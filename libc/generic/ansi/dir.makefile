@@ -3,7 +3,7 @@ $c_SRCDIR = $(TREE_PATH)/$c/src
 $c_HEADERDIR := $(TREE_PATH)/$c/include
 $c_OBJDIR := $(BUILD_PATH)/$c/obj
 
-$c_HEADERS := assert.h ctype.h errno.h signal.h stdio.h stdlib.h string.h \
+$c_HEADERS := assert.h ctype.h errno.h signal.h stdio.h stdlib.h string.h time.h \
 	mlibc/ensure.h
 
 $c_OBJECTS := assert.o
