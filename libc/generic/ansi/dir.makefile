@@ -6,7 +6,7 @@ $c_OBJDIR := $(BUILD_PATH)/$c/obj
 $c_HEADERS := assert.h ctype.h errno.h signal.h stdio.h stdlib.h string.h time.h \
 	mlibc/ensure.h
 
-$c_OBJECTS := assert.o stdlib.o
+$c_OBJECTS := assert.o ctype.o signal.o stdio.o stdlib.o string.o time.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
 $c_CXX := x86_64-managarm-g++

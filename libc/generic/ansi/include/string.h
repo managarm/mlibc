@@ -47,7 +47,7 @@ char *strerror(int errnum);
 size_t strlen(const char *s);
 
 
-#ifndef __cplusplus
+#ifdef __cplusplus
 }
 #endif
 
