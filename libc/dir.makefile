@@ -26,5 +26,5 @@ $($c_BINDIR):
 	mkdir -p $@
 
 $($c_BINDIR)/libc.so: $($c_LIBRARY_OBJS) | $($c_BINDIR)
-	g++ -shared -o $@ $($c_LDFLAGS) $($c_LIBRARY_OBJS)
+	x86_64-managarm-g++ -shared -o $@ $($c_LDFLAGS) $($c_LIBRARY_OBJS)
 
