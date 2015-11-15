@@ -2,15 +2,15 @@
 #ifndef _STDLIB_H
 #define _STDLIB_H
 
+#include <mlibc/null.h>
+#include <mlibc/size_t.h>
+#include <mlibc/wchar_t.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // [7.22] General utilities
-
-#define __need_size_t
-#define __need_wchar_t
-#include <stddef.h>
 
 typedef struct {
 	int quot, rem;
@@ -23,11 +23,6 @@ typedef struct {
 typedef struct {
 	long long quot, rem;
 } lldiv_t;
-
-// NULL is defined in multiple headers
-#ifndef NULL
-#define NULL 0
-#endif
 
 #define EXIT_FAILURE 1
 #define EXIT_SUCCESS 0
@@ -87,8 +82,8 @@ long labs(long number);
 long long llabs(long long number);
 
 div_t div(int number, int denom);
-ldiv_t div(long number, long denom);
-lldiv_t div(long long number, long long denom);
+ldiv_t ldiv(long number, long denom);
+lldiv_t lldiv(long long number, long long denom);
 
 // [7.22.7] Multibyte character conversion functions
 

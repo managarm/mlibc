@@ -2,6 +2,9 @@
 #ifndef _STDIO_H
 #define _STDIO_H
 
+#include <mlibc/null.h>
+#include <mlibc/size_t.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -13,17 +16,12 @@ extern "C" {
 
 // [C11-7.21.1] I/O related types
 
-#define __need_size_t
-#include <stddef.h>
-
 struct _MlibcFile { };
 
 typedef struct _MlibcFile FILE;
 typedef size_t fpos_t;
 
 // [C11-7.21.1] I/O related macros
-
-#define NULL 0
 
 #define _IOFBF 1
 #define _IOLBF 2

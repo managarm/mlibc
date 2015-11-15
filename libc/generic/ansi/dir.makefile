@@ -6,12 +6,13 @@ $c_OBJDIR := $(BUILD_PATH)/$c/obj
 $c_HEADERS := assert.h ctype.h errno.h signal.h stdio.h stdlib.h string.h time.h \
 	mlibc/ensure.h
 
-$c_OBJECTS := assert.o
+$c_OBJECTS := assert.o stdlib.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
-$c_CXX := g++
-$c_CPPFLAGS := -std=c++11 -nostdinc -Wall
-$c_CPPFLAGS := -I$(TREE_PATH)/libc/generic/ansi/include
+$c_CXX := x86_64-managarm-g++
+$c_CPPFLAGS := -std=c++11 -Wall
+$c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/ansi/include
+$c_CPPFLAGS += -I$(TREE_PATH)/libc/compilers/gcc/include
 $c_CXXFLAGS :=  $($c_CPPFLAGS) -fPIC -O2
 
 $c_TARGETS := clean-$c install-$c $($c_OBJECT_PATHS)

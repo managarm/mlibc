@@ -19,6 +19,9 @@ $c_LIBRARY_OBJS += $($c/generic/ansi_OBJECT_PATHS)
 clean-$c: clean-$c/generic/ansi
 install-$c: install-$c/generic/ansi
 
+$(call include_dir,$c/compilers/gcc)
+install-$c: install-$c/compilers/gcc
+
 $($c_BINDIR):
 	mkdir -p $@
 

@@ -2,20 +2,14 @@
 #ifndef _TIME_H
 #define _TIME_H
 
+#include <mlibc/null.h>
+#include <mlibc/size_t.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 // [7.27.1] Components of time
-
-#define __need_size_t
-#include <stddef.h>
-
-// NULL is defined in multiple headers
-#ifndef NULL
-#define NULL 0
-#endif
 
 #define CLOCKS_PER_SEC 1000000000
 

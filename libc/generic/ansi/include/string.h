@@ -2,18 +2,11 @@
 #ifndef _STRING_H
 #define _STRING_H
 
+#include <mlibc/null.h>
+#include <mlibc/size_t.h>
+
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-// [7.24.1]
-
-#define __need_size_t
-#include <stddef.h>
-
-// NULL is defined in multiple headers
-#ifndef NULL
-#define NULL 0
 #endif
 
 // [7.24.2] Copying functions
