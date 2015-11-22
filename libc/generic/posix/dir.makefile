@@ -3,7 +3,8 @@ $c_SRCDIR = $(TREE_PATH)/$c/src
 $c_HEADERDIR := $(TREE_PATH)/$c/include
 $c_OBJDIR := $(BUILD_PATH)/$c/obj
 
-$c_HEADERS := unistd.h
+$c_HEADERS := unistd.h \
+	mlibc/ssize_t.h mlibc/uid_t.h mlibc/gid_t.h mlibc/pid_t.h mlibc/off_t.h
 
 $c_OBJECTS := unistd.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
