@@ -2,6 +2,17 @@
 #ifndef _UNISTD_H
 #define _UNISTD_H
 
+#include <mlibc/size_t.h>
+#include <mlibc/ssize_t.h>
+#include <mlibc/uid_t.h>
+#include <mlibc/gid_t.h>
+#include <mlibc/off_t.h>
+#include <mlibc/pid_t.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _POSIX_VERSION 200809L
 #define _POSIX2_VERSION 200809L
 #define _XOPEN_VERSION 700
@@ -31,13 +42,6 @@
 #define STDOUT_FILENO 1
 
 // MISSING: _POSIX_VDISABLE
-
-#include <mlibc/size_t.h>
-#include <mlibc/ssize_t.h>
-#include <mlibc/uid_t.h>
-#include <mlibc/gid_t.h>
-#include <mlibc/off_t.h>
-#include <mlibc/pid_t.h>
 
 // MISSING: intptr_t
 
@@ -125,6 +129,10 @@ int unlinkat(int, const char *, int);
 ssize_t write(int, const void *, size_t);
 
 // MISSING: optarg etc.
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _UNISTD_H
 
