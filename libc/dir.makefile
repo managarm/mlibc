@@ -19,6 +19,11 @@ $c_LIBRARY_OBJS += $($c/generic/ansi_OBJECT_PATHS)
 clean-$c: clean-$c/generic/ansi
 install-$c: install-$c/generic/ansi
 
+$(call include_dir,$c/generic/posix)
+$c_LIBRARY_OBJS += $($c/generic/posix_OBJECT_PATHS)
+clean-$c: clean-$c/generic/posix
+install-$c: install-$c/generic/posix
+
 $(call include_dir,$c/compilers/gcc)
 install-$c: install-$c/compilers/gcc
 
