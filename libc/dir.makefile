@@ -27,6 +27,11 @@ install-$c: install-$c/generic/posix
 $(call include_dir,$c/compilers/gcc)
 install-$c: install-$c/compilers/gcc
 
+$(call include_dir,$c/platform/x86_64-managarm)
+all-$c: all-$c/platform/x86_64-managarm
+clean-$c: clean-$c/platform/x86_64-managarm
+install-$c: install-$c/platform/x86_64-managarm
+
 $($c_BINDIR):
 	mkdir -p $@
 
