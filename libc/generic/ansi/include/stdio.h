@@ -69,6 +69,7 @@ int printf(const char *__restrict format, ...);
 int scanf(const char *__restrict format, ...);
 int snprintf(char *__restrict buffer, size_t max_size, const char *__restrict format, ...);
 int sprintf(char *__restrict buffer, const char *__restrict format, ...);
+int sscanf(const char *__restrict buffer, const char *__restrict format, ...);
 int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args);
 int vfscanf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args);
 int vprintf(const char *__restrict format, __gnuc_va_list args);
