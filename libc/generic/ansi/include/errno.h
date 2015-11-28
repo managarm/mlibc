@@ -8,5 +8,7 @@
 
 extern int errno;
 
+#include <mlibc/posix_errno.h>
+
 #endif // _ERRNO_H
 

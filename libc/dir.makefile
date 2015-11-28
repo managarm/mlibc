@@ -5,7 +5,7 @@ $c_LIBRARY_OBJS :=
 
 $c_LDFLAGS := -nostdlib
 
-$c_TARGETS := clean-$c $($c_BINDIR)/libc.so
+$c_TARGETS := clean-$c install-$c $($c_BINDIR)/libc.so
 
 .PHONY: all-$c install-$c
 
@@ -32,4 +32,8 @@ $($c_BINDIR):
 
 $($c_BINDIR)/libc.so: $($c_LIBRARY_OBJS) | $($c_BINDIR)
 	x86_64-managarm-g++ -shared -o $@ $($c_LDFLAGS) $($c_LIBRARY_OBJS)
+
+install-$c:
+	mkdir -p $(SYSROOT_PATH)/usr/lib
+	install $($c_BINDIR)/libc.so $(SYSROOT_PATH)/usr/lib
 

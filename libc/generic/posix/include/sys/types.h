@@ -8,6 +8,11 @@
 #include <mlibc/gid_t.h>
 #include <mlibc/pid_t.h>
 #include <mlibc/mode_t.h>
+#include <mlibc/dev_t.h>
+#include <mlibc/ino_t.h>
+#include <mlibc/blksize_t.h>
+#include <mlibc/blkcnt_t.h>
+#include <mlibc/nlink_t.h>
 
 // MISSING: almost every type
 
