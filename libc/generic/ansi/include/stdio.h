@@ -116,5 +116,7 @@ int perror(const char *string);
 }
 #endif
 
+#include <mlibc/posix_stdio.h>
+
 #endif // _STDIO_H
 
