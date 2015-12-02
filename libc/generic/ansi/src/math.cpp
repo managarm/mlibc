@@ -42,15 +42,15 @@ long double atanl(long double x) {
 	__builtin_unreachable();
 }
 
-double atan2(double x) {
+double atan2(double x, double y) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-float atan2f(float x) {
+float atan2f(float x, float y) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-long double atan2l(long double x) {
+long double atan2l(long double x, long double y) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

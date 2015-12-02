@@ -1,4 +1,11 @@
 
+#ifndef _MATH_H
+#define _MATH_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // [C11/7.12.1 Treatment of error conditions]
 
 #define MATH_ERRNO 1
@@ -21,9 +28,9 @@ double atan(double x);
 float atanf(float x);
 long double atanl(long double x);
 
-double atan2(double x);
-float atan2f(float x);
-long double atan2l(long double x);
+double atan2(double x, double y);
+float atan2f(float x, float y);
+long double atan2l(long double x, long double y);
 
 double cos(double x);
 float cosf(float x);
@@ -250,4 +257,10 @@ float fminf(float x, float y);
 long double fminl(long double x, long double y);
 
 // MISSING: [C11/7.12.13 Comparison macros]
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // _MATH_H
 

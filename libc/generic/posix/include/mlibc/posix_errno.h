@@ -66,15 +66,16 @@
 #define EPERM 1063
 #define EPIPE 1064
 #define EPROTO 1065
-#define EPROTOTYPE 1066
-#define EROFS 1067
-#define ESPIPE 1068
-#define ESRCH 1069
-#define ESTALE 1070
-#define ETIMEDOUT 1071
-#define ETXTBSY 1072
-#define EWOULDBLOCK 1073
-#define EXDEV 1074
+#define EPROTONOSUPPORT 1066
+#define EPROTOTYPE 1067
+#define EROFS 1068
+#define ESPIPE 1069
+#define ESRCH 1070
+#define ESTALE 1071
+#define ETIMEDOUT 1072
+#define ETXTBSY 1073
+#define EWOULDBLOCK 1074
+#define EXDEV 1075
 
 #endif // MLIBC_POSIX_ERRNO_H
 
