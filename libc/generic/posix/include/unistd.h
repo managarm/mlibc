@@ -17,7 +17,9 @@ extern "C" {
 #define _POSIX2_VERSION 200809L
 #define _XOPEN_VERSION 700
 
-// MISSING: _POSIX and _XOPEN feature macros
+#define _POSIX_THREADS 200809L
+
+// MISSING: additional _POSIX and _XOPEN feature macros
 // MISSING: _POSIX_TIMESTAMP_RESOLUTION and _POSIX2_SYMLINKS
 
 #define F_OK 1

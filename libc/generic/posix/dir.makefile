@@ -3,14 +3,14 @@ $c_SRCDIR = $(TREE_PATH)/$c/src
 $c_HEADERDIR := $(TREE_PATH)/$c/include
 $c_OBJDIR := $(BUILD_PATH)/$c/obj
 
-$c_HEADERS := fcntl.h sched.h spawn.h unistd.h \
+$c_HEADERS := fcntl.h pthread.h sched.h spawn.h unistd.h \
 	sys/types.h sys/stat.h \
 	mlibc/ssize_t.h mlibc/uid_t.h mlibc/gid_t.h mlibc/pid_t.h mlibc/off_t.h \
 	mlibc/mode_t.h mlibc/dev_t.h mlibc/ino_t.h mlibc/blksize_t.h mlibc/blkcnt_t.h \
 	mlibc/nlink_t.h \
 	mlibc/posix_errno.h mlibc/posix_stdio.h
 
-$c_OBJECTS := fcntl.o sched.o spawn.o unistd.o \
+$c_OBJECTS := fcntl.o pthread.o sched.o spawn.o unistd.o \
 	posix_stdio.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
