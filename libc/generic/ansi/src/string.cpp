@@ -62,7 +62,7 @@ size_t strcspn(const char *s, const char *chrs) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-size_t strpbrk(const char *s, const char *chrs) {
+char *strpbrk(const char *s, const char *chrs) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

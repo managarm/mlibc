@@ -34,7 +34,7 @@ size_t strxfrm(char *__restrict dest, const char *__restrict src, size_t max_siz
 void *memchr(const void *s, int c, size_t size);
 char *strchr(const char *s, int c);
 size_t strcspn(const char *s, const char *chrs);
-size_t strpbrk(const char *s, const char *chrs);
+char *strpbrk(const char *s, const char *chrs);
 char *strrchr(const char *s, int c);
 size_t strspn(const char *s, const char *chrs);
 char *strstr(const char *pattern, const char *s);
