@@ -12,7 +12,32 @@ extern "C" {
 #define MATH_ERREXCEPT 2
 #define math_errhandling 3
 
-// MISSING: [C11/7.12.3 Classification macros]
+// [C11/7.12.3 Classification macros]
+
+// NOTE: fpclassify always returns exactly one of those constants
+// However making them bitwise disjoint simplifies isfinite() etc.
+#define FP_INFINITE 1
+#define FP_NAN 2
+#define FP_NORMAL 4
+#define FP_SUBNORMAL 8
+#define FP_ZERO 16
+
+int __mlibc_fpclassify(double x);
+int __mlibc_fpclassifyf(float x);
+int __mlibc_fpclassifyl(long double x);
+
+#define fpclassify(x) \
+	(sizeof(x) == sizeof(double) ? __mlibc_fpclassify(x) : \
+	(sizeof(x) == sizeof(float) ? __mlibc_fpclassifyf(x) : \
+	(sizeof(x) == sizeof(long double) ? __mlibc_fpclassifyl(x) : \
+	0)))
+
+#define isfinite(x) (fpclassify(x) & (FP_NORMAL | FP_SUBNORMAL | FP_ZERO))
+#define isnan(x) (fpclassify(x) == FP_NAN)
+#define isinf(x) (fpclassify(x) == FP_INFINITE)
+#define isnormal(x) (fpclassify(x) == FP_NORMAL)
+
+// MISSING: signbit()
 
 // [C11/7.12.4 Trigonometric functions]
 

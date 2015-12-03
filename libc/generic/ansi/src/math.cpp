@@ -3,6 +3,19 @@
 
 #include <mlibc/ensure.h>
 
+int __mlibc_fpclassify(double x) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int __mlibc_fpclassifyf(float x) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int __mlibc_fpclassifyl(long double x) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 double acos(double x) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
