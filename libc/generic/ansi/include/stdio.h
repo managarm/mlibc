@@ -4,6 +4,7 @@
 
 #include <mlibc/null.h>
 #include <mlibc/size_t.h>
+#include <mlibc/seek.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,10 +35,6 @@ typedef size_t fpos_t;
 #define FOPEN_MAX 1024
 #define FILENAME_MAX 256
 #define L_tmpnam 256
-
-#define SEEK_CUR 1
-#define SEEK_END 2
-#define SEEK_SET 3
 
 #define TMP_MAX 1024
 

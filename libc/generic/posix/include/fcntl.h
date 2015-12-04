@@ -5,6 +5,7 @@
 #include <mlibc/mode_t.h>
 #include <mlibc/off_t.h>
 #include <mlibc/pid_t.h>
+#include <mlibc/seek.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,8 +31,6 @@ extern "C" {
 
 // constants for fcntl()'s additional argument of F_GETFD and F_SETFD
 #define FD_CLOEXEC 1
-
-// MISSING: SEEK macros from stdio.h
 
 // reserve 3 bits for the access mode
 #define O_ACCMODE 0x0007

@@ -11,6 +11,7 @@ $c_HEADERS := fcntl.h pthread.h sched.h spawn.h unistd.h \
 	mlibc/posix_errno.h mlibc/posix_stdio.h
 
 $c_OBJECTS := fcntl.o pthread.o sched.o spawn.o unistd.o \
+	stat.o \
 	posix_stdio.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
