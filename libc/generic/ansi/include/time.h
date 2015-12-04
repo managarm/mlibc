@@ -4,6 +4,8 @@
 
 #include <mlibc/null.h>
 #include <mlibc/size_t.h>
+#include <mlibc/time_t.h>
+#include <mlibc/timespec.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,13 +17,8 @@ extern "C" {
 
 #define TIME_UTC 1
 
+// TODO: Use an integer type for clock_t?
 typedef double clock_t;
-typedef double time_t;
-
-struct timespec {
-	time_t tv_sec;
-	long tv_nsec;
-};
 
 struct tm {
 	int tm_sec;

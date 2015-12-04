@@ -11,6 +11,8 @@
 #include <mlibc/blksize_t.h>
 #include <mlibc/blkcnt_t.h>
 #include <mlibc/nlink_t.h>
+#include <mlibc/time_t.h>
+#include <mlibc/timespec.h>
 
 #define S_IFBLK 0x0000
 #define S_IFCHR 0x0100

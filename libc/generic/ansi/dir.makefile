@@ -5,6 +5,7 @@ $c_OBJDIR := $(BUILD_PATH)/$c/obj
 
 $c_HEADERS := assert.h ctype.h errno.h locale.h math.h setjmp.h signal.h stdio.h stdlib.h \
 	string.h time.h \
+	mlibc/time_t.h mlibc/timespec.h \
 	mlibc/ensure.h
 
 $c_OBJECTS := assert.o ctype.o locale.o math.o setjmp.o signal.o stdio.o stdlib.o string.o time.o
