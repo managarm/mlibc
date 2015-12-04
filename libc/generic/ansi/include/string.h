@@ -51,5 +51,7 @@ size_t strlen(const char *s);
 }
 #endif
 
+#include <mlibc/posix_string.h>
+
 #endif // _STRING_H
 

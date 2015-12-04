@@ -8,11 +8,11 @@ $c_HEADERS := fcntl.h pthread.h sched.h spawn.h unistd.h \
 	mlibc/ssize_t.h mlibc/uid_t.h mlibc/gid_t.h mlibc/pid_t.h mlibc/off_t.h \
 	mlibc/mode_t.h mlibc/dev_t.h mlibc/ino_t.h mlibc/blksize_t.h mlibc/blkcnt_t.h \
 	mlibc/nlink_t.h mlibc/suseconds_t.h \
-	mlibc/posix_errno.h mlibc/posix_stdio.h
+	mlibc/posix_errno.h mlibc/posix_stdio.h mlibc/posix_string.h
 
 $c_OBJECTS := fcntl.o pthread.o sched.o spawn.o unistd.o \
 	stat.o select.o wait.o \
-	posix_stdio.o
+	posix_stdio.o posix_string.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
 $c_CXX := x86_64-managarm-g++
