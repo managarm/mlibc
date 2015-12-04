@@ -14,6 +14,7 @@
 #include <mlibc/time_t.h>
 #include <mlibc/timespec.h>
 
+#define S_IFMT 0x0F00
 #define S_IFBLK 0x0000
 #define S_IFCHR 0x0100
 #define S_IFIFO 0x0200
