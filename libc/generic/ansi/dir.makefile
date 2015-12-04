@@ -8,7 +8,8 @@ $c_HEADERS := assert.h ctype.h errno.h limits.h locale.h math.h setjmp.h signal.
 	mlibc/seek.h mlibc/time_t.h mlibc/timespec.h \
 	mlibc/ensure.h
 
-$c_OBJECTS := assert.o ctype.o locale.o math.o setjmp.o signal.o stdio.o stdlib.o string.o time.o
+$c_OBJECTS := assert.o ctype.o errno.o locale.o math.o setjmp.o signal.o \
+	stdio.o stdlib.o string.o time.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
 $c_CXX := x86_64-managarm-g++
