@@ -17,6 +17,7 @@
 #include <mlibc/nlink_t.h>
 
 #include <mlibc/time_t.h>
+#include <mlibc/suseconds_t.h>
 
 // MISSING: almost every type
 
