@@ -4,8 +4,11 @@
 #include <mlibc/ensure.h>
 
 void *memcpy(void *__restrict dest, const void *__restrict src, size_t size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	char *dest_bytes = (char *)dest;
+	char *src_bytes = (char *)src;
+	for(size_t i = 0; i < size; i++)
+		dest_bytes[i] = src_bytes[i];
+	return dest;
 }
 void *memmove(void *dest, const void *src, size_t size) {
 	__ensure(!"Not implemented");
@@ -92,7 +95,9 @@ char *strerror(int errnum) {
 	__builtin_unreachable();
 }
 size_t strlen(const char *s) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	size_t len = 0;
+	for(size_t i = 0; s[i]; i++)
+		len++;
+	return len;
 }
 
