@@ -25,7 +25,7 @@ clean-$c:
 
 install-$c:
 	mkdir -p  $(SYSROOT_PATH)/usr/lib
-	install $($c_BINDIR)/crt0.o $(SYSROOT_PATH)/usr/lib
+	install -p $($c_BINDIR)/crt0.o $(SYSROOT_PATH)/usr/lib
 
 $($c_OBJDIR) $($c_BINDIR):
 	mkdir -p $@

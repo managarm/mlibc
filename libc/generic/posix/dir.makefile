@@ -35,7 +35,7 @@ install-$c:
 	mkdir -p  $(SYSROOT_PATH)/usr/include/sys
 	mkdir -p  $(SYSROOT_PATH)/usr/include/mlibc
 	for f in $($c_HEADERS); do \
-		install $($c_HEADERDIR)/$$f $(SYSROOT_PATH)/usr/include/$$f; done
+		install -p $($c_HEADERDIR)/$$f $(SYSROOT_PATH)/usr/include/$$f; done
 
 $($c_OBJDIR):
 	mkdir -p $@

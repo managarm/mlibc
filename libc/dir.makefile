@@ -50,5 +50,5 @@ $($c_BINDIR)/libc.so: $($c_LIBRARY_OBJS) | $($c_BINDIR)
 
 install-$c:
 	mkdir -p $(SYSROOT_PATH)/usr/lib
-	install $($c_BINDIR)/libc.so $(SYSROOT_PATH)/usr/lib
+	install -p $($c_BINDIR)/libc.so $(SYSROOT_PATH)/usr/lib
 
