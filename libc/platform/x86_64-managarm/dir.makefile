@@ -3,11 +3,12 @@ $c_SRCDIR = $(TREE_PATH)/$c/src
 $c_OBJDIR := $(BUILD_PATH)/$c/obj
 $c_BINDIR := $(BUILD_PATH)/$c/bin
 
-$c_OBJECTS := entry.o ensure.o
+$c_OBJECTS := entry.o ensure.o frigg-support.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
 $c_CXX := x86_64-managarm-g++
 $c_CPPFLAGS := -std=c++11 -Wall
+$c_CPPFLAGS += -I$(FRIGG_PATH)/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/ansi/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/compilers/gcc/include
 $c_CXXFLAGS :=  $($c_CPPFLAGS) -fPIC -O2

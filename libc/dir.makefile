@@ -5,7 +5,7 @@ $c_LIBRARY_OBJS :=
 
 $c_LDFLAGS := -nostdlib
 
-$c_TARGETS := clean-$c install-$c $($c_BINDIR)/libc.so
+$c_TARGETS := clean-$c gen-$c install-$c $($c_BINDIR)/libc.so
 
 .PHONY: all-$c install-$c
 
@@ -37,6 +37,10 @@ $c_LIBRARY_OBJS += $($c/platform/x86_64-managarm_OBJECT_PATHS)
 all-$c: all-$c/platform/x86_64-managarm
 clean-$c: clean-$c/platform/x86_64-managarm
 install-$c: install-$c/platform/x86_64-managarm
+
+$(call include_dir,$c/frigg-bindings)
+$c_LIBRARY_OBJS += $($c/frigg-bindings_OBJECT_PATHS)
+clean-$c: clean-$c/frigg-bindings
 
 $($c_BINDIR):
 	mkdir -p $@
