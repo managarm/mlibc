@@ -1,11 +1,8 @@
 
 #include <stdio.h>
+#include <string.h>
 
 #include <mlibc/ensure.h>
-
-FILE *stderr;
-FILE *stdin;
-FILE *stdout;
 
 int remove(const char *filename) {
 	__ensure(!"Not implemented");
@@ -114,8 +111,8 @@ int fputc(int c, FILE *stream) {
 	__builtin_unreachable();
 }
 int fputs(const char *__restrict string, FILE *__restrict stream) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	size_t blocks_written = fwrite(string, strlen(string), 1, stream);
+	return blocks_written == 1 ? 1 : EOF;
 }
 int getc(FILE *stream) {
 	__ensure(!"Not implemented");
@@ -134,8 +131,7 @@ int putchar(int c) {
 	__builtin_unreachable();
 }
 int puts(const char *string) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return fputs(string, stdout);
 }
 int ungetc(int c, FILE *stream) {
 	__ensure(!"Not implemented");
@@ -146,10 +142,7 @@ size_t fread(void *__restrict buffer, size_t max_size, size_t count, FILE *__res
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-size_t fwrite(const void *__restrict buffer, size_t size, size_t count, FILE *__restrict stream) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// fwrite() is provided by POSIX
 
 int fgetpos(FILE *__restrict stream, fpos_t *__restrict position) {
 	__ensure(!"Not implemented");

@@ -5,6 +5,9 @@
 #include <mlibc/cxx-support.hpp>
 #include <mlibc/posix-pipe.hpp>
 
+// defined by the POSIX library
+void __mlibc_initStdio();
+// defined in malloc.cpp
 void __mlibc_initMalloc();
 
 // declared in posix-pipe.hpp
@@ -26,6 +29,7 @@ static LibraryGuard guard;
 LibraryGuard::LibraryGuard() {
 	// FIXME: initialize malloc here
 	//__mlibc_initMalloc();
+	__mlibc_initStdio();
 
 	eventHub.initialize(helx::EventHub::create());
 	

@@ -320,8 +320,5 @@ int unlinkat(int, const char *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-ssize_t write(int, const void *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// write() is provided by the platform
 

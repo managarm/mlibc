@@ -5,6 +5,7 @@
 #include <mlibc/null.h>
 #include <mlibc/size_t.h>
 #include <mlibc/seek.h>
+#include <mlibc/file.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,9 +18,7 @@ extern "C" {
 
 // [C11-7.21.1] I/O related types
 
-struct _MlibcFile { };
-
-typedef struct _MlibcFile FILE;
+typedef struct __mlibc_File FILE;
 typedef size_t fpos_t;
 
 // [C11-7.21.1] I/O related macros

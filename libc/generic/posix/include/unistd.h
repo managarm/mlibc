@@ -128,7 +128,7 @@ char *ttyname(int);
 int ttyname_r(int, char *, size_t);
 int unlink(const char *);
 int unlinkat(int, const char *, int);
-ssize_t write(int, const void *, size_t);
+ssize_t write(int fd, const void *buffer, size_t size);
 
 // MISSING: optarg etc.
 
