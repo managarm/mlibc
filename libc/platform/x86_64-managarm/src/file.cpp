@@ -1,6 +1,10 @@
 
 #include <string.h>
 #include <errno.h>
+
+// for dup2()
+#include <unistd.h>
+// for open()
 #include <fcntl.h>
 
 #include <mlibc/ensure.h>
@@ -44,6 +48,38 @@ int open(const char *path, int flags, ...) {
 		return response.fd();
 	}else{
 		__ensure(!"Unexpected error in open()!");
+		__builtin_unreachable();
+	}
+}
+
+int dup2(int src_fd, int dest_fd) {
+	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	request.set_request_type(managarm::posix::ClientRequestType::DUP2);
+	request.set_fd(src_fd);
+	request.set_newfd(dest_fd);
+
+	int64_t request_num = allocPosixRequest();
+	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	request.SerializeToString(&serialized);
+	posixPipe->sendStringReq(serialized.data(), serialized.size(),
+			request_num, 0);
+
+	int8_t buffer[128];
+	size_t length;
+	HelError response_error;
+	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	HEL_CHECK(response_error);
+
+	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	response.ParseFromArray(buffer, length);
+	if(response.error() == managarm::posix::Errors::SUCCESS) {
+		return dest_fd;
+	}else if(response.error() ==  managarm::posix::Errors::NO_SUCH_FD) {
+		errno = EBADF;
+		return -1;
+	}else {
+		__ensure(!"Unexpected error in dup2()!");
+		__builtin_unreachable();
 	}
 }
 

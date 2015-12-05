@@ -35,10 +35,7 @@ int dup(int fd) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int dup2(int src_fd, int dest_fd) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// dup2() is provided by the platform
 void _exit(int status) {
 	__ensure(!"Not implemented");
 }
