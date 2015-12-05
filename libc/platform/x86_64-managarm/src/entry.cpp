@@ -16,6 +16,10 @@ LibraryGuard::LibraryGuard() {
 	//__mlibc_initMalloc();
 }
 
+// __dso_handle is usually defined in crtbeginS.o
+// Since we link with -nostdlib we have to manually define it here
+__attribute__ (( visibility("hidden") )) int __dso_handle;
+
 extern "C" int main(int argc, char *argv[], char *env[]);
 
 extern "C" void __mlibc_entry() {

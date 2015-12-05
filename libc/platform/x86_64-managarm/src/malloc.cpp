@@ -4,23 +4,23 @@
 
 #include <mlibc/ensure.h>
 #include <mlibc/cxx-support.hpp>
+#include <mlibc/frigg-alloc.hpp>
 
 #pragma GCC visibility push(hidden)
-
-#include <frigg/initializer.hpp>
-#include <frigg/memory.hpp>
 
 #include <hel.h>
 #include <hel-syscalls.h>
 
-struct VirtualAllocator {
-public:
-	uintptr_t map(size_t length);
+// --------------------------------------------------------
+// Globals
+// --------------------------------------------------------
 
-	void unmap(uintptr_t address, size_t length);
-};
+VirtualAllocator virtualAllocator;
+frigg::LazyInitializer<MemoryAllocator> memoryAllocator;
 
-typedef frigg::SlabAllocator<VirtualAllocator, frigg::TicketLock> MemoryAllocator;
+// --------------------------------------------------------
+// VirtualAllocator
+// --------------------------------------------------------
 
 uintptr_t VirtualAllocator::map(size_t length) {
 	assert((length % 0x1000) == 0);
@@ -37,9 +37,6 @@ uintptr_t VirtualAllocator::map(size_t length) {
 void VirtualAllocator::unmap(uintptr_t address, size_t length) {
 	HEL_CHECK(helUnmapMemory(kHelNullHandle, (void *)address, length));
 }
-
-VirtualAllocator virtualAllocator;
-frigg::LazyInitializer<MemoryAllocator> memoryAllocator;
 
 #pragma GCC visibility pop
 
