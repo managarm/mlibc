@@ -11,10 +11,7 @@ int fcntl(int, int, ...) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int open(const char *, int, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// open() is provided by the platform
 int openat(int, const char *, int, ...) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
