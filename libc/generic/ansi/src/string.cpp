@@ -11,8 +11,16 @@ void *memcpy(void *__restrict dest, const void *__restrict src, size_t size) {
 	return dest;
 }
 void *memmove(void *dest, const void *src, size_t size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	char *dest_bytes = (char *)dest;
+	char *src_bytes = (char *)src;
+	if(dest_bytes < src_bytes) {
+		for(size_t i = 0; i < size; i++)
+			dest_bytes[i] = src_bytes[i];
+	}else{
+		for(size_t i = 0; i < size; i++)
+			dest_bytes[size - i - 1] = src_bytes[size - i - 1];
+	}
+	return dest;
 }
 char *strcpy(char *__restrict dest, const char *src) {
 	__ensure(!"Not implemented");
