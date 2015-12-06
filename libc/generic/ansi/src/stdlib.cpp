@@ -64,9 +64,7 @@ void *calloc(size_t count, size_t size) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-void free(void *pointer) {
-	__ensure(!"Not implemented");
-}
+// free() is provided by the platform
 // malloc() is provided by the platform
 void *realloc(void *pointer, size_t size) {
 	__ensure(!"Not implemented");

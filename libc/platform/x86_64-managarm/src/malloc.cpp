@@ -44,6 +44,10 @@ void __mlibc_initMalloc() {
 	memoryAllocator.initialize(virtualAllocator);
 }
 
+void free(void *pointer) {
+	memoryAllocator->free(pointer);
+}
+
 void *malloc(size_t size) {
 	// FIXME: initialize malloc from a global library guard constructor
 	if(!memoryAllocator)
