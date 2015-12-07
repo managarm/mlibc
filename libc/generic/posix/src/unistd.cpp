@@ -58,10 +58,7 @@ int execv(const char *, char *const []) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int execve(const char *, char *const [], char *const []) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// execve() is provided by the platform
 int execvp(const char *, char *const[]) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

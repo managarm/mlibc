@@ -62,7 +62,7 @@ int execl(const char *, const char *, ...);
 int execle(const char *, const char *, ...);
 int execlp(const char *, const char *, ...);
 int execv(const char *, char *const []);
-int execve(const char *, char *const [], char *const []);
+int execve(const char *path, char *const argv[], char *const envp[]);
 int execvp(const char *, char *const[]);
 int faccessat(int, const char *, int, int);
 int fchdir(int fd);
