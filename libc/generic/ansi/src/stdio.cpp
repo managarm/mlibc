@@ -25,10 +25,7 @@ int fclose(FILE *stream) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int fflush(FILE *stream) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// fflush is provided by the POSIX sublibrary
 FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -111,8 +108,13 @@ int fputc(int c, FILE *stream) {
 	__builtin_unreachable();
 }
 int fputs(const char *__restrict string, FILE *__restrict stream) {
-	size_t blocks_written = fwrite(string, strlen(string), 1, stream);
-	return blocks_written == 1 ? 1 : EOF;
+	if(fwrite(string, strlen(string), 1, stream) != 1)
+		return EOF;
+	if(fwrite("\n", 1, 1, stream) != 1)
+		return EOF;
+	if(fflush(stream))
+		return EOF;
+	return 1;
 }
 int getc(FILE *stream) {
 	__ensure(!"Not implemented");
@@ -142,7 +144,7 @@ size_t fread(void *__restrict buffer, size_t max_size, size_t count, FILE *__res
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// fwrite() is provided by POSIX
+// fwrite() is provided by the POSIX sublibrary
 
 int fgetpos(FILE *__restrict stream, fpos_t *__restrict position) {
 	__ensure(!"Not implemented");
