@@ -27,19 +27,19 @@ int pthread_join(pthread_t pthread, void **result) {
 
 int pthread_mutex_init(pthread_mutex_t *__restrict mutex,
 		const pthread_mutex_attr_t *__restrict attr) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: we need proper mutexes
+	return 0;
 }
 int pthread_mutex_lock(pthread_mutex_t *mutex) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: we need proper mutexes
+	return 0;
 }
 int pthread_mutex_unlock(pthread_mutex_t *mutex) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: we need proper mutexes
+	return 0;
 }
 int pthread_mutex_destroy(pthread_mutex_t *mutex) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: we need proper mutexes
+	return 0;
 }
 
