@@ -4,8 +4,12 @@ $c_GENDIR := $(BUILD_PATH)/$c/gen
 $c_OBJDIR := $(BUILD_PATH)/$c/obj
 $c_BINDIR := $(BUILD_PATH)/$c/bin
 
-$c_OBJECTS := entry.o ensure.o malloc.o file.o frigg-support.o
+$c_OBJECTS := entry.o ensure.o malloc.o file.o \
+	fork-exec.o enter-fork.o \
+	frigg-support.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
+
+$c_AS := x86_64-managarm-as 
 
 $c_CXX := x86_64-managarm-g++
 $c_CPPFLAGS := -std=c++11 -Wall
@@ -41,6 +45,9 @@ $($c_GENDIR) $($c_OBJDIR) $($c_BINDIR):
 $($c_OBJDIR)/%.o: $($c_SRCDIR)/%.cpp | $($c_OBJDIR)
 	$($c_CXX) -c -o $@ $($c_CXXFLAGS) $<
 	$($c_CXX) $($c_CPPFLAGS) -MM -MP -MF $(@:%.o=%.d) -MT "$@" -MT "$(@:%.o=%.d)" $<
+
+$($c_OBJDIR)/%.o: $($c_SRCDIR)/%.S | $($c_OBJDIR)
+	$($c_AS) -c -o $@ $($c_ASFLAGS) $<
 
 # compile crt0.o
 $($c_BINDIR)/crt0.o: $($c_SRCDIR)/crt0.cpp | $($c_BINDIR)

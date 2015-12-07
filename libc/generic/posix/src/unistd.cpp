@@ -90,10 +90,7 @@ int fexecve(int, char *const [], char *const []) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-pid_t fork(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// fork() is provided by the platform
 long fpathconf(int, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

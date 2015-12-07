@@ -20,17 +20,10 @@ int64_t allocPosixRequest() {
 	return next++;
 }
 
-struct LibraryGuard {
-	LibraryGuard();
-};
-
-static LibraryGuard guard;
-
-LibraryGuard::LibraryGuard() {
-	// FIXME: initialize malloc here
-	//__mlibc_initMalloc();
-	__mlibc_initStdio();
-
+void __mlibc_reinitPosixPipe() {
+	eventHub.discard();
+	posixPipe.discard();
+	
 	eventHub.initialize(helx::EventHub::create());
 	
 	const char *posix_path = "local/posix";
@@ -46,6 +39,20 @@ LibraryGuard::LibraryGuard() {
 	eventHub->waitForConnect(async_id, connect_error, pipe);
 	HEL_CHECK(connect_error);
 	posixPipe.initialize(frigg::move(pipe));
+}
+
+struct LibraryGuard {
+	LibraryGuard();
+};
+
+static LibraryGuard guard;
+
+LibraryGuard::LibraryGuard() {
+	// FIXME: initialize malloc here
+	//__mlibc_initMalloc();
+	__mlibc_initStdio();
+
+	__mlibc_reinitPosixPipe();
 }
 
 // __dso_handle is usually defined in crtbeginS.o
