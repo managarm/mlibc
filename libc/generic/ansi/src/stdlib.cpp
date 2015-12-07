@@ -71,7 +71,7 @@ void *realloc(void *pointer, size_t size) {
 	__builtin_unreachable();
 }
 
-__attribute__ (( noreturn )) void abort(void) {
+void abort(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -83,19 +83,16 @@ int at_quick_exit(void (*func)(void)) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-__attribute__ (( noreturn )) void exit(int status) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void exit(int status) {
+	// TODO: should be provided by the LSB sublibrary
+	_Exit(status);
 }
-__attribute__ (( noreturn )) void _Exit(int status) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// _Exit() is provided by the platform
 char *getenv(const char *name) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-__attribute__ (( noreturn )) void quick_exit(int status) {
+void quick_exit(int status) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

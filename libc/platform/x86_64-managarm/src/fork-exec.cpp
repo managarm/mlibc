@@ -1,4 +1,7 @@
 
+// for _Exit()
+#include <stdlib.h>
+
 #include <string.h>
 #include <errno.h>
 
@@ -84,5 +87,10 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
 		__ensure(!"Unexpected error in execve()!");
 		__builtin_unreachable();
 	}
+}
+
+void _Exit(int status) {
+	HEL_CHECK(helExitThisThread());
+	__builtin_unreachable();
 }
 
