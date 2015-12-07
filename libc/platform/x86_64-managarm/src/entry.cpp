@@ -21,6 +21,8 @@ int64_t allocPosixRequest() {
 }
 
 void __mlibc_reinitPosixPipe() {
+	// we have to discard these objects here as they might already
+	// be initialized after a fork()
 	eventHub.discard();
 	posixPipe.discard();
 	
@@ -48,8 +50,7 @@ struct LibraryGuard {
 static LibraryGuard guard;
 
 LibraryGuard::LibraryGuard() {
-	// FIXME: initialize malloc here
-	//__mlibc_initMalloc();
+	__mlibc_initMalloc();
 	__mlibc_initStdio();
 
 	__mlibc_reinitPosixPipe();
