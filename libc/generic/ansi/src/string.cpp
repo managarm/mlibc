@@ -41,8 +41,15 @@ char *strncat(char *__restrict dest, char *__restrict src, size_t max_size) {
 }
 
 int memcmp(const void *a, const void *b, size_t size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	char *a_bytes = (char *)a;
+	char *b_bytes = (char *)b;
+	for(size_t i = 0; i < size; i++) {
+		if(a_bytes[i] < b_bytes[i])
+			return -1;
+		if(a_bytes[i] > b_bytes[i])
+			return 1;
+	}
+	return 0;
 }
 int strcmp(const char *a, const char *b) {
 	__ensure(!"Not implemented");
@@ -95,8 +102,10 @@ char *strtok(char *__restrict s, const char *__restrict delimiter) {
 }
 
 void *memset(void *dest, int c, size_t size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	char *dest_bytes = (char *)dest;
+	for(size_t i = 0; i < size; i++)
+		dest_bytes[i] = c;
+	return dest;
 }
 char *strerror(int errnum) {
 	__ensure(!"Not implemented");
