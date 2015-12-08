@@ -69,12 +69,16 @@ int fflush(FILE *stream) {
 	while(written < stream->bufferBytes) {
 		ssize_t result = write(stream->fd, stream->bufferPtr + written,
 				stream->bufferBytes - written);
-		if(result < 0)
+		if(result < 0) {
+			stream->bufferBytes = 0;
 			return EOF;
+		}
+
 		written += result;
 		__ensure(written <= stream->bufferBytes);
 	}
 
+	stream->bufferBytes = 0;
 	return 0;
 }
 
