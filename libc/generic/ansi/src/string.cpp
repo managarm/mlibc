@@ -31,11 +31,11 @@ char *strncpy(char *__restrict dest, const char *src, size_t max_size) {
 	__builtin_unreachable();
 }
 
-char *strcat(char *__restrict dest, char *__restrict src) {
+char *strcat(char *__restrict dest, const char *__restrict src) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-char *strncat(char *__restrict dest, char *__restrict src, size_t max_size) {
+char *strncat(char *__restrict dest, const char *__restrict src, size_t max_size) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

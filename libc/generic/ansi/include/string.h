@@ -18,8 +18,8 @@ char *strncpy(char *__restrict dest, const char *src, size_t max_size);
 
 // [7.24.3] Concatenation functions
 
-char *strcat(char *__restrict dest, char *__restrict src);
-char *strncat(char *__restrict dest, char *__restrict src, size_t max_size);
+char *strcat(char *__restrict dest, const char *__restrict src);
+char *strncat(char *__restrict dest, const char *__restrict src, size_t max_size);
 
 // [7.24.4] Comparison functions
 
