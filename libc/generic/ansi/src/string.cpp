@@ -41,19 +41,34 @@ char *strncat(char *__restrict dest, const char *__restrict src, size_t max_size
 }
 
 int memcmp(const void *a, const void *b, size_t size) {
-	char *a_bytes = (char *)a;
-	char *b_bytes = (char *)b;
+	
 	for(size_t i = 0; i < size; i++) {
-		if(a_bytes[i] < b_bytes[i])
+		auto a_byte = static_cast<const unsigned char *>(a)[i];
+		auto b_byte = static_cast<const unsigned char *>(b)[i];
+		if(a_byte < b_byte)
 			return -1;
-		if(a_bytes[i] > b_bytes[i])
+		if(a_byte > b_byte)
 			return 1;
 	}
 	return 0;
 }
 int strcmp(const char *a, const char *b) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	size_t i = 0;
+	while(true) {
+		unsigned char a_byte = a[i];
+		unsigned char b_byte = b[i];
+		if(!a_byte && !b_byte)
+			return 0;
+		if(!a_byte)
+			return -1;
+		if(!b_byte)
+			return -1;
+		if(a_byte < b_byte)
+			return -1;
+		if(a_byte > b_byte)
+			return 1;
+		i++;
+	}
 }
 int strcoll(const char *a, const char *b) {
 	__ensure(!"Not implemented");
