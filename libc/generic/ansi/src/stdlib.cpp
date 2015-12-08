@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <string.h>
 
 #include <mlibc/ensure.h>
 
@@ -61,8 +62,12 @@ void *aligned_alloc(size_t alignment, size_t size) {
 	__builtin_unreachable();
 }
 void *calloc(size_t count, size_t size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: this could be done more efficient if the OS gives us already zero'd pages
+	void *ptr = malloc(count * size);
+	if(!ptr)
+		return nullptr;
+	memset(ptr, 0, count * size);
+	return ptr;
 }
 // free() is provided by the platform
 // malloc() is provided by the platform

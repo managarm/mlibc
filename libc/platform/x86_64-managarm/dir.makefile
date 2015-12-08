@@ -20,7 +20,7 @@ $c_CPPFLAGS += -I$(TREE_PATH)/libc/platform/x86_64-managarm/include
 $c_CPPFLAGS += -I$($c_GENDIR)
 $c_CPPFLAGS += -DFRIGG_HAVE_LIBC
 $c_CXXFLAGS :=  $($c_CPPFLAGS) -fPIC -O2
-$c_CXXFLAGS += -fno-rtti -fno-exceptions
+$c_CXXFLAGS += -fno-builtin -fno-rtti -fno-exceptions
 
 $c_TARGETS := all-$c clean-$c install-$c gen-$c $($c_BINDIR)/crt0.o $($c_OBJECT_PATHS)
 

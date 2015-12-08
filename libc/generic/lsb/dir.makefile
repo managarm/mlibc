@@ -16,8 +16,8 @@ $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/posix/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/compilers/gcc/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/platform/x86_64-managarm/include
 $c_CPPFLAGS += -DFRIGG_HAVE_LIBC
-$c_CXXFLAGS :=  $($c_CPPFLAGS) -fPIC -O2
-$c_CXXFLAGS +=  -fno-rtti -fno-exceptions
+$c_CXXFLAGS := $($c_CPPFLAGS) -fPIC -O2
+$c_CXXFLAGS += -fno-builtin -fno-rtti -fno-exceptions
 
 $c_TARGETS := clean-$c install-$c $($c_OBJECT_PATHS)
 
