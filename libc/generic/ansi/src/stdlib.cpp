@@ -94,8 +94,8 @@ void exit(int status) {
 }
 // _Exit() is provided by the platform
 char *getenv(const char *name) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: should be provided by the POSIX sublibrary based on environ
+	return nullptr;
 }
 void quick_exit(int status) {
 	__ensure(!"Not implemented");
