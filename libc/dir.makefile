@@ -32,6 +32,11 @@ install-$c: install-$c/generic/lsb
 $(call include_dir,$c/compilers/gcc)
 install-$c: install-$c/compilers/gcc
 
+$(call include_dir,$c/machine/x86_64)
+$c_LIBRARY_OBJS += $($c/machine/x86_64_OBJECT_PATHS)
+clean-$c: clean-$c/machine/x86_64
+install-$c: install-$c/machine/x86_64
+
 $(call include_dir,$c/platform/x86_64-managarm)
 $c_LIBRARY_OBJS += $($c/platform/x86_64-managarm_OBJECT_PATHS)
 all-$c: all-$c/platform/x86_64-managarm

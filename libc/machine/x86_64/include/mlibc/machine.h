@@ -1,0 +1,8 @@
+
+#ifndef MLIBC_MACHINE_H
+#define MLIBC_MACHINE_H
+
+#define __MLIBC_JMPBUF_SIZE 8
+
+#endif // MLIBC_MACHINE_H
+
