@@ -4,15 +4,15 @@ $c_HEADERDIR := $(TREE_PATH)/$c/include
 $c_OBJDIR := $(BUILD_PATH)/$c/obj
 
 $c_HEADERS := fcntl.h pthread.h sched.h spawn.h strings.h unistd.h \
-	sys/types.h sys/select.h sys/stat.h sys/wait.h \
+	sys/types.h sys/select.h sys/stat.h sys/time.h sys/wait.h \
 	mlibc/ssize_t.h mlibc/uid_t.h mlibc/gid_t.h mlibc/pid_t.h mlibc/off_t.h \
 	mlibc/mode_t.h mlibc/dev_t.h mlibc/ino_t.h mlibc/blksize_t.h mlibc/blkcnt_t.h \
-	mlibc/nlink_t.h mlibc/suseconds_t.h \
+	mlibc/nlink_t.h mlibc/suseconds_t.h mlibc/timeval.h \
 	mlibc/posix_errno.h mlibc/posix_signal.h mlibc/posix_stdio.h mlibc/posix_string.h \
 	mlibc/file.h
 
 $c_OBJECTS := fcntl.o pthread.o sched.o spawn.o strings.o unistd.o \
-	stat.o select.o wait.o \
+	stat.o select.o time.o wait.o \
 	posix_stdio.o posix_string.o \
 	file.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))

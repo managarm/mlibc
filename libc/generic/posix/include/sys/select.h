@@ -4,15 +4,11 @@
 
 #include <mlibc/time_t.h>
 #include <mlibc/suseconds_t.h>
+#include <mlibc/timeval.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct timeval {
-	time_t tv_sec;
-	suseconds_t tv_usec;
-};
 
 // FIXME: use something like uint8_t with fixed bit-size
 typedef char fd_set[128];
