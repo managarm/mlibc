@@ -9,6 +9,7 @@ $c_CPPFLAGS := -std=c++11 -Wall
 $c_CPPFLAGS += -I$(FRIGG_PATH)/include
 $c_CPPFLAGS += -DFRIGG_HAVE_LIBC
 $c_CXXFLAGS :=  $($c_CPPFLAGS) -fPIC -O2
+$c_CXXFLAGS +=  -fvisibility=hidden
 
 $c_TARGETS := clean-$c install-$c $($c_OBJECT_PATHS)
 
