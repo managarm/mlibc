@@ -107,9 +107,22 @@ size_t strspn(const char *s, const char *chrs) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-char *strstr(const char *pattern, const char *s) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+char *strstr(const char *s, const char *pattern) {
+	for(size_t i = 0; s[i]; i++) {
+		bool found = true;
+		for(size_t j = 0; pattern[j]; j++) {
+			if(!pattern[j] || s[i + j] == pattern[j])
+				continue;
+			
+			found = false;
+			break;
+		}
+
+		if(found)
+			return const_cast<char *>(&s[i]);
+	}
+
+	return nullptr;
 }
 char *strtok(char *__restrict s, const char *__restrict delimiter) {
 	__ensure(!"Not implemented");
