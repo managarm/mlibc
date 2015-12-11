@@ -1,11 +1,172 @@
 
 #include <math.h>
+#include <immintrin.h>
 
 #include <mlibc/ensure.h>
 
+#include <stdint.h>
+
+#pragma GCC visibility push(hidden)
+#include <frigg/debug.hpp>
+#pragma GCC visibility pop
+
+namespace ieee754 {
+
+struct SoftDouble {
+	typedef uint64_t Bits;
+	typedef uint64_t Mantissa;
+	typedef int16_t Exp;
+
+	static constexpr int kMantissaBits = 52;
+	static constexpr int kExpBits = 11;
+	static constexpr int kBias = 1023;
+	
+	// this exponent represents zeros (when mantissa = 0) and subnormals (when mantissa != 0)
+	static constexpr Exp kSubExp = -kBias;
+	// this exponent represents infinities (when mantissa = 0) and NaNs (when mantissa != 0)
+	static constexpr Exp kInfExp = ((Exp(1) << kExpBits) - 1) - kBias;
+
+	static constexpr Bits kMantissaMask = (Bits(1) << kMantissaBits) - 1;
+	static constexpr Bits kExpMask = ((Bits(1) << kExpBits) - 1) << kMantissaBits;
+	static constexpr Bits kSignMask = Bits(1) << (kMantissaBits + kExpBits);
+
+	SoftDouble(bool negative, Mantissa mantissa, Exp exp)
+	: negative(negative), mantissa(mantissa), exp(exp) {
+//		frigg::infoLogger.log() << "(" << (int)negative << ", " << (void *)mantissa
+//				<< ", " << exp << ")" << frigg::EndLog();
+		__ensure(mantissa < (Mantissa(1) << kMantissaBits));
+		__ensure((exp + kBias) >= 0);
+		__ensure((exp + kBias) < (Exp(1) << kExpBits));
+	}
+
+	const bool negative;
+	const Mantissa mantissa;
+	const Exp exp;
+};
+
+template<typename F>
+using Bits = typename F::Bits;
+
+template<typename F>
+using Mantissa = typename F::Mantissa;
+
+template<typename F>
+using Exp = typename F::Exp;
+
+template<typename F>
+bool isZero(F x) {
+	return x.exp == F::kSubExp && x.mantissa == 0;
+}
+
+template<typename F>
+bool isFinite(F x) {
+	return x.exp != F::kInfExp;
+}
+
+// --------------------------------------------------------
+// Soft float operations
+// --------------------------------------------------------
+
+template<typename F>
+F constZero(bool negative) {
+	return F(negative, 0, F::kSubExp);
+}
+
+template<typename F>
+F constOne(bool negative) {
+	return F(negative, 0, 0);
+}
+
+template<typename F>
+F floor(F x) {
+	if(!isFinite(x) || isZero(x)) // TODO: need exception for the not-finite case?
+		return x;
+	
+	if(x.exp > F::kMantissaBits)
+		return x; // x is already integral
+	
+	if(x.exp < 0) {
+		// TODO: raise inexact
+		// return -1 or +0
+		return x.negative ? constOne<F>(true) : constZero<F>(false);
+	}
+	
+	Mantissa<F> mask = F::kMantissaMask >> x.exp;
+	if(!(x.mantissa & mask))
+		return x; // x is already integral
+	
+	// TODO: raise inexact
+	Mantissa<F> integral_position = (Mantissa<F>(1) << F::kMantissaBits) >> x.exp;
+	if(x.negative)
+		return F(true, (x.mantissa + integral_position) & (~mask), x.exp);
+	return F(false, x.mantissa & (~mask), x.exp);
+}
+
+template<typename F>
+F ceil(F x) {
+	if(!isFinite(x) || isZero(x)) // TODO: need exception for the not-finite case?
+		return x;
+	
+	if(x.exp > F::kMantissaBits)
+		return x; // x is already integral
+	
+	if(x.exp < 0) {
+		// TODO: raise inexact
+		// return -0 or +1
+		return x.negative ? constZero<F>(true) : constOne<F>(false);
+	}
+	
+	Mantissa<F> mask = F::kMantissaMask >> x.exp;
+	if(!(x.mantissa & mask))
+		return x; // x is already integral
+	
+	// TODO: raise inexact
+	Mantissa<F> integral_position = (Mantissa<F>(1) << F::kMantissaBits) >> x.exp;
+	if(x.negative)
+		return F(true, x.mantissa & (~mask), x.exp);
+	return F(false, (x.mantissa + integral_position) & (~mask), x.exp);
+}
+
+// --------------------------------------------------------
+// Soft float <-> bit string conversion functions
+// --------------------------------------------------------
+
+template<typename F>
+uint64_t compileBits(F soft) {
+	auto bits = Bits<F>(soft.mantissa) | ((Bits<F>(soft.exp) + F::kBias) << soft.kMantissaBits);
+	return soft.negative ? (F::kSignMask | bits) : bits;
+}
+
+SoftDouble extractBits(uint64_t bits) {
+	return SoftDouble(bits & SoftDouble::kSignMask, bits & SoftDouble::kMantissaMask,
+			((bits & SoftDouble::kExpMask) >> SoftDouble::kMantissaBits) - SoftDouble::kBias);
+}
+
+// --------------------------------------------------------
+// Soft float -> native float conversion functions
+// --------------------------------------------------------
+
+union DoubleBits {
+	double fp;
+	uint64_t bits;
+};
+
+double compileNative(SoftDouble soft) {
+	DoubleBits word;
+	word.bits = compileBits(soft);
+	return word.fp;
+}
+
+SoftDouble extractNative(double native) {
+	DoubleBits word;
+	word.fp = native;
+	return extractBits(word.bits);
+}
+
+} // namespace ieee754
+
 int __mlibc_fpclassify(double x) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x);
 }
 int __mlibc_fpclassifyf(float x) {
 	__ensure(!"Not implemented");
@@ -381,8 +542,7 @@ long double cbrtl(long double x) {
 }
 
 double fabs(double x) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return signbit(x) ? -x : x;
 }
 float fabsf(float x) {
 	__ensure(!"Not implemented");
@@ -394,8 +554,14 @@ long double fabsl(long double x) {
 }
 
 double hypot(double x, double y) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	__ensure(isfinite(x));
+	__ensure(isfinite(y));
+	// TODO: fix exception handling
+	double u = fabs(x);
+	double v = fabs(y);
+	if(u > v)
+		return u * sqrt(1 + (v / u) * (v / u));
+	return v * sqrt(1 + (u / v) * (u / v));
 }
 float hypotf(float x, float y) {
 	__ensure(!"Not implemented");
@@ -420,8 +586,8 @@ long double powl(long double x, long double y) {
 }
 
 double sqrt(double x) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	auto sse_x = _mm_set_sd(x);
+	return _mm_cvtsd_f64(_mm_sqrt_sd(sse_x, sse_x));
 }
 float sqrtf(float x) {
 	__ensure(!"Not implemented");
@@ -485,8 +651,9 @@ long double tgammal(long double x) {
 }
 
 double ceil(double x) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	auto soft_x = ieee754::extractNative(x);
+	auto result = ieee754::ceil(soft_x);
+	return ieee754::compileNative(result);
 }
 float ceilf(float x) {
 	__ensure(!"Not implemented");
@@ -498,8 +665,9 @@ long double ceill(long double x) {
 }
 
 double floor(double x) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	auto soft_x = ieee754::extractNative(x);
+	auto result = ieee754::floor(soft_x);
+	return ieee754::compileNative(result);
 }
 float floorf(float x) {
 	__ensure(!"Not implemented");
@@ -719,8 +887,8 @@ long double fdiml(long double x, long double y) {
 }
 
 double fmax(double x, double y) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	__ensure(isfinite(x) && isfinite(y));
+	return x < y ? y : x;
 }
 float fmaxf(float x, float y) {
 	__ensure(!"Not implemented");
@@ -732,8 +900,8 @@ long double fmaxl(long double x, long double y) {
 }
 
 double fmin(double x, double y) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	__ensure(isfinite(x) && isfinite(y));
+	return x < y ? x : y;
 }
 float fminf(float x, float y) {
 	__ensure(!"Not implemented");

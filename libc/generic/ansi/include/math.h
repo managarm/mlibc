@@ -43,7 +43,8 @@ int __mlibc_fpclassifyl(long double x);
 #define isinf(x) (fpclassify(x) == FP_INFINITE)
 #define isnormal(x) (fpclassify(x) == FP_NORMAL)
 
-// MISSING: signbit()
+// FIXME: this is gcc specific
+#define signbit(x) (__builtin_signbit(x))
 
 // [C11/7.12.4 Trigonometric functions]
 
