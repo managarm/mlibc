@@ -1,8 +1,62 @@
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+
+// TODO: we need this for frigg::printf; replace this mechanism
+#include <assert.h>
 
 #include <mlibc/ensure.h>
+
+#pragma GCC visibility push(hidden)
+
+#include <frigg/debug.hpp>
+#include <frigg/printf.hpp>
+
+struct StreamPrinter {
+	StreamPrinter(FILE *stream)
+	: stream(stream) { }
+
+	void print(char c) {
+		fwrite(&c, 1, 1, stream);
+	}
+
+	void print(const char *str) {
+		fwrite(str, strlen(str), 1, stream);
+	}
+
+	void flush() {
+		fflush(stream);
+	}
+
+	FILE *stream;
+};
+
+struct BufferPrinter {
+	BufferPrinter(char *buffer)
+	: buffer(buffer), offset(0) { }
+
+	void print(char c) {
+		buffer[offset] = c;
+		offset++;
+	}
+
+	void print(const char *str) {
+		// TODO: use strcat
+		for(size_t i = 0; str[i]; i++) {
+			buffer[offset] = str[i];
+			offset++;
+		}
+	}
+
+	void flush() { }
+
+	char *buffer;
+	size_t offset;
+};
+
+#pragma GCC visibility pop
 
 int remove(const char *filename) {
 	__ensure(!"Not implemented");
@@ -50,8 +104,11 @@ int fscanf(FILE *__restrict stream, const char *__restrict format, ...) {
 	__builtin_unreachable();
 }
 int printf(const char *__restrict format, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	va_list args;
+	va_start(args, format);
+	int result = vfprintf(stdout, format, args);
+	va_end(args);
+	return result;
 }
 int scanf(const char *__restrict format, ...) {
 	__ensure(!"Not implemented");
@@ -62,12 +119,16 @@ int snprintf(char *__restrict buffer, size_t max_size, const char *__restrict fo
 	__builtin_unreachable();
 }
 int sprintf(char *__restrict buffer, const char *__restrict format, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	va_list args;
+	va_start(args, format);
+	int result = vsprintf(buffer, format, args);
+	va_end(args);
+	return result;
 }
 int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	StreamPrinter p(stream);
+	frigg::printf(p, format, args);
+	return 0;
 }
 int vfscanf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
 	__ensure(!"Not implemented");
@@ -87,8 +148,10 @@ int vsnprintf(char *__restrict buffer, size_t max_size,
 	__builtin_unreachable();
 }
 int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	BufferPrinter p(buffer);
+	frigg::printf(p, format, args);
+	p.print(char(0));
+	return 0;
 }
 int vsscanf(const char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
 	__ensure(!"Not implemented");

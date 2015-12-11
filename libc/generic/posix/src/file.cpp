@@ -14,7 +14,7 @@ __mlibc_File stdoutFile;
 __mlibc_File stderrFile;
 
 void __mlibc_initStdio() {
-	size_t buffer_size = 4096;
+	size_t buffer_size = 0;
 	
 	stdinFile.fd = 0;
 	stdinFile.bufferPtr = (char *)malloc(buffer_size);
