@@ -28,7 +28,9 @@ typedef struct {
 #define EXIT_SUCCESS 0
 
 // MISSING: RAND_MAX
-// MISSING: MB_CUR_MAX
+
+// TODO: this should not be a compile-time constant
+#define MB_CUR_MAX 4
 
 // [7.22.1] Numeric conversion functions
 
