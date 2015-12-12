@@ -55,7 +55,7 @@ int fflush(FILE *stream);
 FILE *fopen(const char *__restrict filename, const char *__restrict mode);
 FILE *freopen(const char *__restrict filename, const char *__restrict mode, FILE *__restrict stream);
 void setbuf(FILE *__restrict stream, char *__restrict buffer);
-void setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t size);
+int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t size);
 
 // [C11-7.21.6] Formatted input/output functions
 

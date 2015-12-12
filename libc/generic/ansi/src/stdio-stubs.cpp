@@ -91,7 +91,7 @@ FILE *freopen(const char *__restrict filename, const char *__restrict mode, FILE
 void setbuf(FILE *__restrict stream, char *__restrict buffer) {
 	__ensure(!"Not implemented");
 }
-void setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t size) {
+int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t size) {
 	__ensure(!"Not implemented");
 }
 
