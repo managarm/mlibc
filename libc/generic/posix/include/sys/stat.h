@@ -14,6 +14,10 @@
 #include <mlibc/time_t.h>
 #include <mlibc/timespec.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define S_IFMT 0x0F00
 #define S_IFBLK 0x0000
 #define S_IFCHR 0x0100
@@ -76,6 +80,10 @@ int mknodat(const char *, mode_t, dev_t);
 int stat(const char *__restrict, struct stat *__restrict);
 mode_t umask(mode_t);
 int utimensat(int, const char *, const struct timespec times[2], int);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _SYS_STAT_H
 
