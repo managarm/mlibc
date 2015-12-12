@@ -1,0 +1,3 @@
+
+char **environ = { nullptr };
+

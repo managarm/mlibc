@@ -15,7 +15,7 @@ $c_OBJECTS := dirent-stubs.o fcntl-stubs.o pthread-stubs.o pwd-stubs.o sched-stu
 	spawn-stubs.o strings-stubs.o termios-stubs.o unistd-stubs.o \
 	sys-stat-stubs.o sys-select-stubs.o sys-time-stubs.o sys-wait-stubs.o \
 	posix_stdio.o posix_string.o \
-	file-io.o
+	file-io.o environment.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
 $c_CXX := x86_64-managarm-g++
