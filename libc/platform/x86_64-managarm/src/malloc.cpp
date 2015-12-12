@@ -45,12 +45,17 @@ void __mlibc_initMalloc() {
 }
 
 void free(void *pointer) {
+	__ensure(memoryAllocator);
 	memoryAllocator->free(pointer);
 }
 
 void *malloc(size_t size) {
-	// FIXME: initialize malloc from a global library guard constructor
 	__ensure(memoryAllocator);
 	return memoryAllocator->allocate(size);
+}
+
+void *realloc(void *pointer, size_t size) {
+	__ensure(memoryAllocator);
+	return memoryAllocator->realloc(pointer, size);
 }
 

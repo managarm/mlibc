@@ -49,6 +49,8 @@ $($c_OBJDIR)/%.o: $($c_SRCDIR)/%.cpp | $($c_OBJDIR)
 	$($c_CXX) -c -o $@ $($c_CXXFLAGS) $<
 	$($c_CXX) $($c_CPPFLAGS) -MM -MP -MF $(@:%.o=%.d) -MT "$@" -MT "$(@:%.o=%.d)" $<
 
+-include $($c_OBJECT_PATHS:%.o=%.d)
+
 # compile crt0.o
 $($c_BINDIR)/crt0.o: $($c_SRCDIR)/crt0.cpp | $($c_BINDIR)
 	$($c_CXX) -c -o $@ $($c_CXXFLAGS) $<

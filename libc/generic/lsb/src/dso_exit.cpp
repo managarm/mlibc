@@ -1,4 +1,7 @@
 
+// for memcpy()
+#include <string.h>
+
 #include <mlibc/ensure.h>
 
 #pragma GCC visibility push(hidden)

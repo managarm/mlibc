@@ -71,10 +71,7 @@ void *calloc(size_t count, size_t size) {
 }
 // free() is provided by the platform
 // malloc() is provided by the platform
-void *realloc(void *pointer, size_t size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// realloc() is provided by the platform
 
 void abort(void) {
 	__ensure(!"Not implemented");
