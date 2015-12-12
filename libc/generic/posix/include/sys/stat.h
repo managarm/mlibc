@@ -55,6 +55,11 @@ struct stat {
 	blkcnt_t st_blocks;
 };
 
+// POSIX compatibility macros
+#define st_atime st_atim.tv_sec
+#define st_mtime st_mtim.tv_sec
+#define st_ctime st_ctim.tv_sec
+
 int chmod(const char *, mode_t);
 int fchmod(int, mode_t);
 int fchmodat(int, const char *, mode_t, int);
