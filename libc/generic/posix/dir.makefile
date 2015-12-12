@@ -14,7 +14,7 @@ $c_HEADERS := dirent.h fcntl.h pthread.h pwd.h sched.h spawn.h strings.h termios
 $c_OBJECTS := dirent-stubs.o fcntl-stubs.o pthread-stubs.o pwd-stubs.o sched-stubs.o \
 	spawn-stubs.o strings-stubs.o termios-stubs.o unistd-stubs.o \
 	sys-stat-stubs.o sys-select-stubs.o sys-time-stubs.o sys-wait-stubs.o \
-	posix_stdio.o posix_string.o \
+	posix_signal.o posix_stdio.o posix_string.o \
 	file-io.o environment.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 

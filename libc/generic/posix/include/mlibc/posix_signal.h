@@ -2,6 +2,12 @@
 #ifndef MLIBC_POSIX_SIGNAL_H
 #define MLIBC_POSIX_SIGNAL_H
 
+#include <mlibc/pid_t.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SIGALRM 8
 #define SIGBUS 9
 #define SIGCHLD 10
@@ -22,6 +28,12 @@
 #define SIGVTALRM 25
 #define SIGXCPU 26
 #define SIGXFSZ 27
+
+int kill(pid_t pid, int sig);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // MLIBC_POSIX_SIGNAL_H
 
