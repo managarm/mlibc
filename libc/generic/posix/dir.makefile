@@ -11,10 +11,10 @@ $c_HEADERS := fcntl.h pthread.h sched.h spawn.h strings.h unistd.h \
 	mlibc/posix_errno.h mlibc/posix_signal.h mlibc/posix_stdio.h mlibc/posix_string.h \
 	mlibc/file.h
 
-$c_OBJECTS := fcntl.o pthread.o sched.o spawn.o strings.o unistd.o \
-	stat.o select.o time.o wait.o \
+$c_OBJECTS := fcntl-stubs.o pthread-stubs.o sched-stubs.o spawn-stubs.o strings-stubs.o unistd-stubs.o \
+	sys-stat-stubs.o sys-select-stubs.o sys-time-stubs.o sys-wait-stubs.o \
 	posix_stdio.o posix_string.o \
-	file.o
+	file-io.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
 $c_CXX := x86_64-managarm-g++
