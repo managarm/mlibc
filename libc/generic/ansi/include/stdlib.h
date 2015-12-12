@@ -102,5 +102,7 @@ int wcstombs(char *mb_string, const wchar_t *__restrict wc_string, size_t max_si
 }
 #endif
 
+#include <mlibc/posix_stdlib.h>
+
 #endif // _STDLIB_H
 
