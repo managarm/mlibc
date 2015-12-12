@@ -1,5 +1,6 @@
 
 $c_SRCDIR = $(TREE_PATH)/$c/src
+$c_CRT_SRCDIR = $(TREE_PATH)/$c/crt-src
 $c_GENDIR := $(BUILD_PATH)/$c/gen
 $c_OBJDIR := $(BUILD_PATH)/$c/obj
 $c_BINDIR := $(BUILD_PATH)/$c/bin
@@ -52,9 +53,8 @@ $($c_OBJDIR)/%.o: $($c_SRCDIR)/%.cpp | $($c_OBJDIR)
 -include $($c_OBJECT_PATHS:%.o=%.d)
 
 # compile crt0.o
-$($c_BINDIR)/crt0.o: $($c_SRCDIR)/crt0.cpp | $($c_BINDIR)
-	$($c_CXX) -c -o $@ $($c_CXXFLAGS) $<
-	$($c_CXX) $($c_CPPFLAGS) -MM -MP -MF $(@:%.o=%.d) -MT "$@" -MT "$(@:%.o=%.d)" $<
+$($c_BINDIR)/crt0.o: $($c_CRT_SRCDIR)/crt0.S | $($c_BINDIR)
+	$($c_AS) -c -o $@ $($c_ASFLAGS) $<
 
 # generate protobuf files
 $($c_GENDIR)/%.frigg_pb.hpp: $(MANAGARM_SRC_PATH)/bragi/proto/%.proto | $($c_GENDIR)
