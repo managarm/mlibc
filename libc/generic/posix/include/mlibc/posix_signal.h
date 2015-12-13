@@ -3,6 +3,7 @@
 #define MLIBC_POSIX_SIGNAL_H
 
 #include <mlibc/pid_t.h>
+#include <mlibc/uid_t.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,6 +30,63 @@ extern "C" {
 #define SIGXCPU 26
 #define SIGXFSZ 27
 
+// TODO: replace this by uint64_t
+typedef long sigset_t;
+
+union sigval {
+	int sival_int;
+	void *sival_ptr;
+};
+
+struct sigevent {
+	int sigev_notify;
+	int sigev_signo;
+	union sigval sigev_value;
+	void (*sigev_notify_function)(union sigval);
+	// MISSING: sigev_notify_attributes
+};
+
+// constants for sigev_notify of struct sigevent
+#define SIGEV_NONE 1
+#define SIGEV_SIGNAL 2
+#define SIGEV_THREAD 3
+
+typedef struct {
+	int si_signo;
+	int si_code;
+	int si_errno;
+	pid_t si_pid;
+	uid_t si_uid;
+	void *si_addr;
+	int si_status;
+	union sigval si_value;
+} siginfo_t;
+
+struct sigaction {
+	void (*sa_handler)(int);
+	sigset_t sa_mask;
+	int sa_flags;
+	void (*sa_sigaction)(int, siginfo_t *, void *);
+};
+
+// constants for sigprocmask()
+#define SIG_BLOCK 1
+#define SIG_UNBLOCK 2
+#define SIG_SETMASK 3
+
+// functions to manage sigset_t
+int sigemptyset(sigset_t *sigset);
+int sigaddset(sigset_t *sigset, int sig);
+int sigdelset(sigset_t *sigset, int sig);
+
+// functions to block / wait for signals
+int sigsuspend(const sigset_t *sigmask);
+int sigprocmask(int, const sigset_t *__restrict, const sigset_t *__restrict);
+
+// functions to handle signals
+int sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict);
+
+// functions to raise signals
 int kill(pid_t pid, int sig);
 
 #ifdef __cplusplus
