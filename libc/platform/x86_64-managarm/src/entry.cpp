@@ -62,8 +62,13 @@ __attribute__ (( visibility("hidden") )) void *__dso_handle;
 
 extern "C" int main(int argc, char *argv[], char *env[]);
 
+// not declared in any header
+extern char **environ;
+
 extern "C" void __mlibc_entry() {
-	int result = main(0, NULL, NULL);
+	char *empty_argv[] = { nullptr };
+
+	int result = main(1, empty_argv, environ);
 	exit(result);
 }
 

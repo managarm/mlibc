@@ -1,3 +1,5 @@
 
-char **environ = { nullptr };
+char *__emptyEnviron[] = { nullptr };
+
+char **environ = __emptyEnviron;
 
