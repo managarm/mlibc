@@ -81,7 +81,7 @@ int sigdelset(sigset_t *sigset, int sig);
 
 // functions to block / wait for signals
 int sigsuspend(const sigset_t *sigmask);
-int sigprocmask(int, const sigset_t *__restrict, const sigset_t *__restrict);
+int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve);
 
 // functions to handle signals
 int sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict);
