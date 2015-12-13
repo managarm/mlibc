@@ -80,7 +80,7 @@ uid_t geteuid(void);
 gid_t getgid(void);
 int getgroups(int, gid_t []);
 long gethostid(void);
-int gethostname(char *, size_t);
+int gethostname(char *buffer, size_t max_length);
 char *getlogin(void);
 int getlogin_r(char *, size_t);
 int getopt(int, char *const [], const char *);

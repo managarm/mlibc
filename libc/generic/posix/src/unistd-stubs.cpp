@@ -112,10 +112,7 @@ long gethostid(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int gethostname(char *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// gethostname() is provided by the platform
 char *getlogin(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
