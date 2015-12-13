@@ -1,4 +1,5 @@
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -110,7 +111,24 @@ void *bsearch(const void *key, const void *base, size_t count, size_t size,
 }
 void qsort(void *base, size_t count, size_t size,
 		int (*compare)(const void *, const void *)) {
-	__ensure(!"Not implemented");
+	// TODO: implement a faster sort
+	for(size_t i = 0; i < count; i++) {
+		void *u = (void *)((uintptr_t)base + i * size);
+		for(size_t j = i + 1; j < count; j++) {
+			void *v = (void *)((uintptr_t)base + j * size);
+			if(compare(u, v) <= 0)
+				continue;
+
+			// swap u and v
+			char *u_bytes = (char *)u;
+			char *v_bytes = (char *)v;
+			for(size_t k = 0; k < size; k++) {
+				char temp = u_bytes[k];
+				u_bytes[k] = v_bytes[k];
+				v_bytes[k] = temp;
+			}		
+		}
+	}
 }
 
 int abs(int number) {
