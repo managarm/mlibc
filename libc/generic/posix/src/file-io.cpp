@@ -82,3 +82,21 @@ int fflush(FILE *stream) {
 	return 0;
 }
 
+int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t size) {
+	__ensure(mode == _IOLBF);
+	__ensure(stream->bufferBytes == 0);
+
+	// TODO: free the old buffer
+	if(!buffer) {
+		auto new_buffer = (char *)malloc(size);
+		__ensure(new_buffer);
+		stream->bufferPtr = new_buffer;
+		stream->bufferSize = size;
+	}else{
+		stream->bufferPtr = buffer;
+		stream->bufferSize = size;
+	}
+
+	return 0;
+}
+

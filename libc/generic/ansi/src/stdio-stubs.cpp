@@ -91,9 +91,7 @@ FILE *freopen(const char *__restrict filename, const char *__restrict mode, FILE
 void setbuf(FILE *__restrict stream, char *__restrict buffer) {
 	__ensure(!"Not implemented");
 }
-int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t size) {
-	__ensure(!"Not implemented");
-}
+// setvbuf() is provided by the POSIX sublibrary
 
 int fprintf(FILE *__restrict stream, const char *__restrict format, ...) {
 	__ensure(!"Not implemented");
