@@ -19,10 +19,7 @@ int chown(const char *path, uid_t uid, gid_t gid) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int close(int fd) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// close() is provided by the platform
 ssize_t confstr(int, char *, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -298,10 +295,7 @@ int truncate(const char *, off_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-char *ttyname(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// ttyname is provided by the platform
 int ttyname_r(int, char *, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
