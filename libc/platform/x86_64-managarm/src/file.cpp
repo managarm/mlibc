@@ -145,6 +145,11 @@ int dup2(int src_fd, int dest_fd) {
 	}
 }
 
+int isatty(int fd) {
+	frigg::infoLogger.log() << "mlibc: Broken isatty() called!" << frigg::EndLog();
+	return 1;
+}
+
 char *ttyname(int) {
 	frigg::infoLogger.log() << "mlibc: Broken ttyname() called!" << frigg::EndLog();
 	return "/dev/pts/1";

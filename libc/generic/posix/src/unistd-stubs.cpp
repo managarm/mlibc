@@ -149,10 +149,7 @@ pid_t getsid(pid_t) {
 	__builtin_unreachable();
 }
 // getuid() is provided by the platform
-int isatty(int fd) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// isatty() is provided by the platform
 int lchown(const char *path, uid_t uid, gid_t gid) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
