@@ -15,10 +15,7 @@ time_t mktime(struct tm *ptr){
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-time_t time(time_t *timer){
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// time() is provided by the platform
 int timespec_get(struct timespec *ptr, int base){
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
