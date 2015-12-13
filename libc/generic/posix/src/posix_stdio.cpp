@@ -4,8 +4,7 @@
 #include <mlibc/ensure.h>
 
 int fileno(FILE *file) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return file->fd;
 }
 
 FILE *fdopen(int fd, const char *mode) {
