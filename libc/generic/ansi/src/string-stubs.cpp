@@ -23,8 +23,12 @@ void *memmove(void *dest, const void *src, size_t size) {
 	return dest;
 }
 char *strcpy(char *__restrict dest, const char *src) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	char *dest_bytes = (char *)dest;
+	char *src_bytes = (char *)src;
+	for(size_t i = 0; *src_bytes; i++)
+		*(dest_bytes++) = *(src_bytes++);
+	*dest_bytes = 0;
+	return dest;
 }
 char *strncpy(char *__restrict dest, const char *src, size_t max_size) {
 	__ensure(!"Not implemented");
