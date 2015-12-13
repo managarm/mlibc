@@ -101,18 +101,9 @@ char *getcwd(char *, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-gid_t getegid(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-uid_t geteuid(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-gid_t getgid(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// getegid() is provided by the platform
+// geteuid() is provided by the platform
+// getgid() is provided by the platform
 int getgroups(int, gid_t []) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -157,10 +148,7 @@ pid_t getsid(pid_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-uid_t getuid(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// getuid() is provided by the platform
 int isatty(int fd) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
