@@ -97,8 +97,10 @@ void *memchr(const void *s, int c, size_t size) {
 	__builtin_unreachable();
 }
 char *strchr(const char *s, int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	for(size_t i = 0; s[i]; i++)
+		if(s[i] == c)
+			return const_cast<char *>(&s[i]);
+	return nullptr;
 }
 size_t strcspn(const char *s, const char *chrs) {
 	__ensure(!"Not implemented");
