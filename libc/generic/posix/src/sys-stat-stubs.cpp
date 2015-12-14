@@ -55,10 +55,7 @@ int mknodat(const char *, mode_t, dev_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int stat(const char *__restrict, struct stat *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// stat() is provided by the platform
 mode_t umask(mode_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

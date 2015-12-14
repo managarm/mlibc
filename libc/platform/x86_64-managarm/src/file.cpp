@@ -6,6 +6,8 @@
 #include <unistd.h>
 // for open()
 #include <fcntl.h>
+// for stat()
+#include <sys/stat.h>
 
 #include <mlibc/ensure.h>
 #include <mlibc/cxx-support.hpp>
@@ -21,6 +23,12 @@
 #include <posix.frigg_pb.hpp>
 
 #pragma GCC visibility pop
+
+int stat(const char *__restrict path, struct stat *__restrict result) {
+	frigg::infoLogger.log() << "mlibc: Broken stat() called!" << frigg::EndLog();
+	errno = ENOENT;
+	return -1;
+}
 
 int open(const char *path, int flags, ...) {
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
