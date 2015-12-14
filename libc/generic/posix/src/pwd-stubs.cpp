@@ -3,9 +3,7 @@
 
 #include <mlibc/ensure.h>
 
-void endpwent(void) {
-	__ensure(!"Not implemented");
-}
+// endpwd() is provided by the platform
 struct passwd *getpwent(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -18,10 +16,7 @@ int getpwnam_r(const char *, struct passwd *, char *, size_t, struct passwd **) 
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-struct passwd *getpwuid(uid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// getpwuid() is provided by the platform
 int getpwuid_r(uid_t, struct passwd *, char *, size_t, struct passwd **) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
