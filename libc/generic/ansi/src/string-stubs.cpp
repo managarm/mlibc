@@ -145,8 +145,7 @@ void *memset(void *dest, int c, size_t size) {
 	return dest;
 }
 char *strerror(int errnum) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return const_cast<char *>("(Invalid error number)");
 }
 size_t strlen(const char *s) {
 	size_t len = 0;
