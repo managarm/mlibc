@@ -3,8 +3,5 @@
 
 #include <mlibc/ensure.h>
 
-int gettimeofday(struct timeval *__restrict result, void *__restrict unused) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// gettimeofday() is provided by the platform
 

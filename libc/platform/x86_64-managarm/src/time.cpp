@@ -1,5 +1,10 @@
 
+// for time()
 #include <time.h>
+// for gettimeofday()
+#include <sys/time.h>
+
+#include <mlibc/ensure.h>
 
 #pragma GCC visibility push(hidden)
 
@@ -13,5 +18,13 @@ time_t time(time_t *out){
 	if(out)
 		*out = result;
 	return result;
+}
+
+int gettimeofday(struct timeval *__restrict result, void *__restrict unused) {
+	frigg::infoLogger.log() << "mlibc: Broken gettimeofday() called!" << frigg::EndLog();
+	__ensure(!unused);
+	result->tv_sec = 0;
+	result->tv_usec = 0;
+	return 0;
 }
 
