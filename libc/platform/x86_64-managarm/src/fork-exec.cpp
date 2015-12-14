@@ -7,6 +7,8 @@
 
 // for fork() and execve()
 #include <unistd.h>
+// for waitpid()
+#include <sys/wait.h>
 
 #include <mlibc/ensure.h>
 #include <mlibc/cxx-support.hpp>
@@ -15,6 +17,7 @@
 
 #pragma GCC visibility push(hidden)
 
+#include <frigg/debug.hpp>
 #include <frigg/vector.hpp>
 #include <frigg/string.hpp>
 #include <frigg/protobuf.hpp>
@@ -108,6 +111,14 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
 		__ensure(!"Unexpected error in execve()!");
 		__builtin_unreachable();
 	}
+}
+
+pid_t waitpid(pid_t pid, int *status, int flags) {
+	frigg::infoLogger.log() << "mlibc: Broken waitpid("
+			<< pid << ", " << flags << ") called!" << frigg::EndLog();
+	__ensure(flags & WNOHANG);
+	errno = ECHILD;
+	return -1;
 }
 
 void _Exit(int status) {
