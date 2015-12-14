@@ -34,10 +34,12 @@ struct StreamPrinter {
 };
 
 struct BufferPrinter {
-	BufferPrinter(char *buffer)
-	: buffer(buffer), offset(0) { }
+	BufferPrinter(char *buffer, size_t limit)
+	: buffer(buffer), offset(0), limit(limit) { }
 
 	void print(char c) {
+		if(limit && !(offset < limit))
+			return;
 		buffer[offset] = c;
 		offset++;
 	}
@@ -45,6 +47,8 @@ struct BufferPrinter {
 	void print(const char *str) {
 		// TODO: use strcat
 		for(size_t i = 0; str[i]; i++) {
+			if(limit && !(offset < limit))
+				return;
 			buffer[offset] = str[i];
 			offset++;
 		}
@@ -54,6 +58,7 @@ struct BufferPrinter {
 
 	char *buffer;
 	size_t offset;
+	size_t limit;
 };
 
 #pragma GCC visibility pop
@@ -116,8 +121,11 @@ int scanf(const char *__restrict format, ...) {
 	__builtin_unreachable();
 }
 int snprintf(char *__restrict buffer, size_t max_size, const char *__restrict format, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	va_list args;
+	va_start(args, format);
+	int result = vsnprintf(buffer, max_size, format, args);
+	va_end(args);
+	return result;
 }
 int sprintf(char *__restrict buffer, const char *__restrict format, ...) {
 	va_list args;
@@ -145,13 +153,17 @@ int vscanf(const char *__restrict format, __gnuc_va_list args) {
 }
 int vsnprintf(char *__restrict buffer, size_t max_size,
 		const char *__restrict format, __gnuc_va_list args) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	if(!max_size)
+		return 0;
+	BufferPrinter p(buffer, max_size - 1);
+	frigg::printf(p, format, args);
+	p.buffer[p.offset] = 0;
+	return 0;
 }
 int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
-	BufferPrinter p(buffer);
+	BufferPrinter p(buffer, 0);
 	frigg::printf(p, format, args);
-	p.print(char(0));
+	p.buffer[p.offset] = 0;
 	return 0;
 }
 int vsscanf(const char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
