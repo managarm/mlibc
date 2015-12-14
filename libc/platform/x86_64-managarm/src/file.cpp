@@ -155,6 +155,11 @@ int dup2(int src_fd, int dest_fd) {
 	}
 }
 
+int fcntl(int, int, ...) {
+	frigg::infoLogger.log() << "mlibc: Broken fcntl() called!" << frigg::EndLog();
+	return 0;
+}
+
 int isatty(int fd) {
 	frigg::infoLogger.log() << "mlibc: Broken isatty() called!" << frigg::EndLog();
 	return 1;
