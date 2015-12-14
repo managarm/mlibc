@@ -94,8 +94,11 @@ void setbuf(FILE *__restrict stream, char *__restrict buffer) {
 // setvbuf() is provided by the POSIX sublibrary
 
 int fprintf(FILE *__restrict stream, const char *__restrict format, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	va_list args;
+	va_start(args, format);
+	int result = vfprintf(stream, format, args);
+	va_end(args);
+	return result;
 }
 int fscanf(FILE *__restrict stream, const char *__restrict format, ...) {
 	__ensure(!"Not implemented");
