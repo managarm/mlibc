@@ -12,8 +12,7 @@ int isalpha(int c) {
 	__builtin_unreachable();
 }
 int isblank(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return c == ' ' || c == '\t';
 }
 int iscntrl(int c) {
 	__ensure(!"Not implemented");
