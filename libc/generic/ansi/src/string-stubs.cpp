@@ -116,9 +116,14 @@ void *memchr(const void *s, int c, size_t size) {
 	__builtin_unreachable();
 }
 char *strchr(const char *s, int c) {
-	for(size_t i = 0; s[i]; i++)
+	size_t i = 0;
+	while(s[i]) {
 		if(s[i] == c)
 			return const_cast<char *>(&s[i]);
+		i++;
+	}
+	if(c == 0)
+		return const_cast<char *>(&s[i]);
 	return nullptr;
 }
 size_t strcspn(const char *s, const char *chrs) {
@@ -130,8 +135,12 @@ char *strpbrk(const char *s, const char *chrs) {
 	__builtin_unreachable();
 }
 char *strrchr(const char *s, int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	size_t length = strlen(s);
+	for(size_t i = 0; i <= length; i++) {
+		if(s[length - i] == c)
+			return const_cast<char *>(&s[i]);
+	}
+	return nullptr;
 }
 size_t strspn(const char *s, const char *chrs) {
 	__ensure(!"Not implemented");
