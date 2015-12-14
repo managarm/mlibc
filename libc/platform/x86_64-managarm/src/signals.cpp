@@ -11,7 +11,8 @@
 
 int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
 	frigg::infoLogger.log() << "mlibc: Broken sigprocmask() called!" << frigg::EndLog();
-	*retrieve = 0;
+	if(retrieve)
+		*retrieve = 0;
 	return 0;
 }
 
