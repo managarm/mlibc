@@ -31,10 +31,7 @@ int tcflush(int, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int tcgetattr(int, struct termios *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// tcgetattr() is provided by the platform
 pid_t tcgetsid(int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

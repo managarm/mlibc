@@ -6,6 +6,8 @@
 #include <unistd.h>
 // for open()
 #include <fcntl.h>
+// for tcgetattr()
+#include <termios.h>
 // for stat()
 #include <sys/stat.h>
 
@@ -161,5 +163,16 @@ int isatty(int fd) {
 char *ttyname(int) {
 	frigg::infoLogger.log() << "mlibc: Broken ttyname() called!" << frigg::EndLog();
 	return "/dev/pts/1";
+}
+
+int tcgetattr(int fd, struct termios *attr) {
+	frigg::infoLogger.log() << "mlibc: Broken tcgetattr() called!" << frigg::EndLog();
+	attr->c_iflag = 0;
+	attr->c_oflag = 0;
+	attr->c_cflag = 0;
+	attr->c_lflag = 0;
+	for(size_t i = 0; i < NCCS; i++)
+		attr->c_cc[i] = 0;
+	return 0;
 }
 
