@@ -31,8 +31,13 @@ char *strcpy(char *__restrict dest, const char *src) {
 	return dest;
 }
 char *strncpy(char *__restrict dest, const char *src, size_t max_size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	__ensure(max_size > 0);
+	char *dest_bytes = (char *)dest;
+	char *src_bytes = (char *)src;
+	for(size_t i = 0; *src_bytes && i < max_size - 1; i++)
+		*(dest_bytes++) = *(src_bytes++);
+	*dest_bytes = 0;
+	return dest;
 }
 
 char *strcat(char *__restrict dest, const char *__restrict src) {
