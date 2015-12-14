@@ -10,6 +10,8 @@
 #pragma GCC visibility pop
 
 char *setlocale(int category, const char *locale) {
+	if(!locale)
+		return "C";
 	frigg::infoLogger.log() << "mlibc: Broken setlocale(\""
 			<< locale << "\") called!" << frigg::EndLog();
 	return "C";
