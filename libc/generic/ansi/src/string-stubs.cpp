@@ -31,13 +31,16 @@ char *strcpy(char *__restrict dest, const char *src) {
 	return dest;
 }
 char *strncpy(char *__restrict dest, const char *src, size_t max_size) {
-	__ensure(max_size > 0);
-	char *dest_bytes = (char *)dest;
-	char *src_bytes = (char *)src;
-	for(size_t i = 0; *src_bytes && i < max_size - 1; i++)
-		*(dest_bytes++) = *(src_bytes++);
-	*dest_bytes = 0;
-	return dest;
+	auto dest_bytes = static_cast<char *>(dest);
+	auto src_bytes = static_cast<const char *>(src);
+	size_t i = 0;
+	while(src_bytes[i]) {
+		dest_bytes[i] = src_bytes[i];
+		i++;
+	}
+	for(size_t j = i; j < max_size; j++)
+		dest_bytes[j] = 0;
+	return &dest[i];
 }
 
 char *strcat(char *__restrict dest, const char *__restrict src) {
@@ -84,8 +87,24 @@ int strcoll(const char *a, const char *b) {
 	__builtin_unreachable();
 }
 int strncmp(const char *a, const char *b, size_t max_size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	size_t i = 0;
+	while(true) {
+		if(!(i < max_size))
+			return 0;
+		unsigned char a_byte = a[i];
+		unsigned char b_byte = b[i];
+		if(!a_byte && !b_byte)
+			return 0;
+		if(!a_byte)
+			return -1;
+		if(!b_byte)
+			return -1;
+		if(a_byte < b_byte)
+			return -1;
+		if(a_byte > b_byte)
+			return 1;
+		i++;
+	}
 }
 size_t strxfrm(char *__restrict dest, const char *__restrict src, size_t max_size) {
 	__ensure(!"Not implemented");
