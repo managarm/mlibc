@@ -185,10 +185,7 @@ ssize_t pwrite(int, const void *, size_t, off_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-ssize_t read(int, void *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// read is provided by the platform
 ssize_t readlink(const char *__restrict, char *__restrict, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

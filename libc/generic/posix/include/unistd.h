@@ -102,7 +102,7 @@ int pause(void);
 int pipe(int [2]);
 ssize_t pread(int, void *, size_t, off_t);
 ssize_t pwrite(int, const void *, size_t, off_t);
-ssize_t read(int, void *, size_t);
+ssize_t read(int fd, void *buffer, size_t size);
 ssize_t readlink(const char *__restrict, char *__restrict, size_t);
 ssize_t readlinkat(int, const char *__restrict, char *__restrict, size_t);
 int rmdir(const char *);
