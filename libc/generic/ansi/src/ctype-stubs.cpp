@@ -39,8 +39,7 @@ int ispunct(int c) {
 	__builtin_unreachable();
 }
 int isspace(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
 }
 int isupper(int c) {
 	__ensure(!"Not implemented");

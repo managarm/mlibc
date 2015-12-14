@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <mlibc/ensure.h>
 
@@ -34,8 +35,30 @@ long double strtold(const char *__restrict string, char **__restrict end) {
 	__builtin_unreachable();
 }
 long strtol(const char *__restrict string, char **__restrict end, int base) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	__ensure(base == 10);
+	
+	// skip leading space
+	while(*string) {
+		if(!isspace(*string))
+			break;
+		string++;
+	}
+	
+	__ensure(*string != '+' && *string != '-');
+	
+	// parse the actual digits
+	long result = 0;
+	while(*string) {
+		if(*string >= '0' && *string <= '9') {
+			result = result * 10 + (*string - '0');
+		}else{
+			break;
+		}
+		string++;
+	}
+	*end = const_cast<char *>(string);
+
+	return result;
 }
 long long strtoll(const char *__restrict string, char **__restrict end, int base) {
 	__ensure(!"Not implemented");
