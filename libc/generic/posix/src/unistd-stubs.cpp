@@ -133,14 +133,8 @@ pid_t getpgrp(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-pid_t getpid(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-pid_t getppid(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// getpid() is provided by the platform
+// getppid() is provided by the platform
 pid_t getsid(pid_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

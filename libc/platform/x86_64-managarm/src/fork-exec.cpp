@@ -72,6 +72,13 @@ gid_t getegid(void) {
 	return 0;
 }
 
+pid_t getpid(void) {
+	return 1;
+}
+pid_t getppid(void) {
+	return 1;
+}
+
 pid_t fork(void) {
 	return __mlibc_enterFork();
 }
