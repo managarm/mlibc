@@ -40,8 +40,5 @@ int tcsendbreak(int, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int tcsetattr(int, int, const struct termios *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// tcsetattr() is provided by the platform
 

@@ -181,3 +181,8 @@ int tcgetattr(int fd, struct termios *attr) {
 	return 0;
 }
 
+int tcsetattr(int, int, const struct termios *) {
+	frigg::infoLogger.log() << "mlibc: Broken tcsetattr() called!" << frigg::EndLog();
+	return 0;
+}
+
