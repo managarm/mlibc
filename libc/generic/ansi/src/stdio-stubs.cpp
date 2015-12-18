@@ -136,6 +136,7 @@ int sprintf(char *__restrict buffer, const char *__restrict format, ...) {
 }
 int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
 	StreamPrinter p(stream);
+//	frigg::infoLogger.log() << "printf(" << format << ")" << frigg::EndLog();
 	frigg::printf(p, format, args);
 	return 0;
 }
@@ -156,12 +157,14 @@ int vsnprintf(char *__restrict buffer, size_t max_size,
 	if(!max_size)
 		return 0;
 	BufferPrinter p(buffer, max_size - 1);
+//	frigg::infoLogger.log() << "printf(" << format << ")" << frigg::EndLog();
 	frigg::printf(p, format, args);
 	p.buffer[p.offset] = 0;
 	return 0;
 }
 int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
 	BufferPrinter p(buffer, 0);
+//	frigg::infoLogger.log() << "printf(" << format << ")" << frigg::EndLog();
 	frigg::printf(p, format, args);
 	p.buffer[p.offset] = 0;
 	return 0;
@@ -186,8 +189,6 @@ int fputc(int c, FILE *stream) {
 int fputs(const char *__restrict string, FILE *__restrict stream) {
 	if(fwrite(string, strlen(string), 1, stream) != 1)
 		return EOF;
-	if(fwrite("\n", 1, 1, stream) != 1)
-		return EOF;
 	if(fflush(stream))
 		return EOF;
 	return 1;
@@ -201,15 +202,21 @@ int getchar(void) {
 	__builtin_unreachable();
 }
 int putc(int c, FILE *stream) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	if(fwrite(&c, 1, 1, stream) != 1)
+		return EOF;
+	return c;
 }
 int putchar(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return putc(c, stdout);
 }
 int puts(const char *string) {
-	return fputs(string, stdout);
+	if(fwrite(string, strlen(string), 1, stdout) != 1)
+		return EOF;
+	if(fwrite("\n", 1, 1, stdout) != 1)
+		return EOF;
+	if(fflush(stdout))
+		return EOF;
+	return 1;
 }
 int ungetc(int c, FILE *stream) {
 	__ensure(!"Not implemented");
@@ -243,15 +250,15 @@ void rewind(FILE *stream) {
 }
 
 void clearerr(FILE *stream) {
-	__ensure(!"Not implemented");
+	// TODO: implement stdio error handling
 }
 int feof(FILE *stream) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 int ferror(FILE *stream) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: implement stdio error handling
+	return 0;
 }
 int perror(const char *string) {
 	__ensure(!"Not implemented");

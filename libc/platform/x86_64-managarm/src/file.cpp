@@ -27,7 +27,8 @@
 #pragma GCC visibility pop
 
 int stat(const char *__restrict path, struct stat *__restrict result) {
-	frigg::infoLogger.log() << "mlibc: Broken stat() called!" << frigg::EndLog();
+	frigg::infoLogger.log() << "mlibc: Broken stat(\""
+			<< path << "\") called!" << frigg::EndLog();
 	errno = ENOENT;
 	return -1;
 }
@@ -63,6 +64,7 @@ int open(const char *path, int flags, ...) {
 }
 
 ssize_t read(int fd, void *buffer, size_t size){
+//	frigg::infoLogger.log() << "read()" << frigg::EndLog();
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
 	request.set_request_type(managarm::posix::ClientRequestType::READ);
 	request.set_fd(fd);
@@ -96,6 +98,7 @@ ssize_t read(int fd, void *buffer, size_t size){
 };
 
 ssize_t write(int fd, const void *buffer, size_t size) {
+//	frigg::infoLogger.log() << "write()" << frigg::EndLog();
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
 	request.set_request_type(managarm::posix::ClientRequestType::WRITE);
 	request.set_fd(fd);
@@ -209,14 +212,19 @@ int tcgetattr(int fd, struct termios *attr) {
 	attr->c_iflag = 0;
 	attr->c_oflag = 0;
 	attr->c_cflag = 0;
-	attr->c_lflag = 0;
+	attr->c_lflag = ECHO;
 	for(size_t i = 0; i < NCCS; i++)
 		attr->c_cc[i] = 0;
+	attr->c_cc[VMIN] = 1;
+	attr->c_cc[VTIME] = 0;
 	return 0;
 }
 
-int tcsetattr(int, int, const struct termios *) {
-	frigg::infoLogger.log() << "mlibc: Broken tcsetattr() called!" << frigg::EndLog();
+int tcsetattr(int, int, const struct termios *attr) {
+	frigg::infoLogger.log() << "mlibc: Broken tcsetattr("
+			<< (void *)attr->c_iflag << ", " << (void *)attr->c_oflag
+			<< ", " << (void *)attr->c_cflag << ", " << (void *)attr->c_lflag
+			<< ") called!" << frigg::EndLog();
 	return 0;
 }
 
