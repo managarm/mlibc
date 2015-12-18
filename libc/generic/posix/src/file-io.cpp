@@ -14,7 +14,7 @@ __mlibc_File stdoutFile;
 __mlibc_File stderrFile;
 
 void __mlibc_initStdio() {
-	size_t buffer_size = 0;
+	size_t buffer_size = 1024;
 	
 	stdinFile.fd = 0;
 	stdinFile.bufferPtr = (char *)malloc(buffer_size);
@@ -35,11 +35,13 @@ FILE *stderr = &stderrFile;
 FILE *stdin = &stdinFile;
 FILE *stdout = &stdoutFile;
 
+static bool disableBuffering = true;
+
 size_t fwrite(const void *__restrict buffer, size_t size, size_t count,
 		FILE *__restrict stream) {
 	for(size_t i = 0; i < count; i++) {
 		char *block_ptr = (char *)buffer + i * size;
-		if(size > stream->bufferSize) {
+		if(size > stream->bufferSize || disableBuffering) {
 			// write the buffer directly to the fd
 			size_t written = 0;
 			while(written < size) {

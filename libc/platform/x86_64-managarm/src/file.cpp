@@ -34,6 +34,8 @@ int stat(const char *__restrict path, struct stat *__restrict result) {
 }
 
 int open(const char *path, int flags, ...) {
+	frigg::infoLogger.log() << "mlibc: open(\""
+			<< path << "\") called!" << frigg::EndLog();
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
 	request.set_request_type(managarm::posix::ClientRequestType::OPEN);
 	request.set_path(frigg::String<MemoryAllocator>(*memoryAllocator, path));
