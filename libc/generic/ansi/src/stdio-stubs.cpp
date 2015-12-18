@@ -183,8 +183,12 @@ char *fgets(char *__restrict buffer, size_t max_size, FILE *__restrict stream) {
 	__builtin_unreachable();
 }
 int fputc(int c, FILE *stream) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	char d = c;
+	if(fwrite(&d, 1, 1, stream) != 1)
+		return EOF;
+	if(fflush(stream))
+		return EOF;
+	return 1;
 }
 int fputs(const char *__restrict string, FILE *__restrict stream) {
 	if(fwrite(string, strlen(string), 1, stream) != 1)
@@ -202,7 +206,10 @@ int getchar(void) {
 	__builtin_unreachable();
 }
 int putc(int c, FILE *stream) {
-	if(fwrite(&c, 1, 1, stream) != 1)
+	char d = c;
+	if(fwrite(&d, 1, 1, stream) != 1)
+		return EOF;
+	if(fflush(stream))
 		return EOF;
 	return c;
 }
