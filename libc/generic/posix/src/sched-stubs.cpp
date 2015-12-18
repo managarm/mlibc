@@ -3,8 +3,5 @@
 
 #include <mlibc/ensure.h>
 
-int sched_yield() {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// sched_yield() is provided by the platform
 

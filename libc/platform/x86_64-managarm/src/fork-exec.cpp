@@ -7,6 +7,8 @@
 
 // for fork() and execve()
 #include <unistd.h>
+// for sched_yield()
+#include <sched.h>
 // for waitpid()
 #include <sys/wait.h>
 
@@ -124,5 +126,10 @@ pid_t waitpid(pid_t pid, int *status, int flags) {
 void _Exit(int status) {
 	HEL_CHECK(helExitThisThread());
 	__builtin_unreachable();
+}
+
+int sched_yield(void) {
+	HEL_CHECK(helYield());
+	return 0;
 }
 
