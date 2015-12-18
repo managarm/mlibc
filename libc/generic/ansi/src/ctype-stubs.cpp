@@ -4,12 +4,10 @@
 #include <mlibc/ensure.h>
 
 int isalnum(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
 }
 int isalpha(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
 int isblank(int c) {
 	return c == ' ' || c == '\t';
@@ -31,8 +29,7 @@ int islower(int c) {
 	__builtin_unreachable();
 }
 int isprint(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return c >= 0x20 && c <= 0x7E;
 }
 int ispunct(int c) {
 	__ensure(!"Not implemented");
