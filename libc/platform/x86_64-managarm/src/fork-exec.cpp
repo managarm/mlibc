@@ -133,3 +133,9 @@ int sched_yield(void) {
 	return 0;
 }
 
+// FIXME: implement this in the dynamic linker
+// FIXME: this has to save registers, so we need to implement it in assembly
+extern "C" void __tls_get_addr() {
+	__ensure(!"Not implemented");
+}
+
