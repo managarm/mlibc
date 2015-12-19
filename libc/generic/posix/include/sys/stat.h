@@ -67,7 +67,7 @@ struct stat {
 int chmod(const char *, mode_t);
 int fchmod(int, mode_t);
 int fchmodat(int, const char *, mode_t, int);
-int fstat(int, struct stat *);
+int fstat(int fd, struct stat *result);
 int fstatat(int, const char *__restrict, struct stat *__restrict, int);
 int futimens(int fd, const struct timespec times[2]);
 int lstat(const char *__restrict, struct stat *__restrict);

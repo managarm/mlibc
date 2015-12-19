@@ -33,6 +33,37 @@ int stat(const char *__restrict path, struct stat *__restrict result) {
 	return -1;
 }
 
+int fstat(int fd, struct stat *result) {
+	frigg::infoLogger.log() << "Broken fstat() called" << frigg::EndLog();
+	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	request.set_request_type(managarm::posix::ClientRequestType::FSTAT);
+	request.set_fd(fd);
+
+	int64_t request_num = allocPosixRequest();
+	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	request.SerializeToString(&serialized);
+	posixPipe->sendStringReq(serialized.data(), serialized.size(),
+			request_num, 0);
+
+	int8_t buffer[128];
+	size_t length;
+	HelError response_error;
+	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	HEL_CHECK(response_error);
+
+	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	response.ParseFromArray(buffer, length);
+	if(response.error() == managarm::posix::Errors::SUCCESS) {
+		memset(result, 0, sizeof(struct stat));
+		result->st_size = response.file_size();
+		return 0;
+		__ensure(!"fstat() answer");
+	}else{
+		__ensure(!"Unexpected error in fstat()!");
+		__builtin_unreachable();
+	}
+}
+
 int open(const char *path, int flags, ...) {
 	frigg::infoLogger.log() << "mlibc: open(\""
 			<< path << "\") called!" << frigg::EndLog();

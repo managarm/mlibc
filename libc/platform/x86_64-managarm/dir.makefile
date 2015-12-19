@@ -58,6 +58,7 @@ $($c_BINDIR)/crt0.o: $($c_CRT_SRCDIR)/crt0.S | $($c_BINDIR)
 	$($c_AS) -c -o $@ $($c_ASFLAGS) $<
 
 # generate protobuf files
+$c_TARGETS += $($c_GENDIR)/%
 $($c_GENDIR)/%.frigg_pb.hpp: $(MANAGARM_SRC_PATH)/bragi/proto/%.proto | $($c_GENDIR)
 	$(PROTOC) --plugin=protoc-gen-frigg=$(MANAGARM_BUILD_PATH)/tools/frigg_pb/bin/frigg_pb \
 			--frigg_out=$($c_GENDIR) --proto_path=$(MANAGARM_SRC_PATH)/bragi/proto $<

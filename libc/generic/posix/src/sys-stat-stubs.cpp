@@ -15,10 +15,7 @@ int fchmodat(int, const char *, mode_t, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int fstat(int, struct stat *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// fstat() is implemented by the platform
 int fstatat(int, const char *__restrict, struct stat *__restrict, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
