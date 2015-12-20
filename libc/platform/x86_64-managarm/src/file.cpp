@@ -57,9 +57,8 @@ int fstat(int fd, struct stat *result) {
 		memset(result, 0, sizeof(struct stat));
 		result->st_size = response.file_size();
 		return 0;
-		__ensure(!"fstat() answer");
 	}else{
-		__ensure(!"Unexpected error in fstat()!");
+		__ensure(!"Unexpected error");
 		__builtin_unreachable();
 	}
 }
@@ -91,7 +90,7 @@ int open(const char *path, int flags, ...) {
 	}else if(response.error() == managarm::posix::Errors::SUCCESS) {
 		return response.fd();
 	}else{
-		__ensure(!"Unexpected error in open()!");
+		__ensure(!"Unexpected error");
 		__builtin_unreachable();
 	}
 }
@@ -121,11 +120,13 @@ ssize_t read(int fd, void *buffer, size_t size){
 	if(response.error() == managarm::posix::Errors::NO_SUCH_FD) {
 		errno = EBADF;
 		return -1;
+	}else if(response.error() == managarm::posix::Errors::END_OF_FILE) {
+		return 0;
 	}else if(response.error() == managarm::posix::Errors::SUCCESS) {
 		memcpy(buffer, response.buffer().data(), response.buffer().size());
 		return response.buffer().size();
 	}else{
-		__ensure(!"Unexpected error in write()!");
+		__ensure(!"Unexpected error");
 		__builtin_unreachable();
 	}
 };
@@ -159,7 +160,7 @@ ssize_t write(int fd, const void *buffer, size_t size) {
 	}else if(response.error() == managarm::posix::Errors::SUCCESS) {
 		return size;
 	}else{
-		__ensure(!"Unexpected error in write()!");
+		__ensure(!"Unexpected error");
 		__builtin_unreachable();
 	}
 }
@@ -189,7 +190,7 @@ int close(int fd) {
 	}else if(response.error() == managarm::posix::Errors::SUCCESS) {
 		return 0;
 	}else{
-		__ensure(!"Unexpected error in close()!");
+		__ensure(!"Unexpected error");
 		__builtin_unreachable();
 	}
 }
@@ -220,7 +221,7 @@ int dup2(int src_fd, int dest_fd) {
 		errno = EBADF;
 		return -1;
 	}else {
-		__ensure(!"Unexpected error in dup2()!");
+		__ensure(!"Unexpected error");
 		__builtin_unreachable();
 	}
 }
