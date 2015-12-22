@@ -1,5 +1,6 @@
 
 #include <string.h>
+#include <errno.h>
 
 #include <mlibc/ensure.h>
 
@@ -175,7 +176,16 @@ void *memset(void *dest, int c, size_t size) {
 	return dest;
 }
 char *strerror(int errnum) {
-	return const_cast<char *>("(Invalid error number)");
+	const char *string;
+	switch(errnum) {
+	case EACCES:
+		string = "Access denied"; break;
+	case ENOENT:
+		string = "File not found"; break;
+	default:
+		string = "Illegal error code";
+	}
+	return const_cast<char *>(string);
 }
 size_t strlen(const char *s) {
 	size_t len = 0;
