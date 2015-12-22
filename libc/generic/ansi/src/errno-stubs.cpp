@@ -1,3 +1,3 @@
 
-int errno;
+int __thread __mlibc_errno;
 

@@ -47,11 +47,13 @@ $(call include_dir,$c/frigg-bindings)
 $c_LIBRARY_OBJS += $($c/frigg-bindings_OBJECT_PATHS)
 clean-$c: clean-$c/frigg-bindings
 
+$c_LIBS := -l:ld-init.so
+
 $($c_BINDIR):
 	mkdir -p $@
 
 $($c_BINDIR)/libc.so: $($c_LIBRARY_OBJS) | $($c_BINDIR)
-	x86_64-managarm-g++ -shared -o $@ $($c_LDFLAGS) $($c_LIBRARY_OBJS)
+	x86_64-managarm-g++ -shared -o $@ $($c_LDFLAGS) $($c_LIBRARY_OBJS) $($c_LIBS)
 
 install-$c:
 	mkdir -p $(SYSROOT_PATH)/usr/lib

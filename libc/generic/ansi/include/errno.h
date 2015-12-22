@@ -6,7 +6,9 @@
 #define EILSEQ 2
 #define ERANGE 3
 
-extern int errno;
+// if we don't define errno as a macro some programs assume it's an "extern int"
+#define errno __mlibc_errno
+extern __thread int __mlibc_errno;
 
 #include <mlibc/posix_errno.h>
 
