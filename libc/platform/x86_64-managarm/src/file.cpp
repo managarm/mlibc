@@ -122,13 +122,15 @@ ssize_t read(int fd, void *buffer, size_t size){
 		return -1;
 	}else if(response.error() == managarm::posix::Errors::END_OF_FILE) {
 		return 0;
-	}else if(response.error() == managarm::posix::Errors::SUCCESS) {
-		memcpy(buffer, response.buffer().data(), response.buffer().size());
-		return response.buffer().size();
-	}else{
-		__ensure(!"Unexpected error");
-		__builtin_unreachable();
 	}
+	assert(response.error() == managarm::posix::Errors::SUCCESS);
+	
+	size_t data_length;
+	HelError data_error;
+	posixPipe->recvStringRespSync(buffer, size, *eventHub,
+			request_num, 1, data_error, data_length);
+	HEL_CHECK(data_error);
+	return data_length;
 };
 
 ssize_t write(int fd, const void *buffer, size_t size) {
