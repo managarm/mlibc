@@ -113,8 +113,11 @@ size_t strxfrm(char *__restrict dest, const char *__restrict src, size_t max_siz
 }
 
 void *memchr(const void *s, int c, size_t size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	auto s_bytes = static_cast<const unsigned char *>(s);
+	for(size_t i = 0; i < size; i++)
+		if(s_bytes[i] == static_cast<unsigned char>(c))
+			return const_cast<unsigned char *>(&s_bytes[i]);
+	return nullptr;
 }
 char *strchr(const char *s, int c) {
 	size_t i = 0;
