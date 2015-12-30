@@ -168,12 +168,19 @@ ssize_t write(int fd, const void *buffer, size_t size) {
 }
 
 off_t lseek(int fd, off_t offset, int whence) {
-	__ensure(whence == SEEK_SET);
-
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
-	request.set_request_type(managarm::posix::ClientRequestType::SEEK);
 	request.set_fd(fd);
 	request.set_rel_offset(offset);
+
+	if(whence == SEEK_SET) {
+		request.set_request_type(managarm::posix::ClientRequestType::SEEK_ABS);
+	}else if(whence == SEEK_CUR) {
+		request.set_request_type(managarm::posix::ClientRequestType::SEEK_REL);
+	}else if(whence == SEEK_END) {
+		request.set_request_type(managarm::posix::ClientRequestType::SEEK_EOF);
+	}else{
+		frigg::panicLogger.log() << "Illegal whence argument" << frigg::EndLog();
+	}
 
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
@@ -193,7 +200,7 @@ off_t lseek(int fd, off_t offset, int whence) {
 		errno = EBADF;		
 		return -1;
 	}else if(response.error() == managarm::posix::Errors::SUCCESS) {
-		return offset;
+		return response.offset();
 	}else{
 		__ensure(!"Unexpected error");
 		__builtin_unreachable();

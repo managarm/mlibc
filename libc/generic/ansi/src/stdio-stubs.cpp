@@ -242,10 +242,7 @@ int fsetpos(FILE *stream, const fpos_t *position) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-long ftell(FILE *stream) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// ftell() is provided by the POSIX sublibrary
 void rewind(FILE *stream) {
 	__ensure(!"Not implemented");
 }

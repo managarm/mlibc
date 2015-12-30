@@ -90,6 +90,13 @@ int fseek(FILE *stream, long offset, int whence) {
 	return -1;
 }
 
+long ftell(FILE *stream) {
+	off_t offset = lseek(stream->fd, 0, SEEK_CUR);
+	if(offset == off_t(-1))
+		return EOF;
+	return offset;
+}
+
 int fflush(FILE *stream) {
 	if(stream->bufferBytes == 0)
 		return 0;
