@@ -90,7 +90,7 @@ int ungetc(int c, FILE *stream);
 
 // [C11-7.21.8] Direct input/output functions
 
-size_t fread(void *__restrict buffer, size_t max_size, size_t count, FILE *__restrict stream);
+size_t fread(void *__restrict buffer, size_t size, size_t count, FILE *__restrict stream);
 size_t fwrite(const void *__restrict buffer, size_t size, size_t count, FILE *__restrict stream);
 
 // [C11-7.21.9] File positioning functions

@@ -32,6 +32,18 @@ void __mlibc_initStdio() {
 	stderrFile.bufferSize = buffer_size;
 }
 
+int __mlibc_exactRead(int fd, void *buffer, size_t length) {
+	size_t progress = 0;
+	while(progress < length) {
+		ssize_t chunk = read(fd, (char *)buffer + progress, length);
+		__ensure(chunk > 0);
+
+		progress += chunk;
+	}
+
+	return 0;
+}
+
 #pragma GCC visibility pop
 
 FILE *stderr = &stderrFile;
@@ -56,6 +68,12 @@ FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
 	file->bufferPtr = nullptr;
 	file->bufferSize = 0;
 	return file;
+}
+
+size_t fread(void *__restrict buffer, size_t size, size_t count, FILE *__restrict stream) {
+	if(__mlibc_exactRead(stream->fd, buffer, size * count))
+		return 0;
+	return size * count;
 }
 
 size_t fwrite(const void *__restrict buffer, size_t size, size_t count,

@@ -227,10 +227,7 @@ int ungetc(int c, FILE *stream) {
 	__builtin_unreachable();
 }
 
-size_t fread(void *__restrict buffer, size_t max_size, size_t count, FILE *__restrict stream) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// fread() is provided by the POSIX sublibrary
 // fwrite() is provided by the POSIX sublibrary
 
 int fgetpos(FILE *__restrict stream, fpos_t *__restrict position) {
