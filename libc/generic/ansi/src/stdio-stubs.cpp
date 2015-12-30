@@ -84,11 +84,8 @@ int fclose(FILE *stream) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// fflush is provided by the POSIX sublibrary
-FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// fflush() is provided by the POSIX sublibrary
+// fopen() is provided by the POSIX sublibrary
 FILE *freopen(const char *__restrict filename, const char *__restrict mode, FILE *__restrict stream) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -240,10 +237,7 @@ int fgetpos(FILE *__restrict stream, fpos_t *__restrict position) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int fseek(FILE *stream, long offset, int whence) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// fseek() is provided by the POSIX sublibrary
 int fsetpos(FILE *stream, const fpos_t *position) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

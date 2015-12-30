@@ -157,10 +157,7 @@ int lockf(int, int, off_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-off_t lseek(int, off_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// lseek() is provided by the platform
 int nice(int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

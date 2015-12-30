@@ -167,6 +167,39 @@ ssize_t write(int fd, const void *buffer, size_t size) {
 	}
 }
 
+off_t lseek(int fd, off_t offset, int whence) {
+	__ensure(whence == SEEK_SET);
+
+	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	request.set_request_type(managarm::posix::ClientRequestType::SEEK);
+	request.set_fd(fd);
+	request.set_rel_offset(offset);
+
+	int64_t request_num = allocPosixRequest();
+	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	request.SerializeToString(&serialized);
+	posixPipe->sendStringReq(serialized.data(), serialized.size(),
+			request_num, 0);
+
+	uint8_t buffer[128];
+	size_t length;
+	HelError response_error;
+	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	HEL_CHECK(response_error);
+
+	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	response.ParseFromArray(buffer, length);
+	if(response.error() == managarm::posix::Errors::NO_SUCH_FD) {
+		errno = EBADF;		
+		return -1;
+	}else if(response.error() == managarm::posix::Errors::SUCCESS) {
+		return offset;
+	}else{
+		__ensure(!"Unexpected error");
+		__builtin_unreachable();
+	}
+}
+
 int close(int fd) {
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
 	request.set_request_type(managarm::posix::ClientRequestType::CLOSE);

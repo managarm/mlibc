@@ -95,7 +95,7 @@ int lchown(const char *path, uid_t uid, gid_t gid);
 int link(const char *, const char *);
 int linkat(int, const char *, int, const char *, int);
 int lockf(int, int, off_t);
-off_t lseek(int, off_t, int);
+off_t lseek(int fd, off_t offset, int whence);
 int nice(int);
 long pathconf(const char *, int);
 int pause(void);

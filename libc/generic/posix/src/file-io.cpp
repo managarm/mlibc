@@ -4,10 +4,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <mlibc/ensure.h>
 
 #pragma GCC visibility push(hidden)
+
+#include <frigg/debug.hpp>
 
 __mlibc_File stdinFile;
 __mlibc_File stdoutFile;
@@ -37,6 +40,24 @@ FILE *stdout = &stdoutFile;
 
 static bool disableBuffering = true;
 
+FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
+	int fd;
+
+	if(strcmp(mode, "r")) {
+		fd = open(filename, O_RDONLY);
+		if(fd == -1)
+			return nullptr;
+	}else{
+		frigg::panicLogger.log() << "Illegal fopen() mode '" << mode << "'" << frigg::EndLog();
+	}
+
+	FILE *file = (FILE *)malloc(sizeof(FILE));
+	file->fd = fd;
+	file->bufferPtr = nullptr;
+	file->bufferSize = 0;
+	return file;
+}
+
 size_t fwrite(const void *__restrict buffer, size_t size, size_t count,
 		FILE *__restrict stream) {
 	for(size_t i = 0; i < count; i++) {
@@ -61,6 +82,12 @@ size_t fwrite(const void *__restrict buffer, size_t size, size_t count,
 	}
 
 	return count;
+}
+
+int fseek(FILE *stream, long offset, int whence) {
+	if(lseek(stream->fd, offset, whence) != off_t(-1))
+		return 0;
+	return -1;
 }
 
 int fflush(FILE *stream) {
