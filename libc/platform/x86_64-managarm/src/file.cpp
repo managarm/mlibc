@@ -34,7 +34,6 @@ int stat(const char *__restrict path, struct stat *__restrict result) {
 }
 
 int fstat(int fd, struct stat *result) {
-	frigg::infoLogger.log() << "Broken fstat() called" << frigg::EndLog();
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
 	request.set_request_type(managarm::posix::ClientRequestType::FSTAT);
 	request.set_fd(fd);
@@ -55,7 +54,22 @@ int fstat(int fd, struct stat *result) {
 	response.ParseFromArray(buffer, length);
 	if(response.error() == managarm::posix::Errors::SUCCESS) {
 		memset(result, 0, sizeof(struct stat));
+		result->st_dev = 1;
+		result->st_ino = response.inode_num();
+		result->st_mode = response.mode() | S_IFREG;
+		result->st_nlink = response.num_links();
+		result->st_uid = response.uid();
+		result->st_gid = response.gid();
+		result->st_rdev = 0;
 		result->st_size = response.file_size();
+		result->st_atim.tv_sec = response.atime_secs();
+		result->st_atim.tv_nsec = response.atime_nanos();
+		result->st_mtim.tv_sec = response.mtime_secs();
+		result->st_mtim.tv_nsec = response.mtime_nanos();
+		result->st_ctim.tv_sec = response.ctime_secs();
+		result->st_ctim.tv_nsec = response.ctime_nanos();
+		result->st_blksize = 4096;
+		result->st_blocks = response.file_size() / 512 + 1;
 		return 0;
 	}else{
 		__ensure(!"Unexpected error");

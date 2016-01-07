@@ -31,8 +31,8 @@ $c_TARGETS := all-$c clean-$c install-$c gen-$c $($c_BINDIR)/crt0.o $($c_OBJECT_
 all-$c: $($c_BINDIR)/crt0.o
 
 clean-$c:
-	rm -f $($c_BINDIR)/crt0.o
-	rm -f $($c_BINDIR)/crt0.d
+	rm -f $($c_BINDIR)/*
+	rm -f $($c_OBJDIR)/*
 
 install-$c:
 	mkdir -p  $(SYSROOT_PATH)/usr/lib
