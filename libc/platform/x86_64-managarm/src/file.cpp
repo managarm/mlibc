@@ -27,10 +27,18 @@
 #pragma GCC visibility pop
 
 int stat(const char *__restrict path, struct stat *__restrict result) {
-	frigg::infoLogger.log() << "mlibc: Broken stat(\""
-			<< path << "\") called!" << frigg::EndLog();
-	errno = ENOENT;
-	return -1;
+	int fd = open(path, O_RDONLY);
+	if(fd == -1) {
+		__ensure(errno == ENOENT);
+		return -1;
+	}
+
+	if(fstat(fd, result))
+		__ensure("Could not fstat() internal file");
+
+	if(close(fd))
+		__ensure("Could not close() internal file");
+	return 0;
 }
 
 int fstat(int fd, struct stat *result) {
