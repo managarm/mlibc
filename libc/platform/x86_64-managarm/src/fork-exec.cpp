@@ -54,7 +54,7 @@ extern "C" pid_t __mlibc_doFork(uintptr_t child_ip, uintptr_t child_sp) {
 	response.ParseFromArray(buffer, length);
 	assert(response.error() == managarm::posix::Errors::SUCCESS);
 	
-	return 1;
+	return response.pid();
 }
 
 extern "C" void __mlibc_fixForkedChild() {
@@ -78,9 +78,28 @@ gid_t getegid(void) {
 }
 
 pid_t getpid(void) {
-	return 1;
+	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	request.set_request_type(managarm::posix::ClientRequestType::GET_PID);
+
+	int64_t request_num = allocPosixRequest();
+	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	request.SerializeToString(&serialized);
+	posixPipe->sendStringReq(serialized.data(), serialized.size(),
+			request_num, 0);
+
+	int8_t buffer[128];
+	size_t length;
+	HelError response_error;
+	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	HEL_CHECK(response_error);
+
+	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	response.ParseFromArray(buffer, length);
+	assert(response.error() == managarm::posix::Errors::SUCCESS);
+	return response.pid();
 }
 pid_t getppid(void) {
+	frigg::infoLogger.log() << "mlibc: Broken getppid() called" << frigg::EndLog();
 	return 1;
 }
 
