@@ -18,6 +18,7 @@ $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/ansi/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/posix/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/compilers/gcc/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/machine/x86_64/include
+$c_CPPFLAGS += -I$(TREE_PATH)/libc/platform/x86_64-managarm/include
 $c_CPPFLAGS += -I$(FRIGG_PATH)/include
 $c_CPPFLAGS += -DFRIGG_HAVE_LIBC
 $c_CXXFLAGS := $($c_CPPFLAGS) -fPIC -O2

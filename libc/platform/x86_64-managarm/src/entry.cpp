@@ -6,6 +6,8 @@
 #include <mlibc/posix-pipe.hpp>
 
 // defined by the POSIX library
+void __mlibc_initLocale();
+// defined by the POSIX library
 void __mlibc_initStdio();
 // defined in malloc.cpp
 void __mlibc_initMalloc();
@@ -50,6 +52,7 @@ struct LibraryGuard {
 static LibraryGuard guard;
 
 LibraryGuard::LibraryGuard() {
+	__mlibc_initLocale();
 	__mlibc_initMalloc();
 	__mlibc_initStdio();
 
