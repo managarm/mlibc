@@ -86,8 +86,8 @@ int fstat(int fd, struct stat *result) {
 }
 
 int open(const char *path, int flags, ...) {
-	frigg::infoLogger.log() << "mlibc: open(\""
-			<< path << "\") called!" << frigg::EndLog();
+//	frigg::infoLogger.log() << "mlibc: open(\""
+//			<< path << "\") called!" << frigg::EndLog();
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
 	request.set_request_type(managarm::posix::ClientRequestType::OPEN);
 	request.set_path(frigg::String<MemoryAllocator>(*memoryAllocator, path));
@@ -296,13 +296,70 @@ int fcntl(int, int, ...) {
 }
 
 int isatty(int fd) {
-	frigg::infoLogger.log() << "mlibc: Broken isatty() called!" << frigg::EndLog();
-	return 1;
+	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	request.set_request_type(managarm::posix::ClientRequestType::TTY_NAME);
+	request.set_fd(fd);
+
+	int64_t request_num = allocPosixRequest();
+	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	request.SerializeToString(&serialized);
+	posixPipe->sendStringReq(serialized.data(), serialized.size(),
+			request_num, 0);
+
+	int8_t buffer[128];
+	size_t length;
+	HelError response_error;
+	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	HEL_CHECK(response_error);
+
+	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	response.ParseFromArray(buffer, length);
+	if(response.error() == managarm::posix::Errors::SUCCESS) {
+		return 1;
+	}else if(response.error() ==  managarm::posix::Errors::BAD_FD) {
+		errno = ENOTTY;
+		return 0;
+	}else {
+		__ensure(!"Unexpected error");
+		__builtin_unreachable();
+	}
 }
 
-char *ttyname(int) {
-	frigg::infoLogger.log() << "mlibc: Broken ttyname() called!" << frigg::EndLog();
-	return "/dev/pts/1";
+char *ttyname(int fd) {
+	static frigg::LazyInitializer<frigg::String<MemoryAllocator>> cache;
+	
+	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	request.set_request_type(managarm::posix::ClientRequestType::TTY_NAME);
+	request.set_fd(fd);
+
+	int64_t request_num = allocPosixRequest();
+	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	request.SerializeToString(&serialized);
+	posixPipe->sendStringReq(serialized.data(), serialized.size(),
+			request_num, 0);
+
+	int8_t buffer[128];
+	size_t length;
+	HelError response_error;
+	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	HEL_CHECK(response_error);
+
+	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	response.ParseFromArray(buffer, length);
+	if(response.error() == managarm::posix::Errors::SUCCESS) {
+		if(!cache) {
+			cache.initialize(response.path());
+		}else{
+			*cache = response.path();
+		}
+		return cache->data();
+	}else if(response.error() ==  managarm::posix::Errors::BAD_FD) {
+		errno = ENOTTY;
+		return nullptr;
+	}else {
+		__ensure(!"Unexpected error");
+		__builtin_unreachable();
+	}
 }
 
 int tcgetattr(int fd, struct termios *attr) {
