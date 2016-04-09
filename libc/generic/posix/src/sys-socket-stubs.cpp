@@ -12,17 +12,12 @@ int bind(int, const struct sockaddr *, socklen_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-
-int connect(int, const struct sockaddr *, socklen_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// connect() is provided by the platform
 
 int getpeername(int, struct sockaddr *__restrict, socklen_t *__restrict) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-
 
 int getsockname(int, struct sockaddr *__restrict, socklen_t *__restrict) {
 	__ensure(!"Not implemented");

@@ -5,7 +5,7 @@ $c_GENDIR := $(BUILD_PATH)/$c/gen
 $c_OBJDIR := $(BUILD_PATH)/$c/obj
 $c_BINDIR := $(BUILD_PATH)/$c/bin
 
-$c_OBJECTS := entry.o ensure.o malloc.o file.o \
+$c_OBJECTS := entry.o ensure.o malloc.o file.o socket.o \
 	fork-exec.o enter-fork.o signals.o host.o time.o \
 	frigg-support.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
