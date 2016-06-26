@@ -25,8 +25,10 @@ int connect(int fd, const struct sockaddr *address, socklen_t addr_length) {
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
-	posixPipe->sendStringReq(serialized.data(), serialized.size(),
-			request_num, 0);
+	HelError error;
+	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, error);
+	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;

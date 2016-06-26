@@ -49,8 +49,10 @@ int fstat(int fd, struct stat *result) {
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
-	posixPipe->sendStringReq(serialized.data(), serialized.size(),
-			request_num, 0);
+	HelError error;
+	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, error);
+	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
@@ -95,8 +97,10 @@ int open(const char *path, int flags, ...) {
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
-	posixPipe->sendStringReq(serialized.data(), serialized.size(),
-			request_num, 0);
+	HelError error;
+	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, error);
+	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
@@ -127,8 +131,10 @@ ssize_t read(int fd, void *buffer, size_t size){
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
-	posixPipe->sendStringReq(serialized.data(), serialized.size(),
-			request_num, 0);
+	HelError error;
+	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, error);
+	HEL_CHECK(error);
 
 	uint8_t msg_buffer[128];
 	size_t length;
@@ -166,8 +172,10 @@ ssize_t write(int fd, const void *buffer, size_t size) {
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
-	posixPipe->sendStringReq(serialized.data(), serialized.size(),
-			request_num, 0);
+	HelError error;
+	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, error);
+	HEL_CHECK(error);
 
 	uint8_t msg_buffer[128];
 	size_t length;
@@ -207,8 +215,10 @@ off_t lseek(int fd, off_t offset, int whence) {
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
-	posixPipe->sendStringReq(serialized.data(), serialized.size(),
-			request_num, 0);
+	HelError error;
+	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, error);
+	HEL_CHECK(error);
 
 	uint8_t buffer[128];
 	size_t length;
@@ -237,8 +247,10 @@ int close(int fd) {
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
-	posixPipe->sendStringReq(serialized.data(), serialized.size(),
-			request_num, 0);
+	HelError error;
+	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, error);
+	HEL_CHECK(error);
 
 	uint8_t buffer[128];
 	size_t length;
@@ -268,8 +280,10 @@ int dup2(int src_fd, int dest_fd) {
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
-	posixPipe->sendStringReq(serialized.data(), serialized.size(),
-			request_num, 0);
+	HelError error;
+	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, error);
+	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
@@ -303,8 +317,10 @@ int isatty(int fd) {
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
-	posixPipe->sendStringReq(serialized.data(), serialized.size(),
-			request_num, 0);
+	HelError error;
+	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, error);
+	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
@@ -335,8 +351,10 @@ char *ttyname(int fd) {
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
-	posixPipe->sendStringReq(serialized.data(), serialized.size(),
-			request_num, 0);
+	HelError error;
+	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, error);
+	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;

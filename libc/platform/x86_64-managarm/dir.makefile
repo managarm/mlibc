@@ -13,7 +13,7 @@ $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 $c_AS := x86_64-managarm-as 
 
 $c_CXX := x86_64-managarm-g++
-$c_CPPFLAGS := -std=c++11 -Wall
+$c_CPPFLAGS := -std=c++14 -Wall
 $c_CPPFLAGS += -I$(FRIGG_PATH)/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/ansi/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/posix/include

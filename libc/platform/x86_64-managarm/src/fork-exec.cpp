@@ -41,8 +41,10 @@ extern "C" pid_t __mlibc_doFork(uintptr_t child_ip, uintptr_t child_sp) {
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
-	posixPipe->sendStringReq(serialized.data(), serialized.size(),
-			request_num, 0);
+	HelError error;
+	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, error);
+	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
@@ -84,8 +86,10 @@ pid_t getpid(void) {
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
-	posixPipe->sendStringReq(serialized.data(), serialized.size(),
-			request_num, 0);
+	HelError error;
+	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, error);
+	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
@@ -115,7 +119,10 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
-	posixPipe->sendStringReq(serialized.data(), serialized.size(), request_num, 0);
+	HelError error;
+	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, error);
+	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
