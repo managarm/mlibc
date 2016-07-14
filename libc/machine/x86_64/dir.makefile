@@ -18,15 +18,15 @@ $c_CPPFLAGS += -I$(TREE_PATH)/libc/compilers/gcc/include
 $c_CXXFLAGS := $($c_CPPFLAGS) -fPIC -O2
 $c_CXXFLAGS += -fno-builtin -fno-rtti -fno-exceptions
 
-$c_TARGETS := clean-$c install-$c $($c_OBJECT_PATHS)
+$c_TARGETS := clean-$c install-headers-$c $($c_OBJECT_PATHS)
 
-.PHONY: clean-$c install-$c
+.PHONY: clean-$c install-headers-$c
 
 clean-$c:
 	rm -f $($c_OBJECT_PATHS)
 	rm -f $($c_OBJECT_PATHS:%.o=%.d)
 
-install-$c:
+install-headers-$c:
 	mkdir -p  $(SYSROOT_PATH)/usr/include
 	mkdir -p  $(SYSROOT_PATH)/usr/include/mlibc
 	for f in $($c_HEADERS); do \

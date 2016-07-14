@@ -5,9 +5,9 @@ $c_LIBRARY_OBJS :=
 
 $c_LDFLAGS := -nostdlib
 
-$c_TARGETS := clean-$c gen-$c install-$c $($c_BINDIR)/libc.so
+$c_TARGETS := clean-$c gen-$c install-$c install-headers-$c $($c_BINDIR)/libc.so
 
-.PHONY: all-$c install-$c
+.PHONY: all-$c install-$c install-headers-$c
 
 all-$c: $($c_BINDIR)/libc.so
 
@@ -17,25 +17,25 @@ clean-$c:
 $(call include_dir,$c/generic/ansi)
 $c_LIBRARY_OBJS += $($c/generic/ansi_OBJECT_PATHS)
 clean-$c: clean-$c/generic/ansi
-install-$c: install-$c/generic/ansi
+install-headers-$c: install-headers-$c/generic/ansi
 
 $(call include_dir,$c/generic/posix)
 $c_LIBRARY_OBJS += $($c/generic/posix_OBJECT_PATHS)
 clean-$c: clean-$c/generic/posix
-install-$c: install-$c/generic/posix
+install-headers-$c: install-headers-$c/generic/posix
 
 $(call include_dir,$c/generic/lsb)
 $c_LIBRARY_OBJS += $($c/generic/lsb_OBJECT_PATHS)
 clean-$c: clean-$c/generic/lsb
-install-$c: install-$c/generic/lsb
+install-headers-$c: install-headers-$c/generic/lsb
 
 $(call include_dir,$c/compilers/gcc)
-install-$c: install-$c/compilers/gcc
+install-headers-$c: install-headers-$c/compilers/gcc
 
 $(call include_dir,$c/machine/x86_64)
 $c_LIBRARY_OBJS += $($c/machine/x86_64_OBJECT_PATHS)
 clean-$c: clean-$c/machine/x86_64
-install-$c: install-$c/machine/x86_64
+install-headers-$c: install-headers-$c/machine/x86_64
 
 $(call include_dir,$c/platform/x86_64-managarm)
 $c_LIBRARY_OBJS += $($c/platform/x86_64-managarm_OBJECT_PATHS)
@@ -55,7 +55,7 @@ $($c_BINDIR):
 $($c_BINDIR)/libc.so: $($c_LIBRARY_OBJS) | $($c_BINDIR)
 	x86_64-managarm-g++ -shared -o $@ $($c_LDFLAGS) $($c_LIBRARY_OBJS) $($c_LIBS)
 
-install-$c:
+install-$c: install-headers-$c
 	mkdir -p $(SYSROOT_PATH)/usr/lib
 	install -p $($c_BINDIR)/libc.so $(SYSROOT_PATH)/usr/lib
 
