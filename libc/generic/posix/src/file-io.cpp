@@ -60,7 +60,7 @@ FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
 		if(fd == -1)
 			return nullptr;
 	}else{
-		frigg::panicLogger.log() << "Illegal fopen() mode '" << mode << "'" << frigg::EndLog();
+		frigg::panicLogger() << "Illegal fopen() mode '" << mode << "'" << frigg::endLog;
 	}
 
 	FILE *file = (FILE *)malloc(sizeof(FILE));

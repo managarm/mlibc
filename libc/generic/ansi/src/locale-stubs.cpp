@@ -59,8 +59,8 @@ __Mlibc_LocaleDesc &__mlibc_currentLocale(int category) {
 char *setlocale(int category, const char *locale) {
 	if(!(category == LC_ALL || category == LC_COLLATE || category == LC_CTYPE
 			|| category == LC_MONETARY || category == LC_NUMERIC || category == LC_TIME)) {
-		frigg::infoLogger.log() << "mlibc: Unexpected value " << category
-				<< " for category in setlocale()" << frigg::EndLog();
+		frigg::infoLogger() << "mlibc: Unexpected value " << category
+				<< " for category in setlocale()" << frigg::endLog;
 		return nullptr;
 	}
 

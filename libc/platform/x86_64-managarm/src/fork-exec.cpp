@@ -103,7 +103,7 @@ pid_t getpid(void) {
 	return response.pid();
 }
 pid_t getppid(void) {
-	frigg::infoLogger.log() << "mlibc: Broken getppid() called" << frigg::EndLog();
+	frigg::infoLogger() << "mlibc: Broken getppid() called" << frigg::endLog;
 	return 1;
 }
 
@@ -142,8 +142,8 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
 }
 
 pid_t waitpid(pid_t pid, int *status, int flags) {
-	frigg::infoLogger.log() << "mlibc: Broken waitpid("
-			<< pid << ", " << flags << ") called!" << frigg::EndLog();
+	frigg::infoLogger() << "mlibc: Broken waitpid("
+			<< pid << ", " << flags << ") called!" << frigg::endLog;
 	__ensure(flags & WNOHANG);
 	errno = ECHILD;
 	return -1;

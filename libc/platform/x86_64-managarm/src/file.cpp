@@ -209,7 +209,7 @@ off_t lseek(int fd, off_t offset, int whence) {
 	}else if(whence == SEEK_END) {
 		request.set_request_type(managarm::posix::ClientRequestType::SEEK_EOF);
 	}else{
-		frigg::panicLogger.log() << "Illegal whence argument" << frigg::EndLog();
+		frigg::panicLogger() << "Illegal whence argument" << frigg::endLog;
 	}
 
 	int64_t request_num = allocPosixRequest();
@@ -305,7 +305,7 @@ int dup2(int src_fd, int dest_fd) {
 }
 
 int fcntl(int, int, ...) {
-	frigg::infoLogger.log() << "mlibc: Broken fcntl() called!" << frigg::EndLog();
+	frigg::infoLogger() << "mlibc: Broken fcntl() called!" << frigg::endLog;
 	return 0;
 }
 
@@ -381,7 +381,7 @@ char *ttyname(int fd) {
 }
 
 int tcgetattr(int fd, struct termios *attr) {
-	frigg::infoLogger.log() << "mlibc: Broken tcgetattr() called!" << frigg::EndLog();
+	frigg::infoLogger() << "mlibc: Broken tcgetattr() called!" << frigg::endLog;
 	attr->c_iflag = 0;
 	attr->c_oflag = 0;
 	attr->c_cflag = 0;
@@ -394,10 +394,10 @@ int tcgetattr(int fd, struct termios *attr) {
 }
 
 int tcsetattr(int, int, const struct termios *attr) {
-	frigg::infoLogger.log() << "mlibc: Broken tcsetattr("
+	frigg::infoLogger() << "mlibc: Broken tcsetattr("
 			<< (void *)attr->c_iflag << ", " << (void *)attr->c_oflag
 			<< ", " << (void *)attr->c_cflag << ", " << (void *)attr->c_lflag
-			<< ") called!" << frigg::EndLog();
+			<< ") called!" << frigg::endLog;
 	return 0;
 }
 

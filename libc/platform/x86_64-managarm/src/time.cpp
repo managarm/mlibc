@@ -13,7 +13,7 @@
 #pragma GCC visibility pop
 
 time_t time(time_t *out){
-	frigg::infoLogger.log() << "mlibc: Broken time() called!" << frigg::EndLog();
+	frigg::infoLogger() << "mlibc: Broken time() called!" << frigg::endLog;
 	time_t result = 0;
 	if(out)
 		*out = result;
@@ -21,7 +21,7 @@ time_t time(time_t *out){
 }
 
 int gettimeofday(struct timeval *__restrict result, void *__restrict unused) {
-	frigg::infoLogger.log() << "mlibc: Broken gettimeofday() called!" << frigg::EndLog();
+	frigg::infoLogger() << "mlibc: Broken gettimeofday() called!" << frigg::endLog;
 	__ensure(!unused);
 	result->tv_sec = 0;
 	result->tv_usec = 0;
