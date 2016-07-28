@@ -14,6 +14,8 @@ all-$c: $($c_BINDIR)/libc.so
 clean-$c:
 	rm -f $($c_BINDIR)/libc.so
 
+gen-$c: gen-$c/platform/x86_64-managarm
+
 $(call include_dir,$c/generic/ansi)
 $c_LIBRARY_OBJS += $($c/generic/ansi_OBJECT_PATHS)
 clean-$c: clean-$c/generic/ansi
