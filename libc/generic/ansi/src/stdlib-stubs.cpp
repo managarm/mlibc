@@ -6,6 +6,8 @@
 
 #include <mlibc/ensure.h>
 
+extern "C" int __cxa_atexit(void (*function)(void *), void *argument, void *dso_tag);
+
 double atof(const char *string) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -102,8 +104,11 @@ void abort(void) {
 	__builtin_unreachable();
 }
 int atexit(void (*func)(void)) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: the function pointer types are not compatible;
+	// the conversion here is undefined behavior. its fine to do
+	// this on the x86_64 abi though.
+	__cxa_atexit((void (*) (void *))func, nullptr, nullptr);
+	return 0;
 }
 int at_quick_exit(void (*func)(void)) {
 	__ensure(!"Not implemented");
