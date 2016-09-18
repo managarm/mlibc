@@ -3,7 +3,18 @@
 
 #include <mlibc/ensure.h>
 #include <mlibc/cxx-support.hpp>
+#include <mlibc/frigg-alloc.hpp>
 #include <mlibc/posix-pipe.hpp>
+
+#pragma GCC visibility push(hidden)
+
+#include <frigg/vector.hpp>
+#include <frigg/string.hpp>
+#include <frigg/protobuf.hpp>
+
+#include <xuniverse.frigg_pb.hpp>
+
+#pragma GCC visibility pop
 
 // defined by the POSIX library
 void __mlibc_initLocale();
@@ -30,7 +41,34 @@ void __mlibc_reinitPosixPipe() {
 	
 	eventHub.initialize(helx::EventHub::create());
 	
-	const char *posix_path = "local/posix";
+	helx::Pipe superior(kHelThisUniverse);
+
+	// determine the profile we are running in
+	{
+		managarm::xuniverse::CntRequest<MemoryAllocator> request(*memoryAllocator);
+		request.set_req_type(managarm::xuniverse::CntReqType::GET_PROFILE);
+
+		frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+		request.SerializeToString(&serialized);
+
+		HelError error;
+		superior.sendStringReqSync(serialized.data(), serialized.size(), *eventHub,
+				0, 0, error);
+		HEL_CHECK(error);
+	}
+	{
+		uint8_t buffer[128];
+		HelError error;
+		size_t length;
+		superior.recvStringRespSync(buffer, 128, *eventHub,
+				0, 0, error, length);
+		HEL_CHECK(error);
+	}
+
+	superior.release();
+	
+	// TODO: connect to the POSIX server if the profile allows it.
+/*	const char *posix_path = "local/posix";
 	HelHandle posix_handle;
 	HEL_CHECK(helRdOpen(posix_path, strlen(posix_path), &posix_handle));
 	
@@ -42,7 +80,7 @@ void __mlibc_reinitPosixPipe() {
 	HelError connect_error;
 	eventHub->waitForConnect(async_id, connect_error, pipe);
 	HEL_CHECK(connect_error);
-	posixPipe.initialize(frigg::move(pipe));
+	posixPipe.initialize(frigg::move(pipe));*/
 }
 
 struct LibraryGuard {

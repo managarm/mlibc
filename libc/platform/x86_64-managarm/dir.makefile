@@ -38,6 +38,7 @@ install-$c:
 	mkdir -p  $(SYSROOT_PATH)/usr/lib
 	install -p $($c_BINDIR)/crt0.o $(SYSROOT_PATH)/usr/lib
 
+gen-$c: $($c_GENDIR)/xuniverse.frigg_pb.hpp
 gen-$c: $($c_GENDIR)/posix.frigg_pb.hpp
 
 $($c_GENDIR) $($c_OBJDIR) $($c_BINDIR):
