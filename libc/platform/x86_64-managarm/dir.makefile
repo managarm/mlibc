@@ -17,6 +17,7 @@ $c_CPPFLAGS := -std=c++14 -Wall
 $c_CPPFLAGS += -I$(FRIGG_PATH)/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/ansi/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/posix/include
+$c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/lsb/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/compilers/gcc/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/platform/x86_64-managarm/include
 $c_CPPFLAGS += -I$($c_GENDIR)
