@@ -22,10 +22,13 @@ void __mlibc_initLocale();
 void __mlibc_initStdio();
 // defined in malloc.cpp
 void __mlibc_initMalloc();
+// defined in file.cpp
+void __mlibc_initFs();
 
 // declared in posix-pipe.hpp
 frigg::LazyInitializer<helx::EventHub> eventHub;
 frigg::LazyInitializer<helx::Pipe> posixPipe;
+frigg::LazyInitializer<helx::Pipe> fsPipe;
 
 // declared in posix-pipe.hpp
 int64_t allocPosixRequest() {
@@ -33,6 +36,37 @@ int64_t allocPosixRequest() {
 	return next++;
 }
 
+enum {
+	// this value is not part of the ABI
+	AT_ILLEGAL = -1,
+
+	AT_NULL = 0,
+	AT_PHDR = 3,
+	AT_PHENT = 4,
+	AT_PHNUM = 5,
+	AT_ENTRY = 9,
+
+	AT_OPENFILES = 0x1001,
+	AT_FS_SERVER = 0x1102
+};
+
+struct Auxiliary {
+	int type;
+	union {
+		long longValue;
+		void *pointerValue;
+	};
+};
+
+struct AuxFileData {
+	int fd;
+	HelHandle pipe;
+};
+
+// FIXME: move this to another file
+extern "C" Auxiliary *__rtdl_auxvector();
+
+// TODO: this function needs to be removed after we fix fork() semantics.
 void __mlibc_reinitPosixPipe() {
 	// we have to discard these objects here as they might already
 	// be initialized after a fork()
@@ -40,32 +74,24 @@ void __mlibc_reinitPosixPipe() {
 	posixPipe.discard();
 	
 	eventHub.initialize(helx::EventHub::create());
+
+	// parse the auxiliary vector.
+	assert(__rtdl_auxvector);
+	Auxiliary *element = __rtdl_auxvector();
+	while(true) {
+		if(element->type == AT_NULL)
+			break;
+
+		if(element->type == AT_OPENFILES) {
+			__ensure(!"Make this this work correctly");
+//			auto data = static_cast<AuxFileData *>(element->pointerValue);
+//			fileMap->insert(data->fd, helx::Pipe(data->pipe));
+		}else if(element->type == AT_FS_SERVER) {
+			fsPipe.initialize(element->longValue);
+		}
+		element++;
+	}
 	
-	helx::Pipe superior(kHelThisUniverse);
-
-	// determine the profile we are running in
-	{
-		managarm::xuniverse::CntRequest<MemoryAllocator> request(*memoryAllocator);
-		request.set_req_type(managarm::xuniverse::CntReqType::GET_PROFILE);
-
-		frigg::String<MemoryAllocator> serialized(*memoryAllocator);
-		request.SerializeToString(&serialized);
-
-		HelError error;
-		superior.sendStringReqSync(serialized.data(), serialized.size(), *eventHub,
-				0, 0, error);
-		HEL_CHECK(error);
-	}
-	{
-		uint8_t buffer[128];
-		HelError error;
-		size_t length;
-		superior.recvStringRespSync(buffer, 128, *eventHub,
-				0, 0, error, length);
-		HEL_CHECK(error);
-	}
-
-	superior.release();
 	
 	// TODO: connect to the POSIX server if the profile allows it.
 /*	const char *posix_path = "local/posix";
@@ -92,6 +118,7 @@ static LibraryGuard guard;
 LibraryGuard::LibraryGuard() {
 	__mlibc_initLocale();
 	__mlibc_initMalloc();
+	__mlibc_initFs();
 	__mlibc_initStdio();
 
 	__mlibc_reinitPosixPipe();

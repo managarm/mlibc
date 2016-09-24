@@ -19,14 +19,45 @@
 #pragma GCC visibility push(hidden)
 
 #include <frigg/vector.hpp>
+#include <frigg/hashmap.hpp>
 #include <frigg/string.hpp>
 #include <frigg/protobuf.hpp>
 
 #include <posix.frigg_pb.hpp>
+#include <fs.frigg_pb.hpp>
+
+frigg::LazyInitializer<
+	frigg::Hashmap<
+		int,
+		helx::Pipe,
+		frigg::DefaultHasher<int>,
+		MemoryAllocator
+	>
+> fileMap;
+
+int acquireFd(helx::Pipe pipe, int handle) {
+	assert(!"Fix this");
+}
 
 #pragma GCC visibility pop
 
+void __mlibc_initFs() {
+	fileMap.initialize(frigg::DefaultHasher<int>(), *memoryAllocator);
+}
+
+int __mlibc_pushFd(HelHandle handle) {
+	// TODO: limit the number of FDs?
+	for(int fd = 0; ; fd++) {
+		auto it = fileMap->get(fd);
+		if(it)
+			continue;
+		fileMap->insert(fd, helx::Pipe(handle));
+		return fd;
+	}
+}
+
 int stat(const char *__restrict path, struct stat *__restrict result) {
+	assert(!"Fix this");
 	int fd = open(path, O_RDONLY);
 	if(fd == -1) {
 		__ensure(errno == ENOENT);
@@ -42,6 +73,7 @@ int stat(const char *__restrict path, struct stat *__restrict result) {
 }
 
 int fstat(int fd, struct stat *result) {
+	assert(!"Fix this");
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
 	request.set_request_type(managarm::posix::ClientRequestType::FSTAT);
 	request.set_fd(fd);
@@ -90,38 +122,42 @@ int fstat(int fd, struct stat *result) {
 int open(const char *path, int flags, ...) {
 //	frigg::infoLogger.log() << "mlibc: open(\""
 //			<< path << "\") called!" << frigg::EndLog();
-	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
-	request.set_request_type(managarm::posix::ClientRequestType::OPEN);
+	managarm::fs::CntRequest<MemoryAllocator> request(*memoryAllocator);
+	request.set_req_type(managarm::fs::CntReqType::OPEN);
 	request.set_path(frigg::String<MemoryAllocator>(*memoryAllocator, path));
 
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
 	HelError error;
-	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
+	fsPipe->sendStringReqSync(serialized.data(), serialized.size(),
 			*eventHub, request_num, 0, error);
 	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
 	HelError response_error;
-	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	fsPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::fs::SvrResponse<MemoryAllocator> response(*memoryAllocator);
 	response.ParseFromArray(buffer, length);
-	if(response.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+	if(response.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
 		errno = ENOENT;
 		return -1;
-	}else if(response.error() == managarm::posix::Errors::SUCCESS) {
-		return response.fd();
-	}else{
-		__ensure(!"Unexpected error");
-		__builtin_unreachable();
 	}
+	assert(response.error() == managarm::fs::Errors::SUCCESS);
+	
+	HelError handle_error;
+	HelHandle file_handle;
+	fsPipe->recvDescriptorRespSync(*eventHub, request_num, 1, handle_error, file_handle);
+	HEL_CHECK(handle_error);
+
+	return __mlibc_pushFd(file_handle);
 }
 
 ssize_t read(int fd, void *buffer, size_t size){
+	assert(!"Fix this");
 //	frigg::infoLogger.log() << "read()" << frigg::EndLog();
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
 	request.set_request_type(managarm::posix::ClientRequestType::READ);
@@ -162,34 +198,41 @@ ssize_t read(int fd, void *buffer, size_t size){
 };
 
 ssize_t write(int fd, const void *buffer, size_t size) {
+	auto file_it = fileMap->get(fd);
+	assert(file_it);
+
 //	frigg::infoLogger.log() << "write()" << frigg::EndLog();
-	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
-	request.set_request_type(managarm::posix::ClientRequestType::WRITE);
+	managarm::fs::CntRequest<MemoryAllocator> request(*memoryAllocator);
+	request.set_req_type(managarm::fs::CntReqType::WRITE);
 	request.set_fd(fd);
-	request.set_buffer(frigg::String<MemoryAllocator>(*memoryAllocator,
-			(const char *)buffer, size));
 
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
 	request.SerializeToString(&serialized);
-	HelError error;
-	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
-			*eventHub, request_num, 0, error);
-	HEL_CHECK(error);
+	HelError req_error;
+	file_it->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, req_error);
+	HEL_CHECK(req_error);
+	
+	HelError resp_error;
+	file_it->sendStringReqSync(buffer, size,
+			*eventHub, request_num, 1, resp_error);
+	HEL_CHECK(resp_error);
 
 	uint8_t msg_buffer[128];
 	size_t length;
 	HelError response_error;
-	posixPipe->recvStringRespSync(msg_buffer, 128, *eventHub,
+	file_it->recvStringRespSync(msg_buffer, 128, *eventHub,
 			request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::fs::SvrResponse<MemoryAllocator> response(*memoryAllocator);
 	response.ParseFromArray(msg_buffer, length);
-	if(response.error() == managarm::posix::Errors::NO_SUCH_FD) {
+	// TODO: implement NO_SUCH_FD
+/*	if(response.error() == managarm::fs::Errors::NO_SUCH_FD) {
 		errno = EBADF;
 		return -1;
-	}else if(response.error() == managarm::posix::Errors::SUCCESS) {
+	}else*/ if(response.error() == managarm::fs::Errors::SUCCESS) {
 		return size;
 	}else{
 		__ensure(!"Unexpected error");
@@ -198,6 +241,7 @@ ssize_t write(int fd, const void *buffer, size_t size) {
 }
 
 off_t lseek(int fd, off_t offset, int whence) {
+	assert(!"Fix this");
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
 	request.set_fd(fd);
 	request.set_rel_offset(offset);
@@ -239,7 +283,41 @@ off_t lseek(int fd, off_t offset, int whence) {
 	}
 }
 
+HelHandle __raw_map(int fd) {
+	auto file_it = fileMap->get(fd);
+	assert(file_it);
+	
+	managarm::fs::CntRequest<MemoryAllocator> request(*memoryAllocator);
+	request.set_req_type(managarm::fs::CntReqType::MMAP);
+	request.set_fd(fd);
+	
+	int64_t request_num = allocPosixRequest();
+	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	request.SerializeToString(&serialized);
+	HelError send_error;
+	file_it->sendStringReqSync(serialized.data(), serialized.size(),
+			*eventHub, request_num, 0, send_error);
+	HEL_CHECK(send_error);
+
+	uint8_t buffer[128];
+	HelError recv_error;
+	size_t length;
+	file_it->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, recv_error, length);
+	HEL_CHECK(recv_error);
+	
+	managarm::fs::SvrResponse<MemoryAllocator> response(*memoryAllocator);
+	response.ParseFromArray(buffer, length);
+	assert(response.error() == managarm::fs::Errors::SUCCESS);
+
+	HelError handle_error;
+	HelHandle memory_handle;
+	file_it->recvDescriptorRespSync(*eventHub, request_num, 1, handle_error, memory_handle);
+	HEL_CHECK(handle_error);
+	return memory_handle;
+}
+
 int close(int fd) {
+	assert(!"Fix this");
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
 	request.set_request_type(managarm::posix::ClientRequestType::CLOSE);
 	request.set_fd(fd);
@@ -272,6 +350,7 @@ int close(int fd) {
 }
 
 int dup2(int src_fd, int dest_fd) {
+	assert(!"Fix this");
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
 	request.set_request_type(managarm::posix::ClientRequestType::DUP2);
 	request.set_fd(src_fd);
@@ -310,6 +389,7 @@ int fcntl(int, int, ...) {
 }
 
 int isatty(int fd) {
+	assert(!"Fix this");
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
 	request.set_request_type(managarm::posix::ClientRequestType::TTY_NAME);
 	request.set_fd(fd);
@@ -342,6 +422,7 @@ int isatty(int fd) {
 }
 
 char *ttyname(int fd) {
+	assert(!"Fix this");
 	static frigg::LazyInitializer<frigg::String<MemoryAllocator>> cache;
 	
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);

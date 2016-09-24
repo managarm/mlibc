@@ -17,6 +17,7 @@
 
 extern frigg::LazyInitializer<helx::EventHub> eventHub;
 extern frigg::LazyInitializer<helx::Pipe> posixPipe;
+extern frigg::LazyInitializer<helx::Pipe> fsPipe;
 
 int64_t allocPosixRequest();
 

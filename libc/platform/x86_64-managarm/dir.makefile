@@ -40,6 +40,7 @@ install-$c:
 
 gen-$c: $($c_GENDIR)/xuniverse.frigg_pb.hpp
 gen-$c: $($c_GENDIR)/posix.frigg_pb.hpp
+gen-$c: $($c_GENDIR)/fs.frigg_pb.hpp
 
 $($c_GENDIR) $($c_OBJDIR) $($c_BINDIR):
 	mkdir -p $@
