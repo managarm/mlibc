@@ -45,8 +45,8 @@ char *strncpy(char *__restrict dest, const char *src, size_t max_size) {
 }
 
 char *strcat(char *__restrict dest, const char *__restrict src) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	strcpy(dest + strlen(dest), src);
+	return dest;
 }
 char *strncat(char *__restrict dest, const char *__restrict src, size_t max_size) {
 	__ensure(!"Not implemented");

@@ -241,6 +241,7 @@ ssize_t write(int fd, const void *buffer, size_t size) {
 		errno = EBADF;
 		return -1;
 	}else*/ if(response.error() == managarm::fs::Errors::SUCCESS) {
+		//FIXME: handle partial writes
 		return size;
 	}else{
 		__ensure(!"Unexpected error");

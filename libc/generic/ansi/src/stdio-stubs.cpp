@@ -142,8 +142,7 @@ int vfscanf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_li
 	__builtin_unreachable();
 }
 int vprintf(const char *__restrict format, __gnuc_va_list args){
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return vfprintf(stdout, format, args);
 }
 int vscanf(const char *__restrict format, __gnuc_va_list args) {
 	__ensure(!"Not implemented");

@@ -17,8 +17,8 @@ int iscntrl(int c) {
 	__builtin_unreachable();
 }
 int isdigit(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: this really needs to be redesigned and support other charsets.
+	return c >= '0' && c <= '9';
 }
 int isgraph(int c) {
 	__ensure(!"Not implemented");
@@ -36,11 +36,12 @@ int ispunct(int c) {
 	__builtin_unreachable();
 }
 int isspace(int c) {
+	// TODO: this really needs to be redesigned and support other charsets.
 	return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
 }
 int isupper(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: this really needs to be redesigned and support other charsets.
+	return (c >= 'A' && c <= 'Z');
 }
 int isxdigit(int c) {
 	__ensure(!"Not implemented");
@@ -52,7 +53,9 @@ int tolower(int c) {
 	__builtin_unreachable();
 }
 int toupper(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: this really needs to be redesigned and support other charsets.
+	if(c >= 'a' && c <= 'z')
+		return c - 'a' + 'A';
+	return c;
 }
 
