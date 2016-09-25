@@ -37,11 +37,6 @@ int64_t allocPosixRequest() {
 	return next++;
 }
 
-struct AuxFileData {
-	int fd;
-	HelHandle pipe;
-};
-
 // TODO: this function needs to be removed after we fix fork() semantics.
 void __mlibc_reinitPosixPipe() {
 	// we have to discard these objects here as they might already

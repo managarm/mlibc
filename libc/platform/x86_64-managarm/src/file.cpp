@@ -1,6 +1,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <sys/auxv.h>
 
 // for dup2()
 #include <unistd.h>
@@ -35,14 +36,21 @@ frigg::LazyInitializer<
 	>
 > fileMap;
 
-int acquireFd(helx::Pipe pipe, int handle) {
-	assert(!"Fix this");
-}
-
 #pragma GCC visibility pop
 
 void __mlibc_initFs() {
 	fileMap.initialize(frigg::DefaultHasher<int>(), *memoryAllocator);
+
+	struct FileEntry {
+		int fd;
+		HelHandle pipe;
+	};
+
+	unsigned long openfiles;
+	if(!peekauxval(AT_OPENFILES, &openfiles)) {
+		for(auto entry = (FileEntry *)openfiles; entry->fd != -1; ++entry)
+			fileMap->insert(entry->fd, helx::Pipe(entry->pipe));
+	}
 }
 
 int __mlibc_pushFd(HelHandle handle) {
