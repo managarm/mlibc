@@ -50,7 +50,7 @@ FILE *stderr = &stderrFile;
 FILE *stdin = &stdinFile;
 FILE *stdout = &stdoutFile;
 
-static bool disableBuffering = true;
+static bool disableBuffering = false;
 
 FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
 	int fd;

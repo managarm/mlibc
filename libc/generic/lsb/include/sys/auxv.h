@@ -10,6 +10,7 @@
 
 // managarm specific auxvector entries.
 
+#define AT_XPIPE 0x1000
 #define AT_OPENFILES 0x1001
 #define AT_FS_SERVER 0x1102
 
