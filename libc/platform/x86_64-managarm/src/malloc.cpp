@@ -13,8 +13,13 @@
 // Globals
 // --------------------------------------------------------
 
-VirtualAllocator virtualAllocator;
-frigg::LazyInitializer<MemoryAllocator> memoryAllocator;
+MemoryAllocator &getAllocator() {
+	// use frigg::Eternal to prevent a call to __cxa_atexit().
+	// this is necessary because __cxa_atexit() call this function.
+	static frigg::Eternal<VirtualAllocator> virtualAllocator;
+	static frigg::Eternal<MemoryAllocator> singleton(virtualAllocator.get());
+	return singleton.get();
+}
 
 // --------------------------------------------------------
 // VirtualAllocator
@@ -36,22 +41,15 @@ void VirtualAllocator::unmap(uintptr_t address, size_t length) {
 	HEL_CHECK(helUnmapMemory(kHelNullHandle, (void *)address, length));
 }
 
-void __mlibc_initMalloc() {
-	memoryAllocator.initialize(virtualAllocator);
-}
-
 void free(void *pointer) {
-	__ensure(memoryAllocator);
-	memoryAllocator->free(pointer);
+	getAllocator().free(pointer);
 }
 
 void *malloc(size_t size) {
-	__ensure(memoryAllocator);
-	return memoryAllocator->allocate(size);
+	return getAllocator().allocate(size);
 }
 
 void *realloc(void *pointer, size_t size) {
-	__ensure(memoryAllocator);
-	return memoryAllocator->realloc(pointer, size);
+	return getAllocator().realloc(pointer, size);
 }
 

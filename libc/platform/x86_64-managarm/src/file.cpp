@@ -25,18 +25,19 @@
 #include <posix.frigg_pb.hpp>
 #include <fs.frigg_pb.hpp>
 
-frigg::LazyInitializer<
-	frigg::Hashmap<
-		int,
-		helx::Pipe,
-		frigg::DefaultHasher<int>,
-		MemoryAllocator
-	>
-> fileMap;
+using FileMap = frigg::Hashmap<
+	int,
+	helx::Pipe,
+	frigg::DefaultHasher<int>,
+	MemoryAllocator
+>;
+
+FileMap &getFileMap() {
+	static FileMap singleton(frigg::DefaultHasher<int>(), getAllocator());
+	return singleton;
+}
 
 void __mlibc_initFs() {
-	fileMap.initialize(frigg::DefaultHasher<int>(), *memoryAllocator);
-
 	struct FileEntry {
 		int fd;
 		HelHandle pipe;
@@ -45,17 +46,17 @@ void __mlibc_initFs() {
 	unsigned long openfiles;
 	if(!peekauxval(AT_OPENFILES, &openfiles)) {
 		for(auto entry = (FileEntry *)openfiles; entry->fd != -1; ++entry)
-			fileMap->insert(entry->fd, helx::Pipe(entry->pipe));
+			getFileMap().insert(entry->fd, helx::Pipe(entry->pipe));
 	}
 }
 
 int __mlibc_pushFd(HelHandle handle) {
 	// TODO: limit the number of FDs?
 	for(int fd = 0; ; fd++) {
-		auto it = fileMap->get(fd);
+		auto it = getFileMap().get(fd);
 		if(it)
 			continue;
-		fileMap->insert(fd, helx::Pipe(handle));
+		getFileMap().insert(fd, helx::Pipe(handle));
 		return fd;
 	}
 }
@@ -78,25 +79,25 @@ int stat(const char *__restrict path, struct stat *__restrict result) {
 
 int fstat(int fd, struct stat *result) {
 	assert(!"Fix this");
-	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::FSTAT);
 	request.set_fd(fd);
 
 	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	frigg::String<MemoryAllocator> serialized(getAllocator());
 	request.SerializeToString(&serialized);
 	HelError error;
-	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
-			*eventHub, request_num, 0, error);
+	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
+			eventHub, request_num, 0, error);
 	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
 	HelError response_error;
-	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	if(response.error() == managarm::posix::Errors::SUCCESS) {
 		memset(result, 0, sizeof(struct stat));
@@ -126,25 +127,25 @@ int fstat(int fd, struct stat *result) {
 int open(const char *path, int flags, ...) {
 //	frigg::infoLogger.log() << "mlibc: open(\""
 //			<< path << "\") called!" << frigg::EndLog();
-	managarm::fs::CntRequest<MemoryAllocator> request(*memoryAllocator);
+	managarm::fs::CntRequest<MemoryAllocator> request(getAllocator());
 	request.set_req_type(managarm::fs::CntReqType::OPEN);
-	request.set_path(frigg::String<MemoryAllocator>(*memoryAllocator, path));
+	request.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
 
 	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	frigg::String<MemoryAllocator> serialized(getAllocator());
 	request.SerializeToString(&serialized);
 	HelError error;
-	fsPipe->sendStringReqSync(serialized.data(), serialized.size(),
-			*eventHub, request_num, 0, error);
+	fsPipe.sendStringReqSync(serialized.data(), serialized.size(),
+			eventHub, request_num, 0, error);
 	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
 	HelError response_error;
-	fsPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	fsPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::fs::SvrResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::fs::SvrResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	if(response.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
 		errno = ENOENT;
@@ -154,7 +155,7 @@ int open(const char *path, int flags, ...) {
 	
 	HelError handle_error;
 	HelHandle file_handle;
-	fsPipe->recvDescriptorRespSync(*eventHub, request_num, 1, handle_error, file_handle);
+	fsPipe.recvDescriptorRespSync(eventHub, request_num, 1, handle_error, file_handle);
 	HEL_CHECK(handle_error);
 
 	return __mlibc_pushFd(file_handle);
@@ -163,27 +164,27 @@ int open(const char *path, int flags, ...) {
 ssize_t read(int fd, void *buffer, size_t size){
 	assert(!"Fix this");
 //	frigg::infoLogger.log() << "read()" << frigg::EndLog();
-	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::READ);
 	request.set_fd(fd);
 	request.set_size(size);
 
 	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	frigg::String<MemoryAllocator> serialized(getAllocator());
 	request.SerializeToString(&serialized);
 	HelError error;
-	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
-			*eventHub, request_num, 0, error);
+	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
+			eventHub, request_num, 0, error);
 	HEL_CHECK(error);
 
 	uint8_t msg_buffer[128];
 	size_t length;
 	HelError response_error;
-	posixPipe->recvStringRespSync(msg_buffer, 128, *eventHub,
+	posixPipe.recvStringRespSync(msg_buffer, 128, eventHub,
 			request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(msg_buffer, length);
 	if(response.error() == managarm::posix::Errors::NO_SUCH_FD) {
 		errno = EBADF;
@@ -195,42 +196,42 @@ ssize_t read(int fd, void *buffer, size_t size){
 	
 	size_t data_length;
 	HelError data_error;
-	posixPipe->recvStringRespSync(buffer, size, *eventHub,
+	posixPipe.recvStringRespSync(buffer, size, eventHub,
 			request_num, 1, data_error, data_length);
 	HEL_CHECK(data_error);
 	return data_length;
 };
 
 ssize_t write(int fd, const void *buffer, size_t size) {
-	auto file_it = fileMap->get(fd);
+	auto file_it = getFileMap().get(fd);
 	assert(file_it);
 
 //	frigg::infoLogger.log() << "write()" << frigg::EndLog();
-	managarm::fs::CntRequest<MemoryAllocator> request(*memoryAllocator);
+	managarm::fs::CntRequest<MemoryAllocator> request(getAllocator());
 	request.set_req_type(managarm::fs::CntReqType::WRITE);
 	request.set_fd(fd);
 
 	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	frigg::String<MemoryAllocator> serialized(getAllocator());
 	request.SerializeToString(&serialized);
 	HelError req_error;
 	file_it->sendStringReqSync(serialized.data(), serialized.size(),
-			*eventHub, request_num, 0, req_error);
+			eventHub, request_num, 0, req_error);
 	HEL_CHECK(req_error);
 	
 	HelError resp_error;
 	file_it->sendStringReqSync(buffer, size,
-			*eventHub, request_num, 1, resp_error);
+			eventHub, request_num, 1, resp_error);
 	HEL_CHECK(resp_error);
 
 	uint8_t msg_buffer[128];
 	size_t length;
 	HelError response_error;
-	file_it->recvStringRespSync(msg_buffer, 128, *eventHub,
+	file_it->recvStringRespSync(msg_buffer, 128, eventHub,
 			request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::fs::SvrResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::fs::SvrResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(msg_buffer, length);
 	// TODO: implement NO_SUCH_FD
 /*	if(response.error() == managarm::fs::Errors::NO_SUCH_FD) {
@@ -247,7 +248,7 @@ ssize_t write(int fd, const void *buffer, size_t size) {
 
 off_t lseek(int fd, off_t offset, int whence) {
 	assert(!"Fix this");
-	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_fd(fd);
 	request.set_rel_offset(offset);
 
@@ -262,20 +263,20 @@ off_t lseek(int fd, off_t offset, int whence) {
 	}
 
 	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	frigg::String<MemoryAllocator> serialized(getAllocator());
 	request.SerializeToString(&serialized);
 	HelError error;
-	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
-			*eventHub, request_num, 0, error);
+	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
+			eventHub, request_num, 0, error);
 	HEL_CHECK(error);
 
 	uint8_t buffer[128];
 	size_t length;
 	HelError response_error;
-	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	if(response.error() == managarm::posix::Errors::NO_SUCH_FD) {
 		errno = EBADF;		
@@ -289,59 +290,59 @@ off_t lseek(int fd, off_t offset, int whence) {
 }
 
 HelHandle __raw_map(int fd) {
-	auto file_it = fileMap->get(fd);
+	auto file_it = getFileMap().get(fd);
 	assert(file_it);
 	
-	managarm::fs::CntRequest<MemoryAllocator> request(*memoryAllocator);
+	managarm::fs::CntRequest<MemoryAllocator> request(getAllocator());
 	request.set_req_type(managarm::fs::CntReqType::MMAP);
 	request.set_fd(fd);
 	
 	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	frigg::String<MemoryAllocator> serialized(getAllocator());
 	request.SerializeToString(&serialized);
 	HelError send_error;
 	file_it->sendStringReqSync(serialized.data(), serialized.size(),
-			*eventHub, request_num, 0, send_error);
+			eventHub, request_num, 0, send_error);
 	HEL_CHECK(send_error);
 
 	uint8_t buffer[128];
 	HelError recv_error;
 	size_t length;
-	file_it->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, recv_error, length);
+	file_it->recvStringRespSync(buffer, 128, eventHub, request_num, 0, recv_error, length);
 	HEL_CHECK(recv_error);
 	
-	managarm::fs::SvrResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::fs::SvrResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	assert(response.error() == managarm::fs::Errors::SUCCESS);
 
 	HelError handle_error;
 	HelHandle memory_handle;
-	file_it->recvDescriptorRespSync(*eventHub, request_num, 1, handle_error, memory_handle);
+	file_it->recvDescriptorRespSync(eventHub, request_num, 1, handle_error, memory_handle);
 	HEL_CHECK(handle_error);
 	return memory_handle;
 }
 
 int close(int fd) {
 	assert(!"Fix this");
-	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::CLOSE);
 	request.set_fd(fd);
 
 	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	frigg::String<MemoryAllocator> serialized(getAllocator());
 	request.SerializeToString(&serialized);
 	HelError error;
-	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
-			*eventHub, request_num, 0, error);
+	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
+			eventHub, request_num, 0, error);
 	HEL_CHECK(error);
 
 	uint8_t buffer[128];
 	size_t length;
 	HelError response_error;
-	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	if(response.error() == managarm::posix::Errors::NO_SUCH_FD) {
 		errno = EBADF;		
@@ -356,26 +357,26 @@ int close(int fd) {
 
 int dup2(int src_fd, int dest_fd) {
 	assert(!"Fix this");
-	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::DUP2);
 	request.set_fd(src_fd);
 	request.set_newfd(dest_fd);
 
 	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	frigg::String<MemoryAllocator> serialized(getAllocator());
 	request.SerializeToString(&serialized);
 	HelError error;
-	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
-			*eventHub, request_num, 0, error);
+	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
+			eventHub, request_num, 0, error);
 	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
 	HelError response_error;
-	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	if(response.error() == managarm::posix::Errors::SUCCESS) {
 		return dest_fd;
@@ -395,25 +396,25 @@ int fcntl(int, int, ...) {
 
 int isatty(int fd) {
 	assert(!"Fix this");
-	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::TTY_NAME);
 	request.set_fd(fd);
 
 	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	frigg::String<MemoryAllocator> serialized(getAllocator());
 	request.SerializeToString(&serialized);
 	HelError error;
-	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
-			*eventHub, request_num, 0, error);
+	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
+			eventHub, request_num, 0, error);
 	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
 	HelError response_error;
-	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	if(response.error() == managarm::posix::Errors::SUCCESS) {
 		return 1;
@@ -428,35 +429,32 @@ int isatty(int fd) {
 
 char *ttyname(int fd) {
 	assert(!"Fix this");
-	static frigg::LazyInitializer<frigg::String<MemoryAllocator>> cache;
+	// TODO: this is not thread-safe.
+	frigg::String<MemoryAllocator> cache(getAllocator());
 	
-	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::TTY_NAME);
 	request.set_fd(fd);
 
 	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	frigg::String<MemoryAllocator> serialized(getAllocator());
 	request.SerializeToString(&serialized);
 	HelError error;
-	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
-			*eventHub, request_num, 0, error);
+	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
+			eventHub, request_num, 0, error);
 	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
 	HelError response_error;
-	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	if(response.error() == managarm::posix::Errors::SUCCESS) {
-		if(!cache) {
-			cache.initialize(response.path());
-		}else{
-			*cache = response.path();
-		}
-		return cache->data();
+		cache = response.path();
+		return cache.data();
 	}else if(response.error() ==  managarm::posix::Errors::BAD_FD) {
 		errno = ENOTTY;
 		return nullptr;

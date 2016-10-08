@@ -14,8 +14,7 @@ public:
 
 typedef frigg::SlabAllocator<VirtualAllocator, frigg::TicketLock> MemoryAllocator;
 
-extern VirtualAllocator virtualAllocator;
-extern frigg::LazyInitializer<MemoryAllocator> memoryAllocator;
+MemoryAllocator &getAllocator();
 
 #endif // MLIBC_FRIGG_ALLOC
 

@@ -13,9 +13,9 @@
 #include <hel-syscalls.h>
 #include <helx.hpp>
 
-extern frigg::LazyInitializer<helx::EventHub> eventHub;
-extern frigg::LazyInitializer<helx::Pipe> posixPipe;
-extern frigg::LazyInitializer<helx::Pipe> fsPipe;
+extern helx::EventHub eventHub;
+extern helx::Pipe posixPipe;
+extern helx::Pipe fsPipe;
 
 int64_t allocPosixRequest();
 

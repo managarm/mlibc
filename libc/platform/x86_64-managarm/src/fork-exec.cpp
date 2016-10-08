@@ -31,26 +31,26 @@ void __mlibc_reinitPosixPipe();
 extern "C" pid_t __mlibc_enterFork();
 
 extern "C" pid_t __mlibc_doFork(uintptr_t child_ip, uintptr_t child_sp) {
-	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::FORK);
 	request.set_child_ip(child_ip);
 	request.set_child_sp(child_sp);
 
 	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	frigg::String<MemoryAllocator> serialized(getAllocator());
 	request.SerializeToString(&serialized);
 	HelError error;
-	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
-			*eventHub, request_num, 0, error);
+	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
+			eventHub, request_num, 0, error);
 	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
 	HelError response_error;
-	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	assert(response.error() == managarm::posix::Errors::SUCCESS);
 	
@@ -76,24 +76,24 @@ gid_t getegid(void) {
 }
 
 pid_t getpid(void) {
-	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::GET_PID);
 
 	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	frigg::String<MemoryAllocator> serialized(getAllocator());
 	request.SerializeToString(&serialized);
 	HelError error;
-	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
-			*eventHub, request_num, 0, error);
+	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
+			eventHub, request_num, 0, error);
 	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
 	HelError response_error;
-	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	assert(response.error() == managarm::posix::Errors::SUCCESS);
 	return response.pid();
@@ -108,25 +108,25 @@ pid_t fork(void) {
 }
 
 int execve(const char *path, char *const argv[], char *const envp[]) {
-	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);
+	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::EXEC);
-	request.set_path(frigg::String<MemoryAllocator>(*memoryAllocator, path));
+	request.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
 
 	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(*memoryAllocator);
+	frigg::String<MemoryAllocator> serialized(getAllocator());
 	request.SerializeToString(&serialized);
 	HelError error;
-	posixPipe->sendStringReqSync(serialized.data(), serialized.size(),
-			*eventHub, request_num, 0, error);
+	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
+			eventHub, request_num, 0, error);
 	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
 	HelError response_error;
-	posixPipe->recvStringRespSync(buffer, 128, *eventHub, request_num, 0, response_error, length);
+	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(*memoryAllocator);
+	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	if(response.error() == managarm::posix::Errors::SUCCESS) {
 		HEL_CHECK(helExitThisThread());

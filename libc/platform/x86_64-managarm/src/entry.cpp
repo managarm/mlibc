@@ -17,15 +17,13 @@
 void __mlibc_initLocale();
 // defined by the POSIX library
 void __mlibc_initStdio();
-// defined in malloc.cpp
-void __mlibc_initMalloc();
 // defined in file.cpp
 void __mlibc_initFs();
 
 // declared in posix-pipe.hpp
-frigg::LazyInitializer<helx::EventHub> eventHub;
-frigg::LazyInitializer<helx::Pipe> posixPipe;
-frigg::LazyInitializer<helx::Pipe> fsPipe;
+helx::EventHub eventHub = helx::EventHub::create();
+helx::Pipe posixPipe;
+helx::Pipe fsPipe;
 
 // declared in posix-pipe.hpp
 int64_t allocPosixRequest() {
@@ -35,33 +33,11 @@ int64_t allocPosixRequest() {
 
 // TODO: this function needs to be removed after we fix fork() semantics.
 void __mlibc_reinitPosixPipe() {
-	// we have to discard these objects here as they might already
-	// be initialized after a fork()
-	eventHub.discard();
-	posixPipe.discard();
-	
-	eventHub.initialize(helx::EventHub::create());
-
 	unsigned long fs_server;
 	if(peekauxval(AT_FS_SERVER, &fs_server))
 		__ensure(!"No AT_FS_SERVER specified");
 
-	fsPipe.initialize(fs_server);
-	
-	// TODO: connect to the POSIX server if the profile allows it.
-/*	const char *posix_path = "local/posix";
-	HelHandle posix_handle;
-	HEL_CHECK(helRdOpen(posix_path, strlen(posix_path), &posix_handle));
-	
-	int64_t async_id;
-	HEL_CHECK(helSubmitConnect(posix_handle, eventHub->getHandle(), 0, 0, &async_id));
-	HEL_CHECK(helCloseDescriptor(posix_handle));
-	
-	helx::Pipe pipe;
-	HelError connect_error;
-	eventHub->waitForConnect(async_id, connect_error, pipe);
-	HEL_CHECK(connect_error);
-	posixPipe.initialize(frigg::move(pipe));*/
+	fsPipe = helx::Pipe(fs_server);
 }
 
 struct LibraryGuard {
@@ -72,7 +48,6 @@ static LibraryGuard guard;
 
 LibraryGuard::LibraryGuard() {
 	__mlibc_initLocale();
-	__mlibc_initMalloc();
 	__mlibc_initFs();
 	__mlibc_initStdio();
 
