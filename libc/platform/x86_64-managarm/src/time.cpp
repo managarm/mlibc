@@ -6,11 +6,7 @@
 
 #include <mlibc/ensure.h>
 
-#pragma GCC visibility push(hidden)
-
 #include <frigg/debug.hpp>
-
-#pragma GCC visibility pop
 
 time_t time(time_t *out){
 	frigg::infoLogger() << "mlibc: Broken time() called!" << frigg::endLog;

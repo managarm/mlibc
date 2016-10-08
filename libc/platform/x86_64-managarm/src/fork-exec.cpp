@@ -17,8 +17,6 @@
 #include <mlibc/frigg-alloc.hpp>
 #include <mlibc/posix-pipe.hpp>
 
-#pragma GCC visibility push(hidden)
-
 #include <frigg/debug.hpp>
 #include <frigg/vector.hpp>
 #include <frigg/string.hpp>
@@ -62,8 +60,6 @@ extern "C" pid_t __mlibc_doFork(uintptr_t child_ip, uintptr_t child_sp) {
 extern "C" void __mlibc_fixForkedChild() {
 	__mlibc_reinitPosixPipe();
 }
-
-#pragma GCC visibility pop
 
 uid_t getuid(void) {
 	return 0;

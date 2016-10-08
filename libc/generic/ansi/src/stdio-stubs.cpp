@@ -9,8 +9,6 @@
 
 #include <mlibc/ensure.h>
 
-#pragma GCC visibility push(hidden)
-
 #include <frigg/debug.hpp>
 #include <frigg/printf.hpp>
 
@@ -60,8 +58,6 @@ struct BufferPrinter {
 	size_t offset;
 	size_t limit;
 };
-
-#pragma GCC visibility pop
 
 int remove(const char *filename) {
 	__ensure(!"Not implemented");

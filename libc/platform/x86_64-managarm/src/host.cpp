@@ -3,11 +3,7 @@
 #include <unistd.h>
 #include <pwd.h>
 
-#pragma GCC visibility push(hidden)
-
 #include <frigg/debug.hpp>
-
-#pragma GCC visibility pop
 
 int gethostname(char *buffer, size_t max_length) {
 	const char *name = "cradle";

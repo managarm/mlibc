@@ -17,8 +17,6 @@
 #include <mlibc/frigg-alloc.hpp>
 #include <mlibc/posix-pipe.hpp>
 
-#pragma GCC visibility push(hidden)
-
 #include <frigg/vector.hpp>
 #include <frigg/hashmap.hpp>
 #include <frigg/string.hpp>
@@ -35,8 +33,6 @@ frigg::LazyInitializer<
 		MemoryAllocator
 	>
 > fileMap;
-
-#pragma GCC visibility pop
 
 void __mlibc_initFs() {
 	fileMap.initialize(frigg::DefaultHasher<int>(), *memoryAllocator);

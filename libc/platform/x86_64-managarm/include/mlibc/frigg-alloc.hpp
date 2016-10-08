@@ -2,8 +2,6 @@
 #ifndef MLIBC_FRIGG_ALLOC
 #define MLIBC_FRIGG_ALLOC
 
-#pragma GCC visibility push(hidden)
-
 #include <frigg/initializer.hpp>
 #include <frigg/memory.hpp>
 
@@ -18,8 +16,6 @@ typedef frigg::SlabAllocator<VirtualAllocator, frigg::TicketLock> MemoryAllocato
 
 extern VirtualAllocator virtualAllocator;
 extern frigg::LazyInitializer<MemoryAllocator> memoryAllocator;
-
-#pragma GCC visibility pop
 
 #endif // MLIBC_FRIGG_ALLOC
 

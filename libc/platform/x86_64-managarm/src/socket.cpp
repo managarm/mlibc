@@ -7,15 +7,11 @@
 #include <mlibc/frigg-alloc.hpp>
 #include <mlibc/posix-pipe.hpp>
 
-#pragma GCC visibility push(hidden)
-
 #include <frigg/vector.hpp>
 #include <frigg/string.hpp>
 #include <frigg/protobuf.hpp>
 
 #include <posix.frigg_pb.hpp>
-
-#pragma GCC visibility pop
 
 int connect(int fd, const struct sockaddr *address, socklen_t addr_length) {
 	managarm::posix::ClientRequest<MemoryAllocator> request(*memoryAllocator);

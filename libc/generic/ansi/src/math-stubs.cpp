@@ -6,9 +6,7 @@
 
 #include <stdint.h>
 
-#pragma GCC visibility push(hidden)
 #include <frigg/debug.hpp>
-#pragma GCC visibility pop
 
 namespace ieee754 {
 

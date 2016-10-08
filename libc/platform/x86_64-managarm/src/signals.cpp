@@ -3,11 +3,7 @@
 
 #include <mlibc/ensure.h>
 
-#pragma GCC visibility push(hidden)
-
 #include <frigg/debug.hpp>
-
-#pragma GCC visibility pop
 
 int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
 	frigg::infoLogger() << "mlibc: Broken sigprocmask() called!" << frigg::endLog;

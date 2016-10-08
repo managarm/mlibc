@@ -3,8 +3,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#pragma GCC visibility push(hidden)
-
 #include <frigg/support.hpp>
 
 #include <hel.h>
@@ -28,6 +26,4 @@ void friggPanic() {
 		len++;
 	helPanic(str, len);
 }
-
-#pragma GCC visibility pop
 

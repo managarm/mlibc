@@ -4,12 +4,8 @@
 #include <mlibc/ensure.h>
 #include <mlibc/cxx-support.hpp>
 
-#pragma GCC visibility push(hidden)
-
 #include <frigg/debug.hpp>
 #include <frigg/optional.hpp>
-
-#pragma GCC visibility pop
 
 struct __Mlibc_LocaleDesc {
 	// identifier of this locale. used in setlocale()

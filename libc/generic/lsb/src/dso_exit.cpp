@@ -4,8 +4,6 @@
 
 #include <mlibc/ensure.h>
 
-#pragma GCC visibility push(hidden)
-
 #include <mlibc/cxx-support.hpp>
 #include <mlibc/frigg-alloc.hpp>
 
@@ -19,8 +17,6 @@ struct ExitHandler {
 };
 
 frigg::LazyInitializer<frigg::Vector<ExitHandler, MemoryAllocator>> exitHandlers;
-
-#pragma GCC visibility pop
 
 extern "C" int __cxa_atexit(void (*function)(void *), void *argument, void *dso_tag) {
 	// FIXME: initialize this from a global library guard constructor

@@ -8,8 +8,6 @@
 
 #include <mlibc/ensure.h>
 
-#pragma GCC visibility push(hidden)
-
 #include <frigg/debug.hpp>
 
 __mlibc_File stdinFile;
@@ -43,8 +41,6 @@ int __mlibc_exactRead(int fd, void *buffer, size_t length) {
 
 	return 0;
 }
-
-#pragma GCC visibility pop
 
 FILE *stderr = &stderrFile;
 FILE *stdin = &stdinFile;

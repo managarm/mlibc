@@ -7,15 +7,11 @@
 #include <mlibc/frigg-alloc.hpp>
 #include <mlibc/posix-pipe.hpp>
 
-#pragma GCC visibility push(hidden)
-
 #include <frigg/vector.hpp>
 #include <frigg/string.hpp>
 #include <frigg/protobuf.hpp>
 
 #include <xuniverse.frigg_pb.hpp>
-
-#pragma GCC visibility pop
 
 // defined by the POSIX library
 void __mlibc_initLocale();

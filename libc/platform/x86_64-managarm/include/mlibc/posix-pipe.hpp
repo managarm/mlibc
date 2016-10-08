@@ -7,8 +7,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#pragma GCC visibility push(hidden)
-
 #include <frigg/initializer.hpp>
 
 #include <hel.h>
@@ -20,8 +18,6 @@ extern frigg::LazyInitializer<helx::Pipe> posixPipe;
 extern frigg::LazyInitializer<helx::Pipe> fsPipe;
 
 int64_t allocPosixRequest();
-
-#pragma GCC visibility pop
 
 #endif // MLIBC_POSIX_PIPE
 

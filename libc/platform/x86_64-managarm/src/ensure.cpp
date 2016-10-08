@@ -6,14 +6,10 @@
 
 #include <mlibc/ensure.h>
 
-#pragma GCC visibility push(hidden)
-
 #include <frigg/debug.hpp>
 
 #include <hel.h>
 #include <hel-syscalls.h>
-
-#pragma GCC visibility pop
 
 void __assert_fail(const char *assertion, const char *file, unsigned int line,
 		const char *function) {

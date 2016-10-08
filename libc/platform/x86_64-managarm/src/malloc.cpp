@@ -6,8 +6,6 @@
 #include <mlibc/cxx-support.hpp>
 #include <mlibc/frigg-alloc.hpp>
 
-#pragma GCC visibility push(hidden)
-
 #include <hel.h>
 #include <hel-syscalls.h>
 
@@ -37,8 +35,6 @@ uintptr_t VirtualAllocator::map(size_t length) {
 void VirtualAllocator::unmap(uintptr_t address, size_t length) {
 	HEL_CHECK(helUnmapMemory(kHelNullHandle, (void *)address, length));
 }
-
-#pragma GCC visibility pop
 
 void __mlibc_initMalloc() {
 	memoryAllocator.initialize(virtualAllocator);
