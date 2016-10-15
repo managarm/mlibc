@@ -23,7 +23,6 @@ void __mlibc_initFs();
 // declared in posix-pipe.hpp
 helx::EventHub eventHub = helx::EventHub::create();
 helx::Pipe posixPipe;
-helx::Pipe fsPipe;
 
 // declared in posix-pipe.hpp
 int64_t allocPosixRequest() {
@@ -33,11 +32,11 @@ int64_t allocPosixRequest() {
 
 // TODO: this function needs to be removed after we fix fork() semantics.
 void __mlibc_reinitPosixPipe() {
-	unsigned long fs_server;
-	if(peekauxval(AT_FS_SERVER, &fs_server))
-		__ensure(!"No AT_FS_SERVER specified");
+	unsigned long posix_server;
+	if(peekauxval(AT_POSIX_SERVER, &posix_server))
+		__ensure(!"No AT_POSIX_SERVER specified");
 
-	fsPipe = helx::Pipe(fs_server);
+	posixPipe = helx::Pipe(posix_server);
 }
 
 struct LibraryGuard {

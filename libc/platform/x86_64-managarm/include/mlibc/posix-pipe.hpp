@@ -15,7 +15,6 @@
 
 extern helx::EventHub eventHub;
 extern helx::Pipe posixPipe;
-extern helx::Pipe fsPipe;
 
 int64_t allocPosixRequest();
 

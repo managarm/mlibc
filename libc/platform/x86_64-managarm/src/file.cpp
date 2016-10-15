@@ -127,35 +127,35 @@ int fstat(int fd, struct stat *result) {
 int open(const char *path, int flags, ...) {
 //	frigg::infoLogger.log() << "mlibc: open(\""
 //			<< path << "\") called!" << frigg::EndLog();
-	managarm::fs::CntRequest<MemoryAllocator> request(getAllocator());
-	request.set_req_type(managarm::fs::CntReqType::OPEN);
+	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
+	request.set_request_type(managarm::posix::ClientRequestType::OPEN);
 	request.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
 
 	int64_t request_num = allocPosixRequest();
 	frigg::String<MemoryAllocator> serialized(getAllocator());
 	request.SerializeToString(&serialized);
 	HelError error;
-	fsPipe.sendStringReqSync(serialized.data(), serialized.size(),
+	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
 			eventHub, request_num, 0, error);
 	HEL_CHECK(error);
 
 	int8_t buffer[128];
 	size_t length;
 	HelError response_error;
-	fsPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
+	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::fs::SvrResponse<MemoryAllocator> response(getAllocator());
+	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
-	if(response.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
+	if(response.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		errno = ENOENT;
 		return -1;
 	}
-	assert(response.error() == managarm::fs::Errors::SUCCESS);
+	assert(response.error() == managarm::posix::Errors::SUCCESS);
 	
 	HelError handle_error;
 	HelHandle file_handle;
-	fsPipe.recvDescriptorRespSync(eventHub, request_num, 1, handle_error, file_handle);
+	posixPipe.recvDescriptorRespSync(eventHub, request_num, 1, handle_error, file_handle);
 	HEL_CHECK(handle_error);
 
 	return __mlibc_pushFd(file_handle);
