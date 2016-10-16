@@ -14,12 +14,14 @@ $c_AS := x86_64-managarm-as
 
 $c_CXX := x86_64-managarm-g++
 $c_CPPFLAGS := -std=c++14 -Wall
+$c_CPPFLAGS += -I$(TREE_PATH)/libc/compilers/gcc/private
 $c_CPPFLAGS += -I$(FRIGG_PATH)/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/ansi/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/posix/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/lsb/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/compilers/gcc/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/platform/x86_64-managarm/include
+$c_CPPFLAGS += -I$(MANAGARM_SRC_PATH)/hel/include
 $c_CPPFLAGS += -I$($c_GENDIR)
 $c_CPPFLAGS += -DFRIGG_HAVE_LIBC -DFRIGG_HIDDEN
 $c_CXXFLAGS :=  $($c_CPPFLAGS) -fPIC -O2
@@ -39,7 +41,6 @@ install-$c:
 	mkdir -p  $(SYSROOT_PATH)/usr/lib
 	install -p $($c_BINDIR)/crt0.o $(SYSROOT_PATH)/usr/lib
 
-gen-$c: $($c_GENDIR)/xuniverse.frigg_pb.hpp
 gen-$c: $($c_GENDIR)/posix.frigg_pb.hpp
 gen-$c: $($c_GENDIR)/fs.frigg_pb.hpp
 

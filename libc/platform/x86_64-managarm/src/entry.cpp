@@ -11,8 +11,6 @@
 #include <frigg/string.hpp>
 #include <frigg/protobuf.hpp>
 
-#include <xuniverse.frigg_pb.hpp>
-
 // defined by the POSIX library
 void __mlibc_initLocale();
 // defined by the POSIX library

@@ -1,0 +1,14 @@
+
+#ifndef MLIBC_PRIVATE_NEW
+#define MLIBC_PRIVATE_NEW
+
+// libstdc++ (which provides the C++ standard headers) depends on libc.
+// We provide internal fake stdc++ headers so that we can compile
+// mlibc without introducing a circular dependency.
+
+inline void *operator new (size_t size, void *p) {
+	return p;
+}
+
+#endif // MLIBC_PRIVATE_NEW
+
