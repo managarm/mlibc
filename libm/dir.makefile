@@ -5,7 +5,7 @@ $c_OBJDIR := $(BUILD_PATH)/$c/obj
 
 $c_LIBRARY_OBJS := $($c_OBJDIR)/dummy.o
 
-$c_LDFLAGS := -nostdlib
+$c_LDFLAGS := -nodefaultlibs
 
 $c_TARGETS := clean-$c install-$c $($c_BINDIR)/libm.so
 

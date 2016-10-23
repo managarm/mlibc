@@ -51,10 +51,6 @@ LibraryGuard::LibraryGuard() {
 	__mlibc_reinitPosixPipe();
 }
 
-// __dso_handle is usually defined in crtbeginS.o
-// Since we link with -nostdlib we have to manually define it here
-__attribute__ (( visibility("hidden") )) void *__dso_handle;
-
 extern "C" int main(int argc, char *argv[], char *env[]);
 
 // not declared in any header

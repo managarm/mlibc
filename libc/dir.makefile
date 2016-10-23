@@ -3,7 +3,7 @@ $c_BINDIR := $(BUILD_PATH)/$c/bin
 
 $c_LIBRARY_OBJS :=
 
-$c_LDFLAGS := -nostdlib
+$c_LDFLAGS := -nodefaultlibs
 
 $c_TARGETS := clean-$c gen-$c install-$c install-headers-$c $($c_BINDIR)/libc.so
 
