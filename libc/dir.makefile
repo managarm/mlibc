@@ -3,7 +3,7 @@ $c_BINDIR := $(BUILD_PATH)/$c/bin
 
 $c_LIBRARY_OBJS :=
 
-$c_LDFLAGS := -nodefaultlibs
+$c_LDFLAGS := -nostdlib
 
 $c_TARGETS := clean-$c gen-$c install-$c install-headers-$c $($c_BINDIR)/libc.so
 
@@ -32,6 +32,8 @@ clean-$c: clean-$c/generic/lsb
 install-headers-$c: install-headers-$c/generic/lsb
 
 $(call include_dir,$c/compilers/gcc)
+$c_LIBRARY_OBJS += $($c/compilers/gcc_OBJECT_PATHS)
+clean-$c: clean-$c/compilers/gcc
 install-headers-$c: install-headers-$c/compilers/gcc
 
 $(call include_dir,$c/machine/x86_64)
@@ -49,13 +51,16 @@ $(call include_dir,$c/frigg-bindings)
 $c_LIBRARY_OBJS += $($c/frigg-bindings_OBJECT_PATHS)
 clean-$c: clean-$c/frigg-bindings
 
+$c_BEGIN = $c/compilers/gcc/obj/mlibc_begin.o
+$c_END = $c/compilers/gcc/obj/mlibc_end.o
+
 $c_LIBS := -l:ld-init.so
 
 $($c_BINDIR):
 	mkdir -p $@
 
-$($c_BINDIR)/libc.so: $($c_LIBRARY_OBJS) | $($c_BINDIR)
-	x86_64-managarm-g++ -shared -o $@ $($c_LDFLAGS) $($c_LIBRARY_OBJS) $($c_LIBS)
+$($c_BINDIR)/libc.so: $($c_LIBRARY_OBJS) $($c_BEGIN) $($c_END) | $($c_BINDIR)
+	x86_64-managarm-g++ -shared -o $@ $($c_LDFLAGS) $($c_BEGIN) $($c_LIBRARY_OBJS) $($c_LIBS) $($c_END)
 
 install-$c: install-headers-$c
 	mkdir -p $(SYSROOT_PATH)/usr/lib
