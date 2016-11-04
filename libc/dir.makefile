@@ -51,8 +51,8 @@ $(call include_dir,$c/frigg-bindings)
 $c_LIBRARY_OBJS += $($c/frigg-bindings_OBJECT_PATHS)
 clean-$c: clean-$c/frigg-bindings
 
-$c_BEGIN = $c/compilers/gcc/obj/mlibc_begin.o
-$c_END = $c/compilers/gcc/obj/mlibc_end.o
+$c_BEGIN = $c/compilers/gcc/obj/mlibc_crtbegin.o
+$c_END = $c/compilers/gcc/obj/mlibc_crtend.o
 
 $c_LIBS := -l:ld-init.so
 

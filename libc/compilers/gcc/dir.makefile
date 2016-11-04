@@ -1,5 +1,6 @@
 
 $c_SRCDIR = $(TREE_PATH)/$c/src
+$c_EXTRA_SRCDIR = $(TREE_PATH)/$c/extra-src
 $c_HEADERDIR := $(TREE_PATH)/$c/include
 $c_OBJDIR := $(BUILD_PATH)/$c/obj
 
@@ -9,7 +10,7 @@ $c_HEADERS := stdint.h \
 $c_OBJECTS := initfini.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
-$c_EXTRA_OBJECTS := mlibc_begin.o mlibc_end.o
+$c_EXTRA_OBJECTS := mlibc_crtbegin.o mlibc_crtend.o
 $c_EXTRA_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_EXTRA_OBJECTS))
 
 $c_AS := x86_64-managarm-as
@@ -35,7 +36,7 @@ install-headers-$c:
 $($c_OBJDIR):
 	mkdir -p $@
 
-$($c_OBJDIR)/%.o: $($c_SRCDIR)/%.S | $($c_OBJDIR)
+$($c_OBJDIR)/%.o: $($c_EXTRA_SRCDIR)/%.S | $($c_OBJDIR)
 	$($c_AS) -o $@ $($c_ASFLAGS) $<
 
 $($c_OBJDIR)/%.o: $($c_SRCDIR)/%.cpp | $($c_OBJDIR)
