@@ -44,8 +44,8 @@ int isupper(int c) {
 	return (c >= 'A' && c <= 'Z');
 }
 int isxdigit(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: this really needs to be redesigned and support other charsets.
+	return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
 int tolower(int c) {
