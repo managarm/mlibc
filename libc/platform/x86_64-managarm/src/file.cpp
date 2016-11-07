@@ -202,42 +202,56 @@ ssize_t read(int fd, void *buffer, size_t size){
 	return data_length;
 };
 
-ssize_t write(int fd, const void *buffer, size_t size) {
+ssize_t write(int fd, const void *data, size_t size) {
+	HelAction actions[4];
+	HelEvent results[4];
+
 	auto file_it = getFileMap().get(fd);
 	assert(file_it);
 
 //	frigg::infoLogger.log() << "write()" << frigg::EndLog();
-	managarm::fs::CntRequest<MemoryAllocator> request(getAllocator());
-	request.set_req_type(managarm::fs::CntReqType::WRITE);
-	request.set_fd(fd);
+	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_req_type(managarm::fs::CntReqType::WRITE);
+	req.set_fd(fd);
 
-	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(getAllocator());
-	request.SerializeToString(&serialized);
-	HelError req_error;
-	file_it->sendStringReqSync(serialized.data(), serialized.size(),
-			eventHub, request_num, 0, req_error);
-	HEL_CHECK(req_error);
-	
-	HelError resp_error;
-	file_it->sendStringReqSync(buffer, size,
-			eventHub, request_num, 1, resp_error);
-	HEL_CHECK(resp_error);
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	uint8_t buffer[128];
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionSendFromBuffer;
+	actions[2].flags = kHelItemChain;
+	actions[2].buffer = const_cast<void *>(data);
+	actions[2].length = size;
+	actions[3].type = kHelActionRecvToBuffer;
+	actions[3].flags = 0;
+	actions[3].buffer = buffer;
+	actions[3].length = 128;
+	HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 4, eventHub.getHandle(), 0));
 
-	uint8_t msg_buffer[128];
-	size_t length;
-	HelError response_error;
-	file_it->recvStringRespSync(msg_buffer, 128, eventHub,
-			request_num, 0, response_error, length);
-	HEL_CHECK(response_error);
+	results[0] = eventHub.waitForEvent(0);
+	results[1] = eventHub.waitForEvent(0);
+	results[2] = eventHub.waitForEvent(0);
+	results[3] = eventHub.waitForEvent(0);
 
-	managarm::fs::SvrResponse<MemoryAllocator> response(getAllocator());
-	response.ParseFromArray(msg_buffer, length);
+	HEL_CHECK(results[0].error);
+	HEL_CHECK(results[1].error);
+	HEL_CHECK(results[2].error);
+	HEL_CHECK(results[3].error);
+
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(buffer, results[3].length);
+	assert(resp.error() == managarm::fs::Errors::SUCCESS);
+
 	// TODO: implement NO_SUCH_FD
-/*	if(response.error() == managarm::fs::Errors::NO_SUCH_FD) {
+/*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
 		errno = EBADF;
 		return -1;
-	}else*/ if(response.error() == managarm::fs::Errors::SUCCESS) {
+	}else*/ if(resp.error() == managarm::fs::Errors::SUCCESS) {
 		//FIXME: handle partial writes
 		return size;
 	}else{
