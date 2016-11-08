@@ -127,38 +127,49 @@ int fstat(int fd, struct stat *result) {
 int open(const char *path, int flags, ...) {
 //	frigg::infoLogger.log() << "mlibc: open(\""
 //			<< path << "\") called!" << frigg::EndLog();
-	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::ClientRequestType::OPEN);
-	request.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
+	HelAction actions[4];
+	HelEvent results[4];
 
-	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(getAllocator());
-	request.SerializeToString(&serialized);
-	HelError error;
-	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
-			eventHub, request_num, 0, error);
-	HEL_CHECK(error);
+	managarm::posix::ClientRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::ClientRequestType::OPEN);
+	req.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
 
-	int8_t buffer[128];
-	size_t length;
-	HelError response_error;
-	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
-	HEL_CHECK(response_error);
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	uint8_t buffer[128];
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvToBuffer;
+	actions[2].flags = kHelItemChain;
+	actions[2].buffer = buffer;
+	actions[2].length = 128;
+	actions[3].type = kHelActionPullDescriptor;
+	actions[3].flags = 0;
+	HEL_CHECK(helSubmitAsync(posixPipe.getHandle(), actions, 4, eventHub.getHandle(), 0));
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
-	response.ParseFromArray(buffer, length);
-	if(response.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+	results[0] = eventHub.waitForEvent(0);
+	results[1] = eventHub.waitForEvent(0);
+	results[2] = eventHub.waitForEvent(0);
+	results[3] = eventHub.waitForEvent(0);
+
+	HEL_CHECK(results[0].error);
+	HEL_CHECK(results[1].error);
+	HEL_CHECK(results[2].error);
+	HEL_CHECK(results[3].error);
+	
+	managarm::posix::ServerResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(buffer, results[2].length);
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		errno = ENOENT;
 		return -1;
+	}else{
+		assert(resp.error() == managarm::posix::Errors::SUCCESS);
+		return __mlibc_pushFd(results[3].handle);
 	}
-	assert(response.error() == managarm::posix::Errors::SUCCESS);
-	
-	HelError handle_error;
-	HelHandle file_handle;
-	posixPipe.recvDescriptorRespSync(eventHub, request_num, 1, handle_error, file_handle);
-	HEL_CHECK(handle_error);
-
-	return __mlibc_pushFd(file_handle);
 }
 
 ssize_t read(int fd, void *buffer, size_t size){
@@ -304,36 +315,47 @@ off_t lseek(int fd, off_t offset, int whence) {
 }
 
 HelHandle __raw_map(int fd) {
+	HelAction actions[4];
+	HelEvent results[4];
+
 	auto file_it = getFileMap().get(fd);
 	assert(file_it);
 	
-	managarm::fs::CntRequest<MemoryAllocator> request(getAllocator());
-	request.set_req_type(managarm::fs::CntReqType::MMAP);
-	request.set_fd(fd);
+	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_req_type(managarm::fs::CntReqType::MMAP);
+	req.set_fd(fd);
 	
-	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(getAllocator());
-	request.SerializeToString(&serialized);
-	HelError send_error;
-	file_it->sendStringReqSync(serialized.data(), serialized.size(),
-			eventHub, request_num, 0, send_error);
-	HEL_CHECK(send_error);
-
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
 	uint8_t buffer[128];
-	HelError recv_error;
-	size_t length;
-	file_it->recvStringRespSync(buffer, 128, eventHub, request_num, 0, recv_error, length);
-	HEL_CHECK(recv_error);
-	
-	managarm::fs::SvrResponse<MemoryAllocator> response(getAllocator());
-	response.ParseFromArray(buffer, length);
-	assert(response.error() == managarm::fs::Errors::SUCCESS);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvToBuffer;
+	actions[2].flags = kHelItemChain;
+	actions[2].buffer = buffer;
+	actions[2].length = 128;
+	actions[3].type = kHelActionPullDescriptor;
+	actions[3].flags = 0;
+	HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 4, eventHub.getHandle(), 0));
 
-	HelError handle_error;
-	HelHandle memory_handle;
-	file_it->recvDescriptorRespSync(eventHub, request_num, 1, handle_error, memory_handle);
-	HEL_CHECK(handle_error);
-	return memory_handle;
+	results[0] = eventHub.waitForEvent(0);
+	results[1] = eventHub.waitForEvent(0);
+	results[2] = eventHub.waitForEvent(0);
+	results[3] = eventHub.waitForEvent(0);
+
+	HEL_CHECK(results[0].error);
+	HEL_CHECK(results[1].error);
+	HEL_CHECK(results[2].error);
+	HEL_CHECK(results[3].error);
+	
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(buffer, results[2].length);
+	assert(resp.error() == managarm::fs::Errors::SUCCESS);
+	return results[3].handle;
 }
 
 int close(int fd) {
