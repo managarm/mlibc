@@ -2,35 +2,181 @@
 #ifndef _PTHREAD_H
 #define _PTHREAD_H
 
+// TODO: pthread is not required to define size_t.
+#include <mlibc/size_t.h>
+
+// pthread.h is required to include sched.h and time.h
+#include <sched.h>
+#include <time.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+// values for pthread_attr_{get,set}detachstate().
+#define PTHREAD_CREATE_JOINABLE 0
+#define PTHREAD_CREATE_DETACHED 1
+
+// values for pthread_{get,set}canceltype().
+#define PTHREAD_CANCEL_DEFERRED 0
+#define PTHREAD_CANCEL_ASYNCRONOUS 1
+
+// values for pthread_{get,set}cancelstate().
+#define PTHREAD_CANCEL_ENABLE 0
+#define PTHREAD_CANCEL_DISABLE 1
+
+// values for pthread_mutexattr_{get,set}type().
+#define PTHREAD_MUTEX_DEFAULT 0
+#define PTHREAD_MUTEX_NORMAL 0
+#define PTHREAD_MUTEX_ERRORCHECK 1
+#define PTHREAD_MUTEX_RECURSIVE 2
+
+// values for pthread_mutexattr_{get,set}robust().
+#define PTHREAD_MUTEX_STALLED 0
+#define PTHREAD_MUTEX_ROBUST 1
+
+#define PTHREAD_ONCE_INIT {0}
+#define PTHREAD_COND_INITIALIZER {}
+#define PTHREAD_MUTEX_INITIALIZER {0, 0}
+
+// FIXME: this should not be defined here.
+typedef int clockid_t;
+
 // TODO: move to own file and include in sys/types.h
-struct __mlibc_Thread { };
-typedef struct __mlibc_Thread *pthread_t;
+struct __mlibc_threadattr {
+	// TODO: the guardsize attribute needs to be supported here.
 
-struct __mlibc_ThreadAttr { };
-typedef struct __mlibc_ThreadAttr pthread_attr_t;
+	int __mlibc_deatchstate;
+};
+typedef struct __mlibc_threadattr pthread_attr_t;
 
-struct  __mlibc_MutexAttr { };
-typedef struct __mlibc_MutexAttr pthread_mutex_attr_t;
+struct __mlibc_thread_data;
+typedef struct __mlibc_thread_data *pthread_t;
 
-struct __mlibc_Mutex { };
-typedef struct __mlibc_Mutex pthread_mutex_t;
+struct __mlibc_key_data;
+typedef struct __mlibc_key_data *pthread_key_t;
 
-int pthread_attr_init(pthread_attr_t *attr);
-int pthread_create(pthread_t *__restrict pthread, const pthread_attr_t *__restrict attr,
-		void *(*entry)(void *), void *argument);
-int pthread_cleanup_pop(int exec);
-int pthread_cleanup_push(void (*handler)(void *), void *argument);
-int pthread_join(pthread_t pthread, void **result);
+struct __mlibc_once {
+	int __mlibc_done;
+};
+typedef struct __mlibc_once pthread_once_t;
 
-int pthread_mutex_init(pthread_mutex_t *__restrict mutex,
-		const pthread_mutex_attr_t *__restrict attr);
-int pthread_mutex_lock(pthread_mutex_t *mutex);
-int pthread_mutex_unlock(pthread_mutex_t *mutex);
-int pthread_mutex_destroy(pthread_mutex_t *mutex);
+struct  __mlibc_mutexattr {
+	int __mlibc_type;
+	int __mlibc_robust;
+};
+typedef struct __mlibc_mutexattr pthread_mutexattr_t;
+
+struct __mlibc_mutex {
+	unsigned int __mlibc_state;
+	unsigned int __mlibc_flags;
+};
+typedef struct __mlibc_mutex pthread_mutex_t;
+
+struct  __mlibc_condattr_struct {
+	// TODO: the clock attribute needs to be supported here.
+};
+typedef struct __mlibc_condattr pthread_condattr_t;
+
+struct  __mlibc_cond {
+	// TODO: the clock attribute needs to be supported here.
+};
+typedef struct __mlibc_cond pthread_cond_t;
+
+// ----------------------------------------------------------------------------
+// pthread_attr and pthread functions.
+// ----------------------------------------------------------------------------
+
+// pthread_attr functions.
+int pthread_attr_init(pthread_attr_t *);
+int pthread_attr_destroy(pthread_attr_t *);
+
+int pthread_attr_getdetachstate(const pthread_attr_t *, int *);
+int pthread_attr_setdetachstate(pthread_attr_t *, int);
+
+int pthread_attr_getguardsize(const pthread_attr_t *__restrict, size_t *__restrict);
+int pthread_attr_setguardsize(pthread_attr_t *, size_t);
+
+// pthread functions.
+int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict,
+		void *(*) (void *), void *__restrict);
+pthread_t pthread_self(void);
+int pthread_equal(pthread_t, pthread_t);
+int pthread_exit(void *);
+
+int pthread_join(pthread_t, void **);
+int pthread_detach(pthread_t);
+
+int pthread_cleanup_push(void (*) (void *), void *);
+int pthread_cleanup_pop(int);
+
+int pthread_setcanceltype(int, int *);
+int pthread_setcancelstate(int, int *);
+void pthread_testcancel(void);
+int pthread_cancel(pthread_t);
+
+int pthread_atfork(void (*) (void), void (*) (void), void (*) (void));
+
+// ----------------------------------------------------------------------------
+// pthread_key functions.
+// ----------------------------------------------------------------------------
+
+int pthread_key_create(pthread_key_t *, void (*) (void *));
+int pthread_key_delete(pthread_key_t);
+
+void *pthread_getspecific(pthread_key_t);
+int pthread_setspecific(pthread_key_t, const void *);
+
+// ----------------------------------------------------------------------------
+// pthread_once functions.
+// ----------------------------------------------------------------------------
+
+int pthread_once(pthread_once_t *, void (*) (void));
+
+// ----------------------------------------------------------------------------
+// pthread_mutexattr and pthread_mutex functions.
+// ----------------------------------------------------------------------------
+
+// pthread_mutexattr functions
+int pthread_mutexattr_init(pthread_mutexattr_t *);
+int pthread_mutexattr_destroy(pthread_mutexattr_t *);
+
+int pthread_mutexattr_gettype(const pthread_mutexattr_t *__restrict, int *__restrict);
+int pthread_mutexattr_settype(pthread_mutexattr_t *, int);
+
+int pthread_mutexattr_getrobust(const pthread_mutexattr_t *__restrict, int *__restrict);
+int pthread_mutexattr_setrobust(pthread_mutexattr_t *, int);
+
+// pthread_mutex functions
+int pthread_mutex_init(pthread_mutex_t *__restrict, const pthread_mutexattr_t *__restrict);
+int pthread_mutex_destroy(pthread_mutex_t *);
+
+int pthread_mutex_lock(pthread_mutex_t *);
+int pthread_mutex_trylock(pthread_mutex_t *);
+int pthread_mutex_timedlock(pthread_mutex_t *__restrict,
+		const struct timespec *__restrict);
+int pthread_mutex_unlock(pthread_mutex_t *);
+
+int pthread_mutex_consistent(pthread_mutex_t *);
+
+// ----------------------------------------------------------------------------
+// pthread_condattr and pthread_cond functions.
+// ----------------------------------------------------------------------------
+
+int pthread_condattr_init(pthread_condattr_t *);
+int pthread_condattr_destroy(pthread_condattr_t *);
+
+int pthread_condattr_getclock(const pthread_condattr_t *__restrict, clockid_t *__restrict);
+int pthread_condattr_setclock(pthread_condattr_t *, clockid_t);
+
+int pthread_cond_init(pthread_cond_t *__restrict, const pthread_condattr_t *__restrict);
+int pthread_cond_destroy(pthread_cond_t *);
+
+int pthread_cond_wait(pthread_cond_t *__restrict, pthread_mutex_t *__restrict);
+int pthread_cond_timedwait(pthread_cond_t *__restrict, pthread_mutex_t *__restrict,
+		const struct timespec *__restrict);
+int pthread_cond_signal(pthread_cond_t *);
+int pthread_cond_broadcast(pthread_cond_t *);
 
 #ifdef __cplusplus
 }
