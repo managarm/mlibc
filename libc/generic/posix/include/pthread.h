@@ -57,7 +57,7 @@ struct __mlibc_key_data;
 typedef struct __mlibc_key_data *pthread_key_t;
 
 struct __mlibc_once {
-	int __mlibc_done;
+	unsigned int __mlibc_done;
 };
 typedef struct __mlibc_once pthread_once_t;
 
