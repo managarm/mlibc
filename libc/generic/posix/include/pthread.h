@@ -36,8 +36,8 @@ extern "C" {
 #define PTHREAD_MUTEX_ROBUST 1
 
 #define PTHREAD_ONCE_INIT {0}
-#define PTHREAD_COND_INITIALIZER {}
-#define PTHREAD_MUTEX_INITIALIZER {0, 0}
+#define PTHREAD_COND_INITIALIZER {0}
+#define PTHREAD_MUTEX_INITIALIZER {0, 0, 0}
 
 // FIXME: this should not be defined here.
 typedef int clockid_t;
@@ -69,6 +69,7 @@ typedef struct __mlibc_mutexattr pthread_mutexattr_t;
 
 struct __mlibc_mutex {
 	unsigned int __mlibc_state;
+	unsigned int __mlibc_recursion;
 	unsigned int __mlibc_flags;
 };
 typedef struct __mlibc_mutex pthread_mutex_t;
@@ -80,6 +81,7 @@ typedef struct __mlibc_condattr pthread_condattr_t;
 
 struct  __mlibc_cond {
 	// TODO: the clock attribute needs to be supported here.
+	unsigned int __mlibc_seq;
 };
 typedef struct __mlibc_cond pthread_cond_t;
 

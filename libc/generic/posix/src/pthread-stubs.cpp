@@ -13,18 +13,46 @@
 #include <mlibc/ensure.h>
 #include <mlibc/frigg-alloc.hpp>
 
+// TODO: move this to a 
+
+static bool enableTrace = false;
+
+struct ScopeTrace {
+	ScopeTrace(const char *file, int line, const char *function)
+	: _file(file), _line(line), _function(function) {
+		if(!enableTrace)
+			return;
+		frigg::infoLogger() << "trace: Enter scope "
+				<< _file << ":" << _line << " (in function "
+				<< _function << ")" << frigg::endLog;
+	}
+
+	~ScopeTrace() {
+		if(!enableTrace)
+			return;
+		frigg::infoLogger() << "trace: Exit scope" << frigg::endLog;
+	}
+
+private:
+	const char *_file;
+	int _line;
+	const char *_function;
+};
+
+#define SCOPE_TRACE() ScopeTrace(__FILE__, __LINE__, __FUNCTION__)
+
+namespace {
+
+unsigned int threadId() {
+	return 1;
+}
+
+} // anonymous namespace
+
 static constexpr unsigned int mutexRecursive = 1;
 
 // TODO: either use uint32_t or determine the bit based on sizeof(int).
 static constexpr unsigned int waiters = 1 << 31;
-
-struct __mlibc_key_data {
-	__mlibc_key_data()
-	: values(frigg::DefaultHasher<int>(), getAllocator()) { }
-
-	frigg::Hashmap<int, void *, frigg::DefaultHasher<int>,
-			MemoryAllocator> values;
-};
 
 // ----------------------------------------------------------------------------
 // pthread_attr and pthread functions.
@@ -121,8 +149,22 @@ int pthread_atfork(void (*) (void), void (*) (void), void (*) (void)) {
 // pthread_key functions.
 // ----------------------------------------------------------------------------
 
+struct __mlibc_key_data {
+	__mlibc_key_data()
+	: mutex(PTHREAD_MUTEX_INITIALIZER),
+			values(frigg::DefaultHasher<int>(), getAllocator()) { }
+
+	pthread_mutex_t mutex;
+
+	// TODO: this should be unsigned int.
+	frigg::Hashmap<int, void *, frigg::DefaultHasher<int>,
+			MemoryAllocator> values;
+};
+
 int pthread_key_create(pthread_key_t *key, void (*destructor) (void *)) {
-	*key = new __mlibc_key_data;
+	SCOPE_TRACE();
+
+	*key = frigg::construct<__mlibc_key_data>(getAllocator());
 	return 0;
 }
 int pthread_key_delete(pthread_key_t) {
@@ -130,13 +172,40 @@ int pthread_key_delete(pthread_key_t) {
 	__builtin_unreachable();
 }
 
-void *pthread_getspecific(pthread_key_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void *pthread_getspecific(pthread_key_t key) {
+	SCOPE_TRACE();
+
+	if(pthread_mutex_lock(&key->mutex))
+		__ensure("Could not lock mutex");
+	
+	void *value = nullptr;
+	auto it = key->values.get(threadId());
+	if(it)
+		value = *it;
+
+	if(pthread_mutex_unlock(&key->mutex))
+		__ensure("Could not unlock mutex");
+	
+	return value;
 }
-int pthread_setspecific(pthread_key_t, const void *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int pthread_setspecific(pthread_key_t key, const void *value) {
+	SCOPE_TRACE();
+
+	if(pthread_mutex_lock(&key->mutex))
+		__ensure("Could not lock mutex");
+	
+	auto it = key->values.get(threadId());
+	if(it) {
+		*it = const_cast<void *>(value);
+	}else{
+		key->values.insert(threadId(), const_cast<void *>(value));
+	}
+
+	if(pthread_mutex_unlock(&key->mutex))
+		__ensure("Could not unlock mutex");
+	
+	return 0;
 }
 
 // ----------------------------------------------------------------------------
@@ -147,6 +216,8 @@ static constexpr unsigned int onceComplete = 1;
 static constexpr unsigned int onceLocked = 2;
 
 int pthread_once(pthread_once_t *once, void (*function) (void)) {
+	SCOPE_TRACE();
+
 	auto expected = __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
 	
 	// fast path: the function was already run.
@@ -180,10 +251,15 @@ int pthread_once(pthread_once_t *once, void (*function) (void)) {
 
 // pthread_mutexattr functions
 int pthread_mutexattr_init(pthread_mutexattr_t *attr) {
+	SCOPE_TRACE();
+
 	memset(attr, 0, sizeof(pthread_mutexattr_t));
 	return 0;
 }
+
 int pthread_mutexattr_destroy(pthread_mutexattr_t *) {
+	SCOPE_TRACE();
+
 	return 0;
 }
 
@@ -191,10 +267,13 @@ int pthread_mutexattr_gettype(const pthread_mutexattr_t *__restrict, int *__rest
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type) {
+	SCOPE_TRACE();
+
 	// TODO: return EINVAL instead of asserting.
-	__ensure(type == PTHREAD_MUTEX_DEFAULT || type == PTHREAD_MUTEX_ERRORCHECK
-			|| type == PTHREAD_MUTEX_NORMAL || type == PTHREAD_MUTEX_RECURSIVE);
+	__ensure(type == PTHREAD_MUTEX_NORMAL || type == PTHREAD_MUTEX_ERRORCHECK
+			|| type == PTHREAD_MUTEX_RECURSIVE);
 	attr->__mlibc_type = type;
 	return 0;
 }
@@ -211,17 +290,22 @@ int pthread_mutexattr_setrobust(pthread_mutexattr_t *, int) {
 // pthread_mutex functions
 int pthread_mutex_init(pthread_mutex_t *__restrict mutex,
 		const pthread_mutexattr_t *__restrict attr) {
-	mutex->__mlibc_state = 0;
+	SCOPE_TRACE();
 
-	if(attr->__mlibc_type == PTHREAD_MUTEX_NORMAL) {
-		mutex->__mlibc_flags = 0;
-	}else if(attr->__mlibc_type == PTHREAD_MUTEX_RECURSIVE) {
-		mutex->__mlibc_flags = mutexRecursive;
+	auto type = attr ? attr->__mlibc_type : 0;
+	auto robust = attr ? attr->__mlibc_robust : 0;
+
+	mutex->__mlibc_state = 0;
+	mutex->__mlibc_recursion = 0;
+	mutex->__mlibc_flags = 0;
+
+	if(type == PTHREAD_MUTEX_RECURSIVE) {
+		mutex->__mlibc_flags |= mutexRecursive;
 	}else{
-		assert(!"Illegal mutex attributes");
+		assert(type == PTHREAD_MUTEX_NORMAL);
 	}
 	
-	assert(attr->__mlibc_robust == PTHREAD_MUTEX_STALLED);
+	assert(robust == PTHREAD_MUTEX_STALLED);
 	
 	return 0;
 }
@@ -231,6 +315,8 @@ int pthread_mutex_destroy(pthread_mutex_t *) {
 }
 
 int pthread_mutex_lock(pthread_mutex_t *mutex) {
+	SCOPE_TRACE();
+
 	unsigned int expected = 0;
 	while(true) {
 		if(!expected) {
@@ -251,6 +337,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 			}else{
 				// otherwise we have to set the waiters flag first.
 				unsigned int desired = expected | waiters;
+				frigg::infoLogger() << desired << frigg::endLog;
 				if(__atomic_compare_exchange_n((int *)&mutex->__mlibc_state,
 						&expected, desired, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED))
 					expected = desired;
@@ -268,7 +355,10 @@ int pthread_mutex_timedlock(pthread_mutex_t *__restrict,
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int pthread_mutex_unlock(pthread_mutex_t *mutex) {
+	SCOPE_TRACE();
+
 	// reset the mutex to the unlocked state.
 	auto state = __atomic_exchange_n(&mutex->__mlibc_state, 0, __ATOMIC_RELEASE);
 	__ensure((state & ~waiters) == 1);
@@ -310,27 +400,42 @@ int pthread_cond_init(pthread_cond_t *__restrict, const pthread_condattr_t *__re
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int pthread_cond_destroy(pthread_cond_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	SCOPE_TRACE();
+
+	return 0;
 }
 
-int pthread_cond_wait(pthread_cond_t *__restrict, pthread_mutex_t *__restrict) {
+int pthread_cond_wait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restrict mutex) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
+/*
+	auto seq = __atomic_load_n(&cond->__mlibc_seq, __ATOMIC_RELAXED);
+	// TODO: do proper error handling here.
+	if(pthread_mutex_unlock(mutex))
+		__ensure(!"Failed to unlock the mutex");
+	HEL_CHECK(helFutexWait(&cond->__mlibc_seq, seq));
+	return 0;*/
 }
 int pthread_cond_timedwait(pthread_cond_t *__restrict, pthread_mutex_t *__restrict,
 		const struct timespec *__restrict) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int pthread_cond_signal(pthread_cond_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int pthread_cond_signal(pthread_cond_t *cond) {
+	SCOPE_TRACE();
+
+	return pthread_cond_broadcast(cond);
 }
-int pthread_cond_broadcast(pthread_cond_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int pthread_cond_broadcast(pthread_cond_t *cond) {
+	SCOPE_TRACE();
+
+	__atomic_fetch_add(&cond->__mlibc_seq, 1, __ATOMIC_RELAXED);
+	HEL_CHECK(helFutexWake((int *)&cond->__mlibc_seq));
+	return 0;
 }
 
 
