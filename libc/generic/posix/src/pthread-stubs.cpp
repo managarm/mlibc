@@ -438,4 +438,33 @@ int pthread_cond_broadcast(pthread_cond_t *cond) {
 	return 0;
 }
 
+// ----------------------------------------------------------------------------
+// pthread_barrierattr and pthread_barrier functions.
+// ----------------------------------------------------------------------------
+
+int pthread_barrierattr_init(pthread_barrierattr_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int pthread_barrierattr_destroy(pthread_barrierattr_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_barrier_init(pthread_barrier_t *__restrict, const pthread_barrierattr_t *__restrict,
+		unsigned int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int pthread_barrier_destroy(pthread_barrier_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_barrier_wait(pthread_barrier_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+
 

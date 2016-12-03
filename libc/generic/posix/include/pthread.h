@@ -85,6 +85,16 @@ struct  __mlibc_cond {
 };
 typedef struct __mlibc_cond pthread_cond_t;
 
+struct  __mlibc_barrierattr_struct {
+};
+typedef struct __mlibc_barrierattr pthread_barrierattr_t;
+
+struct  __mlibc_barrier {
+	unsigned int __mlibc_waiting;
+	unsigned int __mlibc_count;
+};
+typedef struct __mlibc_barrier pthread_barrier_t;
+
 // ----------------------------------------------------------------------------
 // pthread_attr and pthread functions.
 // ----------------------------------------------------------------------------
@@ -179,6 +189,19 @@ int pthread_cond_timedwait(pthread_cond_t *__restrict, pthread_mutex_t *__restri
 		const struct timespec *__restrict);
 int pthread_cond_signal(pthread_cond_t *);
 int pthread_cond_broadcast(pthread_cond_t *);
+
+// ----------------------------------------------------------------------------
+// pthread_barrierattr and pthread_barrier functions.
+// ----------------------------------------------------------------------------
+
+int pthread_barrierattr_init(pthread_barrierattr_t *);
+int pthread_barrierattr_destroy(pthread_barrierattr_t *);
+
+int pthread_barrier_init(pthread_barrier_t *__restrict, const pthread_barrierattr_t *__restrict,
+		unsigned int);
+int pthread_barrier_destroy(pthread_barrier_t *);
+
+int pthread_barrier_wait(pthread_barrier_t *);
 
 #ifdef __cplusplus
 }
