@@ -181,7 +181,10 @@ int open(const char *path, int flags, ...) {
 //	frigg::infoLogger.log() << "mlibc: open(\""
 //			<< path << "\") called!" << frigg::EndLog();
 	HelAction actions[4];
-	HelEvent results[4];
+	HelSimpleResult *offer;
+	HelSimpleResult *send_req;
+	HelInlineResult *recv_resp;
+	HelHandleResult *pull_lane;
 
 	managarm::posix::ClientRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::ClientRequestType::OPEN);
@@ -189,40 +192,37 @@ int open(const char *path, int flags, ...) {
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
-	uint8_t buffer[128];
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
 	actions[1].type = kHelActionSendFromBuffer;
 	actions[1].flags = kHelItemChain;
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvToBuffer;
+	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = kHelItemChain;
-	actions[2].buffer = buffer;
-	actions[2].length = 128;
 	actions[3].type = kHelActionPullDescriptor;
 	actions[3].flags = 0;
-	assert(!"Fix this");
-	//HEL_CHECK(helSubmitAsync(posixPipe.getHandle(), actions, 4, eventHub.getHandle(), 0));
+	HEL_CHECK(helSubmitAsync(posixPipe.getHandle(), actions, 4,
+			globalQueue.getQueue(), 0));
 
-	results[0] = eventHub.waitForEvent(0);
-	results[1] = eventHub.waitForEvent(0);
-	results[2] = eventHub.waitForEvent(0);
-	results[3] = eventHub.waitForEvent(0);
+	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
+	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
+	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
+	pull_lane = (HelHandleResult *)globalQueue.dequeueSingle();
 
-	HEL_CHECK(results[0].error);
-	HEL_CHECK(results[1].error);
-	HEL_CHECK(results[2].error);
-	HEL_CHECK(results[3].error);
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(pull_lane->error);
 	
 	managarm::posix::ServerResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(buffer, results[2].length);
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		errno = ENOENT;
 		return -1;
 	}else{
 		assert(resp.error() == managarm::posix::Errors::SUCCESS);
-		return __mlibc_pushFd(results[3].handle);
+		return __mlibc_pushFd(pull_lane->handle);
 	}
 }
 
@@ -298,7 +298,6 @@ ssize_t write(int fd, const void *data, size_t size) {
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
-	uint8_t buffer[128];
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
 	actions[1].type = kHelActionSendFromBuffer;
@@ -309,10 +308,8 @@ ssize_t write(int fd, const void *data, size_t size) {
 	actions[2].flags = kHelItemChain;
 	actions[2].buffer = const_cast<void *>(data);
 	actions[2].length = size;
-	actions[3].type = kHelActionRecvToBuffer;
+	actions[3].type = kHelActionRecvInline;
 	actions[3].flags = 0;
-	actions[3].buffer = buffer;
-	actions[3].length = 128;
 	HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 4,
 			globalQueue.getQueue(), 0));
 
@@ -403,7 +400,10 @@ off_t lseek(int fd, off_t offset, int whence) {
 
 HelHandle __raw_map(int fd) {
 	HelAction actions[4];
-	HelEvent results[4];
+	HelSimpleResult *offer;
+	HelSimpleResult *send_req;
+	HelInlineResult *recv_resp;
+	HelHandleResult *pull_memory;
 
 	auto file_it = getFileMap().get(fd);
 	assert(file_it);
@@ -414,36 +414,33 @@ HelHandle __raw_map(int fd) {
 	
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
-	uint8_t buffer[128];
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
 	actions[1].type = kHelActionSendFromBuffer;
 	actions[1].flags = kHelItemChain;
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvToBuffer;
+	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = kHelItemChain;
-	actions[2].buffer = buffer;
-	actions[2].length = 128;
 	actions[3].type = kHelActionPullDescriptor;
 	actions[3].flags = 0;
-	assert(!"Fix this");
-	//HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 4, eventHub.getHandle(), 0));
+	HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 4,
+			globalQueue.getQueue(), 0));
 
-	results[0] = eventHub.waitForEvent(0);
-	results[1] = eventHub.waitForEvent(0);
-	results[2] = eventHub.waitForEvent(0);
-	results[3] = eventHub.waitForEvent(0);
+	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
+	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
+	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
+	pull_memory = (HelHandleResult *)globalQueue.dequeueSingle();
 
-	HEL_CHECK(results[0].error);
-	HEL_CHECK(results[1].error);
-	HEL_CHECK(results[2].error);
-	HEL_CHECK(results[3].error);
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(pull_memory->error);
 	
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(buffer, results[2].length);
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	assert(resp.error() == managarm::fs::Errors::SUCCESS);
-	return results[3].handle;
+	return pull_memory->handle;
 }
 
 int close(int fd) {
