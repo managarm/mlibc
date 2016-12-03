@@ -25,6 +25,53 @@
 #include <posix.frigg_pb.hpp>
 #include <fs.frigg_pb.hpp>
 
+struct Queue {
+	Queue()
+	: _queue(nullptr), _progress(0) { }
+
+	HelQueue *getQueue() {
+		if(!_queue) {
+			auto ptr = getAllocator().allocate(sizeof(HelQueue) + 4096);
+			_queue = reinterpret_cast<HelQueue *>(ptr);
+			_queue->elementLimit = 128;
+			_queue->queueLength = 4096;
+			_queue->kernelState = 0;
+			_queue->userState = 0;
+		}
+		return _queue;
+	}
+
+	void *dequeueSingle() {
+		assert(_queue);
+
+		auto e = __atomic_load_n(&_queue->kernelState, __ATOMIC_ACQUIRE);
+		while(true) {
+			if(_progress < (e & kHelQueueTail)) {
+				auto ptr = (char *)_queue + sizeof(HelQueue) + _progress;
+				auto elem = reinterpret_cast<HelElement *>(ptr);
+				_progress += sizeof(HelElement) + elem->length;
+				return ptr + sizeof(HelElement);
+			}
+
+			if(!(e & kHelQueueWaiters)) {
+				auto d = e | kHelQueueWaiters;
+				if(__atomic_compare_exchange_n(&_queue->kernelState,
+						&e, d, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
+					e = d;
+			}else{
+				HEL_CHECK(helFutexWait((int *)&_queue->kernelState, e));
+				e = __atomic_load_n(&_queue->kernelState, __ATOMIC_ACQUIRE);
+			}
+		}
+	}
+
+private:
+	HelQueue *_queue;
+	size_t _progress;
+};
+
+thread_local Queue globalQueue;
+
 using FileMap = frigg::Hashmap<
 	int,
 	helx::Pipe,
@@ -155,7 +202,8 @@ int open(const char *path, int flags, ...) {
 	actions[2].length = 128;
 	actions[3].type = kHelActionPullDescriptor;
 	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(posixPipe.getHandle(), actions, 4, eventHub.getHandle(), 0));
+	assert(!"Fix this");
+	//HEL_CHECK(helSubmitAsync(posixPipe.getHandle(), actions, 4, eventHub.getHandle(), 0));
 
 	results[0] = eventHub.waitForEvent(0);
 	results[1] = eventHub.waitForEvent(0);
@@ -181,7 +229,10 @@ int open(const char *path, int flags, ...) {
 ssize_t read(int fd, void *data, size_t max_size){
 	//frigg::infoLogger() << "read() " << max_size << frigg::EndLog();
 	HelAction actions[4];
-	HelEvent results[4];
+	HelSimpleResult *offer;
+	HelSimpleResult *send_req;
+	HelInlineResult *recv_resp;
+	HelLengthResult *recv_data;
 
 	auto file_it = getFileMap().get(fd);
 	assert(file_it);
@@ -193,35 +244,33 @@ ssize_t read(int fd, void *data, size_t max_size){
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
-	uint8_t buffer[128];
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
 	actions[1].type = kHelActionSendFromBuffer;
 	actions[1].flags = kHelItemChain;
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvToBuffer;
+	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = kHelItemChain;
-	actions[2].buffer = buffer;
-	actions[2].length = 128;
 	actions[3].type = kHelActionRecvToBuffer;
 	actions[3].flags = 0;
 	actions[3].buffer = data;
 	actions[3].length = max_size;
-	HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 4, eventHub.getHandle(), 0));
+	HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 4,
+			globalQueue.getQueue(), 0));
 
-	results[0] = eventHub.waitForEvent(0);
-	results[1] = eventHub.waitForEvent(0);
-	results[2] = eventHub.waitForEvent(0);
-	results[3] = eventHub.waitForEvent(0);
+	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
+	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
+	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
+	recv_data = (HelLengthResult *)globalQueue.dequeueSingle();
 
-	HEL_CHECK(results[0].error);
-	HEL_CHECK(results[1].error);
-	HEL_CHECK(results[2].error);
-	HEL_CHECK(results[3].error);
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(recv_data->error);
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(buffer, results[2].length);
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 /*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
 		errno = EBADF;
 		return -1;
@@ -229,12 +278,15 @@ ssize_t read(int fd, void *data, size_t max_size){
 		return 0;
 	}
 	assert(resp.error() == managarm::fs::Errors::SUCCESS);
-	return results[3].length;
+	return recv_data->length;
 }
 
 ssize_t write(int fd, const void *data, size_t size) {
 	HelAction actions[4];
-	HelEvent results[4];
+	HelSimpleResult *offer;
+	HelSimpleResult *send_req;
+	HelSimpleResult *send_data;
+	HelInlineResult *recv_resp;
 
 	auto file_it = getFileMap().get(fd);
 	assert(file_it);
@@ -261,20 +313,21 @@ ssize_t write(int fd, const void *data, size_t size) {
 	actions[3].flags = 0;
 	actions[3].buffer = buffer;
 	actions[3].length = 128;
-	HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 4, eventHub.getHandle(), 0));
+	HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 4,
+			globalQueue.getQueue(), 0));
 
-	results[0] = eventHub.waitForEvent(0);
-	results[1] = eventHub.waitForEvent(0);
-	results[2] = eventHub.waitForEvent(0);
-	results[3] = eventHub.waitForEvent(0);
+	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
+	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
+	send_data = (HelSimpleResult *)globalQueue.dequeueSingle();
+	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
 
-	HEL_CHECK(results[0].error);
-	HEL_CHECK(results[1].error);
-	HEL_CHECK(results[2].error);
-	HEL_CHECK(results[3].error);
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(send_data->error);
+	HEL_CHECK(recv_resp->error);
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(buffer, results[3].length);
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	assert(resp.error() == managarm::fs::Errors::SUCCESS);
 
 	// TODO: implement NO_SUCH_FD
@@ -324,7 +377,8 @@ off_t lseek(int fd, off_t offset, int whence) {
 	actions[2].flags = 0;
 	actions[2].buffer = buffer;
 	actions[2].length = 128;
-	HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 3, eventHub.getHandle(), 0));
+	assert(!"Fix this");
+	//HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 3, eventHub.getHandle(), 0));
 
 	results[0] = eventHub.waitForEvent(0);
 	results[1] = eventHub.waitForEvent(0);
@@ -373,7 +427,8 @@ HelHandle __raw_map(int fd) {
 	actions[2].length = 128;
 	actions[3].type = kHelActionPullDescriptor;
 	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 4, eventHub.getHandle(), 0));
+	assert(!"Fix this");
+	//HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 4, eventHub.getHandle(), 0));
 
 	results[0] = eventHub.waitForEvent(0);
 	results[1] = eventHub.waitForEvent(0);
