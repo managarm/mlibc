@@ -88,7 +88,7 @@ thread_local Queue globalQueue;
 
 using FileMap = frigg::Hashmap<
 	int,
-	helx::Pipe,
+	HelHandle,
 	frigg::DefaultHasher<int>,
 	MemoryAllocator
 >;
@@ -107,7 +107,7 @@ void __mlibc_initFs() {
 	unsigned long openfiles;
 	if(!peekauxval(AT_OPENFILES, &openfiles)) {
 		for(auto entry = (FileEntry *)openfiles; entry->fd != -1; ++entry)
-			getFileMap().insert(entry->fd, helx::Pipe(entry->pipe));
+			getFileMap().insert(entry->fd, entry->pipe);
 	}
 }
 
@@ -117,7 +117,7 @@ int __mlibc_pushFd(HelHandle handle) {
 		auto it = getFileMap().get(fd);
 		if(it)
 			continue;
-		getFileMap().insert(fd, helx::Pipe(handle));
+		getFileMap().insert(fd, handle);
 		return fd;
 	}
 }
@@ -125,7 +125,7 @@ int __mlibc_pushFd(HelHandle handle) {
 HelHandle __mlibc_getPassthrough(int fd) {
 	auto file_it = getFileMap().get(fd);
 	assert(file_it);
-	return file_it->getHandle();
+	return *file_it;
 }
 
 int stat(const char *__restrict path, struct stat *__restrict result) {
@@ -146,7 +146,7 @@ int stat(const char *__restrict path, struct stat *__restrict result) {
 
 int fstat(int fd, struct stat *result) {
 	assert(!"Fix this");
-	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
+/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::FSTAT);
 	request.set_fd(fd);
 
@@ -188,7 +188,7 @@ int fstat(int fd, struct stat *result) {
 	}else{
 		__ensure(!"Unexpected error");
 		__builtin_unreachable();
-	}
+	}*/
 }
 
 int open(const char *path, int flags, ...) {
@@ -218,7 +218,7 @@ int open(const char *path, int flags, ...) {
 	actions[2].flags = kHelItemChain;
 	actions[3].type = kHelActionPullDescriptor;
 	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(posixPipe.getHandle(), actions, 4,
+	HEL_CHECK(helSubmitAsync(posixPipe, actions, 4,
 			globalQueue.getQueue(), 0));
 
 	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
@@ -274,7 +274,7 @@ ssize_t read(int fd, void *data, size_t max_size){
 	actions[3].flags = 0;
 	actions[3].buffer = data;
 	actions[3].length = max_size;
-	HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 4,
+	HEL_CHECK(helSubmitAsync(*file_it, actions, 4,
 			globalQueue.getQueue(), 0));
 
 	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
@@ -330,7 +330,7 @@ ssize_t write(int fd, const void *data, size_t size) {
 	actions[2].length = size;
 	actions[3].type = kHelActionRecvInline;
 	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 4,
+	HEL_CHECK(helSubmitAsync(*file_it, actions, 4,
 			globalQueue.getQueue(), 0));
 
 	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
@@ -361,7 +361,8 @@ ssize_t write(int fd, const void *data, size_t size) {
 }
 
 off_t lseek(int fd, off_t offset, int whence) {
-	HelAction actions[3];
+	assert(!"Fix this");
+	/*HelAction actions[3];
 	HelEvent results[3];
 
 	auto file_it = getFileMap().get(fd);
@@ -394,7 +395,6 @@ off_t lseek(int fd, off_t offset, int whence) {
 	actions[2].flags = 0;
 	actions[2].buffer = buffer;
 	actions[2].length = 128;
-	assert(!"Fix this");
 	//HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 3, eventHub.getHandle(), 0));
 
 	results[0] = eventHub.waitForEvent(0);
@@ -407,15 +407,15 @@ off_t lseek(int fd, off_t offset, int whence) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(buffer, results[2].length);
-	/*if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
+	*//*if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
 		errno = EBADF;		
 		return -1;
-	}else*/ if(resp.error() == managarm::fs::Errors::SUCCESS) {
+	}else*//* if(resp.error() == managarm::fs::Errors::SUCCESS) {
 		return resp.offset();
 	}else{
 		__ensure(!"Unexpected error");
 		__builtin_unreachable();
-	}
+	}*/
 }
 
 HelHandle __raw_map(int fd) {
@@ -446,7 +446,7 @@ HelHandle __raw_map(int fd) {
 	actions[2].flags = kHelItemChain;
 	actions[3].type = kHelActionPullDescriptor;
 	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 4,
+	HEL_CHECK(helSubmitAsync(*file_it, actions, 4,
 			globalQueue.getQueue(), 0));
 
 	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
@@ -467,7 +467,7 @@ HelHandle __raw_map(int fd) {
 
 int close(int fd) {
 	assert(!"Fix this");
-	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
+/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::CLOSE);
 	request.set_fd(fd);
 
@@ -495,12 +495,12 @@ int close(int fd) {
 	}else{
 		__ensure(!"Unexpected error");
 		__builtin_unreachable();
-	}
+	}*/
 }
 
 int dup2(int src_fd, int dest_fd) {
 	assert(!"Fix this");
-	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
+/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::DUP2);
 	request.set_fd(src_fd);
 	request.set_newfd(dest_fd);
@@ -529,7 +529,7 @@ int dup2(int src_fd, int dest_fd) {
 	}else {
 		__ensure(!"Unexpected error");
 		__builtin_unreachable();
-	}
+	}*/
 }
 
 int fcntl(int, int, ...) {
@@ -539,7 +539,7 @@ int fcntl(int, int, ...) {
 
 int isatty(int fd) {
 	assert(!"Fix this");
-	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
+/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::TTY_NAME);
 	request.set_fd(fd);
 
@@ -567,13 +567,13 @@ int isatty(int fd) {
 	}else {
 		__ensure(!"Unexpected error");
 		__builtin_unreachable();
-	}
+	}*/
 }
 
 char *ttyname(int fd) {
 	assert(!"Fix this");
 	// TODO: this is not thread-safe.
-	frigg::String<MemoryAllocator> cache(getAllocator());
+/*	frigg::String<MemoryAllocator> cache(getAllocator());
 	
 	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::TTY_NAME);
@@ -604,7 +604,7 @@ char *ttyname(int fd) {
 	}else {
 		__ensure(!"Unexpected error");
 		__builtin_unreachable();
-	}
+	}*/
 }
 
 int tcgetattr(int fd, struct termios *attr) {

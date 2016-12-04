@@ -11,12 +11,8 @@
 
 #include <hel.h>
 #include <hel-syscalls.h>
-#include <helx.hpp>
 
-extern helx::EventHub eventHub;
-extern helx::Pipe posixPipe;
-
-int64_t allocPosixRequest();
+extern HelHandle posixPipe;
 
 #endif // MLIBC_POSIX_PIPE
 

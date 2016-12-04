@@ -31,7 +31,8 @@ void __mlibc_reinitPosixPipe();
 extern "C" pid_t __mlibc_enterFork();
 
 extern "C" pid_t __mlibc_doFork(uintptr_t child_ip, uintptr_t child_sp) {
-	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
+	assert(!"Fix this");
+/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::FORK);
 	request.set_child_ip(child_ip);
 	request.set_child_sp(child_sp);
@@ -54,7 +55,7 @@ extern "C" pid_t __mlibc_doFork(uintptr_t child_ip, uintptr_t child_sp) {
 	response.ParseFromArray(buffer, length);
 	assert(response.error() == managarm::posix::Errors::SUCCESS);
 	
-	return response.pid();
+	return response.pid();*/
 }
 
 extern "C" void __mlibc_fixForkedChild() {
@@ -76,7 +77,8 @@ gid_t getegid(void) {
 }
 
 pid_t getpid(void) {
-	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
+	assert(!"Fix this");
+/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::GET_PID);
 
 	int64_t request_num = allocPosixRequest();
@@ -96,7 +98,7 @@ pid_t getpid(void) {
 	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	assert(response.error() == managarm::posix::Errors::SUCCESS);
-	return response.pid();
+	return response.pid();*/
 }
 pid_t getppid(void) {
 	frigg::infoLogger() << "mlibc: Broken getppid() called" << frigg::endLog;
@@ -108,7 +110,8 @@ pid_t fork(void) {
 }
 
 int execve(const char *path, char *const argv[], char *const envp[]) {
-	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
+	assert(!"Fix this");
+/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::EXEC);
 	request.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
 
@@ -134,7 +137,7 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
 	}else{
 		__ensure(!"Unexpected error in execve()!");
 		__builtin_unreachable();
-	}
+	}*/
 }
 
 pid_t waitpid(pid_t pid, int *status, int flags) {

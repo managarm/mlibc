@@ -14,7 +14,8 @@
 #include <posix.frigg_pb.hpp>
 
 int connect(int fd, const struct sockaddr *address, socklen_t addr_length) {
-	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
+	assert(!"Fix this");
+/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::CONNECT);
 	request.set_fd(fd);
 
@@ -42,5 +43,5 @@ int connect(int fd, const struct sockaddr *address, socklen_t addr_length) {
 	}else{
 		__ensure(!"Unexpected error");
 		__builtin_unreachable();
-	}
+	}*/
 }

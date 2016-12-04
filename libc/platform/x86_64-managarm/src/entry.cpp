@@ -19,8 +19,7 @@ void __mlibc_initStdio();
 void __mlibc_initFs();
 
 // declared in posix-pipe.hpp
-helx::EventHub eventHub = helx::EventHub::create();
-helx::Pipe posixPipe;
+HelHandle posixPipe;
 
 // declared in posix-pipe.hpp
 int64_t allocPosixRequest() {
@@ -34,7 +33,7 @@ void __mlibc_reinitPosixPipe() {
 	if(peekauxval(AT_POSIX_SERVER, &posix_server))
 		__ensure(!"No AT_POSIX_SERVER specified");
 
-	posixPipe = helx::Pipe(posix_server);
+	posixPipe = HelHandle(posix_server);
 }
 
 struct LibraryGuard {
