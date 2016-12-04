@@ -46,7 +46,11 @@ struct Queue {
 
 		auto e = __atomic_load_n(&_queue->kernelState, __ATOMIC_ACQUIRE);
 		while(true) {
-			if(_progress < (e & kHelQueueTail)) {
+			assert(!(e & kHelQueueWantNext));
+
+			if(_progress != (e & kHelQueueTail)) {
+				assert(_progress < (e & kHelQueueTail));
+
 				auto ptr = (char *)_queue + sizeof(HelQueue) + _progress;
 				auto elem = reinterpret_cast<HelElement *>(ptr);
 				_progress += sizeof(HelElement) + elem->length;
@@ -63,6 +67,16 @@ struct Queue {
 				e = __atomic_load_n(&_queue->kernelState, __ATOMIC_ACQUIRE);
 			}
 		}
+	}
+
+	void trim() {
+		if(!_queue)
+			return;
+
+		// for now we just reset the queue.
+		_queue->kernelState = 0;
+		_queue->userState = 0;
+		_progress = 0;
 	}
 
 private:
@@ -186,6 +200,8 @@ int open(const char *path, int flags, ...) {
 	HelInlineResult *recv_resp;
 	HelHandleResult *pull_lane;
 
+	globalQueue.trim();
+
 	managarm::posix::ClientRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::ClientRequestType::OPEN);
 	req.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
@@ -233,6 +249,8 @@ ssize_t read(int fd, void *data, size_t max_size){
 	HelSimpleResult *send_req;
 	HelInlineResult *recv_resp;
 	HelLengthResult *recv_data;
+
+	globalQueue.trim();
 
 	auto file_it = getFileMap().get(fd);
 	assert(file_it);
@@ -287,6 +305,8 @@ ssize_t write(int fd, const void *data, size_t size) {
 	HelSimpleResult *send_req;
 	HelSimpleResult *send_data;
 	HelInlineResult *recv_resp;
+
+	globalQueue.trim();
 
 	auto file_it = getFileMap().get(fd);
 	assert(file_it);
@@ -404,6 +424,8 @@ HelHandle __raw_map(int fd) {
 	HelSimpleResult *send_req;
 	HelInlineResult *recv_resp;
 	HelHandleResult *pull_memory;
+
+	globalQueue.trim();
 
 	auto file_it = getFileMap().get(fd);
 	assert(file_it);
