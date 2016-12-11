@@ -146,8 +146,8 @@ int stat(const char *__restrict path, struct stat *__restrict result) {
 
 int fstat(int fd, struct stat *result) {
 	assert(!"Fix this");
-/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::ClientRequestType::FSTAT);
+/*	managarm::posix::CntRequest<MemoryAllocator> request(getAllocator());
+	request.set_request_type(managarm::posix::CntReqType::FSTAT);
 	request.set_fd(fd);
 
 	int64_t request_num = allocPosixRequest();
@@ -164,7 +164,7 @@ int fstat(int fd, struct stat *result) {
 	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
+	managarm::posix::SvrResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	if(response.error() == managarm::posix::Errors::SUCCESS) {
 		memset(result, 0, sizeof(struct stat));
@@ -202,8 +202,8 @@ int open(const char *path, int flags, ...) {
 
 	globalQueue.trim();
 
-	managarm::posix::ClientRequest<MemoryAllocator> req(getAllocator());
-	req.set_request_type(managarm::posix::ClientRequestType::OPEN);
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::OPEN);
 	req.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
@@ -231,7 +231,7 @@ int open(const char *path, int flags, ...) {
 	HEL_CHECK(recv_resp->error);
 	HEL_CHECK(pull_lane->error);
 	
-	managarm::posix::ServerResponse<MemoryAllocator> resp(getAllocator());
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		errno = ENOENT;
@@ -467,8 +467,8 @@ HelHandle __raw_map(int fd) {
 
 int close(int fd) {
 	assert(!"Fix this");
-/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::ClientRequestType::CLOSE);
+/*	managarm::posix::CntRequest<MemoryAllocator> request(getAllocator());
+	request.set_request_type(managarm::posix::CntReqType::CLOSE);
 	request.set_fd(fd);
 
 	int64_t request_num = allocPosixRequest();
@@ -485,7 +485,7 @@ int close(int fd) {
 	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
+	managarm::posix::SvrResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	if(response.error() == managarm::posix::Errors::NO_SUCH_FD) {
 		errno = EBADF;		
@@ -500,8 +500,8 @@ int close(int fd) {
 
 int dup2(int src_fd, int dest_fd) {
 	assert(!"Fix this");
-/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::ClientRequestType::DUP2);
+/*	managarm::posix::CntRequest<MemoryAllocator> request(getAllocator());
+	request.set_request_type(managarm::posix::CntReqType::DUP2);
 	request.set_fd(src_fd);
 	request.set_newfd(dest_fd);
 
@@ -519,7 +519,7 @@ int dup2(int src_fd, int dest_fd) {
 	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
+	managarm::posix::SvrResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	if(response.error() == managarm::posix::Errors::SUCCESS) {
 		return dest_fd;
@@ -539,8 +539,8 @@ int fcntl(int, int, ...) {
 
 int isatty(int fd) {
 	assert(!"Fix this");
-/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::ClientRequestType::TTY_NAME);
+/*	managarm::posix::CntRequest<MemoryAllocator> request(getAllocator());
+	request.set_request_type(managarm::posix::CntReqType::TTY_NAME);
 	request.set_fd(fd);
 
 	int64_t request_num = allocPosixRequest();
@@ -557,7 +557,7 @@ int isatty(int fd) {
 	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
+	managarm::posix::SvrResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	if(response.error() == managarm::posix::Errors::SUCCESS) {
 		return 1;
@@ -575,8 +575,8 @@ char *ttyname(int fd) {
 	// TODO: this is not thread-safe.
 /*	frigg::String<MemoryAllocator> cache(getAllocator());
 	
-	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::ClientRequestType::TTY_NAME);
+	managarm::posix::CntRequest<MemoryAllocator> request(getAllocator());
+	request.set_request_type(managarm::posix::CntReqType::TTY_NAME);
 	request.set_fd(fd);
 
 	int64_t request_num = allocPosixRequest();
@@ -593,7 +593,7 @@ char *ttyname(int fd) {
 	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
 	HEL_CHECK(response_error);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
+	managarm::posix::SvrResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
 	if(response.error() == managarm::posix::Errors::SUCCESS) {
 		cache = response.path();
