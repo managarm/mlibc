@@ -97,18 +97,8 @@ FileMap &getFileMap() {
 	static FileMap singleton(frigg::DefaultHasher<int>(), getAllocator());
 	return singleton;
 }
-
-void __mlibc_initFs() {
-	struct FileEntry {
-		int fd;
-		HelHandle pipe;
-	};
-
-	unsigned long openfiles;
-	if(!peekauxval(AT_OPENFILES, &openfiles)) {
-		for(auto entry = (FileEntry *)openfiles; entry->fd != -1; ++entry)
-			getFileMap().insert(entry->fd, entry->pipe);
-	}
+void __mlibc_setFd(int fd, HelHandle handle) {
+	getFileMap().insert(fd, handle);
 }
 
 int __mlibc_pushFd(HelHandle handle) {
@@ -121,6 +111,20 @@ int __mlibc_pushFd(HelHandle handle) {
 		return fd;
 	}
 }
+
+void __mlibc_initFs() {
+	struct FileEntry {
+		int fd;
+		HelHandle pipe;
+	};
+
+	unsigned long openfiles;
+	if(!peekauxval(AT_OPENFILES, &openfiles)) {
+		for(auto entry = (FileEntry *)openfiles; entry->fd != -1; ++entry)
+			__mlibc_setFd(entry->fd, entry->pipe);
+	}
+}
+
 
 HelHandle __mlibc_getPassthrough(int fd) {
 	auto file_it = getFileMap().get(fd);
@@ -499,37 +503,49 @@ int close(int fd) {
 }
 
 int dup2(int src_fd, int dest_fd) {
-	assert(!"Fix this");
-/*	managarm::posix::CntRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::CntReqType::DUP2);
-	request.set_fd(src_fd);
-	request.set_newfd(dest_fd);
+	HelAction actions[4];
+	HelSimpleResult *offer;
+	HelSimpleResult *send_req;
+	HelInlineResult *recv_resp;
+	HelHandleResult *pull_lane;
 
-	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(getAllocator());
-	request.SerializeToString(&serialized);
-	HelError error;
-	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
-			eventHub, request_num, 0, error);
-	HEL_CHECK(error);
+	globalQueue.trim();
 
-	int8_t buffer[128];
-	size_t length;
-	HelError response_error;
-	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
-	HEL_CHECK(response_error);
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::DUP2);
+	req.set_fd(src_fd);
+	req.set_newfd(dest_fd);
 
-	managarm::posix::SvrResponse<MemoryAllocator> response(getAllocator());
-	response.ParseFromArray(buffer, length);
-	if(response.error() == managarm::posix::Errors::SUCCESS) {
-		return dest_fd;
-	}else if(response.error() ==  managarm::posix::Errors::NO_SUCH_FD) {
-		errno = EBADF;
-		return -1;
-	}else {
-		__ensure(!"Unexpected error");
-		__builtin_unreachable();
-	}*/
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = kHelItemChain;
+	actions[3].type = kHelActionPullDescriptor;
+	actions[3].flags = 0;
+	HEL_CHECK(helSubmitAsync(posixPipe, actions, 4,
+			globalQueue.getQueue(), 0));
+
+	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
+	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
+	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
+	pull_lane = (HelHandleResult *)globalQueue.dequeueSingle();
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(pull_lane->error);
+	
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	assert(resp.error() == managarm::posix::Errors::SUCCESS);
+	__mlibc_setFd(dest_fd, pull_lane->handle);
+	return dest_fd;
 }
 
 int fcntl(int, int, ...) {
