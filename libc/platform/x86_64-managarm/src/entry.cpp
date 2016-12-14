@@ -19,21 +19,9 @@ void __mlibc_initStdio();
 void __mlibc_initFs();
 
 // declared in posix-pipe.hpp
-HelHandle posixPipe;
-
-// declared in posix-pipe.hpp
 int64_t allocPosixRequest() {
 	static int64_t next = 1;
 	return next++;
-}
-
-// TODO: this function needs to be removed after we fix fork() semantics.
-void __mlibc_reinitPosixPipe() {
-	unsigned long posix_server;
-	if(peekauxval(AT_POSIX_SERVER, &posix_server))
-		__ensure(!"No AT_POSIX_SERVER specified");
-
-	posixPipe = HelHandle(posix_server);
 }
 
 struct LibraryGuard {
@@ -46,8 +34,6 @@ LibraryGuard::LibraryGuard() {
 	__mlibc_initLocale();
 	__mlibc_initFs();
 	__mlibc_initStdio();
-
-	__mlibc_reinitPosixPipe();
 }
 
 extern "C" int main(int argc, char *argv[], char *env[]);

@@ -222,7 +222,7 @@ int open(const char *path, int flags, ...) {
 	actions[2].flags = kHelItemChain;
 	actions[3].type = kHelActionPullDescriptor;
 	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(posixPipe, actions, 4,
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 4,
 			globalQueue.getQueue(), 0));
 
 	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
@@ -528,7 +528,7 @@ int dup2(int src_fd, int dest_fd) {
 	actions[2].flags = kHelItemChain;
 	actions[3].type = kHelActionPullDescriptor;
 	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(posixPipe, actions, 4,
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 4,
 			globalQueue.getQueue(), 0));
 
 	offer = (HelSimpleResult *)globalQueue.dequeueSingle();

@@ -24,9 +24,6 @@
 
 #include <posix.frigg_pb.hpp>
 
-// defined in entry.cpp
-void __mlibc_reinitPosixPipe();
-
 // defined in enter-fork.S
 extern "C" pid_t __mlibc_enterFork();
 
@@ -59,7 +56,7 @@ extern "C" pid_t __mlibc_doFork(uintptr_t child_ip, uintptr_t child_sp) {
 }
 
 extern "C" void __mlibc_fixForkedChild() {
-	__mlibc_reinitPosixPipe();
+	// TODO: what do we need to do here?
 }
 
 uid_t getuid(void) {

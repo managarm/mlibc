@@ -12,7 +12,5 @@
 #include <hel.h>
 #include <hel-syscalls.h>
 
-extern HelHandle posixPipe;
-
 #endif // MLIBC_POSIX_PIPE
 
