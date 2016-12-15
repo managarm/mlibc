@@ -12,5 +12,66 @@
 #include <hel.h>
 #include <hel-syscalls.h>
 
+struct Queue {
+	Queue()
+	: _queue(nullptr), _progress(0) { }
+
+	HelQueue *getQueue() {
+		if(!_queue) {
+			auto ptr = getAllocator().allocate(sizeof(HelQueue) + 4096);
+			_queue = reinterpret_cast<HelQueue *>(ptr);
+			_queue->elementLimit = 128;
+			_queue->queueLength = 4096;
+			_queue->kernelState = 0;
+			_queue->userState = 0;
+		}
+		return _queue;
+	}
+
+	void *dequeueSingle() {
+		assert(_queue);
+
+		auto e = __atomic_load_n(&_queue->kernelState, __ATOMIC_ACQUIRE);
+		while(true) {
+			assert(!(e & kHelQueueWantNext));
+
+			if(_progress != (e & kHelQueueTail)) {
+				assert(_progress < (e & kHelQueueTail));
+
+				auto ptr = (char *)_queue + sizeof(HelQueue) + _progress;
+				auto elem = reinterpret_cast<HelElement *>(ptr);
+				_progress += sizeof(HelElement) + elem->length;
+				return ptr + sizeof(HelElement);
+			}
+
+			if(!(e & kHelQueueWaiters)) {
+				auto d = e | kHelQueueWaiters;
+				if(__atomic_compare_exchange_n(&_queue->kernelState,
+						&e, d, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
+					e = d;
+			}else{
+				HEL_CHECK(helFutexWait((int *)&_queue->kernelState, e));
+				e = __atomic_load_n(&_queue->kernelState, __ATOMIC_ACQUIRE);
+			}
+		}
+	}
+
+	void trim() {
+		if(!_queue)
+			return;
+
+		// for now we just reset the queue.
+		_queue->kernelState = 0;
+		_queue->userState = 0;
+		_progress = 0;
+	}
+
+private:
+	HelQueue *_queue;
+	size_t _progress;
+};
+
+extern thread_local Queue globalQueue;
+
 #endif // MLIBC_POSIX_PIPE
 

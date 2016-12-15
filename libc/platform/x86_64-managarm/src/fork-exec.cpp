@@ -28,31 +28,44 @@
 extern "C" pid_t __mlibc_enterFork();
 
 extern "C" pid_t __mlibc_doFork(uintptr_t child_ip, uintptr_t child_sp) {
-	assert(!"Fix this");
-/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::ClientRequestType::FORK);
-	request.set_child_ip(child_ip);
-	request.set_child_sp(child_sp);
+	HelAction actions[3];
+	HelSimpleResult *offer;
+	HelSimpleResult *send_req;
+	HelInlineResult *recv_resp;
 
-	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(getAllocator());
-	request.SerializeToString(&serialized);
-	HelError error;
-	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
-			eventHub, request_num, 0, error);
-	HEL_CHECK(error);
+	globalQueue.trim();
 
-	int8_t buffer[128];
-	size_t length;
-	HelError response_error;
-	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
-	HEL_CHECK(response_error);
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::FORK);
+	req.set_child_ip(child_ip);
+	req.set_child_sp(child_sp);
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
-	response.ParseFromArray(buffer, length);
-	assert(response.error() == managarm::posix::Errors::SUCCESS);
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0));
+
+	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
+	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
+	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	assert(resp.error() == managarm::posix::Errors::SUCCESS);
 	
-	return response.pid();*/
+	return resp.pid();
 }
 
 extern "C" void __mlibc_fixForkedChild() {

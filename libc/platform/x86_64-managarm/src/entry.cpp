@@ -19,6 +19,8 @@ void __mlibc_initStdio();
 void __mlibc_initFs();
 
 // declared in posix-pipe.hpp
+thread_local Queue globalQueue;
+
 int64_t allocPosixRequest() {
 	static int64_t next = 1;
 	return next++;
