@@ -71,6 +71,9 @@ private:
 	size_t _progress;
 };
 
+HelHandle *cacheFileTable();
+void clearCachedInfos();
+
 extern thread_local Queue globalQueue;
 
 #endif // MLIBC_POSIX_PIPE

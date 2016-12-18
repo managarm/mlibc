@@ -25,50 +25,24 @@
 #include <posix.frigg_pb.hpp>
 #include <fs.frigg_pb.hpp>
 
-using FileMap = frigg::Hashmap<
-	int,
-	HelHandle,
-	frigg::DefaultHasher<int>,
-	MemoryAllocator
->;
-
-FileMap &getFileMap() {
-	static FileMap singleton(frigg::DefaultHasher<int>(), getAllocator());
-	return singleton;
-}
 void __mlibc_setFd(int fd, HelHandle handle) {
-	getFileMap().insert(fd, handle);
+	cacheFileTable()[fd] = handle;
 }
 
 int __mlibc_pushFd(HelHandle handle) {
 	// TODO: limit the number of FDs?
 	for(int fd = 0; ; fd++) {
-		auto it = getFileMap().get(fd);
-		if(it)
+		if(cacheFileTable()[fd])
 			continue;
-		getFileMap().insert(fd, handle);
+		cacheFileTable()[fd] = handle;
 		return fd;
 	}
 }
 
-void __mlibc_initFs() {
-	struct FileEntry {
-		int fd;
-		HelHandle pipe;
-	};
-
-	unsigned long openfiles;
-	if(!peekauxval(AT_OPENFILES, &openfiles)) {
-		for(auto entry = (FileEntry *)openfiles; entry->fd != -1; ++entry)
-			__mlibc_setFd(entry->fd, entry->pipe);
-	}
-}
-
-
 HelHandle __mlibc_getPassthrough(int fd) {
-	auto file_it = getFileMap().get(fd);
-	assert(file_it);
-	return *file_it;
+	auto handle = cacheFileTable()[fd];
+	assert(handle);
+	return handle;
 }
 
 int stat(const char *__restrict path, struct stat *__restrict result) {
@@ -195,8 +169,8 @@ ssize_t read(int fd, void *data, size_t max_size){
 
 	globalQueue.trim();
 
-	auto file_it = getFileMap().get(fd);
-	assert(file_it);
+	auto handle = cacheFileTable()[fd];
+	assert(handle);
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_req_type(managarm::fs::CntReqType::READ);
@@ -217,7 +191,7 @@ ssize_t read(int fd, void *data, size_t max_size){
 	actions[3].flags = 0;
 	actions[3].buffer = data;
 	actions[3].length = max_size;
-	HEL_CHECK(helSubmitAsync(*file_it, actions, 4,
+	HEL_CHECK(helSubmitAsync(handle, actions, 4,
 			globalQueue.getQueue(), 0));
 
 	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
@@ -251,8 +225,8 @@ ssize_t write(int fd, const void *data, size_t size) {
 
 	globalQueue.trim();
 
-	auto file_it = getFileMap().get(fd);
-	assert(file_it);
+	auto handle = cacheFileTable()[fd];
+	assert(handle);
 
 //	frigg::infoLogger.log() << "write()" << frigg::EndLog();
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
@@ -273,7 +247,7 @@ ssize_t write(int fd, const void *data, size_t size) {
 	actions[2].length = size;
 	actions[3].type = kHelActionRecvInline;
 	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(*file_it, actions, 4,
+	HEL_CHECK(helSubmitAsync(handle, actions, 4,
 			globalQueue.getQueue(), 0));
 
 	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
@@ -370,8 +344,8 @@ HelHandle __raw_map(int fd) {
 
 	globalQueue.trim();
 
-	auto file_it = getFileMap().get(fd);
-	assert(file_it);
+	auto handle = cacheFileTable()[fd];
+	assert(handle);
 	
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_req_type(managarm::fs::CntReqType::MMAP);
@@ -389,7 +363,7 @@ HelHandle __raw_map(int fd) {
 	actions[2].flags = kHelItemChain;
 	actions[3].type = kHelActionPullDescriptor;
 	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(*file_it, actions, 4,
+	HEL_CHECK(helSubmitAsync(handle, actions, 4,
 			globalQueue.getQueue(), 0));
 
 	offer = (HelSimpleResult *)globalQueue.dequeueSingle();

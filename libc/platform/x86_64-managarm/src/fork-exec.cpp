@@ -24,54 +24,6 @@
 
 #include <posix.frigg_pb.hpp>
 
-// defined in enter-fork.S
-extern "C" pid_t __mlibc_enterFork();
-
-extern "C" pid_t __mlibc_doFork(uintptr_t child_ip, uintptr_t child_sp) {
-	HelAction actions[3];
-	HelSimpleResult *offer;
-	HelSimpleResult *send_req;
-	HelInlineResult *recv_resp;
-
-	globalQueue.trim();
-
-	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_request_type(managarm::posix::CntReqType::FORK);
-	req.set_child_ip(child_ip);
-	req.set_child_sp(child_sp);
-
-	frigg::String<MemoryAllocator> ser(getAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
-			globalQueue.getQueue(), 0));
-
-	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
-	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
-	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	assert(resp.error() == managarm::posix::Errors::SUCCESS);
-	
-	return resp.pid();
-}
-
-extern "C" void __mlibc_fixForkedChild() {
-	// TODO: what do we need to do here?
-}
-
 uid_t getuid(void) {
 	return 0;
 }
@@ -116,7 +68,15 @@ pid_t getppid(void) {
 }
 
 pid_t fork(void) {
-	return __mlibc_enterFork();
+	HelError error;
+	pid_t child;
+	asm volatile ("syscall" : "=D"(error), "=S"(child) : "0"(kHelCallSuper + 2));
+	HEL_CHECK(error);
+	
+	if(!child)
+		clearCachedInfos();
+
+	return child;
 }
 
 int execve(const char *path, char *const argv[], char *const envp[]) {
