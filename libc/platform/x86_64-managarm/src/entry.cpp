@@ -24,26 +24,10 @@ namespace {
 	thread_local HelHandle *cachedFileTable;
 	
 	// This construction is a bit weird: Even though the variables above
-	// are thread_local we still protect their initialization with a pthread_once_t.
-	// We do this in order to able to clear them after a fork.
+	// are thread_local we still protect their initialization with a pthread_once_t
+	// (instead of using a C++ constructor).
+	// We do this in order to able to clear the pthread_once_t after a fork.
 	pthread_once_t hasCachedInfos = PTHREAD_ONCE_INIT;
-
-	void initCachedInfos() {
-		frigg::infoLogger() << "initCachedInfos()" << frigg::endLog;
-		struct FileEntry {
-			int fd;
-			HelHandle pipe;
-		};
-
-		cachedFileTable = (HelHandle *)malloc(sizeof(HelHandle) * 1024);
-		memset(cachedFileTable, 0, sizeof(HelHandle) * 1024);
-
-		unsigned long openfiles;
-		if(!peekauxval(AT_OPENFILES, &openfiles)) {
-			for(auto entry = (FileEntry *)openfiles; entry->fd != -1; ++entry)
-				cachedFileTable[entry->fd] = entry->pipe;
-		}
-	}
 
 	void actuallyCacheInfos() {
 		HelError error;
@@ -70,8 +54,6 @@ static LibraryGuard guard;
 LibraryGuard::LibraryGuard() {
 	__mlibc_initLocale();
 	__mlibc_initStdio();
-
-	pthread_once(&hasCachedInfos, &initCachedInfos);
 }
 
 extern "C" int main(int argc, char *argv[], char *env[]);

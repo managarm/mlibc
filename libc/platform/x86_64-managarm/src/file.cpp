@@ -25,20 +25,6 @@
 #include <posix.frigg_pb.hpp>
 #include <fs.frigg_pb.hpp>
 
-void __mlibc_setFd(int fd, HelHandle handle) {
-	cacheFileTable()[fd] = handle;
-}
-
-int __mlibc_pushFd(HelHandle handle) {
-	// TODO: limit the number of FDs?
-	for(int fd = 0; ; fd++) {
-		if(cacheFileTable()[fd])
-			continue;
-		cacheFileTable()[fd] = handle;
-		return fd;
-	}
-}
-
 HelHandle __mlibc_getPassthrough(int fd) {
 	auto handle = cacheFileTable()[fd];
 	assert(handle);
@@ -155,7 +141,7 @@ int open(const char *path, int flags, ...) {
 		return -1;
 	}else{
 		assert(resp.error() == managarm::posix::Errors::SUCCESS);
-		return __mlibc_pushFd(pull_lane->handle);
+		return resp.fd();
 	}
 }
 
@@ -457,7 +443,6 @@ int dup2(int src_fd, int dest_fd) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	assert(resp.error() == managarm::posix::Errors::SUCCESS);
-	__mlibc_setFd(dest_fd, pull_lane->handle);
 	return dest_fd;
 }
 
