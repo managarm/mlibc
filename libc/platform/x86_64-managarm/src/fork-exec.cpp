@@ -80,34 +80,11 @@ pid_t fork(void) {
 }
 
 int execve(const char *path, char *const argv[], char *const envp[]) {
-	assert(!"Fix this");
-/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::ClientRequestType::EXEC);
-	request.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
-
-	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(getAllocator());
-	request.SerializeToString(&serialized);
-	HelError error;
-	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
-			eventHub, request_num, 0, error);
-	HEL_CHECK(error);
-
-	int8_t buffer[128];
-	size_t length;
-	HelError response_error;
-	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
-	HEL_CHECK(response_error);
-
-	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
-	response.ParseFromArray(buffer, length);
-	if(response.error() == managarm::posix::Errors::SUCCESS) {
-		HEL_CHECK(helExitThisThread());
-		__builtin_unreachable();
-	}else{
-		__ensure(!"Unexpected error in execve()!");
-		__builtin_unreachable();
-	}*/
+	auto length = strlen(path);
+	register uintptr_t r8 asm("r8") = (uintptr_t)path;
+	register uintptr_t r9 asm("r9") = length;
+	asm volatile ("syscall" : : "D"(kHelCallSuper + 3), "r"(r8), "r"(r9));
+	__builtin_trap();
 }
 
 pid_t waitpid(pid_t pid, int *status, int flags) {
