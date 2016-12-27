@@ -97,11 +97,10 @@ int fstat(int fd, struct stat *result) {
 int open(const char *path, int flags, ...) {
 //	frigg::infoLogger.log() << "mlibc: open(\""
 //			<< path << "\") called!" << frigg::EndLog();
-	HelAction actions[4];
+	HelAction actions[3];
 	HelSimpleResult *offer;
 	HelSimpleResult *send_req;
 	HelInlineResult *recv_resp;
-	HelHandleResult *pull_lane;
 
 	globalQueue.trim();
 
@@ -118,21 +117,17 @@ int open(const char *path, int flags, ...) {
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionPullDescriptor;
-	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 4,
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
 			globalQueue.getQueue(), 0));
 
 	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
 	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
 	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
-	pull_lane = (HelHandleResult *)globalQueue.dequeueSingle();
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(pull_lane->error);
 	
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
