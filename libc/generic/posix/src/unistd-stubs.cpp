@@ -3,10 +3,7 @@
 
 #include <mlibc/ensure.h>
 
-int access(const char *path, int mode) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// access() is provided by the platform
 unsigned int alarm(unsigned int seconds) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
