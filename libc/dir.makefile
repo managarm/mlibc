@@ -31,6 +31,11 @@ $c_LIBRARY_OBJS += $($c/generic/lsb_OBJECT_PATHS)
 clean-$c: clean-$c/generic/lsb
 install-headers-$c: install-headers-$c/generic/lsb
 
+$(call include_dir,$c/generic/linux)
+$c_LIBRARY_OBJS += $($c/generic/linux_OBJECT_PATHS)
+clean-$c: clean-$c/generic/linux
+install-headers-$c: install-headers-$c/generic/linux
+
 $(call include_dir,$c/compilers/gcc)
 $c_LIBRARY_OBJS += $($c/compilers/gcc_OBJECT_PATHS)
 clean-$c: clean-$c/compilers/gcc

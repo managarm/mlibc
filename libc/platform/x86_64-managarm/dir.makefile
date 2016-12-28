@@ -7,6 +7,7 @@ $c_BINDIR := $(BUILD_PATH)/$c/bin
 
 $c_OBJECTS := entry.o ensure.o malloc.o file.o socket.o \
 	fork-exec.o signals.o host.o time.o \
+	mount.o \
 	frigg-support.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
