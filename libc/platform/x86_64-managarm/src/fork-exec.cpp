@@ -96,8 +96,8 @@ pid_t waitpid(pid_t pid, int *status, int flags) {
 }
 
 void _Exit(int status) {
-	HEL_CHECK(helExitThisThread());
-	__builtin_unreachable();
+	asm volatile ("syscall" : : "D"(kHelCallSuper + 4));
+	__builtin_trap();
 }
 
 int sched_yield(void) {
