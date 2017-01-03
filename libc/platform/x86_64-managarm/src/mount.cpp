@@ -13,9 +13,6 @@
 int mount(const char *source, const char *target,
 		const char *fstype, unsigned long flags, const void *data) {
 	HelAction actions[3];
-	HelSimpleResult *offer;
-	HelSimpleResult *send_req;
-	HelInlineResult *recv_resp;
 
 	globalQueue.trim();
 
@@ -35,11 +32,12 @@ int mount(const char *source, const char *target,
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
 	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
-			globalQueue.getQueue(), 0));
+			globalQueue.getQueue(), 0, 0));
 
-	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
-	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
-	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);

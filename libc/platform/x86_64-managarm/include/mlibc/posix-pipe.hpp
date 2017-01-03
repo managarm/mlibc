@@ -71,6 +71,31 @@ private:
 	size_t _progress;
 };
 
+inline HelSimpleResult *parseSimple(void *&element) {
+	auto result = reinterpret_cast<HelSimpleResult *>(element);
+	element = (char *)element + sizeof(HelSimpleResult);
+	return result;
+}
+
+inline HelInlineResult *parseInline(void *&element) {
+	auto result = reinterpret_cast<HelInlineResult *>(element);
+	element = (char *)element + sizeof(HelInlineResult)
+			+ ((result->length + 7) & ~size_t(7));
+	return result;
+}
+
+inline HelLengthResult *parseLength(void *&element) {
+	auto result = reinterpret_cast<HelLengthResult *>(element);
+	element = (char *)element + sizeof(HelLengthResult);
+	return result;
+}
+
+inline HelHandleResult *parseHandle(void *&element) {
+	auto result = reinterpret_cast<HelHandleResult *>(element);
+	element = (char *)element + sizeof(HelHandleResult);
+	return result;
+}
+
 HelHandle *cacheFileTable();
 void clearCachedInfos();
 

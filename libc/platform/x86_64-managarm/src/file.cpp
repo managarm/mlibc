@@ -33,9 +33,6 @@ HelHandle __mlibc_getPassthrough(int fd) {
 
 int access(const char *path, int mode) {
 	HelAction actions[3];
-	HelSimpleResult *offer;
-	HelSimpleResult *send_req;
-	HelInlineResult *recv_resp;
 
 	globalQueue.trim();
 
@@ -54,11 +51,12 @@ int access(const char *path, int mode) {
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
 	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
-			globalQueue.getQueue(), 0));
+			globalQueue.getQueue(), 0, 0));
 
-	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
-	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
-	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
@@ -142,9 +140,6 @@ int open(const char *path, int flags, ...) {
 //	frigg::infoLogger.log() << "mlibc: open(\""
 //			<< path << "\") called!" << frigg::EndLog();
 	HelAction actions[3];
-	HelSimpleResult *offer;
-	HelSimpleResult *send_req;
-	HelInlineResult *recv_resp;
 
 	globalQueue.trim();
 
@@ -163,11 +158,12 @@ int open(const char *path, int flags, ...) {
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
 	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
-			globalQueue.getQueue(), 0));
+			globalQueue.getQueue(), 0, 0));
 
-	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
-	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
-	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
@@ -187,10 +183,6 @@ int open(const char *path, int flags, ...) {
 ssize_t read(int fd, void *data, size_t max_size){
 	//frigg::infoLogger() << "read() " << max_size << frigg::EndLog();
 	HelAction actions[4];
-	HelSimpleResult *offer;
-	HelSimpleResult *send_req;
-	HelInlineResult *recv_resp;
-	HelLengthResult *recv_data;
 
 	globalQueue.trim();
 
@@ -217,12 +209,13 @@ ssize_t read(int fd, void *data, size_t max_size){
 	actions[3].buffer = data;
 	actions[3].length = max_size;
 	HEL_CHECK(helSubmitAsync(handle, actions, 4,
-			globalQueue.getQueue(), 0));
+			globalQueue.getQueue(), 0, 0));
 
-	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
-	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
-	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
-	recv_data = (HelLengthResult *)globalQueue.dequeueSingle();
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+	auto recv_data = parseLength(element);
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
@@ -243,10 +236,6 @@ ssize_t read(int fd, void *data, size_t max_size){
 
 ssize_t write(int fd, const void *data, size_t size) {
 	HelAction actions[4];
-	HelSimpleResult *offer;
-	HelSimpleResult *send_req;
-	HelSimpleResult *send_data;
-	HelInlineResult *recv_resp;
 
 	globalQueue.trim();
 
@@ -273,12 +262,13 @@ ssize_t write(int fd, const void *data, size_t size) {
 	actions[3].type = kHelActionRecvInline;
 	actions[3].flags = 0;
 	HEL_CHECK(helSubmitAsync(handle, actions, 4,
-			globalQueue.getQueue(), 0));
+			globalQueue.getQueue(), 0, 0));
 
-	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
-	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
-	send_data = (HelSimpleResult *)globalQueue.dequeueSingle();
-	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto send_data = parseSimple(element);
+	auto recv_resp = parseInline(element);
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
@@ -362,10 +352,6 @@ off_t lseek(int fd, off_t offset, int whence) {
 
 HelHandle __raw_map(int fd) {
 	HelAction actions[4];
-	HelSimpleResult *offer;
-	HelSimpleResult *send_req;
-	HelInlineResult *recv_resp;
-	HelHandleResult *pull_memory;
 
 	globalQueue.trim();
 
@@ -389,12 +375,13 @@ HelHandle __raw_map(int fd) {
 	actions[3].type = kHelActionPullDescriptor;
 	actions[3].flags = 0;
 	HEL_CHECK(helSubmitAsync(handle, actions, 4,
-			globalQueue.getQueue(), 0));
+			globalQueue.getQueue(), 0, 0));
 
-	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
-	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
-	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
-	pull_memory = (HelHandleResult *)globalQueue.dequeueSingle();
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+	auto pull_memory = parseHandle(element);
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
@@ -442,10 +429,6 @@ int close(int fd) {
 
 int dup2(int src_fd, int dest_fd) {
 	HelAction actions[4];
-	HelSimpleResult *offer;
-	HelSimpleResult *send_req;
-	HelInlineResult *recv_resp;
-	HelHandleResult *pull_lane;
 
 	globalQueue.trim();
 
@@ -467,12 +450,13 @@ int dup2(int src_fd, int dest_fd) {
 	actions[3].type = kHelActionPullDescriptor;
 	actions[3].flags = 0;
 	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 4,
-			globalQueue.getQueue(), 0));
+			globalQueue.getQueue(), 0, 0));
 
-	offer = (HelSimpleResult *)globalQueue.dequeueSingle();
-	send_req = (HelSimpleResult *)globalQueue.dequeueSingle();
-	recv_resp = (HelInlineResult *)globalQueue.dequeueSingle();
-	pull_lane = (HelHandleResult *)globalQueue.dequeueSingle();
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+	auto pull_lane = parseHandle(element);
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
