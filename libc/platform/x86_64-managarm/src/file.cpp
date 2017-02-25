@@ -395,36 +395,48 @@ HelHandle __raw_map(int fd) {
 }
 
 int close(int fd) {
-	assert(!"Fix this");
-/*	managarm::posix::CntRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::CntReqType::CLOSE);
-	request.set_fd(fd);
+	HelAction actions[3];
+	globalQueue.trim();
 
-	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(getAllocator());
-	request.SerializeToString(&serialized);
-	HelError error;
-	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
-			eventHub, request_num, 0, error);
-	HEL_CHECK(error);
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::CLOSE);
+	req.set_fd(fd);
 
-	uint8_t buffer[128];
-	size_t length;
-	HelError response_error;
-	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
-	HEL_CHECK(response_error);
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+	
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
 
-	managarm::posix::SvrResponse<MemoryAllocator> response(getAllocator());
-	response.ParseFromArray(buffer, length);
-	if(response.error() == managarm::posix::Errors::NO_SUCH_FD) {
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	
+	if(resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
 		errno = EBADF;		
 		return -1;
-	}else if(response.error() == managarm::posix::Errors::SUCCESS) {
+	}else if(resp.error() == managarm::posix::Errors::SUCCESS) {
 		return 0;
 	}else{
 		__ensure(!"Unexpected error");
 		__builtin_unreachable();
-	}*/
+	}
 }
 
 int dup2(int src_fd, int dest_fd) {
