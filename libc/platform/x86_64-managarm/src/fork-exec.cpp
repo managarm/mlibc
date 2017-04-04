@@ -24,6 +24,22 @@
 
 #include <posix.frigg_pb.hpp>
 
+unsigned int sleep(unsigned int secs) {
+	globalQueue.trim();
+
+	uint64_t now;
+	HEL_CHECK(helGetClock(&now));
+
+	HEL_CHECK(helSubmitAwaitClock(now + uint64_t{secs} * 1000000000,
+			globalQueue.getQueue(), 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto result = parseSimple(element);
+	HEL_CHECK(result->error);
+
+	return 0;
+}
+
 uid_t getuid(void) {
 	return 0;
 }

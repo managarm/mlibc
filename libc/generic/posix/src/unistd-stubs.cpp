@@ -228,10 +228,7 @@ int setuid(uid_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-unsigned int sleep(unsigned int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// sleep() is provided by the platform
 void swab(const void *__restrict, void *__restrict, ssize_t) {
 	__ensure(!"Not implemented");
 }
