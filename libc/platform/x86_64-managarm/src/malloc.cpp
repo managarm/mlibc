@@ -26,7 +26,7 @@ MemoryAllocator &getAllocator() {
 // --------------------------------------------------------
 
 uintptr_t VirtualAllocator::map(size_t length) {
-	assert((length % 0x1000) == 0);
+	__ensure((length % 0x1000) == 0);
 
 	HelHandle memory;
 	void *actual_ptr;

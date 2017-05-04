@@ -29,14 +29,14 @@ struct Queue {
 	}
 
 	void *dequeueSingle() {
-		assert(_queue);
+		__ensure(_queue);
 
 		auto e = __atomic_load_n(&_queue->kernelState, __ATOMIC_ACQUIRE);
 		while(true) {
-			assert(!(e & kHelQueueWantNext));
+			__ensure(!(e & kHelQueueWantNext));
 
 			if(_progress != (e & kHelQueueTail)) {
-				assert(_progress < (e & kHelQueueTail));
+				__ensure(_progress < (e & kHelQueueTail));
 
 				auto ptr = (char *)_queue + sizeof(HelQueue) + _progress;
 				auto elem = reinterpret_cast<HelElement *>(ptr);

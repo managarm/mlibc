@@ -45,7 +45,7 @@ int mount(const char *source, const char *target,
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	assert(resp.error() == managarm::posix::Errors::SUCCESS);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
 }
 

@@ -1,6 +1,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
@@ -13,9 +14,9 @@
 
 void __assert_fail(const char *assertion, const char *file, unsigned int line,
 		const char *function) {
-	frigg::panicLogger() << "In function " << function
-			<< ", file " << file << ":" << line << "\n"
-			<< "assert(" << assertion << ") failed" << frigg::endLog;
+	fprintf(stderr, "In function %s, file %s:%d: Assertion '%s' failed!\n",
+			function, file, line, assertion);
+	abort();
 }
 
 void __ensure_fail(const char *assertion, const char *file, unsigned int line,

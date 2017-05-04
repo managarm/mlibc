@@ -236,7 +236,7 @@ int pthread_once(pthread_once_t *once, void (*function) (void)) {
 			return 0;
 		}else{
 			// a different thread is currently running the initializer.
-			assert(expected == onceLocked);
+			__ensure(expected == onceLocked);
 			HEL_CHECK(helFutexWait((int *)&once->__mlibc_done, onceLocked));
 			expected =  __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
 		}
@@ -302,10 +302,10 @@ int pthread_mutex_init(pthread_mutex_t *__restrict mutex,
 	if(type == PTHREAD_MUTEX_RECURSIVE) {
 		mutex->__mlibc_flags |= mutexRecursive;
 	}else{
-		assert(type == PTHREAD_MUTEX_NORMAL);
+		__ensure(type == PTHREAD_MUTEX_NORMAL);
 	}
 	
-	assert(robust == PTHREAD_MUTEX_STALLED);
+	__ensure(robust == PTHREAD_MUTEX_STALLED);
 	
 	return 0;
 }
@@ -326,7 +326,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 				return 0;
 		}else{
 			if(mutex->__mlibc_flags & mutexRecursive)
-				assert(!"TODO: Implement recursive mutexes");
+				__ensure(!"TODO: Implement recursive mutexes");
 
 			// wait on the futex if the waiters flag is set.
 			if(expected & waiters) {

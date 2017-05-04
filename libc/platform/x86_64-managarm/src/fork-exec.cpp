@@ -55,7 +55,7 @@ gid_t getegid(void) {
 }
 
 pid_t getpid(void) {
-	assert(!"Fix this");
+	__ensure(!"Fix this");
 /*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::GET_PID);
 
@@ -75,7 +75,7 @@ pid_t getpid(void) {
 
 	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
 	response.ParseFromArray(buffer, length);
-	assert(response.error() == managarm::posix::Errors::SUCCESS);
+	__ensure(response.error() == managarm::posix::Errors::SUCCESS);
 	return response.pid();*/
 }
 pid_t getppid(void) {

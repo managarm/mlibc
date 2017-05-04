@@ -27,7 +27,7 @@
 
 HelHandle __mlibc_getPassthrough(int fd) {
 	auto handle = cacheFileTable()[fd];
-	assert(handle);
+	__ensure(handle);
 	return handle;
 }
 
@@ -68,13 +68,13 @@ int access(const char *path, int mode) {
 		errno = ENOENT;
 		return -1;
 	}else{
-		assert(resp.error() == managarm::posix::Errors::SUCCESS);
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
 	}
 }
 
 int stat(const char *__restrict path, struct stat *__restrict result) {
-	assert(!"Fix this");
+	__ensure(!"Fix this");
 	int fd = open(path, O_RDONLY);
 	if(fd == -1) {
 		__ensure(errno == ENOENT);
@@ -90,7 +90,7 @@ int stat(const char *__restrict path, struct stat *__restrict result) {
 }
 
 int fstat(int fd, struct stat *result) {
-	assert(!"Fix this");
+	__ensure(!"Fix this");
 /*	managarm::posix::CntRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::CntReqType::FSTAT);
 	request.set_fd(fd);
@@ -175,7 +175,7 @@ int open(const char *path, int flags, ...) {
 		errno = ENOENT;
 		return -1;
 	}else{
-		assert(resp.error() == managarm::posix::Errors::SUCCESS);
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return resp.fd();
 	}
 }
@@ -187,7 +187,7 @@ ssize_t read(int fd, void *data, size_t max_size){
 	globalQueue.trim();
 
 	auto handle = cacheFileTable()[fd];
-	assert(handle);
+	__ensure(handle);
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_req_type(managarm::fs::CntReqType::READ);
@@ -230,7 +230,7 @@ ssize_t read(int fd, void *data, size_t max_size){
 	}else*/ if(resp.error() == managarm::fs::Errors::END_OF_FILE) {
 		return 0;
 	}
-	assert(resp.error() == managarm::fs::Errors::SUCCESS);
+	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 	return recv_data->length;
 }
 
@@ -240,7 +240,7 @@ ssize_t write(int fd, const void *data, size_t size) {
 	globalQueue.trim();
 
 	auto handle = cacheFileTable()[fd];
-	assert(handle);
+	__ensure(handle);
 
 //	frigg::infoLogger.log() << "write()" << frigg::EndLog();
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
@@ -277,7 +277,7 @@ ssize_t write(int fd, const void *data, size_t size) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	assert(resp.error() == managarm::fs::Errors::SUCCESS);
+	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
 	// TODO: implement NO_SUCH_FD
 /*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
@@ -293,12 +293,12 @@ ssize_t write(int fd, const void *data, size_t size) {
 }
 
 off_t lseek(int fd, off_t offset, int whence) {
-	assert(!"Fix this");
+	__ensure(!"Fix this");
 	/*HelAction actions[3];
 	HelEvent results[3];
 
 	auto file_it = getFileMap().get(fd);
-	assert(file_it);
+	__ensure(file_it);
 	
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_fd(fd);
@@ -356,7 +356,7 @@ HelHandle __raw_map(int fd) {
 	globalQueue.trim();
 
 	auto handle = cacheFileTable()[fd];
-	assert(handle);
+	__ensure(handle);
 	
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_req_type(managarm::fs::CntReqType::MMAP);
@@ -390,7 +390,7 @@ HelHandle __raw_map(int fd) {
 	
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	assert(resp.error() == managarm::fs::Errors::SUCCESS);
+	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 	return pull_memory->handle;
 }
 
@@ -477,7 +477,7 @@ int dup2(int src_fd, int dest_fd) {
 	
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	assert(resp.error() == managarm::posix::Errors::SUCCESS);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return dest_fd;
 }
 
@@ -487,7 +487,7 @@ int fcntl(int, int, ...) {
 }
 
 int isatty(int fd) {
-	assert(!"Fix this");
+	__ensure(!"Fix this");
 /*	managarm::posix::CntRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::CntReqType::TTY_NAME);
 	request.set_fd(fd);
@@ -520,7 +520,7 @@ int isatty(int fd) {
 }
 
 char *ttyname(int fd) {
-	assert(!"Fix this");
+	__ensure(!"Fix this");
 	// TODO: this is not thread-safe.
 /*	frigg::String<MemoryAllocator> cache(getAllocator());
 	
