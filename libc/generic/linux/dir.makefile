@@ -3,7 +3,7 @@ $c_SRCDIR = $(TREE_PATH)/$c/src
 $c_HEADERDIR := $(TREE_PATH)/$c/include
 $c_OBJDIR := $(BUILD_PATH)/$c/obj
 
-$c_HEADERS := sys/mount.h
+$c_HEADERS := linux/input.h sys/mount.h
 
 $c_OBJECTS := 
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
@@ -31,6 +31,7 @@ clean-$c:
 
 install-headers-$c:
 	mkdir -p  $(SYSROOT_PATH)/usr/include
+	mkdir -p  $(SYSROOT_PATH)/usr/include/linux
 	mkdir -p  $(SYSROOT_PATH)/usr/include/sys
 	mkdir -p  $(SYSROOT_PATH)/usr/include/mlibc
 	for f in $($c_HEADERS); do \
