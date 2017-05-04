@@ -5,8 +5,8 @@ $c_OBJDIR := $(BUILD_PATH)/$c/obj
 
 $c_HEADERS := dirent.h fcntl.h pthread.h pwd.h sched.h spawn.h strings.h termios.h unistd.h \
 	netinet/in.h \
-	sys/types.h sys/select.h sys/socket.h sys/stat.h sys/time.h sys/wait.h \
-	mlibc/ssize_t.h mlibc/uid_t.h mlibc/gid_t.h mlibc/pid_t.h mlibc/off_t.h \
+	sys/types.h sys/resource.h sys/select.h sys/socket.h sys/stat.h sys/time.h sys/wait.h \
+	mlibc/id_t.h mlibc/ssize_t.h mlibc/uid_t.h mlibc/gid_t.h mlibc/pid_t.h mlibc/off_t.h \
 	mlibc/mode_t.h mlibc/dev_t.h mlibc/ino_t.h mlibc/iovec.h mlibc/sa_family_t.h mlibc/blksize_t.h mlibc/blkcnt_t.h \
 	mlibc/nlink_t.h mlibc/suseconds_t.h mlibc/timeval.h \
 	mlibc/posix_errno.h mlibc/posix_signal.h mlibc/posix_stdio.h mlibc/posix_stdlib.h mlibc/posix_string.h \
@@ -14,7 +14,7 @@ $c_HEADERS := dirent.h fcntl.h pthread.h pwd.h sched.h spawn.h strings.h termios
 
 $c_OBJECTS := dirent-stubs.o fcntl-stubs.o pthread-stubs.o pwd-stubs.o sched-stubs.o \
 	spawn-stubs.o strings-stubs.o termios-stubs.o unistd-stubs.o \
-	sys-socket-stubs.o sys-stat-stubs.o sys-select-stubs.o sys-time-stubs.o sys-wait-stubs.o \
+	sys-resource-stubs.o sys-socket-stubs.o sys-stat-stubs.o sys-select-stubs.o sys-time-stubs.o sys-wait-stubs.o \
 	posix_signal.o posix_stdio.o posix_stdlib.o posix_string.o \
 	file-io.o environment.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
