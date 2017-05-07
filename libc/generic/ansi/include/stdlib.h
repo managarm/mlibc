@@ -51,6 +51,9 @@ unsigned long long strtoull(const char *__restrict string, char **__restrict end
 int rand(void);
 void srand(unsigned int seed);
 
+// POSIX extension.
+void srandom(unsigned int);
+
 // [7.22.3] Memory management functions
 
 void *aligned_alloc(size_t alignment, size_t size);
@@ -69,6 +72,9 @@ __attribute__ (( noreturn )) void _Exit(int status);
 char *getenv(const char *name);
 __attribute__ (( noreturn )) void quick_exit(int status);
 int system(const char *string);
+
+// GLIBC extension.
+char *mktemp(char *);
 
 // [7.22.5] Searching and sorting utilities
 

@@ -133,6 +133,11 @@ void srand(unsigned int seed) {
 	__ensure(!"Not implemented");
 }
 
+void srandom(unsigned int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 void *aligned_alloc(size_t alignment, size_t size) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -178,6 +183,11 @@ void quick_exit(int status) {
 	__builtin_unreachable();
 }
 int system(const char *string) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+char *mktemp(char *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
