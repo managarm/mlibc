@@ -55,28 +55,38 @@ gid_t getegid(void) {
 }
 
 pid_t getpid(void) {
-	__ensure(!"Fix this");
-/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::ClientRequestType::GET_PID);
+	HelAction actions[3];
+	globalQueue.trim();
 
-	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(getAllocator());
-	request.SerializeToString(&serialized);
-	HelError error;
-	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
-			eventHub, request_num, 0, error);
-	HEL_CHECK(error);
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::GET_PID);
 
-	int8_t buffer[128];
-	size_t length;
-	HelError response_error;
-	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
-	HEL_CHECK(response_error);
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
-	response.ParseFromArray(buffer, length);
-	__ensure(response.error() == managarm::posix::Errors::SUCCESS);
-	return response.pid();*/
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	return resp.pid();
 }
 pid_t getppid(void) {
 	frigg::infoLogger() << "mlibc: Broken getppid() called" << frigg::endLog;

@@ -74,66 +74,114 @@ int access(const char *path, int mode) {
 }
 
 int stat(const char *__restrict path, struct stat *__restrict result) {
-	__ensure(!"Fix this");
-	int fd = open(path, O_RDONLY);
-	if(fd == -1) {
-		__ensure(errno == ENOENT);
+	HelAction actions[3];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::STAT);
+	req.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		errno = ENOENT;
 		return -1;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		memset(result, 0, sizeof(struct stat));
+		result->st_dev = 1;
+		result->st_ino = resp.inode_num();
+		result->st_mode = resp.mode() | S_IFREG;
+		result->st_nlink = resp.num_links();
+		result->st_uid = resp.uid();
+		result->st_gid = resp.gid();
+		result->st_rdev = 0;
+		result->st_size = resp.file_size();
+		result->st_atim.tv_sec = resp.atime_secs();
+		result->st_atim.tv_nsec = resp.atime_nanos();
+		result->st_mtim.tv_sec = resp.mtime_secs();
+		result->st_mtim.tv_nsec = resp.mtime_nanos();
+		result->st_ctim.tv_sec = resp.ctime_secs();
+		result->st_ctim.tv_nsec = resp.ctime_nanos();
+		result->st_blksize = 4096;
+		result->st_blocks = resp.file_size() / 512 + 1;
+		return 0;
 	}
-
-	if(fstat(fd, result))
-		__ensure("Could not fstat() internal file");
-
-	if(close(fd))
-		__ensure("Could not close() internal file");
-	return 0;
 }
 
 int fstat(int fd, struct stat *result) {
-	__ensure(!"Fix this");
-/*	managarm::posix::CntRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::CntReqType::FSTAT);
-	request.set_fd(fd);
+	HelAction actions[3];
+	globalQueue.trim();
 
-	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(getAllocator());
-	request.SerializeToString(&serialized);
-	HelError error;
-	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
-			eventHub, request_num, 0, error);
-	HEL_CHECK(error);
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::FSTAT);
+	req.set_fd(fd);
 
-	int8_t buffer[128];
-	size_t length;
-	HelError response_error;
-	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
-	HEL_CHECK(response_error);
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
 
-	managarm::posix::SvrResponse<MemoryAllocator> response(getAllocator());
-	response.ParseFromArray(buffer, length);
-	if(response.error() == managarm::posix::Errors::SUCCESS) {
-		memset(result, 0, sizeof(struct stat));
-		result->st_dev = 1;
-		result->st_ino = response.inode_num();
-		result->st_mode = response.mode() | S_IFREG;
-		result->st_nlink = response.num_links();
-		result->st_uid = response.uid();
-		result->st_gid = response.gid();
-		result->st_rdev = 0;
-		result->st_size = response.file_size();
-		result->st_atim.tv_sec = response.atime_secs();
-		result->st_atim.tv_nsec = response.atime_nanos();
-		result->st_mtim.tv_sec = response.mtime_secs();
-		result->st_mtim.tv_nsec = response.mtime_nanos();
-		result->st_ctim.tv_sec = response.ctime_secs();
-		result->st_ctim.tv_nsec = response.ctime_nanos();
-		result->st_blksize = 4096;
-		result->st_blocks = response.file_size() / 512 + 1;
-		return 0;
-	}else{
-		__ensure(!"Unexpected error");
-		__builtin_unreachable();
-	}*/
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	memset(result, 0, sizeof(struct stat));
+	result->st_dev = 1;
+	result->st_ino = resp.inode_num();
+	result->st_mode = resp.mode() | S_IFREG;
+	result->st_nlink = resp.num_links();
+	result->st_uid = resp.uid();
+	result->st_gid = resp.gid();
+	result->st_rdev = 0;
+	result->st_size = resp.file_size();
+	result->st_atim.tv_sec = resp.atime_secs();
+	result->st_atim.tv_nsec = resp.atime_nanos();
+	result->st_mtim.tv_sec = resp.mtime_secs();
+	result->st_mtim.tv_nsec = resp.mtime_nanos();
+	result->st_ctim.tv_sec = resp.ctime_secs();
+	result->st_ctim.tv_nsec = resp.ctime_nanos();
+	result->st_blksize = 4096;
+	result->st_blocks = resp.file_size() / 512 + 1;
+	return 0;
 }
 
 int open(const char *path, int flags, ...) {
@@ -183,7 +231,6 @@ int open(const char *path, int flags, ...) {
 ssize_t read(int fd, void *data, size_t max_size){
 	//frigg::infoLogger() << "read() " << max_size << frigg::EndLog();
 	HelAction actions[4];
-
 	globalQueue.trim();
 
 	auto handle = cacheFileTable()[fd];
@@ -236,7 +283,6 @@ ssize_t read(int fd, void *data, size_t max_size){
 
 ssize_t write(int fd, const void *data, size_t size) {
 	HelAction actions[4];
-
 	globalQueue.trim();
 
 	auto handle = cacheFileTable()[fd];
@@ -293,12 +339,11 @@ ssize_t write(int fd, const void *data, size_t size) {
 }
 
 off_t lseek(int fd, off_t offset, int whence) {
-	__ensure(!"Fix this");
-	/*HelAction actions[3];
-	HelEvent results[3];
+	HelAction actions[3];
+	globalQueue.trim();
 
-	auto file_it = getFileMap().get(fd);
-	__ensure(file_it);
+	auto handle = cacheFileTable()[fd];
+	__ensure(handle);
 	
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_fd(fd);
@@ -316,38 +361,30 @@ off_t lseek(int fd, off_t offset, int whence) {
 	
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
-	uint8_t buffer[128];
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
 	actions[1].type = kHelActionSendFromBuffer;
 	actions[1].flags = kHelItemChain;
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvToBuffer;
+	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	actions[2].buffer = buffer;
-	actions[2].length = 128;
-	//HEL_CHECK(helSubmitAsync(file_it->getHandle(), actions, 3, eventHub.getHandle(), 0));
+	HEL_CHECK(helSubmitAsync(handle, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+	
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
 
-	results[0] = eventHub.waitForEvent(0);
-	results[1] = eventHub.waitForEvent(0);
-	results[2] = eventHub.waitForEvent(0);
-
-	HEL_CHECK(results[0].error);
-	HEL_CHECK(results[1].error);
-	HEL_CHECK(results[2].error);
-
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(buffer, results[2].length);
-	*//*if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
-		errno = EBADF;		
-		return -1;
-	}else*//* if(resp.error() == managarm::fs::Errors::SUCCESS) {
-		return resp.offset();
-	}else{
-		__ensure(!"Unexpected error");
-		__builtin_unreachable();
-	}*/
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	return resp.offset();
 }
 
 HelHandle __raw_map(int fd) {
@@ -487,73 +524,88 @@ int fcntl(int, int, ...) {
 }
 
 int isatty(int fd) {
-	__ensure(!"Fix this");
-/*	managarm::posix::CntRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::CntReqType::TTY_NAME);
-	request.set_fd(fd);
+	HelAction actions[3];
+	globalQueue.trim();
 
-	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(getAllocator());
-	request.SerializeToString(&serialized);
-	HelError error;
-	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
-			eventHub, request_num, 0, error);
-	HEL_CHECK(error);
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::IS_TTY);
+	req.set_fd(fd);
 
-	int8_t buffer[128];
-	size_t length;
-	HelError response_error;
-	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
-	HEL_CHECK(response_error);
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
 
-	managarm::posix::SvrResponse<MemoryAllocator> response(getAllocator());
-	response.ParseFromArray(buffer, length);
-	if(response.error() == managarm::posix::Errors::SUCCESS) {
-		return 1;
-	}else if(response.error() ==  managarm::posix::Errors::BAD_FD) {
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() ==  managarm::posix::Errors::BAD_FD) {
 		errno = ENOTTY;
 		return 0;
-	}else {
-		__ensure(!"Unexpected error");
-		__builtin_unreachable();
-	}*/
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		return 1;
+	}
 }
 
+thread_local frigg::String<MemoryAllocator> __mlibc_ttynameCache(getAllocator());
+
 char *ttyname(int fd) {
-	__ensure(!"Fix this");
-	// TODO: this is not thread-safe.
-/*	frigg::String<MemoryAllocator> cache(getAllocator());
-	
-	managarm::posix::CntRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::CntReqType::TTY_NAME);
-	request.set_fd(fd);
+	HelAction actions[3];
+	globalQueue.trim();
 
-	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(getAllocator());
-	request.SerializeToString(&serialized);
-	HelError error;
-	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
-			eventHub, request_num, 0, error);
-	HEL_CHECK(error);
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::TTY_NAME);
+	req.set_fd(fd);
 
-	int8_t buffer[128];
-	size_t length;
-	HelError response_error;
-	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
-	HEL_CHECK(response_error);
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
 
-	managarm::posix::SvrResponse<MemoryAllocator> response(getAllocator());
-	response.ParseFromArray(buffer, length);
-	if(response.error() == managarm::posix::Errors::SUCCESS) {
-		cache = response.path();
-		return cache.data();
-	}else if(response.error() ==  managarm::posix::Errors::BAD_FD) {
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() ==  managarm::posix::Errors::BAD_FD) {
 		errno = ENOTTY;
 		return nullptr;
-	}else {
-		__ensure(!"Unexpected error");
-		__builtin_unreachable();
-	}*/
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		__mlibc_ttynameCache = resp.path();
+		return __mlibc_ttynameCache.data();
+	}
 }
 
 int tcgetattr(int fd, struct termios *attr) {
