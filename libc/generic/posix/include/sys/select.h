@@ -11,14 +11,16 @@ extern "C" {
 #endif
 
 // FIXME: use something like uint8_t with fixed bit-size
-typedef char fd_set[128];
+typedef struct {
+	char __mlibc_elems[128];
+} fd_set;
 
 #define FD_SETSIZE 1024
 
-void FD_CLR(int fd, fd_set *set_ptr);
-int FD_ISSET(int fd, fd_set *set_ptr);
-void FD_SET(int fd, fd_set *set_ptr);
-void FD_ZERO(fd_set *set_ptr);
+void FD_CLR(int fd, fd_set *);
+int FD_ISSET(int fd, fd_set *);
+void FD_SET(int fd, fd_set *);
+void FD_ZERO(fd_set *);
 
 // MISSING: pselect
 
