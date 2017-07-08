@@ -255,3 +255,70 @@ int perror(const char *string) {
 	__builtin_unreachable();
 }
 
+// POSIX unlocked I/O extensions.
+
+int getc_unlocked(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int getchar_unlocked(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int putc_unlocked(int, FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int putchar_unlocked(int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+// Linux unlocked I/O extensions.
+
+void clearerr_unlocked(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int feof_unlocked(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int ferror_unlocked(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int fileno_unlocked(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int fflush_unlocked(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int fgetc_unlocked(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int fputc_unlocked(int, FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+size_t fread_unlocked(void *, size_t, size_t, FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+size_t fwrite_unlocked(const void *, size_t, size_t, FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+char *fgets_unlocked(char *, int, FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int fputs_unlocked(const char *, FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+

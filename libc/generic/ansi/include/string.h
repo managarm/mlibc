@@ -46,6 +46,9 @@ void *memset(void *dest, int c, size_t size);
 char *strerror(int errnum);
 size_t strlen(const char *s);
 
+// POSIX extensions.
+
+int strerror_r(int, char *, size_t);
 
 #ifdef __cplusplus
 }

@@ -4,6 +4,7 @@
 
 #include <mlibc/size_t.h>
 #include <mlibc/ssize_t.h>
+#include <mlibc/off_t.h>
 
 #include <mlibc/uid_t.h>
 #include <mlibc/gid_t.h>

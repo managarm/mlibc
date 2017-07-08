@@ -197,3 +197,10 @@ size_t strlen(const char *s) {
 	return len;
 }
 
+// POSIX extensions.
+
+int strerror_r(int, char *, size_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+

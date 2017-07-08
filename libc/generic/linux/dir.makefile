@@ -3,9 +3,9 @@ $c_SRCDIR = $(TREE_PATH)/$c/src
 $c_HEADERDIR := $(TREE_PATH)/$c/include
 $c_OBJDIR := $(BUILD_PATH)/$c/obj
 
-$c_HEADERS := linux/input.h sys/mount.h
+$c_HEADERS := mntent.h linux/input.h stdio_ext.h sys/mount.h
 
-$c_OBJECTS := 
+$c_OBJECTS := mntent-stubs.o stdio_ext-stubs.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
 $c_CXX := x86_64-managarm-g++
@@ -15,6 +15,7 @@ $c_CPPFLAGS += -I$(FRIGG_PATH)/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/ansi/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/posix/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/lsb/include
+$c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/linux/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/compilers/gcc/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/platform/x86_64-managarm/include
 $c_CPPFLAGS += -DFRIGG_HAVE_LIBC -DFRIGG_HIDDEN

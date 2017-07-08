@@ -1,51 +1,60 @@
 
-#include <time.h>
-
+#include <stdio_ext.h>
 #include <mlibc/ensure.h>
 
-clock_t clock(void) {
+size_t __fbufsize(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-double difftime(time_t a, time_t b){
+size_t __fpending(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-time_t mktime(struct tm *ptr){
+int __flbf(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// time() is provided by the platform
-int timespec_get(struct timespec *ptr, int base){
+int __freadable(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int __fwritable(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int __freading(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int __fwriting(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int __fsetlocking(FILE *, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+void __fpurge(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
-char *asctime(const struct tm *ptr){
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-char *ctime(const time_t *timer){
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-struct tm *gmtime(const time_t *timer) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-struct tm *localtime(const time_t *timer) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-size_t strftime(char *__restrict dest, size_t max_size,
-		const char *__restrict format, const struct tm *__restrict ptr) {
+void _flushlbf(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
-// POSIX extensions.
+// The following functions are defined by musl.
 
-int utimes(const char *, const struct timeval[2]) {
+size_t __freadahead(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+const char *__freadptr(FILE *, size_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+void __fseterr(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

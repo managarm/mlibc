@@ -1,4 +1,3 @@
-
 #ifndef MLIBC_OFF_T_H
 #define MLIBC_OFF_T_H
 
@@ -6,4 +5,3 @@
 typedef long off_t;
 
 #endif // MLIBC_OFF_T_H
-

@@ -1,4 +1,3 @@
-
 #ifndef MLIBC_TIMEVAL_H
 #define MLIBC_TIMEVAL_H
 
@@ -8,4 +7,3 @@ struct timeval {
 };
 
 #endif // MLIBC_TIMEVAL_H
-

@@ -53,4 +53,19 @@ size_t strftime(char *__restrict dest, size_t max_size,
 }
 #endif
 
+// POSIX extensions.
+
+#include <mlibc/suseconds_t.h>
+#include <mlibc/timeval.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int utimes(const char *, const struct timeval[2]);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif // _TIME_H

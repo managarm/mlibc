@@ -55,7 +55,12 @@ extern "C" {
 
 // MISSING: AT macros
 
-// MISSING: POSIX_FADV macros
+#define POSIX_FADV_NORMAL 1
+#define POSIX_FADV_SEQUENTIAL 2
+#define POSIX_FADV_NOREUSE 3
+#define POSIX_FADV_DONTNEED 4
+#define POSIX_FADV_WILLNEED 5
+#define POSIX_FADV_RANDOM 6
 
 struct flock {
 	short l_type;

@@ -20,6 +20,7 @@ int mount(const char *source, const char *target,
 	req.set_request_type(managarm::posix::CntReqType::MOUNT);
 	req.set_path(frigg::String<MemoryAllocator>(getAllocator(), source));
 	req.set_target_path(frigg::String<MemoryAllocator>(getAllocator(), target));
+	req.set_fs_type(frigg::String<MemoryAllocator>(getAllocator(), fstype));
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);

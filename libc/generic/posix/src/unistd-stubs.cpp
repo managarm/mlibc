@@ -65,7 +65,7 @@ int fchdir(int fd) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int fchown(int fd, uid_t uid, gid_t gid, int mode) {
+int fchown(int fd, uid_t uid, gid_t gid) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

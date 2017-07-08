@@ -108,6 +108,28 @@ int feof(FILE *stream);
 int ferror(FILE *stream);
 int perror(const char *string);
 
+// POSIX unlocked I/O extensions.
+
+int getc_unlocked(FILE *);
+int getchar_unlocked(void);
+int putc_unlocked(int, FILE *);
+int putchar_unlocked(int);
+
+// Linux unlocked I/O extensions.
+
+void clearerr_unlocked(FILE *);
+int feof_unlocked(FILE *);
+int ferror_unlocked(FILE *);
+int fileno_unlocked(FILE *);
+int fflush_unlocked(FILE *);
+int fgetc_unlocked(FILE *);
+int fputc_unlocked(int, FILE *);
+size_t fread_unlocked(void *, size_t, size_t, FILE *);
+size_t fwrite_unlocked(const void *, size_t, size_t, FILE *);
+
+char *fgets_unlocked(char *, int, FILE *);
+int fputs_unlocked(const char *, FILE *);
+
 #ifdef __cplusplus
 }
 #endif
