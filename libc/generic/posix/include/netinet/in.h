@@ -4,13 +4,12 @@
 
 #include <stdint.h>
 #include <mlibc/sa_family_t.h>
+#include <mlibc/in_port_t.h>
+#include <mlibc/in_addr_t.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef uint16_t in_port_t;
-typedef uint32_t in_addr_t;
 
 struct in_addr {
 	in_addr_t s_addr;

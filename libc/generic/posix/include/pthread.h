@@ -2,6 +2,7 @@
 #ifndef _PTHREAD_H
 #define _PTHREAD_H
 
+#include <mlibc/clockid_t.h>
 // TODO: pthread is not required to define size_t.
 #include <mlibc/size_t.h>
 
@@ -38,9 +39,6 @@ extern "C" {
 #define PTHREAD_ONCE_INIT {0}
 #define PTHREAD_COND_INITIALIZER {0}
 #define PTHREAD_MUTEX_INITIALIZER {0, 0, 0}
-
-// FIXME: this should not be defined here.
-typedef int clockid_t;
 
 // TODO: move to own file and include in sys/types.h
 struct __mlibc_threadattr {

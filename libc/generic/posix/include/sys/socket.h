@@ -3,6 +3,7 @@
 #define _SOCKET_H
 
 #include <mlibc/size_t.h>
+#include <mlibc/socklen_t.h>
 #include <mlibc/ssize_t.h>
 #include <mlibc/sa_family_t.h>
 #include <mlibc/iovec.h>
@@ -10,8 +11,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef size_t  socklen_t;
 
 struct sockaddr {
 	sa_family_t sa_family;

@@ -5,7 +5,7 @@ $c_HEADERDIR := $(TREE_PATH)/$c/include
 $c_OBJDIR := $(BUILD_PATH)/$c/obj
 
 $c_HEADERS := stdint.h \
-	mlibc/null.h mlibc/size_t.h mlibc/wchar_t.h
+	mlibc/null.h mlibc/internal/types.h mlibc/size_t.h mlibc/wchar_t.h
 
 $c_OBJECTS := initfini.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
@@ -29,7 +29,7 @@ clean-$c:
 	rm -f $($c_OBJECT_PATHS:%.o=%.d) $($c_EXTRA_OBJECT_PATHS:%.o=%.d)
 
 install-headers-$c:
-	mkdir -p  $(SYSROOT_PATH)/usr/include/mlibc
+	mkdir -p  $(SYSROOT_PATH)/usr/include/mlibc/internal
 	for f in $($c_HEADERS); do \
 		install -p $($c_HEADERDIR)/$$f $(SYSROOT_PATH)/usr/include/$$f; done
 

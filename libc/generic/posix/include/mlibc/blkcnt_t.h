@@ -1,4 +1,3 @@
-
 #ifndef MLIBC_BLKCNT_T_H
 #define MLIBC_BLKCNT_T_H
 
@@ -6,4 +5,3 @@
 typedef long blkcnt_t;
 
 #endif // MLIBC_BLKCNT_T_H
-

@@ -45,6 +45,22 @@ size_t strftime(char *__restrict dest, size_t max_size,
 
 // POSIX extensions.
 
+int clock_getres(clockid_t, struct timespec *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int clock_gettime(clockid_t, struct timespec *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int clock_settime(clockid_t, const struct timespec *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+
 int utimes(const char *, const struct timeval[2]) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
