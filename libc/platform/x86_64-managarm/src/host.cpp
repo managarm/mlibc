@@ -7,7 +7,7 @@
 
 int gethostname(char *buffer, size_t max_length) {
 	const char *name = "cradle";
-	frigg::infoLogger() << "mlibc: Broken gethostbyname() called!" << frigg::endLog;
+	frigg::infoLogger() << "mlibc: Broken gethostname() called!" << frigg::endLog;
 	strncpy(buffer, name, max_length);
 	return 0;
 }

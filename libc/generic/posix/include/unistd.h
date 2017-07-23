@@ -131,8 +131,13 @@ int unlinkat(int, const char *, int);
 ssize_t write(int fd, const void *buffer, size_t size);
 
 // MISSING: optarg etc.
+extern char *optarg;
+extern int optind;
+extern int opterr;
+extern int optopt;
 
 // Non-POSIX functions supported by Linux.
+int getpagesize(void);
 int chroot(const char *);
 
 #ifdef __cplusplus

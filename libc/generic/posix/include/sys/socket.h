@@ -79,10 +79,17 @@ struct linger{
 #define MSG_TRUNC 7
 #define MSG_WAITALL 8
 
-#define AF_INET 1
-#define AF_INET6 2
-#define AF_UNIX 3
-#define AF_UNSPEC 4
+// GNU (?) extension: Protocol family constants.
+
+#define PF_INET 1
+#define PF_INET6 2
+#define PF_UNIX 3
+#define PF_UNSPEC 4
+
+#define AF_INET PF_INET
+#define AF_INET6 PF_INET6
+#define AF_UNIX PF_UNIX
+#define AF_UNSPEC PF_UNSPEC
 
 #define SHUT_RD 1
 #define SHUT_RDWR 2

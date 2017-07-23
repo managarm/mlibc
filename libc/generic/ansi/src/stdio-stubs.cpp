@@ -127,6 +127,10 @@ int sprintf(char *__restrict buffer, const char *__restrict format, ...) {
 	va_end(args);
 	return result;
 }
+int sscanf(const char *__restrict buffer, const char *__restrict format, ...) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
 	StreamPrinter p(stream);
 //	frigg::infoLogger.log() << "printf(" << format << ")" << frigg::EndLog();

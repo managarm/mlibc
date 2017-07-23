@@ -7,15 +7,22 @@
 #include <mlibc/time_t.h>
 #include <mlibc/timespec.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // [7.27.1] Components of time
 
 #define CLOCKS_PER_SEC 1000000000
 
 #define TIME_UTC 1
+
+// POSIX extensions.
+
+#define CLOCK_REALTIME 1
+#define CLOCK_MONOTONIC 2
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// [7.27.1] Components of time
 
 // TODO: Use an integer type for clock_t?
 typedef double clock_t;

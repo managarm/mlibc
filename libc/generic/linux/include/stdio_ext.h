@@ -4,6 +4,10 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#define FSETLOCKING_INTERNAL 1
+#define FSETLOCKING_BYCALLER 2
+#define FSETLOCKING_QUERY 3
+
 #ifdef __cplusplus
 extern "C" {
 #endif

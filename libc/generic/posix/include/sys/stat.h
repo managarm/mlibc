@@ -14,10 +14,6 @@
 #include <mlibc/time_t.h>
 #include <mlibc/timespec.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define S_IFMT 0x0F00
 #define S_IFBLK 0x0000
 #define S_IFCHR 0x0100
@@ -42,6 +38,18 @@ extern "C" {
 #define S_ISUID 04000
 #define S_ISGID 02000
 #define S_ISVTX 01000
+
+#define S_ISBLK(m) (m & S_IFBLK)
+#define S_ISCHR(m) (m & S_IFCHR)
+#define S_ISFIFO(m) (m & S_IFIFO)
+#define S_ISREG(m) (m & S_IFREG)
+#define S_ISDIR(m) (m & S_IFDIR)
+#define S_ISLNK(m) (m & S_IFLNK)
+#define S_ISSOCK(m) (m & S_IFSOCK)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct stat {
 	dev_t st_dev;

@@ -30,6 +30,10 @@
 #define EAI_SYSTEM 9
 #define EAI_OVERFLOW 10
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct hostent {
 	char *h_name;
 	char **h_aliases;
@@ -65,7 +69,7 @@ struct addrinfo {
 	int ai_protocol;
 	socklen_t ai_addrlen;
 	struct sockaddr *ai_addr;
-	char *ai_cannonname;
+	char *ai_canonname;
 	struct addrinfo *ai_next;
 };
 
@@ -92,5 +96,9 @@ struct servent *getservent(void);
 void sethostent(int);
 void setnetent(int);
 void setprotoent(int);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _NETDB_H

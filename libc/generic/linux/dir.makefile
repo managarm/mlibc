@@ -3,9 +3,10 @@ $c_SRCDIR = $(TREE_PATH)/$c/src
 $c_HEADERDIR := $(TREE_PATH)/$c/include
 $c_OBJDIR := $(BUILD_PATH)/$c/obj
 
-$c_HEADERS := mntent.h linux/input.h linux/types.h stdio_ext.h sys/ioctl.h sys/mount.h
+$c_HEADERS := getopt.h mntent.h linux/input.h linux/types.h stdio_ext.h sys/ioctl.h sys/mount.h \
+	sys/sysmacros.h
 
-$c_OBJECTS := mntent-stubs.o stdio_ext-stubs.o
+$c_OBJECTS := getopt-stubs.o mntent-stubs.o stdio_ext-stubs.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
 $c_CXX := x86_64-managarm-g++

@@ -274,3 +274,13 @@ int unlinkat(int, const char *, int) {
 }
 // write() is provided by the platform
 
+char *optarg;
+int optind;
+int opterr;
+int optopt;
+
+int getpagesize(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+

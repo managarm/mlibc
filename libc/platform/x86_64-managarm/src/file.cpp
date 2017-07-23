@@ -11,6 +11,8 @@
 #include <termios.h>
 // for stat()
 #include <sys/stat.h>
+// for ioctl()
+#include <sys/ioctl.h>
 
 #include <mlibc/ensure.h>
 #include <mlibc/cxx-support.hpp>
@@ -664,5 +666,10 @@ int tcsetattr(int, int, const struct termios *attr) {
 			<< ", " << (void *)attr->c_cflag << ", " << (void *)attr->c_lflag
 			<< ") called!" << frigg::endLog;
 	return 0;
+}
+
+int ioctl(int fd, unsigned long request, void *arg) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
 }
 

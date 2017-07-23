@@ -5,7 +5,7 @@ $c_OBJDIR := $(BUILD_PATH)/$c/obj
 
 $c_HEADERS := sys/auxv.h
 
-$c_OBJECTS := auxv.o dso_exit.o
+$c_OBJECTS := auxv.o dso_exit.o tls.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
 $c_CXX := x86_64-managarm-g++
