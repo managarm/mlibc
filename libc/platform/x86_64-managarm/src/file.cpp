@@ -267,7 +267,7 @@ int open(const char *path, int flags, ...) {
 	}
 }
 
-ssize_t read(int fd, void *data, size_t max_size){
+ssize_t read(int fd, void *data, size_t max_size) {
 	//frigg::infoLogger() << "read() " << max_size << frigg::EndLog();
 	HelAction actions[4];
 	globalQueue.trim();
@@ -668,8 +668,49 @@ int tcsetattr(int, int, const struct termios *attr) {
 	return 0;
 }
 
+#include <libdrm/drm.h>
+
 int ioctl(int fd, unsigned long request, void *arg) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	auto handle = cacheFileTable()[fd];
+	__ensure(handle);
+
+	switch(request) {
+	case DRM_IOCTL_GET_CAP: {
+		HelAction actions[3];
+		globalQueue.trim();
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+
+		frigg::String<MemoryAllocator> ser(getAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		return resp.result();
+	}default:
+		__ensure(!"Illegal ioctl request");
+	}
 }
 
