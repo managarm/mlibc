@@ -2,6 +2,7 @@
 #ifndef _UNISTD_H
 #define _UNISTD_H
 
+#include <mlibc/internal/types.h>
 #include <mlibc/size_t.h>
 #include <mlibc/ssize_t.h>
 #include <mlibc/uid_t.h>
@@ -130,14 +131,16 @@ int unlink(const char *);
 int unlinkat(int, const char *, int);
 ssize_t write(int fd, const void *buffer, size_t size);
 
-// MISSING: optarg etc.
 extern char *optarg;
 extern int optind;
 extern int opterr;
 extern int optopt;
 
 // Non-POSIX functions supported by Linux.
+typedef __mlibc_uint64 useconds_t;
+
 int getpagesize(void);
+int usleep(useconds_t);
 int chroot(const char *);
 
 #ifdef __cplusplus
