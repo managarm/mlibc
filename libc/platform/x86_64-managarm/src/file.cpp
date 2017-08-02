@@ -676,12 +676,14 @@ int ioctl(int fd, unsigned long request, void *arg) {
 
 	switch(request) {
 	case DRM_IOCTL_GET_CAP: {
+		auto param = reinterpret_cast<drm_get_cap*>(arg);
 		HelAction actions[3];
 		globalQueue.trim();
 
 		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
+		req.set_drm_capability(param->capability);
 
 		frigg::String<MemoryAllocator> ser(getAllocator());
 		req.SerializeToString(&ser);
@@ -708,7 +710,9 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		param->value = resp.drm_value();
 		return resp.result();
+
 	}default:
 		__ensure(!"Illegal ioctl request");
 	}
