@@ -2,11 +2,6 @@
 #include <sys/mman.h>
 #include <mlibc/ensure.h>
 
-void *mmap(void *, size_t, int, int, int, off_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
 int mprotect(void *, size_t, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

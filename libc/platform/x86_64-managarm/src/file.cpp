@@ -9,6 +9,8 @@
 #include <fcntl.h>
 // for tcgetattr()
 #include <termios.h>
+// for mmap()
+#include <sys/mman.h>
 // for stat()
 #include <sys/stat.h>
 // for ioctl()
@@ -428,7 +430,6 @@ off_t lseek(int fd, off_t offset, int whence) {
 
 HelHandle __raw_map(int fd) {
 	HelAction actions[4];
-
 	globalQueue.trim();
 
 	auto handle = cacheFileTable()[fd];
@@ -645,6 +646,74 @@ char *ttyname(int fd) {
 		__mlibc_ttynameCache = resp.path();
 		return __mlibc_ttynameCache.data();
 	}
+}
+
+void *mmap(void *hint, size_t size, int prot, int flags, int fd, off_t offset) {
+	// TODO: Raise EINVAL instead of __ensure()ing.
+	auto valid_prot = PROT_READ | PROT_WRITE;
+	auto valid_flags = MAP_SHARED;
+	__ensure(!(prot & ~valid_prot));
+	__ensure(!(flags & ~valid_flags));
+
+	__ensure(flags & MAP_SHARED);
+
+	HelAction actions[4];
+	globalQueue.trim();
+
+	auto handle = cacheFileTable()[fd];
+	__ensure(handle);
+	
+	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_req_type(managarm::fs::CntReqType::MMAP);
+	req.set_fd(fd);
+	
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = kHelItemChain;
+	actions[3].type = kHelActionPullDescriptor;
+	actions[3].flags = 0;
+	HEL_CHECK(helSubmitAsync(handle, actions, 4,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+	auto pull_memory = parseHandle(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(pull_memory->error);
+	
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+	uint32_t native_flags = kHelMapShareAtFork;
+
+	// TODO: Raise EINVAL instead of __ensure()ing.
+	if(prot & PROT_EXEC) {
+		native_flags |= kHelMapReadExecute;
+	}else if(prot & PROT_WRITE) {
+		native_flags |= kHelMapReadWrite;
+	}else if(prot & PROT_READ) {
+		native_flags |= kHelMapReadOnly;
+	}else{
+		__ensure("mmap(): Protection not supported");
+	}
+
+	void *pointer;
+	HEL_CHECK(helMapMemory(pull_memory->handle, kHelNullHandle,
+			nullptr, offset, size, native_flags, &pointer));
+	return pointer;
 }
 
 int tcgetattr(int fd, struct termios *attr) {
