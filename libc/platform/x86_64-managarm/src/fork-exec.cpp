@@ -40,6 +40,23 @@ unsigned int sleep(unsigned int secs) {
 	return 0;
 }
 
+// In contrast to sleep() this functions returns 0/-1 on success/failure.
+int usleep(useconds_t usecs) {
+	globalQueue.trim();
+
+	uint64_t now;
+	HEL_CHECK(helGetClock(&now));
+
+	HEL_CHECK(helSubmitAwaitClock(now + uint64_t{usecs} * 1000,
+			globalQueue.getQueue(), 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto result = parseSimple(element);
+	HEL_CHECK(result->error);
+
+	return 0;
+}
+
 uid_t getuid(void) {
 	return 0;
 }

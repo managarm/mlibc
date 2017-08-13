@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <frg/random.hpp>
 
 #include <mlibc/ensure.h>
 
@@ -125,12 +126,14 @@ unsigned long long strtoull(const char *__restrict string, char **__restrict end
 	__builtin_unreachable();
 }
 
-int rand(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+frg::mt19937 __mlibc_rand_engine;
+
+int rand() {
+	// rand() is specified to return a positive number so we discard the MSB.
+	return static_cast<int>(__mlibc_rand_engine() & 0x7FFFFFFF);
 }
-void srand(unsigned int seed) {
-	__ensure(!"Not implemented");
+void srand(unsigned int s) {
+	__mlibc_rand_engine.seed(s);
 }
 
 void srandom(unsigned int) {

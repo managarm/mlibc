@@ -283,8 +283,6 @@ int getpagesize(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int usleep(useconds_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+
+// usleep() is provided by the platform
 
