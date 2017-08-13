@@ -1155,6 +1155,22 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		param->gamma_size = resp.drm_gamma_size();
 		param->mode_valid = resp.drm_mode_valid();
 			
+		param->mode.clock = resp.drm_mode().clock();
+		param->mode.hdisplay = resp.drm_mode().hdisplay();
+		param->mode.hsync_start = resp.drm_mode().hsync_start();
+		param->mode.hsync_end = resp.drm_mode().hsync_end();
+		param->mode.htotal = resp.drm_mode().htotal();
+		param->mode.hskew = resp.drm_mode().hskew();
+		param->mode.vdisplay = resp.drm_mode().vdisplay();
+		param->mode.vsync_start = resp.drm_mode().vsync_start();
+		param->mode.vsync_end = resp.drm_mode().vsync_end();
+		param->mode.vtotal = resp.drm_mode().vtotal();
+		param->mode.vscan = resp.drm_mode().vscan();
+		param->mode.vrefresh = resp.drm_mode().vrefresh();
+		param->mode.flags = resp.drm_mode().flags();
+		param->mode.type = resp.drm_mode().type();
+		memcpy(param->mode.name, resp.drm_mode().name().data(), resp.drm_mode().name().size());
+		
 		return resp.result();
 	}
 	case DRM_IOCTL_MODE_SETCRTC: {
@@ -1174,6 +1190,23 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		req.set_drm_y(param->y);
 		req.set_drm_crtc_id(param->crtc_id);
 		req.set_drm_fb_id(param->fb_id);
+		
+		req.mutable_drm_mode().set_clock(param->mode.clock);
+		req.mutable_drm_mode().set_hdisplay(param->mode.hdisplay);
+		req.mutable_drm_mode().set_hsync_start(param->mode.hsync_start);
+		req.mutable_drm_mode().set_hsync_end(param->mode.hsync_end);
+		req.mutable_drm_mode().set_htotal(param->mode.htotal);
+		req.mutable_drm_mode().set_hskew(param->mode.hskew);
+		req.mutable_drm_mode().set_vdisplay(param->mode.vdisplay);
+		req.mutable_drm_mode().set_vsync_start(param->mode.vsync_start);
+		req.mutable_drm_mode().set_vsync_end(param->mode.vsync_end);
+		req.mutable_drm_mode().set_vtotal(param->mode.vtotal);
+		req.mutable_drm_mode().set_vscan(param->mode.vscan);
+		req.mutable_drm_mode().set_vrefresh(param->mode.vrefresh);
+		req.mutable_drm_mode().set_flags(param->mode.flags);
+		req.mutable_drm_mode().set_type(param->mode.type);
+		req.mutable_drm_mode().set_name(frigg::String<MemoryAllocator>(getAllocator(),
+				param->mode.name, strlen(param->mode.name)));
 
 		frigg::String<MemoryAllocator> ser(getAllocator());
 		req.SerializeToString(&ser);
