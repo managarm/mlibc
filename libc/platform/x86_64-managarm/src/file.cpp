@@ -1024,7 +1024,185 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		param->size = resp.drm_size();
 	
 		return resp.result();
-	}	
+	}
+	case DRM_IOCTL_MODE_ADDFB: {
+		auto param = reinterpret_cast<drm_mode_fb_cmd*>(arg);
+		HelAction actions[3];
+		globalQueue.trim();
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+	
+		req.set_drm_width(param->width);
+		req.set_drm_height(param->height);
+		req.set_drm_pitch(param->pitch);
+		req.set_drm_bpp(param->bpp);
+		req.set_drm_depth(param->depth);
+		req.set_drm_handle(param->handle);
+	
+		frigg::String<MemoryAllocator> ser(getAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		param->fb_id = resp.drm_fb_id();
+	
+		return resp.result();
+	}
+	case DRM_IOCTL_MODE_MAP_DUMB: {
+		auto param = reinterpret_cast<drm_mode_map_dumb*>(arg);
+		HelAction actions[3];
+		globalQueue.trim();
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+
+		req.set_drm_handle(param->handle);
+	
+		frigg::String<MemoryAllocator> ser(getAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	
+		param->offset = resp.drm_offset();
+	
+		return resp.result();
+	}
+	case DRM_IOCTL_MODE_GETCRTC: {
+		auto param = reinterpret_cast<drm_mode_crtc*>(arg);
+		HelAction actions[3];
+		globalQueue.trim();
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+
+		req.set_drm_crtc_id(param->crtc_id);
+
+		frigg::String<MemoryAllocator> ser(getAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		param->fb_id = resp.drm_fb_id();
+		param->x = resp.drm_x();
+		param->y = resp.drm_y();
+		param->gamma_size = resp.drm_gamma_size();
+		param->mode_valid = resp.drm_mode_valid();
+			
+		return resp.result();
+	}
+	case DRM_IOCTL_MODE_SETCRTC: {
+		auto param = reinterpret_cast<drm_mode_crtc*>(arg);
+		HelAction actions[3];
+		globalQueue.trim();
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+
+		for(int i = 0; i < param->count_connectors; i++) {
+			auto dest = reinterpret_cast<uint32_t *>(param->set_connectors_ptr);
+			req.add_drm_connector_ids(dest[i]);
+		}
+		req.set_drm_x(param->x);
+		req.set_drm_y(param->y);
+		req.set_drm_crtc_id(param->crtc_id);
+		req.set_drm_fb_id(param->fb_id);
+
+		frigg::String<MemoryAllocator> ser(getAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		return resp.result();
+	}
 	default:
 		__ensure(!"Illegal ioctl request");
 	}
