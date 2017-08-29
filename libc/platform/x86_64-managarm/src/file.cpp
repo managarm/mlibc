@@ -666,6 +666,7 @@ void *mmap(void *hint, size_t size, int prot, int flags, int fd, off_t offset) {
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_req_type(managarm::fs::CntReqType::MMAP);
 	req.set_fd(fd);
+	req.set_rel_offset(offset);
 	
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
@@ -712,7 +713,7 @@ void *mmap(void *hint, size_t size, int prot, int flags, int fd, off_t offset) {
 
 	void *pointer;
 	HEL_CHECK(helMapMemory(pull_memory->handle, kHelNullHandle,
-			nullptr, offset, size, native_flags, &pointer));
+			nullptr, resp.offset(), size, native_flags, &pointer));
 	return pointer;
 }
 
