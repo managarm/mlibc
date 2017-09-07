@@ -1176,7 +1176,7 @@ int ioctl(int fd, unsigned long request, void *arg) {
 	}
 	case DRM_IOCTL_MODE_SETCRTC: {
 		auto param = reinterpret_cast<drm_mode_crtc*>(arg);
-		HelAction actions[3];
+		HelAction actions[4];
 		globalQueue.trim();
 
 		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
@@ -1191,23 +1191,6 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		req.set_drm_y(param->y);
 		req.set_drm_crtc_id(param->crtc_id);
 		req.set_drm_fb_id(param->fb_id);
-		
-		req.mutable_drm_mode().set_clock(param->mode.clock);
-		req.mutable_drm_mode().set_hdisplay(param->mode.hdisplay);
-		req.mutable_drm_mode().set_hsync_start(param->mode.hsync_start);
-		req.mutable_drm_mode().set_hsync_end(param->mode.hsync_end);
-		req.mutable_drm_mode().set_htotal(param->mode.htotal);
-		req.mutable_drm_mode().set_hskew(param->mode.hskew);
-		req.mutable_drm_mode().set_vdisplay(param->mode.vdisplay);
-		req.mutable_drm_mode().set_vsync_start(param->mode.vsync_start);
-		req.mutable_drm_mode().set_vsync_end(param->mode.vsync_end);
-		req.mutable_drm_mode().set_vtotal(param->mode.vtotal);
-		req.mutable_drm_mode().set_vscan(param->mode.vscan);
-		req.mutable_drm_mode().set_vrefresh(param->mode.vrefresh);
-		req.mutable_drm_mode().set_flags(param->mode.flags);
-		req.mutable_drm_mode().set_type(param->mode.type);
-		req.mutable_drm_mode().set_name(frigg::String<MemoryAllocator>(getAllocator(),
-				param->mode.name, strlen(param->mode.name)));
 
 		frigg::String<MemoryAllocator> ser(getAllocator());
 		req.SerializeToString(&ser);
@@ -1217,18 +1200,24 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		actions[1].flags = kHelItemChain;
 		actions[1].buffer = ser.data();
 		actions[1].length = ser.size();
-		actions[2].type = kHelActionRecvInline;
-		actions[2].flags = 0;
-		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+		actions[2].type = kHelActionSendFromBuffer;
+		actions[2].flags = kHelItemChain;
+		actions[2].buffer = &param->mode;
+		actions[2].length = sizeof(drm_mode_modeinfo);
+		actions[3].type = kHelActionRecvInline;
+		actions[3].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 4,
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
 		auto offer = parseSimple(element);
 		auto send_req = parseSimple(element);
+		auto send_mode = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		HEL_CHECK(send_mode->error);
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
