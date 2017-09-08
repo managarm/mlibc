@@ -1115,13 +1115,12 @@ int ioctl(int fd, unsigned long request, void *arg) {
 	}
 	case DRM_IOCTL_MODE_GETCRTC: {
 		auto param = reinterpret_cast<drm_mode_crtc*>(arg);
-		HelAction actions[3];
+		HelAction actions[4];
 		globalQueue.trim();
 
 		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
-
 		req.set_drm_crtc_id(param->crtc_id);
 
 		frigg::String<MemoryAllocator> ser(getAllocator());
@@ -1133,18 +1132,24 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		actions[1].buffer = ser.data();
 		actions[1].length = ser.size();
 		actions[2].type = kHelActionRecvInline;
-		actions[2].flags = 0;
-		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+		actions[2].flags = kHelItemChain;
+		actions[3].type = kHelActionRecvToBuffer;
+		actions[3].flags = 0;
+		actions[3].buffer = &param->mode;
+		actions[3].length = sizeof(drm_mode_modeinfo);
+		HEL_CHECK(helSubmitAsync(handle, actions, 4,
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
 		auto offer = parseSimple(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
+		auto recv_data = parseLength(element);
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
 		HEL_CHECK(recv_resp->error);
+		HEL_CHECK(recv_data->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
@@ -1155,23 +1160,7 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		param->y = resp.drm_y();
 		param->gamma_size = resp.drm_gamma_size();
 		param->mode_valid = resp.drm_mode_valid();
-			
-		param->mode.clock = resp.drm_mode().clock();
-		param->mode.hdisplay = resp.drm_mode().hdisplay();
-		param->mode.hsync_start = resp.drm_mode().hsync_start();
-		param->mode.hsync_end = resp.drm_mode().hsync_end();
-		param->mode.htotal = resp.drm_mode().htotal();
-		param->mode.hskew = resp.drm_mode().hskew();
-		param->mode.vdisplay = resp.drm_mode().vdisplay();
-		param->mode.vsync_start = resp.drm_mode().vsync_start();
-		param->mode.vsync_end = resp.drm_mode().vsync_end();
-		param->mode.vtotal = resp.drm_mode().vtotal();
-		param->mode.vscan = resp.drm_mode().vscan();
-		param->mode.vrefresh = resp.drm_mode().vrefresh();
-		param->mode.flags = resp.drm_mode().flags();
-		param->mode.type = resp.drm_mode().type();
-		memcpy(param->mode.name, resp.drm_mode().name().data(), resp.drm_mode().name().size());
-		
+
 		return resp.result();
 	}
 	case DRM_IOCTL_MODE_SETCRTC: {
