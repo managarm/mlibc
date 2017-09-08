@@ -1180,6 +1180,7 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		req.set_drm_y(param->y);
 		req.set_drm_crtc_id(param->crtc_id);
 		req.set_drm_fb_id(param->fb_id);
+		req.set_drm_mode_valid(param->mode_valid);
 
 		frigg::String<MemoryAllocator> ser(getAllocator());
 		req.SerializeToString(&ser);
