@@ -860,7 +860,7 @@ int ioctl(int fd, unsigned long request, void *arg) {
 	}
 	case DRM_IOCTL_MODE_GETCONNECTOR: {
 		auto param = reinterpret_cast<drm_mode_get_connector*>(arg);
-		HelAction actions[3];
+		HelAction actions[4];
 		globalQueue.trim();
 
 		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
@@ -877,18 +877,22 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		actions[1].buffer = ser.data();
 		actions[1].length = ser.size();
 		actions[2].type = kHelActionRecvInline;
-		actions[2].flags = 0;
-		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+		actions[2].flags = kHelItemChain;
+		actions[3].type = kHelActionRecvInline;
+		actions[3].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 4,
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
 		auto offer = parseSimple(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
+		auto recv_list = parseInline(element);
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
 		HEL_CHECK(recv_resp->error);
+		HEL_CHECK(recv_list->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
@@ -902,28 +906,15 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		}
 		param->count_encoders = resp.drm_encoders_size();
 		
-		for(int i = 0; i < resp.drm_modes_size(); i++) {
+		for(int i = 0; i < resp.drm_num_modes(); i++) {
 			if(i >= param->count_modes)
 				 continue;
 			auto dest = reinterpret_cast<drm_mode_modeinfo *>(param->modes_ptr);
-			auto mode_resp = &resp.drm_modes(i);
-			dest[i].clock = mode_resp->clock();
-			dest[i].hdisplay = mode_resp->hdisplay();
-			dest[i].hsync_start = mode_resp->hsync_start();
-			dest[i].hsync_end = mode_resp->hsync_end();
-			dest[i].htotal = mode_resp->htotal();
-			dest[i].hskew = mode_resp->hskew();
-			dest[i].vdisplay = mode_resp->vdisplay();
-			dest[i].vsync_start = mode_resp->vsync_start();
-			dest[i].vsync_end = mode_resp->vsync_end();
-			dest[i].vtotal = mode_resp->vtotal();
-			dest[i].vscan = mode_resp->vscan();
-			dest[i].vrefresh = mode_resp->vrefresh();
-			dest[i].flags = mode_resp->flags();
-			dest[i].type = mode_resp->type();
-			memcpy(dest[i].name, mode_resp->name().data(), mode_resp->name().size());
+			auto src = reinterpret_cast<drm_mode_modeinfo *>(recv_list->data);
+
+			memcpy(&dest[i], &src[i], sizeof(drm_mode_modeinfo));
 		}
-		param->count_modes = resp.drm_modes_size();
+		param->count_modes = resp.drm_num_modes();
 		
 		param->count_props = 0;
 		param->encoder_id = resp.drm_encoder_id();
