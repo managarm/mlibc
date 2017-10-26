@@ -1207,6 +1207,56 @@ int ioctl(int fd, unsigned long request, void *arg) {
 
 		return resp.result();
 	}
+	case DRM_IOCTL_MODE_DIRTYFB: {
+		auto param = reinterpret_cast<drm_mode_fb_dirty_cmd*>(arg);
+		HelAction actions[4];
+		globalQueue.trim();
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+
+		req.set_drm_fb_id(param->fb_id);
+		req.set_drm_flags(param->flags);
+		req.set_drm_color(param->color);
+		for(int i = 0; i < param->num_clips; i++) {
+			auto dest = reinterpret_cast<drm_clip_rect *>(param->clips_ptr);
+			managarm::fs::Rect<MemoryAllocator> clip(getAllocator());
+			clip.set_x1(dest->x1);
+			clip.set_y1(dest->y1);
+			clip.set_x2(dest->x2);
+			clip.set_y2(dest->y2);
+			req.add_drm_clips(std::move(clip));
+		}
+	
+		frigg::String<MemoryAllocator> ser(getAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	
+		return resp.result();
+	}
 	default:
 		__ensure(!"Illegal ioctl request");
 	}
