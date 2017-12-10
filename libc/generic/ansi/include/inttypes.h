@@ -89,6 +89,8 @@
 #define PRIxPTR "lx"
 #define PRIXPTR "lX"
 
+#define SCNu64 "lu"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

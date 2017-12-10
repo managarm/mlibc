@@ -7,6 +7,7 @@ extern "C" {
 #endif
 
 char *strdup(const char *string);
+char *strndup(const char *, size_t);
 
 #ifdef __cplusplus
 }

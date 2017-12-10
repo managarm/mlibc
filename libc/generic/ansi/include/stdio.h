@@ -115,6 +115,9 @@ int getchar_unlocked(void);
 int putc_unlocked(int, FILE *);
 int putchar_unlocked(int);
 
+// GLIBC extensions.
+int asprintf(char **, const char *, ...);
+
 // Linux unlocked I/O extensions.
 
 void clearerr_unlocked(FILE *);

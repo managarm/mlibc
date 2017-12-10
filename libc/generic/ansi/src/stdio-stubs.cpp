@@ -278,6 +278,12 @@ int putchar_unlocked(int) {
 	__builtin_unreachable();
 }
 
+// GLIBC extensions.
+int asprintf(char **, const char *, ...) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 // Linux unlocked I/O extensions.
 
 void clearerr_unlocked(FILE *) {

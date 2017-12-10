@@ -13,3 +13,8 @@ char *strdup(const char *string) {
 	return new_string;
 }
 
+char *strndup(const char *string, size_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
