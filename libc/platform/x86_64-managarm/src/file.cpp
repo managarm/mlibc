@@ -819,7 +819,7 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		
-		for(int i = 0; i < resp.drm_fb_ids_size(); i++) {
+		for(size_t i = 0; i < resp.drm_fb_ids_size(); i++) {
 			if(i >= param->count_fbs)
 				 continue;
 			auto dest = reinterpret_cast<uint32_t *>(param->fb_id_ptr);
@@ -827,7 +827,7 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		}
 		param->count_fbs = resp.drm_fb_ids_size();
 		
-		for(int i = 0; i < resp.drm_crtc_ids_size(); i++) {
+		for(size_t i = 0; i < resp.drm_crtc_ids_size(); i++) {
 			if(i >= param->count_crtcs)
 				 continue;
 			auto dest = reinterpret_cast<uint32_t *>(param->crtc_id_ptr);
@@ -835,7 +835,7 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		}
 		param->count_crtcs = resp.drm_crtc_ids_size();
 		
-		for(int i = 0; i < resp.drm_connector_ids_size(); i++) {
+		for(size_t i = 0; i < resp.drm_connector_ids_size(); i++) {
 			if(i >= param->count_connectors)
 				 continue;
 			auto dest = reinterpret_cast<uint32_t *>(param->connector_id_ptr);
@@ -843,7 +843,7 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		}
 		param->count_connectors = resp.drm_connector_ids_size();
 		
-		for(int i = 0; i < resp.drm_encoder_ids_size(); i++) {
+		for(size_t i = 0; i < resp.drm_encoder_ids_size(); i++) {
 			if(i >= param->count_encoders)
 				 continue;
 			auto dest = reinterpret_cast<uint32_t *>(param->encoder_id_ptr);
@@ -898,7 +898,7 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		
-		for(int i = 0; i < resp.drm_encoders_size(); i++) {
+		for(size_t i = 0; i < resp.drm_encoders_size(); i++) {
 			if(i >= param->count_encoders)
 				 continue;
 			auto dest = reinterpret_cast<uint32_t *>(param->encoders_ptr);
@@ -906,7 +906,7 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		}
 		param->count_encoders = resp.drm_encoders_size();
 		
-		for(int i = 0; i < resp.drm_num_modes(); i++) {
+		for(size_t i = 0; i < resp.drm_num_modes(); i++) {
 			if(i >= param->count_modes)
 				 continue;
 			auto dest = reinterpret_cast<drm_mode_modeinfo *>(param->modes_ptr);
@@ -1163,7 +1163,7 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
 
-		for(int i = 0; i < param->count_connectors; i++) {
+		for(size_t i = 0; i < param->count_connectors; i++) {
 			auto dest = reinterpret_cast<uint32_t *>(param->set_connectors_ptr);
 			req.add_drm_connector_ids(dest[i]);
 		}
@@ -1219,14 +1219,14 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		req.set_drm_fb_id(param->fb_id);
 		req.set_drm_flags(param->flags);
 		req.set_drm_color(param->color);
-		for(int i = 0; i < param->num_clips; i++) {
+		for(size_t i = 0; i < param->num_clips; i++) {
 			auto dest = reinterpret_cast<drm_clip_rect *>(param->clips_ptr);
 			managarm::fs::Rect<MemoryAllocator> clip(getAllocator());
 			clip.set_x1(dest->x1);
 			clip.set_y1(dest->y1);
 			clip.set_x2(dest->x2);
 			clip.set_y2(dest->y2);
-			req.add_drm_clips(std::move(clip));
+			req.add_drm_clips(frigg::move(clip));
 		}
 	
 		frigg::String<MemoryAllocator> ser(getAllocator());
