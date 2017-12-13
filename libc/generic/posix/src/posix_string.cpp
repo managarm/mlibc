@@ -14,7 +14,17 @@ char *strdup(const char *string) {
 }
 
 char *strndup(const char *string, size_t) {
-	__ensure(!"Not implemented");
+	__ensure(!"strndup() not implemented");
+	__builtin_unreachable();
+}
+
+size_t strnlen(const char *, size_t) {
+	__ensure(!"strnlen() not implemented");
+	__builtin_unreachable();
+}
+
+char *strtok_r(char *__restrict, const char *__restrict, char **__restrict) {
+	__ensure(!"strtok_r() not implemented");
 	__builtin_unreachable();
 }
 

@@ -38,7 +38,10 @@ extern "C" {
 #define F_ULOCK 4
 
 // MISSING: _PC macros
-// MISSING: _SC macros
+
+// MISSING: remaining _SC_macros
+#define _SC_GETPW_R_SIZE_MAX 1
+
 
 #define STDERR_FILENO 2
 #define STDIN_FILENO 0

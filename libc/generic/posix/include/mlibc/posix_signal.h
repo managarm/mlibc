@@ -75,13 +75,16 @@ struct sigaction {
 #define SIG_SETMASK 3
 
 // functions to manage sigset_t
-int sigemptyset(sigset_t *sigset);
-int sigaddset(sigset_t *sigset, int sig);
-int sigdelset(sigset_t *sigset, int sig);
+int sigemptyset(sigset_t *);
+int sigfillset(sigset_t *);
+int sigaddset(sigset_t *, int);
+int sigdelset(sigset_t *, int);
 
 // functions to block / wait for signals
-int sigsuspend(const sigset_t *sigmask);
-int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve);
+int sigsuspend(const sigset_t *);
+int sigprocmask(int, const sigset_t *__restrict, sigset_t *__restrict);
+
+int pthread_sigmask(int, const sigset_t *__restrict, sigset_t *__restrict);
 
 // functions to handle signals
 int sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict);
