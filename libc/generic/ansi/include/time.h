@@ -70,6 +70,8 @@ size_t strftime(char *__restrict dest, size_t max_size,
 extern "C" {
 #endif
 
+int nanosleep(const struct timespec *, struct timespec *);
+
 int clock_getres(clockid_t, struct timespec *);
 int clock_gettime(clockid_t, struct timespec *);
 int clock_settime(clockid_t, const struct timespec *);

@@ -45,6 +45,11 @@ size_t strftime(char *__restrict dest, size_t max_size,
 
 // POSIX extensions.
 
+int nanosleep(const struct timespec *, struct timespec *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 int clock_getres(clockid_t, struct timespec *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
