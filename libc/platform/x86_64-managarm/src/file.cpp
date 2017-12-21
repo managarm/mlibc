@@ -1258,6 +1258,10 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		return resp.result();
 	}
 	default:
+		frigg::infoLogger() << "mlibc: Unexpected ioctl with"
+				<< " type: 0x" << frigg::logHex(_IOC_TYPE(request))
+				<< ", number: 0x" << frigg::logHex(_IOC_NR(request))
+				<< " (raw request: " << frigg::logHex(request) << ")" << frigg::endLog;
 		__ensure(!"Illegal ioctl request");
 	}
 }
