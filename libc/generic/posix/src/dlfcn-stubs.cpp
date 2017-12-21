@@ -3,6 +3,9 @@
 
 #include <mlibc/ensure.h>
 
+extern "C" void *__dlapi_open(const char *);
+extern "C" void *__dlapi_resolve(void *handle, const char *);
+
 int dlclose(void *) {
 	__ensure(!"dlclose() not implemented");
 	__builtin_unreachable();
@@ -13,14 +16,13 @@ char *dlerror(void) {
 	__builtin_unreachable();
 }
 
-void *dlopen(const char *, int) {
-	__ensure(!"dlopen() not implemented");
-	__builtin_unreachable();
+void *dlopen(const char *file, int flags) {
+	__ensure(flags & RTLD_GLOBAL);
+	return __dlapi_open(file);
 }
 
-void *dlsym(void *__restrict, const char *__restrict) {
-	__ensure(!"dlsym() not implemented");
-	__builtin_unreachable();
+void *dlsym(void *__restrict handle, const char *__restrict string) {
+	return __dlapi_resolve(handle, string);
 }
 
 //gnu extensions
