@@ -30,6 +30,16 @@ extern "C" {
 #define SIGXCPU 26
 #define SIGXFSZ 27
 
+#define SA_NOCLDSTOP 1
+#define SA_ONSTACK 2
+#define SA_RESETHAND 4
+#define SA_RESTART 8
+#define SA_SIGINFO 16
+#define SA_NOCLDWAIT 32
+#define SA_NODEFER 64
+
+#define NSIG 65
+
 // TODO: replace this by uint64_t
 typedef long sigset_t;
 

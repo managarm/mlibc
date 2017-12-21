@@ -332,3 +332,8 @@ int fputs_unlocked(const char *, FILE *) {
 	__builtin_unreachable();
 }
 
+int vasprintf(char **, const char *, __gnuc_va_list) {
+	__ensure(!"vasprintf() not implemented");
+	__builtin_unreachable();
+}
+

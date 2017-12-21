@@ -82,6 +82,7 @@ const char *gai_strerror(int);
 int getaddrinfo(const char *__restrict, const char *__restrict,
 		const struct addrinfo *__restrict, struct addrinfo **__restrict);
 struct hostent *gethostent(void);
+struct hostent *gethostbyname(const char *);
 int getnameinfo(const struct sockaddr *__restrict, socklen_t,
 		char *__restrict, socklen_t, char *__restrict, socklen_t, int);
 struct netent *getnetbyaddr(uint32_t, int);

@@ -909,3 +909,46 @@ long double fminl(long double x, long double y) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+//gnu extension
+
+void sincos(double, double *, double *) {
+	__ensure(!"sincos() not implemented");
+	__builtin_unreachable();
+}
+
+void sincosf(float, float *, float *) {
+	__ensure(!"sincosf() not implemented");
+	__builtin_unreachable();
+}
+void sincosl(long double, long double *, long double *) {
+	__ensure(!"sincosl() not implemented");
+	__builtin_unreachable();
+}
+
+double exp10(double) {
+	__ensure(!"exp10() not implemented");
+	__builtin_unreachable();
+}
+float exp10f(float) {
+	__ensure(!"exp10f() not implemented");
+	__builtin_unreachable();
+}
+long double exp10l(long double) {
+	__ensure(!"exp10l() not implemented");
+	__builtin_unreachable();
+}
+
+double pow10(double) {
+	__ensure(!"pow10() not implemented");
+	__builtin_unreachable();
+}
+float pow10f(float) {
+	__ensure(!"pow10f() not implemented");
+	__builtin_unreachable();
+}
+long double pow10l(long double) {
+	__ensure(!"pow10l() not implemented");
+	__builtin_unreachable();
+}
+

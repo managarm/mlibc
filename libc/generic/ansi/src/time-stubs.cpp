@@ -60,6 +60,11 @@ int clock_gettime(clockid_t, struct timespec *) {
 	__builtin_unreachable();
 }
 
+int clock_nanosleep(clockid_t, int, const struct timespec *, struct timespec *) {
+	__ensure(!"clock_nanosleep() not implemented");
+	__builtin_unreachable();
+}
+
 int clock_settime(clockid_t, const struct timespec *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

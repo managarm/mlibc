@@ -15,6 +15,10 @@
 
 #define MAP_FAILED ((void *)(-1))
 
+// posix extension:
+#define MAP_ANON 0x08
+#define MAP_ANONYMOUS 0x08
+
 #define MS_ASYNC 0x01
 #define MS_SYNC 0x02
 #define MS_INVALIDATE 0x04

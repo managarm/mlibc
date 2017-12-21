@@ -64,6 +64,11 @@ struct netent *getnetent(void) {
 	__builtin_unreachable();
 }
 
+struct hostent *gethostbyname(const char *) {
+	__ensure(!"gethostbyname() not implemented");
+	__builtin_unreachable();
+}
+
 struct protoent *getprotobyname(const char *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

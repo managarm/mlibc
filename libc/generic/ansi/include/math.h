@@ -2,7 +2,7 @@
 #ifndef _MATH_H
 #define _MATH_H
 
-// this is a  posix extension
+// this is a posix extension
 #define M_E             2.7182818284590452354
 #define M_LOG2E         1.4426950408889634074
 #define M_LOG10E        0.43429448190325182765
@@ -25,7 +25,7 @@ extern "C" {
 #define HUGE_VALF (__builtin_huge_valf())
 #define HUGE_VALL (__builtin_huge_vall())
 #define INFINITY (__builtin_inff())
-#define NAN (__builtin_nanf())
+#define NAN (__builtin_nanf(""))
 
 // [C11/7.12.1 Treatment of error conditions]
 
@@ -60,6 +60,19 @@ int __mlibc_fpclassifyl(long double x);
 
 // FIXME: this is gcc specific
 #define signbit(x) (__builtin_signbit(x))
+
+// this is a gnu extension
+void sincos(double, double *, double *);
+void sincosf(float, float *, float *);
+void sincosl(long double, long double *, long double *);
+
+double exp10(double);
+float exp10f(float);
+long double exp10l(long double);
+
+double pow10(double);
+float pow10f(float);
+long double pow10l(long double);
 
 // [C11/7.12.4 Trigonometric functions]
 

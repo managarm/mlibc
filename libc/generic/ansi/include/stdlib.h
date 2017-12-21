@@ -2,6 +2,7 @@
 #ifndef _STDLIB_H
 #define _STDLIB_H
 
+#include <alloca.h>
 #include <mlibc/null.h>
 #include <mlibc/size_t.h>
 #include <mlibc/wchar_t.h>

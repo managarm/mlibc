@@ -66,6 +66,8 @@ size_t strftime(char *__restrict dest, size_t max_size,
 #include <mlibc/suseconds_t.h>
 #include <mlibc/timeval.h>
 
+#define TIMER_ABSTIME 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -74,6 +76,7 @@ int nanosleep(const struct timespec *, struct timespec *);
 
 int clock_getres(clockid_t, struct timespec *);
 int clock_gettime(clockid_t, struct timespec *);
+int clock_nanosleep(clockid_t, int, const struct timespec *, struct timespec *);
 int clock_settime(clockid_t, const struct timespec *);
 
 int utimes(const char *, const struct timeval[2]);

@@ -2,10 +2,10 @@
 #ifndef _DLFCN_H
 #define _DLFCN_H
 
-#define RTDL_LAZY 0
-#define RTDL_NOW 1
-#define RTDL_GLOBAL 2
-#define RTDL_LOCAL 0
+#define RTLD_LAZY 0
+#define RTLD_NOW 1
+#define RTLD_GLOBAL 2
+#define RTLD_LOCAL 0
 
 #ifdef __cplusplus
 extern "C" {

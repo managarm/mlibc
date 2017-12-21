@@ -14,6 +14,11 @@ extern "C" {
 int fileno(FILE *file);
 FILE *fdopen(int fd, const char *mode); 
 
+FILE *fmemopen(void *__restrict, size_t, const char *__restrict);
+int pclose(FILE *);
+FILE *popen(const char*, const char *);
+FILE *open_memstream(char **, size_t *);
+
 #ifdef __cplusplus
 }
 #endif
