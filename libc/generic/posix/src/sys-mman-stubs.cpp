@@ -2,12 +2,9 @@
 #include <sys/mman.h>
 #include <mlibc/ensure.h>
 
-int mprotect(void *, size_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+#include <frigg/debug.hpp>
 
-int munmap(void *, size_t) {
+int mprotect(void *, size_t, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

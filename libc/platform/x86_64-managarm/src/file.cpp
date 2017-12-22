@@ -722,7 +722,13 @@ void *mmap(void *hint, size_t size, int prot, int flags, int fd, off_t offset) {
 	void *pointer;
 	HEL_CHECK(helMapMemory(pull_memory->handle, kHelNullHandle,
 			nullptr, resp.offset(), size, native_flags, &pointer));
+	HEL_CHECK(helCloseDescriptor(pull_memory->handle));
 	return pointer;
+}
+
+int munmap(void *pointer, size_t size) {
+	HEL_CHECK(helUnmapMemory(kHelNullHandle, pointer, size));
+	return 0;
 }
 
 int tcgetattr(int fd, struct termios *attr) {
