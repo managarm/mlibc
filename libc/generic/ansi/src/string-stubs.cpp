@@ -147,8 +147,12 @@ char *strrchr(const char *s, int c) {
 	return nullptr;
 }
 size_t strspn(const char *s, const char *chrs) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	size_t n = 0;
+	while(true) {
+		if(!s[n] || !strchr(chrs, s[n]))
+			return n;
+		n++;
+	}
 }
 char *strstr(const char *s, const char *pattern) {
 	for(size_t i = 0; s[i]; i++) {
