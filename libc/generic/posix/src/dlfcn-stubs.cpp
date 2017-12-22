@@ -3,6 +3,7 @@
 
 #include <mlibc/ensure.h>
 
+extern "C" const char *__dlapi_error();
 extern "C" void *__dlapi_open(const char *);
 extern "C" void *__dlapi_resolve(void *handle, const char *);
 
@@ -12,12 +13,11 @@ int dlclose(void *) {
 }
 
 char *dlerror(void) {
-	__ensure(!"dlerror() not implemented");
-	__builtin_unreachable();
+	return const_cast<char *>(__dlapi_error());
 }
 
 void *dlopen(const char *file, int flags) {
-	__ensure(flags & RTLD_GLOBAL);
+//	__ensure(flags & RTLD_GLOBAL);
 	return __dlapi_open(file);
 }
 
