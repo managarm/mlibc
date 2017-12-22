@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 // TODO: we need this for frigg::printf; replace this mechanism
 #include <assert.h>
@@ -14,14 +15,16 @@
 
 struct StreamPrinter {
 	StreamPrinter(FILE *stream)
-	: stream(stream) { }
+	: stream(stream), count(0) { }
 
 	void print(char c) {
 		fwrite(&c, 1, 1, stream);
+		count++;
 	}
 
 	void print(const char *str) {
 		fwrite(str, strlen(str), 1, stream);
+		count += strlen(str);
 	}
 
 	void flush() {
@@ -29,34 +32,66 @@ struct StreamPrinter {
 	}
 
 	FILE *stream;
+	size_t count;
 };
 
 struct BufferPrinter {
 	BufferPrinter(char *buffer, size_t limit)
-	: buffer(buffer), offset(0), limit(limit) { }
+	: buffer(buffer), limit(limit), count(0) { }
 
 	void print(char c) {
-		if(limit && !(offset < limit))
+		if(limit && !(count < limit))
 			return;
-		buffer[offset] = c;
-		offset++;
+		buffer[count] = c;
+		count++;
 	}
 
 	void print(const char *str) {
 		// TODO: use strcat
 		for(size_t i = 0; str[i]; i++) {
-			if(limit && !(offset < limit))
+			if(limit && !(count < limit))
 				return;
-			buffer[offset] = str[i];
-			offset++;
+			buffer[count] = str[i];
+			count++;
 		}
 	}
 
 	void flush() { }
 
 	char *buffer;
-	size_t offset;
 	size_t limit;
+	size_t count;
+};
+
+struct ResizePrinter {
+	ResizePrinter()
+	: buffer(nullptr), limit(0), count(0) { }
+
+	void print(char c) {
+		if(count == limit) {
+			auto new_limit = frigg::max(2 * limit, size_t(16));
+			auto new_buffer = reinterpret_cast<char *>(malloc(new_limit));
+			__ensure(new_buffer);
+			memcpy(new_buffer, buffer, count);
+			buffer = new_buffer;
+			limit = new_limit;
+		}
+		__ensure(count < limit);
+
+		buffer[count] = c;
+		count++;
+	}
+
+	void print(const char *str) {
+		for(size_t i = 0; str[i]; i++)
+			print(str[i]);
+	}
+
+	void flush() { }
+
+	char *buffer;
+	size_t limit;
+	size_t count;
 };
 
 int remove(const char *filename) {
@@ -135,7 +170,7 @@ int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_l
 	StreamPrinter p(stream);
 //	frigg::infoLogger.log() << "printf(" << format << ")" << frigg::EndLog();
 	frigg::printf(p, format, args);
-	return 0;
+	return p.count;
 }
 int vfscanf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
 	__ensure(!"Not implemented");
@@ -155,15 +190,15 @@ int vsnprintf(char *__restrict buffer, size_t max_size,
 	BufferPrinter p(buffer, max_size - 1);
 //	frigg::infoLogger.log() << "printf(" << format << ")" << frigg::EndLog();
 	frigg::printf(p, format, args);
-	p.buffer[p.offset] = 0;
-	return 0;
+	p.buffer[p.count] = 0;
+	return p.count + 1;
 }
 int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
 	BufferPrinter p(buffer, 0);
 //	frigg::infoLogger.log() << "printf(" << format << ")" << frigg::EndLog();
 	frigg::printf(p, format, args);
-	p.buffer[p.offset] = 0;
-	return 0;
+	p.buffer[p.count] = 0;
+	return p.count + 1;
 }
 int vsscanf(const char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
 	__ensure(!"Not implemented");
@@ -279,9 +314,21 @@ int putchar_unlocked(int) {
 }
 
 // GLIBC extensions.
-int asprintf(char **, const char *, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int asprintf(char **out, const char *format, ...) {
+	va_list args;
+	va_start(args, format);
+	int result = vasprintf(out, format, args);
+	va_end(args);
+	return result;
+}
+
+int vasprintf(char **out, const char *format, __gnuc_va_list args) {
+	ResizePrinter p;
+//	frigg::infoLogger.log() << "printf(" << format << ")" << frigg::EndLog();
+	frigg::printf(p, format, args);
+	p.print(char(0));
+	*out = p.buffer;
+	return p.count;
 }
 
 // Linux unlocked I/O extensions.
@@ -329,11 +376,6 @@ char *fgets_unlocked(char *, int, FILE *) {
 }
 int fputs_unlocked(const char *, FILE *) {
 	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int vasprintf(char **, const char *, __gnuc_va_list) {
-	__ensure(!"vasprintf() not implemented");
 	__builtin_unreachable();
 }
 
