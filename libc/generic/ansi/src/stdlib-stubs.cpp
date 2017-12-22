@@ -197,8 +197,25 @@ char *mktemp(char *) {
 
 void *bsearch(const void *key, const void *base, size_t count, size_t size,
 		int (*compare)(const void *, const void *)) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// Invariant: Element is in the interval [i, j).
+	size_t i = 0;
+	size_t j = count;
+
+	while(i < j) {
+		size_t k = (j - i) / 2;
+		auto element = reinterpret_cast<const char *>(base) + (i + k) * size;
+		auto res = compare(key, element);
+		if(res < 0) {
+			j = i + k;
+		}else if(res > 0) {
+			i = i + k + 1;
+		}else{
+			return const_cast<char *>(element);
+		}
+	}
+	__ensure(i == j);
+
+	return nullptr;
 }
 void qsort(void *base, size_t count, size_t size,
 		int (*compare)(const void *, const void *)) {
