@@ -36,12 +36,10 @@ struct StreamPrinter {
 };
 
 struct BufferPrinter {
-	BufferPrinter(char *buffer, size_t limit)
-	: buffer(buffer), limit(limit), count(0) { }
+	BufferPrinter(char *buffer)
+	: buffer(buffer), count(0) { }
 
 	void print(char c) {
-		if(limit && !(count < limit))
-			return;
 		buffer[count] = c;
 		count++;
 	}
@@ -49,11 +47,31 @@ struct BufferPrinter {
 	void print(const char *str) {
 		// TODO: use strcat
 		for(size_t i = 0; str[i]; i++) {
-			if(limit && !(count < limit))
-				return;
 			buffer[count] = str[i];
 			count++;
 		}
+	}
+
+	void flush() { }
+
+	char *buffer;
+	size_t count;
+};
+
+struct LimitedPrinter {
+	LimitedPrinter(char *buffer, size_t limit)
+	: buffer(buffer), limit(limit), count(0) { }
+
+	void print(char c) {
+		if(count < limit)
+			buffer[count] = c;
+		count++;
+	}
+
+	void print(const char *str) {
+		// TODO: use strcat
+		for(size_t i = 0; str[i]; i++)
+			print(str[i]);
 	}
 
 	void flush() { }
@@ -67,17 +85,21 @@ struct ResizePrinter {
 	ResizePrinter()
 	: buffer(nullptr), limit(0), count(0) { }
 
-	void print(char c) {
+	void expand() {
 		if(count == limit) {
 			auto new_limit = frigg::max(2 * limit, size_t(16));
 			auto new_buffer = reinterpret_cast<char *>(malloc(new_limit));
 			__ensure(new_buffer);
 			memcpy(new_buffer, buffer, count);
+			free(buffer);
 			buffer = new_buffer;
 			limit = new_limit;
 		}
 		__ensure(count < limit);
+	}
 
+	void print(char c) {
+		expand();
 		buffer[count] = c;
 		count++;
 	}
@@ -187,18 +209,18 @@ int vsnprintf(char *__restrict buffer, size_t max_size,
 		const char *__restrict format, __gnuc_va_list args) {
 	if(!max_size)
 		return 0;
-	BufferPrinter p(buffer, max_size - 1);
-//	frigg::infoLogger.log() << "printf(" << format << ")" << frigg::EndLog();
+	LimitedPrinter p(buffer, max_size - 1);
+//	frigg::infoLogger() << "printf(" << format << ")" << frigg::EndLog();
 	frigg::printf(p, format, args);
-	p.buffer[p.count] = 0;
-	return p.count + 1;
+	p.buffer[frigg::min(max_size, p.count)] = 0;
+	return p.count;
 }
 int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
-	BufferPrinter p(buffer, 0);
-//	frigg::infoLogger.log() << "printf(" << format << ")" << frigg::EndLog();
+	BufferPrinter p(buffer);
+//	frigg::infoLogger() << "printf(" << format << ")" << frigg::EndLog();
 	frigg::printf(p, format, args);
 	p.buffer[p.count] = 0;
-	return p.count + 1;
+	return p.count;
 }
 int vsscanf(const char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
 	__ensure(!"Not implemented");
@@ -326,7 +348,8 @@ int vasprintf(char **out, const char *format, __gnuc_va_list args) {
 	ResizePrinter p;
 //	frigg::infoLogger.log() << "printf(" << format << ")" << frigg::EndLog();
 	frigg::printf(p, format, args);
-	p.print(char(0));
+	p.expand();
+	p.buffer[p.count] = 0;
 	*out = p.buffer;
 	return p.count;
 }
