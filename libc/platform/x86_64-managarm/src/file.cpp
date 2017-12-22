@@ -831,10 +831,15 @@ int ioctl(int fd, unsigned long request, void *arg) {
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		
-		param->value = resp.drm_value();
-		return resp.result();
+		if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+			errno = EINVAL;
+			return -1;
+		}else{
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			
+			param->value = resp.drm_value();
+			return resp.result();
+		}
 	}
 	case DRM_IOCTL_MODE_GETRESOURCES: {
 		auto param = reinterpret_cast<drm_mode_card_res *>(arg);
