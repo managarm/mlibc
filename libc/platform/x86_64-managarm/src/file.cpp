@@ -545,22 +545,30 @@ int dup2(int src_fd, int dest_fd) {
 	auto offer = parseSimple(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
-	auto pull_lane = parseHandle(element);
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(pull_lane->error);
 	
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	return dest_fd;
+	return resp.fd();
 }
 
-int fcntl(int, int, ...) {
-	frigg::infoLogger() << "mlibc: Broken fcntl() called!" << frigg::endLog;
-	return 0;
+int fcntl(int fd, int request, ...) {
+	if(request == F_DUPFD) {
+		return dup2(fd, -1);
+	}else if(request == F_DUPFD_CLOEXEC) {
+		frigg::infoLogger() << "\e[31mmlibc: fcntl(F_DUPFD_CLOEXEC) is not implemented correctly"
+				<< "\e[39m" << frigg::endLog;
+		return dup2(fd, -1);
+	}else{
+		frigg::infoLogger() << "\e[31mmlibc: Unexpected fcntl() request: "
+				<< request << "\e[39m" << frigg::endLog;
+		errno = EINVAL;
+		return -1;
+	}
 }
 
 int isatty(int fd) {
@@ -741,6 +749,12 @@ int tcsetattr(int, int, const struct termios *attr) {
 #include <libdrm/drm.h>
 
 int ioctl(int fd, unsigned long request, void *arg) {
+//	frigg::infoLogger() << "mlibc: ioctl with"
+//			<< " type: 0x" << frigg::logHex(_IOC_TYPE(request))
+//			<< ", number: 0x" << frigg::logHex(_IOC_NR(request))
+//			<< " (raw request: " << frigg::logHex(request) << ")"
+//			<< " on fd " << fd << frigg::endLog;
+
 	auto handle = cacheFileTable()[fd];
 	__ensure(handle);
 
