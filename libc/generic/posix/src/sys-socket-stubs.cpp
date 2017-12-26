@@ -84,8 +84,5 @@ int socket(int, int, int) {
 	__builtin_unreachable();
 }
 
-int socketpair(int, int, int, int [2]) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// connectpair() is provided by the platform
 
