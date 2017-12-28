@@ -56,15 +56,13 @@ LibraryGuard::LibraryGuard() {
 	__mlibc_initStdio();
 }
 
-extern "C" int main(int argc, char *argv[], char *env[]);
-
 // not declared in any header
 extern char **environ;
 
-extern "C" void __mlibc_entry() {
+extern "C" void __mlibc_entry(int (*main_function)(int argc, char *argv[], char *env[])) {
 	char *empty_argv[] = { nullptr };
 
-	int result = main(1, empty_argv, environ);
+	auto result = main_function(1, empty_argv, environ);
 	exit(result);
 }
 
