@@ -796,6 +796,7 @@ int socketpair(int domain, int type, int proto, int *fds) {
 }
 
 #include <libdrm/drm.h>
+#include <libdrm/drm_fourcc.h>
 
 int ioctl(int fd, unsigned long request, void *arg) {
 //	frigg::infoLogger() << "mlibc: ioctl with"
@@ -1138,7 +1139,7 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		return resp.result();
 	}
 	case DRM_IOCTL_MODE_ADDFB: {
-		auto param = reinterpret_cast<drm_mode_fb_cmd*>(arg);
+		auto param = reinterpret_cast<drm_mode_fb_cmd *>(arg);
 		HelAction actions[3];
 		globalQueue.trim();
 
@@ -1152,6 +1153,57 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		req.set_drm_bpp(param->bpp);
 		req.set_drm_depth(param->depth);
 		req.set_drm_handle(param->handle);
+	
+		frigg::String<MemoryAllocator> ser(getAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		param->fb_id = resp.drm_fb_id();
+	
+		return resp.result();
+	}
+	case DRM_IOCTL_MODE_ADDFB2: {
+		auto param = reinterpret_cast<drm_mode_fb_cmd2 *>(arg);
+		HelAction actions[3];
+		globalQueue.trim();
+
+		__ensure(param->pixel_format == DRM_FORMAT_XRGB8888);
+		__ensure(!param->flags);
+		__ensure(!param->modifier[0]);
+		__ensure(!param->offsets[0]);
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(DRM_IOCTL_MODE_ADDFB);
+
+		req.set_drm_width(param->width);
+		req.set_drm_height(param->height);
+		req.set_drm_pitch(param->pitches[0]);
+		req.set_drm_bpp(32);
+		req.set_drm_depth(24);
+		req.set_drm_handle(param->handles[0]);
 	
 		frigg::String<MemoryAllocator> ser(getAllocator());
 		req.SerializeToString(&ser);
