@@ -4,8 +4,8 @@
 #include <mlibc/ensure.h>
 
 extern "C" const char *__dlapi_error();
-extern "C" void *__dlapi_open(const char *);
-extern "C" void *__dlapi_resolve(void *handle, const char *);
+extern "C" void *__dlapi_open(const char *, int);
+extern "C" void *__dlapi_resolve(void *, const char *);
 
 int dlclose(void *) {
 	__ensure(!"dlclose() not implemented");
@@ -17,8 +17,7 @@ char *dlerror(void) {
 }
 
 void *dlopen(const char *file, int flags) {
-//	__ensure(flags & RTLD_GLOBAL);
-	return __dlapi_open(file);
+	return __dlapi_open(file, !(flags & RTLD_GLOBAL));
 }
 
 void *dlsym(void *__restrict handle, const char *__restrict string) {
