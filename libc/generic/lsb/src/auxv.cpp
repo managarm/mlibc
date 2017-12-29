@@ -1,34 +1,33 @@
 
 #include <errno.h>
+#include <stdint.h>
 #include <sys/auxv.h>
 
 #include <mlibc/ensure.h>
 
-struct Auxiliary {
-	// the ABI supplement specifies type to be an 'int' but
-	// Linux uses unsigned long. It does not really matter though
-	// because 'int' would be padded anyways.
-	unsigned long type;
-	union {
-		long longValue;
-		void *pointerValue;
-	};
-};
+extern "C" uintptr_t *__dlapi_entrystack();
 
-extern "C" Auxiliary *__rtdl_auxvector();
+int peekauxval(unsigned long type, unsigned long *out) {
+	// Find the auxiliary vector by skipping args and environment.
+	auto aux = __dlapi_entrystack();
+	aux += *aux + 1; // Skip argc and all arguments
+	__ensure(!*aux);
+	aux++;
+	while(*aux) // Now, we skip the environment.
+		aux++;
+	aux++;
 
-int peekauxval(unsigned long type, unsigned long *value) {
-	// parse the auxiliary vector.
-	auto element = __rtdl_auxvector();
+	// Parse the auxiliary vector.
 	while(true) {
-		if(element->type == AT_NULL) {
+		auto value = aux + 1;
+		if(*aux == AT_NULL) {
 			errno = ENOENT;
 			return -1;
-		}else if(element->type == type) {
-			*value = element->longValue;
+		}else if(*aux == type) {
+			*out = *value;
 			return 0;
 		}
-		element++;
+		aux += 2;
 	}
 }
 
