@@ -25,8 +25,8 @@ void __assert_fail(const char *assertion, const char *file, unsigned int line,
 #else // NDEBUG
 
 #undef assert
-#define assert(assertion) do { if(!(assertion)) \
-		__assert_fail(#assertion, __FILE__, __LINE__, __func__); } while(0)
+#define assert(assertion) ((void)((assertion) \
+		|| (__assert_fail(#assertion, __FILE__, __LINE__, __func__), 0)))
 
 #endif // NDEBUG
 
