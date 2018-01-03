@@ -23,7 +23,7 @@ struct pollfd {
 	short revents;
 };
 
-int poll(struct pollfd *, nfds_t);
+int poll(struct pollfd *, nfds_t, int);
 
 #ifdef __cplusplus
 }

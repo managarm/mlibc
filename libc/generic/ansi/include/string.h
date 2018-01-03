@@ -49,6 +49,8 @@ size_t strlen(const char *s);
 // POSIX extensions.
 
 int strerror_r(int, char *, size_t);
+void *mempcpy(void *, const void *, size_t);
+char *stpcpy(char *__restrict, const char *__restrict);
 
 #ifdef __cplusplus
 }

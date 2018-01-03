@@ -81,6 +81,8 @@ int clock_settime(clockid_t, const struct timespec *);
 
 int utimes(const char *, const struct timeval[2]);
 
+struct tm *localtime_r(const time_t *, struct tm *);
+
 #ifdef __cplusplus
 }
 #endif

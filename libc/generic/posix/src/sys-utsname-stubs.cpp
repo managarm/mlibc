@@ -1,8 +1,8 @@
 
-#include <poll.h>
+#include <sys/utsname.h>
 #include <mlibc/ensure.h>
 
-int poll(struct pollfd *, nfds_t, int) {
+int uname(struct utsname *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

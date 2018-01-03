@@ -1,4 +1,7 @@
 
+#ifndef _LINUX_INPUT_H
+#define _LINUX_INPUT_H
+
 #include <stdint.h>
 #include <sys/time.h>
 #include <mlibc/timeval.h>
@@ -140,4 +143,6 @@ struct input_event {
 #define REL_X			0x00
 #define REL_Y			0x01
 #define REL_WHEEL		0x08
+
+#endif // _LINUX_INPUT_H
 

@@ -27,6 +27,19 @@ void __signalIgn(int signal);
 #define SIGINT 4
 #define SIGSEGV 5
 #define SIGTERM 6
+#define SIGPROF 7
+#define SIGWINCH 8
+#define SIGIO 9
+#define SIGPWR 10
+#define SIGRTMIN 11
+#define SIGRTMAX 12
+
+#define CLD_EXITED 1
+#define CLD_KILLED 2
+#define CLD_DUMPED 3
+#define CLD_TRAPPED 4
+#define CLD_STOPPED 5
+#define CLD_CONTINUED 6
 
 // [7.14.1] signal() function
 

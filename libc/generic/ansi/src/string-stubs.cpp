@@ -204,3 +204,12 @@ int strerror_r(int, char *, size_t) {
 	__builtin_unreachable();
 }
 
+void *mempcpy(void *dest, const void *src, size_t len) {
+	return (char *)memcpy(dest, src, len) + len;
+}
+
+char *stpcpy(char *__restrict, const char *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+

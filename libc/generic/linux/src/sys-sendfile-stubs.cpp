@@ -1,8 +1,8 @@
 
-#include <poll.h>
+#include <sys/sendfile.h>
 #include <mlibc/ensure.h>
 
-int poll(struct pollfd *, nfds_t, int) {
+ssize_t sendfile(int, int, off_t *, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

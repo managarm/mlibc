@@ -41,6 +41,7 @@ struct lconv {
 #define LC_MONETARY 4
 #define LC_NUMERIC 5
 #define LC_TIME 6
+#define LC_MESSAGES 7
 
 // [C11/7.11.1] setlocale() function
 

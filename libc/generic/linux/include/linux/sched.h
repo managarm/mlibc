@@ -2,25 +2,23 @@
 #ifndef _SCHED_H
 #define _SCHED_H
 
-#include <mlibc/pid_t.h>
-
-// MISSING: time_t, struct timespec
-
-// MISSING: POSIX [PS], [SS] and [TSP] options
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define SCHED_OTHER 0
+#include <mlibc/sa_family_t.h>
+
+#define SCHED_NORMAL 0
 #define SCHED_FIFO 1
 #define SCHED_RR 2
 #define SCHED_BATCH 3
 #define SCHED_IDLE 5
 #define SCHED_DEADLINE 6
+
 #define SCHED_RESET_ON_FORK 0x40000000
 
-int sched_yield();
+#define SCHED_FLAG_RESET_ON_FORK 0x01
+#define SCHED_FLAG_RECLAIM 0x02
 
 #ifdef __cplusplus
 }

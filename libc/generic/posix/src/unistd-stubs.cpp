@@ -286,3 +286,9 @@ int getpagesize(void) {
 
 // usleep() is provided by the platform
 
+// This is a Linux extension
+pid_t gettid(void *, size_t, unsigned int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+

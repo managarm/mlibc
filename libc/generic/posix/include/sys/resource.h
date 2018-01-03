@@ -24,6 +24,15 @@
 #define RLIMIT_NOFILE 5
 #define RLIMIT_STACK 6
 #define RLIMIT_AS 7
+#define RLIMIT_MEMLOCK 8
+#define RLIMIT_RSS 9
+#define RLIMIT_NPROC 10
+#define RLIMIT_LOCKS 11
+#define RLIMIT_SIGPENDING 12
+#define RLIMIT_MSGQUEUE 13
+#define RLIMIT_NICE 14
+#define RLIMIT_RTPRIO 15
+#define RLIMIT_NLIMITS 16
 
 #ifdef __cplusplus
 extern "C" {

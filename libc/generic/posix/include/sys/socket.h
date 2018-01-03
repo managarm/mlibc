@@ -2,10 +2,13 @@
 #ifndef _SOCKET_H
 #define _SOCKET_H
 
+#include <mlibc/gid_t.h>
+#include <mlibc/pid_t.h>
+#include <mlibc/sa_family_t.h>
 #include <mlibc/size_t.h>
 #include <mlibc/socklen_t.h>
 #include <mlibc/ssize_t.h>
-#include <mlibc/sa_family_t.h>
+#include <mlibc/uid_t.h>
 #include <mlibc/iovec.h>
 
 #ifdef __cplusplus
@@ -44,10 +47,14 @@ struct linger{
 	int l_linger;
 };
 
+#define SCM_CREDENTIALS 0x02
+
 #define SOCK_DGRAM 1
 #define SOCK_RAW 2
 #define SOCK_SEQPACKET 3
 #define SOCK_STREAM 4
+#define SOCK_NONBLOCK 0x10000
+#define SOCK_CLOEXEC 0x20000
 
 #define SOL_SOCKET 1
 
@@ -67,6 +74,11 @@ struct linger{
 #define SO_SNDLOWAT 14
 #define SO_SNDTIMEO 15
 #define SO_TYPE 16
+#define SO_SNDBUFFORCE 17
+#define SO_PEERCRED 18
+#define SO_ATTACH_FILTER 19
+#define SO_PASSCRED 20
+#define SO_RCVBUFFORCE 21
 
 #define SOMAXCONN 1
 
@@ -85,15 +97,23 @@ struct linger{
 #define PF_INET6 2
 #define PF_UNIX 3
 #define PF_UNSPEC 4
+#define PF_NETLINK 5
 
 #define AF_INET PF_INET
 #define AF_INET6 PF_INET6
 #define AF_UNIX PF_UNIX
 #define AF_UNSPEC PF_UNSPEC
+#define AF_NETLINK PF_NETLINK
 
 #define SHUT_RD 1
 #define SHUT_RDWR 2
 #define SHUT_WR 3
+
+struct ucred {
+	pid_t pid;
+	uid_t uid;
+	gid_t gid;
+};
 
 int accept(int, struct sockaddr *__restrict, socklen_t *__restrict);
 int bind(int, const struct sockaddr *, socklen_t);

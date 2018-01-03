@@ -20,6 +20,9 @@
 #include <mlibc/time_t.h>
 #include <mlibc/suseconds_t.h>
 
+#include <mlibc/fsblkcnt_t.h>
+#include <mlibc/fsfilcnt_t.h>
+
 // MISSING: almost every type
 
 #endif // _SYS_TYPES_H

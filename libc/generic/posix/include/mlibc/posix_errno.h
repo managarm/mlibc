@@ -74,8 +74,9 @@
 #define ESTALE 1071
 #define ETIMEDOUT 1072
 #define ETXTBSY 1073
-#define EWOULDBLOCK 1074
+#define EWOULDBLOCK EAGAIN
 #define EXDEV 1075
+#define ENODATA 1076
 
 #endif // MLIBC_POSIX_ERRNO_H
 

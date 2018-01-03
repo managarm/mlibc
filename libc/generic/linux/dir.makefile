@@ -3,11 +3,14 @@ $c_SRCDIR = $(TREE_PATH)/$c/src
 $c_HEADERDIR := $(TREE_PATH)/$c/include
 $c_OBJDIR := $(BUILD_PATH)/$c/obj
 
-$c_HEADERS := getopt.h mntent.h linux/input.h linux/types.h poll.h \
-	stdio_ext.h sys/ioctl.h sys/mount.h \
-	sys/sysmacros.h
+$c_HEADERS := getopt.h mntent.h malloc.h poll.h \
+	linux/filter.h linux/sched.h linux/input.h linux/types.h linux/netlink.h linux/magic.h \
+	linux/sockios.h linux/bpf_common.h \
+	stdio_ext.h sys/inotify.h sys/ioctl.h sys/mount.h sys/random.h \
+	sys/sysmacros.h sys/sendfile.h
 
-$c_OBJECTS := getopt-stubs.o mntent-stubs.o poll-stubs.o stdio_ext-stubs.o
+$c_OBJECTS := getopt-stubs.o mntent-stubs.o poll-stubs.o stdio_ext-stubs.o sys-inotify-stubs.o
+$c_OBJECTS += sys-random-stubs.o sys-sendfile-stubs.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
 $c_CXX := x86_64-managarm-g++

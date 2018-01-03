@@ -43,6 +43,7 @@ extern "C" {
 #define _SC_GETPW_R_SIZE_MAX 1
 #define _SC_PHYS_PAGES 2
 #define _SC_PAGE_SIZE 3
+#define _SCPAGESIZE _SC_PAGE_SIZE
 
 #define STDERR_FILENO 2
 #define STDIN_FILENO 0
@@ -135,6 +136,7 @@ int unlink(const char *);
 int unlinkat(int, const char *, int);
 ssize_t write(int fd, const void *buffer, size_t size);
 
+extern char **environ;
 extern char *optarg;
 extern int optind;
 extern int opterr;
@@ -146,6 +148,9 @@ typedef __mlibc_uint64 useconds_t;
 int getpagesize(void);
 int usleep(useconds_t);
 int chroot(const char *);
+
+// This is a Linux extension
+pid_t gettid(void);
 
 #ifdef __cplusplus
 }

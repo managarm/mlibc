@@ -1,8 +1,8 @@
 
-#include <poll.h>
+#include <fnmatch.h>
 #include <mlibc/ensure.h>
 
-int poll(struct pollfd *, nfds_t, int) {
+int fnmatch(const char *, const char *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

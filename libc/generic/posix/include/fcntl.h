@@ -77,6 +77,21 @@ int openat(int, const char *, int, ...);
 int posix_fadvise(int, off_t, off_t, int);
 int posix_fallocate(int, off_t, off_t);
 
+// This is a linux extension
+
+#define AT_EMPTY_PATH 1
+#define AT_SYMLINK_FOLLOW 2
+#define AT_FDCWD -100
+
+struct file_handle {
+        unsigned int handle_bytes;
+        int handle_type;
+        unsigned char f_handle[0];
+};
+
+int name_to_handle_at(int, const char *, struct file_handle *, int, int);
+int open_by_handle_at(int, struct file_handle *, int);
+
 #ifdef __cplusplus
 }
 #endif

@@ -70,8 +70,12 @@ int clock_settime(clockid_t, const struct timespec *) {
 	__builtin_unreachable();
 }
 
-
 int utimes(const char *, const struct timeval[2]) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+struct tm *localtime_r(const time_t *, struct tm *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
