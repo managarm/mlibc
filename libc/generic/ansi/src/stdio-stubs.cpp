@@ -190,7 +190,7 @@ int sscanf(const char *__restrict buffer, const char *__restrict format, ...) {
 }
 int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
 	StreamPrinter p(stream);
-//	frigg::infoLogger.log() << "printf(" << format << ")" << frigg::EndLog();
+//	frigg::infoLogger() << "printf(" << format << ")" << frigg::EndLog();
 	frigg::printf(p, format, args);
 	return p.count;
 }
@@ -346,7 +346,7 @@ int asprintf(char **out, const char *format, ...) {
 
 int vasprintf(char **out, const char *format, __gnuc_va_list args) {
 	ResizePrinter p;
-//	frigg::infoLogger.log() << "printf(" << format << ")" << frigg::EndLog();
+//	frigg::infoLogger() << "printf(" << format << ")" << frigg::EndLog();
 	frigg::printf(p, format, args);
 	p.expand();
 	p.buffer[p.count] = 0;
