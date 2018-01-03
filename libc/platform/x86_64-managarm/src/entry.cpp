@@ -17,6 +17,8 @@ void __mlibc_initLocale();
 // defined by the POSIX library
 void __mlibc_initStdio();
 
+extern "C" uintptr_t *__dlapi_entrystack();
+
 // declared in posix-pipe.hpp
 thread_local Queue globalQueue;
 
@@ -54,9 +56,22 @@ static LibraryGuard guard;
 LibraryGuard::LibraryGuard() {
 	__mlibc_initLocale();
 	__mlibc_initStdio();
+
+	// Parse the environment.
+	auto env = __dlapi_entrystack();
+	env += *env + 1; // Skip argc and all arguments.
+	__ensure(!*env);
+	env++;
+
+	while(*env) {
+		auto string = reinterpret_cast<char *>(*env);
+		auto fail = putenv(string);
+		__ensure(!fail);
+		env++;
+	}
 }
 
-// not declared in any header
+// The environmet was build by the LibraryGuard.
 extern char **environ;
 
 extern "C" void __mlibc_entry(int (*main_function)(int argc, char *argv[], char *env[])) {
