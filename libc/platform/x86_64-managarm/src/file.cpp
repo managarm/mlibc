@@ -767,6 +767,131 @@ int socketpair(int domain, int type, int proto, int *fds) {
 	return 0;
 }
 
+#include <sys/epoll.h>
+
+int epoll_create1(int flags) {
+	__ensure(!flags);
+
+	HelAction actions[3];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::EPOLL_CREATE);
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	return resp.fd();
+}
+
+int epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
+	__ensure(mode == EPOLL_CTL_ADD);
+
+	HelAction actions[3];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::EPOLL_CTL);
+	req.set_fd(epfd);
+	req.set_newfd(fd);
+	req.set_flags(ev->events);
+	req.set_cookie(ev->data.u64);
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	return 0;
+}
+
+int epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
+	__ensure(timeout == -1);
+
+	HelAction actions[4];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::EPOLL_WAIT);
+	req.set_fd(epfd);
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = kHelItemChain;
+	actions[3].type = kHelActionRecvToBuffer;
+	actions[3].flags = 0;
+	actions[3].buffer = evnts;
+	actions[3].length = n * sizeof(struct epoll_event);
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 4,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+	auto recv_data = parseLength(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(recv_data->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	__ensure(!(recv_data->length % sizeof(struct epoll_event)));
+	return recv_data->length / sizeof(struct epoll_event);
+}
+
 #include <libdrm/drm.h>
 #include <libdrm/drm_fourcc.h>
 
@@ -1402,6 +1527,7 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		assert(!(param->flags & ~DRM_MODE_PAGE_FLIP_EVENT));
 		req.set_drm_crtc_id(param->crtc_id);
 		req.set_drm_fb_id(param->fb_id);
+		req.set_drm_cookie(param->user_data);
 
 		frigg::String<MemoryAllocator> ser(getAllocator());
 		req.SerializeToString(&ser);
