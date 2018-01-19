@@ -14,7 +14,7 @@ $c_OBJECTS := assert-stubs.o ctype-stubs.o errno-stubs.o inttypes-stubs.o \
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
 $c_CXX := x86_64-managarm-g++
-$c_CPPFLAGS := -std=c++14 -Wall
+$c_CPPFLAGS := -std=c++1z -Wall
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/compilers/gcc/private
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/ansi/include
 $c_CPPFLAGS += -I$(TREE_PATH)/libc/generic/posix/include
