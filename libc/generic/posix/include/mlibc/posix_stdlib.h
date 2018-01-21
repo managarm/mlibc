@@ -8,6 +8,8 @@ extern "C" {
 
 long random(void);
 
+int putenv(const char *);
+
 #ifdef __cplusplus
 }
 #endif

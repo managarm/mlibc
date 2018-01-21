@@ -3,8 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <frg/random.hpp>
 
+#include <frg/random.hpp>
+#include <frigg/debug.hpp>
 #include <mlibc/ensure.h>
 
 extern "C" int __cxa_atexit(void (*function)(void *), void *argument, void *dso_tag);
@@ -177,10 +178,7 @@ void exit(int status) {
 	_Exit(status);
 }
 // _Exit() is provided by the platform
-char *getenv(const char *name) {
-	// TODO: should be provided by the POSIX sublibrary based on environ
-	return nullptr;
-}
+// getenv() is provided by POSIX
 void quick_exit(int status) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
