@@ -2,14 +2,13 @@
 libc_CXX := x86_64-managarm-g++
 
 libc_CPPFLAGS := -std=c++1z -Wall
-libc_CPPFLAGS += -I$(TREE_PATH)/libc/compilers/gcc/private
-libc_CPPFLAGS += -I$(TREE_PATH)/libc/generic/ansi/include
-libc_CPPFLAGS += -I$(TREE_PATH)/libc/generic/linux/include
-libc_CPPFLAGS += -I$(TREE_PATH)/libc/generic/lsb/include
-libc_CPPFLAGS += -I$(TREE_PATH)/libc/generic/posix/include
-libc_CPPFLAGS += -I$(TREE_PATH)/libc/compilers/gcc/include
-libc_CPPFLAGS += -I$(TREE_PATH)/libc/machine/x86_64/include
-libc_CPPFLAGS += -I$(TREE_PATH)/libc/platform/x86_64-managarm/include
+libc_CPPFLAGS += -I$(TREE_PATH)/options/internal/private
+libc_CPPFLAGS += -I$(TREE_PATH)/options/ansi/include
+libc_CPPFLAGS += -I$(TREE_PATH)/options/linux/include
+libc_CPPFLAGS += -I$(TREE_PATH)/options/lsb/include
+libc_CPPFLAGS += -I$(TREE_PATH)/options/posix/include
+libc_CPPFLAGS += -I$(TREE_PATH)/options/internal/include
+libc_CPPFLAGS += -I$(TREE_PATH)/sysdeps/managarm/include
 libc_CPPFLAGS += -Igen
 libc_CPPFLAGS += -I$(FRIGG_PATH)/include
 libc_CPPFLAGS += -DFRIGG_HAVE_LIBC -DFRIGG_HIDDEN
@@ -17,25 +16,25 @@ libc_CPPFLAGS += -DFRIGG_HAVE_LIBC -DFRIGG_HIDDEN
 libc_CXXFLAGS := $(libc_CPPFLAGS) -fPIC -O2
 libc_CXXFLAGS += -fno-builtin -fno-rtti -fno-exceptions
 
-libc_BEGIN := libc/compilers/gcc/extra-src/mlibc_crtbegin.o
-libc_END := libc/compilers/gcc/extra-src/mlibc_crtend.o
+libc_BEGIN := options/internal/gcc-extra/mlibc_crtbegin.o
+libc_END := options/internal/gcc-extra/mlibc_crtend.o
 
 libc_gendir := gen/
 
-libc_dirs := libc/generic/ansi/src libc/generic/linux/src
-libc_dirs += libc/generic/lsb/src libc/generic/posix/src
-libc_dirs += libc/compilers/gcc/src libc/compilers/gcc/extra-src
-libc_dirs += libc/machine/x86_64/src
-libc_dirs += libc/platform/x86_64-managarm/src
+libc_dirs := options/ansi/generic options/linux/generic
+libc_dirs += options/lsb/generic options/posix/generic
+libc_dirs += options/internal/gcc/ options/internal/gcc
+libc_dirs += options/internal/x86_64
+libc_dirs += sysdeps/managarm/generic
 
-libc_cxx_sources := $(wildcard $(TREE_PATH)/libc/generic/ansi/src/*.cpp)
-libc_cxx_sources += $(wildcard $(TREE_PATH)/libc/generic/linux/src/*.cpp)
-libc_cxx_sources += $(wildcard $(TREE_PATH)/libc/generic/lsb/src/*.cpp)
-libc_cxx_sources += $(wildcard $(TREE_PATH)/libc/generic/posix/src/*.cpp)
-libc_cxx_sources += $(wildcard $(TREE_PATH)/libc/compilers/gcc/src/*.cpp)
-libc_cxx_sources += $(wildcard $(TREE_PATH)/libc/platform/x86_64-managarm/src/*.cpp)
+libc_cxx_sources := $(wildcard $(TREE_PATH)/options/ansi/generic/*.cpp)
+libc_cxx_sources += $(wildcard $(TREE_PATH)/options/linux/generic/*.cpp)
+libc_cxx_sources += $(wildcard $(TREE_PATH)/options/lsb/generic/*.cpp)
+libc_cxx_sources += $(wildcard $(TREE_PATH)/options/posix/generic/*.cpp)
+libc_cxx_sources += $(wildcard $(TREE_PATH)/options/internal/gcc/*.cpp)
+libc_cxx_sources += $(wildcard $(TREE_PATH)/sysdeps/managarm/generic/*.cpp)
 
-libc_s_sources := $(wildcard $(TREE_PATH)/libc/machine/x86_64/src/*.S)
+libc_s_sources := $(wildcard $(TREE_PATH)/options/internal/x86_64/*.S)
 
 libc_objects := $(patsubst $(TREE_PATH)/%.cpp,%.o,$(libc_cxx_sources))
 libc_objects += $(patsubst $(TREE_PATH)/%.cpp,%.o,$(libc_s_sources))
