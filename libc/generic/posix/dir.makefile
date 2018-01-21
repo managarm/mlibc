@@ -20,8 +20,8 @@ $c_OBJECTS := arpa-inet-stubs.o dirent-stubs.o dlfcn-stubs.o environment.o fcntl
 	ftw-stubs.o glob-stubs.o grp-stubs.o langinfo-stubs.o libgen-stubs.o netdb-stubs.o net-if-stubs.o pthread-stubs.o \
 	pwd-stubs.o sched-stubs.o spawn-stubs.o strings-stubs.o syslog-stubs.o termios-stubs.o unistd-stubs.o \
 	sys-file-stubs.o sys-mman-stubs.o sys-resource-stubs.o sys-socket-stubs.o sys-stat-stubs.o sys-select-stubs.o \
-	sys-time-stubs.o sys-wait-stubs.o sys-statfs-stubs.o sys-statvfs-stubs.o sys-utsname-stubs.o\
-	posix_signal.o posix_stdio.o posix_stdlib.o posix_string.o \
+	sys-time-stubs.o sys-wait-stubs.o sys-statfs-stubs.o sys-statvfs-stubs.o sys-utsname-stubs.o \
+	posix_signal.o posix_stdio.o posix_stdlib.o posix_string.o
 $c_OBJECT_PATHS := $(addprefix $($c_OBJDIR)/,$($c_OBJECTS))
 
 $c_CXX := x86_64-managarm-g++
