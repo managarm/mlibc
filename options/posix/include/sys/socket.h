@@ -38,6 +38,23 @@ struct cmsghdr {
 	int cmsg_type;
 };
 
+#define CMSG_LEN(sz) (sizeof(struct cmsghdr) + (sz))
+#define CMSG_ALIGN(sz) (((sz) + __alignof__(struct cmsghdr) - 1) & \
+		~(__alignof__(struct cmsghdr) - 1))
+#define CMSG_SPACE(sz) (sizeof(struct cmsghdr) + CMSG_ALIGN(sz))
+
+#define __MLIBC_CMSG_NEXT(cmsg) ((char *)(cmsg) + CMSG_ALIGN((cmsg)->cmsg_len))
+#define __MLIBC_MHDR_LIMIT(mhdr) ((char *)(mhdr)->msg_control + (mhdr)->msg_controllen)
+
+#define CMSG_DATA(cmsg) ((char *)(((struct cmsghdr *)(cmsg)) + 1))
+#define CMSG_NXTHDR(mhdr, cmsg) \
+	((cmsg)->cmsg_len < sizeof(struct cmsghdr) || \
+		sizeof(struct cmsghdr) + CMSG_ALIGN((cmsg)->cmsg_len) \
+			>= __MLIBC_MHDR_LIMIT(mhdr) - (char *)(cmsg) \
+	? (struct cmsghdr *)0 : (struct cmsghdr *)__MLIBC_CMSG_NEXT(cmsg))
+#define CMSG_FIRSTHDR(mhdr) ((size_t)(mhdr)->msg_controllen <= sizeof(struct cmsghdr) \
+	? (struct cmsghdr *)0 : (struct cmsghdr *) (mhdr)->msg_control)
+
 #define SCM_RIGHTS 1
 
 //MISSING: CMSG_DATA, CMSG_NXTHDR, CMSG_FIRSTHDR
