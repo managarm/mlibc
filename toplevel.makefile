@@ -18,5 +18,5 @@ gen: gen-libc
 
 install: install-libc install-libm install-libpthread
 
-#install-headers: install-headers-libc
+install-headers: install-headers-libc
 
