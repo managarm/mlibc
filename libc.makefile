@@ -29,9 +29,14 @@ libc_include_dirs := options/internal/include \
 
 pretty = @echo '\t\e[1m$2\e[0m $3'; if ! $1; then echo "Error! Command line was:"; echo '$1'; fi
 
+compile_cxx_cmd = $(libc_CXX) -c -o $@ $(libc_CXXFLAGS) $<
+link_cxx_cmd = x86_64-managarm-g++ -shared -o $@ -nostdlib \
+	$(libc_BEGIN) $(libc_objects) -l:ld-init.so $(libc_END)
 install_header_cmd = install -Dp $< $@
 install_slib_cmd = install -Dp $< $@
 
+compile_cxx_pretty = $(call pretty,$(compile_cxx_cmd),c++,$@)
+link_cxx_pretty = $(call pretty,$(link_cxx_cmd),link,$@)
 install_header_pretty = $(call pretty,$(install_header_cmd),install,$@)
 install_slib_pretty = $(call pretty,$(install_slib_cmd),install,$@)
 
@@ -182,7 +187,7 @@ libc_cxx_sources += $(wildcard $(TREE_PATH)/options/posix/generic/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/options/internal/gcc/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/sysdeps/managarm/generic/*.cpp)
 
-libc_objects := $(patsubst $(TREE_PATH)/%.cpp,%.o,$(libc_s_sources))
+libc_objects := $(patsubst $(TREE_PATH)/%.S,%.o,$(libc_s_sources))
 libc_objects += $(patsubst $(TREE_PATH)/%.cpp,%.o,$(libc_cxx_sources))
 
 libc_AS := x86_64-managarm-as
@@ -201,12 +206,13 @@ $(libc_gendir):
 %.o: %.S | $(libc_code_dirs)
 	$(libc_AS) -o $@ $($libc_ASFLAGS) $<
 
+# TODO: Speed up compilation by calling GCC only once.
 %.o: %.cpp | $(libc_code_dirs)
-	$(libc_CXX) -c -o $@ $(libc_CXXFLAGS) $<
-	$(libc_CXX) $(libc_CPPFLAGS) -MM -MP -MF $(@:%.o=%.d) -MT "$@" -MT "$(@:%.o=%.d)" $<
+	$(compile_cxx_pretty)
+	@$(libc_CXX) $(libc_CPPFLAGS) -MM -MP -MF $(@:%.o=%.d) -MT "$@" -MT "$(@:%.o=%.d)" $<
 
 libc.so: $(libc_objects) $(libc_BEGIN) $(libc_END)
-	x86_64-managarm-g++ -shared -o $@ -nostdlib $(libc_BEGIN) $(libc_objects) -l:ld-init.so $(libc_END)
+	$(link_cxx_pretty)
 
 gen-libc: $(libc_gendir)/posix.frigg_pb.hpp $(libc_gendir)/fs.frigg_pb.hpp
 
