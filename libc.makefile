@@ -21,7 +21,140 @@ libc_END := options/internal/gcc-extra/mlibc_crtend.o
 
 libc_gendir := gen/
 
-libc_includes := sys/socket.h
+#Ansi
+libc_includes := alloca.h \
+	assert.h \
+	ctype.h \
+	errno.h \
+	inttypes.h \
+	limits.h \
+	locale.h \
+	math.h \
+	mlibc/clockid_t.h \
+	mlibc/ensure.h \
+	mlibc/seek.h \
+	mlibc/timespec.h \
+	mlibc/time_t.h \
+	setjmp.h \
+	signal.h \
+	stdio.h \
+	stdlib.h \
+	string.h \
+	time.h \
+	wchar.h
+#Internal
+libc_includes += mlibc/internal/types.h \
+	mlibc/machine.h \
+	mlibc/null.h \
+	mlibc/size_t.h \
+	mlibc/wchar_t.h \
+	stdint.h
+#Linux
+libc_includes += getopt.h \
+	linux/bpf_common.h \
+	linux/filter.h \
+	linux/input.h \
+	linux/magic.h \
+	linux/netlink.h \
+	linux/sched.h \
+	linux/sockios.h \
+	linux/types.h \
+	malloc.h \
+	mntent.h \
+	poll.h \
+	stdio_ext.h \
+	sys/epoll.h \
+	sys/inotify.h \
+	sys/ioctl.h \
+	sys/mount.h \
+	sys/random.h \
+	sys/sendfile.h \
+	sys/sysmacros.h
+#LSB
+libc_includes += sys/auxv.h
+#Posix
+libc_includes += arpa/inet.h \
+	byteswap.h \
+	dirent.h \
+	dlfcn.h \
+	endian.h \
+	fcntl.h \
+	fnmatch.h \
+	ftw.h \
+	glob.h \
+	grp.h \
+	langinfo.h \
+	libgen.h \
+	mlibc/blkcnt_t.h \
+	mlibc/blksize_t.h \
+	mlibc/dev_t.h \
+	mlibc/file.h \
+	mlibc/fsblkcnt_t.h \
+	mlibc/fsfilcnt_t.h \
+	mlibc/gid_t.h \
+	mlibc/id_t.h \
+	mlibc/in_addr_t.h \
+	mlibc/ino_t.h \
+	mlibc/in_port_t.h \
+	mlibc/iovec.h \
+	mlibc/locale_t.h \
+	mlibc/mode_t.h \
+	mlibc/nlink_t.h \
+	mlibc/nl_item.h \
+	mlibc/off_t.h \
+	mlibc/pid_t.h \
+	mlibc/posix_errno.h \
+	mlibc/posix_signal.h \
+	mlibc/posix_stdio.h \
+	mlibc/posix_stdlib.h \
+	mlibc/posix_string.h \
+	mlibc/sa_family_t.h \
+	mlibc/socklen_t.h \
+	mlibc/ssize_t.h \
+	mlibc/stat.h \
+	mlibc/suseconds_t.h \
+	mlibc/timeval.h \
+	mlibc/uid_t.h \
+	net/if.h \
+	netdb.h \
+	netinet/in.h \
+	netinet/ip.h \
+	pthread.h \
+	pwd.h \
+	sched.h \
+	spawn.h \
+	strings.h \
+	sys/file.h \
+	sys/mman.h \
+	sys/param.h \
+	sys/resource.h \
+	sys/select.h \
+	sys/socket.h \
+	sys/statfs.h \
+	sys/stat.h \
+	sys/statvfs.h \
+	sys/time.h \
+	sys/types.h \
+	sys/uio.h \
+	sys/un.h \
+	sys/utsname.h \
+	sys/vfs.h \
+	sys/wait.h \
+	syslog.h \
+	termios.h \
+	unistd.h
+
+$(SYSROOT_PATH)/usr/include/%.h: options/ansi/include/%.h
+	install -Dp $< $@
+
+$(SYSROOT_PATH)/usr/include/%.h: options/internal/include/%.h
+	install -Dp $< $@
+
+$(SYSROOT_PATH)/usr/include/%.h: options/linux/include/%.h
+	install -Dp $< $@
+
+$(SYSROOT_PATH)/usr/include/%.h: options/lsb/include/%.h
+	install -Dp $< $@
 
 $(SYSROOT_PATH)/usr/include/%.h: options/posix/include/%.h
 	install -Dp $< $@
