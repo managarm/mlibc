@@ -19,7 +19,7 @@ libc_CXXFLAGS += -fno-builtin -fno-rtti -fno-exceptions
 libc_BEGIN := options/internal/gcc-extra/mlibc_crtbegin.o
 libc_END := options/internal/gcc-extra/mlibc_crtend.o
 
-libc_gendir := gen/
+libc_gendir := gen
 
 libc_include_dirs := options/internal/include \
 	options/ansi/include \
@@ -27,14 +27,25 @@ libc_include_dirs := options/internal/include \
 	options/lsb/include \
 	options/linux/include
 
-pretty = @echo '\t\e[1m$2\e[0m $3'; if ! $1; then echo "Error! Command line was:"; echo '$1'; fi
+pretty = @echo '\t\e[1m$2\e[0m $3'; if ! $1; then \
+	echo "\e[31mError in" '\e[1m$2\e[0m\e[31m $3!\e[39m' \
+	"Command line was:"; echo '\e[31m$1\e[39m'; exit 1; fi
+quiet = @if ! $1; then \
+	echo "\e[31mError in" '\e[1m$2\e[0m\e[31m $3!\e[39m'\
+	"Command line was:"; echo '\e[31m$1\e[39m'; exit 1; fi
 
+proto_cmd = $(PROTOC) \
+	--plugin=protoc-gen-frigg=$(MANAGARM_BUILD_PATH)/tools/frigg_pb/bin/frigg_pb \
+	--frigg_out=$(libc_gendir) --proto_path=$(MANAGARM_SRC_PATH)/bragi/proto $<
+compile_s_cmd = $(libc_AS) -o $@ $($libc_ASFLAGS) $<
 compile_cxx_cmd = $(libc_CXX) -c -o $@ $(libc_CXXFLAGS) $<
 link_cxx_cmd = x86_64-managarm-g++ -shared -o $@ -nostdlib \
 	$(libc_BEGIN) $(libc_objects) -l:ld-init.so $(libc_END)
 install_header_cmd = install -Dp $< $@
 install_slib_cmd = install -Dp $< $@
 
+proto_pretty = $(call pretty,$(proto_cmd),protoc,$@)
+compile_s_pretty = $(call pretty,$(compile_s_cmd),as,$@)
 compile_cxx_pretty = $(call pretty,$(compile_cxx_cmd),c++,$@)
 link_cxx_pretty = $(call pretty,$(link_cxx_cmd),link,$@)
 install_header_pretty = $(call pretty,$(install_header_cmd),install,$@)
@@ -198,13 +209,13 @@ vpath %.S $(TREE_PATH)
 vpath %.cpp $(TREE_PATH)
 
 $(libc_code_dirs):
-	mkdir -p $@
+	$(call quiet,mkdir -p $@,mkdir,$@)
 
 $(libc_gendir):
-	mkdir -p $@
+	$(call quiet,mkdir -p $@,mkdir,$@)
 
 %.o: %.S | $(libc_code_dirs)
-	$(libc_AS) -o $@ $($libc_ASFLAGS) $<
+	$(compile_s_pretty)
 
 # TODO: Speed up compilation by calling GCC only once.
 %.o: %.cpp | $(libc_code_dirs)
@@ -222,8 +233,7 @@ install-libc: $(addprefix $(SYSROOT_PATH)/usr/include/,$(libc_includes))
 install-libc: $(SYSROOT_PATH)/usr/lib/libc.so
 
 $(libc_gendir)/%.frigg_pb.hpp: $(MANAGARM_SRC_PATH)/bragi/proto/%.proto | $(libc_gendir)
-	$(PROTOC) --plugin=protoc-gen-frigg=$(MANAGARM_BUILD_PATH)/tools/frigg_pb/bin/frigg_pb \
-			--frigg_out=$(libc_gendir) --proto_path=$(MANAGARM_SRC_PATH)/bragi/proto $<
+	$(proto_pretty)
 
 -include $(libc_objects:%.o=%.d)
 
