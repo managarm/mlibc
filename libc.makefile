@@ -30,11 +30,11 @@ libc_includes := alloca.h \
 	limits.h \
 	locale.h \
 	math.h \
-	mlibc/clockid_t.h \
-	mlibc/ensure.h \
-	mlibc/seek.h \
-	mlibc/timespec.h \
-	mlibc/time_t.h \
+	bits/ansi/clockid_t.h \
+	bits/ansi/ensure.h \
+	bits/ansi/seek.h \
+	bits/ansi/timespec.h \
+	bits/ansi/time_t.h \
 	setjmp.h \
 	signal.h \
 	stdio.h \
@@ -43,11 +43,11 @@ libc_includes := alloca.h \
 	time.h \
 	wchar.h
 #Internal
-libc_includes += mlibc/internal/types.h \
-	mlibc/machine.h \
-	mlibc/null.h \
-	mlibc/size_t.h \
-	mlibc/wchar_t.h \
+libc_includes += bits/types.h \
+	bits/machine.h \
+	bits/null.h \
+	bits/size_t.h \
+	bits/wchar_t.h \
 	stdint.h
 #Linux
 libc_includes += getopt.h \
@@ -85,36 +85,36 @@ libc_includes += arpa/inet.h \
 	grp.h \
 	langinfo.h \
 	libgen.h \
-	mlibc/blkcnt_t.h \
-	mlibc/blksize_t.h \
-	mlibc/dev_t.h \
-	mlibc/file.h \
-	mlibc/fsblkcnt_t.h \
-	mlibc/fsfilcnt_t.h \
-	mlibc/gid_t.h \
-	mlibc/id_t.h \
-	mlibc/in_addr_t.h \
-	mlibc/ino_t.h \
-	mlibc/in_port_t.h \
-	mlibc/iovec.h \
-	mlibc/locale_t.h \
-	mlibc/mode_t.h \
-	mlibc/nlink_t.h \
-	mlibc/nl_item.h \
-	mlibc/off_t.h \
-	mlibc/pid_t.h \
-	mlibc/posix_errno.h \
-	mlibc/posix_signal.h \
-	mlibc/posix_stdio.h \
-	mlibc/posix_stdlib.h \
-	mlibc/posix_string.h \
-	mlibc/sa_family_t.h \
-	mlibc/socklen_t.h \
-	mlibc/ssize_t.h \
-	mlibc/stat.h \
-	mlibc/suseconds_t.h \
-	mlibc/timeval.h \
-	mlibc/uid_t.h \
+	bits/posix/blkcnt_t.h \
+	bits/posix/blksize_t.h \
+	bits/posix/dev_t.h \
+	bits/posix/file.h \
+	bits/posix/fsblkcnt_t.h \
+	bits/posix/fsfilcnt_t.h \
+	bits/posix/gid_t.h \
+	bits/posix/id_t.h \
+	bits/posix/in_addr_t.h \
+	bits/posix/ino_t.h \
+	bits/posix/in_port_t.h \
+	bits/posix/iovec.h \
+	bits/posix/locale_t.h \
+	bits/posix/mode_t.h \
+	bits/posix/nlink_t.h \
+	bits/posix/nl_item.h \
+	bits/posix/off_t.h \
+	bits/posix/pid_t.h \
+	bits/posix/posix_errno.h \
+	bits/posix/posix_signal.h \
+	bits/posix/posix_stdio.h \
+	bits/posix/posix_stdlib.h \
+	bits/posix/posix_string.h \
+	bits/posix/sa_family_t.h \
+	bits/posix/socklen_t.h \
+	bits/posix/ssize_t.h \
+	bits/posix/stat.h \
+	bits/posix/suseconds_t.h \
+	bits/posix/timeval.h \
+	bits/posix/uid_t.h \
 	net/if.h \
 	netdb.h \
 	netinet/in.h \
