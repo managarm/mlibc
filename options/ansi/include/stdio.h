@@ -2,10 +2,11 @@
 #ifndef _STDIO_H
 #define _STDIO_H
 
-#include <bits/null.h>
-#include <bits/size_t.h>
 #include <bits/ansi/seek.h>
+#include <bits/feature.h>
+#include <bits/null.h>
 #include <bits/posix/file.h>
+#include <bits/size_t.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -140,7 +141,9 @@ int fputs_unlocked(const char *, FILE *);
 }
 #endif
 
-#include <bits/posix/posix_stdio.h>
+#if __MLIBC_POSIX_OPTION
+#	include <bits/posix/posix_stdio.h>
+#endif
 
 #endif // _STDIO_H
 

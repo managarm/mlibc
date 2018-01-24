@@ -1,6 +1,7 @@
-
 #ifndef MLIBC_FILE_H
 #define MLIBC_FILE_H
+
+#include <bits/size_t.h>
 
 struct __mlibc_File {
 	// local buffer for I/O operations
@@ -17,4 +18,3 @@ struct __mlibc_File {
 };
 
 #endif // MLIBC_FILE_H
-
