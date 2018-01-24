@@ -27,7 +27,13 @@ libc_include_dirs := options/internal/include \
 	options/lsb/include \
 	options/linux/include
 
+pretty = @echo '\t\e[1m$2\e[0m $3'; if ! $1; then echo "Error! Command line was:"; echo '$1'; fi
+
 install_header_cmd = install -Dp $< $@
+install_slib_cmd = install -Dp $< $@
+
+install_header_pretty = $(call pretty,$(install_header_cmd),install,$@)
+install_slib_pretty = $(call pretty,$(install_slib_cmd),install,$@)
 
 #Ansi
 libc_includes := alloca.h \
@@ -153,10 +159,10 @@ libc_includes += arpa/inet.h \
 	unistd.h
 
 $(foreach d,$(libc_include_dirs),\
-	$(eval $(SYSROOT_PATH)/usr/include/%.h: $d/%.h ; $(value install_header_cmd)))
+	$(eval $(SYSROOT_PATH)/usr/include/%.h: $d/%.h ; $(value install_header_pretty)))
 
 $(SYSROOT_PATH)/usr/lib/libc.so: libc.so
-	install -Dp $< $@
+	$(install_slib_pretty)
 
 libc_code_dirs := options/ansi/generic
 libc_code_dirs += options/linux/generic
