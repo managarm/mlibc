@@ -21,6 +21,14 @@ libc_END := options/internal/gcc-extra/mlibc_crtend.o
 
 libc_gendir := gen/
 
+libc_include_dirs := options/internal/include \
+	options/ansi/include \
+	options/posix/include \
+	options/lsb/include \
+	options/linux/include
+
+install_header_cmd = install -Dp $< $@
+
 #Ansi
 libc_includes := alloca.h \
 	assert.h \
@@ -144,20 +152,8 @@ libc_includes += arpa/inet.h \
 	termios.h \
 	unistd.h
 
-$(SYSROOT_PATH)/usr/include/%.h: options/ansi/include/%.h
-	install -Dp $< $@
-
-$(SYSROOT_PATH)/usr/include/%.h: options/internal/include/%.h
-	install -Dp $< $@
-
-$(SYSROOT_PATH)/usr/include/%.h: options/linux/include/%.h
-	install -Dp $< $@
-
-$(SYSROOT_PATH)/usr/include/%.h: options/lsb/include/%.h
-	install -Dp $< $@
-
-$(SYSROOT_PATH)/usr/include/%.h: options/posix/include/%.h
-	install -Dp $< $@
+$(foreach d,$(libc_include_dirs),\
+	$(eval $(SYSROOT_PATH)/usr/include/%.h: $d/%.h ; $(value install_header_cmd)))
 
 $(SYSROOT_PATH)/usr/lib/libc.so: libc.so
 	install -Dp $< $@
