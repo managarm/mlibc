@@ -1,7 +1,7 @@
 
 #include <unistd.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 // access() is provided by the platform
 unsigned int alarm(unsigned int seconds) {

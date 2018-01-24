@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#include <mlibc/size_t.h>
+#include <bits/size_t.h>
 
 // [7.22.3] Memory management functions
 void *calloc(size_t count, size_t size);

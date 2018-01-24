@@ -1,6 +1,6 @@
 
 #include <sys/statvfs.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 int statvfs(const char *__restrict, struct statvfs *__restirct) {
 	__ensure(!"dlclose() not implemented");

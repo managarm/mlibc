@@ -2,10 +2,10 @@
 #ifndef _FCNTL_H
 #define _FCNTL_H
 
-#include <mlibc/mode_t.h>
-#include <mlibc/off_t.h>
-#include <mlibc/pid_t.h>
-#include <mlibc/seek.h>
+#include <bits/posix/mode_t.h>
+#include <bits/posix/off_t.h>
+#include <bits/posix/pid_t.h>
+#include <bits/ansi/seek.h>
 
 #ifdef __cplusplus
 extern "C" {

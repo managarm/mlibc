@@ -15,7 +15,7 @@ extern __thread int __mlibc_errno;
 extern char *program_invocation_name;
 extern char *program_invocation_short_name;
 
-#include <mlibc/posix_errno.h>
+#include <bits/posix/posix_errno.h>
 
 #endif // _ERRNO_H
 

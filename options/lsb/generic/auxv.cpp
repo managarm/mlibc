@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <sys/auxv.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 extern "C" uintptr_t *__dlapi_entrystack();
 

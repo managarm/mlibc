@@ -1,7 +1,7 @@
 
 #include <sched.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 // sched_yield() is provided by the platform
 

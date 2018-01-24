@@ -2,26 +2,26 @@
 #ifndef _SYS_TYPES_H
 #define _SYS_TYPES_H
 
-#include <mlibc/size_t.h>
-#include <mlibc/ssize_t.h>
-#include <mlibc/off_t.h>
+#include <bits/size_t.h>
+#include <bits/posix/ssize_t.h>
+#include <bits/posix/off_t.h>
 
-#include <mlibc/uid_t.h>
-#include <mlibc/gid_t.h>
-#include <mlibc/pid_t.h>
+#include <bits/posix/uid_t.h>
+#include <bits/posix/gid_t.h>
+#include <bits/posix/pid_t.h>
 
-#include <mlibc/mode_t.h>
-#include <mlibc/dev_t.h>
-#include <mlibc/ino_t.h>
-#include <mlibc/blksize_t.h>
-#include <mlibc/blkcnt_t.h>
-#include <mlibc/nlink_t.h>
+#include <bits/posix/mode_t.h>
+#include <bits/posix/dev_t.h>
+#include <bits/posix/ino_t.h>
+#include <bits/posix/blksize_t.h>
+#include <bits/posix/blkcnt_t.h>
+#include <bits/posix/nlink_t.h>
 
-#include <mlibc/time_t.h>
-#include <mlibc/suseconds_t.h>
+#include <bits/ansi/time_t.h>
+#include <bits/posix/suseconds_t.h>
 
-#include <mlibc/fsblkcnt_t.h>
-#include <mlibc/fsfilcnt_t.h>
+#include <bits/posix/fsblkcnt_t.h>
+#include <bits/posix/fsfilcnt_t.h>
 
 // MISSING: almost every type
 

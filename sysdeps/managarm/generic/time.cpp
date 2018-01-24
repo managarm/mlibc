@@ -4,7 +4,7 @@
 // for gettimeofday()
 #include <sys/time.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 #include <frigg/debug.hpp>
 

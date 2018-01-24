@@ -5,7 +5,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 #include <frigg/debug.hpp>
 

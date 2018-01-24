@@ -2,9 +2,9 @@
 #ifndef _PWD_H
 #define _PWD_H
 
-#include <mlibc/uid_t.h>
-#include <mlibc/gid_t.h>
-#include <mlibc/size_t.h>
+#include <bits/posix/uid_t.h>
+#include <bits/posix/gid_t.h>
+#include <bits/size_t.h>
 
 #ifdef __cplusplus
 extern "C" {

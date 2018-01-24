@@ -1,7 +1,7 @@
 
 #include <pwd.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 // endpwd() is provided by the platform
 struct passwd *getpwent(void) {

@@ -2,8 +2,8 @@
 #ifndef MLIBC_POSIX_SIGNAL_H
 #define MLIBC_POSIX_SIGNAL_H
 
-#include <mlibc/pid_t.h>
-#include <mlibc/uid_t.h>
+#include <bits/posix/pid_t.h>
+#include <bits/posix/uid_t.h>
 
 #ifdef __cplusplus
 extern "C" {

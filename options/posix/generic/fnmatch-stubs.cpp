@@ -1,6 +1,6 @@
 
 #include <fnmatch.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 int fnmatch(const char *, const char *, int) {
 	__ensure(!"Not implemented");

@@ -2,7 +2,7 @@
 #ifndef _SYS_TERMIOS_H
 #define _SYS_TERMIOS_H
 
-#include <mlibc/pid_t.h>
+#include <bits/posix/pid_t.h>
 
 #ifdef __cplusplus
 extern "C" {

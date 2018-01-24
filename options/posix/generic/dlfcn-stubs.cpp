@@ -1,7 +1,7 @@
 
 #include <dlfcn.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 extern "C" const char *__dlapi_error();
 extern "C" void *__dlapi_open(const char *, int);

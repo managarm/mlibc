@@ -1,7 +1,7 @@
 
 #include <stdlib.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 long random(void) {
 	__ensure(!"Not implemented");

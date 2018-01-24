@@ -1,6 +1,6 @@
 
 #include <sys/inotify.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 int inotify_init(void) {
 	__ensure(!"Not implemented");

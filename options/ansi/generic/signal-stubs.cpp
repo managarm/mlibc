@@ -1,7 +1,7 @@
 
 #include <signal.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 void __signalDfl(int signal) {
 	__ensure(!"Not implemented");

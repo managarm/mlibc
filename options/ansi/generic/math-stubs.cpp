@@ -2,7 +2,7 @@
 #include <math.h>
 #include <immintrin.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 #include <stdint.h>
 

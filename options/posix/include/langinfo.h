@@ -6,8 +6,8 @@
 extern "C" {
 #endif
 
-#include <mlibc/locale_t.h>
-#include <mlibc/nl_item.h>
+#include <bits/posix/locale_t.h>
+#include <bits/posix/nl_item.h>
 
 #define ABDAY_1 0x60000
 #define ABDAY_2 0x60001

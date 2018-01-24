@@ -10,7 +10,7 @@
 #include <hel.h>
 #include <hel-syscalls.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 #include <mlibc/frigg-alloc.hpp>
 
 // TODO: move this to a 

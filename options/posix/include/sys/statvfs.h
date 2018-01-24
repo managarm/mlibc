@@ -6,8 +6,8 @@
 extern "C" {
 #endif
 
-#include <mlibc/fsblkcnt_t.h>
-#include <mlibc/fsfilcnt_t.h>
+#include <bits/posix/fsblkcnt_t.h>
+#include <bits/posix/fsfilcnt_t.h>
 
 #define ST_RDONLY 1
 #define ST_NOSUID 2

@@ -2,7 +2,7 @@
 #ifndef _SYS_STAT_H
 #define _SYS_STAT_H
 
-#include <mlibc/stat.h>
+#include <bits/posix/stat.h>
 
 #ifdef __cplusplus
 extern "C" {

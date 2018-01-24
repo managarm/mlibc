@@ -1,6 +1,6 @@
 
 #include <netdb.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 void endhostent(void) {
 	__ensure(!"Not implemented");

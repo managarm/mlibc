@@ -1,7 +1,7 @@
 
 #include <signal.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 int sigemptyset(sigset_t *sigset) {
 	*sigset = 0;

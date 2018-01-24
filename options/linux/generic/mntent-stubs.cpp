@@ -1,6 +1,6 @@
 
 #include <mntent.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 FILE *setmntent(const char *, const char *) {
 	__ensure(!"Not implemented");

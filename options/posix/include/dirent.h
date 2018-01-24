@@ -2,8 +2,8 @@
 #ifndef _DIRENT_H
 #define _DIRENT_H
 
-#include <mlibc/ino_t.h>
-#include <mlibc/off_t.h>
+#include <bits/posix/ino_t.h>
+#include <bits/posix/off_t.h>
 
 #ifdef __cplusplus
 extern "C" {

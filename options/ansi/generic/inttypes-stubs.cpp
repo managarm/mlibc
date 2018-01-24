@@ -3,7 +3,7 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 static const char *__mlibc_digits = "0123456789abcdefghijklmnopqrstuvwxyz";
 

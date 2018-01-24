@@ -1,7 +1,7 @@
 
 #include <sys/file.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 int flock(int, int) {
 	__ensure(!"flock() not implemented");

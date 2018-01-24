@@ -3,7 +3,7 @@
 
 #include <frigg/string.hpp>
 #include <frigg/vector.hpp>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 #include <mlibc/frigg-alloc.hpp>
 
 static char *emptyEnvironment[] = { nullptr };

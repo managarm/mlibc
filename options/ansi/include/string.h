@@ -2,8 +2,8 @@
 #ifndef _STRING_H
 #define _STRING_H
 
-#include <mlibc/null.h>
-#include <mlibc/size_t.h>
+#include <bits/null.h>
+#include <bits/size_t.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,7 +56,7 @@ char *stpcpy(char *__restrict, const char *__restrict);
 }
 #endif
 
-#include <mlibc/posix_string.h>
+#include <bits/posix/posix_string.h>
 
 #endif // _STRING_H
 

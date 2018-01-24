@@ -2,10 +2,10 @@
 #ifndef _TIME_H
 #define _TIME_H
 
-#include <mlibc/null.h>
-#include <mlibc/size_t.h>
-#include <mlibc/time_t.h>
-#include <mlibc/timespec.h>
+#include <bits/null.h>
+#include <bits/size_t.h>
+#include <bits/ansi/time_t.h>
+#include <bits/ansi/timespec.h>
 
 // [7.27.1] Components of time
 
@@ -62,9 +62,9 @@ size_t strftime(char *__restrict dest, size_t max_size,
 
 // POSIX extensions.
 
-#include <mlibc/clockid_t.h>
-#include <mlibc/suseconds_t.h>
-#include <mlibc/timeval.h>
+#include <bits/ansi/clockid_t.h>
+#include <bits/posix/suseconds_t.h>
+#include <bits/posix/timeval.h>
 
 #define TIMER_ABSTIME 1
 

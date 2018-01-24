@@ -1,6 +1,6 @@
 
 #include <stdio_ext.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 size_t __fbufsize(FILE *) {
 	__ensure(!"Not implemented");

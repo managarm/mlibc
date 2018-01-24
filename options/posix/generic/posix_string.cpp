@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 char *strdup(const char *string) {
 	auto num_bytes = strlen(string);

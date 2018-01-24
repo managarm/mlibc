@@ -6,7 +6,7 @@
 
 #include <frg/random.hpp>
 #include <frigg/debug.hpp>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 extern "C" int __cxa_atexit(void (*function)(void *), void *argument, void *dso_tag);
 

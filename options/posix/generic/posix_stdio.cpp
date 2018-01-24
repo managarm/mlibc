@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 int fileno(FILE *file) {
 	return file->fd;

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 #include <mlibc/cxx-support.hpp>
 #include <mlibc/frigg-alloc.hpp>
 

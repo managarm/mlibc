@@ -2,7 +2,7 @@
 #ifndef _SETJMP_H
 #define _SETJMP_H
 
-#include <mlibc/machine.h>
+#include <bits/machine.h>
 
 #ifdef __cplusplus
 extern "C" {

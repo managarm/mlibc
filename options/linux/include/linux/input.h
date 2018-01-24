@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 #include <sys/time.h>
-#include <mlibc/timeval.h>
+#include <bits/posix/timeval.h>
 
 struct input_event {
 	struct timeval time;

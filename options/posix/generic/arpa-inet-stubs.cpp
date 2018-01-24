@@ -1,6 +1,6 @@
 
 #include <arpa/inet.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 uint32_t htonl(uint32_t) {
 	__ensure(!"Not implemented");

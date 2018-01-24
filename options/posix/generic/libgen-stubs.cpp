@@ -1,6 +1,6 @@
 
 #include <libgen.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 char *basename(char *) {
 	__ensure(!"Not implemented");

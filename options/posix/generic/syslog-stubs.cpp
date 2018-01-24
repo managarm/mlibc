@@ -1,6 +1,6 @@
 
 #include <syslog.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 void closelog(void) {
 	__ensure(!"Not implemented");

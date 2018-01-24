@@ -2,7 +2,7 @@
 #ifndef _LOCALE_H
 #define _LOCALE_H
 
-#include <mlibc/null.h>
+#include <bits/null.h>
 
 #ifdef __cplusplus
 extern "C" {

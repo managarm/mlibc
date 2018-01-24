@@ -1,6 +1,6 @@
 #ifndef _SYS_UIO_H
 #define _SYS_UIO_H
 
-#include <mlibc/iovec.h>
+#include <bits/posix/iovec.h>
 
 #endif // _SYS_UIO_H

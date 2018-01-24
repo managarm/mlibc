@@ -1,10 +1,10 @@
 #ifndef _SYS_RESOURCE_H
 #define _SYS_RESOURCE_H
 
-#include <mlibc/id_t.h>
-#include <mlibc/suseconds_t.h>
-#include <mlibc/time_t.h>
-#include <mlibc/timeval.h>
+#include <bits/posix/id_t.h>
+#include <bits/posix/suseconds_t.h>
+#include <bits/ansi/time_t.h>
+#include <bits/posix/timeval.h>
 
 #define PRIO_PROCESS 1
 #define PRIO_PGRP 2

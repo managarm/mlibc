@@ -1,6 +1,6 @@
 
 #include <sys/statfs.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 int statfs(const char *, struct statfs *) {
 	__ensure(!"Not implemented");

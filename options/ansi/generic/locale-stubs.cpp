@@ -1,7 +1,7 @@
 
 #include <locale.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 #include <mlibc/cxx-support.hpp>
 
 #include <frigg/debug.hpp>

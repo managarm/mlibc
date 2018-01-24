@@ -2,14 +2,14 @@
 #ifndef _SOCKET_H
 #define _SOCKET_H
 
-#include <mlibc/gid_t.h>
-#include <mlibc/pid_t.h>
-#include <mlibc/sa_family_t.h>
-#include <mlibc/size_t.h>
-#include <mlibc/socklen_t.h>
-#include <mlibc/ssize_t.h>
-#include <mlibc/uid_t.h>
-#include <mlibc/iovec.h>
+#include <bits/posix/gid_t.h>
+#include <bits/posix/pid_t.h>
+#include <bits/posix/sa_family_t.h>
+#include <bits/size_t.h>
+#include <bits/posix/socklen_t.h>
+#include <bits/posix/ssize_t.h>
+#include <bits/posix/uid_t.h>
+#include <bits/posix/iovec.h>
 
 #ifdef __cplusplus
 extern "C" {

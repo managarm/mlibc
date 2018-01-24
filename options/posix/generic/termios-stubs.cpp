@@ -1,7 +1,7 @@
 
 #include <termios.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 speed_t cfgetispeed(const struct termios *) {
 	__ensure(!"Not implemented");

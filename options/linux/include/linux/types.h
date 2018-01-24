@@ -1,7 +1,7 @@
 #ifndef _LINUX_TYPES_H
 #define _LINUX_TYPES_H
 
-#include <mlibc/internal/types.h>
+#include <bits/types.h>
 
 typedef __mlibc_size __kernel_size_t;
 

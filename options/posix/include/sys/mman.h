@@ -1,8 +1,8 @@
 #ifndef _SYS_MMAN_H
 #define _SYS_MMAN_H
 
-#include <mlibc/off_t.h>
-#include <mlibc/size_t.h>
+#include <bits/posix/off_t.h>
+#include <bits/size_t.h>
 
 #define PROT_NONE 0x00
 #define PROT_READ 0x01

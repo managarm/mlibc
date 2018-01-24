@@ -8,7 +8,7 @@
 // TODO: we need this for frigg::printf; replace this mechanism
 #include <assert.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 #include <frigg/debug.hpp>
 #include <frigg/printf.hpp>

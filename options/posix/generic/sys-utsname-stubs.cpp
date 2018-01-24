@@ -1,6 +1,6 @@
 
 #include <sys/utsname.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 int uname(struct utsname *) {
 	__ensure(!"Not implemented");

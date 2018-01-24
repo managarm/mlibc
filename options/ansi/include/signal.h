@@ -53,7 +53,7 @@ int raise(int sig);
 }
 #endif
 
-#include <mlibc/posix_signal.h>
+#include <bits/posix/posix_signal.h>
 
 #endif // _SIGNAL_H
 

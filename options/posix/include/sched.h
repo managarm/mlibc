@@ -2,7 +2,7 @@
 #ifndef _SCHED_H
 #define _SCHED_H
 
-#include <mlibc/pid_t.h>
+#include <bits/posix/pid_t.h>
 
 // MISSING: time_t, struct timespec
 

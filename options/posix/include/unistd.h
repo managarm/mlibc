@@ -2,13 +2,13 @@
 #ifndef _UNISTD_H
 #define _UNISTD_H
 
-#include <mlibc/internal/types.h>
-#include <mlibc/size_t.h>
-#include <mlibc/ssize_t.h>
-#include <mlibc/uid_t.h>
-#include <mlibc/gid_t.h>
-#include <mlibc/off_t.h>
-#include <mlibc/pid_t.h>
+#include <bits/types.h>
+#include <bits/size_t.h>
+#include <bits/posix/ssize_t.h>
+#include <bits/posix/uid_t.h>
+#include <bits/posix/gid_t.h>
+#include <bits/posix/off_t.h>
+#include <bits/posix/pid_t.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,7 +1,7 @@
 
 #include <strings.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 int ffs(int word) {
 	__ensure(!"Not implemented");

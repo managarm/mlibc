@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-#include <mlibc/size_t.h>
+#include <bits/size_t.h>
 
 #define GLOB_APPEND 0x01
 #define GLOB_DOOFFS 0x02

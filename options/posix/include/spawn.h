@@ -2,8 +2,8 @@
 #ifndef _SPAWN_H
 #define _SPAWN_H
 
-#include <mlibc/mode_t.h>
-#include <mlibc/pid_t.h>
+#include <bits/posix/mode_t.h>
+#include <bits/posix/pid_t.h>
 
 #ifdef __cplusplus
 extern "C" {

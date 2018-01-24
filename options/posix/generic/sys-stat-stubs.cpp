@@ -1,7 +1,7 @@
 
 #include <sys/stat.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 int chmod(const char *, mode_t) {
 	__ensure(!"Not implemented");

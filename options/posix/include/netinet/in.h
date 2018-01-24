@@ -3,9 +3,9 @@
 #define _NETINET_IN_H
 
 #include <stdint.h>
-#include <mlibc/sa_family_t.h>
-#include <mlibc/in_port_t.h>
-#include <mlibc/in_addr_t.h>
+#include <bits/posix/sa_family_t.h>
+#include <bits/posix/in_port_t.h>
+#include <bits/posix/in_addr_t.h>
 
 #ifdef __cplusplus
 extern "C" {

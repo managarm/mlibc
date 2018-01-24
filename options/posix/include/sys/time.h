@@ -2,9 +2,9 @@
 #ifndef _SYS_TIME_H
 #define _SYS_TIME_H
 
-#include <mlibc/time_t.h>
-#include <mlibc/suseconds_t.h>
-#include <mlibc/timeval.h>
+#include <bits/ansi/time_t.h>
+#include <bits/posix/suseconds_t.h>
+#include <bits/posix/timeval.h>
 
 #ifdef __cplusplus
 extern "C" {

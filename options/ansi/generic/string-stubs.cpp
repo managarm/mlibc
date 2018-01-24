@@ -2,7 +2,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 void *memcpy(void *__restrict dest, const void *__restrict src, size_t size) {
 	char *dest_bytes = (char *)dest;

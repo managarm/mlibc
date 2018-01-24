@@ -1,7 +1,7 @@
 
 #include <sys/wait.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 pid_t wait(int *status) {
 	__ensure(!"Not implemented");

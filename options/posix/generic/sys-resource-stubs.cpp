@@ -1,6 +1,6 @@
 
 #include <sys/resource.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 int getpriority(int, id_t) {
 	__ensure(!"Not implemented");

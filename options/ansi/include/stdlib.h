@@ -3,9 +3,9 @@
 #define _STDLIB_H
 
 #include <alloca.h>
-#include <mlibc/null.h>
-#include <mlibc/size_t.h>
-#include <mlibc/wchar_t.h>
+#include <bits/null.h>
+#include <bits/size_t.h>
+#include <bits/wchar_t.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -109,7 +109,7 @@ int wcstombs(char *mb_string, const wchar_t *__restrict wc_string, size_t max_si
 }
 #endif
 
-#include <mlibc/posix_stdlib.h>
+#include <bits/posix/posix_stdlib.h>
 
 #endif // _STDLIB_H
 

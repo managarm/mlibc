@@ -1,6 +1,6 @@
 
 #include <dirent.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 void if_freenameindex(struct if_nameindex *) {
 	__ensure(!"Not implemented");

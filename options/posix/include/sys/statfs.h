@@ -6,8 +6,8 @@
 extern "C" {
 #endif
 
-#include <mlibc/fsblkcnt_t.h>
-#include <mlibc/fsfilcnt_t.h>
+#include <bits/posix/fsblkcnt_t.h>
+#include <bits/posix/fsfilcnt_t.h>
 
 typedef struct __mlibc_fsid {
 	int __val[2];

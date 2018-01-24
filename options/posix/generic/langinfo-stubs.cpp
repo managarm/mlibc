@@ -1,6 +1,6 @@
 
 #include <langinfo.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 char *nl_langinfo(nl_item) {
 	__ensure(!"Not implemented");

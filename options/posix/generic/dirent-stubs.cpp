@@ -1,7 +1,7 @@
 
 #include <dirent.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 int alphasort(const struct dirent **, const struct dirent **) {
 	__ensure(!"Not implemented");

@@ -9,7 +9,7 @@
 #define POLLRDHUP 0x20
 #define POLLNVAL 0x40
 
-#include <mlibc/internal/types.h>
+#include <bits/types.h>
 
 typedef __mlibc_size nfds_t;
 

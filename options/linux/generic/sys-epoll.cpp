@@ -1,7 +1,7 @@
 
 #include <sys/epoll.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 int epoll_create(int) {
 	__ensure(!"Not implemented");

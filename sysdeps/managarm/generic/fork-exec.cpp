@@ -12,7 +12,7 @@
 // for waitpid()
 #include <sys/wait.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 #include <mlibc/cxx-support.hpp>
 #include <mlibc/frigg-alloc.hpp>
 #include <mlibc/posix-pipe.hpp>

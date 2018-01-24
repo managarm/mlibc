@@ -2,8 +2,8 @@
 #ifndef _SYS_WAIT_H
 #define _SYS_WAIT_H
 
-#include <mlibc/id_t.h>
-#include <mlibc/pid_t.h>
+#include <bits/posix/id_t.h>
+#include <bits/posix/pid_t.h>
 
 #ifdef __cplusplus
 extern "C" {

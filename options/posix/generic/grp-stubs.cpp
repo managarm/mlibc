@@ -1,6 +1,6 @@
 
 #include <grp.h>
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 void endgrent(void) {
 	__ensure(!"Not implemented");

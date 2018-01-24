@@ -2,8 +2,8 @@
 #ifndef MLIBC_POSIX_STDIO_H
 #define MLIBC_POSIX_STDIO_H
 
-#include <mlibc/off_t.h>
-#include <mlibc/ssize_t.h>
+#include <bits/posix/off_t.h>
+#include <bits/posix/ssize_t.h>
 
 // MISSING: var_list
 

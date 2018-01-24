@@ -2,17 +2,17 @@
 #ifndef MLIBC_STAT_H
 #define MLIBC_STAT_H
 
-#include <mlibc/uid_t.h>
-#include <mlibc/gid_t.h>
-#include <mlibc/off_t.h>
-#include <mlibc/mode_t.h>
-#include <mlibc/dev_t.h>
-#include <mlibc/ino_t.h>
-#include <mlibc/blksize_t.h>
-#include <mlibc/blkcnt_t.h>
-#include <mlibc/nlink_t.h>
-#include <mlibc/time_t.h>
-#include <mlibc/timespec.h>
+#include <bits/posix/uid_t.h>
+#include <bits/posix/gid_t.h>
+#include <bits/posix/off_t.h>
+#include <bits/posix/mode_t.h>
+#include <bits/posix/dev_t.h>
+#include <bits/posix/ino_t.h>
+#include <bits/posix/blksize_t.h>
+#include <bits/posix/blkcnt_t.h>
+#include <bits/posix/nlink_t.h>
+#include <bits/ansi/time_t.h>
+#include <bits/ansi/timespec.h>
 
 #define S_IFMT 0x0F00
 #define S_IFBLK 0x0000

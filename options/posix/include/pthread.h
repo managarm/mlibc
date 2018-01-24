@@ -2,9 +2,9 @@
 #ifndef _PTHREAD_H
 #define _PTHREAD_H
 
-#include <mlibc/clockid_t.h>
+#include <bits/ansi/clockid_t.h>
 // TODO: pthread is not required to define size_t.
-#include <mlibc/size_t.h>
+#include <bits/size_t.h>
 
 // pthread.h is required to include sched.h and time.h
 #include <sched.h>

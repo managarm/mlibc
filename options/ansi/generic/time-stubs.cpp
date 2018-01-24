@@ -1,7 +1,7 @@
 
 #include <time.h>
 
-#include <mlibc/ensure.h>
+#include <bits/ensure.h>
 
 clock_t clock(void) {
 	__ensure(!"Not implemented");
