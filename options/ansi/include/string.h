@@ -1,7 +1,7 @@
-
 #ifndef _STRING_H
 #define _STRING_H
 
+#include <bits/feature.h>
 #include <bits/null.h>
 #include <bits/size_t.h>
 
@@ -56,7 +56,8 @@ char *stpcpy(char *__restrict, const char *__restrict);
 }
 #endif
 
-#include <bits/posix/posix_string.h>
+#if __MLIBC_POSIX_OPTION
+#	include <bits/posix/posix_string.h>
+#endif
 
 #endif // _STRING_H
-

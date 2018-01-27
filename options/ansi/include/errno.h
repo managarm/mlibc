@@ -1,6 +1,7 @@
-
 #ifndef _ERRNO_H
 #define _ERRNO_H
+
+#include <bits/feature.h>
 
 #define EDOM 1
 #define EILSEQ 2
@@ -15,7 +16,8 @@ extern __thread int __mlibc_errno;
 extern char *program_invocation_name;
 extern char *program_invocation_short_name;
 
-#include <bits/posix/posix_errno.h>
+#if __MLIBC_POSIX_OPTION
+#	include <bits/posix/posix_errno.h>
+#endif
 
 #endif // _ERRNO_H
-

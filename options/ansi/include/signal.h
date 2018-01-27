@@ -1,6 +1,7 @@
-
 #ifndef _SIGNAL_H
 #define _SIGNAL_H
+
+#include <bits/feature.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,7 +54,8 @@ int raise(int sig);
 }
 #endif
 
-#include <bits/posix/posix_signal.h>
+#if __MLIBC_POSIX_OPTION
+#	include <bits/posix/posix_signal.h>
+#endif
 
 #endif // _SIGNAL_H
-

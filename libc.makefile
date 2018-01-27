@@ -73,10 +73,11 @@ libc_includes := alloca.h \
 	time.h \
 	wchar.h
 #Internal
-libc_includes += bits/types.h \
+libc_includes += bits/feature.h \
 	bits/machine.h \
 	bits/null.h \
 	bits/size_t.h \
+	bits/types.h \
 	bits/wchar_t.h \
 	stdint.h
 #Linux

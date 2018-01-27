@@ -1,8 +1,8 @@
-
 #ifndef _STDLIB_H
 #define _STDLIB_H
 
 #include <alloca.h>
+#include <bits/feature.h>
 #include <bits/null.h>
 #include <bits/size_t.h>
 #include <bits/wchar_t.h>
@@ -109,7 +109,9 @@ int wcstombs(char *mb_string, const wchar_t *__restrict wc_string, size_t max_si
 }
 #endif
 
-#include <bits/posix/posix_stdlib.h>
+#if __MLIBC_POSIX_OPTION
+#	include <bits/posix/posix_stdlib.h>
+#endif
 
 #endif // _STDLIB_H
 
