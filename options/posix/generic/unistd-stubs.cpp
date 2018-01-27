@@ -284,6 +284,11 @@ int getpagesize(void) {
 	__builtin_unreachable();
 }
 
+char *get_current_dir_name(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 // usleep() is provided by the platform
 
 // This is a Linux extension
