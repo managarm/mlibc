@@ -3,6 +3,8 @@
 
 #include <bits/ensure.h>
 
+#include <mlibc/sysdeps.hpp>
+
 clock_t clock(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -15,7 +17,6 @@ time_t mktime(struct tm *ptr){
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// time() is provided by the platform
 int timespec_get(struct timespec *ptr, int base){
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -78,5 +79,11 @@ int utimes(const char *, const struct timeval[2]) {
 struct tm *localtime_r(const time_t *, struct tm *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
+}
+
+time_t time(time_t *out){
+	if(mlibc::sys_clock_get(out))
+		return (time_t)-1;
+	return 0;
 }
 

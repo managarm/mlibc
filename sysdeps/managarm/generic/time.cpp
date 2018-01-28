@@ -8,13 +8,17 @@
 
 #include <frigg/debug.hpp>
 
-time_t time(time_t *out){
+#include <mlibc/sysdeps.hpp>
+
+namespace mlibc {
+
+int sys_clock_get(time_t *secs) {
 	frigg::infoLogger() << "mlibc: Broken time() called!" << frigg::endLog;
-	time_t result = 0;
-	if(out)
-		*out = result;
-	return result;
+	*secs = 0;
+	return 0;
 }
+
+} //namespace mlibc
 
 int gettimeofday(struct timeval *__restrict result, void *__restrict unused) {
 	frigg::infoLogger() << "mlibc: Broken gettimeofday() called!" << frigg::endLog;

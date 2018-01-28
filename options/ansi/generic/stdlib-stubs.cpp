@@ -8,6 +8,8 @@
 #include <frigg/debug.hpp>
 #include <bits/ensure.h>
 
+#include <mlibc/sysdeps.hpp>
+
 extern "C" int __cxa_atexit(void (*function)(void *), void *argument, void *dso_tag);
 
 double atof(const char *string) {
@@ -173,11 +175,15 @@ int at_quick_exit(void (*func)(void)) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 void exit(int status) {
-	// TODO: should be provided by the LSB sublibrary
-	_Exit(status);
+	mlibc::sys_exit(status);
 }
-// _Exit() is provided by the platform
+
+void _Exit(int status) {
+	mlibc::sys_exit(status);
+}
+
 // getenv() is provided by POSIX
 void quick_exit(int status) {
 	__ensure(!"Not implemented");

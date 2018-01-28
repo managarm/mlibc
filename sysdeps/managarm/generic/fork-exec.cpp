@@ -24,6 +24,8 @@
 
 #include <posix.frigg_pb.hpp>
 
+#include <mlibc/sysdeps.hpp>
+
 unsigned int sleep(unsigned int secs) {
 	globalQueue.trim();
 
@@ -159,14 +161,18 @@ pid_t waitpid(pid_t pid, int *status, int flags) {
 	return -1;
 }
 
-void _Exit(int status) {
+int sched_yield(void) {
+	HEL_CHECK(helYield());
+	return 0;
+}
+
+namespace mlibc {
+
+void sys_exit(int status) {
 	asm volatile ("syscall" : : "D"(kHelCallSuper + 4)
 			: "rcx", "r11", "rbx", "memory");
 	__builtin_trap();
 }
 
-int sched_yield(void) {
-	HEL_CHECK(helYield());
-	return 0;
-}
+} //namespace mlibc
 
