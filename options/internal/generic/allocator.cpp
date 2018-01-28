@@ -25,11 +25,11 @@ MemoryAllocator &getAllocator() {
 
 uintptr_t VirtualAllocator::map(size_t length) {
 	void *ptr;
-	__ensure(mlibc::sys_anon_allocate(length, &ptr));
+	__ensure(!mlibc::sys_anon_allocate(length, &ptr));
 	return (uintptr_t)ptr;
 }
 
 void VirtualAllocator::unmap(uintptr_t address, size_t length) {
-	__ensure(mlibc::sys_anon_free((void *)address, length));
+	__ensure(!mlibc::sys_anon_free((void *)address, length));
 }
 
