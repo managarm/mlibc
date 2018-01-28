@@ -34,7 +34,7 @@ int open_by_handle_at(int, struct file_handle *, int) {
 	__builtin_unreachable();
 }
 
-int open(const char *pathname, int flags) {
+int open(const char *pathname, int flags, ...) {
 	int fd;
 	if(mlibc::sys_open(pathname, flags, &fd))
 		return -1;

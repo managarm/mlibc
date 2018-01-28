@@ -54,9 +54,7 @@ static bool disableBuffering = false;
 
 FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
 	int fd;
-
 	if(strcmp(mode, "r")) {
-		int fd;
 		if(mlibc::sys_open(filename, __MLIBC_O_RDONLY, &fd))
 			return nullptr;
 	}else{

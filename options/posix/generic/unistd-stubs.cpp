@@ -296,7 +296,7 @@ pid_t gettid(void) {
 	__builtin_unreachable();
 }
 
-ssize_t write(int fd, const void *buf, ssize_t count) {
+ssize_t write(int fd, const void *buf, size_t count) {
 	ssize_t bytes_written;
 	if(mlibc::sys_write(fd, buf, count, &bytes_written))
 		return (ssize_t)-1;
