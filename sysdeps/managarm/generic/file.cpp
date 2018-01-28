@@ -29,6 +29,8 @@
 #include <posix.frigg_pb.hpp>
 #include <fs.frigg_pb.hpp>
 
+#include <mlibc/sysdeps.hpp>
+
 HelHandle __mlibc_getPassthrough(int fd) {
 	auto handle = cacheFileTable()[fd];
 	__ensure(handle);
@@ -225,208 +227,6 @@ int fstat(int fd, struct stat *result) {
 	return 0;
 }
 
-int open(const char *path, int flags, ...) {
-//	frigg::infoLogger.log() << "mlibc: open(\""
-//			<< path << "\") called!" << frigg::EndLog();
-	HelAction actions[3];
-
-	globalQueue.trim();
-
-	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_request_type(managarm::posix::CntReqType::OPEN);
-	req.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
-
-	frigg::String<MemoryAllocator> ser(getAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		errno = ENOENT;
-		return -1;
-	}else{
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return resp.fd();
-	}
-}
-
-ssize_t read(int fd, void *data, size_t max_size) {
-	//frigg::infoLogger() << "read() " << max_size << frigg::EndLog();
-	HelAction actions[4];
-	globalQueue.trim();
-
-	auto handle = cacheFileTable()[fd];
-	__ensure(handle);
-
-	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_req_type(managarm::fs::CntReqType::READ);
-	req.set_fd(fd);
-	req.set_size(max_size);
-
-	frigg::String<MemoryAllocator> ser(getAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionRecvToBuffer;
-	actions[3].flags = 0;
-	actions[3].buffer = data;
-	actions[3].length = max_size;
-	HEL_CHECK(helSubmitAsync(handle, actions, 4,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto recv_data = parseLength(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(recv_data->error);
-
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-/*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
-		errno = EBADF;
-		return -1;
-	}else*/ if(resp.error() == managarm::fs::Errors::END_OF_FILE) {
-		return 0;
-	}
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	return recv_data->length;
-}
-
-ssize_t write(int fd, const void *data, size_t size) {
-	HelAction actions[4];
-	globalQueue.trim();
-
-	auto handle = cacheFileTable()[fd];
-	__ensure(handle);
-
-//	frigg::infoLogger.log() << "write()" << frigg::EndLog();
-	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_req_type(managarm::fs::CntReqType::WRITE);
-	req.set_fd(fd);
-
-	frigg::String<MemoryAllocator> ser(getAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionSendFromBuffer;
-	actions[2].flags = kHelItemChain;
-	actions[2].buffer = const_cast<void *>(data);
-	actions[2].length = size;
-	actions[3].type = kHelActionRecvInline;
-	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 4,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto send_data = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(send_data->error);
-	HEL_CHECK(recv_resp->error);
-
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-
-	// TODO: implement NO_SUCH_FD
-/*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
-		errno = EBADF;
-		return -1;
-	}else*/ if(resp.error() == managarm::fs::Errors::SUCCESS) {
-		//FIXME: handle partial writes
-		return size;
-	}else{
-		__ensure(!"Unexpected error");
-		__builtin_unreachable();
-	}
-}
-
-off_t lseek(int fd, off_t offset, int whence) {
-	HelAction actions[3];
-	globalQueue.trim();
-
-	auto handle = cacheFileTable()[fd];
-	__ensure(handle);
-	
-	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_fd(fd);
-	req.set_rel_offset(offset);
-
-	if(whence == SEEK_SET) {
-		req.set_req_type(managarm::fs::CntReqType::SEEK_ABS);
-	}else if(whence == SEEK_CUR) {
-		req.set_req_type(managarm::fs::CntReqType::SEEK_REL);
-	}else if(whence == SEEK_END) {
-		req.set_req_type(managarm::fs::CntReqType::SEEK_EOF);
-	}else{
-		frigg::panicLogger() << "Illegal whence argument" << frigg::endLog;
-	}
-	
-	frigg::String<MemoryAllocator> ser(getAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 3,
-			globalQueue.getQueue(), 0, 0));
-	
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	return resp.offset();
-}
 
 HelHandle __raw_map(int fd) {
 	HelAction actions[4];
@@ -1615,4 +1415,214 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		__ensure(!"Illegal ioctl request");
 	}
 }
+
+namespace mlibc {
+int sys_open(const char *path, int flags, int *fd) {
+//	frigg::infoLogger.log() << "mlibc: open(\""
+//			<< path << "\") called!" << frigg::EndLog();
+	HelAction actions[3];
+
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::OPEN);
+	req.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		errno = ENOENT;
+		return -1;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		*fd = resp.fd();
+		return 0;
+	}
+}
+
+int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
+	//frigg::infoLogger() << "read() " << max_size << frigg::EndLog();
+	HelAction actions[4];
+	globalQueue.trim();
+
+	auto handle = cacheFileTable()[fd];
+	__ensure(handle);
+
+	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_req_type(managarm::fs::CntReqType::READ);
+	req.set_fd(fd);
+	req.set_size(max_size);
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = kHelItemChain;
+	actions[3].type = kHelActionRecvToBuffer;
+	actions[3].flags = 0;
+	actions[3].buffer = data;
+	actions[3].length = max_size;
+	HEL_CHECK(helSubmitAsync(handle, actions, 4,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+	auto recv_data = parseLength(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(recv_data->error);
+
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+/*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
+		errno = EBADF;
+		return -1;
+	}else*/ if(resp.error() == managarm::fs::Errors::END_OF_FILE) {
+		return 0;
+	}
+	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	*bytes_read = recv_data->length;
+	return 0;
+}
+
+int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
+	HelAction actions[4];
+	globalQueue.trim();
+
+	auto handle = cacheFileTable()[fd];
+	__ensure(handle);
+
+//	frigg::infoLogger.log() << "write()" << frigg::EndLog();
+	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_req_type(managarm::fs::CntReqType::WRITE);
+	req.set_fd(fd);
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionSendFromBuffer;
+	actions[2].flags = kHelItemChain;
+	actions[2].buffer = const_cast<void *>(data);
+	actions[2].length = size;
+	actions[3].type = kHelActionRecvInline;
+	actions[3].flags = 0;
+	HEL_CHECK(helSubmitAsync(handle, actions, 4,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto send_data = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(send_data->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+	// TODO: implement NO_SUCH_FD
+/*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
+		errno = EBADF;
+		return -1;
+	}else*/ if(resp.error() == managarm::fs::Errors::SUCCESS) {
+		//FIXME: handle partial writes
+		*bytes_written = size;
+		return 0;
+	}else{
+		__ensure(!"Unexpected error");
+		__builtin_unreachable();
+	}
+}
+
+int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
+	HelAction actions[3];
+	globalQueue.trim();
+
+	auto handle = cacheFileTable()[fd];
+	__ensure(handle);
+	
+	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_fd(fd);
+	req.set_rel_offset(offset);
+
+	if(whence == SEEK_SET) {
+		req.set_req_type(managarm::fs::CntReqType::SEEK_ABS);
+	}else if(whence == SEEK_CUR) {
+		req.set_req_type(managarm::fs::CntReqType::SEEK_REL);
+	}else if(whence == SEEK_END) {
+		req.set_req_type(managarm::fs::CntReqType::SEEK_EOF);
+	}else{
+		frigg::panicLogger() << "Illegal whence argument" << frigg::endLog;
+	}
+	
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(handle, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+	
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	*new_offset = resp.offset();
+	return 0;
+}
+
+} //namespace mlibc
 

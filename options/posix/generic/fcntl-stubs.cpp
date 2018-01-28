@@ -3,12 +3,13 @@
 
 #include <bits/ensure.h>
 
+#include <mlibc/sysdeps.hpp>
+
 int creat(const char *, mode_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 // fcntl() is provided by the platform
-// open() is provided by the platform
 int openat(int, const char *, int, ...) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -31,5 +32,13 @@ int name_to_handle_at(int, const char *, struct file_handle *, int, int) {
 int open_by_handle_at(int, struct file_handle *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
+}
+
+int open(const char *pathname, int flags) {
+	int fd;
+	if(mlibc::sys_open(pathname, flags, &fd))
+		return -1;
+	return fd;
+
 }
 

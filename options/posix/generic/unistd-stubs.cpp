@@ -3,6 +3,8 @@
 
 #include <bits/ensure.h>
 
+#include <mlibc/sysdeps.hpp>
+
 // access() is provided by the platform
 unsigned int alarm(unsigned int seconds) {
 	__ensure(!"Not implemented");
@@ -154,7 +156,6 @@ int lockf(int, int, off_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// lseek() is provided by the platform
 int nice(int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -179,7 +180,6 @@ ssize_t pwrite(int, const void *, size_t, off_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// read is provided by the platform
 ssize_t readlink(const char *__restrict, char *__restrict, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -272,7 +272,6 @@ int unlinkat(int, const char *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// write() is provided by the platform
 
 char *optarg;
 int optind;
@@ -295,5 +294,26 @@ char *get_current_dir_name(void) {
 pid_t gettid(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
+}
+
+ssize_t write(int fd, const void *buf, ssize_t count) {
+	ssize_t bytes_written;
+	if(mlibc::sys_write(fd, buf, count, &bytes_written))
+		return (ssize_t)-1;
+	return bytes_written;
+}
+
+ssize_t read(int fd, void *buf, size_t count) {
+	ssize_t bytes_read;
+	if(mlibc::sys_read(fd, buf, count, &bytes_read))
+		return (ssize_t)-1;
+	return bytes_read;
+}
+
+off_t lseek(int fd, off_t offset, int whence) {
+	off_t new_offset;
+	if(mlibc::sys_seek(fd, offset, whence, &new_offset))
+		return (off_t)-1;
+	return new_offset;
 }
 

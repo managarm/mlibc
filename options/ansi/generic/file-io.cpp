@@ -3,12 +3,13 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
 
 #include <bits/ensure.h>
 
 #include <frigg/debug.hpp>
+
+#include <bits/abi.h>
+#include <mlibc/sysdeps.hpp>
 
 __mlibc_File stdinFile;
 __mlibc_File stdoutFile;
@@ -33,7 +34,10 @@ void __mlibc_initStdio() {
 int __mlibc_exactRead(int fd, void *buffer, size_t length) {
 	size_t progress = 0;
 	while(progress < length) {
-		ssize_t chunk = read(fd, (char *)buffer + progress, length);
+		ssize_t chunk;
+		if(mlibc::sys_read(fd, (char *)buffer + progress, length, &chunk))
+			assert(!"error in mlibc exactread");
+		
 		__ensure(chunk > 0);
 
 		progress += chunk;
@@ -52,8 +56,8 @@ FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
 	int fd;
 
 	if(strcmp(mode, "r")) {
-		fd = open(filename, O_RDONLY);
-		if(fd == -1)
+		int fd;
+		if(mlibc::sys_open(filename, __MLIBC_O_RDONLY, &fd))
 			return nullptr;
 	}else{
 		frigg::panicLogger() << "Illegal fopen() mode '" << mode << "'" << frigg::endLog;
@@ -80,8 +84,8 @@ size_t fwrite(const void *__restrict buffer, size_t size, size_t count,
 			// write the buffer directly to the fd
 			size_t written = 0;
 			while(written < size) {
-				ssize_t result = write(stream->fd, block_ptr + written, size - written);
-				if(result < 0)
+				ssize_t result;
+				if(mlibc::sys_write(stream->fd, block_ptr + written, size - written, &result))
 					return i;
 				written += result;
 				__ensure(written <= size);
@@ -99,16 +103,17 @@ size_t fwrite(const void *__restrict buffer, size_t size, size_t count,
 }
 
 int fseek(FILE *stream, long offset, int whence) {
-	if(lseek(stream->fd, offset, whence) != off_t(-1))
-		return 0;
-	return -1;
+	off_t new_offset;
+	if(mlibc::sys_seek(stream->fd, offset, whence, &new_offset))
+		return -1;
+	return 0;
 }
 
 long ftell(FILE *stream) {
-	off_t offset = lseek(stream->fd, 0, SEEK_CUR);
-	if(offset == off_t(-1))
+	off_t new_offset;
+	if(mlibc::sys_seek(stream->fd, 0, SEEK_CUR, &new_offset))
 		return EOF;
-	return offset;
+	return new_offset;
 }
 
 int fflush(FILE *stream) {
@@ -117,14 +122,14 @@ int fflush(FILE *stream) {
 	
 	size_t written = 0;
 	while(written < stream->bufferBytes) {
-		ssize_t result = write(stream->fd, stream->bufferPtr + written,
-				stream->bufferBytes - written);
-		if(result < 0) {
+		ssize_t written_bytes;
+		if(mlibc::sys_write(stream->fd, stream->bufferPtr + written,
+				stream->bufferBytes - written, &written_bytes)) {
 			stream->bufferBytes = 0;
 			return EOF;
 		}
 
-		written += result;
+		written += written_bytes;
 		__ensure(written <= stream->bufferBytes);
 	}
 

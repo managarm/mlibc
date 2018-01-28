@@ -6,6 +6,7 @@
 #include <bits/posix/off_t.h>
 #include <bits/posix/pid_t.h>
 #include <bits/ansi/seek.h>
+#include <bits/abi.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,25 +34,25 @@ extern "C" {
 #define FD_CLOEXEC 1
 
 // reserve 3 bits for the access mode
-#define O_ACCMODE 0x0007
-#define O_EXEC 1
-#define O_RDONLY 2
-#define O_RDWR 3
-#define O_SEARCH 4
-#define O_WRONLY 5
+#define O_ACCMODE __MLIBC_O_ACCMODE
+#define O_EXEC __MLIBC_O_EXEC
+#define O_RDONLY __MLIBC_O_RDONLY
+#define O_RDWR __MLIBC_O_RDWR
+#define O_SEARCH __MLIBC_O_SEARCH
+#define O_WRONLY __MLIBC_O_WRONLY
 // all remaining flags get their own bit
-#define O_APPEND 0x0008
-#define O_CREAT 0x0010
-#define O_DIRECTORY 0x0020
-#define O_EXCL 0x0040
-#define O_NOCTTY 0x0080
-#define O_NOFOLLOW 0x0100
-#define O_TRUNC 0x0200
-#define O_NONBLOCK 0x0400
-#define O_DSYNC 0x0800
-#define O_RSYNC 0x1000
-#define O_SYNC 0x2000
-#define O_CLOEXEC 0x4000
+#define O_APPEND __MLIBC_O_APPEND
+#define O_CREAT __MLIBC_O_CREAT
+#define O_DIRECTORY __MLIBC_O_DIRECTORY
+#define O_EXCL __MLIBC_O_EXCL
+#define O_NOCTTY __MLIBC_O_NOCTTY
+#define O_NOFOLLOW __MLIBC_O_NOFOLLOW
+#define O_TRUNC __MLIBC_O_TRUNC
+#define O_NONBLOCK __MLIBC_O_NONBLOCK
+#define O_DSYNC __MLIBC_O_DSYNC
+#define O_RSYNC __MLIBC_O_RSYNC
+#define O_SYNC __MLIBC_O_SYNC
+#define O_CLOEXEC __MLIBC_O_CLOEXEC
 
 // MISSING: AT macros
 
