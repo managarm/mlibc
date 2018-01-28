@@ -4,8 +4,8 @@
 #include <sys/auxv.h>
 
 #include <bits/ensure.h>
+#include <mlibc/allocator.hpp>
 #include <mlibc/cxx-support.hpp>
-#include <mlibc/frigg-alloc.hpp>
 #include <mlibc/posix-pipe.hpp>
 
 #include <frigg/vector.hpp>

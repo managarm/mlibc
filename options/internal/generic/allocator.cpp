@@ -3,11 +3,9 @@
 #include <string.h>
 
 #include <bits/ensure.h>
+#include <mlibc/allocator.hpp>
 #include <mlibc/cxx-support.hpp>
-#include <mlibc/frigg-alloc.hpp>
-
-#include <hel.h>
-#include <hel-syscalls.h>
+#include <mlibc/sysdeps.hpp>
 
 // --------------------------------------------------------
 // Globals
@@ -26,30 +24,12 @@ MemoryAllocator &getAllocator() {
 // --------------------------------------------------------
 
 uintptr_t VirtualAllocator::map(size_t length) {
-	__ensure((length % 0x1000) == 0);
-
-	HelHandle memory;
-	void *actual_ptr;
-	HEL_CHECK(helAllocateMemory(length, 0, &memory));
-	HEL_CHECK(helMapMemory(memory, kHelNullHandle, nullptr, 0, length,
-			kHelMapProtRead | kHelMapProtWrite | kHelMapCopyOnWriteAtFork, &actual_ptr));
-	HEL_CHECK(helCloseDescriptor(memory));
-	return (uintptr_t)actual_ptr;
+	void *ptr;
+	__ensure(mlibc::sys_anon_allocate(length, &ptr));
+	return (uintptr_t)ptr;
 }
 
 void VirtualAllocator::unmap(uintptr_t address, size_t length) {
-	HEL_CHECK(helUnmapMemory(kHelNullHandle, (void *)address, length));
-}
-
-void free(void *pointer) {
-	getAllocator().free(pointer);
-}
-
-void *malloc(size_t size) {
-	return getAllocator().allocate(size);
-}
-
-void *realloc(void *pointer, size_t size) {
-	return getAllocator().realloc(pointer, size);
+	__ensure(mlibc::sys_anon_free((void *)address, length));
 }
 

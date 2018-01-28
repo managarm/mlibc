@@ -11,7 +11,7 @@
 #include <hel-syscalls.h>
 
 #include <bits/ensure.h>
-#include <mlibc/frigg-alloc.hpp>
+#include <mlibc/allocator.hpp>
 
 // TODO: move this to a 
 

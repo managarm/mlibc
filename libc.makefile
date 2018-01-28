@@ -185,9 +185,11 @@ libc_code_dirs := options/ansi/generic
 libc_code_dirs += options/linux/generic
 libc_code_dirs += options/lsb/generic
 libc_code_dirs += options/posix/generic
-libc_code_dirs += options/internal/gcc \
+libc_code_dirs += options/internal/generic \
+	options/internal/gcc \
 	options/internal/gcc-extra \
 	options/internal/x86_64
+	
 libc_code_dirs += sysdeps/managarm/generic
 
 libc_s_sources := $(wildcard $(TREE_PATH)/options/internal/x86_64/*.S)
@@ -196,6 +198,7 @@ libc_cxx_sources := $(wildcard $(TREE_PATH)/options/ansi/generic/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/options/linux/generic/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/options/lsb/generic/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/options/posix/generic/*.cpp)
+libc_cxx_sources += $(wildcard $(TREE_PATH)/options/internal/generic/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/options/internal/gcc/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/sysdeps/managarm/generic/*.cpp)
 

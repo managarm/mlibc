@@ -3,9 +3,8 @@
 #include <string.h>
 
 #include <bits/ensure.h>
-
+#include <mlibc/allocator.hpp>
 #include <mlibc/cxx-support.hpp>
-#include <mlibc/frigg-alloc.hpp>
 
 #include <frigg/initializer.hpp>
 #include <frigg/vector.hpp>

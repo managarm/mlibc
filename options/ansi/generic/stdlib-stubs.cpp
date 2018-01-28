@@ -8,7 +8,9 @@
 #include <frigg/debug.hpp>
 #include <bits/ensure.h>
 
+#include <mlibc/allocator.hpp>
 #include <mlibc/sysdeps.hpp>
+
 
 extern "C" int __cxa_atexit(void (*function)(void *), void *argument, void *dso_tag);
 
@@ -290,4 +292,18 @@ int wcstombs(char *mb_string, const wchar_t *__restrict wc_string, size_t max_si
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+
+void free(void *pointer) {
+	getAllocator().free(pointer);
+}
+
+void *malloc(size_t size) {
+	return getAllocator().allocate(size);
+}
+
+void *realloc(void *pointer, size_t size) {
+	return getAllocator().realloc(pointer, size);
+}
+
 
