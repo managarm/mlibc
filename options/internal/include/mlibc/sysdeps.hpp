@@ -3,6 +3,7 @@
 #include <bits/posix/ssize_t.h>
 #include <bits/posix/off_t.h>
 #include <bits/posix/pid_t.h>
+#include <bits/posix/stat.h>
 
 namespace mlibc {
 
@@ -18,6 +19,9 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);
 int sys_seek(int fd, off_t offset, int whence, off_t *new_offset);
 int sys_close(int fd);
 int sys_dup2(int fd, int newfd);
+
+int sys_stat(const char *pathname, struct stat *statbuf);
+int sys_fstat(int fd, struct stat *statbuf);
 
 int sys_anon_allocate(size_t size, void **pointer);
 int sys_anon_free(void *pointer, size_t size);

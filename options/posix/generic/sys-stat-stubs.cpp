@@ -3,6 +3,8 @@
 
 #include <bits/ensure.h>
 
+#include <mlibc/sysdeps.hpp>
+
 int chmod(const char *, mode_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -15,7 +17,6 @@ int fchmodat(int, const char *, mode_t, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// fstat() is implemented by the platform
 int fstatat(int, const char *__restrict, struct stat *__restrict, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -52,7 +53,6 @@ int mknodat(const char *, mode_t, dev_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// stat() is provided by the platform
 mode_t umask(mode_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -60,5 +60,14 @@ mode_t umask(mode_t) {
 int utimensat(int, const char *, const struct timespec times[2], int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
+}
+
+
+int stat(const char *__restrict path, struct stat *__restrict result) {
+	return mlibc::sys_stat(path, result);
+}
+
+int fstat(int fd, struct stat *result) {
+	return mlibc::sys_fstat(fd, result);
 }
 
