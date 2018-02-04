@@ -4,6 +4,7 @@
 
 #include <bits/posix/ino_t.h>
 #include <bits/posix/off_t.h>
+#include <bits/types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,9 +20,6 @@ extern "C" {
 #define DT_SOCK 12
 #define DT_WHT 14
 
-struct __mlibc_Dir { };
-typedef struct __mlibc_Dir DIR;
-
 struct dirent {
 	ino_t d_ino;
 	off_t d_off;
@@ -29,6 +27,16 @@ struct dirent {
 	unsigned char d_type;
 	char d_name[1024];
 };
+
+struct __mlibc_dir_struct {
+	int __handle;
+	__mlibc_size __ent_next;
+	__mlibc_size __ent_limit;
+	char __ent_buffer[2048];
+	struct dirent __current;
+};
+
+typedef struct __mlibc_dir_struct DIR;
 
 int alphasort(const struct dirent **, const struct dirent **);
 int closedir(DIR *);

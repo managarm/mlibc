@@ -5,6 +5,7 @@
 
 // for dup2()
 #include <unistd.h>
+#include <dirent.h>
 // for open()
 #include <fcntl.h>
 // for tcgetattr()
@@ -20,6 +21,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/cxx-support.hpp>
 #include <mlibc/posix-pipe.hpp>
+#include <mlibc/sysdeps.hpp>
 
 #include <frigg/vector.hpp>
 #include <frigg/hashmap.hpp>
@@ -370,6 +372,65 @@ int fcntl(int fd, int request, ...) {
 		return -1;
 	}
 }
+
+namespace mlibc {
+
+int sys_open_dir(const char *path, int *handle) {
+	if((*handle = open(path, 0)) == -1)
+		return -1;
+	return 0;
+}
+
+int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) {
+	auto handle = cacheFileTable()[fd];
+	__ensure(handle);
+
+	HelAction actions[3];
+	globalQueue.trim();
+	
+	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_req_type(managarm::fs::CntReqType::PT_READ_ENTRIES);
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(handle, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::fs::Errors::END_OF_FILE) {
+		*bytes_read = 0;
+		return 0;
+	}else{
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		__ensure(max_size > sizeof(struct dirent));
+		auto ent = new (buffer) struct dirent;
+		memset(ent, 0, sizeof(struct dirent));
+		memcpy(ent->d_name, resp.path().data(), resp.path().size());
+		ent->d_reclen = sizeof(struct dirent);
+		*bytes_read = sizeof(struct dirent);
+		return 0;
+	}
+}
+
+} // namespace mlibc
 
 int isatty(int fd) {
 	HelAction actions[3];
