@@ -2,6 +2,7 @@
 #include <time.h>
 #include <bits/posix/ssize_t.h>
 #include <bits/posix/off_t.h>
+#include <bits/posix/pid_t.h>
 
 namespace mlibc {
 
@@ -25,6 +26,8 @@ void sys_yield();
 
 int sys_sleep(time_t *secs, long *nanos);
 
+int sys_fork(pid_t *child);
+void sys_execve(const char *path, char *const argv[], char *const envp[]);
 
 } //namespace mlibc
 

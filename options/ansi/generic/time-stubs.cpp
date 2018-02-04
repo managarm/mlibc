@@ -81,7 +81,7 @@ struct tm *localtime_r(const time_t *, struct tm *) {
 	__builtin_unreachable();
 }
 
-time_t time(time_t *out){
+time_t time(time_t *out) {
 	if(mlibc::sys_clock_get(out))
 		return (time_t)-1;
 	return 0;

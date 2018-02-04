@@ -52,7 +52,6 @@ int execv(const char *, char *const []) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// execve() is provided by the platform
 int execvp(const char *, char *const[]) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -81,7 +80,6 @@ int fexecve(int, char *const [], char *const []) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// fork() is provided by the platform
 long fpathconf(int, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -335,5 +333,16 @@ int dup2(int fd, int newfd) {
 	if(mlibc::sys_dup2(fd, newfd))
 		return -1;
 	return newfd;
+}
+
+pid_t fork(void) {
+	pid_t child;
+	if(mlibc::sys_fork(&child))
+		return -1;
+	return child;
+}
+
+int execve(const char *path, char *const argv[], char *const envp[]) {
+	mlibc::sys_execve(path, argv, envp);
 }
 

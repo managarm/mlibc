@@ -79,47 +79,6 @@ pid_t getppid(void) {
 	return 1;
 }
 
-pid_t fork(void) {
-	HelError error;
-	pid_t child;
-	asm volatile ("syscall" : "=D"(error), "=S"(child) : "0"(kHelCallSuper + 2)
-			: "rcx", "r11", "rbx", "memory");
-	HEL_CHECK(error);
-	
-	if(!child)
-		clearCachedInfos();
-
-	return child;
-}
-
-int execve(const char *path, char *const argv[], char *const envp[]) {
-	frigg::String<MemoryAllocator> args_area(getAllocator());
-	for(auto it = argv; *it; ++it)
-		args_area += frigg::StringView{*it, strlen(*it) + 1};
-
-	frigg::String<MemoryAllocator> env_area(getAllocator());
-	for(auto it = envp; *it; ++it)
-		env_area += frigg::StringView{*it, strlen(*it) + 1};
-
-	uintptr_t arg0 = reinterpret_cast<uintptr_t>(path);
-	uintptr_t arg1 = strlen(path);
-	uintptr_t arg2 = reinterpret_cast<uintptr_t>(args_area.data());
-	uintptr_t arg3 = args_area.size();
-	uintptr_t arg4 = reinterpret_cast<uintptr_t>(env_area.data());
-	uintptr_t arg5 = env_area.size();
-
-	register uintptr_t in0 asm("rsi") = arg0;
-	register uintptr_t in1 asm("rdx") = arg1;
-	register uintptr_t in2 asm("rax") = arg2;
-	register uintptr_t in3 asm("r8") = arg3;
-	register uintptr_t in4 asm("r9") = arg4;
-	register uintptr_t in5 asm("r10") = arg5;
-	asm volatile ("syscall" : : "D"(kHelCallSuper + 3), "r"(in0), "r"(in1),
-				"r"(in2), "r"(in3), "r"(in4), "r"(in5)
-			: "rcx", "r11", "rbx", "memory");
-	__builtin_trap();
-}
-
 pid_t waitpid(pid_t pid, int *status, int flags) {
 	frigg::infoLogger() << "mlibc: Broken waitpid("
 			<< pid << ", " << flags << ") called!" << frigg::endLog;
@@ -157,6 +116,48 @@ int sys_sleep(time_t *secs, long *nanos) {
 	*nanos = 0;
 
 	return 0;
+}
+
+int sys_fork(pid_t *child) {
+	HelError error;
+	asm volatile ("syscall" : "=D"(error), "=S"(*child) : "0"(kHelCallSuper + 2)
+			: "rcx", "r11", "rbx", "memory");
+	HEL_CHECK(error);
+	
+	if(!*child) {
+		clearCachedInfos();
+		return -1;
+	}
+
+	return 0;
+}
+
+void sys_execve(const char *path, char *const argv[], char *const envp[]) {
+	frigg::String<MemoryAllocator> args_area(getAllocator());
+	for(auto it = argv; *it; ++it)
+		args_area += frigg::StringView{*it, strlen(*it) + 1};
+
+	frigg::String<MemoryAllocator> env_area(getAllocator());
+	for(auto it = envp; *it; ++it)
+		env_area += frigg::StringView{*it, strlen(*it) + 1};
+
+	uintptr_t arg0 = reinterpret_cast<uintptr_t>(path);
+	uintptr_t arg1 = strlen(path);
+	uintptr_t arg2 = reinterpret_cast<uintptr_t>(args_area.data());
+	uintptr_t arg3 = args_area.size();
+	uintptr_t arg4 = reinterpret_cast<uintptr_t>(env_area.data());
+	uintptr_t arg5 = env_area.size();
+
+	register uintptr_t in0 asm("rsi") = arg0;
+	register uintptr_t in1 asm("rdx") = arg1;
+	register uintptr_t in2 asm("rax") = arg2;
+	register uintptr_t in3 asm("r8") = arg3;
+	register uintptr_t in4 asm("r9") = arg4;
+	register uintptr_t in5 asm("r10") = arg5;
+	asm volatile ("syscall" : : "D"(kHelCallSuper + 3), "r"(in0), "r"(in1),
+				"r"(in2), "r"(in3), "r"(in4), "r"(in5)
+			: "rcx", "r11", "rbx", "memory");
+	__builtin_trap();
 }
 
 } //namespace mlibc
