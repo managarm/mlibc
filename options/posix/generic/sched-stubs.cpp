@@ -3,5 +3,10 @@
 
 #include <bits/ensure.h>
 
-// sched_yield() is provided by the platform
+#include <mlibc/sysdeps.hpp>
+
+int sched_yield(void) {
+	mlibc::sys_yield();
+	return 0;
+}
 

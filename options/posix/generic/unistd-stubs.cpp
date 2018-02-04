@@ -228,7 +228,6 @@ int setuid(uid_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// sleep() is provided by the platform
 void swab(const void *__restrict, void *__restrict, ssize_t) {
 	__ensure(!"Not implemented");
 }
@@ -288,13 +287,12 @@ char *get_current_dir_name(void) {
 	__builtin_unreachable();
 }
 
-// usleep() is provided by the platform
-
 // This is a Linux extension
 pid_t gettid(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 
 ssize_t write(int fd, const void *buf, size_t count) {
 	ssize_t bytes_written;
@@ -315,5 +313,19 @@ off_t lseek(int fd, off_t offset, int whence) {
 	if(mlibc::sys_seek(fd, offset, whence, &new_offset))
 		return (off_t)-1;
 	return new_offset;
+}
+
+unsigned int sleep(unsigned int secs) {
+	time_t seconds = secs;
+	long nanos = 0;
+	mlibc::sys_sleep(&seconds, &nanos);
+	return seconds;
+}
+
+// In contrast to sleep() this functions returns 0/-1 on success/failure.
+int usleep(useconds_t usecs) {
+	time_t seconds = 0;
+	long nanos = usecs * 1000;
+	return mlibc::sys_sleep(&seconds, &nanos); 
 }
 

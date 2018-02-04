@@ -19,5 +19,9 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset);
 int sys_anon_allocate(size_t size, void **pointer);
 int sys_anon_free(void *pointer, size_t size);
 
+void sys_yield();
+
+int sys_sleep(time_t *secs, long *nanos);
+
 } //namespace mlibc
 
