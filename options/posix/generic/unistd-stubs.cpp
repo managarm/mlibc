@@ -18,7 +18,6 @@ int chown(const char *path, uid_t uid, gid_t gid) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// close() is provided by the platform
 ssize_t confstr(int, char *, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -31,7 +30,6 @@ int dup(int fd) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// dup2() is provided by the platform
 void _exit(int status) {
 	__ensure(!"Not implemented");
 }
@@ -315,6 +313,10 @@ off_t lseek(int fd, off_t offset, int whence) {
 	return new_offset;
 }
 
+int close(int fd) {
+	return mlibc::sys_close(fd);
+}
+
 unsigned int sleep(unsigned int secs) {
 	time_t seconds = secs;
 	long nanos = 0;
@@ -327,5 +329,11 @@ int usleep(useconds_t usecs) {
 	time_t seconds = 0;
 	long nanos = usecs * 1000;
 	return mlibc::sys_sleep(&seconds, &nanos); 
+}
+
+int dup2(int fd, int newfd) {
+	if(mlibc::sys_dup2(fd, newfd))
+		return -1;
+	return newfd;
 }
 
