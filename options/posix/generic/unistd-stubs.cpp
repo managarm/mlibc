@@ -347,3 +347,25 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
 	mlibc::sys_execve(path, argv, envp);
 }
 
+gid_t getgid(void) {
+	return mlibc::sys_getgid();
+}
+gid_t getegid(void) {
+	return mlibc::sys_getegid();
+}
+
+uid_t getuid(void) {
+	return mlibc::sys_getuid();
+}
+uid_t geteuid(void) {
+	return mlibc::sys_geteuid();
+}
+
+pid_t getpid(void) {
+	return mlibc::sys_getpid();
+}
+
+pid_t getppid(void) {
+	return mlibc::sys_getppid();
+}
+

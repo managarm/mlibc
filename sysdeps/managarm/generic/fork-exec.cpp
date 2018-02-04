@@ -26,59 +26,6 @@
 
 #include <mlibc/sysdeps.hpp>
 
-uid_t getuid(void) {
-	return 0;
-}
-gid_t getgid(void) {
-	return 0;
-}
-
-uid_t geteuid(void) {
-	return 0;
-}
-gid_t getegid(void) {
-	return 0;
-}
-
-pid_t getpid(void) {
-	HelAction actions[3];
-	globalQueue.trim();
-
-	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_request_type(managarm::posix::CntReqType::GET_PID);
-
-	frigg::String<MemoryAllocator> ser(getAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	return resp.pid();
-}
-pid_t getppid(void) {
-	frigg::infoLogger() << "mlibc: Broken getppid() called" << frigg::endLog;
-	return 1;
-}
-
 pid_t waitpid(pid_t pid, int *status, int flags) {
 	frigg::infoLogger() << "mlibc: Broken waitpid("
 			<< pid << ", " << flags << ") called!" << frigg::endLog;
@@ -156,6 +103,62 @@ void sys_execve(const char *path, char *const argv[], char *const envp[]) {
 				"r"(in2), "r"(in3), "r"(in4), "r"(in5)
 			: "rcx", "r11", "rbx", "memory");
 	__builtin_trap();
+}
+
+gid_t sys_getgid() {
+	return 0;
+}
+
+gid_t sys_getegid() {
+	return 0;
+}
+
+uid_t sys_getuid() {
+	return 0;
+}
+
+uid_t sys_geteuid() {
+	return 0;
+}
+
+pid_t sys_getpid() {
+	HelAction actions[3];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::GET_PID);
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	return resp.pid();
+}
+
+pid_t sys_getppid() {
+	frigg::infoLogger() << "mlibc: Broken getppid() called" << frigg::endLog;
+	return 1;
 }
 
 } //namespace mlibc

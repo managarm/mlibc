@@ -24,6 +24,13 @@ int sys_stat(const char *pathname, struct stat *statbuf);
 int sys_fstat(int fd, struct stat *statbuf);
 int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length);
 
+gid_t sys_getgid();
+gid_t sys_getegid();
+uid_t sys_getuid();
+uid_t sys_geteuid();
+pid_t sys_getpid();
+pid_t sys_getppid();
+
 int sys_anon_allocate(size_t size, void **pointer);
 int sys_anon_free(void *pointer, size_t size);
 
