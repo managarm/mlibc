@@ -124,10 +124,8 @@ int sys_fork(pid_t *child) {
 			: "rcx", "r11", "rbx", "memory");
 	HEL_CHECK(error);
 	
-	if(!*child) {
+	if(!*child)
 		clearCachedInfos();
-		return -1;
-	}
 
 	return 0;
 }
