@@ -30,9 +30,15 @@ char *strndup(const char *string, size_t max_size) {
 	return new_string;
 }
 
-size_t strnlen(const char *, size_t) {
-	__ensure(!"strnlen() not implemented");
-	__builtin_unreachable();
+size_t strnlen(const char *s, size_t n) {
+	__ensure(n >= 0);
+	size_t len = 0;
+	for(size_t i = 0; s[i]; i++) {
+		if(len == n)
+			break;
+		len++;
+	}
+	return len;
 }
 
 char *strtok_r(char *__restrict, const char *__restrict, char **__restrict) {
