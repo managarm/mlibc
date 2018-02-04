@@ -4,7 +4,6 @@
 
 #include <mlibc/sysdeps.hpp>
 
-// access() is provided by the platform
 unsigned int alarm(unsigned int seconds) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -95,9 +94,6 @@ char *getcwd(char *, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// getegid() is provided by the platform
-// geteuid() is provided by the platform
-// getgid() is provided by the platform
 int getgroups(int, gid_t []) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -127,14 +123,10 @@ pid_t getpgrp(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// getpid() is provided by the platform
-// getppid() is provided by the platform
 pid_t getsid(pid_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// getuid() is provided by the platform
-// isatty() is provided by the platform
 int lchown(const char *path, uid_t uid, gid_t gid) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -367,5 +359,17 @@ pid_t getpid(void) {
 
 pid_t getppid(void) {
 	return mlibc::sys_getppid();
+}
+
+int access(const char *path, int mode) {
+	return mlibc::sys_access(path, mode);
+}
+
+int isatty(int fd) {
+	int val;
+	if(mlibc::sys_isatty(fd, &val)) {
+		return 0;
+	}
+	return val;
 }
 
