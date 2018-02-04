@@ -1613,9 +1613,17 @@ int sys_stat(const char *path, struct stat *result) {
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		memset(result, 0, sizeof(struct stat));
+		
+		switch(resp.file_type()) {
+		case managarm::posix::FileType::FT_REGULAR:
+			result->st_mode = S_IFREG; break;
+		case managarm::posix::FileType::FT_DIRECTORY:
+			result->st_mode = S_IFDIR; break;
+		}
+
 		result->st_dev = 1;
 		result->st_ino = resp.inode_num();
-		result->st_mode = resp.mode() | S_IFREG;
+		result->st_mode |= resp.mode();
 		result->st_nlink = resp.num_links();
 		result->st_uid = resp.uid();
 		result->st_gid = resp.gid();
@@ -1667,9 +1675,17 @@ int sys_fstat(int fd, struct stat *result) {
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	memset(result, 0, sizeof(struct stat));
+		
+	switch(resp.file_type()) {
+	case managarm::posix::FileType::FT_REGULAR:
+		result->st_mode = S_IFREG; break;
+	case managarm::posix::FileType::FT_DIRECTORY:
+		result->st_mode = S_IFDIR; break;
+	}
+
 	result->st_dev = 1;
 	result->st_ino = resp.inode_num();
-	result->st_mode = resp.mode() | S_IFREG;
+	result->st_mode |= resp.mode();
 	result->st_nlink = resp.num_links();
 	result->st_uid = resp.uid();
 	result->st_gid = resp.gid();
