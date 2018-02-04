@@ -22,6 +22,7 @@ int sys_dup2(int fd, int newfd);
 
 int sys_stat(const char *pathname, struct stat *statbuf);
 int sys_fstat(int fd, struct stat *statbuf);
+int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length);
 
 int sys_anon_allocate(size_t size, void **pointer);
 int sys_anon_free(void *pointer, size_t size);

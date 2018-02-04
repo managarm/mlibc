@@ -1686,5 +1686,53 @@ int sys_fstat(int fd, struct stat *result) {
 	return 0;
 }
 
+int sys_readlink(const char *path, void *data, size_t max_size, ssize_t *length) {
+	HelAction actions[4];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::READLINK);
+	req.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = kHelItemChain;
+	actions[3].type = kHelActionRecvToBuffer;
+	actions[3].flags = 0;
+	actions[3].buffer = data;
+	actions[3].length = max_size;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 4,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+	auto recv_data = parseLength(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(recv_data->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		errno = EINVAL;
+		return -1;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		*length = recv_data->length;
+		return 0;
+	}
+}
+
 } //namespace mlibc
 

@@ -1,7 +1,6 @@
 
-#include <unistd.h>
-
 #include <bits/ensure.h>
+#include <unistd.h>
 
 #include <mlibc/sysdeps.hpp>
 
@@ -176,9 +175,11 @@ ssize_t pwrite(int, const void *, size_t, off_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-ssize_t readlink(const char *__restrict, char *__restrict, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+ssize_t readlink(const char *__restrict path, char *__restrict buffer, size_t max_size) {
+	ssize_t length;
+	if(mlibc::sys_readlink(path, buffer, max_size, &length))
+		return -1;
+	return length;
 }
 ssize_t readlinkat(int, const char *__restrict, char *__restrict, size_t) {
 	__ensure(!"Not implemented");
