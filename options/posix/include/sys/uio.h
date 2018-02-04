@@ -1,6 +1,7 @@
 #ifndef _SYS_UIO_H
 #define _SYS_UIO_H
 
+#include <bits/posix/iovec.h>
 #include <bits/posix/ssize_t.h>
 #include <bits/size_t.h>
 
