@@ -25,7 +25,8 @@ libc_include_dirs := options/internal/include \
 	options/ansi/include \
 	options/posix/include \
 	options/lsb/include \
-	options/linux/include
+	options/linux/include \
+	sysdeps/managarm/include
 
 pretty = @echo '\t\e[1m$2\e[0m $3'; if ! $1; then \
 	echo "\e[31mError in" '\e[1m$2\e[0m\e[31m $3!\e[39m' \
@@ -174,6 +175,8 @@ libc_includes += arpa/inet.h \
 	syslog.h \
 	termios.h \
 	unistd.h
+# sysdeps/managarm
+libc_includes += bits/abi.h
 
 $(foreach d,$(libc_include_dirs),\
 	$(eval $(SYSROOT_PATH)/usr/include/%.h: $d/%.h ; $(value install_header_pretty)))
@@ -184,7 +187,8 @@ $(SYSROOT_PATH)/usr/lib/libc.so: libc.so
 libc_code_dirs := options/ansi/generic
 libc_code_dirs += options/linux/generic
 libc_code_dirs += options/lsb/generic
-libc_code_dirs += options/posix/generic
+libc_code_dirs += options/posix/generic \
+	options/posix/musl-generic
 libc_code_dirs += options/internal/generic \
 	options/internal/gcc \
 	options/internal/gcc-extra \
@@ -198,6 +202,7 @@ libc_cxx_sources := $(wildcard $(TREE_PATH)/options/ansi/generic/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/options/linux/generic/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/options/lsb/generic/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/options/posix/generic/*.cpp)
+libc_cxx_sources += $(wildcard $(TREE_PATH)/options/posix/musl-generic/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/options/internal/generic/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/options/internal/gcc/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/sysdeps/managarm/generic/*.cpp)
