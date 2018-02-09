@@ -97,3 +97,13 @@ struct lconv *localeconv(void) {
 	__builtin_unreachable();
 }
 
+locale_t newlocale(int category_mask, const char *locale, locale_t base) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+void freelocale(locale_t locobj) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+

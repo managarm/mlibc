@@ -306,4 +306,8 @@ void *realloc(void *pointer, size_t size) {
 	return getAllocator().realloc(pointer, size);
 }
 
+double strtod_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 
