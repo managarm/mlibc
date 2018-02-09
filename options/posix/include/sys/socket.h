@@ -99,26 +99,32 @@ struct linger{
 
 #define SOMAXCONN 1
 
-#define MSG_CTRUNC 1
-#define MSG_DONTROUTE 2
-#define MSG_EOR 3
-#define MSG_OOB 4
-#define MSG_NOSIGNAL 5
-#define MSG_PEEK 6
-#define MSG_TRUNC 7
-#define MSG_WAITALL 8
+#define MSG_CTRUNC 0x1
+#define MSG_DONTROUTE 0x2
+#define MSG_EOR 0x4
+#define MSG_OOB 0x8
+#define MSG_NOSIGNAL 0x10
+#define MSG_PEEK 0x20
+#define MSG_TRUNC 0x40
+#define MSG_WAITALL 0x80
+
+// Linux extensions.
+#define MSG_DONTWAIT 0x1000
+#define MSG_CMSG_CLOEXEC 0x2000
 
 // GNU (?) extension: Protocol family constants.
 
 #define PF_INET 1
 #define PF_INET6 2
 #define PF_UNIX 3
+#define PF_LOCAL 3
 #define PF_UNSPEC 4
 #define PF_NETLINK 5
 
 #define AF_INET PF_INET
 #define AF_INET6 PF_INET6
 #define AF_UNIX PF_UNIX
+#define AF_LOCAL PF_LOCAL
 #define AF_UNSPEC PF_UNSPEC
 #define AF_NETLINK PF_NETLINK
 

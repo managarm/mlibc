@@ -41,4 +41,13 @@ int msync(void *, size_t, int) {
 	__builtin_unreachable();
 }
 
+void *mremap(void *, size_t, size_t, int, ...) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int remap_file_pages(void *, size_t, int, size_t, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 

@@ -101,7 +101,9 @@ libc_includes += getopt.h \
 	sys/mount.h \
 	sys/random.h \
 	sys/sendfile.h \
-	sys/sysmacros.h
+	sys/signalfd.h \
+	sys/sysmacros.h \
+	sys/timerfd.h
 #LSB
 libc_includes += sys/auxv.h
 #Posix

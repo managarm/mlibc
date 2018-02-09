@@ -32,6 +32,10 @@
 #define POSIX_MADV_DONTNEED 4
 #define POSIX_MADV_WILLNEED 5
 
+// Linux extension:
+#define MREMAP_MAYMOVE 1
+#define MREMAP_FIXED 2
+
 // Missing: posix_typed_mem_open(), POSIX_TYPED constants and related stuff.
 
 #ifdef __cplusplus
@@ -49,6 +53,10 @@ int munlockall(void);
 
 int posix_madvise(void *, size_t, int);
 int msync(void *, size_t, int);
+
+// Linux extension:
+void *mremap(void *, size_t, size_t, int, ...);
+int remap_file_pages(void *, size_t, int, size_t, int);
 
 #ifdef __cplusplus
 }
