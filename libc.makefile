@@ -99,6 +99,8 @@ libc_includes += getopt.h \
 	sys/inotify.h \
 	sys/ioctl.h \
 	sys/mount.h \
+	sys/prctl.h \
+	sys/ptrace.h \
 	sys/random.h \
 	sys/sendfile.h \
 	sys/signalfd.h \
