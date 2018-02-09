@@ -3,6 +3,7 @@
 #define _LINUX_INPUT_H
 
 #include <stdint.h>
+#include <sys/ioctl.h>
 #include <sys/time.h>
 #include <bits/posix/timeval.h>
 
@@ -13,13 +14,33 @@ struct input_event {
 	int32_t value;
 };
 
+struct input_absinfo {
+	int32_t value;
+	int32_t minimum;
+	int32_t maximum;
+	int32_t fuzz;
+	int32_t flat;
+	int32_t resolution;
+};
+
 //----------------------------------
 // Event Types
 //----------------------------------
 
+#define EV_SYN			0x00
 #define EV_KEY			0x01
 #define EV_REL			0x02
 #define EV_ABS			0x03
+
+#define EVIOCGRAB       _IOW('E', 0x90, int)
+#define EVIOCGABS(abs)  _IOR('E', 0x40 + (abs),struct input_absinfo) 
+#define EVIOCGBIT(ev,len) _IOC(_IOC_READ, 'E', 0x18, len)
+
+//----------------------------------
+// Sync Types
+//----------------------------------
+
+#define SYN_REPORT 		0
 
 //----------------------------------
 // Key Codes
@@ -137,12 +158,36 @@ struct input_event {
 #define KEY_COMPOSE		127
 
 //----------------------------------
+// BUTTON Codes
+//----------------------------------
+
+#define BTN_TOUCH 		0x14A
+
+//----------------------------------
 // Mouse Codes
 //----------------------------------
 
 #define REL_X			0x00
 #define REL_Y			0x01
 #define REL_WHEEL		0x08
+
+//----------------------------------
+// Axes Codes
+//----------------------------------
+
+#define ABS_X 			0x00
+#define ABS_Y 			0x01
+#define ABS_Z 			0x02
+#define ABS_PRESSURE 	0x18
+
+#define ABS_MAX 		0x3f
+#define ABS_CNT 		(ABS_MAX+1)
+
+//----------------------------------
+// other
+//----------------------------------
+
+typedef uint64_t __u64;
 
 #endif // _LINUX_INPUT_H
 
