@@ -28,7 +28,7 @@ typedef struct {
 #define EXIT_FAILURE 1
 #define EXIT_SUCCESS 0
 
-// MISSING: RAND_MAX
+#define RAND_MAX 0x7FFFFFFF
 
 // TODO: this should not be a compile-time constant
 #define MB_CUR_MAX 4
