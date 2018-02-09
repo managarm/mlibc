@@ -13,12 +13,15 @@ long random(void);
 // ----------------------------------------------------------------------------
 
 int putenv(const char *);
+int setenv(const char *, const char *, int);
+int unsetenv(const char *);
 
 // ----------------------------------------------------------------------------
 // Path handling.
 // ----------------------------------------------------------------------------
 
 int mkstemp(char *);
+char *mkdtemp(char *path);
 
 char *realpath(const char *__restrict, char *__restrict);
 

@@ -145,6 +145,7 @@ libc_includes += arpa/inet.h \
 	bits/posix/posix_stdlib.h \
 	bits/posix/posix_string.h \
 	bits/posix/sa_family_t.h \
+	bits/posix/siginfo_t.h \
 	bits/posix/socklen_t.h \
 	bits/posix/ssize_t.h \
 	bits/posix/stat.h \

@@ -4,6 +4,7 @@
 
 #include <bits/posix/id_t.h>
 #include <bits/posix/pid_t.h>
+#include <bits/posix/siginfo_t.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,13 +28,12 @@ extern "C" {
 #define WTERMSIG(x) (((x) & 0xFF000000) >> 24)
 
 // TODO: move to own file and include in sys/types.h
-enum idtype_t {
+typedef enum {
 	P_ALL, P_PID, P_PGID
-};
+} idtype_t;
 
 pid_t wait(int *status);
-// FIXME: Add siginfo_t
-//int waitid(idtype_t idtype, id_t id, siginfo_t *siginfo, int flags);
+int waitid(idtype_t idtype, id_t id, siginfo_t *siginfo, int flags);
 pid_t waitpid(pid_t pid, int *status, int flags);
 
 #ifdef __cplusplus

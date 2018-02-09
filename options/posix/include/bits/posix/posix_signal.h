@@ -2,8 +2,7 @@
 #ifndef MLIBC_POSIX_SIGNAL_H
 #define MLIBC_POSIX_SIGNAL_H
 
-#include <bits/posix/pid_t.h>
-#include <bits/posix/uid_t.h>
+#include <bits/posix/siginfo_t.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,11 +42,6 @@ extern "C" {
 // TODO: replace this by uint64_t
 typedef long sigset_t;
 
-union sigval {
-	int sival_int;
-	void *sival_ptr;
-};
-
 struct sigevent {
 	int sigev_notify;
 	int sigev_signo;
@@ -60,17 +54,6 @@ struct sigevent {
 #define SIGEV_NONE 1
 #define SIGEV_SIGNAL 2
 #define SIGEV_THREAD 3
-
-typedef struct {
-	int si_signo;
-	int si_code;
-	int si_errno;
-	pid_t si_pid;
-	uid_t si_uid;
-	void *si_addr;
-	int si_status;
-	union sigval si_value;
-} siginfo_t;
 
 struct sigaction {
 	void (*sa_handler)(int);
