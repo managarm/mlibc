@@ -157,12 +157,16 @@ struct input_absinfo {
 #define KEY_RIGHTMETA	126
 #define KEY_COMPOSE		127
 
+#define KEY_BRIGHTNESSDOWN 224
+#define KEY_BRIGHTNESSUP 225
+
 //----------------------------------
 // BUTTON Codes
 //----------------------------------
 
 #define BTN_LEFT		0x110
 #define BTN_RIGHT 		0x111
+#define BTN_MIDDLE		0x112
 #define BTN_TOUCH 		0x14A
 
 //----------------------------------
