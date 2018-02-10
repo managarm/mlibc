@@ -139,10 +139,11 @@ char *strpbrk(const char *s, const char *chrs) {
 	__builtin_unreachable();
 }
 char *strrchr(const char *s, int c) {
+	// The null-terminator is considered to be part of the string.
 	size_t length = strlen(s);
 	for(size_t i = 0; i <= length; i++) {
 		if(s[length - i] == c)
-			return const_cast<char *>(&s[i]);
+			return const_cast<char *>(s + (length - i));
 	}
 	return nullptr;
 }
