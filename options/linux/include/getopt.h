@@ -6,7 +6,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif __cplusplus
+#endif
 
 struct option {
 	const char *name;
@@ -24,7 +24,7 @@ int getopt_long_only(int, char *const[], const char *, const struct option *, in
 
 #ifdef __cplusplus
 }
-#endif __cplusplus
+#endif
 
 #endif // _GETOPT_H
 
