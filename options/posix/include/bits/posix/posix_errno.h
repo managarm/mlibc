@@ -77,6 +77,7 @@
 #define EWOULDBLOCK EAGAIN
 #define EXDEV 1075
 #define ENODATA 1076
+#define ETIME 1077
 
 #endif // MLIBC_POSIX_ERRNO_H
 

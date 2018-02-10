@@ -161,6 +161,8 @@ struct input_absinfo {
 // BUTTON Codes
 //----------------------------------
 
+#define BTN_LEFT		0x110
+#define BTN_RIGHT 		0x111
 #define BTN_TOUCH 		0x14A
 
 //----------------------------------

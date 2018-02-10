@@ -86,11 +86,14 @@ libc_includes += getopt.h \
 	linux/bpf_common.h \
 	linux/filter.h \
 	linux/input.h \
+	linux/kd.h \
 	linux/magic.h \
+	linux/major.h \
 	linux/netlink.h \
 	linux/sched.h \
 	linux/sockios.h \
 	linux/types.h \
+	linux/vt.h \
 	malloc.h \
 	mntent.h \
 	poll.h \
@@ -105,7 +108,8 @@ libc_includes += getopt.h \
 	sys/sendfile.h \
 	sys/signalfd.h \
 	sys/sysmacros.h \
-	sys/timerfd.h
+	sys/timerfd.h \
+	values.h
 #LSB
 libc_includes += sys/auxv.h
 #Posix
