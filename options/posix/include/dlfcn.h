@@ -5,6 +5,8 @@
 #define RTLD_LAZY 0
 #define RTLD_NOW 1
 #define RTLD_GLOBAL 2
+#define RTLD_NOLOAD 4
+#define RTLD_NOW 8
 #define RTLD_LOCAL 0
 
 #define RTLD_NEXT ((void *)-1)
