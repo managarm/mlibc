@@ -153,6 +153,8 @@ int chroot(const char *);
 // This is a Linux extension
 pid_t gettid(void);
 
+int pipe2(int *pipefd, int flags);
+
 #ifdef __cplusplus
 }
 #endif

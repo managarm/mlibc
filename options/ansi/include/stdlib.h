@@ -51,6 +51,7 @@ unsigned long long strtoull(const char *__restrict string, char **__restrict end
 // [7.22.2] Pseudo-random sequence generation functions
 
 int rand(void);
+int rand_r(unsigned *);
 void srand(unsigned int);
 
 // POSIX extension.

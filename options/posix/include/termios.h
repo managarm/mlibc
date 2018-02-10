@@ -158,6 +158,17 @@ pid_t tcgetsid(int);
 int tcsendbreak(int, int);
 int tcsetattr(int, int, const struct termios *);
 
+// This is a linux extension
+
+#define TIOCSWINSZ 0x5414
+
+struct winsize {
+	unsigned short ws_row;
+	unsigned short ws_col;
+	unsigned short ws_xpixel;
+	unsigned short ws_ypixel;
+};
+
 #ifdef __cplusplus
 }
 #endif

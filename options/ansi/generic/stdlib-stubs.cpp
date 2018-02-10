@@ -137,6 +137,12 @@ int rand() {
 	// rand() is specified to return a positive number so we discard the MSB.
 	return static_cast<int>(__mlibc_rand_engine() & 0x7FFFFFFF);
 }
+
+int rand_r(unsigned *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 void srand(unsigned int s) {
 	__mlibc_rand_engine.seed(s);
 }

@@ -95,8 +95,10 @@ libc_includes += getopt.h \
 	linux/types.h \
 	linux/vt.h \
 	malloc.h \
+	memory.h \
 	mntent.h \
 	poll.h \
+	pty.h \
 	stdio_ext.h \
 	sys/epoll.h \
 	sys/inotify.h \

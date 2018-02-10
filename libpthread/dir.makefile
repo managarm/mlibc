@@ -6,7 +6,7 @@ $c_OBJDIR := $(BUILD_PATH)/$c/obj
 $c_LIBRARY_OBJS := $($c_OBJDIR)/dummy.o
 
 # FIXME: We do have crtbegin/crtend here so global ctors do not work!
-# Either build libm after libgcc or include a private version of crtbegin/crtend.
+# Either build libpthread after libgcc or include a private version of crtbegin/crtend.
 $c_LDFLAGS := -nostdlib
 
 $c_TARGETS := clean-$c install-$c $($c_BINDIR)/libpthread.so

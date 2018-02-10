@@ -373,3 +373,8 @@ int isatty(int fd) {
 	return val;
 }
 
+int pipe2(int *pipefd, int flags) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
