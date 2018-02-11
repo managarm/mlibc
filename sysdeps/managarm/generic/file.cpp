@@ -126,6 +126,14 @@ int fcntl(int fd, int request, ...) {
 		frigg::infoLogger() << "\e[31mmlibc: fcntl(F_DUPFD_CLOEXEC) is not implemented correctly"
 				<< "\e[39m" << frigg::endLog;
 		return dup2(fd, -1);
+	}else if(request == F_GETFD) {
+		frigg::infoLogger() << "\e[31mmlibc: fcntl(F_GETFD) is not implemented correctly"
+				<< "\e[39m" << frigg::endLog;
+		return 0;
+	}else if(request == F_SETFD) {
+		frigg::infoLogger() << "\e[31mmlibc: fcntl(F_SETFD) is not implemented correctly"
+				<< "\e[39m" << frigg::endLog;
+		return 0;
 	}else{
 		frigg::infoLogger() << "\e[31mmlibc: Unexpected fcntl() request: "
 				<< request << "\e[39m" << frigg::endLog;
@@ -351,7 +359,10 @@ int socketpair(int domain, int type, int proto, int *fds) {
 #include <sys/epoll.h>
 
 int epoll_create1(int flags) {
-	__ensure(!flags);
+	__ensure(!(flags & ~(EPOLL_CLOEXEC)));
+	if(flags & EPOLL_CLOEXEC)
+		frigg::infoLogger() << "\e[31mmlibc: epoll_create1(EPOLL_CLOEXEC)"
+				" is not implemented correctly\e[39m" << frigg::endLog;
 
 	HelAction actions[3];
 	globalQueue.trim();

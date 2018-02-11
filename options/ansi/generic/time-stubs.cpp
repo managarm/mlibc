@@ -3,6 +3,7 @@
 
 #include <bits/ensure.h>
 
+#include <frigg/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 clock_t clock(void) {
@@ -34,14 +35,17 @@ struct tm *gmtime(const time_t *timer) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-struct tm *localtime(const time_t *timer) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+struct tm *localtime(const time_t *t) {
+	static thread_local struct tm per_thread_tm;
+	return localtime_r(t, &per_thread_tm);
 }
 size_t strftime(char *__restrict dest, size_t max_size,
-		const char *__restrict format, const struct tm *__restrict ptr) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+		const char *__restrict, const struct tm *__restrict) {
+	frigg::infoLogger() << "\e[31mmlibc: strftime always writes an"
+		" empty string\e[39m" << frigg::endLog;
+	__ensure(max_size > 0);
+	dest[0] = 0;
+	return 0;
 }
 
 // POSIX extensions.
@@ -76,9 +80,11 @@ int utimes(const char *, const struct timeval[2]) {
 	__builtin_unreachable();
 }
 
-struct tm *localtime_r(const time_t *, struct tm *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+struct tm *localtime_r(const time_t *t, struct tm *tm) {
+	frigg::infoLogger() << "\e[31mmlibc: localtime_r always returns a"
+		" zero date\e[39m" << frigg::endLog;
+	memset(tm, 0, sizeof(struct tm));
+	return tm;
 }
 
 time_t time(time_t *out) {

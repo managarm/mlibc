@@ -1,7 +1,9 @@
 
+#include <errno.h>
 #include <stdio.h>
 
 #include <bits/ensure.h>
+#include <frigg/debug.hpp>
 
 int fileno(FILE *file) {
 	return file->fd;
@@ -28,7 +30,9 @@ FILE *popen(const char*, const char *) {
 }
 
 FILE *open_memstream(char **, size_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "\e[31mmlibc: open_memstream() always fails"
+			<< "\e[39m" << frigg::endLog;
+	errno = ENOMEM;
+	return nullptr;
 }
 
