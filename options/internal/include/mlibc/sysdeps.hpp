@@ -43,5 +43,7 @@ int sys_sleep(time_t *secs, long *nanos);
 int sys_fork(pid_t *child);
 void sys_execve(const char *path, char *const argv[], char *const envp[]);
 
+int sys_signalfd_create(int flags, int *fd);
+
 } //namespace mlibc
 
