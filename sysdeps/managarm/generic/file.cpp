@@ -125,7 +125,7 @@ int fcntl(int fd, int request, ...) {
 	}else if(request == F_DUPFD_CLOEXEC) {
 		frigg::infoLogger() << "\e[31mmlibc: fcntl(F_DUPFD_CLOEXEC) is not implemented correctly"
 				<< "\e[39m" << frigg::endLog;
-		return dup2(fd, -1);
+		return dup(fd);
 	}else if(request == F_GETFD) {
 		frigg::infoLogger() << "\e[31mmlibc: fcntl(F_GETFD) is not implemented correctly"
 				<< "\e[39m" << frigg::endLog;
@@ -1557,8 +1557,46 @@ int sys_close(int fd) {
 	}
 }
 
+int sys_dup(int fd, int *newfd) {
+	HelAction actions[3];
+
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::DUP2);
+	req.set_fd(fd);
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	*newfd = resp.fd();
+	return 0;
+}
+
 int sys_dup2(int fd, int newfd) {
-	HelAction actions[4];
+	HelAction actions[3];
 
 	globalQueue.trim();
 
@@ -1576,10 +1614,8 @@ int sys_dup2(int fd, int newfd) {
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionPullDescriptor;
-	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 4,
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();

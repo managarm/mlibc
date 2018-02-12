@@ -24,10 +24,6 @@ char *crypt(const char *, const char *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int dup(int fd) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
 void _exit(int status) {
 	__ensure(!"Not implemented");
 }
@@ -322,6 +318,13 @@ int usleep(useconds_t usecs) {
 	return mlibc::sys_sleep(&seconds, &nanos); 
 }
 
+int dup(int fd) {
+	int newfd;
+	if(mlibc::sys_dup(fd, &newfd))
+		return -1;
+	return newfd;
+}
+
 int dup2(int fd, int newfd) {
 	if(mlibc::sys_dup2(fd, newfd))
 		return -1;
@@ -337,6 +340,7 @@ pid_t fork(void) {
 
 int execve(const char *path, char *const argv[], char *const envp[]) {
 	mlibc::sys_execve(path, argv, envp);
+	return -1;
 }
 
 gid_t getgid(void) {

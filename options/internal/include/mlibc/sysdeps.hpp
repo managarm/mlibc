@@ -19,6 +19,7 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);
 int sys_seek(int fd, off_t offset, int whence, off_t *new_offset);
 int sys_access(const char *path, int mode);
 int sys_close(int fd);
+int sys_dup(int fd, int *newfd);
 int sys_dup2(int fd, int newfd);
 int sys_isatty(int fd, int *ptr);
 
