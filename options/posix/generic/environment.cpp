@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
@@ -46,5 +47,20 @@ int putenv(const char *string) {
 	mutEnvironment.push(nullptr);
 	environ = mutEnvironment.data();
 	return 0;
+}
+
+int setenv(const char *name, const char *value, int overwrite) {
+	// We never free strings here.
+	// TODO: Reuse them?
+	__ensure(overwrite);
+	char *string;
+	__ensure(asprintf(&string, "%s=%s", name, value) > 0);
+	__ensure(string);
+	return putenv(string);
+}
+
+int unsetenv(const char *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
 }
 

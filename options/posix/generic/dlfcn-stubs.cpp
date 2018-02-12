@@ -1,15 +1,16 @@
 
+#include <bits/ensure.h>
 #include <dlfcn.h>
 
-#include <bits/ensure.h>
+#include <frigg/debug.hpp>
 
 extern "C" const char *__dlapi_error();
 extern "C" void *__dlapi_open(const char *, int);
 extern "C" void *__dlapi_resolve(void *, const char *);
 
 int dlclose(void *) {
-	__ensure(!"dlclose() not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "\e[31mmlibc: dlclose() is a no-op\e[39m" << frigg::endLog;
+	return 0;
 }
 
 char *dlerror(void) {
@@ -17,6 +18,12 @@ char *dlerror(void) {
 }
 
 void *dlopen(const char *file, int flags) {
+	// TODO: Validate the flags.
+	if(flags & RTLD_NOLOAD) {
+		frigg::infoLogger() << "\e[31mmlibc: dlopen(RTLD_NOLOAD) always fails\e[39m"
+				<< frigg::endLog;
+		return nullptr;
+	}
 	return __dlapi_open(file, !(flags & RTLD_GLOBAL));
 }
 
