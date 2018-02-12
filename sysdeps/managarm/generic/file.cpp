@@ -1679,6 +1679,10 @@ int sys_stat(const char *path, struct stat *result) {
 			result->st_mode = S_IFREG; break;
 		case managarm::posix::FileType::FT_DIRECTORY:
 			result->st_mode = S_IFDIR; break;
+		case managarm::posix::FileType::FT_CHAR_DEVICE:
+			result->st_mode = S_IFCHR; break;
+		case managarm::posix::FileType::FT_BLOCK_DEVICE:
+			result->st_mode = S_IFBLK; break;
 		}
 
 		result->st_dev = 1;
@@ -1741,6 +1745,10 @@ int sys_fstat(int fd, struct stat *result) {
 		result->st_mode = S_IFREG; break;
 	case managarm::posix::FileType::FT_DIRECTORY:
 		result->st_mode = S_IFDIR; break;
+	case managarm::posix::FileType::FT_CHAR_DEVICE:
+		result->st_mode = S_IFCHR; break;
+	case managarm::posix::FileType::FT_BLOCK_DEVICE:
+		result->st_mode = S_IFBLK; break;
 	}
 
 	result->st_dev = 1;
