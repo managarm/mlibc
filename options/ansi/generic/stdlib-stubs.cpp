@@ -19,8 +19,7 @@ double atof(const char *string) {
 	__builtin_unreachable();
 }
 int atoi(const char *string) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return strtol(string, nullptr, 10);
 }
 long atol(const char *string) {
 	__ensure(!"Not implemented");
@@ -64,7 +63,9 @@ long strtol(const char *__restrict string, char **__restrict end, int base) {
 		}
 		string++;
 	}
-	*end = const_cast<char *>(string);
+
+	if(end)
+		*end = const_cast<char *>(string);
 
 	return result;
 }

@@ -1305,8 +1305,8 @@ int ioctl(int fd, unsigned long request, void *arg) {
 
 namespace mlibc {
 int sys_open(const char *path, int flags, int *fd) {
-//	frigg::infoLogger.log() << "mlibc: open(\""
-//			<< path << "\") called!" << frigg::EndLog();
+	frigg::infoLogger() << "mlibc: open(\""
+			<< path << "\") called!" << frigg::endLog;
 	HelAction actions[3];
 
 	globalQueue.trim();
@@ -1328,7 +1328,9 @@ int sys_open(const char *path, int flags, int *fd) {
 	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
+	frigg::infoLogger() << "dequeue" << frigg::endLog;
 	auto element = globalQueue.dequeueSingle();
+	frigg::infoLogger() << "dequeue done" << frigg::endLog;
 	auto offer = parseSimple(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
@@ -1798,7 +1800,10 @@ int sys_readlink(const char *path, void *data, size_t max_size, ssize_t *length)
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		errno = ENOENT;
+		return -1;
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		errno = EINVAL;
 		return -1;
 	}else{

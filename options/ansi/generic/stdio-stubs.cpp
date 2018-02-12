@@ -12,6 +12,7 @@
 
 #include <frigg/debug.hpp>
 #include <frigg/printf.hpp>
+#include <mlibc/sysdeps.hpp>
 
 struct StreamPrinter {
 	StreamPrinter(FILE *stream)
@@ -134,8 +135,9 @@ char *tmpnam(char *buffer) {
 }
 
 int fclose(FILE *stream) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	if(mlibc::sys_close(stream->fd))
+		return EOF;
+	return 0;
 }
 // fflush() is provided by the POSIX sublibrary
 // fopen() is provided by the POSIX sublibrary
@@ -228,13 +230,47 @@ int vsscanf(const char *__restrict buffer, const char *__restrict format, __gnuc
 }
 
 int fgetc(FILE *stream) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	char c;
+	auto bytes_read = fread(&c, 1, 1, stream);
+	if(bytes_read != 1)
+		return EOF;
+	return c;
 }
+
 char *fgets(char *__restrict buffer, size_t max_size, FILE *__restrict stream) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	__ensure(max_size > 0);
+	for(size_t i = 0; ; i++) {
+		auto c = fgetc(stream);
+		
+		// If fgetc() fails, there is either an EOF or an I/O error.
+		if(c == EOF) {
+//			if(ferror(stream)) {
+//				// Technically, we do not have to terminate the buffer in this case;
+//				// do it anyway to avoid UB if apps do not check our result.
+//				buffer[i] = 0;
+//				return nullptr;
+//			}
+
+			// EOF is only an error if no chars have been read yet.
+			//__ensure(feof(stream));
+			if(i) {
+				buffer[i] = 0;
+				return buffer;
+			}else{
+				// In this case, the buffer is not changed.
+				return nullptr;
+			}
+		}else{
+			buffer[i] = c;
+		}
+
+		if(c == '\n' || i == max_size - 1) {
+			buffer[i + 1] = 0;
+			return buffer;
+		}
+	}
 }
+
 int fputc(int c, FILE *stream) {
 	char d = c;
 	if(fwrite(&d, 1, 1, stream) != 1)

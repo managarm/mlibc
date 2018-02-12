@@ -69,9 +69,31 @@ FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
 }
 
 size_t fread(void *__restrict buffer, size_t size, size_t count, FILE *__restrict stream) {
-	if(__mlibc_exactRead(stream->fd, buffer, size * count))
-		return 0;
-	return size * count;
+	// Distinguish two cases here: If the object size is one, we perform byte-wise reads.
+	// Otherwise, we try to read each object individually.
+	if(size == 1) {
+		size_t progress = 0;
+		while(progress < count) {
+			ssize_t chunk;
+			if(mlibc::sys_read(stream->fd, (char *)buffer + progress, count - progress, &chunk)) {
+				// TODO: Handle I/O errors.
+				return progress;
+			}
+			if(!chunk) {
+				// TODO: Handle eof.
+				return progress;
+			}
+
+			progress += chunk;
+		}
+
+		return count;
+	}else{
+		// TODO: Read each object individually.
+		if(__mlibc_exactRead(stream->fd, buffer, size * count))
+			return 0;
+		return size * count;
+	}
 }
 
 size_t fwrite(const void *__restrict buffer, size_t size, size_t count,
