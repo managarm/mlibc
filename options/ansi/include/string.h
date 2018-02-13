@@ -40,6 +40,9 @@ size_t strspn(const char *s, const char *chrs);
 char *strstr(const char *pattern, const char *s);
 char *strtok(char *__restrict s, const char *__restrict delimiter);
 
+// This is a GNU extension.
+char *strchrnul(const char *, int);
+
 // [7.24.6] Miscellaneous functions
 
 void *memset(void *dest, int c, size_t size);

@@ -82,6 +82,8 @@ int posix_fallocate(int, off_t, off_t);
 
 #define AT_EMPTY_PATH 1
 #define AT_SYMLINK_FOLLOW 2
+#define AT_SYMLINK_NOFOLLOW 4
+
 #define AT_FDCWD -100
 
 struct file_handle {

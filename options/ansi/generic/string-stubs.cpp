@@ -131,8 +131,12 @@ char *strchr(const char *s, int c) {
 	return nullptr;
 }
 size_t strcspn(const char *s, const char *chrs) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	size_t n = 0;
+	while(true) {
+		if(!s[n] || strchr(chrs, s[n]))
+			return n;
+		n++;
+	}
 }
 char *strpbrk(const char *s, const char *chrs) {
 	__ensure(!"Not implemented");
@@ -175,6 +179,17 @@ char *strstr(const char *s, const char *pattern) {
 char *strtok(char *__restrict s, const char *__restrict delimiter) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
+}
+
+// This is a GNU extension.
+char *strchrnul(const char *s, int c) {
+	size_t i = 0;
+	while(s[i]) {
+		if(s[i] == c)
+			return const_cast<char *>(s + i);
+		i++;
+	}
+	return const_cast<char *>(s + i);
 }
 
 void *memset(void *dest, int c, size_t size) {

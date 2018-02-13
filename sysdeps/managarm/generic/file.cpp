@@ -973,7 +973,11 @@ int ioctl(int fd, unsigned long request, void *arg) {
 		HelAction actions[3];
 		globalQueue.trim();
 
-		__ensure(param->pixel_format == DRM_FORMAT_XRGB8888);
+		if(param->pixel_format != DRM_FORMAT_XRGB8888)
+			frigg::infoLogger() << "mlibc: Unexpected pixel format "
+					<< frigg::logHex(param->pixel_format) << frigg::endLog;
+		__ensure(param->pixel_format == DRM_FORMAT_XRGB8888
+				|| param->pixel_format == DRM_FORMAT_ARGB8888);
 		__ensure(!param->flags);
 		__ensure(!param->modifier[0]);
 		__ensure(!param->offsets[0]);

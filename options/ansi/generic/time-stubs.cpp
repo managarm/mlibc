@@ -60,9 +60,13 @@ int clock_getres(clockid_t, struct timespec *) {
 	__builtin_unreachable();
 }
 
-int clock_gettime(clockid_t, struct timespec *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int clock_gettime(clockid_t, struct timespec *time) {
+	frigg::infoLogger() << "\e[31mmlibc: clock_gettime does not support different clocks"
+		"\e[39m" << frigg::endLog;
+	if(mlibc::sys_clock_get(&time->tv_sec))
+		return -1;
+	time->tv_nsec = 0;
+	return 0;
 }
 
 int clock_nanosleep(clockid_t, int, const struct timespec *, struct timespec *) {
