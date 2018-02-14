@@ -315,14 +315,77 @@ int tcsetattr(int, int, const struct termios *attr) {
 
 #include <sys/socket.h>
 
-int socketpair(int domain, int type, int proto, int *fds) {
+namespace mlibc {
+
+int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
+	constexpr int type_mask = int(0xFFFF);
+	constexpr int flags_mask = ~int(0xFFFF);
+	__ensure(!((type_and_flags & flags_mask) & ~(SOCK_CLOEXEC | SOCK_NONBLOCK)));
+	if(type_and_flags & SOCK_CLOEXEC)
+		frigg::infoLogger() << "\e[31mmlibc: socket(SOCK_CLOEXEC)"
+				" is not implemented correctly\e[39m" << frigg::endLog;
+	if(type_and_flags & SOCK_NONBLOCK)
+		frigg::infoLogger() << "\e[31mmlibc: socket(SOCK_NONBLOCK)"
+				" is not implemented correctly\e[39m" << frigg::endLog;
+
+	HelAction actions[3];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::SOCKET);
+	req.set_domain(domain);
+	req.set_socktype(type_and_flags & type_mask);
+	req.set_protocol(proto);
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	*fd = resp.fd();
+	return 0;
+}
+
+} // namespace mlibc
+
+int socketpair(int domain, int type_and_flags, int proto, int *fds) {
+	constexpr int type_mask = int(0xFFFF);
+	constexpr int flags_mask = ~int(0xFFFF);
+	__ensure(!((type_and_flags & flags_mask) & ~(SOCK_CLOEXEC | SOCK_NONBLOCK)));
+	if(type_and_flags & SOCK_CLOEXEC)
+		frigg::infoLogger() << "\e[31mmlibc: socketpair(SOCK_CLOEXEC)"
+				" is not implemented correctly\e[39m" << frigg::endLog;
+	if(type_and_flags & SOCK_NONBLOCK)
+		frigg::infoLogger() << "\e[31mmlibc: socketpair(SOCK_NONBLOCK)"
+				" is not implemented correctly\e[39m" << frigg::endLog;
+
 	HelAction actions[3];
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::SOCKPAIR);
 	req.set_domain(domain);
-	req.set_socktype(type);
+	req.set_socktype(type_and_flags & type_mask);
 	req.set_protocol(proto);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());

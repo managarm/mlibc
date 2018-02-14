@@ -27,6 +27,8 @@ int sys_stat(const char *pathname, struct stat *statbuf);
 int sys_fstat(int fd, struct stat *statbuf);
 int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length);
 
+int sys_socket(int family, int type, int protocol, int *fd);
+
 gid_t sys_getgid();
 gid_t sys_getegid();
 uid_t sys_getuid();

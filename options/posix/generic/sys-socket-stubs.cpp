@@ -1,7 +1,9 @@
 
+#include <bits/ensure.h>
 #include <sys/socket.h>
 
-#include <bits/ensure.h>
+#include <frigg/debug.hpp>
+#include <mlibc/sysdeps.hpp>
 
 int accept(int, struct sockaddr *__restrict, socklen_t *__restrict) {
 	__ensure(!"Not implemented");
@@ -9,8 +11,8 @@ int accept(int, struct sockaddr *__restrict, socklen_t *__restrict) {
 }
 
 int bind(int, const struct sockaddr *, socklen_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "\e[31mmlibc: bind() is a no-op\e[39m" << frigg::endLog;
+	return 0;
 }
 // connect() is provided by the platform
 
@@ -30,8 +32,8 @@ int getsockopt(int, int, int, void *__restrict, socklen_t *__restrict) {
 }
 
 int listen(int, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "\e[31mmlibc: listen() is a no-op\e[39m" << frigg::endLog;
+	return 0;
 }
 
 ssize_t recv(int, void *, size_t, int) {
@@ -79,9 +81,11 @@ int sockatmark(int) {
 	__builtin_unreachable();
 }
 
-int socket(int, int, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int socket(int family, int type, int protocol) {
+	int fd;
+	if(mlibc::sys_socket(family, type, protocol, &fd))
+		return -1;
+	return fd;
 }
 
 // connectpair() is provided by the platform
