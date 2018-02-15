@@ -7,9 +7,9 @@ int sigemptyset(sigset_t *sigset) {
 	*sigset = 0;
 	return 0;
 }
-int sigfillset(sigset_t *) {
-	__ensure(!"sigfillset() not implemented");
-	__builtin_unreachable();
+int sigfillset(sigset_t *sigset) {
+	*sigset = ~sigset_t(0);
+	return 0;
 }
 int sigaddset(sigset_t *sigset, int sig) {
 	// TODO: do not hard code CHAR_BITS

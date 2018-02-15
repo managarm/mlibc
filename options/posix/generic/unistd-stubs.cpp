@@ -1,7 +1,9 @@
 
+#include <stdarg.h>
 #include <bits/ensure.h>
 #include <unistd.h>
 
+#include <frigg/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 unsigned int alarm(unsigned int seconds) {
@@ -30,9 +32,23 @@ void _exit(int status) {
 void encrypt(char block[64], int flags) {
 	__ensure(!"Not implemented");
 }
-int execl(const char *, const char *, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int execl(const char *path, const char *arg0, ...) {
+	// TODO: It's a stupid idea to limit the number of arguments here.
+	char *argv[16];
+	int n = 0;
+
+	va_list args;
+	va_start(args, arg0);
+	while(true) {
+		__ensure(n < 16);
+		auto argn = va_arg(args, const char *);
+		argv[n++] = const_cast<char *>(argn);
+		if(!argn)
+			break;
+	}
+	va_end(args);
+
+	return execve(path, argv, environ);
 }
 int execle(const char *, const char *, ...) {
 	__ensure(!"Not implemented");
@@ -182,8 +198,8 @@ int setegid(gid_t) {
 	__builtin_unreachable();
 }
 int seteuid(uid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "\e[31mmlibc: seteuid() is a no-op\e[39m" << frigg::endLog;
+	return 0;
 }
 int setgid(gid_t) {
 	__ensure(!"Not implemented");

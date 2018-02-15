@@ -59,8 +59,9 @@ int setenv(const char *name, const char *value, int overwrite) {
 	return putenv(string);
 }
 
-int unsetenv(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int unsetenv(const char *name) {
+	frigg::infoLogger() << "\e[31mmlibc: unsetenv() is not implemented correctly\e[39m"
+			<< frigg::endLog;
+	return 0;
 }
 

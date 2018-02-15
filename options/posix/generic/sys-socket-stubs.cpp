@@ -26,9 +26,22 @@ int getsockname(int, struct sockaddr *__restrict, socklen_t *__restrict) {
 	__builtin_unreachable();
 }
 
-int getsockopt(int, int, int, void *__restrict, socklen_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int getsockopt(int fd, int layer, int number,
+		void *__restrict buffer, socklen_t *__restrict size) {
+	if(layer == SOL_SOCKET && number == SO_PEERCRED) {
+		__ensure(*size == sizeof(struct ucred));
+		frigg::infoLogger() << "\e[31mmlibc: getsockopt(SO_PEERCRED) returns all zeros\e[39m"
+				<< frigg::endLog;
+
+		struct ucred creds;
+		creds.pid = 0;
+		creds.uid = 0;
+		creds.gid = 0;
+		memcpy(buffer, &creds, sizeof(struct ucred));
+		return 0;
+	}else{
+		frigg::panicLogger() << "mlibc: Unexpected getsockopt call" << frigg::endLog;
+	}
 }
 
 int listen(int, int) {
@@ -56,9 +69,12 @@ ssize_t send(int, const void *, size_t, int) {
 	__builtin_unreachable();
 }
 
-ssize_t sendmsg(int, const struct msghdr *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+ssize_t sendmsg(int fd, const struct msghdr *msgh, int flags) {
+	size_t size = 0;
+	for(size_t i = 0; i < msgh->msg_iovlen; i++)
+		size += msgh->msg_iov[i].iov_len;
+
+	return size;
 }
 
 ssize_t sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_t) {

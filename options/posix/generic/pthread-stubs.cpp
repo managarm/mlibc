@@ -396,9 +396,12 @@ int pthread_condattr_setclock(pthread_condattr_t *, clockid_t) {
 	__builtin_unreachable();
 }
 
-int pthread_cond_init(pthread_cond_t *__restrict, const pthread_condattr_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_cond_init(pthread_cond_t *__restrict cond, const pthread_condattr_t *__restrict) {
+	SCOPE_TRACE();
+
+	__atomic_store_n(&cond->__mlibc_seq, 1, __ATOMIC_RELAXED);
+
+	return 0;
 }
 
 int pthread_cond_destroy(pthread_cond_t *) {
