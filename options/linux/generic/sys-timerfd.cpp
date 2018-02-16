@@ -12,8 +12,12 @@ int timerfd_create(int, int flags) {
 	return fd;
 }
 
-int timerfd_settime(int, int, const struct itimerspec *, struct itimerspec *) {
-	frigg::infoLogger() << "\e[31mmlibc: timerfd_settime() is a no-op\e[39m" << frigg::endLog;
+int timerfd_settime(int fd, int flags, const struct itimerspec *value,
+		struct itimerspec *oldvalue) {
+	__ensure(!oldvalue);
+
+	if(mlibc::sys_timerfd_settime(fd, flags, value))
+		return -1;
 	return 0;
 }
 

@@ -462,6 +462,16 @@ int epoll_create1(int flags) {
 }
 
 int epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
+	if(mode == EPOLL_CTL_MOD) {
+		frigg::infoLogger() << "\e[31mmlibc: epoll_ctl(EPOLL_CTL_MOD) is not implemented correctly"
+				<< "\e[39m" << frigg::endLog;
+		return 0;
+	}else if(mode == EPOLL_CTL_DEL) {
+		frigg::infoLogger() << "\e[31mmlibc: epoll_ctl(EPOLL_CTL_DEL) is not implemented correctly"
+				<< "\e[39m" << frigg::endLog;
+		return 0;
+	}
+
 	__ensure(mode == EPOLL_CTL_ADD);
 
 	HelAction actions[3];
@@ -593,6 +603,47 @@ int sys_timerfd_create(int flags, int *fd) {
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	*fd = resp.fd();
+	return 0;
+}
+
+int sys_timerfd_settime(int fd, int flags,
+		const struct itimerspec *value) {
+	HelAction actions[3];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::TIMERFD_SETTIME);
+	req.set_fd(fd);
+	req.set_time_secs(value->it_value.tv_sec);
+	req.set_time_nanos(value->it_value.tv_nsec);
+	req.set_interval_secs(value->it_interval.tv_sec);
+	req.set_interval_nanos(value->it_interval.tv_nsec);
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
 }
 
