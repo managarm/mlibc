@@ -1632,7 +1632,7 @@ int sys_dup(int fd, int *newfd) {
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_request_type(managarm::posix::CntReqType::DUP2);
+	req.set_request_type(managarm::posix::CntReqType::DUP);
 	req.set_fd(fd);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
