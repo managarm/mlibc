@@ -59,9 +59,19 @@ ssize_t recvfrom(int, void *__restrict, size_t, int, struct sockaddr *__restrict
 	__builtin_unreachable();
 }
 
-ssize_t recvmsg(int, struct msghdr *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+ssize_t recvmsg(int fd, struct msghdr *msgh, int flags) {
+	__ensure(msgh->msg_iovlen);
+
+	frigg::infoLogger() << "mlibc: recvmsg() control length: " << msgh->msg_controllen
+			<< frigg::endLog;
+
+	ssize_t size;
+	if(mlibc::sys_read(fd, msgh->msg_iov[0].iov_base, msgh->msg_iov[0].iov_len, &size))
+		return -1;
+	
+	msgh->msg_controllen = 0;
+
+	return size;
 }
 
 ssize_t send(int, const void *, size_t, int) {
@@ -70,10 +80,15 @@ ssize_t send(int, const void *, size_t, int) {
 }
 
 ssize_t sendmsg(int fd, const struct msghdr *msgh, int flags) {
-	size_t size = 0;
-	for(size_t i = 0; i < msgh->msg_iovlen; i++)
-		size += msgh->msg_iov[i].iov_len;
+	__ensure(msgh->msg_iovlen);
 
+	frigg::infoLogger() << "mlibc: sendmsg() control length: " << msgh->msg_controllen
+			<< frigg::endLog;
+	__ensure(!msgh->msg_controllen);
+
+	ssize_t size;
+	if(mlibc::sys_write(fd, msgh->msg_iov[0].iov_base, msgh->msg_iov[0].iov_len, &size))
+		return -1;
 	return size;
 }
 
