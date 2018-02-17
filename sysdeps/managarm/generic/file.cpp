@@ -462,27 +462,28 @@ int epoll_create1(int flags) {
 }
 
 int epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
-	if(mode == EPOLL_CTL_MOD) {
-		frigg::infoLogger() << "\e[31mmlibc: epoll_ctl(EPOLL_CTL_MOD) is not implemented correctly"
-				<< "\e[39m" << frigg::endLog;
-		return 0;
-	}else if(mode == EPOLL_CTL_DEL) {
-		frigg::infoLogger() << "\e[31mmlibc: epoll_ctl(EPOLL_CTL_DEL) is not implemented correctly"
-				<< "\e[39m" << frigg::endLog;
-		return 0;
-	}
-
-	__ensure(mode == EPOLL_CTL_ADD);
-
 	HelAction actions[3];
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_request_type(managarm::posix::CntReqType::EPOLL_CTL);
+	if(mode == EPOLL_CTL_ADD) {
+		__ensure(ev);
+		req.set_request_type(managarm::posix::CntReqType::EPOLL_ADD);
+		req.set_flags(ev->events);
+		req.set_cookie(ev->data.u64);
+	}else if(mode == EPOLL_CTL_MOD) {
+		__ensure(ev);
+		req.set_request_type(managarm::posix::CntReqType::EPOLL_MODIFY);
+		req.set_flags(ev->events);
+		req.set_cookie(ev->data.u64);
+	}else if(mode == EPOLL_CTL_DEL) {
+		__ensure(!ev);
+		req.set_request_type(managarm::posix::CntReqType::EPOLL_DELETE);
+	}else{
+		frigg::panicLogger() << "\e[31mmlibc: Illegal epoll_ctl() mode\e[39m" << frigg::endLog;
+	}
 	req.set_fd(epfd);
 	req.set_newfd(fd);
-	req.set_flags(ev->events);
-	req.set_cookie(ev->data.u64);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);

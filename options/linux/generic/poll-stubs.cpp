@@ -34,7 +34,7 @@ int poll(struct pollfd *fds, nfds_t count, int timeout) {
 			continue;
 		ev.data.u32 = k;
 		
-		if(epoll_ctl(epfd, EPOLL_CTL_ADD, k, &ev))
+		if(epoll_ctl(epfd, EPOLL_CTL_ADD, fds[k].fd, &ev))
 			return -1;
 	}
 
@@ -43,16 +43,16 @@ int poll(struct pollfd *fds, nfds_t count, int timeout) {
 	if(n == -1)
 		return -1;
 
-	int m;
+	int m = 0;
 	for(int i = 0; i < n; i++) {
 		int k = evnts[i].data.u32;
 
-		if((fds[k].events & POLLIN) && evnts[i].events & EPOLLIN) {
+		if((fds[k].events & POLLIN) && (evnts[i].events & EPOLLIN)) {
 			fds[i].revents |= POLLIN;
 			m++;
 		}
 
-		if((fds[k].events & POLLIN) && evnts[i].events & EPOLLOUT) {
+		if((fds[k].events & POLLIN) && (evnts[i].events & EPOLLOUT)) {
 			fds[i].revents |= POLLOUT;
 			m++;
 		}
