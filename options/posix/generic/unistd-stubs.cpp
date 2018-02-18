@@ -279,9 +279,10 @@ int ttyname_r(int, char *, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int unlink(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int unlink(const char *path) {
+	if(mlibc::sys_unlink(path))
+		return -1;
+	return 0;
 }
 int unlinkat(int, const char *, int) {
 	__ensure(!"Not implemented");
