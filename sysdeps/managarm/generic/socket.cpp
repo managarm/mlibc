@@ -13,7 +13,9 @@
 
 #include <posix.frigg_pb.hpp>
 
-int connect(int fd, const struct sockaddr *address, socklen_t addr_length) {
+namespace mlibc {
+
+int sys_connect(int fd, const struct sockaddr *address, socklen_t addr_length) {
 	__ensure(!"Fix this");
 /*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
 	request.set_request_type(managarm::posix::ClientRequestType::CONNECT);
@@ -45,3 +47,5 @@ int connect(int fd, const struct sockaddr *address, socklen_t addr_length) {
 		__builtin_unreachable();
 	}*/
 }
+
+} //namespace mlibc

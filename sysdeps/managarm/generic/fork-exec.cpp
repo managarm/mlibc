@@ -26,15 +26,15 @@
 
 #include <mlibc/sysdeps.hpp>
 
-pid_t waitpid(pid_t pid, int *status, int flags) {
+namespace mlibc {
+
+int sys_waitpid(pid_t pid, int *status, int flags) {
 	frigg::infoLogger() << "mlibc: Broken waitpid("
 			<< pid << ", " << flags << ") called!" << frigg::endLog;
 	__ensure(flags & WNOHANG);
 	errno = ECHILD;
 	return -1;
 }
-
-namespace mlibc {
 
 void sys_exit(int status) {
 	asm volatile ("syscall" : : "D"(kHelCallSuper + 4)

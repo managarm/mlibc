@@ -10,7 +10,9 @@
 
 #include <posix.frigg_pb.hpp>
 
-int mount(const char *source, const char *target,
+namespace mlibc {
+
+int sys_mount(const char *source, const char *target,
 		const char *fstype, unsigned long flags, const void *data) {
 	HelAction actions[3];
 
@@ -49,4 +51,7 @@ int mount(const char *source, const char *target,
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
 }
+
+} //namespace mlibc
+
 

@@ -1,16 +1,19 @@
 
+#include <cstdarg>
+
 #include <time.h>
 #include <bits/posix/ssize_t.h>
 #include <bits/posix/off_t.h>
 #include <bits/posix/pid_t.h>
+#include <bits/posix/socklen_t.h>
 #include <bits/posix/stat.h>
+#include <sys/epoll.h>
 
 namespace mlibc {
 
 __attribute__ ((noreturn)) void sys_exit(int status);
 
 int sys_clock_get(time_t *secs);
-
 int sys_open(const char *pathname, int flags, int *fd);
 int sys_open_dir(const char *path, int *handle);
 int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read);
@@ -22,35 +25,44 @@ int sys_close(int fd);
 int sys_dup(int fd, int *newfd);
 int sys_dup2(int fd, int newfd);
 int sys_isatty(int fd, int *ptr);
-
 int sys_stat(const char *pathname, struct stat *statbuf);
 int sys_fstat(int fd, struct stat *statbuf);
 int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length);
-
 int sys_socket(int family, int type, int protocol, int *fd);
-
 gid_t sys_getgid();
 gid_t sys_getegid();
 uid_t sys_getuid();
 uid_t sys_geteuid();
 pid_t sys_getpid();
 pid_t sys_getppid();
-
 int sys_anon_allocate(size_t size, void **pointer);
 int sys_anon_free(void *pointer, size_t size);
-
 void sys_yield();
-
 int sys_sleep(time_t *secs, long *nanos);
-
 int sys_fork(pid_t *child);
 void sys_execve(const char *path, char *const argv[], char *const envp[]);
-
 int sys_timerfd_create(int flags, int *fd);
 int sys_timerfd_settime(int fd, int flags,
 		const struct itimerspec *value);
-
 int sys_signalfd_create(int flags, int *fd);
+int sys_chroot(const char *ptr);
+int sys_fcntl(int fd, int request, va_list args);
+int sys_ttyname(int fd, char *buf, size_t size);
+int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window);
+int sys_vm_unmap(void *pointer, size_t size);
+int sys_tcgetattr(int fd, struct termios *attr);
+int sys_tcsetattr(int, int, const struct termios *attr);
+int sys_socketpair(int domain, int type_and_flags, int proto, int *fds);
+int sys_epoll_create(int flags, int *fd);
+int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev);
+int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout);
+int sys_ioctl(int fd, unsigned long request, void *arg);
+int sys_waitpid(pid_t pid, int *status, int flags);
+int sys_mount(const char *source, const char *target,
+		const char *fstype, unsigned long flags, const void *data);
+int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve);
+int sys_sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict);
+int sys_connect(int fd, const struct sockaddr *address, socklen_t addr_length);
 
 } //namespace mlibc
 

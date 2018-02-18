@@ -1,4 +1,6 @@
 
+#include <cstdarg>
+
 #include <fcntl.h>
 
 #include <bits/ensure.h>
@@ -9,7 +11,15 @@ int creat(const char *, mode_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// fcntl() is provided by the platform
+
+int fcntl(int fd, int command, ...) {
+	va_list args;
+	va_start(args, command);
+	int val = mlibc::sys_fcntl(fd, command, args);
+	va_end(args);
+	return val;
+}
+
 int openat(int, const char *, int, ...) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

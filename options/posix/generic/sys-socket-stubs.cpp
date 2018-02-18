@@ -14,7 +14,12 @@ int bind(int, const struct sockaddr *, socklen_t) {
 	frigg::infoLogger() << "\e[31mmlibc: bind() is a no-op\e[39m" << frigg::endLog;
 	return 0;
 }
-// connect() is provided by the platform
+
+int connect(int fd, const struct sockaddr *address, socklen_t addr_len) {
+	if(mlibc::sys_connect(fd, address, addr_len))
+		return -1;
+	return 0;
+}
 
 int getpeername(int, struct sockaddr *__restrict, socklen_t *__restrict) {
 	__ensure(!"Not implemented");
@@ -41,6 +46,7 @@ int getsockopt(int fd, int layer, int number,
 		return 0;
 	}else{
 		frigg::panicLogger() << "mlibc: Unexpected getsockopt call" << frigg::endLog;
+		__builtin_unreachable();
 	}
 }
 
@@ -117,6 +123,12 @@ int socket(int family, int type, int protocol) {
 	if(mlibc::sys_socket(family, type, protocol, &fd))
 		return -1;
 	return fd;
+}
+
+int socketpair(int domain, int type, int protocol, int sv[2]) {
+	if(mlibc::sys_socketpair(domain, type, protocol, sv))
+		return -1;
+	return 0;
 }
 
 // connectpair() is provided by the platform

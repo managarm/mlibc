@@ -259,7 +259,15 @@ int truncate(const char *, off_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// ttyname is provided by the platform
+
+char *ttyname(int fd) {
+	const size_t size = 128;
+	static thread_local char buf[size];
+	if(mlibc::sys_ttyname(fd, buf, size))
+		return nullptr;
+	return buf;
+}
+
 int ttyname_r(int, char *, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -397,4 +405,11 @@ int pipe2(int *pipefd, int flags) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+int chroot(const char *ptr) {
+	if(mlibc::sys_chroot(ptr))
+		return -1;
+	return 0;
+}
+
 

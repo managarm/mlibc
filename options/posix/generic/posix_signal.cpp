@@ -1,7 +1,8 @@
 
 #include <signal.h>
-
 #include <bits/ensure.h>
+
+#include <mlibc/sysdeps.hpp>
 
 int sigemptyset(sigset_t *sigset) {
 	*sigset = 0;
@@ -33,9 +34,18 @@ int pthread_sigmask(int, const sigset_t *__restrict, sigset_t *__restrict) {
 	__ensure(!"pthread_sigmask() not implemented");
 	__builtin_unreachable();
 }
-// sigprocmask() is provided by the platform
 
-// sigaction() is provided by the platform
+int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
+	if(mlibc::sys_sigprocmask(how, set, retrieve))
+		return -1;
+	return 0;
+}
+
+int sigaction(int signum, const struct sigaction *__restrict act, struct sigaction *__restrict oldact) {
+	if(mlibc::sys_sigaction(signum, act, oldact))
+		return -1;
+	return 0;
+}
 
 int kill(pid_t pid, int sig) {
 	__ensure(!"kill() not implemented");

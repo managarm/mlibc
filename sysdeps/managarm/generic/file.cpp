@@ -1,6 +1,7 @@
 
 #include <string.h>
 #include <errno.h>
+
 #include <sys/auxv.h>
 
 // for dup2()
@@ -16,6 +17,12 @@
 #include <sys/stat.h>
 // for ioctl()
 #include <sys/ioctl.h>
+
+#include <sys/socket.h>
+#include <sys/timerfd.h>
+#include <sys/signalfd.h>
+#include <libdrm/drm.h>
+#include <libdrm/drm_fourcc.h>
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
@@ -39,7 +46,9 @@ HelHandle __mlibc_getPassthrough(int fd) {
 	return handle;
 }
 
-int chroot(const char *path) {
+namespace mlibc {
+
+int sys_chroot(const char *path) {
 	HelAction actions[3];
 
 	globalQueue.trim();
@@ -75,6 +84,8 @@ int chroot(const char *path) {
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
 }
+
+} //namespace mlibc
 
 HelHandle __raw_map(int fd) {
 	HelAction actions[4];
@@ -119,7 +130,9 @@ HelHandle __raw_map(int fd) {
 	return pull_memory->handle;
 }
 
-int fcntl(int fd, int request, ...) {
+namespace mlibc {
+
+int sys_fcntl(int fd, int request, va_list args) {
 	if(request == F_DUPFD) {
 		return dup2(fd, -1);
 	}else if(request == F_DUPFD_CLOEXEC) {
@@ -141,8 +154,6 @@ int fcntl(int fd, int request, ...) {
 		return -1;
 	}
 }
-
-namespace mlibc {
 
 int sys_open_dir(const char *path, int *handle) {
 	if((*handle = open(path, 0)) == -1)
@@ -199,11 +210,7 @@ int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) 
 	}
 }
 
-} // namespace mlibc
-
-thread_local frigg::String<MemoryAllocator> __mlibc_ttynameCache(getAllocator());
-
-char *ttyname(int fd) {
+int sys_ttyname(int fd, char *buf, size_t size) {
 	HelAction actions[3];
 	globalQueue.trim();
 
@@ -237,15 +244,17 @@ char *ttyname(int fd) {
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() ==  managarm::posix::Errors::BAD_FD) {
 		errno = ENOTTY;
-		return nullptr;
+		return -1;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		__mlibc_ttynameCache = resp.path();
-		return __mlibc_ttynameCache.data();
+		__ensure(size >= resp.path().size() + 1);
+		memcpy(buf, resp.path().data(), size);
+		buf[resp.path().size()] = '\0';
+		return 0;
 	}
 }
 
-void *mmap(void *hint, size_t size, int prot, int flags, int fd, off_t offset) {
+int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
 	__ensure(!hint);
 
 	HelAction actions[3];
@@ -284,15 +293,16 @@ void *mmap(void *hint, size_t size, int prot, int flags, int fd, off_t offset) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	return reinterpret_cast<void *>(resp.offset());
+	*window = reinterpret_cast<void *>(resp.offset());
+	return 0;
 }
 
-int munmap(void *pointer, size_t size) {
+int sys_vm_unmap(void *pointer, size_t size) {
 	HEL_CHECK(helUnmapMemory(kHelNullHandle, pointer, size));
 	return 0;
 }
 
-int tcgetattr(int fd, struct termios *attr) {
+int sys_tcgetattr(int fd, struct termios *attr) {
 	frigg::infoLogger() << "mlibc: Broken tcgetattr() called!" << frigg::endLog;
 	attr->c_iflag = 0;
 	attr->c_oflag = 0;
@@ -305,17 +315,13 @@ int tcgetattr(int fd, struct termios *attr) {
 	return 0;
 }
 
-int tcsetattr(int, int, const struct termios *attr) {
+int sys_tcsetattr(int, int, const struct termios *attr) {
 	frigg::infoLogger() << "mlibc: Broken tcsetattr("
-			<< (void *)attr->c_iflag << ", " << (void *)attr->c_oflag
-			<< ", " << (void *)attr->c_cflag << ", " << (void *)attr->c_lflag
+			<< attr->c_iflag << ", " << attr->c_oflag
+			<< ", " << attr->c_cflag << ", " << attr->c_lflag
 			<< ") called!" << frigg::endLog;
 	return 0;
 }
-
-#include <sys/socket.h>
-
-namespace mlibc {
 
 int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	constexpr int type_mask = int(0xFFFF);
@@ -366,9 +372,7 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	return 0;
 }
 
-} // namespace mlibc
-
-int socketpair(int domain, int type_and_flags, int proto, int *fds) {
+int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 	constexpr int type_mask = int(0xFFFF);
 	constexpr int flags_mask = ~int(0xFFFF);
 	__ensure(!((type_and_flags & flags_mask) & ~(SOCK_CLOEXEC | SOCK_NONBLOCK)));
@@ -419,9 +423,7 @@ int socketpair(int domain, int type_and_flags, int proto, int *fds) {
 	return 0;
 }
 
-#include <sys/epoll.h>
-
-int epoll_create1(int flags) {
+int sys_epoll_create(int flags, int *fd) {
 	__ensure(!(flags & ~(EPOLL_CLOEXEC)));
 	if(flags & EPOLL_CLOEXEC)
 		frigg::infoLogger() << "\e[31mmlibc: epoll_create1(EPOLL_CLOEXEC)"
@@ -458,10 +460,11 @@ int epoll_create1(int flags) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	return resp.fd();
+	*fd = resp.fd();
+	return 0;
 }
 
-int epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
+int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 	HelAction actions[3];
 	globalQueue.trim();
 
@@ -513,7 +516,7 @@ int epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 	return 0;
 }
 
-int epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
+int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
 	__ensure(timeout == -1);
 
 	HelAction actions[4];
@@ -557,11 +560,6 @@ int epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
 	__ensure(!(recv_data->length % sizeof(struct epoll_event)));
 	return recv_data->length / sizeof(struct epoll_event);
 }
-
-#include <sys/timerfd.h>
-#include <sys/signalfd.h>
-
-namespace mlibc {
 
 int sys_timerfd_create(int flags, int *fd) {
 	__ensure(!(flags & ~(TFD_CLOEXEC | TFD_NONBLOCK)));
@@ -692,12 +690,7 @@ int sys_signalfd_create(int flags, int *fd) {
 	return 0;
 }
 
-} // namespace mlibc
-
-#include <libdrm/drm.h>
-#include <libdrm/drm_fourcc.h>
-
-int ioctl(int fd, unsigned long request, void *arg) {
+int sys_ioctl(int fd, unsigned long request, void *arg) {
 //	frigg::infoLogger() << "mlibc: ioctl with"
 //			<< " type: 0x" << frigg::logHex(_IOC_TYPE(request))
 //			<< ", number: 0x" << frigg::logHex(_IOC_NR(request))
@@ -1419,10 +1412,10 @@ int ioctl(int fd, unsigned long request, void *arg) {
 				<< ", number: 0x" << frigg::logHex(_IOC_NR(request))
 				<< " (raw request: " << frigg::logHex(request) << ")" << frigg::endLog;
 		__ensure(!"Illegal ioctl request");
+		__builtin_unreachable();
 	}
 }
 
-namespace mlibc {
 int sys_open(const char *path, int flags, int *fd) {
 	frigg::infoLogger() << "mlibc: open(\""
 			<< path << "\") called!" << frigg::endLog;
