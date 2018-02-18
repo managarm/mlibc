@@ -1,9 +1,8 @@
 
-#include <cstdarg>
-
-#include <fcntl.h>
-
+#include <errno.h>
 #include <bits/ensure.h>
+#include <fcntl.h>
+#include <stdarg.h>
 
 #include <mlibc/sysdeps.hpp>
 
@@ -28,9 +27,24 @@ int posix_fadvise(int, off_t, off_t, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int posix_fallocate(int, off_t, off_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int posix_fallocate(int fd, off_t offset, off_t size) {
+	struct error_guard {
+		error_guard()
+		: _s{errno} { }
+
+		~error_guard() {
+			errno = _s;
+		}
+
+	private:
+		int _s;
+	};
+
+	error_guard guard;
+
+	if(mlibc::sys_fallocate(fd, offset, size))
+		return errno;
+	return 0;
 }
 
 // This is a linux extension

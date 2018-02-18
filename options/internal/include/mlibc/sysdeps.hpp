@@ -28,6 +28,7 @@ int sys_isatty(int fd, int *ptr);
 int sys_stat(const char *pathname, struct stat *statbuf);
 int sys_fstat(int fd, struct stat *statbuf);
 int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length);
+int sys_fallocate(int fd, off_t offset, size_t size);
 int sys_unlink(const char *path);
 int sys_socket(int family, int type, int protocol, int *fd);
 gid_t sys_getgid();
