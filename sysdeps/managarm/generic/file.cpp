@@ -1423,9 +1423,16 @@ int sys_open(const char *path, int flags, int *fd) {
 
 	globalQueue.trim();
 
+	uint32_t proto_flags = 0;
+	if(flags & __MLIBC_O_CREAT)
+		proto_flags |= managarm::posix::OpenFlags::OF_CREATE;
+	if(flags & __MLIBC_O_EXCL)
+		proto_flags |= managarm::posix::OpenFlags::OF_EXCLUSIVE;
+
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::OPEN);
 	req.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
+	req.set_flags(proto_flags);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
@@ -1440,9 +1447,7 @@ int sys_open(const char *path, int flags, int *fd) {
 	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
-	frigg::infoLogger() << "dequeue" << frigg::endLog;
 	auto element = globalQueue.dequeueSingle();
-	frigg::infoLogger() << "dequeue done" << frigg::endLog;
 	auto offer = parseSimple(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
