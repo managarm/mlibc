@@ -20,11 +20,3 @@ int sys_clock_get(time_t *secs) {
 
 } //namespace mlibc
 
-int gettimeofday(struct timeval *__restrict result, void *__restrict unused) {
-	frigg::infoLogger() << "mlibc: Broken gettimeofday() called!" << frigg::endLog;
-	__ensure(!unused);
-	result->tv_sec = 0;
-	result->tv_usec = 0;
-	return 0;
-}
-

@@ -114,7 +114,14 @@ long gethostid(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-// gethostname() is provided by the platform
+
+int gethostname(char *buffer, size_t max_length) {
+	const char *name = "cradle";
+	frigg::infoLogger() << "mlibc: Broken gethostname() called!" << frigg::endLog;
+	strncpy(buffer, name, max_length);
+	return 0;
+}
+
 char *getlogin(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
