@@ -98,9 +98,10 @@ int fsync(int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int ftruncate(int, off_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int ftruncate(int fd, off_t size) {
+	if(mlibc::sys_ftruncate(fd, size))
+		return -1;
+	return 0;
 }
 char *getcwd(char *, size_t) {
 	__ensure(!"Not implemented");
