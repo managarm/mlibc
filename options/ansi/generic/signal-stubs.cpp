@@ -1,7 +1,8 @@
 
+#include <bits/ensure.h>
 #include <signal.h>
 
-#include <bits/ensure.h>
+#include <frigg/debug.hpp>
 
 void __signalDfl(int signal) {
 	__ensure(!"Not implemented");
@@ -14,8 +15,8 @@ void __signalIgn(int signal) {
 }
 
 __sighandler signal(int sig, __sighandler handler) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "\e[31mmlibc: signal() always returns SIG_DFL\e[39m" << frigg::endLog;
+	return SIG_DFL;
 }
 
 int raise(int sig) {

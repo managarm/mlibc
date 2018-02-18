@@ -276,6 +276,43 @@ float __cosdf(double x) {
 	return ((1.0+z*C0) + w*C1) + (w*z)*r;
 }
 
+float __tandf(double x, int odd) {
+	/* |tan(x)/x - t(x)| < 2**-25.5 (~[-2e-08, 2e-08]). */
+	static const double T[] = {
+		0x15554d3418c99f.0p-54, /* 0.333331395030791399758 */
+		0x1112fd38999f72.0p-55, /* 0.133392002712976742718 */
+		0x1b54c91d865afe.0p-57, /* 0.0533812378445670393523 */
+		0x191df3908c33ce.0p-58, /* 0.0245283181166547278873 */
+		0x185dadfcecf44e.0p-61, /* 0.00297435743359967304927 */
+		0x1362b9bf971bcd.0p-59, /* 0.00946564784943673166728 */
+	};
+
+	double z,r,w,s,t,u;
+
+	z = x*x;
+	/*
+	 * Split up the polynomial into small independent terms to give
+	 * opportunities for parallel evaluation.  The chosen splitting is
+	 * micro-optimized for Athlons (XP, X64).  It costs 2 multiplications
+	 * relative to Horner's method on sequential machines.
+	 *
+	 * We add the small terms from lowest degree up for efficiency on
+	 * non-sequential machines (the lowest degree terms tend to be ready
+	 * earlier).  Apart from this, we don't care about order of
+	 * operations, and don't need to to care since we have precision to
+	 * spare.  However, the chosen splitting is good for accuracy too,
+	 * and would give results as accurate as Horner's method if the
+	 * small terms were added from highest degree down.
+	 */
+	r = T[4] + z*T[5];
+	t = T[2] + z*T[3];
+	w = z*z;
+	s = z*x;
+	u = T[0] + z*T[1];
+	r = (x + s*u) + (s*w)*(t + w*r);
+	return odd ? -1.0/r : r;
+}
+
 #define DBL_EPSILON 2.22044604925031308085e-16
 #define EPS DBL_EPSILON
 
@@ -285,6 +322,22 @@ do {                                              \
   union {float f; uint32_t i;} __u;               \
   __u.f = (d);                                    \
   (w) = __u.i;                                    \
+} while (0)
+
+/* Get the more significant 32 bit int from a double.  */
+#define GET_HIGH_WORD(hi,d)                       \
+do {                                              \
+  union {double f; uint64_t i;} __u;              \
+  __u.f = (d);                                    \
+  (hi) = __u.i >> 32;                             \
+} while (0)
+
+/* Get the less significant 32 bit int from a double.  */
+#define GET_LOW_WORD(lo,d)                        \
+do {                                              \
+  union {double f; uint64_t i;} __u;              \
+  __u.f = (d);                                    \
+  (lo) = (uint32_t)__u.i;                         \
 } while (0)
 
 // Taken from musl. See musl for the license/copyright!
@@ -784,12 +837,53 @@ long double sinl(long double x) {
 }
 
 double tan(double x) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "mlibc: tan() is not precise" << frigg::endLog;
+	return tanf(x);
 }
+// Taken from musl. See musl for the license/copyright!
 float tanf(float x) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	/* Small multiples of pi/2 rounded to double precision. */
+	static const double t1pio2 = 1*M_PI_2, /* 0x3FF921FB, 0x54442D18 */
+			t2pio2 = 2*M_PI_2, /* 0x400921FB, 0x54442D18 */
+			t3pio2 = 3*M_PI_2, /* 0x4012D97C, 0x7F3321D2 */
+			t4pio2 = 4*M_PI_2; /* 0x401921FB, 0x54442D18 */
+
+	double y;
+	uint32_t ix;
+	unsigned n, sign;
+
+	GET_FLOAT_WORD(ix, x);
+	sign = ix >> 31;
+	ix &= 0x7fffffff;
+
+	if (ix <= 0x3f490fda) {  /* |x| ~<= pi/4 */
+		if (ix < 0x39800000) {  /* |x| < 2**-12 */
+			/* raise inexact if x!=0 and underflow if subnormal */
+			FORCE_EVAL(ix < 0x00800000 ? x/0x1p120f : x+0x1p120f);
+			return x;
+		}
+		return __tandf(x, 0);
+	}
+	if (ix <= 0x407b53d1) {  /* |x| ~<= 5*pi/4 */
+		if (ix <= 0x4016cbe3)  /* |x| ~<= 3pi/4 */
+			return __tandf((sign ? x+t1pio2 : x-t1pio2), 1);
+		else
+			return __tandf((sign ? x+t2pio2 : x-t2pio2), 0);
+	}
+	if (ix <= 0x40e231d5) {  /* |x| ~<= 9*pi/4 */
+		if (ix <= 0x40afeddf)  /* |x| ~<= 7*pi/4 */
+			return __tandf((sign ? x+t3pio2 : x-t3pio2), 1);
+		else
+			return __tandf((sign ? x+t4pio2 : x-t4pio2), 0);
+	}
+
+	/* tan(Inf or NaN) is NaN */
+	if (ix >= 0x7f800000)
+		return x - x;
+
+	/* argument reduction */
+	n = __rem_pio2f(x, &y);
+	return __tandf(y, n&1);
 }
 long double tanl(long double x) {
 	__ensure(!"Not implemented");
@@ -875,8 +969,67 @@ long double tanhl(long double x) {
 }
 
 double exp(double x) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	static const double half[2] = {0.5,-0.5},
+			ln2hi = 6.93147180369123816490e-01, /* 0x3fe62e42, 0xfee00000 */
+			ln2lo = 1.90821492927058770002e-10, /* 0x3dea39ef, 0x35793c76 */
+			invln2 = 1.44269504088896338700e+00, /* 0x3ff71547, 0x652b82fe */
+			P1   =  1.66666666666666019037e-01, /* 0x3FC55555, 0x5555553E */
+			P2   = -2.77777777770155933842e-03, /* 0xBF66C16C, 0x16BEBD93 */
+			P3   =  6.61375632143793436117e-05, /* 0x3F11566A, 0xAF25DE2C */
+			P4   = -1.65339022054652515390e-06, /* 0xBEBBBD41, 0xC5D26BF1 */
+			P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
+
+	double hi, lo, c, xx, y;
+	int k, sign;
+	uint32_t hx;
+
+	GET_HIGH_WORD(hx, x);
+	sign = hx>>31;
+	hx &= 0x7fffffff;  /* high word of |x| */
+
+	/* special cases */
+	if (hx >= 0x4086232b) {  /* if |x| >= 708.39... */
+		if (isnan(x))
+			return x;
+		if (x > 709.782712893383973096) {
+			/* overflow if x!=inf */
+			x *= 0x1p1023;
+			return x;
+		}
+		if (x < -708.39641853226410622) {
+			/* underflow if x!=-inf */
+			FORCE_EVAL((float)(-0x1p-149/x));
+			if (x < -745.13321910194110842)
+				return 0;
+		}
+	}
+
+	/* argument reduction */
+	if (hx > 0x3fd62e42) {  /* if |x| > 0.5 ln2 */
+		if (hx >= 0x3ff0a2b2)  /* if |x| >= 1.5 ln2 */
+			k = (int)(invln2*x + half[sign]);
+		else
+			k = 1 - sign - sign;
+		hi = x - k*ln2hi;  /* k*ln2hi is exact here */
+		lo = k*ln2lo;
+		x = hi - lo;
+	} else if (hx > 0x3e300000)  {  /* if |x| > 2**-28 */
+		k = 0;
+		hi = x;
+		lo = 0;
+	} else {
+		/* inexact if x!=0 */
+		FORCE_EVAL(0x1p1023 + x);
+		return 1 + x;
+	}
+
+	/* x is now in primary range */
+	xx = x*x;
+	c = x - xx*(P1+xx*(P2+xx*(P3+xx*(P4+xx*P5))));
+	y = 1 + (x*c/(2-c) - lo + hi);
+	if (k == 0)
+		return y;
+	return scalbn(y, k);
 }
 float expf(float x) {
 	__ensure(!"Not implemented");
@@ -1192,9 +1345,34 @@ long double modfl(long double x, long double *integral) {
 	__builtin_unreachable();
 }
 
-double scalbn(double x, int power) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+double scalbn(double x, int n) {
+	union {double f; uint64_t i;} u;
+	double y = x;
+
+	if (n > 1023) {
+		y *= 0x1p1023;
+		n -= 1023;
+		if (n > 1023) {
+			y *= 0x1p1023;
+			n -= 1023;
+			if (n > 1023)
+				n = 1023;
+		}
+	} else if (n < -1022) {
+		/* make sure final n < -53 to avoid double
+		   rounding in the subnormal range */
+		y *= 0x1p-1022 * 0x1p53;
+		n += 1022 - 53;
+		if (n < -1022) {
+			y *= 0x1p-1022 * 0x1p53;
+			n += 1022 - 53;
+			if (n < -1022)
+				n = -1022;
+		}
+	}
+	u.i = (uint64_t)(0x3ff+n)<<52;
+	x = y * u.f;
+	return x;
 }
 float scalbnf(float x, int power) {
 	__ensure(!"Not implemented");
@@ -1604,9 +1782,13 @@ long double fminl(long double x, long double y) {
 
 //gnu extension
 
-void sincos(double, double *, double *) {
-	__ensure(!"sincos() not implemented");
-	__builtin_unreachable();
+void sincos(double x, double *sx, double *cx) {
+	frigg::infoLogger() << "mlibc: sincos() is not precise" << frigg::endLog;
+	float sxf;
+	float cxf;
+	sincosf(x, &sxf, &cxf);
+	*sx = sxf;
+	*cx = cxf;
 }
 
 void sincosf(float x, float *sx, float *cx) {

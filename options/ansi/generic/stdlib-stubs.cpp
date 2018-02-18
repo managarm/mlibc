@@ -34,8 +34,23 @@ double strtod(const char *__restrict string, char **__restrict end) {
 	__builtin_unreachable();
 }
 float strtof(const char *__restrict string, char **__restrict end) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "mlibc: strtof() called on string '" << string << "'" << frigg::endLog;
+
+	const char *s = string;
+	char *e;
+	long integral;
+	long fractional;
+
+	integral = strtol(s, &e, 10);
+	__ensure(*e == '.');
+	s = e + 1;
+	fractional = strtol(s, &e, 10);
+
+	if(end)
+		*end = e;
+
+	__ensure(!fractional);
+	return integral;
 }
 long double strtold(const char *__restrict string, char **__restrict end) {
 	__ensure(!"Not implemented");
@@ -266,8 +281,10 @@ long long llabs(long long number) {
 }
 
 div_t div(int number, int denom) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	div_t r;
+	r.quot = number / denom;
+	r.rem = number % denom;
+	return r;
 }
 ldiv_t ldiv(long number, long denom) {
 	__ensure(!"Not implemented");

@@ -41,8 +41,21 @@ size_t strnlen(const char *s, size_t n) {
 	return len;
 }
 
-char *strtok_r(char *__restrict, const char *__restrict, char **__restrict) {
-	__ensure(!"strtok_r() not implemented");
-	__builtin_unreachable();
+char *strtok_r(char *__restrict s, const char *__restrict del, char **__restrict m) {
+	__ensure(m);
+
+	// Skip initial delimiters.
+	char *w = s ? s : *m;
+	while(*w && strchr(del, *w))
+		w++;
+
+	*m = w;
+
+	// Replace the following delimiter by a null-terminator.
+	while(*w && !strchr(del, *w))
+		w++;
+	*w = 0;
+
+	return *m;
 }
 
