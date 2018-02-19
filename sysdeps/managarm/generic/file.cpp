@@ -423,6 +423,132 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 	return 0;
 }
 
+int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *length) {
+	__ensure(hdr->msg_iovlen);
+
+	HelAction actions[4];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::SENDMSG);
+	req.set_fd(sockfd);
+
+	frigg::infoLogger() << "mlibc: sendmsg() control length: " << hdr->msg_controllen
+			<< frigg::endLog;
+	for(auto cmsg = CMSG_FIRSTHDR(hdr); cmsg; cmsg = CMSG_NXTHDR(hdr, cmsg)) {
+		__ensure(cmsg->cmsg_level == SOL_SOCKET);
+		__ensure(cmsg->cmsg_type == SCM_RIGHTS);
+		__ensure(cmsg->cmsg_len >= sizeof(struct cmsghdr));
+		
+		size_t size = cmsg->cmsg_len - CMSG_ALIGN(sizeof(struct cmsghdr));
+		__ensure(!(size % sizeof(int)));
+		for(size_t off = 0; off < size; off += sizeof(int)) {
+			int fd;
+			memcpy(&fd, CMSG_DATA(cmsg) + off, sizeof(int));
+			req.add_fds(fd);
+			frigg::infoLogger() << "mlibc: sending fd " << fd << frigg::endLog;
+		}
+	}
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionSendFromBuffer;
+	actions[2].flags = kHelItemChain;
+	actions[2].buffer = hdr->msg_iov[0].iov_base;
+	actions[2].length = hdr->msg_iov[0].iov_len;
+	actions[3].type = kHelActionRecvInline;
+	actions[3].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 4,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto send_data = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(send_data->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	*length = resp.size();
+	return 0;
+}
+
+int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
+	__ensure(hdr->msg_iovlen);
+
+	HelAction actions[4];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::RECVMSG);
+	req.set_fd(sockfd);
+	req.set_size(hdr->msg_iov[0].iov_len);
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = kHelItemChain;
+	actions[3].type = kHelActionRecvToBuffer;
+	actions[3].flags = 0;
+	actions[3].buffer = hdr->msg_iov[0].iov_base;
+	actions[3].length = hdr->msg_iov[0].iov_len;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 4,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+	auto recv_data = parseLength(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(recv_data->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+
+	if(resp.fds_size()) {
+		auto space = CMSG_SPACE(resp.fds_size());
+		__ensure(hdr->msg_controllen >= space);
+
+		auto cmsg = CMSG_FIRSTHDR(hdr);
+		cmsg->cmsg_level = SOL_SOCKET;
+		cmsg->cmsg_type = SCM_RIGHTS;
+		cmsg->cmsg_len = CMSG_LEN(resp.fds_size() * sizeof(int));
+
+		for(int i = 0; i < resp.fds_size(); i++) {
+			int fd = resp.fds(i);
+			memcpy(CMSG_DATA(cmsg) + i * sizeof(int), &fd, sizeof(int));
+		}
+
+		hdr->msg_controllen = space;
+	}
+
+	*length = recv_data->length;
+	return 0;
+}
+
 int sys_epoll_create(int flags, int *fd) {
 	__ensure(!(flags & ~(EPOLL_CLOEXEC)));
 	if(flags & EPOLL_CLOEXEC)

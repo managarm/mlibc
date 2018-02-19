@@ -54,8 +54,11 @@ static bool disableBuffering = false;
 
 FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
 	int fd;
-	if(strcmp(mode, "r")) {
+	if(!strcmp(mode, "r") || !strcmp(mode, "rb")) {
 		if(mlibc::sys_open(filename, __MLIBC_O_RDONLY, &fd))
+			return nullptr;
+	}else if(!strcmp(mode, "re")) {
+		if(mlibc::sys_open(filename, __MLIBC_O_RDONLY | __MLIBC_O_CLOEXEC, &fd))
 			return nullptr;
 	}else{
 		frigg::panicLogger() << "Illegal fopen() mode '" << mode << "'" << frigg::endLog;

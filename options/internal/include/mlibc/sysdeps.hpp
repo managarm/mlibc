@@ -1,13 +1,14 @@
 
-#include <cstdarg>
-
 #include <time.h>
 #include <bits/posix/ssize_t.h>
 #include <bits/posix/off_t.h>
 #include <bits/posix/pid_t.h>
 #include <bits/posix/socklen_t.h>
 #include <bits/posix/stat.h>
+#include <stdarg.h>
 #include <sys/epoll.h>
+#include <sys/socket.h>
+#include <time.h>
 
 namespace mlibc {
 
@@ -32,6 +33,8 @@ int sys_ftruncate(int fd, size_t size);
 int sys_fallocate(int fd, off_t offset, size_t size);
 int sys_unlink(const char *path);
 int sys_socket(int family, int type, int protocol, int *fd);
+int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length);
+int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length);
 gid_t sys_getgid();
 gid_t sys_getegid();
 uid_t sys_getuid();
