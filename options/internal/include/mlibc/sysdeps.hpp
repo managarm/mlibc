@@ -55,6 +55,7 @@ int sys_chroot(const char *ptr);
 int sys_fcntl(int fd, int request, va_list args);
 int sys_ttyname(int fd, char *buf, size_t size);
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window);
+int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window);
 int sys_vm_unmap(void *pointer, size_t size);
 int sys_tcgetattr(int fd, struct termios *attr);
 int sys_tcsetattr(int, int, const struct termios *attr);

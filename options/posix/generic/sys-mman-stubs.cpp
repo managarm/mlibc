@@ -42,9 +42,13 @@ int msync(void *, size_t, int) {
 	__builtin_unreachable();
 }
 
-void *mremap(void *, size_t, size_t, int, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void *mremap(void *pointer, size_t size, size_t new_size, int flags, ...) {
+	__ensure(flags == MREMAP_MAYMOVE);
+
+	void *window;
+	if(mlibc::sys_vm_remap(pointer, size, new_size, &window))
+		return (void *)-1;
+	return window;
 }
 
 int remap_file_pages(void *, size_t, int, size_t, int) {
@@ -55,7 +59,7 @@ int remap_file_pages(void *, size_t, int, size_t, int) {
 void *mmap(void *hint, size_t size, int prot, int flags, int fd, off_t offset) {
 	void *window;
 	if(mlibc::sys_vm_map(hint, size, prot, flags, fd, offset, &window))
-		return (void *) -1;
+		return (void *)-1;
 	return window;
 }
 
