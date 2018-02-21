@@ -332,9 +332,6 @@ int fsetpos(FILE *stream, const fpos_t *position) {
 	__builtin_unreachable();
 }
 // ftell() is provided by the POSIX sublibrary
-void rewind(FILE *stream) {
-	__ensure(!"Not implemented");
-}
 
 void clearerr(FILE *stream) {
 	// TODO: implement stdio error handling

@@ -95,7 +95,7 @@ size_t fread(void *__restrict buffer, size_t size, size_t count, FILE *__restric
 		// TODO: Read each object individually.
 		if(__mlibc_exactRead(stream->fd, buffer, size * count))
 			return 0;
-		return size * count;
+		return count;
 	}
 }
 
@@ -176,5 +176,10 @@ int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t s
 	}
 
 	return 0;
+}
+
+void rewind(FILE *stream) {
+	fseek(stream, 0, SEEK_SET);
+	// TODO: rewind() should also clear the error indicator.
 }
 
