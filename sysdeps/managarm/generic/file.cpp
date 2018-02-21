@@ -472,8 +472,6 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	req.set_request_type(managarm::posix::CntReqType::SENDMSG);
 	req.set_fd(sockfd);
 
-	frigg::infoLogger() << "mlibc: sendmsg() control length: " << hdr->msg_controllen
-			<< frigg::endLog;
 	for(auto cmsg = CMSG_FIRSTHDR(hdr); cmsg; cmsg = CMSG_NXTHDR(hdr, cmsg)) {
 		__ensure(cmsg->cmsg_level == SOL_SOCKET);
 		__ensure(cmsg->cmsg_type == SCM_RIGHTS);
@@ -485,7 +483,6 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 			int fd;
 			memcpy(&fd, CMSG_DATA(cmsg) + off, sizeof(int));
 			req.add_fds(fd);
-			frigg::infoLogger() << "mlibc: sending fd " << fd << frigg::endLog;
 		}
 	}
 
@@ -568,7 +565,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 
 	if(resp.fds_size()) {
-		auto space = CMSG_SPACE(resp.fds_size());
+		auto space = CMSG_SPACE(resp.fds_size() * sizeof(int));
 		__ensure(hdr->msg_controllen >= space);
 
 		auto cmsg = CMSG_FIRSTHDR(hdr);
@@ -582,6 +579,8 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 		}
 
 		hdr->msg_controllen = space;
+	}else{
+		hdr->msg_controllen = 0;
 	}
 
 	*length = recv_data->length;
@@ -1570,6 +1569,16 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 	
 		return resp.result();
+	}
+	case DRM_IOCTL_MODE_CURSOR: {
+		static bool infoPrinted = false;
+		if(!infoPrinted) {
+			frigg::infoLogger() << "mlibc: Cursor-specific DRM ioctl()s are not supported"
+					<< frigg::endLog;
+			infoPrinted = true;
+		}
+		errno = ENXIO;
+		return -1;
 	}
 	default:
 		frigg::infoLogger() << "mlibc: Unexpected ioctl with"
