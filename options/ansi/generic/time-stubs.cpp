@@ -60,12 +60,9 @@ int clock_getres(clockid_t, struct timespec *) {
 	__builtin_unreachable();
 }
 
-int clock_gettime(clockid_t, struct timespec *time) {
-	frigg::infoLogger() << "\e[31mmlibc: clock_gettime does not support different clocks"
-		"\e[39m" << frigg::endLog;
-	if(mlibc::sys_clock_get(&time->tv_sec))
+int clock_gettime(clockid_t clock, struct timespec *time) {
+	if(mlibc::sys_clock_get(clock, &time->tv_sec, &time->tv_nsec))
 		return -1;
-	time->tv_nsec = 0;
 	return 0;
 }
 
@@ -92,7 +89,8 @@ struct tm *localtime_r(const time_t *t, struct tm *tm) {
 }
 
 time_t time(time_t *out) {
-	if(mlibc::sys_clock_get(out))
+	long nanos;
+	if(mlibc::sys_clock_get(CLOCK_REALTIME, out, &nanos))
 		return (time_t)-1;
 	return 0;
 }

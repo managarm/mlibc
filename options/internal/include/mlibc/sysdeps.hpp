@@ -14,7 +14,7 @@ namespace mlibc {
 
 __attribute__ ((noreturn)) void sys_exit(int status);
 
-int sys_clock_get(time_t *secs);
+int sys_clock_get(int clock, time_t *secs, long *nanos);
 int sys_open(const char *pathname, int flags, int *fd);
 int sys_open_dir(const char *path, int *handle);
 int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read);
