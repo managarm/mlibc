@@ -27,8 +27,9 @@ int getpeername(int, struct sockaddr *__restrict, socklen_t *__restrict) {
 }
 
 int getsockname(int, struct sockaddr *__restrict, socklen_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "\e[31mmlibc: getsockname() always fails\e[39m"
+			<< frigg::endLog;
+	return -1;
 }
 
 int getsockopt(int fd, int layer, int number,
@@ -45,7 +46,7 @@ int getsockopt(int fd, int layer, int number,
 		memcpy(buffer, &creds, sizeof(struct ucred));
 		return 0;
 	}else{
-		frigg::panicLogger() << "mlibc: Unexpected getsockopt call" << frigg::endLog;
+		frigg::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call\e[39m" << frigg::endLog;
 		__builtin_unreachable();
 	}
 }
@@ -89,9 +90,20 @@ ssize_t sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_
 	__builtin_unreachable();
 }
 
-int setsockopt(int, int, int, const void *, socklen_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int setsockopt(int sockfd, int layer, int number,
+		const void *buffer, socklen_t size) {
+	if(layer == SOL_SOCKET && number == SO_PASSCRED) {
+		frigg::infoLogger() << "\e[31mmlibc: setsockopt(SO_PASSCRED) is not implemented"
+				" correctly\e[39m" << frigg::endLog;
+		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_ATTACH_FILTER) {
+		frigg::infoLogger() << "\e[31mmlibc: setsockopt(SO_ATTACH_FILTER) is not implemented"
+				" correctly\e[39m" << frigg::endLog;
+		return 0;
+	}else{
+		frigg::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call\e[39m" << frigg::endLog;
+		__builtin_unreachable();
+	}
 }
 
 int shutdown(int, int) {
