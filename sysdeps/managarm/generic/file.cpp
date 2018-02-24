@@ -962,6 +962,19 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 			return resp.result();
 		}
 	}
+	case DRM_IOCTL_GET_MAGIC: {
+		auto param = reinterpret_cast<drm_auth *>(arg);
+		frigg::infoLogger() << "mlibc: DRM_IOCTL_GET_MAGIC is not implemented correctly"
+				<< frigg::endLog;
+		param->magic = 1;
+		return 0;
+	}
+	case DRM_IOCTL_AUTH_MAGIC: {
+		auto param = reinterpret_cast<drm_auth *>(arg);
+		frigg::infoLogger() << "mlibc: DRM_IOCTL_AUTH_MAGIC is not implemented correctly"
+				<< frigg::endLog;
+		return 0;
+	}
 	case DRM_IOCTL_MODE_GETRESOURCES: {
 		auto param = reinterpret_cast<drm_mode_card_res *>(arg);
 		HelAction actions[3];
