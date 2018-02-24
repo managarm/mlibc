@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 #include <sys/timerfd.h>
 #include <sys/signalfd.h>
+#include <sys/sysmacros.h>
 #include <libdrm/drm.h>
 #include <libdrm/drm_fourcc.h>
 
@@ -1977,12 +1978,12 @@ int sys_stat(const char *path, struct stat *result) {
 		}
 
 		result->st_dev = 1;
-		result->st_ino = resp.inode_num();
+		result->st_ino = resp.fs_inode();
 		result->st_mode |= resp.mode();
 		result->st_nlink = resp.num_links();
 		result->st_uid = resp.uid();
 		result->st_gid = resp.gid();
-		result->st_rdev = 0;
+		result->st_rdev = resp.ref_devnum();
 		result->st_size = resp.file_size();
 		result->st_atim.tv_sec = resp.atime_secs();
 		result->st_atim.tv_nsec = resp.atime_nanos();
@@ -2029,6 +2030,7 @@ int sys_fstat(int fd, struct stat *result) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	
 	memset(result, 0, sizeof(struct stat));
 		
 	switch(resp.file_type()) {
@@ -2043,12 +2045,12 @@ int sys_fstat(int fd, struct stat *result) {
 	}
 
 	result->st_dev = 1;
-	result->st_ino = resp.inode_num();
+	result->st_ino = resp.fs_inode();
 	result->st_mode |= resp.mode();
 	result->st_nlink = resp.num_links();
 	result->st_uid = resp.uid();
 	result->st_gid = resp.gid();
-	result->st_rdev = 0;
+	result->st_rdev = resp.ref_devnum();
 	result->st_size = resp.file_size();
 	result->st_atim.tv_sec = resp.atime_secs();
 	result->st_atim.tv_nsec = resp.atime_nanos();
