@@ -7,6 +7,13 @@
 #include <sys/time.h>
 #include <bits/posix/timeval.h>
 
+struct input_id {
+	uint16_t bustype;
+	uint16_t vendor;
+	uint16_t product;
+	uint16_t version;
+};
+
 struct input_event {
 	struct timeval time;
 	uint16_t type;
@@ -32,9 +39,20 @@ struct input_absinfo {
 #define EV_REL			0x02
 #define EV_ABS			0x03
 
-#define EVIOCGRAB       _IOW('E', 0x90, int)
-#define EVIOCGABS(abs)  _IOR('E', 0x40 + (abs),struct input_absinfo) 
-#define EVIOCGBIT(ev,len) _IOC(_IOC_READ, 'E', 0x18, len)
+#define EVIOCGVERSION _IOR('E', 0x01, int)
+#define EVIOCGID _IOR('E', 0x02, struct input_id)
+#define EVIOCGNAME(len) _IOC(_IOC_READ, 'E', 0x06, len)
+#define EVIOCGPHYS(len) _IOC(_IOC_READ, 'E', 0x07, len)
+#define EVIOCGUNIQ(len) _IOC(_IOC_READ, 'E', 0x08, len)
+#define EVIOCGPROP(len) _IOC(_IOC_READ, 'E', 0x09, len)
+#define EVIOCGKEY(len) _IOC(_IOC_READ, 'E', 0x18, len)
+#define EVIOCGLED(len) _IOC(_IOC_READ, 'E', 0x19, len)
+#define EVIOCGSND(len) _IOC(_IOC_READ, 'E', 0x1a, len)
+#define EVIOCGSW(len) _IOC(_IOC_READ, 'E', 0x1b, len)
+#define EVIOCGRAB _IOW('E', 0x90, int)
+#define EVIOCGBIT(ev, len) _IOC(_IOC_READ, 'E', 0x20 + (ev), len)
+#define EVIOCGABS(abs) _IOR('E', 0x40 + (abs),struct input_absinfo) 
+#define EVIOSCLOCKID _IOW('E', 0xa0, int)
 
 //----------------------------------
 // Sync Types

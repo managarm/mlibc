@@ -22,6 +22,7 @@
 #include <sys/timerfd.h>
 #include <sys/signalfd.h>
 #include <sys/sysmacros.h>
+#include <linux/input.h>
 #include <libdrm/drm.h>
 #include <libdrm/drm_fourcc.h>
 
@@ -1594,14 +1595,80 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		errno = ENXIO;
 		return -1;
 	}
-	default:
-		frigg::infoLogger() << "mlibc: Unexpected ioctl with"
-				<< " type: 0x" << frigg::logHex(_IOC_TYPE(request))
-				<< ", number: 0x" << frigg::logHex(_IOC_NR(request))
-				<< " (raw request: " << frigg::logHex(request) << ")" << frigg::endLog;
-		__ensure(!"Illegal ioctl request");
-		__builtin_unreachable();
+	} // end of switch()
+
+
+	if(_IOC_TYPE(request) == 'E'
+			&& _IOC_NR(request) == _IOC_NR(EVIOCGVERSION)) {
+		*reinterpret_cast<int *>(arg) = 0x010001; // should be EV_VERSION
+		return 0;
+	}else if(_IOC_TYPE(request) == 'E'
+			&& _IOC_NR(request) == _IOC_NR(EVIOCGID)) {
+		memset(arg, 0, sizeof(struct input_id));
+		return 0;
+	}else if(_IOC_TYPE(request) == 'E'
+			&& _IOC_NR(request) == _IOC_NR(EVIOCGNAME(0))) {
+		const char *s = "Managarm generic evdev";
+		auto chunk = frigg::min(_IOC_SIZE(request), strlen(s) + 1);
+		memcpy(arg, s, chunk);
+		return chunk;
+	}else if(_IOC_TYPE(request) == 'E'
+			&& _IOC_NR(request) == _IOC_NR(EVIOCGPHYS(0))) {
+		// Returns the sysfs path of the device.
+		const char *s = "input0";
+		auto chunk = frigg::min(_IOC_SIZE(request), strlen(s) + 1);
+		memcpy(arg, s, chunk);
+		return chunk;
+	}else if(_IOC_TYPE(request) == 'E'
+			&& _IOC_NR(request) == _IOC_NR(EVIOCGUNIQ(0))) {
+		// Returns a unique ID for the device.
+		const char *s = "0";
+		auto chunk = frigg::min(_IOC_SIZE(request), strlen(s) + 1);
+		memcpy(arg, s, chunk);
+		return chunk;
+	}else if(_IOC_TYPE(request) == 'E'
+			&& _IOC_NR(request) == _IOC_NR(EVIOCGPROP(0))) {
+		// Returns a bitmask of properties of the device.
+		auto size = _IOC_SIZE(request);
+		memset(arg, 0, size);
+		return size;
+	}else if(_IOC_TYPE(request) == 'E'
+			&& _IOC_NR(request) == _IOC_NR(EVIOCGKEY(0))) {
+		// Returns the current key state.
+		auto size = _IOC_SIZE(request);
+		memset(arg, 0, size);
+		return size;
+	}else if(_IOC_TYPE(request) == 'E'
+			&& _IOC_NR(request) == _IOC_NR(EVIOCGLED(0))) {
+		// Returns the current LED state.
+		auto size = _IOC_SIZE(request);
+		memset(arg, 0, size);
+		return size;
+	}else if(_IOC_TYPE(request) == 'E'
+			&& _IOC_NR(request) == _IOC_NR(EVIOCGSW(0))) {
+		auto size = _IOC_SIZE(request);
+		memset(arg, 0, size);
+		return size;
+	}else if(_IOC_TYPE(request) == 'E'
+			&& _IOC_NR(request) >= _IOC_NR(EVIOCGBIT(0, 0))
+			&& _IOC_NR(request) <= _IOC_NR(EVIOCGBIT(0x1f /* should be EV_MAX */, 0))) {
+		// Returns a bitmask of capabilities of the device.
+		auto type = _IOC_NR(request) - _IOC_NR(EVIOCGBIT(0, 0));
+		auto size = _IOC_SIZE(request);
+		frigg::infoLogger() << "EVIOCGBIT " << type << frigg::endLog;
+		memset(arg, 0, size);
+		return size;
+	}else if(_IOC_TYPE(request) == 'E'
+			&& _IOC_NR(request) == _IOC_NR(EVIOSCLOCKID)) {
+		return 0;
 	}
+	
+	frigg::infoLogger() << "mlibc: Unexpected ioctl with"
+			<< " type: 0x" << frigg::logHex(_IOC_TYPE(request))
+			<< ", number: 0x" << frigg::logHex(_IOC_NR(request))
+			<< " (raw request: " << frigg::logHex(request) << ")" << frigg::endLog;
+	__ensure(!"Illegal ioctl request");
+	__builtin_unreachable();
 }
 
 int sys_open(const char *path, int flags, int *fd) {
