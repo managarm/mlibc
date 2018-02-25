@@ -683,7 +683,7 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 }
 
 int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
-	__ensure(timeout == -1);
+	__ensure(!timeout || timeout == -1);
 
 	HelAction actions[4];
 	globalQueue.trim();
@@ -1592,6 +1592,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 					<< frigg::endLog;
 			infoPrinted = true;
 		}
+		auto param = reinterpret_cast<drm_mode_cursor *>(arg);
+		if(param->handle)
+			frigg::infoLogger() << "mlibc: DRM_IOCTL_MODE_CURSOR to ("
+					<< param->x << ", " << param->y << ")" << frigg::endLog;
 		errno = ENXIO;
 		return -1;
 	}
@@ -1654,9 +1658,22 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 			&& _IOC_NR(request) <= _IOC_NR(EVIOCGBIT(0x1f /* should be EV_MAX */, 0))) {
 		// Returns a bitmask of capabilities of the device.
 		auto type = _IOC_NR(request) - _IOC_NR(EVIOCGBIT(0, 0));
-		auto size = _IOC_SIZE(request);
 		frigg::infoLogger() << "EVIOCGBIT " << type << frigg::endLog;
-		memset(arg, 0, size);
+		size_t size;
+		if(!type) {
+			// If type is zero, return a mask of supported types.
+			// As EV_SYN is zero, this implies that it is impossible
+			// to get the mask of supported synthetic events.
+			uint32_t bits = (1 << EV_REL);
+			size = frigg::max(_IOC_SIZE(request), sizeof(bits));
+			memcpy(arg, &bits, size);
+		}else if(type == EV_REL) {
+			uint32_t bits = (1 << REL_X) | (1 << REL_Y);
+			size = frigg::max(_IOC_SIZE(request), sizeof(bits));
+			memcpy(arg, &bits, size);
+		}else{
+			memset(arg, 0, size);
+		}
 		return size;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOSCLOCKID)) {
