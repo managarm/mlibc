@@ -1616,6 +1616,8 @@ int sys_open(const char *path, int flags, int *fd) {
 		proto_flags |= managarm::posix::OpenFlags::OF_CREATE;
 	if(flags & __MLIBC_O_EXCL)
 		proto_flags |= managarm::posix::OpenFlags::OF_EXCLUSIVE;
+	if(flags & __MLIBC_O_NONBLOCK)
+		proto_flags |= managarm::posix::OpenFlags::OF_NONBLOCK;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::OPEN);
@@ -1695,19 +1697,25 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(recv_data->error);
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 /*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
 		errno = EBADF;
 		return -1;
-	}else*/ if(resp.error() == managarm::fs::Errors::END_OF_FILE) {
+	}else*/
+	if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
+		errno = EAGAIN;
+		return -1;
+	}else if(resp.error() == managarm::fs::Errors::END_OF_FILE) {
+		*bytes_read = 0;
+		return 0;
+	}else{
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		HEL_CHECK(recv_data->error);
+		*bytes_read = recv_data->length;
 		return 0;
 	}
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	*bytes_read = recv_data->length;
-	return 0;
 }
 
 int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
