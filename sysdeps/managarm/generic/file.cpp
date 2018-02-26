@@ -1689,8 +1689,6 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 }
 
 int sys_open(const char *path, int flags, int *fd) {
-	frigg::infoLogger() << "mlibc: open(\""
-			<< path << "\") called!" << frigg::endLog;
 	HelAction actions[3];
 
 	globalQueue.trim();

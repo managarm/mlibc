@@ -85,8 +85,8 @@ long strtol(const char *__restrict string, char **__restrict end, int base) {
 	return result;
 }
 long long strtoll(const char *__restrict string, char **__restrict end, int base) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	static_assert(sizeof(long long) == sizeof(long));
+	return strtol(string, end, base);
 }
 // this function is copied from newlib and available under a BSD license
 unsigned long strtoul(const char *__restrict nptr, char **__restrict endptr, int base) {
@@ -143,8 +143,8 @@ unsigned long strtoul(const char *__restrict nptr, char **__restrict endptr, int
 	return (acc);
 }
 unsigned long long strtoull(const char *__restrict string, char **__restrict end, int base) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	static_assert(sizeof(unsigned long long) == sizeof(unsigned long));
+	return strtoul(string, end, base);
 }
 
 frg::mt19937 __mlibc_rand_engine;

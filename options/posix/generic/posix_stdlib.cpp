@@ -20,8 +20,6 @@ long random(void) {
 // ----------------------------------------------------------------------------
 
 int mkstemp(char *pattern) {
-	frigg::infoLogger() << "libc: mkstemp pattern is " << (const char *)pattern << frigg::endLog;
-
 	auto n = strlen(pattern);
 	__ensure(n >= 6);
 	if(n < 6) {
@@ -38,7 +36,8 @@ int mkstemp(char *pattern) {
 	// TODO: Do an exponential search.
 	for(size_t i = 0; i < 999999; i++) {
 		__ensure(sprintf(pattern + (n - 6), "%06zu", i) == 6);
-		frigg::infoLogger() << "mlibc: mkstemp candidate is " << (const char *)pattern << frigg::endLog;
+//		frigg::infoLogger() << "mlibc: mkstemp candidate is "
+//				<< (const char *)pattern << frigg::endLog;
 
 		// TODO: Add a mode argument to sys_open().
 		int fd;

@@ -54,8 +54,6 @@ struct LibraryGuard {
 static LibraryGuard guard;
 
 LibraryGuard::LibraryGuard() {
-	frigg::infoLogger() << "mlibc guard: " << __builtin_frame_address(0) << frigg::endLog;
-
 	__mlibc_initLocale();
 	__mlibc_initStdio();
 
