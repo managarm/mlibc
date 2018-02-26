@@ -1657,24 +1657,100 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 			&& _IOC_NR(request) >= _IOC_NR(EVIOCGBIT(0, 0))
 			&& _IOC_NR(request) <= _IOC_NR(EVIOCGBIT(0x1f /* should be EV_MAX */, 0))) {
 		// Returns a bitmask of capabilities of the device.
+		// If type is zero, return a mask of supported types.
+		// As EV_SYN is zero, this implies that it is impossible
+		// to get the mask of supported synthetic events.
 		auto type = _IOC_NR(request) - _IOC_NR(EVIOCGBIT(0, 0));
-		frigg::infoLogger() << "EVIOCGBIT " << type << frigg::endLog;
-		size_t size;
 		if(!type) {
-			// If type is zero, return a mask of supported types.
-			// As EV_SYN is zero, this implies that it is impossible
-			// to get the mask of supported synthetic events.
-			uint32_t bits = (1 << EV_REL);
-			size = frigg::max(_IOC_SIZE(request), sizeof(bits));
-			memcpy(arg, &bits, size);
-		}else if(type == EV_REL) {
-			uint32_t bits = (1 << REL_X) | (1 << REL_Y);
-			size = frigg::max(_IOC_SIZE(request), sizeof(bits));
-			memcpy(arg, &bits, size);
+			// TODO: Check with the Linux ABI if we have to do this.
+			memset(arg, 0, _IOC_SIZE(request));
+
+			HelAction actions[4];
+			globalQueue.trim();
+
+			managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+			req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+			req.set_command(EVIOCGBIT(0, 0));
+			req.set_size(_IOC_SIZE(request));
+
+			frigg::String<MemoryAllocator> ser(getAllocator());
+			req.SerializeToString(&ser);
+			actions[0].type = kHelActionOffer;
+			actions[0].flags = kHelItemAncillary;
+			actions[1].type = kHelActionSendFromBuffer;
+			actions[1].flags = kHelItemChain;
+			actions[1].buffer = ser.data();
+			actions[1].length = ser.size();
+			actions[2].type = kHelActionRecvInline;
+			actions[2].flags = kHelItemChain;
+			actions[3].type = kHelActionRecvToBuffer;
+			actions[3].flags = 0;
+			actions[3].buffer = arg;
+			actions[3].length = _IOC_SIZE(request);
+			HEL_CHECK(helSubmitAsync(handle, actions, 4,
+					globalQueue.getQueue(), 0, 0));
+
+			auto element = globalQueue.dequeueSingle();
+			auto offer = parseSimple(element);
+			auto send_req = parseSimple(element);
+			auto recv_resp = parseInline(element);
+			auto recv_data = parseLength(element);
+
+			HEL_CHECK(offer->error);
+			HEL_CHECK(send_req->error);
+			HEL_CHECK(recv_resp->error);
+			HEL_CHECK(recv_data->error);
+
+			managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+			resp.ParseFromArray(recv_resp->data, recv_resp->length);
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			return recv_data->length;
 		}else{
-			memset(arg, 0, size);
+			// TODO: Check with the Linux ABI if we have to do this.
+			memset(arg, 0, _IOC_SIZE(request));
+
+			HelAction actions[4];
+			globalQueue.trim();
+
+			managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+			req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+			req.set_command(EVIOCGBIT(1, 0));
+			req.set_input_type(type);
+			req.set_size(_IOC_SIZE(request));
+
+			frigg::String<MemoryAllocator> ser(getAllocator());
+			req.SerializeToString(&ser);
+			actions[0].type = kHelActionOffer;
+			actions[0].flags = kHelItemAncillary;
+			actions[1].type = kHelActionSendFromBuffer;
+			actions[1].flags = kHelItemChain;
+			actions[1].buffer = ser.data();
+			actions[1].length = ser.size();
+			actions[2].type = kHelActionRecvInline;
+			actions[2].flags = kHelItemChain;
+			actions[3].type = kHelActionRecvToBuffer;
+			actions[3].flags = 0;
+			actions[3].buffer = arg;
+			actions[3].length = _IOC_SIZE(request);
+			HEL_CHECK(helSubmitAsync(handle, actions, 4,
+					globalQueue.getQueue(), 0, 0));
+
+			auto element = globalQueue.dequeueSingle();
+			auto offer = parseSimple(element);
+			auto send_req = parseSimple(element);
+			auto recv_resp = parseInline(element);
+			auto recv_data = parseLength(element);
+
+			HEL_CHECK(offer->error);
+			HEL_CHECK(send_req->error);
+			HEL_CHECK(recv_resp->error);
+			HEL_CHECK(recv_data->error);
+
+			managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+			resp.ParseFromArray(recv_resp->data, recv_resp->length);
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			return recv_data->length;
 		}
-		return size;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOSCLOCKID)) {
 		return 0;
