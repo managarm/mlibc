@@ -1,7 +1,8 @@
 
+libc_CC := x86_64-managarm-gcc
 libc_CXX := x86_64-managarm-g++
 
-libc_CPPFLAGS := -std=c++1z -Wall
+libc_CPPFLAGS :=  -Wall
 libc_CPPFLAGS += -I$(TREE_PATH)/options/internal/private
 libc_CPPFLAGS += -I$(TREE_PATH)/options/ansi/include
 libc_CPPFLAGS += -I$(TREE_PATH)/options/linux/include
@@ -12,6 +13,9 @@ libc_CPPFLAGS += -I$(TREE_PATH)/sysdeps/managarm/include
 libc_CPPFLAGS += -Igen
 libc_CPPFLAGS += -I$(FRIGG_PATH)/include
 libc_CPPFLAGS += -DFRIGG_HAVE_LIBC -DFRIGG_HIDDEN
+
+libc_CFLAGS := $(libc_CPPFLAGS) -fPIC -O2
+libc_CFLAGS += -fno-builtin
 
 libc_CXXFLAGS := $(libc_CPPFLAGS) -fPIC -O2
 libc_CXXFLAGS += -fno-builtin -fno-rtti -fno-exceptions
@@ -39,7 +43,8 @@ proto_cmd = $(PROTOC) \
 	--plugin=protoc-gen-frigg=$(MANAGARM_BUILD_PATH)/tools/frigg_pb/bin/frigg_pb \
 	--frigg_out=$(libc_gendir) --proto_path=$(MANAGARM_SRC_PATH)/bragi/proto $<
 compile_s_cmd = $(libc_AS) -o $@ $($libc_ASFLAGS) $<
-compile_cxx_cmd = $(libc_CXX) -c -o $@ $(libc_CXXFLAGS) $<
+compile_c_cmd = $(libc_CC) -c -o $@ -std=c11 $(libc_CFLAGS) $<
+compile_cxx_cmd = $(libc_CXX) -c -o $@ -std=c++17 $(libc_CXXFLAGS) $<
 link_cxx_cmd = x86_64-managarm-g++ -shared -o $@ -nostdlib \
 	$(libc_BEGIN) $(libc_objects) -l:ld-init.so $(libc_END)
 install_header_cmd = install -Dp $< $@
@@ -47,6 +52,7 @@ install_slib_cmd = install -Dp $< $@
 
 proto_pretty = $(call pretty,$(proto_cmd),protoc,$@)
 compile_s_pretty = $(call pretty,$(compile_s_cmd),as,$@)
+compile_c_pretty = $(call pretty,$(compile_c_cmd),cc,$@)
 compile_cxx_pretty = $(call pretty,$(compile_cxx_cmd),c++,$@)
 link_cxx_pretty = $(call pretty,$(link_cxx_cmd),link,$@)
 install_header_pretty = $(call pretty,$(install_header_cmd),install,$@)
@@ -205,7 +211,8 @@ $(foreach d,$(libc_include_dirs),\
 $(SYSROOT_PATH)/usr/lib/libc.so: libc.so
 	$(install_slib_pretty)
 
-libc_code_dirs := options/ansi/generic
+libc_code_dirs := options/ansi/generic \
+	options/ansi/musl-generic-math
 libc_code_dirs += options/linux/generic
 libc_code_dirs += options/lsb/generic
 libc_code_dirs += options/posix/generic \
@@ -219,6 +226,8 @@ libc_code_dirs += sysdeps/managarm/generic
 
 libc_s_sources := $(wildcard $(TREE_PATH)/options/internal/x86_64/*.S)
 
+libc_c_sources := $(wildcard $(TREE_PATH)/options/ansi/musl-generic-math/*.c)
+
 libc_cxx_sources := $(wildcard $(TREE_PATH)/options/ansi/generic/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/options/linux/generic/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/options/lsb/generic/*.cpp)
@@ -229,6 +238,7 @@ libc_cxx_sources += $(wildcard $(TREE_PATH)/options/internal/gcc/*.cpp)
 libc_cxx_sources += $(wildcard $(TREE_PATH)/sysdeps/managarm/generic/*.cpp)
 
 libc_objects := $(patsubst $(TREE_PATH)/%.S,%.o,$(libc_s_sources))
+libc_objects += $(patsubst $(TREE_PATH)/%.c,%.o,$(libc_c_sources))
 libc_objects += $(patsubst $(TREE_PATH)/%.cpp,%.o,$(libc_cxx_sources))
 
 libc_AS := x86_64-managarm-as
@@ -236,6 +246,7 @@ libc_ASFLAGS :=
 
 vpath %.h $(TREE_PATH)
 vpath %.S $(TREE_PATH)
+vpath %.c $(TREE_PATH)
 vpath %.cpp $(TREE_PATH)
 
 $(libc_code_dirs):
@@ -248,9 +259,14 @@ $(libc_gendir):
 	$(compile_s_pretty)
 
 # TODO: Speed up compilation by calling GCC only once.
+%.o: %.c | $(libc_code_dirs)
+	$(compile_c_pretty)
+	@$(libc_CC) $(libc_CPPFLAGS) -std=c11 -MM -MP -MF $(@:%.o=%.d) -MT "$@" -MT "$(@:%.o=%.d)" $<
+
+# TODO: Speed up compilation by calling GCC only once.
 %.o: %.cpp | $(libc_code_dirs)
 	$(compile_cxx_pretty)
-	@$(libc_CXX) $(libc_CPPFLAGS) -MM -MP -MF $(@:%.o=%.d) -MT "$@" -MT "$(@:%.o=%.d)" $<
+	@$(libc_CXX) $(libc_CPPFLAGS) -std=c++17 -MM -MP -MF $(@:%.o=%.d) -MT "$@" -MT "$(@:%.o=%.d)" $<
 
 libc.so: $(libc_objects) $(libc_BEGIN) $(libc_END)
 	$(link_cxx_pretty)

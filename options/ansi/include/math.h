@@ -17,9 +17,16 @@
 #define M_SQRT2         1.41421356237309504880
 #define M_SQRT1_2       0.70710678118654752440
 
+// The following two definitions are from musl.
+#define FP_ILOGBNAN (-1 - (int)(((unsigned)-1) >> 1))
+#define FP_ILOGB0 FP_ILOGBNAN
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef double double_t;
+typedef float float_t;
 
 #define HUGE_VAL (__builtin_huge_val())
 #define HUGE_VALF (__builtin_huge_valf())
@@ -43,14 +50,14 @@ extern "C" {
 #define FP_SUBNORMAL 8
 #define FP_ZERO 16
 
-int __mlibc_fpclassify(double x);
-int __mlibc_fpclassifyf(float x);
-int __mlibc_fpclassifyl(long double x);
+int __fpclassify(double x);
+int __fpclassifyf(float x);
+int __fpclassifyl(long double x);
 
 #define fpclassify(x) \
-	(sizeof(x) == sizeof(double) ? __mlibc_fpclassify(x) : \
-	(sizeof(x) == sizeof(float) ? __mlibc_fpclassifyf(x) : \
-	(sizeof(x) == sizeof(long double) ? __mlibc_fpclassifyl(x) : \
+	(sizeof(x) == sizeof(double) ? __fpclassify(x) : \
+	(sizeof(x) == sizeof(float) ? __fpclassifyf(x) : \
+	(sizeof(x) == sizeof(long double) ? __fpclassifyl(x) : \
 	0)))
 
 #define isfinite(x) (fpclassify(x) & (FP_NORMAL | FP_SUBNORMAL | FP_ZERO))
@@ -148,9 +155,9 @@ double frexp(double x, int *power);
 float frexpf(float x, int *power);
 long double frexpl(long double x, int *power);
 
-double ilogb(double x);
-float ilogbf(float x);
-long double ilogbl(long double x);
+int ilogb(double x);
+int ilogbf(float x);
+int ilogbl(long double x);
 
 double ldexp(double x, int power);
 float ldexpf(float x, int power);
