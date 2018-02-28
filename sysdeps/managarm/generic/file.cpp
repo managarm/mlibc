@@ -728,19 +728,12 @@ int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
 }
 
 int sys_timerfd_create(int flags, int *fd) {
-	__ensure(!(flags & ~(TFD_CLOEXEC | TFD_NONBLOCK)));
-	if(flags & TFD_CLOEXEC)
-		frigg::infoLogger() << "\e[31mmlibc: timerfd(TFD_CLOEXEC)"
-				" is not implemented correctly\e[39m" << frigg::endLog;
-	if(flags & TFD_NONBLOCK)
-		frigg::infoLogger() << "\e[31mmlibc: timerfd(TFD_NONBLOCK)"
-				" is not implemented correctly\e[39m" << frigg::endLog;
-
 	HelAction actions[3];
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::TIMERFD_CREATE);
+	req.set_flags(flags);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
