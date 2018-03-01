@@ -1858,7 +1858,10 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 		errno = EBADF;
 		return -1;
 	}else*/
-	if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
+	if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+		errno = EINVAL;
+		return -1;
+	}else if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
 		errno = EAGAIN;
 		return -1;
 	}else if(resp.error() == managarm::fs::Errors::END_OF_FILE) {
