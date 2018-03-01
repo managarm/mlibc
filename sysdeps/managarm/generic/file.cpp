@@ -687,6 +687,7 @@ int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::EPOLL_WAIT);
 	req.set_fd(epfd);
+	req.set_size(n);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
