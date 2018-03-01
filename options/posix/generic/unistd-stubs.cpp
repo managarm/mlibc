@@ -353,13 +353,13 @@ int usleep(useconds_t usecs) {
 
 int dup(int fd) {
 	int newfd;
-	if(mlibc::sys_dup(fd, &newfd))
+	if(mlibc::sys_dup(fd, 0, &newfd))
 		return -1;
 	return newfd;
 }
 
 int dup2(int fd, int newfd) {
-	if(mlibc::sys_dup2(fd, newfd))
+	if(mlibc::sys_dup2(fd, 0, newfd))
 		return -1;
 	return newfd;
 }

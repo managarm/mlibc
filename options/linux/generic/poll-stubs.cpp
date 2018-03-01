@@ -7,9 +7,9 @@
 #include <frigg/debug.hpp>
 
 int poll(struct pollfd *fds, nfds_t count, int timeout) {
-	if(timeout)
-		frigg::infoLogger() << "\e[31mmlibc: poll() timeout is not implemented correctly\e[39m"
-				<< frigg::endLog;
+//	if(timeout)
+//		frigg::infoLogger() << "\e[31mmlibc: poll() timeout is not implemented correctly\e[39m"
+//				<< frigg::endLog;
 
 	// TODO: Do not keep errors from epoll (?).
 	int epfd = epoll_create1(0);

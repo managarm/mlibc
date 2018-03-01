@@ -136,11 +136,15 @@ namespace mlibc {
 
 int sys_fcntl(int fd, int request, va_list args) {
 	if(request == F_DUPFD) {
-		return dup2(fd, -1);
+		int newfd;
+		if(sys_dup(fd, 0, &newfd))
+			return -1;
+		return newfd;
 	}else if(request == F_DUPFD_CLOEXEC) {
-		frigg::infoLogger() << "\e[31mmlibc: fcntl(F_DUPFD_CLOEXEC) is not implemented correctly"
-				<< "\e[39m" << frigg::endLog;
-		return dup(fd);
+		int newfd;
+		if(sys_dup(fd, __MLIBC_O_CLOEXEC, &newfd))
+			return -1;
+		return newfd;
 	}else if(request == F_GETFD) {
 		frigg::infoLogger() << "\e[31mmlibc: fcntl(F_GETFD) is not implemented correctly"
 				<< "\e[39m" << frigg::endLog;
@@ -368,12 +372,6 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	constexpr int type_mask = int(0xFFFF);
 	constexpr int flags_mask = ~int(0xFFFF);
 	__ensure(!((type_and_flags & flags_mask) & ~(SOCK_CLOEXEC | SOCK_NONBLOCK)));
-	if(type_and_flags & SOCK_CLOEXEC)
-		frigg::infoLogger() << "\e[31mmlibc: socket(SOCK_CLOEXEC)"
-				" is not implemented correctly\e[39m" << frigg::endLog;
-	if(type_and_flags & SOCK_NONBLOCK)
-		frigg::infoLogger() << "\e[31mmlibc: socket(SOCK_NONBLOCK)"
-				" is not implemented correctly\e[39m" << frigg::endLog;
 
 	HelAction actions[3];
 	globalQueue.trim();
@@ -383,6 +381,7 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	req.set_domain(domain);
 	req.set_socktype(type_and_flags & type_mask);
 	req.set_protocol(proto);
+	req.set_flags(type_and_flags & flags_mask);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
@@ -417,12 +416,6 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 	constexpr int type_mask = int(0xFFFF);
 	constexpr int flags_mask = ~int(0xFFFF);
 	__ensure(!((type_and_flags & flags_mask) & ~(SOCK_CLOEXEC | SOCK_NONBLOCK)));
-	if(type_and_flags & SOCK_CLOEXEC)
-		frigg::infoLogger() << "\e[31mmlibc: socketpair(SOCK_CLOEXEC)"
-				" is not implemented correctly\e[39m" << frigg::endLog;
-	if(type_and_flags & SOCK_NONBLOCK)
-		frigg::infoLogger() << "\e[31mmlibc: socketpair(SOCK_NONBLOCK)"
-				" is not implemented correctly\e[39m" << frigg::endLog;
 
 	HelAction actions[3];
 	globalQueue.trim();
@@ -432,6 +425,7 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 	req.set_domain(domain);
 	req.set_socktype(type_and_flags & type_mask);
 	req.set_protocol(proto);
+	req.set_flags(type_and_flags & flags_mask);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
@@ -591,15 +585,17 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 
 int sys_epoll_create(int flags, int *fd) {
 	__ensure(!(flags & ~(EPOLL_CLOEXEC)));
-	if(flags & EPOLL_CLOEXEC)
-		frigg::infoLogger() << "\e[31mmlibc: epoll_create1(EPOLL_CLOEXEC)"
-				" is not implemented correctly\e[39m" << frigg::endLog;
 
 	HelAction actions[3];
 	globalQueue.trim();
+	
+	uint32_t proto_flags = 0;
+	if(flags & EPOLL_CLOEXEC)
+		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::EPOLL_CREATE);
+	req.set_flags(proto_flags);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
@@ -807,18 +803,21 @@ int sys_timerfd_settime(int fd, int flags,
 
 int sys_signalfd_create(int flags, int *fd) {
 	__ensure(!(flags & ~(SFD_CLOEXEC | SFD_NONBLOCK)));
-	if(flags & SFD_CLOEXEC)
-		frigg::infoLogger() << "\e[31mmlibc: signalfd(SFD_CLOEXEC)"
-				" is not implemented correctly\e[39m" << frigg::endLog;
+
 	if(flags & SFD_NONBLOCK)
 		frigg::infoLogger() << "\e[31mmlibc: signalfd(SFD_NONBLOCK)"
 				" is not implemented correctly\e[39m" << frigg::endLog;
+	
+	uint32_t proto_flags = 0;
+	if(flags & SFD_CLOEXEC)
+		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
 
 	HelAction actions[3];
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::SIGNALFD_CREATE);
+	req.set_flags(proto_flags);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
@@ -1770,6 +1769,9 @@ int sys_open(const char *path, int flags, int *fd) {
 	if(flags & __MLIBC_O_NONBLOCK)
 		proto_flags |= managarm::posix::OpenFlags::OF_NONBLOCK;
 
+	if(flags & __MLIBC_O_CLOEXEC)
+		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
+
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::OPEN);
 	req.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
@@ -2023,14 +2025,20 @@ int sys_close(int fd) {
 	}
 }
 
-int sys_dup(int fd, int *newfd) {
+int sys_dup(int fd, int flags, int *newfd) {
 	HelAction actions[3];
-
 	globalQueue.trim();
+	
+	assert(!(flags & ~(__MLIBC_O_CLOEXEC)));
+	
+	uint32_t proto_flags = 0;
+	if(flags & __MLIBC_O_CLOEXEC)
+		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::DUP);
 	req.set_fd(fd);
+	req.set_flags(proto_flags);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
@@ -2061,15 +2069,15 @@ int sys_dup(int fd, int *newfd) {
 	return 0;
 }
 
-int sys_dup2(int fd, int newfd) {
+int sys_dup2(int fd, int flags, int newfd) {
 	HelAction actions[3];
-
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::DUP2);
 	req.set_fd(fd);
 	req.set_newfd(newfd);
+	req.set_flags(flags);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
