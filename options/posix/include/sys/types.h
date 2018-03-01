@@ -23,7 +23,7 @@
 #include <bits/posix/fsblkcnt_t.h>
 #include <bits/posix/fsfilcnt_t.h>
 
-// MISSING: almost every type
+typedef unsigned char u_char;
 
 #endif // _SYS_TYPES_H
 

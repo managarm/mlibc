@@ -59,3 +59,13 @@ char *strtok_r(char *__restrict s, const char *__restrict del, char **__restrict
 	return *m;
 }
 
+char *strsep(char **stringp, const char *delim) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+char *strsignal(int sig) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+

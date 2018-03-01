@@ -19,6 +19,9 @@ int pclose(FILE *);
 FILE *popen(const char*, const char *);
 FILE *open_memstream(char **, size_t *);
 
+int fseeko(FILE *stream, off_t offset, int whence);
+off_t ftello(FILE *stream);
+
 #ifdef __cplusplus
 }
 #endif

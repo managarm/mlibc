@@ -1,0 +1,10 @@
+
+#ifndef _LINUX_SCSI_SCSI_H
+#define _LINUX_SCSI_SCSI_H
+
+#define RECOVERED_ERROR 0x01
+#define ILLEGAL_REQUEST 0x05
+#define UNIT_ATTENTION 0x06
+
+#endif // _LINUX_SCSI_SCSI_H
+

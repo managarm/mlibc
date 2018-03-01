@@ -1,0 +1,6 @@
+
+#ifndef _LINUX_SCSI_SCSI_IOCTL_H
+#define _LINUX_SCSI_SCSI_IOCTL_H
+
+#endif // _LINUX_SCSI_SCSI_IOCTL_H
+

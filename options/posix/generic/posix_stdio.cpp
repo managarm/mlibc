@@ -36,3 +36,13 @@ FILE *open_memstream(char **, size_t *) {
 	return nullptr;
 }
 
+int fseeko(FILE *stream, off_t offset, int whence) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+off_t ftello(FILE *stream) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+

@@ -84,21 +84,31 @@ libc_includes += bits/feature.h \
 #Linux
 libc_includes += getopt.h \
 	linux/bpf_common.h \
+	linux/bsg.h \
+	linux/cdrom.h \
+	linux/hdreg.h \
 	linux/filter.h \
+	linux/fs.h \
 	linux/input.h \
 	linux/kd.h \
 	linux/magic.h \
 	linux/major.h \
 	linux/netlink.h \
+	linux/pci_regs.h \
 	linux/sched.h \
 	linux/sockios.h \
 	linux/types.h \
+	linux/videodev2.h \
 	linux/vt.h \
 	malloc.h \
 	memory.h \
 	mntent.h \
+	net/if_arp.h \
 	poll.h \
 	pty.h \
+	scsi/sg.h \
+	scsi/scsi.h \
+	scsi/scsi_ioctl.h \
 	stdio_ext.h \
 	sys/epoll.h \
 	sys/inotify.h \
