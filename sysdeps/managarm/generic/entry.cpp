@@ -53,13 +53,19 @@ struct LibraryGuard {
 
 static LibraryGuard guard;
 
+static int __mlibc_argc;
+static char **__mlibc_argv;
+
 LibraryGuard::LibraryGuard() {
 	__mlibc_initLocale();
 	__mlibc_initStdio();
 
 	// Parse the environment.
+	// TODO: Copy the arguments instead of pointing to them?
 	auto env = __dlapi_entrystack();
-	env += *env + 1; // Skip argc and all arguments.
+	__mlibc_argc = *env++;
+	__mlibc_argv = reinterpret_cast<char **>(env);
+	env += __mlibc_argc; // Skip all arguments.
 	__ensure(!*env);
 	env++;
 
@@ -75,9 +81,7 @@ LibraryGuard::LibraryGuard() {
 extern char **environ;
 
 extern "C" void __mlibc_entry(int (*main_function)(int argc, char *argv[], char *env[])) {
-	char *empty_argv[] = { nullptr };
-
-	auto result = main_function(1, empty_argv, environ);
+	auto result = main_function(__mlibc_argc, __mlibc_argv, environ);
 	exit(result);
 }
 
