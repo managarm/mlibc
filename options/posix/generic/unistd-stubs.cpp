@@ -35,10 +35,12 @@ void encrypt(char block[64], int flags) {
 int execl(const char *path, const char *arg0, ...) {
 	// TODO: It's a stupid idea to limit the number of arguments here.
 	char *argv[16];
-	int n = 0;
+	argv[0] = const_cast<char *>(arg0);
 
 	va_list args;
 	va_start(args, arg0);
+
+	int n = 1;
 	while(true) {
 		__ensure(n < 16);
 		auto argn = va_arg(args, const char *);
@@ -46,6 +48,7 @@ int execl(const char *path, const char *arg0, ...) {
 		if(!argn)
 			break;
 	}
+
 	va_end(args);
 
 	return execve(path, argv, environ);
