@@ -72,10 +72,7 @@ int strcmp(const char *a, const char *b) {
 		unsigned char b_byte = b[i];
 		if(!a_byte && !b_byte)
 			return 0;
-		if(!a_byte)
-			return -1;
-		if(!b_byte)
-			return -1;
+		// If only one char is null, one of the following cases applies.
 		if(a_byte < b_byte)
 			return -1;
 		if(a_byte > b_byte)
@@ -96,10 +93,7 @@ int strncmp(const char *a, const char *b, size_t max_size) {
 		unsigned char b_byte = b[i];
 		if(!a_byte && !b_byte)
 			return 0;
-		if(!a_byte)
-			return -1;
-		if(!b_byte)
-			return -1;
+		// If only one char is null, one of the following cases applies.
 		if(a_byte < b_byte)
 			return -1;
 		if(a_byte > b_byte)
