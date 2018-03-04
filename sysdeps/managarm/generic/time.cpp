@@ -20,8 +20,10 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 	}else if(clock == CLOCK_REALTIME) {
 		frigg::infoLogger() << "\e[31mmlibc: clock_gettime does not support CLOCK_REALTIME"
 				"\e[39m" << frigg::endLog;
-		*secs = 0;
-		*nanos = 0;
+		uint64_t tick;
+		HEL_CHECK(helGetClock(&tick));
+		*secs = tick / 1000000000;
+		*nanos = tick % 1000000000;
 	}else if(clock == CLOCK_PROCESS_CPUTIME_ID) {
 		frigg::infoLogger() << "\e[31mmlibc: clock_gettime does not support the CPU time clocks"
 				"\e[39m" << frigg::endLog;

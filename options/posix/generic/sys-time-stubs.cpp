@@ -1,14 +1,18 @@
 
 #include <sys/time.h>
+#include <time.h>
 #include <bits/ensure.h>
 
 #include <frigg/debug.hpp>
+#include <mlibc/sysdeps.hpp>
 
 int gettimeofday(struct timeval *__restrict result, void *__restrict unused) {
-	frigg::infoLogger() << "mlibc: Broken gettimeofday() called!" << frigg::endLog;
 	__ensure(!unused);
-	result->tv_sec = 0;
-	result->tv_usec = 0;
+
+	long nanos;
+	if(mlibc::sys_clock_get(CLOCK_REALTIME, &result->tv_sec, &nanos))
+		return -1;
+	result->tv_usec = nanos / 1000;
 	return 0;
 }
 
