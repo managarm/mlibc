@@ -1,7 +1,7 @@
 
 #include <time.h>
 
-#include <iostream>
+#include <string.h>
 #include <bits/ensure.h>
 #include <frigg/debug.hpp>
 #include <mlibc/sysdeps.hpp>
@@ -211,17 +211,67 @@ int utimes(const char *, const struct timeval[2]) {
 	__builtin_unreachable();
 }
 
-struct tm *localtime_r(const time_t *t, struct tm *tm) {
-	frigg::infoLogger() << "\e[31mmlibc: localtime_r always returns a"
-		" zero date\e[39m" << frigg::endLog;
-	memset(tm, 0, sizeof(struct tm));
-	return tm;
-}
-
 time_t time(time_t *out) {
 	long nanos;
 	if(mlibc::sys_clock_get(CLOCK_REALTIME, out, &nanos))
 		return (time_t)-1;
 	return 0;
+}
+
+namespace {
+
+void civil_from_days(time_t days_since_epoch, int *year, unsigned int *month, unsigned int *day) {
+	time_t time = days_since_epoch + 719468;
+	int era = (time >= 0 ? time : time - 146096) / 146097;
+	unsigned int doe = static_cast<unsigned int>(time - era * 146097);
+	unsigned int yoe = (doe - doe/1460 + doe/36524 - doe/146096) / 365;
+	int y = static_cast<int>(yoe) + era * 400;
+	unsigned int doy = doe - (365*yoe + yoe/4 - yoe/100);
+	unsigned int mp = (5*doy + 2)/153;
+	unsigned int d = doy - (153*mp+2)/5 + 1;
+	unsigned int m = mp + (mp < 10 ? 3 : -9);
+
+	*year = y + (m <= 2);
+	*month = m;
+	*day = d;
+}
+
+void weekday_from_days(time_t days_since_epoch, unsigned int *weekday) {
+	*weekday = static_cast<unsigned int>(days_since_epoch >= -4 ?
+			(days_since_epoch+4) % 7 : (days_since_epoch+5) % 7 + 6);
+}
+
+void yearday_from_date(unsigned int year, unsigned int month, unsigned int day, unsigned int *yday) {
+	unsigned int n1 = 275 * month / 9;
+	unsigned int n2 = (month + 9) / 12;
+	unsigned int n3 = (1 + (year - 4 * year / 4 + 2) / 3);
+	*yday = n1 - (n2 * n3) + day - 30;
+}
+
+} //anonymous namespace
+
+struct tm *localtime_r(const time_t *t, struct tm *tm) {
+	int year;
+	unsigned int month;
+	unsigned int day;
+	unsigned int weekday;
+	unsigned int yday;
+
+	int days_since_epoch = *timep / (60*60*24);
+	civil_from_days(days_since_epoch, &year, &month, &day);
+	weekday_from_days(days_since_epoch, &weekday);
+	yearday_from_date(year, month, day, &yday);
+
+	tm->tm_sec = *timep % 60;
+	tm->tm_min = (*timep / 60) % 60;
+	tm->tm_hour = (*timep / (60*60)) % 24;
+	tm->tm_mday = day;
+	tm->tm_mon = month - 1;
+	tm->tm_year = year - 1900;
+	tm->tm_wday = weekday;
+	tm->tm_yday = yday - 1;
+	tm->tm_isdst = -1;
+
+	return tm;
 }
 
