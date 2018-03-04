@@ -1,8 +1,9 @@
 
+#include <bits/ensure.h>
+#include <stdio.h>
+#include <string.h>
 #include <time.h>
 
-#include <string.h>
-#include <bits/ensure.h>
 #include <frigg/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
@@ -250,21 +251,21 @@ void yearday_from_date(unsigned int year, unsigned int month, unsigned int day, 
 
 } //anonymous namespace
 
-struct tm *localtime_r(const time_t *t, struct tm *tm) {
+struct tm *localtime_r(const time_t *time, struct tm *tm) {
 	int year;
 	unsigned int month;
 	unsigned int day;
 	unsigned int weekday;
 	unsigned int yday;
 
-	int days_since_epoch = *timep / (60*60*24);
+	int days_since_epoch = *time / (60*60*24);
 	civil_from_days(days_since_epoch, &year, &month, &day);
 	weekday_from_days(days_since_epoch, &weekday);
 	yearday_from_date(year, month, day, &yday);
 
-	tm->tm_sec = *timep % 60;
-	tm->tm_min = (*timep / 60) % 60;
-	tm->tm_hour = (*timep / (60*60)) % 24;
+	tm->tm_sec = *time % 60;
+	tm->tm_min = (*time / 60) % 60;
+	tm->tm_hour = (*time / (60*60)) % 24;
 	tm->tm_mday = day;
 	tm->tm_mon = month - 1;
 	tm->tm_year = year - 1900;
