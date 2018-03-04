@@ -1,8 +1,8 @@
 
 #include <time.h>
 
+#include <iostream>
 #include <bits/ensure.h>
-
 #include <frigg/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
@@ -40,12 +40,142 @@ struct tm *localtime(const time_t *t) {
 	return localtime_r(t, &per_thread_tm);
 }
 size_t strftime(char *__restrict dest, size_t max_size,
-		const char *__restrict, const struct tm *__restrict) {
-	frigg::infoLogger() << "\e[31mmlibc: strftime always writes an"
-		" empty string\e[39m" << frigg::endLog;
-	__ensure(max_size > 0);
-	dest[0] = 0;
-	return 0;
+		const char *__restrict format, const struct tm *__restrict tm) {
+	auto c = format;
+	auto p = dest;
+	
+	while(*c) {
+		auto space = (dest + max_size) - p;
+		assert(space >= 0);
+		
+		if(*c != '%') {
+			if(!space)
+				return 0;
+			*p = *c;
+			c++;
+			p++;
+			continue;
+		}
+		
+		if(*(c + 1) == 'Y') {
+			auto chunk = snprintf(p, space, "%d", 1900 + tm->tm_year);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
+		}else if (*(c + 1) == 'm') {
+			auto chunk = snprintf(p, space, "%d", tm->tm_mon + 1);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
+		}else if (*(c + 1) == 'd') {
+			auto chunk = snprintf(p, space, "%d", tm->tm_mday);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
+		}else if (*(c + 1) == 'Z') {
+			auto chunk = snprintf(p, space, "%s", "GMT");
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
+		}else if (*(c + 1) == 'H') {
+			auto chunk = snprintf(p, space, "%i", tm->tm_hour);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
+		}else if (*(c + 1) == 'M') {
+			auto chunk = snprintf(p, space, "%i", tm->tm_min);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
+		}else if (*(c + 1) == 'S') {
+			auto chunk = snprintf(p, space, "%d", tm->tm_sec);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
+		}else if (*(c + 1) == 'F') {
+			auto chunk = snprintf(p, space, "%d/%d/%d", 1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
+		}else if (*(c + 1) == 'a') {
+			const char *strdays[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+			int day = tm->tm_wday;
+			if(day < 0 || day > 6)
+				assert(!"Day not in bounds.");
+
+			auto chunk = snprintf(p, space, "%s", strdays[day]);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
+		}else if (*(c + 1) == 'b') {
+			const char *strmons[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+					"Aug", "Sep", "Oct", "Nov", "Dec" };
+			int mon = tm->tm_mon;
+			if(mon < 0 || mon > 11)
+				assert(!"Month not in bounds.");
+			
+			auto chunk = snprintf(p, space, "%s", strmons[mon]);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
+		}else if (*(c + 1) == 'c') {
+			auto chunk = snprintf(p, space, "%d/%d/%d %d:%d:%d", 1900 + tm->tm_year,
+					tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
+		}else if (*(c + 1) == 'd') {
+			auto chunk = snprintf(p, space, "%d", tm->tm_mday);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
+		}else if (*(c + 1) == 'I') {
+			int hour = tm->tm_hour;
+			if(hour > 12)
+				hour -= 12;
+			auto chunk = snprintf(p, space, "%i", hour);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
+		}else if (*(c + 1) == 'p') {
+			if(tm->tm_hour < 12) {
+				char time[] = "AM";
+				auto chunk = snprintf(p, space, "%s", time);
+				if(chunk >= space)
+					return 0;
+				p += chunk;
+			}else {
+				char time[] = "PM";
+				auto chunk = snprintf(p, space, "%s", time);
+				if(chunk >= space)
+					return 0;
+				p += chunk;
+			}
+			c += 2;
+		}else {
+			assert(!"Unknown format type.");
+		}
+	}
+
+	auto space = (dest + max_size) - p;
+	if(!space)
+		return 0;	
+
+	*p = '\0';
+	return (p - dest) + 1;
 }
 
 // POSIX extensions.
