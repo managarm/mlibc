@@ -65,13 +65,13 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			p += chunk;
 			c += 2;
 		}else if (*(c + 1) == 'm') {
-			auto chunk = snprintf(p, space, "%d", tm->tm_mon + 1);
+			auto chunk = snprintf(p, space, "%.2d", tm->tm_mon + 1);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
 			c += 2;
 		}else if (*(c + 1) == 'd') {
-			auto chunk = snprintf(p, space, "%d", tm->tm_mday);
+			auto chunk = snprintf(p, space, "%.2d", tm->tm_mday);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
@@ -83,25 +83,25 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			p += chunk;
 			c += 2;
 		}else if (*(c + 1) == 'H') {
-			auto chunk = snprintf(p, space, "%i", tm->tm_hour);
+			auto chunk = snprintf(p, space, "%.2i", tm->tm_hour);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
 			c += 2;
 		}else if (*(c + 1) == 'M') {
-			auto chunk = snprintf(p, space, "%i", tm->tm_min);
+			auto chunk = snprintf(p, space, "%.2i", tm->tm_min);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
 			c += 2;
 		}else if (*(c + 1) == 'S') {
-			auto chunk = snprintf(p, space, "%d", tm->tm_sec);
+			auto chunk = snprintf(p, space, "%.2d", tm->tm_sec);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
 			c += 2;
 		}else if (*(c + 1) == 'F') {
-			auto chunk = snprintf(p, space, "%d/%d/%d", 1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday);
+			auto chunk = snprintf(p, space, "%d/%.2d/%.2d", 1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
@@ -130,14 +130,14 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			p += chunk;
 			c += 2;
 		}else if (*(c + 1) == 'c') {
-			auto chunk = snprintf(p, space, "%d/%d/%d %d:%d:%d", 1900 + tm->tm_year,
+			auto chunk = snprintf(p, space, "%d/%.2d/%.2d %.2d:%.2d:%.2d", 1900 + tm->tm_year,
 					tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
 			c += 2;
 		}else if (*(c + 1) == 'd') {
-			auto chunk = snprintf(p, space, "%d", tm->tm_mday);
+			auto chunk = snprintf(p, space, "%.2d", tm->tm_mday);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
@@ -146,7 +146,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			int hour = tm->tm_hour;
 			if(hour > 12)
 				hour -= 12;
-			auto chunk = snprintf(p, space, "%i", hour);
+			auto chunk = snprintf(p, space, "%.2i", hour);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
