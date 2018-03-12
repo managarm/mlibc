@@ -740,7 +740,7 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 }
 
 int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
-	__ensure(!timeout || timeout == -1);
+	__ensure(!timeout || timeout == -1); // TODO: Remove this limitation.
 
 	HelAction actions[4];
 	globalQueue.trim();
@@ -749,6 +749,7 @@ int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
 	req.set_request_type(managarm::posix::CntReqType::EPOLL_WAIT);
 	req.set_fd(epfd);
 	req.set_size(n);
+	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
@@ -1807,7 +1808,41 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		}
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOSCLOCKID)) {
-		return 0;
+		auto param = reinterpret_cast<int *>(arg);
+		HelAction actions[3];
+		globalQueue.trim();
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+		req.set_input_clock(*param);
+	
+		frigg::String<MemoryAllocator> ser(getAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		return resp.result();
 	}
 	
 	frigg::infoLogger() << "mlibc: Unexpected ioctl with"

@@ -7,10 +7,6 @@
 #include <frigg/debug.hpp>
 
 int poll(struct pollfd *fds, nfds_t count, int timeout) {
-//	if(timeout)
-//		frigg::infoLogger() << "\e[31mmlibc: poll() timeout is not implemented correctly\e[39m"
-//				<< frigg::endLog;
-
 	// TODO: Do not keep errors from epoll (?).
 	int epfd = epoll_create1(0);
 	if(epfd == -1)
@@ -39,7 +35,7 @@ int poll(struct pollfd *fds, nfds_t count, int timeout) {
 	}
 
 	struct epoll_event evnts[16];
-	int n = epoll_wait(epfd, evnts, 16, -1);
+	int n = epoll_wait(epfd, evnts, 16, timeout);
 	if(n == -1)
 		return -1;
 
