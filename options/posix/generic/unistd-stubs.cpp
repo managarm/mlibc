@@ -233,8 +233,8 @@ int setreuid(uid_t, uid_t) {
 	__builtin_unreachable();
 }
 pid_t setsid(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "\e[31mmlibc: setsid() is a no-op\e[39m" << frigg::endLog;
+	return 1;
 }
 int setuid(uid_t) {
 	__ensure(!"Not implemented");

@@ -1,8 +1,8 @@
 
-#include <errno.h>
-#include "sys/socket.h"
-
 #include <bits/ensure.h>
+#include <errno.h>
+#include <sys/socket.h>
+
 #include <mlibc/allocator.hpp>
 #include <mlibc/cxx-support.hpp>
 #include <mlibc/posix-pipe.hpp>
@@ -11,41 +11,134 @@
 #include <frigg/string.hpp>
 #include <frigg/protobuf.hpp>
 
+#include <fs.frigg_pb.hpp>
 #include <posix.frigg_pb.hpp>
 
 namespace mlibc {
 
-int sys_connect(int fd, const struct sockaddr *address, socklen_t addr_length) {
-	__ensure(!"Fix this");
-/*	managarm::posix::ClientRequest<MemoryAllocator> request(getAllocator());
-	request.set_request_type(managarm::posix::ClientRequestType::CONNECT);
-	request.set_fd(fd);
+int sys_accept(int fd, int *newfd) {
+	HelAction actions[3];
+	globalQueue.trim();
 
-	int64_t request_num = allocPosixRequest();
-	frigg::String<MemoryAllocator> serialized(getAllocator());
-	request.SerializeToString(&serialized);
-	HelError error;
-	posixPipe.sendStringReqSync(serialized.data(), serialized.size(),
-			eventHub, request_num, 0, error);
-	HEL_CHECK(error);
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::ACCEPT);
+	req.set_fd(fd);
 
-	int8_t buffer[128];
-	size_t length;
-	HelError response_error;
-	posixPipe.recvStringRespSync(buffer, 128, eventHub, request_num, 0, response_error, length);
-	HEL_CHECK(response_error);
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
 
-	managarm::posix::ServerResponse<MemoryAllocator> response(getAllocator());
-	response.ParseFromArray(buffer, length);
-	if(response.error() == managarm::posix::Errors::SUCCESS) {
-		return 0;
-	}else if(response.error() == managarm::posix::Errors::NO_SUCH_FD) {
-		errno = EBADF;		
-		return -1;
-	}else{
-		__ensure(!"Unexpected error");
-		__builtin_unreachable();
-	}*/
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	*newfd = resp.fd();
+	return 0;
+}
+
+int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
+	auto handle = cacheFileTable()[fd];
+	__ensure(handle);
+
+	HelAction actions[4];
+	globalQueue.trim();
+
+	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_req_type(managarm::fs::CntReqType::PT_BIND);
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionSendFromBuffer;
+	actions[2].flags = kHelItemChain;
+	actions[2].buffer = const_cast<struct sockaddr *>(addr_ptr);
+	actions[2].length = addr_length;
+	actions[3].type = kHelActionRecvInline;
+	actions[3].flags = 0;
+	HEL_CHECK(helSubmitAsync(handle, actions, 4,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto send_addr = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(send_addr->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	return 0;
+}
+
+int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
+	auto handle = cacheFileTable()[fd];
+	__ensure(handle);
+
+	HelAction actions[4];
+	globalQueue.trim();
+
+	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_req_type(managarm::fs::CntReqType::PT_CONNECT);
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionSendFromBuffer;
+	actions[2].flags = kHelItemChain;
+	actions[2].buffer = const_cast<struct sockaddr *>(addr_ptr);
+	actions[2].length = addr_length;
+	actions[3].type = kHelActionRecvInline;
+	actions[3].flags = 0;
+	HEL_CHECK(helSubmitAsync(handle, actions, 4,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto send_addr = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(send_addr->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	return 0;
 }
 
 } //namespace mlibc

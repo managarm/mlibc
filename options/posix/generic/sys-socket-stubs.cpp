@@ -5,18 +5,24 @@
 #include <frigg/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
-int accept(int, struct sockaddr *__restrict, socklen_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length) {
+	if(addr_ptr || addr_length)
+		frigg::infoLogger() << "\e[35mmlibc: accept() does not fill struct sockaddr\e[39m"
+				<< frigg::endLog;
+	int newfd;
+	if(mlibc::sys_accept(fd, &newfd))
+		return -1;
+	return newfd;
 }
 
-int bind(int, const struct sockaddr *, socklen_t) {
-	frigg::infoLogger() << "\e[31mmlibc: bind() is a no-op\e[39m" << frigg::endLog;
+int bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_len) {
+	if(mlibc::sys_bind(fd, addr_ptr, addr_len))
+		return -1;
 	return 0;
 }
 
-int connect(int fd, const struct sockaddr *address, socklen_t addr_len) {
-	if(mlibc::sys_connect(fd, address, addr_len))
+int connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_len) {
+	if(mlibc::sys_connect(fd, addr_ptr, addr_len))
 		return -1;
 	return 0;
 }
