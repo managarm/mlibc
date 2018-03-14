@@ -19,15 +19,15 @@ void __mlibc_initStdio() {
 	size_t buffer_size = 1024;
 	
 	stdinFile.fd = 0;
-	stdinFile.bufferPtr = (char *)malloc(buffer_size);
+	stdinFile.bufferPtr = (char *)malloc(buffer_size); // TODO: Use the allocator.
 	stdinFile.bufferSize = buffer_size;
 
 	stdoutFile.fd = 1;
-	stdoutFile.bufferPtr = (char *)malloc(buffer_size);
+	stdoutFile.bufferPtr = (char *)malloc(buffer_size); // TODO: Use the allocator.
 	stdoutFile.bufferSize = buffer_size;
 	
 	stderrFile.fd = 2;
-	stderrFile.bufferPtr = (char *)malloc(buffer_size);
+	stderrFile.bufferPtr = (char *)malloc(buffer_size); // TODO: Use the allocator.
 	stderrFile.bufferSize = buffer_size;
 }
 
@@ -64,7 +64,7 @@ FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
 		frigg::panicLogger() << "Illegal fopen() mode '" << mode << "'" << frigg::endLog;
 	}
 
-	FILE *file = (FILE *)malloc(sizeof(FILE));
+	FILE *file = (FILE *)malloc(sizeof(FILE)); // TODO: Use the allocator.
 	file->fd = fd;
 	file->bufferPtr = nullptr;
 	file->bufferSize = 0;
@@ -166,7 +166,7 @@ int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t s
 
 	// TODO: free the old buffer
 	if(!buffer) {
-		auto new_buffer = (char *)malloc(size);
+		auto new_buffer = (char *)malloc(size); // TODO: Use the allocator.
 		__ensure(new_buffer);
 		stream->bufferPtr = new_buffer;
 		stream->bufferSize = size;

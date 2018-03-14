@@ -164,8 +164,7 @@ void srand(unsigned int s) {
 }
 
 void srandom(unsigned int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "mlibc: srandom() is a no-op" << frigg::endLog;
 }
 
 void *aligned_alloc(size_t alignment, size_t size) {
