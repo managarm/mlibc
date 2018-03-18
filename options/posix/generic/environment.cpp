@@ -15,30 +15,30 @@ char **environ = emptyEnvironment;
 namespace {
 
 // Environment vector that is mutated by putenv() and setenv().
-static frigg::Vector<char *, MemoryAllocator> env_vector{getAllocator()};
+static frigg::Vector<char *, MemoryAllocator> global_env_vector{getAllocator()};
 
 void update_env_copy() {
-	if(environ == env_vector.data())
+	if(environ == global_env_vector.data())
 		return;
 	
 	// If the environ variable was changed, we copy the environment.
 	// Note that we must only copy the pointers but not the strings themselves!
 	__ensure(!*environ); // TODO: Actually copy the entries.
-	env_vector.push(nullptr);
+	global_env_vector.push(nullptr);
 	
-	environ = env_vector.data();
+	environ = global_env_vector.data();
 }
 
 void fix_env_pointer() {
-	environ = env_vector.data();
+	environ = global_env_vector.data();
 }
 
 size_t find_env_index(frigg::StringView name) {
-	__ensure(environ == env_vector.data());
-	__ensure(!env_vector.empty());
+	__ensure(environ == global_env_vector.data());
+	__ensure(!global_env_vector.empty());
 
-	for(size_t i = 0; env_vector[i]; i++) {
-		frigg::StringView view{env_vector[i]};
+	for(size_t i = 0; global_env_vector[i]; i++) {
+		frigg::StringView view{global_env_vector[i]};
 		size_t s = view.findFirst('=');
 		__ensure(s != size_t(-1));
 		if(view.subString(0, s) == name)
@@ -51,11 +51,14 @@ size_t find_env_index(frigg::StringView name) {
 } // anonymous namespace
 
 char *getenv(const char *name) {
+	// TODO: We do not necessarily need this.
+	update_env_copy();
+
 	auto k = find_env_index(name);
 	if(k == size_t(-1))
 		return nullptr;
 	
-	frigg::StringView view{env_vector[k]};
+	frigg::StringView view{global_env_vector[k]};
 	size_t s = view.findFirst('=');
 	__ensure(s != size_t(-1));
 	return const_cast<char *>(view.data() + s + 1);
@@ -73,9 +76,9 @@ int putenv(const char *string) {
 	if(k != size_t(-1)) {
 		__ensure(!"Implement enviornment variable replacement");
 	}else{
-		__ensure(!env_vector.back()); // Last pointer must always be a null delimiter.
-		env_vector.back() = const_cast<char *>(string);
-		env_vector.push(nullptr);
+		__ensure(!global_env_vector.back()); // Last pointer must always be a null delimiter.
+		global_env_vector.back() = const_cast<char *>(string);
+		global_env_vector.push(nullptr);
 		fix_env_pointer();
 	}
 
@@ -99,10 +102,11 @@ int unsetenv(const char *name) {
 	auto k = find_env_index(name);
 	assert(k != size_t(-1));
 
-	__ensure(env_vector.size() >= 2 && !env_vector.back()); // Last pointer is always null.
-	frigg::swap(env_vector[k], env_vector[env_vector.size() - 2]);
-	env_vector.pop();
-	env_vector.back() = nullptr;
+	// Last pointer is always null.
+	__ensure(global_env_vector.size() >= 2 && !global_env_vector.back());
+	frigg::swap(global_env_vector[k], global_env_vector[global_env_vector.size() - 2]);
+	global_env_vector.pop();
+	global_env_vector.back() = nullptr;
 
 	return 0;
 }

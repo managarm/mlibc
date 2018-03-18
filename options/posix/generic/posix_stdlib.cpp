@@ -56,8 +56,15 @@ char *mkdtemp(char *path) {
 	__builtin_unreachable();
 }
 
-char *realpath(const char *__restrict, char *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+char *realpath(const char *__restrict path, char *__restrict resolved) {
+	// TODO: Implement this based on 
+	__ensure(!resolved);
+	frigg::infoLogger() << "\e[31mmlibc: realpath() does not really resolve paths\e[39m"
+			<< frigg::endLog;
+
+	resolved = reinterpret_cast<char *>(malloc(strlen(path) + 1));
+	assert(resolved);
+	strcpy(resolved, path);
+	return resolved;
 }
 

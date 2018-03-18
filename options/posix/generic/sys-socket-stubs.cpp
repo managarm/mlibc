@@ -106,6 +106,10 @@ int setsockopt(int sockfd, int layer, int number,
 		frigg::infoLogger() << "\e[31mmlibc: setsockopt(SO_ATTACH_FILTER) is not implemented"
 				" correctly\e[39m" << frigg::endLog;
 		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_RCVBUFFORCE) {
+		frigg::infoLogger() << "\e[31mmlibc: setsockopt(SO_RCVBUFFORCE) is not implemented"
+				" correctly\e[39m" << frigg::endLog;
+		return 0;
 	}else{
 		frigg::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call\e[39m" << frigg::endLog;
 		__builtin_unreachable();

@@ -133,8 +133,13 @@ size_t strcspn(const char *s, const char *chrs) {
 	}
 }
 char *strpbrk(const char *s, const char *chrs) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	size_t n = 0;
+	while(s[n]) {
+		if(strchr(chrs, s[n]))
+			return const_cast<char *>(s + n);
+		n++;
+	}
+	return nullptr;
 }
 char *strrchr(const char *s, int c) {
 	// The null-terminator is considered to be part of the string.
@@ -222,8 +227,9 @@ void *mempcpy(void *dest, const void *src, size_t len) {
 	return (char *)memcpy(dest, src, len) + len;
 }
 
-char *stpcpy(char *__restrict, const char *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+char *stpcpy(char *__restrict dest, const char *__restrict src) {
+	auto n = strlen(src);
+	memcpy(dest, src, n + 1);
+	return dest + n;
 }
 
