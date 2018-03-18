@@ -10,9 +10,9 @@ unsigned int alarm(unsigned int seconds) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int chdir(const char *path) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int chdir(const char *) {
+	frigg::infoLogger() << "\e[31mmlibc: chdir() is a no-op\e[39m" << frigg::endLog;
+	return 0;
 }
 int chown(const char *path, uid_t uid, gid_t gid) {
 	__ensure(!"Not implemented");
@@ -243,9 +243,10 @@ int setuid(uid_t) {
 void swab(const void *__restrict, void *__restrict, ssize_t) {
 	__ensure(!"Not implemented");
 }
-int symlink(const char *, const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int symlink(const char *target_path, const char *link_path) {
+	if(mlibc::sys_symlink(target_path, link_path))
+		return -1;
+	return 0;
 }
 int symlinkat(const char *, int, const char *) {
 	__ensure(!"Not implemented");
@@ -254,9 +255,14 @@ int symlinkat(const char *, int, const char *) {
 void sync(void) {
 	__ensure(!"Not implemented");
 }
-unsigned long sysconf(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+unsigned long sysconf(int number) {
+	if(number == _SC_PAGE_SIZE) {
+		return 4096;
+	}else{
+		frigg::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented\e[39m"
+				<< frigg::endLog;
+		__builtin_unreachable();
+	}
 }
 pid_t tcgetpgrp(int) {
 	__ensure(!"Not implemented");
@@ -310,8 +316,9 @@ char *get_current_dir_name(void) {
 
 // This is a Linux extension
 pid_t gettid(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "\e[31mmlibc: gettid() is not implemented correctly\e[39m"
+			<< frigg::endLog;
+	return mlibc::sys_getpid();
 }
 
 

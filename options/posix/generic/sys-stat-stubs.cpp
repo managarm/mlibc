@@ -1,8 +1,8 @@
 
+#include <bits/ensure.h>
 #include <sys/stat.h>
 
-#include <bits/ensure.h>
-
+#include <frigg/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 int chmod(const char *, mode_t) {
@@ -29,9 +29,11 @@ int lstat(const char *__restrict, struct stat *__restrict) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int mkdir(const char *, mode_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int mkdir(const char *path, mode_t) {
+	frigg::infoLogger() << "\e[31mmlibc: mkdir() ignore the mode\e[39m" << frigg::endLog;
+	if(mlibc::sys_mkdir(path))
+		return -1;
+	return 0;
 }
 int mkdirat(int, const char *, mode_t) {
 	__ensure(!"Not implemented");
@@ -54,8 +56,9 @@ int mknodat(const char *, mode_t, dev_t) {
 	__builtin_unreachable();
 }
 mode_t umask(mode_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "\e[31mmlibc: umask() is a no-op and always returns 0\e[39m"
+			<< frigg::endLog;
+	return 0;
 }
 int utimensat(int, const char *, const struct timespec times[2], int) {
 	__ensure(!"Not implemented");

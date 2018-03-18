@@ -2,8 +2,10 @@
 #include <sys/random.h>
 #include <bits/ensure.h>
 
-ssize_t getrandom(void *, size_t, unsigned int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+#include <frigg/debug.hpp>
+
+ssize_t getrandom(void *buffer, size_t max_size, unsigned int flags) {
+	frigg::infoLogger() << "\e[31mmlibc: getrandom() is a no-op\e[39m" << frigg::endLog;
+	return max_size;
 }
 
