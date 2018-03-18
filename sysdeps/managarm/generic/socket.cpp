@@ -57,7 +57,7 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	auto handle = cacheFileTable()[fd];
 	__ensure(handle);
 
-	HelAction actions[4];
+	HelAction actions[5];
 	globalQueue.trim();
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
@@ -71,13 +71,15 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	actions[1].flags = kHelItemChain;
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
-	actions[2].type = kHelActionSendFromBuffer;
+	actions[2].type = kHelActionImbueCredentials;
 	actions[2].flags = kHelItemChain;
-	actions[2].buffer = const_cast<struct sockaddr *>(addr_ptr);
-	actions[2].length = addr_length;
-	actions[3].type = kHelActionRecvInline;
-	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 4,
+	actions[3].type = kHelActionSendFromBuffer;
+	actions[3].flags = kHelItemChain;
+	actions[3].buffer = const_cast<struct sockaddr *>(addr_ptr);
+	actions[3].length = addr_length;
+	actions[4].type = kHelActionRecvInline;
+	actions[4].flags = 0;
+	HEL_CHECK(helSubmitAsync(handle, actions, 5,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -101,7 +103,7 @@ int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) 
 	auto handle = cacheFileTable()[fd];
 	__ensure(handle);
 
-	HelAction actions[4];
+	HelAction actions[5];
 	globalQueue.trim();
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
@@ -115,13 +117,15 @@ int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) 
 	actions[1].flags = kHelItemChain;
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
-	actions[2].type = kHelActionSendFromBuffer;
+	actions[2].type = kHelActionImbueCredentials;
 	actions[2].flags = kHelItemChain;
-	actions[2].buffer = const_cast<struct sockaddr *>(addr_ptr);
-	actions[2].length = addr_length;
-	actions[3].type = kHelActionRecvInline;
-	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 4,
+	actions[3].type = kHelActionSendFromBuffer;
+	actions[3].flags = kHelItemChain;
+	actions[3].buffer = const_cast<struct sockaddr *>(addr_ptr);
+	actions[3].length = addr_length;
+	actions[4].type = kHelActionRecvInline;
+	actions[4].flags = 0;
+	HEL_CHECK(helSubmitAsync(handle, actions, 5,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
