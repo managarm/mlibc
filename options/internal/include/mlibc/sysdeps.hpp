@@ -54,6 +54,7 @@ int sys_signalfd_create(int flags, int *fd);
 int sys_chroot(const char *path);
 int sys_mkdir(const char *path);
 int sys_symlink(const char *target_path, const char *link_path);
+int sys_rename(const char *path, const char *new_path);
 int sys_fcntl(int fd, int request, va_list args);
 int sys_ttyname(int fd, char *buf, size_t size);
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window);

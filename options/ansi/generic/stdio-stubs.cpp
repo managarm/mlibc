@@ -121,9 +121,10 @@ int remove(const char *filename) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int rename(const char *old_path, const char *new_path) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int rename(const char *path, const char *new_path) {
+	if(mlibc::sys_rename(path, new_path))
+		return -1;
+	return 0;
 }
 FILE *tmpfile(void) {
 	__ensure(!"Not implemented");
