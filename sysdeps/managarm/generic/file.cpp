@@ -15,9 +15,9 @@
 #include <sys/mman.h>
 // for stat()
 #include <sys/stat.h>
+#include <sys/inotify.h>
 // for ioctl()
 #include <sys/ioctl.h>
-
 #include <sys/socket.h>
 #include <sys/timerfd.h>
 #include <sys/signalfd.h>
@@ -953,6 +953,49 @@ int sys_signalfd_create(int flags, int *fd) {
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::SIGNALFD_CREATE);
+	req.set_flags(proto_flags);
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	*fd = resp.fd();
+	return 0;
+}
+
+int sys_inotify_create(int flags, int *fd) {
+	__ensure(!(flags & ~(IN_CLOEXEC)));
+
+	HelAction actions[3];
+	globalQueue.trim();
+	
+	uint32_t proto_flags = 0;
+	if(flags & IN_CLOEXEC)
+		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::INOTIFY_CREATE);
 	req.set_flags(proto_flags);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());

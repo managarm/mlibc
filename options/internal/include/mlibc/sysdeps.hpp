@@ -65,6 +65,7 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds);
 int sys_epoll_create(int flags, int *fd);
 int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev);
 int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout);
+int sys_inotify_create(int flags, int *fd);
 int sys_ioctl(int fd, unsigned long request, void *arg);
 int sys_waitpid(pid_t pid, int *status, int flags);
 int sys_mount(const char *source, const char *target,

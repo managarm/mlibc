@@ -1,20 +1,27 @@
 
-#include <sys/inotify.h>
 #include <bits/ensure.h>
+#include <sys/inotify.h>
+
+#include <frigg/debug.hpp>
+#include <mlibc/sysdeps.hpp>
 
 int inotify_init(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	int fd;
+	if(mlibc::sys_inotify_create(0, &fd))
+		return -1;
+	return fd;
 }
 
-int inotify_init1(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int inotify_init1(int flags) {
+	int fd;
+	if(mlibc::sys_inotify_create(0, &fd))
+		return -1;
+	return fd;
 }
 
 int inotify_add_watch(int, const char *, unsigned int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "\e[31mmlibc: inotify_add_watch() is broken\e[39m" << frigg::endLog;
+	return 0; // TODO: Return a non-negative watch descriptor.
 }
 
 int inotify_rm_watch(int, int) {
