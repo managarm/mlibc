@@ -696,13 +696,14 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	__ensure(hdr->msg_iovlen);
 
-	HelAction actions[4];
+	HelAction actions[5];
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::RECVMSG);
 	req.set_fd(sockfd);
 	req.set_size(hdr->msg_iov[0].iov_len);
+	req.set_addr_size(hdr->msg_namelen);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
@@ -715,21 +716,27 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = kHelItemChain;
 	actions[3].type = kHelActionRecvToBuffer;
-	actions[3].flags = 0;
-	actions[3].buffer = hdr->msg_iov[0].iov_base;
-	actions[3].length = hdr->msg_iov[0].iov_len;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 4,
+	actions[3].flags = kHelItemChain;
+	actions[3].buffer = hdr->msg_name;
+	actions[3].length = hdr->msg_namelen;
+	actions[4].type = kHelActionRecvToBuffer;
+	actions[4].flags = 0;
+	actions[4].buffer = hdr->msg_iov[0].iov_base;
+	actions[4].length = hdr->msg_iov[0].iov_len;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 5,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
 	auto offer = parseSimple(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
+	auto recv_addr = parseInline(element);
 	auto recv_data = parseLength(element);
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(recv_addr->error);
 	HEL_CHECK(recv_data->error);
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
@@ -756,6 +763,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	}
 
 	*length = recv_data->length;
+	hdr->msg_namelen = recv_addr->length;
 	return 0;
 }
 
