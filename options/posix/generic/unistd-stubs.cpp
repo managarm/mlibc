@@ -299,11 +299,6 @@ int unlinkat(int, const char *, int) {
 	__builtin_unreachable();
 }
 
-char *optarg;
-int optind;
-int opterr;
-int optopt;
-
 int getpagesize(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

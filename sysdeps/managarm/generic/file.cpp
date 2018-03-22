@@ -2664,8 +2664,13 @@ int sys_unlink(const char *path) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	return 0;
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		errno = ENOENT;
+		return -1;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		return 0;
+	}
 }
 
 int sys_access(const char *path, int mode) {

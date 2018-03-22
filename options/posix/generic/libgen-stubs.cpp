@@ -3,6 +3,8 @@
 #include <libgen.h>
 #include <string.h>
 
+#include <frigg/debug.hpp>
+
 // Adopted from musl's code.
 char *basename(char *s) {
 	// This empty string behavior is specified by POSIX.

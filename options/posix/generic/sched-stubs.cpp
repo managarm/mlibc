@@ -1,8 +1,8 @@
 
+#include <bits/ensure.h>
 #include <sched.h>
 
-#include <bits/ensure.h>
-
+#include <frigg/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 int sched_yield(void) {
@@ -10,9 +10,9 @@ int sched_yield(void) {
 	return 0;
 }
 
-int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int sched_getaffinity(pid_t, size_t, cpu_set_t *) {
+	frigg::infoLogger() << "\e[31mmlibc: sched_getaffinity() always fails\e[39m" << frigg::endLog;
+	return -1;
 }
 
 int CPU_COUNT(cpu_set_t *set) {

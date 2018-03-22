@@ -8,6 +8,11 @@
 #include <stdio.h>
 #include <string.h>
 
+char *optarg;
+int optind = 1;
+int opterr;
+int optopt;
+
 // TODO: Support all global variables
 // TODO: Report ambigious options
 // TODO: Support concatenated short options
