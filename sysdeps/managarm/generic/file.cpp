@@ -696,7 +696,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	__ensure(hdr->msg_iovlen);
 
-	HelAction actions[5];
+	HelAction actions[6];
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
@@ -704,6 +704,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	req.set_fd(sockfd);
 	req.set_size(hdr->msg_iov[0].iov_len);
 	req.set_addr_size(hdr->msg_namelen);
+	req.set_ctrl_size(hdr->msg_controllen);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
@@ -720,50 +721,38 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	actions[3].buffer = hdr->msg_name;
 	actions[3].length = hdr->msg_namelen;
 	actions[4].type = kHelActionRecvToBuffer;
-	actions[4].flags = 0;
+	actions[4].flags = kHelItemChain;
 	actions[4].buffer = hdr->msg_iov[0].iov_base;
 	actions[4].length = hdr->msg_iov[0].iov_len;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 5,
+	actions[5].type = kHelActionRecvToBuffer;
+	actions[5].flags = 0;
+	actions[5].buffer = hdr->msg_control;
+	actions[5].length = hdr->msg_controllen;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 6,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
 	auto offer = parseSimple(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
-	auto recv_addr = parseInline(element);
+	auto recv_addr = parseLength(element);
 	auto recv_data = parseLength(element);
+	auto recv_ctrl = parseLength(element);
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
 	HEL_CHECK(recv_addr->error);
 	HEL_CHECK(recv_data->error);
+	HEL_CHECK(recv_ctrl->error);
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 
-	if(resp.fds_size()) {
-		auto space = CMSG_SPACE(resp.fds_size() * sizeof(int));
-		__ensure(hdr->msg_controllen >= space);
-
-		auto cmsg = CMSG_FIRSTHDR(hdr);
-		cmsg->cmsg_level = SOL_SOCKET;
-		cmsg->cmsg_type = SCM_RIGHTS;
-		cmsg->cmsg_len = CMSG_LEN(resp.fds_size() * sizeof(int));
-
-		for(int i = 0; i < resp.fds_size(); i++) {
-			int fd = resp.fds(i);
-			memcpy(CMSG_DATA(cmsg) + i * sizeof(int), &fd, sizeof(int));
-		}
-
-		hdr->msg_controllen = space;
-	}else{
-		hdr->msg_controllen = 0;
-	}
-
-	*length = recv_data->length;
 	hdr->msg_namelen = recv_addr->length;
+	hdr->msg_controllen = recv_ctrl->length;
+	*length = recv_data->length;
 	return 0;
 }
 

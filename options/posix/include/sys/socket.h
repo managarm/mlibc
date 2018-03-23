@@ -38,22 +38,41 @@ struct cmsghdr {
 	int cmsg_type;
 };
 
-#define CMSG_LEN(sz) (sizeof(struct cmsghdr) + (sz))
-#define CMSG_ALIGN(sz) (((sz) + __alignof__(struct cmsghdr) - 1) & \
-		~(__alignof__(struct cmsghdr) - 1))
-#define CMSG_SPACE(sz) (sizeof(struct cmsghdr) + CMSG_ALIGN(sz))
+// Control message format:
+// The offsets marked with ^ are aligned to alignof(size_t).
+// 
+// |---HEADER---|---DATA---|---PADDING---|---HEADER---|...
+// ^            ^                        ^
+// |---------CMSG_LEN------|
+// |---------------CMSG_SPACE------------|
 
-#define __MLIBC_CMSG_NEXT(cmsg) ((char *)(cmsg) + CMSG_ALIGN((cmsg)->cmsg_len))
-#define __MLIBC_MHDR_LIMIT(mhdr) ((char *)(mhdr)->msg_control + (mhdr)->msg_controllen)
+// Auxiliary macro. While there is basically no reason for applications
+// to use this, it is exported by glibc.
+#define CMSG_ALIGN(s) (((s) + __alignof__(size_t) - 1) & \
+		~(__alignof__(size_t) - 1))
 
-#define CMSG_DATA(cmsg) ((char *)(((struct cmsghdr *)(cmsg)) + 1))
-#define CMSG_NXTHDR(mhdr, cmsg) \
-	((cmsg)->cmsg_len < sizeof(struct cmsghdr) || \
-		sizeof(struct cmsghdr) + CMSG_ALIGN((cmsg)->cmsg_len) \
-			>= __MLIBC_MHDR_LIMIT(mhdr) - (char *)(cmsg) \
-	? (struct cmsghdr *)0 : (struct cmsghdr *)__MLIBC_CMSG_NEXT(cmsg))
-#define CMSG_FIRSTHDR(mhdr) ((size_t)(mhdr)->msg_controllen <= sizeof(struct cmsghdr) \
-	? (struct cmsghdr *)0 : (struct cmsghdr *) (mhdr)->msg_control)
+// Basic macros to return content and padding size of a control message.
+#define CMSG_LEN(s) (sizeof(struct cmsghdr) + (s))
+#define CMSG_SPACE(s) (sizeof(struct cmsghdr) + CMSG_ALIGN(s))
+
+// Provides access to the data of a control message.
+#define CMSG_DATA(c) ((char *)(c) + sizeof(struct cmsghdr))
+
+#define __MLIBC_CMSG_NEXT(c) ((char *)(c) + CMSG_ALIGN((c)->cmsg_len))
+#define __MLIBC_MHDR_LIMIT(m) ((char *)(m)->msg_control + (m)->msg_controllen)
+
+// For parsing control messages only.
+// Returns a pointer to the first header or nullptr if there is none.
+#define CMSG_FIRSTHDR(m) ((size_t)(m)->msg_controllen <= sizeof(struct cmsghdr) \
+	? (struct cmsghdr *)0 : (struct cmsghdr *) (m)->msg_control)
+
+// For parsing control messages only.
+// Returns a pointer to the next header or nullptr if there is none.
+#define CMSG_NXTHDR(m, c) \
+	((c)->cmsg_len < sizeof(struct cmsghdr) || \
+		sizeof(struct cmsghdr) + CMSG_ALIGN((c)->cmsg_len) \
+			>= __MLIBC_MHDR_LIMIT(m) - (char *)(c) \
+	? (struct cmsghdr *)0 : (struct cmsghdr *)__MLIBC_CMSG_NEXT(c))
 
 #define SCM_RIGHTS 1
 
