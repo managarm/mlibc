@@ -63,6 +63,7 @@ libc_includes := alloca.h \
 	assert.h \
 	ctype.h \
 	errno.h \
+	fenv.h \
 	inttypes.h \
 	limits.h \
 	locale.h \
