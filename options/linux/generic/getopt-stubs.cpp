@@ -1,22 +1,17 @@
 
-#include <getopt.h>
-
-#include <frigg/debug.hpp>
-#include <bits/ensure.h>
 
 #include <assert.h>
+#include <bits/ensure.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <string.h>
 
+#include <frigg/debug.hpp>
+
 char *optarg;
 int optind = 1;
-int opterr;
+int opterr = 1;
 int optopt;
-
-// TODO: Support all global variables
-// TODO: Report ambigious options
-// TODO: Support concatenated short options
-// TODO: Support arguments
 
 int getopt_long(int argc, char * const argv[], const char *optstring,
 		const struct option *longopts, int *longindex) {
@@ -24,33 +19,52 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 		char *arg = argv[optind];
 		if(arg[0] != '-')
 			return -1;
+
 		if(arg[1] == '-') {
-			for(int i = 0; longopts[i].name; i++) {	
-				if(!strcmp(argv[optind] + 2, longopts[i].name)) {
-					// We do not support arguments yet
-					assert(longopts[i].has_arg == no_argument);
-					if(!longopts[i].flag) {
-						optind++;
-						return longopts[i].val;
-					}
-							
-					*longopts[i].flag = longopts[i].val;
-					optind++;
-					return 0;
+			int k = -1;
+			for(int i = 0; longopts[i].name; i++) {
+				if(strcmp(argv[optind] + 2, longopts[i].name))
+					continue;
+				if(k >= 0) {
+					if(opterr)
+						fprintf(stderr, "Multiple option declaration detected.\n", arg);
+					return '?';
 				}
+				k = i;
 			}
-			fprintf(stderr, "%s is not a valid option.\n", arg);
-			return '?';
+
+			if(k == -1) {
+				if(opterr)
+					fprintf(stderr, "%s is not a valid option.\n", arg);
+				return -1;
+			}
+
+			if(longindex)
+				*longindex = k;
+
+			// We do not support arguments yet
+			__ensure(longopts[k].has_arg == no_argument);
+			if(!longopts[k].flag) {
+				optind++;
+				return longopts[k].val;
+			}
+					
+			*longopts[k].flag = longopts[k].val;
+			optind++;
+			return 0;
 		}else {
-			// We do not support multiple shortoptions yet. Ex: -dhV.
-			assert(strlen(argv[optind]) == 2);
+			__ensure((strlen(argv[optind]) == 2) && "We do not support concatenated short options yet.");
 			unsigned int i = 1;
 			while(true) {
-				if(strchr(optstring, arg[i])) {
+				auto opt = strchr(optstring, arg[i]);
+				if(opt) {
+					__ensure((opt[1] != ':') && "We do not support option arguments.");
 					optind++;
 					return arg[i];
 				}else {
-					fprintf(stderr, "%s is not a valid option.\n", arg);
+					optopt = arg[1];
+					if(opterr)
+						fprintf(stderr, "%s is not a valid option.\n", arg);
 					return '?';
 				}
 			}
