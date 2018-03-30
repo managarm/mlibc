@@ -76,6 +76,8 @@ int sys_sigaction(int, const struct sigaction *__restrict, struct sigaction *__r
 int sys_accept(int fd, int *newfd);
 int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);
 int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);
+int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
+		socklen_t *actual_length);
 
 } //namespace mlibc
 

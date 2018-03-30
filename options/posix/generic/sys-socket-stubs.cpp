@@ -32,10 +32,12 @@ int getpeername(int, struct sockaddr *__restrict, socklen_t *__restrict) {
 	__builtin_unreachable();
 }
 
-int getsockname(int, struct sockaddr *__restrict, socklen_t *__restrict) {
-	frigg::infoLogger() << "\e[31mmlibc: getsockname() always fails\e[39m"
-			<< frigg::endLog;
-	return -1;
+int getsockname(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length) {
+	socklen_t actual_length;
+	if(mlibc::sys_sockname(fd, addr_ptr, *addr_length, &actual_length))
+		return -1;
+	*addr_length = actual_length;
+	return 0;
 }
 
 int getsockopt(int fd, int layer, int number,
