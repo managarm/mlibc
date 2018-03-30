@@ -15,7 +15,12 @@ int sched_getaffinity(pid_t, size_t, cpu_set_t *) {
 	return -1;
 }
 
-int CPU_COUNT(cpu_set_t *set) {
+int __mlibc_cpu_isset(int cpu, cpu_set_t *set) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int __mlibc_cpu_count(cpu_set_t *set) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

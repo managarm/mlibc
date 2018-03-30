@@ -1,10 +1,12 @@
 
+#include <bits/ensure.h>
 #include <sys/prctl.h>
 
-#include <bits/ensure.h>
+#include <frigg/debug.hpp>
 
-int prctl (int, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int prctl(int, ...) {
+	frigg::infoLogger() << "\e[31mmlibc: prctl() is not implemented correctly\e[39m"
+			<< frigg::endLog;
+	return 0;
 }
 

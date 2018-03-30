@@ -33,6 +33,10 @@
 #define CLONE_NEWNET 0x40000000
 #define CLONE_IO 0x80000000
 
+#define CPU_SETSIZE 128
+#define CPU_ISSET __mlibc_cpu_isset
+#define CPU_COUNT __mlibc_cpu_count
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -54,9 +58,10 @@ typedef struct __mlibc_cpu_set cpu_set_t;
 
 int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask);
 
-int CPU_COUNT(cpu_set_t *set);
-
 int unshare(int flags);
+
+int __mlibc_cpu_isset(int cpu, cpu_set_t *set);
+int __mlibc_cpu_count(cpu_set_t *set);
 
 #ifdef __cplusplus
 }

@@ -15,8 +15,9 @@ int chdir(const char *) {
 	return 0;
 }
 int chown(const char *path, uid_t uid, gid_t gid) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "\e[31mmlibc: chown() is not implemented correctly\e[39m"
+			<< frigg::endLog;
+	return 0;
 }
 ssize_t confstr(int, char *, size_t) {
 	__ensure(!"Not implemented");

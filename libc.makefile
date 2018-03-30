@@ -49,6 +49,7 @@ link_cxx_cmd = x86_64-managarm-g++ -shared -o $@ -nostdlib \
 	$(libc_BEGIN) $(libc_objects) -l:ld-init.so $(libc_END)
 install_header_cmd = install -Dp $< $@
 install_slib_cmd = install -Dp $< $@
+install_crt_cmd = install -Dp $< $@
 
 proto_pretty = $(call pretty,$(proto_cmd),protoc,$@)
 compile_s_pretty = $(call pretty,$(compile_s_cmd),as,$@)
@@ -57,6 +58,7 @@ compile_cxx_pretty = $(call pretty,$(compile_cxx_cmd),c++,$@)
 link_cxx_pretty = $(call pretty,$(link_cxx_cmd),link,$@)
 install_header_pretty = $(call pretty,$(install_header_cmd),install,$@)
 install_slib_pretty = $(call pretty,$(install_slib_cmd),install,$@)
+install_crt_pretty = $(call pretty,$(install_crt_cmd),install,$@)
 
 #Ansi
 libc_includes := alloca.h \
@@ -69,7 +71,6 @@ libc_includes := alloca.h \
 	locale.h \
 	math.h \
 	bits/ansi/clockid_t.h \
-	bits/ansi/ensure.h \
 	bits/ansi/seek.h \
 	bits/ansi/timespec.h \
 	bits/ansi/time_t.h \
@@ -81,7 +82,9 @@ libc_includes := alloca.h \
 	time.h \
 	wchar.h
 #Internal
-libc_includes += bits/feature.h \
+libc_includes += \
+	bits/ensure.h \
+	bits/feature.h \
 	bits/machine.h \
 	bits/null.h \
 	bits/size_t.h \
@@ -212,6 +215,9 @@ $(foreach d,$(libc_include_dirs),\
 $(SYSROOT_PATH)/usr/lib/libc.so: libc.so
 	$(install_slib_pretty)
 
+$(SYSROOT_PATH)/usr/lib/crt0.o: sysdeps/managarm/crt-src/crt0.o
+	$(install_crt_pretty)
+
 libc_code_dirs := options/ansi/generic \
 	options/ansi/musl-generic-math
 libc_code_dirs += options/linux/generic
@@ -223,7 +229,7 @@ libc_code_dirs += options/internal/generic \
 	options/internal/gcc-extra \
 	options/internal/x86_64
 	
-libc_code_dirs += sysdeps/managarm/generic
+libc_code_dirs += sysdeps/managarm/crt-src sysdeps/managarm/generic
 
 libc_s_sources := $(wildcard $(TREE_PATH)/options/internal/x86_64/*.S)
 
@@ -277,6 +283,7 @@ gen-libc: $(libc_gendir)/posix.frigg_pb.hpp $(libc_gendir)/fs.frigg_pb.hpp
 install-headers-libc: $(addprefix $(SYSROOT_PATH)/usr/include/,$(libc_includes))
 
 install-libc: $(addprefix $(SYSROOT_PATH)/usr/include/,$(libc_includes))
+install-libc: $(SYSROOT_PATH)/usr/lib/crt0.o
 install-libc: $(SYSROOT_PATH)/usr/lib/libc.so
 
 $(libc_gendir)/%.frigg_pb.hpp: $(MANAGARM_SRC_PATH)/bragi/proto/%.proto | $(libc_gendir)

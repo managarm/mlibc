@@ -118,8 +118,13 @@ int sys_mkdir(const char *path) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	return 0;
+	if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
+		errno = EEXIST;
+		return -1;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		return 0;
+	}
 }
 
 int sys_symlink(const char *target_path, const char *link_path) {
@@ -852,7 +857,7 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 }
 
 int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
-	__ensure(!timeout || timeout == -1); // TODO: Remove this limitation.
+	__ensure(timeout >= 0 || timeout == -1); // TODO: Report errors correctly.
 
 	HelAction actions[4];
 	globalQueue.trim();
@@ -1865,7 +1870,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		return size;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) >= _IOC_NR(EVIOCGBIT(0, 0))
-			&& _IOC_NR(request) <= _IOC_NR(EVIOCGBIT(0x1f /* should be EV_MAX */, 0))) {
+			&& _IOC_NR(request) <= _IOC_NR(EVIOCGBIT(EV_MAX, 0))) {
 		// Returns a bitmask of capabilities of the device.
 		// If type is zero, return a mask of supported types.
 		// As EV_SYN is zero, this implies that it is impossible
@@ -1998,6 +2003,12 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		return resp.result();
+	}else if(_IOC_TYPE(request) == 'E'
+			&& _IOC_NR(request) >= _IOC_NR(EVIOCGABS(0))
+			&& _IOC_NR(request) <= _IOC_NR(EVIOCGABS(ABS_MAX))) {
+		frigg::infoLogger() << "mlibc: EVIOCGABS is not implemented correctly"
+				<< frigg::endLog;
+		return -1;
 	}
 	
 	frigg::infoLogger() << "mlibc: Unexpected ioctl with"
@@ -2014,6 +2025,7 @@ int sys_open(const char *path, int flags, int *fd) {
 	globalQueue.trim();
 
 	uint32_t proto_flags = 0;
+	frigg::infoLogger() << "mlibc: flags: " << frigg::logHex(flags) << frigg::endLog;
 	if(flags & __MLIBC_O_CREAT)
 		proto_flags |= managarm::posix::OpenFlags::OF_CREATE;
 	if(flags & __MLIBC_O_EXCL)

@@ -60,8 +60,15 @@ FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
 	}else if(!strcmp(mode, "re")) {
 		if(mlibc::sys_open(filename, __MLIBC_O_RDONLY | __MLIBC_O_CLOEXEC, &fd))
 			return nullptr;
+	}else if(!strcmp(mode, "r+")) {
+		if(mlibc::sys_open(filename, __MLIBC_O_RDWR, &fd))
+			return nullptr;
 	}else if(!strcmp(mode, "w")) {
-		if(mlibc::sys_open(filename, __MLIBC_O_WRONLY, &fd))
+		if(mlibc::sys_open(filename, __MLIBC_O_WRONLY | __MLIBC_O_CREAT, &fd))
+			return nullptr;
+	}else if(!strcmp(mode, "we")) {
+		if(mlibc::sys_open(filename, __MLIBC_O_WRONLY | __MLIBC_O_CREAT
+				| __MLIBC_O_CLOEXEC, &fd))
 			return nullptr;
 	}else{
 		frigg::panicLogger() << "Illegal fopen() mode '" << mode << "'" << frigg::endLog;

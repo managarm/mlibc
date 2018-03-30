@@ -75,9 +75,26 @@ char *strtok_r(char *__restrict s, const char *__restrict del, char **__restrict
 	return tok;
 }
 
-char *strsep(char **stringp, const char *delim) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+char *strsep(char **m, const char *del) {
+	__ensure(m);
+
+	auto tok = *m;
+	if(!tok)
+		return nullptr;
+
+	// Replace the following delimiter by a null-terminator.
+	// After this loop: *p is null iff we reached the end of the string.
+	auto p = tok;
+	while(*p && !strchr(del, *p))
+		p++;
+	
+	if(*p) {
+		*p = 0;
+		*m = p + 1;
+	}else{
+		*m = nullptr;
+	}
+	return tok;
 }
 
 char *strsignal(int sig) {

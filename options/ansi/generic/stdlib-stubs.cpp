@@ -57,7 +57,7 @@ long double strtold(const char *__restrict string, char **__restrict end) {
 	__builtin_unreachable();
 }
 long strtol(const char *__restrict string, char **__restrict end, int base) {
-	__ensure(base == 10);
+	frigg::infoLogger() << "mlibc: strtol() called on string '" << string << "'" << frigg::endLog;
 	
 	// skip leading space
 	while(*string) {
@@ -66,7 +66,17 @@ long strtol(const char *__restrict string, char **__restrict end, int base) {
 		string++;
 	}
 	
-	__ensure(*string != '+' && *string != '-');
+	__ensure(*string != '+');
+	bool negative = false;
+	if(*string == '-') {
+		negative = true;
+		string++;
+	}
+	
+	if(base != 10) { // This is an ugly hack!
+		__ensure(!negative);
+		return strtoul(string, end, base);
+	}
 	
 	// parse the actual digits
 	long result = 0;
@@ -82,7 +92,7 @@ long strtol(const char *__restrict string, char **__restrict end, int base) {
 	if(end)
 		*end = const_cast<char *>(string);
 
-	return result;
+	return negative ? -result : result;
 }
 long long strtoll(const char *__restrict string, char **__restrict end, int base) {
 	static_assert(sizeof(long long) == sizeof(long));
