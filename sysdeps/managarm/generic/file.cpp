@@ -642,7 +642,7 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *length) {
 	__ensure(hdr->msg_iovlen);
 
-	HelAction actions[4];
+	HelAction actions[5];
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
@@ -675,20 +675,26 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	actions[2].flags = kHelItemChain;
 	actions[2].buffer = hdr->msg_iov[0].iov_base;
 	actions[2].length = hdr->msg_iov[0].iov_len;
-	actions[3].type = kHelActionRecvInline;
-	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 4,
+	actions[3].type = kHelActionSendFromBuffer;
+	actions[3].flags = kHelItemChain;
+	actions[3].buffer = hdr->msg_name;
+	actions[3].length = hdr->msg_namelen;
+	actions[4].type = kHelActionRecvInline;
+	actions[4].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 5,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
 	auto offer = parseSimple(element);
 	auto send_req = parseSimple(element);
 	auto send_data = parseSimple(element);
+	auto send_addr = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(send_data->error);
+	HEL_CHECK(send_addr->error);
 	HEL_CHECK(recv_resp->error);
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
