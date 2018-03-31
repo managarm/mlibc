@@ -98,24 +98,9 @@ ssize_t sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_
 	__builtin_unreachable();
 }
 
-int setsockopt(int sockfd, int layer, int number,
+int setsockopt(int fd, int layer, int number,
 		const void *buffer, socklen_t size) {
-	if(layer == SOL_SOCKET && number == SO_PASSCRED) {
-		frigg::infoLogger() << "\e[31mmlibc: setsockopt(SO_PASSCRED) is not implemented"
-				" correctly\e[39m" << frigg::endLog;
-		return 0;
-	}else if(layer == SOL_SOCKET && number == SO_ATTACH_FILTER) {
-		frigg::infoLogger() << "\e[31mmlibc: setsockopt(SO_ATTACH_FILTER) is not implemented"
-				" correctly\e[39m" << frigg::endLog;
-		return 0;
-	}else if(layer == SOL_SOCKET && number == SO_RCVBUFFORCE) {
-		frigg::infoLogger() << "\e[31mmlibc: setsockopt(SO_RCVBUFFORCE) is not implemented"
-				" correctly\e[39m" << frigg::endLog;
-		return 0;
-	}else{
-		frigg::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call\e[39m" << frigg::endLog;
-		__builtin_unreachable();
-	}
+	return mlibc::sys_setsockopt(fd, layer, number, buffer, size);
 }
 
 int shutdown(int, int) {
