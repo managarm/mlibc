@@ -2083,7 +2083,7 @@ int sys_open(const char *path, int flags, int *fd) {
 
 int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	//frigg::infoLogger() << "read() " << max_size << frigg::EndLog();
-	HelAction actions[4];
+	HelAction actions[5];
 	globalQueue.trim();
 
 	auto handle = cacheFileTable()[fd];
@@ -2102,23 +2102,27 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	actions[1].flags = kHelItemChain;
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
+	actions[2].type = kHelActionImbueCredentials;
 	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionRecvToBuffer;
-	actions[3].flags = 0;
-	actions[3].buffer = data;
-	actions[3].length = max_size;
-	HEL_CHECK(helSubmitAsync(handle, actions, 4,
+	actions[3].type = kHelActionRecvInline;
+	actions[3].flags = kHelItemChain;
+	actions[4].type = kHelActionRecvToBuffer;
+	actions[4].flags = 0;
+	actions[4].buffer = data;
+	actions[4].length = max_size;
+	HEL_CHECK(helSubmitAsync(handle, actions, 5,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
 	auto offer = parseSimple(element);
 	auto send_req = parseSimple(element);
+	auto imbue_creds = parseSimple(element);
 	auto recv_resp = parseInline(element);
 	auto recv_data = parseLength(element);
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
+	HEL_CHECK(imbue_creds->error);
 	HEL_CHECK(recv_resp->error);
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
@@ -2145,7 +2149,7 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 }
 
 int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
-	HelAction actions[4];
+	HelAction actions[5];
 	globalQueue.trim();
 
 	auto handle = cacheFileTable()[fd];
@@ -2164,23 +2168,27 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	actions[1].flags = kHelItemChain;
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
-	actions[2].type = kHelActionSendFromBuffer;
+	actions[2].type = kHelActionImbueCredentials;
 	actions[2].flags = kHelItemChain;
-	actions[2].buffer = const_cast<void *>(data);
-	actions[2].length = size;
-	actions[3].type = kHelActionRecvInline;
-	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 4,
+	actions[3].type = kHelActionSendFromBuffer;
+	actions[3].flags = kHelItemChain;
+	actions[3].buffer = const_cast<void *>(data);
+	actions[3].length = size;
+	actions[4].type = kHelActionRecvInline;
+	actions[4].flags = 0;
+	HEL_CHECK(helSubmitAsync(handle, actions, 5,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
 	auto offer = parseSimple(element);
 	auto send_req = parseSimple(element);
+	auto imbue_creds = parseSimple(element);
 	auto send_data = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
+	HEL_CHECK(imbue_creds->error);
 	HEL_CHECK(send_data->error);
 	HEL_CHECK(recv_resp->error);
 
