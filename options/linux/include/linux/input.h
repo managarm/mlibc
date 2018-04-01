@@ -337,6 +337,7 @@ struct input_absinfo {
 #define BTN_MISC 0x100
 #define BTN_1 0x101
 
+#define BTN_MOUSE 0x110
 #define BTN_LEFT 0x110
 #define BTN_RIGHT 0x111
 #define BTN_MIDDLE 0x112
@@ -348,7 +349,6 @@ struct input_absinfo {
 
 #define BTN_TOOL_PEN 0x140
 #define BTN_TOOL_FINGER	0x145
-#define BTN_MOUSE 0x146
 #define BTN_TOUCH 0x14A
 #define BTN_STYLUS 0x14B
 
