@@ -135,11 +135,6 @@ char *tmpnam(char *buffer) {
 	__builtin_unreachable();
 }
 
-int fclose(FILE *stream) {
-	if(mlibc::sys_close(stream->fd))
-		return EOF;
-	return 0;
-}
 // fflush() is provided by the POSIX sublibrary
 // fopen() is provided by the POSIX sublibrary
 FILE *freopen(const char *__restrict filename, const char *__restrict mode, FILE *__restrict stream) {

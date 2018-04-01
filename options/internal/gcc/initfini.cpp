@@ -6,6 +6,8 @@
 #include <hel.h>
 #include <hel-syscalls.h>
 
+#include <frigg/debug.hpp>
+
 namespace {
 
 // Itanium ABI static initialization guard.
@@ -39,6 +41,10 @@ struct Guard {
 static_assert(sizeof(Guard) == sizeof(int64_t));
 
 } // namespace { }
+
+extern "C" [[ gnu::visibility("hidden") ]] void __cxa_pure_virtual() {
+	frigg::panicLogger() << "mlibc: Virtual function called" << frigg::endLog;
+}
 
 extern "C" [[ gnu::visibility("hidden") ]] int __cxa_guard_acquire(int64_t *ptr) {
 	auto guard = reinterpret_cast<Guard *>(ptr);

@@ -5,7 +5,6 @@
 #include <bits/ansi/seek.h>
 #include <bits/feature.h>
 #include <bits/null.h>
-#include <bits/posix/file.h>
 #include <bits/size_t.h>
 
 #ifdef __cplusplus
@@ -19,7 +18,28 @@ extern "C" {
 
 // [C11-7.21.1] I/O related types
 
-typedef struct __mlibc_File FILE;
+struct __mlibc_file_base {
+	// Buffer for I/O operations.
+	char *__buffer_ptr;
+	
+	// Number of bytes the buffer can hold.
+	size_t __buffer_size;
+
+	// Current offset inside the buffer.
+	size_t __offset;
+
+	// Region inside the buffer that is currently valid.
+	// Does not include virtual bytes inserted by ungetc().
+	size_t __valid_begin;
+	size_t __valid_end;
+	
+	// Region inside the buffer that is currently dirty.
+	// This is always a subregion of the valid region.
+	size_t __dirty_begin;
+	size_t __dirty_end;
+};
+
+typedef struct __mlibc_file_base FILE;
 typedef size_t fpos_t;
 
 // [C11-7.21.1] I/O related macros

@@ -9,26 +9,150 @@
 #include <frigg/debug.hpp>
 
 #include <bits/abi.h>
+#include <mlibc/allocator.hpp>
 #include <mlibc/sysdeps.hpp>
 
-__mlibc_File stdinFile;
-__mlibc_File stdoutFile;
-__mlibc_File stderrFile;
+namespace mlibc {
+
+static bool disableBuffering = false;
+
+struct abstract_file : __mlibc_file_base {
+public:
+	abstract_file() {
+		__buffer_ptr = nullptr;
+		__buffer_size = 16;
+		__offset = 0;
+		__valid_begin = 0;
+		__valid_end = 0;
+		__dirty_begin = 0;
+		__dirty_end = 0;
+	}
+
+	abstract_file(const abstract_file &) = delete;
+
+	abstract_file &operator= (const abstract_file &) = delete;
+
+	~abstract_file() {
+		frigg::panicLogger() << "mlibc: Fix abstract_file destructor" << frigg::endLog;
+	}
+
+	virtual int close() = 0;
+
+	int read(char *buffer, size_t max_size, size_t *actual_size) {
+		__ensure(max_size);
+
+		if(disableBuffering)
+			return io_read(buffer, max_size, actual_size);
+
+		// Try use return data that is already inside buffers.
+		if(__offset >= __valid_begin && __offset < __valid_end) {
+			auto chunk = frigg::min(size_t(__valid_end - __offset), max_size);
+			memcpy(buffer, __buffer_ptr + __offset, chunk);
+			__offset += chunk;
+
+			*actual_size = chunk;
+			return 0;
+		}
+
+		// TODO: Write back dirty bytes if necessary.
+		__ensure(__dirty_begin == __dirty_end);
+		_reset_buffer_state();
+		_ensure_allocation();
+
+		// Buffer some data.
+		size_t io_size;
+		if(io_read(__buffer_ptr, __buffer_size, &io_size))
+			return -1;
+		if(!io_size) {
+			*actual_size = 0;
+			return 0;
+		}
+
+		// Return some of the newly buffered data.
+		auto chunk = frigg::min(io_size, max_size);
+		memcpy(buffer, __buffer_ptr, chunk);
+		__offset = chunk;
+		__valid_end = io_size;
+
+		*actual_size = chunk;
+		return 0;
+	}
+
+	int write(const char *buffer, size_t max_size, size_t *actual_size) {
+		__ensure(max_size);
+
+		if(disableBuffering)
+			return io_write(buffer, max_size, actual_size);
+		
+		return io_write(buffer, max_size, actual_size);
+	}
+
+protected:
+	virtual int io_read(char *buffer, size_t max_size, size_t *actual_size) = 0;
+	virtual int io_write(const char *buffer, size_t max_size, size_t *actual_size) = 0;
+
+private:
+	void _ensure_allocation() {
+		__ensure(__buffer_size);
+		if(__buffer_ptr)
+			return;
+
+		auto ptr = getAllocator().allocate(__buffer_size);
+		__buffer_ptr = reinterpret_cast<char *>(ptr);
+	}
+
+	void _reset_buffer_state() {
+		__offset = 0;
+		__valid_begin = 0;
+		__valid_end = 0;
+		__dirty_begin = 0;
+		__dirty_end = 0;
+	}
+};
+
+struct fd_file : abstract_file {
+	fd_file(int fd)
+	: _fd{fd} { }
+
+	int fd() {
+		return _fd;
+	}
+
+	int close() {
+		if(mlibc::sys_close(_fd))
+			return -1;
+		return 0;
+	}
+
+protected:
+	int io_read(char *buffer, size_t max_size, size_t *actual_size) override {
+		ssize_t s;
+		if(mlibc::sys_read(_fd, buffer, max_size, &s))
+			return -1;
+		*actual_size = s;
+		return 0;
+	}
+
+	int io_write(const char *buffer, size_t max_size, size_t *actual_size) override {
+		ssize_t s;
+		if(mlibc::sys_write(_fd, buffer, max_size, &s))
+			return -1;
+		*actual_size = s;
+		return 0;
+	}
+
+private:
+	// Underlying file descriptor.
+	int _fd;
+};
+
+} // namespace mlibc
+
+mlibc::fd_file stdinFile{0};
+mlibc::fd_file stdoutFile{1};
+mlibc::fd_file stderrFile{2};
 
 void __mlibc_initStdio() {
-	size_t buffer_size = 1024;
-	
-	stdinFile.fd = 0;
-	stdinFile.bufferPtr = (char *)malloc(buffer_size); // TODO: Use the allocator.
-	stdinFile.bufferSize = buffer_size;
-
-	stdoutFile.fd = 1;
-	stdoutFile.bufferPtr = (char *)malloc(buffer_size); // TODO: Use the allocator.
-	stdoutFile.bufferSize = buffer_size;
-	
-	stderrFile.fd = 2;
-	stderrFile.bufferPtr = (char *)malloc(buffer_size); // TODO: Use the allocator.
-	stderrFile.bufferSize = buffer_size;
 }
 
 int __mlibc_exactRead(int fd, void *buffer, size_t length) {
@@ -50,7 +174,10 @@ FILE *stderr = &stderrFile;
 FILE *stdin = &stdinFile;
 FILE *stdout = &stdoutFile;
 
-static bool disableBuffering = false;
+int fileno(FILE *file_base) {
+	auto file = static_cast<mlibc::fd_file *>(file_base);
+	return file->fd();
+}
 
 FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
 	int fd;
@@ -74,89 +201,162 @@ FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
 		frigg::panicLogger() << "Illegal fopen() mode '" << mode << "'" << frigg::endLog;
 	}
 
-	FILE *file = (FILE *)malloc(sizeof(FILE)); // TODO: Use the allocator.
-	file->fd = fd;
-	file->bufferPtr = nullptr;
-	file->bufferSize = 0;
-	return file;
+	return frigg::construct<mlibc::fd_file>(getAllocator(), fd);
 }
 
-size_t fread(void *__restrict buffer, size_t size, size_t count, FILE *__restrict stream) {
+FILE *fdopen(int fd, const char *mode) {
+	frigg::infoLogger() << "\e[31mmlibc: fdopen() ignores the file mode"
+			<< "\e[39m" << frigg::endLog;
+	(void)mode;
+
+	return frigg::construct<mlibc::fd_file>(getAllocator(), fd);
+}
+
+int fclose(FILE *file_base) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	if(file->close())
+		return EOF;
+	return 0;
+}
+
+size_t fread(void *__restrict buffer, size_t size, size_t count,
+		FILE *__restrict file_base) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	__ensure(size);
+	__ensure(count);
+
 	// Distinguish two cases here: If the object size is one, we perform byte-wise reads.
 	// Otherwise, we try to read each object individually.
 	if(size == 1) {
 		size_t progress = 0;
 		while(progress < count) {
-			ssize_t chunk;
-			if(mlibc::sys_read(stream->fd, (char *)buffer + progress, count - progress, &chunk)) {
+			size_t chunk;
+			if(file->read((char *)buffer + progress,
+					count - progress, &chunk)) {
 				// TODO: Handle I/O errors.
-				return progress;
-			}
-			if(!chunk) {
+				frigg::infoLogger() << "mlibc: fread() I/O errors are not handled"
+						<< frigg::endLog;
+				break;
+			}else if(!chunk) {
 				// TODO: Handle eof.
-				return progress;
+				break;
 			}
 
 			progress += chunk;
 		}
-
-		return count;
+		
+		return progress;
 	}else{
-		// TODO: Read each object individually.
-		if(__mlibc_exactRead(stream->fd, buffer, size * count))
-			return 0;
+		for(size_t i = 0; i < count; i++) {
+			size_t progress = 0;
+			while(progress < size) {
+				size_t chunk;
+				if(file->read((char *)buffer + i * size + progress,
+						size - progress, &chunk)) {
+					// TODO: Handle I/O errors.
+					frigg::infoLogger() << "mlibc: fread() I/O errors are not handled"
+							<< frigg::endLog;
+					break;
+				}else if(!chunk) {
+					// TODO: Handle eof.
+					break;
+				}
+				
+				progress += chunk;
+			}
+
+			if(progress < size)
+				return i;
+		}
+
 		return count;
 	}
 }
 
 size_t fwrite(const void *__restrict buffer, size_t size, size_t count,
-		FILE *__restrict stream) {
-	for(size_t i = 0; i < count; i++) {
-		char *block_ptr = (char *)buffer + i * size;
-		if(size > stream->bufferSize || disableBuffering) {
-			// write the buffer directly to the fd
-			size_t written = 0;
-			while(written < size) {
-				ssize_t result;
-				if(mlibc::sys_write(stream->fd, block_ptr + written, size - written, &result))
-					return i;
-				written += result;
-				__ensure(written <= size);
-			}
-		}else if(stream->bufferBytes + size < stream->bufferSize) {
-			memcpy((char *)stream->bufferPtr + stream->bufferBytes, block_ptr, size);
-			stream->bufferBytes += size;
-		}else{
-			__ensure(!"Not implemented");
-			__builtin_unreachable();
-		}
-	}
+		FILE *__restrict file_base) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	__ensure(size);
+	__ensure(count);
 
-	return count;
+	// Distinguish two cases here: If the object size is one, we perform byte-wise writes.
+	// Otherwise, we try to write each object individually.
+	if(size == 1) {
+		size_t progress = 0;
+		while(progress < count) {
+			size_t chunk;
+			if(file->write((const char *)buffer + progress,
+					count - progress, &chunk)) {
+				// TODO: Handle I/O errors.
+				frigg::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
+						<< frigg::endLog;
+				break;
+			}else if(!chunk) {
+				// TODO: Handle eof.
+				break;
+			}
+
+			progress += chunk;
+		}
+		
+		return progress;
+	}else{
+		for(size_t i = 0; i < count; i++) {
+			size_t progress = 0;
+			while(progress < size) {
+				size_t chunk;
+				if(file->write((const char *)buffer + i * size + progress,
+						size - progress, &chunk)) {
+					// TODO: Handle I/O errors.
+					frigg::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
+							<< frigg::endLog;
+					break;
+				}else if(!chunk) {
+					// TODO: Handle eof.
+					break;
+				}
+				
+				progress += chunk;
+			}
+
+			if(progress < size)
+				return i;
+		}
+
+		return count;
+	}
 }
 
 int fseek(FILE *stream, long offset, int whence) {
+	frigg::panicLogger() << "mlibc: Fix fseek()" << frigg::endLog;
+	/*
 	off_t new_offset;
 	if(mlibc::sys_seek(stream->fd, offset, whence, &new_offset))
 		return -1;
+	*/
 	return 0;
 }
 
 long ftell(FILE *stream) {
+	frigg::panicLogger() << "mlibc: Fix ftell()" << frigg::endLog;
+	/*
 	off_t new_offset;
 	if(mlibc::sys_seek(stream->fd, 0, SEEK_CUR, &new_offset))
 		return EOF;
 	return new_offset;
+	*/
+	return 0;
 }
 
 int fflush(FILE *stream) {
+/*
 	if(stream->bufferBytes == 0)
 		return 0;
 	
 	size_t written = 0;
 	while(written < stream->bufferBytes) {
 		ssize_t written_bytes;
-		if(mlibc::sys_write(stream->fd, stream->bufferPtr + written,
+		if(mlibc::sys_write(stream->fd, stream->__buffer_ptr + written,
 				stream->bufferBytes - written, &written_bytes)) {
 			stream->bufferBytes = 0;
 			return EOF;
@@ -167,10 +367,13 @@ int fflush(FILE *stream) {
 	}
 
 	stream->bufferBytes = 0;
+*/
 	return 0;
 }
 
 int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t size) {
+	frigg::panicLogger() << "mlibc: Fix setvbuf()" << frigg::endLog;
+/*
 	__ensure(mode == _IOLBF);
 	__ensure(stream->bufferBytes == 0);
 
@@ -178,18 +381,20 @@ int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t s
 	if(!buffer) {
 		auto new_buffer = (char *)malloc(size); // TODO: Use the allocator.
 		__ensure(new_buffer);
-		stream->bufferPtr = new_buffer;
-		stream->bufferSize = size;
+		stream->__buffer_ptr = new_buffer;
+		stream->__buffer_size = size;
 	}else{
-		stream->bufferPtr = buffer;
-		stream->bufferSize = size;
+		stream->__buffer_ptr = buffer;
+		stream->__buffer_size = size;
 	}
+*/
 
 	return 0;
 }
 
 void rewind(FILE *stream) {
-	fseek(stream, 0, SEEK_SET);
+	frigg::panicLogger() << "mlibc: Fix rewind()" << frigg::endLog;
+//	fseek(stream, 0, SEEK_SET);
 	// TODO: rewind() should also clear the error indicator.
 }
 
