@@ -179,9 +179,10 @@ int pause(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int pipe(int [2]) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pipe(int *fds) {
+	if(mlibc::sys_pipe(fds))
+		return -1;
+	return 0;
 }
 ssize_t pread(int, void *, size_t, off_t) {
 	__ensure(!"Not implemented");

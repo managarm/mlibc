@@ -62,6 +62,7 @@ int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window);
 int sys_vm_unmap(void *pointer, size_t size);
 int sys_tcgetattr(int fd, struct termios *attr);
 int sys_tcsetattr(int, int, const struct termios *attr);
+int sys_pipe(int *fds);
 int sys_socketpair(int domain, int type_and_flags, int proto, int *fds);
 int sys_epoll_create(int flags, int *fd);
 int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev);
