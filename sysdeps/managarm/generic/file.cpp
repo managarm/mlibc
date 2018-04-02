@@ -2297,9 +2297,14 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	*new_offset = resp.offset();
-	return 0;
+	if(resp.error() == managarm::fs::Errors::SEEK_ON_PIPE) {
+		errno = ESPIPE;
+		return -1;
+	}else{
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*new_offset = resp.offset();
+		return 0;
+	}
 }
 
 
