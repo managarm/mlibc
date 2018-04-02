@@ -2031,7 +2031,6 @@ int sys_open(const char *path, int flags, int *fd) {
 	globalQueue.trim();
 
 	uint32_t proto_flags = 0;
-	frigg::infoLogger() << "mlibc: flags: " << frigg::logHex(flags) << frigg::endLog;
 	if(flags & __MLIBC_O_CREAT)
 		proto_flags |= managarm::posix::OpenFlags::OF_CREATE;
 	if(flags & __MLIBC_O_EXCL)

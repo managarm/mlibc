@@ -54,8 +54,7 @@ public:
 			return 0;
 		}
 
-		// TODO: Write back dirty bytes if necessary.
-		__ensure(__dirty_begin == __dirty_end);
+		_write_back();
 		_reset_buffer_state();
 		_ensure_allocation();
 
@@ -83,15 +82,40 @@ public:
 
 		if(disableBuffering)
 			return io_write(buffer, max_size, actual_size);
-		
+
+		// We might have to seek before writing.
+		__ensure(__offset == __valid_end);
+
 		return io_write(buffer, max_size, actual_size);
+	}
+
+	int seek(off_t offset, int whence) {
+		_write_back();
+		
+		if(whence == SEEK_SET || whence == SEEK_END) {
+			if(io_seek(offset, whence))
+				return -1;
+			
+			// For absolute seeks we can just forget the current buffer.
+			_reset_buffer_state();
+			return 0;
+		}else{
+			__ensure(whence == SEEK_CUR); // TODO: Handle errors.
+			frigg::panicLogger() << "mlibc: Implement relative seek for FILE" << frigg::endLog;
+		}
 	}
 
 protected:
 	virtual int io_read(char *buffer, size_t max_size, size_t *actual_size) = 0;
 	virtual int io_write(const char *buffer, size_t max_size, size_t *actual_size) = 0;
+	virtual int io_seek(off_t offset, int whence) = 0;
 
 private:
+	void _write_back() {
+		// TODO: Write back dirty bytes if necessary.
+		__ensure(__dirty_begin == __dirty_end);
+	}
+
 	void _ensure_allocation() {
 		__ensure(__buffer_size);
 		if(__buffer_ptr)
@@ -118,7 +142,7 @@ struct fd_file : abstract_file {
 		return _fd;
 	}
 
-	int close() {
+	int close() override {
 		if(mlibc::sys_close(_fd))
 			return -1;
 		return 0;
@@ -138,6 +162,13 @@ protected:
 		if(mlibc::sys_write(_fd, buffer, max_size, &s))
 			return -1;
 		*actual_size = s;
+		return 0;
+	}
+
+	int io_seek(off_t offset, int whence) override {
+		off_t new_offset;
+		if(mlibc::sys_seek(_fd, offset, whence, &new_offset))
+			return -1;
 		return 0;
 	}
 
@@ -392,9 +423,9 @@ int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t s
 	return 0;
 }
 
-void rewind(FILE *stream) {
-	frigg::panicLogger() << "mlibc: Fix rewind()" << frigg::endLog;
-//	fseek(stream, 0, SEEK_SET);
+void rewind(FILE *file_base) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	file->seek(0, SEEK_SET);
 	// TODO: rewind() should also clear the error indicator.
 }
 
