@@ -57,7 +57,7 @@ long double strtold(const char *__restrict string, char **__restrict end) {
 	__builtin_unreachable();
 }
 long strtol(const char *__restrict string, char **__restrict end, int base) {
-	frigg::infoLogger() << "mlibc: strtol() called on string '" << string << "'" << frigg::endLog;
+//	frigg::infoLogger() << "mlibc: strtol() called on string '" << string << "'" << frigg::endLog;
 	
 	// skip leading space
 	while(*string) {

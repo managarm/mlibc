@@ -640,7 +640,12 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 }
 
 int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *length) {
-	__ensure(hdr->msg_iovlen);
+	HelSgItem sglist[4];
+	__ensure(hdr->msg_iovlen <= 4);
+	for(int i = 0; i < hdr->msg_iovlen; i++) {
+		sglist[i].buffer = hdr->msg_iov[i].iov_base;
+		sglist[i].length = hdr->msg_iov[i].iov_len;
+	}
 
 	HelAction actions[5];
 	globalQueue.trim();
@@ -671,10 +676,10 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	actions[1].flags = kHelItemChain;
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
-	actions[2].type = kHelActionSendFromBuffer;
+	actions[2].type = kHelActionSendFromBufferSg;
 	actions[2].flags = kHelItemChain;
-	actions[2].buffer = hdr->msg_iov[0].iov_base;
-	actions[2].length = hdr->msg_iov[0].iov_len;
+	actions[2].buffer = &sglist;
+	actions[2].length = hdr->msg_iovlen;
 	actions[3].type = kHelActionSendFromBuffer;
 	actions[3].flags = kHelItemChain;
 	actions[3].buffer = hdr->msg_name;
