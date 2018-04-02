@@ -28,15 +28,14 @@ struct __mlibc_file_base {
 	// Current offset inside the buffer.
 	size_t __offset;
 
-	// Region inside the buffer that is currently valid.
-	// Does not include virtual bytes inserted by ungetc().
-	size_t __valid_begin;
-	size_t __valid_end;
+	// Position inside the buffer that matches the current file pointer.
+	size_t __io_offset;
+
+	// Valid region of the buffer.
+	size_t __valid_limit;
 	
-	// Region inside the buffer that is currently dirty.
-	// This is always a subregion of the valid region.
-	size_t __dirty_begin;
-	size_t __dirty_end;
+	// True if the buffer was modified and not written back.
+	int __is_dirty;
 };
 
 typedef struct __mlibc_file_base FILE;

@@ -22,10 +22,9 @@ public:
 		__buffer_ptr = nullptr;
 		__buffer_size = 16;
 		__offset = 0;
-		__valid_begin = 0;
-		__valid_end = 0;
-		__dirty_begin = 0;
-		__dirty_end = 0;
+		__io_offset = 0;
+		__valid_limit = 0;
+		__is_dirty = 0;
 	}
 
 	abstract_file(const abstract_file &) = delete;
@@ -45,8 +44,8 @@ public:
 			return io_read(buffer, max_size, actual_size);
 
 		// Try use return data that is already inside buffers.
-		if(__offset >= __valid_begin && __offset < __valid_end) {
-			auto chunk = frigg::min(size_t(__valid_end - __offset), max_size);
+		if(__offset < __valid_limit) {
+			auto chunk = frigg::min(size_t(__valid_limit - __offset), max_size);
 			memcpy(buffer, __buffer_ptr + __offset, chunk);
 			__offset += chunk;
 
@@ -55,10 +54,12 @@ public:
 		}
 
 		_write_back();
-		_reset_buffer_state();
-		_ensure_allocation();
+		__offset = 0;
+		__io_offset = 0;
+		__valid_limit = 0;
 
 		// Buffer some data.
+		_ensure_allocation();
 		size_t io_size;
 		if(io_read(__buffer_ptr, __buffer_size, &io_size))
 			return -1;
@@ -71,7 +72,8 @@ public:
 		auto chunk = frigg::min(io_size, max_size);
 		memcpy(buffer, __buffer_ptr, chunk);
 		__offset = chunk;
-		__valid_end = io_size;
+		__io_offset = io_size;
+		__valid_limit = io_size;
 
 		*actual_size = chunk;
 		return 0;
@@ -84,7 +86,7 @@ public:
 			return io_write(buffer, max_size, actual_size);
 
 		// We might have to seek before writing.
-		__ensure(__offset == __valid_end);
+		__ensure(__offset == __valid_limit);
 
 		return io_write(buffer, max_size, actual_size);
 	}
@@ -97,7 +99,9 @@ public:
 				return -1;
 			
 			// For absolute seeks we can just forget the current buffer.
-			_reset_buffer_state();
+			__offset = 0;
+			__io_offset = 0;
+			__valid_limit = 0;
 			return 0;
 		}else{
 			__ensure(whence == SEEK_CUR); // TODO: Handle errors.
@@ -113,7 +117,12 @@ protected:
 private:
 	void _write_back() {
 		// TODO: Write back dirty bytes if necessary.
-		__ensure(__dirty_begin == __dirty_end);
+		// We need to write back all data in [0, __valid_limit].
+		// First do a seek to reset the I/O position to zero, then do a write().
+		// For pipe-like files (seek returns ESPIPE), we need to make sure
+		// that the buffer only ever contains all-dirty or all-clean data!
+		// We can achieve this by ungetc()ing all data before a write happens.
+		__ensure(!__is_dirty);
 	}
 
 	void _ensure_allocation() {
@@ -123,14 +132,6 @@ private:
 
 		auto ptr = getAllocator().allocate(__buffer_size);
 		__buffer_ptr = reinterpret_cast<char *>(ptr);
-	}
-
-	void _reset_buffer_state() {
-		__offset = 0;
-		__valid_begin = 0;
-		__valid_end = 0;
-		__dirty_begin = 0;
-		__dirty_end = 0;
 	}
 };
 
