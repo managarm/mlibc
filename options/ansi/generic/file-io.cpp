@@ -50,6 +50,10 @@ public:
 
 	virtual int close() = 0;
 
+	// Note that read() and write() are asymmetric:
+	// While read() can trigger a write-back, write() can never trigger a read-ahead().
+	// This peculiarity is reflected in their code.
+
 	int read(char *buffer, size_t max_size, size_t *actual_size) {
 		__ensure(max_size);
 
@@ -63,37 +67,34 @@ public:
 					<< frigg::endLog;
 		__io_mode = 0;
 
-		// Try use return data that is already inside buffers.
-		if(__offset < __valid_limit) {
-			auto chunk = frigg::min(size_t(__valid_limit - __offset), max_size);
-			memcpy(buffer, __buffer_ptr + __offset, chunk);
-			__offset += chunk;
-
-			*actual_size = chunk;
-			return 0;
-		}
-
 		// Clear the buffer, then buffer new data.
-		if(_write_back())
-			return -1;
-		if(_reset())
-			return -1;
+		if(__offset == __valid_limit) {
+			// TODO: We only have to write-back/reset if __valid_limit reaches the buffer end.
+			if(_write_back())
+				return -1;
+			if(_reset())
+				return -1;
 
-		_ensure_allocation();
-		size_t io_size;
-		if(io_read(__buffer_ptr, __buffer_size, &io_size))
-			return -1;
-		if(!io_size) {
-			*actual_size = 0;
-			return 0;
+			// Perform a read-ahead.
+			_ensure_allocation();
+			size_t io_size;
+			if(io_read(__buffer_ptr, __buffer_size, &io_size))
+				return -1;
+			if(!io_size) {
+				*actual_size = 0;
+				return 0;
+			}
+
+			__io_offset = io_size;
+			__valid_limit = io_size;
 		}
 
-		// Return some of the newly buffered data.
-		auto chunk = frigg::min(io_size, max_size);
-		memcpy(buffer, __buffer_ptr, chunk);
-		__offset = chunk;
-		__io_offset = io_size;
-		__valid_limit = io_size;
+		// Return data from the buffer.
+		__ensure(__offset < __valid_limit);
+
+		auto chunk = frigg::min(size_t(__valid_limit - __offset), max_size);
+		memcpy(buffer, __buffer_ptr + __offset, chunk);
+		__offset += chunk;
 
 		*actual_size = chunk;
 		return 0;
@@ -128,6 +129,7 @@ public:
 		_ensure_allocation();
 		auto chunk = frigg::min(__buffer_size - __offset, max_size);
 		memcpy(__buffer_ptr + __offset, buffer, chunk);
+
 		if(__dirty_begin != __dirty_end) {
 			__dirty_begin = frigg::min(__dirty_begin, __offset);
 			__dirty_end = frigg::max(__dirty_end, __offset + chunk);
@@ -204,7 +206,7 @@ private:
 			__ensure(__io_offset == __dirty_begin);
 		}
 
-		// Now, we are in the correct position to write back everything.
+		// Now, we are in the correct position to write-back everything.
 		while(__io_offset < __dirty_end) {
 			size_t chunk;
 			if(io_write(__buffer_ptr + __io_offset, __dirty_end - __io_offset, &chunk))
