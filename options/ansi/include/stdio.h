@@ -34,13 +34,14 @@ struct __mlibc_file_base {
 	// Valid region of the buffer.
 	size_t __valid_limit;
 
+	// Begin and end of the dirty region inside the buffer.
+	size_t __dirty_begin;
+	size_t __dirty_end;
+
 	// 0 if we are currently reading from the buffer.
 	// 1 if we are currently writing to the buffer.
 	// This is only really important for pipe-like streams.
 	int __io_mode;
-
-	// True if the buffer was modified and not written back.
-	int __is_dirty;
 };
 
 typedef struct __mlibc_file_base FILE;

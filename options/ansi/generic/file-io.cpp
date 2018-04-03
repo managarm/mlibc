@@ -35,8 +35,9 @@ public:
 		__offset = 0;
 		__io_offset = 0;
 		__valid_limit = 0;
+		__dirty_begin = 0;
+		__dirty_end = 0;
 		__io_mode = 0;
-		__is_dirty = 0;
 	}
 
 	abstract_file(const abstract_file &) = delete;
@@ -57,10 +58,10 @@ public:
 
 		// Ensure correct buffer type for pipe-like streams.
 		// TODO: In order to support pipe-like streams we need to write-back the buffer.
-		if(!__io_mode && __valid_limit)
+		if(__io_mode && __valid_limit)
 			frigg::panicLogger() << "mlibc: Cannot read-write to same pipe-like stream"
 					<< frigg::endLog;
-		__io_mode = 1;
+		__io_mode = 0;
 
 		// Try use return data that is already inside buffers.
 		if(__offset < __valid_limit) {
@@ -73,7 +74,9 @@ public:
 		}
 
 		// Clear the buffer, then buffer new data.
-		if(_internal_flush(true))
+		if(_write_back())
+			return -1;
+		if(_reset())
 			return -1;
 
 		_ensure_allocation();
@@ -104,7 +107,9 @@ public:
 
 		// Flush the buffer if necessary.
 		if(__offset == __buffer_size) {
-			if(_internal_flush(true))
+			if(_write_back())
+				return -1;
+			if(_reset())
 				return -1;
 		}
 
@@ -112,10 +117,10 @@ public:
 		// TODO: We could full support pipe-like files
 		// by ungetc()ing all data before a write happens,
 		// however, for now we just report an error.
-		if(__io_mode && __valid_limit) // TODO: Only check this for pipe-like streams.
+		if(!__io_mode && __valid_limit) // TODO: Only check this for pipe-like streams.
 			frigg::panicLogger() << "mlibc: Cannot read-write to same pipe-like stream"
 					<< frigg::endLog;
-		__io_mode = 0;
+		__io_mode = 1;
 
 		// Buffer data without performing I/O.
 		__ensure(__offset < __buffer_size);
@@ -123,9 +128,15 @@ public:
 		_ensure_allocation();
 		auto chunk = frigg::min(__buffer_size - __offset, max_size);
 		memcpy(__buffer_ptr + __offset, buffer, chunk);
+		if(__dirty_begin != __dirty_end) {
+			__dirty_begin = frigg::min(__dirty_begin, __offset);
+			__dirty_end = frigg::max(__dirty_end, __offset + chunk);
+		}else{
+			__dirty_begin = __offset;
+			__dirty_end = __offset + chunk;
+		}
+		__valid_limit = frigg::max(__offset + chunk, __valid_limit);
 		__offset += chunk;
-		__valid_limit = frigg::max(__offset, __valid_limit);
-		__is_dirty = 1;
 
 		*actual_size = chunk;
 		return 0;
@@ -133,16 +144,19 @@ public:
 
 	// TODO: For input files, discard the buffer.
 	int flush() {
-		if(_internal_flush(false))
+		if(_write_back())
 			return -1;
 
 		return 0;
 	}
 
 	int seek(off_t offset, int whence) {
+		if(_write_back())
+			return -1;
+
 		if(whence == SEEK_SET || whence == SEEK_END) {
 			// For absolute seeks we can just forget the current buffer.
-			if(_internal_flush(true))
+			if(_reset())
 				return -1;
 
 			if(io_seek(offset, whence))
@@ -162,44 +176,59 @@ protected:
 	virtual int io_seek(off_t offset, int whence) = 0;
 
 private:
-	int _internal_flush(bool reset) {
-		if(_type == stream_type::unknown && determine_type(&_type))
+	int _update_type() {
+		if(_type != stream_type::unknown)
+			return 0;
+
+		if(determine_type(&_type))
 			return -1;
-		
-		__ensure(__offset == __valid_limit);
+		__ensure(_type != stream_type::unknown);
+		return 0;
+	}
 
-		if(__is_dirty) {
-			// We need to write back all data in [0, __valid_limit].
-			// For non-pipe streams, first do a seek to reset the
-			// I/O position to zero, then do a write().
-			// TODO: Actually do the seek.
-			__ensure(!__io_offset);
+	int _write_back() {
+		if(_update_type())
+			return -1;
 
-			size_t progress = 0;
-			while(progress < __valid_limit) {
-				size_t chunk;
-				if(io_write(__buffer_ptr + progress, __valid_limit - progress, &chunk))
-					return -1;
-				progress += chunk;
-			}
+		if(__dirty_begin == __dirty_end)
+			return 0;
 
-			// For file-like streams, it might be worth to keep some data buffered.
-			if(_type == stream_type::pipe_like) {
-				__offset = 0;
-				__io_offset = 0;
-				__valid_limit = 0;
-			}else{
-				__ensure(_type == stream_type::file_like);
-				__io_offset = __valid_limit;
-			}
+		// For non-pipe streams, first do a seek to reset the
+		// I/O position to zero, then do a write().
+		if(_type == stream_type::file_like) {
+			if(io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR))
+				return -1;
+			__io_offset = __dirty_begin;
+		}else{
+			__ensure(_type == stream_type::pipe_like);
+			__ensure(__io_offset == __dirty_begin);
 		}
-		__is_dirty = 0;
 
-		if(reset) {
-			__offset = 0;
-			__io_offset = 0;
-			__valid_limit = 0;
+		// Now, we are in the correct position to write back everything.
+		while(__io_offset < __dirty_end) {
+			size_t chunk;
+			if(io_write(__buffer_ptr + __io_offset, __dirty_end - __io_offset, &chunk))
+				return -1;
+			__io_offset += chunk;
+			__dirty_begin += chunk;
 		}
+
+		return 0;
+	}
+
+	int _reset() {
+		if(_update_type())
+			return -1;
+
+		// For pipe-like files, we must not forget already read data.
+		// TODO: Report this error to the user.
+		if(_type == stream_type::pipe_like)
+			__ensure(__offset == __valid_limit);
+
+		__ensure(__dirty_begin == __dirty_end);
+		__offset = 0;
+		__io_offset = 0;
+		__valid_limit = 0;
 
 		return 0;
 	}
@@ -213,6 +242,8 @@ private:
 		__buffer_ptr = reinterpret_cast<char *>(ptr);
 	}
 
+	// As we might construct FILE objects for FDs that are not actually
+	// open (e.g. for std{in,out,err}), we defer the type determination and cache the result.
 	stream_type _type;
 };
 
