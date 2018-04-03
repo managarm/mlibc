@@ -15,7 +15,8 @@
 
 namespace mlibc {
 
-static bool disableBuffering = false;
+// Useful when debugging the FILE implementation.
+static bool globallyDisableBuffering = false;
 
 enum class stream_type {
 	unknown,
@@ -51,7 +52,7 @@ public:
 	int read(char *buffer, size_t max_size, size_t *actual_size) {
 		__ensure(max_size);
 
-		if(disableBuffering)
+		if(globallyDisableBuffering)
 			return io_read(buffer, max_size, actual_size);
 
 		// Ensure correct buffer type for pipe-like streams.
@@ -72,11 +73,8 @@ public:
 		}
 
 		// Clear the buffer, then buffer new data.
-		if(_write_back())
+		if(_internal_flush(true))
 			return -1;
-		__offset = 0;
-		__io_offset = 0;
-		__valid_limit = 0;
 
 		_ensure_allocation();
 		size_t io_size;
@@ -101,16 +99,13 @@ public:
 	int write(const char *buffer, size_t max_size, size_t *actual_size) {
 		__ensure(max_size);
 
-		if(disableBuffering)
+		if(globallyDisableBuffering)
 			return io_write(buffer, max_size, actual_size);
 
 		// Flush the buffer if necessary.
 		if(__offset == __buffer_size) {
-			if(_write_back())
+			if(_internal_flush(true))
 				return -1;
-			__offset = 0;
-			__io_offset = 0;
-			__valid_limit = 0;
 		}
 
 		// Ensure correct buffer type for pipe-like streams.
@@ -138,24 +133,20 @@ public:
 
 	// TODO: For input files, discard the buffer.
 	int flush() {
-		if(_write_back())
+		if(_internal_flush(false))
 			return -1;
 
 		return 0;
 	}
 
 	int seek(off_t offset, int whence) {
-		if(_write_back())
-			return -1;
-		
 		if(whence == SEEK_SET || whence == SEEK_END) {
+			// For absolute seeks we can just forget the current buffer.
+			if(_internal_flush(true))
+				return -1;
+
 			if(io_seek(offset, whence))
 				return -1;
-			
-			// For absolute seeks we can just forget the current buffer.
-			__offset = 0;
-			__io_offset = 0;
-			__valid_limit = 0;
 			return 0;
 		}else{
 			__ensure(whence == SEEK_CUR); // TODO: Handle errors.
@@ -171,38 +162,44 @@ protected:
 	virtual int io_seek(off_t offset, int whence) = 0;
 
 private:
-	int _write_back() {
-		if(!__is_dirty)
-			return 0;
-
+	int _internal_flush(bool reset) {
 		if(_type == stream_type::unknown && determine_type(&_type))
 			return -1;
-
-		// We need to write back all data in [0, __valid_limit].
-		// For non-pipe streams, first do a seek to reset the
-		// I/O position to zero, then do a write().
-		// TODO: Actually do the seek.
-		__ensure(!__io_offset);
+		
 		__ensure(__offset == __valid_limit);
 
-		size_t progress = 0;
-		while(progress < __valid_limit) {
-			size_t chunk;
-			if(io_write(__buffer_ptr + progress, __valid_limit - progress, &chunk))
-				return -1;
-			progress += chunk;
-		}
+		if(__is_dirty) {
+			// We need to write back all data in [0, __valid_limit].
+			// For non-pipe streams, first do a seek to reset the
+			// I/O position to zero, then do a write().
+			// TODO: Actually do the seek.
+			__ensure(!__io_offset);
 
-		// For file-like streams, it might be worth to keep some data buffered.
-		if(_type == stream_type::pipe_like) {
+			size_t progress = 0;
+			while(progress < __valid_limit) {
+				size_t chunk;
+				if(io_write(__buffer_ptr + progress, __valid_limit - progress, &chunk))
+					return -1;
+				progress += chunk;
+			}
+
+			// For file-like streams, it might be worth to keep some data buffered.
+			if(_type == stream_type::pipe_like) {
+				__offset = 0;
+				__io_offset = 0;
+				__valid_limit = 0;
+			}else{
+				__ensure(_type == stream_type::file_like);
+				__io_offset = __valid_limit;
+			}
+		}
+		__is_dirty = 0;
+
+		if(reset) {
 			__offset = 0;
 			__io_offset = 0;
 			__valid_limit = 0;
-		}else{
-			__ensure(_type == stream_type::file_like);
-			__io_offset = __valid_limit;
 		}
-		__is_dirty = 0;
 
 		return 0;
 	}
