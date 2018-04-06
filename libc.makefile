@@ -92,7 +92,9 @@ libc_includes += \
 	bits/wchar_t.h \
 	stdint.h
 #Linux
-libc_includes += getopt.h \
+libc_includes += \
+	asm/ioctls.h \
+	getopt.h \
 	linux/bpf_common.h \
 	linux/bsg.h \
 	linux/cdrom.h \
