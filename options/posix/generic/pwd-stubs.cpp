@@ -31,8 +31,7 @@ struct passwd *getpwuid(uid_t) {
 }
 
 void endpwent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	frigg::infoLogger() << "\e[35mmlibc: endpwent() is a no-op\e[39m" << frigg::endLog;
 }
 
 int getpwuid_r(uid_t, struct passwd *, char *, size_t, struct passwd **) {

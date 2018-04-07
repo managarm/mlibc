@@ -9,10 +9,12 @@
 int gettimeofday(struct timeval *__restrict result, void *__restrict unused) {
 	__ensure(!unused);
 
-	long nanos;
-	if(mlibc::sys_clock_get(CLOCK_REALTIME, &result->tv_sec, &nanos))
-		return -1;
-	result->tv_usec = nanos / 1000;
+	if(result) {
+		long nanos;
+		if(mlibc::sys_clock_get(CLOCK_REALTIME, &result->tv_sec, &nanos))
+			return -1;
+		result->tv_usec = nanos / 1000;
+	}
 	return 0;
 }
 

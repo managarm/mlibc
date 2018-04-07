@@ -97,6 +97,7 @@ struct servent *getservent(void);
 void sethostent(int);
 void setnetent(int);
 void setprotoent(int);
+void setservent(int);
 
 #ifdef __cplusplus
 }

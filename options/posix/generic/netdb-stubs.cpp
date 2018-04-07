@@ -114,3 +114,8 @@ void setprotoent(int) {
 	__builtin_unreachable();
 }
 
+void setservent(int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+

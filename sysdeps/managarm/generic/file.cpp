@@ -1230,14 +1230,14 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 	}
 	case DRM_IOCTL_GET_MAGIC: {
 		auto param = reinterpret_cast<drm_auth *>(arg);
-		frigg::infoLogger() << "mlibc: DRM_IOCTL_GET_MAGIC is not implemented correctly"
+		frigg::infoLogger() << "\e[31mmlibc: DRM_IOCTL_GET_MAGIC is not implemented correctly\e[39m"
 				<< frigg::endLog;
 		param->magic = 1;
 		return 0;
 	}
 	case DRM_IOCTL_AUTH_MAGIC: {
 		auto param = reinterpret_cast<drm_auth *>(arg);
-		frigg::infoLogger() << "mlibc: DRM_IOCTL_AUTH_MAGIC is not implemented correctly"
+		frigg::infoLogger() << "\e[31mmlibc: DRM_IOCTL_AUTH_MAGIC is not implemented correctly\e[39m"
 				<< frigg::endLog;
 		return 0;
 	}
@@ -1864,6 +1864,11 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		errno = ENXIO;
 		return -1;
 	}
+	case TIOCSWINSZ: {
+		frigg::infoLogger() << "\e[31mmlibc: TIOCSWINSZ is not implemented correctly\e[39m"
+				<< frigg::endLog;
+		return -1;
+	}
 	case TIOCGPTN: {
 		auto param = reinterpret_cast<int *>(arg);
 		HelAction actions[3];
@@ -2093,7 +2098,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) >= _IOC_NR(EVIOCGABS(0))
 			&& _IOC_NR(request) <= _IOC_NR(EVIOCGABS(ABS_MAX))) {
-		frigg::infoLogger() << "mlibc: EVIOCGABS is not implemented correctly"
+		frigg::infoLogger() << "\e[31mmlibc: EVIOCGABS is not implemented correctly\e[39m"
 				<< frigg::endLog;
 		return -1;
 	}

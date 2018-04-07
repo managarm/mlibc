@@ -503,7 +503,7 @@ int fflush(FILE *file_base) {
 }
 
 int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t size) {
-	frigg::panicLogger() << "mlibc: Fix setvbuf()" << frigg::endLog;
+	frigg::infoLogger() << "\e[35mmlibc: setvbuf() is ignored\e[39m" << frigg::endLog;
 /*
 	__ensure(mode == _IOLBF);
 	__ensure(stream->bufferBytes == 0);

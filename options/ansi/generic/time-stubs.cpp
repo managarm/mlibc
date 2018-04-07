@@ -213,10 +213,13 @@ int utimes(const char *, const struct timeval[2]) {
 }
 
 time_t time(time_t *out) {
+	time_t secs;
 	long nanos;
-	if(mlibc::sys_clock_get(CLOCK_REALTIME, out, &nanos))
+	if(mlibc::sys_clock_get(CLOCK_REALTIME, &secs, &nanos))
 		return (time_t)-1;
-	return 0;
+	if(out)
+		*out = secs;
+	return secs;
 }
 
 namespace {
