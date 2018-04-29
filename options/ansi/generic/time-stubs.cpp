@@ -276,35 +276,37 @@ struct[[gnu::packed]] ttinfo {
 };
 
 void *global_tzinfo_buffer = nullptr;
-int unix_to_local(time_t gmt_time, time_t *offset, bool *dst) {
+
+// Looks up the local time rules for a given 
+// UNIX GMT timestamp (seconds since 1970 GMT, ignoring leap seconds).
+int unix_local_from_gmt(time_t gmt_time, time_t *offset, bool *dst) {
 	if(!global_tzinfo_buffer) {
 		int fd;
-		if(!mlibc::sys_open("/etc/localtime", O_RDONLY, &fd)) {
-			frigg::infoLogger() << "mlibc: Error opening TZfile" << frigg::endLog;
+		if(mlibc::sys_open("/etc/localtime", O_RDONLY, &fd)) {
+			frigg::infoLogger() << "mlibc: Error opening TZinfo" << frigg::endLog;
 			return -1;
 		}
 	
 		struct stat info;
-		if(!mlibc::sys_fstat(fd, &info)) {
-			frigg::infoLogger() << "mlibc: Error getting TZfile stats" << frigg::endLog;
+		if(mlibc::sys_fstat(fd, &info)) {
+			frigg::infoLogger() << "mlibc: Error getting TZinfo stats" << frigg::endLog;
 			return -1;
 		}
 
-		if(!mlibc::sys_vm_map(nullptr, (size_t)info.st_size, PROT_READ, MAP_PRIVATE, fd, 0, 
-				&global_tzinfo_buffer)) {
-			frigg::infoLogger() << "mlibc: Error mapping TZfile" << frigg::endLog;
+		if(mlibc::sys_vm_map(nullptr, (size_t)info.st_size, PROT_READ, MAP_PRIVATE,
+				fd, 0, &global_tzinfo_buffer)) {
+			frigg::infoLogger() << "mlibc: Error mapping TZinfo" << frigg::endLog;
 			return -1;
 		}
 	
-		if(!mlibc::sys_close(fd)) {
-			frigg::infoLogger() << "mlibc: Error closing TZfile" << frigg::endLog;
+		if(mlibc::sys_close(fd)) {
+			frigg::infoLogger() << "mlibc: Error closing TZinfo" << frigg::endLog;
 			return -1;
 		}
 	}	
 
 	tzfile tzfile_time;
-	memcpy(&tzfile_time, (char *)global_tzinfo_buffer, sizeof(tzfile));
-
+	memcpy(&tzfile_time, reinterpret_cast<char *>(global_tzinfo_buffer), sizeof(tzfile));
 	tzfile_time.tzh_ttisgmtcnt = bswap_32(tzfile_time.tzh_ttisgmtcnt);
 	tzfile_time.tzh_ttisstdcnt = bswap_32(tzfile_time.tzh_ttisstdcnt);
 	tzfile_time.tzh_leapcnt = bswap_32(tzfile_time.tzh_leapcnt);
@@ -314,36 +316,40 @@ int unix_to_local(time_t gmt_time, time_t *offset, bool *dst) {
 	
 	if(tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i' 
 			|| tzfile_time.magic[3] != 'f') {
-		frigg::infoLogger() << "mlibc: TZfile is not a valid TZfile type" << frigg::endLog;
+		frigg::infoLogger() << "mlibc: /etc/localtime is not a valid TZinfo file" << frigg::endLog;
 		return -1;
 	}
 
 	if(tzfile_time.version != '\0' && tzfile_time.version != '2' && tzfile_time.version != '3') {
-		frigg::infoLogger() << "mlibc: TZfile is not a valid version" << frigg::endLog;
+		frigg::infoLogger() << "mlibc: /etc/localtime has an invalid TZinfo version"
+				<< frigg::endLog;
 		return -1;
 	}
 
-	int index = 0;
+	int index = -1;
 	for(size_t i = 0; i < tzfile_time.tzh_timecnt; i++) {
 		int32_t ttime;
-		memcpy(&ttime, (char *)global_tzinfo_buffer + sizeof(tzfile) + i * sizeof(int32_t),
-				sizeof(int32_t));
+		memcpy(&ttime, reinterpret_cast<char *>(global_tzinfo_buffer) + sizeof(tzfile)
+				+ i * sizeof(int32_t), sizeof(int32_t));
 		ttime = bswap_32(ttime);
 		if(ttime > gmt_time) {
+			__ensure(i);
 			index = i - 1;
 			break;
 		}	
 	}
+	__ensure(index > 0);
 
 	uint8_t ttinfo_index;
-	memcpy(&ttinfo_index, (char *)global_tzinfo_buffer + sizeof(tzfile) + tzfile_time.tzh_timecnt *
-			sizeof(int32_t) + index * sizeof(uint8_t), sizeof(uint8_t));
+	memcpy(&ttinfo_index, reinterpret_cast<char *>(global_tzinfo_buffer) + sizeof(tzfile)
+			+ tzfile_time.tzh_timecnt * sizeof(int32_t)
+			+ index * sizeof(uint8_t), sizeof(uint8_t));
 
 	ttinfo time_info;
-	memcpy(&time_info, (char *)global_tzinfo_buffer + sizeof(tzfile) + tzfile_time.tzh_timecnt *
-			sizeof(int32_t) + tzfile_time.tzh_timecnt * sizeof(uint8_t) + ttinfo_index *
-			sizeof(ttinfo), sizeof(ttinfo));
-	
+	memcpy(&time_info, reinterpret_cast<char *>(global_tzinfo_buffer) + sizeof(tzfile)
+			+ tzfile_time.tzh_timecnt * sizeof(int32_t)
+			+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
+			+ ttinfo_index * sizeof(ttinfo), sizeof(ttinfo));
 	time_info.tt_gmtoff = bswap_32(time_info.tt_gmtoff);
 	
 	*offset = time_info.tt_gmtoff;
@@ -353,7 +359,7 @@ int unix_to_local(time_t gmt_time, time_t *offset, bool *dst) {
 
 } //anonymous namespace
 
-struct tm *localtime_r(const time_t *time, struct tm *tm) {
+struct tm *localtime_r(const time_t *gmt_time, struct tm *tm) {
 	int year;
 	unsigned int month;
 	unsigned int day;
@@ -362,19 +368,18 @@ struct tm *localtime_r(const time_t *time, struct tm *tm) {
 
 	time_t offset = 0;
 	bool dst;
-	if(!unix_to_local(*time, &offset, &dst)) {
-		__ensure(!"Error parsing TZfile");
-	}
+	if(unix_local_from_gmt(*gmt_time, &offset, &dst))
+		__ensure(!"Error parsing /etc/localtime");
+	time_t tz_time = *gmt_time + offset;
 
-	time_t loc_time = *time + offset;
-	int days_since_epoch = loc_time / (60*60*24);
+	int days_since_epoch = tz_time / (60*60*24);
 	civil_from_days(days_since_epoch, &year, &month, &day);
 	weekday_from_days(days_since_epoch, &weekday);
 	yearday_from_date(year, month, day, &yday);
 
-	tm->tm_sec = loc_time % 60;
-	tm->tm_min = (loc_time / 60) % 60;
-	tm->tm_hour = (loc_time / (60*60)) % 24;
+	tm->tm_sec = tz_time % 60;
+	tm->tm_min = (tz_time / 60) % 60;
+	tm->tm_hour = (tz_time / (60*60)) % 24;
 	tm->tm_mday = day;
 	tm->tm_mon = month - 1;
 	tm->tm_year = year - 1900;
