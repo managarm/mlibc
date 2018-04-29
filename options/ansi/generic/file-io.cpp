@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdio_ext.h>
 
 #include <bits/ensure.h>
 
@@ -142,6 +143,13 @@ public:
 
 		*actual_size = chunk;
 		return 0;
+	}
+
+	void purge() {
+		__offset = 0;
+		__io_offset = 0;
+		__valid_limit = 0;
+		__dirty_end = __dirty_begin;
 	}
 
 	// TODO: For input files, discard the buffer.
@@ -527,5 +535,10 @@ void rewind(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	file->seek(0, SEEK_SET);
 	// TODO: rewind() should also clear the error indicator.
+}
+
+void __fpurge(FILE *file_base) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	file->purge();
 }
 

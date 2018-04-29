@@ -34,10 +34,6 @@ int __fsetlocking(FILE *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-void __fpurge(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
 
 void _flushlbf(void) {
 	__ensure(!"Not implemented");
