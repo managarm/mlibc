@@ -1,7 +1,11 @@
 
 #include <bits/ensure.h>
+#include <byteswap.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 #include <time.h>
 
 #include <frigg/debug.hpp>
@@ -101,7 +105,8 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			p += chunk;
 			c += 2;
 		}else if (*(c + 1) == 'F') {
-			auto chunk = snprintf(p, space, "%d/%.2d/%.2d", 1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday);
+			auto chunk = snprintf(p, space, "%d/%.2d/%.2d", 1900 + tm->tm_year, tm->tm_mon + 1,
+					tm->tm_mday);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
@@ -252,6 +257,100 @@ void yearday_from_date(unsigned int year, unsigned int month, unsigned int day, 
 	*yday = n1 - (n2 * n3) + day - 30;
 }
 
+struct tzfile {
+	uint8_t magic[4];
+	uint8_t version;
+	uint8_t reserved[15];
+	uint32_t tzh_ttisgmtcnt;
+	uint32_t tzh_ttisstdcnt;
+	uint32_t tzh_leapcnt;
+	uint32_t tzh_timecnt;
+	uint32_t tzh_typecnt;
+	uint32_t tzh_charcnt;
+};
+
+struct[[gnu::packed]] ttinfo {
+	int32_t tt_gmtoff;
+	unsigned char tt_isdst;
+	unsigned char tt_abbrind;
+};
+
+void *global_tzinfo_buffer = nullptr;
+int unix_to_local(time_t gmt_time, time_t *offset, bool *dst) {
+	if(!global_tzinfo_buffer) {
+		int fd;
+		if(!mlibc::sys_open("/etc/localtime", O_RDONLY, &fd)) {
+			frigg::infoLogger() << "mlibc: Error opening TZfile" << frigg::endLog;
+			return -1;
+		}
+	
+		struct stat info;
+		if(!mlibc::sys_fstat(fd, &info)) {
+			frigg::infoLogger() << "mlibc: Error getting TZfile stats" << frigg::endLog;
+			return -1;
+		}
+
+		if(!mlibc::sys_vm_map(nullptr, (size_t)info.st_size, PROT_READ, MAP_PRIVATE, fd, 0, 
+				&global_tzinfo_buffer)) {
+			frigg::infoLogger() << "mlibc: Error mapping TZfile" << frigg::endLog;
+			return -1;
+		}
+	
+		if(!mlibc::sys_close(fd)) {
+			frigg::infoLogger() << "mlibc: Error closing TZfile" << frigg::endLog;
+			return -1;
+		}
+	}	
+
+	tzfile tzfile_time;
+	memcpy(&tzfile_time, (char *)global_tzinfo_buffer, sizeof(tzfile));
+
+	tzfile_time.tzh_ttisgmtcnt = bswap_32(tzfile_time.tzh_ttisgmtcnt);
+	tzfile_time.tzh_ttisstdcnt = bswap_32(tzfile_time.tzh_ttisstdcnt);
+	tzfile_time.tzh_leapcnt = bswap_32(tzfile_time.tzh_leapcnt);
+	tzfile_time.tzh_timecnt = bswap_32(tzfile_time.tzh_timecnt);
+	tzfile_time.tzh_typecnt = bswap_32(tzfile_time.tzh_typecnt);
+	tzfile_time.tzh_charcnt = bswap_32(tzfile_time.tzh_charcnt);
+	
+	if(tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i' 
+			|| tzfile_time.magic[3] != 'f') {
+		frigg::infoLogger() << "mlibc: TZfile is not a valid TZfile type" << frigg::endLog;
+		return -1;
+	}
+
+	if(tzfile_time.version != '\0' && tzfile_time.version != '2' && tzfile_time.version != '3') {
+		frigg::infoLogger() << "mlibc: TZfile is not a valid version" << frigg::endLog;
+		return -1;
+	}
+
+	int index = 0;
+	for(size_t i = 0; i < tzfile_time.tzh_timecnt; i++) {
+		int32_t ttime;
+		memcpy(&ttime, (char *)global_tzinfo_buffer + sizeof(tzfile) + i * sizeof(int32_t),
+				sizeof(int32_t));
+		ttime = bswap_32(ttime);
+		if(ttime > gmt_time) {
+			index = i - 1;
+			break;
+		}	
+	}
+
+	uint8_t ttinfo_index;
+	memcpy(&ttinfo_index, (char *)global_tzinfo_buffer + sizeof(tzfile) + tzfile_time.tzh_timecnt *
+			sizeof(int32_t) + index * sizeof(uint8_t), sizeof(uint8_t));
+
+	ttinfo time_info;
+	memcpy(&time_info, (char *)global_tzinfo_buffer + sizeof(tzfile) + tzfile_time.tzh_timecnt *
+			sizeof(int32_t) + tzfile_time.tzh_timecnt * sizeof(uint8_t) + ttinfo_index *
+			sizeof(ttinfo), sizeof(ttinfo));
+	
+	time_info.tt_gmtoff = bswap_32(time_info.tt_gmtoff);
+	
+	*offset = time_info.tt_gmtoff;
+	*dst = time_info.tt_isdst;
+	return 0;
+}
+
 } //anonymous namespace
 
 struct tm *localtime_r(const time_t *time, struct tm *tm) {
@@ -261,14 +360,21 @@ struct tm *localtime_r(const time_t *time, struct tm *tm) {
 	unsigned int weekday;
 	unsigned int yday;
 
-	int days_since_epoch = *time / (60*60*24);
+	time_t offset = 0;
+	bool dst;
+	if(!unix_to_local(*time, &offset, &dst)) {
+		__ensure(!"Error parsing TZfile");
+	}
+
+	time_t loc_time = *time + offset;
+	int days_since_epoch = loc_time / (60*60*24);
 	civil_from_days(days_since_epoch, &year, &month, &day);
 	weekday_from_days(days_since_epoch, &weekday);
 	yearday_from_date(year, month, day, &yday);
 
-	tm->tm_sec = *time % 60;
-	tm->tm_min = (*time / 60) % 60;
-	tm->tm_hour = (*time / (60*60)) % 24;
+	tm->tm_sec = loc_time % 60;
+	tm->tm_min = (loc_time / 60) % 60;
+	tm->tm_hour = (loc_time / (60*60)) % 24;
 	tm->tm_mday = day;
 	tm->tm_mon = month - 1;
 	tm->tm_year = year - 1900;
