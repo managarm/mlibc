@@ -530,24 +530,14 @@ int sys_vm_unmap(void *pointer, size_t size) {
 }
 
 int sys_tcgetattr(int fd, struct termios *attr) {
-	frigg::infoLogger() << "mlibc: Broken tcgetattr() called!" << frigg::endLog;
-	attr->c_iflag = 0;
-	attr->c_oflag = 0;
-	attr->c_cflag = 0;
-	attr->c_lflag = ECHO;
-	for(size_t i = 0; i < NCCS; i++)
-		attr->c_cc[i] = 0;
-	attr->c_cc[VMIN] = 1;
-	attr->c_cc[VTIME] = 0;
-	return 0;
+	return sys_ioctl(fd, TCGETS, attr);
 }
 
-int sys_tcsetattr(int, int, const struct termios *attr) {
-	frigg::infoLogger() << "mlibc: Broken tcsetattr("
-			<< attr->c_iflag << ", " << attr->c_oflag
-			<< ", " << attr->c_cflag << ", " << attr->c_lflag
-			<< ") called!" << frigg::endLog;
-	return 0;
+int sys_tcsetattr(int fd, int when, const struct termios *attr) {
+	if(when != TCSANOW)
+		frigg::infoLogger() << "\e[35mmlibc: tcsetattr() when argument ignored\e[39m"
+				<< frigg::endLog;
+	return sys_ioctl(fd, TCSETS, const_cast<struct termios *>(attr));
 }
 
 int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
@@ -1863,6 +1853,91 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 					<< param->x << ", " << param->y << ")" << frigg::endLog;
 		errno = ENXIO;
 		return -1;
+	}
+	case TCGETS: {
+		auto param = reinterpret_cast<struct termios *>(arg);
+		HelAction actions[4];
+		globalQueue.trim();
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+
+		frigg::String<MemoryAllocator> ser(getAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = kHelItemChain;
+		actions[3].type = kHelActionRecvToBuffer;
+		actions[3].flags = 0;
+		actions[3].buffer = param;
+		actions[3].length = sizeof(struct termios);
+		HEL_CHECK(helSubmitAsync(handle, actions, 4,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+		auto recv_attrs = parseLength(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+		HEL_CHECK(recv_attrs->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		__ensure(recv_attrs->length == sizeof(struct termios));
+		return resp.result();
+	}
+	case TCSETS: {
+		auto param = reinterpret_cast<struct termios *>(arg);
+		HelAction actions[4];
+		globalQueue.trim();
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+
+		frigg::String<MemoryAllocator> ser(getAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionSendFromBuffer;
+		actions[2].flags = kHelItemChain;
+		actions[2].buffer = param;
+		actions[2].length = sizeof(struct termios);
+		actions[3].type = kHelActionRecvInline;
+		actions[3].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 4,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto send_attrs = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(send_attrs->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		return resp.result();
 	}
 	case TIOCSWINSZ: {
 		frigg::infoLogger() << "\e[31mmlibc: TIOCSWINSZ is not implemented correctly\e[39m"
