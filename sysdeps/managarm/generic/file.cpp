@@ -2626,6 +2626,76 @@ int sys_stat(const char *path, struct stat *result) {
 	}
 }
 
+int sys_lstat(const char *path, struct stat *result) {
+	HelAction actions[3];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::LSTAT);
+	req.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		errno = ENOENT;
+		return -1;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		memset(result, 0, sizeof(struct stat));
+		
+		switch(resp.file_type()) {
+		case managarm::posix::FileType::FT_REGULAR:
+			result->st_mode = S_IFREG; break;
+		case managarm::posix::FileType::FT_DIRECTORY:
+			result->st_mode = S_IFDIR; break;
+		case managarm::posix::FileType::FT_CHAR_DEVICE:
+			result->st_mode = S_IFCHR; break;
+		case managarm::posix::FileType::FT_BLOCK_DEVICE:
+			result->st_mode = S_IFBLK; break;
+		}
+
+		result->st_dev = 1;
+		result->st_ino = resp.fs_inode();
+		result->st_mode |= resp.mode();
+		result->st_nlink = resp.num_links();
+		result->st_uid = resp.uid();
+		result->st_gid = resp.gid();
+		result->st_rdev = resp.ref_devnum();
+		result->st_size = resp.file_size();
+		result->st_atim.tv_sec = resp.atime_secs();
+		result->st_atim.tv_nsec = resp.atime_nanos();
+		result->st_mtim.tv_sec = resp.mtime_secs();
+		result->st_mtim.tv_nsec = resp.mtime_nanos();
+		result->st_ctim.tv_sec = resp.ctime_secs();
+		result->st_ctim.tv_nsec = resp.ctime_nanos();
+		result->st_blksize = 4096;
+		result->st_blocks = resp.file_size() / 512 + 1;
+		return 0;
+	}
+}
+
 int sys_fstat(int fd, struct stat *result) {
 	HelAction actions[3];
 	globalQueue.trim();

@@ -27,11 +27,6 @@ int futimens(int fd, const struct timespec times[2]) {
 			<< frigg::endLog;
 	return 0;
 }
-int lstat(const char *__restrict path, struct stat *__restrict result) {
-	frigg::infoLogger() << "\e[31mmlibc: lstat() degrades to stat()\e[39m"
-			<< frigg::endLog;
-	return mlibc::sys_stat(path, result);
-}
 int mkdir(const char *path, mode_t) {
 	frigg::infoLogger() << "\e[31mmlibc: mkdir() ignore the mode\e[39m" << frigg::endLog;
 	if(mlibc::sys_mkdir(path))
@@ -72,6 +67,10 @@ int utimensat(int, const char *, const struct timespec times[2], int) {
 
 int stat(const char *__restrict path, struct stat *__restrict result) {
 	return mlibc::sys_stat(path, result);
+}
+
+int lstat(const char *__restrict path, struct stat *__restrict result) {
+	return mlibc::sys_lstat(path, result);
 }
 
 int fstat(int fd, struct stat *result) {
