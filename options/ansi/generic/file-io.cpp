@@ -423,8 +423,8 @@ size_t fread(void *__restrict buffer, size_t size, size_t count,
 size_t fwrite(const void *__restrict buffer, size_t size, size_t count,
 		FILE *__restrict file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
-	__ensure(size);
-	__ensure(count);
+	if(!size || !count)
+		return 0;
 
 	// Distinguish two cases here: If the object size is one, we perform byte-wise writes.
 	// Otherwise, we try to write each object individually.

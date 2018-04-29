@@ -7,7 +7,19 @@
 #include <hel.h>
 #include <hel-syscalls.h>
 #include <frigg/debug.hpp>
+#include <mlibc/allocator.hpp>
+#include <mlibc/posix-pipe.hpp>
 #include <mlibc/sysdeps.hpp>
+
+struct TrackerPage {
+	uint64_t seqlock;
+	int32_t state;
+	int32_t padding;
+	int64_t refClock;
+	int64_t baseRealtime;
+};
+
+extern TrackerPage *__mlibc_clk_tracker_page;
 
 namespace mlibc {
 
@@ -18,10 +30,13 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 		*secs = tick / 1000000000;
 		*nanos = tick % 1000000000;
 	}else if(clock == CLOCK_REALTIME) {
-		frigg::infoLogger() << "\e[31mmlibc: clock_gettime does not support CLOCK_REALTIME"
-				"\e[39m" << frigg::endLog;
+		cacheFileTable();
+
 		uint64_t tick;
 		HEL_CHECK(helGetClock(&tick));
+		__ensure(tick >= __mlibc_clk_tracker_page->refClock); // TODO: Respect the seqlock!
+		tick -= __mlibc_clk_tracker_page->refClock;
+		tick += __mlibc_clk_tracker_page->baseRealtime;
 		*secs = tick / 1000000000;
 		*nanos = tick % 1000000000;
 	}else if(clock == CLOCK_PROCESS_CPUTIME_ID) {

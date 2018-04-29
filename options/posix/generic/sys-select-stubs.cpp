@@ -25,8 +25,6 @@ void FD_ZERO(fd_set *set) {
 
 int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_set,
 		fd_set *__restrict except_set, struct timeval *__restrict timeout) {
-	__ensure(!timeout);
-
 	// TODO: Do not keep errors from epoll (?).
 	int fd = epoll_create1(0);
 	if(fd == -1)
@@ -52,7 +50,8 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 	}
 
 	struct epoll_event evnts[16];
-	int n = epoll_wait(fd, evnts, 16, -1);
+	int n = epoll_wait(fd, evnts, 16,
+			timeout ? (timeout->tv_sec * 1000 + timeout->tv_usec / 10) : -1);
 	if(n == -1)
 		return -1;
 	

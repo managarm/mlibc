@@ -22,6 +22,8 @@ extern "C" uintptr_t *__dlapi_entrystack();
 // declared in posix-pipe.hpp
 thread_local Queue globalQueue;
 
+void *__mlibc_clk_tracker_page;
+
 namespace {
 	thread_local HelHandle *cachedFileTable;
 	
@@ -33,7 +35,8 @@ namespace {
 
 	void actuallyCacheInfos() {
 		HelError error;
-		asm volatile ("syscall" : "=D"(error), "=S"(cachedFileTable) : "0"(kHelCallSuper + 1));
+		asm volatile ("syscall" : "=D"(error), "=c"(__mlibc_clk_tracker_page),
+				"=S"(cachedFileTable) : "0"(kHelCallSuper + 1));
 		HEL_CHECK(error);
 	}
 }

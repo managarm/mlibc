@@ -19,6 +19,13 @@ void __assert_fail(const char *assertion, const char *file, unsigned int line,
 	abort();
 }
 
+void __frigg_assert_fail(const char *assertion, const char *file, unsigned int line,
+		const char *function) {
+	frigg::panicLogger() << "In function " << function
+			<< ", file " << file << ":" << line << "\n"
+			<< "__ensure(" << assertion << ") failed" << frigg::endLog;
+}
+
 void __ensure_fail(const char *assertion, const char *file, unsigned int line,
 		const char *function) {
 	frigg::panicLogger() << "In function " << function

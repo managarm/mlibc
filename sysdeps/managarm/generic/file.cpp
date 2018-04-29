@@ -2159,6 +2159,9 @@ int sys_open(const char *path, int flags, int *fd) {
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		errno = ENOENT;
 		return -1;
+	}else if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
+		errno = EEXIST;
+		return -1;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*fd = resp.fd();

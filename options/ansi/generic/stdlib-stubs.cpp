@@ -308,9 +308,13 @@ int mblen(const char *mb_chr, size_t max_size) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int mbtowc(wchar_t *__restrict wc, const char *__restrict mb_chr, size_t max_size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int mbtowc(wchar_t *__restrict wc, const char *__restrict mbs, size_t max_size) {
+	__ensure(wc);
+	__ensure(mbs);
+	__ensure(max_size);
+	__ensure(*mbs);
+	*wc = *mbs;
+	return 1;
 }
 int wctomb(char *mb_chr, wchar_t wc) {
 	__ensure(!"Not implemented");
