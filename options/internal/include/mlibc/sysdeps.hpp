@@ -5,6 +5,7 @@
 #include <bits/posix/pid_t.h>
 #include <bits/posix/socklen_t.h>
 #include <bits/posix/stat.h>
+#include <poll.h>
 #include <stdarg.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
@@ -65,6 +66,7 @@ int sys_tcgetattr(int fd, struct termios *attr);
 int sys_tcsetattr(int, int, const struct termios *attr);
 int sys_pipe(int *fds);
 int sys_socketpair(int domain, int type_and_flags, int proto, int *fds);
+int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events);
 int sys_epoll_create(int flags, int *fd);
 int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev);
 int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout);

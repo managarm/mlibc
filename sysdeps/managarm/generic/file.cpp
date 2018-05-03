@@ -801,6 +801,73 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	return 0;
 }
 
+int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
+	__ensure(timeout >= 0 || timeout == -1); // TODO: Report errors correctly.
+
+	HelAction actions[3];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::EPOLL_CALL);
+	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
+	
+	for(nfds_t i = 0; i < count; i++) {
+		int mask = 0;
+		if(fds[i].events & ~(POLLIN | POLLOUT))
+			frigg::infoLogger() << "\e[31mmlibc: Unexpected events for poll()\e[39m"
+					<< frigg::endLog;
+		if(fds[i].events & POLLIN)
+			mask |= EPOLLIN;
+		if(fds[i].events & POLLOUT)
+			mask |= EPOLLOUT;
+
+		req.add_fds(fds[i].fd);
+		req.add_events(mask);
+	}
+
+	frigg::String<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	__ensure(resp.events_size() == count);
+
+	int m = 0;
+	for(nfds_t i = 0; i < count; i++) {
+		if(resp.events(i))
+			m++;
+
+		fds[i].revents = 0;
+		if(resp.events(i) & EPOLLIN)
+			fds[i].revents |= POLLIN;
+		if(resp.events(i) & EPOLLOUT)
+			fds[i].revents |= POLLOUT;
+	}
+
+	*num_events = m;
+	return 0;
+}
+
 int sys_epoll_create(int flags, int *fd) {
 	__ensure(!(flags & ~(EPOLL_CLOEXEC)));
 
