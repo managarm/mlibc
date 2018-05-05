@@ -32,11 +32,24 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 	}else if(clock == CLOCK_REALTIME) {
 		cacheFileTable();
 
+		// Start the seqlock read.
+		auto seqlock = __atomic_load_n(&__mlibc_clk_tracker_page->seqlock, __ATOMIC_ACQUIRE);
+		assert(!(seqlock & 1));
+
+		// Perform the actual loads.
+		auto ref = __atomic_load_n(&__mlibc_clk_tracker_page->refClock, __ATOMIC_RELAXED);
+		auto base = __atomic_load_n(&__mlibc_clk_tracker_page->baseRealtime, __ATOMIC_RELAXED);
+
+		// Finish the seqlock read.
+		__atomic_thread_fence(__ATOMIC_ACQUIRE);
+		assert(__atomic_load_n(&__mlibc_clk_tracker_page->seqlock, __ATOMIC_RELAXED) == seqlock);
+
+		// Calculate the current time.
 		uint64_t tick;
 		HEL_CHECK(helGetClock(&tick));
 		__ensure(tick >= __mlibc_clk_tracker_page->refClock); // TODO: Respect the seqlock!
-		tick -= __mlibc_clk_tracker_page->refClock;
-		tick += __mlibc_clk_tracker_page->baseRealtime;
+		tick -= ref;
+		tick += base;
 		*secs = tick / 1000000000;
 		*nanos = tick % 1000000000;
 	}else if(clock == CLOCK_PROCESS_CPUTIME_ID) {
