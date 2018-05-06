@@ -682,6 +682,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::SENDMSG);
 	req.set_fd(sockfd);
+	req.set_flags(flags);
 
 	for(auto cmsg = CMSG_FIRSTHDR(hdr); cmsg; cmsg = CMSG_NXTHDR(hdr, cmsg)) {
 		__ensure(cmsg->cmsg_level == SOL_SOCKET);
@@ -747,6 +748,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::RECVMSG);
 	req.set_fd(sockfd);
+	req.set_flags(flags);
 	req.set_size(hdr->msg_iov[0].iov_len);
 	req.set_addr_size(hdr->msg_namelen);
 	req.set_ctrl_size(hdr->msg_controllen);
@@ -787,18 +789,24 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(recv_addr->error);
-	HEL_CHECK(recv_data->error);
-	HEL_CHECK(recv_ctrl->error);
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	
+	if(resp.error() == managarm::posix::Errors::WOULD_BLOCK) {
+		errno = EAGAIN;
+		return -1;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		HEL_CHECK(recv_addr->error);
+		HEL_CHECK(recv_data->error);
+		HEL_CHECK(recv_ctrl->error);
 
-	hdr->msg_namelen = recv_addr->length;
-	hdr->msg_controllen = recv_ctrl->length;
-	*length = recv_data->length;
-	return 0;
+		hdr->msg_namelen = recv_addr->length;
+		hdr->msg_controllen = recv_ctrl->length;
+		*length = recv_data->length;
+		return 0;
+	}
 }
 
 int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
