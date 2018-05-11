@@ -29,13 +29,13 @@ extern "C" {
 #define SIGXCPU 26
 #define SIGXFSZ 27
 
-#define SA_NOCLDSTOP 1
-#define SA_ONSTACK 2
-#define SA_RESETHAND 4
-#define SA_RESTART 8
-#define SA_SIGINFO 16
-#define SA_NOCLDWAIT 32
-#define SA_NODEFER 64
+#define SA_NOCLDSTOP (1 << 0)
+#define SA_ONSTACK (1 << 1)
+#define SA_RESETHAND (1 << 2)
+#define SA_RESTART (1 << 3)
+#define SA_SIGINFO (1 << 4)
+#define SA_NOCLDWAIT (1 << 5)
+#define SA_NODEFER (1 << 6)
 
 #define NSIG 65
 

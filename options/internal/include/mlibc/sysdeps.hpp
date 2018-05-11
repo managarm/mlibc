@@ -79,6 +79,7 @@ int sys_mount(const char *source, const char *target,
 		const char *fstype, unsigned long flags, const void *data);
 int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve);
 int sys_sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict);
+int sys_kill(int, int);
 int sys_accept(int fd, int *newfd);
 int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);
 int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);

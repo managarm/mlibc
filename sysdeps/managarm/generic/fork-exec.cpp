@@ -66,6 +66,16 @@ int sys_sleep(time_t *secs, long *nanos) {
 }
 
 int sys_fork(pid_t *child) {
+	int res;
+
+	sigset_t full_sigset;
+	res = sigfillset(&full_sigset);
+	__ensure(!res);
+
+	sigset_t former_sigset;
+	res = sigprocmask(SIG_SETMASK, &full_sigset, &former_sigset); 
+	__ensure(!res);
+
 	HelError error;
 	asm volatile ("syscall" : "=D"(error), "=S"(*child) : "0"(kHelCallSuper + 2)
 			: "rcx", "r11", "rbx", "memory");
@@ -73,6 +83,9 @@ int sys_fork(pid_t *child) {
 	
 	if(!*child)
 		clearCachedInfos();
+	
+	res = sigprocmask(SIG_SETMASK, &former_sigset, nullptr);
+	__ensure(!res);
 
 	return 0;
 }

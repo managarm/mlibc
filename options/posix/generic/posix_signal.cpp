@@ -47,8 +47,9 @@ int sigaction(int signum, const struct sigaction *__restrict act, struct sigacti
 	return 0;
 }
 
-int kill(pid_t pid, int sig) {
-	__ensure(!"kill() not implemented");
-	__builtin_unreachable();
+int kill(pid_t pid, int number) {
+	if(mlibc::sys_kill(pid, number))
+		return -1;
+	return 0;
 }
 

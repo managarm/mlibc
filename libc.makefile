@@ -231,9 +231,12 @@ libc_code_dirs += options/internal/generic \
 	options/internal/gcc-extra \
 	options/internal/x86_64
 	
-libc_code_dirs += sysdeps/managarm/crt-src sysdeps/managarm/generic
+libc_code_dirs += sysdeps/managarm/crt-src \
+	sysdeps/managarm/generic \
+	sysdeps/managarm/x86_64
 
 libc_s_sources := $(wildcard $(TREE_PATH)/options/internal/x86_64/*.S)
+libc_s_sources += $(wildcard $(TREE_PATH)/sysdeps/managarm/x86_64/*.S)
 
 libc_c_sources := $(wildcard $(TREE_PATH)/options/ansi/musl-generic-math/*.c)
 
