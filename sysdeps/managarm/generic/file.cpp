@@ -2248,9 +2248,50 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) >= _IOC_NR(EVIOCGABS(0))
 			&& _IOC_NR(request) <= _IOC_NR(EVIOCGABS(ABS_MAX))) {
-		frigg::infoLogger() << "\e[31mmlibc: EVIOCGABS is not implemented correctly\e[39m"
-				<< frigg::endLog;
-		return -1;
+		auto param = reinterpret_cast<struct input_absinfo *>(arg);
+		HelAction actions[3];
+		globalQueue.trim();
+
+		auto type = _IOC_NR(request) - _IOC_NR(EVIOCGABS(0));
+		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(EVIOCGABS(0));
+		req.set_input_type(type);
+	
+		frigg::String<MemoryAllocator> ser(getAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		param->value = resp.input_value();
+		param->minimum = resp.input_min();
+		param->maximum = resp.input_max();
+		param->fuzz = resp.input_fuzz();
+		param->flat = resp.input_flat();
+		param->resolution = resp.input_resolution();
+
+		return resp.result();
 	}
 	
 	frigg::infoLogger() << "mlibc: Unexpected ioctl with"
