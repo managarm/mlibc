@@ -14,9 +14,15 @@
 
 struct Queue {
 	Queue()
-	: _queue(nullptr), _progress(0) { }
+	: _handle{kHelNullHandle}, _queue(nullptr), _progress(0) { }
 
-	HelQueue *getQueue() {
+	void recreateQueue() {
+		if(!_queue)
+			return;
+		HEL_CHECK(helCreateQueue(_queue, 0, &_handle));
+	}
+
+	HelHandle getQueue() {
 		if(!_queue) {
 			auto ptr = getAllocator().allocate(sizeof(HelQueue) + 4096);
 			_queue = reinterpret_cast<HelQueue *>(ptr);
@@ -24,8 +30,9 @@ struct Queue {
 			_queue->queueLength = 4096;
 			_queue->kernelState = 0;
 			_queue->userState = 0;
+			HEL_CHECK(helCreateQueue(_queue, 0, &_handle));
 		}
-		return _queue;
+		return _handle;
 	}
 
 	void *dequeueSingle() {
@@ -67,6 +74,7 @@ struct Queue {
 	}
 
 private:
+	HelHandle _handle;
 	HelQueue *_queue;
 	size_t _progress;
 };

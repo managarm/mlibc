@@ -81,8 +81,10 @@ int sys_fork(pid_t *child) {
 			: "rcx", "r11", "rbx", "memory");
 	HEL_CHECK(error);
 	
-	if(!*child)
+	if(!*child) {
 		clearCachedInfos();
+		globalQueue.recreateQueue();
+	}
 	
 	res = sigprocmask(SIG_SETMASK, &former_sigset, nullptr);
 	__ensure(!res);
