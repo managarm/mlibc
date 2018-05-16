@@ -12,95 +12,213 @@
 #include <hel.h>
 #include <hel-syscalls.h>
 
+struct Queue;
+
+struct ElementHandle {
+	ElementHandle(Queue *queue, void *data)
+	: _queue{queue}, _data{data} { }
+
+	ElementHandle(const ElementHandle &) = delete;
+	
+	ElementHandle &operator= (const ElementHandle &) = delete;
+
+	~ElementHandle();
+
+	void *data() {
+		return _data;
+	}
+
+	void advance(size_t size) {
+		_data = reinterpret_cast<char *>(_data) + size;
+	}
+
+private:
+	Queue *_queue;
+	void *_data;
+};
+
 struct Queue {
 	Queue()
-	: _handle{kHelNullHandle}, _queue(nullptr), _progress(0) { }
+	: _handle{kHelNullHandle}, _refCount{0} {
+		_queue = reinterpret_cast<HelQueue *>(getAllocator().allocate(sizeof(HelQueue)
+				+ 2 * sizeof(int)));
+		_chunks[0] = reinterpret_cast<HelChunk *>(getAllocator().allocate(sizeof(HelChunk) + 4096));
+		_chunks[1] = reinterpret_cast<HelChunk *>(getAllocator().allocate(sizeof(HelChunk) + 4096));
+
+		recreateQueue();
+	}
+
+	Queue(const Queue &) = delete;
+
+	Queue &operator= (const Queue &) = delete;
+
+	// TODO: Add this once we turn globalQueue into an accessor function for an Eternal object.
+//	~Queue() {
+//		__ensure(!_refCount);
+//	}
 
 	void recreateQueue() {
-		if(!_queue)
-			return;
+		__ensure(!_refCount);
+
+		// Reset the internal queue state.
+		_retrieveIndex = 0;
+		_nextIndex = 0;
+		_lastProgress = 0;
+
+		for(int i = 0; i < 2; i++)
+			_requeue[i] = false;
+
+		// Setup the queue header.
+		_queue->headFutex = 0;
+		_queue->elementLimit = 128;
+		_queue->sizeShift = 1;
 		HEL_CHECK(helCreateQueue(_queue, 0, &_handle));
+		HEL_CHECK(helSetupChunk(_handle, 0, _chunks[0], 0));
+		HEL_CHECK(helSetupChunk(_handle, 1, _chunks[1], 0));
+
+		// Reset and enqueue the chunks.
+		_chunks[0]->progressFutex = 0;
+		_chunks[1]->progressFutex = 0;
+
+		_queue->indexQueue[0] = 0;
+		_queue->indexQueue[1] = 1;
+		_nextIndex = 2;
+		_wakeHeadFutex();
 	}
 
 	HelHandle getQueue() {
-		if(!_queue) {
-			auto ptr = getAllocator().allocate(sizeof(HelQueue) + 4096);
-			_queue = reinterpret_cast<HelQueue *>(ptr);
-			_queue->elementLimit = 128;
-			_queue->queueLength = 4096;
-			_queue->kernelState = 0;
-			_queue->userState = 0;
-			HEL_CHECK(helCreateQueue(_queue, 0, &_handle));
-		}
 		return _handle;
 	}
 
-	void *dequeueSingle() {
-		__ensure(_queue);
+	void trim() { }
+	
+	ElementHandle dequeueSingle() {
+		__ensure(!_refCount);
 
-		auto e = __atomic_load_n(&_queue->kernelState, __ATOMIC_ACQUIRE);
 		while(true) {
-			__ensure(!(e & kHelQueueWantNext));
+			__ensure(_retrieveIndex != _nextIndex);
 
-			if(_progress != (e & kHelQueueTail)) {
-				__ensure(_progress < (e & kHelQueueTail));
+			bool done;
+			_waitProgressFutex(&done);
+			if(done) {
+				__ensure(!_requeue[_numberOf(_retrieveIndex)]);
+				_requeue[_numberOf(_retrieveIndex)] = true;
 
-				auto ptr = (char *)_queue + sizeof(HelQueue) + _progress;
-				auto elem = reinterpret_cast<HelElement *>(ptr);
-				_progress += sizeof(HelElement) + elem->length;
-				return ptr + sizeof(HelElement);
+				_lastProgress = 0;
+				_retrieveIndex = ((_retrieveIndex + 1) & kHelHeadMask);
+				continue;
 			}
 
-			if(!(e & kHelQueueWaiters)) {
-				auto d = e | kHelQueueWaiters;
-				if(__atomic_compare_exchange_n(&_queue->kernelState,
-						&e, d, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
-					e = d;
-			}else{
-				HEL_CHECK(helFutexWait((int *)&_queue->kernelState, e));
-				e = __atomic_load_n(&_queue->kernelState, __ATOMIC_ACQUIRE);
-			}
+			// Dequeue the next element.
+			auto ptr = (char *)_retrieveChunk() + sizeof(HelChunk) + _lastProgress;
+			auto element = reinterpret_cast<HelElement *>(ptr);
+			_lastProgress += sizeof(HelElement) + element->length;
+			_refCount++;
+			return ElementHandle{this, ptr + sizeof(HelElement)};
 		}
 	}
 
-	void trim() {
-		if(!_queue)
+	void retire() {
+		__ensure(_refCount > 0);
+		if(_refCount-- > 1)
 			return;
 
-		// for now we just reset the queue.
-		_queue->kernelState = 0;
-		_queue->userState = 0;
-		_progress = 0;
+		for(int i = 0; i < 2; i++) {
+			if(!_requeue[i])
+				continue;
+
+			// Reset and enqueue the chunk again.
+			_chunks[i]->progressFutex = 0;
+			
+			_queue->indexQueue[_nextIndex & 1] = i;
+			_nextIndex = ((_nextIndex + 1) & kHelHeadMask);
+			_wakeHeadFutex();
+			_requeue[i] = false;
+		}
+	}
+
+private:
+	int _numberOf(int index) {
+		return _queue->indexQueue[index & 1];
+	}
+
+	HelChunk *_retrieveChunk() {
+		return _chunks[_numberOf(_retrieveIndex)];
+	}
+
+	void _wakeHeadFutex() {
+		auto futex = __atomic_exchange_n(&_queue->headFutex, _nextIndex, __ATOMIC_RELEASE);
+		if(futex & kHelHeadWaiters)
+			HEL_CHECK(helFutexWake(&_queue->headFutex));
+	}
+
+	void _waitProgressFutex(bool *done) {
+		while(true) {
+			auto futex = __atomic_load_n(&_retrieveChunk()->progressFutex, __ATOMIC_ACQUIRE);
+			do {
+				if(_lastProgress != (futex & kHelProgressMask)) {
+					*done = false;
+					return;
+				}else if(futex & kHelProgressDone) {
+					*done = true;
+					return;
+				}
+
+				__ensure(futex == _lastProgress);
+			} while(!__atomic_compare_exchange_n(&_retrieveChunk()->progressFutex, &futex,
+						_lastProgress | kHelProgressWaiters,
+						false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE));
+			
+			HEL_CHECK(helFutexWait(&_retrieveChunk()->progressFutex,
+					_lastProgress | kHelProgressWaiters));
+		}
 	}
 
 private:
 	HelHandle _handle;
 	HelQueue *_queue;
-	size_t _progress;
+	HelChunk *_chunks[2];
+	
+	// Index of the chunk that we are currently retrieving/inserting next.
+	int _retrieveIndex;
+	int _nextIndex;
+
+	// Progress into the current chunk.
+	int _lastProgress;
+
+	// Number of ElementHandle objects alive.
+	int _refCount;
+
+	// Stores for each chunk, if it is available for requeuing.
+	bool _requeue[2];
 };
 
-inline HelSimpleResult *parseSimple(void *&element) {
-	auto result = reinterpret_cast<HelSimpleResult *>(element);
-	element = (char *)element + sizeof(HelSimpleResult);
+inline ElementHandle::~ElementHandle() {
+	if(_queue)
+		_queue->retire();
+}
+
+inline HelSimpleResult *parseSimple(ElementHandle &element) {
+	auto result = reinterpret_cast<HelSimpleResult *>(element.data());
+	element.advance(sizeof(HelSimpleResult));
 	return result;
 }
 
-inline HelInlineResult *parseInline(void *&element) {
-	auto result = reinterpret_cast<HelInlineResult *>(element);
-	element = (char *)element + sizeof(HelInlineResult)
-			+ ((result->length + 7) & ~size_t(7));
+inline HelInlineResult *parseInline(ElementHandle &element) {
+	auto result = reinterpret_cast<HelInlineResult *>(element.data());
+	element.advance(sizeof(HelInlineResult) + ((result->length + 7) & ~size_t(7)));
 	return result;
 }
 
-inline HelLengthResult *parseLength(void *&element) {
-	auto result = reinterpret_cast<HelLengthResult *>(element);
-	element = (char *)element + sizeof(HelLengthResult);
+inline HelLengthResult *parseLength(ElementHandle &element) {
+	auto result = reinterpret_cast<HelLengthResult *>(element.data());
+	element.advance(sizeof(HelLengthResult));
 	return result;
 }
 
-inline HelHandleResult *parseHandle(void *&element) {
-	auto result = reinterpret_cast<HelHandleResult *>(element);
-	element = (char *)element + sizeof(HelHandleResult);
+inline HelHandleResult *parseHandle(ElementHandle &element) {
+	auto result = reinterpret_cast<HelHandleResult *>(element.data());
+	element.advance(sizeof(HelHandleResult));
 	return result;
 }
 

@@ -8,6 +8,9 @@
 #include <hel.h>
 #include <hel-syscalls.h>
 
+void friggBeginLog() { }
+void friggEndLog() { }
+
 void friggPrintCritical(char c) {
 	helLog(&c, 1);
 }
