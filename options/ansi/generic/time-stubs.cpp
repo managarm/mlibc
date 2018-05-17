@@ -40,6 +40,11 @@ struct tm *gmtime(const time_t *timer) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+struct tm *gmtime_r(const time_t *__restrict timer,
+		struct tm *__restrict result) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 struct tm *localtime(const time_t *t) {
 	static thread_local struct tm per_thread_tm;
 	return localtime_r(t, &per_thread_tm);
@@ -184,6 +189,11 @@ size_t strftime(char *__restrict dest, size_t max_size,
 	return (p - dest) + 1;
 }
 
+void tzset(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 // POSIX extensions.
 
 int nanosleep(const struct timespec *, struct timespec *) {
@@ -212,6 +222,10 @@ int clock_settime(clockid_t, const struct timespec *) {
 	__builtin_unreachable();
 }
 
+int utime(const char *, const struct utimbuf *times) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 int utimes(const char *, const struct timeval[2]) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

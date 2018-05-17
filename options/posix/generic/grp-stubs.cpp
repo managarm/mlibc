@@ -46,3 +46,8 @@ void setgrent(void) {
 	__builtin_unreachable();
 }
 
+int setgroups(size_t size, const gid_t *list) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+

@@ -22,6 +22,8 @@ struct group *getgrnam(const char *);
 int getgrnam_r(const char *, struct group *, char *, size_t, struct group **);
 void setgrent(void);
 
+int setgroups(size_t size, const gid_t *list);
+
 #ifdef __cplusplus
 }
 #endif

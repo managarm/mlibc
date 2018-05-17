@@ -71,6 +71,7 @@ extern FILE *stdout;
 
 int remove(const char *filename);
 int rename(const char *old_path, const char *new_path);
+int renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path);
 FILE *tmpfile(void);
 char *tmpnam(char *buffer);
 

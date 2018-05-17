@@ -133,6 +133,7 @@ libc_includes += \
 	sys/signalfd.h \
 	sys/sysmacros.h \
 	sys/timerfd.h \
+	utmp.h \
 	values.h
 #LSB
 libc_includes += sys/auxv.h

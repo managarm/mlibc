@@ -8,6 +8,11 @@
 extern "C" {
 #endif
 
+typedef struct __mbstate_t {
+	unsigned int opaque1;
+	unsigned int opaque2;
+} mbstate_t;
+
 int wcwidth(wchar_t wc);
 
 #ifdef __cplusplus

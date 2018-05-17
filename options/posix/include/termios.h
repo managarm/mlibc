@@ -160,6 +160,7 @@ int tcsetattr(int, int, const struct termios *);
 
 // This is a linux extension
 
+#define TIOCGWINSZ 0x5413
 #define TIOCSWINSZ 0x5414
 
 struct winsize {

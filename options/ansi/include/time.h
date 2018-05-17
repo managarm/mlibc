@@ -58,9 +58,12 @@ int timespec_get(struct timespec *ptr, int base);
 char *asctime(const struct tm *ptr);
 char *ctime(const time_t *timer);
 struct tm *gmtime(const time_t *timer);
+struct tm *gmtime_r(const time_t *__restrict timer, struct tm *__restrict result);
 struct tm *localtime(const time_t *timer);
 size_t strftime(char *__restrict dest, size_t max_size,
 		const char *__restrict format, const struct tm *__restrict ptr);
+
+void tzset(void);
 
 #ifdef __cplusplus
 }
@@ -78,6 +81,11 @@ size_t strftime(char *__restrict dest, size_t max_size,
 extern "C" {
 #endif
 
+struct utimbuf {
+	time_t actime;
+	time_t modtime;
+};
+
 int nanosleep(const struct timespec *, struct timespec *);
 
 int clock_getres(clockid_t, struct timespec *);
@@ -85,6 +93,7 @@ int clock_gettime(clockid_t, struct timespec *);
 int clock_nanosleep(clockid_t, int, const struct timespec *, struct timespec *);
 int clock_settime(clockid_t, const struct timespec *);
 
+int utime(const char *, const struct utimbuf *times);
 int utimes(const char *, const struct timeval[2]);
 
 struct tm *localtime_r(const time_t *, struct tm *);

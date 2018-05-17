@@ -24,6 +24,10 @@ int sigdelset(sigset_t *sigset, int sig) {
 	*sigset &= ~(sigset_t(1) << sig);
 	return 0;
 }
+int sigismember(const sigset_t *set, int signo) {
+	__ensure(!"sigismember() not implemented");
+	__builtin_unreachable();
+}
 
 int sigsuspend(const sigset_t *sigmask) {
 	__ensure(!"sigsuspend() not implemented");

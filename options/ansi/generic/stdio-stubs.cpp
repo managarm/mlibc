@@ -126,6 +126,10 @@ int rename(const char *path, const char *new_path) {
 		return -1;
 	return 0;
 }
+int renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 FILE *tmpfile(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
