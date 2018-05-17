@@ -41,7 +41,7 @@ char *strncpy(char *__restrict dest, const char *src, size_t max_size) {
 	}
 	for(size_t j = i; j < max_size; j++)
 		dest_bytes[j] = 0;
-	return &dest[i];
+	return dest;
 }
 
 char *strcat(char *__restrict dest, const char *__restrict src) {
