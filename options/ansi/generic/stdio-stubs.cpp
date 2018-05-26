@@ -315,8 +315,11 @@ int putc(int c, FILE *stream) {
 	return putc_unlocked(c, stream);
 }
 
+int putchar_unlocked(int c) {
+	return putc_unlocked(c, stdout);
+}
 int putchar(int c) {
-	return putc(c, stdout);
+	return putchar_unlocked(c);
 }
 
 int puts(const char *string) {
@@ -369,10 +372,6 @@ int getc_unlocked(FILE *) {
 	__builtin_unreachable();
 }
 int getchar_unlocked(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-int putchar_unlocked(int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
