@@ -509,11 +509,14 @@ long ftell(FILE *stream) {
 	return 0;
 }
 
-int fflush(FILE *file_base) {
+int fflush_unlocked(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	if(file->flush())
 		return EOF;
 	return 0;
+}
+int fflush(FILE *file_base) {
+	return fflush_unlocked(file_base);
 }
 
 int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t size) {

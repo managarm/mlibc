@@ -271,7 +271,7 @@ char *fgets(char *__restrict buffer, size_t max_size, FILE *__restrict stream) {
 	}
 }
 
-int fputc(int c, FILE *stream) {
+int fputc_unlocked(int c, FILE *stream) {
 	char d = c;
 	if(fwrite(&d, 1, 1, stream) != 1)
 		return EOF;
@@ -279,13 +279,21 @@ int fputc(int c, FILE *stream) {
 		return EOF;
 	return 1;
 }
-int fputs(const char *__restrict string, FILE *__restrict stream) {
+int fputc(int c, FILE *stream) {
+	return fputc_unlocked(c, stream);
+}
+
+int fputs_unlocked(const char *__restrict string, FILE *__restrict stream) {
 	if(fwrite(string, strlen(string), 1, stream) != 1)
 		return EOF;
 	if(fflush(stream))
 		return EOF;
 	return 1;
 }
+int fputs(const char *__restrict string, FILE *__restrict stream) {
+	return fputs_unlocked(string, stream);
+}
+
 int getc(FILE *stream) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -294,7 +302,8 @@ int getchar(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int putc(int c, FILE *stream) {
+
+int putc_unlocked(int c, FILE *stream) {
 	char d = c;
 	if(fwrite(&d, 1, 1, stream) != 1)
 		return EOF;
@@ -302,9 +311,14 @@ int putc(int c, FILE *stream) {
 		return EOF;
 	return c;
 }
+int putc(int c, FILE *stream) {
+	return putc_unlocked(c, stream);
+}
+
 int putchar(int c) {
 	return putc(c, stdout);
 }
+
 int puts(const char *string) {
 	if(fwrite(string, strlen(string), 1, stdout) != 1)
 		return EOF;
@@ -358,10 +372,6 @@ int getchar_unlocked(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int putc_unlocked(int, FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
 int putchar_unlocked(int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -404,15 +414,7 @@ int fileno_unlocked(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int fflush_unlocked(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
 int fgetc_unlocked(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-int fputc_unlocked(int, FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -422,10 +424,6 @@ size_t fread_unlocked(void *, size_t, size_t, FILE *) {
 }
 
 char *fgets_unlocked(char *, int, FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-int fputs_unlocked(const char *, FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
