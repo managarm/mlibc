@@ -80,10 +80,12 @@ int strcmp(const char *a, const char *b) {
 		i++;
 	}
 }
+
 int strcoll(const char *a, const char *b) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: strcoll should take "LC_COLLATE" into account.
+	return strcmp(a, b);
 }
+
 int strncmp(const char *a, const char *b, size_t max_size) {
 	size_t i = 0;
 	while(true) {

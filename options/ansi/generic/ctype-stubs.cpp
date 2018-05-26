@@ -48,9 +48,12 @@ int isxdigit(int c) {
 }
 
 int tolower(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: this really needs to be redesigned and support other charsets.
+	if(c >= 'A' && c <= 'Z')
+		return c - 'A' + 'a';
+	return c;
 }
+
 int toupper(int c) {
 	// TODO: this really needs to be redesigned and support other charsets.
 	if(c >= 'a' && c <= 'z')
