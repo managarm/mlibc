@@ -331,16 +331,30 @@ int wcstombs(char *mb_string, const wchar_t *__restrict wc_string, size_t max_si
 }
 
 
-void free(void *pointer) {
-	getAllocator().free(pointer);
+void free(void *ptr) {
+	if(getenv("MLIBC_DEBUG_MALLOC")) {
+		frigg::infoLogger() << "mlibc (PID " << mlibc::sys_getpid() << "): free() on "
+				<< ptr << frigg::endLog;
+		if((uintptr_t)ptr & 1)
+			frigg::infoLogger() << __builtin_return_address(0) << frigg::endLog;
+	}
+	getAllocator().free(ptr);
 }
 
 void *malloc(size_t size) {
-	return getAllocator().allocate(size);
+	auto nptr = getAllocator().allocate(size);
+	if(getenv("MLIBC_DEBUG_MALLOC"))
+		frigg::infoLogger() << "mlibc (PID " << mlibc::sys_getpid() << "): malloc() returns "
+				<< nptr << frigg::endLog;
+	return nptr;
 }
 
-void *realloc(void *pointer, size_t size) {
-	return getAllocator().realloc(pointer, size);
+void *realloc(void *ptr, size_t size) {
+	auto nptr = getAllocator().realloc(ptr, size);
+	if(getenv("MLIBC_DEBUG_MALLOC"))
+		frigg::infoLogger() << "mlibc (PID " << mlibc::sys_getpid() << "): realloc() on "
+				<< ptr << " returns " << nptr << frigg::endLog;
+	return nptr;
 }
 
 double strtod_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc) {
