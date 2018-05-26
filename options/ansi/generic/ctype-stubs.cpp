@@ -21,8 +21,7 @@ int isdigit(int c) {
 	return c >= '0' && c <= '9';
 }
 int isgraph(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return c >= 32 && c < 127;
 }
 int islower(int c) {
 	__ensure(!"Not implemented");
