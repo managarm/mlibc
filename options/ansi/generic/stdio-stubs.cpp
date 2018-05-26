@@ -320,7 +320,6 @@ int ungetc(int c, FILE *stream) {
 }
 
 // fread() is provided by the POSIX sublibrary
-// fwrite() is provided by the POSIX sublibrary
 
 int fgetpos(FILE *__restrict stream, fpos_t *__restrict position) {
 	__ensure(!"Not implemented");
@@ -418,10 +417,6 @@ int fputc_unlocked(int, FILE *) {
 	__builtin_unreachable();
 }
 size_t fread_unlocked(void *, size_t, size_t, FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-size_t fwrite_unlocked(const void *, size_t, size_t, FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

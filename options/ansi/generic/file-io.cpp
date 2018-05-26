@@ -428,7 +428,7 @@ size_t fread(void *__restrict buffer, size_t size, size_t count,
 	}
 }
 
-size_t fwrite(const void *__restrict buffer, size_t size, size_t count,
+size_t fwrite_unlocked(const void *__restrict buffer, size_t size, size_t count,
 		FILE *__restrict file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	if(!size || !count)
@@ -481,6 +481,12 @@ size_t fwrite(const void *__restrict buffer, size_t size, size_t count,
 		return count;
 	}
 }
+
+size_t fwrite(const void *__restrict buffer, size_t size , size_t count,
+		FILE *__restrict file_base) {
+	return fwrite_unlocked(buffer, size, count, file_base);
+}
+
 
 int fseek(FILE *stream, long offset, int whence) {
 	frigg::panicLogger() << "mlibc: Fix fseek()" << frigg::endLog;
