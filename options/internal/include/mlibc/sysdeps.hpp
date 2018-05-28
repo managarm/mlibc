@@ -72,6 +72,8 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev);
 int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout);
 int sys_inotify_create(int flags, int *fd);
 int sys_ioctl(int fd, unsigned long request, void *arg);
+int sys_getsockopt(int fd, int layer, int number,
+		void *__restrict buffer, socklen_t *__restrict size);
 int sys_setsockopt(int fd, int layer, int number,
 		const void *buffer, socklen_t size);
 int sys_waitpid(pid_t pid, int *status, int flags);

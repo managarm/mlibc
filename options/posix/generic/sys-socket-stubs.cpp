@@ -42,21 +42,7 @@ int getsockname(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restr
 
 int getsockopt(int fd, int layer, int number,
 		void *__restrict buffer, socklen_t *__restrict size) {
-	if(layer == SOL_SOCKET && number == SO_PEERCRED) {
-		__ensure(*size == sizeof(struct ucred));
-		frigg::infoLogger() << "\e[31mmlibc: getsockopt(SO_PEERCRED) returns all zeros\e[39m"
-				<< frigg::endLog;
-
-		struct ucred creds;
-		creds.pid = 0;
-		creds.uid = 0;
-		creds.gid = 0;
-		memcpy(buffer, &creds, sizeof(struct ucred));
-		return 0;
-	}else{
-		frigg::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call\e[39m" << frigg::endLog;
-		__builtin_unreachable();
-	}
+	return mlibc::sys_getsockopt(fd, layer, number, buffer, size);
 }
 
 int listen(int, int) {
