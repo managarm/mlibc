@@ -1096,7 +1096,7 @@ int sys_timerfd_settime(int fd, int flags,
 	return 0;
 }
 
-int sys_signalfd_create(int flags, int *fd) {
+int sys_signalfd_create(sigset_t mask, int flags, int *fd) {
 	__ensure(!(flags & ~(SFD_CLOEXEC | SFD_NONBLOCK)));
 
 	if(flags & SFD_NONBLOCK)
@@ -1113,6 +1113,7 @@ int sys_signalfd_create(int flags, int *fd) {
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::SIGNALFD_CREATE);
 	req.set_flags(proto_flags);
+	req.set_sigset(mask);
 
 	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);

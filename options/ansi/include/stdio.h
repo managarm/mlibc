@@ -157,7 +157,8 @@ int fileno_unlocked(FILE *);
 int fflush_unlocked(FILE *);
 int fgetc_unlocked(FILE *);
 int fputc_unlocked(int, FILE *);
-size_t fread_unlocked(void *, size_t, size_t, FILE *);
+size_t fread_unlocked(void *__restrict, size_t, size_t, FILE *__restrict);
+size_t fwrite_unlocked(const void *__restrict, size_t, size_t, FILE *__restrict);
 
 char *fgets_unlocked(char *, int, FILE *);
 int fputs_unlocked(const char *, FILE *);
