@@ -222,10 +222,6 @@ int clock_settime(clockid_t, const struct timespec *) {
 	__builtin_unreachable();
 }
 
-int utime(const char *, const struct utimbuf *times) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
 int utimes(const char *, const struct timeval[2]) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

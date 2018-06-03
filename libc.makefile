@@ -208,7 +208,8 @@ libc_includes += arpa/inet.h \
 	sys/wait.h \
 	syslog.h \
 	termios.h \
-	unistd.h
+	unistd.h \
+	utime.h
 # sysdeps/managarm
 libc_includes += bits/abi.h
 

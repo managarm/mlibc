@@ -28,6 +28,7 @@ extern "C" {
 #define SIGVTALRM 25
 #define SIGXCPU 26
 #define SIGXFSZ 27
+#define SIGWINCH 28
 
 #define SA_NOCLDSTOP (1 << 0)
 #define SA_ONSTACK (1 << 1)

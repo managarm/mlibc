@@ -81,11 +81,6 @@ void tzset(void);
 extern "C" {
 #endif
 
-struct utimbuf {
-	time_t actime;
-	time_t modtime;
-};
-
 int nanosleep(const struct timespec *, struct timespec *);
 
 int clock_getres(clockid_t, struct timespec *);
@@ -93,7 +88,6 @@ int clock_gettime(clockid_t, struct timespec *);
 int clock_nanosleep(clockid_t, int, const struct timespec *, struct timespec *);
 int clock_settime(clockid_t, const struct timespec *);
 
-int utime(const char *, const struct utimbuf *times);
 int utimes(const char *, const struct timeval[2]);
 
 struct tm *localtime_r(const time_t *, struct tm *);
