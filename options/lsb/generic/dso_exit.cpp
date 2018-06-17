@@ -6,6 +6,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/cxx-support.hpp>
 
+#include <frg/eternal.hpp>
 #include <frigg/initializer.hpp>
 #include <frigg/vector.hpp>
 
@@ -18,9 +19,9 @@ struct ExitHandler {
 using ExitQueue = frigg::Vector<ExitHandler, MemoryAllocator>;
 
 ExitQueue &getExitQueue() {
-	// use frigg::Eternal to prevent the compiler from scheduling the destructor
+	// use frg::eternal to prevent the compiler from scheduling the destructor
 	// by generating a call to __cxa_atexit().
-	static frigg::Eternal<ExitQueue> singleton(getAllocator());
+	static frg::eternal<ExitQueue> singleton(getAllocator());
 	return singleton.get();
 }
 
