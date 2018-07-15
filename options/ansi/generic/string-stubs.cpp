@@ -26,7 +26,7 @@ void *memmove(void *dest, const void *src, size_t size) {
 char *strcpy(char *__restrict dest, const char *src) {
 	char *dest_bytes = (char *)dest;
 	char *src_bytes = (char *)src;
-	for(size_t i = 0; *src_bytes; i++)
+	while(*src_bytes)
 		*(dest_bytes++) = *(src_bytes++);
 	*dest_bytes = 0;
 	return dest;
@@ -35,12 +35,14 @@ char *strncpy(char *__restrict dest, const char *src, size_t max_size) {
 	auto dest_bytes = static_cast<char *>(dest);
 	auto src_bytes = static_cast<const char *>(src);
 	size_t i = 0;
-	while(src_bytes[i]) {
-		dest_bytes[i] = src_bytes[i];
+	while(*src_bytes && i < max_size) {
+		*(dest_bytes++) = *(src_bytes++);
 		i++;
 	}
-	for(size_t j = i; j < max_size; j++)
-		dest_bytes[j] = 0;
+	while(i < max_size) {
+		*(dest_bytes++) = 0;
+		i++;
+	}
 	return dest;
 }
 
