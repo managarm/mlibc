@@ -2,8 +2,10 @@
 #ifndef MLIBC_FRIGG_ALLOC
 #define MLIBC_FRIGG_ALLOC
 
+#include <frigg/atomic.hpp>
 #include <frigg/initializer.hpp>
 #include <frigg/memory.hpp>
+#include <frg/slab.hpp>
 
 struct VirtualAllocator {
 public:
@@ -12,7 +14,7 @@ public:
 	void unmap(uintptr_t address, size_t length);
 };
 
-typedef frigg::SlabAllocator<VirtualAllocator, frigg::TicketLock> MemoryAllocator;
+typedef frg::slab_allocator<VirtualAllocator, frigg::TicketLock> MemoryAllocator;
 
 MemoryAllocator &getAllocator();
 

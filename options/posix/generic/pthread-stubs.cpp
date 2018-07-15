@@ -4,6 +4,7 @@
 #include <string.h>
 #include <pthread.h>
 
+#include <frigg/debug.hpp>
 #include <frigg/traits.hpp>
 #include <frigg/memory.hpp>
 #include <frigg/hashmap.hpp>
