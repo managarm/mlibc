@@ -1294,6 +1294,14 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 			return resp.result();
 		}
 	}
+	case DRM_IOCTL_SET_CLIENT_CAP: {
+		auto param = reinterpret_cast<drm_set_client_cap *>(arg);
+		frigg::infoLogger() << "\e[35mmlibc: DRM_IOCTL_SET_CLIENT_CAP("
+				<< param->capability << ") is not implemented correctly\e[39m"
+				<< frigg::endLog;
+		errno = EINVAL;
+		return -1;
+	}
 	case DRM_IOCTL_GET_MAGIC: {
 		auto param = reinterpret_cast<drm_auth *>(arg);
 		frigg::infoLogger() << "\e[31mmlibc: DRM_IOCTL_GET_MAGIC is not implemented correctly\e[39m"
@@ -1450,6 +1458,12 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		param->pad = 0;
 		
 		return resp.result();
+	}
+	case DRM_IOCTL_MODE_GETPLANERESOURCES: {
+		frigg::infoLogger() << "\e[35mmlibc: DRM_IOCTL_MODE_GETPLANERESOURCES"
+				" is not implemented correctly\e[39m" << frigg::endLog;
+		errno = EINVAL;
+		return -1;
 	}
 	case DRM_IOCTL_MODE_GETENCODER: {
 		auto param = reinterpret_cast<drm_mode_get_encoder*>(arg);
@@ -1823,6 +1837,13 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
 		return resp.result();
+	}
+	case DRM_IOCTL_MODE_OBJ_GETPROPERTIES: {
+		auto param = reinterpret_cast<drm_mode_obj_get_properties *>(arg);
+		frigg::infoLogger() << "\e[35mmlibc: DRM_IOCTL_MODE_OBJ_GETPROPERTIES"
+				" is not implemented correctly\e[39m" << frigg::endLog;
+		param->count_props = 0;
+		return 0;
 	}
 	case DRM_IOCTL_MODE_PAGE_FLIP: {
 		auto param = reinterpret_cast<drm_mode_crtc_page_flip *>(arg);

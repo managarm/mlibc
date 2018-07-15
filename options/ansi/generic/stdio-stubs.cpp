@@ -187,6 +187,8 @@ int sprintf(char *__restrict buffer, const char *__restrict format, ...) {
 	return result;
 }
 int sscanf(const char *__restrict buffer, const char *__restrict format, ...) {
+	frigg::infoLogger() << "sscanf(" << buffer << ", " << format << ")" << frigg::endLog;
+	return EOF;
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
