@@ -44,7 +44,7 @@ struct SoftDouble {
 
 	SoftDouble(bool negative, Mantissa mantissa, Exp exp)
 	: negative(negative), mantissa(mantissa), exp(exp) {
-//		frigg::infoLogger.log() << "(" << (int)negative << ", " << (void *)mantissa
+//		mlibc::infoLogger.log() << "(" << (int)negative << ", " << (void *)mantissa
 //				<< ", " << exp << ")" << frigg::EndLog();
 		__ensure(mantissa < (Mantissa(1) << kMantissaBits));
 		__ensure((exp + kBias) >= 0);
@@ -837,7 +837,7 @@ long double sinl(long double x) {
 }
 
 double tan(double x) {
-	frigg::infoLogger() << "mlibc: tan() is not precise" << frigg::endLog;
+	mlibc::infoLogger() << "mlibc: tan() is not precise" << frg::endlog;
 	return tanf(x);
 }
 // Taken from musl. See musl for the license/copyright!
@@ -1783,7 +1783,7 @@ long double fminl(long double x, long double y) {
 //gnu extension
 
 void sincos(double x, double *sx, double *cx) {
-	frigg::infoLogger() << "mlibc: sincos() is not precise" << frigg::endLog;
+	mlibc::infoLogger() << "mlibc: sincos() is not precise" << frg::endlog;
 	float sxf;
 	float cxf;
 	sincosf(x, &sxf, &cxf);
