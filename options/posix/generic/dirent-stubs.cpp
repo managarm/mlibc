@@ -24,13 +24,13 @@ DIR *fdopendir(int) {
 	__builtin_unreachable();
 }
 DIR *opendir(const char *path) {
-	auto dir = frigg::construct<__mlibc_dir_struct>(getAllocator());
+	auto dir = frg::construct<__mlibc_dir_struct>(getAllocator());
 	__ensure(dir);
 	dir->__ent_next = 0;
 	dir->__ent_limit = 0;
 
 	if(mlibc::sys_open_dir(path, &dir->__handle)) {
-		frigg::destruct(getAllocator(), dir);
+		frg::destruct(getAllocator(), dir);
 		return nullptr;
 	}else{
 		return dir;

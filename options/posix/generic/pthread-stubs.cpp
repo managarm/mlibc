@@ -5,12 +5,12 @@
 #include <pthread.h>
 
 #include <frigg/traits.hpp>
-#include <frigg/memory.hpp>
 #include <frigg/hashmap.hpp>
 #include <hel.h>
 #include <hel-syscalls.h>
 
 #include <bits/ensure.h>
+#include <frg/allocation.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 
@@ -165,7 +165,7 @@ struct __mlibc_key_data {
 int pthread_key_create(pthread_key_t *key, void (*destructor) (void *)) {
 	SCOPE_TRACE();
 
-	*key = frigg::construct<__mlibc_key_data>(getAllocator());
+	*key = frg::construct<__mlibc_key_data>(getAllocator());
 	return 0;
 }
 int pthread_key_delete(pthread_key_t) {

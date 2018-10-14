@@ -11,6 +11,7 @@
 #include <mlibc/debug.hpp>
 
 #include <bits/abi.h>
+#include <frg/allocation.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/sysdeps.hpp>
 
@@ -356,7 +357,7 @@ FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
 		mlibc::panicLogger() << "Illegal fopen() mode '" << mode << "'" << frg::endlog;
 	}
 
-	return frigg::construct<mlibc::fd_file>(getAllocator(), fd);
+	return frg::construct<mlibc::fd_file>(getAllocator(), fd);
 }
 
 FILE *fdopen(int fd, const char *mode) {
@@ -364,7 +365,7 @@ FILE *fdopen(int fd, const char *mode) {
 			<< "\e[39m" << frg::endlog;
 	(void)mode;
 
-	return frigg::construct<mlibc::fd_file>(getAllocator(), fd);
+	return frg::construct<mlibc::fd_file>(getAllocator(), fd);
 }
 
 int fclose(FILE *file_base) {
