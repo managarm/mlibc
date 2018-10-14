@@ -8,7 +8,7 @@
 
 #include <bits/ensure.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 
 #include <bits/abi.h>
 #include <mlibc/allocator.hpp>
@@ -46,7 +46,7 @@ public:
 	abstract_file &operator= (const abstract_file &) = delete;
 
 	~abstract_file() {
-		frigg::panicLogger() << "mlibc: Fix abstract_file destructor" << frigg::endLog;
+		mlibc::panicLogger() << "mlibc: Fix abstract_file destructor" << frg::endlog;
 	}
 
 	virtual int close() = 0;
@@ -64,8 +64,8 @@ public:
 		// Ensure correct buffer type for pipe-like streams.
 		// TODO: In order to support pipe-like streams we need to write-back the buffer.
 		if(__io_mode && __valid_limit)
-			frigg::panicLogger() << "mlibc: Cannot read-write to same pipe-like stream"
-					<< frigg::endLog;
+			mlibc::panicLogger() << "mlibc: Cannot read-write to same pipe-like stream"
+					<< frg::endlog;
 		__io_mode = 0;
 
 		// Clear the buffer, then buffer new data.
@@ -120,8 +120,8 @@ public:
 		// by ungetc()ing all data before a write happens,
 		// however, for now we just report an error.
 		if(!__io_mode && __valid_limit) // TODO: Only check this for pipe-like streams.
-			frigg::panicLogger() << "mlibc: Cannot read-write to same pipe-like stream"
-					<< frigg::endLog;
+			mlibc::panicLogger() << "mlibc: Cannot read-write to same pipe-like stream"
+					<< frg::endlog;
 		__io_mode = 1;
 
 		// Buffer data without performing I/O.
@@ -174,7 +174,7 @@ public:
 			return 0;
 		}else{
 			__ensure(whence == SEEK_CUR); // TODO: Handle errors.
-			frigg::panicLogger() << "mlibc: Implement relative seek for FILE" << frigg::endLog;
+			mlibc::panicLogger() << "mlibc: Implement relative seek for FILE" << frg::endlog;
 			__builtin_unreachable();
 		}
 	}
@@ -353,15 +353,15 @@ FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
 				| __MLIBC_O_CLOEXEC, &fd))
 			return nullptr;
 	}else{
-		frigg::panicLogger() << "Illegal fopen() mode '" << mode << "'" << frigg::endLog;
+		mlibc::panicLogger() << "Illegal fopen() mode '" << mode << "'" << frg::endlog;
 	}
 
 	return frigg::construct<mlibc::fd_file>(getAllocator(), fd);
 }
 
 FILE *fdopen(int fd, const char *mode) {
-	frigg::infoLogger() << "\e[31mmlibc: fdopen() ignores the file mode"
-			<< "\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: fdopen() ignores the file mode"
+			<< "\e[39m" << frg::endlog;
 	(void)mode;
 
 	return frigg::construct<mlibc::fd_file>(getAllocator(), fd);
@@ -389,8 +389,8 @@ size_t fread(void *__restrict buffer, size_t size, size_t count,
 			if(file->read((char *)buffer + progress,
 					count - progress, &chunk)) {
 				// TODO: Handle I/O errors.
-				frigg::infoLogger() << "mlibc: fread() I/O errors are not handled"
-						<< frigg::endLog;
+				mlibc::infoLogger() << "mlibc: fread() I/O errors are not handled"
+						<< frg::endlog;
 				break;
 			}else if(!chunk) {
 				// TODO: Handle eof.
@@ -409,8 +409,8 @@ size_t fread(void *__restrict buffer, size_t size, size_t count,
 				if(file->read((char *)buffer + i * size + progress,
 						size - progress, &chunk)) {
 					// TODO: Handle I/O errors.
-					frigg::infoLogger() << "mlibc: fread() I/O errors are not handled"
-							<< frigg::endLog;
+					mlibc::infoLogger() << "mlibc: fread() I/O errors are not handled"
+							<< frg::endlog;
 					break;
 				}else if(!chunk) {
 					// TODO: Handle eof.
@@ -443,8 +443,8 @@ size_t fwrite_unlocked(const void *__restrict buffer, size_t size, size_t count,
 			if(file->write((const char *)buffer + progress,
 					count - progress, &chunk)) {
 				// TODO: Handle I/O errors.
-				frigg::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
-						<< frigg::endLog;
+				mlibc::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
+						<< frg::endlog;
 				break;
 			}else if(!chunk) {
 				// TODO: Handle eof.
@@ -463,8 +463,8 @@ size_t fwrite_unlocked(const void *__restrict buffer, size_t size, size_t count,
 				if(file->write((const char *)buffer + i * size + progress,
 						size - progress, &chunk)) {
 					// TODO: Handle I/O errors.
-					frigg::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
-							<< frigg::endLog;
+					mlibc::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
+							<< frg::endlog;
 					break;
 				}else if(!chunk) {
 					// TODO: Handle eof.
@@ -489,7 +489,7 @@ size_t fwrite(const void *__restrict buffer, size_t size , size_t count,
 
 
 int fseek(FILE *stream, long offset, int whence) {
-	frigg::panicLogger() << "mlibc: Fix fseek()" << frigg::endLog;
+	mlibc::panicLogger() << "mlibc: Fix fseek()" << frg::endlog;
 	/*
 	off_t new_offset;
 	if(mlibc::sys_seek(stream->fd, offset, whence, &new_offset))
@@ -499,7 +499,7 @@ int fseek(FILE *stream, long offset, int whence) {
 }
 
 long ftell(FILE *stream) {
-	frigg::panicLogger() << "mlibc: Fix ftell()" << frigg::endLog;
+	mlibc::panicLogger() << "mlibc: Fix ftell()" << frg::endlog;
 	/*
 	off_t new_offset;
 	if(mlibc::sys_seek(stream->fd, 0, SEEK_CUR, &new_offset))
@@ -520,7 +520,7 @@ int fflush(FILE *file_base) {
 }
 
 int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t size) {
-	frigg::infoLogger() << "\e[35mmlibc: setvbuf() is ignored\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[35mmlibc: setvbuf() is ignored\e[39m" << frg::endlog;
 /*
 	__ensure(mode == _IOLBF);
 	__ensure(stream->bufferBytes == 0);

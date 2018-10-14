@@ -2,7 +2,7 @@
 #include <pwd.h>
 #include <bits/ensure.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 
 // endpwd() is provided by the platform
 
@@ -21,7 +21,7 @@ int getpwnam_r(const char *, struct passwd *, char *, size_t, struct passwd **) 
 
 struct passwd *getpwuid(uid_t) {
 	static thread_local passwd theEntry;
-	frigg::infoLogger() << "mlibc: Broken getpwuid() called!" << frigg::endLog;
+	mlibc::infoLogger() << "mlibc: Broken getpwuid() called!" << frg::endlog;
 	theEntry.pw_name = "root";
 	theEntry.pw_uid = 0;
 	theEntry.pw_gid = 0;
@@ -31,7 +31,7 @@ struct passwd *getpwuid(uid_t) {
 }
 
 void endpwent(void) {
-	frigg::infoLogger() << "\e[35mmlibc: endpwent() is a no-op\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[35mmlibc: endpwent() is a no-op\e[39m" << frg::endlog;
 }
 
 int getpwuid_r(uid_t, struct passwd *, char *, size_t, struct passwd **) {

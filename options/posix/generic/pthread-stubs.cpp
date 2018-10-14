@@ -4,7 +4,6 @@
 #include <string.h>
 #include <pthread.h>
 
-#include <frigg/debug.hpp>
 #include <frigg/traits.hpp>
 #include <frigg/memory.hpp>
 #include <frigg/hashmap.hpp>
@@ -13,6 +12,7 @@
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
+#include <mlibc/debug.hpp>
 
 // TODO: move this to a 
 
@@ -23,15 +23,15 @@ struct ScopeTrace {
 	: _file(file), _line(line), _function(function) {
 		if(!enableTrace)
 			return;
-		frigg::infoLogger() << "trace: Enter scope "
+		mlibc::infoLogger() << "trace: Enter scope "
 				<< _file << ":" << _line << " (in function "
-				<< _function << ")" << frigg::endLog;
+				<< _function << ")" << frg::endlog;
 	}
 
 	~ScopeTrace() {
 		if(!enableTrace)
 			return;
-		frigg::infoLogger() << "trace: Exit scope" << frigg::endLog;
+		mlibc::infoLogger() << "trace: Exit scope" << frg::endlog;
 	}
 
 private:
@@ -338,7 +338,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 			}else{
 				// otherwise we have to set the waiters flag first.
 				unsigned int desired = expected | waiters;
-				frigg::infoLogger() << desired << frigg::endLog;
+				mlibc::infoLogger() << desired << frg::endlog;
 				if(__atomic_compare_exchange_n((int *)&mutex->__mlibc_state,
 						&expected, desired, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED))
 					expected = desired;

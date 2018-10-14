@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #include <bits/ensure.h>
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 
 FILE *fmemopen(void *__restrict, size_t, const char *__restrict) {
 	__ensure(!"Not implemented");
@@ -22,8 +22,8 @@ FILE *popen(const char*, const char *) {
 }
 
 FILE *open_memstream(char **, size_t *) {
-	frigg::infoLogger() << "\e[31mmlibc: open_memstream() always fails"
-			<< "\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: open_memstream() always fails"
+			<< "\e[39m" << frg::endlog;
 	errno = ENOMEM;
 	return nullptr;
 }

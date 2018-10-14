@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 int ptsname_r(int fd, char *buffer, size_t length) {
@@ -69,7 +69,7 @@ int forkpty(int *mfd, char *name, const struct termios *ios, const struct winsiz
 
 	if(!child) {
 		if(login_tty(sfd))
-			frigg::panicLogger() << "mlibc: TTY login fail in forkpty() child" << frigg::endLog;
+			mlibc::panicLogger() << "mlibc: TTY login fail in forkpty() child" << frg::endlog;
 	}else{
 		if(mlibc::sys_close(sfd))
 			return -1;

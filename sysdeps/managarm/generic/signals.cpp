@@ -7,7 +7,7 @@
 
 #include <hel.h>
 #include <hel-syscalls.h>
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/allocator.hpp>
 #include <frigg/string.hpp>
 #include <frigg/protobuf.hpp>

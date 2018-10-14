@@ -4,7 +4,7 @@
 #include <bits/ensure.h>
 #include <mlibc/cxx-support.hpp>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <frigg/optional.hpp>
 
 struct __Mlibc_LocaleDesc {
@@ -55,8 +55,8 @@ __Mlibc_LocaleDesc &__mlibc_currentLocale(int category) {
 char *setlocale(int category, const char *locale) {
 	if(!(category == LC_ALL || category == LC_COLLATE || category == LC_CTYPE
 			|| category == LC_MONETARY || category == LC_NUMERIC || category == LC_TIME)) {
-		frigg::infoLogger() << "mlibc: Unexpected value " << category
-				<< " for category in setlocale()" << frigg::endLog;
+		mlibc::infoLogger() << "mlibc: Unexpected value " << category
+				<< " for category in setlocale()" << frg::endlog;
 		return nullptr;
 	}
 

@@ -2,7 +2,7 @@
 #include <bits/ensure.h>
 #include <dlfcn.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 
 struct __dlapi_symbol {
 	const char *file;
@@ -17,7 +17,7 @@ extern "C" void *__dlapi_resolve(void *, const char *);
 extern "C" int __dlapi_reverse(const void *, __dlapi_symbol *);
 
 int dlclose(void *) {
-	frigg::infoLogger() << "\e[31mmlibc: dlclose() is a no-op\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: dlclose() is a no-op\e[39m" << frg::endlog;
 	return 0;
 }
 
@@ -28,8 +28,8 @@ char *dlerror(void) {
 void *dlopen(const char *file, int flags) {
 	// TODO: Validate the flags.
 	if(flags & RTLD_NOLOAD) {
-		frigg::infoLogger() << "\e[31mmlibc: dlopen(RTLD_NOLOAD) always fails\e[39m"
-				<< frigg::endLog;
+		mlibc::infoLogger() << "\e[31mmlibc: dlopen(RTLD_NOLOAD) always fails\e[39m"
+				<< frg::endlog;
 		return nullptr;
 	}
 	return __dlapi_open(file, !(flags & RTLD_GLOBAL));

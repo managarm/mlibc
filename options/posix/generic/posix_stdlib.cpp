@@ -5,9 +5,10 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/stat.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 long random(void) {
@@ -36,8 +37,8 @@ int mkstemp(char *pattern) {
 	// TODO: Do an exponential search.
 	for(size_t i = 0; i < 999999; i++) {
 		__ensure(sprintf(pattern + (n - 6), "%06zu", i) == 6);
-//		frigg::infoLogger() << "mlibc: mkstemp candidate is "
-//				<< (const char *)pattern << frigg::endLog;
+//		mlibc::infoLogger() << "mlibc: mkstemp candidate is "
+//				<< (const char *)pattern << frg::endlog;
 
 		// TODO: Add a mode argument to sys_open().
 		int fd;
@@ -59,11 +60,11 @@ char *mkdtemp(char *path) {
 char *realpath(const char *__restrict path, char *__restrict resolved) {
 	// TODO: Implement this based on 
 	__ensure(!resolved);
-	frigg::infoLogger() << "\e[31mmlibc: realpath() does not really resolve paths\e[39m"
-			<< frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: realpath() does not really resolve paths\e[39m"
+			<< frg::endlog;
 
 	resolved = reinterpret_cast<char *>(malloc(strlen(path) + 1));
-	assert(resolved);
+	__ensure(resolved);
 	strcpy(resolved, path);
 	return resolved;
 }

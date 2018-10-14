@@ -6,7 +6,7 @@
 
 #include <hel.h>
 #include <hel-syscalls.h>
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/posix-pipe.hpp>
 #include <mlibc/sysdeps.hpp>
@@ -53,12 +53,12 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 		*secs = tick / 1000000000;
 		*nanos = tick % 1000000000;
 	}else if(clock == CLOCK_PROCESS_CPUTIME_ID) {
-		frigg::infoLogger() << "\e[31mmlibc: clock_gettime does not support the CPU time clocks"
-				"\e[39m" << frigg::endLog;
+		mlibc::infoLogger() << "\e[31mmlibc: clock_gettime does not support the CPU time clocks"
+				"\e[39m" << frg::endlog;
 		*secs = 0;
 		*nanos = 0;
 	}else{
-		frigg::panicLogger() << "mlibc: Unexpected clock " << clock << frigg::endLog;
+		mlibc::panicLogger() << "mlibc: Unexpected clock " << clock << frg::endlog;
 	}
 	return 0;
 }

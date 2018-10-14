@@ -7,7 +7,8 @@
 
 #include <bits/ensure.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
+#include <mlibc/sysdeps.hpp>
 
 #include <hel.h>
 #include <hel-syscalls.h>
@@ -21,15 +22,32 @@ void __assert_fail(const char *assertion, const char *file, unsigned int line,
 
 void __frigg_assert_fail(const char *assertion, const char *file, unsigned int line,
 		const char *function) {
-	frigg::panicLogger() << "In function " << function
+	mlibc::panicLogger() << "In function " << function
 			<< ", file " << file << ":" << line << "\n"
-			<< "__ensure(" << assertion << ") failed" << frigg::endLog;
+			<< "__ensure(" << assertion << ") failed" << frg::endlog;
 }
 
 void __ensure_fail(const char *assertion, const char *file, unsigned int line,
 		const char *function) {
-	frigg::panicLogger() << "In function " << function
+	mlibc::panicLogger() << "In function " << function
 			<< ", file " << file << ":" << line << "\n"
-			<< "__ensure(" << assertion << ") failed" << frigg::endLog;
+			<< "__ensure(" << assertion << ") failed" << frg::endlog;
+}
+
+namespace mlibc {
+	void sys_libc_log(const char *message) {
+		size_t n = 0;
+		while(message[n])
+			n++;
+		HEL_CHECK(helLog(message, n));
+	}
+
+	void sys_libc_panic() {
+		const char *message = "mlibc: Panic!";
+		size_t n = 0;
+		while(message[n])
+			n++;
+		helPanic(message, n);
+	}
 }
 

@@ -2,11 +2,11 @@
 #include <bits/ensure.h>
 #include <sys/prctl.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 
 int prctl(int, ...) {
-	frigg::infoLogger() << "\e[31mmlibc: prctl() is not implemented correctly\e[39m"
-			<< frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: prctl() is not implemented correctly\e[39m"
+			<< frg::endlog;
 	return 0;
 }
 

@@ -1,9 +1,10 @@
 
 #include <stdarg.h>
 #include <bits/ensure.h>
+#include <string.h>
 #include <unistd.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 unsigned int alarm(unsigned int seconds) {
@@ -11,12 +12,12 @@ unsigned int alarm(unsigned int seconds) {
 	__builtin_unreachable();
 }
 int chdir(const char *) {
-	frigg::infoLogger() << "\e[31mmlibc: chdir() is a no-op\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: chdir() is a no-op\e[39m" << frg::endlog;
 	return 0;
 }
 int chown(const char *path, uid_t uid, gid_t gid) {
-	frigg::infoLogger() << "\e[31mmlibc: chown() is not implemented correctly\e[39m"
-			<< frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: chown() is not implemented correctly\e[39m"
+			<< frg::endlog;
 	return 0;
 }
 ssize_t confstr(int, char *, size_t) {
@@ -122,7 +123,7 @@ long gethostid(void) {
 
 int gethostname(char *buffer, size_t max_length) {
 	const char *name = "cradle";
-	frigg::infoLogger() << "mlibc: Broken gethostname() called!" << frigg::endLog;
+	mlibc::infoLogger() << "mlibc: Broken gethostname() called!" << frg::endlog;
 	strncpy(buffer, name, max_length);
 	return 0;
 }
@@ -211,7 +212,7 @@ int setegid(gid_t) {
 	__builtin_unreachable();
 }
 int seteuid(uid_t) {
-	frigg::infoLogger() << "\e[31mmlibc: seteuid() is a no-op\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: seteuid() is a no-op\e[39m" << frg::endlog;
 	return 0;
 }
 int setgid(gid_t) {
@@ -235,7 +236,7 @@ int setreuid(uid_t, uid_t) {
 	__builtin_unreachable();
 }
 pid_t setsid(void) {
-	frigg::infoLogger() << "\e[31mmlibc: setsid() is a no-op\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: setsid() is a no-op\e[39m" << frg::endlog;
 	return 1;
 }
 int setuid(uid_t) {
@@ -261,8 +262,8 @@ unsigned long sysconf(int number) {
 	if(number == _SC_PAGE_SIZE) {
 		return 4096;
 	}else{
-		frigg::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented\e[39m"
-				<< frigg::endLog;
+		mlibc::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented\e[39m"
+				<< frg::endlog;
 		__builtin_unreachable();
 	}
 }
@@ -313,8 +314,8 @@ char *get_current_dir_name(void) {
 
 // This is a Linux extension
 pid_t gettid(void) {
-	frigg::infoLogger() << "\e[31mmlibc: gettid() is not implemented correctly\e[39m"
-			<< frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: gettid() is not implemented correctly\e[39m"
+			<< frg::endlog;
 	return mlibc::sys_getpid();
 }
 

@@ -17,7 +17,7 @@
 #include <mlibc/cxx-support.hpp>
 #include <mlibc/posix-pipe.hpp>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <frigg/vector.hpp>
 #include <frigg/string.hpp>
 #include <frigg/protobuf.hpp>
@@ -204,7 +204,7 @@ pid_t sys_getpid() {
 }
 
 pid_t sys_getppid() {
-	frigg::infoLogger() << "mlibc: Broken getppid() called" << frigg::endLog;
+	mlibc::infoLogger() << "mlibc: Broken getppid() called" << frg::endlog;
 	return 1;
 }
 

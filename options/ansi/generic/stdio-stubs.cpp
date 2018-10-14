@@ -10,7 +10,7 @@
 
 #include <bits/ensure.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <frigg/printf.hpp>
 #include <mlibc/sysdeps.hpp>
 
@@ -194,7 +194,7 @@ int sscanf(const char *__restrict buffer, const char *__restrict format, ...) {
 }
 int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
 	StreamPrinter p(stream);
-//	frigg::infoLogger() << "printf(" << format << ")" << frigg::EndLog();
+//	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
 	frigg::printf(p, format, args);
 	return p.count;
 }
@@ -214,14 +214,14 @@ int vsnprintf(char *__restrict buffer, size_t max_size,
 	if(!max_size)
 		return 0;
 	LimitedPrinter p(buffer, max_size - 1);
-//	frigg::infoLogger() << "printf(" << format << ")" << frigg::EndLog();
+//	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
 	frigg::printf(p, format, args);
 	p.buffer[frigg::min(max_size - 1, p.count)] = 0;
 	return p.count;
 }
 int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
 	BufferPrinter p(buffer);
-//	frigg::infoLogger() << "printf(" << format << ")" << frigg::EndLog();
+//	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
 	frigg::printf(p, format, args);
 	p.buffer[p.count] = 0;
 	return p.count;
@@ -389,7 +389,7 @@ int asprintf(char **out, const char *format, ...) {
 
 int vasprintf(char **out, const char *format, __gnuc_va_list args) {
 	ResizePrinter p;
-//	frigg::infoLogger() << "printf(" << format << ")" << frigg::EndLog();
+//	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
 	frigg::printf(p, format, args);
 	p.expand();
 	p.buffer[p.count] = 0;

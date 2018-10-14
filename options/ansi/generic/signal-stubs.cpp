@@ -2,7 +2,7 @@
 #include <bits/ensure.h>
 #include <signal.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 void __signalDfl(int signal) {
@@ -16,7 +16,7 @@ void __signalIgn(int signal) {
 }
 
 __sighandler signal(int sn, __sighandler handler) {
-	frigg::infoLogger() << "\e[31mmlibc: signal() always returns SIG_DFL\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: signal() always returns SIG_DFL\e[39m" << frg::endlog;
 	if(handler == SIG_DFL || handler == SIG_IGN) {
 	}else{
 		struct sigaction sa;
@@ -24,7 +24,7 @@ __sighandler signal(int sn, __sighandler handler) {
 		sa.sa_flags = 0;
 		sa.sa_mask = 0;
 		if(mlibc::sys_sigaction(sn, &sa, nullptr))
-			frigg::panicLogger() << "\e[31mmlibc: sys_sigaction() failed\e[39m" << frigg::endLog;
+			mlibc::panicLogger() << "\e[31mmlibc: sys_sigaction() failed\e[39m" << frg::endlog;
 	}
 	return SIG_DFL;
 }

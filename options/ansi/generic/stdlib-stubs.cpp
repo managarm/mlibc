@@ -5,7 +5,7 @@
 #include <ctype.h>
 
 #include <frg/random.hpp>
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <bits/ensure.h>
 
 #include <mlibc/allocator.hpp>
@@ -34,7 +34,7 @@ double strtod(const char *__restrict string, char **__restrict end) {
 	__builtin_unreachable();
 }
 float strtof(const char *__restrict string, char **__restrict end) {
-	frigg::infoLogger() << "mlibc: strtof() called on string '" << string << "'" << frigg::endLog;
+	mlibc::infoLogger() << "mlibc: strtof() called on string '" << string << "'" << frg::endlog;
 
 	const char *s = string;
 	char *e;
@@ -57,7 +57,7 @@ long double strtold(const char *__restrict string, char **__restrict end) {
 	__builtin_unreachable();
 }
 long strtol(const char *__restrict string, char **__restrict end, int base) {
-//	frigg::infoLogger() << "mlibc: strtol() called on string '" << string << "'" << frigg::endLog;
+//	mlibc::infoLogger() << "mlibc: strtol() called on string '" << string << "'" << frg::endlog;
 	
 	// skip leading space
 	while(*string) {
@@ -174,7 +174,7 @@ void srand(unsigned int s) {
 }
 
 void srandom(unsigned int) {
-	frigg::infoLogger() << "mlibc: srandom() is a no-op" << frigg::endLog;
+	mlibc::infoLogger() << "mlibc: srandom() is a no-op" << frg::endlog;
 }
 
 void *aligned_alloc(size_t alignment, size_t size) {
@@ -333,10 +333,10 @@ int wcstombs(char *mb_string, const wchar_t *__restrict wc_string, size_t max_si
 
 void free(void *ptr) {
 	if(getenv("MLIBC_DEBUG_MALLOC")) {
-		frigg::infoLogger() << "mlibc (PID " << mlibc::sys_getpid() << "): free() on "
-				<< ptr << frigg::endLog;
+		mlibc::infoLogger() << "mlibc (PID " << mlibc::sys_getpid() << "): free() on "
+				<< ptr << frg::endlog;
 		if((uintptr_t)ptr & 1)
-			frigg::infoLogger() << __builtin_return_address(0) << frigg::endLog;
+			mlibc::infoLogger() << __builtin_return_address(0) << frg::endlog;
 	}
 	getAllocator().free(ptr);
 }
@@ -344,16 +344,16 @@ void free(void *ptr) {
 void *malloc(size_t size) {
 	auto nptr = getAllocator().allocate(size);
 	if(getenv("MLIBC_DEBUG_MALLOC"))
-		frigg::infoLogger() << "mlibc (PID " << mlibc::sys_getpid() << "): malloc() returns "
-				<< nptr << frigg::endLog;
+		mlibc::infoLogger() << "mlibc (PID " << mlibc::sys_getpid() << "): malloc() returns "
+				<< nptr << frg::endlog;
 	return nptr;
 }
 
 void *realloc(void *ptr, size_t size) {
 	auto nptr = getAllocator().realloc(ptr, size);
 	if(getenv("MLIBC_DEBUG_MALLOC"))
-		frigg::infoLogger() << "mlibc (PID " << mlibc::sys_getpid() << "): realloc() on "
-				<< ptr << " returns " << nptr << frigg::endLog;
+		mlibc::infoLogger() << "mlibc (PID " << mlibc::sys_getpid() << "): realloc() on "
+				<< ptr << " returns " << nptr << frg::endlog;
 	return nptr;
 }
 

@@ -2,7 +2,7 @@
 #include <bits/ensure.h>
 #include <poll.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 int poll(struct pollfd *fds, nfds_t count, int timeout) {

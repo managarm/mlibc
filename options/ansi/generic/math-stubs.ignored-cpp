@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 
 // Taken from musl. See musl for the license/copyright!
 #define FORCE_EVAL(x) do {                        \

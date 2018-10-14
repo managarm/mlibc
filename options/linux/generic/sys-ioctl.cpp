@@ -1,7 +1,7 @@
 
 #include <sys/ioctl.h>
 #include <bits/ensure.h>
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 
 #include <mlibc/sysdeps.hpp>
 

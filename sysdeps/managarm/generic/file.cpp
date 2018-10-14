@@ -30,6 +30,7 @@
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
 #include <mlibc/cxx-support.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
 #include <mlibc/sysdeps.hpp>
 
@@ -300,12 +301,12 @@ int sys_fcntl(int fd, int request, va_list args) {
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return resp.flags();
 	}else if(request == F_SETFD) {
-		frigg::infoLogger() << "\e[31mmlibc: fcntl(F_SETFD) is not implemented correctly"
-				<< "\e[39m" << frigg::endLog;
+		mlibc::infoLogger() << "\e[31mmlibc: fcntl(F_SETFD) is not implemented correctly"
+				<< "\e[39m" << frg::endlog;
 		return 0;
 	}else{
-		frigg::infoLogger() << "\e[31mmlibc: Unexpected fcntl() request: "
-				<< request << "\e[39m" << frigg::endLog;
+		mlibc::infoLogger() << "\e[31mmlibc: Unexpected fcntl() request: "
+				<< request << "\e[39m" << frg::endlog;
 		errno = EINVAL;
 		return -1;
 	}
@@ -535,8 +536,8 @@ int sys_tcgetattr(int fd, struct termios *attr) {
 
 int sys_tcsetattr(int fd, int when, const struct termios *attr) {
 	if(when != TCSANOW)
-		frigg::infoLogger() << "\e[35mmlibc: tcsetattr() when argument ignored\e[39m"
-				<< frigg::endLog;
+		mlibc::infoLogger() << "\e[35mmlibc: tcsetattr() when argument ignored\e[39m"
+				<< frg::endlog;
 	return sys_ioctl(fd, TCSETS, const_cast<struct termios *>(attr));
 }
 
@@ -822,8 +823,8 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	for(nfds_t i = 0; i < count; i++) {
 		int mask = 0;
 		if(fds[i].events & ~(POLLIN | POLLOUT))
-			frigg::infoLogger() << "\e[31mmlibc: Unexpected events for poll()\e[39m"
-					<< frigg::endLog;
+			mlibc::infoLogger() << "\e[31mmlibc: Unexpected events for poll()\e[39m"
+					<< frg::endlog;
 		if(fds[i].events & POLLIN)
 			mask |= EPOLLIN;
 		if(fds[i].events & POLLOUT)
@@ -938,7 +939,7 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 		__ensure(!ev);
 		req.set_request_type(managarm::posix::CntReqType::EPOLL_DELETE);
 	}else{
-		frigg::panicLogger() << "\e[31mmlibc: Illegal epoll_ctl() mode\e[39m" << frigg::endLog;
+		mlibc::panicLogger() << "\e[31mmlibc: Illegal epoll_ctl() mode\e[39m" << frg::endlog;
 	}
 	req.set_fd(epfd);
 	req.set_newfd(fd);
@@ -1100,8 +1101,8 @@ int sys_signalfd_create(sigset_t mask, int flags, int *fd) {
 	__ensure(!(flags & ~(SFD_CLOEXEC | SFD_NONBLOCK)));
 
 	if(flags & SFD_NONBLOCK)
-		frigg::infoLogger() << "\e[31mmlibc: signalfd(SFD_NONBLOCK)"
-				" is not implemented correctly\e[39m" << frigg::endLog;
+		mlibc::infoLogger() << "\e[31mmlibc: signalfd(SFD_NONBLOCK)"
+				" is not implemented correctly\e[39m" << frg::endlog;
 	
 	uint32_t proto_flags = 0;
 	if(flags & SFD_CLOEXEC)
@@ -1188,11 +1189,11 @@ int sys_inotify_create(int flags, int *fd) {
 }
 
 int sys_ioctl(int fd, unsigned long request, void *arg) {
-//	frigg::infoLogger() << "mlibc: ioctl with"
-//			<< " type: 0x" << frigg::logHex(_IOC_TYPE(request))
-//			<< ", number: 0x" << frigg::logHex(_IOC_NR(request))
-//			<< " (raw request: " << frigg::logHex(request) << ")"
-//			<< " on fd " << fd << frigg::endLog;
+//	mlibc::infoLogger() << "mlibc: ioctl with"
+//			<< " type: 0x" << frg::hex_fmt(_IOC_TYPE(request))
+//			<< ", number: 0x" << frg::hex_fmt(_IOC_NR(request))
+//			<< " (raw request: " << frg::hex_fmt(request) << ")"
+//			<< " on fd " << fd << frg::endlog;
 
 	auto handle = cacheFileTable()[fd];
 	__ensure(handle);
@@ -1304,15 +1305,15 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 	}
 	case DRM_IOCTL_GET_MAGIC: {
 		auto param = reinterpret_cast<drm_auth *>(arg);
-		frigg::infoLogger() << "\e[31mmlibc: DRM_IOCTL_GET_MAGIC is not implemented correctly\e[39m"
-				<< frigg::endLog;
+		mlibc::infoLogger() << "\e[31mmlibc: DRM_IOCTL_GET_MAGIC is not implemented correctly\e[39m"
+				<< frg::endlog;
 		param->magic = 1;
 		return 0;
 	}
 	case DRM_IOCTL_AUTH_MAGIC: {
 		auto param = reinterpret_cast<drm_auth *>(arg);
-		frigg::infoLogger() << "\e[31mmlibc: DRM_IOCTL_AUTH_MAGIC is not implemented correctly\e[39m"
-				<< frigg::endLog;
+		mlibc::infoLogger() << "\e[31mmlibc: DRM_IOCTL_AUTH_MAGIC is not implemented correctly\e[39m"
+				<< frg::endlog;
 		return 0;
 	}
 	case DRM_IOCTL_MODE_GETRESOURCES: {
@@ -1606,8 +1607,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		globalQueue.trim();
 
 		if(param->pixel_format != DRM_FORMAT_XRGB8888)
-			frigg::infoLogger() << "mlibc: Unexpected pixel format "
-					<< frigg::logHex(param->pixel_format) << frigg::endLog;
+			mlibc::infoLogger() << "mlibc: Unexpected pixel format "
+					<< frg::hex_fmt(param->pixel_format) << frg::endlog;
 		__ensure(param->pixel_format == DRM_FORMAT_XRGB8888
 				|| param->pixel_format == DRM_FORMAT_ARGB8888);
 		__ensure(!param->flags);
@@ -1940,14 +1941,14 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 	case DRM_IOCTL_MODE_CURSOR: {
 		static bool infoPrinted = false;
 		if(!infoPrinted) {
-			frigg::infoLogger() << "mlibc: Cursor-specific DRM ioctl()s are not supported"
-					<< frigg::endLog;
+			mlibc::infoLogger() << "mlibc: Cursor-specific DRM ioctl()s are not supported"
+					<< frg::endlog;
 			infoPrinted = true;
 		}
 		auto param = reinterpret_cast<drm_mode_cursor *>(arg);
 		if(param->handle)
-			frigg::infoLogger() << "mlibc: DRM_IOCTL_MODE_CURSOR to ("
-					<< param->x << ", " << param->y << ")" << frigg::endLog;
+			mlibc::infoLogger() << "mlibc: DRM_IOCTL_MODE_CURSOR to ("
+					<< param->x << ", " << param->y << ")" << frg::endlog;
 		errno = ENXIO;
 		return -1;
 	}
@@ -2037,8 +2038,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		return resp.result();
 	}
 	case TIOCSWINSZ: {
-		frigg::infoLogger() << "\e[31mmlibc: TIOCSWINSZ is not implemented correctly\e[39m"
-				<< frigg::endLog;
+		mlibc::infoLogger() << "\e[31mmlibc: TIOCSWINSZ is not implemented correctly\e[39m"
+				<< frg::endlog;
 		return -1;
 	}
 	case TIOCGPTN: {
@@ -2316,10 +2317,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		return resp.result();
 	}
 	
-	frigg::infoLogger() << "mlibc: Unexpected ioctl with"
-			<< " type: 0x" << frigg::logHex(_IOC_TYPE(request))
-			<< ", number: 0x" << frigg::logHex(_IOC_NR(request))
-			<< " (raw request: " << frigg::logHex(request) << ")" << frigg::endLog;
+	mlibc::infoLogger() << "mlibc: Unexpected ioctl with"
+			<< " type: 0x" << frg::hex_fmt(_IOC_TYPE(request))
+			<< ", number: 0x" << frg::hex_fmt(_IOC_NR(request))
+			<< " (raw request: " << frg::hex_fmt(request) << ")" << frg::endlog;
 	__ensure(!"Illegal ioctl request");
 	__builtin_unreachable();
 }
@@ -2383,7 +2384,7 @@ int sys_open(const char *path, int flags, int *fd) {
 }
 
 int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
-	//frigg::infoLogger() << "read() " << max_size << frigg::EndLog();
+	//mlibc::infoLogger() << "read() " << max_size << frigg::EndLog();
 	HelAction actions[5];
 	globalQueue.trim();
 
@@ -2456,7 +2457,7 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	auto handle = cacheFileTable()[fd];
 	__ensure(handle);
 
-//	frigg::infoLogger.log() << "write()" << frigg::EndLog();
+//	mlibc::infoLogger.log() << "write()" << frigg::EndLog();
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_req_type(managarm::fs::CntReqType::WRITE);
 	req.set_fd(fd);
@@ -2529,7 +2530,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	}else if(whence == SEEK_END) {
 		req.set_req_type(managarm::fs::CntReqType::SEEK_EOF);
 	}else{
-		frigg::panicLogger() << "Illegal whence argument" << frigg::endLog;
+		mlibc::panicLogger() << "Illegal whence argument" << frg::endlog;
 	}
 	
 	frigg::String<MemoryAllocator> ser(getAllocator());

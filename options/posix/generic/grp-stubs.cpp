@@ -3,7 +3,7 @@
 #include <string.h>
 #include <bits/ensure.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 
 namespace {
 
@@ -30,8 +30,8 @@ int getgrgid_r(gid_t, struct group *, char *, size_t, struct group **) {
 	__builtin_unreachable();
 }
 struct group *getgrnam(const char *name) {
-	frigg::infoLogger() << "mlibc: getgrname() for group '"
-			<< name << "' returns null data" << frigg::endLog;
+	mlibc::infoLogger() << "mlibc: getgrname() for group '"
+			<< name << "' returns null data" << frg::endlog;
 	local_group.gr_name = strdup(name);
 	local_group.gr_gid = 0;
 	local_group.gr_mem = global_empty_strlist;

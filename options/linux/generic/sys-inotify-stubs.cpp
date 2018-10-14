@@ -2,7 +2,7 @@
 #include <bits/ensure.h>
 #include <sys/inotify.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 int inotify_init(void) {
@@ -20,7 +20,7 @@ int inotify_init1(int flags) {
 }
 
 int inotify_add_watch(int, const char *, unsigned int) {
-	frigg::infoLogger() << "\e[31mmlibc: inotify_add_watch() is broken\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: inotify_add_watch() is broken\e[39m" << frg::endlog;
 	return 0; // TODO: Return a non-negative watch descriptor.
 }
 

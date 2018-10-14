@@ -2,13 +2,13 @@
 #include <bits/ensure.h>
 #include <sys/socket.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length) {
 	if(addr_ptr || addr_length)
-		frigg::infoLogger() << "\e[35mmlibc: accept() does not fill struct sockaddr\e[39m"
-				<< frigg::endLog;
+		mlibc::infoLogger() << "\e[35mmlibc: accept() does not fill struct sockaddr\e[39m"
+				<< frg::endlog;
 	int newfd;
 	if(mlibc::sys_accept(fd, &newfd))
 		return -1;
@@ -46,7 +46,7 @@ int getsockopt(int fd, int layer, int number,
 }
 
 int listen(int, int) {
-	frigg::infoLogger() << "\e[31mmlibc: listen() is a no-op\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: listen() is a no-op\e[39m" << frg::endlog;
 	return 0;
 }
 

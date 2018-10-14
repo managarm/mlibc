@@ -5,6 +5,7 @@
 
 #include <mlibc/allocator.hpp>
 #include <mlibc/cxx-support.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
 
 #include <frigg/vector.hpp>
@@ -240,7 +241,7 @@ int sys_getsockopt(int fd, int layer, int number,
 		memcpy(buffer, &creds, sizeof(struct ucred));
 		return 0;
 	}else{
-		frigg::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call\e[39m" << frigg::endLog;
+		mlibc::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call\e[39m" << frg::endlog;
 		__builtin_unreachable();
 	}
 }
@@ -290,15 +291,15 @@ int sys_setsockopt(int fd, int layer, int number,
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		return 0;
 	}else if(layer == SOL_SOCKET && number == SO_ATTACH_FILTER) {
-		frigg::infoLogger() << "\e[31mmlibc: setsockopt(SO_ATTACH_FILTER) is not implemented"
-				" correctly\e[39m" << frigg::endLog;
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt(SO_ATTACH_FILTER) is not implemented"
+				" correctly\e[39m" << frg::endlog;
 		return 0;
 	}else if(layer == SOL_SOCKET && number == SO_RCVBUFFORCE) {
-		frigg::infoLogger() << "\e[31mmlibc: setsockopt(SO_RCVBUFFORCE) is not implemented"
-				" correctly\e[39m" << frigg::endLog;
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt(SO_RCVBUFFORCE) is not implemented"
+				" correctly\e[39m" << frg::endlog;
 		return 0;
 	}else{
-		frigg::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call\e[39m" << frigg::endLog;
+		mlibc::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call\e[39m" << frg::endlog;
 		__builtin_unreachable();
 	}
 }

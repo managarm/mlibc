@@ -1,12 +1,13 @@
 
+#include <string.h>
 #include <sys/utsname.h>
-#include <bits/ensure.h>
 
-#include <frigg/debug.hpp>
+#include <bits/ensure.h>
+#include <mlibc/debug.hpp>
 
 int uname(struct utsname *p) {
 	__ensure(p);
-	frigg::infoLogger() << "\e[31mmlibc: uname() returns static information\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: uname() returns static information\e[39m" << frg::endlog;
 	strcpy(p->sysname, "managarm");
 	strcpy(p->nodename, "foo");
 	strcpy(p->release, "0.1.0");

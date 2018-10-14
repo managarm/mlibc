@@ -2,7 +2,7 @@
 #include <bits/ensure.h>
 #include <sys/timerfd.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 int timerfd_create(int, int flags) {

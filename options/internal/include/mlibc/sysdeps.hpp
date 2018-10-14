@@ -13,6 +13,9 @@
 
 namespace mlibc {
 
+void sys_libc_log(const char *message);
+__attribute__ ((noreturn)) void sys_libc_panic();
+
 __attribute__ ((noreturn)) void sys_exit(int status);
 
 int sys_clock_get(int clock, time_t *secs, long *nanos);

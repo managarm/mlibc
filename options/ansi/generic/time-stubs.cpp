@@ -8,7 +8,7 @@
 #include <sys/stat.h>
 #include <time.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 clock_t clock(void) {
@@ -56,7 +56,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 	
 	while(*c) {
 		auto space = (dest + max_size) - p;
-		assert(space >= 0);
+		__ensure(space >= 0);
 		
 		if(*c != '%') {
 			if(!space)
@@ -120,7 +120,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			const char *strdays[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 			int day = tm->tm_wday;
 			if(day < 0 || day > 6)
-				assert(!"Day not in bounds.");
+				__ensure(!"Day not in bounds.");
 
 			auto chunk = snprintf(p, space, "%s", strdays[day]);
 			if(chunk >= space)
@@ -132,7 +132,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 					"Aug", "Sep", "Oct", "Nov", "Dec" };
 			int mon = tm->tm_mon;
 			if(mon < 0 || mon > 11)
-				assert(!"Month not in bounds.");
+				__ensure(!"Month not in bounds.");
 			
 			auto chunk = snprintf(p, space, "%s", strmons[mon]);
 			if(chunk >= space)
@@ -177,7 +177,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			}
 			c += 2;
 		}else {
-			assert(!"Unknown format type.");
+			__ensure(!"Unknown format type.");
 		}
 	}
 
@@ -293,24 +293,24 @@ int unix_local_from_gmt(time_t gmt_time, time_t *offset, bool *dst) {
 	if(!global_tzinfo_buffer) {
 		int fd;
 		if(mlibc::sys_open("/etc/localtime", O_RDONLY, &fd)) {
-			frigg::infoLogger() << "mlibc: Error opening TZinfo" << frigg::endLog;
+			mlibc::infoLogger() << "mlibc: Error opening TZinfo" << frg::endlog;
 			return -1;
 		}
 	
 		struct stat info;
 		if(mlibc::sys_fstat(fd, &info)) {
-			frigg::infoLogger() << "mlibc: Error getting TZinfo stats" << frigg::endLog;
+			mlibc::infoLogger() << "mlibc: Error getting TZinfo stats" << frg::endlog;
 			return -1;
 		}
 
 		if(mlibc::sys_vm_map(nullptr, (size_t)info.st_size, PROT_READ, MAP_PRIVATE,
 				fd, 0, &global_tzinfo_buffer)) {
-			frigg::infoLogger() << "mlibc: Error mapping TZinfo" << frigg::endLog;
+			mlibc::infoLogger() << "mlibc: Error mapping TZinfo" << frg::endlog;
 			return -1;
 		}
 	
 		if(mlibc::sys_close(fd)) {
-			frigg::infoLogger() << "mlibc: Error closing TZinfo" << frigg::endLog;
+			mlibc::infoLogger() << "mlibc: Error closing TZinfo" << frg::endlog;
 			return -1;
 		}
 	}	
@@ -326,13 +326,13 @@ int unix_local_from_gmt(time_t gmt_time, time_t *offset, bool *dst) {
 	
 	if(tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i' 
 			|| tzfile_time.magic[3] != 'f') {
-		frigg::infoLogger() << "mlibc: /etc/localtime is not a valid TZinfo file" << frigg::endLog;
+		mlibc::infoLogger() << "mlibc: /etc/localtime is not a valid TZinfo file" << frg::endlog;
 		return -1;
 	}
 
 	if(tzfile_time.version != '\0' && tzfile_time.version != '2' && tzfile_time.version != '3') {
-		frigg::infoLogger() << "mlibc: /etc/localtime has an invalid TZinfo version"
-				<< frigg::endLog;
+		mlibc::infoLogger() << "mlibc: /etc/localtime has an invalid TZinfo version"
+				<< frg::endlog;
 		return -1;
 	}
 

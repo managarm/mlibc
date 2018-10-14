@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 
 char *strdup(const char *string) {
 	auto num_bytes = strlen(string);

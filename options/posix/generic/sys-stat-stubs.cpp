@@ -2,12 +2,12 @@
 #include <bits/ensure.h>
 #include <sys/stat.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 int chmod(const char *, mode_t) {
-	frigg::infoLogger() << "\e[31mmlibc: chmod() is not implemented correctly\e[39m"
-			<< frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: chmod() is not implemented correctly\e[39m"
+			<< frg::endlog;
 	return 0;
 }
 int fchmod(int, mode_t) {
@@ -23,12 +23,12 @@ int fstatat(int, const char *__restrict, struct stat *__restrict, int) {
 	__builtin_unreachable();
 }
 int futimens(int fd, const struct timespec times[2]) {
-	frigg::infoLogger() << "\e[31mmlibc: futimens() is not implemented correctly\e[39m"
-			<< frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: futimens() is not implemented correctly\e[39m"
+			<< frg::endlog;
 	return 0;
 }
 int mkdir(const char *path, mode_t) {
-	frigg::infoLogger() << "\e[31mmlibc: mkdir() ignore the mode\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: mkdir() ignore the mode\e[39m" << frg::endlog;
 	if(mlibc::sys_mkdir(path))
 		return -1;
 	return 0;
@@ -54,13 +54,13 @@ int mknodat(const char *, mode_t, dev_t) {
 	__builtin_unreachable();
 }
 mode_t umask(mode_t) {
-	frigg::infoLogger() << "\e[31mmlibc: umask() is a no-op and always returns 0\e[39m"
-			<< frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: umask() is a no-op and always returns 0\e[39m"
+			<< frg::endlog;
 	return 0;
 }
 int utimensat(int, const char *, const struct timespec times[2], int) {
-	frigg::infoLogger() << "\e[31mmlibc: utimensat() is not implemented correctly\e[39m"
-			<< frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: utimensat() is not implemented correctly\e[39m"
+			<< frg::endlog;
 	return 0;
 }
 

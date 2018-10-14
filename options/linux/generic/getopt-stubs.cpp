@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 
 char *optarg;
 int optind = 1;
@@ -74,7 +74,7 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 }
 
 int getopt_long_only(int, char *const[], const char *, const struct option *, int *) {
-	frigg::infoLogger() << "\e[31mmlibc: getopt_long_only() is only a stub\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: getopt_long_only() is only a stub\e[39m" << frg::endlog;
 	return -1;
 }
 

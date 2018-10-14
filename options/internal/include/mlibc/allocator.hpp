@@ -3,7 +3,6 @@
 #define MLIBC_FRIGG_ALLOC
 
 #include <frigg/atomic.hpp>
-#include <frigg/initializer.hpp>
 #include <frigg/memory.hpp>
 #include <frg/slab.hpp>
 

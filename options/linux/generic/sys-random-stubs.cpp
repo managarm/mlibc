@@ -2,10 +2,10 @@
 #include <sys/random.h>
 #include <bits/ensure.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 
 ssize_t getrandom(void *buffer, size_t max_size, unsigned int flags) {
-	frigg::infoLogger() << "\e[31mmlibc: getrandom() is a no-op\e[39m" << frigg::endLog;
+	mlibc::infoLogger() << "\e[31mmlibc: getrandom() is a no-op\e[39m" << frg::endlog;
 	return max_size;
 }
 

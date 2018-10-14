@@ -3,7 +3,7 @@
 #include <libgen.h>
 #include <string.h>
 
-#include <frigg/debug.hpp>
+#include <mlibc/debug.hpp>
 
 // Adopted from musl's code.
 char *basename(char *s) {
