@@ -104,7 +104,7 @@ int unsetenv(const char *name) {
 
 	// Last pointer is always null.
 	__ensure(global_env_vector.size() >= 2 && !global_env_vector.back());
-	frigg::swap(global_env_vector[k], global_env_vector[global_env_vector.size() - 2]);
+	std::swap(global_env_vector[k], global_env_vector[global_env_vector.size() - 2]);
 	global_env_vector.pop();
 	global_env_vector.back() = nullptr;
 

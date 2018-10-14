@@ -93,7 +93,7 @@ public:
 		// Return data from the buffer.
 		__ensure(__offset < __valid_limit);
 
-		auto chunk = frigg::min(size_t(__valid_limit - __offset), max_size);
+		auto chunk = frg::min(size_t(__valid_limit - __offset), max_size);
 		memcpy(buffer, __buffer_ptr + __offset, chunk);
 		__offset += chunk;
 
@@ -128,17 +128,17 @@ public:
 		__ensure(__offset < __buffer_size);
 
 		_ensure_allocation();
-		auto chunk = frigg::min(__buffer_size - __offset, max_size);
+		auto chunk = frg::min(__buffer_size - __offset, max_size);
 		memcpy(__buffer_ptr + __offset, buffer, chunk);
 
 		if(__dirty_begin != __dirty_end) {
-			__dirty_begin = frigg::min(__dirty_begin, __offset);
-			__dirty_end = frigg::max(__dirty_end, __offset + chunk);
+			__dirty_begin = frg::min(__dirty_begin, __offset);
+			__dirty_end = frg::max(__dirty_end, __offset + chunk);
 		}else{
 			__dirty_begin = __offset;
 			__dirty_end = __offset + chunk;
 		}
-		__valid_limit = frigg::max(__offset + chunk, __valid_limit);
+		__valid_limit = frg::max(__offset + chunk, __valid_limit);
 		__offset += chunk;
 
 		*actual_size = chunk;

@@ -1238,11 +1238,11 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		param->version_minor = resp.drm_version_minor();
 		param->version_patchlevel = resp.drm_version_patchlevel();
 		
-		memcpy(param->name, resp.drm_driver_name().data(), frigg::min(param->name_len,
+		memcpy(param->name, resp.drm_driver_name().data(), frg::min(param->name_len,
 				resp.drm_driver_name().size()));
-		memcpy(param->date, resp.drm_driver_date().data(), frigg::min(param->date_len,
+		memcpy(param->date, resp.drm_driver_date().data(), frg::min(param->date_len,
 				resp.drm_driver_date().size()));
-		memcpy(param->desc, resp.drm_driver_desc().data(), frigg::min(param->desc_len,
+		memcpy(param->desc, resp.drm_driver_desc().data(), frg::min(param->desc_len,
 				resp.drm_driver_desc().size()));
 
 		param->name_len = resp.drm_driver_name().size();
@@ -2093,21 +2093,21 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGNAME(0))) {
 		const char *s = "Managarm generic evdev";
-		auto chunk = frigg::min(_IOC_SIZE(request), strlen(s) + 1);
+		auto chunk = frg::min(_IOC_SIZE(request), strlen(s) + 1);
 		memcpy(arg, s, chunk);
 		return chunk;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGPHYS(0))) {
 		// Returns the sysfs path of the device.
 		const char *s = "input0";
-		auto chunk = frigg::min(_IOC_SIZE(request), strlen(s) + 1);
+		auto chunk = frg::min(_IOC_SIZE(request), strlen(s) + 1);
 		memcpy(arg, s, chunk);
 		return chunk;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGUNIQ(0))) {
 		// Returns a unique ID for the device.
 		const char *s = "0";
-		auto chunk = frigg::min(_IOC_SIZE(request), strlen(s) + 1);
+		auto chunk = frg::min(_IOC_SIZE(request), strlen(s) + 1);
 		memcpy(arg, s, chunk);
 		return chunk;
 	}else if(_IOC_TYPE(request) == 'E'
