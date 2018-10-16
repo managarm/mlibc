@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include <bits/ensure.h>
+#include <frg/allocation.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/sysdeps.hpp>
 
