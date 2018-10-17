@@ -5,8 +5,8 @@
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
 
+#include <frg/vector.hpp>
 #include <frigg/string.hpp>
-#include <frigg/vector.hpp>
 
 static char *emptyEnvironment[] = { nullptr };
 
@@ -15,7 +15,7 @@ char **environ = emptyEnvironment;
 namespace {
 
 // Environment vector that is mutated by putenv() and setenv().
-static frigg::Vector<char *, MemoryAllocator> global_env_vector{getAllocator()};
+static frg::vector<char *, MemoryAllocator> global_env_vector{getAllocator()};
 
 void update_env_copy() {
 	if(environ == global_env_vector.data())

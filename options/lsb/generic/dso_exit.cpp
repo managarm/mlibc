@@ -7,8 +7,7 @@
 #include <mlibc/cxx-support.hpp>
 
 #include <frg/eternal.hpp>
-#include <frigg/initializer.hpp>
-#include <frigg/vector.hpp>
+#include <frg/vector.hpp>
 
 struct ExitHandler {
 	void (*function)(void *);
@@ -16,7 +15,7 @@ struct ExitHandler {
 	void *dsoHandle;
 };
 
-using ExitQueue = frigg::Vector<ExitHandler, MemoryAllocator>;
+using ExitQueue = frg::vector<ExitHandler, MemoryAllocator>;
 
 ExitQueue &getExitQueue() {
 	// use frg::eternal to prevent the compiler from scheduling the destructor
