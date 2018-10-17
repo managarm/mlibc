@@ -1,18 +1,19 @@
 
 #include <locale.h>
+#include <string.h>
 
 #include <bits/ensure.h>
 #include <mlibc/cxx-support.hpp>
 
 #include <mlibc/debug.hpp>
-#include <frigg/optional.hpp>
+#include <frg/optional.hpp>
 
 struct __Mlibc_LocaleDesc {
 	// identifier of this locale. used in setlocale()
 	const char *locale;
 };
 
-frigg::Optional<__Mlibc_LocaleDesc> __mlibc_queryLocale(const char *locale) {
+frg::optional<__Mlibc_LocaleDesc> __mlibc_queryLocale(const char *locale) {
 	// our default C locale is the C locale
 	if(!strlen(locale))
 		return __mlibc_queryLocale("C");
@@ -70,7 +71,7 @@ char *setlocale(int category, const char *locale) {
 		if(!locale)
 			return const_cast<char *>(current_desc.locale);
 		
-		frigg::Optional<__Mlibc_LocaleDesc> new_desc = __mlibc_queryLocale(locale);
+		frg::optional<__Mlibc_LocaleDesc> new_desc = __mlibc_queryLocale(locale);
 		if(!new_desc)
 			return nullptr;
 		__mlibc_collateDesc = *new_desc;
@@ -85,7 +86,7 @@ char *setlocale(int category, const char *locale) {
 	if(!locale)
 		return const_cast<char *>(current_desc.locale);
 	
-	frigg::Optional<__Mlibc_LocaleDesc> new_desc = __mlibc_queryLocale(locale);
+	frg::optional<__Mlibc_LocaleDesc> new_desc = __mlibc_queryLocale(locale);
 	if(!new_desc)
 		return nullptr;
 	__mlibc_currentLocale(category) = *new_desc;
