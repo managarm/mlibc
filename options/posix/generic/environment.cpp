@@ -5,8 +5,8 @@
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
 
+#include <frg/string.hpp>
 #include <frg/vector.hpp>
-#include <frigg/string.hpp>
 
 static char *emptyEnvironment[] = { nullptr };
 
@@ -33,15 +33,15 @@ void fix_env_pointer() {
 	environ = global_env_vector.data();
 }
 
-size_t find_env_index(frigg::StringView name) {
+size_t find_env_index(frg::string_view name) {
 	__ensure(environ == global_env_vector.data());
 	__ensure(!global_env_vector.empty());
 
 	for(size_t i = 0; global_env_vector[i]; i++) {
-		frigg::StringView view{global_env_vector[i]};
-		size_t s = view.findFirst('=');
+		frg::string_view view{global_env_vector[i]};
+		size_t s = view.find_first('=');
 		__ensure(s != size_t(-1));
-		if(view.subString(0, s) == name)
+		if(view.sub_string(0, s) == name)
 			return i;
 	}
 
@@ -58,8 +58,8 @@ char *getenv(const char *name) {
 	if(k == size_t(-1))
 		return nullptr;
 	
-	frigg::StringView view{global_env_vector[k]};
-	size_t s = view.findFirst('=');
+	frg::string_view view{global_env_vector[k]};
+	size_t s = view.find_first('=');
 	__ensure(s != size_t(-1));
 	return const_cast<char *>(view.data() + s + 1);
 }
@@ -67,12 +67,12 @@ char *getenv(const char *name) {
 int putenv(const char *string) {
 	update_env_copy();
 
-	frigg::StringView view{string};
-	size_t s = view.findFirst('=');
+	frg::string_view view{string};
+	size_t s = view.find_first('=');
 	if(s == size_t(-1))
 		__ensure(!"Environment strings need to contain an equals sign");
 	
-	auto k = find_env_index(view.subString(0, s));
+	auto k = find_env_index(view.sub_string(0, s));
 	if(k != size_t(-1)) {
 		__ensure(!"Implement enviornment variable replacement");
 	}else{
