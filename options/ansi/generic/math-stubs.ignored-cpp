@@ -45,7 +45,7 @@ struct SoftDouble {
 	SoftDouble(bool negative, Mantissa mantissa, Exp exp)
 	: negative(negative), mantissa(mantissa), exp(exp) {
 //		mlibc::infoLogger.log() << "(" << (int)negative << ", " << (void *)mantissa
-//				<< ", " << exp << ")" << frigg::EndLog();
+//				<< ", " << exp << ")" << frg::end_log;
 		__ensure(mantissa < (Mantissa(1) << kMantissaBits));
 		__ensure((exp + kBias) >= 0);
 		__ensure((exp + kBias) < (Exp(1) << kExpBits));
