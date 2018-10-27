@@ -4,17 +4,14 @@
 #include <string.h>
 #include <pthread.h>
 
-#include <frigg/traits.hpp>
-#include <frigg/hashmap.hpp>
 #include <hel.h>
 #include <hel-syscalls.h>
 
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>
+#include <frg/hash_map.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
-
-// TODO: move this to a 
 
 static bool enableTrace = false;
 
@@ -153,13 +150,12 @@ int pthread_atfork(void (*) (void), void (*) (void), void (*) (void)) {
 struct __mlibc_key_data {
 	__mlibc_key_data()
 	: mutex(PTHREAD_MUTEX_INITIALIZER),
-			values(frigg::DefaultHasher<int>(), getAllocator()) { }
+			values{frg::hash<int>{}, getAllocator()} { }
 
 	pthread_mutex_t mutex;
 
 	// TODO: this should be unsigned int.
-	frigg::Hashmap<int, void *, frigg::DefaultHasher<int>,
-			MemoryAllocator> values;
+	frg::hash_map<int, void *, frg::hash<int>, MemoryAllocator> values;
 };
 
 int pthread_key_create(pthread_key_t *key, void (*destructor) (void *)) {
