@@ -5,25 +5,55 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-// TODO: we need this for frigg::printf; replace this mechanism
-#include <assert.h>
-
 #include <bits/ensure.h>
 
-#include <mlibc/debug.hpp>
 #include <frigg/printf.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
+
+template<typename F>
+struct PrintfAgent {
+	PrintfAgent(F *formatter, frg::va_struct *vsp)
+	: _formatter{formatter}, _vsp{vsp} { }
+
+	void operator() (char c) {
+		_formatter->append(c);
+	}
+
+	void operator() (char t, frg::format_options opts, frg::printf_size_mod szmod) {
+		switch(t) {
+		case 'p': case 'c': case 's':
+			frg::do_printf_chars(*_formatter, t, opts, szmod, _vsp);
+			break;
+		case 'd': case 'i': case 'o': case 'x': case 'X': case 'u':
+			frg::do_printf_ints(*_formatter, t, opts, szmod, _vsp);
+			break;
+		case 'f': case 'F': case 'g': case 'G': case 'e': case 'E':
+			frg::do_printf_floats(*_formatter, t, opts, szmod, _vsp);
+			break;
+		case 'm':
+			_formatter->append("%m");
+			break;
+		default:
+			__ensure(!"Illegal printf terminator");
+		}
+	}
+
+private:
+	F *_formatter;
+	frg::va_struct *_vsp;
+};
 
 struct StreamPrinter {
 	StreamPrinter(FILE *stream)
 	: stream(stream), count(0) { }
 
-	void print(char c) {
+	void append(char c) {
 		fwrite(&c, 1, 1, stream);
 		count++;
 	}
 
-	void print(const char *str) {
+	void append(const char *str) {
 		fwrite(str, strlen(str), 1, stream);
 		count += strlen(str);
 	}
@@ -40,12 +70,12 @@ struct BufferPrinter {
 	BufferPrinter(char *buffer)
 	: buffer(buffer), count(0) { }
 
-	void print(char c) {
+	void append(char c) {
 		buffer[count] = c;
 		count++;
 	}
 
-	void print(const char *str) {
+	void append(const char *str) {
 		// TODO: use strcat
 		for(size_t i = 0; str[i]; i++) {
 			buffer[count] = str[i];
@@ -63,16 +93,16 @@ struct LimitedPrinter {
 	LimitedPrinter(char *buffer, size_t limit)
 	: buffer(buffer), limit(limit), count(0) { }
 
-	void print(char c) {
+	void append(char c) {
 		if(count < limit)
 			buffer[count] = c;
 		count++;
 	}
 
-	void print(const char *str) {
+	void append(const char *str) {
 		// TODO: use strcat
 		for(size_t i = 0; str[i]; i++)
-			print(str[i]);
+			append(str[i]);
 	}
 
 	void flush() { }
@@ -99,15 +129,15 @@ struct ResizePrinter {
 		__ensure(count < limit);
 	}
 
-	void print(char c) {
+	void append(char c) {
 		expand();
 		buffer[count] = c;
 		count++;
 	}
 
-	void print(const char *str) {
+	void append(const char *str) {
 		for(size_t i = 0; str[i]; i++)
-			print(str[i]);
+			append(str[i]);
 	}
 
 	void flush() { }
@@ -193,9 +223,11 @@ int sscanf(const char *__restrict buffer, const char *__restrict format, ...) {
 	__builtin_unreachable();
 }
 int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
-	StreamPrinter p(stream);
+	frg::va_struct vs;
+	va_copy(vs.args, args);
+	StreamPrinter p{stream};
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
-	frigg::printf(p, format, args);
+	frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
 	return p.count;
 }
 int vfscanf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
@@ -213,16 +245,20 @@ int vsnprintf(char *__restrict buffer, size_t max_size,
 		const char *__restrict format, __gnuc_va_list args) {
 	if(!max_size)
 		return 0;
-	LimitedPrinter p(buffer, max_size - 1);
+	frg::va_struct vs;
+	va_copy(vs.args, args);
+	LimitedPrinter p{buffer, max_size - 1};
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
-	frigg::printf(p, format, args);
+	frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
 	p.buffer[frg::min(max_size - 1, p.count)] = 0;
 	return p.count;
 }
 int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
+	frg::va_struct vs;
+	va_copy(vs.args, args);
 	BufferPrinter p(buffer);
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
-	frigg::printf(p, format, args);
+	frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
 	p.buffer[p.count] = 0;
 	return p.count;
 }
@@ -388,9 +424,11 @@ int asprintf(char **out, const char *format, ...) {
 }
 
 int vasprintf(char **out, const char *format, __gnuc_va_list args) {
+	frg::va_struct vs;
+	va_copy(vs.args, args);
 	ResizePrinter p;
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
-	frigg::printf(p, format, args);
+	frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
 	p.expand();
 	p.buffer[p.count] = 0;
 	*out = p.buffer;
