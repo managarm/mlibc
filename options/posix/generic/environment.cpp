@@ -100,7 +100,7 @@ int unsetenv(const char *name) {
 	update_env_copy();
 
 	auto k = find_env_index(name);
-	assert(k != size_t(-1));
+	FRG_ASSERT(k != size_t(-1));
 
 	// Last pointer is always null.
 	__ensure(global_env_vector.size() >= 2 && !global_env_vector.back());
