@@ -20,6 +20,13 @@ internal_sources = [
 	'options/internal/x86_64/setjmp.S',
 ]
 
+rtdl_sources = [
+	'options/rtdl/generic/main.cpp',
+	'options/rtdl/generic/linker.cpp',
+	'options/rtdl/x86_64/runtime.S',
+	'sysdeps/managarm/rtdl-generic/support.cpp',
+]
+
 if get_option('ansi_option').enabled()
 	ansi_incl = include_directories('options/ansi/include')
 	ansi_sources = [
@@ -349,7 +356,6 @@ sysdeps_sources = [
 add_project_arguments('-std=c++17', language: 'cpp')
 add_project_arguments('-fno-builtin', language: 'c')
 add_project_arguments('-fno-builtin', '-fno-rtti', '-fno-exceptions', language: 'cpp')
-add_project_arguments('-DFRIGG_HAVE_LIBC', language: 'cpp')
 add_project_link_arguments('-nostdlib', '-l:ld-init.so', language: 'cpp')
 
 shared_library('c',
@@ -361,6 +367,7 @@ shared_library('c',
 			linux_sources,
 			sysdeps_sources,
 		],
+		cpp_args: ['-DFRIGG_HAVE_LIBC'],
 		include_directories: [
 			managarm_incl,
 			internal_incl,
@@ -369,6 +376,21 @@ shared_library('c',
 			lsb_incl,
 			linux_incl,
 			sysdeps_incl
+		],
+		dependencies: [frigg_dep],
+		install: true)
+
+shared_library('ld',
+		[
+			rtdl_sources,
+			fs_pb,
+			posix_pb,
+		],
+		name_prefix: '',
+		cpp_args: ['-fvisibility=hidden', '-DFRIGG_HAVE_LIBC'],
+		include_directories: [
+			managarm_incl,
+			include_directories('options/internal/private')
 		],
 		dependencies: [frigg_dep],
 		install: true)
