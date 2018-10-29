@@ -1,26 +1,12 @@
 
-#include <frigg/cxx-support.hpp>
-#include <frigg/traits.hpp>
 #include <frigg/debug.hpp>
 #include <frigg/initializer.hpp>
-#include <frigg/support.hpp>
-#include <frigg/algorithm.hpp>
-#include <frigg/atomic.hpp>
-#include <frigg/memory.hpp>
-#include <frigg/libc.hpp>
 #include <frigg/elf.hpp>
-
-#include <frigg/tuple.hpp>
-#include <frigg/string.hpp>
-#include <frigg/vector.hpp>
-#include <frigg/hashmap.hpp>
-#include <frigg/linked.hpp>
 
 #include <hel.h>
 #include <hel-syscalls.h>
 
 #include <frigg/glue-hel.hpp>
-#include <frigg/protobuf.hpp>
 
 #include <posix.frigg_pb.hpp>
 #include <fs.frigg_pb.hpp>
@@ -41,6 +27,10 @@ bool eagerBinding = true;
 // object became global). This mechanism is used to determine which
 // part of the global scope is considered for symbol resolution.
 uint64_t rtsCounter = 2;
+
+frigg::StringView csv(frg::string_view x) {
+	return frigg::StringView{x.data(), x.size()};
+}
 
 // --------------------------------------------------------
 // POSIX I/O functions.
@@ -383,50 +373,50 @@ void posixClose(int fd) {
 ObjectRepository::ObjectRepository()
 : _nameMap{frigg::DefaultHasher<frigg::StringView>{}, *allocator} { }
 
-SharedObject *ObjectRepository::injectObjectFromDts(frigg::StringView name,
+SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 		uintptr_t base_address, Elf64_Dyn *dynamic, uint64_t rts) {
-	assert(!_nameMap.get(name));
+	assert(!_nameMap.get(csv(name)));
 
 	auto object = frigg::construct<SharedObject>(*allocator, name.data(), false, rts);
 	object->baseAddress = base_address;
 	object->dynamic = dynamic;
 	_parseDynamic(object);
 
-	_nameMap.insert(name, object);
+	_nameMap.insert(csv(name), object);
 	_discoverDependencies(object, rts);
 
 	return object;
 }
 
-SharedObject *ObjectRepository::injectObjectFromPhdrs(frigg::StringView name,
+SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 		void *phdr_pointer, size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 		uint64_t rts) {
-	assert(!_nameMap.get(name));
+	assert(!_nameMap.get(csv(name)));
 
 	auto object = frigg::construct<SharedObject>(*allocator, name.data(), true, rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 	_parseDynamic(object);
 
-	_nameMap.insert(name, object);
+	_nameMap.insert(csv(name), object);
 	_discoverDependencies(object, rts);
 
 	return object;
 }
 
-SharedObject *ObjectRepository::requestObjectWithName(frigg::StringView name, uint64_t rts) {
-	auto it = _nameMap.get(name);
+SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name, uint64_t rts) {
+	auto it = _nameMap.get(csv(name));
 	if(it)
 		return *it;
 
 	auto object = frigg::construct<SharedObject>(*allocator, name.data(), false, rts);
 
-	frigg::String<Allocator> lib_prefix(*allocator, "/lib/");
-	frigg::String<Allocator> usr_prefix(*allocator, "/usr/lib/");
+	frg::string<Allocator> lib_prefix(*allocator, "/lib/");
+	frg::string<Allocator> usr_prefix(*allocator, "/usr/lib/");
 
 	// open the object file
-	auto fd = posixOpen(lib_prefix + name);
+	auto fd = posixOpen(csv(lib_prefix + name));
 	if(fd == -1)
-		fd = posixOpen(usr_prefix + name);
+		fd = posixOpen(csv(usr_prefix + name));
 	if(fd == -1)
 		return nullptr; // TODO: Free the SharedObject.
 	_fetchFromFile(object, fd);
@@ -434,21 +424,21 @@ SharedObject *ObjectRepository::requestObjectWithName(frigg::StringView name, ui
 
 	_parseDynamic(object);
 
-	_nameMap.insert(name, object);
+	_nameMap.insert(csv(name), object);
 	_discoverDependencies(object, rts);
 
 	return object;
 }
 
-SharedObject *ObjectRepository::requestObjectAtPath(frigg::StringView path, uint64_t rts) {
+SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint64_t rts) {
 	// TODO: Support SONAME correctly.
-	auto it = _nameMap.get(path);
+	auto it = _nameMap.get(csv(path));
 	if(it)
 		return *it;
 
 	auto object = frigg::construct<SharedObject>(*allocator, path.data(), false, rts);
 	
-	auto fd = posixOpen(path);
+	auto fd = posixOpen(csv(path));
 	if(fd == -1)
 		return nullptr; // TODO: Free the SharedObject.
 	_fetchFromFile(object, fd);
@@ -456,7 +446,7 @@ SharedObject *ObjectRepository::requestObjectAtPath(frigg::StringView path, uint
 
 	_parseDynamic(object);
 
-	_nameMap.insert(path, object);
+	_nameMap.insert(csv(path), object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -700,7 +690,7 @@ void ObjectRepository::_discoverDependencies(SharedObject *object, uint64_t rts)
 		const char *library_str = (const char *)(object->baseAddress
 				+ object->stringTableOffset + dynamic->d_val);
 
-		auto library = requestObjectWithName(frigg::StringView{library_str}, rts);
+		auto library = requestObjectWithName(frg::string_view{library_str}, rts);
 		if(!library)
 			frigg::panicLogger() << "Could not satisfy dependency " << library_str << frigg::endLog;
 		object->dependencies.push(library);
@@ -737,15 +727,15 @@ void processCopyRela(SharedObject *object, Elf64_Rela *reloc) {
 	auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 			+ symbol_index * sizeof(Elf64_Sym));
 	ObjectSymbol r(object, symbol);
-	frigg::Optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, Scope::resolveCopy);
+	frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, Scope::resolveCopy);
 	assert(p);
 
 	memcpy((void *)rel_addr, (void *)p->virtualAddress(), symbol->st_size);
 }
 
 void processCopyRelocations(SharedObject *object) {
-	frigg::Optional<uintptr_t> rela_offset;
-	frigg::Optional<size_t> rela_length;
+	frg::optional<uintptr_t> rela_offset;
+	frg::optional<size_t> rela_length;
 
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
 		Elf64_Dyn *dynamic = &object->dynamic[i];
@@ -870,7 +860,7 @@ uintptr_t ObjectSymbol::virtualAddress() {
 // Scope
 // --------------------------------------------------------
 
-uint32_t elf64Hash(frigg::StringView string) {
+uint32_t elf64Hash(frg::string_view string) {
 	uint32_t h = 0, g;
 
 	for(size_t i = 0; i < string.size(); ++i) {
@@ -885,7 +875,7 @@ uint32_t elf64Hash(frigg::StringView string) {
 }
 
 // TODO: move this to some namespace or class?
-frigg::Optional<ObjectSymbol> resolveInObject(SharedObject *object, frigg::StringView string) {
+frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_view string) {
 	// Checks if the symbol can be used to satisfy the dependency.
 	auto eligible = [&] (ObjectSymbol cand) {
 		if(cand.symbol()->st_shndx == SHN_UNDEF)
@@ -906,28 +896,28 @@ frigg::Optional<ObjectSymbol> resolveInObject(SharedObject *object, frigg::Strin
 	while(index != 0) {
 		ObjectSymbol cand{object, (Elf64_Sym *)(object->baseAddress
 				+ object->symbolTableOffset + index * sizeof(Elf64_Sym))};
-		if(eligible(cand) && frigg::StringView{cand.getString()} == string)
+		if(eligible(cand) && frg::string_view{cand.getString()} == string)
 			return cand;
 
 		index = hash_table[2 + num_buckets + index];
 	}
 
-	return frigg::Optional<ObjectSymbol>();
+	return frg::optional<ObjectSymbol>();
 }
 
 
-frigg::Optional<ObjectSymbol> Scope::resolveWholeScope(Scope *scope,
-		frigg::StringView string, ResolveFlags flags) {
+frg::optional<ObjectSymbol> Scope::resolveWholeScope(Scope *scope,
+		frg::string_view string, ResolveFlags flags) {
 	for(size_t i = 0; i < scope->_objects.size(); i++) {
 		if((flags & resolveCopy) && scope->_objects[i]->isMainObject)
 			continue;
 
-		frigg::Optional<ObjectSymbol> p = resolveInObject(scope->_objects[i], string);
+		frg::optional<ObjectSymbol> p = resolveInObject(scope->_objects[i], string);
 		if(p)
 			return p;
 	}
 
-	return frigg::Optional<ObjectSymbol>();
+	return frg::optional<ObjectSymbol>();
 }
 
 Scope::Scope()
@@ -938,19 +928,19 @@ void Scope::appendObject(SharedObject *object) {
 }
 
 // TODO: let this return uintptr_t
-frigg::Optional<ObjectSymbol> Scope::resolveSymbol(ObjectSymbol r, ResolveFlags flags) {
+frg::optional<ObjectSymbol> Scope::resolveSymbol(ObjectSymbol r, ResolveFlags flags) {
 	for(size_t i = 0; i < _objects.size(); i++) {
 		if((flags & resolveCopy) && _objects[i]->isMainObject)
 			continue;
 
 		const char *string = (const char *)(r.object()->baseAddress
 				+ r.object()->stringTableOffset + r.symbol()->st_name);
-		frigg::Optional<ObjectSymbol> p = resolveInObject(_objects[i], string);
+		frg::optional<ObjectSymbol> p = resolveInObject(_objects[i], string);
 		if(p)
 			return p;
 	}
 
-	return frigg::Optional<ObjectSymbol>();
+	return frg::optional<ObjectSymbol>();
 }
 
 
@@ -959,10 +949,9 @@ frigg::Optional<ObjectSymbol> Scope::resolveSymbol(ObjectSymbol r, ResolveFlags 
 // --------------------------------------------------------
 
 Loader::Loader(Scope *scope, bool is_initial_link, uint64_t rts)
-: _globalScope(scope), _isInitialLink(is_initial_link), _linkRts(rts),
-		_linkSet(frigg::DefaultHasher<SharedObject *>(), *allocator),
-		_linkBfs(*allocator),
-		_initQueue(*allocator) { }
+: _globalScope{scope}, _isInitialLink{is_initial_link}, _linkRts{rts},
+		_linkSet{frg::hash<SharedObject *>{}, *allocator},
+		_linkBfs{*allocator}, _initQueue{*allocator} { }
 
 // TODO: Use an explicit vector to reduce stack usage to O(1)?
 void Loader::submitObject(SharedObject *object) {
@@ -970,7 +959,7 @@ void Loader::submitObject(SharedObject *object) {
 		return;
 
 	_linkSet.insert(object, Token{});
-	_linkBfs.addBack(object);
+	_linkBfs.push(object);
 
 	for(size_t i = 0; i < object->dependencies.size(); i++)
 		submitObject(object->dependencies[i]);
@@ -980,7 +969,7 @@ void Loader::linkObjects() {
 	_buildTlsMaps();
 
 	// Promote objects to the global scope.
-	for(auto it = _linkBfs.frontIter(); it.okay(); ++it) {
+	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 		if((*it)->globalRts)
 			continue;
 		(*it)->globalRts = _linkRts;
@@ -988,7 +977,7 @@ void Loader::linkObjects() {
 	}
 
 	// Process regular relocations.
-	for(auto it = _linkBfs.frontIter(); it.okay(); ++it) {
+	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 		// Some objects have already been linked before.
 		if((*it)->objectRts < _linkRts)
 			continue;
@@ -1009,7 +998,7 @@ void Loader::linkObjects() {
 	}
 	
 	// Process copy relocations.
-	for(auto it = _linkBfs.frontIter(); it.okay(); ++it) {
+	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 		if(!(*it)->isMainObject)
 			continue;
 
@@ -1020,7 +1009,7 @@ void Loader::linkObjects() {
 		processCopyRelocations(*it);
 	}
 	
-	for(auto it = _linkBfs.frontIter(); it.okay(); ++it)
+	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it)
 		(*it)->wasLinked = true;
 }
 
@@ -1032,7 +1021,7 @@ void Loader::_buildTlsMaps() {
 		assert(!_linkBfs.empty());
 		assert(_linkBfs.front()->isMainObject);
 
-		for(auto it = _linkBfs.frontIter(); it.okay(); ++it) {
+		for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 			SharedObject *object = *it;
 			assert(object->tlsModel == TlsModel::null);
 
@@ -1058,7 +1047,7 @@ void Loader::_buildTlsMaps() {
 		// Reserve some additional space for future libraries.
 		runtimeTlsMap->initialLimit = runtimeTlsMap->initialPtr + 64;
 	}else{
-		for(auto it = _linkBfs.frontIter(); it.okay(); ++it) {
+		for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 			SharedObject *object = *it;
 			
 			if(object->tlsModel != TlsModel::null)
@@ -1098,7 +1087,7 @@ void Loader::_buildTlsMaps() {
 
 void Loader::initObjects() {
 	// Initialize TLS segments that follow the static model.
-	for(auto it = _linkBfs.frontIter(); it.okay(); ++it) {
+	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 		SharedObject *object = *it;
 		
 		if(object->tlsModel == TlsModel::initial) {
@@ -1114,17 +1103,16 @@ void Loader::initObjects() {
 		}
 	}
 
-	for(auto it = _linkBfs.frontIter(); it.okay(); ++it) {
+	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 		if(!(*it)->scheduledForInit)
 			_scheduleInit((*it));
 	}
 
-	while(!_initQueue.empty()) {
-		SharedObject *object = _initQueue.front();
+	// TODO: We don't we initialize in _linkBfs order?
+	for(auto it = _initQueue.begin(); it != _initQueue.end(); ++it) {
+		SharedObject *object = *it;
 		if(!object->wasInitialized)
 			doInitialize(object);
-
-		_initQueue.removeFront();
 	}
 }
 
@@ -1142,7 +1130,7 @@ void Loader::_scheduleInit(SharedObject *object) {
 			_scheduleInit(object->dependencies[i]);
 	}
 
-	_initQueue.addBack(object);
+	_initQueue.push(object);
 	object->onInitStack = false;
 }
 
@@ -1155,7 +1143,7 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 		return;
 	
 	// resolve the symbol if there is a symbol
-	frigg::Optional<ObjectSymbol> p;
+	frg::optional<ObjectSymbol> p;
 	if(symbol_index) {
 		auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 				+ symbol_index * sizeof(Elf64_Sym));
@@ -1239,8 +1227,8 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 }
 
 void Loader::_processStaticRelocations(SharedObject *object) {
-	frigg::Optional<uintptr_t> rela_offset;
-	frigg::Optional<size_t> rela_length;
+	frg::optional<uintptr_t> rela_offset;
+	frg::optional<size_t> rela_length;
 
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
 		Elf64_Dyn *dynamic = &object->dynamic[i];
@@ -1292,7 +1280,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 			auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 					+ symbol_index * sizeof(Elf64_Sym));
 			ObjectSymbol r(object, symbol);
-			frigg::Optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
+			frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
 			if(!p) {
 				if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
 					frigg::panicLogger() << "rtdl: Unresolved JUMP_SLOT symbol "

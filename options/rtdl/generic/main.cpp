@@ -1,20 +1,7 @@
 
-#include <frigg/cxx-support.hpp>
-#include <frigg/traits.hpp>
 #include <frigg/debug.hpp>
 #include <frigg/initializer.hpp>
-#include <frigg/algorithm.hpp>
-#include <frigg/support.hpp>
-#include <frigg/atomic.hpp>
-#include <frigg/memory.hpp>
-#include <frigg/libc.hpp>
 #include <frigg/elf.hpp>
-
-#include <frigg/optional.hpp>
-#include <frigg/tuple.hpp>
-#include <frigg/vector.hpp>
-#include <frigg/hashmap.hpp>
-#include <frigg/linked.hpp>
 
 #include <hel.h>
 #include <hel-syscalls.h>
@@ -88,7 +75,7 @@ extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
 	auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 			+ symbol_index * sizeof(Elf64_Sym));
 	ObjectSymbol r(object, symbol);
-	frigg::Optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
+	frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
 	if(!p)
 		frigg::panicLogger() << "Unresolved JUMP_SLOT symbol" << frigg::endLog;
 
@@ -293,20 +280,21 @@ void *__dlapi_open(const char *file, int local) {
 		Set set{frigg::DefaultHasher<SharedObject *>{}, *allocator};
 		
 		object->objectScope = frigg::construct<Scope>(*allocator);
-		frigg::LinkedList<SharedObject *, Allocator> queue{*allocator};
+		frg::vector<SharedObject *, Allocator> queue{*allocator};
 
 		object->objectScope->appendObject(object);
 		set.insert(object, Token{});
-		queue.addBack(object);
+		queue.push(object);
 
-		while(!queue.empty()) {
-			auto current = queue.removeFront();
+		// Loop over indices (not iterators) here: We are adding elements in the loop!
+		for(size_t i = 0; i < queue.size(); i++) {
+			auto current = queue[i];
 			if(set.get(current))
 				continue;
 		
 			object->objectScope->appendObject(current);
 			set.insert(current, Token{});
-			queue.addBack(current);
+			queue.push(current);
 		}
 	}
 
@@ -319,7 +307,7 @@ void *__dlapi_resolve(void *handle, const char *string) {
 
 	assert(handle != reinterpret_cast<void *>(-1));
 
-	frigg::Optional<ObjectSymbol> target;
+	frg::optional<ObjectSymbol> target;
 	if(handle) {
 		auto object = reinterpret_cast<SharedObject *>(handle);
 		assert(object->objectScope);

@@ -1,6 +1,10 @@
 
+#include <frg/hash_map.hpp>
+#include <frg/optional.hpp>
+#include <frg/string.hpp>
+#include <frg/vector.hpp>
+#include <frigg/hashmap.hpp>
 #include <frigg/string.hpp>
-#include <frigg/optional.hpp>
 
 struct ObjectRepository;
 struct Scope;
@@ -27,17 +31,17 @@ struct ObjectRepository {
 	ObjectRepository &operator= (const ObjectRepository &) = delete;
 
 	// This is primarily used to create a SharedObject for the RTDL itself.
-	SharedObject *injectObjectFromDts(frigg::StringView name,
+	SharedObject *injectObjectFromDts(frg::string_view name,
 			uintptr_t base_address, Elf64_Dyn *dynamic, uint64_t rts);
 
 	// This is used to create a SharedObject for the executable that we want to link.
-	SharedObject *injectObjectFromPhdrs(frigg::StringView name,
+	SharedObject *injectObjectFromPhdrs(frg::string_view name,
 			void *phdr_pointer, size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 			uint64_t rts);
 
-	SharedObject *requestObjectWithName(frigg::StringView name, uint64_t rts);
+	SharedObject *requestObjectWithName(frg::string_view name, uint64_t rts);
 
-	SharedObject *requestObjectAtPath(frigg::StringView path, uint64_t rts);
+	SharedObject *requestObjectAtPath(frg::string_view path, uint64_t rts);
 
 private:
 	void _fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
@@ -98,7 +102,7 @@ struct SharedObject {
 	bool haveStaticTls;
 
 	// vector of dependencies
-	frigg::Vector<SharedObject *, Allocator> dependencies;
+	frg::vector<SharedObject *, Allocator> dependencies;
 	
 	TlsModel tlsModel;
 	size_t tlsOffset;
@@ -165,18 +169,18 @@ struct Scope {
 	using ResolveFlags = uint32_t;
 	static inline constexpr ResolveFlags resolveCopy = 1;
 
-	static frigg::Optional<ObjectSymbol> resolveWholeScope(Scope *scope,
-			frigg::StringView string, ResolveFlags flags);
+	static frg::optional<ObjectSymbol> resolveWholeScope(Scope *scope,
+			frg::string_view string, ResolveFlags flags);
 
 	Scope();
 	
 	void appendObject(SharedObject *object);
 
-	frigg::Optional<ObjectSymbol> resolveSymbol(ObjectSymbol r, ResolveFlags flags);
+	frg::optional<ObjectSymbol> resolveSymbol(ObjectSymbol r, ResolveFlags flags);
 
 private:
 public: // TODO: Make this private again. (Was made public for __dlapi_reverse()).
-	frigg::Vector<SharedObject *, Allocator> _objects;
+	frg::vector<SharedObject *, Allocator> _objects;
 };
 
 // --------------------------------------------------------
@@ -212,14 +216,13 @@ private:
 	bool _isInitialLink;
 	uint64_t _linkRts;
 
-	frigg::Hashmap<SharedObject *, Token,
-			frigg::DefaultHasher<SharedObject *>, Allocator> _linkSet;
+	frg::hash_map<SharedObject *, Token,
+			frg::hash<SharedObject *>, Allocator> _linkSet;
 	
 	// Stores the same objects as _linkSet but in dependency-BFS order.
-	frigg::LinkedList<SharedObject *, Allocator> _linkBfs;
+	frg::vector<SharedObject *, Allocator> _linkBfs;
 
-	frigg::LinkedList<SharedObject *, Allocator> _initQueue;
-
+	frg::vector<SharedObject *, Allocator> _initQueue;
 };
 
 // --------------------------------------------------------
