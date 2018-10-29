@@ -4,10 +4,13 @@ protoc = find_program('protoc')
 
 cpp_compiler = meson.get_compiler('cpp')
 
+cxxshim_dep = subproject('cxxshim').get_variable('cxxshim_dep')
 frigg_dep = subproject('frigg').get_variable('frigg_dep')
 #rtdl_dep = cpp_compiler.find_library(':ld-init.so')
 
-managarm_incl = include_directories('subprojects/managarm/frigg/include')
+managarm_incl = include_directories('subprojects/managarm/frigg/include',
+		'subprojects/managarm/hel/include')
+drm_incl = include_directories('../ports/libdrm/include')
 
 internal_incl = include_directories('options/internal/include')
 internal_sources = [
@@ -353,10 +356,32 @@ sysdeps_sources = [
 	posix_pb,
 ]
 
+gccdir = run_command('/bin/sh', '-c',
+	'x86_64-managarm-gcc -print-search-dirs | sed -n -e "s/install: \(.*\)/\\1/p"',
+	check: true).stdout().strip()
+
+add_project_arguments('-nostdinc', '-fno-builtin', language: ['c', 'cpp'])
 add_project_arguments('-std=c++17', language: 'cpp')
-add_project_arguments('-fno-builtin', language: 'c')
-add_project_arguments('-fno-builtin', '-fno-rtti', '-fno-exceptions', language: 'cpp')
-add_project_link_arguments('-nostdlib', '-l:ld-init.so', language: 'cpp')
+add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
+add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
+
+ldso_lib = shared_library('ld',
+		[
+			rtdl_sources,
+			fs_pb,
+			posix_pb,
+		],
+		name_prefix: '',
+		cpp_args: ['-fvisibility=hidden', '-DFRIGG_HAVE_LIBC'],
+		include_directories: [
+			managarm_incl,
+			internal_incl,
+			ansi_incl,
+			include_directories('options/internal/private'),
+			include_directories(gccdir + '/include'),
+		],
+		dependencies: [cxxshim_dep, frigg_dep],
+		install: true)
 
 shared_library('c',
 		[
@@ -375,23 +400,11 @@ shared_library('c',
 			posix_incl,
 			lsb_incl,
 			linux_incl,
-			sysdeps_incl
+			sysdeps_incl,
+			drm_incl,
+			include_directories(gccdir + '/include'),
 		],
-		dependencies: [frigg_dep],
-		install: true)
-
-shared_library('ld',
-		[
-			rtdl_sources,
-			fs_pb,
-			posix_pb,
-		],
-		name_prefix: '',
-		cpp_args: ['-fvisibility=hidden', '-DFRIGG_HAVE_LIBC'],
-		include_directories: [
-			managarm_incl,
-			include_directories('options/internal/private')
-		],
-		dependencies: [frigg_dep],
+		dependencies: [cxxshim_dep, frigg_dep],
+		link_with: [ldso_lib],
 		install: true)
 

@@ -24,8 +24,8 @@
 #include <sys/signalfd.h>
 #include <sys/sysmacros.h>
 #include <linux/input.h>
-#include <libdrm/drm.h>
-#include <libdrm/drm_fourcc.h>
+#include <drm/drm.h>
+#include <drm/drm_fourcc.h>
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
