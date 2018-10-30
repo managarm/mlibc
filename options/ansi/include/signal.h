@@ -29,7 +29,6 @@ void __signalIgn(int signal);
 #define SIGSEGV 5
 #define SIGTERM 6
 #define SIGPROF 7
-#define SIGWINCH 8
 #define SIGIO 9
 #define SIGPWR 10
 #define SIGRTMIN 11
