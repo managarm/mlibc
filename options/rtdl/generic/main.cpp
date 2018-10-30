@@ -1,7 +1,7 @@
 
-#include <frigg/debug.hpp>
 #include <frigg/initializer.hpp>
 #include <frigg/elf.hpp>
+#include <mlibc/debug.hpp>
 
 #include <hel.h>
 #include <hel-syscalls.h>
@@ -77,10 +77,10 @@ extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
 	ObjectSymbol r(object, symbol);
 	frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
 	if(!p)
-		frigg::panicLogger() << "Unresolved JUMP_SLOT symbol" << frigg::endLog;
+		mlibc::panicLogger() << "Unresolved JUMP_SLOT symbol" << frg::endlog;
 
-	//frigg::infoLogger() << "Lazy relocation to " << symbol_str
-	//		<< " resolved to " << pointer << frigg::endLog;
+	//mlibc::infoLogger() << "Lazy relocation to " << symbol_str
+	//		<< " resolved to " << pointer << frg::endlog;
 	
 	*(uint64_t *)(object->baseAddress + reloc->r_offset) = p->virtualAddress();
 	return (void *)p->virtualAddress();
@@ -92,7 +92,7 @@ extern "C" [[ gnu::visibility("default") ]] void __rtdl_setupTcb() {
 
 extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	if(logEntryExit)
-		frigg::infoLogger() << "Entering ld-init" << frigg::endLog;
+		mlibc::infoLogger() << "Entering ld-init" << frg::endlog;
 	entryStack = entry_stack;
 	allocator.initialize(virtualAlloc);
 	runtimeTlsMap.initialize();
@@ -181,8 +181,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 				// ignore these auxiliary vector entries.
 				break;
 		default:
-			frigg::panicLogger() << "rtdl: Unexpected auxiliary item type "
-					<< *aux << frigg::endLog;
+			mlibc::panicLogger() << "rtdl: Unexpected auxiliary item type "
+					<< *aux << frg::endlog;
 		}
 
 		aux += 2;
@@ -208,7 +208,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	linker.initObjects();
 
 	if(logEntryExit)
-		frigg::infoLogger() << "Leaving ld-init" << frigg::endLog;
+		mlibc::infoLogger() << "Leaving ld-init" << frg::endlog;
 	return executable->entry;
 }
 
@@ -239,7 +239,7 @@ void *__dlapi_get_tls(struct __abi_tls_entry *entry) {
 	assert(entry->object->tlsModel == TlsModel::initial);
 	
 //	frigg::infoLogger() << "__tls_get_addr(" << entry->object->name
-//			<< ", " << entry->offset << ")" << frigg::endLog;
+//			<< ", " << entry->offset << ")" << frg::endlog;
 	
 	char *tp;
 	asm ( "mov %%fs:(0), %0" : "=r" (tp) );
@@ -252,11 +252,11 @@ void *__dlapi_open(const char *file, int local) {
 	auto rts = rtsCounter++;
 	
 	if(local)
-		frigg::infoLogger() << "\e[31mrtdl: RTLD_LOCAL is not supported properly\e[39m"
-				<< frigg::endLog;
+		mlibc::infoLogger() << "\e[31mrtdl: RTLD_LOCAL is not supported properly\e[39m"
+				<< frg::endlog;
 
 	SharedObject *object;
-	if(frigg::StringView(file).findFirst('/') == size_t(-1)) {
+	if(frg::string_view{file}.find_first('/') == size_t(-1)) {
 		object = initialRepository->requestObjectWithName(file, rts);
 	}else{
 		object = initialRepository->requestObjectAtPath(file, rts);
@@ -275,11 +275,11 @@ void *__dlapi_open(const char *file, int local) {
 	if(!object->objectScope) {
 		struct Token { };
 
-		using Set = frigg::Hashmap<SharedObject *, Token,
-				frigg::DefaultHasher<SharedObject *>, Allocator>;
-		Set set{frigg::DefaultHasher<SharedObject *>{}, *allocator};
+		using Set = frg::hash_map<SharedObject *, Token,
+				frg::hash<SharedObject *>, Allocator>;
+		Set set{frg::hash<SharedObject *>{}, *allocator};
 		
-		object->objectScope = frigg::construct<Scope>(*allocator);
+		object->objectScope = frg::construct<Scope>(*allocator);
 		frg::vector<SharedObject *, Allocator> queue{*allocator};
 
 		object->objectScope->appendObject(object);
@@ -303,7 +303,7 @@ void *__dlapi_open(const char *file, int local) {
 
 extern "C" [[gnu::visibility("default")]]
 void *__dlapi_resolve(void *handle, const char *string) {
-	frigg::infoLogger() << "rtdl: __dlapi_resolve(" << string << ")" << frigg::endLog;
+	mlibc::infoLogger() << "rtdl: __dlapi_resolve(" << string << ")" << frg::endlog;
 
 	assert(handle != reinterpret_cast<void *>(-1));
 
@@ -329,7 +329,7 @@ struct __dlapi_symbol {
 
 extern "C" [[gnu::visibility("default")]]
 int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
-	frigg::infoLogger() << "rtdl: __dlapi_reverse(" << ptr << ")" << frigg::endLog;
+	mlibc::infoLogger() << "rtdl: __dlapi_reverse(" << ptr << ")" << frg::endlog;
 
 	for(size_t i = 0; i < globalScope->_objects.size(); i++) {
 		auto object = globalScope->_objects[i];
@@ -351,8 +351,8 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 			ObjectSymbol cand{object, (Elf64_Sym *)(object->baseAddress
 					+ object->symbolTableOffset + i * sizeof(Elf64_Sym))};
 			if(eligible(cand) && cand.virtualAddress() == reinterpret_cast<uintptr_t>(ptr)) {
-				frigg::infoLogger() << "rtdl: Found symbol " << cand.getString() << " in object "
-						<< object->name << frigg::endLog;
+				mlibc::infoLogger() << "rtdl: Found symbol " << cand.getString() << " in object "
+						<< object->name << frg::endlog;
 				info->file = object->name;
 				info->base = reinterpret_cast<void *>(object->baseAddress);
 				info->symbol = cand.getString();
@@ -362,8 +362,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 		}
 	}
 
-	frigg::panicLogger() << "rtdl: Could not find symbol in __dlapi_reverse()" << frigg::endLog;
+	mlibc::panicLogger() << "rtdl: Could not find symbol in __dlapi_reverse()" << frg::endlog;
 	return -1;
 }
-
 

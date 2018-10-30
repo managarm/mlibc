@@ -16,7 +16,6 @@ internal_incl = include_directories('options/internal/include')
 internal_sources = [
 	'options/internal/generic/allocator.cpp',
 	'options/internal/generic/debug.cpp',
-	'options/internal/generic/debug.cpp',
 	'options/internal/gcc/initfini.cpp',
 	'options/internal/gcc-extra/mlibc_crtbegin.S',
 	'options/internal/gcc-extra/mlibc_crtend.S',
@@ -24,6 +23,7 @@ internal_sources = [
 ]
 
 rtdl_sources = [
+	'options/internal/generic/debug.cpp',
 	'options/rtdl/generic/main.cpp',
 	'options/rtdl/generic/linker.cpp',
 	'options/rtdl/x86_64/runtime.S',
@@ -372,7 +372,7 @@ ldso_lib = shared_library('ld',
 			posix_pb,
 		],
 		name_prefix: '',
-		cpp_args: ['-fvisibility=hidden', '-DFRIGG_HAVE_LIBC'],
+		cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
 		include_directories: [
 			managarm_incl,
 			internal_incl,

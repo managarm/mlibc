@@ -66,6 +66,23 @@ extern "C" void frg_panic(const char *mstr) {
 	helPanic(str, len);
 }
 
+namespace mlibc {
+	void sys_libc_log(const char *message) {
+		size_t n = 0;
+		while(message[n])
+			n++;
+		HEL_CHECK(helLog(message, n));
+	}
+
+	void sys_libc_panic() {
+		const char *message = "mlibc: Panic in ld.so!";
+		size_t n = 0;
+		while(message[n])
+			n++;
+		helPanic(message, n);
+	}
+}
+
 extern "C" void __assert_fail(const char *assertion,
 	const char *file, unsigned int line, const char *function) {
 	frg_panic(assertion);

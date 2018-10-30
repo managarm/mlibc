@@ -1,7 +1,7 @@
 
-#include <frigg/debug.hpp>
 #include <frigg/initializer.hpp>
 #include <frigg/elf.hpp>
+#include <mlibc/debug.hpp>
 
 #include <hel.h>
 #include <hel-syscalls.h>
@@ -377,7 +377,7 @@ SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 		uintptr_t base_address, Elf64_Dyn *dynamic, uint64_t rts) {
 	assert(!_nameMap.get(csv(name)));
 
-	auto object = frigg::construct<SharedObject>(*allocator, name.data(), false, rts);
+	auto object = frg::construct<SharedObject>(*allocator, name.data(), false, rts);
 	object->baseAddress = base_address;
 	object->dynamic = dynamic;
 	_parseDynamic(object);
@@ -393,7 +393,7 @@ SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 		uint64_t rts) {
 	assert(!_nameMap.get(csv(name)));
 
-	auto object = frigg::construct<SharedObject>(*allocator, name.data(), true, rts);
+	auto object = frg::construct<SharedObject>(*allocator, name.data(), true, rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 	_parseDynamic(object);
 
@@ -408,7 +408,7 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name, uin
 	if(it)
 		return *it;
 
-	auto object = frigg::construct<SharedObject>(*allocator, name.data(), false, rts);
+	auto object = frg::construct<SharedObject>(*allocator, name.data(), false, rts);
 
 	frg::string<Allocator> lib_prefix(*allocator, "/lib/");
 	frg::string<Allocator> usr_prefix(*allocator, "/usr/lib/");
@@ -436,7 +436,7 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint6
 	if(it)
 		return *it;
 
-	auto object = frigg::construct<SharedObject>(*allocator, path.data(), false, rts);
+	auto object = frg::construct<SharedObject>(*allocator, path.data(), false, rts);
 	
 	auto fd = posixOpen(csv(path));
 	if(fd == -1)
@@ -460,7 +460,7 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 		size_t phdr_entry_size, size_t phdr_count, void *entry_pointer) {
 	assert(object->isMainObject);
 	if(verbose)
-		frigg::infoLogger() << "rtdl: Loading " << object->name << frigg::endLog;
+		mlibc::infoLogger() << "rtdl: Loading " << object->name << frg::endlog;
 	
 	object->entry = entry_pointer;
 
@@ -493,8 +493,8 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	libraryBase += 0x1000000; // assume 16 MiB per library
 
 	if(verbose || logBaseAddresses)
-		frigg::infoLogger() << "rtdl: Loading " << object->name
-				<< " at " << (void *)object->baseAddress << frigg::endLog;
+		mlibc::infoLogger() << "rtdl: Loading " << object->name
+				<< " at " << (void *)object->baseAddress << frg::endlog;
 
 	// read the elf file header
 	Elf64_Ehdr ehdr;
@@ -543,8 +543,8 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 							kHelMapProtRead | kHelMapProtExecute | kHelMapShareAtFork,
 							&map_pointer));
 				}else{
-					frigg::panicLogger() << "Illegal combination of segment permissions"
-							<< frigg::endLog;
+					mlibc::panicLogger() << "Illegal combination of segment permissions"
+							<< frg::endlog;
 				}
 			}else{
 				// setup the segment with write permission and copy data
@@ -569,8 +569,8 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 								| kHelMapCopyOnWriteAtFork,
 							&map_pointer));
 				}else{
-					frigg::panicLogger() << "Illegal combination of segment permissions"
-							<< frigg::endLog;
+					mlibc::panicLogger() << "Illegal combination of segment permissions"
+							<< frg::endlog;
 				}
 			}
 		}else if(phdr->p_type == PT_TLS) {
@@ -650,17 +650,17 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			if(dynamic->d_val & DF_STATIC_TLS)
 				object->haveStaticTls = true;
 			if(dynamic->d_val & ~(DF_SYMBOLIC | DF_STATIC_TLS))
-				frigg::infoLogger() << "\e[31mrtdl: DT_FLAGS(" << frigg::logHex(dynamic->d_val)
+				mlibc::infoLogger() << "\e[31mrtdl: DT_FLAGS(" << frg::hex_fmt{dynamic->d_val}
 						<< ") is not implemented correctly!\e[39m"
-						<< frigg::endLog;
+						<< frg::endlog;
 			break;
 		case DT_FLAGS_1:
 			if(dynamic->d_val & DF_1_NOW)
 				object->eagerBinding = true;
 			if(dynamic->d_val & ~(DF_1_NOW))
-				frigg::infoLogger() << "\e[31mrtdl: DT_FLAGS_1(" << frigg::logHex(dynamic->d_val)
+				mlibc::infoLogger() << "\e[31mrtdl: DT_FLAGS_1(" << frg::hex_fmt{dynamic->d_val}
 						<< ") is not implemented correctly!\e[39m"
-						<< frigg::endLog;
+						<< frg::endlog;
 			break;
 		// ignore unimportant tags
 		case DT_SONAME: case DT_NEEDED: case DT_RPATH: // we handle this later
@@ -674,8 +674,8 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_VERNEED: case DT_VERNEEDNUM:
 			break;
 		default:
-			frigg::panicLogger() << "Unexpected dynamic entry "
-					<< (void *)dynamic->d_tag << " in object" << frigg::endLog;
+			mlibc::panicLogger() << "Unexpected dynamic entry "
+					<< (void *)dynamic->d_tag << " in object" << frg::endlog;
 		}
 	}
 }
@@ -692,7 +692,7 @@ void ObjectRepository::_discoverDependencies(SharedObject *object, uint64_t rts)
 
 		auto library = requestObjectWithName(frg::string_view{library_str}, rts);
 		if(!library)
-			frigg::panicLogger() << "Could not satisfy dependency " << library_str << frigg::endLog;
+			mlibc::panicLogger() << "Could not satisfy dependency " << library_str << frg::endlog;
 		object->dependencies.push(library);
 	}
 }
@@ -772,7 +772,7 @@ void doInitialize(SharedObject *object) {
 		assert(object->dependencies[i]->wasInitialized);
 
 	if(verbose)
-		frigg::infoLogger() << "rtdl: Initialize " << object->name << frigg::endLog;
+		mlibc::infoLogger() << "rtdl: Initialize " << object->name << frg::endlog;
 	
 	// now initialize the actual object
 	typedef void (*InitFuncPtr) ();
@@ -800,18 +800,18 @@ void doInitialize(SharedObject *object) {
 	}
 
 	if(verbose)
-		frigg::infoLogger() << "rtdl: Running DT_INIT function" << frigg::endLog;
+		mlibc::infoLogger() << "rtdl: Running DT_INIT function" << frg::endlog;
 	if(init_ptr != nullptr)
 		init_ptr();
 	
 	if(verbose)
-		frigg::infoLogger() << "rtdl: Running DT_INIT_ARRAY functions" << frigg::endLog;
+		mlibc::infoLogger() << "rtdl: Running DT_INIT_ARRAY functions" << frg::endlog;
 	assert((array_size % sizeof(InitFuncPtr)) == 0);
 	for(size_t i = 0; i < array_size / sizeof(InitFuncPtr); i++)
 		init_array[i]();
 
 	if(verbose)
-		frigg::infoLogger() << "rtdl: Object initialization complete" << frigg::endLog;
+		mlibc::infoLogger() << "rtdl: Object initialization complete" << frg::endlog;
 	object->wasInitialized = true;
 }
 
@@ -983,15 +983,15 @@ void Loader::linkObjects() {
 			continue;
 
 		if(verbose)
-			frigg::infoLogger() << "rtdl: Linking " << (*it)->name << frigg::endLog;
+			mlibc::infoLogger() << "rtdl: Linking " << (*it)->name << frg::endlog;
 
 		assert(!(*it)->wasLinked);
 		(*it)->loadScope = _globalScope;
 
 		// TODO: Support this.
 		if((*it)->symbolicResolution)
-			frigg::infoLogger() << "\e[31mrtdl: DT_SYMBOLIC is not implemented correctly!\e[39m"
-					<< frigg::endLog;
+			mlibc::infoLogger() << "\e[31mrtdl: DT_SYMBOLIC is not implemented correctly!\e[39m"
+					<< frg::endlog;
 
 		_processStaticRelocations(*it);
 		_processLazyRelocations(*it);
@@ -1038,10 +1038,10 @@ void Loader::_buildTlsMaps() {
 			object->tlsOffset = -runtimeTlsMap->initialPtr;
 			
 			if(verbose)
-				frigg::infoLogger() << "rtdl: TLS of " << object->name
-						<< " mapped to 0x" << frigg::logHex(object->tlsOffset)
+				mlibc::infoLogger() << "rtdl: TLS of " << object->name
+						<< " mapped to 0x" << frg::hex_fmt{object->tlsOffset}
 						<< ", size: " << object->tlsSegmentSize
-						<< ", alignment: " << object->tlsAlignment << frigg::endLog;
+						<< ", alignment: " << object->tlsAlignment << frg::endlog;
 		}
 
 		// Reserve some additional space for future libraries.
@@ -1065,21 +1065,21 @@ void Loader::_buildTlsMaps() {
 					ptr += object->tlsAlignment - misalign;
 
 				if(ptr > runtimeTlsMap->initialLimit)
-					frigg::panicLogger() << "rtdl: Static TLS space exhausted while while"
-							" allocating TLS for " << object->name << frigg::endLog;
+					mlibc::panicLogger() << "rtdl: Static TLS space exhausted while while"
+							" allocating TLS for " << object->name << frg::endlog;
 				runtimeTlsMap->initialPtr = ptr;
 
 				object->tlsModel = TlsModel::initial;
 				object->tlsOffset = -runtimeTlsMap->initialPtr;
 				
 //				if(verbose)
-					frigg::infoLogger() << "rtdl: TLS of " << object->name
-							<< " mapped to 0x" << frigg::logHex(object->tlsOffset)
+					mlibc::infoLogger() << "rtdl: TLS of " << object->name
+							<< " mapped to 0x" << frg::hex_fmt{object->tlsOffset}
 							<< ", size: " << object->tlsSegmentSize
-							<< ", alignment: " << object->tlsAlignment << frigg::endLog;
+							<< ", alignment: " << object->tlsAlignment << frg::endlog;
 			}else{
 				// TODO: Implement dynamic TLS.
-				frigg::panicLogger() << "rtdl: Dynamic TLS is not supported" << frigg::endLog;
+				mlibc::panicLogger() << "rtdl: Dynamic TLS is not supported" << frg::endlog;
 			}
 		}
 	}
@@ -1151,12 +1151,12 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 		p = object->loadScope->resolveSymbol(r, 0);
 		if(!p) {
 			if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
-				frigg::panicLogger() << "Unresolved load-time symbol "
-						<< r.getString() << " in object " << object->name << frigg::endLog;
+				mlibc::panicLogger() << "Unresolved load-time symbol "
+						<< r.getString() << " in object " << object->name << frg::endlog;
 			
 			if(verbose)
-				frigg::infoLogger() << "rtdl: Unresolved weak load-time symbol "
-						<< r.getString() << " in object " << object->name << frigg::endLog;
+				mlibc::infoLogger() << "rtdl: Unresolved weak load-time symbol "
+						<< r.getString() << " in object " << object->name << frg::endlog;
 		}
 	}
 
@@ -1188,8 +1188,8 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 		}else{
 			// TODO: is this behaviour actually documented anywhere?
 			if(stillSlightlyVerbose)
-				frigg::infoLogger() << "rtdl: Warning: DTPOFF64 with no symbol"
-						" in object " << object->name << frigg::endLog;
+				mlibc::infoLogger() << "rtdl: Warning: DTPOFF64 with no symbol"
+						" in object " << object->name << frg::endlog;
 			*((uint64_t *)rel_addr) = (uint64_t)object;
 		}
 	} break;
@@ -1204,25 +1204,25 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 			assert(p);
 			assert(!reloc->r_addend);
 			if(p->object()->tlsModel != TlsModel::initial)
-				frigg::panicLogger() << "rtdl: In object " << object->name
+				mlibc::panicLogger() << "rtdl: In object " << object->name
 						<< ": Static TLS relocation to dynamically loaded object "
-						<< p->object()->name << frigg::endLog;
+						<< p->object()->name << frg::endlog;
 			*((uint64_t *)rel_addr) = p->object()->tlsOffset + p->symbol()->st_value;
 		}else{
 			assert(!reloc->r_addend);
 			if(stillSlightlyVerbose)
-				frigg::infoLogger() << "rtdl: Warning: TPOFF64 with no symbol"
-						" in object " << object->name << frigg::endLog;
+				mlibc::infoLogger() << "rtdl: Warning: TPOFF64 with no symbol"
+						" in object " << object->name << frg::endlog;
 			if(object->tlsModel != TlsModel::initial)
-				frigg::panicLogger() << "rtdl: In object " << object->name
+				mlibc::panicLogger() << "rtdl: In object " << object->name
 						<< ": Static TLS relocation to dynamically loaded object "
-						<< object->name << frigg::endLog;
+						<< object->name << frg::endlog;
 			*((uint64_t *)rel_addr) = object->tlsOffset;
 		}
 	} break;
 	default:
-		frigg::panicLogger() << "Unexpected relocation type "
-				<< (void *)type << frigg::endLog;
+		mlibc::panicLogger() << "Unexpected relocation type "
+				<< (void *)type << frg::endlog;
 	}
 }
 
@@ -1283,12 +1283,12 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 			frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
 			if(!p) {
 				if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
-					frigg::panicLogger() << "rtdl: Unresolved JUMP_SLOT symbol "
-							<< r.getString() << " in object " << object->name << frigg::endLog;
+					mlibc::panicLogger() << "rtdl: Unresolved JUMP_SLOT symbol "
+							<< r.getString() << " in object " << object->name << frg::endlog;
 				
 				if(verbose)
-					frigg::infoLogger() << "rtdl: Unresolved weak JUMP_SLOT symbol "
-							<< r.getString() << " in object " << object->name << frigg::endLog;
+					mlibc::infoLogger() << "rtdl: Unresolved weak JUMP_SLOT symbol "
+							<< r.getString() << " in object " << object->name << frg::endlog;
 				*((uint64_t *)rel_addr) = 0;
 			}else{
 				*((uint64_t *)rel_addr) = p->virtualAddress();

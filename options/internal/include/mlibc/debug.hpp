@@ -6,10 +6,16 @@
 namespace mlibc {
 
 struct InfoSink {
+	// constexpr so that this can be initialized statically.
+	constexpr InfoSink() = default;
+
 	void operator() (const char *message);
 };
 
 struct PanicSink {
+	// constexpr so that this can be initialized statically.
+	constexpr PanicSink() = default;
+
 	void operator() (const char *message);
 };
 
