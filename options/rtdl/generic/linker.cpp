@@ -1,8 +1,9 @@
 
-#include <frigg/initializer.hpp>
+#include <frg/manual_box.hpp>
 #include <frigg/elf.hpp>
 #include <mlibc/debug.hpp>
 
+#include <string.h>
 #include <hel.h>
 #include <hel-syscalls.h>
 
@@ -135,7 +136,7 @@ private:
 	int _lastProgress;
 };
 
-frigg::LazyInitializer<Queue> globalQueue;
+frg::manual_box<Queue> globalQueue;
 
 HelSimpleResult *parseSimple(void *&element) {
 	auto result = reinterpret_cast<HelSimpleResult *>(element);
@@ -169,7 +170,7 @@ int posixOpen(frigg::StringView path) {
 	req.set_request_type(managarm::posix::CntReqType::OPEN);
 	req.set_path(frigg::String<Allocator>(*allocator, path));
 
-	if(!globalQueue)
+	if(!globalQueue.valid())
 		globalQueue.initialize();
 
 	frigg::String<Allocator> ser(*allocator);
@@ -210,7 +211,7 @@ void posixSeek(int fd, int64_t offset) {
 	req.set_req_type(managarm::fs::CntReqType::SEEK_ABS);
 	req.set_rel_offset(offset);
 	
-	if(!globalQueue)
+	if(!globalQueue.valid())
 		globalQueue.initialize();
 
 	frigg::String<Allocator> ser(*allocator);
@@ -249,7 +250,7 @@ void posixRead(int fd, void *data, size_t length) {
 		req.set_req_type(managarm::fs::CntReqType::READ);
 		req.set_size(length - offset);
 	
-		if(!globalQueue)
+		if(!globalQueue.valid())
 			globalQueue.initialize();
 
 		frigg::String<Allocator> ser(*allocator);
@@ -298,7 +299,7 @@ HelHandle posixMmap(int fd) {
 	managarm::fs::CntRequest<Allocator> req(*allocator);
 	req.set_req_type(managarm::fs::CntReqType::MMAP);
 
-	if(!globalQueue)
+	if(!globalQueue.valid())
 		globalQueue.initialize();
 
 	frigg::String<Allocator> ser(*allocator);
@@ -338,7 +339,7 @@ void posixClose(int fd) {
 	req.set_request_type(managarm::posix::CntReqType::CLOSE);
 	req.set_fd(fd);
 	
-	if(!globalQueue)
+	if(!globalQueue.valid())
 		globalQueue.initialize();
 
 	frigg::String<Allocator> ser(*allocator);

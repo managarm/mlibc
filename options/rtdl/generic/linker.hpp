@@ -58,7 +58,7 @@ private:
 };
 
 // FIXME: Do not depend on the initial universe everywhere.
-extern frigg::LazyInitializer<ObjectRepository> initialRepository;
+extern frg::manual_box<ObjectRepository> initialRepository;
 
 // --------------------------------------------------------
 // SharedObject
@@ -133,7 +133,7 @@ struct RuntimeTlsMap {
 	size_t initialLimit;
 };
 
-extern frigg::LazyInitializer<RuntimeTlsMap> runtimeTlsMap;
+extern frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
 void allocateTcb();
 

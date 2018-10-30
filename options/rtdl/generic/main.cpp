@@ -1,5 +1,5 @@
 
-#include <frigg/initializer.hpp>
+#include <frg/manual_box.hpp>
 #include <frigg/elf.hpp>
 #include <mlibc/debug.hpp>
 
@@ -19,11 +19,11 @@ extern HIDDEN void *_GLOBAL_OFFSET_TABLE_[];
 extern HIDDEN Elf64_Dyn _DYNAMIC[];
 
 uintptr_t *entryStack;
-frigg::LazyInitializer<ObjectRepository> initialRepository;
-frigg::LazyInitializer<Scope> globalScope;
-frigg::LazyInitializer<Loader> globalLoader;
+frg::manual_box<ObjectRepository> initialRepository;
+frg::manual_box<Scope> globalScope;
+frg::manual_box<Loader> globalLoader;
 
-frigg::LazyInitializer<RuntimeTlsMap> runtimeTlsMap;
+frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
 HelHandle *fileTable;
 
