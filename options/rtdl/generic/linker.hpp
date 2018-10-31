@@ -3,8 +3,6 @@
 #include <frg/optional.hpp>
 #include <frg/string.hpp>
 #include <frg/vector.hpp>
-#include <frigg/hashmap.hpp>
-#include <frigg/string.hpp>
 
 struct ObjectRepository;
 struct Scope;
@@ -53,8 +51,8 @@ private:
 
 	void _discoverDependencies(SharedObject *object, uint64_t rts);
 
-	frigg::Hashmap<frigg::StringView, SharedObject *,
-			frigg::DefaultHasher<frigg::StringView>, Allocator> _nameMap;
+	frg::hash_map<frg::string_view, SharedObject *,
+			frg::hash<frg::string_view>, Allocator> _nameMap;
 };
 
 // FIXME: Do not depend on the initial universe everywhere.

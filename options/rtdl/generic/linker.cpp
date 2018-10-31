@@ -372,18 +372,18 @@ void posixClose(int fd) {
 // --------------------------------------------------------
 
 ObjectRepository::ObjectRepository()
-: _nameMap{frigg::DefaultHasher<frigg::StringView>{}, *allocator} { }
+: _nameMap{frg::hash<frg::string_view>{}, *allocator} { }
 
 SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 		uintptr_t base_address, Elf64_Dyn *dynamic, uint64_t rts) {
-	assert(!_nameMap.get(csv(name)));
+	assert(!_nameMap.get(name));
 
 	auto object = frg::construct<SharedObject>(*allocator, name.data(), false, rts);
 	object->baseAddress = base_address;
 	object->dynamic = dynamic;
 	_parseDynamic(object);
 
-	_nameMap.insert(csv(name), object);
+	_nameMap.insert(name, object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -392,20 +392,20 @@ SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 		void *phdr_pointer, size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 		uint64_t rts) {
-	assert(!_nameMap.get(csv(name)));
+	assert(!_nameMap.get(name));
 
 	auto object = frg::construct<SharedObject>(*allocator, name.data(), true, rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 	_parseDynamic(object);
 
-	_nameMap.insert(csv(name), object);
+	_nameMap.insert(name, object);
 	_discoverDependencies(object, rts);
 
 	return object;
 }
 
 SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name, uint64_t rts) {
-	auto it = _nameMap.get(csv(name));
+	auto it = _nameMap.get(name);
 	if(it)
 		return *it;
 
@@ -425,7 +425,7 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name, uin
 
 	_parseDynamic(object);
 
-	_nameMap.insert(csv(name), object);
+	_nameMap.insert(name, object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -433,7 +433,7 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name, uin
 
 SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint64_t rts) {
 	// TODO: Support SONAME correctly.
-	auto it = _nameMap.get(csv(path));
+	auto it = _nameMap.get(path);
 	if(it)
 		return *it;
 
@@ -447,7 +447,7 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint6
 
 	_parseDynamic(object);
 
-	_nameMap.insert(csv(path), object);
+	_nameMap.insert(path, object);
 	_discoverDependencies(object, rts);
 
 	return object;
