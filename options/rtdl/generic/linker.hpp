@@ -3,6 +3,7 @@
 #include <frg/optional.hpp>
 #include <frg/string.hpp>
 #include <frg/vector.hpp>
+#include <mlibc/allocator.hpp>
 
 struct ObjectRepository;
 struct Scope;
@@ -52,7 +53,7 @@ private:
 	void _discoverDependencies(SharedObject *object, uint64_t rts);
 
 	frg::hash_map<frg::string_view, SharedObject *,
-			frg::hash<frg::string_view>, Allocator> _nameMap;
+			frg::hash<frg::string_view>, MemoryAllocator> _nameMap;
 };
 
 // FIXME: Do not depend on the initial universe everywhere.
@@ -100,7 +101,7 @@ struct SharedObject {
 	bool haveStaticTls;
 
 	// vector of dependencies
-	frg::vector<SharedObject *, Allocator> dependencies;
+	frg::vector<SharedObject *, MemoryAllocator> dependencies;
 	
 	TlsModel tlsModel;
 	size_t tlsOffset;
@@ -178,7 +179,7 @@ struct Scope {
 
 private:
 public: // TODO: Make this private again. (Was made public for __dlapi_reverse()).
-	frg::vector<SharedObject *, Allocator> _objects;
+	frg::vector<SharedObject *, MemoryAllocator> _objects;
 };
 
 // --------------------------------------------------------
@@ -215,12 +216,12 @@ private:
 	uint64_t _linkRts;
 
 	frg::hash_map<SharedObject *, Token,
-			frg::hash<SharedObject *>, Allocator> _linkSet;
+			frg::hash<SharedObject *>, MemoryAllocator> _linkSet;
 	
 	// Stores the same objects as _linkSet but in dependency-BFS order.
-	frg::vector<SharedObject *, Allocator> _linkBfs;
+	frg::vector<SharedObject *, MemoryAllocator> _linkBfs;
 
-	frg::vector<SharedObject *, Allocator> _initQueue;
+	frg::vector<SharedObject *, MemoryAllocator> _initQueue;
 };
 
 // --------------------------------------------------------

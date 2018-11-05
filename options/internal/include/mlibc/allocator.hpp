@@ -1,7 +1,7 @@
-
 #ifndef MLIBC_FRIGG_ALLOC
 #define MLIBC_FRIGG_ALLOC
 
+#include <bits/ensure.h>
 #include <frg/slab.hpp>
 
 struct AllocatorLock {
@@ -37,4 +37,3 @@ typedef frg::slab_allocator<VirtualAllocator, AllocatorLock> MemoryAllocator;
 MemoryAllocator &getAllocator();
 
 #endif // MLIBC_FRIGG_ALLOC
-

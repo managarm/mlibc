@@ -14,7 +14,6 @@
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
-#include <mlibc/cxx-support.hpp>
 #include <mlibc/posix-pipe.hpp>
 
 #include <mlibc/debug.hpp>

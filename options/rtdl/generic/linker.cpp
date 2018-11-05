@@ -1,13 +1,12 @@
 
 #include <frg/manual_box.hpp>
 #include <frigg/elf.hpp>
+#include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 
 #include <string.h>
 #include <hel.h>
 #include <hel-syscalls.h>
-
-#include <frigg/glue-hel.hpp>
 
 #include <posix.frigg_pb.hpp>
 #include <fs.frigg_pb.hpp>
@@ -49,14 +48,14 @@ T load(void *ptr) {
 struct Queue {
 	Queue()
 	: _handle{kHelNullHandle}, _lastProgress(0) {
-		_queue = reinterpret_cast<HelQueue *>(allocator->allocate(sizeof(HelQueue)
+		_queue = reinterpret_cast<HelQueue *>(getAllocator().allocate(sizeof(HelQueue)
 				+ sizeof(int)));
 		_queue->headFutex = 1;
 		_queue->elementLimit = 128;
 		_queue->sizeShift = 0;
 		HEL_CHECK(helCreateQueue(_queue, 0, &_handle));
 		
-		_chunk = reinterpret_cast<HelChunk *>(allocator->allocate(sizeof(HelChunk) + 4096));
+		_chunk = reinterpret_cast<HelChunk *>(getAllocator().allocate(sizeof(HelChunk) + 4096));
 		HEL_CHECK(helSetupChunk(_handle, 0, _chunk, 0));
 
 		// Reset and enqueue the first chunk.
@@ -118,7 +117,7 @@ private:
 					return;
 				}
 
-				assert(futex == _lastProgress);
+				__ensure(futex == _lastProgress);
 			} while(!__atomic_compare_exchange_n(&_chunk->progressFutex, &futex,
 						_lastProgress | kHelProgressWaiters,
 						false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE));
@@ -166,14 +165,14 @@ HelHandleResult *parseHandle(void *&element) {
 int posixOpen(frigg::StringView path) {
 	HelAction actions[3];
 
-	managarm::posix::CntRequest<Allocator> req(*allocator);
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::OPEN);
-	req.set_path(frigg::String<Allocator>(*allocator, path));
+	req.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
 
 	if(!globalQueue.valid())
 		globalQueue.initialize();
 
-	frigg::String<Allocator> ser(*allocator);
+	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -193,12 +192,12 @@ int posixOpen(frigg::StringView path) {
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
 	
-	managarm::posix::SvrResponse<Allocator> resp(*allocator);
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND)
 		return -1;
-	assert(resp.error() == managarm::posix::Errors::SUCCESS);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return resp.fd();
 }
 
@@ -207,14 +206,14 @@ void posixSeek(int fd, int64_t offset) {
 
 	HelAction actions[3];
 
-	managarm::fs::CntRequest<Allocator> req(*allocator);
+	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_req_type(managarm::fs::CntReqType::SEEK_ABS);
 	req.set_rel_offset(offset);
 	
 	if(!globalQueue.valid())
 		globalQueue.initialize();
 
-	frigg::String<Allocator> ser(*allocator);
+	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -234,9 +233,9 @@ void posixSeek(int fd, int64_t offset) {
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
 	
-	managarm::fs::SvrResponse<Allocator> resp(*allocator);
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	assert(resp.error() == managarm::fs::Errors::SUCCESS);
+	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 }
 
 void posixRead(int fd, void *data, size_t length) {
@@ -246,14 +245,14 @@ void posixRead(int fd, void *data, size_t length) {
 	while(offset < length) {
 		HelAction actions[5];
 
-		managarm::fs::CntRequest<Allocator> req(*allocator);
+		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 		req.set_req_type(managarm::fs::CntReqType::READ);
 		req.set_size(length - offset);
 	
 		if(!globalQueue.valid())
 			globalQueue.initialize();
 
-		frigg::String<Allocator> ser(*allocator);
+		frigg::String<MemoryAllocator> ser(getAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -283,12 +282,12 @@ void posixRead(int fd, void *data, size_t length) {
 		HEL_CHECK(recv_resp->error);
 		HEL_CHECK(recv_data->error);
 
-		managarm::fs::SvrResponse<Allocator> resp(*allocator);
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
-		assert(resp.error() == managarm::fs::Errors::SUCCESS);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		offset += recv_data->length;
 	}
-	assert(offset == length);
+	__ensure(offset == length);
 }
 
 HelHandle posixMmap(int fd) {
@@ -296,13 +295,13 @@ HelHandle posixMmap(int fd) {
 
 	HelAction actions[4];
 
-	managarm::fs::CntRequest<Allocator> req(*allocator);
+	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_req_type(managarm::fs::CntReqType::MMAP);
 
 	if(!globalQueue.valid())
 		globalQueue.initialize();
 
-	frigg::String<Allocator> ser(*allocator);
+	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -326,23 +325,23 @@ HelHandle posixMmap(int fd) {
 	HEL_CHECK(recv_resp->error);
 	HEL_CHECK(pull_memory->error);
 	
-	managarm::fs::SvrResponse<Allocator> resp(*allocator);
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	assert(resp.error() == managarm::fs::Errors::SUCCESS);
+	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 	return pull_memory->handle;
 }
 
 void posixClose(int fd) {
 	HelAction actions[3];
 
-	managarm::posix::CntRequest<Allocator> req(*allocator);
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::CLOSE);
 	req.set_fd(fd);
 	
 	if(!globalQueue.valid())
 		globalQueue.initialize();
 
-	frigg::String<Allocator> ser(*allocator);
+	frigg::String<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -362,9 +361,9 @@ void posixClose(int fd) {
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
 	
-	managarm::posix::SvrResponse<Allocator> resp(*allocator);
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	assert(resp.error() == managarm::posix::Errors::SUCCESS);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 }
 
 // --------------------------------------------------------
@@ -372,13 +371,13 @@ void posixClose(int fd) {
 // --------------------------------------------------------
 
 ObjectRepository::ObjectRepository()
-: _nameMap{frg::hash<frg::string_view>{}, *allocator} { }
+: _nameMap{frg::hash<frg::string_view>{}, getAllocator()} { }
 
 SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 		uintptr_t base_address, Elf64_Dyn *dynamic, uint64_t rts) {
-	assert(!_nameMap.get(name));
+	__ensure(!_nameMap.get(name));
 
-	auto object = frg::construct<SharedObject>(*allocator, name.data(), false, rts);
+	auto object = frg::construct<SharedObject>(getAllocator(), name.data(), false, rts);
 	object->baseAddress = base_address;
 	object->dynamic = dynamic;
 	_parseDynamic(object);
@@ -392,9 +391,9 @@ SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 		void *phdr_pointer, size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 		uint64_t rts) {
-	assert(!_nameMap.get(name));
+	__ensure(!_nameMap.get(name));
 
-	auto object = frg::construct<SharedObject>(*allocator, name.data(), true, rts);
+	auto object = frg::construct<SharedObject>(getAllocator(), name.data(), true, rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 	_parseDynamic(object);
 
@@ -409,10 +408,10 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name, uin
 	if(it)
 		return *it;
 
-	auto object = frg::construct<SharedObject>(*allocator, name.data(), false, rts);
+	auto object = frg::construct<SharedObject>(getAllocator(), name.data(), false, rts);
 
-	frg::string<Allocator> lib_prefix(*allocator, "/lib/");
-	frg::string<Allocator> usr_prefix(*allocator, "/usr/lib/");
+	frg::string<MemoryAllocator> lib_prefix(getAllocator(), "/lib/");
+	frg::string<MemoryAllocator> usr_prefix(getAllocator(), "/usr/lib/");
 
 	// open the object file
 	auto fd = posixOpen(csv(lib_prefix + name));
@@ -437,7 +436,7 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint6
 	if(it)
 		return *it;
 
-	auto object = frg::construct<SharedObject>(*allocator, path.data(), false, rts);
+	auto object = frg::construct<SharedObject>(getAllocator(), path.data(), false, rts);
 	
 	auto fd = posixOpen(csv(path));
 	if(fd == -1)
@@ -459,7 +458,7 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint6
 
 void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 		size_t phdr_entry_size, size_t phdr_count, void *entry_pointer) {
-	assert(object->isMainObject);
+	__ensure(object->isMainObject);
 	if(verbose)
 		mlibc::infoLogger() << "rtdl: Loading " << object->name << frg::endlog;
 	
@@ -487,7 +486,7 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 
 
 void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
-	assert(!object->isMainObject);
+	__ensure(!object->isMainObject);
 
 	object->baseAddress = libraryBase;
 	// TODO: handle this dynamically
@@ -501,14 +500,14 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	Elf64_Ehdr ehdr;
 	posixRead(fd, &ehdr, sizeof(Elf64_Ehdr));
 
-	assert(ehdr.e_ident[0] == 0x7F
+	__ensure(ehdr.e_ident[0] == 0x7F
 			&& ehdr.e_ident[1] == 'E'
 			&& ehdr.e_ident[2] == 'L'
 			&& ehdr.e_ident[3] == 'F');
-	assert(ehdr.e_type == ET_EXEC || ehdr.e_type == ET_DYN);
+	__ensure(ehdr.e_type == ET_EXEC || ehdr.e_type == ET_DYN);
 
 	// read the elf program headers
-	auto phdr_buffer = (char *)allocator->allocate(ehdr.e_phnum * ehdr.e_phentsize);
+	auto phdr_buffer = (char *)getAllocator().allocate(ehdr.e_phnum * ehdr.e_phentsize);
 	posixSeek(fd, ehdr.e_phoff);
 	posixRead(fd, phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
 
@@ -521,9 +520,9 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 		auto phdr = (Elf64_Phdr *)(phdr_buffer + i * ehdr.e_phentsize);
 		
 		if(phdr->p_type == PT_LOAD) {
-			assert(phdr->p_memsz > 0);
+			__ensure(phdr->p_memsz > 0);
 			
-			assert(object->baseAddress % kPageSize == 0);
+			__ensure(object->baseAddress % kPageSize == 0);
 			size_t misalign = phdr->p_vaddr % kPageSize;
 
 			uintptr_t map_address = object->baseAddress + phdr->p_vaddr - misalign;
@@ -532,7 +531,7 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 				map_length += kPageSize - (map_length % kPageSize);
 			
 			if(!(phdr->p_flags & PF_W)) {
-				assert((phdr->p_offset % kPageSize) == 0);
+				__ensure((phdr->p_offset % kPageSize) == 0);
 
 				// map the segment with correct permissions
 				if((phdr->p_flags & (PF_R | PF_W | PF_X)) == (PF_R | PF_X)) {
@@ -588,7 +587,7 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 				|| phdr->p_type == PT_GNU_STACK) {
 			// ignore the phdr
 		}else{
-			assert(!"Unexpected PHDR");
+			__ensure(!"Unexpected PHDR");
 		}
 	}
 
@@ -600,7 +599,7 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 // --------------------------------------------------------
 
 void ObjectRepository::_parseDynamic(SharedObject *object) {
-	assert(object->dynamic != nullptr);
+	__ensure(object->dynamic != nullptr);
 
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
 		Elf64_Dyn *dynamic = &object->dynamic[i];
@@ -618,7 +617,7 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			object->symbolTableOffset = dynamic->d_ptr;
 			break;
 		case DT_SYMENT:
-			assert(dynamic->d_val == sizeof(Elf64_Sym));
+			__ensure(dynamic->d_val == sizeof(Elf64_Sym));
 			break;
 		// handle lazy relocation table
 		case DT_PLTGOT:
@@ -635,7 +634,7 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			if(dynamic->d_val == DT_RELA) {
 				object->lazyExplicitAddend = true;
 			}else{
-				assert(dynamic->d_val == DT_REL);
+				__ensure(dynamic->d_val == DT_REL);
 			}
 			break;
 		// TODO: Implement this correctly!
@@ -711,7 +710,7 @@ SharedObject::SharedObject(const char *name, bool is_main_object, uint64_t objec
 		hashTableOffset(0), symbolTableOffset(0), stringTableOffset(0),
 		lazyRelocTableOffset(0), lazyTableSize(0), lazyExplicitAddend(false),
 		symbolicResolution(false), eagerBinding(false), haveStaticTls(false),
-		dependencies(*allocator),
+		dependencies(getAllocator()),
 		tlsModel(TlsModel::null), tlsOffset(0),
 		globalRts(0), wasLinked(false),
 		scheduledForInit(false), onInitStack(false), wasInitialized(false),
@@ -729,7 +728,7 @@ void processCopyRela(SharedObject *object, Elf64_Rela *reloc) {
 			+ symbol_index * sizeof(Elf64_Sym));
 	ObjectSymbol r(object, symbol);
 	frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, Scope::resolveCopy);
-	assert(p);
+	__ensure(p);
 
 	memcpy((void *)rel_addr, (void *)p->virtualAddress(), symbol->st_size);
 }
@@ -749,7 +748,7 @@ void processCopyRelocations(SharedObject *object) {
 			rela_length = dynamic->d_val;
 			break;
 		case DT_RELAENT:
-			assert(dynamic->d_val == sizeof(Elf64_Rela));
+			__ensure(dynamic->d_val == sizeof(Elf64_Rela));
 			break;
 		}
 	}
@@ -760,17 +759,17 @@ void processCopyRelocations(SharedObject *object) {
 			processCopyRela(object, reloc);
 		}
 	}else{
-		assert(!rela_offset && !rela_length);
+		__ensure(!rela_offset && !rela_length);
 	}
 }
 
 void doInitialize(SharedObject *object) {
-	assert(object->wasLinked);
-	assert(!object->wasInitialized);
+	__ensure(object->wasLinked);
+	__ensure(!object->wasInitialized);
 
 	// if the object has dependencies we initialize them first
 	for(size_t i = 0; i < object->dependencies.size(); i++)
-		assert(object->dependencies[i]->wasInitialized);
+		__ensure(object->dependencies[i]->wasInitialized);
 
 	if(verbose)
 		mlibc::infoLogger() << "rtdl: Initialize " << object->name << frg::endlog;
@@ -807,7 +806,7 @@ void doInitialize(SharedObject *object) {
 	
 	if(verbose)
 		mlibc::infoLogger() << "rtdl: Running DT_INIT_ARRAY functions" << frg::endlog;
-	assert((array_size % sizeof(InitFuncPtr)) == 0);
+	__ensure((array_size % sizeof(InitFuncPtr)) == 0);
 	for(size_t i = 0; i < array_size / sizeof(InitFuncPtr); i++)
 		init_array[i]();
 
@@ -829,7 +828,7 @@ struct Tcb {
 
 void allocateTcb() {
 	size_t fs_size = runtimeTlsMap->initialLimit + sizeof(Tcb);
-	char *fs_buffer = (char *)allocator->allocate(fs_size);
+	char *fs_buffer = (char *)getAllocator().allocate(fs_size);
 	memset(fs_buffer, 0, fs_size);
 
 	auto tcb_ptr = (Tcb *)(fs_buffer + runtimeTlsMap->initialLimit);
@@ -845,15 +844,15 @@ ObjectSymbol::ObjectSymbol(SharedObject *object, const Elf64_Sym *symbol)
 : _object(object), _symbol(symbol) { }
 
 const char *ObjectSymbol::getString() {
-	assert(_symbol->st_name != 0);
+	__ensure(_symbol->st_name != 0);
 	return (const char *)(_object->baseAddress
 			+ _object->stringTableOffset + _symbol->st_name);
 }
 
 uintptr_t ObjectSymbol::virtualAddress() {
 	auto bind = ELF64_ST_BIND(_symbol->st_info);
-	assert(bind == STB_GLOBAL || bind == STB_WEAK);
-	assert(_symbol->st_shndx != SHN_UNDEF);
+	__ensure(bind == STB_GLOBAL || bind == STB_WEAK);
+	__ensure(_symbol->st_shndx != SHN_UNDEF);
 	return _object->baseAddress + _symbol->st_value;
 }
 
@@ -922,7 +921,7 @@ frg::optional<ObjectSymbol> Scope::resolveWholeScope(Scope *scope,
 }
 
 Scope::Scope()
-: _objects(*allocator) { }
+: _objects(getAllocator()) { }
 
 void Scope::appendObject(SharedObject *object) {
 	_objects.push(object);
@@ -951,8 +950,8 @@ frg::optional<ObjectSymbol> Scope::resolveSymbol(ObjectSymbol r, ResolveFlags fl
 
 Loader::Loader(Scope *scope, bool is_initial_link, uint64_t rts)
 : _globalScope{scope}, _isInitialLink{is_initial_link}, _linkRts{rts},
-		_linkSet{frg::hash<SharedObject *>{}, *allocator},
-		_linkBfs{*allocator}, _initQueue{*allocator} { }
+		_linkSet{frg::hash<SharedObject *>{}, getAllocator()},
+		_linkBfs{getAllocator()}, _initQueue{getAllocator()} { }
 
 // TODO: Use an explicit vector to reduce stack usage to O(1)?
 void Loader::submitObject(SharedObject *object) {
@@ -986,7 +985,7 @@ void Loader::linkObjects() {
 		if(verbose)
 			mlibc::infoLogger() << "rtdl: Linking " << (*it)->name << frg::endlog;
 
-		assert(!(*it)->wasLinked);
+		__ensure(!(*it)->wasLinked);
 		(*it)->loadScope = _globalScope;
 
 		// TODO: Support this.
@@ -1016,20 +1015,20 @@ void Loader::linkObjects() {
 
 void Loader::_buildTlsMaps() {
 	if(_isInitialLink) {
-		assert(runtimeTlsMap->initialPtr == 0);
-		assert(runtimeTlsMap->initialLimit == 0);
+		__ensure(runtimeTlsMap->initialPtr == 0);
+		__ensure(runtimeTlsMap->initialLimit == 0);
 
-		assert(!_linkBfs.empty());
-		assert(_linkBfs.front()->isMainObject);
+		__ensure(!_linkBfs.empty());
+		__ensure(_linkBfs.front()->isMainObject);
 
 		for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 			SharedObject *object = *it;
-			assert(object->tlsModel == TlsModel::null);
+			__ensure(object->tlsModel == TlsModel::null);
 
 			if(object->tlsSegmentSize == 0)
 				continue;
 
-			assert(16 % object->tlsAlignment == 0);
+			__ensure(16 % object->tlsAlignment == 0);
 			runtimeTlsMap->initialPtr += object->tlsSegmentSize;
 			size_t misalign = runtimeTlsMap->initialPtr % object->tlsAlignment;
 			if(misalign)
@@ -1059,7 +1058,7 @@ void Loader::_buildTlsMaps() {
 			// There are some libraries (e.g. Mesa) that require static TLS even though
 			// they expect to be dynamically loaded.
 			if(object->haveStaticTls) {
-				assert(16 % object->tlsAlignment == 0);
+				__ensure(16 % object->tlsAlignment == 0);
 				auto ptr = runtimeTlsMap->initialPtr + object->tlsSegmentSize;
 				size_t misalign = ptr % object->tlsAlignment;
 				if(misalign)
@@ -1120,10 +1119,10 @@ void Loader::initObjects() {
 // TODO: Use an explicit vector to reduce stack usage to O(1)?
 void Loader::_scheduleInit(SharedObject *object) {
 	// Here we detect cyclic dependencies.
-	assert(!object->onInitStack);
+	__ensure(!object->onInitStack);
 	object->onInitStack = true;
 
-	assert(!object->scheduledForInit);
+	__ensure(!object->scheduledForInit);
 	object->scheduledForInit = true;
 
 	for(size_t i = 0; i < object->dependencies.size(); i++) {
@@ -1165,26 +1164,26 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 	
 	switch(type) {
 	case R_X86_64_64: {
-		assert(symbol_index);
+		__ensure(symbol_index);
 		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
 		*((uint64_t *)rel_addr) = symbol_addr + reloc->r_addend;
 	} break;
 	case R_X86_64_GLOB_DAT: {
-		assert(symbol_index);
-		assert(!reloc->r_addend);
+		__ensure(symbol_index);
+		__ensure(!reloc->r_addend);
 		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
 		*((uint64_t *)rel_addr) = symbol_addr;
 	} break;
 	case R_X86_64_RELATIVE: {
-		assert(!symbol_index);
+		__ensure(!symbol_index);
 		*((uint64_t *)rel_addr) = object->baseAddress + reloc->r_addend;
 	} break;
 	// DTPMOD and DTPOFF are dynamic TLS relocations (for __tls_get_addr()).
 	// TPOFF is a relocation to the initial TLS model.
 	case R_X86_64_DTPMOD64: {
-		assert(!reloc->r_addend);
+		__ensure(!reloc->r_addend);
 		if(symbol_index) {
-			assert(p);
+			__ensure(p);
 			*((uint64_t *)rel_addr) = (uint64_t)p->object();
 		}else{
 			// TODO: is this behaviour actually documented anywhere?
@@ -1195,22 +1194,22 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 		}
 	} break;
 	case R_X86_64_DTPOFF64: {
-		assert(p);
-		assert(!reloc->r_addend);
-		assert(p->object()->tlsModel == TlsModel::initial);
+		__ensure(p);
+		__ensure(!reloc->r_addend);
+		__ensure(p->object()->tlsModel == TlsModel::initial);
 		*((uint64_t *)rel_addr) = p->symbol()->st_value;
 	} break;
 	case R_X86_64_TPOFF64: {
 		if(symbol_index) {
-			assert(p);
-			assert(!reloc->r_addend);
+			__ensure(p);
+			__ensure(!reloc->r_addend);
 			if(p->object()->tlsModel != TlsModel::initial)
 				mlibc::panicLogger() << "rtdl: In object " << object->name
 						<< ": Static TLS relocation to dynamically loaded object "
 						<< p->object()->name << frg::endlog;
 			*((uint64_t *)rel_addr) = p->object()->tlsOffset + p->symbol()->st_value;
 		}else{
-			assert(!reloc->r_addend);
+			__ensure(!reloc->r_addend);
 			if(stillSlightlyVerbose)
 				mlibc::infoLogger() << "rtdl: Warning: TPOFF64 with no symbol"
 						" in object " << object->name << frg::endlog;
@@ -1242,7 +1241,7 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 			rela_length = dynamic->d_val;
 			break;
 		case DT_RELAENT:
-			assert(dynamic->d_val == sizeof(Elf64_Rela));
+			__ensure(dynamic->d_val == sizeof(Elf64_Rela));
 			break;
 		}
 	}
@@ -1253,13 +1252,13 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 			_processRela(object, reloc);
 		}
 	}else{
-		assert(!rela_offset && !rela_length);
+		__ensure(!rela_offset && !rela_length);
 	}
 }
 
 void Loader::_processLazyRelocations(SharedObject *object) {
 	if(object->globalOffsetTable == nullptr) {
-		assert(object->lazyRelocTableOffset == 0);
+		__ensure(object->lazyRelocTableOffset == 0);
 		return;
 	}
 	object->globalOffsetTable[1] = object;
@@ -1269,14 +1268,14 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 		return;
 
 	// adjust the addresses of JUMP_SLOT relocations
-	assert(object->lazyExplicitAddend);
+	__ensure(object->lazyExplicitAddend);
 	for(size_t offset = 0; offset < object->lazyTableSize; offset += sizeof(Elf64_Rela)) {
 		auto reloc = (Elf64_Rela *)(object->baseAddress + object->lazyRelocTableOffset + offset);
 		Elf64_Xword type = ELF64_R_TYPE(reloc->r_info);
 		Elf64_Xword symbol_index = ELF64_R_SYM(reloc->r_info);
 		uintptr_t rel_addr = object->baseAddress + reloc->r_offset;
 
-		assert(type == R_X86_64_JUMP_SLOT);
+		__ensure(type == R_X86_64_JUMP_SLOT);
 		if(eagerBinding) {
 			auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 					+ symbol_index * sizeof(Elf64_Sym));

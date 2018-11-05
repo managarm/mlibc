@@ -16,6 +16,7 @@ internal_incl = include_directories('options/internal/include')
 internal_sources = [
 	'options/internal/generic/allocator.cpp',
 	'options/internal/generic/debug.cpp',
+	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc/initfini.cpp',
 	'options/internal/gcc-extra/mlibc_crtbegin.S',
 	'options/internal/gcc-extra/mlibc_crtend.S',
@@ -23,10 +24,14 @@ internal_sources = [
 ]
 
 rtdl_sources = [
+	'options/internal/gcc/guard-abi.cpp',
+	'options/internal/generic/allocator.cpp',
 	'options/internal/generic/debug.cpp',
 	'options/rtdl/generic/main.cpp',
 	'options/rtdl/generic/linker.cpp',
 	'options/rtdl/x86_64/runtime.S',
+	'sysdeps/managarm/generic/ensure.cpp',
+	'sysdeps/managarm/generic/memory.cpp',
 	'sysdeps/managarm/rtdl-generic/support.cpp',
 ]
 

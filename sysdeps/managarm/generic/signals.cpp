@@ -12,7 +12,6 @@
 #include <frigg/string.hpp>
 #include <frigg/protobuf.hpp>
 #include <frigg/vector.hpp>
-#include <mlibc/cxx-support.hpp>
 #include <mlibc/posix-pipe.hpp>
 
 #include <posix.frigg_pb.hpp>

@@ -4,7 +4,6 @@
 #include <sys/socket.h>
 
 #include <mlibc/allocator.hpp>
-#include <mlibc/cxx-support.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
 

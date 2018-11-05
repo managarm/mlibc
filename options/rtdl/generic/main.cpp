@@ -6,8 +6,6 @@
 #include <hel.h>
 #include <hel-syscalls.h>
 
-#include <frigg/glue-hel.hpp>
-
 #include "linker.hpp"
 
 #define HIDDEN  __attribute__ ((visibility ("hidden")))
@@ -64,13 +62,13 @@ extern "C" void relocateSelf() {
 }
 
 extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
-	assert(object->lazyExplicitAddend);
+	__ensure(object->lazyExplicitAddend);
 	auto reloc = (Elf64_Rela *)(object->baseAddress + object->lazyRelocTableOffset
 			+ rel_index * sizeof(Elf64_Rela));
 	Elf64_Xword type = ELF64_R_TYPE(reloc->r_info);
 	Elf64_Xword symbol_index = ELF64_R_SYM(reloc->r_info);
 
-	assert(type == R_X86_64_JUMP_SLOT);
+	__ensure(type == R_X86_64_JUMP_SLOT);
 
 	auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 			+ symbol_index * sizeof(Elf64_Sym));
@@ -94,7 +92,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	if(logEntryExit)
 		mlibc::infoLogger() << "Entering ld-init" << frg::endlog;
 	entryStack = entry_stack;
-	allocator.initialize(virtualAlloc);
+//	allocator.initialize(virtualAlloc);
 	runtimeTlsMap.initialize();
 	
 	HelError error;
@@ -128,11 +126,11 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		case DT_RELACOUNT:
 			continue;
 		default:
-			assert(!"Unexpected dynamic entry in program interpreter");
+			__ensure(!"Unexpected dynamic entry in program interpreter");
 		}
 	}
-	assert(strtab_offset);
-	assert(soname_str);
+	__ensure(strtab_offset);
+	__ensure(soname_str);
 	
 	// Parse the auxiliary vector.
 	enum {
@@ -158,7 +156,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// Find the auxiliary vector by skipping args and environment.
 	auto aux = entryStack;
 	aux += *aux + 1; // First, we skip argc and all args.
-	assert(!*aux);
+	__ensure(!*aux);
 	aux++;
 	while(*aux) // Now, we skip the environment.
 		aux++;
@@ -236,7 +234,7 @@ const char *__dlapi_error() {
 extern "C" __attribute__ (( visibility("default") ))
 void *__dlapi_get_tls(struct __abi_tls_entry *entry) {
 	// TODO: Thread-safety!
-	assert(entry->object->tlsModel == TlsModel::initial);
+	__ensure(entry->object->tlsModel == TlsModel::initial);
 	
 //	frigg::infoLogger() << "__tls_get_addr(" << entry->object->name
 //			<< ", " << entry->offset << ")" << frg::endlog;
@@ -276,11 +274,11 @@ void *__dlapi_open(const char *file, int local) {
 		struct Token { };
 
 		using Set = frg::hash_map<SharedObject *, Token,
-				frg::hash<SharedObject *>, Allocator>;
-		Set set{frg::hash<SharedObject *>{}, *allocator};
+				frg::hash<SharedObject *>, MemoryAllocator>;
+		Set set{frg::hash<SharedObject *>{}, getAllocator()};
 		
-		object->objectScope = frg::construct<Scope>(*allocator);
-		frg::vector<SharedObject *, Allocator> queue{*allocator};
+		object->objectScope = frg::construct<Scope>(getAllocator());
+		frg::vector<SharedObject *, MemoryAllocator> queue{getAllocator()};
 
 		object->objectScope->appendObject(object);
 		set.insert(object, Token{});
@@ -305,18 +303,18 @@ extern "C" [[gnu::visibility("default")]]
 void *__dlapi_resolve(void *handle, const char *string) {
 	mlibc::infoLogger() << "rtdl: __dlapi_resolve(" << string << ")" << frg::endlog;
 
-	assert(handle != reinterpret_cast<void *>(-1));
+	__ensure(handle != reinterpret_cast<void *>(-1));
 
 	frg::optional<ObjectSymbol> target;
 	if(handle) {
 		auto object = reinterpret_cast<SharedObject *>(handle);
-		assert(object->objectScope);
+		__ensure(object->objectScope);
 		target = Scope::resolveWholeScope(object->objectScope, string, 0);
 	}else{
 		target = Scope::resolveWholeScope(globalScope.get(), string, 0);
 	}
 
-	assert(target);
+	__ensure(target);
 	return reinterpret_cast<void *>(target->virtualAddress());
 }
 

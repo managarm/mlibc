@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include <bits/ensure.h>
-#include <mlibc/cxx-support.hpp>
 
 #include <mlibc/debug.hpp>
 #include <frg/optional.hpp>

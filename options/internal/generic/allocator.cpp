@@ -1,11 +1,9 @@
 
-#include <stdlib.h>
 #include <string.h>
 
 #include <bits/ensure.h>
 #include <frg/eternal.hpp>
 #include <mlibc/allocator.hpp>
-#include <mlibc/cxx-support.hpp>
 #include <mlibc/sysdeps.hpp>
 
 // --------------------------------------------------------
@@ -16,7 +14,7 @@ MemoryAllocator &getAllocator() {
 	// use frg::eternal to prevent a call to __cxa_atexit().
 	// this is necessary because __cxa_atexit() call this function.
 	static frg::eternal<VirtualAllocator> virtualAllocator;
-	static frg::eternal<MemoryAllocator> singleton(virtualAllocator.get());
+	static frg::eternal<MemoryAllocator> singleton{virtualAllocator.get()};
 	return singleton.get();
 }
 

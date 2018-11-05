@@ -18,6 +18,9 @@ namespace mlibc {
 void sys_libc_log(const char *message);
 __attribute__ ((noreturn)) void sys_libc_panic();
 
+int sys_anon_allocate(size_t size, void **pointer);
+int sys_anon_free(void *pointer, size_t size);
+
 #ifndef MLIBC_BUILDING_RTDL
 	__attribute__ ((noreturn)) void sys_exit(int status);
 
@@ -49,8 +52,6 @@ __attribute__ ((noreturn)) void sys_libc_panic();
 	uid_t sys_geteuid();
 	pid_t sys_getpid();
 	pid_t sys_getppid();
-	int sys_anon_allocate(size_t size, void **pointer);
-	int sys_anon_free(void *pointer, size_t size);
 	void sys_yield();
 	int sys_sleep(time_t *secs, long *nanos);
 	int sys_fork(pid_t *child);
