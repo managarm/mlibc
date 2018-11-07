@@ -1,17 +1,19 @@
 
+#include <elf.h>
+#include <string.h>
+
 #include <frg/manual_box.hpp>
-#include <frigg/elf.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 
-#include <string.h>
+#include <posix.frigg_pb.hpp>
+#include <fs.frigg_pb.hpp>
+#include "linker.hpp"
+
 #include <hel.h>
 #include <hel-syscalls.h>
 
-#include <posix.frigg_pb.hpp>
-#include <fs.frigg_pb.hpp>
-
-#include "linker.hpp"
+HelHandle *fileTable;
 
 uintptr_t libraryBase = 0x41000000;
 
@@ -35,6 +37,16 @@ frigg::StringView csv(frg::string_view x) {
 // --------------------------------------------------------
 // POSIX I/O functions.
 // --------------------------------------------------------
+
+void cacheFileTable() {
+	if(fileTable)
+		return;
+
+	HelError error;
+	asm volatile ("syscall" : "=D"(error), "=S"(fileTable) : "0"(kHelCallSuper + 1)
+			: "rbx", "rcx", "r11");
+	HEL_CHECK(error);
+}
 
 template<typename T>
 T load(void *ptr) {
@@ -202,6 +214,7 @@ int posixOpen(frigg::StringView path) {
 }
 
 void posixSeek(int fd, int64_t offset) {
+	cacheFileTable();
 	auto lane = fileTable[fd];
 
 	HelAction actions[3];
@@ -239,6 +252,7 @@ void posixSeek(int fd, int64_t offset) {
 }
 
 void posixRead(int fd, void *data, size_t length) {
+	cacheFileTable();
 	auto lane = fileTable[fd];
 
 	size_t offset = 0;
@@ -291,6 +305,7 @@ void posixRead(int fd, void *data, size_t length) {
 }
 
 HelHandle posixMmap(int fd) {
+	cacheFileTable();
 	auto lane = fileTable[fd];
 
 	HelAction actions[4];

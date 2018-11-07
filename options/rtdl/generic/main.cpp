@@ -1,11 +1,8 @@
 
+#include <elf.h>
+
 #include <frg/manual_box.hpp>
-#include <frigg/elf.hpp>
 #include <mlibc/debug.hpp>
-
-#include <hel.h>
-#include <hel-syscalls.h>
-
 #include "linker.hpp"
 
 #define HIDDEN  __attribute__ ((visibility ("hidden")))
@@ -22,8 +19,6 @@ frg::manual_box<Scope> globalScope;
 frg::manual_box<Loader> globalLoader;
 
 frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
-
-HelHandle *fileTable;
 
 // Relocates the dynamic linker (i.e. this DSO) itself.
 // Assumptions:
@@ -94,11 +89,6 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	entryStack = entry_stack;
 //	allocator.initialize(virtualAlloc);
 	runtimeTlsMap.initialize();
-	
-	HelError error;
-	asm volatile ("syscall" : "=D"(error), "=S"(fileTable) : "0"(kHelCallSuper + 1)
-			: "rbx", "rcx", "r11");
-	HEL_CHECK(error);
 	
 	auto ldso_base = reinterpret_cast<uintptr_t>(_DYNAMIC)
 			- reinterpret_cast<uintptr_t>(_GLOBAL_OFFSET_TABLE_[0]);

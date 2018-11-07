@@ -230,8 +230,6 @@ private:
 
 extern "C" void pltRelocateStub() __attribute__ (( visibility("hidden") ));
 
-extern HelHandle *fileTable;
-
 // --------------------------------------------------------
 // RTDL interface
 // --------------------------------------------------------
