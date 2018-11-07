@@ -5,15 +5,11 @@
 #include <frg/manual_box.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
-
-#include <posix.frigg_pb.hpp>
-#include <fs.frigg_pb.hpp>
+#include <mlibc/sysdeps.hpp>
 #include "linker.hpp"
 
 #include <hel.h>
 #include <hel-syscalls.h>
-
-HelHandle *fileTable;
 
 uintptr_t libraryBase = 0x41000000;
 
@@ -30,355 +26,30 @@ bool eagerBinding = true;
 // part of the global scope is considered for symbol resolution.
 uint64_t rtsCounter = 2;
 
-frigg::StringView csv(frg::string_view x) {
-	return frigg::StringView{x.data(), x.size()};
+void seekOrDie(int fd, int64_t offset) {
+	off_t noff;
+	if(mlibc::sys_seek(fd, offset, SEEK_SET, &noff))
+		__ensure(!"sys_seek() failed");
 }
 
-// --------------------------------------------------------
-// POSIX I/O functions.
-// --------------------------------------------------------
-
-void cacheFileTable() {
-	if(fileTable)
-		return;
-
-	HelError error;
-	asm volatile ("syscall" : "=D"(error), "=S"(fileTable) : "0"(kHelCallSuper + 1)
-			: "rbx", "rcx", "r11");
-	HEL_CHECK(error);
-}
-
-template<typename T>
-T load(void *ptr) {
-	T result;
-	memcpy(&result, ptr, sizeof(T));
-	return result;
-}
-
-// This Queue implementation is more simplistic than the ones in mlibc and helix.
-// In fact, we only manage a single chunk; this minimizes the memory usage of the queue.
-struct Queue {
-	Queue()
-	: _handle{kHelNullHandle}, _lastProgress(0) {
-		_queue = reinterpret_cast<HelQueue *>(getAllocator().allocate(sizeof(HelQueue)
-				+ sizeof(int)));
-		_queue->headFutex = 1;
-		_queue->elementLimit = 128;
-		_queue->sizeShift = 0;
-		HEL_CHECK(helCreateQueue(_queue, 0, &_handle));
-		
-		_chunk = reinterpret_cast<HelChunk *>(getAllocator().allocate(sizeof(HelChunk) + 4096));
-		HEL_CHECK(helSetupChunk(_handle, 0, _chunk, 0));
-
-		// Reset and enqueue the first chunk.
-		_chunk->progressFutex = 0;
-
-		_queue->indexQueue[0] = 0;
-		_nextIndex = 1;
-		_wakeHeadFutex();
-	}
-
-	Queue(const Queue &) = delete;
-
-	Queue &operator= (const Queue &) = delete;
-
-	HelHandle getHandle() {
-		return _handle;
-	}
-
-	void *dequeueSingle() {
-		while(true) {
-			bool done;
-			_waitProgressFutex(&done);
-			if(done) {
-				// Reset and enqueue the chunk again.
-				_chunk->progressFutex = 0;
-
-				_queue->indexQueue[0] = 0;
-				_nextIndex = ((_nextIndex + 1) & kHelHeadMask);
-				_wakeHeadFutex();
-
-				_lastProgress = 0;
-				continue;
-			}
-			
-			// Dequeue the next element.
-			auto ptr = (char *)_chunk + sizeof(HelChunk) + _lastProgress;
-			auto element = load<HelElement>(ptr);
-			_lastProgress += sizeof(HelElement) + element.length;
-			return ptr + sizeof(HelElement);
-		}
-	}
-
-private:
-	void _wakeHeadFutex() {
-		auto futex = __atomic_exchange_n(&_queue->headFutex, _nextIndex, __ATOMIC_RELEASE);
-		if(futex & kHelHeadWaiters)
-			HEL_CHECK(helFutexWake(&_queue->headFutex));
-	}
-
-	void _waitProgressFutex(bool *done) {
-		while(true) {
-			auto futex = __atomic_load_n(&_chunk->progressFutex, __ATOMIC_ACQUIRE);
-			do {
-				if(_lastProgress != (futex & kHelProgressMask)) {
-					*done = false;
-					return;
-				}else if(futex & kHelProgressDone) {
-					*done = true;
-					return;
-				}
-
-				__ensure(futex == _lastProgress);
-			} while(!__atomic_compare_exchange_n(&_chunk->progressFutex, &futex,
-						_lastProgress | kHelProgressWaiters,
-						false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE));
-			
-			HEL_CHECK(helFutexWait(&_chunk->progressFutex,
-					_lastProgress | kHelProgressWaiters));
-		}
-	}
-
-private:
-	HelHandle _handle;
-	HelQueue *_queue;
-	HelChunk *_chunk;
-	int _nextIndex;
-	int _lastProgress;
-};
-
-frg::manual_box<Queue> globalQueue;
-
-HelSimpleResult *parseSimple(void *&element) {
-	auto result = reinterpret_cast<HelSimpleResult *>(element);
-	element = (char *)element + sizeof(HelSimpleResult);
-	return result;
-}
-
-HelInlineResult *parseInline(void *&element) {
-	auto result = reinterpret_cast<HelInlineResult *>(element);
-	element = (char *)element + sizeof(HelInlineResult)
-			+ ((result->length + 7) & ~size_t(7));
-	return result;
-}
-
-HelLengthResult *parseLength(void *&element) {
-	auto result = reinterpret_cast<HelLengthResult *>(element);
-	element = (char *)element + sizeof(HelLengthResult);
-	return result;
-}
-
-HelHandleResult *parseHandle(void *&element) {
-	auto result = reinterpret_cast<HelHandleResult *>(element);
-	element = (char *)element + sizeof(HelHandleResult);
-	return result;
-}
-
-int posixOpen(frigg::StringView path) {
-	HelAction actions[3];
-
-	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_request_type(managarm::posix::CntReqType::OPEN);
-	req.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
-
-	if(!globalQueue.valid())
-		globalQueue.initialize();
-
-	frigg::String<MemoryAllocator> ser(getAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3, globalQueue->getHandle(), 0, 0));
-
-	auto element = globalQueue->dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-
-	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND)
-		return -1;
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	return resp.fd();
-}
-
-void posixSeek(int fd, int64_t offset) {
-	cacheFileTable();
-	auto lane = fileTable[fd];
-
-	HelAction actions[3];
-
-	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_req_type(managarm::fs::CntReqType::SEEK_ABS);
-	req.set_rel_offset(offset);
-	
-	if(!globalQueue.valid())
-		globalQueue.initialize();
-
-	frigg::String<MemoryAllocator> ser(getAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(lane, actions, 3, globalQueue->getHandle(), 0, 0));
-
-	auto element = globalQueue->dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-}
-
-void posixRead(int fd, void *data, size_t length) {
-	cacheFileTable();
-	auto lane = fileTable[fd];
-
+void readExactlyOrDie(int fd, void *data, size_t length) {
 	size_t offset = 0;
 	while(offset < length) {
-		HelAction actions[5];
-
-		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
-		req.set_req_type(managarm::fs::CntReqType::READ);
-		req.set_size(length - offset);
-	
-		if(!globalQueue.valid())
-			globalQueue.initialize();
-
-		frigg::String<MemoryAllocator> ser(getAllocator());
-		req.SerializeToString(&ser);
-		actions[0].type = kHelActionOffer;
-		actions[0].flags = kHelItemAncillary;
-		actions[1].type = kHelActionSendFromBuffer;
-		actions[1].flags = kHelItemChain;
-		actions[1].buffer = ser.data();
-		actions[1].length = ser.size();
-		actions[2].type = kHelActionImbueCredentials;
-		actions[2].flags = kHelItemChain;
-		actions[3].type = kHelActionRecvInline;
-		actions[3].flags = kHelItemChain;
-		actions[4].type = kHelActionRecvToBuffer;
-		actions[4].flags = 0;
-		actions[4].buffer = (char *)data + offset;
-		actions[4].length = length - offset;
-		HEL_CHECK(helSubmitAsync(lane, actions, 5, globalQueue->getHandle(), 0, 0));
-
-		auto element = globalQueue->dequeueSingle();
-		auto offer = parseSimple(element);
-		auto send_req = parseSimple(element);
-		auto imbue_creds = parseSimple(element);
-		auto recv_resp = parseInline(element);
-		auto recv_data = parseLength(element);
-		HEL_CHECK(offer->error);
-		HEL_CHECK(send_req->error);
-		HEL_CHECK(imbue_creds->error);
-		HEL_CHECK(recv_resp->error);
-		HEL_CHECK(recv_data->error);
-
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
-		resp.ParseFromArray(recv_resp->data, recv_resp->length);
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		offset += recv_data->length;
+		ssize_t chunk;
+		if(mlibc::sys_read(fd, reinterpret_cast<char *>(data) + offset,
+				length - offset, &chunk))
+			__ensure(!"sys_read() failed");
+		__ensure(chunk > 0);
+		offset += chunk;
 	}
 	__ensure(offset == length);
 }
 
-HelHandle posixMmap(int fd) {
-	cacheFileTable();
-	auto lane = fileTable[fd];
+extern HelHandle posixMmap(int fd);
 
-	HelAction actions[4];
-
-	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_req_type(managarm::fs::CntReqType::MMAP);
-
-	if(!globalQueue.valid())
-		globalQueue.initialize();
-
-	frigg::String<MemoryAllocator> ser(getAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionPullDescriptor;
-	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(lane, actions, 4, globalQueue->getHandle(), 0, 0));
-
-	auto element = globalQueue->dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto pull_memory = parseHandle(element);
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(pull_memory->error);
-	
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	return pull_memory->handle;
-}
-
-void posixClose(int fd) {
-	HelAction actions[3];
-
-	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_request_type(managarm::posix::CntReqType::CLOSE);
-	req.set_fd(fd);
-	
-	if(!globalQueue.valid())
-		globalQueue.initialize();
-
-	frigg::String<MemoryAllocator> ser(getAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3, globalQueue->getHandle(), 0, 0));
-
-	auto element = globalQueue->dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+void closeOrDie(int fd) {
+	if(mlibc::sys_close(fd))
+		__ensure(!"sys_close() failed");
 }
 
 // --------------------------------------------------------
@@ -429,13 +100,20 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name, uin
 	frg::string<MemoryAllocator> usr_prefix(getAllocator(), "/usr/lib/");
 
 	// open the object file
-	auto fd = posixOpen(csv(lib_prefix + name));
+	auto tryToOpen = [&] (const char *path) {
+		int fd;
+		if(mlibc::sys_open(path, 0, &fd))
+			return -1;
+		return fd;
+	};
+
+	auto fd = tryToOpen((lib_prefix + name + '\0').data());
 	if(fd == -1)
-		fd = posixOpen(csv(usr_prefix + name));
+		fd = tryToOpen((usr_prefix + name + '\0').data());
 	if(fd == -1)
 		return nullptr; // TODO: Free the SharedObject.
 	_fetchFromFile(object, fd);
-	posixClose(fd);
+	closeOrDie(fd);
 
 	_parseDynamic(object);
 
@@ -453,11 +131,13 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint6
 
 	auto object = frg::construct<SharedObject>(getAllocator(), path.data(), false, rts);
 	
-	auto fd = posixOpen(csv(path));
-	if(fd == -1)
+	frg::string<MemoryAllocator> no_prefix(getAllocator(), path);
+	
+	int fd;
+	if(mlibc::sys_open((no_prefix + '\0').data(), 0, &fd))
 		return nullptr; // TODO: Free the SharedObject.
 	_fetchFromFile(object, fd);
-	posixClose(fd);
+	closeOrDie(fd);
 
 	_parseDynamic(object);
 
@@ -513,7 +193,7 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 
 	// read the elf file header
 	Elf64_Ehdr ehdr;
-	posixRead(fd, &ehdr, sizeof(Elf64_Ehdr));
+	readExactlyOrDie(fd, &ehdr, sizeof(Elf64_Ehdr));
 
 	__ensure(ehdr.e_ident[0] == 0x7F
 			&& ehdr.e_ident[1] == 'E'
@@ -523,8 +203,8 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 
 	// read the elf program headers
 	auto phdr_buffer = (char *)getAllocator().allocate(ehdr.e_phnum * ehdr.e_phentsize);
-	posixSeek(fd, ehdr.e_phoff);
-	posixRead(fd, phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
+	seekOrDie(fd, ehdr.e_phoff);
+	readExactlyOrDie(fd, phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
 
 	// mmap the file so we can map read-only segments instead of copying them
 	HelHandle file_memory = posixMmap(fd);
@@ -572,8 +252,8 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 						&write_ptr));
 
 				memset(write_ptr, 0, map_length);
-				posixSeek(fd, phdr->p_offset);
-				posixRead(fd, (char *)write_ptr + misalign, phdr->p_filesz);
+				seekOrDie(fd, phdr->p_offset);
+				readExactlyOrDie(fd, (char *)write_ptr + misalign, phdr->p_filesz);
 				HEL_CHECK(helUnmapMemory(kHelNullHandle, write_ptr, map_length));
 
 				// map the segment with correct permissions

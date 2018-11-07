@@ -1,8 +1,10 @@
 
+#include <bits/ansi/seek.h>
+#include <bits/posix/off_t.h>
+#include <bits/posix/ssize_t.h>
+
 #ifndef MLIBC_BUILDING_RTDL
 #	include <time.h>
-#	include <bits/posix/ssize_t.h>
-#	include <bits/posix/off_t.h>
 #	include <bits/posix/pid_t.h>
 #	include <bits/posix/socklen_t.h>
 #	include <bits/posix/stat.h>
@@ -23,16 +25,27 @@ int sys_anon_free(void *pointer, size_t size);
 
 #ifndef MLIBC_BUILDING_RTDL
 	__attribute__ ((noreturn)) void sys_exit(int status);
-
 	int sys_clock_get(int clock, time_t *secs, long *nanos);
-	int sys_open(const char *pathname, int flags, int *fd);
+#endif // !defined(MLIBC_BUILDING_RTDL)
+
+int sys_open(const char *pathname, int flags, int *fd);
+
+#ifndef MLIBC_BUILDING_RTDL
 	int sys_open_dir(const char *path, int *handle);
-	int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read);
 	int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read);
+#endif // !defined(MLIBC_BUILDING_RTDL)
+
+int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read);
+
+#ifndef MLIBC_BUILDING_RTDL
 	int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);
-	int sys_seek(int fd, off_t offset, int whence, off_t *new_offset);
+#endif // !defined(MLIBC_BUILDING_RTDL)
+
+int sys_seek(int fd, off_t offset, int whence, off_t *new_offset);
+int sys_close(int fd);
+
+#ifndef MLIBC_BUILDING_RTDL
 	int sys_access(const char *path, int mode);
-	int sys_close(int fd);
 	int sys_dup(int fd, int flags, int *newfd);
 	int sys_dup2(int fd, int flags, int newfd);
 	int sys_isatty(int fd, int *ptr);
@@ -66,7 +79,11 @@ int sys_anon_free(void *pointer, size_t size);
 	int sys_rename(const char *path, const char *new_path);
 	int sys_fcntl(int fd, int request, va_list args);
 	int sys_ttyname(int fd, char *buf, size_t size);
-	int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window);
+#endif // !defined(MLIBC_BUILDING_RTDL)
+
+int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window);
+
+#ifndef MLIBC_BUILDING_RTDL
 	int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window);
 	int sys_vm_unmap(void *pointer, size_t size);
 	int sys_tcgetattr(int fd, struct termios *attr);
@@ -94,7 +111,7 @@ int sys_anon_free(void *pointer, size_t size);
 	int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);
 	int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 			socklen_t *actual_length);
-#endif
+#endif // !defined(MLIBC_BUILDING_RTDL)
 
 } //namespace mlibc
 
