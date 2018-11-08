@@ -1,5 +1,6 @@
 
 #include <bits/ansi/seek.h>
+#include <bits/posix/map_flags.h>
 #include <bits/posix/off_t.h>
 #include <bits/posix/ssize_t.h>
 
@@ -85,7 +86,11 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 
 #ifndef MLIBC_BUILDING_RTDL
 	int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window);
-	int sys_vm_unmap(void *pointer, size_t size);
+#endif // !defined(MLIBC_BUILDING_RTDL)
+
+int sys_vm_unmap(void *pointer, size_t size);
+
+#ifndef MLIBC_BUILDING_RTDL
 	int sys_tcgetattr(int fd, struct termios *attr);
 	int sys_tcsetattr(int, int, const struct termios *attr);
 	int sys_pipe(int *fds);

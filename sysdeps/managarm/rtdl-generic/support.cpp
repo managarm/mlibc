@@ -370,51 +370,75 @@ int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read) {
 	return 0;
 }
 
-} // namespace mlibc
+int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
+	HelHandle handle;
+	if(!(flags & MAP_ANONYMOUS)) {
+		cacheFileTable();
+		auto lane = fileTable[fd];
 
-HelHandle posixMmap(int fd) {
-	cacheFileTable();
-	auto lane = fileTable[fd];
+		HelAction actions[4];
 
-	HelAction actions[4];
+		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
+		req.set_req_type(managarm::fs::CntReqType::MMAP);
 
-	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_req_type(managarm::fs::CntReqType::MMAP);
+		if(!globalQueue.valid())
+			globalQueue.initialize();
 
-	if(!globalQueue.valid())
-		globalQueue.initialize();
+		frigg::String<MemoryAllocator> ser(getAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = kHelItemChain;
+		actions[3].type = kHelActionPullDescriptor;
+		actions[3].flags = 0;
+		HEL_CHECK(helSubmitAsync(lane, actions, 4, globalQueue->getHandle(), 0, 0));
 
-	frigg::String<MemoryAllocator> ser(getAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionPullDescriptor;
-	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(lane, actions, 4, globalQueue->getHandle(), 0, 0));
+		auto element = globalQueue->dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+		auto pull_memory = parseHandle(element);
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+		HEL_CHECK(pull_memory->error);
+		
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		handle = pull_memory->handle;
+	}else{
+		__ensure(fd == -1);
+		__ensure(!offset);
+		if(!size) // helAllocateMemory() does not like zero sizes.
+			return 0;
+		HEL_CHECK(helAllocateMemory(size, 0, &handle));
+	}
 
-	auto element = globalQueue->dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto pull_memory = parseHandle(element);
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(pull_memory->error);
-	
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	return pull_memory->handle;
+	__ensure(size);
+
+	uint32_t hel_flags = 0;
+	if(prot & PROT_READ)
+		hel_flags |= kHelMapProtRead;
+	if(prot & PROT_WRITE)
+		hel_flags |= kHelMapProtWrite;
+	if(prot & PROT_EXEC)
+		hel_flags |= kHelMapProtExecute;
+
+	void *map_pointer;
+	HEL_CHECK(helMapMemory(handle, kHelNullHandle,
+			hint, offset, size,
+			hel_flags | kHelMapCopyOnWriteAtFork,
+			&map_pointer));
+	HEL_CHECK(helCloseDescriptor(handle));
+	*window = map_pointer;
+	return 0;
 }
-
-namespace mlibc {
 
 int sys_close(int fd) {
 	HelAction actions[3];

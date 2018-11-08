@@ -45,8 +45,6 @@ void readExactlyOrDie(int fd, void *data, size_t length) {
 	__ensure(offset == length);
 }
 
-extern HelHandle posixMmap(int fd);
-
 void closeOrDie(int fd) {
 	if(mlibc::sys_close(fd))
 		__ensure(!"sys_close() failed");
@@ -206,68 +204,49 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	seekOrDie(fd, ehdr.e_phoff);
 	readExactlyOrDie(fd, phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
 
-	// mmap the file so we can map read-only segments instead of copying them
-	HelHandle file_memory = posixMmap(fd);
-
 	constexpr size_t kPageSize = 0x1000;
+	__ensure(!(object->baseAddress & (kPageSize - 1)));
 	
 	for(int i = 0; i < ehdr.e_phnum; i++) {
 		auto phdr = (Elf64_Phdr *)(phdr_buffer + i * ehdr.e_phentsize);
 		
 		if(phdr->p_type == PT_LOAD) {
+			size_t misalign = phdr->p_vaddr & (kPageSize - 1);
 			__ensure(phdr->p_memsz > 0);
-			
-			__ensure(object->baseAddress % kPageSize == 0);
-			size_t misalign = phdr->p_vaddr % kPageSize;
+			__ensure(phdr->p_memsz >= phdr->p_filesz);
 
-			uintptr_t map_address = object->baseAddress + phdr->p_vaddr - misalign;
-			size_t map_length = phdr->p_memsz + misalign;
-			if((map_length % kPageSize) != 0)
-				map_length += kPageSize - (map_length % kPageSize);
-			
-			if(!(phdr->p_flags & PF_W)) {
-				__ensure((phdr->p_offset % kPageSize) == 0);
+			// If the following condition is violated, we cannot use mmap() the segment;
+			// however, GCC only generates ELF files that satisfy this.
+			__ensure(misalign == (phdr->p_offset & (kPageSize - 1)));
 
-				// map the segment with correct permissions
-				if((phdr->p_flags & (PF_R | PF_W | PF_X)) == (PF_R | PF_X)) {
-					HEL_CHECK(helLoadahead(file_memory, phdr->p_offset, map_length));
+			auto map_address = object->baseAddress + phdr->p_vaddr - misalign;
+			auto backed_map_size = (phdr->p_filesz + misalign + kPageSize - 1) & ~(kPageSize - 1);
+			auto total_map_size = (phdr->p_memsz + misalign + kPageSize - 1) & ~(kPageSize - 1);
 
-					void *map_pointer;
-					HEL_CHECK(helMapMemory(file_memory, kHelNullHandle,
-							(void *)map_address, phdr->p_offset, map_length,
-							kHelMapProtRead | kHelMapProtExecute | kHelMapShareAtFork,
-							&map_pointer));
-				}else{
-					mlibc::panicLogger() << "Illegal combination of segment permissions"
-							<< frg::endlog;
-				}
-			}else{
-				// setup the segment with write permission and copy data
-				HelHandle memory;
-				HEL_CHECK(helAllocateMemory(map_length, 0, &memory));
+			int prot = 0;
+			if(phdr->p_flags & PF_R)
+				prot |= PROT_READ;
+			if(phdr->p_flags & PF_W)
+				prot |= PROT_WRITE;
+			if(phdr->p_flags & PF_X)
+				prot |= PROT_EXEC;
 
-				void *write_ptr;
-				HEL_CHECK(helMapMemory(memory, kHelNullHandle, nullptr,
-						0, map_length, kHelMapProtRead | kHelMapProtWrite | kHelMapDropAtFork,
-						&write_ptr));
+			// TODO: Map with (prot | PROT_WRITE) here,
+			// then mprotect() to remove PROT_WRITE if that is necessary.
+			void *map_pointer;
+			if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
+					backed_map_size, prot,
+					MAP_PRIVATE | MAP_FIXED, fd, phdr->p_offset - misalign, &map_pointer))
+				__ensure(!"sys_vm_map failed");
+			if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address + backed_map_size),
+					total_map_size - backed_map_size, prot,
+					MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
+				__ensure(!"sys_vm_map failed");
 
-				memset(write_ptr, 0, map_length);
-				seekOrDie(fd, phdr->p_offset);
-				readExactlyOrDie(fd, (char *)write_ptr + misalign, phdr->p_filesz);
-				HEL_CHECK(helUnmapMemory(kHelNullHandle, write_ptr, map_length));
-
-				// map the segment with correct permissions
-				if((phdr->p_flags & (PF_R | PF_W | PF_X)) == (PF_R | PF_W)) {
-					void *map_pointer;
-					HEL_CHECK(helMapMemory(memory, kHelNullHandle, (void *)map_address,
-							0, map_length, kHelMapProtRead | kHelMapProtWrite
-								| kHelMapCopyOnWriteAtFork,
-							&map_pointer));
-				}else{
-					mlibc::panicLogger() << "Illegal combination of segment permissions"
-							<< frg::endlog;
-				}
-			}
+			// Clear the trailing area at the end of the backed mapping.
+			// We do not clear the leading area; programs are not supposed to access it.
+			memset(reinterpret_cast<void *>(map_address + misalign + phdr->p_filesz),
+					0, phdr->p_memsz - phdr->p_filesz);
 		}else if(phdr->p_type == PT_TLS) {
 			object->tlsSegmentSize = phdr->p_memsz;
 			object->tlsAlignment = phdr->p_align;
@@ -285,8 +264,6 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 			__ensure(!"Unexpected PHDR");
 		}
 	}
-
-	HEL_CHECK(helCloseDescriptor(file_memory));
 }
 
 // --------------------------------------------------------
