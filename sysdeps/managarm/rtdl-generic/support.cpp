@@ -238,6 +238,10 @@ HelHandleResult *parseHandle(void *&element) {
 
 namespace mlibc {
 
+int sys_tcb_set(void *pointer) {
+	HEL_CHECK(helWriteFsBase(pointer));
+}
+
 int sys_open(const char *path, int flags, int *fd) {
 	HelAction actions[3];
 

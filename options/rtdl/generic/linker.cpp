@@ -8,9 +8,6 @@
 #include <mlibc/sysdeps.hpp>
 #include "linker.hpp"
 
-#include <hel.h>
-#include <hel-syscalls.h>
-
 uintptr_t libraryBase = 0x41000000;
 
 bool verbose = false;
@@ -505,7 +502,8 @@ void allocateTcb() {
 
 	auto tcb_ptr = (Tcb *)(fs_buffer + runtimeTlsMap->initialLimit);
 	tcb_ptr->selfPointer = tcb_ptr;
-	HEL_CHECK(helWriteFsBase(tcb_ptr));
+	if(mlibc::sys_tcb_set(tcb_ptr))
+		__ensure(!"sys_tcb_set() failed");
 }
 
 // --------------------------------------------------------
