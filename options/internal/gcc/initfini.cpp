@@ -3,10 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <hel.h>
-#include <hel-syscalls.h>
-
-#include <mlibc/debug.hpp>
+#include <mlibc/sysdeps.hpp>
 
 typedef void (*InitPtr)();
 
@@ -20,6 +17,6 @@ extern "C" [[ gnu::visibility("hidden") ]] void __mlibc_do_ctors() {
 }
 
 extern "C" [[ gnu::visibility("hidden") ]] void __mlibc_do_dtors() {
-	helLog("mlibc: fini\n", 12);
+	mlibc::sys_libc_log("__mlibc_do_dtors() called");
 }
 

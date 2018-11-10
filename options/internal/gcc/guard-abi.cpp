@@ -3,10 +3,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <hel.h>
-#include <hel-syscalls.h>
-
 #include <mlibc/debug.hpp>
+#include <mlibc/sysdeps.hpp>
 
 namespace {
 
@@ -22,7 +20,7 @@ struct Guard {
 				__ATOMIC_ACQUIRE, __ATOMIC_RELAXED))
 			return;
 
-		helLog("__cxa_guard_acquire contention\n", 31);
+		mlibc::sys_libc_log("__cxa_guard_acquire contention");
 		__builtin_trap();
 	}
 
