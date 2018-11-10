@@ -4,14 +4,12 @@
 #include <string.h>
 #include <pthread.h>
 
-#include <hel.h>
-#include <hel-syscalls.h>
-
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>
 #include <frg/hash_map.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/sysdeps.hpp>
 
 static bool enableTrace = false;
 
@@ -229,12 +227,14 @@ int pthread_once(pthread_once_t *once, void (*function) (void)) {
 
 			// unlock the mutex.
 			__atomic_exchange_n(&once->__mlibc_done, onceComplete, __ATOMIC_RELEASE);
-			HEL_CHECK(helFutexWake((int *)&once->__mlibc_done));
+			if(mlibc::sys_futex_wake((int *)&once->__mlibc_done))
+				__ensure(!"sys_futex_wake() failed");
 			return 0;
 		}else{
 			// a different thread is currently running the initializer.
 			__ensure(expected == onceLocked);
-			HEL_CHECK(helFutexWait((int *)&once->__mlibc_done, onceLocked));
+			if(mlibc::sys_futex_wait((int *)&once->__mlibc_done, onceLocked))
+				__ensure(!"sys_futex_wait() failed");
 			expected =  __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
 		}
 	}
@@ -327,7 +327,8 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 
 			// wait on the futex if the waiters flag is set.
 			if(expected & waiters) {
-				HEL_CHECK(helFutexWait((int *)&mutex->__mlibc_state, expected));
+				if(mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected))
+					__ensure(!"sys_futex_wait() failed");
 				
 				// opportunistically try to take the lock after we wake up.
 				expected = 0;
@@ -362,7 +363,8 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
 
 	// wake the futex if there were waiters.
 	if(state & waiters)
-		HEL_CHECK(helFutexWake((int *)&mutex->__mlibc_state));
+		if(mlibc::sys_futex_wake((int *)&mutex->__mlibc_state))
+			__ensure(!"sys_futex_wake() failed");
 	return 0;
 }
 
@@ -415,7 +417,8 @@ int pthread_cond_wait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restri
 	// TODO: do proper error handling here.
 	if(pthread_mutex_unlock(mutex))
 		__ensure(!"Failed to unlock the mutex");
-	HEL_CHECK(helFutexWait(&cond->__mlibc_seq, seq));
+	if(mlibc::sys_futex_wait(&cond->__mlibc_seq, seq))
+		__ensure(!"sys_futex_wait() failed");
 	return 0;*/
 }
 int pthread_cond_timedwait(pthread_cond_t *__restrict, pthread_mutex_t *__restrict,
@@ -434,7 +437,8 @@ int pthread_cond_broadcast(pthread_cond_t *cond) {
 	SCOPE_TRACE();
 
 	__atomic_fetch_add(&cond->__mlibc_seq, 1, __ATOMIC_RELAXED);
-	HEL_CHECK(helFutexWake((int *)&cond->__mlibc_seq));
+	if(mlibc::sys_futex_wake((int *)&cond->__mlibc_seq))
+		__ensure(!"sys_futex_wake() failed");
 	return 0;
 }
 

@@ -27,6 +27,18 @@
 
 namespace mlibc {
 
+int sys_futex_wait(int *pointer, int expected) {
+	if(helFutexWait(pointer, expected))
+		return -1;
+	return 0;
+}
+
+int sys_futex_wake(int *pointer) {
+	if(helFutexWake(pointer))
+		return -1;
+	return 0;
+}
+
 int sys_waitpid(pid_t pid, int *status, int flags) {
 	HelAction actions[3];
 	globalQueue.trim();
