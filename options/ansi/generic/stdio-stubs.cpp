@@ -7,7 +7,6 @@
 
 #include <bits/ensure.h>
 
-#include <frigg/printf.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
