@@ -18,38 +18,6 @@
 VirtualAlloc virtualAlloc;
 frigg::LazyInitializer<Allocator> allocator;
 
-void *memcpy(void *dest, const void *src, size_t n) {
-	for(size_t i = 0; i < n; i++)
-		((char *)dest)[i] = ((const char *)src)[i];
-	return dest;
-}
-
-void *memset(void *dest, int byte, size_t count) {
-	for(size_t i = 0; i < count; i++)
-		((char *)dest)[i] = (char)byte;
-	return dest;
-}
-
-size_t strlen(const char *str) {
-	size_t length = 0;
-	while(*str++ != 0)
-		length++;
-	return length;
-}
-
-extern "C" void frg_panic(const char *mstr) {
-	int mlen = 0;
-	while(mstr[mlen])
-		mlen++;
-	helLog(mstr, mlen);
-
-	const char *str = "Panic in mlibc";
-	int len = 0;
-	while(str[len])
-		len++;
-	helPanic(str, len);
-}
-
 // The frigg protobuf implementation uses assert(), so we need this function.
 extern "C" void __assert_fail(const char *assertion,
 		const char *file, unsigned int line, const char *function) {

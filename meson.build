@@ -14,6 +14,9 @@ internal_incl = include_directories('options/internal/include')
 internal_sources = [
 	'options/internal/generic/allocator.cpp',
 	'options/internal/generic/debug.cpp',
+	'options/internal/generic/ensure.cpp',
+	'options/internal/generic/essential.cpp',
+	'options/internal/generic/frigg.cpp',
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc/initfini.cpp',
 	'options/internal/gcc-extra/mlibc_crtbegin.S',
@@ -25,6 +28,9 @@ rtdl_sources += [
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/generic/allocator.cpp',
 	'options/internal/generic/debug.cpp',
+	'options/internal/generic/ensure.cpp',
+	'options/internal/generic/essential.cpp',
+	'options/internal/generic/frigg.cpp',
 	'options/rtdl/generic/main.cpp',
 	'options/rtdl/generic/linker.cpp',
 	'options/rtdl/x86_64/runtime.S'
@@ -45,12 +51,7 @@ add_project_arguments('-std=c++17', language: 'cpp')
 add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
-ldso_lib = shared_library('ld',
-		[
-			rtdl_sources,
-			fs_pb,
-			posix_pb,
-		],
+ldso_lib = shared_library('ld', rtdl_sources,
 		name_prefix: '',
 		cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
 		include_directories: [

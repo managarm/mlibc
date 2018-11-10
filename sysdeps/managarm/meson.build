@@ -20,6 +20,10 @@ rtdl_sources += files(
 	'generic/memory.cpp',
 	'rtdl-generic/support.cpp',
 )
+rtdl_sources += [
+	fs_pb,
+	posix_pb,
+]
 
 libc_include_dirs += include_directories('include',
 	'../../../ports/libdrm/include')

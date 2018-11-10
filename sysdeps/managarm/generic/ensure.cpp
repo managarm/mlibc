@@ -4,7 +4,6 @@
 #include <assert.h>
 
 #include <bits/ensure.h>
-
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
@@ -12,13 +11,6 @@
 #include <hel-syscalls.h>
 
 void __frigg_assert_fail(const char *assertion, const char *file, unsigned int line,
-		const char *function) {
-	mlibc::panicLogger() << "In function " << function
-			<< ", file " << file << ":" << line << "\n"
-			<< "__ensure(" << assertion << ") failed" << frg::endlog;
-}
-
-void __ensure_fail(const char *assertion, const char *file, unsigned int line,
 		const char *function) {
 	mlibc::panicLogger() << "In function " << function
 			<< ", file " << file << ":" << line << "\n"

@@ -30,16 +30,3 @@ void friggPanic() {
 	helPanic(str, len);
 }
 
-extern "C" void frg_panic(const char *mstr) {
-	int mlen = 0;
-	while(mstr[mlen])
-		mlen++;
-	helLog(mstr, mlen);
-
-	const char *str = "Panic in mlibc";
-	int len = 0;
-	while(str[len])
-		len++;
-	helPanic(str, len);
-}
-
