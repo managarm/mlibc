@@ -1,7 +1,11 @@
 
+rtdl_include_dirs += include_directories('include')
 
-linux_incl = include_directories('include')
-linux_sources = files(
+libc_include_dirs += include_directories('include')
+if disable_posix_option
+	subdir_done()
+endif
+libc_sources += files(
 	'generic/getopt-stubs.cpp',
 	'generic/mntent-stubs.cpp',
 	'generic/poll-stubs.cpp',

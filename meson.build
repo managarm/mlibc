@@ -8,6 +8,9 @@ libc_include_dirs = [ ]
 rtdl_sources = [ ]
 libc_sources = [ ]
 
+disable_posix_option = false
+disable_linux_option = false
+
 subdir('sysdeps/managarm')
 
 internal_incl = include_directories('options/internal/include')
@@ -58,8 +61,6 @@ ldso_lib = shared_library('ld', rtdl_sources,
 			rtdl_include_dirs,
 			internal_incl,
 			ansi_incl,
-			posix_incl,
-			linux_incl,
 			include_directories(gccdir + '/include'),
 		],
 		dependencies: [cxxshim_dep, frigg_dep],
@@ -70,18 +71,14 @@ shared_library('c',
 			libc_sources,
 			internal_sources,
 			ansi_sources,
-			posix_sources,
 			lsb_sources,
-			linux_sources,
 		],
 		cpp_args: ['-DFRIGG_HAVE_LIBC'],
 		include_directories: [
 			libc_include_dirs,
 			internal_incl,
 			ansi_incl,
-			posix_incl,
 			lsb_incl,
-			linux_incl,
 			include_directories(gccdir + '/include'),
 		],
 		dependencies: [cxxshim_dep, frigg_dep],

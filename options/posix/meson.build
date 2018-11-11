@@ -1,6 +1,11 @@
 
-posix_incl = include_directories('include')
-posix_sources = files(
+rtdl_include_dirs += include_directories('include')
+
+libc_include_dirs += include_directories('include')
+if disable_posix_option
+	subdir_done()
+endif
+libc_sources += files(
 	'generic/arpa-inet-stubs.cpp',
 	'generic/dirent-stubs.cpp',
 	'generic/dlfcn-stubs.cpp',
