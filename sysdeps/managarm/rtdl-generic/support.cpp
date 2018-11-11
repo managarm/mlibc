@@ -5,8 +5,6 @@
 
 #include <frg/manual_box.hpp>
 #include <frg/string.hpp>
-#include <frigg/glue-hel.hpp>
-#include <frigg/support.hpp>
 #include <hel.h>
 #include <hel-syscalls.h>
 
@@ -15,29 +13,10 @@
 #include <posix.frigg_pb.hpp>
 #include <fs.frigg_pb.hpp>
 
-VirtualAlloc virtualAlloc;
-frigg::LazyInitializer<Allocator> allocator;
-
 // The frigg protobuf implementation uses assert(), so we need this function.
 extern "C" void __assert_fail(const char *assertion,
 		const char *file, unsigned int line, const char *function) {
 	frg_panic(assertion);
-}
-
-uintptr_t VirtualAlloc::map(size_t length) {
-	assert((length % 0x1000) == 0);
-
-	HelHandle memory;
-	void *actual_ptr;
-	HEL_CHECK(helAllocateMemory(length, 0, &memory));
-	HEL_CHECK(helMapMemory(memory, kHelNullHandle, nullptr, 0, length,
-			kHelMapProtRead | kHelMapProtWrite | kHelMapCopyOnWriteAtFork, &actual_ptr));
-	HEL_CHECK(helCloseDescriptor(memory));
-	return (uintptr_t)actual_ptr;
-}
-
-void VirtualAlloc::unmap(uintptr_t address, size_t length) {
-	HEL_CHECK(helUnmapMemory(kHelNullHandle, (void *)address, length));
 }
 
 // --------------------------------------------------------
