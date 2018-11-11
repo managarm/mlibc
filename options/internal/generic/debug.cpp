@@ -13,6 +13,7 @@ void InfoSink::operator() (const char *message) {
 }
 
 void PanicSink::operator() (const char *message) {
+//	sys_libc_log("mlibc: Write to PanicSink");
 	sys_libc_log(message);
 	sys_libc_panic();
 }
