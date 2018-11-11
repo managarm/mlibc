@@ -1,4 +1,6 @@
 
+#include <stddef.h>
+
 #include <bits/ansi/seek.h>
 #include <bits/posix/map_flags.h>
 #include <bits/posix/off_t.h>
