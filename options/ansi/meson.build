@@ -5,6 +5,7 @@ if get_option('ansi_option').enabled()
 		'generic/stdlib-stubs.cpp',
 		'generic/assert-stubs.cpp',
 		'generic/ctype-stubs.cpp',
+		'generic/environment.cpp',
 		'generic/errno-stubs.cpp',
 		'generic/fenv-stubs.cpp',
 		'generic/file-io.cpp',

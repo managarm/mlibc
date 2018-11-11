@@ -4,7 +4,6 @@ posix_sources = files(
 	'generic/arpa-inet-stubs.cpp',
 	'generic/dirent-stubs.cpp',
 	'generic/dlfcn-stubs.cpp',
-	'generic/environment.cpp',
 	'generic/fcntl-stubs.cpp',
 	'generic/ftw-stubs.cpp',
 	'generic/glob-stubs.cpp',
