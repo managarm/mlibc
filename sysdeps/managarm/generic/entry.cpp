@@ -5,6 +5,7 @@
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
 
 #include <frigg/vector.hpp>
