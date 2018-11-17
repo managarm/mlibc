@@ -11,7 +11,14 @@ libc_sources = [ ]
 disable_posix_option = false
 disable_linux_option = false
 
-subdir('sysdeps/managarm')
+# Process sysdeps first, as sysdeps might want to disable unsupported options.
+if host_machine.system() == 'managarm'
+	subdir('sysdeps/managarm')
+elif host_machine.system() == 'qword'
+	subdir('sysdeps/qword')
+else
+	error('No sysdeps defined for OS: ' + host_machine.system())
+endif
 
 internal_incl = include_directories('options/internal/include')
 internal_sources = [
