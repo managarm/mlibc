@@ -5,6 +5,7 @@
 
 #include <abi-bits/auxv.h>
 #include <mlibc/debug.hpp>
+#include <mlibc/sysdeps.hpp>
 #include "linker.hpp"
 
 #define HIDDEN  __attribute__ ((visibility ("hidden")))
@@ -87,9 +88,8 @@ extern "C" [[ gnu::visibility("default") ]] void __rtdl_setupTcb() {
 
 extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	if(logEntryExit)
-		mlibc::infoLogger() << "Entering ld-init" << frg::endlog;
+		mlibc::infoLogger() << "Entering ld.so" << frg::endlog;
 	entryStack = entry_stack;
-//	allocator.initialize(virtualAlloc);
 	runtimeTlsMap.initialize();
 	
 	auto ldso_base = reinterpret_cast<uintptr_t>(_DYNAMIC)
@@ -124,10 +124,10 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	__ensure(strtab_offset);
 	__ensure(soname_str);
 	
-	void *phdr_pointer;
-	size_t phdr_entry_size;
-	size_t phdr_count;
-	void *entry_pointer;
+	void *phdr_pointer = 0;
+	size_t phdr_entry_size = 0;
+	size_t phdr_count = 0;
+	void *entry_pointer = 0;
 
 	// Find the auxiliary vector by skipping args and environment.
 	auto aux = entryStack;
@@ -182,7 +182,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	linker.initObjects();
 
 	if(logEntryExit)
-		mlibc::infoLogger() << "Leaving ld-init" << frg::endlog;
+		mlibc::infoLogger() << "Leaving ld.so" << frg::endlog;
 	return executable->entry;
 }
 
