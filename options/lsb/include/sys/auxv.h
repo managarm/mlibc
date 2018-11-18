@@ -1,19 +1,8 @@
-
 #ifndef _SYS_AUXV_H
 #define _SYS_AUXV_H
 
 #define AT_NULL 0
-#define AT_PHDR 3
-#define AT_PHENT 4
-#define AT_PHNUM 5
-#define AT_ENTRY 9
-
-// managarm specific auxvector entries.
-
-#define AT_XPIPE 0x1000
-#define AT_OPENFILES 0x1001
-#define AT_FS_SERVER 0x1102
-#define AT_MBUS_SERVER 0x1103
+#include <abi-bits/auxv.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,4 +20,3 @@ unsigned long getauxval(unsigned long type);
 #endif
 
 #endif
-

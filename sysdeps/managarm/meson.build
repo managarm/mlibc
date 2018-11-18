@@ -14,6 +14,7 @@ posix_pb = proto_gen.process('../../subprojects/managarm/bragi/proto/posix.proto
 managarm_incl = include_directories('../../subprojects/managarm/frigg/include',
 		'../../subprojects/managarm/hel/include')
 
+rtdl_include_dirs += include_directories('include')
 rtdl_include_dirs += managarm_incl
 rtdl_sources += files(
 	'generic/ensure.cpp',

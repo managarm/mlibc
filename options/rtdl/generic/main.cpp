@@ -2,6 +2,8 @@
 #include <elf.h>
 
 #include <frg/manual_box.hpp>
+
+#include <abi-bits/auxv.h>
 #include <mlibc/debug.hpp>
 #include "linker.hpp"
 
@@ -122,22 +124,6 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	__ensure(strtab_offset);
 	__ensure(soname_str);
 	
-	// Parse the auxiliary vector.
-	enum {
-		// this value is not part of the ABI
-		AT_ILLEGAL = -1,
-
-		AT_NULL = 0,
-		AT_PHDR = 3,
-		AT_PHENT = 4,
-		AT_PHNUM = 5,
-		AT_ENTRY = 9,
-		
-		AT_XPIPE = 0x1000,
-		AT_OPENFILES = 0x1001,
-		AT_MBUS_SERVER = 0x1103
-	};
-
 	void *phdr_pointer;
 	size_t phdr_entry_size;
 	size_t phdr_count;
@@ -155,7 +141,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// Parse the actual vector.
 	while(true) {
 		auto value = aux + 1;
-		if(*aux == AT_NULL)
+		if(!(*aux))
 			break;
 		
 		switch(*aux) {
