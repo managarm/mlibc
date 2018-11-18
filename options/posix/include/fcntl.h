@@ -2,11 +2,11 @@
 #ifndef _FCNTL_H
 #define _FCNTL_H
 
+#include <abi-bits/abi.h>
 #include <bits/posix/mode_t.h>
 #include <bits/posix/off_t.h>
 #include <bits/posix/pid_t.h>
 #include <bits/ansi/seek.h>
-#include <bits/abi.h>
 
 #ifdef __cplusplus
 extern "C" {

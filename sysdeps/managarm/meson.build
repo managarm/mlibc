@@ -47,3 +47,8 @@ libc_sources += [
 	posix_pb,
 ]
 
+install_headers(
+	'include/abi-bits/abi.h',
+	subdir: 'bits'
+)
+

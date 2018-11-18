@@ -11,3 +11,8 @@ libc_sources += files(
 	'generic/file.cpp'
 )
 
+install_headers(
+	'include/abi-bits/abi.h',
+	subdir: 'bits'
+)
+

@@ -10,7 +10,7 @@
 
 #include <mlibc/debug.hpp>
 
-#include <bits/abi.h>
+#include <abi-bits/abi.h>
 #include <frg/allocation.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/sysdeps.hpp>
