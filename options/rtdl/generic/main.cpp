@@ -144,19 +144,12 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		if(!(*aux))
 			break;
 		
+		// TODO: Whitelist auxiliary vector entries here?
 		switch(*aux) {
 			case AT_PHDR: phdr_pointer = reinterpret_cast<void *>(*value); break;
 			case AT_PHENT: phdr_entry_size = *value; break;
 			case AT_PHNUM: phdr_count = *value; break;
 			case AT_ENTRY: entry_pointer = reinterpret_cast<void *>(*value); break;
-			case AT_XPIPE:
-			case AT_OPENFILES:
-			case AT_MBUS_SERVER:
-				// ignore these auxiliary vector entries.
-				break;
-		default:
-			mlibc::panicLogger() << "rtdl: Unexpected auxiliary item type "
-					<< *aux << frg::endlog;
 		}
 
 		aux += 2;
