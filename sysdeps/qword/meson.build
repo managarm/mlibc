@@ -15,7 +15,7 @@ libc_sources += files(
 install_headers(
 	'include/abi-bits/abi.h',
 	'include/abi-bits/auxv.h',
-	subdir: 'bits'
+	subdir: 'abi-bits'
 )
 
 custom_target('crt0',
