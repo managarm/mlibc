@@ -44,3 +44,92 @@ libc_sources += files(
 	'musl-generic/fnmatch.cpp',
 )
 
+install_headers(
+	'include/byteswap.h',
+	'include/dirent.h',
+	'include/dlfcn.h',
+	'include/endian.h',
+	'include/fcntl.h',
+	'include/fnmatch.h',
+	'include/ftw.h',
+	'include/glob.h',
+	'include/grp.h',
+	'include/langinfo.h',
+	'include/libgen.h',
+	'include/netdb.h',
+	'include/pthread.h',
+	'include/pwd.h',
+	'include/sched.h',
+	'include/spawn.h',
+	'include/strings.h',
+	'include/syslog.h',
+	'include/termios.h',
+	'include/unistd.h',
+	'include/utime.h',
+)
+install_headers(
+	'include/arpa/inet.h',
+	subdir: 'arpa'
+)
+install_headers(
+	'include/net/if.h',
+	subdir: 'net'
+)
+install_headers(
+	'include/netinet/in.h',
+	'include/netinet/ip.h',
+	subdir: 'netinet'
+)
+install_headers(
+	'include/sys/file.h',
+	'include/sys/mman.h',
+	'include/sys/param.h',
+	'include/sys/resource.h',
+	'include/sys/select.h',
+	'include/sys/socket.h',
+	'include/sys/statfs.h',
+	'include/sys/stat.h',
+	'include/sys/statvfs.h',
+	'include/sys/time.h',
+	'include/sys/types.h',
+	'include/sys/uio.h',
+	'include/sys/un.h',
+	'include/sys/utsname.h',
+	'include/sys/vfs.h',
+	'include/sys/wait.h',
+	subdir: 'sys'
+)
+install_headers(
+	'include/bits/posix/blkcnt_t.h',
+	'include/bits/posix/blksize_t.h',
+	'include/bits/posix/dev_t.h',
+	'include/bits/posix/fsblkcnt_t.h',
+	'include/bits/posix/fsfilcnt_t.h',
+	'include/bits/posix/gid_t.h',
+	'include/bits/posix/id_t.h',
+	'include/bits/posix/in_addr_t.h',
+	'include/bits/posix/ino_t.h',
+	'include/bits/posix/in_port_t.h',
+	'include/bits/posix/iovec.h',
+	'include/bits/posix/locale_t.h',
+	'include/bits/posix/map_flags.h',
+	'include/bits/posix/mode_t.h',
+	'include/bits/posix/nlink_t.h',
+	'include/bits/posix/nl_item.h',
+	'include/bits/posix/off_t.h',
+	'include/bits/posix/pid_t.h',
+	'include/bits/posix/posix_errno.h',
+	'include/bits/posix/posix_signal.h',
+	'include/bits/posix/posix_stdio.h',
+	'include/bits/posix/posix_stdlib.h',
+	'include/bits/posix/posix_string.h',
+	'include/bits/posix/sa_family_t.h',
+	'include/bits/posix/siginfo_t.h',
+	'include/bits/posix/socklen_t.h',
+	'include/bits/posix/ssize_t.h',
+	'include/bits/posix/stat.h',
+	'include/bits/posix/suseconds_t.h',
+	'include/bits/posix/timeval.h',
+	'include/bits/posix/uid_t.h',
+	subdir: 'bits/posix'
+)

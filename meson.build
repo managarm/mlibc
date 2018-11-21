@@ -33,6 +33,19 @@ internal_sources = [
 	'options/internal/gcc-extra/mlibc_crtend.S',
 	'options/internal/x86_64/setjmp.S',
 ]
+install_headers(
+	'options/internal/include/stdint.h'
+)
+install_headers(
+	'options/internal/include/bits/wchar_t.h',
+	'options/internal/include/bits/feature.h',
+	'options/internal/include/bits/size_t.h',
+	'options/internal/include/bits/types.h',
+	'options/internal/include/bits/ensure.h',
+	'options/internal/include/bits/machine.h',
+	'options/internal/include/bits/null.h',
+	subdir: 'bits'
+)
 
 rtdl_sources += [
 	'options/internal/gcc/guard-abi.cpp',
