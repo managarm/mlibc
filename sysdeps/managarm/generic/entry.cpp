@@ -80,7 +80,7 @@ LibraryGuard::LibraryGuard() {
 	}
 }
 
-// The environmet was build by the LibraryGuard.
+// The environment was build by the LibraryGuard.
 extern char **environ;
 
 extern "C" void __mlibc_entry(int (*main_function)(int argc, char *argv[], char *env[])) {

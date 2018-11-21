@@ -9,6 +9,7 @@ rtdl_sources += files(
 
 libc_include_dirs += include_directories('include')
 libc_sources += files(
+	'generic/entry.cpp',
 	'generic/file.cpp'
 )
 
