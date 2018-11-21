@@ -105,3 +105,9 @@ shared_library('c',
 		link_with: [ldso_lib],
 		install: true)
 
+shared_library('dl', 'libdl/src/dummy.cpp', install: true)
+shared_library('m', 'libm/src/dummy.cpp', install: true)
+shared_library('pthread', 'libpthread/src/dummy.cpp', install: true)
+shared_library('rt', 'librt/src/dummy.cpp', install: true)
+shared_library('util', 'libutil/src/dummy.cpp', install: true)
+
