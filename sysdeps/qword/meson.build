@@ -1,5 +1,4 @@
 
-disable_posix_option = true
 disable_linux_option = true
 
 rtdl_include_dirs += include_directories('include')

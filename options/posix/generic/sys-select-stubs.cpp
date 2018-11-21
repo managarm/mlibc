@@ -6,6 +6,7 @@
 
 #include <mlibc/debug.hpp>
 #include <bits/ensure.h>
+#include <bits/feature.h>
 
 void FD_CLR(int fd, fd_set *set) {
 	__ensure(fd < FD_SETSIZE);
@@ -23,6 +24,9 @@ void FD_ZERO(fd_set *set) {
 	memset(set->__mlibc_elems, 0, sizeof(fd_set));
 }
 
+// select() is currently implemented on top of epoll.
+// TODO: Provide a sys_select() function instead.
+#ifdef __managarm__
 int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_set,
 		fd_set *__restrict except_set, struct timeval *__restrict timeout) {
 	// TODO: Do not keep errors from epoll (?).
@@ -97,4 +101,5 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 
 	return m;
 }
+#endif
 
