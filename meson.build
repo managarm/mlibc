@@ -3,6 +3,8 @@ project('mlibc', 'c', 'cpp')
 cxxshim_dep = subproject('cxxshim').get_variable('cxxshim_dep')
 frigg_dep = subproject('frigg').get_variable('frigg_dep')
 
+c_compiler = meson.get_compiler('c')
+
 rtdl_include_dirs = [ ]
 libc_include_dirs = [ ]
 rtdl_sources = [ ]
@@ -64,7 +66,6 @@ subdir('options/posix')
 subdir('options/lsb')
 subdir('options/linux')
 
-c_compiler = meson.get_compiler('c')
 gccdir = run_command('/bin/sh', '-c',
 	''.join(c_compiler.cmd_array()) + ' -print-search-dirs | sed -n -e "s/install: \(.*\)/\\1/p"',
 	check: true).stdout().strip()
