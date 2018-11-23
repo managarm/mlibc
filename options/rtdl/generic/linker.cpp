@@ -280,7 +280,10 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 // --------------------------------------------------------
 
 void ObjectRepository::_parseDynamic(SharedObject *object) {
-	__ensure(object->dynamic != nullptr);
+	if(!object->dynamic)
+		mlibc::infoLogger() << "ldso: Object '" << object->name
+				<< "' does not have a dynamic section" << frg::endlog;
+	__ensure(object->dynamic);
 
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
 		Elf64_Dyn *dynamic = &object->dynamic[i];

@@ -12,6 +12,7 @@
 #define EXPORT  __attribute__ ((visibility ("default")))
 
 static constexpr bool logEntryExit = false;
+static constexpr bool logStartup = false;
 
 extern HIDDEN void *_GLOBAL_OFFSET_TABLE_[];
 extern HIDDEN Elf64_Dyn _DYNAMIC[];
@@ -94,6 +95,11 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	
 	auto ldso_base = reinterpret_cast<uintptr_t>(_DYNAMIC)
 			- reinterpret_cast<uintptr_t>(_GLOBAL_OFFSET_TABLE_[0]);
+	if(logStartup) {
+		mlibc::infoLogger() << "ldso: Own base address is: 0x"
+				<< frg::hex_fmt(ldso_base) << frg::endlog;
+		mlibc::infoLogger() << "ldso: Own dynamic section is at: " << _DYNAMIC << frg::endlog;
+	}
 
 	// TODO: Use a fake PLT stub that reports an error message?
 	_GLOBAL_OFFSET_TABLE_[1] = 0;
@@ -154,6 +160,12 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 
 		aux += 2;
 	}
+	__ensure(phdr_pointer);
+	__ensure(entry_pointer);
+
+	if(logStartup)
+		mlibc::infoLogger() << "ldso: Executable PHDRs are at " << phdr_pointer
+				<< frg::endlog;
 
 	// perform the initial dynamic linking
 	initialRepository.initialize();
