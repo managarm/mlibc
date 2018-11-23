@@ -228,22 +228,34 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 			if(phdr->p_flags & PF_X)
 				prot |= PROT_EXEC;
 
-			// TODO: Map with (prot | PROT_WRITE) here,
-			// then mprotect() to remove PROT_WRITE if that is necessary.
-			void *map_pointer;
-			if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
-					backed_map_size, prot,
-					MAP_PRIVATE | MAP_FIXED, fd, phdr->p_offset - misalign, &map_pointer))
-				__ensure(!"sys_vm_map failed");
-			if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address + backed_map_size),
-					total_map_size - backed_map_size, prot,
-					MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
-				__ensure(!"sys_vm_map failed");
+			if(false) {
+				// TODO: Map with (prot | PROT_WRITE) here,
+				// then mprotect() to remove PROT_WRITE if that is necessary.
+				void *map_pointer;
+				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
+						backed_map_size, prot,
+						MAP_PRIVATE | MAP_FIXED, fd, phdr->p_offset - misalign, &map_pointer))
+					__ensure(!"sys_vm_map failed");
+				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address + backed_map_size),
+						total_map_size - backed_map_size, prot,
+						MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
+					__ensure(!"sys_vm_map failed");
 
-			// Clear the trailing area at the end of the backed mapping.
-			// We do not clear the leading area; programs are not supposed to access it.
-			memset(reinterpret_cast<void *>(map_address + misalign + phdr->p_filesz),
-					0, phdr->p_memsz - phdr->p_filesz);
+				// Clear the trailing area at the end of the backed mapping.
+				// We do not clear the leading area; programs are not supposed to access it.
+				memset(reinterpret_cast<void *>(map_address + misalign + phdr->p_filesz),
+						0, phdr->p_memsz - phdr->p_filesz);
+			}else{
+				void *map_pointer;
+				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
+						total_map_size, prot | PROT_WRITE,
+						MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
+					__ensure(!"sys_vm_map failed");
+
+				seekOrDie(fd, phdr->p_offset);
+				readExactlyOrDie(fd, reinterpret_cast<char *>(map_address) + misalign,
+						phdr->p_filesz);
+			}
 		}else if(phdr->p_type == PT_TLS) {
 			object->tlsSegmentSize = phdr->p_memsz;
 			object->tlsAlignment = phdr->p_align;
