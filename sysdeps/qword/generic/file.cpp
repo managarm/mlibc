@@ -18,7 +18,13 @@ void sys_libc_panic() {
 	__builtin_trap();
 }
 
-int sys_tcb_set(void *pointer) STUB_ONLY
+int sys_tcb_set(void *pointer) {
+    int res;
+	asm volatile ("syscall" : "=a"(res)
+			: "a"(7), "D"(pointer)
+			: "rcx", "r11");
+    return res;
+}
 
 int sys_anon_allocate(size_t size, void **pointer) {
 	// The qword kernel wants us to allocate whole pages.
@@ -46,18 +52,93 @@ void sys_exit(int status) {
 int sys_clock_get(int clock, time_t *secs, long *nanos) STUB_ONLY
 #endif
 
-int sys_open(const char *path, int flags, int *fd) STUB_ONLY
-int sys_close(int fd) STUB_ONLY
-int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) STUB_ONLY
+int sys_open(const char *path, int flags, int *fd) {
+    // For now, we ignore the flags.
+    // TODO: Adjust the ABI so that the flags match qword kernel flags.
+    flags = 0;
+
+    int res;
+    asm volatile ("syscall" : "=a"(res)
+            : "a"(1), "D"(path), "S"(0), "d"(flags)
+            : "rcx", "r11");
+    if(res < 0)
+        return -1;
+    *fd = res;
+    return 0;
+}
+
+int sys_close(int fd) {
+    int res;
+    asm volatile ("syscall" : "=a"(res)
+            : "a"(2), "D"(fd)
+            : "rcx", "r11");
+    if(res < 0)
+        return -1;
+    return 0;
+}
+
+int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
+    ssize_t res;
+    asm volatile ("syscall" : "=a"(res)
+            : "a"(3), "D"(fd), "S"(buf), "d"(count)
+            : "rcx", "r11");
+    *bytes_read = res;
+    return 0;
+}
 
 #ifndef MLIBC_BUILDING_RTDL
-int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) STUB_ONLY
+int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
+    ssize_t res;
+    asm volatile ("syscall" : "=a"(res)
+            : "a"(4), "D"(fd), "S"(buf), "d"(count)
+            : "rcx", "r11");
+    *bytes_written = res;
+    return 0;
+}
 #endif
 
-int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) STUB_ONLY
+#define __QWORD_SEEK_SET        0
+#define __QWORD_SEEK_CUR        1
+#define __QWORD_SEEK_END        2
+
+int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
+    off_t res;
+    int qword_type;
+    switch (whence) {
+        case SEEK_SET:
+            qword_type = __QWORD_SEEK_SET;
+            break;
+        case SEEK_CUR:
+            qword_type = __QWORD_SEEK_CUR;
+            break;
+        case SEEK_END:
+            qword_type = __QWORD_SEEK_END;
+            break;
+        default:
+            return -1;
+    }
+    asm volatile ("syscall" : "=a"(res)
+            : "a"(8), "D"(fd), "S"(offset), "d"(qword_type)
+            : "rcx", "r11");
+    if(res < 0)
+        return -1;
+    *new_offset = res;
+    return 0;
+}
 
 int sys_vm_map(void *hint, size_t size, int prot, int flags,
-		int fd, off_t offset, void **window) STUB_ONLY
+		int fd, off_t offset, void **window) {
+    __ensure(flags & MAP_ANONYMOUS);
+    void *res;
+    size_t size_in_pages = (size + 4096 - 1) / 4096;
+    asm volatile ("syscall" : "=a"(res)
+            : "a"(6), "D"(hint), "S"(size_in_pages)
+            : "rcx", "r11");
+    if(!res)
+        return -1;
+    *window = res;
+    return 0;
+}
 
 #ifndef MLIBC_BUILDING_RTDL
 int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) STUB_ONLY
