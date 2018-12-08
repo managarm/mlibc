@@ -10,7 +10,7 @@ install_headers(
 	'include/stdio_ext.h',
 )
 install_headers(
-	'include/stdio_ext.h',
+	'include/sys/ioctl.h',
 	subdir: 'sys'
 )
 
