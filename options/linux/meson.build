@@ -10,7 +10,6 @@ libc_sources += files(
 	'generic/mntent-stubs.cpp',
 	'generic/poll-stubs.cpp',
 	'generic/pty-stubs.cpp',
-	'generic/stdio_ext-stubs.cpp',
 	'generic/sys-epoll.cpp',
 	'generic/sys-inotify-stubs.cpp',
 	'generic/sys-ioctl.cpp',
@@ -31,7 +30,6 @@ install_headers(
 	'include/mntent.h',
 	'include/poll.h',
 	'include/pty.h',
-	'include/stdio_ext.h',
 	'include/utmp.h',
 	'include/values.h',
 )

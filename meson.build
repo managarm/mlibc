@@ -64,6 +64,7 @@ rtdl_sources += [
 subdir('options/ansi')
 subdir('options/posix')
 subdir('options/lsb')
+subdir('options/glibc')
 subdir('options/linux')
 
 gccdir = run_command('/bin/sh', '-c',
