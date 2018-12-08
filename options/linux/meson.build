@@ -12,7 +12,6 @@ libc_sources += files(
 	'generic/pty-stubs.cpp',
 	'generic/sys-epoll.cpp',
 	'generic/sys-inotify-stubs.cpp',
-	'generic/sys-ioctl.cpp',
 	'generic/sys-mount.cpp',
 	'generic/sys-prctl-stubs.cpp',
 	'generic/sys-ptrace-stubs.cpp',
@@ -70,7 +69,6 @@ install_headers(
 install_headers(
 	'include/sys/epoll.h',
 	'include/sys/inotify.h',
-	'include/sys/ioctl.h',
 	'include/sys/mount.h',
 	'include/sys/prctl.h',
 	'include/sys/ptrace.h',

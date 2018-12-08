@@ -97,6 +97,10 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
 }
 #endif
 
+#ifndef MLIBC_BUILDING_RTDL
+int sys_ioctl(int fd, unsigned long request, void *arg) STUB_ONLY
+#endif
+
 #define __QWORD_SEEK_SET        0
 #define __QWORD_SEEK_CUR        1
 #define __QWORD_SEEK_END        2
