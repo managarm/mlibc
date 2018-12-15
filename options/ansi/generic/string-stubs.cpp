@@ -1,6 +1,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <wchar.h>
 
 #include <bits/ensure.h>
 
@@ -180,6 +181,41 @@ char *strchrnul(const char *s, int c) {
 	}
 	return const_cast<char *>(s + i);
 }
+
+double wcstod(const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
+float wcstof(const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
+long double wcstold(const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
+
+long wcstol(const wchar_t *__restrict, wchar_t **__restrict, int) MLIBC_STUB_BODY
+long long wcstoll(const wchar_t *__restrict, wchar_t **__restrict, int) MLIBC_STUB_BODY
+unsigned long wcstoul(const wchar_t *__restrict, wchar_t **__restrict, int) MLIBC_STUB_BODY
+unsigned long long wcstoull(const wchar_t *__restrict, wchar_t **__restrict, int) MLIBC_STUB_BODY
+
+wchar_t *wcscpy(wchar_t *__restrict, const wchar_t *__restrict) MLIBC_STUB_BODY
+wchar_t *wcsncpy(wchar_t *__restrict, const wchar_t *__restrict, size_t) MLIBC_STUB_BODY
+wchar_t *wmemcpy(wchar_t *__restrict, const wchar_t *__restrict, size_t) MLIBC_STUB_BODY
+wchar_t *wmemmove(wchar_t *, const wchar_t *, size_t) MLIBC_STUB_BODY
+
+wchar_t *wcscat(wchar_t *__restrict, const wchar_t *__restrict) MLIBC_STUB_BODY
+wchar_t *wcsncat(wchar_t *__restrict, const wchar_t *__restrict, size_t) MLIBC_STUB_BODY
+
+int wcscmp(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
+int wcscoll(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
+int wcsncmp(const wchar_t *, const wchar_t *, size_t) MLIBC_STUB_BODY
+int wcsxfrm(wchar_t *__restrict, const wchar_t *__restrict, size_t) MLIBC_STUB_BODY
+int wmemcmp(const wchar_t *, const wchar_t *, size_t) MLIBC_STUB_BODY
+
+wchar_t *wcschr(const wchar_t *, wchar_t) MLIBC_STUB_BODY
+size_t wcscspn(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
+wchar_t *wcspbrk(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
+wchar_t *wcsrchr(const wchar_t *, wchar_t) MLIBC_STUB_BODY
+size_t wcsspn(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
+wchar_t *wcsstr(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
+wchar_t *wcstok(wchar_t *__restrict, const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
+wchar_t *wmemchr(const wchar_t *, wchar_t, size_t) MLIBC_STUB_BODY
+
+size_t wcslen(const wchar_t *) MLIBC_STUB_BODY
+wchar_t *wmemset(wchar_t *, wchar_t, size_t) MLIBC_STUB_BODY
 
 char *strerror(int errnum) {
 	const char *string;

@@ -7,6 +7,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <wchar.h>
 
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
@@ -188,6 +189,9 @@ size_t strftime(char *__restrict dest, size_t max_size,
 	*p = '\0';
 	return (p - dest) + 1;
 }
+
+size_t wcsftime(wchar_t *__restrict, size_t, const wchar_t *__restrict,
+		const struct tm *__restrict) MLIBC_STUB_BODY
 
 void tzset(void) {
 	__ensure(!"Not implemented");

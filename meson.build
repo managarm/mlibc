@@ -40,6 +40,7 @@ install_headers(
 )
 install_headers(
 	'options/internal/include/bits/wchar_t.h',
+	'options/internal/include/bits/wint_t.h',
 	'options/internal/include/bits/feature.h',
 	'options/internal/include/bits/size_t.h',
 	'options/internal/include/bits/types.h',

@@ -26,3 +26,6 @@ wint_t towupper(wint_t) {
 	__builtin_unreachable();
 }
 
+wctrans_t wctrans(const char *) MLIBC_STUB_BODY
+wint_t towctrans(wint_t, wctrans_t) MLIBC_STUB_BODY
+

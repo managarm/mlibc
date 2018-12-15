@@ -15,6 +15,8 @@ void __ensure_fail(const char *assertion, const char *file, unsigned int line,
 #define MLIBC_UNIMPLEMENTED() __ensure_fail("Functionality is not implemented", \
 		__FILE__, __LINE__, __func__)
 
+#define MLIBC_STUB_BODY { MLIBC_UNIMPLEMENTED(); __builtin_unreachable(); }
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,5 +1,6 @@
 
 #include <ctype.h>
+#include <wctype.h>
 
 #include <bits/ensure.h>
 
@@ -46,6 +47,20 @@ int isxdigit(int c) {
 	// TODO: this really needs to be redesigned and support other charsets.
 	return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
+
+int iswalnum(wint_t) MLIBC_STUB_BODY
+int iswalpha(wint_t) MLIBC_STUB_BODY
+int iswblank(wint_t) MLIBC_STUB_BODY
+int iswcntrl(wint_t) MLIBC_STUB_BODY
+int iswdigit(wint_t) MLIBC_STUB_BODY
+int iswgraph(wint_t) MLIBC_STUB_BODY
+int iswlower(wint_t) MLIBC_STUB_BODY
+int iswprint(wint_t) MLIBC_STUB_BODY
+int iswpunct(wint_t) MLIBC_STUB_BODY
+int iswspace(wint_t) MLIBC_STUB_BODY
+int iswupper(wint_t) MLIBC_STUB_BODY
+int iswxdigit(wint_t) MLIBC_STUB_BODY
+
 
 int tolower(int c) {
 	// TODO: this really needs to be redesigned and support other charsets.
