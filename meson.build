@@ -62,6 +62,7 @@ rtdl_sources += [
 	'options/rtdl/x86_64/runtime.S'
 ]
 
+subdir('options/elf')
 subdir('options/ansi')
 subdir('options/posix')
 subdir('options/lsb')
