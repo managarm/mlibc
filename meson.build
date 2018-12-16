@@ -10,6 +10,7 @@ libc_include_dirs = [ ]
 rtdl_sources = [ ]
 libc_sources = [ ]
 
+disable_ansi_option = false
 disable_posix_option = false
 disable_linux_option = false
 

@@ -1,5 +1,1 @@
 
-option('ansi_option', type: 'feature', value: 'enabled')
-option('posix_option', type: 'feature', value: 'auto')
-option('linux_option', type: 'feature', value: 'auto')
-
