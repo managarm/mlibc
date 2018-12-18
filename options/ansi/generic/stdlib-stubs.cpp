@@ -9,6 +9,7 @@
 #include <bits/ensure.h>
 
 #include <mlibc/allocator.hpp>
+#include <mlibc/charcode.hpp>
 #include <mlibc/sysdeps.hpp>
 
 
@@ -58,26 +59,26 @@ long double strtold(const char *__restrict string, char **__restrict end) {
 }
 long strtol(const char *__restrict string, char **__restrict end, int base) {
 //	mlibc::infoLogger() << "mlibc: strtol() called on string '" << string << "'" << frg::endlog;
-	
+
 	// skip leading space
 	while(*string) {
 		if(!isspace(*string))
 			break;
 		string++;
 	}
-	
+
 	__ensure(*string != '+');
 	bool negative = false;
 	if(*string == '-') {
 		negative = true;
 		string++;
 	}
-	
+
 	if(base != 10) { // This is an ugly hack!
 		__ensure(!negative);
 		return strtoul(string, end, base);
 	}
-	
+
 	// parse the actual digits
 	long result = 0;
 	while(*string) {
@@ -271,7 +272,7 @@ void qsort(void *base, size_t count, size_t size,
 				char temp = u_bytes[k];
 				u_bytes[k] = v_bytes[k];
 				v_bytes[k] = temp;
-			}		
+			}
 		}
 	}
 }
@@ -304,9 +305,12 @@ lldiv_t lldiv(long long number, long long denom) {
 	__builtin_unreachable();
 }
 
-int mblen(const char *mb_chr, size_t max_size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int mblen(const char *s, size_t n) {
+	size_t res;
+	auto cc = mlibc::current_charcode();
+	if(auto e = cc->validate_length(s, n, &res); e != mlibc::charcode_error::null)
+		return -1;
+	return res;
 }
 int mbtowc(wchar_t *__restrict wc, const char *__restrict mbs, size_t max_size) {
 	__ensure(wc);

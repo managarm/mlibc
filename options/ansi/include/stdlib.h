@@ -98,7 +98,7 @@ lldiv_t lldiv(long long number, long long denom);
 
 // [7.22.7] Multibyte character conversion functions
 
-int mblen(const char *mb_chr, size_t max_size);
+int mblen(const char *, size_t);
 int mbtowc(wchar_t *__restrict wc, const char *__restrict mb_chr, size_t max_size);
 int wctomb(char *mb_chr, wchar_t wc);
 

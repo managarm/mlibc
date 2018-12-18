@@ -26,6 +26,7 @@ endif
 internal_incl = include_directories('options/internal/include')
 internal_sources = [
 	'options/internal/generic/allocator.cpp',
+	'options/internal/generic/charcode.cpp',
 	'options/internal/generic/debug.cpp',
 	'options/internal/generic/ensure.cpp',
 	'options/internal/generic/essential.cpp',
