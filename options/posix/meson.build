@@ -41,6 +41,7 @@ libc_sources += files(
 	'generic/sys-wait-stubs.cpp',
 	'generic/termios-stubs.cpp',
 	'generic/unistd-stubs.cpp',
+	'generic/utime-stubs.cpp',
 	'musl-generic/fnmatch.cpp',
 )
 

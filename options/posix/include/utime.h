@@ -1,4 +1,3 @@
-
 #ifndef _UTIME_H
 #define _UTIME_H
 
@@ -13,7 +12,7 @@ struct utimbuf {
 	time_t modtime;
 };
 
-int utime(const char *, const struct utimbuf *times);
+int utime(const char *, const struct utimbuf *);
 
 #ifdef __cplusplus
 }
