@@ -6,31 +6,67 @@
 #include <mlibc/charcode.hpp>
 #include <mlibc/debug.hpp>
 
+namespace {
+	// All conversion functions mbrlen(), mbrtowc(), wcrtomb(),
+	// mbsrtowcs() and wcsrtombs() have an internal state.
+	__mlibc_mbstate mbrlen_state = __MLIBC_MBSTATE_INITIALIZER;
+	__mlibc_mbstate mbrtowc_state = __MLIBC_MBSTATE_INITIALIZER;
+}
+
 wint_t btowc(int c)
 	MLIBC_STUB_BODY
 int wctob(wint_t)
 	MLIBC_STUB_BODY
 
-int mbsinit(const mbstate_t *)
-	MLIBC_STUB_BODY
-
-size_t mbrlen(const char *__restrict s, size_t n, mbstate_t *__restrict) {
-	size_t res;
-	auto cc = mlibc::current_charcode();
-	if(auto e = cc->validate_length(s, n, &res); e != mlibc::charcode_error::null) {
-		// In contrast to mblen(), mbrlen() detects multibyte sequences that are too short.
-		if(e == mlibc::charcode_error::not_enough_units) {
-			return -2;
-		}else{
-			errno = EILSEQ;
-			return -1;
-		}
-	}
-	return res;
+int mbsinit(const mbstate_t *stp) {
+	if(!stp)
+		return -1;
+	return !stp->__progress && !stp->__shift;
 }
 
-size_t mbrtowc(wchar_t *__restrict, const char *__restrict, size_t, mbstate_t *__restrict)
-	MLIBC_STUB_BODY
+size_t mbrlen(const char *mbs, size_t mb_limit, mbstate_t *stp) {
+	auto cc = mlibc::current_charcode();
+	wchar_t wc;
+
+	if(!stp)
+		stp = &mbrlen_state;
+	if(!mbs) {
+		*stp = __MLIBC_MBSTATE_INITIALIZER;
+		return 0;
+	}
+
+	mlibc::code_seq<const char> cus{mbs, mbs + mb_limit};
+	mlibc::code_seq<wchar_t> cps{&wc, &wc + 1};
+	if(auto e = cc->wdecode(cus, cps, *stp); e != mlibc::charcode_error::null)
+		__ensure(!"decode() errors are not handled");
+	return cus.it - mbs;
+}
+
+size_t mbrtowc(wchar_t *wcp, const char *mbs, size_t mb_limit, mbstate_t *stp) {
+	auto cc = mlibc::current_charcode();
+
+	if(!stp)
+		stp = &mbrtowc_state;
+	if(!mbs) {
+		*stp = __MLIBC_MBSTATE_INITIALIZER;
+		return 0;
+	}
+
+	// TODO: Decode to a local wchar_t.
+	__ensure(wcp);
+
+	mlibc::code_seq<const char> cus{mbs, mbs + mb_limit};
+	mlibc::code_seq<wchar_t> cps{wcp, wcp + 1};
+	if(auto e = cc->wdecode(cus, cps, *stp); e != mlibc::charcode_error::null) {
+		__ensure(!"decode() errors are not handled");
+	}else{
+		size_t n = cps.it - wcp;
+		if(!n) // Null-terminate resulting wide string.
+			*wcp = 0;
+		return n;
+	}
+}
+
 size_t wcrtomb(char *__restrict, wchar_t, mbstate_t *__restrict)
 	MLIBC_STUB_BODY
 

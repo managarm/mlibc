@@ -12,8 +12,14 @@
 #include <mlibc/charcode.hpp>
 #include <mlibc/sysdeps.hpp>
 
-
 extern "C" int __cxa_atexit(void (*function)(void *), void *argument, void *dso_tag);
+
+namespace {
+	// According to the first paragraph of [C11 7.22.7],
+	// mblen(), mbtowc() and wctomb() have an internal state.
+	// The string functions mbstowcs() and wcstombs() do *not* have this state.
+	thread_local __mlibc_mbstate mblen_state = __MLIBC_MBSTATE_INITIALIZER;
+}
 
 double atof(const char *string) {
 	__ensure(!"Not implemented");
@@ -305,14 +311,23 @@ lldiv_t lldiv(long long number, long long denom) {
 	__builtin_unreachable();
 }
 
-int mblen(const char *s, size_t n) {
-	size_t res;
+int mblen(const char *mbs, size_t mb_limit) {
 	auto cc = mlibc::current_charcode();
-	if(auto e = cc->validate_length(s, n, &res); e != mlibc::charcode_error::null)
-		return -1;
-	return res;
+	wchar_t wc;
+	mlibc::code_seq<const char> cus{mbs, mbs + mb_limit};
+	mlibc::code_seq<wchar_t> cps{&wc, &wc + 1};
+
+	if(!mbs) {
+		mblen_state = __MLIBC_MBSTATE_INITIALIZER;
+		__ensure(!"TODO: Return whether encoding is stateful");
+	}
+
+	if(auto e = cc->wdecode(cus, cps, mblen_state); e != mlibc::charcode_error::null)
+		__ensure(!"decode() errors are not handled");
+	return cus.it - mbs;
 }
 int mbtowc(wchar_t *__restrict wc, const char *__restrict mbs, size_t max_size) {
+	mlibc::infoLogger() << "mlibc: Broken mbtowc() called" << frg::endlog;
 	__ensure(wc);
 	__ensure(mbs);
 	__ensure(max_size);
@@ -325,12 +340,11 @@ int wctomb(char *mb_chr, wchar_t wc) {
 	__builtin_unreachable();
 }
 
-size_t mbstowcs(wchar_t *wcs, const char *mbs, size_t limit) {
+size_t mbstowcs(wchar_t *wcs, const char *mbs, size_t wc_limit) {
 	auto cc = mlibc::current_charcode();
-
-	mlibc::code_seq<const char> cus{mbs, nullptr};
-	mlibc::code_seq<wchar_t> cps{wcs, wcs + limit};
 	__mlibc_mbstate st = __MLIBC_MBSTATE_INITIALIZER;
+	mlibc::code_seq<const char> cus{mbs, nullptr};
+	mlibc::code_seq<wchar_t> cps{wcs, wcs + wc_limit};
 
 	if(!wcs) {
 		size_t size;
@@ -338,11 +352,12 @@ size_t mbstowcs(wchar_t *wcs, const char *mbs, size_t limit) {
 			__ensure(!"decode() errors are not handled");
 		return size;
 	}
+
 	if(auto e = cc->wdecode(cus, cps, st); e != mlibc::charcode_error::null) {
 		__ensure(!"decode() errors are not handled");
 	}else{
 		size_t n = cps.it - wcs;
-		if(n < limit) // Null-terminate resulting wide string.
+		if(n < wc_limit) // Null-terminate resulting wide string.
 			wcs[n] = 0;
 		return n;
 	}
