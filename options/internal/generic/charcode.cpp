@@ -20,13 +20,13 @@ struct utf8_charcode {
 					_cpoint = *seq.it;
 				}else if((*seq.it & 0b1110'0000) == 0b1100'0000) {
 					_cpoint = *seq.it & 0b1'1111;
-					_progress = -1;
+					_progress = 1;
 				}else if((*seq.it & 0b1111'0000) == 0b1110'0000) {
 					_cpoint = *seq.it & 0b1111;
-					_progress = -2;
+					_progress = 2;
 				}else if((*seq.it & 0b1111'1000) == 0b1111'0000) {
 					_cpoint = *seq.it & 0b111;
-					_progress = -3;
+					_progress = 3;
 				}else{
 					// If the highest two bits are 0b10, this is the second (or later) unit.
 					__ensure(!((*seq.it & 0b1100'0000) == 0b1000'0000));
@@ -36,7 +36,7 @@ struct utf8_charcode {
 			}else{
 				__ensure((*seq.it & 0b1100'0000) == 0b1000'0000);
 				_cpoint = (_cpoint << 6) | ((*seq.it) & 0x3F);
-				++_progress;
+				--_progress;
 			}
 			++seq.it;
 			return charcode_error::null;
@@ -48,23 +48,30 @@ struct utf8_charcode {
 	};
 };
 
+// For *decoding, this class assumes that:
+// - G::decode_state has members progress() and cpoint().
+// - G::decode_state::progress() >= 0 at all times.
+//   TODO: This will be needed on platforms like Windows, where wchar_t is UTF-16.
+//   TODO: There, we can use negative __mlibc_mbstate::progress to represent encoding to UTF-16.
+// - If G::decode_state::progress() == 0, the code point (given by cpoint())
+//   was decoded successfully.
 template<typename G>
 struct polymorphic_charcode_adapter : polymorphic_charcode {
 	charcode_error wdecode(code_seq<const char> &cus, code_seq<wchar_t> &cps,
 			__mlibc_mbstate &st) override {
-		__ensure(!st.__progress);
+		__ensure(!st.__progress); // TODO: Update st with d.progress() and d.cpoint().
 
-		code_seq<const char> acus = cus;
+		code_seq<const char> dcus = cus;
 		typename G::decode_state d;
 
-		while(acus && cps) {
+		while(dcus && cps) {
 			// Consume the next code unit.
-			if(auto e = d(acus); e != charcode_error::null)
+			if(auto e = d(dcus); e != charcode_error::null)
 				return e;
 
 			// Produce a new code point.
 			if(!d.progress()) {
-				cus = acus; // "Commit" consumed code units.
+				cus.it = dcus.it; // "Commit" consumed code units (as there was no decode error).
 				if(!d.cpoint()) // Stop on null characters.
 					return charcode_error::null;
 				*cps.it = d.cpoint();
@@ -79,18 +86,18 @@ struct polymorphic_charcode_adapter : polymorphic_charcode {
 
 	charcode_error wdecode_length(code_seq<const char> &cus,
 			__mlibc_mbstate &st) override {
-		__ensure(!st.__progress);
+		__ensure(!st.__progress); // TODO: Update st with d.progress() and d.cpoint().
 
-		code_seq<const char> acus = cus;
+		code_seq<const char> dcus = cus;
 		typename G::decode_state d;
 
-		while(acus) {
+		while(dcus) {
 			// Consume the next code unit.
-			if(auto e = d(acus); e != charcode_error::null)
+			if(auto e = d(dcus); e != charcode_error::null)
 				return e;
 
 			if(!d.progress()) {
-				cus = acus; // "Commit" consumed code units.
+				cus.it = dcus.it; // "Commit" consumed code units (as there was no decode error).
 				if(!d.cpoint()) // Stop on null code points.
 					return charcode_error::null;
 			}

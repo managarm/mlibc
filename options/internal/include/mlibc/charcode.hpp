@@ -24,10 +24,17 @@ struct code_seq {
 	}
 };
 
+// Some encodings (e.g. the one defined in RFC 1843) have "shift states",
+// i.e. escape sequences that switch between different encodings (e.g. between single-byte ASCII
+// and 2-byte encoding of Chinese characters).
+// TODO: Implement that using the __shift member of __mlibc_mbstate.
+
 typedef uint32_t codepoint;
 
-// The following class deals with encoding/decoding "code points" to/from "units".
-// It does not actually care about what code points represent -- they are only numeric values.
+// The following class deals with decoding/encoding "code units" to/from unicode "code points".
+// We assume that wchar_t (and char16_t, char32_t) are represent unicode characters.
+// char is allowed to have an arbitrary encoding.
+// TODO: For iconv(), first convert to char32_t and then to the destination encoding.
 struct polymorphic_charcode {
 	virtual charcode_error wdecode(code_seq<const char> &cus, code_seq<wchar_t> &cps,
 			__mlibc_mbstate &st) = 0;
