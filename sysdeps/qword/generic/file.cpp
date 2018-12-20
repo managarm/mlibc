@@ -2,6 +2,7 @@
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
+#include <errno.h>
 
 #define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }
 
@@ -15,7 +16,8 @@ void sys_libc_log(const char *message) {
 }
 
 void sys_libc_panic() {
-	__builtin_trap();
+    mlibc::infoLogger() << "\e[31mmlibc: sys_libc_panic() called!" << frg::endlog;
+    for (;;);
 }
 
 int sys_tcb_set(void *pointer) {
@@ -44,12 +46,17 @@ int sys_anon_free(void *pointer, size_t size) STUB_ONLY
 
 #ifndef MLIBC_BUILDING_RTDL
 void sys_exit(int status) {
-	__builtin_trap();
+    mlibc::infoLogger() << "\e[31mmlibc: sys_exit() called (not implemented yet!)" << frg::endlog;
+    for (;;);
 }
 #endif
 
 #ifndef MLIBC_BUILDING_RTDL
-int sys_clock_get(int clock, time_t *secs, long *nanos) STUB_ONLY
+int sys_clock_get(int clock, time_t *secs, long *nanos) {
+    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
+    errno = ENOSYS;
+    return -1;
+}
 #endif
 
 int sys_open(const char *path, int flags, int *fd) {
@@ -98,7 +105,11 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
 #endif
 
 #ifndef MLIBC_BUILDING_RTDL
-int sys_ioctl(int fd, unsigned long request, void *arg) STUB_ONLY
+int sys_ioctl(int fd, unsigned long request, void *arg) {
+    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
+    errno = ENOSYS;
+    return -1;
+}
 #endif
 
 #define __QWORD_SEEK_SET        0
@@ -151,7 +162,15 @@ int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) STU
 int sys_vm_unmap(void *pointer, size_t size) STUB_ONLY
 
 #ifndef MLIBC_BUILDING_RTDL
-int sys_fstat(int fd, struct stat *statbuf) STUB_ONLY
+int sys_fstat(int fd, struct stat *statbuf) {
+    int res;
+    asm volatile ("syscall" : "=a"(res)
+            : "a"(9), "D"(fd), "S"(statbuf)
+            : "rcx", "r11");
+    if(res < 0)
+        return -1;
+    return 0;
+}
 #endif
 
 #ifndef MLIBC_BUILDING_RTDL
@@ -159,7 +178,10 @@ int sys_rename(const char *path, const char *new_path) STUB_ONLY
 #endif
 
 #ifndef MLIBC_BUILDING_RTDL
-int sys_sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict) STUB_ONLY
+int sys_sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict) {
+    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
+    return -1;
+}
 #endif
 
 // All remaining functions are disabled in ldso.
@@ -174,13 +196,32 @@ int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_re
 int sys_access(const char *path, int mode) STUB_ONLY
 int sys_dup(int fd, int flags, int *newfd) STUB_ONLY
 int sys_dup2(int fd, int flags, int newfd) STUB_ONLY
-int sys_isatty(int fd, int *ptr) STUB_ONLY
+int sys_isatty(int fd, int *ptr) {
+    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
+    *ptr = 1;
+    return 0;
+}
 int sys_ttyname(int fd, char *buf, size_t size) STUB_ONLY
-int sys_stat(const char *path, struct stat *statbuf) STUB_ONLY
+int sys_stat(const char *path, struct stat *statbuf) {
+    int fd;
+    if (sys_open(path, 0/*O_RDONLY*/, &fd) < 0)
+        return -1;
+    int ret = sys_fstat(fd, statbuf);
+    if (ret < 0) {
+        sys_close(fd);
+        return -1;
+    }
+    sys_close(fd);
+    return ret;
+}
 int sys_lstat(const char *path, struct stat *statbuf) STUB_ONLY
 int sys_chroot(const char *path) STUB_ONLY
 int sys_mkdir(const char *path) STUB_ONLY
-int sys_tcgetattr(int fd, struct termios *attr) STUB_ONLY
+int sys_tcgetattr(int fd, struct termios *attr) {
+    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
+    errno = ENOSYS;
+    return -1;
+}
 int sys_tcsetattr(int, int, const struct termios *attr) STUB_ONLY
 int sys_pipe(int *fds) STUB_ONLY
 int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length) STUB_ONLY
@@ -188,7 +229,11 @@ int sys_ftruncate(int fd, size_t size) STUB_ONLY
 int sys_fallocate(int fd, off_t offset, size_t size) STUB_ONLY
 int sys_unlink(const char *path) STUB_ONLY
 int sys_symlink(const char *target_path, const char *link_path) STUB_ONLY
-int sys_fcntl(int fd, int request, va_list args) STUB_ONLY
+int sys_fcntl(int fd, int request, va_list args) {
+    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
+    errno = ENOSYS;
+    return -1;
+}
 
 int sys_socket(int family, int type, int protocol, int *fd) STUB_ONLY
 int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) STUB_ONLY
@@ -205,19 +250,50 @@ int sys_setsockopt(int fd, int layer, int number,
 		const void *buffer, socklen_t size) STUB_ONLY
 
 int sys_sleep(time_t *secs, long *nanos) STUB_ONLY
-int sys_fork(pid_t *child) STUB_ONLY
+int sys_fork(pid_t *child) {
+    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
+    errno = ENOSYS;
+    return -1;
+}
 void sys_execve(const char *path, char *const argv[], char *const envp[]) STUB_ONLY
 int sys_kill(int, int) STUB_ONLY
-int sys_waitpid(pid_t pid, int *status, int flags) STUB_ONLY
-int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) STUB_ONLY
+int sys_waitpid(pid_t pid, int *status, int flags) {
+    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
+    return -1;
+}
+int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
+    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
+    return -1;
+}
 void sys_yield() STUB_ONLY
 
-gid_t sys_getgid() STUB_ONLY
-gid_t sys_getegid() STUB_ONLY
-uid_t sys_getuid() STUB_ONLY
-uid_t sys_geteuid() STUB_ONLY
-pid_t sys_getpid() STUB_ONLY
-pid_t sys_getppid() STUB_ONLY
+gid_t sys_getgid() {
+    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
+    return 0;
+}
+gid_t sys_getegid() {
+    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
+    return 0;
+}
+uid_t sys_getuid() {
+    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
+    return 0;
+}
+uid_t sys_geteuid() {
+    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
+    return 0;
+}
+pid_t sys_getpid() {
+    pid_t pid;
+    asm volatile ("syscall" : "=a"(pid)
+            : "a"(5)
+            : "rcx", "r11");
+    return pid;
+}
+pid_t sys_getppid() {
+    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
+    return 0;
+}
 
 #endif // MLIBC_BUILDING_RTDL
 
