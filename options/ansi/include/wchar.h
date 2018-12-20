@@ -10,6 +10,7 @@
 #include <bits/size_t.h>
 #include <bits/wchar_t.h>
 #include <bits/wint_t.h>
+#include <bits/mbstate.h>
 
 #define WEOF 0xffffffffU
 // TODO: The following declaration should be independent of gcc.
@@ -22,10 +23,7 @@ extern "C" {
 
 typedef struct __mlibc_file_base FILE;
 
-typedef struct __mbstate_t {
-	unsigned int opaque1;
-	unsigned int opaque2;
-} mbstate_t;
+typedef struct __mlibc_mbstate mbstate_t;
 
 // MISSING: struct tm
 

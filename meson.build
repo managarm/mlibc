@@ -48,6 +48,7 @@ install_headers(
 	'options/internal/include/bits/types.h',
 	'options/internal/include/bits/ensure.h',
 	'options/internal/include/bits/machine.h',
+	'options/internal/include/bits/mbstate.h',
 	'options/internal/include/bits/null.h',
 	subdir: 'bits'
 )

@@ -325,11 +325,30 @@ int wctomb(char *mb_chr, wchar_t wc) {
 	__builtin_unreachable();
 }
 
-int mbstowcs(wchar_t *__restrict wc_string, const char *__restrict mb_string, size_t max_size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+size_t mbstowcs(wchar_t *wcs, const char *mbs, size_t limit) {
+	auto cc = mlibc::current_charcode();
+
+	mlibc::code_seq<const char> cus{mbs, nullptr};
+	mlibc::code_seq<wchar_t> cps{wcs, wcs + limit};
+	__mlibc_mbstate st = __MLIBC_MBSTATE_INITIALIZER;
+
+	if(!wcs) {
+		size_t size;
+		if(auto e = cc->wdecode_length(cus, st); e != mlibc::charcode_error::null)
+			__ensure(!"decode() errors are not handled");
+		return size;
+	}
+	if(auto e = cc->wdecode(cus, cps, st); e != mlibc::charcode_error::null) {
+		__ensure(!"decode() errors are not handled");
+	}else{
+		size_t n = cps.it - wcs;
+		if(n < limit) // Null-terminate resulting wide string.
+			wcs[n] = 0;
+		return n;
+	}
 }
-int wcstombs(char *mb_string, const wchar_t *__restrict wc_string, size_t max_size) {
+
+size_t wcstombs(char *mb_string, const wchar_t *__restrict wc_string, size_t max_size) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

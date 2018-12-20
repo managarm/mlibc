@@ -33,8 +33,11 @@ size_t mbrtowc(wchar_t *__restrict, const char *__restrict, size_t, mbstate_t *_
 	MLIBC_STUB_BODY
 size_t wcrtomb(char *__restrict, wchar_t, mbstate_t *__restrict)
 	MLIBC_STUB_BODY
-size_t mbsrtowcs(wchar_t *__restrict, const char **__restrict, size_t, mbstate_t *__restrict)
+
+size_t mbsrtowcs(wchar_t *__restrict wcs, const char **__restrict mbs,
+		size_t max_wcs, mbstate_t *__restrict)
 	MLIBC_STUB_BODY
+
 size_t wcsrtombs(char *__restrict, const wchar_t **__restrict, size_t, mbstate_t *__restrict)
 	MLIBC_STUB_BODY
 
