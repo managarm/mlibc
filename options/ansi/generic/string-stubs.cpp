@@ -218,16 +218,27 @@ size_t wcslen(const wchar_t *) MLIBC_STUB_BODY
 wchar_t *wmemset(wchar_t *, wchar_t, size_t) MLIBC_STUB_BODY
 
 char *strerror(int errnum) {
-	const char *string;
+	const char *s;
 	switch(errnum) {
-	case EACCES:
-		string = "Access denied"; break;
-	case ENOENT:
-		string = "File not found"; break;
+	case EAGAIN: s = "Operation would block (EAGAIN)"; break;
+	case EACCES: s = "Access denied (EACCESS)"; break;
+	case EBADF:  s = "Bad file descriptor (EBADF)"; break;
+	case EEXIST: s = "File exists already (EEXIST)"; break;
+	case EFAULT: s = "Access violation (EFAULT)"; break;
+	case EINTR:  s = "Operation interrupted (EINTR)"; break;
+	case EINVAL: s = "Invalid argument (EINVAL)"; break;
+	case EIO:    s = "I/O error (EIO)"; break;
+	case EISDIR: s = "Resource is directory (EISDIR)"; break;
+	case ENOENT: s = "No such file or directory (ENOENT)"; break;
+	case ENOMEM: s = "Out of memory (ENOMEM)"; break;
+	case ENOSYS: s = "Operation not implemented (ENOSYS)"; break;
+	case EPERM:  s = "Operation not permitted (EFAULT)"; break;
+	case EPIPE:  s = "Broken pipe (EPIPE)"; break;
+	case ESPIPE: s = "Seek not possible (ESPIPE)"; break;
 	default:
-		string = "Illegal error code";
+		s = "Unknown error code (?)";
 	}
-	return const_cast<char *>(string);
+	return const_cast<char *>(s);
 }
 // strlen() is defined in options/internals.
 
