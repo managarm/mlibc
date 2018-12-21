@@ -36,7 +36,13 @@ struct PrintfAgent {
 			frg::do_printf_floats(*_formatter, t, opts, szmod, _vsp);
 			break;
 		case 'm':
-			_formatter->append("%m");
+			__ensure(!opts.fill_zeros);
+			__ensure(!opts.left_justify);
+			__ensure(!opts.alt_conversion);
+			__ensure(opts.minimum_width == 0);
+			__ensure(szmod == frg::printf_size_mod::default_size);
+			__ensure(!opts.precision);
+			_formatter->append(strerror(errno));
 			break;
 		default:
 			__ensure(!"Illegal printf terminator");
