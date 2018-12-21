@@ -2036,6 +2036,11 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		return resp.result();
 	}
+	case TIOCGWINSZ: {
+		mlibc::infoLogger() << "\e[31mmlibc: TIOCGWINSZ is not implemented correctly\e[39m"
+				<< frg::endlog;
+		return -1;
+	}
 	case TIOCSWINSZ: {
 		mlibc::infoLogger() << "\e[31mmlibc: TIOCSWINSZ is not implemented correctly\e[39m"
 				<< frg::endlog;
