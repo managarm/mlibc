@@ -228,7 +228,7 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 			if(phdr->p_flags & PF_X)
 				prot |= PROT_EXEC;
 
-			if(false) {
+			#ifdef MLIBC_MAP_DSO_SEGMENTS
 				// TODO: Map with (prot | PROT_WRITE) here,
 				// then mprotect() to remove PROT_WRITE if that is necessary.
 				void *map_pointer;
@@ -245,7 +245,7 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 				// We do not clear the leading area; programs are not supposed to access it.
 				memset(reinterpret_cast<void *>(map_address + misalign + phdr->p_filesz),
 						0, phdr->p_memsz - phdr->p_filesz);
-			}else{
+			#else
 				void *map_pointer;
 				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
 						total_map_size, prot | PROT_WRITE,
@@ -255,7 +255,7 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 				seekOrDie(fd, phdr->p_offset);
 				readExactlyOrDie(fd, reinterpret_cast<char *>(map_address) + misalign,
 						phdr->p_filesz);
-			}
+			#endif
 		}else if(phdr->p_type == PT_TLS) {
 			object->tlsSegmentSize = phdr->p_memsz;
 			object->tlsAlignment = phdr->p_align;

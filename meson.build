@@ -13,6 +13,9 @@ libc_sources = [ ]
 disable_ansi_option = false
 disable_posix_option = false
 disable_linux_option = false
+internal_conf = configuration_data()
+
+internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', true)
 
 # Process sysdeps first, as sysdeps might want to disable unsupported options.
 if host_machine.system() == 'managarm'
@@ -22,6 +25,10 @@ elif host_machine.system() == 'qword'
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
+
+configure_file(input: 'internal-config.h.in',
+	output: 'internal-config.h',
+	configuration: internal_conf)
 
 internal_incl = include_directories('options/internal/include')
 internal_sources = [

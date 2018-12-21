@@ -1,5 +1,6 @@
 
 disable_linux_option = true
+internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', false)
 
 rtdl_include_dirs += include_directories('include')
 rtdl_sources += files(
