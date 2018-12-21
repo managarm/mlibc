@@ -6,6 +6,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
+#include <internal-config.h>
 #include "linker.hpp"
 
 uintptr_t libraryBase = 0x41000000;
@@ -240,6 +241,12 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 						total_map_size - backed_map_size, prot,
 						MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
 					__ensure(!"sys_vm_map failed");
+
+				if(mlibc::sys_vm_readahead)
+					if(mlibc::sys_vm_readahead(reinterpret_cast<void *>(map_address),
+							backed_map_size))
+						mlibc::infoLogger() << "mlibc: sys_vm_readahead() failed in ld.so"
+								<< frg::endlog;
 
 				// Clear the trailing area at the end of the backed mapping.
 				// We do not clear the leading area; programs are not supposed to access it.

@@ -100,6 +100,8 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 
 int sys_vm_unmap(void *pointer, size_t size);
 
+[[gnu::weak]] int sys_vm_readahead(void *pointer, size_t size);
+
 #ifndef MLIBC_BUILDING_RTDL
 	int sys_tcgetattr(int fd, struct termios *attr);
 	int sys_tcsetattr(int, int, const struct termios *attr);
