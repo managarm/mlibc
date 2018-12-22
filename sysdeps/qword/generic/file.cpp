@@ -251,9 +251,12 @@ int sys_setsockopt(int fd, int layer, int number,
 
 int sys_sleep(time_t *secs, long *nanos) STUB_ONLY
 int sys_fork(pid_t *child) {
-    mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
-    errno = ENOSYS;
-    return -1;
+    pid_t ret;
+    asm volatile ("syscall" : "=a"(ret)
+            : "a"(10)
+            : "rcx", "r11");
+    *child = ret;
+    return 0;
 }
 void sys_execve(const char *path, char *const argv[], char *const envp[]) STUB_ONLY
 int sys_kill(int, int) STUB_ONLY
