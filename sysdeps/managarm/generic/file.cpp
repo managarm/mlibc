@@ -3170,11 +3170,13 @@ int sys_isatty(int fd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	if(resp.error() ==  managarm::posix::Errors::BAD_FD) {
-		return ENOTTY;
+	if(resp.error() ==  managarm::posix::Errors::NO_SUCH_FD) {
+		return EBADF;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
+		if(resp.mode())
+			return 0;
+		return ENOTTY;
 	}
 }
 
