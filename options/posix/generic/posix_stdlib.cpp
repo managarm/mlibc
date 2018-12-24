@@ -42,13 +42,15 @@ int mkstemp(char *pattern) {
 
 		// TODO: Add a mode argument to sys_open().
 		int fd;
-		if(!mlibc::sys_open(pattern, O_RDWR | O_CREAT | O_EXCL, /*S_IRUSR | S_IWUSR,*/ &fd))
+		if(int e = mlibc::sys_open(pattern, O_RDWR | O_CREAT | O_EXCL, /*S_IRUSR | S_IWUSR,*/ &fd); !e) {
 			return fd;
-		if(errno != EEXIST)
+		}else if(e != EEXIST) {
+			errno = e;
 			return -1;
+		}
 	}
 
-	__ensure(errno == EEXIST);
+	errno = EEXIST;
 	return -1;
 }
 

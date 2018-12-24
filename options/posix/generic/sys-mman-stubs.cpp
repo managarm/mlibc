@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <sys/mman.h>
 #include <bits/ensure.h>
 
@@ -46,8 +47,10 @@ void *mremap(void *pointer, size_t size, size_t new_size, int flags, ...) {
 	__ensure(flags == MREMAP_MAYMOVE);
 
 	void *window;
-	if(mlibc::sys_vm_remap(pointer, size, new_size, &window))
+	if(int e = mlibc::sys_vm_remap(pointer, size, new_size, &window); e) {
+		errno = e;
 		return (void *)-1;
+	}
 	return window;
 }
 
@@ -58,14 +61,18 @@ int remap_file_pages(void *, size_t, int, size_t, int) {
 
 void *mmap(void *hint, size_t size, int prot, int flags, int fd, off_t offset) {
 	void *window;
-	if(mlibc::sys_vm_map(hint, size, prot, flags, fd, offset, &window))
+	if(int e = mlibc::sys_vm_map(hint, size, prot, flags, fd, offset, &window); e) {
+		errno = e;
 		return (void *)-1;
+	}
 	return window;
 }
 
 int munmap(void *pointer, size_t size) {
-	if(mlibc::sys_vm_unmap(pointer, size))
+	if(int e = mlibc::sys_vm_unmap(pointer, size); e) {
+		errno = e;
 		return -1;
+	}
 	return 0;
 }
 

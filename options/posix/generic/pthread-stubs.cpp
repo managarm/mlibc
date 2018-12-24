@@ -227,13 +227,13 @@ int pthread_once(pthread_once_t *once, void (*function) (void)) {
 
 			// unlock the mutex.
 			__atomic_exchange_n(&once->__mlibc_done, onceComplete, __ATOMIC_RELEASE);
-			if(mlibc::sys_futex_wake((int *)&once->__mlibc_done))
+			if(int e = mlibc::sys_futex_wake((int *)&once->__mlibc_done); e)
 				__ensure(!"sys_futex_wake() failed");
 			return 0;
 		}else{
 			// a different thread is currently running the initializer.
 			__ensure(expected == onceLocked);
-			if(mlibc::sys_futex_wait((int *)&once->__mlibc_done, onceLocked))
+			if(int e = mlibc::sys_futex_wait((int *)&once->__mlibc_done, onceLocked); e)
 				__ensure(!"sys_futex_wait() failed");
 			expected =  __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
 		}
@@ -327,7 +327,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 
 			// wait on the futex if the waiters flag is set.
 			if(expected & waiters) {
-				if(mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected))
+				if(int e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected); e)
 					__ensure(!"sys_futex_wait() failed");
 				
 				// opportunistically try to take the lock after we wake up.
@@ -363,7 +363,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
 
 	// wake the futex if there were waiters.
 	if(state & waiters)
-		if(mlibc::sys_futex_wake((int *)&mutex->__mlibc_state))
+		if(int e = mlibc::sys_futex_wake((int *)&mutex->__mlibc_state); e)
 			__ensure(!"sys_futex_wake() failed");
 	return 0;
 }
@@ -437,7 +437,7 @@ int pthread_cond_broadcast(pthread_cond_t *cond) {
 	SCOPE_TRACE();
 
 	__atomic_fetch_add(&cond->__mlibc_seq, 1, __ATOMIC_RELAXED);
-	if(mlibc::sys_futex_wake((int *)&cond->__mlibc_seq))
+	if(int e = mlibc::sys_futex_wake((int *)&cond->__mlibc_seq); e)
 		__ensure(!"sys_futex_wake() failed");
 	return 0;
 }

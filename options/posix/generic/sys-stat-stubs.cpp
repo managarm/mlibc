@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <bits/ensure.h>
 #include <sys/stat.h>
 
@@ -29,8 +30,10 @@ int futimens(int fd, const struct timespec times[2]) {
 }
 int mkdir(const char *path, mode_t) {
 	mlibc::infoLogger() << "\e[31mmlibc: mkdir() ignore the mode\e[39m" << frg::endlog;
-	if(mlibc::sys_mkdir(path))
+	if(int e = mlibc::sys_mkdir(path); e) {
+		errno = e;
 		return -1;
+	}
 	return 0;
 }
 int mkdirat(int, const char *, mode_t) {
@@ -66,14 +69,26 @@ int utimensat(int, const char *, const struct timespec times[2], int) {
 
 
 int stat(const char *__restrict path, struct stat *__restrict result) {
-	return mlibc::sys_stat(path, result);
+	if(int e = mlibc::sys_stat(path, result); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int lstat(const char *__restrict path, struct stat *__restrict result) {
-	return mlibc::sys_lstat(path, result);
+	if(int e = mlibc::sys_lstat(path, result); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int fstat(int fd, struct stat *result) {
-	return mlibc::sys_fstat(fd, result);
+	if(int e = mlibc::sys_fstat(fd, result); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 

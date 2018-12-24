@@ -72,16 +72,16 @@ public:
 		// Clear the buffer, then buffer new data.
 		if(__offset == __valid_limit) {
 			// TODO: We only have to write-back/reset if __valid_limit reaches the buffer end.
-			if(_write_back())
-				return -1;
-			if(_reset())
-				return -1;
+			if(int e = _write_back(); e)
+				return e;
+			if(int e = _reset(); e)
+				return e;
 
 			// Perform a read-ahead.
 			_ensure_allocation();
 			size_t io_size;
-			if(io_read(__buffer_ptr, __buffer_size, &io_size))
-				return -1;
+			if(int e = io_read(__buffer_ptr, __buffer_size, &io_size); e)
+				return e;
 			if(!io_size) {
 				*actual_size = 0;
 				return 0;
@@ -110,10 +110,10 @@ public:
 
 		// Flush the buffer if necessary.
 		if(__offset == __buffer_size) {
-			if(_write_back())
-				return -1;
-			if(_reset())
-				return -1;
+			if(int e = _write_back(); e)
+				return e;
+			if(int e = _reset(); e)
+				return e;
 		}
 
 		// Ensure correct buffer type for pipe-like streams.
@@ -155,23 +155,20 @@ public:
 
 	// TODO: For input files, discard the buffer.
 	int flush() {
-		if(_write_back())
-			return -1;
-
-		return 0;
+		return _write_back();
 	}
 
 	int seek(off_t offset, int whence) {
-		if(_write_back())
-			return -1;
+		if(int e = _write_back(); e)
+			return e;
 
 		if(whence == SEEK_SET || whence == SEEK_END) {
 			// For absolute seeks we can just forget the current buffer.
-			if(_reset())
-				return -1;
+			if(int e = _reset(); e)
+				return e;
 
-			if(io_seek(offset, whence))
-				return -1;
+			if(int e = io_seek(offset, whence); e)
+				return e;
 			return 0;
 		}else{
 			__ensure(whence == SEEK_CUR); // TODO: Handle errors.
@@ -191,15 +188,15 @@ private:
 		if(_type != stream_type::unknown)
 			return 0;
 
-		if(determine_type(&_type))
-			return -1;
+		if(int e = determine_type(&_type); e)
+			return e;
 		__ensure(_type != stream_type::unknown);
 		return 0;
 	}
 
 	int _write_back() {
-		if(_update_type())
-			return -1;
+		if(int e = _update_type(); e)
+			return e;
 
 		if(__dirty_begin == __dirty_end)
 			return 0;
@@ -207,8 +204,8 @@ private:
 		// For non-pipe streams, first do a seek to reset the
 		// I/O position to zero, then do a write().
 		if(_type == stream_type::file_like) {
-			if(io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR))
-				return -1;
+			if(int e = io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR); e)
+				return e;
 			__io_offset = __dirty_begin;
 		}else{
 			__ensure(_type == stream_type::pipe_like);
@@ -218,8 +215,8 @@ private:
 		// Now, we are in the correct position to write-back everything.
 		while(__io_offset < __dirty_end) {
 			size_t chunk;
-			if(io_write(__buffer_ptr + __io_offset, __dirty_end - __io_offset, &chunk))
-				return -1;
+			if(int e = io_write(__buffer_ptr + __io_offset, __dirty_end - __io_offset, &chunk); e)
+				return e;
 			__io_offset += chunk;
 			__dirty_begin += chunk;
 		}
@@ -228,8 +225,8 @@ private:
 	}
 
 	int _reset() {
-		if(_update_type())
-			return -1;
+		if(int e = _update_type(); e)
+			return e;
 
 		// For pipe-like files, we must not forget already read data.
 		// TODO: Report this error to the user.
@@ -267,48 +264,46 @@ struct fd_file : abstract_file {
 	}
 
 	int close() override {
-		if(mlibc::sys_close(_fd))
-			return -1;
+		if(int e = mlibc::sys_close(_fd); e)
+			return e;
 		return 0;
 	}
 
 protected:
-// TODO: We should not modify errno on ESPIPE.
 	int determine_type(stream_type *type) override {
 		off_t offset;
-		if(!mlibc::sys_seek(_fd, 0, SEEK_CUR, &offset)) {
+		int e = mlibc::sys_seek(_fd, 0, SEEK_CUR, &offset);
+		if(!e) {
 			*type = stream_type::file_like;
 			return 0;
-		}
-
-		if(errno == ESPIPE) {
+		}else if(e == ESPIPE) {
 			*type = stream_type::pipe_like;
 			return 0;
 		}else{
-			return -1;
+			return e;
 		}
 	}
 
 	int io_read(char *buffer, size_t max_size, size_t *actual_size) override {
 		ssize_t s;
-		if(mlibc::sys_read(_fd, buffer, max_size, &s))
-			return -1;
+		if(int e = mlibc::sys_read(_fd, buffer, max_size, &s); e)
+			return e;
 		*actual_size = s;
 		return 0;
 	}
 
 	int io_write(const char *buffer, size_t max_size, size_t *actual_size) override {
 		ssize_t s;
-		if(mlibc::sys_write(_fd, buffer, max_size, &s))
-			return -1;
+		if(int e = mlibc::sys_write(_fd, buffer, max_size, &s); e)
+			return e;
 		*actual_size = s;
 		return 0;
 	}
 
 	int io_seek(off_t offset, int whence) override {
 		off_t new_offset;
-		if(mlibc::sys_seek(_fd, offset, whence, &new_offset))
-			return -1;
+		if(int e = mlibc::sys_seek(_fd, offset, whence, &new_offset); e)
+			return e;
 		return 0;
 	}
 
@@ -491,22 +486,11 @@ size_t fwrite(const void *__restrict buffer, size_t size , size_t count,
 
 int fseek(FILE *stream, long offset, int whence) {
 	mlibc::panicLogger() << "mlibc: Fix fseek()" << frg::endlog;
-	/*
-	off_t new_offset;
-	if(mlibc::sys_seek(stream->fd, offset, whence, &new_offset))
-		return -1;
-	*/
 	return 0;
 }
 
 long ftell(FILE *stream) {
 	mlibc::panicLogger() << "mlibc: Fix ftell()" << frg::endlog;
-	/*
-	off_t new_offset;
-	if(mlibc::sys_seek(stream->fd, 0, SEEK_CUR, &new_offset))
-		return EOF;
-	return new_offset;
-	*/
 	return 0;
 }
 
@@ -521,23 +505,8 @@ int fflush(FILE *file_base) {
 }
 
 int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t size) {
+	// TODO: Honor the buffering mode.
 	mlibc::infoLogger() << "\e[35mmlibc: setvbuf() is ignored\e[39m" << frg::endlog;
-/*
-	__ensure(mode == _IOLBF);
-	__ensure(stream->bufferBytes == 0);
-
-	// TODO: free the old buffer
-	if(!buffer) {
-		auto new_buffer = (char *)malloc(size); // TODO: Use the allocator.
-		__ensure(new_buffer);
-		stream->__buffer_ptr = new_buffer;
-		stream->__buffer_size = size;
-	}else{
-		stream->__buffer_ptr = buffer;
-		stream->__buffer_size = size;
-	}
-*/
-
 	return 0;
 }
 

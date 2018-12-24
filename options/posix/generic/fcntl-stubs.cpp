@@ -14,9 +14,13 @@ int creat(const char *, mode_t) {
 int fcntl(int fd, int command, ...) {
 	va_list args;
 	va_start(args, command);
-	int val = mlibc::sys_fcntl(fd, command, args);
+	int result;
+	if(int e = mlibc::sys_fcntl(fd, command, args, &result); e) {
+		errno = e;
+		return -1;
+	}
 	va_end(args);
-	return val;
+	return result;
 }
 
 int openat(int, const char *, int, ...) {
@@ -42,8 +46,10 @@ int posix_fallocate(int fd, off_t offset, off_t size) {
 
 	error_guard guard;
 
-	if(mlibc::sys_fallocate(fd, offset, size))
-		return errno;
+	if(int e = mlibc::sys_fallocate(fd, offset, size); e) {
+		errno = e;
+		return -1;
+	}
 	return 0;
 }
 
@@ -60,8 +66,10 @@ int open_by_handle_at(int, struct file_handle *, int) {
 
 int open(const char *pathname, int flags, ...) {
 	int fd;
-	if(mlibc::sys_open(pathname, flags, &fd))
+	if(int e = mlibc::sys_open(pathname, flags, &fd); e) {
+		errno = e;
 		return -1;
+	}
 	return fd;
 
 }

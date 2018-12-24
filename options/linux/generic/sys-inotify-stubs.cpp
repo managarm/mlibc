@@ -1,21 +1,26 @@
 
-#include <bits/ensure.h>
+#include <errno.h>
 #include <sys/inotify.h>
 
+#include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 int inotify_init(void) {
 	int fd;
-	if(mlibc::sys_inotify_create(0, &fd))
+	if(int e = mlibc::sys_inotify_create(0, &fd); e) {
+		errno = e;
 		return -1;
+	}
 	return fd;
 }
 
 int inotify_init1(int flags) {
 	int fd;
-	if(mlibc::sys_inotify_create(0, &fd))
+	if(int e = mlibc::sys_inotify_create(0, &fd); e) {
+		errno = e;
 		return -1;
+	}
 	return fd;
 }
 
