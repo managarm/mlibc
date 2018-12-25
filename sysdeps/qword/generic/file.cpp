@@ -37,7 +37,7 @@ int sys_anon_allocate(size_t size, void **pointer) {
 			: "a"(6), "D"(0), "S"(size >> 12)
 			: "rcx", "r11");
 	if(!res)
-		return -1;
+		return ENOMEM;
 	*pointer = res;
 	return 0;
 }
@@ -54,8 +54,7 @@ void sys_exit(int status) {
 #ifndef MLIBC_BUILDING_RTDL
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
     mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
-    errno = ENOSYS;
-    return -1;
+    return ENOSYS;
 }
 #endif
 
@@ -69,7 +68,7 @@ int sys_open(const char *path, int flags, int *fd) {
             : "a"(1), "D"(path), "S"(0), "d"(flags)
             : "rcx", "r11");
     if(res < 0)
-        return -1;
+        return -1; // TODO: Properly report error.
     *fd = res;
     return 0;
 }
@@ -80,7 +79,7 @@ int sys_close(int fd) {
             : "a"(2), "D"(fd)
             : "rcx", "r11");
     if(res < 0)
-        return -1;
+        return -1; // TODO: Properly report error.
     return 0;
 }
 
@@ -105,10 +104,9 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
 #endif
 
 #ifndef MLIBC_BUILDING_RTDL
-int sys_ioctl(int fd, unsigned long request, void *arg) {
+int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
     mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
-    errno = ENOSYS;
-    return -1;
+    return ENOSYS;
 }
 #endif
 
@@ -130,13 +128,13 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
             qword_type = __QWORD_SEEK_END;
             break;
         default:
-            return -1;
+            return EINVAL;
     }
     asm volatile ("syscall" : "=a"(res)
             : "a"(8), "D"(fd), "S"(offset), "d"(qword_type)
             : "rcx", "r11");
     if(res < 0)
-        return -1;
+        return -1; // TODO: Properly report error.
     *new_offset = res;
     return 0;
 }
@@ -150,7 +148,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags,
             : "a"(6), "D"(hint), "S"(size_in_pages)
             : "rcx", "r11");
     if(!res)
-        return -1;
+        return -1; // TODO: Properly report error.
     *window = res;
     return 0;
 }
@@ -168,7 +166,7 @@ int sys_fstat(int fd, struct stat *statbuf) {
             : "a"(9), "D"(fd), "S"(statbuf)
             : "rcx", "r11");
     if(res < 0)
-        return -1;
+        return -1; // TODO: Properly report error.
     return 0;
 }
 #endif
@@ -180,7 +178,7 @@ int sys_rename(const char *path, const char *new_path) STUB_ONLY
 #ifndef MLIBC_BUILDING_RTDL
 int sys_sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict) {
     mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
-    return -1;
+    return ENOSYS;
 }
 #endif
 
@@ -196,20 +194,19 @@ int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_re
 int sys_access(const char *path, int mode) STUB_ONLY
 int sys_dup(int fd, int flags, int *newfd) STUB_ONLY
 int sys_dup2(int fd, int flags, int newfd) STUB_ONLY
-int sys_isatty(int fd, int *ptr) {
+int sys_isatty(int fd) {
     mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
-    *ptr = 1;
     return 0;
 }
 int sys_ttyname(int fd, char *buf, size_t size) STUB_ONLY
 int sys_stat(const char *path, struct stat *statbuf) {
     int fd;
     if (sys_open(path, 0/*O_RDONLY*/, &fd) < 0)
-        return -1;
+        return -1; // TODO: Properly report error.
     int ret = sys_fstat(fd, statbuf);
     if (ret < 0) {
         sys_close(fd);
-        return -1;
+        return -1; // TODO: Properly report error.
     }
     sys_close(fd);
     return ret;
@@ -219,8 +216,7 @@ int sys_chroot(const char *path) STUB_ONLY
 int sys_mkdir(const char *path) STUB_ONLY
 int sys_tcgetattr(int fd, struct termios *attr) {
     mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
-    errno = ENOSYS;
-    return -1;
+    return ENOSYS;
 }
 int sys_tcsetattr(int, int, const struct termios *attr) STUB_ONLY
 int sys_pipe(int *fds) STUB_ONLY
@@ -229,10 +225,9 @@ int sys_ftruncate(int fd, size_t size) STUB_ONLY
 int sys_fallocate(int fd, off_t offset, size_t size) STUB_ONLY
 int sys_unlink(const char *path) STUB_ONLY
 int sys_symlink(const char *target_path, const char *link_path) STUB_ONLY
-int sys_fcntl(int fd, int request, va_list args) {
+int sys_fcntl(int fd, int request, va_list args, int *result) {
     mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
-    errno = ENOSYS;
-    return -1;
+    return ENOSYS;
 }
 
 int sys_socket(int family, int type, int protocol, int *fd) STUB_ONLY
@@ -258,15 +253,15 @@ int sys_fork(pid_t *child) {
     *child = ret;
     return 0;
 }
-void sys_execve(const char *path, char *const argv[], char *const envp[]) STUB_ONLY
+int sys_execve(const char *path, char *const argv[], char *const envp[]) STUB_ONLY
 int sys_kill(int, int) STUB_ONLY
 int sys_waitpid(pid_t pid, int *status, int flags) {
     mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
-    return -1;
+    return ENOSYS;
 }
 int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
     mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
-    return -1;
+    return ENOSYS;
 }
 void sys_yield() STUB_ONLY
 

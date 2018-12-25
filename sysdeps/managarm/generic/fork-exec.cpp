@@ -135,7 +135,7 @@ int sys_fork(pid_t *child) {
 	return 0;
 }
 
-void sys_execve(const char *path, char *const argv[], char *const envp[]) {
+int sys_execve(const char *path, char *const argv[], char *const envp[]) {
 	frigg::String<MemoryAllocator> args_area(getAllocator());
 	for(auto it = argv; *it; ++it)
 		args_area += frigg::StringView{*it, strlen(*it) + 1};

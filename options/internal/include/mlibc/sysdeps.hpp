@@ -57,7 +57,9 @@ int sys_close(int fd);
 	int sys_access(const char *path, int mode);
 	int sys_dup(int fd, int flags, int *newfd);
 	int sys_dup2(int fd, int flags, int newfd);
-	int sys_isatty(int fd, int *ptr);
+	// In contrast to the isatty() library function, the sysdep function uses return value
+	// zero (and not one) to indicate that the file is a terminal.
+	int sys_isatty(int fd);
 	int sys_stat(const char *path, struct stat *statbuf);
 	int sys_lstat(const char *path, struct stat *statbuf);
 	int sys_fstat(int fd, struct stat *statbuf);
@@ -77,7 +79,7 @@ int sys_close(int fd);
 	void sys_yield();
 	int sys_sleep(time_t *secs, long *nanos);
 	int sys_fork(pid_t *child);
-	void sys_execve(const char *path, char *const argv[], char *const envp[]);
+	int sys_execve(const char *path, char *const argv[], char *const envp[]);
 	int sys_timerfd_create(int flags, int *fd);
 	int sys_timerfd_settime(int fd, int flags,
 			const struct itimerspec *value);
@@ -86,7 +88,7 @@ int sys_close(int fd);
 	int sys_mkdir(const char *path);
 	int sys_symlink(const char *target_path, const char *link_path);
 	int sys_rename(const char *path, const char *new_path);
-	int sys_fcntl(int fd, int request, va_list args);
+	int sys_fcntl(int fd, int request, va_list args, int *result);
 	int sys_ttyname(int fd, char *buf, size_t size);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 
@@ -106,9 +108,9 @@ int sys_vm_unmap(void *pointer, size_t size);
 	int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events);
 	int sys_epoll_create(int flags, int *fd);
 	int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev);
-	int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout);
+	int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout, int *raised);
 	int sys_inotify_create(int flags, int *fd);
-	int sys_ioctl(int fd, unsigned long request, void *arg);
+	int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 	int sys_getsockopt(int fd, int layer, int number,
 			void *__restrict buffer, socklen_t *__restrict size);
 	int sys_setsockopt(int fd, int layer, int number,

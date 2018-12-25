@@ -120,8 +120,7 @@ int sys_mkdir(const char *path) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
-		errno = EEXIST;
-		return -1;
+		return EEXIST;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
@@ -199,8 +198,7 @@ int sys_rename(const char *path, const char *new_path) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		errno = ENOENT;
-		return -1;
+		return ENOENT;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
@@ -254,17 +252,19 @@ HelHandle __raw_map(int fd) {
 
 namespace mlibc {
 
-int sys_fcntl(int fd, int request, va_list args) {
+int sys_fcntl(int fd, int request, va_list args, int *result) {
 	if(request == F_DUPFD) {
 		int newfd;
-		if(sys_dup(fd, 0, &newfd))
-			return -1;
-		return newfd;
+		if(int e = sys_dup(fd, 0, &newfd); e)
+			return e;
+		*result = newfd;
+		return 0;
 	}else if(request == F_DUPFD_CLOEXEC) {
 		int newfd;
-		if(sys_dup(fd, __MLIBC_O_CLOEXEC, &newfd))
-			return -1;
-		return newfd;
+		if(int e = sys_dup(fd, __MLIBC_O_CLOEXEC, &newfd); e)
+			return e;
+		*result = newfd;
+		return 0;
 	}else if(request == F_GETFD) {
 		HelAction actions[3];
 		globalQueue.trim();
@@ -298,23 +298,22 @@ int sys_fcntl(int fd, int request, va_list args) {
 		managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return resp.flags();
+		*result = resp.flags();
+		return 0;
 	}else if(request == F_SETFD) {
 		mlibc::infoLogger() << "\e[31mmlibc: fcntl(F_SETFD) is not implemented correctly"
 				<< "\e[39m" << frg::endlog;
+		*result = 0;
 		return 0;
 	}else{
 		mlibc::infoLogger() << "\e[31mmlibc: Unexpected fcntl() request: "
 				<< request << "\e[39m" << frg::endlog;
-		errno = EINVAL;
-		return -1;
+		return EINVAL;
 	}
 }
 
 int sys_open_dir(const char *path, int *handle) {
-	if((*handle = open(path, 0)) == -1)
-		return -1;
-	return 0;
+	return sys_open(path, 0, handle);
 }
 
 int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) {
@@ -399,8 +398,7 @@ int sys_ttyname(int fd, char *buf, size_t size) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() ==  managarm::posix::Errors::BAD_FD) {
-		errno = ENOTTY;
-		return -1;
+		return ENOTTY;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		__ensure(size >= resp.path().size() + 1);
@@ -530,14 +528,20 @@ int sys_vm_unmap(void *pointer, size_t size) {
 }
 
 int sys_tcgetattr(int fd, struct termios *attr) {
-	return sys_ioctl(fd, TCGETS, attr);
+	int result;
+	if(int e = sys_ioctl(fd, TCGETS, attr, &result); e)
+		return e;
+	return 0;
 }
 
 int sys_tcsetattr(int fd, int when, const struct termios *attr) {
 	if(when != TCSANOW)
 		mlibc::infoLogger() << "\e[35mmlibc: tcsetattr() when argument ignored\e[39m"
 				<< frg::endlog;
-	return sys_ioctl(fd, TCSETS, const_cast<struct termios *>(attr));
+	int result;
+	if(int e = sys_ioctl(fd, TCSETS, const_cast<struct termios *>(attr), &result); e)
+		return e;
+	return 0;
 }
 
 int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
@@ -794,8 +798,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	
 	if(resp.error() == managarm::posix::Errors::WOULD_BLOCK) {
-		errno = EAGAIN;
-		return -1;
+		return EAGAIN;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		HEL_CHECK(recv_addr->error);
@@ -971,7 +974,7 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 	return 0;
 }
 
-int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
+int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout, int *raised) {
 	__ensure(timeout >= 0 || timeout == -1); // TODO: Report errors correctly.
 
 	HelAction actions[4];
@@ -1015,7 +1018,8 @@ int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	__ensure(!(recv_data->length % sizeof(struct epoll_event)));
-	return recv_data->length / sizeof(struct epoll_event);
+	*raised = recv_data->length / sizeof(struct epoll_event);
+	return 0;
 }
 
 int sys_timerfd_create(int flags, int *fd) {
@@ -1187,7 +1191,7 @@ int sys_inotify_create(int flags, int *fd) {
 	return 0;
 }
 
-int sys_ioctl(int fd, unsigned long request, void *arg) {
+int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 //	mlibc::infoLogger() << "mlibc: ioctl with"
 //			<< " type: 0x" << frg::hex_fmt(_IOC_TYPE(request))
 //			<< ", number: 0x" << frg::hex_fmt(_IOC_NR(request))
@@ -1248,7 +1252,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		param->date_len = resp.drm_driver_date().size();
 		param->desc_len = resp.drm_driver_desc().size();
 		
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_GET_CAP: {
 		auto param = reinterpret_cast<drm_get_cap*>(arg);
@@ -1285,13 +1290,13 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-			errno = EINVAL;
-			return -1;
+			return EINVAL;
 		}else{
 			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 			
 			param->value = resp.drm_value();
-			return resp.result();
+			*result = resp.result();
+			return 0;
 		}
 	}
 	case DRM_IOCTL_SET_CLIENT_CAP: {
@@ -1299,20 +1304,21 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_SET_CLIENT_CAP("
 				<< param->capability << ") is not implemented correctly\e[39m"
 				<< frg::endlog;
-		errno = EINVAL;
-		return -1;
+		return EINVAL;
 	}
 	case DRM_IOCTL_GET_MAGIC: {
 		auto param = reinterpret_cast<drm_auth *>(arg);
 		mlibc::infoLogger() << "\e[31mmlibc: DRM_IOCTL_GET_MAGIC is not implemented correctly\e[39m"
 				<< frg::endlog;
 		param->magic = 1;
+		*result = 0;
 		return 0;
 	}
 	case DRM_IOCTL_AUTH_MAGIC: {
 		auto param = reinterpret_cast<drm_auth *>(arg);
 		mlibc::infoLogger() << "\e[31mmlibc: DRM_IOCTL_AUTH_MAGIC is not implemented correctly\e[39m"
 				<< frg::endlog;
+		*result = 0;
 		return 0;
 	}
 	case DRM_IOCTL_MODE_GETRESOURCES: {
@@ -1387,7 +1393,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		param->min_height = resp.drm_min_height();
 		param->max_height = resp.drm_max_height();
 		
-		return resp.result();	
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_MODE_GETCONNECTOR: {
 		auto param = reinterpret_cast<drm_mode_get_connector*>(arg);
@@ -1457,13 +1464,13 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		param->subpixel = resp.drm_subpixel();
 		param->pad = 0;
 		
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_MODE_GETPLANERESOURCES: {
 		mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_MODE_GETPLANERESOURCES"
 				" is not implemented correctly\e[39m" << frg::endlog;
-		errno = EINVAL;
-		return -1;
+		return EINVAL;
 	}
 	case DRM_IOCTL_MODE_GETENCODER: {
 		auto param = reinterpret_cast<drm_mode_get_encoder*>(arg);
@@ -1506,7 +1513,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		param->possible_crtcs = resp.drm_possible_crtcs();
 		param->possible_clones = resp.drm_possible_clones();
 		
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}	
 	case DRM_IOCTL_MODE_CREATE_DUMB: {
 		auto param = reinterpret_cast<drm_mode_create_dumb*>(arg);
@@ -1552,7 +1560,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		param->pitch = resp.drm_pitch();
 		param->size = resp.drm_size();
 	
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_MODE_ADDFB: {
 		auto param = reinterpret_cast<drm_mode_fb_cmd *>(arg);
@@ -1598,7 +1607,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 
 		param->fb_id = resp.drm_fb_id();
 	
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_MODE_ADDFB2: {
 		auto param = reinterpret_cast<drm_mode_fb_cmd2 *>(arg);
@@ -1653,7 +1663,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 
 		param->fb_id = resp.drm_fb_id();
 	
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_MODE_RMFB: {
 		auto param = reinterpret_cast<int *>(arg);
@@ -1692,7 +1703,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 	
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_MODE_MAP_DUMB: {
 		auto param = reinterpret_cast<drm_mode_map_dumb*>(arg);
@@ -1733,7 +1745,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 	
 		param->offset = resp.drm_offset();
 	
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_MODE_GETCRTC: {
 		auto param = reinterpret_cast<drm_mode_crtc*>(arg);
@@ -1783,7 +1796,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		param->gamma_size = resp.drm_gamma_size();
 		param->mode_valid = resp.drm_mode_valid();
 
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_MODE_SETCRTC: {
 		auto param = reinterpret_cast<drm_mode_crtc*>(arg);
@@ -1836,13 +1850,15 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_MODE_OBJ_GETPROPERTIES: {
 		auto param = reinterpret_cast<drm_mode_obj_get_properties *>(arg);
 		mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_MODE_OBJ_GETPROPERTIES"
 				" is not implemented correctly\e[39m" << frg::endlog;
 		param->count_props = 0;
+		*result = 0;
 		return 0;
 	}
 	case DRM_IOCTL_MODE_PAGE_FLIP: {
@@ -1885,7 +1901,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_MODE_DIRTYFB: {
 		auto param = reinterpret_cast<drm_mode_fb_dirty_cmd*>(arg);
@@ -1935,7 +1952,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 	
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_MODE_CURSOR: {
 		static bool infoPrinted = false;
@@ -1948,8 +1966,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		if(param->handle)
 			mlibc::infoLogger() << "mlibc: DRM_IOCTL_MODE_CURSOR to ("
 					<< param->x << ", " << param->y << ")" << frg::endlog;
-		errno = ENXIO;
-		return -1;
+		return ENXIO;
 	}
 	case TCGETS: {
 		auto param = reinterpret_cast<struct termios *>(arg);
@@ -1992,7 +2009,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		__ensure(recv_attrs->length == sizeof(struct termios));
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	case TCSETS: {
 		auto param = reinterpret_cast<struct termios *>(arg);
@@ -2034,17 +2052,18 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	case TIOCGWINSZ: {
 		mlibc::infoLogger() << "\e[31mmlibc: TIOCGWINSZ is not implemented correctly\e[39m"
 				<< frg::endlog;
-		return -1;
+		return EINVAL;
 	}
 	case TIOCSWINSZ: {
 		mlibc::infoLogger() << "\e[31mmlibc: TIOCSWINSZ is not implemented correctly\e[39m"
 				<< frg::endlog;
-		return -1;
+		return EINVAL;
 	}
 	case TIOCGPTN: {
 		auto param = reinterpret_cast<int *>(arg);
@@ -2081,7 +2100,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*param = resp.pts_index();
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	} // end of switch()
 
@@ -2089,54 +2109,63 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 	if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGVERSION)) {
 		*reinterpret_cast<int *>(arg) = 0x010001; // should be EV_VERSION
+		*result = 0;
 		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGID)) {
 		memset(arg, 0, sizeof(struct input_id));
+		*result = 0;
 		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGNAME(0))) {
 		const char *s = "Managarm generic evdev";
 		auto chunk = frg::min(_IOC_SIZE(request), strlen(s) + 1);
 		memcpy(arg, s, chunk);
-		return chunk;
+		*result = chunk;
+		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGPHYS(0))) {
 		// Returns the sysfs path of the device.
 		const char *s = "input0";
 		auto chunk = frg::min(_IOC_SIZE(request), strlen(s) + 1);
 		memcpy(arg, s, chunk);
-		return chunk;
+		*result = chunk;
+		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGUNIQ(0))) {
 		// Returns a unique ID for the device.
 		const char *s = "0";
 		auto chunk = frg::min(_IOC_SIZE(request), strlen(s) + 1);
 		memcpy(arg, s, chunk);
-		return chunk;
+		*result = chunk;
+		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGPROP(0))) {
 		// Returns a bitmask of properties of the device.
 		auto size = _IOC_SIZE(request);
 		memset(arg, 0, size);
-		return size;
+		*result = size;
+		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGKEY(0))) {
 		// Returns the current key state.
 		auto size = _IOC_SIZE(request);
 		memset(arg, 0, size);
-		return size;
+		*result = size;
+		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGLED(0))) {
 		// Returns the current LED state.
 		auto size = _IOC_SIZE(request);
 		memset(arg, 0, size);
-		return size;
+		*result = size;
+		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGSW(0))) {
 		auto size = _IOC_SIZE(request);
 		memset(arg, 0, size);
-		return size;
+		*result = size;
+		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) >= _IOC_NR(EVIOCGBIT(0, 0))
 			&& _IOC_NR(request) <= _IOC_NR(EVIOCGBIT(EV_MAX, 0))) {
@@ -2188,7 +2217,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 			managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 			resp.ParseFromArray(recv_resp->data, recv_resp->length);
 			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-			return recv_data->length;
+			*result = recv_data->length;
+			return 0;
 		}else{
 			// TODO: Check with the Linux ABI if we have to do this.
 			memset(arg, 0, _IOC_SIZE(request));
@@ -2233,7 +2263,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 			managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 			resp.ParseFromArray(recv_resp->data, recv_resp->length);
 			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-			return recv_data->length;
+			*result = recv_data->length;
+			return 0;
 		}
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOSCLOCKID)) {
@@ -2271,7 +2302,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) >= _IOC_NR(EVIOCGABS(0))
 			&& _IOC_NR(request) <= _IOC_NR(EVIOCGABS(ABS_MAX))) {
@@ -2318,7 +2350,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg) {
 		param->flat = resp.input_flat();
 		param->resolution = resp.input_resolution();
 
-		return resp.result();
+		*result = resp.result();
+		return 0;
 	}
 	
 	mlibc::infoLogger() << "mlibc: Unexpected ioctl with"
@@ -2375,11 +2408,9 @@ int sys_open(const char *path, int flags, int *fd) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		errno = ENOENT;
-		return -1;
+		return ENOENT;
 	}else if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
-		errno = EEXIST;
-		return -1;
+		return EEXIST;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*fd = resp.fd();
@@ -2434,15 +2465,12 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 /*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
-		errno = EBADF;
-		return -1;
+		return EBADF;
 	}else*/
 	if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		errno = EINVAL;
-		return -1;
+		return EINVAL;
 	}else if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
-		errno = EAGAIN;
-		return -1;
+		return EAGAIN;
 	}else if(resp.error() == managarm::fs::Errors::END_OF_FILE) {
 		*bytes_read = 0;
 		return 0;
@@ -2504,8 +2532,7 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 
 	// TODO: implement NO_SUCH_FD
 /*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
-		errno = EBADF;
-		return -1;
+		return EBADF;
 	}else*/ if(resp.error() == managarm::fs::Errors::SUCCESS) {
 		//FIXME: handle partial writes
 		*bytes_written = size;
@@ -2562,8 +2589,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::fs::Errors::SEEK_ON_PIPE) {
-		errno = ESPIPE;
-		return -1;
+		return ESPIPE;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*new_offset = resp.offset();
@@ -2607,8 +2633,7 @@ int sys_close(int fd) {
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	
 	if(resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
-		errno = EBADF;		
-		return -1;
+		return EBADF;
 	}else if(resp.error() == managarm::posix::Errors::SUCCESS) {
 		return 0;
 	}else{
@@ -2732,8 +2757,7 @@ int sys_stat(const char *path, struct stat *result) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		errno = ENOENT;
-		return -1;
+		return ENOENT;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		memset(result, 0, sizeof(struct stat));
@@ -2802,8 +2826,7 @@ int sys_lstat(const char *path, struct stat *result) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		errno = ENOENT;
-		return -1;
+		return ENOENT;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		memset(result, 0, sizeof(struct stat));
@@ -2944,11 +2967,9 @@ int sys_readlink(const char *path, void *data, size_t max_size, ssize_t *length)
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		errno = ENOENT;
-		return -1;
+		return ENOENT;
 	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		errno = EINVAL;
-		return -1;
+		return EINVAL;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*length = recv_data->length;
@@ -3069,8 +3090,7 @@ int sys_unlink(const char *path) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		errno = ENOENT;
-		return -1;
+		return ENOENT;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
@@ -3111,15 +3131,14 @@ int sys_access(const char *path, int mode) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		errno = ENOENT;
-		return -1;
+		return ENOENT;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
 	}
 }
 
-int sys_isatty(int fd, int *ptr) {
+int sys_isatty(int fd) {
 	HelAction actions[3];
 	globalQueue.trim();
 
@@ -3152,12 +3171,9 @@ int sys_isatty(int fd, int *ptr) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() ==  managarm::posix::Errors::BAD_FD) {
-		errno = ENOTTY;
-		*ptr = 0;
-		return -1;
+		return ENOTTY;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		*ptr = 1;
 		return 0;
 	}
 }

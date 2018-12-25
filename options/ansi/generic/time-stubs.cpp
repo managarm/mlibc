@@ -1,5 +1,5 @@
 
-#include <bits/ensure.h>
+#include <errno.h>
 #include <byteswap.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -9,6 +9,7 @@
 #include <time.h>
 #include <wchar.h>
 
+#include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
@@ -211,8 +212,10 @@ int clock_getres(clockid_t, struct timespec *) {
 }
 
 int clock_gettime(clockid_t clock, struct timespec *time) {
-	if(mlibc::sys_clock_get(clock, &time->tv_sec, &time->tv_nsec))
+	if(int e = mlibc::sys_clock_get(clock, &time->tv_sec, &time->tv_nsec); e) {
+		errno = e;
 		return -1;
+	}
 	return 0;
 }
 
@@ -234,8 +237,10 @@ int utimes(const char *, const struct timeval[2]) {
 time_t time(time_t *out) {
 	time_t secs;
 	long nanos;
-	if(mlibc::sys_clock_get(CLOCK_REALTIME, &secs, &nanos))
+	if(int e = mlibc::sys_clock_get(CLOCK_REALTIME, &secs, &nanos); e) {
+		errno = e;
 		return (time_t)-1;
+	}
 	if(out)
 		*out = secs;
 	return secs;
@@ -382,6 +387,7 @@ struct tm *localtime_r(const time_t *gmt_time, struct tm *tm) {
 
 	time_t offset = 0;
 	bool dst;
+	// TODO: Set errno if the conversion fails.
 	if(unix_local_from_gmt(*gmt_time, &offset, &dst))
 		__ensure(!"Error parsing /etc/localtime");
 	time_t tz_time = *gmt_time + offset;

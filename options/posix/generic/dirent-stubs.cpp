@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <dirent.h>
 #include <unistd.h>
 
@@ -30,7 +31,8 @@ DIR *opendir(const char *path) {
 	dir->__ent_next = 0;
 	dir->__ent_limit = 0;
 
-	if(mlibc::sys_open_dir(path, &dir->__handle)) {
+	if(int e = mlibc::sys_open_dir(path, &dir->__handle); e) {
+		errno = e;
 		frg::destruct(getAllocator(), dir);
 		return nullptr;
 	}else{
@@ -40,7 +42,7 @@ DIR *opendir(const char *path) {
 struct dirent *readdir(DIR *dir) {
 	__ensure(dir->__ent_next <= dir->__ent_limit);
 	if(dir->__ent_next == dir->__ent_limit) {
-		if(mlibc::sys_read_entries(dir->__handle, dir->__ent_buffer, 2048, &dir->__ent_limit))
+		if(int e = mlibc::sys_read_entries(dir->__handle, dir->__ent_buffer, 2048, &dir->__ent_limit); e)
 			__ensure(!"mlibc::sys_read_entries() failed");
 		dir->__ent_next = 0;
 		if(!dir->__ent_limit)

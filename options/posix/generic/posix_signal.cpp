@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <signal.h>
 #include <bits/ensure.h>
 
@@ -40,20 +41,26 @@ int pthread_sigmask(int, const sigset_t *__restrict, sigset_t *__restrict) {
 }
 
 int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
-	if(mlibc::sys_sigprocmask(how, set, retrieve))
+	if(int e = mlibc::sys_sigprocmask(how, set, retrieve); e) {
+		errno = e;
 		return -1;
+	}
 	return 0;
 }
 
 int sigaction(int signum, const struct sigaction *__restrict act, struct sigaction *__restrict oldact) {
-	if(mlibc::sys_sigaction(signum, act, oldact))
+	if(int e = mlibc::sys_sigaction(signum, act, oldact); e) {
+		errno = e;
 		return -1;
+	}
 	return 0;
 }
 
 int kill(pid_t pid, int number) {
-	if(mlibc::sys_kill(pid, number))
+	if(int e = mlibc::sys_kill(pid, number); e) {
+		errno = e;
 		return -1;
+	}
 	return 0;
 }
 

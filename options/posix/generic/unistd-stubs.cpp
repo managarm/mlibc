@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <stdarg.h>
 #include <bits/ensure.h>
 #include <string.h>
@@ -104,8 +105,10 @@ int fsync(int) {
 	__builtin_unreachable();
 }
 int ftruncate(int fd, off_t size) {
-	if(mlibc::sys_ftruncate(fd, size))
+	if(int e = mlibc::sys_ftruncate(fd, size); e) {
+		errno = e;
 		return -1;
+	}
 	return 0;
 }
 char *getcwd(char *, size_t) {
@@ -181,8 +184,10 @@ int pause(void) {
 	__builtin_unreachable();
 }
 int pipe(int *fds) {
-	if(mlibc::sys_pipe(fds))
+	if(int e = mlibc::sys_pipe(fds); e) {
+		errno = e;
 		return -1;
+	}
 	return 0;
 }
 ssize_t pread(int, void *, size_t, off_t) {
@@ -195,8 +200,10 @@ ssize_t pwrite(int, const void *, size_t, off_t) {
 }
 ssize_t readlink(const char *__restrict path, char *__restrict buffer, size_t max_size) {
 	ssize_t length;
-	if(mlibc::sys_readlink(path, buffer, max_size, &length))
+	if(int e = mlibc::sys_readlink(path, buffer, max_size, &length); e) {
+		errno = e;
 		return -1;
+	}
 	return length;
 }
 ssize_t readlinkat(int, const char *__restrict, char *__restrict, size_t) {
@@ -247,8 +254,10 @@ void swab(const void *__restrict, void *__restrict, ssize_t) {
 	__ensure(!"Not implemented");
 }
 int symlink(const char *target_path, const char *link_path) {
-	if(mlibc::sys_symlink(target_path, link_path))
+	if(int e = mlibc::sys_symlink(target_path, link_path); e) {
+		errno = e;
 		return -1;
+	}
 	return 0;
 }
 int symlinkat(const char *, int, const char *) {
@@ -283,8 +292,10 @@ int truncate(const char *, off_t) {
 char *ttyname(int fd) {
 	const size_t size = 128;
 	static thread_local char buf[size];
-	if(mlibc::sys_ttyname(fd, buf, size))
+	if(int e = mlibc::sys_ttyname(fd, buf, size); e) {
+		errno = e;
 		return nullptr;
+	}
 	return buf;
 }
 
@@ -293,8 +304,10 @@ int ttyname_r(int, char *, size_t) {
 	__builtin_unreachable();
 }
 int unlink(const char *path) {
-	if(mlibc::sys_unlink(path))
+	if(int e = mlibc::sys_unlink(path); e) {
+		errno = e;
 		return -1;
+	}
 	return 0;
 }
 int unlinkat(int, const char *, int) {
@@ -322,22 +335,28 @@ pid_t gettid(void) {
 
 ssize_t write(int fd, const void *buf, size_t count) {
 	ssize_t bytes_written;
-	if(mlibc::sys_write(fd, buf, count, &bytes_written))
+	if(int e = mlibc::sys_write(fd, buf, count, &bytes_written); e) {
+		errno = e;
 		return (ssize_t)-1;
+	}
 	return bytes_written;
 }
 
 ssize_t read(int fd, void *buf, size_t count) {
 	ssize_t bytes_read;
-	if(mlibc::sys_read(fd, buf, count, &bytes_read))
+	if(int e = mlibc::sys_read(fd, buf, count, &bytes_read); e) {
+		errno = e;
 		return (ssize_t)-1;
+	}
 	return bytes_read;
 }
 
 off_t lseek(int fd, off_t offset, int whence) {
 	off_t new_offset;
-	if(mlibc::sys_seek(fd, offset, whence, &new_offset))
+	if(int e = mlibc::sys_seek(fd, offset, whence, &new_offset); e) {
+		errno = e;
 		return (off_t)-1;
+	}
 	return new_offset;
 }
 
@@ -361,26 +380,34 @@ int usleep(useconds_t usecs) {
 
 int dup(int fd) {
 	int newfd;
-	if(mlibc::sys_dup(fd, 0, &newfd))
+	if(int e = mlibc::sys_dup(fd, 0, &newfd); e) {
+		errno = e;
 		return -1;
+	}
 	return newfd;
 }
 
 int dup2(int fd, int newfd) {
-	if(mlibc::sys_dup2(fd, 0, newfd))
+	if(int e = mlibc::sys_dup2(fd, 0, newfd); e) {
+		errno = e;
 		return -1;
+	}
 	return newfd;
 }
 
 pid_t fork(void) {
 	pid_t child;
-	if(mlibc::sys_fork(&child))
+	if(int e = mlibc::sys_fork(&child); e) {
+		errno = e;
 		return -1;
+	}
 	return child;
 }
 
 int execve(const char *path, char *const argv[], char *const envp[]) {
-	mlibc::sys_execve(path, argv, envp);
+	int e = mlibc::sys_execve(path, argv, envp);
+	__ensure(e && "sys_execve() is expected to fail if it returns");
+	errno = e;
 	return -1;
 }
 
@@ -411,11 +438,11 @@ int access(const char *path, int mode) {
 }
 
 int isatty(int fd) {
-	int val;
-	if(mlibc::sys_isatty(fd, &val)) {
+	if(int e = mlibc::sys_isatty(fd); e) {
+		errno = e;
 		return 0;
 	}
-	return val;
+	return 1;
 }
 
 int pipe2(int *pipefd, int flags) {
@@ -424,8 +451,10 @@ int pipe2(int *pipefd, int flags) {
 }
 
 int chroot(const char *ptr) {
-	if(mlibc::sys_chroot(ptr))
+	if(int e = mlibc::sys_chroot(ptr); e) {
+		errno = e;
 		return -1;
+	}
 	return 0;
 }
 

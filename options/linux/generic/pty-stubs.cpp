@@ -29,16 +29,20 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 	// FIXME: Close the master FD if the slave open fails.
 
 	int ptmx_fd;
-	if(mlibc::sys_open("/dev/ptmx", O_RDWR | O_NOCTTY, &ptmx_fd))
+	if(int e = mlibc::sys_open("/dev/ptmx", O_RDWR | O_NOCTTY, &ptmx_fd); e) {
+		errno = e;
 		return -1;
+	}
 
 	char spath[32];
 	if(ptsname_r(ptmx_fd, spath, 32))
 		return -1;
 	
 	int pts_fd;
-	if(mlibc::sys_open(spath, O_RDWR | O_NOCTTY, &pts_fd))
+	if(int e = mlibc::sys_open(spath, O_RDWR | O_NOCTTY, &pts_fd); e) {
+		errno = e;
 		return -1;
+	}
 	
 	*mfd = ptmx_fd;
 	*sfd = pts_fd;
@@ -47,14 +51,24 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 
 int login_tty(int fd) {
 	// TODO: Perform an ioctl() to set the controlling terminal.
-
-	if(mlibc::sys_dup2(fd, 0, STDIN_FILENO)
-			|| mlibc::sys_dup2(fd, 0, STDOUT_FILENO)
-			|| mlibc::sys_dup2(fd, 0, STDERR_FILENO))
+	int e;
+	if(e = mlibc::sys_dup2(fd, 0, STDIN_FILENO)) {
+		errno = e;
 		return -1;
-
-	if(mlibc::sys_close(fd))
+	}
+	if(e = mlibc::sys_dup2(fd, 0, STDOUT_FILENO)) {
+		errno = e;
 		return -1;
+	}
+	if(e = mlibc::sys_dup2(fd, 0, STDERR_FILENO)) {
+		errno = e;
+		return -1;
+	}
+
+	if(e = mlibc::sys_close(fd); e) {
+		errno = e;
+		return -1;
+	}
 	return 0;
 }
 
@@ -64,15 +78,19 @@ int forkpty(int *mfd, char *name, const struct termios *ios, const struct winsiz
 		return -1;
 
 	pid_t child;
-	if(mlibc::sys_fork(&child))
+	if(int e = mlibc::sys_fork(&child); e) {
+		errno = e;
 		return -1;
+	}
 
 	if(!child) {
 		if(login_tty(sfd))
 			mlibc::panicLogger() << "mlibc: TTY login fail in forkpty() child" << frg::endlog;
 	}else{
-		if(mlibc::sys_close(sfd))
+		if(int e = mlibc::sys_close(sfd); e) {
+			errno = e;
 			return -1;
+		}
 	}
 
 	return child;

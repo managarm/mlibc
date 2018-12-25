@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -152,8 +153,10 @@ int remove(const char *filename) {
 	__builtin_unreachable();
 }
 int rename(const char *path, const char *new_path) {
-	if(mlibc::sys_rename(path, new_path))
+	if(int e = mlibc::sys_rename(path, new_path); e) {
+		errno = e;
 		return -1;
+	}
 	return 0;
 }
 int renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {

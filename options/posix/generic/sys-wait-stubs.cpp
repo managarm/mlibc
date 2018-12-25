@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <sys/wait.h>
 #include <bits/ensure.h>
 
@@ -15,8 +16,10 @@ int waitid(idtype_t idtype, id_t id, siginfo_t *siginfo, int flags) {
 }
 
 pid_t waitpid(pid_t pid, int *status, int flags) {
-	if(mlibc::sys_waitpid(pid, status, flags))
+	if(int e = mlibc::sys_waitpid(pid, status, flags); e) {
+		errno = e;
 		return -1;
+	}
 	return 0;
 }
 
