@@ -30,11 +30,13 @@ struct utf8_charcode {
 					_progress = 3;
 				}else{
 					// If the highest two bits are 0b10, this is the second (or later) unit.
-					__ensure(!((uc & 0b1100'0000) == 0b1000'0000));
 					// Units with highest five bits = 0b11111 do not occur in valid UTF-8.
-					__ensure(!"Unit cannot occur in valid UTF-8 character");
+					__ensure((uc & 0b1100'0000) == 0b1000'0000
+							|| (uc & 0b1111'1000) == 0b1111'1000);
+					return charcode_error::illegal_units;
 				}
 			}else{
+				// TODO: Return an error.
 				__ensure((uc & 0b1100'0000) == 0b1000'0000);
 				_cpoint = (_cpoint << 6) | (uc & 0x3F);
 				--_progress;
