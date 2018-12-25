@@ -14,28 +14,29 @@ struct utf8_charcode {
 		auto cpoint() { return _cpoint; }
 
 		charcode_error operator() (code_seq<const char> &seq) {
+			auto uc = static_cast<unsigned char>(*seq.it);
 			if(!_progress) {
-				if(!(*seq.it & 0b1000'0000)) {
+				if(!(uc & 0b1000'0000)) {
 					// ASCII-compatible.
-					_cpoint = *seq.it;
-				}else if((*seq.it & 0b1110'0000) == 0b1100'0000) {
-					_cpoint = *seq.it & 0b1'1111;
+					_cpoint = uc;
+				}else if((uc & 0b1110'0000) == 0b1100'0000) {
+					_cpoint = uc & 0b1'1111;
 					_progress = 1;
-				}else if((*seq.it & 0b1111'0000) == 0b1110'0000) {
-					_cpoint = *seq.it & 0b1111;
+				}else if((uc & 0b1111'0000) == 0b1110'0000) {
+					_cpoint = uc & 0b1111;
 					_progress = 2;
-				}else if((*seq.it & 0b1111'1000) == 0b1111'0000) {
-					_cpoint = *seq.it & 0b111;
+				}else if((uc & 0b1111'1000) == 0b1111'0000) {
+					_cpoint = uc & 0b111;
 					_progress = 3;
 				}else{
 					// If the highest two bits are 0b10, this is the second (or later) unit.
-					__ensure(!((*seq.it & 0b1100'0000) == 0b1000'0000));
+					__ensure(!((uc & 0b1100'0000) == 0b1000'0000));
 					// Units with highest five bits = 0b11111 do not occur in valid UTF-8.
 					__ensure(!"Unit cannot occur in valid UTF-8 character");
 				}
 			}else{
-				__ensure((*seq.it & 0b1100'0000) == 0b1000'0000);
-				_cpoint = (_cpoint << 6) | ((*seq.it) & 0x3F);
+				__ensure((uc & 0b1100'0000) == 0b1000'0000);
+				_cpoint = (_cpoint << 6) | (uc & 0x3F);
 				--_progress;
 			}
 			++seq.it;
