@@ -57,25 +57,25 @@ struct utf8_charcode {
 //   was decoded successfully.
 template<typename G>
 struct polymorphic_charcode_adapter : polymorphic_charcode {
-	charcode_error wdecode(code_seq<const char> &cus, code_seq<wchar_t> &cps,
+	charcode_error decode_wtranscode(code_seq<const char> &nseq, code_seq<wchar_t> &wseq,
 			__mlibc_mbstate &st) override {
 		__ensure(!st.__progress); // TODO: Update st with d.progress() and d.cpoint().
 
-		code_seq<const char> dcus = cus;
+		code_seq<const char> dnseq = nseq;
 		typename G::decode_state d;
 
-		while(dcus && cps) {
+		while(dnseq && wseq) {
 			// Consume the next code unit.
-			if(auto e = d(dcus); e != charcode_error::null)
+			if(auto e = d(dnseq); e != charcode_error::null)
 				return e;
 
 			// Produce a new code point.
 			if(!d.progress()) {
-				cus.it = dcus.it; // "Commit" consumed code units (as there was no decode error).
+				nseq.it = dnseq.it; // "Commit" consumed code units (as there was no decode error).
 				if(!d.cpoint()) // Stop on null characters.
 					return charcode_error::null;
-				*cps.it = d.cpoint();
-				++cps.it;
+				*wseq.it = d.cpoint();
+				++wseq.it;
 			}
 		}
 
@@ -84,20 +84,20 @@ struct polymorphic_charcode_adapter : polymorphic_charcode {
 		return charcode_error::null;
 	}
 
-	charcode_error wdecode_length(code_seq<const char> &cus,
+	charcode_error decode_wtranscode_length(code_seq<const char> &nseq,
 			__mlibc_mbstate &st) override {
 		__ensure(!st.__progress); // TODO: Update st with d.progress() and d.cpoint().
 
-		code_seq<const char> dcus = cus;
+		code_seq<const char> dnseq = nseq;
 		typename G::decode_state d;
 
-		while(dcus) {
+		while(dnseq) {
 			// Consume the next code unit.
-			if(auto e = d(dcus); e != charcode_error::null)
+			if(auto e = d(dnseq); e != charcode_error::null)
 				return e;
 
 			if(!d.progress()) {
-				cus.it = dcus.it; // "Commit" consumed code units (as there was no decode error).
+				nseq.it = dnseq.it; // "Commit" consumed code units (as there was no decode error).
 				if(!d.cpoint()) // Stop on null code points.
 					return charcode_error::null;
 			}

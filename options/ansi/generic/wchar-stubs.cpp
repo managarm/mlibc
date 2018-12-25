@@ -35,11 +35,11 @@ size_t mbrlen(const char *mbs, size_t mb_limit, mbstate_t *stp) {
 		return 0;
 	}
 
-	mlibc::code_seq<const char> cus{mbs, mbs + mb_limit};
-	mlibc::code_seq<wchar_t> cps{&wc, &wc + 1};
-	if(auto e = cc->wdecode(cus, cps, *stp); e != mlibc::charcode_error::null)
-		__ensure(!"decode() errors are not handled");
-	return cus.it - mbs;
+	mlibc::code_seq<const char> nseq{mbs, mbs + mb_limit};
+	mlibc::code_seq<wchar_t> wseq{&wc, &wc + 1};
+	if(auto e = cc->decode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null)
+		__ensure(!"decode_wtranscode() errors are not handled");
+	return nseq.it - mbs;
 }
 
 size_t mbrtowc(wchar_t *wcp, const char *mbs, size_t mb_limit, mbstate_t *stp) {
@@ -55,12 +55,12 @@ size_t mbrtowc(wchar_t *wcp, const char *mbs, size_t mb_limit, mbstate_t *stp) {
 	// TODO: Decode to a local wchar_t.
 	__ensure(wcp);
 
-	mlibc::code_seq<const char> cus{mbs, mbs + mb_limit};
-	mlibc::code_seq<wchar_t> cps{wcp, wcp + 1};
-	if(auto e = cc->wdecode(cus, cps, *stp); e != mlibc::charcode_error::null) {
-		__ensure(!"decode() errors are not handled");
+	mlibc::code_seq<const char> nseq{mbs, mbs + mb_limit};
+	mlibc::code_seq<wchar_t> wseq{wcp, wcp + 1};
+	if(auto e = cc->decode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
+		__ensure(!"decode_wtranscode() errors are not handled");
 	}else{
-		size_t n = cps.it - wcp;
+		size_t n = wseq.it - wcp;
 		if(!n) // Null-terminate resulting wide string.
 			*wcp = 0;
 		return n;

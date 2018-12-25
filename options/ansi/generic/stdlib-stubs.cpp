@@ -314,17 +314,17 @@ lldiv_t lldiv(long long number, long long denom) {
 int mblen(const char *mbs, size_t mb_limit) {
 	auto cc = mlibc::current_charcode();
 	wchar_t wc;
-	mlibc::code_seq<const char> cus{mbs, mbs + mb_limit};
-	mlibc::code_seq<wchar_t> cps{&wc, &wc + 1};
+	mlibc::code_seq<const char> nseq{mbs, mbs + mb_limit};
+	mlibc::code_seq<wchar_t> wseq{&wc, &wc + 1};
 
 	if(!mbs) {
 		mblen_state = __MLIBC_MBSTATE_INITIALIZER;
 		__ensure(!"TODO: Return whether encoding is stateful");
 	}
 
-	if(auto e = cc->wdecode(cus, cps, mblen_state); e != mlibc::charcode_error::null)
-		__ensure(!"decode() errors are not handled");
-	return cus.it - mbs;
+	if(auto e = cc->decode_wtranscode(nseq, wseq, mblen_state); e != mlibc::charcode_error::null)
+		__ensure(!"decode_wtranscode() errors are not handled");
+	return nseq.it - mbs;
 }
 int mbtowc(wchar_t *__restrict wc, const char *__restrict mbs, size_t max_size) {
 	mlibc::infoLogger() << "mlibc: Broken mbtowc() called" << frg::endlog;
@@ -343,20 +343,20 @@ int wctomb(char *mb_chr, wchar_t wc) {
 size_t mbstowcs(wchar_t *wcs, const char *mbs, size_t wc_limit) {
 	auto cc = mlibc::current_charcode();
 	__mlibc_mbstate st = __MLIBC_MBSTATE_INITIALIZER;
-	mlibc::code_seq<const char> cus{mbs, nullptr};
-	mlibc::code_seq<wchar_t> cps{wcs, wcs + wc_limit};
+	mlibc::code_seq<const char> nseq{mbs, nullptr};
+	mlibc::code_seq<wchar_t> wseq{wcs, wcs + wc_limit};
 
 	if(!wcs) {
 		size_t size;
-		if(auto e = cc->wdecode_length(cus, st); e != mlibc::charcode_error::null)
-			__ensure(!"decode() errors are not handled");
+		if(auto e = cc->decode_wtranscode_length(nseq, st); e != mlibc::charcode_error::null)
+			__ensure(!"decode_wtranscode() errors are not handled");
 		return size;
 	}
 
-	if(auto e = cc->wdecode(cus, cps, st); e != mlibc::charcode_error::null) {
-		__ensure(!"decode() errors are not handled");
+	if(auto e = cc->decode_wtranscode(nseq, wseq, st); e != mlibc::charcode_error::null) {
+		__ensure(!"decode_wtranscode() errors are not handled");
 	}else{
-		size_t n = cps.it - wcs;
+		size_t n = wseq.it - wcs;
 		if(n < wc_limit) // Null-terminate resulting wide string.
 			wcs[n] = 0;
 		return n;
