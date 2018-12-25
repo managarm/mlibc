@@ -3,49 +3,102 @@
 #include <wctype.h>
 
 #include <bits/ensure.h>
+#include <mlibc/charset.hpp>
 
-int isalnum(int c) {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
+int isalpha(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_alpha(cp);
 }
-int isalpha(int c) {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+
+int isdigit(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_digit(cp);
 }
-int isblank(int c) {
-	return c == ' ' || c == '\t';
+
+int isxdigit(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_xdigit(cp);
 }
-int iscntrl(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int isalnum(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_alnum(cp);
 }
-int isdigit(int c) {
-	// TODO: this really needs to be redesigned and support other charsets.
-	return c >= '0' && c <= '9';
+
+int ispunct(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_punct(cp);
 }
-int isgraph(int c) {
-	return c >= 32 && c < 127;
+
+int isgraph(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_graph(cp);
 }
-int islower(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int isblank(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_blank(cp);
 }
-int isprint(int c) {
-	return c >= 0x20 && c <= 0x7E;
+
+int isspace(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_space(cp);
 }
-int ispunct(int c) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int isprint(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_print(cp);
 }
-int isspace(int c) {
-	// TODO: this really needs to be redesigned and support other charsets.
-	return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
+
+int islower(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_lower(cp);
 }
-int isupper(int c) {
-	// TODO: this really needs to be redesigned and support other charsets.
-	return (c >= 'A' && c <= 'Z');
+
+int isupper(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_upper(cp);
 }
-int isxdigit(int c) {
-	// TODO: this really needs to be redesigned and support other charsets.
-	return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+
+int iscntrl(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::generic_is_control(cp);
 }
 
 int iswalnum(wint_t) MLIBC_STUB_BODY
@@ -61,18 +114,19 @@ int iswspace(wint_t) MLIBC_STUB_BODY
 int iswupper(wint_t) MLIBC_STUB_BODY
 int iswxdigit(wint_t) MLIBC_STUB_BODY
 
-
-int tolower(int c) {
-	// TODO: this really needs to be redesigned and support other charsets.
-	if(c >= 'A' && c <= 'Z')
-		return c - 'A' + 'a';
-	return c;
+int tolower(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return nc;
+	return mlibc::current_charset()->to_lower(cp);
 }
 
-int toupper(int c) {
-	// TODO: this really needs to be redesigned and support other charsets.
-	if(c >= 'a' && c <= 'z')
-		return c - 'a' + 'A';
-	return c;
+int toupper(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return nc;
+	return mlibc::current_charset()->to_upper(cp);
 }
 

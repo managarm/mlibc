@@ -2,10 +2,13 @@
 #include <bits/ensure.h>
 #include <frg/string.hpp>
 #include <mlibc/charcode.hpp>
+#include <mlibc/debug.hpp>
 
 namespace mlibc {
 
 struct utf8_charcode {
+	static constexpr bool preserves_7bit_units = true;
+
 	struct decode_state {
 		decode_state()
 		: _progress{0}, _cpoint{0} { }
@@ -60,6 +63,36 @@ struct utf8_charcode {
 //   was decoded successfully.
 template<typename G>
 struct polymorphic_charcode_adapter : polymorphic_charcode {
+	polymorphic_charcode_adapter()
+	: polymorphic_charcode{G::preserves_7bit_units} { }
+
+	charcode_error decode(code_seq<const char> &nseq, code_seq<codepoint> &wseq,
+			__mlibc_mbstate &st) override {
+		__ensure(!st.__progress); // TODO: Update st with d.progress() and d.cpoint().
+
+		code_seq<const char> dnseq = nseq;
+		typename G::decode_state d;
+
+		while(dnseq && wseq) {
+			// Consume the next code unit.
+			if(auto e = d(dnseq); e != charcode_error::null)
+				return e;
+
+			// Produce a new code point.
+			if(!d.progress()) {
+				nseq.it = dnseq.it; // "Commit" consumed code units (as there was no decode error).
+				if(!d.cpoint()) // Stop on null characters.
+					return charcode_error::null;
+				*wseq.it = d.cpoint();
+				++wseq.it;
+			}
+		}
+
+		if(d.progress())
+			return charcode_error::not_enough_units;
+		return charcode_error::null;
+	}
+
 	charcode_error decode_wtranscode(code_seq<const char> &nseq, code_seq<wchar_t> &wseq,
 			__mlibc_mbstate &st) override {
 		__ensure(!st.__progress); // TODO: Update st with d.progress() and d.cpoint().
