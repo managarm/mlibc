@@ -253,7 +253,15 @@ int sys_fork(pid_t *child) {
     *child = ret;
     return 0;
 }
-int sys_execve(const char *path, char *const argv[], char *const envp[]) STUB_ONLY
+int sys_execve(const char *path, char *const argv[], char *const envp[]) {
+    int ret;
+    asm volatile ("syscall"
+            : "=a"(ret)
+            : "a"(11), "D"(path), "S"(argv), "d"(envp)
+            : "rcx", "r11");
+    return ret;
+
+}
 int sys_kill(int, int) STUB_ONLY
 int sys_waitpid(pid_t pid, int *status, int flags) {
     mlibc::infoLogger() << "\e[31mmlibc: " << __func__ << " is a stub!" << frg::endlog;
