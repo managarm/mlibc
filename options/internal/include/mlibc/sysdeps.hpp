@@ -19,7 +19,7 @@
 #	include <time.h>
 #endif
 
-namespace mlibc {
+namespace mlibc [[gnu::visibility("hidden")]] {
 
 void sys_libc_log(const char *message);
 __attribute__ ((noreturn)) void sys_libc_panic();
@@ -126,6 +126,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 	int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);
 	int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 			socklen_t *actual_length);
+	[[gnu::weak]] int sys_gethostname(char *buffer, size_t bufsize);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 
 } //namespace mlibc

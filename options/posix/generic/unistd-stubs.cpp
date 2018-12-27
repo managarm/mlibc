@@ -124,10 +124,16 @@ long gethostid(void) {
 	__builtin_unreachable();
 }
 
-int gethostname(char *buffer, size_t max_length) {
-	const char *name = "cradle";
-	mlibc::infoLogger() << "mlibc: Broken gethostname() called!" << frg::endlog;
-	strncpy(buffer, name, max_length);
+int gethostname(char *buffer, size_t bufsize) {
+	if(!mlibc::sys_gethostname) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(auto e = mlibc::sys_gethostname(buffer, bufsize); e) {
+		errno = e;
+		return -1;
+	}
 	return 0;
 }
 
