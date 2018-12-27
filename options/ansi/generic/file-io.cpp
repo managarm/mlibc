@@ -570,9 +570,29 @@ int fflush(FILE *file_base) {
 	return fflush_unlocked(file_base);
 }
 
-int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t size) {
-	// TODO: Honor the buffering mode.
-	mlibc::infoLogger() << "\e[35mmlibc: setvbuf() is ignored\e[39m" << frg::endlog;
+int setvbuf(FILE *file_base, char *buffer, int mode, size_t size) {
+	// TODO: We could also honor the buffer, but for now use just set the mode.
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	if(mode == _IONBF) {
+		if(int e = file->update_bufmode(mlibc::buffer_mode::no_buffer); e) {
+			errno = e;
+			return -1;
+		}
+	}else if(mode == _IOLBF) {
+		if(int e = file->update_bufmode(mlibc::buffer_mode::line_buffer); e) {
+			errno = e;
+			return -1;
+		}
+	}else if(mode == _IOLBF) {
+		if(int e = file->update_bufmode(mlibc::buffer_mode::full_buffer); e) {
+			errno = e;
+			return -1;
+		}
+	}else{
+		errno = EINVAL;
+		return -1;
+	}
+
 	return 0;
 }
 
