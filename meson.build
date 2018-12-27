@@ -5,8 +5,22 @@ frigg_dep = subproject('frigg').get_variable('frigg_dep')
 
 c_compiler = meson.get_compiler('c')
 
-rtdl_include_dirs = [ ]
-libc_include_dirs = [ ]
+gccdir = run_command('/bin/sh', '-c',
+	''.join(c_compiler.cmd_array()) + ' -print-search-dirs | sed -n -e "s/install: \(.*\)/\\1/p"',
+	check: true).stdout().strip()
+
+rtdl_include_dirs = [
+	include_directories(gccdir + '/include'),
+	include_directories('options/internal/include'),
+]
+libc_include_dirs = [
+	include_directories(gccdir + '/include'),
+	include_directories('options/internal/include'),
+	include_directories('options/elf/include'),
+	include_directories('options/lsb/include'),
+	include_directories('options/glibc/include'),
+
+]
 rtdl_sources = [ ]
 libc_sources = [ ]
 
@@ -17,20 +31,49 @@ internal_conf = configuration_data()
 
 internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', true)
 
+#----------------------------------------------------------------------------------------
+# Configuration based on sysdeps.
+#----------------------------------------------------------------------------------------
+
 # Process sysdeps first, as sysdeps might want to disable unsupported options.
 if host_machine.system() == 'managarm'
+	# TODO: Adopt the include_directories() commands from the managarm meson.build.
+	rtdl_include_dirs += include_directories('sysdeps/managarm/include')
+	libc_include_dirs += include_directories('sysdeps/managarm/include')
 	subdir('sysdeps/managarm')
 elif host_machine.system() == 'qword'
+	disable_linux_option = true
+	internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', false)
+	rtdl_include_dirs += include_directories('sysdeps/qword/include')
+	libc_include_dirs += include_directories('sysdeps/qword/include')
 	subdir('sysdeps/qword')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
 
+#----------------------------------------------------------------------------------------
+# Configuration based on enabled options.
+#----------------------------------------------------------------------------------------
+
+if not disable_ansi_option
+	rtdl_include_dirs += include_directories('options/ansi/include')
+	libc_include_dirs += include_directories('options/ansi/include')
+endif
+
+if not disable_posix_option
+	rtdl_include_dirs += include_directories('options/posix/include')
+	libc_include_dirs += include_directories('options/posix/include')
+endif
+
+rtdl_include_dirs += include_directories('options/linux/include')
+libc_include_dirs += include_directories('options/linux/include')
+
+#----------------------------------------------------------------------------------------
+
 configure_file(input: 'internal-config.h.in',
 	output: 'internal-config.h',
 	configuration: internal_conf)
 
-internal_incl = include_directories('options/internal/include')
 internal_sources = [
 	'options/internal/generic/allocator.cpp',
 	'options/internal/generic/charcode.cpp',
@@ -80,10 +123,6 @@ subdir('options/lsb')
 subdir('options/glibc')
 subdir('options/linux')
 
-gccdir = run_command('/bin/sh', '-c',
-	''.join(c_compiler.cmd_array()) + ' -print-search-dirs | sed -n -e "s/install: \(.*\)/\\1/p"',
-	check: true).stdout().strip()
-
 add_project_arguments('-nostdinc', '-fno-builtin', language: ['c', 'cpp'])
 add_project_arguments('-std=c++17', language: 'cpp')
 add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
@@ -92,12 +131,7 @@ add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 ldso_lib = shared_library('ld', rtdl_sources,
 		name_prefix: '',
 		cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
-		include_directories: [
-			rtdl_include_dirs,
-			internal_incl,
-			ansi_incl,
-			include_directories(gccdir + '/include'),
-		],
+		include_directories: rtdl_include_dirs,
 		dependencies: [cxxshim_dep, frigg_dep],
 		install: true)
 
@@ -109,13 +143,7 @@ shared_library('c',
 			lsb_sources,
 		],
 		cpp_args: ['-DFRIGG_HAVE_LIBC'],
-		include_directories: [
-			libc_include_dirs,
-			internal_incl,
-			ansi_incl,
-			lsb_incl,
-			include_directories(gccdir + '/include'),
-		],
+		include_directories: libc_include_dirs,
 		dependencies: [cxxshim_dep, frigg_dep],
 		link_with: [ldso_lib],
 		install: true)

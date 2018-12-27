@@ -1,13 +1,8 @@
 
-disable_linux_option = true
-internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', false)
-
-rtdl_include_dirs += include_directories('include')
 rtdl_sources += files(
 	'generic/file.cpp'
 )
 
-libc_include_dirs += include_directories('include')
 libc_sources += files(
 	'generic/entry.cpp',
 	'generic/file.cpp'

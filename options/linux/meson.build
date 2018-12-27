@@ -1,7 +1,4 @@
 
-rtdl_include_dirs += include_directories('include')
-
-libc_include_dirs += include_directories('include')
 if disable_linux_option
 	subdir_done()
 endif

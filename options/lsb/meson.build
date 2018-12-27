@@ -1,5 +1,4 @@
 
-lsb_incl = include_directories('include')
 lsb_sources = files(
 	'generic/auxv.cpp',
 	'generic/dso_exit.cpp',

@@ -3,7 +3,6 @@ if disable_posix_option
 	subdir_done()
 endif
 
-ansi_incl = include_directories('include')
 ansi_sources = files(
 	'generic/stdlib-stubs.cpp',
 	'generic/assert-stubs.cpp',
