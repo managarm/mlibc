@@ -26,12 +26,19 @@ enum class stream_type {
 	pipe_like
 };
 
+enum class buffer_mode {
+	unknown,
+	no_buffer,
+	line_buffer,
+	full_buffer
+};
+
 // For pipe-like streams (seek returns ESPIPE), we need to make sure
 // that the buffer only ever contains all-dirty or all-clean data.
 struct abstract_file : __mlibc_file_base {
 public:
 	abstract_file()
-	: _type{stream_type::unknown} {
+	: _type{stream_type::unknown}, _bufmode{buffer_mode::unknown} {
 		__buffer_ptr = nullptr;
 		__buffer_size = 128;
 		__offset = 0;
@@ -59,7 +66,9 @@ public:
 	int read(char *buffer, size_t max_size, size_t *actual_size) {
 		__ensure(max_size);
 
-		if(globallyDisableBuffering)
+		if(_init_bufmode())
+			return -1;
+		if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer)
 			return io_read(buffer, max_size, actual_size);
 
 		// Ensure correct buffer type for pipe-like streams.
@@ -105,8 +114,13 @@ public:
 	int write(const char *buffer, size_t max_size, size_t *actual_size) {
 		__ensure(max_size);
 
-		if(globallyDisableBuffering)
+		if(_init_bufmode())
+			return -1;
+		if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer) {
+			// As we do not buffer, nothing can be dirty.
+			__ensure(__dirty_begin == __dirty_end);
 			return io_write(buffer, max_size, actual_size);
+		}
 
 		// Flush the buffer if necessary.
 		if(__offset == __buffer_size) {
@@ -125,11 +139,22 @@ public:
 					<< frg::endlog;
 		__io_mode = 1;
 
-		// Buffer data without performing I/O.
 		__ensure(__offset < __buffer_size);
-
-		_ensure_allocation();
 		auto chunk = frg::min(__buffer_size - __offset, max_size);
+
+		// Line-buffered streams perform I/O on full lines.
+		bool flush_line = false;
+		if(_bufmode == buffer_mode::line_buffer) {
+			auto nl = reinterpret_cast<char *>(memchr(buffer, chunk, '\n'));
+			if(nl) {
+				chunk = nl + 1 - buffer;
+				flush_line = true;
+			}
+		}
+		__ensure(chunk);
+
+		// Buffer data (without necessarily performing I/O).
+		_ensure_allocation();
 		memcpy(__buffer_ptr + __offset, buffer, chunk);
 
 		if(__dirty_begin != __dirty_end) {
@@ -142,6 +167,12 @@ public:
 		__valid_limit = frg::max(__offset + chunk, __valid_limit);
 		__offset += chunk;
 
+		// Flush line-buffered streams.
+		if(flush_line) {
+			if(_write_back())
+				return -1;
+		}
+
 		*actual_size = chunk;
 		return 0;
 	}
@@ -151,6 +182,13 @@ public:
 		__io_offset = 0;
 		__valid_limit = 0;
 		__dirty_end = __dirty_begin;
+	}
+
+	int update_bufmode(buffer_mode mode) {
+		if(_write_back())
+			return -1;
+		_bufmode = mode;
+		return 0;
 	}
 
 	// TODO: For input files, discard the buffer.
@@ -179,12 +217,13 @@ public:
 
 protected:
 	virtual int determine_type(stream_type *type) = 0;
+	virtual int determine_bufmode(buffer_mode *mode) = 0;
 	virtual int io_read(char *buffer, size_t max_size, size_t *actual_size) = 0;
 	virtual int io_write(const char *buffer, size_t max_size, size_t *actual_size) = 0;
 	virtual int io_seek(off_t offset, int whence) = 0;
 
 private:
-	int _update_type() {
+	int _init_type() {
 		if(_type != stream_type::unknown)
 			return 0;
 
@@ -194,8 +233,18 @@ private:
 		return 0;
 	}
 
+	int _init_bufmode() {
+		if(_bufmode != buffer_mode::unknown)
+			return 0;
+
+		if(determine_bufmode(&_bufmode))
+			return -1;
+		__ensure(_bufmode != buffer_mode::unknown);
+		return 0;
+	}
+
 	int _write_back() {
-		if(int e = _update_type(); e)
+		if(int e = _init_type(); e)
 			return e;
 
 		if(__dirty_begin == __dirty_end)
@@ -225,7 +274,7 @@ private:
 	}
 
 	int _reset() {
-		if(int e = _update_type(); e)
+		if(int e = _init_type(); e)
 			return e;
 
 		// For pipe-like files, we must not forget already read data.
@@ -253,6 +302,7 @@ private:
 	// As we might construct FILE objects for FDs that are not actually
 	// open (e.g. for std{in,out,err}), we defer the type determination and cache the result.
 	stream_type _type;
+	buffer_mode _bufmode;
 };
 
 struct fd_file : abstract_file {
@@ -281,6 +331,20 @@ protected:
 			return 0;
 		}else{
 			return e;
+		}
+	}
+
+	int determine_bufmode(buffer_mode *mode) override {
+		if(int e = mlibc::sys_isatty(_fd); !e) {
+			*mode = buffer_mode::line_buffer;
+			return 0;
+		}else if(e == ENOTTY) {
+			*mode = buffer_mode::full_buffer;
+			return 0;
+		}else{
+			mlibc::infoLogger() << "mlibc: sys_isatty() failed while determining whether"
+					" stream is interactive" << frg::endlog;
+			return -1;
 		}
 	}
 
@@ -314,9 +378,11 @@ private:
 
 } // namespace mlibc
 
-mlibc::fd_file stdinFile{0};
-mlibc::fd_file stdoutFile{1};
-mlibc::fd_file stderrFile{2};
+namespace {
+	mlibc::fd_file stdinFile{0};
+	mlibc::fd_file stdoutFile{1};
+	mlibc::fd_file stderrFile{2};
+}
 
 void __mlibc_initStdio() {
 }

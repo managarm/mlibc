@@ -314,7 +314,7 @@ char *fgets(char *__restrict buffer, size_t max_size, FILE *__restrict stream) {
 	__ensure(max_size > 0);
 	for(size_t i = 0; ; i++) {
 		auto c = fgetc(stream);
-		
+
 		// If fgetc() fails, there is either an EOF or an I/O error.
 		if(c == EOF) {
 //			if(ferror(stream)) {
@@ -348,8 +348,6 @@ int fputc_unlocked(int c, FILE *stream) {
 	char d = c;
 	if(fwrite(&d, 1, 1, stream) != 1)
 		return EOF;
-	if(fflush(stream))
-		return EOF;
 	return 1;
 }
 int fputc(int c, FILE *stream) {
@@ -358,8 +356,6 @@ int fputc(int c, FILE *stream) {
 
 int fputs_unlocked(const char *__restrict string, FILE *__restrict stream) {
 	if(fwrite(string, strlen(string), 1, stream) != 1)
-		return EOF;
-	if(fflush(stream))
 		return EOF;
 	return 1;
 }
@@ -380,8 +376,6 @@ int putc_unlocked(int c, FILE *stream) {
 	char d = c;
 	if(fwrite(&d, 1, 1, stream) != 1)
 		return EOF;
-	if(fflush(stream))
-		return EOF;
 	return c;
 }
 int putc(int c, FILE *stream) {
@@ -399,8 +393,6 @@ int puts(const char *string) {
 	if(fwrite(string, strlen(string), 1, stdout) != 1)
 		return EOF;
 	if(fwrite("\n", 1, 1, stdout) != 1)
-		return EOF;
-	if(fflush(stdout))
 		return EOF;
 	return 1;
 }
