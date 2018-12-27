@@ -20,6 +20,9 @@ struct PrintfAgent {
 	void operator() (char c) {
 		_formatter->append(c);
 	}
+	void operator() (const char *c, size_t n) {
+		_formatter->append(c, n);
+	}
 
 	void operator() (char t, frg::format_options opts, frg::printf_size_mod szmod) {
 		switch(t) {
@@ -59,8 +62,9 @@ struct StreamPrinter {
 		count += strlen(str);
 	}
 
-	void flush() {
-		fflush(stream);
+	void append(const char *str, size_t n) {
+		fwrite(str, n, 1, stream);
+		count += n;
 	}
 
 	FILE *stream;
@@ -84,7 +88,13 @@ struct BufferPrinter {
 		}
 	}
 
-	void flush() { }
+	void append(const char *str, size_t n) {
+		// TODO: use strcat
+		for(size_t i = 0; i < n; i++) {
+			buffer[count] = str[i];
+			count++;
+		}
+	}
 
 	char *buffer;
 	size_t count;
@@ -106,7 +116,11 @@ struct LimitedPrinter {
 			append(str[i]);
 	}
 
-	void flush() { }
+	void append(const char *str, size_t n) {
+		// TODO: use strcat
+		for(size_t i = 0; i < n; i++)
+			append(str[i]);
+	}
 
 	char *buffer;
 	size_t limit;
@@ -141,7 +155,10 @@ struct ResizePrinter {
 			append(str[i]);
 	}
 
-	void flush() { }
+	void append(const char *str, size_t n) {
+		for(size_t i = 0; i < n; i++)
+			append(str[i]);
+	}
 
 	char *buffer;
 	size_t limit;
