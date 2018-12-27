@@ -1,5 +1,5 @@
 
-if disable_posix_option
+if disable_ansi_option
 	subdir_done()
 endif
 
@@ -20,6 +20,35 @@ ansi_sources = files(
 	'generic/time-stubs.cpp',
 	'generic/wchar-stubs.cpp',
 	'generic/wctype.cpp',
+)
+install_headers(
+	'include/alloca.h',
+	'include/assert.h',
+	'include/ctype.h',
+	'include/errno.h',
+	'include/fenv.h',
+	'include/inttypes.h',
+	'include/limits.h',
+	'include/locale.h',
+	'include/math.h',
+	'include/setjmp.h',
+	'include/signal.h',
+	'include/stdio.h',
+	'include/stdlib.h',
+	'include/string.h',
+	'include/time.h',
+	'include/wchar.h',
+	'include/wctype.h',
+)
+install_headers(
+	'include/bits/ansi/clockid_t.h',
+	'include/bits/ansi/seek.h',
+	'include/bits/ansi/timespec.h',
+	'include/bits/ansi/time_t.h',
+	subdir: 'bits/ansi'
+)
+
+libc_sublibs += static_library('mlibc-musl-math',
 	'musl-generic-math/acos.c',
 	'musl-generic-math/acosf.c',
 	'musl-generic-math/acosh.c',
@@ -224,31 +253,7 @@ ansi_sources = files(
 	'musl-generic-math/trunc.c',
 	'musl-generic-math/truncf.c',
 	'musl-generic-math/truncl.c',
-)
-install_headers(
-	'include/alloca.h',
-	'include/assert.h',
-	'include/ctype.h',
-	'include/errno.h',
-	'include/fenv.h',
-	'include/inttypes.h',
-	'include/limits.h',
-	'include/locale.h',
-	'include/math.h',
-	'include/setjmp.h',
-	'include/signal.h',
-	'include/stdio.h',
-	'include/stdlib.h',
-	'include/string.h',
-	'include/time.h',
-	'include/wchar.h',
-	'include/wctype.h',
-)
-install_headers(
-	'include/bits/ansi/clockid_t.h',
-	'include/bits/ansi/seek.h',
-	'include/bits/ansi/timespec.h',
-	'include/bits/ansi/time_t.h',
-	subdir: 'bits/ansi'
-)
+	pic: true,
+	include_directories: libc_include_dirs,
+	c_args: ['-Wno-unused', '-Wno-implicit', '-Wno-parentheses'])
 

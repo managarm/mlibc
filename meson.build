@@ -9,6 +9,11 @@ gccdir = run_command('/bin/sh', '-c',
 	''.join(c_compiler.cmd_array()) + ' -print-search-dirs | sed -n -e "s/install: \(.*\)/\\1/p"',
 	check: true).stdout().strip()
 
+add_project_arguments('-nostdinc', '-fno-builtin', language: ['c', 'cpp'])
+add_project_arguments('-std=c++17', language: 'cpp')
+add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
+add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
+
 rtdl_include_dirs = [
 	include_directories(gccdir + '/include'),
 	include_directories('options/internal/include'),
@@ -23,6 +28,7 @@ libc_include_dirs = [
 ]
 rtdl_sources = [ ]
 libc_sources = [ ]
+libc_sublibs = [ ]
 
 disable_ansi_option = false
 disable_posix_option = false
@@ -123,11 +129,6 @@ subdir('options/lsb')
 subdir('options/glibc')
 subdir('options/linux')
 
-add_project_arguments('-nostdinc', '-fno-builtin', language: ['c', 'cpp'])
-add_project_arguments('-std=c++17', language: 'cpp')
-add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
-add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
-
 ldso_lib = shared_library('ld', rtdl_sources,
 		name_prefix: '',
 		cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
@@ -146,6 +147,7 @@ shared_library('c',
 		include_directories: libc_include_dirs,
 		dependencies: [cxxshim_dep, frigg_dep],
 		link_with: [ldso_lib],
+		link_whole: libc_sublibs,
 		install: true)
 
 shared_library('dl', 'libdl/src/dummy.cpp', install: true)
