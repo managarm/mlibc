@@ -348,13 +348,14 @@ size_t mbstowcs(wchar_t *wcs, const char *mbs, size_t wc_limit) {
 
 	if(!wcs) {
 		size_t size;
-		if(auto e = cc->decode_wtranscode_length(nseq, st); e != mlibc::charcode_error::null)
+		if(auto e = cc->decode_wtranscode_length(nseq, &size, st); e != mlibc::charcode_error::null)
 			__ensure(!"decode_wtranscode() errors are not handled");
 		return size;
 	}
 
 	if(auto e = cc->decode_wtranscode(nseq, wseq, st); e != mlibc::charcode_error::null) {
 		__ensure(!"decode_wtranscode() errors are not handled");
+		__builtin_unreachable();
 	}else{
 		size_t n = wseq.it - wcs;
 		if(n < wc_limit) // Null-terminate resulting wide string.

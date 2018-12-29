@@ -122,13 +122,14 @@ struct polymorphic_charcode_adapter : polymorphic_charcode {
 		return charcode_error::null;
 	}
 
-	charcode_error decode_wtranscode_length(code_seq<const char> &nseq,
+	charcode_error decode_wtranscode_length(code_seq<const char> &nseq, size_t *n,
 			__mlibc_mbstate &st) override {
 		__ensure(!st.__progress); // TODO: Update st with d.progress() and d.cpoint().
 
 		code_seq<const char> dnseq = nseq;
 		typename G::decode_state d;
 
+		*n = 0;
 		while(dnseq) {
 			// Consume the next code unit.
 			if(auto e = d(dnseq); e != charcode_error::null)
@@ -138,6 +139,7 @@ struct polymorphic_charcode_adapter : polymorphic_charcode {
 				nseq.it = dnseq.it; // "Commit" consumed code units (as there was no decode error).
 				if(!d.cpoint()) // Stop on null code points.
 					return charcode_error::null;
+				++(*n);
 			}
 		}
 

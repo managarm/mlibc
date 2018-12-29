@@ -71,7 +71,7 @@ struct polymorphic_charcode {
 	virtual charcode_error decode_wtranscode(code_seq<const char> &nseq, code_seq<wchar_t> &wseq,
 			__mlibc_mbstate &st) = 0;
 
-	virtual charcode_error decode_wtranscode_length(code_seq<const char> &nseq,
+	virtual charcode_error decode_wtranscode_length(code_seq<const char> &nseq, size_t *n,
 			__mlibc_mbstate &st) = 0;
 
 	// True iff promotion only zero-extends units below 0x7F.
