@@ -40,6 +40,8 @@ typedef uint32_t codepoint;
 // TODO: char16_t and char32_t variants are missing.
 // TODO: For iconv(), first decode and then encode to the destination encoding.
 struct polymorphic_charcode {
+	virtual ~polymorphic_charcode();
+
 	// Helper function to decode a single char.
 	charcode_error promote(char nc, codepoint &wc) {
 		auto uc = static_cast<unsigned char>(nc);

@@ -54,6 +54,8 @@ struct utf8_charcode {
 	};
 };
 
+polymorphic_charcode::~polymorphic_charcode() = default;
+
 // For *decoding, this class assumes that:
 // - G::decode_state has members progress() and cpoint().
 // - G::decode_state::progress() >= 0 at all times.

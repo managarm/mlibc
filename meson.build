@@ -90,6 +90,7 @@ internal_sources = [
 	'options/internal/generic/frigg.cpp',
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc/initfini.cpp',
+	'options/internal/gcc-extra/cxxabi.cpp',
 	'options/internal/gcc-extra/mlibc_crtbegin.S',
 	'options/internal/gcc-extra/mlibc_crtend.S',
 	'options/internal/x86_64/setjmp.S',

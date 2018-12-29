@@ -53,7 +53,7 @@ public:
 
 	abstract_file &operator= (const abstract_file &) = delete;
 
-	~abstract_file() {
+	virtual ~abstract_file() {
 		mlibc::panicLogger() << "mlibc: Fix abstract_file destructor" << frg::endlog;
 	}
 

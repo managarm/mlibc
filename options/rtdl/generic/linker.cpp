@@ -246,6 +246,8 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 				memset(reinterpret_cast<void *>(map_address + misalign + phdr->p_filesz),
 						0, phdr->p_memsz - phdr->p_filesz);
 			#else
+				(void)backed_map_size;
+
 				void *map_pointer;
 				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
 						total_map_size, prot | PROT_WRITE,

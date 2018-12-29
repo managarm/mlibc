@@ -59,6 +59,7 @@ size_t mbrtowc(wchar_t *wcp, const char *mbs, size_t mb_limit, mbstate_t *stp) {
 	mlibc::code_seq<wchar_t> wseq{wcp, wcp + 1};
 	if(auto e = cc->decode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
 		__ensure(!"decode_wtranscode() errors are not handled");
+		__builtin_unreachable();
 	}else{
 		size_t n = wseq.it - wcp;
 		if(!n) // Null-terminate resulting wide string.
