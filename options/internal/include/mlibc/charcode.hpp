@@ -80,6 +80,14 @@ struct polymorphic_charcode {
 
 polymorphic_charcode *current_charcode();
 
+// Similar to polymorphic_charcode but for wchar_t. Note that this encoding is fixed per-platform;
+// thus, it does not need to be polymorphic.
+struct wide_charcode {
+	charcode_error promote(wchar_t nc, codepoint &wc);
+};
+
+wide_charcode *platform_wide_charcode();
+
 } // namespace mlibc
 
 #endif // MLIBC_CHARCODE_HPP

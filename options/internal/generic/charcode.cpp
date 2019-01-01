@@ -154,5 +154,16 @@ polymorphic_charcode *current_charcode() {
 	return &global_charcode;
 }
 
+charcode_error wide_charcode::promote(wchar_t nc, codepoint &wc) {
+	// TODO: Allow non-identity encodings of wchar_t.
+	wc = nc;
+	return charcode_error::null;
+}
+
+wide_charcode *platform_wide_charcode() {
+	static wide_charcode global_wide_charcode;
+	return &global_wide_charcode;
+}
+
 } // namespace mlibc
 

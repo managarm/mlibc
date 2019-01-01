@@ -5,6 +5,10 @@
 #include <bits/ensure.h>
 #include <mlibc/charset.hpp>
 
+// --------------------------------------------------------------------------------------
+// char ctype functions.
+// --------------------------------------------------------------------------------------
+
 int isalpha(int nc) {
 	auto cc = mlibc::current_charcode();
 	mlibc::codepoint cp;
@@ -101,18 +105,109 @@ int iscntrl(int nc) {
 	return mlibc::generic_is_control(cp);
 }
 
-int iswalnum(wint_t) MLIBC_STUB_BODY
-int iswalpha(wint_t) MLIBC_STUB_BODY
-int iswblank(wint_t) MLIBC_STUB_BODY
-int iswcntrl(wint_t) MLIBC_STUB_BODY
-int iswdigit(wint_t) MLIBC_STUB_BODY
-int iswgraph(wint_t) MLIBC_STUB_BODY
-int iswlower(wint_t) MLIBC_STUB_BODY
-int iswprint(wint_t) MLIBC_STUB_BODY
-int iswpunct(wint_t) MLIBC_STUB_BODY
-int iswspace(wint_t) MLIBC_STUB_BODY
-int iswupper(wint_t) MLIBC_STUB_BODY
-int iswxdigit(wint_t) MLIBC_STUB_BODY
+// --------------------------------------------------------------------------------------
+// wchar_t ctype functions.
+// --------------------------------------------------------------------------------------
+
+int iswalpha(wint_t nc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_alpha(cp);
+}
+
+int iswdigit(wint_t nc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_digit(cp);
+}
+
+int iswxdigit(wint_t nc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_xdigit(cp);
+}
+
+int iswalnum(wint_t nc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_alnum(cp);
+}
+
+int iswpunct(wint_t nc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_punct(cp);
+}
+
+int iswgraph(wint_t nc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_graph(cp);
+}
+
+int iswblank(wint_t nc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_blank(cp);
+}
+
+int iswspace(wint_t nc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_space(cp);
+}
+
+int iswprint(wint_t nc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_print(cp);
+}
+
+int iswlower(wint_t nc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_lower(cp);
+}
+
+int iswupper(wint_t nc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::current_charset()->is_upper(cp);
+}
+
+int iswcntrl(wint_t nc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return mlibc::generic_is_control(cp);
+}
+
+// --------------------------------------------------------------------------------------
+// char conversion functions.
+// --------------------------------------------------------------------------------------
 
 int tolower(int nc) {
 	auto cc = mlibc::current_charcode();
