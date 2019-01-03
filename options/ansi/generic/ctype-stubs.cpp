@@ -105,6 +105,14 @@ int iscntrl(int nc) {
 	return mlibc::generic_is_control(cp);
 }
 
+int isascii(int nc) {
+	auto cc = mlibc::current_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return cp <= 0x7F;
+}
+
 // --------------------------------------------------------------------------------------
 // wchar_t ctype functions.
 // --------------------------------------------------------------------------------------

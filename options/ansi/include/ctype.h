@@ -1,4 +1,3 @@
-
 #ifndef _CTYPE_H
 #define _CTYPE_H
 
@@ -20,6 +19,9 @@ int isspace(int c);
 int isupper(int c);
 int isxdigit(int c);
 
+// glibc extensions.
+int isascii(int c);
+
 // Character case mapping functions [7.4.2]
 int tolower(int c);
 int toupper(int c);
@@ -29,4 +31,3 @@ int toupper(int c);
 #endif
 
 #endif // _CTYPE_H
-
