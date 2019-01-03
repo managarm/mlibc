@@ -12,21 +12,21 @@ void sys_libc_log(const char *message) {
 	unsigned long res;
 	asm volatile ("syscall" : "=a"(res)
 			: "a"(0), "D"(0), "S"(message)
-			: "rcx", "r11");
+			: "rcx", "r11", "rdx");
 }
 
 void sys_libc_panic() {
     mlibc::infoLogger() << "\e[31mmlibc: panic!" << frg::endlog;
     asm volatile ("syscall" :
             : "a"(12), "D"(1)
-            : "rcx", "r11");
+            : "rcx", "r11", "rdx");
 }
 
 int sys_tcb_set(void *pointer) {
     int res;
 	asm volatile ("syscall" : "=a"(res)
 			: "a"(7), "D"(pointer)
-			: "rcx", "r11");
+			: "rcx", "r11", "rdx");
     return res;
 }
 
@@ -34,14 +34,19 @@ int sys_anon_allocate(size_t size, void **pointer) {
 	// The qword kernel wants us to allocate whole pages.
 	__ensure(!(size & 0xFFF));
 
-	void *res;
-	asm volatile ("syscall" : "=a"(res)
+	void *ret;
+    int sys_errno;
+
+	asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
 			: "a"(6), "D"(0), "S"(size >> 12)
 			: "rcx", "r11");
-	if(!res)
-		return ENOMEM;
-	*pointer = res;
-	return 0;
+
+	*pointer = ret;
+    if (!ret)
+        return sys_errno;
+    else
+        return 0;
 }
 
 int sys_anon_free(void *pointer, size_t size) STUB_ONLY
@@ -50,7 +55,7 @@ int sys_anon_free(void *pointer, size_t size) STUB_ONLY
 void sys_exit(int status) {
     asm volatile ("syscall" :
             : "a"(12), "D"(status)
-            : "rcx", "r11");
+            : "rcx", "r11", "rdx");
 }
 #endif
 
@@ -66,43 +71,61 @@ int sys_open(const char *path, int flags, int *fd) {
     // TODO: Adjust the ABI so that the flags match qword kernel flags.
     flags = 0;
 
-    int res;
-    asm volatile ("syscall" : "=a"(res)
+    int ret;
+    int sys_errno;
+
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
             : "a"(1), "D"(path), "S"(0), "d"(flags)
             : "rcx", "r11");
-    if(res < 0)
-        return -1; // TODO: Properly report error.
-    *fd = res;
-    return 0;
+
+    *fd = ret;
+    if (ret == -1)
+        return sys_errno;
+    else
+        return 0;
 }
 
 int sys_close(int fd) {
-    int res;
-    asm volatile ("syscall" : "=a"(res)
+    int ret;
+    int sys_errno;
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
             : "a"(2), "D"(fd)
             : "rcx", "r11");
-    if(res < 0)
-        return -1; // TODO: Properly report error.
-    return 0;
+    if (ret == -1)
+        return sys_errno;
+    else
+        return 0;
 }
 
 int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
-    ssize_t res;
-    asm volatile ("syscall" : "=a"(res)
+    ssize_t ret;
+    int sys_errno;
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
             : "a"(3), "D"(fd), "S"(buf), "d"(count)
             : "rcx", "r11");
-    *bytes_read = res;
-    return 0;
+    *bytes_read = ret;
+    if (ret == -1)
+        return sys_errno;
+    else
+        return 0;
 }
 
 #ifndef MLIBC_BUILDING_RTDL
 int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
-    ssize_t res;
-    asm volatile ("syscall" : "=a"(res)
+    ssize_t ret;
+    int sys_errno;
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
             : "a"(4), "D"(fd), "S"(buf), "d"(count)
             : "rcx", "r11");
-    *bytes_written = res;
-    return 0;
+    *bytes_written = ret;
+    if (ret == -1)
+        return sys_errno;
+    else
+        return 0;
 }
 #endif
 
@@ -118,7 +141,9 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 #define __QWORD_SEEK_END        2
 
 int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
-    off_t res;
+    off_t ret;
+    int sys_errno;
+
     int qword_type;
     switch (whence) {
         case SEEK_SET:
@@ -133,13 +158,16 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
         default:
             return EINVAL;
     }
-    asm volatile ("syscall" : "=a"(res)
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
             : "a"(8), "D"(fd), "S"(offset), "d"(qword_type)
             : "rcx", "r11");
-    if(res < 0)
-        return -1; // TODO: Properly report error.
-    *new_offset = res;
-    return 0;
+
+    *new_offset = ret;
+    if (ret == -1)
+        return sys_errno;
+    else
+        return 0;
 }
 
 int sys_vm_map(void *hint, size_t size, int prot, int flags,
@@ -164,13 +192,16 @@ int sys_vm_unmap(void *pointer, size_t size) STUB_ONLY
 
 #ifndef MLIBC_BUILDING_RTDL
 int sys_fstat(int fd, struct stat *statbuf) {
-    int res;
-    asm volatile ("syscall" : "=a"(res)
+    int ret;
+    int sys_errno;
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
             : "a"(9), "D"(fd), "S"(statbuf)
             : "rcx", "r11");
-    if(res < 0)
-        return -1; // TODO: Properly report error.
-    return 0;
+    if (ret == -1)
+        return sys_errno;
+    else
+        return 0;
 }
 #endif
 
@@ -204,15 +235,17 @@ int sys_isatty(int fd) {
 int sys_ttyname(int fd, char *buf, size_t size) STUB_ONLY
 int sys_stat(const char *path, struct stat *statbuf) {
     int fd;
-    if (sys_open(path, 0/*O_RDONLY*/, &fd) < 0)
-        return -1; // TODO: Properly report error.
-    int ret = sys_fstat(fd, statbuf);
-    if (ret < 0) {
+    int sys_errno;
+    sys_errno = sys_open(path, 0/*O_RDONLY*/, &fd);
+    if (sys_errno)
+        return sys_errno;
+    sys_errno = sys_fstat(fd, statbuf);
+    if (sys_errno) {
         sys_close(fd);
-        return -1; // TODO: Properly report error.
+        return sys_errno;
     }
     sys_close(fd);
-    return ret;
+    return 0;
 }
 int sys_lstat(const char *path, struct stat *statbuf) STUB_ONLY
 int sys_chroot(const char *path) STUB_ONLY
@@ -250,30 +283,43 @@ int sys_setsockopt(int fd, int layer, int number,
 int sys_sleep(time_t *secs, long *nanos) STUB_ONLY
 int sys_fork(pid_t *child) {
     pid_t ret;
-    asm volatile ("syscall" : "=a"(ret)
+    int sys_errno;
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
             : "a"(10)
             : "rcx", "r11");
     *child = ret;
-    return 0;
+    if (ret == -1)
+        return sys_errno;
+    else
+        return 0;
 }
 int sys_execve(const char *path, char *const argv[], char *const envp[]) {
     int ret;
+    int sys_errno;
     asm volatile ("syscall"
-            : "=a"(ret)
+            : "=a"(ret), "=d"(sys_errno)
             : "a"(11), "D"(path), "S"(argv), "d"(envp)
             : "rcx", "r11");
-    return ret;
+    if (ret == -1)
+        return sys_errno;
+    else
+        return 0;
 
 }
 int sys_kill(int, int) STUB_ONLY
 int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
     pid_t ret;
+    int sys_errno;
     asm volatile ("syscall"
-            : "=a"(ret)
+            : "=a"(ret), "=d"(sys_errno)
             : "a"(13), "D"(pid), "S"(status), "d"(flags)
             : "rcx", "r11");
     *ret_pid = ret;
-    return 0;
+    if (ret == -1)
+        return sys_errno;
+    else
+        return 0;
 }
 int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
     mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
@@ -301,14 +347,14 @@ pid_t sys_getpid() {
     pid_t pid;
     asm volatile ("syscall" : "=a"(pid)
             : "a"(5)
-            : "rcx", "r11");
+            : "rcx", "r11", "rdx");
     return pid;
 }
 pid_t sys_getppid() {
     pid_t ppid;
     asm volatile ("syscall" : "=a"(ppid)
             : "a"(14)
-            : "rcx", "r11");
+            : "rcx", "r11", "rdx");
     return ppid;
 }
 
