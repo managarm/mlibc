@@ -206,6 +206,52 @@ int iswcntrl(wint_t nc) {
 }
 
 // --------------------------------------------------------------------------------------
+// iswctype functions.
+// --------------------------------------------------------------------------------------
+
+namespace {
+	enum {
+		ct_null,
+		ct_alnum,
+		ct_alpha,
+		ct_blank,
+		ct_cntrl,
+		ct_digit,
+		ct_graph,
+		ct_lower,
+		ct_print,
+		ct_punct,
+		ct_space,
+		ct_upper,
+		ct_xdigit,
+		ct_count
+	};
+}
+
+wctype_t wctype(const char *cs) {
+	frg::string_view s{cs};
+	if(s == "alnum") return ct_alnum;
+	if(s == "alpha") return ct_alpha;
+	if(s == "blank") return ct_blank;
+	if(s == "cntrl") return ct_cntrl;
+	if(s == "digit") return ct_digit;
+	if(s == "graph") return ct_graph;
+	if(s == "lower") return ct_lower;
+	if(s == "print") return ct_print;
+	if(s == "punct") return ct_punct;
+	if(s == "space") return ct_space;
+	if(s == "upper") return ct_upper;
+	if(s == "xdigit") return ct_xdigit;
+	mlibc::infoLogger() << "mlibc: wctype(\"" << cs << "\") is not supported" << frg::endlog;
+	return ct_null;
+}
+
+int iswctype(wint_t, wctype_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+// --------------------------------------------------------------------------------------
 // char conversion functions.
 // --------------------------------------------------------------------------------------
 
@@ -223,5 +269,19 @@ int toupper(int nc) {
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return nc;
 	return mlibc::current_charset()->to_upper(cp);
+}
+
+// --------------------------------------------------------------------------------------
+// wchar_t conversion functions.
+// --------------------------------------------------------------------------------------
+
+wint_t towlower(wint_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+wint_t towupper(wint_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
 }
 
