@@ -7,7 +7,9 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
+#include <mlibc/sysdeps.hpp>
 
+#include <frg/eternal.hpp>
 #include <frigg/vector.hpp>
 #include <frigg/string.hpp>
 #include <frigg/protobuf.hpp>
@@ -41,7 +43,28 @@ namespace {
 	}
 }
 
+SignalGuard::SignalGuard() {
+	sigset_t all;
+	sigfillset(&all);
+	if(mlibc::sys_sigprocmask(SIG_BLOCK, &all, &_restoreMask))
+		mlibc::panicLogger() << "SignalGuard() failed" << frg::endlog;
+}
+
+SignalGuard::~SignalGuard() {
+	if(mlibc::sys_sigprocmask(SIG_SETMASK, &_restoreMask, nullptr))
+		mlibc::panicLogger() << "~SignalGuard() failed" << frg::endlog;
+}
+
+MemoryAllocator &getSysdepsAllocator() {
+	// use frg::eternal to prevent a call to __cxa_atexit().
+	// this is necessary because __cxa_atexit() call this function.
+	static frg::eternal<VirtualAllocator> virtualAllocator;
+	static frg::eternal<MemoryAllocator> singleton{virtualAllocator.get()};
+	return singleton.get();
+}
+
 HelHandle *cacheFileTable() {
+	// TODO: Make sure that this is signal-safe (it is called e.g. by sys_clock_get()).
 	pthread_once(&hasCachedInfos, &actuallyCacheInfos);
 	return cachedFileTable;
 }

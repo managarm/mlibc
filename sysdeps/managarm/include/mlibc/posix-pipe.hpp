@@ -3,6 +3,7 @@
 #define MLIBC_POSIX_PIPE
 
 // FIXME: required for hel.h
+#include <signal.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -11,6 +12,23 @@
 
 #include <hel.h>
 #include <hel-syscalls.h>
+
+struct SignalGuard {
+	SignalGuard();
+
+	SignalGuard(const SignalGuard &) = delete;
+
+	~SignalGuard();
+
+	SignalGuard &operator= (const SignalGuard &) = delete;
+
+private:
+	sigset_t _restoreMask;
+};
+
+// We need an allocator for message structs in sysdeps functions; the "normal" mlibc
+// allocator cannot be used, as the sysdeps function might be called from a signal.
+MemoryAllocator &getSysdepsAllocator();
 
 struct Queue;
 
@@ -40,10 +58,12 @@ private:
 struct Queue {
 	Queue()
 	: _handle{kHelNullHandle}, _refCount{0} {
-		_queue = reinterpret_cast<HelQueue *>(getAllocator().allocate(sizeof(HelQueue)
+		// We do not need to protect those allocations against signals as this constructor
+		// is only called during library initialization.
+		_queue = reinterpret_cast<HelQueue *>(getSysdepsAllocator().allocate(sizeof(HelQueue)
 				+ 2 * sizeof(int)));
-		_chunks[0] = reinterpret_cast<HelChunk *>(getAllocator().allocate(sizeof(HelChunk) + 4096));
-		_chunks[1] = reinterpret_cast<HelChunk *>(getAllocator().allocate(sizeof(HelChunk) + 4096));
+		_chunks[0] = reinterpret_cast<HelChunk *>(getSysdepsAllocator().allocate(sizeof(HelChunk) + 4096));
+		_chunks[1] = reinterpret_cast<HelChunk *>(getSysdepsAllocator().allocate(sizeof(HelChunk) + 4096));
 
 		recreateQueue();
 	}

@@ -24,6 +24,7 @@ extern TrackerPage *__mlibc_clk_tracker_page;
 namespace mlibc {
 
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
+	// This implementation is inherently signal-safe.
 	if(clock == CLOCK_MONOTONIC) {
 		uint64_t tick;
 		HEL_CHECK(helGetClock(&tick));

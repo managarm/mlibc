@@ -28,27 +28,30 @@
 namespace mlibc {
 
 int sys_futex_wait(int *pointer, int expected) {
+	// This implementation is inherently signal-safe.
 	if(helFutexWait(pointer, expected))
 		return -1;
 	return 0;
 }
 
 int sys_futex_wake(int *pointer) {
+	// This implementation is inherently signal-safe.
 	if(helFutexWake(pointer))
 		return -1;
 	return 0;
 }
 
 int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
+	SignalGuard sguard;
 	HelAction actions[3];
 	globalQueue.trim();
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::WAIT);
 	req.set_pid(pid);
 	req.set_flags(flags);
 
-	frigg::String<MemoryAllocator> ser(getAllocator());
+	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -70,7 +73,7 @@ int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	if(status)
@@ -80,16 +83,19 @@ int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
 }
 
 void sys_exit(int status) {
+	// This implementation is inherently signal-safe.
 	asm volatile ("syscall" : : "D"(kHelCallSuper + 4)
 			: "rcx", "r11", "rbx", "memory");
 	__builtin_trap();
 }
 
 void sys_yield() {
+	// This implementation is inherently signal-safe.
 	HEL_CHECK(helYield());
 }
 
 int sys_sleep(time_t *secs, long *nanos) {
+	SignalGuard sguard;
 	globalQueue.trim();
 
 	uint64_t now;
@@ -110,6 +116,7 @@ int sys_sleep(time_t *secs, long *nanos) {
 }
 
 int sys_fork(pid_t *child) {
+	// This implementation is inherently signal-safe.
 	int res;
 
 	sigset_t full_sigset;
@@ -137,11 +144,12 @@ int sys_fork(pid_t *child) {
 }
 
 int sys_execve(const char *path, char *const argv[], char *const envp[]) {
-	frigg::String<MemoryAllocator> args_area(getAllocator());
+	// TODO: Make this function signal-safe!
+	frigg::String<MemoryAllocator> args_area(getSysdepsAllocator());
 	for(auto it = argv; *it; ++it)
 		args_area += frigg::StringView{*it, strlen(*it) + 1};
 
-	frigg::String<MemoryAllocator> env_area(getAllocator());
+	frigg::String<MemoryAllocator> env_area(getSysdepsAllocator());
 	for(auto it = envp; *it; ++it)
 		env_area += frigg::StringView{*it, strlen(*it) + 1};
 
@@ -181,13 +189,14 @@ uid_t sys_geteuid() {
 }
 
 pid_t sys_getpid() {
+	SignalGuard sguard;
 	HelAction actions[3];
 	globalQueue.trim();
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::GET_PID);
 
-	frigg::String<MemoryAllocator> ser(getAllocator());
+	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -209,7 +218,7 @@ pid_t sys_getpid() {
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return resp.pid();

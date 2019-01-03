@@ -11,6 +11,7 @@
 namespace mlibc {
 
 int sys_anon_allocate(size_t size, void **pointer) {
+	// This implementation is inherently signal-safe.
 	__ensure((size % 0x1000) == 0);
 
 	HelHandle memory;
@@ -22,6 +23,7 @@ int sys_anon_allocate(size_t size, void **pointer) {
 }
 
 int sys_anon_free(void *pointer, size_t size) {
+	// This implementation is inherently signal-safe.
 	HEL_CHECK(helUnmapMemory(kHelNullHandle, pointer, size));
 	return 0;
 }

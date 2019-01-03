@@ -19,6 +19,7 @@ void __frigg_assert_fail(const char *assertion, const char *file, unsigned int l
 
 namespace mlibc {
 	void sys_libc_log(const char *message) {
+		// This implementation is inherently signal-safe.
 		size_t n = 0;
 		while(message[n])
 			n++;
@@ -27,6 +28,7 @@ namespace mlibc {
 	}
 
 	void sys_libc_panic() {
+		// This implementation is inherently signal-safe.
 		const char *message = "mlibc: Panic!";
 		size_t n = 0;
 		while(message[n])

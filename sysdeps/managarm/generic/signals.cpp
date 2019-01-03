@@ -20,7 +20,8 @@ extern "C" void __mlibc_signal_restore();
 
 namespace mlibc {
 
-int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
+int sys_sigprocmask(int how, const sigset_t *set, sigset_t *retrieve) {
+	// This implementation is inherently signal-safe.
 	uint64_t former;
 	if(set) {
 		HEL_CHECK(helSyscall2_1(kHelObserveSuperCall + 7, how, *set, &former));
@@ -34,6 +35,7 @@ int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restric
 
 int sys_sigaction(int number, const struct sigaction *__restrict action,
 		struct sigaction *__restrict saved_action) {
+	SignalGuard sguard;
 	__ensure(action);
 
 	// TODO: Respect restorer. __ensure(!(action->sa_flags & SA_RESTORER));
@@ -41,7 +43,7 @@ int sys_sigaction(int number, const struct sigaction *__restrict action,
 	HelAction actions[3];
 	globalQueue.trim();
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::SIG_ACTION);
 	req.set_flags(action->sa_flags);
 	req.set_sig_number(number);
@@ -53,7 +55,7 @@ int sys_sigaction(int number, const struct sigaction *__restrict action,
 	}
 	req.set_sig_restorer(reinterpret_cast<uintptr_t>(&__mlibc_signal_restore));
 
-	frigg::String<MemoryAllocator> ser(getAllocator());
+	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -75,7 +77,7 @@ int sys_sigaction(int number, const struct sigaction *__restrict action,
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 
@@ -94,6 +96,7 @@ int sys_sigaction(int number, const struct sigaction *__restrict action,
 }
 
 int sys_kill(int pid, int number) {
+	// This implementation is inherently signal-safe.
 	HEL_CHECK(helSyscall2(kHelObserveSuperCall + 5, pid, number));
 	return 0;
 }
