@@ -39,7 +39,7 @@ int sys_futex_wake(int *pointer) {
 	return 0;
 }
 
-int sys_waitpid(pid_t pid, int *status, int flags) {
+int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
 	HelAction actions[3];
 	globalQueue.trim();
 
@@ -75,7 +75,8 @@ int sys_waitpid(pid_t pid, int *status, int flags) {
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	if(status)
 		*status = resp.mode();
-	return resp.pid();
+	*ret_pid = resp.pid();
+	return 0;
 }
 
 void sys_exit(int status) {
@@ -116,19 +117,19 @@ int sys_fork(pid_t *child) {
 	__ensure(!res);
 
 	sigset_t former_sigset;
-	res = sigprocmask(SIG_SETMASK, &full_sigset, &former_sigset); 
+	res = sigprocmask(SIG_SETMASK, &full_sigset, &former_sigset);
 	__ensure(!res);
 
 	HelError error;
 	asm volatile ("syscall" : "=D"(error), "=S"(*child) : "0"(kHelCallSuper + 2)
 			: "rcx", "r11", "rbx", "memory");
 	HEL_CHECK(error);
-	
+
 	if(!*child) {
 		clearCachedInfos();
 		globalQueue.recreateQueue();
 	}
-	
+
 	res = sigprocmask(SIG_SETMASK, &former_sigset, nullptr);
 	__ensure(!res);
 

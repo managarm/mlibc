@@ -115,7 +115,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 			void *__restrict buffer, socklen_t *__restrict size);
 	int sys_setsockopt(int fd, int layer, int number,
 			const void *buffer, socklen_t size);
-	int sys_waitpid(pid_t pid, int *status, int flags);
+	int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid);
 	int sys_mount(const char *source, const char *target,
 			const char *fstype, unsigned long flags, const void *data);
 	int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve);

@@ -266,9 +266,14 @@ int sys_execve(const char *path, char *const argv[], char *const envp[]) {
 
 }
 int sys_kill(int, int) STUB_ONLY
-int sys_waitpid(pid_t pid, int *status, int flags) {
-    mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
-    return ENOSYS;
+int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
+    pid_t ret;
+    asm volatile ("syscall"
+            : "=a"(ret)
+            : "a"(13), "D"(pid), "S"(status), "d"(flags)
+            : "rcx", "r11");
+    *ret_pid = ret;
+    return 0;
 }
 int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
     mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
