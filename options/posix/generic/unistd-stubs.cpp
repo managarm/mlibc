@@ -440,7 +440,11 @@ pid_t getppid(void) {
 }
 
 int access(const char *path, int mode) {
-	return mlibc::sys_access(path, mode);
+	if(int e = mlibc::sys_access(path, mode); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int isatty(int fd) {
