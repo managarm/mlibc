@@ -5,16 +5,6 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
-void __signalDfl(int signal) {
-	__ensure(!"Not implemented");
-}
-void __signalErr(int signal) {
-	__ensure(!"Not implemented");
-}
-void __signalIgn(int signal) {
-	__ensure(!"Not implemented");
-}
-
 __sighandler signal(int sn, __sighandler handler) {
 	mlibc::infoLogger() << "\e[31mmlibc: signal() always returns SIG_DFL\e[39m" << frg::endlog;
 	if(handler == SIG_DFL || handler == SIG_IGN) {

@@ -14,13 +14,9 @@ typedef int sig_atomic_t;
 // Argument for signal()
 typedef void (*__sighandler) (int);
 
-void __signalDfl(int signal);
-void __signalErr(int signal);
-void __signalIgn(int signal);
-
-#define SIG_DFL __signalDfl
-#define SIG_ERR __signalErr
-#define SIG_IGN __signalIgn
+#define SIG_ERR ((__sighandler)(void *)(-1))
+#define SIG_DFL ((__sighandler)(void *)(-2))
+#define SIG_IGN ((__sighandler)(void *)(-3))
 
 #define SIGABRT 1
 #define SIGFPE 2
