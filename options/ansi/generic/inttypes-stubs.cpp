@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <bits/ensure.h>
+#include <mlibc/debug.hpp>
 
 static const char *__mlibc_digits = "0123456789abcdefghijklmnopqrstuvwxyz";
 
@@ -15,7 +16,7 @@ imaxdiv_t imaxdiv(intmax_t, intmax_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-intmax_t strtoimax(const char *__restrict it, char **__restrict out, int base) {
+intmax_t strtoimax(const char *it, char **out, int base) {
 	// TODO: This function has to check for overflow!
 	intmax_t v = 0;
 	bool negate = false;
@@ -53,9 +54,9 @@ parse_digits:
 		__ensure(base <= 10); // TODO: For base > 10 we need to implement tolower().
 		//auto c = strchr(__mlibc_digits, tolower(*it));
 		auto c = strchr(__mlibc_digits, *it);
-		if(!c || (__mlibc_digits - c) >= base)
+		if(!c || (c - __mlibc_digits) >= base)
 			break;
-		v = v * base + (__mlibc_digits - c);
+		v = v * base + (c - __mlibc_digits);
 		it++;
 	}
 
