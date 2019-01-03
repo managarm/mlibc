@@ -62,6 +62,26 @@ struct polymorphic_charcode {
 		return charcode_error::null;
 	}
 
+	// Helper function to decode a single char.
+	charcode_error promote_wtranscode(char nc, wchar_t &wc) {
+		auto uc = static_cast<unsigned char>(nc);
+		if(uc <= 0x7F && preserves_7bit_units) { // TODO: Use "wtranscode_preserves_7bit_units".
+			wc = uc;
+			return charcode_error::null;
+		}
+
+		code_seq<const char> nseq{&nc, &nc + 1};
+		code_seq<wchar_t> wseq{&wc, &wc + 1};
+		__mlibc_mbstate st = __MLIBC_MBSTATE_INITIALIZER;
+
+		if(auto e = decode_wtranscode(nseq, wseq, st); e != charcode_error::null)
+			return e;
+		// This should have read/written exactly one code unit/code point.
+		__ensure(nseq.it == nseq.end);
+		__ensure(wseq.it == wseq.end);
+		return charcode_error::null;
+	}
+
 	polymorphic_charcode(bool preserves_7bit_units_)
 	: preserves_7bit_units{preserves_7bit_units_} { }
 

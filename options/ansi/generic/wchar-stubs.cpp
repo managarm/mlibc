@@ -1,5 +1,6 @@
 
 #include <errno.h>
+#include <stdio.h>
 #include <wchar.h>
 #include <bits/ensure.h>
 
@@ -13,10 +14,22 @@ namespace {
 	__mlibc_mbstate mbrtowc_state = __MLIBC_MBSTATE_INITIALIZER;
 }
 
-wint_t btowc(int c)
-	MLIBC_STUB_BODY
-int wctob(wint_t)
-	MLIBC_STUB_BODY
+wint_t btowc(int c) {
+	if(c == EOF)
+		return WEOF;
+
+	char nc = c;
+	auto cc = mlibc::current_charcode();
+	wchar_t wc;
+	if(auto e = cc->promote_wtranscode(nc, wc); e != mlibc::charcode_error::null)
+		return WEOF;
+	return wc;
+}
+
+int wctob(wint_t wc) {
+	// TODO: Revisit this once we have character encoding functions.
+	return wc;
+}
 
 int mbsinit(const mbstate_t *stp) {
 	if(!stp)
