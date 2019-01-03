@@ -101,7 +101,7 @@ void *memchr(const void *s, int c, size_t size) {
 	auto s_bytes = static_cast<const unsigned char *>(s);
 	for(size_t i = 0; i < size; i++)
 		if(s_bytes[i] == static_cast<unsigned char>(c))
-			return const_cast<unsigned char *>(&s_bytes[i]);
+			return const_cast<unsigned char *>(s_bytes + i);
 	return nullptr;
 }
 char *strchr(const char *s, int c) {

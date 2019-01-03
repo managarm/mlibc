@@ -145,7 +145,7 @@ public:
 		// Line-buffered streams perform I/O on full lines.
 		bool flush_line = false;
 		if(_bufmode == buffer_mode::line_buffer) {
-			auto nl = reinterpret_cast<char *>(memchr(buffer, chunk, '\n'));
+			auto nl = reinterpret_cast<char *>(memchr(buffer, '\n', chunk));
 			if(nl) {
 				chunk = nl + 1 - buffer;
 				flush_line = true;
