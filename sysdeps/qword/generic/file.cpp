@@ -305,8 +305,11 @@ pid_t sys_getpid() {
     return pid;
 }
 pid_t sys_getppid() {
-    mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
-    return 0;
+    pid_t ppid;
+    asm volatile ("syscall" : "=a"(ppid)
+            : "a"(14)
+            : "rcx", "r11");
+    return ppid;
 }
 
 #endif // MLIBC_BUILDING_RTDL
