@@ -22,6 +22,19 @@ void sys_libc_panic() {
             : "rcx", "r11", "rdx");
 }
 
+int sys_chdir(const char *path) {
+    int ret;
+    int sys_errno;
+	asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+			: "a"(15), "D"(path)
+			: "rcx", "r11");
+    if (ret == -1)
+        return sys_errno;
+    else
+        return 0;
+}
+
 int sys_tcb_set(void *pointer) {
     int res;
 	asm volatile ("syscall" : "=a"(res)
