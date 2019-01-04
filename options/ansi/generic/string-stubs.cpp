@@ -231,6 +231,7 @@ char *strerror(int errnum) {
 	case EISDIR: s = "Resource is directory (EISDIR)"; break;
 	case ENOENT: s = "No such file or directory (ENOENT)"; break;
 	case ENOMEM: s = "Out of memory (ENOMEM)"; break;
+	case ENOTDIR: s = "Directory does not exist (ENOTDIR)"; break;
 	case ENOSYS: s = "Operation not implemented (ENOSYS)"; break;
 	case EPERM:  s = "Operation not permitted (EFAULT)"; break;
 	case EPIPE:  s = "Broken pipe (EPIPE)"; break;
