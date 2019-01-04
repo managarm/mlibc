@@ -84,6 +84,7 @@ int sys_close(int fd);
 	int sys_timerfd_settime(int fd, int flags,
 			const struct itimerspec *value);
 	int sys_signalfd_create(sigset_t, int flags, int *fd);
+	[[gnu::weak]] int sys_chdir(const char *path);
 	int sys_chroot(const char *path);
 	int sys_mkdir(const char *path);
 	int sys_symlink(const char *target_path, const char *link_path);

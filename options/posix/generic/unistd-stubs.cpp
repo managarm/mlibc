@@ -12,10 +12,20 @@ unsigned int alarm(unsigned int seconds) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int chdir(const char *) {
-	mlibc::infoLogger() << "\e[31mmlibc: chdir() is a no-op\e[39m" << frg::endlog;
+
+int chdir(const char *path) {
+	if(!mlibc::sys_chdir) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_chdir(path); e) {
+		errno = e;
+		return -1;
+	}
 	return 0;
 }
+
 int chown(const char *path, uid_t uid, gid_t gid) {
 	mlibc::infoLogger() << "\e[31mmlibc: chown() is not implemented correctly\e[39m"
 			<< frg::endlog;
