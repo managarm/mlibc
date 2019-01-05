@@ -240,7 +240,19 @@ int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_re
 
 int sys_access(const char *path, int mode) STUB_ONLY
 int sys_dup(int fd, int flags, int *newfd) STUB_ONLY
-int sys_dup2(int fd, int flags, int newfd) STUB_ONLY
+int sys_dup2(int fd, int flags, int newfd) {
+    (void)flags;
+    int ret;
+    int sys_errno;
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(16), "D"(fd), "S"(newfd)
+            : "rcx", "r11");
+    if (ret == -1)
+        return sys_errno;
+    else
+        return 0;
+}
 int sys_isatty(int fd) {
     mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
     return 0;
