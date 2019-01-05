@@ -3,6 +3,27 @@
 
 #include <stdint.h>
 
+// TODO: Convert the enums to #defines so that they work with #ifdef.
+
+#define ELFCLASS64 2
+#define ELFDATA2LSB 1
+#define ELFOSABI_SYSV 0
+#define EM_X86_64 62
+
+#define SHT_NULL 0
+#define SHT_PROGBITS 1
+#define SHT_SYMTAB 2
+#define SHT_STRTAB 3
+#define SHT_RELA 4
+#define SHT_HASH 5
+#define SHT_DYNAMIC 6
+#define SHT_NOBITS 8
+#define SHT_DYNSYM 11
+
+#define SHF_WRITE 1
+#define SHF_ALLOC 2
+#define SHF_EXECINSTR 4
+
 typedef uint64_t Elf64_Addr;
 typedef uint64_t Elf64_Off;
 typedef uint16_t Elf64_Half;
@@ -53,6 +74,9 @@ extern inline unsigned char ELF64_ST_BIND(unsigned char info) {
 }
 extern inline unsigned char ELF64_ST_TYPE(unsigned char info) {
 	return info & 0x0F;
+}
+extern inline unsigned char ELF64_ST_INFO(unsigned char bind, unsigned char type) {
+	return (bind << 4) | type;
 }
 
 enum {
@@ -170,6 +194,19 @@ struct Elf64_Dyn {
 		Elf64_Xword d_val;
 		Elf64_Addr d_ptr;
 	};
+};
+
+struct Elf64_Shdr {
+	Elf64_Word sh_name;
+	Elf64_Word sh_type;
+	Elf64_Xword sh_flags;
+	Elf64_Addr sh_addr;
+	Elf64_Off sh_offset;
+	Elf64_Xword sh_size;
+	Elf64_Word sh_link;
+	Elf64_Word sh_info;
+	Elf64_Xword sh_addralign;
+	Elf64_Xword sh_entsize;
 };
 
 #endif // _ELF_H
