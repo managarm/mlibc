@@ -3,6 +3,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 #include <errno.h>
+#include <dirent.h>
 
 #define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }
 
@@ -149,31 +150,13 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 }
 #endif
 
-#define __QWORD_SEEK_SET        0
-#define __QWORD_SEEK_CUR        1
-#define __QWORD_SEEK_END        2
-
 int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
     off_t ret;
     int sys_errno;
 
-    int qword_type;
-    switch (whence) {
-        case SEEK_SET:
-            qword_type = __QWORD_SEEK_SET;
-            break;
-        case SEEK_CUR:
-            qword_type = __QWORD_SEEK_CUR;
-            break;
-        case SEEK_END:
-            qword_type = __QWORD_SEEK_END;
-            break;
-        default:
-            return EINVAL;
-    }
     asm volatile ("syscall"
             : "=a"(ret), "=d"(sys_errno)
-            : "a"(8), "D"(fd), "S"(offset), "d"(qword_type)
+            : "a"(8), "D"(fd), "S"(offset), "d"(whence)
             : "rcx", "r11");
 
     *new_offset = ret;
@@ -235,8 +218,27 @@ int sys_sigaction(int, const struct sigaction *__restrict, struct sigaction *__r
 int sys_futex_wait(int *pointer, int expected) STUB_ONLY
 int sys_futex_wake(int *pointer) STUB_ONLY
 
-int sys_open_dir(const char *path, int *handle) STUB_ONLY
-int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read) STUB_ONLY
+int sys_open_dir(const char *path, int *handle) {
+	return sys_open(path, 0, handle);
+}
+int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read) {
+    int ret;
+    int sys_errno;
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(17), "D"(handle), "S"(buffer)
+            : "rcx", "r11");
+    if (ret == -1 && sys_errno == 0) {
+        /* end of dir */
+        *bytes_read = 0;
+        return 0;
+    } else if (ret == -1) {
+        *bytes_read = 0;
+        return sys_errno;
+    }
+    *bytes_read = sizeof(struct dirent);
+    return 0;
+}
 
 int sys_access(const char *path, int mode) STUB_ONLY
 int sys_dup(int fd, int flags, int *newfd) STUB_ONLY
