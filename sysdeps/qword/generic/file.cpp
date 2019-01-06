@@ -81,16 +81,12 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 #endif
 
 int sys_open(const char *path, int flags, int *fd) {
-    // For now, we ignore the flags.
-    // TODO: Adjust the ABI so that the flags match qword kernel flags.
-    flags = 0;
-
     int ret;
     int sys_errno;
 
     asm volatile ("syscall"
             : "=a"(ret), "=d"(sys_errno)
-            : "a"(1), "D"(path), "S"(0), "d"(flags)
+            : "a"(1), "D"(path), "S"(flags), "d"(0)
             : "rcx", "r11");
 
     *fd = ret;
@@ -274,7 +270,9 @@ int sys_stat(const char *path, struct stat *statbuf) {
     sys_close(fd);
     return 0;
 }
-int sys_lstat(const char *path, struct stat *statbuf) STUB_ONLY
+int sys_lstat(const char *path, struct stat *statbuf) {
+    return sys_stat(path, statbuf);
+}
 int sys_chroot(const char *path) STUB_ONLY
 int sys_mkdir(const char *path) STUB_ONLY
 int sys_tcgetattr(int fd, struct termios *attr) {
