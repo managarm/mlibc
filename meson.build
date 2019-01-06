@@ -1,25 +1,9 @@
-project('mlibc', 'c', 'cpp')
-
-cxxshim_dep = subproject('cxxshim').get_variable('cxxshim_dep')
-frigg_dep = subproject('frigg').get_variable('frigg_dep')
-
-c_compiler = meson.get_compiler('c')
-
-gccdir = run_command('/bin/sh', '-c',
-	''.join(c_compiler.cmd_array()) + ' -print-search-dirs | sed -n -e "s/install: \(.*\)/\\1/p"',
-	check: true).stdout().strip()
-
-add_project_arguments('-nostdinc', '-fno-builtin', language: ['c', 'cpp'])
-add_project_arguments('-std=c++17', language: 'cpp')
-add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
-add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
+project('mlibc')
 
 rtdl_include_dirs = [
-	include_directories(gccdir + '/include'),
 	include_directories('options/internal/include'),
 ]
 libc_include_dirs = [
-	include_directories(gccdir + '/include'),
 	include_directories('options/internal/include'),
 	include_directories('options/elf/include'),
 	include_directories('options/lsb/include'),
@@ -30,10 +14,32 @@ rtdl_sources = [ ]
 libc_sources = [ ]
 libc_sublibs = [ ]
 
+headers_only = get_option('headers_only')
 disable_ansi_option = false
 disable_posix_option = false
 disable_linux_option = false
 internal_conf = configuration_data()
+
+if not headers_only
+	cxxshim_dep = subproject('cxxshim').get_variable('cxxshim_dep')
+	frigg_dep = subproject('frigg').get_variable('frigg_dep')
+
+	add_languages('c', 'cpp')
+	c_compiler = meson.get_compiler('c')
+
+	add_project_arguments('-nostdinc', '-fno-builtin', language: ['c', 'cpp'])
+	add_project_arguments('-std=c++17', language: 'cpp')
+	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
+	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
+
+	gccdir = run_command('/bin/sh', '-c',
+		''.join(c_compiler.cmd_array())
+				+ ' -print-search-dirs | sed -n -e "s/install: \(.*\)/\\1/p"',
+		check: true).stdout().strip()
+
+	rtdl_include_dirs += include_directories(gccdir + '/include')
+	libc_include_dirs += include_directories(gccdir + '/include')
+endif
 
 internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', true)
 
@@ -130,30 +136,31 @@ subdir('options/lsb')
 subdir('options/glibc')
 subdir('options/linux')
 
-ldso_lib = shared_library('ld', rtdl_sources,
-		name_prefix: '',
-		cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
-		include_directories: rtdl_include_dirs,
-		dependencies: [cxxshim_dep, frigg_dep],
-		install: true)
+if not headers_only
+	ldso_lib = shared_library('ld', rtdl_sources,
+			name_prefix: '',
+			cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
+			include_directories: rtdl_include_dirs,
+			dependencies: [cxxshim_dep, frigg_dep],
+			install: true)
 
-shared_library('c',
-		[
-			libc_sources,
-			internal_sources,
-			ansi_sources,
-			lsb_sources,
-		],
-		cpp_args: ['-DFRIGG_HAVE_LIBC'],
-		include_directories: libc_include_dirs,
-		dependencies: [cxxshim_dep, frigg_dep],
-		link_with: [ldso_lib],
-		link_whole: libc_sublibs,
-		install: true)
+	shared_library('c',
+			[
+				libc_sources,
+				internal_sources,
+				ansi_sources,
+				lsb_sources,
+			],
+			cpp_args: ['-DFRIGG_HAVE_LIBC'],
+			include_directories: libc_include_dirs,
+			dependencies: [cxxshim_dep, frigg_dep],
+			link_with: [ldso_lib],
+			link_whole: libc_sublibs,
+			install: true)
 
-shared_library('dl', 'libdl/src/dummy.cpp', install: true)
-shared_library('m', 'libm/src/dummy.cpp', install: true)
-shared_library('pthread', 'libpthread/src/dummy.cpp', install: true)
-shared_library('rt', 'librt/src/dummy.cpp', install: true)
-shared_library('util', 'libutil/src/dummy.cpp', install: true)
-
+	shared_library('dl', 'libdl/src/dummy.cpp', install: true)
+	shared_library('m', 'libm/src/dummy.cpp', install: true)
+	shared_library('pthread', 'libpthread/src/dummy.cpp', install: true)
+	shared_library('rt', 'librt/src/dummy.cpp', install: true)
+	shared_library('util', 'libutil/src/dummy.cpp', install: true)
+endif
