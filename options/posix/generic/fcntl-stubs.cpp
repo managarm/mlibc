@@ -40,25 +40,8 @@ int posix_fadvise(int fd, off_t offset, off_t length, int advice) {
 }
 
 int posix_fallocate(int fd, off_t offset, off_t size) {
-	struct error_guard {
-		error_guard()
-		: _s{errno} { }
-
-		~error_guard() {
-			errno = _s;
-		}
-
-	private:
-		int _s;
-	};
-
-	error_guard guard;
-
-	if(int e = mlibc::sys_fallocate(fd, offset, size); e) {
-		errno = e;
-		return -1;
-	}
-	return 0;
+	// posix_fallocate() returns an error instead of setting errno.
+	return mlibc::sys_fallocate(fd, offset, size);
 }
 
 // This is a linux extension
