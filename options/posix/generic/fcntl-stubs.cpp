@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 
+#include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
 int creat(const char *, mode_t) {
@@ -27,10 +28,17 @@ int openat(int, const char *, int, ...) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int posix_fadvise(int, off_t, off_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int posix_fadvise(int fd, off_t offset, off_t length, int advice) {
+	if(!mlibc::sys_fadvise) {
+		mlibc::infoLogger() << "mlibc: fadvise() ignored due to missing sysdep" << frg::endlog;
+		return 0;
+	}
+
+	// posix_fadvise() returns an error instead of setting errno.
+	return mlibc::sys_fadvise(fd, offset, length, advice);
 }
+
 int posix_fallocate(int fd, off_t offset, off_t size) {
 	struct error_guard {
 		error_guard()
