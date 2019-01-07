@@ -5,6 +5,7 @@ rtdl_include_dirs = [
 ]
 libc_include_dirs = [
 	include_directories('options/internal/include'),
+	include_directories('options/internal/x86_64-include'),
 	include_directories('options/elf/include'),
 	include_directories('options/lsb/include'),
 	include_directories('options/glibc/include'),

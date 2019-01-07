@@ -5,6 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <mlibc/arch-defs.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
@@ -285,7 +286,7 @@ void sync(void) {
 }
 unsigned long sysconf(int number) {
 	if(number == _SC_PAGE_SIZE) {
-		return 4096;
+		return mlibc::page_size;
 	}else{
 		mlibc::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented\e[39m"
 				<< frg::endlog;
@@ -331,9 +332,8 @@ int unlinkat(int, const char *, int) {
 	__builtin_unreachable();
 }
 
-int getpagesize(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int getpagesize() {
+	return mlibc::page_size;
 }
 
 char *get_current_dir_name(void) {
