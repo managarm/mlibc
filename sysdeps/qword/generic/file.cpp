@@ -26,14 +26,16 @@ void sys_libc_panic() {
 int sys_chdir(const char *path) {
     int ret;
     int sys_errno;
+
 	asm volatile ("syscall"
             : "=a"(ret), "=d"(sys_errno)
 			: "a"(15), "D"(path)
 			: "rcx", "r11");
+
     if (ret == -1)
         return sys_errno;
-    else
-        return 0;
+
+    return 0;
 }
 
 int sys_tcb_set(void *pointer) {
@@ -56,11 +58,11 @@ int sys_anon_allocate(size_t size, void **pointer) {
 			: "a"(6), "D"(0), "S"(size >> 12)
 			: "rcx", "r11");
 
-	*pointer = ret;
     if (!ret)
         return sys_errno;
-    else
-        return 0;
+
+	*pointer = ret;
+    return 0;
 }
 
 int sys_anon_free(void *pointer, size_t size) STUB_ONLY
@@ -89,53 +91,59 @@ int sys_open(const char *path, int flags, int *fd) {
             : "a"(1), "D"(path), "S"(flags), "d"(0)
             : "rcx", "r11");
 
-    *fd = ret;
     if (ret == -1)
         return sys_errno;
-    else
-        return 0;
+
+    *fd = ret;
+    return 0;
 }
 
 int sys_close(int fd) {
     int ret;
     int sys_errno;
+
     asm volatile ("syscall"
             : "=a"(ret), "=d"(sys_errno)
             : "a"(2), "D"(fd)
             : "rcx", "r11");
+
     if (ret == -1)
         return sys_errno;
-    else
-        return 0;
+
+    return 0;
 }
 
 int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
     ssize_t ret;
     int sys_errno;
+
     asm volatile ("syscall"
             : "=a"(ret), "=d"(sys_errno)
             : "a"(3), "D"(fd), "S"(buf), "d"(count)
             : "rcx", "r11");
-    *bytes_read = ret;
+
     if (ret == -1)
         return sys_errno;
-    else
-        return 0;
+
+    *bytes_read = ret;
+    return 0;
 }
 
 #ifndef MLIBC_BUILDING_RTDL
 int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
     ssize_t ret;
     int sys_errno;
+
     asm volatile ("syscall"
             : "=a"(ret), "=d"(sys_errno)
             : "a"(4), "D"(fd), "S"(buf), "d"(count)
             : "rcx", "r11");
-    *bytes_written = ret;
+
     if (ret == -1)
         return sys_errno;
-    else
-        return 0;
+
+    *bytes_written = ret;
+    return 0;
 }
 #endif
 
@@ -155,11 +163,11 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
             : "a"(8), "D"(fd), "S"(offset), "d"(whence)
             : "rcx", "r11");
 
-    *new_offset = ret;
     if (ret == -1)
         return sys_errno;
-    else
-        return 0;
+
+    *new_offset = ret;
+    return 0;
 }
 
 int sys_vm_map(void *hint, size_t size, int prot, int flags,
@@ -186,14 +194,16 @@ int sys_vm_unmap(void *pointer, size_t size) STUB_ONLY
 int sys_fstat(int fd, struct stat *statbuf) {
     int ret;
     int sys_errno;
+
     asm volatile ("syscall"
             : "=a"(ret), "=d"(sys_errno)
             : "a"(9), "D"(fd), "S"(statbuf)
             : "rcx", "r11");
+
     if (ret == -1)
         return sys_errno;
-    else
-        return 0;
+
+    return 0;
 }
 #endif
 
@@ -220,18 +230,20 @@ int sys_open_dir(const char *path, int *handle) {
 int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read) {
     int ret;
     int sys_errno;
+
     asm volatile ("syscall"
             : "=a"(ret), "=d"(sys_errno)
             : "a"(17), "D"(handle), "S"(buffer)
             : "rcx", "r11");
+
     if (ret == -1 && sys_errno == 0) {
         /* end of dir */
         *bytes_read = 0;
         return 0;
     } else if (ret == -1) {
-        *bytes_read = 0;
         return sys_errno;
     }
+
     *bytes_read = sizeof(struct dirent);
     return 0;
 }
@@ -242,14 +254,16 @@ int sys_dup2(int fd, int flags, int newfd) {
     (void)flags;
     int ret;
     int sys_errno;
+
     asm volatile ("syscall"
             : "=a"(ret), "=d"(sys_errno)
             : "a"(16), "D"(fd), "S"(newfd)
             : "rcx", "r11");
+
     if (ret == -1)
         return sys_errno;
-    else
-        return 0;
+
+    return 0;
 }
 int sys_isatty(int fd) {
     mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
@@ -287,8 +301,20 @@ int sys_fallocate(int fd, off_t offset, size_t size) STUB_ONLY
 int sys_unlink(const char *path) STUB_ONLY
 int sys_symlink(const char *target_path, const char *link_path) STUB_ONLY
 int sys_fcntl(int fd, int request, va_list args, int *result) {
-    mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
-    return ENOSYS;
+    int ret;
+    int sys_errno;
+    size_t arg = va_arg(args, size_t);
+
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(18), "D"(fd), "S"(request), "d"(arg)
+            : "rcx", "r11");
+
+    if (ret == -1)
+        return sys_errno;
+
+    *result = ret;
+    return 0;
 }
 
 int sys_socket(int family, int type, int protocol, int *fd) STUB_ONLY
@@ -309,42 +335,47 @@ int sys_sleep(time_t *secs, long *nanos) STUB_ONLY
 int sys_fork(pid_t *child) {
     pid_t ret;
     int sys_errno;
+
     asm volatile ("syscall"
             : "=a"(ret), "=d"(sys_errno)
             : "a"(10)
             : "rcx", "r11");
-    *child = ret;
+
     if (ret == -1)
         return sys_errno;
-    else
-        return 0;
+
+    *child = ret;
+    return 0;
 }
 int sys_execve(const char *path, char *const argv[], char *const envp[]) {
     int ret;
     int sys_errno;
+
     asm volatile ("syscall"
             : "=a"(ret), "=d"(sys_errno)
             : "a"(11), "D"(path), "S"(argv), "d"(envp)
             : "rcx", "r11");
+
     if (ret == -1)
         return sys_errno;
-    else
-        return 0;
 
+    return 0;
 }
 int sys_kill(int, int) STUB_ONLY
 int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
     pid_t ret;
     int sys_errno;
+
     asm volatile ("syscall"
             : "=a"(ret), "=d"(sys_errno)
             : "a"(13), "D"(pid), "S"(status), "d"(flags)
             : "rcx", "r11");
-    *ret_pid = ret;
+
     if (ret == -1)
         return sys_errno;
-    else
-        return 0;
+
+    *ret_pid = ret;
+    return 0;
 }
 int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
     mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
