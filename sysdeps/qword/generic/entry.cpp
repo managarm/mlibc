@@ -26,15 +26,8 @@ LibraryGuard::LibraryGuard() {
 
 	// Parse the exec() stack.
 	mlibc::parse_exec_stack(__dlapi_entrystack(), &__mlibc_stack_data);
-
-	// Initialize environ.
-	// TODO: Copy the arguments instead of pointing to them?
-	auto ev = __mlibc_stack_data.envp;
-	while(*ev) {
-		auto fail = putenv(*ev);
-		__ensure(!fail);
-		ev++;
-	}
+	mlibc::set_startup_data(__mlibc_stack_data.argc, __mlibc_stack_data.argv,
+			__mlibc_stack_data.envp);
 }
 
 extern "C" void __mlibc_entry(int (*main_fn)(int argc, char *argv[], char *env[])) {

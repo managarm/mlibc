@@ -11,6 +11,8 @@ struct exec_stack_data {
 
 void parse_exec_stack(void *sp, exec_stack_data *data);
 
+void set_startup_data(int argc, char **argv, char **envp);
+
 } // namespace mlibc
 
 #endif // MLIBC_ELF_STARTUP
