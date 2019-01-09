@@ -44,7 +44,15 @@ struct PrintfAgent {
 			__ensure(!opts.precision);
 			_formatter->append(strerror(errno));
 			break;
+		case 'n': {
+			__ensure(szmod == frg::printf_size_mod::default_size);
+			auto p = va_arg(_vsp->args, int *);
+			*p = _formatter->count;
+			break;
+		}
 		default:
+			mlibc::infoLogger() << "\e[31mmlibc: Unknown printf terminator '"
+					<< t << "'\e[39m" << frg::endlog;
 			__ensure(!"Illegal printf terminator");
 		}
 	}
