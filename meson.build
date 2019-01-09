@@ -42,6 +42,7 @@ if not headers_only
 	libc_include_dirs += include_directories(gccdir + '/include')
 endif
 
+internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
 internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', true)
 
 #----------------------------------------------------------------------------------------
