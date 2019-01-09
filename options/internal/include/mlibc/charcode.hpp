@@ -11,8 +11,10 @@ namespace mlibc {
 
 enum class charcode_error {
 	null,
-	illegal_units,
-	not_enough_units
+	dirty,
+	illegal_input,
+	input_underflow,
+	output_overflow
 };
 
 template<typename C>
@@ -92,6 +94,9 @@ struct polymorphic_charcode {
 			__mlibc_mbstate &st) = 0;
 
 	virtual charcode_error decode_wtranscode_length(code_seq<const char> &nseq, size_t *n,
+			__mlibc_mbstate &st) = 0;
+
+	virtual charcode_error encode_wtranscode(code_seq<char> &nseq, code_seq<const wchar_t> &wseq,
 			__mlibc_mbstate &st) = 0;
 
 	// True iff promotion only zero-extends units below 0x7F.

@@ -88,8 +88,25 @@ size_t mbsrtowcs(wchar_t *__restrict wcs, const char **__restrict mbs,
 		size_t max_wcs, mbstate_t *__restrict)
 	MLIBC_STUB_BODY
 
-size_t wcsrtombs(char *__restrict, const wchar_t **__restrict, size_t, mbstate_t *__restrict)
-	MLIBC_STUB_BODY
+size_t wcsrtombs(char *mbs, const wchar_t **wcsp, size_t mb_limit, mbstate_t *stp) {
+	__ensure(wcsp && "wcsrtombs() with null input");
+	auto cc = mlibc::current_charcode();
+	mlibc::code_seq<char> nseq{mbs, mbs + mb_limit};
+	mlibc::code_seq<const wchar_t> wseq{*wcsp, nullptr};
+
+	__ensure(mbs && "Handle !mbs case as in mbstowcs()");
+
+	if(auto e = cc->encode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
+		__ensure(!"encode_wtranscode() errors are not handled");
+		__builtin_unreachable();
+	}else{
+		*wcsp = wseq.it;
+		size_t n = nseq.it - mbs;
+		if(n < mb_limit) // Null-terminate resulting narrow string.
+			mbs[n] = 0;
+		return n;
+	}
+}
 
 int wcwidth(wchar_t) {
 	static bool warned = false;
