@@ -51,6 +51,12 @@ HelHandle __mlibc_getPassthrough(int fd) {
 
 namespace mlibc {
 
+int sys_chdir(const char *path) {
+	mlibc::infoLogger() << "\e[31mmlibc: chdir() is not implemented correctly\e[39m"
+			<< frg::endlog;
+	return 0;
+}
+
 int sys_chroot(const char *path) {
 	SignalGuard sguard;
 	HelAction actions[3];
