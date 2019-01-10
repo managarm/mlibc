@@ -38,6 +38,7 @@ extern "C" {
 #define F_ULOCK 4
 
 // MISSING: _PC macros
+#define _PC_PATH_MAX 4
 #define _PC_PIPE_BUF 5
 
 // MISSING: remaining _SC_macros
