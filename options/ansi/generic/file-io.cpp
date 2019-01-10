@@ -13,368 +13,339 @@
 #include <abi-bits/abi.h>
 #include <frg/allocation.hpp>
 #include <mlibc/allocator.hpp>
+#include <mlibc/file-io.hpp>
 #include <mlibc/sysdeps.hpp>
 
 namespace mlibc {
 
+// --------------------------------------------------------------------------------------
+// abstract_file implementation.
+// --------------------------------------------------------------------------------------
+
 // Useful when debugging the FILE implementation.
 static bool globallyDisableBuffering = false;
 
-enum class stream_type {
-	unknown,
-	file_like,
-	pipe_like
-};
-
-enum class buffer_mode {
-	unknown,
-	no_buffer,
-	line_buffer,
-	full_buffer
-};
-
 // For pipe-like streams (seek returns ESPIPE), we need to make sure
 // that the buffer only ever contains all-dirty or all-clean data.
-struct abstract_file : __mlibc_file_base {
-public:
-	abstract_file()
-	: _type{stream_type::unknown}, _bufmode{buffer_mode::unknown} {
-		__buffer_ptr = nullptr;
-		__buffer_size = 128;
-		__offset = 0;
-		__io_offset = 0;
-		__valid_limit = 0;
-		__dirty_begin = 0;
-		__dirty_end = 0;
-		__io_mode = 0;
-	}
+// Regarding _type and _bufmode:
+//     As we might construct FILE objects for FDs that are not actually
+//     open (e.g. for std{in,out,err}), we defer the type determination and cache the result.
 
-	abstract_file(const abstract_file &) = delete;
+abstract_file::abstract_file()
+: _type{stream_type::unknown}, _bufmode{buffer_mode::unknown} {
+	__buffer_ptr = nullptr;
+	__buffer_size = 128;
+	__offset = 0;
+	__io_offset = 0;
+	__valid_limit = 0;
+	__dirty_begin = 0;
+	__dirty_end = 0;
+	__io_mode = 0;
+}
 
-	abstract_file &operator= (const abstract_file &) = delete;
+abstract_file::~abstract_file() {
+	mlibc::panicLogger() << "mlibc: Fix abstract_file destructor" << frg::endlog;
+}
 
-	virtual ~abstract_file() {
-		mlibc::panicLogger() << "mlibc: Fix abstract_file destructor" << frg::endlog;
-	}
+// Note that read() and write() are asymmetric:
+// While read() can trigger a write-back, write() can never trigger a read-ahead().
+// This peculiarity is reflected in their code.
 
-	virtual int close() = 0;
+int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
+	__ensure(max_size);
 
-	// Note that read() and write() are asymmetric:
-	// While read() can trigger a write-back, write() can never trigger a read-ahead().
-	// This peculiarity is reflected in their code.
+	if(_init_bufmode())
+		return -1;
+	if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer)
+		return io_read(buffer, max_size, actual_size);
 
-	int read(char *buffer, size_t max_size, size_t *actual_size) {
-		__ensure(max_size);
+	// Ensure correct buffer type for pipe-like streams.
+	// TODO: In order to support pipe-like streams we need to write-back the buffer.
+	if(__io_mode && __valid_limit)
+		mlibc::panicLogger() << "mlibc: Cannot read-write to same pipe-like stream"
+				<< frg::endlog;
+	__io_mode = 0;
 
-		if(_init_bufmode())
-			return -1;
-		if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer)
-			return io_read(buffer, max_size, actual_size);
-
-		// Ensure correct buffer type for pipe-like streams.
-		// TODO: In order to support pipe-like streams we need to write-back the buffer.
-		if(__io_mode && __valid_limit)
-			mlibc::panicLogger() << "mlibc: Cannot read-write to same pipe-like stream"
-					<< frg::endlog;
-		__io_mode = 0;
-
-		// Clear the buffer, then buffer new data.
-		if(__offset == __valid_limit) {
-			// TODO: We only have to write-back/reset if __valid_limit reaches the buffer end.
-			if(int e = _write_back(); e)
-				return e;
-			if(int e = _reset(); e)
-				return e;
-
-			// Perform a read-ahead.
-			_ensure_allocation();
-			size_t io_size;
-			if(int e = io_read(__buffer_ptr, __buffer_size, &io_size); e)
-				return e;
-			if(!io_size) {
-				*actual_size = 0;
-				return 0;
-			}
-
-			__io_offset = io_size;
-			__valid_limit = io_size;
-		}
-
-		// Return data from the buffer.
-		__ensure(__offset < __valid_limit);
-
-		auto chunk = frg::min(size_t(__valid_limit - __offset), max_size);
-		memcpy(buffer, __buffer_ptr + __offset, chunk);
-		__offset += chunk;
-
-		*actual_size = chunk;
-		return 0;
-	}
-
-	int write(const char *buffer, size_t max_size, size_t *actual_size) {
-		__ensure(max_size);
-
-		if(_init_bufmode())
-			return -1;
-		if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer) {
-			// As we do not buffer, nothing can be dirty.
-			__ensure(__dirty_begin == __dirty_end);
-			return io_write(buffer, max_size, actual_size);
-		}
-
-		// Flush the buffer if necessary.
-		if(__offset == __buffer_size) {
-			if(int e = _write_back(); e)
-				return e;
-			if(int e = _reset(); e)
-				return e;
-		}
-
-		// Ensure correct buffer type for pipe-like streams.
-		// TODO: We could full support pipe-like files
-		// by ungetc()ing all data before a write happens,
-		// however, for now we just report an error.
-		if(!__io_mode && __valid_limit) // TODO: Only check this for pipe-like streams.
-			mlibc::panicLogger() << "mlibc: Cannot read-write to same pipe-like stream"
-					<< frg::endlog;
-		__io_mode = 1;
-
-		__ensure(__offset < __buffer_size);
-		auto chunk = frg::min(__buffer_size - __offset, max_size);
-
-		// Line-buffered streams perform I/O on full lines.
-		bool flush_line = false;
-		if(_bufmode == buffer_mode::line_buffer) {
-			auto nl = reinterpret_cast<char *>(memchr(buffer, '\n', chunk));
-			if(nl) {
-				chunk = nl + 1 - buffer;
-				flush_line = true;
-			}
-		}
-		__ensure(chunk);
-
-		// Buffer data (without necessarily performing I/O).
-		_ensure_allocation();
-		memcpy(__buffer_ptr + __offset, buffer, chunk);
-
-		if(__dirty_begin != __dirty_end) {
-			__dirty_begin = frg::min(__dirty_begin, __offset);
-			__dirty_end = frg::max(__dirty_end, __offset + chunk);
-		}else{
-			__dirty_begin = __offset;
-			__dirty_end = __offset + chunk;
-		}
-		__valid_limit = frg::max(__offset + chunk, __valid_limit);
-		__offset += chunk;
-
-		// Flush line-buffered streams.
-		if(flush_line) {
-			if(_write_back())
-				return -1;
-		}
-
-		*actual_size = chunk;
-		return 0;
-	}
-
-	void purge() {
-		__offset = 0;
-		__io_offset = 0;
-		__valid_limit = 0;
-		__dirty_end = __dirty_begin;
-	}
-
-	int update_bufmode(buffer_mode mode) {
-		if(_write_back())
-			return -1;
-		_bufmode = mode;
-		return 0;
-	}
-
-	// TODO: For input files, discard the buffer.
-	int flush() {
-		return _write_back();
-	}
-
-	int seek(off_t offset, int whence) {
+	// Clear the buffer, then buffer new data.
+	if(__offset == __valid_limit) {
+		// TODO: We only have to write-back/reset if __valid_limit reaches the buffer end.
 		if(int e = _write_back(); e)
 			return e;
-
-		if(whence == SEEK_SET || whence == SEEK_END) {
-			// For absolute seeks we can just forget the current buffer.
-			if(int e = _reset(); e)
-				return e;
-
-			if(int e = io_seek(offset, whence); e)
-				return e;
-			return 0;
-		}else{
-			__ensure(whence == SEEK_CUR); // TODO: Handle errors.
-			mlibc::panicLogger() << "mlibc: Implement relative seek for FILE" << frg::endlog;
-			__builtin_unreachable();
-		}
-	}
-
-protected:
-	virtual int determine_type(stream_type *type) = 0;
-	virtual int determine_bufmode(buffer_mode *mode) = 0;
-	virtual int io_read(char *buffer, size_t max_size, size_t *actual_size) = 0;
-	virtual int io_write(const char *buffer, size_t max_size, size_t *actual_size) = 0;
-	virtual int io_seek(off_t offset, int whence) = 0;
-
-private:
-	int _init_type() {
-		if(_type != stream_type::unknown)
-			return 0;
-
-		if(int e = determine_type(&_type); e)
-			return e;
-		__ensure(_type != stream_type::unknown);
-		return 0;
-	}
-
-	int _init_bufmode() {
-		if(_bufmode != buffer_mode::unknown)
-			return 0;
-
-		if(determine_bufmode(&_bufmode))
-			return -1;
-		__ensure(_bufmode != buffer_mode::unknown);
-		return 0;
-	}
-
-	int _write_back() {
-		if(int e = _init_type(); e)
+		if(int e = _reset(); e)
 			return e;
 
-		if(__dirty_begin == __dirty_end)
+		// Perform a read-ahead.
+		_ensure_allocation();
+		size_t io_size;
+		if(int e = io_read(__buffer_ptr, __buffer_size, &io_size); e)
+			return e;
+		if(!io_size) {
+			*actual_size = 0;
 			return 0;
-
-		// For non-pipe streams, first do a seek to reset the
-		// I/O position to zero, then do a write().
-		if(_type == stream_type::file_like) {
-			if(int e = io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR); e)
-				return e;
-			__io_offset = __dirty_begin;
-		}else{
-			__ensure(_type == stream_type::pipe_like);
-			__ensure(__io_offset == __dirty_begin);
 		}
 
-		// Now, we are in the correct position to write-back everything.
-		while(__io_offset < __dirty_end) {
-			size_t chunk;
-			if(int e = io_write(__buffer_ptr + __io_offset, __dirty_end - __io_offset, &chunk); e)
-				return e;
-			__io_offset += chunk;
-			__dirty_begin += chunk;
-		}
-
-		return 0;
+		__io_offset = io_size;
+		__valid_limit = io_size;
 	}
 
-	int _reset() {
-		if(int e = _init_type(); e)
-			return e;
+	// Return data from the buffer.
+	__ensure(__offset < __valid_limit);
 
-		// For pipe-like files, we must not forget already read data.
-		// TODO: Report this error to the user.
-		if(_type == stream_type::pipe_like)
-			__ensure(__offset == __valid_limit);
+	auto chunk = frg::min(size_t(__valid_limit - __offset), max_size);
+	memcpy(buffer, __buffer_ptr + __offset, chunk);
+	__offset += chunk;
 
+	*actual_size = chunk;
+	return 0;
+}
+
+int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_size) {
+	__ensure(max_size);
+
+	if(_init_bufmode())
+		return -1;
+	if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer) {
+		// As we do not buffer, nothing can be dirty.
 		__ensure(__dirty_begin == __dirty_end);
-		__offset = 0;
-		__io_offset = 0;
-		__valid_limit = 0;
-
-		return 0;
+		return io_write(buffer, max_size, actual_size);
 	}
 
-	void _ensure_allocation() {
-		__ensure(__buffer_size);
-		if(__buffer_ptr)
-			return;
-
-		auto ptr = getAllocator().allocate(__buffer_size);
-		__buffer_ptr = reinterpret_cast<char *>(ptr);
-	}
-
-	// As we might construct FILE objects for FDs that are not actually
-	// open (e.g. for std{in,out,err}), we defer the type determination and cache the result.
-	stream_type _type;
-	buffer_mode _bufmode;
-};
-
-struct fd_file : abstract_file {
-	fd_file(int fd)
-	: _fd{fd} { }
-
-	int fd() {
-		return _fd;
-	}
-
-	int close() override {
-		if(int e = mlibc::sys_close(_fd); e)
+	// Flush the buffer if necessary.
+	if(__offset == __buffer_size) {
+		if(int e = _write_back(); e)
 			return e;
-		return 0;
+		if(int e = _reset(); e)
+			return e;
 	}
 
-protected:
-	int determine_type(stream_type *type) override {
-		off_t offset;
-		int e = mlibc::sys_seek(_fd, 0, SEEK_CUR, &offset);
-		if(!e) {
-			*type = stream_type::file_like;
-			return 0;
-		}else if(e == ESPIPE) {
-			*type = stream_type::pipe_like;
-			return 0;
-		}else{
-			return e;
+	// Ensure correct buffer type for pipe-like streams.
+	// TODO: We could full support pipe-like files
+	// by ungetc()ing all data before a write happens,
+	// however, for now we just report an error.
+	if(!__io_mode && __valid_limit) // TODO: Only check this for pipe-like streams.
+		mlibc::panicLogger() << "mlibc: Cannot read-write to same pipe-like stream"
+				<< frg::endlog;
+	__io_mode = 1;
+
+	__ensure(__offset < __buffer_size);
+	auto chunk = frg::min(__buffer_size - __offset, max_size);
+
+	// Line-buffered streams perform I/O on full lines.
+	bool flush_line = false;
+	if(_bufmode == buffer_mode::line_buffer) {
+		auto nl = reinterpret_cast<char *>(memchr(buffer, '\n', chunk));
+		if(nl) {
+			chunk = nl + 1 - buffer;
+			flush_line = true;
 		}
 	}
+	__ensure(chunk);
 
-	int determine_bufmode(buffer_mode *mode) override {
-		if(int e = mlibc::sys_isatty(_fd); !e) {
-			*mode = buffer_mode::line_buffer;
-			return 0;
-		}else if(e == ENOTTY) {
-			*mode = buffer_mode::full_buffer;
-			return 0;
-		}else{
-			mlibc::infoLogger() << "mlibc: sys_isatty() failed while determining whether"
-					" stream is interactive" << frg::endlog;
+	// Buffer data (without necessarily performing I/O).
+	_ensure_allocation();
+	memcpy(__buffer_ptr + __offset, buffer, chunk);
+
+	if(__dirty_begin != __dirty_end) {
+		__dirty_begin = frg::min(__dirty_begin, __offset);
+		__dirty_end = frg::max(__dirty_end, __offset + chunk);
+	}else{
+		__dirty_begin = __offset;
+		__dirty_end = __offset + chunk;
+	}
+	__valid_limit = frg::max(__offset + chunk, __valid_limit);
+	__offset += chunk;
+
+	// Flush line-buffered streams.
+	if(flush_line) {
+		if(_write_back())
 			return -1;
-		}
 	}
 
-	int io_read(char *buffer, size_t max_size, size_t *actual_size) override {
-		ssize_t s;
-		if(int e = mlibc::sys_read(_fd, buffer, max_size, &s); e)
+	*actual_size = chunk;
+	return 0;
+}
+
+int abstract_file::update_bufmode(buffer_mode mode) {
+	if(_write_back())
+		return -1;
+	_bufmode = mode;
+	return 0;
+}
+
+void abstract_file::purge() {
+	__offset = 0;
+	__io_offset = 0;
+	__valid_limit = 0;
+	__dirty_end = __dirty_begin;
+}
+
+// TODO: For input files, discard the buffer.
+int abstract_file::flush() {
+	return _write_back();
+}
+
+int abstract_file::seek(off_t offset, int whence) {
+	if(int e = _write_back(); e)
+		return e;
+
+	if(whence == SEEK_SET || whence == SEEK_END) {
+		// For absolute seeks we can just forget the current buffer.
+		if(int e = _reset(); e)
 			return e;
-		*actual_size = s;
-		return 0;
-	}
 
-	int io_write(const char *buffer, size_t max_size, size_t *actual_size) override {
-		ssize_t s;
-		if(int e = mlibc::sys_write(_fd, buffer, max_size, &s); e)
-			return e;
-		*actual_size = s;
-		return 0;
-	}
-
-	int io_seek(off_t offset, int whence) override {
-		off_t new_offset;
-		if(int e = mlibc::sys_seek(_fd, offset, whence, &new_offset); e)
+		if(int e = io_seek(offset, whence); e)
 			return e;
 		return 0;
+	}else{
+		__ensure(whence == SEEK_CUR); // TODO: Handle errors.
+		mlibc::panicLogger() << "mlibc: Implement relative seek for FILE" << frg::endlog;
+		__builtin_unreachable();
+	}
+}
+
+int abstract_file::_init_type() {
+	if(_type != stream_type::unknown)
+		return 0;
+
+	if(int e = determine_type(&_type); e)
+		return e;
+	__ensure(_type != stream_type::unknown);
+	return 0;
+}
+
+int abstract_file::_init_bufmode() {
+	if(_bufmode != buffer_mode::unknown)
+		return 0;
+
+	if(determine_bufmode(&_bufmode))
+		return -1;
+	__ensure(_bufmode != buffer_mode::unknown);
+	return 0;
+}
+
+int abstract_file::_write_back() {
+	if(int e = _init_type(); e)
+		return e;
+
+	if(__dirty_begin == __dirty_end)
+		return 0;
+
+	// For non-pipe streams, first do a seek to reset the
+	// I/O position to zero, then do a write().
+	if(_type == stream_type::file_like) {
+		if(int e = io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR); e)
+			return e;
+		__io_offset = __dirty_begin;
+	}else{
+		__ensure(_type == stream_type::pipe_like);
+		__ensure(__io_offset == __dirty_begin);
 	}
 
-private:
-	// Underlying file descriptor.
-	int _fd;
-};
+	// Now, we are in the correct position to write-back everything.
+	while(__io_offset < __dirty_end) {
+		size_t chunk;
+		if(int e = io_write(__buffer_ptr + __io_offset, __dirty_end - __io_offset, &chunk); e)
+			return e;
+		__io_offset += chunk;
+		__dirty_begin += chunk;
+	}
+
+	return 0;
+}
+
+int abstract_file::_reset() {
+	if(int e = _init_type(); e)
+		return e;
+
+	// For pipe-like files, we must not forget already read data.
+	// TODO: Report this error to the user.
+	if(_type == stream_type::pipe_like)
+		__ensure(__offset == __valid_limit);
+
+	__ensure(__dirty_begin == __dirty_end);
+	__offset = 0;
+	__io_offset = 0;
+	__valid_limit = 0;
+
+	return 0;
+}
+
+void abstract_file::_ensure_allocation() {
+	__ensure(__buffer_size);
+	if(__buffer_ptr)
+		return;
+
+	auto ptr = getAllocator().allocate(__buffer_size);
+	__buffer_ptr = reinterpret_cast<char *>(ptr);
+}
+
+// --------------------------------------------------------------------------------------
+// fd_file implementation.
+// --------------------------------------------------------------------------------------
+
+fd_file::fd_file(int fd)
+: _fd{fd} { }
+
+int fd_file::fd() {
+	return _fd;
+}
+
+int fd_file::close() {
+	if(int e = mlibc::sys_close(_fd); e)
+		return e;
+	return 0;
+}
+
+int fd_file::determine_type(stream_type *type) {
+	off_t offset;
+	int e = mlibc::sys_seek(_fd, 0, SEEK_CUR, &offset);
+	if(!e) {
+		*type = stream_type::file_like;
+		return 0;
+	}else if(e == ESPIPE) {
+		*type = stream_type::pipe_like;
+		return 0;
+	}else{
+		return e;
+	}
+}
+
+int fd_file::determine_bufmode(buffer_mode *mode) {
+	if(int e = mlibc::sys_isatty(_fd); !e) {
+		*mode = buffer_mode::line_buffer;
+		return 0;
+	}else if(e == ENOTTY) {
+		*mode = buffer_mode::full_buffer;
+		return 0;
+	}else{
+		mlibc::infoLogger() << "mlibc: sys_isatty() failed while determining whether"
+				" stream is interactive" << frg::endlog;
+		return -1;
+	}
+}
+
+int fd_file::io_read(char *buffer, size_t max_size, size_t *actual_size) {
+	ssize_t s;
+	if(int e = mlibc::sys_read(_fd, buffer, max_size, &s); e)
+		return e;
+	*actual_size = s;
+	return 0;
+}
+
+int fd_file::io_write(const char *buffer, size_t max_size, size_t *actual_size) {
+	ssize_t s;
+	if(int e = mlibc::sys_write(_fd, buffer, max_size, &s); e)
+		return e;
+	*actual_size = s;
+	return 0;
+}
+
+int fd_file::io_seek(off_t offset, int whence) {
+	off_t new_offset;
+	if(int e = mlibc::sys_seek(_fd, offset, whence, &new_offset); e)
+		return e;
+	return 0;
+}
 
 } // namespace mlibc
 
