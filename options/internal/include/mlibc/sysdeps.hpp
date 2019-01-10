@@ -80,6 +80,8 @@ int sys_close(int fd);
 	int sys_sleep(time_t *secs, long *nanos);
 	int sys_fork(pid_t *child);
 	int sys_execve(const char *path, char *const argv[], char *const envp[]);
+	[[gnu::weak]] int sys_getrlimit(int resource, struct rlimit *limit);
+	[[gnu::weak]] int sys_getrusage(int scope, struct rusage *usage);
 	int sys_timerfd_create(int flags, int *fd);
 	int sys_timerfd_settime(int fd, int flags,
 			const struct itimerspec *value);
