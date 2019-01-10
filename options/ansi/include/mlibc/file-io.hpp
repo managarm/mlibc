@@ -38,6 +38,7 @@ public:
 	void purge();
 	int flush();
 
+	int tell(off_t *current_offset);
 	int seek(off_t offset, int whence);
 
 protected:
@@ -45,7 +46,7 @@ protected:
 	virtual int determine_bufmode(buffer_mode *mode) = 0;
 	virtual int io_read(char *buffer, size_t max_size, size_t *actual_size) = 0;
 	virtual int io_write(const char *buffer, size_t max_size, size_t *actual_size) = 0;
-	virtual int io_seek(off_t offset, int whence) = 0;
+	virtual int io_seek(off_t offset, int whence, off_t *new_offset) = 0;
 
 private:
 	int _init_type();
@@ -73,7 +74,7 @@ protected:
 
 	int io_read(char *buffer, size_t max_size, size_t *actual_size) override;
 	int io_write(const char *buffer, size_t max_size, size_t *actual_size) override;
-	int io_seek(off_t offset, int whence) override;
+	int io_seek(off_t offset, int whence, off_t *new_offset) override;
 
 private:
 	// Underlying file descriptor.

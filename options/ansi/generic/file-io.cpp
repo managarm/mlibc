@@ -184,6 +184,15 @@ int abstract_file::flush() {
 	return _write_back();
 }
 
+int abstract_file::tell(off_t *current_offset) {
+	off_t seek_offset;
+	if(int e = io_seek(0, SEEK_CUR, &seek_offset); e)
+		return e;
+
+	*current_offset = seek_offset + (off_t(__offset) - off_t(__io_offset));
+	return 0;
+}
+
 int abstract_file::seek(off_t offset, int whence) {
 	if(int e = _write_back(); e)
 		return e;
@@ -193,7 +202,8 @@ int abstract_file::seek(off_t offset, int whence) {
 		if(int e = _reset(); e)
 			return e;
 
-		if(int e = io_seek(offset, whence); e)
+		off_t new_offset;
+		if(int e = io_seek(offset, whence, &new_offset); e)
 			return e;
 		return 0;
 	}else{
@@ -233,7 +243,8 @@ int abstract_file::_write_back() {
 	// For non-pipe streams, first do a seek to reset the
 	// I/O position to zero, then do a write().
 	if(_type == stream_type::file_like) {
-		if(int e = io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR); e)
+		off_t new_offset;
+		if(int e = io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR, &new_offset); e)
 			return e;
 		__io_offset = __dirty_begin;
 	}else{
@@ -340,9 +351,8 @@ int fd_file::io_write(const char *buffer, size_t max_size, size_t *actual_size) 
 	return 0;
 }
 
-int fd_file::io_seek(off_t offset, int whence) {
-	off_t new_offset;
-	if(int e = mlibc::sys_seek(_fd, offset, whence, &new_offset); e)
+int fd_file::io_seek(off_t offset, int whence, off_t *new_offset) {
+	if(int e = mlibc::sys_seek(_fd, offset, whence, new_offset); e)
 		return e;
 	return 0;
 }
@@ -521,14 +531,23 @@ size_t fwrite(const void *__restrict buffer, size_t size , size_t count,
 }
 
 
-int fseek(FILE *stream, long offset, int whence) {
-	mlibc::panicLogger() << "mlibc: Fix fseek()" << frg::endlog;
+int fseek(FILE *file_base, long offset, int whence) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	if(int e = file->seek(offset, whence); e) {
+		errno = e;
+		return -1;
+	}
 	return 0;
 }
 
-long ftell(FILE *stream) {
-	mlibc::panicLogger() << "mlibc: Fix ftell()" << frg::endlog;
-	return 0;
+long ftell(FILE *file_base) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	off_t current_offset;
+	if(int e = file->tell(&current_offset); e) {
+		errno = e;
+		return -1;
+	}
+	return current_offset;
 }
 
 int fflush_unlocked(FILE *file_base) {
