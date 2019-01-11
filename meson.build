@@ -39,7 +39,9 @@ if not headers_only
 		check: true).stdout().strip()
 
 	rtdl_include_dirs += include_directories(gccdir + '/include')
+	rtdl_include_dirs += include_directories(gccdir + '/include-fixed')
 	libc_include_dirs += include_directories(gccdir + '/include')
+	libc_include_dirs += include_directories(gccdir + '/include-fixed')
 endif
 
 internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
