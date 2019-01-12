@@ -41,6 +41,7 @@ abstract_file::abstract_file()
 	__dirty_begin = 0;
 	__dirty_end = 0;
 	__io_mode = 0;
+	__status_bits = 0;
 }
 
 abstract_file::~abstract_file() {
@@ -56,8 +57,17 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 
 	if(_init_bufmode())
 		return -1;
-	if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer)
-		return io_read(buffer, max_size, actual_size);
+	if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer) {
+		size_t io_size;
+		if(int e = io_read(buffer, max_size, &io_size); e) {
+			__status_bits |= __MLIBC_ERROR_BIT;
+			return e;
+		}
+		if(!io_size)
+			__status_bits |= __MLIBC_EOF_BIT;
+		*actual_size = io_size;
+		return 0;
+	}
 
 	// Ensure correct buffer type for pipe-like streams.
 	// TODO: In order to support pipe-like streams we need to write-back the buffer.
@@ -77,9 +87,12 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 		// Perform a read-ahead.
 		_ensure_allocation();
 		size_t io_size;
-		if(int e = io_read(__buffer_ptr, __buffer_size, &io_size); e)
+		if(int e = io_read(__buffer_ptr, __buffer_size, &io_size); e) {
+			__status_bits |= __MLIBC_ERROR_BIT;
 			return e;
+		}
 		if(!io_size) {
+			__status_bits |= __MLIBC_EOF_BIT;
 			*actual_size = 0;
 			return 0;
 		}
@@ -107,7 +120,14 @@ int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_siz
 	if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer) {
 		// As we do not buffer, nothing can be dirty.
 		__ensure(__dirty_begin == __dirty_end);
-		return io_write(buffer, max_size, actual_size);
+		size_t io_size;
+		if(int e = io_write(buffer, max_size, &io_size); e) {
+			__status_bits |= __MLIBC_ERROR_BIT;
+			return e;
+		}
+		__ensure(io_size > 0 && "io_write() is expected to always write at least one byte");
+		*actual_size = io_size;
+		return 0;
 	}
 
 	// Flush the buffer if necessary.
@@ -166,8 +186,9 @@ int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_siz
 }
 
 int abstract_file::update_bufmode(buffer_mode mode) {
-	if(_write_back())
-		return -1;
+	// setvbuf() has undefined behavior if I/O has been performed.
+	__ensure(__dirty_begin == __dirty_end
+			&& "update_bufmode() must only be called before performing I/O");
 	_bufmode = mode;
 	return 0;
 }
@@ -203,8 +224,10 @@ int abstract_file::seek(off_t offset, int whence) {
 			return e;
 
 		off_t new_offset;
-		if(int e = io_seek(offset, whence, &new_offset); e)
+		if(int e = io_seek(offset, whence, &new_offset); e) {
+			__status_bits |= __MLIBC_ERROR_BIT;
 			return e;
+		}
 		return 0;
 	}else{
 		__ensure(whence == SEEK_CUR); // TODO: Handle errors.
@@ -254,11 +277,14 @@ int abstract_file::_write_back() {
 
 	// Now, we are in the correct position to write-back everything.
 	while(__io_offset < __dirty_end) {
-		size_t chunk;
-		if(int e = io_write(__buffer_ptr + __io_offset, __dirty_end - __io_offset, &chunk); e)
+		size_t io_size;
+		if(int e = io_write(__buffer_ptr + __io_offset, __dirty_end - __io_offset, &io_size); e) {
+			__status_bits |= __MLIBC_ERROR_BIT;
 			return e;
-		__io_offset += chunk;
-		__dirty_begin += chunk;
+		}
+		__ensure(io_size > 0 && "io_write() is expected to always write at least one byte");
+		__io_offset += io_size;
+		__dirty_begin += io_size;
 	}
 
 	return 0;

@@ -18,6 +18,9 @@ extern "C" {
 
 // [C11-7.21.1] I/O related types
 
+#define __MLIBC_EOF_BIT 1
+#define __MLIBC_ERROR_BIT 2
+
 struct __mlibc_file_base {
 	// Buffer for I/O operations.
 	char *__buffer_ptr;
@@ -42,6 +45,9 @@ struct __mlibc_file_base {
 	// 1 if we are currently writing to the buffer.
 	// This is only really important for pipe-like streams.
 	int __io_mode;
+
+	// EOF and error bits.
+	int __status_bits;
 };
 
 typedef struct __mlibc_file_base FILE;

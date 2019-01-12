@@ -439,17 +439,18 @@ int fsetpos(FILE *stream, const fpos_t *position) {
 }
 // ftell() is provided by the POSIX sublibrary
 
-void clearerr(FILE *stream) {
-	// TODO: implement stdio error handling
+void clearerr(FILE *file_base) {
+	file_base->__status_bits = 0;
 }
-int feof(FILE *stream) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int feof(FILE *file_base) {
+	return file_base->__status_bits & __MLIBC_EOF_BIT;
 }
-int ferror(FILE *stream) {
-	// TODO: implement stdio error handling
-	return 0;
+
+int ferror(FILE *file_base) {
+	return file_base->__status_bits & __MLIBC_ERROR_BIT;
 }
+
 int perror(const char *string) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -461,6 +462,7 @@ int getc_unlocked(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int getchar_unlocked(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -489,18 +491,18 @@ int vasprintf(char **out, const char *format, __gnuc_va_list args) {
 
 // Linux unlocked I/O extensions.
 
-void clearerr_unlocked(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void clearerr_unlocked(FILE *file_base) {
+	file_base->__status_bits = 0;
 }
-int feof_unlocked(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int feof_unlocked(FILE *file_base) {
+	return file_base->__status_bits & __MLIBC_EOF_BIT;
 }
-int ferror_unlocked(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int ferror_unlocked(FILE *file_base) {
+	return file_base->__status_bits & __MLIBC_ERROR_BIT;
 }
+
 int fileno_unlocked(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
