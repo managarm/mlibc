@@ -10,6 +10,7 @@
 #include <bits/ensure.h>
 
 #include <mlibc/debug.hpp>
+#include <mlibc/file-io.hpp>
 #include <mlibc/sysdeps.hpp>
 
 template<typename F>
@@ -426,7 +427,13 @@ wint_t putwc(wchar_t, FILE *) MLIBC_STUB_BODY
 wint_t putwchar(wchar_t) MLIBC_STUB_BODY
 wint_t ungetwc(wint_t, FILE *) MLIBC_STUB_BODY
 
-// fread() is provided by the POSIX sublibrary
+size_t fread(void *buffer, size_t size, size_t count, FILE *file_base) {
+	return fread_unlocked(buffer, size, count, file_base);
+}
+
+size_t fwrite(const void *buffer, size_t size , size_t count, FILE *file_base) {
+	return fwrite_unlocked(buffer, size, count, file_base);
+}
 
 int fgetpos(FILE *__restrict stream, fpos_t *__restrict position) {
 	__ensure(!"Not implemented");
@@ -511,9 +518,111 @@ int fgetc_unlocked(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-size_t fread_unlocked(void *, size_t, size_t, FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+size_t fread_unlocked(void *buffer, size_t size, size_t count, FILE *file_base) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	__ensure(size);
+	__ensure(count);
+
+	// Distinguish two cases here: If the object size is one, we perform byte-wise reads.
+	// Otherwise, we try to read each object individually.
+	if(size == 1) {
+		size_t progress = 0;
+		while(progress < count) {
+			size_t chunk;
+			if(file->read((char *)buffer + progress,
+					count - progress, &chunk)) {
+				// TODO: Handle I/O errors.
+				mlibc::infoLogger() << "mlibc: fread() I/O errors are not handled"
+						<< frg::endlog;
+				break;
+			}else if(!chunk) {
+				// TODO: Handle eof.
+				break;
+			}
+
+			progress += chunk;
+		}
+
+		return progress;
+	}else{
+		for(size_t i = 0; i < count; i++) {
+			size_t progress = 0;
+			while(progress < size) {
+				size_t chunk;
+				if(file->read((char *)buffer + i * size + progress,
+						size - progress, &chunk)) {
+					// TODO: Handle I/O errors.
+					mlibc::infoLogger() << "mlibc: fread() I/O errors are not handled"
+							<< frg::endlog;
+					break;
+				}else if(!chunk) {
+					// TODO: Handle eof.
+					break;
+				}
+
+				progress += chunk;
+			}
+
+			if(progress < size)
+				return i;
+		}
+
+		return count;
+	}
+}
+
+size_t fwrite_unlocked(const void *buffer, size_t size, size_t count, FILE *file_base) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	if(!size || !count)
+		return 0;
+
+	// Distinguish two cases here: If the object size is one, we perform byte-wise writes.
+	// Otherwise, we try to write each object individually.
+	if(size == 1) {
+		size_t progress = 0;
+		while(progress < count) {
+			size_t chunk;
+			if(file->write((const char *)buffer + progress,
+					count - progress, &chunk)) {
+				// TODO: Handle I/O errors.
+				mlibc::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
+						<< frg::endlog;
+				break;
+			}else if(!chunk) {
+				// TODO: Handle eof.
+				break;
+			}
+
+			progress += chunk;
+		}
+
+		return progress;
+	}else{
+		for(size_t i = 0; i < count; i++) {
+			size_t progress = 0;
+			while(progress < size) {
+				size_t chunk;
+				if(file->write((const char *)buffer + i * size + progress,
+						size - progress, &chunk)) {
+					// TODO: Handle I/O errors.
+					mlibc::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
+							<< frg::endlog;
+					break;
+				}else if(!chunk) {
+					// TODO: Handle eof.
+					break;
+				}
+
+				progress += chunk;
+			}
+
+			if(progress < size)
+				return i;
+		}
+
+		return count;
+	}
 }
 
 char *fgets_unlocked(char *, int, FILE *) {
