@@ -219,22 +219,17 @@ int abstract_file::seek(off_t offset, int whence) {
 	if(int e = _write_back(); e)
 		return e;
 
-	if(whence == SEEK_SET || whence == SEEK_END) {
-		// For absolute seeks we can just forget the current buffer.
-		if(int e = _reset(); e)
-			return e;
+	// We just forget the current buffer.
+	// TODO: If the seek is "small", we can just modify our internal offset.
+	if(int e = _reset(); e)
+		return e;
 
-		off_t new_offset;
-		if(int e = io_seek(offset, whence, &new_offset); e) {
-			__status_bits |= __MLIBC_ERROR_BIT;
-			return e;
-		}
-		return 0;
-	}else{
-		__ensure(whence == SEEK_CUR); // TODO: Handle errors.
-		mlibc::panicLogger() << "mlibc: Implement relative seek for FILE" << frg::endlog;
-		__builtin_unreachable();
+	off_t new_offset;
+	if(int e = io_seek(offset, whence, &new_offset); e) {
+		__status_bits |= __MLIBC_ERROR_BIT;
+		return e;
 	}
+	return 0;
 }
 
 int abstract_file::_init_type() {
