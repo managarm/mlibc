@@ -22,14 +22,15 @@ int __fwritable(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int __freading(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int __freading(FILE *file_base) {
+	return file_base->__io_mode == 0;
 }
-int __fwriting(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int __fwriting(FILE *file_base) {
+	return file_base->__io_mode == 1;
 }
+
 int __fsetlocking(FILE *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

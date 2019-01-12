@@ -33,6 +33,7 @@ static bool globallyDisableBuffering = false;
 
 abstract_file::abstract_file()
 : _type{stream_type::unknown}, _bufmode{buffer_mode::unknown} {
+	// TODO: For __fwriting to work correctly, set the __io_mode to 1 if the write is write-only.
 	__buffer_ptr = nullptr;
 	__buffer_size = 128;
 	__offset = 0;
