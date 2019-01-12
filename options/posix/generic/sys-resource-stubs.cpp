@@ -15,7 +15,7 @@ int setpriority(int, id_t, int) {
 }
 
 int getrusage(int scope, struct rusage *usage) {
-	if(!mlibc::sys_getrlimit) {
+	if(!mlibc::sys_getrusage) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
 		return -1;
