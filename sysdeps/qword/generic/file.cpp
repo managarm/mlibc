@@ -65,7 +65,10 @@ int sys_anon_allocate(size_t size, void **pointer) {
     return 0;
 }
 
-int sys_anon_free(void *pointer, size_t size) STUB_ONLY
+int sys_anon_free(void *pointer, size_t size) {
+    mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
+	return 0;
+}
 
 #ifndef MLIBC_BUILDING_RTDL
 void sys_exit(int status) {
