@@ -399,28 +399,47 @@ int fileno(FILE *file_base) {
 	return file->fd();
 }
 
-FILE *fopen(const char *__restrict filename, const char *__restrict mode) {
-	int fd;
-	if(!strcmp(mode, "r") || !strcmp(mode, "rb")) {
-		if(mlibc::sys_open(filename, __MLIBC_O_RDONLY, &fd))
-			return nullptr;
-	}else if(!strcmp(mode, "re")) {
-		if(mlibc::sys_open(filename, __MLIBC_O_RDONLY | __MLIBC_O_CLOEXEC, &fd))
-			return nullptr;
-	}else if(!strcmp(mode, "r+")) {
-		if(mlibc::sys_open(filename, __MLIBC_O_RDWR, &fd))
-			return nullptr;
-	}else if(!strcmp(mode, "w")) {
-		if(mlibc::sys_open(filename, __MLIBC_O_WRONLY | __MLIBC_O_CREAT, &fd))
-			return nullptr;
-	}else if(!strcmp(mode, "we")) {
-		if(mlibc::sys_open(filename, __MLIBC_O_WRONLY | __MLIBC_O_CREAT
-				| __MLIBC_O_CLOEXEC, &fd))
-			return nullptr;
+FILE *fopen(const char *path, const char *mode) {
+	// Consume the first char; this must be 'r', 'w' or 'a'.
+	int flags;
+	bool has_plus = strchr(mode, '+');
+	if(*mode == 'r') {
+		if(has_plus) {
+			flags = __MLIBC_O_RDWR;
+		}else{
+			flags = __MLIBC_O_RDONLY;
+		}
+	}else if(*mode == 'w') {
+		if(has_plus) {
+			flags = __MLIBC_O_RDWR;
+		}else{
+			flags = __MLIBC_O_WRONLY;
+		}
+		flags |= __MLIBC_O_CREAT | __MLIBC_O_TRUNC;
 	}else{
-		mlibc::panicLogger() << "Illegal fopen() mode '" << mode << "'" << frg::endlog;
+		mlibc::panicLogger() << "Illegal fopen() mode '" << *mode << "'" << frg::endlog;
+	}
+	mode += 1;
+
+	// Consume additional flags.
+	while(*mode) {
+		if(*mode == '+') {
+			mode++; // This is already handled above.
+		}else if(*mode == 'b') {
+			mode++; // mlibc assumes that there is no distinction between text and binary.
+		}else if(*mode == 'e') {
+			flags |= __MLIBC_O_CLOEXEC;
+			mode++;
+		}else{
+			mlibc::panicLogger() << "Illegal fopen() flag '" << mode << "'" << frg::endlog;
+		}
 	}
 
+	int fd;
+	if(int e = mlibc::sys_open(path, flags, &fd); e) {
+		errno = e;
+		return nullptr;
+	}
 	return frg::construct<mlibc::fd_file>(getAllocator(), fd);
 }
 
