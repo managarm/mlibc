@@ -3,13 +3,20 @@
 #include <bits/ensure.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 
+#include <frg/vector.hpp>
+#include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
+
+namespace {
+	constexpr bool debugPathResolution = false;
+}
 
 long random(void) {
 	__ensure(!"Not implemented");
@@ -33,7 +40,7 @@ int mkstemp(char *pattern) {
 		errno = EINVAL;
 		return -1;
 	}
-	
+
 	// TODO: Do an exponential search.
 	for(size_t i = 0; i < 999999; i++) {
 		__ensure(sprintf(pattern + (n - 6), "%06zu", i) == 6);
@@ -59,15 +66,138 @@ char *mkdtemp(char *path) {
 	__builtin_unreachable();
 }
 
-char *realpath(const char *__restrict path, char *__restrict resolved) {
-	// TODO: Implement this based on 
-	__ensure(!resolved);
-	mlibc::infoLogger() << "\e[31mmlibc: realpath() does not really resolve paths\e[39m"
-			<< frg::endlog;
+char *realpath(const char *path, char *out) {
+	frg::string_view path_view{path};
 
-	resolved = reinterpret_cast<char *>(malloc(strlen(path) + 1));
-	__ensure(resolved);
-	strcpy(resolved, path);
-	return resolved;
+	// TODO: Replace by a small_vector to avoid allocations.
+	// In case of the root, the string only contains the null-terminator.
+	frg::vector<char, MemoryAllocator> resolv{getAllocator()};
+	size_t ps;
+
+	// If the path is relative, we have to preprend the working directory.
+	if(path[0] == '/') {
+		resolv.push_back('0');
+		ps = 1;
+	}else{
+		if(!mlibc::sys_getcwd) {
+			MLIBC_MISSING_SYSDEP();
+			errno = ENOSYS;
+			return nullptr;
+		}
+
+		// Try to getcwd() until the buffer is large enough.
+		resolv.resize(128);
+		while(true) {
+			int e = mlibc::sys_getcwd(resolv.data(), resolv.size());
+			if(e == ERANGE) {
+				resolv.resize(2 * resolv.size());
+			}else if(!e) {
+				break;
+			}else{
+				errno = e;
+				return nullptr;
+			}
+		}
+		frg::string_view cwd_view{resolv.data()};
+		if(cwd_view == "/") {
+			// Restore our invariant that we only store the null-terminator for the root.
+			resolv.resize(1);
+			resolv[0] = 0;
+		}else{
+			resolv.resize(cwd_view.size() + 1);
+		}
+		ps = 0;
+	}
+
+	// TODO: Replace by a small_vector to avoid allocations.
+	// Contains unresolved links as a relative path compared to resolv.
+	frg::vector<char, MemoryAllocator> lnk{getAllocator()};
+	size_t ls = 0;
+
+	auto process_segment = [&] (frg::string_view s_view) -> int {
+		if(debugPathResolution)
+			mlibc::infoLogger() << "resolv is " << resolv.data()
+					<< ", segment is " << s_view.data()
+					<< ", size: " << s_view.size() << frg::endlog;
+
+		if(!s_view.size() || s_view == ".") {
+			// Keep resolv invariant.
+			return 0;
+		}else if(s_view == "..") {
+			// Remove a single segment from resolv.
+			if(resolv.size() > 1) {
+				auto slash = strchr(resolv.data(), '/');
+				__ensure(slash); // We never remove the leading sla.
+				resolv.resize((slash - resolv.data()) + 1);
+				*slash = 0; // Replace the slash by a null-terminator.
+			}
+			return 0;
+		}
+
+		// Append the segment to resolv.
+		auto rsz = resolv.size();
+		resolv[rsz - 1] = '/'; // Replace null-terminator by a slash.
+		resolv.resize(rsz + s_view.size() + 1);
+		strcpy(resolv.data() + rsz, s_view.data());
+
+		// stat() the path to (1) see if it exists and (2) see if it is a link.
+		struct stat st;
+		if(int e = mlibc::sys_stat(resolv.data(), &st); e)
+			return e;
+
+		__ensure(!S_ISLNK(st.st_mode) && "TODO: Use readlink in realpath()");
+		// TODO: If it is a link, prepend it to lnk, adjust ls and revert the change to resolv.
+		return 0;
+	};
+
+	// Each iteration of this outer loop consumes segment of the input path.
+	// This design avoids copying the input path into lnk;
+	// the latter could often involve additional allocations.
+	while(ps < path_view.size()) {
+		frg::string_view ps_view;
+		if(auto slash = strchr(path + ps, '/'); slash) {
+			ps_view = frg::string_view{path + ps, slash - (path + ps)};
+		}else{
+			ps_view = frg::string_view{path + ps, strlen(path) - ps};
+		}
+		ps += ps_view.size() + 1;
+
+		// Handle one segment from the input path.
+		if(int e = process_segment(ps_view); e) {
+			errno = e;
+			return nullptr;
+		}
+
+		// This inner loop consumes segments of lnk.
+		while(ls < lnk.size()) {
+			frg::string_view ls_view;
+			if(auto slash = strchr(lnk.data() + ls, '/'); slash) {
+				ls_view = frg::string_view{lnk.data() + ls, slash - (lnk.data() + ls)};
+			}else{
+				ls_view = frg::string_view{lnk.data() + ls, strlen(lnk.data()) - ls};
+			}
+			ls += ls_view.size() + 1;
+
+			// Handle one segment from the link
+			if(int e = process_segment(ls_view); e) {
+				errno = e;
+				return nullptr;
+			}
+		}
+	}
+
+	if(debugPathResolution)
+		mlibc::infoLogger() << "mlibc: realpath(" << path << ") yields "
+				<< resolv.data() << frg::endlog;
+
+	if(resolv.size() > PATH_MAX) {
+		errno = ENAMETOOLONG;
+		return nullptr;
+	}
+
+	if(!out)
+		out = reinterpret_cast<char *>(getAllocator().allocate(resolv.size()));
+	strcpy(out, resolv.data());
+	return out;
 }
 
