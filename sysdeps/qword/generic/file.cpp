@@ -23,6 +23,21 @@ void sys_libc_panic() {
             : "rcx", "r11", "rdx");
 }
 
+int sys_getcwd(char *buffer, size_t size) {
+    int ret;
+    int sys_errno;
+
+	asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+			: "a"(20), "D"(buffer), "S"(size)
+			: "rcx", "r11");
+
+    if (ret == -1)
+        return sys_errno;
+
+    return 0;
+}
+
 int sys_chdir(const char *path) {
     int ret;
     int sys_errno;
