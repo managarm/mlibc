@@ -293,9 +293,11 @@ unsigned long sysconf(int number) {
 		__builtin_unreachable();
 	}
 }
-pid_t tcgetpgrp(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+pid_t tcgetpgrp(int fd) {
+	(void)fd;
+	mlibc::infoLogger() << "mlibc: tcgetpgrp() fails with ENOSYS" << frg::endlog;
+	errno = ENOSYS;
+	return -1;
 }
 int tcsetpgrp(int, pid_t) {
 	__ensure(!"Not implemented");
