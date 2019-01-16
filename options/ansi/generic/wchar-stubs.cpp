@@ -12,6 +12,7 @@ namespace {
 	// mbsrtowcs() and wcsrtombs() have an internal state.
 	__mlibc_mbstate mbrlen_state = __MLIBC_MBSTATE_INITIALIZER;
 	__mlibc_mbstate mbrtowc_state = __MLIBC_MBSTATE_INITIALIZER;
+	__mlibc_mbstate mbsrtowcs_state = __MLIBC_MBSTATE_INITIALIZER;
 }
 
 wint_t btowc(int c) {
@@ -84,9 +85,35 @@ size_t mbrtowc(wchar_t *wcp, const char *mbs, size_t mb_limit, mbstate_t *stp) {
 size_t wcrtomb(char *__restrict, wchar_t, mbstate_t *__restrict)
 	MLIBC_STUB_BODY
 
-size_t mbsrtowcs(wchar_t *__restrict wcs, const char **__restrict mbs,
-		size_t max_wcs, mbstate_t *__restrict)
-	MLIBC_STUB_BODY
+size_t mbsrtowcs(wchar_t *wcs, const char **mbsp, size_t wc_limit, mbstate_t *stp) {
+	__ensure(mbsp);
+
+	auto cc = mlibc::current_charcode();
+	__mlibc_mbstate st = __MLIBC_MBSTATE_INITIALIZER;
+	mlibc::code_seq<const char> nseq{*mbsp, nullptr};
+	mlibc::code_seq<wchar_t> wseq{wcs, wcs + wc_limit};
+
+	if(!stp)
+		stp = &mbsrtowcs_state;
+
+	if(!wcs) {
+		size_t size;
+		if(auto e = cc->decode_wtranscode_length(nseq, &size, st); e != mlibc::charcode_error::null)
+			__ensure(!"decode_wtranscode() errors are not handled");
+		return size;
+	}
+
+	if(auto e = cc->decode_wtranscode(nseq, wseq, st); e != mlibc::charcode_error::null) {
+		__ensure(!"decode_wtranscode() errors are not handled");
+		__builtin_unreachable();
+	}else{
+		size_t n = wseq.it - wcs;
+		if(n < wc_limit) // Null-terminate resulting wide string.
+			wcs[n] = 0;
+		*mbsp = nullptr;
+		return n;
+	}
+}
 
 size_t wcsrtombs(char *mbs, const wchar_t **wcsp, size_t mb_limit, mbstate_t *stp) {
 	__ensure(wcsp && "wcsrtombs() with null input");
