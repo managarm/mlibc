@@ -43,7 +43,6 @@ char *strncat(char *__restrict dest, const char *__restrict src, size_t max_size
 }
 
 int memcmp(const void *a, const void *b, size_t size) {
-	
 	for(size_t i = 0; i < size; i++) {
 		auto a_byte = static_cast<const unsigned char *>(a)[i];
 		auto b_byte = static_cast<const unsigned char *>(b)[i];
@@ -212,7 +211,14 @@ wchar_t *wcsrchr(const wchar_t *, wchar_t) MLIBC_STUB_BODY
 size_t wcsspn(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
 wchar_t *wcsstr(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
 wchar_t *wcstok(wchar_t *__restrict, const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
-wchar_t *wmemchr(const wchar_t *, wchar_t, size_t) MLIBC_STUB_BODY
+
+wchar_t *wmemchr(const wchar_t *s, wchar_t c, size_t size) {
+	auto s_bytes = s;
+	for(size_t i = 0; i < size; i++)
+		if(s_bytes[i] == c)
+			return const_cast<wchar_t *>(s_bytes + i);
+	return nullptr;
+}
 
 size_t wcslen(const wchar_t *) MLIBC_STUB_BODY
 wchar_t *wmemset(wchar_t *, wchar_t, size_t) MLIBC_STUB_BODY
