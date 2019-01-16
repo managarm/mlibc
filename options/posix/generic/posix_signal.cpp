@@ -9,25 +9,32 @@ int sigemptyset(sigset_t *sigset) {
 	*sigset = 0;
 	return 0;
 }
+
 int sigfillset(sigset_t *sigset) {
 	*sigset = ~sigset_t(0);
 	return 0;
 }
-int sigaddset(sigset_t *sigset, int sig) {
+
+// TODO: Return EINVAL instead of __ensure()ing.
+
+int sigaddset(sigset_t *sigset, int signo) {
 	// TODO: do not hard code CHAR_BITS
-	__ensure((unsigned int)sig < sizeof(sigset_t) * 8);
-	*sigset |= sigset_t(1) << sig;
+	__ensure((unsigned int)signo < sizeof(sigset_t) * 8);
+	*sigset |= sigset_t(1) << signo;
 	return 0;
 }
-int sigdelset(sigset_t *sigset, int sig) {
+
+int sigdelset(sigset_t *sigset, int signo) {
 	// TODO: do not hard code CHAR_BITS
-	__ensure((unsigned int)sig < sizeof(sigset_t) * 8);
-	*sigset &= ~(sigset_t(1) << sig);
+	__ensure((unsigned int)signo < sizeof(sigset_t) * 8);
+	*sigset &= ~(sigset_t(1) << signo);
 	return 0;
 }
+
 int sigismember(const sigset_t *set, int signo) {
-	__ensure(!"sigismember() not implemented");
-	__builtin_unreachable();
+	// TODO: do not hard code CHAR_BITS
+	__ensure((unsigned int)signo < sizeof(sigset_t) * 8);
+	return (*set) & (sigset_t(1) << signo);
 }
 
 int sigsuspend(const sigset_t *sigmask) {
