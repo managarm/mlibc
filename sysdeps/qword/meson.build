@@ -5,13 +5,18 @@ rtdl_sources += files(
 
 libc_sources += files(
 	'generic/entry.cpp',
-	'generic/file.cpp'
+	'generic/file.cpp',
+	'generic/perfmon.cpp'
 )
 
 install_headers(
 	'include/abi-bits/abi.h',
 	'include/abi-bits/auxv.h',
 	subdir: 'abi-bits'
+)
+install_headers(
+	'include/qword/perfmon.h',
+	subdir: 'qword'
 )
 
 if not headers_only
