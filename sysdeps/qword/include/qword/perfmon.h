@@ -8,6 +8,7 @@ extern "C" {
 #endif
 
 struct perfstats {
+	uint64_t syscall_time;
 	uint64_t mman_time;
 	uint64_t io_time;
 };
