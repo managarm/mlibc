@@ -308,10 +308,31 @@ int sys_lstat(const char *path, struct stat *statbuf) {
 int sys_chroot(const char *path) STUB_ONLY
 int sys_mkdir(const char *path) STUB_ONLY
 int sys_tcgetattr(int fd, struct termios *attr) {
-    mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
-    return ENOSYS;
+    int ret;
+    int sys_errno;
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(24), "D"(fd), "S"(attr)
+            : "rcx", "r11");
+
+    if (ret == -1)
+        return sys_errno;
+
+    return 0;
 }
-int sys_tcsetattr(int, int, const struct termios *attr) STUB_ONLY
+int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
+    int ret;
+    int sys_errno;
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(23), "D"(fd), "S"(optional_action), "d"(attr)
+            : "rcx", "r11");
+
+    if (ret == -1)
+        return sys_errno;
+
+    return 0;
+}
 int sys_pipe(int *fds) {
     int ret;
     int sys_errno;
