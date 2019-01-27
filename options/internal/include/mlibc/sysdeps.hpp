@@ -15,6 +15,7 @@
 #	include <stdarg.h>
 #	include <sys/epoll.h>
 #	include <sys/socket.h>
+#	include <sys/resource.h>
 #	include <termios.h>
 #	include <time.h>
 #endif

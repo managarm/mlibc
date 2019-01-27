@@ -95,8 +95,19 @@ void sys_exit(int status) {
 
 #ifndef MLIBC_BUILDING_RTDL
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
-    mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
-    return ENOSYS;
+    int ret;
+    int sys_errno;
+    struct timespec tp = {0};
+    asm volatile("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(25), "D"(clock), "S"(&tp)
+            : "rcx", "r11");
+    if (ret == -1)
+        return sys_errno;
+
+    *secs = tp.tv_sec;
+    *nanos = tp.tv_nsec;
+    return 0;
 }
 #endif
 
@@ -429,6 +440,20 @@ int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
     *ret_pid = ret;
     return 0;
 }
+
+int sys_getrusage(int who, struct rusage *usage) {
+    int ret;
+    int sys_errno;
+
+    asm volatile("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(26), "D"(who), "S"(usage)
+            : "rcx", "r11");
+    if (ret == -1)
+        return sys_errno;
+    return 0;
+}
+
 int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
     mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
     return ENOSYS;
