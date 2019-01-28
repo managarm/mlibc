@@ -223,9 +223,9 @@ wchar_t *wmemchr(const wchar_t *s, wchar_t c, size_t size) {
 size_t wcslen(const wchar_t *) MLIBC_STUB_BODY
 wchar_t *wmemset(wchar_t *, wchar_t, size_t) MLIBC_STUB_BODY
 
-char *strerror(int errnum) {
+char *strerror(int e) {
 	const char *s;
-	switch(errnum) {
+	switch(e) {
 	case EAGAIN: s = "Operation would block (EAGAIN)"; break;
 	case EACCES: s = "Access denied (EACCESS)"; break;
 	case EBADF:  s = "Bad file descriptor (EBADF)"; break;
@@ -251,9 +251,13 @@ char *strerror(int errnum) {
 
 // POSIX extensions.
 
-int strerror_r(int, char *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int strerror_r(int e, char *buffer, size_t bufsz) {
+	auto s = strerror(e);
+	strncpy(buffer, s, bufsz);
+	// Note that strerror_r does not set errno on error!
+	if(strlen(s) >= bufsz)
+		return ERANGE;
+	return 0;
 }
 
 void *mempcpy(void *dest, const void *src, size_t len) {
