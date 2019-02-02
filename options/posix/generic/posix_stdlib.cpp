@@ -67,6 +67,8 @@ char *mkdtemp(char *path) {
 }
 
 char *realpath(const char *path, char *out) {
+	if(debugPathResolution)
+		mlibc::infoLogger() << "mlibc realpath(): Called on '" << path << "'" << frg::endlog;
 	frg::string_view path_view{path};
 
 	// TODO: Replace by a small_vector to avoid allocations.
@@ -76,7 +78,7 @@ char *realpath(const char *path, char *out) {
 
 	// If the path is relative, we have to preprend the working directory.
 	if(path[0] == '/') {
-		resolv.push_back('0');
+		resolv.push_back(0);
 		ps = 1;
 	}else{
 		if(!mlibc::sys_getcwd) {
@@ -116,7 +118,7 @@ char *realpath(const char *path, char *out) {
 
 	auto process_segment = [&] (frg::string_view s_view) -> int {
 		if(debugPathResolution)
-			mlibc::infoLogger() << "resolv is " << resolv.data()
+			mlibc::infoLogger() << "mlibc realpath(): resolv is '" << resolv.data() << "'"
 					<< ", segment is " << s_view.data()
 					<< ", size: " << s_view.size() << frg::endlog;
 
@@ -138,9 +140,13 @@ char *realpath(const char *path, char *out) {
 		auto rsz = resolv.size();
 		resolv[rsz - 1] = '/'; // Replace null-terminator by a slash.
 		resolv.resize(rsz + s_view.size() + 1);
-		strcpy(resolv.data() + rsz, s_view.data());
+		memcpy(resolv.data() + rsz, s_view.data(), s_view.size());
+		resolv[rsz + s_view.size()] = 0;
 
 		// stat() the path to (1) see if it exists and (2) see if it is a link.
+		if(debugPathResolution)
+			mlibc::infoLogger() << "mlibc realpath(): stat()ing '"
+					<< resolv.data() << "'" << frg::endlog;
 		struct stat st;
 		if(int e = mlibc::sys_stat(resolv.data(), &st); e)
 			return e;
@@ -187,8 +193,7 @@ char *realpath(const char *path, char *out) {
 	}
 
 	if(debugPathResolution)
-		mlibc::infoLogger() << "mlibc: realpath(" << path << ") yields "
-				<< resolv.data() << frg::endlog;
+		mlibc::infoLogger() << "mlibc realpath(): Returns '" << resolv.data() << "'" << frg::endlog;
 
 	if(resolv.size() > PATH_MAX) {
 		errno = ENAMETOOLONG;
