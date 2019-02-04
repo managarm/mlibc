@@ -298,7 +298,10 @@ int sys_isatty(int fd) {
     mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
     return 0;
 }
-int sys_ttyname(int fd, char *buf, size_t size) STUB_ONLY
+int sys_ttyname(int fd, char *buf, size_t size) {
+    mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
+    return ENOSYS;
+}
 int sys_stat(const char *path, struct stat *statbuf) {
     int fd;
     int sys_errno;
