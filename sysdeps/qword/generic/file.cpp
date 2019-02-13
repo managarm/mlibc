@@ -241,9 +241,18 @@ int sys_rename(const char *path, const char *new_path) STUB_ONLY
 #endif
 
 #ifndef MLIBC_BUILDING_RTDL
-int sys_sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict) {
-    mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
-    return ENOSYS;
+int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) {
+    int ret;
+    int sys_errno;
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(29), "D"(signum), "S"(act), "d"(oldact)
+            : "rcx", "r11");
+
+    if (ret == -1)
+        return sys_errno;
+
+    return 0;
 }
 #endif
 
@@ -427,7 +436,22 @@ int sys_execve(const char *path, char *const argv[], char *const envp[]) {
 
     return 0;
 }
-int sys_kill(int, int) STUB_ONLY
+
+int sys_kill(pid_t pid, int signal) {
+    int ret;
+    int sys_errno;
+
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(27), "D"(pid), "S"(signal)
+            : "rcx", "r11");
+
+    if (ret == -1)
+        return sys_errno;
+
+    return 0;
+}
+
 int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
     pid_t ret;
     int sys_errno;
