@@ -2,6 +2,7 @@
 #include <bits/ensure.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include <mlibc/debug.hpp>
 
@@ -98,7 +99,44 @@ char *strsep(char **m, const char *del) {
 }
 
 char *strsignal(int sig) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	#define CASE_FOR(sigconst) case sigconst: s = #sigconst; break;
+	const char *s;
+	switch(sig) {
+	CASE_FOR(SIGABRT)
+	CASE_FOR(SIGFPE)
+	CASE_FOR(SIGILL)
+	CASE_FOR(SIGINT)
+	CASE_FOR(SIGSEGV)
+	CASE_FOR(SIGTERM)
+	CASE_FOR(SIGPROF)
+// TODO: Uncomment these after fixing the ABI.
+//	CASE_FOR(SIGIO)
+//	CASE_FOR(SIGPWR)
+	CASE_FOR(SIGALRM)
+	CASE_FOR(SIGBUS)
+	CASE_FOR(SIGCHLD)
+	CASE_FOR(SIGCONT)
+	CASE_FOR(SIGHUP)
+	CASE_FOR(SIGKILL)
+	CASE_FOR(SIGPIPE)
+	CASE_FOR(SIGQUIT)
+	CASE_FOR(SIGSTOP)
+	CASE_FOR(SIGTSTP)
+	CASE_FOR(SIGTTIN)
+	CASE_FOR(SIGTTOU)
+	CASE_FOR(SIGUSR1)
+	CASE_FOR(SIGUSR2)
+	CASE_FOR(SIGSYS)
+	CASE_FOR(SIGTRAP)
+	CASE_FOR(SIGURG)
+	CASE_FOR(SIGVTALRM)
+	CASE_FOR(SIGXCPU)
+	CASE_FOR(SIGXFSZ)
+	CASE_FOR(SIGWINCH)
+	default:
+		mlibc::infoLogger() << "mlibc: Unknown signal number " << sig << frg::endlog;
+		s = "Unknown signal number";
+	}
+	return const_cast<char *>(s);
 }
 
