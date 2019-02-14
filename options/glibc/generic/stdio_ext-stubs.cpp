@@ -1,6 +1,7 @@
 
 #include <stdio_ext.h>
 #include <bits/ensure.h>
+#include <mlibc/debug.hpp>
 
 size_t __fbufsize(FILE *) {
 	__ensure(!"Not implemented");
@@ -32,8 +33,8 @@ int __fwriting(FILE *file_base) {
 }
 
 int __fsetlocking(FILE *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: __fsetlocking() is a no-op" << frg::endlog;
+	return FSETLOCKING_INTERNAL;
 }
 
 void _flushlbf(void) {

@@ -510,10 +510,6 @@ int ferror_unlocked(FILE *file_base) {
 	return file_base->__status_bits & __MLIBC_ERROR_BIT;
 }
 
-int fileno_unlocked(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
 int fgetc_unlocked(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

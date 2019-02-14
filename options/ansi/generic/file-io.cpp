@@ -394,9 +394,13 @@ FILE *stderr = &stderrFile;
 FILE *stdin = &stdinFile;
 FILE *stdout = &stdoutFile;
 
-int fileno(FILE *file_base) {
+int fileno_unlocked(FILE *file_base) {
 	auto file = static_cast<mlibc::fd_file *>(file_base);
 	return file->fd();
+}
+
+int fileno(FILE *file_base) {
+	return fileno_unlocked(file_base);
 }
 
 FILE *fopen(const char *path, const char *mode) {
