@@ -111,6 +111,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 #ifndef MLIBC_BUILDING_RTDL
 	int sys_tcgetattr(int fd, struct termios *attr);
 	int sys_tcsetattr(int, int, const struct termios *attr);
+	int sys_tcflow(int, int);
 	int sys_pipe(int *fds);
 	int sys_socketpair(int domain, int type_and_flags, int proto, int *fds);
 	int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events);

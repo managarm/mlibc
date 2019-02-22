@@ -25,9 +25,12 @@ int tcdrain(int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int tcflow(int, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int tcflow(int fd, int action) {
+	if(int e = mlibc::sys_tcflow(fd, action); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 int tcflush(int, int) {
 	__ensure(!"Not implemented");
