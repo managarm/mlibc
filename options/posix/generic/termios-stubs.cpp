@@ -26,6 +26,11 @@ int tcdrain(int) {
 	__builtin_unreachable();
 }
 int tcflow(int fd, int action) {
+	if(!mlibc::sys_tcflow) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_tcflow(fd, action); e) {
 		errno = e;
 		return -1;
