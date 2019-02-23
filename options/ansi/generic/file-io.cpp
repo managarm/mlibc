@@ -22,8 +22,22 @@ namespace mlibc {
 // abstract_file implementation.
 // --------------------------------------------------------------------------------------
 
-// Useful when debugging the FILE implementation.
-static bool globallyDisableBuffering = false;
+namespace {
+	using file_list = frg::intrusive_list<
+		abstract_file,
+		frg::locate_member<
+			abstract_file,
+			frg::default_list_hook<abstract_file>,
+			&abstract_file::_list_hook
+		>
+	>;
+
+	// Useful when debugging the FILE implementation.
+	constexpr bool globallyDisableBuffering = false;
+
+	// List of files that will be flushed before exit().
+	file_list global_file_list;
+}
 
 // For pipe-like streams (seek returns ESPIPE), we need to make sure
 // that the buffer only ever contains all-dirty or all-clean data.
@@ -43,10 +57,20 @@ abstract_file::abstract_file()
 	__dirty_end = 0;
 	__io_mode = 0;
 	__status_bits = 0;
+
+	global_file_list.push_back(this);
 }
 
 abstract_file::~abstract_file() {
-	mlibc::panicLogger() << "mlibc: Fix abstract_file destructor" << frg::endlog;
+	if(__dirty_begin != __dirty_end)
+		mlibc::infoLogger() << "mlibc warning: File is not flushed before destruction"
+				<< frg::endlog;
+
+	if(__buffer_ptr)
+		getAllocator().free(__buffer_ptr);
+
+	auto it = global_file_list.iterator_to(this);
+	global_file_list.erase(it);
 }
 
 // Note that read() and write() are asymmetric:
@@ -382,17 +406,27 @@ int fd_file::io_seek(off_t offset, int whence, off_t *new_offset) {
 } // namespace mlibc
 
 namespace {
-	mlibc::fd_file stdinFile{0};
-	mlibc::fd_file stdoutFile{1};
-	mlibc::fd_file stderrFile{2};
+	mlibc::fd_file stdin_file{0};
+	mlibc::fd_file stdout_file{1};
+	mlibc::fd_file stderr_file{2};
+
+	struct stdio_guard {
+		stdio_guard() { }
+
+		~stdio_guard() {
+			// Only flush the files but do not close them.
+			for(auto it : mlibc::global_file_list) {
+				if(int e = it->flush(); e)
+					mlibc::infoLogger() << "mlibc warning: Failed to flush file before exit()"
+							<< frg::endlog;
+			}
+		}
+	} global_stdio_guard;
 }
 
-void __mlibc_initStdio() {
-}
-
-FILE *stderr = &stderrFile;
-FILE *stdin = &stdinFile;
-FILE *stdout = &stdoutFile;
+FILE *stderr = &stderr_file;
+FILE *stdin = &stdin_file;
+FILE *stdout = &stdout_file;
 
 int fileno_unlocked(FILE *file_base) {
 	auto file = static_cast<mlibc::fd_file *>(file_base);
@@ -459,6 +493,7 @@ int fclose(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	if(file->close())
 		return EOF;
+	// TODO: Destruct the FILE struct.
 	return 0;
 }
 

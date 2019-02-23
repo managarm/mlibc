@@ -6,8 +6,6 @@
 
 // defined by the POSIX library
 void __mlibc_initLocale();
-// defined by the POSIX library
-void __mlibc_initStdio();
 
 extern "C" uintptr_t *__dlapi_entrystack();
 
@@ -22,7 +20,6 @@ static LibraryGuard guard;
 
 LibraryGuard::LibraryGuard() {
 	__mlibc_initLocale();
-	__mlibc_initStdio();
 
 	// Parse the exec() stack.
 	mlibc::parse_exec_stack(__dlapi_entrystack(), &__mlibc_stack_data);

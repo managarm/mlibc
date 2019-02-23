@@ -16,8 +16,6 @@
 
 // defined by the POSIX library
 void __mlibc_initLocale();
-// defined by the POSIX library
-void __mlibc_initStdio();
 
 extern "C" uintptr_t *__dlapi_entrystack();
 
@@ -84,7 +82,6 @@ static char **__mlibc_argv;
 
 LibraryGuard::LibraryGuard() {
 	__mlibc_initLocale();
-	__mlibc_initStdio();
 
 	// Parse the environment.
 	// TODO: Copy the arguments instead of pointing to them?

@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#include <frg/list.hpp>
+
 namespace mlibc {
 
 enum class stream_type {
@@ -59,6 +61,10 @@ private:
 
 	stream_type _type;
 	buffer_mode _bufmode;
+
+public:
+	// All files are stored in a global linked list, so that they can be flushed at exit().
+	frg::default_list_hook<abstract_file> _list_hook;
 };
 
 struct fd_file : abstract_file {
