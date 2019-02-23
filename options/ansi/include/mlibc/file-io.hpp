@@ -22,13 +22,15 @@ enum class buffer_mode {
 
 struct abstract_file : __mlibc_file_base {
 public:
-	abstract_file();
+	abstract_file(void (*do_dispose)(abstract_file *) = nullptr);
 
 	abstract_file(const abstract_file &) = delete;
 
 	abstract_file &operator= (const abstract_file &) = delete;
 
 	virtual ~abstract_file();
+
+	void dispose();
 
 	virtual int close() = 0;
 
@@ -61,6 +63,7 @@ private:
 
 	stream_type _type;
 	buffer_mode _bufmode;
+	void (*_do_dispose)(abstract_file *);
 
 public:
 	// All files are stored in a global linked list, so that they can be flushed at exit().
@@ -68,7 +71,7 @@ public:
 };
 
 struct fd_file : abstract_file {
-	fd_file(int fd);
+	fd_file(int fd, void (*do_dispose)(abstract_file *) = nullptr);
 
 	int fd();
 

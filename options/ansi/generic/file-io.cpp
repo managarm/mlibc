@@ -45,8 +45,8 @@ namespace {
 //     As we might construct FILE objects for FDs that are not actually
 //     open (e.g. for std{in,out,err}), we defer the type determination and cache the result.
 
-abstract_file::abstract_file()
-: _type{stream_type::unknown}, _bufmode{buffer_mode::unknown} {
+abstract_file::abstract_file(void (*do_dispose)(abstract_file *))
+: _type{stream_type::unknown}, _bufmode{buffer_mode::unknown}, _do_dispose{do_dispose} {
 	// TODO: For __fwriting to work correctly, set the __io_mode to 1 if the write is write-only.
 	__buffer_ptr = nullptr;
 	__buffer_size = 128;
@@ -71,6 +71,12 @@ abstract_file::~abstract_file() {
 
 	auto it = global_file_list.iterator_to(this);
 	global_file_list.erase(it);
+}
+
+void abstract_file::dispose() {
+	if(!_do_dispose)
+		return;
+	_do_dispose(this);
 }
 
 // Note that read() and write() are asymmetric:
@@ -340,8 +346,8 @@ void abstract_file::_ensure_allocation() {
 // fd_file implementation.
 // --------------------------------------------------------------------------------------
 
-fd_file::fd_file(int fd)
-: _fd{fd} { }
+fd_file::fd_file(int fd, void (*do_dispose)(abstract_file *))
+: abstract_file{do_dispose}, _fd{fd} { }
 
 int fd_file::fd() {
 	return _fd;
@@ -419,6 +425,7 @@ namespace {
 				if(int e = it->flush(); e)
 					mlibc::infoLogger() << "mlibc warning: Failed to flush file before exit()"
 							<< frg::endlog;
+				it->dispose();
 			}
 		}
 	} global_stdio_guard;
@@ -478,7 +485,8 @@ FILE *fopen(const char *path, const char *mode) {
 		errno = e;
 		return nullptr;
 	}
-	return frg::construct<mlibc::fd_file>(getAllocator(), fd);
+	return frg::construct<mlibc::fd_file>(getAllocator(), fd,
+			[] (mlibc::abstract_file *abstract) { frg::destruct(getAllocator(), abstract); });
 }
 
 FILE *fdopen(int fd, const char *mode) {
@@ -486,15 +494,17 @@ FILE *fdopen(int fd, const char *mode) {
 			<< "\e[39m" << frg::endlog;
 	(void)mode;
 
-	return frg::construct<mlibc::fd_file>(getAllocator(), fd);
+	return frg::construct<mlibc::fd_file>(getAllocator(), fd,
+			[] (mlibc::abstract_file *abstract) { frg::destruct(getAllocator(), abstract); });
 }
 
 int fclose(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	int e = 0;
 	if(file->close())
-		return EOF;
-	// TODO: Destruct the FILE struct.
-	return 0;
+		e = EOF;
+	file->dispose();
+	return e;
 }
 
 int fseek(FILE *file_base, long offset, int whence) {
