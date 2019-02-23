@@ -539,7 +539,7 @@ int setvbuf(FILE *file_base, char *buffer, int mode, size_t size) {
 			errno = e;
 			return -1;
 		}
-	}else if(mode == _IOLBF) {
+	}else if(mode == _IOFBF) {
 		if(int e = file->update_bufmode(mlibc::buffer_mode::full_buffer); e) {
 			errno = e;
 			return -1;
