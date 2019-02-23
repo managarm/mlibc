@@ -304,8 +304,17 @@ int sys_dup2(int fd, int flags, int newfd) {
     return 0;
 }
 int sys_isatty(int fd) {
-    mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
-    return 0;
+    int ret;
+
+    asm volatile ("syscall"
+            : "=a"(ret)
+            : "a"(31), "D"(fd)
+            : "rcx", "r11", "rdx");
+
+    if (ret)
+        return 0;
+    else
+        return ENOTTY;
 }
 int sys_ttyname(int fd, char *buf, size_t size) {
     mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
