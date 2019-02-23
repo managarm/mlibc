@@ -41,7 +41,8 @@ static_assert(sizeof(Guard) == sizeof(int64_t));
 } // namespace { }
 
 extern "C" [[ gnu::visibility("hidden") ]] void __cxa_pure_virtual() {
-	mlibc::panicLogger() << "mlibc: Virtual function called" << frg::endlog;
+	mlibc::panicLogger() << "mlibc: Pure virtual function called from IP "
+			<< (void *)__builtin_return_address(0) << frg::endlog;
 }
 
 extern "C" [[ gnu::visibility("hidden") ]] int __cxa_guard_acquire(int64_t *ptr) {

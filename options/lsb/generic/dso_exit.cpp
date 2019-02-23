@@ -32,3 +32,11 @@ extern "C" int __cxa_atexit(void (*function)(void *), void *argument, void *hand
 	return 0;
 }
 
+void __mlibc_do_finalize() {
+	ExitQueue &eq = getExitQueue();
+	for(size_t i = eq.size(); i > 0; i--) {
+		auto handler = &eq[i - 1];
+		handler->function(handler->argument);
+	}
+}
+

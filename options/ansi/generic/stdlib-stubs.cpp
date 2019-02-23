@@ -13,6 +13,7 @@
 #include <mlibc/sysdeps.hpp>
 
 extern "C" int __cxa_atexit(void (*function)(void *), void *argument, void *dso_tag);
+void __mlibc_do_finalize();
 
 namespace {
 	// According to the first paragraph of [C11 7.22.7],
@@ -217,6 +218,7 @@ int at_quick_exit(void (*func)(void)) {
 }
 
 void exit(int status) {
+	__mlibc_do_finalize();
 	mlibc::sys_exit(status);
 }
 
