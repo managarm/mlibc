@@ -7,10 +7,12 @@ size_t __fbufsize(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-size_t __fpending(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+size_t __fpending(FILE *file_base) {
+	__ensure(file_base->__dirty_end >= file_base->__dirty_begin);
+	return file_base->__dirty_end - file_base->__dirty_begin;
 }
+
 int __flbf(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
