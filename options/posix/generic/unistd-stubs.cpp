@@ -41,7 +41,7 @@ char *crypt(const char *, const char *) {
 	__builtin_unreachable();
 }
 void _exit(int status) {
-	__ensure(!"Not implemented");
+	mlibc::sys_exit(status);
 }
 void encrypt(char block[64], int flags) {
 	__ensure(!"Not implemented");
