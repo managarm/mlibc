@@ -4,6 +4,7 @@
 #include <mlibc/sysdeps.hpp>
 #include <errno.h>
 #include <dirent.h>
+#include <fcntl.h>
 
 #define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }
 
@@ -286,7 +287,14 @@ int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_re
     return 0;
 }
 
-int sys_access(const char *path, int mode) STUB_ONLY
+int sys_access(const char *path, int mode) {
+	int fd;
+	if(int e = sys_open(path, O_RDWR, &fd); e)
+		return e;
+	sys_close(fd);
+	return 0;
+}
+
 int sys_dup(int fd, int flags, int *newfd) STUB_ONLY
 int sys_dup2(int fd, int flags, int newfd) {
     (void)flags;
