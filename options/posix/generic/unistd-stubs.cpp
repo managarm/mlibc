@@ -1,10 +1,12 @@
 
 #include <errno.h>
 #include <stdarg.h>
-#include <bits/ensure.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include <bits/ensure.h>
+#include <mlibc/allocator.hpp>
 #include <mlibc/arch-defs.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
@@ -52,18 +54,17 @@ int execl(const char *path, const char *arg0, ...) {
 	argv[0] = const_cast<char *>(arg0);
 
 	va_list args;
-	va_start(args, arg0);
-
 	int n = 1;
+	va_start(args, arg0);
 	while(true) {
-		__ensure(n < 16);
+		__ensure(n < 15);
 		auto argn = va_arg(args, const char *);
 		argv[n++] = const_cast<char *>(argn);
 		if(!argn)
 			break;
 	}
-
 	va_end(args);
+	argv[n] = nullptr;
 
 	return execve(path, argv, environ);
 }
@@ -79,10 +80,51 @@ int execv(const char *, char *const []) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int execvp(const char *, char *const[]) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int execvp(const char *file, char *const argv[]) {
+	frg::string_view dirs;
+	if(const char *pv = getenv("PATH"); pv) {
+		dirs = pv;
+	}else{
+		dirs = "/bin:/usr/bin";
+	}
+
+	size_t p = 0;
+	int res = ENOENT;
+	while(p < dirs.size()) {
+		size_t s; // Offset of next colon or end of string.
+		if(size_t cs = dirs.find_first(':', p); cs != size_t(-1)) {
+			s = cs;
+		}else{
+			s = dirs.size();
+		}
+
+		frg::string<MemoryAllocator> path{getAllocator()};
+		path += dirs.sub_string(p, s - p);
+		path += "/";
+		path += file;
+
+		mlibc::infoLogger() << "mlibc: execvp() tries '" << path.data() << "'" << frg::endlog;
+		int e = mlibc::sys_execve(path.data(), argv, environ);
+		switch(e) {
+		case ENOENT:
+		case ENOTDIR:
+			break;
+		case EACCES:
+			res = EACCES;
+			break;
+		default:
+			errno = e;
+			return -1;
+		}
+
+		p = s + 1;
+	}
+
+	errno = res;
+	return -1;
 }
+
 int faccessat(int, const char *, int, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
