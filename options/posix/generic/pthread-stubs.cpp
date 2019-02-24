@@ -163,8 +163,8 @@ int pthread_key_create(pthread_key_t *key, void (*destructor) (void *)) {
 	return 0;
 }
 int pthread_key_delete(pthread_key_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: pthread_key_delete is a no-op" << frg::endlog;
+	return 0;
 }
 
 void *pthread_getspecific(pthread_key_t key) {
