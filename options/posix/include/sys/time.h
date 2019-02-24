@@ -1,4 +1,3 @@
-
 #ifndef _SYS_TIME_H
 #define _SYS_TIME_H
 
@@ -25,4 +24,3 @@ int timerisset(struct timeval *tvp);
 #endif
 
 #endif // _SYS_TIME_H
-
