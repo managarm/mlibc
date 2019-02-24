@@ -431,7 +431,6 @@ namespace {
 				if(int e = it->flush(); e)
 					mlibc::infoLogger() << "mlibc warning: Failed to flush file before exit()"
 							<< frg::endlog;
-				it->dispose();
 			}
 		}
 	} global_stdio_guard;
