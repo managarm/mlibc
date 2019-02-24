@@ -76,9 +76,9 @@ int execlp(const char *, const char *, ...) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int execv(const char *, char *const []) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int execv(const char *path, char *const argv[]) {
+	return execve(path, argv, environ);
 }
 
 int execvp(const char *file, char *const argv[]) {
