@@ -165,6 +165,7 @@ int ftruncate(int fd, off_t size) {
 	return 0;
 }
 char *getcwd(char *buffer, size_t size) {
+	__ensure(buffer && "glibc extension for !buffer is not implemented");
 	if(!mlibc::sys_getcwd) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
