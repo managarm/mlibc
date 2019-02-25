@@ -378,13 +378,20 @@ int fputs(const char *__restrict string, FILE *__restrict stream) {
 	return fputs_unlocked(string, stream);
 }
 
-int getc(FILE *stream) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int getc_unlocked(FILE *stream) {
+	return fgetc_unlocked(stream);
 }
+
+int getc(FILE *stream) {
+	return fgetc(stream);
+}
+
+int getchar_unlocked(void) {
+	return fgetc_unlocked(stdin);
+}
+
 int getchar(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return fgetc(stdin);
 }
 
 int putc_unlocked(int c, FILE *stream) {
@@ -464,16 +471,6 @@ int perror(const char *string) {
 }
 
 // POSIX unlocked I/O extensions.
-
-int getc_unlocked(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int getchar_unlocked(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
 
 // GLIBC extensions.
 int asprintf(char **out, const char *format, ...) {
