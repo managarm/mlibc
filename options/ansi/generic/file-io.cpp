@@ -216,6 +216,12 @@ int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_siz
 	return 0;
 }
 
+void abstract_file::unget(char c) {
+	__ensure(__offset);
+	__offset--;
+	__buffer_ptr[__offset] = c;
+}
+
 int abstract_file::update_bufmode(buffer_mode mode) {
 	// setvbuf() has undefined behavior if I/O has been performed.
 	__ensure(__dirty_begin == __dirty_end
@@ -566,6 +572,12 @@ void rewind(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	file->seek(0, SEEK_SET);
 	// TODO: rewind() should also clear the error indicator.
+}
+
+int ungetc(int c, FILE *file_base) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	file->unget(c);
+	return c;
 }
 
 void __fpurge(FILE *file_base) {

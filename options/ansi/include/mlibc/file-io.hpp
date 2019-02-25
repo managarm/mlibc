@@ -36,6 +36,7 @@ public:
 
 	int read(char *buffer, size_t max_size, size_t *actual_size);
 	int write(const char *buffer, size_t max_size, size_t *actual_size);
+	void unget(char c);
 
 	int update_bufmode(buffer_mode mode);
 

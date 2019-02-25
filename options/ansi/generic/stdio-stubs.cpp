@@ -418,10 +418,6 @@ int puts(const char *string) {
 		return EOF;
 	return 1;
 }
-int ungetc(int c, FILE *stream) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
 
 wint_t fgetwc(FILE *) MLIBC_STUB_BODY
 wchar_t *fgetws(wchar_t *__restrict, int, FILE *__restrict) MLIBC_STUB_BODY
