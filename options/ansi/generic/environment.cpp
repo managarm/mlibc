@@ -9,44 +9,24 @@
 #include <frg/string.hpp>
 #include <frg/vector.hpp>
 
-static char *emptyEnvironment[] = { nullptr };
+namespace {
+	char *empty_environment[] = { nullptr };
+}
 
-char **environ = emptyEnvironment;
+char **environ = empty_environment;
 
 namespace {
 
-// Environment vector that is mutated by putenv() and setenv().
-// Cannot be global as it is accessed during library initialization.
-frg::vector<char *, MemoryAllocator> *get_env_vector() {
-	static frg::vector<char *, MemoryAllocator> env_vector{getAllocator()};
-	return &env_vector;
-}
-
-void update_env_copy() {
-	if(environ == get_env_vector()->data()) {
-		return;
-	}
-	
-	// If the environ variable was changed, we copy the environment.
-	// Note that we must only copy the pointers but not the strings themselves!
-	__ensure(!*environ); // TODO: Actually copy the entries.
-	get_env_vector()->push(nullptr);
-	
-	environ = get_env_vector()->data();
-}
-
-void fix_env_pointer() {
-	environ = get_env_vector()->data();
-}
-
-size_t find_env_index(frg::string_view name) {
-	__ensure(environ == get_env_vector()->data());
-	__ensure(!get_env_vector()->empty());
-
-	for(size_t i = 0; (*get_env_vector())[i]; i++) {
-		frg::string_view view{(*get_env_vector())[i]};
+size_t find_environ_index(frg::string_view name) {
+	for(size_t i = 0; environ[i]; i++) {
+		frg::string_view view{environ[i]};
 		size_t s = view.find_first('=');
-		__ensure(s != size_t(-1));
+		if(s == size_t(-1)) {
+			mlibc::infoLogger() << "mlibc: environment string \""
+					<< frg::escape_fmt{view.data(), view.size()}
+					<< "\" does not contain an equals sign (=)" << frg::endlog;
+			continue;
+		}
 		if(view.sub_string(0, s) == name)
 			return i;
 	}
@@ -54,66 +34,107 @@ size_t find_env_index(frg::string_view name) {
 	return -1;
 }
 
+// Environment vector that is mutated by putenv() and setenv().
+// Cannot be global as it is accessed during library initialization.
+frg::vector<char *, MemoryAllocator> &get_vector() {
+	static frg::vector<char *, MemoryAllocator> vector{getAllocator()};
+	return vector;
+}
+
+void update_vector() {
+	auto &vector = get_vector();
+	if(environ == vector.data())
+		return;
+
+	// If the environ variable was changed, we copy the environment.
+	// Note that we must only copy the pointers but not the strings themselves!
+	vector.clear();
+	for(size_t i = 0; environ[i]; i++)
+		vector.push(environ[i]);
+	vector.push(nullptr);
+
+	environ = vector.data();
+}
+
+void assign_variable(frg::string_view name, const char *string, bool overwrite) {
+	auto &vector = get_vector();
+	__ensure(environ == vector.data());
+
+	auto k = find_environ_index(name);
+	if(k != size_t(-1)) {
+		if(overwrite)
+			vector[k] = const_cast<char *>(string);
+	}else{
+		// Last pointer of environ must always be a null delimiter.
+		__ensure(!vector.back());
+		vector.back() = const_cast<char *>(string);
+		vector.push(nullptr);
+	}
+
+	// push() might have re-allocated the vector.
+	environ = vector.data();
+}
+
+void unassign_variable(frg::string_view name) {
+	auto &vector = get_vector();
+	__ensure(environ == vector.data());
+
+	auto k = find_environ_index(name);
+	FRG_ASSERT(k != size_t(-1));
+
+	// Last pointer of environ must always be a null delimiter.
+	__ensure(vector.size() >= 2 && !vector.back());
+	std::swap(vector[k], vector[vector.size() - 2]);
+	vector.pop();
+	vector.back() = nullptr;
+
+	// pop() might have re-allocated the vector.
+	environ = vector.data();
+}
+
 } // anonymous namespace
 
 char *getenv(const char *name) {
-	// TODO: We do not necessarily need this.
-	update_env_copy();
-
-	auto k = find_env_index(name);
+	auto k = find_environ_index(name);
 	if(k == size_t(-1))
 		return nullptr;
-	
-	frg::string_view view{(*get_env_vector())[k]};
+
+	frg::string_view view{environ[k]};
 	size_t s = view.find_first('=');
 	__ensure(s != size_t(-1));
 	return const_cast<char *>(view.data() + s + 1);
 }
 
 int putenv(const char *string) {
-	update_env_copy();
-
 	frg::string_view view{string};
 	size_t s = view.find_first('=');
 	if(s == size_t(-1))
 		__ensure(!"Environment strings need to contain an equals sign");
-	
-	auto k = find_env_index(view.sub_string(0, s));
-	if(k != size_t(-1)) {
-		__ensure(!"Implement enviornment variable replacement");
-	}else{
-		__ensure(!get_env_vector()->back()); // Last pointer must always be a null delimiter.
-		get_env_vector()->back() = const_cast<char *>(string);
-		get_env_vector()->push(nullptr);
-		fix_env_pointer();
-	}
 
+	update_vector();
+	assign_variable(view.sub_string(0, s), string, true);
 	return 0;
 }
 
 int setenv(const char *name, const char *value, int overwrite) {
-	// We never free strings here.
-	// TODO: Reuse them?
-	__ensure(overwrite);
+	frg::string_view view{name};
+	size_t s = view.find_first('=');
+	if(s == size_t(-1)) // TODO: Return an error instead.
+		__ensure(!"Environment values must not contain an equals sign");
+
+	// We never free strings here. TODO: Reuse them?
 	char *string;
 	__ensure(asprintf(&string, "%s=%s", name, value) > 0);
 	__ensure(string);
 
-	return putenv(string);
+	update_vector();
+	assign_variable(name, string, overwrite);
+	return 0;
 }
 
 int unsetenv(const char *name) {
-	update_env_copy();
-
-	auto k = find_env_index(name);
-	FRG_ASSERT(k != size_t(-1));
-
-	// Last pointer is always null.
-	__ensure(get_env_vector()->size() >= 2 && !get_env_vector()->back());
-	std::swap((*get_env_vector())[k], (*get_env_vector())[get_env_vector()->size() - 2]);
-	get_env_vector()->pop();
-	get_env_vector()->back() = nullptr;
-
+	update_vector();
+	unassign_variable(name);
 	return 0;
 }
 
