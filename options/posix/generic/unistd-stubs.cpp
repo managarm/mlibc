@@ -168,7 +168,7 @@ char *getcwd(char *buffer, size_t size) {
 	if(!mlibc::sys_getcwd) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
-		return -1;
+		return NULL;
 	}
 	if(int e = mlibc::sys_getcwd(buffer, size); e) {
 		errno = e;
