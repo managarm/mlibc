@@ -260,8 +260,32 @@ int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *old
 // All remaining functions are disabled in ldso.
 #ifndef MLIBC_BUILDING_RTDL
 
-int sys_futex_wait(int *pointer, int expected) STUB_ONLY
-int sys_futex_wake(int *pointer) STUB_ONLY
+int sys_futex_wait(int *pointer, int expected) {
+    int ret;
+    int sys_errno;
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(32), "D"(pointer), "S"(expected)
+            : "rcx", "r11");
+
+    if (ret == -1)
+        return sys_errno;
+
+    return 0;
+}
+int sys_futex_wake(int *pointer) {
+    int ret;
+    int sys_errno;
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(33), "D"(pointer)
+            : "rcx", "r11");
+
+    if (ret == -1)
+        return sys_errno;
+
+    return 0;
+}
 
 int sys_open_dir(const char *path, int *handle) {
 	return sys_open(path, 0, handle);

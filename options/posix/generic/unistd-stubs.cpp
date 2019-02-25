@@ -164,9 +164,17 @@ int ftruncate(int fd, off_t size) {
 	}
 	return 0;
 }
-char *getcwd(char *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+char *getcwd(char *buffer, size_t size) {
+	if(!mlibc::sys_getcwd) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_getcwd(buffer, size); e) {
+		errno = e;
+		return NULL;
+	}
+	return buffer;
 }
 int getgroups(int, gid_t []) {
 	__ensure(!"Not implemented");
@@ -435,7 +443,7 @@ unsigned int sleep(unsigned int secs) {
 int usleep(useconds_t usecs) {
 	time_t seconds = 0;
 	long nanos = usecs * 1000;
-	return mlibc::sys_sleep(&seconds, &nanos); 
+	return mlibc::sys_sleep(&seconds, &nanos);
 }
 
 int dup(int fd) {
