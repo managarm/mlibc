@@ -20,7 +20,7 @@
 #define CLOCK_PROCESS_CPUTIME_ID 2
 #define CLOCK_THREAD_CPUTIME_ID 3
 #define CLOCK_MONOTONIC_RAW 4
-#define CLOCK_REALTIME_COARSE 5 
+#define CLOCK_REALTIME_COARSE 5
 #define CLOCK_MONOTONIC_COARSE 6
 #define CLOCK_BOOTTIME 7
 
@@ -31,7 +31,7 @@ extern "C" {
 // [7.27.1] Components of time
 
 // TODO: Use an integer type for clock_t?
-typedef double clock_t;
+typedef long int clock_t;
 
 struct tm {
 	int tm_sec;
