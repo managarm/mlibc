@@ -45,7 +45,8 @@ if not headers_only
 endif
 
 internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
-internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', true)
+internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', false)
+internal_conf.set('MLIBC_MAP_FILE_WINDOWS', false)
 
 #----------------------------------------------------------------------------------------
 # Configuration based on sysdeps.
@@ -56,10 +57,11 @@ if host_machine.system() == 'managarm'
 	# TODO: Adopt the include_directories() commands from the managarm meson.build.
 	rtdl_include_dirs += include_directories('sysdeps/managarm/include')
 	libc_include_dirs += include_directories('sysdeps/managarm/include')
+	internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', true)
+	internal_conf.set('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/managarm')
 elif host_machine.system() == 'qword'
 	disable_linux_option = true
-	internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', false)
 	rtdl_include_dirs += include_directories('sysdeps/qword/include')
 	libc_include_dirs += include_directories('sysdeps/qword/include')
 	subdir('sysdeps/qword')

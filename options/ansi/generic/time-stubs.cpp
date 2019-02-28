@@ -11,6 +11,7 @@
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
+#include <mlibc/file-window.hpp>
 #include <mlibc/sysdeps.hpp>
 
 clock_t clock(void) {
@@ -294,38 +295,13 @@ struct[[gnu::packed]] ttinfo {
 	unsigned char tt_abbrind;
 };
 
-void *global_tzinfo_buffer = nullptr;
-
 // Looks up the local time rules for a given 
 // UNIX GMT timestamp (seconds since 1970 GMT, ignoring leap seconds).
 int unix_local_from_gmt(time_t gmt_time, time_t *offset, bool *dst) {
-	if(!global_tzinfo_buffer) {
-		int fd;
-		if(mlibc::sys_open("/etc/localtime", O_RDONLY, &fd)) {
-			mlibc::infoLogger() << "mlibc: Error opening TZinfo" << frg::endlog;
-			return -1;
-		}
-	
-		struct stat info;
-		if(mlibc::sys_fstat(fd, &info)) {
-			mlibc::infoLogger() << "mlibc: Error getting TZinfo stats" << frg::endlog;
-			return -1;
-		}
-
-		if(mlibc::sys_vm_map(nullptr, (size_t)info.st_size, PROT_READ, MAP_PRIVATE,
-				fd, 0, &global_tzinfo_buffer)) {
-			mlibc::infoLogger() << "mlibc: Error mapping TZinfo" << frg::endlog;
-			return -1;
-		}
-	
-		if(mlibc::sys_close(fd)) {
-			mlibc::infoLogger() << "mlibc: Error closing TZinfo" << frg::endlog;
-			return -1;
-		}
-	}	
+	static file_window window{"/etc/localtime"};
 
 	tzfile tzfile_time;
-	memcpy(&tzfile_time, reinterpret_cast<char *>(global_tzinfo_buffer), sizeof(tzfile));
+	memcpy(&tzfile_time, reinterpret_cast<char *>(window.get()), sizeof(tzfile));
 	tzfile_time.tzh_ttisgmtcnt = bswap_32(tzfile_time.tzh_ttisgmtcnt);
 	tzfile_time.tzh_ttisstdcnt = bswap_32(tzfile_time.tzh_ttisstdcnt);
 	tzfile_time.tzh_leapcnt = bswap_32(tzfile_time.tzh_leapcnt);
@@ -348,7 +324,7 @@ int unix_local_from_gmt(time_t gmt_time, time_t *offset, bool *dst) {
 	int index = -1;
 	for(size_t i = 0; i < tzfile_time.tzh_timecnt; i++) {
 		int32_t ttime;
-		memcpy(&ttime, reinterpret_cast<char *>(global_tzinfo_buffer) + sizeof(tzfile)
+		memcpy(&ttime, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
 				+ i * sizeof(int32_t), sizeof(int32_t));
 		ttime = bswap_32(ttime);
 		if(ttime > gmt_time) {
@@ -360,12 +336,12 @@ int unix_local_from_gmt(time_t gmt_time, time_t *offset, bool *dst) {
 	__ensure(index > 0);
 
 	uint8_t ttinfo_index;
-	memcpy(&ttinfo_index, reinterpret_cast<char *>(global_tzinfo_buffer) + sizeof(tzfile)
+	memcpy(&ttinfo_index, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
 			+ tzfile_time.tzh_timecnt * sizeof(int32_t)
 			+ index * sizeof(uint8_t), sizeof(uint8_t));
 
 	ttinfo time_info;
-	memcpy(&time_info, reinterpret_cast<char *>(global_tzinfo_buffer) + sizeof(tzfile)
+	memcpy(&time_info, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
 			+ tzfile_time.tzh_timecnt * sizeof(int32_t)
 			+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
 			+ ttinfo_index * sizeof(ttinfo), sizeof(ttinfo));
