@@ -38,6 +38,8 @@ extern "C" {
 #define F_ULOCK 4
 
 // MISSING: _PC macros
+// For now, use the Linux ABI for _PC constants.
+#define _PC_NAME_MAX 3
 #define _PC_PATH_MAX 4
 #define _PC_PIPE_BUF 5
 
