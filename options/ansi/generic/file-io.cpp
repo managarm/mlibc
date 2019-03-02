@@ -255,16 +255,25 @@ int abstract_file::seek(off_t offset, int whence) {
 	if(int e = _write_back(); e)
 		return e;
 
+	off_t new_offset;
+	if(whence == SEEK_CUR) {
+		auto seek_offset = offset + (off_t(__offset) - off_t(__io_offset));
+		if(int e = io_seek(seek_offset, whence, &new_offset); e) {
+			__status_bits |= __MLIBC_ERROR_BIT;
+			return e;
+		}
+	}else{
+		__ensure(whence == SEEK_SET || whence == SEEK_END);
+		if(int e = io_seek(offset, whence, &new_offset); e) {
+			__status_bits |= __MLIBC_ERROR_BIT;
+			return e;
+		}
+	}
+
 	// We just forget the current buffer.
 	// TODO: If the seek is "small", we can just modify our internal offset.
-	if(int e = _reset(); e)
-		return e;
+	purge();
 
-	off_t new_offset;
-	if(int e = io_seek(offset, whence, &new_offset); e) {
-		__status_bits |= __MLIBC_ERROR_BIT;
-		return e;
-	}
 	return 0;
 }
 
