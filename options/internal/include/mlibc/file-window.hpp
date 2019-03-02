@@ -19,7 +19,7 @@ struct file_window {
 
 #ifdef MLIBC_MAP_FILE_WINDOWS
 		if(mlibc::sys_vm_map(nullptr, (size_t)info.st_size, PROT_READ, MAP_PRIVATE,
-				fd, 0, &global_tzinfo_buffer))
+				fd, 0, &_ptr))
 			mlibc::panicLogger() << "mlibc: Error mapping TZinfo" << frg::endlog;
 #else
 		_ptr = getAllocator().allocate(info.st_size);
