@@ -360,6 +360,9 @@ int fd_file::fd() {
 }
 
 int fd_file::close() {
+	if(__dirty_begin != __dirty_end)
+		mlibc::infoLogger() << "mlibc warning: File is not flushed before closing"
+				<< frg::endlog;
 	if(int e = mlibc::sys_close(_fd); e)
 		return e;
 	return 0;
@@ -506,6 +509,8 @@ FILE *fdopen(int fd, const char *mode) {
 int fclose(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	int e = 0;
+	if(file->flush())
+		e = EOF;
 	if(file->close())
 		e = EOF;
 	file->dispose();
