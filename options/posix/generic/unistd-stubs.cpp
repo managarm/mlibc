@@ -82,6 +82,13 @@ int execv(const char *path, char *const argv[]) {
 }
 
 int execvp(const char *file, char *const argv[]) {
+	if(strchr(file, '/')) {
+		int e = mlibc::sys_execve(file, argv, environ);
+		__ensure(e && "sys_execve() is supposed to never return with success");
+		errno = e;
+		return -1;
+	}
+
 	frg::string_view dirs;
 	if(const char *pv = getenv("PATH"); pv) {
 		dirs = pv;
@@ -106,6 +113,7 @@ int execvp(const char *file, char *const argv[]) {
 
 		mlibc::infoLogger() << "mlibc: execvp() tries '" << path.data() << "'" << frg::endlog;
 		int e = mlibc::sys_execve(path.data(), argv, environ);
+		__ensure(e && "sys_execve() is supposed to never return with success");
 		switch(e) {
 		case ENOENT:
 		case ENOTDIR:
