@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -119,8 +120,13 @@ int putenv(const char *string) {
 int setenv(const char *name, const char *value, int overwrite) {
 	frg::string_view view{name};
 	size_t s = view.find_first('=');
-	if(s == size_t(-1)) // TODO: Return an error instead.
-		__ensure(!"Environment values must not contain an equals sign");
+	if(s != size_t(-1)) {
+		mlibc::infoLogger() << "mlibc: environment variable \""
+				<< frg::escape_fmt{view.data(), view.size()} << "\" contains an equals sign"
+				<< frg::endlog;
+		errno = EINVAL;
+		return -1;
+	}
 
 	// We never free strings here. TODO: Reuse them?
 	char *string;
