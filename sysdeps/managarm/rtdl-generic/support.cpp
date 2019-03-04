@@ -29,10 +29,15 @@ void cacheFileTable() {
 	if(fileTable)
 		return;
 
-	HelError error;
-	asm volatile ("syscall" : "=D"(error), "=S"(fileTable) : "0"(kHelCallSuper + 1)
-			: "rbx", "rcx", "r11");
-	HEL_CHECK(error);
+	struct managarm_process_data {
+		HelHandle posix_lane;
+		HelHandle *file_table;
+		void *clock_tracker_page;
+	};
+
+	managarm_process_data data;
+	HEL_CHECK(helSyscall1(kHelCallSuper + 1, reinterpret_cast<HelWord>(&data)));
+	fileTable = data.file_table;
 }
 
 template<typename T>
@@ -53,7 +58,7 @@ struct Queue {
 		_queue->elementLimit = 128;
 		_queue->sizeShift = 0;
 		HEL_CHECK(helCreateQueue(_queue, 0, &_handle));
-		
+
 		_chunk = reinterpret_cast<HelChunk *>(getAllocator().allocate(sizeof(HelChunk) + 4096));
 		HEL_CHECK(helSetupChunk(_handle, 0, _chunk, 0));
 
@@ -88,7 +93,7 @@ struct Queue {
 				_lastProgress = 0;
 				continue;
 			}
-			
+
 			// Dequeue the next element.
 			auto ptr = (char *)_chunk + sizeof(HelChunk) + _lastProgress;
 			auto element = load<HelElement>(ptr);
@@ -120,7 +125,7 @@ private:
 			} while(!__atomic_compare_exchange_n(&_chunk->progressFutex, &futex,
 						_lastProgress | kHelProgressWaiters,
 						false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE));
-			
+
 			HEL_CHECK(helFutexWait(&_chunk->progressFutex,
 					_lastProgress | kHelProgressWaiters));
 		}
@@ -197,7 +202,7 @@ int sys_open(const char *path, int flags, int *fd) {
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	
+
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 
@@ -219,7 +224,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_req_type(managarm::fs::CntReqType::SEEK_ABS);
 	req.set_rel_offset(offset);
-	
+
 	if(!globalQueue.valid())
 		globalQueue.initialize();
 
@@ -242,7 +247,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	
+
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
@@ -337,7 +342,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 		HEL_CHECK(send_req->error);
 		HEL_CHECK(recv_resp->error);
 		HEL_CHECK(pull_memory->error);
-		
+
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
@@ -376,7 +381,7 @@ int sys_close(int fd) {
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::CLOSE);
 	req.set_fd(fd);
-	
+
 	if(!globalQueue.valid())
 		globalQueue.initialize();
 
@@ -399,7 +404,7 @@ int sys_close(int fd) {
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	
+
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);

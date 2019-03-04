@@ -22,11 +22,18 @@ extern "C" uintptr_t *__dlapi_entrystack();
 // declared in posix-pipe.hpp
 thread_local Queue globalQueue;
 
+HelHandle __mlibc_posix_lane;
 void *__mlibc_clk_tracker_page;
 
 namespace {
+	struct managarm_process_data {
+		HelHandle posix_lane;
+		HelHandle *file_table;
+		void *clock_tracker_page;
+	};
+
 	thread_local HelHandle *cachedFileTable;
-	
+
 	// This construction is a bit weird: Even though the variables above
 	// are thread_local we still protect their initialization with a pthread_once_t
 	// (instead of using a C++ constructor).
@@ -34,10 +41,12 @@ namespace {
 	pthread_once_t hasCachedInfos = PTHREAD_ONCE_INIT;
 
 	void actuallyCacheInfos() {
-		HelError error;
-		asm volatile ("syscall" : "=D"(error), "=c"(__mlibc_clk_tracker_page),
-				"=S"(cachedFileTable) : "0"(kHelCallSuper + 1));
-		HEL_CHECK(error);
+		managarm_process_data data;
+		HEL_CHECK(helSyscall1(kHelCallSuper + 1, reinterpret_cast<HelWord>(&data)));
+
+		__mlibc_posix_lane = data.posix_lane;
+		cachedFileTable = data.file_table;
+		__mlibc_clk_tracker_page = data.clock_tracker_page;
 	}
 }
 
