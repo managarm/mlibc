@@ -242,6 +242,7 @@ inline HelHandleResult *parseHandle(ElementHandle &element) {
 	return result;
 }
 
+HelHandle getPosixLane();
 HelHandle *cacheFileTable();
 void clearCachedInfos();
 

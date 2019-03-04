@@ -70,6 +70,11 @@ MemoryAllocator &getSysdepsAllocator() {
 	return singleton.get();
 }
 
+HelHandle getPosixLane() {
+	cacheFileTable();
+	return __mlibc_posix_lane;
+}
+
 HelHandle *cacheFileTable() {
 	// TODO: Make sure that this is signal-safe (it is called e.g. by sys_clock_get()).
 	pthread_once(&hasCachedInfos, &actuallyCacheInfos);

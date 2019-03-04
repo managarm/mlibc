@@ -65,7 +65,7 @@ int sys_sigaction(int number, const struct sigaction *__restrict action,
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();

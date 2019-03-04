@@ -23,6 +23,7 @@ extern "C" void __assert_fail(const char *assertion,
 // POSIX I/O functions.
 // --------------------------------------------------------
 
+HelHandle posixLane;
 HelHandle *fileTable;
 
 void cacheFileTable() {
@@ -37,6 +38,7 @@ void cacheFileTable() {
 
 	managarm_process_data data;
 	HEL_CHECK(helSyscall1(kHelCallSuper + 1, reinterpret_cast<HelWord>(&data)));
+	posixLane = data.posix_lane;
 	fileTable = data.file_table;
 }
 
@@ -174,6 +176,7 @@ int sys_tcb_set(void *pointer) {
 }
 
 int sys_open(const char *path, int flags, int *fd) {
+	cacheFileTable();
 	HelAction actions[3];
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
@@ -193,7 +196,7 @@ int sys_open(const char *path, int flags, int *fd) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3, globalQueue->getHandle(), 0, 0));
+	HEL_CHECK(helSubmitAsync(posixLane, actions, 3, globalQueue->getHandle(), 0, 0));
 
 	auto element = globalQueue->dequeueSingle();
 	auto offer = parseSimple(element);
@@ -218,7 +221,6 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 
 	cacheFileTable();
 	auto lane = fileTable[fd];
-
 	HelAction actions[3];
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
@@ -258,7 +260,6 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read) {
 	cacheFileTable();
 	auto lane = fileTable[fd];
-
 	HelAction actions[5];
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
@@ -310,7 +311,6 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 	if(!(flags & MAP_ANONYMOUS)) {
 		cacheFileTable();
 		auto lane = fileTable[fd];
-
 		HelAction actions[4];
 
 		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
@@ -376,6 +376,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 }
 
 int sys_close(int fd) {
+	cacheFileTable();
 	HelAction actions[3];
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
@@ -395,7 +396,7 @@ int sys_close(int fd) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3, globalQueue->getHandle(), 0, 0));
+	HEL_CHECK(helSubmitAsync(posixLane, actions, 3, globalQueue->getHandle(), 0, 0));
 
 	auto element = globalQueue->dequeueSingle();
 	auto offer = parseSimple(element);

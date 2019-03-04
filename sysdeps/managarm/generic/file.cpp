@@ -70,7 +70,7 @@ int sys_chdir(const char *path) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -111,7 +111,7 @@ int sys_chroot(const char *path) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -148,7 +148,7 @@ int sys_mkdir(const char *path) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -190,7 +190,7 @@ int sys_symlink(const char *target_path, const char *link_path) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -228,7 +228,7 @@ int sys_rename(const char *path, const char *new_path) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -330,7 +330,7 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		actions[1].length = ser.size();
 		actions[2].type = kHelActionRecvInline;
 		actions[2].flags = 0;
-		HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+		HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
@@ -432,7 +432,7 @@ int sys_ttyname(int fd, char *buf, size_t size) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -482,7 +482,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -522,7 +522,7 @@ int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -561,7 +561,7 @@ int sys_vm_unmap(void *pointer, size_t size) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -622,7 +622,7 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -659,7 +659,7 @@ int sys_pipe(int *fds) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -706,7 +706,7 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -776,7 +776,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	actions[3].length = hdr->msg_namelen;
 	actions[4].type = kHelActionRecvInline;
 	actions[4].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 5,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 5,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -836,7 +836,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	actions[5].flags = 0;
 	actions[5].buffer = hdr->msg_control;
 	actions[5].length = hdr->msg_controllen;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 6,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 6,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -904,7 +904,7 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -962,7 +962,7 @@ int sys_epoll_create(int flags, int *fd) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -1016,7 +1016,7 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -1061,7 +1061,7 @@ int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout, int 
 	actions[3].flags = 0;
 	actions[3].buffer = evnts;
 	actions[3].length = n * sizeof(struct epoll_event);
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 4,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 4,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -1102,7 +1102,7 @@ int sys_timerfd_create(int flags, int *fd) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -1145,7 +1145,7 @@ int sys_timerfd_settime(int fd, int flags,
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -1193,7 +1193,7 @@ int sys_signalfd_create(sigset_t mask, int flags, int *fd) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -1237,7 +1237,7 @@ int sys_inotify_create(int flags, int *fd) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -2460,7 +2460,7 @@ int sys_open(const char *path, int flags, int *fd) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -2688,7 +2688,7 @@ int sys_close(int fd) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 	
 	auto element = globalQueue.dequeueSingle();
@@ -2739,7 +2739,7 @@ int sys_dup(int fd, int flags, int *newfd) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -2779,7 +2779,7 @@ int sys_dup2(int fd, int flags, int newfd) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -2816,7 +2816,7 @@ int sys_stat(const char *path, struct stat *result) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -2886,7 +2886,7 @@ int sys_lstat(const char *path, struct stat *result) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -2956,7 +2956,7 @@ int sys_fstat(int fd, struct stat *result) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -3027,7 +3027,7 @@ int sys_readlink(const char *path, void *data, size_t max_size, ssize_t *length)
 	actions[3].flags = 0;
 	actions[3].buffer = data;
 	actions[3].length = max_size;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 4,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 4,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -3155,7 +3155,7 @@ int sys_unlink(const char *path) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -3197,7 +3197,7 @@ int sys_access(const char *path, int mode) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -3238,7 +3238,7 @@ int sys_isatty(int fd) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();

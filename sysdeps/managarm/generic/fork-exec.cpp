@@ -63,7 +63,7 @@ int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -208,7 +208,7 @@ pid_t sys_getpid() {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
@@ -252,7 +252,7 @@ int sys_getrusage(int scope, struct rusage *usage) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(kHelThisThread, actions, 3,
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
