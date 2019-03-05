@@ -13,8 +13,12 @@ struct file_window {
 			mlibc::panicLogger() << "mlibc: Error opening file_window to "
 					<< path << frg::endlog;
 
+		if(!mlibc::sys_stat) {
+			MLIBC_MISSING_SYSDEP();
+			__ensure(!"cannot proceed without sys_stat");
+		}
 		struct stat info;
-		if(mlibc::sys_fstat(fd, &info))
+		if(mlibc::sys_stat(mlibc::fsfd_target::fd, fd, nullptr, 0, &info))
 			mlibc::panicLogger() << "mlibc: Error getting TZinfo stats" << frg::endlog;
 
 #ifdef MLIBC_MAP_FILE_WINDOWS

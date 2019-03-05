@@ -1,3 +1,5 @@
+#ifndef MLIBC_SYSDEPS
+#define MLIBC_SYSDEPS
 
 #include <stddef.h>
 
@@ -7,6 +9,7 @@
 #include <bits/posix/ssize_t.h>
 
 #ifndef MLIBC_BUILDING_RTDL
+#	include <fcntl.h>
 #	include <time.h>
 #	include <bits/posix/pid_t.h>
 #	include <bits/posix/socklen_t.h>
@@ -21,6 +24,13 @@
 #endif
 
 namespace mlibc [[gnu::visibility("hidden")]] {
+
+enum class fsfd_target {
+	none,
+	path,
+	fd,
+	fd_path
+};
 
 void sys_libc_log(const char *message);
 __attribute__ ((noreturn)) void sys_libc_panic();
@@ -61,9 +71,8 @@ int sys_close(int fd);
 	// In contrast to the isatty() library function, the sysdep function uses return value
 	// zero (and not one) to indicate that the file is a terminal.
 	int sys_isatty(int fd);
-	int sys_stat(const char *path, struct stat *statbuf);
-	int sys_lstat(const char *path, struct stat *statbuf);
-	int sys_fstat(int fd, struct stat *statbuf);
+	[[gnu::weak]] int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags,
+			struct stat *statbuf);
 	int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length);
 	int sys_ftruncate(int fd, size_t size);
 	int sys_fallocate(int fd, off_t offset, size_t size);
@@ -140,3 +149,4 @@ int sys_vm_unmap(void *pointer, size_t size);
 
 } //namespace mlibc
 
+#endif // MLIBC_SYSDEPS
