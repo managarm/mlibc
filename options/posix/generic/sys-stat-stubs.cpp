@@ -25,7 +25,7 @@ int fstatat(int dirfd, const char *path, struct stat *result, int flags) {
 		errno = ENOSYS;
 		return -1;
 	}
-	if(int e = mlibc::sys_stat(mlibc::fsfd_target::path, dirfd, path, flags, result); e) {
+	if(int e = mlibc::sys_stat(mlibc::fsfd_target::fd_path, dirfd, path, flags, result); e) {
 		errno = e;
 		return -1;
 	}
