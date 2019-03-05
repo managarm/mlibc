@@ -156,14 +156,16 @@ struct __mlibc_key_data {
 	frg::hash_map<int, void *, frg::hash<int>, MemoryAllocator> values;
 };
 
-int pthread_key_create(pthread_key_t *key, void (*destructor) (void *)) {
+int pthread_key_create(pthread_key_t *out_key, void (*destructor) (void *)) {
 	SCOPE_TRACE();
-
-	*key = frg::construct<__mlibc_key_data>(getAllocator());
+	// TODO: Invoke the destructor on thread exit.
+	*out_key = frg::construct<__mlibc_key_data>(getAllocator());
 	return 0;
 }
-int pthread_key_delete(pthread_key_t) {
-	mlibc::infoLogger() << "mlibc: pthread_key_delete is a no-op" << frg::endlog;
+
+int pthread_key_delete(pthread_key_t key) {
+	SCOPE_TRACE();
+	frg::destruct(getAllocator(), key);
 	return 0;
 }
 
