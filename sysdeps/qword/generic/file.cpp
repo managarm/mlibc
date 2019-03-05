@@ -370,7 +370,20 @@ int sys_lstat(const char *path, struct stat *statbuf) {
     return sys_stat(path, statbuf);
 }
 int sys_chroot(const char *path) STUB_ONLY
-int sys_mkdir(const char *path) STUB_ONLY
+int sys_mkdir(const char *path) {
+    int ret;
+    int sys_errno;
+
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(35), "D"(path)
+            : "rcx", "r11");
+
+    if (ret == -1)
+        return sys_errno;
+
+    return 0;
+}
 int sys_tcgetattr(int fd, struct termios *attr) {
     int ret;
     int sys_errno;
