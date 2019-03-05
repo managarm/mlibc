@@ -35,8 +35,9 @@ struct file_window {
 				break;
 			progress += chunk;
 		}
-		mlibc::infoLogger() << "stat says " << info.st_size << " but we got "
-				<< progress << " bytes" << frg::endlog;
+		if(progress != info.st_size)
+			mlibc::panicLogger() << "stat reports " << info.st_size << " but we only read "
+					<< progress << " bytes" << frg::endlog;
 #endif
 
 		if(mlibc::sys_close(fd))
