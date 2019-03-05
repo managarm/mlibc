@@ -144,11 +144,17 @@ char *realpath(const char *path, char *out) {
 		resolv[rsz + s_view.size()] = 0;
 
 		// stat() the path to (1) see if it exists and (2) see if it is a link.
+		if(!mlibc::sys_stat) {
+			MLIBC_MISSING_SYSDEP();
+			errno = ENOSYS;
+			return -1;
+		}
 		if(debugPathResolution)
 			mlibc::infoLogger() << "mlibc realpath(): stat()ing '"
 					<< resolv.data() << "'" << frg::endlog;
 		struct stat st;
-		if(int e = mlibc::sys_stat(resolv.data(), &st); e)
+		if(int e = mlibc::sys_stat(mlibc::fsfd_target::path,
+				-1, resolv.data(), AT_SYMLINK_NOFOLLOW, &st); e)
 			return e;
 
 		__ensure(!S_ISLNK(st.st_mode) && "TODO: Use readlink in realpath()");

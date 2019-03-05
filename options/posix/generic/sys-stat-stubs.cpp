@@ -19,9 +19,17 @@ int fchmodat(int, const char *, mode_t, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int fstatat(int, const char *__restrict, struct stat *__restrict, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int fstatat(int dirfd, const char *path, struct stat *result, int flags) {
+	if(!mlibc::sys_stat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_stat(mlibc::fsfd_target::fd_path, dirfd, path, flags, result); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 int futimens(int fd, const struct timespec times[2]) {
 	mlibc::infoLogger() << "\e[31mmlibc: futimens() is not implemented correctly\e[39m"
@@ -68,16 +76,27 @@ int utimensat(int, const char *, const struct timespec times[2], int) {
 }
 
 
-int stat(const char *__restrict path, struct stat *__restrict result) {
-	if(int e = mlibc::sys_stat(path, result); e) {
+int stat(const char *path, struct stat *result) {
+	if(!mlibc::sys_stat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_stat(mlibc::fsfd_target::path, -1, path, 0, result); e) {
 		errno = e;
 		return -1;
 	}
 	return 0;
 }
 
-int lstat(const char *__restrict path, struct stat *__restrict result) {
-	if(int e = mlibc::sys_lstat(path, result); e) {
+int lstat(const char *path, struct stat *result) {
+	if(!mlibc::sys_stat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_stat(mlibc::fsfd_target::path,
+			-1, path, AT_SYMLINK_NOFOLLOW, result); e) {
 		errno = e;
 		return -1;
 	}
@@ -85,7 +104,12 @@ int lstat(const char *__restrict path, struct stat *__restrict result) {
 }
 
 int fstat(int fd, struct stat *result) {
-	if(int e = mlibc::sys_fstat(fd, result); e) {
+	if(!mlibc::sys_stat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_stat(mlibc::fsfd_target::fd, fd, nullptr, 0, result); e) {
 		errno = e;
 		return -1;
 	}

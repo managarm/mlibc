@@ -221,19 +221,35 @@ int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) STU
 int sys_vm_unmap(void *pointer, size_t size) STUB_ONLY
 
 #ifndef MLIBC_BUILDING_RTDL
-int sys_fstat(int fd, struct stat *statbuf) {
-    int ret;
-    int sys_errno;
+namespace {
+	int do_fstat(int fd, struct stat *statbuf) {
+		int ret;
+		int sys_errno;
 
-    asm volatile ("syscall"
-            : "=a"(ret), "=d"(sys_errno)
-            : "a"(9), "D"(fd), "S"(statbuf)
-            : "rcx", "r11");
+		asm volatile ("syscall"
+				: "=a"(ret), "=d"(sys_errno)
+				: "a"(9), "D"(fd), "S"(statbuf)
+				: "rcx", "r11");
 
-    if (ret == -1)
-        return sys_errno;
+		if (ret == -1)
+			return sys_errno;
 
-    return 0;
+		return 0;
+	}
+}
+
+int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
+	if(fsfdt == fsfd_target::fd) {
+		return do_fstat(fd, statbuf);
+	}else{
+		__ensure(fsfdt == fsfd_target::path);
+		int e = sys_open(path, 0/*O_RDONLY*/, &fd);
+		if (e)
+			return e;
+		e = do_fstat(fd, statbuf);
+		sys_close(fd);
+		return e;
+	}
 }
 #endif
 
@@ -351,23 +367,6 @@ int sys_isatty(int fd) {
 int sys_ttyname(int fd, char *buf, size_t size) {
     mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
     return ENOSYS;
-}
-int sys_stat(const char *path, struct stat *statbuf) {
-    int fd;
-    int sys_errno;
-    sys_errno = sys_open(path, 0/*O_RDONLY*/, &fd);
-    if (sys_errno)
-        return sys_errno;
-    sys_errno = sys_fstat(fd, statbuf);
-    if (sys_errno) {
-        sys_close(fd);
-        return sys_errno;
-    }
-    sys_close(fd);
-    return 0;
-}
-int sys_lstat(const char *path, struct stat *statbuf) {
-    return sys_stat(path, statbuf);
 }
 int sys_chroot(const char *path) STUB_ONLY
 int sys_mkdir(const char *path) {
