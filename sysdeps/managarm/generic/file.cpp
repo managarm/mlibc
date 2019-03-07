@@ -794,9 +794,14 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	*length = resp.size();
-	return 0;
+
+	if(resp.error() == managarm::posix::Errors::BROKEN_PIPE) {
+		return EPIPE;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		*length = resp.size();
+		return 0;
+	}
 }
 
 int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
