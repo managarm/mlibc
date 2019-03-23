@@ -38,8 +38,16 @@ char *strcat(char *__restrict dest, const char *__restrict src) {
 	return dest;
 }
 char *strncat(char *__restrict dest, const char *__restrict src, size_t max_size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	auto dest_bytes = static_cast<char *>(dest);
+	auto src_bytes = static_cast<const char *>(src);
+	dest_bytes += strlen(dest);
+	size_t i = 0;
+	while(*src_bytes && i < max_size) {
+		*(dest_bytes++) = *(src_bytes++);
+		i++;
+	}
+	*dest_bytes = 0;
+	return dest;
 }
 
 int memcmp(const void *a, const void *b, size_t size) {
