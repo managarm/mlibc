@@ -23,8 +23,29 @@ char *basename(char *s) {
 	return s + i;
 }
 
-char *dirname(char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+char *dirname(char *s) {
+	if (!s || !(*s))
+		return ".";
+
+	auto i = strlen(s) - 1;
+
+	// Skip trailing slashes.
+	for (; s[i] == '/'; i--)
+		if(!i) // Path only consists of slashes.
+			return "/";
+
+	// Skip the last non-slash path component.
+	for (; s[i] != '/'; i--)
+		if(!i) // Path only contains a single component.
+			return ".";
+
+	// Skip slashes.
+	for (; s[i] == '/'; i--)
+		if(!i) // Path is entry in root directory.
+			return "/";
+
+	s[i+1] = 0;
+
+	return s;
 }
 
