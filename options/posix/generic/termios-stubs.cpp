@@ -5,13 +5,11 @@
 #include <bits/ensure.h>
 #include <mlibc/sysdeps.hpp>
 
-speed_t cfgetispeed(const struct termios *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+speed_t cfgetispeed(const struct termios *tios) {
+	return tios->ibaud;
 }
-speed_t cfgetospeed(const struct termios *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+speed_t cfgetospeed(const struct termios *tios) {
+	return tios->obaud;
 }
 int cfsetispeed(struct termios *, speed_t) {
 	__ensure(!"Not implemented");
