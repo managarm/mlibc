@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <wchar.h>
+#include <ctype.h>
 
 #include <bits/ensure.h>
 
@@ -233,6 +234,293 @@ int printf(const char *__restrict format, ...) {
 	va_end(args);
 	return result;
 }
+
+namespace {
+    enum {
+        SCANF_TYPE_CHAR,
+        SCANF_TYPE_SHORT,
+        SCANF_TYPE_INTMAX,
+        SCANF_TYPE_L,
+        SCANF_TYPE_LL,
+        SCANF_TYPE_PTRDIFF,
+        SCANF_TYPE_SIZE_T
+    };
+}
+
+static void store_int(void *dest, unsigned int size, unsigned long long i) {
+    switch (size) {
+        case SCANF_TYPE_CHAR:
+            *(char *)dest = i;
+            break;
+        case SCANF_TYPE_SHORT:
+            *(short *)dest = i;
+            break;
+        case SCANF_TYPE_INTMAX:
+            *(intmax_t *)dest = i;
+            break;
+        case SCANF_TYPE_L:
+            *(long *)dest = i;
+            break;
+        case SCANF_TYPE_LL:
+            *(long long *)dest = i;
+            break;
+        case SCANF_TYPE_PTRDIFF:
+            *(ptrdiff_t *)dest = i;
+            break;
+        case SCANF_TYPE_SIZE_T:
+            *(size_t *)dest = i;
+            break;
+        default:
+            *(int *)dest = i;
+            break;
+    }
+}
+
+template<typename H>
+static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
+    int match_count = 0;
+    for (; *fmt; fmt++) {
+
+        if (isspace(*fmt)) {
+            while (isspace(fmt[1])) fmt++;
+            while (isspace(handler.look_ahead()))
+                    handler.consume();
+            continue;
+        }
+
+        if (*fmt != '%' || fmt[1] == '%') {
+            if (*fmt == '%')
+                fmt++;
+            char c = handler.consume();
+            if (c != *fmt) return -1;
+            continue;
+        }
+
+        void *dest = NULL;
+        /* %n$ format */
+        if (isdigit(*fmt) && fmt[1] == '$') {
+            /* TODO: dest = get_arg_at_pos(args, *fmt -'0'); */
+            fmt += 3;
+        } else {
+            dest = va_arg(args, void*);
+            fmt++;
+        }
+
+        int width = 0;
+        if (*fmt == '*') {
+            fmt++;
+            continue;
+        } else if (*fmt == '\'') {
+        /* TODO: numeric seperators locale stuff */
+             mlibc::infoLogger() << "do_scanf: \' not implemented!" << frg::endlog;
+            fmt++;
+            continue;
+        } else if (*fmt == 'm') {
+            /* TODO: allocate buffer for them */
+            mlibc::infoLogger() << "do_scanf: m not implemented!" << frg::endlog;
+            fmt++;
+            continue;
+        } else if (*fmt >= '0' && *fmt <= '9') {
+            /* read in width specifier */
+            width = 0;
+            while (*fmt >= '0' && *fmt <= '9') {
+                width = width * 10 + (*fmt - '0');
+                fmt++;
+                continue;
+            }
+        }
+
+        /* type modifiers */
+        unsigned int type = 0;
+        unsigned int base = 10;
+        switch (*fmt) {
+            case 'h': {
+                if (fmt[1] == 'h') {
+                    type = SCANF_TYPE_CHAR;
+                    fmt += 2;
+                    break;
+                }
+                type = SCANF_TYPE_SHORT;
+                fmt++;
+                break;
+            }
+            case 'j': {
+                type = SCANF_TYPE_INTMAX;
+                fmt++;
+                break;
+            }
+            case 'l': {
+                if (fmt[1] == 'l') {
+                    type = SCANF_TYPE_LL;
+                    fmt += 2;
+                    break;
+                }
+                type = SCANF_TYPE_L;
+                fmt++;
+                break;
+            }
+            case 'L': {
+                type = SCANF_TYPE_LL;
+                fmt++;
+                break;
+            }
+            case 'q': {
+                type = SCANF_TYPE_LL;
+                fmt++;
+                break;
+            }
+            case 't': {
+                type = SCANF_TYPE_PTRDIFF;
+                fmt++;
+                break;
+            }
+             case 'z': {
+                type = SCANF_TYPE_SIZE_T;
+                fmt++;
+                break;
+            }
+            case '0': {
+                if (fmt[1] == 'x' || fmt[1] == 'X') {
+                    base = 16;
+                    fmt += 2;
+                    break;
+                }
+                base = 8;
+                fmt++;
+                break;
+            }
+        }
+
+        switch (*fmt) {
+            case 'd': {
+                unsigned long long res = 0;
+                char c = handler.look_ahead();
+                while (c >= '0' && c <= '9') {
+                    handler.consume();
+                    res = res * 10 + (c - '0');
+                    c = handler.look_ahead();
+                }
+                if (dest)
+                    store_int(dest, type, res);
+                break;
+            }
+            case 'i': {
+                /* TODO: do all the bases */
+                if (base != 10) {
+                    mlibc::infoLogger() << "do_scanf: unhandled base!" << frg::endlog;
+                    return EOF;
+                }
+                unsigned long long res = 0;
+                char c = handler.look_ahead();
+                while (c >= '0' && c <= '9') {
+                    handler.consume();
+                    res = res * 10 + (c - '0');
+                    c = handler.look_ahead();
+                }
+                if(dest)
+                    store_int(dest, type, res);
+                break;
+            }
+            case 'o':
+            case 'u':
+            case 'x':
+            case 'X': {
+                mlibc::infoLogger() << "do_scanf: unhandled base!" << frg::endlog;
+                return EOF;
+            }
+            case 's': {
+                char *typed_dest = (char *)dest;
+                char c = handler.look_ahead();
+                int count = 0;
+                while (c && !isspace(c)) {
+                    handler.consume();
+                    if (typed_dest)
+                        typed_dest[count] = c;
+                    c = handler.look_ahead();
+                    count++;
+                    if (width && count >= width)
+                        break;
+                }
+                if (typed_dest)
+                    typed_dest[count + 1] = '\0';
+                break;
+            }
+            case 'c': {
+                char *typed_dest = (char *)dest;
+                char c = handler.look_ahead();
+                int count = 0;
+                if (!width)
+                    width = 1;
+                while (c && count < width) {
+                    handler.consume();
+                    if (typed_dest)
+                        typed_dest[count] = c;
+                    c = handler.look_ahead();
+                    count++;
+                }
+                break;
+            }
+            case '[': {
+                fmt++;
+                int invert = 0;
+                if (*fmt == '^') {
+                    invert = 1;
+                    fmt++;
+                }
+
+                char scanset[257];
+                memset(&scanset[0], invert, sizeof(char) * 257);
+                scanset[0] = '\0';
+
+                if (*fmt == '-') {
+                    fmt++;
+                    scanset[1+'-'] = 1 - invert;
+                } else if (*fmt == ']') {
+                    fmt++;
+                    scanset[1+']'] = 1 - invert;
+                }
+
+                for (; *fmt != ']'; fmt++) {
+                    if (!*fmt) return EOF;
+                    if (*fmt == '-' && *fmt != ']') {
+                        fmt++;
+                        for (char c = *(fmt - 2); c < *fmt; c++)
+                            scanset[1 + c] = 1 - invert;
+                    }
+                    scanset[1 + *fmt] = 1 - invert;
+                }
+
+                char *typed_dest = (char *)dest;
+                int count = 0;
+                char c = handler.look_ahead();
+                while (c && count < width) {
+                    handler.consume();
+                    if (!scanset[1 + c])
+                        break;
+                    if (typed_dest)
+                        typed_dest[count] = c;
+                    c = handler.look_ahead();
+                    count++;
+                }
+                if (typed_dest)
+                    typed_dest[count] = '\0';
+                break;
+            }
+            case 'p': {
+                mlibc::infoLogger() << "do_scanf: unhandled base! (pointer)" << frg::endlog;
+                return EOF;
+            }
+            case 'n': {
+                int *typed_dest = (int *)dest;
+                if (typed_dest)
+                    *typed_dest = match_count;
+            }
+        }
+        if (dest) match_count++;
+    }
+    return match_count;
+}
+
 int scanf(const char *__restrict format, ...) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
