@@ -392,10 +392,62 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
         }
 
         switch (*fmt) {
-            case 'd': {
+            case 'd':
+            case 'u':
+                base = 10;
+                /* fallthrough */
+            case 'i': {
                 unsigned long long res = 0;
                 char c = handler.look_ahead();
-                while (c >= '0' && c <= '9') {
+                switch (base) {
+                    case 10:
+                        while (c >= '0' && c <= '9') {
+                            handler.consume();
+                            res = res * 10 + (c - '0');
+                            c = handler.look_ahead();
+                        }
+                        break;
+                    case 16:
+                        if (c == '0') {
+                            handler.consume();
+                            c = handler.look_ahead();
+                            if (c == 'x') {
+                                handler.consume();
+                                c = handler.look_ahead();
+                            }
+                        }
+                        while (true) {
+                            if (c >= '0' && c <= '9') {
+                                handler.consume();
+                                res = res * 16 + (c - '0');
+                            } else if (c >= 'a' && c <= 'f') {
+                                handler.consume();
+                                res = res * 16 + (c - 'a');
+                            } else if (c >= 'A' && c <= 'F') {
+                                handler.consume();
+                                res = res * 16 + (c - 'A');
+                            } else {
+                                break;
+                            }
+                            c = handler.look_ahead();
+                        }
+                        break;
+                    case 8:
+                        while (c >= '0' && c <= '7') {
+                            handler.consume();
+                            res = res * 10 + (c - '0');
+                            c = handler.look_ahead();
+                        }
+                        break;
+                }
+                if (dest)
+                    store_int(dest, type, res);
+                break;
+            }
+            case 'o': {
+                unsigned long long res = 0;
+                char c = handler.look_ahead();
+                while (c >= '0' && c <= '7') {
                     handler.consume();
                     res = res * 10 + (c - '0');
                     c = handler.look_ahead();
@@ -404,29 +456,36 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
                     store_int(dest, type, res);
                 break;
             }
-            case 'i': {
-                /* TODO: do all the bases */
-                if (base != 10) {
-                    mlibc::infoLogger() << "do_scanf: unhandled base!" << frg::endlog;
-                    return EOF;
-                }
-                unsigned long long res = 0;
-                char c = handler.look_ahead();
-                while (c >= '0' && c <= '9') {
-                    handler.consume();
-                    res = res * 10 + (c - '0');
-                    c = handler.look_ahead();
-                }
-                if(dest)
-                    store_int(dest, type, res);
-                break;
-            }
-            case 'o':
-            case 'u':
             case 'x':
             case 'X': {
-                mlibc::infoLogger() << "do_scanf: unhandled base!" << frg::endlog;
-                return EOF;
+                unsigned long long res = 0;
+                char c = handler.look_ahead();
+                if (c == '0') {
+                    handler.consume();
+                    c = handler.look_ahead();
+                    if (c == 'x') {
+                        handler.consume();
+                        c = handler.look_ahead();
+                    }
+                }
+                while (true) {
+                    if (c >= '0' && c <= '9') {
+                        handler.consume();
+                        res = res * 16 + (c - '0');
+                    } else if (c >= 'a' && c <= 'f') {
+                        handler.consume();
+                        res = res * 16 + (c - 'a');
+                    } else if (c >= 'A' && c <= 'F') {
+                        handler.consume();
+                        res = res * 16 + (c - 'A');
+                    } else {
+                        break;
+                    }
+                    c = handler.look_ahead();
+                }
+                if (dest)
+                    store_int(dest, type, res);
+                break;
             }
             case 's': {
                 char *typed_dest = (char *)dest;
@@ -507,8 +566,34 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
                 break;
             }
             case 'p': {
-                mlibc::infoLogger() << "do_scanf: unhandled base! (pointer)" << frg::endlog;
-                return EOF;
+                unsigned long long res = 0;
+                char c = handler.look_ahead();
+                if (c == '0') {
+                    handler.consume();
+                    c = handler.look_ahead();
+                    if (c == 'x') {
+                        handler.consume();
+                        c = handler.look_ahead();
+                    }
+                }
+                while (true) {
+                    if (c >= '0' && c <= '9') {
+                        handler.consume();
+                        res = res * 16 + (c - '0');
+                    } else if (c >= 'a' && c <= 'f') {
+                        handler.consume();
+                        res = res * 16 + (c - 'a');
+                    } else if (c >= 'A' && c <= 'F') {
+                        handler.consume();
+                        res = res * 16 + (c - 'A');
+                    } else {
+                        break;
+                    }
+                    c = handler.look_ahead();
+                }
+                void **typed_dest = (void **)dest;
+                *typed_dest = (void *)(uintptr_t)res;
+                break;
             }
             case 'n': {
                 int *typed_dest = (int *)dest;
