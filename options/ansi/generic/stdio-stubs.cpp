@@ -540,10 +540,22 @@ int sprintf(char *__restrict buffer, const char *__restrict format, ...) {
 	return result;
 }
 int sscanf(const char *__restrict buffer, const char *__restrict format, ...) {
-	mlibc::infoLogger() << "sscanf(" << buffer << ", " << format << ")" << frg::endlog;
-	return EOF;
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+    class {
+    public:
+        char look_ahead() {
+            return *buffer;
+        };
+
+        char consume() {
+            return *buffer++;
+        };
+        const char *buffer;
+    } handler = {buffer};
+    va_list args;
+    va_start(args, format);
+    int result = do_scanf(handler, format, args);
+    va_end(args);
+    return result;
 }
 int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
 	frg::va_struct vs;
