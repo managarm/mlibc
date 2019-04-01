@@ -39,19 +39,17 @@ char *ctime(const time_t *timer){
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-struct tm *gmtime(const time_t *timer) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-struct tm *gmtime_r(const time_t *__restrict timer,
-		struct tm *__restrict result) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-struct tm *localtime(const time_t *t) {
+
+struct tm *gmtime(const time_t *unix_gmt) {
 	static thread_local struct tm per_thread_tm;
-	return localtime_r(t, &per_thread_tm);
+	return gmtime_r(unix_gmt, &per_thread_tm);
 }
+
+struct tm *localtime(const time_t *unix_gmt) {
+	static thread_local struct tm per_thread_tm;
+	return localtime_r(unix_gmt, &per_thread_tm);
+}
+
 size_t strftime(char *__restrict dest, size_t max_size,
 		const char *__restrict format, const struct tm *__restrict tm) {
 	auto c = format;
@@ -297,7 +295,7 @@ struct[[gnu::packed]] ttinfo {
 
 // Looks up the local time rules for a given 
 // UNIX GMT timestamp (seconds since 1970 GMT, ignoring leap seconds).
-int unix_local_from_gmt(time_t gmt_time, time_t *offset, bool *dst) {
+int unix_local_from_gmt(time_t unix_gmt, time_t *offset, bool *dst) {
 	static file_window window{"/etc/localtime"};
 
 	tzfile tzfile_time;
@@ -327,7 +325,7 @@ int unix_local_from_gmt(time_t gmt_time, time_t *offset, bool *dst) {
 		memcpy(&ttime, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
 				+ i * sizeof(int32_t), sizeof(int32_t));
 		ttime = bswap_32(ttime);
-		if(ttime > gmt_time) {
+		if(ttime > unix_gmt) {
 			__ensure(i);
 			index = i - 1;
 			break;
@@ -354,7 +352,34 @@ int unix_local_from_gmt(time_t gmt_time, time_t *offset, bool *dst) {
 
 } //anonymous namespace
 
-struct tm *localtime_r(const time_t *gmt_time, struct tm *tm) {
+struct tm *gmtime_r(const time_t *unix_gmt, struct tm *res) {
+	int year;
+	unsigned int month;
+	unsigned int day;
+	unsigned int weekday;
+	unsigned int yday;
+
+	time_t unix_local = *unix_gmt;
+
+	int days_since_epoch = unix_local / (60*60*24);
+	civil_from_days(days_since_epoch, &year, &month, &day);
+	weekday_from_days(days_since_epoch, &weekday);
+	yearday_from_date(year, month, day, &yday);
+
+	res->tm_sec = unix_local % 60;
+	res->tm_min = (unix_local / 60) % 60;
+	res->tm_hour = (unix_local / (60*60)) % 24;
+	res->tm_mday = day;
+	res->tm_mon = month - 1;
+	res->tm_year = year - 1900;
+	res->tm_wday = weekday;
+	res->tm_yday = yday - 1;
+	res->tm_isdst = -1;
+
+	return res;
+}
+
+struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 	int year;
 	unsigned int month;
 	unsigned int day;
@@ -364,25 +389,25 @@ struct tm *localtime_r(const time_t *gmt_time, struct tm *tm) {
 	time_t offset = 0;
 	bool dst;
 	// TODO: Set errno if the conversion fails.
-	if(unix_local_from_gmt(*gmt_time, &offset, &dst))
+	if(unix_local_from_gmt(*unix_gmt, &offset, &dst))
 		__ensure(!"Error parsing /etc/localtime");
-	time_t tz_time = *gmt_time + offset;
+	time_t unix_local = *unix_gmt + offset;
 
-	int days_since_epoch = tz_time / (60*60*24);
+	int days_since_epoch = unix_local / (60*60*24);
 	civil_from_days(days_since_epoch, &year, &month, &day);
 	weekday_from_days(days_since_epoch, &weekday);
 	yearday_from_date(year, month, day, &yday);
 
-	tm->tm_sec = tz_time % 60;
-	tm->tm_min = (tz_time / 60) % 60;
-	tm->tm_hour = (tz_time / (60*60)) % 24;
-	tm->tm_mday = day;
-	tm->tm_mon = month - 1;
-	tm->tm_year = year - 1900;
-	tm->tm_wday = weekday;
-	tm->tm_yday = yday - 1;
-	tm->tm_isdst = -1;
+	res->tm_sec = unix_local % 60;
+	res->tm_min = (unix_local / 60) % 60;
+	res->tm_hour = (unix_local / (60*60)) % 24;
+	res->tm_mday = day;
+	res->tm_mon = month - 1;
+	res->tm_year = year - 1900;
+	res->tm_wday = weekday;
+	res->tm_yday = yday - 1;
+	res->tm_isdst = -1;
 
-	return tm;
+	return res;
 }
 
