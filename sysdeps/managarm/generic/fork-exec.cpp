@@ -168,10 +168,10 @@ int sys_execve(const char *path, char *const argv[], char *const envp[]) {
 	register uintptr_t in3 asm("r8") = arg3;
 	register uintptr_t in4 asm("r9") = arg4;
 	register uintptr_t in5 asm("r10") = arg5;
-	asm volatile ("syscall" : : "D"(kHelCallSuper + 3), "r"(in0), "r"(in1),
+	asm volatile ("syscall" : "=r"(in0) : "D"(kHelCallSuper + 3), "r"(in0), "r"(in1),
 				"r"(in2), "r"(in3), "r"(in4), "r"(in5)
 			: "rcx", "r11", "rbx", "memory");
-	__builtin_trap();
+	return in0;
 }
 
 gid_t sys_getgid() {
