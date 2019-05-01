@@ -344,6 +344,8 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 
 		managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		if(resp.error() == managarm::posix::Errors::NO_SUCH_FD)
+			return EBADF;
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*result = resp.flags();
 		return 0;
@@ -2127,14 +2129,88 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return 0;
 	}
 	case TIOCGWINSZ: {
-		mlibc::infoLogger() << "\e[31mmlibc: TIOCGWINSZ is not implemented correctly\e[39m"
-				<< frg::endlog;
-		return EINVAL;
+		auto param = reinterpret_cast<struct winsize *>(arg);
+		HelAction actions[3];
+		globalQueue.trim();
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+
+		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		*result = resp.result();
+		param->ws_col = resp.pts_width();
+		param->ws_row = resp.pts_height();
+		param->ws_xpixel = resp.pts_pixel_width();
+		param->ws_ypixel = resp.pts_pixel_height();
+		return 0;
 	}
 	case TIOCSWINSZ: {
-		mlibc::infoLogger() << "\e[31mmlibc: TIOCSWINSZ is not implemented correctly\e[39m"
-				<< frg::endlog;
-		return EINVAL;
+		auto param = reinterpret_cast<const struct winsize *>(arg);
+		HelAction actions[3];
+		globalQueue.trim();
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+		req.set_pts_width(param->ws_col);
+		req.set_pts_height(param->ws_row);
+		req.set_pts_pixel_width(param->ws_xpixel);
+		req.set_pts_pixel_height(param->ws_ypixel);
+
+		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		*result = resp.result();
+		return 0;
 	}
 	case TIOCGPTN: {
 		auto param = reinterpret_cast<int *>(arg);
@@ -2636,7 +2712,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	}else if(whence == SEEK_END) {
 		req.set_req_type(managarm::fs::CntReqType::SEEK_EOF);
 	}else{
-		mlibc::panicLogger() << "Illegal whence argument" << frg::endlog;
+		mlibc::panicLogger() << "Illegal whence argument " << whence << frg::endlog;
 	}
 	
 	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
