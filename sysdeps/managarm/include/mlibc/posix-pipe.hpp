@@ -33,8 +33,8 @@ MemoryAllocator &getSysdepsAllocator();
 struct Queue;
 
 struct ElementHandle {
-	ElementHandle(Queue *queue, void *data)
-	: _queue{queue}, _data{data} { }
+	ElementHandle(Queue *queue, int n, void *data)
+	: _queue{queue}, _n{n}, _data{data} { }
 
 	ElementHandle(const ElementHandle &) = delete;
 	
@@ -52,12 +52,13 @@ struct ElementHandle {
 
 private:
 	Queue *_queue;
+	int _n;
 	void *_data;
 };
 
 struct Queue {
 	Queue()
-	: _handle{kHelNullHandle}, _refCount{0} {
+	: _handle{kHelNullHandle} {
 		// We do not need to protect those allocations against signals as this constructor
 		// is only called during library initialization.
 		_queue = reinterpret_cast<HelQueue *>(getSysdepsAllocator().allocate(sizeof(HelQueue)
@@ -72,21 +73,11 @@ struct Queue {
 
 	Queue &operator= (const Queue &) = delete;
 
-	// TODO: Add this once we turn globalQueue into an accessor function for an Eternal object.
-//	~Queue() {
-//		__ensure(!_refCount);
-//	}
-
 	void recreateQueue() {
-		__ensure(!_refCount);
-
 		// Reset the internal queue state.
 		_retrieveIndex = 0;
 		_nextIndex = 0;
 		_lastProgress = 0;
-
-		for(int i = 0; i < 2; i++)
-			_requeue[i] = false;
 
 		// Setup the queue header.
 		_queue->headFutex = 0;
@@ -99,6 +90,8 @@ struct Queue {
 		// Reset and enqueue the chunks.
 		_chunks[0]->progressFutex = 0;
 		_chunks[1]->progressFutex = 0;
+		_refCount[0] = 1;
+		_refCount[1] = 1;
 
 		_queue->indexQueue[0] = 0;
 		_queue->indexQueue[1] = 1;
@@ -113,16 +106,17 @@ struct Queue {
 	void trim() { }
 	
 	ElementHandle dequeueSingle() {
-		__ensure(!_refCount);
-
 		while(true) {
 			__ensure(_retrieveIndex != _nextIndex);
 
 			bool done;
 			_waitProgressFutex(&done);
+
+			auto n = _numberOf(_retrieveIndex);
+			__ensure(_refCount[n]);
+
 			if(done) {
-				__ensure(!_requeue[_numberOf(_retrieveIndex)]);
-				_requeue[_numberOf(_retrieveIndex)] = true;
+				retire(n);
 
 				_lastProgress = 0;
 				_retrieveIndex = ((_retrieveIndex + 1) & kHelHeadMask);
@@ -130,31 +124,26 @@ struct Queue {
 			}
 
 			// Dequeue the next element.
-			auto ptr = (char *)_retrieveChunk() + sizeof(HelChunk) + _lastProgress;
+			auto ptr = (char *)_chunks[n] + sizeof(HelChunk) + _lastProgress;
 			auto element = reinterpret_cast<HelElement *>(ptr);
 			_lastProgress += sizeof(HelElement) + element->length;
-			_refCount++;
-			return ElementHandle{this, ptr + sizeof(HelElement)};
+			_refCount[n]++;
+			return ElementHandle{this, n, ptr + sizeof(HelElement)};
 		}
 	}
 
-	void retire() {
-		__ensure(_refCount > 0);
-		if(_refCount-- > 1)
+	void retire(int n) {
+		__ensure(_refCount[n]);
+		if(_refCount[n]-- > 1)
 			return;
 
-		for(int i = 0; i < 2; i++) {
-			if(!_requeue[i])
-				continue;
+		// Reset and enqueue the chunk again.
+		_chunks[n]->progressFutex = 0;
+		_refCount[n] = 1;
 
-			// Reset and enqueue the chunk again.
-			_chunks[i]->progressFutex = 0;
-			
-			_queue->indexQueue[_nextIndex & 1] = i;
-			_nextIndex = ((_nextIndex + 1) & kHelHeadMask);
-			_wakeHeadFutex();
-			_requeue[i] = false;
-		}
+		_queue->indexQueue[_nextIndex & 1] = n;
+		_nextIndex = ((_nextIndex + 1) & kHelHeadMask);
+		_wakeHeadFutex();
 	}
 
 private:
@@ -207,15 +196,12 @@ private:
 	int _lastProgress;
 
 	// Number of ElementHandle objects alive.
-	int _refCount;
-
-	// Stores for each chunk, if it is available for requeuing.
-	bool _requeue[2];
+	int _refCount[2];
 };
 
 inline ElementHandle::~ElementHandle() {
 	if(_queue)
-		_queue->retire();
+		_queue->retire(_n);
 }
 
 inline HelSimpleResult *parseSimple(ElementHandle &element) {
