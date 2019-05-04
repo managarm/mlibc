@@ -732,9 +732,11 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *length) {
 	HelSgItem sglist[4];
 	__ensure(hdr->msg_iovlen <= 4);
+	size_t overall_size = 0;
 	for(int i = 0; i < hdr->msg_iovlen; i++) {
 		sglist[i].buffer = hdr->msg_iov[i].iov_base;
 		sglist[i].length = hdr->msg_iov[i].iov_len;
+		overall_size += hdr->msg_iov[i].iov_len;
 	}
 
 	SignalGuard sguard;
@@ -745,6 +747,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	req.set_request_type(managarm::posix::CntReqType::SENDMSG);
 	req.set_fd(sockfd);
 	req.set_flags(flags);
+	req.set_size(overall_size);
 
 	for(auto cmsg = CMSG_FIRSTHDR(hdr); cmsg; cmsg = CMSG_NXTHDR(hdr, cmsg)) {
 		__ensure(cmsg->cmsg_level == SOL_SOCKET);
@@ -1478,6 +1481,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
 		req.set_drm_connector_id(param->connector_id);
+		req.set_drm_max_modes(param->count_modes);
 
 		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
@@ -1489,8 +1493,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		actions[1].length = ser.size();
 		actions[2].type = kHelActionRecvInline;
 		actions[2].flags = kHelItemChain;
-		actions[3].type = kHelActionRecvInline;
+		actions[3].type = kHelActionRecvToBuffer;
 		actions[3].flags = 0;
+		actions[3].buffer = reinterpret_cast<drm_mode_modeinfo *>(param->modes_ptr);
+		actions[3].length = param->count_modes * sizeof(drm_mode_modeinfo);
 		HEL_CHECK(helSubmitAsync(handle, actions, 4,
 				globalQueue.getQueue(), 0, 0));
 
@@ -1498,7 +1504,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		auto offer = parseSimple(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
-		auto recv_list = parseInline(element);
+		auto recv_list = parseLength(element);
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
@@ -1515,18 +1521,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			auto dest = reinterpret_cast<uint32_t *>(param->encoders_ptr);
 			dest[i] = resp.drm_encoders(i);
 		}
-		param->count_encoders = resp.drm_encoders_size();
-		
-		for(size_t i = 0; i < resp.drm_num_modes(); i++) {
-			if(i >= param->count_modes)
-				 continue;
-			auto dest = reinterpret_cast<drm_mode_modeinfo *>(param->modes_ptr);
-			auto src = reinterpret_cast<drm_mode_modeinfo *>(recv_list->data);
 
-			memcpy(&dest[i], &src[i], sizeof(drm_mode_modeinfo));
-		}
-		param->count_modes = resp.drm_num_modes();
-		
 		param->count_props = 0;
 		param->encoder_id = resp.drm_encoder_id();
 		param->connector_type = resp.drm_connector_type();
@@ -1536,6 +1531,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		param->mm_height = resp.drm_mm_height();
 		param->subpixel = resp.drm_subpixel();
 		param->pad = 0;
+		param->count_encoders = resp.drm_encoders_size();
+		param->count_modes = resp.drm_num_modes();
 		
 		*result = resp.result();
 		return 0;
@@ -2643,6 +2640,7 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::WRITE);
 	req.set_fd(fd);
+	req.set_size(size);
 
 	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
