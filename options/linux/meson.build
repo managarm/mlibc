@@ -3,7 +3,6 @@ if disable_linux_option
 	subdir_done()
 endif
 libc_sources += files(
-	'generic/getopt-stubs.cpp',
 	'generic/mntent-stubs.cpp',
 	'generic/poll-stubs.cpp',
 	'generic/pty-stubs.cpp',
@@ -20,7 +19,6 @@ libc_sources += files(
 
 install_headers(
 	'include/elf.h',
-	'include/getopt.h',
 	'include/malloc.h',
 	'include/memory.h',
 	'include/mntent.h',
