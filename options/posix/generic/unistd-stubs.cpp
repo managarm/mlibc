@@ -527,8 +527,11 @@ int isatty(int fd) {
 }
 
 int pipe2(int *pipefd, int flags) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	if(int e = mlibc::sys_pipe2(pipefd, flags); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int chroot(const char *ptr) {

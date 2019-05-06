@@ -122,6 +122,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 	int sys_tcsetattr(int, int, const struct termios *attr);
 	[[gnu::weak]] int sys_tcflow(int, int);
 	int sys_pipe(int *fds);
+	[[gnu::weak]] int sys_pipe2(int *fds, int flags);
 	int sys_socketpair(int domain, int type_and_flags, int proto, int *fds);
 	int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events);
 	int sys_epoll_create(int flags, int *fd);

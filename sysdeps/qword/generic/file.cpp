@@ -436,6 +436,20 @@ int sys_pipe(int *fds) {
 
     return 0;
 }
+int sys_pipe2(int *fds, int flags) {
+    int ret;
+    int sys_errno;
+
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(36), "D"(fds), "S"(flags)
+            : "rcx", "r11");
+
+    if (ret == -1)
+        return sys_errno;
+
+    return 0;
+}
 int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length) STUB_ONLY
 int sys_ftruncate(int fd, size_t size) STUB_ONLY
 int sys_fallocate(int fd, off_t offset, size_t size) STUB_ONLY
