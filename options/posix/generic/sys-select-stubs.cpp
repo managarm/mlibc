@@ -3,10 +3,13 @@
 #include <sys/epoll.h>
 #include <sys/select.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <mlibc/debug.hpp>
 #include <bits/ensure.h>
 #include <bits/feature.h>
+
+#include <mlibc/sysdeps.hpp>
 
 void FD_CLR(int fd, fd_set *set) {
 	__ensure(fd < FD_SETSIZE);
@@ -26,9 +29,9 @@ void FD_ZERO(fd_set *set) {
 
 // select() is currently implemented on top of epoll.
 // TODO: Provide a sys_select() function instead.
-#ifdef __managarm__
 int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_set,
 		fd_set *__restrict except_set, struct timeval *__restrict timeout) {
+#ifdef __managarm__
 	// TODO: Do not keep errors from epoll (?).
 	int fd = epoll_create1(0);
 	if(fd == -1)
@@ -48,7 +51,7 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 		if(!ev.events)
 			continue;
 		ev.data.u32 = k;
-		
+
 		if(epoll_ctl(fd, EPOLL_CTL_ADD, k, &ev))
 			return -1;
 	}
@@ -58,7 +61,7 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 			timeout ? (timeout->tv_sec * 1000 + timeout->tv_usec / 10) : -1);
 	if(n == -1)
 		return -1;
-	
+
 	fd_set res_read_set;
 	fd_set res_write_set;
 	fd_set res_except_set;
@@ -91,7 +94,7 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 
 	if(close(fd))
 		__ensure("close() failed on epoll file");
-	
+
 	if(read_set)
 		memcpy(read_set, &res_read_set, sizeof(fd_set));
 	if(write_set)
@@ -100,6 +103,12 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 		memcpy(except_set, &res_except_set, sizeof(fd_set));
 
 	return m;
-}
+#else
+	if(int e = mlibc::sys_select(num_fds, read_set, write_set, except_set,
+				timeout); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 #endif
-
+}

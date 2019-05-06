@@ -19,6 +19,7 @@
 #	include <sys/epoll.h>
 #	include <sys/socket.h>
 #	include <sys/resource.h>
+#	include <sys/select.h>
 #	include <termios.h>
 #	include <time.h>
 #endif
@@ -90,6 +91,7 @@ int sys_close(int fd);
 	int sys_sleep(time_t *secs, long *nanos);
 	int sys_fork(pid_t *child);
 	int sys_execve(const char *path, char *const argv[], char *const envp[]);
+	[[gnu::weak]] int sys_select(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set, struct timeval *timeout);
 	[[gnu::weak]] int sys_getrusage(int scope, struct rusage *usage);
 	[[gnu::weak]] int sys_getrlimit(int resource, struct rlimit *limit);
 	int sys_timerfd_create(int flags, int *fd);
