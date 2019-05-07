@@ -104,6 +104,12 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 
 	return m;
 #else
+    if(!mlibc::sys_select) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
 	if(int e = mlibc::sys_select(num_fds, read_set, write_set, except_set,
 				timeout); e) {
 		errno = e;
