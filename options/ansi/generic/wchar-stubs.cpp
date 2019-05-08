@@ -72,8 +72,11 @@ size_t mbrtowc(wchar_t *wcp, const char *mbs, size_t mb_limit, mbstate_t *stp) {
 	mlibc::code_seq<const char> nseq{mbs, mbs + mb_limit};
 	mlibc::code_seq<wchar_t> wseq{wcp, wcp + 1};
 	if(auto e = cc->decode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
-		__ensure(!"decode_wtranscode() errors are not handled");
-		__builtin_unreachable();
+		if(e == mlibc::charcode_error::input_underflow)
+			return static_cast<size_t>(-2);
+		__ensure(e == mlibc::charcode_error::illegal_input);
+		errno = EILSEQ;
+		return static_cast<size_t>(-1);
 	}else{
 		size_t n = wseq.it - wcp;
 		if(!n) // Null-terminate resulting wide string.
