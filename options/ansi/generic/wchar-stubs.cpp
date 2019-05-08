@@ -85,8 +85,27 @@ size_t mbrtowc(wchar_t *wcp, const char *mbs, size_t mb_limit, mbstate_t *stp) {
 	}
 }
 
-size_t wcrtomb(char *__restrict, wchar_t, mbstate_t *__restrict)
-	MLIBC_STUB_BODY
+size_t wcrtomb(char *mbs, wchar_t wc, mbstate_t *stp) {
+	auto cc = mlibc::current_charcode();
+
+	// wcrtomb() always takes a mbstate_t.
+	__ensure(stp);
+
+	// TODO: Implement the following case:
+	__ensure(mbs);
+
+	mlibc::code_seq<const wchar_t> wseq{&wc, &wc + 1};
+	mlibc::code_seq<char> nseq{mbs, mbs + 4}; // TODO: Replace 4 by some named constant.
+	if(auto e = cc->encode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
+		__ensure(!"encode_wtranscode() errors are not handled");
+		__builtin_unreachable();
+	}else{
+		size_t n = nseq.it - mbs;
+		if(!n) // Null-terminate resulting wide string.
+			*mbs = 0;
+		return n;
+	}
+}
 
 size_t mbsrtowcs(wchar_t *wcs, const char **mbsp, size_t wc_limit, mbstate_t *stp) {
 	__ensure(mbsp);
