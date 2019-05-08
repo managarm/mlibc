@@ -49,7 +49,10 @@ frg::optional<__Mlibc_LocaleDesc> __mlibc_queryLocale(const char *locale) {
 		return __mlibc_queryLocale("C");
 
 	// for now we only support the C locale
-	__ensure(!strcmp(locale, "C"));
+	if(strcmp(locale, "C")) {
+		mlibc::infoLogger() << "mlibc: Locale " << locale << " is not supported" << frg::endlog;
+		return frg::null_opt;
+	}
 
 	__Mlibc_LocaleDesc desc;
 	desc.locale = locale;
