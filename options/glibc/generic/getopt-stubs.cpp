@@ -15,16 +15,32 @@ int optopt;
 
 int getopt_long(int argc, char * const argv[], const char *optstring,
 		const struct option *longopts, int *longindex) {
+	// glibc extension: Setting optind to zero causes a full reset.
+	// TODO: Should we really reset opterr and the other flags?
+	if(!optind) {
+		optarg = nullptr;
+		optind = 1;
+		opterr = 1;
+		optopt = 0;
+	}
+
 	while(optind < argc) {
 		char *arg = argv[optind];
 		if(arg[0] != '-')
 			return -1;
 
 		if(arg[1] == '-') {
+			arg += 2;
+
+			// Determine the end of the option name (vs. the start of the argument).
+			auto s = strchr(arg, '=');
+			size_t n = s ? (s - arg) : strlen(arg);
+
 			int k = -1;
 			for(int i = 0; longopts[i].name; i++) {
-				if(strcmp(argv[optind] + 2, longopts[i].name))
+				if(strncmp(arg, longopts[i].name, n) || longopts[i].name[n])
 					continue;
+
 				if(k >= 0) {
 					if(opterr)
 						fprintf(stderr, "Multiple option declaration detected.\n", arg);
@@ -35,15 +51,24 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 
 			if(k == -1) {
 				if(opterr)
-					fprintf(stderr, "%s is not a valid option.\n", arg);
-				return -1;
+					fprintf(stderr, "--%s is not a valid option.\n", arg);
+				return '?';
 			}
 
 			if(longindex)
 				*longindex = k;
 
 			// We do not support arguments yet
-			__ensure(longopts[k].has_arg == no_argument);
+			if(longopts[k].has_arg == required_argument) {
+				if(!s) {
+					if(opterr)
+						fprintf(stderr, "--%s is not a valid option.\n", arg);
+					return '?';
+				}
+				optarg = s + 1;
+			}else{
+				__ensure(longopts[k].has_arg == no_argument);
+			}
 			if(!longopts[k].flag) {
 				optind++;
 				return longopts[k].val;
@@ -52,7 +77,7 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 			*longopts[k].flag = longopts[k].val;
 			optind++;
 			return 0;
-		}else {
+		}else{
 			__ensure((strlen(argv[optind]) == 2) && "We do not support concatenated short options yet.");
 			unsigned int i = 1;
 			while(true) {
