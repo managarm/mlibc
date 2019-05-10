@@ -157,7 +157,7 @@ int asprintf(char **, const char *, ...);
 // Linux unlocked I/O extensions.
 
 void flockfile(FILE *);
-void fulockfile(FILE *);
+void funlockfile(FILE *);
 int ftrylockfile(FILE *);
 
 void clearerr_unlocked(FILE *);

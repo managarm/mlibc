@@ -880,7 +880,7 @@ void flockfile(FILE *) {
 	mlibc::infoLogger() << "mlibc: File locking (flockfile) is a no-op" << frg::endlog;
 }
 
-void fulockfile(FILE *) {
+void funlockfile(FILE *) {
 	mlibc::infoLogger() << "mlibc: File locking (funlockfile) is a no-op" << frg::endlog;
 }
 
