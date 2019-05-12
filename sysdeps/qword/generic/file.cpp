@@ -422,21 +422,7 @@ int sys_tcflow(int fd, int action) {
 
     return 0;
 }
-int sys_pipe(int *fds) {
-    int ret;
-    int sys_errno;
-
-    asm volatile ("syscall"
-            : "=a"(ret), "=d"(sys_errno)
-            : "a"(19), "D"(fds)
-            : "rcx", "r11");
-
-    if (ret == -1)
-        return sys_errno;
-
-    return 0;
-}
-int sys_pipe2(int *fds, int flags) {
+int sys_pipe(int *fds, int flags) {
     int ret;
     int sys_errno;
 

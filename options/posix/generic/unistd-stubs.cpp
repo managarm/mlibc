@@ -259,13 +259,33 @@ int pause(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int pipe(int *fds) {
-	if(int e = mlibc::sys_pipe(fds); e) {
+	if(!mlibc::sys_pipe) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_pipe(fds, 0); e) {
 		errno = e;
 		return -1;
 	}
 	return 0;
 }
+
+int pipe2(int *fds, int flags) {
+	if(!mlibc::sys_pipe) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_pipe(fds, flags); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
+}
+
 ssize_t pread(int, void *, size_t, off_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -524,14 +544,6 @@ int isatty(int fd) {
 		return 0;
 	}
 	return 1;
-}
-
-int pipe2(int *pipefd, int flags) {
-	if(int e = mlibc::sys_pipe2(pipefd, flags); e) {
-		errno = e;
-		return -1;
-	}
-	return 0;
 }
 
 int chroot(const char *ptr) {

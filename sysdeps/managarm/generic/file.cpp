@@ -688,13 +688,14 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	return 0;
 }
 
-int sys_pipe(int *fds) {
+int sys_pipe(int *fds, int flags) {
 	SignalGuard sguard;
 	HelAction actions[3];
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::PIPE_CREATE);
+	req.set_flags(flags);
 
 	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
