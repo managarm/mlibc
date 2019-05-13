@@ -41,6 +41,10 @@ int posix_fadvise(int fd, off_t offset, off_t length, int advice) {
 
 int posix_fallocate(int fd, off_t offset, off_t size) {
 	// posix_fallocate() returns an error instead of setting errno.
+	if(!mlibc::sys_fallocate) {
+		MLIBC_MISSING_SYSDEP();
+		return ENOSYS;
+	}
 	return mlibc::sys_fallocate(fd, offset, size);
 }
 

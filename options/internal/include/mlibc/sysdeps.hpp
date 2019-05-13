@@ -52,8 +52,9 @@ int sys_anon_free(void *pointer, size_t size);
 int sys_open(const char *pathname, int flags, int *fd);
 
 #ifndef MLIBC_BUILDING_RTDL
-	int sys_open_dir(const char *path, int *handle);
-	int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read);
+	[[gnu::weak]] int sys_open_dir(const char *path, int *handle);
+	[[gnu::weak]] int sys_read_entries(int handle, void *buffer, size_t max_size,
+			size_t *bytes_read);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 
 int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read);
@@ -66,18 +67,18 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset);
 int sys_close(int fd);
 
 #ifndef MLIBC_BUILDING_RTDL
-	int sys_access(const char *path, int mode);
-	int sys_dup(int fd, int flags, int *newfd);
-	int sys_dup2(int fd, int flags, int newfd);
+	[[gnu::weak]] int sys_access(const char *path, int mode);
+	[[gnu::weak]] int sys_dup(int fd, int flags, int *newfd);
+	[[gnu::weak]] int sys_dup2(int fd, int flags, int newfd);
 	// In contrast to the isatty() library function, the sysdep function uses return value
 	// zero (and not one) to indicate that the file is a terminal.
 	int sys_isatty(int fd);
 	[[gnu::weak]] int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags,
 			struct stat *statbuf);
-	int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length);
-	int sys_ftruncate(int fd, size_t size);
-	int sys_fallocate(int fd, off_t offset, size_t size);
-	int sys_unlink(const char *path);
+	[[gnu::weak]] int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length);
+	[[gnu::weak]] int sys_ftruncate(int fd, size_t size);
+	[[gnu::weak]] int sys_fallocate(int fd, off_t offset, size_t size);
+	[[gnu::weak]] int sys_unlink(const char *path);
 	[[gnu::weak]] int sys_socket(int family, int type, int protocol, int *fd);
 	[[gnu::weak]] int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length);
 	[[gnu::weak]] int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length);
@@ -101,12 +102,12 @@ int sys_close(int fd);
 	[[gnu::weak]] int sys_signalfd_create(sigset_t, int flags, int *fd);
 	[[gnu::weak]] int sys_getcwd(char *buffer, size_t size);
 	[[gnu::weak]] int sys_chdir(const char *path);
-	int sys_chroot(const char *path);
-	int sys_mkdir(const char *path);
-	int sys_symlink(const char *target_path, const char *link_path);
-	int sys_rename(const char *path, const char *new_path);
+	[[gnu::weak]] int sys_chroot(const char *path);
+	[[gnu::weak]] int sys_mkdir(const char *path);
+	[[gnu::weak]] int sys_symlink(const char *target_path, const char *link_path);
+	[[gnu::weak]] int sys_rename(const char *path, const char *new_path);
 	int sys_fcntl(int fd, int request, va_list args, int *result);
-	int sys_ttyname(int fd, char *buf, size_t size);
+	[[gnu::weak]] int sys_ttyname(int fd, char *buf, size_t size);
 	[[gnu::weak]] int sys_fadvise(int fd, off_t offset, off_t length, int advice);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 

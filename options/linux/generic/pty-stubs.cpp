@@ -52,6 +52,11 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 int login_tty(int fd) {
 	// TODO: Perform an ioctl() to set the controlling terminal.
 	int e;
+	if(!mlibc::sys_dup2) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(e = mlibc::sys_dup2(fd, 0, STDIN_FILENO)) {
 		errno = e;
 		return -1;

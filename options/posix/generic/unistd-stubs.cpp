@@ -172,6 +172,11 @@ int fsync(int) {
 	__builtin_unreachable();
 }
 int ftruncate(int fd, off_t size) {
+	if(!mlibc::sys_ftruncate) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_ftruncate(fd, size); e) {
 		errno = e;
 		return -1;
@@ -302,6 +307,11 @@ ssize_t pwrite(int, const void *, size_t, off_t) {
 }
 ssize_t readlink(const char *__restrict path, char *__restrict buffer, size_t max_size) {
 	ssize_t length;
+	if(!mlibc::sys_readlink) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_readlink(path, buffer, max_size, &length); e) {
 		errno = e;
 		return -1;
@@ -356,6 +366,11 @@ void swab(const void *__restrict, void *__restrict, ssize_t) {
 	__ensure(!"Not implemented");
 }
 int symlink(const char *target_path, const char *link_path) {
+	if(!mlibc::sys_symlink) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_symlink(target_path, link_path); e) {
 		errno = e;
 		return -1;
@@ -396,6 +411,11 @@ int truncate(const char *, off_t) {
 char *ttyname(int fd) {
 	const size_t size = 128;
 	static thread_local char buf[size];
+	if(!mlibc::sys_ttyname) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return nullptr;
+	}
 	if(int e = mlibc::sys_ttyname(fd, buf, size); e) {
 		errno = e;
 		return nullptr;
@@ -408,6 +428,11 @@ int ttyname_r(int, char *, size_t) {
 	__builtin_unreachable();
 }
 int unlink(const char *path) {
+	if(!mlibc::sys_unlink) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_unlink(path); e) {
 		errno = e;
 		return -1;
@@ -491,6 +516,11 @@ int usleep(useconds_t usecs) {
 
 int dup(int fd) {
 	int newfd;
+	if(!mlibc::sys_dup) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_dup(fd, 0, &newfd); e) {
 		errno = e;
 		return -1;
@@ -499,6 +529,11 @@ int dup(int fd) {
 }
 
 int dup2(int fd, int newfd) {
+	if(!mlibc::sys_dup2) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_dup2(fd, 0, newfd); e) {
 		errno = e;
 		return -1;
@@ -579,6 +614,11 @@ pid_t getppid(void) {
 }
 
 int access(const char *path, int mode) {
+	if(!mlibc::sys_access) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_access(path, mode); e) {
 		errno = e;
 		return -1;
@@ -595,6 +635,11 @@ int isatty(int fd) {
 }
 
 int chroot(const char *ptr) {
+	if(!mlibc::sys_chroot) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_chroot(ptr); e) {
 		errno = e;
 		return -1;

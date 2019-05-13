@@ -37,7 +37,12 @@ int futimens(int fd, const struct timespec times[2]) {
 	return 0;
 }
 int mkdir(const char *path, mode_t) {
-	mlibc::infoLogger() << "\e[31mmlibc: mkdir() ignore the mode\e[39m" << frg::endlog;
+	mlibc::infoLogger() << "\e[31mmlibc: mkdir() ignores its mode\e[39m" << frg::endlog;
+	if(!mlibc::sys_mkdir) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_mkdir(path); e) {
 		errno = e;
 		return -1;
