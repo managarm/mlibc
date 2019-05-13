@@ -533,24 +533,48 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
 }
 
 gid_t getgid(void) {
+	if(!mlibc::sys_getgid) {
+		MLIBC_MISSING_SYSDEP();
+		__ensure(!"Cannot continue without sys_getgid()");
+	}
 	return mlibc::sys_getgid();
 }
 gid_t getegid(void) {
+	if(!mlibc::sys_getegid) {
+		MLIBC_MISSING_SYSDEP();
+		__ensure(!"Cannot continue without sys_getegid()");
+	}
 	return mlibc::sys_getegid();
 }
 
 uid_t getuid(void) {
+	if(!mlibc::sys_getuid) {
+		MLIBC_MISSING_SYSDEP();
+		__ensure(!"Cannot continue without sys_getuid()");
+	}
 	return mlibc::sys_getuid();
 }
 uid_t geteuid(void) {
+	if(!mlibc::sys_geteuid) {
+		MLIBC_MISSING_SYSDEP();
+		__ensure(!"Cannot continue without sys_geteuid()");
+	}
 	return mlibc::sys_geteuid();
 }
 
 pid_t getpid(void) {
+	if(!mlibc::sys_getpid) {
+		MLIBC_MISSING_SYSDEP();
+		__ensure(!"Cannot continue without sys_getpid()");
+	}
 	return mlibc::sys_getpid();
 }
 
 pid_t getppid(void) {
+	if(!mlibc::sys_getppid) {
+		MLIBC_MISSING_SYSDEP();
+		__ensure(!"Cannot continue without sys_getppid()");
+	}
 	return mlibc::sys_getppid();
 }
 
