@@ -8,6 +8,11 @@
 
 int inotify_init(void) {
 	int fd;
+	if(!mlibc::sys_inotify_create) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_inotify_create(0, &fd); e) {
 		errno = e;
 		return -1;
@@ -17,6 +22,11 @@ int inotify_init(void) {
 
 int inotify_init1(int flags) {
 	int fd;
+	if(!mlibc::sys_inotify_create) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_inotify_create(0, &fd); e) {
 		errno = e;
 		return -1;

@@ -94,10 +94,10 @@ int sys_close(int fd);
 	[[gnu::weak]] int sys_select(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set, struct timeval *timeout);
 	[[gnu::weak]] int sys_getrusage(int scope, struct rusage *usage);
 	[[gnu::weak]] int sys_getrlimit(int resource, struct rlimit *limit);
-	int sys_timerfd_create(int flags, int *fd);
-	int sys_timerfd_settime(int fd, int flags,
+	[[gnu::weak]] int sys_timerfd_create(int flags, int *fd);
+	[[gnu::weak]] int sys_timerfd_settime(int fd, int flags,
 			const struct itimerspec *value);
-	int sys_signalfd_create(sigset_t, int flags, int *fd);
+	[[gnu::weak]] int sys_signalfd_create(sigset_t, int flags, int *fd);
 	[[gnu::weak]] int sys_getcwd(char *buffer, size_t size);
 	[[gnu::weak]] int sys_chdir(const char *path);
 	int sys_chroot(const char *path);
@@ -125,18 +125,19 @@ int sys_vm_unmap(void *pointer, size_t size);
 	[[gnu::weak]] int sys_tcflow(int, int);
 	[[gnu::weak]] int sys_pipe(int *fds, int flags);
 	int sys_socketpair(int domain, int type_and_flags, int proto, int *fds);
-	int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events);
-	int sys_epoll_create(int flags, int *fd);
-	int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev);
-	int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout, int *raised);
-	int sys_inotify_create(int flags, int *fd);
+	[[gnu::weak]] int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events);
+	[[gnu::weak]] int sys_epoll_create(int flags, int *fd);
+	[[gnu::weak]] int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev);
+	[[gnu::weak]] int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n,
+			int timeout, int *raised);
+	[[gnu::weak]] int sys_inotify_create(int flags, int *fd);
 	int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 	int sys_getsockopt(int fd, int layer, int number,
 			void *__restrict buffer, socklen_t *__restrict size);
 	int sys_setsockopt(int fd, int layer, int number,
 			const void *buffer, socklen_t size);
 	int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid);
-	int sys_mount(const char *source, const char *target,
+	[[gnu::weak]] int sys_mount(const char *source, const char *target,
 			const char *fstype, unsigned long flags, const void *data);
 	int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve);
 	int sys_sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict);
