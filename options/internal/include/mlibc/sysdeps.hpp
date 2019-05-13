@@ -87,10 +87,10 @@ int sys_close(int fd);
 	uid_t sys_geteuid();
 	pid_t sys_getpid();
 	pid_t sys_getppid();
-	void sys_yield();
-	int sys_sleep(time_t *secs, long *nanos);
-	int sys_fork(pid_t *child);
-	int sys_execve(const char *path, char *const argv[], char *const envp[]);
+	[[gnu::weak]] void sys_yield();
+	[[gnu::weak]] int sys_sleep(time_t *secs, long *nanos);
+	[[gnu::weak]] int sys_fork(pid_t *child);
+	[[gnu::weak]] int sys_execve(const char *path, char *const argv[], char *const envp[]);
 	[[gnu::weak]] int sys_select(int num_fds, fd_set *read_set, fd_set *write_set,
 			fd_set *except_set, struct timeval *timeout);
 	[[gnu::weak]] int sys_getrusage(int scope, struct rusage *usage);
@@ -137,12 +137,14 @@ int sys_vm_unmap(void *pointer, size_t size);
 			void *__restrict buffer, socklen_t *__restrict size);
 	[[gnu::weak]] int sys_setsockopt(int fd, int layer, int number,
 			const void *buffer, socklen_t size);
-	int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid);
+	[[gnu::weak]] int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid);
 	[[gnu::weak]] int sys_mount(const char *source, const char *target,
 			const char *fstype, unsigned long flags, const void *data);
-	int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve);
-	int sys_sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict);
-	int sys_kill(int, int);
+	[[gnu::weak]] int sys_sigprocmask(int how, const sigset_t *__restrict set,
+			sigset_t *__restrict retrieve);
+	[[gnu::weak]] int sys_sigaction(int, const struct sigaction *__restrict,
+			struct sigaction *__restrict);
+	[[gnu::weak]] int sys_kill(int, int);
 	[[gnu::weak]] int sys_accept(int fd, int *newfd);
 	[[gnu::weak]] int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);
 	[[gnu::weak]] int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);

@@ -48,6 +48,11 @@ int pthread_sigmask(int, const sigset_t *__restrict, sigset_t *__restrict) {
 }
 
 int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
+	if(!mlibc::sys_sigprocmask) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_sigprocmask(how, set, retrieve); e) {
 		errno = e;
 		return -1;
@@ -56,6 +61,11 @@ int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict re
 }
 
 int sigaction(int signum, const struct sigaction *__restrict act, struct sigaction *__restrict oldact) {
+	if(!mlibc::sys_sigaction) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_sigaction(signum, act, oldact); e) {
 		errno = e;
 		return -1;
@@ -64,6 +74,11 @@ int sigaction(int signum, const struct sigaction *__restrict act, struct sigacti
 }
 
 int kill(pid_t pid, int number) {
+	if(!mlibc::sys_kill) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_kill(pid, number); e) {
 		errno = e;
 		return -1;

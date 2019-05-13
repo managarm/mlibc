@@ -82,6 +82,12 @@ int execv(const char *path, char *const argv[]) {
 }
 
 int execvp(const char *file, char *const argv[]) {
+	if(!mlibc::sys_execve) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
 	if(strchr(file, '/')) {
 		int e = mlibc::sys_execve(file, argv, environ);
 		__ensure(e && "sys_execve() is supposed to never return with success");
@@ -464,6 +470,10 @@ int close(int fd) {
 unsigned int sleep(unsigned int secs) {
 	time_t seconds = secs;
 	long nanos = 0;
+	if(!mlibc::sys_sleep) {
+		MLIBC_MISSING_SYSDEP();
+		__ensure(!"Cannot continue without sys_sleep()");
+	}
 	mlibc::sys_sleep(&seconds, &nanos);
 	return seconds;
 }
@@ -472,6 +482,10 @@ unsigned int sleep(unsigned int secs) {
 int usleep(useconds_t usecs) {
 	time_t seconds = 0;
 	long nanos = usecs * 1000;
+	if(!mlibc::sys_sleep) {
+		MLIBC_MISSING_SYSDEP();
+		__ensure(!"Cannot continue without sys_sleep()");
+	}
 	return mlibc::sys_sleep(&seconds, &nanos);
 }
 
@@ -494,6 +508,11 @@ int dup2(int fd, int newfd) {
 
 pid_t fork(void) {
 	pid_t child;
+	if(!mlibc::sys_fork) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_fork(&child); e) {
 		errno = e;
 		return -1;
@@ -502,6 +521,11 @@ pid_t fork(void) {
 }
 
 int execve(const char *path, char *const argv[], char *const envp[]) {
+	if(!mlibc::sys_execve) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	int e = mlibc::sys_execve(path, argv, envp);
 	__ensure(e && "sys_execve() is expected to fail if it returns");
 	errno = e;

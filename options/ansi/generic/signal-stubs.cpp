@@ -1,5 +1,6 @@
 
 #include <bits/ensure.h>
+#include <errno.h>
 #include <signal.h>
 
 #include <mlibc/debug.hpp>
@@ -7,6 +8,11 @@
 
 __sighandler signal(int sn, __sighandler handler) {
 	mlibc::infoLogger() << "\e[31mmlibc: signal() always returns SIG_DFL\e[39m" << frg::endlog;
+	if(!mlibc::sys_sigaction) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return SIG_ERR;
+	}
 	if(handler == SIG_DFL || handler == SIG_IGN) {
 	}else{
 		struct sigaction sa;

@@ -78,6 +78,11 @@ int forkpty(int *mfd, char *name, const struct termios *ios, const struct winsiz
 		return -1;
 
 	pid_t child;
+	if(!mlibc::sys_fork) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_fork(&child); e) {
 		errno = e;
 		return -1;

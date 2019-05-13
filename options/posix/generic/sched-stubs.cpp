@@ -6,7 +6,12 @@
 #include <mlibc/sysdeps.hpp>
 
 int sched_yield(void) {
-	mlibc::sys_yield();
+	if(mlibc::sys_yield) {
+		mlibc::sys_yield();
+	}else{
+		// Missing sched_yield() is not an error.
+		MLIBC_MISSING_SYSDEP();
+	}
 	return 0;
 }
 
