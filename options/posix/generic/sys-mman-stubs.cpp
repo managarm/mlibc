@@ -47,6 +47,11 @@ void *mremap(void *pointer, size_t size, size_t new_size, int flags, ...) {
 	__ensure(flags == MREMAP_MAYMOVE);
 
 	void *window;
+	if(!mlibc::sys_vm_remap) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return (void *)-1;
+	}
 	if(int e = mlibc::sys_vm_remap(pointer, size, new_size, &window); e) {
 		errno = e;
 		return (void *)-1;

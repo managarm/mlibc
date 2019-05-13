@@ -627,6 +627,11 @@ int access(const char *path, int mode) {
 }
 
 int isatty(int fd) {
+	if(!mlibc::sys_isatty) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return 0; // isatty() returns 0 on failure.
+	}
 	if(int e = mlibc::sys_isatty(fd); e) {
 		errno = e;
 		return 0;

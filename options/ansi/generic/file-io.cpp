@@ -392,6 +392,13 @@ int fd_file::determine_type(stream_type *type) {
 }
 
 int fd_file::determine_bufmode(buffer_mode *mode) {
+	// When isatty() is not implemented, we fall back to the safest default (no buffering).
+	if(!mlibc::sys_isatty) {
+		MLIBC_MISSING_SYSDEP();
+		*mode = buffer_mode::no_buffer;
+		return 0;
+	}
+
 	if(int e = mlibc::sys_isatty(_fd); !e) {
 		*mode = buffer_mode::line_buffer;
 		return 0;

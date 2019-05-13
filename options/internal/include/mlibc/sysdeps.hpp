@@ -34,7 +34,7 @@ enum class fsfd_target {
 };
 
 void sys_libc_log(const char *message);
-__attribute__ ((noreturn)) void sys_libc_panic();
+[[noreturn]] void sys_libc_panic();
 
 int sys_futex_wait(int *pointer, int expected);
 int sys_futex_wake(int *pointer);
@@ -45,7 +45,7 @@ int sys_anon_allocate(size_t size, void **pointer);
 int sys_anon_free(void *pointer, size_t size);
 
 #ifndef MLIBC_BUILDING_RTDL
-	__attribute__ ((noreturn)) void sys_exit(int status);
+	[[noreturn]] void sys_exit(int status);
 	int sys_clock_get(int clock, time_t *secs, long *nanos);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 
@@ -72,7 +72,7 @@ int sys_close(int fd);
 	[[gnu::weak]] int sys_dup2(int fd, int flags, int newfd);
 	// In contrast to the isatty() library function, the sysdep function uses return value
 	// zero (and not one) to indicate that the file is a terminal.
-	int sys_isatty(int fd);
+	[[gnu::weak]] int sys_isatty(int fd);
 	[[gnu::weak]] int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags,
 			struct stat *statbuf);
 	[[gnu::weak]] int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length);
@@ -114,7 +114,7 @@ int sys_close(int fd);
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window);
 
 #ifndef MLIBC_BUILDING_RTDL
-	int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window);
+	[[gnu::weak]] int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 
 int sys_vm_unmap(void *pointer, size_t size);
