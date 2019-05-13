@@ -11,6 +11,11 @@ int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict a
 		mlibc::infoLogger() << "\e[35mmlibc: accept() does not fill struct sockaddr\e[39m"
 				<< frg::endlog;
 	int newfd;
+	if(!mlibc::sys_accept) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_accept(fd, &newfd); e) {
 		errno = e;
 		return -1;
@@ -19,6 +24,11 @@ int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict a
 }
 
 int bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_len) {
+	if(!mlibc::sys_bind) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_bind(fd, addr_ptr, addr_len); e) {
 		errno = e;
 		return -1;
@@ -27,6 +37,11 @@ int bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_len) {
 }
 
 int connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_len) {
+	if(!mlibc::sys_connect) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_connect(fd, addr_ptr, addr_len); e) {
 		errno = e;
 		return -1;
@@ -41,6 +56,11 @@ int getpeername(int, struct sockaddr *__restrict, socklen_t *__restrict) {
 
 int getsockname(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length) {
 	socklen_t actual_length;
+	if(!mlibc::sys_sockname) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_sockname(fd, addr_ptr, *addr_length, &actual_length); e) {
 		errno = e;
 		return -1;
@@ -51,6 +71,11 @@ int getsockname(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restr
 
 int getsockopt(int fd, int layer, int number,
 		void *__restrict buffer, socklen_t *__restrict size) {
+	if(!mlibc::sys_getsockopt) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	return mlibc::sys_getsockopt(fd, layer, number, buffer, size);
 }
 
@@ -71,6 +96,11 @@ ssize_t recvfrom(int, void *__restrict, size_t, int, struct sockaddr *__restrict
 
 ssize_t recvmsg(int fd, struct msghdr *hdr, int flags) {
 	ssize_t length;
+	if(!mlibc::sys_msg_recv) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_msg_recv(fd, hdr, flags, &length); e) {
 		errno = e;
 		return -1;
@@ -85,6 +115,11 @@ ssize_t send(int, const void *, size_t, int) {
 
 ssize_t sendmsg(int fd, const struct msghdr *hdr, int flags) {
 	ssize_t length;
+	if(!mlibc::sys_msg_send) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_msg_send(fd, hdr, flags, &length); e) {
 		errno = e;
 		return -1;
@@ -99,6 +134,11 @@ ssize_t sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_
 
 int setsockopt(int fd, int layer, int number,
 		const void *buffer, socklen_t size) {
+	if(!mlibc::sys_setsockopt) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	return mlibc::sys_setsockopt(fd, layer, number, buffer, size);
 }
 
@@ -114,6 +154,11 @@ int sockatmark(int) {
 
 int socket(int family, int type, int protocol) {
 	int fd;
+	if(!mlibc::sys_socket) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_socket(family, type, protocol, &fd); e) {
 		errno = e;
 		return -1;
@@ -122,6 +167,11 @@ int socket(int family, int type, int protocol) {
 }
 
 int socketpair(int domain, int type, int protocol, int sv[2]) {
+	if(!mlibc::sys_socketpair) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_socketpair(domain, type, protocol, sv); e) {
 		errno = e;
 		return -1;

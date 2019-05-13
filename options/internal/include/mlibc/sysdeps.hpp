@@ -78,9 +78,9 @@ int sys_close(int fd);
 	int sys_ftruncate(int fd, size_t size);
 	int sys_fallocate(int fd, off_t offset, size_t size);
 	int sys_unlink(const char *path);
-	int sys_socket(int family, int type, int protocol, int *fd);
-	int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length);
-	int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length);
+	[[gnu::weak]] int sys_socket(int family, int type, int protocol, int *fd);
+	[[gnu::weak]] int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length);
+	[[gnu::weak]] int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length);
 	gid_t sys_getgid();
 	gid_t sys_getegid();
 	uid_t sys_getuid();
@@ -91,7 +91,8 @@ int sys_close(int fd);
 	int sys_sleep(time_t *secs, long *nanos);
 	int sys_fork(pid_t *child);
 	int sys_execve(const char *path, char *const argv[], char *const envp[]);
-	[[gnu::weak]] int sys_select(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set, struct timeval *timeout);
+	[[gnu::weak]] int sys_select(int num_fds, fd_set *read_set, fd_set *write_set,
+			fd_set *except_set, struct timeval *timeout);
 	[[gnu::weak]] int sys_getrusage(int scope, struct rusage *usage);
 	[[gnu::weak]] int sys_getrlimit(int resource, struct rlimit *limit);
 	[[gnu::weak]] int sys_timerfd_create(int flags, int *fd);
@@ -124,7 +125,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 	int sys_tcsetattr(int, int, const struct termios *attr);
 	[[gnu::weak]] int sys_tcflow(int, int);
 	[[gnu::weak]] int sys_pipe(int *fds, int flags);
-	int sys_socketpair(int domain, int type_and_flags, int proto, int *fds);
+	[[gnu::weak]] int sys_socketpair(int domain, int type_and_flags, int proto, int *fds);
 	[[gnu::weak]] int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events);
 	[[gnu::weak]] int sys_epoll_create(int flags, int *fd);
 	[[gnu::weak]] int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev);
@@ -132,9 +133,9 @@ int sys_vm_unmap(void *pointer, size_t size);
 			int timeout, int *raised);
 	[[gnu::weak]] int sys_inotify_create(int flags, int *fd);
 	int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
-	int sys_getsockopt(int fd, int layer, int number,
+	[[gnu::weak]] int sys_getsockopt(int fd, int layer, int number,
 			void *__restrict buffer, socklen_t *__restrict size);
-	int sys_setsockopt(int fd, int layer, int number,
+	[[gnu::weak]] int sys_setsockopt(int fd, int layer, int number,
 			const void *buffer, socklen_t size);
 	int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid);
 	[[gnu::weak]] int sys_mount(const char *source, const char *target,
@@ -142,10 +143,10 @@ int sys_vm_unmap(void *pointer, size_t size);
 	int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve);
 	int sys_sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict);
 	int sys_kill(int, int);
-	int sys_accept(int fd, int *newfd);
-	int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);
-	int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);
-	int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
+	[[gnu::weak]] int sys_accept(int fd, int *newfd);
+	[[gnu::weak]] int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);
+	[[gnu::weak]] int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);
+	[[gnu::weak]] int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 			socklen_t *actual_length);
 	[[gnu::weak]] int sys_gethostname(char *buffer, size_t bufsize);
 #endif // !defined(MLIBC_BUILDING_RTDL)
