@@ -16,6 +16,11 @@ int fcntl(int fd, int command, ...) {
 	va_list args;
 	va_start(args, command);
 	int result;
+	if(!mlibc::sys_fcntl) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_fcntl(fd, command, args, &result); e) {
 		errno = e;
 		return -1;

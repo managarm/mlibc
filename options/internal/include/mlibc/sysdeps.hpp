@@ -106,7 +106,7 @@ int sys_close(int fd);
 	[[gnu::weak]] int sys_mkdir(const char *path);
 	[[gnu::weak]] int sys_symlink(const char *target_path, const char *link_path);
 	[[gnu::weak]] int sys_rename(const char *path, const char *new_path);
-	int sys_fcntl(int fd, int request, va_list args, int *result);
+	[[gnu::weak]] int sys_fcntl(int fd, int request, va_list args, int *result);
 	[[gnu::weak]] int sys_ttyname(int fd, char *buf, size_t size);
 	[[gnu::weak]] int sys_fadvise(int fd, off_t offset, off_t length, int advice);
 #endif // !defined(MLIBC_BUILDING_RTDL)
@@ -122,8 +122,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_vm_readahead(void *pointer, size_t size);
 
 #ifndef MLIBC_BUILDING_RTDL
-	int sys_tcgetattr(int fd, struct termios *attr);
-	int sys_tcsetattr(int, int, const struct termios *attr);
+	[[gnu::weak]] int sys_tcgetattr(int fd, struct termios *attr);
+	[[gnu::weak]] int sys_tcsetattr(int, int, const struct termios *attr);
 	[[gnu::weak]] int sys_tcflow(int, int);
 	[[gnu::weak]] int sys_pipe(int *fds, int flags);
 	[[gnu::weak]] int sys_socketpair(int domain, int type_and_flags, int proto, int *fds);
@@ -133,7 +133,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 	[[gnu::weak]] int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n,
 			int timeout, int *raised);
 	[[gnu::weak]] int sys_inotify_create(int flags, int *fd);
-	int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
+	[[gnu::weak]] int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 	[[gnu::weak]] int sys_getsockopt(int fd, int layer, int number,
 			void *__restrict buffer, socklen_t *__restrict size);
 	[[gnu::weak]] int sys_setsockopt(int fd, int layer, int number,

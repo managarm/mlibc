@@ -8,6 +8,11 @@
 
 int ioctl(int fd, unsigned long request, void *arg) {
 	int result;
+	if(!mlibc::sys_ioctl) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_ioctl(fd, request, arg, &result); e) {
 		errno = e;
 		return -1;

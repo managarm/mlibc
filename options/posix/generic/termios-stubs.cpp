@@ -41,6 +41,11 @@ int tcflush(int, int) {
 }
 
 int tcgetattr(int fd, struct termios *attr) {
+	if(!mlibc::sys_tcgetattr) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_tcgetattr(fd, attr); e) {
 		errno = e;
 		return -1;
@@ -58,6 +63,11 @@ int tcsendbreak(int, int) {
 }
 
 int tcsetattr(int fd, int opts, const struct termios *attr) {
+	if(!mlibc::sys_tcsetattr) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
 	if(int e = mlibc::sys_tcsetattr(fd, opts, attr); e) {
 		errno = e;
 		return -1;
