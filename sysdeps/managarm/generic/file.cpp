@@ -2071,18 +2071,59 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		*result = resp.result();
 		return 0;
 	}
-	case DRM_IOCTL_MODE_CURSOR: {
-		static bool infoPrinted = false;
-		if(!infoPrinted) {
-			mlibc::infoLogger() << "mlibc: Cursor-specific DRM ioctl()s are not supported"
-					<< frg::endlog;
-			infoPrinted = true;
-		}
+	case DRM_IOCTL_MODE_CURSOR: {	
 		auto param = reinterpret_cast<drm_mode_cursor *>(arg);
-		if(param->handle)
-			mlibc::infoLogger() << "mlibc: DRM_IOCTL_MODE_CURSOR to ("
-					<< param->x << ", " << param->y << ")" << frg::endlog;
-		return ENXIO;
+
+		HelAction actions[4];
+		globalQueue.trim();
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+
+		req.set_drm_flags(param->flags);
+		req.set_drm_crtc_id(param->crtc_id);
+
+		if (param->flags == DRM_MODE_CURSOR_MOVE) {
+			req.set_drm_x(param->x);
+			req.set_drm_y(param->y);
+		} else if (param->flags == DRM_MODE_CURSOR_BO) {
+			req.set_drm_width(param->width);
+			req.set_drm_height(param->height);
+			req.set_drm_handle(param->handle);
+		} else {
+			mlibc::infoLogger() << "\e[35mmlibc: invalid flags in DRM_IOCTL_MODE_CURSOR\e[39m" << frg::endlog;
+			return EINVAL;
+		}
+		
+		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	
+		*result = resp.result();
+		return 0;
 	}
 	case TCGETS: {
 		auto param = reinterpret_cast<struct termios *>(arg);
