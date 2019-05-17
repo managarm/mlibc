@@ -133,6 +133,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 	[[gnu::weak]] int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n,
 			int timeout, int *raised);
 	[[gnu::weak]] int sys_inotify_create(int flags, int *fd);
+	[[gnu::weak]] int sys_inotify_add_watch(int ifd, const char *path, uint32_t mask, int *wd);
+	[[gnu::weak]] int sys_inotify_rm_watch(int ifd, int wd);
 	[[gnu::weak]] int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 	[[gnu::weak]] int sys_getsockopt(int fd, int layer, int number,
 			void *__restrict buffer, socklen_t *__restrict size);

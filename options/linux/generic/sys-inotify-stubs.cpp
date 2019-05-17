@@ -34,13 +34,30 @@ int inotify_init1(int flags) {
 	return fd;
 }
 
-int inotify_add_watch(int, const char *, unsigned int) {
-	mlibc::infoLogger() << "\e[31mmlibc: inotify_add_watch() is broken\e[39m" << frg::endlog;
-	return 0; // TODO: Return a non-negative watch descriptor.
+int inotify_add_watch(int ifd, const char *path, uint32_t mask) {
+	int wd;
+	if(!mlibc::sys_inotify_add_watch) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_inotify_add_watch(ifd, path, mask, &wd); e) {
+		errno = e;
+		return -1;
+	}
+	return wd;
 }
 
-int inotify_rm_watch(int, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int inotify_rm_watch(int ifd, int wd) {
+	if(!mlibc::sys_inotify_rm_watch) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_inotify_rm_watch(ifd, wd); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
