@@ -108,9 +108,23 @@ ssize_t recvmsg(int fd, struct msghdr *hdr, int flags) {
 	return length;
 }
 
-ssize_t send(int, const void *, size_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+ssize_t send(int fd, const void *buffer, size_t size, int flags) {
+	return sendto(fd, buffer, size, flags, nullptr, 0);
+}
+
+ssize_t sendto(int fd, const void *buffer, size_t size, int flags,
+		const struct sockaddr *sock_addr, socklen_t addr_length) {
+	struct iovec iov = {};
+	iov.iov_base = const_cast<void *>(buffer);
+	iov.iov_len = size;
+
+	struct msghdr hdr = {};
+	hdr.msg_name = const_cast<struct sockaddr *>(sock_addr);
+	hdr.msg_namelen = addr_length;
+	hdr.msg_iov = &iov;
+	hdr.msg_iovlen = 1;
+
+	return sendmsg(fd, &hdr, flags);
 }
 
 ssize_t sendmsg(int fd, const struct msghdr *hdr, int flags) {
@@ -125,11 +139,6 @@ ssize_t sendmsg(int fd, const struct msghdr *hdr, int flags) {
 		return -1;
 	}
 	return length;
-}
-
-ssize_t sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
 }
 
 int setsockopt(int fd, int layer, int number,
