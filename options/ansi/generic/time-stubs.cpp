@@ -325,18 +325,27 @@ int unix_local_from_gmt(time_t unix_gmt, time_t *offset, bool *dst) {
 		memcpy(&ttime, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
 				+ i * sizeof(int32_t), sizeof(int32_t));
 		ttime = bswap_32(ttime);
-		if(ttime > unix_gmt) {
-			__ensure(i);
+		// If we are before the first transition, the format dicates that
+		// the first ttinfo entry should be used (and not the ttinfo entry pointed
+		// to by the first transition time).
+		if(i && ttime > unix_gmt) {
 			index = i - 1;
 			break;
 		}	
 	}
-	__ensure(index > 0);
 
-	uint8_t ttinfo_index;
-	memcpy(&ttinfo_index, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
-			+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-			+ index * sizeof(uint8_t), sizeof(uint8_t));
+	// The format dictates that if no transition is applicable,
+	// the first entry in the file is chosen.
+	uint8_t ttinfo_index = 0;
+	if(index >= 0) {
+		memcpy(&ttinfo_index, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
+				+ tzfile_time.tzh_timecnt * sizeof(int32_t)
+				+ index * sizeof(uint8_t), sizeof(uint8_t));
+	}
+
+	// There should be at least one entry in the ttinfo table.
+	// TODO: If there is not, we might want to fall back to UTC, no DST (?).
+	__ensure(tzfile_time.tzh_typecnt);
 
 	ttinfo time_info;
 	memcpy(&time_info, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
