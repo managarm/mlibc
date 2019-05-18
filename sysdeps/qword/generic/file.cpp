@@ -428,7 +428,7 @@ int sys_pipe(int *fds, int flags) {
 
     asm volatile ("syscall"
             : "=a"(ret), "=d"(sys_errno)
-            : "a"(36), "D"(fds), "S"(flags)
+            : "a"(19), "D"(fds), "S"(flags)
             : "rcx", "r11");
 
     if (ret == -1)
