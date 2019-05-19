@@ -1314,6 +1314,46 @@ int sys_inotify_create(int flags, int *fd) {
 	return 0;
 }
 
+int sys_inotify_add_watch(int ifd, const char *path, uint32_t mask, int *wd) {
+	SignalGuard sguard;
+	HelAction actions[3];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_request_type(managarm::posix::CntReqType::INOTIFY_ADD);
+	req.set_fd(ifd);
+	req.set_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_flags(mask);
+
+	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	*wd = resp.wd();
+	return 0;
+}
+
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 //	mlibc::infoLogger() << "mlibc: ioctl with"
 //			<< " type: 0x" << frg::hex_fmt(_IOC_TYPE(request))
