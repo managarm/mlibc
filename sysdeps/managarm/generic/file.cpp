@@ -987,6 +987,8 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 			fds[i].revents |= POLLIN;
 		if(resp.events(i) & EPOLLOUT)
 			fds[i].revents |= POLLOUT;
+		if(resp.events(i) & EPOLLHUP)
+			fds[i].revents |= POLLHUP;
 	}
 
 	*num_events = m;
