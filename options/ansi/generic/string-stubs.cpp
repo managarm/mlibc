@@ -250,6 +250,7 @@ char *strerror(int e) {
 	case EPERM:  s = "Operation not permitted (EFAULT)"; break;
 	case EPIPE:  s = "Broken pipe (EPIPE)"; break;
 	case ESPIPE: s = "Seek not possible (ESPIPE)"; break;
+	case ENXIO: s = "No such device or address (ENXIO)"; break;
 	default:
 		s = "Unknown error code (?)";
 	}
