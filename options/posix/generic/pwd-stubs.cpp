@@ -93,8 +93,10 @@ struct passwd *getpwuid(uid_t uid) {
 	while(fgets(line, 512, file)) {
 		if(!extract_entry(line, &global_entry))
 			continue;
-		if(global_entry.pw_uid == uid)
+		if(global_entry.pw_uid == uid) {
+			fclose(file);
 			return &global_entry;
+		}
 	}
 
 	fclose(file);
