@@ -179,14 +179,6 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	__ensure(!object->isMainObject);
 
-	object->baseAddress = libraryBase;
-	// TODO: handle this dynamically
-	libraryBase += 0x1000000; // assume 16 MiB per library
-
-	if(verbose || logBaseAddresses)
-		mlibc::infoLogger() << "rtdl: Loading " << object->name
-				<< " at " << (void *)object->baseAddress << frg::endlog;
-
 	// read the elf file header
 	Elf64_Ehdr ehdr;
 	readExactlyOrDie(fd, &ehdr, sizeof(Elf64_Ehdr));
@@ -202,24 +194,46 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	seekOrDie(fd, ehdr.e_phoff);
 	readExactlyOrDie(fd, phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
 
-	constexpr size_t kPageSize = 0x1000;
-	__ensure(!(object->baseAddress & (kPageSize - 1)));
-	
+	// Allocate virtual address space for the DSO.
+	constexpr size_t hugeSize = 0x200000;
+
+	uintptr_t highest_address = 0;
+	for(int i = 0; i < ehdr.e_phnum; i++) {
+		auto phdr = (Elf64_Phdr *)(phdr_buffer + i * ehdr.e_phentsize);
+
+		if(phdr->p_type != PT_LOAD)
+			continue;
+
+		auto limit = phdr->p_vaddr + phdr->p_memsz;
+		if(limit > highest_address)
+			highest_address = limit;
+	}
+
+	__ensure(!(object->baseAddress & (hugeSize - 1)));
+	object->baseAddress = libraryBase;
+	libraryBase += (highest_address + (hugeSize - 1)) & ~(hugeSize - 1);
+
+	if(verbose || logBaseAddresses)
+		mlibc::infoLogger() << "rtdl: Loading " << object->name
+				<< " at " << (void *)object->baseAddress << frg::endlog;
+
+	// Load all segments.
+	constexpr size_t pageSize = 0x1000;
 	for(int i = 0; i < ehdr.e_phnum; i++) {
 		auto phdr = (Elf64_Phdr *)(phdr_buffer + i * ehdr.e_phentsize);
 		
 		if(phdr->p_type == PT_LOAD) {
-			size_t misalign = phdr->p_vaddr & (kPageSize - 1);
+			size_t misalign = phdr->p_vaddr & (pageSize - 1);
 			__ensure(phdr->p_memsz > 0);
 			__ensure(phdr->p_memsz >= phdr->p_filesz);
 
 			// If the following condition is violated, we cannot use mmap() the segment;
 			// however, GCC only generates ELF files that satisfy this.
-			__ensure(misalign == (phdr->p_offset & (kPageSize - 1)));
+			__ensure(misalign == (phdr->p_offset & (pageSize - 1)));
 
 			auto map_address = object->baseAddress + phdr->p_vaddr - misalign;
-			auto backed_map_size = (phdr->p_filesz + misalign + kPageSize - 1) & ~(kPageSize - 1);
-			auto total_map_size = (phdr->p_memsz + misalign + kPageSize - 1) & ~(kPageSize - 1);
+			auto backed_map_size = (phdr->p_filesz + misalign + pageSize - 1) & ~(pageSize - 1);
+			auto total_map_size = (phdr->p_memsz + misalign + pageSize - 1) & ~(pageSize - 1);
 
 			int prot = 0;
 			if(phdr->p_flags & PF_R)
