@@ -44,6 +44,7 @@ extern "C" {
 #define _PC_PIPE_BUF 5
 
 // MISSING: remaining _SC_macros
+#define _SC_ARG_MAX 0
 #define _SC_GETPW_R_SIZE_MAX 1
 #define _SC_PHYS_PAGES 2
 #define _SC_PAGE_SIZE 3
