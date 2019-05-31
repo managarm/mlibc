@@ -73,6 +73,15 @@ int pthread_attr_setdetachstate(pthread_attr_t *, int) {
 	__builtin_unreachable();
 }
 
+int pthread_attr_getstacksize(const pthread_attr_t *__restrict, size_t *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int pthread_attr_setstacksize(pthread_attr_t *, size_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 int pthread_attr_getguardsize(const pthread_attr_t *__restrict, size_t *__restrict) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
