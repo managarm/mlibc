@@ -118,6 +118,7 @@ enum {
 	PT_LOAD = 1,
 	PT_DYNAMIC = 2,
 	PT_INTERP = 3,
+	PT_NOTE = 4,
 	PT_PHDR = 6,
 	PT_TLS = 7,
 	PT_GNU_EH_FRAME = 0x6474E550,

@@ -274,12 +274,14 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 			object->dynamic = (Elf64_Dyn *)(object->baseAddress + phdr->p_vaddr);
 		}else if(phdr->p_type == PT_INTERP
 				|| phdr->p_type == PT_PHDR
+				|| phdr->p_type == PT_NOTE
 				|| phdr->p_type == PT_GNU_EH_FRAME
 				|| phdr->p_type == PT_GNU_RELRO
 				|| phdr->p_type == PT_GNU_STACK) {
 			// ignore the phdr
 		}else{
-			__ensure(!"Unexpected PHDR");
+			mlibc::panicLogger() << "Unexpected PHDR type 0x"
+					<< frg::hex_fmt(phdr->p_type) << " in DSO " << object->name << frg::endlog;
 		}
 	}
 }
