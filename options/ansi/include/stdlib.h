@@ -65,6 +65,8 @@ void free(void *pointer);
 void *malloc(size_t size);
 void *realloc(void *pointer, size_t size);
 
+int posix_memalign(void **, size_t, size_t);
+
 // [7.22.4] Communication with the environment
 
 __attribute__ (( noreturn )) void abort(void);

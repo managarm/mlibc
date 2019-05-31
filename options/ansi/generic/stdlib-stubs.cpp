@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -399,6 +400,21 @@ void *realloc(void *ptr, size_t size) {
 		mlibc::infoLogger() << "mlibc (PID ?): realloc() on "
 				<< ptr << " returns " << nptr << frg::endlog;
 	return nptr;
+}
+
+int posix_memalign(void **out, size_t align, size_t size) {
+	if(align < sizeof(void *))
+		return EINVAL;
+	if(align & (align - 1)) // Make sure that align is a power of two.
+		return EINVAL;
+	auto p = getAllocator().allocate(frg::max(align, size));
+	if(!p)
+		return ENOMEM;
+	// Hope that the alignment was respected. This works on the current allocator.
+	// TODO: Make the allocator alignment-aware.
+	__ensure(!(reinterpret_cast<uintptr_t>(p) & (align - 1)));
+	*out = p;
+	return 0;
 }
 
 double strtod_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc) {
