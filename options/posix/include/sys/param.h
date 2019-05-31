@@ -11,6 +11,9 @@
 #	error "Unsupported compiler"
 #endif
 
+// Report the same value as Linux here.
+#define MAXPATHLEN 4096
+
 #ifdef __cplusplus
 extern "C" {
 #endif
