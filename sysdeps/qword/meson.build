@@ -1,11 +1,11 @@
 
 rtdl_sources += files(
-	'generic/file.cpp'
+	'generic/generic.cpp'
 )
 
 libc_sources += files(
 	'generic/entry.cpp',
-	'generic/file.cpp',
+	'generic/generic.cpp',
 	'generic/perfmon.cpp'
 )
 
