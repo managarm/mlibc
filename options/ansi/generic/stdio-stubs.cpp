@@ -852,8 +852,11 @@ int ferror(FILE *file_base) {
 }
 
 int perror(const char *string) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	int error = errno;
+	if (string && *string) {
+		fprintf(stderr, "%s: ", string);
+	}
+	fprintf(stderr, "%s\n", strerror(error));
 }
 
 // POSIX unlocked I/O extensions.
