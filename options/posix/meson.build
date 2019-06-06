@@ -29,6 +29,7 @@ libc_sources += files(
 	'generic/sys-mman-stubs.cpp',
 	'generic/sys-resource-stubs.cpp',
 	'generic/sys-select-stubs.cpp',
+	'generic/sys-shm.cpp',
 	'generic/sys-socket-stubs.cpp',
 	'generic/sys-statfs-stubs.cpp',
 	'generic/sys-stat-stubs.cpp',
@@ -83,10 +84,12 @@ install_headers(
 )
 install_headers(
 	'include/sys/file.h',
+	'include/sys/ipc.h',
 	'include/sys/mman.h',
 	'include/sys/param.h',
 	'include/sys/resource.h',
 	'include/sys/select.h',
+	'include/sys/shm.h',
 	'include/sys/socket.h',
 	'include/sys/statfs.h',
 	'include/sys/stat.h',
