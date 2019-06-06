@@ -68,6 +68,37 @@ int __fpclassifyl(long double x);
 // FIXME: this is gcc specific
 #define signbit(x) (__builtin_signbit(x))
 
+// [C11/7.12.14 Comparison macros]
+#define isunordered(x,y) (isnan((x)) ? ((void)(y),1) : isnan((y)))
+
+inline int __mlibc_is_less(double_t x, double_t y) { return !isunordered(x, y) && x < y; }
+inline int __mlibc_is_lessf(float_t x, float_t y) { return !isunordered(x, y) && x < y; }
+inline int __mlibc_is_lessl(long double x, long double y) { return !isunordered(x, y) && x < y; }
+inline int __mlibc_is_lessequal(double_t x, double_t y) { return !isunordered(x, y) && x <= y; }
+inline int __mlibc_is_lessequalf(float_t x, float_t y) { return !isunordered(x, y) && x <= y; }
+inline int __mlibc_is_lessequall(long double x, long double y) { return !isunordered(x, y) && x <= y; }
+inline int __mlibc_is_lessgreater(double_t x, double_t y) { return !isunordered(x, y) && x != y; }
+inline int __mlibc_is_lessgreaterf(float_t x, float_t y) { return !isunordered(x, y) && x != y; }
+inline int __mlibc_is_lessgreaterl(long double x, long double y) { return !isunordered(x, y) && x != y; }
+inline int __mlibc_is_greater(double_t x, double_t y) { return !isunordered(x, y) && x > y; }
+inline int __mlibc_is_greaterf(float_t x, float_t y) { return !isunordered(x, y) && x > y; }
+inline int __mlibc_is_greaterl(long double x, long double y) { return !isunordered(x, y) && x > y; }
+inline int __mlibc_is_greaterequal(double_t x, double_t y) { return !isunordered(x, y) && x >= y; }
+inline int __mlibc_is_greaterequalf(float_t x, float_t y) { return !isunordered(x, y) && x >= y; }
+inline int __mlibc_is_greaterequall(long double x, long double y) { return !isunordered(x, y) && x >= y; }
+
+// TODO: We chould use _Generic here but that does not work in C++ code.
+#define __MLIBC_CHOOSE_COMPARISON(x, y, p) ( \
+	sizeof((x)+(y)) == sizeof(float) ? p##f(x, y) : \
+	sizeof((x)+(y)) == sizeof(double) ? p(x, y) : \
+	p##l(x, y) )
+
+#define isless(x, y) __MLIBC_CHOOSE_COMPARISON(x, y, __mlibc_isless)
+#define islessequal(x, y) __MLIBC_CHOOSE_COMPARISON(x, y, __mlibc_islessequal)
+#define islessgreater(x, y) __MLIBC_CHOOSE_COMPARISON(x, y, __mlibc_islessgreater)
+#define isgreater(x, y) __MLIBC_CHOOSE_COMPARISON(x, y, __mlibc_isgreater)
+#define isgreaterequal(x, y) __MLIBC_CHOOSE_COMPARISON(x, y, __mlibc_isgreaterequal)
+
 // this is a gnu extension
 void sincos(double, double *, double *);
 void sincosf(float, float *, float *);
@@ -323,7 +354,11 @@ double fmin(double x, double y);
 float fminf(float x, float y);
 long double fminl(long double x, long double y);
 
-// MISSING: [C11/7.12.13 Comparison macros]
+// [C11/7.12.13 Floating multiply-add]
+
+double fma(double, double, double);
+float fmaf(float, float, float);
+long double fmal(long double, long double, long double);
 
 #ifdef __cplusplus
 }
