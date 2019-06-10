@@ -92,10 +92,13 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name, uin
 
 	auto object = frg::construct<SharedObject>(getAllocator(), name.data(), false, rts);
 
-	frg::string<MemoryAllocator> lib_prefix(getAllocator(), "/lib/");
-	frg::string<MemoryAllocator> usr_prefix(getAllocator(), "/usr/lib/");
+	const char *libdirs[4] = {
+		"/lib/",
+		"/lib64/",
+		"/usr/lib/",
+		"/usr/lib64/"
+	};
 
-	// open the object file
 	auto tryToOpen = [&] (const char *path) {
 		int fd;
 		if(mlibc::sys_open(path, 0, &fd))
@@ -103,11 +106,16 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name, uin
 		return fd;
 	};
 
-	auto fd = tryToOpen((lib_prefix + name + '\0').data());
-	if(fd == -1)
-		fd = tryToOpen((usr_prefix + name + '\0').data());
+	int fd = -1;
+	for(int i = 0; i < 4; i++) {
+		auto path = frg::string<MemoryAllocator>{getAllocator(), libdirs[i]} + name + '\0';
+		fd = tryToOpen(path.data());
+		if(fd >= 0)
+			break;
+	}
 	if(fd == -1)
 		return nullptr; // TODO: Free the SharedObject.
+
 	_fetchFromFile(object, fd);
 	closeOrDie(fd);
 
