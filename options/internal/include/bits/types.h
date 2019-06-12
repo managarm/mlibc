@@ -37,15 +37,20 @@ typedef __INT64_TYPE__ __mlibc_int64;
 #	define __MLIBC_UINT64_C(x) __UINT64_C(x)
 #endif
 
-#define __MLIBC_INT8_MAX  __INT8_MAX
-#define __MLIBC_INT16_MAX __INT16_MAX
-#define __MLIBC_INT32_MAX __INT32_MAX
-#define __MLIBC_INT64_MAX __INT64_MAX
+#define __MLIBC_INT8_MAX  __INT8_MAX__
+#define __MLIBC_INT16_MAX __INT16_MAX__
+#define __MLIBC_INT32_MAX __INT32_MAX__
+#define __MLIBC_INT64_MAX __INT64_MAX__
 
-#define __MLIBC_INT8_MIN  (-__INT8_MAX - 1)
-#define __MLIBC_INT16_MIN (-__INT16_MAX - 1)
-#define __MLIBC_INT32_MIN (-__INT32_MAX - 1)
-#define __MLIBC_INT64_MIN (-__INT64_MAX - 1)
+#define __MLIBC_INT8_MIN  (-__MLIBC_INT8_MAX - 1)
+#define __MLIBC_INT16_MIN (-__MLIBC_INT16_MAX - 1)
+#define __MLIBC_INT32_MIN (-__MLIBC_INT32_MAX - 1)
+#define __MLIBC_INT64_MIN (-__MLIBC_INT64_MAX - 1)
+
+#define __MLIBC_UINT8_MAX  __UINT8_MAX__
+#define __MLIBC_UINT16_MAX __UINT16_MAX__
+#define __MLIBC_UINT32_MAX __UINT32_MAX__
+#define __MLIBC_UINT64_MAX __UINT64_MAX__
 
 // Fast types (signed).
 
@@ -125,10 +130,12 @@ typedef __SIZE_TYPE__    __mlibc_size;
 // Sanity checking. Make sure that we agree with the compiler's ABI.
 // ----------------------------------------------------------------------------
 
-#ifdef __cplusplus
+#if defined(__cpp_static_assert)
 #	define __MLIBC_STATIC_ASSERT(c, text) static_assert(c, text)
-#else
+#elif !defined(__cplusplus)
 #	define __MLIBC_STATIC_ASSERT(c, text) _Static_assert(c, text)
+#else
+#	define __MLIBC_STATIC_ASSERT(c, text)
 #endif
 
 #define __MLIBC_CHECK_TYPE(T1, T2) __MLIBC_STATIC_ASSERT(sizeof(T1) == sizeof(T2),\
