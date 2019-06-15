@@ -46,11 +46,13 @@ libc_sources += [
 	posix_pb,
 ]
 
-install_headers(
-	'include/abi-bits/abi.h',
-	'include/abi-bits/auxv.h',
-	subdir: 'abi-bits'
-)
+if not no_headers
+	install_headers(
+		'include/abi-bits/abi.h',
+		'include/abi-bits/auxv.h',
+		subdir: 'abi-bits'
+	)
+endif
 
 if not headers_only
 	custom_target('crt0',

@@ -6,13 +6,15 @@ libc_sources += files(
 	'generic/err.cpp',
 )
 
-install_headers(
-	'include/getopt.h',
-	'include/stdio_ext.h',
-	'include/err.h'
-)
-install_headers(
-	'include/sys/ioctl.h',
-	subdir: 'sys'
-)
+if not no_headers
+	install_headers(
+		'include/getopt.h',
+		'include/stdio_ext.h',
+		'include/err.h'
+	)
+	install_headers(
+		'include/sys/ioctl.h',
+		subdir: 'sys'
+	)
+endif
 

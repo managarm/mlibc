@@ -21,32 +21,35 @@ ansi_sources = files(
 	'generic/wchar-stubs.cpp',
 	'generic/wctype.cpp',
 )
-install_headers(
-	'include/alloca.h',
-	'include/assert.h',
-	'include/ctype.h',
-	'include/errno.h',
-	'include/fenv.h',
-	'include/inttypes.h',
-	'include/limits.h',
-	'include/locale.h',
-	'include/math.h',
-	'include/setjmp.h',
-	'include/signal.h',
-	'include/stdio.h',
-	'include/stdlib.h',
-	'include/string.h',
-	'include/time.h',
-	'include/wchar.h',
-	'include/wctype.h',
-)
-install_headers(
-	'include/bits/ansi/clockid_t.h',
-	'include/bits/ansi/seek.h',
-	'include/bits/ansi/timespec.h',
-	'include/bits/ansi/time_t.h',
-	subdir: 'bits/ansi'
-)
+
+if not no_headers
+	install_headers(
+		'include/alloca.h',
+		'include/assert.h',
+		'include/ctype.h',
+		'include/errno.h',
+		'include/fenv.h',
+		'include/inttypes.h',
+		'include/limits.h',
+		'include/locale.h',
+		'include/math.h',
+		'include/setjmp.h',
+		'include/signal.h',
+		'include/stdio.h',
+		'include/stdlib.h',
+		'include/string.h',
+		'include/time.h',
+		'include/wchar.h',
+		'include/wctype.h',
+	)
+	install_headers(
+		'include/bits/ansi/clockid_t.h',
+		'include/bits/ansi/seek.h',
+		'include/bits/ansi/timespec.h',
+		'include/bits/ansi/time_t.h',
+		subdir: 'bits/ansi'
+	)
+endif
 
 if not headers_only
 	libc_sublibs += static_library('mlibc-musl-math',

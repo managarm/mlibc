@@ -16,6 +16,7 @@ libc_sources = [ ]
 libc_sublibs = [ ]
 
 headers_only = get_option('headers_only')
+no_headers = get_option('mlibc_no_headers')
 disable_ansi_option = false
 disable_posix_option = false
 disable_linux_option = false
@@ -107,21 +108,24 @@ internal_sources = [
 	'options/internal/gcc-extra/mlibc_crtend.S',
 	'options/internal/x86_64/setjmp.S',
 ]
-install_headers(
-	'options/internal/include/stdint.h'
-)
-install_headers(
-	'options/internal/include/bits/wchar_t.h',
-	'options/internal/include/bits/wint_t.h',
-	'options/internal/include/bits/feature.h',
-	'options/internal/include/bits/size_t.h',
-	'options/internal/include/bits/types.h',
-	'options/internal/include/bits/ensure.h',
-	'options/internal/include/bits/machine.h',
-	'options/internal/include/bits/mbstate.h',
-	'options/internal/include/bits/null.h',
-	subdir: 'bits'
-)
+
+if not no_headers
+	install_headers(
+		'options/internal/include/stdint.h'
+	)
+	install_headers(
+		'options/internal/include/bits/wchar_t.h',
+		'options/internal/include/bits/wint_t.h',
+		'options/internal/include/bits/feature.h',
+		'options/internal/include/bits/size_t.h',
+		'options/internal/include/bits/types.h',
+		'options/internal/include/bits/ensure.h',
+		'options/internal/include/bits/machine.h',
+		'options/internal/include/bits/mbstate.h',
+		'options/internal/include/bits/null.h',
+		subdir: 'bits'
+	)
+endif
 
 rtdl_sources += [
 	'options/internal/gcc/guard-abi.cpp',
