@@ -24,7 +24,8 @@ internal_conf = configuration_data()
 
 if not headers_only
 	cxxshim_dep = subproject('cxxshim').get_variable('cxxshim_dep')
-	frigg_dep = subproject('frigg').get_variable('frigg_dep')
+	frigg_dep = subproject('frigg',
+		default_options: ['frigg_no_install=true']).get_variable('frigg_dep')
 
 	add_languages('c', 'cpp')
 	c_compiler = meson.get_compiler('c')
