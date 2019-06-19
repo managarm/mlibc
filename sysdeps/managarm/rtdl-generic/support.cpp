@@ -57,9 +57,7 @@ struct Queue {
 		_queue = reinterpret_cast<HelQueue *>(getAllocator().allocate(sizeof(HelQueue)
 				+ sizeof(int)));
 		_queue->headFutex = 1;
-		_queue->elementLimit = 128;
-		_queue->sizeShift = 0;
-		HEL_CHECK(helCreateQueue(_queue, 0, &_handle));
+		HEL_CHECK(helCreateQueue(_queue, 0, 0, 128, &_handle));
 
 		_chunk = reinterpret_cast<HelChunk *>(getAllocator().allocate(sizeof(HelChunk) + 4096));
 		HEL_CHECK(helSetupChunk(_handle, 0, _chunk, 0));

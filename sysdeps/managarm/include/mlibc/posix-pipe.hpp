@@ -81,9 +81,7 @@ struct Queue {
 
 		// Setup the queue header.
 		_queue->headFutex = 0;
-		_queue->elementLimit = 128;
-		_queue->sizeShift = 1;
-		HEL_CHECK(helCreateQueue(_queue, 0, &_handle));
+		HEL_CHECK(helCreateQueue(_queue, 0, 1, 128, &_handle));
 		HEL_CHECK(helSetupChunk(_handle, 0, _chunks[0], 0));
 		HEL_CHECK(helSetupChunk(_handle, 1, _chunks[1], 0));
 
