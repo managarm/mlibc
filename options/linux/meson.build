@@ -15,6 +15,7 @@ libc_sources += files(
 	'generic/sys-sendfile-stubs.cpp',
 	'generic/sys-signalfd.cpp',
 	'generic/sys-timerfd.cpp',
+	'generic/sys-eventfd.cpp',
 )
 
 if not no_headers
@@ -73,6 +74,7 @@ if not no_headers
 		'include/sys/signalfd.h',
 		'include/sys/sysmacros.h',
 		'include/sys/timerfd.h',
+		'include/sys/eventfd.h',
 		subdir: 'sys'
 	)
 endif
