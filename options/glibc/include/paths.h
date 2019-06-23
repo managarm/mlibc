@@ -1,3 +1,6 @@
+// This file is taken from musl
+// Path to original: include/paths.h
+
 #ifndef _PATHS_H
 #define _PATHS_H
 
