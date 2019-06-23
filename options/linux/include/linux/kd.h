@@ -10,6 +10,7 @@
 #define KD_TEXT 0x00
 #define KD_GRAPHICS 0x01
 
+#define K_RAW 0x00
 #define K_UNICODE 0x03
 #define K_OFF 0x04
 
