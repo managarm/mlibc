@@ -39,7 +39,9 @@ struct input_absinfo {
 #define EV_KEY 0x01
 #define EV_REL 0x02
 #define EV_ABS 0x03
+#define EV_LED 0x11
 #define EV_MAX 0x1F
+#define EV_CNT (EV_MAX + 1)
 
 #define EVIOCGVERSION _IOR('E', 0x01, int)
 #define EVIOCGID _IOR('E', 0x02, struct input_id)
@@ -597,6 +599,10 @@ struct input_absinfo {
 
 #define ABS_MAX 0x3f
 #define ABS_CNT (ABS_MAX+1)
+
+#define LED_NUML 0x00
+#define LED_CAPSL 0x01
+#define LED_SCROLLL 0x02
 
 #endif // _LINUX_INPUT_H
 

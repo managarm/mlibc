@@ -49,6 +49,8 @@
 #define IOCSIZE_MASK (_IOC_SIZEMASK << _IOC_SIZESHIFT)
 #define IOCSIZE_SHIFT (_IOC_SIZESHIFT)
 
+#include <asm/ioctls.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

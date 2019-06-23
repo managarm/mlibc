@@ -10,5 +10,8 @@
 
 #define LINE_MAX 4096
 
+#define CHAR_BIT 8
+#define LONG_BIT (CHAR_BIT * sizeof(long))
+
 #endif // _LIMITS_H
 

@@ -10,7 +10,8 @@ if not no_headers
 	install_headers(
 		'include/getopt.h',
 		'include/stdio_ext.h',
-		'include/err.h'
+		'include/err.h',
+		'include/paths.h'
 	)
 	install_headers(
 		'include/sys/ioctl.h',
