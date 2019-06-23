@@ -78,6 +78,7 @@
 #define EXDEV 1075
 #define ENODATA 1076
 #define ETIME 1077
+#define ENOKEY 1078
 
 #endif // MLIBC_POSIX_ERRNO_H
 
