@@ -8,5 +8,6 @@
 
 #define TIOCGPTN _IOR('T', 0x30, unsigned int)
 #define TIOCSPTLCK _IOW('T', 0x31, int)
+#define TIOCSIG _IOW('T', 0x36, int)
 
 #endif // _ASM_IOCTL_H
