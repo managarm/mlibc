@@ -62,7 +62,8 @@ struct dirent *readdir(DIR *dir) {
 	}
 
 	auto entp = reinterpret_cast<struct dirent *>(dir->__ent_buffer + dir->__ent_next);
-	memcpy(&dir->__current, entp, sizeof(struct dirent));
+	// We only copy as many bytes as we need to avoid buffer-overflows.
+	memcpy(&dir->__current, entp, offsetof(struct dirent, d_name) + strlen(entp->d_name) + 1);
 	dir->__ent_next += entp->d_reclen;
 	return &dir->__current;
 }
@@ -84,7 +85,8 @@ int readdir_r(DIR *dir, struct dirent *entry, struct dirent **result) {
 	}
 
 	auto entp = reinterpret_cast<struct dirent *>(dir->__ent_buffer + dir->__ent_next);
-	memcpy(entry, entp, sizeof(struct dirent));
+	// We only copy as many bytes as we need to avoid buffer-overflows.
+	memcpy(entry, entp, offsetof(struct dirent, d_name) + strlen(entp->d_name) + 1);
 	dir->__ent_next += entp->d_reclen;
 	*result = entry;
 	return 0;
