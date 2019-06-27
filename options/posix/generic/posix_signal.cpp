@@ -42,9 +42,16 @@ int sigsuspend(const sigset_t *sigmask) {
 	__builtin_unreachable();
 }
 
-int pthread_sigmask(int, const sigset_t *__restrict, sigset_t *__restrict) {
-	__ensure(!"pthread_sigmask() not implemented");
-	__builtin_unreachable();
+int pthread_sigmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
+	if(!mlibc::sys_sigprocmask) {
+		MLIBC_MISSING_SYSDEP();
+		return ENOSYS;
+	}
+	if(int e = mlibc::sys_sigprocmask(how, set, retrieve); e) {
+		return e;
+	}
+	return 0;
+
 }
 
 int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
