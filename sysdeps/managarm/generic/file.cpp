@@ -1616,6 +1616,18 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		*result = 0;
 		return 0;
 	}
+	case DRM_IOCTL_SET_MASTER: {
+		mlibc::infoLogger() << "\e[31mmlibc: DRM_IOCTL_SET_MASTER is not implemented correctly\e[39m"
+				<< frg::endlog;
+		*result = 0;
+		return 0;
+	}
+	case DRM_IOCTL_DROP_MASTER: {
+		mlibc::infoLogger() << "\e[31mmlibc: DRM_IOCTL_DROP_MASTER is not implemented correctly\e[39m"
+				<< frg::endlog;
+		*result = 0;
+		return 0;
+	}
 	case DRM_IOCTL_MODE_GETRESOURCES: {
 		auto param = reinterpret_cast<drm_mode_card_res *>(arg);
 		HelAction actions[3];
