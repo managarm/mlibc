@@ -1533,12 +1533,15 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		param->version_minor = resp.drm_version_minor();
 		param->version_patchlevel = resp.drm_version_patchlevel();
 		
-		memcpy(param->name, resp.drm_driver_name().data(), frg::min(param->name_len,
-				resp.drm_driver_name().size()));
-		memcpy(param->date, resp.drm_driver_date().data(), frg::min(param->date_len,
-				resp.drm_driver_date().size()));
-		memcpy(param->desc, resp.drm_driver_desc().data(), frg::min(param->desc_len,
-				resp.drm_driver_desc().size()));
+		if(param->name)
+			memcpy(param->name, resp.drm_driver_name().data(), frg::min(param->name_len,
+					resp.drm_driver_name().size()));
+		if(param->date)
+			memcpy(param->date, resp.drm_driver_date().data(), frg::min(param->date_len,
+					resp.drm_driver_date().size()));
+		if(param->desc)
+			memcpy(param->desc, resp.drm_driver_desc().data(), frg::min(param->desc_len,
+					resp.drm_driver_desc().size()));
 
 		param->name_len = resp.drm_driver_name().size();
 		param->date_len = resp.drm_driver_date().size();
