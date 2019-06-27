@@ -17,6 +17,8 @@
 // for stat()
 #include <sys/stat.h>
 #include <sys/inotify.h>
+// for EFD_CLOEXEC, EFD_NONBLOCK, EFD_SEMAPHONE
+#include <sys/eventfd.h>
 // for ioctl()
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -354,6 +356,86 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 				<< "\e[39m" << frg::endlog;
 		*result = 0;
 		return 0;
+	}else if(request == F_GETFL) {
+		SignalGuard sguard;
+		HelAction actions[3];
+		globalQueue.trim();
+
+		auto handle = cacheFileTable()[fd];
+		__ensure(handle);
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_GET_FILE_FLAGS);
+		req.set_fd(fd);
+
+		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.flags();
+		return 0;
+	}else if(request == F_SETFL) {
+		SignalGuard sguard;
+		HelAction actions[3];
+		globalQueue.trim();
+
+		auto handle = cacheFileTable()[fd];
+		__ensure(handle);
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_SET_FILE_FLAGS);
+		req.set_fd(fd);
+		req.set_flags(va_arg(args, int));
+
+		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		return 0;
+
+
 	}else{
 		mlibc::infoLogger() << "\e[31mmlibc: Unexpected fcntl() request: "
 				<< request << "\e[39m" << frg::endlog;
@@ -1353,6 +1435,52 @@ int sys_inotify_add_watch(int ifd, const char *path, uint32_t mask, int *wd) {
 	*wd = resp.wd();
 	return 0;
 }
+
+int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
+	SignalGuard sguard;
+	HelAction actions[3];
+	globalQueue.trim();
+
+	uint32_t proto_flags = 0;
+	if (flags & EFD_NONBLOCK) proto_flags |= managarm::posix::OpenFlags::OF_NONBLOCK;
+	if (flags & EFD_CLOEXEC) proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
+	if (flags & EFD_SEMAPHORE)
+		return ENOSYS;
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_request_type(managarm::posix::CntReqType::EVENTFD_CREATE);
+	req.set_flags(proto_flags);
+	req.set_initval(initval);
+
+	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	*fd = resp.fd();
+	return 0;
+}
+
 
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 //	mlibc::infoLogger() << "mlibc: ioctl with"

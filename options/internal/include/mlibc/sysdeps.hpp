@@ -154,6 +154,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 	[[gnu::weak]] int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 			socklen_t *actual_length);
 	[[gnu::weak]] int sys_gethostname(char *buffer, size_t bufsize);
+	[[gnu::weak]] int sys_eventfd_create(unsigned int initval, int flags, int *fd);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 
 } //namespace mlibc
