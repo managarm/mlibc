@@ -802,10 +802,27 @@ int putchar(int c) {
 }
 
 int puts(const char *string) {
-	if(fwrite(string, strlen(string), 1, stdout) != 1)
+	auto file = static_cast<mlibc::abstract_file *>(stdout);
+
+	size_t progress = 0;
+	size_t len = strlen(string);
+	while(progress < len) {
+		size_t chunk;
+		if(file->write(string + progress,
+				len - progress, &chunk)) {
+			return EOF;
+		}else if(!chunk) {
+			return EOF;
+		}
+
+		progress += chunk;
+	}
+
+	size_t unused;
+	if (!file->write("\n", 1, &unused)) {
 		return EOF;
-	if(fwrite("\n", 1, 1, stdout) != 1)
-		return EOF;
+	}
+
 	return 1;
 }
 
