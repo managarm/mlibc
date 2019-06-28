@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <asm/ioctls.h>
 
 #include <frg/vector.hpp>
 #include <mlibc/allocator.hpp>
@@ -210,5 +211,38 @@ char *realpath(const char *path, char *out) {
 		out = reinterpret_cast<char *>(getAllocator().allocate(resolv.size()));
 	strcpy(out, resolv.data());
 	return out;
+}
+
+// ----------------------------------------------------------------------------
+// Pseudoterminals
+// ----------------------------------------------------------------------------
+
+int ptsname_r(int fd, char *buffer, size_t length) {
+	int index;
+	if(ioctl(fd, TIOCGPTN, &index))
+		return -1;
+	if(snprintf(buffer, length, "/dev/pts/%d", index) >= length) {
+		errno = ERANGE;
+		return -1;
+	}
+	return 0;
+}
+
+int posix_openpt(int flags) {
+	int fd;
+	if(int e = mlibc::sys_open("/dev/ptmx", flags, &fd); e) {
+		errno = e;
+		return -1;
+	}
+
+	return fd;
+}
+
+int unlockpt(int fd) {
+	return 0;
+}
+
+int grantpt(int fd) {
+	return 0;
 }
 

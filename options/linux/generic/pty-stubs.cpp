@@ -6,20 +6,10 @@
 #include <pty.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
-
-int ptsname_r(int fd, char *buffer, size_t length) {
-	int index;
-	if(ioctl(fd, TIOCGPTN, &index))
-		return -1;
-	if(snprintf(buffer, length, "/dev/pts/%d", index) >= length) {
-		errno = ERANGE;
-		return -1;
-	}
-	return 0;
-}
 
 int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win) {
 	__ensure(!name);

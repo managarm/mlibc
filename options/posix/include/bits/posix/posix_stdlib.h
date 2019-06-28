@@ -25,6 +25,15 @@ char *mkdtemp(char *path);
 
 char *realpath(const char *__restrict, char *__restrict);
 
+// ----------------------------------------------------------------------------
+// Pseudoterminals
+// ----------------------------------------------------------------------------
+
+int posix_openpt(int flags);
+int grantpt(int fd);
+int unlockpt(int fd);
+int ptsname_r(int fd, char *buf, size_t len);
+
 #ifdef __cplusplus
 }
 #endif
