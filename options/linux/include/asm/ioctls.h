@@ -1,7 +1,7 @@
-#ifndef _ASM_IOCTL_H
-#define _ASM_IOCTL_H
+#ifndef _ASM_IOCTLS_H
+#define _ASM_IOCTLS_H
 
-#include <sys/ioctl.h>
+#include <linux/ioctl.h>
 
 #define TCGETS 0x5401
 #define TCSETS 0x5402
@@ -10,4 +10,4 @@
 #define TIOCSPTLCK _IOW('T', 0x31, int)
 #define TIOCSIG _IOW('T', 0x36, int)
 
-#endif // _ASM_IOCTL_H
+#endif // _ASM_IOCTLS_H

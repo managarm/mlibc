@@ -30,6 +30,7 @@ if not no_headers
 		'include/values.h',
 	)
 	install_headers(
+		'include/asm/ioctl.h',
 		'include/asm/ioctls.h',
 		subdir: 'asm'
 	)
@@ -41,6 +42,7 @@ if not no_headers
 		'include/linux/fs.h',
 		'include/linux/hdreg.h',
 		'include/linux/input.h',
+		'include/linux/ioctl.h',
 		'include/linux/kd.h',
 		'include/linux/magic.h',
 		'include/linux/major.h',
