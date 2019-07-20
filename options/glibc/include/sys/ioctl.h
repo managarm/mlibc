@@ -55,7 +55,7 @@
 extern "C" {
 #endif
 
-int ioctl(int fd, unsigned long request, void *arg);
+int ioctl(int fd, unsigned long request, ...);
 
 #ifdef __cplusplus
 }
