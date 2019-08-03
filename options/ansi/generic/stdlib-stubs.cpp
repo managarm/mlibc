@@ -31,12 +31,10 @@ int atoi(const char *string) {
 	return strtol(string, nullptr, 10);
 }
 long atol(const char *string) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return strtol(string, nullptr, 10);
 }
 long long atoll(const char *string) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return strtoll(string, nullptr, 10);
 }
 double strtod(const char *__restrict string, char **__restrict end) {
 	__ensure(!"Not implemented");
