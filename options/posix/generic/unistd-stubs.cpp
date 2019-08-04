@@ -29,6 +29,19 @@ int chdir(const char *path) {
 	return 0;
 }
 
+int fchdir(int fd) {
+	if(!mlibc::sys_fchdir) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_fchdir(fd); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
+}
+
 int chown(const char *path, uid_t uid, gid_t gid) {
 	mlibc::infoLogger() << "\e[31mmlibc: chown() is not implemented correctly\e[39m"
 			<< frg::endlog;
@@ -140,10 +153,6 @@ int execvp(const char *file, char *const argv[]) {
 }
 
 int faccessat(int, const char *, int, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-int fchdir(int fd) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

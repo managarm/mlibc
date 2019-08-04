@@ -102,6 +102,7 @@ int sys_close(int fd);
 	[[gnu::weak]] int sys_signalfd_create(sigset_t, int flags, int *fd);
 	[[gnu::weak]] int sys_getcwd(char *buffer, size_t size);
 	[[gnu::weak]] int sys_chdir(const char *path);
+	[[gnu::weak]] int sys_fchdir(int fd);
 	[[gnu::weak]] int sys_chroot(const char *path);
 	[[gnu::weak]] int sys_mkdir(const char *path);
 	[[gnu::weak]] int sys_symlink(const char *target_path, const char *link_path);
