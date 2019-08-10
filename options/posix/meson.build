@@ -118,7 +118,6 @@ if not no_headers
 		'include/bits/posix/in_port_t.h',
 		'include/bits/posix/iovec.h',
 		'include/bits/posix/locale_t.h',
-		'include/bits/posix/map_flags.h',
 		'include/bits/posix/mode_t.h',
 		'include/bits/posix/nlink_t.h',
 		'include/bits/posix/nl_item.h',

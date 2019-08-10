@@ -1,7 +1,7 @@
 #ifndef _SYS_MMAN_H
 #define _SYS_MMAN_H
 
-#include <bits/posix/map_flags.h>
+#include <abi-bits/vm-flags.h>
 #include <bits/posix/off_t.h>
 #include <bits/size_t.h>
 
