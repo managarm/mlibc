@@ -248,7 +248,8 @@ namespace {
         SCANF_TYPE_L,
         SCANF_TYPE_LL,
         SCANF_TYPE_PTRDIFF,
-        SCANF_TYPE_SIZE_T
+        SCANF_TYPE_SIZE_T,
+        SCANF_TYPE_INT
     };
 }
 
@@ -275,6 +276,8 @@ static void store_int(void *dest, unsigned int size, unsigned long long i) {
         case SCANF_TYPE_SIZE_T:
             *(size_t *)dest = i;
             break;
+        /* fallthrough */
+        case SCANF_TYPE_INT:
         default:
             *(int *)dest = i;
             break;
@@ -336,7 +339,7 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
         }
 
         /* type modifiers */
-        unsigned int type = 0;
+        unsigned int type = SCANF_TYPE_INT;
         unsigned int base = 10;
         switch (*fmt) {
             case 'h': {
@@ -603,7 +606,8 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
             case 'n': {
                 int *typed_dest = (int *)dest;
                 if (typed_dest)
-                    *typed_dest = match_count;
+                    *typed_dest = handler.num_consumed;
+                continue;
             }
         }
         if (dest) match_count++;
@@ -634,12 +638,15 @@ int sscanf(const char *__restrict buffer, const char *__restrict format, ...) {
     public:
         char look_ahead() {
             return *buffer;
-        };
+        }
 
         char consume() {
+            num_consumed++;
             return *buffer++;
-        };
+        }
+
         const char *buffer;
+        int num_consumed;
     } handler = {buffer};
     va_list args;
     va_start(args, format);
