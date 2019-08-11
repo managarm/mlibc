@@ -3,10 +3,10 @@
 #define _FCNTL_H
 
 #include <abi-bits/abi.h>
+#include <abi-bits/seek-whence.h>
 #include <bits/posix/mode_t.h>
 #include <bits/posix/off_t.h>
 #include <bits/posix/pid_t.h>
-#include <bits/ansi/seek.h>
 
 #ifdef __cplusplus
 extern "C" {

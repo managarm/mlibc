@@ -2,7 +2,7 @@
 #ifndef _STDIO_H
 #define _STDIO_H
 
-#include <bits/ansi/seek.h>
+#include <abi-bits/seek-whence.h>
 #include <bits/feature.h>
 #include <bits/null.h>
 #include <bits/size_t.h>

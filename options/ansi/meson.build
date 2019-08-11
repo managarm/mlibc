@@ -44,7 +44,6 @@ if not no_headers
 	)
 	install_headers(
 		'include/bits/ansi/clockid_t.h',
-		'include/bits/ansi/seek.h',
 		'include/bits/ansi/timespec.h',
 		'include/bits/ansi/time_t.h',
 		subdir: 'bits/ansi'

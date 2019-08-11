@@ -13,6 +13,7 @@ if not no_headers
 	install_headers(
 		'include/abi-bits/abi.h',
 		'include/abi-bits/auxv.h',
+		'include/abi-bits/seek-whence.h',
 		'include/abi-bits/vm-flags.h',
 		subdir: 'abi-bits'
 	)

@@ -3,8 +3,8 @@
 
 #include <stddef.h>
 
+#include <abi-bits/seek-whence.h>
 #include <abi-bits/vm-flags.h>
-#include <bits/ansi/seek.h>
 #include <bits/posix/off_t.h>
 #include <bits/posix/ssize_t.h>
 
