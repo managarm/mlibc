@@ -38,7 +38,8 @@ struct ObjectRepository {
 			void *phdr_pointer, size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 			uint64_t rts);
 
-	SharedObject *requestObjectWithName(frg::string_view name, uint64_t rts);
+	SharedObject *requestObjectWithName(frg::string_view name,
+			SharedObject *origin, uint64_t rts);
 
 	SharedObject *requestObjectAtPath(frg::string_view path, uint64_t rts);
 
@@ -90,6 +91,8 @@ struct SharedObject {
 	uintptr_t hashTableOffset;
 	uintptr_t symbolTableOffset;
 	uintptr_t stringTableOffset;
+
+	const char *runPath = nullptr;
 	
 	// save the lazy JUMP_SLOT relocation table
 	uintptr_t lazyRelocTableOffset;

@@ -85,7 +85,8 @@ SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 	return object;
 }
 
-SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name, uint64_t rts) {
+SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
+		SharedObject *origin, uint64_t rts) {
 	auto it = _nameMap.get(name);
 	if(it)
 		return *it;
@@ -107,11 +108,16 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name, uin
 	};
 
 	int fd = -1;
-	for(int i = 0; i < 4; i++) {
-		auto path = frg::string<MemoryAllocator>{getAllocator(), libdirs[i]} + name + '\0';
+	if(origin && origin->runPath) {
+		auto path = frg::string<MemoryAllocator>{getAllocator(), origin->runPath}
+				+ '/' + name + '\0';
 		fd = tryToOpen(path.data());
+	}
+	for(int i = 0; i < 4; i++) {
 		if(fd >= 0)
 			break;
+		auto path = frg::string<MemoryAllocator>{getAllocator(), libdirs[i]} + name + '\0';
+		fd = tryToOpen(path.data());
 	}
 	if(fd == -1)
 		return nullptr; // TODO: Free the SharedObject.
@@ -318,6 +324,8 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 				<< "' does not have a dynamic section" << frg::endlog;
 	__ensure(object->dynamic);
 
+	frg::optional<ptrdiff_t> runpath_offset;
+
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
 		Elf64_Dyn *dynamic = &object->dynamic[i];
 		switch(dynamic->d_tag) {
@@ -379,6 +387,9 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 						<< ") is not implemented correctly!\e[39m"
 						<< frg::endlog;
 			break;
+		case DT_RUNPATH:
+			runpath_offset = dynamic->d_val;
+			break;
 		// ignore unimportant tags
 		case DT_SONAME: case DT_NEEDED: case DT_RPATH: // we handle this later
 		case DT_INIT: case DT_FINI:
@@ -395,6 +406,10 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 					<< (void *)dynamic->d_tag << " in object" << frg::endlog;
 		}
 	}
+
+	if(runpath_offset)
+		object->runPath = reinterpret_cast<const char *>(object->baseAddress
+				+ object->stringTableOffset + *runpath_offset);
 }
 
 void ObjectRepository::_discoverDependencies(SharedObject *object, uint64_t rts) {
@@ -407,7 +422,7 @@ void ObjectRepository::_discoverDependencies(SharedObject *object, uint64_t rts)
 		const char *library_str = (const char *)(object->baseAddress
 				+ object->stringTableOffset + dynamic->d_val);
 
-		auto library = requestObjectWithName(frg::string_view{library_str}, rts);
+		auto library = requestObjectWithName(frg::string_view{library_str}, object, rts);
 		if(!library)
 			mlibc::panicLogger() << "Could not satisfy dependency " << library_str << frg::endlog;
 		object->dependencies.push(library);

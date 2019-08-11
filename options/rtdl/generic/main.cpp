@@ -236,7 +236,7 @@ void *__dlapi_open(const char *file, int local) {
 
 	SharedObject *object;
 	if(frg::string_view{file}.find_first('/') == size_t(-1)) {
-		object = initialRepository->requestObjectWithName(file, rts);
+		object = initialRepository->requestObjectWithName(file, nullptr, rts);
 	}else{
 		object = initialRepository->requestObjectAtPath(file, rts);
 	}
