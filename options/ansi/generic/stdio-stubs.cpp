@@ -932,9 +932,11 @@ int ferror_unlocked(FILE *file_base) {
 	return file_base->__status_bits & __MLIBC_ERROR_BIT;
 }
 
-int fgetc_unlocked(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int fgetc_unlocked(FILE *stream) {
+	unsigned char d;
+	if(fread(&d, 1, 1, stream) != 1)
+		return EOF;
+	return (int)d;
 }
 
 size_t fread_unlocked(void *buffer, size_t size, size_t count, FILE *file_base) {
