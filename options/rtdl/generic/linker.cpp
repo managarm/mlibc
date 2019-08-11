@@ -584,7 +584,7 @@ const char *ObjectSymbol::getString() {
 
 uintptr_t ObjectSymbol::virtualAddress() {
 	auto bind = ELF64_ST_BIND(_symbol->st_info);
-	__ensure(bind == STB_GLOBAL || bind == STB_WEAK);
+	__ensure(bind == STB_GLOBAL || bind == STB_WEAK || bind == STB_GNU_UNIQUE);
 	__ensure(_symbol->st_shndx != SHN_UNDEF);
 	return _object->baseAddress + _symbol->st_value;
 }
@@ -615,7 +615,7 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 			return false;
 
 		auto bind = ELF64_ST_BIND(cand.symbol()->st_info);
-		if(bind != STB_GLOBAL && bind != STB_WEAK)
+		if(bind != STB_GLOBAL && bind != STB_WEAK && bind != STB_GNU_UNIQUE)
 			return false;
 
 		return true;

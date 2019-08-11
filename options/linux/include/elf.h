@@ -81,7 +81,8 @@ extern inline unsigned char ELF64_ST_INFO(unsigned char bind, unsigned char type
 
 enum {
 	STB_GLOBAL = 1,
-	STB_WEAK = 2
+	STB_WEAK = 2,
+	STB_GNU_UNIQUE = 10
 };
 
 enum {
