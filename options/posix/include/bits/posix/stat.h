@@ -14,14 +14,14 @@
 #include <bits/ansi/time_t.h>
 #include <bits/ansi/timespec.h>
 
-#define S_IFMT 0x0F00
-#define S_IFBLK 0x0000
-#define S_IFCHR 0x0100
-#define S_IFIFO 0x0200
-#define S_IFREG 0x0300
-#define S_IFDIR 0x0400
-#define S_IFLNK 0x0500
-#define S_IFSOCK 0x0600
+#define S_IFMT 0x0F000
+#define S_IFBLK 0x06000
+#define S_IFCHR 0x02000
+#define S_IFIFO 0x01000
+#define S_IFREG 0x08000
+#define S_IFDIR 0x04000
+#define S_IFLNK 0x0A000
+#define S_IFSOCK 0x0C000
 
 #define S_IRWXU 0700
 #define S_IRUSR 0400
