@@ -244,8 +244,8 @@ pid_t getpgid(pid_t) {
 	__builtin_unreachable();
 }
 pid_t getpgrp(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: getpgrp() returns invalid PID" << frg::endlog;
+	return 0;
 }
 pid_t getsid(pid_t) {
 	__ensure(!"Not implemented");
@@ -348,8 +348,9 @@ int setgid(gid_t) {
 	__builtin_unreachable();
 }
 int setpgid(pid_t, pid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: setpgid() fails with ENOSYS" << frg::endlog;
+	errno = ENOSYS;
+	return -1;
 }
 pid_t setpgrp(void) {
 	__ensure(!"Not implemented");
@@ -409,8 +410,9 @@ pid_t tcgetpgrp(int fd) {
 	return -1;
 }
 int tcsetpgrp(int, pid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: tcsetpgrp() fails with ENOSYS" << frg::endlog;
+	errno = ENOSYS;
+	return -1;
 }
 int truncate(const char *, off_t) {
 	__ensure(!"Not implemented");
