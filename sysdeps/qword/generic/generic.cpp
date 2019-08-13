@@ -10,6 +10,14 @@
 
 namespace mlibc {
 
+int sys_gethostname(char *buffer, size_t bufsize) {
+    int ret;
+    asm volatile ("syscall" : "=a"(ret)
+            : "a"(36), "D"(buffer), "S"(bufsize)
+            : "rcx", "r11", "rdx");
+    return ret;
+}
+
 void sys_libc_log(const char *message) {
 	unsigned long res;
 	asm volatile ("syscall" : "=a"(res)
