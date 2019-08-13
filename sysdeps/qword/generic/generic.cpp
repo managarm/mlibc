@@ -343,7 +343,28 @@ int sys_access(const char *path, int mode) {
 	return 0;
 }
 
-int sys_dup(int fd, int flags, int *newfd) STUB_ONLY
+static int internal_dup(int fd, int *newfd, ...) {
+    va_list l;
+    va_start(l, newfd);
+    int ret;
+    int sys_errno = sys_fcntl(fd, F_DUPFD, l, &ret);
+    va_end(l);
+    if (sys_errno)
+        return sys_errno;
+    *newfd = ret;
+    return 0;
+}
+
+int sys_dup(int fd, int flags, int *newfd) {
+    (void)flags;
+    int ret;
+    int sys_errno = internal_dup(fd, &ret, 0);
+    if (sys_errno)
+        return sys_errno;
+    *newfd = ret;
+    return 0;
+}
+
 int sys_dup2(int fd, int flags, int newfd) {
     (void)flags;
     int ret;
