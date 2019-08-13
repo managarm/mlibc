@@ -320,7 +320,7 @@ int mblen(const char *mbs, size_t mb_limit) {
 
 	if(!mbs) {
 		mblen_state = __MLIBC_MBSTATE_INITIALIZER;
-		__ensure(!"TODO: Return whether encoding is stateful");
+		return cc->has_shift_states;
 	}
 
 	if(auto e = cc->decode_wtranscode(nseq, wseq, mblen_state); e != mlibc::charcode_error::null)

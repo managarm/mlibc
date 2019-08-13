@@ -84,8 +84,8 @@ struct polymorphic_charcode {
 		return charcode_error::null;
 	}
 
-	polymorphic_charcode(bool preserves_7bit_units_)
-	: preserves_7bit_units{preserves_7bit_units_} { }
+	polymorphic_charcode(bool preserves_7bit_units_, bool has_shift_states_)
+	: preserves_7bit_units{preserves_7bit_units_}, has_shift_states{has_shift_states_} { }
 
 	virtual charcode_error decode(code_seq<const char> &nseq, code_seq<codepoint> &wseq,
 			__mlibc_mbstate &st) = 0;
@@ -101,6 +101,9 @@ struct polymorphic_charcode {
 
 	// True iff promotion only zero-extends units below 0x7F.
 	const bool preserves_7bit_units;
+
+	// Whether the encoding has shift states.
+	const bool has_shift_states;
 };
 
 polymorphic_charcode *current_charcode();

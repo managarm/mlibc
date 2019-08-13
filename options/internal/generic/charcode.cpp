@@ -8,6 +8,7 @@ namespace mlibc {
 
 struct utf8_charcode {
 	static constexpr bool preserves_7bit_units = true;
+	static constexpr bool has_shift_states = false;
 
 	struct decode_state {
 		decode_state()
@@ -79,7 +80,7 @@ polymorphic_charcode::~polymorphic_charcode() = default;
 template<typename G>
 struct polymorphic_charcode_adapter : polymorphic_charcode {
 	polymorphic_charcode_adapter()
-	: polymorphic_charcode{G::preserves_7bit_units} { }
+	: polymorphic_charcode{G::preserves_7bit_units, G::has_shift_states} { }
 
 	charcode_error decode(code_seq<const char> &nseq, code_seq<codepoint> &wseq,
 			__mlibc_mbstate &st) override {
