@@ -486,7 +486,7 @@ FILE *fopen(const char *path, const char *mode) {
 		}
 		flags |= __MLIBC_O_CREAT | __MLIBC_O_TRUNC;
 	}else{
-		mlibc::panicLogger() << "Illegal fopen() mode '" << *mode << "'" << frg::endlog;
+		mlibc::infoLogger() << "Illegal fopen() mode '" << *mode << "'" << frg::endlog;
 	}
 	mode += 1;
 
@@ -500,7 +500,8 @@ FILE *fopen(const char *path, const char *mode) {
 			flags |= __MLIBC_O_CLOEXEC;
 			mode++;
 		}else{
-			mlibc::panicLogger() << "Illegal fopen() flag '" << mode << "'" << frg::endlog;
+			mlibc::infoLogger() << "Illegal fopen() flag '" << mode << "'" << frg::endlog;
+			mode++;
 		}
 	}
 
