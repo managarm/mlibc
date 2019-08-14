@@ -62,9 +62,34 @@ int mkstemp(char *pattern) {
 	return -1;
 }
 
-char *mkdtemp(char *path) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+char *mkdtemp(char *pattern) {
+	mlibc::infoLogger() << "mlibc mkdtemp(" << pattern << ") called" << frg::endlog;
+	auto n = strlen(pattern);
+	__ensure(n >= 6);
+	if(n < 6) {
+		errno = EINVAL;
+		return NULL;
+	}
+	for(size_t i = 0; i < 6; i++) {
+		if(pattern[n - 6 + i] == 'X')
+			continue;
+		errno = EINVAL;
+		return NULL;
+	}
+
+	// TODO: Do an exponential search.
+	for(size_t i = 0; i < 999999; i++) {
+		__ensure(sprintf(pattern + (n - 6), "%06zu", i) == 6);
+		if(int e = mlibc::sys_mkdir(pattern); !e) {
+			return pattern;
+		}else if(e != EEXIST) {
+			errno = e;
+			return NULL;
+		}
+	}
+
+	errno = EEXIST;
+	return NULL;
 }
 
 char *realpath(const char *path, char *out) {
