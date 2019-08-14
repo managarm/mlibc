@@ -167,26 +167,43 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 	if(verbose)
 		mlibc::infoLogger() << "rtdl: Loading " << object->name << frg::endlog;
 	
+	// Note: the entry pointer is absolute and not relative to the base address.
 	object->entry = entry_pointer;
+
+	frg::optional<ptrdiff_t> dynamic_offset;
+	frg::optional<ptrdiff_t> tls_offset;
 
 	// segments are already mapped, so we just have to find the dynamic section
 	for(size_t i = 0; i < phdr_count; i++) {
 		auto phdr = (Elf64_Phdr *)((uintptr_t)phdr_pointer + i * phdr_entry_size);
 		switch(phdr->p_type) {
+		case PT_PHDR:
+			// Determine the executable's base address (in the PIE case) by comparing
+			// the PHDR segment's load address against it's address in the ELF file.
+			object->baseAddress = reinterpret_cast<uintptr_t>(phdr_pointer) - phdr->p_vaddr;
+			if(verbose)
+				mlibc::infoLogger() << "rtdl: Executable is loaded at "
+						<< (void *)object->baseAddress << frg::endlog;
+			break;
 		case PT_DYNAMIC:
-			object->dynamic = (Elf64_Dyn *)(object->baseAddress + phdr->p_vaddr);
+			dynamic_offset = phdr->p_vaddr;
 			break;
 		case PT_TLS: {
 			object->tlsSegmentSize = phdr->p_memsz;
 			object->tlsAlignment = phdr->p_align;
 			object->tlsImageSize = phdr->p_filesz;
-			object->tlsImagePtr = (void *)(object->baseAddress + phdr->p_vaddr);
+			tls_offset = phdr->p_vaddr;
 		} break;
 		default:
 			//FIXME warn about unknown phdrs
 			break;
 		}
 	}
+
+	if(dynamic_offset)
+		object->dynamic = (Elf64_Dyn *)(object->baseAddress + *dynamic_offset);
+	if(tls_offset)
+		object->tlsImagePtr = (void *)(object->baseAddress + *tls_offset);
 }
 
 

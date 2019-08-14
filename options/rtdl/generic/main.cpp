@@ -187,7 +187,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	linker.initObjects();
 
 	if(logEntryExit)
-		mlibc::infoLogger() << "Leaving ld.so" << frg::endlog;
+		mlibc::infoLogger() << "Leaving ld.so, jump to "
+				<< (void *)executable->entry << frg::endlog;
 	return executable->entry;
 }
 
