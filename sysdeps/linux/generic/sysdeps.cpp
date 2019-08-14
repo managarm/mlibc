@@ -26,6 +26,8 @@ void sys_libc_log(const char *message) {
 	while(message[n])
 		n++;
 	do_syscall(NR_write, 1, message, n);
+	char lf = '\n';
+	do_syscall(NR_write, 1, &lf, 1);
 }
 
 void sys_libc_panic() {
