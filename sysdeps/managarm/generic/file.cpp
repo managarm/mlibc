@@ -203,6 +203,8 @@ int sys_mkdir(const char *path) {
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
 		return EEXIST;
+	} else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
@@ -3010,7 +3012,8 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	globalQueue.trim();
 
 	auto handle = cacheFileTable()[fd];
-	__ensure(handle);
+	if(!handle)
+		return EBADF;
 	
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_fd(fd);
