@@ -200,9 +200,26 @@ void tzset(void) {
 
 // POSIX extensions.
 
-int nanosleep(const struct timespec *, struct timespec *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int nanosleep(const struct timespec *req, struct timespec *) {
+	if (req->tv_sec < 0 || req->tv_nsec > 999999999 || req->tv_nsec < 0) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if(!mlibc::sys_sleep) {
+		MLIBC_MISSING_SYSDEP();
+		__ensure(!"Cannot continue without sys_sleep()");
+	}
+
+	struct timespec tmp = *req;
+
+	int e = mlibc::sys_sleep(&tmp.tv_sec, &tmp.tv_nsec);
+	if (!e) {
+		return 0;
+	} else {
+		errno = e;
+		return -1;
+	}
 }
 
 int clock_getres(clockid_t, struct timespec *) {
