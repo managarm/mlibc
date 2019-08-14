@@ -941,8 +941,8 @@ int fgetc_unlocked(FILE *stream) {
 
 size_t fread_unlocked(void *buffer, size_t size, size_t count, FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
-	__ensure(size);
-	__ensure(count);
+	if(!size || !count)
+		return 0;
 
 	// Distinguish two cases here: If the object size is one, we perform byte-wise reads.
 	// Otherwise, we try to read each object individually.
