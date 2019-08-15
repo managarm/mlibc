@@ -725,6 +725,11 @@ int fgetc(FILE *stream) {
 char *fgets(char *__restrict buffer, size_t max_size, FILE *__restrict stream) {
 	__ensure(max_size > 0);
 	for(size_t i = 0; ; i++) {
+		if (i == max_size - 1) {
+			buffer[i] = 0;
+			return buffer;
+		}
+
 		auto c = fgetc(stream);
 
 		// If fgetc() fails, there is either an EOF or an I/O error.
@@ -749,7 +754,7 @@ char *fgets(char *__restrict buffer, size_t max_size, FILE *__restrict stream) {
 			buffer[i] = c;
 		}
 
-		if(c == '\n' || i == max_size - 1) {
+		if(c == '\n') {
 			buffer[i + 1] = 0;
 			return buffer;
 		}
