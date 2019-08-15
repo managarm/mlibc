@@ -592,7 +592,7 @@ int setvbuf(FILE *file_base, char *buffer, int mode, size_t size) {
 void rewind(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	file->seek(0, SEEK_SET);
-	// TODO: rewind() should also clear the error indicator.
+	file_base->__status_bits &= ~(__MLIBC_EOF_BIT | __MLIBC_ERROR_BIT);
 }
 
 int ungetc(int c, FILE *file_base) {
