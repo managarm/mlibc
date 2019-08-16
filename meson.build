@@ -15,6 +15,9 @@ rtdl_sources = [ ]
 libc_sources = [ ]
 libc_sublibs = [ ]
 
+libc_deps = [ ]
+rtdl_deps = [ ]
+
 headers_only = get_option('headers_only')
 no_headers = get_option('mlibc_no_headers')
 disable_ansi_option = false
@@ -24,8 +27,13 @@ internal_conf = configuration_data()
 
 if not headers_only
 	cxxshim_dep = subproject('cxxshim').get_variable('cxxshim_dep')
+	libc_deps += cxxshim_dep
+	rtdl_deps += cxxshim_dep
 	frigg_dep = subproject('frigg',
 		default_options: ['frigg_no_install=true']).get_variable('frigg_dep')
+	libc_deps += frigg_dep
+	rtdl_deps += frigg_dep
+
 
 	add_languages('c', 'cpp')
 	c_compiler = meson.get_compiler('c')
@@ -71,6 +79,14 @@ elif host_machine.system() == 'qword'
 	rtdl_include_dirs += include_directories('sysdeps/qword/include')
 	libc_include_dirs += include_directories('sysdeps/qword/include')
 	subdir('sysdeps/qword')
+elif host_machine.system() == 'sigma'
+	disable_linux_option = true
+	rtdl_include_dirs += include_directories('sysdeps/sigma/include')
+	libc_include_dirs += include_directories('sysdeps/sigma/include')
+	libsigma = dependency('sigma')
+	libc_deps += libsigma
+	rtdl_deps += libsigma
+	subdir('sysdeps/sigma')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
@@ -156,7 +172,7 @@ if not headers_only
 			name_prefix: '',
 			cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
 			include_directories: rtdl_include_dirs,
-			dependencies: [cxxshim_dep, frigg_dep],
+			dependencies: rtdl_deps,
 			install: true)
 
 	shared_library('c',
@@ -168,7 +184,7 @@ if not headers_only
 			],
 			cpp_args: ['-DFRIGG_HAVE_LIBC'],
 			include_directories: libc_include_dirs,
-			dependencies: [cxxshim_dep, frigg_dep],
+			dependencies: libc_deps,
 			link_with: [ldso_lib],
 			link_whole: libc_sublibs,
 			install: true)
