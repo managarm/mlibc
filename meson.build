@@ -70,7 +70,6 @@ elif host_machine.system() == 'managarm'
 	internal_conf.set('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/managarm')
 elif host_machine.system() == 'qword'
-	disable_linux_option = true
 	rtdl_include_dirs += include_directories('sysdeps/qword/include')
 	libc_include_dirs += include_directories('sysdeps/qword/include')
 	subdir('sysdeps/qword')
