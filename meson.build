@@ -57,8 +57,6 @@ internal_conf.set('MLIBC_MAP_FILE_WINDOWS', false)
 # Process sysdeps first, as sysdeps might want to disable unsupported options.
 if host_machine.system() == 'linux'
 	disable_linux_option = true
-	# TODO: Specify this for each target.
-	add_project_link_arguments('-Wl,--hash-style=sysv', language: 'cpp')
 	rtdl_include_dirs += include_directories('sysdeps/linux/include')
 	libc_include_dirs += include_directories('sysdeps/linux/include')
 	subdir('sysdeps/linux')

@@ -115,6 +115,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		case DT_STRTAB: strtab_offset = ent->d_ptr; break;
 		case DT_SONAME: soname_str = ent->d_val; break;
 		case DT_HASH:
+		case DT_GNU_HASH:
 		case DT_STRSZ:
 		case DT_SYMTAB:
 		case DT_SYMENT:
