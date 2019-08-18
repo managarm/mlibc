@@ -4,6 +4,7 @@
 #include <mlibc/sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <libsigma/memory.h>
+#include <errno.h>
 
 #define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }
 
@@ -12,7 +13,7 @@ namespace mlibc
     int sys_anon_allocate(size_t size, void **pointer){
         __ensure((size & 0xFFF) == 0);
         uint64_t ret = libsigma_valloc(LIBSIGMA_VALLOC_TYPE_SBRK_LIKE, 0, size / 0x1000);
-        if(ret == 1) return 1;
+        if(ret == 1) return ENOMEM;
         *pointer = (void*)ret;
 
         return 0;

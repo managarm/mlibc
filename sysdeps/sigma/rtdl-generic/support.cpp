@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-
+#include <errno.h>
 #include <frg/vector.hpp>
 #include <frg/string.hpp>
 #include <frg/eternal.hpp>
@@ -54,7 +54,7 @@ int sys_tcb_set(void *pointer) {
 
 int sys_open(const char *path, int flags, int *fd){
     char buf[2] = {};
-    if(libsigma_read_initrd_file(path, reinterpret_cast<uint8_t*>(buf), 0, 1)) return 1; // File doesn't exist
+    if(libsigma_read_initrd_file(path, reinterpret_cast<uint8_t*>(buf), 0, 1)) return ENOENT; // File doesn't exist
     auto& file = get_file_descriptor_list().push_back(file_descriptor(path));
     (void)(flags);
     *fd = file.fd;
@@ -72,7 +72,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset){
         }
     }
 
-    return 1;
+    return EBADF;
 }
 int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read){
     for(auto& file : get_file_descriptor_list()){
@@ -87,7 +87,7 @@ int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read){
         }
     }
 
-    return 1;
+    return EBADF;
 }
 int sys_close(int fd){
     return 0;
@@ -98,7 +98,8 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 
     int ret = libsigma_vm_map(size, hint, prot, flags);
     *window = hint;
-    return ret;
+    if(ret == 0) return 0;
+    return ENOMEM;
 } // namespace mlibc
 
 }
