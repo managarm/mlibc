@@ -173,6 +173,7 @@ enum {
 	DT_DEBUG = 21,
 	DT_JMPREL = 23,
 	DT_FLAGS = 30,
+	DT_GNU_HASH = 0x6ffffef5,
 	DT_VERSYM = 0x6ffffff0,
 	DT_RELACOUNT = 0x6ffffff9,
 	DT_FLAGS_1 = 0x6ffffffb,

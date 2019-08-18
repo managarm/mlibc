@@ -348,6 +348,11 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		switch(dynamic->d_tag) {
 		// handle hash table, symbol table and string table
 		case DT_HASH:
+			object->hashStyle = HashStyle::systemV;
+			object->hashTableOffset = dynamic->d_ptr;
+			break;
+		case DT_GNU_HASH:
+			object->hashStyle = HashStyle::gnu;
 			object->hashTableOffset = dynamic->d_ptr;
 			break;
 		case DT_STRTAB:
@@ -624,6 +629,13 @@ uint32_t elf64Hash(frg::string_view string) {
 	return h;
 }
 
+uint32_t gnuHash(frg::string_view string) {
+    uint32_t h = 5381;
+	for(size_t i = 0; i < string.size(); ++i)
+        h = (h << 5) + h + string[i];
+    return h;
+}
+
 // TODO: move this to some namespace or class?
 frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_view string) {
 	// Checks if the symbol can be used to satisfy the dependency.
@@ -638,21 +650,67 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 		return true;
 	};
 
-	auto hash_table = (Elf64_Word *)(object->baseAddress + object->hashTableOffset);
-	Elf64_Word num_buckets = hash_table[0];
-	auto bucket = elf64Hash(string) % num_buckets;
+	if (object->hashStyle == HashStyle::systemV) {
+		auto hash_table = (Elf64_Word *)(object->baseAddress + object->hashTableOffset);
+		Elf64_Word num_buckets = hash_table[0];
+		auto bucket = elf64Hash(string) % num_buckets;
 
-	auto index = hash_table[2 + bucket];
-	while(index != 0) {
-		ObjectSymbol cand{object, (Elf64_Sym *)(object->baseAddress
-				+ object->symbolTableOffset + index * sizeof(Elf64_Sym))};
-		if(eligible(cand) && frg::string_view{cand.getString()} == string)
-			return cand;
+		auto index = hash_table[2 + bucket];
+		while(index != 0) {
+			ObjectSymbol cand{object, (Elf64_Sym *)(object->baseAddress
+					+ object->symbolTableOffset + index * sizeof(Elf64_Sym))};
+			if(eligible(cand) && frg::string_view{cand.getString()} == string)
+				return cand;
 
-		index = hash_table[2 + num_buckets + index];
+			index = hash_table[2 + num_buckets + index];
+		}
+
+		return frg::optional<ObjectSymbol>{};
+	}else{
+		__ensure(object->hashStyle == HashStyle::gnu);
+
+		struct GnuTable {
+			Elf64_Word nBuckets;
+			Elf64_Word symbolOffset;
+			Elf64_Word bloomSize;
+			Elf64_Word bloomShift;
+		};
+
+		auto hash_table = reinterpret_cast<const GnuTable *>(object->baseAddress
+				+ object->hashTableOffset);
+		auto buckets = reinterpret_cast<const Elf64_Word *>(object->baseAddress
+				+ object->hashTableOffset + sizeof(GnuTable)
+				+ hash_table->bloomSize * sizeof(Elf64_Addr));
+		auto chains = reinterpret_cast<const Elf64_Word *>(object->baseAddress
+				+ object->hashTableOffset + sizeof(GnuTable)
+				+ hash_table->bloomSize * sizeof(Elf64_Addr)
+				+ hash_table->nBuckets * sizeof(Elf64_Word));
+
+		// TODO: Use the bloom filter.
+
+		// The symbols of a given bucket are contiguous in the table.
+		auto hash = gnuHash(string);
+		auto index = buckets[hash % hash_table->nBuckets];
+
+		if(!index)
+			return frg::optional<ObjectSymbol>{};
+
+		while(true) {
+			// chains[] contains an array of hashes, parallel to the symbol table.
+			auto chash = chains[index - hash_table->symbolOffset];
+			if ((chash & ~1) == (hash & ~1)) {
+				ObjectSymbol cand{object, (Elf64_Sym *)(object->baseAddress
+						+ object->symbolTableOffset + index * sizeof(Elf64_Sym))};
+				if(eligible(cand) && frg::string_view{cand.getString()} == string)
+					return cand;
+			}
+
+			// If we hit the end of the chain, the symbol is not present.
+			if(chash & 1)
+				return frg::optional<ObjectSymbol>{};
+			index++;
+		}
 	}
-
-	return frg::optional<ObjectSymbol>();
 }
 
 

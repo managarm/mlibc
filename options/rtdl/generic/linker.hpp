@@ -64,6 +64,12 @@ extern frg::manual_box<ObjectRepository> initialRepository;
 // SharedObject
 // --------------------------------------------------------
 
+enum class HashStyle {
+	none,
+	systemV,
+	gnu
+};
+
 struct SharedObject {
 	SharedObject(const char *name, bool is_main_object,
 			uint64_t object_rts);
@@ -88,6 +94,7 @@ struct SharedObject {
 	bool tlsInitialized;
 
 	// symbol and string table of this shared object
+	HashStyle hashStyle = HashStyle::none;
 	uintptr_t hashTableOffset;
 	uintptr_t symbolTableOffset;
 	uintptr_t stringTableOffset;
