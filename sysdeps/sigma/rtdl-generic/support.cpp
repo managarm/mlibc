@@ -5,7 +5,7 @@
 #include <frg/vector.hpp>
 #include <frg/string.hpp>
 #include <frg/eternal.hpp>
-
+#include <mlibc/debug.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/sysdeps.hpp>
 
@@ -16,7 +16,8 @@
 namespace {
     class id_allocator{
         public:
-        constexpr id_allocator(): id(0) {}
+        constexpr id_allocator()
+        : id(0) {}
 
         uint64_t get_id(){
             return id++;
@@ -29,8 +30,12 @@ namespace {
     auto file_descriptor_allocator = id_allocator();
 
     struct file_descriptor {
-        file_descriptor(): fd(0), offset(0), name(frg::string<MemoryAllocator>(getAllocator())) {}
-        file_descriptor(const char* name): fd(file_descriptor_allocator.get_id()), offset(0), name(frg::string<MemoryAllocator>(getAllocator(), name) + '\0') {}
+        file_descriptor()
+        : fd(0), offset(0), name(frg::string<MemoryAllocator>(getAllocator())) {}
+        file_descriptor(const char* name)
+        : fd(file_descriptor_allocator.get_id()), offset(0), \
+          name(frg::string<MemoryAllocator>(getAllocator(), name) + '\0') {}
+        
         uint64_t fd, offset;
         frg::string<MemoryAllocator> name;
     };
@@ -42,7 +47,7 @@ namespace {
     
 }
 
-#include <mlibc/debug.hpp>
+
 namespace mlibc {
 
 int sys_tcb_set(void *pointer) {
@@ -79,7 +84,7 @@ int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read){
         if(file.fd == fd){
             if(libsigma_read_initrd_file(file.name.data(), (uint8_t*)data, file.offset, length)){
                 *bytes_read = 0;
-                return 1;
+                return EBADF;
             } else {
                 *bytes_read = length;
                 return 0;
@@ -94,11 +99,13 @@ int sys_close(int fd){
 }
 
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window){
-    if(!(flags & MAP_ANONYMOUS)) __ensure(!"Anything else than MAP_ANONYMOUS is unimplemented");
+    if(!(flags & (MAP_ANONYMOUS | MAP_FIXED))) 
+        __ensure(!"Anything else than MAP_ANONYMOUS | MAP_FIXED is unimplemented");
 
     int ret = libsigma_vm_map(size, hint, prot, flags);
     *window = hint;
-    if(ret == 0) return 0;
+    if(ret == 0) 
+        return 0;
     return ENOMEM;
 } // namespace mlibc
 

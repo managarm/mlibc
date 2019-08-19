@@ -8,8 +8,6 @@
 #include <libsigma/klog.h>
 #include <libsigma/thread.h>
 
-#define UNIMPLEMENTED() { __ensure(!"Unimplemented function was called"); __builtin_unreachable(); }
-
 namespace mlibc
 {
     void sys_libc_log(const char *message) {

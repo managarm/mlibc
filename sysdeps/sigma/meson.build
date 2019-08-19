@@ -1,5 +1,4 @@
 sigma_incl = include_directories('../../subprojects/libsigma/include')
-#		'../../subprojects/managarm/hel/include')
 
 rtdl_include_dirs += sigma_incl
 rtdl_sources += files(
@@ -8,7 +7,6 @@ rtdl_sources += files(
 	'rtdl-generic/support.cpp',
 )
 
-#libc_include_dirs += include_directories('../../../ports/libdrm/include')
 libc_include_dirs += sigma_incl
 
 libc_sources += files(

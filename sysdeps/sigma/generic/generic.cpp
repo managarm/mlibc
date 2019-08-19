@@ -12,11 +12,6 @@
 
 namespace mlibc {
     // Unknown Functions
-    int sys_tcb_set(void *pointer){
-	    libsigma_set_fsbase(reinterpret_cast<uint64_t>(pointer));
-        return 0;
-    }
-    
     int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) STUB_ONLY
     
     // Memory Related Functions
@@ -38,6 +33,11 @@ namespace mlibc {
     void sys_exit(int status){
         (void)(status);
         libsigma_kill();
+    }
+
+    int sys_tcb_set(void *pointer){
+        libsigma_set_fsbase(reinterpret_cast<uint64_t>(pointer));
+        return 0;
     }
 
     int sys_sleep(time_t *secs, long *nanos) STUB_ONLY
