@@ -1,1 +1,1 @@
-../../../../abis/managarm/abi.h
+../../../../abis/mlibc/abi.h

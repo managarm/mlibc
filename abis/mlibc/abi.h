@@ -1,3 +1,5 @@
+#ifndef _ABIBITS_ABI_H
+#define _ABIBITS_ABI_H
 
 // reserve 3 bits for the access mode
 #define __MLIBC_O_ACCMODE 0x0007
@@ -20,4 +22,4 @@
 #define __MLIBC_O_SYNC 0x2000
 #define __MLIBC_O_CLOEXEC 0x4000
 
-
+#endif // _ABIBITS_ABI_H
