@@ -99,7 +99,7 @@ int sys_close(int fd){
 }
 
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window){
-    if(!(flags & (MAP_ANONYMOUS | MAP_FIXED))) 
+    if(!(flags & MAP_ANONYMOUS) || !(flags | MAP_FIXED))
         __ensure(!"Anything else than MAP_ANONYMOUS | MAP_FIXED is unimplemented");
 
     int ret = libsigma_vm_map(size, hint, prot, flags);
