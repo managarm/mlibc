@@ -176,9 +176,17 @@ long fpathconf(int, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int fsync(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int fsync(int fd) {
+	if(!mlibc::sys_fsync) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(auto e = mlibc::sys_fsync(fd); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 int ftruncate(int fd, off_t size) {
 	if(!mlibc::sys_ftruncate) {
