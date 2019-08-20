@@ -1,1 +1,1 @@
-../../../../abis/sigma/abi.h
+../../../../abis/mlibc/abi.h
