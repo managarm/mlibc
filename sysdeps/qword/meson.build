@@ -6,7 +6,7 @@ rtdl_sources += files(
 libc_sources += files(
 	'generic/entry.cpp',
 	'generic/generic.cpp',
-	'generic/perfmon.cpp'
+	'generic/memstats.cpp'
 )
 
 if not no_headers
@@ -18,7 +18,7 @@ if not no_headers
 		subdir: 'abi-bits'
 	)
 	install_headers(
-		'include/qword/perfmon.h',
+		'include/qword/memstats.h',
 		subdir: 'qword'
 	)
 endif
