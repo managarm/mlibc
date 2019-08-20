@@ -1,1 +1,1 @@
-../../../../abis/qword/abi.h
+../../../../abis/mlibc/abi.h
