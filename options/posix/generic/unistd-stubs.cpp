@@ -299,8 +299,12 @@ pid_t getpgid(pid_t) {
 	__builtin_unreachable();
 }
 pid_t getpgrp(void) {
-	mlibc::infoLogger() << "mlibc: getpgrp() returns invalid PID" << frg::endlog;
-	return 0;
+	if(!mlibc::sys_getpgrp) {
+		MLIBC_MISSING_SYSDEP();
+		mlibc::infoLogger() << "mlibc: missing sysdep sys_getpgrp(). Returning invalid PGID" << frg::endlog;
+		return 0;
+	}
+	return mlibc::sys_getpgrp();
 }
 pid_t getsid(pid_t) {
 	__ensure(!"Not implemented");
