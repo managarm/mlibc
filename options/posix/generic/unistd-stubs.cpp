@@ -427,9 +427,14 @@ pid_t setsid(void) {
 	mlibc::infoLogger() << "\e[31mmlibc: setsid() is a no-op\e[39m" << frg::endlog;
 	return 1;
 }
-int setuid(uid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int setuid(uid_t uid) {
+	if(!mlibc::sys_setuid) {
+		MLIBC_MISSING_SYSDEP();
+		mlibc::infoLogger() << "mlibc: missing sysdep sys_setuid(). Returning 0" << frg::endlog;
+		return 0;
+	}
+
+	return mlibc::sys_setuid(uid);
 }
 void swab(const void *__restrict, void *__restrict, ssize_t) {
 	__ensure(!"Not implemented");

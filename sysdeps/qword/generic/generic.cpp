@@ -634,6 +634,14 @@ pid_t sys_getpgrp(void) {
     return pgid;
 }
 
+int sys_setuid(uid_t uid) {
+    int ret;
+    asm volatile ("syscall" : "=a" (ret)
+            : "a"(39), "D"(uid)
+            : "rcx", "r11", "rdx");
+    return ret;
+}
+
 #endif // MLIBC_BUILDING_RTDL
 
 } // namespace mlibc
