@@ -42,6 +42,8 @@ struct hostent {
 	char **h_addr_list;
 };
 
+#define h_addr h_addr_list[0] // Required by some programs
+
 struct netent {
 	char *n_name;
 	char **n_alises;
