@@ -81,6 +81,7 @@ if not no_headers
 	install_headers(
 		'include/netinet/in.h',
 		'include/netinet/ip.h',
+		'include/netinet/tcp.h',
 		subdir: 'netinet'
 	)
 	install_headers(

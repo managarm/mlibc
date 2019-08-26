@@ -48,8 +48,9 @@ struct ipv6_mreq {
 #define IPPROTO_TCP 5
 #define IPPROTO_UDP 6
 
-#define INADDR_ANY 1
-#define INADDR_BROADCAST 2
+#define INADDR_ANY ((in_addr_t)0x00000000)
+#define INADDR_BROADCAST ((in_addr_t)0xffffffff)
+#define INADDR_LOOPBACK ((in_addr_t)0x7f000001)
 
 #define INET_ADDRSTRLEN 1
 
@@ -64,11 +65,22 @@ struct ipv6_mreq {
 #define IPV6_V6ONLY 7
 
 #define IN6_IS_ADDR_UNSPECIFIED 1
-#define IN6_IS_ADDR_LOOPBACK 2
+#define IN6_IS_ADDR_LOOPBACK(a) ({ \
+    uint32_t *_a = (uint32_t *)((a)->s6_addr); \
+    !_a[0] && \
+    !_a[1] && \
+    !_a[2] && \
+     _a[3] == htonl(0x0001); \
+})
 #define IN6_IS_ADDR_MULTICAST 3
 #define IN6_IS_ADDR_LINKLOCAL 4
 #define IN6_IS_ADDR_SITELOCAL 5
-#define IN6_IS_ADDR_V4MAPPED 6
+#define IN6_IS_ADDR_V4MAPPED(a) ({ \
+    uint32_t *_a = (uint32_t *)((a)->s6_addr); \
+    !_a[0] && \
+    !_a[1] && \
+     _a[2] == htonl(0xffff); \
+})
 #define IN6_IS_ADDR_V4COMPAT 7
 #define IN6_IS_ADDR_MC_NODELOCAL 8
 #define IN6_IS_ADDR_MC_LINKLOCAL 9
