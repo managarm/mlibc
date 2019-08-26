@@ -1470,9 +1470,13 @@ int sys_inotify_add_watch(int ifd, const char *path, uint32_t mask, int *wd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	*wd = resp.wd();
-	return 0;
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		*wd = resp.wd();
+		return 0;
+	}
 }
 
 int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
