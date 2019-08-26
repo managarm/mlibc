@@ -12,7 +12,11 @@ extern "C" {
 
 // FIXME: use something like uint8_t with fixed bit-size
 typedef struct {
-	char __mlibc_elems[128];
+	union {
+		char __mlibc_elems[128];
+		// Some programs require the fds_bits field to be present
+		char fds_bits[128];
+	};
 } fd_set;
 
 #define FD_SETSIZE 1024
