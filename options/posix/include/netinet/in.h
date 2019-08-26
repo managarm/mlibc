@@ -54,7 +54,7 @@ struct ipv6_mreq {
 
 #define INET_ADDRSTRLEN 1
 
-#define INET6_ADDRSTRELN 1
+#define INET6_ADDRSTRLEN 1
 
 #define IPV6_JOIN_GROUP 1
 #define IPV6_LEAVE_GROUP 2
