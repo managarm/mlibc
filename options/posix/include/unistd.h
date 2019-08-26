@@ -50,6 +50,7 @@ extern "C" {
 #define _SC_PHYS_PAGES 2
 #define _SC_PAGE_SIZE 3
 #define _SCPAGESIZE _SC_PAGE_SIZE
+#define _SC_OPEN_MAX 256
 
 #define STDERR_FILENO 2
 #define STDIN_FILENO 0
