@@ -39,6 +39,7 @@ extern "C" {
 
 // MISSING: _PC macros
 // For now, use the Linux ABI for _PC constants.
+#define _PC_LINK_MAX 0
 #define _PC_NAME_MAX 3
 #define _PC_PATH_MAX 4
 #define _PC_PIPE_BUF 5
