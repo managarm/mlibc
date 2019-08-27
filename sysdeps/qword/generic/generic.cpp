@@ -514,7 +514,15 @@ int sys_getsockopt(int fd, int layer, int number,
 int sys_setsockopt(int fd, int layer, int number,
 		const void *buffer, socklen_t size) STUB_ONLY
 
-int sys_sleep(time_t *secs, long *nanos) STUB_ONLY
+int sys_sleep(time_t *secs, long *nanos) {
+    asm volatile ("syscall"
+        :
+        : "a"(40), "D"(*secs)
+        : "rcx", "r11");
+    *secs = 0;
+    *nanos = 0;
+    return 0;
+}
 int sys_fork(pid_t *child) {
     pid_t ret;
     int sys_errno;
