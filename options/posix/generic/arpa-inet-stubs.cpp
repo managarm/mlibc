@@ -16,6 +16,8 @@ struct bit_util<uint32_t> {
 
 } // anonymous namespace
 
+const struct in6_addr in6addr_any = {{}};
+
 uint32_t htonl(uint32_t x) {
 	return bit_util<uint32_t>::byteswap(x);
 }
