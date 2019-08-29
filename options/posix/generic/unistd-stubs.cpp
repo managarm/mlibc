@@ -459,12 +459,16 @@ void sync(void) {
 	__ensure(!"Not implemented");
 }
 unsigned long sysconf(int number) {
-	if(number == _SC_PAGE_SIZE) {
-		return mlibc::page_size;
-	}else{
-		mlibc::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented\e[39m"
-				<< frg::endlog;
-		__builtin_unreachable();
+	switch(number) {
+		case _SC_PAGE_SIZE:
+			return mlibc::page_size;
+		case _SC_OPEN_MAX:
+			// TODO: actually return a proper value for _SC_OPEN_MAX
+			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_OPEN_MAX) returns arbitrary value 256\e[39m" << frg::endlog;
+			return 256;
+		default:
+			mlibc::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented\e[39m" << frg::endlog;
+			__builtin_unreachable();
 	}
 }
 pid_t tcgetpgrp(int fd) {
