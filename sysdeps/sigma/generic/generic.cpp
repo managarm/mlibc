@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 
+#include <libsigma/memory.h>
 #include <libsigma/thread.h>
 
 
@@ -15,7 +16,17 @@ namespace mlibc {
     //int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) STUB_ONLY
     
     // Memory Related Functions
-    int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) STUB_ONLY
+    int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window){
+        if(!(flags & MAP_ANONYMOUS) || !(flags | MAP_FIXED))
+        __ensure(!"Anything else than MAP_ANONYMOUS | MAP_FIXED is unimplemented");
+
+        int ret = libsigma_vm_map(size, hint, prot, flags);
+        *window = hint;
+        if(ret == 0) 
+            return 0;
+        return ENOMEM;
+    }
+    
     /*#ifndef MLIBC_BUILDING_RTDL
     int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) STUB_ONLY
     #endif*/
@@ -25,8 +36,14 @@ namespace mlibc {
     #ifndef MLIBC_BUILDING_RTDL
     int sys_clock_get(int clock, time_t *secs, long *nanos) STUB_ONLY
 
-    int sys_futex_wait(int *pointer, int expected) STUB_ONLY
-    int sys_futex_wake(int *pointer) STUB_ONLY
+    // TODO: Actually implement this
+    int sys_futex_wait(int *pointer, int expected){
+        return 0;
+    }
+
+    int sys_futex_wake(int *pointer){
+        return 0;
+    }
 
     // Task functions
     void sys_exit(int status){
