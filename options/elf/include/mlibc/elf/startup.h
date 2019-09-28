@@ -1,6 +1,8 @@
 #ifndef MLIBC_ELF_STARTUP
 #define MLIBC_ELF_STARTUP
 
+void __mlibc_run_constructors();
+
 namespace mlibc {
 
 struct exec_stack_data {
