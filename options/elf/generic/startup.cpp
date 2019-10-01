@@ -20,6 +20,7 @@ struct global_constructor_guard {
 static global_constructor_guard g;
 
 void __mlibc_run_constructors() {
+/*
     if (!constructors_ran_already) {
         size_t constructor_count = (size_t)__init_array_end - (size_t)__init_array_start;
         constructor_count /= sizeof(void*);
@@ -28,6 +29,7 @@ void __mlibc_run_constructors() {
             ptr();
         }
     }
+*/
 }
 
 namespace mlibc {
