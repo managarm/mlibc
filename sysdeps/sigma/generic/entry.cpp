@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <bits/ensure.h>
 #include <mlibc/elf/startup.h>
+#include <mlibc/allocator.hpp>
+#include <mlibc/sigma-posix.hpp>
+#include <frg/eternal.hpp>
 
 void __mlibc_initLocale();
 
@@ -9,6 +12,12 @@ extern "C" uintptr_t* __dlapi_entrystack();
 
 extern char** environ;
 static mlibc::exec_stack_data __mlibc_stack_data;
+
+MemoryAllocator& getSysdepsAllocator(){
+    static frg::eternal<VirtualAllocator> virtualAllocator;
+    static frg::eternal<MemoryAllocator> singleton{virtualAllocator.get()};
+    return singleton.get();
+}
 
 struct LibraryGuard {
     LibraryGuard();

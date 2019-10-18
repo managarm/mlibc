@@ -14,6 +14,7 @@ libc_sources += files(
 	'generic/entry.cpp',
 	'generic/memory.cpp',
 	'generic/generic.cpp',
+	'generic/file.cpp'
 )
 
 if not no_headers

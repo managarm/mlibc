@@ -76,45 +76,6 @@ namespace mlibc {
     pid_t sys_getppid() STUB_ONLY
     #endif*/
 
-    // File functions
-    int sys_open(const char *path, int flags, int *fd) STUB_ONLY
-    int sys_close(int fd){
-        return 0;
-    }
-    int sys_seek(int fd, off_t offset, int whence, off_t *new_offset){
-        return ESPIPE;
-    }
-    int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) STUB_ONLY
-
-    #ifndef MLIBC_BUILDING_RTDL
-    int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) STUB_ONLY
-    #endif
-
-    /*
-    int sys_ioctl(int fd, unsigned long request, void *arg, int *result) STUB_ONLY
-    int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) STUB_ONLY
-    int sys_rename(const char *path, const char *new_path) STUB_ONLY
-    int sys_open_dir(const char *path, int *handle) STUB_ONLY
-    int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read) STUB_ONLY
-    int sys_access(const char *path, int mode) STUB_ONLY
-    int sys_dup(int fd, int flags, int *newfd) STUB_ONLY
-    int sys_dup2(int fd, int flags, int newfd) STUB_ONLY
-    int sys_isatty(int fd) STUB_ONLY
-    int sys_ttyname(int fd, char *buf, size_t size) STUB_ONLY
-    int sys_chroot(const char *path) STUB_ONLY
-    int sys_mkdir(const char *path) STUB_ONLY
-    int sys_tcgetattr(int fd, struct termios *attr) STUB_ONLY
-    int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) STUB_ONLY
-    int sys_tcflow(int fd, int action) STUB_ONLY
-    int sys_pipe(int *fds, int flags) STUB_ONLY
-    int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length) STUB_ONLY
-    int sys_ftruncate(int fd, size_t size) STUB_ONLY
-    int sys_fallocate(int fd, off_t offset, size_t size) STUB_ONLY
-    int sys_unlink(const char *path) STUB_ONLY
-    int sys_symlink(const char *target_path, const char *link_path) STUB_ONLY
-    int sys_fcntl(int fd, int request, va_list args, int *result) STUB_ONLY
-    #endif
-
     // Network related functions
     #ifndef MLIBC_BUILDING_RTDL
     int sys_socket(int family, int type, int protocol, int *fd) STUB_ONLY
