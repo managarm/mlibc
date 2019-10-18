@@ -17,6 +17,57 @@
 
 namespace mlibc {
     // File functions
+    static uint64_t tell(int fd){
+        auto& allocator = getSysdepsAllocator();
+        auto* req = reinterpret_cast<libsigma_tell_message*>(allocator.allocate(sizeof(libsigma_tell_message)));
+
+        req->command = TELL;
+        req->msg_id = 0;
+        req->fd = fd;
+
+        libsigma_ipc_set_message_checksum(req->msg(), sizeof(libsigma_tell_message));
+
+        if(libsigma_ipc_send(libsigma_get_um_tid(), sizeof(libsigma_tell_message), req->data()) == 1){
+            libsigma_klog("Failed to send tell message");
+            allocator.free(static_cast<void*>(req));
+            return -1;
+        }
+
+        if(libsigma_ipc_get_msg_size() == 0) // Block if response hasn't arrived yet
+            libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
+
+        size_t sz = libsigma_ipc_get_msg_size();
+        auto* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
+        uint64_t origin, useless;
+        if(libsigma_ipc_receive(&origin, &useless, ret->data()) == 1){
+            libsigma_klog("Failed to receive return msg");
+            allocator.free(static_cast<void*>(ret));
+            return -1;
+        }
+
+        if(!libsigma_ipc_check_message(ret->msg(), sz)){
+            libsigma_klog("Invalid message checksum");
+            allocator.free(static_cast<void*>(ret));
+            return -1;
+        } 
+
+        if(origin != libsigma_get_um_tid()){
+            allocator.free(static_cast<void*>(ret));
+            libsigma_klog("Didn't receive return message from correct thread");
+            return -1;
+        } 
+
+        if(ret->msg_id != 0){
+            allocator.free(static_cast<void*>(ret));
+            libsigma_klog("Return message didn't have correct message id");
+            return -1;
+        } 
+
+        uint64_t real_ret = ret->ret;
+        allocator.free(static_cast<void*>(ret));
+        return real_ret;
+    }
+
     int sys_open(const char *path, int flags, int *fd){
         SignalGuard sguard{};
         size_t path_size = strlen(path);
@@ -42,7 +93,8 @@ namespace mlibc {
 
         allocator.free(static_cast<void*>(req));
 
-        while(libsigma_ipc_get_msg_size() == 0); // No response yet
+        if(libsigma_ipc_get_msg_size() == 0) // Block if response hasn't arrived yet
+            libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
         size_t sz = libsigma_ipc_get_msg_size();
         libsigma_ret_message* ret = static_cast<libsigma_ret_message*>(allocator.allocate(sz));
@@ -95,7 +147,8 @@ namespace mlibc {
             return -1;
         }
 
-        while(libsigma_ipc_get_msg_size() == 0); // No response yet
+        if(libsigma_ipc_get_msg_size() == 0) // Block if response hasn't arrived yet
+            libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
         size_t sz = libsigma_ipc_get_msg_size();
         auto* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
@@ -149,7 +202,8 @@ namespace mlibc {
             return -1;
         }
 
-        while(libsigma_ipc_get_msg_size() == 0); // No response yet
+        if(libsigma_ipc_get_msg_size() == 0) // Block if response hasn't arrived yet
+            libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
         size_t sz = libsigma_ipc_get_msg_size();
         libsigma_ret_message* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
@@ -182,16 +236,172 @@ namespace mlibc {
         int real_ret = ret->ret;
         allocator.free(static_cast<void*>(ret));
         *bytes_written = count;
-        return 0;
+        return real_ret;
     }
 
     int sys_close(int fd){
+        SignalGuard sguard{};
+        auto& allocator = getSysdepsAllocator();
+        auto* req = reinterpret_cast<libsigma_close_message*>(allocator.allocate(sizeof(libsigma_close_message)));
+
+        req->command = CLOSE;
+        req->msg_id = 0;
+        req->fd = fd;
+        
+        libsigma_ipc_set_message_checksum(req->msg(), sizeof(libsigma_close_message));
+
+        if(libsigma_ipc_send(libsigma_get_um_tid(), sizeof(libsigma_close_message), req->data()) == 1){
+            libsigma_klog("Failed to send close message");
+            allocator.free(static_cast<void*>(req));
+            return -1;
+        }
+
+        if(libsigma_ipc_get_msg_size() == 0) // Block if response hasn't arrived yet
+            libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
+
+        size_t sz = libsigma_ipc_get_msg_size();
+        auto* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
+        uint64_t origin, useless;
+        if(libsigma_ipc_receive(&origin, &useless, ret->data()) == 1){
+            libsigma_klog("Failed to receive return msg");
+            allocator.free(static_cast<void*>(ret));
+            return -1;
+        }
+
+        if(!libsigma_ipc_check_message(ret->msg(), sz)){
+            libsigma_klog("Invalid message checksum");
+            allocator.free(static_cast<void*>(ret));
+            return -1;
+        } 
+
+        if(origin != libsigma_get_um_tid()){
+            allocator.free(static_cast<void*>(ret));
+            libsigma_klog("Didn't receive return message from correct thread");
+            return -1;
+        } 
+
+        if(ret->msg_id != 0){
+            allocator.free(static_cast<void*>(ret));
+            libsigma_klog("Return message didn't have correct message id");
+            return -1;
+        } 
+
+        int real_ret = ret->ret;
+        allocator.free(static_cast<void*>(ret));
+        return real_ret;
+    }
+
+    int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read){
+        SignalGuard sguard{};
+        auto& allocator = getSysdepsAllocator();
+        
+        auto* req = reinterpret_cast<libsigma_read_message*>(allocator.allocate(sizeof(libsigma_read_message)));
+
+        req->command = READ;
+        req->fd = fd;
+        req->count = count;
+
+        libsigma_ipc_set_message_checksum(req->msg(), sizeof(libsigma_read_message));
+
+        if(libsigma_ipc_send(libsigma_get_um_tid(), sizeof(libsigma_read_message), req->data()) == 1){
+            libsigma_klog("Failed to send read message");
+            allocator.free(static_cast<void*>(req));
+            return -1;
+        }
+
+        if(libsigma_ipc_get_msg_size() == 0) // Block if response hasn't arrived yet
+            libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
+
+        size_t sz = libsigma_ipc_get_msg_size();
+        libsigma_ret_message* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
+        uint64_t origin, useless;
+        if(libsigma_ipc_receive(&origin, &useless, ret->data()) == 1){
+            libsigma_klog("Failed to receive return message");
+            allocator.free(static_cast<void*>(ret));
+            return -1;
+        }
+            
+
+        if(!libsigma_ipc_check_message(ret->msg(), sz)){
+            libsigma_klog("Invalid return message checksum");
+            allocator.free(static_cast<void*>(ret));
+            return -1;
+        } 
+
+        if(origin != libsigma_get_um_tid()){
+            allocator.free(static_cast<void*>(ret));
+            libsigma_klog("Didn't receive return message from correct thread");
+            return -1;
+        } 
+
+        if(ret->msg_id != 0){
+            allocator.free(static_cast<void*>(ret));
+            libsigma_klog("Return message didn't have correct message id");
+            return -1;
+        } 
+
+        memcpy(buf, ret->buf, count);
+        allocator.free(static_cast<void*>(ret));
+        *bytes_read = count;
         return 0;
     }
+
     int sys_seek(int fd, off_t offset, int whence, off_t *new_offset){
-        return ESPIPE;
+        SignalGuard sguard{};
+        auto& allocator = getSysdepsAllocator();
+        auto* req = reinterpret_cast<libsigma_seek_message*>(allocator.allocate(sizeof(libsigma_seek_message)));
+
+        req->command = SEEK;
+        req->msg_id = 0;
+        req->fd = fd;
+        req->whence = whence;
+        req->offset = offset;
+        
+        libsigma_ipc_set_message_checksum(req->msg(), sizeof(libsigma_seek_message));
+
+        if(libsigma_ipc_send(libsigma_get_um_tid(), sizeof(libsigma_seek_message), req->data()) == 1){
+            libsigma_klog("Failed to send seek message");
+            allocator.free(static_cast<void*>(req));
+            return -1;
+        }
+
+        if(libsigma_ipc_get_msg_size() == 0) // Block if response hasn't arrived yet
+            libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
+
+        size_t sz = libsigma_ipc_get_msg_size();
+        auto* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
+        uint64_t origin, useless;
+        if(libsigma_ipc_receive(&origin, &useless, ret->data()) == 1){
+            libsigma_klog("Failed to receive return msg");
+            allocator.free(static_cast<void*>(ret));
+            return -1;
+        }
+
+        if(!libsigma_ipc_check_message(ret->msg(), sz)){
+            libsigma_klog("Invalid message checksum");
+            allocator.free(static_cast<void*>(ret));
+            return -1;
+        } 
+
+        if(origin != libsigma_get_um_tid()){
+            allocator.free(static_cast<void*>(ret));
+            libsigma_klog("Didn't receive return message from correct thread");
+            return -1;
+        } 
+
+        if(ret->msg_id != 0){
+            allocator.free(static_cast<void*>(ret));
+            libsigma_klog("Return message didn't have correct message id");
+            return -1;
+        } 
+
+        int real_ret = ret->ret;
+        allocator.free(static_cast<void*>(ret));
+
+        *new_offset = tell(fd);
+
+        return real_ret;
     }
-    int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) STUB_ONLY
 
     int sys_isatty(int fd){
         return 0;
