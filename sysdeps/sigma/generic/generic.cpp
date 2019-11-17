@@ -17,14 +17,14 @@ namespace mlibc {
     
     // Memory Related Functions
     int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window){
-        if(!(flags & MAP_ANONYMOUS) || !(flags | MAP_FIXED))
-        __ensure(!"Anything else than MAP_ANONYMOUS | MAP_FIXED is unimplemented");
+        if(!(flags & MAP_ANONYMOUS))
+            __ensure(!"MAP_ANONYMOUS must be set, fd based mmaps are unimplemented");
 
-        int ret = libsigma_vm_map(size, hint, prot, flags);
-        *window = hint;
-        if(ret == 0) 
-            return 0;
-        return ENOMEM;
+        void* ret = libsigma_vm_map(size, hint, prot, flags);
+        if(!ret)
+            return ENOMEM;
+        *window = ret;
+        return 0;
     }
     
     /*#ifndef MLIBC_BUILDING_RTDL
