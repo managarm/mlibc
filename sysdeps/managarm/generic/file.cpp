@@ -2357,6 +2357,45 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			return 0;
 		}
 	}
+	case DRM_IOCTL_MODE_DESTROY_DUMB: {
+		auto param = reinterpret_cast<drm_mode_destroy_dumb *>(arg);
+
+		HelAction actions[4];
+		globalQueue.trim();
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+
+		req.set_drm_handle(param->handle);
+
+		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(handle, actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		*result = resp.result();
+		return 0;
+	}
 	case TCGETS: {
 		auto param = reinterpret_cast<struct termios *>(arg);
 		HelAction actions[4];
