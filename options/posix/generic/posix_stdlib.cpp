@@ -28,7 +28,7 @@ long random(void) {
 // Path handling.
 // ----------------------------------------------------------------------------
 
-int mkstemp(char *pattern) {
+int mkostemp(char *pattern, int flags) {
 	auto n = strlen(pattern);
 	__ensure(n >= 6);
 	if(n < 6) {
@@ -50,7 +50,7 @@ int mkstemp(char *pattern) {
 
 		// TODO: Add a mode argument to sys_open().
 		int fd;
-		if(int e = mlibc::sys_open(pattern, O_RDWR | O_CREAT | O_EXCL, /*S_IRUSR | S_IWUSR,*/ &fd); !e) {
+		if(int e = mlibc::sys_open(pattern, O_RDWR | O_CREAT | O_EXCL | flags, /*S_IRUSR | S_IWUSR,*/ &fd); !e) {
 			return fd;
 		}else if(e != EEXIST) {
 			errno = e;
@@ -60,6 +60,10 @@ int mkstemp(char *pattern) {
 
 	errno = EEXIST;
 	return -1;
+}
+
+int mkstemp(char *path) {
+	return mkostemp(path, 0);
 }
 
 char *mkdtemp(char *pattern) {
