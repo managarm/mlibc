@@ -20,7 +20,7 @@ namespace mlibc {
         if(!(flags & MAP_ANONYMOUS))
             __ensure(!"MAP_ANONYMOUS must be set, fd based mmaps are unimplemented");
 
-        void* ret = libsigma_vm_map(size, hint, prot, flags);
+        void* ret = libsigma_vm_map(size, hint, NULL, prot, flags);
         if(!ret)
             return ENOMEM;
         *window = ret;
