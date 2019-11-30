@@ -93,3 +93,8 @@ int kill(pid_t pid, int number) {
 	return 0;
 }
 
+int sigtimedwait(const sigset_t *set, siginfo_t *info, const struct timespec *timeout) {
+	__ensure(!"sigtimedwait() not implemented");
+	__builtin_unreachable();
+}
+

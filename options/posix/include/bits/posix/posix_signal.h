@@ -39,6 +39,9 @@ extern "C" {
 #define SA_NOCLDWAIT (1 << 5)
 #define SA_NODEFER (1 << 6)
 
+#include <bits/ansi/time_t.h>
+#include <bits/ansi/timespec.h>
+
 #define NSIG 65
 
 // TODO: replace this by uint64_t
@@ -87,6 +90,8 @@ int sigaction(int, const struct sigaction *__restrict, struct sigaction *__restr
 
 // functions to raise signals
 int kill(pid_t pid, int sig);
+
+int sigtimedwait(const sigset_t *set, siginfo_t *info, const struct timespec *timeout);
 
 #ifdef __cplusplus
 }
