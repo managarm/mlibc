@@ -51,6 +51,7 @@ struct ipv6_mreq {
 #define INADDR_ANY ((in_addr_t)0x00000000)
 #define INADDR_BROADCAST ((in_addr_t)0xffffffff)
 #define INADDR_LOOPBACK ((in_addr_t)0x7f000001)
+#define INADDR_NONE ((in_addr_t)0xffffffff)
 
 #define INET_ADDRSTRLEN 1
 
