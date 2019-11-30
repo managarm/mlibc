@@ -297,7 +297,10 @@ void *__dlapi_resolve(void *handle, const char *string) {
 		target = Scope::resolveWholeScope(globalScope.get(), string, 0);
 	}
 
-	__ensure(target);
+	if (!target) {
+		mlibc::infoLogger() << "rtdl: could not resolve \"" << string << "\"" << frg::endlog;
+		return nullptr;
+	}
 	return reinterpret_cast<void *>(target->virtualAddress());
 }
 
