@@ -13,5 +13,7 @@
 #define CHAR_BIT 8
 #define LONG_BIT (CHAR_BIT * sizeof(long))
 
+#define PIPE_BUF 4096
+
 #endif // _LIMITS_H
 
