@@ -12,6 +12,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/charcode.hpp>
 #include <mlibc/sysdeps.hpp>
+#include <mlibc/strtofp.hpp>
 
 extern "C" int __cxa_atexit(void (*function)(void *), void *argument, void *dso_tag);
 void __mlibc_do_finalize();
@@ -24,8 +25,7 @@ namespace {
 }
 
 double atof(const char *string) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return strtod(string, NULL);
 }
 int atoi(const char *string) {
 	return strtol(string, nullptr, 10);
@@ -37,31 +37,13 @@ long long atoll(const char *string) {
 	return strtoll(string, nullptr, 10);
 }
 double strtod(const char *__restrict string, char **__restrict end) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return mlibc::strtofp<double>(string, end);
 }
 float strtof(const char *__restrict string, char **__restrict end) {
-	mlibc::infoLogger() << "mlibc: strtof() called on string '" << string << "'" << frg::endlog;
-
-	const char *s = string;
-	char *e;
-	long integral;
-	long fractional;
-
-	integral = strtol(s, &e, 10);
-	__ensure(*e == '.');
-	s = e + 1;
-	fractional = strtol(s, &e, 10);
-
-	if(end)
-		*end = e;
-
-	__ensure(!fractional);
-	return integral;
+	return mlibc::strtofp<float>(string, end);
 }
 long double strtold(const char *__restrict string, char **__restrict end) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return mlibc::strtofp<long double>(string, end);
 }
 long strtol(const char *__restrict string, char **__restrict end, int base) {
 //	mlibc::infoLogger() << "mlibc: strtol() called on string '" << string << "'" << frg::endlog;
@@ -185,8 +167,14 @@ void srandom(unsigned int) {
 }
 
 void *aligned_alloc(size_t alignment, size_t size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	void *ptr;
+	int ret = posix_memalign(&ptr, alignment, size);
+	if (ret) {
+		errno = ret;
+		return nullptr;
+	}
+	return ptr;
+
 }
 void *calloc(size_t count, size_t size) {
 	// TODO: this could be done more efficient if the OS gives us already zero'd pages
