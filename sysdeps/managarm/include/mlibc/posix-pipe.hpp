@@ -21,9 +21,6 @@ struct SignalGuard {
 	~SignalGuard();
 
 	SignalGuard &operator= (const SignalGuard &) = delete;
-
-private:
-	sigset_t _restoreMask;
 };
 
 // We need an allocator for message structs in sysdeps functions; the "normal" mlibc

@@ -32,6 +32,7 @@ void cacheFileTable() {
 
 	struct managarm_process_data {
 		HelHandle posix_lane;
+		void *thread_page;
 		HelHandle *file_table;
 		void *clock_tracker_page;
 	};

@@ -28,10 +28,13 @@ void *__mlibc_clk_tracker_page;
 namespace {
 	struct managarm_process_data {
 		HelHandle posix_lane;
+		void *thread_page;
 		HelHandle *file_table;
 		void *clock_tracker_page;
 	};
 
+	thread_local unsigned __mlibc_gsf_nesting;
+	thread_local void *__mlibc_cached_thread_page;
 	thread_local HelHandle *cachedFileTable;
 
 	// This construction is a bit weird: Even though the variables above
@@ -45,21 +48,37 @@ namespace {
 		HEL_CHECK(helSyscall1(kHelCallSuper + 1, reinterpret_cast<HelWord>(&data)));
 
 		__mlibc_posix_lane = data.posix_lane;
+		__mlibc_cached_thread_page = data.thread_page;
 		cachedFileTable = data.file_table;
 		__mlibc_clk_tracker_page = data.clock_tracker_page;
 	}
 }
 
 SignalGuard::SignalGuard() {
-	sigset_t all;
-	sigfillset(&all);
-	if(mlibc::sys_sigprocmask(SIG_BLOCK, &all, &_restoreMask))
-		mlibc::panicLogger() << "SignalGuard() failed" << frg::endlog;
+	pthread_once(&hasCachedInfos, &actuallyCacheInfos);
+	if(!__mlibc_cached_thread_page)
+		return;
+	auto p = reinterpret_cast<unsigned int *>(__mlibc_cached_thread_page);
+	if(!__mlibc_gsf_nesting)
+		__atomic_store_n(p, 1, __ATOMIC_RELAXED);
+	__mlibc_gsf_nesting++;
 }
 
 SignalGuard::~SignalGuard() {
-	if(mlibc::sys_sigprocmask(SIG_SETMASK, &_restoreMask, nullptr))
-		mlibc::panicLogger() << "~SignalGuard() failed" << frg::endlog;
+	pthread_once(&hasCachedInfos, &actuallyCacheInfos);
+	if(!__mlibc_cached_thread_page)
+		return;
+	auto p = reinterpret_cast<unsigned int *>(__mlibc_cached_thread_page);
+	assert(__mlibc_gsf_nesting > 0);
+	__mlibc_gsf_nesting--;
+	if(!__mlibc_gsf_nesting) {
+		unsigned int result = __atomic_exchange_n(p, 0, __ATOMIC_RELAXED);
+		if(result == 2) {
+			HEL_CHECK(helSyscall0(kHelCallSuper + 8));
+		}else{
+			__ensure(result == 1);
+		}
+	}
 }
 
 MemoryAllocator &getSysdepsAllocator() {
