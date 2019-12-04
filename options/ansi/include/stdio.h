@@ -7,6 +7,9 @@
 #include <bits/null.h>
 #include <bits/size_t.h>
 
+// Glibc extensions require ssize_t.
+#include <bits/posix/ssize_t.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -152,6 +155,10 @@ int putc_unlocked(int, FILE *);
 int putchar_unlocked(int);
 
 // GLIBC extensions.
+
+ssize_t getline(char **, size_t *, FILE *);
+ssize_t getdelim(char **, size_t *, int, FILE *);
+
 int asprintf(char **, const char *, ...);
 
 // Linux unlocked I/O extensions.

@@ -10,6 +10,7 @@
 
 #include <bits/ensure.h>
 
+#include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/file-io.hpp>
 #include <mlibc/sysdeps.hpp>
@@ -229,9 +230,13 @@ int fprintf(FILE *__restrict stream, const char *__restrict format, ...) {
 	return result;
 }
 int fscanf(FILE *__restrict stream, const char *__restrict format, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	va_list args;
+	va_start(args, format);
+	int result = vfscanf(stream, format, args);
+	va_end(args);
+	return result;
 }
+
 int printf(const char *__restrict format, ...) {
 	va_list args;
 	va_start(args, format);
@@ -663,8 +668,32 @@ int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_l
 	return p.count;
 }
 int vfscanf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+
+	struct {
+		char look_ahead() {
+			char c;
+			size_t actual_size;
+			file->read(&c, 1, &actual_size);
+			if (actual_size)
+				file->unget(c);
+			return actual_size ? c : 0;
+		}
+
+		char consume() {
+			char c;
+			size_t actual_size;
+			file->read(&c, 1, &actual_size);
+			if (actual_size)
+				num_consumed++;
+			return actual_size ? c : 0;
+		}
+
+		mlibc::abstract_file *file;
+		int num_consumed;
+	} handler = {file};
+
+	return do_scanf(handler, format, args);
 }
 int vprintf(const char *__restrict format, __gnuc_va_list args){
 	return vfprintf(stdout, format, args);
@@ -891,6 +920,45 @@ int perror(const char *string) {
 // POSIX unlocked I/O extensions.
 
 // GLIBC extensions.
+
+ssize_t getline(char **line, size_t *n, FILE *file_base) {
+	// Otherwise, we cannot store the buffer / size.
+	if(!line || !n) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	char *buffer = nullptr;
+	size_t capacity = 0;
+	if(*line) {
+		buffer = *line;
+		capacity = *n;
+	}
+
+	if(!capacity) {
+		buffer = reinterpret_cast<char *>(getAllocator().allocate(1024));
+		capacity = 1024;
+	}
+
+	if(!fgets(buffer, capacity, file_base))
+		return -1;
+
+	size_t k = strlen(buffer);
+	buffer[k] = '\n';
+	buffer[k + 1] = 0;
+	mlibc::infoLogger() << "returns: " << frg::escape_fmt(buffer, k + 1) << frg::endlog;
+
+	*line = buffer;
+	*n = capacity;
+	return k + 1;
+	//return getdelim(line, n, '\n', file_base);
+}
+
+ssize_t getdelim(char **line, size_t *n, int delim, FILE *file_base) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 int asprintf(char **out, const char *format, ...) {
 	va_list args;
 	va_start(args, format);
