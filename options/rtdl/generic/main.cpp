@@ -24,6 +24,8 @@ frg::manual_box<Loader> globalLoader;
 
 frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
+static SharedObject *executableSO;
+
 // Relocates the dynamic linker (i.e. this DSO) itself.
 // Assumptions:
 // - There are no references to external symbols.
@@ -178,19 +180,19 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	initialRepository->injectObjectFromDts(ldso_soname, ldso_base, _DYNAMIC, 1);
 
 	// TODO: support non-zero base addresses?
-	auto executable = initialRepository->injectObjectFromPhdrs("(executable)", phdr_pointer,
+	executableSO = initialRepository->injectObjectFromPhdrs("(executable)", phdr_pointer,
 			phdr_entry_size, phdr_count, entry_pointer, 1);
 
 	Loader linker{globalScope.get(), true, 1};
-	linker.submitObject(executable);
+	linker.submitObject(executableSO);
 	linker.linkObjects();
 	allocateTcb();
 	linker.initObjects();
 
 	if(logEntryExit)
 		mlibc::infoLogger() << "Leaving ld.so, jump to "
-				<< (void *)executable->entry << frg::endlog;
-	return executable->entry;
+				<< (void *)executableSO->entry << frg::endlog;
+	return executableSO->entry;
 }
 
 // the layout of this structure is dictated by the ABI
@@ -231,10 +233,12 @@ extern "C" [[gnu::visibility("default")]]
 void *__dlapi_open(const char *file, int local) {
 	// TODO: Thread-safety!
 	auto rts = rtsCounter++;
-	
 	if(local)
 		mlibc::infoLogger() << "\e[31mrtdl: RTLD_LOCAL is not supported properly\e[39m"
 				<< frg::endlog;
+
+	if(!file)
+		return executableSO;
 
 	SharedObject *object;
 	if(frg::string_view{file}.find_first('/') == size_t(-1)) {
