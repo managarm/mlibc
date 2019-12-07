@@ -115,6 +115,7 @@ int sys_close(int fd);
 	[[gnu::weak]] int sys_fsync(int fd);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 
+// mlibc assumes that anonymous memory returned by sys_vm_map() is zeroed by the kernel / whatever is behind the sysdeps
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window);
 
 #ifndef MLIBC_BUILDING_RTDL
