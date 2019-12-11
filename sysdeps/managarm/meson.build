@@ -1,8 +1,8 @@
 
 protoc = find_program('protoc')
-frigg_pb = find_program('frigg_pb')
+pb2frigg = find_program('pb2frigg')
 proto_gen = generator(protoc, arguments: [
-		'--plugin=protoc-gen-frigg=' + frigg_pb.path(),
+		'--plugin=protoc-gen-frigg=' + pb2frigg.path(),
 		'--frigg_out=@BUILD_DIR@',
 		'--proto_path=@CURRENT_SOURCE_DIR@/../../subprojects/managarm/bragi/proto',
 		'@INPUT@'
@@ -11,8 +11,9 @@ proto_gen = generator(protoc, arguments: [
 fs_pb = proto_gen.process('../../subprojects/managarm/bragi/proto/fs.proto')
 posix_pb = proto_gen.process('../../subprojects/managarm/bragi/proto/posix.proto')
 
-managarm_incl = include_directories('../../subprojects/managarm/frigg/include',
-		'../../subprojects/managarm/hel/include')
+managarm_incl = include_directories(
+		'../../subprojects/managarm/hel/include',
+		'../../subprojects/managarm/tools/pb2frigg/include')
 
 rtdl_include_dirs += managarm_incl
 rtdl_sources += files(
@@ -33,7 +34,6 @@ libc_sources += files(
 	'generic/entry.cpp',
 	'generic/file.cpp',
 	'generic/fork-exec.cpp',
-	'generic/frigg-support.cpp',
 	'generic/memory.cpp',
 	'generic/mount.cpp',
 	'generic/signals.cpp',

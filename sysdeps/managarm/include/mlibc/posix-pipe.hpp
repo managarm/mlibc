@@ -8,8 +8,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <frigg/initializer.hpp>
-
 #include <hel.h>
 #include <hel-syscalls.h>
 

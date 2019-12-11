@@ -1,4 +1,3 @@
-
 #include <bits/ensure.h>
 #include <signal.h>
 #include <stddef.h>
@@ -7,13 +6,10 @@
 
 #include <hel.h>
 #include <hel-syscalls.h>
+
 #include <mlibc/debug.hpp>
 #include <mlibc/allocator.hpp>
-#include <frigg/string.hpp>
-#include <frigg/protobuf.hpp>
-#include <frigg/vector.hpp>
 #include <mlibc/posix-pipe.hpp>
-
 #include <posix.frigg_pb.hpp>
 
 extern "C" void __mlibc_signal_restore();
@@ -57,7 +53,7 @@ int sys_sigaction(int number, const struct sigaction *__restrict action,
 		req.set_sig_restorer(reinterpret_cast<uintptr_t>(&__mlibc_signal_restore));
 	}
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -104,4 +100,3 @@ int sys_kill(int pid, int number) {
 }
 
 } //namespace mlibc
-

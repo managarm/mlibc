@@ -1,12 +1,10 @@
-
-#include <string.h>
 #include <errno.h>
+#include <string.h>
 #include <sys/mount.h>
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
 #include <mlibc/posix-pipe.hpp>
-
 #include <posix.frigg_pb.hpp>
 
 namespace mlibc {
@@ -20,11 +18,11 @@ int sys_mount(const char *source, const char *target,
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::MOUNT);
-	req.set_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), source));
-	req.set_target_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), target));
-	req.set_fs_type(frigg::String<MemoryAllocator>(getSysdepsAllocator(), fstype));
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), source));
+	req.set_target_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), target));
+	req.set_fs_type(frg::string<MemoryAllocator>(getSysdepsAllocator(), fstype));
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -53,5 +51,3 @@ int sys_mount(const char *source, const char *target,
 }
 
 } //namespace mlibc
-
-

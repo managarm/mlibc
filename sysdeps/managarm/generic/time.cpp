@@ -35,7 +35,7 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 
 		// Start the seqlock read.
 		auto seqlock = __atomic_load_n(&__mlibc_clk_tracker_page->seqlock, __ATOMIC_ACQUIRE);
-		assert(!(seqlock & 1));
+		__ensure(!(seqlock & 1));
 
 		// Perform the actual loads.
 		auto ref = __atomic_load_n(&__mlibc_clk_tracker_page->refClock, __ATOMIC_RELAXED);
@@ -43,7 +43,7 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 
 		// Finish the seqlock read.
 		__atomic_thread_fence(__ATOMIC_ACQUIRE);
-		assert(__atomic_load_n(&__mlibc_clk_tracker_page->seqlock, __ATOMIC_RELAXED) == seqlock);
+		__ensure(__atomic_load_n(&__mlibc_clk_tracker_page->seqlock, __ATOMIC_RELAXED) == seqlock);
 
 		// Calculate the current time.
 		uint64_t tick;

@@ -13,12 +13,6 @@
 #include <posix.frigg_pb.hpp>
 #include <fs.frigg_pb.hpp>
 
-// The frigg protobuf implementation uses assert(), so we need this function.
-extern "C" void __assert_fail(const char *assertion,
-		const char *file, unsigned int line, const char *function) {
-	frg_panic(assertion);
-}
-
 // --------------------------------------------------------
 // POSIX I/O functions.
 // --------------------------------------------------------
@@ -180,12 +174,12 @@ int sys_open(const char *path, int flags, int *fd) {
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::OPEN);
-	req.set_path(frigg::String<MemoryAllocator>(getAllocator(), path));
+	req.set_path(frg::string<MemoryAllocator>(getAllocator(), path));
 
 	if(!globalQueue.valid())
 		globalQueue.initialize();
 
-	frigg::String<MemoryAllocator> ser(getAllocator());
+	frg::string<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -229,7 +223,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	if(!globalQueue.valid())
 		globalQueue.initialize();
 
-	frigg::String<MemoryAllocator> ser(getAllocator());
+	frg::string<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -268,7 +262,7 @@ int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read) {
 	if(!globalQueue.valid())
 		globalQueue.initialize();
 
-	frigg::String<MemoryAllocator> ser(getAllocator());
+	frg::string<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -318,7 +312,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 		if(!globalQueue.valid())
 			globalQueue.initialize();
 
-		frigg::String<MemoryAllocator> ser(getAllocator());
+		frg::string<MemoryAllocator> ser(getAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -385,7 +379,7 @@ int sys_close(int fd) {
 	if(!globalQueue.valid())
 		globalQueue.initialize();
 
-	frigg::String<MemoryAllocator> ser(getAllocator());
+	frg::string<MemoryAllocator> ser(getAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;

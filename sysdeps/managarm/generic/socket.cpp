@@ -6,11 +6,6 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
-
-#include <frigg/vector.hpp>
-#include <frigg/string.hpp>
-#include <frigg/protobuf.hpp>
-
 #include <fs.frigg_pb.hpp>
 #include <posix.frigg_pb.hpp>
 
@@ -25,7 +20,7 @@ int sys_accept(int fd, int *newfd) {
 	req.set_request_type(managarm::posix::CntReqType::ACCEPT);
 	req.set_fd(fd);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -65,7 +60,7 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_BIND);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -112,7 +107,7 @@ int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) 
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_CONNECT);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -162,7 +157,7 @@ int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 	req.set_fd(fd);
 	req.set_size(max_addr_length);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -213,7 +208,7 @@ int sys_getsockopt(int fd, int layer, int number,
 		req.set_req_type(managarm::fs::CntReqType::PT_GET_OPTION);
 		req.set_command(SO_PEERCRED);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -271,7 +266,7 @@ int sys_setsockopt(int fd, int layer, int number,
 		req.set_command(SO_PASSCRED);
 		req.set_value(value);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;

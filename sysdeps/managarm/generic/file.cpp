@@ -34,16 +34,8 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
 #include <mlibc/sysdeps.hpp>
-
-#include <frigg/vector.hpp>
-#include <frigg/hashmap.hpp>
-#include <frigg/string.hpp>
-#include <frigg/protobuf.hpp>
-
 #include <posix.frigg_pb.hpp>
 #include <fs.frigg_pb.hpp>
-
-#include <mlibc/sysdeps.hpp>
 
 HelHandle __mlibc_getPassthrough(int fd) {
 	auto handle = cacheFileTable()[fd];
@@ -60,9 +52,9 @@ int sys_chdir(const char *path) {
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::CHDIR);
-	req.set_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -103,7 +95,7 @@ int sys_fchdir(int fd) {
 	req.set_request_type(managarm::posix::CntReqType::FCHDIR);
 	req.set_fd(fd);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -138,9 +130,9 @@ int sys_chroot(const char *path) {
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::CHROOT);
-	req.set_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -175,9 +167,9 @@ int sys_mkdir(const char *path) {
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::MKDIR);
-	req.set_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -218,10 +210,10 @@ int sys_symlink(const char *target_path, const char *link_path) {
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::SYMLINK);
-	req.set_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), link_path));
-	req.set_target_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), target_path));
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), link_path));
+	req.set_target_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), target_path));
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -256,10 +248,10 @@ int sys_rename(const char *path, const char *new_path) {
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::RENAME);
-	req.set_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), path));
-	req.set_target_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), new_path));
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_target_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), new_path));
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -305,7 +297,7 @@ HelHandle __raw_map(int fd) {
 	req.set_req_type(managarm::fs::CntReqType::MMAP);
 	req.set_fd(fd);
 	
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -361,7 +353,7 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		req.set_request_type(managarm::posix::CntReqType::FD_GET_FLAGS);
 		req.set_fd(fd);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -407,7 +399,7 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		req.set_req_type(managarm::fs::CntReqType::PT_GET_FILE_FLAGS);
 		req.set_fd(fd);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -447,7 +439,7 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		req.set_fd(fd);
 		req.set_flags(va_arg(args, int));
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -497,7 +489,7 @@ int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) 
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_READ_ENTRIES);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -545,7 +537,7 @@ int sys_ttyname(int fd, char *buf, size_t size) {
 	req.set_request_type(managarm::posix::CntReqType::TTY_NAME);
 	req.set_fd(fd);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -589,7 +581,7 @@ int sys_getcwd(char *buffer, size_t size) {
 	req.set_request_type(managarm::posix::CntReqType::GETCWD);
 	req.set_size(size);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -640,7 +632,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 	req.set_fd(fd);
 	req.set_rel_offset(offset);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -680,7 +672,7 @@ int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) {
 	req.set_size(size);
 	req.set_new_size(new_size);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -719,7 +711,7 @@ int sys_vm_unmap(void *pointer, size_t size) {
 	req.set_address(reinterpret_cast<uintptr_t>(pointer));
 	req.set_size(size);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -780,7 +772,7 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	req.set_protocol(proto);
 	req.set_flags(type_and_flags & flags_mask);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -818,7 +810,7 @@ int sys_pipe(int *fds, int flags) {
 	req.set_request_type(managarm::posix::CntReqType::PIPE_CREATE);
 	req.set_flags(flags);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -865,7 +857,7 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 	req.set_protocol(proto);
 	req.set_flags(type_and_flags & flags_mask);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -930,7 +922,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		}
 	}
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -991,7 +983,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	req.set_addr_size(hdr->msg_namelen);
 	req.set_ctrl_size(hdr->msg_controllen);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -1071,7 +1063,7 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 		req.add_events(mask);
 	}
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -1131,7 +1123,7 @@ int sys_epoll_create(int flags, int *fd) {
 	req.set_request_type(managarm::posix::CntReqType::EPOLL_CREATE);
 	req.set_flags(proto_flags);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -1185,7 +1177,7 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 	req.set_fd(epfd);
 	req.set_newfd(fd);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -1226,7 +1218,7 @@ int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout, int 
 	req.set_size(n);
 	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -1271,7 +1263,7 @@ int sys_timerfd_create(int flags, int *fd) {
 	req.set_request_type(managarm::posix::CntReqType::TIMERFD_CREATE);
 	req.set_flags(flags);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -1314,7 +1306,7 @@ int sys_timerfd_settime(int fd, int flags,
 	req.set_interval_secs(value->it_interval.tv_sec);
 	req.set_interval_nanos(value->it_interval.tv_nsec);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -1362,7 +1354,7 @@ int sys_signalfd_create(sigset_t mask, int flags, int *fd) {
 	req.set_flags(proto_flags);
 	req.set_sigset(mask);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -1406,7 +1398,7 @@ int sys_inotify_create(int flags, int *fd) {
 	req.set_request_type(managarm::posix::CntReqType::INOTIFY_CREATE);
 	req.set_flags(proto_flags);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -1443,10 +1435,10 @@ int sys_inotify_add_watch(int ifd, const char *path, uint32_t mask, int *wd) {
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::INOTIFY_ADD);
 	req.set_fd(ifd);
-	req.set_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 	req.set_flags(mask);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -1495,7 +1487,7 @@ int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
 	req.set_flags(proto_flags);
 	req.set_initval(initval);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -1546,7 +1538,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
 		
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -1603,7 +1595,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_command(request);
 		req.set_drm_capability(param->capability);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -1680,7 +1672,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
 		
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -1757,7 +1749,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_drm_connector_id(param->connector_id);
 		req.set_drm_max_modes(param->count_modes);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -1826,7 +1818,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_command(request);
 		req.set_drm_encoder_id(param->encoder_id);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -1874,7 +1866,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_drm_bpp(param->bpp);
 		req.set_drm_flags(param->flags);	
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -1923,7 +1915,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_drm_depth(param->depth);
 		req.set_drm_handle(param->handle);
 	
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -1979,7 +1971,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_drm_depth(24);
 		req.set_drm_handle(param->handles[0]);
 	
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2021,7 +2013,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	
 		req.set_drm_fb_id(*param);
 	
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2061,7 +2053,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		req.set_drm_handle(param->handle);
 	
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2102,7 +2094,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_command(request);
 		req.set_drm_crtc_id(param->crtc_id);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2162,7 +2154,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_drm_fb_id(param->fb_id);
 		req.set_drm_mode_valid(param->mode_valid);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2214,12 +2206,12 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
 
-		assert(!(param->flags & ~DRM_MODE_PAGE_FLIP_EVENT));
+		__ensure(!(param->flags & ~DRM_MODE_PAGE_FLIP_EVENT));
 		req.set_drm_crtc_id(param->crtc_id);
 		req.set_drm_fb_id(param->fb_id);
 		req.set_drm_cookie(param->user_data);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2267,10 +2259,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			clip.set_y1(dest->y1);
 			clip.set_x2(dest->x2);
 			clip.set_y2(dest->y2);
-			req.add_drm_clips(frigg::move(clip));
+			req.add_drm_clips(std::move(clip));
 		}
 	
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2324,7 +2316,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			return EINVAL;
 		}
 		
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2369,7 +2361,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		req.set_drm_handle(param->handle);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2405,7 +2397,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2449,7 +2441,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2492,7 +2484,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2538,7 +2530,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_pts_pixel_width(param->ws_xpixel);
 		req.set_pts_pixel_height(param->ws_ypixel);
 
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2576,7 +2568,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
 	
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2688,7 +2680,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			req.set_command(EVIOCGBIT(0, 0));
 			req.set_size(_IOC_SIZE(request));
 
-			frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+			frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 			req.SerializeToString(&ser);
 			actions[0].type = kHelActionOffer;
 			actions[0].flags = kHelItemAncillary;
@@ -2734,7 +2726,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			req.set_input_type(type);
 			req.set_size(_IOC_SIZE(request));
 
-			frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+			frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 			req.SerializeToString(&ser);
 			actions[0].type = kHelActionOffer;
 			actions[0].flags = kHelItemAncillary;
@@ -2779,7 +2771,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_command(request);
 		req.set_input_clock(*param);
 	
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2819,7 +2811,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_command(EVIOCGABS(0));
 		req.set_input_type(type);
 	
-		frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
 		actions[0].flags = kHelItemAncillary;
@@ -2883,10 +2875,10 @@ int sys_open(const char *path, int flags, int *fd) {
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::OPEN);
-	req.set_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 	req.set_flags(proto_flags);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -2922,7 +2914,6 @@ int sys_open(const char *path, int flags, int *fd) {
 }
 
 int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
-	//mlibc::infoLogger() << "read() " << max_size << frigg::EndLog();
 	SignalGuard sguard;
 	HelAction actions[5];
 	globalQueue.trim();
@@ -2935,7 +2926,7 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	req.set_fd(fd);
 	req.set_size(max_size);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -2994,13 +2985,12 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	auto handle = cacheFileTable()[fd];
 	__ensure(handle);
 
-//	mlibc::infoLogger.log() << "write()" << frigg::EndLog();
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::WRITE);
 	req.set_fd(fd);
 	req.set_size(size);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -3072,7 +3062,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 		mlibc::panicLogger() << "Illegal whence argument " << whence << frg::endlog;
 	}
 	
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -3115,7 +3105,7 @@ int sys_close(int fd) {
 	req.set_request_type(managarm::posix::CntReqType::CLOSE);
 	req.set_fd(fd);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	
 	actions[0].type = kHelActionOffer;
@@ -3156,7 +3146,7 @@ int sys_dup(int fd, int flags, int *newfd) {
 	HelAction actions[3];
 	globalQueue.trim();
 	
-	assert(!(flags & ~(__MLIBC_O_CLOEXEC)));
+	__ensure(!(flags & ~(__MLIBC_O_CLOEXEC)));
 	
 	uint32_t proto_flags = 0;
 	if(flags & __MLIBC_O_CLOEXEC)
@@ -3167,7 +3157,7 @@ int sys_dup(int fd, int flags, int *newfd) {
 	req.set_fd(fd);
 	req.set_flags(proto_flags);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -3207,7 +3197,7 @@ int sys_dup2(int fd, int flags, int newfd) {
 	req.set_newfd(newfd);
 	req.set_flags(flags);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -3248,7 +3238,7 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 		}else{
 			req.set_request_type(managarm::posix::CntReqType::LSTAT);
 		}
-		req.set_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), path));
+		req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 	}else{
 		__ensure(fsfdt == fsfd_target::fd);
 		__ensure(!flags);
@@ -3256,7 +3246,7 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 		req.set_fd(fd);
 	}
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -3324,9 +3314,9 @@ int sys_readlink(const char *path, void *data, size_t max_size, ssize_t *length)
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::READLINK);
-	req.set_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -3379,7 +3369,7 @@ int sys_ftruncate(int fd, size_t size) {
 	req.set_req_type(managarm::fs::CntReqType::PT_TRUNCATE);
 	req.set_size(size);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -3420,7 +3410,7 @@ int sys_fallocate(int fd, off_t offset, size_t size) {
 	req.set_rel_offset(offset);
 	req.set_size(size);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -3456,9 +3446,9 @@ int sys_unlink(const char *path) {
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::UNLINK);
-	req.set_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -3498,9 +3488,9 @@ int sys_access(const char *path, int mode) {
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::ACCESS);
-	req.set_path(frigg::String<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -3541,7 +3531,7 @@ int sys_isatty(int fd) {
 	req.set_request_type(managarm::posix::CntReqType::IS_TTY);
 	req.set_fd(fd);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;

@@ -1,18 +1,14 @@
-
 #include <pthread.h>
 #include <stdlib.h>
 #include <sys/auxv.h>
+
+#include <frg/eternal.hpp>
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
 #include <mlibc/sysdeps.hpp>
-
-#include <frg/eternal.hpp>
-#include <frigg/vector.hpp>
-#include <frigg/string.hpp>
-#include <frigg/protobuf.hpp>
 
 // defined by the POSIX library
 void __mlibc_initLocale();
@@ -69,7 +65,7 @@ SignalGuard::~SignalGuard() {
 	if(!__mlibc_cached_thread_page)
 		return;
 	auto p = reinterpret_cast<unsigned int *>(__mlibc_cached_thread_page);
-	assert(__mlibc_gsf_nesting > 0);
+	__ensure(__mlibc_gsf_nesting > 0);
 	__mlibc_gsf_nesting--;
 	if(!__mlibc_gsf_nesting) {
 		unsigned int result = __atomic_exchange_n(p, 0, __ATOMIC_RELAXED);
@@ -140,4 +136,3 @@ extern "C" void __mlibc_entry(int (*main_function)(int argc, char *argv[], char 
 	auto result = main_function(__mlibc_argc, __mlibc_argv, environ);
 	exit(result);
 }
-

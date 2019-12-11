@@ -16,16 +16,10 @@
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
-#include <mlibc/posix-pipe.hpp>
-
 #include <mlibc/debug.hpp>
-#include <frigg/vector.hpp>
-#include <frigg/string.hpp>
-#include <frigg/protobuf.hpp>
-
-#include <posix.frigg_pb.hpp>
-
+#include <mlibc/posix-pipe.hpp>
 #include <mlibc/sysdeps.hpp>
+#include <posix.frigg_pb.hpp>
 
 namespace mlibc {
 
@@ -53,7 +47,7 @@ int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
 	req.set_pid(pid);
 	req.set_flags(flags);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -147,13 +141,13 @@ int sys_fork(pid_t *child) {
 
 int sys_execve(const char *path, char *const argv[], char *const envp[]) {
 	// TODO: Make this function signal-safe!
-	frigg::String<MemoryAllocator> args_area(getSysdepsAllocator());
+	frg::string<MemoryAllocator> args_area(getSysdepsAllocator());
 	for(auto it = argv; *it; ++it)
-		args_area += frigg::StringView{*it, strlen(*it) + 1};
+		args_area += frg::string_view{*it, strlen(*it) + 1};
 
-	frigg::String<MemoryAllocator> env_area(getSysdepsAllocator());
+	frg::string<MemoryAllocator> env_area(getSysdepsAllocator());
 	for(auto it = envp; *it; ++it)
-		env_area += frigg::StringView{*it, strlen(*it) + 1};
+		env_area += frg::string_view{*it, strlen(*it) + 1};
 
 	uintptr_t arg0 = reinterpret_cast<uintptr_t>(path);
 	uintptr_t arg1 = strlen(path);
@@ -198,7 +192,7 @@ pid_t sys_getpid() {
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::GET_PID);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
@@ -242,7 +236,7 @@ int sys_getrusage(int scope, struct rusage *usage) {
 	req.set_request_type(managarm::posix::CntReqType::GET_RESOURCE_USAGE);
 	req.set_mode(scope);
 
-	frigg::String<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
