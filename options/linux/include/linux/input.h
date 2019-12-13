@@ -65,6 +65,7 @@ struct input_absinfo {
 //----------------------------------
 
 #define SYN_REPORT 0
+#define SYN_DROPPED 3
 
 //----------------------------------
 // Key Codes
