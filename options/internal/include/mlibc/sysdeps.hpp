@@ -120,6 +120,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 
 #ifndef MLIBC_BUILDING_RTDL
 	[[gnu::weak]] int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window);
+	[[gnu::weak]] int sys_vm_protect(void *pointer, size_t size, int prot);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 
 int sys_vm_unmap(void *pointer, size_t size);

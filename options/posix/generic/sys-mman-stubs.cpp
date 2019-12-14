@@ -6,11 +6,18 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
-int mprotect(void *, size_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int mprotect(void *pointer, size_t size, int prot) {
+	if(!mlibc::sys_vm_protect) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_vm_protect(pointer, size, prot); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
-
 
 int mlock(const void *, size_t) {
 	__ensure(!"Not implemented");
