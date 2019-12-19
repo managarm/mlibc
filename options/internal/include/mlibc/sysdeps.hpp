@@ -50,6 +50,7 @@ int sys_anon_free(void *pointer, size_t size);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 
 int sys_open(const char *pathname, int flags, int *fd);
+[[gnu::weak]] int sys_flock(int fd, int options);
 
 #ifndef MLIBC_BUILDING_RTDL
 	[[gnu::weak]] int sys_open_dir(const char *path, int *handle);
