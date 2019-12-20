@@ -39,7 +39,9 @@ private:
 
 namespace {
 
-unsigned int threadId() {
+unsigned int this_tid() {
+	if(mlibc::sys_futex_tid)
+		return mlibc::sys_futex_tid();
 	return 1;
 }
 
@@ -48,7 +50,8 @@ unsigned int threadId() {
 static constexpr unsigned int mutexRecursive = 1;
 
 // TODO: either use uint32_t or determine the bit based on sizeof(int).
-static constexpr unsigned int waiters = 1 << 31;
+static constexpr unsigned int mutex_owner_mask = (static_cast<uint32_t>(1) << 31) - 1;
+static constexpr unsigned int mutex_waiters_bit = static_cast<uint32_t>(1) << 31;
 
 // ----------------------------------------------------------------------------
 // pthread_attr and pthread functions.
@@ -185,7 +188,7 @@ void *pthread_getspecific(pthread_key_t key) {
 		__ensure("Could not lock mutex");
 	
 	void *value = nullptr;
-	auto it = key->values.get(threadId());
+	auto it = key->values.get(this_tid());
 	if(it)
 		value = *it;
 
@@ -201,11 +204,11 @@ int pthread_setspecific(pthread_key_t key, const void *value) {
 	if(pthread_mutex_lock(&key->mutex))
 		__ensure("Could not lock mutex");
 	
-	auto it = key->values.get(threadId());
+	auto it = key->values.get(this_tid());
 	if(it) {
 		*it = const_cast<void *>(value);
 	}else{
-		key->values.insert(threadId(), const_cast<void *>(value));
+		key->values.insert(this_tid(), const_cast<void *>(value));
 	}
 
 	if(pthread_mutex_unlock(&key->mutex))
@@ -328,25 +331,33 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 	unsigned int expected = 0;
 	while(true) {
 		if(!expected) {
-			// try to take the mutex here.
+			// Try to take the mutex here.
 			if(__atomic_compare_exchange_n(&mutex->__mlibc_state,
-					&expected, 1, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
+					&expected, this_tid(), false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
+				__ensure(!mutex->__mlibc_recursion);
+				mutex->__mlibc_recursion = 1;
 				return 0;
+			}
 		}else{
-			if(mutex->__mlibc_flags & mutexRecursive)
-				__ensure(!"TODO: Implement recursive mutexes");
+			// If this (recursive) mutex is already owned by us, increment the recursion level.
+			if((expected & mutex_owner_mask) == this_tid()) {
+				if(!(mutex->__mlibc_flags & mutexRecursive))
+					mlibc::panicLogger() << "mlibc: pthread_mutex deadlock detected!"
+							<< frg::endlog;
+				++mutex->__mlibc_recursion;
+				return 0;
+			}
 
-			// wait on the futex if the waiters flag is set.
-			if(expected & waiters) {
+			// Wait on the futex if the waiters flag is set.
+			if(expected & mutex_waiters_bit) {
 				if(int e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected); e)
 					__ensure(!"sys_futex_wait() failed");
 				
-				// opportunistically try to take the lock after we wake up.
+				// Opportunistically try to take the lock after we wake up.
 				expected = 0;
 			}else{
-				// otherwise we have to set the waiters flag first.
-				unsigned int desired = expected | waiters;
-				mlibc::infoLogger() << desired << frg::endlog;
+				// Otherwise we have to set the waiters flag first.
+				unsigned int desired = expected | mutex_waiters_bit;
 				if(__atomic_compare_exchange_n((int *)&mutex->__mlibc_state,
 						&expected, desired, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED))
 					expected = desired;
@@ -368,12 +379,17 @@ int pthread_mutex_timedlock(pthread_mutex_t *__restrict,
 int pthread_mutex_unlock(pthread_mutex_t *mutex) {
 	SCOPE_TRACE();
 
-	// reset the mutex to the unlocked state.
-	auto state = __atomic_exchange_n(&mutex->__mlibc_state, 0, __ATOMIC_RELEASE);
-	__ensure((state & ~waiters) == 1);
+	// Decrement the recursion level and unlock if we hit zero.
+	__ensure(mutex->__mlibc_recursion);
+	if(--mutex->__mlibc_recursion)
+		return 0;
 
-	// wake the futex if there were waiters.
-	if(state & waiters)
+	// Reset the mutex to the unlocked state.
+	auto state = __atomic_exchange_n(&mutex->__mlibc_state, 0, __ATOMIC_RELEASE);
+	__ensure((state & mutex_owner_mask) == this_tid());
+
+	// Wake the futex if there were waiters.
+	if(state & mutex_waiters_bit)
 		if(int e = mlibc::sys_futex_wake((int *)&mutex->__mlibc_state); e)
 			__ensure(!"sys_futex_wake() failed");
 	return 0;

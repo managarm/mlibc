@@ -36,6 +36,7 @@ enum class fsfd_target {
 void sys_libc_log(const char *message);
 [[noreturn]] void sys_libc_panic();
 
+[[gnu::weak]] int sys_futex_tid();
 int sys_futex_wait(int *pointer, int expected);
 int sys_futex_wake(int *pointer);
 
