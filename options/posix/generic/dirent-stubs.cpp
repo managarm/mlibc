@@ -7,6 +7,7 @@
 #include <frg/allocation.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/sysdeps.hpp>
+#include <mlibc/debug.hpp>
 
 int alphasort(const struct dirent **, const struct dirent **) {
 	__ensure(!"Not implemented");
@@ -95,10 +96,12 @@ void rewinddir(DIR *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int scandir(const char *, struct dirent ***, int (*)(const struct dirent *),
+int scandir(const char *path, struct dirent ***, int (*)(const struct dirent *),
 		int (*)(const struct dirent **, const struct dirent **)) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "\e[31m" "mlibc: scandir() stub called on " << path
+			<< "\e[39m" << frg::endlog;
+	errno = ENOSYS;
+	return -1;
 }
 void seekdir(DIR *, long) {
 	__ensure(!"Not implemented");
