@@ -25,9 +25,7 @@ namespace mlibc {
         req->msg_id = 0;
         req->fd = fd;
 
-        libsigma_ipc_set_message_checksum(req->msg(), sizeof(libsigma_tell_message));
-
-        if(libsigma_ipc_send(libsigma_get_um_tid(), sizeof(libsigma_tell_message), req->data()) == 1){
+        if(libsigma_ipc_send(libsigma_get_um_tid(), req->msg(), sizeof(libsigma_tell_message)) == 1){
             libsigma_klog("Failed to send tell message");
             allocator.free(static_cast<void*>(req));
             return -1;
@@ -39,17 +37,11 @@ namespace mlibc {
         size_t sz = libsigma_ipc_get_msg_size();
         auto* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
         uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, &useless, ret->data()) == 1){
+        if(libsigma_ipc_receive(&origin, ret->msg(), &useless) == 1){
             libsigma_klog("Failed to receive return msg");
             allocator.free(static_cast<void*>(ret));
             return -1;
         }
-
-        if(!libsigma_ipc_check_message(ret->msg(), sz)){
-            libsigma_klog("Invalid message checksum");
-            allocator.free(static_cast<void*>(ret));
-            return -1;
-        } 
 
         if(origin != libsigma_get_um_tid()){
             allocator.free(static_cast<void*>(ret));
@@ -83,9 +75,8 @@ namespace mlibc {
         memcpy(req->path, path, path_size);
         req->path_len = path_size;
 
-        libsigma_ipc_set_message_checksum(req->msg(), sizeof(libsigma_open_message) + path_size);
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), sizeof(libsigma_open_message) + path_size, req->data()) == 1){
+        if(libsigma_ipc_send(libsigma_get_um_tid(), req->msg(), sizeof(libsigma_open_message) + path_size) == 1){
             libsigma_klog("Failed to send open");
             allocator.free(static_cast<void*>(req));
             return -1;
@@ -99,18 +90,11 @@ namespace mlibc {
         size_t sz = libsigma_ipc_get_msg_size();
         libsigma_ret_message* ret = static_cast<libsigma_ret_message*>(allocator.allocate(sz));
         uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, &useless, ret->data()) == 1){
+        if(libsigma_ipc_receive(&origin, ret->msg(), &useless) == 1){
             libsigma_klog("Failed to receive return message");
             allocator.free(static_cast<void*>(ret));
             return -1;
         }
-            
-
-        if(!libsigma_ipc_check_message(ret->msg(), sz)){
-            libsigma_klog("Invalid return message checksum");
-            allocator.free(static_cast<void*>(ret));
-            return -1;
-        } 
 
         if(origin != libsigma_get_um_tid()){
             allocator.free(static_cast<void*>(ret));
@@ -139,9 +123,7 @@ namespace mlibc {
         req->oldfd = fd;
         req->newfd = newfd;
 
-        libsigma_ipc_set_message_checksum(req->msg(), sizeof(libsigma_dup2_message));
-
-        if(libsigma_ipc_send(libsigma_get_um_tid(), sizeof(libsigma_dup2_message), req->data()) == 1){
+        if(libsigma_ipc_send(libsigma_get_um_tid(), req->msg(), sizeof(libsigma_dup2_message)) == 1){
             libsigma_klog("Failed to send dup2 message");
             allocator.free(static_cast<void*>(req));
             return -1;
@@ -153,17 +135,11 @@ namespace mlibc {
         size_t sz = libsigma_ipc_get_msg_size();
         auto* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
         uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, &useless, ret->data()) == 1){
+        if(libsigma_ipc_receive(&origin, ret->msg(), &useless) == 1){
             libsigma_klog("Failed to receive return msg");
             allocator.free(static_cast<void*>(ret));
             return -1;
         }
-
-        if(!libsigma_ipc_check_message(ret->msg(), sz)){
-            libsigma_klog("Invalid message checksum");
-            allocator.free(static_cast<void*>(ret));
-            return -1;
-        } 
 
         if(origin != libsigma_get_um_tid()){
             allocator.free(static_cast<void*>(ret));
@@ -194,9 +170,7 @@ namespace mlibc {
         req->fd = fd;
         memcpy(req->buf, buf, count);
 
-        libsigma_ipc_set_message_checksum(req->msg(), sizeof(libsigma_write_message) + count);
-
-        if(libsigma_ipc_send(libsigma_get_um_tid(), sizeof(libsigma_write_message) + count, req->data()) == 1){
+        if(libsigma_ipc_send(libsigma_get_um_tid(), req->msg(), sizeof(libsigma_write_message) + count) == 1){
             libsigma_klog("Failed to send write message");
             allocator.free(static_cast<void*>(req));
             return -1;
@@ -208,18 +182,11 @@ namespace mlibc {
         size_t sz = libsigma_ipc_get_msg_size();
         libsigma_ret_message* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
         uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, &useless, ret->data()) == 1){
+        if(libsigma_ipc_receive(&origin, ret->msg(), &useless) == 1){
             libsigma_klog("Failed to receive return message");
             allocator.free(static_cast<void*>(ret));
             return -1;
         }
-            
-
-        if(!libsigma_ipc_check_message(ret->msg(), sz)){
-            libsigma_klog("Invalid return message checksum");
-            allocator.free(static_cast<void*>(ret));
-            return -1;
-        } 
 
         if(origin != libsigma_get_um_tid()){
             allocator.free(static_cast<void*>(ret));
@@ -247,10 +214,8 @@ namespace mlibc {
         req->command = CLOSE;
         req->msg_id = 0;
         req->fd = fd;
-        
-        libsigma_ipc_set_message_checksum(req->msg(), sizeof(libsigma_close_message));
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), sizeof(libsigma_close_message), req->data()) == 1){
+        if(libsigma_ipc_send(libsigma_get_um_tid(), req->msg(), sizeof(libsigma_close_message)) == 1){
             libsigma_klog("Failed to send close message");
             allocator.free(static_cast<void*>(req));
             return -1;
@@ -262,17 +227,11 @@ namespace mlibc {
         size_t sz = libsigma_ipc_get_msg_size();
         auto* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
         uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, &useless, ret->data()) == 1){
+        if(libsigma_ipc_receive(&origin, ret->msg(), &useless) == 1){
             libsigma_klog("Failed to receive return msg");
             allocator.free(static_cast<void*>(ret));
             return -1;
         }
-
-        if(!libsigma_ipc_check_message(ret->msg(), sz)){
-            libsigma_klog("Invalid message checksum");
-            allocator.free(static_cast<void*>(ret));
-            return -1;
-        } 
 
         if(origin != libsigma_get_um_tid()){
             allocator.free(static_cast<void*>(ret));
@@ -301,9 +260,7 @@ namespace mlibc {
         req->fd = fd;
         req->count = count;
 
-        libsigma_ipc_set_message_checksum(req->msg(), sizeof(libsigma_read_message));
-
-        if(libsigma_ipc_send(libsigma_get_um_tid(), sizeof(libsigma_read_message), req->data()) == 1){
+        if(libsigma_ipc_send(libsigma_get_um_tid(), req->msg(), sizeof(libsigma_read_message)) == 1){
             libsigma_klog("Failed to send read message");
             allocator.free(static_cast<void*>(req));
             return -1;
@@ -315,18 +272,11 @@ namespace mlibc {
         size_t sz = libsigma_ipc_get_msg_size();
         libsigma_ret_message* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
         uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, &useless, ret->data()) == 1){
+        if(libsigma_ipc_receive(&origin, ret->msg(), &useless) == 1){
             libsigma_klog("Failed to receive return message");
             allocator.free(static_cast<void*>(ret));
             return -1;
         }
-            
-
-        if(!libsigma_ipc_check_message(ret->msg(), sz)){
-            libsigma_klog("Invalid return message checksum");
-            allocator.free(static_cast<void*>(ret));
-            return -1;
-        } 
 
         if(origin != libsigma_get_um_tid()){
             allocator.free(static_cast<void*>(ret));
@@ -356,10 +306,8 @@ namespace mlibc {
         req->fd = fd;
         req->whence = whence;
         req->offset = offset;
-        
-        libsigma_ipc_set_message_checksum(req->msg(), sizeof(libsigma_seek_message));
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), sizeof(libsigma_seek_message), req->data()) == 1){
+        if(libsigma_ipc_send(libsigma_get_um_tid(), req->msg(), sizeof(libsigma_seek_message)) == 1){
             libsigma_klog("Failed to send seek message");
             allocator.free(static_cast<void*>(req));
             return -1;
@@ -371,17 +319,11 @@ namespace mlibc {
         size_t sz = libsigma_ipc_get_msg_size();
         auto* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
         uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, &useless, ret->data()) == 1){
+        if(libsigma_ipc_receive(&origin, ret->msg(), &useless) == 1){
             libsigma_klog("Failed to receive return msg");
             allocator.free(static_cast<void*>(ret));
             return -1;
         }
-
-        if(!libsigma_ipc_check_message(ret->msg(), sz)){
-            libsigma_klog("Invalid message checksum");
-            allocator.free(static_cast<void*>(ret));
-            return -1;
-        } 
 
         if(origin != libsigma_get_um_tid()){
             allocator.free(static_cast<void*>(ret));
