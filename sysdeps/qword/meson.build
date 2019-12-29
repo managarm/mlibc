@@ -6,7 +6,8 @@ rtdl_sources += files(
 libc_sources += files(
 	'generic/entry.cpp',
 	'generic/generic.cpp',
-	'generic/memstats.cpp'
+	'generic/memstats.cpp',
+	'generic/mount.cpp'
 )
 
 if not no_headers
@@ -19,6 +20,7 @@ if not no_headers
 	)
 	install_headers(
 		'include/qword/memstats.h',
+		'include/qword/mount.h',
 		subdir: 'qword'
 	)
 endif
