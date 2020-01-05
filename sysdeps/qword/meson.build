@@ -19,6 +19,7 @@ if not no_headers
 		subdir: 'abi-bits'
 	)
 	install_headers(
+		'include/qword/fcntl.h',
 		'include/qword/memstats.h',
 		'include/qword/mount.h',
 		subdir: 'qword'

@@ -5,6 +5,8 @@
 #include <errno.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <qword/fcntl.h>
+#include <limits.h>
 
 #define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }
 
@@ -246,18 +248,61 @@ namespace {
 	}
 }
 
+int sys_unlinkat(int fd, const char *path, int flags) {
+    __ensure(flags == 0);
+    if (path[0] == '/') {
+        // The path is absolute, remove
+        return sys_unlink(path);
+    }
+    // FIXME: this part can totally buffer overflow
+    char fd_path[PATH_MAX];
+    if (fd == AT_FDCWD) {
+        int e = sys_getcwd(fd_path, PATH_MAX);
+        if (e)
+            return e;
+    } else {
+        int e = fcntl(fd, F_GETPATH, fd_path);
+        if (e)
+            return errno;
+    }
+    strcat(fd_path, "/");
+    strcat(fd_path, path);
+    return sys_unlink(fd_path);
+}
+
 int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
-	if(fsfdt == fsfd_target::fd) {
+	if (fsfdt == fsfd_target::fd) {
 		return do_fstat(fd, statbuf);
-	}else{
-		__ensure(fsfdt == fsfd_target::path);
+	} else if (fsfdt == fsfd_target::path) {
+_stat:
 		int e = sys_open(path, 0/*O_RDONLY*/, &fd);
 		if (e)
 			return e;
 		e = do_fstat(fd, statbuf);
 		sys_close(fd);
 		return e;
-	}
+	} else {
+		__ensure(fsfdt == fsfd_target::fd_path);
+        if (path[0] == '/') {
+            // The path is absolute, open normally
+            goto _stat;
+        }
+        // FIXME: this part can totally buffer overflow
+        char fd_path[PATH_MAX];
+        if (fd == AT_FDCWD) {
+            int e = sys_getcwd(fd_path, PATH_MAX);
+            if (e)
+                return e;
+        } else {
+            int e = fcntl(fd, F_GETPATH, fd_path);
+            if (e)
+                return errno;
+        }
+        strcat(fd_path, "/");
+        strcat(fd_path, path);
+        path = fd_path;
+        goto _stat;
+    }
 }
 #endif
 
