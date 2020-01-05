@@ -518,9 +518,17 @@ int unlink(const char *path) {
 	}
 	return 0;
 }
-int unlinkat(int, const char *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int unlinkat(int fd, const char *path, int flags) {
+	if(!mlibc::sys_unlinkat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_unlinkat(fd, path, flags); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int getpagesize() {

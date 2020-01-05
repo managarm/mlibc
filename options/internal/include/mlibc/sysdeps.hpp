@@ -81,6 +81,7 @@ int sys_close(int fd);
 	[[gnu::weak]] int sys_ftruncate(int fd, size_t size);
 	[[gnu::weak]] int sys_fallocate(int fd, off_t offset, size_t size);
 	[[gnu::weak]] int sys_unlink(const char *path);
+	[[gnu::weak]] int sys_unlinkat(int fd, const char *path, int flags);
 	[[gnu::weak]] int sys_socket(int family, int type, int protocol, int *fd);
 	[[gnu::weak]] int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length);
 	[[gnu::weak]] int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length);
