@@ -13,336 +13,296 @@
 #include <libsigma/ipc.h>
 #include <libsigma/klog.h>
 
+#define IOTA_FRIGG_ALLOCATOR MemoryAllocator
+#define IOTA_FRIGG_GET_ALLOCATOR getSysdepsAllocator
+#include <protocols/zeta-frigg.hpp>
+
 #define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }
 
 namespace mlibc {
     // File functions
     static uint64_t tell(int fd){
-        auto& allocator = getSysdepsAllocator();
-        auto* req = reinterpret_cast<libsigma_tell_message*>(allocator.allocate(sizeof(libsigma_tell_message)));
+        SignalGuard sguard{};
+        using namespace sigma::zeta;
+        client_request_builder builder{};
 
-        req->command = TELL;
-        req->msg_id = 0;
-        req->fd = fd;
+        builder.add_command((uint64_t)client_request_type::Tell);
+        builder.add_fd(fd);
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), req->msg(), sizeof(libsigma_tell_message)) == 1){
-            libsigma_klog("Failed to send tell message");
-            allocator.free(static_cast<void*>(req));
+        if(libsigma_ipc_send(libsigma_get_um_tid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+            mlibc::infoLogger() << "Failed to send Tell message" << frg::endlog;
             return -1;
         }
 
-        if(libsigma_ipc_get_msg_size() == 0) // Block if response hasn't arrived yet
+        if(libsigma_ipc_get_msg_size() == 0)
             libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
-        size_t sz = libsigma_ipc_get_msg_size();
-        auto* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
+        size_t res_size = libsigma_ipc_get_msg_size();
+        frg::vector<uint8_t, MemoryAllocator> res{getAllocator()};
+        res.resize(res_size);
+
         uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, ret->msg(), &useless) == 1){
-            libsigma_klog("Failed to receive return msg");
-            allocator.free(static_cast<void*>(ret));
+        if(libsigma_ipc_receive(&origin, (libsigma_message_t*)res.data(), &useless)){
+            mlibc::infoLogger() << "Failed to receive Tell message response" << frg::endlog;
             return -1;
         }
 
-        if(origin != libsigma_get_um_tid()){
-            allocator.free(static_cast<void*>(ret));
-            libsigma_klog("Didn't receive return message from correct thread");
-            return -1;
-        } 
+        server_response_parser parser{res.data(), res.size()};
 
-        if(ret->msg_id != 0){
-            allocator.free(static_cast<void*>(ret));
-            libsigma_klog("Return message didn't have correct message id");
+        if(!parser.has_offset()){
+            mlibc::infoLogger() << "Tell message response has no offset" << frg::endlog;
             return -1;
-        } 
+        }
 
-        uint64_t real_ret = ret->ret;
-        allocator.free(static_cast<void*>(ret));
-        return real_ret;
+        return parser.get_offset();
     }
 
     int sys_open(const char *path, int flags, int *fd){
         SignalGuard sguard{};
-        size_t path_size = strlen(path);
+        using namespace sigma::zeta;
+        client_request_builder builder{};
 
-        auto& allocator = getSysdepsAllocator();
+        builder.add_command((uint64_t)client_request_type::Open);
+        builder.add_path(iota::string{getAllocator(), path});
+        builder.add_flags(flags);
 
-        size_t req_size = sizeof(libsigma_open_message) + path_size;
-        libsigma_open_message* req = static_cast<libsigma_open_message*>(allocator.allocate(req_size));
-
-        req->command = OPEN;
-        req->msg_id = 0;
-        req->flags = flags;
-        memcpy(req->path, path, path_size);
-        req->path_len = path_size;
-
-
-        if(libsigma_ipc_send(libsigma_get_um_tid(), req->msg(), sizeof(libsigma_open_message) + path_size) == 1){
-            libsigma_klog("Failed to send open");
-            allocator.free(static_cast<void*>(req));
+        if(libsigma_ipc_send(libsigma_get_um_tid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+            mlibc::infoLogger() << "Failed to send Open message" << frg::endlog;
             return -1;
         }
 
-        allocator.free(static_cast<void*>(req));
-
-        if(libsigma_ipc_get_msg_size() == 0) // Block if response hasn't arrived yet
+        if(libsigma_ipc_get_msg_size() == 0)
             libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
-        size_t sz = libsigma_ipc_get_msg_size();
-        libsigma_ret_message* ret = static_cast<libsigma_ret_message*>(allocator.allocate(sz));
+        size_t res_size = libsigma_ipc_get_msg_size();
+        frg::vector<uint8_t, MemoryAllocator> res{getAllocator()};
+        res.resize(res_size);
+
         uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, ret->msg(), &useless) == 1){
-            libsigma_klog("Failed to receive return message");
-            allocator.free(static_cast<void*>(ret));
+        if(libsigma_ipc_receive(&origin, (libsigma_message_t*)res.data(), &useless)){
+            mlibc::infoLogger() << "Failed to receive Open message response" << frg::endlog;
             return -1;
         }
 
-        if(origin != libsigma_get_um_tid()){
-            allocator.free(static_cast<void*>(ret));
-            libsigma_klog("Didn't receive return message from correct thread");
-            return -1;
-        } 
+        server_response_parser parser{res.data(), res.size()};
 
-        if(ret->msg_id != 0){
-            allocator.free(static_cast<void*>(ret));
-            libsigma_klog("Return message didn't have correct message id");
+        if(!parser.has_fd()){
+            mlibc::infoLogger() << "Open message response has no fd" << frg::endlog;
             return -1;
-        } 
-
-        *fd = ret->ret;
-        allocator.free(static_cast<void*>(ret));
+        }
+        *fd = parser.get_fd();
         return 0;
     }
     
     int sys_dup2(int fd, int flags, int newfd){
         SignalGuard sguard{};
-        auto& allocator = getSysdepsAllocator();
-        auto* req = reinterpret_cast<libsigma_dup2_message*>(allocator.allocate(sizeof(libsigma_dup2_message)));
+        using namespace sigma::zeta;
+        client_request_builder builder{};
 
-        req->command = DUP2;
-        req->msg_id = 0;
-        req->oldfd = fd;
-        req->newfd = newfd;
+        builder.add_command((uint64_t)client_request_type::Dup2);
+        builder.add_fd(fd);
+        builder.add_newfd(newfd);
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), req->msg(), sizeof(libsigma_dup2_message)) == 1){
-            libsigma_klog("Failed to send dup2 message");
-            allocator.free(static_cast<void*>(req));
+        if(libsigma_ipc_send(libsigma_get_um_tid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+            mlibc::infoLogger() << "Failed to send Dup2 message" << frg::endlog;
             return -1;
         }
 
-        if(libsigma_ipc_get_msg_size() == 0) // Block if response hasn't arrived yet
+        if(libsigma_ipc_get_msg_size() == 0)
             libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
-        size_t sz = libsigma_ipc_get_msg_size();
-        auto* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
+        size_t res_size = libsigma_ipc_get_msg_size();
+        frg::vector<uint8_t, MemoryAllocator> res{getAllocator()};
+        res.resize(res_size);
+
         uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, ret->msg(), &useless) == 1){
-            libsigma_klog("Failed to receive return msg");
-            allocator.free(static_cast<void*>(ret));
+        if(libsigma_ipc_receive(&origin, (libsigma_message_t*)res.data(), &useless)){
+            mlibc::infoLogger() << "Failed to receive Dup2 message response" << frg::endlog;
             return -1;
         }
 
-        if(origin != libsigma_get_um_tid()){
-            allocator.free(static_cast<void*>(ret));
-            libsigma_klog("Didn't receive return message from correct thread");
-            return -1;
-        } 
+        server_response_parser parser{res.data(), res.size()};
 
-        if(ret->msg_id != 0){
-            allocator.free(static_cast<void*>(ret));
-            libsigma_klog("Return message didn't have correct message id");
+        if(!parser.has_status()){
+            mlibc::infoLogger() << "Dup2 message response has no status" << frg::endlog;
             return -1;
-        } 
+        }
 
-        int real_ret = ret->ret;
-        allocator.free(static_cast<void*>(ret));
-        return real_ret;
+        return parser.get_status();
     }
 
     int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written){
         SignalGuard sguard{};
-        auto& allocator = getSysdepsAllocator();
-        
-        auto* req = reinterpret_cast<libsigma_write_message*>(allocator.allocate(count + sizeof(libsigma_write_message)));
+        using namespace sigma::zeta;
+        client_request_builder builder{};
 
-        req->command = WRITE;
-        req->msg_id = 0;
-        req->count = count;
-        req->fd = fd;
-        memcpy(req->buf, buf, count);
+        builder.add_command((uint64_t)client_request_type::Write);
+        builder.add_fd(fd);
+        builder.add_count(count);
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), req->msg(), sizeof(libsigma_write_message) + count) == 1){
-            libsigma_klog("Failed to send write message");
-            allocator.free(static_cast<void*>(req));
+        frg::vector<uint8_t, MemoryAllocator> buffer{getAllocator()};
+        buffer.resize(count);
+        memcpy(buffer.data(), buf, count);
+
+        builder.add_buffer(buffer);
+
+        if(libsigma_ipc_send(libsigma_get_um_tid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+            mlibc::infoLogger() << "Failed to send Write message" << frg::endlog;
             return -1;
         }
 
-        if(libsigma_ipc_get_msg_size() == 0) // Block if response hasn't arrived yet
+        if(libsigma_ipc_get_msg_size() == 0)
             libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
-        size_t sz = libsigma_ipc_get_msg_size();
-        libsigma_ret_message* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
+        size_t res_size = libsigma_ipc_get_msg_size();
+        frg::vector<uint8_t, MemoryAllocator> res{getAllocator()};
+        res.resize(res_size);
+
         uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, ret->msg(), &useless) == 1){
-            libsigma_klog("Failed to receive return message");
-            allocator.free(static_cast<void*>(ret));
+        if(libsigma_ipc_receive(&origin, (libsigma_message_t*)res.data(), &useless)){
+            mlibc::infoLogger() << "Failed to receive Write message response" << frg::endlog;
             return -1;
         }
 
-        if(origin != libsigma_get_um_tid()){
-            allocator.free(static_cast<void*>(ret));
-            libsigma_klog("Didn't receive return message from correct thread");
-            return -1;
-        } 
+        server_response_parser parser{res.data(), res.size()};
 
-        if(ret->msg_id != 0){
-            allocator.free(static_cast<void*>(ret));
-            libsigma_klog("Return message didn't have correct message id");
+        if(!parser.has_status()){
+            mlibc::infoLogger() << "Write message response has no status" << frg::endlog;
             return -1;
-        } 
+        }
 
-        int real_ret = ret->ret;
-        allocator.free(static_cast<void*>(ret));
-        *bytes_written = count;
-        return real_ret;
+        if(parser.get_status() == 0){
+            *bytes_written = count;
+            return 0;
+        } else {
+            return parser.get_status();
+        }
     }
 
     int sys_close(int fd){
         SignalGuard sguard{};
-        auto& allocator = getSysdepsAllocator();
-        auto* req = reinterpret_cast<libsigma_close_message*>(allocator.allocate(sizeof(libsigma_close_message)));
+        using namespace sigma::zeta;
+        client_request_builder builder{};
 
-        req->command = CLOSE;
-        req->msg_id = 0;
-        req->fd = fd;
+        builder.add_command((uint64_t)client_request_type::Close);
+        builder.add_fd(fd);
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), req->msg(), sizeof(libsigma_close_message)) == 1){
-            libsigma_klog("Failed to send close message");
-            allocator.free(static_cast<void*>(req));
+        if(libsigma_ipc_send(libsigma_get_um_tid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+            mlibc::infoLogger() << "Failed to send Close message" << frg::endlog;
             return -1;
         }
 
-        if(libsigma_ipc_get_msg_size() == 0) // Block if response hasn't arrived yet
+        if(libsigma_ipc_get_msg_size() == 0)
             libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
-        size_t sz = libsigma_ipc_get_msg_size();
-        auto* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
+        size_t res_size = libsigma_ipc_get_msg_size();
+        frg::vector<uint8_t, MemoryAllocator> res{getAllocator()};
+        res.resize(res_size);
+
         uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, ret->msg(), &useless) == 1){
-            libsigma_klog("Failed to receive return msg");
-            allocator.free(static_cast<void*>(ret));
+        if(libsigma_ipc_receive(&origin, (libsigma_message_t*)res.data(), &useless)){
+            mlibc::infoLogger() << "Failed to receive Close message response" << frg::endlog;
             return -1;
         }
 
-        if(origin != libsigma_get_um_tid()){
-            allocator.free(static_cast<void*>(ret));
-            libsigma_klog("Didn't receive return message from correct thread");
-            return -1;
-        } 
+        server_response_parser parser{res.data(), res.size()};
 
-        if(ret->msg_id != 0){
-            allocator.free(static_cast<void*>(ret));
-            libsigma_klog("Return message didn't have correct message id");
+        if(!parser.has_status()){
+            mlibc::infoLogger() << "Close message response has no Status" << frg::endlog;
             return -1;
-        } 
-
-        int real_ret = ret->ret;
-        allocator.free(static_cast<void*>(ret));
-        return real_ret;
+        }
+        return parser.get_status();
     }
 
     int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read){
         SignalGuard sguard{};
-        auto& allocator = getSysdepsAllocator();
-        
-        auto* req = reinterpret_cast<libsigma_read_message*>(allocator.allocate(sizeof(libsigma_read_message)));
+        using namespace sigma::zeta;
+        client_request_builder builder{};
 
-        req->command = READ;
-        req->fd = fd;
-        req->count = count;
+        builder.add_command((uint64_t)client_request_type::Read);
+        builder.add_fd(fd);
+        builder.add_count(count);
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), req->msg(), sizeof(libsigma_read_message)) == 1){
-            libsigma_klog("Failed to send read message");
-            allocator.free(static_cast<void*>(req));
+        if(libsigma_ipc_send(libsigma_get_um_tid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+            mlibc::infoLogger() << "Failed to send Read message" << frg::endlog;
             return -1;
         }
 
-        if(libsigma_ipc_get_msg_size() == 0) // Block if response hasn't arrived yet
+        if(libsigma_ipc_get_msg_size() == 0)
             libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
-        size_t sz = libsigma_ipc_get_msg_size();
-        libsigma_ret_message* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
+        size_t res_size = libsigma_ipc_get_msg_size();
+        frg::vector<uint8_t, MemoryAllocator> res{getAllocator()};
+        res.resize(res_size);
+
         uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, ret->msg(), &useless) == 1){
-            libsigma_klog("Failed to receive return message");
-            allocator.free(static_cast<void*>(ret));
+        if(libsigma_ipc_receive(&origin, (libsigma_message_t*)res.data(), &useless)){
+            mlibc::infoLogger() << "Failed to receive Read message response" << frg::endlog;
             return -1;
         }
 
-        if(origin != libsigma_get_um_tid()){
-            allocator.free(static_cast<void*>(ret));
-            libsigma_klog("Didn't receive return message from correct thread");
-            return -1;
-        } 
+        server_response_parser parser{res.data(), res.size()};
 
-        if(ret->msg_id != 0){
-            allocator.free(static_cast<void*>(ret));
-            libsigma_klog("Return message didn't have correct message id");
+        if(!parser.has_status()){
+            mlibc::infoLogger() << "Read message response has no Status" << frg::endlog;
             return -1;
-        } 
+        }
 
-        memcpy(buf, ret->buf, count);
-        allocator.free(static_cast<void*>(ret));
-        *bytes_read = count;
-        return 0;
+        if(!parser.has_buffer()){
+            mlibc::infoLogger() << "Read message response has no Buffer" << frg::endlog;
+            return -1;
+        }
+
+        if(parser.get_status() != 0){
+            return -1;
+        } else {
+            memcpy(buf, parser.get_buffer().data(), count);
+            *bytes_read = count;
+            return 0;
+        }
     }
 
     int sys_seek(int fd, off_t offset, int whence, off_t *new_offset){
         SignalGuard sguard{};
-        auto& allocator = getSysdepsAllocator();
-        auto* req = reinterpret_cast<libsigma_seek_message*>(allocator.allocate(sizeof(libsigma_seek_message)));
+        using namespace sigma::zeta;
+        client_request_builder builder{};
 
-        req->command = SEEK;
-        req->msg_id = 0;
-        req->fd = fd;
-        req->whence = whence;
-        req->offset = offset;
+        builder.add_command((uint64_t)client_request_type::Seek);
+        builder.add_fd(fd);
+        builder.add_whence(whence);
+        builder.add_offset(offset);
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), req->msg(), sizeof(libsigma_seek_message)) == 1){
-            libsigma_klog("Failed to send seek message");
-            allocator.free(static_cast<void*>(req));
+        if(libsigma_ipc_send(libsigma_get_um_tid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+            mlibc::infoLogger() << "Failed to send Seek message" << frg::endlog;
             return -1;
         }
 
-        if(libsigma_ipc_get_msg_size() == 0) // Block if response hasn't arrived yet
+        if(libsigma_ipc_get_msg_size() == 0)
             libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
-        size_t sz = libsigma_ipc_get_msg_size();
-        auto* ret = reinterpret_cast<libsigma_ret_message*>(allocator.allocate(sz));
+        size_t res_size = libsigma_ipc_get_msg_size();
+        frg::vector<uint8_t, MemoryAllocator> res{getAllocator()};
+        res.resize(res_size);
+
         uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, ret->msg(), &useless) == 1){
-            libsigma_klog("Failed to receive return msg");
-            allocator.free(static_cast<void*>(ret));
+        if(libsigma_ipc_receive(&origin, (libsigma_message_t*)res.data(), &useless)){
+            mlibc::infoLogger() << "Failed to receive Seek message response" << frg::endlog;
             return -1;
         }
 
-        if(origin != libsigma_get_um_tid()){
-            allocator.free(static_cast<void*>(ret));
-            libsigma_klog("Didn't receive return message from correct thread");
+        server_response_parser parser{res.data(), res.size()};
+
+        if(!parser.has_status()){
+            mlibc::infoLogger() << "Seek message response has no Status" << frg::endlog;
             return -1;
-        } 
+        }
 
-        if(ret->msg_id != 0){
-            allocator.free(static_cast<void*>(ret));
-            libsigma_klog("Return message didn't have correct message id");
+        if(parser.get_status() != 0){
             return -1;
-        } 
-
-        int real_ret = ret->ret;
-        allocator.free(static_cast<void*>(ret));
-
-        *new_offset = tell(fd);
-
-        return real_ret;
+        } else {
+            *new_offset = tell(fd);
+            return 0;
+        }
     }
 
     int sys_isatty(int fd){

@@ -1,13 +1,15 @@
 sigma_incl = include_directories('../../subprojects/libsigma/include')
+protocols_incl = include_directories('../../../../../build/system-root/usr/include')
 
-rtdl_include_dirs += sigma_incl
+
+rtdl_include_dirs += [sigma_incl, protocols_incl]
 rtdl_sources += files(
 	'generic/log.cpp',
 	'generic/memory.cpp',
 	'rtdl-generic/support.cpp',
 )
 
-libc_include_dirs += sigma_incl
+libc_include_dirs += [sigma_incl, protocols_incl]
 
 libc_sources += files(
 	'generic/log.cpp',
