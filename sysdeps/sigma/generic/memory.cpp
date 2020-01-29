@@ -3,7 +3,7 @@
 #include <bits/ensure.h>
 #include <mlibc/sysdeps.hpp>
 #include <mlibc/debug.hpp>
-#include <libsigma/memory.h>
+#include <libsigma/sys.h>
 #include <errno.h>
 
 #define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }

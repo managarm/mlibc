@@ -5,8 +5,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
-#include <libsigma/klog.h>
-#include <libsigma/thread.h>
+#include <libsigma/sys.h>
 
 namespace mlibc
 {

@@ -5,8 +5,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 
-#include <libsigma/memory.h>
-#include <libsigma/thread.h>
+#include <libsigma/sys.h>
 
 
 #define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }

@@ -9,9 +9,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/sysdeps.hpp>
 
-#include <libsigma/thread.h>
-#include <libsigma/file.h>
-#include <libsigma/memory.h>
+#include <libsigma/sys.h>
 
 namespace {
     class id_allocator{

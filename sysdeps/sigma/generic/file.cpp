@@ -8,10 +8,7 @@
 #include <fcntl.h>
 #include <stdint.h>
 
-#include <libsigma/memory.h>
-#include <libsigma/thread.h>
-#include <libsigma/ipc.h>
-#include <libsigma/klog.h>
+#include <libsigma/sys.h>
 
 #define IOTA_FRIGG_ALLOCATOR MemoryAllocator
 #define IOTA_FRIGG_GET_ALLOCATOR getSysdepsAllocator
