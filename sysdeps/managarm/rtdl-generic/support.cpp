@@ -345,7 +345,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 		__ensure(!offset);
 		if(!size) // helAllocateMemory() does not like zero sizes.
 			return 0;
-		HEL_CHECK(helAllocateMemory(size, 0, &handle));
+		HEL_CHECK(helAllocateMemory(size, 0, nullptr, &handle));
 	}
 
 	__ensure(size);

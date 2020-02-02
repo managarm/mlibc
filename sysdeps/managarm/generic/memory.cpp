@@ -15,7 +15,7 @@ int sys_anon_allocate(size_t size, void **pointer) {
 	__ensure((size % 0x1000) == 0);
 
 	HelHandle memory;
-	HEL_CHECK(helAllocateMemory(size, 0, &memory));
+	HEL_CHECK(helAllocateMemory(size, 0, nullptr, &memory));
 	HEL_CHECK(helMapMemory(memory, kHelNullHandle, nullptr, 0, size,
 			kHelMapProtRead | kHelMapProtWrite | kHelMapCopyOnWriteAtFork, pointer));
 	HEL_CHECK(helCloseDescriptor(memory));
