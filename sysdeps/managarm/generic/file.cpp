@@ -930,6 +930,7 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *length) {
 	HelSgItem sglist[4];
 	__ensure(hdr->msg_iovlen <= 4);
+	auto handle = __mlibc_getPassthrough(sockfd);
 	size_t overall_size = 0;
 	for(int i = 0; i < hdr->msg_iovlen; i++) {
 		sglist[i].buffer = hdr->msg_iov[i].iov_base;
@@ -941,9 +942,8 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	HelAction actions[5];
 	globalQueue.trim();
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::SENDMSG);
-	req.set_fd(sockfd);
+	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_req_type(managarm::fs::CntReqType::PT_SENDMSG);
 	req.set_flags(flags);
 	req.set_size(overall_size);
 
@@ -963,45 +963,55 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
+
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
+
 	actions[1].type = kHelActionSendFromBuffer;
 	actions[1].flags = kHelItemChain;
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
+
 	actions[2].type = kHelActionSendFromBufferSg;
 	actions[2].flags = kHelItemChain;
 	actions[2].buffer = &sglist;
 	actions[2].length = hdr->msg_iovlen;
-	actions[3].type = kHelActionSendFromBuffer;
+
+	actions[3].type = kHelActionImbueCredentials;
 	actions[3].flags = kHelItemChain;
-	actions[3].buffer = hdr->msg_name;
-	actions[3].length = hdr->msg_namelen;
-	actions[4].type = kHelActionRecvInline;
-	actions[4].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 5,
+
+	actions[4].type = kHelActionSendFromBuffer;
+	actions[4].flags = kHelItemChain;
+	actions[4].buffer = hdr->msg_name;
+	actions[4].length = hdr->msg_namelen;
+
+	actions[5].type = kHelActionRecvInline;
+	actions[5].flags = 0;
+	HEL_CHECK(helSubmitAsync(handle, actions, 6,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
 	auto offer = parseSimple(element);
 	auto send_req = parseSimple(element);
 	auto send_data = parseSimple(element);
+	auto imbue_creds = parseSimple(element);
 	auto send_addr = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(send_data->error);
+	HEL_CHECK(imbue_creds->error);
 	HEL_CHECK(send_addr->error);
 	HEL_CHECK(recv_resp->error);
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 
-	if(resp.error() == managarm::posix::Errors::BROKEN_PIPE) {
+	if(resp.error() == managarm::fs::Errors::BROKEN_PIPE) {
 		return EPIPE;
 	}else{
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*length = resp.size();
 		return 0;
 	}
@@ -1009,14 +1019,14 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 
 int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	__ensure(hdr->msg_iovlen);
+	auto handle = __mlibc_getPassthrough(sockfd);
 
 	SignalGuard sguard;
-	HelAction actions[6];
+	HelAction actions[7];
 	globalQueue.trim();
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::RECVMSG);
-	req.set_fd(sockfd);
+	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_req_type(managarm::fs::CntReqType::PT_RECVMSG);
 	req.set_flags(flags);
 	req.set_size(hdr->msg_iov[0].iov_len);
 	req.set_addr_size(hdr->msg_namelen);
@@ -1024,32 +1034,42 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
+
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
+
 	actions[1].type = kHelActionSendFromBuffer;
 	actions[1].flags = kHelItemChain;
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
+
+	actions[2].type = kHelActionImbueCredentials;
 	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionRecvToBuffer;
+
+	actions[3].type = kHelActionRecvInline;
 	actions[3].flags = kHelItemChain;
-	actions[3].buffer = hdr->msg_name;
-	actions[3].length = hdr->msg_namelen;
+
 	actions[4].type = kHelActionRecvToBuffer;
 	actions[4].flags = kHelItemChain;
-	actions[4].buffer = hdr->msg_iov[0].iov_base;
-	actions[4].length = hdr->msg_iov[0].iov_len;
+	actions[4].buffer = hdr->msg_name;
+	actions[4].length = hdr->msg_namelen;
+
 	actions[5].type = kHelActionRecvToBuffer;
-	actions[5].flags = 0;
-	actions[5].buffer = hdr->msg_control;
-	actions[5].length = hdr->msg_controllen;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 6,
+	actions[5].flags = kHelItemChain;
+	actions[5].buffer = hdr->msg_iov[0].iov_base;
+	actions[5].length = hdr->msg_iov[0].iov_len;
+
+	actions[6].type = kHelActionRecvToBuffer;
+	actions[6].flags = 0;
+	actions[6].buffer = hdr->msg_control;
+	actions[6].length = hdr->msg_controllen;
+	HEL_CHECK(helSubmitAsync(handle, actions, 7,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
 	auto offer = parseSimple(element);
 	auto send_req = parseSimple(element);
+	auto imbue_creds = parseSimple(element);
 	auto recv_resp = parseInline(element);
 	auto recv_addr = parseLength(element);
 	auto recv_data = parseLength(element);
@@ -1057,15 +1077,16 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
+	HEL_CHECK(imbue_creds->error);
 	HEL_CHECK(recv_resp->error);
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	
-	if(resp.error() == managarm::posix::Errors::WOULD_BLOCK) {
+	if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
 		return EAGAIN;
 	}else{
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		HEL_CHECK(recv_addr->error);
 		HEL_CHECK(recv_data->error);
 		HEL_CHECK(recv_ctrl->error);
