@@ -608,9 +608,28 @@ void *accessDtv(SharedObject *object) {
 	Tcb *tcb_ptr;
 	asm ( "mov %%fs:(0), %0" : "=r" (tcb_ptr) );
 
-	__ensure(object->tlsModel == TlsModel::initial);
-	__ensure(object->tlsIndex < tcb_ptr->dtvSize);
-	__ensure(tcb_ptr->dtvPointers[object->tlsIndex]);
+	// We might need to reallocate the DTV.
+	if(object->tlsIndex >= tcb_ptr->dtvSize) {
+		// TODO: need to protect runtimeTlsMap against concurrent access.
+		auto ndtv = frg::construct_n<void *>(getAllocator(), runtimeTlsMap->indices.size());
+		memset(ndtv, 0, sizeof(void *) * runtimeTlsMap->indices.size());
+		memcpy(ndtv, tcb_ptr->dtvPointers, sizeof(void *) * tcb_ptr->dtvSize);
+		frg::destruct(getAllocator(), tcb_ptr->dtvPointers);
+		tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
+		tcb_ptr->dtvPointers = ndtv;
+	}
+
+	// We might need to fill in a new DTV entry.
+	if(!tcb_ptr->dtvPointers[object->tlsIndex]) {
+		__ensure(object->tlsModel == TlsModel::dynamic);
+
+		auto buffer = getAllocator().allocate(object->tlsImageSize);
+		__ensure(!(reinterpret_cast<uintptr_t>(buffer) & (object->tlsAlignment - 1)));
+		memset(buffer, 0, object->tlsSegmentSize);
+		memcpy(buffer, object->tlsImagePtr, object->tlsImageSize);
+		tcb_ptr->dtvPointers[object->tlsIndex] = buffer;
+	}
+
 	return tcb_ptr->dtvPointers[object->tlsIndex];
 }
 
@@ -917,8 +936,7 @@ void Loader::_buildTlsMaps() {
 							<< ", size: " << object->tlsSegmentSize
 							<< ", alignment: " << object->tlsAlignment << frg::endlog;
 			}else{
-				// TODO: Implement dynamic TLS.
-				mlibc::panicLogger() << "rtdl: Dynamic TLS is not supported" << frg::endlog;
+				object->tlsModel = TlsModel::dynamic;
 			}
 		}
 	}
