@@ -114,6 +114,7 @@ struct SharedObject {
 	frg::vector<SharedObject *, MemoryAllocator> dependencies;
 	
 	TlsModel tlsModel;
+	size_t tlsIndex;
 	size_t tlsOffset;
 	
 	uint64_t globalRts;
@@ -140,11 +141,15 @@ struct RuntimeTlsMap {
 	
 	// Size of the inital TLS segment.
 	size_t initialLimit;
+
+	// TLS indices.
+	frg::vector<SharedObject *, MemoryAllocator> indices;
 };
 
 extern frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
 void allocateTcb();
+void *accessDtv(SharedObject *object);
 
 // --------------------------------------------------------
 // ObjectSymbol

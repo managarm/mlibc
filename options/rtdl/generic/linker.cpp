@@ -574,21 +574,44 @@ void doInitialize(SharedObject *object) {
 // --------------------------------------------------------
 
 RuntimeTlsMap::RuntimeTlsMap()
-: initialPtr(0), initialLimit(0) { }
+: initialPtr{0}, initialLimit{0}, indices{getAllocator()} { }
 
 struct Tcb {
 	Tcb *selfPointer;
+	size_t dtvSize;
+	void **dtvPointers;
 };
 
 void allocateTcb() {
 	size_t fs_size = runtimeTlsMap->initialLimit + sizeof(Tcb);
-	char *fs_buffer = (char *)getAllocator().allocate(fs_size);
+	auto fs_buffer = getAllocator().allocate(fs_size);
 	memset(fs_buffer, 0, fs_size);
 
-	auto tcb_ptr = (Tcb *)(fs_buffer + runtimeTlsMap->initialLimit);
+	auto tcb_ptr = new (reinterpret_cast<char *>(fs_buffer) + runtimeTlsMap->initialLimit) Tcb;
 	tcb_ptr->selfPointer = tcb_ptr;
+
+	tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
+	tcb_ptr->dtvPointers = frg::construct_n<void *>(getAllocator(), runtimeTlsMap->indices.size());
+	memset(tcb_ptr->dtvPointers, 0, sizeof(void *) * runtimeTlsMap->indices.size());
+	for(size_t i = 0; i < runtimeTlsMap->indices.size(); ++i) {
+		auto object = runtimeTlsMap->indices[i];
+		if(object->tlsModel != TlsModel::initial)
+			continue;
+		tcb_ptr->dtvPointers[i] = reinterpret_cast<char *>(tcb_ptr) + object->tlsOffset;
+	}
+
 	if(mlibc::sys_tcb_set(tcb_ptr))
 		__ensure(!"sys_tcb_set() failed");
+}
+
+void *accessDtv(SharedObject *object) {
+	Tcb *tcb_ptr;
+	asm ( "mov %%fs:(0), %0" : "=r" (tcb_ptr) );
+
+	__ensure(object->tlsModel == TlsModel::initial);
+	__ensure(object->tlsIndex < tcb_ptr->dtvSize);
+	__ensure(tcb_ptr->dtvPointers[object->tlsIndex]);
+	return tcb_ptr->dtvPointers[object->tlsIndex];
 }
 
 // --------------------------------------------------------
@@ -836,6 +859,10 @@ void Loader::_buildTlsMaps() {
 			if(object->tlsSegmentSize == 0)
 				continue;
 
+			// Allocate an index for the object.
+			object->tlsIndex = runtimeTlsMap->indices.size();
+			runtimeTlsMap->indices.push_back(object);
+
 			__ensure(16 % object->tlsAlignment == 0);
 			runtimeTlsMap->initialPtr += object->tlsSegmentSize;
 			size_t misalign = runtimeTlsMap->initialPtr % object->tlsAlignment;
@@ -862,6 +889,10 @@ void Loader::_buildTlsMaps() {
 				continue;
 			if(object->tlsSegmentSize == 0)
 				continue;
+
+			// Allocate an index for the object.
+			object->tlsIndex = runtimeTlsMap->indices.size();
+			runtimeTlsMap->indices.push_back(object);
 
 			// There are some libraries (e.g. Mesa) that require static TLS even though
 			// they expect to be dynamically loaded.

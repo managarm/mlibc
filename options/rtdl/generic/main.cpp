@@ -218,15 +218,7 @@ const char *__dlapi_error() {
 
 extern "C" __attribute__ (( visibility("default") ))
 void *__dlapi_get_tls(struct __abi_tls_entry *entry) {
-	// TODO: Thread-safety!
-	__ensure(entry->object->tlsModel == TlsModel::initial);
-	
-//	frigg::infoLogger() << "__tls_get_addr(" << entry->object->name
-//			<< ", " << entry->offset << ")" << frg::endlog;
-	
-	char *tp;
-	asm ( "mov %%fs:(0), %0" : "=r" (tp) );
-	return tp + entry->object->tlsOffset + entry->offset;
+	return reinterpret_cast<char *>(accessDtv(entry->object)) + entry->offset;
 }
 
 extern "C" [[gnu::visibility("default")]]
