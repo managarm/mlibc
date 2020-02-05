@@ -39,6 +39,8 @@ extern "C" {
 #define SA_NOCLDWAIT (1 << 5)
 #define SA_NODEFER (1 << 6)
 
+#define MINSIGSTKSZ 2048
+
 #include <bits/ansi/time_t.h>
 #include <bits/ansi/timespec.h>
 
