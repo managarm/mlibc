@@ -124,7 +124,6 @@ if not no_headers
 		'include/bits/posix/nl_item.h',
 		'include/bits/posix/off_t.h',
 		'include/bits/posix/pid_t.h',
-		'include/bits/posix/posix_errno.h',
 		'include/bits/posix/posix_signal.h',
 		'include/bits/posix/posix_stdio.h',
 		'include/bits/posix/posix_stdlib.h',

@@ -24,6 +24,7 @@ if not no_headers
 		'include/abi-bits/abi.h',
 		'include/abi-bits/auxv.h',
 		'include/abi-bits/vm-flags.h',
+		'include/abi-bits/errno.h',
 		subdir: 'abi-bits'
 	)
 endif
