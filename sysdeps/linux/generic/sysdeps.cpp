@@ -51,7 +51,8 @@ int sys_anon_free(void *pointer, size_t size) {
 }
 
 int sys_open(const char *path, int flags, int *fd) {
-	auto ret = do_syscall(NR_open, path, flags, 0);
+        // TODO: pass mode in sys_open() sysdep
+	auto ret = do_syscall(NR_open, path, flags, 0666);
 	if(int e = sc_error(ret); e)
 		return e;
 	*fd = sc_int_result<int>(ret);
