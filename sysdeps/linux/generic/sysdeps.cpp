@@ -14,6 +14,7 @@
 #define NR_close 3
 #define NR_lseek 8
 #define NR_mmap 9
+#define NR_ioctl 16
 #define NR_exit 60
 #define NR_arch_prctl 158
 
@@ -101,6 +102,18 @@ int sys_vm_unmap(void *pointer, size_t size) STUB_ONLY
 
 // All remaining functions are disabled in ldso.
 #ifndef MLIBC_BUILDING_RTDL
+
+#include <sys/ioctl.h>
+
+int sys_isatty(int fd) {
+        struct winsize ws;
+        auto ret = do_syscall(NR_ioctl, fd, TIOCGWINSZ, &ws);
+        if (int e = sc_error(ret); e)
+                return e;
+        auto res = sc_int_result<unsigned long>(ret);
+        if(!res) return 0;
+        return 1;
+}
 
 int sys_clock_get(int clock, time_t *secs, long *nanos) STUB_ONLY
 
