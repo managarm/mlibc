@@ -12,11 +12,14 @@
 #define NR_write 1
 #define NR_open 2
 #define NR_close 3
+#define NR_stat 4
+#define NR_fstat 5
 #define NR_lseek 8
 #define NR_mmap 9
 #define NR_ioctl 16
 #define NR_exit 60
 #define NR_arch_prctl 158
+#define NR_clock_gettime 228
 
 #define ARCH_SET_FS	0x1002
 
@@ -116,7 +119,27 @@ int sys_isatty(int fd) {
         return 1;
 }
 
-int sys_clock_get(int clock, time_t *secs, long *nanos) STUB_ONLY
+int sys_clock_get(int clock, time_t *secs, long *nanos) {
+        struct timespec tp = {};
+        auto ret = do_syscall(NR_clock_gettime, clock, &tp);
+        if (int e = sc_error(ret); e)
+                return e;
+        *secs = tp.tv_sec;
+        *nanos = tp.tv_nsec;
+        return 0;
+}
+
+int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
+        (void) flags;
+        sc_result_t ret;
+        if(!path)
+                ret = do_syscall(NR_fstat, fd, statbuf);
+        else
+                ret = do_syscall(NR_stat, path, statbuf);
+        if (int e = sc_error(ret); e)
+                return e;
+        return 0;
+}
 
 void sys_exit(int status) {
 	do_syscall(NR_exit, status);
