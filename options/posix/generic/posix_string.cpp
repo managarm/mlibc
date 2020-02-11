@@ -43,39 +43,6 @@ size_t strnlen(const char *s, size_t n) {
 	return len;
 }
 
-char *strtok_r(char *__restrict s, const char *__restrict del, char **__restrict m) {
-	__ensure(m);
-	
-	// We use *m = null to memorize that the entire string was consumed.
-	char *tok;
-	if(s) {
-		tok = s;
-	}else if(*m) {
-		tok = *m;
-	}else {
-		return nullptr;
-	}
-
-	// Skip initial delimiters.
-	// After this loop: *tok is non-null iff we return a token.
-	while(*tok && strchr(del, *tok))
-		tok++;
-	
-	// Replace the following delimiter by a null-terminator.
-	// After this loop: *p is null iff we reached the end of the string.
-	auto p = tok;
-	while(*p && !strchr(del, *p))
-		p++;
-	
-	if(*p) {
-		*p = 0;
-		*m = p + 1;
-	}else{
-		*m = nullptr;
-	}
-	return tok;
-}
-
 char *strsep(char **m, const char *del) {
 	__ensure(m);
 
@@ -88,7 +55,7 @@ char *strsep(char **m, const char *del) {
 	auto p = tok;
 	while(*p && !strchr(del, *p))
 		p++;
-	
+
 	if(*p) {
 		*p = 0;
 		*m = p + 1;
