@@ -29,6 +29,18 @@ extern "C" {
 		return ret;
 	}
 
+	static sc_word_t do_asm_syscall4(int sc,
+			sc_word_t arg1, sc_word_t arg2, sc_word_t arg3,
+			sc_word_t arg4) {
+		sc_word_t ret;
+		register sc_word_t arg4_reg asm("r10") = arg4;
+		asm volatile ("syscall" : "=a"(ret)
+				: "a"(sc), "D"(arg1), "S"(arg2), "d"(arg3),
+					"r"(arg4_reg)
+				: "rcx", "r11", "memory");
+		return ret;
+	}
+
 	static sc_word_t do_asm_syscall6(int sc,
 			sc_word_t arg1, sc_word_t arg2, sc_word_t arg3,
 			sc_word_t arg4, sc_word_t arg5, sc_word_t arg6) {
@@ -54,6 +66,10 @@ namespace mlibc {
 	}
 	inline sc_word_t do_nargs_syscall(int sc, sc_word_t arg1, sc_word_t arg2, sc_word_t arg3) {
 		return do_asm_syscall3(sc, arg1, arg2, arg3);
+	}
+	inline sc_word_t do_nargs_syscall(int sc, sc_word_t arg1, sc_word_t arg2, sc_word_t arg3,
+			sc_word_t arg4) {
+		return do_asm_syscall4(sc, arg1, arg2, arg3, arg4);
 	}
 	inline sc_word_t do_nargs_syscall(int sc, sc_word_t arg1, sc_word_t arg2, sc_word_t arg3,
 			sc_word_t arg4, sc_word_t arg5, sc_word_t arg6) {

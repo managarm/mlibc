@@ -4,7 +4,8 @@
 
 #include <bits/posix/id_t.h>
 #include <bits/posix/pid_t.h>
-#include <bits/posix/siginfo_t.h>
+// for siginfo_t
+#include <abi-bits/signal.h>
 
 #ifdef __cplusplus
 extern "C" {
