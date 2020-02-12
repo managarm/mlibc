@@ -4,12 +4,18 @@ pb2frigg = find_program('pb2frigg')
 proto_gen = generator(protoc, arguments: [
 		'--plugin=protoc-gen-frigg=' + pb2frigg.path(),
 		'--frigg_out=@BUILD_DIR@',
-		'--proto_path=@CURRENT_SOURCE_DIR@/../../subprojects/managarm/bragi/proto',
+		'@EXTRA_ARGS@',
 		'@INPUT@'
 	],
 	output: '@BASENAME@.frigg_pb.hpp')
-fs_pb = proto_gen.process('../../subprojects/managarm/bragi/proto/fs.proto')
-posix_pb = proto_gen.process('../../subprojects/managarm/bragi/proto/posix.proto')
+fs_pb = proto_gen.process(meson.current_source_dir()
+		+ '/../../subprojects/managarm/protocols/fs/fs.proto',
+	extra_args: ['--proto_path=' + meson.current_source_dir()
+		+ '/../../subprojects/managarm/protocols/fs'])
+posix_pb = proto_gen.process(meson.current_source_dir()
+		+ '/../../subprojects/managarm/protocols/posix/posix.proto',
+	extra_args: ['--proto_path=' + meson.current_source_dir()
+		+ '/../../subprojects/managarm/protocols/posix'])
 
 managarm_incl = include_directories(
 		'../../subprojects/managarm/hel/include',
