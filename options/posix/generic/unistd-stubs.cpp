@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
@@ -336,9 +337,15 @@ int nice(int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-long pathconf(const char *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+long pathconf(const char *path, int name) {
+	switch (name) {
+	case _PC_NAME_MAX:
+		return NAME_MAX;
+	default:
+		mlibc::infoLogger() << "missing pathconf() entry " << name << frg::endlog;
+		errno = EINVAL;
+		return -1;
+	}
 }
 int pause(void) {
 	__ensure(!"Not implemented");
