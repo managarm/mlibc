@@ -5,14 +5,8 @@ rtdl_sources += files(
 libc_sources += files(
 	'generic/filesystem.c',
 	'generic/filesystem.cpp',
-	'generic/ipc.c',
 	'generic/syscall.c',
-	'generic/fb.c',
-	'generic/process.c',
-	'generic/lemon.c',
 	'generic/lemon.cpp',
-	'generic/exit.c',
-	'generic/itoa.c',
 )
 
 if not no_headers
@@ -24,14 +18,9 @@ if not no_headers
 		subdir: 'abi-bits'
 	)
 	install_headers(
-		'include/lemon/ipc.h',
 		'include/lemon/filesystem.h',
 		'include/lemon/syscall.h',
-		'include/lemon/types.h',
-		'include/lemon/fb.h',
-		'include/lemon/lemon.h',
-		'include/lemon/keyboard.h',
-		'include/lemon/itoa.h',
+		'include/lemon/spawn.h',
 		subdir: 'lemon'
 	)
 endif

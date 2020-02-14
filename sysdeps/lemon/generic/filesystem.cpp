@@ -49,13 +49,11 @@ namespace mlibc{
 		return 0; 
 	}
 
-	#warning finish filesystem sysdeps
 	int sys_close(int fd){
 		lemon_close(fd);
 		return 0;
 	}
 
-	#warning Properly Implement access()
 	int sys_access(const char* filename, int mode){
 		int ret = lemon_open(filename, 0);
 

@@ -20,7 +20,6 @@ rtdl_deps = [ ]
 
 headers_only = get_option('headers_only')
 no_headers = get_option('mlibc_no_headers')
-static = get_option('static')
 disable_ansi_option = false
 disable_posix_option = false
 disable_linux_option = false
@@ -181,58 +180,30 @@ subdir('options/glibc')
 subdir('options/linux')
 
 if not headers_only
-	if not static
-		ldso_lib = shared_library('ld', rtdl_sources,
-				name_prefix: '',
-				cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
-				include_directories: rtdl_include_dirs,
-				dependencies: rtdl_deps,
-				install: true)
+	ldso_lib = shared_library('ld', rtdl_sources,
+			name_prefix: '',
+			cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
+			include_directories: rtdl_include_dirs,
+			dependencies: rtdl_deps,
+			install: true)
 
-		shared_library('c',
-				[
-					libc_sources,
-					internal_sources,
-					ansi_sources,
-					lsb_sources,
-				],
-				cpp_args: ['-DFRIGG_HAVE_LIBC'],
-				include_directories: libc_include_dirs,
-				dependencies: libc_deps,
-				link_with: [ldso_lib],
-				link_whole: libc_sublibs,
-				install: true)
+	shared_library('c',
+			[
+				libc_sources,
+				internal_sources,
+				ansi_sources,
+				lsb_sources,
+			],
+			cpp_args: ['-DFRIGG_HAVE_LIBC'],
+			include_directories: libc_include_dirs,
+			dependencies: libc_deps,
+			link_with: [ldso_lib],
+			link_whole: libc_sublibs,
+			install: true)
 
-		shared_library('dl', 'libdl/src/dummy.cpp', install: true)
-		shared_library('pthread', 'libpthread/src/dummy.cpp', install: true)
-		shared_library('rt', 'librt/src/dummy.cpp', install: true)
-		shared_library('util', 'libutil/src/dummy.cpp', install: true)
-		shared_library('m', 'libm/src/dummy.cpp', install: true)
-	else
-		ldso_lib = static_library('ld', rtdl_sources,
-				name_prefix: '',
-				cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
-				include_directories: rtdl_include_dirs,
-				dependencies: rtdl_deps,
-				install: true)
-
-		static_library('c',
-				[
-					libc_sources,
-					internal_sources,
-					ansi_sources,
-				],
-				cpp_args: ['-DFRIGG_HAVE_LIBC'],
-				include_directories: libc_include_dirs,
-				dependencies: libc_deps,
-				link_with: [ldso_lib],
-				link_whole: libc_sublibs,
-				install: true)
-
-		static_library('dl', 'libdl/src/dummy.cpp', install: true)
-		static_library('pthread', 'libpthread/src/dummy.cpp', install: true)
-		static_library('rt', 'librt/src/dummy.cpp', install: true)
-		static_library('util', 'libutil/src/dummy.cpp', install: true)
-		static_library('m', 'libm/src/dummy.cpp', install: true)
-	endif
+	shared_library('dl', 'libdl/src/dummy.cpp', install: true)
+	shared_library('pthread', 'libpthread/src/dummy.cpp', install: true)
+	shared_library('rt', 'librt/src/dummy.cpp', install: true)
+	shared_library('util', 'libutil/src/dummy.cpp', install: true)
+	shared_library('m', 'libm/src/dummy.cpp', install: true)
 endif
