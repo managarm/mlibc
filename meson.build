@@ -106,7 +106,9 @@ if not disable_posix_option
 	libc_include_dirs += include_directories('options/posix/include')
 endif
 
+rtdl_include_dirs += include_directories('options/elf/include')
 rtdl_include_dirs += include_directories('options/linux/include')
+libc_include_dirs += include_directories('options/elf/include')
 libc_include_dirs += include_directories('options/linux/include')
 
 #----------------------------------------------------------------------------------------
