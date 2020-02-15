@@ -3,7 +3,6 @@ rtdl_sources += files(
 )
 
 libc_sources += files(
-	'generic/filesystem.c',
 	'generic/filesystem.cpp',
 	'generic/syscall.c',
 	'generic/lemon.cpp',
@@ -18,7 +17,6 @@ if not no_headers
 		subdir: 'abi-bits'
 	)
 	install_headers(
-		'include/lemon/filesystem.h',
 		'include/lemon/syscall.h',
 		'include/lemon/spawn.h',
 		subdir: 'lemon'
