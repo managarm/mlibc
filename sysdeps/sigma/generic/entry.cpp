@@ -15,7 +15,8 @@ static mlibc::exec_stack_data __mlibc_stack_data;
 
 MemoryAllocator& getSysdepsAllocator(){
     static frg::eternal<VirtualAllocator> virtualAllocator;
-    static frg::eternal<MemoryAllocator> singleton{virtualAllocator.get()};
+    static frg::eternal<MemoryPool> heap{virtualAllocator.get()};
+    static frg::eternal<MemoryAllocator> singleton{&heap.get()};
     return singleton.get();
 }
 

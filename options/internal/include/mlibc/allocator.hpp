@@ -32,6 +32,8 @@ public:
 	void unmap(uintptr_t address, size_t length);
 };
 
+typedef frg::slab_pool<VirtualAllocator, AllocatorLock> MemoryPool;
+
 typedef frg::slab_allocator<VirtualAllocator, AllocatorLock> MemoryAllocator;
 
 MemoryAllocator &getAllocator();

@@ -380,7 +380,7 @@ void *malloc(size_t size) {
 }
 
 void *realloc(void *ptr, size_t size) {
-	auto nptr = getAllocator().realloc(ptr, size);
+	auto nptr = getAllocator().reallocate(ptr, size);
 	// TODO: Print PID only if POSIX option is enabled.
 	if(getenv("MLIBC_DEBUG_MALLOC"))
 		mlibc::infoLogger() << "mlibc (PID ?): realloc() on "

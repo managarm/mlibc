@@ -14,7 +14,8 @@ MemoryAllocator &getAllocator() {
 	// use frg::eternal to prevent a call to __cxa_atexit().
 	// this is necessary because __cxa_atexit() call this function.
 	static frg::eternal<VirtualAllocator> virtualAllocator;
-	static frg::eternal<MemoryAllocator> singleton{virtualAllocator.get()};
+	static frg::eternal<MemoryPool> heap{virtualAllocator.get()};
+	static frg::eternal<MemoryAllocator> singleton{&heap.get()};
 	return singleton.get();
 }
 
