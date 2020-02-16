@@ -5,6 +5,8 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/sigma-posix.hpp>
 #include <frg/eternal.hpp>
+#include <libsigma/sys.h>
+#include <sys/auxv.h>
 
 void __mlibc_initLocale();
 
@@ -12,6 +14,10 @@ extern "C" uintptr_t* __dlapi_entrystack();
 
 extern char** environ;
 static mlibc::exec_stack_data __mlibc_stack_data;
+
+tid_t getUmTid(){
+    return getauxval(AT_VFS_SEVER);
+}
 
 MemoryAllocator& getSysdepsAllocator(){
     static frg::eternal<VirtualAllocator> virtualAllocator;

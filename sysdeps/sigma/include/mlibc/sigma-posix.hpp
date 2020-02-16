@@ -3,6 +3,7 @@
 
 #include <signal.h>
 #include <mlibc/allocator.hpp>
+#include <libsigma/sys.h>
 
 struct SignalGuard {
     SignalGuard(){
@@ -22,5 +23,6 @@ private:
 };
 
 MemoryAllocator& getSysdepsAllocator();
+tid_t getUmTid();
 
 #endif

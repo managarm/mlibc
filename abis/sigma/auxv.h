@@ -6,4 +6,8 @@
 #define AT_PHNUM 5
 #define AT_ENTRY 9
 
+// Sigma specific auxvector entries.
+
+#define AT_VFS_SEVER 0x1000
+
 #endif

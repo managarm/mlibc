@@ -26,7 +26,7 @@ namespace mlibc {
         builder.add_command((uint64_t)client_request_type::Tell);
         builder.add_fd(fd);
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+        if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
             mlibc::infoLogger() << "Failed to send Tell message" << frg::endlog;
             return -1;
         }
@@ -63,7 +63,7 @@ namespace mlibc {
         builder.add_path(iota::string{getAllocator(), path});
         builder.add_flags(flags);
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+        if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
             mlibc::infoLogger() << "Failed to send Open message" << frg::endlog;
             return -1;
         }
@@ -100,7 +100,7 @@ namespace mlibc {
         builder.add_fd(fd);
         builder.add_newfd(newfd);
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+        if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
             mlibc::infoLogger() << "Failed to send Dup2 message" << frg::endlog;
             return -1;
         }
@@ -143,7 +143,7 @@ namespace mlibc {
 
         builder.add_buffer(buffer);
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+        if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
             mlibc::infoLogger() << "Failed to send Write message" << frg::endlog;
             return -1;
         }
@@ -184,7 +184,7 @@ namespace mlibc {
         builder.add_command((uint64_t)client_request_type::Close);
         builder.add_fd(fd);
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+        if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
             mlibc::infoLogger() << "Failed to send Close message" << frg::endlog;
             return -1;
         }
@@ -220,7 +220,7 @@ namespace mlibc {
         builder.add_fd(fd);
         builder.add_count(count);
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+        if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
             mlibc::infoLogger() << "Failed to send Read message" << frg::endlog;
             return -1;
         }
@@ -269,7 +269,7 @@ namespace mlibc {
         builder.add_whence(whence);
         builder.add_offset(offset);
 
-        if(libsigma_ipc_send(libsigma_get_um_tid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+        if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
             mlibc::infoLogger() << "Failed to send Seek message" << frg::endlog;
             return -1;
         }
