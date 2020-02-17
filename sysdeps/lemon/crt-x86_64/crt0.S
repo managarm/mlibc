@@ -6,7 +6,7 @@ _start:
 	pushq %rbp
 	movq %rsp, %rbp
 
-	#call _init
+	call _init
 
 	# Run main
 	call main
