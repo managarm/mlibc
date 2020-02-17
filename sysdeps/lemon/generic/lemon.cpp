@@ -12,7 +12,7 @@ namespace mlibc{
 	int sys_anon_allocate(size_t size, void **pointer) {
 		// Make sure to only allocate whole pages
 		__ensure(!(size & 0xFFF));
-		syscall(SYS_ALLOC, (((size / 0x1000)*0x1000 < size) ? (size / 0x1000) + 1 : (size / 0x1000)), (uintptr_t)pointer, 0, 0, 0);
+		syscall(SYS_ALLOC, ((size + 0xFFF) & ~static_cast<size_t>(0xFFF)) >> 12, (uintptr_t)pointer, 0, 0, 0);
 
 		if (!(*pointer))
 		    return -1;
@@ -24,7 +24,7 @@ namespace mlibc{
 	}
 
 	void sys_libc_panic(){
-		*((int*)0xffffDEADDEADDEAD) = 1; // Force Page Fault
+		__builtin_trap();
 		for(;;);
 	}
 
@@ -37,14 +37,12 @@ namespace mlibc{
 	}
 } 
 
+// Temporary - Remove once LSB is linked into the static library
 extern "C" int __cxa_atexit(){
 	return 0;
 }
 
+// Temporary - Remove once LSB is linked into the static library
 void __mlibc_do_finalize(){
 
-}
-
-extern "C" int lemon_spawn(const char* path){
-	syscall(SYS_EXEC, (uintptr_t)path, 0, 0, 0, 0);
 }

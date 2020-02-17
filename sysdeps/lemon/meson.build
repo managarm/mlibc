@@ -18,7 +18,6 @@ if not no_headers
 	)
 	install_headers(
 		'include/lemon/syscall.h',
-		'include/lemon/spawn.h',
 		subdir: 'lemon'
 	)
 endif

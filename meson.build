@@ -135,7 +135,7 @@ internal_sources = [
 	'options/internal/x86_64/setjmp.S',
 ]
 
-if host_machine.system() != 'lemon'
+if not static
 	internal_sources += [
 		'options/internal/gcc-extra/mlibc_crtbegin.S',
 		'options/internal/gcc-extra/mlibc_crtend.S',
@@ -208,13 +208,6 @@ if not headers_only
 		static_library('util', 'libutil/src/dummy.cpp', install: true)
 		static_library('m', 'libm/src/dummy.cpp', install: true)
 	else
-		ldso_lib = static_library('ld', rtdl_sources,
-				name_prefix: '',
-				cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
-				include_directories: rtdl_include_dirs,
-				dependencies: rtdl_deps,
-				install: true)
-
 		static_library('c',
 				[
 					libc_sources,
@@ -224,11 +217,9 @@ if not headers_only
 				cpp_args: ['-DFRIGG_HAVE_LIBC'],
 				include_directories: libc_include_dirs,
 				dependencies: libc_deps,
-				link_with: [ldso_lib],
 				link_whole: libc_sublibs,
 				install: true)
 
-		static_library('dl', 'libdl/src/dummy.cpp', install: true)
 		static_library('pthread', 'libpthread/src/dummy.cpp', install: true)
 		static_library('rt', 'librt/src/dummy.cpp', install: true)
 		static_library('util', 'libutil/src/dummy.cpp', install: true)

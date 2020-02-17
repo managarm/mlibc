@@ -4,8 +4,6 @@
 namespace mlibc{
 
 	int sys_write(int fd, const void* buffer, size_t count, ssize_t* written){
-
-
 		int ret;
 		syscall(SYS_WRITE, fd, (uintptr_t)buffer, count, (uintptr_t)&ret, 0);
 
@@ -73,7 +71,7 @@ namespace mlibc{
 		} else return 1;
 	}
 
-	void sys_libc_log(const char*){
-
+	void sys_libc_log(const char* msg){
+		syscall(0, (uintptr_t)msg, 0, 0, 0, 0);
 	}
 } 
