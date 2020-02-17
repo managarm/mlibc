@@ -20,6 +20,7 @@ rtdl_deps = [ ]
 
 headers_only = get_option('headers_only')
 no_headers = get_option('mlibc_no_headers')
+static = get_option('static')
 disable_ansi_option = false
 disable_posix_option = false
 disable_linux_option = false
@@ -88,6 +89,11 @@ elif host_machine.system() == 'sigma'
 	libc_deps += libsigma
 	rtdl_deps += libsigma
 	subdir('sysdeps/sigma')
+elif host_machine.system() == 'lemon'
+	disable_linux_option = true
+	rtdl_include_dirs += include_directories('sysdeps/lemon/include')
+	libc_include_dirs += include_directories('sysdeps/lemon/include')
+	subdir('sysdeps/lemon')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
@@ -128,10 +134,15 @@ internal_sources = [
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc/initfini.cpp',
 	'options/internal/gcc-extra/cxxabi.cpp',
-	'options/internal/gcc-extra/mlibc_crtbegin.S',
-	'options/internal/gcc-extra/mlibc_crtend.S',
 	'options/internal/x86_64/setjmp.S',
 ]
+
+if not static
+	internal_sources += [
+		'options/internal/gcc-extra/mlibc_crtbegin.S',
+		'options/internal/gcc-extra/mlibc_crtend.S',
+	]
+endif
 
 if not no_headers
 	install_headers(
@@ -171,30 +182,49 @@ subdir('options/glibc')
 subdir('options/linux')
 
 if not headers_only
-	ldso_lib = shared_library('ld', rtdl_sources,
-			name_prefix: '',
-			cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
-			include_directories: rtdl_include_dirs,
-			dependencies: rtdl_deps,
-			install: true)
+	if not static
+		ldso_lib = shared_library('ld', rtdl_sources,
+				name_prefix: '',
+				cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
+				include_directories: rtdl_include_dirs,
+				dependencies: rtdl_deps,
+				install: true)
 
-	shared_library('c',
-			[
-				libc_sources,
-				internal_sources,
-				ansi_sources,
-				lsb_sources,
-			],
-			cpp_args: ['-DFRIGG_HAVE_LIBC'],
-			include_directories: libc_include_dirs,
-			dependencies: libc_deps,
-			link_with: [ldso_lib],
-			link_whole: libc_sublibs,
-			install: true)
+		shared_library('c',
+				[
+					libc_sources,
+					internal_sources,
+					ansi_sources,
+					lsb_sources,
+				],
+				cpp_args: ['-DFRIGG_HAVE_LIBC'],
+				include_directories: libc_include_dirs,
+				dependencies: libc_deps,
+				link_with: [ldso_lib],
+				link_whole: libc_sublibs,
+				install: true)
 
-	shared_library('dl', 'libdl/src/dummy.cpp', install: true)
-	shared_library('m', 'libm/src/dummy.cpp', install: true)
-	shared_library('pthread', 'libpthread/src/dummy.cpp', install: true)
-	shared_library('rt', 'librt/src/dummy.cpp', install: true)
-	shared_library('util', 'libutil/src/dummy.cpp', install: true)
+		static_library('dl', 'libdl/src/dummy.cpp', install: true)
+		static_library('pthread', 'libpthread/src/dummy.cpp', install: true)
+		static_library('rt', 'librt/src/dummy.cpp', install: true)
+		static_library('util', 'libutil/src/dummy.cpp', install: true)
+		static_library('m', 'libm/src/dummy.cpp', install: true)
+	else
+		static_library('c',
+				[
+					libc_sources,
+					internal_sources,
+					ansi_sources,
+				],
+				cpp_args: ['-DFRIGG_HAVE_LIBC'],
+				include_directories: libc_include_dirs,
+				dependencies: libc_deps,
+				link_whole: libc_sublibs,
+				install: true)
+
+		static_library('pthread', 'libpthread/src/dummy.cpp', install: true)
+		static_library('rt', 'librt/src/dummy.cpp', install: true)
+		static_library('util', 'libutil/src/dummy.cpp', install: true)
+		static_library('m', 'libm/src/dummy.cpp', install: true)
+	endif
 endif
