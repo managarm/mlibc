@@ -204,11 +204,11 @@ if not headers_only
 				link_whole: libc_sublibs,
 				install: true)
 
-		static_library('dl', 'libdl/src/dummy.cpp', install: true)
-		static_library('pthread', 'libpthread/src/dummy.cpp', install: true)
-		static_library('rt', 'librt/src/dummy.cpp', install: true)
-		static_library('util', 'libutil/src/dummy.cpp', install: true)
-		static_library('m', 'libm/src/dummy.cpp', install: true)
+		shared_library('dl', 'libdl/src/dummy.cpp', install: true)
+		shared_library('pthread', 'libpthread/src/dummy.cpp', install: true)
+		shared_library('rt', 'librt/src/dummy.cpp', install: true)
+		shared_library('util', 'libutil/src/dummy.cpp', install: true)
+		shared_library('m', 'libm/src/dummy.cpp', install: true)
 	else
 		static_library('c',
 				[
