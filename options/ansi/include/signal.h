@@ -2,6 +2,7 @@
 #define _SIGNAL_H
 
 #include <bits/feature.h>
+#include <abi-bits/signal.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,22 +14,6 @@ typedef int sig_atomic_t;
 
 // Argument for signal()
 typedef void (*__sighandler) (int);
-
-#define SIG_ERR ((__sighandler)(void *)(-1))
-#define SIG_DFL ((__sighandler)(void *)(-2))
-#define SIG_IGN ((__sighandler)(void *)(-3))
-
-#define SIGABRT 1
-#define SIGFPE 2
-#define SIGILL 3
-#define SIGINT 4
-#define SIGSEGV 5
-#define SIGTERM 6
-#define SIGPROF 7
-#define SIGIO 9
-#define SIGPWR 10
-#define SIGRTMIN 11
-#define SIGRTMAX 12
 
 #define CLD_EXITED 1
 #define CLD_KILLED 2

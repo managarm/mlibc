@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
@@ -47,9 +48,15 @@ int chown(const char *path, uid_t uid, gid_t gid) {
 			<< frg::endlog;
 	return 0;
 }
-ssize_t confstr(int, char *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+ssize_t confstr(int name, char *buf, size_t len) {
+	const char *str = "";
+	if (name == _CS_PATH) {
+		str = "/bin:/usr/bin";
+	} else {
+		__ensure(!"Not implemented");
+	}
+
+	return snprintf(buf, len, "%s", str) + 1;
 }
 char *crypt(const char *, const char *) {
 	__ensure(!"Not implemented");
@@ -330,9 +337,15 @@ int nice(int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-long pathconf(const char *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+long pathconf(const char *path, int name) {
+	switch (name) {
+	case _PC_NAME_MAX:
+		return NAME_MAX;
+	default:
+		mlibc::infoLogger() << "missing pathconf() entry " << name << frg::endlog;
+		errno = EINVAL;
+		return -1;
+	}
 }
 int pause(void) {
 	__ensure(!"Not implemented");

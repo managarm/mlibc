@@ -237,9 +237,16 @@ void abstract_file::purge() {
 	__dirty_end = __dirty_begin;
 }
 
-// TODO: For input files, discard the buffer.
 int abstract_file::flush() {
-	return _write_back();
+	if (__dirty_end != __dirty_begin) {
+		if (int e = _write_back(); e)
+			return e;
+	}
+
+	if (int e = _save_pos(); e)
+		return e;
+	purge();
+	return 0;
 }
 
 int abstract_file::tell(off_t *current_offset) {
@@ -329,6 +336,23 @@ int abstract_file::_write_back() {
 	}
 
 	return 0;
+}
+
+int abstract_file::_save_pos() {
+	if (int e = _init_type(); e)
+		return e;
+
+	if (_type == stream_type::file_like) {
+		off_t new_offset;
+		auto seek_offset = (off_t(__offset) - off_t(__io_offset));
+		if (int e = io_seek(seek_offset, SEEK_CUR, &new_offset); e) {
+			__status_bits |= __MLIBC_ERROR_BIT;
+			mlibc::infoLogger() << "hit io_seek() error " << e << frg::endlog;
+			return e;
+		}
+		return 0;
+	}
+	return 0; // nothing to do for the rest
 }
 
 int abstract_file::_reset() {

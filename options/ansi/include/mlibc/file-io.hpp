@@ -58,6 +58,7 @@ private:
 	int _init_bufmode();
 
 	int _write_back();
+	int _save_pos();
 
 	int _reset();
 	void _ensure_allocation();

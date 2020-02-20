@@ -1,6 +1,9 @@
+#ifndef _ABIBITS_ERRNO_H
+#define _ABIBITS_ERRNO_H
 
-#ifndef MLIBC_POSIX_ERRNO_H
-#define MLIBC_POSIX_ERRNO_H
+#define EDOM 1
+#define EILSEQ 2
+#define ERANGE 3
 
 #define E2BIG 1001
 #define EACCES 1002
@@ -79,6 +82,4 @@
 #define ENODATA 1076
 #define ETIME 1077
 #define ENOKEY 1078
-
-#endif // MLIBC_POSIX_ERRNO_H
-
+#endif // _ABIBITS_ERRNO_H

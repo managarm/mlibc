@@ -16,7 +16,14 @@ typedef struct { } posix_spawn_file_actions_t;
 
 struct sched_param;
 
-// MISSING: POSIX_SPAWN macros
+#define POSIX_SPAWN_RESETIDS 1
+#define POSIX_SPAWN_SETPGROUP 2
+#define POSIX_SPAWN_SETSIGDEF 4
+#define POSIX_SPAWN_SETSIGMASK 8
+#define POSIX_SPAWN_SETSCHEDPARAM 16
+#define POSIX_SPAWN_SETSCHEDULER 32
+#define POSIX_SPAWN_USEVFORK 64
+#define POSIX_SPAWN_SETSID 128
 
 int posix_spawn(pid_t *__restrict pid, const char *__restrict path,
 		const posix_spawn_file_actions_t *file_actions,

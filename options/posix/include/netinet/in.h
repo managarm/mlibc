@@ -82,6 +82,12 @@ struct ipv6_mreq {
     !_a[1] && \
      _a[2] == htonl(0xffff); \
 })
+#define __ARE_4_BYTE_EQUAL(a, b) \
+	((a)[0] == (b)[0] && (a)[1] == (b)[1] && (a)[2] == (b)[2] && \
+	 (a)[3] == (b)[3] && (a)[4] == (b)[4])
+#define IN6_ARE_ADDR_EQUAL(a, b) \
+	__ARE_4_BYTE_EQUAL((const uint32_t *)(a), (const uint32_t *)(b))
+
 #define IN6_IS_ADDR_V4COMPAT 7
 #define IN6_IS_ADDR_MC_NODELOCAL 8
 #define IN6_IS_ADDR_MC_LINKLOCAL 9
