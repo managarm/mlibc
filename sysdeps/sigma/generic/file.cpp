@@ -35,7 +35,7 @@ namespace mlibc {
             libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
         size_t res_size = libsigma_ipc_get_msg_size();
-        frg::vector<uint8_t, MemoryAllocator> res{getAllocator()};
+        frg::vector<uint8_t, MemoryAllocator> res{getSysdepsAllocator()};
         res.resize(res_size);
 
         uint64_t origin, useless;
@@ -60,7 +60,7 @@ namespace mlibc {
         client_request_builder builder{};
 
         builder.add_command((uint64_t)client_request_type::Open);
-        builder.add_path(iota::string{getAllocator(), path});
+        builder.add_path(iota::string{getSysdepsAllocator(), path});
         builder.add_flags(flags);
 
         if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
@@ -72,7 +72,7 @@ namespace mlibc {
             libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
         size_t res_size = libsigma_ipc_get_msg_size();
-        frg::vector<uint8_t, MemoryAllocator> res{getAllocator()};
+        frg::vector<uint8_t, MemoryAllocator> res{getSysdepsAllocator()};
         res.resize(res_size);
 
         uint64_t origin, useless;
@@ -109,7 +109,7 @@ namespace mlibc {
             libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
         size_t res_size = libsigma_ipc_get_msg_size();
-        frg::vector<uint8_t, MemoryAllocator> res{getAllocator()};
+        frg::vector<uint8_t, MemoryAllocator> res{getSysdepsAllocator()};
         res.resize(res_size);
 
         uint64_t origin, useless;
@@ -137,7 +137,7 @@ namespace mlibc {
         builder.add_fd(fd);
         builder.add_count(count);
 
-        frg::vector<uint8_t, MemoryAllocator> buffer{getAllocator()};
+        frg::vector<uint8_t, MemoryAllocator> buffer{getSysdepsAllocator()};
         buffer.resize(count);
         memcpy(buffer.data(), buf, count);
 
@@ -152,7 +152,7 @@ namespace mlibc {
             libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
         size_t res_size = libsigma_ipc_get_msg_size();
-        frg::vector<uint8_t, MemoryAllocator> res{getAllocator()};
+        frg::vector<uint8_t, MemoryAllocator> res{getSysdepsAllocator()};
         res.resize(res_size);
 
         uint64_t origin, useless;
@@ -193,7 +193,7 @@ namespace mlibc {
             libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
         size_t res_size = libsigma_ipc_get_msg_size();
-        frg::vector<uint8_t, MemoryAllocator> res{getAllocator()};
+        frg::vector<uint8_t, MemoryAllocator> res{getSysdepsAllocator()};
         res.resize(res_size);
 
         uint64_t origin, useless;
@@ -229,7 +229,7 @@ namespace mlibc {
             libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
         size_t res_size = libsigma_ipc_get_msg_size();
-        frg::vector<uint8_t, MemoryAllocator> res{getAllocator()};
+        frg::vector<uint8_t, MemoryAllocator> res{getSysdepsAllocator()};
         res.resize(res_size);
 
         uint64_t origin, useless;
@@ -278,7 +278,7 @@ namespace mlibc {
             libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
 
         size_t res_size = libsigma_ipc_get_msg_size();
-        frg::vector<uint8_t, MemoryAllocator> res{getAllocator()};
+        frg::vector<uint8_t, MemoryAllocator> res{getSysdepsAllocator()};
         res.resize(res_size);
 
         uint64_t origin, useless;

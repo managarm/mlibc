@@ -8,6 +8,7 @@
 
 // Sigma specific auxvector entries.
 
-#define AT_VFS_SEVER 0x1000
+#define AT_VFS_SERVER 0x1000
+#define AT_KBUS_SERVER 0x1001
 
 #endif

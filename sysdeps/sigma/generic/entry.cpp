@@ -16,7 +16,7 @@ extern char** environ;
 static mlibc::exec_stack_data __mlibc_stack_data;
 
 tid_t getUmTid(){
-    return getauxval(AT_VFS_SEVER);
+    return getauxval(AT_VFS_SERVER);
 }
 
 MemoryAllocator& getSysdepsAllocator(){
