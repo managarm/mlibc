@@ -1,6 +1,8 @@
 #ifndef _ABIBITS_SIGNAL_H
 #define _ABIBITS_SIGNAL_H
 
+#include <bits/feature.h>
+
 #ifdef __MLIBC_POSIX_OPTION
 
 #include <bits/posix/pid_t.h>

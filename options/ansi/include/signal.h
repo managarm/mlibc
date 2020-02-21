@@ -1,8 +1,8 @@
 #ifndef _SIGNAL_H
 #define _SIGNAL_H
 
-#include <bits/feature.h>
 #include <abi-bits/signal.h>
+#include <bits/feature.h>
 
 #ifdef __cplusplus
 extern "C" {
