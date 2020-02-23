@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <pthread.h>
+#include <errno.h>
 
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>
@@ -49,6 +50,7 @@ unsigned int this_tid() {
 } // anonymous namespace
 
 static constexpr unsigned int mutexRecursive = 1;
+static constexpr unsigned int mutexErrorCheck = 2;
 
 // TODO: either use uint32_t or determine the bit based on sizeof(int).
 static constexpr unsigned int mutex_owner_mask = (static_cast<uint32_t>(1) << 31) - 1;
@@ -314,6 +316,8 @@ int pthread_mutex_init(pthread_mutex_t *__restrict mutex,
 
 	if(type == PTHREAD_MUTEX_RECURSIVE) {
 		mutex->__mlibc_flags |= mutexRecursive;
+	}else if(type == PTHREAD_MUTEX_ERRORCHECK) {
+		mutex->__mlibc_flags |= mutexErrorCheck;
 	}else{
 		__ensure(type == PTHREAD_MUTEX_NORMAL);
 	}
@@ -343,9 +347,13 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 		}else{
 			// If this (recursive) mutex is already owned by us, increment the recursion level.
 			if((expected & mutex_owner_mask) == this_tid()) {
-				if(!(mutex->__mlibc_flags & mutexRecursive))
-					mlibc::panicLogger() << "mlibc: pthread_mutex deadlock detected!"
+				if(!(mutex->__mlibc_flags & mutexRecursive)) {
+					if (mutex->__mlibc_flags & mutexErrorCheck)
+						return EDEADLK;
+					else
+						mlibc::panicLogger() << "mlibc: pthread_mutex deadlock detected!"
 							<< frg::endlog;
+				}
 				++mutex->__mlibc_recursion;
 				return 0;
 			}
@@ -388,6 +396,13 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
 
 	// Reset the mutex to the unlocked state.
 	auto state = __atomic_exchange_n(&mutex->__mlibc_state, 0, __ATOMIC_RELEASE);
+
+	if ((mutex->__mlibc_flags & mutexErrorCheck) && (state & mutex_owner_mask) != this_tid())
+		return EPERM;
+
+	if ((mutex->__mlibc_flags & mutexErrorCheck) && !(state & mutex_owner_mask))
+		return EINVAL;
+
 	__ensure((state & mutex_owner_mask) == this_tid());
 
 	// Wake the futex if there were waiters.
@@ -498,6 +513,3 @@ int pthread_barrier_wait(pthread_barrier_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-
-
-
