@@ -1,5 +1,7 @@
 # mlibc is a C standard library
 
+**Official Discord server:** https://discord.gg/7WB6Ur3
+
 ## Design of the library
 
 | Directory | Purpose |
