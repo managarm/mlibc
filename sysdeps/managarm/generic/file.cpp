@@ -3241,7 +3241,14 @@ int sys_dup(int fd, int flags, int *newfd) {
 	
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	} else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	}
+
 	*newfd = resp.fd();
 	return 0;
 }
@@ -3281,7 +3288,15 @@ int sys_dup2(int fd, int flags, int newfd) {
 	
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+
+	if (resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	} else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	}
+
 	return 0;
 }
 
