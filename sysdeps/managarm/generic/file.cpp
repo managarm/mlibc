@@ -939,7 +939,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	}
 
 	SignalGuard sguard;
-	HelAction actions[5];
+	HelAction actions[6];
 	globalQueue.trim();
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
