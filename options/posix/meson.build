@@ -42,6 +42,7 @@ libc_sources += files(
 	'generic/termios-stubs.cpp',
 	'generic/unistd-stubs.cpp',
 	'generic/utime-stubs.cpp',
+	'generic/iconv-stubs.cpp',
 	'musl-generic/fnmatch.cpp',
 )
 
@@ -69,6 +70,7 @@ if not no_headers
 		'include/termios.h',
 		'include/unistd.h',
 		'include/utime.h',
+		'include/iconv.h',
 	)
 	install_headers(
 		'include/arpa/inet.h',
