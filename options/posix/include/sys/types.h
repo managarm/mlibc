@@ -24,6 +24,7 @@
 #include <bits/posix/fsfilcnt_t.h>
 
 typedef unsigned char u_char;
+typedef void *caddr_t;
 
 #endif // _SYS_TYPES_H
 
