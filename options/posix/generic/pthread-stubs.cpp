@@ -10,6 +10,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
+#include <mlibc/thread.hpp>
 
 static bool enableTrace = false;
 
@@ -100,10 +101,11 @@ int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict,
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 pthread_t pthread_self(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return reinterpret_cast<pthread_t>(mlibc::get_current_tcb());
 }
+
 int pthread_equal(pthread_t, pthread_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

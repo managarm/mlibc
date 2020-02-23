@@ -135,6 +135,7 @@ internal_sources = [
 	'options/internal/gcc/initfini.cpp',
 	'options/internal/gcc-extra/cxxabi.cpp',
 	'options/internal/x86_64/setjmp.S',
+	'options/internal/x86_64/thread.cpp',
 ]
 
 if not static
