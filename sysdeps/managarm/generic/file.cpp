@@ -3306,20 +3306,28 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	if(fsfdt == fsfd_target::path) {
-		__ensure(!(flags & ~(AT_SYMLINK_NOFOLLOW)));
-		if(!(flags & AT_SYMLINK_NOFOLLOW)) {
-			req.set_request_type(managarm::posix::CntReqType::STAT);
-		}else{
-			req.set_request_type(managarm::posix::CntReqType::LSTAT);
-		}
+	req.set_request_type(managarm::posix::CntReqType::FSTATAT);
+	if (fsfdt == fsfd_target::path) {
+		req.set_fd(AT_FDCWD);
 		req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
-	}else{
-		__ensure(fsfdt == fsfd_target::fd);
-		__ensure(!flags);
-		req.set_request_type(managarm::posix::CntReqType::FSTAT);
+	} else if (fsfdt == fsfd_target::fd) {
+		flags |= AT_EMPTY_PATH;
 		req.set_fd(fd);
+	} else {
+		__ensure(fsfdt == fsfd_target::fd_path);
+		req.set_fd(fd);
+		req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 	}
+
+	if (flags & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH)) {
+		return EINVAL;
+	}
+
+	if (!(flags & AT_EMPTY_PATH) && (!path || !strlen(path))) {
+		return ENOENT;
+	}
+
+	req.set_flags(flags);
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
@@ -3347,6 +3355,8 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		return ENOENT;
+	}else if(resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		memset(result, 0, sizeof(struct stat));
