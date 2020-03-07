@@ -26,20 +26,18 @@ namespace mlibc {
         builder.add_command((uint64_t)client_request_type::Tell);
         builder.add_fd(fd);
 
-        if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+        if(libsigma_ipc_send(getUmRing(), (libsigma_message_t*)builder.serialize(), builder.length())){
             mlibc::infoLogger() << "Failed to send Tell message" << frg::endlog;
             return -1;
         }
+        
+        libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC, getUmRing());
 
-        if(libsigma_ipc_get_msg_size() == 0)
-            libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
-
-        size_t res_size = libsigma_ipc_get_msg_size();
+        size_t res_size = libsigma_ipc_get_msg_size(getUmRing());
         frg::vector<uint8_t, MemoryAllocator> res{getSysdepsAllocator()};
         res.resize(res_size);
 
-        uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, (libsigma_message_t*)res.data(), &useless)){
+        if(libsigma_ipc_receive(getUmRing(), (libsigma_message_t*)res.data())){
             mlibc::infoLogger() << "Failed to receive Tell message response" << frg::endlog;
             return -1;
         }
@@ -63,20 +61,18 @@ namespace mlibc {
         builder.add_path(iota::string{getSysdepsAllocator(), path});
         builder.add_flags(flags);
 
-        if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+        if(libsigma_ipc_send(getUmRing(), (libsigma_message_t*)builder.serialize(), builder.length())){
             mlibc::infoLogger() << "Failed to send Open message" << frg::endlog;
             return -1;
         }
 
-        if(libsigma_ipc_get_msg_size() == 0)
-            libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
+        libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC, getUmRing());
 
-        size_t res_size = libsigma_ipc_get_msg_size();
+        size_t res_size = libsigma_ipc_get_msg_size(getUmRing());
         frg::vector<uint8_t, MemoryAllocator> res{getSysdepsAllocator()};
         res.resize(res_size);
 
-        uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, (libsigma_message_t*)res.data(), &useless)){
+        if(libsigma_ipc_receive(getUmRing(), (libsigma_message_t*)res.data())){
             mlibc::infoLogger() << "Failed to receive Open message response" << frg::endlog;
             return -1;
         }
@@ -100,20 +96,18 @@ namespace mlibc {
         builder.add_fd(fd);
         builder.add_newfd(newfd);
 
-        if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+        if(libsigma_ipc_send(getUmRing(), (libsigma_message_t*)builder.serialize(), builder.length())){
             mlibc::infoLogger() << "Failed to send Dup2 message" << frg::endlog;
             return -1;
         }
 
-        if(libsigma_ipc_get_msg_size() == 0)
-            libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
+        libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC, getUmRing());
 
-        size_t res_size = libsigma_ipc_get_msg_size();
+        size_t res_size = libsigma_ipc_get_msg_size(getUmRing());
         frg::vector<uint8_t, MemoryAllocator> res{getSysdepsAllocator()};
         res.resize(res_size);
 
-        uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, (libsigma_message_t*)res.data(), &useless)){
+        if(libsigma_ipc_receive(getUmRing(), (libsigma_message_t*)res.data())){
             mlibc::infoLogger() << "Failed to receive Dup2 message response" << frg::endlog;
             return -1;
         }
@@ -143,20 +137,18 @@ namespace mlibc {
 
         builder.add_buffer(buffer);
 
-        if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+        if(libsigma_ipc_send(getUmRing(), (libsigma_message_t*)builder.serialize(), builder.length())){
             mlibc::infoLogger() << "Failed to send Write message" << frg::endlog;
             return -1;
         }
 
-        if(libsigma_ipc_get_msg_size() == 0)
-            libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
+        libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC, getUmRing());
 
-        size_t res_size = libsigma_ipc_get_msg_size();
+        size_t res_size = libsigma_ipc_get_msg_size(getUmRing());
         frg::vector<uint8_t, MemoryAllocator> res{getSysdepsAllocator()};
         res.resize(res_size);
 
-        uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, (libsigma_message_t*)res.data(), &useless)){
+        if(libsigma_ipc_receive(getUmRing(), (libsigma_message_t*)res.data())){
             mlibc::infoLogger() << "Failed to receive Write message response" << frg::endlog;
             return -1;
         }
@@ -184,20 +176,18 @@ namespace mlibc {
         builder.add_command((uint64_t)client_request_type::Close);
         builder.add_fd(fd);
 
-        if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+        if(libsigma_ipc_send(getUmRing(), (libsigma_message_t*)builder.serialize(), builder.length())){
             mlibc::infoLogger() << "Failed to send Close message" << frg::endlog;
             return -1;
         }
 
-        if(libsigma_ipc_get_msg_size() == 0)
-            libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
+        libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC, getUmRing());
 
-        size_t res_size = libsigma_ipc_get_msg_size();
+        size_t res_size = libsigma_ipc_get_msg_size(getUmRing());
         frg::vector<uint8_t, MemoryAllocator> res{getSysdepsAllocator()};
         res.resize(res_size);
 
-        uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, (libsigma_message_t*)res.data(), &useless)){
+        if(libsigma_ipc_receive(getUmRing(), (libsigma_message_t*)res.data())){
             mlibc::infoLogger() << "Failed to receive Close message response" << frg::endlog;
             return -1;
         }
@@ -220,20 +210,18 @@ namespace mlibc {
         builder.add_fd(fd);
         builder.add_count(count);
 
-        if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+        if(libsigma_ipc_send(getUmRing(), (libsigma_message_t*)builder.serialize(), builder.length())){
             mlibc::infoLogger() << "Failed to send Read message" << frg::endlog;
             return -1;
         }
 
-        if(libsigma_ipc_get_msg_size() == 0)
-            libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
+        libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC, getUmRing());
 
-        size_t res_size = libsigma_ipc_get_msg_size();
+        size_t res_size = libsigma_ipc_get_msg_size(getUmRing());
         frg::vector<uint8_t, MemoryAllocator> res{getSysdepsAllocator()};
         res.resize(res_size);
 
-        uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, (libsigma_message_t*)res.data(), &useless)){
+        if(libsigma_ipc_receive(getUmRing(), (libsigma_message_t*)res.data())){
             mlibc::infoLogger() << "Failed to receive Read message response" << frg::endlog;
             return -1;
         }
@@ -269,20 +257,18 @@ namespace mlibc {
         builder.add_whence(whence);
         builder.add_offset(offset);
 
-        if(libsigma_ipc_send(getUmTid(), (libsigma_message_t*)builder.serialize(), builder.length())){
+        if(libsigma_ipc_send(getUmRing(), (libsigma_message_t*)builder.serialize(), builder.length())){
             mlibc::infoLogger() << "Failed to send Seek message" << frg::endlog;
             return -1;
         }
 
-        if(libsigma_ipc_get_msg_size() == 0)
-            libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC);
+        libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC, getUmRing());
 
-        size_t res_size = libsigma_ipc_get_msg_size();
+        size_t res_size = libsigma_ipc_get_msg_size(getUmRing());
         frg::vector<uint8_t, MemoryAllocator> res{getSysdepsAllocator()};
         res.resize(res_size);
 
-        uint64_t origin, useless;
-        if(libsigma_ipc_receive(&origin, (libsigma_message_t*)res.data(), &useless)){
+        if(libsigma_ipc_receive(getUmRing(), (libsigma_message_t*)res.data())){
             mlibc::infoLogger() << "Failed to receive Seek message response" << frg::endlog;
             return -1;
         }

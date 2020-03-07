@@ -82,7 +82,7 @@ elif host_machine.system() == 'qword'
 	libc_include_dirs += include_directories('sysdeps/qword/include')
 	subdir('sysdeps/qword')
 elif host_machine.system() == 'sigma'
-	disable_linux_option = true
+	#disable_linux_option = true
 	rtdl_include_dirs += include_directories('sysdeps/sigma/include')
 	libc_include_dirs += include_directories('sysdeps/sigma/include')
 	libsigma = dependency('sigma')

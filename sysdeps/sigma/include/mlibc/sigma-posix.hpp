@@ -23,6 +23,6 @@ private:
 };
 
 MemoryAllocator& getSysdepsAllocator();
-tid_t getUmTid();
+handle_t getUmRing();
 
 #endif

@@ -15,7 +15,7 @@ extern "C" uintptr_t* __dlapi_entrystack();
 extern char** environ;
 static mlibc::exec_stack_data __mlibc_stack_data;
 
-tid_t getUmTid(){
+handle_t getUmRing(){
     return getauxval(AT_VFS_SERVER);
 }
 
