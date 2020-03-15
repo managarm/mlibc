@@ -300,71 +300,47 @@ int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read) {
 }
 
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
-	HelHandle handle;
-	if(!(flags & MAP_ANONYMOUS)) {
-		cacheFileTable();
-		auto lane = fileTable[fd];
-		HelAction actions[4];
+	cacheFileTable();
+	HelAction actions[3];
 
-		managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
-		req.set_req_type(managarm::fs::CntReqType::MMAP);
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::VM_MAP);
+	req.set_address_hint(reinterpret_cast<uintptr_t>(hint));
+	req.set_size(size);
+	req.set_mode(prot);
+	req.set_flags(flags);
+	req.set_fd(fd);
+	req.set_rel_offset(offset);
 
-		if(!globalQueue.valid())
-			globalQueue.initialize();
+	if(!globalQueue.valid())
+		globalQueue.initialize();
 
-		frg::string<MemoryAllocator> ser(getAllocator());
-		req.SerializeToString(&ser);
-		actions[0].type = kHelActionOffer;
-		actions[0].flags = kHelItemAncillary;
-		actions[1].type = kHelActionSendFromBuffer;
-		actions[1].flags = kHelItemChain;
-		actions[1].buffer = ser.data();
-		actions[1].length = ser.size();
-		actions[2].type = kHelActionRecvInline;
-		actions[2].flags = kHelItemChain;
-		actions[3].type = kHelActionPullDescriptor;
-		actions[3].flags = 0;
-		HEL_CHECK(helSubmitAsync(lane, actions, 4, globalQueue->getHandle(), 0, 0));
+	frg::string<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(posixLane, actions, 3,
+			globalQueue->getHandle(), 0, 0));
 
-		auto element = globalQueue->dequeueSingle();
-		auto offer = parseSimple(element);
-		auto send_req = parseSimple(element);
-		auto recv_resp = parseInline(element);
-		auto pull_memory = parseHandle(element);
-		HEL_CHECK(offer->error);
-		HEL_CHECK(send_req->error);
-		HEL_CHECK(recv_resp->error);
-		HEL_CHECK(pull_memory->error);
+	auto element = globalQueue->dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getAllocator());
-		resp.ParseFromArray(recv_resp->data, recv_resp->length);
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		handle = pull_memory->handle;
-	}else{
-		__ensure(fd == -1);
-		__ensure(!offset);
-		if(!size) // helAllocateMemory() does not like zero sizes.
-			return 0;
-		HEL_CHECK(helAllocateMemory(size, 0, nullptr, &handle));
-	}
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
 
-	__ensure(size);
-
-	uint32_t hel_flags = 0;
-	if(prot & PROT_READ)
-		hel_flags |= kHelMapProtRead;
-	if(prot & PROT_WRITE)
-		hel_flags |= kHelMapProtWrite;
-	if(prot & PROT_EXEC)
-		hel_flags |= kHelMapProtExecute;
-
-	void *map_pointer;
-	HEL_CHECK(helMapMemory(handle, kHelNullHandle,
-			hint, offset, size,
-			hel_flags | kHelMapCopyOnWriteAtFork,
-			&map_pointer));
-	HEL_CHECK(helCloseDescriptor(handle));
-	*window = map_pointer;
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	*window = reinterpret_cast<void *>(resp.offset());
 	return 0;
 }
 
