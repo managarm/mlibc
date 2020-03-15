@@ -282,10 +282,11 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 						backed_map_size, prot,
 						MAP_PRIVATE | MAP_FIXED, fd, phdr->p_offset - misalign, &map_pointer))
 					__ensure(!"sys_vm_map failed");
-				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address + backed_map_size),
-						total_map_size - backed_map_size, prot,
-						MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
-					__ensure(!"sys_vm_map failed");
+				if(total_map_size > backed_map_size)
+					if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address + backed_map_size),
+							total_map_size - backed_map_size, prot,
+							MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
+						__ensure(!"sys_vm_map failed");
 
 				if(mlibc::sys_vm_readahead)
 					if(mlibc::sys_vm_readahead(reinterpret_cast<void *>(map_address),
