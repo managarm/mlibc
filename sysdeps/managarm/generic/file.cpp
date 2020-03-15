@@ -626,6 +626,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::VM_MAP);
+	req.set_address_hint(reinterpret_cast<uintptr_t>(hint));
 	req.set_size(size);
 	req.set_mode(prot);
 	req.set_flags(flags);
