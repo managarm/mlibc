@@ -84,14 +84,28 @@ int listen(int, int) {
 	return 0;
 }
 
-ssize_t recv(int, void *, size_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+ssize_t recv(int sockfd, void *__restrict buf, size_t len, int flags) {
+	return recvfrom(sockfd, buf, len, flags, NULL, NULL);
 }
 
-ssize_t recvfrom(int, void *__restrict, size_t, int, struct sockaddr *__restrict, socklen_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+ssize_t recvfrom(int sockfd, void *__restrict buf, size_t len, int flags,
+		struct sockaddr *__restrict src_addr, socklen_t *__restrict addrlen) {
+	struct iovec iov = {};
+	iov.iov_base = buf;
+	iov.iov_len = len;
+
+	struct msghdr hdr = {};
+	hdr.msg_name = src_addr;
+	hdr.msg_iov = &iov;
+	hdr.msg_iovlen = 1;
+
+	int ret = recvmsg(sockfd, &hdr, flags);
+	if (ret < 0)
+		return ret;
+
+	if(addrlen)
+		*addrlen = hdr.msg_namelen;
+	return ret;
 }
 
 ssize_t recvmsg(int fd, struct msghdr *hdr, int flags) {
