@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#include <bits/posix/sa_family_t.h>
+#include <abi-bits/socket.h>
 
 #define NETLINK_KOBJECT_UEVENT 15
 

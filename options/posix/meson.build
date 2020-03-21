@@ -132,7 +132,6 @@ if not no_headers
 		'include/bits/posix/posix_stdio.h',
 		'include/bits/posix/posix_stdlib.h',
 		'include/bits/posix/posix_string.h',
-		'include/bits/posix/sa_family_t.h',
 		'include/bits/posix/socklen_t.h',
 		'include/bits/posix/ssize_t.h',
 		'include/bits/posix/stat.h',
