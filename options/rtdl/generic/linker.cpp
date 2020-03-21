@@ -16,6 +16,11 @@ bool stillSlightlyVerbose = false;
 bool logBaseAddresses = false;
 bool eagerBinding = true;
 
+#ifdef MLIBC_STATIC_BUILD
+extern "C" size_t __init_array_start[];
+extern "C" size_t __init_array_end[];
+#endif
+
 // This is the global "resolution timestamp" (RTS) counter.
 // It is incremented each time __dlapi_open() (i.e. dlopen()) is called.
 // Each DSO stores its objectRts (i.e. RTS at the time the object was loaded).
@@ -85,6 +90,24 @@ SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 	return object;
 }
 
+SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
+		void *phdr_pointer, size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
+		uint64_t rts) {
+	__ensure(!_nameMap.get(name));
+	auto object = frg::construct<SharedObject>(getAllocator(), name.data(), true, rts);
+	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
+
+#ifdef MLIBC_STATIC_BUILD
+	object->initArray = reinterpret_cast<InitFuncPtr*>(__init_array_start);
+	object->initArraySize = static_cast<size_t>((uintptr_t)__init_array_end -
+			(uintptr_t)__init_array_start);
+#endif
+
+	_nameMap.insert(name, object);
+
+	return object;
+}
+
 SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 		SharedObject *origin, uint64_t rts) {
 	auto it = _nameMap.get(name);
@@ -140,9 +163,9 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint6
 		return *it;
 
 	auto object = frg::construct<SharedObject>(getAllocator(), path.data(), false, rts);
-	
+
 	frg::string<MemoryAllocator> no_prefix(getAllocator(), path);
-	
+
 	int fd;
 	if(mlibc::sys_open((no_prefix + '\0').data(), 0, &fd))
 		return nullptr; // TODO: Free the SharedObject.
@@ -166,7 +189,7 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 	__ensure(object->isMainObject);
 	if(verbose)
 		mlibc::infoLogger() << "rtdl: Loading " << object->name << frg::endlog;
-	
+
 	// Note: the entry pointer is absolute and not relative to the base address.
 	object->entry = entry_pointer;
 
@@ -252,7 +275,7 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	constexpr size_t pageSize = 0x1000;
 	for(int i = 0; i < ehdr.e_phnum; i++) {
 		auto phdr = (Elf64_Phdr *)(phdr_buffer + i * ehdr.e_phentsize);
-		
+
 		if(phdr->p_type == PT_LOAD) {
 			size_t misalign = phdr->p_vaddr & (pageSize - 1);
 			__ensure(phdr->p_memsz > 0);
@@ -413,11 +436,20 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_RUNPATH:
 			runpath_offset = dynamic->d_val;
 			break;
+		case DT_INIT:
+			if(dynamic->d_ptr != 0)
+				object->initPtr = (InitFuncPtr)(object->baseAddress + dynamic->d_ptr);
+			break;
+		case DT_INIT_ARRAY:
+			if(dynamic->d_ptr != 0)
+				object->initArray = (InitFuncPtr *)(object->baseAddress + dynamic->d_ptr);
+			break;
+		case DT_INIT_ARRAYSZ:
+			object->initArraySize = dynamic->d_val;
+			break;
 		// ignore unimportant tags
 		case DT_SONAME: case DT_NEEDED: case DT_RPATH: // we handle this later
-		case DT_INIT: case DT_FINI:
-		case DT_INIT_ARRAY: case DT_INIT_ARRAYSZ:
-		case DT_FINI_ARRAY: case DT_FINI_ARRAYSZ:
+		case DT_FINI: case DT_FINI_ARRAY: case DT_FINI_ARRAYSZ:
 		case DT_DEBUG:
 		case DT_RELA: case DT_RELASZ: case DT_RELAENT: case DT_RELACOUNT:
 		case DT_VERSYM:
@@ -476,9 +508,9 @@ void processCopyRela(SharedObject *object, Elf64_Rela *reloc) {
 	Elf64_Xword symbol_index = ELF64_R_SYM(reloc->r_info);
 	if(type != R_X86_64_COPY)
 		return;
-	
+
 	uintptr_t rel_addr = object->baseAddress + reloc->r_offset;
-	
+
 	auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 			+ symbol_index * sizeof(Elf64_Sym));
 	ObjectSymbol r(object, symbol);
@@ -494,7 +526,7 @@ void processCopyRelocations(SharedObject *object) {
 
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
 		Elf64_Dyn *dynamic = &object->dynamic[i];
-		
+
 		switch(dynamic->d_tag) {
 		case DT_RELA:
 			rela_offset = dynamic->d_ptr;
@@ -528,42 +560,17 @@ void doInitialize(SharedObject *object) {
 
 	if(verbose)
 		mlibc::infoLogger() << "rtdl: Initialize " << object->name << frg::endlog;
-	
-	// now initialize the actual object
-	typedef void (*InitFuncPtr) ();
-
-	InitFuncPtr init_ptr = nullptr;
-	InitFuncPtr *init_array = nullptr;
-	size_t array_size = 0;
-
-	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
-		Elf64_Dyn *dynamic = &object->dynamic[i];
-		
-		switch(dynamic->d_tag) {
-		case DT_INIT:
-			if(dynamic->d_ptr != 0)
-				init_ptr = (InitFuncPtr)(object->baseAddress + dynamic->d_ptr);
-			break;
-		case DT_INIT_ARRAY:
-			if(dynamic->d_ptr != 0)
-				init_array = (InitFuncPtr *)(object->baseAddress + dynamic->d_ptr);
-			break;
-		case DT_INIT_ARRAYSZ:
-			array_size = dynamic->d_val;
-			break;
-		}
-	}
 
 	if(verbose)
 		mlibc::infoLogger() << "rtdl: Running DT_INIT function" << frg::endlog;
-	if(init_ptr != nullptr)
-		init_ptr();
-	
+	if(object->initPtr != nullptr)
+		object->initPtr();
+
 	if(verbose)
 		mlibc::infoLogger() << "rtdl: Running DT_INIT_ARRAY functions" << frg::endlog;
-	__ensure((array_size % sizeof(InitFuncPtr)) == 0);
-	for(size_t i = 0; i < array_size / sizeof(InitFuncPtr); i++)
-		init_array[i]();
+	__ensure((object->initArraySize % sizeof(InitFuncPtr)) == 0);
+	for(size_t i = 0; i < object->initArraySize / sizeof(InitFuncPtr); i++)
+		object->initArray[i]();
 
 	if(verbose)
 		mlibc::infoLogger() << "rtdl: Object initialization complete" << frg::endlog;
@@ -833,6 +840,9 @@ void Loader::linkObjects() {
 		if((*it)->objectRts < _linkRts)
 			continue;
 
+		if((*it)->dynamic == nullptr)
+			continue;
+
 		if(verbose)
 			mlibc::infoLogger() << "rtdl: Linking " << (*it)->name << frg::endlog;
 
@@ -847,7 +857,7 @@ void Loader::linkObjects() {
 		_processStaticRelocations(*it);
 		_processLazyRelocations(*it);
 	}
-	
+
 	// Process copy relocations.
 	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 		if(!(*it)->isMainObject)
@@ -857,9 +867,12 @@ void Loader::linkObjects() {
 		if((*it)->objectRts < _linkRts)
 			continue;
 
+		if((*it)->dynamic == nullptr)
+			continue;
+
 		processCopyRelocations(*it);
 	}
-	
+
 	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it)
 		(*it)->wasLinked = true;
 }
@@ -891,7 +904,7 @@ void Loader::_buildTlsMaps() {
 
 			object->tlsModel = TlsModel::initial;
 			object->tlsOffset = -runtimeTlsMap->initialPtr;
-			
+
 			if(verbose)
 				mlibc::infoLogger() << "rtdl: TLS of " << object->name
 						<< " mapped to 0x" << frg::hex_fmt{object->tlsOffset}
@@ -904,7 +917,7 @@ void Loader::_buildTlsMaps() {
 	}else{
 		for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 			SharedObject *object = *it;
-			
+
 			if(object->tlsModel != TlsModel::null)
 				continue;
 			if(object->tlsSegmentSize == 0)
@@ -930,7 +943,7 @@ void Loader::_buildTlsMaps() {
 
 				object->tlsModel = TlsModel::initial;
 				object->tlsOffset = -runtimeTlsMap->initialPtr;
-				
+
 //				if(verbose)
 					mlibc::infoLogger() << "rtdl: TLS of " << object->name
 							<< " mapped to 0x" << frg::hex_fmt{object->tlsOffset}
@@ -947,7 +960,7 @@ void Loader::initObjects() {
 	// Initialize TLS segments that follow the static model.
 	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 		SharedObject *object = *it;
-		
+
 		if(object->tlsModel == TlsModel::initial) {
 			if(object->tlsInitialized)
 				continue;
@@ -999,7 +1012,7 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 	// copy relocations have to be performed after all other relocations
 	if(type == R_X86_64_COPY)
 		return;
-	
+
 	// resolve the symbol if there is a symbol
 	frg::optional<ObjectSymbol> p;
 	if(symbol_index) {
@@ -1011,7 +1024,7 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 			if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
 				mlibc::panicLogger() << "Unresolved load-time symbol "
 						<< r.getString() << " in object " << object->name << frg::endlog;
-			
+
 			if(verbose)
 				mlibc::infoLogger() << "rtdl: Unresolved weak load-time symbol "
 						<< r.getString() << " in object " << object->name << frg::endlog;
@@ -1019,7 +1032,7 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 	}
 
 	uintptr_t rel_addr = object->baseAddress + reloc->r_offset;
-	
+
 	switch(type) {
 	case R_X86_64_64: {
 		__ensure(symbol_index);
@@ -1090,7 +1103,7 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
 		Elf64_Dyn *dynamic = &object->dynamic[i];
-		
+
 		switch(dynamic->d_tag) {
 		case DT_RELA:
 			rela_offset = dynamic->d_ptr;
@@ -1121,7 +1134,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 	}
 	object->globalOffsetTable[1] = object;
 	object->globalOffsetTable[2] = (void *)&pltRelocateStub;
-	
+
 	if(!object->lazyTableSize)
 		return;
 
@@ -1143,7 +1156,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
 					mlibc::panicLogger() << "rtdl: Unresolved JUMP_SLOT symbol "
 							<< r.getString() << " in object " << object->name << frg::endlog;
-				
+
 				if(verbose)
 					mlibc::infoLogger() << "rtdl: Unresolved weak JUMP_SLOT symbol "
 							<< r.getString() << " in object " << object->name << frg::endlog;
