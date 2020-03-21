@@ -110,11 +110,12 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 		return -1;
 	}
 
+	int num_fd = 0;
 	if(int e = mlibc::sys_select(num_fds, read_set, write_set, except_set,
-				timeout); e) {
+				timeout, &num_fd); e) {
 		errno = e;
 		return -1;
 	}
-	return 0;
+	return num_fd;
 #endif
 }
