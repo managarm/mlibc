@@ -18,7 +18,13 @@
 #define NR_mmap 9
 #define NR_sigaction 13
 #define NR_ioctl 16
+#define NR_select 23
+#define NR_socket 41
+#define NR_connect 42
+#define NR_sendmsg 46
+#define NR_recvmsg 47
 #define NR_exit 60
+#define NR_fcntl 72
 #define NR_arch_prctl 158
 #define NR_clock_gettime 228
 
@@ -147,6 +153,58 @@ int sys_sigaction(int signum, const struct sigaction *act,
         auto ret = do_syscall(NR_sigaction, signum, act, oldact, sizeof(sigset_t));
         if (int e = sc_error(ret); e)
                 return e;
+        return 0;
+}
+
+int sys_socket(int domain, int type, int protocol, int *fd) {
+        auto ret = do_syscall(NR_socket, domain, type, protocol);
+        if (int e = sc_error(ret); e)
+                return e;
+        *fd = sc_int_result<int>(ret);
+        return 0;
+}
+
+int sys_msg_send(int sockfd, const struct msghdr *msg, int flags, ssize_t *length) {
+        auto ret = do_syscall(NR_sendmsg, sockfd, msg, flags);
+        if (int e = sc_error(ret); e)
+                return e;
+        *length = sc_int_result<ssize_t>(ret);
+        return 0;
+}
+
+int sys_msg_recv(int sockfd, struct msghdr *msg, int flags, ssize_t *length) {
+        auto ret = do_syscall(NR_recvmsg, sockfd, msg, flags);
+        if (int e = sc_error(ret); e)
+                return e;
+        *length = sc_int_result<ssize_t>(ret);
+        return 0;
+}
+
+int sys_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+        auto ret = do_syscall(NR_connect, sockfd, addr, addrlen);
+        if (int e = sc_error(ret); e)
+                return e;
+        return 0;
+}
+
+int sys_fcntl(int fd, int cmd, va_list args, int *result) {
+        auto arg = va_arg(args, unsigned long);
+        // TODO: the api for linux differs for each command so fcntl()s might fail with -EINVAL
+        // we should implement all the different fcntl()s
+        auto ret = do_syscall(NR_fcntl, fd, cmd, arg);
+        if (int e = sc_error(ret); e)
+                return e;
+        *result = sc_int_result<int>(ret);
+        return 0;
+}
+
+int sys_select(int nfds, fd_set *readfds, fd_set *writefds,
+                fd_set *exceptfds, struct timeval *timeout, int *num_fd) {
+        auto ret = do_syscall(NR_select, nfds, readfds, writefds,
+                        exceptfds, timeout);
+        if (int e = sc_error(ret); e)
+                return e;
+        *num_fd = sc_int_result<int>(ret);
         return 0;
 }
 
