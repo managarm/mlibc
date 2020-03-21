@@ -12,6 +12,7 @@ libc_sources += files(
 	'generic/grp-stubs.cpp',
 	'generic/langinfo-stubs.cpp',
 	'generic/libgen-stubs.cpp',
+	'generic/lookup.cpp',
 	'generic/netdb-stubs.cpp',
 	'generic/net-if-stubs.cpp',
 	'generic/posix_signal.cpp',
