@@ -97,11 +97,17 @@ int pthread_attr_setguardsize(pthread_attr_t *, size_t) {
 	__builtin_unreachable();
 }
 
+extern "C" void *__rtdl_allocateTcb();
+
 // pthread functions.
-int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict,
-		void *(*) (void *), void *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict,
+		void *(*entry) (void *), void *__restrict user_arg) {
+
+	void *new_tcb = __rtdl_allocateTcb();
+	mlibc::sys_clone(reinterpret_cast<void *>(entry), user_arg, new_tcb, nullptr);
+	*thread = reinterpret_cast<pthread_t>(new_tcb);
+
+	return 0;
 }
 
 pthread_t pthread_self(void) {

@@ -148,7 +148,7 @@ struct RuntimeTlsMap {
 
 extern frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
-void allocateTcb();
+void *allocateTcb();
 void *accessDtv(SharedObject *object);
 
 // --------------------------------------------------------

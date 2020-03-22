@@ -85,8 +85,8 @@ extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
 	return (void *)p->virtualAddress();
 }
 
-extern "C" [[ gnu::visibility("default") ]] void __rtdl_setupTcb() {
-	allocateTcb();
+extern "C" [[ gnu::visibility("default") ]] void *__rtdl_allocateTcb() {
+	return allocateTcb();
 }
 
 extern "C" void *interpreterMain(uintptr_t *entry_stack) {
@@ -186,7 +186,10 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	Loader linker{globalScope.get(), true, 1};
 	linker.submitObject(executableSO);
 	linker.linkObjects();
-	allocateTcb();
+
+	if(mlibc::sys_tcb_set(allocateTcb()))
+		__ensure(!"sys_tcb_set() failed");
+
 	linker.initObjects();
 
 	if(logEntryExit)

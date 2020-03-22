@@ -96,6 +96,7 @@ int sys_close(int fd);
 	[[gnu::weak]] void sys_yield();
 	[[gnu::weak]] int sys_sleep(time_t *secs, long *nanos);
 	[[gnu::weak]] int sys_fork(pid_t *child);
+	[[gnu::weak]] int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out);
 	[[gnu::weak]] int sys_execve(const char *path, char *const argv[], char *const envp[]);
 	[[gnu::weak]] int sys_select(int num_fds, fd_set *read_set, fd_set *write_set,
 			fd_set *except_set, struct timeval *timeout);

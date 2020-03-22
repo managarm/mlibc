@@ -46,6 +46,8 @@ libc_sources += files(
 	'generic/socket.cpp',
 	'generic/time.cpp',
 	'x86_64/signals.S',
+	'x86_64/thread_entry.S',
+	'x86_64/thread.cpp'
 )
 libc_sources += [
 	fs_pb,

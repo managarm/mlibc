@@ -583,7 +583,7 @@ struct Tcb {
 	void **dtvPointers;
 };
 
-void allocateTcb() {
+void *allocateTcb() {
 	size_t fs_size = runtimeTlsMap->initialLimit + sizeof(Tcb);
 	auto fs_buffer = getAllocator().allocate(fs_size);
 	memset(fs_buffer, 0, fs_size);
@@ -601,8 +601,7 @@ void allocateTcb() {
 		tcb_ptr->dtvPointers[i] = reinterpret_cast<char *>(tcb_ptr) + object->tlsOffset;
 	}
 
-	if(mlibc::sys_tcb_set(tcb_ptr))
-		__ensure(!"sys_tcb_set() failed");
+	return tcb_ptr;
 }
 
 void *accessDtv(SharedObject *object) {

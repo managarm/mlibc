@@ -18,6 +18,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
+#include <mlibc/thread-entry.hpp>
 #include <mlibc/sysdeps.hpp>
 #include <posix.frigg_pb.hpp>
 
@@ -265,6 +266,28 @@ int sys_getrusage(int scope, struct rusage *usage) {
 	usage->ru_utime.tv_sec = resp.ru_user_time() / 1'000'000'000;
 	usage->ru_utime.tv_usec = (resp.ru_user_time() % 1'000'000'000) / 1'000;
 
+	return 0;
+}
+
+int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out) {
+	HelError e;
+	HelWord pid;
+
+	void *sp = prepare_stack(entry, user_arg, tcb);
+
+	HEL_CHECK(helSyscall2_2(kHelCallSuper + 9,
+				reinterpret_cast<HelWord>(__mlibc_start_thread),
+				reinterpret_cast<HelWord>(sp),
+				reinterpret_cast<HelWord *>(&e), &pid));
+
+	if (pid_out)
+		*pid_out = pid;
+
+	return 0;
+}
+
+int sys_tcb_set(void *pointer) {
+	HEL_CHECK(helWriteFsBase(pointer));
 	return 0;
 }
 
