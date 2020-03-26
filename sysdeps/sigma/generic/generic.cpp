@@ -34,6 +34,7 @@ namespace mlibc {
     // Misc functions
     #ifndef MLIBC_BUILDING_RTDL
     int sys_clock_get(int clock, time_t *secs, long *nanos) STUB_ONLY
+    #endif
 
     // TODO: Actually implement this
     int sys_futex_wait(int *pointer, int expected){
@@ -44,6 +45,7 @@ namespace mlibc {
         return 0;
     }
 
+    #ifndef MLIBC_BUILDING_RTDL
     // Task functions
     void sys_exit(int status){
         (void)(status);

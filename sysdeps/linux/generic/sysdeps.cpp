@@ -155,9 +155,9 @@ void sys_exit(int status) {
 	__builtin_trap();
 }
 
+#endif // MLIBC_BUILDING_RTDL
+
 int sys_futex_wait(int *pointer, int expected) STUB_ONLY
 int sys_futex_wake(int *pointer) STUB_ONLY
-
-#endif // MLIBC_BUILDING_RTDL
 
 } // namespace mlibc

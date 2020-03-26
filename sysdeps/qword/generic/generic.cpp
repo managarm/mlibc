@@ -326,9 +326,6 @@ int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *old
 }
 #endif
 
-// All remaining functions are disabled in ldso.
-#ifndef MLIBC_BUILDING_RTDL
-
 int sys_futex_wait(int *pointer, int expected) {
     int ret;
     int sys_errno;
@@ -355,6 +352,9 @@ int sys_futex_wake(int *pointer) {
 
     return 0;
 }
+
+// All remaining functions are disabled in ldso.
+#ifndef MLIBC_BUILDING_RTDL
 
 int sys_open_dir(const char *path, int *handle) {
 	return sys_open(path, 0, handle);
