@@ -1,6 +1,7 @@
 #ifndef MLIBC_FRIGG_ALLOC
 #define MLIBC_FRIGG_ALLOC
 
+#include <mlibc/sysdeps.hpp>
 #include <bits/ensure.h>
 #include <frg/slab.hpp>
 
@@ -9,16 +10,41 @@ struct AllocatorLock {
 	: _futex{0} { }
 
 	AllocatorLock(const AllocatorLock &) = delete;
-	
+
 	AllocatorLock &operator= (const AllocatorLock &) = delete;
 
+	static constexpr inline uint32_t waitersBit = (1 << 31);
+
 	void lock() {
-		if(__atomic_exchange_n(&_futex, 1, __ATOMIC_ACQUIRE))
-			__ensure(!"Implement AllocatorLock slow path");
+
+		unsigned int expected = 0;
+		while(true) {
+			if(!expected) {
+				// Try to take the mutex here.
+				if(__atomic_compare_exchange_n(&_futex, &expected, 1,
+							false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
+					return;
+				}
+			}else{
+				if(expected & waitersBit) {
+					if(int e = mlibc::sys_futex_wait(&_futex, expected); e)
+						__ensure(!"sys_futex_wait() failed");
+
+					expected = 0;
+				}else{
+					unsigned int desired = expected | waitersBit;
+					if(__atomic_compare_exchange_n(&_futex, &expected, desired,
+							false, __ATOMIC_RELAXED, __ATOMIC_RELAXED))
+						expected = desired;
+				}
+			}
+		}
 	}
 
 	void unlock() {
-		__atomic_store_n(&_futex, 0, __ATOMIC_RELEASE);
+		if (__atomic_exchange_n(&_futex, 0, __ATOMIC_RELEASE) & waitersBit)
+			if(int e = mlibc::sys_futex_wake(&_futex); e)
+				__ensure(!"sys_futex_wake() failed");
 	}
 
 private:

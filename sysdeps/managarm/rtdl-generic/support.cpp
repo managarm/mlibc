@@ -381,5 +381,20 @@ int sys_close(int fd) {
 	return 0;
 }
 
+int sys_futex_wait(int *pointer, int expected) {
+	// This implementation is inherently signal-safe.
+	if(helFutexWait(pointer, expected))
+		return -1;
+	return 0;
+}
+
+int sys_futex_wake(int *pointer) {
+	// This implementation is inherently signal-safe.
+	if(helFutexWake(pointer))
+		return -1;
+	return 0;
+}
+
+
 } // namespace mlibc
 
