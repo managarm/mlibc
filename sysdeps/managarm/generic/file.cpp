@@ -1112,13 +1112,17 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	
 	for(nfds_t i = 0; i < count; i++) {
 		int mask = 0;
-		if(fds[i].events & ~(POLLIN | POLLOUT))
+		if(fds[i].events & ~(POLLIN | POLLPRI | POLLOUT | POLLRDHUP | POLLERR | POLLHUP | POLLNVAL))
 			mlibc::infoLogger() << "\e[31mmlibc: Unexpected events for poll()\e[39m"
 					<< frg::endlog;
 		if(fds[i].events & POLLIN)
 			mask |= EPOLLIN;
 		if(fds[i].events & POLLOUT)
 			mask |= EPOLLOUT;
+		if(fds[i].events & POLLPRI)
+			mask |= EPOLLPRI;
+		if(fds[i].events & POLLRDHUP)
+			mask |= EPOLLRDHUP;
 
 		req.add_fds(fds[i].fd);
 		req.add_events(mask);
