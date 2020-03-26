@@ -48,9 +48,9 @@ int sem_wait(sem_t *sem) {
 	}
 }
 
-int sem_timedwait(sem_t *, const struct timespec *) {
-	__ensure(!"sem_timedwait() is unimplemented");
-	__builtin_unreachable();
+int sem_timedwait(sem_t *sem, const struct timespec *) {
+	mlibc::infoLogger() << "\e[31mmlibc: sem_timedwait is implemented as sem_wait\e[0m" << frg::endlog;
+	return sem_wait(sem);
 }
 
 int sem_post(sem_t *sem) {
