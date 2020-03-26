@@ -18,8 +18,9 @@ extern "C" uintptr_t *__dlapi_entrystack();
 // declared in posix-pipe.hpp
 thread_local Queue globalQueue;
 
-HelHandle __mlibc_posix_lane;
-void *__mlibc_clk_tracker_page;
+// TODO: clock tracker page and file table don't need to be thread-local!
+thread_local HelHandle __mlibc_posix_lane;
+thread_local void *__mlibc_clk_tracker_page;
 
 namespace {
 	struct managarm_process_data {
@@ -37,7 +38,7 @@ namespace {
 	// are thread_local we still protect their initialization with a pthread_once_t
 	// (instead of using a C++ constructor).
 	// We do this in order to able to clear the pthread_once_t after a fork.
-	pthread_once_t hasCachedInfos = PTHREAD_ONCE_INIT;
+	thread_local pthread_once_t has_cached_infos = PTHREAD_ONCE_INIT;
 
 	void actuallyCacheInfos() {
 		managarm_process_data data;
@@ -51,7 +52,7 @@ namespace {
 }
 
 SignalGuard::SignalGuard() {
-	pthread_once(&hasCachedInfos, &actuallyCacheInfos);
+	pthread_once(&has_cached_infos, &actuallyCacheInfos);
 	if(!__mlibc_cached_thread_page)
 		return;
 	auto p = reinterpret_cast<unsigned int *>(__mlibc_cached_thread_page);
@@ -61,7 +62,7 @@ SignalGuard::SignalGuard() {
 }
 
 SignalGuard::~SignalGuard() {
-	pthread_once(&hasCachedInfos, &actuallyCacheInfos);
+	pthread_once(&has_cached_infos, &actuallyCacheInfos);
 	if(!__mlibc_cached_thread_page)
 		return;
 	auto p = reinterpret_cast<unsigned int *>(__mlibc_cached_thread_page);
@@ -93,12 +94,12 @@ HelHandle getPosixLane() {
 
 HelHandle *cacheFileTable() {
 	// TODO: Make sure that this is signal-safe (it is called e.g. by sys_clock_get()).
-	pthread_once(&hasCachedInfos, &actuallyCacheInfos);
+	pthread_once(&has_cached_infos, &actuallyCacheInfos);
 	return cachedFileTable;
 }
 
 void clearCachedInfos() {
-	hasCachedInfos = PTHREAD_ONCE_INIT;
+	has_cached_infos = PTHREAD_ONCE_INIT;
 }
 
 struct LibraryGuard {

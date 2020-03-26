@@ -19,7 +19,7 @@ struct TrackerPage {
 	int64_t baseRealtime;
 };
 
-extern TrackerPage *__mlibc_clk_tracker_page;
+extern thread_local TrackerPage *__mlibc_clk_tracker_page;
 
 namespace mlibc {
 
