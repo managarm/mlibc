@@ -58,6 +58,7 @@ endif
 internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
 internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', false)
 internal_conf.set('MLIBC_MAP_FILE_WINDOWS', false)
+internal_conf.set('MLIBC_STATIC_BUILD', static)
 
 #----------------------------------------------------------------------------------------
 # Configuration based on sysdeps.
@@ -172,8 +173,12 @@ rtdl_sources += [
 	'options/internal/generic/frigg.cpp',
 	'options/rtdl/generic/main.cpp',
 	'options/rtdl/generic/linker.cpp',
-	'options/rtdl/x86_64/runtime.S'
+	'options/rtdl/x86_64/runtime.S',
 ]
+
+if not static
+	rtdl_sources += 'options/rtdl/x86_64/entry.S'
+endif
 
 subdir('options/elf')
 subdir('options/ansi')
@@ -211,15 +216,24 @@ if not headers_only
 		shared_library('util', 'libutil/src/dummy.cpp', install: true)
 		shared_library('m', 'libm/src/dummy.cpp', install: true)
 	else
+		ldso_lib = static_library('ld', rtdl_sources,
+				name_prefix: '',
+				cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
+				include_directories: rtdl_include_dirs,
+				dependencies: rtdl_deps,
+				install: false)
+		ldso_dep = declare_dependency(link_with: ldso_lib, sources: rtdl_sources)
 		static_library('c',
 				[
 					libc_sources,
 					internal_sources,
 					ansi_sources,
+                                        lsb_sources,
 				],
 				cpp_args: ['-DFRIGG_HAVE_LIBC'],
 				include_directories: libc_include_dirs,
-				dependencies: libc_deps,
+				dependencies: [libc_deps, ldso_dep],
+				link_with: [ldso_lib],
 				link_whole: libc_sublibs,
 				install: true)
 

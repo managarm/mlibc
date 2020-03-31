@@ -6,6 +6,7 @@
 #include <abi-bits/auxv.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
+#include <internal-config.h>
 #include "linker.hpp"
 
 #define HIDDEN  __attribute__ ((visibility ("hidden")))
@@ -14,8 +15,10 @@
 static constexpr bool logEntryExit = false;
 static constexpr bool logStartup = false;
 
+#ifndef MLIBC_STATIC_BUILD
 extern HIDDEN void *_GLOBAL_OFFSET_TABLE_[];
 extern HIDDEN Elf64_Dyn _DYNAMIC[];
+#endif
 
 uintptr_t *entryStack;
 frg::manual_box<ObjectRepository> initialRepository;
@@ -25,12 +28,14 @@ frg::manual_box<Loader> globalLoader;
 frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
 static SharedObject *executableSO;
+extern char __ehdr_start[];
 
 // Relocates the dynamic linker (i.e. this DSO) itself.
 // Assumptions:
 // - There are no references to external symbols.
 // Note that this code is fragile in the sense that it must not contain relocations itself.
 // TODO: Use tooling to verify this at compile time.
+#ifndef MLIBC_STATIC_BUILD
 extern "C" void relocateSelf() {
 	size_t rela_offset = 0;
 	size_t rela_size = 0;
@@ -41,7 +46,7 @@ extern "C" void relocateSelf() {
 		case DT_RELASZ: rela_size = ent->d_val; break;
 		}
 	}
-	
+
 	auto ldso_base = reinterpret_cast<uintptr_t>(_DYNAMIC)
 			- reinterpret_cast<uintptr_t>(_GLOBAL_OFFSET_TABLE_[0]);
 	for(size_t disp = 0; disp < rela_size; disp += sizeof(Elf64_Rela)) {
@@ -61,6 +66,7 @@ extern "C" void relocateSelf() {
 		}
 	}
 }
+#endif
 
 extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
 	__ensure(object->lazyExplicitAddend);
@@ -80,7 +86,7 @@ extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
 
 	//mlibc::infoLogger() << "Lazy relocation to " << symbol_str
 	//		<< " resolved to " << pointer << frg::endlog;
-	
+
 	*(uint64_t *)(object->baseAddress + reloc->r_offset) = p->virtualAddress();
 	return (void *)p->virtualAddress();
 }
@@ -89,12 +95,22 @@ extern "C" [[ gnu::visibility("default") ]] void *__rtdl_allocateTcb() {
 	return allocateTcb();
 }
 
+extern "C" [[ gnu::visibility("default") ]] void _dl_debug_state()
+{
+}
+
 extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	if(logEntryExit)
 		mlibc::infoLogger() << "Entering ld.so" << frg::endlog;
 	entryStack = entry_stack;
 	runtimeTlsMap.initialize();
-	
+
+	void *phdr_pointer = 0;
+	size_t phdr_entry_size = 0;
+	size_t phdr_count = 0;
+	void *entry_pointer = 0;
+
+#ifndef MLIBC_STATIC_BUILD
 	auto ldso_base = reinterpret_cast<uintptr_t>(_DYNAMIC)
 			- reinterpret_cast<uintptr_t>(_GLOBAL_OFFSET_TABLE_[0]);
 	if(logStartup) {
@@ -106,7 +122,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// TODO: Use a fake PLT stub that reports an error message?
 	_GLOBAL_OFFSET_TABLE_[1] = 0;
 	_GLOBAL_OFFSET_TABLE_[2] = 0;
-	
+
 	// Validate our own dynamic section.
 	// Here, we make sure that the dynamic linker does not need relocations itself.
 	uintptr_t strtab_offset = 0;
@@ -132,11 +148,6 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	}
 	__ensure(strtab_offset);
 	__ensure(soname_str);
-	
-	void *phdr_pointer = 0;
-	size_t phdr_entry_size = 0;
-	size_t phdr_count = 0;
-	void *entry_pointer = 0;
 
 	// Find the auxiliary vector by skipping args and environment.
 	auto aux = entryStack;
@@ -152,7 +163,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		auto value = aux + 1;
 		if(!(*aux))
 			break;
-		
+
 		// TODO: Whitelist auxiliary vector entries here?
 		switch(*aux) {
 			case AT_PHDR: phdr_pointer = reinterpret_cast<void *>(*value); break;
@@ -163,6 +174,13 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 
 		aux += 2;
 	}
+#else
+	auto ehdr = reinterpret_cast<Elf64_Ehdr*>(__ehdr_start);
+	phdr_pointer = reinterpret_cast<void*>((uintptr_t)ehdr->e_phoff + (uintptr_t)ehdr);
+	phdr_entry_size = ehdr->e_phentsize;
+	phdr_count = ehdr->e_phnum;
+	entry_pointer = reinterpret_cast<void*>(ehdr->e_entry);
+#endif
 	__ensure(phdr_pointer);
 	__ensure(entry_pointer);
 
@@ -176,12 +194,19 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	globalScope.initialize();
 
 	// Add the dynamic linker, as well as the exectuable to the repository.
+#ifndef MLIBC_STATIC_BUILD
 	auto ldso_soname = reinterpret_cast<const char *>(ldso_base + strtab_offset + soname_str);
 	initialRepository->injectObjectFromDts(ldso_soname, ldso_base, _DYNAMIC, 1);
+#endif
 
+#ifndef MLIBC_STATIC_BUILD
 	// TODO: support non-zero base addresses?
 	executableSO = initialRepository->injectObjectFromPhdrs("(executable)", phdr_pointer,
 			phdr_entry_size, phdr_count, entry_pointer, 1);
+#else
+	executableSO = initialRepository->injectStaticObject("(executable)",
+			phdr_pointer, phdr_entry_size, phdr_count, entry_pointer, 1);
+#endif
 
 	Loader linker{globalScope.get(), true, 1};
 	linker.submitObject(executableSO);
@@ -258,7 +283,7 @@ void *__dlapi_open(const char *file, int local) {
 		using Set = frg::hash_map<SharedObject *, Token,
 				frg::hash<SharedObject *>, MemoryAllocator>;
 		Set set{frg::hash<SharedObject *>{}, getAllocator()};
-		
+
 		object->objectScope = frg::construct<Scope>(getAllocator());
 		frg::vector<SharedObject *, MemoryAllocator> queue{getAllocator()};
 
@@ -271,7 +296,7 @@ void *__dlapi_open(const char *file, int local) {
 			auto current = queue[i];
 			if(set.get(current))
 				continue;
-		
+
 			object->objectScope->appendObject(current);
 			set.insert(current, Token{});
 			queue.push(current);
@@ -316,7 +341,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 
 	for(size_t i = 0; i < globalScope->_objects.size(); i++) {
 		auto object = globalScope->_objects[i];
-	
+
 		auto eligible = [&] (ObjectSymbol cand) {
 			if(cand.symbol()->st_shndx == SHN_UNDEF)
 				return false;
@@ -327,7 +352,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 
 			return true;
 		};
-	
+
 		auto hash_table = (Elf64_Word *)(object->baseAddress + object->hashTableOffset);
 		auto num_symbols = hash_table[1];
 		for(size_t i = 0; i < num_symbols; i++) {
@@ -349,3 +374,9 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 	return -1;
 }
 
+extern "C" [[gnu::visibility("default")]]
+void __dlapi_enter(uintptr_t *entry_stack) {
+#ifdef MLIBC_STATIC_BUILD
+	interpreterMain(entry_stack);
+#endif
+}

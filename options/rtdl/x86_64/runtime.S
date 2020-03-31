@@ -1,13 +1,4 @@
 
-.global _start
-_start:
-	call relocateSelf
-
-	mov %rsp, %rdi
-	call interpreterMain
-
-	jmp *%rax
-
 .global pltRelocateStub
 pltRelocateStub:
 	# we need to save / restore all registers than can hold function arguments

@@ -38,6 +38,10 @@ struct ObjectRepository {
 			void *phdr_pointer, size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 			uint64_t rts);
 
+	SharedObject *injectStaticObject(frg::string_view name,
+			void *phdr_pointer, size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
+			uint64_t rts);
+
 	SharedObject *requestObjectWithName(frg::string_view name,
 			SharedObject *origin, uint64_t rts);
 
@@ -70,6 +74,8 @@ enum class HashStyle {
 	gnu
 };
 
+using InitFuncPtr = void (*)();
+
 struct SharedObject {
 	SharedObject(const char *name, bool is_main_object,
 			uint64_t object_rts);
@@ -82,11 +88,16 @@ struct SharedObject {
 	uintptr_t baseAddress;
 
 	Scope *loadScope;
-	
+
 	// pointers to the dynamic table, GOT and entry point
-	Elf64_Dyn *dynamic;
+	Elf64_Dyn *dynamic = nullptr;
 	void **globalOffsetTable;
 	void *entry;
+
+	// object initialization information
+	InitFuncPtr initPtr = nullptr;
+	InitFuncPtr *initArray = nullptr;
+	size_t initArraySize = 0;
 
 	// TODO: read this from the PHDR
 	size_t tlsSegmentSize, tlsAlignment, tlsImageSize;
@@ -100,7 +111,7 @@ struct SharedObject {
 	uintptr_t stringTableOffset;
 
 	const char *runPath = nullptr;
-	
+
 	// save the lazy JUMP_SLOT relocation table
 	uintptr_t lazyRelocTableOffset;
 	size_t lazyTableSize;
@@ -112,11 +123,11 @@ struct SharedObject {
 
 	// vector of dependencies
 	frg::vector<SharedObject *, MemoryAllocator> dependencies;
-	
+
 	TlsModel tlsModel;
 	size_t tlsIndex;
 	size_t tlsOffset;
-	
+
 	uint64_t globalRts;
 	bool wasLinked;
 
@@ -138,7 +149,7 @@ struct RuntimeTlsMap {
 
 	// Amount of initialLimit that has already been allocated.
 	size_t initialPtr;
-	
+
 	// Size of the inital TLS segment.
 	size_t initialLimit;
 
@@ -167,7 +178,7 @@ struct ObjectSymbol {
 	}
 
 	const char *getString();
-	
+
 	uintptr_t virtualAddress();
 
 private:
@@ -187,7 +198,7 @@ struct Scope {
 			frg::string_view string, ResolveFlags flags);
 
 	Scope();
-	
+
 	void appendObject(SharedObject *object);
 
 	frg::optional<ObjectSymbol> resolveSymbol(ObjectSymbol r, ResolveFlags flags);
@@ -232,7 +243,7 @@ private:
 
 	frg::hash_map<SharedObject *, Token,
 			frg::hash<SharedObject *>, MemoryAllocator> _linkSet;
-	
+
 	// Stores the same objects as _linkSet but in dependency-BFS order.
 	frg::vector<SharedObject *, MemoryAllocator> _linkBfs;
 
