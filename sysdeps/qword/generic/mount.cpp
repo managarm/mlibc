@@ -14,3 +14,12 @@ int mount(const char *source, const char *target,
             : "rcx", "r11");
     return ret;
 }
+
+int umount(const char *target) {
+    int ret;
+    asm volatile ("syscall"
+                  : "=a" (ret)
+                  : "a" (42), "D" (target)
+                  : "rcx", "r11");
+    return ret;
+}
