@@ -434,7 +434,7 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		globalQueue.trim();
 
 		auto handle = getHandleForFd(fd);
-		if (!fd)
+		if (!handle)
 			return EBADF;
 
 		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
