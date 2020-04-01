@@ -38,7 +38,7 @@
 #include <fs.frigg_pb.hpp>
 
 HelHandle __mlibc_getPassthrough(int fd) {
-	auto handle = cacheFileTable()[fd];
+	auto handle = getHandleForFd(fd);
 	__ensure(handle);
 	return handle;
 }
@@ -290,8 +290,9 @@ HelHandle __raw_map(int fd) {
 	HelAction actions[4];
 	globalQueue.trim();
 
-	auto handle = cacheFileTable()[fd];
-	__ensure(handle);
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return 0;
 	
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::MMAP);
@@ -392,8 +393,9 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		HelAction actions[3];
 		globalQueue.trim();
 
-		auto handle = cacheFileTable()[fd];
-		__ensure(handle);
+		auto handle = getHandleForFd(fd);
+		if (!handle)
+			return EBADF;
 
 		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_req_type(managarm::fs::CntReqType::PT_GET_FILE_FLAGS);
@@ -431,8 +433,9 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		HelAction actions[3];
 		globalQueue.trim();
 
-		auto handle = cacheFileTable()[fd];
-		__ensure(handle);
+		auto handle = getHandleForFd(fd);
+		if (!fd)
+			return EBADF;
 
 		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_req_type(managarm::fs::CntReqType::PT_SET_FILE_FLAGS);
@@ -480,8 +483,9 @@ int sys_open_dir(const char *path, int *handle) {
 
 int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) {
 	SignalGuard sguard;
-	auto handle = cacheFileTable()[fd];
-	__ensure(handle);
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
 
 	HelAction actions[3];
 	globalQueue.trim();
@@ -931,7 +935,10 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *length) {
 	HelSgItem sglist[4];
 	__ensure(hdr->msg_iovlen <= 4);
-	auto handle = __mlibc_getPassthrough(sockfd);
+	auto handle = getHandleForFd(sockfd);
+	if (!handle)
+		return EBADF;
+
 	size_t overall_size = 0;
 	for(int i = 0; i < hdr->msg_iovlen; i++) {
 		sglist[i].buffer = hdr->msg_iov[i].iov_base;
@@ -1020,7 +1027,9 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 
 int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	__ensure(hdr->msg_iovlen);
-	auto handle = __mlibc_getPassthrough(sockfd);
+	auto handle = getHandleForFd(sockfd);
+	if (!handle)
+		return EBADF;
 
 	SignalGuard sguard;
 	HelAction actions[7];
@@ -1590,8 +1599,9 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 //			<< " on fd " << fd << frg::endlog;
 
 	SignalGuard sguard;
-	auto handle = cacheFileTable()[fd];
-	__ensure(handle);
+	auto handle = getHandleForFd(fd);
+	if(!handle)
+		return EBADF;
 
 	switch(request) {
 	case DRM_IOCTL_VERSION: {
@@ -2983,8 +2993,9 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	HelAction actions[5];
 	globalQueue.trim();
 
-	auto handle = cacheFileTable()[fd];
-	__ensure(handle);
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::READ);
@@ -3047,8 +3058,9 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	HelAction actions[5];
 	globalQueue.trim();
 
-	auto handle = cacheFileTable()[fd];
-	__ensure(handle);
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::WRITE);
@@ -3109,7 +3121,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	HelAction actions[3];
 	globalQueue.trim();
 
-	auto handle = cacheFileTable()[fd];
+	auto handle = getHandleForFd(fd);
 	if(!handle)
 		return EBADF;
 	
@@ -3452,8 +3464,9 @@ int sys_ftruncate(int fd, size_t size) {
 	HelAction actions[3];
 	globalQueue.trim();
 
-	auto handle = cacheFileTable()[fd];
-	__ensure(handle);
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
 	
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_TRUNCATE);
@@ -3492,8 +3505,9 @@ int sys_fallocate(int fd, off_t offset, size_t size) {
 	HelAction actions[3];
 	globalQueue.trim();
 
-	auto handle = cacheFileTable()[fd];
-	__ensure(handle);
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
 	
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_FALLOCATE);
@@ -3621,7 +3635,7 @@ int sys_flock(int fd, int opts) {
 	req.set_req_type(managarm::fs::CntReqType::FLOCK);
 	req.set_fd(fd);
 	req.set_flock_flags(opts);
-	auto handle = cacheFileTable()[fd];
+	auto handle = getHandleForFd(fd);
 	if(!handle) {
 		return EBADF;
 	}

@@ -98,6 +98,13 @@ HelHandle *cacheFileTable() {
 	return cachedFileTable;
 }
 
+HelHandle getHandleForFd(int fd) {
+	if (fd >= 512)
+		return 0;
+
+	return cacheFileTable()[fd];
+}
+
 void clearCachedInfos() {
 	has_cached_infos = PTHREAD_ONCE_INIT;
 }

@@ -223,6 +223,7 @@ inline HelHandleResult *parseHandle(ElementHandle &element) {
 
 HelHandle getPosixLane();
 HelHandle *cacheFileTable();
+HelHandle getHandleForFd(int fd);
 void clearCachedInfos();
 
 extern thread_local Queue globalQueue;

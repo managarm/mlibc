@@ -51,8 +51,9 @@ int sys_accept(int fd, int *newfd) {
 
 int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	SignalGuard sguard;
-	auto handle = cacheFileTable()[fd];
-	__ensure(handle);
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
 
 	HelAction actions[5];
 	globalQueue.trim();
@@ -98,8 +99,9 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 
 int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	SignalGuard sguard;
-	auto handle = cacheFileTable()[fd];
-	__ensure(handle);
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
 
 	HelAction actions[5];
 	globalQueue.trim();
@@ -149,8 +151,9 @@ int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 	HelAction actions[4];
 	globalQueue.trim();
 
-	auto handle = cacheFileTable()[fd];
-	__ensure(handle);
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_SOCKNAME);
@@ -201,8 +204,9 @@ int sys_getsockopt(int fd, int layer, int number,
 		HelAction actions[3];
 		globalQueue.trim();
 
-		auto handle = cacheFileTable()[fd];
-		__ensure(handle);
+		auto handle = getHandleForFd(fd);
+		if (!handle)
+			return EBADF;
 
 		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_req_type(managarm::fs::CntReqType::PT_GET_OPTION);
@@ -258,8 +262,9 @@ int sys_setsockopt(int fd, int layer, int number,
 		HelAction actions[3];
 		globalQueue.trim();
 
-		auto handle = cacheFileTable()[fd];
-		__ensure(handle);
+		auto handle = getHandleForFd(fd);
+		if (!handle)
+			return EBADF;
 
 		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_req_type(managarm::fs::CntReqType::PT_SET_OPTION);
