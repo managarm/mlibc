@@ -46,7 +46,7 @@ struct hostent {
 
 struct netent {
 	char *n_name;
-	char **n_alises;
+	char **n_aliases;
 	int n_addrtype;
 	uint32_t n_net;
 };
