@@ -2,6 +2,8 @@
 #include <stddef.h>
 #include <bits/ensure.h>
 #include <bits/posix/pid_t.h>
+#include <mlibc/debug.hpp>
+#include <mlibc/sysdeps.hpp>
 
 namespace mlibc{
 
@@ -24,6 +26,7 @@ namespace mlibc{
 	}
 
 	void sys_libc_panic(){
+		sys_libc_log("libc panic!");
 		__builtin_trap();
 		for(;;);
 	}
@@ -35,14 +38,37 @@ namespace mlibc{
 		pid_t pid = _pid;
 		return pid;
 	}
+	
+	int sys_clock_get(int clock, time_t *secs, long *nanos) {
+		uint64_t _secs, _millis;
+		syscall(SYS_UPTIME, (uintptr_t)&_secs, (uintptr_t)&_millis, 0, 0, 0);
+
+		*secs = _secs;
+		*nanos = _millis * 1000000;
+		return 0;
+	}
+
+	int sys_futex_wait(int *pointer, int expected){
+		return 0;	
+	}
+
+	int sys_futex_wake(int *pointer) {
+		return 0;
+	}
+
+	int sys_tcb_set(void* pointer){
+		syscall(SYS_SET_FS_BASE, (uintptr_t)pointer, 0, 0, 0, 0);
+		return 0;
+	}
+
+	int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
+		__ensure(flags & MAP_ANONYMOUS);
+
+		size_t sizePages = (size + 4096 - 1) / 4096;
+		syscall(SYS_MMAP, (uintptr_t)window, sizePages, (uintptr_t)hint, 0, 0);
+
+		if(!(*window))
+			return -1;
+		return 0;
+	}
 } 
-
-// Temporary - Remove once LSB is linked into the static library
-extern "C" int __cxa_atexit(){
-	return 0;
-}
-
-// Temporary - Remove once LSB is linked into the static library
-void __mlibc_do_finalize(){
-
-}

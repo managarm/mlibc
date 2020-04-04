@@ -1,1 +1,1 @@
-../../../../abis/mlibc/seek-whence.h
+../../../../abis/lemon/x86_64/seek-whence.h

@@ -34,6 +34,8 @@
 #define SYS_GET_VIDEO_MODE 31
 #define SYS_UNAME 32
 #define SYS_READDIR 33
+#define SYS_SET_FS_BASE 34
+#define SYS_MMAP 35
 
 #ifdef __cplusplus
 extern "C"{
