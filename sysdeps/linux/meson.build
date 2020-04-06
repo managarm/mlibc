@@ -18,6 +18,7 @@ if not no_headers
 		'include/abi-bits/in.h',
 		'include/abi-bits/stat.h',
 		'include/abi-bits/signal.h',
+		'include/abi-bits/reboot.h',
 		'include/abi-bits/socket.h',
 		subdir: 'abi-bits'
 	)
