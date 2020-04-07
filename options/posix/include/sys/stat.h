@@ -20,7 +20,7 @@ int mkdirat(int, const char *, mode_t);
 int mkfifo(const char *, mode_t);
 int mkfifoat(int, const char *, mode_t);
 int mknod(const char *, mode_t, dev_t);
-int mknodat(const char *, mode_t, dev_t);
+int mknodat(int, const char *, mode_t, dev_t);
 int stat(const char *__restrict, struct stat *__restrict);
 mode_t umask(mode_t);
 int utimensat(int, const char *, const struct timespec times[2], int);
