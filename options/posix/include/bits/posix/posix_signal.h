@@ -30,6 +30,8 @@ int kill(pid_t pid, int sig);
 
 int sigtimedwait(const sigset_t *set, siginfo_t *info, const struct timespec *timeout);
 
+int sigwait(const sigset_t *set, int *sig);
+
 #ifdef __cplusplus
 }
 #endif
