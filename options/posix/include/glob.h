@@ -25,11 +25,11 @@ extern "C" {
 #define GLOB_NOMATCH 2
 #define GLOB_NOSPACE 3
 
-struct glob_t {
+typedef struct glob_t {
 	size_t gl_pathc;
 	char **gl_pathv;
 	size_t gl_offs;
-};
+} glob_t;
 
 int glob(const char *__restirct, int, int(*)(const char *, int), struct glob_t *__restrict);
 void globfree(struct glob_t *);

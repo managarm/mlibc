@@ -98,3 +98,8 @@ int sigtimedwait(const sigset_t *set, siginfo_t *info, const struct timespec *ti
 	__builtin_unreachable();
 }
 
+int sigwait(const sigset_t *set, int *sig) {
+	__ensure(!"sigwait() not implemented");
+	__builtin_unreachable();
+}
+

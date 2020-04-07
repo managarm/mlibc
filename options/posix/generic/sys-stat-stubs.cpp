@@ -65,7 +65,7 @@ int mknod(const char *, mode_t, dev_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int mknodat(const char *, mode_t, dev_t) {
+int mknodat(int, const char *, mode_t, dev_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
