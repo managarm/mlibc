@@ -7,9 +7,8 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
-int creat(const char *, mode_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int creat(const char *pathname, mode_t mode) {
+	return open(pathname, O_CREAT|O_WRONLY|O_TRUNC, mode);
 }
 
 int fcntl(int fd, int command, ...) {
