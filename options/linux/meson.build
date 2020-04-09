@@ -16,6 +16,7 @@ libc_sources += files(
 	'generic/sys-signalfd.cpp',
 	'generic/sys-timerfd.cpp',
 	'generic/sys-eventfd.cpp',
+	'generic/sys-reboot.cpp',
 )
 
 if not no_headers
@@ -76,6 +77,7 @@ if not no_headers
 		'include/sys/sysmacros.h',
 		'include/sys/timerfd.h',
 		'include/sys/eventfd.h',
+		'include/sys/reboot.h',
 		subdir: 'sys'
 	)
 endif

@@ -2,6 +2,8 @@
 #ifndef  _UTMP_H
 #define  _UTMP_H
 
+#include <bits/types.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,7 +38,7 @@ struct utmp {
 	struct exit_status ut_exit;
 	long   ut_session;
 	struct timeval ut_tv;
-	int32_t ut_addr_v6[4];
+	__mlibc_int32_t ut_addr_v6[4];
 	char __unused[20];
 };
 
