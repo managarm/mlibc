@@ -72,9 +72,26 @@ struct passwd *getpwent(void) {
 	__builtin_unreachable();
 }
 
-struct passwd *getpwnam(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+struct passwd *getpwnam(const char *name) {
+	auto file = fopen("/etc/passwd", "r");
+	if(!file)
+		return nullptr;
+
+	clear_entry(&global_entry);
+
+	char line[512];
+	while(fgets(line, 512, file)) {
+		if(!extract_entry(line, &global_entry))
+			continue;
+		if(global_entry.pw_name == name) {
+			fclose(file);
+			return &global_entry;
+		}
+	}
+
+	fclose(file);
+	errno = ESRCH;
+	return nullptr;
 }
 
 int getpwnam_r(const char *, struct passwd *, char *, size_t, struct passwd **) {
