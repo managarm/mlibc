@@ -3543,14 +3543,20 @@ int sys_fallocate(int fd, off_t offset, size_t size) {
 }
 
 int sys_unlink(const char *path) {
+	return sys_unlinkat(AT_FDCWD, path, 0);
+}
+
+int sys_unlinkat(int fd, const char *path, int flags) {
 	SignalGuard sguard;
 	HelAction actions[3];
 
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::UNLINK);
+	req.set_request_type(managarm::posix::CntReqType::UNLINKAT);
+	req.set_fd(fd);
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_flags(flags);
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
