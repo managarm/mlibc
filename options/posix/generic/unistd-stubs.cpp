@@ -163,10 +163,13 @@ int faccessat(int, const char *, int, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int fchown(int fd, uid_t uid, gid_t gid) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "\e[31mmlibc: fchown() is not implemented correctly\e[39m"
+			<< frg::endlog;
+	return 0;
 }
+
 int fchownat(int fd, const char *path, uid_t uid, gid_t gid, int flags) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
