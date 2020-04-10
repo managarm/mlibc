@@ -909,7 +909,7 @@ int ferror(FILE *file_base) {
 	return file_base->__status_bits & __MLIBC_ERROR_BIT;
 }
 
-int perror(const char *string) {
+void perror(const char *string) {
 	int error = errno;
 	if (string && *string) {
 		fprintf(stderr, "%s: ", string);

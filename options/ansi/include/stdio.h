@@ -145,7 +145,7 @@ void rewind(FILE *stream);
 void clearerr(FILE *stream);
 int feof(FILE *stream);
 int ferror(FILE *stream);
-int perror(const char *string);
+void perror(const char *string);
 
 // POSIX unlocked I/O extensions.
 
