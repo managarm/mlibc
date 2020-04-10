@@ -11,10 +11,13 @@ int chmod(const char *, mode_t) {
 			<< frg::endlog;
 	return 0;
 }
+
 int fchmod(int, mode_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "\e[31mmlibc: fchmod() is not implemented correctly\e[39m"
+			<< frg::endlog;
+	return 0;
 }
+
 int fchmodat(int, const char *, mode_t, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
