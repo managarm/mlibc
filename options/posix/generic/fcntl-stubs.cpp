@@ -7,9 +7,8 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
-int creat(const char *, mode_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int creat(const char *pathname, mode_t mode) {
+	return open(pathname, O_CREAT|O_WRONLY|O_TRUNC, mode);
 }
 
 int fcntl(int fd, int command, ...) {
@@ -29,9 +28,18 @@ int fcntl(int fd, int command, ...) {
 	return result;
 }
 
-int openat(int, const char *, int, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int openat(int dirfd, const char *pathname, int flags, ...) {
+	int fd;
+	if(!mlibc::sys_openat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_openat(dirfd, pathname, flags, &fd); e) {
+		errno = e;
+		return -1;
+	}
+	return fd;
 }
 
 int posix_fadvise(int fd, off_t offset, off_t length, int advice) {
