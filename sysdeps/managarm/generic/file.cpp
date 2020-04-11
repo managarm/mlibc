@@ -384,9 +384,42 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		*result = resp.flags();
 		return 0;
 	}else if(request == F_SETFD) {
-		mlibc::infoLogger() << "\e[31mmlibc: fcntl(F_SETFD) is not implemented correctly"
-				<< "\e[39m" << frg::endlog;
-		*result = 0;
+		HelAction actions[3];
+		globalQueue.trim();
+
+		managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_request_type(managarm::posix::CntReqType::FD_SET_FLAGS);
+		req.set_fd(fd);
+		req.set_flags(va_arg(args, int));
+
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+		req.SerializeToString(&ser);
+		actions[0].type = kHelActionOffer;
+		actions[0].flags = kHelItemAncillary;
+		actions[1].type = kHelActionSendFromBuffer;
+		actions[1].flags = kHelItemChain;
+		actions[1].buffer = ser.data();
+		actions[1].length = ser.size();
+		actions[2].type = kHelActionRecvInline;
+		actions[2].flags = 0;
+		HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
+				globalQueue.getQueue(), 0, 0));
+
+		auto element = globalQueue.dequeueSingle();
+		auto offer = parseSimple(element);
+		auto send_req = parseSimple(element);
+		auto recv_resp = parseInline(element);
+
+		HEL_CHECK(offer->error);
+		HEL_CHECK(send_req->error);
+		HEL_CHECK(recv_resp->error);
+
+		managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		if(resp.error() == managarm::posix::Errors::NO_SUCH_FD)
+			return EBADF;
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		*result = resp.error();
 		return 0;
 	}else if(request == F_GETFL) {
 		SignalGuard sguard;

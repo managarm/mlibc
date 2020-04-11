@@ -1,7 +1,9 @@
 
 #include <errno.h>
 #include <dirent.h>
+#include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>
@@ -22,9 +24,28 @@ int dirfd(DIR *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-DIR *fdopendir(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+DIR *fdopendir(int fd) {
+	struct stat st;
+
+	if(fstat(fd, &st) < 0) {
+		return nullptr;
+	}
+	// Musl implements this, but O_PATH is only declared on the linux abi
+	/*if(fcntl(fd, F_GETFL) & O_PATH) {
+		errno = EBADF;
+		return nullptr;
+	}*/
+	if(!S_ISDIR(st.st_mode)) {
+		errno = ENOTDIR;
+		return nullptr;
+	}
+	auto dir = frg::construct<__mlibc_dir_struct>(getAllocator());
+	__ensure(dir);
+	dir->__ent_next = 0;
+	dir->__ent_limit = 0;
+	fcntl(fd, F_SETFD, FD_CLOEXEC);
+	dir->__handle = fd;
+	return dir;
 }
 DIR *opendir(const char *path) {
 	if(!mlibc::sys_open_dir) {
