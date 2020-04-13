@@ -43,7 +43,8 @@ DIR *fdopendir(int fd) {
 	__ensure(dir);
 	dir->__ent_next = 0;
 	dir->__ent_limit = 0;
-	fcntl(fd, F_SETFD, FD_CLOEXEC);
+	int flags = fcntl(fd, F_GETFD);
+	fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
 	dir->__handle = fd;
 	return dir;
 }
