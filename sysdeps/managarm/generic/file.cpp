@@ -3032,10 +3032,8 @@ int sys_openat(int dirfd, const char *path, int flags, int *fd) {
 		proto_flags |= managarm::posix::OpenFlags::OF_CREATE;
 	if(flags & __MLIBC_O_EXCL)
 		proto_flags |= managarm::posix::OpenFlags::OF_EXCLUSIVE;
-	if(flags & __MLIBC_O_NONBLOCK) {
-		mlibc::infoLogger() << "mlibc: openat() has O_NONBLOCK set but ignored" << frg::endlog;
-		//proto_flags |= managarm::posix::OpenFlags::OF_NONBLOCK;
-	}
+	if(flags & __MLIBC_O_NONBLOCK)
+		proto_flags |= managarm::posix::OpenFlags::OF_NONBLOCK;
 
 	if(flags & __MLIBC_O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
