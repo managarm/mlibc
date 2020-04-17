@@ -16,19 +16,21 @@ imaxdiv_t imaxdiv(intmax_t, intmax_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-intmax_t strtoimax(const char *it, char **out, int base) {
-	// TODO: This function has to check for overflow!
-	intmax_t v = 0;
+
+template <class T> T strtoxmax(const char *it, char **out, int base) {
+	T v = 0;
 	bool negate = false;
 
 	// TODO: In this case we have to detect the base based on the prefix.
 	__ensure(base);
 
-	if(*it == '+') {
-		it++;
-	}else if(*it == '-') {
-		negate = true;
-		it++;
+	if(std::is_signed<T>::value) {
+		if(*it == '+') {
+			it++;
+		}else if(*it == '-') {
+			negate = true;
+			it++;
+		}
 	}
 
 	if(base == 8) {
@@ -60,16 +62,22 @@ parse_digits:
 		it++;
 	}
 
-	if(negate)
-		v = -v;
+	if(std::is_signed<T>::value) {
+		if(negate)
+			v = -v;
+	}
 
 	if(out)
 		*out = const_cast<char *>(it);
 	return v;
 }
-uintmax_t strtoumax(const char *__restrict, char **__restrict, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+intmax_t strtoimax(const char *it, char **out, int base) {
+	// TODO: This function has to check for overflow!
+	return strtoxmax<intmax_t>(it, out, base);
+}
+uintmax_t strtoumax(const char *it, char **out, int base) {
+	return strtoxmax<uintmax_t>(it, out, base);
 }
 intmax_t wcstoimax(const wchar_t *__restrict, wchar_t **__restrict, int) {
 	__ensure(!"Not implemented");
