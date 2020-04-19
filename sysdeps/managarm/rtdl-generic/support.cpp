@@ -122,7 +122,7 @@ private:
 						false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE));
 
 			HEL_CHECK(helFutexWait(&_chunk->progressFutex,
-					_lastProgress | kHelProgressWaiters));
+					_lastProgress | kHelProgressWaiters, -1));
 		}
 	}
 
@@ -383,7 +383,7 @@ int sys_close(int fd) {
 
 int sys_futex_wait(int *pointer, int expected) {
 	// This implementation is inherently signal-safe.
-	if(helFutexWait(pointer, expected))
+	if(helFutexWait(pointer, expected, -1))
 		return -1;
 	return 0;
 }

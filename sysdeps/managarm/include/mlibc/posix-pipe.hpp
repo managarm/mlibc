@@ -172,7 +172,7 @@ private:
 						false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE));
 			
 			HEL_CHECK(helFutexWait(&_retrieveChunk()->progressFutex,
-					_lastProgress | kHelProgressWaiters));
+					_lastProgress | kHelProgressWaiters, -1));
 		}
 	}
 

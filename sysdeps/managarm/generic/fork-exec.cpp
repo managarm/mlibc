@@ -26,7 +26,7 @@ namespace mlibc {
 
 int sys_futex_wait(int *pointer, int expected) {
 	// This implementation is inherently signal-safe.
-	if(helFutexWait(pointer, expected))
+	if(helFutexWait(pointer, expected, -1))
 		return -1;
 	return 0;
 }
