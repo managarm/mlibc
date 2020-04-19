@@ -6,6 +6,7 @@
 #include <bits/posix/ssize_t.h>
 #include <bits/posix/off_t.h>
 
+#include <bits/posix/id_t.h>
 #include <bits/posix/uid_t.h>
 #include <bits/posix/gid_t.h>
 #include <bits/posix/pid_t.h>
