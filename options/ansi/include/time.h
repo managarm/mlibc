@@ -81,6 +81,10 @@ void tzset(void);
 extern "C" {
 #endif
 
+extern int daylight;
+extern long timezone;
+extern char *tzname[2];
+
 int nanosleep(const struct timespec *, struct timespec *);
 
 int clock_getres(clockid_t, struct timespec *);

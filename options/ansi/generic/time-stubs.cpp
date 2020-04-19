@@ -14,6 +14,11 @@
 #include <mlibc/file-window.hpp>
 #include <mlibc/sysdeps.hpp>
 
+// Variables defined by POSIX.
+int daylight;
+long timezone;
+char *tzname[2];
+
 clock_t clock(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
