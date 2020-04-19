@@ -101,6 +101,7 @@ if not no_headers
 		'include/sys/statfs.h',
 		'include/sys/stat.h',
 		'include/sys/statvfs.h',
+		'include/sys/termios.h',
 		'include/sys/time.h',
 		'include/sys/times.h',
 		'include/sys/types.h',
