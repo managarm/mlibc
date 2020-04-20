@@ -283,13 +283,19 @@ int toupper(int nc) {
 // wchar_t conversion functions.
 // --------------------------------------------------------------------------------------
 
-wint_t towlower(wint_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+wint_t towlower(wint_t wc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(wc, cp); e != mlibc::charcode_error::null)
+		return wc;
+	return mlibc::current_charset()->to_lower(cp);
 }
 
-wint_t towupper(wint_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+wint_t towupper(wint_t wc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(wc, cp); e != mlibc::charcode_error::null)
+		return wc;
+	return mlibc::current_charset()->to_upper(cp);
 }
 
