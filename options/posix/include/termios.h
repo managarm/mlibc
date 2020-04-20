@@ -1,6 +1,6 @@
 
-#ifndef _SYS_TERMIOS_H
-#define _SYS_TERMIOS_H
+#ifndef _TERMIOS_H
+#define _TERMIOS_H
 
 #include <bits/posix/pid_t.h>
 
@@ -174,5 +174,5 @@ struct winsize {
 }
 #endif
 
-#endif // _SYS_TERMIOS_H
+#endif // _TERMIOS_H
 

@@ -89,7 +89,7 @@ extern "C" {
 #define _SC_GETPW_R_SIZE_MAX 1
 #define _SC_PHYS_PAGES 2
 #define _SC_PAGE_SIZE 3
-#define _SCPAGESIZE _SC_PAGE_SIZE
+#define _SC_PAGESIZE _SC_PAGE_SIZE
 #define _SC_OPEN_MAX 5
 
 #define STDERR_FILENO 2
