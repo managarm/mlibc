@@ -3682,14 +3682,20 @@ int sys_unlinkat(int fd, const char *path, int flags) {
 }
 
 int sys_access(const char *path, int mode) {
+	return sys_faccessat(AT_FDCWD, path, mode, 0);
+}
+
+int sys_faccessat(int dirfd, const char *pathname, int mode, int flags) {
 	SignalGuard sguard;
 	HelAction actions[3];
 
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::ACCESS);
-	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_request_type(managarm::posix::CntReqType::ACCESSAT);
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), pathname));
+	req.set_fd(dirfd);
+	req.set_flags(flags);
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
@@ -3717,6 +3723,10 @@ int sys_access(const char *path, int mode) {
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		return ENOENT;
+	}else if(resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
+		return EBADF;
+	}else if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+		return EINVAL;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;

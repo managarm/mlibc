@@ -159,9 +159,17 @@ int execvp(const char *file, char *const argv[]) {
 	return -1;
 }
 
-int faccessat(int, const char *, int, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int faccessat(int dirfd, const char *pathname, int mode, int flags) {
+	if(!mlibc::sys_faccessat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_faccessat(dirfd, pathname, mode, flags); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int fchown(int fd, uid_t uid, gid_t gid) {

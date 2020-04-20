@@ -65,6 +65,7 @@ int posix_fallocate(int, off_t, off_t);
 #define AT_SYMLINK_FOLLOW 2
 #define AT_SYMLINK_NOFOLLOW 4
 #define AT_REMOVEDIR 8
+#define AT_EACCESS 512
 
 #define AT_FDCWD -100
 
