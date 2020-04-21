@@ -305,7 +305,8 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
             if (*fmt == '%')
                 fmt++;
             char c = handler.consume();
-            if (c != *fmt) return -1;
+            if (c != *fmt)
+                break;
             continue;
         }
 
