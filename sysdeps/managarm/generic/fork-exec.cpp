@@ -81,8 +81,7 @@ int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
 
 void sys_exit(int status) {
 	// This implementation is inherently signal-safe.
-	asm volatile ("syscall" : : "D"(kHelCallSuper + 4)
-			: "rcx", "r11", "rbx", "memory");
+	HEL_CHECK(helSyscall1(kHelCallSuper + 4, status));
 	__builtin_trap();
 }
 
