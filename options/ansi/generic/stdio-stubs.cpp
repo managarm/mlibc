@@ -218,7 +218,7 @@ FILE *freopen(const char *__restrict filename, const char *__restrict mode, FILE
 	__builtin_unreachable();
 }
 void setbuf(FILE *__restrict stream, char *__restrict buffer) {
-	__ensure(!"Not implemented");
+	setvbuf(stream, buffer, buffer ? _IOFBF : _IONBF, BUFSIZ);
 }
 // setvbuf() is provided by the POSIX sublibrary
 
