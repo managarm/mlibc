@@ -203,6 +203,8 @@ char *strtok_r(char *__restrict s, const char *__restrict del, char **__restrict
 	}else{
 		*m = nullptr;
 	}
+	if(p == tok)
+		return nullptr;
 	return tok;
 }
 char *strtok(char *__restrict s, const char *__restrict delimiter) {
