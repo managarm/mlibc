@@ -389,9 +389,19 @@ int pipe2(int *fds, int flags) {
 	return 0;
 }
 
-ssize_t pread(int, void *, size_t, off_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+ssize_t pread(int fd, void *buf, size_t n, off_t off) {
+	ssize_t num_read;
+
+	if(!mlibc::sys_pread) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_pread(fd, buf, n, off, &num_read); e) {
+		errno = e;
+		return -1;
+	}
+	return num_read;
 }
 ssize_t pwrite(int, const void *, size_t, off_t) {
 	__ensure(!"Not implemented");
