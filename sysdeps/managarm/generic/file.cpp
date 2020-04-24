@@ -161,13 +161,19 @@ int sys_chroot(const char *path) {
 }
 
 int sys_mkdir(const char *path) {
+	return sys_mkdirat(AT_FDCWD, path, 0);
+}
+
+int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
+	(void)mode;
 	SignalGuard sguard;
 	HelAction actions[3];
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::MKDIR);
+	req.set_request_type(managarm::posix::CntReqType::MKDIRAT);
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_fd(dirfd);
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);

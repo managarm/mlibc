@@ -19,8 +19,9 @@ int fchmod(int, mode_t) {
 }
 
 int fchmodat(int, const char *, mode_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "\e[31mmlibc: fchmodat() is not implemented correctly\e[39m"
+			<< frg::endlog;
+	return 0;
 }
 int fstatat(int dirfd, const char *path, struct stat *result, int flags) {
 	if(!mlibc::sys_stat) {
@@ -52,9 +53,18 @@ int mkdir(const char *path, mode_t) {
 	}
 	return 0;
 }
-int mkdirat(int, const char *, mode_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int mkdirat(int dirfd, const char *path, mode_t mode) {
+	mlibc::infoLogger() << "\e[31mmlibc: mkdirat() ignores its mode\e[39m" << frg::endlog;
+	if(!mlibc::sys_mkdirat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_mkdirat(dirfd, path, mode); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 int mkfifo(const char *, mode_t) {
 	__ensure(!"Not implemented");

@@ -114,6 +114,7 @@ int sys_close(int fd);
 	[[gnu::weak]] int sys_fchdir(int fd);
 	[[gnu::weak]] int sys_chroot(const char *path);
 	[[gnu::weak]] int sys_mkdir(const char *path);
+	[[gnu::weak]] int sys_mkdirat(int dirfd, const char *path, mode_t mode);
 	[[gnu::weak]] int sys_symlink(const char *target_path, const char *link_path);
 	[[gnu::weak]] int sys_rename(const char *path, const char *new_path);
 	[[gnu::weak]] int sys_fcntl(int fd, int request, va_list args, int *result);
