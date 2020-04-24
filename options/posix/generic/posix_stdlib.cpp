@@ -257,6 +257,15 @@ int ptsname_r(int fd, char *buffer, size_t length) {
 	return 0;
 }
 
+char *ptsname(int fd) {
+	int index;
+	static char buffer[128];
+	if(ioctl(fd, TIOCGPTN, &index))
+		return NULL;
+	snprintf(buffer, 128, "/dev/pts/%d", index);
+	return buffer;
+}
+
 int posix_openpt(int flags) {
 	int fd;
 	if(int e = mlibc::sys_open("/dev/ptmx", flags, &fd); e) {
