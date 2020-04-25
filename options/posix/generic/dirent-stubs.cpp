@@ -20,9 +20,8 @@ int closedir(DIR *dir) {
 	close(dir->__handle);
 	return 0;
 }
-int dirfd(DIR *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int dirfd(DIR *dir) {
+	return dir->__handle;
 }
 DIR *fdopendir(int fd) {
 	struct stat st;
