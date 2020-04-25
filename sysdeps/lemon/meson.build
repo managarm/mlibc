@@ -1,11 +1,13 @@
 
 rtdl_sources += files(
+	'generic/filesystem.cpp',
+	'generic/lemon.cpp',
 )
 
 libc_sources += files(
 	'generic/filesystem.cpp',
-	'generic/syscall.c',
 	'generic/lemon.cpp',
+	'generic/entry.cpp',
 )
 
 if not no_headers

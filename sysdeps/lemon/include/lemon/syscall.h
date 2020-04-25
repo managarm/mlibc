@@ -17,8 +17,9 @@
 #define SYS_TIME 13
 #define SYS_MAP_FB 14
 #define SYS_ALLOC 15
+#define SYS_CHMOD 16
 #define SYS_CREATE_DESKTOP 17
-
+#define SYS_STAT 18
 #define SYS_LSEEK 19
 #define SYS_GETPID 20
 #define SYS_MOUNT 21
@@ -36,15 +37,13 @@
 #define SYS_READDIR 33
 #define SYS_SET_FS_BASE 34
 #define SYS_MMAP 35
+#define SYS_GRANT_PTY 36
+#define SYS_GET_CWD 37
+#define SYS_WAIT_PID 38
+#define SYS_NANO_SLEEP 39
+#define SYS_PREAD 40
+#define SYS_PWRITE 41
 
-#ifdef __cplusplus
-extern "C"{
-#endif
-
-void syscall(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4);
-
-#ifdef __cplusplus
-}
-#endif
+#define syscall(call, arg0, arg1, arg2, arg3, arg4) asm volatile("int $0x69" :: "a"(call), "b"(arg0), "c"(arg1), "d"(arg2), "S"(arg3), "D"(arg4))
 
 #endif
