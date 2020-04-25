@@ -63,7 +63,7 @@ int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read);
 
 #ifndef MLIBC_BUILDING_RTDL
 	int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);
-	int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read);
+	[[gnu::weak]] int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 
 int sys_seek(int fd, off_t offset, int whence, off_t *new_offset);
