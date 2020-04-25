@@ -248,14 +248,20 @@ int sys_symlink(const char *target_path, const char *link_path) {
 }
 
 int sys_rename(const char *path, const char *new_path) {
+	return sys_renameat(AT_FDCWD, path, AT_FDCWD, new_path);
+}
+
+int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
 	SignalGuard sguard;
 	HelAction actions[3];
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::RENAME);
-	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_request_type(managarm::posix::CntReqType::RENAMEAT);
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), old_path));
 	req.set_target_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), new_path));
+	req.set_fd(olddirfd);
+	req.set_newfd(newdirfd);
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
