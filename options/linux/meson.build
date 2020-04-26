@@ -53,6 +53,7 @@ if not no_headers
 		'include/linux/types.h',
 		'include/linux/videodev2.h',
 		'include/linux/vt.h',
+		'include/linux/rtnetlink.h',
 		subdir: 'linux'
 	)
 	install_headers(
