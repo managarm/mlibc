@@ -6,6 +6,14 @@
 // TODO: Refer to _PATH_MOUNTED
 #define MOUNTED "/etc/mtab"
 
+/* Generic mount options */
+#define MNTOPT_DEFAULTS "defaults"		/* Use all default options. */
+#define MNTOPT_RO		"ro"			/* Read only. */
+#define MNTOPT_RW		"rw"			/* Read/write. */
+#define MNTOPT_SUID		"suid"			/* Set uid allowed. */
+#define MNTOPT_NOSUID	"nosuid"		/* No set uid allowed. */
+#define MNTOPT_NOAUTO	"noauto"		/* Do not auto mount. */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
