@@ -89,26 +89,26 @@ int inet_aton(const char *string, struct in_addr *dest) {
 
 	switch (i) {
 		case 0:
-			dest->s_addr = array[0];
+			dest->s_addr = htonl(array[0]);
 			break;
 		case 1:
 			if (array[0] > 255 || array[1] > 0xffffff)
 				return 0;
-			dest->s_addr = (array[0] << 24) | array[1];
+			dest->s_addr = htonl((array[0] << 24) | array[1]);
 			break;
 		case 2:
 			if (array[0] > 255 || array[1] > 255 ||
 					array[2] > 0xffff)
 				return 0;
-			dest->s_addr = (array[0] << 24) | (array[1] << 16) |
-				array[2];
+			dest->s_addr = htonl((array[0] << 24) | (array[1] << 16) |
+				array[2]);
 			break;
 		case 3:
 			if (array[0] > 255 || array[1] > 255 ||
 					array[2] > 255 || array[3] > 255)
 				return 0;
-			dest->s_addr = (array[0] << 24) | (array[1] << 16) |
-				(array[2] << 8) | array[3];
+			dest->s_addr = htonl((array[0] << 24) | (array[1] << 16) |
+				(array[2] << 8) | array[3]);
 			break;
 	}
 
