@@ -65,9 +65,13 @@ in_addr_t inet_addr(const char *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-char *inet_ntoa(struct in_addr) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+char *inet_ntoa(struct in_addr addr) {
+	thread_local static char buffer[16];
+	int proper = htonl(addr.s_addr);
+	snprintf(buffer, sizeof(buffer), "%d.%d.%d.%d",
+		(proper >> 24) & 0xff, ((proper >> 16) & 0xff),
+		(proper >> 8) & 0xff, proper & 0xff);
+	return buffer;
 }
 int inet_aton(const char *string, struct in_addr *dest) {
 	int array[4];
