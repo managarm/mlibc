@@ -78,6 +78,7 @@ if not no_headers
 		'include/sys/timerfd.h',
 		'include/sys/eventfd.h',
 		'include/sys/reboot.h',
+		'include/sys/poll.h',
 		subdir: 'sys'
 	)
 endif
