@@ -19,6 +19,7 @@ struct sockaddr_in {
 	struct in_addr sin_addr;
 	uint8_t pad[8];
 };
+#define sin_zero pad		/* for BSD Unix compatibility */
 
 struct in6_addr {
 	uint8_t s6_addr[16];

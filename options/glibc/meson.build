@@ -12,7 +12,8 @@ if not no_headers
 		'include/stdio_ext.h',
 		'include/err.h',
 		'include/paths.h',
-		'include/sysexits.h'
+		'include/sysexits.h',
+		'include/resolv.h'
 	)
 	install_headers(
 		'include/sys/ioctl.h',
