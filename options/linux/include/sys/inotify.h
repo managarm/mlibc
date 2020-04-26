@@ -13,7 +13,7 @@ extern "C" {
 #define IN_ACCESS 0x1
 #define IN_ATTRIB 0x4
 #define IN_CLOSE_WRITE 0x8
-#define IN CLOSE_NOWRITE 0x10
+#define IN_CLOSE_NOWRITE 0x10
 #define IN_CREATE 0x100
 #define IN_DELETE 0x200
 #define IN_DELETE_SELF 0x400
