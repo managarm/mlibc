@@ -519,3 +519,42 @@ int pthread_barrier_wait(pthread_barrier_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+// ----------------------------------------------------------------------------
+// pthread_rwlock functions.
+// ----------------------------------------------------------------------------
+
+int pthread_rwlock_init(pthread_rwlock_t *__restrict, const pthread_rwlockattr_t *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_rwlock_destroy(pthread_rwlock_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_rwlock_trywrlock(pthread_rwlock_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_rwlock_wrlock(pthread_rwlock_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();	
+}
+
+int pthread_rwlock_tryrdlock(pthread_rwlock_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_rwlock_rdlock(pthread_rwlock_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_rwlock_unlock(pthread_rwlock_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
