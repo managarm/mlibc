@@ -3,6 +3,7 @@
 #define _NETINET_IN_H
 
 #include <stdint.h>
+#include <endian.h>
 #include <abi-bits/socket.h>
 #include <abi-bits/in.h>
 

@@ -13,7 +13,8 @@ if not no_headers
 		'include/err.h',
 		'include/paths.h',
 		'include/sysexits.h',
-		'include/resolv.h'
+		'include/resolv.h',
+		'include/endian.h'
 	)
 	install_headers(
 		'include/sys/ioctl.h',
