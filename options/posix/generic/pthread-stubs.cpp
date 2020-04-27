@@ -382,9 +382,14 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 	}
 }
 
-int pthread_mutex_trylock(pthread_mutex_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutex_trylock(pthread_mutex_t *mutex) {
+	SCOPE_TRACE();
+
+	mlibc::infoLogger() << "mlibc: pthread_mutex_trylock() is not implemented correctly" << frg::endlog;
+	if(pthread_mutex_lock(mutex)) {
+		return EBUSY;
+	}
+	return 0;
 }
 int pthread_mutex_timedlock(pthread_mutex_t *__restrict,
 		const struct timespec *__restrict) {
@@ -428,12 +433,16 @@ int pthread_mutex_consistent(pthread_mutex_t *) {
 // ----------------------------------------------------------------------------
 
 int pthread_condattr_init(pthread_condattr_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	SCOPE_TRACE();
+
+	mlibc::infoLogger() << "mlibc: pthread_condattr_init() is not implemented correctly" << frg::endlog;
+	return 0;
 }
 int pthread_condattr_destroy(pthread_condattr_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	SCOPE_TRACE();
+
+	mlibc::infoLogger() << "mlibc: pthread_condattr_destroy() is not implemented correctly" << frg::endlog;
+	return 0;
 }
 
 int pthread_condattr_getclock(const pthread_condattr_t *__restrict, clockid_t *__restrict) {
@@ -441,8 +450,10 @@ int pthread_condattr_getclock(const pthread_condattr_t *__restrict, clockid_t *_
 	__builtin_unreachable();
 }
 int pthread_condattr_setclock(pthread_condattr_t *, clockid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	SCOPE_TRACE();
+
+	mlibc::infoLogger() << "mlibc: pthread_condattr_setclock() is not implemented correctly" << frg::endlog;
+	return 0;
 }
 
 int pthread_cond_init(pthread_cond_t *__restrict cond, const pthread_condattr_t *__restrict) {
@@ -525,8 +536,10 @@ int pthread_barrier_wait(pthread_barrier_t *) {
 // ----------------------------------------------------------------------------
 
 int pthread_rwlock_init(pthread_rwlock_t *__restrict, const pthread_rwlockattr_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	SCOPE_TRACE();
+
+	mlibc::infoLogger() << "mlibc: pthread_rwlock_init() is not implemented correctly" << frg::endlog;
+	return 0;
 }
 
 int pthread_rwlock_destroy(pthread_rwlock_t *) {
@@ -540,8 +553,10 @@ int pthread_rwlock_trywrlock(pthread_rwlock_t *) {
 }
 
 int pthread_rwlock_wrlock(pthread_rwlock_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();	
+	SCOPE_TRACE();
+
+	mlibc::infoLogger() << "mlibc: pthread_rwlock_wrlock() is not implemented correctly" << frg::endlog;
+	return 0;
 }
 
 int pthread_rwlock_tryrdlock(pthread_rwlock_t *) {
@@ -550,11 +565,15 @@ int pthread_rwlock_tryrdlock(pthread_rwlock_t *) {
 }
 
 int pthread_rwlock_rdlock(pthread_rwlock_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	SCOPE_TRACE();
+
+	mlibc::infoLogger() << "mlibc: pthread_rwlock_rdlock() is not implemented correctly" << frg::endlog;
+	return 0;
 }
 
 int pthread_rwlock_unlock(pthread_rwlock_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	SCOPE_TRACE();
+
+	mlibc::infoLogger() << "mlibc: pthread_rwlock_unlock() is not implemented correctly" << frg::endlog;
+	return 0;
 }
