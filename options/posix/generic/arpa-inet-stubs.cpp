@@ -67,7 +67,7 @@ in_addr_t inet_addr(const char *) {
 }
 char *inet_ntoa(struct in_addr addr) {
 	thread_local static char buffer[16];
-	int proper = htonl(addr.s_addr);
+	uint32_t proper = htonl(addr.s_addr);
 	snprintf(buffer, sizeof(buffer), "%d.%d.%d.%d",
 		(proper >> 24) & 0xff, ((proper >> 16) & 0xff),
 		(proper >> 8) & 0xff, proper & 0xff);
