@@ -137,6 +137,7 @@ int gethostname(char *buffer, size_t max_length);
 char *getlogin(void);
 int getlogin_r(char *, size_t);
 int getopt(int, char *const [], const char *);
+char *getpass(const char *);
 pid_t getpgid(pid_t);
 pid_t getpgrp(void);
 pid_t getpid(void);
