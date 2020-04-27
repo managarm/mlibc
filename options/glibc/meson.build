@@ -4,6 +4,7 @@ libc_sources += files(
 	'generic/stdio_ext-stubs.cpp',
 	'generic/sys-ioctl.cpp',
 	'generic/err.cpp',
+	'generic/resolv-stubs.cpp',
 )
 
 if not no_headers
