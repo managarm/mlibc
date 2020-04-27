@@ -17,6 +17,7 @@ libc_sources += files(
 	'generic/sys-timerfd.cpp',
 	'generic/sys-eventfd.cpp',
 	'generic/sys-reboot.cpp',
+	'generic/netinet-in6addr.cpp',
 )
 
 if not no_headers
