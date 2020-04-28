@@ -94,8 +94,8 @@ struct  __mlibc_barrier {
 typedef struct __mlibc_barrier pthread_barrier_t;
 
 struct __mlibc_fair_rwlock {
-	pthread_mutex_t m;
-	pthread_mutex_t rw;
+	int m;
+	int rw;
 	unsigned read_count;
 };
 typedef struct __mlibc_fair_rwlock pthread_rwlock_t;
