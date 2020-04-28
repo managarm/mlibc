@@ -66,6 +66,8 @@ in_addr_t inet_addr(const char *) {
 	__builtin_unreachable();
 }
 char *inet_ntoa(struct in_addr addr) {
+	// string: xxx.yyy.zzz.aaa
+	// 4 * 3 + 3 + 1 = 12 + 4 = 16
 	thread_local static char buffer[16];
 	uint32_t proper = htonl(addr.s_addr);
 	snprintf(buffer, sizeof(buffer), "%d.%d.%d.%d",
