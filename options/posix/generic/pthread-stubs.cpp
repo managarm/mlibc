@@ -385,12 +385,33 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 int pthread_mutex_trylock(pthread_mutex_t *mutex) {
 	SCOPE_TRACE();
 
-	mlibc::infoLogger() << "mlibc: pthread_mutex_trylock() is not implemented correctly" << frg::endlog;
-	if(pthread_mutex_lock(mutex)) {
-		return EBUSY;
+	unsigned int expected = __atomic_load_n(&mutex->__mlibc_state, __ATOMIC_RELAXED);
+	if(!expected) {
+		// Try to take the mutex here.
+		if(__atomic_compare_exchange_n(&mutex->__mlibc_state,
+						&expected, this_tid(), false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
+			__ensure(!mutex->__mlibc_recursion);
+			mutex->__mlibc_recursion = 1;
+			return 0;
+		}
+	} else {
+		// If this (recursive) mutex is already owned by us, increment the recursion level.
+        if((expected & mutex_owner_mask) == this_tid()) {
+            if(!(mutex->__mlibc_flags & mutexRecursive)) {
+                if (mutex->__mlibc_flags & mutexErrorCheck)
+                    return EDEADLK;
+                else
+                    mlibc::panicLogger() << "mlibc: pthread_mutex deadlock detected!"
+                        << frg::endlog;
+            }
+            ++mutex->__mlibc_recursion;
+            return 0;
+        }
+
+        return EBUSY;
 	}
-	return 0;
 }
+
 int pthread_mutex_timedlock(pthread_mutex_t *__restrict,
 		const struct timespec *__restrict) {
 	__ensure(!"Not implemented");
