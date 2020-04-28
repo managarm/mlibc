@@ -120,6 +120,8 @@ if not headers_only
 		'musl-generic-math/floorf.c',
 		'musl-generic-math/floorl.c',
 		'musl-generic-math/fma.c',
+		'musl-generic-math/fmaf.c',
+		'musl-generic-math/fmal.c',
 		'musl-generic-math/fmax.c',
 		'musl-generic-math/fmaxf.c',
 		'musl-generic-math/fmaxl.c',
