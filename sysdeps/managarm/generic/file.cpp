@@ -2993,6 +2993,13 @@ int sys_open(const char *path, int flags, int *fd) {
 	if(flags & __MLIBC_O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
 
+	if(flags & __MLIBC_O_RDONLY)
+		proto_flags |= managarm::posix::OpenFlags::OF_RDONLY;
+	else if(flags & __MLIBC_O_WRONLY)
+		proto_flags |= managarm::posix::OpenFlags::OF_WRONLY;
+	else if(flags & __MLIBC_O_RDWR)
+		proto_flags |= managarm::posix::OpenFlags::OF_RDWR;
+
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::OPEN);
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
@@ -3050,6 +3057,13 @@ int sys_openat(int dirfd, const char *path, int flags, int *fd) {
 	if(flags & __MLIBC_O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
 
+	if(flags & __MLIBC_O_RDONLY)
+		proto_flags |= managarm::posix::OpenFlags::OF_RDONLY;
+	else if(flags & __MLIBC_O_WRONLY)
+		proto_flags |= managarm::posix::OpenFlags::OF_WRONLY;
+	else if(flags & __MLIBC_O_RDWR)
+		proto_flags |= managarm::posix::OpenFlags::OF_RDWR;
+
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::OPENAT);
 	req.set_fd(dirfd);
@@ -3087,6 +3101,56 @@ int sys_openat(int dirfd, const char *path, int flags, int *fd) {
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*fd = resp.fd();
+		return 0;
+	}
+}
+
+int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
+	SignalGuard sguard;
+	HelAction actions[3];
+
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_request_type(managarm::posix::CntReqType::MKFIFOAT);
+	req.set_fd(dirfd);
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_mode(mode);
+
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
+	}else if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
+		return EEXIST;
+	}else if(resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
 	}
 }

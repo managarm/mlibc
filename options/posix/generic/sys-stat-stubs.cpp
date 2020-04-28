@@ -66,14 +66,26 @@ int mkdirat(int dirfd, const char *path, mode_t mode) {
 	}
 	return 0;
 }
-int mkfifo(const char *, mode_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int mkfifo(const char *path, mode_t mode) {
+	return mkfifoat(AT_FDCWD, path, mode);
 }
-int mkfifoat(int, const char *, mode_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int mkfifoat(int dirfd, const char *path, mode_t mode) {
+	if (!mlibc::sys_mkfifoat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if (int e = mlibc::sys_mkfifoat(dirfd, path, mode); e) {
+		errno = e;
+		return -1;
+	}
+
+	return 0;
 }
+
 int mknod(const char *, mode_t, dev_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
