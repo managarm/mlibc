@@ -1219,6 +1219,13 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 			fds[i].revents |= POLLIN;
 		if(resp.events(i) & EPOLLOUT)
 			fds[i].revents |= POLLOUT;
+		if(resp.events(i) & EPOLLPRI)
+			fds[i].revents |= POLLPRI;
+		if(resp.events(i) & EPOLLRDHUP)
+			fds[i].revents |= POLLRDHUP;
+		// These are always reported by poll():
+		if(resp.events(i) & EPOLLERR)
+			fds[i].revents |= POLLERR;
 		if(resp.events(i) & EPOLLHUP)
 			fds[i].revents |= POLLHUP;
 	}
