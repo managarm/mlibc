@@ -2,7 +2,24 @@
 #define _LIMITS_H
 
 #define CHAR_BIT 8
-#define LONG_BIT (CHAR_BIT * sizeof(long))
+
+#ifdef LONG_MAX
+# ifdef LONG_MAX == INT32_MAX
+#  define LONG_BIT 32
+# else
+// Safe assumption
+#  define LONG_BIT 64
+# endif
+#elif defined __LONG_MAX__
+# if __LONG_MAX__ == INT32_MAX
+#  define LONG_BIT 32
+# else
+// Safe assumption
+#  define LONG_BIT 64
+# endif
+#else
+# error "Unsupported configuration, please define either LONG_MAX or __LONG_MAX__"
+#endif
 
 #undef LLONG_MAX
 #undef ULLONG_MAX
