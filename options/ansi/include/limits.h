@@ -15,6 +15,12 @@
 #define LINE_MAX 4096
 #define PIPE_BUF 4096
 
+#if INTPTR_MAX == INT64_MAX
+# define SSIZE_MAX LONG_MAX
+#elif INTPTR_MAX == INT32_MAX
+# define SSIZE_MAX INT_MAX
+#endif
+
 #define _POSIX_ARG_MAX 4096
 
 #endif // _LIMITS_H
