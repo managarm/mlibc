@@ -5,6 +5,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <wchar.h>
 
 #include <frg/random.hpp>
 #include <mlibc/debug.hpp>
@@ -354,9 +355,8 @@ size_t mbstowcs(wchar_t *wcs, const char *mbs, size_t wc_limit) {
 	}
 }
 
-size_t wcstombs(char *mb_string, const wchar_t *__restrict wc_string, size_t max_size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+size_t wcstombs(char *mb_string, const wchar_t *wc_string, size_t max_size) {
+	return wcsrtombs(mb_string, &wc_string, max_size, 0);
 }
 
 
