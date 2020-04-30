@@ -65,9 +65,15 @@ in_addr_t inet_addr(const char *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-char *inet_ntoa(struct in_addr) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+char *inet_ntoa(struct in_addr addr) {
+	// string: xxx.yyy.zzz.aaa
+	// 4 * 3 + 3 + 1 = 12 + 4 = 16
+	thread_local static char buffer[16];
+	uint32_t proper = htonl(addr.s_addr);
+	snprintf(buffer, sizeof(buffer), "%d.%d.%d.%d",
+		(proper >> 24) & 0xff, ((proper >> 16) & 0xff),
+		(proper >> 8) & 0xff, proper & 0xff);
+	return buffer;
 }
 int inet_aton(const char *string, struct in_addr *dest) {
 	int array[4];
@@ -85,26 +91,26 @@ int inet_aton(const char *string, struct in_addr *dest) {
 
 	switch (i) {
 		case 0:
-			dest->s_addr = array[0];
+			dest->s_addr = htonl(array[0]);
 			break;
 		case 1:
 			if (array[0] > 255 || array[1] > 0xffffff)
 				return 0;
-			dest->s_addr = (array[0] << 24) | array[1];
+			dest->s_addr = htonl((array[0] << 24) | array[1]);
 			break;
 		case 2:
 			if (array[0] > 255 || array[1] > 255 ||
 					array[2] > 0xffff)
 				return 0;
-			dest->s_addr = (array[0] << 24) | (array[1] << 16) |
-				array[2];
+			dest->s_addr = htonl((array[0] << 24) | (array[1] << 16) |
+				array[2]);
 			break;
 		case 3:
 			if (array[0] > 255 || array[1] > 255 ||
 					array[2] > 255 || array[3] > 255)
 				return 0;
-			dest->s_addr = (array[0] << 24) | (array[1] << 16) |
-				(array[2] << 8) | array[3];
+			dest->s_addr = htonl((array[0] << 24) | (array[1] << 16) |
+				(array[2] << 8) | array[3]);
 			break;
 	}
 

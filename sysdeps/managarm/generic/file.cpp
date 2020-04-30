@@ -1146,7 +1146,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 		HEL_CHECK(recv_data->error);
 		HEL_CHECK(recv_ctrl->error);
 
-		hdr->msg_namelen = recv_addr->length;
+		hdr->msg_namelen = resp.addr_size();
 		hdr->msg_controllen = recv_ctrl->length;
 		*length = recv_data->length;
 		return 0;

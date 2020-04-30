@@ -96,6 +96,9 @@ ssize_t recvfrom(int sockfd, void *__restrict buf, size_t len, int flags,
 
 	struct msghdr hdr = {};
 	hdr.msg_name = src_addr;
+	if (addrlen) {
+		hdr.msg_namelen = *addrlen;
+	}
 	hdr.msg_iov = &iov;
 	hdr.msg_iovlen = 1;
 
