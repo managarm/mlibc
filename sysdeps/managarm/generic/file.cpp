@@ -1197,13 +1197,13 @@ int sys_select(int num_fds, fd_set *read_set, fd_set *write_set,
 		int k = evnts[i].data.u32;
 
 		if(read_set && FD_ISSET(k, read_set)
-				&& evnts[i].events & EPOLLIN) {
+				&& evnts[i].events & (EPOLLIN | EPOLLERR | EPOLLHUP)) {
 			FD_SET(k, &res_read_set);
 			m++;
 		}
 
 		if(write_set && FD_ISSET(k, write_set)
-				&& evnts[i].events & EPOLLOUT) {
+				&& evnts[i].events & (EPOLLOUT | EPOLLERR | EPOLLHUP)) {
 			FD_SET(k, &res_write_set);
 			m++;
 		}
