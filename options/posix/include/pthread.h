@@ -93,6 +93,18 @@ struct  __mlibc_barrier {
 };
 typedef struct __mlibc_barrier pthread_barrier_t;
 
+struct __mlibc_fair_rwlock {
+	int m;
+	int rw;
+	unsigned read_count;
+};
+typedef struct __mlibc_fair_rwlock pthread_rwlock_t;
+
+struct __mlibc_rwlockattr {
+	int align;
+};
+typedef struct __mlibc_rwlockattr pthread_rwlockattr_t;
+
 // ----------------------------------------------------------------------------
 // pthread_attr and pthread functions.
 // ----------------------------------------------------------------------------
@@ -203,6 +215,18 @@ int pthread_barrier_init(pthread_barrier_t *__restrict, const pthread_barrieratt
 int pthread_barrier_destroy(pthread_barrier_t *);
 
 int pthread_barrier_wait(pthread_barrier_t *);
+
+// ----------------------------------------------------------------------------
+// pthread_rwlock functions.
+// ----------------------------------------------------------------------------
+
+int pthread_rwlock_init(pthread_rwlock_t *__restrict, const pthread_rwlockattr_t *__restrict);
+int pthread_rwlock_destroy(pthread_rwlock_t *);
+int pthread_rwlock_trywrlock(pthread_rwlock_t *);
+int pthread_rwlock_wrlock(pthread_rwlock_t *);
+int pthread_rwlock_tryrdlock(pthread_rwlock_t *);
+int pthread_rwlock_rdlock(pthread_rwlock_t *);
+int pthread_rwlock_unlock(pthread_rwlock_t *);
 
 #ifdef __cplusplus
 }

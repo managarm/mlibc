@@ -17,6 +17,7 @@ libc_sources += files(
 	'generic/sys-timerfd.cpp',
 	'generic/sys-eventfd.cpp',
 	'generic/sys-reboot.cpp',
+	'generic/netinet-in6addr.cpp',
 )
 
 if not no_headers
@@ -53,6 +54,7 @@ if not no_headers
 		'include/linux/types.h',
 		'include/linux/videodev2.h',
 		'include/linux/vt.h',
+		'include/linux/rtnetlink.h',
 		subdir: 'linux'
 	)
 	install_headers(
@@ -78,6 +80,7 @@ if not no_headers
 		'include/sys/timerfd.h',
 		'include/sys/eventfd.h',
 		'include/sys/reboot.h',
+		'include/sys/poll.h',
 		subdir: 'sys'
 	)
 endif

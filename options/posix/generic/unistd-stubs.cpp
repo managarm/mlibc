@@ -500,8 +500,12 @@ unsigned long sysconf(int number) {
 			// TODO: actually return a proper value for _SC_OPEN_MAX
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_OPEN_MAX) returns arbitrary value 256\e[39m" << frg::endlog;
 			return 256;
+		case _SC_PHYS_PAGES:
+			// TODO: actually return a proper value for _SC_PHYS_PAGES
+			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_PHYS_PAGES) returns arbitrary value 1024\e[39m" << frg::endlog;
+			return 1024;
 		default:
-			mlibc::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented\e[39m" << frg::endlog;
+			mlibc::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented, number: " << number << "\e[39m" << frg::endlog;
 			__builtin_unreachable();
 	}
 }
@@ -567,6 +571,11 @@ int unlinkat(int fd, const char *path, int flags) {
 
 int getpagesize() {
 	return mlibc::page_size;
+}
+
+char *getpass(const char *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
 }
 
 char *get_current_dir_name(void) {

@@ -3,6 +3,7 @@
 #define _NETINET_IN_H
 
 #include <stdint.h>
+#include <endian.h>
 #include <abi-bits/socket.h>
 #include <abi-bits/in.h>
 
@@ -10,7 +11,13 @@
 extern "C" {
 #endif
 
-#define IN6_IS_ADDR_UNSPECIFIED 1
+#define IN6_IS_ADDR_UNSPECIFIED(a) ({ \
+    uint32_t *_a = (uint32_t *)((a)->s6_addr); \
+    !_a[0] && \
+    !_a[1] && \
+    !_a[2] && \
+    !_a[3];  \
+})
 #define IN6_IS_ADDR_LOOPBACK(a) ({ \
     uint32_t *_a = (uint32_t *)((a)->s6_addr); \
     !_a[0] && \
@@ -18,9 +25,15 @@ extern "C" {
     !_a[2] && \
      _a[3] == htonl(0x0001); \
 })
-#define IN6_IS_ADDR_MULTICAST 3
-#define IN6_IS_ADDR_LINKLOCAL 4
-#define IN6_IS_ADDR_SITELOCAL 5
+#define IN6_IS_ADDR_MULTICAST(a) (((const uint8_t *) (a))[0] == 0xff)
+#define IN6_IS_ADDR_LINKLOCAL(a) ({ \
+    uint32_t *_a = (uint32_t *)((a)->s6_addr); \
+    _a[0] & htonl(0xffc00000) == htonl(0xfe800000); \
+})
+#define IN6_IS_ADDR_SITELOCAL(a) ({ \
+    uint32_t *_a = (uint32_t *)((a)->s6_addr); \
+    _a[0] & htonl(0xffc00000) == htonl(0xfec00000); \
+})
 #define IN6_IS_ADDR_V4MAPPED(a) ({ \
     uint32_t *_a = (uint32_t *)((a)->s6_addr); \
     !_a[0] && \
@@ -34,11 +47,29 @@ extern "C" {
 	__ARE_4_BYTE_EQUAL((const uint32_t *)(a), (const uint32_t *)(b))
 
 #define IN6_IS_ADDR_V4COMPAT 7
-#define IN6_IS_ADDR_MC_NODELOCAL 8
-#define IN6_IS_ADDR_MC_LINKLOCAL 9
-#define IN6_IS_ADDR_MC_SITELOCAL 10
-#define IN6_IS_ADDR_MC_ORGLOCAL 11
-#define IN6_IS_ADDR_MC_GLOBAL 12
+#define IN6_IS_ADDR_MC_NODELOCAL(a) ({ \
+    (IN6_IS_ADDR_MULTICAST(a) && \
+    ((((const uint8_t *)(a))[1] & 0xf) == 0x1)); \
+})
+#define IN6_IS_ADDR_MC_LINKLOCAL(a) ({ \
+    (IN6_IS_ADDR_MULTICAST(a) && \
+    ((((const uint8_t *)(a))[1] & 0xf) == 0x2)); \
+})
+#define IN6_IS_ADDR_MC_SITELOCAL(a) ({ \
+    (IN6_IS_ADDR_MULTICAST(a) && \
+    ((((const uint8_t *)(a))[1] & 0xf) == 0x5)); \
+})
+#define IN6_IS_ADDR_MC_ORGLOCAL(a) ({ \
+    (IN6_IS_ADDR_MULTICAST(a) && \
+    ((((const uint8_t *)(a))[1] & 0xf) == 0x8)); \
+})
+#define IN6_IS_ADDR_MC_GLOBAL(a) ({ \
+    (IN6_IS_ADDR_MULTICAST(a) && \
+    ((((const uint8_t *)(a))[1] & 0xf) == 0xe)); \
+})
+
+#define IN_CLASSD(a) ((((in_addr_t)(a)) & 0xf0000000) == 0xe0000000)
+#define IN_MULTICAST(a) IN_CLASSD(a)
 
 #ifdef __cplusplus
 }

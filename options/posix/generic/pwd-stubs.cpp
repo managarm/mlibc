@@ -15,7 +15,7 @@ namespace {
 		__ensure(!entry->pw_dir);
 		__ensure(!entry->pw_shell);
 
-		frg::string_view segments[7];
+		frg::string_view segments[8];
 
 		// Parse the line into exactly 6 segments.
 		size_t s = 0;
@@ -48,12 +48,15 @@ namespace {
 		__ensure(dir);
 		auto shell = strndup(segments[6].data(), segments[6].size());
 		__ensure(shell);
+		auto real_name = strndup(segments[7].data(), segments[7].size());
+		__ensure(real_name);
 
 		entry->pw_name = name;
 		entry->pw_uid = *uid;
 		entry->pw_gid = *gid;
 		entry->pw_dir = dir;
 		entry->pw_shell = shell;
+		entry->pw_gecos = real_name;
 		return true;
 	}
 
