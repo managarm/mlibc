@@ -275,7 +275,13 @@ wchar_t *wcschr(const wchar_t *s, wchar_t c) {
 
 size_t wcscspn(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
 wchar_t *wcspbrk(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
-wchar_t *wcsrchr(const wchar_t *, wchar_t) MLIBC_STUB_BODY
+
+wchar_t *wcsrchr(const wchar_t *s, wchar_t c) {
+	const wchar_t *p;
+	for(p = s + wcslen(s); p >= s && *p != c; p--);
+	return p >= s ? (wchar_t *)p : 0;
+}
+
 size_t wcsspn(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
 wchar_t *wcsstr(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
 wchar_t *wcstok(wchar_t *__restrict, const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY

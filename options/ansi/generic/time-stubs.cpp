@@ -199,8 +199,9 @@ size_t wcsftime(wchar_t *__restrict, size_t, const wchar_t *__restrict,
 		const struct tm *__restrict) MLIBC_STUB_BODY
 
 void tzset(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: tzset() always initializes to UTC" << frg::endlog;
+	tzname[0] = "UTC";
+	tzname[1] = "\n";
 }
 
 // POSIX extensions.
