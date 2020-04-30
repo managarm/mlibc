@@ -199,12 +199,12 @@ int sys_fcntl(int fd, int cmd, va_list args, int *result) {
 }
 
 int sys_select(int nfds, fd_set *readfds, fd_set *writefds,
-                fd_set *exceptfds, struct timeval *timeout, int *num_fd) {
+                fd_set *exceptfds, struct timeval *timeout, int *num_events) {
         auto ret = do_syscall(NR_select, nfds, readfds, writefds,
                         exceptfds, timeout);
         if (int e = sc_error(ret); e)
                 return e;
-        *num_fd = sc_int_result<int>(ret);
+        *num_events = sc_int_result<int>(ret);
         return 0;
 }
 

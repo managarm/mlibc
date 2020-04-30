@@ -102,7 +102,7 @@ int sys_close(int fd);
 	[[gnu::weak]] int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out);
 	[[gnu::weak]] int sys_execve(const char *path, char *const argv[], char *const envp[]);
 	[[gnu::weak]] int sys_select(int num_fds, fd_set *read_set, fd_set *write_set,
-			fd_set *except_set, struct timeval *timeout, int *num_fd);
+			fd_set *except_set, struct timeval *timeout, int *num_events);
 	[[gnu::weak]] int sys_getrusage(int scope, struct rusage *usage);
 	[[gnu::weak]] int sys_getrlimit(int resource, struct rlimit *limit);
 	[[gnu::weak]] int sys_timerfd_create(int flags, int *fd);
