@@ -31,13 +31,3 @@ longjmp:
 	mov 0x30(%rdi), %rsp
 	jmp *0x38(%rdi)
 
-.global sigsetjmp
-.type sigsetjmp, "function"
-sigsetjmp:
-	ret
-
-.global siglongjmp
-.type siglongjmp, "function"
-siglongjmp:
-	ret
-

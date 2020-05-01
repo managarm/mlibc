@@ -48,6 +48,11 @@ struct ipv6_mreq {
 	unsigned ipv6mr_interface;
 };
 
+struct ip_mreq {
+	struct in_addr imr_multiaddr;
+	struct in_addr imr_interface;
+};
+
 #ifdef __cplusplus
 }
 #endif
@@ -77,5 +82,12 @@ struct ipv6_mreq {
 #define IPV6_MULTICAST_LOOP 5
 #define IPV6_UNICAST_HOPS 6
 #define IPV6_V6ONLY 7
+
+#define IP_TTL 2
+
+#define IP_MULTICAST_TTL   33
+#define IP_MULTICAST_LOOP  34
+#define IP_ADD_MEMBERSHIP  35
+#define IP_DROP_MEMBERSHIP 36
 
 #endif // _ABIBITS_IN_H

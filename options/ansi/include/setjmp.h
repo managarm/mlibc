@@ -13,12 +13,7 @@ extern "C" {
 
 // FIXME: use intptr_t equivalent
 typedef long jmp_buf[__MLIBC_JMPBUF_SIZE];
-
-typedef struct sigjmp_buf {
-	jmp_buf __jmpbuf;
-	int __mask_was_saved;
-	sigset_t __saved_mask;
-} sigjmp_buf;
+typedef long sigjmp_buf[__MLIBC_JMPBUF_SIZE + 2];
 
 __attribute__ (( returns_twice )) int setjmp(jmp_buf buffer);
 __attribute__ (( noreturn )) void longjmp(jmp_buf buffer, int value);
