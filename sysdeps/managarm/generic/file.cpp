@@ -247,6 +247,55 @@ int sys_symlink(const char *target_path, const char *link_path) {
 	return 0;
 }
 
+int sys_link(const char *old_path, const char *new_path) {
+	return sys_linkat(AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
+}
+
+int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags) {
+	SignalGuard sguard;
+	HelAction actions[3];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_request_type(managarm::posix::CntReqType::LINKAT);
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), old_path));
+	req.set_target_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), new_path));
+	req.set_fd(olddirfd);
+	req.set_newfd(newdirfd);
+	req.set_flags(flags);
+
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		return 0;
+	}
+}
+
 int sys_rename(const char *path, const char *new_path) {
 	return sys_renameat(AT_FDCWD, path, AT_FDCWD, new_path);
 }

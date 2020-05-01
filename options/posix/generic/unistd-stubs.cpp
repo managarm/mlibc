@@ -48,16 +48,23 @@ int chown(const char *path, uid_t uid, gid_t gid) {
 			<< frg::endlog;
 	return 0;
 }
+
 ssize_t confstr(int name, char *buf, size_t len) {
 	const char *str = "";
 	if (name == _CS_PATH) {
 		str = "/bin:/usr/bin";
+	} else if(name == _CS_GNU_LIBPTHREAD_VERSION) {
+		// We are not glibc, so we can return 0 here.
+		return 0;
 	} else {
+		mlibc::infoLogger() << "\e[31mmlibc: confstr() request " << name << " is unimplemented\e[39m"
+				<< frg::endlog; 
 		__ensure(!"Not implemented");
 	}
 
 	return snprintf(buf, len, "%s", str) + 1;
 }
+
 char *crypt(const char *, const char *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -332,14 +339,33 @@ int lchown(const char *path, uid_t uid, gid_t gid) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int link(const char *, const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int link(const char *old_path, const char *new_path) {
+	if(!mlibc::sys_link) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_link(old_path, new_path); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
-int linkat(int, const char *, int, const char *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int linkat(int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags) {
+	if(!mlibc::sys_linkat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_linkat(olddirfd, old_path, newdirfd, new_path, flags); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
+
 int lockf(int, int, off_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
