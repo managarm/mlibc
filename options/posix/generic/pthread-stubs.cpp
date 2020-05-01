@@ -407,9 +407,9 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex) {
             ++mutex->__mlibc_recursion;
             return 0;
         }
-
-        return EBUSY;
 	}
+
+	return EBUSY;
 }
 
 int pthread_mutex_timedlock(pthread_mutex_t *__restrict,
