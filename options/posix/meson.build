@@ -45,6 +45,7 @@ libc_sources += files(
 	'generic/utime-stubs.cpp',
 	'generic/iconv-stubs.cpp',
 	'generic/semaphore-stubs.cpp',
+	'generic/libintl-stubs.cpp',
 	'musl-generic/fnmatch.cpp',
 )
 
@@ -74,6 +75,7 @@ if not no_headers
 		'include/utime.h',
 		'include/iconv.h',
 		'include/semaphore.h',
+		'include/libintl.h',
 	)
 	install_headers(
 		'include/arpa/inet.h',

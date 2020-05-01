@@ -32,6 +32,28 @@ int posix_spawnattr_setsigdefault(posix_spawnattr_t *__restrict attr,
 	__builtin_unreachable();
 }
 
+int posix_spawnattr_setschedparam(posix_spawnattr_t *__restrict attr,
+		const struct sched_param *__restrict schedparam) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int posix_spawnattr_setschedpolicy(posix_spawnattr_t *attr, int schedpolicy) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int posix_spawnattr_setsigmask(posix_spawnattr_t *__restrict attr,
+		const sigset_t *__restrict sigmask) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int posix_spawnattr_setpgroup(posix_spawnattr_t *attr, pid_t pgroup) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 int posix_spawn_file_actions_init(posix_spawn_file_actions_t *file_actions) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -50,6 +72,12 @@ int posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t *file_actions,
 
 int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *file_actions,
 		int fildes) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t *__restrict file_actions,
+		int fildes, const char *__restrict path, int oflag, mode_t mode) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

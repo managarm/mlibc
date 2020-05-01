@@ -5,6 +5,7 @@
 #include <bits/posix/mode_t.h>
 #include <bits/posix/pid_t.h>
 #include <abi-bits/signal.h>
+#include <sched.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,12 +37,20 @@ int posix_spawnattr_destroy(posix_spawnattr_t *attr);
 int posix_spawnattr_setflags(posix_spawnattr_t *attr, short flags);
 int posix_spawnattr_setsigdefault(posix_spawnattr_t *__restrict attr,
 		const sigset_t *__restrict sigdefault);
+int posix_spawnattr_setschedparam(posix_spawnattr_t *__restrict attr,
+		const struct sched_param *__restrict schedparam);
+int posix_spawnattr_setschedpolicy(posix_spawnattr_t *attr, int schedpolicy);
+int posix_spawnattr_setsigmask(posix_spawnattr_t *__restrict attr,
+		const sigset_t *__restrict sigmask);
+int posix_spawnattr_setpgroup(posix_spawnattr_t *attr, pid_t pgroup);
 int posix_spawn_file_actions_init(posix_spawn_file_actions_t *file_actions);
 int posix_spawn_file_actions_destroy(posix_spawn_file_actions_t *file_actions);
 int posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t *file_actions,
 		int fildes, int newfildes);
 int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *file_actions,
 		int fildes);
+int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t *__restrict file_actions,
+		int fildes, const char *__restrict path, int oflag, mode_t mode);
 int posix_spawnp(pid_t *__restrict pid, const char *__restrict file,
 		const posix_spawn_file_actions_t *file_actions,
 		const posix_spawnattr_t *__restrict attrp,

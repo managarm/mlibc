@@ -5,6 +5,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <wchar.h>
+#include <setjmp.h>
 
 #include <frg/random.hpp>
 #include <mlibc/debug.hpp>
@@ -37,6 +39,17 @@ long atol(const char *string) {
 long long atoll(const char *string) {
 	return strtoll(string, nullptr, 10);
 }
+
+__attribute__ (( returns_twice )) int sigsetjmp(sigjmp_buf buffer, int savesigs) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+__attribute__ (( noreturn )) void siglongjmp(sigjmp_buf buffer, int value) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 double strtod(const char *__restrict string, char **__restrict end) {
 	return mlibc::strtofp<double>(string, end);
 }
@@ -354,9 +367,8 @@ size_t mbstowcs(wchar_t *wcs, const char *mbs, size_t wc_limit) {
 	}
 }
 
-size_t wcstombs(char *mb_string, const wchar_t *__restrict wc_string, size_t max_size) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+size_t wcstombs(char *mb_string, const wchar_t *wc_string, size_t max_size) {
+	return wcsrtombs(mb_string, &wc_string, max_size, 0);
 }
 
 

@@ -49,6 +49,10 @@ extern "C" {
 #define SCHED_DEADLINE 6
 #define SCHED_RESET_ON_FORK 0x40000000
 
+struct sched_param {
+	int sched_priority;
+};
+
 int sched_yield();
 
 struct __mlibc_cpu_set {

@@ -13,6 +13,7 @@ namespace {
 	__mlibc_mbstate mbrlen_state = __MLIBC_MBSTATE_INITIALIZER;
 	__mlibc_mbstate mbrtowc_state = __MLIBC_MBSTATE_INITIALIZER;
 	__mlibc_mbstate mbsrtowcs_state = __MLIBC_MBSTATE_INITIALIZER;
+	__mlibc_mbstate wcsrtombs_state = __MLIBC_MBSTATE_INITIALIZER;
 }
 
 wint_t btowc(int c) {
@@ -144,6 +145,9 @@ size_t wcsrtombs(char *mbs, const wchar_t **wcsp, size_t mb_limit, mbstate_t *st
 	mlibc::code_seq<const wchar_t> wseq{*wcsp, nullptr};
 
 	__ensure(mbs && "Handle !mbs case as in mbstowcs()");
+
+	if(!stp)
+		stp = &wcsrtombs_state;
 
 	if(auto e = cc->encode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
 		__ensure(!"encode_wtranscode() errors are not handled");
