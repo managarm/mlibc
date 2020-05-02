@@ -1,4 +1,3 @@
-
 #ifndef _ENDIAN_H
 #define _ENDIAN_H
 
@@ -9,6 +8,12 @@
 #	define PDP_ENDIAN __ORDER_PDP_ENDIAN__
 #else
 #	error "Unsupported compiler"
+#endif
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#	define le16toh(x) (uint16_t)(x)
+#else
+#	error "Big endian support is missing here"
 #endif
 
 #endif // _ENDIAN_H

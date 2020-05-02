@@ -54,7 +54,6 @@ if not no_headers
 		'include/byteswap.h',
 		'include/dirent.h',
 		'include/dlfcn.h',
-		'include/endian.h',
 		'include/fcntl.h',
 		'include/fnmatch.h',
 		'include/ftw.h',
