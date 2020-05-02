@@ -19,10 +19,7 @@ char *strdup(const char *string) {
 }
 
 char *strndup(const char *string, size_t max_size) {
-	auto num_bytes = strlen(string);
-	if(num_bytes > max_size)
-		num_bytes = max_size;
-
+	auto num_bytes = strnlen(string, max_size);
 	char *new_string = (char *)malloc(num_bytes + 1);
 	if(!new_string) // TODO: set errno
 		return nullptr;
@@ -35,11 +32,8 @@ char *strndup(const char *string, size_t max_size) {
 size_t strnlen(const char *s, size_t n) {
 	__ensure(n >= 0);
 	size_t len = 0;
-	for(size_t i = 0; s[i]; i++) {
-		if(len == n)
-			break;
-		len++;
-	}
+	while(len < n && s[len])
+		++len;
 	return len;
 }
 
