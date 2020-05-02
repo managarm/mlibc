@@ -17,18 +17,23 @@ namespace {
 
 		frg::string_view segments[8];
 
-		// Parse the line into exactly 6 segments.
+		// Parse the line into 7 or 8 segments.
 		size_t s = 0;
-		for(int i = 0; i < 6; i++) {
+		int n;
+		for(n = 0; n < 7; n++) {
 			size_t d = line.find_first(':', s);
 			if(d == size_t(-1))
-				return false;
-			segments[i] = line.sub_string(s, d - s);
+				break;
+			segments[n] = line.sub_string(s, d - s);
 			s = d + 1;
 		}
 		if(line.find_first(':', s) != size_t(-1))
 			return false;
-		segments[6] = line.sub_string(s, line.size() - s);
+		segments[n] = line.sub_string(s, line.size() - s);
+		n++;
+
+		if(n < 7)
+			return false;
 
 		// segments[1] is the password and segments[4] is the user description; both of those
 		// are not exported to struct passwd. The other segments are consumed below.
