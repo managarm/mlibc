@@ -19,6 +19,8 @@
 #define NI_NUMERICSCOPE 0x08
 #define NI_DGRAM 0x10
 
+#define NI_MAXHOST 1025
+
 #define EAI_AGAIN 1
 #define EAI_BADFLAGS 2
 #define EAI_FAIL 3
@@ -29,6 +31,12 @@
 #define EAI_SOCKTYPE 8
 #define EAI_SYSTEM 9
 #define EAI_OVERFLOW 10
+
+#define HOST_NOT_FOUND 1
+#define TRY_AGAIN      2
+#define NO_DATA        4
+#define NO_ADDRESS     NO_DATA
+
 
 #ifdef __cplusplus
 extern "C" {
