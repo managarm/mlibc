@@ -65,10 +65,6 @@ ssize_t confstr(int name, char *buf, size_t len) {
 	return snprintf(buf, len, "%s", str) + 1;
 }
 
-char *crypt(const char *, const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
 void _exit(int status) {
 	mlibc::sys_exit(status);
 }
