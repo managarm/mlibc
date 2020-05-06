@@ -24,8 +24,7 @@ clock_t clock(void) {
 	__builtin_unreachable();
 }
 double difftime(time_t a, time_t b){
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return a - b;
 }
 time_t mktime(struct tm *ptr){
 	__ensure(!"Not implemented");
