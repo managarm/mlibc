@@ -82,4 +82,5 @@
 #define ENODATA 1076
 #define ETIME 1077
 #define ENOKEY 1078
+#define ESHUTDOWN 1079
 #endif // _ABIBITS_ERRNO_H

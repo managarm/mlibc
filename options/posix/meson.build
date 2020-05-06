@@ -46,6 +46,7 @@ libc_sources += files(
 	'generic/iconv-stubs.cpp',
 	'generic/semaphore-stubs.cpp',
 	'generic/libintl-stubs.cpp',
+	'generic/crypt-stubs.cpp',
 	'musl-generic/fnmatch.cpp',
 )
 
@@ -75,6 +76,7 @@ if not no_headers
 		'include/iconv.h',
 		'include/semaphore.h',
 		'include/libintl.h',
+		'include/crypt.h',
 	)
 	install_headers(
 		'include/arpa/inet.h',
