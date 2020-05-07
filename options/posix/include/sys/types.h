@@ -24,6 +24,7 @@
 #include <bits/posix/fsblkcnt_t.h>
 #include <bits/posix/fsfilcnt_t.h>
 
+typedef unsigned int u_int;
 typedef unsigned char u_char;
 typedef void *caddr_t;
 

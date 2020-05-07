@@ -167,9 +167,16 @@ int rand() {
 	return static_cast<int>(__mlibc_rand_engine() & 0x7FFFFFFF);
 }
 
-int rand_r(unsigned *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+static unsigned temper(unsigned x) {
+	x ^= x >> 11;
+	x ^= x << 7 & 0x9D2C5680;
+	x ^= x << 15 & 0xEFC60000;
+	x ^= x >> 18;
+	return x;
+}
+
+int rand_r(unsigned *seed) {
+	return temper(*seed = *seed * 1103515245 + 12345) / 2;
 }
 
 void srand(unsigned int s) {

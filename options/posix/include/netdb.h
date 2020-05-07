@@ -19,6 +19,9 @@
 #define NI_NUMERICSCOPE 0x08
 #define NI_DGRAM 0x10
 
+#define NI_NUMERICSERV 2
+#define NI_MAXSERV 32
+
 #define NI_MAXHOST 1025
 
 #define EAI_AGAIN 1
