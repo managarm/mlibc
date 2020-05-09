@@ -110,7 +110,7 @@ ssize_t confstr(int, char *, size_t);
 char *crypt(const char *, const char *);
 int dup(int fd);
 int dup2(int src_fd, int dest_fd);
-void _exit(int status);
+__attribute__ ((noreturn)) void _exit(int status);
 void encrypt(char block[64], int flags);
 int execl(const char *, const char *, ...);
 int execle(const char *, const char *, ...);
