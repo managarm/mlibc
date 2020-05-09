@@ -442,3 +442,18 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 	return res;
 }
 
+char *strptime(const char *__restrict, const char *__restrict,
+		struct tm *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+time_t timelocal(struct tm *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+time_t timegm(struct tm *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

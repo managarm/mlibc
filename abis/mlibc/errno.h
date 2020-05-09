@@ -83,4 +83,5 @@
 #define ETIME 1077
 #define ENOKEY 1078
 #define ESHUTDOWN 1079
+#define EHOSTDOWN 1080
 #endif // _ABIBITS_ERRNO_H

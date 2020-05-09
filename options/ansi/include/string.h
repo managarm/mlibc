@@ -42,6 +42,7 @@ char *strtok(char *__restrict s, const char *__restrict delimiter);
 
 // This is a GNU extension.
 char *strchrnul(const char *, int);
+char *strcasestr(const char *, const char *);
 
 // [7.24.6] Miscellaneous functions
 

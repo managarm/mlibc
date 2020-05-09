@@ -37,6 +37,9 @@ pid_t wait(int *status);
 int waitid(idtype_t idtype, id_t id, siginfo_t *siginfo, int flags);
 pid_t waitpid(pid_t pid, int *status, int flags);
 
+// GNU extensions.
+pid_t wait3(int *, int, struct rusage *);
+
 #ifdef __cplusplus
 }
 #endif

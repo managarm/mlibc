@@ -96,6 +96,22 @@ int utimes(const char *, const struct timeval[2]);
 
 struct tm *localtime_r(const time_t *, struct tm *);
 
+char *strptime(const char *__restrict, const char *__restrict,
+		struct tm *__restrict);
+
+#ifdef __cplusplus
+}
+#endif
+
+// GNU extensions.
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+time_t timelocal(struct tm *);
+time_t timegm(struct tm *);
+
 #ifdef __cplusplus
 }
 #endif

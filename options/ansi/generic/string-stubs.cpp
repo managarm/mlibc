@@ -223,6 +223,11 @@ char *strchrnul(const char *s, int c) {
 	return const_cast<char *>(s + i);
 }
 
+char *strcasestr(const char *, const char *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 double wcstod(const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
 float wcstof(const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
 long double wcstold(const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
