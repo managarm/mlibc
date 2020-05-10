@@ -328,7 +328,7 @@ char *strerror(int e) {
 	case ENOMEM: s = "Out of memory (ENOMEM)"; break;
 	case ENOTDIR: s = "Expected directory instead of file (ENOTDIR)"; break;
 	case ENOSYS: s = "Operation not implemented (ENOSYS)"; break;
-	case EPERM:  s = "Operation not permitted (EFAULT)"; break;
+	case EPERM:  s = "Operation not permitted (EPERM)"; break;
 	case EPIPE:  s = "Broken pipe (EPIPE)"; break;
 	case ESPIPE: s = "Seek not possible (ESPIPE)"; break;
 	case ENXIO: s = "No such device or address (ENXIO)"; break;
