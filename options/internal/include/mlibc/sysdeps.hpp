@@ -96,6 +96,7 @@ int sys_close(int fd);
 	[[gnu::weak]] pid_t sys_getppid();
 	[[gnu::weak]] pid_t sys_getpgrp();
 	[[gnu::weak]] int sys_setuid(uid_t uid);
+	[[gnu::weak]] int sys_seteuid(uid_t euid);
 	[[gnu::weak]] void sys_yield();
 	[[gnu::weak]] int sys_sleep(time_t *secs, long *nanos);
 	[[gnu::weak]] int sys_fork(pid_t *child);
