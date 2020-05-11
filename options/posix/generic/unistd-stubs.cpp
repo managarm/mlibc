@@ -450,18 +450,49 @@ int rmdir(const char *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int setegid(gid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-int seteuid(uid_t) {
-	mlibc::infoLogger() << "\e[31mmlibc: seteuid() is a no-op\e[39m" << frg::endlog;
+
+int setegid(gid_t egid) {
+	if(!mlibc::sys_setegid) {
+		MLIBC_MISSING_SYSDEP();
+		mlibc::infoLogger() << "mlibc: missing sysdep sys_setegid(). Returning 0" << frg::endlog;
+		errno = ENOSYS;
+		return 0;
+	}
+	if(int e = mlibc::sys_setegid(egid); e) {
+		errno = e;
+		return -1;
+	}
 	return 0;
 }
-int setgid(gid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int seteuid(uid_t euid) {
+	if(!mlibc::sys_seteuid) {
+		MLIBC_MISSING_SYSDEP();
+		mlibc::infoLogger() << "mlibc: missing sysdep sys_seteuid(). Returning 0" << frg::endlog;
+		errno = ENOSYS;
+		return 0;
+	}
+	if(int e = mlibc::sys_seteuid(euid); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
+
+int setgid(gid_t gid) {
+	if(!mlibc::sys_setgid) {
+		MLIBC_MISSING_SYSDEP();
+		mlibc::infoLogger() << "mlibc: missing sysdep sys_setgid(). Returning 0" << frg::endlog;
+		errno = ENOSYS;
+		return 0;
+	}
+	if(int e = mlibc::sys_setgid(gid); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
+}
+
 int setpgid(pid_t, pid_t) {
 	mlibc::infoLogger() << "mlibc: setpgid() fails with ENOSYS" << frg::endlog;
 	errno = ENOSYS;
@@ -483,15 +514,20 @@ pid_t setsid(void) {
 	mlibc::infoLogger() << "\e[31mmlibc: setsid() is a no-op\e[39m" << frg::endlog;
 	return 1;
 }
+
 int setuid(uid_t uid) {
 	if(!mlibc::sys_setuid) {
 		MLIBC_MISSING_SYSDEP();
 		mlibc::infoLogger() << "mlibc: missing sysdep sys_setuid(). Returning 0" << frg::endlog;
 		return 0;
 	}
-
-	return mlibc::sys_setuid(uid);
+	if(int e = mlibc::sys_setuid(uid); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
+
 void swab(const void *__restrict, void *__restrict, ssize_t) {
 	__ensure(!"Not implemented");
 }
@@ -726,6 +762,7 @@ gid_t getgid(void) {
 	}
 	return mlibc::sys_getgid();
 }
+
 gid_t getegid(void) {
 	if(!mlibc::sys_getegid) {
 		MLIBC_MISSING_SYSDEP();
@@ -741,6 +778,7 @@ uid_t getuid(void) {
 	}
 	return mlibc::sys_getuid();
 }
+
 uid_t geteuid(void) {
 	if(!mlibc::sys_geteuid) {
 		MLIBC_MISSING_SYSDEP();
