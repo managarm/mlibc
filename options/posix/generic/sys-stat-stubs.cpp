@@ -6,23 +6,45 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 
-int chmod(const char *, mode_t) {
-	mlibc::infoLogger() << "\e[31mmlibc: chmod() is not implemented correctly\e[39m"
-			<< frg::endlog;
+int chmod(const char *pathname, mode_t mode) {
+	if(!mlibc::sys_chmod) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_chmod(pathname, mode); e) {
+		errno = e;
+		return -1;
+	}
 	return 0;
 }
 
-int fchmod(int, mode_t) {
-	mlibc::infoLogger() << "\e[31mmlibc: fchmod() is not implemented correctly\e[39m"
-			<< frg::endlog;
+int fchmod(int fd, mode_t mode) {
+	if(!mlibc::sys_fchmod) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_fchmod(fd, mode); e) {
+		errno = e;
+		return -1;
+	}
 	return 0;
 }
 
-int fchmodat(int, const char *, mode_t, int) {
-	mlibc::infoLogger() << "\e[31mmlibc: fchmodat() is not implemented correctly\e[39m"
-			<< frg::endlog;
+int fchmodat(int dirfd, const char *pathname, mode_t mode, int flags) {
+	if(!mlibc::sys_fchmodat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_fchmodat(dirfd, pathname, mode, flags); e) {
+		errno = e;
+		return -1;
+	}
 	return 0;
 }
+
 int fstatat(int dirfd, const char *path, struct stat *result, int flags) {
 	if(!mlibc::sys_stat) {
 		MLIBC_MISSING_SYSDEP();
@@ -35,6 +57,7 @@ int fstatat(int dirfd, const char *path, struct stat *result, int flags) {
 	}
 	return 0;
 }
+
 int futimens(int fd, const struct timespec times[2]) {
 	mlibc::infoLogger() << "\e[31mmlibc: futimens() is not implemented correctly\e[39m"
 			<< frg::endlog;
