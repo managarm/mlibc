@@ -1,6 +1,7 @@
 #ifndef _SYS_RESOURCE_H
 #define _SYS_RESOURCE_H
 
+#include <abi-bits/resource.h>
 #include <bits/posix/id_t.h>
 #include <bits/posix/suseconds_t.h>
 #include <bits/ansi/time_t.h>
@@ -43,11 +44,6 @@ typedef unsigned long rlim_t;
 struct rlimit {
 	rlim_t rlim_cur;
 	rlim_t rlim_max;
-};
-
-struct rusage {
-	struct timeval ru_utime;
-	struct timeval ru_stime;
 };
 
 int getpriority(int, id_t);

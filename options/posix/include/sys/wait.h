@@ -11,6 +11,9 @@
 extern "C" {
 #endif
 
+// According to POSIX, <sys/wait.h> does not make rusage available.
+struct rusage;
+
 #define WCONTINUED 1
 #define WNOHANG 2
 #define WUNTRACED 4
