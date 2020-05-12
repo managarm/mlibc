@@ -29,23 +29,25 @@ namespace {
 	}
 
 	bool extract_entry(frg::string_view line, group *entry) {
-		__ensure(!entry->gr_name);
-		__ensure(!entry->gr_mem);
-
 		frg::string_view segments[5];
 
 		// Parse the line into exactly 4 segments.
+		int n;
 		size_t s = 0;
-		for(int i = 0; i < 5; i++) {
+		for(n = 0; n < 4; n++) {
 			size_t d = line.find_first(':', s);
 			if(d == size_t(-1))
-				return false;
-			segments[i] = line.sub_string(s, d - s);
+				break;
+			segments[n] = line.sub_string(s, d - s);
 			s = d + 1;
 		}
 		if(line.find_first(':', s) != size_t(-1))
 			return false;
-		segments[5] = line.sub_string(s, line.size() - s);
+		segments[n] = line.sub_string(s, line.size() - s);
+		n++;
+
+		if(n < 4)
+			return false;
 
 		// segments[1] is the password; it is not exported to struct group.
 		// The other segments are consumed below.

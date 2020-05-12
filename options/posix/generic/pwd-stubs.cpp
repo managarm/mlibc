@@ -11,10 +11,6 @@ namespace {
 	thread_local passwd global_entry;
 
 	bool extract_entry(frg::string_view line, passwd *entry) {
-		__ensure(!entry->pw_name);
-		__ensure(!entry->pw_dir);
-		__ensure(!entry->pw_shell);
-
 		frg::string_view segments[8];
 
 		// Parse the line into 7 or 8 segments.
