@@ -36,16 +36,21 @@ namespace {
 
 		// Parse the line into exactly 4 segments.
 		size_t s = 0;
-		for(int i = 0; i < 5; i++) {
+		int n;
+		for(n = 0; n < 4; n++) {
 			size_t d = line.find_first(':', s);
 			if(d == size_t(-1))
-				return false;
-			segments[i] = line.sub_string(s, d - s);
+				break;
+			segments[n] = line.sub_string(s, d - s);
 			s = d + 1;
 		}
 		if(line.find_first(':', s) != size_t(-1))
 			return false;
-		segments[5] = line.sub_string(s, line.size() - s);
+		segments[n] = line.sub_string(s, line.size() - s);
+		n++;
+
+		if(n < 4)
+			return false;
 
 		// segments[1] is the password; it is not exported to struct group.
 		// The other segments are consumed below.
@@ -62,7 +67,6 @@ namespace {
 		walk_segments(segments[3], ',', [&] (frg::string_view) {
 			n_members++;
 		});
-		mlibc::infoLogger() << "mlibc: n_members is " << n_members << frg::endlog;
 
 		auto members = reinterpret_cast<char **>(malloc(sizeof(char *) * (n_members + 1)));
 		__ensure(members);
@@ -97,10 +101,9 @@ namespace {
 		if(!file)
 			return nullptr;
 
-		clear_entry(&global_entry);
-
 		char line[512];
 		while(fgets(line, 512, file)) {
+			clear_entry(&global_entry);
 			if(!extract_entry(line, &global_entry))
 				continue;
 			if(cond(&global_entry)) {

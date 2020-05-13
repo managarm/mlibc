@@ -85,10 +85,9 @@ struct passwd *getpwnam(const char *name) {
 	if(!file)
 		return nullptr;
 
-	clear_entry(&global_entry);
-
 	char line[512];
 	while(fgets(line, 512, file)) {
+		clear_entry(&global_entry);
 		if(!extract_entry(line, &global_entry))
 			continue;
 		if(global_entry.pw_name == name) {
@@ -112,10 +111,9 @@ struct passwd *getpwuid(uid_t uid) {
 	if(!file)
 		return nullptr;
 
-	clear_entry(&global_entry);
-
 	char line[512];
 	while(fgets(line, 512, file)) {
+		clear_entry(&global_entry);
 		if(!extract_entry(line, &global_entry))
 			continue;
 		if(global_entry.pw_uid == uid) {
