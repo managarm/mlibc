@@ -648,6 +648,10 @@ pid_t gettid(void) {
 	return mlibc::sys_getpid();
 }
 
+int getentropy(void *, size_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 
 ssize_t write(int fd, const void *buf, size_t count) {
 	ssize_t bytes_written;
