@@ -7,6 +7,8 @@ extern "C" {
 #endif
 
 long random(void);
+double drand48(void);
+void srand48(long int);
 
 // ----------------------------------------------------------------------------
 // Environment.

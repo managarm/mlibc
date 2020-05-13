@@ -24,6 +24,16 @@ long random(void) {
 	__builtin_unreachable();
 }
 
+double drand48(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+void srand48(long int seedval) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 // ----------------------------------------------------------------------------
 // Path handling.
 // ----------------------------------------------------------------------------
