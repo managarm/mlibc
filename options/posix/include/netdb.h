@@ -45,6 +45,9 @@
 extern "C" {
 #endif
 
+int *__h_errno_location(void);
+#define h_errno (*__h_errno_location())
+
 struct hostent {
 	char *h_name;
 	char **h_aliases;
@@ -96,6 +99,7 @@ int getaddrinfo(const char *__restrict, const char *__restrict,
 		const struct addrinfo *__restrict, struct addrinfo **__restrict);
 struct hostent *gethostent(void);
 struct hostent *gethostbyname(const char *);
+struct hostent *gethostbyaddr(const void *, socklen_t, int);
 int getnameinfo(const struct sockaddr *__restrict, socklen_t,
 		char *__restrict, socklen_t, char *__restrict, socklen_t, int);
 struct netent *getnetbyaddr(uint32_t, int);

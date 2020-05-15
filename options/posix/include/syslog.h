@@ -2,6 +2,8 @@
 #ifndef _SYSLOG_H
 #define _SYSLOG_H
 
+#include <stdarg.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -56,6 +58,9 @@ void closelog(void);
 void openlog(const char *, int, int);
 int setlogmask(int);
 void syslog(int, const char *, ...);
+
+// This is a linux extension
+void vsyslog(int, const char *, va_list);
 
 #ifdef __cplusplus
 }

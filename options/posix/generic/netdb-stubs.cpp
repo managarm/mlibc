@@ -7,6 +7,14 @@
 #include <stdlib.h>
 #include <stddef.h>
 
+#undef h_errno
+__thread int __mlibc_h_errno;
+
+// This function is from musl
+int *__h_errno_location(void) {
+	return &__mlibc_h_errno;
+}
+
 void endhostent(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -120,6 +128,11 @@ struct netent *getnetent(void) {
 
 struct hostent *gethostbyname(const char *) {
 	__ensure(!"gethostbyname() not implemented");
+	__builtin_unreachable();
+}
+
+struct hostent *gethostbyaddr(const void *, socklen_t, int) {
+	__ensure(!"gethostbyaddr() not implemented");
 	__builtin_unreachable();
 }
 

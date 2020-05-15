@@ -201,6 +201,7 @@ int chroot(const char *);
 
 // This is a Linux extension
 pid_t gettid(void);
+int getentropy(void *, size_t);
 
 int pipe2(int *pipefd, int flags);
 
