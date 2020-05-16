@@ -877,6 +877,43 @@ int sys_vm_unmap(void *pointer, size_t size) {
 	return 0;
 }
 
+int sys_setsid(pid_t *sid) {
+	SignalGuard sguard;
+	HelAction actions[3];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_request_type(managarm::posix::CntReqType::SETSID);
+
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	*sid = resp.sid();
+	return 0;
+}
+
 int sys_tcgetattr(int fd, struct termios *attr) {
 	int result;
 	if(int e = sys_ioctl(fd, TCGETS, attr, &result); e)

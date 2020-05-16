@@ -145,6 +145,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_vm_readahead(void *pointer, size_t size);
 
 #ifndef MLIBC_BUILDING_RTDL
+	[[gnu::weak]] int sys_setsid(pid_t *sid);
 	[[gnu::weak]] int sys_tcgetattr(int fd, struct termios *attr);
 	[[gnu::weak]] int sys_tcsetattr(int, int, const struct termios *attr);
 	[[gnu::weak]] int sys_tcflow(int, int);

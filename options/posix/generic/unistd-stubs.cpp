@@ -511,8 +511,16 @@ int setreuid(uid_t, uid_t) {
 	__builtin_unreachable();
 }
 pid_t setsid(void) {
-	mlibc::infoLogger() << "\e[31mmlibc: setsid() is a no-op\e[39m" << frg::endlog;
-	return 1;
+	if(!mlibc::sys_setsid) {
+		MLIBC_MISSING_SYSDEP();
+		return -1;
+	}
+	pid_t sid;
+	if(int e = mlibc::sys_setsid(&sid); e) {
+		errno = e;
+		return -1;
+	}
+	return sid;
 }
 
 int setuid(uid_t uid) {
