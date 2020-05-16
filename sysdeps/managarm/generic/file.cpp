@@ -1489,7 +1489,12 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if(resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	} else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		return 0;
+	}
 	return 0;
 }
 
