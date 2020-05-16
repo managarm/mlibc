@@ -354,11 +354,11 @@ HelHandle __raw_map(int fd) {
 	auto handle = getHandleForFd(fd);
 	if (!handle)
 		return 0;
-	
+
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::MMAP);
 	req.set_fd(fd);
-	
+
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
@@ -384,7 +384,7 @@ HelHandle __raw_map(int fd) {
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
 	HEL_CHECK(pull_memory->error);
-	
+
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
@@ -583,7 +583,7 @@ int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) 
 
 	HelAction actions[3];
 	globalQueue.trim();
-	
+
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_READ_ENTRIES);
 
@@ -1053,7 +1053,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		__ensure(cmsg->cmsg_level == SOL_SOCKET);
 		__ensure(cmsg->cmsg_type == SCM_RIGHTS);
 		__ensure(cmsg->cmsg_len >= sizeof(struct cmsghdr));
-		
+
 		size_t size = cmsg->cmsg_len - CMSG_ALIGN(sizeof(struct cmsghdr));
 		__ensure(!(size % sizeof(int)));
 		for(size_t off = 0; off < size; off += sizeof(int)) {
@@ -1186,7 +1186,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	
+
 	if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
 		return EAGAIN;
 	}else{
@@ -1288,7 +1288,7 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::EPOLL_CALL);
 	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
-	
+
 	for(nfds_t i = 0; i < count; i++) {
 		int mask = 0;
 		if(fds[i].events & ~(POLLIN | POLLPRI | POLLOUT | POLLRDHUP | POLLERR | POLLHUP | POLLNVAL))
@@ -1365,7 +1365,7 @@ int sys_epoll_create(int flags, int *fd) {
 	SignalGuard sguard;
 	HelAction actions[3];
 	globalQueue.trim();
-	
+
 	uint32_t proto_flags = 0;
 	if(flags & EPOLL_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
@@ -1591,7 +1591,7 @@ int sys_signalfd_create(sigset_t mask, int flags, int *fd) {
 	if(flags & SFD_NONBLOCK)
 		mlibc::infoLogger() << "\e[31mmlibc: signalfd(SFD_NONBLOCK)"
 				" is not implemented correctly\e[39m" << frg::endlog;
-	
+
 	uint32_t proto_flags = 0;
 	if(flags & SFD_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
@@ -1640,7 +1640,7 @@ int sys_inotify_create(int flags, int *fd) {
 	SignalGuard sguard;
 	HelAction actions[3];
 	globalQueue.trim();
-	
+
 	uint32_t proto_flags = 0;
 	if(flags & IN_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
@@ -1789,7 +1789,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
-		
+
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
@@ -1815,11 +1815,11 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		
+
 		param->version_major = resp.drm_version_major();
 		param->version_minor = resp.drm_version_minor();
 		param->version_patchlevel = resp.drm_version_patchlevel();
-		
+
 		if(param->name)
 			memcpy(param->name, resp.drm_driver_name().data(), frg::min(param->name_len,
 					resp.drm_driver_name().size()));
@@ -1833,7 +1833,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		param->name_len = resp.drm_driver_name().size();
 		param->date_len = resp.drm_driver_date().size();
 		param->desc_len = resp.drm_driver_desc().size();
-		
+
 		*result = resp.result();
 		return 0;
 	}
@@ -1875,7 +1875,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			return EINVAL;
 		}else{
 			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-			
+
 			param->value = resp.drm_value();
 			*result = resp.result();
 			return 0;
@@ -1918,11 +1918,11 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		auto param = reinterpret_cast<drm_mode_card_res *>(arg);
 		HelAction actions[3];
 		globalQueue.trim();
-		
+
 		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
-		
+
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
@@ -1948,7 +1948,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		
+
 		for(size_t i = 0; i < resp.drm_fb_ids_size(); i++) {
 			if(i >= param->count_fbs)
 				 continue;
@@ -1956,7 +1956,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			dest[i] = resp.drm_fb_ids(i);
 		}
 		param->count_fbs = resp.drm_fb_ids_size();
-		
+
 		for(size_t i = 0; i < resp.drm_crtc_ids_size(); i++) {
 			if(i >= param->count_crtcs)
 				 continue;
@@ -1964,7 +1964,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			dest[i] = resp.drm_crtc_ids(i);
 		}
 		param->count_crtcs = resp.drm_crtc_ids_size();
-		
+
 		for(size_t i = 0; i < resp.drm_connector_ids_size(); i++) {
 			if(i >= param->count_connectors)
 				 continue;
@@ -1972,7 +1972,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			dest[i] = resp.drm_connector_ids(i);
 		}
 		param->count_connectors = resp.drm_connector_ids_size();
-		
+
 		for(size_t i = 0; i < resp.drm_encoder_ids_size(); i++) {
 			if(i >= param->count_encoders)
 				 continue;
@@ -1985,7 +1985,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		param->max_width = resp.drm_max_width();
 		param->min_height = resp.drm_min_height();
 		param->max_height = resp.drm_max_height();
-		
+
 		*result = resp.result();
 		return 0;
 	}
@@ -2031,7 +2031,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		
+
 		for(size_t i = 0; i < resp.drm_encoders_size(); i++) {
 			if(i >= param->count_encoders)
 				 continue;
@@ -2050,7 +2050,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		param->pad = 0;
 		param->count_encoders = resp.drm_encoders_size();
 		param->count_modes = resp.drm_num_modes();
-		
+
 		*result = resp.result();
 		return 0;
 	}
@@ -2099,10 +2099,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		param->crtc_id = resp.drm_crtc_id();
 		param->possible_crtcs = resp.drm_possible_crtcs();
 		param->possible_clones = resp.drm_possible_clones();
-		
+
 		*result = resp.result();
 		return 0;
-	}	
+	}
 	case DRM_IOCTL_MODE_CREATE_DUMB: {
 		auto param = reinterpret_cast<drm_mode_create_dumb*>(arg);
 		HelAction actions[3];
@@ -2111,11 +2111,11 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
-		
+
 		req.set_drm_width(param->width);
 		req.set_drm_height(param->height);
 		req.set_drm_bpp(param->bpp);
-		req.set_drm_flags(param->flags);	
+		req.set_drm_flags(param->flags);
 
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
@@ -2142,11 +2142,11 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	
+
 		param->handle = resp.drm_handle();
 		param->pitch = resp.drm_pitch();
 		param->size = resp.drm_size();
-	
+
 		*result = resp.result();
 		return 0;
 	}
@@ -2158,14 +2158,14 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
-	
+
 		req.set_drm_width(param->width);
 		req.set_drm_height(param->height);
 		req.set_drm_pitch(param->pitch);
 		req.set_drm_bpp(param->bpp);
 		req.set_drm_depth(param->depth);
 		req.set_drm_handle(param->handle);
-	
+
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
@@ -2193,7 +2193,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
 		param->fb_id = resp.drm_fb_id();
-	
+
 		*result = resp.result();
 		return 0;
 	}
@@ -2221,7 +2221,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_drm_bpp(32);
 		req.set_drm_depth(24);
 		req.set_drm_handle(param->handles[0]);
-	
+
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
@@ -2249,7 +2249,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
 		param->fb_id = resp.drm_fb_id();
-	
+
 		*result = resp.result();
 		return 0;
 	}
@@ -2261,9 +2261,9 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
-	
+
 		req.set_drm_fb_id(*param);
-	
+
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
@@ -2289,7 +2289,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	
+
 		*result = resp.result();
 		return 0;
 	}
@@ -2303,7 +2303,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_command(request);
 
 		req.set_drm_handle(param->handle);
-	
+
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
@@ -2329,9 +2329,9 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	
+
 		param->offset = resp.drm_offset();
-	
+
 		*result = resp.result();
 		return 0;
 	}
@@ -2512,7 +2512,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			clip.set_y2(dest->y2);
 			req.add_drm_clips(std::move(clip));
 		}
-	
+
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
@@ -2538,11 +2538,11 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	
+
 		*result = resp.result();
 		return 0;
 	}
-	case DRM_IOCTL_MODE_CURSOR: {	
+	case DRM_IOCTL_MODE_CURSOR: {
 		auto param = reinterpret_cast<drm_mode_cursor *>(arg);
 
 		HelAction actions[4];
@@ -2566,7 +2566,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			mlibc::infoLogger() << "\e[35mmlibc: invalid flags in DRM_IOCTL_MODE_CURSOR\e[39m" << frg::endlog;
 			return EINVAL;
 		}
-		
+
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
@@ -2818,7 +2818,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
-	
+
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
@@ -3021,7 +3021,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(request);
 		req.set_input_clock(*param);
-	
+
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
@@ -3061,7 +3061,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 		req.set_command(EVIOCGABS(0));
 		req.set_input_type(type);
-	
+
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 		actions[0].type = kHelActionOffer;
@@ -3098,7 +3098,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		*result = resp.result();
 		return 0;
 	}
-	
+
 	mlibc::infoLogger() << "mlibc: Unexpected ioctl with"
 			<< " type: 0x" << frg::hex_fmt(_IOC_TYPE(request))
 			<< ", number: 0x" << frg::hex_fmt(_IOC_NR(request))
@@ -3157,7 +3157,7 @@ int sys_open(const char *path, int flags, int *fd) {
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	
+
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
@@ -3222,7 +3222,7 @@ int sys_openat(int dirfd, const char *path, int flags, int *fd) {
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	
+
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
@@ -3269,7 +3269,7 @@ int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	
+
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
@@ -3488,7 +3488,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	auto handle = getHandleForFd(fd);
 	if(!handle)
 		return EBADF;
-	
+
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_fd(fd);
 	req.set_rel_offset(offset);
@@ -3502,7 +3502,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	}else{
 		mlibc::panicLogger() << "Illegal whence argument " << whence << frg::endlog;
 	}
-	
+
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 	actions[0].type = kHelActionOffer;
@@ -3515,7 +3515,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	actions[2].flags = 0;
 	HEL_CHECK(helSubmitAsync(handle, actions, 3,
 			globalQueue.getQueue(), 0, 0));
-	
+
 	auto element = globalQueue.dequeueSingle();
 	auto offer = parseSimple(element);
 	auto send_req = parseSimple(element);
@@ -3524,7 +3524,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	
+
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::fs::Errors::SEEK_ON_PIPE) {
@@ -3548,7 +3548,7 @@ int sys_close(int fd) {
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
-	
+
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
 	actions[1].type = kHelActionSendFromBuffer;
@@ -3559,7 +3559,7 @@ int sys_close(int fd) {
 	actions[2].flags = 0;
 	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
 			globalQueue.getQueue(), 0, 0));
-	
+
 	auto element = globalQueue.dequeueSingle();
 	auto offer = parseSimple(element);
 	auto send_req = parseSimple(element);
@@ -3568,10 +3568,10 @@ int sys_close(int fd) {
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	
+
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	
+
 	if(resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
 		return EBADF;
 	}else if(resp.error() == managarm::posix::Errors::SUCCESS) {
@@ -3586,9 +3586,9 @@ int sys_dup(int fd, int flags, int *newfd) {
 	SignalGuard sguard;
 	HelAction actions[3];
 	globalQueue.trim();
-	
+
 	__ensure(!(flags & ~(__MLIBC_O_CLOEXEC)));
-	
+
 	uint32_t proto_flags = 0;
 	if(flags & __MLIBC_O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
@@ -3619,7 +3619,7 @@ int sys_dup(int fd, int flags, int *newfd) {
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	
+
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if (resp.error() == managarm::posix::Errors::BAD_FD) {
@@ -3666,7 +3666,7 @@ int sys_dup2(int fd, int flags, int newfd) {
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	
+
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 
@@ -3741,7 +3741,7 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		memset(result, 0, sizeof(struct stat));
-		
+
 		switch(resp.file_type()) {
 		case managarm::posix::FileType::FT_REGULAR:
 			result->st_mode = S_IFREG; break;
@@ -3831,7 +3831,7 @@ int sys_ftruncate(int fd, size_t size) {
 	auto handle = getHandleForFd(fd);
 	if (!handle)
 		return EBADF;
-	
+
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_TRUNCATE);
 	req.set_size(size);
@@ -3872,7 +3872,7 @@ int sys_fallocate(int fd, off_t offset, size_t size) {
 	auto handle = getHandleForFd(fd);
 	if (!handle)
 		return EBADF;
-	
+
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_FALLOCATE);
 	req.set_rel_offset(offset);
