@@ -28,14 +28,32 @@ MemoryAllocator &getSysdepsAllocator();
 struct Queue;
 
 struct ElementHandle {
+	friend void swap(ElementHandle &u, ElementHandle &v) {
+		using std::swap;
+		swap(u._queue, v._queue);
+		swap(u._n, v._n);
+		swap(u._data, v._data);
+	}
+
+	ElementHandle()
+	: _queue{nullptr}, _n{-1}, _data{nullptr} { }
+
 	ElementHandle(Queue *queue, int n, void *data)
 	: _queue{queue}, _n{n}, _data{data} { }
 
-	ElementHandle(const ElementHandle &) = delete;
-	
-	ElementHandle &operator= (const ElementHandle &) = delete;
+	ElementHandle(const ElementHandle &other);
+
+	ElementHandle(ElementHandle &&other)
+	: ElementHandle{} {
+		swap(*this, other);
+	}
 
 	~ElementHandle();
+
+	ElementHandle &operator= (ElementHandle other) {
+		swap(*this, other);
+		return *this;
+	}
 
 	void *data() {
 		return _data;
@@ -139,6 +157,10 @@ struct Queue {
 		_wakeHeadFutex();
 	}
 
+	void reference(int n) {
+		_refCount[n]++;
+	}
+
 private:
 	int _numberOf(int index) {
 		return _queue->indexQueue[index & 1];
@@ -197,6 +219,15 @@ inline ElementHandle::~ElementHandle() {
 		_queue->retire(_n);
 }
 
+inline ElementHandle::ElementHandle(const ElementHandle &other) {
+	_queue = other._queue;
+	_n = other._n;
+	_data = other._data;
+
+	_queue->reference(_n);
+}
+
+
 inline HelSimpleResult *parseSimple(ElementHandle &element) {
 	auto result = reinterpret_cast<HelSimpleResult *>(element.data());
 	element.advance(sizeof(HelSimpleResult));
@@ -227,6 +258,28 @@ HelHandle getHandleForFd(int fd);
 void clearCachedInfos();
 
 extern thread_local Queue globalQueue;
+
+// This include is here because it needs ElementHandle to be declared
+#include <helix/ipc-structs.hpp>
+
+template <typename ...Args>
+auto exchangeMsgsSync(HelHandle descriptor, Args &&...args) {
+	auto results = helix_ng::createResultsTuple(args...);
+	auto actions = helix_ng::chainActionArrays(args...);
+
+	HEL_CHECK(helSubmitAsync(descriptor, actions.data(),
+		actions.size(), globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	void *ptr = element.data();
+
+	[&]<size_t ...p>(std::index_sequence<p...>) {
+		(results.template get<p>().parse(ptr, element), ...);
+	} (std::make_index_sequence<std::tuple_size_v<decltype(results)>>{});
+
+	return results;
+}
+
 
 #endif // MLIBC_POSIX_PIPE
 
