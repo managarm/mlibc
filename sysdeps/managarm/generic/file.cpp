@@ -710,7 +710,7 @@ int sys_getcwd(char *buffer, size_t size) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	if(resp.size() >= size)
+	if(static_cast<size_t>(resp.size()) >= size)
 		return ERANGE;
 	return 0;
 }
@@ -1897,7 +1897,6 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return 0;
 	}
 	case DRM_IOCTL_AUTH_MAGIC: {
-		auto param = reinterpret_cast<drm_auth *>(arg);
 		mlibc::infoLogger() << "\e[31mmlibc: DRM_IOCTL_AUTH_MAGIC is not implemented correctly\e[39m"
 				<< frg::endlog;
 		*result = 0;
