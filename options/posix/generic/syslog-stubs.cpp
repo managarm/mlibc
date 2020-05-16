@@ -22,3 +22,8 @@ void syslog(int, const char *, ...) {
 	__builtin_unreachable();
 }
 
+void vsyslog(int, const char *, va_list) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
