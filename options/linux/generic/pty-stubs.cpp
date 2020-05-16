@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <pty.h>
 #include <stdio.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 #include <stdlib.h>
 
@@ -40,27 +41,30 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 }
 
 int login_tty(int fd) {
-	// TODO: Perform an ioctl() to set the controlling terminal.
-	int e;
+	if(setsid() == -1)
+		return -1;
+	if(ioctl(fd, TIOCSCTTY, 0))
+		return -1;
+
 	if(!mlibc::sys_dup2) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
 		return -1;
 	}
-	if(e = mlibc::sys_dup2(fd, 0, STDIN_FILENO)) {
+	if(int e = mlibc::sys_dup2(fd, 0, STDIN_FILENO); e) {
 		errno = e;
 		return -1;
 	}
-	if(e = mlibc::sys_dup2(fd, 0, STDOUT_FILENO)) {
+	if(int e = mlibc::sys_dup2(fd, 0, STDOUT_FILENO); e) {
 		errno = e;
 		return -1;
 	}
-	if(e = mlibc::sys_dup2(fd, 0, STDERR_FILENO)) {
+	if(int e = mlibc::sys_dup2(fd, 0, STDERR_FILENO); e) {
 		errno = e;
 		return -1;
 	}
 
-	if(e = mlibc::sys_close(fd); e) {
+	if(int e = mlibc::sys_close(fd); e) {
 		errno = e;
 		return -1;
 	}
