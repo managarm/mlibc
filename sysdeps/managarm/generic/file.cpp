@@ -210,12 +210,17 @@ int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 }
 
 int sys_symlink(const char *target_path, const char *link_path) {
+	return sys_symlinkat(target_path, AT_FDCWD, link_path);
+}
+
+int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
 	SignalGuard sguard;
 	HelAction actions[3];
 	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::SYMLINK);
+	req.set_request_type(managarm::posix::CntReqType::SYMLINKAT);
+	req.set_fd(dirfd);
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), link_path));
 	req.set_target_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), target_path));
 
