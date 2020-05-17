@@ -3783,10 +3783,18 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 			result->st_mode = S_IFREG; break;
 		case managarm::posix::FileType::FT_DIRECTORY:
 			result->st_mode = S_IFDIR; break;
+		case managarm::posix::FileType::FT_SYMLINK:
+			result->st_mode = S_IFLNK; break;
 		case managarm::posix::FileType::FT_CHAR_DEVICE:
 			result->st_mode = S_IFCHR; break;
 		case managarm::posix::FileType::FT_BLOCK_DEVICE:
 			result->st_mode = S_IFBLK; break;
+		case managarm::posix::FileType::FT_SOCKET:
+			result->st_mode = S_IFSOCK; break;
+		case managarm::posix::FileType::FT_FIFO:
+			result->st_mode = S_IFIFO; break;
+		default:
+			__ensure(!resp.file_type());
 		}
 
 		result->st_dev = 1;
