@@ -551,9 +551,17 @@ int symlink(const char *target_path, const char *link_path) {
 	}
 	return 0;
 }
-int symlinkat(const char *, int, const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int symlinkat(const char *target_path, int dirfd, const char *link_path) {
+	if(!mlibc::sys_symlinkat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_symlinkat(target_path, dirfd, link_path); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 void sync(void) {
 	__ensure(!"Not implemented");
