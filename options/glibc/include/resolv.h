@@ -21,11 +21,13 @@ int dn_expand(const unsigned char *, const unsigned char *,
 
 int res_query(const char *, int, int, unsigned char *, int);
 
+int res_init(void);
+
 /* From musl: Unused; purely for broken apps
  * To avoid an massive struct, only add the items requested. */
 typedef struct __res_state {
 	unsigned long options;
-};
+} *res_state;
 struct __res_state *__res_state(void);
 #define _res (*__res_state())
 

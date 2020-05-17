@@ -23,6 +23,7 @@ int getgrnam_r(const char *, struct group *, char *, size_t, struct group **);
 void setgrent(void);
 
 int setgroups(size_t size, const gid_t *list);
+int initgroups(const char *user, gid_t group);
 
 #ifdef __cplusplus
 }
