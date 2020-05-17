@@ -37,9 +37,11 @@
 
 #define HOST_NOT_FOUND 1
 #define TRY_AGAIN      2
+#define NO_RECOVERY    3
 #define NO_DATA        4
 #define NO_ADDRESS     NO_DATA
 
+#define IPPORT_RESERVED 1024
 
 #ifdef __cplusplus
 extern "C" {

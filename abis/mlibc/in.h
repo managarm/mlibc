@@ -83,8 +83,11 @@ struct ip_mreq {
 #define IPV6_UNICAST_HOPS 6
 #define IPV6_V6ONLY 7
 
+#define IP_TOS 1
 #define IP_TTL 2
+#define IP_OPTIONS 4
 
+#define IP_MULTICAST_IF    32
 #define IP_MULTICAST_TTL   33
 #define IP_MULTICAST_LOOP  34
 #define IP_ADD_MEMBERSHIP  35

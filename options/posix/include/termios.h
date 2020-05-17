@@ -25,6 +25,8 @@ typedef unsigned int tcflag_t;
 #define VSTOP    8
 #define VSUSP    9
 #define VTIME   10
+#define VLNEXT  15
+#define VEOL2   16
 
 // bitwise flags for c_iflag in struct termios
 #define BRKINT  0x0001
@@ -169,6 +171,11 @@ struct winsize {
 	unsigned short ws_xpixel;
 	unsigned short ws_ypixel;
 };
+
+#define ECHOCTL 0001000
+#define FLUSHO  0010000
+#define IMAXBEL 0020000
+#define ECHOKE  0040000
 
 #ifdef __cplusplus
 }
