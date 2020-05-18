@@ -9,6 +9,8 @@
 
 // Report the same value as Linux here.
 #define MAXPATHLEN 4096
+#define HOST_NAME_MAX 64
+#define MAXHOSTNAMELEN HOST_NAME_MAX
 
 #ifdef __cplusplus
 extern "C" {

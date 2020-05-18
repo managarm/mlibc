@@ -38,6 +38,10 @@
 #define S_ISGID 02000
 #define S_ISVTX 01000
 
+#define S_IREAD  S_IRUSR
+#define S_IWRITE S_IWUSR
+#define S_IEXEC  S_IXUSR
+
 #ifdef __cplusplus
 extern "C" {
 #endif
