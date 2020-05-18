@@ -5,9 +5,7 @@
 #include <endian.h>
 #include <limits.h>
 
-#if !defined NGROUPS && defined NGROUPS_MAX
-# define NGROUPS NGROUPS_MAX
-#endif
+#define NGROUPS NGROUPS_MAX
 
 // Report the same value as Linux here.
 #define MAXPATHLEN 4096

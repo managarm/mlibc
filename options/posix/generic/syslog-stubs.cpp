@@ -10,13 +10,7 @@ static int log_options;
 static int log_facility = LOG_USER;
 static int log_fd = -1;
 
-static const struct {
-	short sun_family;
-	char sun_path[9];
-} log_addr = {
-	AF_UNIX,
-	"/dev/log"
-};
+static const struct sockaddr_un log_addr {AF_UNIX, "/dev/log"};
 
 void closelog(void) {
 	close(log_fd);
