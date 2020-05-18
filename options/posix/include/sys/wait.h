@@ -21,6 +21,8 @@ struct rusage;
 #define WNOWAIT 16
 #define WSTOPPED 32
 
+#define WCOREFLAG 0x80
+
 // TODO: #error if int is smaller than 32 bits
 
 #define WEXITSTATUS(x) ((x) & 0x000000FF)
@@ -30,6 +32,7 @@ struct rusage;
 #define WIFSTOPPED(x) ((x) & 0x00000800)
 #define WSTOPSIG(x) (((x) & 0x00FF0000) >> 16)
 #define WTERMSIG(x) (((x) & 0xFF000000) >> 24)
+#define WCOREDUMP(x) ((x) & WCOREFLAG)
 
 // TODO: move to own file and include in sys/types.h
 typedef enum {
