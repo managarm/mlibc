@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <bits/ensure.h>
 
 static char log_ident[32];

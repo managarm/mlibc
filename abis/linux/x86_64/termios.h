@@ -1,6 +1,10 @@
 #ifndef _ABIBITS_TERMIOS_H
 #define _ABIBITS_TERMIOS_H
 
+typedef unsigned int cc_t;
+typedef unsigned int speed_t;
+typedef unsigned int tcflag_t;
+
 // indices for the c_cc array in struct termios
 #define NCCS     32
 #define VINTR    0

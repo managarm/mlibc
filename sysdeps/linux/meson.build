@@ -21,6 +21,7 @@ if not no_headers
 		'include/abi-bits/reboot.h',
 		'include/abi-bits/resource.h',
 		'include/abi-bits/socket.h',
+		'include/abi-bits/termios.h',
 		subdir: 'abi-bits'
 	)
 endif

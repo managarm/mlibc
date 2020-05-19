@@ -9,10 +9,6 @@
 extern "C" {
 #endif
 
-typedef unsigned int cc_t;
-typedef unsigned int speed_t;
-typedef unsigned int tcflag_t;
-
 // bitwise flags for c_iflag in struct termios
 #define BRKINT  0x0001
 #define ICRNL   0x0002
