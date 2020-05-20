@@ -23,8 +23,7 @@
 
 #include <bits/posix/fsblkcnt_t.h>
 #include <bits/posix/fsfilcnt_t.h>
-
-#include <sys/select.h>
+#include <bits/posix/fd_set.h>
 
 typedef unsigned int u_int;
 typedef unsigned char u_char;

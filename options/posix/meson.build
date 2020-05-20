@@ -143,6 +143,7 @@ if not no_headers
 		'include/bits/posix/suseconds_t.h',
 		'include/bits/posix/timeval.h',
 		'include/bits/posix/uid_t.h',
+		'include/bits/posix/fd_set.h',
 		subdir: 'bits/posix'
 	)
 endif
