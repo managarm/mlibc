@@ -48,7 +48,6 @@ const char *gai_strerror(int) {
 
 int getaddrinfo(const char *__restrict node, const char *__restrict service,
 		const struct addrinfo *__restrict hints, struct addrinfo **__restrict res) {
-		frg::endlog;
 	if (!node && !service)
 		return EAI_NONAME;
 

@@ -8,6 +8,7 @@
 #define POLLERR 0x10
 #define POLLRDHUP 0x20
 #define POLLNVAL 0x40
+#define POLLWRNORM 0x80
 
 #include <bits/types.h>
 

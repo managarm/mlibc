@@ -9,6 +9,11 @@
 extern "C" {
 #endif
 
+struct timezone {
+	int tz_minuteswest;
+	int tz_dsttime;
+};
+
 // TODO: this function is [OB]. disable it by default and add a macro to enable it
 int gettimeofday(struct timeval *__restrict result, void *__restrict unused);
 

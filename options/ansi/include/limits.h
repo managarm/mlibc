@@ -32,6 +32,9 @@
 #define LINE_MAX 4096
 #define PIPE_BUF 4096
 
+// This value is a guaranteed minimum, get the current maximum from sysconf
+#define NGROUPS_MAX 8
+
 #if INTPTR_MAX == INT64_MAX
 # define SSIZE_MAX LONG_MAX
 #elif INTPTR_MAX == INT32_MAX

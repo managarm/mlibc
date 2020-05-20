@@ -3,6 +3,9 @@
 #define _SYS_PARAM_H
 
 #include <endian.h>
+#include <limits.h>
+
+#define NGROUPS NGROUPS_MAX
 
 // Report the same value as Linux here.
 #define MAXPATHLEN 4096
