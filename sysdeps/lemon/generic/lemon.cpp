@@ -4,6 +4,7 @@
 #include <bits/posix/pid_t.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
+#include <errno.h>
 
 namespace mlibc{
 	int sys_futex_wait(int *pointer, int expected){
@@ -34,7 +35,12 @@ namespace mlibc{
 	}
 
 	int sys_vm_unmap(void* address, size_t size) {
-		return 0;
+		__ensure(!(size & 0xFFF));
+
+		size_t sizePages = ((size + 0xFFF) & ~static_cast<size_t>(0xFFF)) >> 12;
+		long ret = syscall(SYS_MUNMAP, (uintptr_t)address, sizePages, 0, 0, 0);
+
+		return ret;
 	}
 
 	int sys_anon_allocate(size_t size, void **pointer) {
@@ -85,10 +91,7 @@ namespace mlibc{
 	}
 
 	int sys_getcwd(char *buffer, size_t size){
-		int ret = 0;
-		syscall(SYS_GET_CWD, buffer, size, &ret, 0, 0);
-
-		return ret;
+		return syscall(SYS_GET_CWD, buffer, size, 0, 0, 0);
 	}
 
 	int sys_chdir(const char *path){
@@ -99,6 +102,10 @@ namespace mlibc{
 	int sys_sleep(time_t* sec, long* nanosec){
 		syscall(SYS_NANO_SLEEP, (*sec) * 1000000000 + (*nanosec), 0, 0, 0, 0);
 		return 0;
+	}
+	
+	uid_t sys_getuid() {
+		return syscall(SYS_GETUID, 0, 0, 0, 0, 0);
 	}
 
 	#endif

@@ -1,7 +1,11 @@
 #include <lemon/syscall.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <errno.h>
+
 #include <mlibc/sysdeps.hpp>
+#include <mlibc/debug.hpp>
 
 namespace mlibc{
 	typedef struct {
@@ -21,22 +25,18 @@ namespace mlibc{
 		int ret;
 		syscall(SYS_WRITE, fd, (uintptr_t)buffer, count, (uintptr_t)&ret, 0);
 
+		if(ret < 0)
+			return ret;
+			
 		*written = ret;
-
-		if(*written == -1)
-			return -1;
-
 		return 0;
 	}
 
 	int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
-		int ret;
-		int sys_errno;
+    	long ret = syscall(SYS_READ, fd, (uintptr_t)buf, count, (uintptr_t)&ret, 0);
 
-    	syscall(SYS_READ, fd, (uintptr_t)buf, count, (uintptr_t)&ret, 0);
-
-		if (ret == -1)
-		    return -1;
+		if(ret < 0)
+			return ret;
 
 		*bytes_read = ret;
 		return 0;
@@ -85,13 +85,13 @@ namespace mlibc{
 
 
 	int sys_open(const char* filename, int flags, int* fd){
-		int _fd;
-		syscall(SYS_OPEN, (uintptr_t)filename, (uintptr_t)&_fd, 0, 0, 0);
+		long ret = syscall(SYS_OPEN, (uintptr_t)filename, 0, 0, 0, 0);
 
-		if(!fd)
-			return -1;
+		if(ret < 0)
+			return ret;
 
-		*fd = _fd;
+		*fd = ret;
+
 		return 0; 
 	}
 
@@ -143,4 +143,53 @@ namespace mlibc{
 
 		return ret;
 	}
+
+	int sys_ioctl(int fd, unsigned long request, void *arg, int *result){
+		return syscall(SYS_IOCTL, fd, request, arg, result, 0);
+	}
+
+	#ifndef MLIBC_BUILDING_RTDL
+
+	#define LEMON_TIOCGATTR 0xB301
+	#define LEMON_TIOCSATTR 0xB302
+
+	int sys_isatty(int fd) {
+		struct winsize ws;
+		long ret = syscall(SYS_IOCTL, fd, TIOCGWINSZ, &ws, 0 ,0);
+
+		if(!ret) return 0;
+		
+		return ENOTTY;
+	}
+
+	int sys_tcgetattr(int fd, struct termios *attr) {
+		if(int e = sys_isatty(fd))
+			return e;
+
+		int ret;
+		sys_ioctl(fd, LEMON_TIOCGATTR, attr, &ret);
+
+		if(ret)
+			return -1;
+
+		return 0;
+	}
+
+	int sys_tcsetattr(int fd, int optional_action, struct termios *attr) {
+		if(int e = sys_isatty(fd))
+			return e;
+
+		if(optional_action){
+			mlibc::infoLogger() << "mlibc warning: sys_tcsetattr ignores optional_action" << frg::endlog;
+		}
+
+		int ret;
+		sys_ioctl(fd, LEMON_TIOCSATTR, attr, &ret);
+
+		if(ret)
+			return -1;
+
+		return 0;
+	}
+	#endif
 } 

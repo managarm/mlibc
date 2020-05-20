@@ -7,6 +7,7 @@ rtdl_sources += files(
 libc_sources += files(
 	'generic/filesystem.cpp',
 	'generic/lemon.cpp',
+	'generic/sockets.cpp',
 	'generic/entry.cpp',
 )
 
