@@ -61,9 +61,11 @@ uint16_t ntohs(uint16_t x) {
 // ----------------------------------------------------------------------------
 // IPv4 address manipulation.
 // ----------------------------------------------------------------------------
-in_addr_t inet_addr(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+in_addr_t inet_addr(const char *p) {
+	struct in_addr a;
+	if(!inet_aton(p, &a))
+		return -1;
+	return a.s_addr;
 }
 char *inet_ntoa(struct in_addr addr) {
 	// string: xxx.yyy.zzz.aaa
