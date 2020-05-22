@@ -43,6 +43,8 @@ struct tm {
 	int tm_wday;
 	int tm_yday;
 	int tm_isdst;
+	long int tm_gmtoff;
+	const char *tm_zone;
 };
 
 // [7.27.2] Time manipulation functions

@@ -12,5 +12,7 @@ extern __thread int __mlibc_errno;
 
 extern char *program_invocation_name;
 extern char *program_invocation_short_name;
+extern char *__progname;
+extern char *__progname_full;
 
 #endif // _ERRNO_H

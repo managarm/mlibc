@@ -230,6 +230,10 @@ void setbuf(FILE *__restrict stream, char *__restrict buffer) {
 }
 // setvbuf() is provided by the POSIX sublibrary
 
+void setlinebuf(FILE *stream) {
+    setvbuf(stream, NULL, _IOLBF, 0);
+}
+
 int fprintf(FILE *__restrict stream, const char *__restrict format, ...) {
 	va_list args;
 	va_start(args, format);

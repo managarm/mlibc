@@ -71,6 +71,10 @@ extern "C" {
 #define IN_CLASSD(a) ((((in_addr_t)(a)) & 0xf0000000) == 0xe0000000)
 #define IN_MULTICAST(a) IN_CLASSD(a)
 
+#define IN_CLASSA_NET 0xff000000
+#define IN_CLASSB_NET 0xffff0000
+#define IN_CLASSC_NET 0xffffff00
+
 #ifdef __cplusplus
 }
 #endif

@@ -18,6 +18,7 @@ libc_sources += files(
 	'generic/sys-eventfd.cpp',
 	'generic/sys-reboot.cpp',
 	'generic/netinet-in6addr.cpp',
+	'generic/utmp-stubs.cpp',
 )
 
 if not no_headers

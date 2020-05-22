@@ -5,19 +5,11 @@
 #include <bits/ansi/time_t.h>
 #include <bits/posix/suseconds_t.h>
 #include <bits/posix/timeval.h>
+#include <bits/posix/fd_set.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-// FIXME: use something like uint8_t with fixed bit-size
-typedef struct {
-	union {
-		char __mlibc_elems[128];
-		// Some programs require the fds_bits field to be present
-		char fds_bits[128];
-	};
-} fd_set;
 
 #define FD_SETSIZE 1024
 
