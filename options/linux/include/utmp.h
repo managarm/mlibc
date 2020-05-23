@@ -1,8 +1,6 @@
-
 #ifndef  _UTMP_H
 #define  _UTMP_H
 
-#include <stdint.h>
 #include <bits/posix/pid_t.h>
 #include <bits/posix/timeval.h>
 #include <bits/types.h>
@@ -41,7 +39,7 @@ struct utmp {
 	struct exit_status ut_exit;
 	long   ut_session;
 	struct timeval ut_tv;
-	__mlibc_int32_t ut_addr_v6[4];
+	__mlibc_int32 ut_addr_v6[4];
 	char __unused[20];
 };
 
@@ -62,4 +60,3 @@ void endutent(void);
 #endif
 
 #endif // _UTMP_H
-
