@@ -90,6 +90,7 @@
 #define PRIXPTR "lX"
 
 #define SCNu64 "lu"
+#define SCNuMAX "lu"
 
 #ifdef __cplusplus
 extern "C" {

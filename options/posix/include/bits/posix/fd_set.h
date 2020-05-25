@@ -11,4 +11,6 @@ typedef struct {
 	};
 } fd_set;
 
+#define FD_SETSIZE 1024
+
 #endif // MLIBC_FD_SET_H

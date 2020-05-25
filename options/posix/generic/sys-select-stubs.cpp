@@ -45,3 +45,9 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 	}
 	return num_events;
 }
+
+int pselect(int, fd_set *, fd_set *, fd_set *, const struct timespec *,
+		const sigset_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
