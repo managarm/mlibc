@@ -61,10 +61,12 @@ ObjectRepository::ObjectRepository()
 : _nameMap{frg::hash<frg::string_view>{}, getAllocator()} { }
 
 SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
-		uintptr_t base_address, Elf64_Dyn *dynamic, uint64_t rts) {
+		frg::string<MemoryAllocator> path, uintptr_t base_address,
+		Elf64_Dyn *dynamic, uint64_t rts) {
 	__ensure(!_nameMap.get(name));
 
-	auto object = frg::construct<SharedObject>(getAllocator(), name.data(), false, rts);
+	auto object = frg::construct<SharedObject>(getAllocator(),
+		name.data(), std::move(path), false, rts);
 	object->baseAddress = base_address;
 	object->dynamic = dynamic;
 	_parseDynamic(object);
@@ -76,11 +78,13 @@ SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 }
 
 SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
-		void *phdr_pointer, size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
+		frg::string<MemoryAllocator> path, void *phdr_pointer,
+		size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 		uint64_t rts) {
 	__ensure(!_nameMap.get(name));
 
-	auto object = frg::construct<SharedObject>(getAllocator(), name.data(), true, rts);
+	auto object = frg::construct<SharedObject>(getAllocator(),
+		name.data(), std::move(path), true, rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 	_parseDynamic(object);
 
@@ -91,10 +95,12 @@ SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 }
 
 SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
-		void *phdr_pointer, size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
+		frg::string<MemoryAllocator> path, void *phdr_pointer,
+		size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 		uint64_t rts) {
 	__ensure(!_nameMap.get(name));
-	auto object = frg::construct<SharedObject>(getAllocator(), name.data(), true, rts);
+	auto object = frg::construct<SharedObject>(getAllocator(),
+		name.data(), std::move(path), true, rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 
 #ifdef MLIBC_STATIC_BUILD
@@ -114,8 +120,6 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 	if(it)
 		return *it;
 
-	auto object = frg::construct<SharedObject>(getAllocator(), name.data(), false, rts);
-
 	const char *libdirs[4] = {
 		"/lib/",
 		"/lib64/",
@@ -125,25 +129,78 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 
 	auto tryToOpen = [&] (const char *path) {
 		int fd;
-		if(mlibc::sys_open(path, 0, &fd))
+		if(auto x = mlibc::sys_open(path, 0, &fd); x) {
 			return -1;
+		}
 		return fd;
 	};
 
+	// TODO(arsen): this process can probably undergo heavy optimization, by
+	// preprocessing the rpath only once on parse
+	auto processRpath = [&] (frg::string_view path) {
+		frg::string<MemoryAllocator> sPath { getAllocator() };
+		if (path.sub_string(0, 7) == "$ORIGIN") {
+			frg::string_view dirname = origin->path;
+			auto lastsl = dirname.find_last('/');
+			if (lastsl != -1) {
+				dirname = dirname.sub_string(0, lastsl);
+			} else {
+				dirname = ".";
+			}
+			sPath = { getAllocator(), dirname };
+			sPath += path.sub_string(7, path.size() - 7);
+		} else {
+			sPath = { getAllocator(), path };
+		}
+		if (sPath[sPath.size() - 1] != '/') {
+			sPath += '/';
+		}
+		sPath += name;
+		int fd = tryToOpen(sPath.data());
+		return frg::tuple { fd, std::move(sPath) };
+	};
+
+	frg::string<MemoryAllocator> chosenPath { getAllocator() };
 	int fd = -1;
-	if(origin && origin->runPath) {
-		auto path = frg::string<MemoryAllocator>{getAllocator(), origin->runPath}
-				+ '/' + name + '\0';
-		fd = tryToOpen(path.data());
+	if (origin && origin->runPath) {
+		size_t start = 0;
+		size_t idx = 0;
+		frg::string_view rpath { origin->runPath };
+		auto next = [&] () {
+			idx = rpath.find_first(':', start);
+		};
+		for (next(); idx < rpath.size(); next()) {
+			auto path = rpath.sub_string(start, idx - start);
+			start = idx + 1;
+			auto [fd_, fullPath] = processRpath(path);
+			if (fd_ != -1) {
+				fd = fd_;
+				chosenPath = std::move(fullPath);
+				break;
+			}
+		}
+		if (fd == -1) {
+			auto path = rpath.sub_string(start, rpath.size() - start);
+			auto [fd_, fullPath] = processRpath(path);
+			if (fd_ != -1) {
+				fd = fd_;
+				chosenPath = std::move(fullPath);
+			}
+		}
 	}
-	for(int i = 0; i < 4; i++) {
-		if(fd >= 0)
-			break;
+	for(int i = 0; i < 4 && fd == -1; i++) {
 		auto path = frg::string<MemoryAllocator>{getAllocator(), libdirs[i]} + name + '\0';
 		fd = tryToOpen(path.data());
+		if(fd >= 0) {
+			chosenPath = std::move(path);
+			break;
+		}
 	}
 	if(fd == -1)
-		return nullptr; // TODO: Free the SharedObject.
+		return nullptr;
+
+	auto object = frg::construct<SharedObject>(getAllocator(),
+		name.data(), std::move(chosenPath), false, rts);
 
 	_fetchFromFile(object, fd);
 	closeOrDie(fd);
@@ -158,11 +215,17 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 
 SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint64_t rts) {
 	// TODO: Support SONAME correctly.
-	auto it = _nameMap.get(path);
+	auto lastSlash = path.find_last('/') + 1;
+	auto name = path;
+	if (!lastSlash) {
+		name = name.sub_string(lastSlash, path.size() - lastSlash);
+	}
+	auto it = _nameMap.get(name);
 	if(it)
 		return *it;
 
-	auto object = frg::construct<SharedObject>(getAllocator(), path.data(), false, rts);
+	auto object = frg::construct<SharedObject>(getAllocator(),
+		name.data(), path.data(), false, rts);
 
 	frg::string<MemoryAllocator> no_prefix(getAllocator(), path);
 
@@ -433,6 +496,9 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 						<< ") is not implemented correctly!\e[39m"
 						<< frg::endlog;
 			break;
+		case DT_RPATH:
+			mlibc::infoLogger() << "\e[31mrtdl: RUNPATH not preferred over RPATH properly\e[39m" << frg::endlog;
+			// fall through
 		case DT_RUNPATH:
 			runpath_offset = dynamic->d_val;
 			break;
@@ -448,7 +514,7 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			object->initArraySize = dynamic->d_val;
 			break;
 		// ignore unimportant tags
-		case DT_SONAME: case DT_NEEDED: case DT_RPATH: // we handle this later
+		case DT_SONAME: case DT_NEEDED: // we handle this later
 		case DT_FINI: case DT_FINI_ARRAY: case DT_FINI_ARRAYSZ:
 		case DT_DEBUG:
 		case DT_RELA: case DT_RELASZ: case DT_RELAENT: case DT_RELACOUNT:
@@ -462,9 +528,10 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		}
 	}
 
-	if(runpath_offset)
+	if(runpath_offset) {
 		object->runPath = reinterpret_cast<const char *>(object->baseAddress
 				+ object->stringTableOffset + *runpath_offset);
+	}
 }
 
 void ObjectRepository::_discoverDependencies(SharedObject *object, uint64_t rts) {
@@ -488,20 +555,27 @@ void ObjectRepository::_discoverDependencies(SharedObject *object, uint64_t rts)
 // SharedObject
 // --------------------------------------------------------
 
-SharedObject::SharedObject(const char *name, bool is_main_object, uint64_t object_rts)
-		: name(name), isMainObject(is_main_object), objectRts(object_rts),
-		baseAddress(0), loadScope(nullptr),
-		dynamic(nullptr), globalOffsetTable(nullptr), entry(nullptr),
-		tlsSegmentSize(0), tlsAlignment(0), tlsImageSize(0), tlsImagePtr(nullptr),
-		tlsInitialized(false),
-		hashTableOffset(0), symbolTableOffset(0), stringTableOffset(0),
-		lazyRelocTableOffset(0), lazyTableSize(0), lazyExplicitAddend(false),
-		symbolicResolution(false), eagerBinding(false), haveStaticTls(false),
-		dependencies(getAllocator()),
-		tlsModel(TlsModel::null), tlsOffset(0),
-		globalRts(0), wasLinked(false),
-		scheduledForInit(false), onInitStack(false), wasInitialized(false),
-		objectScope(nullptr) { }
+SharedObject::SharedObject(const char *name, frg::string<MemoryAllocator> path,
+	bool is_main_object, uint64_t object_rts)
+		: name(name), path(std::move(path)),
+		isMainObject(is_main_object), objectRts(object_rts),
+		baseAddress(0), loadScope(nullptr), dynamic(nullptr),
+		globalOffsetTable(nullptr), entry(nullptr), tlsSegmentSize(0),
+		tlsAlignment(0), tlsImageSize(0), tlsImagePtr(nullptr),
+		tlsInitialized(false), hashTableOffset(0), symbolTableOffset(0),
+		stringTableOffset(0), lazyRelocTableOffset(0), lazyTableSize(0),
+		lazyExplicitAddend(false), symbolicResolution(false),
+		eagerBinding(false), haveStaticTls(false),
+		dependencies(getAllocator()), tlsModel(TlsModel::null),
+		tlsOffset(0), globalRts(0), wasLinked(false),
+		scheduledForInit(false), onInitStack(false),
+		wasInitialized(false), objectScope(nullptr) { }
+
+SharedObject::SharedObject(const char *name, const char *path,
+	bool is_main_object, uint64_t object_rts)
+		: SharedObject(name,
+			frg::string<MemoryAllocator> { path, getAllocator() },
+			is_main_object, object_rts) {}
 
 void processCopyRela(SharedObject *object, Elf64_Rela *reloc) {
 	Elf64_Xword type = ELF64_R_TYPE(reloc->r_info);

@@ -32,15 +32,18 @@ struct ObjectRepository {
 
 	// This is primarily used to create a SharedObject for the RTDL itself.
 	SharedObject *injectObjectFromDts(frg::string_view name,
+			frg::string<MemoryAllocator> path,
 			uintptr_t base_address, Elf64_Dyn *dynamic, uint64_t rts);
 
 	// This is used to create a SharedObject for the executable that we want to link.
 	SharedObject *injectObjectFromPhdrs(frg::string_view name,
-			void *phdr_pointer, size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
+			frg::string<MemoryAllocator> path, void *phdr_pointer,
+			size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 			uint64_t rts);
 
 	SharedObject *injectStaticObject(frg::string_view name,
-			void *phdr_pointer, size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
+			frg::string<MemoryAllocator> path, void *phdr_pointer,
+			size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 			uint64_t rts);
 
 	SharedObject *requestObjectWithName(frg::string_view name,
@@ -78,10 +81,15 @@ enum class HashStyle {
 using InitFuncPtr = void (*)();
 
 struct SharedObject {
-	SharedObject(const char *name, bool is_main_object,
-			uint64_t object_rts);
+	// path is copied
+	SharedObject(const char *name, frg::string<MemoryAllocator> path,
+		bool is_main_object, uint64_t object_rts);
+
+	SharedObject(const char *name, const char *path, bool is_main_object,
+		uint64_t object_rts);
 
 	const char *name;
+	frg::string<MemoryAllocator> path;
 	bool isMainObject;
 	uint64_t objectRts;
 
