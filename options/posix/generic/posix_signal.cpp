@@ -51,7 +51,11 @@ int pthread_sigmask(int how, const sigset_t *__restrict set, sigset_t *__restric
 		return e;
 	}
 	return 0;
+}
 
+int pthread_kill(pthread_t thread, int sig) {
+	__ensure(!"pthread_kill() not implemented");
+	__builtin_unreachable();
 }
 
 int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
@@ -93,6 +97,11 @@ int kill(pid_t pid, int number) {
 	return 0;
 }
 
+int killpg(int, int) {
+	__ensure(!"killpg() not implemented");
+	__builtin_unreachable();
+}
+
 int sigtimedwait(const sigset_t *set, siginfo_t *info, const struct timespec *timeout) {
 	__ensure(!"sigtimedwait() not implemented");
 	__builtin_unreachable();
@@ -103,3 +112,7 @@ int sigwait(const sigset_t *set, int *sig) {
 	__builtin_unreachable();
 }
 
+int sigpending(sigset_t *) {
+	__ensure(!"sigpending() not implemented");
+	__builtin_unreachable();
+}
