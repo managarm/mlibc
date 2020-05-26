@@ -69,3 +69,28 @@ int sem_post(sem_t *sem) {
 
 	return 0;
 }
+
+sem_t *sem_open(const char *, int, ...) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int sem_close(sem_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int sem_getvalue(sem_t *, int *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int sem_unlink(const char *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int sem_trywait(sem_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
