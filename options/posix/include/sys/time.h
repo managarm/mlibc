@@ -24,6 +24,10 @@ int timerisset(struct timeval *tvp);
 //TODO: implement timercmp as a macro
 //int timercmp(struct timeval *a, struct timeval *b, CMP);
 
+int getitimer(int which, struct itimerval *curr_value);
+int setitimer(int which, const struct itimerval *new_value,
+	struct itimerval *old_value);
+
 #ifdef __cplusplus
 }
 #endif

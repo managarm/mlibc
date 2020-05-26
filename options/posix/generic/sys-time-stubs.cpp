@@ -41,3 +41,11 @@ int timerisset(struct timeval *tvp) {
 	__builtin_unreachable();
 }
 
+int getitimer(int, struct itimerval *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int setitimer(int, const struct itimerval *, struct itimerval *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
