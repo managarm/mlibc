@@ -46,8 +46,19 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 	return num_events;
 }
 
-int pselect(int, fd_set *, fd_set *, fd_set *, const struct timespec *,
-		const sigset_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pselect(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set,
+		const struct timespec *timeout,	const sigset_t *sigmask) {
+	if(!mlibc::sys_pselect) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	int num_events = 0;
+	if(int e = mlibc::sys_pselect(num_fds, read_set, write_set, except_set,
+				timeout, sigmask, &num_events); e) {
+		errno = e;
+		return -1;
+	}
+	return num_events;
 }

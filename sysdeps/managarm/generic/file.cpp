@@ -1311,6 +1311,83 @@ int sys_select(int num_fds, fd_set *read_set, fd_set *write_set,
 	return 0;
 }
 
+int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set,
+		fd_set *except_set, const struct timespec *timeout,
+		const sigset_t *sigmask, int *num_events) {
+	// TODO: Do not keep errors from epoll (?).
+	int fd = epoll_create1(0);
+	if(fd == -1)
+		return -1;
+
+	for(int k = 0; k < FD_SETSIZE; k++) {
+		struct epoll_event ev;
+		memset(&ev, 0, sizeof(struct epoll_event));
+
+		if(read_set && FD_ISSET(k, read_set))
+			ev.events |= EPOLLIN; // TODO: Additional events.
+		if(write_set && FD_ISSET(k, write_set))
+			ev.events |= EPOLLOUT; // TODO: Additional events.
+		if(except_set && FD_ISSET(k, except_set))
+			ev.events |= EPOLLPRI;
+
+		if(!ev.events)
+			continue;
+		ev.data.u32 = k;
+
+		if(epoll_ctl(fd, EPOLL_CTL_ADD, k, &ev))
+			return -1;
+	}
+
+	struct epoll_event evnts[16];
+	int n = epoll_pwait(fd, evnts, 16,
+			timeout ? (timeout->tv_sec * 1000 + timeout->tv_nsec / 100) : -1, sigmask);
+	if(n == -1)
+		return -1;
+
+	fd_set res_read_set;
+	fd_set res_write_set;
+	fd_set res_except_set;
+	FD_ZERO(&res_read_set);
+	FD_ZERO(&res_write_set);
+	FD_ZERO(&res_except_set);
+	int m = 0;
+
+	for(int i = 0; i < n; i++) {
+		int k = evnts[i].data.u32;
+
+		if(read_set && FD_ISSET(k, read_set)
+				&& evnts[i].events & (EPOLLIN | EPOLLERR | EPOLLHUP)) {
+			FD_SET(k, &res_read_set);
+			m++;
+		}
+
+		if(write_set && FD_ISSET(k, write_set)
+				&& evnts[i].events & (EPOLLOUT | EPOLLERR | EPOLLHUP)) {
+			FD_SET(k, &res_write_set);
+			m++;
+		}
+
+		if(except_set && FD_ISSET(k, except_set)
+				&& evnts[i].events & EPOLLPRI) {
+			FD_SET(k, &res_except_set);
+			m++;
+		}
+	}
+
+	if(close(fd))
+		__ensure("close() failed on epoll file");
+
+	if(read_set)
+		memcpy(read_set, &res_read_set, sizeof(fd_set));
+	if(write_set)
+		memcpy(write_set, &res_write_set, sizeof(fd_set));
+	if(except_set)
+		memcpy(except_set, &res_except_set, sizeof(fd_set));
+
+	*num_events = m;
+	return 0;
+}
+
 int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	__ensure(timeout >= 0 || timeout == -1); // TODO: Report errors correctly.
 
@@ -1537,6 +1614,64 @@ int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout, int 
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	}
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	__ensure(!(recv_data->length % sizeof(struct epoll_event)));
+	*raised = recv_data->length / sizeof(struct epoll_event);
+	return 0;
+}
+
+int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
+		int timeout, const sigset_t *sigmask, int *raised) {
+	__ensure(timeout >= 0 || timeout == -1); // TODO: Report errors correctly.
+
+	SignalGuard sguard;
+	HelAction actions[4];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_request_type(managarm::posix::CntReqType::EPOLL_WAIT);
+	req.set_fd(epfd);
+	req.set_size(n);
+	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
+	req.set_sigmask((long int)sigmask);
+	req.set_sigmask_needed(true);
+
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = kHelItemChain;
+	actions[3].type = kHelActionRecvToBuffer;
+	actions[3].flags = 0;
+	actions[3].buffer = ev;
+	actions[3].length = n * sizeof(struct epoll_event);
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 4,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+	auto recv_data = parseLength(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(recv_data->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	}
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	__ensure(!(recv_data->length % sizeof(struct epoll_event)));
 	*raised = recv_data->length / sizeof(struct epoll_event);

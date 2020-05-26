@@ -2,10 +2,14 @@
 #ifndef _SYS_SELECT_H
 #define _SYS_SELECT_H
 
+#include <abi-bits/signal.h>
+
 #include <bits/ansi/time_t.h>
 #include <bits/posix/suseconds_t.h>
 #include <bits/posix/timeval.h>
 #include <bits/posix/fd_set.h>
+
+#define FD_SETSIZE 1024
 
 #ifdef __cplusplus
 extern "C" {

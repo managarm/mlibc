@@ -106,6 +106,8 @@ int sys_close(int fd);
 	[[gnu::weak]] int sys_execve(const char *path, char *const argv[], char *const envp[]);
 	[[gnu::weak]] int sys_select(int num_fds, fd_set *read_set, fd_set *write_set,
 			fd_set *except_set, struct timeval *timeout, int *num_events);
+	[[gnu::weak]] int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set,
+			fd_set *except_set, const struct timespec *timeout, const sigset_t *sigmask, int *num_events);
 	[[gnu::weak]] int sys_getrusage(int scope, struct rusage *usage);
 	[[gnu::weak]] int sys_getrlimit(int resource, struct rlimit *limit);
 	[[gnu::weak]] int sys_timerfd_create(int flags, int *fd);
@@ -157,6 +159,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 	[[gnu::weak]] int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev);
 	[[gnu::weak]] int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n,
 			int timeout, int *raised);
+	[[gnu::weak]] int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
+			int timeout, const sigset_t *sigmask, int *raised);
 	[[gnu::weak]] int sys_inotify_create(int flags, int *fd);
 	[[gnu::weak]] int sys_inotify_add_watch(int ifd, const char *path, uint32_t mask, int *wd);
 	[[gnu::weak]] int sys_inotify_rm_watch(int ifd, int wd);
