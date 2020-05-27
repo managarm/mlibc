@@ -47,6 +47,7 @@ int sys_anon_free(void *pointer, size_t size);
 
 #ifndef MLIBC_BUILDING_RTDL
 	[[noreturn]] void sys_exit(int status);
+	[[noreturn]] void sys_thread_exit();
 	int sys_clock_get(int clock, time_t *secs, long *nanos);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 
@@ -104,8 +105,6 @@ int sys_close(int fd);
 	[[gnu::weak]] int sys_fork(pid_t *child);
 	[[gnu::weak]] int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out);
 	[[gnu::weak]] int sys_execve(const char *path, char *const argv[], char *const envp[]);
-	[[gnu::weak]] int sys_select(int num_fds, fd_set *read_set, fd_set *write_set,
-			fd_set *except_set, struct timeval *timeout, int *num_events);
 	[[gnu::weak]] int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set,
 			fd_set *except_set, const struct timespec *timeout, const sigset_t *sigmask, int *num_events);
 	[[gnu::weak]] int sys_getrusage(int scope, struct rusage *usage);
@@ -157,8 +156,6 @@ int sys_vm_unmap(void *pointer, size_t size);
 	[[gnu::weak]] int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events);
 	[[gnu::weak]] int sys_epoll_create(int flags, int *fd);
 	[[gnu::weak]] int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev);
-	[[gnu::weak]] int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n,
-			int timeout, int *raised);
 	[[gnu::weak]] int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
 			int timeout, const sigset_t *sigmask, int *raised);
 	[[gnu::weak]] int sys_inotify_create(int flags, int *fd);
