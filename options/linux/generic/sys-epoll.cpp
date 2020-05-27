@@ -63,12 +63,12 @@ int epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 
 int epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
 	int raised;
-	if(!mlibc::sys_epoll_wait) {
+	if(!mlibc::sys_epoll_pwait) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
 		return -1;
 	}
-	if(int e = mlibc::sys_epoll_wait(epfd, evnts, n, timeout, &raised)) {
+	if(int e = mlibc::sys_epoll_pwait(epfd, evnts, n, timeout, NULL, &raised)) {
 		errno = e;
 		return -1;
 	}
