@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
@@ -197,7 +198,17 @@ char *realpath(const char *path, char *out) {
 				-1, resolv.data(), AT_SYMLINK_NOFOLLOW, &st); e)
 			return e;
 
-		__ensure(!S_ISLNK(st.st_mode) && "TODO: Use readlink in realpath()");
+		if(S_ISLNK(st.st_mode)) {
+			if(debugPathResolution) {
+				mlibc::infoLogger() << "mlibc realpath(): Encountered symlink '" << resolv.data() << "'" << frg::endlog;
+			}
+			char path[512];
+			readlink(resolv.data(), path, 512);
+			if(debugPathResolution) {
+				mlibc::infoLogger() << "mlibc realpath(): symlink resolves to '" << path << "'" << frg::endlog;
+			}
+			realpath(path, NULL);
+		}
 		// TODO: If it is a link, prepend it to lnk, adjust ls and revert the change to resolv.
 		return 0;
 	};
