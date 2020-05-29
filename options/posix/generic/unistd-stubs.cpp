@@ -425,10 +425,12 @@ ssize_t pread(int fd, void *buf, size_t n, off_t off) {
 	}
 	return num_read;
 }
+
 ssize_t pwrite(int, const void *, size_t, off_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 ssize_t readlink(const char *__restrict path, char *__restrict buffer, size_t max_size) {
 	ssize_t length;
 	if(!mlibc::sys_readlink) {
@@ -442,13 +444,23 @@ ssize_t readlink(const char *__restrict path, char *__restrict buffer, size_t ma
 	}
 	return length;
 }
+
 ssize_t readlinkat(int, const char *__restrict, char *__restrict, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int rmdir(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int rmdir(const char *path) {
+	if(!mlibc::sys_rmdir) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_rmdir(path); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int setegid(gid_t egid) {
