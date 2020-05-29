@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>
@@ -117,12 +118,60 @@ void rewinddir(DIR *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int scandir(const char *path, struct dirent ***, int (*)(const struct dirent *),
-		int (*)(const struct dirent **, const struct dirent **)) {
-	mlibc::infoLogger() << "\e[31m" "mlibc: scandir() stub called on " << path
-			<< "\e[39m" << frg::endlog;
-	errno = ENOSYS;
-	return -1;
+int scandir(const char *path, struct dirent ***res, int (*select)(const struct dirent *),
+		int (*compare)(const struct dirent **, const struct dirent **)) {
+	DIR *dir = opendir(path);
+	if (!dir)
+		return -1; // errno will be set by opendir()
+
+	// we should save the errno
+	int old_errno = errno;
+	errno = 0;
+
+	struct dirent *dir_ent;
+	struct dirent **array = nullptr, **tmp = nullptr;
+	int length = 0;
+	int count = 0;
+	while((dir_ent = readdir(dir)) && !errno) {
+		if(select && !select(dir_ent))
+			continue;
+
+		if(count >= length) {
+			length = 2*length + 1;
+			tmp = static_cast<struct dirent**>(realloc(array,
+						length * sizeof(struct dirent*)));
+			// we need to check the call actually goes through
+			// before we overwrite array so that we can
+			// deallocate the already written entries should realloc()
+			// have failed
+			if(!tmp)
+				break;
+			array = tmp;
+		}
+		array[count] = static_cast<struct dirent*>(malloc(dir_ent->d_reclen));
+		if(!array[count])
+			break;
+
+		memcpy(array[count], dir_ent, dir_ent->d_reclen);
+		count++;
+	}
+
+	if(errno) {
+		if(array)
+			while(count-- > 0)
+				free(array[count]);
+		free(array);
+		return -1;
+	}
+
+	// from here we can set the old errno back
+	errno = old_errno;
+
+	if(compare)
+		qsort(array, count, sizeof(struct dirent*),
+				(int (*)(const void *, const void *)) compare);
+	*res = array;
+	return count;
 }
 void seekdir(DIR *, long) {
 	__ensure(!"Not implemented");
