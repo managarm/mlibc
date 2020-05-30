@@ -8,16 +8,26 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <wchar.h>
+#include <stdlib.h>
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/file-window.hpp>
 #include <mlibc/sysdeps.hpp>
+#include <mlibc/allocator.hpp>
+
+const char __utc[] = "UTC";
 
 // Variables defined by POSIX.
 int daylight;
 long timezone;
 char *tzname[2];
+// TODO(geert): maybe we should have a standalone lock primitive?
+static AllocatorLock __time_lock;
+static file_window *get_localtime_window() {
+	static file_window window{"/etc/localtime"};
+	return &window;
+}
 
 clock_t clock(void) {
 	__ensure(!"Not implemented");
@@ -50,6 +60,7 @@ struct tm *gmtime(const time_t *unix_gmt) {
 }
 
 struct tm *localtime(const time_t *unix_gmt) {
+	tzset();
 	static thread_local struct tm per_thread_tm;
 	return localtime_r(unix_gmt, &per_thread_tm);
 }
@@ -58,11 +69,11 @@ size_t strftime(char *__restrict dest, size_t max_size,
 		const char *__restrict format, const struct tm *__restrict tm) {
 	auto c = format;
 	auto p = dest;
-	
+
 	while(*c) {
 		auto space = (dest + max_size) - p;
 		__ensure(space >= 0);
-		
+
 		if(*c != '%') {
 			if(!space)
 				return 0;
@@ -71,7 +82,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			p++;
 			continue;
 		}
-		
+
 		if(*(c + 1) == 'Y') {
 			auto chunk = snprintf(p, space, "%d", 1900 + tm->tm_year);
 			if(chunk >= space)
@@ -138,7 +149,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			int mon = tm->tm_mon;
 			if(mon < 0 || mon > 11)
 				__ensure(!"Month not in bounds.");
-			
+
 			auto chunk = snprintf(p, space, "%s", strmons[mon]);
 			if(chunk >= space)
 				return 0;
@@ -188,7 +199,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 
 	auto space = (dest + max_size) - p;
 	if(!space)
-		return 0;	
+		return 0;
 
 	*p = '\0';
 	return (p - dest) + 1;
@@ -196,11 +207,85 @@ size_t strftime(char *__restrict dest, size_t max_size,
 
 size_t wcsftime(wchar_t *__restrict, size_t, const wchar_t *__restrict,
 		const struct tm *__restrict) MLIBC_STUB_BODY
+namespace {
 
+struct tzfile {
+	uint8_t magic[4];
+	uint8_t version;
+	uint8_t reserved[15];
+	uint32_t tzh_ttisgmtcnt;
+	uint32_t tzh_ttisstdcnt;
+	uint32_t tzh_leapcnt;
+	uint32_t tzh_timecnt;
+	uint32_t tzh_typecnt;
+	uint32_t tzh_charcnt;
+};
+
+struct[[gnu::packed]] ttinfo {
+	int32_t tt_gmtoff;
+	unsigned char tt_isdst;
+	unsigned char tt_abbrind;
+};
+
+}
+
+// TODO(geert): this function doesn't parse the TZ environment variable
+// or properly handle the case where information might be missing from /etc/localtime
+// also we should probably unify the code for this and unix_local_from_gmt()
 void tzset(void) {
-	mlibc::infoLogger() << "mlibc: tzset() always initializes to UTC" << frg::endlog;
-	tzname[0] = "UTC";
-	tzname[1] = "\n";
+	// TODO(geert): std::lock_guard equivalent
+	__time_lock.lock();
+	// TODO(geert): we can probably cache this somehow
+	tzfile tzfile_time;
+	memcpy(&tzfile_time, reinterpret_cast<char *>(get_localtime_window()->get()), sizeof(tzfile));
+	tzfile_time.tzh_ttisgmtcnt = bswap_32(tzfile_time.tzh_ttisgmtcnt);
+	tzfile_time.tzh_ttisstdcnt = bswap_32(tzfile_time.tzh_ttisstdcnt);
+	tzfile_time.tzh_leapcnt = bswap_32(tzfile_time.tzh_leapcnt);
+	tzfile_time.tzh_timecnt = bswap_32(tzfile_time.tzh_timecnt);
+	tzfile_time.tzh_typecnt = bswap_32(tzfile_time.tzh_typecnt);
+	tzfile_time.tzh_charcnt = bswap_32(tzfile_time.tzh_charcnt);
+
+	if(tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i'
+			|| tzfile_time.magic[3] != 'f') {
+		mlibc::infoLogger() << "mlibc: /etc/localtime is not a valid TZinfo file" << frg::endlog;
+		__time_lock.unlock();
+		return;
+	}
+
+	if(tzfile_time.version != '\0' && tzfile_time.version != '2' && tzfile_time.version != '3') {
+		mlibc::infoLogger() << "mlibc: /etc/localtime has an invalid TZinfo version"
+				<< frg::endlog;
+		__time_lock.unlock();
+		return;
+	}
+
+	// There should be at least one entry in the ttinfo table.
+	// TODO: If there is not, we might want to fall back to UTC, no DST (?).
+	__ensure(tzfile_time.tzh_typecnt);
+
+	char *abbrevs = reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
+		+ tzfile_time.tzh_timecnt * sizeof(int32_t)
+		+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
+		+ tzfile_time.tzh_typecnt * sizeof(struct ttinfo);
+	// start from the last ttinfo entry, this matches the behaviour of glibc and musl
+	for (int i = tzfile_time.tzh_typecnt; i > 0; i--) {
+		ttinfo time_info;
+		memcpy(&time_info, reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
+				+ tzfile_time.tzh_timecnt * sizeof(int32_t)
+				+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
+				+ i * sizeof(ttinfo), sizeof(ttinfo));
+		time_info.tt_gmtoff = bswap_32(time_info.tt_gmtoff);
+		if (!time_info.tt_isdst && !tzname[0]) {
+			tzname[0] = abbrevs + time_info.tt_abbrind;
+			timezone = -time_info.tt_gmtoff;
+		}
+		if (time_info.tt_isdst && !tzname[1]) {
+			tzname[1] = abbrevs + time_info.tt_abbrind;
+			timezone = -time_info.tt_gmtoff;
+			daylight = 1;
+		}
+	}
+	__time_lock.unlock();
 }
 
 // POSIX extensions.
@@ -297,39 +382,23 @@ void yearday_from_date(unsigned int year, unsigned int month, unsigned int day, 
 	*yday = n1 - (n2 * n3) + day - 30;
 }
 
-struct tzfile {
-	uint8_t magic[4];
-	uint8_t version;
-	uint8_t reserved[15];
-	uint32_t tzh_ttisgmtcnt;
-	uint32_t tzh_ttisstdcnt;
-	uint32_t tzh_leapcnt;
-	uint32_t tzh_timecnt;
-	uint32_t tzh_typecnt;
-	uint32_t tzh_charcnt;
-};
-
-struct[[gnu::packed]] ttinfo {
-	int32_t tt_gmtoff;
-	unsigned char tt_isdst;
-	unsigned char tt_abbrind;
-};
-
-// Looks up the local time rules for a given 
+// Looks up the local time rules for a given
 // UNIX GMT timestamp (seconds since 1970 GMT, ignoring leap seconds).
-int unix_local_from_gmt(time_t unix_gmt, time_t *offset, bool *dst) {
-	static file_window window{"/etc/localtime"};
-
+// This function assumes the __time_lock has been taken
+// TODO(geert): if /etc/localtime isn't available this will fail... In that case
+// we should call tzset() and use the variables to compute the variables from
+// the tzset() global variables. Look at the musl code for how to do that
+int unix_local_from_gmt(time_t unix_gmt, time_t *offset, bool *dst, char **tm_zone) {
 	tzfile tzfile_time;
-	memcpy(&tzfile_time, reinterpret_cast<char *>(window.get()), sizeof(tzfile));
+	memcpy(&tzfile_time, reinterpret_cast<char *>(get_localtime_window()->get()), sizeof(tzfile));
 	tzfile_time.tzh_ttisgmtcnt = bswap_32(tzfile_time.tzh_ttisgmtcnt);
 	tzfile_time.tzh_ttisstdcnt = bswap_32(tzfile_time.tzh_ttisstdcnt);
 	tzfile_time.tzh_leapcnt = bswap_32(tzfile_time.tzh_leapcnt);
 	tzfile_time.tzh_timecnt = bswap_32(tzfile_time.tzh_timecnt);
 	tzfile_time.tzh_typecnt = bswap_32(tzfile_time.tzh_typecnt);
 	tzfile_time.tzh_charcnt = bswap_32(tzfile_time.tzh_charcnt);
-	
-	if(tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i' 
+
+	if(tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i'
 			|| tzfile_time.magic[3] != 'f') {
 		mlibc::infoLogger() << "mlibc: /etc/localtime is not a valid TZinfo file" << frg::endlog;
 		return -1;
@@ -344,7 +413,7 @@ int unix_local_from_gmt(time_t unix_gmt, time_t *offset, bool *dst) {
 	int index = -1;
 	for(size_t i = 0; i < tzfile_time.tzh_timecnt; i++) {
 		int32_t ttime;
-		memcpy(&ttime, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
+		memcpy(&ttime, reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
 				+ i * sizeof(int32_t), sizeof(int32_t));
 		ttime = bswap_32(ttime);
 		// If we are before the first transition, the format dicates that
@@ -353,14 +422,14 @@ int unix_local_from_gmt(time_t unix_gmt, time_t *offset, bool *dst) {
 		if(i && ttime > unix_gmt) {
 			index = i - 1;
 			break;
-		}	
+		}
 	}
 
 	// The format dictates that if no transition is applicable,
 	// the first entry in the file is chosen.
 	uint8_t ttinfo_index = 0;
 	if(index >= 0) {
-		memcpy(&ttinfo_index, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
+		memcpy(&ttinfo_index, reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
 				+ tzfile_time.tzh_timecnt * sizeof(int32_t)
 				+ index * sizeof(uint8_t), sizeof(uint8_t));
 	}
@@ -370,14 +439,20 @@ int unix_local_from_gmt(time_t unix_gmt, time_t *offset, bool *dst) {
 	__ensure(tzfile_time.tzh_typecnt);
 
 	ttinfo time_info;
-	memcpy(&time_info, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
+	memcpy(&time_info, reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
 			+ tzfile_time.tzh_timecnt * sizeof(int32_t)
 			+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
 			+ ttinfo_index * sizeof(ttinfo), sizeof(ttinfo));
 	time_info.tt_gmtoff = bswap_32(time_info.tt_gmtoff);
-	
+
+	char *abbrevs = reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
+		+ tzfile_time.tzh_timecnt * sizeof(int32_t)
+		+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
+		+ tzfile_time.tzh_typecnt * sizeof(struct ttinfo);
+
 	*offset = time_info.tt_gmtoff;
 	*dst = time_info.tt_isdst;
+	*tm_zone = abbrevs + time_info.tt_abbrind;
 	return 0;
 }
 
@@ -406,6 +481,7 @@ struct tm *gmtime_r(const time_t *unix_gmt, struct tm *res) {
 	res->tm_wday = weekday;
 	res->tm_yday = yday - 1;
 	res->tm_isdst = -1;
+	res->tm_zone = __utc;
 
 	return res;
 }
@@ -419,8 +495,11 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 
 	time_t offset = 0;
 	bool dst;
+	char *tm_zone;
+	// TODO(geert): maybe we should have an std::lock_guard equivalent
+	__time_lock.lock();
 	// TODO: Set errno if the conversion fails.
-	if(unix_local_from_gmt(*unix_gmt, &offset, &dst))
+	if(unix_local_from_gmt(*unix_gmt, &offset, &dst, &tm_zone))
 		__ensure(!"Error parsing /etc/localtime");
 	time_t unix_local = *unix_gmt + offset;
 
@@ -437,8 +516,10 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 	res->tm_year = year - 1900;
 	res->tm_wday = weekday;
 	res->tm_yday = yday - 1;
-	res->tm_isdst = -1;
+	res->tm_isdst = dst;
+	res->tm_zone = tm_zone;
 
+	__time_lock.unlock();
 	return res;
 }
 
