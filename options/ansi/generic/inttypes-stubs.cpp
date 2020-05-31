@@ -20,18 +20,28 @@ imaxdiv_t imaxdiv(intmax_t, intmax_t) {
 template <class T> T strtoxmax(const char *it, char **out, int base) {
 	T v = 0;
 	bool negate = false;
-
-	// TODO: In this case we have to detect the base based on the prefix.
-	__ensure(base);
+	const unsigned char *s = (const unsigned char *)it;
+	int c;
 
 	if(std::is_signed<T>::value) {
-		if(*it == '+') {
-			it++;
-		}else if(*it == '-') {
+		if(*s == '+') {
+			s++;
+		}else if(*s == '-') {
 			negate = true;
-			it++;
+			s++;
 		}
 	}
+
+	do {
+		c = *s++;
+	} while (isspace(c));
+	if ((base == 0 || base == 16) && c == '0' && (*s == 'x' || *s == 'X')) {
+		c = s[1];
+		s += 2;
+		base = 16;
+	}
+	if (base == 0)
+		base = c == '0' ? 8 : 10;
 
 	if(base == 8) {
 		if(*it != 0)

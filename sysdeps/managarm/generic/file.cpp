@@ -295,6 +295,10 @@ int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		return ENOENT;
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	}else if(resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
@@ -1235,8 +1239,9 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	}
 }
 
-int sys_select(int num_fds, fd_set *read_set, fd_set *write_set,
-		fd_set *except_set, struct timeval *timeout, int *num_events) {
+int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set,
+		fd_set *except_set, const struct timespec *timeout,
+		const sigset_t *sigmask, int *num_events) {
 	// TODO: Do not keep errors from epoll (?).
 	int fd = epoll_create1(0);
 	if(fd == -1)
@@ -1262,8 +1267,8 @@ int sys_select(int num_fds, fd_set *read_set, fd_set *write_set,
 	}
 
 	struct epoll_event evnts[16];
-	int n = epoll_wait(fd, evnts, 16,
-			timeout ? (timeout->tv_sec * 1000 + timeout->tv_usec / 10) : -1);
+	int n = epoll_pwait(fd, evnts, 16,
+		timeout ? (timeout->tv_sec * 1000 + timeout->tv_nsec / 100) : -1, sigmask);
 	if(n == -1)
 		return -1;
 
@@ -1494,7 +1499,8 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 	return 0;
 }
 
-int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout, int *raised) {
+int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
+		int timeout, const sigset_t *sigmask, int *raised) {
 	__ensure(timeout >= 0 || timeout == -1); // TODO: Report errors correctly.
 
 	SignalGuard sguard;
@@ -1506,6 +1512,12 @@ int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout, int 
 	req.set_fd(epfd);
 	req.set_size(n);
 	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
+	if(sigmask != NULL) {
+		req.set_sigmask((long int)*sigmask);
+		req.set_sigmask_needed(true);
+	} else {
+		req.set_sigmask_needed(false);
+	}
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
@@ -1519,7 +1531,7 @@ int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout, int 
 	actions[2].flags = kHelItemChain;
 	actions[3].type = kHelActionRecvToBuffer;
 	actions[3].flags = 0;
-	actions[3].buffer = evnts;
+	actions[3].buffer = ev;
 	actions[3].length = n * sizeof(struct epoll_event);
 	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 4,
 			globalQueue.getQueue(), 0, 0));
@@ -1537,6 +1549,9 @@ int sys_epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout, int 
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	}
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	__ensure(!(recv_data->length % sizeof(struct epoll_event)));
 	*raised = recv_data->length / sizeof(struct epoll_event);
@@ -3868,6 +3883,48 @@ int sys_readlink(const char *path, void *data, size_t max_size, ssize_t *length)
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*length = recv_data->length;
+		return 0;
+	}
+}
+
+int sys_rmdir(const char *path) {
+	SignalGuard sguard;
+	HelAction actions[3];
+
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_request_type(managarm::posix::CntReqType::RMDIR);
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
+
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
 	}
 }

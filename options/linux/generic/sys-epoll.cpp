@@ -19,9 +19,19 @@ int epoll_create(int) {
 	return fd;
 }
 
-int epoll_pwait(int, struct epoll_event *, int, int, const sigset_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int epoll_pwait(int epfd, struct epoll_event *evnts, int n, int timeout,
+		const sigset_t *sigmask) {
+	int raised;
+	if(!mlibc::sys_epoll_pwait) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_epoll_pwait(epfd, evnts, n, timeout, sigmask, &raised)) {
+		errno = e;
+		return -1;
+	}
+	return raised;
 }
 
 int epoll_create1(int flags) {
@@ -53,12 +63,12 @@ int epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 
 int epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
 	int raised;
-	if(!mlibc::sys_epoll_wait) {
+	if(!mlibc::sys_epoll_pwait) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
 		return -1;
 	}
-	if(int e = mlibc::sys_epoll_wait(epfd, evnts, n, timeout, &raised)) {
+	if(int e = mlibc::sys_epoll_pwait(epfd, evnts, n, timeout, NULL, &raised)) {
 		errno = e;
 		return -1;
 	}

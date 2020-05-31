@@ -257,6 +257,11 @@ int printf(const char *__restrict format, ...) {
 	return result;
 }
 
+int dprintf(int fd, const char *format, ...) {
+    __ensure(!"Not implemented");
+    __builtin_unreachable();
+}
+
 namespace {
     enum {
         SCANF_TYPE_CHAR,

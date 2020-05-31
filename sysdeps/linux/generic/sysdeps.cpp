@@ -27,6 +27,7 @@
 #define NR_fcntl 72
 #define NR_arch_prctl 158
 #define NR_clock_gettime 228
+#define NR_pselect6 270
 
 #define ARCH_SET_FS	0x1002
 
@@ -198,10 +199,20 @@ int sys_fcntl(int fd, int cmd, va_list args, int *result) {
         return 0;
 }
 
-int sys_select(int nfds, fd_set *readfds, fd_set *writefds,
-                fd_set *exceptfds, struct timeval *timeout, int *num_events) {
-        auto ret = do_syscall(NR_select, nfds, readfds, writefds,
-                        exceptfds, timeout);
+int sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
+                fd_set *exceptfds, struct timeval *timeout, const sigset_t sigmask, int *num_events) {
+        // The Linux kernel really wants 7 arguments, even tho this is not supported
+        // To fix that issue, they use a struct as the last argument.
+        // See the man page of pselect and the glibc source code
+        struct {
+                sigset_t ss;
+                size_t ss_len;
+        } data;
+        data.ss = (uintptr_t)sigmask;
+        data.ss_len = NSIG / 8;
+
+        auto ret = do_syscall(NR_pselect6, nfds, readfds, writefds,
+                        exceptfds, timeout, &data);
         if (int e = sc_error(ret); e)
                 return e;
         *num_events = sc_int_result<int>(ret);

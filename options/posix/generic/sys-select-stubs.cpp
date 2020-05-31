@@ -31,15 +31,35 @@ void FD_ZERO(fd_set *set) {
 // TODO: Provide a sys_select() function instead.
 int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_set,
 		fd_set *__restrict except_set, struct timeval *__restrict timeout) {
-    if(!mlibc::sys_select) {
+    if(!mlibc::sys_pselect) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
 		return -1;
 	}
 
 	int num_events = 0;
-	if(int e = mlibc::sys_select(num_fds, read_set, write_set, except_set,
-				timeout, &num_events); e) {
+	struct timespec timeouts = {0};
+	timeouts.tv_sec = timeout->tv_sec;
+	timeouts.tv_nsec = timeout->tv_usec * 1000;
+	if(int e = mlibc::sys_pselect(num_fds, read_set, write_set, except_set,
+				&timeouts, NULL, &num_events); e) {
+		errno = e;
+		return -1;
+	}
+	return num_events;
+}
+
+int pselect(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set,
+		const struct timespec *timeout,	const sigset_t *sigmask) {
+	if(!mlibc::sys_pselect) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	int num_events = 0;
+	if(int e = mlibc::sys_pselect(num_fds, read_set, write_set, except_set,
+				timeout, sigmask, &num_events); e) {
 		errno = e;
 		return -1;
 	}

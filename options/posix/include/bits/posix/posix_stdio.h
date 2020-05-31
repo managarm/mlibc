@@ -24,6 +24,8 @@ FILE *open_memstream(char **, size_t *);
 int fseeko(FILE *stream, off_t offset, int whence);
 off_t ftello(FILE *stream);
 
+int dprintf(int fd, const char *format, ...);
+
 #ifdef __cplusplus
 }
 #endif
