@@ -18,6 +18,10 @@ extern "C" {
 #define PTHREAD_CREATE_JOINABLE 0
 #define PTHREAD_CREATE_DETACHED 1
 
+// Values for pthread_attr_{get,set}scope
+#define PTHREAD_SCOPE_SYSTEM 0
+#define PTHREAD_SCOPE_PROCESS 1
+
 // values for pthread_{get,set}canceltype().
 #define PTHREAD_CANCEL_DEFERRED 0
 #define PTHREAD_CANCEL_ASYNCRONOUS 1
@@ -122,6 +126,9 @@ int pthread_attr_setstacksize(pthread_attr_t *, size_t);
 
 int pthread_attr_getguardsize(const pthread_attr_t *__restrict, size_t *__restrict);
 int pthread_attr_setguardsize(pthread_attr_t *, size_t);
+
+int pthread_attr_getscope(const pthread_attr_t *, int);
+int pthread_attr_setscope(pthread_attr_t *, int);
 
 // pthread functions.
 int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict,

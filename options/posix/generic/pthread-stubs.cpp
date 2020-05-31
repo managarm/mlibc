@@ -96,6 +96,14 @@ int pthread_attr_setguardsize(pthread_attr_t *, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+int pthread_attr_getscope(const pthread_attr_t *, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int pthread_attr_setscope(pthread_attr_t *, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 
 extern "C" Tcb *__rtdl_allocateTcb();
 
