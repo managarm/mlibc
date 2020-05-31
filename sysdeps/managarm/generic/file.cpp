@@ -1267,14 +1267,8 @@ int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set,
 	}
 
 	struct epoll_event evnts[16];
-	int n;
-	if(sigmask != NULL) {
-		n = epoll_pwait(fd, evnts, 16,
-			timeout ? (timeout->tv_sec * 1000 + timeout->tv_nsec / 100) : -1, sigmask);
-	} else {
-		n = epoll_wait(fd, evnts, 16,
-			timeout ? (timeout->tv_sec * 1000 + timeout->tv_nsec / 100) : -1);
-	}
+	int n = epoll_pwait(fd, evnts, 16,
+		timeout ? (timeout->tv_sec * 1000 + timeout->tv_nsec / 100) : -1, sigmask);
 	if(n == -1)
 		return -1;
 
@@ -1519,7 +1513,7 @@ int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
 	req.set_size(n);
 	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
 	if(sigmask != NULL) {
-		req.set_sigmask((long int)sigmask);
+		req.set_sigmask((long int)*sigmask);
 		req.set_sigmask_needed(true);
 	} else {
 		req.set_sigmask_needed(false);
