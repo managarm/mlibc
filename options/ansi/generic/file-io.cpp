@@ -12,9 +12,11 @@
 
 #include <abi-bits/abi.h>
 #include <frg/allocation.hpp>
+#include <frg/mutex.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/file-io.hpp>
 #include <mlibc/sysdeps.hpp>
+#include <mlibc/lock.hpp>
 
 namespace mlibc {
 
@@ -489,6 +491,8 @@ int fileno_unlocked(FILE *file_base) {
 }
 
 int fileno(FILE *file_base) {
+	auto file = static_cast<mlibc::fd_file *>(file_base);
+	frg::unique_lock<FutexLock> lock(file->_lock);
 	return fileno_unlocked(file_base);
 }
 
@@ -560,6 +564,7 @@ int fclose(FILE *file_base) {
 
 int fseek(FILE *file_base, long offset, int whence) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	frg::unique_lock<FutexLock> lock(file->_lock);
 	if(int e = file->seek(offset, whence); e) {
 		errno = e;
 		return -1;
@@ -569,6 +574,7 @@ int fseek(FILE *file_base, long offset, int whence) {
 
 long ftell(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	frg::unique_lock<FutexLock> lock(file->_lock);
 	off_t current_offset;
 	if(int e = file->tell(&current_offset); e) {
 		errno = e;
@@ -593,6 +599,8 @@ int fflush_unlocked(FILE *file_base) {
 	return 0;
 }
 int fflush(FILE *file_base) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	frg::unique_lock<FutexLock> lock(file->_lock);
 	return fflush_unlocked(file_base);
 }
 
@@ -624,18 +632,21 @@ int setvbuf(FILE *file_base, char *buffer, int mode, size_t size) {
 
 void rewind(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	frg::unique_lock<FutexLock> lock(file->_lock);
 	file->seek(0, SEEK_SET);
 	file_base->__status_bits &= ~(__MLIBC_EOF_BIT | __MLIBC_ERROR_BIT);
 }
 
 int ungetc(int c, FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	frg::unique_lock<FutexLock> lock(file->_lock);
 	file->unget(c);
 	return c;
 }
 
 void __fpurge(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	frg::unique_lock<FutexLock> lock(file->_lock);
 	file->purge();
 }
 
