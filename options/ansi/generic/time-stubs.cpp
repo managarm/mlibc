@@ -15,6 +15,9 @@
 #include <mlibc/file-window.hpp>
 #include <mlibc/sysdeps.hpp>
 #include <mlibc/allocator.hpp>
+#include <mlibc/lock.hpp>
+
+#include <frg/mutex.hpp>
 
 const char __utc[] = "UTC";
 
@@ -22,8 +25,8 @@ const char __utc[] = "UTC";
 int daylight;
 long timezone;
 char *tzname[2];
-// TODO(geert): maybe we should have a standalone lock primitive?
-static AllocatorLock __time_lock;
+
+static FutexLock __time_lock;
 static file_window *get_localtime_window() {
 	static file_window window{"/etc/localtime"};
 	return &window;
@@ -233,8 +236,7 @@ struct[[gnu::packed]] ttinfo {
 // or properly handle the case where information might be missing from /etc/localtime
 // also we should probably unify the code for this and unix_local_from_gmt()
 void tzset(void) {
-	// TODO(geert): std::lock_guard equivalent
-	__time_lock.lock();
+	frg::unique_lock<FutexLock> lock(__time_lock);
 	// TODO(geert): we can probably cache this somehow
 	tzfile tzfile_time;
 	memcpy(&tzfile_time, reinterpret_cast<char *>(get_localtime_window()->get()), sizeof(tzfile));
@@ -248,14 +250,12 @@ void tzset(void) {
 	if(tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i'
 			|| tzfile_time.magic[3] != 'f') {
 		mlibc::infoLogger() << "mlibc: /etc/localtime is not a valid TZinfo file" << frg::endlog;
-		__time_lock.unlock();
 		return;
 	}
 
 	if(tzfile_time.version != '\0' && tzfile_time.version != '2' && tzfile_time.version != '3') {
 		mlibc::infoLogger() << "mlibc: /etc/localtime has an invalid TZinfo version"
 				<< frg::endlog;
-		__time_lock.unlock();
 		return;
 	}
 
@@ -285,7 +285,6 @@ void tzset(void) {
 			daylight = 1;
 		}
 	}
-	__time_lock.unlock();
 }
 
 // POSIX extensions.
@@ -496,8 +495,7 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 	time_t offset = 0;
 	bool dst;
 	char *tm_zone;
-	// TODO(geert): maybe we should have an std::lock_guard equivalent
-	__time_lock.lock();
+	frg::unique_lock<FutexLock> lock(__time_lock);
 	// TODO: Set errno if the conversion fails.
 	if(unix_local_from_gmt(*unix_gmt, &offset, &dst, &tm_zone))
 		__ensure(!"Error parsing /etc/localtime");
@@ -519,7 +517,6 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 	res->tm_isdst = dst;
 	res->tm_zone = tm_zone;
 
-	__time_lock.unlock();
 	return res;
 }
 
