@@ -49,26 +49,26 @@ extern "C" {
 #ifdef __MLIBC_POSIX_OPTION
 
 #define SIGALRM 8
-#define SIGBUS 9
-#define SIGCHLD 10
-#define SIGCONT 11
-#define SIGHUP 12
-#define SIGKILL 13
-#define SIGPIPE 14
-#define SIGQUIT 15
-#define SIGSTOP 16
-#define SIGTSTP 17
-#define SIGTTIN 18
-#define SIGTTOU 19
-#define SIGUSR1 20
-#define SIGUSR2 21
-#define SIGSYS 22
-#define SIGTRAP 23
-#define SIGURG 24
-#define SIGVTALRM 25
-#define SIGXCPU 26
-#define SIGXFSZ 27
-#define SIGWINCH 28
+#define SIGBUS 13
+#define SIGCHLD 14
+#define SIGCONT 15
+#define SIGHUP 16
+#define SIGKILL 17
+#define SIGPIPE 18
+#define SIGQUIT 19
+#define SIGSTOP 20
+#define SIGTSTP 21
+#define SIGTTIN 22
+#define SIGTTOU 23
+#define SIGUSR1 24
+#define SIGUSR2 25
+#define SIGSYS 26
+#define SIGTRAP 27
+#define SIGURG 28
+#define SIGVTALRM 29
+#define SIGXCPU 30
+#define SIGXFSZ 31
+#define SIGWINCH 32
 #define SIGUNUSED SIGSYS
 
 #define SA_NOCLDSTOP (1 << 0)
