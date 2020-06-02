@@ -590,6 +590,10 @@ unsigned long sysconf(int number) {
 			// TODO: actually return a proper value for _SC_PHYS_PAGES
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_PHYS_PAGES) returns arbitrary value 1024\e[39m" << frg::endlog;
 			return 1024;
+		case _SC_NPROCESSORS_ONLN:
+			// TODO: actually return a proper value for _SC_NPROCESSORS_ONLN
+			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_NPROCESSORS_ONLN) unconditionally returns 1\e[39m" << frg::endlog;
+			return 1;
 		default:
 			mlibc::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented, number: " << number << "\e[39m" << frg::endlog;
 			__builtin_unreachable();
