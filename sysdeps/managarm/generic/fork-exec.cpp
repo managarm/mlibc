@@ -569,15 +569,14 @@ int sys_getrusage(int scope, struct rusage *usage) {
 }
 
 int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out) {
-	HelError e;
-	HelWord pid;
+	HelWord e = 0, pid = 0;
 
 	void *sp = prepare_stack(entry, user_arg, tcb);
 
 	HEL_CHECK(helSyscall2_2(kHelCallSuper + 9,
 				reinterpret_cast<HelWord>(__mlibc_start_thread),
 				reinterpret_cast<HelWord>(sp),
-				reinterpret_cast<HelWord *>(&e), &pid));
+				&e, &pid));
 
 	if (pid_out)
 		*pid_out = pid;

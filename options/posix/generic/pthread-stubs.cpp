@@ -104,10 +104,8 @@ extern "C" void *__rtdl_allocateTcb();
 int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict,
 		void *(*entry) (void *), void *__restrict user_arg) {
 	void *new_tcb = __rtdl_allocateTcb();
-	*thread = reinterpret_cast<pthread_t>(new_tcb);
-	// FIXME: this call has unexpected side effects (at least lower 32-bit
-	//        part of rbx is zeroed out).
 	mlibc::sys_clone(reinterpret_cast<void *>(entry), user_arg, new_tcb, nullptr);
+	*thread = reinterpret_cast<pthread_t>(new_tcb);
 
 	return 0;
 }
