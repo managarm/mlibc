@@ -9,3 +9,6 @@ extern "C" void frg_panic(const char *mstr) {
 	mlibc::sys_libc_panic();
 }
 
+extern "C" void frg_log(const char *mstr) {
+	mlibc::sys_libc_log(mstr);
+}
