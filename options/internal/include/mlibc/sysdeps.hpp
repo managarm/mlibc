@@ -47,7 +47,7 @@ int sys_anon_free(void *pointer, size_t size);
 
 #ifndef MLIBC_BUILDING_RTDL
 	[[noreturn]] void sys_exit(int status);
-	[[noreturn]] void sys_thread_exit();
+	[[noreturn, gnu::weak]] void sys_thread_exit();
 	int sys_clock_get(int clock, time_t *secs, long *nanos);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 
