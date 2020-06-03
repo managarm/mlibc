@@ -1,5 +1,6 @@
 #include <mlibc/thread-entry.hpp>
 #include <mlibc/sysdeps.hpp>
+#include <mlibc/tcb.hpp>
 #include <bits/ensure.h>
 #include <sys/mman.h>
 #include <stdint.h>
@@ -9,10 +10,16 @@ extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, void *tcb) {
 	if(mlibc::sys_tcb_set(tcb))
 		__ensure(!"sys_tcb_set() failed");
 
-	void (*func)(void *) = reinterpret_cast<void (*)(void *)>(entry);
-	func(user_arg);
+	void *(*func)(void *) = reinterpret_cast<void *(*)(void *)>(entry);
+	auto result = func(user_arg);
 
-	__builtin_trap();
+	auto self = reinterpret_cast<Tcb *>(tcb);
+
+	self->returnValue = result;
+	__atomic_store_n(&self->didExit, 1, __ATOMIC_RELEASE);
+	mlibc::sys_futex_wake(&self->didExit);
+
+	mlibc::sys_thread_exit();
 }
 
 namespace mlibc {

@@ -12,6 +12,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
 #include <mlibc/thread.hpp>
+#include <mlibc/tcb.hpp>
 
 static bool enableTrace = false;
 
@@ -102,10 +103,11 @@ extern "C" void *__rtdl_allocateTcb();
 // pthread functions.
 int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict,
 		void *(*entry) (void *), void *__restrict user_arg) {
-
 	void *new_tcb = __rtdl_allocateTcb();
-	mlibc::sys_clone(reinterpret_cast<void *>(entry), user_arg, new_tcb, nullptr);
 	*thread = reinterpret_cast<pthread_t>(new_tcb);
+	// FIXME: this call has unexpected side effects (at least lower 32-bit
+	//        part of rbx is zeroed out).
+	mlibc::sys_clone(reinterpret_cast<void *>(entry), user_arg, new_tcb, nullptr);
 
 	return 0;
 }
@@ -120,15 +122,33 @@ int pthread_equal(pthread_t t1, pthread_t t2) {
 	return 0;
 }
 
-int pthread_exit(void *) {
-	__ensure(!"Not implemented");
+int pthread_exit(void *ret_val) {
+	auto self = static_cast<Tcb *>(mlibc::get_current_tcb());
+
+	self->returnValue = ret_val;
+	__atomic_store_n(&self->didExit, 1, __ATOMIC_RELEASE);
+	mlibc::sys_futex_wake(&self->didExit);
+
+	// TODO: do exit(0) when we're the only thread instead
+	mlibc::sys_thread_exit();
 	__builtin_unreachable();
 }
 
-int pthread_join(pthread_t, void **) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_join(pthread_t thread, void **ret) {
+	auto tcb = reinterpret_cast<Tcb *>(thread);
+
+	while (!__atomic_load_n(&tcb->didExit, __ATOMIC_ACQUIRE)) {
+		mlibc::sys_futex_wait(&tcb->didExit, 0);
+	}
+
+	if (ret)
+		*ret = tcb->returnValue;
+
+	// FIXME: destroy tcb here, currently we leak it
+
+	return 0;
 }
+
 int pthread_detach(pthread_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

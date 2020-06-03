@@ -6,6 +6,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
+#include <mlibc/tcb.hpp>
 #include <internal-config.h>
 #include "linker.hpp"
 
@@ -584,12 +585,6 @@ void doInitialize(SharedObject *object) {
 RuntimeTlsMap::RuntimeTlsMap()
 : initialPtr{0}, initialLimit{0}, indices{getAllocator()} { }
 
-struct Tcb {
-	Tcb *selfPointer;
-	size_t dtvSize;
-	void **dtvPointers;
-};
-
 void *allocateTcb() {
 	size_t fs_size = runtimeTlsMap->initialLimit + sizeof(Tcb);
 	auto fs_buffer = getAllocator().allocate(fs_size);
@@ -598,6 +593,8 @@ void *allocateTcb() {
 	auto tcb_ptr = new (reinterpret_cast<char *>(fs_buffer) + runtimeTlsMap->initialLimit) Tcb;
 	tcb_ptr->selfPointer = tcb_ptr;
 
+	tcb_ptr->didExit = 0;
+	tcb_ptr->returnValue = nullptr;
 	tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
 	tcb_ptr->dtvPointers = frg::construct_n<void *>(getAllocator(), runtimeTlsMap->indices.size());
 	memset(tcb_ptr->dtvPointers, 0, sizeof(void *) * runtimeTlsMap->indices.size());

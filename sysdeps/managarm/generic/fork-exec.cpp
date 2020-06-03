@@ -590,5 +590,12 @@ int sys_tcb_set(void *pointer) {
 	return 0;
 }
 
+void sys_thread_exit() {
+	// This implementation is inherently signal-safe.
+	HEL_CHECK(helSyscall1(kHelCallSuper + 4, 0));
+	__builtin_trap();
+}
+
+
 } //namespace mlibc
 
