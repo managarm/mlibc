@@ -212,8 +212,14 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	linker.submitObject(executableSO);
 	linker.linkObjects();
 
-	if(mlibc::sys_tcb_set(allocateTcb()))
+	auto tcb = allocateTcb();
+	if(mlibc::sys_tcb_set(tcb))
 		__ensure(!"sys_tcb_set() failed");
+	if(mlibc::sys_futex_tid) {
+		tcb->tid = mlibc::sys_futex_tid();
+	}else{
+		tcb->tid = 1;
+	}
 
 	linker.initObjects();
 

@@ -4,6 +4,7 @@
 #include <frg/string.hpp>
 #include <frg/vector.hpp>
 #include <mlibc/allocator.hpp>
+#include <mlibc/tcb.hpp>
 
 struct ObjectRepository;
 struct Scope;
@@ -159,7 +160,7 @@ struct RuntimeTlsMap {
 
 extern frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
-void *allocateTcb();
+Tcb *allocateTcb();
 void *accessDtv(SharedObject *object);
 
 // --------------------------------------------------------

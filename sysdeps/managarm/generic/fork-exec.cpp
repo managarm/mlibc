@@ -24,6 +24,42 @@
 
 namespace mlibc {
 
+int sys_futex_tid() {
+	SignalGuard sguard;
+	HelAction actions[3];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_request_type(managarm::posix::CntReqType::GET_TID);
+
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	return resp.pid();
+}
+
 int sys_futex_wait(int *pointer, int expected) {
 	// This implementation is inherently signal-safe.
 	if(helFutexWait(pointer, expected, -1))
@@ -569,14 +605,14 @@ int sys_getrusage(int scope, struct rusage *usage) {
 }
 
 int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out) {
-	HelWord e = 0, pid = 0;
+	HelWord pid = 0;
 
 	void *sp = prepare_stack(entry, user_arg, tcb);
 
-	HEL_CHECK(helSyscall2_2(kHelCallSuper + 9,
+	HEL_CHECK(helSyscall2_1(kHelCallSuper + 9,
 				reinterpret_cast<HelWord>(__mlibc_start_thread),
 				reinterpret_cast<HelWord>(sp),
-				&e, &pid));
+				&pid));
 
 	if (pid_out)
 		*pid_out = pid;

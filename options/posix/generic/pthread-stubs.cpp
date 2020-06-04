@@ -43,9 +43,8 @@ private:
 namespace {
 
 unsigned int this_tid() {
-	if(mlibc::sys_futex_tid)
-		return mlibc::sys_futex_tid();
-	return 1;
+	auto tcb = mlibc::get_current_tcb();
+	return tcb->tid;
 }
 
 } // anonymous namespace
@@ -98,14 +97,18 @@ int pthread_attr_setguardsize(pthread_attr_t *, size_t) {
 	__builtin_unreachable();
 }
 
-extern "C" void *__rtdl_allocateTcb();
+extern "C" Tcb *__rtdl_allocateTcb();
 
 // pthread functions.
 int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict,
 		void *(*entry) (void *), void *__restrict user_arg) {
-	void *new_tcb = __rtdl_allocateTcb();
-	mlibc::sys_clone(reinterpret_cast<void *>(entry), user_arg, new_tcb, nullptr);
+	auto new_tcb = __rtdl_allocateTcb();
+	pid_t tid;
+	mlibc::sys_clone(reinterpret_cast<void *>(entry), user_arg, new_tcb, &tid);
 	*thread = reinterpret_cast<pthread_t>(new_tcb);
+
+	__atomic_store_n(&new_tcb->tid, tid, __ATOMIC_RELAXED);
+	mlibc::sys_futex_wake(&new_tcb->tid);
 
 	return 0;
 }
@@ -216,15 +219,16 @@ void *pthread_getspecific(pthread_key_t key) {
 
 	if(pthread_mutex_lock(&key->mutex))
 		__ensure("Could not lock mutex");
-	
+
+	// TODO: fix the key type of the hash_map.
 	void *value = nullptr;
-	auto it = key->values.get(this_tid());
+	auto it = key->values.get(static_cast<int>(this_tid()));
 	if(it)
 		value = *it;
 
 	if(pthread_mutex_unlock(&key->mutex))
 		__ensure("Could not unlock mutex");
-	
+
 	return value;
 }
 
@@ -233,8 +237,9 @@ int pthread_setspecific(pthread_key_t key, const void *value) {
 
 	if(pthread_mutex_lock(&key->mutex))
 		__ensure("Could not lock mutex");
-	
-	auto it = key->values.get(this_tid());
+
+	// TODO: fix the key type of the hash_map.
+	auto it = key->values.get(static_cast<int>(this_tid()));
 	if(it) {
 		*it = const_cast<void *>(value);
 	}else{
@@ -243,7 +248,7 @@ int pthread_setspecific(pthread_key_t key, const void *value) {
 
 	if(pthread_mutex_unlock(&key->mutex))
 		__ensure("Could not unlock mutex");
-	
+
 	return 0;
 }
 
@@ -258,7 +263,7 @@ int pthread_once(pthread_once_t *once, void (*function) (void)) {
 	SCOPE_TRACE();
 
 	auto expected = __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
-	
+
 	// fast path: the function was already run.
 	while(!(expected & onceComplete)) {
 		if(!expected) {
@@ -266,7 +271,7 @@ int pthread_once(pthread_once_t *once, void (*function) (void)) {
 			if(!__atomic_compare_exchange_n(&once->__mlibc_done,
 					&expected, onceLocked, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
 				continue;
-			
+
 			function();
 
 			// unlock the mutex.
@@ -347,9 +352,9 @@ int pthread_mutex_init(pthread_mutex_t *__restrict mutex,
 	}else{
 		__ensure(type == PTHREAD_MUTEX_NORMAL);
 	}
-	
+
 	__ensure(robust == PTHREAD_MUTEX_STALLED);
-	
+
 	return 0;
 }
 int pthread_mutex_destroy(pthread_mutex_t *mutex) {
@@ -388,7 +393,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 			if(expected & mutex_waiters_bit) {
 				if(int e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected); e)
 					__ensure(!"sys_futex_wait() failed");
-				
+
 				// Opportunistically try to take the lock after we wake up.
 				expected = 0;
 			}else{
