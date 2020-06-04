@@ -695,6 +695,12 @@ int sys_setuid(uid_t uid) {
     return ret;
 }
 
+int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set,
+		const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
+	mlibc::infoLogger() << "mlibc: sys_pselect is a stub!" << frg::endlog;
+	return 0;
+}
+
 #endif // MLIBC_BUILDING_RTDL
 
 } // namespace mlibc
