@@ -15,7 +15,7 @@ extern "C" {
 int ioctl(int fd, unsigned long request, ...);
 
 #define FIONREAD 0x541B
-#define FIONBIO	 0x5421
+#define FIONBIO 0x5421
 
 #ifdef __cplusplus
 }

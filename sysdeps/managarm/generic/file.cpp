@@ -4261,5 +4261,62 @@ int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
 	}
 }
 
+int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
+	SignalGuard sguard;
+	HelAction actions[3];
+	globalQueue.trim();
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_request_type(managarm::posix::CntReqType::UTIMENSAT);
+	req.set_fd(dirfd);
+	if(pathname != nullptr)
+		req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), pathname));
+	if(times) {
+		req.set_tv_sec(times->tv_sec);
+		req.set_tv_nsec(times->tv_nsec);
+	} else {
+		req.set_tv_sec(UTIME_NOW);
+		req.set_tv_nsec(UTIME_NOW);
+	}
+	req.set_flags(flags);
+
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
+	}else if(resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
+		return EBADF;
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	}else if(resp.error() == managarm::posix::Errors::NOT_SUPPORTED) {
+		return ENOTSUP;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		return 0;
+	}
+}
+
 } //namespace mlibc
 

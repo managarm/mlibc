@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include <ctype.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include <bits/ensure.h>
 
@@ -185,9 +187,15 @@ struct ResizePrinter {
 };
 
 int remove(const char *filename) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+    struct stat statbuf;
+    if(stat(filename, &statbuf) != 0)
+        return -1;
+    if(S_ISDIR(statbuf.st_mode))
+        return rmdir(filename);
+    else
+        return unlink(filename);
 }
+
 int rename(const char *path, const char *new_path) {
 	if(!mlibc::sys_rename) {
 		MLIBC_MISSING_SYSDEP();
@@ -200,6 +208,7 @@ int rename(const char *path, const char *new_path) {
 	}
 	return 0;
 }
+
 int renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
 	if(!mlibc::sys_renameat) {
         MLIBC_MISSING_SYSDEP();
