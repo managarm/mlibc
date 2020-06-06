@@ -59,10 +59,20 @@ int fstatat(int dirfd, const char *path, struct stat *result, int flags) {
 }
 
 int futimens(int fd, const struct timespec times[2]) {
-	mlibc::infoLogger() << "\e[31mmlibc: futimens() is not implemented correctly\e[39m"
-			<< frg::endlog;
+	if (!mlibc::sys_utimensat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if (int e = mlibc::sys_utimensat(fd, nullptr, times, 0); e) {
+		errno = e;
+		return -1;
+	}
+
 	return 0;
 }
+
 int mkdir(const char *path, mode_t) {
 	mlibc::infoLogger() << "\e[31mmlibc: mkdir() ignores its mode\e[39m" << frg::endlog;
 	if(!mlibc::sys_mkdir) {
@@ -76,6 +86,7 @@ int mkdir(const char *path, mode_t) {
 	}
 	return 0;
 }
+
 int mkdirat(int dirfd, const char *path, mode_t mode) {
 	mlibc::infoLogger() << "\e[31mmlibc: mkdirat() ignores its mode\e[39m" << frg::endlog;
 	if(!mlibc::sys_mkdirat) {
@@ -122,12 +133,25 @@ mode_t umask(mode_t) {
 			<< frg::endlog;
 	return 0;
 }
-int utimensat(int, const char *, const struct timespec times[2], int) {
-	mlibc::infoLogger() << "\e[31mmlibc: utimensat() is not implemented correctly\e[39m"
-			<< frg::endlog;
+
+int utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
+	if(pathname == nullptr) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (!mlibc::sys_utimensat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if (int e = mlibc::sys_utimensat(dirfd, pathname, times, flags); e) {
+		errno = e;
+		return -1;
+	}
+
 	return 0;
 }
-
 
 int stat(const char *path, struct stat *result) {
 	if(!mlibc::sys_stat) {

@@ -4261,5 +4261,53 @@ int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
 	}
 }
 
+int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
+	SignalGuard sguard;
+
+	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_request_type(managarm::posix::CntReqType::UTIMENSAT);
+	req.set_fd(dirfd);
+	if(pathname != nullptr)
+		req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), pathname));
+	if(times) {
+		req.set_tv_sec(times->tv_sec);
+		req.set_tv_nsec(times->tv_nsec);
+	} else {
+		req.set_tv_sec(UTIME_NOW);
+		req.set_tv_nsec(UTIME_NOW);
+	}
+	req.set_flags(flags);
+
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+	req.SerializeToString(&ser);
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBuffer(ser.data(), ser.size()),
+			helix_ng::recvInline()
+		)
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
+	}else if(resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
+		return EBADF;
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	}else if(resp.error() == managarm::posix::Errors::NOT_SUPPORTED) {
+		return ENOTSUP;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		return 0;
+	}
+}
+
 } //namespace mlibc
 

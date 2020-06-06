@@ -11,6 +11,11 @@
 extern "C" {
 #endif
 
+uint32_t htonl(uint32_t);
+uint16_t htons(uint16_t);
+uint32_t ntohl(uint32_t);
+uint16_t ntohs(uint16_t);
+
 #define IN6_IS_ADDR_UNSPECIFIED(a) ({ \
     uint32_t *_a = (uint32_t *)((a)->s6_addr); \
     !_a[0] && \

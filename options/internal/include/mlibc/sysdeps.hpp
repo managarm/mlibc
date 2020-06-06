@@ -133,6 +133,7 @@ int sys_close(int fd);
 	[[gnu::weak]] int sys_chmod(const char *pathname, mode_t mode);
 	[[gnu::weak]] int sys_fchmod(int fd, mode_t mode);
 	[[gnu::weak]] int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags);
+	[[gnu::weak]] int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 
 // mlibc assumes that anonymous memory returned by sys_vm_map() is zeroed by the kernel / whatever is behind the sysdeps

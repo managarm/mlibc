@@ -3,6 +3,10 @@
 
 #include <abi-bits/stat.h>
 
+// Used by utimensat and friends
+#define UTIME_NOW ((1l << 30) - 1l)
+#define UTIME_OMIT ((1l << 30) - 2l)
+
 #define S_ISBLK(m) (((m) & S_IFMT) == S_IFBLK)
 #define S_ISCHR(m) (((m) & S_IFMT) == S_IFCHR)
 #define S_ISFIFO(m) (((m) & S_IFMT) == S_IFIFO)

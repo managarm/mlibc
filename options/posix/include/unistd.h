@@ -92,6 +92,7 @@ extern "C" {
 #define _SC_PAGESIZE _SC_PAGE_SIZE
 #define _SC_OPEN_MAX 5
 #define _SC_NPROCESSORS_ONLN 6
+#define _SC_GETGR_R_SIZE_MAX 7
 
 #define STDERR_FILENO 2
 #define STDIN_FILENO 0
