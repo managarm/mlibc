@@ -79,8 +79,16 @@ int getsockopt(int fd, int layer, int number,
 	return mlibc::sys_getsockopt(fd, layer, number, buffer, size);
 }
 
-int listen(int, int) {
-	mlibc::infoLogger() << "\e[31mmlibc: listen() is a no-op\e[39m" << frg::endlog;
+int listen(int fd, int backlog) {
+	if(!mlibc::sys_listen) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_listen(fd, backlog); e) {
+		errno = e;
+		return -1;
+	}
 	return 0;
 }
 

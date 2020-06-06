@@ -90,6 +90,7 @@ int sys_close(int fd);
 	[[gnu::weak]] int sys_socket(int family, int type, int protocol, int *fd);
 	[[gnu::weak]] int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length);
 	[[gnu::weak]] int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length);
+	[[gnu::weak]] int sys_listen(int fd, int backlog);
 	[[gnu::weak]] gid_t sys_getgid();
 	[[gnu::weak]] gid_t sys_getegid();
 	[[gnu::weak]] uid_t sys_getuid();
