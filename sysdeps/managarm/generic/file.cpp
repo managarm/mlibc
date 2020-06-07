@@ -4270,11 +4270,15 @@ int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2
 	if(pathname != nullptr)
 		req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), pathname));
 	if(times) {
-		req.set_tv_sec(times->tv_sec);
-		req.set_tv_nsec(times->tv_nsec);
+		req.set_atime_sec(times[0].tv_sec);
+		req.set_atime_nsec(times[0].tv_nsec);
+		req.set_mtime_sec(times[1].tv_sec);
+		req.set_mtime_nsec(times[1].tv_nsec);
 	} else {
-		req.set_tv_sec(UTIME_NOW);
-		req.set_tv_nsec(UTIME_NOW);
+		req.set_atime_sec(UTIME_NOW);
+		req.set_atime_nsec(UTIME_NOW);
+		req.set_mtime_sec(UTIME_NOW);
+		req.set_mtime_nsec(UTIME_NOW);
 	}
 	req.set_flags(flags);
 
