@@ -311,4 +311,35 @@ int sys_setsockopt(int fd, int layer, int number,
 	}
 }
 
+int sys_listen(int fd, int) {
+	SignalGuard sguard;
+
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
+
+	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_req_type(managarm::fs::CntReqType::PT_LISTEN);
+
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+	req.SerializeToString(&ser);
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBuffer(ser.data(), ser.size()),
+			helix_ng::recvInline()
+		)
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	return 0;
+}
+
 } //namespace mlibc
