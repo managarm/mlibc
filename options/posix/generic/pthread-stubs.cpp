@@ -341,6 +341,15 @@ int pthread_mutexattr_setrobust(pthread_mutexattr_t *, int) {
 	__builtin_unreachable();
 }
 
+int pthread_mutexattr_getpshared(const pthread_mutexattr_t *, int *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int pthread_mutexattr_setpshared(pthread_mutexattr_t *, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 // pthread_mutex functions
 int pthread_mutex_init(pthread_mutex_t *__restrict mutex,
 		const pthread_mutexattr_t *__restrict attr) {
@@ -508,6 +517,15 @@ int pthread_condattr_setclock(pthread_condattr_t *, clockid_t) {
 
 	mlibc::infoLogger() << "mlibc: pthread_condattr_setclock() is not implemented correctly" << frg::endlog;
 	return 0;
+}
+
+int pthread_condattr_getpshared(const pthread_condattr_t *__restrict, int *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int pthread_condattr_setpshared(pthread_condattr_t *, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
 }
 
 int pthread_cond_init(pthread_cond_t *__restrict cond, const pthread_condattr_t *__restrict) {
