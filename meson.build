@@ -1,4 +1,4 @@
-project('mlibc', version: '1.0.0-rc1')
+project('mlibc', version: '1.0.0')
 
 rtdl_include_dirs = [
 	include_directories('options/internal/include'),
