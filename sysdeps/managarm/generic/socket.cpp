@@ -7,7 +7,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
 #include <fs.frigg_pb.hpp>
-#include <posix.frigg_pb.hpp>
+#include <posix.frigg_bragi.hpp>
 
 namespace mlibc {
 

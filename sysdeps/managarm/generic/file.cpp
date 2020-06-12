@@ -34,7 +34,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
 #include <mlibc/sysdeps.hpp>
-#include <posix.frigg_pb.hpp>
+#include <posix.frigg_bragi.hpp>
 #include <fs.frigg_pb.hpp>
 
 HelHandle __mlibc_getPassthrough(int fd) {
@@ -489,7 +489,7 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		if(resp.error() == managarm::posix::Errors::NO_SUCH_FD)
 			return EBADF;
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		*result = resp.error();
+		*result = static_cast<int>(resp.error());
 		return 0;
 	}else if(request == F_GETFL) {
 		SignalGuard sguard;
@@ -4104,7 +4104,7 @@ int sys_faccessat(int dirfd, const char *pathname, int mode, int flags) {
 		return ENOENT;
 	}else if(resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
 		return EBADF;
-	}else if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		return EINVAL;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
@@ -4150,12 +4150,12 @@ int sys_flock(int fd, int opts) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
+	if(resp.error() == managarm::posix::Errors::WOULD_BLOCK) {
 		return EWOULDBLOCK;
-	}else if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		return EINVAL;
 	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
 	}
 }

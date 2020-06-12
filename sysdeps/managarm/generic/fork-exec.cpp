@@ -20,7 +20,7 @@
 #include <mlibc/posix-pipe.hpp>
 #include <mlibc/thread-entry.hpp>
 #include <mlibc/sysdeps.hpp>
-#include <posix.frigg_pb.hpp>
+#include <posix.frigg_bragi.hpp>
 
 namespace mlibc {
 
