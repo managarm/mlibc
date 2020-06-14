@@ -32,6 +32,14 @@ typedef int32_t Elf64_Sword;
 typedef uint64_t Elf64_Xword;
 typedef int64_t Elf64_Sxword;
 
+typedef uint32_t Elf32_Addr;
+typedef uint32_t Elf32_Off;
+typedef uint16_t Elf32_Half;
+typedef uint32_t Elf32_Word;
+typedef int32_t Elf32_Sword;
+typedef uint64_t Elf32_Xword;
+typedef int64_t Elf32_Sxword;
+
 typedef struct {
 	unsigned char e_ident[16]; /* ELF identification */
 	Elf64_Half e_type; /* Object file type */
@@ -51,8 +59,9 @@ typedef struct {
 
 enum {
 	ET_NONE = 0,
+	ET_REL = 1,
 	ET_EXEC = 2,
-	ET_DYN = 3
+	ET_DYN = 3,
 };
 
 enum {
@@ -60,14 +69,14 @@ enum {
 	SHN_ABS = 0xFFF1
 };
 
-struct Elf64_Sym {
+typedef struct {
 	Elf64_Word st_name;
 	unsigned char st_info;
 	unsigned char st_other;
 	Elf64_Half st_shndx;
 	Elf64_Addr st_value;
 	Elf64_Xword st_size;
-};
+} Elf64_Sym ;
 
 extern inline unsigned char ELF64_ST_BIND(unsigned char info) {
 	return info >> 4;
@@ -102,16 +111,21 @@ enum {
 	R_X86_64_TPOFF64 = 18,
 };
 
-struct Elf64_Rela {
+typedef struct {
+	Elf64_Addr r_offset;
+	uint64_t   r_info;
+} Elf64_Rel;
+
+typedef struct {
 	Elf64_Addr r_offset;
 	Elf64_Xword r_info;
 	Elf64_Sxword r_addend;
-};
+} Elf64_Rela;
 
-extern inline Elf64_Xword ELF64_R_SYM(Elf64_Xword info) {
+static inline Elf64_Xword ELF64_R_SYM(Elf64_Xword info) {
 	return info >> 32;
 }
-extern inline Elf64_Xword ELF64_R_TYPE(Elf64_Xword info) {
+static inline Elf64_Xword ELF64_R_TYPE(Elf64_Xword info) {
 	return info & 0xFFFFFFFF;
 }
 
@@ -192,15 +206,15 @@ enum {
 	DF_1_NOW = 0x00000001
 };
 
-struct Elf64_Dyn {
+typedef struct {
 	Elf64_Sxword d_tag;
 	union {
 		Elf64_Xword d_val;
 		Elf64_Addr d_ptr;
 	};
-};
+} Elf64_Dyn;
 
-struct Elf64_Shdr {
+typedef struct {
 	Elf64_Word sh_name;
 	Elf64_Word sh_type;
 	Elf64_Xword sh_flags;
@@ -211,6 +225,70 @@ struct Elf64_Shdr {
 	Elf64_Word sh_info;
 	Elf64_Xword sh_addralign;
 	Elf64_Xword sh_entsize;
-};
+} Elf64_Shdr;
+
+/* ST_TYPE (subfield of st_info) values (symbol type) */
+#define STT_NOTYPE	0
+#define STT_OBJECT	1
+#define STT_FUNC	2
+#define STT_SECTION	3
+#define STT_FILE	4
+
+/* ST_BIND (subfield of st_info) values (symbol binding) */
+#define STB_LOCAL	0
+#define STB_GLOBAL	1
+#define STB_WEAK	2
+
+/* sh_type (section type) values */
+#define SHT_NULL		0
+#define SHT_PROGBITS		1
+#define SHT_SYMTAB		2
+#define SHT_STRTAB		3
+#define SHT_RELA		4
+#define SHT_NOBITS		8
+#define SHT_REL			9
+#define SHT_INIT_ARRAY		14
+#define SHT_FINI_ARRAY		15
+#define SHT_SYMTAB_SHNDX	18
+
+/* special section indices */
+#define SHN_UNDEF	0
+#define SHN_LORESERVE	0xff00
+#define SHN_COMMON	0xfff2
+#define SHN_XINDEX	0xffff
+#define SHN_HIRESERVE	0xff00
+
+/* values for e_machine */
+#define EM_NONE		0
+#define EM_SPARC	2
+#define EM_386		3
+#define EM_PPC		20
+#define EM_PPC64	21
+#define EM_X86_64	62
+
+/* e_indent constants */
+#define EI_MAG0		0
+#define ELFMAG0		0x7f
+
+#define EI_MAG1		1
+#define ELFMAG1		'E'
+
+#define EI_MAG2		2
+#define ELFMAG2		'L'
+
+#define EI_MAG3		3
+#define ELFMAG3		'F'
+
+#define EI_CLASS	4
+#define ELFCLASSNONE	0
+#define ELFCLASS32	1
+#define ELFCLASS64	2
+#define ELFCLASSNUM	3
+
+#define EI_DATA		5
+#define ELFDATANONE	0
+#define ELFDATA2LSB	1
+#define ELFDATA2MSB	2
+#define ELFDATANUM	3
 
 #endif // _ELF_H

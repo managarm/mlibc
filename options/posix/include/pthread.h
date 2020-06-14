@@ -5,6 +5,7 @@
 #include <bits/ansi/clockid_t.h>
 // TODO: pthread is not required to define size_t.
 #include <bits/size_t.h>
+#include <bits/posix/pthread_t.h>
 
 // pthread.h is required to include sched.h and time.h
 #include <sched.h>
@@ -56,9 +57,6 @@ struct __mlibc_threadattr {
 	int __mlibc_deatchstate;
 };
 typedef struct __mlibc_threadattr pthread_attr_t;
-
-struct __mlibc_thread_data;
-typedef struct __mlibc_thread_data *pthread_t;
 
 struct __mlibc_key_data;
 typedef struct __mlibc_key_data *pthread_key_t;

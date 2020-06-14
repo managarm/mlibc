@@ -158,6 +158,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		aux++;
 	aux++;
 
+	const char *execfn = "(executable)";
+
 	// Parse the actual vector.
 	while(true) {
 		auto value = aux + 1;
@@ -170,6 +172,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 			case AT_PHENT: phdr_entry_size = *value; break;
 			case AT_PHNUM: phdr_count = *value; break;
 			case AT_ENTRY: entry_pointer = reinterpret_cast<void *>(*value); break;
+			case AT_EXECFN: execfn = reinterpret_cast<const char *>(*value); break;
 		}
 
 		aux += 2;
@@ -196,15 +199,18 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// Add the dynamic linker, as well as the exectuable to the repository.
 #ifndef MLIBC_STATIC_BUILD
 	auto ldso_soname = reinterpret_cast<const char *>(ldso_base + strtab_offset + soname_str);
-	initialRepository->injectObjectFromDts(ldso_soname, ldso_base, _DYNAMIC, 1);
+	initialRepository->injectObjectFromDts(ldso_soname,
+		frg::string<MemoryAllocator> { execfn, getAllocator() },
+		ldso_base, _DYNAMIC, 1);
 #endif
 
 #ifndef MLIBC_STATIC_BUILD
 	// TODO: support non-zero base addresses?
-	executableSO = initialRepository->injectObjectFromPhdrs("(executable)", phdr_pointer,
-			phdr_entry_size, phdr_count, entry_pointer, 1);
+	executableSO = initialRepository->injectObjectFromPhdrs(execfn,
+		frg::string<MemoryAllocator> { execfn, getAllocator() },
+		phdr_pointer, phdr_entry_size, phdr_count, entry_pointer, 1);
 #else
-	executableSO = initialRepository->injectStaticObject("(executable)",
+	executableSO = initialRepository->injectStaticObject(execfn, execfn,
 			phdr_pointer, phdr_entry_size, phdr_count, entry_pointer, 1);
 #endif
 
@@ -366,8 +372,8 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 					+ object->symbolTableOffset + i * sizeof(Elf64_Sym))};
 			if(eligible(cand) && cand.virtualAddress() == reinterpret_cast<uintptr_t>(ptr)) {
 				mlibc::infoLogger() << "rtdl: Found symbol " << cand.getString() << " in object "
-						<< object->name << frg::endlog;
-				info->file = object->name;
+						<< object->path << frg::endlog;
+				info->file = object->path.data();
 				info->base = reinterpret_cast<void *>(object->baseAddress);
 				info->symbol = cand.getString();
 				info->address = reinterpret_cast<void *>(cand.virtualAddress());
