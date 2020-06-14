@@ -85,7 +85,7 @@ namespace mlibc{
 
 
 	int sys_open(const char* filename, int flags, int* fd){
-		long ret = syscall(SYS_OPEN, (uintptr_t)filename, 0, 0, 0, 0);
+		long ret = syscall(SYS_OPEN, (uintptr_t)filename, flags, 0, 0, 0);
 
 		if(ret < 0)
 			return ret;
@@ -188,6 +188,18 @@ namespace mlibc{
 
 		if(ret)
 			return -1;
+
+		return 0;
+	}
+
+	int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events){
+		long ret = syscall(SYS_POLL, fds, count, timeout, 0, 0);
+
+		if(ret < 0){
+			return ret;
+		}
+
+		*num_events = ret;
 
 		return 0;
 	}
