@@ -91,7 +91,6 @@ elif host_machine.system() == 'sigma'
 	rtdl_deps += libsigma
 	subdir('sysdeps/sigma')
 elif host_machine.system() == 'lemon'
-	disable_linux_option = true
 	rtdl_include_dirs += include_directories('sysdeps/lemon/include')
 	libc_include_dirs += include_directories('sysdeps/lemon/include')
 	subdir('sysdeps/lemon')

@@ -26,6 +26,7 @@
 #define SYS_CREATE_WINDOW 22
 #define SYS_DESTROY_WINDOW 23
 #define SYS_DESKTOP_GET_WINDOW 24
+#define SYS_YIELD 25
 #define SYS_UPDATE_WINDOW 26
 #define SYS_GET_DESKTOP_PID 27
 #define SYS_SEND_MESSAGE 28
@@ -60,6 +61,9 @@
 #define SYS_RECEIVEFROM 57
 #define SYS_GETUID 58
 #define SYS_SETUID 59
+#define SYS_POLL 60
+#define SYS_SENDMSG 61
+#define SYS_RECVMSG 62
 
 static inline long _syscall(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4) {
     volatile long ret;
