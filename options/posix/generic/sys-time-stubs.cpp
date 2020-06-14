@@ -8,7 +8,7 @@
 #include <mlibc/sysdeps.hpp>
 
 int gettimeofday(struct timeval *__restrict result, void *__restrict unused) {
-	__ensure(!unused);
+	(void)unused; // Linux just ignores gettimeofday().
 
 	if(result) {
 		long nanos;
