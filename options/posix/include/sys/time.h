@@ -1,6 +1,7 @@
 #ifndef _SYS_TIME_H
 #define _SYS_TIME_H
 
+#include <abi-bits/time.h>
 #include <bits/ansi/time_t.h>
 #include <bits/posix/suseconds_t.h>
 #include <bits/posix/timeval.h>
