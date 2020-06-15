@@ -24,6 +24,7 @@ if not no_headers
 		'include/abi-bits/signal.h',
 		'include/abi-bits/socket.h',
 		'include/abi-bits/termios.h',
+		'include/abi-bits/time.h',
 		subdir: 'abi-bits'
 	)
 	install_headers(
