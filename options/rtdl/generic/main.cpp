@@ -110,6 +110,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	size_t phdr_count = 0;
 	void *entry_pointer = 0;
 
+	const char *execfn = "(executable)";
+
 #ifndef MLIBC_STATIC_BUILD
 	auto ldso_base = reinterpret_cast<uintptr_t>(_DYNAMIC)
 			- reinterpret_cast<uintptr_t>(_GLOBAL_OFFSET_TABLE_[0]);
@@ -157,8 +159,6 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	while(*aux) // Now, we skip the environment.
 		aux++;
 	aux++;
-
-	const char *execfn = "(executable)";
 
 	// Parse the actual vector.
 	while(true) {
@@ -210,7 +210,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		frg::string<MemoryAllocator> { execfn, getAllocator() },
 		phdr_pointer, phdr_entry_size, phdr_count, entry_pointer, 1);
 #else
-	executableSO = initialRepository->injectStaticObject(execfn, execfn,
+	executableSO = initialRepository->injectStaticObject(execfn,
+			frg::string<MemoryAllocator>{ execfn, getAllocator() },
 			phdr_pointer, phdr_entry_size, phdr_count, entry_pointer, 1);
 #endif
 
