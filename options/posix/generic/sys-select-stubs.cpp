@@ -39,10 +39,15 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 
 	int num_events = 0;
 	struct timespec timeouts = {0};
-	timeouts.tv_sec = timeout->tv_sec;
-	timeouts.tv_nsec = timeout->tv_usec * 1000;
+	struct timespec *timeout_ptr = NULL;
+	if (timeout) {
+		timeouts.tv_sec = timeout->tv_sec;
+		timeouts.tv_nsec = timeout->tv_usec * 1000;
+		timeout_ptr = &timeouts;
+	}
+
 	if(int e = mlibc::sys_pselect(num_fds, read_set, write_set, except_set,
-				&timeouts, NULL, &num_events); e) {
+				timeout_ptr, NULL, &num_events); e) {
 		errno = e;
 		return -1;
 	}
