@@ -602,6 +602,9 @@ unsigned long sysconf(int number) {
 			// TODO: actually return a proper value for _SC_GETGR_R_SIZE_MAX
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_GETGR_R_SIZE_MAX) returns arbitrary value 8\e[39m" << frg::endlog;
 			return 8;
+		case _SC_JOB_CONTROL:
+			// If 1, job control is supported
+			return 1;
 		default:
 			mlibc::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented, number: " << number << "\e[39m" << frg::endlog;
 			__builtin_unreachable();

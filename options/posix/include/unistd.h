@@ -99,12 +99,12 @@ extern "C" {
 #define _SC_NPROCESSORS_ONLN 6
 #define _SC_GETGR_R_SIZE_MAX 7
 
-#define _SC_CHILD_MAX	7
-#define _SC_CLK_TCK	8
-#define _SC_NGROUPS_MAX	9
-#define _SC_VERSION	9
-#define _SC_SAVED_IDS	9
-#define _SC_JOB_CONTROL	9
+#define _SC_CHILD_MAX 8
+#define _SC_CLK_TCK 9
+#define _SC_NGROUPS_MAX 10
+#define _SC_VERSION 11
+#define _SC_SAVED_IDS 12
+#define _SC_JOB_CONTROL 13
 
 #define STDERR_FILENO 2
 #define STDIN_FILENO 0

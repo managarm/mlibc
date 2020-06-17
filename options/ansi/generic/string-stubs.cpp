@@ -332,6 +332,7 @@ char *strerror(int e) {
 	case EPIPE:  s = "Broken pipe (EPIPE)"; break;
 	case ESPIPE: s = "Seek not possible (ESPIPE)"; break;
 	case ENXIO: s = "No such device or address (ENXIO)"; break;
+	case ENOEXEC: s = "Exec format error (ENOEXEC)"; break;
 	default:
 		s = "Unknown error code (?)";
 	}
