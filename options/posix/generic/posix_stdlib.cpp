@@ -35,6 +35,16 @@ void srand48(long int seedval) {
 	__builtin_unreachable();
 }
 
+char *initstate(unsigned int seed, char *state, size_t n) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+char *setstate(char *state) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 // ----------------------------------------------------------------------------
 // Path handling.
 // ----------------------------------------------------------------------------
