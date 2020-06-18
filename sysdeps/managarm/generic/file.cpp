@@ -4114,37 +4114,35 @@ int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
 int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::UTIMENSAT);
+	managarm::posix::UtimensAtRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_fd(dirfd);
 	if(pathname != nullptr)
 		req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), pathname));
 	if(times) {
-		req.set_atime_sec(times[0].tv_sec);
-		req.set_atime_nsec(times[0].tv_nsec);
-		req.set_mtime_sec(times[1].tv_sec);
-		req.set_mtime_nsec(times[1].tv_nsec);
+		req.set_atimeSec(times[0].tv_sec);
+		req.set_atimeNsec(times[0].tv_nsec);
+		req.set_mtimeSec(times[1].tv_sec);
+		req.set_mtimeNsec(times[1].tv_nsec);
 	} else {
-		req.set_atime_sec(UTIME_NOW);
-		req.set_atime_nsec(UTIME_NOW);
-		req.set_mtime_sec(UTIME_NOW);
-		req.set_mtime_nsec(UTIME_NOW);
+		req.set_atimeSec(UTIME_NOW);
+		req.set_atimeNsec(UTIME_NOW);
+		req.set_mtimeSec(UTIME_NOW);
+		req.set_mtimeNsec(UTIME_NOW);
 	}
 	req.set_flags(flags);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-
-	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
-		getPosixLane(),
-		helix_ng::offer(
-			helix_ng::sendBuffer(ser.data(), ser.size()),
-			helix_ng::recvInline()
-		)
-	);
+	auto [offer, send_head, send_tail, recv_resp] =
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
 
 	HEL_CHECK(offer.error());
-	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
