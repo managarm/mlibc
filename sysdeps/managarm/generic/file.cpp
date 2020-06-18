@@ -3659,11 +3659,8 @@ int sys_dup2(int fd, int flags, int newfd) {
 
 int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *result) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::FSTATAT);
+	managarm::posix::FstatAtRequest<MemoryAllocator> req(getSysdepsAllocator());
 	if (fsfdt == fsfd_target::path) {
 		req.set_fd(AT_FDCWD);
 		req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
@@ -3686,30 +3683,22 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 
 	req.set_flags(flags);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_head, send_tail, recv_resp] =
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(send_tail.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		return ENOENT;
 	}else if(resp.error() == managarm::posix::Errors::BAD_FD) {
