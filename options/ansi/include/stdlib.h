@@ -54,9 +54,6 @@ int rand(void);
 int rand_r(unsigned *);
 void srand(unsigned int);
 
-// POSIX extension.
-void srandom(unsigned int);
-
 // [7.22.3] Memory management functions
 
 void *aligned_alloc(size_t alignment, size_t size);

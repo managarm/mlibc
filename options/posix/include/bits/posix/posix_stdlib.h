@@ -9,6 +9,9 @@ extern "C" {
 long random(void);
 double drand48(void);
 void srand48(long int);
+char *initstate(unsigned int, char *, size_t);
+char *setstate(char *);
+void srandom(unsigned int);
 
 // ----------------------------------------------------------------------------
 // Environment.

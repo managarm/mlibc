@@ -3204,6 +3204,8 @@ int sys_open(const char *path, int flags, int *fd) {
 		proto_flags |= managarm::posix::OpenFlags::OF_EXCLUSIVE;
 	if(flags & __MLIBC_O_NONBLOCK)
 		proto_flags |= managarm::posix::OpenFlags::OF_NONBLOCK;
+	if(flags & __MLIBC_O_TRUNC)
+		proto_flags |= managarm::posix::OpenFlags::OF_TRUNC;
 
 	if(flags & __MLIBC_O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
@@ -3261,6 +3263,8 @@ int sys_openat(int dirfd, const char *path, int flags, int *fd) {
 		proto_flags |= managarm::posix::OpenFlags::OF_EXCLUSIVE;
 	if(flags & __MLIBC_O_NONBLOCK)
 		proto_flags |= managarm::posix::OpenFlags::OF_NONBLOCK;
+	if(flags & __MLIBC_O_TRUNC)
+		proto_flags |= managarm::posix::OpenFlags::OF_TRUNC;
 
 	if(flags & __MLIBC_O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;

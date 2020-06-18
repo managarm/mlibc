@@ -183,10 +183,6 @@ void srand(unsigned int s) {
 	__mlibc_rand_engine.seed(s);
 }
 
-void srandom(unsigned int) {
-	mlibc::infoLogger() << "mlibc: srandom() is a no-op" << frg::endlog;
-}
-
 void *aligned_alloc(size_t alignment, size_t size) {
 	void *ptr;
 	int ret = posix_memalign(&ptr, alignment, size);
