@@ -3191,6 +3191,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 }
 
 int sys_open(const char *path, int flags, int *fd) {
+	return sys_openat(AT_FDCWD, path, flags, fd);
+}
+
+int sys_openat(int dirfd, const char *path, int flags, int *fd) {
 	SignalGuard sguard;
 
 	uint32_t proto_flags = 0;
@@ -3213,95 +3217,26 @@ int sys_open(const char *path, int flags, int *fd) {
 	else if(flags & __MLIBC_O_RDWR)
 		proto_flags |= managarm::posix::OpenFlags::OF_RDWR;
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::OPEN);
+	managarm::posix::OpenAtRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_fd(dirfd);
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 	req.set_flags(proto_flags);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-
-	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	auto [offer, sendHead, sendTail, recvResp] = exchangeMsgsSync(
 		getPosixLane(),
 		helix_ng::offer(
-			helix_ng::sendBuffer(ser.data(), ser.size()),
+			helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
 			helix_ng::recvInline()
 		)
 	);
 
 	HEL_CHECK(offer.error());
-	HEL_CHECK(send_req.error());
-	HEL_CHECK(recv_resp.error());
+	HEL_CHECK(sendHead.error());
+	HEL_CHECK(sendTail.error());
+	HEL_CHECK(recvResp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	}else if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
-		return EEXIST;
-	}else{
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		*fd = resp.fd();
-		return 0;
-	}
-}
-
-int sys_openat(int dirfd, const char *path, int flags, int *fd) {
-	SignalGuard sguard;
-	HelAction actions[3];
-
-	globalQueue.trim();
-
-	uint32_t proto_flags = 0;
-	if(flags & __MLIBC_O_CREAT)
-		proto_flags |= managarm::posix::OpenFlags::OF_CREATE;
-	if(flags & __MLIBC_O_EXCL)
-		proto_flags |= managarm::posix::OpenFlags::OF_EXCLUSIVE;
-	if(flags & __MLIBC_O_NONBLOCK)
-		proto_flags |= managarm::posix::OpenFlags::OF_NONBLOCK;
-	if(flags & __MLIBC_O_TRUNC)
-		proto_flags |= managarm::posix::OpenFlags::OF_TRUNC;
-
-	if(flags & __MLIBC_O_CLOEXEC)
-		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
-
-	if(flags & __MLIBC_O_RDONLY)
-		proto_flags |= managarm::posix::OpenFlags::OF_RDONLY;
-	else if(flags & __MLIBC_O_WRONLY)
-		proto_flags |= managarm::posix::OpenFlags::OF_WRONLY;
-	else if(flags & __MLIBC_O_RDWR)
-		proto_flags |= managarm::posix::OpenFlags::OF_RDWR;
-
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::OPENAT);
-	req.set_fd(dirfd);
-	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
-	req.set_flags(proto_flags);
-
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recvResp.data(), recvResp.length());
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		return ENOENT;
 	}else if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {

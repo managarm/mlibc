@@ -1,4 +1,5 @@
 
+#include <fcntl.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -170,33 +171,48 @@ int sys_tcb_set(void *pointer) {
 
 int sys_open(const char *path, int flags, int *fd) {
 	cacheFileTable();
-	HelAction actions[3];
+	HelAction actions[4];
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_request_type(managarm::posix::CntReqType::OPEN);
+	managarm::posix::OpenAtRequest<MemoryAllocator> req(getAllocator());
+	req.set_fd(AT_FDCWD);
 	req.set_path(frg::string<MemoryAllocator>(getAllocator(), path));
 
 	if(!globalQueue.valid())
 		globalQueue.initialize();
 
-	frg::string<MemoryAllocator> ser(getAllocator());
-	req.SerializeToString(&ser);
+	frg::string<MemoryAllocator> head(getAllocator());
+	frg::string<MemoryAllocator> tail(getAllocator());
+	head.resize(req.size_of_head());
+	tail.resize(req.size_of_tail());
+	bragi::limited_writer headWriter{head.data(), head.size()};
+	bragi::limited_writer tailWriter{tail.data(), tail.size()};
+	auto headOk = req.encode_head(headWriter);
+	auto tailOk = req.encode_tail(tailWriter);
+	__ensure(headOk);
+	__ensure(tailOk);
+
 	actions[0].type = kHelActionOffer;
 	actions[0].flags = kHelItemAncillary;
 	actions[1].type = kHelActionSendFromBuffer;
 	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(posixLane, actions, 3, globalQueue->getHandle(), 0, 0));
+	actions[1].buffer = head.data();
+	actions[1].length = head.size();
+	actions[2].type = kHelActionSendFromBuffer;
+	actions[2].flags = kHelItemChain;
+	actions[2].buffer = tail.data();
+	actions[2].length = tail.size();
+	actions[3].type = kHelActionRecvInline;
+	actions[3].flags = 0;
+	HEL_CHECK(helSubmitAsync(posixLane, actions, 4, globalQueue->getHandle(), 0, 0));
 
 	auto element = globalQueue->dequeueSingle();
 	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
+	auto send_head = parseSimple(element);
+	auto send_tail = parseSimple(element);
 	auto recv_resp = parseInline(element);
 	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
+	HEL_CHECK(send_head->error);
+	HEL_CHECK(send_tail->error);
 	HEL_CHECK(recv_resp->error);
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
