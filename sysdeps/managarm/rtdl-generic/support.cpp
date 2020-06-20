@@ -385,8 +385,7 @@ int sys_futex_tid() {
 	cacheFileTable();
 	HelAction actions[3];
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_request_type(managarm::posix::CntReqType::GET_TID);
+	managarm::posix::GetTidRequest<MemoryAllocator> req(getAllocator());
 
 	if(!globalQueue.valid())
 		globalQueue.initialize();
