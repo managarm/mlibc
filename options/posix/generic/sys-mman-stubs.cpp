@@ -41,8 +41,9 @@ int munlockall(void) {
 
 
 int posix_madvise(void *, size_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "\e[31m" "mlibc: posix_madvise() fails unconditionally" "\e[39m"
+			<< frg::endlog;
+	return ENOSYS;
 }
 
 int msync(void *, size_t, int) {
