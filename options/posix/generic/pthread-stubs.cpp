@@ -615,8 +615,8 @@ int pthread_rwlock_init(pthread_rwlock_t *__restrict, const pthread_rwlockattr_t
 }
 
 int pthread_rwlock_destroy(pthread_rwlock_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// TODO: make sure the lock is the unlocked state.
+	return 0;
 }
 
 int pthread_rwlock_trywrlock(pthread_rwlock_t *) {
