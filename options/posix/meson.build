@@ -8,7 +8,6 @@ libc_sources += files(
 	'generic/dlfcn-stubs.cpp',
 	'generic/fcntl-stubs.cpp',
 	'generic/ftw-stubs.cpp',
-	'generic/glob-stubs.cpp',
 	'generic/grp-stubs.cpp',
 	'generic/langinfo-stubs.cpp',
 	'generic/libgen-stubs.cpp',
@@ -48,6 +47,7 @@ libc_sources += files(
 	'generic/libintl-stubs.cpp',
 	'generic/crypt-stubs.cpp',
 	'musl-generic/fnmatch.cpp',
+	'musl-generic/glob.cpp',
 )
 
 if not no_headers

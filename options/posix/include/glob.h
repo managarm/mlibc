@@ -21,6 +21,10 @@ extern "C" {
 #define GLOB_NOESCAPE 0x20
 #define GLOB_NOSORT 0x40
 
+#define GLOB_PERIOD 0x80
+#define GLOB_TILDE 0x100
+#define GLOB_TILDE_CHECK 0x200
+
 #define GLOB_ABORTED 1
 #define GLOB_NOMATCH 2
 #define GLOB_NOSPACE 3
