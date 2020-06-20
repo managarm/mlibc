@@ -3530,27 +3530,23 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 int sys_close(int fd) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::CLOSE);
+	managarm::posix::CloseRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_fd(fd);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-
-	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	auto [offer, sendReq, recvResp] = exchangeMsgsSync(
 		getPosixLane(),
 		helix_ng::offer(
-			helix_ng::sendBuffer(ser.data(), ser.size()),
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			helix_ng::recvInline()
 		)
 	);
 
 	HEL_CHECK(offer.error());
-	HEL_CHECK(send_req.error());
-	HEL_CHECK(recv_resp.error());
+	HEL_CHECK(sendReq.error());
+	HEL_CHECK(recvResp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	resp.ParseFromArray(recvResp.data(), recvResp.length());
 
 	if(resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
 		return EBADF;

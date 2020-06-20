@@ -363,8 +363,7 @@ int sys_close(int fd) {
 	cacheFileTable();
 	HelAction actions[3];
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_request_type(managarm::posix::CntReqType::CLOSE);
+	managarm::posix::CloseRequest<MemoryAllocator> req(getAllocator());
 	req.set_fd(fd);
 
 	if(!globalQueue.valid())
