@@ -94,6 +94,11 @@ elif host_machine.system() == 'lemon'
 	rtdl_include_dirs += include_directories('sysdeps/lemon/include')
 	libc_include_dirs += include_directories('sysdeps/lemon/include')
 	subdir('sysdeps/lemon')
+elif host_machine.system() == 'dripos'
+	disable_linux_option = true
+	rtdl_include_dirs += include_directories('sysdeps/dripos/include')
+	libc_include_dirs += include_directories('sysdeps/dripos/include')
+	subdir('sysdeps/dripos')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
