@@ -1729,8 +1729,6 @@ int sys_inotify_add_watch(int ifd, const char *path, uint32_t mask, int *wd) {
 
 int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	uint32_t proto_flags = 0;
 	if (flags & EFD_NONBLOCK) proto_flags |= managarm::posix::OpenFlags::OF_NONBLOCK;
@@ -1738,35 +1736,24 @@ int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
 	if (flags & EFD_SEMAPHORE)
 		return ENOSYS;
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::EVENTFD_CREATE);
+	managarm::posix::EventfdCreateRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_flags(proto_flags);
 	req.set_initval(initval);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, sendReq, recvResp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline()
+		)
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(sendReq.error());
+	HEL_CHECK(recvResp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recvResp.data(), recvResp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	*fd = resp.fd();
 	return 0;
