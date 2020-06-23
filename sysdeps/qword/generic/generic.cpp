@@ -545,10 +545,36 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
     return 0;
 }
 
-int sys_socket(int family, int type, int protocol, int *fd) STUB_ONLY
+int sys_socket(int family, int type, int protocol, int *fd) {
+    int ret;
+    int sys_errno;
+
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(44), "D"(family), "S"(type), "d"(type)
+            : "rcx", "r11");
+
+    if (ret < 0)
+        return sys_errno;
+    *fd = ret;
+    return 0;
+}
 int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) STUB_ONLY
 int sys_accept(int fd, int *newfd) STUB_ONLY
-int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) STUB_ONLY
+int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
+    int ret;
+    int sys_errno;
+
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(45), "D"(fd), "S"(addr_ptr), "d"(addr_length)
+            : "rcx", "r11");
+
+    if (ret < 0)
+        return sys_errno;
+    return ret; // bind returns 0 on success
+}
+
 int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) STUB_ONLY
 int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) STUB_ONLY
 int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) STUB_ONLY
