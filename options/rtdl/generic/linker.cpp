@@ -16,6 +16,8 @@ bool stillSlightlyVerbose = false;
 bool logBaseAddresses = false;
 bool eagerBinding = true;
 
+extern DebugInterface globalDebugInterface;
+
 #ifdef MLIBC_STATIC_BUILD
 extern "C" size_t __init_array_start[];
 extern "C" size_t __init_array_end[];
@@ -279,6 +281,11 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			object->tlsAlignment = phdr->p_align;
 			object->tlsImageSize = phdr->p_filesz;
 			tls_offset = phdr->p_vaddr;
+		case PT_INTERP:
+			object->interpreterPath = frg::string<MemoryAllocator>{
+				(char*)(phdr->p_vaddr),
+					getAllocator()
+			};
 		} break;
 		default:
 			//FIXME warn about unknown phdrs
@@ -513,10 +520,11 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_INIT_ARRAYSZ:
 			object->initArraySize = dynamic->d_val;
 			break;
+		case DT_DEBUG:
+			dynamic->d_val = reinterpret_cast<Elf64_Xword>(&globalDebugInterface);
 		// ignore unimportant tags
 		case DT_SONAME: case DT_NEEDED: // we handle this later
 		case DT_FINI: case DT_FINI_ARRAY: case DT_FINI_ARRAYSZ:
-		case DT_DEBUG:
 		case DT_RELA: case DT_RELASZ: case DT_RELAENT: case DT_RELACOUNT:
 		case DT_VERSYM:
 		case DT_VERDEF: case DT_VERDEFNUM:
@@ -558,7 +566,8 @@ void ObjectRepository::_discoverDependencies(SharedObject *object, uint64_t rts)
 SharedObject::SharedObject(const char *name, frg::string<MemoryAllocator> path,
 	bool is_main_object, uint64_t object_rts)
 		: name(name), path(std::move(path)),
-		isMainObject(is_main_object), objectRts(object_rts),
+		interpreterPath(getAllocator()),
+		isMainObject(is_main_object), objectRts(object_rts), inLinkMap(false),
 		baseAddress(0), loadScope(nullptr), dynamic(nullptr),
 		globalOffsetTable(nullptr), entry(nullptr), tlsSegmentSize(0),
 		tlsAlignment(0), tlsImageSize(0), tlsImagePtr(nullptr),
@@ -885,6 +894,12 @@ void Loader::submitObject(SharedObject *object) {
 	if(_linkSet.get(object))
 		return;
 
+	// At this point the object is loaded and we can fill in its debug struct,
+	// the linked list fields will be filled later.
+	object->linkMap.base = object->baseAddress;
+	object->linkMap.name = object->path.data();
+	object->linkMap.dynv = object->dynamic;
+
 	_linkSet.insert(object, Token{});
 	_linkBfs.push(object);
 
@@ -942,8 +957,21 @@ void Loader::linkObjects() {
 		processCopyRelocations(*it);
 	}
 
-	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it)
+	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 		(*it)->wasLinked = true;
+
+		if((*it)->inLinkMap)
+			continue;
+
+		auto linkMap = reinterpret_cast<LinkMap*>(globalDebugInterface.head);
+
+		(*it)->linkMap.prev = linkMap;
+		(*it)->linkMap.next = linkMap->next;
+		if(linkMap->next)
+			linkMap->next->prev = &((*it)->linkMap);
+		linkMap->next = &((*it)->linkMap);
+		(*it)->inLinkMap = true;
+	}
 }
 
 void Loader::_buildTlsMaps() {

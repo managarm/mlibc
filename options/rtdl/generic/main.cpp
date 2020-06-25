@@ -30,6 +30,9 @@ frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 static SharedObject *executableSO;
 extern char __ehdr_start[];
 
+// Global debug interface variable
+DebugInterface globalDebugInterface;
+
 // Relocates the dynamic linker (i.e. this DSO) itself.
 // Assumptions:
 // - There are no references to external symbols.
@@ -95,9 +98,19 @@ extern "C" [[ gnu::visibility("default") ]] void *__rtdl_allocateTcb() {
 	return allocateTcb();
 }
 
-extern "C" [[ gnu::visibility("default") ]] void _dl_debug_state()
-{
+extern "C" {
+	static void dl_debug_state() {
+		// This function is used to signal changes in the debugging link map,
+		// GDB just sets a breakpoint on this function and we can call it
+		// everytime we update the link map. We don't need to implement
+		// anything besides defining and calling it.
+	}
 }
+
+extern "C" [[gnu::alias("dl_debug_state"), gnu::visibility("default")]] void _dl_debug_state();
+
+// This symbol can be used by GDB to find the global interface structure
+[[gnu::visibility("default")]] DebugInterface *_dl_debug_addr = &globalDebugInterface;
 
 extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	if(logEntryExit)
@@ -177,6 +190,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 
 		aux += 2;
 	}
+	globalDebugInterface.base = reinterpret_cast<void*>(ldso_base);
 #else
 	auto ehdr = reinterpret_cast<Elf64_Ehdr*>(__ehdr_start);
 	phdr_pointer = reinterpret_cast<void*>((uintptr_t)ehdr->e_phoff + (uintptr_t)ehdr);
@@ -199,22 +213,28 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// Add the dynamic linker, as well as the exectuable to the repository.
 #ifndef MLIBC_STATIC_BUILD
 	auto ldso_soname = reinterpret_cast<const char *>(ldso_base + strtab_offset + soname_str);
-	initialRepository->injectObjectFromDts(ldso_soname,
-		frg::string<MemoryAllocator> { execfn, getAllocator() },
+	auto ldso = initialRepository->injectObjectFromDts(ldso_soname,
+		frg::string<MemoryAllocator> { getAllocator() },
 		ldso_base, _DYNAMIC, 1);
-#endif
 
-#ifndef MLIBC_STATIC_BUILD
 	// TODO: support non-zero base addresses?
 	executableSO = initialRepository->injectObjectFromPhdrs(execfn,
 		frg::string<MemoryAllocator> { execfn, getAllocator() },
 		phdr_pointer, phdr_entry_size, phdr_count, entry_pointer, 1);
+
+	// We can't initialise the ldso object after the executable SO,
+	// so we have to set the ldso path after loading both.
+	ldso->path = executableSO->interpreterPath;
+
 #else
 	executableSO = initialRepository->injectStaticObject(execfn,
 			frg::string<MemoryAllocator>{ execfn, getAllocator() },
 			phdr_pointer, phdr_entry_size, phdr_count, entry_pointer, 1);
+	globalDebugInterface.base = (void*)executableSO->baseAddress;
 #endif
 
+	globalDebugInterface.head = &executableSO->linkMap;
+	executableSO->inLinkMap = true;
 	Loader linker{globalScope.get(), true, 1};
 	linker.submitObject(executableSO);
 	linker.linkObjects();
@@ -229,6 +249,11 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	}
 
 	linker.initObjects();
+
+	globalDebugInterface.ver = 1;
+	globalDebugInterface.brk = &dl_debug_state;
+	globalDebugInterface.state = 0;
+	dl_debug_state();
 
 	if(logEntryExit)
 		mlibc::infoLogger() << "Leaving ld.so, jump to "
@@ -315,6 +340,8 @@ void *__dlapi_open(const char *file, int local) {
 			queue.push(current);
 		}
 	}
+
+	dl_debug_state();
 
 	return object;
 }
