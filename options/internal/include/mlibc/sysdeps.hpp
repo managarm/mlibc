@@ -186,6 +186,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 	[[gnu::weak]] int sys_gethostname(char *buffer, size_t bufsize);
 	[[gnu::weak]] int sys_mkfifoat(int dirfd, const char *path, int mode);
 	[[gnu::weak]] int sys_eventfd_create(unsigned int initval, int flags, int *fd);
+	[[gnu::weak]] int sys_getentropy(void *buffer, size_t length);
 #endif // !defined(MLIBC_BUILDING_RTDL)
 
 } //namespace mlibc

@@ -231,8 +231,11 @@ int sys_getsockopt(int fd, int layer, int number,
 		creds.gid = resp.gid();
 		memcpy(buffer, &creds, sizeof(struct ucred));
 		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_SNDBUF) {
+		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented\e[39m" << frg::endlog;
+		return 4096;
 	}else{
-		mlibc::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call\e[39m" << frg::endlog;
+		mlibc::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call, layer: " << layer << " number: " << number << "\e[39m" << frg::endlog;
 		__builtin_unreachable();
 	}
 }
@@ -292,8 +295,11 @@ int sys_setsockopt(int fd, int layer, int number,
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt(SO_RCVBUFFORCE) is not implemented"
 				" correctly\e[39m" << frg::endlog;
 		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_SNDBUF) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented\e[39m" << frg::endlog;
+		return 0;
 	}else{
-		mlibc::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call\e[39m" << frg::endlog;
+		mlibc::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call, layer: " << layer << " number: " << number << "\e[39m" << frg::endlog;
 		__builtin_unreachable();
 	}
 }
