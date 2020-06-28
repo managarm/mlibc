@@ -545,13 +545,111 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
     return 0;
 }
 
-int sys_socket(int family, int type, int protocol, int *fd) STUB_ONLY
+int sys_socket(int family, int type, int protocol, int *fd) {
+    int ret;
+    int sys_errno;
+
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(44), "D"(family), "S"(type), "d"(protocol)
+            : "rcx", "r11");
+
+    if (ret < 0)
+        return sys_errno;
+    *fd = ret;
+    return 0;
+}
 int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) STUB_ONLY
 int sys_accept(int fd, int *newfd) STUB_ONLY
-int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) STUB_ONLY
+int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
+    int ret;
+    int sys_errno;
+
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(45), "D"(fd), "S"(addr_ptr), "d"(addr_length)
+            : "rcx", "r11");
+
+    if (ret < 0)
+        return sys_errno;
+    return ret; // bind returns 0 on success
+}
+
 int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) STUB_ONLY
-int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) STUB_ONLY
-int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) STUB_ONLY
+int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
+    ssize_t ret;
+    int sys_errno;
+
+    struct iovec *iov = hdr->msg_iov;
+    const void *buf = iov->iov_base;
+    size_t len = iov_len;
+
+
+    struct sockaddr *src_addr = hdr->msg_name;
+    socklen_t addrlen = hdr->msg_namelen;
+
+    if (src_addr) {
+        register int arg_r10 asm("r10") = flags;
+        register const struct sockaddr *arg_r9 asm("r9") = src_addr;
+        register socklen_t arg_r8 asm("r8") = addrlen;
+
+        asm volatile ("syscall"
+                : "=a"(ret), "=d"(sys_errno)
+                : "a"(46), "D"(fd), "S"(buf), "d"(len), "r"(arg_r10), "r"(arg_r9), "r"(arg_r8)
+                : "rcx", "r11");
+        if (ret < 0)
+            return sys_errno;
+        *length = ret;
+        return 0;
+    }
+
+    register int arg_r10 asm("r10") = flags;
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(49), "D"(fd), "S"(buf), "d"(len), "r"(arg_r10)
+            : "rcx", "r11");
+    if (ret < 0)
+        return sys_errno;
+    *length = ret;
+    return 0;
+}
+
+int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
+    ssize_t ret;
+    int sys_errno;
+
+
+    struct iovec *iov = hdr->msg_iov;
+    void *buf = iov->iov_base;
+    size_t len = iov->iov_len;
+
+    struct sockaddr *src_addr = hdr->msg_name;
+    socklen_t *addrlen = &hdr->msg_namelen;
+
+    if (src_addr) {
+        register struct sockaddr *arg_r10 asm("r10") = src_addr;
+        register socklen_t *arg_r8 asm("r8") = addrlen;
+
+        asm volatile ("syscall"
+                : "=a"(ret), "=d"(sys_errno)
+                : "a"(47), "D"(fd), "S"(buf), "d"(len), "r"(arg_r10), "r"(arg_r8)
+                : "rcx", "r11");
+        if (ret < 0)
+            return sys_errno;
+        *length = ret;
+        return 0;
+    }
+
+    // if addr not specified, use recv()
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(48), "D"(fd), "S"(buf), "d"(flags)
+            : "rcx", "r11");
+    if (ret < 0)
+        return sys_errno;
+    *length = ret;
+    return 0;
+}
 int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 		socklen_t *actual_length) STUB_ONLY
 int sys_getsockopt(int fd, int layer, int number,
