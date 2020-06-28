@@ -694,9 +694,17 @@ pid_t gettid(void) {
 	return mlibc::sys_getpid();
 }
 
-int getentropy(void *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int getentropy(void *buffer, size_t length) {
+	if(!mlibc::sys_getentropy) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_getentropy(buffer, length); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 ssize_t write(int fd, const void *buf, size_t count) {

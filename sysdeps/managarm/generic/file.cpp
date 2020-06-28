@@ -1406,7 +1406,6 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 		req.set_flags(ev->events);
 		req.set_cookie(ev->data.u64);
 	}else if(mode == EPOLL_CTL_DEL) {
-		__ensure(!ev);
 		req.set_request_type(managarm::posix::CntReqType::EPOLL_DELETE);
 	}else{
 		mlibc::panicLogger() << "\e[31mmlibc: Illegal epoll_ctl() mode\e[39m" << frg::endlog;
@@ -3855,6 +3854,8 @@ int sys_unlinkat(int fd, const char *path, int flags) {
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		return ENOENT;
+	}else if(resp.error() == managarm::posix::Errors::RESOURCE_IN_USE) {
+		return EBUSY;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
@@ -4086,6 +4087,23 @@ int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
 	}
+}
+
+int sys_getentropy(void *buffer, size_t length) {
+	SignalGuard sguard;
+	auto p = reinterpret_cast<char *>(buffer);
+	size_t n = 0;
+
+	if(length > 256)
+		return EIO;
+
+	while(n < length) {
+		size_t chunk;
+		HEL_CHECK(helGetRandomBytes(p + n, length - n, &chunk));
+		n+= chunk;
+	}
+
+	return 0;
 }
 
 } //namespace mlibc

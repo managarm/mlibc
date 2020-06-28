@@ -269,8 +269,11 @@ int printf(const char *__restrict format, ...) {
 }
 
 int dprintf(int fd, const char *format, ...) {
-    __ensure(!"Not implemented");
-    __builtin_unreachable();
+    va_list args;
+    va_start(args, format);
+    int result = vdprintf(fd, format, args);
+    va_end(args);
+    return result;
 }
 
 namespace {
@@ -758,6 +761,13 @@ int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_l
 int vsscanf(const char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
+}
+
+int vdprintf(int fd, const char *format, __gnuc_va_list args) {
+    FILE *file = fdopen(fd, "a");
+    int ret = vfprintf(file, format, args);
+    fclose(file);
+    return ret;
 }
 
 int fwprintf(FILE *__restrict, const wchar_t *__restrict, ...) MLIBC_STUB_BODY

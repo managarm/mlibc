@@ -91,6 +91,8 @@ extern "C" {
 #define SIG_UNBLOCK 2
 #define SIG_SETMASK 3
 
+#define SI_USER 0
+
 #define NSIG 65
 
 // TODO: replace this by uint64_t

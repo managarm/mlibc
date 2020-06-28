@@ -20,6 +20,11 @@ int FD_ISSET(int fd, fd_set *);
 void FD_SET(int fd, fd_set *);
 void FD_ZERO(fd_set *);
 
+#define FD_CLR FD_CLR
+#define FD_ISSET FD_ISSET
+#define FD_SET FD_SET
+#define FD_ZERO FD_ZERO
+
 int select(int, fd_set *__restrict, fd_set *__restrict, fd_set *__restrict,
 		struct timeval *__restrict);
 int pselect(int, fd_set *, fd_set *, fd_set *, const struct timespec *,
