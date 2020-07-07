@@ -12,7 +12,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/sysdeps.hpp>
 #include <posix.frigg_bragi.hpp>
-#include <fs.frigg_pb.hpp>
+#include <fs.frigg_bragi.hpp>
 
 // --------------------------------------------------------
 // POSIX I/O functions.

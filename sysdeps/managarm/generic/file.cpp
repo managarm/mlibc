@@ -35,7 +35,7 @@
 #include <mlibc/posix-pipe.hpp>
 #include <mlibc/sysdeps.hpp>
 #include <posix.frigg_bragi.hpp>
-#include <fs.frigg_pb.hpp>
+#include <fs.frigg_bragi.hpp>
 
 HelHandle __mlibc_getPassthrough(int fd) {
 	auto handle = getHandleForFd(fd);

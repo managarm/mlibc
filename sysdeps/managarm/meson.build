@@ -1,14 +1,5 @@
 
 bragi = find_program('bragi')
-protoc = find_program('protoc')
-pb2frigg = find_program('pb2frigg')
-proto_gen = generator(protoc, arguments: [
-		'--plugin=protoc-gen-frigg=' + pb2frigg.path(),
-		'--frigg_out=@BUILD_DIR@',
-		'@EXTRA_ARGS@',
-		'@INPUT@'
-	],
-	output: '@BASENAME@.frigg_pb.hpp')
 
 bragi_gen = generator(bragi, arguments: [
 		'-l', 'frigg',
@@ -18,17 +9,12 @@ bragi_gen = generator(bragi, arguments: [
 	],
 	output: '@BASENAME@.frigg_bragi.hpp')
 
-fs_pb = proto_gen.process(meson.current_source_dir()
-		+ '/../../subprojects/managarm/protocols/fs/fs.proto',
-	extra_args: ['--proto_path=' + meson.current_source_dir()
-		+ '/../../subprojects/managarm/protocols/fs'])
-
+fs_bragi = bragi_gen.process('../../subprojects/managarm/protocols/fs/fs.bragi')
 posix_bragi = bragi_gen.process('../../subprojects/managarm/protocols/posix/posix.bragi')
 
 managarm_incl = include_directories(
 		'../../subprojects/managarm/hel/include',
-		'../../subprojects/bragi/include',
-		'../../subprojects/managarm/tools/pb2frigg/include')
+		'../../subprojects/bragi/include')
 
 rtdl_include_dirs += managarm_incl
 rtdl_sources += files(
@@ -37,7 +23,7 @@ rtdl_sources += files(
 	'rtdl-generic/support.cpp',
 )
 rtdl_sources += [
-	fs_pb,
+	fs_bragi,
 	posix_bragi,
 ]
 
@@ -59,7 +45,7 @@ libc_sources += files(
 	'x86_64/thread.cpp'
 )
 libc_sources += [
-	fs_pb,
+	fs_bragi,
 	posix_bragi,
 ]
 
