@@ -30,13 +30,13 @@ node {
 		}
 		stage('Compile sysdeps: dripos') {
 			dir('sysdeps-compilation/dripos') {
-				sh 'meson --cross-file ../../src/ci/dripos.cross-file ../../src/mlibc'
+				sh 'meson --cross-file ../../src/mlibc/ci/dripos.cross-file ../../src/mlibc'
 				sh 'ninja'
 			}
 		}
 		stage('Compile sysdeps: qword') {
 			dir('sysdeps-compilation/qword') {
-				sh 'meson --cross-file ../../src/ci/qword.cross-file ../../src/mlibc'
+				sh 'meson --cross-file ../../src/mlibc/ci/qword.cross-file ../../src/mlibc'
 				sh 'ninja'
 			}
 		}
