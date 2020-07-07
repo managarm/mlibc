@@ -1,33 +1,44 @@
-// vim: sw=4 et :
 node {
-    stage('Fetch sources') {
-        dir('src') {
-            dir ('mlibc') {
-                checkout scm
-                // don't replace sources
-                writeFile file: 'checkedout.xbstrap', text: ''
-            }
-            sh 'cp mlibc/ci/bootstrap.yml .'
-        }
-    }
-    docker.build('mlibc_cienv', 'src/mlibc/ci/docker').inside {
-        dir('build') {
-            stage('Prepare build') {
-                sh '''#!/bin/sh
-                set -xe
-                xbstrap init ../src || true # no cleanWs() step
-                '''
-            }
-            stage('Build mlibc') {
-                sh 'xbstrap install --reconfigure mlibc'
-            }
-            stage('Install gcc') {
-                sh 'xbstrap install-tool --recompile gcc'
-            }
-            stage('Collect results') {
-                sh 'tar c system-root | xz - > root.tar.xz'
-                archiveArtifacts 'root.tar.xz'
-            }
-        }
-    }
+	stage('Fetch sources') {
+		dir('src') {
+			dir ('mlibc') {
+				checkout scm
+				// don't replace sources
+				writeFile file: 'checkedout.xbstrap', text: ''
+			}
+			sh 'cp mlibc/ci/bootstrap.yml .'
+		}
+	}
+	docker.build('mlibc_cienv', 'src/mlibc/ci/docker').inside {
+		dir('build') {
+			stage('Prepare build') {
+				sh '''#!/bin/sh
+				set -xe
+				xbstrap init ../src || true # no cleanWs() step
+				'''
+			}
+			stage('Build mlibc') {
+				sh 'xbstrap install --reconfigure mlibc'
+			}
+			stage('Install gcc') {
+				sh 'xbstrap install-tool --recompile gcc'
+			}
+			stage('Collect results') {
+				sh 'tar c system-root | xz - > root.tar.xz'
+				archiveArtifacts 'root.tar.xz'
+			}
+		}
+		stage('Compile sysdeps: dripos') {
+			dir('sysdeps-compilation/dripos') {
+				sh 'meson --cross-file ../../src/ci/dripos.cross-file ../../src/mlibc'
+				sh 'ninja'
+			}
+		}
+		stage('Compile sysdeps: qword') {
+			dir('sysdeps-compilation/qword') {
+				sh 'meson --cross-file ../../src/ci/qword.cross-file ../../src/mlibc'
+				sh 'ninja'
+			}
+		}
+	}
 }
