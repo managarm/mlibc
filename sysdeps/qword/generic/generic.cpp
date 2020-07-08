@@ -582,10 +582,10 @@ int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
 
     struct iovec *iov = hdr->msg_iov;
     const void *buf = iov->iov_base;
-    size_t len = iov_len;
+    size_t len = iov->iov_len;
 
 
-    struct sockaddr *src_addr = hdr->msg_name;
+    struct sockaddr *src_addr = (sockaddr *)hdr->msg_name;
     socklen_t addrlen = hdr->msg_namelen;
 
     if (src_addr) {
@@ -623,7 +623,7 @@ int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
     void *buf = iov->iov_base;
     size_t len = iov->iov_len;
 
-    struct sockaddr *src_addr = hdr->msg_name;
+    struct sockaddr *src_addr = (sockaddr *)hdr->msg_name;
     socklen_t *addrlen = &hdr->msg_namelen;
 
     if (src_addr) {
