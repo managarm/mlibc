@@ -3,6 +3,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <dirent.h>
+#include <limits.h>
 
 #include <mlibc/sysdeps.hpp>
 #include <mlibc/debug.hpp>
@@ -22,64 +24,58 @@ namespace mlibc{
 	} lemon_stat_t;
 
 	int sys_write(int fd, const void* buffer, size_t count, ssize_t* written){
-		int ret;
-		syscall(SYS_WRITE, fd, (uintptr_t)buffer, count, (uintptr_t)&ret, 0);
+		long ret = syscall(SYS_WRITE, fd, (uintptr_t)buffer, count, 0, 0);
 
 		if(ret < 0)
-			return ret;
-			
+			return -ret;
+
 		*written = ret;
 		return 0;
 	}
 
 	int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
-    	long ret = syscall(SYS_READ, fd, (uintptr_t)buf, count, (uintptr_t)&ret, 0);
+    	long ret = syscall(SYS_READ, fd, (uintptr_t)buf, count, 0, 0);
 
-		if(ret < 0)
-			return ret;
+		if(ret < 0){
+			*bytes_read = 0;
+			return -ret;
+		}
 
 		*bytes_read = ret;
 		return 0;
 	}
 	
 	int sys_pwrite(int fd, const void* buffer, size_t count, off_t off, ssize_t* written){
-		int ret;
-		syscall(SYS_PWRITE, fd, (uintptr_t)buffer, count, (uintptr_t)&ret, off);
+		int ret = syscall(SYS_PWRITE, fd, (uintptr_t)buffer, count, 0, off);
+
+
+		if(ret < 0){
+			return -ret;
+		}
 
 		*written = ret;
-
-		if(*written == -1)
-			return -1;
-
 		return 0;
 	}
 	
 	int sys_pread(int fd, void *buf, size_t count, off_t off, ssize_t *bytes_read) {
-		int ret;
-		int sys_errno;
+		int ret = syscall(SYS_PREAD, fd, (uintptr_t)buf, count, 0, off);
 
-    	syscall(SYS_PREAD, fd, (uintptr_t)buf, count, (uintptr_t)&ret, off);
-
-		if (ret == -1)
-		    return -1;
+		if(ret < 0){
+			return -ret;
+		}
 
 		*bytes_read = ret;
 		return 0;
 	}
 
 	int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
-		off_t off;
-		int sys_errno;
+		long ret = syscall(SYS_LSEEK, fd, offset, whence, 0, 0);
 
-		uint64_t ret;
-    	syscall(SYS_LSEEK, fd, offset, whence, (uintptr_t)&ret, 0);
+		if(ret < 0){
+			return -ret;
+		}
 
-		off = ret;
-
-		if (off == -1)
-		    return -1;
-
-		*new_offset = off;
+		*new_offset = ret;
 		return 0;
 	}
 
@@ -88,7 +84,7 @@ namespace mlibc{
 		long ret = syscall(SYS_OPEN, (uintptr_t)filename, flags, 0, 0, 0);
 
 		if(ret < 0)
-			return ret;
+			return -ret;
 
 		*fd = ret;
 
@@ -112,21 +108,19 @@ namespace mlibc{
 	
 	int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf){
 		int _fd = 0;
+		long ret = 0;
 
+		lemon_stat_t lemonStat;
 		switch(fsfdt){
 			case fsfd_target::fd:
-				_fd = fd;
+				ret = syscall(SYS_FSTAT, &lemonStat, fd, 0, 0, 0);
 				break;
 			case fsfd_target::path:
-				sys_open(path, 0, &_fd);
+				ret = syscall(SYS_STAT, &lemonStat, path, 0, 0, 0);
 				break;
 			default:
-				return 1;
+				return EINVAL;
 		}
-
-		int ret;
-		lemon_stat_t lemonStat;
-		syscall(SYS_STAT, &lemonStat, _fd, &ret, 0, 0);
 
 		statbuf->st_dev = lemonStat.st_dev;
 		statbuf->st_ino = lemonStat.st_ino;
@@ -139,9 +133,7 @@ namespace mlibc{
 		statbuf->st_blksize = lemonStat.st_blksize;
 		statbuf->st_blocks = lemonStat.st_blocks;
 
-		if(fsfdt == fsfd_target::path) sys_close(_fd);
-
-		return ret;
+		return -ret;
 	}
 
 	int sys_ioctl(int fd, unsigned long request, void *arg, int *result){
@@ -170,7 +162,7 @@ namespace mlibc{
 		sys_ioctl(fd, LEMON_TIOCGATTR, attr, &ret);
 
 		if(ret)
-			return -1;
+			return -ret;
 
 		return 0;
 	}
@@ -187,7 +179,7 @@ namespace mlibc{
 		sys_ioctl(fd, LEMON_TIOCSATTR, attr, &ret);
 
 		if(ret)
-			return -1;
+			return -ret;
 
 		return 0;
 	}
@@ -196,12 +188,88 @@ namespace mlibc{
 		long ret = syscall(SYS_POLL, fds, count, timeout, 0, 0);
 
 		if(ret < 0){
-			return ret;
+			return -ret;
 		}
 
 		*num_events = ret;
 
 		return 0;
+	}
+
+	int sys_mkdir(const char* path){
+		long ret = syscall(SYS_MKDIR, path, 0, 0, 0, 0);
+
+		if(ret < 0){
+			return -ret;
+		}
+
+		return 0;
+	}
+
+	int sys_rmdir(const char* path){
+		long ret = syscall(SYS_RMDIR, path, 0, 0, 0, 0);
+
+		if(ret < 0){
+			return -ret;
+		}
+
+		return 0;
+	}
+
+	int sys_link(const char* srcpath, const char* destpath){
+		long ret = syscall(SYS_LINK, srcpath, destpath, 0, 0, 0);
+
+		if(ret < 0){
+			return -ret;
+		}
+
+		return 0;
+	}
+
+	int sys_unlink(const char* path){
+		long ret = syscall(SYS_UNLINK, path, 0, 0, 0, 0);
+
+		if(ret < 0){
+			return -ret;
+		}
+
+		return 0;
+	}
+
+	typedef struct lemon_dirent {
+		uint32_t inode; // Inode number
+		uint32_t type;
+		char name[NAME_MAX]; // Filename
+	} lemon_dirent_t;
+
+	int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read){
+		lemon_dirent_t lemonDirent;
+		long ret = syscall(SYS_READDIR_NEXT, handle, &lemonDirent, 0, 0, 0);
+
+		if(!ret){
+			*bytes_read = 0;
+			return 0;
+		} else if(ret > 0){
+			dirent* dir = (dirent*)buffer;
+			strcpy(dir->d_name, lemonDirent.name);
+			dir->d_ino = lemonDirent.inode;
+			dir->d_off = 0;
+			dir->d_reclen = sizeof(dirent);
+			dir->d_type = lemonDirent.type;
+
+			*bytes_read = sizeof(dirent);
+			return 0;
+		} else {
+			return -ret;
+		}
+	}
+
+	int sys_open_dir(const char* path, int* handle){
+		return sys_open(path, O_DIRECTORY, handle);
+	}
+
+	int sys_rename(const char* path, const char* new_path){
+		return -syscall(SYS_RENAME, path, new_path, 0, 0, 0);
 	}
 	#endif
 } 

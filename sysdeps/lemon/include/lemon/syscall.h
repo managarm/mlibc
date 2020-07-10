@@ -18,17 +18,16 @@
 #define SYS_MAP_FB 14
 #define SYS_ALLOC 15
 #define SYS_CHMOD 16
-#define SYS_CREATE_DESKTOP 17
+#define SYS_FSTAT 17
 #define SYS_STAT 18
 #define SYS_LSEEK 19
 #define SYS_GETPID 20
 #define SYS_MOUNT 21
-#define SYS_CREATE_WINDOW 22
-#define SYS_DESTROY_WINDOW 23
-#define SYS_DESKTOP_GET_WINDOW 24
+#define SYS_MKDIR 22
+#define SYS_RMDIR 23
+#define SYS_RENAME 24
 #define SYS_YIELD 25
-#define SYS_UPDATE_WINDOW 26
-#define SYS_GET_DESKTOP_PID 27
+#define SYS_READDIR_NEXT 26
 #define SYS_SEND_MESSAGE 28
 #define SYS_RECEIVE_MESSAGE 29
 #define SYS_UPTIME 30
@@ -64,6 +63,8 @@
 #define SYS_POLL 60
 #define SYS_SENDMSG 61
 #define SYS_RECVMSG 62
+#define SYS_GETEUID 63
+#define SYS_SETEUID 64
 
 static inline long _syscall(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4) {
     volatile long ret;
