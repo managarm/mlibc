@@ -104,9 +104,34 @@ namespace mlibc{
 		return 0;
 	}
 	
-	uid_t sys_getuid() {
+	uid_t sys_getuid(){
 		return syscall(SYS_GETUID, 0, 0, 0, 0, 0);
 	}
 
+	uid_t sys_geteuid(){
+		return syscall(SYS_GETEUID, 0, 0, 0, 0, 0);
+	}
+
+	int sys_setuid(uid_t uid){
+		return -syscall(SYS_SETUID, uid, 0, 0, 0, 0);
+	}
+
+	int sys_seteuid(uid_t euid){
+		return -syscall(SYS_SETEUID, euid, 0, 0, 0, 0);
+	}
+
+	int sys_getgid(){
+		mlibc::infoLogger() << "mlibc: sys_getgid is a stub" << frg::endlog;
+		return 0;
+	}
+
+	int sys_getegid(){
+		mlibc::infoLogger() << "mlibc: sys_getegid is a stub" << frg::endlog;
+		return 0;
+	}
+
+	void sys_yield(){
+		syscall(SYS_YIELD, 0, 0, 0, 0, 0);
+	}
 	#endif
 } 
