@@ -120,6 +120,16 @@ namespace mlibc{
 		return -syscall(SYS_SETEUID, euid, 0, 0, 0, 0);
 	}
 
+	int sys_getgid(){
+		mlibc::infoLogger() << "mlibc: sys_getgid is a stub" << frg::endlog;
+		return 0;
+	}
+
+	int sys_getegid(){
+		mlibc::infoLogger() << "mlibc: sys_getegid is a stub" << frg::endlog;
+		return 0;
+	}
+
 	void sys_yield(){
 		syscall(SYS_YIELD, 0, 0, 0, 0, 0);
 	}
