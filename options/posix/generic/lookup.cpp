@@ -111,7 +111,7 @@ int lookup_name_dns(struct dns_addr_buf *buf, const char *name) {
 
 		for (int i = 0; i < ntohs(response_header->no_ans); i++) {
 			auto dns_name = read_dns_name(response, it);
-			(void) dns_name;
+			buf[count].name = std::move(dns_name);
 
 			uint16_t rr_type = (it[0] << 8) | it[1];
 			uint16_t rr_class = (it[2] << 8) | it[3];
@@ -119,10 +119,10 @@ int lookup_name_dns(struct dns_addr_buf *buf, const char *name) {
 			it += 10;
 
 			if (rr_type == 1) {
-				memcpy(buf[i].addr, it, rr_length);
-				buf[i].family = AF_INET;
+				memcpy(buf[count].addr, it, rr_length);
+				buf[count].family = AF_INET;
+				count++;
 			}
-			count++;
 			it += rr_length;
 		}
 		num_ans += ntohs(response_header->no_ans);

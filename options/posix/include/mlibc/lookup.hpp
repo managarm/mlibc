@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <frg/string.hpp>
+#include <mlibc/allocator.hpp>
 
 // Constant taken from musl
 #define NAME_MAX 48
@@ -11,6 +13,9 @@
 namespace mlibc {
 
 struct dns_addr_buf {
+	dns_addr_buf() : name(getAllocator())
+	{}
+	frg::string<MemoryAllocator> name;
 	int family;
 	uint8_t addr[16];
 };
