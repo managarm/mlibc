@@ -80,6 +80,23 @@ enum class HashStyle {
 
 using InitFuncPtr = void (*)();
 
+// The ABI of this struct is fixed by GDB
+struct DebugInterface {
+	int ver;
+	void *head;
+	void (*brk)(void);
+	int state;
+	void *base;
+};
+
+// The ABI of this struct is fixed by GDB
+struct LinkMap {
+	uintptr_t base = 0;
+	const char *name = nullptr;
+	Elf64_Dyn *dynv = nullptr;
+	LinkMap *next = nullptr, *prev = nullptr;
+};
+
 struct SharedObject {
 	// path is copied
 	SharedObject(const char *name, frg::string<MemoryAllocator> path,
@@ -90,8 +107,13 @@ struct SharedObject {
 
 	const char *name;
 	frg::string<MemoryAllocator> path;
+	frg::string<MemoryAllocator> interpreterPath;
 	bool isMainObject;
 	uint64_t objectRts;
+
+	// link map for debugging
+	LinkMap linkMap;
+	bool inLinkMap;
 
 	// base address this shared object was loaded to
 	uintptr_t baseAddress;
@@ -211,7 +233,6 @@ struct Scope {
 	void appendObject(SharedObject *object);
 
 	frg::optional<ObjectSymbol> resolveSymbol(ObjectSymbol r, ResolveFlags flags);
-
 private:
 public: // TODO: Make this private again. (Was made public for __dlapi_reverse()).
 	frg::vector<SharedObject *, MemoryAllocator> _objects;
