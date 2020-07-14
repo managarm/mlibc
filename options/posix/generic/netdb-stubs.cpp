@@ -81,6 +81,9 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 		out[i].ai.ai_addr = (struct sockaddr *) &out[i].sa;
 		out[i].ai.ai_canonname = canon;
 		out[i].ai.ai_next = NULL;
+		if (i)
+			out[i].ai.ai_next = &out[i - 1].ai;
+
 		switch (buf[i].family) {
 			case AF_INET:
 				out[i].ai.ai_addrlen = sizeof(struct sockaddr_in);
