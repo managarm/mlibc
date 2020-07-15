@@ -37,7 +37,7 @@ static frg::string<MemoryAllocator> read_dns_name(char *buf, char *&it) {
 	return res;
 }
 
-int lookup_name_dns(struct dns_addr_buf *buf, const char *name) {
+int lookup_name_dns(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, const char *name) {
 	frg::string<MemoryAllocator> request{getAllocator()};
 
 	int num_q = 1;
@@ -93,7 +93,6 @@ int lookup_name_dns(struct dns_addr_buf *buf, const char *name) {
 
 	char response[256];
 	ssize_t rlen;
-	int count = 0;
 	int num_ans = 0;
 	while ((rlen = recvfrom(fd, response, 256, 0, NULL, NULL)) >= 0) {
 		if ((size_t)rlen < sizeof(struct dns_header))
@@ -110,8 +109,9 @@ int lookup_name_dns(struct dns_addr_buf *buf, const char *name) {
 		}
 
 		for (int i = 0; i < ntohs(response_header->no_ans); i++) {
+			struct dns_addr_buf buffer;
 			auto dns_name = read_dns_name(response, it);
-			(void) dns_name;
+			buffer.name = std::move(dns_name);
 
 			uint16_t rr_type = (it[0] << 8) | it[1];
 			uint16_t rr_class = (it[2] << 8) | it[3];
@@ -119,10 +119,10 @@ int lookup_name_dns(struct dns_addr_buf *buf, const char *name) {
 			it += 10;
 
 			if (rr_type == 1) {
-				memcpy(buf[i].addr, it, rr_length);
-				buf[i].family = AF_INET;
+				memcpy(buffer.addr, it, rr_length);
+				buffer.family = AF_INET;
+				buf.push_back(std::move(buffer));
 			}
-			count++;
 			it += rr_length;
 		}
 		num_ans += ntohs(response_header->no_ans);
@@ -132,7 +132,7 @@ int lookup_name_dns(struct dns_addr_buf *buf, const char *name) {
 	}
 
 	close(fd);
-	return count;
+	return buf.size();
 }
 
 } // namespace mlibc

@@ -3,11 +3,13 @@
 
 #include <mlibc/debug.hpp>
 #include <mlibc/lookup.hpp>
+#include <mlibc/allocator.hpp>
+#include <frg/vector.hpp>
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <errno.h>
 
-#undef h_errno
 __thread int __mlibc_h_errno;
 
 // This function is from musl
@@ -62,7 +64,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 		protocol = hints->ai_protocol;
 	}
 
-	struct mlibc::dns_addr_buf buf[NAME_MAX];
+	frg::vector<struct mlibc::dns_addr_buf, MemoryAllocator> buf(getAllocator());
 	int ret = mlibc::lookup_name_dns(buf, node);
 	if (ret < 0)
 		return ret;
@@ -81,6 +83,9 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 		out[i].ai.ai_addr = (struct sockaddr *) &out[i].sa;
 		out[i].ai.ai_canonname = canon;
 		out[i].ai.ai_next = NULL;
+		if (i)
+			out[i].ai.ai_next = &out[i - 1].ai;
+
 		switch (buf[i].family) {
 			case AF_INET:
 				out[i].ai.ai_addrlen = sizeof(struct sockaddr_in);
@@ -125,9 +130,78 @@ struct netent *getnetent(void) {
 	__builtin_unreachable();
 }
 
-struct hostent *gethostbyname(const char *) {
-	__ensure(!"gethostbyname() not implemented");
-	__builtin_unreachable();
+struct hostent *gethostbyname(const char *name) {
+	if (!name) {
+		h_errno = HOST_NOT_FOUND;
+		return NULL;
+	}
+
+	frg::vector<struct mlibc::dns_addr_buf, MemoryAllocator> buf(getAllocator());
+	int ret = mlibc::lookup_name_dns(buf, name);
+	if (ret <= 0) {
+		h_errno = HOST_NOT_FOUND;
+		return NULL;
+	}
+
+	static struct hostent h;
+	if (h.h_name) {
+		free(h.h_name);
+		auto alias = h.h_aliases[0];
+		for (int i = 0; alias != NULL; alias = h.h_aliases[i++])
+			free(alias);
+		free(h.h_aliases);
+
+		if (h.h_addr_list) {
+			auto addr = h.h_addr_list[0];
+			for (int i = 0; addr != NULL; addr = h.h_addr_list[i++])
+				free(addr);
+			free(h.h_addr_list);
+		}
+	}
+	h = {};
+
+	h.h_name = reinterpret_cast<char*>(malloc(strlen(name) + 1));
+	strcpy(h.h_name, name);
+
+	frg::string_view name_view(name);
+	h.h_aliases = reinterpret_cast<char**>(malloc((ret + 1) * sizeof(char*)));
+	int alias_pos = 0;
+	for (int i = 0; i < ret; i++) {
+		auto &buf_name = buf[i].name;
+		if (buf_name == name_view)
+			continue;
+
+		// we have found an entry that is an alias
+		auto name_length = buf_name.size();
+		h.h_aliases[alias_pos] = reinterpret_cast<char*>(malloc(name_length + 1));
+		strncpy(h.h_aliases[alias_pos], buf_name.data(), name_length);
+		h.h_aliases[alias_pos][name_length] = '\0';
+		alias_pos++;
+	}
+	h.h_aliases[alias_pos] = NULL;
+
+	// just pick the first family as the one for all addresses...??
+	h.h_addrtype = buf[0].family;
+	if (h.h_addrtype != AF_INET && h.h_addrtype != AF_INET6) {
+		// this is not allowed per spec
+		h_errno = NO_DATA;
+		return NULL;
+	}
+
+	// can only be AF_INET or AF_INET6
+	h.h_length = h.h_addrtype == AF_INET ? 4 : 16;
+	h.h_addr_list = reinterpret_cast<char**>(malloc((ret + 1) * sizeof(char*)));
+	int addr_pos = 0;
+	for (int i = 0; i < ret; i++) {
+		if (buf[i].family != h.h_addrtype)
+			continue;
+		h.h_addr_list[addr_pos] = reinterpret_cast<char*>(malloc(h.h_length));
+		memcpy(h.h_addr_list[addr_pos], buf[i].addr, h.h_length);
+		addr_pos++;
+	}
+	h.h_addr_list[addr_pos] = NULL;
+
+	return &h;
 }
 
 struct hostent *gethostbyaddr(const void *, socklen_t, int) {
