@@ -24,6 +24,7 @@ libc_sources += files(
 	'generic/sched-stubs.cpp',
 	'generic/spawn-stubs.cpp',
 	'generic/strings-stubs.cpp',
+	'generic/services.cpp',
 	'generic/sys-file-stubs.cpp',
 	'generic/syslog-stubs.cpp',
 	'generic/sys-mman-stubs.cpp',

@@ -4,6 +4,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/lookup.hpp>
 #include <mlibc/allocator.hpp>
+#include <mlibc/services.hpp>
 #include <frg/vector.hpp>
 #include <sys/socket.h>
 #include <stdlib.h>
@@ -53,50 +54,61 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 	if (!node && !service)
 		return EAI_NONAME;
 
-	if (service) {
-		__ensure(!"Not implemented");
-		__builtin_unreachable();
-	}
-
 	int socktype = 0, protocol = 0;
 	if (hints) {
 		socktype = hints->ai_socktype;
 		protocol = hints->ai_protocol;
 	}
 
-	frg::vector<struct mlibc::dns_addr_buf, MemoryAllocator> buf(getAllocator());
-	int ret = mlibc::lookup_name_dns(buf, node);
-	if (ret < 0)
-		return ret;
+	struct mlibc::service_buf serv_buf[SERV_MAX] = {};
+	int serv_count = mlibc::lookup_serv(serv_buf, service, protocol, socktype);
+	if (serv_count < 0)
+		return -serv_count;
 
-	auto out = (struct mlibc::ai_buf *) calloc(ret, sizeof(struct addrinfo));
+	frg::vector<struct mlibc::dns_addr_buf, MemoryAllocator> addr_buf(getAllocator());
+	int addr_count = 1;
+	if (node) {
+		addr_count = mlibc::lookup_name_dns(addr_buf, node);
+		if (addr_count < 0)
+			return -addr_count;
+		if (!addr_count)
+			return EAI_NONAME;
+	}
 
-	auto canon_len = strlen(node);
-	auto canon = (char *) malloc(canon_len);
-	strncpy(canon, node, canon_len);
+	auto out = (struct mlibc::ai_buf *) calloc(serv_count * addr_count,
+			sizeof(struct addrinfo));
 
-	for (int i = 0; i < ret; i++) {
-		out[i].ai.ai_family = buf[i].family;
-		out[i].ai.ai_socktype = socktype;
-		out[i].ai.ai_protocol = protocol;
-		out[i].ai.ai_flags = AI_V4MAPPED | AI_ADDRCONFIG;
-		out[i].ai.ai_addr = (struct sockaddr *) &out[i].sa;
-		out[i].ai.ai_canonname = canon;
-		out[i].ai.ai_next = NULL;
-		if (i)
-			out[i].ai.ai_next = &out[i - 1].ai;
+	char *canon = NULL;
+	if (node) {
+		//TODO(geert): this should be part of lookup_name_dns()
+		auto canon_len = strlen(node);
+		canon = (char *) malloc(canon_len);
+		strncpy(canon, node, canon_len);
+	}
 
-		switch (buf[i].family) {
-			case AF_INET:
-				out[i].ai.ai_addrlen = sizeof(struct sockaddr_in);
-				out[i].sa.sin.sin_family = AF_INET;
-				memcpy(&out[i].sa.sin.sin_addr, buf[i].addr, 4);
-				break;
-			case AF_INET6:
-				out[i].ai.ai_addrlen = sizeof(struct sockaddr_in6);
-				out[i].sa.sin6.sin6_family = AF_INET6;
-				memcpy(&out[i].sa.sin6.sin6_addr, buf[i].addr, 16);
-				break;
+	for (int i = 0, k = 0; i < addr_count; i++) {
+		for (int j = 0; j < serv_count; j++, k++) {
+			out[i].ai.ai_family = addr_buf[i].family;
+			out[i].ai.ai_socktype = serv_buf[j].socktype;
+			out[i].ai.ai_protocol = serv_buf[j].protocol;
+			out[i].ai.ai_flags = AI_V4MAPPED | AI_ADDRCONFIG;
+			out[i].ai.ai_addr = (struct sockaddr *) &out[i].sa;
+			out[i].ai.ai_canonname = canon;
+			out[i].ai.ai_next = NULL;
+			switch (addr_buf[i].family) {
+				case AF_INET:
+					out[i].ai.ai_addrlen = sizeof(struct sockaddr_in);
+					out[i].sa.sin.sin_port = serv_buf[j].port;
+					out[i].sa.sin.sin_family = AF_INET;
+					memcpy(&out[i].sa.sin.sin_addr, addr_buf[i].addr, 4);
+					break;
+				case AF_INET6:
+					out[i].ai.ai_addrlen = sizeof(struct sockaddr_in6);
+					out[i].sa.sin6.sin6_family = serv_buf[j].port;
+					out[i].sa.sin6.sin6_family = AF_INET6;
+					memcpy(&out[i].sa.sin6.sin6_addr, addr_buf[i].addr, 16);
+					break;
+			}
 		}
 	}
 

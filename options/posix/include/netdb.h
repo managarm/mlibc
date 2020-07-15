@@ -43,6 +43,8 @@
 
 #define IPPORT_RESERVED 1024
 
+#define _PATH_SERVICES "/etc/services"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

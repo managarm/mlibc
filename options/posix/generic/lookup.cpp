@@ -75,20 +75,20 @@ int lookup_name_dns(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, cons
 	sin.sin_port = htons(53);
 	if (!inet_aton("8.8.8.8", &sin.sin_addr)) {
 		mlibc::infoLogger() << "__lookup_name(): inet_aton() failed!" << frg::endlog;
-		return -1;
+		return -EAI_SYSTEM;
 	}
 
 	int fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0) {
 		mlibc::infoLogger() << "_lookup_name(): socket() failed" << frg::endlog;
-		return -1;
+		return -EAI_SYSTEM;
 	}
 
 	size_t sent = sendto(fd, request.data(), request.size(), 0,
 			(struct sockaddr*)&sin, sizeof(sin));
 	if (sent != request.size()) {
 		mlibc::infoLogger() << "__lookup_name(): sendto() failed to send everything" << frg::endlog;
-		return -1;
+		return -EAI_SYSTEM;
 	}
 
 	char response[256];
@@ -99,7 +99,7 @@ int lookup_name_dns(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, cons
 			continue;
 		auto response_header = reinterpret_cast<struct dns_header*>(response);
 		if (response_header->identification != header.identification)
-			return -1;
+			return -EAI_FAIL;
 
 		auto it = response + sizeof(struct dns_header);
 		for (int i = 0; i < ntohs(response_header->no_q); i++) {
