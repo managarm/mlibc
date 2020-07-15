@@ -3,6 +3,8 @@
 
 #include <mlibc/debug.hpp>
 #include <mlibc/lookup.hpp>
+#include <mlibc/allocator.hpp>
+#include <frg/vector.hpp>
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -62,7 +64,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 		protocol = hints->ai_protocol;
 	}
 
-	struct mlibc::dns_addr_buf buf[NAME_MAX];
+	frg::vector<struct mlibc::dns_addr_buf, MemoryAllocator> buf(getAllocator());
 	int ret = mlibc::lookup_name_dns(buf, node);
 	if (ret < 0)
 		return ret;
@@ -134,7 +136,7 @@ struct hostent *gethostbyname(const char *name) {
 		return NULL;
 	}
 
-	struct mlibc::dns_addr_buf buf[NAME_MAX];
+	frg::vector<struct mlibc::dns_addr_buf, MemoryAllocator> buf(getAllocator());
 	int ret = mlibc::lookup_name_dns(buf, name);
 	if (ret <= 0) {
 		h_errno = HOST_NOT_FOUND;

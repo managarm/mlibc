@@ -5,10 +5,8 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <frg/string.hpp>
+#include <frg/vector.hpp>
 #include <mlibc/allocator.hpp>
-
-// Constant taken from musl
-#define NAME_MAX 48
 
 namespace mlibc {
 
@@ -37,7 +35,7 @@ struct ai_buf {
 	} sa;
 };
 
-int lookup_name_dns(struct dns_addr_buf *buf, const char *name);
+int lookup_name_dns(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, const char *name);
 
 } // namespace mlibc
 
