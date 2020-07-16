@@ -21,6 +21,7 @@ libc_sources += files(
 	'generic/pthread-stubs.cpp',
 	'generic/pwd-stubs.cpp',
 	'generic/regex.cpp',
+	'generic/resolv_conf.cpp',
 	'generic/sched-stubs.cpp',
 	'generic/spawn-stubs.cpp',
 	'generic/strings-stubs.cpp',

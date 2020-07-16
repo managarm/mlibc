@@ -1,4 +1,5 @@
 #include <mlibc/lookup.hpp>
+#include <mlibc/resolv_conf.hpp>
 #include <mlibc/debug.hpp>
 #include <bits/ensure.h>
 
@@ -72,22 +73,26 @@ int lookup_name_dns(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, cons
 
 	struct sockaddr_in sin = {};
 	sin.sin_family = AF_INET;
+	// TODO(geert): we could probably make this use the service lookup
+	// for dns
 	sin.sin_port = htons(53);
-	if (!inet_aton("8.8.8.8", &sin.sin_addr)) {
-		mlibc::infoLogger() << "__lookup_name(): inet_aton() failed!" << frg::endlog;
+
+	auto nameserver = get_nameserver();
+	if (!inet_aton(nameserver ? nameserver->name.data() : "127.0.0.1", &sin.sin_addr)) {
+		mlibc::infoLogger() << "lookup_name_dns(): inet_aton() failed!" << frg::endlog;
 		return -EAI_SYSTEM;
 	}
 
 	int fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0) {
-		mlibc::infoLogger() << "_lookup_name(): socket() failed" << frg::endlog;
+		mlibc::infoLogger() << "lookup_name_dns(): socket() failed" << frg::endlog;
 		return -EAI_SYSTEM;
 	}
 
 	size_t sent = sendto(fd, request.data(), request.size(), 0,
 			(struct sockaddr*)&sin, sizeof(sin));
 	if (sent != request.size()) {
-		mlibc::infoLogger() << "__lookup_name(): sendto() failed to send everything" << frg::endlog;
+		mlibc::infoLogger() << "lookup_name_dns(): sendto() failed to send everything" << frg::endlog;
 		return -EAI_SYSTEM;
 	}
 
