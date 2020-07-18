@@ -1,6 +1,7 @@
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/sysdeps.hpp>
+#include <mlibc/thread-entry.hpp>
 #include <errno.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -182,16 +183,59 @@ int sys_vm_unmap(void *pointer, size_t size) {
     return sys_anon_free(pointer, size);
 }
 
-
 int sys_futex_wait(int *pointer, int expected) {
-    return 0;
+    uint64_t err;
+    asm volatile ("syscall"
+            : "=d"(err)
+            : "a"(66), "D"(pointer), "S"(expected)
+            : "rcx", "r11");
+        
+    if (err) {
+        return -1;
+    }
+
+	return 0;
 }
+
 int sys_futex_wake(int *pointer) {
-    return 0;
+    uint64_t err;
+    asm volatile ("syscall"
+            : "=d"(err)
+            : "a"(65), "D"(pointer)
+            : "rcx", "r11");
+        
+    if (err) {
+        return -1;
+    }
+
+	return 0;
 }
 
 // All remaining functions are disabled in ldso.
 #ifndef MLIBC_BUILDING_RTDL
+
+int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *tid_out) {
+	void *sp = prepare_stack(entry, user_arg, tcb);
+    int tid;
+
+    asm volatile ("syscall"
+        : "=a"(tid)
+        : "a"(67), "D"(__mlibc_start_thread), "S"(sp), "d"(tcb)
+        : "rcx", "r11");
+
+	if (tid_out)
+		*tid_out = tid;
+
+	return 0;
+}
+
+void sys_thread_exit() {
+	asm volatile ("syscall"
+            :
+            : "a"(68)
+            : "rcx", "r11");
+	__builtin_trap();
+}
 
 int sys_sleep(time_t *secs, long *nanos) {
     long ms = (*nanos / 1000000) + (*secs * 1000);
