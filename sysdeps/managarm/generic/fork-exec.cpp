@@ -453,8 +453,27 @@ pid_t sys_getpid() {
 }
 
 pid_t sys_getppid() {
-	mlibc::infoLogger() << "mlibc: Broken getppid() called" << frg::endlog;
-	return 1;
+	SignalGuard sguard;
+
+	managarm::posix::GetPpidRequest<MemoryAllocator> req(getSysdepsAllocator());
+
+	auto [offer, send_head, recv_resp] = 
+			exchangeMsgsSync(
+					getPosixLane(),
+					helix_ng::offer(
+							helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+							helix_ng::recvInline()
+					)
+			);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	return resp.pid();
 }
 
 int sys_getrusage(int scope, struct rusage *usage) {

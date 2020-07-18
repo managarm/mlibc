@@ -1086,6 +1086,8 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 
 	if(resp.error() == managarm::fs::Errors::BROKEN_PIPE) {
 		return EPIPE;
+	}else if(resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
+		return ENOTCONN;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*length = resp.size();
