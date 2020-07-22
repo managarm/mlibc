@@ -66,12 +66,12 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 	if (serv_count < 0)
 		return -serv_count;
 
-	frg::vector<struct mlibc::dns_addr_buf, MemoryAllocator> addr_buf(getAllocator());
+	struct mlibc::lookup_result addr_buf;
 	int addr_count = 1;
 	frg::string<MemoryAllocator> canon{getAllocator()};
 	if (node) {
 		if ((addr_count = mlibc::lookup_name_hosts(addr_buf, node, canon)) <= 0)
-			addr_count = mlibc::lookup_name_dns(addr_buf, node);
+			addr_count = mlibc::lookup_name_dns(addr_buf, node, canon);
 		else
 			addr_count = 1;
 		if (addr_count < 0)
@@ -83,32 +83,30 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 	auto out = (struct mlibc::ai_buf *) calloc(serv_count * addr_count,
 			sizeof(struct addrinfo));
 
-	if (node && !canon.size()) {
-		//TODO(geert): this should be part of lookup_name_dns()
+	if (node && !canon.size())
 		canon = frg::string<MemoryAllocator>{node, getAllocator()};
-	}
 
 	for (int i = 0, k = 0; i < addr_count; i++) {
 		for (int j = 0; j < serv_count; j++, k++) {
-			out[i].ai.ai_family = addr_buf[i].family;
+			out[i].ai.ai_family = addr_buf.buf[i].family;
 			out[i].ai.ai_socktype = serv_buf[j].socktype;
 			out[i].ai.ai_protocol = serv_buf[j].protocol;
 			out[i].ai.ai_flags = AI_V4MAPPED | AI_ADDRCONFIG;
 			out[i].ai.ai_addr = (struct sockaddr *) &out[i].sa;
 			out[i].ai.ai_canonname = canon.data();
 			out[i].ai.ai_next = NULL;
-			switch (addr_buf[i].family) {
+			switch (addr_buf.buf[i].family) {
 				case AF_INET:
 					out[i].ai.ai_addrlen = sizeof(struct sockaddr_in);
 					out[i].sa.sin.sin_port = serv_buf[j].port;
 					out[i].sa.sin.sin_family = AF_INET;
-					memcpy(&out[i].sa.sin.sin_addr, addr_buf[i].addr, 4);
+					memcpy(&out[i].sa.sin.sin_addr, addr_buf.buf[i].addr, 4);
 					break;
 				case AF_INET6:
 					out[i].ai.ai_addrlen = sizeof(struct sockaddr_in6);
 					out[i].sa.sin6.sin6_family = serv_buf[j].port;
 					out[i].sa.sin6.sin6_family = AF_INET6;
-					memcpy(&out[i].sa.sin6.sin6_addr, addr_buf[i].addr, 16);
+					memcpy(&out[i].sa.sin6.sin6_addr, addr_buf.buf[i].addr, 16);
 					break;
 			}
 		}
@@ -151,11 +149,11 @@ struct hostent *gethostbyname(const char *name) {
 		return NULL;
 	}
 
-	frg::vector<struct mlibc::dns_addr_buf, MemoryAllocator> buf(getAllocator());
+	struct mlibc::lookup_result buf;
 	frg::string<MemoryAllocator> canon{getAllocator()};
 	int ret = 0;
 	if ((ret = mlibc::lookup_name_hosts(buf, name, canon)) <= 0)
-		ret = mlibc::lookup_name_dns(buf, name);
+		ret = mlibc::lookup_name_dns(buf, name, canon);
 	if (ret <= 0) {
 		h_errno = HOST_NOT_FOUND;
 		return NULL;
@@ -181,14 +179,10 @@ struct hostent *gethostbyname(const char *name) {
 
 	h.h_name = canon.data();
 
-	h.h_aliases = reinterpret_cast<char**>(malloc((ret + 1) * sizeof(char*)));
+	h.h_aliases = reinterpret_cast<char**>(malloc((buf.aliases.size() + 1)
+				* sizeof(char*)));
 	int alias_pos = 0;
-	for (int i = 0; i < ret; i++) {
-		auto &buf_name = buf[i].name;
-		if (buf_name == canon)
-			continue;
-
-		// we have found an entry that is an alias
+	for (auto &buf_name : buf.aliases) {
 		h.h_aliases[alias_pos] = buf_name.data();
 		buf_name.detach();
 		alias_pos++;
@@ -197,7 +191,7 @@ struct hostent *gethostbyname(const char *name) {
 	canon.detach();
 
 	// just pick the first family as the one for all addresses...??
-	h.h_addrtype = buf[0].family;
+	h.h_addrtype = buf.buf[0].family;
 	if (h.h_addrtype != AF_INET && h.h_addrtype != AF_INET6) {
 		// this is not allowed per spec
 		h_errno = NO_DATA;
@@ -209,10 +203,10 @@ struct hostent *gethostbyname(const char *name) {
 	h.h_addr_list = reinterpret_cast<char**>(malloc((ret + 1) * sizeof(char*)));
 	int addr_pos = 0;
 	for (int i = 0; i < ret; i++) {
-		if (buf[i].family != h.h_addrtype)
+		if (buf.buf[i].family != h.h_addrtype)
 			continue;
 		h.h_addr_list[addr_pos] = reinterpret_cast<char*>(malloc(h.h_length));
-		memcpy(h.h_addr_list[addr_pos], buf[i].addr, h.h_length);
+		memcpy(h.h_addr_list[addr_pos], buf.buf[i].addr, h.h_length);
 		addr_pos++;
 	}
 	h.h_addr_list[addr_pos] = NULL;

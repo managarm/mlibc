@@ -14,6 +14,11 @@
 
 namespace mlibc {
 
+namespace {
+	constexpr unsigned int RECORD_A = 1;
+	constexpr unsigned int RECORD_CNAME = 5;
+}
+
 static frg::string<MemoryAllocator> read_dns_name(char *buf, char *&it) {
 	frg::string<MemoryAllocator> res{getAllocator()};
 	while (true) {
@@ -40,7 +45,8 @@ static frg::string<MemoryAllocator> read_dns_name(char *buf, char *&it) {
 	return res;
 }
 
-int lookup_name_dns(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, const char *name) {
+int lookup_name_dns(struct lookup_result &buf, const char *name,
+		frg::string<MemoryAllocator> &canon_name) {
 	frg::string<MemoryAllocator> request{getAllocator()};
 
 	int num_q = 1;
@@ -118,19 +124,29 @@ int lookup_name_dns(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, cons
 		for (int i = 0; i < ntohs(response_header->no_ans); i++) {
 			struct dns_addr_buf buffer;
 			auto dns_name = read_dns_name(response, it);
-			buffer.name = std::move(dns_name);
 
 			uint16_t rr_type = (it[0] << 8) | it[1];
 			uint16_t rr_class = (it[2] << 8) | it[3];
 			uint16_t rr_length = (it[8] << 8) | it[9];
 			it += 10;
 
-			if (rr_type == 1) {
-				memcpy(buffer.addr, it, rr_length);
-				buffer.family = AF_INET;
-				buf.push_back(std::move(buffer));
+			switch (rr_type) {
+				case RECORD_A:
+					memcpy(buffer.addr, it, rr_length);
+					it += rr_length;
+					buffer.family = AF_INET;
+					buffer.name = std::move(dns_name);
+					buf.buf.push(std::move(buffer));
+					break;
+				case RECORD_CNAME:
+					canon_name = std::move(read_dns_name(response, it));
+					buf.aliases.push(std::move(dns_name));
+					break;
+				default:
+					mlibc::infoLogger() << "lookup_name_dns: unknown rr type "
+						<< rr_type << frg::endlog;
+					break;
 			}
-			it += rr_length;
 		}
 		num_ans += ntohs(response_header->no_ans);
 
@@ -139,10 +155,10 @@ int lookup_name_dns(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, cons
 	}
 
 	close(fd);
-	return buf.size();
+	return buf.buf.size();
 }
 
-int lookup_name_hosts(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, const char *name,
+int lookup_name_hosts(struct lookup_result &buf, const char *name,
 		frg::string<MemoryAllocator> &canon_name) {
 	auto file = fopen("/etc/hosts", "r");
 	if (!file) {
@@ -189,24 +205,23 @@ int lookup_name_hosts(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, co
 		buffer.family = AF_INET;
 		buffer.name = frg::string<MemoryAllocator>{pos,
 			static_cast<size_t>(end - pos), getAllocator()};
-		if (!canon_name.size())
-			canon_name = buffer.name;
+		canon_name = buffer.name;
 
-		buf.push(std::move(buffer));
+		buf.buf.push(std::move(buffer));
 
 		pos = end;
 		while (pos[1]) {
 			for (; *pos && isspace(*pos); pos++);
 			for (end = pos; *end && !isspace(*end); end++);
-			buffer.name = frg::string<MemoryAllocator>{pos,
+			auto name = frg::string<MemoryAllocator>{pos,
 				static_cast<size_t>(end - pos), getAllocator()};
-			buf.push(std::move(buffer));
+			buf.aliases.push(std::move(name));
 			pos = end;
 		}
 	}
 
 	fclose(file);
-	return buf.size();
+	return buf.buf.size();
 }
 
 } // namespace mlibc
