@@ -36,6 +36,8 @@ struct ai_buf {
 };
 
 int lookup_name_dns(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, const char *name);
+int lookup_name_hosts(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, const char *name,
+		frg::string<MemoryAllocator> &canon_name);
 
 } // namespace mlibc
 

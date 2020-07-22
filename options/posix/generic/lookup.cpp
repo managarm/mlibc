@@ -9,6 +9,8 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <ctype.h>
 
 namespace mlibc {
 
@@ -137,6 +139,73 @@ int lookup_name_dns(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, cons
 	}
 
 	close(fd);
+	return buf.size();
+}
+
+int lookup_name_hosts(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, const char *name,
+		frg::string<MemoryAllocator> &canon_name) {
+	auto file = fopen("/etc/hosts", "r");
+	if (!file) {
+		switch (errno) {
+			case ENOENT:
+			case ENOTDIR:
+			case EACCES:
+				return -EAI_SERVICE;
+			default:
+				return -EAI_SYSTEM;
+		}
+	}
+
+	char line[128];
+	int name_length = strlen(name);
+	while (fgets(line, 128, file)) {
+		char *pos;
+		// same way to deal with comments as in services.cpp
+		if ((pos = strchr(line, '#'))) {
+			*pos++ = '\n';
+			*pos = '\0';
+		}
+
+		for(pos = line + 1; (pos = strstr(pos, name)) &&
+				(!isspace(pos[-1]) || !isspace(pos[name_length])); pos++);
+		if (!pos)
+			continue;
+
+		for (pos = line; !isspace(*pos); pos++);
+		*pos = '\0';
+
+		// TODO(geert): we assume ipv4 for now
+		struct in_addr addr;
+		if (!inet_aton(line, &addr))
+			continue;
+
+		pos++;
+		for(; *pos && isspace(*pos); pos++);
+		char *end;
+		for(end = pos; *end && !isspace(*end); end++);
+
+		struct dns_addr_buf buffer;
+		memcpy(buffer.addr, &addr, 4);
+		buffer.family = AF_INET;
+		buffer.name = frg::string<MemoryAllocator>{pos,
+			static_cast<size_t>(end - pos), getAllocator()};
+		if (!canon_name.size())
+			canon_name = buffer.name;
+
+		buf.push(std::move(buffer));
+
+		pos = end;
+		while (pos[1]) {
+			for (; *pos && isspace(*pos); pos++);
+			for (end = pos; *end && !isspace(*end); end++);
+			buffer.name = frg::string<MemoryAllocator>{pos,
+				static_cast<size_t>(end - pos), getAllocator()};
+			buf.push(std::move(buffer));
+			pos = end;
+		}
+	}
+
+	fclose(file);
 	return buf.size();
 }
 

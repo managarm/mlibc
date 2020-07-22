@@ -40,7 +40,8 @@ void endservent(void) {
 
 void freeaddrinfo(struct addrinfo *ptr) {
 	auto buf = (struct mlibc::ai_buf*) ptr - offsetof(struct mlibc::ai_buf, ai);
-	free(ptr->ai_canonname);
+	// this string was allocated by a frg::string
+	getAllocator().free(ptr->ai_canonname);
 	free(buf);
 }
 
@@ -67,8 +68,12 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 
 	frg::vector<struct mlibc::dns_addr_buf, MemoryAllocator> addr_buf(getAllocator());
 	int addr_count = 1;
+	frg::string<MemoryAllocator> canon{getAllocator()};
 	if (node) {
-		addr_count = mlibc::lookup_name_dns(addr_buf, node);
+		if ((addr_count = mlibc::lookup_name_hosts(addr_buf, node, canon)) <= 0)
+			addr_count = mlibc::lookup_name_dns(addr_buf, node);
+		else
+			addr_count = 1;
 		if (addr_count < 0)
 			return -addr_count;
 		if (!addr_count)
@@ -78,12 +83,9 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 	auto out = (struct mlibc::ai_buf *) calloc(serv_count * addr_count,
 			sizeof(struct addrinfo));
 
-	char *canon = NULL;
-	if (node) {
+	if (node && !canon.size()) {
 		//TODO(geert): this should be part of lookup_name_dns()
-		auto canon_len = strlen(node);
-		canon = (char *) malloc(canon_len);
-		strncpy(canon, node, canon_len);
+		canon = frg::string<MemoryAllocator>{node, getAllocator()};
 	}
 
 	for (int i = 0, k = 0; i < addr_count; i++) {
@@ -93,7 +95,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 			out[i].ai.ai_protocol = serv_buf[j].protocol;
 			out[i].ai.ai_flags = AI_V4MAPPED | AI_ADDRCONFIG;
 			out[i].ai.ai_addr = (struct sockaddr *) &out[i].sa;
-			out[i].ai.ai_canonname = canon;
+			out[i].ai.ai_canonname = canon.data();
 			out[i].ai.ai_next = NULL;
 			switch (addr_buf[i].family) {
 				case AF_INET:
@@ -111,6 +113,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 			}
 		}
 	}
+	canon.detach();
 
 	*res = &out[0].ai;
 	return 0;
@@ -149,7 +152,10 @@ struct hostent *gethostbyname(const char *name) {
 	}
 
 	frg::vector<struct mlibc::dns_addr_buf, MemoryAllocator> buf(getAllocator());
-	int ret = mlibc::lookup_name_dns(buf, name);
+	frg::string<MemoryAllocator> canon{getAllocator()};
+	int ret = 0;
+	if ((ret = mlibc::lookup_name_hosts(buf, name, canon)) <= 0)
+		ret = mlibc::lookup_name_dns(buf, name);
 	if (ret <= 0) {
 		h_errno = HOST_NOT_FOUND;
 		return NULL;
@@ -157,40 +163,38 @@ struct hostent *gethostbyname(const char *name) {
 
 	static struct hostent h;
 	if (h.h_name) {
-		free(h.h_name);
-		auto alias = h.h_aliases[0];
-		for (int i = 0; alias != NULL; alias = h.h_aliases[i++])
-			free(alias);
+		getAllocator().free(h.h_name);
+		for (int i = 0; h.h_aliases[i] != NULL; i++)
+			getAllocator().free(h.h_aliases[i]);
 		free(h.h_aliases);
 
 		if (h.h_addr_list) {
-			auto addr = h.h_addr_list[0];
-			for (int i = 0; addr != NULL; addr = h.h_addr_list[i++])
-				free(addr);
+			for (int i = 0; h.h_addr_list[i] != NULL; i++)
+				free(h.h_addr_list[i]);
 			free(h.h_addr_list);
 		}
 	}
 	h = {};
 
-	h.h_name = reinterpret_cast<char*>(malloc(strlen(name) + 1));
-	strcpy(h.h_name, name);
+	if (!canon.size())
+		canon = frg::string<MemoryAllocator>{name, getAllocator()};
 
-	frg::string_view name_view(name);
+	h.h_name = canon.data();
+
 	h.h_aliases = reinterpret_cast<char**>(malloc((ret + 1) * sizeof(char*)));
 	int alias_pos = 0;
 	for (int i = 0; i < ret; i++) {
 		auto &buf_name = buf[i].name;
-		if (buf_name == name_view)
+		if (buf_name == canon)
 			continue;
 
 		// we have found an entry that is an alias
-		auto name_length = buf_name.size();
-		h.h_aliases[alias_pos] = reinterpret_cast<char*>(malloc(name_length + 1));
-		strncpy(h.h_aliases[alias_pos], buf_name.data(), name_length);
-		h.h_aliases[alias_pos][name_length] = '\0';
+		h.h_aliases[alias_pos] = buf_name.data();
+		buf_name.detach();
 		alias_pos++;
 	}
 	h.h_aliases[alias_pos] = NULL;
+	canon.detach();
 
 	// just pick the first family as the one for all addresses...??
 	h.h_addrtype = buf[0].family;
