@@ -49,9 +49,19 @@ int connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_len) {
 	return 0;
 }
 
-int getpeername(int, struct sockaddr *__restrict, socklen_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int getpeername(int fd, struct sockaddr *addr_ptr, socklen_t *__restrict addr_length) {
+	socklen_t actual_length;
+	if(!mlibc::sys_peername) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_peername(fd, addr_ptr, *addr_length, &actual_length); e) {
+		errno = e;
+		return -1;
+	}
+	*addr_length = actual_length;
+	return 0;
 }
 
 int getsockname(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length) {
@@ -177,8 +187,8 @@ int setsockopt(int fd, int layer, int number,
 }
 
 int shutdown(int, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: shutdown() is a no-op!" << frg::endlog;
+	return 0;
 }
 
 int sockatmark(int) {

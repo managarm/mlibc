@@ -182,6 +182,56 @@ int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 	return 0;
 }
 
+int sys_peername(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
+		socklen_t *actual_length) {
+	SignalGuard sguard;
+	HelAction actions[4];
+	globalQueue.trim();
+
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
+
+	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_req_type(managarm::fs::CntReqType::PT_PEERNAME);
+	req.set_fd(fd);
+	req.set_size(max_addr_length);
+
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+	req.SerializeToString(&ser);
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = kHelItemChain;
+	actions[3].type = kHelActionRecvToBuffer;
+	actions[3].flags = 0;
+	actions[3].buffer = addr_ptr;
+	actions[3].length = max_addr_length;
+	HEL_CHECK(helSubmitAsync(handle, actions, 4,
+			globalQueue.getQueue(), 0, 0));
+
+	auto element = globalQueue.dequeueSingle();
+	auto offer = parseSimple(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+	auto recv_addr = parseLength(element);
+
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(recv_addr->error);
+
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	*actual_length = resp.file_size();
+	return 0;
+}
+
 int sys_getsockopt(int fd, int layer, int number,
 		void *__restrict buffer, socklen_t *__restrict size) {
 	SignalGuard sguard;
