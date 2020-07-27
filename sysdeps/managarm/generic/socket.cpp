@@ -185,8 +185,6 @@ int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 int sys_peername(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 		socklen_t *actual_length) {
 	SignalGuard sguard;
-	HelAction actions[4];
-	globalQueue.trim();
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -199,37 +197,30 @@ int sys_peername(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionRecvToBuffer;
-	actions[3].flags = 0;
-	actions[3].buffer = addr_ptr;
-	actions[3].length = max_addr_length;
-	HEL_CHECK(helSubmitAsync(handle, actions, 4,
-			globalQueue.getQueue(), 0, 0));
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto recv_addr = parseLength(element);
+	auto [offer, sendReq, recvResp, recvData] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBuffer(ser.data(), ser.size()),
+			helix_ng::recvInline(),
+			helix_ng::recvBuffer(addr_ptr, max_addr_length)
+		)
+	);
 
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(recv_addr->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(sendReq.error());
+	HEL_CHECK(recvResp.error());
+	HEL_CHECK(recvData.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	*actual_length = resp.file_size();
-	return 0;
+	resp.ParseFromArray(recvResp.data(), recvResp.length());
+	if(resp.error() == managarm::fs::Errors::ILLEGAL_REQUEST) {
+		return ENOTSOCK;
+	}else{
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*actual_length = resp.file_size();
+		return 0;
+	}
 }
 
 int sys_getsockopt(int fd, int layer, int number,

@@ -4103,7 +4103,7 @@ int sys_gethostname(char *buffer, size_t bufsize) {
 	char name[10] = "managarm\0";
 	if(bufsize < 10)
 		return ENAMETOOLONG;
-	buffer = name;
+	strncpy(buffer, name, 10);
 	return 0;
 }
 
