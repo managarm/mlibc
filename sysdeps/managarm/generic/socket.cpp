@@ -31,9 +31,13 @@ int sys_accept(int fd, int *newfd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	*newfd = resp.fd();
-	return 0;
+	if(resp.error() == managarm::posix::Errors::WOULD_BLOCK) {
+		return EWOULDBLOCK;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		*newfd = resp.fd();
+		return 0;
+	}
 }
 
 int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
