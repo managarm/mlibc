@@ -24,7 +24,6 @@ namespace mlibc {
 		while(message[n])
 			n++;
 		HEL_CHECK(helLog(message, n));
-		HEL_CHECK(helLog("\n", 1));
 	}
 
 	void sys_libc_panic() {
