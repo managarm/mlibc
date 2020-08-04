@@ -11,11 +11,18 @@
 namespace mlibc {
 
 struct dns_addr_buf {
-	dns_addr_buf() : name(getAllocator())
-	{}
+	dns_addr_buf()
+	: name(getAllocator()) {}
 	frg::string<MemoryAllocator> name;
 	int family;
 	uint8_t addr[16];
+};
+
+struct lookup_result {
+	lookup_result()
+	: buf(getAllocator()), aliases(getAllocator()) {}
+	frg::vector<struct dns_addr_buf, MemoryAllocator> buf;
+	frg::vector<frg::string<MemoryAllocator>, MemoryAllocator> aliases;
 };
 
 struct dns_header {
@@ -35,7 +42,10 @@ struct ai_buf {
 	} sa;
 };
 
-int lookup_name_dns(frg::vector<struct dns_addr_buf, MemoryAllocator> &buf, const char *name);
+int lookup_name_dns(struct lookup_result &buf, const char *name,
+		frg::string<MemoryAllocator> &canon_name);
+int lookup_name_hosts(struct lookup_result &buf, const char *name,
+		frg::string<MemoryAllocator> &canon_name);
 
 } // namespace mlibc
 
