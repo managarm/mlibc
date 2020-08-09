@@ -4097,5 +4097,15 @@ int sys_getentropy(void *buffer, size_t length) {
 	return 0;
 }
 
+int sys_gethostname(char *buffer, size_t bufsize) {
+	SignalGuard sguard;
+	mlibc::infoLogger() << "mlibc: gethostname always returns managarm" << frg::endlog;
+	char name[10] = "managarm\0";
+	if(bufsize < 10)
+		return ENAMETOOLONG;
+	strncpy(buffer, name, 10);
+	return 0;
+}
+
 } //namespace mlibc
 
