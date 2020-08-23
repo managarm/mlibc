@@ -1,5 +1,7 @@
 project('mlibc')
 
+fs = import('fs')
+
 rtdl_include_dirs = [
 	include_directories('options/internal/include'),
 ]
@@ -49,10 +51,13 @@ if not headers_only
 				+ ' -print-search-dirs | sed -n -e "s/install: \(.*\)/\\1/p"',
 		check: true).stdout().strip()
 
-	rtdl_include_dirs += include_directories(gccdir + '/include')
-	rtdl_include_dirs += include_directories(gccdir + '/include-fixed')
-	libc_include_dirs += include_directories(gccdir + '/include')
-	libc_include_dirs += include_directories(gccdir + '/include-fixed')
+	rtdl_include_dirs += include_directories(gccdir / 'include')
+	libc_include_dirs += include_directories(gccdir / 'include')
+	# Ubuntu seems to patch out include-fixed/ (the files are in include/ instead).
+	if fs.exists(gccdir / 'include-fixed')
+		rtdl_include_dirs += include_directories(gccdir / 'include-fixed')
+		libc_include_dirs += include_directories(gccdir / 'include-fixed')
+	endif
 endif
 
 internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
