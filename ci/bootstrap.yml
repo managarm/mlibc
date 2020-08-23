@@ -76,6 +76,8 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
+        - "-Dc_args=['-fno-stack-protector']"
+        - "-Dcpp_args=['-fno-stack-protector']"
         - '@THIS_SOURCE_DIR@'
     build:
       - args: ['ninja']

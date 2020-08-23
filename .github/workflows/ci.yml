@@ -1,0 +1,62 @@
+name: Continuous Integration
+
+on: [push, pull_request]
+
+jobs:
+    build-mlibc:
+        name: Build mlibc
+        runs-on: ubuntu-20.04
+        steps:
+          - name: Install prerequisites
+            # Note: the default jsonschema is too old.
+            #       xbstrap should fix this by demanding a recent version.
+            run: |
+                sudo apt-get install ninja-build
+                sudo pip3 install setuptools
+                sudo pip3 install -U jsonschema
+                sudo pip3 install meson xbstrap
+          - name: Prepare directories
+            run: |
+                mkdir src/
+                mkdir src/mlibc/
+                mkdir build/
+          - name: Checkout
+            uses: actions/checkout@v2
+            with:
+              path: src/mlibc/
+          - name: Prepare src/
+            run: |
+                cp mlibc/ci/bootstrap.yml .
+                touch mlibc/checkedout.xbstrap
+            working-directory: src/
+          - name: Prepare build/
+            run: 'xbstrap init ../src'
+            working-directory: build/
+          - name: Build mlibc
+            run: 'xbstrap install mlibc'
+            working-directory: build/
+          - name: Build GCC
+            run: 'xbstrap install-tool gcc'
+            working-directory: build/
+
+    compile-sysdeps:
+        strategy:
+            matrix:
+                sysdeps: [dripos, qword]
+        name: Compile sysdeps
+        runs-on: ubuntu-20.04
+        steps:
+          - name: Install prerequisites
+            # Note: the default jsonschema is too old.
+            #       xbstrap should fix this by demanding a recent version.
+            run: |
+                sudo apt-get install ninja-build
+                sudo pip3 install setuptools
+                sudo pip3 install -U jsonschema
+                sudo pip3 install meson xbstrap
+          - name: Checkout
+            uses: actions/checkout@v2
+          - name: Compile sysdeps
+            run: |
+                meson "-Dc_args=['-fno-stack-protector']" "-Dcpp_args=['-fno-stack-protector']" --cross-file ci/${{matrix.sysdeps}}.cross-file compile-${{matrix.sysdeps}}
+                ninja -C compile-${{matrix.sysdeps}}
