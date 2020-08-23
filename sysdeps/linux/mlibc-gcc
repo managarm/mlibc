@@ -1,0 +1,2 @@
+#!/bin/sh
+exec "${REALGCC:-gcc}" "$@" -specs "/usr/lib/mlibc/lib/mlibc-gcc.specs"

@@ -85,7 +85,3 @@ packages:
         environ:
           DESTDIR: '@THIS_COLLECT_DIR@'
         quiet: true
-      - args: ['cp', '/usr/lib/x86_64-linux-gnu/crti.o', '@THIS_COLLECT_DIR@/usr/lib']
-        quiet: true
-      - args: ['cp', '/usr/lib/x86_64-linux-gnu/crtn.o', '@THIS_COLLECT_DIR@/usr/lib']
-        quiet: true
