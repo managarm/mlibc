@@ -63,4 +63,12 @@ if not headers_only
 		install: true,
 		install_dir: get_option('libdir')
 	)
+
+	install_data('mlibc-gcc.specs',
+		install_dir: get_option('libdir')
+	)
+
+	install_data('mlibc-gcc',
+		install_dir: get_option('bindir')
+	)
 endif
