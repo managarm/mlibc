@@ -34,6 +34,8 @@ int sys_mount(const char *source, const char *target,
 	HEL_CHECK(recv_resp.error());
 
 	auto resp = *bragi::parse_head_only<managarm::posix::SvrResponse>(recv_resp, getSysdepsAllocator());
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND)
+		return ENOENT;
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
 }
