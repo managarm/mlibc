@@ -283,7 +283,7 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			tls_offset = phdr->p_vaddr;
 		case PT_INTERP:
 			object->interpreterPath = frg::string<MemoryAllocator>{
-				(char*)(phdr->p_vaddr),
+				(char*)(object->baseAddress + phdr->p_vaddr),
 					getAllocator()
 			};
 		} break;
