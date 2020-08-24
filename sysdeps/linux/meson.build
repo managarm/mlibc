@@ -64,11 +64,21 @@ if not headers_only
 		install_dir: get_option('libdir')
 	)
 
-	install_data('mlibc-gcc.specs',
+	wrapper_conf = configuration_data()
+	wrapper_conf.set('LIBDIR', get_option('libdir'))
+	specs = configure_file(input: 'mlibc-gcc.specs.in',
+			output: 'mlibc-gcc.specs',
+			configuration: wrapper_conf)
+
+	wrapper_script = configure_file(input: 'mlibc-gcc.in',
+			output: 'mlibc-gcc',
+			configuration: wrapper_conf)
+
+	install_data(specs,
 		install_dir: get_option('libdir')
 	)
 
-	install_data('mlibc-gcc',
+	install_data(wrapper_script,
 		install_dir: get_option('bindir')
 	)
 endif
