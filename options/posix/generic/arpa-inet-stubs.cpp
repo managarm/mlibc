@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 namespace {
 
@@ -146,8 +147,33 @@ const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
 	errno = ENOSPC;
 	return NULL;
 }
-int inet_pton(int, const char *__restrict, void *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
+	switch (af) {
+		case AF_INET: {
+			uint8_t array[4] = {};
+			for (int i = 0; i < 4; i++) {
+				char *end;
+				long int value = strtol(src, &end, 10);
+				if (value > 255)
+					return 0;
+				if (*end != '\0' && *end != '.')
+					return 0;
+				src = end + 1;
+				array[i] = value;
+			}
+			auto addr = reinterpret_cast<struct in_addr*>(dst);
+			memcpy(&addr->s_addr, array, 4);
+			break;
+		}
+		case AF_INET6:
+			__ensure(!"ipv6 is not implemented!");
+			__builtin_unreachable();
+			break;
+		default:
+			errno = EAFNOSUPPORT;
+			return -1;
+	}
+
+	return 1;
 }
 
