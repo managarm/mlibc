@@ -1,5 +1,7 @@
 # mlibc is a C standard library
 
+![Continuous Integration](https://github.com/managarm/mlibc/workflows/Continuous%20Integration/badge.svg)
+
 **Official Discord server:** https://discord.gg/7WB6Ur3
 
 ## Design of the library
