@@ -26,6 +26,9 @@ int isascii(int c);
 int tolower(int c);
 int toupper(int c);
 
+// Borrowed from glibc
+#define	toascii(c)	((c) & 0x7f)
+
 #ifdef __cplusplus
 }
 #endif
