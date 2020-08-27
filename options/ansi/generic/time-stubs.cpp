@@ -503,6 +503,7 @@ struct tm *gmtime_r(const time_t *unix_gmt, struct tm *res) {
 	res->tm_yday = yday - 1;
 	res->tm_isdst = -1;
 	res->tm_zone = __utc;
+	res->tm_gmtoff = 0;
 
 	return res;
 }
@@ -538,6 +539,7 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 	res->tm_yday = yday - 1;
 	res->tm_isdst = dst;
 	res->tm_zone = tm_zone;
+	res->tm_gmtoff = offset;
 
 	return res;
 }

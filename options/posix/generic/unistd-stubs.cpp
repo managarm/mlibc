@@ -608,6 +608,10 @@ unsigned long sysconf(int number) {
 		case _SC_JOB_CONTROL:
 			// If 1, job control is supported
 			return 1;
+		case _SC_CLK_TCK:
+			// TODO: This should be obsolete?
+			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_CLK_TCK) is obsolete and returns arbitrary value 1000000\e[39m" << frg::endlog;
+			return 1000000;
 		default:
 			mlibc::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented, number: " << number << "\e[39m" << frg::endlog;
 			__builtin_unreachable();
