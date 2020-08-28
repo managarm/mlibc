@@ -114,10 +114,12 @@ int readdir_r(DIR *dir, struct dirent *entry, struct dirent **result) {
 	*result = entry;
 	return 0;
 }
-void rewinddir(DIR *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+void rewinddir(DIR *dir) {
+	lseek(dir->__handle, 0, SEEK_SET);
+	dir->__ent_next = 0;
 }
+
 int scandir(const char *path, struct dirent ***res, int (*select)(const struct dirent *),
 		int (*compare)(const struct dirent **, const struct dirent **)) {
 	DIR *dir = opendir(path);
