@@ -1,9 +1,9 @@
 #ifndef _SYS_IPC_H
 #define _SYS_IPC_H
 
-#include <bits/posix/uid_t.h>
-#include <bits/posix/gid_t.h>
-#include <bits/posix/mode_t.h>
+#include <abi-bits/uid_t.h>
+#include <abi-bits/gid_t.h>
+#include <abi-bits/mode_t.h>
 
 #define IPC_CREAT 01000
 #define IPC_EXCL 02000

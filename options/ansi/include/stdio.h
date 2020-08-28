@@ -8,7 +8,7 @@
 #include <bits/size_t.h>
 
 // Glibc extensions require ssize_t.
-#include <bits/posix/ssize_t.h>
+#include <bits/ssize_t.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,7 +27,7 @@ extern "C" {
 struct __mlibc_file_base {
 	// Buffer for I/O operations.
 	char *__buffer_ptr;
-	
+
 	// Number of bytes the buffer can hold.
 	size_t __buffer_size;
 
@@ -111,7 +111,6 @@ int vsnprintf(char *__restrict buffer, size_t max_size,
 		const char *__restrict format, __gnuc_va_list args);
 int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_list args);
 int vsscanf(const char *__restrict buffer, const char *__restrict format, __gnuc_va_list args);
-int vdprintf(int fd, const char *format, __gnuc_va_list args);
 
 // this is a gnu extension
 int vasprintf(char **, const char *, __gnuc_va_list);

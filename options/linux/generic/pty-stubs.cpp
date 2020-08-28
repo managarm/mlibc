@@ -10,7 +10,7 @@
 #include <stdlib.h>
 
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/linux-sysdeps.hpp>
 
 int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win) {
 	__ensure(!name);
@@ -28,13 +28,13 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 	char spath[32];
 	if(ptsname_r(ptmx_fd, spath, 32))
 		return -1;
-	
+
 	int pts_fd;
 	if(int e = mlibc::sys_open(spath, O_RDWR | O_NOCTTY, &pts_fd); e) {
 		errno = e;
 		return -1;
 	}
-	
+
 	*mfd = ptmx_fd;
 	*sfd = pts_fd;
 	return 0;

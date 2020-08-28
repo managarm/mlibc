@@ -10,7 +10,7 @@
 #include <frg/hash_map.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/thread.hpp>
 #include <mlibc/tcb.hpp>
 

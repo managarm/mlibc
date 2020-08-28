@@ -1,7 +1,7 @@
 #ifndef  _UTMP_H
 #define  _UTMP_H
 
-#include <bits/posix/pid_t.h>
+#include <abi-bits/pid_t.h>
 #include <bits/posix/timeval.h>
 #include <bits/types.h>
 

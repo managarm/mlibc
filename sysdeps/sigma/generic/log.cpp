@@ -3,7 +3,7 @@
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 #include <libsigma/sys.h>
 

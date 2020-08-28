@@ -1,4 +1,4 @@
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/sigma-posix.hpp>
 #include <bits/ensure.h>
@@ -30,7 +30,7 @@ namespace mlibc {
             mlibc::infoLogger() << "Failed to send Tell message" << frg::endlog;
             return -1;
         }
-        
+
         libsigma_block_thread(SIGMA_BLOCK_WAITING_FOR_IPC, getUmRing());
 
         size_t res_size = libsigma_ipc_get_msg_size(getUmRing());
@@ -86,7 +86,7 @@ namespace mlibc {
         *fd = parser.get_fd();
         return 0;
     }
-    
+
     int sys_dup2(int fd, int flags, int newfd){
         SignalGuard sguard{};
         using namespace sigma::zeta;
@@ -300,8 +300,8 @@ namespace mlibc {
     int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read) STUB_ONLY
     int sys_access(const char *path, int mode) STUB_ONLY
     int sys_dup(int fd, int flags, int *newfd) STUB_ONLY
-    
-    
+
+
     int sys_ttyname(int fd, char *buf, size_t size) STUB_ONLY
     int sys_chroot(const char *path) STUB_ONLY
     int sys_mkdir(const char *path) STUB_ONLY

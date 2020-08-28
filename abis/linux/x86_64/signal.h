@@ -2,11 +2,8 @@
 #define _ABIBITS_SIGNAL_H
 
 #include <bits/feature.h>
-
-#ifdef __MLIBC_POSIX_OPTION
-
-#include <bits/posix/pid_t.h>
-#include <bits/posix/uid_t.h>
+#include <abi-bits/pid_t.h>
+#include <abi-bits/uid_t.h>
 
 union sigval {
 	int sival_int;
@@ -23,8 +20,6 @@ typedef struct {
 	int si_status;
 	union sigval si_value;
 } siginfo_t;
-
-#endif // __MLIBC_POSIX_OPTION
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,7 +41,10 @@ extern "C" {
 #define SIGRTMIN 35
 #define SIGRTMAX 64
 
-#ifdef __MLIBC_POSIX_OPTION
+// TODO: replace this by uint64_t
+typedef long sigset_t;
+
+#if __MLIBC_POSIX_OPTION
 
 #define SIGHUP    1
 #define SIGQUIT   3
@@ -97,9 +95,6 @@ extern "C" {
 
 #define NSIG 65
 
-// TODO: replace this by uint64_t
-typedef long sigset_t;
-
 struct sigevent {
 	union sigval sigev_value;
 	int sigev_notify;
@@ -107,6 +102,8 @@ struct sigevent {
 	void (*sigev_notify_function)(union sigval);
 	// MISSING: sigev_notify_attributes
 };
+
+#endif // __MLIBC_POSIX_OPTION
 
 struct sigaction {
 	union {
@@ -119,8 +116,6 @@ struct sigaction {
 };
 #define sa_handler __sa_handler.sa_handler
 #define sa_sigaction __sa_handler.sa_sigaction
-
-#endif // __MLIBC_POSIX_OPTION
 
 #ifdef __cplusplus
 }

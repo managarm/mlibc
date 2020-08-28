@@ -1,6 +1,6 @@
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/thread-entry.hpp>
 #include <errno.h>
 #include <dirent.h>
@@ -189,7 +189,7 @@ int sys_futex_wait(int *pointer, int expected) {
             : "=d"(err)
             : "a"(66), "D"(pointer), "S"(expected)
             : "rcx", "r11");
-        
+
     if (err) {
         return -1;
     }
@@ -203,7 +203,7 @@ int sys_futex_wake(int *pointer) {
             : "=d"(err)
             : "a"(65), "D"(pointer)
             : "rcx", "r11");
-        
+
     if (err) {
         return -1;
     }

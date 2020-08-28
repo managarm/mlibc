@@ -4,6 +4,7 @@ fs = import('fs')
 
 rtdl_include_dirs = [
 	include_directories('options/internal/include'),
+	include_directories('options/rtdl/include'),
 ]
 libc_include_dirs = [
 	include_directories('options/internal/include'),
@@ -169,6 +170,8 @@ if not no_headers
 		'options/internal/include/bits/machine.h',
 		'options/internal/include/bits/mbstate.h',
 		'options/internal/include/bits/null.h',
+		'options/internal/include/bits/off_t.h',
+		'options/internal/include/bits/ssize_t.h',
 		subdir: 'bits'
 	)
 endif

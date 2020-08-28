@@ -3,10 +3,8 @@
 
 #include <bits/feature.h>
 
-#ifdef __MLIBC_POSIX_OPTION
-
-#include <bits/posix/pid_t.h>
-#include <bits/posix/uid_t.h>
+#include <abi-bits/pid_t.h>
+#include <abi-bits/uid_t.h>
 
 union sigval {
 	int sival_int;
@@ -23,8 +21,6 @@ typedef struct {
 	int si_status;
 	union sigval si_value;
 } siginfo_t;
-
-#endif // __MLIBC_POSIX_OPTION
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,6 +41,9 @@ extern "C" {
 #define SIGPWR 10
 #define SIGRTMIN 11
 #define SIGRTMAX 12
+
+// TODO: replace this by uint64_t
+typedef long sigset_t;
 
 #ifdef __MLIBC_POSIX_OPTION
 
@@ -95,9 +94,6 @@ extern "C" {
 
 #define NSIG 65
 
-// TODO: replace this by uint64_t
-typedef long sigset_t;
-
 struct sigevent {
 	int sigev_notify;
 	int sigev_signo;
@@ -106,14 +102,14 @@ struct sigevent {
 	// MISSING: sigev_notify_attributes
 };
 
+#endif // __MLIBC_POSIX_OPTION
+
 struct sigaction {
 	void (*sa_handler)(int);
 	sigset_t sa_mask;
 	int sa_flags;
 	void (*sa_sigaction)(int, siginfo_t *, void *);
 };
-
-#endif // __MLIBC_POSIX_OPTION
 
 #ifdef __cplusplus
 }

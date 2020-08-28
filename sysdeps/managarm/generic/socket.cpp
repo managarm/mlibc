@@ -6,6 +6,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <fs.frigg_bragi.hpp>
 #include <posix.frigg_bragi.hpp>
 

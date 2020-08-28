@@ -9,7 +9,7 @@
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>
 #include <mlibc/allocator.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 
 int alphasort(const struct dirent **, const struct dirent **) {

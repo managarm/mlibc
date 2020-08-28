@@ -10,7 +10,7 @@
 #include <hel-syscalls.h>
 
 #include <mlibc/allocator.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <posix.frigg_bragi.hpp>
 #include <fs.frigg_bragi.hpp>
 

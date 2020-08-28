@@ -2,7 +2,7 @@
 #define _SYS_UIO_H
 
 #include <bits/posix/iovec.h>
-#include <bits/posix/ssize_t.h>
+#include <bits/ssize_t.h>
 #include <bits/size_t.h>
 
 #ifdef __cplusplus

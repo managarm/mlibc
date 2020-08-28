@@ -5,7 +5,7 @@
 #include <stdarg.h>
 
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 int creat(const char *pathname, mode_t mode) {
 	return open(pathname, O_CREAT|O_WRONLY|O_TRUNC, mode);

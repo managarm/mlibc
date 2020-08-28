@@ -9,7 +9,7 @@
 #include <bits/ensure.h>
 #include <bits/feature.h>
 
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 void FD_CLR(int fd, fd_set *set) {
 	__ensure(fd < FD_SETSIZE);
@@ -27,8 +27,6 @@ void FD_ZERO(fd_set *set) {
 	memset(set->__mlibc_elems, 0, sizeof(fd_set));
 }
 
-// select() is currently implemented on top of epoll.
-// TODO: Provide a sys_select() function instead.
 int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_set,
 		fd_set *__restrict except_set, struct timeval *__restrict timeout) {
     if(!mlibc::sys_pselect) {

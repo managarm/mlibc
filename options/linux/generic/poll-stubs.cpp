@@ -4,7 +4,7 @@
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/linux-sysdeps.hpp>
 
 int poll(struct pollfd *fds, nfds_t count, int timeout) {
 	int num_events;

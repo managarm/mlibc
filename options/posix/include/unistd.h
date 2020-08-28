@@ -4,11 +4,11 @@
 
 #include <bits/types.h>
 #include <bits/size_t.h>
-#include <bits/posix/ssize_t.h>
-#include <bits/posix/uid_t.h>
-#include <bits/posix/gid_t.h>
-#include <bits/posix/off_t.h>
-#include <bits/posix/pid_t.h>
+#include <bits/ssize_t.h>
+#include <bits/off_t.h>
+#include <abi-bits/uid_t.h>
+#include <abi-bits/gid_t.h>
+#include <abi-bits/pid_t.h>
 
 #ifdef __cplusplus
 extern "C" {

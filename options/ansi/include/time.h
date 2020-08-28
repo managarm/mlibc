@@ -73,9 +73,11 @@ void tzset(void);
 
 // POSIX extensions.
 
+#if __MLIBC_POSIX_OPTION
+#	include <bits/posix/posix_time.h>
+#endif // __MLIBC_POSIX_OPTION
+
 #include <bits/ansi/clockid_t.h>
-#include <bits/posix/suseconds_t.h>
-#include <bits/posix/timeval.h>
 
 #define TIMER_ABSTIME 1
 
@@ -93,8 +95,6 @@ int clock_getres(clockid_t, struct timespec *);
 int clock_gettime(clockid_t, struct timespec *);
 int clock_nanosleep(clockid_t, int, const struct timespec *, struct timespec *);
 int clock_settime(clockid_t, const struct timespec *);
-
-int utimes(const char *, const struct timeval[2]);
 
 struct tm *localtime_r(const time_t *, struct tm *);
 

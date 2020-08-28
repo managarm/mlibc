@@ -2,8 +2,9 @@
 #ifndef _LOCALE_H
 #define _LOCALE_H
 
+#include <bits/feature.h>
+
 #include <bits/null.h>
-#include <bits/posix/locale_t.h>
 
 #define LC_ALL 1
 #define LC_COLLATE 2
@@ -61,8 +62,9 @@ struct lconv *localeconv(void);
 
 // posix extension
 
-locale_t newlocale(int category_mask, const char *locale, locale_t base);
-void freelocale(locale_t locobj);
+#if __MLIBC_POSIX_OPTION
+#	include <bits/posix/posix_locale.h>
+#endif // __MLIBC_POSIX_OPTION
 
 #ifdef __cplusplus
 }

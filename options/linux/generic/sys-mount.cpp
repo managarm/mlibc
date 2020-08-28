@@ -3,7 +3,7 @@
 #include <sys/mount.h>
 
 #include <bits/ensure.h>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/linux-sysdeps.hpp>
 
 int mount(const char *source, const char *target,
 		const char *fstype, unsigned long flags, const void *data) {

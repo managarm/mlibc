@@ -14,7 +14,7 @@
 #include <frg/vector.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 namespace {
 	constexpr bool debugPathResolution = false;
@@ -403,3 +403,7 @@ int grantpt(int fd) {
 	return 0;
 }
 
+double strtod_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

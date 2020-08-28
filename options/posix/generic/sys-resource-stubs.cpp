@@ -3,7 +3,7 @@
 #include <sys/resource.h>
 
 #include <bits/ensure.h>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 int getpriority(int, id_t) {
 	__ensure(!"Not implemented");

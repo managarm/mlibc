@@ -33,7 +33,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <posix.frigg_bragi.hpp>
 #include <fs.frigg_bragi.hpp>
 

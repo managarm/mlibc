@@ -4,7 +4,7 @@
 #include <bits/ensure.h>
 
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 int mprotect(void *pointer, size_t size, int prot) {
 	if(!mlibc::sys_vm_protect) {

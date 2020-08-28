@@ -4,7 +4,7 @@
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/glibc-sysdeps.hpp>
 
 int ioctl(int fd, unsigned long request, ...) {
 	va_list args;

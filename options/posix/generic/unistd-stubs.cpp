@@ -10,7 +10,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/arch-defs.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 unsigned int alarm(unsigned int seconds) {
 	__ensure(!"Not implemented");
@@ -58,7 +58,7 @@ ssize_t confstr(int name, char *buf, size_t len) {
 		return 0;
 	} else {
 		mlibc::infoLogger() << "\e[31mmlibc: confstr() request " << name << " is unimplemented\e[39m"
-				<< frg::endlog; 
+				<< frg::endlog;
 		__ensure(!"Not implemented");
 	}
 

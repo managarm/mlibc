@@ -2,12 +2,12 @@
 #ifndef _SOCKET_H
 #define _SOCKET_H
 
-#include <bits/posix/gid_t.h>
-#include <bits/posix/pid_t.h>
+#include <abi-bits/gid_t.h>
+#include <abi-bits/pid_t.h>
 #include <bits/size_t.h>
 #include <bits/posix/socklen_t.h>
-#include <bits/posix/ssize_t.h>
-#include <bits/posix/uid_t.h>
+#include <bits/ssize_t.h>
+#include <abi-bits/uid_t.h>
 #include <bits/posix/iovec.h>
 #include <abi-bits/socket.h>
 

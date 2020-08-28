@@ -5,7 +5,7 @@
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 int gettimeofday(struct timeval *__restrict result, void *__restrict unused) {
 	(void)unused; // Linux just ignores gettimeofday().

@@ -106,7 +106,9 @@ char *getenv(const char *name) {
 	return const_cast<char *>(view.data() + s + 1);
 }
 
-int putenv(const char *string) {
+namespace mlibc {
+
+int putenv(char *string) {
 	frg::string_view view{string};
 	size_t s = view.find_first('=');
 	if(s == size_t(-1))
@@ -115,6 +117,10 @@ int putenv(const char *string) {
 	update_vector();
 	assign_variable(view.sub_string(0, s), string, true);
 	return 0;
+}
+} // namespace mlibc
+int putenv(char *string) {
+	return mlibc::putenv(string);
 }
 
 int setenv(const char *name, const char *value, int overwrite) {

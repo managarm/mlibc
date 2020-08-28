@@ -7,7 +7,7 @@
 #include <frg/eternal.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/allocator.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 #include <libsigma/sys.h>
 
@@ -19,7 +19,7 @@ namespace {
 
         uint64_t get_id(){
             return id++;
-        } 
+        }
 
         private:
         uint64_t id;
@@ -33,7 +33,7 @@ namespace {
         file_descriptor(const char* name)
         : fd(file_descriptor_allocator.get_id()), offset(0), \
           name(frg::string<MemoryAllocator>(getAllocator(), name) + '\0') {}
-        
+
         uint64_t fd, offset;
         frg::string<MemoryAllocator> name;
     };
@@ -42,7 +42,7 @@ namespace {
         static frg::eternal<frg::vector<file_descriptor, MemoryAllocator>> file_descriptor_list(getAllocator());
         return file_descriptor_list.get();
     }
-    
+
 }
 
 

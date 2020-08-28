@@ -1,15 +1,16 @@
 #ifndef MLIBC_FILE_WINDOW
 #define MLIBC_FILE_WINDOW
 
+#include <abi-bits/abi.h>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/internal-sysdeps.hpp>
 #include <internal-config.h>
 
 struct file_window {
 	file_window(const char *path) {
 		int fd;
-		if(mlibc::sys_open("/etc/localtime", O_RDONLY, &fd))
+		if(mlibc::sys_open("/etc/localtime", __MLIBC_O_RDONLY, &fd))
 			mlibc::panicLogger() << "mlibc: Error opening file_window to "
 					<< path << frg::endlog;
 

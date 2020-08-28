@@ -3,7 +3,7 @@
 #include <sched.h>
 
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 int sched_yield(void) {
 	if(mlibc::sys_yield) {

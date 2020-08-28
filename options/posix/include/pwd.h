@@ -2,8 +2,8 @@
 #ifndef _PWD_H
 #define _PWD_H
 
-#include <bits/posix/uid_t.h>
-#include <bits/posix/gid_t.h>
+#include <abi-bits/uid_t.h>
+#include <abi-bits/gid_t.h>
 #include <bits/size_t.h>
 
 #ifdef __cplusplus

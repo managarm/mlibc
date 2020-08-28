@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <bits/ensure.h>
+#include <bits/feature.h>
 
 #include <mlibc/debug.hpp>
 #include <frg/optional.hpp>
@@ -103,7 +104,7 @@ char *setlocale(int category, const char *locale) {
 		__ensure(!strcmp(current_desc.locale, __mlibc_timeDesc.locale));
 		if(!locale)
 			return const_cast<char *>(current_desc.locale);
-		
+
 		frg::optional<__Mlibc_LocaleDesc> new_desc = __mlibc_queryLocale(locale);
 		if(!new_desc)
 			return nullptr;
@@ -118,7 +119,7 @@ char *setlocale(int category, const char *locale) {
 	__Mlibc_LocaleDesc current_desc = __mlibc_currentLocale(category);
 	if(!locale)
 		return const_cast<char *>(current_desc.locale);
-	
+
 	frg::optional<__Mlibc_LocaleDesc> new_desc = __mlibc_queryLocale(locale);
 	if(!new_desc)
 		return nullptr;
@@ -129,14 +130,3 @@ char *setlocale(int category, const char *locale) {
 struct lconv *localeconv(void) {
 	return &c_locale_lconv;
 }
-
-locale_t newlocale(int category_mask, const char *locale, locale_t base) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-void freelocale(locale_t locobj) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-

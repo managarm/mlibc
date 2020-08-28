@@ -6,54 +6,34 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-
-namespace {
-
-template<typename T>
-struct bit_util;
-
-template<>
-struct bit_util<uint32_t> {
-	static uint32_t byteswap(uint32_t x) {
-		return __builtin_bswap32(x);
-	}
-};
-
-template<>
-struct bit_util<uint16_t> {
-	static uint16_t byteswap(uint16_t x) {
-		return __builtin_bswap16(x);
-	}
-};
-
-} // anonymous namespace
+#include <mlibc/bitutil.hpp>
 
 const struct in6_addr in6addr_any = {{}};
 
 uint32_t htonl(uint32_t x) {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-	return bit_util<uint32_t>::byteswap(x);
+	return mlibc::bit_util<uint32_t>::byteswap(x);
 #else
 	return x;
 #endif
 }
 uint16_t htons(uint16_t x) {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-	return bit_util<uint16_t>::byteswap(x);
+	return mlibc::bit_util<uint16_t>::byteswap(x);
 #else
 	return x;
 #endif
 }
 uint32_t ntohl(uint32_t x) {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-	return bit_util<uint32_t>::byteswap(x);
+	return mlibc::bit_util<uint32_t>::byteswap(x);
 #else
 	return x;
 #endif
 }
 uint16_t ntohs(uint16_t x) {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-	return bit_util<uint16_t>::byteswap(x);
+	return mlibc::bit_util<uint16_t>::byteswap(x);
 #else
 	return x;
 #endif

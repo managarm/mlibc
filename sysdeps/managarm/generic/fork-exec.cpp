@@ -19,7 +19,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
 #include <mlibc/thread-entry.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <posix.frigg_bragi.hpp>
 
 namespace mlibc {
@@ -197,7 +197,7 @@ gid_t sys_getgid() {
 
 	managarm::posix::GetGidRequest<MemoryAllocator> req(getSysdepsAllocator());
 
-	auto [offer, send_head, recv_resp] = 
+	auto [offer, send_head, recv_resp] =
 			exchangeMsgsSync(
 					getPosixLane(),
 					helix_ng::offer(
@@ -223,7 +223,7 @@ int sys_setgid(gid_t gid) {
 
 	req.set_uid(gid);
 
-	auto [offer, send_head, recv_resp] = 
+	auto [offer, send_head, recv_resp] =
 			exchangeMsgsSync(
 					getPosixLane(),
 					helix_ng::offer(
@@ -253,7 +253,7 @@ gid_t sys_getegid() {
 
 	managarm::posix::GetEgidRequest<MemoryAllocator> req(getSysdepsAllocator());
 
-	auto [offer, send_head, recv_resp] = 
+	auto [offer, send_head, recv_resp] =
 			exchangeMsgsSync(
 					getPosixLane(),
 					helix_ng::offer(
@@ -279,7 +279,7 @@ int sys_setegid(gid_t egid) {
 
 	req.set_uid(egid);
 
-	auto [offer, send_head, recv_resp] = 
+	auto [offer, send_head, recv_resp] =
 			exchangeMsgsSync(
 					getPosixLane(),
 					helix_ng::offer(
@@ -309,7 +309,7 @@ uid_t sys_getuid() {
 
 	managarm::posix::GetUidRequest<MemoryAllocator> req(getSysdepsAllocator());
 
-	auto [offer, send_head, recv_resp] = 
+	auto [offer, send_head, recv_resp] =
 			exchangeMsgsSync(
 					getPosixLane(),
 					helix_ng::offer(
@@ -335,7 +335,7 @@ int sys_setuid(uid_t uid) {
 
 	req.set_uid(uid);
 
-	auto [offer, send_head, recv_resp] = 
+	auto [offer, send_head, recv_resp] =
 			exchangeMsgsSync(
 					getPosixLane(),
 					helix_ng::offer(
@@ -365,7 +365,7 @@ uid_t sys_geteuid() {
 
 	managarm::posix::GetEuidRequest<MemoryAllocator> req(getSysdepsAllocator());
 
-	auto [offer, send_head, recv_resp] = 
+	auto [offer, send_head, recv_resp] =
 			exchangeMsgsSync(
 					getPosixLane(),
 					helix_ng::offer(
@@ -391,7 +391,7 @@ int sys_seteuid(uid_t euid) {
 
 	req.set_uid(euid);
 
-	auto [offer, send_head, recv_resp] = 
+	auto [offer, send_head, recv_resp] =
 			exchangeMsgsSync(
 					getPosixLane(),
 					helix_ng::offer(
@@ -457,7 +457,7 @@ pid_t sys_getppid() {
 
 	managarm::posix::GetPpidRequest<MemoryAllocator> req(getSysdepsAllocator());
 
-	auto [offer, send_head, recv_resp] = 
+	auto [offer, send_head, recv_resp] =
 			exchangeMsgsSync(
 					getPosixLane(),
 					helix_ng::offer(

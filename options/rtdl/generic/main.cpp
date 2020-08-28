@@ -5,7 +5,7 @@
 
 #include <abi-bits/auxv.h>
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/rtdl-sysdeps.hpp>
 #include <internal-config.h>
 #include "linker.hpp"
 

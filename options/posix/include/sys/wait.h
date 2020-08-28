@@ -3,7 +3,7 @@
 #define _SYS_WAIT_H
 
 #include <bits/posix/id_t.h>
-#include <bits/posix/pid_t.h>
+#include <abi-bits/pid_t.h>
 // for siginfo_t
 #include <abi-bits/signal.h>
 

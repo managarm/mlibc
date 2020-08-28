@@ -2,7 +2,7 @@
 #define MLIBC_LOCK_HPP
 
 #include <stdint.h>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/internal-sysdeps.hpp>
 #include <bits/ensure.h>
 
 struct FutexLock {

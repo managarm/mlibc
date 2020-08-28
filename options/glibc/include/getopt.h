@@ -2,8 +2,6 @@
 #ifndef  _GETOPT_H
 #define  _GETOPT_H
 
-#include <unistd.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

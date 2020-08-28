@@ -3,7 +3,8 @@
 #include <sys/epoll.h>
 
 #include <bits/ensure.h>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/linux-sysdeps.hpp>
+#include <stddef.h>
 
 int epoll_create(int) {
 	int fd;

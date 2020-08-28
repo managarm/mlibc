@@ -3,12 +3,12 @@
 #include <bits/ensure.h>
 #include <bits/posix/pid_t.h>
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <errno.h>
 
 namespace mlibc{
 	int sys_futex_wait(int *pointer, int expected){
-		return 0;	
+		return 0;
 	}
 
 	int sys_futex_wake(int *pointer) {
@@ -80,7 +80,7 @@ namespace mlibc{
 		pid_t pid = _pid;
 		return pid;
 	}
-	
+
 	int sys_clock_get(int clock, time_t *secs, long *nanos) {
 		uint64_t _secs, _millis;
 		syscall(SYS_UPTIME, (uintptr_t)&_secs, (uintptr_t)&_millis, 0, 0, 0);
@@ -103,7 +103,7 @@ namespace mlibc{
 		syscall(SYS_NANO_SLEEP, (*sec) * 1000000000 + (*nanosec), 0, 0, 0, 0);
 		return 0;
 	}
-	
+
 	uid_t sys_getuid(){
 		return syscall(SYS_GETUID, 0, 0, 0, 0, 0);
 	}
@@ -134,4 +134,4 @@ namespace mlibc{
 		syscall(SYS_YIELD, 0, 0, 0, 0, 0);
 	}
 	#endif
-} 
+}

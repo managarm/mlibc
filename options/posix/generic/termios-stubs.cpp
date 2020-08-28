@@ -3,7 +3,7 @@
 #include <termios.h>
 
 #include <bits/ensure.h>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 speed_t cfgetispeed(const struct termios *tios) {
 	return tios->ibaud;

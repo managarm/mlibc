@@ -2,7 +2,7 @@
 #define _GRP_H
 
 #include <stddef.h>
-#include <bits/posix/gid_t.h>
+#include <abi-bits/gid_t.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -6,7 +6,6 @@
 #include <bits/null.h>
 #include <bits/size_t.h>
 #include <bits/wchar_t.h>
-#include <bits/posix/locale_t.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -105,10 +104,6 @@ int wctomb(char *mb_chr, wchar_t wc);
 
 size_t mbstowcs(wchar_t *__restrict wc_string, const char *__restrict mb_string, size_t max_size);
 size_t wcstombs(char *mb_string, const wchar_t *__restrict wc_string, size_t max_size);
-
-// posix extension
-
-double strtod_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc);
 
 #ifdef __cplusplus
 }

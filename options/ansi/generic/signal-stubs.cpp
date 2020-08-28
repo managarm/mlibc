@@ -4,7 +4,7 @@
 #include <signal.h>
 
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/ansi-sysdeps.hpp>
 
 __sighandler signal(int sn, __sighandler handler) {
 	if(!mlibc::sys_sigaction) {
