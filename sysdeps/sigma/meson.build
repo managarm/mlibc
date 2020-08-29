@@ -39,7 +39,7 @@ if not no_headers
 endif
 
 if not headers_only
-	custom_target('crt0',
+	crt = custom_target('crt0',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
 		input: 'crt-src/crt0.S',
