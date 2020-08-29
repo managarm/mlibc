@@ -19,7 +19,7 @@ void srandom(unsigned int);
 // Environment.
 // ----------------------------------------------------------------------------
 
-int putenv(const char *);
+int putenv(char *);
 int setenv(const char *, const char *, int);
 int unsetenv(const char *);
 

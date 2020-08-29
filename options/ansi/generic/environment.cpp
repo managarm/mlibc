@@ -1,4 +1,3 @@
-
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -118,7 +117,11 @@ int putenv(char *string) {
 	assign_variable(view.sub_string(0, s), string, true);
 	return 0;
 }
+
 } // namespace mlibc
+
+#if __MLIBC_POSIX_OPTION
+
 int putenv(char *string) {
 	return mlibc::putenv(string);
 }
@@ -150,3 +153,4 @@ int unsetenv(const char *name) {
 	return 0;
 }
 
+#endif // __MLIBC_POSIX_OPTION
