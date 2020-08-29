@@ -1,5 +1,5 @@
 #include <mlibc/thread-entry.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/tcb.hpp>
 #include <bits/ensure.h>
 #include <sys/mman.h>
@@ -30,8 +30,8 @@ namespace mlibc {
 
 void *prepare_stack(void *entry, void *user_arg, void *tcb) {
 	uintptr_t *sp = reinterpret_cast<uintptr_t *>(reinterpret_cast<uintptr_t>(
-			mmap(nullptr, 0x1000000, 
-				PROT_READ | PROT_WRITE, 
+			mmap(nullptr, 0x1000000,
+				PROT_READ | PROT_WRITE,
 				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
 			) + 0x1000000);
 

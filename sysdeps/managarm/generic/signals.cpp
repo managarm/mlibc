@@ -10,6 +10,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/posix-pipe.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <posix.frigg_bragi.hpp>
 
 extern "C" void __mlibc_signal_restore();

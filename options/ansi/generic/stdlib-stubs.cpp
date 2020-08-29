@@ -14,7 +14,7 @@
 
 #include <mlibc/allocator.hpp>
 #include <mlibc/charcode.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/strtofp.hpp>
 
 extern "C" int __cxa_atexit(void (*function)(void *), void *argument, void *dso_tag);
@@ -418,9 +418,3 @@ int posix_memalign(void **out, size_t align, size_t size) {
 	*out = p;
 	return 0;
 }
-
-double strtod_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-

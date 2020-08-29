@@ -1,4 +1,4 @@
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <errno.h>
@@ -13,7 +13,7 @@
 namespace mlibc {
     // Unknown Functions
     //int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) STUB_ONLY
-    
+
     // Memory Related Functions
     int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window){
         if(!(flags & MAP_ANONYMOUS))
@@ -25,7 +25,7 @@ namespace mlibc {
         *window = ret;
         return 0;
     }
-    
+
     /*#ifndef MLIBC_BUILDING_RTDL
     int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) STUB_ONLY
     #endif*/

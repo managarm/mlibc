@@ -5,6 +5,7 @@
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
 #include <mlibc/posix-pipe.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <posix.frigg_bragi.hpp>
 #include <bragi/helpers-frigg.hpp>
 

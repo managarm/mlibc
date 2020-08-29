@@ -1,7 +1,7 @@
 #include <errno.h>
 #include <sys/reboot.h>
 #include <bits/ensure.h>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/linux-sysdeps.hpp>
 
 int reboot(int what) {
 	if (!mlibc::sys_reboot) {

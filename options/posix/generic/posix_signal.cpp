@@ -3,7 +3,7 @@
 #include <signal.h>
 #include <bits/ensure.h>
 
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 int sigemptyset(sigset_t *sigset) {
 	*sigset = 0;

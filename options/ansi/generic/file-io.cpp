@@ -15,7 +15,7 @@
 #include <frg/mutex.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/file-io.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/lock.hpp>
 
 namespace mlibc {

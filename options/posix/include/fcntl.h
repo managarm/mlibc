@@ -5,9 +5,9 @@
 #include <abi-bits/abi.h>
 #include <abi-bits/fcntl.h>
 #include <abi-bits/seek-whence.h>
-#include <bits/posix/mode_t.h>
-#include <bits/posix/off_t.h>
-#include <bits/posix/pid_t.h>
+#include <abi-bits/mode_t.h>
+#include <abi-bits/pid_t.h>
+#include <bits//off_t.h>
 
 #ifdef __cplusplus
 extern "C" {

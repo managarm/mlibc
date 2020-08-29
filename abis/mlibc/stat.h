@@ -1,15 +1,15 @@
 #ifndef _ABIBITS_STAT_H
 #define _ABIBITS_STAT_H
 
-#include <bits/posix/uid_t.h>
-#include <bits/posix/gid_t.h>
-#include <bits/posix/off_t.h>
-#include <bits/posix/mode_t.h>
-#include <bits/posix/dev_t.h>
-#include <bits/posix/ino_t.h>
-#include <bits/posix/blksize_t.h>
-#include <bits/posix/blkcnt_t.h>
-#include <bits/posix/nlink_t.h>
+#include <abi-bits/uid_t.h>
+#include <abi-bits/gid_t.h>
+#include <bits/off_t.h>
+#include <abi-bits/mode_t.h>
+#include <abi-bits/dev_t.h>
+#include <abi-bits/ino_t.h>
+#include <abi-bits/blksize_t.h>
+#include <abi-bits/blkcnt_t.h>
+#include <abi-bits/nlink_t.h>
 #include <bits/ansi/time_t.h>
 #include <bits/ansi/timespec.h>
 

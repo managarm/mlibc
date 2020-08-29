@@ -8,7 +8,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 // defined by the POSIX library
 void __mlibc_initLocale();

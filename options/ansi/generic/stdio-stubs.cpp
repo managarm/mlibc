@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include <ctype.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 #include <bits/ensure.h>
@@ -16,7 +15,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/file-io.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/ansi-sysdeps.hpp>
 #include <frg/mutex.hpp>
 
 template<typename F>
@@ -187,13 +186,30 @@ struct ResizePrinter {
 };
 
 int remove(const char *filename) {
-    struct stat statbuf;
-    if(stat(filename, &statbuf) != 0)
+	if(!mlibc::sys_rmdir) {
+        MLIBC_MISSING_SYSDEP();
+        errno = ENOSYS;
         return -1;
-    if(S_ISDIR(statbuf.st_mode))
-        return rmdir(filename);
-    else
-        return unlink(filename);
+	}
+
+	if(int e = mlibc::sys_rmdir(filename); e) {
+		if (e == ENOTDIR) {
+			if(!mlibc::sys_unlink) {
+				MLIBC_MISSING_SYSDEP();
+				errno = ENOSYS;
+				return -1;
+			}
+			if(e = mlibc::sys_unlink(filename); e) {
+				errno = e;
+				return -1;
+			}
+
+			return 0;
+		}
+		return -1;
+	}
+
+	return 0;
 }
 
 int rename(const char *path, const char *new_path) {
@@ -266,14 +282,6 @@ int printf(const char *__restrict format, ...) {
 	int result = vfprintf(stdout, format, args);
 	va_end(args);
 	return result;
-}
-
-int dprintf(int fd, const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    int result = vdprintf(fd, format, args);
-    va_end(args);
-    return result;
 }
 
 namespace {
@@ -761,13 +769,6 @@ int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_l
 int vsscanf(const char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
-}
-
-int vdprintf(int fd, const char *format, __gnuc_va_list args) {
-    FILE *file = fdopen(fd, "a");
-    int ret = vfprintf(file, format, args);
-    fclose(file);
-    return ret;
 }
 
 int fwprintf(FILE *__restrict, const wchar_t *__restrict, ...) MLIBC_STUB_BODY

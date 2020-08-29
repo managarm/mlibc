@@ -1,7 +1,7 @@
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <errno.h>
 #include <dirent.h>
 #include <fcntl.h>

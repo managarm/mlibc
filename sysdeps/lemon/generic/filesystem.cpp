@@ -6,7 +6,7 @@
 #include <dirent.h>
 #include <limits.h>
 
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 
 namespace mlibc{
@@ -44,7 +44,7 @@ namespace mlibc{
 		*bytes_read = ret;
 		return 0;
 	}
-	
+
 	int sys_pwrite(int fd, const void* buffer, size_t count, off_t off, ssize_t* written){
 		int ret = syscall(SYS_PWRITE, fd, (uintptr_t)buffer, count, 0, off);
 
@@ -56,7 +56,7 @@ namespace mlibc{
 		*written = ret;
 		return 0;
 	}
-	
+
 	int sys_pread(int fd, void *buf, size_t count, off_t off, ssize_t *bytes_read) {
 		int ret = syscall(SYS_PREAD, fd, (uintptr_t)buf, count, 0, off);
 
@@ -88,7 +88,7 @@ namespace mlibc{
 
 		*fd = ret;
 
-		return 0; 
+		return 0;
 	}
 
 	int sys_close(int fd){
@@ -105,7 +105,7 @@ namespace mlibc{
 		    return 0;
 		} else return 1;
 	}
-	
+
 	int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf){
 		int _fd = 0;
 		long ret = 0;
@@ -150,7 +150,7 @@ namespace mlibc{
 		long ret = syscall(SYS_IOCTL, fd, TIOCGWINSZ, &ws, 0 ,0);
 
 		if(!ret) return 0;
-		
+
 		return ENOTTY;
 	}
 
@@ -272,4 +272,4 @@ namespace mlibc{
 		return -syscall(SYS_RENAME, path, new_path, 0, 0, 0);
 	}
 	#endif
-} 
+}

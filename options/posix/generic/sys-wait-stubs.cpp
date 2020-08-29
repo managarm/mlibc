@@ -3,7 +3,7 @@
 #include <sys/wait.h>
 #include <bits/ensure.h>
 
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 int waitid(idtype_t idtype, id_t id, siginfo_t *siginfo, int flags) {
 	__ensure(!"Not implemented");

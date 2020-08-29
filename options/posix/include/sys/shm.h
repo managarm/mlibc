@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include <bits/posix/pid_t.h>
+#include <abi-bits/pid_t.h>
 #include <bits/size_t.h>
 #include <time.h>
 

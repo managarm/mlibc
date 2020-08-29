@@ -65,6 +65,15 @@ if not no_headers
 		'include/abi-bits/socket.h',
 		'include/abi-bits/termios.h',
 		'include/abi-bits/time.h',
+		'include/abi-bits/blkcnt_t.h',
+		'include/abi-bits/blksize_t.h',
+		'include/abi-bits/dev_t.h',
+		'include/abi-bits/gid_t.h',
+		'include/abi-bits/ino_t.h',
+		'include/abi-bits/mode_t.h',
+		'include/abi-bits/nlink_t.h',
+		'include/abi-bits/pid_t.h',
+		'include/abi-bits/uid_t.h',
 		subdir: 'abi-bits'
 	)
 endif

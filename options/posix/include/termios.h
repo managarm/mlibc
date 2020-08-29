@@ -2,7 +2,7 @@
 #ifndef _TERMIOS_H
 #define _TERMIOS_H
 
-#include <bits/posix/pid_t.h>
+#include <abi-bits/pid_t.h>
 #include <abi-bits/termios.h>
 
 #ifdef __cplusplus

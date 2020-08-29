@@ -2,7 +2,7 @@
 #define _SYS_MMAN_H
 
 #include <abi-bits/vm-flags.h>
-#include <bits/posix/off_t.h>
+#include <bits/off_t.h>
 #include <bits/size_t.h>
 
 #define MAP_FAILED ((void *)(-1))

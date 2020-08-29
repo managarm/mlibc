@@ -1,8 +1,6 @@
 #ifndef _RESOLV_H
 #define _RESOLV_H
 
-#include <netinet/in.h>
-
 #define RES_INIT     0x00000001
 #define RES_DEBUG    0x00000002
 #define RES_USEVC    0x00000008

@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/internal-sysdeps.hpp>
 
 typedef void (*InitPtr)();
 

@@ -2,9 +2,9 @@
 #ifndef _SPAWN_H
 #define _SPAWN_H
 
-#include <bits/posix/mode_t.h>
-#include <bits/posix/pid_t.h>
 #include <abi-bits/signal.h>
+#include <abi-bits/mode_t.h>
+#include <abi-bits/pid_t.h>
 #include <sched.h>
 
 #ifdef __cplusplus

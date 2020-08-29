@@ -4,7 +4,7 @@
 #include <errno.h>
 
 #include <bits/ensure.h>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 int utime(const char *filename, const struct utimbuf *times) {
 	if (!mlibc::sys_utimensat) {

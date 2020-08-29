@@ -2,8 +2,8 @@
 #ifndef _DIRENT_H
 #define _DIRENT_H
 
-#include <bits/posix/ino_t.h>
-#include <bits/posix/off_t.h>
+#include <abi-bits/ino_t.h>
+#include <bits/off_t.h>
 #include <bits/types.h>
 
 #ifdef __cplusplus

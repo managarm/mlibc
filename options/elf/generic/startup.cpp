@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <bits/ensure.h>
 #include <mlibc/elf/startup.h>
+#include <mlibc/environment.hpp>
 
 extern "C" size_t __init_array_start[];
 extern "C" size_t __init_array_end[];
@@ -60,7 +61,7 @@ void set_startup_data(int argc, char **argv, char **envp) {
 	// TODO: Copy the arguments instead of pointing to them?
 	auto ev = envp;
 	while(*ev) {
-		auto fail = putenv(*ev);
+		auto fail = mlibc::putenv(*ev);
 		__ensure(!fail);
 		ev++;
 	}

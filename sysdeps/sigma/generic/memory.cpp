@@ -1,7 +1,7 @@
 #include <string.h>
 
 #include <bits/ensure.h>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <libsigma/sys.h>
 #include <errno.h>
@@ -16,7 +16,7 @@ namespace mlibc
         void* ret = libsigma_vm_map(size, NULL, NULL, PROT_READ | PROT_WRITE, MAP_ANONYMOUS);
         if(!ret)
             return ENOMEM;
-            
+
         *pointer = ret;
         return 0;
     }

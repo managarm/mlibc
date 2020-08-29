@@ -9,7 +9,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/posix-pipe.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 struct TrackerPage {
 	uint64_t seqlock;

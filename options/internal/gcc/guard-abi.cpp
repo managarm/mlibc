@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/internal-sysdeps.hpp>
 
 namespace {
 

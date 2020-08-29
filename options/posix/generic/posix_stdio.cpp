@@ -48,3 +48,18 @@ off_t ftello(FILE *file_base) {
 	return current_offset;
 }
 
+int dprintf(int fd, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    int result = vdprintf(fd, format, args);
+    va_end(args);
+    return result;
+}
+
+int vdprintf(int fd, const char *format, __gnuc_va_list args) {
+    FILE *file = fdopen(fd, "a");
+    int ret = vfprintf(file, format, args);
+    fclose(file);
+    return ret;
+}
+

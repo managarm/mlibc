@@ -3,7 +3,7 @@
 #include <sys/signalfd.h>
 
 #include <bits/ensure.h>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/linux-sysdeps.hpp>
 
 int signalfd(int fd, const sigset_t *mask, int flags) {
 	__ensure(fd == -1);

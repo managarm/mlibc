@@ -4,7 +4,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 namespace mlibc{
     int sys_socket(int domain, int type, int protocol, int *fd){

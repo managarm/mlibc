@@ -2,6 +2,8 @@
 #ifndef MLIBC_POSIX_STDLIB_H
 #define MLIBC_POSIX_STDLIB_H
 
+#include <bits/posix/locale_t.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,6 +42,8 @@ int grantpt(int fd);
 int unlockpt(int fd);
 char *ptsname(int fd);
 int ptsname_r(int fd, char *buf, size_t len);
+
+double strtod_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc);
 
 #ifdef __cplusplus
 }

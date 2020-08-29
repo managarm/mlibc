@@ -5,7 +5,7 @@
 #include <frg/manual_box.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/rtdl-sysdeps.hpp>
 #include <internal-config.h>
 #include "linker.hpp"
 

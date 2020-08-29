@@ -4,7 +4,7 @@
 #include <sys/stat.h>
 
 #include <mlibc/debug.hpp>
-#include <mlibc/sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 int chmod(const char *pathname, mode_t mode) {
 	if(!mlibc::sys_chmod) {

@@ -9,7 +9,7 @@ extern "C" {
 #define GRND_RANDOM 1
 #define GRND_NONBLOCK 2
 
-#include <bits/posix/ssize_t.h>
+#include <bits/ssize_t.h>
 #include <bits/size_t.h>
 
 ssize_t getrandom(void *, size_t, unsigned int);

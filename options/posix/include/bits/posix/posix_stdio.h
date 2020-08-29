@@ -2,8 +2,8 @@
 #ifndef MLIBC_POSIX_STDIO_H
 #define MLIBC_POSIX_STDIO_H
 
-#include <bits/posix/off_t.h>
-#include <bits/posix/ssize_t.h>
+#include <bits/off_t.h>
+#include <bits/ssize_t.h>
 
 // MISSING: var_list
 
@@ -14,7 +14,7 @@ extern "C" {
 #define P_tmpdir "/tmp"
 
 int fileno(FILE *file);
-FILE *fdopen(int fd, const char *mode); 
+FILE *fdopen(int fd, const char *mode);
 
 FILE *fmemopen(void *__restrict, size_t, const char *__restrict);
 int pclose(FILE *);
@@ -25,6 +25,7 @@ int fseeko(FILE *stream, off_t offset, int whence);
 off_t ftello(FILE *stream);
 
 int dprintf(int fd, const char *format, ...);
+int vdprintf(int fd, const char *format, __gnuc_va_list args);
 
 #ifdef __cplusplus
 }
