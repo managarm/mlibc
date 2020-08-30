@@ -8,9 +8,18 @@ posix_test_cases = [
 	'inet_pton'
 ]
 
+test_sources = [
+	crt
+]
+
+if static
+	test_sources += '../options/internal/gcc-extra/mlibc_crtbegin.S'
+	test_sources += '../options/internal/gcc-extra/mlibc_crtend.S'
+endif
+
 if not disable_ansi_option
 	foreach f : ansi_test_cases
-		exec = executable('ansi-' + f, ['ansi/' + f + '.c', crt],
+		exec = executable('ansi-' + f, ['ansi/' + f + '.c', test_sources],
 			link_with: libc, include_directories: libc_include_dirs,
 			build_rpath: meson.build_root(),
 			c_args: '-no-pie',
@@ -22,7 +31,7 @@ endif
 
 if not disable_posix_option
 	foreach f : posix_test_cases
-		exec = executable('posix-' + f, ['posix/' + f + '.c', crt],
+		exec = executable('posix-' + f, ['posix/' + f + '.c', test_sources],
 			link_with: libc, include_directories: libc_include_dirs,
 			build_rpath: meson.build_root(),
 			c_args: '-no-pie',
