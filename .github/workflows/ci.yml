@@ -4,6 +4,9 @@ on: [push, pull_request]
 
 jobs:
     build-mlibc:
+        strategy:
+            matrix:
+                builds: [mlibc, mlibc-static]
         name: Build mlibc
         runs-on: ubuntu-20.04
         steps:
@@ -33,11 +36,11 @@ jobs:
             run: 'xbstrap init ../src'
             working-directory: build/
           - name: Build mlibc
-            run: 'xbstrap install mlibc'
+            run: 'xbstrap install ${{matrix.builds}}'
             working-directory: build/
           - name: Test mlibc
-            run: 'meson test'
-            working-directory: build/pkg-builds/mlibc
+            run: 'meson test -C pkg-builds/${{matrix.builds}}'
+            working-directory: build/
           - name: Build GCC
             run: 'xbstrap install-tool gcc'
             working-directory: build/
