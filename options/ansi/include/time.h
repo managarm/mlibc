@@ -2,6 +2,7 @@
 #ifndef _TIME_H
 #define _TIME_H
 
+#include <bits/feature.h>
 #include <bits/null.h>
 #include <bits/size_t.h>
 #include <bits/ansi/time_t.h>
