@@ -80,6 +80,7 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dc_args=['-fno-stack-protector']"
         - "-Dcpp_args=['-fno-stack-protector']"
+        - "-Dbuild_tests=true"
         - '@THIS_SOURCE_DIR@'
     build:
       - args: ['ninja']
