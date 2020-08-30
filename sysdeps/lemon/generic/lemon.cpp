@@ -1,7 +1,7 @@
 #include <lemon/syscall.h>
 #include <stddef.h>
+#include <abi-bits/pid_t.h>
 #include <bits/ensure.h>
-#include <bits/posix/pid_t.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <errno.h>
