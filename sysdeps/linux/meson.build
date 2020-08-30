@@ -1,6 +1,8 @@
-rtdl_sources += files(
-	'generic/sysdeps.cpp',
-)
+if not static
+	rtdl_sources += files(
+		'generic/sysdeps.cpp',
+	)
+endif
 
 libc_sources += files(
 	'generic/entry.cpp',

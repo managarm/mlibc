@@ -235,7 +235,6 @@ if not headers_only
 				include_directories: rtdl_include_dirs,
 				dependencies: rtdl_deps,
 				install: false)
-		ldso_dep = declare_dependency(link_with: ldso_lib, sources: rtdl_sources)
 		libc = static_library('c',
 				[
 					libc_sources,
@@ -245,9 +244,9 @@ if not headers_only
 				],
 				cpp_args: ['-DFRIGG_HAVE_LIBC'],
 				include_directories: libc_include_dirs,
-				dependencies: [libc_deps, ldso_dep],
+				dependencies: libc_deps,
 				link_with: [ldso_lib],
-				link_whole: libc_sublibs,
+				link_whole: [libc_sublibs, ldso_lib],
 				install: true)
 
 		static_library('pthread', 'libpthread/src/dummy.cpp', install: true)
