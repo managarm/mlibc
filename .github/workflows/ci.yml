@@ -35,6 +35,9 @@ jobs:
           - name: Build mlibc
             run: 'xbstrap install mlibc'
             working-directory: build/
+          - name: Test mlibc
+            run: 'meson test'
+            working-directory: build/pkg-builds/mlibc
           - name: Build GCC
             run: 'xbstrap install-tool gcc'
             working-directory: build/
@@ -58,5 +61,5 @@ jobs:
             uses: actions/checkout@v2
           - name: Compile sysdeps
             run: |
-                meson "-Dc_args=['-fno-stack-protector']" "-Dcpp_args=['-fno-stack-protector']" --cross-file ci/${{matrix.sysdeps}}.cross-file compile-${{matrix.sysdeps}}
+                meson "-Dc_args=['-fno-stack-protector']" "-Dcpp_args=['-fno-stack-protector']" "-Dbuild_tests=true" --cross-file ci/${{matrix.sysdeps}}.cross-file compile-${{matrix.sysdeps}}
                 ninja -C compile-${{matrix.sysdeps}}

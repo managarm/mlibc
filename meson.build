@@ -24,6 +24,7 @@ rtdl_deps = [ ]
 headers_only = get_option('headers_only')
 no_headers = get_option('mlibc_no_headers')
 static = get_option('static')
+build_tests = get_option('build_tests')
 disable_ansi_option = false
 disable_posix_option = false
 disable_linux_option = false
@@ -208,7 +209,7 @@ if not headers_only
 				dependencies: rtdl_deps,
 				install: true)
 
-		shared_library('c',
+		libc = shared_library('c',
 				[
 					libc_sources,
 					internal_sources,
@@ -235,7 +236,7 @@ if not headers_only
 				dependencies: rtdl_deps,
 				install: false)
 		ldso_dep = declare_dependency(link_with: ldso_lib, sources: rtdl_sources)
-		static_library('c',
+		libc = static_library('c',
 				[
 					libc_sources,
 					internal_sources,
@@ -254,4 +255,8 @@ if not headers_only
 		static_library('util', 'libutil/src/dummy.cpp', install: true)
 		static_library('m', 'libm/src/dummy.cpp', install: true)
 	endif
+endif
+
+if build_tests
+	subdir('tests/')
 endif

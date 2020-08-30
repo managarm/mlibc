@@ -36,6 +36,8 @@ tools:
         - '--enable-languages=c,c++'
         - '--disable-multilib'
         - '--disable-bootstrap'
+        - '--disable-libgomp'
+        - '--with-specs=%{!static:%x{-rpath=@SYSROOT_DIR@/usr/lib} %x{-dynamic-linker=@SYSROOT_DIR@/usr/lib/ld.so}}'
         # -g blows up GCC's binary size.
         - 'CFLAGS=-O2'
         - 'CXXFLAGS=-O2'
@@ -78,6 +80,7 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dc_args=['-fno-stack-protector']"
         - "-Dcpp_args=['-fno-stack-protector']"
+        - "-Dbuild_tests=true"
         - '@THIS_SOURCE_DIR@'
     build:
       - args: ['ninja']
