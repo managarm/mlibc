@@ -42,7 +42,7 @@ jobs:
     compile-sysdeps:
         strategy:
             matrix:
-                sysdeps: [dripos, qword]
+                sysdeps: [dripos, lemon, qword]
         name: Compile sysdeps
         runs-on: ubuntu-20.04
         steps:
