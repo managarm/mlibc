@@ -108,3 +108,22 @@ packages:
         environ:
           DESTDIR: '@THIS_COLLECT_DIR@'
         quiet: true
+  - name: mlibc-ansi-only
+    from_source: mlibc
+    configure:
+      - args:
+        - 'meson'
+        - '--prefix=/usr'
+        - '--libdir=lib'
+        - '--buildtype=debugoptimized'
+        - "-Dc_args=['-fno-stack-protector']"
+        - "-Dcpp_args=['-fno-stack-protector']"
+        - "-Dbuild_tests=true"
+        - "-Ddisable_posix_option=true"
+        - '@THIS_SOURCE_DIR@'
+    build:
+      - args: ['ninja']
+      - args: ['ninja', 'install']
+        environ:
+          DESTDIR: '@THIS_COLLECT_DIR@'
+        quiet: true
