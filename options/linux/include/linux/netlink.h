@@ -9,6 +9,9 @@ extern "C" {
 #include <abi-bits/socket.h>
 
 #define NETLINK_ROUTE 0
+#define NETLINK_USERSOCK 2
+#define NETLINK_FIREWALL 3
+#define NETLINK_IP6_FW 13
 #define NETLINK_KOBJECT_UEVENT 15
 
 struct sockaddr_nl {
