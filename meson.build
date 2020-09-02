@@ -25,9 +25,9 @@ headers_only = get_option('headers_only')
 no_headers = get_option('mlibc_no_headers')
 static = get_option('static')
 build_tests = get_option('build_tests')
-disable_ansi_option = false
-disable_posix_option = false
-disable_linux_option = false
+disable_ansi_option = get_option('disable_ansi_option')
+disable_posix_option = get_option('disable_posix_option')
+disable_linux_option = get_option('disable_linux_option')
 internal_conf = configuration_data()
 
 if not headers_only

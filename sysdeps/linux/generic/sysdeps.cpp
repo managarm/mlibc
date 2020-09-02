@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <type_traits>
 
+#include <bits/feature.h>
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
@@ -115,18 +116,6 @@ int sys_vm_unmap(void *pointer, size_t size) STUB_ONLY
 // All remaining functions are disabled in ldso.
 #ifndef MLIBC_BUILDING_RTDL
 
-#include <sys/ioctl.h>
-
-int sys_isatty(int fd) {
-        struct winsize ws;
-        auto ret = do_syscall(NR_ioctl, fd, TIOCGWINSZ, &ws);
-        if (int e = sc_error(ret); e)
-                return e;
-        auto res = sc_int_result<unsigned long>(ret);
-        if(!res) return 0;
-        return 1;
-}
-
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
         struct timespec tp = {};
         auto ret = do_syscall(NR_clock_gettime, clock, &tp);
@@ -181,13 +170,6 @@ int sys_msg_recv(int sockfd, struct msghdr *msg, int flags, ssize_t *length) {
         return 0;
 }
 
-int sys_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
-        auto ret = do_syscall(NR_connect, sockfd, addr, addrlen);
-        if (int e = sc_error(ret); e)
-                return e;
-        return 0;
-}
-
 int sys_fcntl(int fd, int cmd, va_list args, int *result) {
         auto arg = va_arg(args, unsigned long);
         // TODO: the api for linux differs for each command so fcntl()s might fail with -EINVAL
@@ -196,6 +178,27 @@ int sys_fcntl(int fd, int cmd, va_list args, int *result) {
         if (int e = sc_error(ret); e)
                 return e;
         *result = sc_int_result<int>(ret);
+        return 0;
+}
+
+#if __MLIBC_POSIX_OPTION
+
+#include <sys/ioctl.h>
+
+int sys_isatty(int fd) {
+        struct winsize ws;
+        auto ret = do_syscall(NR_ioctl, fd, TIOCGWINSZ, &ws);
+        if (int e = sc_error(ret); e)
+                return e;
+        auto res = sc_int_result<unsigned long>(ret);
+        if(!res) return 0;
+        return 1;
+}
+
+int sys_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+        auto ret = do_syscall(NR_connect, sockfd, addr, addrlen);
+        if (int e = sc_error(ret); e)
+                return e;
         return 0;
 }
 
@@ -218,6 +221,8 @@ int sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
         *num_events = sc_int_result<int>(ret);
         return 0;
 }
+
+#endif // __MLIBC_POSIX_OPTION
 
 void sys_exit(int status) {
 	do_syscall(NR_exit, status);
