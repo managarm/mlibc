@@ -1,18 +1,19 @@
 #include <lemon/syscall.h>
 #include <stddef.h>
-#include <abi-bits/pid_t.h>
 #include <bits/ensure.h>
+#include <abi-bits/pid_t.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
+#include <mlibc/thread-entry.hpp>
 #include <errno.h>
 
 namespace mlibc{
 	int sys_futex_wait(int *pointer, int expected){
-		return 0;
+		return syscall(SYS_FUTEX_WAIT, pointer, expected, 0, 0, 0);
 	}
 
 	int sys_futex_wake(int *pointer) {
-		return 0;
+		return syscall(SYS_FUTEX_WAKE, pointer, 0, 0, 0, 0);
 	}
 
 	int sys_tcb_set(void* pointer){
@@ -80,7 +81,7 @@ namespace mlibc{
 		pid_t pid = _pid;
 		return pid;
 	}
-
+	
 	int sys_clock_get(int clock, time_t *secs, long *nanos) {
 		uint64_t _secs, _millis;
 		syscall(SYS_UPTIME, (uintptr_t)&_secs, (uintptr_t)&_millis, 0, 0, 0);
@@ -103,7 +104,7 @@ namespace mlibc{
 		syscall(SYS_NANO_SLEEP, (*sec) * 1000000000 + (*nanosec), 0, 0, 0, 0);
 		return 0;
 	}
-
+	
 	uid_t sys_getuid(){
 		return syscall(SYS_GETUID, 0, 0, 0, 0, 0);
 	}
@@ -130,8 +131,33 @@ namespace mlibc{
 		return 0;
 	}
 
+	int sys_setgid(gid_t gid){
+		mlibc::infoLogger() << "mlibc: sys_setgid is a stub" << frg::endlog;
+		return 0;
+	}
+
+	int sys_setegid(gid_t egid){
+		mlibc::infoLogger() << "mlibc: sys_setegid is a stub" << frg::endlog;
+		return 0;
+	}
+
 	void sys_yield(){
 		syscall(SYS_YIELD, 0, 0, 0, 0, 0);
 	}
+
+	int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *tid_out){
+		auto stack = prepare_stack(entry, user_arg, tcb);
+		pid_t tid = syscall(SYS_SPAWN_THREAD, __mlibc_start_thread, stack, 0, 0, 0);
+
+		if(tid_out){
+			*tid_out = tid;
+		}
+
+		return 0;
+	}
+
+	void sys_thread_exit(){
+		syscall(SYS_EXIT_THREAD, 0, 0, 0, 0, 0);
+	}
 	#endif
-}
+} 

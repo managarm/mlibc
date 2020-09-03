@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <limits.h>
+#include <fcntl.h>
 
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
@@ -44,7 +45,7 @@ namespace mlibc{
 		*bytes_read = ret;
 		return 0;
 	}
-
+	
 	int sys_pwrite(int fd, const void* buffer, size_t count, off_t off, ssize_t* written){
 		int ret = syscall(SYS_PWRITE, fd, (uintptr_t)buffer, count, 0, off);
 
@@ -56,7 +57,7 @@ namespace mlibc{
 		*written = ret;
 		return 0;
 	}
-
+	
 	int sys_pread(int fd, void *buf, size_t count, off_t off, ssize_t *bytes_read) {
 		int ret = syscall(SYS_PREAD, fd, (uintptr_t)buf, count, 0, off);
 
@@ -88,7 +89,7 @@ namespace mlibc{
 
 		*fd = ret;
 
-		return 0;
+		return 0; 
 	}
 
 	int sys_close(int fd){
@@ -97,15 +98,15 @@ namespace mlibc{
 	}
 
 	int sys_access(const char* filename, int mode){
-		int ret;
-		sys_open(filename, mode, &ret);
+		int fd;
+		if(int e = sys_open(filename, O_RDONLY, &fd)){
+			return e;
+		}
 
-		if(ret) {
-		    sys_close(ret);
-		    return 0;
-		} else return 1;
+		sys_close(fd);
+		return 0;
 	}
-
+	
 	int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf){
 		int _fd = 0;
 		long ret = 0;
@@ -119,6 +120,7 @@ namespace mlibc{
 				ret = syscall(SYS_STAT, &lemonStat, path, 0, 0, 0);
 				break;
 			default:
+				mlibc::infoLogger() << "mlibc warning: sys_stat: unsupported fsfd target" << frg::endlog;
 				return EINVAL;
 		}
 
@@ -150,7 +152,7 @@ namespace mlibc{
 		long ret = syscall(SYS_IOCTL, fd, TIOCGWINSZ, &ws, 0 ,0);
 
 		if(!ret) return 0;
-
+		
 		return ENOTTY;
 	}
 
@@ -167,7 +169,7 @@ namespace mlibc{
 		return 0;
 	}
 
-	int sys_tcsetattr(int fd, int optional_action, struct termios *attr) {
+	int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 		if(int e = sys_isatty(fd))
 			return e;
 
@@ -176,7 +178,7 @@ namespace mlibc{
 		}
 
 		int ret;
-		sys_ioctl(fd, LEMON_TIOCSATTR, attr, &ret);
+		sys_ioctl(fd, LEMON_TIOCSATTR, const_cast<struct termios*>(attr), &ret);
 
 		if(ret)
 			return -ret;
@@ -271,5 +273,15 @@ namespace mlibc{
 	int sys_rename(const char* path, const char* new_path){
 		return -syscall(SYS_RENAME, path, new_path, 0, 0, 0);
 	}
+	
+	int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length){
+		long ret = syscall(SYS_READLINK, path, buffer, max_size, 0, 0);
+		if(ret < 0){
+			return -ret;
+		}
+
+		*length = ret;
+		return 0;
+	}
 	#endif
-}
+} 

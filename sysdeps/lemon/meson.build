@@ -9,6 +9,8 @@ libc_sources += files(
 	'generic/lemon.cpp',
 	'generic/sockets.cpp',
 	'generic/entry.cpp',
+	'generic/thread_entry.S',
+	'generic/thread.cpp'
 )
 
 if not no_headers
