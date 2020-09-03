@@ -65,6 +65,13 @@
 #define SYS_RECVMSG 62
 #define SYS_GETEUID 63
 #define SYS_SETEUID 64
+#define SYS_GET_PROCESS_INFO 65
+#define SYS_GET_NEXT_PROCESS_INFO 66
+#define SYS_READLINK 67
+#define SYS_SPAWN_THREAD 68
+#define SYS_EXIT_THREAD 69
+#define SYS_FUTEX_WAKE 70
+#define SYS_FUTEX_WAIT 71
 
 static inline long _syscall(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4) {
     volatile long ret;
