@@ -20,11 +20,6 @@ struct sockaddr {
 	char sa_data[];
 };
 
-struct sockaddr_storage {
-	sa_family_t ss_family;
-	char __padding[128 - sizeof(sa_family_t)];
-};
-
 struct cmsghdr {
 	socklen_t cmsg_len;
 	int cmsg_level;
