@@ -58,9 +58,12 @@ extern "C" {
 #define SIGVTALRM 26
 #define SIGPROF 27
 #define SIGWINCH 28
-#define SIGPOLL 29
+#define SIGIO 29
+#define SIGPOLL SIGIO
 #define SIGPWR 30
 #define SIGSYS 31
+#define SIGRTMIN 32
+#define SIGRTMAX 33
 
 // TODO: replace this by uint64_t
 typedef long sigset_t;
