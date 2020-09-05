@@ -172,6 +172,15 @@ int pthread_cleanup_pop(int) {
 	__builtin_unreachable();
 }
 
+int pthread_setname_np(pthread_t, const char *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+int pthread_getname_np(pthread_t, char *, size_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 int pthread_setcanceltype(int, int *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

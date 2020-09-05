@@ -145,6 +145,9 @@ int pthread_detach(pthread_t);
 int pthread_cleanup_push(void (*) (void *), void *);
 int pthread_cleanup_pop(int);
 
+int pthread_setname_np(pthread_t, const char *);
+int pthread_getname_np(pthread_t, char *, size_t);
+
 int pthread_setcanceltype(int, int *);
 int pthread_setcancelstate(int, int *);
 void pthread_testcancel(void);
