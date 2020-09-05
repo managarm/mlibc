@@ -22,4 +22,10 @@
 // constants for fcntl()'s additional argument of F_GETFD and F_SETFD
 #define FD_CLOEXEC 1
 
+// Used by mmap
+#define F_SEAL_SHRINK 0x0002
+#define F_SEAL_GROW   0x0004
+#define F_SEAL_WRITE  0x0008
+#define F_GET_SEALS   1034
+
 #endif // _ABITBITS_FCNTL_H
