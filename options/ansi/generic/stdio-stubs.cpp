@@ -747,14 +747,13 @@ int vscanf(const char *__restrict format, __gnuc_va_list args) {
 }
 int vsnprintf(char *__restrict buffer, size_t max_size,
 		const char *__restrict format, __gnuc_va_list args) {
-	if(!max_size)
-		return 0;
 	frg::va_struct vs;
 	va_copy(vs.args, args);
-	LimitedPrinter p{buffer, max_size - 1};
+	LimitedPrinter p{buffer, max_size ? max_size - 1 : 0};
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
 	frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
-	p.buffer[frg::min(max_size - 1, p.count)] = 0;
+	if (max_size)
+		p.buffer[frg::min(max_size - 1, p.count)] = 0;
 	return p.count;
 }
 int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
