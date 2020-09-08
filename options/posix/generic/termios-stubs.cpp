@@ -19,6 +19,10 @@ int cfsetospeed(struct termios *, speed_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+void cfmakeraw(struct termios *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 int tcdrain(int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
