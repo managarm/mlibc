@@ -443,39 +443,39 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		// handle hash table, symbol table and string table
 		case DT_HASH:
 			object->hashStyle = HashStyle::systemV;
-			object->hashTableOffset = dynamic->d_ptr;
+			object->hashTableOffset = dynamic->d_un.d_ptr;
 			break;
 		case DT_GNU_HASH:
 			object->hashStyle = HashStyle::gnu;
-			object->hashTableOffset = dynamic->d_ptr;
+			object->hashTableOffset = dynamic->d_un.d_ptr;
 			break;
 		case DT_STRTAB:
-			object->stringTableOffset = dynamic->d_ptr;
+			object->stringTableOffset = dynamic->d_un.d_ptr;
 			break;
 		case DT_STRSZ:
 			break; // we don't need the size of the string table
 		case DT_SYMTAB:
-			object->symbolTableOffset = dynamic->d_ptr;
+			object->symbolTableOffset = dynamic->d_un.d_ptr;
 			break;
 		case DT_SYMENT:
-			__ensure(dynamic->d_val == sizeof(Elf64_Sym));
+			__ensure(dynamic->d_un.d_val == sizeof(Elf64_Sym));
 			break;
 		// handle lazy relocation table
 		case DT_PLTGOT:
 			object->globalOffsetTable = (void **)(object->baseAddress
-					+ dynamic->d_ptr);
+					+ dynamic->d_un.d_ptr);
 			break;
 		case DT_JMPREL:
-			object->lazyRelocTableOffset = dynamic->d_ptr;
+			object->lazyRelocTableOffset = dynamic->d_un.d_ptr;
 			break;
 		case DT_PLTRELSZ:
-			object->lazyTableSize = dynamic->d_val;
+			object->lazyTableSize = dynamic->d_un.d_val;
 			break;
 		case DT_PLTREL:
-			if(dynamic->d_val == DT_RELA) {
+			if(dynamic->d_un.d_val == DT_RELA) {
 				object->lazyExplicitAddend = true;
 			}else{
-				__ensure(dynamic->d_val == DT_REL);
+				__ensure(dynamic->d_un.d_val == DT_REL);
 			}
 			break;
 		// TODO: Implement this correctly!
@@ -486,20 +486,20 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			object->eagerBinding = true;
 			break;
 		case DT_FLAGS:
-			if(dynamic->d_val & DF_SYMBOLIC)
+			if(dynamic->d_un.d_val & DF_SYMBOLIC)
 				object->symbolicResolution = true;
-			if(dynamic->d_val & DF_STATIC_TLS)
+			if(dynamic->d_un.d_val & DF_STATIC_TLS)
 				object->haveStaticTls = true;
-			if(dynamic->d_val & ~(DF_SYMBOLIC | DF_STATIC_TLS))
-				mlibc::infoLogger() << "\e[31mrtdl: DT_FLAGS(" << frg::hex_fmt{dynamic->d_val}
+			if(dynamic->d_un.d_val & ~(DF_SYMBOLIC | DF_STATIC_TLS))
+				mlibc::infoLogger() << "\e[31mrtdl: DT_FLAGS(" << frg::hex_fmt{dynamic->d_un.d_val}
 						<< ") is not implemented correctly!\e[39m"
 						<< frg::endlog;
 			break;
 		case DT_FLAGS_1:
-			if(dynamic->d_val & DF_1_NOW)
+			if(dynamic->d_un.d_val & DF_1_NOW)
 				object->eagerBinding = true;
-			if(dynamic->d_val & ~(DF_1_NOW))
-				mlibc::infoLogger() << "\e[31mrtdl: DT_FLAGS_1(" << frg::hex_fmt{dynamic->d_val}
+			if(dynamic->d_un.d_val & ~(DF_1_NOW))
+				mlibc::infoLogger() << "\e[31mrtdl: DT_FLAGS_1(" << frg::hex_fmt{dynamic->d_un.d_val}
 						<< ") is not implemented correctly!\e[39m"
 						<< frg::endlog;
 			break;
@@ -507,21 +507,21 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			mlibc::infoLogger() << "\e[31mrtdl: RUNPATH not preferred over RPATH properly\e[39m" << frg::endlog;
 			// fall through
 		case DT_RUNPATH:
-			runpath_offset = dynamic->d_val;
+			runpath_offset = dynamic->d_un.d_val;
 			break;
 		case DT_INIT:
-			if(dynamic->d_ptr != 0)
-				object->initPtr = (InitFuncPtr)(object->baseAddress + dynamic->d_ptr);
+			if(dynamic->d_un.d_ptr != 0)
+				object->initPtr = (InitFuncPtr)(object->baseAddress + dynamic->d_un.d_ptr);
 			break;
 		case DT_INIT_ARRAY:
-			if(dynamic->d_ptr != 0)
-				object->initArray = (InitFuncPtr *)(object->baseAddress + dynamic->d_ptr);
+			if(dynamic->d_un.d_ptr != 0)
+				object->initArray = (InitFuncPtr *)(object->baseAddress + dynamic->d_un.d_ptr);
 			break;
 		case DT_INIT_ARRAYSZ:
-			object->initArraySize = dynamic->d_val;
+			object->initArraySize = dynamic->d_un.d_val;
 			break;
 		case DT_DEBUG:
-			dynamic->d_val = reinterpret_cast<Elf64_Xword>(&globalDebugInterface);
+			dynamic->d_un.d_val = reinterpret_cast<Elf64_Xword>(&globalDebugInterface);
 		// ignore unimportant tags
 		case DT_SONAME: case DT_NEEDED: // we handle this later
 		case DT_FINI: case DT_FINI_ARRAY: case DT_FINI_ARRAYSZ:
@@ -550,7 +550,7 @@ void ObjectRepository::_discoverDependencies(SharedObject *object, uint64_t rts)
 			continue;
 
 		const char *library_str = (const char *)(object->baseAddress
-				+ object->stringTableOffset + dynamic->d_val);
+				+ object->stringTableOffset + dynamic->d_un.d_val);
 
 		auto library = requestObjectWithName(frg::string_view{library_str}, object, rts);
 		if(!library)
@@ -612,13 +612,13 @@ void processCopyRelocations(SharedObject *object) {
 
 		switch(dynamic->d_tag) {
 		case DT_RELA:
-			rela_offset = dynamic->d_ptr;
+			rela_offset = dynamic->d_un.d_ptr;
 			break;
 		case DT_RELASZ:
-			rela_length = dynamic->d_val;
+			rela_length = dynamic->d_un.d_val;
 			break;
 		case DT_RELAENT:
-			__ensure(dynamic->d_val == sizeof(Elf64_Rela));
+			__ensure(dynamic->d_un.d_val == sizeof(Elf64_Rela));
 			break;
 		}
 	}
@@ -1203,13 +1203,13 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 
 		switch(dynamic->d_tag) {
 		case DT_RELA:
-			rela_offset = dynamic->d_ptr;
+			rela_offset = dynamic->d_un.d_ptr;
 			break;
 		case DT_RELASZ:
-			rela_length = dynamic->d_val;
+			rela_length = dynamic->d_un.d_val;
 			break;
 		case DT_RELAENT:
-			__ensure(dynamic->d_val == sizeof(Elf64_Rela));
+			__ensure(dynamic->d_un.d_val == sizeof(Elf64_Rela));
 			break;
 		}
 	}

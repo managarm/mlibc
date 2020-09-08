@@ -45,8 +45,8 @@ extern "C" void relocateSelf() {
 	for(size_t i = 0; _DYNAMIC[i].d_tag != DT_NULL; i++) {
 		auto ent = &_DYNAMIC[i];
 		switch(ent->d_tag) {
-		case DT_RELA: rela_offset = ent->d_ptr; break;
-		case DT_RELASZ: rela_size = ent->d_val; break;
+		case DT_RELA: rela_offset = ent->d_un.d_ptr; break;
+		case DT_RELASZ: rela_size = ent->d_un.d_val; break;
 		}
 	}
 
@@ -145,8 +145,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	for(size_t i = 0; _DYNAMIC[i].d_tag != DT_NULL; i++) {
 		auto ent = &_DYNAMIC[i];
 		switch(ent->d_tag) {
-		case DT_STRTAB: strtab_offset = ent->d_ptr; break;
-		case DT_SONAME: soname_str = ent->d_val; break;
+		case DT_STRTAB: strtab_offset = ent->d_un.d_ptr; break;
+		case DT_SONAME: soname_str = ent->d_un.d_val; break;
 		case DT_HASH:
 		case DT_GNU_HASH:
 		case DT_STRSZ:

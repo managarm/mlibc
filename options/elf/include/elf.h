@@ -40,8 +40,27 @@ typedef int32_t Elf32_Sword;
 typedef uint64_t Elf32_Xword;
 typedef int64_t Elf32_Sxword;
 
+#define EI_NIDENT (16)
+
 typedef struct {
-	unsigned char e_ident[16]; /* ELF identification */
+	unsigned char e_ident[EI_NIDENT]; /* ELF identification */
+	Elf32_Half e_type; /* Object file type */
+	Elf32_Half e_machine; /* Machine type */
+	Elf32_Word e_version; /* Object file version */
+	Elf32_Addr e_entry; /* Entry point address */
+	Elf32_Off e_phoff; /* Program header offset */
+	Elf32_Off e_shoff; /* Section header offset */
+	Elf32_Word e_flags; /* Processor-specific flags */
+	Elf32_Half e_ehsize; /* ELF header size */
+	Elf32_Half e_phentsize; /* Size of program header entry */
+	Elf32_Half e_phnum; /* Number of program header entries */
+	Elf32_Half e_shentsize; /* Size of section header entry */
+	Elf32_Half e_shnum; /* Number of section header entries */
+	Elf32_Half e_shstrndx; /* Section name string table index */
+} Elf32_Ehdr;
+
+typedef struct {
+	unsigned char e_ident[EI_NIDENT]; /* ELF identification */
 	Elf64_Half e_type; /* Object file type */
 	Elf64_Half e_machine; /* Machine type */
 	Elf64_Word e_version; /* Object file version */
@@ -62,6 +81,7 @@ enum {
 	ET_REL = 1,
 	ET_EXEC = 2,
 	ET_DYN = 3,
+	ET_CORE = 4,
 };
 
 enum {
@@ -207,12 +227,33 @@ enum {
 };
 
 typedef struct {
+	Elf32_Sword d_tag;
+	union {
+		Elf32_Word d_val;
+		Elf32_Addr d_ptr;
+	} d_un;
+} Elf32_Dyn;
+
+typedef struct {
 	Elf64_Sxword d_tag;
 	union {
 		Elf64_Xword d_val;
 		Elf64_Addr d_ptr;
-	};
+	} d_un;
 } Elf64_Dyn;
+
+typedef struct {
+	Elf32_Word sh_name;
+	Elf32_Word sh_type;
+	Elf32_Word sh_flags;
+	Elf32_Addr sh_addr;
+	Elf32_Off sh_offset;
+	Elf32_Word sh_size;
+	Elf32_Word sh_link;
+	Elf32_Word sh_info;
+	Elf32_Word sh_addralign;
+	Elf32_Word sh_entsize;
+} Elf32_Shdr;
 
 typedef struct {
 	Elf64_Word sh_name;
