@@ -25,6 +25,11 @@ struct sockaddr_storage {
 	char __padding[128 - sizeof(sa_family_t)];
 };
 
+struct mmsghdr {
+	struct msghdr msg_hdr;
+	unsigned int  msg_len;
+};
+
 #ifdef __cplusplus
 }
 #endif

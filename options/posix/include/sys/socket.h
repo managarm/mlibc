@@ -86,6 +86,8 @@ ssize_t recvmsg(int, struct msghdr *, int);
 ssize_t send(int, const void *, size_t, int);
 ssize_t sendmsg(int, const struct msghdr *, int);
 ssize_t sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_t);
+int recvmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags, struct timespec *timeout);
+int sendmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags);
 int setsockopt(int, int, int, const void *, socklen_t);
 int shutdown(int, int);
 int sockatmark(int);
