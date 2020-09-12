@@ -17,6 +17,7 @@ bool logBaseAddresses = false;
 bool eagerBinding = true;
 
 extern DebugInterface globalDebugInterface;
+extern uintptr_t __stack_chk_guard;
 
 #ifdef MLIBC_STATIC_BUILD
 extern "C" size_t __init_array_start[];
@@ -675,6 +676,7 @@ Tcb *allocateTcb() {
 	auto tcb_ptr = new (reinterpret_cast<char *>(fs_buffer) + runtimeTlsMap->initialLimit) Tcb;
 	tcb_ptr->selfPointer = tcb_ptr;
 
+	tcb_ptr->stackCanary = __stack_chk_guard;
 	tcb_ptr->didExit = 0;
 	tcb_ptr->returnValue = nullptr;
 	tcb_ptr->dtvSize = runtimeTlsMap->indices.size();

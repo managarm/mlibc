@@ -143,6 +143,7 @@ internal_sources = [
 	'options/internal/generic/ensure.cpp',
 	'options/internal/generic/essential.cpp',
 	'options/internal/generic/frigg.cpp',
+	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc/initfini.cpp',
 	'options/internal/gcc-extra/cxxabi.cpp',
@@ -178,6 +179,7 @@ if not no_headers
 endif
 
 rtdl_sources += [
+	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/generic/allocator.cpp',
 	'options/internal/generic/debug.cpp',

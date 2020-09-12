@@ -6,6 +6,7 @@
 #include <abi-bits/auxv.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/rtdl-sysdeps.hpp>
+#include <mlibc/stack_protector.hpp>
 #include <internal-config.h>
 #include "linker.hpp"
 
@@ -122,6 +123,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	size_t phdr_entry_size = 0;
 	size_t phdr_count = 0;
 	void *entry_pointer = 0;
+	void *stack_entropy = nullptr;
 
 	const char *execfn = "(executable)";
 
@@ -186,6 +188,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 			case AT_PHNUM: phdr_count = *value; break;
 			case AT_ENTRY: entry_pointer = reinterpret_cast<void *>(*value); break;
 			case AT_EXECFN: execfn = reinterpret_cast<const char *>(*value); break;
+			case AT_RANDOM: stack_entropy = reinterpret_cast<void*>(*value); break;
 		}
 
 		aux += 2;
@@ -238,6 +241,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	Loader linker{globalScope.get(), true, 1};
 	linker.submitObject(executableSO);
 	linker.linkObjects();
+
+	mlibc::initStackGuard(stack_entropy);
 
 	auto tcb = allocateTcb();
 	if(mlibc::sys_tcb_set(tcb))
