@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <wchar.h>
 #include <setjmp.h>
+#include <limits.h>
 
 #include <frg/random.hpp>
 #include <mlibc/debug.hpp>
@@ -103,9 +104,6 @@ long long strtoll(const char *__restrict string, char **__restrict end, int base
 }
 // this function is copied from newlib and available under a BSD license
 unsigned long strtoul(const char *__restrict nptr, char **__restrict endptr, int base) {
-	// note: we assume that (unsigned long)-1 == ULONG_MAX
-	const unsigned long ULONG_MAX = -1;
-
 	const unsigned char *s = (const unsigned char *)nptr;
 	unsigned long acc;
 	int c;
