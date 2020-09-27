@@ -36,7 +36,19 @@ struct PrintfAgent {
 	frg::expected<frg::format_error> operator() (char t, frg::format_options opts,
 			frg::printf_size_mod szmod) {
 		switch(t) {
-		case 'p': case 'c': case 's':
+		case 'c':
+			if (szmod == frg::printf_size_mod::long_size) {
+				char c_buf[sizeof(wchar_t)];
+				auto c = static_cast<wchar_t>(va_arg(_vsp->args, wint_t));
+				mbstate_t shift_state = {0};
+				if (wcrtomb(c_buf, c, &shift_state) == size_t(-1))
+					return frg::format_error::agent_error;
+				_formatter->append(c_buf);
+				break;
+			}
+			frg::do_printf_chars(*_formatter, t, opts, szmod, _vsp);
+			break;
+		case 'p': case 's':
 			frg::do_printf_chars(*_formatter, t, opts, szmod, _vsp);
 			break;
 		case 'd': case 'i': case 'o': case 'x': case 'X': case 'u':
