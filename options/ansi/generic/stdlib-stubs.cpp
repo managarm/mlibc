@@ -42,13 +42,13 @@ long long atoll(const char *string) {
 }
 
 __attribute__ (( returns_twice )) int sigsetjmp(sigjmp_buf buffer, int savesigs) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	sigprocmask(0, NULL, (sigset_t *)buffer);
+	setjmp((long *)(buffer + sizeof(sigset_t)));
 }
 
 __attribute__ (( noreturn )) void siglongjmp(sigjmp_buf buffer, int value) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	sigprocmask(SIG_SETMASK, (const sigset_t *)buffer, NULL);
+	longjmp((long *)(buffer + sizeof(sigset_t)), value);
 }
 
 double strtod(const char *__restrict string, char **__restrict end) {
