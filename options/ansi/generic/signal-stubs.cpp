@@ -27,3 +27,17 @@ int raise(int sig) {
 	__builtin_unreachable();
 }
 
+// This is a POSIX extension, but we have it in here for sigsetjmp
+int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
+	if(!mlibc::sys_sigprocmask) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_sigprocmask(how, set, retrieve); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
+}
+

@@ -41,14 +41,24 @@ long long atoll(const char *string) {
 	return strtoll(string, nullptr, 10);
 }
 
-__attribute__ (( returns_twice )) int sigsetjmp(sigjmp_buf buffer, int savesigs) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+// POSIX extensions but are here for simplicities sake. Forward declaration is here
+// to avoid exporting sigprocmask when posix is disabled.
+int sigprocmask(int, const sigset_t *__restrict, sigset_t *__restrict);
+extern "C" {
+	__attribute__ (( returns_twice )) int __sigsetjmp(sigjmp_buf buffer, int savesigs) {
+		buffer[0].savesigs = savesigs;
+		if (savesigs)
+			sigprocmask(0, NULL, &buffer[0].sigset);
+		return 0;
+	}
 }
 
 __attribute__ (( noreturn )) void siglongjmp(sigjmp_buf buffer, int value) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	if (buffer[0].savesigs)
+		sigprocmask(SIG_SETMASK, &buffer[0].sigset, NULL);
+	jmp_buf b;
+	b[0].reg_state = buffer[0].reg_state;
+	longjmp(b, value);
 }
 
 double strtod(const char *__restrict string, char **__restrict end) {

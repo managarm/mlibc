@@ -1,7 +1,6 @@
 
-.global setjmp
-.type setjmp, "function"
-setjmp:
+.type __setjmp, "function"
+__setjmp:
 	mov %rbx, 0x00(%rdi)
 	mov %rbp, 0x08(%rdi)
 	mov %r12, 0x10(%rdi)
@@ -13,9 +12,26 @@ setjmp:
 	mov %rax, 0x30(%rdi)
 	mov (%rsp), %rax # return rip
 	mov %rax, 0x38(%rdi)
-	
-	mov $0, %rax
+
+	test %rdx, %rdx
+	jnz 1f
+	xor %rax, %rax
 	ret
+
+  1:
+	jmp __sigsetjmp
+
+.global setjmp
+.type setjmp, "function"
+setjmp:
+	xor %rdx, %rdx
+	jmp __setjmp
+
+.global sigsetjmp
+.type sigsetjmp, "function"
+sigsetjmp:
+	mov $1, %rdx
+	jmp __setjmp
 
 .global longjmp
 .type longjmp, "function"

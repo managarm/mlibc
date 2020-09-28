@@ -70,6 +70,11 @@ typedef long sigset_t;
 
 #define SIGUNUSED SIGSYS
 
+// constants for sigprocmask()
+#define SIG_BLOCK 1
+#define SIG_UNBLOCK 2
+#define SIG_SETMASK 3
+
 #ifdef __MLIBC_POSIX_OPTION
 
 #define SA_NOCLDSTOP (1 << 0)
@@ -86,11 +91,6 @@ typedef long sigset_t;
 #define SIGEV_NONE 1
 #define SIGEV_SIGNAL 2
 #define SIGEV_THREAD 3
-
-// constants for sigprocmask()
-#define SIG_BLOCK 1
-#define SIG_UNBLOCK 2
-#define SIG_SETMASK 3
 
 #define SI_USER 0
 
