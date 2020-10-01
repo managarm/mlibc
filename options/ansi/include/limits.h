@@ -42,5 +42,6 @@
 #endif
 
 #define _POSIX_ARG_MAX 4096
+#define _POSIX_OPEN_MAX 16
 
 #endif // _LIMITS_H
