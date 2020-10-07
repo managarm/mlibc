@@ -143,6 +143,7 @@ internal_sources = [
 	'options/internal/generic/ensure.cpp',
 	'options/internal/generic/essential.cpp',
 	'options/internal/generic/frigg.cpp',
+	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc/initfini.cpp',
 	'options/internal/gcc-extra/cxxabi.cpp',
@@ -178,6 +179,7 @@ if not no_headers
 endif
 
 rtdl_sources += [
+	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/generic/allocator.cpp',
 	'options/internal/generic/debug.cpp',
@@ -204,7 +206,8 @@ if not headers_only
 	if not static
 		ldso_lib = shared_library('ld', rtdl_sources,
 				name_prefix: '',
-				cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
+				cpp_args:['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC',
+					'-fno-stack-protector'],
 				include_directories: rtdl_include_dirs,
 				dependencies: rtdl_deps,
 				install: true)
@@ -231,7 +234,8 @@ if not headers_only
 	else
 		ldso_lib = static_library('ld', rtdl_sources,
 				name_prefix: '',
-				cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
+				cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC',
+				'-fno-stack-protector'],
 				include_directories: rtdl_include_dirs,
 				dependencies: rtdl_deps,
 				install: false)

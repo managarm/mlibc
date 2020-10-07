@@ -78,8 +78,6 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
-        - "-Dc_args=['-fno-stack-protector']"
-        - "-Dcpp_args=['-fno-stack-protector']"
         - "-Dbuild_tests=true"
         - '@THIS_SOURCE_DIR@'
     build:
@@ -97,8 +95,6 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
-        - "-Dc_args=['-fno-stack-protector']"
-        - "-Dcpp_args=['-fno-stack-protector']"
         - "-Dbuild_tests=true"
         - "-Dstatic=true"
         - '@THIS_SOURCE_DIR@'
@@ -116,8 +112,6 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
-        - "-Dc_args=['-fno-stack-protector']"
-        - "-Dcpp_args=['-fno-stack-protector']"
         - "-Dbuild_tests=true"
         - "-Ddisable_posix_option=true"
         - '@THIS_SOURCE_DIR@'
