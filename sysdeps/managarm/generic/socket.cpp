@@ -348,6 +348,12 @@ int sys_setsockopt(int fd, int layer, int number,
 	}else if(layer == SOL_SOCKET && number == SO_SNDBUF) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented\e[39m" << frg::endlog;
 		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_KEEPALIVE) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_KEEPALIVE is unimplemented\e[39m" << frg::endlog;
+		return 0;
+	}else if(layer == AF_NETLINK && number == SO_ACCEPTCONN) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with AF_NETLINK and SO_ACCEPTCONN is unimplemented\e[39m" << frg::endlog;
+		return 0;
 	}else{
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call, layer: " << layer << " number: " << number << "\e[39m" << frg::endlog;
 		__builtin_unreachable();
