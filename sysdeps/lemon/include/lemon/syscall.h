@@ -72,6 +72,10 @@
 #define SYS_EXIT_THREAD 69
 #define SYS_FUTEX_WAKE 70
 #define SYS_FUTEX_WAIT 71
+#define SYS_DUP 72
+#define SYS_GET_FILE_STATUS_FLAGS 73
+#define SYS_SET_FILE_STATUS_FLAGS 74
+#define SYS_SELECT 75
 
 static inline long _syscall(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4) {
     volatile long ret;
