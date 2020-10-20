@@ -80,7 +80,8 @@ void unassign_variable(frg::string_view name) {
 	__ensure(environ == vector.data());
 
 	auto k = find_environ_index(name);
-	FRG_ASSERT(k != size_t(-1));
+	if(k == size_t(-1))
+		return;
 
 	// Last pointer of environ must always be a null delimiter.
 	__ensure(vector.size() >= 2 && !vector.back());
