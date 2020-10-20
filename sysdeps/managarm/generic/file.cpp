@@ -495,6 +495,10 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+			mlibc::infoLogger() << "\e[31mmlibc: fcntl(F_GETFL) unimplemented for this file\e[39m" << frg::endlog;
+			return EINVAL;
+		}
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*result = resp.flags();
 		return 0;
@@ -536,6 +540,10 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+			mlibc::infoLogger() << "\e[31mmlibc: fcntl(F_SETFL) unimplemented for this file\e[39m" << frg::endlog;
+			return EINVAL;
+		}
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		return 0;
 
