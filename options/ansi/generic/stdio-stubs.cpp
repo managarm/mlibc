@@ -17,22 +17,38 @@
 #include <mlibc/file-io.hpp>
 #include <mlibc/ansi-sysdeps.hpp>
 #include <frg/mutex.hpp>
+#include <frg/expected.hpp>
 
 template<typename F>
 struct PrintfAgent {
 	PrintfAgent(F *formatter, frg::va_struct *vsp)
 	: _formatter{formatter}, _vsp{vsp} { }
 
-	void operator() (char c) {
+	frg::expected<frg::format_error> operator() (char c) {
 		_formatter->append(c);
+		return {};
 	}
-	void operator() (const char *c, size_t n) {
+	frg::expected<frg::format_error> operator() (const char *c, size_t n) {
 		_formatter->append(c, n);
+		return {};
 	}
 
-	void operator() (char t, frg::format_options opts, frg::printf_size_mod szmod) {
+	frg::expected<frg::format_error> operator() (char t, frg::format_options opts,
+			frg::printf_size_mod szmod) {
 		switch(t) {
-		case 'p': case 'c': case 's':
+		case 'c':
+			if (szmod == frg::printf_size_mod::long_size) {
+				char c_buf[sizeof(wchar_t)];
+				auto c = static_cast<wchar_t>(va_arg(_vsp->args, wint_t));
+				mbstate_t shift_state = {0};
+				if (wcrtomb(c_buf, c, &shift_state) == size_t(-1))
+					return frg::format_error::agent_error;
+				_formatter->append(c_buf);
+				break;
+			}
+			frg::do_printf_chars(*_formatter, t, opts, szmod, _vsp);
+			break;
+		case 'p': case 's':
 			frg::do_printf_chars(*_formatter, t, opts, szmod, _vsp);
 			break;
 		case 'd': case 'i': case 'o': case 'x': case 'X': case 'u':
@@ -61,6 +77,8 @@ struct PrintfAgent {
 					<< t << "'\e[39m" << frg::endlog;
 			__ensure(!"Illegal printf terminator");
 		}
+
+		return {};
 	}
 
 private:
@@ -706,7 +724,10 @@ int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_l
 	frg::unique_lock<FutexLock> lock(file->_lock);
 	StreamPrinter p{stream};
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
-	frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
+	auto res = frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
+	if (!res)
+		return -static_cast<int>(res.error());
+
 	return p.count;
 }
 int vfscanf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
@@ -751,7 +772,9 @@ int vsnprintf(char *__restrict buffer, size_t max_size,
 	va_copy(vs.args, args);
 	LimitedPrinter p{buffer, max_size ? max_size - 1 : 0};
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
-	frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
+	auto res = frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
+	if (!res)
+		return -static_cast<int>(res.error());
 	if (max_size)
 		p.buffer[frg::min(max_size - 1, p.count)] = 0;
 	return p.count;
@@ -761,7 +784,9 @@ int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_l
 	va_copy(vs.args, args);
 	BufferPrinter p(buffer);
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
-	frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
+	auto res = frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
+	if (!res)
+		return -static_cast<int>(res.error());
 	p.buffer[p.count] = 0;
 	return p.count;
 }
@@ -1029,7 +1054,9 @@ int vasprintf(char **out, const char *format, __gnuc_va_list args) {
 	va_copy(vs.args, args);
 	ResizePrinter p;
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
-	frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
+	auto res = frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
+	if (!res)
+		return -static_cast<int>(res.error());
 	p.expand();
 	p.buffer[p.count] = 0;
 	*out = p.buffer;
