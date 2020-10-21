@@ -143,6 +143,11 @@ ssize_t recvmsg(int fd, struct msghdr *hdr, int flags) {
 	return length;
 }
 
+int recvmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags, struct timespec *timeout) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 ssize_t send(int fd, const void *buffer, size_t size, int flags) {
 	return sendto(fd, buffer, size, flags, nullptr, 0);
 }
@@ -174,6 +179,11 @@ ssize_t sendmsg(int fd, const struct msghdr *hdr, int flags) {
 		return -1;
 	}
 	return length;
+}
+
+int sendmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
 }
 
 int setsockopt(int fd, int layer, int number,

@@ -47,3 +47,12 @@ ssize_t writev(int fd, const struct iovec *iovs, int iovc) {
 	return written;
 }
 
+ssize_t preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+ssize_t pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

@@ -2,6 +2,7 @@
 #ifndef _UNISTD_H
 #define _UNISTD_H
 
+#include <bits/feature.h>
 #include <bits/types.h>
 #include <bits/size_t.h>
 #include <bits/ssize_t.h>
@@ -220,6 +221,10 @@ int pipe2(int *pipefd, int flags);
 
 #ifdef __cplusplus
 }
+#endif
+
+#if __MLIBC_LINUX_OPTION
+#	include <bits/linux/linux_unistd.h>
 #endif
 
 #endif // _UNISTD_H

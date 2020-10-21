@@ -19,6 +19,7 @@ libc_sources += files(
 	'generic/sys-reboot.cpp',
 	'generic/netinet-in6addr.cpp',
 	'generic/utmp-stubs.cpp',
+	'generic/linux-unistd.cpp',
 )
 
 if not no_headers
@@ -35,6 +36,10 @@ if not no_headers
 		'include/asm/ioctl.h',
 		'include/asm/ioctls.h',
 		subdir: 'asm'
+	)
+	install_headers(
+		'include/bits/linux/linux_unistd.h',
+		subdir: 'bits/linux'
 	)
 	install_headers(
 		'include/linux/bpf_common.h',
