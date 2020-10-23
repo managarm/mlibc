@@ -1,7 +1,6 @@
 
-.global setjmp
-.type setjmp, "function"
-setjmp:
+.type __setjmp, "function"
+__setjmp:
     mov 4(%esp), %eax       # Save argument (buffer) in edi
     mov %ebx, 0x00(%eax)
     mov %ebp, 0x04(%eax)
@@ -13,8 +12,25 @@ setjmp:
 	mov (%esp), %ecx        # Return eip
 	mov %ecx, 0x14(%eax)
 
+	test %edx, %edx
+	jnz 1f
 	xor %eax, %eax
 	ret
+
+  1:
+	jmp __sigsetjmp
+
+.global setjmp
+.type setjmp, "function"
+setjmp:
+	xor %edx, %edx
+	jmp __setjmp
+
+.global sigsetjmp
+.type sigsetjmp, "function"
+sigsetjmp:
+	mov $1, %edx
+	jmp __setjmp
 
 .global longjmp
 .type longjmp, "function"

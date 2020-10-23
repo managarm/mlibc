@@ -44,6 +44,11 @@ extern "C" {
 // TODO: replace this by uint64_t
 typedef long sigset_t;
 
+// constants for sigprocmask()
+#define SIG_BLOCK 0
+#define SIG_UNBLOCK 1
+#define SIG_SETMASK 2
+
 #if __MLIBC_POSIX_OPTION
 
 #define SIGHUP    1
@@ -87,11 +92,6 @@ typedef long sigset_t;
 #define SIGEV_SIGNAL 0
 #define SIGEV_NONE 1
 #define SIGEV_THREAD 2
-
-// constants for sigprocmask()
-#define SIG_BLOCK 0
-#define SIG_UNBLOCK 1
-#define SIG_SETMASK 2
 
 #define NSIG 65
 

@@ -58,19 +58,6 @@ int pthread_kill(pthread_t thread, int sig) {
 	__builtin_unreachable();
 }
 
-int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
-	if(!mlibc::sys_sigprocmask) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
-	if(int e = mlibc::sys_sigprocmask(how, set, retrieve); e) {
-		errno = e;
-		return -1;
-	}
-	return 0;
-}
-
 int sigaction(int signum, const struct sigaction *__restrict act, struct sigaction *__restrict oldact) {
 	if(!mlibc::sys_sigaction) {
 		MLIBC_MISSING_SYSDEP();

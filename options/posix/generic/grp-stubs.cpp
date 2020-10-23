@@ -158,4 +158,3 @@ int initgroups(const char *user, gid_t group) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-
