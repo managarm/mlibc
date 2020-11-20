@@ -273,10 +273,11 @@ int gethostname(char *buffer, size_t bufsize) {
 	return 0;
 }
 
+// Code taken from musl
 char *getlogin(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return getenv("LOGNAME");
 }
+
 int getlogin_r(char *, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
