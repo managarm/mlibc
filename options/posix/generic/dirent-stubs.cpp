@@ -12,10 +12,11 @@
 #include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 
-int alphasort(const struct dirent **, const struct dirent **) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+// Code taken from musl
+int alphasort(const struct dirent **a, const struct dirent **b) {
+	return strcoll((*a)->d_name, (*b)->d_name);
 }
+
 int closedir(DIR *dir) {
 	// TODO: Deallocate the dir structure.
 	close(dir->__handle);
