@@ -23,10 +23,20 @@ void cfmakeraw(struct termios *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int tcdrain(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int tcdrain(int fd) {
+	if(!mlibc::sys_tcdrain) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_tcdrain(fd); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
+
 int tcflow(int fd, int action) {
 	if(!mlibc::sys_tcflow) {
 		MLIBC_MISSING_SYSDEP();
@@ -39,6 +49,7 @@ int tcflow(int fd, int action) {
 	}
 	return 0;
 }
+
 int tcflush(int, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

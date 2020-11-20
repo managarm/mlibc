@@ -729,9 +729,47 @@ int getpagesize() {
 	return mlibc::page_size;
 }
 
-char *getpass(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+// Code taken from musl
+// GLIBC extension for stdin/stdout
+char *getpass(const char *prompt) {
+	int fdin, fdout;
+	struct termios s, t;
+	ssize_t l;
+	static char password[128];
+
+	if((fdin = open("/dev/tty", O_RDWR|O_NOCTTY|O_CLOEXEC)) < 0) {
+		fdin = STDIN_FILENO;
+		fdout = STDOUT_FILENO;
+	} else {
+		fdout = fdin;
+	}
+
+	tcgetattr(fdin, &t);
+	s = t;
+	t.c_lflag &= ~(ECHO | ISIG);
+	t.c_lflag |= ICANON;
+	t.c_iflag &= ~(INLCR | IGNCR);
+	t.c_iflag |= ICRNL;
+	tcsetattr(fdin, TCSAFLUSH, &t);
+	tcdrain(fdin);
+
+	dprintf(fdout, "%s", prompt);
+
+	l = read(fdin, password, sizeof password);
+	if(l >= 0) {
+		if(l > 0 && password[l - 1] == '\n' || l == sizeof password)
+			l--;
+		password[l] = 0;
+	}
+
+	tcsetattr(fdin, TCSAFLUSH, &s);
+
+	dprintf(fdout, "\n");
+	if(fdin != STDIN_FILENO) {
+		close(fdin);
+	}
+
+	return l < 0 ? 0 : password;
 }
 
 char *get_current_dir_name(void) {
