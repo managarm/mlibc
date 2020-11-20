@@ -87,26 +87,10 @@ long strtol(const char *__restrict string, char **__restrict end, int base) {
 		string++;
 	}
 
-	if(base != 10) { // This is an ugly hack!
-		__ensure(!negative);
-		return strtoul(string, end, base);
-	}
-
-	// parse the actual digits
-	long result = 0;
-	while(*string) {
-		if(*string >= '0' && *string <= '9') {
-			result = result * 10 + (*string - '0');
-		}else{
-			break;
-		}
-		string++;
-	}
-
-	if(end)
-		*end = const_cast<char *>(string);
-
-	return negative ? -result : result;
+	unsigned long number = strtoul(string, end, base);
+	if(negative)
+		return static_cast<long>((~number) + 1);
+	return number;
 }
 long long strtoll(const char *__restrict string, char **__restrict end, int base) {
 	static_assert(sizeof(long long) == sizeof(long));
