@@ -138,3 +138,12 @@ void setpwent(void) {
 
 void endpwent(void) { }
 
+int putpwent(const struct passwd *, FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+struct passwd *fgetpwent(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
