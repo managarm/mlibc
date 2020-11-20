@@ -968,6 +968,21 @@ int access(const char *path, int mode) {
 	return 0;
 }
 
+char *getusershell(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+void setusershell(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+void endusershell(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 int isatty(int fd) {
 	if(!mlibc::sys_isatty) {
 		MLIBC_MISSING_SYSDEP();
