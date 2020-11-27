@@ -43,7 +43,9 @@ longjmp:
 	mov 0x20(%rdi), %r14
 	mov 0x28(%rdi), %r15
 
-	mov %rsi, %rax
-	mov 0x30(%rdi), %rsp
-	jmp *0x38(%rdi)
+	mov  %rsi, %rax
+	test %rax, %rax
+	setz %al
+	mov  0x30(%rdi), %rsp
+	jmp  *0x38(%rdi)
 
