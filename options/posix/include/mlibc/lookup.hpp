@@ -46,6 +46,7 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 		frg::string<MemoryAllocator> &canon_name);
 int lookup_name_hosts(struct lookup_result &buf, const char *name,
 		frg::string<MemoryAllocator> &canon_name);
+int lookup_name_null(struct lookup_result &buf, int flags, int family);
 
 } // namespace mlibc
 

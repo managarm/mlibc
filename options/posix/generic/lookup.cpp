@@ -224,4 +224,47 @@ int lookup_name_hosts(struct lookup_result &buf, const char *name,
 	return buf.buf.size();
 }
 
+int lookup_name_null(struct lookup_result &buf, int flags, int family) {
+	if (flags & AI_PASSIVE) {
+		if (family != AF_INET6) {
+			struct dns_addr_buf addr_buf;
+			addr_buf.family = AF_INET;
+
+			in_addr_t addr = INADDR_ANY;
+			memcpy(&addr_buf.addr, &addr, 4);
+
+			buf.buf.push_back(addr_buf);
+		}
+		if (family != AF_INET) {
+			struct dns_addr_buf addr_buf;
+			addr_buf.family = AF_INET6;
+
+			struct in6_addr addr = IN6ADDR_ANY_INIT;
+			memcpy(&addr_buf.addr, &addr, 16);
+
+			buf.buf.push_back(addr_buf);
+		}
+	} else {
+		if (family != AF_INET6) {
+			struct dns_addr_buf addr_buf;
+			addr_buf.family = AF_INET;
+
+			in_addr_t addr = INADDR_LOOPBACK;
+			memcpy(&addr_buf.addr, &addr, 4);
+
+			buf.buf.push_back(addr_buf);
+		}
+		if (family != AF_INET) {
+			struct dns_addr_buf addr_buf;
+			addr_buf.family = AF_INET6;
+
+			struct in6_addr addr = IN6ADDR_LOOPBACK_INIT;
+			memcpy(&addr_buf.addr, &addr, 16);
+
+			buf.buf.push_back(addr_buf);
+		}
+	}
+	return buf.buf.size();
+}
+
 } // namespace mlibc

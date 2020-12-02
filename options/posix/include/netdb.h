@@ -12,6 +12,7 @@
 #define AI_V4MAPPED 0x08
 #define AI_ALL 0x10
 #define AI_ADDRCONFIG 0x20
+#define AI_NUMERICSERV 0x40
 
 #define NI_NOFQDN 0x01
 #define NI_NUMERICHOST 0x02
