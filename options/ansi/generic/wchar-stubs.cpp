@@ -138,11 +138,64 @@ size_t mbsrtowcs(wchar_t *wcs, const char **mbsp, size_t wc_limit, mbstate_t *st
 	}
 }
 
+size_t mbsnrtowcs(wchar_t *wcs, const char **mbsp, size_t mb_limit, size_t wc_limit, mbstate_t *stp) {
+	__ensure(mbsp);
+
+	auto cc = mlibc::current_charcode();
+	__mlibc_mbstate st = __MLIBC_MBSTATE_INITIALIZER;
+	mlibc::code_seq<const char> nseq{*mbsp, (*mbsp) + mb_limit};
+	mlibc::code_seq<wchar_t> wseq{wcs, wcs + wc_limit};
+
+	if(!stp)
+		stp = &mbsrtowcs_state;
+
+	if(!wcs) {
+		size_t size;
+		if(auto e = cc->decode_wtranscode_length(nseq, &size, st); e != mlibc::charcode_error::null)
+			__ensure(!"decode_wtranscode() errors are not handled");
+		return size;
+	}
+
+	if(auto e = cc->decode_wtranscode(nseq, wseq, st); e != mlibc::charcode_error::null) {
+		__ensure(!"decode_wtranscode() errors are not handled");
+		__builtin_unreachable();
+	}else{
+		size_t n = wseq.it - wcs;
+		if(n < wc_limit) // Null-terminate resulting wide string.
+			wcs[n] = 0;
+		*mbsp = nullptr;
+		return n;
+	}
+}
+
 size_t wcsrtombs(char *mbs, const wchar_t **wcsp, size_t mb_limit, mbstate_t *stp) {
 	__ensure(wcsp && "wcsrtombs() with null input");
 	auto cc = mlibc::current_charcode();
 	mlibc::code_seq<char> nseq{mbs, mbs + mb_limit};
 	mlibc::code_seq<const wchar_t> wseq{*wcsp, nullptr};
+
+	__ensure(mbs && "Handle !mbs case as in mbstowcs()");
+
+	if(!stp)
+		stp = &wcsrtombs_state;
+
+	if(auto e = cc->encode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
+		__ensure(!"encode_wtranscode() errors are not handled");
+		__builtin_unreachable();
+	}else{
+		*wcsp = wseq.it;
+		size_t n = nseq.it - mbs;
+		if(n < mb_limit) // Null-terminate resulting narrow string.
+			mbs[n] = 0;
+		return n;
+	}
+}
+
+size_t wcsnrtombs(char *mbs, const wchar_t **wcsp, size_t wc_limit, size_t mb_limit, mbstate_t *stp) {
+	__ensure(wcsp && "wcsrtombs() with null input");
+	auto cc = mlibc::current_charcode();
+	mlibc::code_seq<char> nseq{mbs, mbs + mb_limit};
+	mlibc::code_seq<const wchar_t> wseq{*wcsp, (*wcsp) + wc_limit};
 
 	__ensure(mbs && "Handle !mbs case as in mbstowcs()");
 

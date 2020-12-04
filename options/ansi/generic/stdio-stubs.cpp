@@ -898,6 +898,10 @@ int getchar(void) {
 	return fgetc(stdin);
 }
 
+char *gets(char *s){
+	return fgets(s, SIZE_MAX, stdin);
+}
+
 int putc_unlocked(int c, FILE *stream) {
 	char d = c;
 	if(fwrite_unlocked(&d, 1, 1, stream) != 1)

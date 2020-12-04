@@ -109,7 +109,9 @@ size_t mbrlen(const char *__restrict, size_t, mbstate_t *__restrict);
 size_t mbrtowc(wchar_t *__restrict, const char *__restrict, size_t, mbstate_t *__restrict);
 size_t wcrtomb(char *__restrict, wchar_t, mbstate_t *__restrict);
 size_t mbsrtowcs(wchar_t *__restrict, const char **__restrict, size_t, mbstate_t *__restrict);
+size_t mbsnrtowcs(wchar_t *__restrict, const char **__restrict, size_t, size_t, mbstate_t *__restrict);
 size_t wcsrtombs(char *__restrict, const wchar_t **__restrict, size_t, mbstate_t *__restrict);
+size_t wcsnrtombs(char *__restrict, const wchar_t **__restrict, size_t, size_t, mbstate_t *__restrict);
 
 // POSIX extensions
 int wcwidth(wchar_t wc);

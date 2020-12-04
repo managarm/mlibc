@@ -342,11 +342,15 @@ int mblen(const char *mbs, size_t mb_limit) {
 }
 int mbtowc(wchar_t *__restrict wc, const char *__restrict mbs, size_t max_size) {
 	mlibc::infoLogger() << "mlibc: Broken mbtowc() called" << frg::endlog;
-	__ensure(wc);
-	__ensure(mbs);
 	__ensure(max_size);
-	__ensure(*mbs);
-	*wc = *mbs;
+
+	if(wc && mbs){
+		if(*mbs){
+			*wc = *mbs;
+		} else {
+			return 0; // When mbs is a null byte, return 0
+		}
+	}
 	return 1;
 }
 int wctomb(char *mb_chr, wchar_t wc) {
