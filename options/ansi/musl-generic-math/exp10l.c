@@ -3,6 +3,7 @@
 #include <math.h>
 //#include "libc.h"
 #include "libm.h"
+#include "weak_alias.h"
 
 #if LDBL_MANT_DIG == 53 && LDBL_MAX_EXP == 1024
 long double exp10l(long double x)
