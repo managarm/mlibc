@@ -40,7 +40,6 @@ if not headers_only
 	libc_deps += frigg_dep
 	rtdl_deps += frigg_dep
 
-
 	add_languages('c', 'cpp')
 	c_compiler = meson.get_compiler('c')
 
@@ -49,18 +48,29 @@ if not headers_only
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
-	gccdir = run_command('/bin/sh', '-c',
-		' '.join(c_compiler.cmd_array())
-				+ ' -print-search-dirs | sed -n -e "s/install: \(.*\)/\\1/p"',
-		env: ['LANG=C'],
-		check: true).stdout().strip()
+	if c_compiler.get_id() == 'gcc'
+		gccdir = run_command('/bin/sh', '-c',
+			' '.join(c_compiler.cmd_array())
+					+ ' -print-search-dirs | sed -n -e "s/install: \(.*\)/\\1/p"',
+			env: ['LANG=C'],
+			check: true).stdout().strip()
 
-	rtdl_include_dirs += include_directories(gccdir / 'include')
-	libc_include_dirs += include_directories(gccdir / 'include')
-	# Ubuntu seems to patch out include-fixed/ (the files are in include/ instead).
-	if fs.exists(gccdir / 'include-fixed')
-		rtdl_include_dirs += include_directories(gccdir / 'include-fixed')
-		libc_include_dirs += include_directories(gccdir / 'include-fixed')
+		rtdl_include_dirs += include_directories(gccdir / 'include')
+		libc_include_dirs += include_directories(gccdir / 'include')
+		# Ubuntu seems to patch out include-fixed/ (the files are in include/ instead).
+		if fs.exists(gccdir / 'include-fixed')
+			rtdl_include_dirs += include_directories(gccdir / 'include-fixed')
+			libc_include_dirs += include_directories(gccdir / 'include-fixed')
+		endif
+	elif c_compiler.get_id() == 'clang'
+		clangdir = run_command('/bin/sh', '-c',
+			' '.join(c_compiler.cmd_array())
+					+ ' -print-search-dirs | sed -ne "s/libraries: =\(.*\):.*/\\1/p"',
+			env: ['LANG=C'],
+			check: true).stdout().strip()
+
+		rtdl_include_dirs += include_directories(clangdir / 'include')
+		libc_include_dirs += include_directories(clangdir / 'include')
 	endif
 endif
 
@@ -267,7 +277,7 @@ if not headers_only
 					libc_sources,
 					internal_sources,
 					ansi_sources,
-                                        lsb_sources,
+					lsb_sources,
 				],
 				cpp_args: ['-DFRIGG_HAVE_LIBC'],
 				include_directories: libc_include_dirs,

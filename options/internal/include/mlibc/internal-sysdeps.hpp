@@ -10,7 +10,7 @@
 #include <abi-bits/stat.h>
 #include <mlibc/fsfd_target.hpp>
 
-namespace mlibc [[gnu::visibility("hidden")]] {
+namespace [[gnu::visibility("hidden")]] mlibc {
 
 void sys_libc_log(const char *message);
 [[noreturn]] void sys_libc_panic();

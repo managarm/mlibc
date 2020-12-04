@@ -104,7 +104,7 @@ extern "C" [[ gnu::visibility("default") ]] void *__rtdl_allocateTcb() {
 }
 
 extern "C" {
-	static void dl_debug_state() {
+	[[ gnu::visibility("hidden") ]] void dl_debug_state() {
 		// This function is used to signal changes in the debugging link map,
 		// GDB just sets a breakpoint on this function and we can call it
 		// everytime we update the link map. We don't need to implement
@@ -115,7 +115,7 @@ extern "C" {
 extern "C" [[gnu::alias("dl_debug_state"), gnu::visibility("default")]] void _dl_debug_state();
 
 // This symbol can be used by GDB to find the global interface structure
-[[gnu::visibility("default")]] DebugInterface *_dl_debug_addr = &globalDebugInterface;
+[[ gnu::visibility("default") ]] DebugInterface *_dl_debug_addr = &globalDebugInterface;
 
 extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	if(logEntryExit)
@@ -287,19 +287,19 @@ extern "C" [[ gnu::visibility("default") ]] uintptr_t *__dlapi_entrystack() {
 	return entryStack;
 }
 
-extern "C" [[gnu::visibility("default")]]
+extern "C" [[ gnu::visibility("default") ]]
 const char *__dlapi_error() {
 	auto error = lastError;
 	lastError = nullptr;
 	return error;
 }
 
-extern "C" __attribute__ (( visibility("default") ))
+extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_get_tls(struct __abi_tls_entry *entry) {
 	return reinterpret_cast<char *>(accessDtv(entry->object)) + entry->offset;
 }
 
-extern "C" [[gnu::visibility("default")]]
+extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_open(const char *file, int local) {
 	// TODO: Thread-safety!
 	auto rts = rtsCounter++;
@@ -358,7 +358,7 @@ void *__dlapi_open(const char *file, int local) {
 	return object;
 }
 
-extern "C" [[gnu::visibility("default")]]
+extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_resolve(void *handle, const char *string) {
 	mlibc::infoLogger() << "rtdl: __dlapi_resolve(" << string << ")" << frg::endlog;
 
@@ -387,7 +387,7 @@ struct __dlapi_symbol {
 	void *address;
 };
 
-extern "C" [[gnu::visibility("default")]]
+extern "C" [[ gnu::visibility("default") ]]
 int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 	mlibc::infoLogger() << "rtdl: __dlapi_reverse(" << ptr << ")" << frg::endlog;
 
@@ -426,7 +426,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 	return -1;
 }
 
-extern "C" [[gnu::visibility("default")]]
+extern "C" [[ gnu::visibility("default") ]]
 void __dlapi_enter(uintptr_t *entry_stack) {
 #ifdef MLIBC_STATIC_BUILD
 	interpreterMain(entry_stack);

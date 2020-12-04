@@ -7,7 +7,7 @@
 #include <bits/ssize_t.h>
 #include <bits/size_t.h>
 
-namespace mlibc [[gnu::visibility("default")]] {
+namespace [[gnu::visibility("hidden")]] mlibc {
 
 int sys_open(const char *pathname, int flags, int *fd);
 int sys_close(int fd);
