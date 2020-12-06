@@ -8,12 +8,12 @@ rtdl_include_dirs = [
 ]
 libc_include_dirs = [
 	include_directories('options/internal/include'),
-	include_directories('options/internal/x86_64-include'),
 	include_directories('options/elf/include'),
 	include_directories('options/lsb/include'),
 	include_directories('options/glibc/include'),
-
+	include_directories('options/internal' / host_machine.cpu_family() + '-include')
 ]
+
 rtdl_sources = [ ]
 libc_sources = [ ]
 libc_sublibs = [ ]
@@ -147,14 +147,18 @@ internal_sources = [
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc/initfini.cpp',
 	'options/internal/gcc-extra/cxxabi.cpp',
-	'options/internal/x86_64/setjmp.S',
-	'options/internal/x86_64/thread.cpp',
+	'options/internal' / host_machine.cpu_family() / 'setjmp.S',
+	'options/internal' / host_machine.cpu_family() / 'thread.cpp',
 ]
+
+if host_machine.cpu_family() == 'aarch64'
+	internal_sources += 'options/internal' / host_machine.cpu_family() / 'setjmp.cpp'
+endif
 
 if not static
 	internal_sources += [
 		'options/internal/gcc-extra/mlibc_crtbegin.S',
-		'options/internal/gcc-extra/mlibc_crtend.S',
+		'options/internal' / host_machine.cpu_family() / 'mlibc_crtend.S',
 	]
 endif
 
@@ -188,11 +192,11 @@ rtdl_sources += [
 	'options/internal/generic/frigg.cpp',
 	'options/rtdl/generic/main.cpp',
 	'options/rtdl/generic/linker.cpp',
-	'options/rtdl/x86_64/runtime.S',
+	'options/rtdl' / host_machine.cpu_family() / 'runtime.S'
 ]
 
 if not static
-	rtdl_sources += 'options/rtdl/x86_64/entry.S'
+	rtdl_sources += 'options/rtdl' / host_machine.cpu_family() / 'entry.S'
 endif
 
 subdir('options/elf')
@@ -204,6 +208,8 @@ subdir('options/linux')
 
 if not headers_only
 	if not static
+		libgcc = meson.get_compiler('c').find_library('gcc')
+
 		ldso_lib = shared_library('ld', rtdl_sources,
 				name_prefix: '',
 				cpp_args:['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC',
@@ -221,10 +227,14 @@ if not headers_only
 				],
 				cpp_args: ['-DFRIGG_HAVE_LIBC'],
 				include_directories: libc_include_dirs,
-				dependencies: libc_deps,
+				# Link with libgcc to get math symbols ...
+				dependencies: [libc_deps, libgcc],
 				link_with: [ldso_lib],
 				link_whole: libc_sublibs,
-				install: true)
+				# ... but don't export them ourselves
+				link_args: ['-Wl,--exclude-libs=gcc'],
+				install: true,
+				pic: true)
 
 		shared_library('dl', 'libdl/src/dummy.cpp', install: true)
 		shared_library('pthread', 'libpthread/src/dummy.cpp', install: true)

@@ -131,6 +131,15 @@ enum {
 	R_X86_64_TPOFF64 = 18,
 };
 
+enum {
+	R_AARCH64_ABS64 = 257,
+	R_AARCH64_COPY = 1024,
+	R_AARCH64_GLOB_DAT = 1025,
+	R_AARCH64_JUMP_SLOT = 1026,
+	R_AARCH64_RELATIVE = 1027,
+	R_AARCH64_TLSDESC = 1031
+};
+
 typedef struct {
 	Elf64_Addr r_offset;
 	uint64_t   r_info;
@@ -208,6 +217,8 @@ enum {
 	DT_JMPREL = 23,
 	DT_FLAGS = 30,
 	DT_GNU_HASH = 0x6ffffef5,
+	DT_TLSDESC_PLT = 0x6ffffef6,
+	DT_TLSDESC_GOT = 0x6ffffef7,
 	DT_VERSYM = 0x6ffffff0,
 	DT_RELACOUNT = 0x6ffffff9,
 	DT_FLAGS_1 = 0x6ffffffb,

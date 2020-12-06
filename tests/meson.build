@@ -15,7 +15,7 @@ test_sources = [
 
 if static
 	test_sources += '../options/internal/gcc-extra/mlibc_crtbegin.S'
-	test_sources += '../options/internal/gcc-extra/mlibc_crtend.S'
+	test_sources += '../options/internal' / host_machine.cpu_family() / 'mlibc_crtend.S'
 endif
 
 if not disable_ansi_option

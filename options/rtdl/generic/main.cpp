@@ -62,7 +62,11 @@ extern "C" void relocateSelf() {
 
 		auto p = reinterpret_cast<uint64_t *>(ldso_base + reloc->r_offset);
 		switch(type) {
+#if defined(__x86_64__)
 		case R_X86_64_RELATIVE:
+#elif defined(__aarch64__)
+		case R_AARCH64_RELATIVE:
+#endif
 			*p = ldso_base + reloc->r_addend;
 			break;
 		default:
@@ -136,9 +140,12 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		mlibc::infoLogger() << "ldso: Own dynamic section is at: " << _DYNAMIC << frg::endlog;
 	}
 
+// on aarch64 these lines corrupt unrelated GOT entries (entries for ld.so functions)
+#ifdef __x86_64__
 	// TODO: Use a fake PLT stub that reports an error message?
 	_GLOBAL_OFFSET_TABLE_[1] = 0;
 	_GLOBAL_OFFSET_TABLE_[2] = 0;
+#endif
 
 	// Validate our own dynamic section.
 	// Here, we make sure that the dynamic linker does not need relocations itself.
