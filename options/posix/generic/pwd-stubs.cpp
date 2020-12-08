@@ -90,7 +90,7 @@ struct passwd *getpwnam(const char *name) {
 		clear_entry(&global_entry);
 		if(!extract_entry(line, &global_entry))
 			continue;
-		if(global_entry.pw_name == name) {
+		if(!strcmp(global_entry.pw_name, name)) {
 			fclose(file);
 			return &global_entry;
 		}
