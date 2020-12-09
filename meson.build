@@ -28,6 +28,7 @@ build_tests = get_option('build_tests')
 disable_ansi_option = get_option('disable_ansi_option')
 disable_posix_option = get_option('disable_posix_option')
 disable_linux_option = get_option('disable_linux_option')
+disable_iconv_option = get_option('disable_iconv_option')
 internal_conf = configuration_data()
 
 if not headers_only
@@ -124,6 +125,11 @@ if not disable_posix_option
 	libc_include_dirs += include_directories('options/posix/include')
 endif
 
+if not disable_iconv_option
+	rtdl_include_dirs += include_directories('options/iconv/include')
+	libc_include_dirs += include_directories('options/iconv/include')
+endif
+
 rtdl_include_dirs += include_directories('options/elf/include')
 rtdl_include_dirs += include_directories('options/linux/include')
 libc_include_dirs += include_directories('options/elf/include')
@@ -201,6 +207,7 @@ subdir('options/posix')
 subdir('options/lsb')
 subdir('options/glibc')
 subdir('options/linux')
+subdir('options/iconv')
 
 if not headers_only
 	if not static
