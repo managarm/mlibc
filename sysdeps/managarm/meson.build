@@ -39,15 +39,28 @@ libc_sources += files(
 	'generic/mount.cpp',
 	'generic/signals.cpp',
 	'generic/socket.cpp',
-	'generic/time.cpp',
-	'x86_64/signals.S',
-	'x86_64/thread_entry.S',
-	'x86_64/thread.cpp'
+	'generic/time.cpp'
 )
 libc_sources += [
 	fs_bragi,
 	posix_bragi,
 ]
+
+if host_machine.cpu_family() == 'aarch64'
+	libc_sources += files(
+		'aarch64/signals.S',
+		'aarch64/thread_entry.S',
+		'aarch64/thread.cpp'
+	)
+elif host_machine.cpu_family() == 'x86_64'
+	libc_sources += files(
+		'x86_64/signals.S',
+		'x86_64/thread_entry.S',
+		'x86_64/thread.cpp'
+	)
+else
+	error('Unknown architecture')
+endif
 
 if not no_headers
 	install_headers(
@@ -79,10 +92,11 @@ if not no_headers
 endif
 
 if not headers_only
+	crt_src = files(host_machine.cpu_family() / 'crt-src/crt0.S')
 	crt = custom_target('crt0',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-src/crt0.S',
+		input: crt_src,
 		output: 'crt0.o',
 		install: true,
 		install_dir: get_option('libdir')

@@ -165,7 +165,11 @@ HelHandleResult *parseHandle(void *&element) {
 namespace mlibc {
 
 int sys_tcb_set(void *pointer) {
+#if defined(__aarch64__)
+	asm volatile ("msr tpidr_el0, %0" :: "r"(pointer));
+#else
 	HEL_CHECK(helWriteFsBase(pointer));
+#endif
 	return 0;
 }
 

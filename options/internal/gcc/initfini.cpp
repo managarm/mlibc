@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <mlibc/internal-sysdeps.hpp>
+#include <mlibc/debug.hpp>
 
 typedef void (*InitPtr)();
 

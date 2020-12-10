@@ -6,6 +6,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/rtdl-sysdeps.hpp>
+#include <mlibc/thread.hpp>
 #include <internal-config.h>
 #include "linker.hpp"
 
@@ -55,6 +56,20 @@ void closeOrDie(int fd) {
 	if(mlibc::sys_close(fd))
 		__ensure(!"sys_close() failed");
 }
+
+namespace {
+	Tcb *getCurrentTcb() {
+		uintptr_t ptr;
+#if defined(__x86_64__)
+		asm volatile ("mov %%fs:0, %0" : "=r"(ptr));
+#elif defined(__aarch64__)
+		asm volatile ("mrs %0, tpidr_el0" : "=r"(ptr));
+#else
+#	error Unknown architecture
+#endif
+		return reinterpret_cast<Tcb *>(ptr);
+	}
+} // namespace anonymous
 
 // --------------------------------------------------------
 // ObjectRepository
@@ -531,6 +546,8 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_VERDEF: case DT_VERDEFNUM:
 		case DT_VERNEED: case DT_VERNEEDNUM:
 			break;
+		case DT_TLSDESC_PLT: case DT_TLSDESC_GOT:
+			break;
 		default:
 			mlibc::panicLogger() << "Unexpected dynamic entry "
 					<< (void *)dynamic->d_tag << " in object" << frg::endlog;
@@ -590,8 +607,13 @@ SharedObject::SharedObject(const char *name, const char *path,
 void processCopyRela(SharedObject *object, Elf64_Rela *reloc) {
 	Elf64_Xword type = ELF64_R_TYPE(reloc->r_info);
 	Elf64_Xword symbol_index = ELF64_R_SYM(reloc->r_info);
+#if defined(__x86_64__)
 	if(type != R_X86_64_COPY)
 		return;
+#elif defined(__aarch64__)
+	if(type != R_AARCH64_COPY)
+		return;
+#endif
 
 	uintptr_t rel_addr = object->baseAddress + reloc->r_offset;
 
@@ -693,8 +715,7 @@ Tcb *allocateTcb() {
 }
 
 void *accessDtv(SharedObject *object) {
-	Tcb *tcb_ptr;
-	asm ( "mov %%fs:(0), %0" : "=r" (tcb_ptr) );
+	Tcb *tcb_ptr = getCurrentTcb();
 
 	// We might need to reallocate the DTV.
 	if(object->tlsIndex >= tcb_ptr->dtvSize) {
@@ -1064,8 +1085,7 @@ void Loader::initObjects() {
 			if(object->tlsInitialized)
 				continue;
 
-			char *tcb_ptr;
-			asm volatile ("mov %%fs:(0), %0" : "=r"(tcb_ptr));
+			char *tcb_ptr = reinterpret_cast<char *>(getCurrentTcb());
 			auto tls_ptr = tcb_ptr + object->tlsOffset;
 			memcpy(tls_ptr, object->tlsImagePtr, object->tlsImageSize);
 
@@ -1109,8 +1129,13 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 	Elf64_Xword symbol_index = ELF64_R_SYM(reloc->r_info);
 
 	// copy relocations have to be performed after all other relocations
+#if defined(__x86_64__)
 	if(type == R_X86_64_COPY)
 		return;
+#elif defined(__aarch64__)
+	if(type == R_AARCH64_COPY)
+		return;
+#endif
 
 	// resolve the symbol if there is a symbol
 	frg::optional<ObjectSymbol> p;
@@ -1133,6 +1158,7 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 	uintptr_t rel_addr = object->baseAddress + reloc->r_offset;
 
 	switch(type) {
+#if defined(__x86_64__)
 	case R_X86_64_64: {
 		__ensure(symbol_index);
 		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
@@ -1190,6 +1216,22 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 			*((uint64_t *)rel_addr) = object->tlsOffset;
 		}
 	} break;
+#elif defined(__aarch64__)
+	case R_AARCH64_ABS64: {
+		__ensure(symbol_index);
+		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
+		*((uint64_t *)rel_addr) = symbol_addr + reloc->r_addend;
+	} break;
+	case R_AARCH64_GLOB_DAT: {
+		__ensure(symbol_index);
+		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
+		*((uint64_t *)rel_addr) = symbol_addr + reloc->r_addend;
+	} break;
+	case R_AARCH64_RELATIVE: {
+		__ensure(!symbol_index);
+		*((uint64_t *)rel_addr) = object->baseAddress + reloc->r_addend;
+	} break;
+#endif
 	default:
 		mlibc::panicLogger() << "Unexpected relocation type "
 				<< (void *)type << frg::endlog;
@@ -1226,6 +1268,11 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 	}
 }
 
+// TODO: TLSDESC relocations aren't aarch64 specific
+#ifdef __aarch64__
+extern "C" void *__mlibcTlsdescStatic(void *);
+#endif
+
 void Loader::_processLazyRelocations(SharedObject *object) {
 	if(object->globalOffsetTable == nullptr) {
 		__ensure(object->lazyRelocTableOffset == 0);
@@ -1245,26 +1292,62 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 		Elf64_Xword symbol_index = ELF64_R_SYM(reloc->r_info);
 		uintptr_t rel_addr = object->baseAddress + reloc->r_offset;
 
-		__ensure(type == R_X86_64_JUMP_SLOT);
-		if(eagerBinding) {
-			auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
-					+ symbol_index * sizeof(Elf64_Sym));
-			ObjectSymbol r(object, symbol);
-			frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
-			if(!p) {
-				if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
-					mlibc::panicLogger() << "rtdl: Unresolved JUMP_SLOT symbol "
-							<< r.getString() << " in object " << object->name << frg::endlog;
+		switch (type) {
+#if defined(__x86_64__)
+		case R_X86_64_JUMP_SLOT:
+#elif defined(__aarch64__)
+		case R_AARCH64_JUMP_SLOT:
+#endif
+			if(eagerBinding) {
+				auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
+						+ symbol_index * sizeof(Elf64_Sym));
+				ObjectSymbol r(object, symbol);
+				frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
+				if(!p) {
+					if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
+						mlibc::panicLogger() << "rtdl: Unresolved JUMP_SLOT symbol "
+								<< r.getString() << " in object " << object->name << frg::endlog;
 
-				if(verbose)
-					mlibc::infoLogger() << "rtdl: Unresolved weak JUMP_SLOT symbol "
+					if(verbose)
+						mlibc::infoLogger() << "rtdl: Unresolved weak JUMP_SLOT symbol "
 							<< r.getString() << " in object " << object->name << frg::endlog;
-				*((uint64_t *)rel_addr) = 0;
+					*((uint64_t *)rel_addr) = 0;
+				}else{
+					*((uint64_t *)rel_addr) = p->virtualAddress();
+				}
 			}else{
-				*((uint64_t *)rel_addr) = p->virtualAddress();
+				*((uint64_t *)rel_addr) += object->baseAddress;
 			}
-		}else{
-			*((uint64_t *)rel_addr) += object->baseAddress;
+			break;
+// TODO: TLSDESC relocations aren't aarch64 specific
+#if defined(__aarch64__)
+		case R_AARCH64_TLSDESC: {
+			size_t symValue = 0;
+
+			if (symbol_index) {
+				auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
+						+ symbol_index * sizeof(Elf64_Sym));
+				ObjectSymbol r(object, symbol);
+				frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
+
+				if (!p) {
+					__ensure(ELF64_ST_BIND(symbol->st_info) != STB_WEAK);
+					mlibc::panicLogger() << "rtdl: Unresolved TLSDESC for symbol "
+						<< r.getString() << " in object " << object->name << frg::endlog;
+				} else {
+					if (p->symbol())
+						symValue = p->symbol()->st_value;
+				}
+			}
+
+			if (/*TODO: is static TLS*/ true) {
+				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
+				((uint64_t *)rel_addr)[1] = symValue - object->tlsOffset + reloc->r_addend;
+			} else {
+				// TODO: dynamic TLS
+			}
+		} break;
+#endif
 		}
 	}
 }

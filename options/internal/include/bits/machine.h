@@ -24,6 +24,22 @@ struct __mlibc_jmpbuf_register_state {
 	uint64_t rsp;
 	uint64_t rip;
 };
+#elif defined (__aarch64__)
+struct __mlibc_jmpbuf_register_state {
+	uint64_t x19;
+	uint64_t x20;
+	uint64_t x21;
+	uint64_t x22;
+	uint64_t x23;
+	uint64_t x24;
+	uint64_t x25;
+	uint64_t x26;
+	uint64_t x27;
+	uint64_t x28;
+	uint64_t x29;
+	uint64_t x30;
+	uint64_t x16;
+};
 #else
 #  error "Missing architecture specific code"
 #endif
