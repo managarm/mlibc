@@ -215,8 +215,6 @@ subdir('options/iconv')
 
 if not headers_only
 	if not static
-		libgcc = meson.get_compiler('c').find_library('gcc')
-
 		ldso_lib = shared_library('ld', rtdl_sources,
 				name_prefix: '',
 				cpp_args:['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC',
@@ -224,6 +222,15 @@ if not headers_only
 				include_directories: rtdl_include_dirs,
 				dependencies: rtdl_deps,
 				install: true)
+
+		extra_link_args = []
+
+		if host_machine.cpu_family() == 'aarch64'
+			# Link with libgcc to get math symbols ...
+			libc_deps += meson.get_compiler('c').find_library('gcc')
+			# ... but don't export them ourselves
+			extra_link_args += '-Wl,--exclude-libs=gcc'
+		endif
 
 		libc = shared_library('c',
 				[
@@ -234,12 +241,10 @@ if not headers_only
 				],
 				cpp_args: ['-DFRIGG_HAVE_LIBC'],
 				include_directories: libc_include_dirs,
-				# Link with libgcc to get math symbols ...
-				dependencies: [libc_deps, libgcc],
+				dependencies: libc_deps,
 				link_with: [ldso_lib],
 				link_whole: libc_sublibs,
-				# ... but don't export them ourselves
-				link_args: ['-Wl,--exclude-libs=gcc'],
+				link_args: extra_link_args,
 				install: true,
 				pic: true)
 
