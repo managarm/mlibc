@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <mlibc/debug.hpp>
 
 namespace mlibc {
 
@@ -111,16 +112,18 @@ int lookup_serv(struct service_buf *buf, const char *name, int proto,
 			return 1;
 	}
 
-	// at this point we expect the user to provide a name
-	if (!name)
-		return -EAI_NONAME;
-
-	// handle the case where name is the port
-	char *end;
-	unsigned int port = strtoul(name, &end, 10);
+	char *end = nullptr;
+	unsigned int port = 0;
 	int count = 0;
-	// the end pointer is a null pointer so the name was a port
-	if (!*end) {
+
+	if (name) {
+		if (!*name)
+			return -EAI_SERVICE;
+		port = strtoul(name, &end, 10);
+	}
+	// The end pointer is a null pointer so the name was a port
+	// or the name was not specified.
+	if (!end || !*end) {
 		if (proto != IPPROTO_UDP) {
 			buf[count].port = port;
 			buf[count].protocol = IPPROTO_TCP;

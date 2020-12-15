@@ -21,5 +21,12 @@ int main() {
 	assert(res[0].ai_protocol == IPPROTO_TCP);
 
 	freeaddrinfo(res);
+
+	/* check we can resolve any domain */
+	ret = getaddrinfo("example.net", NULL, &hints, &res);
+	assert(ret == 0);
+
+	freeaddrinfo(res);
+
 	return 0;
 }
