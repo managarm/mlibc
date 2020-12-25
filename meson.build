@@ -50,8 +50,9 @@ if not headers_only
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
 	gccdir = run_command('/bin/sh', '-c',
-		''.join(c_compiler.cmd_array())
+		' '.join(c_compiler.cmd_array())
 				+ ' -print-search-dirs | sed -n -e "s/install: \(.*\)/\\1/p"',
+		env: ['LANG=C'],
 		check: true).stdout().strip()
 
 	rtdl_include_dirs += include_directories(gccdir / 'include')
