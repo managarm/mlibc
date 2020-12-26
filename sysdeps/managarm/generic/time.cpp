@@ -58,6 +58,13 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 				"\e[39m" << frg::endlog;
 		*secs = 0;
 		*nanos = 0;
+	}else if(clock == CLOCK_MONOTONIC_RAW) {
+		mlibc::infoLogger() << "\e[31mmlibc: clock_gettime implements CLOCK_MONOTONIC_RAW as CLOCK_MONOTONIC"
+				"\e[39m" << frg::endlog;
+		uint64_t tick;
+		HEL_CHECK(helGetClock(&tick));
+		*secs = tick / 1000000000;
+		*nanos = tick % 1000000000;
 	}else{
 		mlibc::panicLogger() << "mlibc: Unexpected clock " << clock << frg::endlog;
 	}
