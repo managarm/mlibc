@@ -1192,7 +1192,6 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 	case R_X86_64_DTPOFF64: {
 		__ensure(p);
 		__ensure(!reloc->r_addend);
-		__ensure(p->object()->tlsModel == TlsModel::initial);
 		*((uint64_t *)rel_addr) = p->symbol()->st_value;
 	} break;
 	case R_X86_64_TPOFF64: {
@@ -1201,7 +1200,8 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 			__ensure(!reloc->r_addend);
 			if(p->object()->tlsModel != TlsModel::initial)
 				mlibc::panicLogger() << "rtdl: In object " << object->name
-						<< ": Static TLS relocation to dynamically loaded object "
+						<< ": Static TLS relocation to symbol " << p->getString()
+						<< " in dynamically loaded object "
 						<< p->object()->name << frg::endlog;
 			*((uint64_t *)rel_addr) = p->object()->tlsOffset + p->symbol()->st_value;
 		}else{
