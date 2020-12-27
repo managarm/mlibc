@@ -9,15 +9,15 @@
 
 namespace mlibc{
 	int sys_futex_wait(int *pointer, int expected){
-		return syscall(SYS_FUTEX_WAIT, pointer, expected, 0, 0, 0);
+		return syscall(SYS_FUTEX_WAIT, pointer, expected);
 	}
 
 	int sys_futex_wake(int *pointer) {
-		return syscall(SYS_FUTEX_WAKE, pointer, 0, 0, 0, 0);
+		return syscall(SYS_FUTEX_WAKE, pointer);
 	}
 
 	int sys_tcb_set(void* pointer){
-		syscall(SYS_SET_FS_BASE, (uintptr_t)pointer, 0, 0, 0, 0);
+		syscall(SYS_SET_FS_BASE, (uintptr_t)pointer);
 		return 0;
 	}
 
@@ -28,7 +28,7 @@ namespace mlibc{
 		__ensure(!(size & 0xFFF));
 
 		size_t sizePages = ((size + 0xFFF) & ~static_cast<size_t>(0xFFF)) >> 12;
-		syscall(SYS_MMAP, (uintptr_t)window, sizePages, (uintptr_t)hint, 0, 0);
+		syscall(SYS_MMAP, (uintptr_t)window, sizePages, (uintptr_t)hint);
 
 		if(!(*window))
 			return -1;
@@ -39,7 +39,7 @@ namespace mlibc{
 		__ensure(!(size & 0xFFF));
 
 		size_t sizePages = ((size + 0xFFF) & ~static_cast<size_t>(0xFFF)) >> 12;
-		long ret = syscall(SYS_MUNMAP, (uintptr_t)address, sizePages, 0, 0, 0);
+		long ret = syscall(SYS_MUNMAP, (uintptr_t)address, sizePages);
 
 		return ret;
 	}
@@ -47,7 +47,7 @@ namespace mlibc{
 	int sys_anon_allocate(size_t size, void **pointer) {
 		// Make sure to only allocate whole pages
 		__ensure(!(size & 0xFFF));
-		syscall(SYS_ALLOC, ((size + 0xFFF) & ~static_cast<size_t>(0xFFF)) >> 12, (uintptr_t)pointer, 0, 0, 0);
+		syscall(SYS_ALLOC, ((size + 0xFFF) & ~static_cast<size_t>(0xFFF)) >> 12, (uintptr_t)pointer);
 
 		if (!(*pointer))
 		    return -1;
@@ -65,18 +65,18 @@ namespace mlibc{
 	}
 
 	void sys_libc_log(const char* msg){
-		syscall(0, (uintptr_t)msg, 0, 0, 0, 0);
+		syscall(0, (uintptr_t)msg);
 	}
 
 	#ifndef MLIBC_BUILDING_RTDL
 
 	void sys_exit(int status){
-		syscall(SYS_EXIT, status, 0, 0, 0, 0);
+		syscall(SYS_EXIT, status);
 	}
 
 	pid_t sys_getpid(){
 		uint64_t _pid;
-		syscall(SYS_GETPID, (uintptr_t)&_pid, 0, 0, 0, 0);
+		syscall(SYS_GETPID, (uintptr_t)&_pid);
 
 		pid_t pid = _pid;
 		return pid;
@@ -84,7 +84,7 @@ namespace mlibc{
 	
 	int sys_clock_get(int clock, time_t *secs, long *nanos) {
 		uint64_t _secs, _millis;
-		syscall(SYS_UPTIME, (uintptr_t)&_secs, (uintptr_t)&_millis, 0, 0, 0);
+		syscall(SYS_UPTIME, (uintptr_t)&_secs, (uintptr_t)&_millis);
 
 		*secs = _secs;
 		*nanos = _millis * 1000000;
@@ -92,33 +92,33 @@ namespace mlibc{
 	}
 
 	int sys_getcwd(char *buffer, size_t size){
-		return syscall(SYS_GET_CWD, buffer, size, 0, 0, 0);
+		return syscall(SYS_GET_CWD, buffer, size);
 	}
 
 	int sys_chdir(const char *path){
-		syscall(SYS_CHDIR, path, 0, 0, 0, 0);
+		syscall(SYS_CHDIR, path);
 		return 0;
 	}
 
 	int sys_sleep(time_t* sec, long* nanosec){
-		syscall(SYS_NANO_SLEEP, (*sec) * 1000000000 + (*nanosec), 0, 0, 0, 0);
+		syscall(SYS_NANO_SLEEP, (*sec) * 1000000000 + (*nanosec));
 		return 0;
 	}
 	
 	uid_t sys_getuid(){
-		return syscall(SYS_GETUID, 0, 0, 0, 0, 0);
+		return syscall(SYS_GETUID);
 	}
 
 	uid_t sys_geteuid(){
-		return syscall(SYS_GETEUID, 0, 0, 0, 0, 0);
+		return syscall(SYS_GETEUID);
 	}
 
 	int sys_setuid(uid_t uid){
-		return -syscall(SYS_SETUID, uid, 0, 0, 0, 0);
+		return -syscall(SYS_SETUID, uid);
 	}
 
 	int sys_seteuid(uid_t euid){
-		return -syscall(SYS_SETEUID, euid, 0, 0, 0, 0);
+		return -syscall(SYS_SETEUID, euid);
 	}
 
 	int sys_getgid(){
@@ -142,12 +142,12 @@ namespace mlibc{
 	}
 
 	void sys_yield(){
-		syscall(SYS_YIELD, 0, 0, 0, 0, 0);
+		syscall(SYS_YIELD);
 	}
 
 	int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *tid_out){
 		auto stack = prepare_stack(entry, user_arg, tcb);
-		pid_t tid = syscall(SYS_SPAWN_THREAD, __mlibc_start_thread, stack, 0, 0, 0);
+		pid_t tid = syscall(SYS_SPAWN_THREAD, __mlibc_start_thread, stack);
 
 		if(tid_out){
 			*tid_out = tid;
@@ -157,7 +157,7 @@ namespace mlibc{
 	}
 
 	void sys_thread_exit(){
-		syscall(SYS_EXIT_THREAD, 0, 0, 0, 0, 0);
+		syscall(SYS_EXIT_THREAD);
 	}
 	#endif
 } 

@@ -8,7 +8,7 @@
 
 namespace mlibc{
     int sys_socket(int domain, int type, int protocol, int *fd){
-        long ret = syscall(SYS_SOCKET, domain, type, protocol, 0, 0);
+        long ret = syscall(SYS_SOCKET, domain, type, protocol);
 
         if(ret < 0){
             return ret;
@@ -20,15 +20,15 @@ namespace mlibc{
     }
 
     int sys_bind(int sockfd, const struct sockaddr *addr_ptr, socklen_t addrlen){
-        return syscall(SYS_BIND, sockfd, addr_ptr, addrlen, 0, 0);
+        return syscall(SYS_BIND, sockfd, addr_ptr, addrlen);
     }
 
     int sys_connect(int sockfd, const struct sockaddr *addr_ptr, socklen_t addrlen){
-        return syscall(SYS_CONNECT, sockfd, addr_ptr, addrlen, 0, 0);
+        return syscall(SYS_CONNECT, sockfd, addr_ptr, addrlen);
     }
 
     int sys_accept(int fd, int *newfd){
-        long ret = syscall(SYS_ACCEPT, fd, 0, 0, 0, 0);
+        long ret = syscall(SYS_ACCEPT, fd);
 
         if(ret < 0){
             return ret;
@@ -40,11 +40,11 @@ namespace mlibc{
     }
 
     int sys_listen(int fd, int backlog){
-        return syscall(SYS_LISTEN, fd, backlog, 0, 0, 0);
+        return syscall(SYS_LISTEN, fd, backlog);
     }
 
     int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length){
-        long ret = syscall(SYS_RECVMSG, sockfd, hdr, flags, 0, 0);
+        long ret = syscall(SYS_RECVMSG, sockfd, hdr, flags);
 
         if(ret < 0){
             return ret;
@@ -56,7 +56,7 @@ namespace mlibc{
     }
 
     int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *length){
-        long ret = syscall(SYS_SENDMSG, sockfd, hdr, flags, 0, 0);
+        long ret = syscall(SYS_SENDMSG, sockfd, hdr, flags);
 
         if(ret < 0){
             return ret;

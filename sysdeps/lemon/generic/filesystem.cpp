@@ -25,7 +25,7 @@ namespace mlibc{
 	} lemon_stat_t;
 
 	int sys_write(int fd, const void* buffer, size_t count, ssize_t* written){
-		long ret = syscall(SYS_WRITE, fd, (uintptr_t)buffer, count, 0, 0);
+		long ret = syscall(SYS_WRITE, fd, (uintptr_t)buffer, count);
 
 		if(ret < 0)
 			return -ret;
@@ -35,7 +35,7 @@ namespace mlibc{
 	}
 
 	int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
-    	long ret = syscall(SYS_READ, fd, (uintptr_t)buf, count, 0, 0);
+    	long ret = syscall(SYS_READ, fd, (uintptr_t)buf, count);
 
 		if(ret < 0){
 			*bytes_read = 0;
@@ -70,7 +70,7 @@ namespace mlibc{
 	}
 
 	int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
-		long ret = syscall(SYS_LSEEK, fd, offset, whence, 0, 0);
+		long ret = syscall(SYS_LSEEK, fd, offset, whence);
 
 		if(ret < 0){
 			return -ret;
@@ -82,7 +82,7 @@ namespace mlibc{
 
 
 	int sys_open(const char* filename, int flags, int* fd){
-		long ret = syscall(SYS_OPEN, (uintptr_t)filename, flags, 0, 0, 0);
+		long ret = syscall(SYS_OPEN, (uintptr_t)filename, flags);
 
 		if(ret < 0)
 			return -ret;
@@ -93,7 +93,7 @@ namespace mlibc{
 	}
 
 	int sys_close(int fd){
-		syscall(SYS_CLOSE, fd, 0, 0, 0, 0);
+		syscall(SYS_CLOSE, fd);
 		return 0;
 	}
 
@@ -114,10 +114,10 @@ namespace mlibc{
 		lemon_stat_t lemonStat;
 		switch(fsfdt){
 			case fsfd_target::fd:
-				ret = syscall(SYS_FSTAT, &lemonStat, fd, 0, 0, 0);
+				ret = syscall(SYS_FSTAT, &lemonStat, fd);
 				break;
 			case fsfd_target::path:
-				ret = syscall(SYS_STAT, &lemonStat, path, 0, 0, 0);
+				ret = syscall(SYS_STAT, &lemonStat, path);
 				break;
 			default:
 				mlibc::infoLogger() << "mlibc warning: sys_stat: unsupported fsfd target" << frg::endlog;
@@ -139,7 +139,7 @@ namespace mlibc{
 	}
 
 	int sys_ioctl(int fd, unsigned long request, void *arg, int *result){
-		return syscall(SYS_IOCTL, fd, request, arg, result, 0);
+		return syscall(SYS_IOCTL, fd, request, arg, result);
 	}
 
 	#ifndef MLIBC_BUILDING_RTDL
@@ -149,7 +149,7 @@ namespace mlibc{
 
 	int sys_isatty(int fd) {
 		struct winsize ws;
-		long ret = syscall(SYS_IOCTL, fd, TIOCGWINSZ, &ws, 0 ,0);
+		long ret = syscall(SYS_IOCTL, fd, TIOCGWINSZ, &ws);
 
 		if(!ret) return 0;
 		
@@ -187,7 +187,7 @@ namespace mlibc{
 	}
 
 	int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events){
-		long ret = syscall(SYS_POLL, fds, count, timeout, 0, 0);
+		long ret = syscall(SYS_POLL, fds, count, timeout);
 
 		if(ret < 0){
 			return -ret;
@@ -199,7 +199,7 @@ namespace mlibc{
 	}
 
 	int sys_mkdir(const char* path){
-		long ret = syscall(SYS_MKDIR, path, 0, 0, 0, 0);
+		long ret = syscall(SYS_MKDIR, path);
 
 		if(ret < 0){
 			return -ret;
@@ -209,7 +209,7 @@ namespace mlibc{
 	}
 
 	int sys_rmdir(const char* path){
-		long ret = syscall(SYS_RMDIR, path, 0, 0, 0, 0);
+		long ret = syscall(SYS_RMDIR, path);
 
 		if(ret < 0){
 			return -ret;
@@ -219,7 +219,7 @@ namespace mlibc{
 	}
 
 	int sys_link(const char* srcpath, const char* destpath){
-		long ret = syscall(SYS_LINK, srcpath, destpath, 0, 0, 0);
+		long ret = syscall(SYS_LINK, srcpath, destpath);
 
 		if(ret < 0){
 			return -ret;
@@ -229,7 +229,7 @@ namespace mlibc{
 	}
 
 	int sys_unlink(const char* path){
-		long ret = syscall(SYS_UNLINK, path, 0, 0, 0, 0);
+		long ret = syscall(SYS_UNLINK, path);
 
 		if(ret < 0){
 			return -ret;
@@ -246,7 +246,7 @@ namespace mlibc{
 
 	int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read){
 		lemon_dirent_t lemonDirent;
-		long ret = syscall(SYS_READDIR_NEXT, handle, &lemonDirent, 0, 0, 0);
+		long ret = syscall(SYS_READDIR_NEXT, handle, &lemonDirent);
 
 		if(!ret){
 			*bytes_read = 0;
@@ -271,11 +271,11 @@ namespace mlibc{
 	}
 
 	int sys_rename(const char* path, const char* new_path){
-		return -syscall(SYS_RENAME, path, new_path, 0, 0, 0);
+		return -syscall(SYS_RENAME, path, new_path);
 	}
 	
 	int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length){
-		long ret = syscall(SYS_READLINK, path, buffer, max_size, 0, 0);
+		long ret = syscall(SYS_READLINK, path, buffer, max_size);
 		if(ret < 0){
 			return -ret;
 		}
@@ -285,7 +285,7 @@ namespace mlibc{
 	}
 
 	int sys_dup(int fd, int flags, int* newfd){
-		int ret = syscall(SYS_DUP, fd, flags, 0, 0, 0);
+		int ret = syscall(SYS_DUP, fd, flags);
 		if(ret < 0){
 			return -ret;
 		}
@@ -301,7 +301,7 @@ namespace mlibc{
 			*result = 0; // Lemon does not support O_CLOEXEC
 			return 0;
 		} else if(request == F_GETFL){
-			int ret = syscall(SYS_GET_FILE_STATUS_FLAGS, fd, 0, 0, 0, 0);
+			int ret = syscall(SYS_GET_FILE_STATUS_FLAGS, fd);
 			if(ret < 0){
 				return -ret;
 			}
@@ -309,7 +309,7 @@ namespace mlibc{
 			*result = ret;
 			return 0;
 		} else if(request == F_SETFL){
-			int ret = syscall(SYS_SET_FILE_STATUS_FLAGS, fd, va_arg(args, int), 0, 0, 0);
+			int ret = syscall(SYS_SET_FILE_STATUS_FLAGS, fd, va_arg(args, int));
 			return -ret;
 		} else {
 			infoLogger() << "mlibc: sys_fcntl unsupported request (" << request << ")" << frg::endlog;
