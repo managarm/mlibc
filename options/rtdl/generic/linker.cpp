@@ -732,7 +732,7 @@ void *accessDtv(SharedObject *object) {
 	if(!tcb_ptr->dtvPointers[object->tlsIndex]) {
 		__ensure(object->tlsModel == TlsModel::dynamic);
 
-		auto buffer = getAllocator().allocate(object->tlsImageSize);
+		auto buffer = getAllocator().allocate(object->tlsSegmentSize);
 		__ensure(!(reinterpret_cast<uintptr_t>(buffer) & (object->tlsAlignment - 1)));
 		memset(buffer, 0, object->tlsSegmentSize);
 		memcpy(buffer, object->tlsImagePtr, object->tlsImageSize);
