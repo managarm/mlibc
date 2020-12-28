@@ -38,9 +38,9 @@ void sys_libc_log(const char *message) {
 	size_t n = 0;
 	while(message[n])
 		n++;
-	do_syscall(NR_write, 1, message, n);
+	do_syscall(NR_write, 2, message, n);
 	char lf = '\n';
-	do_syscall(NR_write, 1, &lf, 1);
+	do_syscall(NR_write, 2, &lf, 1);
 }
 
 void sys_libc_panic() {
