@@ -1,25 +1,25 @@
 %rename cpp_options old_cpp_options
 
 *cpp_options:
--nostdinc -isystem /usr/lib/mlibc/include -isystem include%s %(old_cpp_options)
+-nostdinc -isystem @PREFIX@/include -isystem include%s %(old_cpp_options)
 
 *cc1:
-%(cc1_cpu) -nostdinc -isystem /usr/lib/mlibc/include -isystem include%s
+%(cc1_cpu) -nostdinc -isystem @PREFIX@/include -isystem include%s
 
 *link_libgcc:
--L/usr/lib/mlibc/@LIBDIR@ -L .%s
+-L@PREFIX@/@LIBDIR@ -L .%s
 
 *libgcc:
 libgcc.a%s %:if-exists(libgcc_eh.a%s)
 
 *startfile:
-%{!shared: /usr/lib/mlibc/@LIBDIR@/Scrt1.o} /usr/lib/mlibc/@LIBDIR@/crti.o crtbeginS.o%s
+%{!shared: @PREFIX@/@LIBDIR@/Scrt1.o} @PREFIX@/@LIBDIR@/crti.o crtbeginS.o%s
 
 *endfile:
-crtendS.o%s /usr/lib/mlibc/@LIBDIR@/crtn.o
+crtendS.o%s @PREFIX@/@LIBDIR@/crtn.o
 
 *link:
--dynamic-linker /usr/lib/mlibc/@LIBDIR@/ld.so -rpath /usr/lib/mlibc/@LIBDIR@ -nostdlib %{shared:-shared} %{static:-static} %{rdynamic:-export-dynamic}
+-dynamic-linker @PREFIX@/@LIBDIR@/ld.so -rpath @PREFIX@/@LIBDIR@ -nostdlib %{shared:-shared} %{static:-static} %{rdynamic:-export-dynamic}
 
 *esp_link:
 

@@ -77,6 +77,7 @@ if not headers_only
 
 	wrapper_conf = configuration_data()
 	wrapper_conf.set('LIBDIR', get_option('libdir'))
+	wrapper_conf.set('PREFIX', get_option('prefix'))
 	specs = configure_file(input: 'mlibc-gcc.specs.in',
 			output: 'mlibc-gcc.specs',
 			configuration: wrapper_conf)
