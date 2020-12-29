@@ -10,6 +10,10 @@ posix_test_cases = [
 	'pthread_rwlock'
 ]
 
+glibc_test_cases = [
+	'getopt'
+]
+
 test_sources = [
 	crt
 ]
@@ -40,5 +44,18 @@ if not disable_posix_option
 			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
 				'-no-pie'])
 		test('posix/' + f, exec)
+	endforeach
+endif
+
+# We never disable the posix option so glibc is gated behind the posix option here.
+if not disable_posix_option
+	foreach f : glibc_test_cases
+		exec = executable('glibc-' + f, ['glibc/' + f + '.c', test_sources],
+			link_with: libc, include_directories: libc_include_dirs,
+			build_rpath: meson.build_root(),
+			c_args: '-no-pie',
+			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
+				'-no-pie'])
+		test('glibc/' + f, exec)
 	endforeach
 endif
