@@ -53,8 +53,14 @@ static constexpr unsigned int mutexRecursive = 1;
 static constexpr unsigned int mutexErrorCheck = 2;
 
 // TODO: either use uint32_t or determine the bit based on sizeof(int).
-static constexpr unsigned int mutex_owner_mask = (static_cast<uint32_t>(1) << 31) - 1;
+static constexpr unsigned int mutex_owner_mask = (static_cast<uint32_t>(1) << 30) - 1;
 static constexpr unsigned int mutex_waiters_bit = static_cast<uint32_t>(1) << 31;
+
+// Only valid for the internal __mlibc_m mutex of wrlocks.
+static constexpr unsigned int mutex_excl_bit = static_cast<uint32_t>(1) << 30;
+
+static constexpr unsigned int rc_count_mask = (static_cast<uint32_t>(1) << 31) - 1;
+static constexpr unsigned int rc_waiters_bit = static_cast<uint32_t>(1) << 31;
 
 // ----------------------------------------------------------------------------
 // pthread_attr and pthread functions.
@@ -616,45 +622,188 @@ int pthread_barrier_wait(pthread_barrier_t *) {
 // pthread_rwlock functions.
 // ----------------------------------------------------------------------------
 
-int pthread_rwlock_init(pthread_rwlock_t *__restrict, const pthread_rwlockattr_t *__restrict) {
+namespace {
+	void rwlock_m_lock(pthread_rwlock_t *rw, bool excl) {
+		unsigned int m_expected = __atomic_load_n(&rw->__mlibc_m, __ATOMIC_RELAXED);
+		while(true) {
+			if(m_expected) {
+				__ensure(m_expected & mutex_owner_mask);
+
+				// Try to set the waiters bit.
+				if(!(m_expected & mutex_waiters_bit)) {
+					unsigned int desired = m_expected | mutex_waiters_bit;
+					if(!__atomic_compare_exchange_n(&rw->__mlibc_m,
+							&m_expected, desired, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED))
+						continue;
+				}
+
+				// Wait on the futex.
+				mlibc::sys_futex_wait((int *)&rw->__mlibc_m, m_expected | mutex_waiters_bit);
+
+				// Opportunistically try to take the lock after we wake up.
+				m_expected = 0;
+			}else{
+				// Try to lock the mutex.
+				unsigned int desired = 1;
+				if(excl)
+					desired |= mutex_excl_bit;
+				if(__atomic_compare_exchange_n(&rw->__mlibc_m,
+						&m_expected, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED))
+					break;
+			}
+		}
+	}
+
+	int rwlock_m_trylock(pthread_rwlock_t *rw, bool excl) {
+		unsigned int m_expected = __atomic_load_n(&rw->__mlibc_m, __ATOMIC_RELAXED);
+		if(!m_expected) {
+			// Try to lock the mutex.
+			unsigned int desired = 1;
+			if(excl)
+				desired |= mutex_excl_bit;
+			if(__atomic_compare_exchange_n(&rw->__mlibc_m,
+					&m_expected, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED))
+				return 0;
+		}
+
+		__ensure(m_expected & mutex_owner_mask);
+
+		// POSIX says that this function should never block but also that
+		// readers should not be blocked by readers. We implement this by returning EAGAIN
+		// (and not EBUSY) if a reader would block a reader.
+		if(!excl && !(m_expected & mutex_excl_bit))
+			return EAGAIN;
+
+		return EBUSY;
+	}
+
+	void rwlock_m_unlock(pthread_rwlock_t *rw) {
+		auto m = __atomic_exchange_n(&rw->__mlibc_m, 0, __ATOMIC_RELEASE);
+		if(m & mutex_waiters_bit)
+			mlibc::sys_futex_wake((int *)&rw->__mlibc_m);
+	}
+}
+
+int pthread_rwlock_init(pthread_rwlock_t *__restrict rw, const pthread_rwlockattr_t *__restrict) {
+	SCOPE_TRACE();
+	rw->__mlibc_m = 0;
+	rw->__mlibc_rc = 0;
+	return 0;
+}
+
+int pthread_rwlock_destroy(pthread_rwlock_t *rw) {
+	__ensure(!rw->__mlibc_m);
+	__ensure(!rw->__mlibc_rc);
+	return 0;
+}
+
+int pthread_rwlock_trywrlock(pthread_rwlock_t *rw) {
 	SCOPE_TRACE();
 
-	mlibc::infoLogger() << "mlibc: pthread_rwlock_init() is not implemented correctly" << frg::endlog;
+	// Take the __mlibc_m mutex.
+	// Will be released in pthread_rwlock_unlock().
+	if(int e = rwlock_m_trylock(rw, true))
+		return e;
+
+	// Check that there are no readers.
+	unsigned int rc_expected = __atomic_load_n(&rw->__mlibc_rc, __ATOMIC_ACQUIRE);
+	if(rc_expected) {
+		rwlock_m_unlock(rw);
+		return EBUSY;
+	}
+
 	return 0;
 }
 
-int pthread_rwlock_destroy(pthread_rwlock_t *) {
-	// TODO: make sure the lock is the unlocked state.
-	return 0;
-}
-
-int pthread_rwlock_trywrlock(pthread_rwlock_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_rwlock_wrlock(pthread_rwlock_t *) {
+int pthread_rwlock_wrlock(pthread_rwlock_t *rw) {
 	SCOPE_TRACE();
 
-	mlibc::infoLogger() << "mlibc: pthread_rwlock_wrlock() is not implemented correctly" << frg::endlog;
+	// Take the __mlibc_m mutex.
+	// Will be released in pthread_rwlock_unlock().
+	rwlock_m_lock(rw, true);
+
+	// Now wait until there are no more readers.
+	unsigned int rc_expected = __atomic_load_n(&rw->__mlibc_rc, __ATOMIC_ACQUIRE);
+	while(true) {
+		if(!rc_expected)
+			break;
+
+		__ensure(rc_expected & rc_count_mask);
+
+		// Try to set the waiters bit.
+		if(!(rc_expected & rc_waiters_bit)) {
+			unsigned int desired = rc_expected | rc_count_mask;
+			if(!__atomic_compare_exchange_n(&rw->__mlibc_rc,
+					&rc_expected, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
+				continue;
+		}
+
+		// Wait on the futex.
+		mlibc::sys_futex_wait((int *)&rw->__mlibc_rc, rc_expected | rc_waiters_bit);
+
+		// Re-check the reader counter.
+		rc_expected = __atomic_load_n(&rw->__mlibc_rc, __ATOMIC_ACQUIRE);
+	}
+
 	return 0;
 }
 
-int pthread_rwlock_tryrdlock(pthread_rwlock_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_rwlock_rdlock(pthread_rwlock_t *) {
+int pthread_rwlock_tryrdlock(pthread_rwlock_t *rw) {
 	SCOPE_TRACE();
 
-	mlibc::infoLogger() << "mlibc: pthread_rwlock_rdlock() is not implemented correctly" << frg::endlog;
+	// Increment the reader count while holding the __mlibc_m mutex.
+	if(int e = rwlock_m_trylock(rw, false); e)
+		return e;
+	__atomic_fetch_add(&rw->__mlibc_rc, 1, __ATOMIC_ACQUIRE);
+	rwlock_m_unlock(rw);
+
 	return 0;
 }
 
-int pthread_rwlock_unlock(pthread_rwlock_t *) {
+int pthread_rwlock_rdlock(pthread_rwlock_t *rw) {
 	SCOPE_TRACE();
 
-	mlibc::infoLogger() << "mlibc: pthread_rwlock_unlock() is not implemented correctly" << frg::endlog;
+	// Increment the reader count while holding the __mlibc_m mutex.
+	rwlock_m_lock(rw, false);
+	__atomic_fetch_add(&rw->__mlibc_rc, 1, __ATOMIC_ACQUIRE);
+	rwlock_m_unlock(rw);
+
 	return 0;
+}
+
+int pthread_rwlock_unlock(pthread_rwlock_t *rw) {
+	SCOPE_TRACE();
+
+	unsigned int rc_expected = __atomic_load_n(&rw->__mlibc_rc, __ATOMIC_RELAXED);
+	if(!rc_expected) {
+		// We are doing a write-unlock.
+		rwlock_m_unlock(rw);
+		return 0;
+	}else{
+		// We are doing a read-unlock.
+		while(true) {
+			unsigned int count = rc_expected & rc_count_mask;
+			__ensure(count);
+
+			// Try to decrement the count.
+			if(count == 1 && (rc_expected & rc_waiters_bit)) {
+				unsigned int desired = 0;
+				if(!__atomic_compare_exchange_n(&rw->__mlibc_rc,
+						&rc_expected, desired, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED))
+					continue;
+
+				// Wake the futex.
+				mlibc::sys_futex_wake((int *)&rw->__mlibc_rc);
+				break;
+			}else{
+				unsigned int desired = (rc_expected & ~rc_count_mask) | (count - 1);
+				if(!__atomic_compare_exchange_n(&rw->__mlibc_rc,
+						&rc_expected, desired, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED))
+					continue;
+				break;
+			}
+		}
+
+		return 0;
+	}
 }

@@ -101,9 +101,9 @@ struct  __mlibc_barrier {
 typedef struct __mlibc_barrier pthread_barrier_t;
 
 struct __mlibc_fair_rwlock {
-	int m;
-	int rw;
-	unsigned read_count;
+	unsigned int __mlibc_m; // Mutex.
+	unsigned int __mlibc_rc; // Reader count (not reference count).
+	unsigned int __mlibc_padding;
 };
 typedef struct __mlibc_fair_rwlock pthread_rwlock_t;
 
