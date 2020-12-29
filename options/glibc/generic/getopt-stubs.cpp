@@ -58,25 +58,37 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 			if(longindex)
 				*longindex = k;
 
-			// We do not support arguments yet
+			// Consume the option and its argument.
 			if(longopts[k].has_arg == required_argument) {
-				if(!s) {
+				if(s) {
+					// Consume the long option and its argument.
+					optarg = s + 1;
+					optind++;
+				}else if(argv[optind + 1]) {
+					// Consume the long option.
+					optind++;
+
+					// Consume the option's argument.
+					optarg = argv[optind];
+					optind++;
+				}else{
 					if(opterr)
-						fprintf(stderr, "--%s is not a valid option.\n", arg);
+						fprintf(stderr, "--%s requires an argument.\n", arg);
 					return '?';
 				}
-				optarg = s + 1;
 			}else{
 				__ensure(longopts[k].has_arg == no_argument);
-			}
-			if(!longopts[k].flag) {
+
+				// Consume the long option.
 				optind++;
-				return longopts[k].val;
 			}
-					
-			*longopts[k].flag = longopts[k].val;
-			optind++;
-			return 0;
+
+			if(!longopts[k].flag) {
+				return longopts[k].val;
+			}else{
+				*longopts[k].flag = longopts[k].val;
+				return 0;
+			}
 		}else{
 			__ensure((strlen(argv[optind]) == 2) && "We do not support concatenated short options yet.");
 			unsigned int i = 1;
