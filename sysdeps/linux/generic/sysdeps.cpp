@@ -27,6 +27,7 @@
 #define NR_exit 60
 #define NR_fcntl 72
 #define NR_arch_prctl 158
+#define NR_sys_futex 202
 #define NR_clock_gettime 228
 #define NR_pselect6 270
 
@@ -231,7 +232,23 @@ void sys_exit(int status) {
 
 #endif // MLIBC_BUILDING_RTDL
 
-int sys_futex_wait(int *pointer, int expected) STUB_ONLY
-int sys_futex_wake(int *pointer) STUB_ONLY
+#define FUTEX_WAIT 0
+#define FUTEX_WAKE 1
+
+int sys_futex_wait(int *pointer, int expected) {
+	auto ret = do_syscall(NR_sys_futex, pointer, FUTEX_WAIT, expected, nullptr);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_futex_wake(int *pointer) {
+	auto ret = do_syscall(NR_sys_futex, pointer, FUTEX_WAKE, 1);
+	if (int e = sc_error(ret); e)
+		return e;
+	auto num_woken = sc_int_result<int>(ret);
+	__ensure(num_woken >= 0 && num_woken <= 1);
+	return num_woken;
+}
 
 } // namespace mlibc
