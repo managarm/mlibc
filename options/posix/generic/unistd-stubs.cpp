@@ -185,10 +185,20 @@ int fchownat(int fd, const char *path, uid_t uid, gid_t gid, int flags) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int fdatasync(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int fdatasync(int fd) {
+	if(!mlibc::sys_fdatasync) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_fdatasync(fd); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
+
 int fexecve(int, char *const [], char *const []) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -197,6 +207,7 @@ long fpathconf(int, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int fsync(int fd) {
 	if(!mlibc::sys_fsync) {
 		MLIBC_MISSING_SYSDEP();
@@ -209,6 +220,7 @@ int fsync(int fd) {
 	}
 	return 0;
 }
+
 int ftruncate(int fd, off_t size) {
 	if(!mlibc::sys_ftruncate) {
 		MLIBC_MISSING_SYSDEP();
@@ -600,9 +612,15 @@ int symlinkat(const char *target_path, int dirfd, const char *link_path) {
 	}
 	return 0;
 }
+
 void sync(void) {
-	__ensure(!"Not implemented");
+	if(!mlibc::sys_sync) {
+		MLIBC_MISSING_SYSDEP();
+	} else {
+		mlibc::sys_sync();
+	}
 }
+
 unsigned long sysconf(int number) {
 	switch(number) {
 		case _SC_PAGE_SIZE:
