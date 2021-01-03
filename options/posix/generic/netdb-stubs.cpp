@@ -55,14 +55,24 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 	if (!node && !service)
 		return EAI_NONAME;
 
-	int socktype = 0, protocol = 0;
+	int socktype = 0, protocol = 0, family = AF_UNSPEC, flags = AI_V4MAPPED | AI_ADDRCONFIG;
 	if (hints) {
 		socktype = hints->ai_socktype;
 		protocol = hints->ai_protocol;
+		family = hints->ai_family;
+		flags = hints->ai_flags;
+
+		int mask = AI_V4MAPPED | AI_ADDRCONFIG | AI_NUMERICHOST | AI_PASSIVE |
+			AI_CANONNAME | AI_ALL | AI_NUMERICSERV;
+		if ((flags & mask) != flags)
+			return EAI_BADFLAGS;
+
+		if (family != AF_INET && family != AF_INET6 && family != AF_UNSPEC)
+			return EAI_FAMILY;
 	}
 
 	struct mlibc::service_buf serv_buf[SERV_MAX] = {};
-	int serv_count = mlibc::lookup_serv(serv_buf, service, protocol, socktype);
+	int serv_count = mlibc::lookup_serv(serv_buf, service, protocol, socktype, flags);
 	if (serv_count < 0)
 		return -serv_count;
 
@@ -78,6 +88,9 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 			return -addr_count;
 		if (!addr_count)
 			return EAI_NONAME;
+	} else {
+		/* There is no node specified */
+		addr_count = lookup_name_null(addr_buf, flags, family);
 	}
 
 	auto out = (struct mlibc::ai_buf *) calloc(serv_count * addr_count,
@@ -91,27 +104,31 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 			out[i].ai.ai_family = addr_buf.buf[i].family;
 			out[i].ai.ai_socktype = serv_buf[j].socktype;
 			out[i].ai.ai_protocol = serv_buf[j].protocol;
-			out[i].ai.ai_flags = AI_V4MAPPED | AI_ADDRCONFIG;
+			out[i].ai.ai_flags = flags;
 			out[i].ai.ai_addr = (struct sockaddr *) &out[i].sa;
-			out[i].ai.ai_canonname = canon.data();
+			if (canon.size())
+				out[i].ai.ai_canonname = canon.data();
+			else
+				out[i].ai.ai_canonname = NULL;
 			out[i].ai.ai_next = NULL;
 			switch (addr_buf.buf[i].family) {
 				case AF_INET:
 					out[i].ai.ai_addrlen = sizeof(struct sockaddr_in);
-					out[i].sa.sin.sin_port = serv_buf[j].port;
+					out[i].sa.sin.sin_port = htons(serv_buf[j].port);
 					out[i].sa.sin.sin_family = AF_INET;
 					memcpy(&out[i].sa.sin.sin_addr, addr_buf.buf[i].addr, 4);
 					break;
 				case AF_INET6:
 					out[i].ai.ai_addrlen = sizeof(struct sockaddr_in6);
-					out[i].sa.sin6.sin6_family = serv_buf[j].port;
+					out[i].sa.sin6.sin6_family = htons(serv_buf[j].port);
 					out[i].sa.sin6.sin6_family = AF_INET6;
 					memcpy(&out[i].sa.sin6.sin6_addr, addr_buf.buf[i].addr, 16);
 					break;
 			}
 		}
 	}
-	canon.detach();
+	if (canon.size())
+		canon.detach();
 
 	*res = &out[0].ai;
 	return 0;

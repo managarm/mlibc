@@ -13,7 +13,7 @@ struct service_buf {
 };
 
 int lookup_serv(struct service_buf *buf, const char *name, int proto,
-		int socktype);
+		int socktype, int flags);
 
 } // namespace mlibc
 

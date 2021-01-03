@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <mlibc/debug.hpp>
 
 namespace mlibc {
 
@@ -82,40 +83,47 @@ static int lookup_serv_file(struct service_buf *buf, const char *name,
 	return count;
 }
 
+
+// This function returns a negative error code, since a positive
+// return code means success.
 int lookup_serv(struct service_buf *buf, const char *name, int proto,
-		int socktype) {
+		int socktype, int flags) {
 	switch(socktype) {
 		case SOCK_STREAM:
 			if (!proto)
 				proto = IPPROTO_TCP;
 			else if (proto != IPPROTO_TCP)
-				return EAI_SERVICE;
+				return -EAI_SERVICE;
 			break;
 		case SOCK_DGRAM:
 			if (!proto)
 				proto = IPPROTO_UDP;
 			else if (proto != IPPROTO_UDP)
-				return EAI_SERVICE;
+				return -EAI_SERVICE;
+			break;
+		case 0:
 			break;
 		default:
 			if (name)
-				return EAI_SERVICE;
+				return -EAI_SERVICE;
 			buf[0].port = 0;
 			buf[0].socktype = socktype;
 			buf[0].protocol = proto;
 			return 1;
 	}
 
-	// at this point we expect the user to provide a name
-	if (!name)
-		return EAI_NONAME;
-
-	// handle the case where name is the port
-	char *end;
-	unsigned int port = strtoul(name, &end, 10);
+	char *end = nullptr;
+	unsigned int port = 0;
 	int count = 0;
-	// the end pointer is a null pointer so the name was a port
-	if (!*end) {
+
+	if (name) {
+		if (!*name)
+			return -EAI_SERVICE;
+		port = strtoul(name, &end, 10);
+	}
+	// The end pointer is a null pointer so the name was a port
+	// or the name was not specified.
+	if (!end || !*end) {
 		if (proto != IPPROTO_UDP) {
 			buf[count].port = port;
 			buf[count].protocol = IPPROTO_TCP;
@@ -130,6 +138,9 @@ int lookup_serv(struct service_buf *buf, const char *name, int proto,
 		}
 		return count;
 	}
+
+	if (flags & AI_NUMERICSERV)
+		return -EAI_NONAME;
 
 	return lookup_serv_file(buf, name, proto);
 }
