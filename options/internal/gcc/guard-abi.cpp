@@ -57,6 +57,7 @@ extern "C" [[ gnu::visibility("hidden") ]] int __cxa_guard_acquire(int64_t *ptr)
 		return 1;
 	}
 }
+
 extern "C" [[ gnu::visibility("hidden") ]] void __cxa_guard_release(int64_t *ptr) {
 	auto guard = reinterpret_cast<Guard *>(ptr);
 	// do a store-release so that compiler generated code can skip calling

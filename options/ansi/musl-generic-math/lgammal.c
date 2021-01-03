@@ -87,6 +87,7 @@
 
 #define _GNU_SOURCE
 #include "libm.h"
+#include "weak_alias.h"
 //#include "libc.h"
 
 #if LDBL_MANT_DIG == 53 && LDBL_MAX_EXP == 1024

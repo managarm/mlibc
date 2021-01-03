@@ -79,6 +79,7 @@
  */
 
 #include "libm.h"
+#include "weak_alias.h"
 //#include "libc.h"
 
 static const double

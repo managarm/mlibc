@@ -432,7 +432,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 				// Otherwise we have to set the waiters flag first.
 				unsigned int desired = expected | mutex_waiters_bit;
 				if(__atomic_compare_exchange_n((int *)&mutex->__mlibc_state,
-						&expected, desired, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED))
+						reinterpret_cast<int*>(&expected), desired, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED))
 					expected = desired;
 			}
 		}

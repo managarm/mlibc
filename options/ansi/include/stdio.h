@@ -121,6 +121,7 @@ int fgetc(FILE *stream);
 char *fgets(char *__restrict buffer, size_t max_size, FILE *__restrict stream);
 int fputc(int c, FILE *stream);
 int fputs(const char *__restrict string, FILE *__restrict stream);
+char *gets(char *s);
 int getc(FILE *stream);
 int getchar(void);
 int putc(int c, FILE *stream);

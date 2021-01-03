@@ -22,7 +22,7 @@
 #include <termios.h>
 #include <time.h>
 
-namespace mlibc [[gnu::visibility("hidden")]] {
+namespace [[gnu::visibility("hidden")]] mlibc {
 
 void sys_libc_log(const char *message);
 [[noreturn]] void sys_libc_panic();

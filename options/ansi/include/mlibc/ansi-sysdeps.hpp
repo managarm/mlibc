@@ -11,7 +11,7 @@
 #include <signal.h>
 #include <stdarg.h>
 
-namespace mlibc [[gnu::visibility("hidden")]] {
+namespace [[gnu::visibility("hidden")]] mlibc {
 
 [[noreturn]] void sys_exit(int status);
 [[noreturn, gnu::weak]] void sys_thread_exit();

@@ -317,7 +317,7 @@ char *realpath(const char *path, char *out) {
 	while(ps < path_view.size()) {
 		frg::string_view ps_view;
 		if(auto slash = strchr(path + ps, '/'); slash) {
-			ps_view = frg::string_view{path + ps, slash - (path + ps)};
+			ps_view = frg::string_view{path + ps, static_cast<size_t>(slash - (path + ps))};
 		}else{
 			ps_view = frg::string_view{path + ps, strlen(path) - ps};
 		}
@@ -333,7 +333,7 @@ char *realpath(const char *path, char *out) {
 		while(ls < lnk.size()) {
 			frg::string_view ls_view;
 			if(auto slash = strchr(lnk.data() + ls, '/'); slash) {
-				ls_view = frg::string_view{lnk.data() + ls, slash - (lnk.data() + ls)};
+				ls_view = frg::string_view{lnk.data() + ls, static_cast<size_t>(slash - (lnk.data() + ls))};
 			}else{
 				ls_view = frg::string_view{lnk.data() + ls, strlen(lnk.data()) - ls};
 			}
@@ -404,6 +404,21 @@ int grantpt(int fd) {
 }
 
 double strtod_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+long double strtold_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+float strtof_l(const char *__restrict string, char **__restrict end, locale_t loc){
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int strcoll_l(const char *s1, const char *s2, locale_t locale){
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

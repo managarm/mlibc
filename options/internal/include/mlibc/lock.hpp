@@ -21,7 +21,7 @@ struct FutexLock {
 		while(true) {
 			if(!expected) {
 				// Try to take the mutex here.
-				if(__atomic_compare_exchange_n(&_futex, &expected, 1,
+				if(__atomic_compare_exchange_n(&_futex, reinterpret_cast<int*>(&expected), 1,
 							false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
 					return;
 				}
@@ -33,7 +33,7 @@ struct FutexLock {
 					expected = 0;
 				}else{
 					unsigned int desired = expected | waitersBit;
-					if(__atomic_compare_exchange_n(&_futex, &expected, desired,
+					if(__atomic_compare_exchange_n(&_futex, reinterpret_cast<int*>(&expected), desired,
 							false, __ATOMIC_RELAXED, __ATOMIC_RELAXED))
 						expected = desired;
 				}
