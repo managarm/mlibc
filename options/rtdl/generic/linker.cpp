@@ -432,7 +432,8 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 				|| phdr->p_type == PT_NOTE
 				|| phdr->p_type == PT_GNU_EH_FRAME
 				|| phdr->p_type == PT_GNU_RELRO
-				|| phdr->p_type == PT_GNU_STACK) {
+				|| phdr->p_type == PT_GNU_STACK
+				|| phdr->p_type == PT_GNU_PROPERTY) {
 			// ignore the phdr
 		}else{
 			mlibc::panicLogger() << "Unexpected PHDR type 0x"
