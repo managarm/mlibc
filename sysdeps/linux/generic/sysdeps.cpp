@@ -26,6 +26,7 @@
 #define NR_recvmsg 47
 #define NR_exit 60
 #define NR_fcntl 72
+#define NR_unlink 87
 #define NR_arch_prctl 158
 #define NR_sys_futex 202
 #define NR_clock_gettime 228
@@ -180,6 +181,13 @@ int sys_fcntl(int fd, int cmd, va_list args, int *result) {
                 return e;
         *result = sc_int_result<int>(ret);
         return 0;
+}
+
+int sys_unlink(const char *path) {
+	auto ret = do_syscall(NR_unlink, path);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 #if __MLIBC_POSIX_OPTION
