@@ -79,7 +79,7 @@ size_t mbrtowc(wchar_t *wcp, const char *mbs, size_t mb_limit, mbstate_t *stp) {
 		errno = EILSEQ;
 		return static_cast<size_t>(-1);
 	}else{
-		size_t n = wseq.it - wcp;
+		size_t n = nseq.it - mbs;
 		if(!n) // Null-terminate resulting wide string.
 			*wcp = 0;
 		return n;
