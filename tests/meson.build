@@ -8,7 +8,8 @@ posix_test_cases = [
 	'inet_ntop',
 	'inet_pton',
 	'pthread_rwlock',
-	'getaddrinfo'
+	'getaddrinfo',
+	'dprintf'
 ]
 
 glibc_test_cases = [
