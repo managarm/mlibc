@@ -1,7 +1,8 @@
 ansi_test_cases = [
 	'sscanf',
 	'sprintf',
-	'snprintf'
+	'snprintf',
+	'utf8'
 ]
 
 posix_test_cases = [
