@@ -25,7 +25,7 @@ extern "C" {
 
 // values for pthread_{get,set}canceltype().
 #define PTHREAD_CANCEL_DEFERRED 0
-#define PTHREAD_CANCEL_ASYNCRONOUS 1
+#define PTHREAD_CANCEL_ASYNCHRONOUS 1
 
 // values for pthread_{get,set}cancelstate().
 #define PTHREAD_CANCEL_ENABLE 0

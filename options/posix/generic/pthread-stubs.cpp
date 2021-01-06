@@ -187,13 +187,82 @@ int pthread_getname_np(pthread_t, char *, size_t) {
 	__builtin_unreachable();
 }
 
-int pthread_setcanceltype(int, int *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+//pthread cancel functions
+namespace {
+	void __do_cancel() {
+		//TODO(geert): stub for now
+	}
 }
-int pthread_setcancelstate(int, int *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int pthread_setcanceltype(int type, int *oldtype) {
+	if (type != PTHREAD_CANCEL_DEFERRED && type != PTHREAD_CANCEL_ASYNCHRONOUS)
+		return EINVAL;
+
+	auto self = reinterpret_cast<Tcb *>(mlibc::get_current_tcb());
+	int old_value = self->cancelBits;
+	while (1) {
+		int new_value = old_value & ~tcbCancelAsyncBit;
+		if (type == PTHREAD_CANCEL_ASYNCHRONOUS)
+			new_value |= tcbCancelAsyncBit;
+
+		if (oldtype)
+			*oldtype = ((old_value & tcbCancelAsyncBit)
+					? PTHREAD_CANCEL_ASYNCHRONOUS
+					: PTHREAD_CANCEL_DEFERRED);
+
+		// Avoid unecessary atomic op.
+		if (old_value == new_value)
+			break;
+
+		int current_value = old_value;
+		if (__atomic_compare_exchange_n(&self->cancelBits, &current_value,
+					new_value, true, __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
+
+			if (mlibc::tcb_async_cancelled(new_value))
+				__do_cancel();
+
+			break;
+		}
+
+		old_value = current_value;
+	}
+
+	return 0;
+}
+int pthread_setcancelstate(int state, int *oldstate) {
+	if (state != PTHREAD_CANCEL_ENABLE && state != PTHREAD_CANCEL_DISABLE)
+		return EINVAL;
+
+	auto self = reinterpret_cast<Tcb *>(mlibc::get_current_tcb());
+	int old_value = self->cancelBits;
+	while (1) {
+		int new_value = old_value & ~tcbCancelEnableBit;
+		if (state == PTHREAD_CANCEL_ENABLE)
+			new_value |= tcbCancelEnableBit;
+
+		if (oldstate)
+			*oldstate = ((old_value & tcbCancelEnableBit)
+					? PTHREAD_CANCEL_ENABLE
+					: PTHREAD_CANCEL_DISABLE);
+
+		// Avoid unecessary atomic op.
+		if (old_value == new_value)
+			break;
+
+		int current_value = old_value;
+		if (__atomic_compare_exchange_n(&self->cancelBits, &current_value,
+					new_value, true, __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
+
+			if (mlibc::tcb_async_cancelled(new_value))
+				__do_cancel();
+
+			break;
+		}
+
+		old_value = current_value;
+	}
+
+	return 0;
 }
 void pthread_testcancel(void) {
 	__ensure(!"Not implemented");
