@@ -9,6 +9,21 @@ extern "C" {
 #include <bits/ansi/time_t.h>
 #include <bits/ansi/timespec.h>
 #include <bits/posix/pthread_t.h>
+#include <stddef.h>
+
+typedef struct __stack {
+        void *ss_sp;
+        size_t ss_size;
+        int ss_flags;
+} stack_t;
+
+typedef struct __ucontext {
+        unsigned long uc_flags;
+        struct __ucontext *uc_link;
+        stack_t uc_stack;
+        mcontext_t uc_mcontext;
+        sigset_t uc_sigmask;
+} ucontext_t;
 
 // functions to manage sigset_t
 int sigemptyset(sigset_t *);

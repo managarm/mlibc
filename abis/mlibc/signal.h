@@ -113,6 +113,18 @@ struct sigaction {
 	void (*sa_sigaction)(int, siginfo_t *, void *);
 };
 
+// TODO: this struct won't work on all arches (for example aarch64) but
+// we don't have an arch specific abi folder for mlibc yet.
+typedef struct {
+	unsigned long oldmask;
+	unsigned long gregs[16];
+	unsigned long pc, pr, sr;
+	unsigned long gbr, mach, macl;
+	unsigned long fpregs[16];
+	unsigned long xfpregs[16];
+	unsigned int fpscr, fpul, ownedfp;
+} mcontext_t;
+
 #ifdef __cplusplus
 }
 #endif
