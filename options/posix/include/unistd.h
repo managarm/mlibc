@@ -132,6 +132,7 @@ int execlp(const char *, const char *, ...);
 int execv(const char *, char *const []);
 int execve(const char *path, char *const argv[], char *const envp[]);
 int execvp(const char *, char *const[]);
+int execvpe(const char *path, char *const argv[], char *const envp[]);
 int faccessat(int, const char *, int, int);
 int fchdir(int fd);
 int fchown(int fd, uid_t uid, gid_t gid);
