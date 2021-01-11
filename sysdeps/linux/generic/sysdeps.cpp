@@ -18,19 +18,25 @@
 #define NR_lseek 8
 #define NR_mmap 9
 #define NR_sigaction 13
+#define NR_rt_sigprocmask 14
 #define NR_ioctl 16
+#define NR_pipe 22
 #define NR_select 23
 #define NR_socket 41
 #define NR_connect 42
 #define NR_sendmsg 46
 #define NR_recvmsg 47
+#define NR_fork 57
+#define NR_execve 59
 #define NR_exit 60
+#define NR_wait4 61
 #define NR_fcntl 72
 #define NR_unlink 87
 #define NR_arch_prctl 158
 #define NR_sys_futex 202
 #define NR_clock_gettime 228
 #define NR_pselect6 270
+#define NR_pipe2 293
 
 #define ARCH_SET_FS	0x1002
 
@@ -228,6 +234,50 @@ int sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
         if (int e = sc_error(ret); e)
                 return e;
         *num_events = sc_int_result<int>(ret);
+        return 0;
+}
+
+int sys_pipe(int *fds, int flags) {
+        if(flags) {
+                auto ret = do_syscall(NR_pipe2, fds, flags);
+                if (int e = sc_error(ret); e)
+                        return e;
+                return 0;
+        } else {
+                auto ret = do_syscall(NR_pipe, fds);
+                if (int e = sc_error(ret); e)
+                        return e;
+                return 0;
+        }
+}
+
+int sys_fork(pid_t *child) {
+        auto ret = do_syscall(NR_fork);
+        if (int e = sc_error(ret); e)
+                return e;
+        *child = sc_int_result<int>(ret);
+        return 0;
+}
+
+int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
+        auto ret = do_syscall(NR_wait4, pid, status, flags, 0);
+        if (int e = sc_error(ret); e)
+                return e;
+        *ret_pid = sc_int_result<int>(ret);
+        return 0;
+}
+
+int sys_execve(const char *path, char *const argv[], char *const envp[]) {
+        auto ret = do_syscall(NR_execve, path, argv, envp);
+        if (int e = sc_error(ret); e)
+                return e;
+        return 0;
+}
+
+int sys_sigprocmask(int how, const sigset_t *set, sigset_t *old) {
+        auto ret = do_syscall(NR_rt_sigprocmask, how, set, old, NSIG / 8);
+        if (int e = sc_error(ret); e)
+                return e;
         return 0;
 }
 
