@@ -162,6 +162,11 @@ int execvp(const char *file, char *const argv[]) {
 	return -1;
 }
 
+int execvpe(const char *path, char *const argv[], char *const envp[]) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 int faccessat(int dirfd, const char *pathname, int mode, int flags) {
 	if(!mlibc::sys_faccessat) {
 		MLIBC_MISSING_SYSDEP();
