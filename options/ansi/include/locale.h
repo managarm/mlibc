@@ -14,6 +14,8 @@
 #define LC_TIME 6
 #define LC_MESSAGES 7
 
+#define LC_GLOBAL_LOCALE ((locale_t) -1L)
+
 #define LC_CTYPE_MASK (1<<LC_CTYPE)
 #define LC_NUMERIC_MASK (1<<LC_NUMERIC)
 #define LC_TIME_MASK (1<<LC_TIME)
