@@ -15,3 +15,8 @@ void endutent(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+struct utmp *pututline(const struct utmp *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

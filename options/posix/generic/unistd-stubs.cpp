@@ -273,10 +273,11 @@ int gethostname(char *buffer, size_t bufsize) {
 	return 0;
 }
 
+// Code taken from musl
 char *getlogin(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return getenv("LOGNAME");
 }
+
 int getlogin_r(char *, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -660,6 +661,9 @@ unsigned long sysconf(int number) {
 			// TODO: This should be obsolete?
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_CLK_TCK) is obsolete and returns arbitrary value 1000000\e[39m" << frg::endlog;
 			return 1000000;
+		case _SC_NGROUPS_MAX:
+			// On linux, it is defined to 65536 in most cases, so define it to be 65536
+			return 65536;
 		default:
 			mlibc::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented, number: " << number << "\e[39m" << frg::endlog;
 			__builtin_unreachable();
@@ -729,9 +733,47 @@ int getpagesize() {
 	return mlibc::page_size;
 }
 
-char *getpass(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+// Code taken from musl
+// GLIBC extension for stdin/stdout
+char *getpass(const char *prompt) {
+	int fdin, fdout;
+	struct termios s, t;
+	ssize_t l;
+	static char password[128];
+
+	if((fdin = open("/dev/tty", O_RDWR|O_NOCTTY|O_CLOEXEC)) < 0) {
+		fdin = STDIN_FILENO;
+		fdout = STDOUT_FILENO;
+	} else {
+		fdout = fdin;
+	}
+
+	tcgetattr(fdin, &t);
+	s = t;
+	t.c_lflag &= ~(ECHO | ISIG);
+	t.c_lflag |= ICANON;
+	t.c_iflag &= ~(INLCR | IGNCR);
+	t.c_iflag |= ICRNL;
+	tcsetattr(fdin, TCSAFLUSH, &t);
+	tcdrain(fdin);
+
+	dprintf(fdout, "%s", prompt);
+
+	l = read(fdin, password, sizeof password);
+	if(l >= 0) {
+		if(l > 0 && password[l - 1] == '\n' || l == sizeof password)
+			l--;
+		password[l] = 0;
+	}
+
+	tcsetattr(fdin, TCSAFLUSH, &s);
+
+	dprintf(fdout, "\n");
+	if(fdin != STDIN_FILENO) {
+		close(fdin);
+	}
+
+	return l < 0 ? 0 : password;
 }
 
 char *get_current_dir_name(void) {
@@ -924,6 +966,21 @@ int access(const char *path, int mode) {
 		return -1;
 	}
 	return 0;
+}
+
+char *getusershell(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+void setusershell(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+void endusershell(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
 }
 
 int isatty(int fd) {

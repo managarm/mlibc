@@ -264,6 +264,7 @@ if not headers_only
 		shared_library('rt', 'librt/src/dummy.cpp', install: true)
 		shared_library('util', 'libutil/src/dummy.cpp', install: true)
 		shared_library('m', 'libm/src/dummy.cpp', install: true)
+		shared_library('crypt', 'libcrypt/src/dummy.cpp', install: true)
 	else
 		ldso_lib = static_library('ld', rtdl_sources,
 				name_prefix: '',
@@ -291,6 +292,7 @@ if not headers_only
 		static_library('rt', 'librt/src/dummy.cpp', install: true)
 		static_library('util', 'libutil/src/dummy.cpp', install: true)
 		static_library('m', 'libm/src/dummy.cpp', install: true)
+		static_library('crypt', 'libcrypt/src/dummy.cpp', install: true)
 	endif
 endif
 

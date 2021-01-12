@@ -158,3 +158,13 @@ int initgroups(const char *user, gid_t group) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+int putgrent(const struct group *, FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+struct group *fgetgrent(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

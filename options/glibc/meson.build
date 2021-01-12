@@ -5,6 +5,7 @@ libc_sources += files(
 	'generic/sys-ioctl.cpp',
 	'generic/err.cpp',
 	'generic/resolv-stubs.cpp',
+	'generic/shadow-stubs.cpp',
 )
 
 if not no_headers
@@ -16,7 +17,8 @@ if not no_headers
 		'include/sysexits.h',
 		'include/resolv.h',
 		'include/endian.h',
-		'include/ar.h'
+		'include/ar.h',
+		'include/shadow.h'
 	)
 	install_headers(
 		'include/sys/ioctl.h',

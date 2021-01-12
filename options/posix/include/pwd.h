@@ -5,6 +5,7 @@
 #include <abi-bits/uid_t.h>
 #include <abi-bits/gid_t.h>
 #include <bits/size_t.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,6 +28,8 @@ int getpwnam_r(const char *, struct passwd *, char *, size_t, struct passwd **);
 struct passwd *getpwuid(uid_t);
 int getpwuid_r(uid_t, struct passwd *, char *, size_t, struct passwd **);
 void setpwent(void);
+int putpwent(const struct passwd *, FILE *);
+struct passwd *fgetpwent(FILE *);
 
 #ifdef __cplusplus
 }

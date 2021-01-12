@@ -31,6 +31,7 @@ if not no_headers
 		'include/pty.h',
 		'include/utmp.h',
 		'include/values.h',
+		'include/lastlog.h',
 	)
 	install_headers(
 		'include/asm/ioctl.h',

@@ -43,6 +43,12 @@ struct utmp {
 	char __unused[20];
 };
 
+struct lastlog {
+	time_t ll_time;
+	char ll_line[UT_LINESIZE];
+	char ll_host[UT_HOSTSIZE];
+};
+
 /* Hacks for compability reasons */
 #define ut_name ut_user
 #ifndef _NO_UT_TIME
@@ -54,6 +60,7 @@ struct utmp {
 void setutent(void);
 struct utmp *getutent(void);
 void endutent(void);
+struct utmp *pututline(const struct utmp *);
 
 #ifdef __cplusplus
 }

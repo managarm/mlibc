@@ -422,7 +422,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 		}
 	}
 
-	mlibc::panicLogger() << "rtdl: Could not find symbol in __dlapi_reverse()" << frg::endlog;
+	mlibc::infoLogger() << "rtdl: Could not find symbol in __dlapi_reverse()" << frg::endlog;
 	return -1;
 }
 

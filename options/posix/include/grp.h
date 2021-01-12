@@ -2,6 +2,7 @@
 #define _GRP_H
 
 #include <stddef.h>
+#include <stdio.h>
 #include <abi-bits/gid_t.h>
 
 #ifdef __cplusplus
@@ -22,6 +23,8 @@ int getgrgid_r(gid_t, struct group *, char *, size_t, struct group **);
 struct group *getgrnam(const char *);
 int getgrnam_r(const char *, struct group *, char *, size_t, struct group **);
 void setgrent(void);
+int putgrent(const struct group *, FILE *);
+struct group *fgetgrent(FILE *);
 
 int setgroups(size_t size, const gid_t *list);
 int initgroups(const char *user, gid_t group);

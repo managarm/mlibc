@@ -90,7 +90,7 @@ struct passwd *getpwnam(const char *name) {
 		clear_entry(&global_entry);
 		if(!extract_entry(line, &global_entry))
 			continue;
-		if(global_entry.pw_name == name) {
+		if(!strcmp(global_entry.pw_name, name)) {
 			fclose(file);
 			return &global_entry;
 		}
@@ -138,3 +138,12 @@ void setpwent(void) {
 
 void endpwent(void) { }
 
+int putpwent(const struct passwd *, FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+struct passwd *fgetpwent(FILE *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
