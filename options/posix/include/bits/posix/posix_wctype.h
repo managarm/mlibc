@@ -1,14 +1,12 @@
 #ifndef _POSIX_WCTYPE_H
 #define _POSIX_WCTYPE_H
 
+#include <bits/posix/locale_t.h>
 #include <bits/wint_t.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef unsigned long wctype_t;
-typedef unsigned long wctrans_t;
 
 int iswalnum_l(wint_t, locale_t);
 int iswblank_l(wint_t, locale_t);

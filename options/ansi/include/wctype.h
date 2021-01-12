@@ -1,6 +1,7 @@
 #ifndef _WCTYPE_H
 #define _WCTYPE_H
 
+#include <bits/feature.h>
 #include <bits/wint_t.h>
 
 #ifdef __cplusplus

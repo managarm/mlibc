@@ -1,4 +1,3 @@
-
 #ifndef _LOCALE_T_H
 #define _LOCALE_T_H
 
@@ -13,4 +12,3 @@ typedef void *locale_t;
 #endif
 
 #endif // _LOCALE_T_H
-

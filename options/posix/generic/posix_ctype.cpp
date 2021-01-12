@@ -1,6 +1,3 @@
-#include <bits/posix/posix_ctype.h>
-#include <bits/posix/posix_wctype.h>
-
 #include <ctype.h>
 #include <wctype.h>
 
