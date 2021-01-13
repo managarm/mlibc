@@ -105,6 +105,10 @@ int execv(const char *path, char *const argv[]) {
 }
 
 int execvp(const char *file, char *const argv[]) {
+	return execvpe(file, argv, environ);
+}
+
+int execvpe(const char *file, char *const argv[], char *const envp[]) {
 	if(!mlibc::sys_execve) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
@@ -112,7 +116,7 @@ int execvp(const char *file, char *const argv[]) {
 	}
 
 	if(strchr(file, '/')) {
-		int e = mlibc::sys_execve(file, argv, environ);
+		int e = mlibc::sys_execve(file, argv, envp);
 		__ensure(e && "sys_execve() is supposed to never return with success");
 		errno = e;
 		return -1;
@@ -140,8 +144,8 @@ int execvp(const char *file, char *const argv[]) {
 		path += "/";
 		path += file;
 
-		mlibc::infoLogger() << "mlibc: execvp() tries '" << path.data() << "'" << frg::endlog;
-		int e = mlibc::sys_execve(path.data(), argv, environ);
+		mlibc::infoLogger() << "mlibc: execvpe() tries '" << path.data() << "'" << frg::endlog;
+		int e = mlibc::sys_execve(path.data(), argv, envp);
 		__ensure(e && "sys_execve() is supposed to never return with success");
 		switch(e) {
 		case ENOENT:
@@ -160,11 +164,6 @@ int execvp(const char *file, char *const argv[]) {
 
 	errno = res;
 	return -1;
-}
-
-int execvpe(const char *path, char *const argv[], char *const envp[]) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
 }
 
 int faccessat(int dirfd, const char *pathname, int mode, int flags) {

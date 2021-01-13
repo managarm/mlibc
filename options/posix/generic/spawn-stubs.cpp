@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <sched.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <sys/wait.h>
 
@@ -249,24 +250,34 @@ fail:
 }
 
 int posix_spawnattr_init(posix_spawnattr_t *attr) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	*attr = (posix_spawnattr_t){0};
+	return 0;
 }
 
 int posix_spawnattr_destroy(posix_spawnattr_t *attr) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return 0;
 }
 
 int posix_spawnattr_setflags(posix_spawnattr_t *attr, short flags) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	const unsigned all_flags = 
+			POSIX_SPAWN_RESETIDS |
+			POSIX_SPAWN_SETPGROUP |
+			POSIX_SPAWN_SETSIGDEF |
+			POSIX_SPAWN_SETSIGMASK |
+			POSIX_SPAWN_SETSCHEDPARAM |
+			POSIX_SPAWN_SETSCHEDULER |
+			POSIX_SPAWN_USEVFORK |
+			POSIX_SPAWN_SETSID;
+	if(flags & ~all_flags)
+		return EINVAL;
+	attr->__flags = flags;
+	return 0;
 }
 
 int posix_spawnattr_setsigdefault(posix_spawnattr_t *__restrict attr,
 		const sigset_t *__restrict sigdefault) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	attr->__def = *sigdefault;
+	return 0;
 }
 
 int posix_spawnattr_setschedparam(posix_spawnattr_t *__restrict attr,
@@ -282,48 +293,84 @@ int posix_spawnattr_setschedpolicy(posix_spawnattr_t *attr, int schedpolicy) {
 
 int posix_spawnattr_setsigmask(posix_spawnattr_t *__restrict attr,
 		const sigset_t *__restrict sigmask) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	attr->__mask = *sigmask;
+	return 0;
 }
 
 int posix_spawnattr_setpgroup(posix_spawnattr_t *attr, pid_t pgroup) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	attr->__pgrp = pgroup;
+	return 0;
 }
 
 int posix_spawn_file_actions_init(posix_spawn_file_actions_t *file_actions) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	file_actions->__actions = 0;
+	return 0;
 }
 
 int posix_spawn_file_actions_destroy(posix_spawn_file_actions_t *file_actions) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	struct fdop *op = (struct fdop *)file_actions->__actions, *next;
+	while(op) {
+		next = op->next;
+		free(op);
+		op = next;
+	}
+	return 0;
 }
 
 int posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t *file_actions,
 		int fildes, int newfildes) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	struct fdop *op = (struct fdop *)malloc(sizeof *op);
+	if(!op)
+		return ENOMEM;
+	op->cmd = FDOP_DUP2;
+	op->srcfd = fildes;
+	op->fd = newfildes;
+	if((op->next = (struct fdop *)file_actions->__actions))
+		op->next->prev = op;
+	op->prev = 0;
+	file_actions->__actions = op;
+	return 0;
 }
 
 int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *file_actions,
 		int fildes) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	struct fdop *op = (struct fdop *)malloc(sizeof *op);
+	if(!op)
+		return ENOMEM;
+	op->cmd = FDOP_CLOSE;
+	op->fd = fildes;
+	if((op->next = (struct fdop *)file_actions->__actions))
+		op->next->prev = op;
+	op->prev = 0;
+	file_actions->__actions = op;
+	return 0;
 }
 
 int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t *__restrict file_actions,
 		int fildes, const char *__restrict path, int oflag, mode_t mode) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	struct fdop *op = (struct fdop *)malloc(sizeof *op + strlen(path) + 1);
+	if(!op)
+		return ENOMEM;
+	op->cmd = FDOP_OPEN;
+	op->fd = fildes;
+	op->oflag = oflag;
+	op->mode = mode;
+	strcpy(op->path, path);
+	if((op->next = (struct fdop *)file_actions->__actions))
+		op->next->prev = op;
+	op->prev = 0;
+	file_actions->__actions = op;
+	return 0;
 }
 
 int posix_spawnp(pid_t *__restrict pid, const char *__restrict file,
 		const posix_spawn_file_actions_t *file_actions,
 		const posix_spawnattr_t *__restrict attrp,
 		char *const argv[], char *const envp[]) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	posix_spawnattr_t spawnp_attr = { 0 };
+	if(attrp)
+		spawnp_attr = *attrp;
+	spawnp_attr.__fn = (void *)execvpe;	
+	return posix_spawn(pid, file, file_actions, &spawnp_attr, argv, envp);
 }
 
