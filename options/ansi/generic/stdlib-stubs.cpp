@@ -281,17 +281,16 @@ void qsort(void *base, size_t count, size_t size,
 	}
 }
 
-int abs(int number) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int abs(int num) {
+	return num < 0 ? -num : num;
 }
-long labs(long number) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+long labs(long num) {
+	return num < 0 ? -num : num;
 }
-long long llabs(long long number) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+long long llabs(long long num) {
+	return num < 0 ? -num : num;
 }
 
 div_t div(int number, int denom) {
