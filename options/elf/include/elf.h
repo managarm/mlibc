@@ -279,6 +279,18 @@ typedef struct {
 	Elf64_Xword sh_entsize;
 } Elf64_Shdr;
 
+typedef struct {
+  Elf32_Word n_namesz;
+  Elf32_Word n_descsz;
+  Elf32_Word n_type;
+} Elf32_Nhdr;
+
+typedef struct {
+  Elf64_Word n_namesz;
+  Elf64_Word n_descsz;
+  Elf64_Word n_type;
+} Elf64_Nhdr;
+
 /* ST_TYPE (subfield of st_info) values (symbol type) */
 #define STT_NOTYPE	0
 #define STT_OBJECT	1
