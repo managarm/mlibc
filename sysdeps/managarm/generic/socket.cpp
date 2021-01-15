@@ -91,48 +91,39 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 
 int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	SignalGuard sguard;
+
 	auto handle = getHandleForFd(fd);
 	if (!handle)
 		return EBADF;
-
-	HelAction actions[5];
-	globalQueue.trim();
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_CONNECT);
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionImbueCredentials;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionSendFromBuffer;
-	actions[3].flags = kHelItemChain;
-	actions[3].buffer = const_cast<struct sockaddr *>(addr_ptr);
-	actions[3].length = addr_length;
-	actions[4].type = kHelActionRecvInline;
-	actions[4].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 5,
-			globalQueue.getQueue(), 0, 0));
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
-	auto send_req = parseSimple(element);
-	auto send_addr = parseSimple(element);
-	auto recv_resp = parseInline(element);
+	auto [offer, send_req, imbue_creds, send_addr, recv_resp] =
+			exchangeMsgsSync(
+					handle,
+					helix_ng::offer(
+							helix_ng::sendBuffer(ser.data(), ser.size()),
+							helix_ng::imbueCredentials(),
+							helix_ng::sendBuffer(const_cast<struct sockaddr *>(addr_ptr), addr_length),
+							helix_ng::recvInline()
+					)
+			);
 
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(send_addr->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(imbue_creds.error());
+	HEL_CHECK(send_addr.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if(resp.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
+	}
 	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 	return 0;
 }
