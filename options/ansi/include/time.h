@@ -10,7 +10,7 @@
 
 // [7.27.1] Components of time
 
-#define CLOCKS_PER_SEC 1000000000
+#define CLOCKS_PER_SEC ((clock_t)1000000)
 
 #define TIME_UTC 1
 
@@ -98,6 +98,8 @@ int clock_nanosleep(clockid_t, int, const struct timespec *, struct timespec *);
 int clock_settime(clockid_t, const struct timespec *);
 
 struct tm *localtime_r(const time_t *, struct tm *);
+char *asctime_r(const struct tm *tm, char *buf);
+char *ctime_r(const time_t *, char *);
 
 char *strptime(const char *__restrict, const char *__restrict,
 		struct tm *__restrict);
