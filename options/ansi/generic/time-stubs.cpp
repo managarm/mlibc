@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <limits.h>
 #include <wchar.h>
 #include <stdlib.h>
 
@@ -29,10 +30,19 @@ static file_window *get_localtime_window() {
 	return &window;
 }
 
+// Function taken from musl
 clock_t clock(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	struct timespec ts;
+
+	if(clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts))
+		return -1;
+
+	if(ts.tv_sec > LONG_MAX / 1000000 || ts.tv_nsec / 1000 > LONG_MAX - 1000000 * ts.tv_sec)
+		return -1;
+
+	return ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 }
+
 double difftime(time_t a, time_t b){
 	return a - b;
 }
@@ -40,9 +50,15 @@ time_t mktime(struct tm *ptr){
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int timespec_get(struct timespec *ptr, int base){
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+/* There is no other implemented value than TIME_UTC; all other values
+ * are considered erroneous. */
+// Function taken from musl
+int timespec_get(struct timespec *ts, int base) {
+	if(base != TIME_UTC)
+		return 0;
+	int ret = clock_gettime(CLOCK_REALTIME, ts);
+	return ret < 0 ? 0 : base;
 }
 
 char *asctime(const struct tm *ptr){
@@ -512,6 +528,16 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 	res->tm_gmtoff = offset;
 
 	return res;
+}
+
+char *asctime_r(const struct tm *tm, char *buf) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+char *ctime_r(const time_t *, char *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
 }
 
 char *strptime(const char *__restrict, const char *__restrict,
