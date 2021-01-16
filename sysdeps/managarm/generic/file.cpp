@@ -3312,18 +3312,17 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
 	// TODO: implement NO_SUCH_FD
 /*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
 		return EBADF;
-	}else*/ if(resp.error() == managarm::fs::Errors::SUCCESS) {
+	}else*/ if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+		return EINVAL; // FD does not support writes.
+	}else{
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		//FIXME: handle partial writes
 		*bytes_written = size;
 		return 0;
-	}else{
-		__ensure(!"Unexpected error");
-		__builtin_unreachable();
 	}
 }
 
