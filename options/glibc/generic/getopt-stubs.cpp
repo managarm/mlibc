@@ -76,6 +76,16 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 						fprintf(stderr, "--%s requires an argument.\n", arg);
 					return '?';
 				}
+			}else if(longopts[k].has_arg == optional_argument) {
+				if(s) {
+					// Consume the long option and its argument.
+					optarg = s + 1;
+					optind++;
+				}else{
+					// Consume the long option.
+					optarg = nullptr;
+					optind++;
+				}
 			}else{
 				__ensure(longopts[k].has_arg == no_argument);
 
