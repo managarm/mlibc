@@ -141,6 +141,18 @@ size_t strftime(char *__restrict dest, size_t max_size,
 				return 0;
 			p += chunk;
 			c += 2;
+		}else if (*(c + 1) == 'R') {
+			auto chunk = snprintf(p, space, "%.2i:%.2i", tm->tm_hour, tm->tm_min);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
+		}else if (*(c + 1) == 'T') {
+			auto chunk = snprintf(p, space, "%.2i:%.2i:%.2i", tm->tm_hour, tm->tm_min, tm->tm_sec);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
 		}else if (*(c + 1) == 'F') {
 			auto chunk = snprintf(p, space, "%d/%.2d/%.2d", 1900 + tm->tm_year, tm->tm_mon + 1,
 					tm->tm_mday);
