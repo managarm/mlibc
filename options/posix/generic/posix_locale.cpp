@@ -14,3 +14,7 @@ void freelocale(locale_t locobj) {
 locale_t uselocale(locale_t locobj) {
 	return nullptr;
 }
+
+locale_t duplocale(locale_t locobj) {
+	return nullptr;
+}
