@@ -89,6 +89,7 @@
 #define PRIxPTR "lx"
 #define PRIXPTR "lX"
 
+#define SCNu32 "u"
 #define SCNu64 "lu"
 #define SCNuMAX "lu"
 
