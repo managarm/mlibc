@@ -10,6 +10,7 @@ extern "C" {
 locale_t newlocale(int category_mask, const char *locale, locale_t base);
 void freelocale(locale_t locobj);
 locale_t uselocale(locale_t locobj);
+locale_t duplocale(locale_t locobj);
 
 #ifdef __cplusplus
 }
