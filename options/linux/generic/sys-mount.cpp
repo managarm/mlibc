@@ -19,4 +19,12 @@ int mount(const char *source, const char *target,
 	return 0;
 }
 
+int umount(const char *target) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 
+int umount2(const char *target, int flags) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
