@@ -185,3 +185,7 @@ long telldir(DIR *) {
 	__builtin_unreachable();
 }
 
+int versionsort(const struct dirent **, const struct dirent **) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
