@@ -85,4 +85,5 @@
 #define ESHUTDOWN 1079
 #define EHOSTDOWN 1080
 #define EBADFD 1081
+#define ENOMEDIUM 1082
 #endif // _ABIBITS_ERRNO_H

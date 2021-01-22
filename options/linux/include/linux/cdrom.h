@@ -23,6 +23,8 @@
 
 #define CDSL_CURRENT INT_MAX
 
+#define CDS_NO_DISC 1
+#define CDS_TRAY_OPEN 2
 #define CDS_DISC_OK 4
 
 #ifdef __cplusplus
