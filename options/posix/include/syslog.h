@@ -13,6 +13,7 @@ extern "C" {
 #define LOG_NDELAY 0x08
 #define LOG_ODELAY 0x04
 #define LOG_NOWAIT 0x10
+#define LOG_PERROR 0x20
 
 #define LOG_KERN (0<<3)
 #define LOG_USER (1<<3)
