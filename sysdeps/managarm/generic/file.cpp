@@ -3167,6 +3167,11 @@ int sys_openat(int dirfd, const char *path, int flags, int *fd) {
 		return ENOENT;
 	}else if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
 		return EEXIST;
+	}else if(resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
+		return ENOTDIR;
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_OPERATION_TARGET) {
+		mlibc::infoLogger() << "\e[31mmlibc: openat unimplemented for this file " << path << "\e[39m" << frg::endlog;
+		return EINVAL;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*fd = resp.fd();
