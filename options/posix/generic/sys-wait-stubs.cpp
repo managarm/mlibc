@@ -32,3 +32,8 @@ pid_t wait3(int *, int, struct rusage *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+pid_t wait4(pid_t, int *, int, struct rusage *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
