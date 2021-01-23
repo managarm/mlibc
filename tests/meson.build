@@ -5,7 +5,8 @@ ansi_test_cases = [
 	'utf8',
 	'strtol',
 	'abs',
-	'strverscmp'
+	'strverscmp',
+	'strftime'
 ]
 
 posix_test_cases = [
