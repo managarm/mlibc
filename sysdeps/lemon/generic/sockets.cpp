@@ -11,7 +11,7 @@ namespace mlibc{
         long ret = syscall(SYS_SOCKET, domain, type, protocol);
 
         if(ret < 0){
-            return ret;
+            return -ret;
         }
 
         *fd = ret;
@@ -31,7 +31,7 @@ namespace mlibc{
         long ret = syscall(SYS_ACCEPT, fd);
 
         if(ret < 0){
-            return ret;
+            return -ret;
         }
 
         *newfd = ret;
@@ -47,7 +47,7 @@ namespace mlibc{
         long ret = syscall(SYS_RECVMSG, sockfd, hdr, flags);
 
         if(ret < 0){
-            return ret;
+            return -ret;
         }
 
         *length = ret;
@@ -59,11 +59,31 @@ namespace mlibc{
         long ret = syscall(SYS_SENDMSG, sockfd, hdr, flags);
 
         if(ret < 0){
-            return ret;
+            return -ret;
         }
 
         *length = ret;
 
         return 0;
     }
+
+	int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t size){
+        long ret = syscall(SYS_SET_SOCKET_OPTIONS, fd, layer, number, buffer, size);
+
+		if(ret < 0){
+            return -ret;
+        }
+
+		return 0;
+	}
+
+	int sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size){
+        long ret = syscall(SYS_GET_SOCKET_OPTIONS, fd, layer, number, buffer, size);
+
+		if(ret < 0){
+            return -ret;
+        }
+
+		return 0;
+	}
 }
