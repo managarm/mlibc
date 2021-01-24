@@ -1,8 +1,13 @@
 
 #include <strings.h>
+#include <string.h>
 
 #include <ctype.h>
 #include <bits/ensure.h>
+
+char *index (const char *s, int c) {
+	return strchr(s, c);
+}
 
 int ffs(int word) {
 	__ensure(!"Not implemented");
