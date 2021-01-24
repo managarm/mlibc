@@ -34,6 +34,7 @@ extern "C" {
 #define O_RSYNC __MLIBC_O_RSYNC
 #define O_SYNC __MLIBC_O_SYNC
 #define O_CLOEXEC __MLIBC_O_CLOEXEC
+#define O_PATH __MLIBC_O_PATH
 
 // MISSING: AT macros
 
