@@ -25,8 +25,10 @@
 #include <sys/timerfd.h>
 #include <sys/signalfd.h>
 #include <sys/sysmacros.h>
+#include <linux/kd.h>
 #include <linux/input.h>
 #include <linux/cdrom.h>
+#include <linux/vt.h>
 #include <drm/drm.h>
 #include <drm/drm_fourcc.h>
 
@@ -3577,6 +3579,46 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		param->resolution = resp.input_resolution();
 
 		*result = resp.result();
+		return 0;
+	}else if(request == KDSETMODE) {
+		auto param = reinterpret_cast<unsigned int *>(arg);
+		mlibc::infoLogger() << "\e[35mmlibc: KD_SETMODE(" << frg::hex_fmt(param) << ") is a no-op" << frg::endlog;
+
+		*result = 0;
+		return 0;
+	}else if(request == KDGETMODE) {
+		auto param = reinterpret_cast<unsigned int *>(arg);
+		mlibc::infoLogger() << "\e[35mmlibc: KD_GETMODE is a no-op" << frg::endlog;
+		*param = 0;
+
+		*result = 0;
+		return 0;
+	}else if(request == KDSKBMODE) {
+		auto param = reinterpret_cast<long>(arg);
+		mlibc::infoLogger() << "\e[35mmlibc: KD_SKBMODE(" << frg::hex_fmt(param) << ") is a no-op" << frg::endlog;
+
+		*result = 0;
+		return 0;
+	}else if(request == VT_SETMODE) {
+		auto param = reinterpret_cast<struct vt_mode *>(arg);
+		mlibc::infoLogger() << "\e[35mmlibc: VT_SETMODE is a no-op" << frg::endlog;
+
+		*result = 0;
+		return 0;
+	}else if(request == VT_GETSTATE) {
+		auto param = reinterpret_cast<struct vt_stat *>(arg);
+
+		param->v_active = 0;
+		param->v_signal = 0;
+		param->v_state = 0;
+
+		mlibc::infoLogger() << "\e[35mmlibc: VT_GETSTATE is a no-op" << frg::endlog;
+
+		*result = 0;
+		return 0;
+	}else if(request == VT_ACTIVATE || request == VT_WAITACTIVE) {
+		mlibc::infoLogger() << "\e[35mmlibc: VT_ACTIVATE/VT_WAITACTIVE are no-ops" << frg::endlog;
+		*result = 0;
 		return 0;
 	}
 
