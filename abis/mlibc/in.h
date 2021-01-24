@@ -99,6 +99,7 @@ struct group_source_req {
 #define IP_TOS 1
 #define IP_TTL 2
 #define IP_OPTIONS 4
+#define IP_PKTINFO	8
 
 #define IP_MULTICAST_IF           32
 #define IP_MULTICAST_TTL          33
