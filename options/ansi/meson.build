@@ -26,6 +26,7 @@ if not no_headers
 	install_headers(
 		'include/alloca.h',
 		'include/assert.h',
+		'include/complex.h',
 		'include/ctype.h',
 		'include/errno.h',
 		'include/fenv.h',
