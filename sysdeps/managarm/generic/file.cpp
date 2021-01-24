@@ -1897,10 +1897,37 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	}
 	case DRM_IOCTL_SET_CLIENT_CAP: {
 		auto param = reinterpret_cast<drm_set_client_cap *>(arg);
-		mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_SET_CLIENT_CAP("
-				<< param->capability << ") is not implemented correctly\e[39m"
-				<< frg::endlog;
-		return EINVAL;
+		mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_SET_CLIENT_CAP(" << param->capability << ") ignores its value\e[39m" << frg::endlog;
+
+		globalQueue.trim();
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+		req.set_drm_capability(param->capability);
+
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+		if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+			return EINVAL;
+		}else{
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+			param->value = resp.drm_value();
+			*result = resp.result();
+			return 0;
+		}
 	}
 	case DRM_IOCTL_GET_MAGIC: {
 		auto param = reinterpret_cast<drm_auth *>(arg);
