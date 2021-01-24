@@ -53,6 +53,7 @@ libc_sources += files(
 	'generic/search.cpp',
 	'generic/sys-msg.cpp',
 	'generic/sys-sem.cpp',
+	'generic/wordexp-stubs.cpp',
 	'musl-generic/fnmatch.cpp',
 	'musl-generic/glob.cpp',
 )
@@ -83,6 +84,7 @@ if not no_headers
 		'include/unistd.h',
 		'include/utime.h',
 		'include/ucontext.h',
+		'include/wordexp.h',
 		'include/semaphore.h',
 		'include/crypt.h',
 	)
