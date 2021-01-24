@@ -3,6 +3,7 @@
 #define _STDIO_H
 
 #include <abi-bits/seek-whence.h>
+#include <abi-bits/pid_t.h>
 #include <bits/feature.h>
 #include <bits/null.h>
 #include <bits/size_t.h>
@@ -51,6 +52,10 @@ struct __mlibc_file_base {
 
 	// EOF and error bits.
 	int __status_bits;
+
+	// PID of the popen'ed process
+	pid_t __popen_pid;
+	int __popen_pipe;
 };
 
 typedef struct __mlibc_file_base FILE;
