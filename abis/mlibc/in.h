@@ -59,6 +59,12 @@ struct ip_mreq_source {
 	struct in_addr imr_sourceaddr;
 };
 
+struct in_pktinfo {
+	unsigned int ipi_ifindex;
+	struct in_addr ipi_spec_dst;
+	struct in_addr ipi_addr;
+};
+
 struct group_source_req {
 	uint32_t gsr_interface;
 	struct sockaddr_storage gsr_group;

@@ -57,6 +57,7 @@ if not no_headers
 		'include/linux/major.h',
 		'include/linux/netlink.h',
 		'include/linux/pci_regs.h',
+		'include/linux/route.h',
 		'include/linux/sched.h',
 		'include/linux/sockios.h',
 		'include/linux/types.h',
