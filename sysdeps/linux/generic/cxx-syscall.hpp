@@ -1,3 +1,7 @@
+#include <errno.h>
+#include <mlibc/tcb.hpp>
+#include <mlibc/thread.hpp>
+
 // GCC allows register + asm placement in extern "C" mode, but not in C++ mode.
 extern "C" {
 	using sc_word_t = long;
@@ -75,6 +79,11 @@ extern "C" {
 				: "rcx", "r11", "memory");
 		return ret;
 	}
+
+	extern sc_word_t __mlibc_do_asm_cp_syscall(int sc, sc_word_t arg1, sc_word_t arg2,
+			sc_word_t arg3, sc_word_t arg4, sc_word_t arg5, sc_word_t arg6);
+
+	extern void __mlibc_do_cancel();
 }
 
 namespace mlibc {
@@ -104,6 +113,29 @@ namespace mlibc {
 		return do_asm_syscall6(sc, arg1, arg2, arg3, arg4, arg5, arg6);
 	}
 
+	inline sc_word_t do_nargs_cp_syscall(int sc, sc_word_t arg1) {
+		return __mlibc_do_asm_cp_syscall(sc, arg1, 0, 0, 0, 0, 0);
+	}
+	inline sc_word_t do_nargs_cp_syscall(int sc, sc_word_t arg1, sc_word_t arg2) {
+		return __mlibc_do_asm_cp_syscall(sc, arg1, arg2, 0, 0, 0, 0);
+	}
+	inline sc_word_t do_nargs_cp_syscall(int sc, sc_word_t arg1, sc_word_t arg2,
+			sc_word_t arg3) {
+		return __mlibc_do_asm_cp_syscall(sc, arg1, arg2, arg3, 0, 0, 0);
+	}
+	inline sc_word_t do_nargs_cp_syscall(int sc, sc_word_t arg1, sc_word_t arg2, sc_word_t arg3,
+			sc_word_t arg4) {
+		return __mlibc_do_asm_cp_syscall(sc, arg1, arg2, arg3, arg4, 0, 0);
+	}
+	inline sc_word_t do_nargs_cp_syscall(int sc, sc_word_t arg1, sc_word_t arg2, sc_word_t arg3,
+			sc_word_t arg4, sc_word_t arg5) {
+		return __mlibc_do_asm_cp_syscall(sc, arg1, arg2, arg3, arg4, arg5, 0);
+	}
+	inline sc_word_t do_nargs_cp_syscall(int sc, sc_word_t arg1, sc_word_t arg2, sc_word_t arg3,
+			sc_word_t arg4, sc_word_t arg5, sc_word_t arg6) {
+		return __mlibc_do_asm_cp_syscall(sc, arg1, arg2, arg3, arg4, arg5, arg6);
+	}
+
 	// Type-safe syscall result type.
 	enum class sc_result_t : sc_word_t { };
 
@@ -123,6 +155,18 @@ namespace mlibc {
 		return 0;
 	}
 
+	template<typename... T>
+	sc_result_t do_cp_syscall(int sc, T... args) {
+		auto result = static_cast<sc_result_t>(do_nargs_cp_syscall(sc, sc_cast(args)...));
+		if (int e = sc_error(result); e) {
+			auto tcb = reinterpret_cast<Tcb*>(get_current_tcb());
+			if (tcb_async_cancel(tcb->cancelBitmask) && e == EINTR) {
+				__mlibc_do_cancel();
+				__builtin_unreachable();
+			}
+		}
+		return result;
+	}
 	// Cast from the syscall result type.
 	template<typename T>
 	T sc_int_result(sc_result_t ret) {

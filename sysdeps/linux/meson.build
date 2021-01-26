@@ -11,6 +11,7 @@ libc_sources += files(
 
 if not disable_posix_option
 	libc_sources += files(
+		'x86_64/cp_syscall.S',
 		'x86_64/thread.cpp',
 		'x86_64/thread_entry.S'
 	)

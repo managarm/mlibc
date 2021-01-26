@@ -317,6 +317,16 @@ int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out) {
         return 0;
 }
 
+extern "C" const char __mlibc_syscall_begin[1];
+extern "C" const char __mlibc_syscall_end[1];
+
+int sys_before_cancellable_syscall(ucontext_t *uct) {
+	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.rip);
+	if (pc < __mlibc_syscall_begin || pc > __mlibc_syscall_end)
+		return 0;
+	return 1;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 int sys_vm_protect(void *pointer, size_t size, int prot) {
