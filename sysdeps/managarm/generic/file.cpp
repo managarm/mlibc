@@ -2100,9 +2100,43 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return 0;
 	}
 	case DRM_IOCTL_MODE_GETPLANERESOURCES: {
-		mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_MODE_GETPLANERESOURCES"
-				" is not implemented correctly\e[39m" << frg::endlog;
-		return EINVAL;
+		auto param = reinterpret_cast<drm_mode_get_plane_res *>(arg);
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+		req.SerializeToString(&ser);
+
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBuffer(ser.data(), ser.size()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		// FIXME: send this via a helix_ng buffer
+		for(size_t i = 0; i < resp.drm_plane_res_size(); i++) {
+			if(i >= param->count_planes) {
+				continue;
+			}
+			auto dest = reinterpret_cast<uint32_t *>(param->plane_id_ptr);
+			dest[i] = resp.drm_plane_res(i);
+		}
+
+		param->count_planes = resp.drm_plane_res_size();
+
+		*result = resp.result();
+
+		return 0;
 	}
 	case DRM_IOCTL_MODE_GETENCODER: {
 		auto param = reinterpret_cast<drm_mode_get_encoder*>(arg);
