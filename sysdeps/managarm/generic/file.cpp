@@ -2537,10 +2537,43 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	}
 	case DRM_IOCTL_MODE_OBJ_GETPROPERTIES: {
 		auto param = reinterpret_cast<drm_mode_obj_get_properties *>(arg);
-		mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_MODE_OBJ_GETPROPERTIES"
-				" is not implemented correctly\e[39m" << frg::endlog;
-		param->count_props = 0;
-		*result = 0;
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+
+		req.set_drm_count_props(param->count_props);
+		req.set_drm_obj_id(param->obj_id);
+		req.set_drm_obj_type(param->obj_type);
+
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		auto props = reinterpret_cast<uint32_t *>(param->props_ptr);
+		auto prop_vals = reinterpret_cast<uint64_t *>(param->prop_values_ptr);
+
+		for(size_t i = 0; i < resp.drm_obj_property_ids_size(); i++) {
+			if(i >= param->count_props) {
+				break;
+			}
+			props[i] = resp.drm_obj_property_ids(i);
+			prop_vals[i] = resp.drm_obj_property_values(i);
+		}
+
+		param->count_props = resp.drm_obj_property_ids_size();
+
+		*result = resp.result();
 		return 0;
 	}
 	case DRM_IOCTL_MODE_PAGE_FLIP: {
