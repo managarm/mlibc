@@ -4,7 +4,8 @@ ansi_test_cases = [
 	'snprintf',
 	'utf8',
 	'strtol',
-	'abs'
+	'abs',
+	'strverscmp'
 ]
 
 posix_test_cases = [
