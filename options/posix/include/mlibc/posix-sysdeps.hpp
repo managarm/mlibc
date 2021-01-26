@@ -21,6 +21,7 @@
 #include <sys/select.h>
 #include <termios.h>
 #include <time.h>
+#include <ucontext.h>
 
 namespace [[gnu::visibility("hidden")]] mlibc {
 
@@ -149,6 +150,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_gethostname(char *buffer, size_t bufsize);
 [[gnu::weak]] int sys_mkfifoat(int dirfd, const char *path, int mode);
 [[gnu::weak]] int sys_getentropy(void *buffer, size_t length);
+
+[[gnu::weak]] int sys_before_cancellable_syscall(ucontext_t *uctx);
 
 } //namespace mlibc
 

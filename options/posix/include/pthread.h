@@ -50,6 +50,8 @@ extern "C" {
 #define PTHREAD_MUTEX_INITIALIZER {0, 0, 0}
 #define PTHREAD_RWLOCK_INITIALIZER {0, 0, 0}
 
+#define PTHREAD_CANCELED ((void*) -1)
+
 // TODO: move to own file and include in sys/types.h
 struct __mlibc_threadattr {
 	// TODO: the guardsize attribute needs to be supported here.

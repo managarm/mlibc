@@ -135,6 +135,7 @@ typedef long sigset_t;
 #define SIGPOLL   29
 #define SIGSYS    31
 #define SIGUNUSED SIGSYS
+#define SIGCANCEL 33
 
 #define SA_NOCLDSTOP 1
 #define SA_NOCLDWAIT 2
@@ -153,6 +154,16 @@ typedef long sigset_t;
 #define SIGEV_THREAD 2
 
 #define NSIG 65
+
+#define SI_ASYNCNL (-60)
+#define SI_TKILL (-6)
+#define SI_SIGIO (-5)
+#define SI_ASYNCIO (-4)
+#define SI_MESGQ (-3)
+#define SI_TIMER (-2)
+#define SI_QUEUE (-1)
+#define SI_USER 0
+#define SI_KERNEL 128
 
 struct sigevent {
 	union sigval sigev_value;

@@ -64,6 +64,7 @@ extern "C" {
 #define SIGSYS 31
 #define SIGRTMIN 32
 #define SIGRTMAX 33
+#define SIGCANCEL 34
 
 // TODO: replace this by uint64_t
 typedef long sigset_t;
@@ -93,6 +94,7 @@ typedef long sigset_t;
 #define SIGEV_THREAD 3
 
 #define SI_USER 0
+#define SI_TKILL (-6)
 
 #define NSIG 65
 

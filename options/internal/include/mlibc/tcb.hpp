@@ -13,6 +13,20 @@
  * in pthread_cancel() or in the signal handler. This bit is used by
  * pthread_testcancel() to check whether a cancellation has been requested,
  * and also by cancellable syscalls.
+ *
+ * tcbCancelingBit is set when a cancellation is currently being handled. This
+ * is to avoid a situation in which a cancellation handler gets interrupted by
+ * a SIGCANCEL and a second cancellation handler gets executed on top of the
+ * previous one. Right now this cannot happen, since we stay in signal handler
+ * context when canceling/exiting. In the future this might be done outside
+ * of a signal handler, in which case we shouldn't restart the cancellation process.
+ *
+ * tcbExitingBit is set when the thread starts the exit procedure. Currently
+ * this is just an exit, but in the future this will be a stack unwinding
+ * procedure, which shouldn't be reentered. Not currently set anywhere,
+ * may be done so in the future.
+ *
+ * TODO(geert): update this comment when we do unwinding in the exit procedure.
  */
 
 namespace {
@@ -22,6 +36,10 @@ namespace {
 	constexpr unsigned int tcbCancelAsyncBit = 1 << 1;
 	// Set when the thread has been cancelled
 	constexpr unsigned int tcbCancelTriggerBit = 1 << 2;
+	// Set when the thread is in the process of being cancelled.
+	constexpr unsigned int tcbCancelingBit = 1 << 3;
+	// Set when the thread is exiting.
+	constexpr unsigned int tcbExitingBit = 1 << 4;
 }
 
 namespace mlibc {
@@ -31,6 +49,12 @@ namespace mlibc {
 		return (value & (tcbCancelEnableBit | tcbCancelAsyncBit
 				| tcbCancelTriggerBit)) == (tcbCancelEnableBit
 					| tcbCancelAsyncBit | tcbCancelTriggerBit);
+	}
+
+	// Returns true when bitmask indicates async cancellation is enabled.
+	static constexpr bool tcb_async_cancel(int value) {
+		return (value & (tcbCancelEnableBit | tcbCancelAsyncBit))
+			== (tcbCancelEnableBit | tcbCancelAsyncBit);
 	}
 }
 

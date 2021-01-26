@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <pthread.h>
+#include <unistd.h>
 #include <errno.h>
 
 #include <bits/ensure.h>
@@ -188,11 +189,80 @@ int pthread_getname_np(pthread_t, char *, size_t) {
 }
 
 //pthread cancel functions
+
+extern "C" void __mlibc_do_cancel() {
+	//TODO(geert): stub for now
+}
+
 namespace {
-	void __do_cancel() {
-		//TODO(geert): stub for now
+
+	void sigcancel_handler(int signal, siginfo_t *info, void *ucontext) {
+		ucontext_t *uctx = static_cast<ucontext_t*>(ucontext);
+		// The function could be called from other signals, or from another
+		// process, in which case we should do nothing.
+		if (signal != SIGCANCEL || info->si_pid != getpid() ||
+				info->si_code != SI_TKILL)
+			return;
+
+		auto tcb = reinterpret_cast<Tcb*>(mlibc::get_current_tcb());
+		int old_value = tcb->cancelBits;
+
+		/*
+		 * When a thread is marked with deferred cancellation and performs a blocking syscall,
+		 * the spec mandates that the syscall can get interrupted before it has caused any side
+		 * effects (e.g. before a read() has read any bytes from disk). If the syscall has
+		 * already caused side effects it should return its partial work, and set the program
+		 * counter just after the syscall. If the syscall hasn't caused any side effects, it
+		 * should fail with EINTR and set the program counter to the syscall instruction.
+		 *
+		 *	cancellable_syscall:
+		 *		test whether_a_cancel_is_queued
+		 *		je cancel
+		 *		syscall
+		 *	end_cancellable_syscall
+		 *
+		 * The mlibc::sys_before_cancellable_syscall sysdep should return 1 when the
+		 * program counter is between the 'canellable_syscall' and 'end_cancellable_syscall' label.
+		 */
+		if (!(old_value & tcbCancelAsyncBit) &&
+				mlibc::sys_before_cancellable_syscall && !mlibc::sys_before_cancellable_syscall(uctx))
+			return;
+
+		int bitmask = tcbCancelTriggerBit | tcbCancelingBit;
+		while (1) {
+			int new_value = old_value | bitmask;
+
+			// Check if we are already cancelled or exiting
+			if (old_value == new_value || old_value & tcbExitingBit)
+				return;
+
+			int current_value = old_value;
+			if (__atomic_compare_exchange_n(&tcb->cancelBits, &current_value,
+						new_value, true,__ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
+				tcb->returnValue = PTHREAD_CANCELED;
+
+				// Check if asynchronous cancellation is still enabled.
+				if (tcb->cancelBits & tcbCancelAsyncBit)
+					__mlibc_do_cancel();
+
+				break;
+			}
+
+			old_value = current_value;
+		}
 	}
 }
+
+struct PthreadSignalInstaller {
+	PthreadSignalInstaller() {
+		struct sigaction sa;
+		sa.sa_sigaction = sigcancel_handler;
+		sa.sa_flags = SA_SIGINFO;
+		__ensure(!sigaction(SIGCANCEL, &sa, NULL));
+	}
+};
+
+static PthreadSignalInstaller __mlibc_pthread_signal_installer;
 
 int pthread_setcanceltype(int type, int *oldtype) {
 	if (type != PTHREAD_CANCEL_DEFERRED && type != PTHREAD_CANCEL_ASYNCHRONOUS)
@@ -219,7 +289,7 @@ int pthread_setcanceltype(int type, int *oldtype) {
 					new_value, true, __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
 
 			if (mlibc::tcb_async_cancelled(new_value))
-				__do_cancel();
+				__mlibc_do_cancel();
 
 			break;
 		}
@@ -254,8 +324,14 @@ int pthread_setcancelstate(int state, int *oldstate) {
 					new_value, true, __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
 
 			if (mlibc::tcb_async_cancelled(new_value))
-				__do_cancel();
+				__mlibc_do_cancel();
 
+			sigset_t set = {};
+			sigaddset(&set, SIGCANCEL);
+			if (new_value & PTHREAD_CANCEL_ENABLE)
+				sigprocmask(SIG_UNBLOCK, &set, NULL);
+			else
+				sigprocmask(SIG_BLOCK, &set, NULL);
 			break;
 		}
 
