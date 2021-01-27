@@ -168,6 +168,7 @@ int link(const char *, const char *);
 int linkat(int, const char *, int, const char *, int);
 int lockf(int, int, off_t);
 off_t lseek(int fd, off_t offset, int whence);
+off64_t lseek64(int fd, off64_t offset, int whence);
 int nice(int);
 long pathconf(const char *, int);
 int pause(void);
