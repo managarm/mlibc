@@ -108,7 +108,6 @@ namespace mlibc{
 	}
 	
 	int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf){
-		int _fd = 0;
 		long ret = 0;
 
 		lemon_stat_t lemonStat;
@@ -285,7 +284,7 @@ namespace mlibc{
 	}
 
 	int sys_dup(int fd, int flags, int* newfd){
-		int ret = syscall(SYS_DUP, fd, flags);
+		int ret = syscall(SYS_DUP, fd, flags, -1);
 		if(ret < 0){
 			return -ret;
 		}
@@ -294,10 +293,22 @@ namespace mlibc{
 		return 0;
 	}
 
+	int sys_dup2(int fd, int flags, int newfd){
+		int ret = syscall(SYS_DUP, fd, flags, newfd);
+		if(ret < 0){
+			return -ret;
+		}
+
+		return 0;
+	}
+
 	int sys_fcntl(int fd, int request, va_list args, int* result){
 		if(request == F_DUPFD){
 			return sys_dup(fd, 0, result);
 		} else if(request == F_GETFD){
+			*result = 0; // Lemon does not support O_CLOEXEC
+			return 0;
+		} else if(request == F_SETFD){
 			*result = 0; // Lemon does not support O_CLOEXEC
 			return 0;
 		} else if(request == F_GETFL){
@@ -325,6 +336,16 @@ namespace mlibc{
 		}
 
 		*num_events = ret;
+		return 0;
+	}
+
+	int sys_chmod(const char *pathname, mode_t mode){
+		int ret = syscall(SYS_CHMOD, pathname, mode);
+
+		if(ret < 0){
+			return -ret;
+		}
+
 		return 0;
 	}
 	#endif
