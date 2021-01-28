@@ -51,9 +51,9 @@ void sys_libc_log(const char *message) {
 	size_t n = 0;
 	while(message[n])
 		n++;
-	do_syscall(NR_write, 2, message, n);
+	do_cp_syscall(NR_write, 2, message, n);
 	char lf = '\n';
-	do_syscall(NR_write, 2, &lf, 1);
+	do_cp_syscall(NR_write, 2, &lf, 1);
 }
 
 void sys_libc_panic() {
@@ -77,7 +77,7 @@ int sys_anon_free(void *pointer, size_t size) {
 
 int sys_open(const char *path, int flags, int *fd) {
         // TODO: pass mode in sys_open() sysdep
-	auto ret = do_syscall(NR_open, path, flags, 0666);
+	auto ret = do_cp_syscall(NR_open, path, flags, 0666);
 	if(int e = sc_error(ret); e)
 		return e;
 	*fd = sc_int_result<int>(ret);
@@ -85,14 +85,14 @@ int sys_open(const char *path, int flags, int *fd) {
 }
 
 int sys_close(int fd) {
-	auto ret = do_syscall(NR_close, fd);
+	auto ret = do_cp_syscall(NR_close, fd);
 	if(int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int sys_read(int fd, void *buffer, size_t size, ssize_t *bytes_read) {
-	auto ret = do_syscall(NR_read, fd, buffer, size);
+	auto ret = do_cp_syscall(NR_read, fd, buffer, size);
 	if(int e = sc_error(ret); e)
 		return e;
 	*bytes_read = sc_int_result<ssize_t>(ret);
@@ -100,7 +100,7 @@ int sys_read(int fd, void *buffer, size_t size, ssize_t *bytes_read) {
 }
 
 int sys_write(int fd, const void *buffer, size_t size, ssize_t *bytes_written) {
-	auto ret = do_syscall(NR_write, fd, buffer, size);
+	auto ret = do_cp_syscall(NR_write, fd, buffer, size);
 	if(int e = sc_error(ret); e)
 		return e;
 	*bytes_written = sc_int_result<ssize_t>(ret);
@@ -168,7 +168,7 @@ int sys_socket(int domain, int type, int protocol, int *fd) {
 }
 
 int sys_msg_send(int sockfd, const struct msghdr *msg, int flags, ssize_t *length) {
-        auto ret = do_syscall(NR_sendmsg, sockfd, msg, flags);
+        auto ret = do_cp_syscall(NR_sendmsg, sockfd, msg, flags);
         if (int e = sc_error(ret); e)
                 return e;
         *length = sc_int_result<ssize_t>(ret);
@@ -176,7 +176,7 @@ int sys_msg_send(int sockfd, const struct msghdr *msg, int flags, ssize_t *lengt
 }
 
 int sys_msg_recv(int sockfd, struct msghdr *msg, int flags, ssize_t *length) {
-        auto ret = do_syscall(NR_recvmsg, sockfd, msg, flags);
+        auto ret = do_cp_syscall(NR_recvmsg, sockfd, msg, flags);
         if (int e = sc_error(ret); e)
                 return e;
         *length = sc_int_result<ssize_t>(ret);
@@ -187,7 +187,9 @@ int sys_fcntl(int fd, int cmd, va_list args, int *result) {
         auto arg = va_arg(args, unsigned long);
         // TODO: the api for linux differs for each command so fcntl()s might fail with -EINVAL
         // we should implement all the different fcntl()s
-        auto ret = do_syscall(NR_fcntl, fd, cmd, arg);
+	// TODO(geert): only some fcntl()s can fail with -EINTR, making do_cp_syscall useless
+	// on most fcntls(). Another reason to handle different fcntl()s seperately.
+        auto ret = do_cp_syscall(NR_fcntl, fd, cmd, arg);
         if (int e = sc_error(ret); e)
                 return e;
         *result = sc_int_result<int>(ret);
@@ -208,7 +210,7 @@ int sys_sleep(time_t *secs, long *nanos) {
 	};
 	struct timespec rem = {0};
 
-	auto ret = do_syscall(NR_nanosleep, &req, &rem);
+	auto ret = do_cp_syscall(NR_nanosleep, &req, &rem);
         if (int e = sc_error(ret); e)
                 return e;
 
@@ -233,7 +235,7 @@ int sys_isatty(int fd) {
 }
 
 int sys_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
-        auto ret = do_syscall(NR_connect, sockfd, addr, addrlen);
+        auto ret = do_cp_syscall(NR_connect, sockfd, addr, addrlen);
         if (int e = sc_error(ret); e)
                 return e;
         return 0;
@@ -251,7 +253,7 @@ int sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
         data.ss = (uintptr_t)sigmask;
         data.ss_len = NSIG / 8;
 
-        auto ret = do_syscall(NR_pselect6, nfds, readfds, writefds,
+        auto ret = do_cp_syscall(NR_pselect6, nfds, readfds, writefds,
                         exceptfds, timeout, &data);
         if (int e = sc_error(ret); e)
                 return e;
@@ -352,7 +354,7 @@ void sys_exit(int status) {
 #define FUTEX_WAKE 1
 
 int sys_futex_wait(int *pointer, int expected) {
-	auto ret = do_syscall(NR_sys_futex, pointer, FUTEX_WAIT, expected, nullptr);
+	auto ret = do_cp_syscall(NR_sys_futex, pointer, FUTEX_WAIT, expected, nullptr);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
