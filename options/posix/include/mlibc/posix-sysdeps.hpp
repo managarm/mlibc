@@ -152,6 +152,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_getentropy(void *buffer, size_t length);
 
 [[gnu::weak]] int sys_before_cancellable_syscall(ucontext_t *uctx);
+[[gnu::weak]] int sys_tgkill(int tgid, int tid, int sig);
 
 } //namespace mlibc
 

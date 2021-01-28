@@ -163,7 +163,7 @@ namespace mlibc {
 		auto result = static_cast<sc_result_t>(do_nargs_cp_syscall(sc, sc_cast(args)...));
 		if (int e = sc_error(result); e) {
 			auto tcb = reinterpret_cast<Tcb*>(get_current_tcb());
-			if (tcb_async_cancel(tcb->cancelBitmask) && e == EINTR) {
+			if (tcb_async_cancel(tcb->cancelBits) && e == EINTR) {
 				__mlibc_do_cancel();
 				__builtin_unreachable();
 			}

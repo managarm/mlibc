@@ -191,7 +191,8 @@ int pthread_getname_np(pthread_t, char *, size_t) {
 //pthread cancel functions
 
 extern "C" void __mlibc_do_cancel() {
-	//TODO(geert): stub for now
+	//TODO(geert): for now the same as pthread_exit()
+	pthread_exit(PTHREAD_CANCELED);
 }
 
 namespace {
@@ -344,9 +345,40 @@ void pthread_testcancel(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int pthread_cancel(pthread_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_cancel(pthread_t thread) {
+	auto tcb = reinterpret_cast<Tcb *>(thread);
+	// Check if the TCB is valid, somewhat..
+	if (tcb->selfPointer != tcb)
+		return ESRCH;
+
+	int old_value = tcb->cancelBits;
+	while (1) {
+		int bitmask = tcbCancelTriggerBit;
+
+		int new_value = old_value | bitmask;
+		if (old_value == new_value)
+			break;
+
+		int current_value = old_value;
+		if (__atomic_compare_exchange_n(&tcb->cancelBits, &current_value,
+					new_value, true, __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
+			if (mlibc::tcb_async_cancel(new_value)) {
+				pid_t pid = getpid();
+				if (!mlibc::sys_tgkill) {
+					MLIBC_MISSING_SYSDEP();
+					return ENOSYS;
+				}
+
+				return mlibc::sys_tgkill(pid, tcb->tid, SIGCANCEL);
+			}
+
+			break;
+		}
+
+		old_value = current_value;
+	}
+
+	return 0;
 }
 
 int pthread_atfork(void (*) (void), void (*) (void), void (*) (void)) {
