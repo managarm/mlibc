@@ -16,6 +16,7 @@ posix_test_cases = [
 	'inet_pton',
 	'pthread_rwlock',
 	'pthread_create',
+	'pthread_cancel',
 	'getaddrinfo',
 	'dprintf',
 	'posix_spawn',
