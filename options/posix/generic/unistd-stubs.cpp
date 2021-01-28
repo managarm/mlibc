@@ -1008,4 +1008,7 @@ int chroot(const char *ptr) {
 	return 0;
 }
 
-
+int daemon(int, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

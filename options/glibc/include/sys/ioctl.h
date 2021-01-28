@@ -19,6 +19,8 @@ int ioctl(int fd, unsigned long request, ...);
 #define FIONCLEX 0x5450
 #define FIOCLEX 0x5451
 
+#define SIOCGIFCONF 0x8912
+
 #ifdef __cplusplus
 }
 #endif

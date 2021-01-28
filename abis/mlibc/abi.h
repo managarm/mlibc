@@ -21,5 +21,6 @@
 #define __MLIBC_O_RSYNC 0x1000
 #define __MLIBC_O_SYNC 0x2000
 #define __MLIBC_O_CLOEXEC 0x4000
+#define __MLIBC_O_PATH 0x8000
 
 #endif // _ABIBITS_ABI_H

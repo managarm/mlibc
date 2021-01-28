@@ -216,6 +216,7 @@ int getpagesize(void);
 char *get_current_dir_name(void);
 int usleep(useconds_t);
 int chroot(const char *);
+int daemon(int, int);
 
 // This is a Linux extension
 pid_t gettid(void);

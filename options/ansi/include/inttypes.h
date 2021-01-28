@@ -93,6 +93,8 @@
 #define SCNu64 "lu"
 #define SCNuMAX "lu"
 
+#define SCNd64 "ld"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

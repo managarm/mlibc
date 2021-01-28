@@ -115,6 +115,7 @@ size_t wcsnrtombs(char *__restrict, const wchar_t **__restrict, size_t, size_t, 
 
 // POSIX extensions
 int wcwidth(wchar_t wc);
+int wcswidth(const wchar_t *, size_t);
 
 #ifdef __cplusplus
 }

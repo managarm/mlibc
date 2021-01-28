@@ -44,6 +44,14 @@ struct ifreq {
 	};
 };
 
+struct ifconf {
+	int ifc_len;
+	union {
+		char *ifc_buf;
+		struct ifreq *ifc_req;
+	};
+};
+
 void if_freenameindex(struct if_nameindex *);
 char *if_indextoname(unsigned int, char *);
 struct if_nameindex *if_nameindex(void);
