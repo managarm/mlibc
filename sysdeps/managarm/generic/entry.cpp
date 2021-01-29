@@ -9,6 +9,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
 #include <mlibc/all-sysdeps.hpp>
+#include <mlibc/elf/startup.h>
 
 // defined by the POSIX library
 void __mlibc_initLocale();
@@ -115,33 +116,19 @@ struct LibraryGuard {
 
 static LibraryGuard guard;
 
-static int __mlibc_argc;
-static char **__mlibc_argv;
+extern char **environ;
+static mlibc::exec_stack_data __mlibc_stack_data;
 
 LibraryGuard::LibraryGuard() {
 	__mlibc_initLocale();
 
-	// Parse the environment.
-	// TODO: Copy the arguments instead of pointing to them?
-	auto env = __dlapi_entrystack();
-	__mlibc_argc = *env++;
-	__mlibc_argv = reinterpret_cast<char **>(env);
-	env += __mlibc_argc; // Skip all arguments.
-	__ensure(!*env);
-	env++;
-
-	while(*env) {
-		auto string = reinterpret_cast<char *>(*env);
-		auto fail = putenv(string);
-		__ensure(!fail);
-		env++;
-	}
+	// Parse the exec() stack.
+	mlibc::parse_exec_stack(__dlapi_entrystack(), &__mlibc_stack_data);
+	mlibc::set_startup_data(__mlibc_stack_data.argc, __mlibc_stack_data.argv,
+			__mlibc_stack_data.envp);
 }
 
-// The environment was build by the LibraryGuard.
-extern char **environ;
-
-extern "C" void __mlibc_entry(int (*main_function)(int argc, char *argv[], char *env[])) {
-	auto result = main_function(__mlibc_argc, __mlibc_argv, environ);
+extern "C" void __mlibc_entry(int (*main_fn)(int argc, char *argv[], char *env[])) {
+	auto result = main_fn(__mlibc_stack_data.argc, __mlibc_stack_data.argv, environ);
 	exit(result);
 }
