@@ -2,6 +2,10 @@
 #ifndef  _UTMPX_H
 #define  _UTMPX_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <abi-bits/pid_t.h>
 #include <bits/posix/timeval.h>
 
@@ -25,5 +29,19 @@ struct utmpx {
 };
 
 void updwtmpx(const char *, const struct utmpx *);
+
+#define EMPTY           0
+#define RUN_LVL         1
+#define BOOT_TIME       2
+#define NEW_TIME        3
+#define OLD_TIME        4
+#define INIT_PROCESS    5
+#define LOGIN_PROCESS   6
+#define USER_PROCESS    7
+#define DEAD_PROCESS    8
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _UTMPX_H
