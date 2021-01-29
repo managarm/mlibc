@@ -19,6 +19,7 @@ libc_sources += files(
 	'generic/sys-reboot.cpp',
 	'generic/netinet-in6addr.cpp',
 	'generic/utmp-stubs.cpp',
+	'generic/utmpx.cpp',
 	'generic/linux-unistd.cpp',
 )
 
@@ -30,6 +31,7 @@ if not no_headers
 		'include/poll.h',
 		'include/pty.h',
 		'include/utmp.h',
+		'include/utmpx.h',
 		'include/values.h',
 		'include/lastlog.h',
 	)
