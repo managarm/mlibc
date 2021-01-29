@@ -57,6 +57,10 @@ char *if_indextoname(unsigned int, char *);
 struct if_nameindex *if_nameindex(void);
 unsigned int if_nametoindex(const char *);
 
+#define IFF_UP 0x1
+#define IFF_LOOPBACK 0x8
+#define IFF_RUNNING 0x40
+
 #ifdef __cplusplus
 }
 #endif
