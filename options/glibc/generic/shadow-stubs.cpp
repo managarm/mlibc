@@ -29,3 +29,8 @@ int ulckpwdf(void) {
 	mlibc::infoLogger() << "mlibc: ulckpwdf is unimplemented like musl" << frg::endlog;
 	return 0;
 }
+
+struct spwd *getspnam(const char *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

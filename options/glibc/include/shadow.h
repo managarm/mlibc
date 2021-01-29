@@ -26,6 +26,7 @@ struct spwd {
 int putspent(const struct spwd *, FILE *);
 int lckpwdf(void);
 int ulckpwdf(void);
+struct spwd *getspnam(const char *);
 
 #ifdef __cplusplus
 }
