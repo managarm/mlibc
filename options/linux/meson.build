@@ -25,6 +25,7 @@ libc_sources += files(
 
 if not no_headers
 	install_headers(
+		'include/ifaddrs.h',
 		'include/malloc.h',
 		'include/memory.h',
 		'include/mntent.h',
