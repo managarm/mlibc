@@ -2768,6 +2768,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
+			return EINVAL;
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
 		*result = resp.result();
