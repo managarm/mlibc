@@ -48,7 +48,6 @@ libc_sources += files(
 	'generic/unistd-stubs.cpp',
 	'generic/utime-stubs.cpp',
 	'generic/semaphore-stubs.cpp',
-	'generic/libintl-stubs.cpp',
 	'generic/crypt-stubs.cpp',
 	'generic/search.cpp',
 	'generic/sys-msg.cpp',
@@ -83,7 +82,6 @@ if not no_headers
 		'include/unistd.h',
 		'include/utime.h',
 		'include/semaphore.h',
-		'include/libintl.h',
 		'include/crypt.h',
 	)
 	install_headers(
