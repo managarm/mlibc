@@ -47,10 +47,13 @@ struct ifreq {
 struct ifconf {
 	int ifc_len;
 	union {
-		char *ifc_buf;
-		struct ifreq *ifc_req;
-	};
+		char *ifcu_buf;
+		struct ifreq *ifcu_req;
+	} ifc_ifcu;
 };
+
+#define ifc_buf ifc_ifcu.ifcu_buf
+#define ifc_req ifc_ifcu.ifcu_req
 
 void if_freenameindex(struct if_nameindex *);
 char *if_indextoname(unsigned int, char *);
