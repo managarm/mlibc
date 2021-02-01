@@ -9,6 +9,10 @@ char *index (const char *s, int c) {
 	return strchr(s, c);
 }
 
+char *rindex(const char *s, int c) {
+	return strrchr(s, c);
+}
+
 int ffs(int word) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
