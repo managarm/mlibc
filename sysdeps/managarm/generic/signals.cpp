@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <errno.h>
 
 #include <hel.h>
 #include <hel-syscalls.h>
@@ -78,6 +79,8 @@ int sys_sigaction(int number, const struct sigaction *__restrict action,
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS)
+		return EINVAL;
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 
 	if(saved_action) {
