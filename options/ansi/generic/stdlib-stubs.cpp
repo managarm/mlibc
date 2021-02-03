@@ -75,12 +75,13 @@ long strtol(const char *__restrict string, char **__restrict end, int base) {
 
 	// skip leading space
 	while(*string) {
+		if(*string == '+')
+			string++;
 		if(!isspace(*string))
 			break;
 		string++;
 	}
 
-	__ensure(*string != '+');
 	bool negative = false;
 	if(*string == '-') {
 		negative = true;
