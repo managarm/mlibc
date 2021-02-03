@@ -196,6 +196,13 @@ size_t strftime(char *__restrict dest, size_t max_size,
 				return 0;
 			p += chunk;
 			c += 2;
+		}else if (*(c + 1) == 'e') {
+			int chunk;
+			chunk = snprintf(p, space, "%2d", tm->tm_mday);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
 		}else if (*(c + 1) == 'I') {
 			int hour = tm->tm_hour;
 			if(hour > 12)
