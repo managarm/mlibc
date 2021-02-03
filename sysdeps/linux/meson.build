@@ -5,6 +5,7 @@ if not static
 endif
 
 libc_sources += files(
+	'x86_64/signals.S',
 	'generic/entry.cpp',
 	'generic/sysdeps.cpp',
 )

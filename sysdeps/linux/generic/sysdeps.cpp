@@ -153,11 +153,36 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
         return 0;
 }
 
+extern "C" void __mlibc_signal_restore(void);
+
 int sys_sigaction(int signum, const struct sigaction *act,
                 struct sigaction *oldact) {
-        auto ret = do_syscall(NR_sigaction, signum, act, oldact, sizeof(sigset_t));
+	struct ksigaction {
+		void (*handler)(int);
+		unsigned long flags;
+		void (*restorer)(void);
+		sigset_t mask;
+	};
+
+	struct ksigaction kernel_act, kernel_oldact;
+	if (act) {
+		kernel_act.handler = act->sa_handler;
+		kernel_act.flags = act->sa_flags | SA_RESTORER;
+		kernel_act.restorer = __mlibc_signal_restore;
+		kernel_act.mask = act->sa_mask;
+	}
+        auto ret = do_syscall(NR_sigaction, signum, act ?
+			&kernel_act : NULL, oldact ?
+			&kernel_oldact : NULL, sizeof(sigset_t));
         if (int e = sc_error(ret); e)
                 return e;
+
+	if (oldact) {
+		oldact->sa_handler = kernel_oldact.handler;
+		oldact->sa_flags = kernel_oldact.flags;
+		oldact->sa_restorer = kernel_oldact.restorer;
+		oldact->sa_mask = kernel_oldact.mask;
+	}
         return 0;
 }
 
