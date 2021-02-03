@@ -6,7 +6,9 @@ ansi_test_cases = [
 	'strtol',
 	'abs',
 	'strverscmp',
-	'strftime'
+	'strftime',
+	'strchr',
+	'strrchr'
 ]
 
 posix_test_cases = [
@@ -15,7 +17,9 @@ posix_test_cases = [
 	'pthread_rwlock',
 	'getaddrinfo',
 	'dprintf',
-	'posix_spawn'
+	'posix_spawn',
+	'index',
+	'rindex'
 ]
 
 glibc_test_cases = [
