@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 char *index (const char *s, int c);
+char *rindex(const char *s, int c);
 
 int ffs(int word);
 int strcasecmp(const char *a, const char *b);
