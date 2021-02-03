@@ -9,12 +9,12 @@ extern "C" {
 	using sc_word_t = long;
 
 	static sc_word_t do_asm_syscall0(int sc) {
-        sc_word_t ret;
-        asm volatile ("syscall" : "=a"(ret)
-                : "a"(sc)
-                : "rcx", "r11", "memory");
-        return ret;
-    }
+		sc_word_t ret;
+		asm volatile ("syscall" : "=a"(ret)
+				: "a"(sc)
+				: "rcx", "r11", "memory");
+		return ret;
+	}
 
 	static sc_word_t do_asm_syscall1(int sc,
 			sc_word_t arg1) {

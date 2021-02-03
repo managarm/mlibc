@@ -25,6 +25,7 @@
 #define NR_pipe 22
 #define NR_select 23
 #define NR_nanosleep 35
+#define NR_getpid 39
 #define NR_socket 41
 #define NR_connect 42
 #define NR_sendmsg 46
@@ -40,6 +41,7 @@
 #define NR_sys_futex 202
 #define NR_clock_gettime 228
 #define NR_exit_group 231
+#define NR_tgkill 234
 #define NR_pselect6 270
 #define NR_pipe2 293
 
@@ -327,6 +329,19 @@ int sys_before_cancellable_syscall(ucontext_t *uct) {
 	if (pc < __mlibc_syscall_begin || pc > __mlibc_syscall_end)
 		return 0;
 	return 1;
+}
+
+pid_t sys_getpid() {
+	auto ret = do_syscall(NR_getpid);
+	// getpid() always succeeds.
+	return sc_int_result<pid_t>(ret);
+}
+
+int sys_tgkill(int tgid, int tid, int sig) {
+	auto ret = do_syscall(NR_tgkill, tgid, tid, sig);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 #endif // __MLIBC_POSIX_OPTION
