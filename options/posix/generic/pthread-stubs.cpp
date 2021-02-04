@@ -342,8 +342,12 @@ int pthread_setcancelstate(int state, int *oldstate) {
 	return 0;
 }
 void pthread_testcancel(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	auto self = reinterpret_cast<Tcb *>(mlibc::get_current_tcb());
+	int value = self->cancelBits;
+	if (value & (tcbCancelEnableBit | tcbCancelTriggerBit)) {
+		__mlibc_do_cancel();
+		__builtin_unreachable();
+	}
 }
 int pthread_cancel(pthread_t thread) {
 	auto tcb = reinterpret_cast<Tcb *>(thread);
