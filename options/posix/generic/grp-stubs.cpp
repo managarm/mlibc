@@ -168,3 +168,8 @@ struct group *fgetgrent(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+int getgrouplist(const char *, gid_t, gid_t *, int *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

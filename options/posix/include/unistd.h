@@ -106,6 +106,8 @@ extern "C" {
 #define _SC_VERSION 11
 #define _SC_SAVED_IDS 12
 #define _SC_JOB_CONTROL 13
+#define _SC_HOST_NAME_MAX 14
+#define _SC_LINE_MAX 15
 
 #define STDERR_FILENO 2
 #define STDIN_FILENO 0

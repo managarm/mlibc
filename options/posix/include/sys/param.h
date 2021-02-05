@@ -8,6 +8,7 @@
 #define NGROUPS NGROUPS_MAX
 
 // Report the same value as Linux here.
+#define MAXNAMLEN 255
 #define MAXPATHLEN 4096
 #define HOST_NAME_MAX 64
 #define MAXHOSTNAMELEN HOST_NAME_MAX

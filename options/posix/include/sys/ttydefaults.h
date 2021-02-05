@@ -3,6 +3,7 @@
 #define _SYS_TTYDEFAULTS_H
 
 // Values taken from musl
+#define TTYDEF_SPEED (B9600)
 #define CTRL(x) ((x) & 037)
 #define CEOF CTRL('d')
 

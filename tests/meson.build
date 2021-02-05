@@ -19,7 +19,8 @@ posix_test_cases = [
 	'dprintf',
 	'posix_spawn',
 	'index',
-	'rindex'
+	'rindex',
+	'search'
 ]
 
 glibc_test_cases = [

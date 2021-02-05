@@ -19,17 +19,20 @@ libc_sources += files(
 	'generic/sys-reboot.cpp',
 	'generic/netinet-in6addr.cpp',
 	'generic/utmp-stubs.cpp',
+	'generic/utmpx.cpp',
 	'generic/linux-unistd.cpp',
 )
 
 if not no_headers
 	install_headers(
+		'include/ifaddrs.h',
 		'include/malloc.h',
 		'include/memory.h',
 		'include/mntent.h',
 		'include/poll.h',
 		'include/pty.h',
 		'include/utmp.h',
+		'include/utmpx.h',
 		'include/values.h',
 		'include/lastlog.h',
 	)

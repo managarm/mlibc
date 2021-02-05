@@ -29,6 +29,9 @@ struct group *fgetgrent(FILE *);
 int setgroups(size_t size, const gid_t *list);
 int initgroups(const char *user, gid_t group);
 
+// Non standard extension
+int getgrouplist(const char *, gid_t, gid_t *, int *);
+
 #ifdef __cplusplus
 }
 #endif
