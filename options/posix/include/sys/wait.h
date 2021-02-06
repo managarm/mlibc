@@ -45,7 +45,7 @@ pid_t waitpid(pid_t pid, int *status, int flags);
 
 // GNU extensions.
 pid_t wait3(int *, int, struct rusage *);
-pid_t wait4(pid_t, int *, int, struct rusage *);
+pid_t wait4(pid_t pid, int *status, int options, struct rusage *ru);
 
 #ifdef __cplusplus
 }

@@ -72,6 +72,8 @@ namespace mlibc{
 
 	void sys_exit(int status){
 		syscall(SYS_EXIT, status);
+
+		__builtin_unreachable();
 	}
 
 	pid_t sys_getpid(){
@@ -158,6 +160,20 @@ namespace mlibc{
 
 	void sys_thread_exit(){
 		syscall(SYS_EXIT_THREAD);
+
+		__builtin_unreachable();
+	}
+
+	int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid){
+		pid_t ret = syscall(SYS_WAIT_PID, pid, status, flags);
+
+		if(ret < 0){
+			return ret;
+		}
+
+		*ret_pid = ret;
+
+		return 0;
 	}
 	#endif
 } 

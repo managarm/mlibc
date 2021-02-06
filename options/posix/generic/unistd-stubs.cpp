@@ -628,6 +628,9 @@ void sync(void) {
 
 unsigned long sysconf(int number) {
 	switch(number) {
+		case _SC_ARG_MAX:
+			// On linux, it is defined to 2097152 in most cases, so define it to be 2097152
+			return 2097152;
 		case _SC_PAGE_SIZE:
 			return mlibc::page_size;
 		case _SC_OPEN_MAX:
@@ -823,6 +826,15 @@ off_t lseek(int fd, off_t offset, int whence) {
 	if(int e = mlibc::sys_seek(fd, offset, whence, &new_offset); e) {
 		errno = e;
 		return (off_t)-1;
+	}
+	return new_offset;
+}
+
+off64_t lseek64(int fd, off64_t offset, int whence) {
+	off64_t new_offset;
+	if(int e = mlibc::sys_seek(fd, offset, whence, &new_offset); e) {
+		errno = e;
+		return (off64_t)-1;
 	}
 	return new_offset;
 }
