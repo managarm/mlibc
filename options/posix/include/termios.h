@@ -102,6 +102,7 @@ extern "C" {
 #define ISIG    0x0040
 #define NOFLSH  0x0080
 #define TOSTOP  0x0100
+#define ECHOPRT 0x0200
 
 // constants for tcsetattr()
 #define TCSANOW 1
