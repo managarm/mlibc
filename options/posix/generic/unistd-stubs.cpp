@@ -666,6 +666,9 @@ unsigned long sysconf(int number) {
 		case _SC_NGROUPS_MAX:
 			// On linux, it is defined to 65536 in most cases, so define it to be 65536
 			return 65536;
+		case _SC_LINE_MAX:
+			// Linux defines it as 2048.
+			return 2048;
 		default:
 			mlibc::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented, number: " << number << "\e[39m" << frg::endlog;
 			__builtin_unreachable();
