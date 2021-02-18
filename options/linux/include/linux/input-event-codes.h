@@ -347,6 +347,7 @@
 #define BTN_JOYSTICK 0x120
 #define BTN_TRIGGER 0x120
 #define BTN_BASE 0x126
+#define BTN_DIGI 0x140
 
 #define BTN_SOUTH 0x130
 #define BTN_A BTN_SOUTH
