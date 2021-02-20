@@ -120,14 +120,25 @@ int mkfifoat(int dirfd, const char *path, mode_t mode) {
 	return 0;
 }
 
-int mknod(const char *, mode_t, dev_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int mknod(const char *path, mode_t mode, dev_t dev) {
+	return mknodat(AT_FDCWD, path, mode, dev);
 }
-int mknodat(int, const char *, mode_t, dev_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int mknodat(int dirfd, const char *path, mode_t mode, dev_t dev) {
+	if (!mlibc::sys_mknodat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if (int e = mlibc::sys_mknodat(dirfd, path, mode, dev); e) {
+		errno = e;
+		return -1;
+	}
+
+	return 0;
 }
+
 mode_t umask(mode_t) {
 	mlibc::infoLogger() << "\e[31mmlibc: umask() is a no-op and always returns 0\e[39m"
 			<< frg::endlog;
