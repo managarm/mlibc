@@ -334,6 +334,7 @@ char *strerror(int e) {
 	case ESPIPE: s = "Seek not possible (ESPIPE)"; break;
 	case ENXIO: s = "No such device or address (ENXIO)"; break;
 	case ENOEXEC: s = "Exec format error (ENOEXEC)"; break;
+	case ENOSPC: s = "No space left on device (ENOSPC)"; break;
 	default:
 		s = "Unknown error code (?)";
 	}
