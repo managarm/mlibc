@@ -341,10 +341,21 @@ int getopt(int argc, char *const argv[], const char *optstring) {
 	return c;
 }
 
-pid_t getpgid(pid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+pid_t getpgid(pid_t pid) {
+	pid_t pgid;
+
+	if(!mlibc::sys_getpgid) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_getpgid(pid, &pgid); e) {
+		errno = e;
+		return -1;
+	}
+	return pgid;
 }
+
 pid_t getpgrp(void) {
 	if(!mlibc::sys_getpgrp) {
 		MLIBC_MISSING_SYSDEP();
