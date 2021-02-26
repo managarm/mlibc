@@ -567,11 +567,19 @@ int setgid(gid_t gid) {
 	return 0;
 }
 
-int setpgid(pid_t, pid_t) {
-	mlibc::infoLogger() << "mlibc: setpgid() fails with ENOSYS" << frg::endlog;
-	errno = ENOSYS;
-	return -1;
+int setpgid(pid_t pid, pid_t pgid) {
+	if(!mlibc::sys_setpgid) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_setpgid(pid, pgid); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
+
 pid_t setpgrp(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

@@ -77,6 +77,7 @@ int sys_close(int fd);
 [[gnu::weak]] pid_t sys_getppid();
 [[gnu::weak]] pid_t sys_getpgrp();
 [[gnu::weak]] pid_t sys_getpgid(pid_t pid, pid_t *pgid);
+[[gnu::weak]] int sys_setpgid(pid_t pid, pid_t pgid);
 [[gnu::weak]] int sys_setuid(uid_t uid);
 [[gnu::weak]] int sys_seteuid(uid_t euid);
 [[gnu::weak]] int sys_setgid(gid_t gid);
