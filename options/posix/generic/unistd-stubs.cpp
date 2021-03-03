@@ -5,6 +5,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <termios.h>
+#include <sys/ioctl.h>
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
@@ -702,17 +704,19 @@ unsigned long sysconf(int number) {
 			__builtin_unreachable();
 	}
 }
+
 pid_t tcgetpgrp(int fd) {
-	(void)fd;
-	mlibc::infoLogger() << "mlibc: tcgetpgrp() fails with ENOSYS" << frg::endlog;
-	errno = ENOSYS;
-	return -1;
+	int pgrp;
+	if(ioctl(fd, TIOCGPGRP, &pgrp) < 0) {
+		return -1;
+	}
+	return pgrp;
 }
-int tcsetpgrp(int, pid_t) {
-	mlibc::infoLogger() << "mlibc: tcsetpgrp() fails with ENOSYS" << frg::endlog;
-	errno = ENOSYS;
-	return -1;
+
+int tcsetpgrp(int fd, pid_t pgrp) {
+	return ioctl(fd, TIOCSPGRP, pgrp);
 }
+
 int truncate(const char *, off_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
