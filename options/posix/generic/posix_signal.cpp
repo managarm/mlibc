@@ -74,6 +74,20 @@ int sigaction(int signum, const struct sigaction *__restrict act, struct sigacti
 	return 0;
 }
 
+int siginterrupt(int sig, int flag) {
+    int ret;
+    struct sigaction act;
+
+    sigaction(sig, NULL, &act);
+    if (flag)
+        act.sa_flags &= ~SA_RESTART;
+    else
+        act.sa_flags |= SA_RESTART;
+
+    ret = sigaction(sig, &act, NULL);
+    return ret;
+}
+
 int kill(pid_t pid, int number) {
 	if(!mlibc::sys_kill) {
 		MLIBC_MISSING_SYSDEP();
@@ -106,3 +120,5 @@ int sigpending(sigset_t *) {
 	__ensure(!"sigpending() not implemented");
 	__builtin_unreachable();
 }
+
+
