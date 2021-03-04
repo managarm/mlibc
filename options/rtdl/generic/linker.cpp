@@ -1284,6 +1284,27 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 		__ensure(!symbol_index);
 		*((uint64_t *)rel_addr) = object->baseAddress + reloc->r_addend;
 	} break;
+	case R_AARCH64_TLS_TPREL: {
+		if(symbol_index) {
+			__ensure(p);
+			__ensure(!reloc->r_addend);
+			if(p->object()->tlsModel != TlsModel::initial)
+				mlibc::panicLogger() << "rtdl: In object " << object->name
+						<< ": Static TLS relocation to dynamically loaded object "
+						<< p->object()->name << frg::endlog;
+			*((uint64_t *)rel_addr) = p->object()->tlsOffset + p->symbol()->st_value;
+		}else{
+			__ensure(!reloc->r_addend);
+			if(stillSlightlyVerbose)
+				mlibc::infoLogger() << "rtdl: Warning: TLS_TPREL with no symbol"
+						" in object " << object->name << frg::endlog;
+			if(object->tlsModel != TlsModel::initial)
+				mlibc::panicLogger() << "rtdl: In object " << object->name
+						<< ": Static TLS relocation to dynamically loaded object "
+						<< object->name << frg::endlog;
+			*((uint64_t *)rel_addr) = object->tlsOffset;
+		}
+	} break;
 #endif
 	default:
 		mlibc::panicLogger() << "Unexpected relocation type "
