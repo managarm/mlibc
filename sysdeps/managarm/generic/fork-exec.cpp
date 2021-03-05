@@ -501,6 +501,12 @@ pid_t sys_getpgid(pid_t pid, pid_t *pgid) {
 	}
 }
 
+pid_t sys_getpgrp() {
+	pid_t pgid;
+	sys_getpgid(0, &pgid);
+	return pgid;
+}
+
 int sys_setpgid(pid_t pid, pid_t pgid) {
 	SignalGuard sguard;
 
