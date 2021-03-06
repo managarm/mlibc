@@ -3144,6 +3144,8 @@ int sys_openat(int dirfd, const char *path, int flags, int *fd) {
 		proto_flags |= managarm::posix::OpenFlags::OF_WRONLY;
 	else if(flags & __MLIBC_O_RDWR)
 		proto_flags |= managarm::posix::OpenFlags::OF_RDWR;
+	else if(flags & __MLIBC_O_PATH)
+		proto_flags |= managarm::posix::OpenFlags::OF_PATH;
 
 	managarm::posix::OpenAtRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_fd(dirfd);
@@ -3174,6 +3176,8 @@ int sys_openat(int dirfd, const char *path, int flags, int *fd) {
 	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_OPERATION_TARGET) {
 		mlibc::infoLogger() << "\e[31mmlibc: openat unimplemented for this file " << path << "\e[39m" << frg::endlog;
 		return EINVAL;
+	}else if(resp.error() == managarm::posix::Errors::NO_BACKING_DEVICE) {
+		return ENXIO;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*fd = resp.fd();
@@ -3188,6 +3192,45 @@ int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
 	req.set_fd(dirfd);
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 	req.set_mode(mode);
+
+	auto [offer, send_head, send_tail, recv_resp] =
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(send_tail.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
+	}else if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
+		return EEXIST;
+	}else if(resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		return 0;
+	}
+}
+
+int sys_mknodat(int dirfd, const char *path, int mode, int dev) {
+	SignalGuard sguard;
+
+	managarm::posix::MknodAtRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_dirfd(dirfd);
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_mode(mode);
+	req.set_device(dev);
 
 	auto [offer, send_head, send_tail, recv_resp] =
 		exchangeMsgsSync(
@@ -3325,6 +3368,8 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 		return EBADF;
 	}else*/ if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
 		return EINVAL; // FD does not support writes.
+	}else if(resp.error() == managarm::fs::Errors::NO_SPACE_LEFT) {
+		return ENOSPC;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		//FIXME: handle partial writes

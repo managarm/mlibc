@@ -149,6 +149,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_gethostname(char *buffer, size_t bufsize);
 [[gnu::weak]] int sys_mkfifoat(int dirfd, const char *path, int mode);
 [[gnu::weak]] int sys_getentropy(void *buffer, size_t length);
+[[gnu::weak]] int sys_mknodat(int dirfd, const char *path, int mode, int dev);
 
 } //namespace mlibc
 
