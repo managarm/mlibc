@@ -121,6 +121,7 @@ enum {
 };
 
 enum {
+	R_X86_64_NONE = 0,
 	R_X86_64_64 = 1,
 	R_X86_64_COPY = 5,
 	R_X86_64_GLOB_DAT = 6,
