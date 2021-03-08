@@ -28,6 +28,8 @@ int pthread_kill(pthread_t, int);
 int sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict);
 int sigpending(sigset_t *);
 
+int siginterrupt(int sig, int flag);
+
 // functions to raise signals
 int kill(pid_t, int);
 int killpg(int, int);
