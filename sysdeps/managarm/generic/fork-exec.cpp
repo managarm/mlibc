@@ -470,6 +470,37 @@ pid_t sys_getppid() {
 	return resp.pid();
 }
 
+pid_t sys_getsid(pid_t pid, pid_t *sid) {
+	SignalGuard sguard;
+
+	managarm::posix::GetSidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_pid(pid);
+
+	auto [offer, send_head, recv_resp] =
+			exchangeMsgsSync(
+					getPosixLane(),
+					helix_ng::offer(
+							helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+							helix_ng::recvInline()
+					)
+			);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if(resp.error() == managarm::posix::Errors::NO_SUCH_RESOURCE) {
+		*sid = 0;
+		return ESRCH;
+	} else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		*sid = resp.pid();
+		return 0;
+	}
+}
+
 pid_t sys_getpgid(pid_t pid, pid_t *pgid) {
 	SignalGuard sguard;
 

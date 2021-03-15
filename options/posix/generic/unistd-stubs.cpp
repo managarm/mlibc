@@ -366,10 +366,20 @@ pid_t getpgrp(void) {
 	}
 	return mlibc::sys_getpgrp();
 }
-pid_t getsid(pid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+pid_t getsid(pid_t pid) {
+	if(!mlibc::sys_getsid) {
+		MLIBC_MISSING_SYSDEP();
+		return -1;
+	}
+	pid_t sid;
+	if(int e = mlibc::sys_getsid(pid, &sid); e) {
+		errno = e;
+		return -1;
+	}
+	return sid;
 }
+
 int lchown(const char *path, uid_t uid, gid_t gid) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
