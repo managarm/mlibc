@@ -115,6 +115,8 @@ extern "C" {
 
 #define _POSIX_VDISABLE (-1)
 
+#define L_ctermid 20
+
 // MISSING: intptr_t
 
 int access(const char *path, int mode);
@@ -124,6 +126,7 @@ int chown(const char *path, uid_t uid, gid_t gid);
 int close(int fd);
 ssize_t confstr(int, char *, size_t);
 char *crypt(const char *, const char *);
+char *ctermid(char *s);
 int dup(int fd);
 int dup2(int src_fd, int dest_fd);
 __attribute__ ((noreturn)) void _exit(int status);

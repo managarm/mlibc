@@ -1078,3 +1078,7 @@ int daemon(int, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+char *ctermid(char *s) {
+	return s ? strcpy(s, "/dev/tty") : const_cast<char *>("/dev/tty");
+}
