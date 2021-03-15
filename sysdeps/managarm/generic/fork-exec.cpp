@@ -561,8 +561,12 @@ int sys_setpgid(pid_t pid, pid_t pgid) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if(resp.error() == managarm::posix::Errors::NO_SUCH_RESOURCE) {
+	if(resp.error() == managarm::posix::Errors::INSUFFICIENT_PERMISSION) {
+		return EPERM;
+	}else if(resp.error() == managarm::posix::Errors::NO_SUCH_RESOURCE) {
 		return ESRCH;
+	}else if(resp.error() == managarm::posix::Errors::ACCESS_DENIED) {
+		return EACCES;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
