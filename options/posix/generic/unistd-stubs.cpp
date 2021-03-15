@@ -592,10 +592,10 @@ int setpgid(pid_t pid, pid_t pgid) {
 	return 0;
 }
 
-pid_t setpgrp(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+pid_t setpgrp(pid_t pid, pid_t pgid) {
+	return setpgid(pid, pgid);
 }
+
 int setregid(gid_t, gid_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

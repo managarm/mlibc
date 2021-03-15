@@ -185,7 +185,7 @@ int setegid(gid_t);
 int seteuid(uid_t);
 int setgid(gid_t);
 int setpgid(pid_t, pid_t);
-pid_t setpgrp(void);
+pid_t setpgrp(pid_t, pid_t);
 int setregid(gid_t, gid_t);
 int setreuid(uid_t, uid_t);
 pid_t setsid(void);
