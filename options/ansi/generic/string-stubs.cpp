@@ -1,5 +1,5 @@
-
 #include <string.h>
+#include <strings.h>
 #include <errno.h>
 #include <wchar.h>
 #include <ctype.h>
@@ -224,9 +224,16 @@ char *strchrnul(const char *s, int c) {
 	return const_cast<char *>(s + i);
 }
 
-char *strcasestr(const char *, const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+char *strcasestr(const char *s, const char *pattern) {
+	size_t plen = strlen(pattern);
+	const char *p = s;
+	while(*p) {
+		// Need strncasecmp() to avoid checking past the end of a successful match.
+		if(!strncasecmp(p, pattern, plen))
+			return const_cast<char *>(p);
+		++p;
+	}
+	return nullptr;
 }
 
 double wcstod(const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
