@@ -259,8 +259,15 @@ wchar_t *wcsncpy(wchar_t *__restrict dest, const wchar_t *__restrict src, size_t
 	return a;
 }
 
-wchar_t *wmemcpy(wchar_t *__restrict, const wchar_t *__restrict, size_t) MLIBC_STUB_BODY
-wchar_t *wmemmove(wchar_t *, const wchar_t *, size_t) MLIBC_STUB_BODY
+wchar_t *wmemcpy(wchar_t *__restrict dest, const wchar_t *__restrict src, size_t n) {
+	memcpy(dest, src, n * sizeof(wchar_t));
+	return dest;
+}
+
+wchar_t *wmemmove(wchar_t *dest, const wchar_t *src, size_t n) {
+	memmove(dest, src, n * sizeof(wchar_t));
+	return dest;
+}
 
 wchar_t *wcscat(wchar_t *__restrict dest, const wchar_t *__restrict src) {
 	wcscpy(dest + wcslen(dest), src);
