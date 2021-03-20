@@ -109,6 +109,15 @@ int execvp(const char *file, char *const argv[]) {
 }
 
 int execvpe(const char *file, char *const argv[], char *const envp[]) {
+	char *null_list[] = {
+		nullptr
+	};
+
+	if(!argv)
+		argv = null_list;
+	if(!envp)
+		envp = null_list;
+
 	if(!mlibc::sys_execve) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
@@ -910,6 +919,15 @@ pid_t fork(void) {
 }
 
 int execve(const char *path, char *const argv[], char *const envp[]) {
+	char *null_list[] = {
+		nullptr
+	};
+
+	if(!argv)
+		argv = null_list;
+	if(!envp)
+		envp = null_list;
+
 	if(!mlibc::sys_execve) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
