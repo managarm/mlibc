@@ -2859,6 +2859,12 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		*result = resp.result();
 		return 0;
 	}
+	case FIONREAD: {
+	  mlibc::infoLogger() << "\e[31mmlibc: FIONREAD is not implemented\e[39m"
+						  << frg::endlog;
+	  *result = 0;
+	  return 0;
+	}
 	} // end of switch()
 
 
