@@ -1032,12 +1032,10 @@ ssize_t getline(char **line, size_t *n, FILE *file_base) {
 	size_t k = strlen(buffer);
 	buffer[k] = '\n';
 	buffer[k + 1] = 0;
-	mlibc::infoLogger() << "returns: " << frg::escape_fmt(buffer, k + 1) << frg::endlog;
 
 	*line = buffer;
 	*n = capacity;
 	return k + 1;
-	//return getdelim(line, n, '\n', file_base);
 }
 
 ssize_t getdelim(char **line, size_t *n, int delim, FILE *file_base) {
