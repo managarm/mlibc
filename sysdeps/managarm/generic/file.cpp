@@ -3372,8 +3372,7 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 		return ENOSPC;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		//FIXME: handle partial writes
-		*bytes_written = size;
+		*bytes_written = resp.size();
 		return 0;
 	}
 }
