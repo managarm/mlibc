@@ -1747,6 +1747,16 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return EBADF;
 
 	switch(request) {
+	case FIONBIO: {
+		auto mode = reinterpret_cast<int *>(arg);
+		int flags = fcntl(fd, F_GETFL, 0);
+		if(*mode) {
+		    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+		}else{
+		    fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
+		}
+		return 0;
+	}
 	case DRM_IOCTL_VERSION: {
 		auto param = reinterpret_cast<drm_version*>(arg);
 		HelAction actions[3];
