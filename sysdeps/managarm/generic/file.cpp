@@ -1096,6 +1096,8 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		return EPIPE;
 	}else if(resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
 		return ENOTCONN;
+	}else if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
+		return EAGAIN;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*length = resp.size();
@@ -3370,6 +3372,8 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 		return EINVAL; // FD does not support writes.
 	}else if(resp.error() == managarm::fs::Errors::NO_SPACE_LEFT) {
 		return ENOSPC;
+	}else if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
+		return EAGAIN;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*bytes_written = resp.size();
