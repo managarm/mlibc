@@ -17,6 +17,9 @@ char *strsignal(int sig);
 
 int strcoll_l(const char *s1, const char *s2, locale_t locale);
 
+// GNU extensions.
+char *strcasestr(const char *, const char *);
+
 #ifdef __cplusplus
 }
 #endif

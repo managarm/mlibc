@@ -1,7 +1,7 @@
-
 #include <bits/ensure.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <signal.h>
 
 #include <mlibc/debug.hpp>
@@ -101,3 +101,14 @@ char *strsignal(int sig) {
 	return const_cast<char *>(s);
 }
 
+char *strcasestr(const char *s, const char *pattern) {
+	size_t plen = strlen(pattern);
+	const char *p = s;
+	while(*p) {
+		// Need strncasecmp() to avoid checking past the end of a successful match.
+		if(!strncasecmp(p, pattern, plen))
+			return const_cast<char *>(p);
+		++p;
+	}
+	return nullptr;
+}
