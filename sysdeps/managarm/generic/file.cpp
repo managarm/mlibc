@@ -1446,6 +1446,10 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::BAD_FD) {
 		return EBADF;
+	} else if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
+		return EEXIST;
+	} else if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
 	} else {
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
