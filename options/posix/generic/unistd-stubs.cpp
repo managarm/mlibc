@@ -359,12 +359,7 @@ pid_t getpgid(pid_t pid) {
 }
 
 pid_t getpgrp(void) {
-	if(!mlibc::sys_getpgrp) {
-		MLIBC_MISSING_SYSDEP();
-		mlibc::infoLogger() << "mlibc: missing sysdep sys_getpgrp(). Returning invalid PGID" << frg::endlog;
-		return 0;
-	}
-	return mlibc::sys_getpgrp();
+	return getpgid(0);
 }
 
 pid_t getsid(pid_t pid) {
