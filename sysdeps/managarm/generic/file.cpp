@@ -203,6 +203,12 @@ int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 		return EEXIST;
 	} else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		return EINVAL;
+	}else if(resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	}else if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
+	}else if(resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
+		return ENOTDIR;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
@@ -1096,6 +1102,8 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		return EPIPE;
 	}else if(resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
 		return ENOTCONN;
+	}else if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
+		return EAGAIN;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*length = resp.size();
@@ -1438,6 +1446,10 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() == managarm::posix::Errors::BAD_FD) {
 		return EBADF;
+	} else if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
+		return EEXIST;
+	} else if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
 	} else {
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
@@ -1745,6 +1757,16 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return EBADF;
 
 	switch(request) {
+	case FIONBIO: {
+		auto mode = reinterpret_cast<int *>(arg);
+		int flags = fcntl(fd, F_GETFL, 0);
+		if(*mode) {
+		    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+		}else{
+		    fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
+		}
+		return 0;
+	}
 	case DRM_IOCTL_VERSION: {
 		auto param = reinterpret_cast<drm_version*>(arg);
 		HelAction actions[3];
@@ -3370,10 +3392,11 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 		return EINVAL; // FD does not support writes.
 	}else if(resp.error() == managarm::fs::Errors::NO_SPACE_LEFT) {
 		return ENOSPC;
+	}else if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
+		return EAGAIN;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		//FIXME: handle partial writes
-		*bytes_written = size;
+		*bytes_written = resp.size();
 		return 0;
 	}
 }
