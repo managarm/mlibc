@@ -6,7 +6,10 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/services.hpp>
 #include <frg/vector.hpp>
+#include <frg/array.hpp>
+#include <frg/span.hpp>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <errno.h>
@@ -139,10 +142,65 @@ struct hostent *gethostent(void) {
 	__builtin_unreachable();
 }
 
-int getnameinfo(const struct sockaddr *__restrict, socklen_t,
-		char *__restrict, socklen_t, char *__restrict, socklen_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int getnameinfo(const struct sockaddr *__restrict addr, socklen_t addr_len,
+		char *__restrict host, socklen_t host_len, char *__restrict serv,
+		socklen_t serv_len, int flags) {
+	frg::array<uint8_t, 16> addr_array;
+	int family = addr->sa_family;
+
+	switch(family) {
+		case AF_INET: {
+			if (addr_len < sizeof(struct sockaddr_in))
+				return EAI_FAMILY;
+			auto sockaddr = reinterpret_cast<const struct sockaddr_in*>(addr);
+			memcpy(addr_array.data(), reinterpret_cast<const char*>(&sockaddr->sin_addr), 4);
+			break;
+		}
+		case AF_INET6: {
+			mlibc::infoLogger() << "getnameinfo(): ipv6 is not fully supported in this function" << frg::endlog;
+			if (addr_len < sizeof(struct sockaddr_in6))
+				return EAI_FAMILY;
+			auto sockaddr = reinterpret_cast<const struct sockaddr_in6*>(addr);
+			memcpy(addr_array.data(), reinterpret_cast<const char*>(&sockaddr->sin6_addr), 16);
+			break;
+		}
+		default:
+			return EAI_FAMILY;
+	}
+
+	if (host && host_len) {
+		frg::span<char> host_span{host, host_len};
+		int res = 0;
+		if (!(flags & NI_NUMERICHOST))
+			res = mlibc::lookup_addr_hosts(host_span, addr_array, family);
+		if (!(flags & NI_NUMERICHOST) && !res)
+			res = mlibc::lookup_addr_dns(host_span, addr_array, family);
+
+		if (!res) {
+			if (flags & NI_NAMEREQD)
+				return EAI_NONAME;
+			if(!inet_ntop(family, addr_array.data(), host, host_len)) {
+				switch(errno) {
+					case EAFNOSUPPORT:
+						return EAI_FAMILY;
+					case ENOSPC:
+						return EAI_OVERFLOW;
+					default:
+						return EAI_FAIL;
+				}
+			}
+		}
+
+		if (res < 0)
+			return -res;
+	}
+
+	if (serv && serv_len) {
+		__ensure("getnameinfo(): not implemented service resolution yet!");
+		__builtin_unreachable();
+	}
+
+	return 0;
 }
 
 struct netent *getnetbyaddr(uint32_t, int) {

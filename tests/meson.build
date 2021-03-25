@@ -16,6 +16,7 @@ posix_test_cases = [
 	'inet_pton',
 	'pthread_rwlock',
 	'getaddrinfo',
+	'getnameinfo',
 	'dprintf',
 	'posix_spawn',
 	'index',
