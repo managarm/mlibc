@@ -316,10 +316,13 @@ int abstract_file::_write_back() {
 	// For non-pipe streams, first do a seek to reset the
 	// I/O position to zero, then do a write().
 	if(_type == stream_type::file_like) {
-		off_t new_offset;
-		if(int e = io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR, &new_offset); e)
-			return e;
-		__io_offset = __dirty_begin;
+		if(__io_offset != __dirty_begin) {
+			__ensure(__dirty_begin - __io_offset > 0);
+			off_t new_offset;
+			if(int e = io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR, &new_offset); e)
+				return e;
+			__io_offset = __dirty_begin;
+		}
 	}else{
 		__ensure(_type == stream_type::pipe_like);
 		__ensure(__io_offset == __dirty_begin);
