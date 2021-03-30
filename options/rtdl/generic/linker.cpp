@@ -1345,6 +1345,7 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 // TODO: TLSDESC relocations aren't aarch64 specific
 #ifdef __aarch64__
 extern "C" void *__mlibcTlsdescStatic(void *);
+extern "C" void *__mlibcTlsdescDynamic(void *);
 #endif
 
 void Loader::_processLazyRelocations(SharedObject *object) {
@@ -1397,6 +1398,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 #if defined(__aarch64__)
 		case R_AARCH64_TLSDESC: {
 			size_t symValue = 0;
+			SharedObject *target = nullptr;
 
 			if (symbol_index) {
 				auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
@@ -1409,16 +1411,37 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 					mlibc::panicLogger() << "rtdl: Unresolved TLSDESC for symbol "
 						<< r.getString() << " in object " << object->name << frg::endlog;
 				} else {
+					target = p->object();
 					if (p->symbol())
 						symValue = p->symbol()->st_value;
 				}
+			} else {
+				target = object;
 			}
 
-			if (/*TODO: is static TLS*/ true) {
+			__ensure(target);
+
+			if (target->tlsModel == TlsModel::initial) {
 				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
-				((uint64_t *)rel_addr)[1] = symValue + object->tlsOffset + reloc->r_addend;
+				((uint64_t *)rel_addr)[1] = symValue + target->tlsOffset + reloc->r_addend;
 			} else {
-				// TODO: dynamic TLS
+				struct TlsdescData {
+					uintptr_t tlsIndex;
+					uintptr_t addend;
+				};
+
+				// Access DTV for object to force the entry to be allocated and initialized
+				accessDtv(target);
+
+				__ensure(target->tlsIndex < getCurrentTcb()->dtvSize);
+
+				// TODO: We should free this when the DSO gets destroyed
+				auto data = frg::construct<TlsdescData>(getAllocator());
+				data->tlsIndex = target->tlsIndex;
+				data->addend = symValue + reloc->r_addend;
+
+				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescDynamic);
+				((uint64_t *)rel_addr)[1] = reinterpret_cast<uintptr_t>(data);
 			}
 		} break;
 #endif
