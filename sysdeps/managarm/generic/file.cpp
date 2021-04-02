@@ -886,6 +886,10 @@ int sys_setsid(pid_t *sid) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::ACCESS_DENIED) {
+		*sid = -1;
+		return EPERM;
+	}
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	*sid = resp.sid();
 	return 0;
