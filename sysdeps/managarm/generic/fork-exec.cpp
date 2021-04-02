@@ -96,6 +96,9 @@ int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	}
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	if(status)
 		*status = resp.mode();
