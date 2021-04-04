@@ -96,6 +96,9 @@ int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	}
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	if(status)
 		*status = resp.mode();
@@ -192,13 +195,13 @@ gid_t sys_getgid() {
 	managarm::posix::GetGidRequest<MemoryAllocator> req(getSysdepsAllocator());
 
 	auto [offer, send_head, recv_resp] =
-			exchangeMsgsSync(
-					getPosixLane(),
-					helix_ng::offer(
-							helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-							helix_ng::recvInline()
-					)
-			);
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
@@ -218,13 +221,13 @@ int sys_setgid(gid_t gid) {
 	req.set_uid(gid);
 
 	auto [offer, send_head, recv_resp] =
-			exchangeMsgsSync(
-					getPosixLane(),
-					helix_ng::offer(
-							helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-							helix_ng::recvInline()
-					)
-			);
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
@@ -248,13 +251,13 @@ gid_t sys_getegid() {
 	managarm::posix::GetEgidRequest<MemoryAllocator> req(getSysdepsAllocator());
 
 	auto [offer, send_head, recv_resp] =
-			exchangeMsgsSync(
-					getPosixLane(),
-					helix_ng::offer(
-							helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-							helix_ng::recvInline()
-					)
-			);
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
@@ -274,13 +277,13 @@ int sys_setegid(gid_t egid) {
 	req.set_uid(egid);
 
 	auto [offer, send_head, recv_resp] =
-			exchangeMsgsSync(
-					getPosixLane(),
-					helix_ng::offer(
-							helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-							helix_ng::recvInline()
-					)
-			);
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
@@ -304,13 +307,13 @@ uid_t sys_getuid() {
 	managarm::posix::GetUidRequest<MemoryAllocator> req(getSysdepsAllocator());
 
 	auto [offer, send_head, recv_resp] =
-			exchangeMsgsSync(
-					getPosixLane(),
-					helix_ng::offer(
-							helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-							helix_ng::recvInline()
-					)
-			);
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
@@ -330,13 +333,13 @@ int sys_setuid(uid_t uid) {
 	req.set_uid(uid);
 
 	auto [offer, send_head, recv_resp] =
-			exchangeMsgsSync(
-					getPosixLane(),
-					helix_ng::offer(
-							helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-							helix_ng::recvInline()
-					)
-			);
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
@@ -360,13 +363,13 @@ uid_t sys_geteuid() {
 	managarm::posix::GetEuidRequest<MemoryAllocator> req(getSysdepsAllocator());
 
 	auto [offer, send_head, recv_resp] =
-			exchangeMsgsSync(
-					getPosixLane(),
-					helix_ng::offer(
-							helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-							helix_ng::recvInline()
-					)
-			);
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
@@ -386,13 +389,13 @@ int sys_seteuid(uid_t euid) {
 	req.set_uid(euid);
 
 	auto [offer, send_head, recv_resp] =
-			exchangeMsgsSync(
-					getPosixLane(),
-					helix_ng::offer(
-							helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-							helix_ng::recvInline()
-					)
-			);
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
@@ -452,13 +455,13 @@ pid_t sys_getppid() {
 	managarm::posix::GetPpidRequest<MemoryAllocator> req(getSysdepsAllocator());
 
 	auto [offer, send_head, recv_resp] =
-			exchangeMsgsSync(
-					getPosixLane(),
-					helix_ng::offer(
-							helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-							helix_ng::recvInline()
-					)
-			);
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
@@ -468,6 +471,103 @@ pid_t sys_getppid() {
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return resp.pid();
+}
+
+pid_t sys_getsid(pid_t pid, pid_t *sid) {
+	SignalGuard sguard;
+
+	managarm::posix::GetSidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_pid(pid);
+
+	auto [offer, send_head, recv_resp] =
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if(resp.error() == managarm::posix::Errors::NO_SUCH_RESOURCE) {
+		*sid = 0;
+		return ESRCH;
+	} else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		*sid = resp.pid();
+		return 0;
+	}
+}
+
+pid_t sys_getpgid(pid_t pid, pid_t *pgid) {
+	SignalGuard sguard;
+
+	managarm::posix::GetPgidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_pid(pid);
+
+	auto [offer, send_head, recv_resp] =
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if(resp.error() == managarm::posix::Errors::NO_SUCH_RESOURCE) {
+		*pgid = 0;
+		return ESRCH;
+	} else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		*pgid = resp.pid();
+		return 0;
+	}
+}
+
+int sys_setpgid(pid_t pid, pid_t pgid) {
+	SignalGuard sguard;
+
+	managarm::posix::SetPgidRequest<MemoryAllocator> req(getSysdepsAllocator());
+
+	req.set_pid(pid);
+	req.set_pgid(pgid);
+
+	auto [offer, send_head, recv_resp] =
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if(resp.error() == managarm::posix::Errors::INSUFFICIENT_PERMISSION) {
+		return EPERM;
+	}else if(resp.error() == managarm::posix::Errors::NO_SUCH_RESOURCE) {
+		return ESRCH;
+	}else if(resp.error() == managarm::posix::Errors::ACCESS_DENIED) {
+		return EACCES;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		return 0;
+	}
 }
 
 int sys_getrusage(int scope, struct rusage *usage) {

@@ -5,6 +5,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <termios.h>
+#include <sys/ioctl.h>
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
@@ -341,22 +343,38 @@ int getopt(int argc, char *const argv[], const char *optstring) {
 	return c;
 }
 
-pid_t getpgid(pid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-pid_t getpgrp(void) {
-	if(!mlibc::sys_getpgrp) {
+pid_t getpgid(pid_t pid) {
+	pid_t pgid;
+
+	if(!mlibc::sys_getpgid) {
 		MLIBC_MISSING_SYSDEP();
-		mlibc::infoLogger() << "mlibc: missing sysdep sys_getpgrp(). Returning invalid PGID" << frg::endlog;
-		return 0;
+		errno = ENOSYS;
+		return -1;
 	}
-	return mlibc::sys_getpgrp();
+	if(int e = mlibc::sys_getpgid(pid, &pgid); e) {
+		errno = e;
+		return -1;
+	}
+	return pgid;
 }
-pid_t getsid(pid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+pid_t getpgrp(void) {
+	return getpgid(0);
 }
+
+pid_t getsid(pid_t pid) {
+	if(!mlibc::sys_getsid) {
+		MLIBC_MISSING_SYSDEP();
+		return -1;
+	}
+	pid_t sid;
+	if(int e = mlibc::sys_getsid(pid, &sid); e) {
+		errno = e;
+		return -1;
+	}
+	return sid;
+}
+
 int lchown(const char *path, uid_t uid, gid_t gid) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -556,15 +574,23 @@ int setgid(gid_t gid) {
 	return 0;
 }
 
-int setpgid(pid_t, pid_t) {
-	mlibc::infoLogger() << "mlibc: setpgid() fails with ENOSYS" << frg::endlog;
-	errno = ENOSYS;
-	return -1;
+int setpgid(pid_t pid, pid_t pgid) {
+	if(!mlibc::sys_setpgid) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_setpgid(pid, pgid); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
-pid_t setpgrp(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+pid_t setpgrp(pid_t pid, pid_t pgid) {
+	return setpgid(pid, pgid);
 }
+
 int setregid(gid_t, gid_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -683,17 +709,19 @@ unsigned long sysconf(int number) {
 			__builtin_unreachable();
 	}
 }
+
 pid_t tcgetpgrp(int fd) {
-	(void)fd;
-	mlibc::infoLogger() << "mlibc: tcgetpgrp() fails with ENOSYS" << frg::endlog;
-	errno = ENOSYS;
-	return -1;
+	int pgrp;
+	if(ioctl(fd, TIOCGPGRP, &pgrp) < 0) {
+		return -1;
+	}
+	return pgrp;
 }
-int tcsetpgrp(int, pid_t) {
-	mlibc::infoLogger() << "mlibc: tcsetpgrp() fails with ENOSYS" << frg::endlog;
-	errno = ENOSYS;
-	return -1;
+
+int tcsetpgrp(int fd, pid_t pgrp) {
+	return ioctl(fd, TIOCSPGRP, pgrp);
 }
+
 int truncate(const char *, off_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -1044,4 +1072,8 @@ int chroot(const char *ptr) {
 int daemon(int, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
+}
+
+char *ctermid(char *s) {
+	return s ? strcpy(s, "/dev/tty") : const_cast<char *>("/dev/tty");
 }

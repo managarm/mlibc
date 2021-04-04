@@ -777,7 +777,9 @@ pid_t sys_getppid() {
     return ppid;
 }
 
-pid_t sys_getpgrp(void) {
+pid_t sys_getpgid(pid_t pid) {
+    if(pid != 0)
+        return ENOSYS;
     pid_t pgid;
     asm volatile ("syscall" : "=a"(pgid)
             : "a"(38), "D"(0)

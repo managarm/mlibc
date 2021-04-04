@@ -135,8 +135,11 @@ int tcsetattr(int, int, const struct termios *);
 
 // This is a linux extension
 
+#define TIOCGPGRP 0x540F
+#define TIOCSPGRP 0x5410
 #define TIOCGWINSZ 0x5413
 #define TIOCSWINSZ 0x5414
+#define TIOCGSID 0x5429
 
 struct winsize {
 	unsigned short ws_row;

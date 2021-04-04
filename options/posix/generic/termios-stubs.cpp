@@ -1,6 +1,7 @@
 
 #include <errno.h>
 #include <termios.h>
+#include <sys/ioctl.h>
 
 #include <bits/ensure.h>
 #include <mlibc/posix-sysdeps.hpp>
@@ -68,10 +69,14 @@ int tcgetattr(int fd, struct termios *attr) {
 	return 0;
 }
 
-pid_t tcgetsid(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+pid_t tcgetsid(int fd) {
+	int sid;
+	if(ioctl(fd, TIOCGSID, &sid) < 0) {
+		return -1;
+	}
+	return sid;
 }
+
 int tcsendbreak(int, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
