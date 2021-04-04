@@ -1603,13 +1603,11 @@ int sys_timerfd_settime(int fd, int flags,
 int sys_signalfd_create(sigset_t mask, int flags, int *fd) {
 	__ensure(!(flags & ~(SFD_CLOEXEC | SFD_NONBLOCK)));
 
-	if(flags & SFD_NONBLOCK)
-		mlibc::infoLogger() << "\e[31mmlibc: signalfd(SFD_NONBLOCK)"
-				" is not implemented correctly\e[39m" << frg::endlog;
-
 	uint32_t proto_flags = 0;
 	if(flags & SFD_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
+	if(flags & SFD_NONBLOCK)
+		proto_flags |= managarm::posix::OpenFlags::OF_NONBLOCK;
 
 	SignalGuard sguard;
 	HelAction actions[3];
