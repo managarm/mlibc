@@ -17,6 +17,14 @@ bool stillSlightlyVerbose = false;
 bool logBaseAddresses = false;
 bool eagerBinding = true;
 
+#if defined(__x86_64__)
+constexpr inline bool tlsAboveTp = false;
+#elif defined(__aarch64__)
+constexpr inline bool tlsAboveTp = true;
+#else
+#	error Unknown architecture
+#endif
+
 extern DebugInterface globalDebugInterface;
 extern uintptr_t __stack_chk_guard;
 
@@ -24,6 +32,8 @@ extern uintptr_t __stack_chk_guard;
 extern "C" size_t __init_array_start[];
 extern "C" size_t __init_array_end[];
 #endif
+
+size_t tlsMaxAlignment = 16;
 
 // This is the global "resolution timestamp" (RTS) counter.
 // It is incremented each time __dlapi_open() (i.e. dlopen()) is called.
@@ -691,11 +701,24 @@ RuntimeTlsMap::RuntimeTlsMap()
 : initialPtr{0}, initialLimit{0}, indices{getAllocator()} { }
 
 Tcb *allocateTcb() {
-	size_t fs_size = runtimeTlsMap->initialLimit + sizeof(Tcb);
-	auto fs_buffer = getAllocator().allocate(fs_size);
-	memset(fs_buffer, 0, fs_size);
+	size_t tcb_size = sizeof(Tcb);
 
-	auto tcb_ptr = new (reinterpret_cast<char *>(fs_buffer) + runtimeTlsMap->initialLimit) Tcb;
+	if constexpr (tlsAboveTp) {
+		tcb_size = ((sizeof(Tcb) + tlsMaxAlignment - 1) & ~(tlsMaxAlignment - 1));
+	}
+
+	size_t td_size = runtimeTlsMap->initialLimit + tcb_size;
+	auto td_buffer = getAllocator().allocate(td_size);
+	memset(td_buffer, 0, td_size);
+
+	Tcb *tcb_ptr = nullptr;
+
+	if constexpr (tlsAboveTp) {
+		tcb_ptr = new (td_buffer) Tcb;
+	} else {
+		tcb_ptr = new (reinterpret_cast<char *>(td_buffer) + runtimeTlsMap->initialLimit) Tcb;
+	}
+
 	tcb_ptr->selfPointer = tcb_ptr;
 
 	tcb_ptr->stackCanary = __stack_chk_guard;
@@ -926,6 +949,12 @@ void Loader::submitObject(SharedObject *object) {
 	_linkSet.insert(object, Token{});
 	_linkBfs.push(object);
 
+	__ensure((object->tlsAlignment & (object->tlsAlignment - 1)) == 0);
+
+	if (_isInitialLink && object->tlsAlignment > tlsMaxAlignment) {
+		tlsMaxAlignment = object->tlsAlignment;
+	}
+
 	for(size_t i = 0; i < object->dependencies.size(); i++)
 		submitObject(object->dependencies[i]);
 }
@@ -1016,14 +1045,30 @@ void Loader::_buildTlsMaps() {
 			object->tlsIndex = runtimeTlsMap->indices.size();
 			runtimeTlsMap->indices.push_back(object);
 
-			__ensure(16 % object->tlsAlignment == 0);
-			runtimeTlsMap->initialPtr += object->tlsSegmentSize;
-			size_t misalign = runtimeTlsMap->initialPtr % object->tlsAlignment;
-			if(misalign)
-				runtimeTlsMap->initialPtr += object->tlsAlignment - misalign;
+			__ensure((16 & (object->tlsAlignment - 1)) == 0);
 
 			object->tlsModel = TlsModel::initial;
-			object->tlsOffset = -runtimeTlsMap->initialPtr;
+
+			if constexpr (tlsAboveTp) {
+				size_t tcbSize = ((sizeof(Tcb) + tlsMaxAlignment - 1)
+						& ~(tlsMaxAlignment - 1));
+
+				object->tlsOffset = runtimeTlsMap->initialPtr + tcbSize;
+
+				runtimeTlsMap->initialPtr += object->tlsSegmentSize;
+
+				size_t misalign = runtimeTlsMap->initialPtr & (object->tlsAlignment - 1);
+				if(misalign)
+					runtimeTlsMap->initialPtr += object->tlsAlignment - misalign;
+			} else {
+				runtimeTlsMap->initialPtr += object->tlsSegmentSize;
+
+				size_t misalign = runtimeTlsMap->initialPtr & (object->tlsAlignment - 1);
+				if(misalign)
+					runtimeTlsMap->initialPtr += object->tlsAlignment - misalign;
+
+				object->tlsOffset = -runtimeTlsMap->initialPtr;
+			}
 
 			if(verbose)
 				mlibc::infoLogger() << "rtdl: TLS of " << object->name
@@ -1050,21 +1095,29 @@ void Loader::_buildTlsMaps() {
 			// There are some libraries (e.g. Mesa) that require static TLS even though
 			// they expect to be dynamically loaded.
 			if(object->haveStaticTls) {
-				__ensure(16 % object->tlsAlignment == 0);
+				__ensure((16 & (object->tlsAlignment - 1)) == 0);
 				auto ptr = runtimeTlsMap->initialPtr + object->tlsSegmentSize;
-				size_t misalign = ptr % object->tlsAlignment;
+				size_t misalign = ptr & (object->tlsAlignment - 1);
 				if(misalign)
 					ptr += object->tlsAlignment - misalign;
 
 				if(ptr > runtimeTlsMap->initialLimit)
 					mlibc::panicLogger() << "rtdl: Static TLS space exhausted while while"
 							" allocating TLS for " << object->name << frg::endlog;
-				runtimeTlsMap->initialPtr = ptr;
 
 				object->tlsModel = TlsModel::initial;
-				object->tlsOffset = -runtimeTlsMap->initialPtr;
 
-//				if(verbose)
+				if constexpr (tlsAboveTp) {
+					size_t tcbSize = ((sizeof(Tcb) + tlsMaxAlignment - 1) & ~(tlsMaxAlignment - 1));
+
+					object->tlsOffset = runtimeTlsMap->initialPtr + tcbSize;
+					runtimeTlsMap->initialPtr = ptr;
+				} else {
+					runtimeTlsMap->initialPtr = ptr;
+					object->tlsOffset = -runtimeTlsMap->initialPtr;
+				}
+
+				if(verbose)
 					mlibc::infoLogger() << "rtdl: TLS of " << object->name
 							<< " mapped to 0x" << frg::hex_fmt{object->tlsOffset}
 							<< ", size: " << object->tlsSegmentSize
@@ -1231,6 +1284,27 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 		__ensure(!symbol_index);
 		*((uint64_t *)rel_addr) = object->baseAddress + reloc->r_addend;
 	} break;
+	case R_AARCH64_TLS_TPREL: {
+		if(symbol_index) {
+			__ensure(p);
+			__ensure(!reloc->r_addend);
+			if(p->object()->tlsModel != TlsModel::initial)
+				mlibc::panicLogger() << "rtdl: In object " << object->name
+						<< ": Static TLS relocation to dynamically loaded object "
+						<< p->object()->name << frg::endlog;
+			*((uint64_t *)rel_addr) = p->object()->tlsOffset + p->symbol()->st_value;
+		}else{
+			__ensure(!reloc->r_addend);
+			if(stillSlightlyVerbose)
+				mlibc::infoLogger() << "rtdl: Warning: TLS_TPREL with no symbol"
+						" in object " << object->name << frg::endlog;
+			if(object->tlsModel != TlsModel::initial)
+				mlibc::panicLogger() << "rtdl: In object " << object->name
+						<< ": Static TLS relocation to dynamically loaded object "
+						<< object->name << frg::endlog;
+			*((uint64_t *)rel_addr) = object->tlsOffset;
+		}
+	} break;
 #endif
 	default:
 		mlibc::panicLogger() << "Unexpected relocation type "
@@ -1271,6 +1345,7 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 // TODO: TLSDESC relocations aren't aarch64 specific
 #ifdef __aarch64__
 extern "C" void *__mlibcTlsdescStatic(void *);
+extern "C" void *__mlibcTlsdescDynamic(void *);
 #endif
 
 void Loader::_processLazyRelocations(SharedObject *object) {
@@ -1323,6 +1398,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 #if defined(__aarch64__)
 		case R_AARCH64_TLSDESC: {
 			size_t symValue = 0;
+			SharedObject *target = nullptr;
 
 			if (symbol_index) {
 				auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
@@ -1335,16 +1411,37 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 					mlibc::panicLogger() << "rtdl: Unresolved TLSDESC for symbol "
 						<< r.getString() << " in object " << object->name << frg::endlog;
 				} else {
+					target = p->object();
 					if (p->symbol())
 						symValue = p->symbol()->st_value;
 				}
+			} else {
+				target = object;
 			}
 
-			if (/*TODO: is static TLS*/ true) {
+			__ensure(target);
+
+			if (target->tlsModel == TlsModel::initial) {
 				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
-				((uint64_t *)rel_addr)[1] = symValue - object->tlsOffset + reloc->r_addend;
+				((uint64_t *)rel_addr)[1] = symValue + target->tlsOffset + reloc->r_addend;
 			} else {
-				// TODO: dynamic TLS
+				struct TlsdescData {
+					uintptr_t tlsIndex;
+					uintptr_t addend;
+				};
+
+				// Access DTV for object to force the entry to be allocated and initialized
+				accessDtv(target);
+
+				__ensure(target->tlsIndex < getCurrentTcb()->dtvSize);
+
+				// TODO: We should free this when the DSO gets destroyed
+				auto data = frg::construct<TlsdescData>(getAllocator());
+				data->tlsIndex = target->tlsIndex;
+				data->addend = symValue + reloc->r_addend;
+
+				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescDynamic);
+				((uint64_t *)rel_addr)[1] = reinterpret_cast<uintptr_t>(data);
 			}
 		} break;
 #endif

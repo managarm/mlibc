@@ -38,7 +38,16 @@ struct __mlibc_jmpbuf_register_state {
 	uint64_t x28;
 	uint64_t x29;
 	uint64_t x30;
-	uint64_t x16;
+	uint64_t sp;
+	uint64_t pad;
+	uint64_t d8;
+	uint64_t d9;
+	uint64_t d10;
+	uint64_t d11;
+	uint64_t d12;
+	uint64_t d13;
+	uint64_t d14;
+	uint64_t d15;
 };
 #else
 #  error "Missing architecture specific code"

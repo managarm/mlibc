@@ -13,7 +13,13 @@ int uname(struct utsname *p) {
 	strcpy(p->nodename, "?");
 	strcpy(p->release, "?");
 	strcpy(p->version, "?");
+#if defined(__x86_64__)
 	strcpy(p->machine, "x86_64");
+#elif defined (__aarch64__)
+	strcpy(p->machine, "aarch64");
+#else
+#	error Unknown architecture
+#endif
 	return 0;
 }
 

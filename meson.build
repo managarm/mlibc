@@ -173,10 +173,6 @@ internal_sources = [
 	'options/internal' / host_machine.cpu_family() / 'thread.cpp',
 ]
 
-if host_machine.cpu_family() == 'aarch64'
-	internal_sources += 'options/internal' / host_machine.cpu_family() / 'setjmp.cpp'
-endif
-
 if not static
 	internal_sources += [
 		'options/internal/gcc-extra/mlibc_crtbegin.S',
