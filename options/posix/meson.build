@@ -47,6 +47,7 @@ libc_sources += files(
 	'generic/termios-stubs.cpp',
 	'generic/unistd-stubs.cpp',
 	'generic/utime-stubs.cpp',
+	'generic/ucontext-stubs.cpp',
 	'generic/semaphore-stubs.cpp',
 	'generic/crypt-stubs.cpp',
 	'generic/search.cpp',
@@ -81,6 +82,7 @@ if not no_headers
 		'include/termios.h',
 		'include/unistd.h',
 		'include/utime.h',
+		'include/ucontext.h',
 		'include/semaphore.h',
 		'include/crypt.h',
 	)

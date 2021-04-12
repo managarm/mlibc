@@ -5,6 +5,7 @@
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
+#include <mlibc/thread-entry.hpp>
 #include "cxx-syscall.hpp"
 
 #define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }
@@ -17,15 +18,19 @@
 #define NR_fstat 5
 #define NR_lseek 8
 #define NR_mmap 9
+#define NR_mprotect 10
 #define NR_sigaction 13
 #define NR_rt_sigprocmask 14
 #define NR_ioctl 16
 #define NR_pipe 22
 #define NR_select 23
+#define NR_nanosleep 35
+#define NR_getpid 39
 #define NR_socket 41
 #define NR_connect 42
 #define NR_sendmsg 46
 #define NR_recvmsg 47
+#define NR_clone 56
 #define NR_fork 57
 #define NR_execve 59
 #define NR_exit 60
@@ -35,6 +40,8 @@
 #define NR_arch_prctl 158
 #define NR_sys_futex 202
 #define NR_clock_gettime 228
+#define NR_exit_group 231
+#define NR_tgkill 234
 #define NR_pselect6 270
 #define NR_pipe2 293
 
@@ -46,9 +53,9 @@ void sys_libc_log(const char *message) {
 	size_t n = 0;
 	while(message[n])
 		n++;
-	do_syscall(NR_write, 2, message, n);
+	do_cp_syscall(NR_write, 2, message, n);
 	char lf = '\n';
-	do_syscall(NR_write, 2, &lf, 1);
+	do_cp_syscall(NR_write, 2, &lf, 1);
 }
 
 void sys_libc_panic() {
@@ -72,7 +79,7 @@ int sys_anon_free(void *pointer, size_t size) {
 
 int sys_open(const char *path, int flags, int *fd) {
         // TODO: pass mode in sys_open() sysdep
-	auto ret = do_syscall(NR_open, path, flags, 0666);
+	auto ret = do_cp_syscall(NR_open, path, flags, 0666);
 	if(int e = sc_error(ret); e)
 		return e;
 	*fd = sc_int_result<int>(ret);
@@ -80,14 +87,14 @@ int sys_open(const char *path, int flags, int *fd) {
 }
 
 int sys_close(int fd) {
-	auto ret = do_syscall(NR_close, fd);
+	auto ret = do_cp_syscall(NR_close, fd);
 	if(int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int sys_read(int fd, void *buffer, size_t size, ssize_t *bytes_read) {
-	auto ret = do_syscall(NR_read, fd, buffer, size);
+	auto ret = do_cp_syscall(NR_read, fd, buffer, size);
 	if(int e = sc_error(ret); e)
 		return e;
 	*bytes_read = sc_int_result<ssize_t>(ret);
@@ -95,7 +102,7 @@ int sys_read(int fd, void *buffer, size_t size, ssize_t *bytes_read) {
 }
 
 int sys_write(int fd, const void *buffer, size_t size, ssize_t *bytes_written) {
-	auto ret = do_syscall(NR_write, fd, buffer, size);
+	auto ret = do_cp_syscall(NR_write, fd, buffer, size);
 	if(int e = sc_error(ret); e)
 		return e;
 	*bytes_written = sc_int_result<ssize_t>(ret);
@@ -146,11 +153,36 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
         return 0;
 }
 
+extern "C" void __mlibc_signal_restore(void);
+
 int sys_sigaction(int signum, const struct sigaction *act,
                 struct sigaction *oldact) {
-        auto ret = do_syscall(NR_sigaction, signum, act, oldact, sizeof(sigset_t));
+	struct ksigaction {
+		void (*handler)(int);
+		unsigned long flags;
+		void (*restorer)(void);
+		sigset_t mask;
+	};
+
+	struct ksigaction kernel_act, kernel_oldact;
+	if (act) {
+		kernel_act.handler = act->sa_handler;
+		kernel_act.flags = act->sa_flags | SA_RESTORER;
+		kernel_act.restorer = __mlibc_signal_restore;
+		kernel_act.mask = act->sa_mask;
+	}
+        auto ret = do_syscall(NR_sigaction, signum, act ?
+			&kernel_act : NULL, oldact ?
+			&kernel_oldact : NULL, sizeof(sigset_t));
         if (int e = sc_error(ret); e)
                 return e;
+
+	if (oldact) {
+		oldact->sa_handler = kernel_oldact.handler;
+		oldact->sa_flags = kernel_oldact.flags;
+		oldact->sa_restorer = kernel_oldact.restorer;
+		oldact->sa_mask = kernel_oldact.mask;
+	}
         return 0;
 }
 
@@ -163,7 +195,7 @@ int sys_socket(int domain, int type, int protocol, int *fd) {
 }
 
 int sys_msg_send(int sockfd, const struct msghdr *msg, int flags, ssize_t *length) {
-        auto ret = do_syscall(NR_sendmsg, sockfd, msg, flags);
+        auto ret = do_cp_syscall(NR_sendmsg, sockfd, msg, flags);
         if (int e = sc_error(ret); e)
                 return e;
         *length = sc_int_result<ssize_t>(ret);
@@ -171,7 +203,7 @@ int sys_msg_send(int sockfd, const struct msghdr *msg, int flags, ssize_t *lengt
 }
 
 int sys_msg_recv(int sockfd, struct msghdr *msg, int flags, ssize_t *length) {
-        auto ret = do_syscall(NR_recvmsg, sockfd, msg, flags);
+        auto ret = do_cp_syscall(NR_recvmsg, sockfd, msg, flags);
         if (int e = sc_error(ret); e)
                 return e;
         *length = sc_int_result<ssize_t>(ret);
@@ -182,7 +214,9 @@ int sys_fcntl(int fd, int cmd, va_list args, int *result) {
         auto arg = va_arg(args, unsigned long);
         // TODO: the api for linux differs for each command so fcntl()s might fail with -EINVAL
         // we should implement all the different fcntl()s
-        auto ret = do_syscall(NR_fcntl, fd, cmd, arg);
+	// TODO(geert): only some fcntl()s can fail with -EINTR, making do_cp_syscall useless
+	// on most fcntls(). Another reason to handle different fcntl()s seperately.
+        auto ret = do_cp_syscall(NR_fcntl, fd, cmd, arg);
         if (int e = sc_error(ret); e)
                 return e;
         *result = sc_int_result<int>(ret);
@@ -196,9 +230,26 @@ int sys_unlink(const char *path) {
 	return 0;
 }
 
+int sys_sleep(time_t *secs, long *nanos) {
+	struct timespec req = {
+		.tv_sec = *secs,
+		.tv_nsec = *nanos
+	};
+	struct timespec rem = {0};
+
+	auto ret = do_cp_syscall(NR_nanosleep, &req, &rem);
+        if (int e = sc_error(ret); e)
+                return e;
+
+	*secs = rem.tv_sec;
+	*nanos = rem.tv_nsec;
+	return 0;
+}
+
 #if __MLIBC_POSIX_OPTION
 
 #include <sys/ioctl.h>
+#include <sched.h>
 
 int sys_isatty(int fd) {
         struct winsize ws;
@@ -211,7 +262,7 @@ int sys_isatty(int fd) {
 }
 
 int sys_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
-        auto ret = do_syscall(NR_connect, sockfd, addr, addrlen);
+        auto ret = do_cp_syscall(NR_connect, sockfd, addr, addrlen);
         if (int e = sc_error(ret); e)
                 return e;
         return 0;
@@ -229,7 +280,7 @@ int sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
         data.ss = (uintptr_t)sigmask;
         data.ss_len = NSIG / 8;
 
-        auto ret = do_syscall(NR_pselect6, nfds, readfds, writefds,
+        auto ret = do_cp_syscall(NR_pselect6, nfds, readfds, writefds,
                         exceptfds, timeout, &data);
         if (int e = sc_error(ret); e)
                 return e;
@@ -278,13 +329,62 @@ int sys_sigprocmask(int how, const sigset_t *set, sigset_t *old) {
         auto ret = do_syscall(NR_rt_sigprocmask, how, set, old, NSIG / 8);
         if (int e = sc_error(ret); e)
                 return e;
+	return 0;
+}
+
+int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out) {
+        void *stack = prepare_stack(entry, user_arg);
+
+	unsigned long flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND
+		| CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS | CLONE_SETTLS
+		| CLONE_PARENT_SETTID;
+
+	auto ret = __mlibc_spawn_thread(flags, stack, pid_out, NULL, tcb);
+	if (ret < 0)
+		return ret;
+
         return 0;
+}
+
+extern "C" const char __mlibc_syscall_begin[1];
+extern "C" const char __mlibc_syscall_end[1];
+
+int sys_before_cancellable_syscall(ucontext_t *uct) {
+	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.rip);
+	if (pc < __mlibc_syscall_begin || pc > __mlibc_syscall_end)
+		return 0;
+	return 1;
+}
+
+pid_t sys_getpid() {
+	auto ret = do_syscall(NR_getpid);
+	// getpid() always succeeds.
+	return sc_int_result<pid_t>(ret);
+}
+
+int sys_tgkill(int tgid, int tid, int sig) {
+	auto ret = do_syscall(NR_tgkill, tgid, tid, sig);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 #endif // __MLIBC_POSIX_OPTION
 
+int sys_vm_protect(void *pointer, size_t size, int prot) {
+	auto ret = do_syscall(NR_mprotect, pointer, size, prot);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+void sys_thread_exit() {
+	do_syscall(NR_exit, 0);
+	__builtin_trap();
+}
+
 void sys_exit(int status) {
-	do_syscall(NR_exit, status);
+	do_syscall(NR_exit_group, status);
 	__builtin_trap();
 }
 
@@ -294,7 +394,7 @@ void sys_exit(int status) {
 #define FUTEX_WAKE 1
 
 int sys_futex_wait(int *pointer, int expected) {
-	auto ret = do_syscall(NR_sys_futex, pointer, FUTEX_WAIT, expected, nullptr);
+	auto ret = do_cp_syscall(NR_sys_futex, pointer, FUTEX_WAIT, expected, nullptr);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;

@@ -442,7 +442,8 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 				|| phdr->p_type == PT_NOTE
 				|| phdr->p_type == PT_GNU_EH_FRAME
 				|| phdr->p_type == PT_GNU_RELRO
-				|| phdr->p_type == PT_GNU_STACK) {
+				|| phdr->p_type == PT_GNU_STACK
+				|| phdr->p_type == PT_GNU_PROPERTY) {
 			// ignore the phdr
 		}else{
 			mlibc::panicLogger() << "Unexpected PHDR type 0x"
@@ -722,6 +723,7 @@ Tcb *allocateTcb() {
 	tcb_ptr->selfPointer = tcb_ptr;
 
 	tcb_ptr->stackCanary = __stack_chk_guard;
+	tcb_ptr->cancelBits = tcbCancelEnableBit;
 	tcb_ptr->didExit = 0;
 	tcb_ptr->returnValue = nullptr;
 	tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
