@@ -79,8 +79,12 @@ int sys_sigaction(int number, const struct sigaction *__restrict action,
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS)
+	if(resp.error() == managarm::posix::Errors::ILLEGAL_REQUEST) {
+		// This is only returned for servers, not for normal userspace.
+		return ENOSYS;
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		return EINVAL;
+	}
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 
 	if(saved_action) {
