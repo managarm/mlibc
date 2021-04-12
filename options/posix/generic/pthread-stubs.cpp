@@ -254,16 +254,28 @@ namespace {
 	}
 }
 
+namespace mlibc {
+namespace {
+
 struct PthreadSignalInstaller {
 	PthreadSignalInstaller() {
 		struct sigaction sa;
 		sa.sa_sigaction = sigcancel_handler;
 		sa.sa_flags = SA_SIGINFO;
-		__ensure(!sigaction(SIGCANCEL, &sa, NULL));
+		auto e = ENOSYS;
+		if(sys_sigaction)
+			e = sys_sigaction(SIGCANCEL, &sa, NULL);
+		// Opt-out of cancellation support.
+		if(e == ENOSYS)
+			return;
+		__ensure(!e);
 	}
 };
 
-static PthreadSignalInstaller __mlibc_pthread_signal_installer;
+PthreadSignalInstaller pthread_signal_installer;
+
+} // anonymous namespace
+} // namespace mlibc
 
 int pthread_setcanceltype(int type, int *oldtype) {
 	if (type != PTHREAD_CANCEL_DEFERRED && type != PTHREAD_CANCEL_ASYNCHRONOUS)
