@@ -2579,7 +2579,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
-		if (resp.error() == managarm::fs::Errors::ILLEGAL_REQUEST) {
+		if (resp.error() == managarm::fs::Errors::NO_BACKING_DEVICE) {
 			return ENXIO;
 		}else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
 			return EINVAL;
