@@ -1287,21 +1287,8 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
 
 	for(nfds_t i = 0; i < count; i++) {
-		int mask = 0;
-		if(fds[i].events & ~(POLLIN | POLLPRI | POLLOUT | POLLRDHUP | POLLERR | POLLHUP | POLLNVAL))
-			mlibc::infoLogger() << "\e[31mmlibc: Unexpected events for poll()\e[39m"
-					<< frg::endlog;
-		if(fds[i].events & POLLIN)
-			mask |= EPOLLIN;
-		if(fds[i].events & POLLOUT)
-			mask |= EPOLLOUT;
-		if(fds[i].events & POLLPRI)
-			mask |= EPOLLPRI;
-		if(fds[i].events & POLLRDHUP)
-			mask |= EPOLLRDHUP;
-
 		req.add_fds(fds[i].fd);
-		req.add_events(mask);
+		req.add_events(fds[i].events);
 	}
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
@@ -1335,21 +1322,7 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	for(nfds_t i = 0; i < count; i++) {
 		if(resp.events(i))
 			m++;
-
-		fds[i].revents = 0;
-		if(resp.events(i) & EPOLLIN)
-			fds[i].revents |= POLLIN;
-		if(resp.events(i) & EPOLLOUT)
-			fds[i].revents |= POLLOUT;
-		if(resp.events(i) & EPOLLPRI)
-			fds[i].revents |= POLLPRI;
-		if(resp.events(i) & EPOLLRDHUP)
-			fds[i].revents |= POLLRDHUP;
-		// These are always reported by poll():
-		if(resp.events(i) & EPOLLERR)
-			fds[i].revents |= POLLERR;
-		if(resp.events(i) & EPOLLHUP)
-			fds[i].revents |= POLLHUP;
+		fds[i].revents = resp.events(i);
 	}
 
 	*num_events = m;
