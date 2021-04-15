@@ -6,6 +6,7 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/thread-entry.hpp>
 #include <errno.h>
+#include <sys/resource.h>
 
 namespace mlibc{
 	int sys_futex_wait(int *pointer, int expected){
@@ -27,35 +28,23 @@ namespace mlibc{
 		// Make sure to only map whole pages
 		__ensure(!(size & 0xFFF));
 
-		size_t sizePages = ((size + 0xFFF) & ~static_cast<size_t>(0xFFF)) >> 12;
-		syscall(SYS_MMAP, (uintptr_t)window, sizePages, (uintptr_t)hint);
-
-		if(!(*window))
-			return -1;
-		return 0;
+		return syscall(SYS_MMAP, (uintptr_t)window, (size + 0xFFF) & ~static_cast<size_t>(0xFFF), (uintptr_t)hint, flags);
 	}
 
 	int sys_vm_unmap(void* address, size_t size) {
 		__ensure(!(size & 0xFFF));
 
-		size_t sizePages = ((size + 0xFFF) & ~static_cast<size_t>(0xFFF)) >> 12;
-		long ret = syscall(SYS_MUNMAP, (uintptr_t)address, sizePages);
+		long ret = syscall(SYS_MUNMAP, (uintptr_t)address, (size + 0xFFF) & ~static_cast<size_t>(0xFFF));
 
 		return ret;
 	}
 
 	int sys_anon_allocate(size_t size, void **pointer) {
-		// Make sure to only allocate whole pages
-		__ensure(!(size & 0xFFF));
-		syscall(SYS_ALLOC, ((size + 0xFFF) & ~static_cast<size_t>(0xFFF)) >> 12, (uintptr_t)pointer);
-
-		if (!(*pointer))
-		    return -1;
-		return 0;
+		return sys_vm_map(nullptr, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS, -1, 0, pointer);
 	}
 
 	int sys_anon_free(void *pointer, size_t size) {
-		return 0; // Not implemented
+		return sys_vm_unmap(pointer, size);
 	}
 
 	void sys_libc_panic(){

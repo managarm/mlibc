@@ -148,7 +148,7 @@ namespace mlibc{
 
 	int sys_isatty(int fd) {
 		struct winsize ws;
-		long ret = syscall(SYS_IOCTL, fd, TIOCGWINSZ, &ws);
+		long ret = sys_ioctl(fd, TIOCGWINSZ, &ws, 0);
 
 		if(!ret) return 0;
 		
