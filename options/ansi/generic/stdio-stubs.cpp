@@ -1051,7 +1051,7 @@ ssize_t getdelim(char **line, size_t *n, int delim, FILE *stream) {
 
 		// Double the size of the buffer (but make sure it's at least 1024)
 		capacity = (capacity >= 1024) ? capacity * 2 : 1024;
-		buffer = reinterpret_cast<char *>(realloc(*line, capacity));
+		buffer = reinterpret_cast<char *>(getAllocator().reallocate(*line, capacity));
 		if (!buffer) {
 			errno = ENOMEM;
 			return -1;
