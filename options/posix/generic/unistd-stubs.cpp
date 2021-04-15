@@ -58,6 +58,9 @@ ssize_t confstr(int name, char *buf, size_t len) {
 	} else if(name == _CS_GNU_LIBPTHREAD_VERSION) {
 		// We are not glibc, so we can return 0 here.
 		return 0;
+	} else if(name == _CS_GNU_LIBC_VERSION) {
+		// We are not glibc, so we can return 0 here.
+		return 0;
 	} else {
 		mlibc::infoLogger() << "\e[31mmlibc: confstr() request " << name << " is unimplemented\e[39m"
 				<< frg::endlog;
