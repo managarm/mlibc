@@ -8,7 +8,8 @@ ansi_test_cases = [
 	'strverscmp',
 	'strftime',
 	'strchr',
-	'strrchr'
+	'strrchr',
+	'wcsrtombs'
 ]
 
 posix_test_cases = [
