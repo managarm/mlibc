@@ -60,6 +60,22 @@ static void *worker4(void *arg) {
 	__builtin_unreachable();
 }
 
+static void *worker5(void *arg) {
+	assert(!pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL));
+
+	worker_ready = 1;
+
+	while(!main_ready);
+
+	// Cancellation point - we should NOT cancel right now
+	pthread_testcancel();
+
+	int *arg_int = (int*)arg;
+	*arg_int = 1;
+
+	return NULL;
+}
+
 static void check_result(pthread_t thread) {
 
 	void *ret_val = NULL;
@@ -80,6 +96,7 @@ int main() {
 
 	main_ready = 0;
 	worker_ready = 0;
+	main_ready = 0;
 	ret = pthread_create(&thread, NULL, &worker2, NULL);
 	assert(!ret);
 
@@ -91,6 +108,7 @@ int main() {
 
 	main_ready = 0;
 	worker_ready = 0;
+	main_ready = 0;
 	ret = pthread_create(&thread, NULL, &worker3, NULL);
 	assert(!ret);
 
@@ -110,6 +128,23 @@ int main() {
 	assert(!ret);
 	main_ready = 1;
 	check_result(thread);
+
+	// Test for bug where pthread_testcancel() was not checking if
+	// cancellation was triggered properly.
+	worker_ready = 0;
+	int pthread_arg = 0;
+	main_ready = 0;
+	ret = pthread_create(&thread, NULL, &worker5, &pthread_arg);
+	assert(!ret);
+
+	while(!worker_ready);
+	main_ready = 1;
+
+	void *ret_val = NULL;
+	ret = pthread_join(thread, &ret_val);
+	assert(!ret);
+	assert(!ret_val);
+	assert(pthread_arg == 1);
 
 	return 0;
 }
