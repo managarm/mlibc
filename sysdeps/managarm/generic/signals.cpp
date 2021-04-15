@@ -69,7 +69,7 @@ int sys_sigaction(int number, const struct sigaction *__restrict action,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 

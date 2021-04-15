@@ -210,7 +210,7 @@ int sys_open(const char *path, int flags, int *fd) {
 	HEL_CHECK(helSubmitAsync(posixLane, actions, 4, globalQueue->getHandle(), 0, 0));
 
 	auto element = globalQueue->dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_head = parseSimple(element);
 	auto send_tail = parseSimple(element);
 	auto recv_resp = parseInline(element);
@@ -256,7 +256,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	HEL_CHECK(helSubmitAsync(lane, actions, 3, globalQueue->getHandle(), 0, 0));
 
 	auto element = globalQueue->dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 	HEL_CHECK(offer->error);
@@ -301,7 +301,7 @@ int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read) {
 	HEL_CHECK(helSubmitAsync(lane, actions, 5, globalQueue->getHandle(), 0, 0));
 
 	auto element = globalQueue->dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto imbue_creds = parseSimple(element);
 	auto recv_resp = parseInline(element);
@@ -348,7 +348,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 			globalQueue->getHandle(), 0, 0));
 
 	auto element = globalQueue->dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -386,7 +386,7 @@ int sys_close(int fd) {
 	HEL_CHECK(helSubmitAsync(posixLane, actions, 3, globalQueue->getHandle(), 0, 0));
 
 	auto element = globalQueue->dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 	HEL_CHECK(offer->error);
@@ -421,7 +421,7 @@ int sys_futex_tid() {
 	HEL_CHECK(helSubmitAsync(posixLane, actions, 3, globalQueue->getHandle(), 0, 0));
 
 	auto element = globalQueue->dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 	HEL_CHECK(offer->error);

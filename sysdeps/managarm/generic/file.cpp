@@ -68,7 +68,7 @@ int sys_chdir(const char *path) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -109,7 +109,7 @@ int sys_fchdir(int fd) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -146,7 +146,7 @@ int sys_chroot(const char *path) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -189,7 +189,7 @@ int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -357,7 +357,7 @@ HelHandle __raw_map(int fd) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 	auto pull_memory = parseHandle(element);
@@ -411,7 +411,7 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -449,7 +449,7 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -491,7 +491,7 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -536,7 +536,7 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -591,7 +591,7 @@ int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) 
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -639,7 +639,7 @@ int sys_ttyname(int fd, char *buf, size_t size) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -687,7 +687,7 @@ int sys_getcwd(char *buffer, size_t size) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 	auto recv_path = parseInline(element);
@@ -762,7 +762,7 @@ int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -802,7 +802,7 @@ int sys_vm_protect(void *pointer, size_t size, int prot) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -840,7 +840,7 @@ int sys_vm_unmap(void *pointer, size_t size) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -876,7 +876,7 @@ int sys_setsid(pid_t *sid) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -967,7 +967,7 @@ int sys_pipe(int *fds, int flags) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -1085,7 +1085,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto send_data = parseSimple(element);
 	auto imbue_creds = parseSimple(element);
@@ -1167,7 +1167,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto imbue_creds = parseSimple(element);
 	auto recv_resp = parseInline(element);
@@ -1305,7 +1305,7 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -1358,7 +1358,7 @@ int sys_epoll_create(int flags, int *fd) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -1411,7 +1411,7 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -1472,7 +1472,7 @@ int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 	auto recv_data = parseLength(element);
@@ -1516,7 +1516,7 @@ int sys_timerfd_create(int flags, int *fd) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -1559,7 +1559,7 @@ int sys_timerfd_settime(int fd, int flags,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -1605,7 +1605,7 @@ int sys_signalfd_create(sigset_t mask, int flags, int *fd) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -1765,7 +1765,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -1822,7 +1822,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -1898,7 +1898,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -1979,7 +1979,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 		auto recv_list = parseLength(element);
@@ -2044,7 +2044,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -2092,7 +2092,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -2141,7 +2141,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -2197,7 +2197,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -2239,7 +2239,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -2279,7 +2279,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -2324,7 +2324,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 		auto recv_data = parseLength(element);
@@ -2384,7 +2384,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto send_mode = parseSimple(element);
 		auto recv_resp = parseInline(element);
@@ -2437,7 +2437,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -2488,7 +2488,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -2542,7 +2542,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -2587,7 +2587,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -2627,7 +2627,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 		auto recv_attrs = parseLength(element);
@@ -2671,7 +2671,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto send_attrs = parseSimple(element);
 		auto recv_resp = parseInline(element);
@@ -2711,7 +2711,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto imbue_creds = parseSimple(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
@@ -2755,7 +2755,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -2803,7 +2803,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -2841,7 +2841,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -3064,7 +3064,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 					globalQueue.getQueue(), 0, 0));
 
 			auto element = globalQueue.dequeueSingle();
-			auto offer = parseSimple(element);
+			auto offer = parseHandle(element);
 			auto send_req = parseSimple(element);
 			auto recv_resp = parseInline(element);
 			auto recv_data = parseLength(element);
@@ -3110,7 +3110,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 					globalQueue.getQueue(), 0, 0));
 
 			auto element = globalQueue.dequeueSingle();
-			auto offer = parseSimple(element);
+			auto offer = parseHandle(element);
 			auto send_req = parseSimple(element);
 			auto recv_resp = parseInline(element);
 			auto recv_data = parseLength(element);
@@ -3151,7 +3151,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -3191,7 +3191,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -3451,7 +3451,7 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto imbue_creds = parseSimple(element);
 	auto send_data = parseSimple(element);
@@ -3518,7 +3518,7 @@ int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto imbue_creds = parseSimple(element);
 	auto recv_resp = parseInline(element);
@@ -3658,7 +3658,7 @@ int sys_dup(int fd, int flags, int *newfd) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -3705,7 +3705,7 @@ int sys_dup2(int fd, int flags, int newfd) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -3843,7 +3843,7 @@ int sys_readlink(const char *path, void *data, size_t max_size, ssize_t *length)
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 	auto recv_data = parseLength(element);
@@ -3923,7 +3923,7 @@ int sys_ftruncate(int fd, size_t size) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -3965,7 +3965,7 @@ int sys_fallocate(int fd, off_t offset, size_t size) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -4047,7 +4047,7 @@ int sys_faccessat(int dirfd, const char *pathname, int mode, int flags) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 
@@ -4097,7 +4097,7 @@ int sys_flock(int fd, int opts) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 

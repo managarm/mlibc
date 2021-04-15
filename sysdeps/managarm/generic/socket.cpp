@@ -73,7 +73,7 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto send_addr = parseSimple(element);
 	auto recv_resp = parseInline(element);
@@ -161,7 +161,7 @@ int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 			globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	auto offer = parseSimple(element);
+	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
 	auto recv_resp = parseInline(element);
 	auto recv_addr = parseLength(element);
@@ -254,7 +254,7 @@ int sys_getsockopt(int fd, int layer, int number,
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
@@ -316,7 +316,7 @@ int sys_setsockopt(int fd, int layer, int number,
 				globalQueue.getQueue(), 0, 0));
 
 		auto element = globalQueue.dequeueSingle();
-		auto offer = parseSimple(element);
+		auto offer = parseHandle(element);
 		auto send_req = parseSimple(element);
 		auto recv_resp = parseInline(element);
 
