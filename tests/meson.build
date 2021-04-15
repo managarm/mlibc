@@ -18,6 +18,7 @@ posix_test_cases = [
 	'pthread_create',
 	'pthread_cancel',
 	'getaddrinfo',
+	'getdelim',
 	'getnameinfo',
 	'dprintf',
 	'posix_spawn',

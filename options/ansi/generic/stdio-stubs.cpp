@@ -1003,45 +1003,66 @@ void perror(const char *string) {
 	fprintf(stderr, "%s\n", strerror(error));
 }
 
-// POSIX unlocked I/O extensions.
+// POSIX extensions.
 
-// GLIBC extensions.
+ssize_t getline(char **line, size_t *n, FILE *stream) {
+	return getdelim(line, n, '\n', stream);
+}
 
-ssize_t getline(char **line, size_t *n, FILE *file_base) {
+ssize_t getdelim(char **line, size_t *n, int delim, FILE *stream) {
 	// Otherwise, we cannot store the buffer / size.
 	if(!line || !n) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	char *buffer = nullptr;
-	size_t capacity = 0;
-	if(*line) {
-		buffer = *line;
-		capacity = *n;
-	}
+	char *buffer = *line;
+	size_t capacity = *n, nwritten = 0;
 
-	if(!capacity) {
-		buffer = reinterpret_cast<char *>(getAllocator().allocate(1024));
-		capacity = 1024;
-	}
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+	frg::unique_lock<FutexLock> lock(file->_lock);
 
-	if(!fgets(buffer, capacity, file_base))
+	// Avoid allocating if we've already hit the end
+	auto c = fgetc_unlocked(stream);
+	if (c == EOF || ferror(stream)) {
 		return -1;
+	} else {
+		file->unget(c);
+	}
 
-	size_t k = strlen(buffer);
-	buffer[k] = '\n';
-	buffer[k + 1] = 0;
+	while (true) {
+		// Fill the buffer
+		while (buffer && capacity > 0 && nwritten < capacity - 1) {
+			auto c = fgetc_unlocked(stream);
+			if (ferror(stream)) {
+				return -1;
+			} else if (c == EOF) {
+				buffer[nwritten] = 0;
+				return -1;
+			}
 
-	*line = buffer;
-	*n = capacity;
-	return k + 1;
+			buffer[nwritten++] = c;
+
+			if (c == delim) {
+				buffer[nwritten] = 0;
+				return nwritten;
+			}
+		}
+
+		// Double the size of the buffer (but make sure it's at least 1024)
+		capacity = (capacity >= 1024) ? capacity * 2 : 1024;
+		buffer = reinterpret_cast<char *>(getAllocator().reallocate(*line, capacity));
+		if (!buffer) {
+			errno = ENOMEM;
+			return -1;
+		}
+
+		*line = buffer;
+		*n = capacity;
+	}
 }
 
-ssize_t getdelim(char **line, size_t *n, int delim, FILE *file_base) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+// GLIBC extensions.
 
 int asprintf(char **out, const char *format, ...) {
 	va_list args;
