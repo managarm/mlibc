@@ -194,6 +194,34 @@ struct polymorphic_charcode_adapter : polymorphic_charcode {
 			return charcode_error::output_overflow;
 		return charcode_error::null;
 	}
+
+	charcode_error encode_wtranscode_length(code_seq<const wchar_t> &wseq, size_t *n,
+			__mlibc_mbstate &st) override {
+		__ensure(!st.__progress); // TODO: Update st with es.progress() and es.cpoint().
+
+		typename G::encode_state es;
+
+		*n = 0;
+		while(wseq) {
+			char temp[4];
+			code_seq<char> encode_nseq{temp, temp + 4};
+			codepoint cp = *wseq.it;
+			if(!cp)
+				return charcode_error::null;
+			// Consume the next code unit.
+			code_seq<const codepoint> cps{&cp, &cp + 1};
+			if(auto e = es(encode_nseq, cps); e == charcode_error::dirty) {
+				continue;
+			}else if(e != charcode_error::null) {
+				return e;
+			}
+
+			++(*n);
+			++wseq.it;
+		}
+
+		return charcode_error::null;
+	}
 };
 
 polymorphic_charcode *current_charcode() {
