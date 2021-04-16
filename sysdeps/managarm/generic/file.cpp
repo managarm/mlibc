@@ -1742,6 +1742,28 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		}
 		return 0;
 	}
+	case FIOCLEX: {
+		managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_request_type(managarm::posix::CntReqType::FD_SET_FLAGS);
+		req.set_fd(fd);
+
+		auto [offer, sendReq, recvResp] = exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(sendReq.error());
+		HEL_CHECK(recvResp.error());
+
+		managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recvResp.data(), recvResp.length());
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		return 0;
+	}
 	case DRM_IOCTL_VERSION: {
 		auto param = reinterpret_cast<drm_version*>(arg);
 		HelAction actions[3];
