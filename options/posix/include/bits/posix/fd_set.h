@@ -1,6 +1,8 @@
 #ifndef MLIBC_FD_SET_H
 #define MLIBC_FD_SET_H
 
+#include <bits/types.h>
+
 typedef struct {
 	union {
 		__mlibc_uint8 __mlibc_elems[128];
