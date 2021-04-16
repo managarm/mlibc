@@ -1,4 +1,3 @@
-
 #ifndef _TIME_H
 #define _TIME_H
 
@@ -31,8 +30,7 @@ extern "C" {
 
 // [7.27.1] Components of time
 
-// TODO: Use an integer type for clock_t?
-typedef long int clock_t;
+typedef long clock_t; // Matches Linux' ABI.
 
 struct tm {
 	int tm_sec;
