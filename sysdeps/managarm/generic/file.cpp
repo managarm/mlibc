@@ -1743,8 +1743,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return 0;
 	}
 	case FIOCLEX: {
-		managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_request_type(managarm::posix::CntReqType::FD_SET_FLAGS);
+		managarm::posix::IoctlFioclexRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_fd(fd);
 
 		auto [offer, sendReq, recvResp] = exchangeMsgsSync(
