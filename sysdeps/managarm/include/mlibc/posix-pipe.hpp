@@ -179,6 +179,7 @@ private:
 	void _waitProgressFutex(bool *done) {
 		while(true) {
 			auto futex = __atomic_load_n(&_retrieveChunk()->progressFutex, __ATOMIC_ACQUIRE);
+			__ensure(!(futex & ~(kHelProgressMask | kHelProgressWaiters | kHelProgressDone)));
 			do {
 				if(_lastProgress != (futex & kHelProgressMask)) {
 					*done = false;
@@ -188,7 +189,8 @@ private:
 					return;
 				}
 
-				__ensure(futex == _lastProgress);
+				if(futex & kHelProgressWaiters)
+					break; // Waiters bit is already set (in a previous iteration).
 			} while(!__atomic_compare_exchange_n(&_retrieveChunk()->progressFutex, &futex,
 						_lastProgress | kHelProgressWaiters,
 						false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE));
