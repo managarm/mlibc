@@ -1756,6 +1756,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer.error());
 		HEL_CHECK(sendReq.error());
+		if(recvResp.error() == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recvResp.error());
 
 		managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -1792,6 +1794,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -1849,6 +1853,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -1925,6 +1931,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2007,6 +2015,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 		HEL_CHECK(recv_list->error);
 
@@ -2071,6 +2081,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2119,6 +2131,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2168,6 +2182,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2224,6 +2240,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2266,6 +2284,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2306,6 +2326,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2352,6 +2374,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 		HEL_CHECK(recv_data->error);
 
@@ -2412,6 +2436,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(send_mode->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(send_mode->error);
 		HEL_CHECK(recv_resp->error);
 
@@ -2464,6 +2490,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2515,6 +2543,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2569,6 +2599,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2614,6 +2646,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2655,6 +2689,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 		HEL_CHECK(recv_attrs->error);
 
@@ -2699,6 +2735,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(send_attrs->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(send_attrs->error);
 		HEL_CHECK(recv_resp->error);
 
@@ -2738,6 +2776,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		auto recv_resp = parseInline(element);
 
 		HEL_CHECK(offer->error);
+		if(imbue_creds->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(imbue_creds->error);
 		HEL_CHECK(send_req->error);
 		HEL_CHECK(recv_resp->error);
@@ -2782,6 +2822,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2830,6 +2872,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2868,6 +2912,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2899,6 +2945,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		if(send_req.error())
 			return EINVAL;
 		HEL_CHECK(send_req.error());
+		if(imbue_creds.error() == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(recv_resp.error());
 
@@ -2935,6 +2983,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer.error());
 		HEL_CHECK(send_req.error());
+		if(imbue_creds.error() == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(recv_resp.error());
 
@@ -2971,6 +3021,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		if(send_req.error())
 			return EINVAL;
 		HEL_CHECK(send_req.error());
+		if(imbue_creds.error() == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(recv_resp.error());
 
@@ -3092,6 +3144,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 			HEL_CHECK(offer->error);
 			HEL_CHECK(send_req->error);
+			if(recv_resp->error == kHelErrDismissed)
+				return EINVAL;
 			HEL_CHECK(recv_resp->error);
 			HEL_CHECK(recv_data->error);
 
@@ -3138,6 +3192,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 			HEL_CHECK(offer->error);
 			HEL_CHECK(send_req->error);
+			if(recv_resp->error == kHelErrDismissed)
+				return EINVAL;
 			HEL_CHECK(recv_resp->error);
 			HEL_CHECK(recv_data->error);
 
@@ -3178,6 +3234,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -3218,6 +3276,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		HEL_CHECK(offer->error);
 		HEL_CHECK(send_req->error);
+		if(recv_resp->error == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp->error);
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
