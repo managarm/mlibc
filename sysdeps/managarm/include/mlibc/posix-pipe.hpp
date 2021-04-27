@@ -1,12 +1,10 @@
-
 #ifndef MLIBC_POSIX_PIPE
 #define MLIBC_POSIX_PIPE
 
-// FIXME: required for hel.h
 #include <signal.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <cstddef>
 
 #include <hel.h>
 #include <hel-syscalls.h>
@@ -97,14 +95,20 @@ struct Queue {
 			.chunkSize = 4096
 		};
 		HEL_CHECK(helCreateQueue(&params, &_handle));
-		HEL_CHECK(helSetupChunk(_handle, 0, _chunks[0], 0));
-		HEL_CHECK(helSetupChunk(_handle, 1, _chunks[1], 0));
+
+		auto chunksOffset = (sizeof(HelQueue) + (sizeof(int) << 1) + 63) & ~size_t(63);
+		auto reservedPerChunk = (sizeof(HelChunk) + params.chunkSize + 63) & ~size_t(63);
+		auto overallSize = chunksOffset + params.numChunks * reservedPerChunk;
 
 		void *mapping;
 		HEL_CHECK(helMapMemory(_handle, kHelNullHandle, nullptr,
-				0, (sizeof(HelQueue) + (sizeof(int) << 1) + 0xFFF) & ~size_t(0xFFF),
+				0, (overallSize + 0xFFF) & ~size_t(0xFFF),
 				kHelMapProtRead | kHelMapProtWrite, &mapping));
+
 		_queue = reinterpret_cast<HelQueue *>(mapping);
+		auto chunksPtr = reinterpret_cast<std::byte *>(mapping) + chunksOffset;
+		for(unsigned int i = 0; i < 2; ++i)
+			_chunks[i] = reinterpret_cast<HelChunk *>(chunksPtr + i * reservedPerChunk);
 
 		// Reset and enqueue the chunks.
 		_chunks[0]->progressFutex = 0;
@@ -293,4 +297,3 @@ auto exchangeMsgsSync(HelHandle descriptor, Args &&...args) {
 
 
 #endif // MLIBC_POSIX_PIPE
-

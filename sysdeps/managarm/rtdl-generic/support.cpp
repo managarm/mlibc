@@ -1,8 +1,7 @@
-
 #include <fcntl.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <cstddef>
 
 #include <frg/manual_box.hpp>
 #include <frg/string.hpp>
@@ -57,14 +56,18 @@ struct Queue {
 		};
 		HEL_CHECK(helCreateQueue(&params, &_handle));
 
+		auto chunksOffset = (sizeof(HelQueue) + (sizeof(int) << 0) + 63) & ~size_t(63);
+		auto reservedPerChunk = (sizeof(HelChunk) + params.chunkSize + 63) & ~size_t(63);
+		auto overallSize = chunksOffset + params.numChunks * reservedPerChunk;
+
 		void *mapping;
 		HEL_CHECK(helMapMemory(_handle, kHelNullHandle, nullptr,
-				0, (sizeof(HelQueue) + (sizeof(int) << 0) + 0xFFF) & ~size_t(0xFFF),
+				0, (overallSize + 0xFFF) & ~size_t(0xFFF),
 				kHelMapProtRead | kHelMapProtWrite, &mapping));
-		_queue = reinterpret_cast<HelQueue *>(mapping);
 
-		_chunk = reinterpret_cast<HelChunk *>(getAllocator().allocate(sizeof(HelChunk) + 4096));
-		HEL_CHECK(helSetupChunk(_handle, 0, _chunk, 0));
+		_queue = reinterpret_cast<HelQueue *>(mapping);
+		_chunk = reinterpret_cast<HelChunk *>(
+				reinterpret_cast<std::byte *>(mapping) + chunksOffset);
 
 		// Reset and enqueue the first chunk.
 		_chunk->progressFutex = 0;
@@ -461,4 +464,3 @@ int sys_futex_wake(int *pointer) {
 
 
 } // namespace mlibc
-
