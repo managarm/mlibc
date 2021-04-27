@@ -50,10 +50,18 @@ T load(void *ptr) {
 struct Queue {
 	Queue()
 	: _handle{kHelNullHandle}, _lastProgress(0) {
-		_queue = reinterpret_cast<HelQueue *>(getAllocator().allocate(sizeof(HelQueue)
-				+ sizeof(int)));
-		_queue->headFutex = 1;
-		HEL_CHECK(helCreateQueue(_queue, 0, 0, 128, &_handle));
+		HelQueueParameters params {
+			.ringShift = 0,
+			.numChunks = 1,
+			.chunkSize = 4096
+		};
+		HEL_CHECK(helCreateQueue(&params, &_handle));
+
+		void *mapping;
+		HEL_CHECK(helMapMemory(_handle, kHelNullHandle, nullptr,
+				0, (sizeof(HelQueue) + (sizeof(int) << 0) + 0xFFF) & ~size_t(0xFFF),
+				kHelMapProtRead | kHelMapProtWrite, &mapping));
+		_queue = reinterpret_cast<HelQueue *>(mapping);
 
 		_chunk = reinterpret_cast<HelChunk *>(getAllocator().allocate(sizeof(HelChunk) + 4096));
 		HEL_CHECK(helSetupChunk(_handle, 0, _chunk, 0));
@@ -62,6 +70,7 @@ struct Queue {
 		_chunk->progressFutex = 0;
 
 		_queue->indexQueue[0] = 0;
+		_queue->headFutex = 1;
 		_nextIndex = 1;
 		_wakeHeadFutex();
 	}

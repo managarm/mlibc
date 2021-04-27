@@ -74,8 +74,6 @@ struct Queue {
 	: _handle{kHelNullHandle} {
 		// We do not need to protect those allocations against signals as this constructor
 		// is only called during library initialization.
-		_queue = reinterpret_cast<HelQueue *>(getSysdepsAllocator().allocate(sizeof(HelQueue)
-				+ 2 * sizeof(int)));
 		_chunks[0] = reinterpret_cast<HelChunk *>(getSysdepsAllocator().allocate(sizeof(HelChunk) + 4096));
 		_chunks[1] = reinterpret_cast<HelChunk *>(getSysdepsAllocator().allocate(sizeof(HelChunk) + 4096));
 
@@ -93,10 +91,20 @@ struct Queue {
 		_lastProgress = 0;
 
 		// Setup the queue header.
-		_queue->headFutex = 0;
-		HEL_CHECK(helCreateQueue(_queue, 0, 1, 128, &_handle));
+		HelQueueParameters params {
+			.ringShift = 1,
+			.numChunks = 2,
+			.chunkSize = 4096
+		};
+		HEL_CHECK(helCreateQueue(&params, &_handle));
 		HEL_CHECK(helSetupChunk(_handle, 0, _chunks[0], 0));
 		HEL_CHECK(helSetupChunk(_handle, 1, _chunks[1], 0));
+
+		void *mapping;
+		HEL_CHECK(helMapMemory(_handle, kHelNullHandle, nullptr,
+				0, (sizeof(HelQueue) + (sizeof(int) << 1) + 0xFFF) & ~size_t(0xFFF),
+				kHelMapProtRead | kHelMapProtWrite, &mapping));
+		_queue = reinterpret_cast<HelQueue *>(mapping);
 
 		// Reset and enqueue the chunks.
 		_chunks[0]->progressFutex = 0;
@@ -106,6 +114,7 @@ struct Queue {
 
 		_queue->indexQueue[0] = 0;
 		_queue->indexQueue[1] = 1;
+		_queue->headFutex = 0;
 		_nextIndex = 2;
 		_wakeHeadFutex();
 	}
