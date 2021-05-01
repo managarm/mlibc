@@ -1,6 +1,6 @@
 [binaries]
-c = 'cc'
-cpp = 'c++'
+c = 'gcc-10'
+cpp = 'g++-10'
 
 [properties]
 needs_exe_wrapper = true

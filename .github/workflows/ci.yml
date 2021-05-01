@@ -14,7 +14,7 @@ jobs:
             # Note: the default jsonschema is too old.
             #       xbstrap should fix this by demanding a recent version.
             run: |
-                sudo apt-get install ninja-build
+                sudo apt-get install ninja-build g++-10
                 sudo pip3 install setuptools
                 sudo pip3 install -U jsonschema
                 sudo pip3 install meson xbstrap
@@ -39,7 +39,7 @@ jobs:
             run: 'xbstrap install ${{matrix.builds}}'
             working-directory: build/
           - name: Test mlibc
-            run: 'meson test -C pkg-builds/${{matrix.builds}}'
+            run: 'C=gcc-10 CXX=g++-10 meson test -C pkg-builds/${{matrix.builds}}'
             working-directory: build/
           - name: Build GCC
             run: 'xbstrap install-tool gcc'
@@ -56,7 +56,7 @@ jobs:
             # Note: the default jsonschema is too old.
             #       xbstrap should fix this by demanding a recent version.
             run: |
-                sudo apt-get install ninja-build
+                sudo apt-get install ninja-build g++-10
                 sudo pip3 install setuptools
                 sudo pip3 install -U jsonschema
                 sudo pip3 install meson xbstrap

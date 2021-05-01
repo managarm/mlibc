@@ -9,7 +9,7 @@ sources:
 
   - name: gcc
     git: 'git://gcc.gnu.org/git/gcc.git'
-    tag: 'releases/gcc-9.2.0'
+    tag: 'releases/gcc-10.3.0'
     regenerate:
       - args: ['./contrib/download_prerequisites']
         workdir: '@THIS_SOURCE_DIR@'
@@ -41,6 +41,9 @@ tools:
         # -g blows up GCC's binary size.
         - 'CFLAGS=-O2'
         - 'CXXFLAGS=-O2'
+        environ:
+          C: 'gcc-10'
+          CXX: 'g++-10'
     stages:
       - name: compiler
         pkgs_required:
@@ -51,14 +54,15 @@ tools:
           - args: ['make', '-j@PARALLELISM@', 'all-gcc']
         install:
           - args: ['make', 'install-gcc']
-      - name: libgcc
-        tools_required:
-          - tool: gcc
-            stage_dependencies: [compiler]
-        compile:
-          - args: ['make', '-j@PARALLELISM@', 'all-target-libgcc']
-        install:
-          - args: ['make', 'install-target-libgcc']
+       # TODO: Fix libgcc, seems to require <sys/syscall.h> now, and we don't implement that yet.
+#      - name: libgcc
+#        tools_required:
+#          - tool: gcc
+#            stage_dependencies: [compiler]
+#        compile:
+#          - args: ['make', '-j@PARALLELISM@', 'all-target-libgcc']
+#        install:
+#          - args: ['make', 'install-target-libgcc']
        # TODO: to build libstdc++, we need to pass -rpath and --dynamic-linker.
 #      - name: libstdc++
 #        tools_required:
@@ -80,6 +84,9 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dbuild_tests=true"
         - '@THIS_SOURCE_DIR@'
+        environ:
+          C: 'gcc-10'
+          CXX: 'g++-10'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -98,6 +105,9 @@ packages:
         - "-Dbuild_tests=true"
         - "-Dstatic=true"
         - '@THIS_SOURCE_DIR@'
+        environ:
+          C: 'gcc-10'
+          CXX: 'g++-10'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -115,6 +125,9 @@ packages:
         - "-Dbuild_tests=true"
         - "-Ddisable_posix_option=true"
         - '@THIS_SOURCE_DIR@'
+        environ:
+          C: 'gcc-10'
+          CXX: 'g++-10'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']

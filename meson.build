@@ -45,7 +45,7 @@ if not headers_only
 	c_compiler = meson.get_compiler('c')
 
 	add_project_arguments('-nostdinc', '-fno-builtin', language: ['c', 'cpp'])
-	add_project_arguments('-std=c++17', language: 'cpp')
+	add_project_arguments('-std=c++20', language: 'cpp')
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
