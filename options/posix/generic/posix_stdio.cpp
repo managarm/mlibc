@@ -6,6 +6,7 @@
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/file-io.hpp>
+#include <mlibc/posix-file-io.hpp>
 
 FILE *fmemopen(void *__restrict, size_t, const char *__restrict) {
 	__ensure(!"Not implemented");
@@ -22,11 +23,9 @@ FILE *popen(const char*, const char *) {
 	__builtin_unreachable();
 }
 
-FILE *open_memstream(char **, size_t *) {
-	mlibc::infoLogger() << "\e[31mmlibc: open_memstream() always fails"
-			<< "\e[39m" << frg::endlog;
-	errno = ENOMEM;
-	return nullptr;
+FILE *open_memstream(char **buf, size_t *sizeloc) {
+	return frg::construct<mlibc::mem_file>(getAllocator(), buf, sizeloc,
+			[] (mlibc::abstract_file *abstract) { frg::destruct(getAllocator(), abstract); });
 }
 
 int fseeko(FILE *file_base, off_t offset, int whence) {
