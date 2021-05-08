@@ -38,7 +38,10 @@ namespace {
 	constexpr bool globallyDisableBuffering = false;
 
 	// List of files that will be flushed before exit().
-	file_list global_file_list;
+	file_list &global_file_list() {
+		static frg::eternal<file_list> list;
+		return list.get();
+	};
 }
 
 // For pipe-like streams (seek returns ESPIPE), we need to make sure
@@ -60,7 +63,7 @@ abstract_file::abstract_file(void (*do_dispose)(abstract_file *))
 	__io_mode = 0;
 	__status_bits = 0;
 
-	global_file_list.push_back(this);
+	global_file_list().push_back(this);
 }
 
 abstract_file::~abstract_file() {
@@ -71,8 +74,8 @@ abstract_file::~abstract_file() {
 	if(__buffer_ptr)
 		getAllocator().free(__buffer_ptr);
 
-	auto it = global_file_list.iterator_to(this);
-	global_file_list.erase(it);
+	auto it = global_file_list().iterator_to(this);
+	global_file_list().erase(it);
 }
 
 void abstract_file::dispose() {
@@ -475,7 +478,7 @@ namespace {
 
 		~stdio_guard() {
 			// Only flush the files but do not close them.
-			for(auto it : mlibc::global_file_list) {
+			for(auto it : mlibc::global_file_list()) {
 				if(int e = it->flush(); e)
 					mlibc::infoLogger() << "mlibc warning: Failed to flush file before exit()"
 							<< frg::endlog;
@@ -589,7 +592,7 @@ long ftell(FILE *file_base) {
 int fflush_unlocked(FILE *file_base) {
 	if(file_base == NULL) {
 		// Only flush the files but do not close them.
-		for(auto it : mlibc::global_file_list) {
+		for(auto it : mlibc::global_file_list()) {
 			if(int e = it->flush(); e)
 				mlibc::infoLogger() << "mlibc warning: Failed to flush file"
 					<< frg::endlog;
@@ -604,7 +607,7 @@ int fflush_unlocked(FILE *file_base) {
 int fflush(FILE *file_base) {
 	if(file_base == NULL) {
 		// Only flush the files but do not close them.
-		for(auto it : mlibc::global_file_list) {
+		for(auto it : mlibc::global_file_list()) {
 			frg::unique_lock<FutexLock> lock(it->_lock);
 			if(int e = it->flush(); e)
 				mlibc::infoLogger() << "mlibc warning: Failed to flush file"
