@@ -348,5 +348,9 @@ namespace mlibc{
 
 		return 0;
 	}
+
+	int sys_pipe(int *fds, int flags){
+		return -syscall(SYS_PIPE, fds, flags);
+	}
 	#endif
 } 

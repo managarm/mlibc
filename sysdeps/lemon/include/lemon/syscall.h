@@ -13,6 +13,7 @@
 #define SYS_CREATE 8
 #define SYS_LINK 9
 #define SYS_UNLINK 10
+#define SYS_EXECVE 11
 #define SYS_CHDIR 12
 #define SYS_TIME 13
 #define SYS_MAP_FB 14
@@ -92,6 +93,11 @@
 #define SYS_INTERRUPT_THREAD 90
 #define SYS_LOAD_KERNEL_MODULE 91
 #define SYS_UNLOAD_KERNEL_MODULE 92
+#define SYS_FORK 93
+#define SYS_GETGID 94
+#define SYS_GETEGID 95
+#define SYS_GETPPID 96
+#define SYS_PIPE 97
 
 #ifdef __cplusplus
 extern "C"{

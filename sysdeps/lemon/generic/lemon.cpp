@@ -72,6 +72,10 @@ namespace mlibc{
 		pid_t pid = _pid;
 		return pid;
 	}
+
+	pid_t sys_getppid(){
+		return syscall(SYS_GETPPID);
+	}
 	
 	int sys_clock_get(int clock, time_t *secs, long *nanos) {
 		uint64_t _secs, _millis;
@@ -113,13 +117,11 @@ namespace mlibc{
 	}
 
 	gid_t sys_getgid(){
-		mlibc::infoLogger() << "mlibc: sys_getgid is a stub" << frg::endlog;
-		return 0;
+		return syscall(SYS_GETGID);
 	}
 
 	gid_t sys_getegid(){
-		mlibc::infoLogger() << "mlibc: sys_getegid is a stub" << frg::endlog;
-		return 0;
+		return syscall(SYS_GETEGID);
 	}
 
 	int sys_setgid(gid_t gid){
@@ -163,6 +165,21 @@ namespace mlibc{
 		*ret_pid = ret;
 
 		return 0;
+	}
+
+	int sys_fork(pid_t *child){
+		long pid = syscall(SYS_FORK, 0);
+		if(pid < 0){
+			errno = pid;
+			return -1;
+		}
+
+		*child = pid;
+		return 0;
+	}
+
+	int sys_execve(const char *path, char *const argv[], char *const envp[]){
+		return -syscall(SYS_EXECVE, path, argv, envp);
 	}
 	#endif
 } 
