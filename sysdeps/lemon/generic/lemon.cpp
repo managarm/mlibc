@@ -25,9 +25,6 @@ namespace mlibc{
 	int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
 		__ensure(flags & MAP_ANONYMOUS);
 
-		// Make sure to only map whole pages
-		__ensure(!(size & 0xFFF));
-
 		return syscall(SYS_MMAP, (uintptr_t)window, (size + 0xFFF) & ~static_cast<size_t>(0xFFF), (uintptr_t)hint, flags);
 	}
 
@@ -180,6 +177,10 @@ namespace mlibc{
 
 	int sys_execve(const char *path, char *const argv[], char *const envp[]){
 		return -syscall(SYS_EXECVE, path, argv, envp);
+	}
+
+	int sys_getentropy(void *buffer, size_t length){
+		return -syscall(SYS_GETENTROPY, buffer, length);
 	}
 	#endif
 } 
