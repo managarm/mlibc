@@ -17,6 +17,7 @@ posix_test_cases = [
 	'pthread_rwlock',
 	'pthread_create',
 	'pthread_cancel',
+	'pwd',
 	'getaddrinfo',
 	'getdelim',
 	'getnameinfo',
