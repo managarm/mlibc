@@ -16,3 +16,14 @@
 1. Add new `sysdeps/` subdirectory `sysdeps/some-new-os/` and a `meson.build` to compile it. Integreate `sysdeps/some-new-os/meson.build` into the toplevel `meson.build`.
 2. Create ABI headers in `abis/some-new-os/`. Add symlinks in `sysdeps/some-new-os/include/abi-bits` to your ABI headers. Look at existing ports to figure out the ABI headers required for the options enabled by `sysdeps/some-new-os/meson.build`.
 3. In `sysdeps/some-new-os/`, add code to implement (a subset of) the functions from `options/internal/include/mlibc/sysdeps.hpp`. Which subset you need depends on the options that `sysdeps/some-new-os/meson.build` enables.
+
+## Local Development
+
+The `mlibc` test suite can be run under a Linux host. To do this, first run from the project root:
+```
+meson -Dbuild_tests=true build
+```
+This will create a `build` directory. Then, `cd build` and run the tests (showing output) with:
+```
+meson test -v
+```
