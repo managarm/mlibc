@@ -278,6 +278,9 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint6
 void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 		size_t phdr_entry_size, size_t phdr_count, void *entry_pointer) {
 	__ensure(object->isMainObject);
+	object->phdrPointer = phdr_pointer;
+	object->phdrEntrySize = phdr_entry_size;
+	object->phdrCount = phdr_count;
 	if(verbose)
 		mlibc::infoLogger() << "rtdl: Loading " << object->name << frg::endlog;
 
