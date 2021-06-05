@@ -4330,9 +4330,6 @@ int sys_getentropy(void *buffer, size_t length) {
 	auto p = reinterpret_cast<char *>(buffer);
 	size_t n = 0;
 
-	if(length > 256)
-		return EIO;
-
 	while(n < length) {
 		size_t chunk;
 		HEL_CHECK(helGetRandomBytes(p + n, length - n, &chunk));

@@ -834,6 +834,10 @@ int getentropy(void *buffer, size_t length) {
 		errno = ENOSYS;
 		return -1;
 	}
+	if(length > 256) {
+		errno = EIO;
+		return -1;
+	}
 	if(int e = mlibc::sys_getentropy(buffer, length); e) {
 		errno = e;
 		return -1;
