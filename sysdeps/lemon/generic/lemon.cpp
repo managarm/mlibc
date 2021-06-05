@@ -123,12 +123,12 @@ namespace mlibc{
 		return -syscall(SYS_SETEUID, euid);
 	}
 
-	int sys_getgid(){
+	gid_t sys_getgid(){
 		mlibc::infoLogger() << "mlibc: sys_getgid is a stub" << frg::endlog;
 		return 0;
 	}
 
-	int sys_getegid(){
+	gid_t sys_getegid(){
 		mlibc::infoLogger() << "mlibc: sys_getegid is a stub" << frg::endlog;
 		return 0;
 	}
