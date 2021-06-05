@@ -292,7 +292,20 @@ int ftruncate(int fd, off_t size) {
 }
 
 char *getcwd(char *buffer, size_t size) {
-	__ensure(buffer && "glibc extension for !buffer is not implemented");
+	/* In order to support glibc's extension of allocating buffer if none is given, we have this
+	   buffer to use as needed. We do not respect the size passed, which glibc does, but musl
+	   doesn't do. This should be fine, as this behavior is an extension anyways and thus not part
+	   of the spec. */
+	char alt_buffer[PATH_MAX];
+
+	if(!buffer) {
+		buffer = alt_buffer;
+		size = PATH_MAX;
+	} else if(!size) {
+		errno = EINVAL;
+		return NULL;
+	}
+
 	if(!mlibc::sys_getcwd) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
@@ -302,7 +315,7 @@ char *getcwd(char *buffer, size_t size) {
 		errno = e;
 		return NULL;
 	}
-	return buffer;
+	return (buffer == alt_buffer) ? strdup(buffer) : buffer;
 }
 
 int getgroups(int size, gid_t list[]) {
