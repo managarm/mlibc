@@ -167,6 +167,11 @@ struct SharedObject {
 	bool wasInitialized;
 
 	Scope *objectScope;
+
+	// PHDR related stuff, we only set these for the main executable
+	void *phdrPointer = nullptr;
+	size_t phdrEntrySize = 0;
+	size_t phdrCount = 0;
 };
 
 void processCopyRelocations(SharedObject *object);

@@ -422,6 +422,28 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 		}
 	}
 
+	// Not found, find the DSO it should be in.
+	for(size_t i = 0; i < globalScope->_objects.size(); i++) {
+		auto object = globalScope->_objects[i];
+
+		for(size_t j = 0; j < object->phdrCount; j++) {
+			auto phdr = (Elf64_Phdr *)((uintptr_t)object->phdrPointer + j * object->phdrEntrySize);
+			if(phdr->p_type != PT_LOAD) {
+				continue;
+			}
+			uintptr_t start = object->baseAddress + phdr->p_vaddr;
+			uintptr_t end = start + phdr->p_memsz;
+			if(reinterpret_cast<uintptr_t>(ptr) >= start && reinterpret_cast<uintptr_t>(ptr) < end) {
+				mlibc::infoLogger() << "rtdl: Found DSO " << object->path << frg::endlog;
+				info->file = object->path.data();
+				info->base = reinterpret_cast<void *>(object->baseAddress);
+				info->symbol = nullptr;
+				info->address = 0;
+				return 0;
+			}
+		}
+	}
+
 	mlibc::infoLogger() << "rtdl: Could not find symbol in __dlapi_reverse()" << frg::endlog;
 	return -1;
 }
