@@ -89,4 +89,12 @@ int munmap(void *pointer, size_t size) {
 	return 0;
 }
 
+int shm_open(const char *name, int oflag, mode_t mode) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 
+int shm_unlink(const char *name) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

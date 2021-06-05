@@ -2,6 +2,7 @@
 #define _SYS_MMAN_H
 
 #include <abi-bits/vm-flags.h>
+#include <abi-bits/mode_t.h>
 #include <bits/off_t.h>
 #include <bits/size_t.h>
 
@@ -41,6 +42,9 @@ int munlockall(void);
 
 int posix_madvise(void *, size_t, int);
 int msync(void *, size_t, int);
+
+int shm_open(const char *name, int oflag, mode_t mode);
+int shm_unlink(const char *name);
 
 // Linux extension:
 void *mremap(void *, size_t, size_t, int, ...);
