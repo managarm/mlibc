@@ -38,6 +38,10 @@
 #define NR_kill 62
 #define NR_fcntl 72
 #define NR_unlink 87
+#define NR_getuid 102
+#define NR_getgid 104
+#define NR_geteuid 107
+#define NR_getegid 108
 #define NR_arch_prctl 158
 #define NR_sys_futex 202
 #define NR_clock_gettime 228
@@ -369,6 +373,30 @@ int sys_tgkill(int tgid, int tid, int sig) {
 pid_t sys_getpid() {
 	auto ret = do_syscall(NR_getpid);
 	// getpid() always succeeds.
+	return sc_int_result<pid_t>(ret);
+}
+
+uid_t sys_getuid() {
+	auto ret = do_syscall(NR_getuid);
+	// getuid() always succeeds.
+	return sc_int_result<pid_t>(ret);
+}
+
+uid_t sys_geteuid() {
+	auto ret = do_syscall(NR_geteuid);
+	// geteuid() always succeeds.
+	return sc_int_result<pid_t>(ret);
+}
+
+gid_t sys_getgid() {
+	auto ret = do_syscall(NR_getgid);
+	// getgid() always succeeds.
+	return sc_int_result<pid_t>(ret);
+}
+
+gid_t sys_getegid() {
+	auto ret = do_syscall(NR_getegid);
+	// getegid() always succeeds.
 	return sc_int_result<pid_t>(ret);
 }
 
