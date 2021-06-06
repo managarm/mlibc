@@ -552,8 +552,15 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		}
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		return 0;
-
-
+	}else if(request == F_SETLK) {
+		mlibc::infoLogger() << "\e[31mmlibc: F_SETLK\e[39m" << frg::endlog;
+		return 0;
+	}else if(request == F_SETLKW) {
+		mlibc::infoLogger() << "\e[31mmlibc: F_SETLKW\e[39m" << frg::endlog;
+		return 0;
+	}else if(request == F_GETLK) {
+		mlibc::infoLogger() << "\e[31mmlibc: F_GETLK\e[39m" << frg::endlog;
+		return ENOSYS;
 	}else{
 		mlibc::infoLogger() << "\e[31mmlibc: Unexpected fcntl() request: "
 				<< request << "\e[39m" << frg::endlog;
