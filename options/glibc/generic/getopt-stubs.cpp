@@ -100,15 +100,30 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 				return 0;
 			}
 		}else{
+			/* handle short options, i.e. options with only one dash prefixed; e.g. `program -s` */
 			__ensure((strlen(argv[optind]) == 2) && "We do not support concatenated short options yet.");
 			unsigned int i = 1;
 			while(true) {
 				auto opt = strchr(optstring, arg[i]);
 				if(opt) {
-					__ensure((opt[1] != ':') && "We do not support option arguments.");
+					if(opt[1] == ':') {
+						bool required = (opt[2] != ':');
+
+						if(arg[i+1]) {
+							optarg = arg + i + 1;
+						} else if(optind + 1 < argc && argv[optind + 1] && (required || argv[optind + 1][0] != '-')) {
+							optarg = argv[optind + 1];
+							optind++;
+						} else if(!required) {
+							optarg = nullptr;
+						} else {
+							__ensure(!"We do not handle missing required short options yet.");
+						}
+					}
+
 					optind++;
 					return arg[i];
-				}else {
+				} else {
 					optopt = arg[1];
 					if(opterr)
 						fprintf(stderr, "%s is not a valid option.\n", arg);
