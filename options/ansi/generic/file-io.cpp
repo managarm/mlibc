@@ -501,7 +501,7 @@ int fileno(FILE *file_base) {
 
 FILE *fopen(const char *path, const char *mode) {
 	// Consume the first char; this must be 'r', 'w' or 'a'.
-	int flags;
+	int flags = 0;
 	bool has_plus = strchr(mode, '+');
 	if(*mode == 'r') {
 		if(has_plus) {
