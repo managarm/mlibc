@@ -169,11 +169,14 @@ int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(recv_addr->error);
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+		return ENOTSOCK;
+	}
 	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	HEL_CHECK(recv_addr->error);
 	*actual_length = resp.file_size();
 	return 0;
 }

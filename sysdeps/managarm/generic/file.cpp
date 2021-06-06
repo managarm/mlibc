@@ -951,9 +951,13 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	*fd = resp.fd();
-	return 0;
+	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EAFNOSUPPORT;
+	} else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		*fd = resp.fd();
+		return 0;
+	}
 }
 
 int sys_pipe(int *fds, int flags) {
