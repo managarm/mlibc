@@ -83,16 +83,23 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 	int addr_count = 1;
 	frg::string<MemoryAllocator> canon{getAllocator()};
 	if (node) {
-		if ((addr_count = mlibc::lookup_name_hosts(addr_buf, node, canon)) <= 0)
-			addr_count = mlibc::lookup_name_dns(addr_buf, node, canon);
-		else
-			addr_count = 1;
+		if ((addr_count = mlibc::lookup_name_ip(addr_buf, node, family)) <= 0) {
+			if (flags & AI_NUMERICHOST)
+			       addr_count = -EAI_NONAME;
+			else if ((addr_count = mlibc::lookup_name_hosts(addr_buf, node, canon)) <= 0)
+				addr_count = mlibc::lookup_name_dns(addr_buf, node, canon);
+			else
+				addr_count = 1;
+		}
+
 		if (addr_count < 0)
 			return -addr_count;
 		if (!addr_count)
 			return EAI_NONAME;
 	} else {
 		/* There is no node specified */
+		if (flags & AI_NUMERICHOST)
+			return EAI_NONAME;
 		addr_count = lookup_name_null(addr_buf, flags, family);
 	}
 

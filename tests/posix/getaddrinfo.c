@@ -28,5 +28,22 @@ int main() {
 
 	freeaddrinfo(res);
 
+	hints.ai_flags = AI_NUMERICHOST;
+	ret = getaddrinfo("10.10.10.10", NULL, &hints, &res);
+	assert(ret == 0);
+
+	addr = (struct sockaddr_in*)res[0].ai_addr;
+	assert((addr->sin_addr.s_addr & 0xFF) == 10);
+	assert(((addr->sin_addr.s_addr >> 8) & 0xFF) == 10);
+	assert(((addr->sin_addr.s_addr >> 16) & 0xFF) == 10);
+	assert(((addr->sin_addr.s_addr >> 24) & 0xFF) == 10);
+
+	freeaddrinfo(res);
+
+	ret = getaddrinfo("example.net", NULL, &hints, &res);
+	assert(ret == EAI_NONAME);
+
+	freeaddrinfo(res);
+
 	return 0;
 }

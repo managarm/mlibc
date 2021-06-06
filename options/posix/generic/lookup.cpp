@@ -448,4 +448,62 @@ int lookup_name_null(struct lookup_result &buf, int flags, int family) {
 	return buf.buf.size();
 }
 
+int lookup_name_ip(struct lookup_result &buf, const char *name, int family) {
+	if (family == AF_INET) {
+		in_addr_t addr = 0;
+		int res = inet_pton(AF_INET, name, &addr);
+
+		if (res <= 0)
+			return -EAI_NONAME;
+
+		struct dns_addr_buf addr_buf;
+		addr_buf.family = AF_INET;
+		memcpy(&addr_buf.addr, &addr, 4);
+
+		buf.buf.push_back(addr_buf);
+		return 1;
+	}
+
+	if (family == AF_INET6) {
+		struct in6_addr addr{0};
+		int res = inet_pton(AF_INET6, name, &addr);
+
+		if (res <= 0)
+			return -EAI_NONAME;
+
+		struct dns_addr_buf addr_buf;
+		addr_buf.family = AF_INET6;
+		memcpy(&addr_buf.addr, &addr, 16);
+
+		buf.buf.push_back(addr_buf);
+		return 1;
+	}
+
+	// If no family was specified we try ipv4 and then ipv6.
+	in_addr_t addr4 = 0;
+	int res = inet_pton(AF_INET, name, &addr4);
+
+	if (res > 0) {
+		struct dns_addr_buf addr_buf;
+		addr_buf.family = AF_INET;
+		memcpy(&addr_buf.addr, &addr4, 4);
+
+		buf.buf.push_back(addr_buf);
+		return 1;
+	}
+
+	struct in6_addr addr6{0};
+	res = inet_pton(AF_INET6, name, &addr6);
+
+	if (res <= 0)
+		return -EAI_NONAME;
+
+	struct dns_addr_buf addr_buf;
+	addr_buf.family = AF_INET6;
+	memcpy(&addr_buf.addr, &addr6, 16);
+
+	buf.buf.push_back(addr_buf);
+	return 1;
+}
+
 } // namespace mlibc
