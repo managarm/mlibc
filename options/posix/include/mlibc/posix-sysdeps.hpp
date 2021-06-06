@@ -19,6 +19,7 @@
 #include <sys/socket.h>
 #include <sys/resource.h>
 #include <sys/select.h>
+#include <sys/statvfs.h>
 #include <termios.h>
 #include <time.h>
 #include <ucontext.h>
@@ -59,6 +60,8 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_isatty(int fd);
 [[gnu::weak]] int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags,
 		struct stat *statbuf);
+[[gnu::weak]] int sys_statvfs(const char *path, struct statvfs *out);
+[[gnu::weak]] int sys_fstatvfs(int fd, struct statvfs *out);
 [[gnu::weak]] int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length);
 [[gnu::weak]] int sys_rmdir(const char *path);
 [[gnu::weak]] int sys_ftruncate(int fd, size_t size);
