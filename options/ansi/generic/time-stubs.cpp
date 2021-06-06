@@ -61,13 +61,17 @@ int timespec_get(struct timespec *ts, int base) {
 	return ret < 0 ? 0 : base;
 }
 
-char *asctime(const struct tm *ptr){
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+char *asctime(const struct tm *ptr) {
+	static char buf[26];
+	return asctime_r(ptr, buf);
 }
-char *ctime(const time_t *timer){
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+char *ctime(const time_t *timer) {
+	struct tm *tm = localtime(timer);
+	if(!tm) {
+		return 0;
+	}
+	return asctime(tm);
 }
 
 struct tm *gmtime(const time_t *unix_gmt) {
@@ -549,9 +553,22 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 	return res;
 }
 
+// This implementation of asctime_r is taken from sortix
 char *asctime_r(const struct tm *tm, char *buf) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	static char weekday_names[7][4] =
+		{ "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+	static char month_names[12][4] =
+		{ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+		  "Nov", "Dec" };
+	sprintf(buf, "%.3s %.3s%3d %.2d:%.2d%.2d %d\n",
+	             weekday_names[tm->tm_wday],
+	             month_names[tm->tm_mon],
+	             tm->tm_mday,
+	             tm->tm_hour,
+	             tm->tm_min,
+	             tm->tm_sec,
+	             tm->tm_year + 1900);
+	return buf;
 }
 
 char *ctime_r(const time_t *, char *) {
