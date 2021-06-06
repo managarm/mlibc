@@ -1142,7 +1142,10 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 }
 
 int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
-	__ensure(hdr->msg_iovlen);
+	if(!hdr->msg_iovlen) {
+		return EMSGSIZE;
+	}
+
 	auto handle = getHandleForFd(sockfd);
 	if (!handle)
 		return EBADF;
