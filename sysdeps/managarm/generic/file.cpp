@@ -667,6 +667,12 @@ int sys_ttyname(int fd, char *buf, size_t size) {
 	}
 }
 
+int sys_fdatasync(int) {
+	mlibc::infoLogger() << "\e[35mmlibc: fdatasync() is a no-op\e[39m"
+			<< frg::endlog;
+	return 0;
+}
+
 int sys_getcwd(char *buffer, size_t size) {
 	SignalGuard sguard;
 	HelAction actions[4];
