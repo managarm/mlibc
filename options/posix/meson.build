@@ -15,6 +15,7 @@ libc_sources += files(
 	'generic/netdb-stubs.cpp',
 	'generic/net-if-stubs.cpp',
 	'generic/posix_ctype.cpp',
+	'generic/posix-file-io.cpp',
 	'generic/posix_locale.cpp',
 	'generic/posix_signal.cpp',
 	'generic/posix_stdio.cpp',

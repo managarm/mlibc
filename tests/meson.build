@@ -25,7 +25,8 @@ posix_test_cases = [
 	'posix_spawn',
 	'index',
 	'rindex',
-	'search'
+	'search',
+	'open_memstream'
 ]
 
 glibc_test_cases = [
