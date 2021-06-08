@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <string.h>
 #include <mlibc/bitutil.hpp>
+#include <mlibc/debug.hpp>
 
 const struct in6_addr in6addr_any = {{}};
 
@@ -146,9 +147,8 @@ int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 			break;
 		}
 		case AF_INET6:
-			__ensure(!"ipv6 is not implemented!");
-			__builtin_unreachable();
-			break;
+			mlibc::infoLogger() << "inet_pton: ipv6 is not implemented!" << frg::endlog;
+			/* fallthrough */
 		default:
 			errno = EAFNOSUPPORT;
 			return -1;
