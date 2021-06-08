@@ -222,6 +222,8 @@ private:
 	const Elf64_Sym *_symbol;
 };
 
+frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_view string);
+
 // --------------------------------------------------------
 // Scope
 // --------------------------------------------------------
