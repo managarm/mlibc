@@ -2066,6 +2066,56 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		*result = resp.result();
 		return 0;
 	}
+	case DRM_IOCTL_MODE_GETPROPERTY: {
+		auto param = reinterpret_cast<drm_mode_get_property*>(arg);
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+		req.set_drm_property_id(param->prop_id);
+
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+		if(resp.error() != managarm::fs::Errors::SUCCESS) {
+			mlibc::infoLogger() << "\e[31mmlibc: DRM_IOCTL_MODE_GETPROPERTY(" << param->prop_id << ") error " << (int) resp.error() << "\e[39m"
+				<< frg::endlog;
+			*result = 0;
+			return EINVAL;
+		}
+
+		memcpy(param->name, resp.drm_property_name().data(), resp.drm_property_name().size());
+		param->count_values = resp.drm_property_vals_size();
+		param->flags = resp.drm_property_flags();
+
+		for(size_t i = 0; i < param->count_values && i < resp.drm_property_vals_size() && param->values_ptr; i++) {
+			auto dest = reinterpret_cast<uint64_t *>(param->values_ptr);
+			dest[i] = resp.drm_property_vals(i);
+		}
+
+		__ensure(resp.drm_enum_name_size() == resp.drm_enum_value_size());
+
+		for(size_t i = 0; i < param->count_enum_blobs && i < resp.drm_enum_name_size() && i < resp.drm_enum_value_size(); i++) {
+			auto dest = reinterpret_cast<drm_mode_property_enum *>(param->enum_blob_ptr);
+			dest[i].value = resp.drm_enum_value(i);
+			strncpy(dest[i].name, resp.drm_enum_name(i).data(), DRM_PROP_NAME_LEN);
+		}
+
+		param->count_enum_blobs = resp.drm_enum_name_size();
+
+		*result = 0;
+		return 0;
+	}
 	case DRM_IOCTL_MODE_GETPLANERESOURCES: {
 		auto param = reinterpret_cast<drm_mode_get_plane_res *>(arg);
 
