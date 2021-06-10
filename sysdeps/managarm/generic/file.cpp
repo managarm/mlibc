@@ -2149,6 +2149,48 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		*result = 0;
 		return 0;
 	}
+	case DRM_IOCTL_MODE_GETPROPBLOB: {
+		auto param = reinterpret_cast<drm_mode_get_blob *>(arg);
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+		req.set_drm_blob_id(param->blob_id);
+
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+		if(resp.error() != managarm::fs::Errors::SUCCESS) {
+			mlibc::infoLogger() << "\e[31mmlibc: DRM_IOCTL_MODE_GETPROPBLOB(" << param->blob_id << ") error " << (int) resp.error() << "\e[39m"
+				<< frg::endlog;
+			*result = 0;
+			return EINVAL;
+		}
+
+		uint8_t *dest = reinterpret_cast<uint8_t *>(param->data);
+		for(size_t i = 0; i < resp.drm_property_blob_size(); i++) {
+			if(i >= param->length) {
+				continue;
+			}
+
+			dest[i] = resp.drm_property_blob(i);
+		}
+
+		param->length = resp.drm_property_blob_size();
+
+		*result = 0;
+		return 0;
+	}
 	case DRM_IOCTL_MODE_GETPLANERESOURCES: {
 		auto param = reinterpret_cast<drm_mode_get_plane_res *>(arg);
 
