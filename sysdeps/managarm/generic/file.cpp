@@ -2116,6 +2116,39 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		*result = 0;
 		return 0;
 	}
+	case DRM_IOCTL_MODE_SETPROPERTY: {
+		auto param = reinterpret_cast<drm_mode_connector_set_property *>(arg);
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+		req.set_drm_property_id(param->prop_id);
+		req.set_drm_property_value(param->value);
+		req.set_drm_obj_id(param->connector_id);
+
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+		if(resp.error() != managarm::fs::Errors::SUCCESS) {
+			mlibc::infoLogger() << "\e[31mmlibc: DRM_IOCTL_MODE_SETPROPERTY(" << param->prop_id << ") error " << (int) resp.error() << "\e[39m"
+				<< frg::endlog;
+			*result = 0;
+			return EINVAL;
+		}
+
+		*result = 0;
+		return 0;
+	}
 	case DRM_IOCTL_MODE_GETPLANERESOURCES: {
 		auto param = reinterpret_cast<drm_mode_get_plane_res *>(arg);
 
