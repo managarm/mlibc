@@ -2191,6 +2191,47 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		*result = 0;
 		return 0;
 	}
+	case DRM_IOCTL_MODE_GETPLANE: {
+		auto param = reinterpret_cast<drm_mode_get_plane*>(arg);
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+		req.set_drm_plane_id(param->plane_id);
+
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		param->crtc_id = resp.drm_crtc_id();
+		param->fb_id = resp.drm_fb_id();
+		param->possible_crtcs = resp.drm_possible_crtcs();
+		param->gamma_size = resp.drm_gamma_size();
+
+		// FIXME: this should be passed as a buffer with helix, but this has no bounded max size?
+		for(size_t i = 0; i < resp.drm_format_type_size(); i+= 4) {
+			if(i >= param->count_format_types) {
+				break;
+			}
+			auto dest = reinterpret_cast<uint32_t *>(param->format_type_ptr);
+			dest[i] = resp.drm_format_type(i);
+		}
+
+		param->count_format_types = resp.drm_format_type_size();
+
+		*result = resp.result();
+		return 0;
+	}
 	case DRM_IOCTL_MODE_GETPLANERESOURCES: {
 		auto param = reinterpret_cast<drm_mode_get_plane_res *>(arg);
 
