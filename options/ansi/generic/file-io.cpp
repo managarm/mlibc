@@ -54,7 +54,7 @@ abstract_file::abstract_file(void (*do_dispose)(abstract_file *))
 : _type{stream_type::unknown}, _bufmode{buffer_mode::unknown}, _do_dispose{do_dispose} {
 	// TODO: For __fwriting to work correctly, set the __io_mode to 1 if the write is write-only.
 	__buffer_ptr = nullptr;
-	__buffer_size = 128;
+	__buffer_size = 4096;
 	__offset = 0;
 	__io_offset = 0;
 	__valid_limit = 0;
