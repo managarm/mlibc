@@ -30,11 +30,11 @@ int main()
 	
 	result = getpwnam("root");
 	assert(result);
-	assert(pwd.pw_uid == 0);
-	assert(!strcmp(pwd.pw_name, "root"));
+	assert(result->pw_uid == 0);
+	assert(!strcmp(result->pw_name, "root"));
 
 	result = getpwuid(0);
 	assert(result);
-	assert(pwd.pw_uid == 0);
-	assert(!strcmp(pwd.pw_name, "root"));
+	assert(result->pw_uid == 0);
+	assert(!strcmp(result->pw_name, "root"));
 }
