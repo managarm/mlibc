@@ -15,7 +15,7 @@ namespace {
 	void walk_segments(frg::string_view line, char delimiter, F fn) {
 		size_t s = 0;
 		while(true) {
-			size_t d = line.find_first(':', s);
+			size_t d = line.find_first(delimiter, s);
 			if(d == size_t(-1))
 				break;
 			auto chunk = line.sub_string(s, d - s);
@@ -24,32 +24,33 @@ namespace {
 		}
 		if(line[s]) {
 			auto chunk = line.sub_string(s, line.size() - s);
-			fn(chunk);
+
+			if (chunk.size() > 0) {
+				// Remove trailing newline
+				if (chunk[chunk.size() - 1] == '\n')
+					chunk = chunk.sub_string(0, chunk.size() - 1);
+
+				fn(chunk);
+			}
 		}
 	}
 
 	bool extract_entry(frg::string_view line, group *entry) {
-		__ensure(!entry->gr_name);
-		__ensure(!entry->gr_mem);
+		if (entry == &global_entry) {
+			__ensure(!entry->gr_name);
+			__ensure(!entry->gr_mem);
+		}
 
 		frg::string_view segments[5];
 
-		// Parse the line into exactly 4 segments.
-		size_t s = 0;
-		int n;
-		for(n = 0; n < 4; n++) {
-			size_t d = line.find_first(':', s);
-			if(d == size_t(-1))
-				break;
-			segments[n] = line.sub_string(s, d - s);
-			s = d + 1;
-		}
-		if(line.find_first(':', s) != size_t(-1))
-			return false;
-		segments[n] = line.sub_string(s, line.size() - s);
-		n++;
+		// Parse the line into 3 or 4 segments (depending if the group has members or not)
+		int n = 0;
+		walk_segments(line, ':', [&] (frg::string_view s) {
+			__ensure(n < 4);
+			segments[n++] = s;
+		});
 
-		if(n < 4)
+		if(n < 3) // n can be 3 when there are no members in the group
 			return false;
 
 		// segments[1] is the password; it is not exported to struct group.
@@ -96,25 +97,70 @@ namespace {
 	}
 
 	template<typename C>
-	group *walk_file(C cond) {
+	int walk_file(struct group *entry, C cond) {
 		auto file = fopen("/etc/group", "r");
-		if(!file)
-			return nullptr;
+		if(!file) {
+			return EIO;
+		}
 
 		char line[512];
 		while(fgets(line, 512, file)) {
-			clear_entry(&global_entry);
-			if(!extract_entry(line, &global_entry))
+			if (entry == &global_entry)
+				clear_entry(&global_entry);
+			if(!extract_entry(line, entry))
 				continue;
-			if(cond(&global_entry)) {
+			if(cond(entry)) {
 				fclose(file);
-				return &global_entry;
+				return 0;
 			}
 		}
 
 		fclose(file);
-		errno = ESRCH;
-		return nullptr;
+		return ESRCH;
+	}
+
+	int copy_to_buffer(struct group *grp, char *buffer, size_t size) {
+		// Adjust to correct alignment so that we can put gr_mem first in buffer
+		uintptr_t mask = sizeof(char *) - 1;
+		size_t offset = (reinterpret_cast<uintptr_t>(buffer) % sizeof(char *) + mask) & ~mask;
+		if (size < offset)
+			return ERANGE;
+
+		buffer += offset;
+		size -= offset;
+
+		// Calculate the amount of space we need
+		size_t nmemb, required_size = 0;
+		for (nmemb = 0; grp->gr_mem[nmemb] != nullptr; nmemb++) {
+			// One for the string's null terminator and one for the pointer in gr_mem
+			required_size += strlen(grp->gr_mem[nmemb]) + 1 + sizeof(char *);
+		}
+
+		// One for null terminator of gr_name, plus sizeof(char *) for nullptr terminator of gr_mem
+		required_size += strlen(grp->gr_name) + 1 + sizeof(char *);
+		if (size < required_size)
+			return ERANGE;
+
+		// Put the gr_mem array first in the buffer as we are guaranteed
+		// that the pointer is aligned correctly
+		char *string_data = buffer + (nmemb + 1) * sizeof(char *);
+
+		for (size_t i = 0; i < nmemb; i++) {
+			reinterpret_cast<char **>(buffer)[i] = string_data;
+			string_data = stpcpy(string_data, grp->gr_mem[i]) + 1;
+			free(grp->gr_mem[i]);
+		}
+
+		reinterpret_cast<char **>(buffer)[nmemb] = nullptr;
+		free(grp->gr_mem);
+		grp->gr_mem = reinterpret_cast<char **>(buffer);
+
+		char *gr_name = stpcpy(string_data, grp->gr_name) + 1;
+		free(grp->gr_name);
+		grp->gr_name = string_data;
+
+		__ensure(gr_name <= buffer + size);
+		return 0;
 	}
 }
 
@@ -127,22 +173,65 @@ struct group *getgrent(void) {
 	__builtin_unreachable();
 }
 struct group *getgrgid(gid_t gid) {
-	return walk_file([&] (group *entry) {
+	int err = walk_file(&global_entry, [&] (group *entry) {
 		return entry->gr_gid == gid;
 	});
+
+	if (err) {
+		errno = err;
+		return nullptr;
+	}
+
+	return &global_entry;
 }
-int getgrgid_r(gid_t, struct group *, char *, size_t, struct group **) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int getgrgid_r(gid_t gid, struct group *grp, char *buffer, size_t size, struct group **result) {
+	*result = nullptr;
+	int err = walk_file(grp, [&] (group *entry) {
+		return entry->gr_gid == gid;
+	});
+
+	if (err) {
+		return err;
+	}
+
+	err = copy_to_buffer(grp, buffer, size);
+	if (err) {
+		return err;
+	}
+
+	*result = grp;		
+	return 0;
 }
 struct group *getgrnam(const char *name) {
-	return walk_file([&] (group *entry) {
+	int err = walk_file(&global_entry, [&] (group *entry) {
 		return !strcmp(entry->gr_name, name);
 	});
+
+	if (err) {
+		errno = err;
+		return nullptr;
+	}
+
+	return &global_entry;
 }
-int getgrnam_r(const char *, struct group *, char *, size_t, struct group **) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int getgrnam_r(const char *name, struct group *grp, char *buffer, size_t size, struct group **result) {
+	*result = nullptr;
+
+	int err = walk_file(grp, [&] (group *entry) {
+		return !strcmp(entry->gr_name, name);
+	});
+
+	if (err) {
+		return err;
+	}
+
+	err = copy_to_buffer(grp, buffer, size);
+	if (err) {
+		return err;
+	}
+
+	*result = grp;		
+	return 0;
 }
 void setgrent(void) {
 	__ensure(!"Not implemented");
