@@ -683,9 +683,7 @@ unsigned long sysconf(int number) {
 		case _SC_GETPW_R_SIZE_MAX:
 			return 1024;
 		case _SC_GETGR_R_SIZE_MAX:
-			// TODO: actually return a proper value for _SC_GETGR_R_SIZE_MAX
-			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_GETGR_R_SIZE_MAX) returns arbitrary value 8\e[39m" << frg::endlog;
-			return 8;
+			return 1024;
 		case _SC_CHILD_MAX:
 			// On linux, it is defined to 25 in most cases, so define it to be 25
 			return 25;
