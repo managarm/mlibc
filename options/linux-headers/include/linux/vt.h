@@ -15,7 +15,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif __cplusplus
+#endif // __cplusplus
 
 struct vt_mode {
 	char mode;
@@ -33,7 +33,7 @@ struct vt_stat {
 
 #ifdef __cplusplus
 }
-#endif __cplusplus
+#endif // __cplusplus
 
 #endif // _LINUX_VT_H
 
