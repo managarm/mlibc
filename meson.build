@@ -228,22 +228,20 @@ subdir('options/intl')
 
 if not headers_only
 	if not static
+		if host_machine.cpu_family() == 'aarch64'
+			# Link with libgcc to get the necessary symbols (LSE atomics and math stuff)
+			libgcc = meson.get_compiler('c').find_library('gcc')
+			libc_deps += libgcc
+			rtdl_deps += libgcc
+		endif
+
 		ldso_lib = shared_library('ld', rtdl_sources,
 				name_prefix: '',
-				cpp_args:['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC',
+				cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL',
 					'-fno-stack-protector'],
 				include_directories: rtdl_include_dirs,
 				dependencies: rtdl_deps,
 				install: true)
-
-		extra_link_args = []
-
-		if host_machine.cpu_family() == 'aarch64'
-			# Link with libgcc to get math symbols ...
-			libc_deps += meson.get_compiler('c').find_library('gcc')
-			# ... but don't export them ourselves
-			extra_link_args += '-Wl,--exclude-libs=gcc'
-		endif
 
 		libc = shared_library('c',
 				[
@@ -252,12 +250,10 @@ if not headers_only
 					ansi_sources,
 					lsb_sources,
 				],
-				cpp_args: ['-DFRIGG_HAVE_LIBC'],
 				include_directories: libc_include_dirs,
 				dependencies: libc_deps,
 				link_with: [ldso_lib],
 				link_whole: libc_sublibs,
-				link_args: extra_link_args,
 				install: true,
 				pic: true)
 
