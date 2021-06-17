@@ -2739,6 +2739,51 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		*result = resp.result();
 		return 0;
 	}
+	case DRM_IOCTL_MODE_ATOMIC: {
+		auto param = reinterpret_cast<drm_mode_atomic *>(arg);
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+		req.set_drm_flags(param->flags);
+		req.set_drm_cookie(param->user_data);
+
+		size_t prop_count = 0;
+		auto objs_ptr = reinterpret_cast<uint32_t *>(param->objs_ptr);
+		auto count_props_ptr = reinterpret_cast<uint32_t *>(param->count_props_ptr);
+		auto props_ptr = reinterpret_cast<uint32_t *>(param->props_ptr);
+		auto prop_values_ptr = reinterpret_cast<uint64_t *>(param->prop_values_ptr);
+
+		for(size_t i = 0; i < param->count_objs; i++) {
+			/* list of modeobjs and their property count */
+			req.add_drm_obj_ids(objs_ptr[i]);
+			req.add_drm_prop_counts(count_props_ptr[i]);
+			prop_count += count_props_ptr[i];
+		}
+
+		for(size_t i = 0; i < prop_count; i++) {
+			/* array of property IDs */
+			req.add_drm_props(props_ptr[i]);
+			/* array of property values */
+			req.add_drm_prop_values(prop_values_ptr[i]);
+		}
+
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+		*result = resp.result();
+		return 0;
+	}
 	case TCGETS: {
 		auto param = reinterpret_cast<struct termios *>(arg);
 		HelAction actions[4];
