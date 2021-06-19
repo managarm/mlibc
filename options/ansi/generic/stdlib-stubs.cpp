@@ -20,6 +20,10 @@
 #include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/strtofp.hpp>
 
+#if __MLIBC_POSIX_OPTION
+#include <pthread.h>
+#endif // __MLIBC_POSIX_OPTION
+
 extern "C" int __cxa_atexit(void (*function)(void *), void *argument, void *dso_tag);
 void __mlibc_do_finalize();
 
@@ -230,9 +234,72 @@ void quick_exit(int status) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int system(const char *string) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+extern char **environ;
+
+int system(const char *command) {
+	int status = -1;
+	pid_t child;
+
+	if (!mlibc::sys_fork || !mlibc::sys_waitpid || !mlibc::sys_execve
+			|| !mlibc::sys_sigprocmask || !mlibc::sys_sigaction) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+#if __MLIBC_POSIX_OPTION
+	pthread_testcancel();
+#endif // __MLIBC_POSIX_OPTION
+
+	if (!command) {
+		return 1;
+	}
+
+	struct sigaction new_sa, old_int, old_quit;
+	sigset_t new_mask, old_mask;
+
+	new_sa.sa_handler = SIG_IGN;
+	new_sa.sa_flags = 0;
+	sigemptyset(&new_sa.sa_mask);
+	mlibc::sys_sigaction(SIGINT, &new_sa, &old_int);
+	mlibc::sys_sigaction(SIGQUIT, &new_sa, &old_quit);
+
+	sigemptyset(&new_mask);
+	sigaddset(&new_mask, SIGCHLD);
+	mlibc::sys_sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
+
+	if (int e = mlibc::sys_fork(&child)) {
+		errno = e;
+	} else if (!child) {
+		mlibc::sys_sigaction(SIGINT, &old_int, nullptr);
+		mlibc::sys_sigaction(SIGQUIT, &old_quit, nullptr);
+		mlibc::sys_sigprocmask(SIG_SETMASK, &old_mask, nullptr);
+
+		const char *args[] = {
+			"sh", "-c", command, nullptr
+		};
+
+		mlibc::sys_execve("/bin/sh", const_cast<char **>(args), environ);
+		_Exit(127);
+	} else {
+		int err;
+		pid_t unused;
+
+		while ((err = mlibc::sys_waitpid(child, &status, 0, &unused)) < 0) {
+			if (err == EINTR)
+				continue;
+
+			errno = err;
+			status = -1;
+		}
+	}
+
+	mlibc::sys_sigaction(SIGINT, &old_int, nullptr);
+	mlibc::sys_sigaction(SIGQUIT, &old_quit, nullptr);
+	mlibc::sys_sigprocmask(SIG_SETMASK, &old_mask, nullptr);
+
+	return status;
 }
 
 char *mktemp(char *) {

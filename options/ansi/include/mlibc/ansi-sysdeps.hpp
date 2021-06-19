@@ -46,6 +46,10 @@ int sys_clock_get(int clock, time_t *secs, long *nanos);
 [[gnu::weak]] int sys_sigaction(int, const struct sigaction *__restrict,
 		struct sigaction *__restrict);
 
+[[gnu::weak]] int sys_fork(pid_t *child);
+[[gnu::weak]] int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid);
+[[gnu::weak]] int sys_execve(const char *path, char *const argv[], char *const envp[]);
+
 } //namespace mlibc
 
 #endif // MLIBC_ANSI_SYSDEPS

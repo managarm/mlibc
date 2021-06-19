@@ -26,7 +26,8 @@ posix_test_cases = [
 	'index',
 	'rindex',
 	'search',
-	'open_memstream'
+	'open_memstream',
+	'system' # This test should be in the ANSI tests, but it depends on sys/wait.h
 ]
 
 glibc_test_cases = [
