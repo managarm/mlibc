@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <wchar.h>
@@ -12,6 +13,7 @@
 #include <frg/random.hpp>
 #include <mlibc/debug.hpp>
 #include <bits/ensure.h>
+#include <bits/sigset_t.h>
 
 #include <mlibc/allocator.hpp>
 #include <mlibc/charcode.hpp>
