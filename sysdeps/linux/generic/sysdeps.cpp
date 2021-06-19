@@ -35,6 +35,7 @@
 #define NR_execve 59
 #define NR_exit 60
 #define NR_wait4 61
+#define NR_kill 62
 #define NR_fcntl 72
 #define NR_unlink 87
 #define NR_arch_prctl 158
@@ -356,12 +357,6 @@ int sys_before_cancellable_syscall(ucontext_t *uct) {
 	return 1;
 }
 
-pid_t sys_getpid() {
-	auto ret = do_syscall(NR_getpid);
-	// getpid() always succeeds.
-	return sc_int_result<pid_t>(ret);
-}
-
 int sys_tgkill(int tgid, int tid, int sig) {
 	auto ret = do_syscall(NR_tgkill, tgid, tid, sig);
 	if (int e = sc_error(ret); e)
@@ -370,6 +365,19 @@ int sys_tgkill(int tgid, int tid, int sig) {
 }
 
 #endif // __MLIBC_POSIX_OPTION
+
+pid_t sys_getpid() {
+	auto ret = do_syscall(NR_getpid);
+	// getpid() always succeeds.
+	return sc_int_result<pid_t>(ret);
+}
+
+int sys_kill(int pid, int sig) {
+	auto ret = do_syscall(NR_kill, pid, sig);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
 
 int sys_vm_protect(void *pointer, size_t size, int prot) {
 	auto ret = do_syscall(NR_mprotect, pointer, size, prot);
