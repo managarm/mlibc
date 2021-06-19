@@ -30,6 +30,10 @@ posix_test_cases = [
 	'system' # This test should be in the ANSI tests, but it depends on sys/wait.h
 ]
 
+posix_fail_test_cases = [
+	'abort' # This test should be in the ANSI tests, but it depends on sigaction
+]
+
 glibc_test_cases = [
 	'getopt'
 ]
@@ -64,6 +68,16 @@ if not disable_posix_option
 			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
 				'-no-pie'])
 		test('posix/' + f, exec)
+	endforeach
+
+	foreach f : posix_fail_test_cases
+		exec = executable('posix-' + f, ['posix/' + f + '.c', test_sources],
+			link_with: libc, include_directories: libc_include_dirs,
+			build_rpath: meson.build_root(),
+			c_args: '-no-pie',
+			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
+				'-no-pie'])
+		test('posix/' + f, exec, should_fail: true)
 	endforeach
 endif
 

@@ -205,9 +205,35 @@ void *calloc(size_t count, size_t size) {
 // realloc() is provided by the platform
 
 void abort(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set, SIGABRT);
+	if (mlibc::sys_sigprocmask) {
+		mlibc::sys_sigprocmask(SIG_UNBLOCK, &set, nullptr);
+	}
+
+	raise(SIGABRT);
+
+	sigfillset(&set);
+	sigdelset(&set, SIGABRT);
+	if (mlibc::sys_sigprocmask) {
+		mlibc::sys_sigprocmask(SIG_SETMASK, &set, nullptr);
+	}
+
+	struct sigaction sa;
+	sa.sa_handler = SIG_DFL;
+	sa.sa_flags = 0;
+	sigemptyset(&sa.sa_mask);
+
+	if (mlibc::sys_sigaction(SIGABRT, &sa, nullptr))
+		mlibc::panicLogger() << "mlibc: sigaction failed in abort" << frg::endlog;
+
+	if (raise(SIGABRT))
+		mlibc::panicLogger() << "mlibc: raise failed in abort" << frg::endlog;
+
+	__builtin_trap();
 }
+
 int atexit(void (*func)(void)) {
 	// TODO: the function pointer types are not compatible;
 	// the conversion here is undefined behavior. its fine to do
