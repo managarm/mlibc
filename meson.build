@@ -165,6 +165,7 @@ internal_sources = [
 	'options/internal/generic/ensure.cpp',
 	'options/internal/generic/essential.cpp',
 	'options/internal/generic/frigg.cpp',
+	'options/internal/generic/sigset.cpp',
 	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc/initfini.cpp',
@@ -196,6 +197,7 @@ if not no_headers
 		'options/internal/include/bits/null.h',
 		'options/internal/include/bits/off_t.h',
 		'options/internal/include/bits/ssize_t.h',
+		'options/internal/include/bits/sigset_t.h',
 		subdir: 'bits'
 	)
 endif

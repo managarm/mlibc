@@ -118,8 +118,6 @@ typedef long sigset_t;
 #define SIG_UNBLOCK 1
 #define SIG_SETMASK 2
 
-#if __MLIBC_POSIX_OPTION
-
 #define SIGHUP    1
 #define SIGQUIT   3
 #define SIGTRAP   5
@@ -173,8 +171,6 @@ struct sigevent {
 	void (*sigev_notify_function)(union sigval);
 	// MISSING: sigev_notify_attributes
 };
-
-#endif // __MLIBC_POSIX_OPTION
 
 struct sigaction {
 	union {

@@ -9,6 +9,7 @@ extern "C" {
 #include <bits/ansi/time_t.h>
 #include <bits/ansi/timespec.h>
 #include <bits/posix/pthread_t.h>
+#include <bits/sigset_t.h>
 #include <stddef.h>
 
 typedef struct __stack {
@@ -24,13 +25,6 @@ typedef struct __ucontext {
         mcontext_t uc_mcontext;
         sigset_t uc_sigmask;
 } ucontext_t;
-
-// functions to manage sigset_t
-int sigemptyset(sigset_t *);
-int sigfillset(sigset_t *);
-int sigaddset(sigset_t *, int);
-int sigdelset(sigset_t *, int);
-int sigismember(const sigset_t *set, int sig);
 
 // functions to block / wait for signals
 int sigsuspend(const sigset_t *);

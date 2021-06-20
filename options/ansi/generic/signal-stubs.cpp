@@ -23,8 +23,20 @@ __sighandler signal(int sn, __sighandler handler) {
 }
 
 int raise(int sig) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	if(!mlibc::sys_getpid || !mlibc::sys_kill) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	pid_t pid = mlibc::sys_getpid();
+
+	if (int e = mlibc::sys_kill(pid, sig)) {
+		errno = e;
+		return -1;
+	}
+
+	return 0;
 }
 
 // This is a POSIX extension, but we have it in here for sigsetjmp
