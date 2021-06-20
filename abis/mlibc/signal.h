@@ -76,8 +76,6 @@ typedef long sigset_t;
 #define SIG_UNBLOCK 2
 #define SIG_SETMASK 3
 
-#ifdef __MLIBC_POSIX_OPTION
-
 #define SA_NOCLDSTOP (1 << 0)
 #define SA_ONSTACK (1 << 1)
 #define SA_RESETHAND (1 << 2)
@@ -105,8 +103,6 @@ struct sigevent {
 	void (*sigev_notify_function)(union sigval);
 	// MISSING: sigev_notify_attributes
 };
-
-#endif // __MLIBC_POSIX_OPTION
 
 struct sigaction {
 	void (*sa_handler)(int);
