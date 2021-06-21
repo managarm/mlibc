@@ -33,6 +33,7 @@ if not no_headers
 		'include/abi-bits/nlink_t.h',
 		'include/abi-bits/pid_t.h',
 		'include/abi-bits/uid_t.h',
+		'include/abi-bits/wait.h',
 		subdir: 'abi-bits'
 	)
 endif
