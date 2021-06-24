@@ -76,7 +76,7 @@ public:
 };
 
 struct fd_file : abstract_file {
-	fd_file(int fd, void (*do_dispose)(abstract_file *) = nullptr);
+	fd_file(int fd, void (*do_dispose)(abstract_file *) = nullptr, bool force_unbuffered = false);
 
 	int fd();
 
@@ -93,6 +93,7 @@ protected:
 private:
 	// Underlying file descriptor.
 	int _fd;
+	bool _force_unbuffered;
 };
 
 } // namespace mlibc
