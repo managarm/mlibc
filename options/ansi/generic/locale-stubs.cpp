@@ -11,7 +11,7 @@
 
 namespace {
 	// Values of the C locale are defined by the C standard.
-	lconv c_locale_lconv = {
+	constexpr lconv c_lconv = {
 		const_cast<char *>("."), // decimal_point
 		const_cast<char *>(""), // thousands_sep
 		const_cast<char *>(""), // grouping
@@ -39,94 +39,151 @@ namespace {
 	};
 }
 
-struct __Mlibc_LocaleDesc {
-	// identifier of this locale. used in setlocale()
-	const char *locale;
-};
+namespace mlibc {
+	struct locale_description {
+		// Identifier of this locale. used in setlocale().
+		const char *name;
+		lconv lc;
+	};
 
-frg::optional<__Mlibc_LocaleDesc> __mlibc_queryLocale(const char *locale) {
-	// our default C locale is the C locale
-	if(!strlen(locale))
-		return __mlibc_queryLocale("C");
+	constinit const locale_description c_locale{
+		.name = "C",
+		.lc = c_lconv
+	};
 
-	// for now we only support the C locale
-	if(strcmp(locale, "C")) {
-		mlibc::infoLogger() << "mlibc: Locale " << locale << " is not supported" << frg::endlog;
-		return frg::null_opt;
+	constinit const locale_description posix_locale{
+		.name = "POSIX",
+		.lc = c_lconv
+	};
+
+	const locale_description *query_locale_description(const char *name) {
+		if(!strcmp(name, "C"))
+			return &c_locale;
+		if(!strcmp(name, "POSIX"))
+			return &posix_locale;
+		return nullptr;
 	}
 
-	__Mlibc_LocaleDesc desc;
-	desc.locale = locale;
-	return desc;
+	const locale_description *collate_facet;
+	const locale_description *ctype_facet;
+	const locale_description *monetary_facet;
+	const locale_description *numeric_facet;
+	const locale_description *time_facet;
 }
-
-__Mlibc_LocaleDesc __mlibc_collateDesc;
-__Mlibc_LocaleDesc __mlibc_ctypeDesc;
-__Mlibc_LocaleDesc __mlibc_monetaryDesc;
-__Mlibc_LocaleDesc __mlibc_numericDesc;
-__Mlibc_LocaleDesc __mlibc_timeDesc;
 
 void __mlibc_initLocale() {
-	__mlibc_collateDesc = *__mlibc_queryLocale("C");
-	__mlibc_ctypeDesc = *__mlibc_queryLocale("C");
-	__mlibc_monetaryDesc = *__mlibc_queryLocale("C");
-	__mlibc_numericDesc = *__mlibc_queryLocale("C");
-	__mlibc_timeDesc = *__mlibc_queryLocale("C");
+	mlibc::collate_facet = &mlibc::c_locale;
+	mlibc::ctype_facet = &mlibc::c_locale;
+	mlibc::monetary_facet = &mlibc::c_locale;
+	mlibc::numeric_facet = &mlibc::c_locale;
+	mlibc::time_facet = &mlibc::c_locale;
 }
 
-__Mlibc_LocaleDesc &__mlibc_currentLocale(int category) {
-	switch(category) {
-	case LC_COLLATE: return __mlibc_collateDesc;
-	case LC_CTYPE: return __mlibc_ctypeDesc;
-	case LC_MONETARY: return __mlibc_monetaryDesc;
-	case LC_NUMERIC: return __mlibc_numericDesc;
-	case LC_TIME: return __mlibc_timeDesc;
-	default:
-		__ensure(!"__mlibc_currentLocale called with bad category");
-		__builtin_unreachable();
-	}
-}
-
-char *setlocale(int category, const char *locale) {
-	if(!(category == LC_ALL || category == LC_COLLATE || category == LC_CTYPE
-			|| category == LC_MONETARY || category == LC_NUMERIC || category == LC_TIME)) {
-		mlibc::infoLogger() << "mlibc: Unexpected value " << category
-				<< " for category in setlocale()" << frg::endlog;
-		return nullptr;
-	}
-
+char *setlocale(int category, const char *name) {
 	if(category == LC_ALL) {
-		// ´TODO: implement correct return value when categories differ
-		__Mlibc_LocaleDesc current_desc = __mlibc_collateDesc;
-		__ensure(!strcmp(current_desc.locale, __mlibc_ctypeDesc.locale));
-		__ensure(!strcmp(current_desc.locale, __mlibc_monetaryDesc.locale));
-		__ensure(!strcmp(current_desc.locale, __mlibc_numericDesc.locale));
-		__ensure(!strcmp(current_desc.locale, __mlibc_timeDesc.locale));
-		if(!locale)
-			return const_cast<char *>(current_desc.locale);
+		// ´TODO: Implement correct return value when categories differ.
+		auto current_desc = mlibc::collate_facet;
+		__ensure(current_desc == mlibc::ctype_facet);
+		__ensure(current_desc == mlibc::monetary_facet);
+		__ensure(current_desc == mlibc::numeric_facet);
+		__ensure(current_desc == mlibc::time_facet);
 
-		frg::optional<__Mlibc_LocaleDesc> new_desc = __mlibc_queryLocale(locale);
-		if(!new_desc)
+		if(name) {
+			// Our default C locale is the C locale.
+			if(!strlen(name))
+				name = "C";
+
+			auto new_desc = mlibc::query_locale_description(name);
+			if(!new_desc) {
+				mlibc::infoLogger() << "mlibc: Locale " << name
+						<< " is not supported" << frg::endlog;
+				return nullptr;
+			}
+
+			mlibc::collate_facet = new_desc;
+			mlibc::ctype_facet = new_desc;
+			mlibc::monetary_facet = new_desc;
+			mlibc::numeric_facet = new_desc;
+			mlibc::time_facet = new_desc;
+		}
+		return const_cast<char *>(current_desc->name);
+	}else{
+		const mlibc::locale_description **facet_ptr;
+		switch(category) {
+		case LC_COLLATE:
+			facet_ptr = &mlibc::collate_facet;
+			break;
+		case LC_CTYPE:
+			facet_ptr = &mlibc::ctype_facet;
+			break;
+		case LC_MONETARY:
+			facet_ptr = &mlibc::monetary_facet;
+			break;
+		case LC_NUMERIC:
+			facet_ptr = &mlibc::numeric_facet;
+			break;
+		case LC_TIME:
+			facet_ptr = &mlibc::time_facet;
+			break;
+		default:
+			mlibc::infoLogger() << "mlibc: Unexpected value " << category
+					<< " for category in setlocale()" << frg::endlog;
 			return nullptr;
-		__mlibc_collateDesc = *new_desc;
-		__mlibc_ctypeDesc = *new_desc;
-		__mlibc_monetaryDesc = *new_desc;
-		__mlibc_numericDesc = *new_desc;
-		__mlibc_timeDesc = *new_desc;
-		return const_cast<char *>(current_desc.locale);
+		}
+
+		auto current_desc = *facet_ptr;
+		if(name) {
+			// Our default C locale is the C locale.
+			if(!strlen(name))
+				name = "C";
+
+			auto new_desc = mlibc::query_locale_description(name);
+			if(!new_desc) {
+				mlibc::infoLogger() << "mlibc: Locale " << name
+						<< " is not supported" << frg::endlog;
+				return nullptr;
+			}
+
+			*facet_ptr = new_desc;
+		}
+		return const_cast<char *>(current_desc->name);
 	}
+}
 
-	__Mlibc_LocaleDesc current_desc = __mlibc_currentLocale(category);
-	if(!locale)
-		return const_cast<char *>(current_desc.locale);
-
-	frg::optional<__Mlibc_LocaleDesc> new_desc = __mlibc_queryLocale(locale);
-	if(!new_desc)
-		return nullptr;
-	__mlibc_currentLocale(category) = *new_desc;
-	return const_cast<char *>(current_desc.locale);
+namespace {
+	lconv effective_lc;
 }
 
 struct lconv *localeconv(void) {
-	return &c_locale_lconv;
+	// Numeric locale.
+	const auto &numeric_lc = mlibc::numeric_facet->lc;
+	effective_lc.decimal_point = numeric_lc.decimal_point;
+	effective_lc.thousands_sep = numeric_lc.thousands_sep;
+	effective_lc.grouping = numeric_lc.grouping;
+
+	// Monetary locale.
+	const auto &monetary_lc = mlibc::monetary_facet->lc;
+	effective_lc.mon_decimal_point = monetary_lc.mon_decimal_point;
+	effective_lc.mon_thousands_sep = monetary_lc.mon_thousands_sep;
+	effective_lc.mon_grouping = monetary_lc.mon_grouping;
+	effective_lc.positive_sign = monetary_lc.positive_sign;
+	effective_lc.negative_sign = monetary_lc.negative_sign;
+	effective_lc.currency_symbol = monetary_lc.currency_symbol;
+	effective_lc.frac_digits = monetary_lc.frac_digits;
+	effective_lc.p_cs_precedes = monetary_lc.p_cs_precedes;
+	effective_lc.n_cs_precedes = monetary_lc.n_cs_precedes;
+	effective_lc.p_sep_by_space = monetary_lc.p_sep_by_space;
+	effective_lc.n_sep_by_space = monetary_lc.n_sep_by_space;
+	effective_lc.p_sign_posn = monetary_lc.p_sign_posn;
+	effective_lc.n_sign_posn = monetary_lc.n_sign_posn;
+	effective_lc.int_curr_symbol = monetary_lc.int_curr_symbol;
+	effective_lc.int_frac_digits = monetary_lc.int_frac_digits;
+	effective_lc.int_p_cs_precedes = monetary_lc.int_p_cs_precedes;
+	effective_lc.int_n_cs_precedes = monetary_lc.int_n_cs_precedes;
+	effective_lc.int_p_sep_by_space = monetary_lc.int_p_sep_by_space;
+	effective_lc.int_n_sep_by_space = monetary_lc.int_n_sep_by_space;
+	effective_lc.int_p_sign_posn = monetary_lc.int_p_sign_posn;
+	effective_lc.int_n_sign_posn = monetary_lc.int_n_sign_posn;
+
+	return &effective_lc;
 }
