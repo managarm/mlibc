@@ -18,7 +18,8 @@ if not no_headers
 		'include/resolv.h',
 		'include/endian.h',
 		'include/ar.h',
-		'include/shadow.h'
+		'include/shadow.h',
+		'include/memory.h'
 	)
 	install_headers(
 		'include/sys/ioctl.h',

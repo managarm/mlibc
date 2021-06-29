@@ -88,6 +88,7 @@ if not no_headers
 		'include/sys/random.h',
 		'include/sys/sendfile.h',
 		'include/sys/signalfd.h',
+		'include/sys/syscall.h',
 		'include/sys/sysmacros.h',
 		'include/sys/timerfd.h',
 		'include/sys/eventfd.h',
