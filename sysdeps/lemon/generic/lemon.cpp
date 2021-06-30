@@ -6,6 +6,7 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/thread-entry.hpp>
 #include <errno.h>
+#include <sys/resource.h>
 
 namespace mlibc{
 	int sys_futex_wait(int *pointer, int expected){
@@ -24,38 +25,23 @@ namespace mlibc{
 	int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
 		__ensure(flags & MAP_ANONYMOUS);
 
-		// Make sure to only map whole pages
-		__ensure(!(size & 0xFFF));
-
-		size_t sizePages = ((size + 0xFFF) & ~static_cast<size_t>(0xFFF)) >> 12;
-		syscall(SYS_MMAP, (uintptr_t)window, sizePages, (uintptr_t)hint);
-
-		if(!(*window))
-			return -1;
-		return 0;
+		return syscall(SYS_MMAP, (uintptr_t)window, (size + 0xFFF) & ~static_cast<size_t>(0xFFF), (uintptr_t)hint, flags);
 	}
 
 	int sys_vm_unmap(void* address, size_t size) {
 		__ensure(!(size & 0xFFF));
 
-		size_t sizePages = ((size + 0xFFF) & ~static_cast<size_t>(0xFFF)) >> 12;
-		long ret = syscall(SYS_MUNMAP, (uintptr_t)address, sizePages);
+		long ret = syscall(SYS_MUNMAP, (uintptr_t)address, (size + 0xFFF) & ~static_cast<size_t>(0xFFF));
 
 		return ret;
 	}
 
 	int sys_anon_allocate(size_t size, void **pointer) {
-		// Make sure to only allocate whole pages
-		__ensure(!(size & 0xFFF));
-		syscall(SYS_ALLOC, ((size + 0xFFF) & ~static_cast<size_t>(0xFFF)) >> 12, (uintptr_t)pointer);
-
-		if (!(*pointer))
-		    return -1;
-		return 0;
+		return sys_vm_map(nullptr, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS, -1, 0, pointer);
 	}
 
 	int sys_anon_free(void *pointer, size_t size) {
-		return 0; // Not implemented
+		return sys_vm_unmap(pointer, size);
 	}
 
 	void sys_libc_panic(){
@@ -82,6 +68,10 @@ namespace mlibc{
 
 		pid_t pid = _pid;
 		return pid;
+	}
+
+	pid_t sys_getppid(){
+		return syscall(SYS_GETPPID);
 	}
 	
 	int sys_clock_get(int clock, time_t *secs, long *nanos) {
@@ -124,13 +114,11 @@ namespace mlibc{
 	}
 
 	gid_t sys_getgid(){
-		mlibc::infoLogger() << "mlibc: sys_getgid is a stub" << frg::endlog;
-		return 0;
+		return syscall(SYS_GETGID);
 	}
 
 	gid_t sys_getegid(){
-		mlibc::infoLogger() << "mlibc: sys_getegid is a stub" << frg::endlog;
-		return 0;
+		return syscall(SYS_GETEGID);
 	}
 
 	int sys_setgid(gid_t gid){
@@ -174,6 +162,25 @@ namespace mlibc{
 		*ret_pid = ret;
 
 		return 0;
+	}
+
+	int sys_fork(pid_t *child){
+		long pid = syscall(SYS_FORK, 0);
+		if(pid < 0){
+			errno = pid;
+			return -1;
+		}
+
+		*child = pid;
+		return 0;
+	}
+
+	int sys_execve(const char *path, char *const argv[], char *const envp[]){
+		return -syscall(SYS_EXECVE, path, argv, envp);
+	}
+
+	int sys_getentropy(void *buffer, size_t length){
+		return -syscall(SYS_GETENTROPY, buffer, length);
 	}
 	#endif
 } 
