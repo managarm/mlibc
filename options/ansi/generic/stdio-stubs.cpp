@@ -1,4 +1,3 @@
-
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -18,6 +17,7 @@
 #include <mlibc/ansi-sysdeps.hpp>
 #include <frg/mutex.hpp>
 #include <frg/expected.hpp>
+#include <frg/printf.hpp>
 
 template<typename F>
 struct PrintfAgent {
