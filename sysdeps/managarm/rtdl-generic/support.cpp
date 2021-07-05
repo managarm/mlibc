@@ -13,6 +13,8 @@
 #include <posix.frigg_bragi.hpp>
 #include <fs.frigg_bragi.hpp>
 
+#include <protocols/posix/data.hpp>
+
 // --------------------------------------------------------
 // POSIX I/O functions.
 // --------------------------------------------------------
@@ -24,17 +26,10 @@ void cacheFileTable() {
 	if(fileTable)
 		return;
 
-	struct managarm_process_data {
-		HelHandle posix_lane;
-		void *thread_page;
-		HelHandle *file_table;
-		void *clock_tracker_page;
-	};
-
-	managarm_process_data data;
+	posix::ManagarmProcessData data;
 	HEL_CHECK(helSyscall1(kHelCallSuper + 1, reinterpret_cast<HelWord>(&data)));
-	posixLane = data.posix_lane;
-	fileTable = data.file_table;
+	posixLane = data.posixLane;
+	fileTable = data.fileTable;
 }
 
 template<typename T>

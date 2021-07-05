@@ -11,6 +11,8 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/elf/startup.h>
 
+#include <protocols/posix/data.hpp>
+
 // defined by the POSIX library
 void __mlibc_initLocale();
 
@@ -24,13 +26,6 @@ thread_local HelHandle __mlibc_posix_lane;
 thread_local void *__mlibc_clk_tracker_page;
 
 namespace {
-	struct managarm_process_data {
-		HelHandle posix_lane;
-		void *thread_page;
-		HelHandle *file_table;
-		void *clock_tracker_page;
-	};
-
 	thread_local unsigned __mlibc_gsf_nesting;
 	thread_local void *__mlibc_cached_thread_page;
 	thread_local HelHandle *cachedFileTable;
@@ -42,13 +37,13 @@ namespace {
 	thread_local pthread_once_t has_cached_infos = PTHREAD_ONCE_INIT;
 
 	void actuallyCacheInfos() {
-		managarm_process_data data;
+		posix::ManagarmProcessData data;
 		HEL_CHECK(helSyscall1(kHelCallSuper + 1, reinterpret_cast<HelWord>(&data)));
 
-		__mlibc_posix_lane = data.posix_lane;
-		__mlibc_cached_thread_page = data.thread_page;
-		cachedFileTable = data.file_table;
-		__mlibc_clk_tracker_page = data.clock_tracker_page;
+		__mlibc_posix_lane = data.posixLane;
+		__mlibc_cached_thread_page = data.threadPage;
+		cachedFileTable = data.fileTable;
+		__mlibc_clk_tracker_page = data.clockTrackerPage;
 	}
 }
 

@@ -13,6 +13,7 @@ fs_bragi = bragi_gen.process('../../subprojects/managarm/protocols/fs/fs.bragi')
 posix_bragi = bragi_gen.process('../../subprojects/managarm/protocols/posix/posix.bragi')
 
 managarm_incl = include_directories(
+		'../../subprojects/managarm/protocols/posix/include',
 		'../../subprojects/managarm/hel/include',
 		'../../subprojects/bragi/include')
 
