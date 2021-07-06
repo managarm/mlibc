@@ -86,4 +86,8 @@ namespace mlibc{
 
 		return 0;
 	}
+
+	int sys_socketpair(int domain, int type_and_flags, int proto, int *fds){
+		return -syscall(SYS_SOCKETPAIR, domain, type_and_flags, proto, fds);
+	}
 }
