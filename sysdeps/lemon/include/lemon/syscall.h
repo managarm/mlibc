@@ -99,6 +99,7 @@
 #define SYS_GETPPID 96
 #define SYS_PIPE 97
 #define SYS_GETENTROPY 98
+#define SYS_SOCKETPAIR 99
 
 #ifdef __cplusplus
 extern "C"{
