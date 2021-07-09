@@ -99,7 +99,10 @@ struct polymorphic_charcode {
 	virtual charcode_error encode_wtranscode(code_seq<char> &nseq, code_seq<const wchar_t> &wseq,
 			__mlibc_mbstate &st) = 0;
 
-	// True iff promotion only zero-extends units below 0x7F.
+	virtual charcode_error encode_wtranscode_length(code_seq<const wchar_t> &wseq, size_t *n,
+			__mlibc_mbstate &st) = 0;
+
+	// True if promotion only zero-extends units below 0x7F.
 	const bool preserves_7bit_units;
 
 	// Whether the encoding has shift states.

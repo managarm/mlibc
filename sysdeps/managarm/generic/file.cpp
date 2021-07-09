@@ -3376,6 +3376,8 @@ int sys_openat(int dirfd, const char *path, int flags, int *fd) {
 		return EINVAL;
 	}else if(resp.error() == managarm::posix::Errors::NO_BACKING_DEVICE) {
 		return ENXIO;
+	}else if(resp.error() == managarm::posix::Errors::IS_DIRECTORY) {
+		return EISDIR;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*fd = resp.fd();
@@ -3867,6 +3869,8 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 		return ENOENT;
 	}else if(resp.error() == managarm::posix::Errors::BAD_FD) {
 		return EBADF;
+	}else if(resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
+		return ENOTDIR;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		memset(result, 0, sizeof(struct stat));
@@ -4105,6 +4109,8 @@ int sys_unlinkat(int fd, const char *path, int flags) {
 		return ENOENT;
 	}else if(resp.error() == managarm::posix::Errors::RESOURCE_IN_USE) {
 		return EBUSY;
+	}else if(resp.error() == managarm::posix::Errors::IS_DIRECTORY) {
+		return EISDIR;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
