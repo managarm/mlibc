@@ -17,6 +17,7 @@
 #define SYS_CHDIR 12
 #define SYS_TIME 13
 #define SYS_MAP_FB 14
+#define SYS_GETTID 15
 #define SYS_CHMOD 16
 #define SYS_FSTAT 17
 #define SYS_STAT 18
@@ -100,6 +101,8 @@
 #define SYS_PIPE 97
 #define SYS_GETENTROPY 98
 #define SYS_SOCKETPAIR 99
+#define SYS_PEERNAME 100
+#define SYS_SOCKNAME 101
 
 #ifdef __cplusplus
 extern "C"{
