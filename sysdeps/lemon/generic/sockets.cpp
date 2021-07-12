@@ -90,4 +90,14 @@ namespace mlibc{
 	int sys_socketpair(int domain, int type_and_flags, int proto, int *fds){
 		return -syscall(SYS_SOCKETPAIR, domain, type_and_flags, proto, fds);
 	}
+
+    int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
+		socklen_t *actual_length) {
+        return -syscall(SYS_SOCKNAME, fd, addr_ptr, max_addr_length);
+    }
+    
+    int sys_peername(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
+	    socklen_t *actual_length) {
+        return -syscall(SYS_PEERNAME, fd, addr_ptr, max_addr_length);
+    }
 }

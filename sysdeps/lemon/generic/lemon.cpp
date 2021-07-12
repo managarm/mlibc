@@ -9,6 +9,10 @@
 #include <sys/resource.h>
 
 namespace mlibc{
+	int sys_futex_tid(){
+		return syscall(SYS_GETTID);
+	}
+
 	int sys_futex_wait(int *pointer, int expected){
 		return syscall(SYS_FUTEX_WAIT, pointer, expected);
 	}
@@ -139,9 +143,12 @@ namespace mlibc{
 		auto stack = prepare_stack(entry, user_arg, tcb);
 		pid_t tid = syscall(SYS_SPAWN_THREAD, __mlibc_start_thread, stack);
 
-		if(tid_out){
-			*tid_out = tid;
+		if(tid < 0){
+			errno = tid;
+			return -1;
 		}
+
+		*tid_out = tid;
 
 		return 0;
 	}
