@@ -1227,6 +1227,12 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
 		*((uint64_t *)rel_addr) = symbol_addr;
 	} break;
+	case R_X86_64_JUMP_SLOT: {
+		__ensure(symbol_index);
+		__ensure(!reloc->r_addend);
+		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
+		*((uint64_t *)rel_addr) = symbol_addr;
+	} break;
 	case R_X86_64_RELATIVE: {
 		__ensure(!symbol_index);
 		*((uint64_t *)rel_addr) = object->baseAddress + reloc->r_addend;
