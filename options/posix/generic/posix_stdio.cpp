@@ -11,14 +11,48 @@
 #include <mlibc/posix-file-io.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 
+struct popen_file : mlibc::fd_file {
+	popen_file(int fd, void (*do_dispose)(abstract_file *) = nullptr)
+		: fd_file(fd, do_dispose) {}
+
+	pid_t get_popen_pid() {
+		return _popen_pid;
+	}
+
+	void set_popen_pid(pid_t new_pid) {
+		_popen_pid = new_pid;
+	}
+
+private:
+	// Underlying PID in case of popen()
+	pid_t _popen_pid;
+};
+
 FILE *fmemopen(void *__restrict, size_t, const char *__restrict) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
-int pclose(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pclose(FILE *stream) {
+	if (!mlibc::sys_waitpid) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	auto file = static_cast<popen_file *>(stream);
+
+	int status;
+	pid_t pid = file->get_popen_pid();
+
+	fclose(file);
+
+	if (mlibc::sys_waitpid(pid, &status, 0, &pid) != 0) {
+	    errno = ECHILD;
+	    return -1;
+	}
+
+	return status;
 }
 
 FILE *popen(const char *command, const char *typestr) {
@@ -69,6 +103,9 @@ FILE *popen(const char *command, const char *typestr) {
 	sigaddset(&new_mask, SIGCHLD);
 	mlibc::sys_sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
 
+	int parent_end = is_write ? 1 : 0;
+	int child_end = is_write ? 0 : 1;
+
 	if (int e = mlibc::sys_fork(&child)) {
 		errno = e;
 		mlibc::sys_close(fds[0]);
@@ -79,19 +116,12 @@ FILE *popen(const char *command, const char *typestr) {
 		mlibc::sys_sigaction(SIGQUIT, &old_quit, nullptr);
 		mlibc::sys_sigprocmask(SIG_SETMASK, &old_mask, nullptr);
 
-		if (is_write) {
-			mlibc::sys_close(fds[1]); // Close the write end
-			if (int e = mlibc::sys_dup2(fds[0], 0, 0)) {
-				__ensure(!"sys_dup2() failed in popen()");
-			}
-			mlibc::sys_close(fds[0]);
-		} else {
-			mlibc::sys_close(fds[0]); // Close the read end
-			if (int e = mlibc::sys_dup2(fds[1], 0, 1)) {
-				__ensure(!"sys_dup2() failed in popen()");
-			}
-			mlibc::sys_close(fds[1]);
+		mlibc::sys_close(fds[parent_end]);
+
+		if (int e = mlibc::sys_dup2(fds[child_end], 0, is_write ? 0 : 1)) {
+			__ensure(!"sys_dup2() failed in popen()");
 		}
+		mlibc::sys_close(fds[child_end]);
 
 		const char *args[] = {
 			"sh", "-c", command, nullptr
@@ -101,17 +131,22 @@ FILE *popen(const char *command, const char *typestr) {
 		_Exit(127);
 	} else {
 		// For the parent
-		if (is_write) {
-			mlibc::sys_close(fds[0]); // Close the read end
-			ret = fdopen(fds[1], "w");
-			__ensure(ret);
-		} else {
-			mlibc::sys_close(fds[1]); // Close the write end
-			ret = fdopen(fds[0], "r");
-			__ensure(ret);
-		}
+		mlibc::sys_close(fds[child_end]);
+
+		ret = frg::construct<popen_file>(
+			getAllocator(),
+			fds[parent_end],
+			[] (mlibc::abstract_file *abstract) {
+				frg::destruct(getAllocator(), abstract);
+			}
+		);
+		__ensure(ret);
+
+		auto file = static_cast<popen_file *>(ret);
+
+		file->set_popen_pid(child);
+
 		if (cloexec == true) {
-			auto file = static_cast<mlibc::fd_file *>(ret);
 			fcntl(file->fd(), F_SETFD, O_CLOEXEC);
 		}
 	}
