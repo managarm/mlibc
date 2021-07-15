@@ -45,9 +45,16 @@ int fchdir(int fd) {
 	return 0;
 }
 
-int chown(const char *, uid_t, gid_t) {
-	mlibc::infoLogger() << "\e[31mmlibc: chown() is not implemented correctly\e[39m"
-			<< frg::endlog;
+int chown(const char *path, uid_t uid, gid_t gid) {
+	if(!mlibc::sys_fchownat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_fchownat(AT_FDCWD, path, uid, gid, 0); e) {
+		errno = e;
+		return -1;
+	}
 	return 0;
 }
 
@@ -198,15 +205,30 @@ int faccessat(int dirfd, const char *pathname, int mode, int flags) {
 	return 0;
 }
 
-int fchown(int, uid_t, gid_t) {
-	mlibc::infoLogger() << "\e[31mmlibc: fchown() is not implemented correctly\e[39m"
-			<< frg::endlog;
+int fchown(int fd, uid_t uid, gid_t gid) {
+	if(!mlibc::sys_fchownat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_fchownat(fd, "", uid, gid, AT_EMPTY_PATH); e) {
+		errno = e;
+		return -1;
+	}
 	return 0;
 }
 
-int fchownat(int, const char *, uid_t, gid_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int fchownat(int fd, const char *path, uid_t uid, gid_t gid, int flags) {
+	if(!mlibc::sys_fchownat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_fchownat(fd, path, uid, gid, flags); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int fdatasync(int fd) {
@@ -387,9 +409,17 @@ pid_t getsid(pid_t pid) {
 	return sid;
 }
 
-int lchown(const char *, uid_t, gid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int lchown(const char *path, uid_t uid, gid_t gid) {
+	if(!mlibc::sys_fchownat) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_fchownat(AT_FDCWD, path, uid, gid, AT_SYMLINK_NOFOLLOW); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int link(const char *old_path, const char *new_path) {

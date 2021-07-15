@@ -160,6 +160,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_before_cancellable_syscall(ucontext_t *uctx);
 [[gnu::weak]] int sys_tgkill(int tgid, int tid, int sig);
 
+[[gnu::weak]] int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags);
+
 } //namespace mlibc
 
 #endif // MLIBC_POSIX_SYSDEPS
