@@ -48,6 +48,7 @@
 #define NR_exit_group 231
 #define NR_tgkill 234
 #define NR_pselect6 270
+#define NR_dup3 292
 #define NR_pipe2 293
 
 #define ARCH_SET_FS	0x1002
@@ -93,6 +94,13 @@ int sys_open(const char *path, int flags, int *fd) {
 
 int sys_close(int fd) {
 	auto ret = do_cp_syscall(NR_close, fd);
+	if(int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_dup2(int fd, int flags, int newfd) {
+	auto ret = do_cp_syscall(NR_dup3, fd, newfd, flags);
 	if(int e = sc_error(ret); e)
 		return e;
 	return 0;
