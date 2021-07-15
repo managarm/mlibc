@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
@@ -32,8 +33,10 @@ FILE *popen(const char *command, const char *typestr) {
 		return nullptr;
 	}
 
-	__ensure(command);
-    __ensure(typestr);
+	if (typestr == NULL) {
+		errno = EINVAL;
+		return nullptr;
+	}
 
 	if (strstr(typestr, "w") != NULL) {
 		is_write = true;
@@ -41,8 +44,10 @@ FILE *popen(const char *command, const char *typestr) {
 		is_write = false;
 	}
 
+	bool cloexec = false;
 	if (strstr(typestr, "e") != NULL) {
-		__ensure(!"\"e\" type is not supported for popen()");
+		// Set FD_CLOEXEC on the new file descriptor
+		cloexec = true;
 	}
 
 	int fds[2];
@@ -104,6 +109,10 @@ FILE *popen(const char *command, const char *typestr) {
 			mlibc::sys_close(fds[1]); // Close the write end
 			ret = fdopen(fds[0], "r");
 			__ensure(ret);
+		}
+		if (cloexec == true) {
+			auto file = static_cast<mlibc::fd_file *>(ret);
+			fcntl(file->fd(), F_SETFD, O_CLOEXEC);
 		}
 	}
 
