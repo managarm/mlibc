@@ -2,11 +2,13 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/file-io.hpp>
 #include <mlibc/posix-file-io.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 FILE *fmemopen(void *__restrict, size_t, const char *__restrict) {
 	__ensure(!"Not implemented");
@@ -18,9 +20,98 @@ int pclose(FILE *) {
 	__builtin_unreachable();
 }
 
-FILE *popen(const char*, const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+FILE *popen(const char *command, const char *typestr) {
+	bool is_write;
+	pid_t child;
+	FILE *ret = nullptr;
+
+	if (!mlibc::sys_fork || !mlibc::sys_close || !mlibc::sys_dup2 || !mlibc::sys_execve
+			|| !mlibc::sys_sigprocmask || !mlibc::sys_sigaction || !mlibc::sys_pipe) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return nullptr;
+	}
+
+	__ensure(command);
+    __ensure(typestr);
+
+	if (strstr(typestr, "w") != NULL) {
+		is_write = true;
+	} else if (strstr(typestr, "r") != NULL) {
+		is_write = false;
+	}
+
+	if (strstr(typestr, "e") != NULL) {
+		__ensure(!"\"e\" type is not supported for popen()");
+	}
+
+	int fds[2];
+	if (int e = mlibc::sys_pipe(fds, 0)) {
+		errno = e;
+		return nullptr;
+	}
+
+	struct sigaction new_sa, old_int, old_quit;
+	sigset_t new_mask, old_mask;
+
+	new_sa.sa_handler = SIG_IGN;
+	new_sa.sa_flags = 0;
+	sigemptyset(&new_sa.sa_mask);
+	mlibc::sys_sigaction(SIGINT, &new_sa, &old_int);
+	mlibc::sys_sigaction(SIGQUIT, &new_sa, &old_quit);
+
+	sigemptyset(&new_mask);
+	sigaddset(&new_mask, SIGCHLD);
+	mlibc::sys_sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
+
+	if (int e = mlibc::sys_fork(&child)) {
+		errno = e;
+		mlibc::sys_close(fds[0]);
+		mlibc::sys_close(fds[1]);
+	} else if (!child) {
+		// For the child
+		mlibc::sys_sigaction(SIGINT, &old_int, nullptr);
+		mlibc::sys_sigaction(SIGQUIT, &old_quit, nullptr);
+		mlibc::sys_sigprocmask(SIG_SETMASK, &old_mask, nullptr);
+
+		if (is_write) {
+			mlibc::sys_close(fds[1]); // Close the write end
+			if (int e = mlibc::sys_dup2(fds[0], 0, 0)) {
+				__ensure(!"sys_dup2() failed in popen()");
+			}
+			mlibc::sys_close(fds[0]);
+		} else {
+			mlibc::sys_close(fds[0]); // Close the read end
+			if (int e = mlibc::sys_dup2(fds[1], 0, 1)) {
+				__ensure(!"sys_dup2() failed in popen()");
+			}
+			mlibc::sys_close(fds[1]);
+		}
+
+		const char *args[] = {
+			"sh", "-c", command, nullptr
+		};
+
+		mlibc::sys_execve("/bin/sh", const_cast<char **>(args), environ);
+		_Exit(127);
+	} else {
+		// For the parent
+		if (is_write) {
+			mlibc::sys_close(fds[0]); // Close the read end
+			ret = fdopen(fds[1], "w");
+			__ensure(ret);
+		} else {
+			mlibc::sys_close(fds[1]); // Close the write end
+			ret = fdopen(fds[0], "r");
+			__ensure(ret);
+		}
+	}
+
+	mlibc::sys_sigaction(SIGINT, &old_int, nullptr);
+	mlibc::sys_sigaction(SIGQUIT, &old_quit, nullptr);
+	mlibc::sys_sigprocmask(SIG_SETMASK, &old_mask, nullptr);
+
+	return ret;
 }
 
 FILE *open_memstream(char **buf, size_t *sizeloc) {
