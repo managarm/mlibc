@@ -561,8 +561,8 @@ char *ctime_r(const time_t *, char *) {
 
 char *strptime(const char *__restrict, const char *__restrict,
 		struct tm *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: strptime is a stub!" << frg::endlog;
+	return nullptr;
 }
 
 time_t timelocal(struct tm *) {
