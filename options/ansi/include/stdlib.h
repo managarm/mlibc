@@ -2,7 +2,7 @@
 #define _STDLIB_H
 
 #include <alloca.h>
-#include <bits/feature.h>
+#include <mlibc-config.h>
 #include <bits/null.h>
 #include <bits/size_t.h>
 #include <bits/wchar_t.h>
@@ -109,7 +109,7 @@ size_t wcstombs(char *mb_string, const wchar_t *__restrict wc_string, size_t max
 }
 #endif
 
-#if __MLIBC_POSIX_OPTION
+#ifdef __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_stdlib.h>
 #endif
 

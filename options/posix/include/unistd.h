@@ -2,7 +2,7 @@
 #ifndef _UNISTD_H
 #define _UNISTD_H
 
-#include <bits/feature.h>
+#include <mlibc-config.h>
 #include <bits/types.h>
 #include <bits/size_t.h>
 #include <bits/ssize_t.h>
@@ -234,7 +234,7 @@ int pipe2(int *pipefd, int flags);
 }
 #endif
 
-#if __MLIBC_LINUX_OPTION
+#ifdef __MLIBC_LINUX_OPTION
 #	include <bits/linux/linux_unistd.h>
 #endif
 

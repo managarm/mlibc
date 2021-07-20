@@ -1,7 +1,7 @@
 #ifndef _WCTYPE_H
 #define _WCTYPE_H
 
-#include <bits/feature.h>
+#include <mlibc-config.h>
 #include <bits/wint_t.h>
 
 #ifdef __cplusplus
@@ -41,7 +41,7 @@ wint_t towctrans(wint_t, wctrans_t);
 }
 #endif
 
-#if __MLIBC_POSIX_OPTION
+#ifdef __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_wctype.h>
 #endif
 

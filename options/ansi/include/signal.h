@@ -2,7 +2,7 @@
 #define _SIGNAL_H
 
 #include <abi-bits/signal.h>
-#include <bits/feature.h>
+#include <mlibc-config.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,7 +34,7 @@ int raise(int sig);
 }
 #endif
 
-#if __MLIBC_POSIX_OPTION
+#ifdef __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_signal.h>
 #endif
 

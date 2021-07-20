@@ -2,7 +2,7 @@
 #ifndef _SETJMP_H
 #define _SETJMP_H
 
-#include <bits/feature.h>
+#include <mlibc-config.h>
 #include <bits/machine.h>
 #include <abi-bits/signal.h>
 
@@ -27,7 +27,7 @@ typedef struct {
 	sigset_t sigset;
 } sigjmp_buf[1];
 
-#if __MLIBC_POSIX_OPTION
+#ifdef __MLIBC_POSIX_OPTION
 __attribute__ (( returns_twice )) int sigsetjmp(sigjmp_buf buffer, int savesigs);
 __attribute__ (( noreturn )) void siglongjmp(sigjmp_buf buffer, int value);
 #endif // __MLIBC_POSIX_OPTION

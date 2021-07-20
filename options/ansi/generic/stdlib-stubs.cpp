@@ -20,7 +20,7 @@
 #include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/strtofp.hpp>
 
-#if __MLIBC_POSIX_OPTION
+#ifdef __MLIBC_POSIX_OPTION
 #include <pthread.h>
 #endif // __MLIBC_POSIX_OPTION
 
@@ -274,7 +274,7 @@ int system(const char *command) {
 		return -1;
 	}
 
-#if __MLIBC_POSIX_OPTION
+#ifdef __MLIBC_POSIX_OPTION
 	pthread_testcancel();
 #endif // __MLIBC_POSIX_OPTION
 

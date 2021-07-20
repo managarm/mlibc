@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include <bits/ensure.h>
-#include <bits/feature.h>
 
 #include <mlibc/debug.hpp>
 #include <frg/optional.hpp>

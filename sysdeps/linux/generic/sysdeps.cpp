@@ -1,7 +1,7 @@
 #include <errno.h>
 #include <type_traits>
 
-#include <bits/feature.h>
+#include <mlibc-config.h>
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
@@ -251,7 +251,7 @@ int sys_sleep(time_t *secs, long *nanos) {
 	return 0;
 }
 
-#if __MLIBC_POSIX_OPTION
+#ifdef __MLIBC_POSIX_OPTION
 
 #include <sys/ioctl.h>
 #include <sched.h>

@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <time.h>
-#include <bits/feature.h>
 #include <abi-bits/pid_t.h>
 #include <abi-bits/uid_t.h>
 

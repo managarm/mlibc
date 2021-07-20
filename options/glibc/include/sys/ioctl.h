@@ -1,12 +1,13 @@
 #ifndef _SYS_IOCTL_H
 #define _SYS_IOCTL_H
 
-#include <bits/feature.h>
+#include <mlibc-config.h>
 
 // On Linux, sys/ioctl.h includes the termios ioctls.
-#if __MLIBC_LINUX_OPTION
+// TODO(geert): fix this!!
+// #ifdef __MLIBC_LINUX_OPTION
 #	include <asm/ioctls.h>
-#endif
+// #endif
 
 #ifdef __cplusplus
 extern "C" {

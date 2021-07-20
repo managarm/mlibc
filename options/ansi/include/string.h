@@ -1,7 +1,7 @@
 #ifndef _STRING_H
 #define _STRING_H
 
-#include <bits/feature.h>
+#include <mlibc-config.h>
 #include <bits/null.h>
 #include <bits/size_t.h>
 
@@ -62,7 +62,7 @@ int strverscmp(const char *l0, const char *r0);
 }
 #endif
 
-#if __MLIBC_POSIX_OPTION
+#ifdef __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_string.h>
 #endif
 

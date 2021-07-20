@@ -1,7 +1,7 @@
 #ifndef _CTYPE_H
 #define _CTYPE_H
 
-#include <bits/feature.h>
+#include <mlibc-config.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,7 +35,7 @@ int toupper(int c);
 }
 #endif
 
-#if __MLIBC_POSIX_OPTION
+#ifdef __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_ctype.h>
 #endif
 

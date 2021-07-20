@@ -2,7 +2,7 @@
 #ifndef _LOCALE_H
 #define _LOCALE_H
 
-#include <bits/feature.h>
+#include <mlibc-config.h>
 
 #include <bits/null.h>
 
@@ -65,7 +65,7 @@ struct lconv *localeconv(void);
 
 // posix extension
 
-#if __MLIBC_POSIX_OPTION
+#ifdef __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_locale.h>
 #endif // __MLIBC_POSIX_OPTION
 

@@ -1,18 +1,18 @@
 #ifndef MLIBC_ALL_SYSDEPS
 #define MLIBC_ALL_SYSDEPS
 
-#include <bits/feature.h>
+#include <mlibc-config.h>
 #include <internal-config.h>
 
-#if __MLIBC_ANSI_OPTION
+#ifdef __MLIBC_ANSI_OPTION
 #	include <mlibc/ansi-sysdeps.hpp>
 #endif // __MLIBC_ANSI_OPTION
 
-#if __MLIBC_POSIX_OPTION
+#ifdef __MLIBC_POSIX_OPTION
 #	include <mlibc/posix-sysdeps.hpp>
 #endif // __MLIBC_POSIX_OPTION
 
-#if __MLIBC_LINUX_OPTION
+#ifdef __MLIBC_LINUX_OPTION
 #	include <mlibc/linux-sysdeps.hpp>
 #endif // __MLIBC_LINUX_OPTION
 

@@ -5,9 +5,8 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <mlibc/debug.hpp>
 #include <bits/ensure.h>
-#include <bits/feature.h>
+#include <mlibc-config.h>
 
 #include <mlibc/posix-sysdeps.hpp>
 

@@ -1,7 +1,6 @@
 #ifndef _ERRNO_H
 #define _ERRNO_H
 
-#include <bits/feature.h>
 #include <abi-bits/errno.h>
 
 // Some programs define their own errno as an "extern int" if it is not a macro.

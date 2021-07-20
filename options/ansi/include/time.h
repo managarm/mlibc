@@ -1,11 +1,11 @@
 #ifndef _TIME_H
 #define _TIME_H
 
-#include <bits/feature.h>
 #include <bits/null.h>
 #include <bits/size_t.h>
 #include <bits/ansi/time_t.h>
 #include <bits/ansi/timespec.h>
+#include <mlibc-config.h>
 
 // [7.27.1] Components of time
 
@@ -72,7 +72,7 @@ void tzset(void);
 
 // POSIX extensions.
 
-#if __MLIBC_POSIX_OPTION
+#ifdef __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_time.h>
 #endif // __MLIBC_POSIX_OPTION
 
