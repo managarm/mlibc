@@ -29,7 +29,6 @@ if not no_headers
 		'include/malloc.h',
 		'include/memory.h',
 		'include/mntent.h',
-		'include/poll.h',
 		'include/pty.h',
 		'include/utmp.h',
 		'include/utmpx.h',
@@ -58,7 +57,6 @@ if not no_headers
 		'include/sys/timerfd.h',
 		'include/sys/eventfd.h',
 		'include/sys/reboot.h',
-		'include/sys/poll.h',
 		subdir: 'sys'
 	)
 endif
