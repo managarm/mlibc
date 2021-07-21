@@ -87,7 +87,7 @@ internal_conf.set('MLIBC_STATIC_BUILD', static)
 
 # Process sysdeps first, as sysdeps might want to disable unsupported options.
 if host_machine.system() == 'linux'
-	disable_linux_option = true
+	disable_linux_headers = true
 	rtdl_include_dirs += include_directories('sysdeps/linux/include')
 	libc_include_dirs += include_directories('sysdeps/linux/include')
 	subdir('sysdeps/linux')
@@ -153,10 +153,16 @@ if not disable_intl_option
 	libc_include_dirs += include_directories('options/intl/include')
 endif
 
+if not disable_linux_option
+	rtdl_include_dirs += include_directories('options/linux/include')
+	libc_include_dirs += include_directories('options/linux/include')
+endif
+
+
+rtdl_include_dirs += include_directories('options/linux-headers/include')
+libc_include_dirs += include_directories('options/linux-headers/include')
 rtdl_include_dirs += include_directories('options/elf/include')
-rtdl_include_dirs += include_directories('options/linux/include')
 libc_include_dirs += include_directories('options/elf/include')
-libc_include_dirs += include_directories('options/linux/include')
 libc_include_dirs += include_directories('.')
 
 #----------------------------------------------------------------------------------------

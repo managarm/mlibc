@@ -4,10 +4,9 @@
 #include <mlibc-config.h>
 
 // On Linux, sys/ioctl.h includes the termios ioctls.
-// TODO(geert): fix this!!
-// #ifdef __MLIBC_LINUX_OPTION
+#ifdef __MLIBC_LINUX_OPTION
 #	include <asm/ioctls.h>
-// #endif
+#endif
 
 #ifdef __cplusplus
 extern "C" {
