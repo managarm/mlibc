@@ -6,5 +6,6 @@
 #mesondefine __MLIBC_LINUX_OPTION
 #mesondefine __MLIBC_INTL_OPTION
 #mesondefine __MLIBC_ICONV_OPTION
+#mesondefine __MLIBC_GLIBC_OPTION
 
 #endif // _MLIBC_CONFIG_H

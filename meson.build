@@ -10,7 +10,6 @@ libc_include_dirs = [
 	include_directories('options/internal/include'),
 	include_directories('options/elf/include'),
 	include_directories('options/lsb/include'),
-	include_directories('options/glibc/include'),
 	include_directories('options/internal' / host_machine.cpu_family() + '-include')
 ]
 
@@ -30,6 +29,7 @@ disable_posix_option = get_option('disable_posix_option')
 disable_linux_option = get_option('disable_linux_option')
 disable_iconv_option = get_option('disable_iconv_option')
 disable_intl_option = get_option('disable_intl_option')
+disable_glibc_option = get_option('disable_glibc_option')
 internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
@@ -133,6 +133,7 @@ mlibc_conf.set('__MLIBC_POSIX_OPTION', not disable_posix_option)
 mlibc_conf.set('__MLIBC_LINUX_OPTION', not disable_linux_option)
 mlibc_conf.set('__MLIBC_INTL_OPTION', not disable_intl_option)
 mlibc_conf.set('__MLIBC_ICONV_OPTION', not disable_iconv_option)
+mlibc_conf.set('__MLIBC_GLIBC_OPTION', not disable_glibc_option)
 
 if not disable_ansi_option
 	rtdl_include_dirs += include_directories('options/ansi/include')
@@ -158,6 +159,10 @@ if not disable_linux_option
 	libc_include_dirs += include_directories('options/linux/include')
 endif
 
+if not disable_glibc_option
+	rtdl_include_dirs += include_directories('options/glibc/include')
+	libc_include_dirs += include_directories('options/glibc/include')
+endif
 
 rtdl_include_dirs += include_directories('options/linux-headers/include')
 libc_include_dirs += include_directories('options/linux-headers/include')
