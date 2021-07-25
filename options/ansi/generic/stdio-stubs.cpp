@@ -697,25 +697,13 @@ int sprintf(char *__restrict buffer, const char *__restrict format, ...) {
 	return result;
 }
 int sscanf(const char *__restrict buffer, const char *__restrict format, ...) {
-    class {
-    public:
-        char look_ahead() {
-            return *buffer;
-        }
+	va_list args;
+	va_start(args, format);
 
-        char consume() {
-            num_consumed++;
-            return *buffer++;
-        }
+	int result = vsscanf(buffer, format, args);
 
-        const char *buffer;
-        int num_consumed;
-    } handler = {buffer};
-    va_list args;
-    va_start(args, format);
-    int result = do_scanf(handler, format, args);
-    va_end(args);
-    return result;
+	va_end(args);
+	return result;
 }
 int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
 	frg::va_struct vs;
@@ -791,8 +779,23 @@ int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_l
 	return p.count;
 }
 int vsscanf(const char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	struct {
+		char look_ahead() {
+			return *buffer;
+		}
+
+		char consume() {
+			num_consumed++;
+			return *buffer++;
+		}
+
+		const char *buffer;
+		int num_consumed;
+	} handler = {buffer};
+
+	int result = do_scanf(handler, format, args);
+
+	return result;
 }
 
 int fwprintf(FILE *__restrict, const wchar_t *__restrict, ...) MLIBC_STUB_BODY
