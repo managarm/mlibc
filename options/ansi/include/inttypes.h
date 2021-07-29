@@ -92,6 +92,9 @@
 #define SCNu32 "u"
 #define SCNu64 "lu"
 #define SCNuMAX "lu"
+#define SCNx32 "x"
+#define SCNx64 "lx"
+#define SCNxMAX "lx"
 
 #define SCNd64 "ld"
 
