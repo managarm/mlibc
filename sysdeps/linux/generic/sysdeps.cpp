@@ -43,6 +43,7 @@
 #define NR_getgid 104
 #define NR_geteuid 107
 #define NR_getegid 108
+#define NR_rt_sigsuspend 130
 #define NR_sigaltstack 131
 #define NR_arch_prctl 158
 #define NR_sys_futex 202
@@ -448,6 +449,13 @@ int sys_futex_wait(int *pointer, int expected) {
 
 int sys_futex_wake(int *pointer) {
 	auto ret = do_syscall(NR_sys_futex, pointer, FUTEX_WAKE, INT_MAX);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_sigsuspend(const sigset_t *set) {
+	auto ret = do_syscall(NR_rt_sigsuspend, set, NSIG / 8);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;

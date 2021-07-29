@@ -5,9 +5,16 @@
 
 #include <mlibc/posix-sysdeps.hpp>
 
-int sigsuspend(const sigset_t *) {
-	__ensure(!"sigsuspend() not implemented");
-	__builtin_unreachable();
+int sigsuspend(const sigset_t *sigmask) {
+	if(!mlibc::sys_sigsuspend) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	// This is guaranteed to return an error (EINTR most probably)
+	errno = mlibc::sys_sigsuspend(sigmask);
+	return -1;
 }
 
 int pthread_sigmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
