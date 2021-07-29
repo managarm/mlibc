@@ -110,6 +110,10 @@ int sys_kill(int pid, int number) {
 	return 0;
 }
 
+int sys_tgkill(int, int tid, int number) {
+	return sys_kill(tid, number);
+}
+
 int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
 	HelWord out;
 
