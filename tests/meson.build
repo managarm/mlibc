@@ -19,6 +19,7 @@ posix_test_cases = [
 	'pthread_cond',
 	'pthread_create',
 	'pthread_cancel',
+	'pthread_atfork',
 	'pwd',
 	'getaddrinfo',
 	'getdelim',

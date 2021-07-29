@@ -394,9 +394,28 @@ int pthread_cancel(pthread_t thread) {
 	return 0;
 }
 
-int pthread_atfork(void (*) (void), void (*) (void), void (*) (void)) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_atfork(void (*prepare) (void), void (*parent) (void), void (*child) (void)) {
+	auto self = mlibc::get_current_tcb();
+
+	auto hand = frg::construct<Tcb::AtforkHandler>(getAllocator());
+	if (!hand)
+		return -1;
+
+	hand->prepare = prepare;
+	hand->parent = parent;
+	hand->child = child;
+	hand->next = nullptr;
+	hand->prev = self->atforkEnd;
+
+	if (self->atforkEnd)
+		self->atforkEnd->next = hand;
+
+	self->atforkEnd = hand;
+
+	if (!self->atforkBegin)
+		self->atforkBegin = self->atforkEnd;
+
+	return 0;
 }
 
 // ----------------------------------------------------------------------------
