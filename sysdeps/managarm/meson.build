@@ -89,6 +89,7 @@ if not no_headers
 		'include/abi-bits/pid_t.h',
 		'include/abi-bits/uid_t.h',
 		'include/abi-bits/wait.h',
+		'include/abi-bits/limits.h',
 		subdir: 'abi-bits'
 	)
 endif

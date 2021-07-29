@@ -84,6 +84,8 @@ struct group_source_req {
 #define IPPROTO_RAW 4
 #define IPPROTO_TCP 5
 #define IPPROTO_UDP 6
+#define IPPROTO_ESP 50
+#define IPPROTO_AH 51
 
 #define INADDR_ANY ((in_addr_t)0x00000000)
 #define INADDR_BROADCAST ((in_addr_t)0xffffffff)
