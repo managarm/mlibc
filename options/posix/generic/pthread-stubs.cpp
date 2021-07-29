@@ -137,7 +137,15 @@ int pthread_equal(pthread_t t1, pthread_t t2) {
 }
 
 int pthread_exit(void *ret_val) {
-	auto self = static_cast<Tcb *>(mlibc::get_current_tcb());
+	auto self = mlibc::get_current_tcb();
+
+	auto hand = self->cleanupEnd;
+	while (hand) {
+		auto old = hand;
+		hand->func(hand->arg);
+		hand = hand->prev;
+		frg::destruct(getAllocator(), old);
+	}
 
 	self->returnValue = ret_val;
 	__atomic_store_n(&self->didExit, 1, __ATOMIC_RELEASE);
@@ -168,13 +176,38 @@ int pthread_detach(pthread_t) {
 	__builtin_unreachable();
 }
 
-int pthread_cleanup_push(void (*) (void *), void *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void pthread_cleanup_push(void (*func) (void *), void *arg) {
+	auto self = mlibc::get_current_tcb();
+
+	auto hand = frg::construct<Tcb::CleanupHandler>(getAllocator());
+	hand->func = func;
+	hand->arg = arg;
+	hand->next = nullptr;
+	hand->prev = self->cleanupEnd;
+
+	if (self->cleanupEnd)
+		self->cleanupEnd->next = hand;
+
+	self->cleanupEnd = hand;
+
+	if (!self->cleanupBegin)
+		self->cleanupBegin = self->cleanupEnd;
 }
-int pthread_cleanup_pop(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+void pthread_cleanup_pop(int execute) {
+	auto self = mlibc::get_current_tcb();
+
+	auto hand = self->cleanupEnd;
+
+	if (self->cleanupEnd)
+		self->cleanupEnd = self->cleanupEnd->prev;
+	if (self->cleanupEnd)
+		self->cleanupEnd->next = nullptr;
+
+	if (execute)
+		hand->func(hand->arg);
+
+	frg::destruct(getAllocator(), hand);
 }
 
 int pthread_setname_np(pthread_t, const char *) {

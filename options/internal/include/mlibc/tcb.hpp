@@ -96,5 +96,16 @@ struct Tcb {
 
 	AtforkHandler *atforkBegin;
 	AtforkHandler *atforkEnd;
+
+	struct CleanupHandler {
+		void (*func)(void *);
+		void *arg;
+
+		CleanupHandler *next;
+		CleanupHandler *prev;
+	};
+
+	CleanupHandler *cleanupBegin;
+	CleanupHandler *cleanupEnd;
 };
 

@@ -144,8 +144,8 @@ int pthread_exit(void *);
 int pthread_join(pthread_t, void **);
 int pthread_detach(pthread_t);
 
-int pthread_cleanup_push(void (*) (void *), void *);
-int pthread_cleanup_pop(int);
+void pthread_cleanup_push(void (*) (void *), void *);
+void pthread_cleanup_pop(int);
 
 int pthread_setname_np(pthread_t, const char *);
 int pthread_getname_np(pthread_t, char *, size_t);
