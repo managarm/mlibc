@@ -85,3 +85,23 @@ int sigpending(sigset_t *) {
 	__ensure(!"sigpending() not implemented");
 	__builtin_unreachable();
 }
+
+int sigaltstack(const stack_t *__restrict ss, stack_t *__restrict oss) {
+	if (!mlibc::sys_sigaltstack) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if (ss && ss->ss_size < MINSIGSTKSZ && !(ss->ss_flags & SS_DISABLE)) {
+		errno = ENOMEM;
+		return -1;
+	}
+
+	if (int e = mlibc::sys_sigaltstack(ss, oss); e) {
+		errno = e;
+		return -1;
+	}
+
+	return 0;
+}

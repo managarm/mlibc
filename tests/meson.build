@@ -31,7 +31,8 @@ posix_test_cases = [
 	'search',
 	'open_memstream',
 	'popen',
-	'system' # This test should be in the ANSI tests, but it depends on sys/wait.h
+	'system', # This test should be in the ANSI tests, but it depends on sys/wait.h
+	'sigaltstack'
 ]
 
 posix_fail_test_cases = [

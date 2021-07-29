@@ -107,4 +107,16 @@ int sys_kill(int pid, int number) {
 	return 0;
 }
 
+int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
+	HelWord out;
+
+	// This implementation is inherently signal-safe.
+	HEL_CHECK(helSyscall2_1(kHelObserveSuperCall + 12,
+				reinterpret_cast<HelWord>(ss),
+				reinterpret_cast<HelWord>(oss),
+				&out));
+
+	return out;
+}
+
 } //namespace mlibc

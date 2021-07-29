@@ -12,12 +12,6 @@ extern "C" {
 #include <bits/sigset_t.h>
 #include <stddef.h>
 
-typedef struct __stack {
-        void *ss_sp;
-        size_t ss_size;
-        int ss_flags;
-} stack_t;
-
 typedef struct __ucontext {
         unsigned long uc_flags;
         struct __ucontext *uc_link;
@@ -38,6 +32,8 @@ int sigaction(int, const struct sigaction *__restrict, struct sigaction *__restr
 int sigpending(sigset_t *);
 
 int siginterrupt(int sig, int flag);
+
+int sigaltstack(const stack_t *__restrict ss, stack_t *__restrict oss);
 
 // functions to raise signals
 int kill(pid_t, int);
