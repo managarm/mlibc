@@ -6,6 +6,8 @@
 #include <bits/posix/suseconds_t.h>
 #include <bits/posix/timeval.h>
 
+#include <sys/select.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

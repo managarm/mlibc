@@ -5,6 +5,7 @@
 #include <abi-bits/signal.h>
 
 #include <bits/ansi/time_t.h>
+#include <bits/ansi/timespec.h>
 #include <bits/posix/suseconds_t.h>
 #include <bits/posix/timeval.h>
 #include <bits/posix/fd_set.h>
