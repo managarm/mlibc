@@ -39,7 +39,7 @@ jobs:
             run: 'xbstrap install ${{matrix.builds}}'
             working-directory: build/
           - name: Test mlibc
-            run: 'C=gcc-10 CXX=g++-10 meson test -C pkg-builds/${{matrix.builds}}'
+            run: 'C=gcc-10 CXX=g++-10 meson test -v -C pkg-builds/${{matrix.builds}}'
             working-directory: build/
           - name: Build GCC
             run: 'xbstrap install-tool gcc'
