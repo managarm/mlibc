@@ -88,7 +88,7 @@ typedef struct __mlibc_condattr_struct pthread_condattr_t;
 
 struct  __mlibc_cond {
 	// TODO: the clock attribute needs to be supported here.
-	unsigned int __mlibc_seq;
+	int __mlibc_seq;
 };
 typedef struct __mlibc_cond pthread_cond_t;
 
