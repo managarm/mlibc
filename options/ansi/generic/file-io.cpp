@@ -525,6 +525,13 @@ FILE *fopen(const char *path, const char *mode) {
 			flags = __MLIBC_O_WRONLY;
 		}
 		flags |= __MLIBC_O_CREAT | __MLIBC_O_TRUNC;
+	}else if(*mode == 'a') {
+		if(has_plus) {
+			flags = __MLIBC_O_APPEND | __MLIBC_O_RDWR;
+		}else{
+			flags = __MLIBC_O_APPEND;
+		}
+		flags |= __MLIBC_O_CREAT;
 	}else{
 		mlibc::infoLogger() << "Illegal fopen() mode '" << *mode << "'" << frg::endlog;
 	}
