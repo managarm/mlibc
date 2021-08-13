@@ -20,7 +20,7 @@ int inotify_init(void) {
 	return fd;
 }
 
-int inotify_init1(int flags) {
+int inotify_init1(int) {
 	int fd;
 	if(!mlibc::sys_inotify_create) {
 		MLIBC_MISSING_SYSDEP();
