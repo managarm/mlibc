@@ -488,5 +488,7 @@ extern "C" [[ gnu::visibility("default") ]]
 void __dlapi_enter(uintptr_t *entry_stack) {
 #ifdef MLIBC_STATIC_BUILD
 	interpreterMain(entry_stack);
+#else
+	(void)entry_stack;
 #endif
 }
