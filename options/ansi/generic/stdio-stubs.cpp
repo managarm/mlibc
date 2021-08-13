@@ -1120,6 +1120,7 @@ void funlockfile(FILE *) {
 
 int ftrylockfile(FILE *) {
 	mlibc::infoLogger() << "mlibc: File locking (ftrylockfile) is a no-op" << frg::endlog;
+    return 0;
 }
 
 void clearerr_unlocked(FILE *file_base) {
