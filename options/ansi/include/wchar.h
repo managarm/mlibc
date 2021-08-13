@@ -9,13 +9,11 @@
 #include <bits/null.h>
 #include <bits/size_t.h>
 #include <bits/wchar_t.h>
+#include <bits/wchar.h>
 #include <bits/wint_t.h>
 #include <bits/mbstate.h>
 
 #define WEOF 0xffffffffU
-// TODO: The following declaration should be independent of gcc.
-#define WCHAR_MIN __WCHAR_MIN__
-#define WCHAR_MAX __WCHAR_MAX__
 
 #ifdef __cplusplus
 extern "C" {
