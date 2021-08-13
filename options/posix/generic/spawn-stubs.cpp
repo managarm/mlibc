@@ -254,7 +254,7 @@ int posix_spawnattr_init(posix_spawnattr_t *attr) {
 	return 0;
 }
 
-int posix_spawnattr_destroy(posix_spawnattr_t *attr) {
+int posix_spawnattr_destroy(posix_spawnattr_t *) {
 	return 0;
 }
 
@@ -280,13 +280,13 @@ int posix_spawnattr_setsigdefault(posix_spawnattr_t *__restrict attr,
 	return 0;
 }
 
-int posix_spawnattr_setschedparam(posix_spawnattr_t *__restrict attr,
-		const struct sched_param *__restrict schedparam) {
+int posix_spawnattr_setschedparam(posix_spawnattr_t *__restrict,
+		const struct sched_param *__restrict) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
-int posix_spawnattr_setschedpolicy(posix_spawnattr_t *attr, int schedpolicy) {
+int posix_spawnattr_setschedpolicy(posix_spawnattr_t *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

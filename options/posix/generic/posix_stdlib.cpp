@@ -79,7 +79,7 @@ double drand48(void) {
 	__builtin_unreachable();
 }
 
-void srand48(long int seedval) {
+void srand48(long int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -395,30 +395,30 @@ int posix_openpt(int flags) {
 	return fd;
 }
 
-int unlockpt(int fd) {
+int unlockpt(int) {
 	return 0;
 }
 
-int grantpt(int fd) {
+int grantpt(int) {
 	return 0;
 }
 
-double strtod_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc) {
+double strtod_l(const char *__restrict__, char ** __restrict__, locale_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
-long double strtold_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc) {
+long double strtold_l(const char *__restrict__, char ** __restrict__, locale_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
-float strtof_l(const char *__restrict string, char **__restrict end, locale_t loc){
+float strtof_l(const char *__restrict__, char **__restrict__, locale_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
-int strcoll_l(const char *s1, const char *s2, locale_t locale){
+int strcoll_l(const char *, const char *, locale_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

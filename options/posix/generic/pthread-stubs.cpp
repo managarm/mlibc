@@ -416,6 +416,7 @@ struct __mlibc_key_data {
 
 int pthread_key_create(pthread_key_t *out_key, void (*destructor) (void *)) {
 	SCOPE_TRACE();
+	(void)destructor;
 	// TODO: Invoke the destructor on thread exit.
 	*out_key = frg::construct<__mlibc_key_data>(getAllocator());
 	return 0;
@@ -758,6 +759,7 @@ int pthread_cond_wait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restri
 		__ensure(!"Failed to lock the mutex");
 	return 0;
 }
+
 int pthread_cond_timedwait(pthread_cond_t *__restrict, pthread_mutex_t *__restrict,
 		const struct timespec *__restrict) {
 	__ensure(!"Not implemented");

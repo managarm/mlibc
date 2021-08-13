@@ -5,7 +5,7 @@
 
 #include <mlibc/posix-sysdeps.hpp>
 
-int sigsuspend(const sigset_t *sigmask) {
+int sigsuspend(const sigset_t *) {
 	__ensure(!"sigsuspend() not implemented");
 	__builtin_unreachable();
 }
@@ -21,7 +21,7 @@ int pthread_sigmask(int how, const sigset_t *__restrict set, sigset_t *__restric
 	return 0;
 }
 
-int pthread_kill(pthread_t thread, int sig) {
+int pthread_kill(pthread_t, int) {
 	__ensure(!"pthread_kill() not implemented");
 	__builtin_unreachable();
 }
@@ -71,12 +71,12 @@ int killpg(int, int) {
 	__builtin_unreachable();
 }
 
-int sigtimedwait(const sigset_t *set, siginfo_t *info, const struct timespec *timeout) {
+int sigtimedwait(const sigset_t *, siginfo_t *, const struct timespec *) {
 	__ensure(!"sigtimedwait() not implemented");
 	__builtin_unreachable();
 }
 
-int sigwait(const sigset_t *set, int *sig) {
+int sigwait(const sigset_t *, int *) {
 	__ensure(!"sigwait() not implemented");
 	__builtin_unreachable();
 }
@@ -85,5 +85,3 @@ int sigpending(sigset_t *) {
 	__ensure(!"sigpending() not implemented");
 	__builtin_unreachable();
 }
-
-

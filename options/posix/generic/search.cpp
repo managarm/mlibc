@@ -111,16 +111,19 @@ void *tfind(const void *key, void *const *rootp, int (*compar)(const void *, con
 }
 
 void *tdelete(const void *, void **, int(*compar)(const void *, const void *)) {
+	(void)compar;
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
 void twalk(const void *, void (*action)(const void *, VISIT, int)) {
+	(void)action;
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
 void tdestroy(void *, void (*free_node)(void *)) {
+	(void)free_node;
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

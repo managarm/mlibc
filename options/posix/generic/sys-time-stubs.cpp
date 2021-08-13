@@ -21,22 +21,22 @@ int gettimeofday(struct timeval *__restrict result, void *__restrict unused) {
 	return 0;
 }
 
-void timeradd(struct timeval *a, struct timeval *b, struct timeval *res) {
+void timeradd(struct timeval *, struct timeval *, struct timeval *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
-void timersub(struct timeval *a, struct timeval *b, struct timeval *res) {
+void timersub(struct timeval *, struct timeval *, struct timeval *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
-void timerclear(struct timeval *tvp) {
+void timerclear(struct timeval *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
-int timerisset(struct timeval *tvp) {
+int timerisset(struct timeval *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

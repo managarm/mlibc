@@ -25,7 +25,7 @@ int sem_init(sem_t *sem, int pshared, unsigned int initial_count) {
 	return 0;
 }
 
-int sem_destroy(sem_t *sem) {
+int sem_destroy(sem_t *) {
 	return 0;
 }
 

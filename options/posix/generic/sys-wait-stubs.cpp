@@ -6,7 +6,7 @@
 #include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 
-int waitid(idtype_t idtype, id_t id, siginfo_t *siginfo, int flags) {
+int waitid(idtype_t, id_t, siginfo_t *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -34,7 +34,7 @@ pid_t wait3(int *, int, struct rusage *) {
 	__builtin_unreachable();
 }
 
-pid_t wait4(pid_t pid, int *status, int options, struct rusage *ru){
+pid_t wait4(pid_t pid, int *status, int options, struct rusage *){
 	mlibc::infoLogger() << "\e[31mmlibc: wait4() is not implemented correctly\e[39m"
 		<< frg::endlog;
 	return waitpid(pid, status, options);

@@ -171,7 +171,7 @@ static int do_glob(char *buf, size_t pos, int type, char *pat, int flags, int (*
 	return 0;
 }
 
-static int ignore_err(const char *path, int err)
+static int ignore_err(const char *, int)
 {
 	return 0;
 }

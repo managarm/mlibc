@@ -20,17 +20,17 @@ int sched_getaffinity(pid_t, size_t, cpu_set_t *) {
 	return -1;
 }
 
-int __mlibc_cpu_isset(int cpu, cpu_set_t *set) {
+int __mlibc_cpu_isset(int, cpu_set_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
-int __mlibc_cpu_count(cpu_set_t *set) {
+int __mlibc_cpu_count(cpu_set_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
-int unshare(int flags) {
+int unshare(int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
