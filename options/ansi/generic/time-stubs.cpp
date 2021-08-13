@@ -527,8 +527,10 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 	char *tm_zone;
 	frg::unique_lock<FutexLock> lock(__time_lock);
 	// TODO: Set errno if the conversion fails.
-	if(unix_local_from_gmt(*unix_gmt, &offset, &dst, &tm_zone))
+	if(unix_local_from_gmt(*unix_gmt, &offset, &dst, &tm_zone)) {
 		__ensure(!"Error parsing /etc/localtime");
+		__builtin_unreachable();
+	}
 	time_t unix_local = *unix_gmt + offset;
 
 	int days_since_epoch = unix_local / (60*60*24);
