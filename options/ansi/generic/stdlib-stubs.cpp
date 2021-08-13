@@ -242,6 +242,7 @@ int atexit(void (*func)(void)) {
 	return 0;
 }
 int at_quick_exit(void (*func)(void)) {
+	(void)func;
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -256,7 +257,7 @@ void _Exit(int status) {
 }
 
 // getenv() is provided by POSIX
-void quick_exit(int status) {
+void quick_exit(int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -395,11 +396,13 @@ div_t div(int number, int denom) {
 	r.rem = number % denom;
 	return r;
 }
-ldiv_t ldiv(long number, long denom) {
+
+ldiv_t ldiv(long, long) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-lldiv_t lldiv(long long number, long long denom) {
+
+lldiv_t lldiv(long long, long long) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -419,6 +422,7 @@ int mblen(const char *mbs, size_t mb_limit) {
 		__ensure(!"decode_wtranscode() errors are not handled");
 	return nseq.it - mbs;
 }
+
 int mbtowc(wchar_t *__restrict wc, const char *__restrict mbs, size_t max_size) {
 	mlibc::infoLogger() << "mlibc: Broken mbtowc() called" << frg::endlog;
 	__ensure(max_size);
@@ -432,7 +436,8 @@ int mbtowc(wchar_t *__restrict wc, const char *__restrict mbs, size_t max_size) 
 	}
 	return 1;
 }
-int wctomb(char *mb_chr, wchar_t wc) {
+
+int wctomb(char *, wchar_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
