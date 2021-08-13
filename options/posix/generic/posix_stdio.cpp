@@ -76,6 +76,9 @@ FILE *popen(const char *command, const char *typestr) {
 		is_write = true;
 	} else if (strstr(typestr, "r") != NULL) {
 		is_write = false;
+	} else {
+		errno = EINVAL;
+		return nullptr;
 	}
 
 	bool cloexec = false;
