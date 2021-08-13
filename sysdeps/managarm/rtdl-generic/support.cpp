@@ -182,7 +182,7 @@ int sys_tcb_set(void *pointer) {
 	return 0;
 }
 
-int sys_open(const char *path, int flags, int *fd) {
+int sys_open(const char *path, int, int *fd) {
 	cacheFileTable();
 	HelAction actions[4];
 

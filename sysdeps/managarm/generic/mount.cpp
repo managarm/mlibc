@@ -12,7 +12,7 @@
 namespace mlibc {
 
 int sys_mount(const char *source, const char *target,
-		const char *fstype, unsigned long flags, const void *data) {
+		const char *fstype, unsigned long, const void *) {
 	SignalGuard sguard;
 
 	managarm::posix::MountRequest<MemoryAllocator> req(getSysdepsAllocator());
