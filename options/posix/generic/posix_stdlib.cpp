@@ -369,7 +369,7 @@ int ptsname_r(int fd, char *buffer, size_t length) {
 	int index;
 	if(ioctl(fd, TIOCGPTN, &index))
 		return -1;
-	if(snprintf(buffer, length, "/dev/pts/%d", index) >= length) {
+	if((size_t)snprintf(buffer, length, "/dev/pts/%d", index) >= length) {
 		errno = ERANGE;
 		return -1;
 	}

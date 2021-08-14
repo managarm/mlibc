@@ -192,7 +192,7 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 	size_t ptr = 0;
 	do {
 		size_t next = req_view.find_first('.', ptr);
-		size_t length = next != -1 ? next - ptr : req_view.size() - ptr;
+		size_t length = next != (size_t)-1 ? next - ptr : req_view.size() - ptr;
 		frg::string_view substring = req_view.sub_string(ptr, length);
 		request += char(length);
 		request += substring;

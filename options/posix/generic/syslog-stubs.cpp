@@ -101,7 +101,7 @@ static void _vsyslog(int priority, const char *message, va_list ap) {
 	errno = errno_save;
 	l2 = vsnprintf(buf + l, sizeof buf - l, message, ap);
 	if(l2 >= 0) {
-		if(l2 >= sizeof buf - l)
+		if(l2 >= (long int)(sizeof buf - l))
 			l = sizeof buf - 1;
 		else
 			l += l2;
