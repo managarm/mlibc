@@ -310,6 +310,7 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			object->tlsAlignment = phdr->p_align;
 			object->tlsImageSize = phdr->p_filesz;
 			tls_offset = phdr->p_vaddr;
+			break;
 		case PT_INTERP:
 			object->interpreterPath = frg::string<MemoryAllocator>{
 				(char*)(object->baseAddress + phdr->p_vaddr),
