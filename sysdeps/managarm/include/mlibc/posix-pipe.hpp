@@ -90,6 +90,7 @@ struct Queue {
 
 		// Setup the queue header.
 		HelQueueParameters params {
+			.flags = 0,
 			.ringShift = 1,
 			.numChunks = 2,
 			.chunkSize = 4096

@@ -45,6 +45,7 @@ struct Queue {
 	Queue()
 	: _handle{kHelNullHandle}, _lastProgress(0) {
 		HelQueueParameters params {
+			.flags = 0,
 			.ringShift = 0,
 			.numChunks = 1,
 			.chunkSize = 4096
