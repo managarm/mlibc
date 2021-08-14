@@ -30,7 +30,6 @@ char *strndup(const char *string, size_t max_size) {
 }
 
 size_t strnlen(const char *s, size_t n) {
-	__ensure(n >= 0);
 	size_t len = 0;
 	while(len < n && s[len])
 		++len;
