@@ -25,24 +25,24 @@ char *basename(char *s) {
 
 char *dirname(char *s) {
 	if (!s || !(*s))
-		return ".";
+		return const_cast<char *>(".");
 
 	auto i = strlen(s) - 1;
 
 	// Skip trailing slashes.
 	for (; s[i] == '/'; i--)
 		if(!i) // Path only consists of slashes.
-			return "/";
+			return const_cast<char *>("/");
 
 	// Skip the last non-slash path component.
 	for (; s[i] != '/'; i--)
 		if(!i) // Path only contains a single component.
-			return ".";
+			return const_cast<char *>(".");
 
 	// Skip slashes.
 	for (; s[i] == '/'; i--)
 		if(!i) // Path is entry in root directory.
-			return "/";
+			return const_cast<char *>("/");
 
 	s[i+1] = 0;
 

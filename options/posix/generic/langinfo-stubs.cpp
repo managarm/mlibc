@@ -5,11 +5,11 @@
 
 char *nl_langinfo(nl_item item) {
 	if(item == CODESET) {
-		return "UTF-8";
+		return const_cast<char *>("UTF-8");
 	}else{
 		mlibc::infoLogger() << "mlibc: nl_langinfo item "
 				<< item << " is not implemented properly" << frg::endlog;
-		return "";
+		return const_cast<char *>("");
 	}
 }
 
