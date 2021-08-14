@@ -56,6 +56,17 @@ namespace mlibc {
 		return (value & (tcbCancelEnableBit | tcbCancelAsyncBit))
 			== (tcbCancelEnableBit | tcbCancelAsyncBit);
 	}
+
+	// Returns true when bitmask indicates cancellation is enabled.
+	static constexpr bool tcb_cancel_enabled(int value) {
+		return (value & tcbCancelEnableBit);
+	}
+
+	// Returns true when bitmask indicates threas has been cancelled.
+	static constexpr bool tcb_cancelled(int value) {
+		return (value & (tcbCancelEnableBit | tcbCancelTriggerBit))
+		       == (tcbCancelEnableBit | tcbCancelTriggerBit);
+	}
 }
 
 // Gcc expects the stack canary to be at fs:0x28,

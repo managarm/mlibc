@@ -242,9 +242,8 @@ namespace {
 						new_value, true,__ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
 				tcb->returnValue = PTHREAD_CANCELED;
 
-				// Check if asynchronous cancellation is still enabled.
-				if (tcb->cancelBits & tcbCancelAsyncBit)
-					__mlibc_do_cancel();
+				// Perform cancellation
+				__mlibc_do_cancel();
 
 				break;
 			}
@@ -378,7 +377,7 @@ int pthread_cancel(pthread_t thread) {
 		int current_value = old_value;
 		if (__atomic_compare_exchange_n(&tcb->cancelBits, &current_value,
 					new_value, true, __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
-			if (mlibc::tcb_async_cancel(new_value)) {
+			if (mlibc::tcb_cancel_enabled(new_value)) {
 				pid_t pid = getpid();
 				if (!mlibc::sys_tgkill) {
 					MLIBC_MISSING_SYSDEP();

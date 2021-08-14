@@ -47,6 +47,19 @@ static void *worker3(void *arg) {
 	__builtin_unreachable();
 }
 
+static void *worker4(void *arg) {
+	(void) arg;
+	assert(!pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL));
+
+	worker_ready = 1;
+	sleep(1);
+
+	// We expect to be canceled during the sleep
+
+	assert(!"Expected to be cancelled!");
+	__builtin_unreachable();
+}
+
 static void check_result(pthread_t thread) {
 
 	void *ret_val = NULL;
@@ -65,6 +78,7 @@ int main() {
 	assert(!ret);
 	check_result(thread);
 
+	main_ready = 0;
 	worker_ready = 0;
 	ret = pthread_create(&thread, NULL, &worker2, NULL);
 	assert(!ret);
@@ -75,8 +89,20 @@ int main() {
 	main_ready = 1;
 	check_result(thread);
 
+	main_ready = 0;
 	worker_ready = 0;
 	ret = pthread_create(&thread, NULL, &worker3, NULL);
+	assert(!ret);
+
+	while(!worker_ready);
+	ret = pthread_cancel(thread);
+	assert(!ret);
+	main_ready = 1;
+	check_result(thread);
+
+	worker_ready = 0;
+	main_ready = 0;
+	ret = pthread_create(&thread, NULL, &worker4, NULL);
 	assert(!ret);
 
 	while(!worker_ready);
