@@ -199,7 +199,7 @@ int posix_spawn(pid_t *__restrict res, const char *__restrict path,
 	sigset_t full_sigset;
 	sigfillset(&full_sigset);
 
-	//pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 
 	args.path = path;
 	args.fa = file_actions;
@@ -244,7 +244,7 @@ int posix_spawn(pid_t *__restrict res, const char *__restrict path,
 
 fail:
 	pthread_sigmask(SIG_SETMASK, &args.oldmask, 0);
-	//pthread_setcancelstate(cs, 0);
+	pthread_setcancelstate(cs, 0);
 
 	return ec;
 }

@@ -130,6 +130,7 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 			uint16_t rr_class = (it[2] << 8) | it[3];
 			uint16_t rr_length = (it[8] << 8) | it[9];
 			it += 10;
+			(void)rr_class;
 
 			switch (rr_type) {
 				case RECORD_A:
@@ -258,6 +259,8 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 			uint16_t rr_class = (it[2] << 8) | it[3];
 			uint16_t rr_length = (it[8] << 8) | it[9];
 			it += 10;
+			(void)rr_class;
+			(void)rr_length;
 
 			(void)dns_name;
 
