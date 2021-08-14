@@ -53,7 +53,7 @@ struct args {
 
 static int child(void *args_vp) {
 	int i, ret;
-	struct sigaction sa = {0};
+	struct sigaction sa = {};
 	struct args *args = (struct args *)args_vp;
 	int p = args->p[1];
 	const posix_spawn_file_actions_t *fa = args->fa;
@@ -195,7 +195,7 @@ int posix_spawn(pid_t *__restrict res, const char *__restrict path,
 	pid_t pid;
 	int ec = 0, cs;
 	struct args args;
-	const posix_spawnattr_t empty_attr = {0};
+	const posix_spawnattr_t empty_attr = {};
 	sigset_t full_sigset;
 	sigfillset(&full_sigset);
 
@@ -250,7 +250,7 @@ fail:
 }
 
 int posix_spawnattr_init(posix_spawnattr_t *attr) {
-	*attr = (posix_spawnattr_t){0};
+	*attr = (posix_spawnattr_t){};
 	return 0;
 }
 
@@ -367,7 +367,7 @@ int posix_spawnp(pid_t *__restrict pid, const char *__restrict file,
 		const posix_spawn_file_actions_t *file_actions,
 		const posix_spawnattr_t *__restrict attrp,
 		char *const argv[], char *const envp[]) {
-	posix_spawnattr_t spawnp_attr = { 0 };
+	posix_spawnattr_t spawnp_attr = {};
 	if(attrp)
 		spawnp_attr = *attrp;
 	spawnp_attr.__fn = (void *)execvpe;	

@@ -420,7 +420,9 @@ int lockf(int fd, int op, off_t size) {
 	struct flock l = {
 		.l_type = F_WRLCK,
 		.l_whence = SEEK_CUR,
+		.l_start = 0,
 		.l_len = size,
+		.l_pid = 0,
 	};
 
 	switch(op) {
