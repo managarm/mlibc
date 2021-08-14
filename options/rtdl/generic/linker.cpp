@@ -170,7 +170,7 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 		if (path.sub_string(0, 7) == "$ORIGIN") {
 			frg::string_view dirname = origin->path;
 			auto lastsl = dirname.find_last('/');
-			if (lastsl != -1) {
+			if (lastsl != (uint64_t)-1) {
 				dirname = dirname.sub_string(0, lastsl);
 			} else {
 				dirname = ".";
