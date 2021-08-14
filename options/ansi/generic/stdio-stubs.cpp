@@ -40,7 +40,7 @@ struct PrintfAgent {
 			if (szmod == frg::printf_size_mod::long_size) {
 				char c_buf[sizeof(wchar_t)];
 				auto c = static_cast<wchar_t>(va_arg(_vsp->args, wint_t));
-				mbstate_t shift_state = {0};
+				mbstate_t shift_state = {};
 				if (wcrtomb(c_buf, c, &shift_state) == size_t(-1))
 					return frg::format_error::agent_error;
 				_formatter->append(c_buf);
@@ -752,7 +752,7 @@ int vfscanf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_li
 
 		mlibc::abstract_file *file;
 		int num_consumed;
-	} handler = {file};
+	} handler = {file, 0};
 
 	return do_scanf(handler, format, args);
 }
@@ -805,7 +805,7 @@ int vsscanf(const char *__restrict buffer, const char *__restrict format, __gnuc
 
 		const char *buffer;
 		int num_consumed;
-	} handler = {buffer};
+	} handler = {buffer, 0};
 
 	int result = do_scanf(handler, format, args);
 
