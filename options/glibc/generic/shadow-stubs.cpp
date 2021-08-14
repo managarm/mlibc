@@ -4,21 +4,18 @@
 #include <mlibc/debug.hpp>
 
 // Code taken from musl
-int putspent(const struct spwd *sp, FILE *f) {
-	auto num = [] (int n) {
-		return ((n) == -1 ? 0 : -1) && ((n) == -1 ? 0 : (n));
-	};
+#define NUM(n) ((n) == -1 ? 0 : -1), ((n) == -1 ? 0 : (n))
 
+int putspent(const struct spwd *sp, FILE *f) {
 	auto str = [] (char *s) {
 		return ((s) ? (s) : "");
 	};
-	mlibc::infoLogger() << "mlibc: putspent is broken waiting on frigg!" << frg::endlog;
-	return 0;
 	return fprintf(f, "%s:%s:%.*ld:%.*ld:%.*ld:%.*ld:%.*ld:%.*ld:%.*lu\n",
-		str(sp->sp_namp), str(sp->sp_pwdp), num(sp->sp_lstchg),
-		num(sp->sp_min), num(sp->sp_max), num(sp->sp_warn),
-		num(sp->sp_inact), num(sp->sp_expire), num(sp->sp_flag)) < 0 ? -1 : 0;
+		str(sp->sp_namp), str(sp->sp_pwdp), NUM(sp->sp_lstchg),
+		NUM(sp->sp_min), NUM(sp->sp_max), NUM(sp->sp_warn),
+		NUM(sp->sp_inact), NUM(sp->sp_expire), NUM(sp->sp_flag)) < 0 ? -1 : 0;
 }
+#undef NUM
 
 int lckpwdf(void) {
 	mlibc::infoLogger() << "mlibc: lckpwdf is unimplemented like musl" << frg::endlog;
