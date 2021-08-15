@@ -22,19 +22,23 @@ int main()
 	assert(result);
 	assert(pwd.pw_uid == 0);
 	assert(!strcmp(pwd.pw_name, "root"));
+	assert(strlen(pwd.pw_passwd) <= 1000);
 
 	s = getpwuid_r(0, &pwd, buf, bufsize, &result);
 	assert(result);
 	assert(pwd.pw_uid == 0);
 	assert(!strcmp(pwd.pw_name, "root"));
+	assert(strlen(pwd.pw_passwd) <= 1000);
 	
 	result = getpwnam("root");
 	assert(result);
 	assert(result->pw_uid == 0);
 	assert(!strcmp(result->pw_name, "root"));
+	assert(strlen(result->pw_passwd) <= 1000);
 
 	result = getpwuid(0);
 	assert(result);
 	assert(result->pw_uid == 0);
 	assert(!strcmp(result->pw_name, "root"));
+	assert(strlen(result->pw_passwd) <= 1000);
 }
