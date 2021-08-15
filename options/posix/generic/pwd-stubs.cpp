@@ -15,6 +15,7 @@ namespace {
 			__ensure(!entry->pw_name);
 			__ensure(!entry->pw_dir);
 			__ensure(!entry->pw_shell);
+			__ensure(!entry->pw_passwd);
 		}
 
 		frg::string_view segments[8];
@@ -37,12 +38,12 @@ namespace {
 		if(n < 7)
 			return false;
 
-		// segments[1] is the password which is not exported to struct passwd.
-		// The other segments are consumed below.
-
 		// TODO: Handle strndup() failure.
 		auto name = strndup(segments[0].data(), segments[0].size());
 		__ensure(name);
+
+		auto passwd = strndup(segments[1].data(), segments[1].size());
+		__ensure(passwd);
 
 		auto uid = segments[2].to_number<int>();
 		if(!uid)
@@ -63,6 +64,7 @@ namespace {
 		shell[strlen(shell) - 1] = '\0';
 
 		entry->pw_name = name;
+		entry->pw_passwd = passwd;
 		entry->pw_uid = *uid;
 		entry->pw_gid = *gid;
 		entry->pw_dir = dir;
@@ -80,18 +82,24 @@ namespace {
 		free(pwd->pw_dir);
 		pwd->pw_dir = pw_dir;
 
-		char *end = stpcpy(pw_shell, pwd->pw_shell);
-		__ensure(end <= buffer + size);
+		char *pw_passwd = stpcpy(pw_shell, pwd->pw_shell) + 1;
 		free(pwd->pw_shell);
 		pwd->pw_shell = pw_shell;
+
+		char *end = stpcpy(pw_passwd, pwd->pw_passwd);
+		__ensure(end <= buffer + size);
+		free(pwd->pw_passwd);
+		pwd->pw_passwd = pw_passwd;
 	}
 
 	void clear_entry(passwd *entry) {
 		free(entry->pw_name);
 		free(entry->pw_dir);
+		free(entry->pw_passwd);
 		free(entry->pw_shell);
 		entry->pw_name = nullptr;
 		entry->pw_dir = nullptr;
+		entry->pw_passwd = nullptr;
 		entry->pw_shell = nullptr;
 	}
 }
@@ -137,7 +145,7 @@ int getpwnam_r(const char *name, struct passwd *pwd, char *buffer, size_t size, 
 			fclose(file);
 
 			size_t required_size = strlen(pwd->pw_name) + strlen(pwd->pw_dir)
-				+ strlen(pwd->pw_shell) + 3;
+				+ strlen(pwd->pw_shell) + strlen(pwd->pw_passwd) + 4;
 			if (size < required_size)
 				return ERANGE;
 
@@ -187,7 +195,7 @@ int getpwuid_r(uid_t uid, struct passwd *pwd, char *buffer, size_t size, struct 
 			fclose(file);
 
 			size_t required_size = strlen(pwd->pw_name) + strlen(pwd->pw_dir)
-				+ strlen(pwd->pw_shell) + 3;
+				+ strlen(pwd->pw_shell) + + strlen(pwd->pw_passwd) + 4;
 			if (size < required_size)
 				return ERANGE;
 

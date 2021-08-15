@@ -69,12 +69,10 @@ static constexpr unsigned int rc_waiters_bit = static_cast<uint32_t>(1) << 31;
 
 // pthread_attr functions.
 int pthread_attr_init(pthread_attr_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return 0;
 }
 int pthread_attr_destroy(pthread_attr_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return 0;
 }
 
 int pthread_attr_getdetachstate(const pthread_attr_t *, int *) {
@@ -91,8 +89,8 @@ int pthread_attr_getstacksize(const pthread_attr_t *__restrict, size_t *__restri
 	__builtin_unreachable();
 }
 int pthread_attr_setstacksize(pthread_attr_t *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: pthread_attr_setstacksize() is not implemented correctly" << frg::endlog;
+	return 0;
 }
 
 int pthread_attr_getguardsize(const pthread_attr_t *__restrict, size_t *__restrict) {
@@ -750,16 +748,15 @@ int pthread_cond_destroy(pthread_cond_t *) {
 }
 
 int pthread_cond_wait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restrict mutex) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-/*
-	auto seq = __atomic_load_n(&cond->__mlibc_seq, __ATOMIC_RELAXED);
+	auto seq = __atomic_load_n(&cond->__mlibc_seq, __ATOMIC_ACQUIRE);
 	// TODO: do proper error handling here.
 	if(pthread_mutex_unlock(mutex))
 		__ensure(!"Failed to unlock the mutex");
 	if(mlibc::sys_futex_wait(&cond->__mlibc_seq, seq))
 		__ensure(!"sys_futex_wait() failed");
-	return 0;*/
+	if(pthread_mutex_lock(mutex))
+		__ensure(!"Failed to lock the mutex");
+	return 0;
 }
 int pthread_cond_timedwait(pthread_cond_t *__restrict, pthread_mutex_t *__restrict,
 		const struct timespec *__restrict) {
@@ -776,7 +773,7 @@ int pthread_cond_signal(pthread_cond_t *cond) {
 int pthread_cond_broadcast(pthread_cond_t *cond) {
 	SCOPE_TRACE();
 
-	__atomic_fetch_add(&cond->__mlibc_seq, 1, __ATOMIC_RELAXED);
+	__atomic_fetch_add(&cond->__mlibc_seq, 1, __ATOMIC_RELEASE);
 	if(int e = mlibc::sys_futex_wake((int *)&cond->__mlibc_seq); e)
 		__ensure(!"sys_futex_wake() failed");
 	return 0;
