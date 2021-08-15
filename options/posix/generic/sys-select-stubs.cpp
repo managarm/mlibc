@@ -1,6 +1,5 @@
 
 #include <string.h>
-#include <sys/epoll.h>
 #include <sys/select.h>
 #include <unistd.h>
 #include <errno.h>
