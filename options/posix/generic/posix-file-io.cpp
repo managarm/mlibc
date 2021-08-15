@@ -24,7 +24,7 @@ int mem_file::determine_bufmode(buffer_mode *mode) {
 	return 0;
 }
 
-int mem_file::io_read(char *buffer, size_t max_size, size_t *actual_size) {
+int mem_file::io_read(char *, size_t, size_t *) {
 	return EINVAL;
 }
 

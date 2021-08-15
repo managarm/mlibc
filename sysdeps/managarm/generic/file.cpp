@@ -1211,7 +1211,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	}
 }
 
-int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set,
+int sys_pselect(int, fd_set *read_set, fd_set *write_set,
 		fd_set *except_set, const struct timespec *timeout,
 		const sigset_t *sigmask, int *num_events) {
 	// TODO: Do not keep errors from epoll (?).
@@ -1544,7 +1544,7 @@ int sys_timerfd_create(int flags, int *fd) {
 	return 0;
 }
 
-int sys_timerfd_settime(int fd, int flags,
+int sys_timerfd_settime(int fd, int,
 		const struct itimerspec *value) {
 	SignalGuard sguard;
 	HelAction actions[3];
@@ -4115,7 +4115,7 @@ int sys_access(const char *path, int mode) {
 	return sys_faccessat(AT_FDCWD, path, mode, 0);
 }
 
-int sys_faccessat(int dirfd, const char *pathname, int mode, int flags) {
+int sys_faccessat(int dirfd, const char *pathname, int, int flags) {
 	SignalGuard sguard;
 	HelAction actions[3];
 

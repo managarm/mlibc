@@ -13,7 +13,7 @@ char *rindex(const char *s, int c) {
 	return strrchr(s, c);
 }
 
-int ffs(int word) {
+int ffs(int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

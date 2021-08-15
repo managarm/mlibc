@@ -112,7 +112,7 @@ extern "C" {
 	}
 }
 
-extern "C" [[gnu::alias("dl_debug_state"), gnu::visibility("default")]] void _dl_debug_state();
+extern "C" [[gnu::alias("dl_debug_state"), gnu::visibility("default")]] void _dl_debug_state() noexcept;
 
 // This symbol can be used by GDB to find the global interface structure
 [[ gnu::visibility("default") ]] DebugInterface *_dl_debug_addr = &globalDebugInterface;
@@ -488,5 +488,7 @@ extern "C" [[ gnu::visibility("default") ]]
 void __dlapi_enter(uintptr_t *entry_stack) {
 #ifdef MLIBC_STATIC_BUILD
 	interpreterMain(entry_stack);
+#else
+	(void)entry_stack;
 #endif
 }

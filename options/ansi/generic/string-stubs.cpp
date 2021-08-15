@@ -99,7 +99,8 @@ int strncmp(const char *a, const char *b, size_t max_size) {
 		i++;
 	}
 }
-size_t strxfrm(char *__restrict dest, const char *__restrict src, size_t max_size) {
+
+size_t strxfrm(char *__restrict, const char *__restrict, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

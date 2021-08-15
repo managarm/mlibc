@@ -43,10 +43,11 @@ clock_t clock(void) {
 	return ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 }
 
-double difftime(time_t a, time_t b){
+double difftime(time_t a, time_t b) {
 	return a - b;
 }
-time_t mktime(struct tm *ptr){
+
+time_t mktime(struct tm *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -61,11 +62,12 @@ int timespec_get(struct timespec *ts, int base) {
 	return ret < 0 ? 0 : base;
 }
 
-char *asctime(const struct tm *ptr){
+char *asctime(const struct tm *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-char *ctime(const time_t *timer){
+
+char *ctime(const time_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -525,8 +527,10 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 	char *tm_zone;
 	frg::unique_lock<FutexLock> lock(__time_lock);
 	// TODO: Set errno if the conversion fails.
-	if(unix_local_from_gmt(*unix_gmt, &offset, &dst, &tm_zone))
+	if(unix_local_from_gmt(*unix_gmt, &offset, &dst, &tm_zone)) {
 		__ensure(!"Error parsing /etc/localtime");
+		__builtin_unreachable();
+	}
 	time_t unix_local = *unix_gmt + offset;
 
 	int days_since_epoch = unix_local / (60*60*24);
@@ -549,7 +553,7 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 	return res;
 }
 
-char *asctime_r(const struct tm *tm, char *buf) {
+char *asctime_r(const struct tm *, char *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

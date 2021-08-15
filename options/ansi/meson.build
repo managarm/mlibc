@@ -266,5 +266,5 @@ if not headers_only
 		'musl-generic-math/truncl.c',
 		pic: true,
 		include_directories: libc_include_dirs,
-		c_args: ['-Wno-unused', '-Wno-implicit', '-Wno-parentheses'])
+		c_args: ['-Wno-unused', '-Wno-implicit', '-Wno-parentheses', '-Wno-sign-compare', '-Wno-attributes', '-Wno-unknown-pragmas'])
 endif

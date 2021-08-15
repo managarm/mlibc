@@ -170,7 +170,7 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 		if (path.sub_string(0, 7) == "$ORIGIN") {
 			frg::string_view dirname = origin->path;
 			auto lastsl = dirname.find_last('/');
-			if (lastsl != -1) {
+			if (lastsl != (uint64_t)-1) {
 				dirname = dirname.sub_string(0, lastsl);
 			} else {
 				dirname = ".";
@@ -310,6 +310,7 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			object->tlsAlignment = phdr->p_align;
 			object->tlsImageSize = phdr->p_filesz;
 			tls_offset = phdr->p_vaddr;
+			break;
 		case PT_INTERP:
 			object->interpreterPath = frg::string<MemoryAllocator>{
 				(char*)(object->baseAddress + phdr->p_vaddr),

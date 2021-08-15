@@ -60,7 +60,7 @@ FILE *popen(const char *command, const char *typestr) {
 	pid_t child;
 	FILE *ret = nullptr;
 
-	if (!mlibc::sys_fork || !mlibc::sys_close || !mlibc::sys_dup2 || !mlibc::sys_execve
+	if (!mlibc::sys_fork || !mlibc::sys_dup2 || !mlibc::sys_execve
 			|| !mlibc::sys_sigprocmask || !mlibc::sys_sigaction || !mlibc::sys_pipe) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
@@ -76,6 +76,9 @@ FILE *popen(const char *command, const char *typestr) {
 		is_write = true;
 	} else if (strstr(typestr, "r") != NULL) {
 		is_write = false;
+	} else {
+		errno = EINVAL;
+		return nullptr;
 	}
 
 	bool cloexec = false;

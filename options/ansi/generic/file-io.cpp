@@ -623,7 +623,7 @@ int fflush(FILE *file_base) {
 	return 0;
 }
 
-int setvbuf(FILE *file_base, char *buffer, int mode, size_t size) {
+int setvbuf(FILE *file_base, char *, int mode, size_t) {
 	// TODO: We could also honor the buffer, but for now use just set the mode.
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	if(mode == _IONBF) {

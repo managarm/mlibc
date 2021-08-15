@@ -36,7 +36,7 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 	}
 
 	int num_events = 0;
-	struct timespec timeouts = {0};
+	struct timespec timeouts = {};
 	struct timespec *timeout_ptr = NULL;
 	if (timeout) {
 		timeouts.tv_sec = timeout->tv_sec;

@@ -14,7 +14,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 
-unsigned int alarm(unsigned int seconds) {
+unsigned int alarm(unsigned int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -45,7 +45,7 @@ int fchdir(int fd) {
 	return 0;
 }
 
-int chown(const char *path, uid_t uid, gid_t gid) {
+int chown(const char *, uid_t, gid_t) {
 	mlibc::infoLogger() << "\e[31mmlibc: chown() is not implemented correctly\e[39m"
 			<< frg::endlog;
 	return 0;
@@ -70,9 +70,12 @@ ssize_t confstr(int name, char *buf, size_t len) {
 void _exit(int status) {
 	mlibc::sys_exit(status);
 }
-void encrypt(char block[64], int flags) {
+
+void encrypt(char[64], int) {
 	__ensure(!"Not implemented");
+	__builtin_unreachable();
 }
+
 int execl(const char *path, const char *arg0, ...) {
 	// TODO: It's a stupid idea to limit the number of arguments here.
 	char *argv[16];
@@ -93,10 +96,12 @@ int execl(const char *path, const char *arg0, ...) {
 
 	return execve(path, argv, environ);
 }
+
 int execle(const char *, const char *, ...) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int execlp(const char *, const char *, ...) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -190,13 +195,13 @@ int faccessat(int dirfd, const char *pathname, int mode, int flags) {
 	return 0;
 }
 
-int fchown(int fd, uid_t uid, gid_t gid) {
+int fchown(int, uid_t, gid_t) {
 	mlibc::infoLogger() << "\e[31mmlibc: fchown() is not implemented correctly\e[39m"
 			<< frg::endlog;
 	return 0;
 }
 
-int fchownat(int fd, const char *path, uid_t uid, gid_t gid, int flags) {
+int fchownat(int, const char *, uid_t, gid_t, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -218,6 +223,7 @@ int fexecve(int, char *const [], char *const []) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 long fpathconf(int, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -248,6 +254,7 @@ int ftruncate(int fd, off_t size) {
 	}
 	return 0;
 }
+
 char *getcwd(char *buffer, size_t size) {
 	__ensure(buffer && "glibc extension for !buffer is not implemented");
 	if(!mlibc::sys_getcwd) {
@@ -261,10 +268,12 @@ char *getcwd(char *buffer, size_t size) {
 	}
 	return buffer;
 }
+
 int getgroups(int, gid_t []) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 long gethostid(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -375,7 +384,7 @@ pid_t getsid(pid_t pid) {
 	return sid;
 }
 
-int lchown(const char *path, uid_t uid, gid_t gid) {
+int lchown(const char *, uid_t, gid_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -411,7 +420,9 @@ int lockf(int fd, int op, off_t size) {
 	struct flock l = {
 		.l_type = F_WRLCK,
 		.l_whence = SEEK_CUR,
+		.l_start = 0,
 		.l_len = size,
+		.l_pid = 0,
 	};
 
 	switch(op) {
@@ -425,6 +436,7 @@ int lockf(int fd, int op, off_t size) {
 			return -1;
 		case F_ULOCK:
 			l.l_type = F_UNLCK;
+			[[fallthrough]];
 		case F_TLOCK:
 			return fcntl(fd, F_SETLK, &l);
 		case F_LOCK:
@@ -439,7 +451,8 @@ int nice(int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-long pathconf(const char *path, int name) {
+
+long pathconf(const char *, int name) {
 	switch (name) {
 	case _PC_NAME_MAX:
 		return NAME_MAX;
@@ -449,6 +462,7 @@ long pathconf(const char *path, int name) {
 		return -1;
 	}
 }
+
 int pause(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -595,10 +609,12 @@ int setregid(gid_t, gid_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int setreuid(uid_t, uid_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 pid_t setsid(void) {
 	if(!mlibc::sys_setsid) {
 		MLIBC_MISSING_SYSDEP();
@@ -627,7 +643,9 @@ int setuid(uid_t uid) {
 
 void swab(const void *__restrict, void *__restrict, ssize_t) {
 	__ensure(!"Not implemented");
+	__builtin_unreachable();
 }
+
 int symlink(const char *target_path, const char *link_path) {
 	if(!mlibc::sys_symlink) {
 		MLIBC_MISSING_SYSDEP();
@@ -640,6 +658,7 @@ int symlink(const char *target_path, const char *link_path) {
 	}
 	return 0;
 }
+
 int symlinkat(const char *target_path, int dirfd, const char *link_path) {
 	if(!mlibc::sys_symlinkat) {
 		MLIBC_MISSING_SYSDEP();
@@ -742,6 +761,7 @@ int ttyname_r(int, char *, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int unlink(const char *path) {
 	if(!mlibc::sys_unlink) {
 		MLIBC_MISSING_SYSDEP();
@@ -754,6 +774,7 @@ int unlink(const char *path) {
 	}
 	return 0;
 }
+
 int unlinkat(int fd, const char *path, int flags) {
 	if(!mlibc::sys_unlinkat) {
 		MLIBC_MISSING_SYSDEP();
@@ -799,7 +820,7 @@ char *getpass(const char *prompt) {
 
 	l = read(fdin, password, sizeof password);
 	if(l >= 0) {
-		if(l > 0 && password[l - 1] == '\n' || l == sizeof password)
+		if((l > 0 && password[l - 1] == '\n') || l == sizeof password)
 			l--;
 		password[l] = 0;
 	}

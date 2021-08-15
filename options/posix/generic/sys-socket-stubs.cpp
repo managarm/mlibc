@@ -143,7 +143,7 @@ ssize_t recvmsg(int fd, struct msghdr *hdr, int flags) {
 	return length;
 }
 
-int recvmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags, struct timespec *timeout) {
+int recvmmsg(int, struct mmsghdr *, unsigned int, int, struct timespec *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -181,7 +181,7 @@ ssize_t sendmsg(int fd, const struct msghdr *hdr, int flags) {
 	return length;
 }
 
-int sendmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags) {
+int sendmmsg(int, struct mmsghdr *, unsigned int, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

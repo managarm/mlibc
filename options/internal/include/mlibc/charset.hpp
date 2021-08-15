@@ -32,7 +32,7 @@ charset *current_charset();
 
 // The property if a character is a control character is locale-independent.
 inline bool generic_is_control(codepoint c) {
-	return (c >= 0x00 && c <= 0x1F) || (c == 0x7F) || (c >= 0x80 && c <= 0x9F);
+	return (c <= 0x1F) || (c == 0x7F) || (c >= 0x80 && c <= 0x9F);
 }
 
 } // namespace mlibc

@@ -45,6 +45,7 @@ struct Queue {
 	Queue()
 	: _handle{kHelNullHandle}, _lastProgress(0) {
 		HelQueueParameters params {
+			.flags = 0,
 			.ringShift = 0,
 			.numChunks = 1,
 			.chunkSize = 4096
@@ -182,7 +183,7 @@ int sys_tcb_set(void *pointer) {
 	return 0;
 }
 
-int sys_open(const char *path, int flags, int *fd) {
+int sys_open(const char *path, int, int *fd) {
 	cacheFileTable();
 	HelAction actions[4];
 

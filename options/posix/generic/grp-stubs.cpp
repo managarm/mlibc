@@ -168,10 +168,12 @@ void endgrent(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 struct group *getgrent(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 struct group *getgrgid(gid_t gid) {
 	int err = walk_file(&global_entry, [&] (group *entry) {
 		return entry->gr_gid == gid;
@@ -184,6 +186,7 @@ struct group *getgrgid(gid_t gid) {
 
 	return &global_entry;
 }
+
 int getgrgid_r(gid_t gid, struct group *grp, char *buffer, size_t size, struct group **result) {
 	*result = nullptr;
 	int err = walk_file(grp, [&] (group *entry) {
@@ -202,6 +205,7 @@ int getgrgid_r(gid_t gid, struct group *grp, char *buffer, size_t size, struct g
 	*result = grp;		
 	return 0;
 }
+
 struct group *getgrnam(const char *name) {
 	int err = walk_file(&global_entry, [&] (group *entry) {
 		return !strcmp(entry->gr_name, name);
@@ -214,6 +218,7 @@ struct group *getgrnam(const char *name) {
 
 	return &global_entry;
 }
+
 int getgrnam_r(const char *name, struct group *grp, char *buffer, size_t size, struct group **result) {
 	*result = nullptr;
 
@@ -233,17 +238,18 @@ int getgrnam_r(const char *name, struct group *grp, char *buffer, size_t size, s
 	*result = grp;		
 	return 0;
 }
+
 void setgrent(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
-int setgroups(size_t size, const gid_t *list) {
+int setgroups(size_t, const gid_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
-int initgroups(const char *user, gid_t group) {
+int initgroups(const char *, gid_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

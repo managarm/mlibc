@@ -48,7 +48,7 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 		// Calculate the current time.
 		uint64_t tick;
 		HEL_CHECK(helGetClock(&tick));
-		__ensure(tick >= __mlibc_clk_tracker_page->refClock); // TODO: Respect the seqlock!
+		__ensure(tick >= (uint64_t)__mlibc_clk_tracker_page->refClock); // TODO: Respect the seqlock!
 		tick -= ref;
 		tick += base;
 		*secs = tick / 1000000000;
