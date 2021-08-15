@@ -6,6 +6,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/thread-entry.hpp>
+#include <limits.h>
 #include "cxx-syscall.hpp"
 
 #define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }
@@ -445,12 +446,10 @@ int sys_futex_wait(int *pointer, int expected) {
 }
 
 int sys_futex_wake(int *pointer) {
-	auto ret = do_syscall(NR_sys_futex, pointer, FUTEX_WAKE, 1);
+	auto ret = do_syscall(NR_sys_futex, pointer, FUTEX_WAKE, INT_MAX);
 	if (int e = sc_error(ret); e)
 		return e;
-	auto num_woken = sc_int_result<int>(ret);
-	__ensure(num_woken >= 0 && num_woken <= 1);
-	return num_woken;
+	return 0;
 }
 
 } // namespace mlibc
