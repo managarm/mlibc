@@ -97,9 +97,24 @@ int execl(const char *path, const char *arg0, ...) {
 	return execve(path, argv, environ);
 }
 
-int execle(const char *, const char *, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+// This function is taken from musl.
+int execle(const char *path, const char *arg0, ...) {
+	int argc;
+	va_list ap;
+	va_start(ap, arg0);
+	for(argc = 1; va_arg(ap, const char *); argc++);
+	va_end(ap);
+
+	int i;
+	char *argv[argc + 1];
+	char **envp;
+	va_start(ap, arg0);
+	argv[0] = (char *)argv;
+	for(i = 1; i <= argc; i++)
+		argv[i] = va_arg(ap, char *);
+	envp = va_arg(ap, char **);
+	va_end(ap);
+	return execve(path, argv, envp);
 }
 
 int execlp(const char *, const char *, ...) {
