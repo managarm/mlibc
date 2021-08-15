@@ -393,8 +393,8 @@ void abstract_file::_ensure_allocation() {
 // fd_file implementation.
 // --------------------------------------------------------------------------------------
 
-fd_file::fd_file(int fd, void (*do_dispose)(abstract_file *))
-: abstract_file{do_dispose}, _fd{fd} { }
+fd_file::fd_file(int fd, void (*do_dispose)(abstract_file *), bool force_unbuffered)
+: abstract_file{do_dispose}, _fd{fd}, _force_unbuffered{force_unbuffered} { }
 
 int fd_file::fd() {
 	return _fd;
@@ -427,6 +427,10 @@ int fd_file::determine_bufmode(buffer_mode *mode) {
 	// When isatty() is not implemented, we fall back to the safest default (no buffering).
 	if(!mlibc::sys_isatty) {
 		MLIBC_MISSING_SYSDEP();
+		*mode = buffer_mode::no_buffer;
+		return 0;
+	}
+	if(_force_unbuffered) {
 		*mode = buffer_mode::no_buffer;
 		return 0;
 	}
@@ -471,7 +475,7 @@ int fd_file::io_seek(off_t offset, int whence, off_t *new_offset) {
 namespace {
 	mlibc::fd_file stdin_file{0};
 	mlibc::fd_file stdout_file{1};
-	mlibc::fd_file stderr_file{2};
+	mlibc::fd_file stderr_file{2, nullptr, true};
 
 	struct stdio_guard {
 		stdio_guard() { }

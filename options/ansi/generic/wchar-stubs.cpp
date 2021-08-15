@@ -174,10 +174,15 @@ size_t wcsrtombs(char *mbs, const wchar_t **wcsp, size_t mb_limit, mbstate_t *st
 	mlibc::code_seq<char> nseq{mbs, mbs + mb_limit};
 	mlibc::code_seq<const wchar_t> wseq{*wcsp, nullptr};
 
-	__ensure(mbs && "Handle !mbs case as in mbstowcs()");
-
 	if(!stp)
 		stp = &wcsrtombs_state;
+
+	if(!mbs) {
+		size_t size;
+		if(auto e = cc->encode_wtranscode_length(wseq, &size, *stp); e != mlibc::charcode_error::null)
+			__ensure(!"decode_wtranscode() errors are not handled");
+		return size;
+	}
 
 	if(auto e = cc->encode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
 		__ensure(!"encode_wtranscode() errors are not handled");
@@ -197,10 +202,15 @@ size_t wcsnrtombs(char *mbs, const wchar_t **wcsp, size_t wc_limit, size_t mb_li
 	mlibc::code_seq<char> nseq{mbs, mbs + mb_limit};
 	mlibc::code_seq<const wchar_t> wseq{*wcsp, (*wcsp) + wc_limit};
 
-	__ensure(mbs && "Handle !mbs case as in mbstowcs()");
-
 	if(!stp)
 		stp = &wcsrtombs_state;
+
+	if(!mbs) {
+		size_t size;
+		if(auto e = cc->encode_wtranscode_length(wseq, &size, *stp); e != mlibc::charcode_error::null)
+			__ensure(!"decode_wtranscode() errors are not handled");
+		return size;
+	}
 
 	if(auto e = cc->encode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
 		__ensure(!"encode_wtranscode() errors are not handled");
