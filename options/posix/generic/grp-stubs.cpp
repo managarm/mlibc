@@ -250,8 +250,8 @@ int setgroups(size_t, const gid_t *) {
 }
 
 int initgroups(const char *, gid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: initgroups is a stub" << frg::endlog;
+	return 0;
 }
 
 int putgrent(const struct group *, FILE *) {
