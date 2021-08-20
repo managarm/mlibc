@@ -61,12 +61,14 @@ typedef __mlibc_uintptr uintptr_t;
 #define INT16_C(x) __MLIBC_INT16_C(x)
 #define INT32_C(x) __MLIBC_INT32_C(x)
 #define INT64_C(x) __MLIBC_INT64_C(x)
+#define INTMAX_C(x) __MLIBC_INTMAX_C(x)
 
 // Fixed-width (unsigned).
 #define UINT8_C(x)  __MLIBC_UINT8_C(x)
 #define UINT16_C(x) __MLIBC_UINT16_C(x)
 #define UINT32_C(x) __MLIBC_UINT32_C(x)
 #define UINT64_C(x) __MLIBC_UINT64_C(x)
+#define UINTMAX_C(x) __MLIBC_UINTMAX_C(x)
 
 // ----------------------------------------------------------------------------
 // Limits.
