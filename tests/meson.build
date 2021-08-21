@@ -22,6 +22,7 @@ posix_test_cases = [
 	'pthread_atfork',
 	'pthread_cleanup',
 	'pthread_kill',
+	'pthread_key',
 	'pwd',
 	'getaddrinfo',
 	'getdelim',

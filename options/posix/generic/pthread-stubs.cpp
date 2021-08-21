@@ -8,7 +8,7 @@
 
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>
-#include <frg/hash_map.hpp>
+#include <frg/array.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
@@ -136,8 +136,39 @@ int pthread_equal(pthread_t t1, pthread_t t2) {
 	return 0;
 }
 
+namespace {
+	struct key_global_info {
+		bool in_use;
+
+		void (*dtor)(void *);
+		uint64_t generation;
+	};
+
+	struct key_local_info {
+		void *value;
+		uint64_t generation;
+	};
+
+	constinit frg::array<
+		key_global_info,
+		PTHREAD_KEYS_MAX
+	> key_globals_{};
+
+	thread_local constinit frg::array<
+		key_local_info,
+		PTHREAD_KEYS_MAX
+	> key_locals_{};
+
+	FutexLock key_mutex_;
+}
+
 int pthread_exit(void *ret_val) {
 	auto self = mlibc::get_current_tcb();
+
+	if (__atomic_load_n(&self->cancelBits, __ATOMIC_RELAXED) & tcbExitingBit)
+		return 0; // We are already exiting
+
+	__atomic_fetch_or(&self->cancelBits, tcbExitingBit, __ATOMIC_RELAXED);
 
 	auto hand = self->cleanupEnd;
 	while (hand) {
@@ -145,6 +176,18 @@ int pthread_exit(void *ret_val) {
 		hand->func(hand->arg);
 		hand = hand->prev;
 		frg::destruct(getAllocator(), old);
+	}
+
+	for (size_t j = 0; j < PTHREAD_DESTRUCTOR_ITERATIONS; j++) {
+		for (size_t i = 0; i < PTHREAD_KEYS_MAX; i++) {
+			// FIXME: We need to lock here since we're accessing key_globals_, but
+			// the dtor may call a function that also acquires the lock, resulting
+			// in a deadlock.
+			if (auto v = pthread_getspecific(i); v && key_globals_[i].dtor) {
+				key_globals_[i].dtor(v);
+				key_locals_[i].value = nullptr;
+			}
+		}
 	}
 
 	self->returnValue = ret_val;
@@ -455,65 +498,71 @@ int pthread_atfork(void (*prepare) (void), void (*parent) (void), void (*child) 
 // pthread_key functions.
 // ----------------------------------------------------------------------------
 
-struct __mlibc_key_data {
-	__mlibc_key_data()
-	: mutex(PTHREAD_MUTEX_INITIALIZER),
-			values{frg::hash<int>{}, getAllocator()} { }
-
-	pthread_mutex_t mutex;
-
-	// TODO: this should be unsigned int.
-	frg::hash_map<int, void *, frg::hash<int>, MemoryAllocator> values;
-};
-
-int pthread_key_create(pthread_key_t *out_key, void (*destructor) (void *)) {
+int pthread_key_create(pthread_key_t *out, void (*destructor)(void *)) {
 	SCOPE_TRACE();
-	(void)destructor;
-	// TODO: Invoke the destructor on thread exit.
-	*out_key = frg::construct<__mlibc_key_data>(getAllocator());
+
+	auto g = frg::guard(&key_mutex_);
+
+	pthread_key_t key = PTHREAD_KEYS_MAX;
+	for (size_t i = 0; i < PTHREAD_KEYS_MAX; i++) {
+		if (!key_globals_[i].in_use) {
+			key = i;
+			break;
+		}
+	}
+
+	if (key == PTHREAD_KEYS_MAX)
+		return EAGAIN;
+
+	key_globals_[key].in_use = true;
+	key_globals_[key].dtor = destructor;
+
+	*out = key;
+
 	return 0;
 }
 
 int pthread_key_delete(pthread_key_t key) {
 	SCOPE_TRACE();
-	frg::destruct(getAllocator(), key);
+
+	auto g = frg::guard(&key_mutex_);
+
+	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use)
+		return EINVAL;
+
+	key_globals_[key].in_use = false;
+	key_globals_[key].dtor = nullptr;
+	key_globals_[key].generation++;
+
 	return 0;
 }
 
 void *pthread_getspecific(pthread_key_t key) {
 	SCOPE_TRACE();
 
-	if(pthread_mutex_lock(&key->mutex))
-		__ensure("Could not lock mutex");
+	auto g = frg::guard(&key_mutex_);
 
-	// TODO: fix the key type of the hash_map.
-	void *value = nullptr;
-	auto it = key->values.get(static_cast<int>(this_tid()));
-	if(it)
-		value = *it;
+	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use)
+		return nullptr;
 
-	if(pthread_mutex_unlock(&key->mutex))
-		__ensure("Could not unlock mutex");
+	if (key_globals_[key].generation > key_locals_[key].generation) {
+		key_locals_[key].value = nullptr;
+		key_locals_[key].generation = key_globals_[key].generation;
+	}
 
-	return value;
+	return key_locals_[key].value;
 }
 
 int pthread_setspecific(pthread_key_t key, const void *value) {
 	SCOPE_TRACE();
 
-	if(pthread_mutex_lock(&key->mutex))
-		__ensure("Could not lock mutex");
+	auto g = frg::guard(&key_mutex_);
 
-	// TODO: fix the key type of the hash_map.
-	auto it = key->values.get(static_cast<int>(this_tid()));
-	if(it) {
-		*it = const_cast<void *>(value);
-	}else{
-		key->values.insert(this_tid(), const_cast<void *>(value));
-	}
+	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use)
+		return EINVAL;
 
-	if(pthread_mutex_unlock(&key->mutex))
-		__ensure("Could not unlock mutex");
+	key_locals_[key].value = const_cast<void *>(value);
+	key_locals_[key].generation = key_globals_[key].generation;
 
 	return 0;
 }
