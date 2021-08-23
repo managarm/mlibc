@@ -731,6 +731,7 @@ Tcb *allocateTcb() {
 	tcb_ptr->stackCanary = __stack_chk_guard;
 	tcb_ptr->cancelBits = tcbCancelEnableBit;
 	tcb_ptr->didExit = 0;
+	tcb_ptr->isJoinable = 1;
 	tcb_ptr->returnValue = nullptr;
 	tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
 	tcb_ptr->dtvPointers = frg::construct_n<void *>(getAllocator(), runtimeTlsMap->indices.size());
