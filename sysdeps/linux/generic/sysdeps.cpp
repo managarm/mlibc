@@ -39,7 +39,12 @@
 #define NR_wait4 61
 #define NR_kill 62
 #define NR_fcntl 72
+#define NR_chdir 80
+#define NR_mkdir 83
+#define NR_rmdir 84
 #define NR_unlink 87
+#define NR_symlink 88
+#define NR_readlink 89
 #define NR_getuid 102
 #define NR_getgid 104
 #define NR_geteuid 107
@@ -51,6 +56,7 @@
 #define NR_clock_gettime 228
 #define NR_exit_group 231
 #define NR_tgkill 234
+#define NR_newfstatat 262
 #define NR_pselect6 270
 #define NR_dup3 292
 #define NR_pipe2 293
@@ -149,25 +155,27 @@ int sys_vm_unmap(void *pointer, size_t size) STUB_ONLY
 #ifndef MLIBC_BUILDING_RTDL
 
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
-        struct timespec tp = {};
-        auto ret = do_syscall(NR_clock_gettime, clock, &tp);
-        if (int e = sc_error(ret); e)
-                return e;
-        *secs = tp.tv_sec;
-        *nanos = tp.tv_nsec;
-        return 0;
+	struct timespec tp = {};
+	auto ret = do_syscall(NR_clock_gettime, clock, &tp);
+	if (int e = sc_error(ret); e)
+		return e;
+	*secs = tp.tv_sec;
+	*nanos = tp.tv_nsec;
+	return 0;
 }
 
 int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
-        (void) flags;
-        sc_result_t ret;
-        if(!path)
-                ret = do_syscall(NR_fstat, fd, statbuf);
-        else
-                ret = do_syscall(NR_stat, path, statbuf);
-        if (int e = sc_error(ret); e)
-                return e;
-        return 0;
+	if (fsfdt == fsfd_target::path)
+		fd = AT_FDCWD;
+	else if (fsfdt == fsfd_target::fd)
+		flags |= AT_EMPTY_PATH;
+	else
+		__ensure(fsfdt == fsfd_target::fd_path);
+
+	auto ret = do_cp_syscall(NR_newfstatat, fd, path, statbuf, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 extern "C" void __mlibc_signal_restore(void);
@@ -466,6 +474,42 @@ int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
 	auto ret = do_syscall(NR_sigaltstack, ss, oss);
 	if (int e = sc_error(ret); e)
 		return e;
+	return 0;
+}
+
+int sys_mkdir(const char *path) {
+	auto ret = do_syscall(NR_mkdir, path, S_IRWXU | S_IRWXG | S_IRWXO);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_symlink(const char *target_path, const char *link_path) {
+	auto ret = do_syscall(NR_symlink, target_path, link_path);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_chdir(const char *path) {
+	auto ret = do_syscall(NR_chdir, path);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_rmdir(const char *path) {
+	auto ret = do_syscall(NR_rmdir, path);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_readlink(const char *path, void *buf, size_t bufsiz, ssize_t *len) {
+	auto ret = do_syscall(NR_readlink, path, buf, bufsiz);
+	if (int e = sc_error(ret); e)
+		return e;
+	*len = sc_int_result<ssize_t>(ret);
 	return 0;
 }
 
