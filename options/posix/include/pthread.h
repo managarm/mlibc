@@ -7,6 +7,8 @@
 #include <bits/size_t.h>
 #include <bits/posix/pthread_t.h>
 
+#include <stdint.h>
+
 // pthread.h is required to include sched.h and time.h
 #include <sched.h>
 #include <time.h>
@@ -52,6 +54,10 @@ extern "C" {
 
 #define PTHREAD_CANCELED ((void*) -1)
 
+// values for pthread_key
+#define PTHREAD_KEYS_MAX 1024
+#define PTHREAD_DESTRUCTOR_ITERATIONS 8
+
 // TODO: move to own file and include in sys/types.h
 struct __mlibc_threadattr {
 	// TODO: the guardsize attribute needs to be supported here.
@@ -60,8 +66,7 @@ struct __mlibc_threadattr {
 };
 typedef struct __mlibc_threadattr pthread_attr_t;
 
-struct __mlibc_key_data;
-typedef struct __mlibc_key_data *pthread_key_t;
+typedef uintptr_t pthread_key_t;
 
 struct __mlibc_once {
 	unsigned int __mlibc_done;
@@ -144,8 +149,8 @@ int pthread_exit(void *);
 int pthread_join(pthread_t, void **);
 int pthread_detach(pthread_t);
 
-int pthread_cleanup_push(void (*) (void *), void *);
-int pthread_cleanup_pop(int);
+void pthread_cleanup_push(void (*) (void *), void *);
+void pthread_cleanup_pop(int);
 
 int pthread_setname_np(pthread_t, const char *);
 int pthread_getname_np(pthread_t, char *, size_t);

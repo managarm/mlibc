@@ -6,6 +6,7 @@
 #include <bits/feature.h>
 #include <abi-bits/pid_t.h>
 #include <abi-bits/uid_t.h>
+#include <bits/size_t.h>
 
 union sigval {
 	int sival_int;
@@ -146,6 +147,15 @@ typedef long sigset_t;
 #define SIGCANCEL 33
 
 #define MINSIGSTKSZ 2048
+#define SIGSTKSZ 8192
+#define SS_ONSTACK 1
+#define SS_DISABLE 2
+
+typedef struct __stack {
+        void *ss_sp;
+        int ss_flags;
+        size_t ss_size;
+} stack_t;
 
 // constants for sigev_notify of struct sigevent
 #define SIGEV_SIGNAL 0

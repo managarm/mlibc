@@ -14,17 +14,20 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <posix.frigg_bragi.hpp>
 
+#include <bragi/helpers-frigg.hpp>
+#include <helix/ipc-structs.hpp>
+
 extern "C" void __mlibc_signal_restore();
 
 namespace mlibc {
 
 int sys_sigprocmask(int how, const sigset_t *set, sigset_t *retrieve) {
 	// This implementation is inherently signal-safe.
-	uint64_t former;
+	uint64_t former, unused;
 	if(set) {
-		HEL_CHECK(helSyscall2_1(kHelObserveSuperCall + 7, how, *set, &former));
+		HEL_CHECK(helSyscall2_2(kHelObserveSuperCall + 7, how, *set, &former, &unused));
 	}else{
-		HEL_CHECK(helSyscall2_1(kHelObserveSuperCall + 7, 0, 0, &former));
+		HEL_CHECK(helSyscall2_2(kHelObserveSuperCall + 7, 0, 0, &former, &unused));
 	}
 	if(retrieve)
 		*retrieve = former;
@@ -105,6 +108,33 @@ int sys_kill(int pid, int number) {
 	// This implementation is inherently signal-safe.
 	HEL_CHECK(helSyscall2(kHelObserveSuperCall + 5, pid, number));
 	return 0;
+}
+
+int sys_tgkill(int, int tid, int number) {
+	return sys_kill(tid, number);
+}
+
+int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
+	HelWord out;
+
+	// This implementation is inherently signal-safe.
+	HEL_CHECK(helSyscall2_1(kHelObserveSuperCall + 12,
+				reinterpret_cast<HelWord>(ss),
+				reinterpret_cast<HelWord>(oss),
+				&out));
+
+	return out;
+}
+
+int sys_sigsuspend(const sigset_t *set) {
+	//SignalGuard sguard;
+	uint64_t former, seq, unused;
+
+	HEL_CHECK(helSyscall2_2(kHelObserveSuperCall + 7, SIG_SETMASK, *set, &former, &seq));
+	HEL_CHECK(helSyscall1(kHelObserveSuperCall + 13, seq));
+	HEL_CHECK(helSyscall2_2(kHelObserveSuperCall + 7, SIG_SETMASK, former, &unused, &unused));
+
+	return EINTR;
 }
 
 } //namespace mlibc

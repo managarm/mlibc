@@ -1,13 +1,22 @@
 
 #include <errno.h>
 #include <signal.h>
+#include <unistd.h>
 #include <bits/ensure.h>
 
 #include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/tcb.hpp>
 
-int sigsuspend(const sigset_t *) {
-	__ensure(!"sigsuspend() not implemented");
-	__builtin_unreachable();
+int sigsuspend(const sigset_t *sigmask) {
+	if(!mlibc::sys_sigsuspend) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	// This is guaranteed to return an error (EINTR most probably)
+	errno = mlibc::sys_sigsuspend(sigmask);
+	return -1;
 }
 
 int pthread_sigmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
@@ -21,9 +30,20 @@ int pthread_sigmask(int how, const sigset_t *__restrict set, sigset_t *__restric
 	return 0;
 }
 
-int pthread_kill(pthread_t, int) {
-	__ensure(!"pthread_kill() not implemented");
-	__builtin_unreachable();
+int pthread_kill(pthread_t thread, int sig) {
+	auto tcb = reinterpret_cast<Tcb *>(thread);
+	auto pid = getpid();
+
+	if(!mlibc::sys_tgkill) {
+		MLIBC_MISSING_SYSDEP();
+		return ENOSYS;
+	}
+
+	if(int e = mlibc::sys_tgkill(pid, tcb->tid, sig); e) {
+		return e;
+	}
+
+	return 0;
 }
 
 int sigaction(int signum, const struct sigaction *__restrict act, struct sigaction *__restrict oldact) {
@@ -40,17 +60,17 @@ int sigaction(int signum, const struct sigaction *__restrict act, struct sigacti
 }
 
 int siginterrupt(int sig, int flag) {
-    int ret;
-    struct sigaction act;
+	int ret;
+	struct sigaction act;
 
-    sigaction(sig, NULL, &act);
-    if (flag)
-        act.sa_flags &= ~SA_RESTART;
-    else
-        act.sa_flags |= SA_RESTART;
+	sigaction(sig, NULL, &act);
+	if (flag)
+		act.sa_flags &= ~SA_RESTART;
+	else
+		act.sa_flags |= SA_RESTART;
 
-    ret = sigaction(sig, &act, NULL);
-    return ret;
+	ret = sigaction(sig, &act, NULL);
+	return ret;
 }
 
 int kill(pid_t pid, int number) {
@@ -84,4 +104,24 @@ int sigwait(const sigset_t *, int *) {
 int sigpending(sigset_t *) {
 	__ensure(!"sigpending() not implemented");
 	__builtin_unreachable();
+}
+
+int sigaltstack(const stack_t *__restrict ss, stack_t *__restrict oss) {
+	if (!mlibc::sys_sigaltstack) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if (ss && ss->ss_size < MINSIGSTKSZ && !(ss->ss_flags & SS_DISABLE)) {
+		errno = ENOMEM;
+		return -1;
+	}
+
+	if (int e = mlibc::sys_sigaltstack(ss, oss); e) {
+		errno = e;
+		return -1;
+	}
+
+	return 0;
 }

@@ -47,4 +47,6 @@
 
 #define PTHREAD_STACK_MIN 16384
 
+#include <abi-bits/limits.h>
+
 #endif // _LIMITS_H

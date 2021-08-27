@@ -5,6 +5,7 @@
 
 #include <abi-bits/pid_t.h>
 #include <abi-bits/uid_t.h>
+#include <bits/size_t.h>
 
 union sigval {
 	int sival_int;
@@ -85,14 +86,30 @@ typedef long sigset_t;
 #define SA_NODEFER (1 << 6)
 
 #define MINSIGSTKSZ 2048
+#define SIGSTKSZ 8192
+#define SS_ONSTACK 1
+#define SS_DISABLE 2
+
+typedef struct __stack {
+        void *ss_sp;
+        size_t ss_size;
+        int ss_flags;
+} stack_t;
 
 // constants for sigev_notify of struct sigevent
 #define SIGEV_NONE 1
 #define SIGEV_SIGNAL 2
 #define SIGEV_THREAD 3
 
-#define SI_USER 0
+#define SI_ASYNCNL (-60)
 #define SI_TKILL (-6)
+#define SI_SIGIO (-5)
+#define SI_ASYNCIO (-4)
+#define SI_MESGQ (-3)
+#define SI_TIMER (-2)
+#define SI_QUEUE (-1)
+#define SI_USER 0
+#define SI_KERNEL 128
 
 #define NSIG 65
 

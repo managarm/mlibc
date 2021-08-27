@@ -719,8 +719,6 @@ int sys_getcwd(char *buffer, size_t size) {
 }
 
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
-	__ensure(!hint);
-
 	SignalGuard sguard;
 
 	managarm::posix::VmMapRequest<MemoryAllocator> req(getSysdepsAllocator());

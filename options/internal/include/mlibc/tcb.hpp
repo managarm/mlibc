@@ -84,5 +84,28 @@ struct Tcb {
 	void *returnValue;
 	uintptr_t stackCanary;
 	int cancelBits;
+
+	struct AtforkHandler {
+		void (*prepare)(void);
+		void (*parent)(void);
+		void (*child)(void);
+
+		AtforkHandler *next;
+		AtforkHandler *prev;
+	};
+
+	AtforkHandler *atforkBegin;
+	AtforkHandler *atforkEnd;
+
+	struct CleanupHandler {
+		void (*func)(void *);
+		void *arg;
+
+		CleanupHandler *next;
+		CleanupHandler *prev;
+	};
+
+	CleanupHandler *cleanupBegin;
+	CleanupHandler *cleanupEnd;
 };
 

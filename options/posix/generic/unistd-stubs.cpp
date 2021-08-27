@@ -13,6 +13,7 @@
 #include <mlibc/arch-defs.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/thread.hpp>
 
 unsigned int alarm(unsigned int) {
 	__ensure(!"Not implemented");
@@ -1002,16 +1003,40 @@ int dup2(int fd, int newfd) {
 }
 
 pid_t fork(void) {
+	auto self = mlibc::get_current_tcb();
 	pid_t child;
+
 	if(!mlibc::sys_fork) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
 		return -1;
 	}
+
+	auto hand = self->atforkEnd;
+	while (hand) {
+		if (hand->prepare)
+			hand->prepare();
+
+		hand = hand->prev;
+	}
+
 	if(int e = mlibc::sys_fork(&child); e) {
 		errno = e;
 		return -1;
 	}
+
+	hand = self->atforkBegin;
+	while (hand) {
+		if (!child) {
+			if (hand->child)
+				hand->child();
+		} else {
+			if (hand->parent)
+				hand->parent();
+		}
+		hand = hand->next;
+	}
+
 	return child;
 }
 
