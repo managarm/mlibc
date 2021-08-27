@@ -37,7 +37,8 @@ posix_test_cases = [
 	'popen',
 	'system', # This test should be in the ANSI tests, but it depends on sys/wait.h
 	'sigsuspend',
-	'sigaltstack'
+	'sigaltstack',
+	'realpath'
 ]
 
 posix_fail_test_cases = [
