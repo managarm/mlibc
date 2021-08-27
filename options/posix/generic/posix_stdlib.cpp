@@ -11,7 +11,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
-#include <frg/vector.hpp>
+#include <frg/small_vector.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
@@ -210,9 +210,8 @@ char *realpath(const char *path, char *out) {
 		mlibc::infoLogger() << "mlibc realpath(): Called on '" << path << "'" << frg::endlog;
 	frg::string_view path_view{path};
 
-	// TODO: Replace by a small_vector to avoid allocations.
 	// In case of the root, the string only contains the null-terminator.
-	frg::vector<char, MemoryAllocator> resolv{getAllocator()};
+	frg::small_vector<char, PATH_MAX, MemoryAllocator> resolv{getAllocator()};
 	size_t ps;
 
 	// If the path is relative, we have to preprend the working directory.
@@ -250,9 +249,8 @@ char *realpath(const char *path, char *out) {
 		ps = 0;
 	}
 
-	// TODO: Replace by a small_vector to avoid allocations.
 	// Contains unresolved links as a relative path compared to resolv.
-	frg::vector<char, MemoryAllocator> lnk{getAllocator()};
+	frg::small_vector<char, PATH_MAX, MemoryAllocator> lnk{getAllocator()};
 	size_t ls = 0;
 
 	auto process_segment = [&] (frg::string_view s_view) -> int {
@@ -285,8 +283,7 @@ char *realpath(const char *path, char *out) {
 		// stat() the path to (1) see if it exists and (2) see if it is a link.
 		if(!mlibc::sys_stat) {
 			MLIBC_MISSING_SYSDEP();
-			errno = ENOSYS;
-			return -1;
+			return ENOSYS;
 		}
 		if(debugPathResolution)
 			mlibc::infoLogger() << "mlibc realpath(): stat()ing '"
@@ -298,16 +295,56 @@ char *realpath(const char *path, char *out) {
 
 		if(S_ISLNK(st.st_mode)) {
 			if(debugPathResolution) {
-				mlibc::infoLogger() << "mlibc realpath(): Encountered symlink '" << resolv.data() << "'" << frg::endlog;
+				mlibc::infoLogger() << "mlibc realpath(): Encountered symlink '"
+					<< resolv.data() << "'" << frg::endlog;
 			}
+
+			if(!mlibc::sys_readlink) {
+				MLIBC_MISSING_SYSDEP();
+				return ENOSYS;
+			}
+
+			ssize_t sz = 0;
 			char path[512];
-			readlink(resolv.data(), path, 512);
+
+			if (int e = mlibc::sys_readlink(resolv.data(), path, 512, &sz); e)
+				return e;
+
 			if(debugPathResolution) {
-				mlibc::infoLogger() << "mlibc realpath(): symlink resolves to '" << path << "'" << frg::endlog;
+				mlibc::infoLogger() << "mlibc realpath(): Symlink resolves to '"
+					<< frg::string_view{path, static_cast<size_t>(sz)} << "'" << frg::endlog;
 			}
-			realpath(path, NULL);
+
+			if (path[0] == '/') {
+				// Absolute path, replace resolv
+				resolv.resize(sz);
+				strncpy(resolv.data(), path, sz - 1);
+				resolv.data()[sz - 1] = 0;
+
+				if(debugPathResolution) {
+					mlibc::infoLogger() << "mlibc realpath(): Symlink is absolute, resolv: '"
+						<< resolv.data() << "'" << frg::endlog;
+				}
+			} else {
+				// Relative path, revert changes to resolv, prepend to lnk
+				resolv.resize(rsz);
+				resolv[rsz - 1] = 0;
+
+				auto lsz = lnk.size();
+				lnk.resize((lsz - ls) + sz);
+				memmove(lnk.data() + sz, lnk.data() + ls, lsz - ls);
+				memcpy(lnk.data(), path, sz);
+
+				ls = 0;
+
+				if(debugPathResolution) {
+					mlibc::infoLogger() << "mlibc realpath(): Symlink is relative, resolv: '"
+						<< resolv.data() << "' lnk: '"
+						<< frg::string_view{lnk.data(), lnk.size()} << "'" << frg::endlog;
+				}
+			}
 		}
-		// TODO: If it is a link, prepend it to lnk, adjust ls and revert the change to resolv.
+
 		return 0;
 	};
 
@@ -345,6 +382,10 @@ char *realpath(const char *path, char *out) {
 				return nullptr;
 			}
 		}
+
+		// All of lnk was consumed, reset it
+		lnk.resize(0);
+		ls = 0;
 	}
 
 	if(debugPathResolution)
