@@ -28,4 +28,12 @@
 #define F_SEAL_WRITE  0x0008
 #define F_GET_SEALS   1034
 
+#define AT_EMPTY_PATH 1
+#define AT_SYMLINK_FOLLOW 2
+#define AT_SYMLINK_NOFOLLOW 4
+#define AT_REMOVEDIR 8
+#define AT_EACCESS 512
+
+#define AT_FDCWD -100
+
 #endif // _ABITBITS_FCNTL_H

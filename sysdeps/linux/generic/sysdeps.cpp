@@ -3,6 +3,7 @@
 
 #include <bits/feature.h>
 #include <bits/ensure.h>
+#include <abi-bits/fcntl.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/thread-entry.hpp>
