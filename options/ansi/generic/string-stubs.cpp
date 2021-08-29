@@ -413,3 +413,8 @@ int strverscmp(const char *l0, const char *r0) {
 
 	return l[i] - r[i];
 }
+
+void *memmem(const void *, size_t, const void *, size_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
