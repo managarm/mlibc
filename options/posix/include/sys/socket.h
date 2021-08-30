@@ -11,6 +11,8 @@
 #include <bits/posix/iovec.h>
 #include <abi-bits/socket.h>
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
