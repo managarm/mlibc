@@ -21,6 +21,7 @@ posix_test_cases = [
 	'getaddrinfo',
 	'getdelim',
 	'getnameinfo',
+	'getservbyport',
 	'grp',
 	'dprintf',
 	'posix_spawn',

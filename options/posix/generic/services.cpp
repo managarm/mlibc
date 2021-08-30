@@ -11,7 +11,90 @@
 
 namespace mlibc {
 
-static int lookup_serv_file(struct service_buf *buf, const char *name,
+static int parse_rest(service_buf &buf, char *end, int proto) {
+	if (!strncmp(end, "/udp", 4)) {
+		if (proto == IPPROTO_TCP && proto != -1)
+			return 0;
+		buf.protocol = IPPROTO_UDP;
+		buf.socktype = SOCK_DGRAM;
+	} else if (!strncmp(end, "/tcp", 4)) {
+		if (proto == IPPROTO_UDP && proto != -1)
+			return 0;
+		buf.protocol = IPPROTO_TCP;
+		buf.socktype = SOCK_STREAM;
+	} else {
+		return 0;
+	}
+
+	//TODO(geert): also parse aliases.
+
+	return 1;
+}
+
+static int lookup_serv_file_port(service_result &buf, int proto, int port) {
+	auto file = fopen(_PATH_SERVICES, "r");
+	if (!file) {
+		switch (errno) {
+			case ENOENT:
+			case ENOTDIR:
+			case EACCES:
+				return -EAI_SERVICE;
+			default:
+				return -EAI_SYSTEM;
+		}
+	}
+
+	char line_buf[129] = {0};
+	char *line = line_buf + 1;
+	int name_length = 0;
+	while(fgets(line, 128, file)) {
+		char *pos;
+		// easy way to handle comments, just move the end of the line
+		// to the beginning of the comment
+		if ((pos = strchr(line, '#'))) {
+			*pos++ = '\n';
+			*pos = '\0';
+		}
+
+		char *end = NULL;
+		for (pos = line; *pos; pos++) {
+			for (; isalpha(*pos); pos++);
+			int rport = strtoul(pos, &end, 10);
+			if (rport != port || rport > 65535) {
+				pos = end;
+				continue;
+			}
+
+			// We have found the port, time to rewind to the start
+			// of the line.
+			for (; pos[-1]; pos--)
+				if(!isspace(pos[-1]))
+					name_length++;
+			break;
+		}
+
+		if (!pos)
+			continue;
+
+		if (!name_length)
+			continue;
+
+		auto name = frg::string<MemoryAllocator>(pos, name_length,
+				getAllocator());
+
+		struct service_buf sbuf = {};
+		sbuf.port = port;
+		sbuf.name = std::move(name);
+		if (!parse_rest(sbuf, end, proto))
+			continue;
+		buf.push_back(std::move(sbuf));
+	}
+
+	fclose(file);
+	return buf.size();
+}
+
+static int lookup_serv_file_name(service_result &buf, const char *name,
 		int proto) {
 	auto file = fopen(_PATH_SERVICES, "r");
 	if (!file) {
@@ -26,9 +109,8 @@ static int lookup_serv_file(struct service_buf *buf, const char *name,
 	}
 
 	char line[128];
-	int count = 0;
 	int name_length = strlen(name);
-	while(fgets(line, 128, file) && count < SERV_MAX) {
+	while(fgets(line, 128, file)) {
 		char *pos;
 		// easy way to handle comments, just move the end of the line
 		// to the beginning of the comment
@@ -48,45 +130,33 @@ static int lookup_serv_file(struct service_buf *buf, const char *name,
 		if (!pos)
 			continue;
 
-		// now that we know the name is in this line we can parse
-		// the rest
-
-		// skip the name at the beginning of the line
+		// Skip the name at the beginning of the line.
 		for(pos = line; *pos && !isspace(*pos); pos++)
 			;
 
-		char *end;
+		char *end = NULL;
 		int port = strtoul(pos, &end, 10);
 		if (port > 65535 || end == pos)
 			continue;
 
-		if (!strncmp(end, "/udp", 4)) {
-			if (proto == IPPROTO_TCP)
-				continue;
-			buf[count].port = port;
-			buf[count].protocol = IPPROTO_UDP;
-			buf[count].socktype = SOCK_DGRAM;
-			count++;
-		}
-		if (!strncmp(end, "/tcp", 4)) {
-			if (proto == IPPROTO_UDP)
-				continue;
-			buf[count].port = port;
-			buf[count].protocol = IPPROTO_TCP;
-			buf[count].socktype = SOCK_STREAM;
-			count++;
-		}
+		struct service_buf sbuf;
+		sbuf.port = port;
+		sbuf.name = frg::string<MemoryAllocator>(name, getAllocator());
+		if (!parse_rest(sbuf, end, proto))
+			continue;
+
+		buf.push_back(sbuf);
 
 	}
 
 	fclose(file);
-	return count;
+	return buf.size();
 }
 
 
 // This function returns a negative error code, since a positive
 // return code means success.
-int lookup_serv(struct service_buf *buf, const char *name, int proto,
+int lookup_serv_by_name(service_result &buf, const char *name, int proto,
 		int socktype, int flags) {
 	switch(socktype) {
 		case SOCK_STREAM:
@@ -142,7 +212,11 @@ int lookup_serv(struct service_buf *buf, const char *name, int proto,
 	if (flags & AI_NUMERICSERV)
 		return -EAI_NONAME;
 
-	return lookup_serv_file(buf, name, proto);
+	return lookup_serv_file_name(buf, name, proto);
+}
+
+int lookup_serv_by_port(service_result &buf, int proto, int port) {
+	return lookup_serv_file_port(buf, proto, port);
 }
 
 } // namespace mlibc
