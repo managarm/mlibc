@@ -244,7 +244,7 @@ int pthread_join(pthread_t thread, void **ret) {
 		return EINVAL;
 
 	while (!__atomic_load_n(&tcb->didExit, __ATOMIC_ACQUIRE)) {
-		mlibc::sys_futex_wait(&tcb->didExit, 0);
+		mlibc::sys_futex_wait(&tcb->didExit, 0, nullptr);
 	}
 
 	if (ret)
@@ -672,7 +672,7 @@ int pthread_once(pthread_once_t *once, void (*function) (void)) {
 		}else{
 			// a different thread is currently running the initializer.
 			__ensure(expected == onceLocked);
-			if(int e = mlibc::sys_futex_wait((int *)&once->__mlibc_done, onceLocked); e)
+			if(int e = mlibc::sys_futex_wait((int *)&once->__mlibc_done, onceLocked, nullptr); e)
 				__ensure(!"sys_futex_wait() failed");
 			expected =  __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
 		}
@@ -790,7 +790,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 
 			// Wait on the futex if the waiters flag is set.
 			if(expected & mutex_waiters_bit) {
-				if(int e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected); e)
+				if(int e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected, nullptr); e)
 					__ensure(!"sys_futex_wait() failed");
 
 				// Opportunistically try to take the lock after we wake up.
@@ -925,21 +925,20 @@ int pthread_cond_destroy(pthread_cond_t *) {
 }
 
 int pthread_cond_wait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restrict mutex) {
+	return pthread_cond_timedwait(cond, mutex, nullptr);
+}
+
+int pthread_cond_timedwait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restrict mutex,
+		const struct timespec *__restrict abstime) {
 	auto seq = __atomic_load_n(&cond->__mlibc_seq, __ATOMIC_ACQUIRE);
 	// TODO: do proper error handling here.
 	if(pthread_mutex_unlock(mutex))
 		__ensure(!"Failed to unlock the mutex");
-	if(mlibc::sys_futex_wait(&cond->__mlibc_seq, seq))
+	if(mlibc::sys_futex_wait(&cond->__mlibc_seq, seq, abstime))
 		__ensure(!"sys_futex_wait() failed");
 	if(pthread_mutex_lock(mutex))
 		__ensure(!"Failed to lock the mutex");
 	return 0;
-}
-
-int pthread_cond_timedwait(pthread_cond_t *__restrict, pthread_mutex_t *__restrict,
-		const struct timespec *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
 }
 
 int pthread_cond_signal(pthread_cond_t *cond) {
@@ -1005,7 +1004,7 @@ namespace {
 				}
 
 				// Wait on the futex.
-				mlibc::sys_futex_wait((int *)&rw->__mlibc_m, m_expected | mutex_waiters_bit);
+				mlibc::sys_futex_wait((int *)&rw->__mlibc_m, m_expected | mutex_waiters_bit, nullptr);
 
 				// Opportunistically try to take the lock after we wake up.
 				m_expected = 0;
@@ -1106,7 +1105,7 @@ int pthread_rwlock_wrlock(pthread_rwlock_t *rw) {
 		}
 
 		// Wait on the futex.
-		mlibc::sys_futex_wait((int *)&rw->__mlibc_rc, rc_expected | rc_waiters_bit);
+		mlibc::sys_futex_wait((int *)&rw->__mlibc_rc, rc_expected | rc_waiters_bit, nullptr);
 
 		// Re-check the reader counter.
 		rc_expected = __atomic_load_n(&rw->__mlibc_rc, __ATOMIC_ACQUIRE);

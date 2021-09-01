@@ -30,7 +30,7 @@ namespace [[gnu::visibility("hidden")]] mlibc {
 void sys_libc_log(const char *message);
 [[noreturn]] void sys_libc_panic();
 
-int sys_futex_wait(int *pointer, int expected);
+int sys_futex_wait(int *pointer, int expected, const struct timespec *time);
 int sys_futex_wake(int *pointer);
 
 [[noreturn]] void sys_exit(int status);

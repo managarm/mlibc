@@ -27,7 +27,7 @@ struct FutexLock {
 				}
 			}else{
 				if(expected & waitersBit) {
-					if(int e = mlibc::sys_futex_wait(&_futex, expected); e)
+					if(int e = mlibc::sys_futex_wait(&_futex, expected, nullptr); e)
 						__ensure(!"sys_futex_wait() failed");
 
 					expected = 0;

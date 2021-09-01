@@ -36,7 +36,7 @@ int sem_wait(sem_t *sem) {
 		if (!(state & semaphoreCountMask)) {
 			if (__atomic_compare_exchange_n(&sem->__mlibc_count, &state, semaphoreHasWaiters,
 						false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
-				if(int e = mlibc::sys_futex_wait((int *)&sem->__mlibc_count, state); e)
+				if(int e = mlibc::sys_futex_wait((int *)&sem->__mlibc_count, state, nullptr); e)
 					__ensure(!"sys_futex_wait() failed");
 			}
 		} else {
