@@ -463,3 +463,8 @@ int strcoll_l(const char *, const char *, locale_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+int getloadavg(double *, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
