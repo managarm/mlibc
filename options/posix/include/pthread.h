@@ -79,6 +79,7 @@ struct __mlibc_threadattr {
 	int __mlibc_detachstate;
 	int __mlibc_scope;
 	int __mlibc_inheritsched;
+	struct sched_param __mlibc_schedparam;
 };
 typedef struct __mlibc_threadattr pthread_attr_t;
 
@@ -163,6 +164,11 @@ int pthread_attr_setschedparam(pthread_attr_t *__restrict, const struct sched_pa
 
 int pthread_attr_getinheritsched(const pthread_attr_t *__restrict, int *__restrict);
 int pthread_attr_setinheritsched(pthread_attr_t *__restrict, int);
+
+int pthread_attr_getschedparam(const pthread_attr_t *__restrict, struct sched_param *__restrict);
+int pthread_attr_setschedparam(pthread_attr_t *__restrict, const struct sched_param *__restrict);
+
+int pthread_getattr_np(pthread_t, pthread_attr_t *);
 
 // pthread functions.
 int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict,
