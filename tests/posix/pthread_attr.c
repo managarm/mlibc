@@ -33,7 +33,17 @@ static void test_stacksize() {
 	assert(!pthread_join(thread, NULL));
 }
 
+static void test_guardsize() {
+	pthread_attr_t attr;
+	assert(!pthread_attr_init(&attr));
+	assert(!pthread_attr_setguardsize(&attr, 0));
+	size_t guardsize;
+	assert(!pthread_attr_getguardsize(&attr, &guardsize));
+	assert(!guardsize);
+}
+
 int main() {
 	test_detachstate();
 	test_stacksize();
+	test_guardsize();
 }
