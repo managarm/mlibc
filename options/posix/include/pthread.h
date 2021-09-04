@@ -73,6 +73,7 @@ struct __mlibc_threadattr {
 	size_t __mlibc_stacksize;
 	void *__mlibc_stackaddr;
 	int __mlibc_detachstate;
+	int __mlibc_scope;
 };
 typedef struct __mlibc_threadattr pthread_attr_t;
 
@@ -146,7 +147,7 @@ int pthread_attr_setstacksize(pthread_attr_t *, size_t);
 int pthread_attr_getguardsize(const pthread_attr_t *__restrict, size_t *__restrict);
 int pthread_attr_setguardsize(pthread_attr_t *, size_t);
 
-int pthread_attr_getscope(const pthread_attr_t *, int);
+int pthread_attr_getscope(const pthread_attr_t *, int*);
 int pthread_attr_setscope(pthread_attr_t *, int);
 
 int pthread_attr_getschedpolicy(const pthread_attr_t *__restrict, int *__restrict);
