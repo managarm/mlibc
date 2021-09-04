@@ -71,6 +71,16 @@ static void test_schedparam() {
 	assert(param.sched_priority == init_param.sched_priority);
 }
 
+static void test_schedpolicy() {
+	pthread_attr_t attr;
+	assert(!pthread_attr_setschedpolicy(&attr, SCHED_FIFO));
+	int policy;
+	assert(!pthread_attr_getschedpolicy(&attr, &policy));
+	assert(policy == SCHED_FIFO);
+	assert(pthread_attr_setinheritsched(&attr, 2* (SCHED_FIFO + SCHED_RR +
+				SCHED_OTHER)) == EINVAL);
+}
+
 int main() {
 	test_detachstate();
 	test_stacksize();
@@ -78,4 +88,5 @@ int main() {
 	test_scope();
 	test_inheritsched();
 	test_schedparam();
+	test_schedpolicy();
 }
