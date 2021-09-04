@@ -123,21 +123,11 @@ int pthread_attr_setscope(pthread_attr_t *attr, int scope) {
 	return 0;
 }
 
-int pthread_attr_getschedpolicy(const pthread_attr_t *__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_attr_setschedpolicy(pthread_attr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_attr_getinheritsched(const pthread_attr_t *__restrict attr, int *inheritsched) {
+int pthread_attr_getinheritsched(const pthread_attr_t *attr, int *inheritsched) {
 	*inheritsched = attr->__mlibc_inheritsched;
 	return 0;
 }
-int pthread_attr_setinheritsched(pthread_attr_t *__restrict attr, int inheritsched) {
+int pthread_attr_setinheritsched(pthread_attr_t *attr, int inheritsched) {
 	if (inheritsched != PTHREAD_INHERIT_SCHED &&
 			inheritsched != PTHREAD_EXPLICIT_SCHED)
 		return EINVAL;
@@ -153,6 +143,18 @@ int pthread_attr_setschedparam(pthread_attr_t *__restrict attr, const struct sch
 	// TODO: this is supposed to return EINVAL for when the schedparam doesn't make sense
 	// for the given schedpolicy.
 	attr->__mlibc_schedparam = *schedparam;
+	return 0;
+}
+
+int pthread_attr_getschedpolicy(const pthread_attr_t *__restrict attr, int *__restrict policy) {
+	*policy = attr->__mlibc_schedpolicy;
+	return 0;
+}
+int pthread_attr_setschedpolicy(pthread_attr_t *__restrict attr, int policy) {
+	if (policy != SCHED_FIFO && policy != SCHED_RR &&
+			policy != SCHED_OTHER)
+		return EINVAL;
+	attr->__mlibc_schedpolicy = policy;
 	return 0;
 }
 
