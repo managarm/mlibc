@@ -69,7 +69,7 @@ extern "C" {
 struct __mlibc_threadattr {
 	// TODO: the guardsize attribute needs to be supported here.
 
-	int __mlibc_deatchstate;
+	int __mlibc_detachstate;
 };
 typedef struct __mlibc_threadattr pthread_attr_t;
 
