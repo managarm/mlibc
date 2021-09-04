@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <alloca.h>
+#include <sys/mman.h>
 
 static void test_detachstate() {
 	pthread_attr_t attr;
@@ -81,6 +82,43 @@ static void test_schedpolicy() {
 				SCHED_OTHER)) == EINVAL);
 }
 
+static void *stackaddr_worker(void *arg) {
+	void *addr = *(void**)arg;
+
+	void *sp;
+#if defined(__x86_64__)
+	asm volatile ("mov %%rsp, %0" : "=r"(sp));
+#elif defined(__aarch64__)
+	asm volatile ("mov %0, sp" : "=r"(sp));
+#elif defined (__riscv)
+	asm volatile ("mv %0, sp" : "=r"(sp));
+#else
+#	error Unknown architecture
+#endif
+
+	// Check if our stack pointer is in a sane range.
+	assert(addr >= sp);
+	return NULL;
+}
+
+static void test_stackaddr() {
+	pthread_attr_t attr;
+	assert(!pthread_attr_init(&attr));
+	size_t size;
+	assert(!pthread_attr_getstacksize(&attr, &size));
+	void *addr = mmap(NULL, size, PROT_READ | PROT_WRITE,
+				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0) + size;
+	assert(!pthread_attr_setstackaddr(&attr, addr));
+	assert(!pthread_attr_setguardsize(&attr, 0));
+	void *new_addr;
+	assert(!pthread_attr_getstackaddr(&attr, &new_addr));
+	assert(new_addr == addr);
+
+	pthread_t thread;
+	assert(!pthread_create(&thread, &attr, stackaddr_worker, &addr));
+	assert(!pthread_join(thread, NULL));
+}
+
 int main() {
 	test_detachstate();
 	test_stacksize();
@@ -89,4 +127,5 @@ int main() {
 	test_inheritsched();
 	test_schedparam();
 	test_schedpolicy();
+	test_stackaddr();
 }

@@ -100,6 +100,15 @@ int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize) {
 	return 0;
 }
 
+int pthread_attr_getstackaddr(const pthread_attr_t *attr, void **stackaddr) {
+	*stackaddr = attr->__mlibc_stackaddr;
+	return 0;
+}
+int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr) {
+	attr->__mlibc_stackaddr = stackaddr;
+	return 0;
+}
+
 int pthread_attr_getguardsize(const pthread_attr_t *__restrict attr, size_t *__restrict guardsize) {
 	*guardsize = attr->__mlibc_guardsize;
 	return 0;
@@ -171,19 +180,15 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
 	else
 		attr = *attrp;
 
-	void *stack;
-	if (attr.__mlibc_stackaddr) {
-		stack = attr.__mlibc_stackaddr;
-	} else {
-		if (!mlibc::sys_prepare_stack) {
-			MLIBC_MISSING_SYSDEP();
-			return ENOSYS;
-		}
-		int ret = mlibc::sys_prepare_stack(&stack, reinterpret_cast<void*>(entry),
-				user_arg, new_tcb, attr.__mlibc_stacksize, attr.__mlibc_guardsize);
-		if (ret)
-			return ret;
+	void *stack = attr.__mlibc_stackaddr;
+	if (!mlibc::sys_prepare_stack) {
+		MLIBC_MISSING_SYSDEP();
+		return ENOSYS;
 	}
+	int ret = mlibc::sys_prepare_stack(&stack, reinterpret_cast<void*>(entry),
+			user_arg, new_tcb, attr.__mlibc_stacksize, attr.__mlibc_guardsize);
+	if (ret)
+		return ret;
 
 	if (!mlibc::sys_clone) {
 		MLIBC_MISSING_SYSDEP();

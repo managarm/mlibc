@@ -28,19 +28,26 @@ extern "C" void __mlibc_enter_thread(void *entry, void *user_arg) {
 namespace mlibc {
 
 int sys_prepare_stack(void **stack, void *entry, void *user_arg, void *tcb, size_t stack_size, size_t guard_size) {
-	uintptr_t map = reinterpret_cast<uintptr_t>(
-			mmap(nullptr, stack_size + guard_size,
-				PROT_NONE,
-				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
-			);
-	if (reinterpret_cast<void*>(map) == MAP_FAILED)
-		return EAGAIN;
-	int ret = mprotect(reinterpret_cast<void*>(map + guard_size), stack_size,
-			PROT_READ | PROT_WRITE);
-	if(ret)
-		return EAGAIN;
+	(void)tcb;
+	uintptr_t map;
+	if (*stack) {
+		map = reinterpret_cast<uintptr_t>(*stack);
+	} else {
+		map = reinterpret_cast<uintptr_t>(
+				mmap(nullptr, stack_size + guard_size,
+					PROT_NONE,
+					MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+				);
+		if (reinterpret_cast<void*>(map) == MAP_FAILED)
+			return EAGAIN;
+		int ret = mprotect(reinterpret_cast<void*>(map + guard_size), stack_size,
+				PROT_READ | PROT_WRITE);
+		if(ret)
+			return EAGAIN;
+		map += stack_size + guard_size;
+	}
 
-	auto sp = reinterpret_cast<uintptr_t*>(map + stack_size + guard_size);
+	auto sp = reinterpret_cast<uintptr_t*>(map);
 	*--sp = reinterpret_cast<uintptr_t>(user_arg);
 	*--sp = reinterpret_cast<uintptr_t>(entry);
 	*stack = reinterpret_cast<void*>(sp);
