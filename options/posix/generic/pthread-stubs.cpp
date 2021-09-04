@@ -55,12 +55,19 @@ static constexpr unsigned int mutex_excl_bit = static_cast<uint32_t>(1) << 30;
 static constexpr unsigned int rc_count_mask = (static_cast<uint32_t>(1) << 31) - 1;
 static constexpr unsigned int rc_waiters_bit = static_cast<uint32_t>(1) << 31;
 
+static constexpr size_t default_stacksize = 0x200000;
+static constexpr size_t default_guardsize = 4096;
+
 // ----------------------------------------------------------------------------
 // pthread_attr and pthread functions.
 // ----------------------------------------------------------------------------
 
 // pthread_attr functions.
-int pthread_attr_init(pthread_attr_t *) {
+int pthread_attr_init(pthread_attr_t *attr) {
+	*attr = pthread_attr_t{};
+	attr->__mlibc_stacksize = default_stacksize;
+	attr->__mlibc_guardsize = default_guardsize;
+	attr->__mlibc_detachstate = PTHREAD_CREATE_JOINABLE;
 	return 0;
 }
 
@@ -81,13 +88,15 @@ int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate) {
 	return 0;
 }
 
-int pthread_attr_getstacksize(const pthread_attr_t *__restrict, size_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getstacksize(const pthread_attr_t *__restrict attr, size_t *__restrict stacksize) {
+	*stacksize = attr->__mlibc_stacksize;
+	return 0;
 }
 
-int pthread_attr_setstacksize(pthread_attr_t *, size_t) {
-	mlibc::infoLogger() << "mlibc: pthread_attr_setstacksize() is not implemented correctly" << frg::endlog;
+int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize) {
+	if (stacksize < PTHREAD_STACK_MIN)
+		return EINVAL;
+	attr->__mlibc_stacksize = stacksize;
 	return 0;
 }
 
@@ -144,11 +153,35 @@ int pthread_attr_setinheritsched(pthread_attr_t *, int) {
 extern "C" Tcb *__rtdl_allocateTcb();
 
 // pthread functions.
-int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict,
+int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict attrp,
 		void *(*entry) (void *), void *__restrict user_arg) {
 	auto new_tcb = __rtdl_allocateTcb();
 	pid_t tid;
-	mlibc::sys_clone(reinterpret_cast<void *>(entry), user_arg, new_tcb, &tid);
+	pthread_attr_t attr = {};
+	if (!attrp)
+		pthread_attr_init(&attr);
+	else
+		attr = *attrp;
+
+	void *stack;
+	if (attr.__mlibc_stackaddr) {
+		stack = attr.__mlibc_stackaddr;
+	} else {
+		if (!mlibc::sys_prepare_stack) {
+			MLIBC_MISSING_SYSDEP();
+			return ENOSYS;
+		}
+		int ret = mlibc::sys_prepare_stack(&stack, reinterpret_cast<void*>(entry),
+				user_arg, new_tcb, attr.__mlibc_stacksize, attr.__mlibc_guardsize);
+		if (ret)
+			return ret;
+	}
+
+	if (!mlibc::sys_clone) {
+		MLIBC_MISSING_SYSDEP();
+		return ENOSYS;
+	}
+	mlibc::sys_clone(new_tcb, &tid, stack);
 	*thread = reinterpret_cast<pthread_t>(new_tcb);
 
 	__atomic_store_n(&new_tcb->tid, tid, __ATOMIC_RELAXED);

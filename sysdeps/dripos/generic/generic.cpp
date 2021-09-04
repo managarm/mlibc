@@ -214,13 +214,12 @@ int sys_futex_wake(int *pointer) {
 // All remaining functions are disabled in ldso.
 #ifndef MLIBC_BUILDING_RTDL
 
-int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *tid_out) {
-	void *sp = prepare_stack(entry, user_arg, tcb);
+int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
     int tid;
 
     asm volatile ("syscall"
         : "=a"(tid)
-        : "a"(67), "D"(__mlibc_start_thread), "S"(sp), "d"(tcb)
+        : "a"(67), "D"(__mlibc_start_thread), "S"(stack), "d"(tcb)
         : "rcx", "r11");
 
 	if (tid_out)
