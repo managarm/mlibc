@@ -451,9 +451,7 @@ int sys_sysinfo(struct sysinfo *info) {
 	return 0;
 }
 
-int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out) {
-        void *stack = prepare_stack(entry, user_arg);
-
+int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
 	unsigned long flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND
 		| CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS | CLONE_SETTLS
 		| CLONE_PARENT_SETTID;

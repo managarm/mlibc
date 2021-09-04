@@ -65,10 +65,13 @@ extern "C" {
 #define PTHREAD_INHERIT_SCHED 0
 #define PTHREAD_EXPLICIT_SCHED 1
 
+#define PTHREAD_STACK_MIN 16384
+
 // TODO: move to own file and include in sys/types.h
 struct __mlibc_threadattr {
-	// TODO: the guardsize attribute needs to be supported here.
-
+	size_t __mlibc_guardsize;
+	size_t __mlibc_stacksize;
+	void *__mlibc_stackaddr;
 	int __mlibc_detachstate;
 };
 typedef struct __mlibc_threadattr pthread_attr_t;
