@@ -52,9 +52,20 @@ static void test_scope() {
 				PTHREAD_SCOPE_PROCESS)) == EINVAL);
 }
 
+static void test_inheritsched() {
+	pthread_attr_t attr;
+	assert(!pthread_attr_setinheritsched(&attr, PTHREAD_INHERIT_SCHED));
+	int inheritsched;
+	assert(!pthread_attr_getinheritsched(&attr, &inheritsched));
+	assert(inheritsched == PTHREAD_INHERIT_SCHED);
+	assert(pthread_attr_setinheritsched(&attr, 2* (PTHREAD_INHERIT_SCHED +
+				PTHREAD_EXPLICIT_SCHED)) == EINVAL);
+}
+
 int main() {
 	test_detachstate();
 	test_stacksize();
 	test_guardsize();
 	test_scope();
+	test_inheritsched();
 }
