@@ -144,5 +144,6 @@
 #define ELNRNG			113
 #define ENOTUNIQ		114
 #define ERESTART		115
+#define ENOTSUP			116
 
 #endif

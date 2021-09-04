@@ -42,8 +42,19 @@ static void test_guardsize() {
 	assert(!guardsize);
 }
 
+static void test_scope() {
+	pthread_attr_t attr;
+	assert(!pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM));
+	int scope;
+	assert(!pthread_attr_getscope(&attr, &scope));
+	assert(scope == PTHREAD_SCOPE_SYSTEM);
+	assert(pthread_attr_setscope(&attr, 2* (PTHREAD_SCOPE_SYSTEM +
+				PTHREAD_SCOPE_PROCESS)) == EINVAL);
+}
+
 int main() {
 	test_detachstate();
 	test_stacksize();
 	test_guardsize();
+	test_scope();
 }

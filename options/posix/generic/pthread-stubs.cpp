@@ -109,14 +109,18 @@ int pthread_attr_setguardsize(pthread_attr_t *attr, size_t guardsize) {
 	return 0;
 }
 
-int pthread_attr_getscope(const pthread_attr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getscope(const pthread_attr_t *attr, int *scope) {
+	*scope = attr->__mlibc_scope;
+	return 0;
 }
-
-int pthread_attr_setscope(pthread_attr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_setscope(pthread_attr_t *attr, int scope) {
+	if (scope != PTHREAD_SCOPE_SYSTEM &&
+			scope != PTHREAD_SCOPE_PROCESS)
+		return EINVAL;
+	if (scope == PTHREAD_SCOPE_PROCESS)
+		return ENOTSUP;
+	attr->__mlibc_scope = scope;
+	return 0;
 }
 
 int pthread_attr_getschedpolicy(const pthread_attr_t *__restrict, int *__restrict) {
