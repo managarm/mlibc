@@ -68,14 +68,17 @@ int pthread_attr_destroy(pthread_attr_t *) {
 	return 0;
 }
 
-int pthread_attr_getdetachstate(const pthread_attr_t *, int *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate) {
+	*detachstate = attr->__mlibc_detachstate;
+	return 0;
 }
+int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate) {
+	if (detachstate != PTHREAD_CREATE_DETACHED &&
+			detachstate != PTHREAD_CREATE_JOINABLE)
+		return EINVAL;
 
-int pthread_attr_setdetachstate(pthread_attr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	attr->__mlibc_detachstate = detachstate;
+	return 0;
 }
 
 int pthread_attr_getstacksize(const pthread_attr_t *__restrict, size_t *__restrict) {
