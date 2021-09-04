@@ -109,6 +109,19 @@ int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr) {
 	return 0;
 }
 
+int pthread_attr_getstack(const pthread_attr_t *attr, void **stackaddr, size_t *stacksize) {
+	*stackaddr = attr->__mlibc_stackaddr;
+	*stacksize = attr->__mlibc_stacksize;
+	return 0;
+}
+int pthread_attr_setstack(pthread_attr_t *attr, void *stackaddr, size_t stacksize) {
+	if (stacksize < PTHREAD_STACK_MIN)
+		return EINVAL;
+	attr->__mlibc_stacksize = stacksize;
+	attr->__mlibc_stackaddr = stackaddr;
+	return 0;
+}
+
 int pthread_attr_getguardsize(const pthread_attr_t *__restrict attr, size_t *__restrict guardsize) {
 	*guardsize = attr->__mlibc_guardsize;
 	return 0;
@@ -342,16 +355,6 @@ int pthread_setname_np(pthread_t, const char *) {
 }
 
 int pthread_getname_np(pthread_t, char *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_attr_setstack(pthread_attr_t *, void *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_attr_getstack(const pthread_attr_t *, void **, size_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

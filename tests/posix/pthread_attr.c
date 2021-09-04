@@ -119,6 +119,19 @@ static void test_stackaddr() {
 	assert(!pthread_join(thread, NULL));
 }
 
+static void test_stack() {
+	pthread_attr_t attr;
+	void *stackaddr = (void*)1;
+	size_t stacksize = PTHREAD_STACK_MIN;
+
+	assert(!pthread_attr_setstack(&attr, stackaddr, stacksize));
+	void *new_addr;
+	size_t new_size;
+	assert(!pthread_attr_getstack(&attr, &new_addr, &new_size));
+	assert(new_addr == stackaddr);
+	assert(new_size == stacksize);
+}
+
 int main() {
 	test_detachstate();
 	test_stacksize();
@@ -128,4 +141,5 @@ int main() {
 	test_schedparam();
 	test_schedpolicy();
 	test_stackaddr();
+	test_stack();
 }
