@@ -133,22 +133,24 @@ int pthread_attr_setschedpolicy(pthread_attr_t *, int) {
 	__builtin_unreachable();
 }
 
+int pthread_attr_getinheritsched(const pthread_attr_t *__restrict attr, int *inheritsched) {
+	*inheritsched = attr->__mlibc_inheritsched;
+	return 0;
+}
+int pthread_attr_setinheritsched(pthread_attr_t *__restrict attr, int inheritsched) {
+	if (inheritsched != PTHREAD_INHERIT_SCHED &&
+			inheritsched != PTHREAD_EXPLICIT_SCHED)
+		return EINVAL;
+	attr->__mlibc_inheritsched = inheritsched;
+	return 0;
+}
+
 int pthread_attr_getschedparam(const pthread_attr_t *__restrict, struct sched_param *__restrict) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
 int pthread_attr_setschedparam(pthread_attr_t *__restrict, const struct sched_param *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_attr_getinheritsched(const pthread_attr_t *__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_attr_setinheritsched(pthread_attr_t *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
