@@ -25,6 +25,10 @@ extern "C" {
 #define PTHREAD_SCOPE_SYSTEM 0
 #define PTHREAD_SCOPE_PROCESS 1
 
+// Values for pthread_attr_{get,set}inheritsched
+#define PTHREAD_INHERIT_SCHED 0
+#define PTHREAD_EXPLICIT_SCHED 1
+
 // values for pthread_{get,set}canceltype().
 #define PTHREAD_CANCEL_DEFERRED 0
 #define PTHREAD_CANCEL_ASYNCHRONOUS 1
@@ -74,6 +78,7 @@ struct __mlibc_threadattr {
 	void *__mlibc_stackaddr;
 	int __mlibc_detachstate;
 	int __mlibc_scope;
+	int __mlibc_inheritsched;
 };
 typedef struct __mlibc_threadattr pthread_attr_t;
 
@@ -157,7 +162,7 @@ int pthread_attr_getschedparam(const pthread_attr_t *__restrict, struct sched_pa
 int pthread_attr_setschedparam(pthread_attr_t *__restrict, const struct sched_param *__restrict);
 
 int pthread_attr_getinheritsched(const pthread_attr_t *__restrict, int *__restrict);
-int pthread_attr_setinheritsched(pthread_attr_t *, int);
+int pthread_attr_setinheritsched(pthread_attr_t *__restrict, int);
 
 // pthread functions.
 int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict,
