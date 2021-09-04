@@ -100,14 +100,13 @@ int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize) {
 	return 0;
 }
 
-int pthread_attr_getguardsize(const pthread_attr_t *__restrict, size_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getguardsize(const pthread_attr_t *__restrict attr, size_t *__restrict guardsize) {
+	*guardsize = attr->__mlibc_guardsize;
+	return 0;
 }
-
-int pthread_attr_setguardsize(pthread_attr_t *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_setguardsize(pthread_attr_t *attr, size_t guardsize) {
+	attr->__mlibc_guardsize = guardsize;
+	return 0;
 }
 
 int pthread_attr_getscope(const pthread_attr_t *, int) {
