@@ -310,9 +310,18 @@ char *getcwd(char *buffer, size_t size) {
 	return buffer;
 }
 
-int getgroups(int, gid_t []) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int getgroups(int size, gid_t list[]) {
+	if(!mlibc::sys_getgroups) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	int ret;
+	if(int e = mlibc::sys_getgroups(size, list, &ret); e) {
+		errno = e;
+		return -1;
+	}
+	return ret;
 }
 
 long gethostid(void) {
