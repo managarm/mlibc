@@ -52,6 +52,7 @@ int sys_clock_get(int clock, time_t *secs, long *nanos);
 [[gnu::weak]] int sys_execve(const char *path, char *const argv[], char *const envp[]);
 
 [[gnu::weak]] pid_t sys_getpid();
+[[gnu::weak]] int sys_setgroups(size_t size, const gid_t *list, int *ret);
 [[gnu::weak]] int sys_kill(int, int);
 
 } //namespace mlibc
