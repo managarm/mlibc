@@ -258,8 +258,7 @@ int sys_setegid(gid_t egid) {
 
 void sys_yield() UNIMPLEMENTED("sys_yield")
 
-int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *tid_out) {
-    auto stack = prepare_stack(entry, user_arg, tcb);
+int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
     auto tid = syscall(SYS_CLONE, (uintptr_t)__mlibc_start_thread, stack);
 
     if (tid < 0) {
