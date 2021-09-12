@@ -180,6 +180,17 @@ int pthread_attr_setschedpolicy(pthread_attr_t *__restrict attr, int policy) {
 	return 0;
 }
 
+int pthread_getattr_np(pthread_t thread, pthread_attr_t *attr) {
+	auto tcb = reinterpret_cast<Tcb*>(thread);
+	*attr = pthread_attr_t{};
+	attr->__mlibc_stacksize = tcb->stackSize;
+	attr->__mlibc_stackaddr = tcb->stackAddr;
+	attr->__mlibc_guardsize = tcb->guardSize;
+	attr->__mlibc_detachstate = tcb->isJoinable ? PTHREAD_CREATE_JOINABLE : PTHREAD_CREATE_DETACHED;
+	mlibc::infoLogger() << "pthread_getattr_np(): Implementation is incomplete!" << frg::endlog;
+	return 0;
+}
+
 extern "C" Tcb *__rtdl_allocateTcb();
 
 // pthread functions.
@@ -193,13 +204,16 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
 	else
 		attr = *attrp;
 
+	// TODO: due to alignment guarantees, the stackaddr and stacksize might change
+	// when the stack is allocated. Currently this isn't propagated to the TCB,
+	// but it should be.
 	void *stack = attr.__mlibc_stackaddr;
 	if (!mlibc::sys_prepare_stack) {
 		MLIBC_MISSING_SYSDEP();
 		return ENOSYS;
 	}
 	int ret = mlibc::sys_prepare_stack(&stack, reinterpret_cast<void*>(entry),
-			user_arg, new_tcb, attr.__mlibc_stacksize, attr.__mlibc_guardsize);
+			user_arg, new_tcb, &attr.__mlibc_stacksize, &attr.__mlibc_guardsize);
 	if (ret)
 		return ret;
 
@@ -207,6 +221,11 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
 		MLIBC_MISSING_SYSDEP();
 		return ENOSYS;
 	}
+	new_tcb->stackSize = attr.__mlibc_stacksize;
+	new_tcb->guardSize = attr.__mlibc_guardsize;
+	new_tcb->stackAddr = reinterpret_cast<void*>(
+			reinterpret_cast<uintptr_t>(stack)
+			- attr.__mlibc_stacksize - attr.__mlibc_guardsize);
 	mlibc::sys_clone(new_tcb, &tid, stack);
 	*thread = reinterpret_cast<pthread_t>(new_tcb);
 
@@ -355,11 +374,6 @@ int pthread_setname_np(pthread_t, const char *) {
 }
 
 int pthread_getname_np(pthread_t, char *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_getattr_np(pthread_t, pthread_attr_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
