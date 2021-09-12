@@ -30,6 +30,9 @@ extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, Tcb *tcb) {
 }
 
 namespace mlibc {
+
+static constexpr size_t default_stacksize = 0x1000000;
+
 int sys_prepare_stack(void **stack, void *entry, void *user_arg, void *tcb, size_t *stack_size, size_t *guard_size) {
 	if (!*stack_size)
 		*stack_size = default_stacksize;

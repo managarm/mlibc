@@ -28,17 +28,22 @@ extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, Tcb *tcb) {
 
 namespace mlibc {
 
-int sys_prepare_stack(void **stack, void *entry, void *user_arg, void *tcb, size_t stack_size, size_t guard_size) {
-	(void)guard_size;
+static constexpr size_t default_stacksize = 0x200000;
+
+int sys_prepare_stack(void **stack, void *entry, void *user_arg, void *tcb, size_t *stack_size, size_t *guard_size) {
+	if (!*stack_size)
+		*stack_size = default_stacksize;
+	*guard_size = 0;
+
 	uintptr_t *sp;
 	if (*stack) {
 		sp = reinterpret_cast<uintptr_t *>(*stack);
 	} else {
 		sp = reinterpret_cast<uintptr_t *>(reinterpret_cast<uintptr_t>(
-					mmap(nullptr, stack_size,
+					mmap(nullptr, *stack_size,
 						PROT_READ | PROT_WRITE,
 						MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
-					) + stack_size);
+					) + *stack_size);
 	}
 
 	*--sp = reinterpret_cast<uintptr_t>(tcb);
