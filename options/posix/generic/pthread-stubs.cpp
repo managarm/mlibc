@@ -194,6 +194,8 @@ int pthread_exit(void *ret_val) {
 	__atomic_store_n(&self->didExit, 1, __ATOMIC_RELEASE);
 	mlibc::sys_futex_wake(&self->didExit);
 
+	// TODO: clean up thread resources when we are detached.
+
 	// TODO: do exit(0) when we're the only thread instead
 	mlibc::sys_thread_exit();
 	__builtin_unreachable();
@@ -201,6 +203,9 @@ int pthread_exit(void *ret_val) {
 
 int pthread_join(pthread_t thread, void **ret) {
 	auto tcb = reinterpret_cast<Tcb *>(thread);
+
+	if (!__atomic_load_n(&tcb->isJoinable, __ATOMIC_ACQUIRE))
+		return EINVAL;
 
 	while (!__atomic_load_n(&tcb->didExit, __ATOMIC_ACQUIRE)) {
 		mlibc::sys_futex_wait(&tcb->didExit, 0);
@@ -214,9 +219,17 @@ int pthread_join(pthread_t thread, void **ret) {
 	return 0;
 }
 
-int pthread_detach(pthread_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_detach(pthread_t thread) {
+	auto tcb = reinterpret_cast<Tcb*>(thread);
+	if (!__atomic_load_n(&tcb->isJoinable, __ATOMIC_RELAXED))
+		return EINVAL;
+
+	int expected = 1;
+	if(!__atomic_compare_exchange_n(&tcb->isJoinable, &expected, 0, false, __ATOMIC_RELEASE,
+				__ATOMIC_RELAXED))
+		return EINVAL;
+
+	return 0;
 }
 
 void pthread_cleanup_push(void (*func) (void *), void *arg) {

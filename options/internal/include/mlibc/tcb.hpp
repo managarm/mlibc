@@ -84,7 +84,6 @@ struct Tcb {
 	void *returnValue;
 	uintptr_t stackCanary;
 	int cancelBits;
-
 	struct AtforkHandler {
 		void (*prepare)(void);
 		void (*parent)(void);
@@ -107,5 +106,6 @@ struct Tcb {
 
 	CleanupHandler *cleanupBegin;
 	CleanupHandler *cleanupEnd;
+	int isJoinable;
 };
 
