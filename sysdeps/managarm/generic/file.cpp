@@ -26,6 +26,7 @@
 #include <sys/signalfd.h>
 #include <sys/sysmacros.h>
 #include <linux/input.h>
+#include <linux/cdrom.h>
 #include <drm/drm.h>
 #include <drm/drm_fourcc.h>
 
@@ -2941,7 +2942,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
-		
+
 		auto [offer, send_req, imbue_creds, recv_resp] =
 			exchangeMsgsSync(
 					handle,
@@ -2981,7 +2982,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
-		
+
 		auto [offer, send_req, imbue_creds, recv_resp] =
 			exchangeMsgsSync(
 					handle,
@@ -3017,7 +3018,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
-		
+
 		auto [offer, send_req, imbue_creds, recv_resp] =
 			exchangeMsgsSync(
 					handle,
@@ -3045,6 +3046,38 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*result = resp.result();
 		*static_cast<int *>(arg) = resp.pid();
+		return 0;
+	}
+	case CDROM_GET_CAPABILITY: {
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+
+		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+		req.SerializeToString(&ser);
+
+		auto [offer, send_req, recv_resp] =
+			exchangeMsgsSync(
+					handle,
+					helix_ng::offer(
+						helix_ng::sendBuffer(ser.data(), ser.size()),
+						helix_ng::recvInline()
+					)
+			);
+
+		HEL_CHECK(offer.error());
+		if(send_req.error())
+			return EINVAL;
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		if(resp.error() == managarm::fs::Errors::NOT_A_TERMINAL) {
+			return ENOTTY;
+		}
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
 		return 0;
 	}
 	} // end of switch()
