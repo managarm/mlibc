@@ -26,6 +26,7 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);
 [[gnu::weak]] int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events);
 [[gnu::weak]] int sys_mount(const char *source, const char *target,
 		const char *fstype, unsigned long flags, const void *data);
+[[gnu::weak]] int sys_umount2(const char *target, int flags);
 [[gnu::weak]] int sys_eventfd_create(unsigned int initval, int flags, int *fd);
 [[gnu::weak]] int sys_timerfd_create(int flags, int *fd);
 [[gnu::weak]] int sys_timerfd_settime(int fd, int flags,
