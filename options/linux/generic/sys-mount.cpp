@@ -20,11 +20,18 @@ int mount(const char *source, const char *target,
 }
 
 int umount(const char *target) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return umount2(target, 0);
 }
 
 int umount2(const char *target, int flags) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	if(!mlibc::sys_umount2) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_umount2(target, flags); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
