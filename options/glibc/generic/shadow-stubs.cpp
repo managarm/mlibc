@@ -31,3 +31,8 @@ struct spwd *getspnam(const char *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+void endspent(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
