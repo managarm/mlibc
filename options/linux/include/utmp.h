@@ -61,6 +61,7 @@ void setutent(void);
 struct utmp *getutent(void);
 void endutent(void);
 struct utmp *pututline(const struct utmp *);
+struct utmp *getutline(const struct utmp *);
 
 #ifdef __cplusplus
 }

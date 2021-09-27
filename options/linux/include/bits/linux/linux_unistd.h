@@ -7,6 +7,7 @@ extern "C" {
 
 int dup3(int fd, int newfd, int flags);
 int vhangup(void);
+int getdtablesize(void);
 
 #ifdef __cplusplus
 }
