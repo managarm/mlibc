@@ -34,6 +34,7 @@
 #define RLIMIT_NICE 14
 #define RLIMIT_RTPRIO 15
 #define RLIMIT_NLIMITS 16
+#define RLIM_NLIMITS RLIMIT_NLIMITS
 
 #ifdef __cplusplus
 extern "C" {
