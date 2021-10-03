@@ -272,7 +272,18 @@ int wcscmp(const wchar_t *l, const wchar_t *r) {
 int wcscoll(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
 int wcsncmp(const wchar_t *, const wchar_t *, size_t) MLIBC_STUB_BODY
 int wcsxfrm(wchar_t *__restrict, const wchar_t *__restrict, size_t) MLIBC_STUB_BODY
-int wmemcmp(const wchar_t *, const wchar_t *, size_t) MLIBC_STUB_BODY
+
+int wmemcmp(const wchar_t *a, const wchar_t *b, size_t size) {
+	for(size_t i = 0; i < size; i++) {
+		auto a_byte = a[i];
+		auto b_byte = b[i];
+		if(a_byte < b_byte)
+			return -1;
+		if(a_byte > b_byte)
+			return 1;
+	}
+	return 0;
+}
 
 wchar_t *wcschr(const wchar_t *s, wchar_t c) {
 	if(!c)
