@@ -8,13 +8,14 @@
 
 static const char *__mlibc_digits = "0123456789abcdefghijklmnopqrstuvwxyz";
 
-intmax_t imaxabs(intmax_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+intmax_t imaxabs(intmax_t num) {
+	return num < 0 ? -num : num;
 }
-imaxdiv_t imaxdiv(intmax_t, intmax_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+imaxdiv_t imaxdiv(intmax_t number, intmax_t denom) {
+	imaxdiv_t r;
+	r.quot = number / denom;
+	r.rem = number % denom;
+	return r;
 }
 
 template <class T> T strtoxmax(const char *it, char **out, int base) {
