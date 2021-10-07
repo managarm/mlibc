@@ -3409,6 +3409,8 @@ int sys_openat(int dirfd, const char *path, int flags, int *fd) {
 		return ENXIO;
 	}else if(resp.error() == managarm::posix::Errors::IS_DIRECTORY) {
 		return EISDIR;
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*fd = resp.fd();
