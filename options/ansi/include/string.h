@@ -57,6 +57,8 @@ char *stpcpy(char *__restrict, const char *__restrict);
 
 // GNU extensions.
 int strverscmp(const char *l0, const char *r0);
+int ffsl(long i);
+int ffsll(long long i);
 
 #ifdef __cplusplus
 }
