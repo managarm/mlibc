@@ -397,14 +397,18 @@ div_t div(int number, int denom) {
 	return r;
 }
 
-ldiv_t ldiv(long, long) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+ldiv_t ldiv(long number, long denom) {
+	ldiv_t r;
+	r.quot = number / denom;
+	r.rem = number % denom;
+	return r;
 }
 
-lldiv_t lldiv(long long, long long) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+lldiv_t lldiv(long long number, long long denom) {
+	lldiv_t r;
+	r.quot = number / denom;
+	r.rem = number % denom;
+	return r;
 }
 
 int mblen(const char *mbs, size_t mb_limit) {

@@ -39,7 +39,8 @@ posix_test_cases = [
 	'system', # This test should be in the ANSI tests, but it depends on sys/wait.h
 	'sigsuspend',
 	'sigaltstack',
-	'realpath'
+	'realpath',
+	'ffs'
 ]
 
 posix_fail_test_cases = [
@@ -47,7 +48,8 @@ posix_fail_test_cases = [
 ]
 
 glibc_test_cases = [
-	'getopt'
+	'getopt',
+	'ffsl-ffsll'
 ]
 
 test_sources = [
