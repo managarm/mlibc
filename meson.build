@@ -67,7 +67,7 @@ if not headers_only
 	elif c_compiler.get_id() == 'clang'
 		clangdir = run_command('/bin/sh', '-c',
 			' '.join(c_compiler.cmd_array())
-					+ ' -print-search-dirs | sed -ne "s/libraries: =\(.*\):.*/\\1/p"',
+					+ ' -print-search-dirs | sed -ne "s/libraries: =\([^:]*\).*/\\1/p"',
 			env: ['LANG=C'],
 			check: true).stdout().strip()
 
