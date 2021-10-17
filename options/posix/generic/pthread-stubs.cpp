@@ -1,10 +1,12 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <errno.h>
+#include <inttypes.h>
 
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>
@@ -180,11 +182,45 @@ int pthread_attr_setschedpolicy(pthread_attr_t *__restrict attr, int policy) {
 	return 0;
 }
 
+namespace {
+	void get_own_stackinfo(void **stack_addr, size_t *stack_size) {
+		auto fp = fopen("/proc/self/maps", "r");
+		if (!fp) {
+			mlibc::infoLogger() << "mlibc pthreads: /proc/self/maps does not exist! Producing incorrect"
+				" stack results!" << frg::endlog;
+			return;
+		}
+
+		char line[256];
+		auto sp = mlibc::get_sp();
+		while (fgets(line, 256, fp)) {
+			uintptr_t from, to;
+			if(sscanf(line, "%lx-%lx", &from, &to) != 2)
+				continue;
+			if (sp < to && sp > from) {
+				// We need to return the lowest byte of the stack.
+				*stack_addr = reinterpret_cast<void*>(from);
+				*stack_size = to - from;
+				fclose(fp);
+				return;
+			}
+		}
+
+		fclose(fp);
+	}
+}
+
 int pthread_getattr_np(pthread_t thread, pthread_attr_t *attr) {
 	auto tcb = reinterpret_cast<Tcb*>(thread);
 	*attr = pthread_attr_t{};
-	attr->__mlibc_stacksize = tcb->stackSize;
-	attr->__mlibc_stackaddr = tcb->stackAddr;
+
+	if (!tcb->stackAddr || !tcb->stackSize) {
+		get_own_stackinfo(&attr->__mlibc_stackaddr, &attr->__mlibc_stacksize);
+	} else {
+		attr->__mlibc_stacksize = tcb->stackSize;
+		attr->__mlibc_stackaddr = tcb->stackAddr;
+	}
+
 	attr->__mlibc_guardsize = tcb->guardSize;
 	attr->__mlibc_detachstate = tcb->isJoinable ? PTHREAD_CREATE_JOINABLE : PTHREAD_CREATE_DETACHED;
 	mlibc::infoLogger() << "pthread_getattr_np(): Implementation is incomplete!" << frg::endlog;

@@ -132,6 +132,37 @@ static void test_stack() {
 	assert(new_size == stacksize);
 }
 
+static void *getattr_worker(void *arg) {
+	(void)arg;
+	return NULL;
+}
+
+static void test_getattrnp() {
+	pthread_attr_t attr;
+	size_t stacksize = PTHREAD_STACK_MIN;
+	assert(!pthread_attr_init(&attr));
+	assert(!pthread_attr_setstacksize(&attr, stacksize));
+
+	pthread_t thread;
+	assert(!pthread_create(&thread, &attr, getattr_worker, NULL));
+	assert(!pthread_getattr_np(thread, &attr));
+	size_t other_stacksize;
+	assert(!pthread_attr_getstacksize(&attr, &other_stacksize));
+	assert(other_stacksize == stacksize);
+	assert(!pthread_join(thread, NULL));
+
+	pthread_t own_thread = pthread_self();
+	void *stack;
+	assert(!pthread_getattr_np(own_thread, &attr));
+	assert(!pthread_attr_getstack(&attr, &stack, &other_stacksize));
+	assert(stack);
+	assert(other_stacksize);
+	// Check that we can read from the highest byte returned.
+	// pthread_getattr_np() should return the lowest byte
+	// of the stack.
+	assert(!*(char*)(stack + other_stacksize - 1));
+}
+
 int main() {
 	test_detachstate();
 	test_stacksize();
@@ -142,4 +173,5 @@ int main() {
 	test_schedpolicy();
 	test_stackaddr();
 	test_stack();
+	test_getattrnp();
 }
