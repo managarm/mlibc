@@ -124,6 +124,7 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dbuild_tests=true"
         - "-Ddisable_posix_option=true"
+        - "-Ddisable_linux_option=true"
         - '@THIS_SOURCE_DIR@'
         environ:
           C: 'gcc-10'

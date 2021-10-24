@@ -10,7 +10,6 @@ libc_include_dirs = [
 	include_directories('options/internal/include'),
 	include_directories('options/elf/include'),
 	include_directories('options/lsb/include'),
-	include_directories('options/glibc/include'),
 	include_directories('options/internal' / host_machine.cpu_family() + '-include')
 ]
 
@@ -30,7 +29,9 @@ disable_posix_option = get_option('disable_posix_option')
 disable_linux_option = get_option('disable_linux_option')
 disable_iconv_option = get_option('disable_iconv_option')
 disable_intl_option = get_option('disable_intl_option')
+disable_glibc_option = get_option('disable_glibc_option')
 internal_conf = configuration_data()
+mlibc_conf = configuration_data()
 
 if not headers_only
 	cxxshim_dep = subproject('cxxshim').get_variable('cxxshim_dep')
@@ -87,7 +88,7 @@ internal_conf.set('MLIBC_STATIC_BUILD', static)
 
 # Process sysdeps first, as sysdeps might want to disable unsupported options.
 if host_machine.system() == 'linux'
-	disable_linux_option = true
+	disable_linux_headers = true
 	rtdl_include_dirs += include_directories('sysdeps/linux/include')
 	libc_include_dirs += include_directories('sysdeps/linux/include')
 	subdir('sysdeps/linux')
@@ -128,6 +129,13 @@ endif
 # Configuration based on enabled options.
 #----------------------------------------------------------------------------------------
 
+mlibc_conf.set('__MLIBC_ANSI_OPTION', not disable_ansi_option)
+mlibc_conf.set('__MLIBC_POSIX_OPTION', not disable_posix_option)
+mlibc_conf.set('__MLIBC_LINUX_OPTION', not disable_linux_option)
+mlibc_conf.set('__MLIBC_INTL_OPTION', not disable_intl_option)
+mlibc_conf.set('__MLIBC_ICONV_OPTION', not disable_iconv_option)
+mlibc_conf.set('__MLIBC_GLIBC_OPTION', not disable_glibc_option)
+
 if not disable_ansi_option
 	rtdl_include_dirs += include_directories('options/ansi/include')
 	libc_include_dirs += include_directories('options/ansi/include')
@@ -147,16 +155,33 @@ if not disable_intl_option
 	libc_include_dirs += include_directories('options/intl/include')
 endif
 
+if not disable_linux_option
+	rtdl_include_dirs += include_directories('options/linux/include')
+	libc_include_dirs += include_directories('options/linux/include')
+endif
+
+if not disable_glibc_option
+	rtdl_include_dirs += include_directories('options/glibc/include')
+	libc_include_dirs += include_directories('options/glibc/include')
+endif
+
+rtdl_include_dirs += include_directories('options/linux-headers/include')
+libc_include_dirs += include_directories('options/linux-headers/include')
 rtdl_include_dirs += include_directories('options/elf/include')
-rtdl_include_dirs += include_directories('options/linux/include')
 libc_include_dirs += include_directories('options/elf/include')
-libc_include_dirs += include_directories('options/linux/include')
+libc_include_dirs += include_directories('.')
 
 #----------------------------------------------------------------------------------------
 
 configure_file(input: 'internal-config.h.in',
 	output: 'internal-config.h',
 	configuration: internal_conf)
+
+configure_file(input: 'mlibc-config.h.in',
+	output: 'mlibc-config.h',
+	configuration: mlibc_conf,
+	install: true,
+	install_dir: get_option('includedir'))
 
 internal_sources = [
 	'options/internal/generic/allocator.cpp',
@@ -190,7 +215,6 @@ if not no_headers
 		'options/internal/include/bits/wchar_t.h',
 		'options/internal/include/bits/wchar.h',
 		'options/internal/include/bits/wint_t.h',
-		'options/internal/include/bits/feature.h',
 		'options/internal/include/bits/size_t.h',
 		'options/internal/include/bits/types.h',
 		'options/internal/include/bits/ensure.h',

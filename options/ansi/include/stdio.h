@@ -3,9 +3,9 @@
 #define _STDIO_H
 
 #include <abi-bits/seek-whence.h>
-#include <bits/feature.h>
 #include <bits/null.h>
 #include <bits/size_t.h>
+#include <mlibc-config.h>
 
 // Glibc extensions require ssize_t.
 #include <bits/ssize_t.h>
@@ -186,7 +186,7 @@ int fputs_unlocked(const char *, FILE *);
 }
 #endif
 
-#if __MLIBC_POSIX_OPTION
+#ifdef __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_stdio.h>
 #endif
 

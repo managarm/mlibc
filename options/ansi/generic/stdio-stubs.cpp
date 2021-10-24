@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include <ctype.h>
-#include <unistd.h>
 
 #include <bits/ensure.h>
 

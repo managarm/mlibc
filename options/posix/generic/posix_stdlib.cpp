@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <asm/ioctls.h>
 
 #include <frg/small_vector.hpp>
 #include <mlibc/allocator.hpp>
