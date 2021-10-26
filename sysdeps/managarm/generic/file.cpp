@@ -951,9 +951,13 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	*fd = resp.fd();
-	return 0;
+	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EAFNOSUPPORT;
+	} else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		*fd = resp.fd();
+		return 0;
+	}
 }
 
 int sys_pipe(int *fds, int flags) {
@@ -1120,6 +1124,16 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		return ENOTCONN;
 	}else if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
 		return EAGAIN;
+	}else if(resp.error() == managarm::fs::Errors::HOST_UNREACHABLE) {
+		return EHOSTUNREACH;
+	}else if(resp.error() == managarm::fs::Errors::ACCESS_DENIED) {
+		return EACCES;
+	}else if(resp.error() == managarm::fs::Errors::NETWORK_UNREACHABLE) {
+		return ENETUNREACH;
+	}else if(resp.error() == managarm::fs::Errors::DESTINATION_ADDRESS_REQUIRED) {
+		return EDESTADDRREQ;
+	}else if(resp.error() == managarm::fs::Errors::ADDRESS_NOT_AVAILABLE) {
+		return EADDRNOTAVAIL;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*length = resp.size();

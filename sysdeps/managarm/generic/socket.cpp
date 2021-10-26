@@ -169,11 +169,14 @@ int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(recv_addr->error);
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+		return ENOTSOCK;
+	}
 	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	HEL_CHECK(recv_addr->error);
 	*actual_length = resp.file_size();
 	return 0;
 }
@@ -341,6 +344,9 @@ int sys_setsockopt(int fd, int layer, int number,
 		return 0;
 	}else if(layer == SOL_SOCKET && number == SO_KEEPALIVE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_KEEPALIVE is unimplemented\e[39m" << frg::endlog;
+		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_REUSEADDR) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_REUSEADDR is unimplemented\e[39m" << frg::endlog;
 		return 0;
 	}else if(layer == AF_NETLINK && number == SO_ACCEPTCONN) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with AF_NETLINK and SO_ACCEPTCONN is unimplemented\e[39m" << frg::endlog;
