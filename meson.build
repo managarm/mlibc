@@ -282,8 +282,7 @@ if not headers_only
 				dependencies: libc_deps,
 				link_with: [ldso_lib],
 				link_whole: libc_sublibs,
-				install: true,
-				pic: true)
+				install: true)
 
 		shared_library('dl', 'libdl/src/dummy.cpp', install: true)
 		shared_library('pthread', 'libpthread/src/dummy.cpp', install: true)
