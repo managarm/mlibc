@@ -180,7 +180,7 @@ configure_file(input: 'internal-config.h.in',
 configure_file(input: 'mlibc-config.h.in',
 	output: 'mlibc-config.h',
 	configuration: mlibc_conf,
-	install: true,
+	install: not no_headers,
 	install_dir: get_option('includedir'))
 
 internal_sources = [
