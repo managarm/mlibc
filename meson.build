@@ -31,6 +31,7 @@ disable_linux_headers = get_option('disable_linux_headers_option')
 disable_iconv_option = get_option('disable_iconv_option')
 disable_intl_option = get_option('disable_intl_option')
 disable_glibc_option = get_option('disable_glibc_option')
+disable_crypt_option = get_option('disable_crypt_option')
 internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
@@ -136,6 +137,7 @@ mlibc_conf.set('__MLIBC_LINUX_OPTION', not disable_linux_option)
 mlibc_conf.set('__MLIBC_INTL_OPTION', not disable_intl_option)
 mlibc_conf.set('__MLIBC_ICONV_OPTION', not disable_iconv_option)
 mlibc_conf.set('__MLIBC_GLIBC_OPTION', not disable_glibc_option)
+mlibc_conf.set('__MLIBC_CRYPT_OPTION', not disable_crypt_option)
 
 if not disable_ansi_option
 	rtdl_include_dirs += include_directories('options/ansi/include')
@@ -164,6 +166,10 @@ endif
 if not disable_glibc_option
 	rtdl_include_dirs += include_directories('options/glibc/include')
 	libc_include_dirs += include_directories('options/glibc/include')
+endif
+
+if not disable_crypt_option
+	libc_include_dirs += include_directories('options/crypt/include')
 endif
 
 rtdl_include_dirs += include_directories('options/linux-headers/include')
@@ -255,6 +261,7 @@ subdir('options/linux')
 subdir('options/linux-headers')
 subdir('options/iconv')
 subdir('options/intl')
+subdir('options/crypt')
 
 if not headers_only
 	if not static
@@ -291,7 +298,9 @@ if not headers_only
 		shared_library('rt', 'librt/src/dummy.cpp', install: true)
 		shared_library('util', 'libutil/src/dummy.cpp', install: true)
 		shared_library('m', 'libm/src/dummy.cpp', install: true)
-		shared_library('crypt', 'libcrypt/src/dummy.cpp', install: true)
+		if not disable_crypt_option
+			shared_library('crypt', 'libcrypt/src/dummy.cpp', install: true)
+		endif
 		shared_library('resolv', 'libresolv/src/dummy.cpp', install: true)
 	else
 		ldso_lib = static_library('ld', rtdl_sources,
@@ -320,7 +329,9 @@ if not headers_only
 		static_library('rt', 'librt/src/dummy.cpp', install: true)
 		static_library('util', 'libutil/src/dummy.cpp', install: true)
 		static_library('m', 'libm/src/dummy.cpp', install: true)
-		static_library('crypt', 'libcrypt/src/dummy.cpp', install: true)
+		if not disable_crypt_option
+			static_library('crypt', 'libcrypt/src/dummy.cpp', install: true)
+		endif
 		static_library('resolv', 'libresolv/src/dummy.cpp', install: true)
 	endif
 endif

@@ -82,11 +82,6 @@ void _exit(int status) {
 	mlibc::sys_exit(status);
 }
 
-void encrypt(char[64], int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
 int execl(const char *path, const char *arg0, ...) {
 	// TODO: It's a stupid idea to limit the number of arguments here.
 	char *argv[16];
@@ -777,6 +772,12 @@ unsigned long sysconf(int number) {
 		case _SC_LINE_MAX:
 			// Linux defines it as 2048.
 			return 2048;
+		case _SC_XOPEN_CRYPT:
+#ifdef __MLIBC_CRYPT_OPTION
+			return _XOPEN_CRYPT;
+#else
+			return -1;
+#endif
 		default:
 			mlibc::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented, number: " << number << "\e[39m" << frg::endlog;
 			__builtin_unreachable();
@@ -1180,3 +1181,10 @@ int daemon(int, int) {
 char *ctermid(char *s) {
 	return s ? strcpy(s, "/dev/tty") : const_cast<char *>("/dev/tty");
 }
+
+#ifdef __MLIBC_CRYPT_OPTION
+void encrypt(char[64], int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+#endif
