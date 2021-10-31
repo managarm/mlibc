@@ -28,6 +28,10 @@ extern "C" {
 #define _POSIX_THREADS _POSIX_VERSION
 #define _POSIX_THREAD_SAFE_FUNCTIONS _POSIX_VERSION
 
+#ifdef __MLIBC_CRYPT_OPTION
+#define _XOPEN_CRYPT 1
+#endif
+
 // MISSING: additional _POSIX and _XOPEN feature macros
 // MISSING: _POSIX_TIMESTAMP_RESOLUTION and _POSIX2_SYMLINKS
 
@@ -115,6 +119,7 @@ extern "C" {
 #define _SC_JOB_CONTROL 13
 #define _SC_HOST_NAME_MAX 14
 #define _SC_LINE_MAX 15
+#define _SC_XOPEN_CRYPT 16
 
 #define STDERR_FILENO 2
 #define STDIN_FILENO 0
@@ -132,12 +137,10 @@ int chdir(const char *path);
 int chown(const char *path, uid_t uid, gid_t gid);
 int close(int fd);
 ssize_t confstr(int, char *, size_t);
-char *crypt(const char *, const char *);
 char *ctermid(char *s);
 int dup(int fd);
 int dup2(int src_fd, int dest_fd);
 __attribute__ ((noreturn)) void _exit(int status);
-void encrypt(char block[64], int flags);
 void endusershell(void);
 int execl(const char *, const char *, ...);
 int execle(const char *, const char *, ...);
@@ -236,6 +239,12 @@ pid_t gettid(void);
 int getentropy(void *, size_t);
 
 int pipe2(int *pipefd, int flags);
+
+// Glibc doesn't provide them by default anymore, lock behind an option
+#ifdef __MLIBC_CRYPT_OPTION
+char *crypt(const char *, const char *);
+void encrypt(char block[64], int flags);
+#endif
 
 #ifdef __cplusplus
 }

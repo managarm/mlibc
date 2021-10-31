@@ -50,7 +50,6 @@ libc_sources += files(
 	'generic/utime-stubs.cpp',
 	'generic/ucontext-stubs.cpp',
 	'generic/semaphore-stubs.cpp',
-	'generic/crypt-stubs.cpp',
 	'generic/search.cpp',
 	'generic/sys-msg.cpp',
 	'generic/sys-sem.cpp',
@@ -86,7 +85,6 @@ if not no_headers
 		'include/utime.h',
 		'include/ucontext.h',
 		'include/semaphore.h',
-		'include/crypt.h',
 	)
 	install_headers(
 		'include/arpa/inet.h',
