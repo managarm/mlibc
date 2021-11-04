@@ -19,7 +19,9 @@ if not no_headers
 		'include/endian.h',
 		'include/ar.h',
 		'include/shadow.h',
-		'include/memory.h'
+		'include/memory.h',
+		'include/printf.h',
+		'include/gshadow.h'
 	)
 	install_headers(
 		'include/sys/ioctl.h',
