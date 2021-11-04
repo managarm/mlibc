@@ -35,6 +35,7 @@ if not no_headers
 		'include/linux/if_ether.h',
 		'include/linux/if_infiniband.h',
 		'include/linux/if_packet.h',
+		'include/linux/genetlink.h',
 		subdir: 'linux'
 	)
 	install_headers(

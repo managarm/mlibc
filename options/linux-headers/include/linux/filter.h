@@ -6,6 +6,8 @@
 extern "C" {
 #endif __cplusplus
 
+#include <stdint.h>
+
 #include <linux/bpf_common.h>
 
 struct sock_filter {
