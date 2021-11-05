@@ -18,6 +18,14 @@ struct br_port_msg {
 	uint32_t ifindex;
 };
 
+enum {
+	MDBA_SET_ENTRY_UNSPEC,
+	MDBA_SET_ENTRY,
+	MDBA_SET_ENTRY_ATTRS,
+	__MDBA_SET_ENTRY_MAX,
+};
+#define MDBA_SET_ENTRY_MAX (__MDBA_SET_ENTRY_MAX - 1)
+
 #ifdef __cplusplus
 }
 #endif

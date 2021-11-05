@@ -1,6 +1,10 @@
 #ifndef _LINUX_IF_ADDRLABEL_H
 #define _LINUX_IF_ADDRLABEL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <linux/types.h>
 
 struct ifaddrlblmsg {
@@ -19,5 +23,9 @@ enum {
 };
 
 #define IFAL_MAX        (__IFAL_MAX - 1)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
