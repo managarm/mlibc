@@ -70,6 +70,7 @@ struct mmsghdr {
 #define SO_ATTACH_FILTER 19
 #define SO_PASSCRED 20
 #define SO_RCVBUFFORCE 21
+#define SO_DETACH_FILTER 22
 
 #define SOMAXCONN 1
 
