@@ -19,6 +19,8 @@ int strcoll_l(const char *s1, const char *s2, locale_t locale);
 
 // GNU extensions.
 char *strcasestr(const char *, const char *);
+char *strdupa(const char *);
+char *strndupa(const char *, size_t);
 void *memrchr(const void *, int, size_t);
 
 #ifdef __cplusplus
