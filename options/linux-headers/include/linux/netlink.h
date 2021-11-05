@@ -13,6 +13,7 @@ extern "C" {
 #define NETLINK_FIREWALL 3
 #define NETLINK_IP6_FW 13
 #define NETLINK_KOBJECT_UEVENT 15
+#define NETLINK_GENERIC 16
 
 struct sockaddr_nl {
 	sa_family_t nl_family;
@@ -30,10 +31,15 @@ struct nlmsghdr {
 };
 
 #define NLM_F_REQUEST	0x01
+#define NLM_F_MULTI		0x02
+#define NLM_F_ACK		0x04
 
 #define NLM_F_ROOT	0x100
 #define NLM_F_MATCH	0x200
 #define NLM_F_DUMP	(NLM_F_ROOT|NLM_F_MATCH)
+
+#define NLM_F_CAPPED    0x100
+#define NLM_F_ACK_TLVS  0x200
 
 #define NLMSG_ALIGNTO		4U
 #define NLMSG_ALIGN(len) 	(((len) + NLMSG_ALIGNTO - 1) & ~(NLMSG_ALIGNTO - 1))
@@ -48,13 +54,28 @@ struct nlmsghdr {
 			   (nlh)->nlmsg_len <= (len))
 #define NLMSG_PAYLOAD(nlh,len) ((nlh)->nlmsg_len - NLMSG_SPACE((len)))
 
+#define NLMSG_NOOP		0x1
 #define NLMSG_ERROR		0x2
 #define NLMSG_DONE		0x3
+#define NLMSG_OVERRUN	0x4
 
 struct nlmsgerr {
 	int		error;
 	struct nlmsghdr msg;
 };
+
+#define NETLINK_ADD_MEMBERSHIP			1
+#define NETLINK_DROP_MEMBERSHIP			2
+#define NETLINK_PKTINFO					3
+#define NETLINK_LIST_MEMBERSHIPS		9
+
+struct nl_pktinfo {
+	uint32_t group;
+};
+
+#define NLA_F_NESTED            (1 << 15)
+#define NLA_F_NET_BYTEORDER     (1 << 14)
+#define NLA_TYPE_MASK           ~(NLA_F_NESTED | NLA_F_NET_BYTEORDER)
 
 #ifdef __cplusplus
 }
