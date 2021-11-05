@@ -6,6 +6,7 @@ libc_sources += files(
 	'generic/err.cpp',
 	'generic/resolv-stubs.cpp',
 	'generic/shadow-stubs.cpp',
+	'generic/printf.cpp',
 )
 
 if not no_headers
