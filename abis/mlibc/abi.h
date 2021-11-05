@@ -9,18 +9,20 @@
 #define __MLIBC_O_SEARCH 4
 #define __MLIBC_O_WRONLY 5
 // all remaining flags get their own bit
-#define __MLIBC_O_APPEND 0x0008
-#define __MLIBC_O_CREAT 0x0010
-#define __MLIBC_O_DIRECTORY 0x0020
-#define __MLIBC_O_EXCL 0x0040
-#define __MLIBC_O_NOCTTY 0x0080
-#define __MLIBC_O_NOFOLLOW 0x0100
-#define __MLIBC_O_TRUNC 0x0200
-#define __MLIBC_O_NONBLOCK 0x0400
-#define __MLIBC_O_DSYNC 0x0800
-#define __MLIBC_O_RSYNC 0x1000
-#define __MLIBC_O_SYNC 0x2000
-#define __MLIBC_O_CLOEXEC 0x4000
-#define __MLIBC_O_PATH 0x8000
+#define __MLIBC_O_APPEND 0x00008
+#define __MLIBC_O_CREAT 0x00010
+#define __MLIBC_O_DIRECTORY 0x00020
+#define __MLIBC_O_EXCL 0x00040
+#define __MLIBC_O_NOCTTY 0x00080
+#define __MLIBC_O_NOFOLLOW 0x00100
+#define __MLIBC_O_TRUNC 0x00200
+#define __MLIBC_O_NONBLOCK 0x00400
+#define __MLIBC_O_DSYNC 0x00800
+#define __MLIBC_O_RSYNC 0x01000
+#define __MLIBC_O_SYNC 0x02000
+#define __MLIBC_O_CLOEXEC 0x04000
+#define __MLIBC_O_PATH 0x08000
+#define __MLIBC_O_LARGEFILE 0x10000
+#define __MLIBC_O_NOATIME 0x20000
 
 #endif // _ABIBITS_ABI_H
