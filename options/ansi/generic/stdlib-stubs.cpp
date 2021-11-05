@@ -378,6 +378,13 @@ void qsort(void *base, size_t count, size_t size,
 	}
 }
 
+void qsort_r(void *, size_t, size_t,
+		int (*compar)(const void *, const void *, void *),
+		void *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 int abs(int num) {
 	return num < 0 ? -num : num;
 }
