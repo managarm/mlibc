@@ -46,6 +46,8 @@ if not no_headers
 		'include/linux/if_bridge.h',
 		'include/linux/if_tunnel.h',
 		'include/linux/l2tp.h',
+		'include/linux/pkt_sched.h',
+		'include/linux/veth.h',
 		subdir: 'linux'
 	)
 	install_headers(
