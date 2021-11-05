@@ -39,6 +39,9 @@ if not no_headers
 		'include/linux/neighbour.h',
 		'include/linux/keyctl.h',
 		'include/linux/if_arp.h',
+		'include/linux/if_addrlabel.h',
+		'include/linux/if_link.h',
+		'include/linux/ip.h',
 		subdir: 'linux'
 	)
 	install_headers(
