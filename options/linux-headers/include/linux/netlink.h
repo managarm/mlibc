@@ -76,6 +76,8 @@ struct nlmsgerr {
 #define NETLINK_DROP_MEMBERSHIP			2
 #define NETLINK_PKTINFO					3
 #define NETLINK_LIST_MEMBERSHIPS		9
+#define NETLINK_EXT_ACK                 11
+#define NETLINK_GET_STRICT_CHK          12
 
 struct nl_pktinfo {
 	unsigned int group;

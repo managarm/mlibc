@@ -143,6 +143,16 @@ enum {
 
 #define RTN_MAX (__RTN_MAX - 1)
 
+#define RTPROT_UNSPEC 0
+
+enum rt_scope_t {
+	RT_SCOPE_UNIVERSE = 0,
+	RT_SCOPE_SITE = 200,
+	RT_SCOPE_LINK = 253,
+	RT_SCOPE_HOST = 254,
+	RT_SCOPE_NOWHERE = 255
+};
+
 enum rtattr_type_t {
 	RTA_UNSPEC,
 	RTA_DST,
@@ -188,6 +198,15 @@ struct rtnexthop {
 	unsigned char	rtnh_hops;
 	int				rtnh_ifindex;
 };
+
+#define RTNH_ALIGNTO    4
+#define RTNH_ALIGN(len) ( ((len)+RTNH_ALIGNTO-1) & ~(RTNH_ALIGNTO-1) )
+#define RTNH_OK(rtnh,len) ((rtnh)->rtnh_len >= sizeof(struct rtnexthop) && \
+                           ((int)(rtnh)->rtnh_len) <= (len))
+#define RTNH_NEXT(rtnh) ((struct rtnexthop*)(((char*)(rtnh)) + RTNH_ALIGN((rtnh)->rtnh_len)))
+#define RTNH_LENGTH(len) (RTNH_ALIGN(sizeof(struct rtnexthop)) + (len))
+#define RTNH_SPACE(len) RTNH_ALIGN(RTNH_LENGTH(len))
+#define RTNH_DATA(rtnh)   ((struct rtattr*)(((char*)(rtnh)) + RTNH_LENGTH(0)))
 
 struct rtgenmsg {
 	unsigned char		rtgen_family;
