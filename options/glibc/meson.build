@@ -29,7 +29,8 @@ if not no_headers
 	)
 	install_headers(
 		'include/netinet/in_systm.h',
-		subdir: 'netinet'
+		'include/net/ethernet.h',
+		subdir: 'net'
 	)
 endif
 
