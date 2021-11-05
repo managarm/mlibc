@@ -12,6 +12,10 @@
 #define ETH_MIN_MTU 68
 #define ETH_MAX_MTU 0xFFFFU
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct ethhdr {
 	unsigned char h_dest[ETH_ALEN];
 	unsigned char h_source[ETH_ALEN];
@@ -19,5 +23,9 @@ struct ethhdr {
 	// __be16 h_proto;
 	uint16_t h_proto;
 } __attribute__((packed));
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

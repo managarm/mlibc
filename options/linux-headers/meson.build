@@ -36,6 +36,9 @@ if not no_headers
 		'include/linux/if_infiniband.h',
 		'include/linux/if_packet.h',
 		'include/linux/genetlink.h',
+		'include/linux/neighbour.h',
+		'include/linux/keyctl.h',
+		'include/linux/if_arp.h',
 		subdir: 'linux'
 	)
 	install_headers(
