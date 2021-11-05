@@ -19,9 +19,7 @@ extern "C" {
 struct ethhdr {
 	unsigned char h_dest[ETH_ALEN];
 	unsigned char h_source[ETH_ALEN];
-	// What is __be16?
-	// __be16 h_proto;
-	uint16_t h_proto;
+	unsigned short h_proto;
 } __attribute__((packed));
 
 #ifdef __cplusplus

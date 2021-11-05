@@ -3,7 +3,7 @@
 
 struct sockaddr_ll {
 	unsigned short sll_family;
-	uint16_t sll_protocol;
+	unsigned short sll_protocol;
 	int sll_ifindex;
 	unsigned short sll_hatype;
 	unsigned char sll_pkttype;

@@ -19,6 +19,9 @@ extern "C" {
 #define TMPFS_MAGIC 0x01021994
 #define USBDEVICE_SUPER_MAGIC 0x9fa2
 
+/* Other file systems */
+#define BTRFS_SUPER_MAGIC 0x9123683E
+
 #ifdef __cplusplus
 }
 #endif

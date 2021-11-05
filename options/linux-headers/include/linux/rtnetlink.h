@@ -2,6 +2,8 @@
 #define _RTNETLINK_H
 
 #include <linux/netlink.h>
+#include <linux/if_addr.h>
+#include <linux/if_link.h>
 
 // Missing some defines here, but they weren't needed yet
 enum {
@@ -107,6 +109,7 @@ struct rtattr {
 #define RTA_LENGTH(len)	(RTA_ALIGN(sizeof(struct rtattr)) + (len))
 #define RTA_SPACE(len)	RTA_ALIGN(RTA_LENGTH(len))
 #define RTA_DATA(rta)   ((void*)(((char*)(rta)) + RTA_LENGTH(0)))
+#define RTA_PAYLOAD(rta) ((int)((rta)->rta_len) - RTA_LENGTH(0))
 
 struct rtmsg {
 	unsigned char		rtm_family;
@@ -179,8 +182,189 @@ enum rtattr_type_t {
 
 #define RTM_RTA(r)  ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct rtmsg))))
 
+struct rtnexthop {
+	unsigned short	rtnh_len;
+	unsigned char	rtnh_flags;
+	unsigned char	rtnh_hops;
+	int				rtnh_ifindex;
+};
+
 struct rtgenmsg {
 	unsigned char		rtgen_family;
 };
+
+struct ifinfomsg {
+	unsigned char	ifi_family;
+	unsigned char	__ifi_pad;
+	unsigned short	ifi_type;
+	int				ifi_index;
+	unsigned		ifi_flags;
+	unsigned		ifi_change;
+};
+
+struct tcmsg {
+	unsigned char	tcm_family;
+	unsigned char	tcm__pad1;
+	unsigned short	tcm__pad2;
+	int				tcm_ifindex;
+	uint32_t		tcm_handle;
+	uint32_t		tcm_parent;
+#define tcm_block_index tcm_parent
+	uint32_t		tcm_info;
+};
+
+#define TCM_IFINDEX_MAGIC_BLOCK (0xFFFFFFFFU)
+
+enum {
+	TCA_UNSPEC,
+	TCA_KIND,
+	TCA_OPTIONS,
+	TCA_STATS,
+	TCA_XSTATS,
+	TCA_RATE,
+	TCA_FCNT,
+	TCA_STATS2,
+	TCA_STAB,
+	TCA_PAD,
+	TCA_DUMP_INVISIBLE,
+	TCA_CHAIN,
+	TCA_HW_OFFLOAD,
+	TCA_INGRESS_BLOCK,
+	TCA_EGRESS_BLOCK,
+	TCA_DUMP_FLAGS,
+	__TCA_MAX
+};
+
+struct rta_cacheinfo {
+	uint32_t   rta_clntref;
+	uint32_t   rta_lastuse;
+	int32_t   rta_expires;
+	uint32_t   rta_error;
+	uint32_t   rta_used;
+#define RTNETLINK_HAVE_PEERINFO 1
+	uint32_t   rta_id;
+	uint32_t   rta_ts;
+	uint32_t   rta_tsage;
+};
+
+enum {
+	RTAX_UNSPEC,
+#define RTAX_UNSPEC RTAX_UNSPEC
+	RTAX_LOCK,
+#define RTAX_LOCK RTAX_LOCK
+	RTAX_MTU,
+#define RTAX_MTU RTAX_MTU
+	RTAX_WINDOW,
+#define RTAX_WINDOW RTAX_WINDOW
+	RTAX_RTT,
+#define RTAX_RTT RTAX_RTT
+	RTAX_RTTVAR,
+#define RTAX_RTTVAR RTAX_RTTVAR
+	RTAX_SSTHRESH,
+#define RTAX_SSTHRESH RTAX_SSTHRESH
+	RTAX_CWND,
+#define RTAX_CWND RTAX_CWND
+	RTAX_ADVMSS,
+#define RTAX_ADVMSS RTAX_ADVMSS
+	RTAX_REORDERING,
+#define RTAX_REORDERING RTAX_REORDERING
+	RTAX_HOPLIMIT,
+#define RTAX_HOPLIMIT RTAX_HOPLIMIT
+	RTAX_INITCWND,
+#define RTAX_INITCWND RTAX_INITCWND
+	RTAX_FEATURES,
+#define RTAX_FEATURES RTAX_FEATURES
+	RTAX_RTO_MIN,
+#define RTAX_RTO_MIN RTAX_RTO_MIN
+	RTAX_INITRWND,
+#define RTAX_INITRWND RTAX_INITRWND
+	RTAX_QUICKACK,
+#define RTAX_QUICKACK RTAX_QUICKACK
+	RTAX_CC_ALGO,
+#define RTAX_CC_ALGO RTAX_CC_ALGO
+	RTAX_FASTOPEN_NO_COOKIE,
+#define RTAX_FASTOPEN_NO_COOKIE RTAX_FASTOPEN_NO_COOKIE
+	__RTAX_MAX
+};
+
+#define RTAX_MAX (__RTAX_MAX - 1)
+
+#define TCA_MAX (__TCA_MAX - 1)
+
+#define TCA_DUMP_FLAGS_TERSE (1 << 0)
+
+#define TCA_RTA(r)  ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct tcmsg))))
+#define TCA_PAYLOAD(n) NLMSG_PAYLOAD(n,sizeof(struct tcmsg))
+
+enum rtnetlink_groups {
+	RTNLGRP_NONE,
+#define RTNLGRP_NONE            RTNLGRP_NONE
+	RTNLGRP_LINK,
+#define RTNLGRP_LINK            RTNLGRP_LINK
+	RTNLGRP_NOTIFY,
+#define RTNLGRP_NOTIFY          RTNLGRP_NOTIFY
+	RTNLGRP_NEIGH,
+#define RTNLGRP_NEIGH           RTNLGRP_NEIGH
+	RTNLGRP_TC,
+#define RTNLGRP_TC              RTNLGRP_TC
+	RTNLGRP_IPV4_IFADDR,
+#define RTNLGRP_IPV4_IFADDR     RTNLGRP_IPV4_IFADDR
+	RTNLGRP_IPV4_MROUTE,
+#define RTNLGRP_IPV4_MROUTE     RTNLGRP_IPV4_MROUTE
+	RTNLGRP_IPV4_ROUTE,
+#define RTNLGRP_IPV4_ROUTE      RTNLGRP_IPV4_ROUTE
+	RTNLGRP_IPV4_RULE,
+#define RTNLGRP_IPV4_RULE       RTNLGRP_IPV4_RULE
+	RTNLGRP_IPV6_IFADDR,
+#define RTNLGRP_IPV6_IFADDR     RTNLGRP_IPV6_IFADDR
+	RTNLGRP_IPV6_MROUTE,
+#define RTNLGRP_IPV6_MROUTE     RTNLGRP_IPV6_MROUTE
+	RTNLGRP_IPV6_ROUTE,
+#define RTNLGRP_IPV6_ROUTE      RTNLGRP_IPV6_ROUTE
+	RTNLGRP_IPV6_IFINFO,
+#define RTNLGRP_IPV6_IFINFO     RTNLGRP_IPV6_IFINFO
+	RTNLGRP_DECnet_IFADDR,
+#define RTNLGRP_DECnet_IFADDR   RTNLGRP_DECnet_IFADDR
+	RTNLGRP_NOP2,
+	RTNLGRP_DECnet_ROUTE,
+#define RTNLGRP_DECnet_ROUTE    RTNLGRP_DECnet_ROUTE
+	RTNLGRP_DECnet_RULE,
+#define RTNLGRP_DECnet_RULE     RTNLGRP_DECnet_RULE
+	RTNLGRP_NOP4,
+	RTNLGRP_IPV6_PREFIX,
+#define RTNLGRP_IPV6_PREFIX     RTNLGRP_IPV6_PREFIX
+	RTNLGRP_IPV6_RULE,
+#define RTNLGRP_IPV6_RULE       RTNLGRP_IPV6_RULE
+	RTNLGRP_ND_USEROPT,
+#define RTNLGRP_ND_USEROPT      RTNLGRP_ND_USEROPT
+	RTNLGRP_PHONET_IFADDR,
+#define RTNLGRP_PHONET_IFADDR   RTNLGRP_PHONET_IFADDR
+	RTNLGRP_PHONET_ROUTE,
+#define RTNLGRP_PHONET_ROUTE    RTNLGRP_PHONET_ROUTE
+	RTNLGRP_DCB,
+#define RTNLGRP_DCB             RTNLGRP_DCB
+	RTNLGRP_IPV4_NETCONF,
+#define RTNLGRP_IPV4_NETCONF    RTNLGRP_IPV4_NETCONF
+	RTNLGRP_IPV6_NETCONF,
+#define RTNLGRP_IPV6_NETCONF    RTNLGRP_IPV6_NETCONF
+	RTNLGRP_MDB,
+#define RTNLGRP_MDB             RTNLGRP_MDB
+	RTNLGRP_MPLS_ROUTE,
+#define RTNLGRP_MPLS_ROUTE      RTNLGRP_MPLS_ROUTE
+	RTNLGRP_NSID,
+#define RTNLGRP_NSID            RTNLGRP_NSID
+	RTNLGRP_MPLS_NETCONF,
+#define RTNLGRP_MPLS_NETCONF    RTNLGRP_MPLS_NETCONF
+	RTNLGRP_IPV4_MROUTE_R,
+#define RTNLGRP_IPV4_MROUTE_R   RTNLGRP_IPV4_MROUTE_R
+	RTNLGRP_IPV6_MROUTE_R,
+#define RTNLGRP_IPV6_MROUTE_R   RTNLGRP_IPV6_MROUTE_R
+	RTNLGRP_NEXTHOP,
+#define RTNLGRP_NEXTHOP         RTNLGRP_NEXTHOP
+	RTNLGRP_BRVLAN,
+#define RTNLGRP_BRVLAN          RTNLGRP_BRVLAN
+	__RTNLGRP_MAX
+};
+#define RTNLGRP_MAX     (__RTNLGRP_MAX - 1)
 
 #endif // _RTNETLINK_H

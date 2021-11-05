@@ -105,18 +105,11 @@ extern "C" {
 #endif
 
 struct arphdr {
-	// __be16          ar_hrd;
-	// __be16          ar_pro;
-	// unsigned char   ar_hln;
-	// unsigned char   ar_pln;
-	// __be16          ar_op;
-	// Missing __be16 memes
-	uint16_t ar_hrd;
-	uint16_t ar_pro;
+	unsigned short ar_hrd;
+	unsigned short ar_pro;
 	unsigned char ar_hln;
 	unsigned char ar_pln;
-	uint16_t ar_op;
-
+	unsigned short ar_op;
 };
 
 #ifdef __cplusplus
