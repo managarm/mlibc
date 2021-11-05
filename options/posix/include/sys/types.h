@@ -29,6 +29,7 @@ typedef unsigned int u_int;
 typedef unsigned char u_char;
 typedef unsigned short u_short;
 typedef char *caddr_t;
+typedef off64_t loff_t;
 
 #endif // _SYS_TYPES_H
 
