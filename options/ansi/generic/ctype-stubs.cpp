@@ -255,44 +255,31 @@ wctype_t wctype(const char *cs) {
 }
 
 // Taken from musl. See musl for the license/copyright!
-#define WCTYPE_ALNUM  1
-#define WCTYPE_ALPHA  2
-#define WCTYPE_BLANK  3
-#define WCTYPE_CNTRL  4
-#define WCTYPE_DIGIT  5
-#define WCTYPE_GRAPH  6
-#define WCTYPE_LOWER  7
-#define WCTYPE_PRINT  8
-#define WCTYPE_PUNCT  9
-#define WCTYPE_SPACE  10
-#define WCTYPE_UPPER  11
-#define WCTYPE_XDIGIT 12
-
 int iswctype(wint_t wc, wctype_t type) {
 	switch (type) {
-	case WCTYPE_ALNUM:
+	case ct_alnum:
 		return iswalnum(wc);
-	case WCTYPE_ALPHA:
+	case ct_alpha:
 		return iswalpha(wc);
-	case WCTYPE_BLANK:
+	case ct_blank:
 		return iswblank(wc);
-	case WCTYPE_CNTRL:
+	case ct_cntrl:
 		return iswcntrl(wc);
-	case WCTYPE_DIGIT:
+	case ct_digit:
 		return iswdigit(wc);
-	case WCTYPE_GRAPH:
+	case ct_graph:
 		return iswgraph(wc);
-	case WCTYPE_LOWER:
+	case ct_lower:
 		return iswlower(wc);
-	case WCTYPE_PRINT:
+	case ct_print:
 		return iswprint(wc);
-	case WCTYPE_PUNCT:
+	case ct_punct:
 		return iswpunct(wc);
-	case WCTYPE_SPACE:
+	case ct_space:
 		return iswspace(wc);
-	case WCTYPE_UPPER:
+	case ct_upper:
 		return iswupper(wc);
-	case WCTYPE_XDIGIT:
+	case ct_xdigit:
 		return iswxdigit(wc);
 	}
 	return 0;
