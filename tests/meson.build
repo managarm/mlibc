@@ -14,7 +14,8 @@ ansi_test_cases = [
 	'wmemcmp',
 	'time',
 	'wcsdup',
-	'wcsncasecmp'
+	'wcsncasecmp',
+	'fopen'
 ]
 
 bsd_test_cases = [
