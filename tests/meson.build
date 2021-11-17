@@ -10,7 +10,8 @@ ansi_test_cases = [
 	'strchr',
 	'strrchr',
 	'wcsrtombs',
-	'wmemcmp'
+	'wmemcmp',
+	'time'
 ]
 
 posix_test_cases = [
