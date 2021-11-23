@@ -337,6 +337,19 @@ int gethostname(char *buffer, size_t bufsize) {
 	return 0;
 }
 
+int sethostname(const char *buffer, size_t bufsize) {
+	if(!mlibc::sys_sethostname) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(auto e = mlibc::sys_sethostname(buffer, bufsize); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
+}
+
 // Code taken from musl
 char *getlogin(void) {
 	return getenv("LOGNAME");
