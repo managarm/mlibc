@@ -575,7 +575,7 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
                         break;
                 }
                 if (typed_dest)
-                    typed_dest[count + 1] = '\0';
+                    typed_dest[count] = '\0';
                 break;
             }
             case 'c': {
@@ -626,7 +626,7 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
                 char *typed_dest = (char *)dest;
                 int count = 0;
                 char c = handler.look_ahead();
-                while (c && count < width) {
+                while (c && (!width || count < width)) {
                     handler.consume();
                     if (!scanset[1 + c])
                         break;
