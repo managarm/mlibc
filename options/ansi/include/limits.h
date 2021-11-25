@@ -34,6 +34,8 @@
 
 // This value is a guaranteed minimum, get the current maximum from sysconf
 #define NGROUPS_MAX 8
+// POSIX states 9 is the minimum for NL_ARGMAX
+#define NL_ARGMAX 9
 
 #if INTPTR_MAX == INT64_MAX
 # define SSIZE_MAX LONG_MAX

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include <ctype.h>
+#include <limits.h>
 
 #include <bits/ensure.h>
 
@@ -714,6 +715,8 @@ int sscanf(const char *__restrict buffer, const char *__restrict format, ...) {
 
 int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
 	frg::va_struct vs;
+	frg::arg arg_list[NL_ARGMAX + 1];
+	vs.arg_list = arg_list;
 	va_copy(vs.args, args);
 	auto file = static_cast<mlibc::abstract_file *>(stream);
 	frg::unique_lock<FutexLock> lock(file->_lock);
@@ -768,6 +771,8 @@ int vscanf(const char *__restrict, __gnuc_va_list) {
 int vsnprintf(char *__restrict buffer, size_t max_size,
 		const char *__restrict format, __gnuc_va_list args) {
 	frg::va_struct vs;
+	frg::arg arg_list[NL_ARGMAX + 1];
+	vs.arg_list = arg_list;
 	va_copy(vs.args, args);
 	LimitedPrinter p{buffer, max_size ? max_size - 1 : 0};
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
@@ -781,6 +786,8 @@ int vsnprintf(char *__restrict buffer, size_t max_size,
 
 int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_list args) {
 	frg::va_struct vs;
+	frg::arg arg_list[NL_ARGMAX + 1];
+	vs.arg_list = arg_list;
 	va_copy(vs.args, args);
 	BufferPrinter p(buffer);
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
@@ -1095,6 +1102,8 @@ int asprintf(char **out, const char *format, ...) {
 
 int vasprintf(char **out, const char *format, __gnuc_va_list args) {
 	frg::va_struct vs;
+	frg::arg arg_list[NL_ARGMAX + 1];
+	vs.arg_list = arg_list;
 	va_copy(vs.args, args);
 	ResizePrinter p;
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
