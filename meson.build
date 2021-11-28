@@ -32,6 +32,7 @@ disable_iconv_option = get_option('disable_iconv_option')
 disable_intl_option = get_option('disable_intl_option')
 disable_glibc_option = get_option('disable_glibc_option')
 disable_crypt_option = get_option('disable_crypt_option')
+disable_bsd_option = get_option('disable_bsd_option')
 internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
@@ -142,6 +143,7 @@ mlibc_conf.set('__MLIBC_INTL_OPTION', not disable_intl_option)
 mlibc_conf.set('__MLIBC_ICONV_OPTION', not disable_iconv_option)
 mlibc_conf.set('__MLIBC_GLIBC_OPTION', not disable_glibc_option)
 mlibc_conf.set('__MLIBC_CRYPT_OPTION', not disable_crypt_option)
+mlibc_conf.set('__MLIBC_BSD_OPTION', not disable_bsd_option)
 
 if not disable_ansi_option
 	rtdl_include_dirs += include_directories('options/ansi/include')
@@ -174,6 +176,10 @@ endif
 
 if not disable_crypt_option
 	libc_include_dirs += include_directories('options/crypt/include')
+endif
+
+if not disable_bsd_option
+	libc_include_dirs += include_directories('options/bsd/include')
 endif
 
 rtdl_include_dirs += include_directories('options/linux-headers/include')
@@ -266,6 +272,7 @@ subdir('options/linux-headers')
 subdir('options/iconv')
 subdir('options/intl')
 subdir('options/crypt')
+subdir('options/bsd')
 
 if not headers_only
 	if not static
