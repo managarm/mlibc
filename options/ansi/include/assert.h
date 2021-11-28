@@ -30,5 +30,7 @@ void __assert_fail(const char *assertion, const char *file, unsigned int line,
 
 #endif // NDEBUG
 
-// MISSING: static_assert
-
+#ifndef __cplusplus
+#undef static_assert
+#define static_assert _Static_assert
+#endif
