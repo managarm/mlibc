@@ -326,7 +326,7 @@ int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *old
 }
 #endif
 
-int sys_futex_wait(int *pointer, int expected) {
+int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
     int ret;
     int sys_errno;
     asm volatile ("syscall"
