@@ -14,7 +14,7 @@ int sys_futex_tid(){
 	return syscall(SYS_GETTID);
 }
 
-int sys_futex_wait(int *pointer, int expected){
+int sys_futex_wait(int *pointer, int expected, const struct timespec *time){
 	return syscall(SYS_FUTEX_WAIT, pointer, expected);
 }
 
