@@ -449,8 +449,8 @@ void sys_exit(int status) {
 #define FUTEX_WAIT 0
 #define FUTEX_WAKE 1
 
-int sys_futex_wait(int *pointer, int expected) {
-	auto ret = do_cp_syscall(NR_sys_futex, pointer, FUTEX_WAIT, expected, nullptr);
+int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
+	auto ret = do_cp_syscall(NR_sys_futex, pointer, FUTEX_WAIT, expected, time);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
