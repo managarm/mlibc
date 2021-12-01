@@ -20,6 +20,7 @@
 #include <sys/resource.h>
 #include <sys/select.h>
 #include <sys/statvfs.h>
+#include <sys/statfs.h>
 #include <termios.h>
 #include <time.h>
 #include <ucontext.h>
@@ -29,7 +30,7 @@ namespace [[gnu::visibility("hidden")]] mlibc {
 void sys_libc_log(const char *message);
 [[noreturn]] void sys_libc_panic();
 
-int sys_futex_wait(int *pointer, int expected);
+int sys_futex_wait(int *pointer, int expected, const struct timespec *time);
 int sys_futex_wake(int *pointer);
 
 [[noreturn]] void sys_exit(int status);
@@ -165,6 +166,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags);
 [[gnu::weak]] int sys_sigaltstack(const stack_t *ss, stack_t *oss);
 [[gnu::weak]] int sys_sigsuspend(const sigset_t *set);
+[[gnu::weak]] int sys_setgroups(size_t size, const gid_t *list);
+[[gnu::weak]] int sys_statfs(const char *path, struct statfs *buf);
 
 } //namespace mlibc
 

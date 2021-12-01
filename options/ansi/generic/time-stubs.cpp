@@ -349,9 +349,17 @@ int nanosleep(const struct timespec *req, struct timespec *) {
 	}
 }
 
-int clock_getres(clockid_t, struct timespec *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int clock_getres(clockid_t clockid, struct timespec *res) {
+	if(!mlibc::sys_clock_getres) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_clock_getres(clockid, &res->tv_sec, &res->tv_nsec); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int clock_gettime(clockid_t clock, struct timespec *time) {

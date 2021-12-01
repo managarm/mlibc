@@ -71,6 +71,7 @@ static constexpr unsigned int rc_waiters_bit = static_cast<uint32_t>(1) << 31;
 int pthread_attr_init(pthread_attr_t *) {
 	return 0;
 }
+
 int pthread_attr_destroy(pthread_attr_t *) {
 	return 0;
 }
@@ -79,6 +80,7 @@ int pthread_attr_getdetachstate(const pthread_attr_t *, int *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int pthread_attr_setdetachstate(pthread_attr_t *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
@@ -88,6 +90,7 @@ int pthread_attr_getstacksize(const pthread_attr_t *__restrict, size_t *__restri
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int pthread_attr_setstacksize(pthread_attr_t *, size_t) {
 	mlibc::infoLogger() << "mlibc: pthread_attr_setstacksize() is not implemented correctly" << frg::endlog;
 	return 0;
@@ -97,15 +100,48 @@ int pthread_attr_getguardsize(const pthread_attr_t *__restrict, size_t *__restri
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int pthread_attr_setguardsize(pthread_attr_t *, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int pthread_attr_getscope(const pthread_attr_t *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
 int pthread_attr_setscope(pthread_attr_t *, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_attr_getschedpolicy(const pthread_attr_t *__restrict, int *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_attr_setschedpolicy(pthread_attr_t *, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_attr_getschedparam(const pthread_attr_t *__restrict, struct sched_param *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_attr_setschedparam(pthread_attr_t *__restrict, const struct sched_param *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_attr_getinheritsched(const pthread_attr_t *__restrict, int *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_attr_setinheritsched(pthread_attr_t *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -208,7 +244,7 @@ int pthread_join(pthread_t thread, void **ret) {
 		return EINVAL;
 
 	while (!__atomic_load_n(&tcb->didExit, __ATOMIC_ACQUIRE)) {
-		mlibc::sys_futex_wait(&tcb->didExit, 0);
+		mlibc::sys_futex_wait(&tcb->didExit, 0, nullptr);
 	}
 
 	if (ret)
@@ -267,10 +303,36 @@ void pthread_cleanup_pop(int execute) {
 }
 
 int pthread_setname_np(pthread_t, const char *) {
+	mlibc::infoLogger() << "mlibc: pthread_setname_np is a stub" << frg::endlog;
+	return 0;
+}
+
+int pthread_getname_np(pthread_t, char *, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int pthread_getname_np(pthread_t, char *, size_t) {
+
+int pthread_attr_setstack(pthread_attr_t *, void *, size_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_attr_getstack(const pthread_attr_t *, void **, size_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_getattr_np(pthread_t, pthread_attr_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_setschedparam(pthread_t, int, const struct sched_param *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_getschedparam(pthread_t, int *, struct sched_param *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -610,7 +672,7 @@ int pthread_once(pthread_once_t *once, void (*function) (void)) {
 		}else{
 			// a different thread is currently running the initializer.
 			__ensure(expected == onceLocked);
-			if(int e = mlibc::sys_futex_wait((int *)&once->__mlibc_done, onceLocked); e)
+			if(int e = mlibc::sys_futex_wait((int *)&once->__mlibc_done, onceLocked, nullptr); e)
 				__ensure(!"sys_futex_wait() failed");
 			expected =  __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
 		}
@@ -728,7 +790,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 
 			// Wait on the futex if the waiters flag is set.
 			if(expected & mutex_waiters_bit) {
-				if(int e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected); e)
+				if(int e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected, nullptr); e)
 					__ensure(!"sys_futex_wait() failed");
 
 				// Opportunistically try to take the lock after we wake up.
@@ -863,21 +925,20 @@ int pthread_cond_destroy(pthread_cond_t *) {
 }
 
 int pthread_cond_wait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restrict mutex) {
+	return pthread_cond_timedwait(cond, mutex, nullptr);
+}
+
+int pthread_cond_timedwait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restrict mutex,
+		const struct timespec *__restrict abstime) {
 	auto seq = __atomic_load_n(&cond->__mlibc_seq, __ATOMIC_ACQUIRE);
 	// TODO: do proper error handling here.
 	if(pthread_mutex_unlock(mutex))
 		__ensure(!"Failed to unlock the mutex");
-	if(mlibc::sys_futex_wait(&cond->__mlibc_seq, seq))
+	if(mlibc::sys_futex_wait(&cond->__mlibc_seq, seq, abstime))
 		__ensure(!"sys_futex_wait() failed");
 	if(pthread_mutex_lock(mutex))
 		__ensure(!"Failed to lock the mutex");
 	return 0;
-}
-
-int pthread_cond_timedwait(pthread_cond_t *__restrict, pthread_mutex_t *__restrict,
-		const struct timespec *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
 }
 
 int pthread_cond_signal(pthread_cond_t *cond) {
@@ -943,7 +1004,7 @@ namespace {
 				}
 
 				// Wait on the futex.
-				mlibc::sys_futex_wait((int *)&rw->__mlibc_m, m_expected | mutex_waiters_bit);
+				mlibc::sys_futex_wait((int *)&rw->__mlibc_m, m_expected | mutex_waiters_bit, nullptr);
 
 				// Opportunistically try to take the lock after we wake up.
 				m_expected = 0;
@@ -1044,7 +1105,7 @@ int pthread_rwlock_wrlock(pthread_rwlock_t *rw) {
 		}
 
 		// Wait on the futex.
-		mlibc::sys_futex_wait((int *)&rw->__mlibc_rc, rc_expected | rc_waiters_bit);
+		mlibc::sys_futex_wait((int *)&rw->__mlibc_rc, rc_expected | rc_waiters_bit, nullptr);
 
 		// Re-check the reader counter.
 		rc_expected = __atomic_load_n(&rw->__mlibc_rc, __ATOMIC_ACQUIRE);

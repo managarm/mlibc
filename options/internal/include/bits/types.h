@@ -25,6 +25,9 @@ typedef __INT64_TYPE__ __mlibc_int64;
 #	define __MLIBC_UINT16_C(x) __MLIBC_C_JOIN(x, __UINT16_C_SUFFIX__)
 #	define __MLIBC_UINT32_C(x) __MLIBC_C_JOIN(x, __UINT32_C_SUFFIX__)
 #	define __MLIBC_UINT64_C(x) __MLIBC_C_JOIN(x, __UINT64_C_SUFFIX__)
+
+#	define __MLIBC_INTMAX_C(x) __MLIBC_C_JOIN(x, __INTMAX_C_SUFFIX__)
+#	define __MLIBC_UINTMAX_C(x) __MLIBC_C_JOIN(x, __UINTMAX_C_SUFFIX__)
 #else
 #	define __MLIBC_INT8_C(x)  __INT8_C(x)
 #	define __MLIBC_INT16_C(x) __INT16_C(x)
@@ -35,6 +38,9 @@ typedef __INT64_TYPE__ __mlibc_int64;
 #	define __MLIBC_UINT16_C(x) __UINT16_C(x)
 #	define __MLIBC_UINT32_C(x) __UINT32_C(x)
 #	define __MLIBC_UINT64_C(x) __UINT64_C(x)
+
+#	define __MLIBC_INTMAX_C(x) __INTMAX_C(x)
+#	define __MLIBC_UINTMAX_C(x) __UINTMAX_C(x)
 #endif
 
 #define __MLIBC_INT8_MAX  __INT8_MAX__

@@ -183,7 +183,7 @@ int sys_vm_unmap(void *pointer, size_t size) {
     return sys_anon_free(pointer, size);
 }
 
-int sys_futex_wait(int *pointer, int expected) {
+int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
     uint64_t err;
     asm volatile ("syscall"
             : "=d"(err)

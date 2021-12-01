@@ -9,7 +9,7 @@
 extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, Tcb *tcb) {
 	// Wait until our parent sets up the TID.
 	while(!__atomic_load_n(&tcb->tid, __ATOMIC_RELAXED))
-		mlibc::sys_futex_wait(&tcb->tid, 0);
+		mlibc::sys_futex_wait(&tcb->tid, 0, nullptr);
 
 	if(mlibc::sys_tcb_set(tcb))
 		__ensure(!"sys_tcb_set() failed");

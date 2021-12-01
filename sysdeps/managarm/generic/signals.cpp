@@ -45,10 +45,10 @@ int sys_sigaction(int number, const struct sigaction *__restrict action,
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::SIG_ACTION);
+	req.set_sig_number(number);
 	if(action) {
 		req.set_mode(1);
 		req.set_flags(action->sa_flags);
-		req.set_sig_number(number);
 		req.set_sig_mask(action->sa_mask);
 		if(action->sa_flags & SA_SIGINFO) {
 			req.set_sig_handler(reinterpret_cast<uintptr_t>(action->sa_sigaction));
@@ -56,6 +56,8 @@ int sys_sigaction(int number, const struct sigaction *__restrict action,
 			req.set_sig_handler(reinterpret_cast<uintptr_t>(action->sa_handler));
 		}
 		req.set_sig_restorer(reinterpret_cast<uintptr_t>(&__mlibc_signal_restore));
+	} else {
+		req.set_mode(0);
 	}
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());

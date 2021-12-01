@@ -4415,5 +4415,10 @@ int sys_gethostname(char *buffer, size_t bufsize) {
 	return 0;
 }
 
+int sys_fsync(int) {
+	mlibc::infoLogger() << "mlibc: fsync is a stub" << frg::endlog;
+	return 0;
+}
+
 } //namespace mlibc
 

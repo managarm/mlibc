@@ -48,8 +48,13 @@ int sys_futex_tid() {
 	return resp.pid();
 }
 
-int sys_futex_wait(int *pointer, int expected) {
+int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	// This implementation is inherently signal-safe.
+	if(time) {
+		if(helFutexWait(pointer, expected, time->tv_nsec + time->tv_sec * 1000000000))
+			return -1;
+		return 0;
+	}
 	if(helFutexWait(pointer, expected, -1))
 		return -1;
 	return 0;

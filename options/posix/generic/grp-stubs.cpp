@@ -7,6 +7,7 @@
 #include <bits/ensure.h>
 
 #include <mlibc/debug.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 namespace {
 	thread_local group global_entry;
@@ -244,9 +245,17 @@ void setgrent(void) {
 	__builtin_unreachable();
 }
 
-int setgroups(size_t, const gid_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int setgroups(size_t size, const gid_t *list) {
+	if(!mlibc::sys_setgroups) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_setgroups(size, list); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int initgroups(const char *, gid_t) {
@@ -265,6 +274,6 @@ struct group *fgetgrent(FILE *) {
 }
 
 int getgrouplist(const char *, gid_t, gid_t *, int *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: getgrouplist is a stub" << frg::endlog;
+	return 0;
 }

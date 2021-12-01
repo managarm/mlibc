@@ -411,6 +411,7 @@ void *__dlapi_resolve(void *handle, const char *string) {
 
 	if (!target) {
 		mlibc::infoLogger() << "rtdl: could not resolve \"" << string << "\"" << frg::endlog;
+		lastError = "Cannot resolve requested symbol";
 		return nullptr;
 	}
 	return reinterpret_cast<void *>(target->virtualAddress());

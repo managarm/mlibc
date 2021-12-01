@@ -37,7 +37,7 @@ namespace mlibc {
     #endif
 
     // TODO: Actually implement this
-    int sys_futex_wait(int *pointer, int expected){
+    int sys_futex_wait(int *pointer, int expected, const struct timespec *time){
         return 0;
     }
 
