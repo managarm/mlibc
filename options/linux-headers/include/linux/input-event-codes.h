@@ -644,6 +644,8 @@
 #define REL_Z 0x02
 #define REL_HWHEEL 0x06
 #define REL_WHEEL 0x08
+#define REL_WHEEL_HI_RES 0x0B
+#define REL_HWHEEL_HI_RES 0x0C
 #define REL_MAX	0x0F
 
 //----------------------------------

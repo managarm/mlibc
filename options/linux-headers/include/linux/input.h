@@ -38,6 +38,7 @@ struct input_absinfo {
 #define BUS_BLUETOOTH 0x05
 #define BUS_I8042 0x11
 #define BUS_I2C 0x18
+#define BUS_SPI 0x1C
 #define BUS_RMI 0x1D
 
 #define MT_TOOL_FINGER 0x00
