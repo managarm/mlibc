@@ -1,1 +1,0 @@
-../../../../abis/qword/auxv.h
