@@ -1,4 +1,4 @@
-project('mlibc', version: '2.1.0-rc1')
+project('mlibc', version: '2.1.0')
 
 fs = import('fs')
 
