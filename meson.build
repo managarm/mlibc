@@ -53,30 +53,33 @@ if not headers_only
 	add_project_arguments('-Wall', '-Wextra', language: ['c', 'cpp'])
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
-	if c_compiler.get_id() == 'gcc'
-		gccdir = run_command('/bin/sh', '-c',
-			' '.join(c_compiler.cmd_array())
-					+ ' -print-search-dirs | sed -n -e "s/install: \(.*\)/\\1/p"',
-			env: ['LANG=C'],
-			check: true).stdout().strip()
-
-		rtdl_include_dirs += include_directories(gccdir / 'include')
-		libc_include_dirs += include_directories(gccdir / 'include')
-		# Ubuntu seems to patch out include-fixed/ (the files are in include/ instead).
-		if fs.exists(gccdir / 'include-fixed')
-			rtdl_include_dirs += include_directories(gccdir / 'include-fixed')
-			libc_include_dirs += include_directories(gccdir / 'include-fixed')
-		endif
-	elif c_compiler.get_id() == 'clang'
-		clangdir = run_command('/bin/sh', '-c',
-			' '.join(c_compiler.cmd_array())
-					+ ' -print-search-dirs | sed -ne "s/libraries: =\([^:]*\).*/\\1/p"',
-			env: ['LANG=C'],
-			check: true).stdout().strip()
-
-		rtdl_include_dirs += include_directories(clangdir / 'include')
-		libc_include_dirs += include_directories(clangdir / 'include')
+	searchdirs = run_command(c_compiler.cmd_array(), '-print-search-dirs',
+				check: true).stdout()
+	searchdirs_arr = searchdirs.split('\n')
+	searchline = 'install: '
+	ccdir = ''
+	if c_compiler.get_id() == 'clang'
+		searchline = 'libraries: ='
 	endif
+
+	foreach line : searchdirs_arr
+		if line.startswith(searchline)
+			ccdir = line.strip(searchline)
+			ccdir = ccdir.split(':')[0]
+		endif
+	endforeach
+
+	if ccdir == ''
+		error('could not find compiler-specific header directory')
+	endif
+
+	if c_compiler.get_id() == 'gcc' and fs.exists(ccdir / 'include-fixed')
+		rtdl_include_dirs += include_directories(ccdir / 'include-fixed')
+		libc_include_dirs += include_directories(ccdir / 'include-fixed')
+	endif
+
+	rtdl_include_dirs += include_directories(ccdir / 'include')
+	libc_include_dirs += include_directories(ccdir / 'include')
 endif
 
 internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
