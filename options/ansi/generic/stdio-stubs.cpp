@@ -1118,17 +1118,17 @@ int vasprintf(char **out, const char *format, __gnuc_va_list args) {
 
 // Linux unlocked I/O extensions.
 
-void flockfile(FILE *) {
-	mlibc::infoLogger() << "mlibc: File locking (flockfile) is a no-op" << frg::endlog;
+void flockfile(FILE *file_base) {
+	static_cast<mlibc::abstract_file *>(file_base)->_lock.lock();
 }
 
-void funlockfile(FILE *) {
-	mlibc::infoLogger() << "mlibc: File locking (funlockfile) is a no-op" << frg::endlog;
+void funlockfile(FILE *file_base) {
+	static_cast<mlibc::abstract_file *>(file_base)->_lock.unlock();
 }
 
 int ftrylockfile(FILE *) {
 	mlibc::infoLogger() << "mlibc: File locking (ftrylockfile) is a no-op" << frg::endlog;
-    return 0;
+	return 0;
 }
 
 void clearerr_unlocked(FILE *file_base) {
