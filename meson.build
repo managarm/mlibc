@@ -66,6 +66,7 @@ if not headers_only
 		if line.startswith(searchline)
 			ccdir = line.strip(searchline)
 			ccdir = ccdir.split(':')[0]
+			break
 		endif
 	endforeach
 
