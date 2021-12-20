@@ -39,6 +39,7 @@
 #define NR_wait4 61
 #define NR_kill 62
 #define NR_fcntl 72
+#define NR_getcwd 79
 #define NR_chdir 80
 #define NR_mkdir 83
 #define NR_rmdir 84
@@ -246,6 +247,14 @@ int sys_fcntl(int fd, int cmd, va_list args, int *result) {
                 return e;
         *result = sc_int_result<int>(ret);
         return 0;
+}
+
+int sys_getcwd(char *buf, size_t size) {
+	auto ret = do_syscall(NR_getcwd, buf, size);
+	if (int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
 }
 
 int sys_unlink(const char *path) {
