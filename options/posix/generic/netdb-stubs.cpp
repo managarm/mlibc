@@ -316,9 +316,59 @@ struct protoent *getprotoent(void) {
 	__builtin_unreachable();
 }
 
-struct servent *getservbyname(const char *, const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+struct servent *getservbyname(const char *name, const char *proto) {
+	int iproto = -1;
+	if (proto &&(!strncmp(proto, "tcp", 3) || !strncmp(proto, "TCP", 3)))
+		iproto = IPPROTO_TCP;
+	else if (proto && (!strncmp(proto, "udp", 3) || !strncmp(proto, "UDP", 3)))
+		iproto = IPPROTO_UDP;
+
+	static struct servent ret;
+	if (ret.s_name) {
+		free(ret.s_name);
+		for (char **alias = ret.s_aliases; *alias != NULL; alias++)
+			free(*alias);
+		free(ret.s_proto);
+	}
+
+	mlibc::service_result serv_buf{getAllocator()};
+	int count = mlibc::lookup_serv_by_name(serv_buf, name, iproto,
+			0, 0);
+	if (count <= 0)
+		return NULL;
+
+	ret.s_name = serv_buf[0].name.data();
+	serv_buf[0].name.detach();
+	// Sanity check.
+	if (strncmp(name, serv_buf[0].name.data(), serv_buf[0].name.size()))
+		return NULL;
+
+	ret.s_aliases = reinterpret_cast<char**>(malloc((serv_buf[0].aliases.size() + 1) * sizeof(char*)));
+	int alias_pos = 0;
+	for (auto &buf_name : serv_buf[0].aliases) {
+		ret.s_aliases[alias_pos] = buf_name.data();
+		buf_name.detach();
+		alias_pos++;
+	}
+	ret.s_aliases[alias_pos] = NULL;
+
+	ret.s_port = htons(serv_buf[0].port);
+
+	auto proto_string = frg::string<MemoryAllocator>(getAllocator());
+	if (!proto) {
+		if (serv_buf[0].protocol == IPPROTO_TCP)
+			proto_string = frg::string<MemoryAllocator>("tcp", getAllocator());
+		else if (serv_buf[0].protocol == IPPROTO_UDP)
+			proto_string = frg::string<MemoryAllocator>("udp", getAllocator());
+		else
+			return NULL;
+	} else {
+		proto_string = frg::string<MemoryAllocator>(proto, getAllocator());
+	}
+	ret.s_proto = proto_string.data();
+	proto_string.detach();
+
+	return &ret;
 }
 
 struct servent *getservbyport(int port, const char *proto) {
