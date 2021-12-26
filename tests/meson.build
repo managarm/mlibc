@@ -55,6 +55,13 @@ glibc_test_cases = [
 	'ffsl-ffsll'
 ]
 
+rtdl_test_cases = [
+]
+
+if not static
+	rtdl_test_cases += 'dl_iterate_phdr'
+endif
+
 test_sources = [
 	crt
 ]
@@ -110,3 +117,13 @@ if not disable_posix_option
 		test('glibc/' + f, exec)
 	endforeach
 endif
+
+foreach f : rtdl_test_cases
+    exec = executable('rtdl-' + f, ['rtdl/' + f + '.c', test_sources],
+	    link_with: libc, include_directories: libc_include_dirs,
+	    build_rpath: meson.build_root(),
+	    c_args: '-no-pie',
+	    link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
+		    '-no-pie'])
+    test('rtdl/' + f, exec)
+endforeach

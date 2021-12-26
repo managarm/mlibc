@@ -774,6 +774,17 @@ void *accessDtv(SharedObject *object) {
 	return tcb_ptr->dtvPointers[object->tlsIndex];
 }
 
+void *tryAccessDtv(SharedObject *object) {
+	Tcb *tcb_ptr = getCurrentTcb();
+
+	if (object->tlsIndex >= tcb_ptr->dtvSize)
+		return nullptr;
+	if (!tcb_ptr->dtvPointers[object->tlsIndex])
+		return nullptr;
+
+	return tcb_ptr->dtvPointers[object->tlsIndex];
+}
+
 // --------------------------------------------------------
 // ObjectSymbol
 // --------------------------------------------------------

@@ -1,5 +1,6 @@
 
 #include <elf.h>
+#include <link.h>
 
 #include <frg/manual_box.hpp>
 
@@ -483,6 +484,29 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 
 	mlibc::infoLogger() << "rtdl: Could not find symbol in __dlapi_reverse()" << frg::endlog;
 	return -1;
+}
+
+extern "C" [[ gnu::visibility("default") ]]
+int __dlapi_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void*), void *data) {
+	int last_return = 0;
+	for (auto object : globalScope->_objects) {
+		struct dl_phdr_info info;
+		info.dlpi_addr = object->baseAddress;
+		info.dlpi_name = object->name;
+		info.dlpi_phdr = static_cast<ElfW(Phdr)*>(object->phdrPointer);
+		info.dlpi_phnum = object->phdrCount;
+		info.dlpi_adds = rtsCounter;
+		info.dlpi_subs = 0; // TODO(geert): implement dlclose().
+		if (object->tlsModel != TlsModel::null)
+			info.dlpi_tls_modid = object->tlsIndex;
+		else
+			info.dlpi_tls_modid = 0;
+		info.dlpi_tls_data = tryAccessDtv(object);
+
+		last_return = callback(&info, sizeof(struct dl_phdr_info), data);
+	}
+
+	return last_return;
 }
 
 extern "C" [[ gnu::visibility("default") ]]
