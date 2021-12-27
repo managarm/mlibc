@@ -110,4 +110,20 @@
 #define EOVERFLOW   80
 #define EILSEQ      81
 
+#define EBADMSG			82
+#define ECANCELED		83
+#define EIDRM			84
+#define EMULTIHOP		85
+#define ENOLINK			86
+#define ENOMSG			87
+#define ENOTRECOVERABLE	88
+#define ENOTSUP			89
+#define EOWNERDEAD		90
+#define EPROTO			91
+#define ENODATA			92
+#define ETIME			93
+#define ENOKEY			94
+#define EBADFD			95
+#define ENOMEDIUM		96
+
 #endif
