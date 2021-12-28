@@ -13,6 +13,7 @@ if not no_headers
 		'include/linux/bpf_common.h',
 		'include/linux/bsg.h',
 		'include/linux/cdrom.h',
+		'include/linux/fb.h',
 		'include/linux/filter.h',
 		'include/linux/fs.h',
 		'include/linux/hdreg.h',
