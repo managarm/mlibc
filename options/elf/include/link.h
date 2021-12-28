@@ -8,13 +8,19 @@ extern "C" {
 #include <elf.h>
 #include <stddef.h>
     
-#define ElfW(type) Elf64_ ## type
+#if defined(__x86_64__) || defined(__aarch64__)
+#	define ElfW(type) Elf64_ ## type
+#elif defined(__i386__)
+#	define ElfW(type) Elf32_ ## type
+#else
+# 	error Unknown architecture
+#endif
     
 struct dl_phdr_info {
-	Elf64_Addr dlpi_addr;
+	ElfW(Addr) dlpi_addr;
 	const char *dlpi_name;
-	const Elf64_Phdr *dlpi_phdr;
-	Elf64_Half dlpi_phnum;
+	const ElfW(Phdr) *dlpi_phdr;
+	ElfW(Half) dlpi_phnum;
 	unsigned long long int dlpi_adds;
 	unsigned long long int dlpi_subs;
 	size_t dlpi_tls_modid;

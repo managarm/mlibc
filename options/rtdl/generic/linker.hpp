@@ -197,6 +197,9 @@ extern frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
 Tcb *allocateTcb();
 void *accessDtv(SharedObject *object);
+// Tries to access the DTV, if not allocated, or object doesn't have
+// PT_TLS, return nullptr.
+void *tryAccessDtv(SharedObject *object);
 
 // --------------------------------------------------------
 // ObjectSymbol
