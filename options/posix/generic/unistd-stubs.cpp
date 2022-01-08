@@ -804,6 +804,8 @@ unsigned long sysconf(int number) {
 #else
 			return -1;
 #endif
+		case _SC_LOGIN_NAME_MAX:
+			return 256;
 		default:
 			mlibc::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented, number: " << number << "\e[39m" << frg::endlog;
 			__builtin_unreachable();
