@@ -120,6 +120,16 @@ extern "C" {
 #define _SC_HOST_NAME_MAX 14
 #define _SC_LINE_MAX 15
 #define _SC_XOPEN_CRYPT 16
+#define _SC_STREAM_MAX 17
+#define _SC_TZNAME_MAX 18
+#define _SC_REALTIME_SIGNALS 19
+#define _SC_PRIORITY_SCHEDULING 20
+#define _SC_TIMERS 21
+#define _SC_ASYNCHRONOUS_IO 22
+#define _SC_LOGIN_NAME_MAX 23
+#define _SC_PRIORITIZED_IO 24
+#define _SC_SYNCHRONIZED_IO 25
+#define _SC_FSYNC 26
 
 #define STDERR_FILENO 2
 #define STDIN_FILENO 0
