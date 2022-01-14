@@ -1,9 +1,8 @@
 #ifndef	_SYS_EPOLL_H
 #define	_SYS_EPOLL_H
 
-// TODO: We only need sigset_t and not the whole signal.h
 #include <stdint.h>
-#include <signal.h>
+#include <abi-bits/signal.h>
 
 #define EPOLL_CLOEXEC 1
 #define EPOLL_NONBLOCK 2
