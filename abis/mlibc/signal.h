@@ -111,6 +111,13 @@ typedef struct __stack {
 
 #define NSIG 65
 
+#define CLD_EXITED 1
+#define CLD_KILLED 2
+#define CLD_DUMPED 3
+#define CLD_TRAPPED 4
+#define CLD_STOPPED 5
+#define CLD_CONTINUED 6
+
 struct sigevent {
 	int sigev_notify;
 	int sigev_signo;
