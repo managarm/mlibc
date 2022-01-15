@@ -29,6 +29,7 @@ posix_test_cases = [
 	'getaddrinfo',
 	'getdelim',
 	'getnameinfo',
+	'getservbyname',
 	'getservbyport',
 	'grp',
 	'dprintf',
