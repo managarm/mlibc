@@ -177,9 +177,38 @@ size_t strftime(char *__restrict dest, size_t max_size,
 				return 0;
 			p += chunk;
 			c += 2;
-		}else if (*(c + 1) == 'b') {
-			const char *strmons[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
-					"Aug", "Sep", "Oct", "Nov", "Dec" };
+		}else if (*(c + 1) == 'b' || *(c + 1) == 'B') {
+			const char *strmons[12];
+			switch (*(c + 1)) {
+				case 'b':
+					strmons[0] = "Jan";
+					strmons[1] = "Feb";
+					strmons[2] = "Mar";
+					strmons[3] = "Apr";
+					strmons[4] = "May";
+					strmons[5] = "Jun";
+					strmons[6] = "Jul";
+					strmons[7] = "Aug";
+					strmons[8] = "Sep";
+					strmons[9] = "Oct";
+					strmons[10] = "Nov";
+					strmons[11] = "Dec";
+					break;
+				case 'B':
+					strmons[0] = "January";
+					strmons[1] = "February";
+					strmons[2] = "March";
+					strmons[3] = "April";
+					strmons[4] = "May";
+					strmons[5] = "June";
+					strmons[6] = "July";
+					strmons[7] = "August";
+					strmons[8] = "September";
+					strmons[9] = "October";
+					strmons[10] = "November";
+					strmons[11] = "December";
+					break;
+			}
 			int mon = tm->tm_mon;
 			if(mon < 0 || mon > 11)
 				__ensure(!"Month not in bounds.");
@@ -688,7 +717,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 	struct tm *__restrict tm, struct strptime_internal_state *__restrict state) {
 	while(isspace(input[state->input_index]))
 		state->input_index++;
-	
+
 	if(input[state->input_index] == '\0')
 		return NULL;
 
@@ -887,7 +916,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				state->has_year = true;
 				break;
 			}
-			case 'Y': {                     
+			case 'Y': {
 				int product = 0, n = 0;
 				sscanf(&input[state->input_index], "%d%n", &product, &n);
 				if(n == 0 || 4 < n)
