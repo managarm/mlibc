@@ -37,7 +37,6 @@
 #define SYS_READDIR 33
 #define SYS_SET_FS_BASE 34
 #define SYS_MMAP 35
-#define SYS_GRANT_PTY 36
 #define SYS_GET_CWD 37
 #define SYS_WAIT_PID 38
 #define SYS_NANO_SLEEP 39
@@ -107,6 +106,11 @@
 #define SYS_SIGPROCMASK 103
 #define SYS_KILL 104
 #define SYS_SIGNAL_RETURN 105
+#define SYS_ALARM 106
+#define SYS_GET_RESOURCE_LIMIT 107 
+#define SYS_EPOLL_CREATE 108
+#define SYS_EPOLL_CTL 109
+#define SYS_EPOLL_WAIT 110
 
 #ifdef __cplusplus
 extern "C"{
