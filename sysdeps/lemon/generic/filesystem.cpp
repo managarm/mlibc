@@ -353,6 +353,41 @@ int sys_chmod(const char *pathname, mode_t mode){
 int sys_pipe(int *fds, int flags){
 	return -syscall(SYS_PIPE, fds, flags);
 }
+
+int sys_epoll_create(int flags, int *fd) {
+	int ret = syscall(SYS_EPOLL_CREATE, flags);
+
+	if(ret < 0){
+		return -ret;
+	}
+
+	*fd = ret;
+
+	return 0;
+}
+
+int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
+	int ret = syscall(SYS_EPOLL_CTL, epfd, mode, fd, ev);
+
+	if(ret < 0) {
+		return -ret;
+	}
+
+	return 0;
+}
+
+int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
+		int timeout, const sigset_t *sigmask, int *raised) {
+	int ret = syscall(SYS_EPOLL_WAIT, epfd, ev, n, timeout, sigmask);
+
+	if(ret < 0) {
+		return -ret;
+	}
+
+	*raised = ret;
+
+	return 0;
+}
 #endif
 
 } 
