@@ -2950,6 +2950,67 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				" is a noop\e[39m" << frg::endlog;
 		return 0;
 	}
+	case DRM_IOCTL_PRIME_HANDLE_TO_FD: {
+		auto param = reinterpret_cast<drm_prime_handle *>(arg);
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+		req.set_drm_prime_handle(param->handle);
+		req.set_drm_flags(param->flags);
+
+		auto [offer, send_req, send_creds, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_creds.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		param->fd = resp.drm_prime_fd();
+		*result = resp.result();
+		return 0;
+	}
+	case DRM_IOCTL_PRIME_FD_TO_HANDLE: {
+		auto param = reinterpret_cast<drm_prime_handle *>(arg);
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+		req.set_drm_flags(param->flags);
+
+		auto [offer, send_req, send_creds, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(getHandleForFd(param->fd)),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_creds.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		if(resp.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
+			return EBADF;
+		} else {
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		}
+
+		param->handle = resp.drm_prime_handle();
+		*result = resp.result();
+		return 0;
+	}
 	case TCGETS: {
 		auto param = reinterpret_cast<struct termios *>(arg);
 		HelAction actions[4];
