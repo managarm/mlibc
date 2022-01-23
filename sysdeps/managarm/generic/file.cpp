@@ -1771,6 +1771,41 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		}
 		return 0;
 	}
+	case FIONREAD: {
+		auto argp = reinterpret_cast<int *>(arg);
+
+		auto handle = getHandleForFd(fd);
+		if (!handle)
+			return EBADF;
+
+		if(!argp)
+			return EINVAL;
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(FIONREAD);
+
+		auto [offer, send_req, recv_resp] =
+		exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		*argp = resp.fionread_count();
+
+		return 0;
+	}
 	case FIOCLEX: {
 		managarm::posix::IoctlFioclexRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_fd(fd);
