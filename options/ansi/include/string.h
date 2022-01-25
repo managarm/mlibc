@@ -59,7 +59,7 @@ char *stpcpy(char *__restrict, const char *__restrict);
 int strverscmp(const char *l0, const char *r0);
 int ffsl(long i);
 int ffsll(long long i);
-void *memmem(const void *, size_t, const void *, size_t);
+void *memmem(const void *h0, size_t k, const void *n0, size_t l);
 
 #ifdef __cplusplus
 }
