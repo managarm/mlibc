@@ -1045,7 +1045,9 @@ ssize_t getdelim(char **line, size_t *n, int delim, FILE *stream) {
 	}
 
 	char *buffer = *line;
-	size_t capacity = *n, nwritten = 0;
+	/* set the starting capacity to 512 if buffer = NULL */
+	size_t capacity = (!buffer) ? 512 : *n;
+	size_t nwritten = 0;
 
 	auto file = static_cast<mlibc::abstract_file *>(stream);
 	frg::unique_lock<FutexLock> lock(file->_lock);
