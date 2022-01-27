@@ -536,7 +536,7 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			break;
 		case DT_RPATH:
 			mlibc::infoLogger() << "\e[31mrtdl: RUNPATH not preferred over RPATH properly\e[39m" << frg::endlog;
-			// fall through
+			[[fallthrough]];
 		case DT_RUNPATH:
 			runpath_offset = dynamic->d_un.d_val;
 			break;
@@ -553,6 +553,7 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			break;
 		case DT_DEBUG:
 			dynamic->d_un.d_val = reinterpret_cast<Elf64_Xword>(&globalDebugInterface);
+			break;
 		// ignore unimportant tags
 		case DT_SONAME: case DT_NEEDED: // we handle this later
 		case DT_FINI: case DT_FINI_ARRAY: case DT_FINI_ARRAYSZ:

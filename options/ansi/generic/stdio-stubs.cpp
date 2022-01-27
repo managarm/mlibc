@@ -470,7 +470,7 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
             case 'd':
             case 'u':
                 base = 10;
-                /* fallthrough */
+                [[fallthrough]];
             case 'i': {
                 unsigned long long res = 0;
                 char c = handler.look_ahead();
