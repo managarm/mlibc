@@ -29,6 +29,8 @@ struct sockaddr_storage {
 }
 #endif
 
+#define SCM_RIGHTS 1
+
 #define SHUT_RD 0
 #define SHUT_WR 1
 #define SHUT_RDWR 2
