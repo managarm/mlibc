@@ -34,7 +34,7 @@ frg::optional<struct nameserver_data> get_nameserver() {
 	}
 
 	fclose(file);
-	if(ret.name == "")
+	if(ret.name.empty())
 		return frg::null_opt;
 	return ret;
 }

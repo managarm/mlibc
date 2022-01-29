@@ -175,10 +175,10 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 			} else {
 				dirname = ".";
 			}
-			sPath = { getAllocator(), dirname };
+			sPath = frg::string<MemoryAllocator>{ getAllocator(), dirname };
 			sPath += path.sub_string(7, path.size() - 7);
 		} else {
-			sPath = { getAllocator(), path };
+			sPath = frg::string<MemoryAllocator>{ getAllocator(), path };
 		}
 		if (sPath[sPath.size() - 1] != '/') {
 			sPath += '/';
