@@ -475,3 +475,12 @@ char *secure_getenv(const char *name) {
 	mlibc::infoLogger() << "mlibc: Secure environment setting is ignored, falling back to unsafe default" << frg::endlog;
 	return getenv(name);
 }
+
+void *reallocarray(void *ptr, size_t m, size_t n) {
+	if(n && m > -1 / n) {
+		errno = ENOMEM;
+		return 0;
+	}
+
+	return realloc(ptr, m * n);
+}
