@@ -2921,6 +2921,11 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				" is not implemented correctly\e[39m" << frg::endlog;
 		return EINVAL;
 	}
+	case DRM_IOCTL_MODE_SETGAMMA: {
+		mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_MODE_SETGAMMA"
+				" is not implemented correctly\e[39m" << frg::endlog;
+		return 0;
+	}
 	case TCGETS: {
 		auto param = reinterpret_cast<struct termios *>(arg);
 		HelAction actions[4];
