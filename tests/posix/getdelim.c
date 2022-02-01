@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <unistd.h>
+#include <string.h>
 
 #define TEST_FILE "getdelim.tmp"
 
@@ -50,6 +51,29 @@ int main(void) {
 
 	assert(getdelim(&line, &len, 'b', fp) == -1);
 	assert(feof(fp));
+
+	free(line);
+	fclose(fp);
+
+	fp = fopen(TEST_FILE, "w");
+	assert(fp);
+	assert(fwrite("1234ef\0f", 1, 8, fp) == 8);
+	fclose(fp);
+
+	fp = fopen(TEST_FILE, "r");
+	assert(fp);
+
+	/* test with line = NULL and large len */
+	line = NULL;
+	len = (size_t) ~0;
+	assert(getdelim(&line, &len, 'e', fp) == 5);
+	assert(!memcmp(line, "1234e", 6));
+	assert(5 < len);
+
+	/* test handling of EOF */
+	assert(getdelim(&line, &len, 'e', fp) == -1);
+	assert(!memcmp(line, "f\0f", 4));
+	assert(3 < len);
 
 	free(line);
 	fclose(fp);
