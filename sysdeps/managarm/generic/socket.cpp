@@ -277,7 +277,20 @@ int sys_getsockopt(int fd, int layer, int number,
 		return 0;
 	}else if(layer == SOL_SOCKET && number == SO_SNDBUF) {
 		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented\e[39m" << frg::endlog;
-		return 4096;
+		*(int *)buffer = 4096;
+		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_TYPE) {
+		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_TYPE is unimplemented, hardcoding SOCK_STREAM\e[39m" << frg::endlog;
+		*(int *)buffer = SOCK_STREAM;
+		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_ERROR) {
+		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_ERROR is unimplemented, hardcoding 0\e[39m" << frg::endlog;
+		*(int *)buffer = 0;
+		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_KEEPALIVE) {
+		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_KEEPALIVE is unimplemented, hardcoding 0\e[39m" << frg::endlog;
+		*(int *)buffer = 0;
+		return 0;
 	}else{
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call, layer: " << layer << " number: " << number << "\e[39m" << frg::endlog;
 		__builtin_unreachable();
