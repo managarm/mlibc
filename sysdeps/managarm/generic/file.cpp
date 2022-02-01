@@ -2739,10 +2739,14 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
-		*result = resp.result();
-		return 0;
+		if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+			return EINVAL;
+		}else{
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			*result = resp.result();
+			return 0;
+		}
 	}
 	case DRM_IOCTL_MODE_CURSOR: {
 		auto param = reinterpret_cast<drm_mode_cursor *>(arg);
