@@ -131,9 +131,7 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 
     int result;
 
-    // 0x5404 = TCSETSF (using this workaround since the headers don't define
-    // it)
-    if (int e = sys_ioctl(fd, 0x5404, (void *)attr, &result); e)
+    if (int e = sys_ioctl(fd, TCSETSF, (void *)attr, &result); e)
         return e;
 
     return 0;
