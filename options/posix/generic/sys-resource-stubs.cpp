@@ -3,15 +3,25 @@
 #include <sys/resource.h>
 
 #include <bits/ensure.h>
+#include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 
 int getpriority(int, id_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-int setpriority(int, id_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int setpriority(int which, id_t who, int prio) {
+	if(!mlibc::sys_setpriority) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_setpriority(which, who, prio); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int getrusage(int scope, struct rusage *usage) {
