@@ -98,6 +98,10 @@ if host_machine.system() == 'linux'
 	rtdl_include_dirs += include_directories('sysdeps/linux/include')
 	libc_include_dirs += include_directories('sysdeps/linux/include')
 	subdir('sysdeps/linux')
+elif host_machine.system() == 'aero'
+	rtdl_include_dirs += include_directories('sysdeps/aero/include')
+	libc_include_dirs += include_directories('sysdeps/aero/include')
+	subdir('sysdeps/aero')
 elif host_machine.system() == 'managarm'
 	# TODO: Adopt the include_directories() commands from the managarm meson.build.
 	rtdl_include_dirs += include_directories('sysdeps/managarm/include')
