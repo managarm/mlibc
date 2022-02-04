@@ -25,5 +25,9 @@ if not no_headers
 		'include/sys/ioctl.h',
 		subdir: 'sys'
 	)
+	install_headers(
+		'include/netinet/in_systm.h',
+		subdir: 'netinet'
+	)
 endif
 
