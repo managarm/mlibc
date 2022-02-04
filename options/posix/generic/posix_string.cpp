@@ -110,3 +110,8 @@ char *strcasestr(const char *s, const char *pattern) {
 	}
 	return nullptr;
 }
+
+void *memrchr(const void *, int, size_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

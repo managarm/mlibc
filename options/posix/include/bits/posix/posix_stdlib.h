@@ -49,6 +49,9 @@ float strtof_l(const char *__restrict string, char **__restrict end, locale_t lo
 
 int getloadavg(double *, int);
 
+// GNU extension
+char *secure_getenv(const char *);
+
 #ifdef __cplusplus
 }
 #endif

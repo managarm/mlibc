@@ -469,3 +469,9 @@ int getloadavg(double *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+char *secure_getenv(const char *name) {
+	// We don't have a secure execution environment.
+	mlibc::infoLogger() << "mlibc: Secure environment setting is ignored, falling back to unsafe default" << frg::endlog;
+	return getenv(name);
+}

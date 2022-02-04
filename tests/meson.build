@@ -14,6 +14,10 @@ ansi_test_cases = [
 	'time'
 ]
 
+bsd_test_cases = [
+	'ns_get_put'
+]
+
 posix_test_cases = [
 	'inet_ntop',
 	'inet_pton',
@@ -81,6 +85,18 @@ if not disable_ansi_option
 			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
 				'-no-pie'])
 		test('ansi/' + f, exec)
+	endforeach
+endif
+
+if not disable_bsd_option
+	foreach f : bsd_test_cases
+		exec = executable('ansi-' + f, ['bsd/' + f + '.c', test_sources],
+			link_with: libc, include_directories: libc_include_dirs,
+			build_rpath: meson.build_root(),
+			c_args: '-no-pie',
+			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
+				'-no-pie'])
+		test('bsd/' + f, exec)
 	endforeach
 endif
 
