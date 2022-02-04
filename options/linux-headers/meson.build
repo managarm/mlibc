@@ -23,6 +23,7 @@ if not no_headers
 		'include/linux/kd.h',
 		'include/linux/magic.h',
 		'include/linux/major.h',
+		'include/linux/memfd.h',
 		'include/linux/netlink.h',
 		'include/linux/pci_regs.h',
 		'include/linux/route.h',

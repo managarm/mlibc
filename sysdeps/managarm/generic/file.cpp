@@ -4583,5 +4583,38 @@ int sys_fsync(int) {
 	return 0;
 }
 
+int sys_memfd_create(const char *name, int flags, int *fd) {
+	SignalGuard sguard;
+
+	managarm::posix::MemFdCreateRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_name(frg::string<MemoryAllocator>(getSysdepsAllocator(), name));
+	req.set_flags(flags);
+
+	auto [offer, send_head, send_tail, recv_resp] =
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(send_tail.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	}
+
+	*fd = resp.fd();
+
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	return 0;
+}
+
 } //namespace mlibc
 
