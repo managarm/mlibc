@@ -562,6 +562,65 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 	}else if(request == F_GETLK) {
 		mlibc::infoLogger() << "\e[31mmlibc: F_GETLK\e[39m" << frg::endlog;
 		return ENOSYS;
+	}else if(request == F_ADD_SEALS) {
+		auto seals = va_arg(args, int);
+		auto handle = getHandleForFd(fd);
+		if (!handle)
+			return EBADF;
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_ADD_SEALS);
+		req.set_fd(fd);
+		req.set_seals(seals);
+
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::RecvInline()
+			));
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+			mlibc::infoLogger() << "\e[31mmlibc: fcntl(F_ADD_SEALS) unimplemented for this file\e[39m" << frg::endlog;
+			return EINVAL;
+		}
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		*result = resp.seals();
+		return 0;
+	}else if(request == F_GET_SEALS) {
+		auto handle = getHandleForFd(fd);
+		if (!handle)
+			return EBADF;
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_GET_SEALS);
+		req.set_fd(fd);
+
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::RecvInline()
+			));
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+			mlibc::infoLogger() << "\e[31mmlibc: fcntl(F_GET_SEALS) unimplemented for this file\e[39m" << frg::endlog;
+			return EINVAL;
+		}
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.seals();
+		return 0;
 	}else{
 		mlibc::infoLogger() << "\e[31mmlibc: Unexpected fcntl() request: "
 				<< request << "\e[39m" << frg::endlog;
