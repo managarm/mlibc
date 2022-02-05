@@ -2249,7 +2249,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			return EINVAL;
 		}
 
-		*result = 0;
+		*result = resp.result();
 		return 0;
 	}
 	case DRM_IOCTL_MODE_GETPROPBLOB: {
