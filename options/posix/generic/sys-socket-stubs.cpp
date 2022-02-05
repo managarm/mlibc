@@ -23,6 +23,33 @@ int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict a
 	return newfd;
 }
 
+int accept4(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length, int flags) {
+	if(addr_ptr || addr_length)
+		mlibc::infoLogger() << "\e[35mmlibc: accept4() does not fill struct sockaddr\e[39m"
+				<< frg::endlog;
+
+	if(flags & SOCK_NONBLOCK) {
+		mlibc::infoLogger() << "\e[35mmlibc: accept4() ignores SOCK_NONBLOCK\e[39m" << frg::endlog;
+	}
+
+	int newfd;
+	if(!mlibc::sys_accept) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_accept(fd, &newfd); e) {
+		errno = e;
+		return -1;
+	}
+
+	if(flags & SOCK_CLOEXEC) {
+		fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+	}
+
+	return newfd;
+}
+
 int bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_len) {
 	if(!mlibc::sys_bind) {
 		MLIBC_MISSING_SYSDEP();
