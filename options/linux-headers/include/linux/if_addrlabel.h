@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <linux/types.h>
+#include <stdint.h>
 
 struct ifaddrlblmsg {
 	uint8_t ifal_family;

@@ -1,6 +1,8 @@
 #ifndef _LINUX_IF_ETHER_H
 #define _LINUX_IF_ETHER_H
 
+#include <stdint.h>
+
 #define ETH_ALEN 6
 #define ETH_TLEN 2
 #define ETH_HLEN 14
@@ -19,7 +21,7 @@ extern "C" {
 struct ethhdr {
 	unsigned char h_dest[ETH_ALEN];
 	unsigned char h_source[ETH_ALEN];
-	unsigned short h_proto;
+	uint16_t h_proto;
 } __attribute__((packed));
 
 #ifdef __cplusplus

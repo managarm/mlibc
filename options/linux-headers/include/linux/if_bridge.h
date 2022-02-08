@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <linux/types.h>
+#include <stdint.h>
 
 #define BR_STATE_DISABLED 0
 #define BR_STATE_LISTENING 1

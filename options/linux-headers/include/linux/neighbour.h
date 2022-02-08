@@ -3,6 +3,7 @@
 
 #include <linux/types.h>
 #include <linux/netlink.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,34 +45,6 @@ struct nda_cacheinfo {
 	uint32_t ndm_used;
 	uint32_t ndm_updated;
 	uint32_t ndm_refcnt;
-};
-
-enum {
-	NDA_UNSPEC,
-	NDA_DST,
-	NDA_LLADDR,
-	NDA_CACHEINFO,
-	NDA_PROBES,
-	NDA_VLAN,
-	NDA_PORT,
-	NDA_VNI,
-	NDA_IFINDEX,
-	NDA_MASTER,
-	NDA_LINK_NETNSID,
-	NDA_SRC_VNI,
-	NDA_PROTOCOL,
-	NDA_NH_ID,
-	NDA_FDB_EXT_ATTRS,
-	__NDA_MAX
-};
-
-#define NDA_MAX (__NDA_MAX - 1)
-
-struct nda_cacheinfo {
-	__u32 ndm_confirmed;
-	__u32 ndm_used;
-	__u32 ndm_updated;
-	__u32 ndm_refcnt;
 };
 
 #ifdef __cplusplus

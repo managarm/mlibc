@@ -3,6 +3,7 @@
 
 #include <linux/types.h>
 #include <linux/netlink.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

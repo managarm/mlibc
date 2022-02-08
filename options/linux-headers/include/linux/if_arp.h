@@ -1,6 +1,8 @@
 #ifndef _LINUX_IF_ARP_H
 #define _LINUX_IF_ARP_H
 
+#include <stdint.h>
+
 #define ARPHRD_NETROM 0
 #define ARPHRD_ETHER 1
 #define ARPHRD_EETHER 2
@@ -105,11 +107,11 @@ extern "C" {
 #endif
 
 struct arphdr {
-	unsigned short ar_hrd;
-	unsigned short ar_pro;
+	uint16_t ar_hrd;
+	uint16_t ar_pro;
 	unsigned char ar_hln;
 	unsigned char ar_pln;
-	unsigned short ar_op;
+	uint16_t ar_op;
 };
 
 #ifdef __cplusplus

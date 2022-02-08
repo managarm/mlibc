@@ -95,8 +95,8 @@ enum {
 #define RTMGRP_IPV6_ROUTE	0x400
 
 struct rtattr {
-	unsigned short	rta_len;
-	unsigned short	rta_type;
+	unsigned short rta_len;
+	unsigned short rta_type;
 };
 
 #define RTA_ALIGNTO	4U
@@ -112,17 +112,17 @@ struct rtattr {
 #define RTA_PAYLOAD(rta) ((int)((rta)->rta_len) - RTA_LENGTH(0))
 
 struct rtmsg {
-	unsigned char		rtm_family;
-	unsigned char		rtm_dst_len;
-	unsigned char		rtm_src_len;
-	unsigned char		rtm_tos;
+	unsigned char rtm_family;
+	unsigned char rtm_dst_len;
+	unsigned char rtm_src_len;
+	unsigned char rtm_tos;
 
-	unsigned char		rtm_table;
-	unsigned char		rtm_protocol;
-	unsigned char		rtm_scope;
-	unsigned char		rtm_type;
+	unsigned char rtm_table;
+	unsigned char rtm_protocol;
+	unsigned char rtm_scope;
+	unsigned char rtm_type;
 
-	unsigned		rtm_flags;
+	unsigned rtm_flags;
 };
 
 enum {
@@ -193,10 +193,10 @@ enum rtattr_type_t {
 #define RTM_RTA(r)  ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct rtmsg))))
 
 struct rtnexthop {
-	unsigned short	rtnh_len;
-	unsigned char	rtnh_flags;
-	unsigned char	rtnh_hops;
-	int				rtnh_ifindex;
+	unsigned short rtnh_len;
+	unsigned char rtnh_flags;
+	unsigned char rtnh_hops;
+	int rtnh_ifindex;
 };
 
 #define RTNH_ALIGNTO    4
@@ -209,27 +209,27 @@ struct rtnexthop {
 #define RTNH_DATA(rtnh)   ((struct rtattr*)(((char*)(rtnh)) + RTNH_LENGTH(0)))
 
 struct rtgenmsg {
-	unsigned char		rtgen_family;
+	unsigned char rtgen_family;
 };
 
 struct ifinfomsg {
-	unsigned char	ifi_family;
-	unsigned char	__ifi_pad;
-	unsigned short	ifi_type;
-	int				ifi_index;
-	unsigned		ifi_flags;
-	unsigned		ifi_change;
+	unsigned char ifi_family;
+	unsigned char __ifi_pad;
+	unsigned short ifi_type;
+	int ifi_index;
+	unsigned ifi_flags;
+	unsigned ifi_change;
 };
 
 struct tcmsg {
-	unsigned char	tcm_family;
-	unsigned char	tcm__pad1;
-	unsigned short	tcm__pad2;
-	int				tcm_ifindex;
-	uint32_t		tcm_handle;
-	uint32_t		tcm_parent;
+	unsigned char tcm_family;
+	unsigned char tcm__pad1;
+	unsigned short tcm__pad2;
+	int tcm_ifindex;
+	uint32_t tcm_handle;
+	uint32_t tcm_parent;
 #define tcm_block_index tcm_parent
-	uint32_t		tcm_info;
+	uint32_t tcm_info;
 };
 
 #define TCM_IFINDEX_MAGIC_BLOCK (0xFFFFFFFFU)
@@ -255,15 +255,15 @@ enum {
 };
 
 struct rta_cacheinfo {
-	uint32_t   rta_clntref;
-	uint32_t   rta_lastuse;
-	int32_t   rta_expires;
-	uint32_t   rta_error;
-	uint32_t   rta_used;
+	uint32_t rta_clntref;
+	uint32_t rta_lastuse;
+	int32_t rta_expires;
+	uint32_t rta_error;
+	uint32_t rta_used;
 #define RTNETLINK_HAVE_PEERINFO 1
-	uint32_t   rta_id;
-	uint32_t   rta_ts;
-	uint32_t   rta_tsage;
+	uint32_t rta_id;
+	uint32_t rta_ts;
+	uint32_t rta_tsage;
 };
 
 enum {

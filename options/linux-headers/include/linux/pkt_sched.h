@@ -6,21 +6,22 @@ extern "C" {
 #endif
 
 #include <linux/types.h>
+#include <stdint.h>
 
 struct tc_ratespec {
-	unsigned char	cell_log;
-	uint8_t			linklayer;
+	unsigned char cell_log;
+	uint8_t linklayer;
 	unsigned short	overhead;
-	short			cell_align;
+	short cell_align;
 	unsigned short	mpu;
-	uint32_t		rate;
+	uint32_t rate;
 };
 
 #define TC_RTAB_SIZE	1024
 
 struct tc_tbf_qopt {
-	struct tc_ratespec	rate;
-	struct tc_ratespec	peakrate;
+	struct tc_ratespec rate;
+	struct tc_ratespec peakrate;
 	uint32_t limit;
 	uint32_t buffer;
 	uint32_t mtu;
@@ -42,11 +43,11 @@ enum {
 #define TCA_GRED_MAX (__TCA_GRED_MAX - 1)
 
 struct tc_gred_sopt {
-	uint32_t	DPs;
-	uint32_t	def_DP;
-	uint8_t		grio;
-	uint8_t		flags;
-	uint16_t	pad1;
+	uint32_t DPs;
+	uint32_t def_DP;
+	uint8_t grio;
+	uint8_t flags;
+	uint16_t pad1;
 };
 
 enum {
@@ -74,13 +75,13 @@ enum {
 #define TC_HTB_PROTOVER	3
 
 struct tc_htb_opt {
-	struct tc_ratespec	rate;
-	struct tc_ratespec	ceil;
-	uint32_t	buffer;
-	uint32_t	cbuffer;
-	uint32_t	quantum;
-	uint32_t	level;
-	uint32_t	prio;
+	struct tc_ratespec rate;
+	struct tc_ratespec ceil;
+	uint32_t buffer;
+	uint32_t cbuffer;
+	uint32_t quantum;
+	uint32_t level;
+	uint32_t prio;
 };
 
 struct tc_htb_glob {

@@ -7,6 +7,7 @@ extern "C" {
 
 #include <linux/types.h>
 #include <linux/netfilter/nfnetlink_compat.h>
+#include <stdint.h>
 
 struct nfgenmsg {
 	uint8_t nfgen_family;

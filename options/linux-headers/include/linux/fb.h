@@ -3,6 +3,7 @@
 #define _LINUX_FB_H
 
 #include <linux/types.h>
+#include <stdint.h>
 #include <sys/ioctl.h>
 
 #define FB_MAX 32
@@ -127,119 +128,119 @@ extern "C" {
 struct fb_fix_screeninfo {
     char id[16];
     unsigned long smem_start;
-    unsigned int smem_len;
-    unsigned int type;
-    unsigned int type_aux;
-    unsigned int visual;
-    unsigned short xpanstep;
-    unsigned short ypanstep;
-    unsigned short ywrapstep;
-    unsigned int line_length;
+    uint32_t smem_len;
+    uint32_t type;
+    uint32_t type_aux;
+    uint32_t visual;
+    uint16_t xpanstep;
+    uint16_t ypanstep;
+    uint16_t ywrapstep;
+    uint32_t line_length;
     unsigned long mmio_start;
-    unsigned int mmio_len;
-    unsigned int accel;
-    unsigned short capabilities;
-    unsigned short reserved[2];
+    uint32_t mmio_len;
+    uint32_t accel;
+    uint16_t capabilities;
+    uint16_t reserved[2];
 };
 
 struct fb_bitfield {
-    unsigned int offset;
-    unsigned int length;
-    unsigned int msb_right;
+    uint32_t offset;
+    uint32_t length;
+    uint32_t msb_right;
 };
 
 struct fb_var_screeninfo {
-    unsigned int xres;
-    unsigned int yres;
-    unsigned int xres_virtual;
-    unsigned int yres_virtual;
-    unsigned int xoffset;
-    unsigned int yoffset;
-    unsigned int bits_per_pixel;
-    unsigned int grayscale;
+    uint32_t xres;
+    uint32_t yres;
+    uint32_t xres_virtual;
+    uint32_t yres_virtual;
+    uint32_t xoffset;
+    uint32_t yoffset;
+    uint32_t bits_per_pixel;
+    uint32_t grayscale;
     struct fb_bitfield red;
     struct fb_bitfield green;
     struct fb_bitfield blue;
     struct fb_bitfield transp;
-    unsigned int nonstd;
-    unsigned int activate;
-    unsigned int height;
-    unsigned int width;
-    unsigned int accel_flags;
-    unsigned int pixclock;
-    unsigned int left_margin;
-    unsigned int right_margin;
-    unsigned int upper_margin;
-    unsigned int lower_margin;
-    unsigned int hsync_len;
-    unsigned int vsync_len;
-    unsigned int sync;
-    unsigned int vmode;
-    unsigned int rotate;
-    unsigned int colorspace;
-    unsigned int reserved[4];
+    uint32_t nonstd;
+    uint32_t activate;
+    uint32_t height;
+    uint32_t width;
+    uint32_t accel_flags;
+    uint32_t pixclock;
+    uint32_t left_margin;
+    uint32_t right_margin;
+    uint32_t upper_margin;
+    uint32_t lower_margin;
+    uint32_t hsync_len;
+    uint32_t vsync_len;
+    uint32_t sync;
+    uint32_t vmode;
+    uint32_t rotate;
+    uint32_t colorspace;
+    uint32_t reserved[4];
 };
 
 struct fb_cmap {
-    unsigned int start;
-    unsigned int len;
-    unsigned short *red;
-    unsigned short *green;
-    unsigned short *blue;
-    unsigned short *transp;
+    uint32_t start;
+    uint32_t len;
+    uint16_t *red;
+    uint16_t *green;
+    uint16_t *blue;
+    uint16_t *transp;
 };
 
 struct fb_con2fbmap {
-    unsigned int console;
-    unsigned int framebuffer;
+    uint32_t console;
+    uint32_t framebuffer;
 };
 
 struct fb_vblank {
-    unsigned int flags;
-    unsigned int count;
-    unsigned int vcount;
-    unsigned int hcount;
-    unsigned int reserved[4];
+    uint32_t flags;
+    uint32_t count;
+    uint32_t vcount;
+    uint32_t hcount;
+    uint32_t reserved[4];
 };
 
 struct fb_copyarea {
-    unsigned int dx;
-    unsigned int dy;
-    unsigned int width;
-    unsigned int height;
-    unsigned int sx;
-    unsigned int sy;
+    uint32_t dx;
+    uint32_t dy;
+    uint32_t width;
+    uint32_t height;
+    uint32_t sx;
+    uint32_t sy;
 };
 
 struct fb_fillrect {
-    unsigned int dx;
-    unsigned int dy;
-    unsigned int width;
-    unsigned int height;
-    unsigned int color;
-    unsigned int rop;
+    uint32_t dx;
+    uint32_t dy;
+    uint32_t width;
+    uint32_t height;
+    uint32_t color;
+    uint32_t rop;
 };
 
 struct fb_image {
-    unsigned int dx;
-    unsigned int dy;
-    unsigned int width;
-    unsigned int height;
-    unsigned int fg_color;
-    unsigned int bg_color;
-    unsigned char depth;
+    uint32_t dx;
+    uint32_t dy;
+    uint32_t width;
+    uint32_t height;
+    uint32_t fg_color;
+    uint32_t bg_color;
+    uint8_t depth;
     const char *data;
     struct fb_cmap cmap;
 };
 
 struct fbcurpos {
-    unsigned short x, y;
+    uint16_t x, y;
 };
 
 struct fb_cursor {
-    unsigned short set;
-    unsigned short enable;
-    unsigned short rop;
+    uint16_t set;
+    uint16_t enable;
+    uint16_t rop;
     const char *mask;
     struct fbcurpos hot;
     struct fb_image image;

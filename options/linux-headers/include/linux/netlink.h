@@ -7,6 +7,7 @@ extern "C" {
 #endif
 
 #include <abi-bits/socket.h>
+#include <stdint.h>
 
 #define NETLINK_ROUTE 0
 #define NETLINK_USERSOCK 2
@@ -19,16 +20,16 @@ extern "C" {
 struct sockaddr_nl {
 	sa_family_t nl_family;
 	unsigned short nl_pad;
-	unsigned int nl_pid;
-	unsigned int nl_groups;
+	uint32_t nl_pid;
+	uint32_t nl_groups;
 };
 
 struct nlmsghdr {
-	unsigned int nlmsg_len;
-	unsigned short nlmsg_type;
-	unsigned short nlmsg_flags;
-	unsigned int nlmsg_seq;
-	unsigned int nlmsg_pid;
+	uint32_t nlmsg_len;
+	uint16_t nlmsg_type;
+	uint16_t nlmsg_flags;
+	uint32_t nlmsg_seq;
+	uint32_t nlmsg_pid;
 };
 
 #define NLM_F_REQUEST	0x01
@@ -91,7 +92,7 @@ enum nlmsgerr_attrs {
 #define NETLINK_GET_STRICT_CHK          12
 
 struct nl_pktinfo {
-	unsigned int group;
+	uint32_t group;
 };
 
 #define NLA_F_NESTED            (1 << 15)

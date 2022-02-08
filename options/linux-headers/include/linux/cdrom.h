@@ -3,6 +3,7 @@
 #define _LINUX_CDROM_H
 
 #include <linux/types.h>
+#include <stdint.h>
 
 #define CDROM_PACKET_SIZE 12
 

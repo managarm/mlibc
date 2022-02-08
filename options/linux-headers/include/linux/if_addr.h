@@ -2,6 +2,7 @@
 #define _LINUX_IF_ADDR_H
 
 #include <linux/types.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
