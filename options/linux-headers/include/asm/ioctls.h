@@ -11,6 +11,7 @@
 #define TIOCSTI 0x5412
 #define TIOCGWINSZ 0x5413
 #define TIOCMGET 0x5415
+#define TIOCMSET 0x5418
 #define TIOCNOTTY 0x5422
 
 #define TIOCGPTN _IOR('T', 0x30, unsigned int)

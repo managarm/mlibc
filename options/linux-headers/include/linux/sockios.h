@@ -6,10 +6,10 @@
 extern "C" {
 #endif
 
+#define SIOCATMARK 0x8905
 #define SIOCGSTAMP 0x8906
 #define SIOCADDRT 0x890B
 #define SIOCDELRT 0x890C
-
 #define SIOCGIFNAME 0x8910
 #define SIOCSIFLINK 0x8911
 #define SIOCGIFCONF 0x8912
