@@ -22,15 +22,15 @@ typedef long int __fd_mask;
 typedef __fd_mask fd_mask;
 #define NFDBITS __NFDBITS
 
-void FD_CLR(int fd, fd_set *);
-int FD_ISSET(int fd, fd_set *);
-void FD_SET(int fd, fd_set *);
-void FD_ZERO(fd_set *);
+void __FD_CLR(int fd, fd_set *);
+int __FD_ISSET(int fd, fd_set *);
+void __FD_SET(int fd, fd_set *);
+void __FD_ZERO(fd_set *);
 
-#define FD_CLR FD_CLR
-#define FD_ISSET FD_ISSET
-#define FD_SET FD_SET
-#define FD_ZERO FD_ZERO
+#define FD_CLR(fd, set) __FD_CLR(fd, set)
+#define FD_ISSET(fd, set) __FD_ISSET(fd, set)
+#define FD_SET(fd, set) __FD_SET(fd, set)
+#define FD_ZERO(set) __FD_ZERO(set)
 
 int select(int, fd_set *__restrict, fd_set *__restrict, fd_set *__restrict,
 		struct timeval *__restrict);
