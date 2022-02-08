@@ -89,6 +89,8 @@ struct group_source_req {
 #define IPPROTO_RAW 4
 #define IPPROTO_TCP 5
 #define IPPROTO_UDP 6
+#define IPPROTO_IGMP 7
+#define IPPROTO_IPIP 8
 #define IPPROTO_ESP 50
 #define IPPROTO_AH 51
 
