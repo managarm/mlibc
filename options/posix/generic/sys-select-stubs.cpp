@@ -9,19 +9,19 @@
 
 #include <mlibc/posix-sysdeps.hpp>
 
-void FD_CLR(int fd, fd_set *set) {
+void __FD_CLR(int fd, fd_set *set) {
 	__ensure(fd < FD_SETSIZE);
 	set->__mlibc_elems[fd / 8] &= ~(1 << (fd % 8));
 }
-int FD_ISSET(int fd, fd_set *set) {
+int __FD_ISSET(int fd, fd_set *set) {
 	__ensure(fd < FD_SETSIZE);
 	return set->__mlibc_elems[fd / 8] & (1 << (fd % 8));
 }
-void FD_SET(int fd, fd_set *set) {
+void __FD_SET(int fd, fd_set *set) {
 	__ensure(fd < FD_SETSIZE);
 	set->__mlibc_elems[fd / 8] |= 1 << (fd % 8);
 }
-void FD_ZERO(fd_set *set) {
+void __FD_ZERO(fd_set *set) {
 	memset(set->__mlibc_elems, 0, sizeof(fd_set));
 }
 
