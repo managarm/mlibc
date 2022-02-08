@@ -12,6 +12,18 @@ extern "C" {
 #include <bits/sigset_t.h>
 #include <stddef.h>
 
+#define FPE_INTDIV      1       /* integer divide by zero */
+#define FPE_INTOVF      2       /* integer overflow */
+#define FPE_FLTDIV      3       /* floating point divide by zero */
+#define FPE_FLTOVF      4       /* floating point overflow */
+#define FPE_FLTUND      5       /* floating point underflow */
+#define FPE_FLTRES      6       /* floating point inexact result */
+#define FPE_FLTINV      7       /* floating point invalid operation */
+#define FPE_FLTSUB      8       /* subscript out of range */
+
+#define TRAP_BRKPT      1       /* process breakpoint */
+#define TRAP_TRACE      2       /* process trace trap */
+
 typedef struct __ucontext {
         unsigned long uc_flags;
         struct __ucontext *uc_link;
