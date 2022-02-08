@@ -11,6 +11,8 @@
 #define RTLD_NEXT ((void *)-1)
 #define RTLD_DEFAULT ((void *)0)
 
+#define RTLD_DI_LINKMAP 2
+
 #ifdef __cplusplus
 extern "C" {
 #endif
