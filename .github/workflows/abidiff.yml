@@ -1,0 +1,108 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches-ignore:
+      - abi-break
+  pull_request:
+    branches-ignore:
+      - abi-break
+
+jobs:
+  run-abidiff:
+    name: Compare ABIs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install prerequisites
+        run: |
+          sudo apt-get install ninja-build g++-10 abigail-tools
+          sudo pip3 install setuptools
+          sudo pip3 install meson
+
+      - name: Checkout base branch
+        if: ${{ github.base_ref }}
+        uses: actions/checkout@v2
+        with:
+          path: mlibc-base
+          ref: ${{ github.base_ref }}
+          submodules: true
+          fetch-depth: 4
+
+      - name: Checkout managarm/mlibc#master
+        if: ${{ github.base_ref == '' }}
+        uses: actions/checkout@v2
+        with:
+          path: mlibc-base
+          repository: managarm/mlibc
+          submodules: true
+          ref: master
+          fetch-depth: 4
+
+      - name: Checkout branch
+        uses: actions/checkout@v2
+        with:
+          path: mlibc-branch
+          submodules: true
+
+      - name: Determine base ref
+        run: |
+          master_hash="$(git -C mlibc-base rev-parse HEAD)"
+          branch_hash="$(git -C mlibc-branch rev-parse HEAD)"
+          printf '%s\n' "$master_hash" "$branch_hash"
+
+          if [ "$master_hash" = "$branch_hash" ]; then
+            git -C mlibc-base reset --hard HEAD^
+          fi
+
+      - name: Build and install both copies
+        run: |
+          set -xe
+          export C=gcc-10 CXX=g++-10
+          mkdir root-base root-branch
+          (
+            cd mlibc-base
+            # defaults to all features, linux build
+            meson --buildtype=debugoptimized build
+            ninja -C build
+            DESTDIR="$GITHUB_WORKSPACE/root-base" ninja -C build install
+          )
+          (
+            cd mlibc-branch
+            meson --buildtype=debugoptimized build
+            ninja -C build
+            DESTDIR="$GITHUB_WORKSPACE/root-branch" ninja -C build install
+          )
+      - name: Compare
+        run: |
+          # TODO(arsen): does this require handling for version suffixes?
+          set -e +x
+
+          exitcode=0
+          git -C mlibc-branch show -s --format=%s | grep -q abi-break || \
+            exitcode=1
+
+          echo ==== RUNNING ABIDIFF... ====
+          ( cd root-base; find . -type f -name '*.so'; ) | while read -r file
+          do
+            if ! file -- root-{base,branch}/"$file"; then
+              touch files-differ
+              continue
+            fi
+            abidiff \
+              --hd1 root-base/usr/local/include/ \
+              --hd2 root-branch/usr/local/include/ \
+              root-{base,branch}/"$file" \
+              || touch files-differ
+          done
+
+          echo ==== CHECKING FOR EXTRA FILES... ====
+          ( cd root-branch; find . -type f -name '*.so'; ) | while read -r file
+          do
+            [ -e "root-base/$file" ] || file root-{base,branch}/"$file" \
+              || touch files-differ
+          done
+
+          if [ -e files-differ ]; then
+            echo SOME FILES/ABI DIFFER, SEE OUTPUT ABOVE
+            exit "$exitcode"
+          fi
