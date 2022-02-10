@@ -69,12 +69,22 @@ int sys_futex_tid() {
 }
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
-    mlibc::infoLogger() << "sys_futex_wait() is not implemented" << frg::endlog;
+    auto result = syscall(SYS_FUTEX_WAIT, pointer, expected, time);
+
+    if (result < 0) {
+        return -result;
+    }
+
     return 0;
 }
 
 int sys_futex_wake(int *pointer) {
-    mlibc::infoLogger() << "sys_futex_wake() is not implemented" << frg::endlog;
+    auto result = syscall(SYS_FUTEX_WAKE, pointer);
+
+    if (result < 0) {
+        return -result;
+    }
+
     return 0;
 }
 
@@ -131,10 +141,18 @@ void sys_exit(int status) {
 pid_t sys_getpid() {
     auto result = syscall(SYS_GETPID);
 
-    // SAFETY: getpid does not return any errors (ie. the call is always
-    // successful).
-    __ensure(result >= 0);
+    __ensure(result >= 0); // getpid() cannot fail.
     return result;
+}
+
+int sys_kill(int pid, int sig) {
+    auto result = syscall(SYS_KILL, pid, sig);
+
+    if (result < 0) {
+        return -result;
+    }
+
+    return 0;
 }
 
 pid_t sys_getpgid(pid_t pid, pid_t *pgid) {
@@ -173,7 +191,15 @@ int sys_getcwd(char *buffer, size_t size) {
     return 0;
 }
 
-int sys_chdir(const char *path) UNIMPLEMENTED("sys_chdir")
+int sys_chdir(const char *path) {
+    auto result = syscall(SYS_CHDIR, path, strlen(path));
+
+    if (result < 0) {
+        return -result;
+    }
+
+    return 0;
+}
 
 int sys_gethostname(char *buffer, size_t bufsize) {
     auto result = syscall(SYS_GETHOSTNAME, buffer, bufsize);
@@ -286,7 +312,7 @@ int sys_execve(const char *path, char *const argv[], char *const envp[]) {
     __builtin_unreachable();
 }
 
-int sys_getentropy(void *buffer, size_t length) UNIMPLEMENTED("sys_getentropy")
+// int sys_getentropy(void *buffer, size_t length) UNIMPLEMENTED("sys_getentropy")
 
 #endif
 } // namespace mlibc

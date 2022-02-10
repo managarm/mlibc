@@ -49,6 +49,21 @@
 #define SYS_DUP 42
 #define SYS_FCNTL 43
 #define SYS_DUP2 44
+#define SYS_IPC_SEND 45
+#define SYS_IPC_RECV 46
+#define SYS_DISCOVER_ROOT 47
+#define SYS_BECOME_ROOT 48
+#define SYS_STAT 49
+#define SYS_FSTAT 50
+#define SYS_READ_LINK 51
+#define SYS_EPOLL_CREATE 52
+#define SYS_EPOLL_PWAIT 53
+#define SYS_EPOLL_CTL 54
+#define SYS_EVENT_FD 55
+#define SYS_KILL 56
+#define SYS_FUTEX_WAIT 57
+#define SYS_FUTEX_WAKE 58
+#define SYS_LINK 59
 
 // Invalid syscall used to trigger a log error in the kernel (as a hint)
 // so, that we can implement the syscall in the kernel.
