@@ -60,15 +60,22 @@ void openlog(const char *ident, int options, int facility) {
 		__openlog();
 }
 
-int setlogmask(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int setlogmask(int mask) {
+	int old_mask = log_mask;
+
+	log_mask = mask;
+
+	return old_mask;
 }
 
 static void _vsyslog(int priority, const char *message, va_list ap) {
 	auto is_lost_conn = [] (int e) {
 		return e == ECONNREFUSED || e == ECONNRESET || e == ENOTCONN || e == EPIPE;
 	};
+
+	if(!(priority & log_mask)) {
+		return;
+	}
 
 	char timebuf[16];
 	time_t now;
