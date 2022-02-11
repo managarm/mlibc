@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include <endian.h>
+#include <sys/socket.h> // struct sockaddr
 #include <abi-bits/socket.h>
 #include <abi-bits/in.h>
 

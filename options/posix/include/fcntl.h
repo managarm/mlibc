@@ -35,6 +35,8 @@ extern "C" {
 #define O_SYNC __MLIBC_O_SYNC
 #define O_CLOEXEC __MLIBC_O_CLOEXEC
 #define O_PATH __MLIBC_O_PATH
+#define O_LARGEFILE __MLIBC_O_LARGEFILE
+#define O_NOATIME __MLIBC_O_NOATIME
 
 // MISSING: AT macros
 

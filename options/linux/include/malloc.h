@@ -15,6 +15,9 @@ void *malloc(size_t size);
 void *realloc(void *pointer, size_t size);
 void *memalign(size_t, size_t);
 
+// GNU extension
+size_t malloc_usable_size(void *ptr);
+
 #ifdef __cplusplus
 }
 #endif

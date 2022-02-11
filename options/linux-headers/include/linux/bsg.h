@@ -11,6 +11,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 struct sg_io_v4 {
 	int32_t guard;
 	uint32_t protocol;

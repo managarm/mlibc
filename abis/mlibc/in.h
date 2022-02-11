@@ -103,11 +103,18 @@ struct group_source_req {
 #define IPV6_MULTICAST_LOOP 5
 #define IPV6_UNICAST_HOPS 6
 #define IPV6_V6ONLY 7
+#define IPV6_RECVERR 25
+#define IPV6_RECVPKTINFO 49
+#define IPV6_PKTINFO 50
+#define IPV6_RECVHOPLIMIT 51
+#define IPV6_HOPLIMIT 52
 
 #define IP_TOS 1
 #define IP_TTL 2
 #define IP_OPTIONS 4
-#define IP_PKTINFO	8
+#define IP_PKTINFO 8
+#define IP_RECVERR 11
+#define IP_RECVTTL 12
 
 #define IP_MULTICAST_IF           32
 #define IP_MULTICAST_TTL          33

@@ -83,6 +83,9 @@ void *bsearch(const void *key, const void *base, size_t count, size_t size,
 		int (*compare)(const void *, const void *));
 void qsort(void *base, size_t count, size_t size,
 		int (*compare)(const void *, const void *));
+void qsort_r(void *base, size_t nmemb, size_t size,
+		int (*compar)(const void *, const void *, void *),
+		void *arg);
 
 // [7.22.6] Integer arithmetic functions
 

@@ -21,6 +21,7 @@ libc_sources += files(
 	'generic/utmp-stubs.cpp',
 	'generic/utmpx.cpp',
 	'generic/linux-unistd.cpp',
+	'generic/malloc.cpp',
 )
 
 if not no_headers

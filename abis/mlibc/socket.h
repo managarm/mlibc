@@ -70,6 +70,8 @@ struct mmsghdr {
 #define SO_ATTACH_FILTER 19
 #define SO_PASSCRED 20
 #define SO_RCVBUFFORCE 21
+#define SO_DETACH_FILTER 22
+#define SO_PROTOCOL 23
 
 #define SOMAXCONN 1
 
@@ -94,6 +96,7 @@ struct mmsghdr {
 #define PF_LOCAL 3
 #define PF_UNSPEC 4
 #define PF_NETLINK 5
+#define PF_BRIDGE 6
 
 #define AF_INET PF_INET
 #define AF_INET6 PF_INET6
@@ -101,6 +104,7 @@ struct mmsghdr {
 #define AF_LOCAL PF_LOCAL
 #define AF_UNSPEC PF_UNSPEC
 #define AF_NETLINK PF_NETLINK
+#define AF_BRIDGE PF_BRIDGE
 
 #define SHUT_RD 1
 #define SHUT_RDWR 2

@@ -6,6 +6,7 @@ libc_sources += files(
 	'generic/err.cpp',
 	'generic/resolv-stubs.cpp',
 	'generic/shadow-stubs.cpp',
+	'generic/printf.cpp',
 )
 
 if not no_headers
@@ -19,7 +20,9 @@ if not no_headers
 		'include/endian.h',
 		'include/ar.h',
 		'include/shadow.h',
-		'include/memory.h'
+		'include/memory.h',
+		'include/printf.h',
+		'include/gshadow.h'
 	)
 	install_headers(
 		'include/sys/ioctl.h',
@@ -27,7 +30,8 @@ if not no_headers
 	)
 	install_headers(
 		'include/netinet/in_systm.h',
-		subdir: 'netinet'
+		'include/net/ethernet.h',
+		subdir: 'net'
 	)
 endif
 
