@@ -89,6 +89,7 @@ jobs:
               continue
             fi
             abidiff \
+              --no-added-syms \
               --hd1 root-base/usr/local/include/ \
               --hd2 root-branch/usr/local/include/ \
               root-{base,branch}/"$file" \
