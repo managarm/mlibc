@@ -94,6 +94,10 @@ wchar_t *wmemset(wchar_t *, wchar_t, size_t);
 
 // [7.28.5] Wide date/time functions
 
+/* POSIX says:
+ * The tag tm is declared as naming an incomplete structure type, the contents of which are
+ * described in the header <time.h>. */
+struct tm;
 size_t wcsftime(wchar_t *__restrict, size_t, const wchar_t *__restrict,
 		const struct tm *__restrict);
 
