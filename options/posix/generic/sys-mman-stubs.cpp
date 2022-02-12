@@ -130,3 +130,22 @@ int shm_unlink(const char *name) {
 		return -1;
 	return unlink(name);
 }
+
+#ifdef __MLIBC_LINUX_OPTION
+int memfd_create(const char *name, unsigned int flags) {
+	if(!mlibc::sys_memfd_create) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	int ret = -1;
+
+	if(int e = mlibc::sys_memfd_create(name, flags, &ret)) {
+		errno = e;
+		return -1;
+	}
+
+	return ret;
+}
+#endif
