@@ -588,6 +588,8 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
 			mlibc::infoLogger() << "\e[31mmlibc: fcntl(F_ADD_SEALS) unimplemented for this file\e[39m" << frg::endlog;
 			return EINVAL;
+		} else if(resp.error() == managarm::fs::Errors::INSUFFICIENT_PERMISSIONS) {
+			return EPERM;
 		}
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
