@@ -1,7 +1,9 @@
 
 #include <errno.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <wchar.h>
+#include <wctype.h>
 #include <bits/ensure.h>
 
 #include <mlibc/charcode.hpp>
@@ -237,3 +239,25 @@ int wcswidth(const wchar_t *, size_t) {
 	__builtin_unreachable();
 }
 
+wchar_t *wcsdup(const wchar_t *s) {
+	size_t len = wcslen(s);
+	wchar_t *ret = (wchar_t *) malloc(sizeof(wchar_t) * (len + 1));
+	if(!ret)
+		return NULL;
+	wmemcpy(ret, s, len + 1);
+	return ret;
+}
+
+int wcsncasecmp(const wchar_t* s1, const wchar_t* s2, size_t n) {
+	for(size_t i = 0; i < n; i++) {
+		wint_t c1 = towlower(s1[i]);
+		wint_t c2 = towlower(s2[i]);
+		if(c1 == L'\0' && c2 == L'\0')
+			return 0;
+		if(c1 < c2)
+			return -1;
+		if(c1 > c2)
+			return 1;
+	}
+	return 0;
+}

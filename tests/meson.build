@@ -11,7 +11,9 @@ ansi_test_cases = [
 	'strrchr',
 	'wcsrtombs',
 	'wmemcmp',
-	'time'
+	'time',
+	'wcsdup',
+	'wcsncasecmp'
 ]
 
 bsd_test_cases = [
