@@ -23,6 +23,7 @@ libc_sources += files(
 	'generic/linux-unistd.cpp',
 	'generic/malloc.cpp',
 	'generic/sys-fsuid.cpp',
+	'generic/ifaddrs.cpp',
 )
 
 if not no_headers
