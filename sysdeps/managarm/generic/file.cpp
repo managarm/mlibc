@@ -552,6 +552,7 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 			return EINVAL;
 		}
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = 0;
 		return 0;
 	}else if(request == F_SETLK) {
 		mlibc::infoLogger() << "\e[31mmlibc: F_SETLK\e[39m" << frg::endlog;
