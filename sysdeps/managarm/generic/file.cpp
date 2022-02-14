@@ -4349,10 +4349,6 @@ int sys_fallocate(int fd, off_t offset, size_t size) {
 	return 0;
 }
 
-int sys_unlink(const char *path) {
-	return sys_unlinkat(AT_FDCWD, path, 0);
-}
-
 int sys_unlinkat(int fd, const char *path, int flags) {
 	SignalGuard sguard;
 

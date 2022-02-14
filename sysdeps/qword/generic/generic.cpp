@@ -248,6 +248,21 @@ namespace {
 	}
 }
 
+int sys_unlink(const char *path) {
+    int ret;
+    int sys_errno;
+
+    asm volatile ("syscall"
+            : "=a"(ret), "=d"(sys_errno)
+            : "a"(34), "D"(path)
+            : "rcx", "r11");
+
+    if (ret == -1)
+        return sys_errno;
+
+    return 0;
+}
+
 int sys_unlinkat(int fd, const char *path, int flags) {
     __ensure(flags == 0);
     if (path[0] == '/') {
@@ -513,20 +528,6 @@ int sys_pipe(int *fds, int flags) {
 int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length) STUB_ONLY
 int sys_ftruncate(int fd, size_t size) STUB_ONLY
 int sys_fallocate(int fd, off_t offset, size_t size) STUB_ONLY
-int sys_unlink(const char *path) {
-    int ret;
-    int sys_errno;
-
-    asm volatile ("syscall"
-            : "=a"(ret), "=d"(sys_errno)
-            : "a"(34), "D"(path)
-            : "rcx", "r11");
-
-    if (ret == -1)
-        return sys_errno;
-
-    return 0;
-}
 int sys_symlink(const char *target_path, const char *link_path) STUB_ONLY
 int sys_fcntl(int fd, int request, va_list args, int *result) {
     int ret;

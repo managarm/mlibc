@@ -228,16 +228,6 @@ int sys_link(const char* srcpath, const char* destpath){
 	return 0;
 }
 
-int sys_unlink(const char* path){
-	long ret = syscall(SYS_UNLINK, path);
-
-	if(ret < 0){
-		return -ret;
-	}
-
-	return 0;
-}
-
 typedef struct lemon_dirent {
 	uint32_t inode; // Inode number
 	uint32_t type;

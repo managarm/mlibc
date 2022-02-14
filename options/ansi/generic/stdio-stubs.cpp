@@ -8,6 +8,8 @@
 #include <ctype.h>
 #include <limits.h>
 
+#include <abi-bits/fcntl.h>
+
 #include <bits/ensure.h>
 
 #include <mlibc/lock.hpp>
@@ -212,12 +214,12 @@ int remove(const char *filename) {
 
 	if(int e = mlibc::sys_rmdir(filename); e) {
 		if (e == ENOTDIR) {
-			if(!mlibc::sys_unlink) {
+			if(!mlibc::sys_unlinkat) {
 				MLIBC_MISSING_SYSDEP();
 				errno = ENOSYS;
 				return -1;
 			}
-			if(e = mlibc::sys_unlink(filename); e) {
+			if(e = mlibc::sys_unlinkat(AT_FDCWD, filename, 0); e) {
 				errno = e;
 				return -1;
 			}

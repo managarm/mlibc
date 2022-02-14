@@ -155,10 +155,6 @@ int sys_mkdir(const char *path) {
 int sys_rmdir(const char *path) UNIMPLEMENTED("sys_rmdir")
 int sys_link(const char *srcpath, const char *destpath) UNIMPLEMENTED("sys_link")
 
-int sys_unlink(const char *path) {
-    return sys_unlinkat(AT_FDCWD, path, 0);
-}
-
 int sys_unlinkat(int fd, const char *path, int flags) {
     auto result = syscall(SYS_UNLINK, fd, path, strlen(path), flags);
 

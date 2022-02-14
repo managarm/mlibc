@@ -39,7 +39,7 @@ int sys_clock_get(int clock, time_t *secs, long *nanos);
 // zero (and not one) to indicate that the file is a terminal.
 [[gnu::weak]] int sys_isatty(int fd);
 [[gnu::weak]] int sys_rmdir(const char *path);
-[[gnu::weak]] int sys_unlink(const char *path);
+[[gnu::weak]] int sys_unlinkat(int dirfd, const char *path, int flags);
 [[gnu::weak]] int sys_rename(const char *path, const char *new_path);
 [[gnu::weak]] int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path);
 
