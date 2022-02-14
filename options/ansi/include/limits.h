@@ -32,6 +32,9 @@
 #define LINE_MAX 4096
 #define PIPE_BUF 4096
 
+#define CHARCLASS_NAME_MAX 14
+#define RE_DUP_MAX 255
+
 // This value is a guaranteed minimum, get the current maximum from sysconf
 #define NGROUPS_MAX 8
 // POSIX states 9 is the minimum for NL_ARGMAX
