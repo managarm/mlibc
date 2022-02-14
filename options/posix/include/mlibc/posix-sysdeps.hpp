@@ -68,7 +68,6 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_rmdir(const char *path);
 [[gnu::weak]] int sys_ftruncate(int fd, size_t size);
 [[gnu::weak]] int sys_fallocate(int fd, off_t offset, size_t size);
-[[gnu::weak]] int sys_unlink(const char *path);
 [[gnu::weak]] int sys_unlinkat(int fd, const char *path, int flags);
 [[gnu::weak]] int sys_openat(int dirfd, const char *path, int flags, int *fd);
 [[gnu::weak]] int sys_socket(int family, int type, int protocol, int *fd);

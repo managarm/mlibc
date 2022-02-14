@@ -312,7 +312,6 @@ namespace mlibc {
     int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length) STUB_ONLY
     int sys_ftruncate(int fd, size_t size) STUB_ONLY
     int sys_fallocate(int fd, off_t offset, size_t size) STUB_ONLY
-    int sys_unlink(const char *path) STUB_ONLY
     int sys_symlink(const char *target_path, const char *link_path) STUB_ONLY
     int sys_fcntl(int fd, int request, va_list args, int *result) STUB_ONLY
     #endif*/

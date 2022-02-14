@@ -58,6 +58,7 @@
 #define NR_exit_group 231
 #define NR_tgkill 234
 #define NR_newfstatat 262
+#define NR_unlinkat 263
 #define NR_pselect6 270
 #define NR_dup3 292
 #define NR_pipe2 293
@@ -257,8 +258,8 @@ int sys_getcwd(char *buf, size_t size) {
 	return 0;
 }
 
-int sys_unlink(const char *path) {
-	auto ret = do_syscall(NR_unlink, path);
+int sys_unlinkat(int dfd, const char *path, int flags) {
+	auto ret = do_syscall(NR_unlinkat, dfd, path, flags);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;

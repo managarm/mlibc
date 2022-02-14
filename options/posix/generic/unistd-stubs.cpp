@@ -848,12 +848,12 @@ int ttyname_r(int, char *, size_t) {
 }
 
 int unlink(const char *path) {
-	if(!mlibc::sys_unlink) {
+	if(!mlibc::sys_unlinkat) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
 		return -1;
 	}
-	if(int e = mlibc::sys_unlink(path); e) {
+	if(int e = mlibc::sys_unlinkat(AT_FDCWD, path, 0); e) {
 		errno = e;
 		return -1;
 	}
