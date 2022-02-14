@@ -41,11 +41,26 @@ int timerisset(struct timeval *) {
 	__builtin_unreachable();
 }
 
-int getitimer(int, struct itimerval *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int getitimer(int which, struct itimerval *curr_value) {
+	if(!mlibc::sys_getitimer) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_getitimer(which, curr_value); e) {
+		errno = e;
+		return -1;
+	}
 }
-int setitimer(int, const struct itimerval *, struct itimerval *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
+	if(!mlibc::sys_setitimer) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_setitimer(which, new_value, old_value); e) {
+		errno = e;
+		return -1;
+	}
 }
