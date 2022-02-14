@@ -7,16 +7,17 @@
 #include <mlibc/posix-sysdeps.hpp>
 
 int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length) {
-	if(addr_ptr || addr_length)
-		mlibc::infoLogger() << "\e[35mmlibc: accept() does not fill struct sockaddr\e[39m"
-				<< frg::endlog;
 	int newfd;
-	if(!mlibc::sys_accept) {
+	if(!mlibc::sys_accept || !mlibc::sys_peername) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
 		return -1;
 	}
 	if(int e = mlibc::sys_accept(fd, &newfd); e) {
+		errno = e;
+		return -1;
+	}
+	if(int e = mlibc::sys_peername(newfd, addr_ptr, *addr_length, addr_length); e) {
 		errno = e;
 		return -1;
 	}
