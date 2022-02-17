@@ -25,6 +25,7 @@ if not no_headers
 		'include/gshadow.h'
 	)
 	install_headers(
+		'include/sys/dir.h',
 		'include/sys/ioctl.h',
 		subdir: 'sys'
 	)
