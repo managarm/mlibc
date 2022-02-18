@@ -32,6 +32,11 @@ struct nlmsghdr {
 	uint32_t nlmsg_pid;
 };
 
+struct nlattr {
+	uint16_t nla_len;
+	uint16_t nla_type;
+};
+
 #define NLM_F_REQUEST	0x01
 #define NLM_F_MULTI		0x02
 #define NLM_F_ACK		0x04
