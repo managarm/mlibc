@@ -706,6 +706,23 @@ void doInitialize(SharedObject *object) {
 RuntimeTlsMap::RuntimeTlsMap()
 : initialPtr{0}, initialLimit{0}, indices{getAllocator()} { }
 
+void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, MemoryAllocator> &objects, bool checkInitialized) {
+	// Initialize TLS segments that follow the static model.
+	for(auto object : objects) {
+		if(object->tlsModel == TlsModel::initial) {
+			if(checkInitialized && object->tlsInitialized)
+				continue;
+
+			char *tcb_ptr = reinterpret_cast<char *>(tcb);
+			auto tls_ptr = tcb_ptr + object->tlsOffset;
+			memcpy(tls_ptr, object->tlsImagePtr, object->tlsImageSize);
+
+			if (checkInitialized)
+				object->tlsInitialized = true;
+		}
+	}
+}
+
 Tcb *allocateTcb() {
 	size_t tcb_size = sizeof(Tcb);
 
@@ -1148,21 +1165,7 @@ void Loader::_buildTlsMaps() {
 }
 
 void Loader::initObjects() {
-	// Initialize TLS segments that follow the static model.
-	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
-		SharedObject *object = *it;
-
-		if(object->tlsModel == TlsModel::initial) {
-			if(object->tlsInitialized)
-				continue;
-
-			char *tcb_ptr = reinterpret_cast<char *>(getCurrentTcb());
-			auto tls_ptr = tcb_ptr + object->tlsOffset;
-			memcpy(tls_ptr, object->tlsImagePtr, object->tlsImageSize);
-
-			object->tlsInitialized = true;
-		}
-	}
+	initTlsObjects(getCurrentTcb(), _linkBfs, true);
 
 	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 		if(!(*it)->scheduledForInit)

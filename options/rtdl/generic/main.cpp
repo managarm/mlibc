@@ -101,7 +101,9 @@ extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
 }
 
 extern "C" [[ gnu::visibility("default") ]] void *__rtdl_allocateTcb() {
-	return allocateTcb();
+	auto tcb = allocateTcb();
+	initTlsObjects(tcb, globalScope->_objects, false);
+	return tcb;
 }
 
 extern "C" {
