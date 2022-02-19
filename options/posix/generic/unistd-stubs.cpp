@@ -588,9 +588,19 @@ ssize_t pread(int fd, void *buf, size_t n, off_t off) {
 	return num_read;
 }
 
-ssize_t pwrite(int, const void *, size_t, off_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+ssize_t pwrite(int fd, const void *buf, size_t n, off_t off) {
+	ssize_t num_written;
+
+	if(!mlibc::sys_pwrite) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_pwrite(fd, buf, n, off, &num_written); e) {
+		errno = e;
+		return -1;
+	}
+	return num_written;
 }
 
 ssize_t readlink(const char *__restrict path, char *__restrict buffer, size_t max_size) {
