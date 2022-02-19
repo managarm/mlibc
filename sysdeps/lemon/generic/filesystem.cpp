@@ -6,7 +6,9 @@
 #include <dirent.h>
 #include <limits.h>
 #include <fcntl.h>
+#include <string.h>
 
+#include <bits/ensure.h>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 
@@ -387,6 +389,43 @@ int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
 	*raised = ret;
 
 	return 0;
+}
+
+int sys_ttyname(int tty, char *buf, size_t size) {
+	char path[PATH_MAX] = {"/dev/pts/"};
+
+	struct stat stat;
+	if(int e = sys_stat(fsfd_target::fd, tty, nullptr, 0, &stat)) {
+		return e;
+	}
+
+	if(!S_ISCHR(stat.st_mode)) {
+		return ENOTTY; // Not a char device, isn't a tty
+	}
+
+	if(sys_isatty(tty)) {
+		return ENOTTY;
+	}
+
+	// Look for tty in /dev/pts
+	int ptDir = open("/dev/pts", O_DIRECTORY);
+	__ensure(ptDir >= 0);
+
+	struct dirent dirent;
+	size_t direntBytesRead;
+	while(!sys_read_entries(ptDir, &dirent, sizeof(dirent), &direntBytesRead) && direntBytesRead) {
+		// Compare the inodes
+		if(dirent.d_ino == stat.st_ino) {
+			__ensure(strlen(path) + strlen(dirent.d_name) < PATH_MAX);
+			strcat(path, dirent.d_name);
+
+			strncpy(buf, path, size);
+			return 0;
+		}
+	}
+
+	// Could not find corresponding TTY in /dev/pts
+	return ENODEV;
 }
 #endif
 
