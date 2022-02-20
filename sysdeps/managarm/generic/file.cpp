@@ -3917,6 +3917,56 @@ int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 	}
 }
 
+int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_written) {
+	SignalGuard sguard;
+
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
+
+	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_req_type(managarm::fs::CntReqType::PT_PWRITE);
+	req.set_fd(fd);
+	req.set_size(n);
+	req.set_offset(off);
+
+	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+	req.SerializeToString(&ser);
+
+	auto [offer, send_head, send_tail, imbue_creds, recv_resp] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
+			helix_ng::imbueCredentials(),
+			helix_ng::recvInline()
+		)
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(imbue_creds.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+		return EINVAL;
+	}else if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
+		return EAGAIN;
+	}else if(resp.error() == managarm::fs::Errors::NO_SPACE_LEFT) {
+		return ENOSPC;
+	}else if(resp.error() == managarm::fs::Errors::SEEK_ON_PIPE) {
+		return ESPIPE;
+	}else if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+		return EINVAL;
+	}else{
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		HEL_CHECK(send_tail.error());
+		*bytes_written = n;
+		return 0;
+	}
+}
+
 int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	SignalGuard sguard;
 
