@@ -11,5 +11,6 @@
 #define MAP_FIXED     0x04
 #define MAP_ANON      0x08
 #define MAP_ANONYMOUS 0x08
+#define MAP_NORESERVE 0x10
 
 #endif // _ABIBITS_MMAP_FLAGS_H

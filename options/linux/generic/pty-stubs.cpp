@@ -15,7 +15,6 @@
 int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win) {
 	__ensure(!name);
 	__ensure(!ios);
-	__ensure(!win);
 
 	// FIXME: Close the master FD if the slave open fails.
 
