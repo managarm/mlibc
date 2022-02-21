@@ -27,7 +27,7 @@ int memcmp(const void *a, const void *b, size_t size);
 int strcmp(const char *a, const char *b);
 int strcoll(const char *a, const char *b);
 int strncmp(const char *a, const char *b, size_t max_size);
-size_t strxfrm(char *__restrict dest, const char *__restrict src, size_t max_size);
+size_t strxfrm(char *__restrict dest, const char *__restrict src, size_t n);
 
 // [7.24.5] Search functions
 

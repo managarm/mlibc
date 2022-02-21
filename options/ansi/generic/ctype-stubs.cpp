@@ -254,9 +254,35 @@ wctype_t wctype(const char *cs) {
 	return ct_null;
 }
 
-int iswctype(wint_t, wctype_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+// Taken from musl. See musl for the license/copyright!
+int iswctype(wint_t wc, wctype_t type) {
+	switch (type) {
+	case ct_alnum:
+		return iswalnum(wc);
+	case ct_alpha:
+		return iswalpha(wc);
+	case ct_blank:
+		return iswblank(wc);
+	case ct_cntrl:
+		return iswcntrl(wc);
+	case ct_digit:
+		return iswdigit(wc);
+	case ct_graph:
+		return iswgraph(wc);
+	case ct_lower:
+		return iswlower(wc);
+	case ct_print:
+		return iswprint(wc);
+	case ct_punct:
+		return iswpunct(wc);
+	case ct_space:
+		return iswspace(wc);
+	case ct_upper:
+		return iswupper(wc);
+	case ct_xdigit:
+		return iswxdigit(wc);
+	}
+	return 0;
 }
 
 // --------------------------------------------------------------------------------------

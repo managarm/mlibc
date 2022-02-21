@@ -100,9 +100,11 @@ int strncmp(const char *a, const char *b, size_t max_size) {
 	}
 }
 
-size_t strxfrm(char *__restrict, const char *__restrict, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+// Taken from musl. See musl for the license/copyright!
+size_t strxfrm(char *__restrict dest, const char *__restrict src, size_t n) {
+	size_t l = strlen(src);
+	if (n > l) strcpy(dest, src);
+	return l;
 }
 
 void *memchr(const void *s, int c, size_t size) {
