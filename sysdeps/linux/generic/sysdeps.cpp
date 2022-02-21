@@ -314,7 +314,7 @@ int sys_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 }
 
 int sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
-                fd_set *exceptfds, struct timeval *timeout, const sigset_t sigmask, int *num_events) {
+                fd_set *exceptfds, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
         // The Linux kernel really wants 7 arguments, even tho this is not supported
         // To fix that issue, they use a struct as the last argument.
         // See the man page of pselect and the glibc source code
