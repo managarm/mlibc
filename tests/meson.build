@@ -50,7 +50,8 @@ posix_test_cases = [
 	'sigaltstack',
 	'realpath',
 	'ffs',
-	'getcwd'
+	'getcwd',
+	'memrchr'
 ]
 
 posix_fail_test_cases = [
