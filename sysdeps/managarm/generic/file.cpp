@@ -4303,8 +4303,12 @@ int sys_ftruncate(int fd, size_t size) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	return 0;
+	if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+		return EINVAL;
+	} else {
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		return 0;
+	}
 }
 
 int sys_fallocate(int fd, off_t offset, size_t size) {
