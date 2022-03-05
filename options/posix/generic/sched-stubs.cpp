@@ -20,6 +20,16 @@ int sched_getaffinity(pid_t, size_t, cpu_set_t *) {
 	return -1;
 }
 
+int sched_get_priority_max(int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int sched_get_priority_min(int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 int __mlibc_cpu_isset(int, cpu_set_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
