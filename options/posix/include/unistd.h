@@ -120,6 +120,7 @@ extern "C" {
 #define _SC_HOST_NAME_MAX 14
 #define _SC_LINE_MAX 15
 #define _SC_XOPEN_CRYPT 16
+#define _SC_NPROCESSORS_CONF 17
 
 #define STDERR_FILENO 2
 #define STDIN_FILENO 0
