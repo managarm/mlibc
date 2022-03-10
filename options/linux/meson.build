@@ -22,6 +22,7 @@ libc_sources += files(
 	'generic/utmpx.cpp',
 	'generic/linux-unistd.cpp',
 	'generic/malloc.cpp',
+	'generic/sys-fsuid.cpp',
 )
 
 if not no_headers
@@ -58,6 +59,7 @@ if not no_headers
 		'include/sys/timerfd.h',
 		'include/sys/eventfd.h',
 		'include/sys/reboot.h',
+		'include/sys/fsuid.h',
 		subdir: 'sys'
 	)
 endif
