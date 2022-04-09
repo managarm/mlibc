@@ -48,6 +48,7 @@ frg::optional<struct nameserver_data> get_nameserver(int idx) {
 				break;
 
 			ret.name = str;
+			break;
 		}
 	}
 
