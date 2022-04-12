@@ -86,9 +86,13 @@ int kill(pid_t pid, int number) {
 	return 0;
 }
 
-int killpg(int, int) {
-	__ensure(!"killpg() not implemented");
-	__builtin_unreachable();
+int killpg(pid_t pgrp, int sig) {
+	if(pgrp > 1) {
+		return kill(-pgrp, sig);
+	}
+
+	errno = EINVAL;
+	return -1;
 }
 
 int sigtimedwait(const sigset_t *, siginfo_t *, const struct timespec *) {
