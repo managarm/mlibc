@@ -96,6 +96,10 @@
 #define SCNx64 "lx"
 #define SCNxMAX "lx"
 
+#define SCNi8 "hhi"
+#define SCNi64 "li"
+
+#define SCNd32 "d"
 #define SCNd64 "ld"
 
 #ifdef __cplusplus

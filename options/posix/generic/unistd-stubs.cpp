@@ -804,6 +804,10 @@ unsigned long sysconf(int number) {
 #else
 			return -1;
 #endif
+		case _SC_NPROCESSORS_CONF:
+			// TODO: actually return a proper value for _SC_NPROCESSORS_CONF
+			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_NPROCESSORS_CONF) unconditionally returns 1\e[39m" << frg::endlog;
+			return 1;
 		default:
 			mlibc::panicLogger() << "\e[31mmlibc: sysconf() call is not implemented, number: " << number << "\e[39m" << frg::endlog;
 			__builtin_unreachable();
