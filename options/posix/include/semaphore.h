@@ -9,6 +9,7 @@ extern "C" {
 #include <bits/ansi/timespec.h>
 
 #define SEM_VALUE_MAX 0x7FFFFFFF
+#define SEM_FAILED ((sem_t *) 0)
 
 typedef struct sem_ {
 	unsigned int __mlibc_count;
