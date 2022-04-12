@@ -684,9 +684,12 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
     return match_count;
 }
 
-int scanf(const char *__restrict, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int scanf(const char *__restrict format, ...) {
+	va_list args;
+	va_start(args, format);
+	int result = vfscanf(stdin, format, args);
+	va_end(args);
+	return result;
 }
 
 int snprintf(char *__restrict buffer, size_t max_size, const char *__restrict format, ...) {
