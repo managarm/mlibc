@@ -10,19 +10,11 @@
 #define ELFOSABI_SYSV 0
 #define EM_X86_64 62
 
-#define SHT_NULL 0
-#define SHT_PROGBITS 1
-#define SHT_SYMTAB 2
-#define SHT_STRTAB 3
-#define SHT_RELA 4
-#define SHT_HASH 5
-#define SHT_DYNAMIC 6
-#define SHT_NOBITS 8
-#define SHT_DYNSYM 11
-
 #define SHF_WRITE 1
 #define SHF_ALLOC 2
 #define SHF_EXECINSTR 4
+#define SHF_STRINGS 16
+#define SHF_TLS 512
 
 typedef uint64_t Elf64_Addr;
 typedef uint64_t Elf64_Off;
@@ -161,6 +153,7 @@ static inline Elf64_Xword ELF64_R_TYPE(Elf64_Xword info) {
 }
 
 enum {
+	PT_NULL = 0,
 	PT_LOAD = 1,
 	PT_DYNAMIC = 2,
 	PT_INTERP = 3,
@@ -178,6 +171,17 @@ enum {
 	PF_W = 2,
 	PF_R = 4
 };
+
+typedef struct {
+	Elf32_Word p_type; /* Type of segment */
+	Elf32_Off p_offset; /* Offset in file */
+	Elf32_Addr p_vaddr; /* Virtual address in memory */
+	Elf32_Addr p_paddr; /* Reserved */
+	Elf32_Word p_filesz; /* Size of segment in file */
+	Elf32_Word p_memsz; /* Size of segment in memory */
+	Elf32_Word p_flags; /* Segment attributes */
+	Elf32_Word p_align; /* Alignment of segment */
+} Elf32_Phdr;
 
 typedef struct {
 	Elf64_Word p_type; /* Type of segment */
@@ -312,8 +316,12 @@ typedef struct {
 #define SHT_SYMTAB		2
 #define SHT_STRTAB		3
 #define SHT_RELA		4
+#define SHT_HASH    5
+#define SHT_DYNAMIC 6
+#define SHT_NOTE	  7
 #define SHT_NOBITS		8
 #define SHT_REL			9
+#define SHT_DYNSYM  11
 #define SHT_INIT_ARRAY		14
 #define SHT_FINI_ARRAY		15
 #define SHT_SYMTAB_SHNDX	18
@@ -326,12 +334,25 @@ typedef struct {
 #define SHN_HIRESERVE	0xff00
 
 /* values for e_machine */
-#define EM_NONE		0
-#define EM_SPARC	2
-#define EM_386		3
-#define EM_PPC		20
-#define EM_PPC64	21
-#define EM_X86_64	62
+#define EM_NONE		  0
+#define EM_SPARC	  2
+#define EM_386		  3
+#define EM_MIPS		  8
+#define EM_PPC		  20
+#define EM_PPC64	  21
+#define EM_S390		  22
+#define EM_ARM		  40
+#define EM_SH		    42
+#define EM_SPARCV9	43
+#define EM_IA_64	  50
+#define EM_X86_64	  62
+#define EM_BLACKFIN	106
+#define EM_AARCH64	183
+
+/* values for e_version */
+#define EV_NONE		0
+#define EV_CURRENT	1
+#define EV_NUM		2
 
 /* e_indent constants */
 #define EI_MAG0		0
@@ -346,6 +367,9 @@ typedef struct {
 #define EI_MAG3		3
 #define ELFMAG3		'F'
 
+#define ELFMAG    "\177ELF"
+#define SELFMAG   4
+
 #define EI_CLASS	4
 #define ELFCLASSNONE	0
 #define ELFCLASS32	1
@@ -357,5 +381,19 @@ typedef struct {
 #define ELFDATA2LSB	1
 #define ELFDATA2MSB	2
 #define ELFDATANUM	3
+
+#define EI_VERSION	6
+
+#define EI_OSABI	7
+#define ELFOSABI_HPUX		1
+#define ELFOSABI_NETBSD		2
+#define ELFOSABI_GNU		3
+#define ELFOSABI_SOLARIS	6
+#define ELFOSABI_AIX		7
+#define ELFOSABI_IRIX		8
+#define ELFOSABI_FREEBSD	9
+#define ELFOSABI_OPENBSD	12
+
+#define EI_ABIVERSION	8
 
 #endif // _ELF_H
