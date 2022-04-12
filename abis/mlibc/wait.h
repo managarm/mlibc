@@ -8,6 +8,8 @@
 #define WNOWAIT 16
 #define WSTOPPED 32
 
+#define __WCLONE 0x80000000
+
 #define WCOREFLAG 0x80
 
 #define WEXITSTATUS(x) ((x) & 0x000000FF)
