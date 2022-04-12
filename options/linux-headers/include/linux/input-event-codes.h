@@ -28,6 +28,7 @@
 
 #define EVIOCGVERSION _IOR('E', 0x01, int)
 #define EVIOCGID _IOR('E', 0x02, struct input_id)
+#define EVIOCSREP _IOW('E', 0x03, unsigned int[2])
 #define EVIOCSKEYCODE _IOW('E', 0x04, unsigned int[2])
 #define EVIOCGNAME(len) _IOC(_IOC_READ, 'E', 0x06, len)
 #define EVIOCGPHYS(len) _IOC(_IOC_READ, 'E', 0x07, len)
