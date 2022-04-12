@@ -196,6 +196,7 @@ struct RuntimeTlsMap {
 extern frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
 Tcb *allocateTcb();
+void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, MemoryAllocator> &objects, bool checkInitialized);
 void *accessDtv(SharedObject *object);
 // Tries to access the DTV, if not allocated, or object doesn't have
 // PT_TLS, return nullptr.
