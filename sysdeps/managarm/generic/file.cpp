@@ -3605,6 +3605,8 @@ int sys_openat(int dirfd, const char *path, int flags, int *fd) {
 
 	if(flags & __MLIBC_O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
+	if(flags & __MLIBC_O_NOCTTY)
+		proto_flags |= managarm::posix::OpenFlags::OF_NOCTTY;
 
 	if(flags & __MLIBC_O_RDONLY)
 		proto_flags |= managarm::posix::OpenFlags::OF_RDONLY;
