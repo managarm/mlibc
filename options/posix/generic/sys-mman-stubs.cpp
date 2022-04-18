@@ -148,4 +148,9 @@ int memfd_create(const char *name, unsigned int flags) {
 
 	return ret;
 }
+
+int madvise(void *, size_t, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 #endif
