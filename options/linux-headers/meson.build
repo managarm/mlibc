@@ -49,6 +49,7 @@ if not no_headers
 		'include/linux/l2tp.h',
 		'include/linux/pkt_sched.h',
 		'include/linux/veth.h',
+		'include/linux/v4l2-controls.h',
 		subdir: 'linux'
 	)
 	install_headers(
