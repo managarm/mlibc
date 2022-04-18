@@ -213,6 +213,5 @@ struct spwd *fgetspent(FILE *) {
 }
 
 void endspent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: endspent is a stub" << frg::endlog;
 }
