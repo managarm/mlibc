@@ -39,8 +39,10 @@ struct utmp *getutent(void) {
 }
 
 void endutent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	if(fd >= 0) {
+		close(fd);
+		fd = -1;
+	}
 }
 
 struct utmp *pututline(const struct utmp *) {
