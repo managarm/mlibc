@@ -4,7 +4,9 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#ifdef __MLIBC_GLIBC_OPTION
 #include <stdio_ext.h>
+#endif
 
 #include <bits/ensure.h>
 
@@ -667,9 +669,11 @@ int ungetc(int c, FILE *file_base) {
 	return c;
 }
 
+#ifdef __MLIBC_GLIBC_OPTION
 void __fpurge(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	frg::unique_lock<FutexLock> lock(file->_lock);
 	file->purge();
 }
+#endif
 
