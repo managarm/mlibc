@@ -16,8 +16,6 @@
 #include <stdint.h>
 #include <float.h>
 #include <math.h>
-//#include <complex.h>
-#include <endian.h>
 
 #define INT_MAX __INT_MAX__
 #define INT_MIN (-INT_MAX - 1)
