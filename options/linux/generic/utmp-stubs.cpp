@@ -33,9 +33,48 @@ void setutent(void) {
 	offset = 0;
 }
 
+static ssize_t read_last_entry(void) {
+	struct utmp buf;
+	ssize_t bytes_read = pread(fd, &buf, sizeof(buf), offset);
+
+	if(bytes_read < 0) {
+		return -1;
+	} else if(bytes_read != sizeof(buf)) {
+		// EOF
+		return 0;
+	} else {
+		last_entry = buf;
+		offset += sizeof(buf);
+		return 1;
+	}
+}
+
 struct utmp *getutent(void) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
+}
+
+int getutent_r(struct utmp *buf, struct utmp **res) {
+	int saved_errno = errno;
+
+	if(fd < 0) {
+		setutent();
+	}
+
+	ssize_t bytes_read = read_last_entry();
+
+	if(bytes_read <= 0) {
+		if(bytes_read == 0) {
+			errno = saved_errno;
+			*res = NULL;
+			return -1;
+		}
+	}
+
+	memcpy(buf, &last_entry, sizeof(struct utmp));
+	*res = buf;
+
+	return 0;
 }
 
 void endutent(void) {
