@@ -29,6 +29,7 @@
 // Linux extension:
 #define MREMAP_MAYMOVE 1
 #define MREMAP_FIXED 2
+#define MADV_DONTNEED 4
 
 // Missing: posix_typed_mem_open(), POSIX_TYPED constants and related stuff.
 
@@ -57,6 +58,7 @@ int remap_file_pages(void *, size_t, int, size_t, int);
 
 #ifdef __MLIBC_LINUX_OPTION
 int memfd_create(const char *, unsigned int);
+int madvise(void *, size_t, int);
 #endif
 
 #ifdef __cplusplus
