@@ -1,4 +1,6 @@
-
+if disable_glibc_option
+	subdir_done()
+endif
 libc_sources += files(
 	'generic/getopt-stubs.cpp',
 	'generic/stdio_ext-stubs.cpp',
