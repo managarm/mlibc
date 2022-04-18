@@ -50,8 +50,19 @@ static ssize_t read_last_entry(void) {
 }
 
 struct utmp *getutent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	struct utmp *result;
+	static struct utmp *buf;
+	if(buf == NULL) {
+		buf = (struct utmp *)malloc(sizeof(struct utmp));
+		if(buf == NULL) {
+			return NULL;
+		}
+	}
+
+	if(getutent_r(buf, &result) < 0) {
+		return NULL;
+	}
+	return result;
 }
 
 int getutent_r(struct utmp *buf, struct utmp **res) {
