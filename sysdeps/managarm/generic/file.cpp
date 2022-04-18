@@ -992,6 +992,11 @@ int sys_tcsetattr(int fd, int when, const struct termios *attr) {
 	return 0;
 }
 
+int sys_tcdrain(int) {
+	mlibc::infoLogger() << "\e[35mmlibc: tcdrain() is a stub\e[39m" << frg::endlog;
+	return 0;
+}
+
 int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	constexpr int type_mask = int(0xFFFF);
 	constexpr int flags_mask = ~int(0xFFFF);
