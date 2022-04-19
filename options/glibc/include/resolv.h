@@ -1,6 +1,8 @@
 #ifndef _RESOLV_H
 #define _RESOLV_H
 
+#include <netinet/in.h>
+
 #define RES_INIT     0x00000001
 #define RES_DEBUG    0x00000002
 #define RES_USEVC    0x00000008
@@ -9,6 +11,9 @@
 #define RES_DEFNAMES 0x00000080
 #define RES_STAYOPEN 0x00000100
 #define RES_DNSRCH   0x00000200
+
+#define MAXNS     3
+#define MAXDNSRCH 6
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,6 +30,10 @@ int res_init(void);
  * To avoid an massive struct, only add the items requested. */
 typedef struct __res_state {
 	unsigned long options;
+	int nscount;
+	struct sockaddr_in nsaddr_list[MAXNS];
+	char *dnsrch[MAXDNSRCH + 1];
+	char defdname[256];
 } *res_state;
 struct __res_state *__res_state(void);
 #define _res (*__res_state())

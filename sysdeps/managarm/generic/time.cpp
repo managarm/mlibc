@@ -71,5 +71,13 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 	return 0;
 }
 
+int sys_clock_getres(int clock, time_t *secs, long *nanos) {
+	(void)clock;
+	(void)secs;
+	(void)nanos;
+	mlibc::infoLogger() << "mlibc: clock_getres is a stub" << frg::endlog;
+	return 0;
+}
+
 } //namespace mlibc
 

@@ -32,6 +32,11 @@ struct in6_addr {
 #define s6_addr16 __in6_union.__s6_addr16
 #define s6_addr32 __in6_union.__s6_addr32
 
+struct in6_pktinfo {
+	struct in6_addr ipi6_addr;
+	uint32_t ipi6_ifindex;
+};
+
 struct sockaddr_in6 {
 	sa_family_t sin6_family;
 	in_port_t sin6_port;
