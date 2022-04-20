@@ -720,6 +720,8 @@ int sys_ttyname(int fd, char *buf, size_t size) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	if(resp.error() ==  managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	}else if(resp.error() == managarm::posix::Errors::NOT_A_TTY) {
 		return ENOTTY;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
