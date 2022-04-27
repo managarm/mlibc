@@ -5,6 +5,10 @@
 #include <abi-bits/gid_t.h>
 #include <abi-bits/mode_t.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define IPC_CREAT 01000
 #define IPC_EXCL 02000
 #define IPC_NOWAIT 04000
@@ -27,5 +31,11 @@ struct ipc_perm {
 	mode_t mode;
 	int __ipc_perm_seq;
 };
+
+key_t ftok(const char *, int);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
