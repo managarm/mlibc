@@ -71,21 +71,21 @@ int __fpclassifyl(long double x);
 // [C11/7.12.14 Comparison macros]
 #define isunordered(x,y) (isnan((x)) ? ((void)(y),1) : isnan((y)))
 
-inline int __mlibc_isless(double_t x, double_t y) { return !isunordered(x, y) && x < y; }
-inline int __mlibc_islessf(float_t x, float_t y) { return !isunordered(x, y) && x < y; }
-inline int __mlibc_islessl(long double x, long double y) { return !isunordered(x, y) && x < y; }
-inline int __mlibc_islessequal(double_t x, double_t y) { return !isunordered(x, y) && x <= y; }
-inline int __mlibc_islessequalf(float_t x, float_t y) { return !isunordered(x, y) && x <= y; }
-inline int __mlibc_islessequall(long double x, long double y) { return !isunordered(x, y) && x <= y; }
-inline int __mlibc_islessgreater(double_t x, double_t y) { return !isunordered(x, y) && x != y; }
-inline int __mlibc_islessgreaterf(float_t x, float_t y) { return !isunordered(x, y) && x != y; }
-inline int __mlibc_islessgreaterl(long double x, long double y) { return !isunordered(x, y) && x != y; }
-inline int __mlibc_isgreater(double_t x, double_t y) { return !isunordered(x, y) && x > y; }
-inline int __mlibc_isgreaterf(float_t x, float_t y) { return !isunordered(x, y) && x > y; }
-inline int __mlibc_isgreaterl(long double x, long double y) { return !isunordered(x, y) && x > y; }
-inline int __mlibc_isgreaterequal(double_t x, double_t y) { return !isunordered(x, y) && x >= y; }
-inline int __mlibc_isgreaterequalf(float_t x, float_t y) { return !isunordered(x, y) && x >= y; }
-inline int __mlibc_isgreaterequall(long double x, long double y) { return !isunordered(x, y) && x >= y; }
+static __inline__ int __mlibc_isless(double_t x, double_t y) { return !isunordered(x, y) && x < y; }
+static __inline__ int __mlibc_islessf(float_t x, float_t y) { return !isunordered(x, y) && x < y; }
+static __inline__ int __mlibc_islessl(long double x, long double y) { return !isunordered(x, y) && x < y; }
+static __inline__ int __mlibc_islessequal(double_t x, double_t y) { return !isunordered(x, y) && x <= y; }
+static __inline__ int __mlibc_islessequalf(float_t x, float_t y) { return !isunordered(x, y) && x <= y; }
+static __inline__ int __mlibc_islessequall(long double x, long double y) { return !isunordered(x, y) && x <= y; }
+static __inline__ int __mlibc_islessgreater(double_t x, double_t y) { return !isunordered(x, y) && x != y; }
+static __inline__ int __mlibc_islessgreaterf(float_t x, float_t y) { return !isunordered(x, y) && x != y; }
+static __inline__ int __mlibc_islessgreaterl(long double x, long double y) { return !isunordered(x, y) && x != y; }
+static __inline__ int __mlibc_isgreater(double_t x, double_t y) { return !isunordered(x, y) && x > y; }
+static __inline__ int __mlibc_isgreaterf(float_t x, float_t y) { return !isunordered(x, y) && x > y; }
+static __inline__ int __mlibc_isgreaterl(long double x, long double y) { return !isunordered(x, y) && x > y; }
+static __inline__ int __mlibc_isgreaterequal(double_t x, double_t y) { return !isunordered(x, y) && x >= y; }
+static __inline__ int __mlibc_isgreaterequalf(float_t x, float_t y) { return !isunordered(x, y) && x >= y; }
+static __inline__ int __mlibc_isgreaterequall(long double x, long double y) { return !isunordered(x, y) && x >= y; }
 
 // TODO: We chould use _Generic here but that does not work in C++ code.
 #define __MLIBC_CHOOSE_COMPARISON(x, y, p) ( \
