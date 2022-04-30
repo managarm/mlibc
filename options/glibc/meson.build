@@ -29,6 +29,7 @@ if not no_headers
 	install_headers(
 		'include/sys/dir.h',
 		'include/sys/ioctl.h',
+		'include/sys/user.h',
 		subdir: 'sys'
 	)
 	install_headers(
