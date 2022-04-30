@@ -287,6 +287,13 @@ typedef struct {
 } Elf64_Shdr;
 
 typedef struct {
+  uint64_t a_type;
+  union {
+    uint64_t a_val;
+  } a_un;
+} Elf64_auxv_t;
+
+typedef struct {
   Elf32_Word n_namesz;
   Elf32_Word n_descsz;
   Elf32_Word n_type;
