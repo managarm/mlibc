@@ -11,6 +11,8 @@ extern "C" {
 
 #define SETVAL 16
 
+#define SEM_UNDO 0x1000
+
 struct sembuf {
 	unsigned short int sem_num;
 	short int sem_op;

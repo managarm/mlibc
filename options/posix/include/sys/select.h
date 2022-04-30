@@ -16,6 +16,12 @@
 extern "C" {
 #endif
 
+typedef long int __fd_mask;
+#define __NFDBITS (8 * (int) sizeof (__fd_mask))
+
+typedef __fd_mask fd_mask;
+#define NFDBITS __NFDBITS
+
 void FD_CLR(int fd, fd_set *);
 int FD_ISSET(int fd, fd_set *);
 void FD_SET(int fd, fd_set *);
