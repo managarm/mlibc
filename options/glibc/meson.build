@@ -9,6 +9,7 @@ libc_sources += files(
 	'generic/resolv-stubs.cpp',
 	'generic/shadow-stubs.cpp',
 	'generic/printf.cpp',
+	'generic/glibc-signal.cpp',
 )
 
 if not no_headers
@@ -40,6 +41,10 @@ if not no_headers
 	install_headers(
 		'include/netinet/in_systm.h',
 		subdir: 'netinet'
+	)
+	install_headers(
+		'include/bits/glibc/glibc_signal.h',
+		subdir: 'bits/glibc'
 	)
 endif
 
