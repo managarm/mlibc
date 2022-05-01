@@ -19,6 +19,7 @@ typedef struct {
 	void *si_addr;
 	int si_status;
 	union sigval si_value;
+	int si_fd;
 } siginfo_t;
 
 #ifdef __cplusplus
