@@ -30,6 +30,7 @@ if not no_headers
 		'include/sys/dir.h',
 		'include/sys/ioctl.h',
 		'include/sys/user.h',
+		'include/sys/procfs.h',
 		subdir: 'sys'
 	)
 	install_headers(
