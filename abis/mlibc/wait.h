@@ -8,6 +8,7 @@
 #define WNOWAIT 16
 #define WSTOPPED 32
 
+#define __WALL 0x40000000
 #define __WCLONE 0x80000000
 
 #define WCOREFLAG 0x80
