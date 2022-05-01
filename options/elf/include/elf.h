@@ -23,6 +23,7 @@ typedef uint32_t Elf64_Word;
 typedef int32_t Elf64_Sword;
 typedef uint64_t Elf64_Xword;
 typedef int64_t Elf64_Sxword;
+typedef uint16_t Elf64_Section;
 
 typedef uint32_t Elf32_Addr;
 typedef uint32_t Elf32_Off;
@@ -31,6 +32,7 @@ typedef uint32_t Elf32_Word;
 typedef int32_t Elf32_Sword;
 typedef uint64_t Elf32_Xword;
 typedef int64_t Elf32_Sxword;
+typedef uint16_t Elf32_Section;
 
 #define EI_NIDENT (16)
 
@@ -82,13 +84,22 @@ enum {
 };
 
 typedef struct {
+	Elf32_Word st_name;
+	Elf32_Addr st_value;
+	Elf32_Word st_size;
+	unsigned char st_info;
+	unsigned char st_other;
+	Elf32_Section st_shndx;
+} Elf32_Sym;
+
+typedef struct {
 	Elf64_Word st_name;
 	unsigned char st_info;
 	unsigned char st_other;
 	Elf64_Half st_shndx;
 	Elf64_Addr st_value;
 	Elf64_Xword st_size;
-} Elf64_Sym ;
+} Elf64_Sym;
 
 extern inline unsigned char ELF64_ST_BIND(unsigned char info) {
 	return info >> 4;
