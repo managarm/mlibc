@@ -8,6 +8,7 @@
 #define AT_SECURE 23
 #define AT_RANDOM 25
 #define AT_EXECFN 31
+#define AT_SYSINFO_EHDR 33
 
 // managarm specific auxvector entries.
 
