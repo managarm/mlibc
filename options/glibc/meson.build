@@ -10,6 +10,7 @@ libc_sources += files(
 	'generic/shadow-stubs.cpp',
 	'generic/printf.cpp',
 	'generic/glibc-signal.cpp',
+	'generic/execinfo.cpp',
 )
 
 if not no_headers
@@ -25,7 +26,8 @@ if not no_headers
 		'include/shadow.h',
 		'include/memory.h',
 		'include/printf.h',
-		'include/gshadow.h'
+		'include/gshadow.h',
+		'include/execinfo.h'
 	)
 	install_headers(
 		'include/sys/dir.h',
