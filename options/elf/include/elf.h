@@ -24,6 +24,7 @@ typedef int32_t Elf64_Sword;
 typedef uint64_t Elf64_Xword;
 typedef int64_t Elf64_Sxword;
 typedef uint16_t Elf64_Section;
+typedef Elf64_Half Elf64_Versym;
 
 typedef uint32_t Elf32_Addr;
 typedef uint32_t Elf32_Off;
@@ -33,6 +34,7 @@ typedef int32_t Elf32_Sword;
 typedef uint64_t Elf32_Xword;
 typedef int64_t Elf32_Sxword;
 typedef uint16_t Elf32_Section;
+typedef Elf32_Half Elf32_Versym;
 
 #define EI_NIDENT (16)
 
@@ -69,6 +71,36 @@ typedef struct {
 	Elf64_Half e_shnum; /* Number of section header entries */
 	Elf64_Half e_shstrndx; /* Section name string table index */
 } Elf64_Ehdr;
+
+typedef struct {
+	Elf32_Half vd_version; /* Version revision */
+	Elf32_Half vd_flags; /* Version information */
+	Elf32_Half vd_ndx; /* Version Index */
+	Elf32_Half vd_cnt; /* Number of associated aux entries */
+	Elf32_Word vd_hash; /* Version name hash value */
+	Elf32_Word vd_aux; /* Offset in bytes to verdaux array */
+	Elf32_Word vd_next; /* Offset in bytes to next verdef entry */
+} Elf32_Verdef;
+
+typedef struct {
+	Elf64_Half vd_version; /* Version revision */
+	Elf64_Half vd_flags; /* Version information */
+	Elf64_Half vd_ndx; /* Version Index */
+	Elf64_Half vd_cnt; /* Number of associated aux entries */
+	Elf64_Word vd_hash; /* Version name hash value */
+	Elf64_Word vd_aux; /* Offset in bytes to verdaux array */
+	Elf64_Word vd_next; /* Offset in bytes to next verdef entry */
+} Elf64_Verdef;
+
+typedef struct {
+	Elf32_Word vda_name; /* Version or dependency names */
+	Elf32_Word vda_next; /* Offset in bytes to next verdaux entry */
+} Elf32_Verdaux;
+
+typedef struct {
+	Elf64_Word vda_name; /* Version or dependency names */
+	Elf64_Word vda_next; /* Offset in bytes to next verdaux entry */
+} Elf64_Verdaux;
 
 enum {
 	ET_NONE = 0,
