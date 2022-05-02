@@ -47,6 +47,11 @@ extern "C" {
 #define PTHREAD_PROCESS_PRIVATE 0
 #define PTHREAD_PROCESS_SHARED 1
 
+// Values for pthread_mutexattr_{get,set}protocol()
+#define PTHREAD_PRIO_NONE 0
+#define PTHREAD_PRIO_INHERIT 1
+#define PTHREAD_PRIO_PROTECT 2
+
 #define PTHREAD_ONCE_INIT {0}
 #define PTHREAD_COND_INITIALIZER {0}
 #define PTHREAD_MUTEX_INITIALIZER {0, 0, 0}
@@ -214,6 +219,9 @@ int pthread_mutexattr_setrobust(pthread_mutexattr_t *, int);
 
 int pthread_mutexattr_getpshared(const pthread_mutexattr_t *, int *);
 int pthread_mutexattr_setpshared(pthread_mutexattr_t *, int);
+
+int pthread_mutexattr_getprotocol(const pthread_mutexattr_t *__restrict, int *__restrict);
+int pthread_mutexattr_setprotocol(pthread_mutexattr_t *, int);
 
 // pthread_mutex functions
 int pthread_mutex_init(pthread_mutex_t *__restrict, const pthread_mutexattr_t *__restrict);

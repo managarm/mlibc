@@ -732,6 +732,16 @@ int pthread_mutexattr_setpshared(pthread_mutexattr_t *, int) {
 	__builtin_unreachable();
 }
 
+int pthread_mutexattr_getprotocol(const pthread_mutexattr_t *__restrict, int *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_mutexattr_setprotocol(pthread_mutexattr_t *, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 // pthread_mutex functions
 int pthread_mutex_init(pthread_mutex_t *__restrict mutex,
 		const pthread_mutexattr_t *__restrict attr) {
