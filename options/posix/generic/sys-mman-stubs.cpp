@@ -163,4 +163,9 @@ int madvise(void *addr, size_t length, int advice) {
 
 	return 0;
 }
+
+int mincore(void *, size_t, unsigned char *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 #endif

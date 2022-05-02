@@ -36,6 +36,7 @@ int remap_file_pages(void *, size_t, int, size_t, int);
 #ifdef __MLIBC_LINUX_OPTION
 int memfd_create(const char *, unsigned int);
 int madvise(void *, size_t, int);
+int mincore(void *, size_t, unsigned char *);
 #endif
 
 #ifdef __cplusplus
