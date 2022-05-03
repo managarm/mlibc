@@ -6,6 +6,7 @@
 extern "C" {
 #endif
 
+#define SIOCGSTAMP 0x8906
 #define SIOCADDRT 0x890B
 #define SIOCDELRT 0x890C
 
