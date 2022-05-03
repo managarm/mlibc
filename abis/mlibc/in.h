@@ -115,11 +115,13 @@ struct group_source_req {
 #define IPV6_PKTINFO 50
 #define IPV6_RECVHOPLIMIT 51
 #define IPV6_HOPLIMIT 52
+#define IPV6_TCLASS 67
 
 #define IP_TOS 1
 #define IP_TTL 2
 #define IP_OPTIONS 4
 #define IP_PKTINFO 8
+#define IP_MTU_DISCOVER 10
 #define IP_RECVERR 11
 #define IP_RECVTTL 12
 
