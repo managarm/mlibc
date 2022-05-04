@@ -110,4 +110,5 @@
 #define ELNRNG 1104
 #define ENOTUNIQ 1105
 #define ERESTART 1106
+#define EUSERS 1107
 #endif // _ABIBITS_ERRNO_H
