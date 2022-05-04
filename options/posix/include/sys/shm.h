@@ -57,6 +57,15 @@ struct shmid_ds {
 	unsigned long shm_nattch;
 };
 
+struct shminfo {
+	unsigned long shmmax;
+	unsigned long shmmin;
+	unsigned long shmmni;
+	unsigned long shmseg;
+	unsigned long shmall;
+	unsigned long __unused[4];
+};
+
 void *shmat(int, const void *, int);
 int shmctl(int, int, struct shmid_ds *);
 int shmdt(const void *);
