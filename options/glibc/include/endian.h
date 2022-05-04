@@ -1,6 +1,8 @@
 #ifndef _ENDIAN_H
 #define _ENDIAN_H
 
+#include <byteswap.h>
+
 #ifdef __GNUC__
 # 	define BYTE_ORDER __BYTE_ORDER__
 #	define LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
