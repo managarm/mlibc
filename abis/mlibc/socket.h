@@ -87,6 +87,7 @@ struct mmsghdr {
 #define MSG_PEEK 0x20
 #define MSG_TRUNC 0x40
 #define MSG_WAITALL 0x80
+#define MSG_CONFIRM 0x800
 
 // Linux extensions.
 #define MSG_DONTWAIT 0x1000
