@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include <sys/socket.h>
 #include <sys/resource.h>
+#include <sys/utsname.h>
 #include <sys/select.h>
 #include <sys/statvfs.h>
 #include <sys/statfs.h>
@@ -172,6 +173,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 
 [[gnu::weak]] int sys_getitimer(int which, struct itimerval *curr_value);
 [[gnu::weak]] int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value);
+[[gnu::weak]] int sys_uname(struct utsname *buf);
 
 } //namespace mlibc
 
