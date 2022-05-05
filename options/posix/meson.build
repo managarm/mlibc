@@ -43,7 +43,7 @@ libc_sources += files(
 	'generic/sys-times.cpp',
 	'generic/sys-time-stubs.cpp',
 	'generic/sys-uio.cpp',
-	'generic/sys-utsname-stubs.cpp',
+	'generic/sys-utsname.cpp',
 	'generic/sys-wait-stubs.cpp',
 	'generic/termios-stubs.cpp',
 	'generic/unistd-stubs.cpp',
