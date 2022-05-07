@@ -24,6 +24,7 @@
 #define NR_sigaction 13
 #define NR_rt_sigprocmask 14
 #define NR_ioctl 16
+#define NR_access 21
 #define NR_pipe 22
 #define NR_select 23
 #define NR_nanosleep 35
@@ -296,6 +297,15 @@ int sys_isatty(int fd) {
         return 1;
 }
 
+int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
+	auto ret = do_syscall(NR_ioctl, fd, request, arg);
+	if (int e = sc_error(ret); e)
+		return e;
+	if (result)
+		*result = sc_int_result<unsigned long>(ret);
+	return 0;
+}
+
 int sys_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
         auto ret = do_cp_syscall(NR_connect, sockfd, addr, addrlen);
         if (int e = sc_error(ret); e)
@@ -304,7 +314,7 @@ int sys_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 }
 
 int sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
-                fd_set *exceptfds, struct timeval *timeout, const sigset_t sigmask, int *num_events) {
+                fd_set *exceptfds, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
         // The Linux kernel really wants 7 arguments, even tho this is not supported
         // To fix that issue, they use a struct as the last argument.
         // See the man page of pselect and the glibc source code
@@ -393,6 +403,36 @@ int sys_before_cancellable_syscall(ucontext_t *uct) {
 
 int sys_tgkill(int tgid, int tid, int sig) {
 	auto ret = do_syscall(NR_tgkill, tgid, tid, sig);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_tcgetattr(int fd, struct termios *attr) {
+	auto ret = do_syscall(NR_ioctl, fd, TCGETS, attr);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
+	int req;
+
+	switch (optional_action) {
+		case TCSANOW: req = TCSETS; break;
+		case TCSADRAIN: req = TCSETSW; break;
+		case TCSAFLUSH: req = TCSETSF; break;
+		default: return EINVAL;
+	}
+
+	auto ret = do_syscall(NR_ioctl, fd, req, attr);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_access(const char *path, int mode) {
+	auto ret = do_syscall(NR_access, path, mode);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
