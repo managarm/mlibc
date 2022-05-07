@@ -196,7 +196,7 @@ int fstat(int fd, struct stat *result) {
 		errno = ENOSYS;
 		return -1;
 	}
-	if(int e = mlibc::sys_stat(mlibc::fsfd_target::fd, fd, nullptr, 0, result); e) {
+	if(int e = mlibc::sys_stat(mlibc::fsfd_target::fd, fd, "", 0, result); e) {
 		errno = e;
 		return -1;
 	}
