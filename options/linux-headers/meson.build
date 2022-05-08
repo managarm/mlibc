@@ -50,6 +50,8 @@ if not no_headers
 		'include/linux/pkt_sched.h',
 		'include/linux/veth.h',
 		'include/linux/v4l2-controls.h',
+		'include/linux/wireless.h',
+		'include/linux/if.h',
 		subdir: 'linux'
 	)
 	install_headers(
@@ -62,5 +64,9 @@ if not no_headers
 		'include/linux/netfilter/nfnetlink.h',
 		'include/linux/netfilter/nfnetlink_compat.h',
 		subdir: 'linux/netfilter'
+	)
+	install_headers(
+		'include/linux/hdlc/ioctl.h',
+		subdir: 'linux/hdlc'
 	)
 endif
