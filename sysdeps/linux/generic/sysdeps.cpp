@@ -720,4 +720,22 @@ int sys_dup(int fd, int flags, int *newfd) {
 	return 0;
 }
 
+void sys_sync() {
+	do_syscall(NR_sync);
+}
+
+int sys_fsync(int fd) {
+	auto ret = do_syscall(NR_fsync, fd);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_fdatasync(int fd) {
+	auto ret = do_syscall(NR_fdatasync, fd);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 } // namespace mlibc
