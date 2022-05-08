@@ -64,7 +64,8 @@ posix_test_cases = [
 	'rlimits',
 	'accept4',
 	'setpriority',
-	'alarm'
+	'alarm',
+	'timer'
 ]
 
 posix_fail_test_cases = [
