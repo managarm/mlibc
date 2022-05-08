@@ -52,6 +52,7 @@ if not no_headers
 		'include/linux/v4l2-controls.h',
 		'include/linux/wireless.h',
 		'include/linux/if.h',
+		'include/linux/kdev_t.h',
 		subdir: 'linux'
 	)
 	install_headers(
