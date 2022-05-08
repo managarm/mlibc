@@ -70,6 +70,11 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 				"\e[39m" << frg::endlog;
 		*secs = 0;
 		*nanos = 0;
+	}else if(clock == CLOCK_BOOTTIME) {
+		mlibc::infoLogger() << "\e[31mmlibc: clock_gettime does not support CLOCK_BOOTTIME"
+				"\e[39m" << frg::endlog;
+		*secs = 0;
+		*nanos = 0;
 	}else{
 		mlibc::panicLogger() << "mlibc: Unexpected clock " << clock << frg::endlog;
 	}
