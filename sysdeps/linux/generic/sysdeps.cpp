@@ -646,6 +646,20 @@ int sys_chdir(const char *path) {
 	return 0;
 }
 
+int sys_rename(const char *old_path, const char *new_path) {
+	auto ret = do_syscall(NR_renameat, AT_FDCWD, old_path, AT_FDCWD, new_path);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_renameat(int old_dirfd, const char *old_path, int new_dirfd, const char *new_path) {
+	auto ret = do_syscall(NR_renameat, old_dirfd, old_path, new_dirfd, new_path);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_rmdir(const char *path) {
 	auto ret = do_syscall(SYS_unlinkat, AT_FDCWD, path, AT_REMOVEDIR);
 	if (int e = sc_error(ret); e)
