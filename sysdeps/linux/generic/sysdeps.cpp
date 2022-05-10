@@ -125,6 +125,34 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	return 0;
 }
 
+int sys_chmod(const char *pathname, mode_t mode) {
+	auto ret = do_cp_syscall(SYS_fchmodat, AT_FDCWD, pathname, mode);
+	if(int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_fchmod(int fd, mode_t mode) {
+	auto ret = do_cp_syscall(SYS_fchmod, fd, mode);
+	if(int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
+	auto ret = do_cp_syscall(SYS_fchmodat, fd, pathname, mode, flags);
+	if(int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
+	auto ret = do_cp_syscall(SYS_utimensat, dirfd, pathname, times, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_vm_map(void *hint, size_t size, int prot, int flags,
 		int fd, off_t offset, void **window) {
 	auto ret = do_syscall(SYS_mmap, hint, size, prot, flags, fd, offset);
@@ -731,6 +759,13 @@ int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 
 int sys_symlink(const char *target_path, const char *link_path) {
 	auto ret = do_syscall(SYS_symlinkat, target_path, AT_FDCWD, link_path);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
+	auto ret = do_syscall(SYS_symlinkat, target_path, dirfd, link_path);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;

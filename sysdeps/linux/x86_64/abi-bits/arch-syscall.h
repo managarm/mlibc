@@ -58,6 +58,10 @@
 #define SYS_unlink 87
 #define SYS_symlink 88
 #define SYS_readlink 89
+#define SYS_chmod 90
+#define SYS_fchmod 91
+#define SYS_chown 92
+#define SYS_fchown 93
 #define SYS_getrlimit 97
 #define SYS_getrusage 97
 #define SYS_ptrace 101
@@ -93,9 +97,11 @@
 #define SYS_renameat 264
 #define SYS_symlinkat 266
 #define SYS_readlinkat 267
+#define SYS_fchmodat 268
 #define SYS_faccessat 269
 #define SYS_pselect6 270
 #define SYS_ppoll 271
+#define SYS_utimensat 280
 #define SYS_accept4 288
 #define SYS_dup3 292
 #define SYS_pipe2 293
