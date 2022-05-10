@@ -7,6 +7,8 @@
 #define TCSETS 0x5402
 #define TCSETSW 0x5403
 #define TCSETSF 0x5404
+#define TCSBRK 0x5409
+#define TCXONC 0x540A
 #define TIOCSCTTY 0x540E
 #define TIOCSTI 0x5412
 #define TIOCGWINSZ 0x5413
