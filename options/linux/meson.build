@@ -64,6 +64,7 @@ if not no_headers
 		'include/sys/eventfd.h',
 		'include/sys/reboot.h',
 		'include/sys/fsuid.h',
+		'include/sys/vt.h',
 		subdir: 'sys'
 	)
 endif
