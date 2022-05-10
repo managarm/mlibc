@@ -775,4 +775,12 @@ int sys_fdatasync(int fd) {
 	return 0;
 }
 
+int sys_getrandom(void *buffer, size_t length, int flags, ssize_t *bytes_written) {
+	auto ret = do_syscall(NR_getrandom, buffer, length, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*bytes_written = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
 } // namespace mlibc
