@@ -15,8 +15,16 @@ int statfs(const char *path, struct statfs *buf) {
 	return 0;
 }
 
-int fstatfs(int, struct statfs *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int fstatfs(int fd, struct statfs *buf) {
+	if (!mlibc::sys_fstatfs) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if (int e = mlibc::sys_fstatfs(fd, buf); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 

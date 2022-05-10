@@ -166,6 +166,20 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 	return 0;
 }
 
+int sys_statfs(const char *path, struct statfs *buf) {
+  auto ret = do_cp_syscall(NR_statfs, path, buf);
+  if (int e = sc_error(ret); e)
+    return e;
+  return 0;
+}
+
+int sys_fstatfs(int fd, struct statfs *buf) {
+  auto ret = do_cp_syscall(NR_fstatfs, fd, buf);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 extern "C" void __mlibc_signal_restore(void);
 
 int sys_sigaction(int signum, const struct sigaction *act,
