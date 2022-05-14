@@ -53,6 +53,7 @@ libc_sources += files(
 	'generic/search.cpp',
 	'generic/sys-msg.cpp',
 	'generic/sys-sem.cpp',
+	'generic/sys-ipc.cpp',
 	'musl-generic/fnmatch.cpp',
 	'musl-generic/glob.cpp',
 )

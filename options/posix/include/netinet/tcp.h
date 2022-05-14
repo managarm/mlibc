@@ -9,6 +9,8 @@ extern "C" {
 #define TCP_NODELAY 1
 #define TCP_MAXSEG 2
 
+#define SOL_TCP 6
+
 #ifdef __cplusplus
 }
 #endif

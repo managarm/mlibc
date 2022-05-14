@@ -11,4 +11,8 @@ if not no_headers
 		'include/arpa/nameser.h',
 		subdir: 'arpa'
 	)
+	install_headers(
+		'include/sys/queue.h',
+		subdir: 'sys'
+	)
 endif
