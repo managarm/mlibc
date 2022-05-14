@@ -4682,5 +4682,23 @@ int sys_memfd_create(const char *name, int flags, int *fd) {
 	return 0;
 }
 
+int sys_uname(struct utsname *buf) {
+	__ensure(buf);
+	mlibc::infoLogger() << "\e[31mmlibc: uname() returns static information\e[39m" << frg::endlog;
+	strcpy(buf->sysname, MLIBC_SYSTEM_NAME);
+	strcpy(buf->nodename, "?");
+	strcpy(buf->release, "?");
+	strcpy(buf->version, "?");
+#if defined(__x86_64__)
+	strcpy(buf->machine, "x86_64");
+#elif defined (__aarch64__)
+	strcpy(buf->machine, "aarch64");
+#else
+#	error Unknown architecture
+#endif
+
+	return 0;
+}
+
 } //namespace mlibc
 
