@@ -54,6 +54,7 @@ libc_sources += files(
 	'generic/sys-msg.cpp',
 	'generic/sys-sem.cpp',
 	'generic/sys-ipc.cpp',
+	'generic/wordexp-stubs.cpp',
 	'musl-generic/fnmatch.cpp',
 	'musl-generic/glob.cpp',
 )
@@ -85,6 +86,7 @@ if not no_headers
 		'include/unistd.h',
 		'include/utime.h',
 		'include/ucontext.h',
+		'include/wordexp.h',
 		'include/semaphore.h',
 	)
 	install_headers(

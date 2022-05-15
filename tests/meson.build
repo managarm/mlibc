@@ -52,7 +52,8 @@ posix_test_cases = [
 	'realpath',
 	'ffs',
 	'getcwd',
-	'memrchr'
+	'memrchr',
+	'wordexp'
 ]
 
 posix_fail_test_cases = [
