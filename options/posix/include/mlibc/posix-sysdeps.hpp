@@ -98,6 +98,7 @@ int sys_close(int fd);
 		fd_set *except_set, const struct timespec *timeout, const sigset_t *sigmask, int *num_events);
 [[gnu::weak]] int sys_getrusage(int scope, struct rusage *usage);
 [[gnu::weak]] int sys_getrlimit(int resource, struct rlimit *limit);
+[[gnu::weak]] int sys_setrlimit(int resource, const struct rlimit *limit);
 [[gnu::weak]] int sys_getcwd(char *buffer, size_t size);
 [[gnu::weak]] int sys_chdir(const char *path);
 [[gnu::weak]] int sys_fchdir(int fd);

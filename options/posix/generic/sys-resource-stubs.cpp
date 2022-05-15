@@ -40,7 +40,15 @@ int getrlimit(int resource, struct rlimit *limit) {
 	return 0;
 }
 
-int setrlimit(int, const struct rlimit *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int setrlimit(int resource, const struct rlimit *limit) {
+	if(!mlibc::sys_setrlimit) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_setrlimit(resource, limit); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
