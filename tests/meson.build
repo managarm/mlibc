@@ -53,7 +53,8 @@ posix_test_cases = [
 	'ffs',
 	'getcwd',
 	'memrchr',
-	'wordexp'
+	'wordexp',
+	'rlimits'
 ]
 
 posix_fail_test_cases = [

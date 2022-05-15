@@ -47,6 +47,7 @@
 #define NR_unlink 87
 #define NR_symlink 88
 #define NR_readlink 89
+#define NR_getrlimit 97
 #define NR_getuid 102
 #define NR_getgid 104
 #define NR_geteuid 107
@@ -54,6 +55,7 @@
 #define NR_rt_sigsuspend 130
 #define NR_sigaltstack 131
 #define NR_arch_prctl 158
+#define NR_setrlimit 160
 #define NR_sys_futex 202
 #define NR_clock_gettime 228
 #define NR_exit_group 231
@@ -560,6 +562,20 @@ int sys_readlink(const char *path, void *buf, size_t bufsiz, ssize_t *len) {
 	if (int e = sc_error(ret); e)
 		return e;
 	*len = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_getrlimit(int resource, struct rlimit *limit) {
+	auto ret = do_syscall(NR_getrlimit, resource, limit);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_setrlimit(int resource, const struct rlimit *limit) {
+	auto ret = do_syscall(NR_setrlimit, resource, limit);
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 
