@@ -1,4 +1,4 @@
-project('mlibc')
+project('mlibc', default_options: ['warning_level=2'])
 
 fs = import('fs')
 
@@ -51,7 +51,6 @@ if not headers_only
 	add_project_arguments('-nostdinc', '-fno-builtin', language: ['c', 'cpp'])
 	add_project_arguments('-std=c++20', language: 'cpp')
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
-	add_project_arguments('-Wall', '-Wextra', language: ['c', 'cpp'])
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
 	searchdirs = run_command(c_compiler.cmd_array(), '-print-search-dirs',
