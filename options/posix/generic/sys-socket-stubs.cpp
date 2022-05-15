@@ -1,5 +1,6 @@
 
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/socket.h>
 
 #include <bits/ensure.h>
@@ -22,7 +23,7 @@ int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict a
 
 int accept4(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length, int flags) {
 	if(flags & SOCK_NONBLOCK) {
-		mlibc::infoLogger() << "\e[35mmlibc: accept4() ignores SOCK_NONBLOCK\e[39m" << frg::endlog;
+		fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 	}
 
 	int newfd;
