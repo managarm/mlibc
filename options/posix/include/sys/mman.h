@@ -30,9 +30,12 @@
 #define MREMAP_MAYMOVE 1
 #define MREMAP_FIXED 2
 
+#define MADV_NORMAL 0
+#define MADV_RANDOM 1
 #define MADV_SEQUENTIAL 2
 #define MADV_WILLNEED 3
 #define MADV_DONTNEED 4
+#define MADV_FREE 5
 
 // Missing: posix_typed_mem_open(), POSIX_TYPED constants and related stuff.
 
