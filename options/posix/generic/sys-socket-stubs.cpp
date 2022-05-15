@@ -7,9 +7,6 @@
 #include <mlibc/posix-sysdeps.hpp>
 
 int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length) {
-	if(addr_ptr || addr_length)
-		mlibc::infoLogger() << "\e[35mmlibc: accept() does not fill struct sockaddr\e[39m"
-				<< frg::endlog;
 	int newfd;
 	if(!mlibc::sys_accept) {
 		MLIBC_MISSING_SYSDEP();
@@ -24,10 +21,6 @@ int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict a
 }
 
 int accept4(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length, int flags) {
-	if(addr_ptr || addr_length)
-		mlibc::infoLogger() << "\e[35mmlibc: accept4() does not fill struct sockaddr\e[39m"
-				<< frg::endlog;
-
 	if(flags & SOCK_NONBLOCK) {
 		mlibc::infoLogger() << "\e[35mmlibc: accept4() ignores SOCK_NONBLOCK\e[39m" << frg::endlog;
 	}
