@@ -80,11 +80,11 @@ pid_t sys_getppid(){
 }
 
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
-	uint64_t _secs, _millis;
-	syscall(SYS_UPTIME, (uintptr_t)&_secs, (uintptr_t)&_millis);
+	syscall(SYS_UPTIME, nanos);
 
-	*secs = _secs;
-	*nanos = _millis * 1000000;
+	*secs = (*nanos) / 1000000000;
+	*nanos = (*nanos) - (*secs) * 1000000000;
+
 	return 0;
 }
 
