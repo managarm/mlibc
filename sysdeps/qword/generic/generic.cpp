@@ -561,7 +561,7 @@ int sys_socket(int family, int type, int protocol, int *fd) {
     return 0;
 }
 int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) STUB_ONLY
-int sys_accept(int fd, int *newfd) STUB_ONLY
+int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length) STUB_ONLY
 int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
     int ret;
     int sys_errno;

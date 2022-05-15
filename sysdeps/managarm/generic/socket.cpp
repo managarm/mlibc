@@ -12,7 +12,7 @@
 
 namespace mlibc {
 
-int sys_accept(int fd, int *newfd) {
+int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length) {
 	SignalGuard sguard;
 
 	managarm::posix::AcceptRequest<MemoryAllocator> req(getSysdepsAllocator());

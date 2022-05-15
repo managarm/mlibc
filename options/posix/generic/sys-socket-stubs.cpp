@@ -16,7 +16,7 @@ int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict a
 		errno = ENOSYS;
 		return -1;
 	}
-	if(int e = mlibc::sys_accept(fd, &newfd); e) {
+	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length); e) {
 		errno = e;
 		return -1;
 	}
@@ -38,7 +38,7 @@ int accept4(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict 
 		errno = ENOSYS;
 		return -1;
 	}
-	if(int e = mlibc::sys_accept(fd, &newfd); e) {
+	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length); e) {
 		errno = e;
 		return -1;
 	}
