@@ -10,6 +10,8 @@
 #include <abi-bits/uid_t.h>
 #include <bits/posix/iovec.h>
 #include <abi-bits/socket.h>
+#include <bits/ansi/time_t.h>
+#include <bits/ansi/timespec.h>
 
 #include <stddef.h>
 
