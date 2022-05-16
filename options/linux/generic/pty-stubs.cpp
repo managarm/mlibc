@@ -16,6 +16,10 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 	__ensure(!name);
 	__ensure(!ios);
 
+	if (win) {
+		mlibc::infoLogger() << "mlibc: openpty ignores win argument" << frg::endlog;
+	}
+
 	// FIXME: Close the master FD if the slave open fails.
 
 	int ptmx_fd;
