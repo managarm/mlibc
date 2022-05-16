@@ -1,5 +1,6 @@
 
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/socket.h>
 
 #include <bits/ensure.h>
@@ -7,19 +8,39 @@
 #include <mlibc/posix-sysdeps.hpp>
 
 int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length) {
-	if(addr_ptr || addr_length)
-		mlibc::infoLogger() << "\e[35mmlibc: accept() does not fill struct sockaddr\e[39m"
-				<< frg::endlog;
 	int newfd;
 	if(!mlibc::sys_accept) {
 		MLIBC_MISSING_SYSDEP();
 		errno = ENOSYS;
 		return -1;
 	}
-	if(int e = mlibc::sys_accept(fd, &newfd); e) {
+	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length); e) {
 		errno = e;
 		return -1;
 	}
+	return newfd;
+}
+
+int accept4(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length, int flags) {
+	if(flags & SOCK_NONBLOCK) {
+		fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+	}
+
+	int newfd;
+	if(!mlibc::sys_accept) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length); e) {
+		errno = e;
+		return -1;
+	}
+
+	if(flags & SOCK_CLOEXEC) {
+		fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+	}
+
 	return newfd;
 }
 

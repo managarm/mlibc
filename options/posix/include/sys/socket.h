@@ -10,6 +10,8 @@
 #include <abi-bits/uid_t.h>
 #include <bits/posix/iovec.h>
 #include <abi-bits/socket.h>
+#include <bits/ansi/time_t.h>
+#include <bits/ansi/timespec.h>
 
 #include <stddef.h>
 
@@ -76,6 +78,7 @@ struct ucred {
 };
 
 int accept(int, struct sockaddr *__restrict, socklen_t *__restrict);
+int accept4(int, struct sockaddr *__restrict, socklen_t *__restrict, int);
 int bind(int, const struct sockaddr *, socklen_t);
 int connect(int, const struct sockaddr *, socklen_t);
 int getpeername(int, struct sockaddr *__restrict, socklen_t *__restrict);

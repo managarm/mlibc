@@ -12,7 +12,7 @@
 
 namespace mlibc {
 
-int sys_accept(int fd, int *newfd) {
+int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length) {
 	SignalGuard sguard;
 
 	managarm::posix::AcceptRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -37,8 +37,16 @@ int sys_accept(int fd, int *newfd) {
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*newfd = resp.fd();
-		return 0;
 	}
+
+	if(addr_ptr && addr_length) {
+		if(int e = mlibc::sys_peername(*newfd, addr_ptr, *addr_length, addr_length); e) {
+			errno = e;
+			return -1;
+		}
+	}
+
+	return 0;
 }
 
 int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {

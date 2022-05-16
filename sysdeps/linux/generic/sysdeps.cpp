@@ -31,8 +31,17 @@
 #define NR_getpid 39
 #define NR_socket 41
 #define NR_connect 42
+#define NR_accept 43
 #define NR_sendmsg 46
 #define NR_recvmsg 47
+#define NR_shutdown 48
+#define NR_bind 49
+#define NR_listen 50
+#define NR_getsockname 51
+#define NR_getpeername 52
+#define NR_socketpair 53
+#define NR_setsockopt 54
+#define NR_getsockopt 55
 #define NR_clone 56
 #define NR_fork 57
 #define NR_execve 59
@@ -63,6 +72,7 @@
 #define NR_newfstatat 262
 #define NR_unlinkat 263
 #define NR_pselect6 270
+#define NR_accept4 288
 #define NR_dup3 292
 #define NR_pipe2 293
 
@@ -435,6 +445,35 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 
 int sys_access(const char *path, int mode) {
 	auto ret = do_syscall(NR_access, path, mode);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length) {
+	auto ret = do_syscall(NR_accept, fd, addr_ptr, addr_length, 0, 0, 0);
+	if (int e = sc_error(ret); e)
+		return e;
+	*newfd = fd;
+	return 0;
+}
+
+int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
+	auto ret = do_syscall(NR_bind, fd, addr_ptr, addr_length, 0, 0, 0);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t size) {
+	auto ret = do_syscall(NR_setsockopt, fd, layer, number, buffer, size, 0);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_listen(int fd, int backlog) {
+	auto ret = do_syscall(NR_listen, fd, backlog, 0, 0, 0, 0);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;

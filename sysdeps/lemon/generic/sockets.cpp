@@ -28,7 +28,7 @@ int sys_connect(int sockfd, const struct sockaddr *addr_ptr, socklen_t addrlen){
     return syscall(SYS_CONNECT, sockfd, addr_ptr, addrlen);
 }
 
-int sys_accept(int fd, int *newfd){
+int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length){
     long ret = syscall(SYS_ACCEPT, fd);
 
     if(ret < 0){
