@@ -464,6 +464,8 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		resp.ParseFromArray(recv_resp->data, recv_resp->length);
 		if(resp.error() == managarm::posix::Errors::NO_SUCH_FD)
 			return EBADF;
+		else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS)
+			return EINVAL;
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*result = static_cast<int>(resp.error());
 		return 0;
