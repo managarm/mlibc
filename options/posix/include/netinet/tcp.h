@@ -8,6 +8,8 @@ extern "C" {
 // Define some macros using same ABI as Linux
 #define TCP_NODELAY 1
 #define TCP_MAXSEG 2
+#define TCP_KEEPINTVL 5
+#define TCP_KEEPCNT 6
 
 #define SOL_TCP 6
 

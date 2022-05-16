@@ -33,6 +33,7 @@ extern "C" {
 #define O_DSYNC __MLIBC_O_DSYNC
 #define O_RSYNC __MLIBC_O_RSYNC
 #define O_SYNC __MLIBC_O_SYNC
+#define O_ASYNC __MLIBC_O_ASYNC
 #define O_CLOEXEC __MLIBC_O_CLOEXEC
 #define O_PATH __MLIBC_O_PATH
 #define O_LARGEFILE __MLIBC_O_LARGEFILE

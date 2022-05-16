@@ -35,6 +35,7 @@ struct mmsghdr {
 #endif
 
 #define SCM_RIGHTS 1
+#define SCM_TIMESTAMP SO_TIMESTAMP
 
 //MISSING: CMSG_DATA, CMSG_NXTHDR, CMSG_FIRSTHDR
 
@@ -46,6 +47,7 @@ struct mmsghdr {
 #define SOCK_STREAM 4
 #define SOCK_NONBLOCK 0x10000
 #define SOCK_CLOEXEC 0x20000
+#define SOCK_RDM 0x40000
 
 #define SOL_SOCKET 1
 
@@ -72,6 +74,8 @@ struct mmsghdr {
 #define SO_RCVBUFFORCE 21
 #define SO_DETACH_FILTER 22
 #define SO_PROTOCOL 23
+#define SO_REUSEPORT 24
+#define SO_TIMESTAMP 25
 
 #define SOMAXCONN 1
 
@@ -97,6 +101,13 @@ struct mmsghdr {
 #define PF_UNSPEC 4
 #define PF_NETLINK 5
 #define PF_BRIDGE 6
+#define PF_APPLETALK 7
+#define PF_BLUETOOTH 8
+#define PF_DECnet 9
+#define PF_IPX 10
+#define PF_ISDN 11
+#define PF_SNA 12
+#define PF_PACKET 13
 
 #define AF_INET PF_INET
 #define AF_INET6 PF_INET6
@@ -105,6 +116,7 @@ struct mmsghdr {
 #define AF_UNSPEC PF_UNSPEC
 #define AF_NETLINK PF_NETLINK
 #define AF_BRIDGE PF_BRIDGE
+#define AF_PACKET PF_PACKET
 
 #define SHUT_RD 1
 #define SHUT_RDWR 2

@@ -77,6 +77,9 @@ extern "C" {
 #define B9600   13
 #define B19200  14
 #define B38400  15
+#define B57600  16
+#define B115200 17
+#define B230400 18
 
 // bitwise constants for c_cflag in struct termios
 #define CSIZE   0x0003
