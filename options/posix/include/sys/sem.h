@@ -9,7 +9,9 @@
 extern "C" {
 #endif
 
+#define GETALL 13
 #define SETVAL 16
+#define SETALL 17
 
 #define SEM_UNDO 0x1000
 
