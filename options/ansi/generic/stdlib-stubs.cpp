@@ -184,6 +184,11 @@ void srand(unsigned int s) {
 
 void *aligned_alloc(size_t alignment, size_t size) {
 	void *ptr;
+
+	// posix_memalign requires that the alignment is a multiple of sizeof(void *).
+	if (alignment < sizeof(void *))
+		alignment = sizeof(void *);
+
 	int ret = posix_memalign(&ptr, alignment, size);
 	if (ret) {
 		errno = ret;
