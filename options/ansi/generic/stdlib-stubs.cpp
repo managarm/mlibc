@@ -186,8 +186,10 @@ void *aligned_alloc(size_t alignment, size_t size) {
 	void *ptr;
 
 	// alignment must be a power of two, and size % alignment must be 0
-	if (alignment & (alignment - 1) || size & (alignment - 1))
+	if (alignment & (alignment - 1) || size & (alignment - 1)) {
+		errno = EINVAL;
 		return nullptr;
+	}
 
 	// posix_memalign requires that the alignment is a multiple of sizeof(void *)
 	if (alignment < sizeof(void *))

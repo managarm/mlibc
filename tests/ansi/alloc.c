@@ -20,8 +20,11 @@ int main() {
 
 	// size % align must be 0
 	p = aligned_alloc(256, 1);
+	assert(errno == EINVAL);
 	assert(p == NULL);
 
 	// align must be a 'valid alignment supported by the implementation'
-	assert(aligned_alloc(3, 1) == NULL);
+	p = aligned_alloc(3, 1);
+	assert(errno == EINVAL);
+	assert(p == NULL);
 }
