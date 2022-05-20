@@ -171,6 +171,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_setgroups(size_t size, const gid_t *list);
 [[gnu::weak]] int sys_statfs(const char *path, struct statfs *buf);
 [[gnu::weak]] int sys_memfd_create(const char *name, int flags, int *fd);
+[[gnu::weak]] int sys_madvise(void *addr, size_t length, int advice);
 
 [[gnu::weak]] int sys_getitimer(int which, struct itimerval *curr_value);
 [[gnu::weak]] int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value);

@@ -149,8 +149,20 @@ int memfd_create(const char *name, unsigned int flags) {
 	return ret;
 }
 
-int madvise(void *, size_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int madvise(void *addr, size_t length, int advice) {
+	if(!mlibc::sys_madvise) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	int ret = -1;
+
+	if(int e = mlibc::sys_madvise(addr, length, advice)) {
+		errno = e;
+		return -1;
+	}
+
+	return 0;
 }
 #endif
