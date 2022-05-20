@@ -1,4 +1,4 @@
-project('mlibc', default_options: ['warning_level=2'])
+project('mlibc', default_options: ['warning_level=2', 'cpp_std=c++20'])
 
 fs = import('fs')
 
@@ -37,11 +37,20 @@ internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
 if not headers_only
-	cxxshim_dep = subproject('cxxshim').get_variable('cxxshim_dep')
+	cxxshim_dep = dependency('cxxshim', method: 'pkg-config', fallback: ['cxxshim', 'cxxshim_dep'])
 	libc_deps += cxxshim_dep
 	rtdl_deps += cxxshim_dep
-	frigg_dep = subproject('frigg',
-		default_options: ['frigg_no_install=true']).get_variable('frigg_dep')
+
+	# Ideally we'd use the same one-liner as above, but we can't pass default_options that way
+	frigg_dep = dependency('frigg', method: 'pkg-config', required: false)
+	if not frigg_dep.found()
+		message('frigg not found with pkg-config, falling back to subproject...')
+		frigg_dep = subproject(
+			'frigg',
+			default_options: ['frigg_no_install=true']
+		).get_variable('frigg_dep')
+	endif
+
 	libc_deps += frigg_dep
 	rtdl_deps += frigg_dep
 
@@ -49,7 +58,6 @@ if not headers_only
 	c_compiler = meson.get_compiler('c')
 
 	add_project_arguments('-nostdinc', '-fno-builtin', language: ['c', 'cpp'])
-	add_project_arguments('-std=c++20', language: 'cpp')
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
