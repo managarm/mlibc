@@ -57,7 +57,8 @@ posix_test_cases = [
 	'wordexp',
 	'rlimits',
 	'accept4',
-	'setpriority'
+	'setpriority',
+	'alarm'
 ]
 
 posix_fail_test_cases = [

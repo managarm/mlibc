@@ -28,6 +28,7 @@
 #define NR_pipe 22
 #define NR_select 23
 #define NR_nanosleep 35
+#define NR_setitimer 38
 #define NR_getpid 39
 #define NR_socket 41
 #define NR_connect 42
@@ -492,6 +493,13 @@ int sys_getpriority(int which, id_t who, int *value) {
 
 int sys_setpriority(int which, id_t who, int prio) {
 	auto ret = do_syscall(NR_setpriority, which, who, prio);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
+	auto ret = do_syscall(NR_setitimer, which, new_value, old_value);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
