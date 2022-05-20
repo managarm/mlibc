@@ -63,6 +63,8 @@
 #define NR_getegid 108
 #define NR_rt_sigsuspend 130
 #define NR_sigaltstack 131
+#define NR_getpriority 140
+#define NR_setpriority 141
 #define NR_arch_prctl 158
 #define NR_setrlimit 160
 #define NR_sys_futex 202
@@ -474,6 +476,22 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 
 int sys_listen(int fd, int backlog) {
 	auto ret = do_syscall(NR_listen, fd, backlog, 0, 0, 0, 0);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_getpriority(int which, id_t who, int *value) {
+	auto ret = do_syscall(NR_getpriority, which, who);
+	if (int e = sc_error(ret); e) {
+		return e;
+	}
+	*value = 20 - sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_setpriority(int which, id_t who, int prio) {
+	auto ret = do_syscall(NR_setpriority, which, who, prio);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
