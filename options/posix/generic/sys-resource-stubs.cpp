@@ -6,9 +6,17 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 
-int getpriority(int, id_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int getpriority(int which, id_t who) {
+	if(!mlibc::sys_getpriority) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	int value = 0;
+	if(int e = mlibc::sys_getpriority(which, who, &value); e) {
+		errno = e;
+	}
+	return value;
 }
 
 int setpriority(int which, id_t who, int prio) {
