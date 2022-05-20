@@ -41,16 +41,12 @@ if not headers_only
 	libc_deps += cxxshim_dep
 	rtdl_deps += cxxshim_dep
 
-	# Ideally we'd use the same one-liner as above, but we can't pass default_options that way
-	frigg_dep = dependency('frigg', method: 'pkg-config', required: false)
-	if not frigg_dep.found()
-		message('frigg not found with pkg-config, falling back to subproject...')
-		frigg_dep = subproject(
-			'frigg',
-			default_options: ['frigg_no_install=true']
-		).get_variable('frigg_dep')
-	endif
-
+	frigg_dep = dependency(
+		'frigg',
+		default_options: ['frigg_no_install=true'],
+		method: 'pkg-config',
+		fallback: ['frigg', 'frigg_dep'],
+	)
 	libc_deps += frigg_dep
 	rtdl_deps += frigg_dep
 
