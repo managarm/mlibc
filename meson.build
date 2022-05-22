@@ -37,14 +37,13 @@ internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
 if not headers_only
-	cxxshim_dep = dependency('cxxshim', method: 'pkg-config', fallback: ['cxxshim', 'cxxshim_dep'])
+	cxxshim_dep = dependency('cxxshim', fallback: ['cxxshim', 'cxxshim_dep'])
 	libc_deps += cxxshim_dep
 	rtdl_deps += cxxshim_dep
 
 	frigg_dep = dependency(
 		'frigg',
 		default_options: ['frigg_no_install=true'],
-		method: 'pkg-config',
 		fallback: ['frigg', 'frigg_dep'],
 	)
 	libc_deps += frigg_dep
