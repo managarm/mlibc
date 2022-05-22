@@ -51,6 +51,7 @@ int getitimer(int which, struct itimerval *curr_value) {
 		errno = e;
 		return -1;
 	}
+	return 0;
 }
 
 int setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
@@ -63,4 +64,5 @@ int setitimer(int which, const struct itimerval *new_value, struct itimerval *ol
 		errno = e;
 		return -1;
 	}
+	return 0;
 }

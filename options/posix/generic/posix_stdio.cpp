@@ -121,7 +121,7 @@ FILE *popen(const char *command, const char *typestr) {
 
 		mlibc::sys_close(fds[parent_end]);
 
-		if (int e = mlibc::sys_dup2(fds[child_end], 0, is_write ? 0 : 1)) {
+		if (mlibc::sys_dup2(fds[child_end], 0, is_write ? 0 : 1)) {
 			__ensure(!"sys_dup2() failed in popen()");
 		}
 		mlibc::sys_close(fds[child_end]);
