@@ -390,8 +390,9 @@ void qsort(void *base, size_t count, size_t size,
 }
 
 void qsort_r(void *, size_t, size_t,
-		int (*compar)(const void *, const void *, void *),
+		int (*compare)(const void *, const void *, void *),
 		void *) {
+	(void) compare;
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
