@@ -13,8 +13,14 @@ int optind = 1;
 int opterr = 1;
 int optopt;
 
+namespace {
+	int __optpos = 1;
+}
+
 int getopt_long(int argc, char * const argv[], const char *optstring,
 		const struct option *longopts, int *longindex) {
+	bool colon = optstring[0] == ':';
+
 	// glibc extension: Setting optind to zero causes a full reset.
 	// TODO: Should we really reset opterr and the other flags?
 	if(!optind) {
@@ -22,12 +28,30 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 		optind = 1;
 		opterr = 1;
 		optopt = 0;
+		__optpos = 1;
 	}
 
 	while(optind < argc) {
 		char *arg = argv[optind];
-		if(arg[0] != '-')
-			return -1;
+		if(arg[0] != '-') {
+			bool further_options = false;
+			int skip = optind;
+
+			for(; skip < argc; ++skip) {
+				if(argv[skip][0] == '-') {
+					further_options = true;
+					break;
+				}
+			}
+
+			if(further_options) {
+				optind += skip - optind;
+				continue;
+			} else {
+				optarg = nullptr;
+				return -1;
+			}
+		}
 
 		if(arg[1] == '-') {
 			arg += 2;
@@ -72,9 +96,14 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 					optarg = argv[optind];
 					optind++;
 				}else{
-					if(opterr)
+					/*	If an error was detected, and the first character of optstring is not a colon,
+						and the external variable opterr is nonzero (which is the default),
+						getopt() prints an error message. */
+					if(!colon && opterr)
 						fprintf(stderr, "--%s requires an argument.\n", arg);
-					return '?';
+					/*	If the first character of optstring is a colon (':'), then getopt()
+						returns ':' instead of '?' to indicate a missing option argument. */
+					return colon ? ':' : '?';
 				}
 			}else if(longopts[k].has_arg == optional_argument) {
 				if(s) {
@@ -101,8 +130,7 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 			}
 		}else{
 			/* handle short options, i.e. options with only one dash prefixed; e.g. `program -s` */
-			__ensure((strlen(argv[optind]) == 2) && "We do not support concatenated short options yet.");
-			unsigned int i = 1;
+			unsigned int i = __optpos;
 			while(true) {
 				auto opt = strchr(optstring, arg[i]);
 				if(opt) {
@@ -112,18 +140,33 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 						if(arg[i+1]) {
 							optarg = arg + i + 1;
 						} else if(optind + 1 < argc && argv[optind + 1] && (required || argv[optind + 1][0] != '-')) {
+							/* there is an argument to this short option, separated by a space */
 							optarg = argv[optind + 1];
 							optind++;
+							__optpos = 1;
 						} else if(!required) {
 							optarg = nullptr;
 						} else {
-							__ensure(!"We do not handle missing required short options yet.");
+							__optpos = 1;
+							optopt = arg[i];
+							return colon ? ':' : '?';
+						}
+						optind++;
+					} else {
+						if(arg[i+1]) {
+							__optpos++;
+						} else if(arg[i]) {
+							optind++;
+						} else {
+							return -1;
 						}
 					}
 
-					optind++;
 					return arg[i];
 				} else {
+					/*	If getopt() does not recognize an option character, it prints an error message to stderr,
+						stores the character in optopt, and returns '?'. The calling program may prevent
+						the error message by setting opterr to 0. */
 					optopt = arg[1];
 					if(opterr)
 						fprintf(stderr, "%s is not a valid option.\n", arg);
