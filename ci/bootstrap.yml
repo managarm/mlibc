@@ -1,12 +1,4 @@
 sources:
-  - name: cxxshim
-    git: 'https://github.com/managarm/cxxshim.git'
-    branch: 'master'
-
-  - name: frigg
-    git: 'https://github.com/managarm/frigg.git'
-    branch: 'master'
-
   - name: gcc
     git: 'git://gcc.gnu.org/git/gcc.git'
     tag: 'releases/gcc-10.3.0'
@@ -17,12 +9,6 @@ sources:
   - name: mlibc
     git: 'https://github.com/managarm/mlibc.git'
     branch: 'master'
-    sources_required:
-      - cxxshim
-      - frigg
-    regenerate:
-      - args: ['ln', '-sf', '@SOURCE_ROOT@/cxxshim', '@THIS_SOURCE_DIR@/subprojects/cxxshim']
-      - args: ['ln', '-sf', '@SOURCE_ROOT@/frigg', '@THIS_SOURCE_DIR@/subprojects/frigg']
 
 tools:
   - name: gcc
