@@ -19,10 +19,13 @@ bool eagerBinding = true;
 
 #if defined(__x86_64__)
 constexpr inline bool tlsAboveTp = false;
+constexpr inline unsigned long TLS_DTV_OFFSET = 0;
 #elif defined(__aarch64__)
 constexpr inline bool tlsAboveTp = true;
-#elif defined(__riscv) && __riscv_xlen == 64
+constexpr inline unsigned long TLS_DTV_OFFSET = 0;
+#elif defined(__riscv)
 constexpr inline bool tlsAboveTp = true;
+constexpr inline unsigned long TLS_DTV_OFFSET = 0x800;
 #else
 #	error Unknown architecture
 #endif
@@ -617,6 +620,9 @@ void processCopyRela(SharedObject *object, Elf64_Rela *reloc) {
 #elif defined(__aarch64__)
 	if(type != R_AARCH64_COPY)
 		return;
+#elif defined(__riscv)
+	if (type != R_RISCV_COPY)
+		return;
 #endif
 
 	uintptr_t rel_addr = object->baseAddress + reloc->r_offset;
@@ -777,7 +783,7 @@ void *accessDtv(SharedObject *object) {
 		tcb_ptr->dtvPointers[object->tlsIndex] = buffer;
 	}
 
-	return tcb_ptr->dtvPointers[object->tlsIndex];
+	return (void *)((char *)tcb_ptr->dtvPointers[object->tlsIndex] + TLS_DTV_OFFSET);
 }
 
 void *tryAccessDtv(SharedObject *object) {
@@ -788,7 +794,7 @@ void *tryAccessDtv(SharedObject *object) {
 	if (!tcb_ptr->dtvPointers[object->tlsIndex])
 		return nullptr;
 
-	return tcb_ptr->dtvPointers[object->tlsIndex];
+	return (void *)((char *)tcb_ptr->dtvPointers[object->tlsIndex] + TLS_DTV_OFFSET);
 }
 
 // --------------------------------------------------------
@@ -1197,6 +1203,9 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 #elif defined(__aarch64__)
 	if(type == R_AARCH64_COPY)
 		return;
+#elif defined(__riscv)
+	if(type == R_RISCV_COPY)
+		return;
 #endif
 
 	// resolve the symbol if there is a symbol
@@ -1320,6 +1329,64 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 			*((uint64_t *)rel_addr) = object->tlsOffset;
 		}
 	} break;
+#elif defined(__riscv)
+	case R_RISCV_64: {
+		__ensure(symbol_index);
+		__ensure(p);
+		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
+		*((uint64_t *)rel_addr) = symbol_addr + reloc->r_addend;
+	} break;
+	case R_RISCV_JUMP_SLOT: {
+		__ensure(symbol_index);
+		__ensure(p);
+		__ensure(!reloc->r_addend);
+		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
+		*((uint64_t *)rel_addr) = symbol_addr;
+	} break;
+	case R_RISCV_RELATIVE: {
+		__ensure(!symbol_index);
+		*((uint64_t *)rel_addr) = object->baseAddress + reloc->r_addend;
+	} break;
+	case R_RISCV_TLS_DTPMOD64: {
+		__ensure(!reloc->r_addend);
+		if(symbol_index) {
+			__ensure(p);
+			*((uint64_t *)rel_addr) = (uint64_t)p->object();
+		}else{
+			if(stillSlightlyVerbose)
+				mlibc::infoLogger() << "rtdl: Warning: TLS_DTPMOD64 with no symbol"
+						" in object " << object->name << frg::endlog;
+			*((uint64_t *)rel_addr) = (uint64_t)object;
+		}
+	} break;
+	case R_RISCV_TLS_DTPREL64: {
+		__ensure(symbol_index);
+		__ensure(p);
+		*((uint64_t *)rel_addr) = p->symbol()->st_value + reloc->r_addend - TLS_DTV_OFFSET;
+	} break;
+	case R_RISCV_TLS_TPREL64: {
+		// Note: this assumes that tcb_ptr + sizeof(Tcb) == tp.
+		if(symbol_index) {
+			__ensure(p);
+			__ensure(!reloc->r_addend);
+			if(p->object()->tlsModel != TlsModel::initial)
+				mlibc::panicLogger() << "rtdl: In object " << object->name
+						<< ": Static TLS relocation to dynamically loaded object "
+						<< p->object()->name << frg::endlog;
+			auto val = p->object()->tlsOffset - sizeof(Tcb) + p->symbol()->st_value;
+			*((uint64_t *)rel_addr) = p->object()->tlsOffset - sizeof(Tcb) + p->symbol()->st_value;
+		}else{
+			__ensure(!reloc->r_addend);
+			if(stillSlightlyVerbose)
+				mlibc::infoLogger() << "rtdl: Warning: TLS_TPREL64 with no symbol"
+						" in object " << object->name << frg::endlog;
+			if(object->tlsModel != TlsModel::initial)
+				mlibc::panicLogger() << "rtdl: In object " << object->name
+						<< ": Static TLS relocation to dynamically loaded object "
+						<< object->name << frg::endlog;
+			*((uint64_t *)rel_addr) = object->tlsOffset - sizeof(Tcb);
+		}
+	} break;
 #endif
 	default:
 		mlibc::panicLogger() << "Unexpected relocation type "
@@ -1387,6 +1454,8 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 		case R_X86_64_JUMP_SLOT:
 #elif defined(__aarch64__)
 		case R_AARCH64_JUMP_SLOT:
+#elif defined(__riscv)
+		case R_RISCV_JUMP_SLOT:
 #endif
 			if(eagerBinding) {
 				auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
@@ -1460,6 +1529,9 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 			}
 		} break;
 #endif
+		default:
+			mlibc::panicLogger() << "unimplemented lazy relocation type " << type << frg::endlog;
+			break;
 		}
 	}
 }

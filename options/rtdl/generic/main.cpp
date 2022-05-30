@@ -32,17 +32,31 @@ frg::manual_box<Loader> globalLoader;
 frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
 static SharedObject *executableSO;
-extern char __ehdr_start[];
+extern HIDDEN char __ehdr_start[];
 
 // Global debug interface variable
 DebugInterface globalDebugInterface;
+
+#ifndef MLIBC_STATIC_BUILD
+
+// Use a PC-relative instruction sequence to find our runtime load address.
+uintptr_t getLdsoBase() {
+#if defined(__x86_64__) || defined(__aarch64__)
+	// On x86_64, the first GOT entry holds the link-time address of _DYNAMIC.
+	// TODO: This isn't guaranteed on AArch64, so this might fail with some linkers.
+	auto linktime_dynamic = reinterpret_cast<uintptr_t>(_GLOBAL_OFFSET_TABLE_[0]);
+	auto runtime_dynamic = reinterpret_cast<uintptr_t>(_DYNAMIC);
+	return runtime_dynamic - linktime_dynamic;
+#elif defined(__riscv)
+	return reinterpret_cast<uintptr_t>(&__ehdr_start);
+#endif
+}
 
 // Relocates the dynamic linker (i.e. this DSO) itself.
 // Assumptions:
 // - There are no references to external symbols.
 // Note that this code is fragile in the sense that it must not contain relocations itself.
 // TODO: Use tooling to verify this at compile time.
-#ifndef MLIBC_STATIC_BUILD
 extern "C" void relocateSelf() {
 	size_t rela_offset = 0;
 	size_t rela_size = 0;
@@ -54,8 +68,8 @@ extern "C" void relocateSelf() {
 		}
 	}
 
-	auto ldso_base = reinterpret_cast<uintptr_t>(_DYNAMIC)
-			- reinterpret_cast<uintptr_t>(_GLOBAL_OFFSET_TABLE_[0]);
+	auto ldso_base = getLdsoBase();
+
 	for(size_t disp = 0; disp < rela_size; disp += sizeof(Elf64_Rela)) {
 		auto reloc = reinterpret_cast<Elf64_Rela *>(ldso_base + rela_offset + disp);
 
@@ -69,6 +83,8 @@ extern "C" void relocateSelf() {
 		case R_X86_64_RELATIVE:
 #elif defined(__aarch64__)
 		case R_AARCH64_RELATIVE:
+#elif defined(__riscv)
+		case R_RISCV_RELATIVE:
 #endif
 			*p = ldso_base + reloc->r_addend;
 			break;
@@ -137,16 +153,15 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	const char *execfn = "(executable)";
 
 #ifndef MLIBC_STATIC_BUILD
-	auto ldso_base = reinterpret_cast<uintptr_t>(_DYNAMIC)
-			- reinterpret_cast<uintptr_t>(_GLOBAL_OFFSET_TABLE_[0]);
+	auto ldso_base = getLdsoBase();
 	if(logStartup) {
 		mlibc::infoLogger() << "ldso: Own base address is: 0x"
 				<< frg::hex_fmt(ldso_base) << frg::endlog;
 		mlibc::infoLogger() << "ldso: Own dynamic section is at: " << _DYNAMIC << frg::endlog;
 	}
 
-// on aarch64 these lines corrupt unrelated GOT entries (entries for ld.so functions)
 #ifdef __x86_64__
+	// These entries are reserved on x86_64.
 	// TODO: Use a fake PLT stub that reports an error message?
 	_GLOBAL_OFFSET_TABLE_[1] = 0;
 	_GLOBAL_OFFSET_TABLE_[2] = 0;
