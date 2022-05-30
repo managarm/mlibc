@@ -51,7 +51,32 @@ struct __mlibc_jmpbuf_register_state {
 };
 #elif defined (__riscv) && __riscv_xlen == 64
 struct __mlibc_jmpbuf_register_state {
-	uint64_t dummy;
+	uint64_t ra;
+	uint64_t s0;
+	uint64_t s1;
+	uint64_t s2;
+	uint64_t s3;
+	uint64_t s4;
+	uint64_t s5;
+	uint64_t s6;
+	uint64_t s7;
+	uint64_t s8;
+	uint64_t s9;
+	uint64_t s10;
+	uint64_t s11;
+	uint64_t sp;
+	double fs0;
+	double fs1;
+	double fs2;
+	double fs3;
+	double fs4;
+	double fs5;
+	double fs6;
+	double fs7;
+	double fs8;
+	double fs9;
+	double fs10;
+	double fs11;
 };
 #else
 #  error "Missing architecture specific code"
