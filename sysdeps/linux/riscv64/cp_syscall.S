@@ -13,8 +13,16 @@ __mlibc_do_asm_cp_syscall:
 	mv a4, a5
 	mv a5, a6
 	ld a6, -8(sp) // a7
+	lw t0, -48(tp) // Tcb::cancelBits
 __mlibc_syscall_begin:
-	// TODO: cancellation point
+	// tcbCancelEnableBit && tcbCancelTriggerBit
+	li t1, (1 << 0) | (1 << 2)
+	and t0, t0, t1
+	beq t0, t1, cancel
 	ecall
 __mlibc_syscall_end:
-	ret // TODO
+	ret
+
+cancel:
+	call __mlibc_do_cancel
+	unimp

@@ -68,14 +68,6 @@ typedef unsigned long int greg_t;
 #define TRAP_BRKPT      1       /* process breakpoint */
 #define TRAP_TRACE      2       /* process trace trap */
 
-typedef struct __ucontext {
-        unsigned long uc_flags;
-        struct __ucontext *uc_link;
-        stack_t uc_stack;
-        mcontext_t uc_mcontext;
-        sigset_t uc_sigmask;
-} ucontext_t;
-
 // functions to block / wait for signals
 int sigsuspend(const sigset_t *);
 int sigprocmask(int, const sigset_t *__restrict, sigset_t *__restrict);

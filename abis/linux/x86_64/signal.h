@@ -195,6 +195,8 @@ struct sigaction {
 
 // Taken from the linux kernel headers
 
+#if defined(__x86_64__)
+
 struct _fpreg {
 	unsigned short significand[4];
 	unsigned short exponent;
@@ -254,6 +256,92 @@ typedef struct {
 	struct _fpstate * fpstate;
 	unsigned long __reserved1 [8];
 } mcontext_t;
+
+typedef struct __ucontext {
+	unsigned long uc_flags;
+	struct __ucontext *uc_link;
+	stack_t uc_stack;
+	mcontext_t uc_mcontext;
+	sigset_t uc_sigmask;
+} ucontext_t;
+
+#elif defined(__riscv) && __riscv_xlen == 64
+// Definitions from Linux kernel headers.
+
+struct __riscv_f_ext_state {
+	uint32_t f[32];
+	uint32_t fcsr;
+};
+
+struct __riscv_d_ext_state {
+	uint64_t f[32];
+	uint32_t fcsr;
+};
+
+struct __riscv_q_ext_state {
+	uint64_t f[64] __attribute__((aligned(16)));
+	uint32_t fcsr;
+	uint32_t reserved[3];
+};
+
+union __riscv_fp_state {
+	struct __riscv_f_ext_state f;
+	struct __riscv_d_ext_state d;
+	struct __riscv_q_ext_state q;
+};
+
+struct __user_regs_struct {
+	unsigned long pc;
+	unsigned long ra;
+	unsigned long sp;
+	unsigned long gp;
+	unsigned long tp;
+	unsigned long t0;
+	unsigned long t1;
+	unsigned long t2;
+	unsigned long s0;
+	unsigned long s1;
+	unsigned long a0;
+	unsigned long a1;
+	unsigned long a2;
+	unsigned long a3;
+	unsigned long a4;
+	unsigned long a5;
+	unsigned long a6;
+	unsigned long a7;
+	unsigned long s2;
+	unsigned long s3;
+	unsigned long s4;
+	unsigned long s5;
+	unsigned long s6;
+	unsigned long s7;
+	unsigned long s8;
+	unsigned long s9;
+	unsigned long s10;
+	unsigned long s11;
+	unsigned long t3;
+	unsigned long t4;
+	unsigned long t5;
+	unsigned long t6;
+};
+
+typedef struct __mcontext {
+	struct __user_regs_struct sc_regs;
+	union __riscv_fp_state sc_fpregs;
+} mcontext_t;
+
+typedef struct __ucontext {
+	unsigned long uc_flags;
+	struct ucontext	*uc_link;
+	stack_t uc_stack;
+	sigset_t uc_sigmask;
+	uint8_t  __unused[1024 / 8 - sizeof(sigset_t)];
+	mcontext_t uc_mcontext;
+} ucontext_t;
+
+#else
+#error "Missing architecture specific code."
+#endif
 
 #ifdef __cplusplus
 }

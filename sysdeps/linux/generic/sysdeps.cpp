@@ -372,7 +372,13 @@ extern "C" const char __mlibc_syscall_begin[1];
 extern "C" const char __mlibc_syscall_end[1];
 
 int sys_before_cancellable_syscall(ucontext_t *uct) {
+#if defined(__x86_64__)
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.rip);
+#elif defined(__riscv)
+	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.sc_regs.pc);
+#else
+#error "Missing architecture specific code."
+#endif
 	if (pc < __mlibc_syscall_begin || pc > __mlibc_syscall_end)
 		return 0;
 	return 1;
