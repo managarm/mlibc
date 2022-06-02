@@ -1,4 +1,5 @@
 ansi_test_cases = [
+	'alloc',
 	'sscanf',
 	'sprintf',
 	'snprintf',
@@ -40,6 +41,7 @@ posix_test_cases = [
 	'getservbyport',
 	'grp',
 	'dprintf',
+	'posix_memalign',
 	'posix_spawn',
 	'index',
 	'rindex',
