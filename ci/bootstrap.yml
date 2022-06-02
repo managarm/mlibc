@@ -69,6 +69,7 @@ packages:
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
         - "-Dbuild_tests=true"
+        - "-Dwerror=true"
         - '@THIS_SOURCE_DIR@'
         environ:
           C: 'gcc-10'
@@ -90,6 +91,7 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dbuild_tests=true"
         - "-Dstatic=true"
+        - "-Dwerror=true"
         - '@THIS_SOURCE_DIR@'
         environ:
           C: 'gcc-10'
@@ -109,6 +111,7 @@ packages:
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
         - "-Dbuild_tests=true"
+        - "-Dwerror=true"
         - "-Ddisable_posix_option=true"
         - "-Ddisable_linux_option=true"
         - "-Ddisable_glibc_option=true"
