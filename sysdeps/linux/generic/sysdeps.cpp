@@ -19,9 +19,9 @@ void sys_libc_log(const char *message) {
 	size_t n = 0;
 	while(message[n])
 		n++;
-	do_cp_syscall(NR_write, 2, message, n);
+	do_syscall(NR_write, 2, message, n);
 	char lf = '\n';
-	do_cp_syscall(NR_write, 2, &lf, 1);
+	do_syscall(NR_write, 2, &lf, 1);
 }
 
 void sys_libc_panic() {
@@ -353,6 +353,13 @@ int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out) {
 	unsigned long flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND
 		| CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS | CLONE_SETTLS
 		| CLONE_PARENT_SETTID;
+
+#if defined(__riscv)
+	// TP should point to the address immediately after the TCB.
+	// TODO: We should change the sysdep so that we don't need to do this.
+	auto tls = reinterpret_cast<char *>(tcb) + sizeof(Tcb);
+	tcb = reinterpret_cast<void *>(tls);
+#endif
 
 	auto ret = __mlibc_spawn_thread(flags, stack, pid_out, NULL, tcb);
 	if (ret < 0)

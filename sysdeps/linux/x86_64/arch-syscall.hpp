@@ -95,6 +95,7 @@ extern "C" {
 #define NR_pipe 22
 #define NR_select 23
 #define NR_nanosleep 35
+#define NR_setitimer 38
 #define NR_getpid 39
 #define NR_socket 41
 #define NR_connect 42
@@ -130,6 +131,8 @@ extern "C" {
 #define NR_getegid 108
 #define NR_rt_sigsuspend 130
 #define NR_sigaltstack 131
+#define NR_getpriority 140
+#define NR_setpriority 141
 #define NR_arch_prctl 158
 #define NR_setrlimit 160
 #define NR_sys_futex 202

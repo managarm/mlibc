@@ -16,7 +16,6 @@ if not disable_posix_option
 	libc_sources += files(
 		'generic/thread.cpp',
 		host_machine.cpu_family() / 'cp_syscall.S',
-		host_machine.cpu_family() / 'thread.cpp',
 		host_machine.cpu_family() / 'thread_entry.S'
 	)
 endif
