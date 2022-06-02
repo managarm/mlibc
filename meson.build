@@ -11,6 +11,7 @@ libc_include_dirs = [
 	include_directories('options/internal/include'),
 	include_directories('options/elf/include'),
 	include_directories('options/lsb/include'),
+	include_directories('options/rtdl/include'),
 	include_directories('options/internal' / host_machine.cpu_family() + '-include')
 ]
 

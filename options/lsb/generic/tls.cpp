@@ -1,3 +1,6 @@
+#include <internal-config.h>
+#include <mlibc/thread.hpp>
+#include <mlibc/rtdl-abi.hpp>
 
 struct __abi_tls_entry;
 
