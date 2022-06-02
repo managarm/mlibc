@@ -13,76 +13,6 @@
 #define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }
 #define UNUSED(x) (void)(x);
 
-#define NR_read 0
-#define NR_write 1
-#define NR_open 2
-#define NR_close 3
-#define NR_stat 4
-#define NR_fstat 5
-#define NR_lseek 8
-#define NR_mmap 9
-#define NR_mprotect 10
-#define NR_sigaction 13
-#define NR_rt_sigprocmask 14
-#define NR_ioctl 16
-#define NR_access 21
-#define NR_pipe 22
-#define NR_select 23
-#define NR_nanosleep 35
-#define NR_setitimer 38
-#define NR_getpid 39
-#define NR_socket 41
-#define NR_connect 42
-#define NR_accept 43
-#define NR_sendmsg 46
-#define NR_recvmsg 47
-#define NR_shutdown 48
-#define NR_bind 49
-#define NR_listen 50
-#define NR_getsockname 51
-#define NR_getpeername 52
-#define NR_socketpair 53
-#define NR_setsockopt 54
-#define NR_getsockopt 55
-#define NR_clone 56
-#define NR_fork 57
-#define NR_execve 59
-#define NR_exit 60
-#define NR_wait4 61
-#define NR_kill 62
-#define NR_fcntl 72
-#define NR_getcwd 79
-#define NR_chdir 80
-#define NR_mkdir 83
-#define NR_rmdir 84
-#define NR_unlink 87
-#define NR_symlink 88
-#define NR_readlink 89
-#define NR_getrlimit 97
-#define NR_getuid 102
-#define NR_getgid 104
-#define NR_geteuid 107
-#define NR_getegid 108
-#define NR_rt_sigsuspend 130
-#define NR_sigaltstack 131
-#define NR_getpriority 140
-#define NR_setpriority 141
-#define NR_arch_prctl 158
-#define NR_setrlimit 160
-#define NR_sys_futex 202
-#define NR_clock_gettime 228
-#define NR_exit_group 231
-#define NR_tgkill 234
-#define NR_mkdirat 258
-#define NR_newfstatat 262
-#define NR_unlinkat 263
-#define NR_pselect6 270
-#define NR_accept4 288
-#define NR_dup3 292
-#define NR_pipe2 293
-
-#define ARCH_SET_FS	0x1002
-
 namespace mlibc {
 
 void sys_libc_log(const char *message) {
@@ -99,9 +29,16 @@ void sys_libc_panic() {
 }
 
 int sys_tcb_set(void *pointer) {
+#if defined(__x86_64__)
 	auto ret = do_syscall(NR_arch_prctl, ARCH_SET_FS, pointer);
 	if(int e = sc_error(ret); e)
 		return e;
+#elif defined(__riscv)
+	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
+	asm volatile ("mv tp, %0" : "=r"(thread_data));
+#else
+#error "Missing architecture specific code."
+#endif
 	return 0;
 }
 
@@ -114,7 +51,11 @@ int sys_anon_free(void *pointer, size_t size) {
 }
 
 int sys_open(const char *path, int flags, mode_t mode, int *fd) {
+#ifdef NR_open
 	auto ret = do_cp_syscall(NR_open, path, flags, mode);
+#else
+	auto ret = do_cp_syscall(NR_openat, AT_FDCWD, path, flags, mode);
+#endif
 	if(int e = sc_error(ret); e)
 		return e;
 	*fd = sc_int_result<int>(ret);
@@ -220,7 +161,7 @@ int sys_sigaction(int signum, const struct sigaction *act,
 		kernel_act.restorer = __mlibc_signal_restore;
 		kernel_act.mask = act->sa_mask;
 	}
-        auto ret = do_syscall(NR_sigaction, signum, act ?
+        auto ret = do_syscall(NR_rt_sigaction, signum, act ?
 			&kernel_act : NULL, oldact ?
 			&kernel_oldact : NULL, sizeof(sigset_t));
         if (int e = sc_error(ret); e)
@@ -361,7 +302,11 @@ int sys_pipe(int *fds, int flags) {
                         return e;
                 return 0;
         } else {
+#ifdef NR_pipe
                 auto ret = do_syscall(NR_pipe, fds);
+#else
+				auto ret = do_syscall(NR_pipe2, fds, 0);
+#endif
                 if (int e = sc_error(ret); e)
                         return e;
                 return 0;
@@ -369,11 +314,15 @@ int sys_pipe(int *fds, int flags) {
 }
 
 int sys_fork(pid_t *child) {
-        auto ret = do_syscall(NR_fork);
-        if (int e = sc_error(ret); e)
-                return e;
-        *child = sc_int_result<int>(ret);
-        return 0;
+#ifdef NR_fork
+	auto ret = do_syscall(NR_fork);
+#else
+	auto ret = do_syscall(NR_clone, SIGCHLD, 0);
+#endif
+	if (int e = sc_error(ret); e)
+			return e;
+	*child = sc_int_result<int>(ret);
+	return 0;
 }
 
 int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
@@ -453,7 +402,11 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 }
 
 int sys_access(const char *path, int mode) {
+#ifdef NR_access
 	auto ret = do_syscall(NR_access, path, mode);
+#else
+	auto ret = do_syscall(NR_faccessat, AT_FDCWD, path, mode, 0);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -601,11 +554,16 @@ int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
 }
 
 int sys_mkdir(const char *path, mode_t mode) {
+#ifdef NR_mkdir
 	auto ret = do_syscall(NR_mkdir, path, mode);
+#else
+	auto ret = do_syscall(NR_mkdirat, AT_FDCWD, path, mode);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
+
 
 int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 	auto ret = do_syscall(NR_mkdirat, dirfd, path, mode);
@@ -615,7 +573,11 @@ int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 }
 
 int sys_symlink(const char *target_path, const char *link_path) {
+#ifdef NR_symlink
 	auto ret = do_syscall(NR_symlink, target_path, link_path);
+#else
+	auto ret = do_syscall(NR_symlinkat, target_path, AT_FDCWD, link_path);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -629,14 +591,22 @@ int sys_chdir(const char *path) {
 }
 
 int sys_rmdir(const char *path) {
+#ifdef NR_rmdir
 	auto ret = do_syscall(NR_rmdir, path);
+#else
+	auto ret = do_syscall(NR_unlinkat, AT_FDCWD, path, AT_REMOVEDIR);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int sys_readlink(const char *path, void *buf, size_t bufsiz, ssize_t *len) {
+#ifdef NR_rmdir
 	auto ret = do_syscall(NR_readlink, path, buf, bufsiz);
+#else
+	auto ret = do_syscall(NR_readlinkat, AT_FDCWD, path, buf, bufsiz);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	*len = sc_int_result<ssize_t>(ret);

@@ -49,6 +49,10 @@ struct __mlibc_jmpbuf_register_state {
 	uint64_t d14;
 	uint64_t d15;
 };
+#elif defined (__riscv) && __riscv_xlen == 64
+struct __mlibc_jmpbuf_register_state {
+	uint64_t dummy;
+};
 #else
 #  error "Missing architecture specific code"
 #endif

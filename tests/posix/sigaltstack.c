@@ -37,6 +37,8 @@ int main() {
 	asm volatile ("mov $0, %rsp\n\tpush $0");
 #elif defined(__aarch64__)
 	asm volatile ("mov sp, %0\n\tstp x0, x1, [sp, #-16]!" :: "r"(uint64_t{0}));
+#elif defined(__riscv) && __riscv_xlen == 64
+	asm volatile ("unimp"); // TODO
 #else
 #	error Unknown architecture
 #endif

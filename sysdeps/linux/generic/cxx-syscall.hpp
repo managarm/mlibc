@@ -1,87 +1,14 @@
+#pragma once
+
 #include <errno.h>
 #include <mlibc/tcb.hpp>
 #include <mlibc/thread.hpp>
 #include <mlibc-config.h>
 #include <utility>
 
-// GCC allows register + asm placement in extern "C" mode, but not in C++ mode.
+#include <arch-syscall.hpp>
+
 extern "C" {
-	using sc_word_t = long;
-
-	static sc_word_t do_asm_syscall0(int sc) {
-		sc_word_t ret;
-		asm volatile ("syscall" : "=a"(ret)
-				: "a"(sc)
-				: "rcx", "r11", "memory");
-		return ret;
-	}
-
-	static sc_word_t do_asm_syscall1(int sc,
-			sc_word_t arg1) {
-		sc_word_t ret;
-		asm volatile ("syscall" : "=a"(ret)
-				: "a"(sc), "D"(arg1)
-				: "rcx", "r11", "memory");
-		return ret;
-	}
-
-	static sc_word_t do_asm_syscall2(int sc,
-			sc_word_t arg1, sc_word_t arg2) {
-		sc_word_t ret;
-		asm volatile ("syscall" : "=a"(ret)
-				: "a"(sc), "D"(arg1), "S"(arg2)
-				: "rcx", "r11", "memory");
-		return ret;
-	}
-
-	static sc_word_t do_asm_syscall3(int sc,
-			sc_word_t arg1, sc_word_t arg2, sc_word_t arg3) {
-		sc_word_t ret;
-		asm volatile ("syscall" : "=a"(ret)
-				: "a"(sc), "D"(arg1), "S"(arg2), "d"(arg3)
-				: "rcx", "r11", "memory");
-		return ret;
-	}
-
-	static sc_word_t do_asm_syscall4(int sc,
-			sc_word_t arg1, sc_word_t arg2, sc_word_t arg3,
-			sc_word_t arg4) {
-		sc_word_t ret;
-		register sc_word_t arg4_reg asm("r10") = arg4;
-		asm volatile ("syscall" : "=a"(ret)
-				: "a"(sc), "D"(arg1), "S"(arg2), "d"(arg3),
-					"r"(arg4_reg)
-				: "rcx", "r11", "memory");
-		return ret;
-	}
-
-	static sc_word_t do_asm_syscall5(int sc,
-			sc_word_t arg1, sc_word_t arg2, sc_word_t arg3,
-			sc_word_t arg4, sc_word_t arg5) {
-		sc_word_t ret;
-		register sc_word_t arg4_reg asm("r10") = arg4;
-		register sc_word_t arg5_reg asm("r8") = arg5;
-		asm volatile ("syscall" : "=a"(ret)
-				: "a"(sc), "D"(arg1), "S"(arg2), "d"(arg3),
-					"r"(arg4_reg), "r"(arg5_reg)
-				: "rcx", "r11", "memory");
-		return ret;
-	}
-
-	static sc_word_t do_asm_syscall6(int sc,
-			sc_word_t arg1, sc_word_t arg2, sc_word_t arg3,
-			sc_word_t arg4, sc_word_t arg5, sc_word_t arg6) {
-		sc_word_t ret;
-		register sc_word_t arg4_reg asm("r10") = arg4;
-		register sc_word_t arg5_reg asm("r8") = arg5;
-		register sc_word_t arg6_reg asm("r9") = arg6;
-		asm volatile ("syscall" : "=a"(ret)
-				: "a"(sc), "D"(arg1), "S"(arg2), "d"(arg3),
-					"r"(arg4_reg), "r"(arg5_reg), "r"(arg6_reg)
-				: "rcx", "r11", "memory");
-		return ret;
-	}
-
 	extern sc_word_t __mlibc_do_asm_cp_syscall(int sc, sc_word_t arg1, sc_word_t arg2,
 			sc_word_t arg3, sc_word_t arg4, sc_word_t arg5, sc_word_t arg6);
 

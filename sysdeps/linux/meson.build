@@ -4,17 +4,20 @@ if not static
 	)
 endif
 
+rtdl_include_dirs += include_directories(host_machine.cpu_family())
+libc_include_dirs += include_directories(host_machine.cpu_family())
 libc_sources += files(
-	'x86_64/signals.S',
+	host_machine.cpu_family() / 'signals.S',
 	'generic/entry.cpp',
 	'generic/sysdeps.cpp',
 )
 
 if not disable_posix_option
 	libc_sources += files(
-		'x86_64/cp_syscall.S',
-		'x86_64/thread.cpp',
-		'x86_64/thread_entry.S'
+		'generic/thread.cpp',
+		host_machine.cpu_family() / 'cp_syscall.S',
+		host_machine.cpu_family() / 'thread.cpp',
+		host_machine.cpu_family() / 'thread_entry.S'
 	)
 endif
 
@@ -55,7 +58,7 @@ if not headers_only
 	crt = custom_target('crt1',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'x86_64/crt-src/crt1.S',
+		input: host_machine.cpu_family() / 'crt-src/crt1.S',
 		output: 'crt1.o',
 		install: true,
 		install_dir: get_option('libdir')
@@ -64,7 +67,7 @@ if not headers_only
 	custom_target('Scrt1',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'x86_64/crt-src/Scrt1.S',
+		input: host_machine.cpu_family() / 'crt-src/Scrt1.S',
 		output: 'Scrt1.o',
 		install: true,
 		install_dir: get_option('libdir')
@@ -73,7 +76,7 @@ if not headers_only
 	custom_target('crti',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'x86_64/crt-src/crti.S',
+		input: host_machine.cpu_family() / 'crt-src/crti.S',
 		output: 'crti.o',
 		install: true,
 		install_dir: get_option('libdir')
@@ -82,7 +85,7 @@ if not headers_only
 	custom_target('crtn',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'x86_64/crt-src/crtn.S',
+		input: host_machine.cpu_family() / 'crt-src/crtn.S',
 		output: 'crtn.o',
 		install: true,
 		install_dir: get_option('libdir')
