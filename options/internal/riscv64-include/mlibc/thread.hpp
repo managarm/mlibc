@@ -1,10 +1,11 @@
-#include <mlibc/thread.hpp>
+#pragma once
 
 #include <stdint.h>
+#include <mlibc/tcb.hpp>
 
 namespace mlibc {
 
-Tcb *get_current_tcb() {
+inline Tcb *get_current_tcb() {
 	uintptr_t ptr;
 	asm ("mv %0, tp" : "=r"(ptr));
 

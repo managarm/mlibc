@@ -2,11 +2,17 @@
 #include <mlibc/thread.hpp>
 #include <mlibc/rtdl-abi.hpp>
 
-struct __abi_tls_entry;
-
-extern "C" void *__dlapi_get_tls(struct __abi_tls_entry *);
-
-extern "C" void *__tls_get_addr(struct __abi_tls_entry *entry) {
-	return __dlapi_get_tls(entry);
-}
+#if defined(__riscv) && defined(MLIBC_STATIC_BUILD)
+	// On RISC-V, linker optimisation is not guaranteed and so we may still get
+	// calls to this function in statically linked binaries.
+	extern "C" void *__tls_get_addr(struct __abi_tls_entry *entry) {
+		Tcb *tcbPtr = mlibc::get_current_tcb();
+		auto dtvPtr = reinterpret_cast<char *>(tcbPtr->dtvPointers[0]);
+		return reinterpret_cast<void *>(dtvPtr + entry->offset);
+	}
+#else
+	extern "C" void *__tls_get_addr(struct __abi_tls_entry *entry) {
+		return __dlapi_get_tls(entry);
+	}
+#endif
 
