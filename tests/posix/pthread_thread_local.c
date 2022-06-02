@@ -8,7 +8,7 @@ _Thread_local unsigned int uninitialized;
 void *check_rage(void *arg)
 {
 	(void)arg;
-    fprintf(stderr, "Rage counter for thread a: %d\n", rage, &rage);
+    fprintf(stderr, "Rage counter for thread a: %d, at %p\n", rage, &rage);
 	fflush(stderr);
 	assert(rage == 9999);
 	assert(uninitialized == 0);
@@ -24,7 +24,7 @@ void *check_rage(void *arg)
  
 int main()
 {
-    fprintf(stderr, "Rage counter for main: %d\n", rage);
+    fprintf(stderr, "Rage counter for main: %d, at %p\n", rage, &rage);
 	fflush(stderr);
 	assert(rage == 9999);
 	assert(uninitialized == 0);
