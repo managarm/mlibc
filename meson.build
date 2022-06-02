@@ -4,6 +4,7 @@ fs = import('fs')
 
 rtdl_include_dirs = [
 	include_directories('options/internal/include'),
+	include_directories('options/internal' / host_machine.cpu_family() + '-include'),
 	include_directories('options/rtdl/include'),
 ]
 libc_include_dirs = [
@@ -217,7 +218,6 @@ internal_sources = [
 	'options/internal/gcc/initfini.cpp',
 	'options/internal/gcc-extra/cxxabi.cpp',
 	'options/internal' / host_machine.cpu_family() / 'setjmp.S',
-	'options/internal' / host_machine.cpu_family() / 'thread.cpp',
 ]
 
 if not static

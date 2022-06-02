@@ -1,12 +1,13 @@
-#include <mlibc/thread.hpp>
+#pragma once
 
 #include <stdint.h>
+#include <mlibc/tcb.hpp>
 
 namespace mlibc {
 
-Tcb *get_current_tcb() {
+inline Tcb *get_current_tcb() {
 	uintptr_t ptr;
-	asm ("mrs %0, tpidr_el0" : "=r"(ptr));
+	asm ("movq %%fs:0, %0" : "=r"(ptr));
 	return reinterpret_cast<Tcb *>(ptr);
 }
 
