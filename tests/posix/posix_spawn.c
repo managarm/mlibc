@@ -32,8 +32,7 @@ void run_cmd(char *cmd)
     }
 }
 
-int main(int argc, char* argv[])
-{
+int main() {
     run_cmd("/usr/bin/true");
     return 0;
 }

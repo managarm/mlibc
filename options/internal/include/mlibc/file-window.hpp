@@ -31,16 +31,17 @@ struct file_window {
 		__ensure(_ptr);
 
 		size_t progress = 0;
-		while(progress < info.st_size) {
+		size_t st_size = static_cast<size_t>(info.st_size);
+		while(progress < st_size) {
 			ssize_t chunk;
 			if(int e = mlibc::sys_read(fd, reinterpret_cast<char *>(_ptr) + progress,
-					info.st_size - progress, &chunk); e)
+					st_size - progress, &chunk); e)
 				mlibc::panicLogger() << "mlibc: Read from file_window failed" << frg::endlog;
 			if(!chunk)
 				break;
 			progress += chunk;
 		}
-		if(progress != info.st_size)
+		if(progress != st_size)
 			mlibc::panicLogger() << "stat reports " << info.st_size << " but we only read "
 					<< progress << " bytes" << frg::endlog;
 #endif

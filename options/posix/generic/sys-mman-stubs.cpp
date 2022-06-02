@@ -156,8 +156,6 @@ int madvise(void *addr, size_t length, int advice) {
 		return -1;
 	}
 
-	int ret = -1;
-
 	if(int e = mlibc::sys_madvise(addr, length, advice)) {
 		errno = e;
 		return -1;

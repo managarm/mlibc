@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-int main(int argc, char *argv[]) {
+int main() {
    int res;
 
    res = strverscmp("jan1", "jan10");

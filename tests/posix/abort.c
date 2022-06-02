@@ -2,7 +2,11 @@
 #include <assert.h>
 #include <stdlib.h>
 
-void handler(int sig, siginfo_t *info, void *ctx) { }
+void handler(int sig, siginfo_t *info, void *ctx) {
+	(void)sig;
+	(void)info;
+	(void)ctx;
+}
 
 int main() {
 	struct sigaction sa;

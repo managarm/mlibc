@@ -11,6 +11,7 @@
 #include "cxx-syscall.hpp"
 
 #define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }
+#define UNUSED(x) (void)(x);
 
 #define NR_read 0
 #define NR_write 1
@@ -164,7 +165,12 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags,
 	*window = sc_ptr_result<void>(ret);
 	return 0;
 }
-int sys_vm_unmap(void *pointer, size_t size) STUB_ONLY
+
+int sys_vm_unmap(void *pointer, size_t size) {
+	UNUSED(pointer);
+	UNUSED(size);
+	STUB_ONLY
+}
 
 // All remaining functions are disabled in ldso.
 #ifndef MLIBC_BUILDING_RTDL
@@ -283,7 +289,7 @@ int sys_sleep(time_t *secs, long *nanos) {
 		.tv_sec = *secs,
 		.tv_nsec = *nanos
 	};
-	struct timespec rem = {0};
+	struct timespec rem = {};
 
 	auto ret = do_cp_syscall(NR_nanosleep, &req, &rem);
         if (int e = sc_error(ret); e)

@@ -24,6 +24,10 @@ void cleanup() {
 }
 
 void signal_handler(int sig, siginfo_t *info, void *ctx) {
+	(void)sig;
+	(void)info;
+	(void)ctx;
+
 	cleanup();
 
 	struct sigaction sa;
