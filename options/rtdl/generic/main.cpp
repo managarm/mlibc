@@ -7,6 +7,7 @@
 #include <abi-bits/auxv.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/rtdl-sysdeps.hpp>
+#include <mlibc/rtdl-abi.hpp>
 #include <mlibc/stack_protector.hpp>
 #include <internal-config.h>
 #include "linker.hpp"
@@ -275,14 +276,6 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 				<< (void *)executableSO->entry << frg::endlog;
 	return executableSO->entry;
 }
-
-// the layout of this structure is dictated by the ABI
-struct __abi_tls_entry {
-	SharedObject *object;
-	uint64_t offset;
-};
-
-static_assert(sizeof(__abi_tls_entry) == 16, "Bad __abi_tls_entry size");
 
 const char *lastError;
 

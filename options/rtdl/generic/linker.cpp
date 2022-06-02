@@ -67,20 +67,6 @@ void closeOrDie(int fd) {
 		__ensure(!"sys_close() failed");
 }
 
-namespace {
-	Tcb *getCurrentTcb() {
-		uintptr_t ptr;
-#if defined(__x86_64__)
-		asm volatile ("mov %%fs:0, %0" : "=r"(ptr));
-#elif defined(__aarch64__)
-		asm volatile ("mrs %0, tpidr_el0" : "=r"(ptr));
-#else
-#	error Unknown architecture
-#endif
-		return reinterpret_cast<Tcb *>(ptr);
-	}
-} // namespace anonymous
-
 // --------------------------------------------------------
 // ObjectRepository
 // --------------------------------------------------------
@@ -765,7 +751,7 @@ Tcb *allocateTcb() {
 }
 
 void *accessDtv(SharedObject *object) {
-	Tcb *tcb_ptr = getCurrentTcb();
+	Tcb *tcb_ptr = mlibc::get_current_tcb();
 
 	// We might need to reallocate the DTV.
 	if(object->tlsIndex >= tcb_ptr->dtvSize) {
@@ -793,7 +779,7 @@ void *accessDtv(SharedObject *object) {
 }
 
 void *tryAccessDtv(SharedObject *object) {
-	Tcb *tcb_ptr = getCurrentTcb();
+	Tcb *tcb_ptr = mlibc::get_current_tcb();
 
 	if (object->tlsIndex >= tcb_ptr->dtvSize)
 		return nullptr;
@@ -1165,7 +1151,7 @@ void Loader::_buildTlsMaps() {
 }
 
 void Loader::initObjects() {
-	initTlsObjects(getCurrentTcb(), _linkBfs, true);
+	initTlsObjects(mlibc::get_current_tcb(), _linkBfs, true);
 
 	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 		if(!(*it)->scheduledForInit)
@@ -1460,7 +1446,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				// Access DTV for object to force the entry to be allocated and initialized
 				accessDtv(target);
 
-				__ensure(target->tlsIndex < getCurrentTcb()->dtvSize);
+				__ensure(target->tlsIndex < mlibc::get_current_tcb()->dtvSize);
 
 				// TODO: We should free this when the DSO gets destroyed
 				auto data = frg::construct<TlsdescData>(getAllocator());
