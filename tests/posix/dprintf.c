@@ -7,7 +7,7 @@
 #define TEST_FILE "dprintf.tmp"
 
 int main() {
-	int fd = open(TEST_FILE, O_RDWR | O_CREAT);
+	int fd = open(TEST_FILE, O_RDWR | O_CREAT, 0666);
 	assert(fd > -1);
 
 	int ret = dprintf(fd, "aaa");

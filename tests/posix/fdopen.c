@@ -7,7 +7,7 @@
 #define TEST_FILE "fdopen.tmp"
 
 int main() {
-	int fd = open(TEST_FILE, O_CREAT | O_RDWR);
+	int fd = open(TEST_FILE, O_CREAT | O_RDWR, 0666);
 	assert(fd >= 0);
 
 	char *str = "mlibc fdopen test";
