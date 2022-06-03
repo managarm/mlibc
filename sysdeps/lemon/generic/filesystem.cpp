@@ -84,7 +84,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 }
 
 
-int sys_open(const char* filename, int flags, int* fd){
+int sys_open(const char* filename, int flags, mode_t mode, int* fd){
 	long ret = syscall(SYS_OPEN, (uintptr_t)filename, flags);
 
 	if(ret < 0)
@@ -102,7 +102,7 @@ int sys_close(int fd){
 
 int sys_access(const char* filename, int mode){
 	int fd;
-	if(int e = sys_open(filename, O_RDONLY, &fd)){
+	if(int e = sys_open(filename, O_RDONLY, 0, &fd)){
 		return e;
 	}
 
@@ -269,7 +269,7 @@ int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_re
 }
 
 int sys_open_dir(const char* path, int* handle){
-	return sys_open(path, O_DIRECTORY, handle);
+	return sys_open(path, O_DIRECTORY, 0, handle);
 }
 
 int sys_rename(const char* path, const char* new_path){

@@ -50,7 +50,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
     return 0;
 }
 
-int sys_open(const char *filename, int flags, int *fd) {
+int sys_open(const char *filename, int flags, mode_t mode, int *fd) {
     auto result = syscall(SYS_OPEN, 0, filename, strlen(filename), flags);
 
     if (result < 0) {
@@ -210,7 +210,7 @@ int sys_read_entries(int handle, void *buffer, size_t max_size,
 }
 
 int sys_open_dir(const char *path, int *handle) {
-    return sys_open(path, O_DIRECTORY, handle);
+    return sys_open(path, O_DIRECTORY, 0, handle);
 }
 
 int sys_rename(const char *path, const char *new_path) UNIMPLEMENTED("sys_rename")

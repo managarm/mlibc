@@ -636,7 +636,7 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 }
 
 int sys_open_dir(const char *path, int *handle) {
-	return sys_open(path, 0, handle);
+	return sys_open(path, 0, 0, handle);
 }
 
 int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) {
@@ -3632,7 +3632,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	__builtin_unreachable();
 }
 
-int sys_open(const char *path, int flags, int *fd) {
+int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	return sys_openat(AT_FDCWD, path, flags, fd);
 }
 

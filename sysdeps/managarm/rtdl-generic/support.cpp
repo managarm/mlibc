@@ -183,12 +183,14 @@ int sys_tcb_set(void *pointer) {
 	return 0;
 }
 
-int sys_open(const char *path, int, int *fd) {
+int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	cacheFileTable();
 	HelAction actions[4];
 
 	managarm::posix::OpenAtRequest<MemoryAllocator> req(getAllocator());
 	req.set_fd(AT_FDCWD);
+	req.set_flags(flags);
+	req.set_mode(mode);
 	req.set_path(frg::string<MemoryAllocator>(getAllocator(), path));
 
 	if(!globalQueue.valid())
