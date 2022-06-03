@@ -69,6 +69,7 @@
 #define NR_clock_gettime 228
 #define NR_exit_group 231
 #define NR_tgkill 234
+#define NR_mkdirat 258
 #define NR_newfstatat 262
 #define NR_unlinkat 263
 #define NR_pselect6 270
@@ -568,8 +569,15 @@ int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
 	return 0;
 }
 
-int sys_mkdir(const char *path) {
-	auto ret = do_syscall(NR_mkdir, path, S_IRWXU | S_IRWXG | S_IRWXO);
+int sys_mkdir(const char *path, mode_t mode) {
+	auto ret = do_syscall(NR_mkdir, path, mode);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
+	auto ret = do_syscall(NR_mkdirat, dirfd, path, mode);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
