@@ -19,8 +19,8 @@ struct PanicSink {
 	void operator() (const char *message);
 };
 
-extern frg::stack_buffer_logger<InfoSink> infoLogger;
-extern frg::stack_buffer_logger<PanicSink> panicLogger;
+extern frg::stack_buffer_logger<InfoSink, 512> infoLogger;
+extern frg::stack_buffer_logger<PanicSink, 512> panicLogger;
 
 } // namespace mlibc
 
