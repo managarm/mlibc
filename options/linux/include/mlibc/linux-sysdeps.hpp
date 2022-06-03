@@ -4,12 +4,13 @@
 #include <sys/epoll.h>
 #include <poll.h>
 #include <abi-bits/pid_t.h>
+#include <abi-bits/mode_t.h>
 #include <bits/ssize_t.h>
 #include <bits/size_t.h>
 
 namespace [[gnu::visibility("hidden")]] mlibc {
 
-int sys_open(const char *pathname, int flags, int *fd);
+int sys_open(const char *pathname, int flags, mode_t mode, int *fd);
 int sys_close(int fd);
 int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read);
 int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);

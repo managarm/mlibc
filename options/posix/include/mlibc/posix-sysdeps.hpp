@@ -39,7 +39,7 @@ int sys_futex_wake(int *pointer);
 [[noreturn, gnu::weak]] void sys_thread_exit();
 int sys_clock_get(int clock, time_t *secs, long *nanos);
 
-int sys_open(const char *pathname, int flags, int *fd);
+int sys_open(const char *pathname, int flags, mode_t mode, int *fd);
 [[gnu::weak]] int sys_flock(int fd, int options);
 
 [[gnu::weak]] int sys_open_dir(const char *path, int *handle);
@@ -103,7 +103,7 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_chdir(const char *path);
 [[gnu::weak]] int sys_fchdir(int fd);
 [[gnu::weak]] int sys_chroot(const char *path);
-[[gnu::weak]] int sys_mkdir(const char *path);
+[[gnu::weak]] int sys_mkdir(const char *path, mode_t mode);
 [[gnu::weak]] int sys_mkdirat(int dirfd, const char *path, mode_t mode);
 [[gnu::weak]] int sys_link(const char *old_path, const char *new_path);
 [[gnu::weak]] int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags);

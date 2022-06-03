@@ -25,5 +25,6 @@
 #define __MLIBC_O_LARGEFILE 0x10000
 #define __MLIBC_O_NOATIME 0x20000
 #define __MLIBC_O_ASYNC 0x40000
+#define __MLIBC_O_TMPFILE 0x80000
 
 #endif // _ABIBITS_ABI_H

@@ -158,9 +158,8 @@ int mkostemp(char *pattern, int flags) {
 //		mlibc::infoLogger() << "mlibc: mkstemp candidate is "
 //				<< (const char *)pattern << frg::endlog;
 
-		// TODO: Add a mode argument to sys_open().
 		int fd;
-		if(int e = mlibc::sys_open(pattern, O_RDWR | O_CREAT | O_EXCL | flags, /*S_IRUSR | S_IWUSR,*/ &fd); !e) {
+		if(int e = mlibc::sys_open(pattern, O_RDWR | O_CREAT | O_EXCL | flags, S_IRUSR | S_IWUSR, &fd); !e) {
 			return fd;
 		}else if(e != EEXIST) {
 			errno = e;
@@ -194,7 +193,7 @@ char *mkdtemp(char *pattern) {
 	// TODO: Do an exponential search.
 	for(size_t i = 0; i < 999999; i++) {
 		__ensure(sprintf(pattern + (n - 6), "%06zu", i) == 6);
-		if(int e = mlibc::sys_mkdir(pattern); !e) {
+		if(int e = mlibc::sys_mkdir(pattern, S_IRWXU); !e) {
 			return pattern;
 		}else if(e != EEXIST) {
 			errno = e;
@@ -429,7 +428,7 @@ char *ptsname(int fd) {
 
 int posix_openpt(int flags) {
 	int fd;
-	if(int e = mlibc::sys_open("/dev/ptmx", flags, &fd); e) {
+	if(int e = mlibc::sys_open("/dev/ptmx", flags, 0, &fd); e) {
 		errno = e;
 		return -1;
 	}

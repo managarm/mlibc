@@ -24,7 +24,7 @@ int sys_futex_wake(int *pointer);
 int sys_anon_allocate(size_t size, void **pointer);
 int sys_anon_free(void *pointer, size_t size);
 
-int sys_open(const char *pathname, int flags, int *fd);
+int sys_open(const char *pathname, int flags, mode_t mode, int *fd);
 int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read);
 int sys_seek(int fd, off_t offset, int whence, off_t *new_offset);
 int sys_close(int fd);
