@@ -35,6 +35,7 @@ posix_test_cases = [
 	'pthread_key',
 	'pthread_thread_local',
 	'pwd',
+	'fdopen',
 	'getaddrinfo',
 	'getdelim',
 	'getnameinfo',
