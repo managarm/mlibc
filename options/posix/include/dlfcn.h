@@ -2,10 +2,13 @@
 #ifndef _DLFCN_H
 #define _DLFCN_H
 
+// RTLD_LAZY and RTLD_LOCAL have the same value. See issue #450.
 #define RTLD_LAZY 0
 #define RTLD_NOW 1
 #define RTLD_GLOBAL 2
 #define RTLD_NOLOAD 4
+#define RTLD_NODELETE 8
+#define RTLD_DEEPBIND 16
 #define RTLD_LOCAL 0
 
 #define RTLD_NEXT ((void *)-1)
