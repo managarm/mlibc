@@ -12,6 +12,10 @@
 #include <internal-config.h>
 #include "linker.hpp"
 
+#ifdef __MLIBC_POSIX_OPTION
+#include <dlfcn.h>
+#endif
+
 #define HIDDEN  __attribute__ ((visibility ("hidden")))
 #define EXPORT  __attribute__ ((visibility ("default")))
 
@@ -316,6 +320,8 @@ void *__dlapi_get_tls(struct __abi_tls_entry *entry) {
 	return reinterpret_cast<char *>(accessDtv(entry->object)) + entry->offset;
 }
 
+#ifdef __MLIBC_POSIX_OPTION
+
 extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_open(const char *file, int local) {
 	// TODO: Thread-safety!
@@ -502,6 +508,8 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 	return -1;
 }
 
+#endif
+
 extern "C" [[ gnu::visibility("default") ]]
 int __dlapi_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void*), void *data) {
 	int last_return = 0;
@@ -533,3 +541,4 @@ void __dlapi_enter(uintptr_t *entry_stack) {
 	(void)entry_stack;
 #endif
 }
+
