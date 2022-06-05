@@ -1093,7 +1093,19 @@ time_t timelocal(struct tm *) {
 	__builtin_unreachable();
 }
 
-time_t timegm(struct tm *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+constexpr static int days_from_civil(int y, unsigned m, unsigned d) noexcept {
+	y -= m <= 2;
+	const int era = (y >= 0 ? y : y - 399) / 400;
+	const unsigned yoe = static_cast<unsigned>(y - era * 400); // [0, 399]
+	const unsigned doy = (153 * (m > 2 ? m - 3 : m + 9) + 2) / 5 + d - 1; // [0, 365]
+	const unsigned doe = yoe * 365 + yoe / 4 - yoe / 100 + doy; // [0, 146096]
+	return era * 146097 + static_cast<int>(doe) - 719468;
+}
+
+time_t timegm(struct tm *tm) {
+	time_t year = tm->tm_year + 1900;
+	time_t month = tm->tm_mon + 1;
+	time_t days = days_from_civil(year, month, tm->tm_mday);
+	time_t secs = (days * 86400) + (tm->tm_hour * 60 * 60) + (tm->tm_min * 60) + tm->tm_sec;
+	return secs;
 }
