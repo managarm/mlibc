@@ -236,6 +236,7 @@ internal_sources = [
 	'options/internal/gcc/initfini.cpp',
 	'options/internal/gcc-extra/cxxabi.cpp',
 	'options/internal' / host_machine.cpu_family() / 'setjmp.S',
+	'options/internal' / host_machine.cpu_family() / 'fenv.S',
 ]
 
 internal_dso_sources = [
