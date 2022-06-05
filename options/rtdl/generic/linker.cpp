@@ -520,7 +520,10 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_FLAGS_1:
 			if(dynamic->d_un.d_val & DF_1_NOW)
 				object->eagerBinding = true;
-			if(dynamic->d_un.d_val & ~(DF_1_NOW))
+			// The DF_1_PIE flag is informational only. It is used by e.g file(1).
+			// The DF_1_NODELETE flag has a similar effect to RTLD_NODELETE, both of which we
+			// ignore because we don't implement dlclose().
+			if(dynamic->d_un.d_val & ~(DF_1_NOW | DF_1_PIE | DF_1_NODELETE))
 				mlibc::infoLogger() << "\e[31mrtdl: DT_FLAGS_1(" << frg::hex_fmt{dynamic->d_un.d_val}
 						<< ") is not implemented correctly!\e[39m"
 						<< frg::endlog;

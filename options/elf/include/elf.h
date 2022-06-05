@@ -300,7 +300,9 @@ enum {
 	DF_STATIC_TLS = 0x10,
 
 	// For DT_FLAGS_1.
-	DF_1_NOW = 0x00000001
+	DF_1_NOW = 0x00000001,
+	DF_1_NODELETE = 0x00000008,
+	DF_1_PIE = 0x08000000
 };
 
 // Valid values for note segment descriptor files for core files
