@@ -2,11 +2,6 @@
 #ifndef _GLOB_H
 #define _GLOB_H
 
-#define RTLD_LAZY 0
-#define RTLD_NOW 1
-#define RTLD_GLOBAL 2
-#define RTLD_LOCAL 0
-
 #ifdef __cplusplus
 extern "C" {
 #endif
