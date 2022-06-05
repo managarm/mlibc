@@ -69,8 +69,10 @@ size_t mbrtowc(wchar_t *wcp, const char *mbs, size_t mb_limit, mbstate_t *stp) {
 		return 0;
 	}
 
-	// TODO: Decode to a local wchar_t.
-	__ensure(wcp);
+	wchar_t temp = 0;
+	if(!wcp) {
+		wcp = &temp;
+	}
 
 	mlibc::code_seq<const char> nseq{mbs, mbs + mb_limit};
 	mlibc::code_seq<wchar_t> wseq{wcp, wcp + 1};
