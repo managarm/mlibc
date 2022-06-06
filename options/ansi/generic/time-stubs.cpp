@@ -977,6 +977,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 			case 'E': { //locale-dependent date & time representation
 				__ensure(!"strptime() %E* directives unimplemented.");
 				__builtin_unreachable();
+				/*
 				state->format_index++;
 				switch(format[state->format_index]){
 					case 'c':
@@ -994,10 +995,12 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 					default:
 						return NULL;
 				}
+				*/
 			}
 			case 'O': { //locale-dependent numeric symbols
 				__ensure(!"strptime() %O* directives unimplemented.");
 				__builtin_unreachable();
+				/*
 				state->format_index++;
 				switch(format[state->format_index]){
 					case 'd':
@@ -1024,6 +1027,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 					default:
 						return NULL;
 				}
+				*/
 			}
 			default:
 				return NULL;

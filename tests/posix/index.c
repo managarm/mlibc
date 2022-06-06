@@ -2,7 +2,7 @@
 #include <strings.h>
 #include <stddef.h>
 
-int main(int argc, char *argv[]) {
+int main() {
   char str[] = "This is a sample string";
   char *pch;
   // The character 's' is at position 4, 7, 11 and 18

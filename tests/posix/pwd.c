@@ -19,13 +19,13 @@ int main()
 	assert(buf);
 
 	s = getpwnam_r("root", &pwd, buf, bufsize, &result);
-	assert(result);
+	assert(!s);
 	assert(pwd.pw_uid == 0);
 	assert(!strcmp(pwd.pw_name, "root"));
 	assert(strlen(pwd.pw_passwd) <= 1000);
 
 	s = getpwuid_r(0, &pwd, buf, bufsize, &result);
-	assert(result);
+	assert(!s);
 	assert(pwd.pw_uid == 0);
 	assert(!strcmp(pwd.pw_name, "root"));
 	assert(strlen(pwd.pw_passwd) <= 1000);

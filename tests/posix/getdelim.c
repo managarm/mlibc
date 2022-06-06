@@ -31,7 +31,7 @@ int main(void) {
 	size_t nchars = 10000;
 	fp = fopen(TEST_FILE, "w");
 	assert(fp);
-	for (int i = 0; i < nchars; i++)
+	for (size_t i = 0; i < nchars; i++)
 		fputc('a', fp);
 	fputc('b', fp);
 	fclose(fp);
@@ -42,7 +42,7 @@ int main(void) {
 	assert(fp);
 	while ((read = getdelim(&line, &len, 'b', fp)) != -1) {
 		printf("read line of length %zu, capacity %zu\n", read, len);
-		assert(read == nchars + 1);
+		assert((size_t)read == nchars + 1);
 	}
 
 	assert(len > nchars + 1);

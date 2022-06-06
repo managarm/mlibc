@@ -3,6 +3,9 @@
 #include <mlibc/debug.hpp>
 
 size_t iconv(iconv_t cd, char **__restrict inbuf, size_t *__restrict inbytesleft, char **__restrict outbuf, size_t *__restrict outbytesleft) {
+	(void)inbytesleft;
+	(void)outbytesleft;
+
 	mlibc::infoLogger() << "iconv() is unimplemented!" << frg::endlog;
 	if(cd == (iconv_t)1) { // UTF-8 to UTF-8
 		mlibc::infoLogger() << "iconv() from and to are the same, memcpy it is" << frg::endlog;

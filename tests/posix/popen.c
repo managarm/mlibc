@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
 
 #define TEST_FILE "popen.tmp"
 #define TEST_STRING1 "the quick brown fox jumps over the lazy dog"

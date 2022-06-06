@@ -1,7 +1,7 @@
 #include <strings.h>
 #include <assert.h>
 
-int main(int argc, char *argv[]) {
+int main() {
   char str[] = "This is a sample string";
   char *pch;
   pch = rindex(str, 's');

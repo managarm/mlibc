@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-int main(int argc, char *argv[]) {
+int main() {
 	uint8_t *buf = malloc(256);
 	uint16_t original16 = 4891;
 	uint32_t original32 = 4861984;
