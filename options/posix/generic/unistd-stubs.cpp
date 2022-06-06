@@ -16,7 +16,8 @@
 #include <mlibc/thread.hpp>
 
 unsigned int alarm(unsigned int seconds) {
-	struct itimerval it = {it.it_value.tv_sec = seconds}, old = {0};
+	struct itimerval it = {}, old = {};
+	it.it_value.tv_sec = seconds;
 	setitimer(ITIMER_REAL, &it, &old);
 	return old.it_value.tv_sec + !! old.it_value.tv_usec;
 }
