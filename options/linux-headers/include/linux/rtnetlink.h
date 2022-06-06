@@ -99,6 +99,15 @@ struct rtattr {
 	unsigned short rta_type;
 };
 
+enum rt_class_t {
+	RT_TABLE_UNSPEC = 0,
+	RT_TABLE_COMPAT = 252,
+	RT_TABLE_DEFAULT = 253,
+	RT_TABLE_MAIN = 254,
+	RT_TABLE_LOCAL = 255,
+	RT_TABLE_MAX = 0xFFFFFFFF
+};
+
 #define RTA_ALIGNTO	4U
 #define RTA_ALIGN(len) ( ((len) + RTA_ALIGNTO - 1) & ~(RTA_ALIGNTO - 1) )
 #define RTA_OK(rta,len) ((len) >= (int)sizeof(struct rtattr) && \
