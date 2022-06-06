@@ -21,7 +21,8 @@ ansi_test_cases = [
 
 bsd_test_cases = [
 	'ns_get_put',
-	'reallocarray'
+	'reallocarray',
+	'strl'
 ]
 
 posix_test_cases = [
