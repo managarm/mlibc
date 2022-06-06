@@ -38,6 +38,9 @@ typedef struct __res_state {
 struct __res_state *__res_state(void);
 #define _res (*__res_state())
 
+int res_ninit(res_state);
+void res_nclose(res_state);
+
 #ifdef __cplusplus
 }
 #endif
