@@ -275,7 +275,11 @@ size_t strftime(char *__restrict dest, size_t max_size,
 }
 
 size_t wcsftime(wchar_t *__restrict, size_t, const wchar_t *__restrict,
-		const struct tm *__restrict) MLIBC_STUB_BODY
+		const struct tm *__restrict) {
+	mlibc::infoLogger() << "mlibc: wcsftime is a stub" << frg::endlog;
+	return 0;
+}
+
 namespace {
 
 struct tzfile {
