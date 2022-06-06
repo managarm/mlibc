@@ -18,9 +18,14 @@ extern "C" {
 #define RAMFS_MAGIC 0x858458f6
 #define TMPFS_MAGIC 0x01021994
 #define USBDEVICE_SUPER_MAGIC 0x9fa2
+#define HUGETLBFS_MAGIC 0x958458f6
+#define CGROUP_SUPER_MAGIC 0x27e0eb
 
 /* Other file systems */
+#define EXT2_SUPER_MAGIC 0xEF53
+#define MSDOS_SUPER_MAGIC 0x4d44
 #define BTRFS_SUPER_MAGIC 0x9123683E
+#define REISERFS_SUPER_MAGIC 0x52654973
 
 #ifdef __cplusplus
 }

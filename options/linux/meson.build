@@ -46,6 +46,10 @@ if not no_headers
 		subdir: 'net'
 	)
 	install_headers(
+		'include/netpacket/packet.h',
+		subdir: 'netpacket'
+	)
+	install_headers(
 		'include/sys/epoll.h',
 		'include/sys/inotify.h',
 		'include/sys/mount.h',
