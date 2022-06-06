@@ -89,6 +89,8 @@ struct group_source_req {
 #define IPPROTO_RAW 4
 #define IPPROTO_TCP 5
 #define IPPROTO_UDP 6
+#define IPPROTO_IGMP 7
+#define IPPROTO_IPIP 8
 #define IPPROTO_ESP 50
 #define IPPROTO_AH 51
 
@@ -126,6 +128,8 @@ struct group_source_req {
 #define IP_MULTICAST_LOOP         34
 #define IP_ADD_MEMBERSHIP         35
 #define IP_DROP_MEMBERSHIP        36
+#define IP_UNBLOCK_SOURCE         37
+#define IP_BLOCK_SOURCE           38
 #define IP_ADD_SOURCE_MEMBERSHIP  39
 #define IP_DROP_SOURCE_MEMBERSHIP 40
 #define MCAST_JOIN_SOURCE_GROUP   46

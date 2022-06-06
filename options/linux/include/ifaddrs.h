@@ -21,6 +21,9 @@ struct ifaddrs {
 	void *ifa_data;
 };
 
+int getifaddrs(struct ifaddrs **);
+void freeifaddrs(struct ifaddrs *);
+
 #ifdef __cplusplus
 }
 #endif
