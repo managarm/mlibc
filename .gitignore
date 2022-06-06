@@ -1,10 +1,3 @@
-build
-
-# the menson vsocde extension auto generates another build directory
-# called `builddir`
-builddir
-
-subprojects/cxxshim
-subprojects/frigg
-.vscode
-.clang-format
+subprojects
+!subprojects/*.wrap
+*.xbstrap
