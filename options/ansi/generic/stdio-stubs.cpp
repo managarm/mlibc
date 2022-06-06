@@ -379,14 +379,15 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
             /* TODO: dest = get_arg_at_pos(args, *fmt -'0'); */
             fmt += 3;
         } else {
-            dest = va_arg(args, void*);
+            if (fmt[1] != '*') {
+                dest = va_arg(args, void*);
+            }
             fmt++;
         }
 
         int width = 0;
         if (*fmt == '*') {
             fmt++;
-            continue;
         } else if (*fmt == '\'') {
         /* TODO: numeric seperators locale stuff */
              mlibc::infoLogger() << "do_scanf: \' not implemented!" << frg::endlog;
