@@ -46,8 +46,8 @@ static int lookup_serv_file_port(service_result &buf, int proto, int port) {
 
 	char line_buf[129] = {0};
 	char *line = line_buf + 1;
-	int name_length = 0;
 	while(fgets(line, 128, file)) {
+		int name_length = 0;
 		char *pos;
 		// easy way to handle comments, just move the end of the line
 		// to the beginning of the comment

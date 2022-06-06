@@ -17,7 +17,9 @@ int main() {
 	assert(ret->s_port == htons(80));
 	assert(!strcmp("tcp", ret->s_proto));
 
-	ret = getservbyport(htons(80), "udp");
+	ret = getservbyport(htons(6696), "udp");
+	assert(ret);
+	ret = getservbyport(htons(6696), "tcp");
 	assert(!ret);
 
 	ret = getservbyport(htons(0), NULL);
