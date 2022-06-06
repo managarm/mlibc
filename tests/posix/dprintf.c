@@ -4,7 +4,11 @@
 #include <assert.h>
 #include <errno.h>
 
+#ifdef USE_HOST_LIBC
+#define TEST_FILE "dprintf-host-libc.tmp"
+#else
 #define TEST_FILE "dprintf.tmp"
+#endif
 
 int main() {
 	int fd = open(TEST_FILE, O_RDWR | O_CREAT, 0666);

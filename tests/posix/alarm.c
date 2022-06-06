@@ -1,4 +1,4 @@
-#include <abi-bits/signal.h>
+#include <signal.h>
 #include <assert.h>
 #include <signal.h>
 #include <stdio.h>

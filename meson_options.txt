@@ -1,6 +1,7 @@
 option('headers_only', type : 'boolean', value : false)
 option('mlibc_no_headers', type : 'boolean', value : false)
 option('build_tests', type: 'boolean', value : false)
+option('build_tests_host_libc', type: 'boolean', value : true)
 option('disable_ansi_option', type: 'boolean', value : false)
 option('disable_crypt_option', type: 'boolean', value : false)
 option('disable_posix_option', type: 'boolean', value : false)

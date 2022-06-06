@@ -16,7 +16,7 @@ int main() {
 	assert(count == 3);
 	assert(c == '$');
 	assert(n1 == 7);
-	assert(n2 = 440);
+	assert(n2 == 440);
 
 	// From dsda-doom
 	char buf2[] = "process_priority               0\n";

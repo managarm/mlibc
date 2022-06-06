@@ -4,7 +4,11 @@
 #include <unistd.h>
 #include <string.h>
 
+#ifdef USE_HOST_LIBC
+#define TEST_FILE "getdelim-host-libc.tmp"
+#else
 #define TEST_FILE "getdelim.tmp"
+#endif
 
 int main(void) {
 	FILE *fp;

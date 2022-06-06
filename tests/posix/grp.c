@@ -61,8 +61,15 @@ int main()
 
 	result = getgrnam("this_group_doesnt_exist");
 	assert(!result);
+#ifndef USE_HOST_LIBC
+	// This is not guaranteed.
 	assert(errno == ESRCH);
+#endif
+
 	s = getgrnam_r("this_group_doesnt_exist", &grp, buf, bufsize, &result);
 	assert(!result);
+#ifndef USE_HOST_LIBC
+	// This is not guaranteed.
 	assert(s == ESRCH);
+#endif
 }
