@@ -18,7 +18,8 @@ ansi_test_cases = [
 ]
 
 bsd_test_cases = [
-	'ns_get_put'
+	'ns_get_put',
+	'reallocarray'
 ]
 
 posix_test_cases = [
@@ -57,7 +58,9 @@ posix_test_cases = [
 	'memrchr',
 	'wordexp',
 	'rlimits',
-	'accept4'
+	'accept4',
+	'setpriority',
+	'alarm'
 ]
 
 posix_fail_test_cases = [

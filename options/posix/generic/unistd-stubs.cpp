@@ -15,9 +15,10 @@
 #include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/thread.hpp>
 
-unsigned int alarm(unsigned int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+unsigned int alarm(unsigned int seconds) {
+	struct itimerval it = {it.it_value.tv_sec = seconds}, old = {0};
+	setitimer(ITIMER_REAL, &it, &old);
+	return old.it_value.tv_sec + !! old.it_value.tv_usec;
 }
 
 int chdir(const char *path) {

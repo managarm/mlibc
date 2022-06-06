@@ -99,6 +99,8 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_getrusage(int scope, struct rusage *usage);
 [[gnu::weak]] int sys_getrlimit(int resource, struct rlimit *limit);
 [[gnu::weak]] int sys_setrlimit(int resource, const struct rlimit *limit);
+[[gnu::weak]] int sys_getpriority(int which, id_t who, int *value);
+[[gnu::weak]] int sys_setpriority(int which, id_t who, int prio);
 [[gnu::weak]] int sys_getcwd(char *buffer, size_t size);
 [[gnu::weak]] int sys_chdir(const char *path);
 [[gnu::weak]] int sys_fchdir(int fd);

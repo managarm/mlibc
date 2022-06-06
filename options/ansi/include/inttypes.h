@@ -95,6 +95,7 @@
 #define SCNx32 "x"
 #define SCNx64 "lx"
 #define SCNxMAX "lx"
+#define SCNi8 "hhi"
 
 #define SCNi8 "hhi"
 #define SCNi64 "li"

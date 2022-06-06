@@ -109,4 +109,5 @@
 #define EXFULL 1103
 #define ELNRNG 1104
 #define ENOTUNIQ 1105
+#define ERESTART 1106
 #endif // _ABIBITS_ERRNO_H
