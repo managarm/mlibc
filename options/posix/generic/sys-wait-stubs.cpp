@@ -29,9 +29,11 @@ pid_t wait(int *status) {
 	return waitpid(-1, status, 0);
 }
 
-pid_t wait3(int *, int, struct rusage *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+pid_t wait3(int *status, int options, struct rusage *rusage) {
+	(void) rusage;
+	mlibc::infoLogger() << "\e[31mmlibc: wait3() is not implemented correctly\e[39m"
+		<< frg::endlog;
+	return waitpid(-1, status, options);
 }
 
 pid_t wait4(pid_t pid, int *status, int options, struct rusage *){
