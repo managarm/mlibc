@@ -470,10 +470,13 @@ int getloadavg(double *, int) {
 	__builtin_unreachable();
 }
 
+extern "C" int __dlapi_secure_required(void); 
+
 char *secure_getenv(const char *name) {
-	// We don't have a secure execution environment.
-	mlibc::infoLogger() << "mlibc: Secure environment setting is ignored, falling back to unsafe default" << frg::endlog;
-	return getenv(name);
+	if (__dlapi_secure_required())
+		return NULL;
+	else
+		return getenv(name);
 }
 
 void *reallocarray(void *ptr, size_t m, size_t n) {
