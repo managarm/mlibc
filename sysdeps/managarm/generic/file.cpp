@@ -4744,5 +4744,10 @@ int sys_uname(struct utsname *buf) {
 	return 0;
 }
 
+int sys_madvise(void *addr, size_t length, int advice) {
+	mlibc::infoLogger() << "mlibc: sys_madvise is a stub!" << frg::endlog;
+	return 0;
+}
+
 } //namespace mlibc
 
