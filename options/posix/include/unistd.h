@@ -7,6 +7,7 @@
 #include <bits/size_t.h>
 #include <bits/ssize_t.h>
 #include <bits/off_t.h>
+#include <abi-bits/access.h>
 #include <abi-bits/uid_t.h>
 #include <abi-bits/gid_t.h>
 #include <abi-bits/pid_t.h>
@@ -34,11 +35,6 @@ extern "C" {
 
 // MISSING: additional _POSIX and _XOPEN feature macros
 // MISSING: _POSIX_TIMESTAMP_RESOLUTION and _POSIX2_SYMLINKS
-
-#define F_OK 1
-#define R_OK 2
-#define W_OK 4
-#define X_OK 8
 
 #define _CS_PATH 0
 #define _CS_POSIX_V6_WIDTH_RESTRICTED_ENVS 1

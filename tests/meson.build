@@ -6,6 +6,7 @@ ansi_test_cases = [
 	'utf8',
 	'strtol',
 	'abs',
+	'longjmp',
 	'strverscmp',
 	'strftime',
 	'strchr',
@@ -25,6 +26,7 @@ bsd_test_cases = [
 posix_test_cases = [
 	'inet_ntop',
 	'inet_pton',
+	'access',
 	'pthread_rwlock',
 	'pthread_cond',
 	'pthread_create',
