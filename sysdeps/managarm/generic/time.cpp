@@ -65,6 +65,11 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 		HEL_CHECK(helGetClock(&tick));
 		*secs = tick / 1000000000;
 		*nanos = tick % 1000000000;
+	}else if(clock == CLOCK_MONOTONIC_COARSE) {
+		mlibc::infoLogger() << "\e[31mmlibc: clock_gettime does not support CLOCK_MONOTONIC_COARSE"
+				"\e[39m" << frg::endlog;
+		*secs = 0;
+		*nanos = 0;
 	}else{
 		mlibc::panicLogger() << "mlibc: Unexpected clock " << clock << frg::endlog;
 	}
