@@ -790,7 +790,11 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 
 			// Wait on the futex if the waiters flag is set.
 			if(expected & mutex_waiters_bit) {
-				if(int e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected, nullptr); e)
+				int e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected, nullptr);
+
+				// If the wait returns EAGAIN, that means that the mutex_waiters_bit was just unset by
+				// some other thread. In this case, we should loop back around.
+				if (e && e != EAGAIN)
 					__ensure(!"sys_futex_wait() failed");
 
 				// Opportunistically try to take the lock after we wake up.
