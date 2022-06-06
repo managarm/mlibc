@@ -48,9 +48,8 @@ double difftime(time_t a, time_t b) {
 	return a - b;
 }
 
-time_t mktime(struct tm *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+time_t mktime(struct tm *tm) {
+	return timegm(tm);
 }
 
 /* There is no other implemented value than TIME_UTC; all other values
