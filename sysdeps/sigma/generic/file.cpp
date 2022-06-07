@@ -304,7 +304,7 @@ namespace mlibc {
 
     int sys_ttyname(int fd, char *buf, size_t size) STUB_ONLY
     int sys_chroot(const char *path) STUB_ONLY
-    int sys_mkdir(const char *path) STUB_ONLY
+    int sys_mkdir(const char *path, mode_t) STUB_ONLY
     int sys_tcgetattr(int fd, struct termios *attr) STUB_ONLY
     int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) STUB_ONLY
     int sys_tcflow(int fd, int action) STUB_ONLY

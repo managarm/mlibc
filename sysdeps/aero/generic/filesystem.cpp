@@ -142,7 +142,7 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
     return 0;
 }
 
-int sys_mkdir(const char *path) {
+int sys_mkdir(const char *path, mode_t) {
     auto result = syscall(SYS_MKDIR, path, strlen(path));
 
     if (result < 0) {

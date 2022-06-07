@@ -92,7 +92,7 @@ int sys_open(const char* filename, int flags, mode_t mode, int* fd){
 
 	*fd = ret;
 
-	return 0; 
+	return 0;
 }
 
 int sys_close(int fd){
@@ -154,7 +154,7 @@ int sys_isatty(int fd) {
 	long ret = sys_ioctl(fd, TIOCGWINSZ, &ws, 0);
 
 	if(!ret) return 0;
-	
+
 	return ENOTTY;
 }
 
@@ -200,7 +200,7 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events){
 	return 0;
 }
 
-int sys_mkdir(const char* path){
+int sys_mkdir(const char* path, mode_t){
 	long ret = syscall(SYS_MKDIR, path);
 
 	if(ret < 0){
@@ -319,7 +319,7 @@ int sys_fcntl(int fd, int request, va_list args, int* result){
 		if(ret < 0){
 			return -ret;
 		}
-		
+
 		*result = ret;
 		return 0;
 	} else if(request == F_SETFL){
@@ -429,4 +429,4 @@ int sys_ttyname(int tty, char *buf, size_t size) {
 }
 #endif
 
-} 
+}
