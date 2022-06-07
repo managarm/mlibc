@@ -122,7 +122,7 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 }
 #endif
 
-int sys_open(const char *path, int flags, int *fd) {
+int sys_open(const char *path, int flags, mode_t mode, int *fd) {
     int ret;
     int sys_errno;
 
@@ -290,7 +290,7 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 		return do_fstat(fd, statbuf);
 	} else if (fsfdt == fsfd_target::path) {
 _stat:
-		int e = sys_open(path, 0/*O_RDONLY*/, &fd);
+		int e = sys_open(path, 0/*O_RDONLY*/, 0, &fd);
 		if (e)
 			return e;
 		e = do_fstat(fd, statbuf);
@@ -372,7 +372,7 @@ int sys_futex_wake(int *pointer) {
 #ifndef MLIBC_BUILDING_RTDL
 
 int sys_open_dir(const char *path, int *handle) {
-	return sys_open(path, 0, handle);
+	return sys_open(path, 0, 0, handle);
 }
 int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read) {
     int ret;
@@ -397,7 +397,7 @@ int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_re
 
 int sys_access(const char *path, int mode) {
 	int fd;
-	if(int e = sys_open(path, O_RDWR, &fd); e)
+	if(int e = sys_open(path, O_RDWR, 0, &fd); e)
 		return e;
 	sys_close(fd);
 	return 0;

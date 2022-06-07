@@ -1,5 +1,6 @@
 #include <mlibc/posix-file-io.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 #include <errno.h>
 
@@ -77,3 +78,34 @@ void mem_file::_update_ptrs() {
 }
 
 } // namespace mlibc
+
+FILE *fdopen(int fd, const char *mode) {
+	int flags = mlibc::fd_file::parse_modestring(mode);
+
+	flags &= ~__MLIBC_O_TRUNC; // 'w' should not truncate the file
+
+	if (flags & __MLIBC_O_APPEND) {
+		int cur_flags = fcntl(fd, F_GETFL, 0);
+		if (cur_flags < 0) {
+			errno = EINVAL;
+			return nullptr;
+		} else if (!(cur_flags & __MLIBC_O_APPEND)) {
+			if (fcntl(fd, F_SETFL, cur_flags | __MLIBC_O_APPEND)) {
+				errno = EINVAL;
+				return nullptr;
+			}
+		}
+	}
+
+	if (flags & __MLIBC_O_CLOEXEC) {
+		if (fcntl(fd, F_SETFD, FD_CLOEXEC)) {
+			errno = EINVAL;
+			return nullptr;
+		}
+	}
+
+	// TODO: We may need to activate line buffered mode for terminals.
+
+	return frg::construct<mlibc::fd_file>(getAllocator(), fd,
+			[] (mlibc::abstract_file *abstract) { frg::destruct(getAllocator(), abstract); });
+}

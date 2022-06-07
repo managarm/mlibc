@@ -6,6 +6,7 @@
 #include <abi-bits/seek-whence.h>
 #include <abi-bits/vm-flags.h>
 #include <abi-bits/pid_t.h>
+#include <abi-bits/mode_t.h>
 #include <bits/off_t.h>
 #include <bits/ssize_t.h>
 #include <bits/ansi/time_t.h>
@@ -17,7 +18,7 @@ namespace [[gnu::visibility("hidden")]] mlibc {
 [[noreturn]] void sys_exit(int status);
 [[noreturn, gnu::weak]] void sys_thread_exit();
 
-int sys_open(const char *pathname, int flags, int *fd);
+int sys_open(const char *pathname, int flags, mode_t mode, int *fd);
 [[gnu::weak]] int sys_flock(int fd, int options);
 
 [[gnu::weak]] int sys_open_dir(const char *path, int *handle);

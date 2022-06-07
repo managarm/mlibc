@@ -472,6 +472,53 @@ int fd_file::io_seek(off_t offset, int whence, off_t *new_offset) {
 	return 0;
 }
 
+int fd_file::parse_modestring(const char *mode) {
+	// Consume the first char; this must be 'r', 'w' or 'a'.
+	int flags = 0;
+	bool has_plus = strchr(mode, '+');
+	if(*mode == 'r') {
+		if(has_plus) {
+			flags = __MLIBC_O_RDWR;
+		}else{
+			flags = __MLIBC_O_RDONLY;
+		}
+	}else if(*mode == 'w') {
+		if(has_plus) {
+			flags = __MLIBC_O_RDWR;
+		}else{
+			flags = __MLIBC_O_WRONLY;
+		}
+		flags |= __MLIBC_O_CREAT | __MLIBC_O_TRUNC;
+	}else if(*mode == 'a') {
+		if(has_plus) {
+			flags = __MLIBC_O_APPEND | __MLIBC_O_RDWR;
+		}else{
+			flags = __MLIBC_O_APPEND | __MLIBC_O_WRONLY;
+		}
+		flags |= __MLIBC_O_CREAT;
+	}else{
+		mlibc::infoLogger() << "Illegal fopen() mode '" << *mode << "'" << frg::endlog;
+	}
+	mode += 1;
+
+	// Consume additional flags.
+	while(*mode) {
+		if(*mode == '+') {
+			mode++; // This is already handled above.
+		}else if(*mode == 'b') {
+			mode++; // mlibc assumes that there is no distinction between text and binary.
+		}else if(*mode == 'e') {
+			flags |= __MLIBC_O_CLOEXEC;
+			mode++;
+		}else{
+			mlibc::infoLogger() << "Illegal fopen() flag '" << mode << "'" << frg::endlog;
+			mode++;
+		}
+	}
+
+	return flags;
+}
+
 } // namespace mlibc
 
 namespace {
@@ -509,55 +556,13 @@ int fileno(FILE *file_base) {
 }
 
 FILE *fopen(const char *path, const char *mode) {
-	// Consume the first char; this must be 'r', 'w' or 'a'.
-	int flags = 0;
-	bool has_plus = strchr(mode, '+');
-	if(*mode == 'r') {
-		if(has_plus) {
-			flags = __MLIBC_O_RDWR;
-		}else{
-			flags = __MLIBC_O_RDONLY;
-		}
-	}else if(*mode == 'w') {
-		if(has_plus) {
-			flags = __MLIBC_O_RDWR;
-		}else{
-			flags = __MLIBC_O_WRONLY;
-		}
-		flags |= __MLIBC_O_CREAT | __MLIBC_O_TRUNC;
-	}else{
-		mlibc::infoLogger() << "Illegal fopen() mode '" << *mode << "'" << frg::endlog;
-	}
-	mode += 1;
-
-	// Consume additional flags.
-	while(*mode) {
-		if(*mode == '+') {
-			mode++; // This is already handled above.
-		}else if(*mode == 'b') {
-			mode++; // mlibc assumes that there is no distinction between text and binary.
-		}else if(*mode == 'e') {
-			flags |= __MLIBC_O_CLOEXEC;
-			mode++;
-		}else{
-			mlibc::infoLogger() << "Illegal fopen() flag '" << mode << "'" << frg::endlog;
-			mode++;
-		}
-	}
+	int flags = mlibc::fd_file::parse_modestring(mode);
 
 	int fd;
-	if(int e = mlibc::sys_open(path, flags, &fd); e) {
+	if(int e = mlibc::sys_open(path, flags, 0666, &fd); e) {
 		errno = e;
 		return nullptr;
 	}
-	return frg::construct<mlibc::fd_file>(getAllocator(), fd,
-			[] (mlibc::abstract_file *abstract) { frg::destruct(getAllocator(), abstract); });
-}
-
-FILE *fdopen(int fd, const char *mode) {
-	mlibc::infoLogger() << "\e[31mmlibc: fdopen() ignores the file mode"
-			<< "\e[39m" << frg::endlog;
-	(void)mode;
 
 	return frg::construct<mlibc::fd_file>(getAllocator(), fd,
 			[] (mlibc::abstract_file *abstract) { frg::destruct(getAllocator(), abstract); });

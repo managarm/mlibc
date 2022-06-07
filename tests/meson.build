@@ -15,7 +15,8 @@ ansi_test_cases = [
 	'wmemcmp',
 	'time',
 	'wcsdup',
-	'wcsncasecmp'
+	'wcsncasecmp',
+	'fopen'
 ]
 
 bsd_test_cases = [
@@ -37,6 +38,7 @@ posix_test_cases = [
 	'pthread_key',
 	'pthread_thread_local',
 	'pwd',
+	'fdopen',
 	'getaddrinfo',
 	'getdelim',
 	'getnameinfo',

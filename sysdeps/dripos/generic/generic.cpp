@@ -76,7 +76,7 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 }
 #endif
 
-int sys_open(const char *path, int flags, int *fd) {
+int sys_open(const char *path, int flags, mode_t mode, int *fd) {
     int ret;
     int sys_errno;
 

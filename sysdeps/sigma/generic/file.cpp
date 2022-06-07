@@ -52,7 +52,7 @@ namespace mlibc {
         return parser.get_offset();
     }
 
-    int sys_open(const char *path, int flags, int *fd){
+    int sys_open(const char *path, int flags, mode_t mode, int *fd){
         SignalGuard sguard{};
         using namespace sigma::zeta;
         client_request_builder builder{};

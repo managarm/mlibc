@@ -73,12 +73,20 @@ int open_by_handle_at(int, struct file_handle *, int) {
 }
 
 int open(const char *pathname, int flags, ...) {
+	mode_t mode = 0;
+
+	if ((flags & O_CREAT) || (flags & O_TMPFILE)) {
+		va_list args;
+		va_start(args, flags);
+		mode = va_arg(args, mode_t);
+		va_end(args);
+	}
+
 	int fd;
-	if(int e = mlibc::sys_open(pathname, flags, &fd); e) {
+	if(int e = mlibc::sys_open(pathname, flags, mode, &fd); e) {
 		errno = e;
 		return -1;
 	}
 	return fd;
-
 }
 

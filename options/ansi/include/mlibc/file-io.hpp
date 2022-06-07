@@ -82,6 +82,8 @@ struct fd_file : abstract_file {
 
 	int close() override;
 
+	static int parse_modestring(const char *mode);
+
 protected:
 	int determine_type(stream_type *type) override;
 	int determine_bufmode(buffer_mode *mode) override;
