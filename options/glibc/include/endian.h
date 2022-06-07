@@ -28,7 +28,20 @@
 #	define be64toh(x) __bswap_64(x)
 #	define le64toh(x) (uint64_t)(x)
 #else
-#	error "Big endian support is missing here"
+#	define htobe16(x) (uint16_t)(x)
+#	define htole16(x) __bswap_16(x)
+#	define be16toh(x) (uint16_t)(x)
+#	define le16toh(x) __bswap_16(x)
+
+#	define htobe32(x) (uint32_t)(x)
+#	define htole32(x) __bswap_32(x)
+#	define be32toh(x) (uint32_t)(x)
+#	define le32toh(x) __bswap_32(x)
+
+#	define htobe64(x) (uint64_t)(x)
+#	define htole64(x) __bswap_64(x)
+#	define be64toh(x) (uint64_t)(x)
+#	define le64toh(x) __bswap_64(x)
 #endif
 
 #endif // _ENDIAN_H
