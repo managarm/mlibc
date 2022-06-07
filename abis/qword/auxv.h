@@ -5,6 +5,7 @@
 #define AT_PHDR 20
 #define AT_PHENT 21
 #define AT_PHNUM 22
+#define AT_SECURE 23
 #define AT_RANDOM 25
 #define AT_EXECFN 31
 

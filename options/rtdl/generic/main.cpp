@@ -23,6 +23,7 @@ extern HIDDEN void *_GLOBAL_OFFSET_TABLE_[];
 extern HIDDEN Elf64_Dyn _DYNAMIC[];
 #endif
 
+bool secureRequired;
 uintptr_t *entryStack;
 frg::manual_box<ObjectRepository> initialRepository;
 frg::manual_box<Scope> globalScope;
@@ -200,6 +201,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 			case AT_ENTRY: entry_pointer = reinterpret_cast<void *>(*value); break;
 			case AT_EXECFN: execfn = reinterpret_cast<const char *>(*value); break;
 			case AT_RANDOM: stack_entropy = reinterpret_cast<void*>(*value); break;
+			case AT_SECURE: secureRequired = reinterpret_cast<uintptr_t>(*value); break;
 		}
 
 		aux += 2;
@@ -281,6 +283,10 @@ const char *lastError;
 
 extern "C" [[ gnu::visibility("default") ]] uintptr_t *__dlapi_entrystack() {
 	return entryStack;
+}
+
+extern "C" [[ gnu::visibility("default") ]] int __dlapi_secure_required() {
+	return secureRequired;
 }
 
 extern "C" [[ gnu::visibility("default") ]]
