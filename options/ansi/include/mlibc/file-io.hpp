@@ -5,7 +5,6 @@
 
 #include <mlibc/lock.hpp>
 #include <frg/list.hpp>
-#include <frg/optional.hpp>
 
 namespace mlibc {
 
@@ -68,7 +67,6 @@ private:
 	stream_type _type;
 	buffer_mode _bufmode;
 	void (*_do_dispose)(abstract_file *);
-	frg::optional<char> _ungetStorage;
 
 public:
 	// lock for file operations

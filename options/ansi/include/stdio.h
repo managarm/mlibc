@@ -26,6 +26,8 @@ extern "C" {
 
 struct __mlibc_file_base {
 	// Buffer for I/O operations.
+	// We reserve a few extra bytes for ungetc operations. This means
+	// that __buffer_ptr will point a few bytes *into* the allocation.
 	char *__buffer_ptr;
 
 	// Number of bytes the buffer can hold.
@@ -43,6 +45,11 @@ struct __mlibc_file_base {
 	// Begin and end of the dirty region inside the buffer.
 	size_t __dirty_begin;
 	size_t __dirty_end;
+
+	// This points to the same place as __buffer_ptr, or a few bytes earlier
+	// if there are bytes pushed by ungetc. If buffering is disabled, calls
+	// to ungetc will trigger an allocation.
+	char *__unget_ptr;
 
 	// 0 if we are currently reading from the buffer.
 	// 1 if we are currently writing to the buffer.
