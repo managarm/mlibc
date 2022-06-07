@@ -64,6 +64,12 @@ struct ip_mreq_source {
 	struct in_addr imr_sourceaddr;
 };
 
+struct ip_mreqn {
+	struct in_addr imr_multiaddr;
+	struct in_addr imr_address;
+	int imr_ifindex;
+};
+
 struct in_pktinfo {
 	unsigned int ipi_ifindex;
 	struct in_addr ipi_spec_dst;
@@ -110,19 +116,25 @@ struct group_source_req {
 #define IPV6_MULTICAST_LOOP 5
 #define IPV6_UNICAST_HOPS 6
 #define IPV6_V6ONLY 7
+#define IPV6_PMTUDISC_DONT 8
+#define IPV6_PMTUDISC_DO 9
+#define IPV6_MTU_DISCOVER 23
 #define IPV6_RECVERR 25
 #define IPV6_RECVPKTINFO 49
 #define IPV6_PKTINFO 50
 #define IPV6_RECVHOPLIMIT 51
 #define IPV6_HOPLIMIT 52
+#define IPV6_TCLASS 67
 
 #define IP_TOS 1
 #define IP_TTL 2
 #define IP_OPTIONS 4
 #define IP_PKTINFO 8
+#define IP_MTU_DISCOVER 10
 #define IP_RECVERR 11
 #define IP_RECVTTL 12
 
+#define IP_DEFAULT_MULTICAST_TTL  1
 #define IP_MULTICAST_IF           32
 #define IP_MULTICAST_TTL          33
 #define IP_MULTICAST_LOOP         34

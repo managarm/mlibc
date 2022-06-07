@@ -3,4 +3,10 @@
 
 #define IOV_MAX 1024
 
+// Niceness related
+#define NZERO 20
+
+// Maximum hostname length, posix defines it as 255
+#define HOST_NAME_MAX 255
+
 #endif //_ABIBITS_LIMITS_H
