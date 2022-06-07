@@ -61,7 +61,7 @@ int main() {
 	assert(!strcmp(getcwd(NULL, 0), we.we_wordv[0]));
 
 	char *home;
-	asprintf(&home, "%s/.config", getenv("HOME"));
+	assert(asprintf(&home, "%s/.config", getenv("HOME")) != -1);
 	wordexp("$HOME ~ ~/.config", &we, WRDE_REUSE);
 	assert(!strcmp(getenv("HOME"), we.we_wordv[0]));
 	assert(!strcmp(getenv("HOME"), we.we_wordv[1]));
@@ -69,7 +69,7 @@ int main() {
 	free(home);
 
 	struct passwd *pw = getpwnam("root");
-	asprintf(&home, "%s/.config", pw->pw_dir);
+	assert(asprintf(&home, "%s/.config", pw->pw_dir) != -1);
 	wordexp("~root ~root/.config", &we, WRDE_REUSE);
 	assert(!strcmp(pw->pw_dir, we.we_wordv[0]));
 	assert(!strcmp(home, we.we_wordv[1]));
@@ -123,7 +123,7 @@ static const char *wordexp_return_stringify(int val) {
 	}
 
 	char *unknown;
-	asprintf(&unknown, "unknown return value %d", val);
+	assert(asprintf(&unknown, "unknown return value %d", val) != -1);
 
 	return unknown;
 }
