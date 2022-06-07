@@ -312,15 +312,15 @@ if not headers_only
 				link_whole: libc_sublibs,
 				install: true)
 
-		shared_library('dl', 'libdl/src/dummy.cpp', install: true)
-		shared_library('pthread', 'libpthread/src/dummy.cpp', install: true)
-		shared_library('rt', 'librt/src/dummy.cpp', install: true)
-		shared_library('util', 'libutil/src/dummy.cpp', install: true)
-		shared_library('m', 'libm/src/dummy.cpp', install: true)
+		shared_library('dl', 'dummy-libs/libdl/src/dummy.cpp', install: true)
+		shared_library('pthread', 'dummy-libs/libpthread/src/dummy.cpp', install: true)
+		shared_library('rt', 'dummy-libs/librt/src/dummy.cpp', install: true)
+		shared_library('util', 'dummy-libs/libutil/src/dummy.cpp', install: true)
+		shared_library('m', 'dummy-libs/libm/src/dummy.cpp', install: true)
 		if not disable_crypt_option
-			shared_library('crypt', 'libcrypt/src/dummy.cpp', install: true)
+			shared_library('crypt', 'dummy-libs/libcrypt/src/dummy.cpp', install: true)
 		endif
-		shared_library('resolv', 'libresolv/src/dummy.cpp', install: true)
+		shared_library('resolv', 'dummy-libs/libresolv/src/dummy.cpp', install: true)
 	else
 		ldso_lib = static_library('ld', rtdl_sources,
 				name_prefix: '',
@@ -344,14 +344,14 @@ if not headers_only
 				link_whole: [libc_sublibs, ldso_lib],
 				install: true)
 
-		static_library('pthread', 'libpthread/src/dummy.cpp', install: true)
-		static_library('rt', 'librt/src/dummy.cpp', install: true)
-		static_library('util', 'libutil/src/dummy.cpp', install: true)
-		static_library('m', 'libm/src/dummy.cpp', install: true)
+		static_library('pthread', 'dummy-libs/libpthread/src/dummy.cpp', install: true)
+		static_library('rt', 'dummy-libs/librt/src/dummy.cpp', install: true)
+		static_library('util', 'dummy-libs/libutil/src/dummy.cpp', install: true)
+		static_library('m', 'dummy-libs/libm/src/dummy.cpp', install: true)
 		if not disable_crypt_option
-			static_library('crypt', 'libcrypt/src/dummy.cpp', install: true)
+			static_library('crypt', 'dummy-libs/libcrypt/src/dummy.cpp', install: true)
 		endif
-		static_library('resolv', 'libresolv/src/dummy.cpp', install: true)
+		static_library('resolv', 'dummy-libs/libresolv/src/dummy.cpp', install: true)
 	endif
 endif
 
