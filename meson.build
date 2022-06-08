@@ -120,6 +120,11 @@ elif host_machine.system() == 'qword'
 	rtdl_include_dirs += include_directories('sysdeps/qword/include')
 	libc_include_dirs += include_directories('sysdeps/qword/include')
 	subdir('sysdeps/qword')
+elif host_machine.system() == 'ironclad'
+	# disable_linux_option = true
+	rtdl_include_dirs += include_directories('sysdeps/ironclad/include')
+	libc_include_dirs += include_directories('sysdeps/ironclad/include')
+	subdir('sysdeps/ironclad')
 elif host_machine.system() == 'sigma'
 	#disable_linux_option = true
 	rtdl_include_dirs += include_directories('sysdeps/sigma/include')
