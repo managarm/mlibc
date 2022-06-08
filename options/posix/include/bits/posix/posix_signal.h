@@ -11,6 +11,50 @@ extern "C" {
 #include <bits/posix/pthread_t.h>
 #include <bits/sigset_t.h>
 #include <stddef.h>
+#include <stdint.h>
+
+#define FPE_INTDIV      1       /* integer divide by zero */
+#define FPE_INTOVF      2       /* integer overflow */
+#define FPE_FLTDIV      3       /* floating point divide by zero */
+#define FPE_FLTOVF      4       /* floating point overflow */
+#define FPE_FLTUND      5       /* floating point underflow */
+#define FPE_FLTRES      6       /* floating point inexact result */
+#define FPE_FLTINV      7       /* floating point invalid operation */
+#define FPE_FLTSUB      8       /* subscript out of range */
+
+#define TRAP_BRKPT      1       /* process breakpoint */
+#define TRAP_TRACE      2       /* process trace trap */
+
+// Start Glibc stuff
+
+struct _libc_fpxreg {
+  unsigned short int significand[4];
+  unsigned short int exponent;
+  unsigned short int __glibc_reserved1[3];
+};
+
+struct _libc_xmmreg {
+  uint32_t element[4];
+};
+
+struct _libc_fpstate {
+  uint16_t cwd;
+  int16_t  swd;
+  uint16_t ftw;
+  uint16_t fop;
+  uint64_t rip;
+  uint64_t dp;
+  uint32_t mxcsr;
+  uint32_t mxcr_mask;
+  struct _libc_fpxreg _st[8];
+  struct _libc_xmmreg _xmm[16];
+  uint32_t __glibc_reserved1[24];
+};
+
+typedef struct _libc_fpstate *fpregset_t;
+// End Glibc stuff
+
+typedef unsigned long int greg_t;
 
 #define FPE_INTDIV      1       /* integer divide by zero */
 #define FPE_INTOVF      2       /* integer overflow */

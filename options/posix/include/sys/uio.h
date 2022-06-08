@@ -5,10 +5,13 @@
 #include <bits/ssize_t.h>
 #include <bits/off_t.h>
 #include <bits/size_t.h>
+#include <limits.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define UIO_MAXIOV IOV_MAX
 
 ssize_t readv(int fd, const struct iovec *iov, int iovcnt);
 ssize_t writev(int fd, const struct iovec *iov, int iovcnt);

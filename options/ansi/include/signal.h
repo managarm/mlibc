@@ -38,4 +38,8 @@ int raise(int sig);
 #	include <bits/posix/posix_signal.h>
 #endif
 
+#ifdef __MLIBC_GLIBC_OPTION
+#	include <bits/glibc/glibc_signal.h>
+#endif
+
 #endif // _SIGNAL_H

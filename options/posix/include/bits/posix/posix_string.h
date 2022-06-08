@@ -23,6 +23,10 @@ char *strdupa(const char *);
 char *strndupa(const char *, size_t);
 void *memrchr(const void *, int, size_t);
 
+// BSD extensions
+size_t strlcpy(char *d, const char *s, size_t n);
+size_t strlcat(char *d, const char *s, size_t n);
+
 #ifdef __cplusplus
 }
 #endif

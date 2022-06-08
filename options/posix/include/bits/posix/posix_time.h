@@ -11,6 +11,9 @@ extern "C" {
 
 int utimes(const char *, const struct timeval[2]);
 
+// Not standardized, Linux and BSDs have it
+int futimes(int, const struct timeval[2]);
+
 #ifdef __cplusplus
 }
 #endif

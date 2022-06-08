@@ -45,3 +45,7 @@ int unshare(int) {
 	__builtin_unreachable();
 }
 
+int clone(int (*)(void *), void *, int, void *, ...) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

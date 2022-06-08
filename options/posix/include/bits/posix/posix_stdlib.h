@@ -51,6 +51,7 @@ int getloadavg(double *, int);
 
 // GNU extension
 char *secure_getenv(const char *);
+char *canonicalize_file_name(const char *);
 
 // BSD extension
 void *reallocarray(void *, size_t, size_t);

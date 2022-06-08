@@ -30,3 +30,7 @@ int utimes(const char *filename, const struct timeval times[2]) {
 	return 0;
 }
 
+int futimes(int, const struct timeval[2]) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

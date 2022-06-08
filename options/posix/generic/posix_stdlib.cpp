@@ -486,3 +486,8 @@ void *reallocarray(void *ptr, size_t m, size_t n) {
 
 	return realloc(ptr, m * n);
 }
+
+char *canonicalize_file_name(const char *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
