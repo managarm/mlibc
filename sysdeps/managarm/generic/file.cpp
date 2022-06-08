@@ -4047,7 +4047,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	}else if(whence == SEEK_END) {
 		req.set_req_type(managarm::fs::CntReqType::SEEK_EOF);
 	}else{
-		mlibc::panicLogger() << "Illegal whence argument " << whence << frg::endlog;
+		return EINVAL;
 	}
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
