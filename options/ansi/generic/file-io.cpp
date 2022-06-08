@@ -39,6 +39,9 @@ namespace {
 	// Useful when debugging the FILE implementation.
 	constexpr bool globallyDisableBuffering = false;
 
+	// The maximum number of characters we permit the user to ungetc.
+	constexpr size_t ungetBufferSize = 8;
+
 	// List of files that will be flushed before exit().
 	file_list &global_file_list() {
 		static frg::eternal<file_list> list;
@@ -56,6 +59,7 @@ abstract_file::abstract_file(void (*do_dispose)(abstract_file *))
 : _type{stream_type::unknown}, _bufmode{buffer_mode::unknown}, _do_dispose{do_dispose} {
 	// TODO: For __fwriting to work correctly, set the __io_mode to 1 if the write is write-only.
 	__buffer_ptr = nullptr;
+	__unget_ptr = nullptr;
 	__buffer_size = 4096;
 	__offset = 0;
 	__io_offset = 0;
@@ -74,7 +78,7 @@ abstract_file::~abstract_file() {
 				<< frg::endlog;
 
 	if(__buffer_ptr)
-		getAllocator().free(__buffer_ptr);
+		getAllocator().free(__buffer_ptr - ungetBufferSize);
 
 	auto it = global_file_list().iterator_to(this);
 	global_file_list().erase(it);
@@ -95,6 +99,22 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 
 	if(_init_bufmode())
 		return -1;
+
+	size_t unget_length = 0;
+	if (__unget_ptr != __buffer_ptr) {
+		unget_length = frg::min(max_size, (size_t)(__unget_ptr - __buffer_ptr));
+		memcpy(buffer, __unget_ptr, unget_length);
+
+		__unget_ptr += unget_length;
+		buffer += unget_length;
+		max_size -= unget_length;
+
+		if (max_size == 0) {
+			*actual_size = unget_length;
+			return 0;
+		}
+	}
+
 	if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer) {
 		size_t io_size;
 		if(int e = io_read(buffer, max_size, &io_size); e) {
@@ -103,7 +123,7 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 		}
 		if(!io_size)
 			__status_bits |= __MLIBC_EOF_BIT;
-		*actual_size = io_size;
+		*actual_size = io_size + unget_length;
 		return 0;
 	}
 
@@ -146,7 +166,7 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 	memcpy(buffer, __buffer_ptr + __offset, chunk);
 	__offset += chunk;
 
-	*actual_size = chunk;
+	*actual_size = chunk + unget_length;
 	return 0;
 }
 
@@ -223,10 +243,21 @@ int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_siz
 	return 0;
 }
 
-void abstract_file::unget(char c) {
-	__ensure(__offset);
-	__offset--;
-	__buffer_ptr[__offset] = c;
+int abstract_file::unget(char c) {
+	if (!__unget_ptr) {
+		// This can happen if the file is unbuffered, but we still need
+		// a space to store ungetc'd data.
+		__ensure(!__buffer_ptr);
+		_ensure_allocation();
+		__ensure(__unget_ptr);
+	}
+
+	if ((size_t)(__buffer_ptr - __unget_ptr) + 1 > ungetBufferSize)
+		return EOF;
+	else {
+		*(--__unget_ptr) = c;
+		return c;
+	}
 }
 
 int abstract_file::update_bufmode(buffer_mode mode) {
@@ -242,6 +273,7 @@ void abstract_file::purge() {
 	__io_offset = 0;
 	__valid_limit = 0;
 	__dirty_end = __dirty_begin;
+	__unget_ptr = __buffer_ptr;
 }
 
 int abstract_file::flush() {
@@ -382,13 +414,14 @@ int abstract_file::_reset() {
 	return 0;
 }
 
+// This may still be called when buffering is disabled, for ungetc.
 void abstract_file::_ensure_allocation() {
-	__ensure(__buffer_size);
 	if(__buffer_ptr)
 		return;
 
-	auto ptr = getAllocator().allocate(__buffer_size);
-	__buffer_ptr = reinterpret_cast<char *>(ptr);
+	auto ptr = getAllocator().allocate(__buffer_size + ungetBufferSize);
+	__buffer_ptr = reinterpret_cast<char *>(ptr) + ungetBufferSize;
+	__unget_ptr = __buffer_ptr;
 }
 
 // --------------------------------------------------------------------------------------
@@ -668,10 +701,12 @@ void rewind(FILE *file_base) {
 }
 
 int ungetc(int c, FILE *file_base) {
+	if (c == EOF)
+		return EOF;
+
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	frg::unique_lock<FutexLock> lock(file->_lock);
-	file->unget(c);
-	return c;
+	return file->unget(c);
 }
 
 #ifdef __MLIBC_GLIBC_OPTION
