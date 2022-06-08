@@ -4,6 +4,7 @@
 #include <ctype.h>
 
 #include <bits/ensure.h>
+#include <mlibc/strtol.hpp>
 
 // memset() is defined in options/internals.
 // memcpy() is defined in options/internals.
@@ -228,10 +229,18 @@ double wcstod(const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
 float wcstof(const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
 long double wcstold(const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
 
-long wcstol(const wchar_t *__restrict, wchar_t **__restrict, int) MLIBC_STUB_BODY
-long long wcstoll(const wchar_t *__restrict, wchar_t **__restrict, int) MLIBC_STUB_BODY
-unsigned long wcstoul(const wchar_t *__restrict, wchar_t **__restrict, int) MLIBC_STUB_BODY
-unsigned long long wcstoull(const wchar_t *__restrict, wchar_t **__restrict, int) MLIBC_STUB_BODY
+long wcstol(const wchar_t *__restrict nptr, wchar_t **__restrict endptr, int base)  {
+	return mlibc::stringToInteger<long, wchar_t>(nptr, endptr, base);
+}
+unsigned long wcstoul(const wchar_t *__restrict nptr, wchar_t **__restrict endptr, int base)  {
+	return mlibc::stringToInteger<unsigned long, wchar_t>(nptr, endptr, base);
+}
+long long wcstoll(const wchar_t *__restrict nptr, wchar_t **__restrict endptr, int base)  {
+	return mlibc::stringToInteger<long long, wchar_t>(nptr, endptr, base);
+}
+unsigned long long wcstoull(const wchar_t *__restrict nptr, wchar_t **__restrict endptr, int base)  {
+	return mlibc::stringToInteger<unsigned long long, wchar_t>(nptr, endptr, base);
+}
 
 wchar_t *wcscpy(wchar_t *__restrict dest, const wchar_t *__restrict src) {
 	wchar_t *a = dest;

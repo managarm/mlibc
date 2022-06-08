@@ -19,6 +19,7 @@
 #include <mlibc/charcode.hpp>
 #include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/strtofp.hpp>
+#include <mlibc/strtol.hpp>
 
 #ifdef __MLIBC_POSIX_OPTION
 #include <pthread.h>
@@ -76,87 +77,18 @@ float strtof(const char *__restrict string, char **__restrict end) {
 long double strtold(const char *__restrict string, char **__restrict end) {
 	return mlibc::strtofp<long double>(string, end);
 }
+
 long strtol(const char *__restrict string, char **__restrict end, int base) {
-//	mlibc::infoLogger() << "mlibc: strtol() called on string '" << string << "'" << frg::endlog;
-
-	// skip leading space
-	while(*string) {
-		if(*string == '+')
-			string++;
-		if(!isspace(*string))
-			break;
-		string++;
-	}
-
-	bool negative = false;
-	if(*string == '-') {
-		negative = true;
-		string++;
-	}
-
-	unsigned long number = strtoul(string, end, base);
-	if(negative)
-		return static_cast<long>((~number) + 1);
-	return number;
+	return mlibc::stringToInteger<long, char>(string, end, base);
 }
 long long strtoll(const char *__restrict string, char **__restrict end, int base) {
-	static_assert(sizeof(long long) == sizeof(long));
-	return strtol(string, end, base);
+	return mlibc::stringToInteger<long long, char>(string, end, base);
 }
-// this function is copied from newlib and available under a BSD license
-unsigned long strtoul(const char *__restrict nptr, char **__restrict endptr, int base) {
-	const unsigned char *s = (const unsigned char *)nptr;
-	unsigned long acc;
-	int c;
-	unsigned long cutoff;
-	int neg = 0, any, cutlim;
-
-	do {
-		c = *s++;
-	} while (isspace(c));
-	if (c == '-') {
-		neg = 1;
-		c = *s++;
-	} else if (c == '+')
-		c = *s++;
-	if ((base == 0 || base == 16) &&
-	    c == '0' && (*s == 'x' || *s == 'X')) {
-		c = s[1];
-		s += 2;
-		base = 16;
-	}
-	if (base == 0)
-		base = c == '0' ? 8 : 10;
-	cutoff = (unsigned long)ULONG_MAX / (unsigned long)base;
-	cutlim = (unsigned long)ULONG_MAX % (unsigned long)base;
-	for (acc = 0, any = 0;; c = *s++) {
-		if (isdigit(c))
-			c -= '0';
-		else if (isalpha(c))
-			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
-		else
-			break;
-		if (c >= base)
-			break;
-               if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
-			any = -1;
-		else {
-			any = 1;
-			acc *= base;
-			acc += c;
-		}
-	}
-	if (any < 0) {
-		acc = (unsigned long)ULONG_MAX;
-	} else if (neg)
-		acc = -acc;
-	if (endptr != 0)
-		*endptr = (char *) (any ? (char *)s - 1 : nptr);
-	return (acc);
+unsigned long strtoul(const char *__restrict string, char **__restrict end, int base) {
+	return mlibc::stringToInteger<unsigned long, char>(string, end, base);
 }
 unsigned long long strtoull(const char *__restrict string, char **__restrict end, int base) {
-	static_assert(sizeof(unsigned long long) == sizeof(unsigned long));
-	return strtoul(string, end, base);
+	return mlibc::stringToInteger<unsigned long long, char>(string, end, base);
 }
 
 frg::mt19937 __mlibc_rand_engine;
