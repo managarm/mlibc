@@ -36,7 +36,7 @@ static frg::string<MemoryAllocator> read_dns_name(char *buf, char *&it) {
 			for (int i = 0; i < code; i++)
 				res += (*it++);
 
-			if (*(it + 1))
+			if (*it)
 				res += '.';
 		} else {
 			break;
