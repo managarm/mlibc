@@ -95,6 +95,21 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 
 	if(_init_bufmode())
 		return -1;
+
+	bool wroteUngetc = false;
+	if (_ungetStorage) {
+		buffer[0] = _ungetStorage.value();
+		buffer++;
+		max_size--;
+		_ungetStorage = {};
+		wroteUngetc = true;
+
+		if (max_size == 0) {
+			*actual_size = 1;
+			return 0;
+		}
+	}
+
 	if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer) {
 		size_t io_size;
 		if(int e = io_read(buffer, max_size, &io_size); e) {
@@ -103,7 +118,7 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 		}
 		if(!io_size)
 			__status_bits |= __MLIBC_EOF_BIT;
-		*actual_size = io_size;
+		*actual_size = io_size + (wroteUngetc ? 1 : 0);
 		return 0;
 	}
 
@@ -146,7 +161,7 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 	memcpy(buffer, __buffer_ptr + __offset, chunk);
 	__offset += chunk;
 
-	*actual_size = chunk;
+	*actual_size = chunk + (wroteUngetc ? 1 : 0);
 	return 0;
 }
 
@@ -223,10 +238,14 @@ int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_siz
 	return 0;
 }
 
-void abstract_file::unget(char c) {
-	__ensure(__offset);
-	__offset--;
-	__buffer_ptr[__offset] = c;
+int abstract_file::unget(char c) {
+	if(_ungetStorage) {
+		_ungetStorage = c;
+		return EOF;
+	} else {
+		_ungetStorage = c;
+		return c;
+	}
 }
 
 int abstract_file::update_bufmode(buffer_mode mode) {
@@ -242,6 +261,7 @@ void abstract_file::purge() {
 	__io_offset = 0;
 	__valid_limit = 0;
 	__dirty_end = __dirty_begin;
+	_ungetStorage = {};
 }
 
 int abstract_file::flush() {
@@ -668,10 +688,12 @@ void rewind(FILE *file_base) {
 }
 
 int ungetc(int c, FILE *file_base) {
+	if (c == EOF)
+		return EOF;
+
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	frg::unique_lock<FutexLock> lock(file->_lock);
-	file->unget(c);
-	return c;
+	return file->unget(c);
 }
 
 #ifdef __MLIBC_GLIBC_OPTION

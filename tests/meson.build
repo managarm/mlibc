@@ -14,6 +14,7 @@ ansi_test_cases = [
 	'wcsrtombs',
 	'wmemcmp',
 	'time',
+	'ungetc',
 	'wcsdup',
 	'wcsncasecmp',
 	'fopen'
