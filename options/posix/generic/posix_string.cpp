@@ -29,6 +29,27 @@ char *strndup(const char *string, size_t max_size) {
 	return new_string;
 }
 
+char *stpcpy(char *__restrict dest, const char *__restrict src) {
+	auto n = strlen(src);
+	memcpy(dest, src, n + 1);
+	return dest + n;
+}
+
+char *stpncpy(char *__restrict dest, const char *__restrict src, size_t n) {
+	size_t nulls, copied, srcLen = strlen(src);
+	if (n >= srcLen) {
+		nulls = n - srcLen;
+		copied = srcLen;
+	} else {
+		nulls = 0;
+		copied = n;
+	}
+
+	memcpy(dest, src, copied);
+	memset(dest + srcLen, 0, nulls);
+	return dest + n - nulls;
+}
+
 size_t strnlen(const char *s, size_t n) {
 	size_t len = 0;
 	while(len < n && s[len])
