@@ -81,7 +81,6 @@ fail_test_cases = [
 
 host_libc_excluded_test_cases = [
 	'bsd/strl', # These functions do not exist on Linux.
-	'rtdl/dl_iterate_phdr', # Can be removed when #448 lands
 	'ansi/utf8', # See issue #459
 ]
 host_libc_noasan_test_cases = [
@@ -127,6 +126,11 @@ else
 		test_c_args += '-no-pie'
 		test_link_args += '-no-pie'
 	endif
+
+	# Add the rtdl tests.
+	if not disable_posix_option
+		subdir('rtdl')
+	endif
 endif
 
 foreach test_name : all_test_cases
@@ -142,8 +146,6 @@ foreach test_name : all_test_cases
 		continue
 	elif test_subdir == 'posix' and disable_posix_option
 		continue
-	elif test_subdir == 'rtdl' and library_type == 'static'
-		continue
 	endif
 
 	should_fail = fail_test_cases.contains(test_name)
@@ -152,7 +154,7 @@ foreach test_name : all_test_cases
 		dependencies: rtlib_deps,
 		build_rpath: meson.build_root(),
 		override_options: test_override_options,
-	    c_args: test_c_args,
+		c_args: test_c_args,
 		link_args: test_link_args,
 		pie: use_pie,
 	)
