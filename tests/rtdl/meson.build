@@ -1,8 +1,13 @@
 rtdl_test_cases = [
 	'dl_iterate_phdr',
+	'noload-promote',
 	'rtld_next',
 	'soname',
 	'preinit',
+	'scope1',
+	'scope2',
+	'scope3',
+	'scope4',
 ]
 
 foreach test_name : rtdl_test_cases 
