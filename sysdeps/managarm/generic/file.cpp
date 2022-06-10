@@ -2926,6 +2926,21 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				" is not implemented correctly\e[39m" << frg::endlog;
 		return 0;
 	}
+	case DRM_IOCTL_MODE_CREATE_LEASE: {
+		auto param = reinterpret_cast<drm_mode_create_lease *>(arg);
+
+		mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_MODE_CREATE_LEASE"
+				" is a noop\e[39m" << frg::endlog;
+		param->lessee_id = 1;
+		param->fd = fd;
+		*result = 0;
+		return 0;
+	}
+	case DRM_IOCTL_GEM_CLOSE: {
+		mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_GEM_CLOSE"
+				" is a noop\e[39m" << frg::endlog;
+		return 0;
+	}
 	case TCGETS: {
 		auto param = reinterpret_cast<struct termios *>(arg);
 		HelAction actions[4];
