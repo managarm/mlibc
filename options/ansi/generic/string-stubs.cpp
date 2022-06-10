@@ -437,12 +437,6 @@ void *mempcpy(void *dest, const void *src, size_t len) {
 	return (char *)memcpy(dest, src, len) + len;
 }
 
-char *stpcpy(char *__restrict dest, const char *__restrict src) {
-	auto n = strlen(src);
-	memcpy(dest, src, n + 1);
-	return dest + n;
-}
-
 // GNU extensions.
 // Taken from musl.
 int strverscmp(const char *l0, const char *r0) {

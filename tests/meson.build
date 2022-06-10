@@ -58,6 +58,7 @@ posix_test_cases = [
 	'system', # This test should be in the ANSI tests, but it depends on sys/wait.h
 	'sigsuspend',
 	'sigaltstack',
+	'string',
 	'realpath',
 	'ffs',
 	'getcwd',

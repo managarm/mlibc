@@ -53,7 +53,6 @@ size_t strlen(const char *s);
 
 int strerror_r(int, char *, size_t);
 void *mempcpy(void *, const void *, size_t);
-char *stpcpy(char *__restrict, const char *__restrict);
 
 // GNU extensions.
 int strverscmp(const char *l0, const char *r0);
