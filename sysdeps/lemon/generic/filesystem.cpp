@@ -427,6 +427,10 @@ int sys_ttyname(int tty, char *buf, size_t size) {
 	// Could not find corresponding TTY in /dev/pts
 	return ENODEV;
 }
+
+int sys_fchdir(int fd) {
+	return syscall(SYS_FCHDIR, fd);
+}
 #endif
 
 } 
