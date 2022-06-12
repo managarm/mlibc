@@ -111,6 +111,7 @@
 #define SYS_EPOLL_CREATE 108
 #define SYS_EPOLL_CTL 109
 #define SYS_EPOLL_WAIT 110
+#define SYS_FCHDIR 111
 
 #ifdef __cplusplus
 extern "C"{
