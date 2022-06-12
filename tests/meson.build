@@ -70,7 +70,8 @@ posix_test_cases = [
 	'accept4',
 	'setpriority',
 	'alarm',
-	'timer'
+	'timer',
+	'regex',
 ]
 
 posix_fail_test_cases = [
