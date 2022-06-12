@@ -11,7 +11,9 @@ typedef ptrdiff_t regoff_t;
 
 typedef struct re_pattern_buffer {
 	size_t re_nsub;
-	void *__impl;
+	void *__opaque, *__padding[4];
+	size_t __nsub2;
+	char __padding2;
 } regex_t;
 
 typedef struct {

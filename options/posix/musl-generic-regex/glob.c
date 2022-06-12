@@ -1,3 +1,4 @@
+#define _BSD_SOURCE
 #include <glob.h>
 #include <fnmatch.h>
 #include <sys/stat.h>
@@ -18,16 +19,16 @@ struct match
 
 static int append(struct match **tail, const char *name, size_t len, int mark)
 {
-	struct match *m = reinterpret_cast<struct match *>(malloc(sizeof(struct match) + len + 2));
-	if (!m) return -1;
-	(*tail)->next = m;
-	m->next = NULL;
-	memcpy(m->name, name, len+1);
+	struct match *new = malloc(sizeof(struct match) + len + 2);
+	if (!new) return -1;
+	(*tail)->next = new;
+	new->next = NULL;
+	memcpy(new->name, name, len+1);
 	if (mark && len && name[len-1]!='/') {
-		m->name[len] = '/';
-		m->name[len+1] = 0;
+		new->name[len] = '/';
+		new->name[len+1] = 0;
 	}
-	*tail = m;
+	*tail = new;
 	return 0;
 }
 
@@ -150,13 +151,13 @@ static int do_glob(char *buf, size_t pos, int type, char *pat, int flags, int (*
 		/* With GLOB_PERIOD, don't allow matching . or .. unless
 		 * fnmatch would match them with FNM_PERIOD rules in effect. */
 		if (p2 && (flags & GLOB_PERIOD) && de->d_name[0]=='.'
-		    && (!de->d_name[1] || (de->d_name[1]=='.' && !de->d_name[2]))
+		    && (!de->d_name[1] || de->d_name[1]=='.' && !de->d_name[2])
 		    && fnmatch(pat, de->d_name, fnm_flags | FNM_PERIOD))
 			continue;
 
 		memcpy(buf+pos, de->d_name, l+1);
 		if (p2) *p2 = saved_sep;
-		int r = do_glob(buf, pos+l, de->d_type, p2 ? p2 : const_cast<char *>(""), flags, errfunc, tail);
+		int r = do_glob(buf, pos+l, de->d_type, p2 ? p2 : "", flags, errfunc, tail);
 		if (r) {
 			closedir(dir);
 			return r;
@@ -171,7 +172,7 @@ static int do_glob(char *buf, size_t pos, int type, char *pat, int flags, int (*
 	return 0;
 }
 
-static int ignore_err(const char *, int)
+static int ignore_err(const char *path, int err)
 {
 	return 0;
 }
@@ -223,14 +224,14 @@ static int expand_tilde(char **pat, char *buf, size_t *pos)
 	return 0;
 }
 
-int glob(const char *__restrict pat, int flags, int (*errfunc)(const char *path, int err), glob_t *__restrict g)
+int glob(const char *restrict pat, int flags, int (*errfunc)(const char *path, int err), glob_t *restrict g)
 {
 	struct match head = { .next = NULL }, *tail = &head;
 	size_t cnt, i;
 	size_t offs = (flags & GLOB_DOOFFS) ? g->gl_offs : 0;
 	int error = 0;
 	char buf[PATH_MAX];
-
+	
 	if (!errfunc) errfunc = ignore_err;
 
 	if (!(flags & GLOB_APPEND)) {
@@ -256,7 +257,7 @@ int glob(const char *__restrict pat, int flags, int (*errfunc)(const char *path,
 		freelist(&head);
 		return error;
 	}
-
+	
 	for (cnt=0, tail=head.next; tail; tail=tail->next, cnt++);
 	if (!cnt) {
 		if (flags & GLOB_NOCHECK) {
@@ -269,7 +270,7 @@ int glob(const char *__restrict pat, int flags, int (*errfunc)(const char *path,
 	}
 
 	if (flags & GLOB_APPEND) {
-		char **pathv = reinterpret_cast<char **>(realloc(g->gl_pathv, (offs + g->gl_pathc + cnt + 1) * sizeof(char *)));
+		char **pathv = realloc(g->gl_pathv, (offs + g->gl_pathc + cnt + 1) * sizeof(char *));
 		if (!pathv) {
 			freelist(&head);
 			return GLOB_NOSPACE;
@@ -277,7 +278,7 @@ int glob(const char *__restrict pat, int flags, int (*errfunc)(const char *path,
 		g->gl_pathv = pathv;
 		offs += g->gl_pathc;
 	} else {
-		g->gl_pathv = reinterpret_cast<char **>(malloc((offs + cnt + 1) * sizeof(char *)));
+		g->gl_pathv = malloc((offs + cnt + 1) * sizeof(char *));
 		if (!g->gl_pathv) {
 			freelist(&head);
 			return GLOB_NOSPACE;
@@ -292,7 +293,7 @@ int glob(const char *__restrict pat, int flags, int (*errfunc)(const char *path,
 
 	if (!(flags & GLOB_NOSORT))
 		qsort(g->gl_pathv+offs, cnt, sizeof(char *), sort);
-
+	
 	return error;
 }
 
@@ -305,3 +306,6 @@ void globfree(glob_t *g)
 	g->gl_pathc = 0;
 	g->gl_pathv = NULL;
 }
+
+// weak_alias(glob, glob64);
+// weak_alias(globfree, globfree64);
