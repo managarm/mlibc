@@ -123,6 +123,9 @@ extern "C" {
 #define TCOOFF 3
 #define TCOON 4
 
+#define TIOCM_DTR 0x002
+#define TIOCM_RTS 0x004
+
 speed_t cfgetispeed(const struct termios *);
 speed_t cfgetospeed(const struct termios *);
 int cfsetispeed(struct termios *, speed_t);
