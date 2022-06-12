@@ -67,6 +67,7 @@ all_test_cases = [
 	'posix/timer',
 	'posix/vfork',
 	'posix/wcwidth',
+	'posix/regex',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 ]
