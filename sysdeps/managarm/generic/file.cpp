@@ -163,8 +163,8 @@ int sys_chroot(const char *path) {
 	return 0;
 }
 
-int sys_mkdir(const char *path) {
-	return sys_mkdirat(AT_FDCWD, path, 0);
+int sys_mkdir(const char *path, mode_t mode) {
+	return sys_mkdirat(AT_FDCWD, path, mode);
 }
 
 int sys_mkdirat(int dirfd, const char *path, mode_t mode) {

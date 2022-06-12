@@ -458,7 +458,7 @@ int sys_ttyname(int fd, char *buf, size_t size) {
     return ENOSYS;
 }
 int sys_chroot(const char *path) STUB_ONLY
-int sys_mkdir(const char *path) {
+int sys_mkdir(const char *path, mode_t) {
     int ret;
     int sys_errno;
 
