@@ -69,6 +69,7 @@ all_test_cases = [
 	'posix/wcwidth',
 	'posix/pause',
 	'posix/flockfile',
+	'posix/regex',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 ]
