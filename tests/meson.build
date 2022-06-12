@@ -70,6 +70,7 @@ all_test_cases = [
 	'posix/pause',
 	'posix/flockfile',
 	'posix/basename',
+	'posix/regex',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 ]
