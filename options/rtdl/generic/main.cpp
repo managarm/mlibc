@@ -170,6 +170,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		case DT_RELASZ:
 		case DT_RELAENT:
 		case DT_RELACOUNT:
+		case DT_DEBUG:
 			continue;
 		default:
 			__ensure(!"Unexpected dynamic entry in program interpreter");
