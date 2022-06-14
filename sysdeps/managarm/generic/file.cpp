@@ -1161,6 +1161,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	actions[2].length = hdr->msg_iovlen;
 
 	actions[3].type = kHelActionImbueCredentials;
+	actions[3].handle = kHelThisThread;
 	actions[3].flags = kHelItemChain;
 
 	actions[4].type = kHelActionSendFromBuffer;
@@ -1246,6 +1247,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	actions[1].length = ser.size();
 
 	actions[2].type = kHelActionImbueCredentials;
+	actions[2].handle = kHelThisThread;
 	actions[2].flags = kHelItemChain;
 
 	actions[3].type = kHelActionRecvInline;
@@ -3056,6 +3058,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		actions[1].buffer = ser.data();
 		actions[1].length = ser.size();
 		actions[2].type = kHelActionImbueCredentials;
+		actions[2].handle = kHelThisThread;
 		actions[2].flags = kHelItemChain;
 		actions[3].type = kHelActionRecvInline;
 		actions[3].flags = 0;
@@ -3892,6 +3895,7 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionImbueCredentials;
+	actions[2].handle = kHelThisThread;
 	actions[2].flags = kHelItemChain;
 	actions[3].type = kHelActionSendFromBuffer;
 	actions[3].flags = kHelItemChain;
@@ -3959,6 +3963,7 @@ int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionImbueCredentials;
+	actions[2].handle = kHelThisThread;
 	actions[2].flags = kHelItemChain;
 	actions[3].type = kHelActionRecvInline;
 	actions[3].flags = kHelItemChain;

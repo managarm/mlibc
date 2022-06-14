@@ -303,6 +303,7 @@ int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read) {
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionImbueCredentials;
+	actions[2].handle = kHelThisThread;
 	actions[2].flags = kHelItemChain;
 	actions[3].type = kHelActionRecvInline;
 	actions[3].flags = kHelItemChain;
