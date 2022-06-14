@@ -69,6 +69,7 @@ packages:
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
         - "-Dbuild_tests=true"
+        - "-Db_sanitize=undefined"
         - "-Dwerror=true"
         - '@THIS_SOURCE_DIR@'
         environ:
@@ -90,6 +91,7 @@ packages:
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
         - "-Dbuild_tests=true"
+        - "-Db_sanitize=undefined"
         - "-Dstatic=true"
         - "-Dwerror=true"
         - '@THIS_SOURCE_DIR@'
@@ -111,6 +113,7 @@ packages:
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
         - "-Dbuild_tests=true"
+        - "-Db_sanitize=undefined"
         - "-Dwerror=true"
         - "-Ddisable_posix_option=true"
         - "-Ddisable_linux_option=true"
