@@ -1162,12 +1162,10 @@ size_t fread_unlocked(void *buffer, size_t size, size_t count, FILE *file_base) 
 		size_t progress = 0;
 		while(progress < count) {
 			size_t chunk;
-			if(file->read((char *)buffer + progress,
+			if(int e = file->read((char *)buffer + progress,
 					count - progress, &chunk)) {
-				// TODO: Handle I/O errors.
-				mlibc::infoLogger() << "mlibc: fread() I/O errors are not handled"
-						<< frg::endlog;
-				break;
+				errno = e;
+				return 0;
 			}else if(!chunk) {
 				// TODO: Handle eof.
 				break;
@@ -1182,12 +1180,10 @@ size_t fread_unlocked(void *buffer, size_t size, size_t count, FILE *file_base) 
 			size_t progress = 0;
 			while(progress < size) {
 				size_t chunk;
-				if(file->read((char *)buffer + i * size + progress,
+				if(int e = file->read((char *)buffer + i * size + progress,
 						size - progress, &chunk)) {
-					// TODO: Handle I/O errors.
-					mlibc::infoLogger() << "mlibc: fread() I/O errors are not handled"
-							<< frg::endlog;
-					break;
+					errno = e;
+					return 0;
 				}else if(!chunk) {
 					// TODO: Handle eof.
 					break;
