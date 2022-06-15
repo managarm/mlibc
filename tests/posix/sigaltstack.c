@@ -34,11 +34,14 @@ int main() {
 
 	// This is used to trash the stack to ensure sigaltstack actually switched stacks.
 #if defined(__x86_64__)
-	asm volatile ("mov $0, %rsp\n\tpush $0");
+	asm volatile ("mov $0, %rsp\n"
+			"\t" "push $0");
 #elif defined(__aarch64__)
-	asm volatile ("mov sp, %0\n\tstp x0, x1, [sp, #-16]!" :: "r"(uint64_t{0}));
+	asm volatile ("mov sp, %0\n"
+			"\t" "stp x0, x1, [sp, #-16]!" :: "r"(uint64_t{0}));
 #elif defined(__riscv) && __riscv_xlen == 64
-	asm volatile ("li sp, 0\n\tsd zero, 0(sp)");
+	asm volatile ("li sp, 0\n"
+			"\t" "sd zero, 0(sp)");
 #else
 #	error Unknown architecture
 #endif
