@@ -139,9 +139,13 @@ extern "C" {
 #define NR_clock_gettime 228
 #define NR_exit_group 231
 #define NR_tgkill 234
+#define NR_openat 257
 #define NR_mkdirat 258
 #define NR_newfstatat 262
 #define NR_unlinkat 263
+#define NR_symlinkat 266
+#define NR_readlinkat 267
+#define NR_faccessat 269
 #define NR_pselect6 270
 #define NR_accept4 288
 #define NR_dup3 292

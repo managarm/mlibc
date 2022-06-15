@@ -51,11 +51,7 @@ int sys_anon_free(void *pointer, size_t size) {
 }
 
 int sys_open(const char *path, int flags, mode_t mode, int *fd) {
-#ifdef NR_open
-	auto ret = do_cp_syscall(NR_open, path, flags, mode);
-#else
 	auto ret = do_cp_syscall(NR_openat, AT_FDCWD, path, flags, mode);
-#endif
 	if(int e = sc_error(ret); e)
 		return e;
 	*fd = sc_int_result<int>(ret);
@@ -302,11 +298,7 @@ int sys_pipe(int *fds, int flags) {
                         return e;
                 return 0;
         } else {
-#ifdef NR_pipe
-                auto ret = do_syscall(NR_pipe, fds);
-#else
 				auto ret = do_syscall(NR_pipe2, fds, 0);
-#endif
                 if (int e = sc_error(ret); e)
                         return e;
                 return 0;
@@ -314,11 +306,7 @@ int sys_pipe(int *fds, int flags) {
 }
 
 int sys_fork(pid_t *child) {
-#ifdef NR_fork
-	auto ret = do_syscall(NR_fork);
-#else
 	auto ret = do_syscall(NR_clone, SIGCHLD, 0);
-#endif
 	if (int e = sc_error(ret); e)
 			return e;
 	*child = sc_int_result<int>(ret);
@@ -415,11 +403,7 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 }
 
 int sys_access(const char *path, int mode) {
-#ifdef NR_access
-	auto ret = do_syscall(NR_access, path, mode);
-#else
 	auto ret = do_syscall(NR_faccessat, AT_FDCWD, path, mode, 0);
-#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -567,11 +551,7 @@ int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
 }
 
 int sys_mkdir(const char *path, mode_t mode) {
-#ifdef NR_mkdir
-	auto ret = do_syscall(NR_mkdir, path, mode);
-#else
 	auto ret = do_syscall(NR_mkdirat, AT_FDCWD, path, mode);
-#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -586,11 +566,7 @@ int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 }
 
 int sys_symlink(const char *target_path, const char *link_path) {
-#ifdef NR_symlink
-	auto ret = do_syscall(NR_symlink, target_path, link_path);
-#else
 	auto ret = do_syscall(NR_symlinkat, target_path, AT_FDCWD, link_path);
-#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -604,22 +580,14 @@ int sys_chdir(const char *path) {
 }
 
 int sys_rmdir(const char *path) {
-#ifdef NR_rmdir
-	auto ret = do_syscall(NR_rmdir, path);
-#else
 	auto ret = do_syscall(NR_unlinkat, AT_FDCWD, path, AT_REMOVEDIR);
-#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int sys_readlink(const char *path, void *buf, size_t bufsiz, ssize_t *len) {
-#ifdef NR_rmdir
-	auto ret = do_syscall(NR_readlink, path, buf, bufsiz);
-#else
 	auto ret = do_syscall(NR_readlinkat, AT_FDCWD, path, buf, bufsiz);
-#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	*len = sc_int_result<ssize_t>(ret);
