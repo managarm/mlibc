@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/auxv.h
+../../../../abis/linux/auxv.h

@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/resource.h
+../../../../abis/linux/resource.h

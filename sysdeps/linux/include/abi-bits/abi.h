@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/abi.h
+../../../../abis/linux/abi.h

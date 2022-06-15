@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/errno.h
+../../../../abis/linux/errno.h

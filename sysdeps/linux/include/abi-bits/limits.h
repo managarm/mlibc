@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/limits.h
+../../../../abis/linux/limits.h

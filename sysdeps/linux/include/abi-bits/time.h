@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/time.h
+../../../../abis/linux/time.h

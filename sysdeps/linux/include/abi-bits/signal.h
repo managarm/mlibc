@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/signal.h
+../../../../abis/linux/signal.h

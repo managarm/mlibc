@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/vm-flags.h
+../../../../abis/linux/vm-flags.h
