@@ -633,4 +633,35 @@ int sys_setrlimit(int resource, const struct rlimit *limit) {
 	return 0;
 }
 
+pid_t sys_getppid() {
+	auto ret = do_syscall(NR_getppid);
+	// getppid() always succeeds.
+	return sc_int_result<pid_t>(ret);
+}
+
+int sys_setpgid(pid_t pid, pid_t pgid) {
+	auto ret = do_syscall(NR_setpgid, pid, pgid);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_getpgid(pid_t pid, pid_t *out) {
+	auto ret = do_syscall(NR_getpgid, pid);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<pid_t>(ret);
+	return 0;
+}
+
+int sys_dup(int fd, int flags, int *newfd) {
+	auto ret = do_cp_syscall(NR_dup, fd);
+	if (int e = sc_error(ret); e)
+		return e;
+	// TODO: Handle flags
+	(void) flags;
+	*newfd = sc_int_result<int>(ret);
+	return 0;
+}
+
 } // namespace mlibc
