@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/blksize_t.h
+../../../../abis/linux/blksize_t.h

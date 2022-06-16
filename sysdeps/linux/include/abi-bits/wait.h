@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/wait.h
+../../../../abis/linux/wait.h

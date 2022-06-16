@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/reboot.h
+../../../../abis/linux/reboot.h

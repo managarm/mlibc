@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/ino_t.h
+../../../../abis/linux/ino_t.h

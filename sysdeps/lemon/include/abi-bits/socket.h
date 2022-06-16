@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/socket.h
+../../../../abis/linux/socket.h

@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/fcntl.h
+../../../../abis/linux/fcntl.h

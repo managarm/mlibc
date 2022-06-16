@@ -69,12 +69,15 @@ namespace mlibc {
 	}
 }
 
-// Gcc expects the stack canary to be at fs:0x28,
+// There are a few parts of the mlibc code which assume the layout of
+// this struct:
+//
+// options/linker/aarch64/runtime.S uses the offset of dtvPointers.
+// sysdeps/linux/{riscv64,x86_64}/cp_syscall.S uses the offset of cancelBits.
+//
+// Gcc also expects the stack canary to be at fs:0x28,
 // at least on x86_64, so this struct has fixed
 // ABI until stackCanary.
-
-// The code in options/linker/aarch64/runtime.S depends on the layout
-// of this struct (or at least on the position of dtvPointers)
 struct Tcb {
 	Tcb *selfPointer;
 	size_t dtvSize;
