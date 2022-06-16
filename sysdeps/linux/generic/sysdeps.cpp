@@ -528,6 +528,43 @@ int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_re
 	return 0;
 }
 
+int sys_uname(struct utsname *buf) {
+	auto ret = do_syscall(NR_uname, buf);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_gethostname(char *buf, size_t bufsize) {
+	struct utsname uname_buf;
+	if (auto e = sys_uname(&uname_buf); e)
+		return e;
+
+	auto node_len = strlen(uname_buf.nodename);
+	if (node_len >= bufsize)
+		return ENAMETOOLONG;
+
+	memcpy(buf, uname_buf.nodename, node_len);
+	buf[node_len] = '\0';
+	return 0;
+}
+
+int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
+	auto ret = do_syscall(NR_pread64, fd, buf, n, off);
+	if (int e = sc_error(ret); e)
+		return e;
+	*bytes_read = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_written) {
+	auto ret = do_syscall(NR_pwrite64, fd, buf, n, off);
+	if (int e = sc_error(ret); e)
+		return e;
+	*bytes_written = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 pid_t sys_getpid() {
