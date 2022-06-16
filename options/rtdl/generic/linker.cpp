@@ -941,6 +941,12 @@ Scope::Scope()
 : _objects(getAllocator()) { }
 
 void Scope::appendObject(SharedObject *object) {
+	// Don't insert duplicates.
+	for (auto obj : _objects) {
+		if (obj == object)
+			return;
+	}
+
 	_objects.push(object);
 }
 
