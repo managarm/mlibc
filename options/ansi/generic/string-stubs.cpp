@@ -415,6 +415,30 @@ char *strerror(int e) {
 	case EBADFD: s = "File descriptor in bad state (EBADFD)"; break;
 	case ENOMEDIUM: s = "No medium found (ENOMEDIUM)"; break;
 	case ENOTBLK: s = "Block device required (ENOTBLK)"; break;
+	case ENONET: s = "Machine is not on the network (ENONET)"; break;
+	case EPFNOSUPPORT: s = "Protocol family not supported (EPFNOSUPPORT)"; break;
+	case ESOCKTNOSUPPORT: s = "Socket type not supported (ESOCKTNOSUPPORT)"; break;
+	case ESTRPIPE: s = "Streams pipe error (ESTRPIPE)"; break;
+	case EREMOTEIO: s = "Remote I/O error (EREMOTEIO)"; break;
+	case ERFKILL: s = "Operation not possible due to RF-kill (ERFKILL)"; break;
+	case EBADR: s = "Invalid request descriptor (EBADR)"; break;
+	case EUNATCH: s = "Protocol driver not attached (EUNATCH)"; break;
+	case EMEDIUMTYPE: s = "Wrong medium type (EMEDIUMTYPE)"; break;
+	case EREMOTE: s = "Object is remote (EREMOTE)"; break;
+	case EKEYREJECTED: s = "Key was rejected by service (EKEYREJECTED)"; break;
+	case EUCLEAN: s = "Structure needs cleaning (EUCLEAN)"; break;
+	case EBADSLT: s = "Invalid slot (EBADSLT)"; break;
+	case ENOANO: s = "No anode (ENOANO)"; break;
+	case ENOCSI: s = "No CSI structure available (ENOCSI)"; break;
+	case ENOSTR: s = "Device not a stream (ENOSTR)"; break;
+	case ETOOMANYREFS: s = "Too many references: cannot splice (ETOOMANYREFS)"; break;
+	case ENOPKG: s = "Package not installed (ENOPKG)"; break;
+	case EKEYREVOKED: s = "Key has been revoked (EKEYREVOKED)"; break;
+	case EXFULL: s = "Exchange full (EXFULL)"; break;
+	case ELNRNG: s = "Link number out of range (ELNRNG)"; break;
+	case ENOTUNIQ: s = "Name not unique on network (ENOTUNIQ)"; break;
+	case ERESTART: s = "Interrupted system call should be restarted (ERESTART)"; break;
+	case EUSERS: s = "Too many users (EUSERS)"; break;
 	default:
 		s = "Unknown error code (?)";
 	}

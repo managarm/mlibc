@@ -65,6 +65,27 @@ extern "C" {
 #define SIGRTMAX 33
 #define SIGCANCEL 34
 
+// siginfo->si_info constants
+// SIGBUS
+#define BUS_ADRALN 1
+#define BUS_ADRERR 2
+#define BUS_OBJERR 3
+
+// SIGILL
+#define ILL_ILLOPC 1
+#define ILL_ILLOPN 2
+#define ILL_ILLADR 3
+#define ILL_ILLTRP 4
+#define ILL_PRVOPC 5
+#define ILL_PRVREG 6
+#define ILL_COPROC 7
+#define ILL_BADSTK 8
+#define ILL_BADIADDR 9
+
+// SIGSEGV
+#define SEGV_MAPERR 1
+#define SEGV_ACCERR 2
+
 // TODO: replace this by uint64_t
 typedef long sigset_t;
 
