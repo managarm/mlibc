@@ -125,14 +125,6 @@ elif host_machine.system() == 'ironclad'
 	rtdl_include_dirs += include_directories('sysdeps/ironclad/include')
 	libc_include_dirs += include_directories('sysdeps/ironclad/include')
 	subdir('sysdeps/ironclad')
-elif host_machine.system() == 'sigma'
-	#disable_linux_option = true
-	rtdl_include_dirs += include_directories('sysdeps/sigma/include')
-	libc_include_dirs += include_directories('sysdeps/sigma/include')
-	libsigma = dependency('sigma')
-	libc_deps += libsigma
-	rtdl_deps += libsigma
-	subdir('sysdeps/sigma')
 elif host_machine.system() == 'lemon'
 	rtdl_include_dirs += include_directories('sysdeps/lemon/include')
 	libc_include_dirs += include_directories('sysdeps/lemon/include')

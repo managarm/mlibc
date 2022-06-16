@@ -1,1 +1,0 @@
-../../../../abis/sigma/auxv.h
