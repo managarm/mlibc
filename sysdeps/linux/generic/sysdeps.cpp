@@ -711,6 +711,13 @@ int sys_rmdir(const char *path) {
 	return 0;
 }
 
+int sys_ftruncate(int fd, size_t size) {
+	auto ret = do_syscall(NR_ftruncate, fd, size);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_readlink(const char *path, void *buf, size_t bufsiz, ssize_t *len) {
 	auto ret = do_syscall(SYS_readlinkat, AT_FDCWD, path, buf, bufsiz);
 	if (int e = sc_error(ret); e)
