@@ -125,5 +125,24 @@
 #define ENOKEY			94
 #define EBADFD			95
 #define ENOMEDIUM		96
+#define ENONET			97
+#define ESTRPIPE		98
+#define EREMOTEIO		99
+#define ERFKILL			100
+#define EBADR			101
+#define EUNATCH			102
+#define EMEDIUMTYPE		103
+#define EKEYREJECTED	104
+#define EUCLEAN			105
+#define EBADSLT			106
+#define ENOANO			107
+#define ENOCSI			108
+#define ENOSTR			109
+#define ENOPKG			110
+#define EKEYREVOKED		111
+#define EXFULL			112
+#define ELNRNG			113
+#define ENOTUNIQ		114
+#define ERESTART		115
 
 #endif
