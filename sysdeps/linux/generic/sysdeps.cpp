@@ -61,6 +61,13 @@ int sys_anon_free(void *pointer, size_t size) {
 	return sys_vm_unmap(pointer, size);
 }
 
+int sys_fadvise(int fd, off_t offset, off_t length, int advice) {
+	auto ret = do_syscall(NR_fadvise64, fd, offset, length, advice);
+	if(int e = sc_error(ret); e)
+    	return e;
+	return 0;
+}
+
 int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	auto ret = do_cp_syscall(SYS_openat, AT_FDCWD, path, flags, mode);
 	if(int e = sc_error(ret); e)
