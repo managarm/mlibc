@@ -576,6 +576,13 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	return 0;
 }
 
+int sys_getrusage(int scope, struct rusage *usage) {
+	auto ret = do_syscall(NR_getrusage, scope, usage);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 pid_t sys_getpid() {
