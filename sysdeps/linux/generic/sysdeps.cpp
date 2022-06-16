@@ -683,6 +683,13 @@ int sys_chdir(const char *path) {
 	return 0;
 }
 
+int sys_fchdir(int fd) {
+	auto ret = do_syscall(NR_fchdir, fd);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_rename(const char *old_path, const char *new_path) {
 	auto ret = do_syscall(NR_renameat, AT_FDCWD, old_path, AT_FDCWD, new_path);
 	if (int e = sc_error(ret); e)
