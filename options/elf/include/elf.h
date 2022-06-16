@@ -175,15 +175,11 @@ typedef struct {
 	Elf64_Xword st_size;
 } Elf64_Sym;
 
-__MLIBC_INLINE_DEFINITION unsigned char ELF64_ST_BIND(unsigned char info) {
-	return info >> 4;
-}
-__MLIBC_INLINE_DEFINITION unsigned char ELF64_ST_TYPE(unsigned char info) {
-	return info & 0x0F;
-}
-__MLIBC_INLINE_DEFINITION unsigned char ELF64_ST_INFO(unsigned char bind, unsigned char type) {
-	return (bind << 4) | type;
-}
+#define ELF64_ST_BIND(info) ((info) >> 4)
+
+#define ELF64_ST_TYPE(info) ((info) & 0x0F)
+
+#define ELF64_ST_INFO(bind, type) (((bind) << 4) | (type))
 
 typedef struct {
 	Elf64_Half si_boundto;
