@@ -565,6 +565,17 @@ int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_writ
 	return 0;
 }
 
+int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
+	struct timespec tm;
+	tm.tv_sec = timeout / 1000;
+	tm.tv_nsec = timeout % 1000 * 1000000;
+	auto ret = do_syscall(NR_ppoll, fds, count, timeout >= 0 ? &tm : nullptr, 0, NSIG / 8);
+	if (int e = sc_error(ret); e)
+		return e;
+	*num_events = sc_int_result<int>(ret);
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 pid_t sys_getpid() {
