@@ -16,6 +16,8 @@ typedef elf_greg_t elf_gregset_t[ELF_NGREG];
 
 typedef struct user_fpregs_struct elf_fpregset_t;
 
+#define ELF_PRARGSZ 80
+
 struct elf_siginfo {
 	int si_signo;
 	int si_code;
