@@ -31,14 +31,20 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 		__optpos = 1;
 	}
 
+	auto isOptionArg = [](char *arg){
+		// If the first character of arg '-', and the arg is not exactly
+		// equal to "-" or "--", then the arg is an option argument.
+		return arg[0] == '-' && strcmp(arg, "-") && strcmp(arg, "--");
+	};
+
 	while(optind < argc) {
 		char *arg = argv[optind];
-		if(arg[0] != '-') {
+		if(!isOptionArg(arg)) {
 			bool further_options = false;
 			int skip = optind;
 
 			for(; skip < argc; ++skip) {
-				if(argv[skip][0] == '-') {
+				if(isOptionArg(argv[skip])) {
 					further_options = true;
 					break;
 				}
