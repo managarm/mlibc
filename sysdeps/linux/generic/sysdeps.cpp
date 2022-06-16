@@ -487,6 +487,18 @@ int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out) {
 	return 0;
 }
 
+int sys_open_dir(const char *path, int *fd) {
+	return sys_open(path, O_DIRECTORY, 0, fd);
+}
+
+int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read) {
+	auto ret = do_syscall(NR_getdents64, handle, buffer, max_size);
+	if(int e = sc_error(ret); e)
+		return e;
+	*bytes_read = sc_int_result<int>(ret);
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 pid_t sys_getpid() {
