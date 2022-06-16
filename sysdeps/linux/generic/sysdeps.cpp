@@ -118,9 +118,10 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags,
 }
 
 int sys_vm_unmap(void *pointer, size_t size) {
-	UNUSED(pointer);
-	UNUSED(size);
-	STUB_ONLY
+	auto ret = do_syscall(NR_munmap, pointer, size);
+	if(int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 // All remaining functions are disabled in ldso.
