@@ -76,6 +76,14 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	return 0;
 }
 
+int sys_openat(int dirfd, const char *path, int flags, int *fd) {
+	auto ret = do_syscall(NR_openat, dirfd, path, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*fd = sc_int_result<int>(ret);
+	return 0;
+}
+
 int sys_close(int fd) {
 	auto ret = do_cp_syscall(SYS_close, fd);
 	if(int e = sc_error(ret); e)
