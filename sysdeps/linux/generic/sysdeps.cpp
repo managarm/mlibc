@@ -779,6 +779,14 @@ int sys_getpgid(pid_t pid, pid_t *out) {
 	return 0;
 }
 
+int sys_getgroups(size_t size, const gid_t *list, int *retval) {
+	auto ret = do_syscall(NR_getgroups, size, list);
+	if (int e = sc_error(ret); e)
+		return e;
+	*retval = sc_int_result<int>(ret);
+	return 0;
+}
+
 int sys_dup(int fd, int flags, int *newfd) {
 	auto ret = do_cp_syscall(NR_dup, fd);
 	if (int e = sc_error(ret); e)
