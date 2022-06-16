@@ -27,7 +27,8 @@ if not no_headers
 		'include/memory.h',
 		'include/printf.h',
 		'include/gshadow.h',
-		'include/execinfo.h'
+		'include/execinfo.h',
+		'include/features.h'
 	)
 	install_headers(
 		'include/sys/dir.h',
