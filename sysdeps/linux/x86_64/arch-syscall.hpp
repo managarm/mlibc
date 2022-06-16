@@ -125,6 +125,7 @@ extern "C" {
 #define NR_symlink 88
 #define NR_readlink 89
 #define NR_getrlimit 97
+#define NR_ptrace 101
 #define NR_getuid 102
 #define NR_getgid 104
 #define NR_geteuid 107

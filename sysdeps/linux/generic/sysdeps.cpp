@@ -461,6 +461,14 @@ int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval
 	return 0;
 }
 
+int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out) {
+	auto ret = do_syscall(NR_ptrace, req, pid, addr, data);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<long>(ret);
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 pid_t sys_getpid() {
