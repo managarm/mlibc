@@ -597,6 +597,13 @@ int sys_getrusage(int scope, struct rusage *usage) {
 	return 0;
 }
 
+int sys_madvise(void *addr, size_t length, int advice) {
+	auto ret = do_syscall(NR_madvise, addr, length, advice);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 pid_t sys_getpid() {
