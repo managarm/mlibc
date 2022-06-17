@@ -7,6 +7,7 @@ struct utsname {
 	char release[65];
 	char version[65];
 	char machine[65];
+	char domainname[65];
 };
 
 #endif // _ABIBITS_UTSNAME_T_H
