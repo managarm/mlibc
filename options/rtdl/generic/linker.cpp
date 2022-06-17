@@ -167,7 +167,7 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 	// preprocessing the rpath only once on parse
 	auto processRpath = [&] (frg::string_view path) {
 		frg::string<MemoryAllocator> sPath { getAllocator() };
-		if (path.sub_string(0, 7) == "$ORIGIN") {
+		if (path.starts_with("$ORIGIN")) {
 			frg::string_view dirname = origin->path;
 			auto lastsl = dirname.find_last('/');
 			if (lastsl != (uint64_t)-1) {
