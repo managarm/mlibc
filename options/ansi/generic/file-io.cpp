@@ -102,7 +102,7 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 
 	size_t unget_length = 0;
 	if (__unget_ptr != __buffer_ptr) {
-		unget_length = frg::min(max_size, (size_t)(__unget_ptr - __buffer_ptr));
+		unget_length = frg::min(max_size, (size_t)(__buffer_ptr - __unget_ptr));
 		memcpy(buffer, __unget_ptr, unget_length);
 
 		__unget_ptr += unget_length;
