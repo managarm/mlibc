@@ -499,7 +499,23 @@ int strverscmp(const char *l0, const char *r0) {
 	return l[i] - r[i];
 }
 
-void *memmem(const void *, size_t, const void *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void *memmem(const void *hs, size_t haystackLen, const void *nd, size_t needleLen) {
+	const char *haystack = static_cast<const char *>(hs);
+	const char *needle = static_cast<const char *>(nd);
+
+	for (size_t i = 0; i < haystackLen; i++) {
+		bool found = true;
+
+		for (size_t j = 0; j < needleLen; j++) {
+			if (i + j >= haystackLen || haystack[i + j] != needle[j]) {
+				found = false;
+				break;
+			}
+		}
+
+		if(found)
+			return const_cast<char *>(&haystack[i]);
+	}
+
+	return nullptr;
 }

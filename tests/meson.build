@@ -18,7 +18,8 @@ ansi_test_cases = [
 	'ungetc',
 	'wcsdup',
 	'wcsncasecmp',
-	'fopen'
+	'fopen',
+	'memmem'
 ]
 
 bsd_test_cases = [
