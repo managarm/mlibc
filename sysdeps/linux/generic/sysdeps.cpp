@@ -264,6 +264,7 @@ int sys_isatty(int fd) {
 #ifdef __MLIBC_POSIX_OPTION
 
 #include <sys/ioctl.h>
+#include <sys/utsname.h>
 #include <sched.h>
 
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
