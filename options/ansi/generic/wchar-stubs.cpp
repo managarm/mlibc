@@ -740,9 +740,16 @@ int wcwidth(wchar_t ucs) {
 	return intable(WIDE_EASTASIAN, sizeof(WIDE_EASTASIAN) / sizeof(struct width_interval), ucs) ? 2 : 1;
 }
 
-int wcswidth(const wchar_t *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int wcswidth(const wchar_t *wcs, size_t n) {
+	int ret = 0;
+	for(size_t i = 0; i < n && wcs[n]; i++) {
+		int cols = wcwidth(wcs[n]);
+		if (cols < 0)
+			return -1;
+		ret += cols;
+	}
+
+	return ret;
 }
 
 wchar_t *wcsdup(const wchar_t *s) {
