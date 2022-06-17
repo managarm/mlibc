@@ -1,4 +1,7 @@
 #include <errno.h>
+#include <limits.h>
+#include <linux/reboot.h>
+
 #include <type_traits>
 
 #include <mlibc-config.h>
@@ -296,6 +299,7 @@ int sys_isatty(int fd) {
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
 #include <sched.h>
+#include <fcntl.h>
 
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	auto ret = do_syscall(SYS_ioctl, fd, request, arg);
@@ -599,6 +603,13 @@ int sys_getrusage(int scope, struct rusage *usage) {
 
 int sys_madvise(void *addr, size_t length, int advice) {
 	auto ret = do_syscall(NR_madvise, addr, length, advice);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_reboot(int cmd) {
+	auto ret = do_syscall(NR_reboot, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, cmd, nullptr);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
