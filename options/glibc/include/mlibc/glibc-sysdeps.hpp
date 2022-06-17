@@ -4,6 +4,7 @@
 namespace  [[gnu::visibility("hidden")]] mlibc {
 
 [[gnu::weak]] int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
+[[gnu::weak]] int sys_tgkill(int tgid, int tid, int sig);
 
 } // namespace mlibc
 
