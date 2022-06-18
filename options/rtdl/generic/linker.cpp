@@ -187,6 +187,8 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 		frg::string_view rpath { origin->runPath };
 		auto next = [&] () {
 			idx = rpath.find_first(':', start);
+			if (idx == (size_t)-1)
+				idx = rpath.size();
 		};
 		for (next(); idx < rpath.size(); next()) {
 			auto path = rpath.sub_string(start, idx - start);
