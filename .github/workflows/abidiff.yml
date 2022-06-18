@@ -3,10 +3,16 @@ name: Continuous Integration
 on:
   push:
     branches-ignore:
-      - abi-break
+      - "abi-break"
+      - "staging.tmp"
+      - "trying.tmp"
+      - "staging-squash-merge.tmp"
   pull_request:
     branches-ignore:
-      - abi-break
+      - "abi-break"
+      - "staging.tmp"
+      - "trying.tmp"
+      - "staging-squash-merge.tmp"
 
 jobs:
   run-abidiff:

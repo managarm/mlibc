@@ -1,6 +1,16 @@
 name: Continuous Integration
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore:
+      - "staging.tmp"
+      - "trying.tmp"
+      - "staging-squash-merge.tmp"
+  pull_request:
+    branches-ignore:
+      - "staging.tmp"
+      - "trying.tmp"
+      - "staging-squash-merge.tmp"
 
 jobs:
     build-mlibc:
