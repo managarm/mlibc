@@ -144,6 +144,11 @@ __MLIBC_INLINE_DEFINITION unsigned char ELF64_ST_INFO(unsigned char bind, unsign
 	return (bind << 4) | type;
 }
 
+// Some programs check for definitions of these macros.
+#define ELF64_ST_BIND ELF64_ST_BIND
+#define ELF64_ST_TYPE ELF64_ST_TYPE
+#define ELF64_ST_INFO ELF64_ST_INFO
+
 enum {
 	STB_GLOBAL = 1,
 	STB_WEAK = 2,
