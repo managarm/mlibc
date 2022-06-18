@@ -2,6 +2,7 @@
 #define _ELF_H
 
 #include <stdint.h>
+#include <bits/inline-definition.h>
 
 // TODO: Convert the enums to #defines so that they work with #ifdef.
 
@@ -133,13 +134,13 @@ typedef struct {
 	Elf64_Xword st_size;
 } Elf64_Sym;
 
-extern inline unsigned char ELF64_ST_BIND(unsigned char info) {
+__MLIBC_INLINE_DEFINITION unsigned char ELF64_ST_BIND(unsigned char info) {
 	return info >> 4;
 }
-extern inline unsigned char ELF64_ST_TYPE(unsigned char info) {
+__MLIBC_INLINE_DEFINITION unsigned char ELF64_ST_TYPE(unsigned char info) {
 	return info & 0x0F;
 }
-extern inline unsigned char ELF64_ST_INFO(unsigned char bind, unsigned char type) {
+__MLIBC_INLINE_DEFINITION unsigned char ELF64_ST_INFO(unsigned char bind, unsigned char type) {
 	return (bind << 4) | type;
 }
 
@@ -204,10 +205,10 @@ typedef struct {
 	Elf64_Sxword r_addend;
 } Elf64_Rela;
 
-static inline Elf64_Xword ELF64_R_SYM(Elf64_Xword info) {
+__MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_SYM(Elf64_Xword info) {
 	return info >> 32;
 }
-static inline Elf64_Xword ELF64_R_TYPE(Elf64_Xword info) {
+__MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_TYPE(Elf64_Xword info) {
 	return info & 0xFFFFFFFF;
 }
 
