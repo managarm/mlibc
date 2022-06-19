@@ -795,7 +795,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 				// If the wait returns EAGAIN, that means that the mutex_waiters_bit was just unset by
 				// some other thread. In this case, we should loop back around.
 				if (e && e != EAGAIN)
-					__ensure(!"sys_futex_wait() failed");
+					mlibc::panicLogger() << "sys_futex_wait() failed with error code " << e << frg::endlog;
 
 				// Opportunistically try to take the lock after we wake up.
 				expected = 0;
