@@ -9,7 +9,8 @@
 #include <mlibc/bitutil.hpp>
 #include <mlibc/debug.hpp>
 
-const struct in6_addr in6addr_any = {{}};
+const struct in6_addr in6addr_any = IN6ADDR_ANY_INIT;
+const struct in6_addr in6addr_loopback = IN6ADDR_LOOPBACK_INIT;
 
 uint32_t htonl(uint32_t x) {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__

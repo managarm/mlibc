@@ -19,7 +19,7 @@ struct file_window {
 			__ensure(!"cannot proceed without sys_stat");
 		}
 		struct stat info;
-		if(mlibc::sys_stat(mlibc::fsfd_target::fd, fd, nullptr, 0, &info))
+		if(mlibc::sys_stat(mlibc::fsfd_target::fd, fd, "", 0, &info))
 			mlibc::panicLogger() << "mlibc: Error getting TZinfo stats" << frg::endlog;
 
 #ifdef MLIBC_MAP_FILE_WINDOWS

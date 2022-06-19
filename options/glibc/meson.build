@@ -27,13 +27,15 @@ if not no_headers
 		'include/memory.h',
 		'include/printf.h',
 		'include/gshadow.h',
-		'include/execinfo.h'
+		'include/execinfo.h',
+		'include/features.h'
 	)
 	install_headers(
 		'include/sys/dir.h',
 		'include/sys/ioctl.h',
 		'include/sys/user.h',
 		'include/sys/procfs.h',
+		'include/sys/reg.h',
 		subdir: 'sys'
 	)
 	install_headers(

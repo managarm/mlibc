@@ -12,6 +12,9 @@
 extern "C" {
 #endif
 
+extern const struct in6_addr in6addr_any;
+extern const struct in6_addr in6addr_loopback;
+
 uint32_t htonl(uint32_t);
 uint16_t htons(uint16_t);
 uint32_t ntohl(uint32_t);

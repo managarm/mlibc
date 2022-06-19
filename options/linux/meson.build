@@ -17,7 +17,6 @@ libc_sources += files(
 	'generic/sys-timerfd.cpp',
 	'generic/sys-eventfd.cpp',
 	'generic/sys-reboot.cpp',
-	'generic/netinet-in6addr.cpp',
 	'generic/utmp-stubs.cpp',
 	'generic/utmpx.cpp',
 	'generic/linux-unistd.cpp',
