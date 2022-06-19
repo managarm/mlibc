@@ -1,8 +1,6 @@
-if not static
-	rtdl_sources += files(
-		'generic/sysdeps.cpp',
-	)
-endif
+rtdl_dso_sources += files(
+	'generic/sysdeps.cpp',
+)
 
 rtdl_include_dirs += include_directories(host_machine.cpu_family())
 libc_include_dirs += include_directories(host_machine.cpu_family())

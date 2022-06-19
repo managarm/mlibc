@@ -100,10 +100,16 @@ test_sources = [
 # since it is internal to libc.so and ld.so.
 test_override_options = ['b_sanitize=none']
 
-if static
-	test_sources += '../options/internal/gcc-extra/mlibc_crtbegin.S'
-	test_sources += '../options/internal' / host_machine.cpu_family() / 'mlibc_crtend.S'
+if library_type == 'static'
+	libc = libc_static
+	test_sources += [
+		'../options/internal/gcc-extra/mlibc_crtbegin.S',
+		'../options/internal' / host_machine.cpu_family() / 'mlibc_crtend.S',
+	]
 	test_link_args += '-static'
+else
+	libc = libc_shared
+	rtdl_test_cases += 'dl_iterate_phdr'
 endif
 
 if not disable_ansi_option
