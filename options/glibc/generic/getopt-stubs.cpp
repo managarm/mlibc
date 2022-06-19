@@ -43,7 +43,7 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 
 				if(k >= 0) {
 					if(opterr)
-						fprintf(stderr, "Multiple option declaration detected.\n", arg);
+						fprintf(stderr, "Multiple option declaration detected: %s\n", arg);
 					return '?';
 				}
 				k = i;

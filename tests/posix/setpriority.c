@@ -15,7 +15,7 @@ int main() {
 	int ret = setpriority(PRIO_PROCESS, getpid(), original_priority + 1);
 
 	if(ret) {
-		fprintf(stderr, strerror(errno));
+		fprintf(stderr, "%s", strerror(errno));
 		exit(1);
 	}
 

@@ -81,6 +81,9 @@ int main() {
 	// assert(!strcmp(buf, "1.20 "));
 
 	// Test '+' and ' ' flags - mlibc issue #229.
+	// Disable -Wformat here since we deliberately induce some warnings.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
 	sprintf(buf, "%+d", 12);
 	assert(!strcmp(buf, "+12"));
 	sprintf(buf, "% d", 12);
@@ -97,6 +100,7 @@ int main() {
 	assert(!strcmp(buf, "-12"));
 	sprintf(buf, "%+ d", -12);
 	assert(!strcmp(buf, "-12"));
+#pragma GCC diagnostic pop
 
 	// Test '#' flag.
 	// TODO: Test with a, A, e, E, f, F, g, G conversions.
@@ -117,11 +121,11 @@ int main() {
 	// if they work
 	sprintf(buf, "%d", 12);
 	assert(!strcmp(buf, "12"));
-	sprintf(buf, "%ld", 12);
+	sprintf(buf, "%ld", 12L);
 	assert(!strcmp(buf, "12"));
-	sprintf(buf, "%lld", 12);
+	sprintf(buf, "%lld", 12LL);
 	assert(!strcmp(buf, "12"));
-	sprintf(buf, "%zd", 12);
+	sprintf(buf, "%zd", (size_t)12);
 	assert(!strcmp(buf, "12"));
 	sprintf(buf, "%hd", 12);
 	assert(!strcmp(buf, "12"));
@@ -132,11 +136,11 @@ int main() {
 	// if they work
 	sprintf(buf, "%x", 12);
 	assert(!strcmp(buf, "c"));
-	sprintf(buf, "%lx", 12);
+	sprintf(buf, "%lx", 12L);
 	assert(!strcmp(buf, "c"));
-	sprintf(buf, "%llx", 12);
+	sprintf(buf, "%llx", 12LL);
 	assert(!strcmp(buf, "c"));
-	sprintf(buf, "%zx", 12);
+	sprintf(buf, "%zx", (size_t)12);
 	assert(!strcmp(buf, "c"));
 	sprintf(buf, "%hx", 12);
 	assert(!strcmp(buf, "c"));
@@ -147,11 +151,11 @@ int main() {
 	// if they work
 	sprintf(buf, "%X", 12);
 	assert(!strcmp(buf, "C"));
-	sprintf(buf, "%lX", 12);
+	sprintf(buf, "%lX", 12L);
 	assert(!strcmp(buf, "C"));
-	sprintf(buf, "%llX", 12);
+	sprintf(buf, "%llX", 12LL);
 	assert(!strcmp(buf, "C"));
-	sprintf(buf, "%zX", 12);
+	sprintf(buf, "%zX", (size_t)12);
 	assert(!strcmp(buf, "C"));
 	sprintf(buf, "%hX", 12);
 	assert(!strcmp(buf, "C"));
@@ -162,11 +166,11 @@ int main() {
 	// if they work
 	sprintf(buf, "%o", 12);
 	assert(!strcmp(buf, "14"));
-	sprintf(buf, "%lo", 12);
+	sprintf(buf, "%lo", 12L);
 	assert(!strcmp(buf, "14"));
-	sprintf(buf, "%llo", 12);
+	sprintf(buf, "%llo", 12LL);
 	assert(!strcmp(buf, "14"));
-	sprintf(buf, "%zo", 12);
+	sprintf(buf, "%zo", (size_t)12);
 	assert(!strcmp(buf, "14"));
 	sprintf(buf, "%ho", 12);
 	assert(!strcmp(buf, "14"));
