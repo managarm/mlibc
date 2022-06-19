@@ -3,6 +3,7 @@
 ![Continuous Integration](https://github.com/managarm/mlibc/workflows/Continuous%20Integration/badge.svg)
 
 **Official Discord server:** https://discord.gg/7WB6Ur3
+
 **AUR package** (provides `mlibc-gcc`): https://aur.archlinux.org/packages/mlibc
 
 ## Design of the library
