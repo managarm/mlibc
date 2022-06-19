@@ -39,6 +39,7 @@ extern "C" {
 #define O_LARGEFILE __MLIBC_O_LARGEFILE
 #define O_NOATIME __MLIBC_O_NOATIME
 #define O_TMPFILE __MLIBC_O_TMPFILE
+#define O_DIRECT __MLIBC_O_DIRECT
 
 // MISSING: AT macros
 
