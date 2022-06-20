@@ -3,9 +3,7 @@
 
 #include <stdint.h>
 #include <abi-bits/signal.h>
-
-#define EPOLL_CLOEXEC 1
-#define EPOLL_NONBLOCK 2
+#include <abi-bits/epoll.h>
 
 // These constants match the Linux definitions.
 #define EPOLLIN 0x001
