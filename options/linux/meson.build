@@ -23,6 +23,7 @@ libc_sources += files(
 	'generic/malloc.cpp',
 	'generic/sys-fsuid.cpp',
 	'generic/ifaddrs.cpp',
+	'generic/sys-sysinfo.cpp',
 )
 
 if not no_headers
@@ -65,6 +66,7 @@ if not no_headers
 		'include/sys/reboot.h',
 		'include/sys/fsuid.h',
 		'include/sys/vt.h',
+		'include/sys/sysinfo.h',
 		subdir: 'sys'
 	)
 endif
