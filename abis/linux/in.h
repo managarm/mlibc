@@ -44,6 +44,12 @@ struct ip_mreq {
 	struct in_addr imr_interface;
 };
 
+struct ip_mreq_source {
+	struct in_addr imr_multiaddr;
+	struct in_addr imr_interface;
+	struct in_addr imr_sourceaddr;
+};
+
 struct ipv6_mreq {
 	struct in6_addr ipv6mr_multiaddr;
 	unsigned        ipv6mr_interface;
