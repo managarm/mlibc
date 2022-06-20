@@ -42,6 +42,7 @@ jobs:
             run: 'C=gcc-10 CXX=g++-10 meson test -v -C pkg-builds/${{matrix.builds}}'
             working-directory: build/
           - name: Build GCC
+            if: ${{matrix.builds == 'mlibc'}}
             run: 'xbstrap install-tool gcc'
             working-directory: build/
 
