@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
 #include <unistd.h>
 #include <limits.h>
 #include <termios.h>
@@ -683,9 +684,13 @@ unsigned long sysconf(int number) {
 		case _SC_PAGE_SIZE:
 			return mlibc::page_size;
 		case _SC_OPEN_MAX:
-			// TODO: actually return a proper value for _SC_OPEN_MAX
-			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_OPEN_MAX) returns arbitrary value 256\e[39m" << frg::endlog;
-			return 256;
+			struct rlimit ru;
+			if (getrlimit(RLIMIT_NOFILE, &ru) < 0) {
+				mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_OPEN_MAX) returns arbitrary value 256\e[39m" << frg::endlog;
+				return 256;
+			} else {
+				return (ru.rlim_cur == RLIM_INFINITY) ? -1 : ru.rlim_cur;
+			}
 		case _SC_PHYS_PAGES:
 			// TODO: actually return a proper value for _SC_PHYS_PAGES
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_PHYS_PAGES) returns arbitrary value 1024\e[39m" << frg::endlog;
