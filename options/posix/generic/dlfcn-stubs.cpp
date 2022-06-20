@@ -26,12 +26,18 @@ char *dlerror(void) {
 }
 
 void *dlopen(const char *file, int flags) {
+	// The following three flags are glibc extensions.
 	// TODO: Validate the flags.
 	if(flags & RTLD_NOLOAD) {
 		mlibc::infoLogger() << "\e[31mmlibc: dlopen(RTLD_NOLOAD) always fails\e[39m"
 				<< frg::endlog;
 		return nullptr;
 	}
+
+	int unhandled = flags & (RTLD_NODELETE | RTLD_DEEPBIND);
+	if (unhandled)
+		mlibc::infoLogger() << "mlibc: unhandled dlopen flags " << unhandled << frg::endlog;
+
 	return __dlapi_open(file, !(flags & RTLD_GLOBAL));
 }
 

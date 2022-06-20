@@ -12,11 +12,16 @@
 #include <internal-config.h>
 #include "linker.hpp"
 
+#ifdef __MLIBC_POSIX_OPTION
+#include <dlfcn.h>
+#endif
+
 #define HIDDEN  __attribute__ ((visibility ("hidden")))
 #define EXPORT  __attribute__ ((visibility ("default")))
 
 static constexpr bool logEntryExit = false;
 static constexpr bool logStartup = false;
+static constexpr bool logDlCalls = false;
 
 #ifndef MLIBC_STATIC_BUILD
 extern HIDDEN void *_GLOBAL_OFFSET_TABLE_[];
@@ -316,12 +321,14 @@ void *__dlapi_get_tls(struct __abi_tls_entry *entry) {
 	return reinterpret_cast<char *>(accessDtv(entry->object)) + entry->offset;
 }
 
+#ifdef __MLIBC_POSIX_OPTION
+
 extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_open(const char *file, int local) {
 	// TODO: Thread-safety!
 	auto rts = rtsCounter++;
 	if(local)
-		mlibc::infoLogger() << "\e[31mrtdl: RTLD_LOCAL is not supported properly\e[39m"
+		mlibc::infoLogger() << "\e[31mrtdl: RTLD_LOCAL " << file << " is not supported properly\e[39m"
 				<< frg::endlog;
 
 	if(!file)
@@ -377,12 +384,16 @@ void *__dlapi_open(const char *file, int local) {
 
 extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_resolve(void *handle, const char *string) {
-	mlibc::infoLogger() << "rtdl: __dlapi_resolve(" << string << ")" << frg::endlog;
+	if (logDlCalls)
+		mlibc::infoLogger() << "rtdl: __dlapi_resolve(" << handle << ", " << string << ")" << frg::endlog;
 
-	__ensure(handle != reinterpret_cast<void *>(-1));
+	__ensure(handle != RTLD_NEXT);
 
 	frg::optional<ObjectSymbol> target;
-	if(handle) {
+
+	if (handle == RTLD_DEFAULT) {
+		target = Scope::resolveWholeScope(globalScope.get(), string, 0);
+	} else {
 		// POSIX does not unambiguously state how dlsym() is supposed to work; it just
 		// states that "The symbol resolution algorithm used shall be dependency order
 		// as described in dlopen()".
@@ -422,12 +433,12 @@ void *__dlapi_resolve(void *handle, const char *string) {
 				queue.push_back(dep);
 			}
 		}
-	}else{
-		target = Scope::resolveWholeScope(globalScope.get(), string, 0);
 	}
 
 	if (!target) {
-		mlibc::infoLogger() << "rtdl: could not resolve \"" << string << "\"" << frg::endlog;
+		if (logDlCalls)
+			mlibc::infoLogger() << "rtdl: could not resolve \"" << string << "\"" << frg::endlog;
+
 		lastError = "Cannot resolve requested symbol";
 		return nullptr;
 	}
@@ -443,7 +454,8 @@ struct __dlapi_symbol {
 
 extern "C" [[ gnu::visibility("default") ]]
 int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
-	mlibc::infoLogger() << "rtdl: __dlapi_reverse(" << ptr << ")" << frg::endlog;
+	if (logDlCalls)
+		mlibc::infoLogger() << "rtdl: __dlapi_reverse(" << ptr << ")" << frg::endlog;
 
 	for(size_t i = 0; i < globalScope->_objects.size(); i++) {
 		auto object = globalScope->_objects[i];
@@ -465,8 +477,10 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 			ObjectSymbol cand{object, (Elf64_Sym *)(object->baseAddress
 					+ object->symbolTableOffset + i * sizeof(Elf64_Sym))};
 			if(eligible(cand) && cand.virtualAddress() == reinterpret_cast<uintptr_t>(ptr)) {
-				mlibc::infoLogger() << "rtdl: Found symbol " << cand.getString() << " in object "
-						<< object->path << frg::endlog;
+				if (logDlCalls)
+					mlibc::infoLogger() << "rtdl: Found symbol " << cand.getString() << " in object "
+							<< object->path << frg::endlog;
+
 				info->file = object->path.data();
 				info->base = reinterpret_cast<void *>(object->baseAddress);
 				info->symbol = cand.getString();
@@ -498,9 +512,13 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 		}
 	}
 
-	mlibc::infoLogger() << "rtdl: Could not find symbol in __dlapi_reverse()" << frg::endlog;
+	if (logDlCalls)
+		mlibc::infoLogger() << "rtdl: Could not find symbol in __dlapi_reverse()" << frg::endlog;
+
 	return -1;
 }
+
+#endif
 
 extern "C" [[ gnu::visibility("default") ]]
 int __dlapi_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void*), void *data) {
@@ -533,3 +551,4 @@ void __dlapi_enter(uintptr_t *entry_stack) {
 	(void)entry_stack;
 #endif
 }
+
