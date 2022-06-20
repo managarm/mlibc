@@ -68,3 +68,8 @@ int setitimer(int which, const struct itimerval *new_value, struct itimerval *ol
 	}
 	return 0;
 }
+
+int timer_create(clockid_t, struct sigevent *__restrict, timer_t *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
