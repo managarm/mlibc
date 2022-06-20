@@ -11,7 +11,7 @@ int main() {
 	assert(fd >= 0);
 
 	char *str = "mlibc fdopen test";
-	write(fd, str, strlen(str));
+	assert(write(fd, str, strlen(str)));
 
 	// Seek to the beginning, then reopen with fdopen in append mode.
 	lseek(fd, 0, SEEK_SET);
@@ -31,7 +31,7 @@ int main() {
 	assert(file);
 	str = "mlibc fdopen test appended";
 	char buf[100] = {0};
-	fread(buf, strlen(str), 1, file);
+	assert(fread(buf, 1, strlen(str), file));
 	assert(!strcmp(buf, str));
 	fclose(file);
 }

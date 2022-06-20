@@ -17,7 +17,7 @@ void prepare() {
 	assert(!mkdir(TEST_BASE "/dir1", S_IRWXU));
 	assert(!mkdir(TEST_BASE "/dir2", S_IRWXU));
 	assert(!symlink(TEST_BASE "/dir2/", TEST_BASE "/dir1/abs-link"));
-	chdir(TEST_BASE "/dir1");
+	assert(!chdir(TEST_BASE "/dir1"));
 	assert(!symlink("../dir2/", TEST_BASE "/dir1/rel-link"));
 }
 
