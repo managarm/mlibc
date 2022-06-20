@@ -39,6 +39,11 @@ struct sockaddr_in6 {
 	uint32_t        sin6_scope_id;
 };
 
+struct ip_mreq {
+	struct in_addr imr_multiaddr;
+	struct in_addr imr_interface;
+};
+
 struct ipv6_mreq {
 	struct in6_addr ipv6mr_multiaddr;
 	unsigned        ipv6mr_interface;
