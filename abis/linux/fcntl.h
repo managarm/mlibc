@@ -73,9 +73,17 @@
 #define AT_EACCESS 0x200
 #define AT_EMPTY_PATH 0x1000
 
+
 struct f_owner_ex {
 	int type;
 	pid_t pid;
 };
+
+#define POSIX_FADV_NORMAL 0
+#define POSIX_FADV_RANDOM 1
+#define POSIX_FADV_SEQUENTIAL 2
+#define POSIX_FADV_WILLNEED 3
+#define POSIX_FADV_DONTNEED 4
+#define POSIX_FADV_NOREUSE 5
 
 #endif // _ABIBITS_FCNTL_H
