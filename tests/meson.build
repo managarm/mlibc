@@ -65,6 +65,7 @@ all_test_cases = [
 	'posix/alarm',
 	'posix/abort', # This test should be in the ANSI tests, but it depends on sigaction
 	'posix/timer',
+	'posix/vfork',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 ]

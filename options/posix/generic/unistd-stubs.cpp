@@ -955,6 +955,37 @@ pid_t fork(void) {
 	return child;
 }
 
+pid_t vfork(void) {
+	pid_t child;
+	/*
+	 * Fork handlers established using pthread_atfork(3) are not
+	 * called when a multithreaded program employing the NPTL
+	 * threading library calls vfork().  Fork handlers are called
+	 * in this case in a program using the LinuxThreads threading
+	 * library.  (See pthreads(7) for a description of Linux
+	 * threading libraries.)
+	 *  - vfork(2), release 5.13 of the Linux man-pages project
+	 *
+	 *  as a result, we call sys_fork instead of running atforks
+	 */
+
+	/* deferring to fork as implementing vfork correctly requires assembly
+	 * to handle not mucking up the stack
+	 */
+	if(!mlibc::sys_fork) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if(int e = mlibc::sys_fork(&child); e) {
+		errno = e;
+		return -1;
+	}
+
+	return child;
+}
+
 int execve(const char *path, char *const argv[], char *const envp[]) {
 	char *null_list[] = {
 		nullptr
