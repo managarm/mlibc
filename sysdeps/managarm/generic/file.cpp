@@ -2249,7 +2249,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			return EINVAL;
 		}
 
-		*result = 0;
+		*result = resp.result();
 		return 0;
 	}
 	case DRM_IOCTL_MODE_GETPROPBLOB: {
@@ -2924,6 +2924,21 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	case DRM_IOCTL_MODE_SETGAMMA: {
 		mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_MODE_SETGAMMA"
 				" is not implemented correctly\e[39m" << frg::endlog;
+		return 0;
+	}
+	case DRM_IOCTL_MODE_CREATE_LEASE: {
+		auto param = reinterpret_cast<drm_mode_create_lease *>(arg);
+
+		mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_MODE_CREATE_LEASE"
+				" is a noop\e[39m" << frg::endlog;
+		param->lessee_id = 1;
+		param->fd = fd;
+		*result = 0;
+		return 0;
+	}
+	case DRM_IOCTL_GEM_CLOSE: {
+		mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_GEM_CLOSE"
+				" is a noop\e[39m" << frg::endlog;
 		return 0;
 	}
 	case TCGETS: {
@@ -4047,7 +4062,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	}else if(whence == SEEK_END) {
 		req.set_req_type(managarm::fs::CntReqType::SEEK_EOF);
 	}else{
-		mlibc::panicLogger() << "Illegal whence argument " << whence << frg::endlog;
+		return EINVAL;
 	}
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
