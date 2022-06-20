@@ -40,6 +40,7 @@ template<>
 struct char_detail<char> {
 	static bool isSpace(char c) { return isspace(c); }
 	static bool isDigit(char c) { return isdigit(c); }
+	static bool isHexDigit(char c) { return isxdigit(c); }
 	static bool isLower(char c) { return islower(c); }
 	static bool isUpper(char c) { return isupper(c); }
 };
@@ -48,6 +49,7 @@ template<>
 struct char_detail<wchar_t> {
 	static bool isSpace(wchar_t c) { return iswspace(c); }
 	static bool isDigit(wchar_t c) { return iswdigit(c); }
+	static bool isHexDigit(wchar_t c) { return iswxdigit(c); }
 	static bool isLower(wchar_t c) { return iswlower(c); }
 	static bool isUpper(wchar_t c) { return iswupper(c); }
 };
@@ -78,9 +80,15 @@ Return stringToInteger(const Char *__restrict nptr, Char **__restrict endptr, in
 		s++;
 	}
 
+
 	bool hasOctalPrefix = s[0] == widen<Char>('0');
 	bool hasHexPrefix = hasOctalPrefix && (s[1] == widen<Char>('x') || s[1] == widen<Char>('X'));
-	if ((base == 0 || base == 16) && hasHexPrefix) {
+
+	// There's two tricky cases we need to keep in mind here:
+	//   1. We should interpret "0x5" as hex 5 rather than octal 0.
+	//   2. We should interpret "0x" as octal 0 (and set endptr correctly).
+	// To deal with 2, we check the charcacter following the hex prefix.
+	if ((base == 0 || base == 16) && hasHexPrefix && char_detail<Char>::isHexDigit(s[2])) {
 		s += 2;
 		base = 16;
 	} else if ((base == 0 || base == 8) && hasOctalPrefix) {
