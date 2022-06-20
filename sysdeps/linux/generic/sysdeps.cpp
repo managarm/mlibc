@@ -361,7 +361,7 @@ extern "C" const char __mlibc_syscall_end[1];
 
 int sys_before_cancellable_syscall(ucontext_t *uct) {
 #if defined(__x86_64__)
-	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.rip);
+	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.gregs[REG_RIP]);
 #elif defined(__riscv)
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.sc_regs.pc);
 #else
@@ -458,6 +458,14 @@ int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval
 	auto ret = do_syscall(NR_setitimer, which, new_value, old_value);
 	if (int e = sc_error(ret); e)
 		return e;
+	return 0;
+}
+
+int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out) {
+	auto ret = do_syscall(NR_ptrace, req, pid, addr, data);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<long>(ret);
 	return 0;
 }
 

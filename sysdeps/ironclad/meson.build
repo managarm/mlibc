@@ -36,7 +36,8 @@ if not no_headers
 		'include/abi-bits/uid_t.h',
 		'include/abi-bits/wait.h',
 		'include/abi-bits/limits.h',
-      'include/abi-bits/utsname.h',
+		'include/abi-bits/utsname.h',
+		'include/abi-bits/ptrace.h',
 		subdir: 'abi-bits'
 	)
 	install_headers(
