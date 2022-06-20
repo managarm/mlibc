@@ -28,7 +28,8 @@ struct timex {
 	long calcnt;
 	long errcnt;
 	long stbcnt;
-	long tai;
+	int tai;
+	int __padding[11];
 };
 
 #define ADJ_OFFSET 0x0001
@@ -62,7 +63,9 @@ struct timex {
 #define STA_MODE 0x4000
 #define STA_CLK 0x8000
 
+int adjtimex(struct timex *);
 int clock_adjtime(clockid_t clk_id, struct timex *buf);
+int ntp_adjtime(struct timex *);
 
 #ifdef __cplusplus
 }
