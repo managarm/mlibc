@@ -64,6 +64,7 @@
 #define SYS_fchown 93
 #define SYS_getrlimit 97
 #define SYS_getrusage 97
+#define SYS_times 100
 #define SYS_ptrace 101
 #define SYS_getuid 102
 #define SYS_getgid 104

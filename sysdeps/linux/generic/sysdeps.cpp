@@ -655,6 +655,14 @@ int sys_reboot(int cmd) {
 
 #endif // __MLIBC_POSIX_OPTION
 
+int sys_times(struct tms *tms, clock_t *out) {
+	auto ret = do_syscall(SYS_times, tms);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<long>(ret);
+	return 0;
+}
+
 pid_t sys_getpid() {
 	auto ret = do_syscall(SYS_getpid);
 	// getpid() always succeeds.
