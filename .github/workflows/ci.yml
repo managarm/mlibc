@@ -6,7 +6,7 @@ jobs:
     build-mlibc:
         strategy:
             matrix:
-                builds: [mlibc, mlibc-static, mlibc-ansi-only]
+                builds: [mlibc, mlibc-static, mlibc-ansi-only, mlibc-headers-only]
         name: Build mlibc
         runs-on: ubuntu-20.04
         steps:

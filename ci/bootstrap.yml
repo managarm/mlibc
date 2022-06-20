@@ -129,3 +129,22 @@ packages:
         environ:
           DESTDIR: '@THIS_COLLECT_DIR@'
         quiet: true
+
+  - name: mlibc-headers-only
+    from_source: mlibc
+    configure:
+      - args:
+        - 'meson'
+        - '--prefix=/usr'
+        - '--libdir=lib'
+        - '--buildtype=debugoptimized'
+        - "-Db_sanitize=undefined"
+        - "-Dwerror=true"
+        - "-Dheaders_only=true"
+        - '@THIS_SOURCE_DIR@'
+    build:
+      - args: ['ninja']
+      - args: ['ninja', 'install']
+        environ:
+          DESTDIR: '@THIS_COLLECT_DIR@'
+        quiet: true
