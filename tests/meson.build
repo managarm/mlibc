@@ -87,11 +87,6 @@ rtdl_test_cases = [
 
 test_link_args = []
 
-if not static
-	rtdl_test_cases += 'dl_iterate_phdr'
-	test_link_args += ['-no-pie', '-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so']
-endif
-
 test_sources = [
 	crt
 ]
@@ -110,6 +105,7 @@ if library_type == 'static'
 else
 	libc = libc_shared
 	rtdl_test_cases += 'dl_iterate_phdr'
+	test_link_args += ['-no-pie', '-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so']
 endif
 
 if not disable_ansi_option

@@ -107,6 +107,27 @@ packages:
           DESTDIR: '@THIS_COLLECT_DIR@'
         quiet: true
 
+  - name: mlibc-shared
+    from_source: mlibc
+    configure:
+      - args:
+        - 'meson'
+        - '--prefix=/usr'
+        - '--libdir=lib'
+        - '--buildtype=debugoptimized'
+        - "-Dbuild_tests=true"
+        - "-Db_sanitize=undefined"
+        - "-Ddefault_library=shared"
+        - "-Dwerror=true"
+        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
+        - '@THIS_SOURCE_DIR@'
+    build:
+      - args: ['ninja']
+      - args: ['ninja', 'install']
+        environ:
+          DESTDIR: '@THIS_COLLECT_DIR@'
+        quiet: true
+
   - name: mlibc-ansi-only
     architecture: '@OPTION:arch@'
     from_source: mlibc

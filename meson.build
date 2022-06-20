@@ -350,7 +350,6 @@ if not headers_only
 			link_whole: libc_sublibs,
 			install: true
 		)
-
 	endif
 
 	library('pthread', 'dummy-libs/libpthread/src/dummy.cpp', install: true)
