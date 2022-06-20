@@ -5,7 +5,8 @@ namespace {
 	// Needed since we cannot declare a templated enum.
 	template<typename T>
 	struct word_helper {
-		enum class [[gnu::may_alias, gnu::aligned(1)]] word_enum : T { };
+		using underlying [[gnu::aligned(1)]] = T;
+		enum class [[gnu::may_alias]] word_enum : underlying { };
 	};
 
 	template<typename T>

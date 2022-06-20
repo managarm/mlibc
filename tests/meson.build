@@ -92,6 +92,10 @@ test_sources = [
 	crt
 ]
 
+# Our ubsan implementation can't be used by the tests themselves,
+# since it is internal to libc.so and ld.so.
+test_override_options = ['b_sanitize=none']
+
 if static
 	test_sources += '../options/internal/gcc-extra/mlibc_crtbegin.S'
 	test_sources += '../options/internal' / host_machine.cpu_family() / 'mlibc_crtend.S'
@@ -102,6 +106,7 @@ if not disable_ansi_option
 		exec = executable('ansi-' + f, ['ansi/' + f + '.c', test_sources],
 			link_with: libc, include_directories: libc_include_dirs,
 			build_rpath: meson.build_root(),
+			override_options: test_override_options,
 			c_args: '-no-pie',
 			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
 				'-no-pie'])
@@ -114,6 +119,7 @@ if not disable_bsd_option
 		exec = executable('ansi-' + f, ['bsd/' + f + '.c', test_sources],
 			link_with: libc, include_directories: libc_include_dirs,
 			build_rpath: meson.build_root(),
+			override_options: test_override_options,
 			c_args: '-no-pie',
 			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
 				'-no-pie'])
@@ -126,6 +132,7 @@ if not disable_posix_option
 		exec = executable('posix-' + f, ['posix/' + f + '.c', test_sources],
 			link_with: libc, include_directories: libc_include_dirs,
 			build_rpath: meson.build_root(),
+			override_options: test_override_options,
 			c_args: '-no-pie',
 			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
 				'-no-pie'])
@@ -136,6 +143,7 @@ if not disable_posix_option
 		exec = executable('posix-' + f, ['posix/' + f + '.c', test_sources],
 			link_with: libc, include_directories: libc_include_dirs,
 			build_rpath: meson.build_root(),
+			override_options: test_override_options,
 			c_args: '-no-pie',
 			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
 				'-no-pie'])
@@ -149,6 +157,7 @@ if not disable_posix_option
 		exec = executable('glibc-' + f, ['glibc/' + f + '.c', test_sources],
 			link_with: libc, include_directories: libc_include_dirs,
 			build_rpath: meson.build_root(),
+			override_options: test_override_options,
 			c_args: '-no-pie',
 			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
 				'-no-pie'])
@@ -160,6 +169,7 @@ foreach f : rtdl_test_cases
     exec = executable('rtdl-' + f, ['rtdl/' + f + '.c', test_sources],
 	    link_with: libc, include_directories: libc_include_dirs,
 	    build_rpath: meson.build_root(),
+		override_options: test_override_options,
 	    c_args: '-no-pie',
 	    link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
 		    '-no-pie'])

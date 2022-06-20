@@ -1,20 +1,31 @@
 #include <assert.h>
 #include <string.h>
+#include <limits.h>
 
 int main(void){
-    long test1 = 1L << (sizeof(long) * 8 - 1);
-    long long test2 = 1LL << (sizeof(long long) * 8 - 1);
+	// ffsl
+	assert(ffsl(0x8000) == 16);
+	assert(ffsl(0) == 0);
+	assert(ffsl(LLONG_MAX - 1) ==  2);
+	assert(ffsl(LLONG_MAX) == 1);
+	assert(ffsl(LONG_MIN) == (long)(sizeof(long) * CHAR_BIT));
+	assert(ffsl(LONG_MIN + 1) == 1);
 
-    assert(ffsl(test1) == sizeof(long) * 8);
-    assert(ffsll(test2) == sizeof(long long) * 8);
-    assert(ffsl(0) == 0);
-    assert(ffsll(0) == 0);
-    assert(ffsl(test1) == ffsll(test1));
-    if(sizeof(long) < sizeof(long long)){
-        assert(ffsl(test1) < ffsll(test2));
-    } else {
-        assert(ffsl(test2) == ffsll(test2));
-    }
+	for (int i = 1; i < 0x1000; i++) {
+		assert(ffsl(i) - 1 == __builtin_ctz(i));
+	}
 
-    return 0;
+	// ffsll
+	assert(ffsll(0x8000) == 16);
+	assert(ffsll(0) == 0);
+	assert(ffsll(LLONG_MAX - 1) ==  2);
+	assert(ffsll(LLONG_MAX) == 1);
+	assert(ffsll(LLONG_MIN) == (long long)(sizeof(long long) * CHAR_BIT));
+	assert(ffsll(LLONG_MIN + 1) == 1);
+
+	for (int i = 1; i < 0x1000; i++) {
+		assert(ffsll(i) - 1 == __builtin_ctz(i));
+	}
+
+	return 0;
 }

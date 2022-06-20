@@ -216,6 +216,7 @@ internal_sources = [
 	'options/internal/generic/frigg.cpp',
 	'options/internal/generic/inline-emitter.cpp',
 	'options/internal/generic/sigset.cpp',
+	'options/internal/generic/ubsan.cpp',
 	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc/initfini.cpp',
@@ -261,6 +262,7 @@ rtdl_sources += [
 	'options/internal/generic/essential.cpp',
 	'options/internal/generic/inline-emitter.cpp',
 	'options/internal/generic/frigg.cpp',
+	'options/internal/generic/ubsan.cpp',
 	'options/rtdl/generic/main.cpp',
 	'options/rtdl/generic/linker.cpp',
 	'options/rtdl' / host_machine.cpu_family() / 'runtime.S'
