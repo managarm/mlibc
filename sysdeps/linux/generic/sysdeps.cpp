@@ -826,6 +826,17 @@ int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 	return 0;
 }
 
+int sys_mknodat(int dirfd, const char *path, int mode, int dev) {
+	auto ret = do_syscall(SYS_mknodat, dirfd, path, mode, dev);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_mkfifoat(int dirfd, const char *path, int mode) {
+	return sys_mknodat(dirfd, path, mode | S_IFIFO, 0);
+}
+
 int sys_symlink(const char *target_path, const char *link_path) {
 	auto ret = do_syscall(SYS_symlinkat, target_path, AT_FDCWD, link_path);
 	if (int e = sc_error(ret); e)

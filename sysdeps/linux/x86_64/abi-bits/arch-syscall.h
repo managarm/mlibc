@@ -98,6 +98,7 @@
 #define SYS_tgkill 234
 #define SYS_openat 257
 #define SYS_mkdirat 258
+#define SYS_mknodat 259
 #define SYS_newfstatat 262
 #define SYS_unlinkat 263
 #define SYS_renameat 264
