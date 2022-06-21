@@ -67,7 +67,6 @@ all_test_cases = [
 	'posix/timer',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
-	'rtdl/dl_iterate_phdr',
 ]
 
 if host_machine.system() == 'linux'
