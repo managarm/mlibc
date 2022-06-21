@@ -120,6 +120,7 @@ int wcwidth(wchar_t wc);
 int wcswidth(const wchar_t *, size_t);
 wchar_t *wcsdup(const wchar_t *s);
 int wcsncasecmp(const wchar_t*, const wchar_t*, size_t);
+int wcscasecmp(const wchar_t *, const wchar_t *);
 
 #ifdef __cplusplus
 }
