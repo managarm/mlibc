@@ -72,5 +72,10 @@ jobs:
             uses: actions/checkout@v2
           - name: Compile sysdeps
             run: |
-                meson "-Dc_args=['-fno-stack-protector']" "-Dcpp_args=['-fno-stack-protector']" "-Dbuild_tests=true" "-Db_sanitize=undefined" --cross-file ci/${{matrix.sysdeps}}.cross-file compile-${{matrix.sysdeps}}
+                meson \
+                    "-Dc_args=['-fno-stack-protector', '-U__linux__']" \
+                    "-Dcpp_args=['-fno-stack-protector', '-U__linux__']" \
+                    "-Dbuild_tests=true" \
+                    "-Db_sanitize=undefined" \
+                    --cross-file ci/${{matrix.sysdeps}}.cross-file compile-${{matrix.sysdeps}}
                 ninja -C compile-${{matrix.sysdeps}}

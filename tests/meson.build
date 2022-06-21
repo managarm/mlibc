@@ -79,13 +79,17 @@ posix_fail_test_cases = [
 
 glibc_test_cases = [
 	'getopt',
-	'ffsl-ffsll'
+	'ffsl-ffsll',
 ]
 
 rtdl_test_cases = [
 ]
 
 test_link_args = []
+
+if host_machine.system() == 'linux'
+	glibc_test_cases += 'linux-syscall'
+endif
 
 test_sources = [
 	crt
