@@ -675,6 +675,29 @@ int sys_sethostname(const char *buffer, size_t bufsize) {
 	return 0;
 }
 
+int sys_epoll_create(int flags, int *fd) {
+	auto ret = do_syscall(SYS_epoll_create1, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*fd = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
+	auto ret = do_syscall(SYS_epoll_ctl, epfd, mode, fd, ev);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n, int timeout, const sigset_t *sigmask, int *raised) {
+	auto ret = do_syscall(SYS_epoll_pwait, epfd, ev, n, timeout, sigmask, NSIG / 8);
+	if (int e = sc_error(ret); e)
+		return e;
+	*raised = sc_int_result<int>(ret);
+	return 0;
+}
+
 int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
 	auto ret = do_syscall(SYS_eventfd2, initval, flags);
 	if (int e = sc_error(ret); e)

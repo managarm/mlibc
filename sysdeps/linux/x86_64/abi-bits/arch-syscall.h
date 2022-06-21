@@ -93,6 +93,8 @@
 #define SYS_clock_gettime 228
 #define SYS_clock_getres 229
 #define SYS_exit_group 231
+#define SYS_epoll_wait 232
+#define SYS_epoll_ctl 233
 #define SYS_tgkill 234
 #define SYS_openat 257
 #define SYS_mkdirat 258
@@ -106,9 +108,11 @@
 #define SYS_pselect6 270
 #define SYS_ppoll 271
 #define SYS_utimensat 280
+#define SYS_epoll_pwait 281
 #define SYS_accept4 288
 #define SYS_signalfd4 289
 #define SYS_eventfd2 290
+#define SYS_epoll_create1 291
 #define SYS_dup3 292
 #define SYS_pipe2 293
 #define SYS_getrandom 318
