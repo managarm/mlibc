@@ -739,6 +739,21 @@ int sys_signalfd_create(const sigset_t *masks, int flags, int *fd) {
 	return 0;
 }
 
+int sys_timerfd_create(int clockid, int flags, int *fd) {
+	auto ret = do_syscall(SYS_timerfd_create, clockid, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*fd = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_timerfd_settime(int fd, int flags, const struct itimerspec *value, struct itimerspec *oldvalue) {
+	auto ret = do_syscall(SYS_timerfd_settime, fd, flags, value, oldvalue);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {

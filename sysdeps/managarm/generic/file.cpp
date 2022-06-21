@@ -1595,7 +1595,8 @@ int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
 	return 0;
 }
 
-int sys_timerfd_create(int flags, int *fd) {
+int sys_timerfd_create(int clockid, int flags, int *fd) {
+	(void) clockid;
 	SignalGuard sguard;
 	HelAction actions[3];
 	globalQueue.trim();
@@ -1634,7 +1635,8 @@ int sys_timerfd_create(int flags, int *fd) {
 }
 
 int sys_timerfd_settime(int fd, int,
-		const struct itimerspec *value) {
+		const struct itimerspec *value, struct itimerspec *oldvalue) {
+	__ensure(!oldvalue);
 	SignalGuard sguard;
 	HelAction actions[3];
 	globalQueue.trim();

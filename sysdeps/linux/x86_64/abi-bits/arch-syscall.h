@@ -113,6 +113,8 @@
 #define SYS_ppoll 271
 #define SYS_utimensat 280
 #define SYS_epoll_pwait 281
+#define SYS_timerfd_create 283
+#define SYS_timerfd_settime 286
 #define SYS_accept4 288
 #define SYS_signalfd4 289
 #define SYS_eventfd2 290

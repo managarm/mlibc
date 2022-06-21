@@ -6,10 +6,10 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/linux-sysdeps.hpp>
 
-int timerfd_create(int, int flags) {
+int timerfd_create(int clockid, int flags) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timerfd_create, -1);
 	int fd;
-	if(int e = mlibc::sys_timerfd_create(flags, &fd); e) {
+	if(int e = mlibc::sys_timerfd_create(clockid, flags, &fd); e) {
 		errno = e;
 		return -1;
 	}
@@ -18,10 +18,8 @@ int timerfd_create(int, int flags) {
 
 int timerfd_settime(int fd, int flags, const struct itimerspec *value,
 		struct itimerspec *oldvalue) {
-	__ensure(!oldvalue);
-
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timerfd_settime, -1);
-	if(int e = mlibc::sys_timerfd_settime(fd, flags, value); e) {
+	if(int e = mlibc::sys_timerfd_settime(fd, flags, value, oldvalue); e) {
 		errno = e;
 		return -1;
 	}
