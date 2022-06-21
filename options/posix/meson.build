@@ -128,6 +128,7 @@ if not no_headers
 		'include/sys/utsname.h',
 		'include/sys/vfs.h',
 		'include/sys/wait.h',
+		'include/sys/syslog.h',
 		subdir: 'sys'
 	)
 	install_headers(
