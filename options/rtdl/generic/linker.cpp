@@ -6,6 +6,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/rtdl-sysdeps.hpp>
+#include <mlibc/rtdl-abi.hpp>
 #include <mlibc/thread.hpp>
 #include <internal-config.h>
 #include "linker.hpp"
@@ -19,13 +20,10 @@ bool eagerBinding = true;
 
 #if defined(__x86_64__)
 constexpr inline bool tlsAboveTp = false;
-constexpr inline unsigned long TLS_DTV_OFFSET = 0;
 #elif defined(__aarch64__)
 constexpr inline bool tlsAboveTp = true;
-constexpr inline unsigned long TLS_DTV_OFFSET = 0;
 #elif defined(__riscv)
 constexpr inline bool tlsAboveTp = true;
-constexpr inline unsigned long TLS_DTV_OFFSET = 0x800;
 #else
 #	error Unknown architecture
 #endif

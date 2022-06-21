@@ -9,7 +9,7 @@
 	extern "C" void *__tls_get_addr(struct __abi_tls_entry *entry) {
 		Tcb *tcbPtr = mlibc::get_current_tcb();
 		auto dtvPtr = reinterpret_cast<char *>(tcbPtr->dtvPointers[0]);
-		return reinterpret_cast<void *>(dtvPtr + entry->offset);
+		return reinterpret_cast<void *>(dtvPtr + entry->offset + TLS_DTV_OFFSET);
 	}
 #else
 	extern "C" void *__tls_get_addr(struct __abi_tls_entry *entry) {
