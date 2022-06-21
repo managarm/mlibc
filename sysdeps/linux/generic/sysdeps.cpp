@@ -838,6 +838,20 @@ int sys_msync(void *addr, size_t length, int flags) {
 	return 0;
 }
 
+int sys_swapon(const char *path, int flags) {
+	auto ret = do_syscall(SYS_swapon, path, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_swapoff(const char *path) {
+	auto ret = do_syscall(SYS_swapoff, path);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask) {
 	auto ret = do_syscall(SYS_sched_getaffinity, pid, cpusetsize, mask);
 	if (int e = sc_error(ret); e)
