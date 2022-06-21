@@ -57,12 +57,6 @@ if not no_headers
 		subdir: 'linux'
 	)
 	install_headers(
-		'include/scsi/scsi.h',
-		'include/scsi/scsi_ioctl.h',
-		'include/scsi/sg.h',
-		subdir: 'scsi'
-	)
-	install_headers(
 		'include/linux/netfilter/nfnetlink.h',
 		'include/linux/netfilter/nfnetlink_compat.h',
 		subdir: 'linux/netfilter'
