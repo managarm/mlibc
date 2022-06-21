@@ -81,7 +81,7 @@ void mem_file::_update_ptrs() {
 buf_file::buf_file(char *ptr, size_t size, void (*do_dispose)(abstract_file *))
 : abstract_file{do_dispose}, _buf{ptr}, _size{size}, _was_allocated{false}, _do_dispose(do_dispose) {
 	if (!_buf) {
-		_buf = (char*)malloc(_size);
+		_buf = reinterpret_cast<char *>(getAllocator().allocate(_size));
 		_was_allocated = true;
 	}
 }
@@ -90,7 +90,7 @@ int buf_file::close() {
 	if (_do_dispose)
 		_do_dispose(this);
 	if (_was_allocated)
-		free(_buf);
+		getAllocator().free(_buf);
 	_buf = nullptr;
 	return 0;
 }
