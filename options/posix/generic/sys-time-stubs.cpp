@@ -83,3 +83,8 @@ int timer_gettime(timer_t, struct itimerspec *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+int timer_delete(timer_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
