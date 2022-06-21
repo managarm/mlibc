@@ -898,6 +898,14 @@ int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
 	return 0;
 }
 
+int sys_umask(mode_t mode, mode_t *old) {
+	auto ret = do_syscall(SYS_umask, mode);
+	if (int e = sc_error(ret); e)
+		return e;
+	*old = sc_int_result<mode_t>(ret);
+	return 0;
+}
+
 int sys_chdir(const char *path) {
 	auto ret = do_syscall(SYS_chdir, path);
 	if (int e = sc_error(ret); e)

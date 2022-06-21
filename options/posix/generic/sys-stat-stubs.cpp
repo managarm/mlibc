@@ -100,10 +100,14 @@ int mknodat(int dirfd, const char *path, mode_t mode, dev_t dev) {
 	return 0;
 }
 
-mode_t umask(mode_t) {
-	mlibc::infoLogger() << "\e[31mmlibc: umask() is a no-op and always returns 0\e[39m"
-			<< frg::endlog;
-	return 0;
+mode_t umask(mode_t mode) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_umask, -1);
+	mode_t old;
+	if (int e = mlibc::sys_umask(mode, &old); e) {
+		errno = e;
+		return -1;
+	}
+	return old;
 }
 
 int utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags) {

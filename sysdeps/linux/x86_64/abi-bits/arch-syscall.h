@@ -62,6 +62,7 @@
 #define SYS_fchmod 91
 #define SYS_chown 92
 #define SYS_fchown 93
+#define SYS_umask 95
 #define SYS_getrlimit 97
 #define SYS_getrusage 97
 #define SYS_times 100
