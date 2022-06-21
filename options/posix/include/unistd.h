@@ -12,6 +12,10 @@
 #include <abi-bits/gid_t.h>
 #include <abi-bits/pid_t.h>
 
+#ifdef __linux__
+#include <bits/syscall.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
