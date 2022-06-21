@@ -7,16 +7,12 @@
 #include <mlibc/ansi-sysdeps.hpp>
 
 __sighandler signal(int sn, __sighandler handler) {
-	if(!mlibc::sys_sigaction) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return SIG_ERR;
-	}
 	struct sigaction sa;
 	sa.sa_handler = handler;
 	sa.sa_flags = 0;
 	sa.sa_mask = 0;
 	struct sigaction old;
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sigaction, SIG_ERR);
 	if(int e = mlibc::sys_sigaction(sn, &sa, &old)){
 		errno = e;
 		return SIG_ERR;
@@ -25,12 +21,7 @@ __sighandler signal(int sn, __sighandler handler) {
 }
 
 int raise(int sig) {
-	if(!mlibc::sys_getpid || !mlibc::sys_kill) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
-
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getpid && mlibc::sys_kill, -1);
 	pid_t pid = mlibc::sys_getpid();
 
 	if (int e = mlibc::sys_kill(pid, sig)) {
@@ -43,11 +34,7 @@ int raise(int sig) {
 
 // This is a POSIX extension, but we have it in here for sigsetjmp
 int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
-	if(!mlibc::sys_sigprocmask) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sigprocmask, -1);
 	if(int e = mlibc::sys_sigprocmask(how, set, retrieve); e) {
 		errno = e;
 		return -1;

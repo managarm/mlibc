@@ -27,12 +27,6 @@ void FD_ZERO(fd_set *set) {
 
 int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_set,
 		fd_set *__restrict except_set, struct timeval *__restrict timeout) {
-    if(!mlibc::sys_pselect) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
-
 	int num_events = 0;
 	struct timespec timeouts = {};
 	struct timespec *timeout_ptr = NULL;
@@ -42,6 +36,7 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 		timeout_ptr = &timeouts;
 	}
 
+    MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pselect, -1);
 	if(int e = mlibc::sys_pselect(num_fds, read_set, write_set, except_set,
 				timeout_ptr, NULL, &num_events); e) {
 		errno = e;
@@ -52,13 +47,8 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 
 int pselect(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set,
 		const struct timespec *timeout,	const sigset_t *sigmask) {
-	if(!mlibc::sys_pselect) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
-
 	int num_events = 0;
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pselect, -1);
 	if(int e = mlibc::sys_pselect(num_fds, read_set, write_set, except_set,
 				timeout, sigmask, &num_events); e) {
 		errno = e;

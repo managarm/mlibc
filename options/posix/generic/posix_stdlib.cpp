@@ -219,11 +219,7 @@ char *realpath(const char *path, char *out) {
 		resolv.push_back(0);
 		ps = 1;
 	}else{
-		if(!mlibc::sys_getcwd) {
-			MLIBC_MISSING_SYSDEP();
-			errno = ENOSYS;
-			return nullptr;
-		}
+		MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getcwd, nullptr);
 
 		// Try to getcwd() until the buffer is large enough.
 		resolv.resize(128);

@@ -8,11 +8,7 @@
 #include <mlibc/tcb.hpp>
 
 int sigsuspend(const sigset_t *sigmask) {
-	if(!mlibc::sys_sigsuspend) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sigsuspend, -1);
 
 	// This is guaranteed to return an error (EINTR most probably)
 	errno = mlibc::sys_sigsuspend(sigmask);
@@ -47,11 +43,7 @@ int pthread_kill(pthread_t thread, int sig) {
 }
 
 int sigaction(int signum, const struct sigaction *__restrict act, struct sigaction *__restrict oldact) {
-	if(!mlibc::sys_sigaction) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sigaction, -1);
 	if(int e = mlibc::sys_sigaction(signum, act, oldact); e) {
 		errno = e;
 		return -1;
@@ -74,11 +66,7 @@ int siginterrupt(int sig, int flag) {
 }
 
 int kill(pid_t pid, int number) {
-	if(!mlibc::sys_kill) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_kill, -1);
 	if(int e = mlibc::sys_kill(pid, number); e) {
 		errno = e;
 		return -1;
@@ -111,17 +99,12 @@ int sigpending(sigset_t *) {
 }
 
 int sigaltstack(const stack_t *__restrict ss, stack_t *__restrict oss) {
-	if (!mlibc::sys_sigaltstack) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
-
 	if (ss && ss->ss_size < MINSIGSTKSZ && !(ss->ss_flags & SS_DISABLE)) {
 		errno = ENOMEM;
 		return -1;
 	}
 
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sigaltstack, -1);
 	if (int e = mlibc::sys_sigaltstack(ss, oss); e) {
 		errno = e;
 		return -1;

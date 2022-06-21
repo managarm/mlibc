@@ -7,11 +7,7 @@
 #include <mlibc/posix-sysdeps.hpp>
 
 int statfs(const char *path, struct statfs *buf) {
-	if(!mlibc::sys_statfs) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_statfs, -1);
 	if(int e = mlibc::sys_statfs(path, buf); e) {
 		errno = e;
 		return -1;

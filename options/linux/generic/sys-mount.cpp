@@ -7,11 +7,7 @@
 
 int mount(const char *source, const char *target,
 		const char *fstype, unsigned long flags, const void *data) {
-	if(!mlibc::sys_mount) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_mount, -1);
 	if(int e = mlibc::sys_mount(source, target, fstype, flags, data); e) {
 		errno = e;
 		return -1;
@@ -24,11 +20,7 @@ int umount(const char *target) {
 }
 
 int umount2(const char *target, int flags) {
-	if(!mlibc::sys_umount2) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_umount2, -1);
 	if(int e = mlibc::sys_umount2(target, flags); e) {
 		errno = e;
 		return -1;

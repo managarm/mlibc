@@ -34,11 +34,7 @@ FILE *fmemopen(void *__restrict, size_t, const char *__restrict) {
 }
 
 int pclose(FILE *stream) {
-	if (!mlibc::sys_waitpid) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_waitpid, -1);
 
 	auto file = static_cast<popen_file *>(stream);
 
@@ -60,12 +56,8 @@ FILE *popen(const char *command, const char *typestr) {
 	pid_t child;
 	FILE *ret = nullptr;
 
-	if (!mlibc::sys_fork || !mlibc::sys_dup2 || !mlibc::sys_execve
-			|| !mlibc::sys_sigprocmask || !mlibc::sys_sigaction || !mlibc::sys_pipe) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return nullptr;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fork && mlibc::sys_dup2 && mlibc::sys_execve &&
+			mlibc::sys_sigprocmask && mlibc::sys_sigaction && mlibc::sys_pipe, nullptr);
 
 	if (typestr == NULL) {
 		errno = EINVAL;

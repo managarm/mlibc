@@ -206,19 +206,10 @@ struct ResizePrinter {
 };
 
 int remove(const char *filename) {
-	if(!mlibc::sys_rmdir) {
-        MLIBC_MISSING_SYSDEP();
-        errno = ENOSYS;
-        return -1;
-	}
-
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_rmdir, -1);
 	if(int e = mlibc::sys_rmdir(filename); e) {
 		if (e == ENOTDIR) {
-			if(!mlibc::sys_unlinkat) {
-				MLIBC_MISSING_SYSDEP();
-				errno = ENOSYS;
-				return -1;
-			}
+			MLIBC_CHECK_OR_ENOSYS(mlibc::sys_unlinkat, -1);
 			if(e = mlibc::sys_unlinkat(AT_FDCWD, filename, 0); e) {
 				errno = e;
 				return -1;
@@ -233,11 +224,7 @@ int remove(const char *filename) {
 }
 
 int rename(const char *path, const char *new_path) {
-	if(!mlibc::sys_rename) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_rename, -1);
 	if(int e = mlibc::sys_rename(path, new_path); e) {
 		errno = e;
 		return -1;
@@ -246,11 +233,7 @@ int rename(const char *path, const char *new_path) {
 }
 
 int renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
-	if(!mlibc::sys_renameat) {
-        MLIBC_MISSING_SYSDEP();
-        errno = ENOSYS;
-        return -1;
-    }
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_renameat, -1);
     if(int e = mlibc::sys_renameat(olddirfd, old_path, newdirfd, new_path); e) {
         errno = e;
         return -1;

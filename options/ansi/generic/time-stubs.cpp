@@ -382,11 +382,7 @@ int nanosleep(const struct timespec *req, struct timespec *) {
 }
 
 int clock_getres(clockid_t clockid, struct timespec *res) {
-	if(!mlibc::sys_clock_getres) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_clock_getres, -1);
 	if(int e = mlibc::sys_clock_getres(clockid, &res->tv_sec, &res->tv_nsec); e) {
 		errno = e;
 		return -1;

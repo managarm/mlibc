@@ -52,11 +52,7 @@ int timerisset(struct timeval *tvp) {
 }
 
 int getitimer(int which, struct itimerval *curr_value) {
-	if(!mlibc::sys_getitimer) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getitimer, -1);
 	if(int e = mlibc::sys_getitimer(which, curr_value); e) {
 		errno = e;
 		return -1;
@@ -65,11 +61,7 @@ int getitimer(int which, struct itimerval *curr_value) {
 }
 
 int setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
-	if(!mlibc::sys_setitimer) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setitimer, -1);
 	if(int e = mlibc::sys_setitimer(which, new_value, old_value); e) {
 		errno = e;
 		return -1;

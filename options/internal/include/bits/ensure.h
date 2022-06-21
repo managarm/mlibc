@@ -21,6 +21,15 @@ void __ensure_warn(const char *assertion, const char *file, unsigned int line,
 #define MLIBC_MISSING_SYSDEP() __ensure_warn("Library function fails due to missing sysdep", \
 		__FILE__, __LINE__, __func__)
 
+#define MLIBC_CHECK_OR_ENOSYS(sysdep, ret) ({ \
+			if (!(sysdep)) { \
+				__ensure_warn("Library function fails due to missing sysdep", \
+					__FILE__, __LINE__, __func__); \
+				errno = ENOSYS; \
+				return (ret); \
+			} \
+		})
+
 #define MLIBC_STUB_BODY { MLIBC_UNIMPLEMENTED(); __builtin_unreachable(); }
 
 #ifdef __cplusplus

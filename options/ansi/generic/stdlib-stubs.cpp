@@ -211,12 +211,8 @@ int system(const char *command) {
 	int status = -1;
 	pid_t child;
 
-	if (!mlibc::sys_fork || !mlibc::sys_waitpid || !mlibc::sys_execve
-			|| !mlibc::sys_sigprocmask || !mlibc::sys_sigaction) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fork && mlibc::sys_waitpid &&
+			mlibc::sys_execve && mlibc::sys_sigprocmask && mlibc::sys_sigaction, -1);
 
 #ifdef __MLIBC_POSIX_OPTION
 	pthread_testcancel();

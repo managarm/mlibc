@@ -12,11 +12,7 @@ ssize_t getrandom(void *buffer, size_t max_size, unsigned int flags) {
 		errno = EINVAL;
 		return -1;
 	}
-	if(!mlibc::sys_getentropy) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getentropy, -1);
 	if(int e = mlibc::sys_getentropy(buffer, max_size); e) {
 		errno = e;
 		return -1;
