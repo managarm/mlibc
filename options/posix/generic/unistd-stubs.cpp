@@ -487,7 +487,12 @@ long pathconf(const char *, int name) {
 }
 
 int pause(void) {
-	__ensure(!"Not implemented");
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pause, -1);
+	if(int e = mlibc::sys_pause(); e) {
+		errno = e;
+		return -1;
+	}
+	__ensure(!"There is no successful completion return value for pause");
 	__builtin_unreachable();
 }
 

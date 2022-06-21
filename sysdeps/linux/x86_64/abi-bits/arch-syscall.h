@@ -22,6 +22,7 @@
 #define SYS_select 23
 #define SYS_madvise 28
 #define SYS_dup 32
+#define SYS_pause 34
 #define SYS_nanosleep 35
 #define SYS_setitimer 38
 #define SYS_getpid 39

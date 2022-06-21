@@ -183,6 +183,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value);
 [[gnu::weak]] int sys_times(struct tms *tms, clock_t *out);
 [[gnu::weak]] int sys_uname(struct utsname *buf);
+[[gnu::weak]] int sys_pause();
 
 [[gnu::weak]] int sys_setresuid(uid_t ruid, uid_t euid, uid_t suid);
 [[gnu::weak]] int sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid);
