@@ -616,6 +616,18 @@ int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_re
 	return 0;
 }
 
+int sys_prctl(int op, va_list ap, int *out) {
+	unsigned long x[4];
+	for(int i = 0; i < 4; i++)
+		x[i] = va_arg(ap, unsigned long);
+
+	auto ret = do_syscall(SYS_prctl, op, x[0], x[1], x[2], x[3]);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<int>(ret);
+	return 0;
+}
+
 int sys_uname(struct utsname *buf) {
 	auto ret = do_syscall(SYS_uname, buf);
 	if (int e = sc_error(ret); e)

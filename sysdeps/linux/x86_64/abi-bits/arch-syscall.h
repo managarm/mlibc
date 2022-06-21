@@ -84,6 +84,7 @@
 #define SYS_fstatfs 138
 #define SYS_getpriority 140
 #define SYS_setpriority 141
+#define SYS_prctl 157
 #define SYS_arch_prctl 158
 #define SYS_setrlimit 160
 #define SYS_sync 162
