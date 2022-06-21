@@ -107,6 +107,8 @@
 #define SYS_ppoll 271
 #define SYS_utimensat 280
 #define SYS_accept4 288
+#define SYS_signalfd4 289
+#define SYS_eventfd2 290
 #define SYS_dup3 292
 #define SYS_pipe2 293
 #define SYS_getrandom 318

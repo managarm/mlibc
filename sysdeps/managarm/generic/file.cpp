@@ -1670,7 +1670,7 @@ int sys_timerfd_settime(int fd, int,
 	return 0;
 }
 
-int sys_signalfd_create(sigset_t mask, int flags, int *fd) {
+int sys_signalfd_create(const sigset_t *masks, int flags, int *fd)  {
 	__ensure(!(flags & ~(SFD_CLOEXEC | SFD_NONBLOCK)));
 
 	uint32_t proto_flags = 0;
@@ -1686,7 +1686,7 @@ int sys_signalfd_create(sigset_t mask, int flags, int *fd) {
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::SIGNALFD_CREATE);
 	req.set_flags(proto_flags);
-	req.set_sigset(mask);
+	req.set_sigset(*masks);
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);

@@ -32,7 +32,7 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);
 [[gnu::weak]] int sys_timerfd_create(int flags, int *fd);
 [[gnu::weak]] int sys_timerfd_settime(int fd, int flags,
 		const struct itimerspec *value);
-[[gnu::weak]] int sys_signalfd_create(sigset_t, int flags, int *fd);
+[[gnu::weak]] int sys_signalfd_create(const sigset_t *, int flags, int *fd);
 [[gnu::weak]] int sys_reboot(int cmd);
 [[gnu::weak]] int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out);
 

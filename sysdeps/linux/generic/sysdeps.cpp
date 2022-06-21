@@ -675,6 +675,22 @@ int sys_sethostname(const char *buffer, size_t bufsize) {
 	return 0;
 }
 
+int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
+	auto ret = do_syscall(SYS_eventfd2, initval, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*fd = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_signalfd_create(const sigset_t *masks, int flags, int *fd) {
+	auto ret = do_syscall(SYS_signalfd4, *fd, masks, sizeof(sigset_t), flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*fd = sc_int_result<int>(ret);
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {
