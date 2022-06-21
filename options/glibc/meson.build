@@ -51,6 +51,7 @@ if not no_headers
 		'include/sys/mtio.h',
 		'include/sys/endian.h',
 		'include/sys/timex.h',
+		'include/sys/kd.h',
 		subdir: 'sys'
 	)
 	install_headers(
