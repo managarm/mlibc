@@ -3,6 +3,7 @@
 #include <mlibc/posix-sysdeps.hpp>
 
 #include <errno.h>
+#include <stdlib.h>
 
 namespace mlibc {
 
@@ -75,6 +76,45 @@ int mem_file::io_seek(off_t offset, int whence, off_t *new_offset) {
 void mem_file::_update_ptrs() {
 	*_bufloc = _buf.data();
 	*_sizeloc = _buf.size() - 1;
+}
+
+buf_file::buf_file(char *ptr, size_t size, void (*do_dispose)(abstract_file *))
+: abstract_file{do_dispose}, _buf{ptr}, _size{size}, _was_allocated{false}, _do_dispose(do_dispose) {
+	if (!_buf) {
+		_buf = (char*)malloc(_size);
+		_was_allocated = true;
+	}
+}
+
+int buf_file::close() {
+	if (_do_dispose)
+		_do_dispose(this);
+	if (_was_allocated)
+		free(_buf);
+	_buf = nullptr;
+	return 0;
+}
+
+int buf_file::determine_type(stream_type *type) {
+	*type = stream_type::file_like;
+	return 0;
+}
+
+int buf_file::determine_bufmode(buffer_mode *mode) {
+	*mode = buffer_mode::no_buffer;
+	return 0;
+}
+
+int buf_file::io_read(char *buffer, size_t max_size, size_t *actual_size) {
+	return EINVAL;
+}
+
+int buf_file::io_write(const char *buffer, size_t max_size, size_t *actual_size) {
+	return EINVAL;
+}
+
+int buf_file::io_seek(off_t offset, int whence, off_t *new_offset) {
+	return EINVAL;
 }
 
 } // namespace mlibc

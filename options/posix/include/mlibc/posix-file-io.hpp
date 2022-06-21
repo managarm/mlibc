@@ -29,6 +29,27 @@ private:
 	size_t _pos;
 };
 
+struct buf_file : abstract_file {
+	buf_file(char *ptr, size_t size, void (*do_dispose)(abstract_file *) = nullptr);
+
+	int close() override;
+protected:
+	int determine_type(stream_type *type) override;
+	int determine_bufmode(buffer_mode *mode) override;
+
+	int io_read(char *buffer, size_t max_size, size_t *actual_size) override;
+	int io_write(const char *buffer, size_t max_size, size_t *actual_size) override;
+	int io_seek(off_t offset, int whence, off_t *new_offset) override;
+
+private:
+	char *_buf;
+	size_t _size;
+	size_t _pos;
+	bool _was_allocated;
+
+	void (*_do_dispose)(abstract_file *);
+};
+
 } // namespace mlibc
 
 #endif // MLIBC_POSIX_FILE_IO_HPP
