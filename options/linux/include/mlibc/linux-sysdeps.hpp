@@ -44,6 +44,8 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);
 [[gnu::weak]] int sys_getcpu(int *cpu);
 
 [[gnu::weak]] int sys_sysinfo(struct sysinfo *info);
+[[gnu::weak]] int sys_swapon(const char *path, int flags);
+[[gnu::weak]] int sys_swapoff(const char *path);
 
 [[gnu::weak]] int sys_setxattr(const char *path, const char *name,
 	const void *val, size_t size, int flags);
