@@ -773,6 +773,14 @@ int sys_timerfd_settime(int fd, int flags, const struct itimerspec *value, struc
 	return 0;
 }
 
+int sys_inotify_create(int flags, int *fd) {
+	auto ret = do_syscall(SYS_inotify_init1, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*fd = sc_int_result<int>(ret);
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {

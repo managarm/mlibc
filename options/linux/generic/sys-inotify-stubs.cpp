@@ -16,10 +16,10 @@ int inotify_init(void) {
 	return fd;
 }
 
-int inotify_init1(int) {
+int inotify_init1(int flags) {
 	int fd;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_inotify_create, -1);
-	if(int e = mlibc::sys_inotify_create(0, &fd); e) {
+	if(int e = mlibc::sys_inotify_create(flags, &fd); e) {
 		errno = e;
 		return -1;
 	}

@@ -101,6 +101,7 @@
 #define SYS_epoll_wait 232
 #define SYS_epoll_ctl 233
 #define SYS_tgkill 234
+#define SYS_inotify_init 253
 #define SYS_openat 257
 #define SYS_mkdirat 258
 #define SYS_mknodat 259
@@ -124,6 +125,7 @@
 #define SYS_epoll_create1 291
 #define SYS_dup3 292
 #define SYS_pipe2 293
+#define SYS_inotify_init1 294
 #define SYS_getrandom 318
 
 #endif // _ARCH_SYSCALL_H

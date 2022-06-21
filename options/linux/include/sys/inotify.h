@@ -2,13 +2,12 @@
 #define _SYS_INOTIFY_H
 
 #include <stdint.h>
+#include <abi-bits/fcntl.h>
+#include <abi-bits/inotify.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define IN_CLOEXEC 1
-#define IN_NONBLOCK 2
 
 #define IN_ACCESS 0x1
 #define IN_ATTRIB 0x4
