@@ -73,3 +73,13 @@ int timer_create(clockid_t, struct sigevent *__restrict, timer_t *__restrict) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+int timer_settime(timer_t, int, const struct itimerspec *__restrict, struct itimerspec *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int timer_gettime(timer_t, struct itimerspec *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
