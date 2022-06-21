@@ -6,7 +6,7 @@ jobs:
     build-mlibc:
         strategy:
             matrix:
-                builds: [mlibc, mlibc-static, mlibc-ansi-only]
+                builds: [mlibc, mlibc-static, mlibc-ansi-only, mlibc-headers-only]
         name: Build mlibc
         runs-on: ubuntu-20.04
         steps:
@@ -42,6 +42,7 @@ jobs:
             run: 'C=gcc-10 CXX=g++-10 meson test -v -C pkg-builds/${{matrix.builds}}'
             working-directory: build/
           - name: Build GCC
+            if: ${{matrix.builds == 'mlibc'}}
             run: 'xbstrap install-tool gcc'
             working-directory: build/
 
