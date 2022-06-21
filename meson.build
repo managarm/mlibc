@@ -284,21 +284,32 @@ subdir('options/intl')
 subdir('options/crypt')
 subdir('options/bsd')
 
-if not headers_only
-	if not static
-		if host_machine.cpu_family() == 'aarch64'
-			# Link with libgcc to get the necessary symbols (LSE atomics and math stuff)
-			libgcc = meson.get_compiler('c').find_library('gcc')
-			libc_deps += libgcc
-			rtdl_deps += libgcc
-		endif
+rtlib_deps = []
 
+if not headers_only
+	if host_machine.cpu_family() == 'aarch64' or host_machine.cpu_family() == 'riscv64'
+		# Some architectures require us to link with libgcc or compiler_rt
+		libgcc = meson.get_compiler('c').find_library('gcc', required: false)
+
+		compiler_rt_name = 'libclang_rt.builtins-' + host_machine.cpu_family()
+		compiler_rt = meson.get_compiler('c').find_library(compiler_rt_name, required: false)
+
+		if libgcc.found()
+			rtlib_deps += libgcc
+		elif compiler_rt.found()
+			rtlib_deps += compiler_rt
+		else
+			error('neither libgcc nor ' + compiler_rt_name + ' was found')
+		endif
+	endif
+
+	if not static
 		ldso_lib = shared_library('ld', rtdl_sources,
 				name_prefix: '',
 				cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL',
 					'-fno-stack-protector'],
 				include_directories: rtdl_include_dirs,
-				dependencies: rtdl_deps,
+				dependencies: rtdl_deps + rtlib_deps,
 				install: true)
 
 		libc = shared_library('c',
@@ -309,7 +320,7 @@ if not headers_only
 					lsb_sources,
 				],
 				include_directories: libc_include_dirs,
-				dependencies: libc_deps,
+				dependencies: libc_deps + rtlib_deps,
 				link_with: [ldso_lib],
 				link_whole: libc_sublibs,
 				install: true)

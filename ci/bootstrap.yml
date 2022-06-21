@@ -1,3 +1,6 @@
+declare_options:
+  - name: arch
+
 sources:
   - name: gcc
     git: 'git://gcc.gnu.org/git/gcc.git'
@@ -61,6 +64,7 @@ tools:
 
 packages:
   - name: mlibc
+    architecture: '@OPTION:arch@'
     from_source: mlibc
     configure:
       - args:
@@ -71,10 +75,8 @@ packages:
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Dwerror=true"
+        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
-        environ:
-          C: 'gcc-10'
-          CXX: 'g++-10'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -83,6 +85,7 @@ packages:
         quiet: true
 
   - name: mlibc-static
+    architecture: '@OPTION:arch@'
     from_source: mlibc
     configure:
       - args:
@@ -94,17 +97,17 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Dstatic=true"
         - "-Dwerror=true"
+        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
-        environ:
-          C: 'gcc-10'
-          CXX: 'g++-10'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
         environ:
           DESTDIR: '@THIS_COLLECT_DIR@'
         quiet: true
+
   - name: mlibc-ansi-only
+    architecture: '@OPTION:arch@'
     from_source: mlibc
     configure:
       - args:
@@ -119,10 +122,8 @@ packages:
         - "-Ddisable_linux_option=true"
         - "-Ddisable_glibc_option=true"
         - "-Ddisable_bsd_option=true"
+        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
-        environ:
-          C: 'gcc-10'
-          CXX: 'g++-10'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -131,6 +132,7 @@ packages:
         quiet: true
 
   - name: mlibc-headers-only
+    architecture: '@OPTION:arch@'
     from_source: mlibc
     configure:
       - args:
@@ -141,6 +143,7 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Dwerror=true"
         - "-Dheaders_only=true"
+        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
     build:
       - args: ['ninja']
