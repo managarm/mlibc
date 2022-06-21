@@ -106,11 +106,35 @@ int buf_file::determine_bufmode(buffer_mode *mode) {
 }
 
 int buf_file::io_read(char *buffer, size_t max_size, size_t *actual_size) {
-	return EINVAL;
+	if (_pos >= _size) {
+		*actual_size = 0;
+		return 0;
+	}
+	if (max_size == 0) {
+		*actual_size = 0;
+		return 0;
+	}
+	size_t bytes_read = std::min(_size - _pos, max_size);
+	memcpy(buffer, _buf + _pos, bytes_read);
+	_pos += bytes_read;
+	*actual_size = bytes_read;
+	return 0;
 }
 
 int buf_file::io_write(const char *buffer, size_t max_size, size_t *actual_size) {
-	return EINVAL;
+	if (_pos >= _size) {
+		*actual_size = 0;
+		return 0;
+	}
+	if (max_size == 0) {
+		*actual_size = 0;
+		return 0;
+	}
+	size_t bytes_written = std::min(_size - _pos, max_size);
+	memcpy(_buf + _pos, buffer, bytes_written);
+	_pos += bytes_written;
+	*actual_size = bytes_written;
+	return 0;
 }
 
 int buf_file::io_seek(off_t offset, int whence, off_t *new_offset) {
