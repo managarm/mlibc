@@ -1272,4 +1272,99 @@ int sys_getentropy(void *buffer, size_t length) {
 	return sys_getrandom(buffer, length, 0, &written);
 }
 
+int sys_setxattr(const char *path, const char *name, const void *val,
+		size_t size, int flags) {
+	auto ret = do_syscall(SYS_setxattr, path, name, val, size, flags);
+	return sc_error(ret);
+}
+
+int sys_lsetxattr(const char *path, const char *name, const void *val,
+		size_t size, int flags) {
+	auto ret = do_syscall(SYS_lsetxattr, path, name, val, size, flags);
+	return sc_error(ret);
+}
+
+int sys_fsetxattr(int fd, const char *name, const void *val,
+		size_t size, int flags) {
+	auto ret = do_syscall(SYS_fsetxattr, fd, name, val, size, flags);
+	return sc_error(ret);
+}
+
+int sys_getxattr(const char *path, const char *name, void *val, size_t size,
+		ssize_t *nread) {
+	auto ret = do_syscall(SYS_getxattr, path, name, val, size);
+	if (int e = sc_error(ret); e) {
+		return e;
+	}
+
+	*nread = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_lgetxattr(const char *path, const char *name, void *val, size_t size,
+		ssize_t *nread) {
+	auto ret = do_syscall(SYS_lgetxattr, path, name, val, size);
+	if (int e = sc_error(ret); e) {
+		return e;
+	}
+
+	*nread = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_fgetxattr(int fd, const char *name, void *val, size_t size,
+		ssize_t *nread) {
+	auto ret = do_syscall(SYS_fgetxattr, fd, name, val, size);
+	if (int e = sc_error(ret); e) {
+		return e;
+	}
+
+	*nread = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_removexattr(const char *path, const char *name) {
+	auto ret = do_syscall(SYS_removexattr, path, name);
+	return sc_error(ret);
+}
+
+int sys_lremovexattr(const char *path, const char *name) {
+	auto ret = do_syscall(SYS_lremovexattr, path, name);
+	return sc_error(ret);
+}
+
+int sys_fremovexattr(int fd, const char *name) {
+	auto ret = do_syscall(SYS_fremovexattr, fd, name);
+	return sc_error(ret);
+}
+
+int sys_listxattr(const char *path, char *list, size_t size, ssize_t *nread) {
+	auto ret = do_syscall(SYS_listxattr, path, list, size);
+	if (int e = sc_error(ret); e) {
+		return e;
+	}
+
+	*nread = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_llistxattr(const char *path, char *list, size_t size, ssize_t *nread) {
+	auto ret = do_syscall(SYS_llistxattr, path, list, size);
+	if (int e = sc_error(ret); e) {
+		return e;
+	}
+
+	*nread = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_flistxattr(int fd, char *list, size_t size, ssize_t *nread) {
+	auto ret = do_syscall(SYS_flistxattr, fd, list, size);
+	if (int e = sc_error(ret); e) {
+		return e;
+	}
+
+	*nread = sc_int_result<ssize_t>(ret);
+	return 0;
+}
 } // namespace mlibc
