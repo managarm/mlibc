@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <alloca.h>
+#include <string.h>
 #include <sys/mman.h>
 
 static void test_detachstate() {
@@ -132,6 +133,18 @@ static void test_stack() {
 	assert(new_size == stacksize);
 }
 
+static void test_affinity() {
+	pthread_attr_t attr;
+	cpu_set_t set = {0};
+	assert(!pthread_attr_init(&attr));
+	assert(!pthread_attr_setaffinity_np(&attr, 1, &set));
+
+	cpu_set_t other_set = {0};
+	assert(!pthread_attr_getaffinity_np(&attr, 1, &set));
+
+	assert(!memcmp(&set, &other_set, sizeof(cpu_set_t)));
+}
+
 static void *getattr_worker(void *arg) {
 	(void)arg;
 	return NULL;
@@ -173,5 +186,6 @@ int main() {
 	test_schedpolicy();
 	test_stackaddr();
 	test_stack();
+	test_affinity();
 	test_getattrnp();
 }
