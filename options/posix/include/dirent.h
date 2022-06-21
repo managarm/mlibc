@@ -28,6 +28,8 @@ struct dirent {
 	char d_name[1024];
 };
 
+#define d_fileno d_ino
+
 struct __mlibc_dir_struct {
 	int __handle;
 	__mlibc_size __ent_next;
