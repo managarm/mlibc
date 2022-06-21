@@ -35,6 +35,7 @@ struct mmsghdr {
 #endif
 
 #define SCM_RIGHTS 1
+#define SCM_CREDENTIALS 2
 
 #define SHUT_RD 0
 #define SHUT_WR 1
