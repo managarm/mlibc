@@ -146,6 +146,13 @@ int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
 	return 0;
 }
 
+int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
+	auto ret = do_cp_syscall(SYS_fchownat, dirfd, pathname, owner, group, flags);
+	if(int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
 	auto ret = do_cp_syscall(SYS_utimensat, dirfd, pathname, times, flags);
 	if (int e = sc_error(ret); e)
