@@ -56,6 +56,8 @@ template<typename Char> Char widen(char c) { return static_cast<Char>(c); }
 
 template<typename Return, typename Char>
 Return stringToInteger(const Char *__restrict nptr, Char **__restrict endptr, int baseInt) {
+	using UnsignedReturn = std::make_unsigned_t<Return>;
+
 	auto base = static_cast<Return>(baseInt);
 	auto s = nptr;
 
@@ -88,21 +90,22 @@ Return stringToInteger(const Char *__restrict nptr, Char **__restrict endptr, in
 	}
 
 	// Compute the range of acceptable values.
-	Return cutoff, cutlim;
-	if (std::is_unsigned<Return>::value) {
+	UnsignedReturn cutoff, cutlim;
+	if (std::is_unsigned_v<Return>) {
 		cutoff = int_limits<Return>::max() / base;
 		cutlim = int_limits<Return>::max() % base;
 	} else {
-		cutoff = negative ? int_limits<Return>::min() : int_limits<Return>::max();
-		cutlim = negative ? -(cutoff % base) : cutoff % base;
-		cutoff /= negative ? -base : base;
+		Return co = negative ? int_limits<Return>::min() : int_limits<Return>::max();
+		cutlim = negative ? -(co % base) : co % base;
+		co /= negative ? -base : base;
+		cutoff = co;
 	}
 
-	Return totalValue = 0;
+	UnsignedReturn totalValue = 0;
 	bool convertedAny = false;
 	bool outOfRange = false;
 	for (Char c = *s; c != widen<Char>('\0'); c = *++s) {
-		Return digitValue;
+		UnsignedReturn digitValue;
 		if (char_detail<Char>::isDigit(c))
 			digitValue = c - widen<Char>('0');
 		else if (char_detail<Char>::isUpper(c))
@@ -112,7 +115,7 @@ Return stringToInteger(const Char *__restrict nptr, Char **__restrict endptr, in
 		else
 			break;
 
-		if (digitValue >= base)
+		if (digitValue >= static_cast<UnsignedReturn>(base))
 			break;
 
 		if (outOfRange) {
@@ -133,7 +136,7 @@ Return stringToInteger(const Char *__restrict nptr, Char **__restrict endptr, in
 	if (outOfRange) {
 		errno = ERANGE;
 
-		if (std::is_unsigned<Return>::value) {
+		if (std::is_unsigned_v<Return>) {
 			return int_limits<Return>::max();
 		} else {
 			return negative ? int_limits<Return>::min() : int_limits<Return>::max();
