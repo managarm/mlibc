@@ -386,6 +386,12 @@ char *realpath(const char *path, char *out) {
 		ls = 0;
 	}
 
+	if(resolv.size() == 1) {
+		resolv.resize(0);
+		resolv.push_back('/');
+		resolv.push_back(0);
+	}
+
 	if(debugPathResolution)
 		mlibc::infoLogger() << "mlibc realpath(): Returns '" << resolv.data() << "'" << frg::endlog;
 
