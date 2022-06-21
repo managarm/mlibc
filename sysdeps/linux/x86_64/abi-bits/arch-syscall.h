@@ -68,12 +68,15 @@
 #define SYS_ptrace 101
 #define SYS_getuid 102
 #define SYS_getgid 104
+#define SYS_setuid 105
 #define SYS_geteuid 107
 #define SYS_getegid 108
 #define SYS_setpgid 109
 #define SYS_getppid 110
+#define SYS_setsid 112
 #define SYS_getgroups 115
 #define SYS_getpgid 121
+#define SYS_getsid 124
 #define SYS_rt_sigsuspend 130
 #define SYS_sigaltstack 131
 #define SYS_statfs 137
