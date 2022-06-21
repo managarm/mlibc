@@ -435,6 +435,7 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 		}else if(phdr->p_type == PT_INTERP
 				|| phdr->p_type == PT_PHDR
 				|| phdr->p_type == PT_NOTE
+				|| phdr->p_type == PT_RISCV_ATTRIBUTES
 				|| phdr->p_type == PT_GNU_EH_FRAME
 				|| phdr->p_type == PT_GNU_RELRO
 				|| phdr->p_type == PT_GNU_STACK
@@ -1382,7 +1383,6 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 				mlibc::panicLogger() << "rtdl: In object " << object->name
 						<< ": Static TLS relocation to dynamically loaded object "
 						<< p->object()->name << frg::endlog;
-			auto val = p->object()->tlsOffset - sizeof(Tcb) + p->symbol()->st_value;
 			*((uint64_t *)rel_addr) = p->object()->tlsOffset - sizeof(Tcb) + p->symbol()->st_value;
 		}else{
 			__ensure(!reloc->r_addend);
