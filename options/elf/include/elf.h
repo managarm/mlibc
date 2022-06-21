@@ -181,6 +181,16 @@ typedef struct {
 	Elf64_Half si_flags;
 } Elf64_Syminfo;
 
+__MLIBC_INLINE_DEFINITION unsigned char ELF32_ST_BIND(unsigned char info) {
+	return info >> 4;
+}
+__MLIBC_INLINE_DEFINITION unsigned char ELF32_ST_TYPE(unsigned char info) {
+	return info & 0xF;
+}
+__MLIBC_INLINE_DEFINITION unsigned char ELF32_ST_INFO(unsigned char bind, unsigned char type) {
+	return (bind << 4) | (type & 0xF);
+}
+
 enum {
 	STB_GLOBAL = 1,
 	STB_WEAK = 2,
