@@ -81,6 +81,8 @@ struct __mlibc_threadattr {
 	int __mlibc_inheritsched;
 	struct sched_param __mlibc_schedparam;
 	int __mlibc_schedpolicy;
+	cpu_set_t *__mlibc_cpuset;
+	size_t __mlibc_cpusetsize;
 };
 typedef struct __mlibc_threadattr pthread_attr_t;
 
@@ -174,6 +176,9 @@ int pthread_attr_setinheritsched(pthread_attr_t *__restrict, int);
 
 int pthread_attr_getschedparam(const pthread_attr_t *__restrict, struct sched_param *__restrict);
 int pthread_attr_setschedparam(pthread_attr_t *__restrict, const struct sched_param *__restrict);
+
+int pthread_attr_getaffinity_np(const pthread_attr_t *__restrict, size_t, cpu_set_t *__restrict);
+int pthread_attr_setaffinity_np(pthread_attr_t *__restrict, size_t, const cpu_set_t *__restrict);
 
 int pthread_getattr_np(pthread_t, pthread_attr_t *);
 

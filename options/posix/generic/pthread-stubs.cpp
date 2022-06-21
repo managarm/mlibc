@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -182,6 +183,52 @@ int pthread_attr_setschedpolicy(pthread_attr_t *__restrict attr, int policy) {
 	return 0;
 }
 
+int pthread_attr_getaffinity_np(const pthread_attr_t *__restrict attr,
+		size_t cpusetsize, cpu_set_t *__restrict cpusetp) {
+	if (!attr)
+		return EINVAL;
+
+	if (!attr->__mlibc_cpuset) {
+		memset(cpusetp, -1, cpusetsize);
+		return 0;
+	}
+
+	for (size_t cnt = cpusetsize; cnt < attr->__mlibc_cpusetsize; cnt++)
+		if (reinterpret_cast<char*>(attr->__mlibc_cpuset)[cnt] != '\0')
+			return ERANGE;
+
+	auto p = memcpy(cpusetp, attr->__mlibc_cpuset,
+			std::min(cpusetsize, attr->__mlibc_cpusetsize));
+	if (cpusetsize > attr->__mlibc_cpusetsize)
+		memset(p, '\0', cpusetsize - attr->__mlibc_cpusetsize);
+
+	return 0;
+}
+
+int pthread_attr_setaffinity_np(pthread_attr_t *__restrict attr,
+		size_t cpusetsize, const cpu_set_t *__restrict cpusetp) {
+	if (!attr)
+		return EINVAL;
+
+	if (!cpusetp || !cpusetsize) {
+		attr->__mlibc_cpuset = NULL;
+		attr->__mlibc_cpusetsize = 0;
+		return 0;
+	}
+
+	if (attr->__mlibc_cpusetsize != cpusetsize) {
+		auto newp = realloc(attr->__mlibc_cpuset, cpusetsize);
+		if (!newp)
+			return ENOMEM;
+
+		attr->__mlibc_cpuset = static_cast<cpu_set_t*>(newp);
+		attr->__mlibc_cpusetsize = cpusetsize;
+	}
+
+	memcpy(attr->__mlibc_cpuset, cpusetp, cpusetsize);
+	return 0;
+}
+
 namespace {
 	void get_own_stackinfo(void **stack_addr, size_t *stack_size) {
 		auto fp = fopen("/proc/self/maps", "r");
@@ -239,6 +286,9 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
 		pthread_attr_init(&attr);
 	else
 		attr = *attrp;
+
+	if (attr.__mlibc_cpuset)
+		mlibc::infoLogger() << "pthread_create(): cpuset is ignored!" << frg::endlog;
 
 	// TODO: due to alignment guarantees, the stackaddr and stacksize might change
 	// when the stack is allocated. Currently this isn't propagated to the TCB,
