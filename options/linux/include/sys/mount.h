@@ -18,6 +18,8 @@ extern "C" {
 #define MS_SLAVE (1<<19)
 #define MS_SHARED (1<<20)
 
+#define MNT_FORCE 1
+
 int mount(const char *source, const char *target,
 		const char *fstype, unsigned long flags, const void *data);
 int umount(const char *target);
