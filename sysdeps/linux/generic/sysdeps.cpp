@@ -560,6 +560,13 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 	return 0;
 }
 
+int sys_tcflush(int fd, int queue) {
+	auto ret = do_syscall(SYS_ioctl, fd, TCFLSH, queue);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_tcdrain(int fd) {
 	auto ret = do_syscall(SYS_ioctl, fd, TCSBRK, 1);
 	if (int e = sc_error(ret); e)
