@@ -83,7 +83,10 @@
 #define SYS_arch_prctl 158
 #define SYS_setrlimit 160
 #define SYS_sync 162
+#define SYS_mount 165
+#define SYS_umount2 166
 #define SYS_reboot 169
+#define SYS_sethostname 170
 #define SYS_getdents64 217
 #define SYS_sys_futex 202
 #define SYS_fadvise64 221

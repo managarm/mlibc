@@ -653,6 +653,28 @@ int sys_reboot(int cmd) {
 	return 0;
 }
 
+int sys_mount(const char *source, const char *target,
+	const char *fstype, unsigned long flags, const void *data) {
+	auto ret = do_syscall(SYS_mount, source, target, fstype, flags, data);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_umount2(const char *target, int flags) {
+	auto ret = do_syscall(SYS_umount2, target, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_sethostname(const char *buffer, size_t bufsize) {
+	auto ret = do_syscall(SYS_sethostname, buffer, bufsize);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {
