@@ -229,6 +229,39 @@ int pthread_attr_setaffinity_np(pthread_attr_t *__restrict attr,
 	return 0;
 }
 
+int pthread_attr_getsigmask_np(const pthread_attr_t *__restrict attr,
+		sigset_t *__restrict sigmask) {
+	if (!attr)
+		return EINVAL;
+
+	if (!attr->__mlibc_sigmaskset) {
+		sigemptyset(sigmask);
+		return PTHREAD_ATTR_NO_SIGMASK_NP;
+	}
+
+	*sigmask = attr->__mlibc_sigmask;
+
+	return 0;
+}
+int pthread_attr_setsigmask_np(pthread_attr_t *__restrict attr,
+		const sigset_t *__restrict sigmask) {
+	if (!attr)
+		return EINVAL;
+
+	if (!sigmask) {
+		attr->__mlibc_sigmaskset = 0;
+		return 0;
+	}
+
+	attr->__mlibc_sigmask = *sigmask;
+	attr->__mlibc_sigmaskset = 1;
+
+	// Filter out internally used signals.
+	sigdelset(&attr->__mlibc_sigmask, SIGCANCEL);
+
+	return 0;
+}
+
 namespace {
 	void get_own_stackinfo(void **stack_addr, size_t *stack_size) {
 		auto fp = fopen("/proc/self/maps", "r");
@@ -289,6 +322,8 @@ int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restric
 
 	if (attr.__mlibc_cpuset)
 		mlibc::infoLogger() << "pthread_create(): cpuset is ignored!" << frg::endlog;
+	if (attr.__mlibc_sigmaskset)
+		mlibc::infoLogger() << "pthread_create(): sigmask is ignored!" << frg::endlog;
 
 	// TODO: due to alignment guarantees, the stackaddr and stacksize might change
 	// when the stack is allocated. Currently this isn't propagated to the TCB,
