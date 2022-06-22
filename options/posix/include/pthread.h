@@ -7,6 +7,7 @@
 #include <bits/size_t.h>
 #include <bits/posix/pthread_t.h>
 
+#include <signal.h>
 #include <stdint.h>
 
 // pthread.h is required to include sched.h and time.h
@@ -71,6 +72,8 @@ extern "C" {
 
 #define PTHREAD_STACK_MIN 16384
 
+#define PTHREAD_ATTR_NO_SIGMASK_NP (-1)
+
 // TODO: move to own file and include in sys/types.h
 struct __mlibc_threadattr {
 	size_t __mlibc_guardsize;
@@ -83,6 +86,8 @@ struct __mlibc_threadattr {
 	int __mlibc_schedpolicy;
 	cpu_set_t *__mlibc_cpuset;
 	size_t __mlibc_cpusetsize;
+	sigset_t __mlibc_sigmask;
+	int __mlibc_sigmaskset;
 };
 typedef struct __mlibc_threadattr pthread_attr_t;
 
@@ -179,6 +184,9 @@ int pthread_attr_setschedparam(pthread_attr_t *__restrict, const struct sched_pa
 
 int pthread_attr_getaffinity_np(const pthread_attr_t *__restrict, size_t, cpu_set_t *__restrict);
 int pthread_attr_setaffinity_np(pthread_attr_t *__restrict, size_t, const cpu_set_t *__restrict);
+
+int pthread_attr_getsigmask_np(const pthread_attr_t *__restrict, sigset_t *__restrict);
+int pthread_attr_setsigmask_np(pthread_attr_t *__restrict, const sigset_t *__restrict);
 
 int pthread_getattr_np(pthread_t, pthread_attr_t *);
 
