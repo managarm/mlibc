@@ -825,9 +825,11 @@ char *get_current_dir_name(void) {
 
 // This is a Linux extension
 pid_t gettid(void) {
-	mlibc::infoLogger() << "\e[31mmlibc: gettid() is not implemented correctly\e[39m"
-			<< frg::endlog;
-	return mlibc::sys_getpid();
+	if(!mlibc::sys_gettid) {
+		MLIBC_MISSING_SYSDEP();
+		__ensure(!"Cannot continue without sys_gettid()");
+	}
+	return mlibc::sys_gettid();
 }
 
 int getentropy(void *buffer, size_t length) {

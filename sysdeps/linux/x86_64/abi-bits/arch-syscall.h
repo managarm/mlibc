@@ -95,6 +95,7 @@
 #define SYS_sethostname 170
 #define SYS_init_module 175
 #define SYS_delete_module 176
+#define SYS_gettid 186
 #define SYS_futex 202
 #define SYS_getdents64 217
 #define SYS_sys_futex 202

@@ -881,6 +881,12 @@ pid_t sys_getpid() {
 	return sc_int_result<pid_t>(ret);
 }
 
+pid_t sys_gettid() {
+	auto ret = do_syscall(SYS_gettid);
+	// getpid() always succeeds.
+	return sc_int_result<pid_t>(ret);
+}
+
 uid_t sys_getuid() {
 	auto ret = do_syscall(SYS_getuid);
 	// getuid() always succeeds.
