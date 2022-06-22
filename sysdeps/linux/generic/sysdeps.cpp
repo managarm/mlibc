@@ -795,6 +795,20 @@ int sys_delete_module(const char *name, unsigned flags) {
 	return 0;
 }
 
+int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
+	auto ret = do_syscall(SYS_socketpair, domain, type_and_flags, proto, fds, 0, 0);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
+	auto ret = do_syscall(SYS_getsockopt, fd, layer, number, buffer, size, 0);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {
