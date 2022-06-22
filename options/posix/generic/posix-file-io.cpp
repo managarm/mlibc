@@ -3,6 +3,7 @@
 #include <mlibc/posix-sysdeps.hpp>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdlib.h>
 
 namespace mlibc {
@@ -138,7 +139,30 @@ int buf_file::io_write(const char *buffer, size_t max_size, size_t *actual_size)
 }
 
 int buf_file::io_seek(off_t offset, int whence, off_t *new_offset) {
-	return EINVAL;
+	switch(whence) {
+		case SEEK_SET: {
+			if(offset > _size)
+				return EINVAL;
+			_pos = offset;
+			break;
+		}
+		case SEEK_CUR: {
+			if(_pos + offset > _size)
+				return EINVAL;
+			_pos += offset;
+			break;
+		}
+		case SEEK_END: {
+			if(_size + offset > _size)
+				return EINVAL;
+			_pos = _size + offset;
+			break;
+		}
+		default:
+			return EINVAL;
+	}
+	*new_offset = _pos;
+	return 0;
 }
 
 } // namespace mlibc
