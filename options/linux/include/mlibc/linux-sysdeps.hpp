@@ -41,6 +41,7 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);
 [[gnu::weak]] int sys_init_module(void *module, unsigned long length, const char *args);
 [[gnu::weak]] int sys_delete_module(const char *name, unsigned flags);
 [[gnu::weak]] int sys_klogctl(int type, char *bufp, int len, int *out);
+[[gnu::weak]] int sys_getcpu(int *cpu);
 
 [[gnu::weak]] int sys_sysinfo(struct sysinfo *info);
 
