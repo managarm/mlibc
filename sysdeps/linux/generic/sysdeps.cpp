@@ -781,6 +781,20 @@ int sys_inotify_create(int flags, int *fd) {
 	return 0;
 }
 
+int sys_init_module(void *module, unsigned long length, const char *args) {
+	auto ret = do_syscall(SYS_init_module, module, length, args);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_delete_module(const char *name, unsigned flags) {
+	auto ret = do_syscall(SYS_delete_module, name, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {
