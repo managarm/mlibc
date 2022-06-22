@@ -2,6 +2,7 @@
 #include <getopt.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
@@ -193,6 +194,47 @@ void test6() {
 	assert(!optarg);
 }
 
+void test7() {
+	int c;
+
+	static const struct option options[] = {
+		{ "debug", no_argument, NULL, 'd' },
+		{ "help", no_argument, NULL, 'h' },
+		{ "version", no_argument, NULL, 'V' },
+		{}
+	};
+	const char *command;
+
+	char *test_argv[] = {
+		"udevadm",
+		"hwdb",
+		"--update",
+		0
+	};
+
+	int test_argc = 3;
+	setenv("POSIXLY_CORRECT", "1", 1);
+	optind = 0;
+
+	while ((c = getopt_long(test_argc, test_argv, "+dhV", options, NULL)) >= 0) {
+		switch (c) {
+			case 'd':
+				break;
+			case 'h':
+				break;
+			case 'V':
+				break;
+			default:
+				break;
+		}
+	}
+
+	dump(c);
+	command = test_argv[optind];
+	assert(command);
+	assert(!strcmp(command, "hwdb"));
+}
+
 int main() {
 	test1();
 	test2();
@@ -200,4 +242,5 @@ int main() {
 	test4();
 	test5();
 	test6();
+	test7();
 }
