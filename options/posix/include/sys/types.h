@@ -25,6 +25,8 @@
 #include <bits/posix/fsfilcnt_t.h>
 #include <bits/posix/fd_set.h>
 
+#include <stdint.h>
+
 typedef unsigned int u_int;
 typedef unsigned char u_char;
 typedef unsigned short u_short;
@@ -35,6 +37,11 @@ typedef off64_t loff_t;
 typedef unsigned long int ulong;
 typedef unsigned short int ushort;
 typedef unsigned int uint;
+
+typedef uint8_t u_int8_t;
+typedef uint16_t u_int16_t;
+typedef uint32_t u_int32_t;
+typedef uint64_t u_int64_t;
 
 #endif // _SYS_TYPES_H
 
