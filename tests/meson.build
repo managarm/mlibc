@@ -85,8 +85,11 @@ glibc_test_cases = [
 rtdl_test_cases = [
 ]
 
+test_link_args = []
+
 if not static
 	rtdl_test_cases += 'dl_iterate_phdr'
+	test_link_args += ['-no-pie', '-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so']
 endif
 
 test_sources = [
@@ -100,17 +103,19 @@ test_override_options = ['b_sanitize=none']
 if static
 	test_sources += '../options/internal/gcc-extra/mlibc_crtbegin.S'
 	test_sources += '../options/internal' / host_machine.cpu_family() / 'mlibc_crtend.S'
+	test_link_args += '-static'
 endif
 
 if not disable_ansi_option
 	foreach f : ansi_test_cases
 		exec = executable('ansi-' + f, ['ansi/' + f + '.c', test_sources],
 			link_with: libc, include_directories: libc_include_dirs,
+			dependencies: rtlib_deps,
 			build_rpath: meson.build_root(),
 			override_options: test_override_options,
 			c_args: '-no-pie',
-			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
-				'-no-pie'])
+			link_args: test_link_args,
+		)
 		test('ansi/' + f, exec)
 	endforeach
 endif
@@ -119,11 +124,12 @@ if not disable_bsd_option
 	foreach f : bsd_test_cases
 		exec = executable('ansi-' + f, ['bsd/' + f + '.c', test_sources],
 			link_with: libc, include_directories: libc_include_dirs,
+			dependencies: rtlib_deps,
 			build_rpath: meson.build_root(),
 			override_options: test_override_options,
 			c_args: '-no-pie',
-			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
-				'-no-pie'])
+			link_args: test_link_args,
+		)
 		test('bsd/' + f, exec)
 	endforeach
 endif
@@ -132,22 +138,24 @@ if not disable_posix_option
 	foreach f : posix_test_cases
 		exec = executable('posix-' + f, ['posix/' + f + '.c', test_sources],
 			link_with: libc, include_directories: libc_include_dirs,
+			dependencies: rtlib_deps,
 			build_rpath: meson.build_root(),
 			override_options: test_override_options,
 			c_args: '-no-pie',
-			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
-				'-no-pie'])
+			link_args: test_link_args,
+		)
 		test('posix/' + f, exec)
 	endforeach
 
 	foreach f : posix_fail_test_cases
 		exec = executable('posix-' + f, ['posix/' + f + '.c', test_sources],
 			link_with: libc, include_directories: libc_include_dirs,
+			dependencies: rtlib_deps,
 			build_rpath: meson.build_root(),
 			override_options: test_override_options,
 			c_args: '-no-pie',
-			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
-				'-no-pie'])
+			link_args: test_link_args,
+		)
 		test('posix/' + f, exec, should_fail: true)
 	endforeach
 endif
@@ -157,11 +165,12 @@ if not disable_posix_option
 	foreach f : glibc_test_cases
 		exec = executable('glibc-' + f, ['glibc/' + f + '.c', test_sources],
 			link_with: libc, include_directories: libc_include_dirs,
+			dependencies: rtlib_deps,
 			build_rpath: meson.build_root(),
 			override_options: test_override_options,
 			c_args: '-no-pie',
-			link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
-				'-no-pie'])
+			link_args: test_link_args,
+		)
 		test('glibc/' + f, exec)
 	endforeach
 endif
@@ -169,10 +178,11 @@ endif
 foreach f : rtdl_test_cases
     exec = executable('rtdl-' + f, ['rtdl/' + f + '.c', test_sources],
 	    link_with: libc, include_directories: libc_include_dirs,
+		dependencies: rtlib_deps,
 	    build_rpath: meson.build_root(),
 		override_options: test_override_options,
 	    c_args: '-no-pie',
-	    link_args: ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so',
-		    '-no-pie'])
+		link_args: test_link_args,
+	)
     test('rtdl/' + f, exec)
 endforeach

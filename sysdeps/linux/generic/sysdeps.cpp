@@ -35,7 +35,7 @@ int sys_tcb_set(void *pointer) {
 		return e;
 #elif defined(__riscv)
 	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
-	asm volatile ("mv tp, %0" : "=r"(thread_data));
+	asm volatile ("mv tp, %0" :: "r"(thread_data));
 #else
 #error "Missing architecture specific code."
 #endif
@@ -359,6 +359,11 @@ int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out) {
 extern "C" const char __mlibc_syscall_begin[1];
 extern "C" const char __mlibc_syscall_end[1];
 
+#if defined(__riscv)
+// Disable UBSan here to work around qemu-user misaligning ucontext_t.
+// https://github.com/qemu/qemu/blob/2bf40d0841b942e7ba12953d515e62a436f0af84/linux-user/riscv/signal.c#L68-L69
+[[gnu::no_sanitize("undefined")]]
+#endif
 int sys_before_cancellable_syscall(ucontext_t *uct) {
 #if defined(__x86_64__)
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.gregs[REG_RIP]);

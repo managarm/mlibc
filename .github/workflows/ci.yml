@@ -6,6 +6,7 @@ jobs:
     build-mlibc:
         strategy:
             matrix:
+                arch: [x86_64, riscv64]
                 builds: [mlibc, mlibc-static, mlibc-ansi-only, mlibc-headers-only]
         name: Build mlibc
         runs-on: ubuntu-20.04
@@ -14,7 +15,7 @@ jobs:
             # Note: the default jsonschema is too old.
             #       xbstrap should fix this by demanding a recent version.
             run: |
-                sudo apt-get install ninja-build g++-10
+                sudo apt-get install ninja-build g++-10 g++-10-riscv64-linux-gnu qemu-user
                 sudo pip3 install setuptools
                 sudo pip3 install -U jsonschema
                 sudo pip3 install meson xbstrap
@@ -33,16 +34,21 @@ jobs:
                 touch mlibc/checkedout.xbstrap
             working-directory: src/
           - name: Prepare build/
-            run: 'xbstrap init ../src'
+            run: |
+              cat > bootstrap-site.yml << EOF
+              define_options:
+                arch: ${{matrix.arch}}
+              EOF
+              xbstrap init ../src
             working-directory: build/
           - name: Build mlibc
             run: 'xbstrap install ${{matrix.builds}}'
             working-directory: build/
           - name: Test mlibc
-            run: 'C=gcc-10 CXX=g++-10 meson test -v -C pkg-builds/${{matrix.builds}}'
+            run: 'meson test -v -C pkg-builds/${{matrix.builds}}'
             working-directory: build/
           - name: Build GCC
-            if: ${{matrix.builds == 'mlibc'}}
+            if: ${{matrix.builds == 'mlibc' && matrix.arch == 'x86_64'}}
             run: 'xbstrap install-tool gcc'
             working-directory: build/
 

@@ -6,8 +6,7 @@
 namespace mlibc {
 
 inline Tcb *get_current_tcb() {
-	uintptr_t ptr;
-	asm ("mv %0, tp" : "=r"(ptr));
+	uintptr_t ptr = (uintptr_t)__builtin_thread_pointer();
 
 	// On RISC-V, the TCB is below the thread pointer.
 	// TODO: This may be wrong if the TLS section has stricter alignment requirements.

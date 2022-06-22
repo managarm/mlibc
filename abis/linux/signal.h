@@ -143,7 +143,7 @@ typedef long sigset_t;
 #define SIGPOLL   29
 #define SIGSYS    31
 #define SIGUNUSED SIGSYS
-#define SIGCANCEL 33
+#define SIGCANCEL 32
 
 #define MINSIGSTKSZ 2048
 #define SIGSTKSZ 8192

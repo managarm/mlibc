@@ -18,7 +18,7 @@ namespace {
 	template<typename T>
 	int ffs_generic(T i) {
 		//Non-portably assume a byte has 8 bits; fine in all plausible cases.
-		for(int b = 0; b < sizeof(T) * 8;)
+		for(size_t b = 0; b < sizeof(T) * 8;)
 			if(i & (static_cast<T>(0x1) << b++))
 				return b;
 
@@ -27,7 +27,8 @@ namespace {
 
 }
 
-#ifdef __has_builtin
+// On RISC-V, __builtin_ffs just calls into ffs, so we can't use it here.
+#if defined(__has_builtin) && !defined(__riscv)
 #	if __has_builtin(__builtin_ffs)
 #		define __mlibc_ffs __builtin_ffs
 #	endif
