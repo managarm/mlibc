@@ -343,6 +343,10 @@ int sys_isatty(int fd) {
 
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sched.h>
 #include <fcntl.h>
 
@@ -821,6 +825,35 @@ int sys_inotify_rm_watch(int ifd, int wd) {
 	auto ret = do_syscall(SYS_inotify_rm_watch, ifd, wd);
 	if (int e = sc_error(ret); e)
 		return e;
+	return 0;
+}
+
+int sys_ttyname(int fd, char *buf, size_t size) {
+	if (!isatty(fd))
+		return errno;
+
+	char *procname;
+	if(int e = asprintf(&procname, "/proc/self/fd/%i", fd); e)
+		return ENOMEM;
+	__ensure(procname);
+
+	ssize_t l = readlink(procname, buf, size);
+	free(procname);
+
+	if (l < 0)
+		return errno;
+	else if ((size_t)l >= size)
+		return ERANGE;
+
+	buf[l] = '\0';
+	struct stat st1;
+	struct stat st2;
+
+	if (stat(buf, &st1) || fstat(fd, &st2))
+		return errno;
+	if (st1.st_dev != st2.st_dev || st1.st_ino != st2.st_ino)
+		return ENODEV;
+
 	return 0;
 }
 
