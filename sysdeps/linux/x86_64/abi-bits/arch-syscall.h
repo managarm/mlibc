@@ -127,6 +127,7 @@
 #define SYS_dup3 292
 #define SYS_pipe2 293
 #define SYS_inotify_init1 294
+#define SYS_kcmp 312
 #define SYS_getrandom 318
 
 #endif // _ARCH_SYSCALL_H
