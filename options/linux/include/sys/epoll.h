@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <abi-bits/signal.h>
 #include <abi-bits/epoll.h>
+#include <abi-bits/fcntl.h>
+
+#define EPOLL_NONBLOCK O_NONBLOCK
 
 // These constants match the Linux definitions.
 #define EPOLLIN 0x001
@@ -40,7 +43,11 @@ typedef union epoll_data {
 struct epoll_event {
 	uint32_t events;
 	epoll_data_t data;
-};
+}
+#ifdef __x86_64__
+__attribute__ ((__packed__))
+#endif
+;
 
 int epoll_create(int);
 int epoll_create1(int);
