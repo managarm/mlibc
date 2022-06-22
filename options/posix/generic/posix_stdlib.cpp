@@ -434,8 +434,9 @@ int posix_openpt(int flags) {
 	return fd;
 }
 
-int unlockpt(int) {
-	return 0;
+int unlockpt(int fd) {
+	int unlock = 0;
+	return ioctl(fd, TIOCSPTLCK, &unlock);
 }
 
 int grantpt(int) {
