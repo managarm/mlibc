@@ -68,6 +68,7 @@ namespace mlibc {
 	const locale_description *monetary_facet;
 	const locale_description *numeric_facet;
 	const locale_description *time_facet;
+	const locale_description *messages_facet;
 }
 
 void __mlibc_initLocale() {
@@ -76,6 +77,7 @@ void __mlibc_initLocale() {
 	mlibc::monetary_facet = &mlibc::c_locale;
 	mlibc::numeric_facet = &mlibc::c_locale;
 	mlibc::time_facet = &mlibc::c_locale;
+	mlibc::messages_facet = &mlibc::c_locale;
 }
 
 char *setlocale(int category, const char *name) {
@@ -86,6 +88,7 @@ char *setlocale(int category, const char *name) {
 		__ensure(current_desc == mlibc::monetary_facet);
 		__ensure(current_desc == mlibc::numeric_facet);
 		__ensure(current_desc == mlibc::time_facet);
+		__ensure(current_desc == mlibc::messages_facet);
 
 		if(name) {
 			// Our default C locale is the C locale.
@@ -104,6 +107,7 @@ char *setlocale(int category, const char *name) {
 			mlibc::monetary_facet = new_desc;
 			mlibc::numeric_facet = new_desc;
 			mlibc::time_facet = new_desc;
+			mlibc::messages_facet = new_desc;
 		}
 		return const_cast<char *>(current_desc->name);
 	}else{
@@ -123,6 +127,9 @@ char *setlocale(int category, const char *name) {
 			break;
 		case LC_TIME:
 			facet_ptr = &mlibc::time_facet;
+			break;
+		case LC_MESSAGES:
+			facet_ptr = &mlibc::messages_facet;
 			break;
 		default:
 			mlibc::infoLogger() << "mlibc: Unexpected value " << category
