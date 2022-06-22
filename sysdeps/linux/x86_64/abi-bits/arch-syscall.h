@@ -105,6 +105,8 @@
 #define SYS_epoll_ctl 233
 #define SYS_tgkill 234
 #define SYS_inotify_init 253
+#define SYS_inotify_add_watch 254
+#define SYS_inotify_rm_watch 255
 #define SYS_openat 257
 #define SYS_mkdirat 258
 #define SYS_mknodat 259

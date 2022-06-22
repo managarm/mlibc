@@ -809,6 +809,21 @@ int sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, sockl
 	return 0;
 }
 
+int sys_inotify_add_watch(int ifd, const char *path, uint32_t mask, int *wd) {
+	auto ret = do_syscall(SYS_inotify_add_watch, ifd, path, mask);
+	if (int e = sc_error(ret); e)
+		return e;
+	*wd = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_inotify_rm_watch(int ifd, int wd) {
+	auto ret = do_syscall(SYS_inotify_rm_watch, ifd, wd);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {
