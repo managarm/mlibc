@@ -145,6 +145,26 @@ static void test_affinity() {
 	assert(!memcmp(&set, &other_set, sizeof(cpu_set_t)));
 }
 
+static void test_sigmask() {
+	pthread_attr_t attr;
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
+	sigaddset(&set, SIGCANCEL);
+
+	assert(!pthread_attr_init(&attr));
+	assert(!pthread_attr_setsigmask_np(&attr, &set));
+
+	sigset_t other_set;
+	sigemptyset(&other_set);
+
+	assert(!pthread_attr_getsigmask_np(&attr, &other_set));
+
+	assert(sigismember(&other_set, SIGUSR1));
+	// Test whether internal signals get filtered properly.
+	assert(!sigismember(&other_set, SIGCANCEL));
+}
+
 static void *getattr_worker(void *arg) {
 	(void)arg;
 	return NULL;
@@ -187,5 +207,6 @@ int main() {
 	test_stackaddr();
 	test_stack();
 	test_affinity();
+	test_sigmask();
 	test_getattrnp();
 }
