@@ -701,6 +701,13 @@ int sys_reboot(int cmd) {
 	return 0;
 }
 
+int sys_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask) {
+	auto ret = do_syscall(SYS_sched_getaffinity, pid, cpusetsize, mask);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_mount(const char *source, const char *target,
 	const char *fstype, unsigned long flags, const void *data) {
 	auto ret = do_syscall(SYS_mount, source, target, fstype, flags, data);

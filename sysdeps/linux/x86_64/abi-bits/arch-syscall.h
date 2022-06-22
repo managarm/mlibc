@@ -97,8 +97,9 @@
 #define SYS_delete_module 176
 #define SYS_gettid 186
 #define SYS_futex 202
-#define SYS_getdents64 217
 #define SYS_sys_futex 202
+#define SYS_sched_getaffinity 204
+#define SYS_getdents64 217
 #define SYS_fadvise64 221
 #define SYS_clock_gettime 228
 #define SYS_clock_getres 229
