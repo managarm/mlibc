@@ -868,6 +868,13 @@ int sys_klogctl(int type, char *bufp, int len, int *out) {
 	return 0;
 }
 
+int sys_getcpu(int *cpu) {
+	auto ret = do_syscall(SYS_getcpu, cpu, NULL, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 	auto ret = do_syscall(SYS_socketpair, domain, type_and_flags, proto, fds, 0, 0);
 	if (int e = sc_error(ret); e)

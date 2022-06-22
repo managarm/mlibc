@@ -25,6 +25,7 @@ libc_sources += files(
 	'generic/sys-sysinfo.cpp',
 	'generic/module.cpp',
 	'generic/sys-klog.cpp',
+	'generic/sched.cpp',
 )
 
 if not no_headers
@@ -42,6 +43,7 @@ if not no_headers
 	)
 	install_headers(
 		'include/bits/linux/linux_unistd.h',
+		'include/bits/linux/linux_sched.h',
 		subdir: 'bits/linux'
 	)
 	install_headers(
