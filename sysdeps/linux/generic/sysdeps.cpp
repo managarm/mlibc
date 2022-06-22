@@ -799,6 +799,14 @@ int sys_delete_module(const char *name, unsigned flags) {
 	return 0;
 }
 
+int sys_syslog(int type, char *bufp, int len, int *out) {
+	auto ret = do_syscall(SYS_syslog, type, bufp, len);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<int>(ret);
+	return 0;
+}
+
 int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 	auto ret = do_syscall(SYS_socketpair, domain, type_and_flags, proto, fds, 0, 0);
 	if (int e = sc_error(ret); e)

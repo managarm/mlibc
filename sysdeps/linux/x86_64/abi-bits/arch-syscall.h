@@ -68,6 +68,7 @@
 #define SYS_times 100
 #define SYS_ptrace 101
 #define SYS_getuid 102
+#define SYS_syslog 103
 #define SYS_getgid 104
 #define SYS_setuid 105
 #define SYS_geteuid 107
