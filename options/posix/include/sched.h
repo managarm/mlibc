@@ -40,7 +40,8 @@
 #ifndef __MLIBC_LINUX_OPTION
 #define CPU_SETSIZE 128
 #define CPU_ISSET __mlibc_cpu_isset
-#define CPU_COUNT __mlibc_cpu_count
+#define CPU_COUNT(set) CPU_COUNT_S(sizeof(cpu_set_t), set)
+#define CPU_COUNT_S(setsize, set) __mlibc_cpu_count((setsize), (set))
 #else
 #define CPU_ISSET(cpu, cpusetp) __CPU_ISSET_S (cpu, sizeof (cpu_set_t), \
 						cpusetp)
@@ -80,7 +81,7 @@ int sched_get_priority_min(int policy);
 int unshare(int flags);
 
 int __mlibc_cpu_isset(int cpu, cpu_set_t *set);
-int __mlibc_cpu_count(cpu_set_t *set);
+int __mlibc_cpu_count(size_t setsize, cpu_set_t *set);
 
 // Linux extension
 int clone(int (*)(void *), void *, int, void *, ...);

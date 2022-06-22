@@ -35,9 +35,12 @@ int __mlibc_cpu_isset(int, cpu_set_t *) {
 	__builtin_unreachable();
 }
 
-int __mlibc_cpu_count(cpu_set_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int __mlibc_cpu_count(size_t setsize, cpu_set_t *set) {
+	size_t i, j, cnt=0;
+	const unsigned char *p = reinterpret_cast<const unsigned char *>(set);
+	for (i=0; i<setsize; i++) for (j=0; j<8; j++)
+		if (p[i] & (1<<j)) cnt++;
+	return cnt;
 }
 
 int unshare(int) {

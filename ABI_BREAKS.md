@@ -11,3 +11,4 @@ This document lists the ABI breaks that were made in each mlibc major version.
 - [#652](https://github.com/managarm/mlibc/pull/652): The ABI of `struct statfs` and `struct statvfs` was changed to match Linux. `socklen_t` was also changed from `unsigned long` to `unsigned int`.
 - [#658](https://github.com/managarm/mlibc/pull/648): In the Linux ABI, `cc_t` was changed from an `unsigned int` to an `unsigned char`.
 - [#679](https://github.com/managarm/mlibc/pull/679): The `struct glob_t` received some additional members to bring it up to par with glibc.
+- [#710](https://github.com/managarm/mlibc/pull/710): CPU_COUNT was not implemented correctly, and we had to change the function and macro signature to fix it.
