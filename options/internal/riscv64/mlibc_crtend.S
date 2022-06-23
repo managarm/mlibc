@@ -2,10 +2,10 @@
 .hidden __mlibc_do_dtors
 
 .section .init
-	j __mlibc_do_ctors
+	tail __mlibc_do_ctors
 
 .section .fini
-	j __mlibc_do_dtors
+	tail __mlibc_do_dtors
 
 .section .ctors
 .hidden __CTOR_END__
