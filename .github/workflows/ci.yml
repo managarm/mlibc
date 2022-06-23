@@ -15,6 +15,7 @@ jobs:
             # Note: the default jsonschema is too old.
             #       xbstrap should fix this by demanding a recent version.
             run: |
+                sudo apt-get update
                 sudo apt-get install ninja-build g++-10 g++-10-riscv64-linux-gnu qemu-user
                 sudo pip3 install setuptools
                 sudo pip3 install -U jsonschema
