@@ -139,6 +139,7 @@ typedef struct __stack {
 #define SI_KERNEL 128
 
 #define NSIG 65
+#define _NSIG NSIG
 
 #define CLD_EXITED 1
 #define CLD_KILLED 2
