@@ -30,6 +30,8 @@ __sighandler signal(int sig, __sighandler handler);
 
 int raise(int sig);
 
+#define _NSIG NSIG
+
 #ifdef __cplusplus
 }
 #endif
