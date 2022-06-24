@@ -16,6 +16,7 @@ libc_include_dirs = [
 ]
 
 rtdl_sources = [ ]
+rtdl_dso_sources = [ ]
 libc_sources = [ ]
 libc_sublibs = [ ]
 
@@ -24,7 +25,7 @@ rtdl_deps = [ ]
 
 headers_only = get_option('headers_only')
 no_headers = get_option('mlibc_no_headers')
-static = get_option('static')
+library_type = get_option('default_library')
 build_tests = get_option('build_tests')
 disable_ansi_option = get_option('disable_ansi_option')
 disable_posix_option = get_option('disable_posix_option')
@@ -92,7 +93,6 @@ endif
 internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
 internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', false)
 internal_conf.set('MLIBC_MAP_FILE_WINDOWS', false)
-internal_conf.set('MLIBC_STATIC_BUILD', static)
 
 #----------------------------------------------------------------------------------------
 # Configuration based on sysdeps.
@@ -224,12 +224,10 @@ internal_sources = [
 	'options/internal' / host_machine.cpu_family() / 'setjmp.S',
 ]
 
-if not static
-	internal_sources += [
-		'options/internal/gcc-extra/mlibc_crtbegin.S',
-		'options/internal' / host_machine.cpu_family() / 'mlibc_crtend.S',
-	]
-endif
+internal_dso_sources = [
+	'options/internal/gcc-extra/mlibc_crtbegin.S',
+	'options/internal' / host_machine.cpu_family() / 'mlibc_crtend.S',
+]
 
 if not no_headers
 	install_headers(
@@ -268,9 +266,7 @@ rtdl_sources += [
 	'options/rtdl' / host_machine.cpu_family() / 'runtime.S'
 ]
 
-if not static
-	rtdl_sources += 'options/rtdl' / host_machine.cpu_family() / 'entry.S'
-endif
+rtdl_dso_sources += ['options/rtdl' / host_machine.cpu_family() / 'entry.S']
 
 subdir('options/elf')
 subdir('options/ansi')
@@ -303,69 +299,68 @@ if not headers_only
 		endif
 	endif
 
-	if not static
-		ldso_lib = shared_library('ld', rtdl_sources,
-				name_prefix: '',
-				cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL',
-					'-fno-stack-protector'],
-				include_directories: rtdl_include_dirs,
-				dependencies: rtdl_deps + rtlib_deps,
-				install: true)
+	ld_cpp_args = [
+		'-fvisibility=hidden',
+		'-fno-stack-protector',
+		'-DMLIBC_BUILDING_RTDL'
+	]
 
-		libc = shared_library('c',
-				[
-					libc_sources,
-					internal_sources,
-					ansi_sources,
-					lsb_sources,
-				],
-				include_directories: libc_include_dirs,
-				dependencies: libc_deps + rtlib_deps,
-				link_with: [ldso_lib],
-				link_whole: libc_sublibs,
-				install: true)
+	libc_all_sources = [
+		libc_sources,
+		internal_sources,
+		ansi_sources,
+		lsb_sources,
+	]
 
-		shared_library('dl', 'dummy-libs/libdl/src/dummy.cpp', install: true)
-		shared_library('pthread', 'dummy-libs/libpthread/src/dummy.cpp', install: true)
-		shared_library('rt', 'dummy-libs/librt/src/dummy.cpp', install: true)
-		shared_library('util', 'dummy-libs/libutil/src/dummy.cpp', install: true)
-		shared_library('m', 'dummy-libs/libm/src/dummy.cpp', install: true)
-		if not disable_crypt_option
-			shared_library('crypt', 'dummy-libs/libcrypt/src/dummy.cpp', install: true)
-		endif
-		shared_library('resolv', 'dummy-libs/libresolv/src/dummy.cpp', install: true)
-	else
-		ldso_lib = static_library('ld', rtdl_sources,
-				name_prefix: '',
-				cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC',
-				'-fno-stack-protector'],
-				include_directories: rtdl_include_dirs,
-				dependencies: rtdl_deps,
-				install: false)
-		libc = static_library('c',
-				[
-					libc_sources,
-					internal_sources,
-					ansi_sources,
-					lsb_sources,
-				],
-				cpp_args: ['-DFRIGG_HAVE_LIBC', '-fno-stack-protector'],
-				c_args: ['-fno-stack-protector'],
-				include_directories: libc_include_dirs,
-				dependencies: libc_deps,
-				link_with: [ldso_lib],
-				link_whole: [libc_sublibs, ldso_lib],
-				install: true)
-
-		static_library('pthread', 'dummy-libs/libpthread/src/dummy.cpp', install: true)
-		static_library('rt', 'dummy-libs/librt/src/dummy.cpp', install: true)
-		static_library('util', 'dummy-libs/libutil/src/dummy.cpp', install: true)
-		static_library('m', 'dummy-libs/libm/src/dummy.cpp', install: true)
-		if not disable_crypt_option
-			static_library('crypt', 'dummy-libs/libcrypt/src/dummy.cpp', install: true)
-		endif
-		static_library('resolv', 'dummy-libs/libresolv/src/dummy.cpp', install: true)
+	# Our library have different behaviour when built as static and shared libraries.
+	# Hence we need to rebuild the object files with a different define for each mode.
+	if library_type in ['static', 'both']
+		static_cpp_args = [
+			'-DMLIBC_STATIC_BUILD',
+			'-DFRIGG_HAVE_LIBC',
+		]
+		ld_static_lib = static_library('ld', rtdl_sources,
+			name_prefix: '',
+			cpp_args: ld_cpp_args + static_cpp_args,
+			include_directories: rtdl_include_dirs,
+			dependencies: rtdl_deps + rtlib_deps,
+			install: false
+		)
+		libc_static = static_library('c', libc_all_sources,
+			cpp_args: static_cpp_args + ['-fno-stack-protector'],
+			include_directories: libc_include_dirs,
+			dependencies: libc_deps + rtlib_deps,
+			link_with: [ld_static_lib],
+			link_whole: [libc_sublibs, ld_static_lib],
+			install: true
+		)
 	endif
+	if library_type in ['shared', 'both']
+		ld_shared_lib = shared_library('ld', rtdl_sources + rtdl_dso_sources,
+			name_prefix: '',
+			cpp_args: ld_cpp_args,
+			include_directories: rtdl_include_dirs,
+			dependencies: rtdl_deps + rtlib_deps,
+			install: true
+		)
+		libc_shared = shared_library('c', libc_all_sources + internal_dso_sources,
+			include_directories: libc_include_dirs,
+			dependencies: libc_deps + rtlib_deps,
+			link_with: [ld_shared_lib],
+			link_whole: libc_sublibs,
+			install: true
+		)
+	endif
+
+	library('pthread', 'dummy-libs/libpthread/src/dummy.cpp', install: true)
+	library('rt', 'dummy-libs/librt/src/dummy.cpp', install: true)
+	library('util', 'dummy-libs/libutil/src/dummy.cpp', install: true)
+	library('m', 'dummy-libs/libm/src/dummy.cpp', install: true)
+	if not disable_crypt_option
+		library('crypt', 'dummy-libs/libcrypt/src/dummy.cpp', install: true)
+	endif
+	library('resolv', 'dummy-libs/libresolv/src/dummy.cpp', install: true)
+	library('dl', 'dummy-libs/libdl/src/dummy.cpp', install: true)
 endif
 
 if build_tests

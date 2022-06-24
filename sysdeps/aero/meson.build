@@ -1,9 +1,7 @@
-if not static
-	rtdl_sources += files(
-		'generic/aero.cpp',
-		'generic/filesystem.cpp',
-	)
-endif
+rtdl_dso_sources += files(
+	'generic/aero.cpp',
+	'generic/filesystem.cpp',
+)
 
 libc_sources += files(
 	'generic/aero.cpp',
