@@ -45,6 +45,7 @@ if not no_headers
 		'include/abi-bits/ptrace.h',
 		'include/abi-bits/poll.h',
 		'include/abi-bits/epoll.h',
+		'include/abi-bits/packet.h',
 		subdir: 'abi-bits'
 	)
 	install_headers(
