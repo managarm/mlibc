@@ -162,6 +162,7 @@ typedef struct __stack {
 #define SIGEV_THREAD 2
 
 #define NSIG 65
+#define  _NSIG NSIG
 
 #define SI_ASYNCNL (-60)
 #define SI_TKILL (-6)
