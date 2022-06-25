@@ -527,7 +527,7 @@ int __dlapi_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void*), 
 	for (auto object : globalScope->_objects) {
 		struct dl_phdr_info info;
 		info.dlpi_addr = object->baseAddress;
-		info.dlpi_name = object->name;
+		info.dlpi_name = object->name.data();
 		info.dlpi_phdr = static_cast<ElfW(Phdr)*>(object->phdrPointer);
 		info.dlpi_phnum = object->phdrCount;
 		info.dlpi_adds = rtsCounter;
