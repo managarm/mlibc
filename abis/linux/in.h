@@ -159,6 +159,9 @@ struct group_source_req {
 #define IPV6_RECVHOPLIMIT 51
 #define IPV6_HOPLIMIT 52
 
+#define MCAST_JOIN_SOURCE_GROUP 46
+#define MCAST_LEAVE_SOURCE_GROUP 47
+
 /* These defines are needed for compatibility with Linux kernel headers. */
 #define __UAPI_DEF_IN_ADDR      0
 #define __UAPI_DEF_IN_IPPROTO   0
