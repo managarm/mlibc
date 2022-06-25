@@ -38,6 +38,7 @@ if not no_headers
 		'include/abi-bits/wait.h',
 		'include/abi-bits/utsname.h',
 		'include/abi-bits/ptrace.h',
+		'include/abi-bits/poll.h',
 		subdir: 'abi-bits'
 	)
 	install_headers(
