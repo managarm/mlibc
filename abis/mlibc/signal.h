@@ -30,6 +30,9 @@ typedef struct {
 extern "C" {
 #endif
 
+// Argument for signal()
+typedef void (*__sighandler) (int);
+
 #define SIG_ERR ((__sighandler)(void *)(-1))
 #define SIG_DFL ((__sighandler)(void *)(-2))
 #define SIG_IGN ((__sighandler)(void *)(-3))
