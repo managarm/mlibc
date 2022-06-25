@@ -1,32 +1,32 @@
 #include <bits/ensure.h>
+#include <stddef.h>
+#include <errno.h>
 #include <utmpx.h>
 
 void updwtmpx(const char *, const struct utmpx *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// Empty as musl does
 }
 
 void endutxent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// Empty as musl does
 }
 
 void setutxent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// Empty as musl does
 }
 
 struct utmpx *getutxent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// return NULL as musl does
+	return NULL;
 }
 
 struct utmpx *pututxline(const struct utmpx *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// return NULL as musl does
+	return NULL;
 }
 
 int utmpxname(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	// return -1 as musl does
+	errno = ENOSYS;
+	return -1;
 }
