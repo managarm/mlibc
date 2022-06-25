@@ -1140,6 +1140,16 @@ int setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
 	return 0;
 }
 
+int getdomainname(char *, size_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int setdomainname(const char *, size_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 #ifdef __MLIBC_CRYPT_OPTION
 void encrypt(char[64], int) {
 	__ensure(!"Not implemented");
