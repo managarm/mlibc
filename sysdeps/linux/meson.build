@@ -72,9 +72,9 @@ if not headers_only
 		install_dir: get_option('libdir')
 	)
 
-	custom_target('Scrt1',
+	crt_pie = custom_target('Scrt1',
 		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		command: c_compiler.cmd_array() + ['-fPIE', '-c', '-o', '@OUTPUT@', '@INPUT@'],
 		input: host_machine.cpu_family() / 'crt-src/Scrt1.S',
 		output: 'Scrt1.o',
 		install: true,

@@ -5,7 +5,7 @@ _start:
 	.hidden __global_pointer$
 	.option push
 	.option norelax
-	la gp, __global_pointer$
+	lla gp, __global_pointer$
 	.option pop
 
 	mv a0, sp

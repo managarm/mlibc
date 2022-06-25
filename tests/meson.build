@@ -83,9 +83,10 @@ host_libc_excluded_test_cases = [
 	'ansi/utf8', # See issue #459
 ]
 
-test_sources = [
-	crt
-]
+test_sources = []
+test_link_args = []
+test_c_args = []
+use_pie = false
 
 test_c_args = []
 test_link_args = []
@@ -96,15 +97,29 @@ test_override_options = ['b_sanitize=none']
 
 if library_type == 'static'
 	libc = libc_static
+	use_pie = false
+	test_c_args += '-no-pie'
+	test_link_args += ['-no-pie', '-static']
 	test_sources += [
 		'../options/internal/gcc-extra/mlibc_crtbegin.S',
 		'../options/internal' / host_machine.cpu_family() / 'mlibc_crtend.S',
+		crt,
 	]
-	test_link_args += '-static'
 else
 	libc = libc_shared
-	test_c_args += '-no-pie'
-	test_link_args += ['-no-pie', '-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so']
+	test_link_args += ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so']
+
+	if host_machine.system() in ['linux', 'managarm']
+		use_pie = true
+		test_sources += crt_pie
+	else
+		use_pie = false
+		test_sources += crt
+
+		# Meson doesn't set these for us (issue #4651).
+		test_c_args += '-no-pie'
+		test_link_args += '-no-pie'
+	endif
 endif
 
 foreach test_name : all_test_cases
@@ -132,6 +147,7 @@ foreach test_name : all_test_cases
 		override_options: test_override_options,
 	    c_args: test_c_args,
 		link_args: test_link_args,
+		pie: use_pie,
 	)
 	test(test_short_name, exec, suite: test_subdir, should_fail: should_fail)
 
