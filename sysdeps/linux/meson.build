@@ -1,4 +1,5 @@
 rtdl_dso_sources += files(
+	host_machine.cpu_family() / 'arch-syscall.cpp',
 	'generic/sysdeps.cpp',
 )
 
@@ -6,6 +7,7 @@ rtdl_include_dirs += include_directories(host_machine.cpu_family())
 libc_include_dirs += include_directories(host_machine.cpu_family())
 libc_sources += files(
 	host_machine.cpu_family() / 'signals.S',
+	host_machine.cpu_family() / 'arch-syscall.cpp',
 	'generic/entry.cpp',
 	'generic/sysdeps.cpp',
 )
@@ -49,8 +51,12 @@ if not no_headers
 		'include/abi-bits/utsname.h',
 		'include/abi-bits/ptrace.h',
 		'include/abi-bits/vt.h',
+		host_machine.cpu_family() / 'abi-bits/arch-syscall.h',
 		subdir: 'abi-bits'
 	)
+
+	install_headers('include/sys/syscall.h', subdir: 'sys')
+	install_headers('include/bits/syscall.h', subdir: 'bits')
 endif
 
 if not headers_only

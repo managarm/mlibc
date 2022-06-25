@@ -6,7 +6,10 @@
 #include <mlibc-config.h>
 #include <utility>
 
-#include <arch-syscall.hpp>
+#include <sys/syscall.h>
+#include <bits/syscall.h>
+
+using sc_word_t = __sc_word_t;
 
 extern "C" {
 	extern sc_word_t __mlibc_do_asm_cp_syscall(int sc, sc_word_t arg1, sc_word_t arg2,
@@ -18,28 +21,28 @@ extern "C" {
 namespace mlibc {
 	// C++ wrappers for the extern "C" functions.
 	inline sc_word_t do_nargs_syscall(int sc) {
-		return do_asm_syscall0(sc);
+		return __do_syscall0(sc);
 	}
 	inline sc_word_t do_nargs_syscall(int sc, sc_word_t arg1) {
-		return do_asm_syscall1(sc, arg1);
+		return __do_syscall1(sc, arg1);
 	}
 	inline sc_word_t do_nargs_syscall(int sc, sc_word_t arg1, sc_word_t arg2) {
-		return do_asm_syscall2(sc, arg1, arg2);
+		return __do_syscall2(sc, arg1, arg2);
 	}
 	inline sc_word_t do_nargs_syscall(int sc, sc_word_t arg1, sc_word_t arg2, sc_word_t arg3) {
-		return do_asm_syscall3(sc, arg1, arg2, arg3);
+		return __do_syscall3(sc, arg1, arg2, arg3);
 	}
 	inline sc_word_t do_nargs_syscall(int sc, sc_word_t arg1, sc_word_t arg2, sc_word_t arg3,
 			sc_word_t arg4) {
-		return do_asm_syscall4(sc, arg1, arg2, arg3, arg4);
+		return __do_syscall4(sc, arg1, arg2, arg3, arg4);
 	}
 	inline sc_word_t do_nargs_syscall(int sc, sc_word_t arg1, sc_word_t arg2, sc_word_t arg3,
 			sc_word_t arg4, sc_word_t arg5) {
-		return do_asm_syscall5(sc, arg1, arg2, arg3, arg4, arg5);
+		return __do_syscall5(sc, arg1, arg2, arg3, arg4, arg5);
 	}
 	inline sc_word_t do_nargs_syscall(int sc, sc_word_t arg1, sc_word_t arg2, sc_word_t arg3,
 			sc_word_t arg4, sc_word_t arg5, sc_word_t arg6) {
-		return do_asm_syscall6(sc, arg1, arg2, arg3, arg4, arg5, arg6);
+		return __do_syscall6(sc, arg1, arg2, arg3, arg4, arg5, arg6);
 	}
 
 	inline sc_word_t do_nargs_cp_syscall(int sc, sc_word_t arg1) {
