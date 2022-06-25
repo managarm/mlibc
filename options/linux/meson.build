@@ -39,6 +39,7 @@ if not no_headers
 		'include/values.h',
 		'include/lastlog.h',
 		'include/module.h',
+		'include/syscall.h',
 	)
 	install_headers(
 		'include/bits/linux/linux_unistd.h',
