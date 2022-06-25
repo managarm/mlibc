@@ -43,5 +43,9 @@ typedef uint16_t u_int16_t;
 typedef uint32_t u_int32_t;
 typedef uint64_t u_int64_t;
 
+// BSD extensions
+typedef int64_t quad_t;
+typedef uint64_t u_quad_t;
+
 #endif // _SYS_TYPES_H
 
