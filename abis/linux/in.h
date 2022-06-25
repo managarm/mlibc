@@ -55,6 +55,28 @@ struct ipv6_mreq {
 	unsigned        ipv6mr_interface;
 };
 
+struct in_pktinfo {
+	unsigned int ipi_ifindex;
+	struct in_addr ipi_spec_dst;
+	struct in_addr ipi_addr;
+};
+
+struct in6_pktinfo {
+	struct in6_addr ipi6_addr;
+	uint32_t ipi6_ifindex;
+};
+
+struct group_req {
+	uint32_t gr_interface;
+	struct sockaddr_storage gr_group;
+};
+
+struct group_source_req {
+	uint32_t gsr_interface;
+	struct sockaddr_storage gsr_group;
+	struct sockaddr_storage gsr_source;
+};
+
 #ifdef __cplusplus
 }
 #endif
