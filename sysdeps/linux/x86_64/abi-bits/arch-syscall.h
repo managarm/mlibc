@@ -77,6 +77,8 @@
 #define SYS_getppid 110
 #define SYS_setsid 112
 #define SYS_getgroups 115
+#define SYS_setresuid 117
+#define SYS_setresgid 119
 #define SYS_getpgid 121
 #define SYS_getsid 124
 #define SYS_rt_sigsuspend 130

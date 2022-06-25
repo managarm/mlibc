@@ -434,6 +434,20 @@ int sys_sigprocmask(int how, const sigset_t *set, sigset_t *old) {
 	return 0;
 }
 
+int sys_setresuid(uid_t ruid, uid_t euid, uid_t suid) {
+	auto ret = do_syscall(SYS_setresuid, ruid, euid, suid);
+        if (int e = sc_error(ret); e)
+                return e;
+	return 0;
+}
+
+int sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
+	auto ret = do_syscall(SYS_setresgid, rgid, egid, sgid);
+        if (int e = sc_error(ret); e)
+                return e;
+	return 0;
+}
+
 int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out) {
         void *stack = prepare_stack(entry, user_arg);
 
