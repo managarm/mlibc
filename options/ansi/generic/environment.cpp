@@ -154,4 +154,11 @@ int unsetenv(const char *name) {
 	return 0;
 }
 
+int clearenv(void) {
+	auto vector = get_vector();
+	vector.clear();
+	update_vector();
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION

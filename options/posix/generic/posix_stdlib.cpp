@@ -465,7 +465,7 @@ int getloadavg(double *, int) {
 	__builtin_unreachable();
 }
 
-extern "C" int __dlapi_secure_required(void); 
+extern "C" int __dlapi_secure_required(void);
 
 char *secure_getenv(const char *name) {
 	if (__dlapi_secure_required())
