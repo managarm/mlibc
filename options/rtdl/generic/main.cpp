@@ -328,12 +328,13 @@ extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_open(const char *file, int local) {
 	// TODO: Thread-safety!
 	auto rts = rtsCounter++;
-	if(local)
-		mlibc::infoLogger() << "\e[31mrtdl: RTLD_LOCAL " << file << " is not supported properly\e[39m"
-				<< frg::endlog;
 
 	if(!file)
 		return executableSO;
+
+	if(local)
+		mlibc::infoLogger() << "\e[31mrtdl: RTLD_LOCAL " << file << " is not supported properly\e[39m"
+				<< frg::endlog;
 
 	SharedObject *object;
 	if(frg::string_view{file}.find_first('/') == size_t(-1)) {
