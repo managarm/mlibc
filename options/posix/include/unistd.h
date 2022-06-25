@@ -240,6 +240,9 @@ int getentropy(void *, size_t);
 
 int pipe2(int *pipefd, int flags);
 
+int setresuid(uid_t ruid, uid_t euid, uid_t suid);
+int setresgid(gid_t rgid, gid_t egid, gid_t sgid);
+
 // Glibc doesn't provide them by default anymore, lock behind an option
 #ifdef __MLIBC_CRYPT_OPTION
 char *crypt(const char *, const char *);

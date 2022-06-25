@@ -1239,6 +1239,32 @@ char *ctermid(char *s) {
 	return s ? strcpy(s, "/dev/tty") : const_cast<char *>("/dev/tty");
 }
 
+int setresuid(uid_t ruid, uid_t euid, uid_t suid) {
+	if(!mlibc::sys_setresuid) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_setresuid(ruid, euid, suid); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
+}
+
+int setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
+	if(!mlibc::sys_setresgid) {
+		MLIBC_MISSING_SYSDEP();
+		errno = ENOSYS;
+		return -1;
+	}
+	if(int e = mlibc::sys_setresgid(rgid, egid, sgid); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
+}
+
 #ifdef __MLIBC_CRYPT_OPTION
 void encrypt(char[64], int) {
 	__ensure(!"Not implemented");
