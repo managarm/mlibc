@@ -3,6 +3,8 @@
 
 #define __MLIBC_EMIT_INLINE_DEFINITIONS
 
+#include <mlibc-config.h>
+
 #include <elf.h>
 
 #ifdef __MLIBC_LINUX_OPTION
