@@ -21,6 +21,7 @@
 
 #define F_GETOWNER_UIDS 17
 
+#define F_DUPFD_CLOEXEC 1030
 #define F_ADD_SEALS 1033
 #define F_GET_SEALS 1034
 
