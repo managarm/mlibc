@@ -32,11 +32,7 @@ void cfmakeraw(struct termios *t) {
 }
 
 int tcdrain(int fd) {
-	if(!mlibc::sys_tcdrain) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_tcdrain, -1);
 	if(int e = mlibc::sys_tcdrain(fd); e) {
 		errno = e;
 		return -1;
@@ -45,11 +41,7 @@ int tcdrain(int fd) {
 }
 
 int tcflow(int fd, int action) {
-	if(!mlibc::sys_tcflow) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_tcflow, -1);
 	if(int e = mlibc::sys_tcflow(fd, action); e) {
 		errno = e;
 		return -1;
@@ -63,11 +55,7 @@ int tcflush(int, int) {
 }
 
 int tcgetattr(int fd, struct termios *attr) {
-	if(!mlibc::sys_tcgetattr) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_tcgetattr, -1);
 	if(int e = mlibc::sys_tcgetattr(fd, attr); e) {
 		errno = e;
 		return -1;
@@ -89,11 +77,7 @@ int tcsendbreak(int, int) {
 }
 
 int tcsetattr(int fd, int opts, const struct termios *attr) {
-	if(!mlibc::sys_tcsetattr) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_tcsetattr, -1);
 	if(int e = mlibc::sys_tcsetattr(fd, opts, attr); e) {
 		errno = e;
 		return -1;

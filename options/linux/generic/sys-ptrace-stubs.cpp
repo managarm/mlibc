@@ -21,11 +21,7 @@ long ptrace(int req, ...) {
 		data = &ret;
 	}
 
-	if(!mlibc::sys_ptrace) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ptrace, -1);
 	long out;
 	if(int e = mlibc::sys_ptrace(req, pid, addr, data, &out); e) {
 		errno = e;

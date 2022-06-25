@@ -6,11 +6,7 @@
 #include <bits/ensure.h>
 
 int flock(int fd, int opt) {
-	if(!mlibc::sys_flock) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_flock, -1);
 	if(int e = mlibc::sys_flock(fd, opt); e) {
 		errno = e;
 		return -1;

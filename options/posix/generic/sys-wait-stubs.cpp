@@ -13,11 +13,7 @@ int waitid(idtype_t, id_t, siginfo_t *, int) {
 
 pid_t waitpid(pid_t pid, int *status, int flags) {
 	pid_t ret;
-	if(!mlibc::sys_waitpid) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_waitpid, -1);
 	if(int e = mlibc::sys_waitpid(pid, status, flags, &ret); e) {
 		errno = e;
 		return -1;

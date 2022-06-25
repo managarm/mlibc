@@ -49,11 +49,7 @@ int login_tty(int fd) {
 	if(ioctl(fd, TIOCSCTTY, 0))
 		return -1;
 
-	if(!mlibc::sys_dup2) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_dup2, -1);
 	if(int e = mlibc::sys_dup2(fd, 0, STDIN_FILENO); e) {
 		errno = e;
 		return -1;
@@ -80,11 +76,7 @@ int forkpty(int *mfd, char *name, const struct termios *ios, const struct winsiz
 		return -1;
 
 	pid_t child;
-	if(!mlibc::sys_fork) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fork, -1);
 	if(int e = mlibc::sys_fork(&child); e) {
 		errno = e;
 		return -1;

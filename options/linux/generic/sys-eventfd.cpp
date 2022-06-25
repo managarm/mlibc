@@ -7,12 +7,7 @@
 int eventfd(unsigned int initval, int flags) {
 	int fd = 0;
 
-	if (!mlibc::sys_eventfd_create) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
-
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_eventfd_create, -1);
 	if (int e = mlibc::sys_eventfd_create(initval, flags, &fd); e) {
 		errno = e;
 		return -1;

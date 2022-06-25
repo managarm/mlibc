@@ -15,11 +15,7 @@ int fcntl(int fd, int command, ...) {
 	va_list args;
 	va_start(args, command);
 	int result;
-	if(!mlibc::sys_fcntl) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fcntl, -1);
 	if(int e = mlibc::sys_fcntl(fd, command, args, &result); e) {
 		errno = e;
 		return -1;
@@ -30,11 +26,7 @@ int fcntl(int fd, int command, ...) {
 
 int openat(int dirfd, const char *pathname, int flags, ...) {
 	int fd;
-	if(!mlibc::sys_openat) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_openat, -1);
 	if(int e = mlibc::sys_openat(dirfd, pathname, flags, &fd); e) {
 		errno = e;
 		return -1;

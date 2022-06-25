@@ -50,17 +50,12 @@ DIR *fdopendir(int fd) {
 	return dir;
 }
 DIR *opendir(const char *path) {
-	if(!mlibc::sys_open_dir) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return nullptr;
-	}
-
 	auto dir = frg::construct<__mlibc_dir_struct>(getAllocator());
 	__ensure(dir);
 	dir->__ent_next = 0;
 	dir->__ent_limit = 0;
 
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_open_dir, nullptr);
 	if(int e = mlibc::sys_open_dir(path, &dir->__handle); e) {
 		errno = e;
 		frg::destruct(getAllocator(), dir);
@@ -70,14 +65,9 @@ DIR *opendir(const char *path) {
 	}
 }
 struct dirent *readdir(DIR *dir) {
-	if(!mlibc::sys_read_entries) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return nullptr;
-	}
-
 	__ensure(dir->__ent_next <= dir->__ent_limit);
 	if(dir->__ent_next == dir->__ent_limit) {
+		MLIBC_CHECK_OR_ENOSYS(mlibc::sys_read_entries, nullptr);
 		if(int e = mlibc::sys_read_entries(dir->__handle, dir->__ent_buffer, 2048, &dir->__ent_limit); e)
 			__ensure(!"mlibc::sys_read_entries() failed");
 		dir->__ent_next = 0;

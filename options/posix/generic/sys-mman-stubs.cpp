@@ -10,11 +10,7 @@
 #include <mlibc/posix-sysdeps.hpp>
 
 int mprotect(void *pointer, size_t size, int prot) {
-	if(!mlibc::sys_vm_protect) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_vm_protect, -1);
 	if(int e = mlibc::sys_vm_protect(pointer, size, prot); e) {
 		errno = e;
 		return -1;
@@ -58,11 +54,7 @@ void *mremap(void *pointer, size_t size, size_t new_size, int flags, ...) {
 	__ensure(flags == MREMAP_MAYMOVE);
 
 	void *window;
-	if(!mlibc::sys_vm_remap) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return (void *)-1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_vm_remap, (void *)-1);
 	if(int e = mlibc::sys_vm_remap(pointer, size, new_size, &window); e) {
 		errno = e;
 		return (void *)-1;
@@ -133,14 +125,9 @@ int shm_unlink(const char *name) {
 
 #ifdef __MLIBC_LINUX_OPTION
 int memfd_create(const char *name, unsigned int flags) {
-	if(!mlibc::sys_memfd_create) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
-
 	int ret = -1;
 
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_memfd_create, -1);
 	if(int e = mlibc::sys_memfd_create(name, flags, &ret)) {
 		errno = e;
 		return -1;
@@ -150,12 +137,7 @@ int memfd_create(const char *name, unsigned int flags) {
 }
 
 int madvise(void *addr, size_t length, int advice) {
-	if(!mlibc::sys_madvise) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
-
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_madvise, -1);
 	if(int e = mlibc::sys_madvise(addr, length, advice)) {
 		errno = e;
 		return -1;

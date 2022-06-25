@@ -5,11 +5,7 @@
 #include <mlibc/posix-sysdeps.hpp>
 
 int statvfs(const char *path, struct statvfs *out) {
-	if(!mlibc::sys_statvfs) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_statvfs, -1);
 	if(int e = mlibc::sys_statvfs(path, out); e) {
 		errno = e;
 		return -1;
@@ -18,11 +14,7 @@ int statvfs(const char *path, struct statvfs *out) {
 }
 
 int fstatvfs(int fd, struct statvfs *out) {
-	if(!mlibc::sys_fstatvfs) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fstatvfs, -1);
 	if(int e = mlibc::sys_fstatvfs(fd, out); e) {
 		errno = e;
 		return -1;

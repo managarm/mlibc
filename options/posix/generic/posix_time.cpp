@@ -4,11 +4,7 @@
 #include <errno.h>
 
 int utimes(const char *filename, const struct timeval times[2]) {
-	if (!mlibc::sys_utimensat) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_utimensat, -1);
 	struct timespec time[2];
 	if(times == nullptr) {
 		time[0].tv_sec = UTIME_NOW;

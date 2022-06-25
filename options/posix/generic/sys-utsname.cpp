@@ -14,11 +14,7 @@ int uname(struct utsname *p) {
 		return -1;
 	}
 
-	if(!mlibc::sys_uname) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_uname, -1);
 	if(int e = mlibc::sys_uname(p); e) {
 		errno = e;
 		return -1;

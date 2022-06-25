@@ -246,11 +246,7 @@ void setgrent(void) {
 }
 
 int setgroups(size_t size, const gid_t *list) {
-	if(!mlibc::sys_setgroups) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setgroups, -1);
 	if(int e = mlibc::sys_setgroups(size, list); e) {
 		errno = e;
 		return -1;
