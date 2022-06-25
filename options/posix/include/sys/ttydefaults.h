@@ -16,5 +16,7 @@
 #define CSTOP CTRL('s')
 #define CLNEXT CTRL('v')
 #define CWERASE CTRL('w')
+#define CREPRINT CTRL('r')
+#define CDISCARD CTRL('o')
 
 #endif // _SYS_TTYDEFAULTS_H
