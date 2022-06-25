@@ -12,9 +12,6 @@ extern "C" {
 
 typedef int sig_atomic_t;
 
-// Argument for signal()
-typedef void (*__sighandler) (int);
-
 #define CLD_EXITED 1
 #define CLD_KILLED 2
 #define CLD_DUMPED 3
