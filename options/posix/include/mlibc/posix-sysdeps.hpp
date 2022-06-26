@@ -173,6 +173,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_sigsuspend(const sigset_t *set);
 [[gnu::weak]] int sys_setgroups(size_t size, const gid_t *list);
 [[gnu::weak]] int sys_statfs(const char *path, struct statfs *buf);
+[[gnu::weak]] int sys_fstatfs(int fd, struct statfs *buf);
 [[gnu::weak]] int sys_memfd_create(const char *name, int flags, int *fd);
 [[gnu::weak]] int sys_madvise(void *addr, size_t length, int advice);
 

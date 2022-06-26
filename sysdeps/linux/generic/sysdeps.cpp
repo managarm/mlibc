@@ -1,4 +1,7 @@
 #include <errno.h>
+#include <limits.h>
+#include <linux/reboot.h>
+
 #include <type_traits>
 
 #include <mlibc-config.h>
@@ -61,9 +64,24 @@ int sys_anon_free(void *pointer, size_t size) {
 	return sys_vm_unmap(pointer, size);
 }
 
+int sys_fadvise(int fd, off_t offset, off_t length, int advice) {
+	auto ret = do_syscall(SYS_fadvise64, fd, offset, length, advice);
+	if(int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	auto ret = do_cp_syscall(SYS_openat, AT_FDCWD, path, flags, mode);
 	if(int e = sc_error(ret); e)
+		return e;
+	*fd = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_openat(int dirfd, const char *path, int flags, int *fd) {
+	auto ret = do_syscall(SYS_openat, dirfd, path, flags);
+	if (int e = sc_error(ret); e)
 		return e;
 	*fd = sc_int_result<int>(ret);
 	return 0;
@@ -118,9 +136,10 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags,
 }
 
 int sys_vm_unmap(void *pointer, size_t size) {
-	UNUSED(pointer);
-	UNUSED(size);
-	STUB_ONLY
+	auto ret = do_syscall(SYS_munmap, pointer, size);
+	if(int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 // All remaining functions are disabled in ldso.
@@ -145,6 +164,20 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 		__ensure(fsfdt == fsfd_target::fd_path);
 
 	auto ret = do_cp_syscall(SYS_newfstatat, fd, path, statbuf, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_statfs(const char *path, struct statfs *buf) {
+	auto ret = do_cp_syscall(SYS_statfs, path, buf);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_fstatfs(int fd, struct statfs *buf) {
+	auto ret = do_cp_syscall(SYS_fstatfs, fd, buf);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -264,7 +297,9 @@ int sys_isatty(int fd) {
 #ifdef __MLIBC_POSIX_OPTION
 
 #include <sys/ioctl.h>
+#include <sys/utsname.h>
 #include <sched.h>
+#include <fcntl.h>
 
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	auto ret = do_syscall(SYS_ioctl, fd, request, arg);
@@ -418,6 +453,20 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 	return 0;
 }
 
+int sys_tcdrain(int fd) {
+	auto ret = do_syscall(SYS_ioctl, fd, TCSBRK, 1);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_tcflow(int fd, int action) {
+	auto ret = do_syscall(SYS_ioctl, fd, TCXONC, action);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_access(const char *path, int mode) {
 	auto ret = do_syscall(SYS_faccessat, AT_FDCWD, path, mode, 0);
 	if (int e = sc_error(ret); e)
@@ -482,6 +531,87 @@ int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out) {
 	if (int e = sc_error(ret); e)
 		return e;
 	*out = sc_int_result<long>(ret);
+	return 0;
+}
+
+int sys_open_dir(const char *path, int *fd) {
+	return sys_open(path, O_DIRECTORY, 0, fd);
+}
+
+int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read) {
+	auto ret = do_syscall(SYS_getdents64, handle, buffer, max_size);
+	if(int e = sc_error(ret); e)
+		return e;
+	*bytes_read = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_uname(struct utsname *buf) {
+	auto ret = do_syscall(SYS_uname, buf);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_gethostname(char *buf, size_t bufsize) {
+	struct utsname uname_buf;
+	if (auto e = sys_uname(&uname_buf); e)
+		return e;
+
+	auto node_len = strlen(uname_buf.nodename);
+	if (node_len >= bufsize)
+		return ENAMETOOLONG;
+
+	memcpy(buf, uname_buf.nodename, node_len);
+	buf[node_len] = '\0';
+	return 0;
+}
+
+int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
+	auto ret = do_syscall(SYS_pread64, fd, buf, n, off);
+	if (int e = sc_error(ret); e)
+		return e;
+	*bytes_read = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_written) {
+	auto ret = do_syscall(SYS_pwrite64, fd, buf, n, off);
+	if (int e = sc_error(ret); e)
+		return e;
+	*bytes_written = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
+	struct timespec tm;
+	tm.tv_sec = timeout / 1000;
+	tm.tv_nsec = timeout % 1000 * 1000000;
+	auto ret = do_syscall(SYS_ppoll, fds, count, timeout >= 0 ? &tm : nullptr, 0, NSIG / 8);
+	if (int e = sc_error(ret); e)
+		return e;
+	*num_events = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_getrusage(int scope, struct rusage *usage) {
+	auto ret = do_syscall(SYS_getrusage, scope, usage);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_madvise(void *addr, size_t length, int advice) {
+	auto ret = do_syscall(SYS_madvise, addr, length, advice);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_reboot(int cmd) {
+	auto ret = do_syscall(SYS_reboot, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, cmd, nullptr);
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 
@@ -603,8 +733,36 @@ int sys_chdir(const char *path) {
 	return 0;
 }
 
+int sys_fchdir(int fd) {
+	auto ret = do_syscall(SYS_fchdir, fd);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_rename(const char *old_path, const char *new_path) {
+	auto ret = do_syscall(SYS_renameat, AT_FDCWD, old_path, AT_FDCWD, new_path);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_renameat(int old_dirfd, const char *old_path, int new_dirfd, const char *new_path) {
+	auto ret = do_syscall(SYS_renameat, old_dirfd, old_path, new_dirfd, new_path);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_rmdir(const char *path) {
 	auto ret = do_syscall(SYS_unlinkat, AT_FDCWD, path, AT_REMOVEDIR);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_ftruncate(int fd, size_t size) {
+	auto ret = do_syscall(SYS_ftruncate, fd, size);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -629,6 +787,70 @@ int sys_setrlimit(int resource, const struct rlimit *limit) {
 	auto ret = do_syscall(SYS_setrlimit, resource, limit);
 	if (int e = sc_error(ret); e)
 		return e;
+	return 0;
+}
+
+pid_t sys_getppid() {
+	auto ret = do_syscall(SYS_getppid);
+	// getppid() always succeeds.
+	return sc_int_result<pid_t>(ret);
+}
+
+int sys_setpgid(pid_t pid, pid_t pgid) {
+	auto ret = do_syscall(SYS_setpgid, pid, pgid);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_getpgid(pid_t pid, pid_t *out) {
+	auto ret = do_syscall(SYS_getpgid, pid);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<pid_t>(ret);
+	return 0;
+}
+
+int sys_getgroups(size_t size, const gid_t *list, int *retval) {
+	auto ret = do_syscall(SYS_getgroups, size, list);
+	if (int e = sc_error(ret); e)
+		return e;
+	*retval = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_dup(int fd, int flags, int *newfd) {
+	__ensure(!flags);
+	auto ret = do_cp_syscall(SYS_dup, fd);
+	if (int e = sc_error(ret); e)
+		return e;
+	*newfd = sc_int_result<int>(ret);
+	return 0;
+}
+
+void sys_sync() {
+	do_syscall(SYS_sync);
+}
+
+int sys_fsync(int fd) {
+	auto ret = do_syscall(SYS_fsync, fd);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_fdatasync(int fd) {
+	auto ret = do_syscall(SYS_fdatasync, fd);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_getrandom(void *buffer, size_t length, int flags, ssize_t *bytes_written) {
+	auto ret = do_syscall(SYS_getrandom, buffer, length, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*bytes_written = sc_int_result<ssize_t>(ret);
 	return 0;
 }
 
