@@ -30,7 +30,7 @@ int main() {
 	assert(file);
 
 	// Verify that we read back the written string and close the file.
-	assert(fread(buffer, 1, strlen(str) + 1, file));
+	assert(fread(buffer, 1, sizeof(str) - 1, file));
 	assert(!strcmp(buffer, str));
 	fclose(file);
 
@@ -42,7 +42,7 @@ int main() {
 
 	// Open the file for reading again, verify the contents, close the file and return.
 	file = fopen(TEST_FILE, "r");
-	assert(fread(buffer2, 1, strlen(completestr) + 1, file));
+	assert(fread(buffer2, 1, sizeof(completestr) - 1, file));
 	assert(!strcmp(buffer2, completestr));
 	fclose(file);
 

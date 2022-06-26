@@ -251,20 +251,20 @@ int sys_sleep(time_t *secs, long *nanos) {
 	return 0;
 }
 
+int sys_isatty(int fd) {
+	unsigned short winsizeHack[4];
+	auto ret = do_syscall(SYS_ioctl, fd, 0x5413 /* TIOCGWINSZ */, &winsizeHack);
+	if (int e = sc_error(ret); e)
+		return e;
+	auto res = sc_int_result<unsigned long>(ret);
+	if(!res) return 0;
+	return 1;
+}
+
 #ifdef __MLIBC_POSIX_OPTION
 
 #include <sys/ioctl.h>
 #include <sched.h>
-
-int sys_isatty(int fd) {
-        struct winsize ws;
-        auto ret = do_syscall(SYS_ioctl, fd, TIOCGWINSZ, &ws);
-        if (int e = sc_error(ret); e)
-                return e;
-        auto res = sc_int_result<unsigned long>(ret);
-        if(!res) return 0;
-        return 1;
-}
 
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	auto ret = do_syscall(SYS_ioctl, fd, request, arg);
