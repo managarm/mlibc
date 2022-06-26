@@ -16,11 +16,7 @@ int statfs(const char *path, struct statfs *buf) {
 }
 
 int fstatfs(int fd, struct statfs *buf) {
-	if (!mlibc::sys_fstatfs) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fstatfs, -1);
 	if (int e = mlibc::sys_fstatfs(fd, buf); e) {
 		errno = e;
 		return -1;
