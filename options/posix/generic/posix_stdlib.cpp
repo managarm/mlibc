@@ -139,6 +139,7 @@ char *setstate(char *state) {
 // ----------------------------------------------------------------------------
 
 int mkostemp(char *pattern, int flags) {
+	flags &= ~O_WRONLY;
 	auto n = strlen(pattern);
 	__ensure(n >= 6);
 	if(n < 6) {
