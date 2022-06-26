@@ -1192,4 +1192,9 @@ int sys_getrandom(void *buffer, size_t length, int flags, ssize_t *bytes_written
 	return 0;
 }
 
+int sys_getentropy(void *buffer, size_t length) {
+	ssize_t written;
+	return sys_getrandom(buffer, length, 0, &written);
+}
+
 } // namespace mlibc
