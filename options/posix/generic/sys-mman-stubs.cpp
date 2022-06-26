@@ -23,9 +23,13 @@ int mlock(const void *, size_t) {
 	__builtin_unreachable();
 }
 
-int mlockall(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int mlockall(int flags) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_mlockall, -1);
+	if(int e = mlibc::sys_mlockall(flags); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int munlock(const void *, size_t) {

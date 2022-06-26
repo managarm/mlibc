@@ -904,6 +904,13 @@ int sys_pause() {
 	return EINTR;
 }
 
+int sys_mlockall(int flags) {
+	auto ret = do_syscall(SYS_mlockall, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {
