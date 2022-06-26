@@ -103,6 +103,38 @@ typedef struct {
 	Elf64_Word vda_next; /* Offset in bytes to next verdaux entry */
 } Elf64_Verdaux;
 
+typedef struct {
+	Elf64_Half vn_version;
+	Elf64_Half vn_cnt;
+	Elf64_Word vn_file;
+	Elf64_Word vn_aux;
+	Elf64_Word vn_next;
+} Elf64_Verneed;
+
+typedef struct {
+	Elf64_Word vna_hash;
+	Elf64_Half vna_flags;
+	Elf64_Half vna_other;
+	Elf64_Word vna_name;
+	Elf64_Word vna_next;
+} Elf64_Vernaux;
+
+typedef struct {
+	Elf64_Xword m_value;
+	Elf64_Xword m_info;
+	Elf64_Xword m_poffset;
+	Elf64_Half m_repeat;
+	Elf64_Half m_stride;
+} Elf64_Move;
+
+typedef struct {
+	Elf64_Word l_name;
+	Elf64_Word l_time_stamp;
+	Elf64_Word l_checksum;
+	Elf64_Word l_version;
+	Elf64_Word l_flags;
+} Elf64_Lib;
+
 enum {
 	ET_NONE = 0,
 	ET_REL = 1,
@@ -142,6 +174,21 @@ __MLIBC_INLINE_DEFINITION unsigned char ELF64_ST_TYPE(unsigned char info) {
 }
 __MLIBC_INLINE_DEFINITION unsigned char ELF64_ST_INFO(unsigned char bind, unsigned char type) {
 	return (bind << 4) | type;
+}
+
+typedef struct {
+	Elf64_Half si_boundto;
+	Elf64_Half si_flags;
+} Elf64_Syminfo;
+
+__MLIBC_INLINE_DEFINITION unsigned char ELF32_ST_BIND(unsigned char info) {
+	return info >> 4;
+}
+__MLIBC_INLINE_DEFINITION unsigned char ELF32_ST_TYPE(unsigned char info) {
+	return info & 0xF;
+}
+__MLIBC_INLINE_DEFINITION unsigned char ELF32_ST_INFO(unsigned char bind, unsigned char type) {
+	return (bind << 4) | (type & 0xF);
 }
 
 enum {
