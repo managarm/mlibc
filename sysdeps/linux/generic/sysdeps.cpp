@@ -67,7 +67,7 @@ int sys_anon_free(void *pointer, size_t size) {
 int sys_fadvise(int fd, off_t offset, off_t length, int advice) {
 	auto ret = do_syscall(SYS_fadvise64, fd, offset, length, advice);
 	if(int e = sc_error(ret); e)
-    	return e;
+		return e;
 	return 0;
 }
 
@@ -170,14 +170,14 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 }
 
 int sys_statfs(const char *path, struct statfs *buf) {
-  auto ret = do_cp_syscall(SYS_statfs, path, buf);
-  if (int e = sc_error(ret); e)
-    return e;
-  return 0;
+	auto ret = do_cp_syscall(SYS_statfs, path, buf);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 int sys_fstatfs(int fd, struct statfs *buf) {
-  auto ret = do_cp_syscall(SYS_fstatfs, fd, buf);
+	auto ret = do_cp_syscall(SYS_fstatfs, fd, buf);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -454,17 +454,17 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 }
 
 int sys_tcdrain(int fd) {
-  auto ret = do_syscall(SYS_ioctl, fd, TCSBRK, 1);
-  if (int e = sc_error(ret); e)
-    return e;
-  return 0;
+	auto ret = do_syscall(SYS_ioctl, fd, TCSBRK, 1);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 int sys_tcflow(int fd, int action) {
-  auto ret = do_syscall(SYS_ioctl, fd, TCXONC, action);
-  if (int e = sc_error(ret); e)
-    return e;
-  return 0;
+	auto ret = do_syscall(SYS_ioctl, fd, TCXONC, action);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 int sys_access(const char *path, int mode) {
@@ -820,11 +820,10 @@ int sys_getgroups(size_t size, const gid_t *list, int *retval) {
 }
 
 int sys_dup(int fd, int flags, int *newfd) {
+	__ensure(!flags);
 	auto ret = do_cp_syscall(SYS_dup, fd);
 	if (int e = sc_error(ret); e)
 		return e;
-	// TODO: Handle flags
-	(void) flags;
 	*newfd = sc_int_result<int>(ret);
 	return 0;
 }
