@@ -36,6 +36,8 @@ if not no_headers
 		'include/sys/user.h',
 		'include/sys/procfs.h',
 		'include/sys/reg.h',
+		'include/sys/errno.h',
+		'include/sys/signal.h',
 		subdir: 'sys'
 	)
 	install_headers(
