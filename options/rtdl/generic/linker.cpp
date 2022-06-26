@@ -88,7 +88,7 @@ SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 	object->dynamic = dynamic;
 	_parseDynamic(object);
 
-	_nameMap.insert(name, object);
+	_nameMap.insert(object->name, object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -105,7 +105,7 @@ SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 	_parseDynamic(object);
 
-	_nameMap.insert(name, object);
+	_nameMap.insert(object->name, object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -126,7 +126,7 @@ SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
 			(uintptr_t)__init_array_start);
 #endif
 
-	_nameMap.insert(name, object);
+	_nameMap.insert(object->name, object);
 
 	return object;
 }
@@ -226,7 +226,7 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 
 	_parseDynamic(object);
 
-	_nameMap.insert(name, object);
+	_nameMap.insert(object->name, object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -256,7 +256,7 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint6
 
 	_parseDynamic(object);
 
-	_nameMap.insert(path, object);
+	_nameMap.insert(object->name, object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -594,7 +594,7 @@ void ObjectRepository::_discoverDependencies(SharedObject *object, uint64_t rts)
 
 SharedObject::SharedObject(const char *name, frg::string<MemoryAllocator> path,
 	bool is_main_object, uint64_t object_rts)
-		: name(name), path(std::move(path)),
+		: name(name, getAllocator()), path(std::move(path)),
 		interpreterPath(getAllocator()),
 		isMainObject(is_main_object), objectRts(object_rts), inLinkMap(false),
 		baseAddress(0), loadScope(nullptr), dynamic(nullptr),

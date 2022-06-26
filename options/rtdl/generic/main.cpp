@@ -328,12 +328,13 @@ extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_open(const char *file, int local) {
 	// TODO: Thread-safety!
 	auto rts = rtsCounter++;
-	if(local)
-		mlibc::infoLogger() << "\e[31mrtdl: RTLD_LOCAL " << file << " is not supported properly\e[39m"
-				<< frg::endlog;
 
 	if(!file)
 		return executableSO;
+
+	if(local)
+		mlibc::infoLogger() << "\e[31mrtdl: RTLD_LOCAL " << file << " is not supported properly\e[39m"
+				<< frg::endlog;
 
 	SharedObject *object;
 	if(frg::string_view{file}.find_first('/') == size_t(-1)) {
@@ -527,7 +528,7 @@ int __dlapi_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void*), 
 	for (auto object : globalScope->_objects) {
 		struct dl_phdr_info info;
 		info.dlpi_addr = object->baseAddress;
-		info.dlpi_name = object->name;
+		info.dlpi_name = object->name.data();
 		info.dlpi_phdr = static_cast<ElfW(Phdr)*>(object->phdrPointer);
 		info.dlpi_phnum = object->phdrCount;
 		info.dlpi_adds = rtsCounter;

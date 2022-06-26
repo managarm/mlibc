@@ -105,7 +105,7 @@ struct SharedObject {
 	SharedObject(const char *name, const char *path, bool is_main_object,
 		uint64_t object_rts);
 
-	const char *name;
+	frg::string<MemoryAllocator> name;
 	frg::string<MemoryAllocator> path;
 	frg::string<MemoryAllocator> interpreterPath;
 	bool isMainObject;
