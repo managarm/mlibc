@@ -2,7 +2,11 @@
 #include <assert.h>
 #include <string.h>
 
+#ifdef USE_HOST_LIBC
+#define TEST_FILE "fopen-host-libc.tmp"
+#else
 #define TEST_FILE "fopen.tmp"
+#endif
 
 int main() {
 	FILE *file;
