@@ -5,7 +5,8 @@
 #include <string.h>
 
 #define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
-#define dump(x) fprintf(stderr, "getopt c '%c' (%d), optind %d ('%s'), optarg '%s', optopt '%c' (%d)\n", (x), (x), optind, test_argv[optind], optarg, optopt, optopt);
+#define dump(x) fprintf(stderr, "getopt c '%c' (%d), optind %d ('%s'), optarg '%s', optopt '%c' (%d)\n", \
+		(x), (x), optind, (size_t)optind >= COUNT_OF(test_argv) ? "out of range" : test_argv[optind], optarg, optopt, optopt);
 
 void test1() {
 	const char *shortopts = "b:cdef";
