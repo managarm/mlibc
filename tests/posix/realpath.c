@@ -6,21 +6,35 @@
 #include <stdio.h>
 #include <signal.h>
 
+#ifdef USE_HOST_LIBC
+#define TEST_BASE "/tmp/mlibc-realpath-host-libc"
+#else
+#define TEST_BASE "/tmp/mlibc-realpath"
+#endif
+
 void prepare() {
-	assert(!mkdir("/tmp/mlibc-realpath/", S_IRWXU));
-	assert(!mkdir("/tmp/mlibc-realpath/dir1", S_IRWXU));
-	assert(!mkdir("/tmp/mlibc-realpath/dir2", S_IRWXU));
-	assert(!symlink("/tmp/mlibc-realpath/dir2/", "/tmp/mlibc-realpath/dir1/abs-link"));
-	chdir("/tmp/mlibc-realpath/dir1");
-	assert(!symlink("../dir2/", "/tmp/mlibc-realpath/dir1/rel-link"));
+	assert(!mkdir(TEST_BASE "/", S_IRWXU));
+	assert(!mkdir(TEST_BASE "/dir1", S_IRWXU));
+	assert(!mkdir(TEST_BASE "/dir2", S_IRWXU));
+	assert(!symlink(TEST_BASE "/dir2/", TEST_BASE "/dir1/abs-link"));
+	assert(!chdir(TEST_BASE "/dir1"));
+	assert(!symlink("../dir2/", TEST_BASE "/dir1/rel-link"));
 }
 
-void cleanup() {
-	assert(!unlink("/tmp/mlibc-realpath/dir1/rel-link"));
-	assert(!unlink("/tmp/mlibc-realpath/dir1/abs-link"));
-	assert(!rmdir("/tmp/mlibc-realpath/dir2"));
-	assert(!rmdir("/tmp/mlibc-realpath/dir1"));
-	assert(!rmdir("/tmp/mlibc-realpath/"));
+void cleanup(int do_assert) {
+	if (do_assert) {
+		assert(!unlink(TEST_BASE "/dir1/rel-link"));
+		assert(!unlink(TEST_BASE "/dir1/abs-link"));
+		assert(!rmdir(TEST_BASE "/dir2"));
+		assert(!rmdir(TEST_BASE "/dir1"));
+		assert(!rmdir(TEST_BASE "/"));
+	} else {
+		unlink(TEST_BASE "/dir1/rel-link");
+		unlink(TEST_BASE "/dir1/abs-link");
+		rmdir(TEST_BASE "/dir2");
+		rmdir(TEST_BASE "/dir1");
+		rmdir(TEST_BASE "/");
+	}
 }
 
 void signal_handler(int sig, siginfo_t *info, void *ctx) {
@@ -28,7 +42,7 @@ void signal_handler(int sig, siginfo_t *info, void *ctx) {
 	(void)info;
 	(void)ctx;
 
-	cleanup();
+	cleanup(0);
 
 	struct sigaction sa;
 	sigemptyset(&sa.sa_mask);
@@ -50,55 +64,55 @@ int main() {
 
 	prepare();
 
-	path = realpath("/tmp/mlibc-realpath/dir1/", NULL);
+	path = realpath(TEST_BASE "/dir1/", NULL);
 	assert(path);
-	assert(!strcmp(path, "/tmp/mlibc-realpath/dir1"));
+	assert(!strcmp(path, TEST_BASE "/dir1"));
 	free(path);
 
-	path = realpath("/tmp/mlibc-realpath/dir1/../dir2", NULL);
+	path = realpath(TEST_BASE "/dir1/../dir2", NULL);
 	assert(path);
-	assert(!strcmp(path, "/tmp/mlibc-realpath/dir2"));
+	assert(!strcmp(path, TEST_BASE "/dir2"));
 	free(path);
 
-	path = realpath("/tmp/mlibc-realpath/dir1/abs-link/", NULL);
+	path = realpath(TEST_BASE "/dir1/abs-link/", NULL);
 	assert(path);
-	assert(!strcmp(path, "/tmp/mlibc-realpath/dir2"));
+	assert(!strcmp(path, TEST_BASE "/dir2"));
 	free(path);
 
-	path = realpath("/tmp/mlibc-realpath/dir1/rel-link/", NULL);
+	path = realpath(TEST_BASE "/dir1/rel-link/", NULL);
 	assert(path);
-	assert(!strcmp(path, "/tmp/mlibc-realpath/dir2"));
+	assert(!strcmp(path, TEST_BASE "/dir2"));
 	free(path);
 
-	path = realpath("/tmp/mlibc-realpath/dir1/abs-link/../", NULL);
+	path = realpath(TEST_BASE "/dir1/abs-link/../", NULL);
 	assert(path);
-	assert(!strcmp(path, "/tmp/mlibc-realpath"));
+	assert(!strcmp(path, TEST_BASE ""));
 	free(path);
 
-	path = realpath("/tmp/mlibc-realpath/dir1/rel-link/../", NULL);
+	path = realpath(TEST_BASE "/dir1/rel-link/../", NULL);
 	assert(path);
-	assert(!strcmp(path, "/tmp/mlibc-realpath"));
+	assert(!strcmp(path, TEST_BASE ""));
 	free(path);
 
-	path = realpath("/tmp/mlibc-realpath/dir1/abs-link/../dir1/abs-link/", NULL);
+	path = realpath(TEST_BASE "/dir1/abs-link/../dir1/abs-link/", NULL);
 	assert(path);
-	assert(!strcmp(path, "/tmp/mlibc-realpath/dir2"));
+	assert(!strcmp(path, TEST_BASE "/dir2"));
 	free(path);
 
-	path = realpath("/tmp/mlibc-realpath/dir1/rel-link/../dir1/rel-link/", NULL);
+	path = realpath(TEST_BASE "/dir1/rel-link/../dir1/rel-link/", NULL);
 	assert(path);
-	assert(!strcmp(path, "/tmp/mlibc-realpath/dir2"));
+	assert(!strcmp(path, TEST_BASE "/dir2"));
 	free(path);
 
-	path = realpath("/tmp/mlibc-realpath/dir1/abs-link/../dir1/rel-link/", NULL);
+	path = realpath(TEST_BASE "/dir1/abs-link/../dir1/rel-link/", NULL);
 	assert(path);
-	assert(!strcmp(path, "/tmp/mlibc-realpath/dir2"));
+	assert(!strcmp(path, TEST_BASE "/dir2"));
 	free(path);
 
-	path = realpath("/tmp/mlibc-realpath/dir1/rel-link/../dir1/abs-link/", NULL);
+	path = realpath(TEST_BASE "/dir1/rel-link/../dir1/abs-link/", NULL);
 	assert(path);
-	assert(!strcmp(path, "/tmp/mlibc-realpath/dir2"));
+	assert(!strcmp(path, TEST_BASE "/dir2"));
 	free(path);
 
-	cleanup();
+	cleanup(1);
 }

@@ -4,7 +4,11 @@
 #include <unistd.h>
 #include <string.h>
 
+#ifdef USE_HOST_LIBC
+#define TEST_FILE "getdelim-host-libc.tmp"
+#else
 #define TEST_FILE "getdelim.tmp"
+#endif
 
 int main(void) {
 	FILE *fp;
@@ -70,10 +74,13 @@ int main(void) {
 	assert(!memcmp(line, "1234e", 6));
 	assert(5 < len);
 
-	/* test handling of EOF */
-	assert(getdelim(&line, &len, 'e', fp) == -1);
+	/* test handling of internal nulls */
+	assert(getdelim(&line, &len, 'e', fp) == 3);
 	assert(!memcmp(line, "f\0f", 4));
 	assert(3 < len);
+
+	/* test handling of EOF */
+	assert(getdelim(&line, &len, 'e', fp) == -1);
 
 	free(line);
 	fclose(fp);

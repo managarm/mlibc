@@ -21,12 +21,14 @@ int main() {
 	assert(res[0].ai_protocol == IPPROTO_TCP);
 
 	freeaddrinfo(res);
+	res = NULL;
 
 	/* check we can resolve any domain */
 	ret = getaddrinfo("example.net", NULL, &hints, &res);
 	assert(ret == 0);
 
 	freeaddrinfo(res);
+	res = NULL;
 
 	hints.ai_flags = AI_NUMERICHOST;
 	ret = getaddrinfo("10.10.10.10", NULL, &hints, &res);
@@ -39,6 +41,7 @@ int main() {
 	assert(((addr->sin_addr.s_addr >> 24) & 0xFF) == 10);
 
 	freeaddrinfo(res);
+	res = NULL;
 
 	ret = getaddrinfo("example.net", NULL, &hints, &res);
 	assert(ret == EAI_NONAME);

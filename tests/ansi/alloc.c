@@ -18,6 +18,8 @@ int main() {
 	p = aligned_alloc(1, 1);
 	assert(p != NULL);
 
+	// It seems that glibc doesn't report error in these cases.
+#if !(defined(USE_HOST_LIBC) && defined(__GLIBC__))
 	// size % align must be 0
 	p = aligned_alloc(256, 1);
 	assert(errno == EINVAL);
@@ -27,4 +29,5 @@ int main() {
 	p = aligned_alloc(3, 1);
 	assert(errno == EINVAL);
 	assert(p == NULL);
+#endif
 }

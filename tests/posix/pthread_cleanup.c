@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <assert.h>
 #include <pthread.h>
 
@@ -22,6 +23,10 @@ static void *worker(void *arg) {
 	assert(cleanup_val == 4);
 
 	pthread_exit(NULL);
+
+	pthread_cleanup_pop(0);
+	pthread_cleanup_pop(0);
+
 	return NULL;
 }
 
@@ -34,3 +39,4 @@ int main() {
 
 	return 0;
 }
+

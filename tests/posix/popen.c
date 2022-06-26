@@ -3,7 +3,12 @@
 #include <assert.h>
 #include <unistd.h>
 
+#ifdef USE_HOST_LIBC
+#define TEST_FILE "popen-host-libc.tmp"
+#else
 #define TEST_FILE "popen.tmp"
+#endif
+
 #define TEST_STRING1 "the quick brown fox jumps over the lazy dog"
 #define TEST_STRING1_LEN 43
 #define TEST_STRING2 "Lorem ipsum dolor sit amet, consectetur adipiscing elit"

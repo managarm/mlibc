@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <pthread.h>
 #include <errno.h>
+#include <limits.h>
 
 _Atomic int dtors_entered = 0;
 pthread_key_t key3;

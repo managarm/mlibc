@@ -42,10 +42,12 @@ void endservent(void) {
 }
 
 void freeaddrinfo(struct addrinfo *ptr) {
-	auto buf = (struct mlibc::ai_buf*) ptr - offsetof(struct mlibc::ai_buf, ai);
-	// this string was allocated by a frg::string
-	getAllocator().free(ptr->ai_canonname);
-	free(buf);
+	if (ptr) {
+		auto buf = (struct mlibc::ai_buf*) ptr - offsetof(struct mlibc::ai_buf, ai);
+		// this string was allocated by a frg::string
+		getAllocator().free(ptr->ai_canonname);
+		free(buf);
+	}
 }
 
 const char *gai_strerror(int) {

@@ -1,99 +1,94 @@
-ansi_test_cases = [
-	'alloc',
-	'sscanf',
-	'sprintf',
-	'snprintf',
-	'utf8',
-	'strtol',
-	'abs',
-	'longjmp',
-	'strverscmp',
-	'strftime',
-	'strchr',
-	'strrchr',
-	'wcsrtombs',
-	'wmemcmp',
-	'time',
-	'timegm',
-	'ungetc',
-	'wcsdup',
-	'wcsncasecmp',
-	'fopen',
-	'memmem'
+all_test_cases = [
+	'ansi/alloc',
+	'ansi/sscanf',
+	'ansi/sprintf',
+	'ansi/snprintf',
+	'ansi/utf8',
+	'ansi/strtol',
+	'ansi/abs',
+	'ansi/longjmp',
+	'ansi/strverscmp',
+	'ansi/strftime',
+	'ansi/strchr',
+	'ansi/strrchr',
+	'ansi/wcsrtombs',
+	'ansi/wmemcmp',
+	'ansi/time',
+	'ansi/timegm',
+	'ansi/ungetc',
+	'ansi/wcsdup',
+	'ansi/wcsncasecmp',
+	'ansi/fopen',
+	'ansi/memmem',
+	'bsd/ns_get_put',
+	'bsd/reallocarray',
+	'bsd/strl',
+	'posix/inet_ntop',
+	'posix/inet_pton',
+	'posix/access',
+	'posix/pthread_rwlock',
+	'posix/pthread_cond',
+	'posix/pthread_create',
+	'posix/pthread_cancel',
+	'posix/pthread_atfork',
+	'posix/pthread_cleanup',
+	'posix/pthread_kill',
+	'posix/pthread_key',
+	'posix/pthread_thread_local',
+	'posix/pwd',
+	'posix/fdopen',
+	'posix/getaddrinfo',
+	'posix/getdelim',
+	'posix/getnameinfo',
+	'posix/getservbyname',
+	'posix/getservbyport',
+	'posix/grp',
+	'posix/dprintf',
+	'posix/posix_memalign',
+	'posix/posix_spawn',
+	'posix/index',
+	'posix/rindex',
+	'posix/search',
+	'posix/open_memstream',
+	'posix/popen',
+	'posix/system', # This test should be in the ANSI tests, but it depends on sys/wait.h
+	'posix/sigsuspend',
+	'posix/sigaltstack',
+	'posix/realpath',
+	'posix/ffs',
+	'posix/getcwd',
+	'posix/memrchr',
+	'posix/wordexp',
+	'posix/rlimits',
+	'posix/accept4',
+	'posix/setpriority',
+	'posix/alarm',
+	'posix/abort', # This test should be in the ANSI tests, but it depends on sigaction
+	'posix/timer',
+	'glibc/getopt',
+	'glibc/ffsl-ffsll',
 ]
-
-bsd_test_cases = [
-	'ns_get_put',
-	'reallocarray',
-	'strl'
-]
-
-posix_test_cases = [
-	'inet_ntop',
-	'inet_pton',
-	'access',
-	'pthread_rwlock',
-	'pthread_cond',
-	'pthread_create',
-	'pthread_cancel',
-	'pthread_atfork',
-	'pthread_cleanup',
-	'pthread_kill',
-	'pthread_key',
-	'pthread_thread_local',
-	'pwd',
-	'fdopen',
-	'getaddrinfo',
-	'getdelim',
-	'getnameinfo',
-	'getservbyname',
-	'getservbyport',
-	'grp',
-	'dprintf',
-	'posix_memalign',
-	'posix_spawn',
-	'index',
-	'rindex',
-	'search',
-	'open_memstream',
-	'popen',
-	'system', # This test should be in the ANSI tests, but it depends on sys/wait.h
-	'sigsuspend',
-	'sigaltstack',
-	'string',
-	'realpath',
-	'ffs',
-	'getcwd',
-	'memrchr',
-	'wordexp',
-	'rlimits',
-	'accept4',
-	'setpriority',
-	'alarm',
-	'timer'
-]
-
-posix_fail_test_cases = [
-	'abort' # This test should be in the ANSI tests, but it depends on sigaction
-]
-
-glibc_test_cases = [
-	'getopt',
-	'ffsl-ffsll',
-]
-
-rtdl_test_cases = [
-]
-
-test_link_args = []
 
 if host_machine.system() == 'linux'
-	glibc_test_cases += 'linux-syscall'
+	all_test_cases += 'glibc/linux-syscall'
 endif
+
+fail_test_cases = [
+	'posix/abort',
+]
+
+host_libc_excluded_test_cases = [
+	'bsd/strl', # These functions do not exist on Linux.
+	'rtdl/dl_iterate_phdr', # Can be removed when #448 lands
+	'ansi/utf8', # See issue #459
+]
 
 test_sources = [
 	crt
 ]
+
+test_c_args = []
+test_link_args = []
 
 # Our ubsan implementation can't be used by the tests themselves,
 # since it is internal to libc.so and ld.so.
@@ -108,87 +103,45 @@ if library_type == 'static'
 	test_link_args += '-static'
 else
 	libc = libc_shared
-	rtdl_test_cases += 'dl_iterate_phdr'
+	test_c_args += '-no-pie'
 	test_link_args += ['-no-pie', '-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so']
 endif
 
-if not disable_ansi_option
-	foreach f : ansi_test_cases
-		exec = executable('ansi-' + f, ['ansi/' + f + '.c', test_sources],
-			link_with: libc, include_directories: libc_include_dirs,
-			dependencies: rtlib_deps,
-			build_rpath: meson.build_root(),
-			override_options: test_override_options,
-			c_args: '-no-pie',
-			link_args: test_link_args,
-		)
-		test('ansi/' + f, exec)
-	endforeach
-endif
+foreach test_name : all_test_cases
+	test_subdir = test_name.split('/')[0]
+	test_short_name = test_name.split('/')[1]
+	test_exec_name = test_name.replace('/', '-')
 
-if not disable_bsd_option
-	foreach f : bsd_test_cases
-		exec = executable('ansi-' + f, ['bsd/' + f + '.c', test_sources],
-			link_with: libc, include_directories: libc_include_dirs,
-			dependencies: rtlib_deps,
-			build_rpath: meson.build_root(),
-			override_options: test_override_options,
-			c_args: '-no-pie',
-			link_args: test_link_args,
-		)
-		test('bsd/' + f, exec)
-	endforeach
-endif
+	if test_subdir == 'ansi' and disable_ansi_option
+		continue
+	elif test_subdir == 'bsd' and disable_bsd_option
+		continue
+	elif test_subdir == 'glibc' and disable_glibc_option
+		continue
+	elif test_subdir == 'posix' and disable_posix_option
+		continue
+	elif test_subdir == 'rtdl' and library_type == 'static'
+		continue
+	endif
 
-if not disable_posix_option
-	foreach f : posix_test_cases
-		exec = executable('posix-' + f, ['posix/' + f + '.c', test_sources],
-			link_with: libc, include_directories: libc_include_dirs,
-			dependencies: rtlib_deps,
-			build_rpath: meson.build_root(),
-			override_options: test_override_options,
-			c_args: '-no-pie',
-			link_args: test_link_args,
-		)
-		test('posix/' + f, exec)
-	endforeach
-
-	foreach f : posix_fail_test_cases
-		exec = executable('posix-' + f, ['posix/' + f + '.c', test_sources],
-			link_with: libc, include_directories: libc_include_dirs,
-			dependencies: rtlib_deps,
-			build_rpath: meson.build_root(),
-			override_options: test_override_options,
-			c_args: '-no-pie',
-			link_args: test_link_args,
-		)
-		test('posix/' + f, exec, should_fail: true)
-	endforeach
-endif
-
-# We never disable the posix option so glibc is gated behind the posix option here.
-if not disable_posix_option
-	foreach f : glibc_test_cases
-		exec = executable('glibc-' + f, ['glibc/' + f + '.c', test_sources],
-			link_with: libc, include_directories: libc_include_dirs,
-			dependencies: rtlib_deps,
-			build_rpath: meson.build_root(),
-			override_options: test_override_options,
-			c_args: '-no-pie',
-			link_args: test_link_args,
-		)
-		test('glibc/' + f, exec)
-	endforeach
-endif
-
-foreach f : rtdl_test_cases
-    exec = executable('rtdl-' + f, ['rtdl/' + f + '.c', test_sources],
-	    link_with: libc, include_directories: libc_include_dirs,
+	should_fail = fail_test_cases.contains(test_name)
+	exec = executable(test_exec_name, [test_name + '.c', test_sources],
+		link_with: libc, include_directories: libc_include_dirs,
 		dependencies: rtlib_deps,
-	    build_rpath: meson.build_root(),
+		build_rpath: meson.build_root(),
 		override_options: test_override_options,
-	    c_args: '-no-pie',
+	    c_args: test_c_args,
 		link_args: test_link_args,
 	)
-    test('rtdl/' + f, exec)
+	test(test_short_name, exec, suite: test_subdir, should_fail: should_fail)
+
+	if build_tests_host_libc and not host_libc_excluded_test_cases.contains(test_name)
+		exec = executable('host-libc-' + test_exec_name, test_name + '.c',
+			build_rpath: meson.build_root(),
+			c_args: ['-D_GNU_SOURCE', '-DUSE_HOST_LIBC', '-pthread'],
+			link_args: ['-lresolv', '-ldl', '-pthread'],
+			native: true,
+		)
+		test(test_short_name, exec, suite: ['host-libc', test_subdir], should_fail: should_fail)
+	endif
 endforeach

@@ -1057,7 +1057,7 @@ ssize_t getdelim(char **line, size_t *n, int delim, FILE *stream) {
 				return -1;
 			} else if (c == EOF) {
 				buffer[nwritten] = 0;
-				return -1;
+				return nwritten;
 			}
 
 			buffer[nwritten++] = c;
