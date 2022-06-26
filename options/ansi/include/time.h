@@ -74,6 +74,7 @@ void tzset(void);
 
 #ifdef __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_time.h>
+#	include <bits/posix/timer_t.h>
 #endif // __MLIBC_POSIX_OPTION
 
 #include <bits/ansi/clockid_t.h>
