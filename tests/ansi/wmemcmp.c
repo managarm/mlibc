@@ -13,5 +13,7 @@ int main(void){
     assert(wmemcmp(ws2, ws1, 10) > 0);
     assert(wmemcmp(ws2, ws2, 10) == 0);
 
+	free(ws1);
+	free(ws2);
     return 0;
 }

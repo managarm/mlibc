@@ -72,4 +72,5 @@ int main()
 	// This is not guaranteed.
 	assert(s == ESRCH);
 #endif
+	free(buf);
 }

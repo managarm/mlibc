@@ -1,5 +1,7 @@
 #include <stdlib.h>
 
 int main() {
-	return !reallocarray(NULL, 69, 0xCB7);
+	void *ret = reallocarray(NULL, 69, 0xCB7);
+	free(ret);
+	return !ret;
 }

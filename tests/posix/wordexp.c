@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <wordexp.h>
 
-static const char *wordexp_return_stringify(int val);
+static const char *wordexp_return_stringify(int val, int *should_free);
 
 struct we_test {
 	int expected_return;
@@ -56,7 +56,10 @@ int main() {
 	wordexp_t we;
 
 	wordexp("$(pwd)", &we, 0);
-	assert(!strcmp(getcwd(NULL, 0), we.we_wordv[0]));
+	char *cwd = getcwd(NULL, 0);
+	assert(!strcmp(cwd, we.we_wordv[0]));
+	wordfree(&we);
+	free(cwd);
 
 	char *home;
 	assert(asprintf(&home, "%s/.config", getenv("HOME")) != -1);
@@ -65,23 +68,28 @@ int main() {
 	assert(!strcmp(getenv("HOME"), we.we_wordv[1]));
 	assert(!strcmp(home, we.we_wordv[2]));
 	free(home);
+	wordfree(&we);
 
 	struct passwd *pw = getpwnam("root");
 	assert(asprintf(&home, "%s/.config", pw->pw_dir) != -1);
 	wordexp("~root ~root/.config", &we, WRDE_REUSE);
 	assert(!strcmp(pw->pw_dir, we.we_wordv[0]));
 	assert(!strcmp(home, we.we_wordv[1]));
+	free(home);
+	wordfree(&we);
 
 	size_t i = 0;
 
 	for(struct we_test *test = &test_cases[i]; test->expected_return != -1; test = &test_cases[++i]) {
 		wordexp_t test_we;
 
-		fprintf(stderr, "TESTCASE %zu: '%s' with flags %d expected to return %s\n", i, test->words, test->flags, wordexp_return_stringify(test->expected_return));
+		int should_free;
+		const char *expected = wordexp_return_stringify(test->expected_return, &should_free);
+		fprintf(stderr, "TESTCASE %zu: '%s' with flags %d expected to return %s\n", i, test->words, test->flags, expected);
 		int test_ret = wordexp(test->words, &test_we, test->flags);
 
 		if(test_ret != test->expected_return) {
-			fprintf(stderr, "\twordexp() returned %s, but we expect %s\n", wordexp_return_stringify(test_ret), wordexp_return_stringify(test->expected_return));
+			fprintf(stderr, "\twordexp() returned %s, but we expect %s\n", wordexp_return_stringify(test_ret, &should_free), wordexp_return_stringify(test->expected_return, &should_free));
 		}
 
 		assert(test_ret == test->expected_return);
@@ -95,9 +103,12 @@ int main() {
 			assert(test->wordv[j] && test_we.we_wordv[j]);
 			assert(!strcmp(test->wordv[j], test_we.we_wordv[j]));
 		}
+
+		wordfree(&test_we);
+		if (should_free)
+			free((void *)expected);
 	}
 
-	wordfree(&we);
 	exit(EXIT_SUCCESS);
 }
 
@@ -113,15 +124,17 @@ struct wordexp_return_val {
 	{-1, NULL},
 };
 
-static const char *wordexp_return_stringify(int val) {
+static const char *wordexp_return_stringify(int val, int *should_free) {
 	for(size_t i = 0; wordexp_return_vals[i].val != -1 || wordexp_return_vals[i].string; i++) {
 		if(wordexp_return_vals[i].val == val) {
+			*should_free = 0;
 			return wordexp_return_vals[i].string;
 		}
 	}
 
 	char *unknown;
 	assert(asprintf(&unknown, "unknown return value %d", val) != -1);
+	*should_free = 1;
 
 	return unknown;
 }

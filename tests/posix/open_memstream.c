@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 
 #define WRITE_NO 1024
@@ -59,5 +60,6 @@ int main() {
 
 	// Close the file, we have tested everything.
 	assert(!fclose(fp));
+	free(buf);
 	return 0;
 }

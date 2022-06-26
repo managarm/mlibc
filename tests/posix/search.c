@@ -18,6 +18,10 @@ static void check_key(int key, void *root) {
 	assert(**((int **) ret) == key);
 }
 
+static void free_key(void *key) {
+	free(key);
+}
+
 int main() {
 	void *root = NULL;
 	for (int i = 0; i < 12; i++) {
@@ -40,5 +44,8 @@ int main() {
 	void *ret = tfind((void*) &key, &root, compare);
 	assert(ret == NULL);
 
+	// tdelete is not implemented yet (#351)
+	(void)free_key;
+	// tdestroy(root, free_key);
 	return 0;
 }

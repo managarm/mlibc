@@ -82,6 +82,11 @@ host_libc_excluded_test_cases = [
 	'rtdl/dl_iterate_phdr', # Can be removed when #448 lands
 	'ansi/utf8', # See issue #459
 ]
+host_libc_noasan_test_cases = [
+	'posix/pthread_cancel',
+	'posix/posix_memalign',
+	'posix/search', # requires tdelete (#351)
+]
 
 test_sources = [
 	crt
@@ -136,8 +141,14 @@ foreach test_name : all_test_cases
 	test(test_short_name, exec, suite: test_subdir, should_fail: should_fail)
 
 	if build_tests_host_libc and not host_libc_excluded_test_cases.contains(test_name)
+		if test_name in host_libc_noasan_test_cases
+			host_libc_sanitize_options = 'b_sanitize=undefined'
+		else
+			host_libc_sanitize_options = 'b_sanitize=address,undefined'
+		endif
 		exec = executable('host-libc-' + test_exec_name, test_name + '.c',
 			build_rpath: meson.build_root(),
+			override_options: host_libc_sanitize_options,
 			c_args: ['-D_GNU_SOURCE', '-DUSE_HOST_LIBC', '-pthread'],
 			link_args: ['-lresolv', '-ldl', '-pthread'],
 			native: true,
