@@ -1,1 +1,1 @@
-../../../../abis/linux/x86_64/vt.h
+../../../../abis/linux/vt.h
