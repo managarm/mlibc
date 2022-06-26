@@ -94,6 +94,7 @@ if not no_headers
 		'include/abi-bits/utsname.h',
 		'include/abi-bits/ptrace.h',
 		'include/abi-bits/poll.h',
+		'include/abi-bits/epoll.h',
 		subdir: 'abi-bits'
 	)
 endif

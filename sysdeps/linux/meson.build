@@ -53,6 +53,7 @@ if not no_headers
 		'include/abi-bits/vt.h',
 		'include/abi-bits/ptrace.h',
 		'include/abi-bits/poll.h',
+		'include/abi-bits/epoll.h',
 		host_machine.cpu_family() / 'abi-bits/arch-syscall.h',
 		subdir: 'abi-bits'
 	)
