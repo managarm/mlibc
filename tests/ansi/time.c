@@ -96,4 +96,10 @@ int main() {
     assert(tm.tm_hour == 22);
     assert(tm.tm_min  == 21);
     memset(&tm, 0, sizeof(tm));
+
+    a = strptime("January", "%h", &tm);
+    assert(a != NULL);
+    assert(*a == '\0');
+    assert(tm.tm_mon == 0);
+    memset(&tm, 0, sizeof(tm));
 }

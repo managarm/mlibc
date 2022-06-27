@@ -748,10 +748,29 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				break;
 			case 'b':
 			case 'B':
-			case 'h':
-				__ensure(!"strptime() %b, %B and %h directives unimplemented.");
-				__builtin_unreachable();
+			case 'h': {
+				for(size_t i = MON_1; i <= MON_12; i++) {
+					const char *mon = nl_langinfo(i);
+					size_t len = strlen(mon);
+					if(strncasecmp(&input[state->input_index], mon, len))
+						continue;
+					state->input_index += len;
+					tm->tm_mon = i - MON_1;
+					state->has_month = true;
+					break;
+				}
+				for(size_t i = ABMON_1; i <= ABMON_12; i++) {
+					const char *mon = nl_langinfo(i);
+					size_t len = strlen(mon);
+					if(strncasecmp(&input[state->input_index], mon, len))
+						continue;
+					state->input_index += len;
+					tm->tm_mon = i - ABMON_1;
+					state->has_month = true;
+					break;
+				}
 				break;
+			}
 			case 'c':
 				__ensure(!"strptime() %c directive unimplemented.");
 				__builtin_unreachable();
