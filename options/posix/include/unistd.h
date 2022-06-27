@@ -162,6 +162,7 @@ int fchownat(int fd, const char *path, uid_t uid, gid_t gid, int flags);
 int fdatasync(int);
 int fexecve(int, char *const [], char *const []);
 pid_t fork(void);
+pid_t vfork(void);
 long fpathconf(int, int);
 int fsync(int);
 int ftruncate(int, off_t);
