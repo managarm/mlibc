@@ -16,5 +16,6 @@ int main() {
 	ns_put32(original32, buf);
 	uint32_t result32 = ns_get32(buf);
 	assert(result32 == original32);
+	free(buf);
 	return 0;
 }

@@ -41,4 +41,6 @@ int main()
 	assert(result->pw_uid == 0);
 	assert(!strcmp(result->pw_name, "root"));
 	assert(strlen(result->pw_passwd) <= 1000);
+
+	free(buf);
 }

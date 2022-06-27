@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 int main() {
 	char buf[PATH_MAX];
@@ -15,6 +16,7 @@ int main() {
 	assert(ret2);
 	assert(strlen(ret2));
 	assert(!strcmp(ret, ret2));
+	free(ret2);
 
 	return 0;
 }

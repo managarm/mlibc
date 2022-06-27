@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 static jmp_buf env;
+static char *sigStack;
 
 static void sig_handler(int sig, siginfo_t *info, void *ctx) {
 	(void)sig;
@@ -15,11 +16,14 @@ static void sig_handler(int sig, siginfo_t *info, void *ctx) {
 
 int main() {
 	if (setjmp(env)) {
+		free(sigStack);
 		return 0;
 	}
 
+	sigStack = malloc(SIGSTKSZ);
+
 	stack_t ss;
-	ss.ss_sp = malloc(SIGSTKSZ);
+	ss.ss_sp = sigStack;
 	ss.ss_size = SIGSTKSZ;
 	ss.ss_flags = 0;
 
