@@ -2,6 +2,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
+#include <langinfo.h>
 #include <time.h>
 #include <limits.h>
 #include <wchar.h>
@@ -795,10 +797,15 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				tm->tm_hour = product;
 				break;
 			}
-			case 'I':
-				__ensure(!"strptime() %I directive unimplemented.");
-				__builtin_unreachable();
+			case 'I': {
+				int product = 0, n = 0;
+				sscanf(&input[state->input_index], "%d%n", &product, &n);
+				if(n == 0 || 2 < n)
+					return NULL;
+				state->input_index += n;
+				tm->tm_hour = product;
 				break;
+			}
 			case 'j': {
 				int product = 0, n = 0;
 				sscanf(&input[state->input_index], "%d%n", &product, &n);
@@ -838,10 +845,24 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				state->input_index--;
 				break;
 			}
-			case 'p':
-				__ensure(!"strptime() %p directive unimplemented.");
-				__builtin_unreachable();
+			case 'p': {
+				const char *meridian_str = nl_langinfo(AM_STR);
+				size_t len = strlen(meridian_str);
+				if (!strncasecmp(&input[state->input_index], meridian_str, len)) {
+					tm->tm_hour %= 12;
+					state->input_index += len;
+					break;
+				}
+				meridian_str = nl_langinfo(PM_STR);
+				len = strlen(meridian_str);
+				if (!strncasecmp(&input[state->input_index], meridian_str, len)) {
+					tm->tm_hour %= 12;
+					tm->tm_hour += 12;
+					state->input_index += len;
+					break;
+				}
 				break;
+			}
 			case 'r':
 				__ensure(!"strptime() %r directive unimplemented.");
 				__builtin_unreachable();

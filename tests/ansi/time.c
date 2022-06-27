@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <locale.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -86,5 +87,13 @@ int main() {
     assert(*a == '\0');
     assert(tm.tm_sec  == 53);
     assert(tm.tm_hour == 14);
+    memset(&tm, 0, sizeof(tm));
+
+    setlocale(LC_TIME, "en_US.UTF-8");
+    a = strptime("10 21 PM", "%I %M %p", &tm);
+    assert(a != NULL);
+    assert(*a == '\0');
+    assert(tm.tm_hour == 22);
+    assert(tm.tm_min  == 21);
     memset(&tm, 0, sizeof(tm));
 }
