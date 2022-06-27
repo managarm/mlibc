@@ -9,6 +9,7 @@ typedef long __sc_word_t;
 
 // These syscall macros were copied from musl.
 #define __scc(x) ((__sc_word_t)(x))
+#define __syscall0(n) __do_syscall0(n)
 #define __syscall1(n,a) __do_syscall1(n,__scc(a))
 #define __syscall2(n,a,b) __do_syscall2(n,__scc(a),__scc(b))
 #define __syscall3(n,a,b,c) __do_syscall3(n,__scc(a),__scc(b),__scc(c))
