@@ -742,10 +742,29 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 					return NULL;
 				break;
 			case 'a':
-			case 'A':
-				__ensure(!"strptime() %a and %A directives unimplemented.");
-				__builtin_unreachable();
+			case 'A': {
+				for(size_t i = DAY_1; i <= DAY_7; i++) {
+					const char *mon = nl_langinfo(i);
+					size_t len = strlen(mon);
+					if(strncasecmp(&input[state->input_index], mon, len))
+						continue;
+					state->input_index += len;
+					tm->tm_wday = i - DAY_1;
+					state->has_day_of_week = true;
+					break;
+				}
+				for(size_t i = ABDAY_1; i <= ABDAY_7; i++) {
+					const char *mon = nl_langinfo(i);
+					size_t len = strlen(mon);
+					if(strncasecmp(&input[state->input_index], mon, len))
+						continue;
+					state->input_index += len;
+					tm->tm_wday = i - ABDAY_1;
+					state->has_day_of_week = true;
+					break;
+				}
 				break;
+			}
 			case 'b':
 			case 'B':
 			case 'h': {

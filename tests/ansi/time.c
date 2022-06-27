@@ -102,4 +102,10 @@ int main() {
     assert(*a == '\0');
     assert(tm.tm_mon == 0);
     memset(&tm, 0, sizeof(tm));
+
+    a = strptime("Wednesday", "%A", &tm);
+    assert(a != NULL);
+    assert(*a == '\0');
+    assert(tm.tm_wday == 3);
+    memset(&tm, 0, sizeof(tm));
 }
