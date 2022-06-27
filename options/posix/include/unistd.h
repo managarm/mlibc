@@ -12,7 +12,9 @@
 #include <abi-bits/gid_t.h>
 #include <abi-bits/pid_t.h>
 
-#ifdef __linux__
+// Some cross compilers may erroneously have __linux__ set.
+// Work around this by checking __has_include.
+#if defined(__linux__) && __has_include(<bits/syscall.h>)
 #include <bits/syscall.h>
 #endif
 
