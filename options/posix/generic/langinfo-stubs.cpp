@@ -22,6 +22,10 @@ char *nl_langinfo(nl_item item) {
 			case ABMON_12: return const_cast<char *>("Dec");
 		}
 		__builtin_unreachable();
+	} else if(item == AM_STR) {
+		return const_cast<char *>("AM");
+	} else if(item == PM_STR) {
+		return const_cast<char *>("PM");
 	}else{
 		mlibc::infoLogger() << "mlibc: nl_langinfo item "
 				<< item << " is not implemented properly" << frg::endlog;
