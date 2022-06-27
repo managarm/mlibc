@@ -155,6 +155,16 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 	return 0;
 }
 
+int sys_clock_getres(int clock, time_t *secs, long *nanos) {
+	struct timespec tp = {};
+	auto ret = do_syscall(SYS_clock_getres, clock, &tp);
+	if (int e = sc_error(ret); e)
+		return e;
+	*secs = tp.tv_sec;
+	*nanos = tp.tv_nsec;
+	return 0;
+}
+
 int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
 	if (fsfdt == fsfd_target::path)
 		fd = AT_FDCWD;

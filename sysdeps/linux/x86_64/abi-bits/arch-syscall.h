@@ -83,6 +83,7 @@
 #define SYS_sys_futex 202
 #define SYS_fadvise64 221
 #define SYS_clock_gettime 228
+#define SYS_clock_getres 229
 #define SYS_exit_group 231
 #define SYS_tgkill 234
 #define SYS_openat 257
