@@ -42,6 +42,28 @@ char *nl_langinfo(nl_item item) {
 		return const_cast<char *>("AM");
 	} else if(item == PM_STR) {
 		return const_cast<char *>("PM");
+	} else if(item >= DAY_1 && item <= DAY_7) {
+		switch(item) {
+			case DAY_1: return const_cast<char *>("Sunday");
+			case DAY_2: return const_cast<char *>("Monday");
+			case DAY_3: return const_cast<char *>("Tuesday");
+			case DAY_4: return const_cast<char *>("Wednesday");
+			case DAY_5: return const_cast<char *>("Thursday");
+			case DAY_6: return const_cast<char *>("Friday");
+			case DAY_7: return const_cast<char *>("Saturday");
+		}
+		__builtin_unreachable();
+	} else if(item >= ABDAY_1 && item <= ABDAY_7) {
+		switch(item) {
+			case ABDAY_1: return const_cast<char *>("Sun");
+			case ABDAY_2: return const_cast<char *>("Mon");
+			case ABDAY_3: return const_cast<char *>("Tue");
+			case ABDAY_4: return const_cast<char *>("Wed");
+			case ABDAY_5: return const_cast<char *>("Thu");
+			case ABDAY_6: return const_cast<char *>("Fri");
+			case ABDAY_7: return const_cast<char *>("Sat");
+		}
+		__builtin_unreachable();
 	}else{
 		mlibc::infoLogger() << "mlibc: nl_langinfo item "
 				<< item << " is not implemented properly" << frg::endlog;
