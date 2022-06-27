@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <locale.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -25,12 +26,13 @@ void assertWidthIs(int expected_width, wchar_t c) {
 	tests_run++;
 	int actual_width = wcwidth(c);
 	if (actual_width != expected_width) {
-		fprintf(stderr, "ERROR: wcwidth(U+%04x) returned %d, expected %d\n", c, actual_width, expected_width);
+		fprintf(stderr, "ERROR: wcwidth(U+%04x, '%lc') returned %d, expected %d\n", c, c, actual_width, expected_width);
 		test_failures++;
 	}
 }
 
 int main() {
+	setlocale(LC_CTYPE, "C.UTF-8");
 	assertWidthIs(1, 'a');
 	assertWidthIs(1, L'ö');
 
@@ -45,7 +47,9 @@ int main() {
 	assertWidthIs(2, 0x2070E);
 	assertWidthIs(2, 0x20731);
 
+#ifndef USE_HOST_LIBC
 	assertWidthIs(1, 0x11A3);
+#endif
 
 	assertWidthIs(2, 0x1F428); // Koala emoji.
 	assertWidthIs(2, 0x231a);  // Watch emoji.
