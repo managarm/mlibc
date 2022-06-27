@@ -1,6 +1,8 @@
 #ifndef _NETPACKET_PACKET_H
 #define _NETPACKET_PACKET_H
 
+#include <abi-bits/packet.h>
+
 struct sockaddr_ll {
 	unsigned short int sll_family;
 	unsigned short int sll_protocol;
