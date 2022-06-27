@@ -716,6 +716,33 @@ struct strptime_internal_state {
 
 char *strptime_internal(const char *__restrict input, const char *__restrict format,
 	struct tm *__restrict tm, struct strptime_internal_state *__restrict state) {
+	auto matchLanginfoItem = [&] (int start, size_t num, int &dest, bool &flag) -> bool {
+		for(size_t i = start; i < (start + num); i++) {
+			const char *mon = nl_langinfo(i);
+			size_t len = strlen(mon);
+			if(strncasecmp(&input[state->input_index], mon, len))
+				continue;
+			state->input_index += len;
+			dest = i - start;
+			flag = true;
+			return true;
+		}
+		return false;
+	};
+
+	auto matchNumericRange = [&] (int start, int end, int &dest, bool *flag) -> bool {
+		int product = 0, n = 0;
+		sscanf(&input[state->input_index], "%d%n", &product, &n);
+		if(n == 0 || 2 < n)
+			return false;
+		if(product < start || product > end)
+			return false;
+		state->input_index += n;
+		dest = product;
+		if(flag) *flag = true;
+		return true;
+	};
+
 	while(isspace(input[state->input_index]))
 		state->input_index++;
 
@@ -743,51 +770,17 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				break;
 			case 'a':
 			case 'A': {
-				for(size_t i = DAY_1; i <= DAY_7; i++) {
-					const char *mon = nl_langinfo(i);
-					size_t len = strlen(mon);
-					if(strncasecmp(&input[state->input_index], mon, len))
-						continue;
-					state->input_index += len;
-					tm->tm_wday = i - DAY_1;
-					state->has_day_of_week = true;
-					break;
-				}
-				for(size_t i = ABDAY_1; i <= ABDAY_7; i++) {
-					const char *mon = nl_langinfo(i);
-					size_t len = strlen(mon);
-					if(strncasecmp(&input[state->input_index], mon, len))
-						continue;
-					state->input_index += len;
-					tm->tm_wday = i - ABDAY_1;
-					state->has_day_of_week = true;
-					break;
-				}
+				if (!matchLanginfoItem(DAY_1, 7, tm->tm_wday, state->has_day_of_week) && \
+					!matchLanginfoItem(ABDAY_1, 7, tm->tm_wday, state->has_day_of_week))
+					return NULL;
 				break;
 			}
 			case 'b':
 			case 'B':
 			case 'h': {
-				for(size_t i = MON_1; i <= MON_12; i++) {
-					const char *mon = nl_langinfo(i);
-					size_t len = strlen(mon);
-					if(strncasecmp(&input[state->input_index], mon, len))
-						continue;
-					state->input_index += len;
-					tm->tm_mon = i - MON_1;
-					state->has_month = true;
-					break;
-				}
-				for(size_t i = ABMON_1; i <= ABMON_12; i++) {
-					const char *mon = nl_langinfo(i);
-					size_t len = strlen(mon);
-					if(strncasecmp(&input[state->input_index], mon, len))
-						continue;
-					state->input_index += len;
-					tm->tm_mon = i - ABMON_1;
-					state->has_month = true;
-					break;
-				}
+				if (!matchLanginfoItem(MON_1, 12, tm->tm_mon, state->has_month) && \
+					!matchLanginfoItem(ABMON_1, 12, tm->tm_mon, state->has_month))
+					return NULL;
 				break;
 			}
 			case 'c':
@@ -806,13 +799,8 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 			}
 			case 'd': //`%d` and `%e` are equivalent
 			case 'e': {
-				int product = 0, n = 0;
-				sscanf(&input[state->input_index], "%d%n", &product, &n);
-				if(n == 0 || 2 < n)
+				if(!matchNumericRange(1, 31, tm->tm_mday, &state->has_day_of_month))
 					return NULL;
-				state->input_index += n;
-				tm->tm_mday = product;
-				state->has_day_of_month = true;
 				break;
 			}
 			case 'D': { //equivalent to `%m/%d/%y`
@@ -827,50 +815,30 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				break;
 			}
 			case 'H': {
-				int product = 0, n = 0;
-				sscanf(&input[state->input_index], "%d%n", &product, &n);
-				if(n == 0 || 2 < n)
+				if(!matchNumericRange(0, 23, tm->tm_hour, nullptr))
 					return NULL;
-				state->input_index += n;
-				tm->tm_hour = product;
 				break;
 			}
 			case 'I': {
-				int product = 0, n = 0;
-				sscanf(&input[state->input_index], "%d%n", &product, &n);
-				if(n == 0 || 2 < n)
+				if(!matchNumericRange(1, 12, tm->tm_hour, nullptr))
 					return NULL;
-				state->input_index += n;
-				tm->tm_hour = product;
 				break;
 			}
 			case 'j': {
-				int product = 0, n = 0;
-				sscanf(&input[state->input_index], "%d%n", &product, &n);
-				if(n == 0 || 3 < n)
+				if(!matchNumericRange(1, 366, tm->tm_yday, &state->has_day_of_year))
 					return NULL;
-				state->input_index += n;
-				tm->tm_yday = product - 1;
-				state->has_day_of_year = true;
+				tm->tm_yday--;
 				break;
 			}
 			case 'm': {
-				int product = 0, n = 0;
-				sscanf(&input[state->input_index], "%d%n", &product, &n);
-				if(n == 0 || 2 < n)
+				if(!matchNumericRange(1, 12, tm->tm_mon, &state->has_month))
 					return NULL;
-				state->input_index += n;
-				tm->tm_mon = product - 1;
-				state->has_month = true;
+				tm->tm_mon--;
 				break;
 			}
 			case 'M': {
-				int product = 0, n = 0;
-				sscanf(&input[state->input_index], "%d%n", &product, &n);
-				if(n == 0 || 2 < n)
+				if(!matchNumericRange(0, 59, tm->tm_min, nullptr))
 					return NULL;
-				state->input_index += n;
-				tm->tm_min = product;
 				break;
 			}
 			case 'n':
@@ -917,12 +885,8 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				break;
 			}
 			case 'S': {
-				int product = 0, n = 0;
-				sscanf(&input[state->input_index], "%d%n", &product, &n);
-				if(n == 0 || 2 < n)
+				if(!matchNumericRange(0, 60, tm->tm_sec, nullptr))
 					return NULL;
-				state->input_index += n;
-				tm->tm_sec = product;
 				break;
 			}
 			case 'T': { //equivalent to `%H:%M:%S`
@@ -1008,12 +972,9 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				__builtin_unreachable();
 				break;
 			case 'u': {
-				int product = 0, n = 0;
-				sscanf(&input[state->input_index], "%d%n", &product, &n);
-				if(n == 0 || 1 < n)
+				if(!matchNumericRange(1, 7, tm->tm_wday, nullptr))
 					return NULL;
-				state->input_index += n;
-				tm->tm_wday = product - 1;
+				tm->tm_wday--;
 				break;
 			}
 			case 'V':

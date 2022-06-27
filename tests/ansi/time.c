@@ -89,6 +89,14 @@ int main() {
     assert(tm.tm_hour == 14);
     memset(&tm, 0, sizeof(tm));
 
+    a = strptime("24", "%H", &tm);
+    assert(a == NULL);
+    memset(&tm, 0, sizeof(tm));
+
+    a = strptime("0", "%I", &tm);
+    assert(a == NULL);
+    memset(&tm, 0, sizeof(tm));
+
     setlocale(LC_TIME, "en_US.UTF-8");
     a = strptime("10 21 PM", "%I %M %p", &tm);
     assert(a != NULL);
@@ -101,6 +109,12 @@ int main() {
     assert(a != NULL);
     assert(*a == '\0');
     assert(tm.tm_mon == 0);
+    memset(&tm, 0, sizeof(tm));
+
+    a = strptime("2", "%j", &tm);
+    assert(a != NULL);
+    assert(*a == '\0');
+    assert(tm.tm_yday == 1);
     memset(&tm, 0, sizeof(tm));
 
     a = strptime("Wednesday", "%A", &tm);
