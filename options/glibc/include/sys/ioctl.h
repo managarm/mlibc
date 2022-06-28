@@ -25,6 +25,9 @@ int ioctl(int fd, unsigned long request, ...);
 #define SIOCSIFFLAGS 0x8914
 #define SIOCGIFINDEX 0x8933
 
+#define SIOCPROTOPRIVATE 0x89E0
+#define SIOCDEVPRIVATE 0x89F0
+
 #ifdef __cplusplus
 }
 #endif
