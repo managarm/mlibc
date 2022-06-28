@@ -72,6 +72,7 @@ if not no_headers
 	)
 	install_headers(
 		'include/netinet/in_systm.h',
+		'include/netinet/icmp6.h',
 		subdir: 'netinet'
 	)
 	install_headers(
