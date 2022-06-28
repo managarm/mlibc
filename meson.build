@@ -217,6 +217,7 @@ internal_sources = [
 	'options/internal/generic/frigg.cpp',
 	'options/internal/generic/inline-emitter.cpp',
 	'options/internal/generic/sigset.cpp',
+	'options/internal/generic/strings.cpp',
 	'options/internal/generic/ubsan.cpp',
 	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',

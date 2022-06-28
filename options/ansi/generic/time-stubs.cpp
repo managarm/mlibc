@@ -2,7 +2,6 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <strings.h>
 #include <langinfo.h>
 #include <time.h>
 #include <limits.h>
@@ -17,6 +16,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/lock.hpp>
 #include <mlibc/bitutil.hpp>
+#include <mlibc/strings.hpp>
 
 #include <frg/mutex.hpp>
 
@@ -720,7 +720,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 		for(size_t i = start; i < (start + num); i++) {
 			const char *mon = nl_langinfo(i);
 			size_t len = strlen(mon);
-			if(strncasecmp(&input[state->input_index], mon, len))
+			if(mlibc::strncasecmp(&input[state->input_index], mon, len))
 				continue;
 			state->input_index += len;
 			dest = i - start;
@@ -854,14 +854,14 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 			case 'p': {
 				const char *meridian_str = nl_langinfo(AM_STR);
 				size_t len = strlen(meridian_str);
-				if (!strncasecmp(&input[state->input_index], meridian_str, len)) {
+				if (!mlibc::strncasecmp(&input[state->input_index], meridian_str, len)) {
 					tm->tm_hour %= 12;
 					state->input_index += len;
 					break;
 				}
 				meridian_str = nl_langinfo(PM_STR);
 				len = strlen(meridian_str);
-				if (!strncasecmp(&input[state->input_index], meridian_str, len)) {
+				if (!mlibc::strncasecmp(&input[state->input_index], meridian_str, len)) {
 					tm->tm_hour %= 12;
 					tm->tm_hour += 12;
 					state->input_index += len;
