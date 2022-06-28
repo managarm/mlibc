@@ -54,6 +54,7 @@ libc_sources += files(
 	'generic/sys-msg.cpp',
 	'generic/sys-sem.cpp',
 	'generic/sys-ipc.cpp',
+	'generic/time.cpp',
 	'generic/wordexp-stubs.cpp',
 	'musl-generic/fnmatch.cpp',
 	'musl-generic/glob.cpp',

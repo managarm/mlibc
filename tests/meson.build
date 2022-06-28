@@ -13,7 +13,6 @@ all_test_cases = [
 	'ansi/strrchr',
 	'ansi/wcsrtombs',
 	'ansi/wmemcmp',
-	'ansi/time',
 	'ansi/timegm',
 	'ansi/ungetc',
 	'ansi/wcsdup',
@@ -54,6 +53,7 @@ all_test_cases = [
 	'posix/system', # This test should be in the ANSI tests, but it depends on sys/wait.h
 	'posix/sigsuspend',
 	'posix/sigaltstack',
+	'posix/time',
 	'posix/realpath',
 	'posix/ffs',
 	'posix/getcwd',
