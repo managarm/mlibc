@@ -39,6 +39,8 @@ struct sockaddr_in6 {
 	uint32_t        sin6_scope_id;
 };
 
+#define MCAST_INCLUDE 1
+
 struct ip_mreq {
 	struct in_addr imr_multiaddr;
 	struct in_addr imr_interface;
