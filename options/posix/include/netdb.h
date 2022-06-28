@@ -106,6 +106,7 @@ int getaddrinfo(const char *__restrict, const char *__restrict,
 		const struct addrinfo *__restrict, struct addrinfo **__restrict);
 struct hostent *gethostent(void);
 struct hostent *gethostbyname(const char *);
+struct hostent *gethostbyname2(const char *, int);
 struct hostent *gethostbyaddr(const void *, socklen_t, int);
 int gethostbyaddr_r(const void *__restrict, socklen_t, int, struct hostent *__restrict,
 					char *__restrict, size_t, struct hostent **__restrict, int *__restrict);
