@@ -869,10 +869,17 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				}
 				break;
 			}
-			case 'r':
-				__ensure(!"strptime() %r directive unimplemented.");
-				__builtin_unreachable();
+			case 'r': {  //equivalent to `%I:%M:%S %p`
+				size_t pre_fi = state->format_index;
+				state->format_index = 0;
+
+				char *result = strptime_internal(input, "%I:%M:%S %p", tm, state);
+				if(result == NULL)
+					return NULL;
+
+				state->format_index = pre_fi;
 				break;
+			}
 			case 'R': { //equivalent to `%H:%M`
 				size_t pre_fi = state->format_index;
 				state->format_index = 0;

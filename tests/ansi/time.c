@@ -122,4 +122,12 @@ int main() {
     assert(*a == '\0');
     assert(tm.tm_wday == 3);
     memset(&tm, 0, sizeof(tm));
+
+    a = strptime("11:51:13 PM", "%r", &tm);
+    assert(a != NULL);
+    assert(*a == '\0');
+    assert(tm.tm_hour == 23);
+    assert(tm.tm_min == 51);
+    assert(tm.tm_sec == 13);
+    memset(&tm, 0, sizeof(tm));
 }
