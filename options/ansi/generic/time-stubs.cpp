@@ -272,7 +272,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 		return 0;
 
 	*p = '\0';
-	return (p - dest) + 1;
+	return (p - dest);
 }
 
 size_t wcsftime(wchar_t *__restrict, size_t, const wchar_t *__restrict,
