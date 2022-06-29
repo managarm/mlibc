@@ -7,6 +7,7 @@
 #include <wchar.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <langinfo.h>
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
@@ -248,19 +249,10 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			p += chunk;
 			c += 2;
 		}else if (*(c + 1) == 'p') {
-			if(tm->tm_hour < 12) {
-				char time[] = "AM";
-				auto chunk = snprintf(p, space, "%s", time);
-				if(chunk >= space)
-					return 0;
-				p += chunk;
-			}else {
-				char time[] = "PM";
-				auto chunk = snprintf(p, space, "%s", time);
-				if(chunk >= space)
-					return 0;
-				p += chunk;
-			}
+			auto chunk = snprintf(p, space, "%s", nl_langinfo((tm->tm_hour < 12) ? AM_STR : PM_STR));
+			if(chunk >= space)
+				return 0;
+			p += chunk;
 			c += 2;
 		}else {
 			__ensure(!"Unknown format type.");
