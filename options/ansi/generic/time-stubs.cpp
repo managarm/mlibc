@@ -168,12 +168,11 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			p += chunk;
 			c += 2;
 		}else if (*(c + 1) == 'a') {
-			const char *strdays[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 			int day = tm->tm_wday;
 			if(day < 0 || day > 6)
 				__ensure(!"Day not in bounds.");
 
-			auto chunk = snprintf(p, space, "%s", strdays[day]);
+			auto chunk = snprintf(p, space, "%s", nl_langinfo(DAY_1 + day));
 			if(chunk >= space)
 				return 0;
 			p += chunk;
