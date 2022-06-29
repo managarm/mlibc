@@ -179,42 +179,13 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			p += chunk;
 			c += 2;
 		}else if (*(c + 1) == 'b' || *(c + 1) == 'B') {
-			const char *strmons[12];
-			switch (*(c + 1)) {
-				case 'b':
-					strmons[0] = "Jan";
-					strmons[1] = "Feb";
-					strmons[2] = "Mar";
-					strmons[3] = "Apr";
-					strmons[4] = "May";
-					strmons[5] = "Jun";
-					strmons[6] = "Jul";
-					strmons[7] = "Aug";
-					strmons[8] = "Sep";
-					strmons[9] = "Oct";
-					strmons[10] = "Nov";
-					strmons[11] = "Dec";
-					break;
-				case 'B':
-					strmons[0] = "January";
-					strmons[1] = "February";
-					strmons[2] = "March";
-					strmons[3] = "April";
-					strmons[4] = "May";
-					strmons[5] = "June";
-					strmons[6] = "July";
-					strmons[7] = "August";
-					strmons[8] = "September";
-					strmons[9] = "October";
-					strmons[10] = "November";
-					strmons[11] = "December";
-					break;
-			}
 			int mon = tm->tm_mon;
 			if(mon < 0 || mon > 11)
 				__ensure(!"Month not in bounds.");
 
-			auto chunk = snprintf(p, space, "%s", strmons[mon]);
+			nl_item item = (*(c + 1) == 'b') ? ABMON_1 : MON_1;
+
+			auto chunk = snprintf(p, space, "%s", nl_langinfo(item + mon));
 			if(chunk >= space)
 				return 0;
 			p += chunk;
