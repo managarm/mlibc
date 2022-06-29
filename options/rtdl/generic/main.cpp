@@ -253,6 +253,9 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	auto ldso = initialRepository->injectObjectFromDts(ldso_soname,
 		frg::string<MemoryAllocator> { getAllocator() },
 		ldso_base, _DYNAMIC, 1);
+	ldso->phdrPointer = phdr_pointer;
+	ldso->phdrCount = phdr_count;
+	ldso->phdrEntrySize = phdr_entry_size;
 
 	// TODO: support non-zero base addresses?
 	executableSO = initialRepository->injectObjectFromPhdrs(execfn,

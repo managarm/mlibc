@@ -339,6 +339,10 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	seekOrDie(fd, ehdr.e_phoff);
 	readExactlyOrDie(fd, phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
 
+	object->phdrPointer = phdr_buffer;
+	object->phdrCount = ehdr.e_phnum;
+	object->phdrEntrySize = ehdr.e_phentsize;
+
 	// Allocate virtual address space for the DSO.
 	constexpr size_t hugeSize = 0x200000;
 
