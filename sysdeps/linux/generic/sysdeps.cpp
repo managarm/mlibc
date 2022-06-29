@@ -448,6 +448,13 @@ int sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
 	return 0;
 }
 
+int sys_sysinfo(struct sysinfo *info) {
+	auto ret = do_syscall(SYS_sysinfo, info);
+        if (int e = sc_error(ret); e)
+                return e;
+	return 0;
+}
+
 int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out) {
         void *stack = prepare_stack(entry, user_arg);
 

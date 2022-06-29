@@ -3,6 +3,7 @@
 
 #include <stdarg.h>
 #include <sys/epoll.h>
+#include <sys/sysinfo.h>
 #include <poll.h>
 #include <abi-bits/pid_t.h>
 #include <abi-bits/mode_t.h>
@@ -37,6 +38,8 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);
 [[gnu::weak]] int sys_reboot(int cmd);
 [[gnu::weak]] int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out);
 [[gnu::weak]] int sys_prctl(int option, va_list va, int *out);
+
+[[gnu::weak]] int sys_sysinfo(struct sysinfo *info);
 
 } // namespace mlibc
 

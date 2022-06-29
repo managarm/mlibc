@@ -65,6 +65,7 @@
 #define SYS_umask 95
 #define SYS_getrlimit 97
 #define SYS_getrusage 97
+#define SYS_sysinfo 99
 #define SYS_times 100
 #define SYS_ptrace 101
 #define SYS_getuid 102
