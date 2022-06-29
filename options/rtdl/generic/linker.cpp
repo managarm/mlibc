@@ -269,6 +269,25 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint6
 	return object;
 }
 
+SharedObject *ObjectRepository::findCaller(void *addr) {
+	uintptr_t target = reinterpret_cast<uintptr_t>(addr);
+
+	for (auto [name, object] : _nameMap) {
+		// Search all PT_LOAD segments for the specified address.
+		for(size_t j = 0; j < object->phdrCount; j++) {
+			auto phdr = (Elf64_Phdr *)((uintptr_t)object->phdrPointer + j * object->phdrEntrySize);
+			if (phdr->p_type == PT_LOAD) {
+				uintptr_t start = object->baseAddress + phdr->p_vaddr;
+				uintptr_t end = start + phdr->p_memsz;
+				if (start <= target && target < end)
+					return object;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
 // --------------------------------------------------------
 // ObjectRepository: Fetching methods.
 // --------------------------------------------------------

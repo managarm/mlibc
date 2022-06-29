@@ -51,6 +51,8 @@ struct ObjectRepository {
 
 	SharedObject *requestObjectAtPath(frg::string_view path, uint64_t rts);
 
+	SharedObject *findCaller(void *address);
+
 private:
 	void _fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer);

@@ -12,37 +12,29 @@ struct __dlapi_symbol {
 };
 
 extern "C" const char *__dlapi_error();
-extern "C" void *__dlapi_open(const char *, int);
-extern "C" void *__dlapi_resolve(void *, const char *);
+extern "C" void *__dlapi_open(const char *, int, void *);
+extern "C" void *__dlapi_resolve(void *, const char *, void *);
 extern "C" int __dlapi_reverse(const void *, __dlapi_symbol *);
+extern "C" int __dlapi_close(void *);
 
-int dlclose(void *) {
-	mlibc::infoLogger() << "\e[31mmlibc: dlclose() is a no-op\e[39m" << frg::endlog;
-	return 0;
+int dlclose(void *handle) {
+	return __dlapi_close(handle);
 }
 
 char *dlerror(void) {
 	return const_cast<char *>(__dlapi_error());
 }
 
+[[gnu::noinline]]
 void *dlopen(const char *file, int flags) {
-	// The following three flags are glibc extensions.
-	// TODO: Validate the flags.
-	if(flags & RTLD_NOLOAD) {
-		mlibc::infoLogger() << "\e[31mmlibc: dlopen(RTLD_NOLOAD) always fails\e[39m"
-				<< frg::endlog;
-		return nullptr;
-	}
-
-	int unhandled = flags & (RTLD_NODELETE | RTLD_DEEPBIND);
-	if (unhandled)
-		mlibc::infoLogger() << "mlibc: unhandled dlopen flags " << unhandled << frg::endlog;
-
-	return __dlapi_open(file, !(flags & RTLD_GLOBAL));
+	auto ra = __builtin_extract_return_addr(__builtin_return_address(0));
+	return __dlapi_open(file, flags, ra);
 }
 
+[[gnu::noinline]]
 void *dlsym(void *__restrict handle, const char *__restrict string) {
-	return __dlapi_resolve(handle, string);
+	auto ra = __builtin_extract_return_addr(__builtin_return_address(0));
+	return __dlapi_resolve(handle, string, ra);
 }
 
 //gnu extensions
