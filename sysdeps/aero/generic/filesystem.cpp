@@ -1,3 +1,4 @@
+#include "mlibc/fsfd_target.hpp"
 #include <aero/syscall.h>
 
 #include <sys/ioctl.h>
@@ -84,9 +85,29 @@ int sys_access(const char *filename, int mode) {
 
 int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags,
              struct stat *statbuf) {
-    mlibc::infoLogger() << "sys_stat() is unimplemented" << frg::endlog;
+    auto result = 0;
 
-    memset(statbuf, 0, sizeof(struct stat));
+    switch (fsfdt) {
+        case fsfd_target::path: {
+            result = syscall(SYS_STAT, path, strlen(path), statbuf);
+            break;
+        }
+
+        case fsfd_target::fd: {
+            result = syscall(SYS_FSTAT, fd, statbuf);
+            break;
+        }
+
+        default: {
+			mlibc::infoLogger() << "mlibc warning: sys_stat: unsupported fsfd target" << frg::endlog;
+			return EINVAL;
+        }
+    }
+
+    if (result < 0) {
+        return -result;
+    }
+
     return 0;
 }
 
@@ -153,7 +174,16 @@ int sys_mkdir(const char *path, mode_t) {
 }
 
 int sys_rmdir(const char *path) UNIMPLEMENTED("sys_rmdir")
-int sys_link(const char *srcpath, const char *destpath) UNIMPLEMENTED("sys_link")
+
+int sys_link(const char *srcpath, const char *destpath) {
+    auto result = syscall(SYS_LINK, srcpath, strlen(srcpath), destpath, strlen(destpath));
+
+    if (result < 0) {
+        return -result;
+    }
+
+    return 0;
+}
 
 int sys_unlinkat(int fd, const char *path, int flags) {
     auto result = syscall(SYS_UNLINK, fd, path, strlen(path), flags);
@@ -192,10 +222,10 @@ int sys_read_entries(int handle, void *buffer, size_t max_size,
     auto entry = (struct aero_dir_entry *)buffer;
 
     struct dirent dirent = {
-        .d_ino = entry->inode,
-        .d_off = entry->offset,
-        .d_reclen = entry->reclen,
-        .d_type = entry->filetyp,
+        .d_ino = static_cast<ino_t>(entry->inode),
+        .d_off = static_cast<off_t>(entry->offset),
+        .d_reclen = static_cast<unsigned short>(entry->reclen),
+        .d_type = static_cast<unsigned char>(entry->filetyp),
     };
 
     // The reclen is the size of the dirent struct, plus the size of the name.
@@ -214,7 +244,17 @@ int sys_open_dir(const char *path, int *handle) {
 }
 
 int sys_rename(const char *path, const char *new_path) UNIMPLEMENTED("sys_rename")
-int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length) UNIMPLEMENTED("sys_readlink")
+
+int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length) {
+    auto result = syscall(SYS_READ_LINK, path, strlen(path), buffer, max_size);
+
+    if (result < 0) {
+        return -result;
+    }
+
+    *length = result;
+    return 0;
+}
 
 int sys_dup(int fd, int flags, int *newfd) {
     auto result = syscall(SYS_DUP, fd, flags);
@@ -252,11 +292,10 @@ int sys_pselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
                 const struct timespec *timeout, const sigset_t *sigmask,
                 int *num_events) {
     mlibc::infoLogger() << "sys_pselect() is not implemented" << frg::endlog;
-    *num_events = 10;
     return 0;
 }
 
-int sys_chmod(const char *pathname, mode_t mode) UNIMPLEMENTED("sys_chmod")
+// int sys_chmod(const char *pathname, mode_t mode) UNIMPLEMENTED("sys_chmod")
 
 int sys_pipe(int *fds, int flags) {
     auto result = syscall(SYS_PIPE, fds, flags);
@@ -265,6 +304,57 @@ int sys_pipe(int *fds, int flags) {
         return -result;
     }
 
+    return 0;
+}
+
+// epoll API syscalls:
+int sys_epoll_create(int flags, int *fd) {
+    auto result = syscall(SYS_EPOLL_CREATE, flags);
+
+    if (result < 0) {
+        return -result;
+    }
+
+    *fd = result;
+    return 0;
+}
+
+int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
+    auto result = syscall(SYS_EPOLL_CTL, epfd, mode, fd, ev);
+
+    if (result < 0) {
+        return -result;
+    }
+
+    return 0;
+}
+
+int sys_epoll_pwait(
+    int epfd,
+    struct epoll_event *ev,
+    int n,
+    int timeout,
+    const sigset_t *sigmask,
+    int *raised
+) {
+    auto result = syscall(SYS_EPOLL_PWAIT, epfd, ev, n, timeout, sigmask);
+
+    if (result < 0) {
+        return -result;
+    }
+
+    *raised = result;
+    return 0;
+}
+
+int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
+    auto result = syscall(SYS_EVENT_FD, initval, flags);
+
+    if (result < 0) {
+        return -result;
+    }
+
+    *fd = result;
     return 0;
 }
 } // namespace mlibc
