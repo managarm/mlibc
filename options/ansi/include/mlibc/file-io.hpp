@@ -70,7 +70,7 @@ private:
 
 public:
 	// lock for file operations
-	FutexLock _lock;
+	RecursiveFutexLock _lock;
 	// All files are stored in a global linked list, so that they can be flushed at exit().
 	frg::default_list_hook<abstract_file> _list_hook;
 };
