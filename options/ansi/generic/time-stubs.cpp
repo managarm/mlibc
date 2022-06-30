@@ -167,6 +167,12 @@ size_t strftime(char *__restrict dest, size_t max_size,
 				return 0;
 			p += chunk;
 			c += 2;
+		}else if (*(c + 1) == 'D') {
+			auto chunk = snprintf(p, space, "%.2d/%.2d/%.2d", tm->tm_mon + 1, tm->tm_mday, tm->tm_year % 100);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
 		}else if (*(c + 1) == 'a') {
 			int day = tm->tm_wday;
 			if(day < 0 || day > 6)
