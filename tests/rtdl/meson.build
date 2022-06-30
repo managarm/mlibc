@@ -1,5 +1,6 @@
 rtdl_test_cases = [
 	'dl_iterate_phdr',
+	'rtld_next',
 ]
 
 foreach test_name : rtdl_test_cases 
