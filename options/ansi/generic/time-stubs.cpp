@@ -248,6 +248,12 @@ size_t strftime(char *__restrict dest, size_t max_size,
 				return 0;
 			p += chunk;
 			c += 2;
+		}else if(*(c + 1) == 'A') {
+			auto chunk = snprintf(p, space, "%s", nl_langinfo(DAY_1 + tm->tm_wday));
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
 		}else if(*(c + 1) == '%') {
 			auto chunk = snprintf(p, space, "%%");
 			if(chunk >= space)
