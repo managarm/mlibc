@@ -11,16 +11,73 @@ union sigval {
 	void *sival_ptr;
 };
 
+// struct taken from musl.
+
 typedef struct {
-	int si_signo;
-	int si_code;
-	int si_errno;
-	pid_t si_pid;
-	uid_t si_uid;
-	void *si_addr;
-	int si_status;
-	union sigval si_value;
+	int si_signo, si_errno, si_code;
+	union {
+		char __pad[128 - 2 * sizeof(int) - sizeof(long)];
+		struct {
+			union {
+				struct {
+					pid_t si_pid;
+					uid_t si_uid;
+				} __piduid;
+				struct {
+					int si_timerid;
+					int si_overrun;
+				} __timer;
+			} __first;
+			union {
+				union sigval si_value;
+				struct {
+					int si_status;
+					clock_t si_utime, si_stime;
+				} __sigchld;
+			} __second;
+		} __si_common;
+		struct {
+			void *si_addr;
+			short si_addr_lsb;
+			union {
+				struct {
+					void *si_lower;
+					void *si_upper;
+				} __addr_bnd;
+				unsigned si_pkey;
+			} __first;
+		} __sigfault;
+		struct {
+			long si_band;
+			int si_fd;
+		} __sigpoll;
+		struct {
+			void *si_call_addr;
+			int si_syscall;
+			unsigned si_arch;
+		} __sigsys;
+	} __si_fields;
 } siginfo_t;
+#define si_pid     __si_fields.__si_common.__first.__piduid.si_pid
+#define si_uid     __si_fields.__si_common.__first.__piduid.si_uid
+#define si_status  __si_fields.__si_common.__second.__sigchld.si_status
+#define si_utime   __si_fields.__si_common.__second.__sigchld.si_utime
+#define si_stime   __si_fields.__si_common.__second.__sigchld.si_stime
+#define si_value   __si_fields.__si_common.__second.si_value
+#define si_addr    __si_fields.__sigfault.si_addr
+#define si_addr_lsb __si_fields.__sigfault.si_addr_lsb
+#define si_lower   __si_fields.__sigfault.__first.__addr_bnd.si_lower
+#define si_upper   __si_fields.__sigfault.__first.__addr_bnd.si_upper
+#define si_pkey    __si_fields.__sigfault.__first.si_pkey
+#define si_band    __si_fields.__sigpoll.si_band
+#define si_fd      __si_fields.__sigpoll.si_fd
+#define si_timerid __si_fields.__si_common.__first.__timer.si_timerid
+#define si_overrun __si_fields.__si_common.__first.__timer.si_overrun
+#define si_ptr     si_value.sival_ptr
+#define si_int     si_value.sival_int
+#define si_call_addr __si_fields.__sigsys.si_call_addr
+#define si_syscall __si_fields.__sigsys.si_syscall
+#define si_arch    __si_fields.__sigsys.si_arch
 
 #ifdef __cplusplus
 extern "C" {
@@ -149,11 +206,16 @@ struct sigevent {
 };
 
 struct sigaction {
-	void (*sa_handler)(int);
+	union {
+		void (*sa_handler)(int);
+		void (*sa_sigaction)(int, siginfo_t *, void *);
+	} __sa_handler;
 	sigset_t sa_mask;
 	int sa_flags;
-	void (*sa_sigaction)(int, siginfo_t *, void *);
+	void (*sa_restorer)(void);
 };
+#define sa_handler __sa_handler.sa_handler
+#define sa_sigaction __sa_handler.sa_sigaction
 
 #if defined(__x86_64__) || defined(__aarch64__)
 // TODO: This is wrong for AArch64.
