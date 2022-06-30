@@ -242,6 +242,12 @@ size_t strftime(char *__restrict dest, size_t max_size,
 				return 0;
 			p += chunk;
 			c += 2;
+		}else if(*(c + 1) == 'j') {
+			auto chunk = snprintf(p, space, "%.3d", tm->tm_yday + 1);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
 		}else if(*(c + 1) == '%') {
 			auto chunk = snprintf(p, space, "%%");
 			if(chunk >= space)
