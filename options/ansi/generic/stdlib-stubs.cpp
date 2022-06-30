@@ -252,7 +252,7 @@ int system(const char *command) {
 		int err;
 		pid_t unused;
 
-		while ((err = mlibc::sys_waitpid(child, &status, 0, &unused)) < 0) {
+		while ((err = mlibc::sys_waitpid(child, &status, 0, NULL, &unused)) < 0) {
 			if (err == EINTR)
 				continue;
 

@@ -1,7 +1,9 @@
 #ifndef MLIBC_LINUX_SYSDEPS
 #define MLIBC_LINUX_SYSDEPS
 
+#include <stdarg.h>
 #include <sys/epoll.h>
+#include <sys/sysinfo.h>
 #include <poll.h>
 #include <abi-bits/pid_t.h>
 #include <abi-bits/mode_t.h>
@@ -29,12 +31,17 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);
 		const char *fstype, unsigned long flags, const void *data);
 [[gnu::weak]] int sys_umount2(const char *target, int flags);
 [[gnu::weak]] int sys_eventfd_create(unsigned int initval, int flags, int *fd);
-[[gnu::weak]] int sys_timerfd_create(int flags, int *fd);
+[[gnu::weak]] int sys_timerfd_create(int clockid, int flags, int *fd);
 [[gnu::weak]] int sys_timerfd_settime(int fd, int flags,
-		const struct itimerspec *value);
-[[gnu::weak]] int sys_signalfd_create(sigset_t, int flags, int *fd);
+		const struct itimerspec *value, struct itimerspec *oldvalue);
+[[gnu::weak]] int sys_signalfd_create(const sigset_t *, int flags, int *fd);
 [[gnu::weak]] int sys_reboot(int cmd);
 [[gnu::weak]] int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out);
+[[gnu::weak]] int sys_prctl(int option, va_list va, int *out);
+[[gnu::weak]] int sys_init_module(void *module, unsigned long length, const char *args);
+[[gnu::weak]] int sys_delete_module(const char *name, unsigned flags);
+
+[[gnu::weak]] int sys_sysinfo(struct sysinfo *info);
 
 } // namespace mlibc
 

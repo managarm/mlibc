@@ -23,6 +23,7 @@
 #include <sys/statvfs.h>
 #include <sys/statfs.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 #include <termios.h>
 #include <time.h>
 #include <ucontext.h>
@@ -81,6 +82,7 @@ int sys_close(int fd);
 [[gnu::weak]] uid_t sys_getuid();
 [[gnu::weak]] uid_t sys_geteuid();
 [[gnu::weak]] pid_t sys_getpid();
+[[gnu::weak]] pid_t sys_gettid();
 [[gnu::weak]] pid_t sys_getppid();
 [[gnu::weak]] pid_t sys_getpgid(pid_t pid, pid_t *pgid);
 [[gnu::weak]] pid_t sys_getsid(pid_t pid, pid_t *sid);
@@ -146,7 +148,6 @@ int sys_vm_unmap(void *pointer, size_t size);
 		void *__restrict buffer, socklen_t *__restrict size);
 [[gnu::weak]] int sys_setsockopt(int fd, int layer, int number,
 		const void *buffer, socklen_t size);
-[[gnu::weak]] int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid);
 [[gnu::weak]] int sys_sigprocmask(int how, const sigset_t *__restrict set,
 		sigset_t *__restrict retrieve);
 [[gnu::weak]] int sys_sigaction(int, const struct sigaction *__restrict,
@@ -164,6 +165,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_mkfifoat(int dirfd, const char *path, int mode);
 [[gnu::weak]] int sys_getentropy(void *buffer, size_t length);
 [[gnu::weak]] int sys_mknodat(int dirfd, const char *path, int mode, int dev);
+[[gnu::weak]] int sys_umask(mode_t mode, mode_t *old);
 
 [[gnu::weak]] int sys_before_cancellable_syscall(ucontext_t *uctx);
 [[gnu::weak]] int sys_tgkill(int tgid, int tid, int sig);
@@ -179,6 +181,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 
 [[gnu::weak]] int sys_getitimer(int which, struct itimerval *curr_value);
 [[gnu::weak]] int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value);
+[[gnu::weak]] int sys_times(struct tms *tms, clock_t *out);
 [[gnu::weak]] int sys_uname(struct utsname *buf);
 
 [[gnu::weak]] int sys_setresuid(uid_t ruid, uid_t euid, uid_t suid);

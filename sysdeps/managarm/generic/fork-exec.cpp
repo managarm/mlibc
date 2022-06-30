@@ -67,7 +67,12 @@ int sys_futex_wake(int *pointer) {
 	return 0;
 }
 
-int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
+int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
+	if(ru) {
+		mlibc::infoLogger() << "mlibc: struct rusage in sys_waitpid is unsupported" << frg::endlog;
+		return ENOSYS;
+	}
+
 	SignalGuard sguard;
 	HelAction actions[3];
 	globalQueue.trim();

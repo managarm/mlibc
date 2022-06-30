@@ -992,6 +992,11 @@ int sys_tcsetattr(int fd, int when, const struct termios *attr) {
 	return 0;
 }
 
+int sys_tcdrain(int) {
+	mlibc::infoLogger() << "\e[35mmlibc: tcdrain() is a stub\e[39m" << frg::endlog;
+	return 0;
+}
+
 int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	constexpr int type_mask = int(0xFFFF);
 	constexpr int flags_mask = ~int(0xFFFF);
@@ -1590,7 +1595,8 @@ int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
 	return 0;
 }
 
-int sys_timerfd_create(int flags, int *fd) {
+int sys_timerfd_create(int clockid, int flags, int *fd) {
+	(void) clockid;
 	SignalGuard sguard;
 	HelAction actions[3];
 	globalQueue.trim();
@@ -1629,7 +1635,8 @@ int sys_timerfd_create(int flags, int *fd) {
 }
 
 int sys_timerfd_settime(int fd, int,
-		const struct itimerspec *value) {
+		const struct itimerspec *value, struct itimerspec *oldvalue) {
+	__ensure(!oldvalue);
 	SignalGuard sguard;
 	HelAction actions[3];
 	globalQueue.trim();
@@ -1670,7 +1677,7 @@ int sys_timerfd_settime(int fd, int,
 	return 0;
 }
 
-int sys_signalfd_create(sigset_t mask, int flags, int *fd) {
+int sys_signalfd_create(const sigset_t *masks, int flags, int *fd)  {
 	__ensure(!(flags & ~(SFD_CLOEXEC | SFD_NONBLOCK)));
 
 	uint32_t proto_flags = 0;
@@ -1686,7 +1693,7 @@ int sys_signalfd_create(sigset_t mask, int flags, int *fd) {
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::SIGNALFD_CREATE);
 	req.set_flags(proto_flags);
-	req.set_sigset(mask);
+	req.set_sigset(*masks);
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);

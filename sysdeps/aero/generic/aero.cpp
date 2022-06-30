@@ -272,7 +272,12 @@ int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *tid_out) {
 
 void sys_thread_exit() UNIMPLEMENTED("sys_thread_exit")
 
-int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
+int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
+	if(ru) {
+		mlibc::infoLogger() << "mlibc: struct rusage in sys_waitpid is unsupported" << frg::endlog;
+		return ENOSYS;
+	}
+
     auto result = syscall(SYS_WAITPID, pid, status, flags);
 
     if (result < 0) {

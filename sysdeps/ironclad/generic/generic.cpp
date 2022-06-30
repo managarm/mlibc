@@ -247,9 +247,14 @@ int sys_fork(pid_t *child) {
     return 0;
 }
 
-int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
+int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
 	pid_t ret;
 	int errno;
+
+	if(ru) {
+		mlibc::infoLogger() << "mlibc: struct rusage in sys_waitpid is unsupported" << frg::endlog;
+		return ENOSYS;
+	}
 
 	SYSCALL3(SYSCALL_WAIT, pid, status, flags);
 

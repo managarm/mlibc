@@ -745,9 +745,12 @@ char *ttyname(int fd) {
 	return buf;
 }
 
-int ttyname_r(int, char *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int ttyname_r(int fd, char *buf, size_t size) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ttyname, -1);
+	if(int e = mlibc::sys_ttyname(fd, buf, size); e) {
+		return e;
+	}
+	return 0;
 }
 
 int unlink(const char *path) {
@@ -822,9 +825,11 @@ char *get_current_dir_name(void) {
 
 // This is a Linux extension
 pid_t gettid(void) {
-	mlibc::infoLogger() << "\e[31mmlibc: gettid() is not implemented correctly\e[39m"
-			<< frg::endlog;
-	return mlibc::sys_getpid();
+	if(!mlibc::sys_gettid) {
+		MLIBC_MISSING_SYSDEP();
+		__ensure(!"Cannot continue without sys_gettid()");
+	}
+	return mlibc::sys_gettid();
 }
 
 int getentropy(void *buffer, size_t length) {

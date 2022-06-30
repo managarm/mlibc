@@ -712,9 +712,14 @@ int sys_kill(pid_t pid, int signal) {
     return 0;
 }
 
-int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
+int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
     pid_t ret;
     int sys_errno;
+
+	if(ru) {
+		mlibc::infoLogger() << "mlibc: struct rusage in sys_waitpid is unsupported" << frg::endlog;
+		return ENOSYS;
+	}
 
     asm volatile ("syscall"
             : "=a"(ret), "=d"(sys_errno)

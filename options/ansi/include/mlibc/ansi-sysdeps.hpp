@@ -13,6 +13,8 @@
 #include <signal.h>
 #include <stdarg.h>
 
+struct rusage;
+
 namespace [[gnu::visibility("hidden")]] mlibc {
 
 [[noreturn]] void sys_exit(int status);
@@ -50,7 +52,7 @@ int sys_clock_get(int clock, time_t *secs, long *nanos);
 		struct sigaction *__restrict);
 
 [[gnu::weak]] int sys_fork(pid_t *child);
-[[gnu::weak]] int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid);
+[[gnu::weak]] int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid);
 [[gnu::weak]] int sys_execve(const char *path, char *const argv[], char *const envp[]);
 
 [[gnu::weak]] pid_t sys_getpid();

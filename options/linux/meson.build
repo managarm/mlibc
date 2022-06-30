@@ -23,6 +23,8 @@ libc_sources += files(
 	'generic/malloc.cpp',
 	'generic/sys-fsuid.cpp',
 	'generic/ifaddrs.cpp',
+	'generic/sys-sysinfo.cpp',
+	'generic/module.cpp',
 )
 
 if not no_headers
@@ -36,6 +38,7 @@ if not no_headers
 		'include/utmpx.h',
 		'include/values.h',
 		'include/lastlog.h',
+		'include/module.h',
 	)
 	install_headers(
 		'include/bits/linux/linux_unistd.h',
@@ -65,6 +68,7 @@ if not no_headers
 		'include/sys/reboot.h',
 		'include/sys/fsuid.h',
 		'include/sys/vt.h',
+		'include/sys/sysinfo.h',
 		subdir: 'sys'
 	)
 endif
