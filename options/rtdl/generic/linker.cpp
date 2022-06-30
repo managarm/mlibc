@@ -979,6 +979,32 @@ frg::optional<ObjectSymbol> Scope::resolveWholeScope(Scope *scope,
 	return frg::optional<ObjectSymbol>();
 }
 
+frg::optional<ObjectSymbol> Scope::resolveNext(Scope *scope,
+		frg::string_view string, SharedObject *target) {
+	// Skip objects until we find the target, and only look for symbols after that.
+	size_t i;
+	for (i = 0; i < scope->_objects.size(); i++) {
+		if (scope->_objects[i] == target)
+			break;
+	}
+
+	if (i == scope->_objects.size()) {
+		mlibc::infoLogger() << "rtdl: object passed to Scope::resolveAfter was not found" << frg::endlog;
+		return frg::optional<ObjectSymbol>();
+	}
+
+	for (i = i + 1; i < scope->_objects.size(); i++) {
+		if(scope->_objects[i]->isMainObject)
+			continue;
+
+		frg::optional<ObjectSymbol> p = resolveInObject(scope->_objects[i], string);
+		if(p)
+			return p;
+	}
+
+	return frg::optional<ObjectSymbol>();
+}
+
 Scope::Scope()
 : _objects(getAllocator()) { }
 

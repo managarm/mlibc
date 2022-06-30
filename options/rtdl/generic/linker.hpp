@@ -240,6 +240,8 @@ struct Scope {
 
 	static frg::optional<ObjectSymbol> resolveWholeScope(Scope *scope,
 			frg::string_view string, ResolveFlags flags);
+	static frg::optional<ObjectSymbol> resolveNext(Scope *scope,
+			frg::string_view string, SharedObject *target);
 
 	Scope();
 

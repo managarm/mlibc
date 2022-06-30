@@ -416,7 +416,8 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
 			mlibc::panicLogger() << "rtdl: unable to determine calling object of dlsym "
 				<< "(ra = " << returnAddress << ")" << frg::endlog;
 		}
-		__ensure("RTLD_NEXT unimplemented");
+
+		target = Scope::resolveNext(globalScope.get(), string, origin);
 	} else {
 		// POSIX does not unambiguously state how dlsym() is supposed to work; it just
 		// states that "The symbol resolution algorithm used shall be dependency order
