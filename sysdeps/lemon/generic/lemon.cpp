@@ -160,7 +160,12 @@ void sys_thread_exit(){
 	__builtin_unreachable();
 }
 
-int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid){
+int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid){
+	if(ru) {
+		mlibc::infoLogger() << "mlibc: struct rusage in sys_waitpid is unsupported" << frg::endlog;
+		return ENOSYS;
+	}
+
 	pid_t ret = syscall(SYS_WAIT_PID, pid, status, flags);
 
 	if(ret < 0){
@@ -192,4 +197,4 @@ int sys_getentropy(void *buffer, size_t length){
 }
 #endif
 
-} 
+}

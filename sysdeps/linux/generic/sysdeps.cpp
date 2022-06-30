@@ -408,16 +408,12 @@ int sys_fork(pid_t *child) {
 	return 0;
 }
 
-int sys_waitpid(pid_t pid, int *status, int flags, pid_t *ret_pid) {
-	return sys_wait4(pid, status, flags, 0, ret_pid);
-}
-
-int sys_wait4(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
+int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
 	auto ret = do_syscall(SYS_wait4, pid, status, flags, ru);
-        if (int e = sc_error(ret); e)
-                return e;
-        *ret_pid = sc_int_result<int>(ret);
-        return 0;
+	if (int e = sc_error(ret); e)
+			return e;
+	*ret_pid = sc_int_result<int>(ret);
+	return 0;
 }
 
 int sys_execve(const char *path, char *const argv[], char *const envp[]) {

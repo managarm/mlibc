@@ -3,6 +3,7 @@
 #include <sys/wait.h>
 #include <bits/ensure.h>
 
+#include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 
@@ -14,7 +15,7 @@ int waitid(idtype_t, id_t, siginfo_t *, int) {
 pid_t waitpid(pid_t pid, int *status, int flags) {
 	pid_t ret;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_waitpid, -1);
-	if(int e = mlibc::sys_waitpid(pid, status, flags, &ret); e) {
+	if(int e = mlibc::sys_waitpid(pid, status, flags, NULL, &ret); e) {
 		errno = e;
 		return -1;
 	}
@@ -34,8 +35,8 @@ pid_t wait3(int *status, int options, struct rusage *rusage) {
 
 pid_t wait4(pid_t pid, int *status, int options, struct rusage *ru) {
 	pid_t ret;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_wait4, -1);
-	if(int e = mlibc::sys_wait4(pid, status, options, ru, &ret); e) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_waitpid, -1);
+	if(int e = mlibc::sys_waitpid(pid, status, options, ru, &ret); e) {
 		errno = e;
 		return -1;
 	}

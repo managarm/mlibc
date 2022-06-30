@@ -6,6 +6,7 @@
 #include <fcntl.h>
 
 #include <bits/ensure.h>
+#include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/file-io.hpp>
 #include <mlibc/posix-file-io.hpp>
@@ -43,7 +44,7 @@ int pclose(FILE *stream) {
 
 	fclose(file);
 
-	if (mlibc::sys_waitpid(pid, &status, 0, &pid) != 0) {
+	if (mlibc::sys_waitpid(pid, &status, 0, NULL, &pid) != 0) {
 	    errno = ECHILD;
 	    return -1;
 	}
