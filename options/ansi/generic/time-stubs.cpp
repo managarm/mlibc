@@ -183,12 +183,12 @@ size_t strftime(char *__restrict dest, size_t max_size,
 				return 0;
 			p += chunk;
 			c += 2;
-		}else if (*(c + 1) == 'b' || *(c + 1) == 'B') {
+		}else if (*(c + 1) == 'b' || *(c + 1) == 'B' || *(c + 1) == 'h') {
 			int mon = tm->tm_mon;
 			if(mon < 0 || mon > 11)
 				__ensure(!"Month not in bounds.");
 
-			nl_item item = (*(c + 1) == 'b') ? ABMON_1 : MON_1;
+			nl_item item = (*(c + 1) == 'B') ? MON_1 : ABMON_1;
 
 			auto chunk = snprintf(p, space, "%s", nl_langinfo(item + mon));
 			if(chunk >= space)
