@@ -508,16 +508,24 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_BIND_NOW:
 			object->eagerBinding = true;
 			break;
-		case DT_FLAGS:
+		case DT_FLAGS: {
 			if(dynamic->d_un.d_val & DF_SYMBOLIC)
 				object->symbolicResolution = true;
 			if(dynamic->d_un.d_val & DF_STATIC_TLS)
 				object->haveStaticTls = true;
-			if(dynamic->d_un.d_val & ~(DF_SYMBOLIC | DF_STATIC_TLS))
-				mlibc::infoLogger() << "\e[31mrtdl: DT_FLAGS(" << frg::hex_fmt{dynamic->d_un.d_val}
+			if(dynamic->d_un.d_val & DF_BIND_NOW)
+				object->eagerBinding = true;
+
+			auto ignored = DF_BIND_NOW | DF_SYMBOLIC | DF_STATIC_TLS;
+#ifdef __riscv
+			// Work around https://sourceware.org/bugzilla/show_bug.cgi?id=24673.
+			ignored |= DF_TEXTREL;
+#endif
+			if(dynamic->d_un.d_val & ~ignored)
+				mlibc::infoLogger() << "\e[31mrtdl: DT_FLAGS(" << frg::hex_fmt{dynamic->d_un.d_val & ~ignored}
 						<< ") is not implemented correctly!\e[39m"
 						<< frg::endlog;
-			break;
+		} break;
 		case DT_FLAGS_1:
 			if(dynamic->d_un.d_val & DF_1_NOW)
 				object->eagerBinding = true;
@@ -556,6 +564,9 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_VERSYM:
 		case DT_VERDEF: case DT_VERDEFNUM:
 		case DT_VERNEED: case DT_VERNEEDNUM:
+#ifdef __riscv
+		case DT_TEXTREL: // Work around https://sourceware.org/bugzilla/show_bug.cgi?id=24673.
+#endif
 			break;
 		case DT_TLSDESC_PLT: case DT_TLSDESC_GOT:
 			break;
@@ -1396,6 +1407,9 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 			*((uint64_t *)rel_addr) = object->tlsOffset - sizeof(Tcb);
 		}
 	} break;
+	case R_RISCV_NONE:
+		// Work around https://sourceware.org/bugzilla/show_bug.cgi?id=24673.
+		break;
 #endif
 	default:
 		mlibc::panicLogger() << "Unexpected relocation type "

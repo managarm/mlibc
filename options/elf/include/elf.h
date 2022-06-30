@@ -321,6 +321,7 @@ enum {
 	DT_RPATH = 15,
 	DT_SYMBOLIC = 16,
 	DT_REL = 17,
+	DT_TEXTREL = 22,
 	DT_BIND_NOW = 24,
 	DT_INIT_ARRAY = 25,
 	DT_FINI_ARRAY = 26,
@@ -346,6 +347,8 @@ enum {
 enum {
 	// For DT_FLAGS.
 	DF_SYMBOLIC = 0x02,
+	DF_TEXTREL = 0x04,
+	DF_BIND_NOW = 0x08,
 	DF_STATIC_TLS = 0x10,
 
 	// For DT_FLAGS_1.
