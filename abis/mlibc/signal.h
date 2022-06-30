@@ -1,6 +1,7 @@
 #ifndef _ABIBITS_SIGNAL_H
 #define _ABIBITS_SIGNAL_H
 
+#include <abi-bits/clock_t.h>
 #include <abi-bits/pid_t.h>
 #include <abi-bits/uid_t.h>
 #include <bits/size_t.h>

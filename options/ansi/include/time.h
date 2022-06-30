@@ -1,6 +1,7 @@
 #ifndef _TIME_H
 #define _TIME_H
 
+#include <abi-bits/clock_t.h>
 #include <bits/null.h>
 #include <bits/size_t.h>
 #include <bits/ansi/time_t.h>
@@ -29,8 +30,6 @@ extern "C" {
 #endif
 
 // [7.27.1] Components of time
-
-typedef long clock_t; // Matches Linux' ABI.
 
 struct tm {
 	int tm_sec;
