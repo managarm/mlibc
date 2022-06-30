@@ -1121,8 +1121,8 @@ void funlockfile(FILE *file_base) {
 	static_cast<mlibc::abstract_file *>(file_base)->_lock.unlock();
 }
 
-int ftrylockfile(FILE *) {
-	mlibc::infoLogger() << "mlibc: File locking (ftrylockfile) is a no-op" << frg::endlog;
+int ftrylockfile(FILE *file_base) {
+	static_cast<mlibc::abstract_file *>(file_base)->_lock.try_lock();
 	return 0;
 }
 

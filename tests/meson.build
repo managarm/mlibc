@@ -68,6 +68,7 @@ all_test_cases = [
 	'posix/vfork',
 	'posix/wcwidth',
 	'posix/pause',
+	'posix/flockfile',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 ]
