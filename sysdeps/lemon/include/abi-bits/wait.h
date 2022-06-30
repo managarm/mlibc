@@ -1,1 +1,1 @@
-../../../../abis/mlibc/wait.h
+../../../../abis/linux/wait.h
