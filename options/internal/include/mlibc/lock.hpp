@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <mlibc/internal-sysdeps.hpp>
+#include <mlibc/debug.hpp>
+#include <mlibc/tid.hpp>
 #include <bits/ensure.h>
 
 struct FutexLock {
