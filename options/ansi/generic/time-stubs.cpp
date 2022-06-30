@@ -254,6 +254,18 @@ size_t strftime(char *__restrict dest, size_t max_size,
 				return 0;
 			p += chunk;
 			c += 2;
+		}else if(*(c + 1) == 'r') {
+			int hour = tm->tm_hour;
+			if(!hour)
+				hour = 12;
+			if(hour > 12)
+				hour -= 12;
+			auto chunk = snprintf(p, space, "%.2i:%.2i:%.2i %s", hour, tm->tm_min, tm->tm_sec,
+				nl_langinfo((tm->tm_hour < 12) ? AM_STR : PM_STR));
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c += 2;
 		}else if(*(c + 1) == '%') {
 			auto chunk = snprintf(p, space, "%%");
 			if(chunk >= space)
