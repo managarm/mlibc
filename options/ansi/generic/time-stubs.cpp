@@ -161,7 +161,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			p += chunk;
 			c += 2;
 		}else if (*(c + 1) == 'F') {
-			auto chunk = snprintf(p, space, "%d/%.2d/%.2d", 1900 + tm->tm_year, tm->tm_mon + 1,
+			auto chunk = snprintf(p, space, "%d-%.2d-%.2d", 1900 + tm->tm_year, tm->tm_mon + 1,
 					tm->tm_mday);
 			if(chunk >= space)
 				return 0;
