@@ -1279,28 +1279,112 @@ int pthread_cond_broadcast(pthread_cond_t *cond) {
 // pthread_barrierattr and pthread_barrier functions.
 // ----------------------------------------------------------------------------
 
-int pthread_barrierattr_init(pthread_barrierattr_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_barrierattr_init(pthread_barrierattr_t *attr) {
+	attr->__mlibc_pshared = PTHREAD_PROCESS_PRIVATE;
+	return 0;
 }
+
+int pthread_barrierattr_getpshared(const pthread_barrierattr_t *__restrict attr,
+		int *__restrict pshared) {
+	*pshared = attr->__mlibc_pshared;
+	return 0;
+}
+
+int pthread_barrierattr_setpshared(pthread_barrierattr_t *attr, int pshared) {
+	if (pshared != PTHREAD_PROCESS_SHARED && pshared != PTHREAD_PROCESS_PRIVATE)
+		return EINVAL;
+
+	attr->__mlibc_pshared = pshared;
+	return 0;
+}
+
 int pthread_barrierattr_destroy(pthread_barrierattr_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return 0;
 }
 
-int pthread_barrier_init(pthread_barrier_t *__restrict, const pthread_barrierattr_t *__restrict,
-		unsigned int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-int pthread_barrier_destroy(pthread_barrier_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_barrier_init(pthread_barrier_t *__restrict barrier,
+		const pthread_barrierattr_t *__restrict attr, unsigned count) {
+	if (count == 0)
+		return EINVAL;
+
+	barrier->__mlibc_waiting = 0;
+	barrier->__mlibc_inside = 0;
+	barrier->__mlibc_seq = 0;
+	barrier->__mlibc_count = count;
+
+	// Since we don't implement these yet, set a flag to error later.
+	auto pshared = attr ? attr->__mlibc_pshared : PTHREAD_PROCESS_PRIVATE;
+	barrier->__mlibc_flags = pshared;
+
+	return 0;
 }
 
-int pthread_barrier_wait(pthread_barrier_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_barrier_destroy(pthread_barrier_t *barrier) {
+	// Wait until there are no threads still using the barrier.
+	unsigned inside = 0;
+	do {
+		unsigned expected = __atomic_load_n(&barrier->__mlibc_inside, __ATOMIC_RELAXED);
+		if (expected == 0)
+			break;
+
+		int e = mlibc::sys_futex_wait((int *)&barrier->__mlibc_inside, expected, nullptr);
+		if (e != 0 && e != EAGAIN && e != EINTR)
+			mlibc::panicLogger() << "mlibc: sys_futex_wait() returned error " << e << frg::endlog;
+	} while (inside > 0);
+
+	memset(barrier, 0, sizeof *barrier);
+	return 0;
+}
+
+int pthread_barrier_wait(pthread_barrier_t *barrier) {
+	if (barrier->__mlibc_flags != 0) {
+		mlibc::panicLogger() << "mlibc: pthread_barrier_t flags were non-zero"
+			<< frg::endlog;
+	}
+
+	// inside is incremented on entry and decremented on exit.
+	// This is used to synchronise with pthread_barrier_destroy, to ensure that a thread doesn't pass
+	// the barrier and immediately destroy its state while other threads still rely on it.
+
+	__atomic_fetch_add(&barrier->__mlibc_inside, 1, __ATOMIC_ACQUIRE);
+
+	auto leave = [&](){
+		unsigned inside = __atomic_sub_fetch(&barrier->__mlibc_inside, 1, __ATOMIC_RELEASE);
+		if (inside == 0)
+			mlibc::sys_futex_wake((int *)&barrier->__mlibc_inside);
+	};
+
+	unsigned seq = __atomic_load_n(&barrier->__mlibc_seq, __ATOMIC_ACQUIRE);
+
+	while (true) {
+		unsigned expected = __atomic_load_n(&barrier->__mlibc_waiting, __ATOMIC_RELAXED);
+		bool swapped = __atomic_compare_exchange_n(&barrier->__mlibc_waiting, &expected, expected + 1, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE);
+
+		if (swapped) {
+			if (expected + 1 == barrier->__mlibc_count) {
+				// We were the last thread to hit the barrier. Reset waiters and wake the others.
+				__atomic_fetch_add(&barrier->__mlibc_seq, 1, __ATOMIC_ACQUIRE);
+				__atomic_store_n(&barrier->__mlibc_waiting, 0, __ATOMIC_RELEASE);
+
+				mlibc::sys_futex_wake((int *)&barrier->__mlibc_seq);
+
+				leave();
+				return PTHREAD_BARRIER_SERIAL_THREAD;
+			}
+
+			while (true) {
+				int e = mlibc::sys_futex_wait((int *)&barrier->__mlibc_seq, seq, nullptr);
+				if (e != 0 && e != EAGAIN && e != EINTR)
+					mlibc::panicLogger() << "mlibc: sys_futex_wait() returned error " << e << frg::endlog;
+
+				unsigned newSeq = __atomic_load_n(&barrier->__mlibc_seq, __ATOMIC_ACQUIRE);
+				if (newSeq > seq) {
+					leave();
+					return 0;
+				}
+			}
+		}
+	}
 }
 
 // ----------------------------------------------------------------------------

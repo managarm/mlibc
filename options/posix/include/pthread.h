@@ -64,6 +64,8 @@ extern "C" {
 
 #define PTHREAD_CANCELED ((void*) -1)
 
+#define PTHREAD_BARRIER_SERIAL_THREAD -1
+
 // values for pthread_key
 #define PTHREAD_DESTRUCTOR_ITERATIONS 8
 
@@ -129,12 +131,16 @@ struct  __mlibc_cond {
 typedef struct __mlibc_cond pthread_cond_t;
 
 struct  __mlibc_barrierattr_struct {
+	int __mlibc_pshared;
 };
 typedef struct __mlibc_barrierattr_struct pthread_barrierattr_t;
 
-struct  __mlibc_barrier {
+struct __mlibc_barrier {
 	unsigned int __mlibc_waiting;
+	unsigned int __mlibc_inside;
 	unsigned int __mlibc_count;
+	unsigned int __mlibc_seq;
+	unsigned int __mlibc_flags;
 };
 typedef struct __mlibc_barrier pthread_barrier_t;
 
@@ -306,6 +312,9 @@ int pthread_cond_broadcast(pthread_cond_t *);
 
 int pthread_barrierattr_init(pthread_barrierattr_t *);
 int pthread_barrierattr_destroy(pthread_barrierattr_t *);
+int pthread_barrierattr_setpshared(pthread_barrierattr_t *, int);
+int pthread_barrierattr_getpshared(const pthread_barrierattr_t *__restrict,
+		int *__restrict);
 
 int pthread_barrier_init(pthread_barrier_t *__restrict, const pthread_barrierattr_t *__restrict,
 		unsigned int);
