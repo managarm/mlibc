@@ -94,6 +94,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 	auto p = dest;
 
 	while(*c) {
+		int chunk;
 		auto space = (dest + max_size) - p;
 		__ensure(space >= 0);
 
@@ -106,179 +107,223 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			continue;
 		}
 
-		if(*(c + 1) == 'Y') {
-			auto chunk = snprintf(p, space, "%d", 1900 + tm->tm_year);
+		switch(*++c) {
+		case 'Y': {
+			chunk = snprintf(p, space, "%d", 1900 + tm->tm_year);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'm') {
-			auto chunk = snprintf(p, space, "%.2d", tm->tm_mon + 1);
+			c++;
+			break;
+		}
+		case 'm': {
+			chunk = snprintf(p, space, "%.2d", tm->tm_mon + 1);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'd') {
-			auto chunk = snprintf(p, space, "%.2d", tm->tm_mday);
+			c++;
+			break;
+		}
+		case 'd': {
+			chunk = snprintf(p, space, "%.2d", tm->tm_mday);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'Z') {
-			auto chunk = snprintf(p, space, "%s", "GMT");
+			c++;
+			break;
+		}
+		case 'Z': {
+			chunk = snprintf(p, space, "%s", "GMT");
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'H') {
-			auto chunk = snprintf(p, space, "%.2i", tm->tm_hour);
+			c++;
+			break;
+		}
+		case 'H': {
+			chunk = snprintf(p, space, "%.2i", tm->tm_hour);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'M') {
-			auto chunk = snprintf(p, space, "%.2i", tm->tm_min);
+			c++;
+			break;
+		}
+		case 'M': {
+			chunk = snprintf(p, space, "%.2i", tm->tm_min);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'S') {
-			auto chunk = snprintf(p, space, "%.2d", tm->tm_sec);
+			c++;
+			break;
+		}
+		case 'S': {
+			chunk = snprintf(p, space, "%.2d", tm->tm_sec);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'R') {
-			auto chunk = snprintf(p, space, "%.2i:%.2i", tm->tm_hour, tm->tm_min);
+			c++;
+			break;
+		}
+		case 'R': {
+			chunk = snprintf(p, space, "%.2i:%.2i", tm->tm_hour, tm->tm_min);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'T') {
-			auto chunk = snprintf(p, space, "%.2i:%.2i:%.2i", tm->tm_hour, tm->tm_min, tm->tm_sec);
+			c++;
+			break;
+		}
+		case 'T': {
+			chunk = snprintf(p, space, "%.2i:%.2i:%.2i", tm->tm_hour, tm->tm_min, tm->tm_sec);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'F') {
-			auto chunk = snprintf(p, space, "%d-%.2d-%.2d", 1900 + tm->tm_year, tm->tm_mon + 1,
+			c++;
+			break;
+		}
+		case 'F': {
+			chunk = snprintf(p, space, "%d-%.2d-%.2d", 1900 + tm->tm_year, tm->tm_mon + 1,
 					tm->tm_mday);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'D') {
-			auto chunk = snprintf(p, space, "%.2d/%.2d/%.2d", tm->tm_mon + 1, tm->tm_mday, tm->tm_year % 100);
+			c++;
+			break;
+		}
+		case 'D': {
+			chunk = snprintf(p, space, "%.2d/%.2d/%.2d", tm->tm_mon + 1, tm->tm_mday, tm->tm_year % 100);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'a') {
+			c++;
+			break;
+		}
+		case 'a': {
 			int day = tm->tm_wday;
 			if(day < 0 || day > 6)
 				__ensure(!"Day not in bounds.");
 
-			auto chunk = snprintf(p, space, "%s", nl_langinfo(DAY_1 + day));
+			chunk = snprintf(p, space, "%s", nl_langinfo(DAY_1 + day));
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'b' || *(c + 1) == 'B' || *(c + 1) == 'h') {
+			c++;
+			break;
+		}
+		case 'b':
+		case 'B':
+		case 'h': {
 			int mon = tm->tm_mon;
 			if(mon < 0 || mon > 11)
 				__ensure(!"Month not in bounds.");
 
-			nl_item item = (*(c + 1) == 'B') ? MON_1 : ABMON_1;
+			nl_item item = (*c == 'B') ? MON_1 : ABMON_1;
 
-			auto chunk = snprintf(p, space, "%s", nl_langinfo(item + mon));
+			chunk = snprintf(p, space, "%s", nl_langinfo(item + mon));
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'c') {
-			auto chunk = snprintf(p, space, "%d/%.2d/%.2d %.2d:%.2d:%.2d", 1900 + tm->tm_year,
+			c++;
+			break;
+		}
+		case 'c': {
+			chunk = snprintf(p, space, "%d/%.2d/%.2d %.2d:%.2d:%.2d", 1900 + tm->tm_year,
 					tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'd') {
-			auto chunk = snprintf(p, space, "%.2d", tm->tm_mday);
-			if(chunk >= space)
-				return 0;
-			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'e') {
-			int chunk;
+			c++;
+			break;
+		}
+		case 'e': {
 			chunk = snprintf(p, space, "%2d", tm->tm_mday);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'I') {
+			c++;
+			break;
+		}
+		case 'I': {
 			int hour = tm->tm_hour;
 			if(hour > 12)
 				hour -= 12;
-			auto chunk = snprintf(p, space, "%.2i", hour);
+			chunk = snprintf(p, space, "%.2i", hour);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if (*(c + 1) == 'p') {
-			auto chunk = snprintf(p, space, "%s", nl_langinfo((tm->tm_hour < 12) ? AM_STR : PM_STR));
+			c++;
+			break;
+		}
+		case 'p': {
+			chunk = snprintf(p, space, "%s", nl_langinfo((tm->tm_hour < 12) ? AM_STR : PM_STR));
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if(*(c + 1) == 'C') {
-			auto chunk = snprintf(p, space, "%.2d", (1900 + tm->tm_year) / 100);
+			c++;
+			break;
+		}
+		case 'C': {
+			chunk = snprintf(p, space, "%.2d", (1900 + tm->tm_year) / 100);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if(*(c + 1) == 'y') {
-			auto chunk = snprintf(p, space, "%.2d", (1900 + tm->tm_year) % 100);
+			c++;
+			break;
+		}
+		case 'y': {
+			chunk = snprintf(p, space, "%.2d", (1900 + tm->tm_year) % 100);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if(*(c + 1) == 'j') {
-			auto chunk = snprintf(p, space, "%.3d", tm->tm_yday + 1);
+			c++;
+			break;
+		}
+		case 'j': {
+			chunk = snprintf(p, space, "%.3d", tm->tm_yday + 1);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if(*(c + 1) == 'A') {
-			auto chunk = snprintf(p, space, "%s", nl_langinfo(DAY_1 + tm->tm_wday));
+			c++;
+			break;
+		}
+		case 'A': {
+			chunk = snprintf(p, space, "%s", nl_langinfo(DAY_1 + tm->tm_wday));
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if(*(c + 1) == 'r') {
+			c++;
+			break;
+		}
+		case 'r': {
 			int hour = tm->tm_hour;
 			if(!hour)
 				hour = 12;
 			if(hour > 12)
 				hour -= 12;
-			auto chunk = snprintf(p, space, "%.2i:%.2i:%.2i %s", hour, tm->tm_min, tm->tm_sec,
+			chunk = snprintf(p, space, "%.2i:%.2i:%.2i %s", hour, tm->tm_min, tm->tm_sec,
 				nl_langinfo((tm->tm_hour < 12) ? AM_STR : PM_STR));
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if(*(c + 1) == '%') {
-			auto chunk = snprintf(p, space, "%%");
+			c++;
+			break;
+		}
+		case '%': {
+			chunk = snprintf(p, space, "%%");
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else if(*(c + 1) == 't') {
-			auto chunk = snprintf(p, space, "\t");
+			c++;
+			break;
+		}
+		case 't': {
+			chunk = snprintf(p, space, "\t");
 			if(chunk >= space)
 				return 0;
 			p += chunk;
-			c += 2;
-		}else {
+			c++;
+			break;
+		}
+		default:
 			__ensure(!"Unknown format type.");
 		}
 	}
