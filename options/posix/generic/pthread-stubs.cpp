@@ -1060,10 +1060,37 @@ namespace {
 	}
 }
 
-int pthread_rwlock_init(pthread_rwlock_t *__restrict rw, const pthread_rwlockattr_t *__restrict) {
+int pthread_rwlockattr_init(pthread_rwlockattr_t *attr) {
+	attr->__mlibc_pshared = PTHREAD_PROCESS_PRIVATE;
+	return 0;
+}
+
+int pthread_rwlockattr_getpshared(const pthread_rwlockattr_t *__restrict attr,
+		int *__restrict pshared) {
+	*pshared = attr->__mlibc_pshared;
+	return 0;
+}
+
+int pthread_rwlockattr_setpshared(pthread_rwlockattr_t *attr, int pshared) {
+	if (pshared != PTHREAD_PROCESS_SHARED && pshared != PTHREAD_PROCESS_PRIVATE)
+		return EINVAL;
+
+	attr->__mlibc_pshared = pshared;
+	return 0;
+}
+
+int pthread_rwlockattr_destroy(pthread_rwlockattr_t *) {
+	return 0;
+}
+
+int pthread_rwlock_init(pthread_rwlock_t *__restrict rw, const pthread_rwlockattr_t *__restrict attr) {
 	SCOPE_TRACE();
 	rw->__mlibc_m = 0;
 	rw->__mlibc_rc = 0;
+
+	// Since we don't implement this yet, set a flag to error later.
+	auto pshared = attr ? attr->__mlibc_pshared : PTHREAD_PROCESS_PRIVATE;
+	rw->__mlibc_flags = pshared;
 	return 0;
 }
 
@@ -1075,6 +1102,11 @@ int pthread_rwlock_destroy(pthread_rwlock_t *rw) {
 
 int pthread_rwlock_trywrlock(pthread_rwlock_t *rw) {
 	SCOPE_TRACE();
+
+	if (rw->__mlibc_flags != 0) {
+		mlibc::panicLogger() << "mlibc: pthread_rwlock_t flags were non-zero"
+			<< frg::endlog;
+	}
 
 	// Take the __mlibc_m mutex.
 	// Will be released in pthread_rwlock_unlock().
@@ -1093,6 +1125,11 @@ int pthread_rwlock_trywrlock(pthread_rwlock_t *rw) {
 
 int pthread_rwlock_wrlock(pthread_rwlock_t *rw) {
 	SCOPE_TRACE();
+
+	if (rw->__mlibc_flags != 0) {
+		mlibc::panicLogger() << "mlibc: pthread_rwlock_t flags were non-zero"
+			<< frg::endlog;
+	}
 
 	// Take the __mlibc_m mutex.
 	// Will be released in pthread_rwlock_unlock().
@@ -1127,6 +1164,11 @@ int pthread_rwlock_wrlock(pthread_rwlock_t *rw) {
 int pthread_rwlock_tryrdlock(pthread_rwlock_t *rw) {
 	SCOPE_TRACE();
 
+	if (rw->__mlibc_flags != 0) {
+		mlibc::panicLogger() << "mlibc: pthread_rwlock_t flags were non-zero"
+			<< frg::endlog;
+	}
+
 	// Increment the reader count while holding the __mlibc_m mutex.
 	if(int e = rwlock_m_trylock(rw, false); e)
 		return e;
@@ -1138,6 +1180,11 @@ int pthread_rwlock_tryrdlock(pthread_rwlock_t *rw) {
 
 int pthread_rwlock_rdlock(pthread_rwlock_t *rw) {
 	SCOPE_TRACE();
+
+	if (rw->__mlibc_flags != 0) {
+		mlibc::panicLogger() << "mlibc: pthread_rwlock_t flags were non-zero"
+			<< frg::endlog;
+	}
 
 	// Increment the reader count while holding the __mlibc_m mutex.
 	rwlock_m_lock(rw, false);
