@@ -873,58 +873,85 @@ int pthread_once(pthread_once_t *once, void (*function) (void)) {
 // pthread_mutexattr functions
 int pthread_mutexattr_init(pthread_mutexattr_t *attr) {
 	SCOPE_TRACE();
-
-	memset(attr, 0, sizeof(pthread_mutexattr_t));
+	attr->__mlibc_type = PTHREAD_MUTEX_DEFAULT;
+	attr->__mlibc_robust = PTHREAD_MUTEX_STALLED;
+	attr->__mlibc_pshared = PTHREAD_PROCESS_PRIVATE;
+	attr->__mlibc_protocol = PTHREAD_PRIO_NONE;
 	return 0;
 }
 
-int pthread_mutexattr_destroy(pthread_mutexattr_t *) {
+int pthread_mutexattr_destroy(pthread_mutexattr_t *attr) {
 	SCOPE_TRACE();
-
+	memset(attr, 0, sizeof(*attr));
 	return 0;
 }
 
-int pthread_mutexattr_gettype(const pthread_mutexattr_t *__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutexattr_gettype(const pthread_mutexattr_t *__restrict attr,
+		int *__restrict type) {
+	*type = attr->__mlibc_type;
+	return 0;
 }
 
 int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type) {
-	SCOPE_TRACE();
+	if (type != PTHREAD_MUTEX_NORMAL && type != PTHREAD_MUTEX_ERRORCHECK
+			&& type != PTHREAD_MUTEX_RECURSIVE)
+		return EINVAL;
 
-	// TODO: return EINVAL instead of asserting.
-	__ensure(type == PTHREAD_MUTEX_NORMAL || type == PTHREAD_MUTEX_ERRORCHECK
-			|| type == PTHREAD_MUTEX_RECURSIVE);
 	attr->__mlibc_type = type;
 	return 0;
 }
 
-int pthread_mutexattr_getrobust(const pthread_mutexattr_t *__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutexattr_getrobust(const pthread_mutexattr_t *__restrict attr,
+		int *__restrict robust) {
+	*robust = attr->__mlibc_robust;
+	return 0;
 }
-int pthread_mutexattr_setrobust(pthread_mutexattr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutexattr_setrobust(pthread_mutexattr_t *attr, int robust) {
+	if (robust != PTHREAD_MUTEX_STALLED && robust != PTHREAD_MUTEX_ROBUST)
+		return EINVAL;
+
+	attr->__mlibc_robust = robust;
+	return 0;
 }
 
-int pthread_mutexattr_getpshared(const pthread_mutexattr_t *, int *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutexattr_getpshared(const pthread_mutexattr_t *attr, int *pshared) {
+	*pshared = attr->__mlibc_pshared;
+	return 0;
 }
-int pthread_mutexattr_setpshared(pthread_mutexattr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutexattr_setpshared(pthread_mutexattr_t *attr, int pshared) {
+	if (pshared != PTHREAD_PROCESS_PRIVATE && pshared != PTHREAD_PROCESS_SHARED)
+		return EINVAL;
+
+	attr->__mlibc_pshared = pshared;
+	return 0;
 }
 
-int pthread_mutexattr_getprotocol(const pthread_mutexattr_t *__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutexattr_getprotocol(const pthread_mutexattr_t *__restrict attr,
+		int *__restrict protocol) {
+	*protocol = attr->__mlibc_protocol;
+	return 0;
 }
 
-int pthread_mutexattr_setprotocol(pthread_mutexattr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutexattr_setprotocol(pthread_mutexattr_t *attr, int protocol) {
+	if (protocol != PTHREAD_PRIO_NONE && protocol != PTHREAD_PRIO_INHERIT
+			&& protocol != PTHREAD_PRIO_PROTECT)
+		return EINVAL;
+
+	attr->__mlibc_protocol = protocol;
+	return 0;
+}
+
+int pthread_mutexattr_getprioceiling(const pthread_mutexattr_t *__restrict attr,
+		int *__restrict prioceiling) {
+	(void)attr;
+	(void)prioceiling;
+	return EINVAL;
+}
+
+int pthread_mutexattr_setprioceiling(pthread_mutexattr_t *attr, int prioceiling) {
+	(void)attr;
+	(void)prioceiling;
+	return EINVAL;
 }
 
 // pthread_mutex functions
@@ -932,12 +959,15 @@ int pthread_mutex_init(pthread_mutex_t *__restrict mutex,
 		const pthread_mutexattr_t *__restrict attr) {
 	SCOPE_TRACE();
 
-	auto type = attr ? attr->__mlibc_type : 0;
-	auto robust = attr ? attr->__mlibc_robust : 0;
+	auto type = attr ? attr->__mlibc_type : PTHREAD_MUTEX_DEFAULT;
+	auto robust = attr ? attr->__mlibc_robust : PTHREAD_MUTEX_STALLED;
+	auto protocol = attr ? attr->__mlibc_protocol : PTHREAD_PRIO_NONE;
+	auto pshared = attr ? attr->__mlibc_pshared : PTHREAD_PROCESS_PRIVATE;
 
 	mutex->__mlibc_state = 0;
 	mutex->__mlibc_recursion = 0;
 	mutex->__mlibc_flags = 0;
+	mutex->__mlibc_prioceiling = 0; // TODO: We don't implement this.
 
 	if(type == PTHREAD_MUTEX_RECURSIVE) {
 		mutex->__mlibc_flags |= mutexRecursive;
@@ -947,7 +977,10 @@ int pthread_mutex_init(pthread_mutex_t *__restrict mutex,
 		__ensure(type == PTHREAD_MUTEX_NORMAL);
 	}
 
+	// TODO: Other values aren't supported yet.
 	__ensure(robust == PTHREAD_MUTEX_STALLED);
+	__ensure(protocol == PTHREAD_PRIO_NONE);
+	__ensure(pshared == PTHREAD_PROCESS_PRIVATE);
 
 	return 0;
 }

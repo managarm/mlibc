@@ -59,7 +59,7 @@ extern "C" {
 
 #define PTHREAD_ONCE_INIT {0}
 #define PTHREAD_COND_INITIALIZER {0}
-#define PTHREAD_MUTEX_INITIALIZER {0, 0, 0}
+#define PTHREAD_MUTEX_INITIALIZER {0, 0, 0, 0}
 #define PTHREAD_RWLOCK_INITIALIZER {0, 0, 0}
 
 #define PTHREAD_CANCELED ((void*) -1)
@@ -101,6 +101,9 @@ typedef struct __mlibc_once pthread_once_t;
 struct  __mlibc_mutexattr {
 	int __mlibc_type;
 	int __mlibc_robust;
+	int __mlibc_protocol;
+	int __mlibc_pshared;
+	int __mlibc_prioceiling;
 };
 typedef struct __mlibc_mutexattr pthread_mutexattr_t;
 
@@ -108,6 +111,7 @@ struct __mlibc_mutex {
 	unsigned int __mlibc_state;
 	unsigned int __mlibc_recursion;
 	unsigned int __mlibc_flags;
+	int __mlibc_prioceiling;
 };
 typedef struct __mlibc_mutex pthread_mutex_t;
 
@@ -256,6 +260,9 @@ int pthread_mutexattr_setpshared(pthread_mutexattr_t *, int);
 
 int pthread_mutexattr_getprotocol(const pthread_mutexattr_t *__restrict, int *__restrict);
 int pthread_mutexattr_setprotocol(pthread_mutexattr_t *, int);
+
+int pthread_mutexattr_getprioceiling(const pthread_mutexattr_t *, int *);
+int pthread_mutexattr_setprioceiling(pthread_mutexattr_t *, int);
 
 // pthread_mutex functions
 int pthread_mutex_init(pthread_mutex_t *__restrict, const pthread_mutexattr_t *__restrict);
