@@ -1069,41 +1069,55 @@ int pthread_mutex_consistent(pthread_mutex_t *) {
 // pthread_condattr and pthread_cond functions.
 // ----------------------------------------------------------------------------
 
-int pthread_condattr_init(pthread_condattr_t *) {
-	SCOPE_TRACE();
-
-	mlibc::infoLogger() << "mlibc: pthread_condattr_init() is not implemented correctly" << frg::endlog;
-	return 0;
-}
-int pthread_condattr_destroy(pthread_condattr_t *) {
-	SCOPE_TRACE();
-
-	mlibc::infoLogger() << "mlibc: pthread_condattr_destroy() is not implemented correctly" << frg::endlog;
+int pthread_condattr_init(pthread_condattr_t *attr) {
+	attr->__mlibc_pshared = PTHREAD_PROCESS_PRIVATE;
+	attr->__mlibc_clock = CLOCK_REALTIME;
 	return 0;
 }
 
-int pthread_condattr_getclock(const pthread_condattr_t *__restrict, clockid_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-int pthread_condattr_setclock(pthread_condattr_t *, clockid_t) {
-	SCOPE_TRACE();
-
-	mlibc::infoLogger() << "mlibc: pthread_condattr_setclock() is not implemented correctly" << frg::endlog;
+int pthread_condattr_destroy(pthread_condattr_t *attr) {
+	memset(attr, 0, sizeof(*attr));
 	return 0;
 }
 
-int pthread_condattr_getpshared(const pthread_condattr_t *__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-int pthread_condattr_setpshared(pthread_condattr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_condattr_getclock(const pthread_condattr_t *__restrict attr,
+		clockid_t *__restrict clock) {
+	*clock = attr->__mlibc_clock;
+	return 0;
 }
 
-int pthread_cond_init(pthread_cond_t *__restrict cond, const pthread_condattr_t *__restrict) {
+int pthread_condattr_setclock(pthread_condattr_t *attr, clockid_t clock) {
+	if (clock != CLOCK_REALTIME && clock != CLOCK_MONOTONIC
+			&& clock != CLOCK_MONOTONIC_RAW && clock != CLOCK_REALTIME_COARSE
+			&& clock != CLOCK_MONOTONIC_COARSE && clock != CLOCK_BOOTTIME)
+		return EINVAL;
+
+	attr->__mlibc_clock = clock;
+	return 0;
+}
+
+int pthread_condattr_getpshared(const pthread_condattr_t *__restrict attr,
+		int *__restrict pshared) {
+	*pshared = attr->__mlibc_pshared;
+	return 0;
+}
+
+int pthread_condattr_setpshared(pthread_condattr_t *attr, int pshared) {
+	if (pshared != PTHREAD_PROCESS_PRIVATE && pshared != PTHREAD_PROCESS_SHARED)
+		return EINVAL;
+
+	attr->__mlibc_pshared = pshared;
+	return 0;
+}
+
+int pthread_cond_init(pthread_cond_t *__restrict cond, const pthread_condattr_t *__restrict attr) {
 	SCOPE_TRACE();
+
+	auto clock = attr ? attr->__mlibc_clock : CLOCK_REALTIME;
+	auto pshared = attr ? attr->__mlibc_pshared : PTHREAD_PROCESS_PRIVATE;
+
+	cond->__mlibc_clock = clock;
+	cond->__mlibc_flags = pshared;
 
 	__atomic_store_n(&cond->__mlibc_seq, 1, __ATOMIC_RELAXED);
 
@@ -1122,6 +1136,9 @@ int pthread_cond_wait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restri
 
 int pthread_cond_timedwait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restrict mutex,
 		const struct timespec *__restrict abstime) {
+	// TODO: pshared isn't supported yet.
+	__ensure(cond->__mlibc_flags == 0);
+
 	constexpr long nanos_per_second = 1'000'000'000;
 	if (abstime && (abstime->tv_nsec < 0 || abstime->tv_nsec >= nanos_per_second))
 		return EINVAL;
@@ -1138,9 +1155,8 @@ int pthread_cond_timedwait(pthread_cond_t *__restrict cond, pthread_mutex_t *__r
 			// Adjust for the fact that sys_futex_wait accepts a *timeout*, but
 			// pthread_cond_timedwait accepts an *absolute time*.
 			// Note: mlibc::sys_clock_get is available unconditionally.
-			// TODO: allow clock to be configured via a condattr.
 			struct timespec now;
-			if (mlibc::sys_clock_get(CLOCK_REALTIME, &now.tv_sec, &now.tv_nsec))
+			if (mlibc::sys_clock_get(cond->__mlibc_clock, &now.tv_sec, &now.tv_nsec))
 				__ensure(!"sys_clock_get() failed");
 
 			struct timespec timeout;
@@ -1162,9 +1178,9 @@ int pthread_cond_timedwait(pthread_cond_t *__restrict cond, pthread_mutex_t *__r
 				__ensure(timeout.tv_nsec >= 0);
 			}
 
-			e = mlibc::sys_futex_wait(&cond->__mlibc_seq, seq, &timeout);
+			e = mlibc::sys_futex_wait((int *)&cond->__mlibc_seq, seq, &timeout);
 		} else {
-			e = mlibc::sys_futex_wait(&cond->__mlibc_seq, seq, nullptr);
+			e = mlibc::sys_futex_wait((int *)&cond->__mlibc_seq, seq, nullptr);
 		}
 
 		if (pthread_mutex_lock(mutex))
