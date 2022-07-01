@@ -22,6 +22,48 @@ char *nl_langinfo(nl_item item) {
 			case ABMON_12: return const_cast<char *>("Dec");
 		}
 		__builtin_unreachable();
+	} else if(item >= MON_1 && item <= MON_12) {
+		switch(item) {
+			case MON_1: return const_cast<char *>("January");
+			case MON_2: return const_cast<char *>("Feburary");
+			case MON_3: return const_cast<char *>("March");
+			case MON_4: return const_cast<char *>("April");
+			case MON_5: return const_cast<char *>("May");
+			case MON_6: return const_cast<char *>("June");
+			case MON_7: return const_cast<char *>("July");
+			case MON_8: return const_cast<char *>("August");
+			case MON_9: return const_cast<char *>("September");
+			case MON_10: return const_cast<char *>("October");
+			case MON_11: return const_cast<char *>("November");
+			case MON_12: return const_cast<char *>("December");
+		}
+		__builtin_unreachable();
+	} else if(item == AM_STR) {
+		return const_cast<char *>("AM");
+	} else if(item == PM_STR) {
+		return const_cast<char *>("PM");
+	} else if(item >= DAY_1 && item <= DAY_7) {
+		switch(item) {
+			case DAY_1: return const_cast<char *>("Sunday");
+			case DAY_2: return const_cast<char *>("Monday");
+			case DAY_3: return const_cast<char *>("Tuesday");
+			case DAY_4: return const_cast<char *>("Wednesday");
+			case DAY_5: return const_cast<char *>("Thursday");
+			case DAY_6: return const_cast<char *>("Friday");
+			case DAY_7: return const_cast<char *>("Saturday");
+		}
+		__builtin_unreachable();
+	} else if(item >= ABDAY_1 && item <= ABDAY_7) {
+		switch(item) {
+			case ABDAY_1: return const_cast<char *>("Sun");
+			case ABDAY_2: return const_cast<char *>("Mon");
+			case ABDAY_3: return const_cast<char *>("Tue");
+			case ABDAY_4: return const_cast<char *>("Wed");
+			case ABDAY_5: return const_cast<char *>("Thu");
+			case ABDAY_6: return const_cast<char *>("Fri");
+			case ABDAY_7: return const_cast<char *>("Sat");
+		}
+		__builtin_unreachable();
 	}else{
 		mlibc::infoLogger() << "mlibc: nl_langinfo item "
 				<< item << " is not implemented properly" << frg::endlog;

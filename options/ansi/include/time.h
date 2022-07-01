@@ -99,8 +99,10 @@ struct tm *localtime_r(const time_t *, struct tm *);
 char *asctime_r(const struct tm *tm, char *buf);
 char *ctime_r(const time_t *, char *);
 
+#ifdef __MLIBC_POSIX_OPTION
 char *strptime(const char *__restrict, const char *__restrict,
 		struct tm *__restrict);
+#endif
 
 #ifdef __cplusplus
 }
