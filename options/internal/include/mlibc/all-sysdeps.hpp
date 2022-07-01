@@ -20,10 +20,14 @@
 #	include <mlibc/glibc-sysdeps.hpp>
 #endif /* __MLIBC_GLIBC_OPTION */
 
+#if __MLIBC_BSD_OPTION
+#	include <mlibc/bsd-sysdeps.hpp>
+#endif /* __MLIBC_BSD_OPTION */
+
 #if MLIBC_BUILDING_RTDL
 #	include <mlibc/rtdl-sysdeps.hpp>
 #endif /* MLIBC_BUILDING_RTDL */
 
 #include <mlibc/internal-sysdeps.hpp>
 
-#endif // MLIBC_ALL_SYSDEPS
+#endif /* MLIBC_ALL_SYSDEPS */
