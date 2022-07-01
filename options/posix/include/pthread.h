@@ -116,13 +116,15 @@ struct __mlibc_mutex {
 typedef struct __mlibc_mutex pthread_mutex_t;
 
 struct  __mlibc_condattr_struct {
-	// TODO: the clock attribute needs to be supported here.
+	int __mlibc_pshared;
+	clockid_t __mlibc_clock;
 };
 typedef struct __mlibc_condattr_struct pthread_condattr_t;
 
 struct  __mlibc_cond {
-	// TODO: the clock attribute needs to be supported here.
-	int __mlibc_seq;
+	unsigned int __mlibc_seq;
+	unsigned int __mlibc_flags;
+	clockid_t __mlibc_clock;
 };
 typedef struct __mlibc_cond pthread_cond_t;
 
