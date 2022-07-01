@@ -32,6 +32,7 @@ all_test_cases = [
 	'posix/pthread_atfork',
 	'posix/pthread_cleanup',
 	'posix/pthread_kill',
+	'posix/pthread_mutex',
 	'posix/pthread_key',
 	'posix/pthread_thread_local',
 	'posix/pthread_attr',
