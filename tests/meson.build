@@ -25,6 +25,7 @@ all_test_cases = [
 	'posix/inet_ntop',
 	'posix/inet_pton',
 	'posix/access',
+	'posix/pthread_barrier',
 	'posix/pthread_rwlock',
 	'posix/pthread_cond',
 	'posix/pthread_create',
