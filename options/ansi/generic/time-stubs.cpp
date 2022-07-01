@@ -323,6 +323,13 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			c++;
 			break;
 		}
+		case '\0': {
+			chunk = snprintf(p, space, "%%");
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			break;
+		}
 		default:
 			__ensure(!"Unknown format type.");
 		}

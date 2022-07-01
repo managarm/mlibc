@@ -168,4 +168,12 @@ int main() {
 	assert(strftime(buf, BUF_SIZE, "%r", &tm));
 	assert(!strcmp(buf, "11:51:13 PM"));
 	memset(&tm, 0, sizeof(tm));
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+	assert(strftime(buf, BUF_SIZE, "%", &tm) == 1);
+	fprintf(stderr, "%s\n", buf);
+	assert(!strcmp(buf, "%"));
+	memset(&tm, 0, sizeof(tm));
+#pragma GCC diagnostic pop
 }
