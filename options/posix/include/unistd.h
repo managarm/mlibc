@@ -7,6 +7,7 @@
 #include <bits/size_t.h>
 #include <bits/ssize_t.h>
 #include <bits/off_t.h>
+#include <bits/types.h>
 #include <abi-bits/access.h>
 #include <abi-bits/uid_t.h>
 #include <abi-bits/gid_t.h>
@@ -198,7 +199,9 @@ extern "C" {
 
 #define L_ctermid 20
 
-// MISSING: intptr_t
+#ifndef intptr_t
+typedef __mlibc_intptr intptr_t;
+#endif
 
 int access(const char *path, int mode);
 unsigned int alarm(unsigned int seconds);
@@ -333,6 +336,10 @@ void encrypt(char block[64], int flags);
 
 #if __MLIBC_LINUX_OPTION
 #	include <bits/linux/linux_unistd.h>
+#endif
+
+#if __MLIBC_BSD_OPTION
+#	include <bits/bsd/bsd_unistd.h>
 #endif
 
 #endif // _UNISTD_H

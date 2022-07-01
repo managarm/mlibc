@@ -1624,4 +1624,16 @@ int sys_sigtimedwait(const sigset_t *__restrict set, siginfo_t *__restrict info,
 	return 0;
 }
 
+#if __MLIBC_BSD_OPTION
+int sys_brk(void **out) {
+	auto ret = do_syscall(SYS_brk, 0);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+
+	*out = (void *) sc_int_result<uintptr_t>(ret);
+	return 0;
+}
+#endif // __MLIBC_BSD_OPTION
+
 } // namespace mlibc

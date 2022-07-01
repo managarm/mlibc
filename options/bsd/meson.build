@@ -25,4 +25,8 @@ if not no_headers
 		'include/netinet/ether.h',
 		subdir: 'netinet'
 	)
+	install_headers(
+		'include/bits/bsd/bsd_unistd.h',
+		subdir: 'bits/bsd'
+	)
 endif

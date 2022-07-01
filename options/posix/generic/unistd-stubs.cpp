@@ -14,6 +14,7 @@
 #include <mlibc/arch-defs.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/bsd-sysdeps.hpp>
 #include <mlibc/thread.hpp>
 
 unsigned int alarm(unsigned int seconds) {
@@ -1169,5 +1170,22 @@ int getresgid(gid_t *, gid_t *, gid_t *) {
 void encrypt(char[64], int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
+}
+#endif
+
+#if __MLIBC_BSD_OPTION
+void *sbrk(intptr_t increment) {
+	if(increment) {
+		errno = ENOMEM;
+		return (void *)-1;
+	}
+
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_brk, (void *)-1);
+	void *out;
+	if(int e = mlibc::sys_brk(&out); e) {
+		errno = e;
+		return (void *)-1;
+	}
+	return out;
 }
 #endif
