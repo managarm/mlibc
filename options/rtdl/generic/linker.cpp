@@ -16,6 +16,7 @@ uintptr_t libraryBase = 0x41000000;
 constexpr bool verbose = false;
 constexpr bool stillSlightlyVerbose = false;
 constexpr bool logBaseAddresses = false;
+constexpr bool logRpath = false;
 constexpr bool eagerBinding = true;
 
 #if defined(__x86_64__)
@@ -173,7 +174,11 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 			sPath += '/';
 		}
 		sPath += name;
+		if (logRpath)
+			mlibc::infoLogger() << "rtdl: trying in rpath " << sPath << frg::endlog;
 		int fd = tryToOpen(sPath.data());
+		if (logRpath && fd >= 0)
+			mlibc::infoLogger() << "rtdl: found in rpath" << frg::endlog;
 		return frg::tuple { fd, std::move(sPath) };
 	};
 
@@ -206,6 +211,8 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 				chosenPath = std::move(fullPath);
 			}
 		}
+	} else if (logRpath) {
+		mlibc::infoLogger() << "rtdl: no rpath set for object" << frg::endlog;
 	}
 	for(int i = 0; i < 4 && fd == -1; i++) {
 		auto path = frg::string<MemoryAllocator>{getAllocator(), libdirs[i]} + name + '\0';
