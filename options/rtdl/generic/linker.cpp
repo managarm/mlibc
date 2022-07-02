@@ -13,10 +13,10 @@
 
 uintptr_t libraryBase = 0x41000000;
 
-bool verbose = false;
-bool stillSlightlyVerbose = false;
-bool logBaseAddresses = false;
-bool eagerBinding = true;
+constexpr bool verbose = false;
+constexpr bool stillSlightlyVerbose = false;
+constexpr bool logBaseAddresses = false;
+constexpr bool eagerBinding = true;
 
 #if defined(__x86_64__)
 constexpr inline bool tlsAboveTp = false;
