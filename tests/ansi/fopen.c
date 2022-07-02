@@ -50,5 +50,10 @@ int main() {
 	assert(!strcmp(buffer2, completestr));
 	fclose(file);
 
+	// Check that stdout, stdin and stderr can be closed by the application (issue #12).
+	fclose(stdout);
+	fclose(stdin);
+	fclose(stderr);
+
 	return 0;
 }
