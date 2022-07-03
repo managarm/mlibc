@@ -118,12 +118,12 @@ typedef struct __mlibc_barrier pthread_barrier_t;
 struct __mlibc_fair_rwlock {
 	unsigned int __mlibc_m; // Mutex.
 	unsigned int __mlibc_rc; // Reader count (not reference count).
-	unsigned int __mlibc_padding;
+	unsigned int __mlibc_flags;
 };
 typedef struct __mlibc_fair_rwlock pthread_rwlock_t;
 
 struct __mlibc_rwlockattr {
-	int align;
+	int __mlibc_pshared;
 };
 typedef struct __mlibc_rwlockattr pthread_rwlockattr_t;
 
@@ -271,8 +271,14 @@ int pthread_barrier_destroy(pthread_barrier_t *);
 int pthread_barrier_wait(pthread_barrier_t *);
 
 // ----------------------------------------------------------------------------
-// pthread_rwlock functions.
+// pthread_wrlockattr and pthread_rwlock functions.
 // ----------------------------------------------------------------------------
+
+int pthread_rwlockattr_init(pthread_rwlockattr_t *);
+int pthread_rwlockattr_destroy(pthread_rwlockattr_t *);
+int pthread_rwlockattr_setpshared(pthread_rwlockattr_t *, int);
+int pthread_rwlockattr_getpshared(const pthread_rwlockattr_t *__restrict,
+		int *__restrict);
 
 int pthread_rwlock_init(pthread_rwlock_t *__restrict, const pthread_rwlockattr_t *__restrict);
 int pthread_rwlock_destroy(pthread_rwlock_t *);

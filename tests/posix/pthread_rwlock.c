@@ -82,6 +82,25 @@ static void test_read_allows_read() {
 	assert(!res);
 }
 
+static void test_attr() {
+	pthread_rwlockattr_t attr;
+	pthread_rwlockattr_init(&attr);
+
+	int pshared;
+	pthread_rwlockattr_getpshared(&attr, &pshared);
+	assert(pshared == PTHREAD_PROCESS_PRIVATE);
+
+	pthread_rwlockattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
+	pthread_rwlockattr_getpshared(&attr, &pshared);
+	assert(pshared == PTHREAD_PROCESS_SHARED);
+
+	pthread_rwlockattr_setpshared(&attr, PTHREAD_PROCESS_PRIVATE);
+	pthread_rwlockattr_getpshared(&attr, &pshared);
+	assert(pshared == PTHREAD_PROCESS_PRIVATE);
+
+	pthread_rwlockattr_destroy(&attr);
+}
+
 int main() {
 	test_write_lock_unlock();
 	test_read_lock_unlock();
@@ -91,4 +110,5 @@ int main() {
 	test_write_prevents_write();
 	test_read_prevents_write();
 	test_read_allows_read();
+	test_attr();
 }
