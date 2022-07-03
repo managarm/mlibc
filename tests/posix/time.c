@@ -14,7 +14,7 @@ int main() {
 	char *a = strptime("%", "%%", &tm);
 	assert(a != NULL);
 	assert(*a == '\0');
-	assert(strftime(buf, BUF_SIZE, "%%", &tm));
+	assert(strftime(buf, BUF_SIZE, "%%", &tm) == 1);
 	assert(!strcmp(buf, "%"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -25,7 +25,7 @@ int main() {
 	assert(tm.tm_mon == 10);
 	assert(tm.tm_wday == 4);
 	assert(tm.tm_yday == 324);
-	assert(strftime(buf, BUF_SIZE, "%F", &tm));
+	assert(strftime(buf, BUF_SIZE, "%F", &tm) == 10);
 	assert(!strcmp(buf, "1991-11-21"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -37,7 +37,7 @@ int main() {
 	assert(tm.tm_year == 91);
 	assert(tm.tm_wday == 6);
 	assert(tm.tm_yday == 291);
-	assert(strftime(buf, BUF_SIZE, "%D", &tm));
+	assert(strftime(buf, BUF_SIZE, "%D", &tm) == 8);
 	assert(!strcmp(buf, "10/19/91"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -46,7 +46,7 @@ int main() {
 	assert(*a == '\0');
 	assert(tm.tm_min  == 23);
 	assert(tm.tm_hour == 15);
-	assert(strftime(buf, BUF_SIZE, "%R", &tm));
+	assert(strftime(buf, BUF_SIZE, "%R", &tm) == 5);
 	assert(!strcmp(buf, "15:23"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -56,7 +56,7 @@ int main() {
 	assert(tm.tm_sec  == 56);
 	assert(tm.tm_min  == 12);
 	assert(tm.tm_hour == 17);
-	assert(strftime(buf, BUF_SIZE, "%T", &tm));
+	assert(strftime(buf, BUF_SIZE, "%T", &tm) == 8);
 	assert(!strcmp(buf, "17:12:56"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -64,7 +64,7 @@ int main() {
 	assert(a != NULL);
 	assert(*a == '\0');
 	assert(tm.tm_yday == 272);
-	assert(strftime(buf, BUF_SIZE, "%m", &tm));
+	assert(strftime(buf, BUF_SIZE, "%m", &tm) == 2);
 	assert(!strcmp(buf, "10"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -72,7 +72,7 @@ int main() {
 	assert(a != NULL);
 	assert(*a == '\0');
 	assert(tm.tm_year == -417);
-	assert(strftime(buf, BUF_SIZE, "%C %y", &tm));
+	assert(strftime(buf, BUF_SIZE, "%C %y", &tm) == 5);
 	assert(!strcmp(buf, "14 83"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -81,7 +81,7 @@ int main() {
 	assert(*a == '\0');
 	assert(tm.tm_year == -268);
 	assert(tm.tm_wday == 3);
-	assert(strftime(buf, BUF_SIZE, "%y %C", &tm));
+	assert(strftime(buf, BUF_SIZE, "%y %C", &tm) == 5);
 	assert(!strcmp(buf, "32 16"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -90,7 +90,7 @@ int main() {
 	assert(*a == '\0');
 	assert(tm.tm_year == -700);
 	assert(tm.tm_wday == 5);
-	assert(strftime(buf, BUF_SIZE, "%C", &tm));
+	assert(strftime(buf, BUF_SIZE, "%C", &tm) == 2);
 	assert(!strcmp(buf, "12"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -102,7 +102,7 @@ int main() {
 	assert(tm.tm_year == -217);
 	assert(tm.tm_wday == 4);
 	assert(tm.tm_yday == 265);
-	assert(strftime(buf, BUF_SIZE, "%F", &tm));
+	assert(strftime(buf, BUF_SIZE, "%F", &tm) == 10);
 	assert(!strcmp(buf, "1683-09-23"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -111,7 +111,7 @@ int main() {
 	assert(*a == '\0');
 	assert(tm.tm_sec  == 53);
 	assert(tm.tm_hour == 14);
-	assert(strftime(buf, BUF_SIZE, "%H%t%S", &tm));
+	assert(strftime(buf, BUF_SIZE, "%H%t%S", &tm) == 5);
 	assert(!strcmp(buf, "14	53"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -129,12 +129,12 @@ int main() {
 	assert(*a == '\0');
 	assert(tm.tm_hour == 22);
 	assert(tm.tm_min  == 21);
-	assert(strftime(buf, BUF_SIZE, "%I %M %p", &tm));
+	assert(strftime(buf, BUF_SIZE, "%I %M %p", &tm) == 8);
 	assert(!strcmp(buf, "10 21 PM"));
 	memset(&tm, 0, sizeof(tm));
 
 	tm.tm_min = 23;
-	assert(strftime(buf, BUF_SIZE, "%I %M", &tm));
+	assert(strftime(buf, BUF_SIZE, "%I %M", &tm) == 5);
 	assert(!strcmp(buf, "12 23"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -142,9 +142,9 @@ int main() {
 	assert(a != NULL);
 	assert(*a == '\0');
 	assert(tm.tm_mon == 0);
-	assert(strftime(buf, BUF_SIZE, "%h %b", &tm));
+	assert(strftime(buf, BUF_SIZE, "%h %b", &tm) == 7);
 	assert(!strcmp(buf, "Jan Jan"));
-	assert(strftime(buf, BUF_SIZE, "%B", &tm));
+	assert(strftime(buf, BUF_SIZE, "%B", &tm) == 7);
 	assert(!strcmp(buf, "January"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -152,7 +152,7 @@ int main() {
 	assert(a != NULL);
 	assert(*a == '\0');
 	assert(tm.tm_yday == 1);
-	assert(strftime(buf, BUF_SIZE, "%j", &tm));
+	assert(strftime(buf, BUF_SIZE, "%j", &tm) == 3);
 	assert(!strcmp(buf, "002"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -160,7 +160,7 @@ int main() {
 	assert(a != NULL);
 	assert(*a == '\0');
 	assert(tm.tm_wday == 3);
-	assert(strftime(buf, BUF_SIZE, "%A", &tm));
+	assert(strftime(buf, BUF_SIZE, "%A", &tm) == 9);
 	assert(!strcmp(buf, "Wednesday"));
 	memset(&tm, 0, sizeof(tm));
 
@@ -170,14 +170,14 @@ int main() {
 	assert(tm.tm_hour == 23);
 	assert(tm.tm_min == 51);
 	assert(tm.tm_sec == 13);
-	assert(strftime(buf, BUF_SIZE, "%r", &tm));
+	assert(strftime(buf, BUF_SIZE, "%r", &tm) == 11);
 	assert(!strcmp(buf, "11:51:13 PM"));
 	memset(&tm, 0, sizeof(tm));
 
 	tm.tm_hour = 0;
 	tm.tm_min = 51;
 	tm.tm_sec = 13;
-	assert(strftime(buf, BUF_SIZE, "%r", &tm));
+	assert(strftime(buf, BUF_SIZE, "%r", &tm) == 11);
 	assert(!strcmp(buf, "12:51:13 AM"));
 	memset(&tm, 0, sizeof(tm));
 
