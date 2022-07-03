@@ -126,6 +126,7 @@ extern "C" {
 #define _SC_NPROCESSORS_CONF 17
 #define _SC_SYMLOOP_MAX 18
 #define _SC_TTY_NAME_MAX 19
+#define _SC_RE_DUP_MAX 20
 
 #define STDERR_FILENO 2
 #define STDIN_FILENO 0
