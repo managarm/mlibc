@@ -269,6 +269,25 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint6
 	return object;
 }
 
+SharedObject *ObjectRepository::findCaller(void *addr) {
+	uintptr_t target = reinterpret_cast<uintptr_t>(addr);
+
+	for (auto [name, object] : _nameMap) {
+		// Search all PT_LOAD segments for the specified address.
+		for(size_t j = 0; j < object->phdrCount; j++) {
+			auto phdr = (Elf64_Phdr *)((uintptr_t)object->phdrPointer + j * object->phdrEntrySize);
+			if (phdr->p_type == PT_LOAD) {
+				uintptr_t start = object->baseAddress + phdr->p_vaddr;
+				uintptr_t end = start + phdr->p_memsz;
+				if (start <= target && target < end)
+					return object;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
 // --------------------------------------------------------
 // ObjectRepository: Fetching methods.
 // --------------------------------------------------------
@@ -950,6 +969,32 @@ frg::optional<ObjectSymbol> Scope::resolveWholeScope(Scope *scope,
 		frg::string_view string, ResolveFlags flags) {
 	for(size_t i = 0; i < scope->_objects.size(); i++) {
 		if((flags & resolveCopy) && scope->_objects[i]->isMainObject)
+			continue;
+
+		frg::optional<ObjectSymbol> p = resolveInObject(scope->_objects[i], string);
+		if(p)
+			return p;
+	}
+
+	return frg::optional<ObjectSymbol>();
+}
+
+frg::optional<ObjectSymbol> Scope::resolveNext(Scope *scope,
+		frg::string_view string, SharedObject *target) {
+	// Skip objects until we find the target, and only look for symbols after that.
+	size_t i;
+	for (i = 0; i < scope->_objects.size(); i++) {
+		if (scope->_objects[i] == target)
+			break;
+	}
+
+	if (i == scope->_objects.size()) {
+		mlibc::infoLogger() << "rtdl: object passed to Scope::resolveAfter was not found" << frg::endlog;
+		return frg::optional<ObjectSymbol>();
+	}
+
+	for (i = i + 1; i < scope->_objects.size(); i++) {
+		if(scope->_objects[i]->isMainObject)
 			continue;
 
 		frg::optional<ObjectSymbol> p = resolveInObject(scope->_objects[i], string);

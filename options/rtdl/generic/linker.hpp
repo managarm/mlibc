@@ -51,6 +51,8 @@ struct ObjectRepository {
 
 	SharedObject *requestObjectAtPath(frg::string_view path, uint64_t rts);
 
+	SharedObject *findCaller(void *address);
+
 private:
 	void _fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer);
@@ -238,6 +240,8 @@ struct Scope {
 
 	static frg::optional<ObjectSymbol> resolveWholeScope(Scope *scope,
 			frg::string_view string, ResolveFlags flags);
+	static frg::optional<ObjectSymbol> resolveNext(Scope *scope,
+			frg::string_view string, SharedObject *target);
 
 	Scope();
 

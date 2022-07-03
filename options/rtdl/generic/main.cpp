@@ -303,6 +303,13 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	return executableSO->entry;
 }
 
+extern "C" [[ gnu::visibility("default") ]]
+int __dlapi_close(void *) {
+	if (logDlCalls)
+		mlibc::infoLogger() << "mlibc: dlclose() is a no-op" << frg::endlog;
+	return 0;
+}
+
 const char *lastError;
 
 extern "C" [[ gnu::visibility("default") ]] uintptr_t *__dlapi_entrystack() {
@@ -328,7 +335,7 @@ void *__dlapi_get_tls(struct __abi_tls_entry *entry) {
 #ifdef __MLIBC_POSIX_OPTION
 
 extern "C" [[ gnu::visibility("default") ]]
-void *__dlapi_open(const char *file, int local) {
+void *__dlapi_open(const char *file, int local, void *returnAddress) {
 	// TODO: Thread-safety!
 	auto rts = rtsCounter++;
 
@@ -341,7 +348,14 @@ void *__dlapi_open(const char *file, int local) {
 
 	SharedObject *object;
 	if(frg::string_view{file}.find_first('/') == size_t(-1)) {
-		object = initialRepository->requestObjectWithName(file, nullptr, rts);
+		// In order to know which RUNPATH / RPATH to process, we must find the calling object.
+		SharedObject *origin = initialRepository->findCaller(returnAddress);
+		if (!origin) {
+			mlibc::panicLogger() << "rtdl: unable to determine calling object of dlopen "
+				<< "(ra = " << returnAddress << ")" << frg::endlog;
+		}
+
+		object = initialRepository->requestObjectWithName(file, origin, rts);
 	}else{
 		object = initialRepository->requestObjectAtPath(file, rts);
 	}
@@ -388,16 +402,22 @@ void *__dlapi_open(const char *file, int local) {
 }
 
 extern "C" [[ gnu::visibility("default") ]]
-void *__dlapi_resolve(void *handle, const char *string) {
+void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
 	if (logDlCalls)
 		mlibc::infoLogger() << "rtdl: __dlapi_resolve(" << handle << ", " << string << ")" << frg::endlog;
-
-	__ensure(handle != RTLD_NEXT);
 
 	frg::optional<ObjectSymbol> target;
 
 	if (handle == RTLD_DEFAULT) {
 		target = Scope::resolveWholeScope(globalScope.get(), string, 0);
+	} else if (handle == RTLD_NEXT) {
+		SharedObject *origin = initialRepository->findCaller(returnAddress);
+		if (!origin) {
+			mlibc::panicLogger() << "rtdl: unable to determine calling object of dlsym "
+				<< "(ra = " << returnAddress << ")" << frg::endlog;
+		}
+
+		target = Scope::resolveNext(globalScope.get(), string, origin);
 	} else {
 		// POSIX does not unambiguously state how dlsym() is supposed to work; it just
 		// states that "The symbol resolution algorithm used shall be dependency order
