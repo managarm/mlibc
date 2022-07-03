@@ -7,7 +7,6 @@
 #include <wchar.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <langinfo.h>
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
@@ -15,6 +14,7 @@
 #include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/lock.hpp>
+#include <mlibc/locale.hpp>
 #include <mlibc/bitutil.hpp>
 #include <mlibc/strings.hpp>
 
@@ -202,7 +202,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			if(day < 0 || day > 6)
 				__ensure(!"Day not in bounds.");
 
-			chunk = snprintf(p, space, "%s", nl_langinfo(DAY_1 + day));
+			chunk = snprintf(p, space, "%s", mlibc::nl_langinfo(DAY_1 + day));
 			if(chunk >= space)
 				return 0;
 			p += chunk;
@@ -218,7 +218,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 
 			nl_item item = (*c == 'B') ? MON_1 : ABMON_1;
 
-			chunk = snprintf(p, space, "%s", nl_langinfo(item + mon));
+			chunk = snprintf(p, space, "%s", mlibc::nl_langinfo(item + mon));
 			if(chunk >= space)
 				return 0;
 			p += chunk;
@@ -256,7 +256,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			break;
 		}
 		case 'p': {
-			chunk = snprintf(p, space, "%s", nl_langinfo((tm->tm_hour < 12) ? AM_STR : PM_STR));
+			chunk = snprintf(p, space, "%s", mlibc::nl_langinfo((tm->tm_hour < 12) ? AM_STR : PM_STR));
 			if(chunk >= space)
 				return 0;
 			p += chunk;
@@ -288,7 +288,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			break;
 		}
 		case 'A': {
-			chunk = snprintf(p, space, "%s", nl_langinfo(DAY_1 + tm->tm_wday));
+			chunk = snprintf(p, space, "%s", mlibc::nl_langinfo(DAY_1 + tm->tm_wday));
 			if(chunk >= space)
 				return 0;
 			p += chunk;
@@ -302,7 +302,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			if(hour > 12)
 				hour -= 12;
 			chunk = snprintf(p, space, "%.2i:%.2i:%.2i %s", hour, tm->tm_min, tm->tm_sec,
-				nl_langinfo((tm->tm_hour < 12) ? AM_STR : PM_STR));
+				mlibc::nl_langinfo((tm->tm_hour < 12) ? AM_STR : PM_STR));
 			if(chunk >= space)
 				return 0;
 			p += chunk;
