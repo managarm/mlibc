@@ -244,6 +244,8 @@ size_t strftime(char *__restrict dest, size_t max_size,
 		}
 		case 'I': {
 			int hour = tm->tm_hour;
+			if(!hour)
+				hour = 12;
 			if(hour > 12)
 				hour -= 12;
 			chunk = snprintf(p, space, "%.2i", hour);

@@ -133,6 +133,11 @@ int main() {
 	assert(!strcmp(buf, "10 21 PM"));
 	memset(&tm, 0, sizeof(tm));
 
+	tm.tm_min = 23;
+	assert(strftime(buf, BUF_SIZE, "%I %M", &tm));
+	assert(!strcmp(buf, "12 23"));
+	memset(&tm, 0, sizeof(tm));
+
 	a = strptime("January", "%h", &tm);
 	assert(a != NULL);
 	assert(*a == '\0');
@@ -167,6 +172,13 @@ int main() {
 	assert(tm.tm_sec == 13);
 	assert(strftime(buf, BUF_SIZE, "%r", &tm));
 	assert(!strcmp(buf, "11:51:13 PM"));
+	memset(&tm, 0, sizeof(tm));
+
+	tm.tm_hour = 0;
+	tm.tm_min = 51;
+	tm.tm_sec = 13;
+	assert(strftime(buf, BUF_SIZE, "%r", &tm));
+	assert(!strcmp(buf, "12:51:13 AM"));
 	memset(&tm, 0, sizeof(tm));
 
 #pragma GCC diagnostic push
