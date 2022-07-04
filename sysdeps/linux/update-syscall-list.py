@@ -285,8 +285,11 @@ def main(ctx: Context):
         if wanted_arch not in WANTED_ARCHES:
             continue
 
+<<<<<<< HEAD
         wanted_arch = LINUX_GNU_TRANSLATION.get(wanted_arch, wanted_arch)
 
+=======
+>>>>>>> sysdeps/linux: generate complete syscall lists instead
         with open(wanted_arch + "/syscallnos.h", "w") as f:
             print("#ifndef __MLIBC_SYSCALLNOS_h", file=f)
             print("#define __MLIBC_SYSCALLNOS_h", file=f)
