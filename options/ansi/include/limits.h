@@ -51,6 +51,7 @@
 #define _POSIX_HOST_NAME_MAX 255
 
 #define PTHREAD_STACK_MIN 16384
+#define PTHREAD_KEYS_MAX 1024
 
 #include <abi-bits/limits.h>
 
