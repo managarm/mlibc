@@ -33,6 +33,7 @@ namespace {
 	// mblen(), mbtowc() and wctomb() have an internal state.
 	// The string functions mbstowcs() and wcstombs() do *not* have this state.
 	thread_local __mlibc_mbstate mblen_state = __MLIBC_MBSTATE_INITIALIZER;
+	thread_local __mlibc_mbstate mbtowc_state = __MLIBC_MBSTATE_INITIALIZER;
 }
 
 double atof(const char *string) {
@@ -374,18 +375,32 @@ int mblen(const char *mbs, size_t mb_limit) {
 	return nseq.it - mbs;
 }
 
-int mbtowc(wchar_t *__restrict wc, const char *__restrict mbs, size_t max_size) {
-	mlibc::infoLogger() << "mlibc: Broken mbtowc() called" << frg::endlog;
+int mbtowc(wchar_t *__restrict wc, const char *__restrict mb, size_t max_size) {
+	auto cc = mlibc::current_charcode();
 	__ensure(max_size);
 
-	if(wc && mbs){
-		if(*mbs){
-			*wc = *mbs;
+	if (mb) {
+		if (*mb) {
+			// If wc is NULL, decode into a single local character which we discard
+			// to obtain the length.
+			wchar_t tmp_wc;
+			if (!wc)
+				wc = &tmp_wc;
+
+			mlibc::code_seq<wchar_t> wseq{wc, wc + 1};
+			mlibc::code_seq<const char> nseq{mb, mb + max_size};
+			auto e = cc->decode_wtranscode(nseq, wseq, mbtowc_state);
+			if (e != mlibc::charcode_error::null)
+				__ensure(!"decode_wtranscode() errors are not handled");
+
+			return nseq.it - mb;
 		} else {
 			return 0; // When mbs is a null byte, return 0
 		}
+	} else {
+		mblen_state = __MLIBC_MBSTATE_INITIALIZER;
+		return cc->has_shift_states;
 	}
-	return 1;
 }
 
 int wctomb(char *, wchar_t) {
