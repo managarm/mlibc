@@ -11,9 +11,8 @@
 #define LIBBAR "libnative-bar.so"
 #else
 #define LDSO_PATTERN "ld.so"
-// Temporarily hardcode the paths to work around issue #584.
-#define LIBFOO "tests/rtdl/dl_iterate_phdr/libfoo.so"
-#define LIBBAR "tests/rtdl/dl_iterate_phdr/libbar.so"
+#define LIBFOO "libfoo.so"
+#define LIBBAR "libbar.so"
 #endif
 
 struct result {
