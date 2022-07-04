@@ -195,7 +195,9 @@ namespace {
 		PTHREAD_KEYS_MAX
 	> key_locals_{};
 
-	FutexLock key_mutex_;
+	// This protects accesses to key_globals_ (not key_locals_).
+	// TODO: Use a type that works with frigg (to avoid manual locking).
+	pthread_rwlock_t key_global_mutex_;
 }
 
 int pthread_exit(void *ret_val) {
@@ -216,12 +218,17 @@ int pthread_exit(void *ret_val) {
 
 	for (size_t j = 0; j < PTHREAD_DESTRUCTOR_ITERATIONS; j++) {
 		for (size_t i = 0; i < PTHREAD_KEYS_MAX; i++) {
-			// FIXME: We need to lock here since we're accessing key_globals_, but
-			// the dtor may call a function that also acquires the lock, resulting
-			// in a deadlock.
-			if (auto v = pthread_getspecific(i); v && key_globals_[i].dtor) {
-				key_globals_[i].dtor(v);
-				key_locals_[i].value = nullptr;
+			if (auto v = pthread_getspecific(i)) {
+				// We need to be careful to call dtor with no locks held, as POSIX allows
+				// the dtor to allocate or destroy keys.
+				pthread_rwlock_rdlock(&key_global_mutex_);
+				auto dtor = key_globals_[i].dtor;
+				pthread_rwlock_unlock(&key_global_mutex_);
+
+				if (dtor) {
+					dtor(v);
+					key_locals_[i].value = nullptr;
+				}
 			}
 		}
 	}
@@ -576,7 +583,7 @@ int pthread_atfork(void (*prepare) (void), void (*parent) (void), void (*child) 
 int pthread_key_create(pthread_key_t *out, void (*destructor)(void *)) {
 	SCOPE_TRACE();
 
-	auto g = frg::guard(&key_mutex_);
+	pthread_rwlock_wrlock(&key_global_mutex_);
 
 	pthread_key_t key = PTHREAD_KEYS_MAX;
 	for (size_t i = 0; i < PTHREAD_KEYS_MAX; i++) {
@@ -586,59 +593,71 @@ int pthread_key_create(pthread_key_t *out, void (*destructor)(void *)) {
 		}
 	}
 
-	if (key == PTHREAD_KEYS_MAX)
+	if (key == PTHREAD_KEYS_MAX) {
+		pthread_rwlock_unlock(&key_global_mutex_);
 		return EAGAIN;
+	}
 
 	key_globals_[key].in_use = true;
 	key_globals_[key].dtor = destructor;
 
 	*out = key;
 
+	pthread_rwlock_unlock(&key_global_mutex_);
 	return 0;
 }
 
 int pthread_key_delete(pthread_key_t key) {
 	SCOPE_TRACE();
 
-	auto g = frg::guard(&key_mutex_);
+	pthread_rwlock_wrlock(&key_global_mutex_);
 
-	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use)
+	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use) {
+		pthread_rwlock_unlock(&key_global_mutex_);
 		return EINVAL;
+	}
 
 	key_globals_[key].in_use = false;
 	key_globals_[key].dtor = nullptr;
 	key_globals_[key].generation++;
 
+	pthread_rwlock_unlock(&key_global_mutex_);
 	return 0;
 }
 
 void *pthread_getspecific(pthread_key_t key) {
 	SCOPE_TRACE();
 
-	auto g = frg::guard(&key_mutex_);
+	pthread_rwlock_rdlock(&key_global_mutex_);
 
-	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use)
+	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use) {
+		pthread_rwlock_unlock(&key_global_mutex_);
 		return nullptr;
+	}
 
 	if (key_globals_[key].generation > key_locals_[key].generation) {
 		key_locals_[key].value = nullptr;
 		key_locals_[key].generation = key_globals_[key].generation;
 	}
 
+	pthread_rwlock_unlock(&key_global_mutex_);
 	return key_locals_[key].value;
 }
 
 int pthread_setspecific(pthread_key_t key, const void *value) {
 	SCOPE_TRACE();
 
-	auto g = frg::guard(&key_mutex_);
+	pthread_rwlock_rdlock(&key_global_mutex_);
 
-	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use)
+	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use) {
+		pthread_rwlock_unlock(&key_global_mutex_);
 		return EINVAL;
+	}
 
 	key_locals_[key].value = const_cast<void *>(value);
 	key_locals_[key].generation = key_globals_[key].generation;
 
+	pthread_rwlock_unlock(&key_global_mutex_);
 	return 0;
 }
 
