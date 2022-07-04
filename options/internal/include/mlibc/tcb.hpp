@@ -1,7 +1,9 @@
 #pragma once
 
 #include <stdint.h>
+#include <limits.h>
 #include <bits/size_t.h>
+#include <frg/array.hpp>
 
 /*
  * Explanation of cancellation bits:
@@ -110,5 +112,11 @@ struct Tcb {
 	CleanupHandler *cleanupBegin;
 	CleanupHandler *cleanupEnd;
 	int isJoinable;
+
+	struct LocalKey {
+		void *value;
+		uint64_t generation;
+	};
+	frg::array<LocalKey, PTHREAD_KEYS_MAX> *localKeys;
 };
 
