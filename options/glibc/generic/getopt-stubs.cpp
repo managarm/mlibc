@@ -4,6 +4,7 @@
 #include <bits/ensure.h>
 #include <getopt.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <mlibc/debug.hpp>
@@ -20,6 +21,7 @@ namespace {
 int getopt_long(int argc, char * const argv[], const char *optstring,
 		const struct option *longopts, int *longindex) {
 	bool colon = optstring[0] == ':';
+	bool stop_at_first_nonarg = (optstring[0] == '+' || getenv("POSIXLY_CORRECT"));
 
 	// glibc extension: Setting optind to zero causes a full reset.
 	// TODO: Should we really reset opterr and the other flags?
@@ -40,6 +42,10 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 	while(optind < argc) {
 		char *arg = argv[optind];
 		if(!isOptionArg(arg)) {
+			if(stop_at_first_nonarg) {
+				return -1;
+			}
+
 			bool further_options = false;
 			int skip = optind;
 
