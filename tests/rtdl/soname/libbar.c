@@ -1,0 +1,1 @@
+char *name() { return "bar"; }
