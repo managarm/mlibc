@@ -81,7 +81,7 @@ ObjectRepository::ObjectRepository()
 SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 		frg::string<MemoryAllocator> path, uintptr_t base_address,
 		Elf64_Dyn *dynamic, uint64_t rts) {
-	__ensure(!_nameMap.get(name));
+	__ensure(!findLoadedObject(name));
 
 	auto object = frg::construct<SharedObject>(getAllocator(),
 		name.data(), std::move(path), false, rts);
@@ -99,7 +99,7 @@ SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 		frg::string<MemoryAllocator> path, void *phdr_pointer,
 		size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 		uint64_t rts) {
-	__ensure(!_nameMap.get(name));
+	__ensure(!findLoadedObject(name));
 
 	auto object = frg::construct<SharedObject>(getAllocator(),
 		name.data(), std::move(path), true, rts);
@@ -116,7 +116,7 @@ SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
 		frg::string<MemoryAllocator> path, void *phdr_pointer,
 		size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 		uint64_t rts) {
-	__ensure(!_nameMap.get(name));
+	__ensure(!findLoadedObject(name));
 	auto object = frg::construct<SharedObject>(getAllocator(),
 		name.data(), std::move(path), true, rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
@@ -134,9 +134,8 @@ SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
 
 SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 		SharedObject *origin, uint64_t rts) {
-	auto it = _nameMap.get(name);
-	if(it)
-		return *it;
+	if (auto obj = findLoadedObject(name))
+		return obj;
 
 	const char *libdirs[4] = {
 		"/lib/",
@@ -246,9 +245,8 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint6
 	if (!lastSlash) {
 		name = name.sub_string(lastSlash, path.size() - lastSlash);
 	}
-	auto it = _nameMap.get(name);
-	if(it)
-		return *it;
+	if (auto obj = findLoadedObject(name))
+		return obj;
 
 	auto object = frg::construct<SharedObject>(getAllocator(),
 		name.data(), path.data(), false, rts);
@@ -285,6 +283,21 @@ SharedObject *ObjectRepository::findCaller(void *addr) {
 		}
 	}
 
+	return nullptr;
+}
+
+SharedObject *ObjectRepository::findLoadedObject(frg::string_view name) {
+	auto it = _nameMap.get(name);
+	if (it)
+		return *it;
+
+	for (auto [objectName, object] : _nameMap) {
+		// See if any object has a matching SONAME.
+		if (object->soName && name == object->soName)
+			return object;	
+	}
+
+	// TODO: We should also look at the device and inode here as a fallback.
 	return nullptr;
 }
 
@@ -488,7 +501,10 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 				<< "' does not have a dynamic section" << frg::endlog;
 	__ensure(object->dynamic);
 
+	// Fix up these offsets to addresses after the loop, since the
+	// addresses depend on the value of DT_STRTAB.
 	frg::optional<ptrdiff_t> runpath_offset;
+	frg::optional<ptrdiff_t> soname_offset;
 
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
 		Elf64_Dyn *dynamic = &object->dynamic[i];
@@ -587,8 +603,11 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_DEBUG:
 			dynamic->d_un.d_val = reinterpret_cast<Elf64_Xword>(&globalDebugInterface);
 			break;
+		case DT_SONAME:
+			soname_offset = dynamic->d_un.d_val;
+			break;
 		// ignore unimportant tags
-		case DT_SONAME: case DT_NEEDED: // we handle this later
+		case DT_NEEDED: // we handle this later
 		case DT_FINI: case DT_FINI_ARRAY: case DT_FINI_ARRAYSZ:
 		case DT_RELA: case DT_RELASZ: case DT_RELAENT: case DT_RELACOUNT:
 		case DT_VERSYM:
@@ -609,6 +628,10 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 	if(runpath_offset) {
 		object->runPath = reinterpret_cast<const char *>(object->baseAddress
 				+ object->stringTableOffset + *runpath_offset);
+	}
+	if(soname_offset) {
+		object->soName = reinterpret_cast<const char *>(object->baseAddress
+				+ object->stringTableOffset + *soname_offset);
 	}
 }
 
@@ -636,7 +659,7 @@ void ObjectRepository::_discoverDependencies(SharedObject *object, uint64_t rts)
 SharedObject::SharedObject(const char *name, frg::string<MemoryAllocator> path,
 	bool is_main_object, uint64_t object_rts)
 		: name(name, getAllocator()), path(std::move(path)),
-		interpreterPath(getAllocator()),
+		interpreterPath(getAllocator()), soName(nullptr),
 		isMainObject(is_main_object), objectRts(object_rts), inLinkMap(false),
 		baseAddress(0), loadScope(nullptr), dynamic(nullptr),
 		globalOffsetTable(nullptr), entry(nullptr), tlsSegmentSize(0),
