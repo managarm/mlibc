@@ -206,12 +206,15 @@ int pthread_exit(void *ret_val) {
 
 	for (size_t j = 0; j < PTHREAD_DESTRUCTOR_ITERATIONS; j++) {
 		for (size_t i = 0; i < PTHREAD_KEYS_MAX; i++) {
-			// FIXME: We need to lock here since we're accessing key_globals_, but
-			// the dtor may call a function that also acquires the lock, resulting
-			// in a deadlock.
-			if (auto v = pthread_getspecific(i); v && key_globals_[i].dtor) {
-				key_globals_[i].dtor(v);
-				(*self->localKeys)[i].value = nullptr;
+			if (auto v = pthread_getspecific(i)) {
+				key_mutex_.lock();
+				auto dtor = key_globals_[i].dtor;
+				key_mutex_.unlock();
+
+				if (dtor) {
+					dtor(v);
+					(*self->localKeys)[i].value = nullptr;
+				}
 			}
 		}
 	}
