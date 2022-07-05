@@ -33,7 +33,7 @@ static int ends_with(const char *suffix, const char *s) {
 }
 
 static int contains(const char *pattern, const char *s) {
-	return !!strstr(pattern, s);
+	return !!strstr(s, pattern);
 }
 
 static int callback(struct dl_phdr_info *info, size_t size, void *data) {
