@@ -17,6 +17,7 @@ void *memalign(size_t, size_t);
 
 // GNU extension
 size_t malloc_usable_size(void *ptr);
+int mallopt(int param, int value);
 
 #ifdef __cplusplus
 }
