@@ -180,20 +180,10 @@ namespace {
 		uint64_t generation;
 	};
 
-	struct key_local_info {
-		void *value;
-		uint64_t generation;
-	};
-
 	constinit frg::array<
 		key_global_info,
 		PTHREAD_KEYS_MAX
 	> key_globals_{};
-
-	thread_local constinit frg::array<
-		key_local_info,
-		PTHREAD_KEYS_MAX
-	> key_locals_{};
 
 	FutexLock key_mutex_;
 }
@@ -216,12 +206,15 @@ int pthread_exit(void *ret_val) {
 
 	for (size_t j = 0; j < PTHREAD_DESTRUCTOR_ITERATIONS; j++) {
 		for (size_t i = 0; i < PTHREAD_KEYS_MAX; i++) {
-			// FIXME: We need to lock here since we're accessing key_globals_, but
-			// the dtor may call a function that also acquires the lock, resulting
-			// in a deadlock.
-			if (auto v = pthread_getspecific(i); v && key_globals_[i].dtor) {
-				key_globals_[i].dtor(v);
-				key_locals_[i].value = nullptr;
+			if (auto v = pthread_getspecific(i)) {
+				key_mutex_.lock();
+				auto dtor = key_globals_[i].dtor;
+				key_mutex_.unlock();
+
+				if (dtor) {
+					dtor(v);
+					(*self->localKeys)[i].value = nullptr;
+				}
 			}
 		}
 	}
@@ -615,29 +608,31 @@ int pthread_key_delete(pthread_key_t key) {
 void *pthread_getspecific(pthread_key_t key) {
 	SCOPE_TRACE();
 
+	auto self = mlibc::get_current_tcb();
 	auto g = frg::guard(&key_mutex_);
 
 	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use)
 		return nullptr;
 
-	if (key_globals_[key].generation > key_locals_[key].generation) {
-		key_locals_[key].value = nullptr;
-		key_locals_[key].generation = key_globals_[key].generation;
+	if (key_globals_[key].generation > (*self->localKeys)[key].generation) {
+		(*self->localKeys)[key].value = nullptr;
+		(*self->localKeys)[key].generation = key_globals_[key].generation;
 	}
 
-	return key_locals_[key].value;
+	return (*self->localKeys)[key].value;
 }
 
 int pthread_setspecific(pthread_key_t key, const void *value) {
 	SCOPE_TRACE();
 
+	auto self = mlibc::get_current_tcb();
 	auto g = frg::guard(&key_mutex_);
 
 	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use)
 		return EINVAL;
 
-	key_locals_[key].value = const_cast<void *>(value);
-	key_locals_[key].generation = key_globals_[key].generation;
+	(*self->localKeys)[key].value = const_cast<void *>(value);
+	(*self->localKeys)[key].generation = key_globals_[key].generation;
 
 	return 0;
 }

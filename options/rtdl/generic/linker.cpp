@@ -844,6 +844,7 @@ Tcb *allocateTcb() {
 	tcb_ptr->didExit = 0;
 	tcb_ptr->isJoinable = 1;
 	tcb_ptr->returnValue = nullptr;
+	tcb_ptr->localKeys = frg::construct<frg::array<Tcb::LocalKey, PTHREAD_KEYS_MAX>>(getAllocator());
 	tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
 	tcb_ptr->dtvPointers = frg::construct_n<void *>(getAllocator(), runtimeTlsMap->indices.size());
 	memset(tcb_ptr->dtvPointers, 0, sizeof(void *) * runtimeTlsMap->indices.size());

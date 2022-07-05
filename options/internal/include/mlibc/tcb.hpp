@@ -1,7 +1,9 @@
 #pragma once
 
 #include <stdint.h>
+#include <limits.h>
 #include <bits/size_t.h>
+#include <frg/array.hpp>
 
 /*
  * Explanation of cancellation bits:
@@ -69,15 +71,6 @@ namespace mlibc {
 	}
 }
 
-// There are a few parts of the mlibc code which assume the layout of
-// this struct:
-//
-// options/linker/aarch64/runtime.S uses the offset of dtvPointers.
-// sysdeps/linux/{riscv64,x86_64}/cp_syscall.S uses the offset of cancelBits.
-//
-// Gcc also expects the stack canary to be at fs:0x28,
-// at least on x86_64, so this struct has fixed
-// ABI until stackCanary.
 struct Tcb {
 	Tcb *selfPointer;
 	size_t dtvSize;
@@ -110,5 +103,29 @@ struct Tcb {
 	CleanupHandler *cleanupBegin;
 	CleanupHandler *cleanupEnd;
 	int isJoinable;
+
+	struct LocalKey {
+		void *value;
+		uint64_t generation;
+	};
+	frg::array<LocalKey, PTHREAD_KEYS_MAX> *localKeys;
 };
 
+// There are a few places where we assume the layout of the TCB:
+#if defined(__x86_64__)
+// sysdeps/linux/x86_64/cp_syscall.S uses the offset of cancelBits.
+// GCC also expects the stack canary to be at fs:0x28.
+static_assert(offsetof(Tcb, stackCanary) == 0x28);
+static_assert(offsetof(Tcb, cancelBits) == 0x30);
+#elif defined(__aarch64__)
+// options/linker/aarch64/runtime.S uses the offset of dtvPointers.
+static_assert(offsetof(Tcb, dtvPointers) == 16);
+#elif defined(__riscv) && __riscv_xlen == 64
+// The thread pointer on RISC-V points to *after* the TCB, and since
+// we need to access specific fields that means that the value in
+// sysdeps/linux/riscv64/cp_syscall.S needs to be updated whenever
+// the struct is expanded.
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 56);
+#else
+#error "Missing architecture specific code."
+#endif

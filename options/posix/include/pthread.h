@@ -60,7 +60,6 @@ extern "C" {
 #define PTHREAD_CANCELED ((void*) -1)
 
 // values for pthread_key
-#define PTHREAD_KEYS_MAX 1024
 #define PTHREAD_DESTRUCTOR_ITERATIONS 8
 
 #define PTHREAD_INHERIT_SCHED 0
