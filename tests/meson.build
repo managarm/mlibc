@@ -81,7 +81,6 @@ fail_test_cases = [
 
 host_libc_excluded_test_cases = [
 	'bsd/strl', # These functions do not exist on Linux.
-	'ansi/utf8', # See issue #459
 ]
 host_libc_noasan_test_cases = [
 	'posix/pthread_cancel',
