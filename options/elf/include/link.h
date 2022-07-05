@@ -45,6 +45,8 @@ struct r_debug {
 
 int dl_iterate_phdr(int (*callback)(struct dl_phdr_info*, size_t, void*), void* data);
 
+extern ElfW(Dyn) _DYNAMIC[];
+
 #ifdef __cplusplus
 }
 #endif
