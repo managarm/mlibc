@@ -29,9 +29,10 @@ The following custom meson options are accepted, in addition to the [built-in op
 
 - `headers_only`: Only install headers; don't build `libc.so` or `ld.so`.
 - `mlibc_no_headers`: Don't install headers; only build `libc.so` and `ld.so`.
-- `static`: Build `libc.a` and `ld.a` instead of `libc.so` and `ld.so`. This disables the dynamic linker.
 - `build_tests`: Build the test suite (see below).
 - `disable_x_option`: Disable `x` component of mlibc functionality. See `meson_options.txt` for a full list of possible values for `x`. This may be used to e.g disable POSIX and glibc extensions.
+
+The type of library to be built (static, shared, or both) is controlled by meson's `default_library` option. Passing `-Ddefault_library=static` effectively disables the dynamic linker.
 
 We also support building with `-Db_sanitize=undefined` to use UBSan inside mlibc. Note that this does not enable UBSan for external applications which link against `libc.so`, but it can be useful during development to detect internal bugs (e.g when adding new sysdeps).
 
