@@ -305,6 +305,18 @@ struct hostent *gethostbyaddr(const void *, socklen_t, int) {
 	__builtin_unreachable();
 }
 
+int gethostbyaddr_r(const void *__restrict, socklen_t, int, struct hostent *__restrict,
+					char *__restrict, size_t, struct hostent **__restrict, int *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int gethostbyname_r(const char *__restrict, struct hostent *__restrict, char *__restrict, size_t,
+					struct hostent **__restrict, int *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 struct protoent *getprotobyname(const char *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
