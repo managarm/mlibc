@@ -139,7 +139,6 @@ if not no_headers
 		'include/bits/posix/in_port_t.h',
 		'include/bits/posix/iovec.h',
 		'include/bits/posix/locale_t.h',
-		'include/bits/posix/nl_item.h',
 		'include/bits/posix/posix_ctype.h',
 		'include/bits/posix/posix_locale.h',
 		'include/bits/posix/posix_signal.h',

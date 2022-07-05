@@ -231,3 +231,10 @@ void __ubsan_handle_vla_bound_not_positive(VLABoundData *vlabd) {
 		<< LOG_NAME_LOC("VLA bound not positive", vlabd->loc)
 		<< frg::endlog;
 }
+
+extern "C" [[gnu::visibility("hidden")]]
+void __ubsan_handle_missing_return(UnreachableData *data) {
+	mlibc::panicLogger()
+		<< LOG_NAME_LOC("reached end of a value-returning function without returning a value", data->loc)
+		<< frg::endlog;
+}
