@@ -1,1 +1,1 @@
-../../../../abis/mlibc/signal.h
+../../../../abis/linux/signal.h
