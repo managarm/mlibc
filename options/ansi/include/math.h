@@ -362,6 +362,9 @@ double fma(double, double, double);
 float fmaf(float, float, float);
 long double fmal(long double, long double, long double);
 
+extern int signgam;
+#define __signgam signgam
+
 #ifdef __cplusplus
 }
 #endif
