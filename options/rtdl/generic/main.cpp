@@ -290,12 +290,12 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		tcb->tid = 1;
 	}
 
-	linker.initObjects();
-
 	globalDebugInterface.ver = 1;
 	globalDebugInterface.brk = &dl_debug_state;
 	globalDebugInterface.state = 0;
 	dl_debug_state();
+
+	linker.initObjects();
 
 	if(logEntryExit)
 		mlibc::infoLogger() << "Leaving ld.so, jump to "
