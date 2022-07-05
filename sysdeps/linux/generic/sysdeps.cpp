@@ -451,6 +451,10 @@ int sys_sysinfo(struct sysinfo *info) {
 	return 0;
 }
 
+void sys_yield() {
+	do_syscall(SYS_sched_yield);
+}
+
 int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out) {
         void *stack = prepare_stack(entry, user_arg);
 
