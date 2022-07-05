@@ -1150,6 +1150,16 @@ int setdomainname(const char *, size_t) {
 	__builtin_unreachable();
 }
 
+int getresuid(uid_t *, uid_t *, uid_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int getresgid(gid_t *, gid_t *, gid_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 #ifdef __MLIBC_CRYPT_OPTION
 void encrypt(char[64], int) {
 	__ensure(!"Not implemented");
