@@ -1,6 +1,7 @@
 #ifndef _SYS_RESOURCE_H
 #define _SYS_RESOURCE_H
 
+#include <limits.h>
 #include <abi-bits/pid_t.h>
 #include <abi-bits/resource.h>
 #include <bits/posix/id_t.h>
@@ -24,6 +25,8 @@ extern "C" {
 
 typedef unsigned long rlim_t;
 
+_Static_assert(sizeof(long) * CHAR_BIT == 64, "long * CHAR_BIT is not 64, we should fix this on this architecture!");
+
 struct rlimit {
 	rlim_t rlim_cur;
 	rlim_t rlim_max;
@@ -37,6 +40,8 @@ int getrlimit(int, struct rlimit *);
 int setrlimit(int, const struct rlimit *);
 
 int prlimit(pid_t pid, int resource, const struct rlimit *new_limits, struct rlimit *old_limits);
+
+#define rlimit64 rlimit
 
 #ifdef __cplusplus
 }
