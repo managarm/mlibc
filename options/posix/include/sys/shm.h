@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <abi-bits/pid_t.h>
+#include <abi-bits/shm.h>
 #include <bits/size_t.h>
 #include <time.h>
 
