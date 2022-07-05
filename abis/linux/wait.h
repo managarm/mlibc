@@ -22,4 +22,7 @@
 #define WIFCONTINUED(x) ((x) == 0xffff)
 #define WCOREDUMP(x) ((x) & WCOREFLAG)
 
+/* glibc extension, but also useful for kernels */
+#define W_EXITCODE(ret, sig) (((ret) << 8) | (sig))
+
 #endif //_ABIBITS_WAIT_H
