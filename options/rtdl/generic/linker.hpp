@@ -133,7 +133,9 @@ struct SharedObject {
 	// object initialization information
 	InitFuncPtr initPtr = nullptr;
 	InitFuncPtr *initArray = nullptr;
+	InitFuncPtr *preInitArray = nullptr;
 	size_t initArraySize = 0;
+	size_t preInitArraySize = 0;
 
 	// TODO: read this from the PHDR
 	size_t tlsSegmentSize, tlsAlignment, tlsImageSize;

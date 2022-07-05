@@ -600,6 +600,13 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_INIT_ARRAYSZ:
 			object->initArraySize = dynamic->d_un.d_val;
 			break;
+		case DT_PREINIT_ARRAY:
+			if(dynamic->d_un.d_ptr != 0)
+				object->preInitArray = (InitFuncPtr *)(object->baseAddress + dynamic->d_un.d_ptr);
+			break;
+		case DT_PREINIT_ARRAYSZ:
+			object->preInitArraySize = dynamic->d_un.d_val;
+			break;
 		case DT_DEBUG:
 			dynamic->d_un.d_val = reinterpret_cast<Elf64_Xword>(&globalDebugInterface);
 			break;
@@ -744,6 +751,12 @@ void doInitialize(SharedObject *object) {
 
 	if(verbose)
 		mlibc::infoLogger() << "rtdl: Initialize " << object->name << frg::endlog;
+
+	if(verbose)
+		mlibc::infoLogger() << "rtdl: Running DT_PREINIT_ARRAY functions" << frg::endlog;
+	__ensure((object->preInitArraySize % sizeof(InitFuncPtr)) == 0);
+	for(size_t i = 0; i < object->preInitArraySize / sizeof(InitFuncPtr); i++)
+		object->preInitArray[i]();
 
 	if(verbose)
 		mlibc::infoLogger() << "rtdl: Running DT_INIT function" << frg::endlog;
