@@ -22,6 +22,7 @@
 #define SYS_select 23
 #define SYS_madvise 28
 #define SYS_dup 32
+#define SYS_pause 34
 #define SYS_nanosleep 35
 #define SYS_setitimer 38
 #define SYS_getpid 39
@@ -88,6 +89,7 @@
 #define SYS_fstatfs 138
 #define SYS_getpriority 140
 #define SYS_setpriority 141
+#define SYS_mlockall 151
 #define SYS_prctl 157
 #define SYS_arch_prctl 158
 #define SYS_setrlimit 160

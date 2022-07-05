@@ -126,6 +126,7 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_fchmod(int fd, mode_t mode);
 [[gnu::weak]] int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags);
 [[gnu::weak]] int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags);
+[[gnu::weak]] int sys_mlockall(int flags);
 
 // mlibc assumes that anonymous memory returned by sys_vm_map() is zeroed by the kernel / whatever is behind the sysdeps
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window);
@@ -183,6 +184,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value);
 [[gnu::weak]] int sys_times(struct tms *tms, clock_t *out);
 [[gnu::weak]] int sys_uname(struct utsname *buf);
+[[gnu::weak]] int sys_pause();
 
 [[gnu::weak]] int sys_setresuid(uid_t ruid, uid_t euid, uid_t suid);
 [[gnu::weak]] int sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid);

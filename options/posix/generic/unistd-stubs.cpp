@@ -487,7 +487,12 @@ long pathconf(const char *, int name) {
 }
 
 int pause(void) {
-	__ensure(!"Not implemented");
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pause, -1);
+	if(int e = mlibc::sys_pause(); e) {
+		errno = e;
+		return -1;
+	}
+	__ensure(!"There is no successful completion return value for pause");
 	__builtin_unreachable();
 }
 
@@ -1110,11 +1115,7 @@ char *ctermid(char *s) {
 }
 
 int setresuid(uid_t ruid, uid_t euid, uid_t suid) {
-	if(!mlibc::sys_setresuid) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setresuid, -1);
 	if(int e = mlibc::sys_setresuid(ruid, euid, suid); e) {
 		errno = e;
 		return -1;
@@ -1123,11 +1124,7 @@ int setresuid(uid_t ruid, uid_t euid, uid_t suid) {
 }
 
 int setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
-	if(!mlibc::sys_setresgid) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setresgid, -1);
 	if(int e = mlibc::sys_setresgid(rgid, egid, sgid); e) {
 		errno = e;
 		return -1;

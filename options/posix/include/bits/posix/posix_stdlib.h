@@ -56,6 +56,8 @@ char *canonicalize_file_name(const char *);
 // BSD extension
 void *reallocarray(void *, size_t, size_t);
 
+int clearenv(void);
+
 #ifdef __cplusplus
 }
 #endif

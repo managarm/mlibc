@@ -893,6 +893,24 @@ int sys_ttyname(int fd, char *buf, size_t size) {
 	return 0;
 }
 
+int sys_pause() {
+#ifdef SYS_pause
+	auto ret = do_syscall(SYS_pause);
+#else
+	auto ret = do_syscall(SYS_ppoll, 0, 0, 0, 0);
+#endif
+	if (int e = sc_error(ret); e)
+		return e;
+	return EINTR;
+}
+
+int sys_mlockall(int flags) {
+	auto ret = do_syscall(SYS_mlockall, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {

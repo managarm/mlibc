@@ -100,6 +100,7 @@ FILE *freopen(const char *__restrict filename, const char *__restrict mode, FILE
 void setbuf(FILE *__restrict stream, char *__restrict buffer);
 int setvbuf(FILE *__restrict stream, char *__restrict buffer, int mode, size_t size);
 void setlinebuf(FILE *stream);
+void setbuffer(FILE *, char *, size_t);
 
 // [C11-7.21.6] Formatted input/output functions
 

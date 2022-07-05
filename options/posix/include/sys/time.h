@@ -2,8 +2,11 @@
 #define _SYS_TIME_H
 
 #include <abi-bits/time.h>
+#include <abi-bits/signal.h>
+#include <bits/ansi/clockid_t.h>
 #include <bits/ansi/time_t.h>
 #include <bits/posix/suseconds_t.h>
+#include <bits/posix/timer_t.h>
 #include <bits/posix/timeval.h>
 
 #include <sys/select.h>
@@ -32,6 +35,8 @@ int timerisset(struct timeval *tvp);
 int getitimer(int which, struct itimerval *curr_value);
 int setitimer(int which, const struct itimerval *new_value,
 	struct itimerval *old_value);
+
+int timer_create(clockid_t clockid, struct sigevent *__restrict sevp, timer_t *__restrict timerid);
 
 // The following 2 macros are taken from musl
 #define TIMEVAL_TO_TIMESPEC(tv, ts) ( \

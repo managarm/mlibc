@@ -60,6 +60,7 @@ if not no_headers
 		subdir: 'abi-bits'
 	)
 
+	install_headers('include/syscall.h')
 	install_headers('include/sys/syscall.h', subdir: 'sys')
 	install_headers('include/bits/syscall.h', subdir: 'bits')
 endif
