@@ -53,6 +53,8 @@ struct ObjectRepository {
 
 	SharedObject *findCaller(void *address);
 
+	SharedObject *findLoadedObject(frg::string_view name);
+
 private:
 	void _fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer);
@@ -110,6 +112,7 @@ struct SharedObject {
 	frg::string<MemoryAllocator> name;
 	frg::string<MemoryAllocator> path;
 	frg::string<MemoryAllocator> interpreterPath;
+	const char *soName;
 	bool isMainObject;
 	uint64_t objectRts;
 
