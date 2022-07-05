@@ -43,7 +43,21 @@ if not no_headers
 	)
 	install_headers(
 		'include/net/ethernet.h',
+		'include/net/route.h',
+		'include/net/if_ppp.h',
 		subdir: 'net'
+	)
+	install_headers(
+		'include/netax25/ax25.h',
+		subdir: 'netax25'
+	)
+	install_headers(
+		'include/netipx/ipx.h',
+		subdir: 'netipx'
+	)
+	install_headers(
+		'include/netrom/netrom.h',
+		subdir: 'netrom'
 	)
 	install_headers(
 		'include/netinet/in_systm.h',
