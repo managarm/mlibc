@@ -10,6 +10,8 @@ extern "C" {
 int statfs(const char *, struct statfs *);
 int fstatfs(int, struct statfs *);
 
+#define statfs64 statfs
+
 #ifdef __cplusplus
 }
 #endif
