@@ -90,6 +90,7 @@ jobs:
             fi
             abidiff \
               --no-added-syms \
+              --suppr mlibc-branch/ci/abidiff_suppress.ini \
               --hd1 root-base/usr/local/include/ \
               --hd2 root-branch/usr/local/include/ \
               root-{base,branch}/"$file" \
