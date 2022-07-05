@@ -56,7 +56,7 @@ if not headers_only
 	add_languages('c', 'cpp')
 	c_compiler = meson.get_compiler('c')
 
-	add_project_arguments('-Wno-unused-function', language: ['c', 'cpp'])
+	add_project_arguments('-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', language: ['c', 'cpp'])
 	add_project_arguments('-nostdinc', '-fno-builtin', language: ['c', 'cpp'])
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
