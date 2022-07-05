@@ -15,19 +15,31 @@ extern "C" {
 #define GLOB_NOCHECK 0x10
 #define GLOB_NOESCAPE 0x20
 #define GLOB_NOSORT 0x40
-
 #define GLOB_PERIOD 0x80
 #define GLOB_TILDE 0x100
 #define GLOB_TILDE_CHECK 0x200
+#define GLOB_BRACE 0x400
+#define GLOB_NOMAGIC 0x800
+#define GLOB_ALTDIRFUNC 0x1000
+#define GLOB_ONLYDIR 0x2000
+#define GLOB_MAGCHAR 0x4000
 
 #define GLOB_ABORTED 1
 #define GLOB_NOMATCH 2
 #define GLOB_NOSPACE 3
+#define GLOB_NOSYS 4
 
+struct stat;
 typedef struct glob_t {
 	size_t gl_pathc;
 	char **gl_pathv;
 	size_t gl_offs;
+	int gl_flags;
+	void (*gl_closedir) (void *);
+	struct dirent *(*gl_readdir) (void *);
+	void *(*gl_opendir) (const char *);
+	int (*gl_lstat) (const char *__restrict, struct stat *__restrict);
+	int (*gl_stat) (const char *__restrict, struct stat *__restrict);
 } glob_t;
 
 int glob(const char *__restirct, int, int(*)(const char *, int), struct glob_t *__restrict);
