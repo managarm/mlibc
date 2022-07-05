@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <stddef.h>
 #include <errno.h>
 
@@ -50,9 +51,10 @@ void freeaddrinfo(struct addrinfo *ptr) {
 	}
 }
 
-const char *gai_strerror(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+const char *gai_strerror(int code) {
+	static thread_local char buffer[128];
+	snprintf(buffer, sizeof(buffer), "Unknown error (%d)", code);
+	return buffer;
 }
 
 int getaddrinfo(const char *__restrict node, const char *__restrict service,
