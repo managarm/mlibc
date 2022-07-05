@@ -754,6 +754,7 @@ void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, MemoryAllocator>
 
 			char *tcb_ptr = reinterpret_cast<char *>(tcb);
 			auto tls_ptr = tcb_ptr + object->tlsOffset;
+			memset(tls_ptr, 0, object->tlsSegmentSize);
 			memcpy(tls_ptr, object->tlsImagePtr, object->tlsImageSize);
 
 			if (checkInitialized)
