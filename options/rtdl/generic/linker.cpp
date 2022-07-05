@@ -71,6 +71,10 @@ void closeOrDie(int fd) {
 		__ensure(!"sys_close() failed");
 }
 
+uintptr_t alignUp(uintptr_t address, size_t align) {
+	return (address + align - 1) & ~(align - 1);
+}
+
 // --------------------------------------------------------
 // ObjectRepository
 // --------------------------------------------------------
@@ -757,6 +761,11 @@ void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, MemoryAllocator>
 			memset(tls_ptr, 0, object->tlsSegmentSize);
 			memcpy(tls_ptr, object->tlsImagePtr, object->tlsImageSize);
 
+			if (verbose) {
+				mlibc::infoLogger() << "rtdl: wrote tls image at " << (void *)tls_ptr
+						<< ", size = 0x" << frg::hex_fmt{object->tlsSegmentSize} << frg::endlog;
+			}
+
 			if (checkInitialized)
 				object->tlsInitialized = true;
 		}
@@ -764,26 +773,47 @@ void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, MemoryAllocator>
 }
 
 Tcb *allocateTcb() {
-	size_t tcb_size = sizeof(Tcb);
+	size_t tlsInitialSize = runtimeTlsMap->initialLimit;
 
+	// To make sure that both the TCB and TLS data are sufficiently aligned, allocate
+	// slightly more than necessary and adjust alignment afterwards.
+	size_t alignOverhead = frg::min(alignof(Tcb), tlsMaxAlignment);
+	size_t allocSize = tlsInitialSize + sizeof(Tcb) + alignOverhead;
+	auto allocation = reinterpret_cast<uintptr_t>(getAllocator().allocate(allocSize));
+	memset(reinterpret_cast<void *>(allocation), 0, allocSize);
+
+	uintptr_t tlsAddress, tcbAddress;
 	if constexpr (tlsAboveTp) {
-		tcb_size = ((sizeof(Tcb) + tlsMaxAlignment - 1) & ~(tlsMaxAlignment - 1));
-	}
-
-	size_t td_size = runtimeTlsMap->initialLimit + tcb_size;
-	auto td_buffer = getAllocator().allocate(td_size);
-	memset(td_buffer, 0, td_size);
-
-	__ensure((reinterpret_cast<uintptr_t>(td_buffer) & (tlsMaxAlignment - 1)) == 0);
-
-	Tcb *tcb_ptr = nullptr;
-
-	if constexpr (tlsAboveTp) {
-		tcb_ptr = new (td_buffer) Tcb;
+		// Here we must satisfy two requirements of the TCB and the TLS data:
+		//   1. One should follow the other immediately in memory. We do this so that
+		//      we can simply add or subtract sizeof(Tcb) to obtain the address of the other.
+		//   2. Both should be sufficiently aligned.
+		// To do this, we will fix whichever address has stricter alignment requirements, and
+		// derive the other from it.
+		if (tlsMaxAlignment > alignof(Tcb)) {
+			tlsAddress = alignUp(allocation + sizeof(Tcb), tlsMaxAlignment);
+			tcbAddress = tlsAddress - sizeof(Tcb);
+		} else {
+			tcbAddress = alignUp(allocation, alignof(Tcb));
+			tlsAddress = tcbAddress + sizeof(Tcb);
+		}
+		__ensure((tlsAddress & (tlsMaxAlignment - 1)) == 0);
+		__ensure(tlsAddress == tcbAddress + sizeof(Tcb));
 	} else {
-		tcb_ptr = new (reinterpret_cast<char *>(td_buffer) + runtimeTlsMap->initialLimit) Tcb;
+		// The TCB should be aligned such that the preceding blocks are aligned too.
+		tcbAddress = alignUp(allocation + tlsInitialSize, alignOverhead);
+		tlsAddress = tcbAddress - tlsInitialSize;
+	}
+	__ensure((tcbAddress & (alignof(Tcb) - 1)) == 0);
+
+	if (verbose) {
+		mlibc::infoLogger() << "rtdl: tcb allocated at " << (void *)tcbAddress
+				<< ", size = 0x" << frg::hex_fmt{sizeof(Tcb)} << frg::endlog;
+		mlibc::infoLogger() << "rtdl: tls allocated at " << (void *)tlsAddress
+				<< ", size = 0x" << frg::hex_fmt{tlsInitialSize} << frg::endlog;
 	}
 
+	Tcb *tcb_ptr = new ((char *)tcbAddress) Tcb;
 	tcb_ptr->selfPointer = tcb_ptr;
 
 	tcb_ptr->stackCanary = __stack_chk_guard;
@@ -827,6 +857,11 @@ void *accessDtv(SharedObject *object) {
 		memset(buffer, 0, object->tlsSegmentSize);
 		memcpy(buffer, object->tlsImagePtr, object->tlsImageSize);
 		tcb_ptr->dtvPointers[object->tlsIndex] = buffer;
+
+		if (verbose) {
+			mlibc::infoLogger() << "rtdl: accessDtv wrote tls image at " << buffer
+					<< ", size = 0x" << frg::hex_fmt{object->tlsSegmentSize} << frg::endlog;
+		}
 	}
 
 	return (void *)((char *)tcb_ptr->dtvPointers[object->tlsIndex] + TLS_DTV_OFFSET);
@@ -1158,11 +1193,9 @@ void Loader::_buildTlsMaps() {
 			object->tlsModel = TlsModel::initial;
 
 			if constexpr (tlsAboveTp) {
-				size_t tcbSize = ((sizeof(Tcb) + tlsMaxAlignment - 1)
-						& ~(tlsMaxAlignment - 1));
-
-				object->tlsOffset = runtimeTlsMap->initialPtr + tcbSize;
-
+				// As per the comment in allocateTcb(), we may simply add sizeof(Tcb) to
+				// reach the TLS data.
+				object->tlsOffset = runtimeTlsMap->initialPtr + sizeof(Tcb);
 				runtimeTlsMap->initialPtr += object->tlsSegmentSize;
 
 				size_t misalign = runtimeTlsMap->initialPtr & (object->tlsAlignment - 1);
