@@ -1416,7 +1416,6 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 						<< p->object()->name << frg::endlog;
 			*((uint64_t *)rel_addr) = p->object()->tlsOffset + p->symbol()->st_value;
 		}else{
-			__ensure(!reloc->r_addend);
 			if(stillSlightlyVerbose)
 				mlibc::infoLogger() << "rtdl: Warning: TPOFF64 with no symbol"
 						" in object " << object->name << frg::endlog;
@@ -1424,7 +1423,7 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 				mlibc::panicLogger() << "rtdl: In object " << object->name
 						<< ": Static TLS relocation to dynamically loaded object "
 						<< object->name << frg::endlog;
-			*((uint64_t *)rel_addr) = object->tlsOffset;
+			*((uint64_t *)rel_addr) = object->tlsOffset + reloc->r_addend;
 		}
 	} break;
 #elif defined(__aarch64__)
