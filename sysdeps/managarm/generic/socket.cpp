@@ -70,6 +70,7 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionImbueCredentials;
+	actions[2].handle = kHelThisThread;
 	actions[2].flags = kHelItemChain;
 	actions[3].type = kHelActionSendFromBuffer;
 	actions[3].flags = kHelItemChain;

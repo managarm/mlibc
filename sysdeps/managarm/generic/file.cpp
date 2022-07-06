@@ -1161,6 +1161,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	actions[2].length = hdr->msg_iovlen;
 
 	actions[3].type = kHelActionImbueCredentials;
+	actions[3].handle = kHelThisThread;
 	actions[3].flags = kHelItemChain;
 
 	actions[4].type = kHelActionSendFromBuffer;
@@ -1246,6 +1247,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	actions[1].length = ser.size();
 
 	actions[2].type = kHelActionImbueCredentials;
+	actions[2].handle = kHelThisThread;
 	actions[2].flags = kHelItemChain;
 
 	actions[3].type = kHelActionRecvInline;
@@ -2948,6 +2950,67 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				" is a noop\e[39m" << frg::endlog;
 		return 0;
 	}
+	case DRM_IOCTL_PRIME_HANDLE_TO_FD: {
+		auto param = reinterpret_cast<drm_prime_handle *>(arg);
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+		req.set_drm_prime_handle(param->handle);
+		req.set_drm_flags(param->flags);
+
+		auto [offer, send_req, send_creds, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_creds.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		param->fd = resp.drm_prime_fd();
+		*result = resp.result();
+		return 0;
+	}
+	case DRM_IOCTL_PRIME_FD_TO_HANDLE: {
+		auto param = reinterpret_cast<drm_prime_handle *>(arg);
+
+		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		req.set_command(request);
+		req.set_drm_flags(param->flags);
+
+		auto [offer, send_req, send_creds, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(getHandleForFd(param->fd)),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_creds.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		if(resp.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
+			return EBADF;
+		} else {
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		}
+
+		param->handle = resp.drm_prime_handle();
+		*result = resp.result();
+		return 0;
+	}
 	case TCGETS: {
 		auto param = reinterpret_cast<struct termios *>(arg);
 		HelAction actions[4];
@@ -3056,6 +3119,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		actions[1].buffer = ser.data();
 		actions[1].length = ser.size();
 		actions[2].type = kHelActionImbueCredentials;
+		actions[2].handle = kHelThisThread;
 		actions[2].flags = kHelItemChain;
 		actions[3].type = kHelActionRecvInline;
 		actions[3].flags = 0;
@@ -3892,6 +3956,7 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionImbueCredentials;
+	actions[2].handle = kHelThisThread;
 	actions[2].flags = kHelItemChain;
 	actions[3].type = kHelActionSendFromBuffer;
 	actions[3].flags = kHelItemChain;
@@ -3959,6 +4024,7 @@ int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionImbueCredentials;
+	actions[2].handle = kHelThisThread;
 	actions[2].flags = kHelItemChain;
 	actions[3].type = kHelActionRecvInline;
 	actions[3].flags = kHelItemChain;
