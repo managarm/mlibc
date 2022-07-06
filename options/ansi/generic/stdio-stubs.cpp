@@ -712,7 +712,7 @@ int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_l
 	vs.arg_list = arg_list;
 	va_copy(vs.args, args);
 	auto file = static_cast<mlibc::abstract_file *>(stream);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	StreamPrinter p{stream};
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
 	auto res = frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
@@ -724,7 +724,7 @@ int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_l
 
 int vfscanf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args) {
 	auto file = static_cast<mlibc::abstract_file *>(stream);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 
 	struct {
 		char look_ahead() {
@@ -837,7 +837,7 @@ int fgetc(FILE *stream) {
 char *fgets(char *__restrict buffer, size_t max_size, FILE *__restrict stream) {
 	__ensure(max_size > 0);
 	auto file = static_cast<mlibc::abstract_file *>(stream);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	for(size_t i = 0; ; i++) {
 		if (i == max_size - 1) {
 			buffer[i] = 0;
@@ -884,7 +884,7 @@ int fputc_unlocked(int c, FILE *stream) {
 
 int fputc(int c, FILE *stream) {
 	auto file = static_cast<mlibc::abstract_file *>(stream);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	return fputc_unlocked(c, stream);
 }
 
@@ -896,7 +896,7 @@ int fputs_unlocked(const char *__restrict string, FILE *__restrict stream) {
 
 int fputs(const char *__restrict string, FILE *__restrict stream) {
 	auto file = static_cast<mlibc::abstract_file *>(stream);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	return fputs_unlocked(string, stream);
 }
 
@@ -929,7 +929,7 @@ int putc_unlocked(int c, FILE *stream) {
 
 int putc(int c, FILE *stream) {
 	auto file = static_cast<mlibc::abstract_file *>(stream);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	return putc_unlocked(c, stream);
 }
 
@@ -939,13 +939,13 @@ int putchar_unlocked(int c) {
 
 int putchar(int c) {
 	auto file = static_cast<mlibc::abstract_file *>(stdout);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	return putchar_unlocked(c);
 }
 
 int puts(const char *string) {
 	auto file = static_cast<mlibc::abstract_file *>(stdout);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 
 	size_t progress = 0;
 	size_t len = strlen(string);
@@ -982,13 +982,13 @@ wint_t ungetwc(wint_t, FILE *) MLIBC_STUB_BODY
 
 size_t fread(void *buffer, size_t size, size_t count, FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	return fread_unlocked(buffer, size, count, file_base);
 }
 
 size_t fwrite(const void *buffer, size_t size , size_t count, FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	return fwrite_unlocked(buffer, size, count, file_base);
 }
 
@@ -1043,7 +1043,7 @@ ssize_t getdelim(char **line, size_t *n, int delim, FILE *stream) {
 	size_t nwritten = 0;
 
 	auto file = static_cast<mlibc::abstract_file *>(stream);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 
 	// Avoid allocating if we've already hit the end
 	auto c = fgetc_unlocked(stream);
@@ -1121,8 +1121,8 @@ void funlockfile(FILE *file_base) {
 	static_cast<mlibc::abstract_file *>(file_base)->_lock.unlock();
 }
 
-int ftrylockfile(FILE *) {
-	mlibc::infoLogger() << "mlibc: File locking (ftrylockfile) is a no-op" << frg::endlog;
+int ftrylockfile(FILE *file_base) {
+	static_cast<mlibc::abstract_file *>(file_base)->_lock.try_lock();
 	return 0;
 }
 

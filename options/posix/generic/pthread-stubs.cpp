@@ -14,6 +14,7 @@
 #include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/thread.hpp>
 #include <mlibc/tcb.hpp>
+#include <mlibc/tid.hpp>
 
 static bool enableTrace = false;
 
@@ -40,15 +41,6 @@ private:
 };
 
 #define SCOPE_TRACE() ScopeTrace(__FILE__, __LINE__, __FUNCTION__)
-
-namespace {
-
-unsigned int this_tid() {
-	auto tcb = mlibc::get_current_tcb();
-	return tcb->tid;
-}
-
-} // anonymous namespace
 
 static constexpr unsigned int mutexRecursive = 1;
 static constexpr unsigned int mutexErrorCheck = 2;
@@ -774,14 +766,14 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 		if(!expected) {
 			// Try to take the mutex here.
 			if(__atomic_compare_exchange_n(&mutex->__mlibc_state,
-					&expected, this_tid(), false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
+					&expected, mlibc::this_tid(), false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
 				__ensure(!mutex->__mlibc_recursion);
 				mutex->__mlibc_recursion = 1;
 				return 0;
 			}
 		}else{
 			// If this (recursive) mutex is already owned by us, increment the recursion level.
-			if((expected & mutex_owner_mask) == this_tid()) {
+			if((expected & mutex_owner_mask) == mlibc::this_tid()) {
 				if(!(mutex->__mlibc_flags & mutexRecursive)) {
 					if (mutex->__mlibc_flags & mutexErrorCheck)
 						return EDEADLK;
@@ -822,14 +814,14 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex) {
 	if(!expected) {
 		// Try to take the mutex here.
 		if(__atomic_compare_exchange_n(&mutex->__mlibc_state,
-						&expected, this_tid(), false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
+						&expected, mlibc::this_tid(), false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
 			__ensure(!mutex->__mlibc_recursion);
 			mutex->__mlibc_recursion = 1;
 			return 0;
 		}
 	} else {
 		// If this (recursive) mutex is already owned by us, increment the recursion level.
-		if((expected & mutex_owner_mask) == this_tid()) {
+		if((expected & mutex_owner_mask) == mlibc::this_tid()) {
 			if(!(mutex->__mlibc_flags & mutexRecursive)) {
 				return EBUSY;
 			}
@@ -858,13 +850,13 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
 	// Reset the mutex to the unlocked state.
 	auto state = __atomic_exchange_n(&mutex->__mlibc_state, 0, __ATOMIC_RELEASE);
 
-	if ((mutex->__mlibc_flags & mutexErrorCheck) && (state & mutex_owner_mask) != this_tid())
+	if ((mutex->__mlibc_flags & mutexErrorCheck) && (state & mutex_owner_mask) != mlibc::this_tid())
 		return EPERM;
 
 	if ((mutex->__mlibc_flags & mutexErrorCheck) && !(state & mutex_owner_mask))
 		return EINVAL;
 
-	__ensure((state & mutex_owner_mask) == this_tid());
+	__ensure((state & mutex_owner_mask) == mlibc::this_tid());
 
 	// Wake the futex if there were waiters.
 	if(state & mutex_waiters_bit)

@@ -584,7 +584,7 @@ int fileno_unlocked(FILE *file_base) {
 
 int fileno(FILE *file_base) {
 	auto file = static_cast<mlibc::fd_file *>(file_base);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	return fileno_unlocked(file_base);
 }
 
@@ -614,7 +614,7 @@ int fclose(FILE *file_base) {
 
 int fseek(FILE *file_base, long offset, int whence) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	if(int e = file->seek(offset, whence); e) {
 		errno = e;
 		return -1;
@@ -624,7 +624,7 @@ int fseek(FILE *file_base, long offset, int whence) {
 
 long ftell(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	off_t current_offset;
 	if(int e = file->tell(&current_offset); e) {
 		errno = e;
@@ -652,7 +652,7 @@ int fflush(FILE *file_base) {
 	if(file_base == NULL) {
 		// Only flush the files but do not close them.
 		for(auto it : mlibc::global_file_list()) {
-			frg::unique_lock<FutexLock> lock(it->_lock);
+			frg::unique_lock lock(it->_lock);
 			if(int e = it->flush(); e)
 				mlibc::infoLogger() << "mlibc warning: Failed to flush file"
 					<< frg::endlog;
@@ -661,7 +661,7 @@ int fflush(FILE *file_base) {
 	}
 
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	if (file->flush())
 		return EOF;
 	return 0;
@@ -695,7 +695,7 @@ int setvbuf(FILE *file_base, char *, int mode, size_t) {
 
 void rewind(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	file->seek(0, SEEK_SET);
 	file_base->__status_bits &= ~(__MLIBC_EOF_BIT | __MLIBC_ERROR_BIT);
 }
@@ -705,14 +705,14 @@ int ungetc(int c, FILE *file_base) {
 		return EOF;
 
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	return file->unget(c);
 }
 
 #ifdef __MLIBC_GLIBC_OPTION
 void __fpurge(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
-	frg::unique_lock<FutexLock> lock(file->_lock);
+	frg::unique_lock lock(file->_lock);
 	file->purge();
 }
 #endif
