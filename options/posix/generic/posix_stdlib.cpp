@@ -16,6 +16,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/rtdl-config.hpp>
 
 namespace {
 	constexpr bool debugPathResolution = false;
@@ -466,10 +467,8 @@ int getloadavg(double *, int) {
 	__builtin_unreachable();
 }
 
-extern "C" int __dlapi_secure_required(void);
-
 char *secure_getenv(const char *name) {
-	if (__dlapi_secure_required())
+	if (mlibc::rtdlConfig().secureRequired)
 		return NULL;
 	else
 		return getenv(name);
