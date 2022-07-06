@@ -36,6 +36,8 @@ extern uintptr_t __stack_chk_guard;
 #ifdef MLIBC_STATIC_BUILD
 extern "C" size_t __init_array_start[];
 extern "C" size_t __init_array_end[];
+extern "C" size_t __preinit_array_start[];
+extern "C" size_t __preinit_array_end[];
 #endif
 
 size_t tlsMaxAlignment = 16;
@@ -131,6 +133,9 @@ SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
 	object->initArray = reinterpret_cast<InitFuncPtr*>(__init_array_start);
 	object->initArraySize = static_cast<size_t>((uintptr_t)__init_array_end -
 			(uintptr_t)__init_array_start);
+	object->preInitArray = reinterpret_cast<InitFuncPtr*>(__preinit_array_start);
+	object->preInitArraySize = static_cast<size_t>((uintptr_t)__preinit_array_end -
+			(uintptr_t)__preinit_array_start);
 #endif
 
 	_addLoadedObject(object);
@@ -605,6 +610,18 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			break;
 		case DT_INIT_ARRAYSZ:
 			object->initArraySize = dynamic->d_un.d_val;
+			break;
+		case DT_PREINIT_ARRAY:
+			if(dynamic->d_un.d_ptr != 0) {
+				// Only the main object is allowed pre-initializers.
+				__ensure(object->isMainObject);
+				object->preInitArray = (InitFuncPtr *)(object->baseAddress + dynamic->d_un.d_ptr);
+			}
+			break;
+		case DT_PREINIT_ARRAYSZ:
+			// Only the main object is allowed pre-initializers.
+			__ensure(object->isMainObject);
+			object->preInitArraySize = dynamic->d_un.d_val;
 			break;
 		case DT_DEBUG:
 			dynamic->d_un.d_val = reinterpret_cast<Elf64_Xword>(&globalDebugInterface);
@@ -1088,9 +1105,9 @@ frg::optional<ObjectSymbol> Scope::resolveSymbol(frg::string_view string, Resolv
 // Loader
 // --------------------------------------------------------
 
-Loader::Loader(Scope *scope, bool is_initial_link, uint64_t rts)
-: _globalScope{scope}, _isInitialLink{is_initial_link}, _linkRts{rts},
-		_linkBfs{getAllocator()}, _initQueue{getAllocator()} { }
+Loader::Loader(Scope *scope, SharedObject *mainExecutable, bool is_initial_link, uint64_t rts)
+: _mainExecutable{mainExecutable}, _globalScope{scope}, _isInitialLink{is_initial_link},
+		_linkRts{rts}, _linkBfs{getAllocator()}, _initQueue{getAllocator()} { }
 
 void Loader::_buildLinkBfs(SharedObject *root) {
 	__ensure(_linkBfs.size() == 0);
@@ -1294,6 +1311,17 @@ void Loader::_buildTlsMaps() {
 
 void Loader::initObjects() {
 	initTlsObjects(mlibc::get_current_tcb(), _linkBfs, true);
+
+	if (_mainExecutable && _mainExecutable->preInitArray) {
+		if (verbose)
+			mlibc::infoLogger() << "rtdl: Running DT_PREINIT_ARRAY functions" << frg::endlog;
+
+		__ensure(_mainExecutable->isMainObject);
+		__ensure(!_mainExecutable->wasInitialized);
+		__ensure((_mainExecutable->preInitArraySize % sizeof(InitFuncPtr)) == 0);
+		for(size_t i = 0; i < _mainExecutable->preInitArraySize / sizeof(InitFuncPtr); i++)
+			_mainExecutable->preInitArray[i]();
+	}
 
 	// Convert the breadth-first representation to a depth-first post-order representation,
 	// so that every object is initialized *after* its dependencies.
