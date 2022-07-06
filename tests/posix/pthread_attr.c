@@ -4,6 +4,7 @@
 #include <alloca.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <signal.h>
 
 static void test_detachstate() {
 	pthread_attr_t attr;
@@ -101,7 +102,8 @@ static void *stackaddr_worker(void *arg) {
 	assert(addr >= sp);
 	return NULL;
 }
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 static void test_stackaddr() {
 	pthread_attr_t attr;
 	assert(!pthread_attr_init(&attr));
@@ -119,7 +121,9 @@ static void test_stackaddr() {
 	assert(!pthread_create(&thread, &attr, stackaddr_worker, &addr));
 	assert(!pthread_join(thread, NULL));
 }
+#pragma GCC diagnostic pop
 
+#if !defined(USE_HOST_LIBC) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
 static void test_stack() {
 	pthread_attr_t attr;
 	void *stackaddr = (void*)1;
@@ -132,6 +136,7 @@ static void test_stack() {
 	assert(new_addr == stackaddr);
 	assert(new_size == stacksize);
 }
+#endif
 
 static void test_affinity() {
 	pthread_attr_t attr;
@@ -145,6 +150,7 @@ static void test_affinity() {
 	assert(!memcmp(&set, &other_set, sizeof(cpu_set_t)));
 }
 
+#if !defined(USE_HOST_LIBC) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
 static void test_sigmask() {
 	pthread_attr_t attr;
 	sigset_t set;
@@ -195,6 +201,7 @@ static void test_getattrnp() {
 	// of the stack.
 	assert(!*(char*)(stack + other_stacksize - 1));
 }
+#endif
 
 int main() {
 	test_detachstate();
@@ -205,8 +212,10 @@ int main() {
 	test_schedparam();
 	test_schedpolicy();
 	test_stackaddr();
-	test_stack();
 	test_affinity();
+#if !defined(USE_HOST_LIBC) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
+	test_stack();
 	test_sigmask();
 	test_getattrnp();
+#endif
 }
