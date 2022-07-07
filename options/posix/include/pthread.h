@@ -7,6 +7,7 @@
 #include <bits/size_t.h>
 #include <bits/posix/pthread_t.h>
 
+#include <signal.h>
 #include <stdint.h>
 
 // pthread.h is required to include sched.h and time.h
@@ -24,6 +25,10 @@ extern "C" {
 // Values for pthread_attr_{get,set}scope
 #define PTHREAD_SCOPE_SYSTEM 0
 #define PTHREAD_SCOPE_PROCESS 1
+
+// Values for pthread_attr_{get,set}inheritsched
+#define PTHREAD_INHERIT_SCHED 0
+#define PTHREAD_EXPLICIT_SCHED 1
 
 // values for pthread_{get,set}canceltype().
 #define PTHREAD_CANCEL_DEFERRED 0
@@ -65,11 +70,24 @@ extern "C" {
 #define PTHREAD_INHERIT_SCHED 0
 #define PTHREAD_EXPLICIT_SCHED 1
 
+#define PTHREAD_STACK_MIN 16384
+
+#define PTHREAD_ATTR_NO_SIGMASK_NP (-1)
+
 // TODO: move to own file and include in sys/types.h
 struct __mlibc_threadattr {
-	// TODO: the guardsize attribute needs to be supported here.
-
-	int __mlibc_deatchstate;
+	size_t __mlibc_guardsize;
+	size_t __mlibc_stacksize;
+	void *__mlibc_stackaddr;
+	int __mlibc_detachstate;
+	int __mlibc_scope;
+	int __mlibc_inheritsched;
+	struct sched_param __mlibc_schedparam;
+	int __mlibc_schedpolicy;
+	cpu_set_t *__mlibc_cpuset;
+	size_t __mlibc_cpusetsize;
+	sigset_t __mlibc_sigmask;
+	int __mlibc_sigmaskset;
 };
 typedef struct __mlibc_threadattr pthread_attr_t;
 
@@ -140,20 +158,37 @@ int pthread_attr_setdetachstate(pthread_attr_t *, int);
 int pthread_attr_getstacksize(const pthread_attr_t *__restrict, size_t *__restrict);
 int pthread_attr_setstacksize(pthread_attr_t *, size_t);
 
+int pthread_attr_getstackaddr(const pthread_attr_t *, void **);
+int pthread_attr_setstackaddr(pthread_attr_t *, void *);
+
+int pthread_attr_getstack(const pthread_attr_t *, void **, size_t*);
+int pthread_attr_setstack(pthread_attr_t *, void *, size_t);
+
 int pthread_attr_getguardsize(const pthread_attr_t *__restrict, size_t *__restrict);
 int pthread_attr_setguardsize(pthread_attr_t *, size_t);
 
-int pthread_attr_getscope(const pthread_attr_t *, int);
+int pthread_attr_getscope(const pthread_attr_t *, int*);
 int pthread_attr_setscope(pthread_attr_t *, int);
-
-int pthread_attr_getschedpolicy(const pthread_attr_t *__restrict, int *__restrict);
-int pthread_attr_setschedpolicy(pthread_attr_t *, int);
 
 int pthread_attr_getschedparam(const pthread_attr_t *__restrict, struct sched_param *__restrict);
 int pthread_attr_setschedparam(pthread_attr_t *__restrict, const struct sched_param *__restrict);
 
+int pthread_attr_getschedpolicy(const pthread_attr_t *__restrict, int *__restrict);
+int pthread_attr_setschedpolicy(pthread_attr_t *__restrict, int);
+
 int pthread_attr_getinheritsched(const pthread_attr_t *__restrict, int *__restrict);
-int pthread_attr_setinheritsched(pthread_attr_t *, int);
+int pthread_attr_setinheritsched(pthread_attr_t *__restrict, int);
+
+int pthread_attr_getschedparam(const pthread_attr_t *__restrict, struct sched_param *__restrict);
+int pthread_attr_setschedparam(pthread_attr_t *__restrict, const struct sched_param *__restrict);
+
+int pthread_attr_getaffinity_np(const pthread_attr_t *__restrict, size_t, cpu_set_t *__restrict);
+int pthread_attr_setaffinity_np(pthread_attr_t *__restrict, size_t, const cpu_set_t *__restrict);
+
+int pthread_attr_getsigmask_np(const pthread_attr_t *__restrict, sigset_t *__restrict);
+int pthread_attr_setsigmask_np(pthread_attr_t *__restrict, const sigset_t *__restrict);
+
+int pthread_getattr_np(pthread_t, pthread_attr_t *);
 
 // pthread functions.
 int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict,

@@ -1,10 +1,13 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <errno.h>
+#include <inttypes.h>
 
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>
@@ -55,12 +58,19 @@ static constexpr unsigned int mutex_excl_bit = static_cast<uint32_t>(1) << 30;
 static constexpr unsigned int rc_count_mask = (static_cast<uint32_t>(1) << 31) - 1;
 static constexpr unsigned int rc_waiters_bit = static_cast<uint32_t>(1) << 31;
 
+static constexpr size_t default_stacksize = 0x200000;
+static constexpr size_t default_guardsize = 4096;
+
 // ----------------------------------------------------------------------------
 // pthread_attr and pthread functions.
 // ----------------------------------------------------------------------------
 
 // pthread_attr functions.
-int pthread_attr_init(pthread_attr_t *) {
+int pthread_attr_init(pthread_attr_t *attr) {
+	*attr = pthread_attr_t{};
+	attr->__mlibc_stacksize = default_stacksize;
+	attr->__mlibc_guardsize = default_guardsize;
+	attr->__mlibc_detachstate = PTHREAD_CREATE_JOINABLE;
 	return 0;
 }
 
@@ -68,84 +78,276 @@ int pthread_attr_destroy(pthread_attr_t *) {
 	return 0;
 }
 
-int pthread_attr_getdetachstate(const pthread_attr_t *, int *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate) {
+	*detachstate = attr->__mlibc_detachstate;
+	return 0;
 }
+int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate) {
+	if (detachstate != PTHREAD_CREATE_DETACHED &&
+			detachstate != PTHREAD_CREATE_JOINABLE)
+		return EINVAL;
 
-int pthread_attr_setdetachstate(pthread_attr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_attr_getstacksize(const pthread_attr_t *__restrict, size_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_attr_setstacksize(pthread_attr_t *, size_t) {
-	mlibc::infoLogger() << "mlibc: pthread_attr_setstacksize() is not implemented correctly" << frg::endlog;
+	attr->__mlibc_detachstate = detachstate;
 	return 0;
 }
 
-int pthread_attr_getguardsize(const pthread_attr_t *__restrict, size_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getstacksize(const pthread_attr_t *__restrict attr, size_t *__restrict stacksize) {
+	*stacksize = attr->__mlibc_stacksize;
+	return 0;
 }
 
-int pthread_attr_setguardsize(pthread_attr_t *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize) {
+	if (stacksize < PTHREAD_STACK_MIN)
+		return EINVAL;
+	attr->__mlibc_stacksize = stacksize;
+	return 0;
 }
 
-int pthread_attr_getscope(const pthread_attr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getstackaddr(const pthread_attr_t *attr, void **stackaddr) {
+	*stackaddr = attr->__mlibc_stackaddr;
+	return 0;
+}
+int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr) {
+	attr->__mlibc_stackaddr = stackaddr;
+	return 0;
 }
 
-int pthread_attr_setscope(pthread_attr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getstack(const pthread_attr_t *attr, void **stackaddr, size_t *stacksize) {
+	*stackaddr = attr->__mlibc_stackaddr;
+	*stacksize = attr->__mlibc_stacksize;
+	return 0;
+}
+int pthread_attr_setstack(pthread_attr_t *attr, void *stackaddr, size_t stacksize) {
+	if (stacksize < PTHREAD_STACK_MIN)
+		return EINVAL;
+	attr->__mlibc_stacksize = stacksize;
+	attr->__mlibc_stackaddr = stackaddr;
+	return 0;
 }
 
-int pthread_attr_getschedpolicy(const pthread_attr_t *__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getguardsize(const pthread_attr_t *__restrict attr, size_t *__restrict guardsize) {
+	*guardsize = attr->__mlibc_guardsize;
+	return 0;
+}
+int pthread_attr_setguardsize(pthread_attr_t *attr, size_t guardsize) {
+	attr->__mlibc_guardsize = guardsize;
+	return 0;
 }
 
-int pthread_attr_setschedpolicy(pthread_attr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getscope(const pthread_attr_t *attr, int *scope) {
+	*scope = attr->__mlibc_scope;
+	return 0;
+}
+int pthread_attr_setscope(pthread_attr_t *attr, int scope) {
+	if (scope != PTHREAD_SCOPE_SYSTEM &&
+			scope != PTHREAD_SCOPE_PROCESS)
+		return EINVAL;
+	if (scope == PTHREAD_SCOPE_PROCESS)
+		return ENOTSUP;
+	attr->__mlibc_scope = scope;
+	return 0;
 }
 
-int pthread_attr_getschedparam(const pthread_attr_t *__restrict, struct sched_param *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getinheritsched(const pthread_attr_t *attr, int *inheritsched) {
+	*inheritsched = attr->__mlibc_inheritsched;
+	return 0;
+}
+int pthread_attr_setinheritsched(pthread_attr_t *attr, int inheritsched) {
+	if (inheritsched != PTHREAD_INHERIT_SCHED &&
+			inheritsched != PTHREAD_EXPLICIT_SCHED)
+		return EINVAL;
+	attr->__mlibc_inheritsched = inheritsched;
+	return 0;
 }
 
-int pthread_attr_setschedparam(pthread_attr_t *__restrict, const struct sched_param *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getschedparam(const pthread_attr_t *__restrict attr, struct sched_param *__restrict schedparam) {
+	*schedparam = attr->__mlibc_schedparam;
+	return 0;
+}
+int pthread_attr_setschedparam(pthread_attr_t *__restrict attr, const struct sched_param *__restrict schedparam) {
+	// TODO: this is supposed to return EINVAL for when the schedparam doesn't make sense
+	// for the given schedpolicy.
+	attr->__mlibc_schedparam = *schedparam;
+	return 0;
 }
 
-int pthread_attr_getinheritsched(const pthread_attr_t *__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getschedpolicy(const pthread_attr_t *__restrict attr, int *__restrict policy) {
+	*policy = attr->__mlibc_schedpolicy;
+	return 0;
+}
+int pthread_attr_setschedpolicy(pthread_attr_t *__restrict attr, int policy) {
+	if (policy != SCHED_FIFO && policy != SCHED_RR &&
+			policy != SCHED_OTHER)
+		return EINVAL;
+	attr->__mlibc_schedpolicy = policy;
+	return 0;
 }
 
-int pthread_attr_setinheritsched(pthread_attr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getaffinity_np(const pthread_attr_t *__restrict attr,
+		size_t cpusetsize, cpu_set_t *__restrict cpusetp) {
+	if (!attr)
+		return EINVAL;
+
+	if (!attr->__mlibc_cpuset) {
+		memset(cpusetp, -1, cpusetsize);
+		return 0;
+	}
+
+	for (size_t cnt = cpusetsize; cnt < attr->__mlibc_cpusetsize; cnt++)
+		if (reinterpret_cast<char*>(attr->__mlibc_cpuset)[cnt] != '\0')
+			return ERANGE;
+
+	auto p = memcpy(cpusetp, attr->__mlibc_cpuset,
+			std::min(cpusetsize, attr->__mlibc_cpusetsize));
+	if (cpusetsize > attr->__mlibc_cpusetsize)
+		memset(p, '\0', cpusetsize - attr->__mlibc_cpusetsize);
+
+	return 0;
+}
+
+int pthread_attr_setaffinity_np(pthread_attr_t *__restrict attr,
+		size_t cpusetsize, const cpu_set_t *__restrict cpusetp) {
+	if (!attr)
+		return EINVAL;
+
+	if (!cpusetp || !cpusetsize) {
+		attr->__mlibc_cpuset = NULL;
+		attr->__mlibc_cpusetsize = 0;
+		return 0;
+	}
+
+	if (attr->__mlibc_cpusetsize != cpusetsize) {
+		auto newp = realloc(attr->__mlibc_cpuset, cpusetsize);
+		if (!newp)
+			return ENOMEM;
+
+		attr->__mlibc_cpuset = static_cast<cpu_set_t*>(newp);
+		attr->__mlibc_cpusetsize = cpusetsize;
+	}
+
+	memcpy(attr->__mlibc_cpuset, cpusetp, cpusetsize);
+	return 0;
+}
+
+int pthread_attr_getsigmask_np(const pthread_attr_t *__restrict attr,
+		sigset_t *__restrict sigmask) {
+	if (!attr)
+		return EINVAL;
+
+	if (!attr->__mlibc_sigmaskset) {
+		sigemptyset(sigmask);
+		return PTHREAD_ATTR_NO_SIGMASK_NP;
+	}
+
+	*sigmask = attr->__mlibc_sigmask;
+
+	return 0;
+}
+int pthread_attr_setsigmask_np(pthread_attr_t *__restrict attr,
+		const sigset_t *__restrict sigmask) {
+	if (!attr)
+		return EINVAL;
+
+	if (!sigmask) {
+		attr->__mlibc_sigmaskset = 0;
+		return 0;
+	}
+
+	attr->__mlibc_sigmask = *sigmask;
+	attr->__mlibc_sigmaskset = 1;
+
+	// Filter out internally used signals.
+	sigdelset(&attr->__mlibc_sigmask, SIGCANCEL);
+
+	return 0;
+}
+
+namespace {
+	void get_own_stackinfo(void **stack_addr, size_t *stack_size) {
+		auto fp = fopen("/proc/self/maps", "r");
+		if (!fp) {
+			mlibc::infoLogger() << "mlibc pthreads: /proc/self/maps does not exist! Producing incorrect"
+				" stack results!" << frg::endlog;
+			return;
+		}
+
+		char line[256];
+		auto sp = mlibc::get_sp();
+		while (fgets(line, 256, fp)) {
+			uintptr_t from, to;
+			if(sscanf(line, "%lx-%lx", &from, &to) != 2)
+				continue;
+			if (sp < to && sp > from) {
+				// We need to return the lowest byte of the stack.
+				*stack_addr = reinterpret_cast<void*>(from);
+				*stack_size = to - from;
+				fclose(fp);
+				return;
+			}
+		}
+
+		fclose(fp);
+	}
+}
+
+int pthread_getattr_np(pthread_t thread, pthread_attr_t *attr) {
+	auto tcb = reinterpret_cast<Tcb*>(thread);
+	*attr = pthread_attr_t{};
+
+	if (!tcb->stackAddr || !tcb->stackSize) {
+		get_own_stackinfo(&attr->__mlibc_stackaddr, &attr->__mlibc_stacksize);
+	} else {
+		attr->__mlibc_stacksize = tcb->stackSize;
+		attr->__mlibc_stackaddr = tcb->stackAddr;
+	}
+
+	attr->__mlibc_guardsize = tcb->guardSize;
+	attr->__mlibc_detachstate = tcb->isJoinable ? PTHREAD_CREATE_JOINABLE : PTHREAD_CREATE_DETACHED;
+	mlibc::infoLogger() << "pthread_getattr_np(): Implementation is incomplete!" << frg::endlog;
+	return 0;
 }
 
 extern "C" Tcb *__rtdl_allocateTcb();
 
 // pthread functions.
-int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict,
+int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict attrp,
 		void *(*entry) (void *), void *__restrict user_arg) {
 	auto new_tcb = __rtdl_allocateTcb();
 	pid_t tid;
-	mlibc::sys_clone(reinterpret_cast<void *>(entry), user_arg, new_tcb, &tid);
+	pthread_attr_t attr = {};
+	if (!attrp)
+		pthread_attr_init(&attr);
+	else
+		attr = *attrp;
+
+	if (attr.__mlibc_cpuset)
+		mlibc::infoLogger() << "pthread_create(): cpuset is ignored!" << frg::endlog;
+	if (attr.__mlibc_sigmaskset)
+		mlibc::infoLogger() << "pthread_create(): sigmask is ignored!" << frg::endlog;
+
+	// TODO: due to alignment guarantees, the stackaddr and stacksize might change
+	// when the stack is allocated. Currently this isn't propagated to the TCB,
+	// but it should be.
+	void *stack = attr.__mlibc_stackaddr;
+	if (!mlibc::sys_prepare_stack) {
+		MLIBC_MISSING_SYSDEP();
+		return ENOSYS;
+	}
+	int ret = mlibc::sys_prepare_stack(&stack, reinterpret_cast<void*>(entry),
+			user_arg, new_tcb, &attr.__mlibc_stacksize, &attr.__mlibc_guardsize);
+	if (ret)
+		return ret;
+
+	if (!mlibc::sys_clone) {
+		MLIBC_MISSING_SYSDEP();
+		return ENOSYS;
+	}
+	new_tcb->stackSize = attr.__mlibc_stacksize;
+	new_tcb->guardSize = attr.__mlibc_guardsize;
+	new_tcb->stackAddr = reinterpret_cast<void*>(
+			reinterpret_cast<uintptr_t>(stack)
+			- attr.__mlibc_stacksize - attr.__mlibc_guardsize);
+	mlibc::sys_clone(new_tcb, &tid, stack);
 	*thread = reinterpret_cast<pthread_t>(new_tcb);
 
 	__atomic_store_n(&new_tcb->tid, tid, __ATOMIC_RELAXED);
@@ -293,21 +495,6 @@ int pthread_setname_np(pthread_t, const char *) {
 }
 
 int pthread_getname_np(pthread_t, char *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_attr_setstack(pthread_attr_t *, void *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_attr_getstack(const pthread_attr_t *, void **, size_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_getattr_np(pthread_t, pthread_attr_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

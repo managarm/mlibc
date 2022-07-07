@@ -109,6 +109,10 @@ struct Tcb {
 		uint64_t generation;
 	};
 	frg::array<LocalKey, PTHREAD_KEYS_MAX> *localKeys;
+
+	size_t stackSize;
+	void *stackAddr;
+	size_t guardSize;
 };
 
 // There are a few places where we assume the layout of the TCB:
@@ -125,7 +129,7 @@ static_assert(offsetof(Tcb, dtvPointers) == 16);
 // we need to access specific fields that means that the value in
 // sysdeps/linux/riscv64/cp_syscall.S needs to be updated whenever
 // the struct is expanded.
-static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 56);
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 80);
 #else
 #error "Missing architecture specific code."
 #endif

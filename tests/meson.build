@@ -34,6 +34,7 @@ all_test_cases = [
 	'posix/pthread_kill',
 	'posix/pthread_key',
 	'posix/pthread_thread_local',
+	'posix/pthread_attr',
 	'posix/pwd',
 	'posix/fdopen',
 	'posix/getaddrinfo',
@@ -87,6 +88,7 @@ host_libc_excluded_test_cases = [
 ]
 host_libc_noasan_test_cases = [
 	'posix/pthread_cancel',
+	'posix/pthread_attr', # does some stack overflowing to check stack size
 	'posix/posix_memalign',
 	'posix/search', # requires tdelete (#351)
 ]

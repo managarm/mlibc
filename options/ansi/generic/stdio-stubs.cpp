@@ -487,10 +487,10 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
                                 res = res * 16 + (c - '0');
                             } else if (c >= 'a' && c <= 'f') {
                                 handler.consume();
-                                res = res * 16 + (c - 'a');
+                                res = res * 16 + (c - 'a' + 10);
                             } else if (c >= 'A' && c <= 'F') {
                                 handler.consume();
-                                res = res * 16 + (c - 'A');
+                                res = res * 16 + (c - 'A' + 10);
                             } else {
                                 break;
                             }
@@ -539,10 +539,10 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
                         res = res * 16 + (c - '0');
                     } else if (c >= 'a' && c <= 'f') {
                         handler.consume();
-                        res = res * 16 + (c - 'a');
+                        res = res * 16 + (c - 'a' + 10);
                     } else if (c >= 'A' && c <= 'F') {
                         handler.consume();
-                        res = res * 16 + (c - 'A');
+                        res = res * 16 + (c - 'A' + 10);
                     } else {
                         break;
                     }

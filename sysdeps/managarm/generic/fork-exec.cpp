@@ -623,14 +623,11 @@ int sys_getrusage(int scope, struct rusage *usage) {
 	return 0;
 }
 
-int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out) {
+int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
 	HelWord pid = 0;
-
-	void *sp = prepare_stack(entry, user_arg, tcb);
-
 	HEL_CHECK(helSyscall2_1(kHelCallSuper + 9,
 				reinterpret_cast<HelWord>(__mlibc_start_thread),
-				reinterpret_cast<HelWord>(sp),
+				reinterpret_cast<HelWord>(stack),
 				&pid));
 
 	if (pid_out)
