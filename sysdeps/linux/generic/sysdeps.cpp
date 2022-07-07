@@ -1202,6 +1202,13 @@ int sys_setuid(uid_t uid) {
 	return 0;
 }
 
+int sys_setgid(gid_t gid) {
+	auto ret = do_syscall(SYS_setgid, gid);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_getpgid(pid_t pid, pid_t *out) {
 	auto ret = do_syscall(SYS_getpgid, pid);
 	if (int e = sc_error(ret); e)
