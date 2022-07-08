@@ -13,12 +13,12 @@ typedef unsigned short sa_family_t;
 
 struct msghdr {
 	void *msg_name;
-	int msg_namelen;
+	socklen_t msg_namelen;
 	struct iovec *msg_iov;
-	size_t msg_iovlen;
+	size_t msg_iovlen; /* int in POSIX */
 	void *msg_control;
-	size_t msg_controllen;
-	unsigned int msg_flags;
+	size_t msg_controllen; /* socklen_t in POSIX */
+	int msg_flags;
 };
 
 struct sockaddr_storage {
