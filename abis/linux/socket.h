@@ -2,6 +2,7 @@
 #define _ABIBITS_SOCKET_H
 
 #include <stddef.h>
+#include <abi-bits/socklen_t.h>
 #include <bits/posix/iovec.h>
 
 #ifdef __cplusplus
