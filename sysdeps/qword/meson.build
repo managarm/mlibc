@@ -5,19 +5,20 @@ rtdl_sources += files(
 
 libc_sources += files(
 	'generic/entry.cpp',
-	'generic/generic.cpp'
+	'generic/generic.cpp',
+	'generic/memstats.cpp',
+	'generic/mount.cpp'
 )
 
 if not no_headers
 	install_headers(
-		'include/abi-bits/access.h',
+		'include/abi-bits/abi.h',
 		'include/abi-bits/auxv.h',
 		'include/abi-bits/seek-whence.h',
 		'include/abi-bits/vm-flags.h',
 		'include/abi-bits/errno.h',
 		'include/abi-bits/fcntl.h',
 		'include/abi-bits/in.h',
-		'include/abi-bits/reboot.h',
 		'include/abi-bits/resource.h',
 		'include/abi-bits/stat.h',
 		'include/abi-bits/signal.h',
@@ -33,17 +34,14 @@ if not no_headers
 		'include/abi-bits/nlink_t.h',
 		'include/abi-bits/pid_t.h',
 		'include/abi-bits/uid_t.h',
+		'include/abi-bits/access.h',
 		'include/abi-bits/wait.h',
-		'include/abi-bits/limits.h',
 		'include/abi-bits/utsname.h',
 		'include/abi-bits/ptrace.h',
 		'include/abi-bits/poll.h',
 		'include/abi-bits/epoll.h',
 		'include/abi-bits/packet.h',
 		'include/abi-bits/inotify.h',
-		'include/abi-bits/clockid_t.h',
-		'include/abi-bits/shm.h',
-		'include/abi-bits/mqueue.h',
 		'include/abi-bits/suseconds_t.h',
 		'include/abi-bits/fsfilcnt_t.h',
 		'include/abi-bits/fsblkcnt_t.h',
@@ -53,9 +51,10 @@ if not no_headers
 		subdir: 'abi-bits'
 	)
 	install_headers(
-		'include/sys/ironclad.h',
-		'include/sys/syscall.h',
-		subdir: 'sys'
+		'include/qword/fcntl.h',
+		'include/qword/memstats.h',
+		'include/qword/mount.h',
+		subdir: 'qword'
 	)
 endif
 
