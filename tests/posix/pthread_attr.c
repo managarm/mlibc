@@ -156,7 +156,9 @@ static void test_sigmask() {
 	sigset_t set;
 	sigemptyset(&set);
 	sigaddset(&set, SIGUSR1);
+#ifndef USE_HOST_LIBC
 	sigaddset(&set, SIGCANCEL);
+#endif
 
 	assert(!pthread_attr_init(&attr));
 	assert(!pthread_attr_setsigmask_np(&attr, &set));
@@ -167,8 +169,10 @@ static void test_sigmask() {
 	assert(!pthread_attr_getsigmask_np(&attr, &other_set));
 
 	assert(sigismember(&other_set, SIGUSR1));
+#ifndef USE_HOST_LIBC
 	// Test whether internal signals get filtered properly.
 	assert(!sigismember(&other_set, SIGCANCEL));
+#endif
 }
 
 static void *getattr_worker(void *arg) {
