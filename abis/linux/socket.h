@@ -31,6 +31,12 @@ struct mmsghdr {
 	unsigned int  msg_len;
 };
 
+struct cmsghdr {
+	size_t cmsg_len; /* socklen_t in POSIX */
+	int cmsg_level;
+	int cmsg_type;
+};
+
 #ifdef __cplusplus
 }
 #endif

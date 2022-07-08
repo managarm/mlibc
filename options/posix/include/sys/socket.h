@@ -24,12 +24,6 @@ struct sockaddr {
 	char sa_data[14];
 };
 
-struct cmsghdr {
-	socklen_t cmsg_len;
-	int cmsg_level;
-	int cmsg_type;
-};
-
 // Control message format:
 // The offsets marked with ^ are aligned to alignof(size_t).
 //
