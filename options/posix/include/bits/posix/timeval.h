@@ -2,7 +2,7 @@
 #define MLIBC_TIMEVAL_H
 
 #include <bits/ansi/time_t.h>
-#include <bits/posix/suseconds_t.h>
+#include <abi-bits/suseconds_t.h>
 
 struct timeval {
 	time_t tv_sec;
