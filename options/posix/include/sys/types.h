@@ -21,8 +21,8 @@
 #include <bits/ansi/time_t.h>
 #include <bits/posix/suseconds_t.h>
 
-#include <bits/posix/fsblkcnt_t.h>
-#include <bits/posix/fsfilcnt_t.h>
+#include <abi-bits/fsblkcnt_t.h>
+#include <abi-bits/fsfilcnt_t.h>
 #include <bits/posix/fd_set.h>
 
 #include <stdint.h>
