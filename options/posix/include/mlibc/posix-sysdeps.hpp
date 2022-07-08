@@ -12,7 +12,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <abi-bits/pid_t.h>
-#include <bits/posix/socklen_t.h>
+#include <abi-bits/socklen_t.h>
 #include <bits/posix/stat.h>
 #include <poll.h>
 #include <stdarg.h>
