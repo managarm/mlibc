@@ -303,13 +303,6 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	return executableSO->entry;
 }
 
-extern "C" [[ gnu::visibility("default") ]]
-int __dlapi_close(void *) {
-	if (logDlCalls)
-		mlibc::infoLogger() << "mlibc: dlclose() is a no-op" << frg::endlog;
-	return 0;
-}
-
 const char *lastError;
 
 extern "C" [[ gnu::visibility("default") ]] uintptr_t *__dlapi_entrystack() {
@@ -541,6 +534,13 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 		mlibc::infoLogger() << "rtdl: Could not find symbol in __dlapi_reverse()" << frg::endlog;
 
 	return -1;
+}
+
+extern "C" [[ gnu::visibility("default") ]]
+int __dlapi_close(void *) {
+	if (logDlCalls)
+		mlibc::infoLogger() << "mlibc: dlclose() is a no-op" << frg::endlog;
+	return 0;
 }
 
 #endif
