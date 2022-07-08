@@ -144,8 +144,6 @@ if not no_headers
 		subdir: 'sys'
 	)
 	install_headers(
-		'include/bits/posix/fsblkcnt_t.h',
-		'include/bits/posix/fsfilcnt_t.h',
 		'include/bits/posix/id_t.h',
 		'include/bits/posix/in_addr_t.h',
 		'include/bits/posix/in_port_t.h',
@@ -159,9 +157,7 @@ if not no_headers
 		'include/bits/posix/posix_string.h',
 		'include/bits/posix/posix_time.h',
 		'include/bits/posix/posix_wctype.h',
-		'include/bits/posix/socklen_t.h',
 		'include/bits/posix/stat.h',
-		'include/bits/posix/suseconds_t.h',
 		'include/bits/posix/timeval.h',
 		'include/bits/posix/fd_set.h',
 		'include/bits/posix/pthread_t.h',
