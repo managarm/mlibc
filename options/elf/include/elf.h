@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <bits/inline-definition.h>
+#include <abi-bits/auxv.h>
 
 // TODO: Convert the enums to #defines so that they work with #ifdef.
 
@@ -412,6 +413,13 @@ typedef struct {
     uint64_t a_val;
   } a_un;
 } Elf64_auxv_t;
+
+typedef struct {
+	uint32_t a_type;
+	union {
+		uint32_t a_val;
+	} a_un;
+} Elf32_auxv_t;
 
 typedef struct {
   Elf32_Word n_namesz;
