@@ -149,6 +149,10 @@ enum {
 	SHN_ABS = 0xFFF1
 };
 
+enum {
+	STN_UNDEF = 0,
+};
+
 typedef struct {
 	Elf32_Word st_name;
 	Elf32_Addr st_value;
