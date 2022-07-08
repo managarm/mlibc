@@ -5,7 +5,7 @@
 #include <abi-bits/gid_t.h>
 #include <abi-bits/pid_t.h>
 #include <bits/size_t.h>
-#include <bits/posix/socklen_t.h>
+#include <abi-bits/socklen_t.h>
 #include <bits/ssize_t.h>
 #include <abi-bits/uid_t.h>
 #include <bits/posix/iovec.h>
