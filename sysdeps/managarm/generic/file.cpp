@@ -388,7 +388,7 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		return 0;
 	}else if(request == F_DUPFD_CLOEXEC) {
 		int newfd;
-		if(int e = sys_dup(fd, __MLIBC_O_CLOEXEC, &newfd); e)
+		if(int e = sys_dup(fd, O_CLOEXEC, &newfd); e)
 			return e;
 		*result = newfd;
 		return 0;
@@ -3740,27 +3740,27 @@ int sys_openat(int dirfd, const char *path, int flags, int *fd) {
 	SignalGuard sguard;
 
 	uint32_t proto_flags = 0;
-	if(flags & __MLIBC_O_CREAT)
+	if(flags & O_CREAT)
 		proto_flags |= managarm::posix::OpenFlags::OF_CREATE;
-	if(flags & __MLIBC_O_EXCL)
+	if(flags & O_EXCL)
 		proto_flags |= managarm::posix::OpenFlags::OF_EXCLUSIVE;
-	if(flags & __MLIBC_O_NONBLOCK)
+	if(flags & O_NONBLOCK)
 		proto_flags |= managarm::posix::OpenFlags::OF_NONBLOCK;
-	if(flags & __MLIBC_O_TRUNC)
+	if(flags & O_TRUNC)
 		proto_flags |= managarm::posix::OpenFlags::OF_TRUNC;
 
-	if(flags & __MLIBC_O_CLOEXEC)
+	if(flags & O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
-	if(flags & __MLIBC_O_NOCTTY)
+	if(flags & O_NOCTTY)
 		proto_flags |= managarm::posix::OpenFlags::OF_NOCTTY;
 
-	if(flags & __MLIBC_O_RDONLY)
+	if(flags & O_RDONLY)
 		proto_flags |= managarm::posix::OpenFlags::OF_RDONLY;
-	else if(flags & __MLIBC_O_WRONLY)
+	else if(flags & O_WRONLY)
 		proto_flags |= managarm::posix::OpenFlags::OF_WRONLY;
-	else if(flags & __MLIBC_O_RDWR)
+	else if(flags & O_RDWR)
 		proto_flags |= managarm::posix::OpenFlags::OF_RDWR;
-	else if(flags & __MLIBC_O_PATH)
+	else if(flags & O_PATH)
 		proto_flags |= managarm::posix::OpenFlags::OF_PATH;
 
 	managarm::posix::OpenAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -4201,10 +4201,10 @@ int sys_dup(int fd, int flags, int *newfd) {
 	HelAction actions[3];
 	globalQueue.trim();
 
-	__ensure(!(flags & ~(__MLIBC_O_CLOEXEC)));
+	__ensure(!(flags & ~(O_CLOEXEC)));
 
 	uint32_t proto_flags = 0;
-	if(flags & __MLIBC_O_CLOEXEC)
+	if(flags & O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());

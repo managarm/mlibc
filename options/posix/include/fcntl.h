@@ -2,7 +2,6 @@
 #ifndef _FCNTL_H
 #define _FCNTL_H
 
-#include <abi-bits/abi.h>
 #include <abi-bits/fcntl.h>
 #include <abi-bits/seek-whence.h>
 #include <abi-bits/mode_t.h>
@@ -13,35 +12,7 @@
 extern "C" {
 #endif
 
-// reserve 3 bits for the access mode
-#define O_ACCMODE __MLIBC_O_ACCMODE
-#define O_EXEC __MLIBC_O_EXEC
-#define O_RDONLY __MLIBC_O_RDONLY
-#define O_RDWR __MLIBC_O_RDWR
-#define O_SEARCH __MLIBC_O_SEARCH
-#define O_WRONLY __MLIBC_O_WRONLY
-// all remaining flags get their own bit
-#define O_APPEND __MLIBC_O_APPEND
-#define O_CREAT __MLIBC_O_CREAT
-#define O_DIRECTORY __MLIBC_O_DIRECTORY
-#define O_EXCL __MLIBC_O_EXCL
-#define O_NOCTTY __MLIBC_O_NOCTTY
-#define O_NOFOLLOW __MLIBC_O_NOFOLLOW
-#define O_TRUNC __MLIBC_O_TRUNC
-#define O_NONBLOCK __MLIBC_O_NONBLOCK
-#define O_NDELAY __MLIBC_O_NONBLOCK
-#define O_DSYNC __MLIBC_O_DSYNC
-#define O_RSYNC __MLIBC_O_RSYNC
-#define O_SYNC __MLIBC_O_SYNC
-#define O_ASYNC __MLIBC_O_ASYNC
-#define O_CLOEXEC __MLIBC_O_CLOEXEC
-#define O_PATH __MLIBC_O_PATH
-#define O_LARGEFILE __MLIBC_O_LARGEFILE
-#define O_NOATIME __MLIBC_O_NOATIME
-#define O_TMPFILE __MLIBC_O_TMPFILE
-#define O_DIRECT __MLIBC_O_DIRECT
-
-// MISSING: AT macros
+#define O_NDELAY O_NONBLOCK
 
 #define POSIX_FADV_NORMAL 1
 #define POSIX_FADV_SEQUENTIAL 2
