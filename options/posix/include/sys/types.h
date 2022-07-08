@@ -19,7 +19,7 @@
 #include <abi-bits/nlink_t.h>
 
 #include <bits/ansi/time_t.h>
-#include <bits/posix/suseconds_t.h>
+#include <abi-bits/suseconds_t.h>
 
 #include <abi-bits/fsblkcnt_t.h>
 #include <abi-bits/fsfilcnt_t.h>

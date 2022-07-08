@@ -5,7 +5,7 @@
 #include <abi-bits/signal.h>
 #include <abi-bits/clockid_t.h>
 #include <bits/ansi/time_t.h>
-#include <bits/posix/suseconds_t.h>
+#include <abi-bits/suseconds_t.h>
 #include <bits/posix/timer_t.h>
 #include <bits/posix/timeval.h>
 
