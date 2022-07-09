@@ -226,5 +226,12 @@ int fputs_unlocked(const char *, FILE *);
 #	include <bits/posix/posix_stdio.h>
 #endif
 
+/* Macro to aid printf debugging. See tests/ansi/trace.c */
+#define __MLIBC_TRACE(format, ...) ({ \
+			fprintf(stderr, "__MLIBC_TRACE(): %s at " __FILE__ ":%d " format "\n", \
+					__PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); \
+			fflush(stderr); \
+		})
+
 #endif // _STDIO_H
 

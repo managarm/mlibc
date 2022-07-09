@@ -19,6 +19,7 @@ all_test_cases = [
 	'ansi/wcsncasecmp',
 	'ansi/fopen',
 	'ansi/memmem',
+	'ansi/trace',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
@@ -82,6 +83,7 @@ fail_test_cases = [
 ]
 
 host_libc_excluded_test_cases = [
+	'ansi/trace', # This tests a macro which is only defined in mlibc.
 	'bsd/strl', # These functions do not exist on Linux.
 ]
 host_libc_noasan_test_cases = [
