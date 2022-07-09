@@ -1246,6 +1246,55 @@ int sys_mincore(void *addr, size_t length, unsigned char *vec) {
 	return 0;
 }
 
+int sys_memfd_create(const char *name, int flags, int *fd) {
+	auto ret = do_syscall(SYS_memfd_create, name, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*fd = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_fallocate(int fd, off_t offset, size_t size) {
+	auto ret = do_syscall(SYS_fallocate, fd, 0, offset, size);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_flock(int fd, int options) {
+	auto ret = do_syscall(SYS_flock, fd, options);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_seteuid(uid_t euid) {
+	return sys_setresuid(-1, euid, -1);
+}
+
+int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) {
+	auto ret = do_syscall(SYS_mremap, pointer, size, new_size, MREMAP_MAYMOVE);
+	// TODO: musl fixes up EPERM errors from the kernel.
+	if(int e = sc_error(ret); e)
+		return e;
+	*window = sc_ptr_result<void>(ret);
+	return 0;
+}
+
+int sys_link(const char *old_path, const char *new_path) {
+#ifdef SYS_link
+	auto ret = do_syscall(SYS_link, old_path, new_path);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+#else
+	auto ret = do_syscall(SYS_linkat, AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+#endif
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 #if __MLIBC_LINUX_OPTION
