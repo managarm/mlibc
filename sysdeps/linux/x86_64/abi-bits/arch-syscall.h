@@ -78,6 +78,8 @@
 #define SYS_setpgid 109
 #define SYS_getppid 110
 #define SYS_setsid 112
+#define SYS_setreuid 113
+#define SYS_setregid 114
 #define SYS_getgroups 115
 #define SYS_setresuid 117
 #define SYS_setresgid 119

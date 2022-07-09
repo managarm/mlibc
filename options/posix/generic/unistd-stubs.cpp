@@ -600,14 +600,22 @@ pid_t setpgrp(pid_t pid, pid_t pgid) {
 	return setpgid(pid, pgid);
 }
 
-int setregid(gid_t, gid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int setregid(gid_t rgid, gid_t egid) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setregid, -1);
+	if(int e = mlibc::sys_setregid(rgid, egid); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
-int setreuid(uid_t, uid_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int setreuid(uid_t ruid, uid_t euid) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setreuid, -1);
+	if(int e = mlibc::sys_setreuid(ruid, euid); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 pid_t setsid(void) {
