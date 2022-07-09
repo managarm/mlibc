@@ -12,7 +12,7 @@
 
 #include <mlibc/debug.hpp>
 
-#include <abi-bits/abi.h>
+#include <abi-bits/fcntl.h>
 #include <frg/allocation.hpp>
 #include <frg/mutex.hpp>
 #include <mlibc/allocator.hpp>
@@ -511,24 +511,24 @@ int fd_file::parse_modestring(const char *mode) {
 	bool has_plus = strchr(mode, '+');
 	if(*mode == 'r') {
 		if(has_plus) {
-			flags = __MLIBC_O_RDWR;
+			flags = O_RDWR;
 		}else{
-			flags = __MLIBC_O_RDONLY;
+			flags = O_RDONLY;
 		}
 	}else if(*mode == 'w') {
 		if(has_plus) {
-			flags = __MLIBC_O_RDWR;
+			flags = O_RDWR;
 		}else{
-			flags = __MLIBC_O_WRONLY;
+			flags = O_WRONLY;
 		}
-		flags |= __MLIBC_O_CREAT | __MLIBC_O_TRUNC;
+		flags |= O_CREAT | O_TRUNC;
 	}else if(*mode == 'a') {
 		if(has_plus) {
-			flags = __MLIBC_O_APPEND | __MLIBC_O_RDWR;
+			flags = O_APPEND | O_RDWR;
 		}else{
-			flags = __MLIBC_O_APPEND | __MLIBC_O_WRONLY;
+			flags = O_APPEND | O_WRONLY;
 		}
-		flags |= __MLIBC_O_CREAT;
+		flags |= O_CREAT;
 	}else{
 		mlibc::infoLogger() << "Illegal fopen() mode '" << *mode << "'" << frg::endlog;
 	}
@@ -541,7 +541,7 @@ int fd_file::parse_modestring(const char *mode) {
 		}else if(*mode == 'b') {
 			mode++; // mlibc assumes that there is no distinction between text and binary.
 		}else if(*mode == 'e') {
-			flags |= __MLIBC_O_CLOEXEC;
+			flags |= O_CLOEXEC;
 			mode++;
 		}else{
 			mlibc::infoLogger() << "Illegal fopen() flag '" << mode << "'" << frg::endlog;

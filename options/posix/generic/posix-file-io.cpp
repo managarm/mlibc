@@ -82,22 +82,22 @@ void mem_file::_update_ptrs() {
 FILE *fdopen(int fd, const char *mode) {
 	int flags = mlibc::fd_file::parse_modestring(mode);
 
-	flags &= ~__MLIBC_O_TRUNC; // 'w' should not truncate the file
+	flags &= ~O_TRUNC; // 'w' should not truncate the file
 
-	if (flags & __MLIBC_O_APPEND) {
+	if (flags & O_APPEND) {
 		int cur_flags = fcntl(fd, F_GETFL, 0);
 		if (cur_flags < 0) {
 			errno = EINVAL;
 			return nullptr;
-		} else if (!(cur_flags & __MLIBC_O_APPEND)) {
-			if (fcntl(fd, F_SETFL, cur_flags | __MLIBC_O_APPEND)) {
+		} else if (!(cur_flags & O_APPEND)) {
+			if (fcntl(fd, F_SETFL, cur_flags | O_APPEND)) {
 				errno = EINVAL;
 				return nullptr;
 			}
 		}
 	}
 
-	if (flags & __MLIBC_O_CLOEXEC) {
+	if (flags & O_CLOEXEC) {
 		if (fcntl(fd, F_SETFD, FD_CLOEXEC)) {
 			errno = EINVAL;
 			return nullptr;
