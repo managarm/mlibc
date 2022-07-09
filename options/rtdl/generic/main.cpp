@@ -566,7 +566,7 @@ int __dlapi_close(void *) {
 extern "C" [[ gnu::visibility("default") ]]
 int __dlapi_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void*), void *data) {
 	int last_return = 0;
-	for (auto object : globalScope->_objects) {
+	for (auto object : initialRepository->loadedObjects) {
 		struct dl_phdr_info info;
 		info.dlpi_addr = object->baseAddress;
 		info.dlpi_name = object->name.data();

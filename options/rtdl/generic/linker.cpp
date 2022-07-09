@@ -80,7 +80,8 @@ uintptr_t alignUp(uintptr_t address, size_t align) {
 // --------------------------------------------------------
 
 ObjectRepository::ObjectRepository()
-: _nameMap{frg::hash<frg::string_view>{}, getAllocator()} { }
+: loadedObjects{getAllocator()},
+	_nameMap{frg::hash<frg::string_view>{}, getAllocator()} {}
 
 SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 		frg::string<MemoryAllocator> path, uintptr_t base_address,
@@ -93,7 +94,7 @@ SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 	object->dynamic = dynamic;
 	_parseDynamic(object);
 
-	_nameMap.insert(object->name, object);
+	_addLoadedObject(object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -110,7 +111,7 @@ SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 	_parseDynamic(object);
 
-	_nameMap.insert(object->name, object);
+	_addLoadedObject(object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -131,7 +132,7 @@ SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
 			(uintptr_t)__init_array_start);
 #endif
 
-	_nameMap.insert(object->name, object);
+	_addLoadedObject(object);
 
 	return object;
 }
@@ -236,7 +237,7 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 
 	_parseDynamic(object);
 
-	_nameMap.insert(object->name, object);
+	_addLoadedObject(object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -265,7 +266,7 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint6
 
 	_parseDynamic(object);
 
-	_nameMap.insert(object->name, object);
+	_addLoadedObject(object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -295,7 +296,7 @@ SharedObject *ObjectRepository::findLoadedObject(frg::string_view name) {
 	if (it)
 		return *it;
 
-	for (auto [objectName, object] : _nameMap) {
+	for (auto object : loadedObjects) {
 		// See if any object has a matching SONAME.
 		if (object->soName && name == object->soName)
 			return object;	
@@ -654,6 +655,11 @@ void ObjectRepository::_discoverDependencies(SharedObject *object, uint64_t rts)
 			mlibc::panicLogger() << "Could not satisfy dependency " << library_str << frg::endlog;
 		object->dependencies.push(library);
 	}
+}
+
+void ObjectRepository::_addLoadedObject(SharedObject *object) {
+	_nameMap.insert(object->name, object);
+	loadedObjects.push_back(object);
 }
 
 // --------------------------------------------------------

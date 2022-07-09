@@ -55,6 +55,9 @@ struct ObjectRepository {
 
 	SharedObject *findLoadedObject(frg::string_view name);
 
+	// Used by dl_iterate_phdr: stores objects in the order they are loaded.
+	frg::vector<SharedObject *, MemoryAllocator> loadedObjects;
+
 private:
 	void _fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer);
@@ -64,6 +67,8 @@ private:
 	void _parseDynamic(SharedObject *object);
 
 	void _discoverDependencies(SharedObject *object, uint64_t rts);
+
+	void _addLoadedObject(SharedObject *object);
 
 	frg::hash_map<frg::string_view, SharedObject *,
 			frg::hash<frg::string_view>, MemoryAllocator> _nameMap;
