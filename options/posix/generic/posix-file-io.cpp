@@ -7,7 +7,7 @@
 namespace mlibc {
 
 mem_file::mem_file(char **ptr, size_t *sizeloc, void (*do_dispose)(abstract_file *))
-: abstract_file{do_dispose}, _bufloc{ptr}, _sizeloc{sizeloc}, _buf{getAllocator()} { }
+: abstract_file{do_dispose}, _bufloc{ptr}, _sizeloc{sizeloc}, _buf{getAllocator()}, _pos{0} { }
 
 int mem_file::close() {
 	_update_ptrs();
