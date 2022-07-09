@@ -328,16 +328,21 @@ void *__dlapi_get_tls(struct __abi_tls_entry *entry) {
 #ifdef __MLIBC_POSIX_OPTION
 
 extern "C" [[ gnu::visibility("default") ]]
-void *__dlapi_open(const char *file, int local, void *returnAddress) {
-	// TODO: Thread-safety!
-	auto rts = rtsCounter++;
+void *__dlapi_open(const char *file, int flags, void *returnAddress) {
+	if (logDlCalls)
+		mlibc::infoLogger() << "rtdl: __dlapi_open(" << (file ? file : "nullptr") << ")" << frg::endlog;
+
+	auto unhandled = RTLD_NOLOAD | RTLD_LOCAL | RTLD_DEEPBIND;
+	if (flags & unhandled) {
+		mlibc::infoLogger() << "rtdl: dlopen flag " << (flags & unhandled)
+			<< "is unsupported" << frg::endlog;
+	}
 
 	if(!file)
 		return executableSO;
 
-	if(local)
-		mlibc::infoLogger() << "\e[31mrtdl: RTLD_LOCAL " << file << " is not supported properly\e[39m"
-				<< frg::endlog;
+	// TODO: Thread-safety!
+	auto rts = rtsCounter++;
 
 	SharedObject *object;
 	if(frg::string_view{file}.find_first('/') == size_t(-1)) {
@@ -396,8 +401,21 @@ void *__dlapi_open(const char *file, int local, void *returnAddress) {
 
 extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
-	if (logDlCalls)
-		mlibc::infoLogger() << "rtdl: __dlapi_resolve(" << handle << ", " << string << ")" << frg::endlog;
+	if (logDlCalls) {
+		const char *name;
+		bool quote = false;
+		if (handle == RTLD_DEFAULT) {
+			name = "RTLD_DEFAULT";
+		} else if (handle == RTLD_NEXT) {
+			name = "RTLD_NEXT";
+		} else {
+			name = ((SharedObject *)handle)->name.data();
+			quote = true;
+		}
+
+		mlibc::infoLogger() << "rtdl: __dlapi_resolve(" << (quote ? "\"" : "") << name
+			<< (quote ? "\"" : "") << ", \"" << string << "\")" << frg::endlog;
+	}
 
 	frg::optional<ObjectSymbol> target;
 
