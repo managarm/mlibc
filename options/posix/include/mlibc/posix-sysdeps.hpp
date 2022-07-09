@@ -188,6 +188,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 
 [[gnu::weak]] int sys_setresuid(uid_t ruid, uid_t euid, uid_t suid);
 [[gnu::weak]] int sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid);
+[[gnu::weak]] int sys_setreuid(uid_t ruid, uid_t euid);
+[[gnu::weak]] int sys_setregid(gid_t rgid, gid_t egid);
 
 } //namespace mlibc
 

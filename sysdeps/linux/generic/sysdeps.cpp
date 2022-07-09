@@ -444,6 +444,20 @@ int sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
 	return 0;
 }
 
+int sys_setreuid(uid_t ruid, uid_t euid) {
+	auto ret = do_syscall(SYS_setreuid, ruid, euid);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_setregid(gid_t rgid, gid_t egid) {
+	auto ret = do_syscall(SYS_setregid, rgid, egid);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_sysinfo(struct sysinfo *info) {
 	auto ret = do_syscall(SYS_sysinfo, info);
         if (int e = sc_error(ret); e)
