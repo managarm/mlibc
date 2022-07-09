@@ -127,3 +127,25 @@ void tdestroy(void *, void (*free_node)(void *)) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+void *lsearch(const void *key, void *base, size_t *nelp, size_t width,
+		int (*compar)(const void *, const void *)) {
+	(void)key;
+	(void)base;
+	(void)nelp;
+	(void)width;
+	(void)compar;
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+void *lfind(const void *key, const void *base, size_t *nelp,
+		size_t width, int (*compar)(const void *, const void *)) {
+	(void)key;
+	(void)base;
+	(void)nelp;
+	(void)width;
+	(void)compar;
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
