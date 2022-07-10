@@ -45,6 +45,10 @@ void endutxent(void);
 #define USER_PROCESS    7
 #define DEAD_PROCESS    8
 
+#define __UT_HOSTSIZE 256
+#define __UT_NAMESIZE 32
+#define __UT_LINESIZE 32
+
 #ifdef __cplusplus
 }
 #endif
