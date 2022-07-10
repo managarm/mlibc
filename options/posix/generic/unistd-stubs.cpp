@@ -741,7 +741,7 @@ pid_t tcgetpgrp(int fd) {
 }
 
 int tcsetpgrp(int fd, pid_t pgrp) {
-	return ioctl(fd, TIOCSPGRP, pgrp);
+	return ioctl(fd, TIOCSPGRP, &pgrp);
 }
 
 int truncate(const char *, off_t) {
