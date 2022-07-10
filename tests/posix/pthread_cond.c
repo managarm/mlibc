@@ -35,6 +35,38 @@ static void test_broadcast_wakes_all() {
 	pthread_join(t2, NULL);
 }
 
+static void test_timedwait_timedout() {
+	struct timespec before_now;
+	assert(!clock_gettime(CLOCK_REALTIME, &before_now));
+	before_now.tv_nsec -= 10000;
+
+	pthread_mutex_lock(&mtx);
+	int e = pthread_cond_timedwait(&cond, &mtx, &before_now);
+	assert(e == ETIMEDOUT);
+	pthread_mutex_unlock(&mtx);
+
+	long nanos_per_second = 1000000000;
+	struct timespec after_now;
+	assert(!clock_gettime(CLOCK_REALTIME, &after_now));
+	after_now.tv_nsec += nanos_per_second / 10; // 100ms
+	if (after_now.tv_nsec >= nanos_per_second) {
+		after_now.tv_nsec -= nanos_per_second;
+		after_now.tv_sec++;
+	}
+
+	pthread_mutex_lock(&mtx);
+	e = pthread_cond_timedwait(&cond, &mtx, &after_now);
+	assert(e == ETIMEDOUT);
+	pthread_mutex_unlock(&mtx);
+
+	after_now.tv_nsec += nanos_per_second;
+	pthread_mutex_lock(&mtx);
+	e = pthread_cond_timedwait(&cond, &mtx, &after_now);
+	assert(e == EINVAL);
+	pthread_mutex_unlock(&mtx);
+}
+
 int main() {
 	test_broadcast_wakes_all();
+	test_timedwait_timedout();
 }
