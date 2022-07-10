@@ -3,6 +3,7 @@
 #define MLIBC_POSIX_STDIO_H
 
 #include <bits/off_t.h>
+#include <bits/size_t.h>
 #include <bits/ssize_t.h>
 
 // MISSING: var_list
@@ -31,12 +32,27 @@ char *fgetln(FILE *, size_t *);
 
 #define RENAME_EXCHANGE (1 << 1)
 
+// GNU extensions
+typedef ssize_t (cookie_read_function_t)(void *, char *, size_t);
+typedef ssize_t (cookie_write_function_t)(void *, const char *, size_t);
+typedef int (cookie_seek_function_t)(void *, off_t *, int);
+typedef int (cookie_close_function_t)(void *);
+
+typedef struct _IO_cookie_io_functions_t {
+	cookie_read_function_t *read;
+	cookie_write_function_t *write;
+	cookie_seek_function_t *seek;
+	cookie_close_function_t *close;
+} cookie_io_functions_t;
+
+FILE *fopencookie(void *__restrict cookie, const char *__restrict mode, cookie_io_functions_t io_funcs);
+
 #ifdef __cplusplus
 }
 #endif
 
 // MISSING: various functions and macros
 
-#endif // MLIBC_POSIX_STDIO_H
+#endif /* MLIBC_POSIX_STDIO_H */
 
 
