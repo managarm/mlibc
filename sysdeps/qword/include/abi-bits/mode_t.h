@@ -1,1 +1,0 @@
-../../../../abis/mlibc/mode_t.h
