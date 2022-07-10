@@ -44,7 +44,6 @@ if not no_headers
 		'include/wctype.h',
 	)
 	install_headers(
-		'include/bits/ansi/clockid_t.h',
 		'include/bits/ansi/timespec.h',
 		'include/bits/ansi/time_t.h',
 		subdir: 'bits/ansi'
