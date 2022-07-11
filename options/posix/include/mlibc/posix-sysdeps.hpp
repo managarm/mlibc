@@ -132,8 +132,12 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_fchmod(int fd, mode_t mode);
 [[gnu::weak]] int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags);
 [[gnu::weak]] int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags);
+[[gnu::weak]] int sys_mlock(const void *addr, size_t length);
+[[gnu::weak]] int sys_munlock(const void *addr, size_t length);
 [[gnu::weak]] int sys_mlockall(int flags);
 [[gnu::weak]] int sys_mlock(const void *addr, size_t len);
+[[gnu::weak]] int sys_munlockall(void);
+[[gnu::weak]] int sys_mincore(void *addr, size_t length, unsigned char *vec);
 
 // mlibc assumes that anonymous memory returned by sys_vm_map() is zeroed by the kernel / whatever is behind the sysdeps
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window);
