@@ -1190,6 +1190,34 @@ int sys_thread_getname(void *tcb, char *name, size_t size) {
 	return 0;
 }
 
+int sys_mlock(const void *addr, size_t length) {
+	auto ret = do_syscall(SYS_mlock, addr, length);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_munlock(const void *addr, size_t length) {
+	auto ret = do_syscall(SYS_munlock, addr, length);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_munlockall(void) {
+	auto ret = do_syscall(SYS_munlockall);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_mincore(void *addr, size_t length, unsigned char *vec) {
+	auto ret = do_syscall(SYS_mincore, addr, length, vec);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 #if __MLIBC_LINUX_OPTION
