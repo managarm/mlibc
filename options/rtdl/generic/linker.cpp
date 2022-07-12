@@ -1294,12 +1294,13 @@ void Loader::_buildTlsMaps() {
 void Loader::initObjects() {
 	initTlsObjects(mlibc::get_current_tcb(), _linkBfs, true);
 
+	// Convert the breadth-first representation to a depth-first post-order representation,
+	// so that every object is initialized *after* its dependencies.
 	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 		if(!(*it)->scheduledForInit)
 			_scheduleInit((*it));
 	}
 
-	// TODO: We don't we initialize in _linkBfs order?
 	for(auto it = _initQueue.begin(); it != _initQueue.end(); ++it) {
 		SharedObject *object = *it;
 		if(!object->wasInitialized)
