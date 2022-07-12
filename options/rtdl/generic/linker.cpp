@@ -708,7 +708,7 @@ void processCopyRela(SharedObject *object, Elf64_Rela *reloc) {
 	auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 			+ symbol_index * sizeof(Elf64_Sym));
 	ObjectSymbol r(object, symbol);
-	frg::optional<ObjectSymbol> p = object->localScope->resolveSymbol(r, Scope::resolveCopy);
+	frg::optional<ObjectSymbol> p = object->localScope->resolveSymbol(r.getString(), Scope::resolveCopy);
 	__ensure(p);
 
 	memcpy((void *)rel_addr, (void *)p->virtualAddress(), symbol->st_size);
@@ -1030,40 +1030,25 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 	}
 }
 
-
-frg::optional<ObjectSymbol> Scope::resolveWholeScope(Scope *scope,
-		frg::string_view string, ResolveFlags flags) {
-	for(size_t i = 0; i < scope->_objects.size(); i++) {
-		if((flags & resolveCopy) && scope->_objects[i]->isMainObject)
-			continue;
-
-		frg::optional<ObjectSymbol> p = resolveInObject(scope->_objects[i], string);
-		if(p)
-			return p;
-	}
-
-	return frg::optional<ObjectSymbol>();
-}
-
-frg::optional<ObjectSymbol> Scope::resolveNext(Scope *scope,
-		frg::string_view string, SharedObject *target) {
+frg::optional<ObjectSymbol> Scope::resolveNext(frg::string_view string,
+		SharedObject *target) {
 	// Skip objects until we find the target, and only look for symbols after that.
 	size_t i;
-	for (i = 0; i < scope->_objects.size(); i++) {
-		if (scope->_objects[i] == target)
+	for (i = 0; i < _objects.size(); i++) {
+		if (_objects[i] == target)
 			break;
 	}
 
-	if (i == scope->_objects.size()) {
+	if (i == _objects.size()) {
 		mlibc::infoLogger() << "rtdl: object passed to Scope::resolveAfter was not found" << frg::endlog;
 		return frg::optional<ObjectSymbol>();
 	}
 
-	for (i = i + 1; i < scope->_objects.size(); i++) {
-		if(scope->_objects[i]->isMainObject)
+	for (i = i + 1; i < _objects.size(); i++) {
+		if(_objects[i]->isMainObject)
 			continue;
 
-		frg::optional<ObjectSymbol> p = resolveInObject(scope->_objects[i], string);
+		frg::optional<ObjectSymbol> p = resolveInObject(_objects[i], string);
 		if(p)
 			return p;
 	}
@@ -1085,13 +1070,11 @@ void Scope::appendObject(SharedObject *object) {
 }
 
 // TODO: let this return uintptr_t
-frg::optional<ObjectSymbol> Scope::resolveSymbol(ObjectSymbol r, ResolveFlags flags) {
+frg::optional<ObjectSymbol> Scope::resolveSymbol(frg::string_view string, ResolveFlags flags) {
 	for(size_t i = 0; i < _objects.size(); i++) {
 		if((flags & resolveCopy) && _objects[i]->isMainObject)
 			continue;
 
-		const char *string = (const char *)(r.object()->baseAddress
-				+ r.object()->stringTableOffset + r.symbol()->st_name);
 		frg::optional<ObjectSymbol> p = resolveInObject(_objects[i], string);
 		if(p)
 			return p;
@@ -1099,7 +1082,6 @@ frg::optional<ObjectSymbol> Scope::resolveSymbol(ObjectSymbol r, ResolveFlags fl
 
 	return frg::optional<ObjectSymbol>();
 }
-
 
 // --------------------------------------------------------
 // Loader
@@ -1365,7 +1347,7 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 		auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 				+ symbol_index * sizeof(Elf64_Sym));
 		ObjectSymbol r(object, symbol);
-		p = object->localScope->resolveSymbol(r, 0);
+		p = object->localScope->resolveSymbol(r.getString(), 0);
 		if(!p) {
 			if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
 				mlibc::panicLogger() << "Unresolved load-time symbol "
@@ -1613,7 +1595,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 						+ symbol_index * sizeof(Elf64_Sym));
 				ObjectSymbol r(object, symbol);
-				frg::optional<ObjectSymbol> p = object->localScope->resolveSymbol(r, 0);
+				auto p = object->localScope->resolveSymbol(r.getString(), 0);
 				if(!p) {
 					if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
 						mlibc::panicLogger() << "rtdl: Unresolved JUMP_SLOT symbol "

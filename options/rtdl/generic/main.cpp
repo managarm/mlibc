@@ -112,7 +112,7 @@ extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
 	auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 			+ symbol_index * sizeof(Elf64_Sym));
 	ObjectSymbol r(object, symbol);
-	frg::optional<ObjectSymbol> p = object->localScope->resolveSymbol(r, 0);
+	auto p = object->localScope->resolveSymbol(r.getString(), 0);
 	if(!p)
 		mlibc::panicLogger() << "Unresolved JUMP_SLOT symbol" << frg::endlog;
 
@@ -418,7 +418,7 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
 	frg::optional<ObjectSymbol> target;
 
 	if (handle == RTLD_DEFAULT) {
-		target = Scope::resolveWholeScope(globalScope.get(), string, 0);
+		target = globalScope->resolveSymbol(string, 0);
 	} else if (handle == RTLD_NEXT) {
 		SharedObject *origin = initialRepository->findCaller(returnAddress);
 		if (!origin) {
@@ -426,7 +426,7 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
 				<< "(ra = " << returnAddress << ")" << frg::endlog;
 		}
 
-		target = Scope::resolveNext(globalScope.get(), string, origin);
+		target = globalScope->resolveNext(string, origin);
 	} else {
 		// POSIX does not unambiguously state how dlsym() is supposed to work; it just
 		// states that "The symbol resolution algorithm used shall be dependency order

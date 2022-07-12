@@ -244,16 +244,12 @@ struct Scope {
 	using ResolveFlags = uint32_t;
 	static inline constexpr ResolveFlags resolveCopy = 1;
 
-	static frg::optional<ObjectSymbol> resolveWholeScope(Scope *scope,
-			frg::string_view string, ResolveFlags flags);
-	static frg::optional<ObjectSymbol> resolveNext(Scope *scope,
-			frg::string_view string, SharedObject *target);
-
 	Scope(bool isGlobal = false);
 
 	void appendObject(SharedObject *object);
 
-	frg::optional<ObjectSymbol> resolveSymbol(ObjectSymbol r, ResolveFlags flags);
+	frg::optional<ObjectSymbol> resolveSymbol(frg::string_view string, ResolveFlags flags);
+	frg::optional<ObjectSymbol> resolveNext(frg::string_view string, SharedObject *target);
 
 	bool isGlobal;
 private:
