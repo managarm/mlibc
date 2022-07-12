@@ -74,9 +74,6 @@ private:
 			frg::hash<frg::string_view>, MemoryAllocator> _nameMap;
 };
 
-// FIXME: Do not depend on the initial universe everywhere.
-extern frg::manual_box<ObjectRepository> initialRepository;
-
 // --------------------------------------------------------
 // SharedObject
 // --------------------------------------------------------
