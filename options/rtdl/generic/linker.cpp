@@ -1,7 +1,6 @@
 
 #include <elf.h>
 #include <string.h>
-#include <fcntl.h>
 
 #include <frg/manual_box.hpp>
 #include <mlibc/allocator.hpp>
@@ -9,6 +8,7 @@
 #include <mlibc/rtdl-sysdeps.hpp>
 #include <mlibc/rtdl-abi.hpp>
 #include <mlibc/thread.hpp>
+#include <abi-bits/fcntl.h>
 #include <internal-config.h>
 #include "linker.hpp"
 
