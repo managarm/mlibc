@@ -1,6 +1,7 @@
 
 #include <elf.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include <frg/manual_box.hpp>
 #include <mlibc/allocator.hpp>
@@ -150,7 +151,7 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 
 	auto tryToOpen = [&] (const char *path) {
 		int fd;
-		if(auto x = mlibc::sys_open(path, 0, 0, &fd); x) {
+		if(auto x = mlibc::sys_open(path, O_RDONLY, 0, &fd); x) {
 			return -1;
 		}
 		return fd;
@@ -258,7 +259,7 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint6
 	frg::string<MemoryAllocator> no_prefix(getAllocator(), path);
 
 	int fd;
-	if(mlibc::sys_open((no_prefix + '\0').data(), 0, 0, &fd))
+	if(mlibc::sys_open((no_prefix + '\0').data(), O_RDONLY, 0, &fd))
 		return nullptr; // TODO: Free the SharedObject.
 	_fetchFromFile(object, fd);
 	closeOrDie(fd);
