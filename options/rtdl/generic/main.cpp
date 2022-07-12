@@ -32,7 +32,6 @@ bool secureRequired;
 uintptr_t *entryStack;
 frg::manual_box<ObjectRepository> initialRepository;
 frg::manual_box<Scope> globalScope;
-frg::manual_box<Loader> globalLoader;
 
 frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
