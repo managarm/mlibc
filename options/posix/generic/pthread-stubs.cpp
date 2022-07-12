@@ -847,21 +847,29 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
 	if(--mutex->__mlibc_recursion)
 		return 0;
 
+	auto flags = mutex->__mlibc_flags;
+
 	// Reset the mutex to the unlocked state.
 	auto state = __atomic_exchange_n(&mutex->__mlibc_state, 0, __ATOMIC_RELEASE);
 
-	if ((mutex->__mlibc_flags & mutexErrorCheck) && (state & mutex_owner_mask) != mlibc::this_tid())
+	// After this point the mutex is unlocked, and therefore we cannot access its contents as it
+	// may have been destroyed by another thread.
+
+	if ((flags & mutexErrorCheck) && (state & mutex_owner_mask) != mlibc::this_tid())
 		return EPERM;
 
-	if ((mutex->__mlibc_flags & mutexErrorCheck) && !(state & mutex_owner_mask))
+	if ((flags & mutexErrorCheck) && !(state & mutex_owner_mask))
 		return EINVAL;
 
 	__ensure((state & mutex_owner_mask) == mlibc::this_tid());
 
-	// Wake the futex if there were waiters.
-	if(state & mutex_waiters_bit)
-		if(int e = mlibc::sys_futex_wake((int *)&mutex->__mlibc_state); e)
-			__ensure(!"sys_futex_wake() failed");
+	if(state & mutex_waiters_bit) {
+		// Wake the futex if there were waiters. Since the mutex might not exist at this location
+		// anymore, we must conservatively ignore EACCES and EINVAL which may occur as a result.
+		int e = mlibc::sys_futex_wake((int *)&mutex->__mlibc_state);
+		__ensure(e >= 0 || e == EACCES || e == EINVAL);
+	}
+
 	return 0;
 }
 
