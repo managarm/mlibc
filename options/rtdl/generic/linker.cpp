@@ -1071,8 +1071,8 @@ frg::optional<ObjectSymbol> Scope::resolveNext(Scope *scope,
 	return frg::optional<ObjectSymbol>();
 }
 
-Scope::Scope()
-: _objects(getAllocator()) { }
+Scope::Scope(bool isGlobal)
+: isGlobal{isGlobal}, _objects(getAllocator()) { }
 
 void Scope::appendObject(SharedObject *object) {
 	// Don't insert duplicates.

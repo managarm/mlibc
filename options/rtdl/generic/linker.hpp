@@ -249,11 +249,13 @@ struct Scope {
 	static frg::optional<ObjectSymbol> resolveNext(Scope *scope,
 			frg::string_view string, SharedObject *target);
 
-	Scope();
+	Scope(bool isGlobal = false);
 
 	void appendObject(SharedObject *object);
 
 	frg::optional<ObjectSymbol> resolveSymbol(ObjectSymbol r, ResolveFlags flags);
+
+	bool isGlobal;
 private:
 public: // TODO: Make this private again. (Was made public for __dlapi_reverse()).
 	frg::vector<SharedObject *, MemoryAllocator> _objects;

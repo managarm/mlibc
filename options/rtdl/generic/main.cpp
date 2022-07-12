@@ -245,7 +245,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// perform the initial dynamic linking
 	initialRepository.initialize();
 
-	globalScope.initialize();
+	globalScope.initialize(true);
 
 	// Add the dynamic linker, as well as the exectuable to the repository.
 #ifndef MLIBC_STATIC_BUILD
