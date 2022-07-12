@@ -1107,34 +1107,44 @@ frg::optional<ObjectSymbol> Scope::resolveSymbol(ObjectSymbol r, ResolveFlags fl
 
 Loader::Loader(Scope *scope, bool is_initial_link, uint64_t rts)
 : _globalScope{scope}, _isInitialLink{is_initial_link}, _linkRts{rts},
-		_linkSet{frg::hash<SharedObject *>{}, getAllocator()},
 		_linkBfs{getAllocator()}, _initQueue{getAllocator()} { }
 
-// TODO: Use an explicit vector to reduce stack usage to O(1)?
-void Loader::submitObject(SharedObject *object) {
-	if(_linkSet.get(object))
-		return;
+void Loader::_buildLinkBfs(SharedObject *root) {
+	__ensure(_linkBfs.size() == 0);
 
-	// At this point the object is loaded and we can fill in its debug struct,
-	// the linked list fields will be filled later.
-	object->linkMap.base = object->baseAddress;
-	object->linkMap.name = object->path.data();
-	object->linkMap.dynv = object->dynamic;
+	struct Token {};
+	using Set = frg::hash_map<SharedObject *, Token,
+			frg::hash<SharedObject *>, MemoryAllocator>;
+	Set set{frg::hash<SharedObject *>{}, getAllocator()};
+	_linkBfs.push(root);
 
-	_linkSet.insert(object, Token{});
-	_linkBfs.push(object);
+	// Loop over indices (not iterators) here: We are adding elements in the loop!
+	for(size_t i = 0; i < _linkBfs.size(); i++) {
+		auto current = _linkBfs[i];
 
-	__ensure((object->tlsAlignment & (object->tlsAlignment - 1)) == 0);
+		// At this point the object is loaded and we can fill in its debug struct,
+		// the linked list fields will be filled later.
+		current->linkMap.base = current->baseAddress;
+		current->linkMap.name = current->path.data();
+		current->linkMap.dynv = current->dynamic;
 
-	if (_isInitialLink && object->tlsAlignment > tlsMaxAlignment) {
-		tlsMaxAlignment = object->tlsAlignment;
+		__ensure((current->tlsAlignment & (current->tlsAlignment - 1)) == 0);
+
+		if (_isInitialLink && current->tlsAlignment > tlsMaxAlignment) {
+			tlsMaxAlignment = current->tlsAlignment;
+		}
+
+		for (auto dep : current->dependencies) {
+			if (!set.get(dep)) {
+				set.insert(dep, Token{});
+				_linkBfs.push(dep);
+			}
+		}
 	}
-
-	for(size_t i = 0; i < object->dependencies.size(); i++)
-		submitObject(object->dependencies[i]);
 }
 
-void Loader::linkObjects() {
+void Loader::linkObjects(SharedObject *root) {
+	_buildLinkBfs(root);
 	_buildTlsMaps();
 
 	// Promote objects to the global scope.

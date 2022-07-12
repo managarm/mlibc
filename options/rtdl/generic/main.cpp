@@ -276,8 +276,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	globalDebugInterface.head = &executableSO->linkMap;
 	executableSO->inLinkMap = true;
 	Loader linker{globalScope.get(), true, 1};
-	linker.submitObject(executableSO);
-	linker.linkObjects();
+	linker.linkObjects(executableSO);
 
 	mlibc::initStackGuard(stack_entropy);
 
@@ -363,8 +362,7 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 	}
 
 	Loader linker{globalScope.get(), false, rts};
-	linker.submitObject(object);
-	linker.linkObjects();
+	linker.linkObjects(object);
 	linker.initObjects();
 
 	// Build the object scope. TODO: Use the Loader object to do this.

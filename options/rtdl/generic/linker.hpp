@@ -267,12 +267,11 @@ class Loader {
 public:
 	Loader(Scope *scope, bool is_initial_link, uint64_t rts);
 
-	void submitObject(SharedObject *object);
-
 public:
-	void linkObjects();
+	void linkObjects(SharedObject *root);
 
 private:
+	void _buildLinkBfs(SharedObject *root);
 	void _buildTlsMaps();
 
 	void _processStaticRelocations(SharedObject *object);
@@ -286,16 +285,10 @@ private:
 	void _scheduleInit(SharedObject *object);
 
 private:
-	struct Token { };
-
 	Scope *_globalScope;
 	bool _isInitialLink;
 	uint64_t _linkRts;
 
-	frg::hash_map<SharedObject *, Token,
-			frg::hash<SharedObject *>, MemoryAllocator> _linkSet;
-
-	// Stores the same objects as _linkSet but in dependency-BFS order.
 	frg::vector<SharedObject *, MemoryAllocator> _linkBfs;
 
 	frg::vector<SharedObject *, MemoryAllocator> _initQueue;
