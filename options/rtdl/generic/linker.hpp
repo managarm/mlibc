@@ -128,7 +128,7 @@ struct SharedObject {
 	// base address this shared object was loaded to
 	uintptr_t baseAddress;
 
-	Scope *loadScope;
+	Scope *localScope;
 
 	// pointers to the dynamic table, GOT and entry point
 	Elf64_Dyn *dynamic = nullptr;
@@ -175,8 +175,6 @@ struct SharedObject {
 	bool scheduledForInit;
 	bool onInitStack;
 	bool wasInitialized;
-
-	Scope *objectScope;
 
 	// PHDR related stuff, we only set these for the main executable
 	void *phdrPointer = nullptr;

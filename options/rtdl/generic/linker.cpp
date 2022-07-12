@@ -671,7 +671,7 @@ SharedObject::SharedObject(const char *name, frg::string<MemoryAllocator> path,
 		: name(name, getAllocator()), path(std::move(path)),
 		interpreterPath(getAllocator()), soName(nullptr),
 		isMainObject(is_main_object), objectRts(object_rts), inLinkMap(false),
-		baseAddress(0), loadScope(nullptr), dynamic(nullptr),
+		baseAddress(0), localScope(nullptr), dynamic(nullptr),
 		globalOffsetTable(nullptr), entry(nullptr), tlsSegmentSize(0),
 		tlsAlignment(0), tlsImageSize(0), tlsImagePtr(nullptr),
 		tlsInitialized(false), hashTableOffset(0), symbolTableOffset(0),
@@ -681,7 +681,7 @@ SharedObject::SharedObject(const char *name, frg::string<MemoryAllocator> path,
 		dependencies(getAllocator()), tlsModel(TlsModel::null),
 		tlsOffset(0), globalRts(0), wasLinked(false),
 		scheduledForInit(false), onInitStack(false),
-		wasInitialized(false), objectScope(nullptr) { }
+		wasInitialized(false) { }
 
 SharedObject::SharedObject(const char *name, const char *path,
 	bool is_main_object, uint64_t object_rts)
@@ -708,7 +708,7 @@ void processCopyRela(SharedObject *object, Elf64_Rela *reloc) {
 	auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 			+ symbol_index * sizeof(Elf64_Sym));
 	ObjectSymbol r(object, symbol);
-	frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, Scope::resolveCopy);
+	frg::optional<ObjectSymbol> p = object->localScope->resolveSymbol(r, Scope::resolveCopy);
 	__ensure(p);
 
 	memcpy((void *)rel_addr, (void *)p->virtualAddress(), symbol->st_size);
@@ -1158,7 +1158,7 @@ void Loader::linkObjects() {
 			mlibc::infoLogger() << "rtdl: Linking " << (*it)->name << frg::endlog;
 
 		__ensure(!(*it)->wasLinked);
-		(*it)->loadScope = _globalScope;
+		(*it)->localScope = _globalScope;
 
 		// TODO: Support this.
 		if((*it)->symbolicResolution)
@@ -1355,7 +1355,7 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 		auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 				+ symbol_index * sizeof(Elf64_Sym));
 		ObjectSymbol r(object, symbol);
-		p = object->loadScope->resolveSymbol(r, 0);
+		p = object->localScope->resolveSymbol(r, 0);
 		if(!p) {
 			if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
 				mlibc::panicLogger() << "Unresolved load-time symbol "
@@ -1603,7 +1603,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 						+ symbol_index * sizeof(Elf64_Sym));
 				ObjectSymbol r(object, symbol);
-				frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
+				frg::optional<ObjectSymbol> p = object->localScope->resolveSymbol(r, 0);
 				if(!p) {
 					if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
 						mlibc::panicLogger() << "rtdl: Unresolved JUMP_SLOT symbol "
@@ -1630,7 +1630,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 						+ symbol_index * sizeof(Elf64_Sym));
 				ObjectSymbol r(object, symbol);
-				frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
+				frg::optional<ObjectSymbol> p = object->localScope->resolveSymbol(r, 0);
 
 				if (!p) {
 					__ensure(ELF64_ST_BIND(symbol->st_info) != STB_WEAK);

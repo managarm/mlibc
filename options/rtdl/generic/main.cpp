@@ -112,7 +112,7 @@ extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
 	auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 			+ symbol_index * sizeof(Elf64_Sym));
 	ObjectSymbol r(object, symbol);
-	frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
+	frg::optional<ObjectSymbol> p = object->localScope->resolveSymbol(r, 0);
 	if(!p)
 		mlibc::panicLogger() << "Unresolved JUMP_SLOT symbol" << frg::endlog;
 
@@ -368,17 +368,17 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 	linker.initObjects();
 
 	// Build the object scope. TODO: Use the Loader object to do this.
-	if(!object->objectScope) {
+	if(!object->localScope) {
 		struct Token { };
 
 		using Set = frg::hash_map<SharedObject *, Token,
 				frg::hash<SharedObject *>, MemoryAllocator>;
 		Set set{frg::hash<SharedObject *>{}, getAllocator()};
 
-		object->objectScope = frg::construct<Scope>(getAllocator());
+		object->localScope = frg::construct<Scope>(getAllocator());
 		frg::vector<SharedObject *, MemoryAllocator> queue{getAllocator()};
 
-		object->objectScope->appendObject(object);
+		object->localScope->appendObject(object);
 		set.insert(object, Token{});
 		queue.push(object);
 
@@ -388,7 +388,7 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 			if(set.get(current))
 				continue;
 
-			object->objectScope->appendObject(current);
+			object->localScope->appendObject(current);
 			set.insert(current, Token{});
 			queue.push(current);
 		}
