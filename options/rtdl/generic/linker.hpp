@@ -55,6 +55,9 @@ struct ObjectRepository {
 
 	SharedObject *findLoadedObject(frg::string_view name);
 
+	// Used by dl_iterate_phdr: stores objects in the order they are loaded.
+	frg::vector<SharedObject *, MemoryAllocator> loadedObjects;
+
 private:
 	void _fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer);
@@ -65,12 +68,11 @@ private:
 
 	void _discoverDependencies(SharedObject *object, uint64_t rts);
 
+	void _addLoadedObject(SharedObject *object);
+
 	frg::hash_map<frg::string_view, SharedObject *,
 			frg::hash<frg::string_view>, MemoryAllocator> _nameMap;
 };
-
-// FIXME: Do not depend on the initial universe everywhere.
-extern frg::manual_box<ObjectRepository> initialRepository;
 
 // --------------------------------------------------------
 // SharedObject
@@ -123,7 +125,7 @@ struct SharedObject {
 	// base address this shared object was loaded to
 	uintptr_t baseAddress;
 
-	Scope *loadScope;
+	Scope *localScope;
 
 	// pointers to the dynamic table, GOT and entry point
 	Elf64_Dyn *dynamic = nullptr;
@@ -170,8 +172,6 @@ struct SharedObject {
 	bool scheduledForInit;
 	bool onInitStack;
 	bool wasInitialized;
-
-	Scope *objectScope;
 
 	// PHDR related stuff, we only set these for the main executable
 	void *phdrPointer = nullptr;
@@ -241,16 +241,14 @@ struct Scope {
 	using ResolveFlags = uint32_t;
 	static inline constexpr ResolveFlags resolveCopy = 1;
 
-	static frg::optional<ObjectSymbol> resolveWholeScope(Scope *scope,
-			frg::string_view string, ResolveFlags flags);
-	static frg::optional<ObjectSymbol> resolveNext(Scope *scope,
-			frg::string_view string, SharedObject *target);
-
-	Scope();
+	Scope(bool isGlobal = false);
 
 	void appendObject(SharedObject *object);
 
-	frg::optional<ObjectSymbol> resolveSymbol(ObjectSymbol r, ResolveFlags flags);
+	frg::optional<ObjectSymbol> resolveSymbol(frg::string_view string, ResolveFlags flags);
+	frg::optional<ObjectSymbol> resolveNext(frg::string_view string, SharedObject *target);
+
+	bool isGlobal;
 private:
 public: // TODO: Make this private again. (Was made public for __dlapi_reverse()).
 	frg::vector<SharedObject *, MemoryAllocator> _objects;
@@ -264,12 +262,11 @@ class Loader {
 public:
 	Loader(Scope *scope, bool is_initial_link, uint64_t rts);
 
-	void submitObject(SharedObject *object);
-
 public:
-	void linkObjects();
+	void linkObjects(SharedObject *root);
 
 private:
+	void _buildLinkBfs(SharedObject *root);
 	void _buildTlsMaps();
 
 	void _processStaticRelocations(SharedObject *object);
@@ -283,16 +280,10 @@ private:
 	void _scheduleInit(SharedObject *object);
 
 private:
-	struct Token { };
-
 	Scope *_globalScope;
 	bool _isInitialLink;
 	uint64_t _linkRts;
 
-	frg::hash_map<SharedObject *, Token,
-			frg::hash<SharedObject *>, MemoryAllocator> _linkSet;
-
-	// Stores the same objects as _linkSet but in dependency-BFS order.
 	frg::vector<SharedObject *, MemoryAllocator> _linkBfs;
 
 	frg::vector<SharedObject *, MemoryAllocator> _initQueue;

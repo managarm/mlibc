@@ -81,7 +81,8 @@ uintptr_t alignUp(uintptr_t address, size_t align) {
 // --------------------------------------------------------
 
 ObjectRepository::ObjectRepository()
-: _nameMap{frg::hash<frg::string_view>{}, getAllocator()} { }
+: loadedObjects{getAllocator()},
+	_nameMap{frg::hash<frg::string_view>{}, getAllocator()} {}
 
 SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 		frg::string<MemoryAllocator> path, uintptr_t base_address,
@@ -94,7 +95,7 @@ SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 	object->dynamic = dynamic;
 	_parseDynamic(object);
 
-	_nameMap.insert(object->name, object);
+	_addLoadedObject(object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -111,7 +112,7 @@ SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 	_parseDynamic(object);
 
-	_nameMap.insert(object->name, object);
+	_addLoadedObject(object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -132,7 +133,7 @@ SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
 			(uintptr_t)__init_array_start);
 #endif
 
-	_nameMap.insert(object->name, object);
+	_addLoadedObject(object);
 
 	return object;
 }
@@ -237,7 +238,7 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 
 	_parseDynamic(object);
 
-	_nameMap.insert(object->name, object);
+	_addLoadedObject(object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -266,7 +267,7 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path, uint6
 
 	_parseDynamic(object);
 
-	_nameMap.insert(object->name, object);
+	_addLoadedObject(object);
 	_discoverDependencies(object, rts);
 
 	return object;
@@ -296,7 +297,7 @@ SharedObject *ObjectRepository::findLoadedObject(frg::string_view name) {
 	if (it)
 		return *it;
 
-	for (auto [objectName, object] : _nameMap) {
+	for (auto object : loadedObjects) {
 		// See if any object has a matching SONAME.
 		if (object->soName && name == object->soName)
 			return object;	
@@ -657,6 +658,11 @@ void ObjectRepository::_discoverDependencies(SharedObject *object, uint64_t rts)
 	}
 }
 
+void ObjectRepository::_addLoadedObject(SharedObject *object) {
+	_nameMap.insert(object->name, object);
+	loadedObjects.push_back(object);
+}
+
 // --------------------------------------------------------
 // SharedObject
 // --------------------------------------------------------
@@ -666,7 +672,7 @@ SharedObject::SharedObject(const char *name, frg::string<MemoryAllocator> path,
 		: name(name, getAllocator()), path(std::move(path)),
 		interpreterPath(getAllocator()), soName(nullptr),
 		isMainObject(is_main_object), objectRts(object_rts), inLinkMap(false),
-		baseAddress(0), loadScope(nullptr), dynamic(nullptr),
+		baseAddress(0), localScope(nullptr), dynamic(nullptr),
 		globalOffsetTable(nullptr), entry(nullptr), tlsSegmentSize(0),
 		tlsAlignment(0), tlsImageSize(0), tlsImagePtr(nullptr),
 		tlsInitialized(false), hashTableOffset(0), symbolTableOffset(0),
@@ -676,7 +682,7 @@ SharedObject::SharedObject(const char *name, frg::string<MemoryAllocator> path,
 		dependencies(getAllocator()), tlsModel(TlsModel::null),
 		tlsOffset(0), globalRts(0), wasLinked(false),
 		scheduledForInit(false), onInitStack(false),
-		wasInitialized(false), objectScope(nullptr) { }
+		wasInitialized(false) { }
 
 SharedObject::SharedObject(const char *name, const char *path,
 	bool is_main_object, uint64_t object_rts)
@@ -703,7 +709,7 @@ void processCopyRela(SharedObject *object, Elf64_Rela *reloc) {
 	auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 			+ symbol_index * sizeof(Elf64_Sym));
 	ObjectSymbol r(object, symbol);
-	frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, Scope::resolveCopy);
+	frg::optional<ObjectSymbol> p = object->localScope->resolveSymbol(r.getString(), Scope::resolveCopy);
 	__ensure(p);
 
 	memcpy((void *)rel_addr, (void *)p->virtualAddress(), symbol->st_size);
@@ -1025,40 +1031,25 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 	}
 }
 
-
-frg::optional<ObjectSymbol> Scope::resolveWholeScope(Scope *scope,
-		frg::string_view string, ResolveFlags flags) {
-	for(size_t i = 0; i < scope->_objects.size(); i++) {
-		if((flags & resolveCopy) && scope->_objects[i]->isMainObject)
-			continue;
-
-		frg::optional<ObjectSymbol> p = resolveInObject(scope->_objects[i], string);
-		if(p)
-			return p;
-	}
-
-	return frg::optional<ObjectSymbol>();
-}
-
-frg::optional<ObjectSymbol> Scope::resolveNext(Scope *scope,
-		frg::string_view string, SharedObject *target) {
+frg::optional<ObjectSymbol> Scope::resolveNext(frg::string_view string,
+		SharedObject *target) {
 	// Skip objects until we find the target, and only look for symbols after that.
 	size_t i;
-	for (i = 0; i < scope->_objects.size(); i++) {
-		if (scope->_objects[i] == target)
+	for (i = 0; i < _objects.size(); i++) {
+		if (_objects[i] == target)
 			break;
 	}
 
-	if (i == scope->_objects.size()) {
+	if (i == _objects.size()) {
 		mlibc::infoLogger() << "rtdl: object passed to Scope::resolveAfter was not found" << frg::endlog;
 		return frg::optional<ObjectSymbol>();
 	}
 
-	for (i = i + 1; i < scope->_objects.size(); i++) {
-		if(scope->_objects[i]->isMainObject)
+	for (i = i + 1; i < _objects.size(); i++) {
+		if(_objects[i]->isMainObject)
 			continue;
 
-		frg::optional<ObjectSymbol> p = resolveInObject(scope->_objects[i], string);
+		frg::optional<ObjectSymbol> p = resolveInObject(_objects[i], string);
 		if(p)
 			return p;
 	}
@@ -1066,8 +1057,8 @@ frg::optional<ObjectSymbol> Scope::resolveNext(Scope *scope,
 	return frg::optional<ObjectSymbol>();
 }
 
-Scope::Scope()
-: _objects(getAllocator()) { }
+Scope::Scope(bool isGlobal)
+: isGlobal{isGlobal}, _objects(getAllocator()) { }
 
 void Scope::appendObject(SharedObject *object) {
 	// Don't insert duplicates.
@@ -1080,13 +1071,11 @@ void Scope::appendObject(SharedObject *object) {
 }
 
 // TODO: let this return uintptr_t
-frg::optional<ObjectSymbol> Scope::resolveSymbol(ObjectSymbol r, ResolveFlags flags) {
+frg::optional<ObjectSymbol> Scope::resolveSymbol(frg::string_view string, ResolveFlags flags) {
 	for(size_t i = 0; i < _objects.size(); i++) {
 		if((flags & resolveCopy) && _objects[i]->isMainObject)
 			continue;
 
-		const char *string = (const char *)(r.object()->baseAddress
-				+ r.object()->stringTableOffset + r.symbol()->st_name);
 		frg::optional<ObjectSymbol> p = resolveInObject(_objects[i], string);
 		if(p)
 			return p;
@@ -1095,41 +1084,50 @@ frg::optional<ObjectSymbol> Scope::resolveSymbol(ObjectSymbol r, ResolveFlags fl
 	return frg::optional<ObjectSymbol>();
 }
 
-
 // --------------------------------------------------------
 // Loader
 // --------------------------------------------------------
 
 Loader::Loader(Scope *scope, bool is_initial_link, uint64_t rts)
 : _globalScope{scope}, _isInitialLink{is_initial_link}, _linkRts{rts},
-		_linkSet{frg::hash<SharedObject *>{}, getAllocator()},
 		_linkBfs{getAllocator()}, _initQueue{getAllocator()} { }
 
-// TODO: Use an explicit vector to reduce stack usage to O(1)?
-void Loader::submitObject(SharedObject *object) {
-	if(_linkSet.get(object))
-		return;
+void Loader::_buildLinkBfs(SharedObject *root) {
+	__ensure(_linkBfs.size() == 0);
 
-	// At this point the object is loaded and we can fill in its debug struct,
-	// the linked list fields will be filled later.
-	object->linkMap.base = object->baseAddress;
-	object->linkMap.name = object->path.data();
-	object->linkMap.dynv = object->dynamic;
+	struct Token {};
+	using Set = frg::hash_map<SharedObject *, Token,
+			frg::hash<SharedObject *>, MemoryAllocator>;
+	Set set{frg::hash<SharedObject *>{}, getAllocator()};
+	_linkBfs.push(root);
 
-	_linkSet.insert(object, Token{});
-	_linkBfs.push(object);
+	// Loop over indices (not iterators) here: We are adding elements in the loop!
+	for(size_t i = 0; i < _linkBfs.size(); i++) {
+		auto current = _linkBfs[i];
 
-	__ensure((object->tlsAlignment & (object->tlsAlignment - 1)) == 0);
+		// At this point the object is loaded and we can fill in its debug struct,
+		// the linked list fields will be filled later.
+		current->linkMap.base = current->baseAddress;
+		current->linkMap.name = current->path.data();
+		current->linkMap.dynv = current->dynamic;
 
-	if (_isInitialLink && object->tlsAlignment > tlsMaxAlignment) {
-		tlsMaxAlignment = object->tlsAlignment;
+		__ensure((current->tlsAlignment & (current->tlsAlignment - 1)) == 0);
+
+		if (_isInitialLink && current->tlsAlignment > tlsMaxAlignment) {
+			tlsMaxAlignment = current->tlsAlignment;
+		}
+
+		for (auto dep : current->dependencies) {
+			if (!set.get(dep)) {
+				set.insert(dep, Token{});
+				_linkBfs.push(dep);
+			}
+		}
 	}
-
-	for(size_t i = 0; i < object->dependencies.size(); i++)
-		submitObject(object->dependencies[i]);
 }
 
-void Loader::linkObjects() {
+void Loader::linkObjects(SharedObject *root) {
+	_buildLinkBfs(root);
 	_buildTlsMaps();
 
 	// Promote objects to the global scope.
@@ -1153,7 +1151,7 @@ void Loader::linkObjects() {
 			mlibc::infoLogger() << "rtdl: Linking " << (*it)->name << frg::endlog;
 
 		__ensure(!(*it)->wasLinked);
-		(*it)->loadScope = _globalScope;
+		(*it)->localScope = _globalScope;
 
 		// TODO: Support this.
 		if((*it)->symbolicResolution)
@@ -1297,12 +1295,13 @@ void Loader::_buildTlsMaps() {
 void Loader::initObjects() {
 	initTlsObjects(mlibc::get_current_tcb(), _linkBfs, true);
 
+	// Convert the breadth-first representation to a depth-first post-order representation,
+	// so that every object is initialized *after* its dependencies.
 	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
 		if(!(*it)->scheduledForInit)
 			_scheduleInit((*it));
 	}
 
-	// TODO: We don't we initialize in _linkBfs order?
 	for(auto it = _initQueue.begin(); it != _initQueue.end(); ++it) {
 		SharedObject *object = *it;
 		if(!object->wasInitialized)
@@ -1350,7 +1349,7 @@ void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
 		auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 				+ symbol_index * sizeof(Elf64_Sym));
 		ObjectSymbol r(object, symbol);
-		p = object->loadScope->resolveSymbol(r, 0);
+		p = object->localScope->resolveSymbol(r.getString(), 0);
 		if(!p) {
 			if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
 				mlibc::panicLogger() << "Unresolved load-time symbol "
@@ -1598,7 +1597,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 						+ symbol_index * sizeof(Elf64_Sym));
 				ObjectSymbol r(object, symbol);
-				frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
+				auto p = object->localScope->resolveSymbol(r.getString(), 0);
 				if(!p) {
 					if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
 						mlibc::panicLogger() << "rtdl: Unresolved JUMP_SLOT symbol "
@@ -1625,7 +1624,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 						+ symbol_index * sizeof(Elf64_Sym));
 				ObjectSymbol r(object, symbol);
-				frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
+				frg::optional<ObjectSymbol> p = object->localScope->resolveSymbol(r, 0);
 
 				if (!p) {
 					__ensure(ELF64_ST_BIND(symbol->st_info) != STB_WEAK);

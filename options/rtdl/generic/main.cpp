@@ -32,7 +32,6 @@ bool secureRequired;
 uintptr_t *entryStack;
 frg::manual_box<ObjectRepository> initialRepository;
 frg::manual_box<Scope> globalScope;
-frg::manual_box<Loader> globalLoader;
 
 frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
@@ -112,7 +111,7 @@ extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
 	auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 			+ symbol_index * sizeof(Elf64_Sym));
 	ObjectSymbol r(object, symbol);
-	frg::optional<ObjectSymbol> p = object->loadScope->resolveSymbol(r, 0);
+	auto p = object->localScope->resolveSymbol(r.getString(), 0);
 	if(!p)
 		mlibc::panicLogger() << "Unresolved JUMP_SLOT symbol" << frg::endlog;
 
@@ -245,7 +244,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// perform the initial dynamic linking
 	initialRepository.initialize();
 
-	globalScope.initialize();
+	globalScope.initialize(true);
 
 	// Add the dynamic linker, as well as the exectuable to the repository.
 #ifndef MLIBC_STATIC_BUILD
@@ -276,8 +275,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	globalDebugInterface.head = &executableSO->linkMap;
 	executableSO->inLinkMap = true;
 	Loader linker{globalScope.get(), true, 1};
-	linker.submitObject(executableSO);
-	linker.linkObjects();
+	linker.linkObjects(executableSO);
 
 	mlibc::initStackGuard(stack_entropy);
 
@@ -301,13 +299,6 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		mlibc::infoLogger() << "Leaving ld.so, jump to "
 				<< (void *)executableSO->entry << frg::endlog;
 	return executableSO->entry;
-}
-
-extern "C" [[ gnu::visibility("default") ]]
-int __dlapi_close(void *) {
-	if (logDlCalls)
-		mlibc::infoLogger() << "mlibc: dlclose() is a no-op" << frg::endlog;
-	return 0;
 }
 
 const char *lastError;
@@ -335,16 +326,21 @@ void *__dlapi_get_tls(struct __abi_tls_entry *entry) {
 #ifdef __MLIBC_POSIX_OPTION
 
 extern "C" [[ gnu::visibility("default") ]]
-void *__dlapi_open(const char *file, int local, void *returnAddress) {
-	// TODO: Thread-safety!
-	auto rts = rtsCounter++;
+void *__dlapi_open(const char *file, int flags, void *returnAddress) {
+	if (logDlCalls)
+		mlibc::infoLogger() << "rtdl: __dlapi_open(" << (file ? file : "nullptr") << ")" << frg::endlog;
+
+	auto unhandled = RTLD_NOLOAD | RTLD_LOCAL | RTLD_DEEPBIND;
+	if (flags & unhandled) {
+		mlibc::infoLogger() << "rtdl: dlopen flag " << (flags & unhandled)
+			<< "is unsupported" << frg::endlog;
+	}
 
 	if(!file)
 		return executableSO;
 
-	if(local)
-		mlibc::infoLogger() << "\e[31mrtdl: RTLD_LOCAL " << file << " is not supported properly\e[39m"
-				<< frg::endlog;
+	// TODO: Thread-safety!
+	auto rts = rtsCounter++;
 
 	SharedObject *object;
 	if(frg::string_view{file}.find_first('/') == size_t(-1)) {
@@ -365,22 +361,21 @@ void *__dlapi_open(const char *file, int local, void *returnAddress) {
 	}
 
 	Loader linker{globalScope.get(), false, rts};
-	linker.submitObject(object);
-	linker.linkObjects();
+	linker.linkObjects(object);
 	linker.initObjects();
 
 	// Build the object scope. TODO: Use the Loader object to do this.
-	if(!object->objectScope) {
+	if(!object->localScope) {
 		struct Token { };
 
 		using Set = frg::hash_map<SharedObject *, Token,
 				frg::hash<SharedObject *>, MemoryAllocator>;
 		Set set{frg::hash<SharedObject *>{}, getAllocator()};
 
-		object->objectScope = frg::construct<Scope>(getAllocator());
+		object->localScope = frg::construct<Scope>(getAllocator());
 		frg::vector<SharedObject *, MemoryAllocator> queue{getAllocator()};
 
-		object->objectScope->appendObject(object);
+		object->localScope->appendObject(object);
 		set.insert(object, Token{});
 		queue.push(object);
 
@@ -390,7 +385,7 @@ void *__dlapi_open(const char *file, int local, void *returnAddress) {
 			if(set.get(current))
 				continue;
 
-			object->objectScope->appendObject(current);
+			object->localScope->appendObject(current);
 			set.insert(current, Token{});
 			queue.push(current);
 		}
@@ -403,13 +398,26 @@ void *__dlapi_open(const char *file, int local, void *returnAddress) {
 
 extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
-	if (logDlCalls)
-		mlibc::infoLogger() << "rtdl: __dlapi_resolve(" << handle << ", " << string << ")" << frg::endlog;
+	if (logDlCalls) {
+		const char *name;
+		bool quote = false;
+		if (handle == RTLD_DEFAULT) {
+			name = "RTLD_DEFAULT";
+		} else if (handle == RTLD_NEXT) {
+			name = "RTLD_NEXT";
+		} else {
+			name = ((SharedObject *)handle)->name.data();
+			quote = true;
+		}
+
+		mlibc::infoLogger() << "rtdl: __dlapi_resolve(" << (quote ? "\"" : "") << name
+			<< (quote ? "\"" : "") << ", \"" << string << "\")" << frg::endlog;
+	}
 
 	frg::optional<ObjectSymbol> target;
 
 	if (handle == RTLD_DEFAULT) {
-		target = Scope::resolveWholeScope(globalScope.get(), string, 0);
+		target = globalScope->resolveSymbol(string, 0);
 	} else if (handle == RTLD_NEXT) {
 		SharedObject *origin = initialRepository->findCaller(returnAddress);
 		if (!origin) {
@@ -417,7 +425,7 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
 				<< "(ra = " << returnAddress << ")" << frg::endlog;
 		}
 
-		target = Scope::resolveNext(globalScope.get(), string, origin);
+		target = globalScope->resolveNext(string, origin);
 	} else {
 		// POSIX does not unambiguously state how dlsym() is supposed to work; it just
 		// states that "The symbol resolution algorithm used shall be dependency order
@@ -543,12 +551,19 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 	return -1;
 }
 
+extern "C" [[ gnu::visibility("default") ]]
+int __dlapi_close(void *) {
+	if (logDlCalls)
+		mlibc::infoLogger() << "mlibc: dlclose() is a no-op" << frg::endlog;
+	return 0;
+}
+
 #endif
 
 extern "C" [[ gnu::visibility("default") ]]
 int __dlapi_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void*), void *data) {
 	int last_return = 0;
-	for (auto object : globalScope->_objects) {
+	for (auto object : initialRepository->loadedObjects) {
 		struct dl_phdr_info info;
 		info.dlpi_addr = object->baseAddress;
 		info.dlpi_name = object->name.data();
