@@ -1295,6 +1295,41 @@ int sys_link(const char *old_path, const char *new_path) {
 #endif
 }
 
+// Inspired by musl (src/stat/statvfs.c:28 fixup function)
+static void statfs_to_statvfs(struct statfs *from, struct statvfs *to) {
+	*to = {
+		.f_bsize = from->f_bsize,
+		.f_frsize = from->f_frsize ? from->f_frsize : from->f_bsize,
+		.f_blocks = from->f_blocks,
+		.f_bfree = from->f_bfree,
+		.f_bavail = from->f_bavail,
+		.f_files = from->f_files,
+		.f_ffree = from->f_ffree,
+		.f_favail = from->f_ffree,
+		.f_fsid = (unsigned long) from->f_fsid.__val[0],
+		.f_flag = from->f_flags,
+		.f_namemax = from->f_namelen,
+	};
+}
+
+int sys_statvfs(const char *path, struct statvfs *out) {
+	struct statfs buf;
+	if(auto ret = sys_statfs(path, &buf); ret != 0) {
+		return ret;
+	}
+	statfs_to_statvfs(&buf, out);
+	return 0;
+}
+
+int sys_fstatvfs(int fd, struct statvfs *out) {
+	struct statfs buf;
+	if(auto ret = sys_fstatfs(fd, &buf); ret != 0) {
+		return ret;
+	}
+	statfs_to_statvfs(&buf, out);
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 #if __MLIBC_LINUX_OPTION
