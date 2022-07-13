@@ -37,6 +37,10 @@ int setitimer(int which, const struct itimerval *new_value,
 	struct itimerval *old_value);
 
 int timer_create(clockid_t clockid, struct sigevent *__restrict sevp, timer_t *__restrict timerid);
+int timer_settime(timer_t timerid, int flags, const struct itimerspec *__restrict new_value,
+	struct itimerspec *__restrict old_value);
+int timer_gettime(timer_t timerid, struct itimerspec *curr_value);
+int timer_delete(timer_t timerid);
 
 // The following 2 macros are taken from musl
 #define TIMEVAL_TO_TIMESPEC(tv, ts) ( \
