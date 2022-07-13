@@ -55,6 +55,39 @@ struct mtconfiginfo {
 	char reserved[10];
 };
 
+#define MTRESET 0
+#define MTFSF 1
+#define MTBSF 2
+#define MTFSR 3
+#define MTBSR 4
+#define MTWEOF 5
+#define MTREW 6
+#define MTOFFL 7
+#define MTNOP 8
+#define MTRETEN 9
+#define MTBSFM 10
+#define MTFSFM 11
+#define MTEOM 12
+#define MTERASE 13
+#define MTRAS1 14
+#define MTRAS2 15
+#define MTRAS3 16
+#define MTSETBLK 20
+#define MTSETDENSITY 21
+#define MTSEEK 22
+#define MTTELL 23
+#define MTSETDRVBUFFER 24
+#define MTFSS 25
+#define MTBSS 26
+#define MTWSM 27
+#define MTLOCK 28
+#define MTUNLOCK 29
+#define MTLOAD 30
+#define MTUNLOAD 31
+#define MTCOMPRESSION 32
+#define MTSETPART 33
+#define MTMKPART 34
+
 #if defined(__linux__) || defined(__MLIBC_LINUX_OPTION)
 #define MTIOCTOP _IOR('m', 1, struct mtop)
 #define MTIOCGET _IOR('m', 2, struct mtget)
