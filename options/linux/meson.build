@@ -52,6 +52,13 @@ if not no_headers
 		'include/netpacket/packet.h',
 		subdir: 'netpacket'
 	)
+	# libc provides these, not the kernel, so the Linux option shall provide them too.
+	install_headers(
+		'include/scsi/scsi.h',
+		'include/scsi/scsi_ioctl.h',
+		'include/scsi/sg.h',
+		subdir: 'scsi'
+	)
 	install_headers(
 		'include/sys/epoll.h',
 		'include/sys/inotify.h',
