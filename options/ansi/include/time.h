@@ -77,7 +77,7 @@ void tzset(void);
 #	include <bits/posix/timer_t.h>
 #endif // __MLIBC_POSIX_OPTION
 
-#include <bits/ansi/clockid_t.h>
+#include <abi-bits/clockid_t.h>
 
 #define TIMER_ABSTIME 1
 

@@ -2,7 +2,7 @@
 #ifndef _PTHREAD_H
 #define _PTHREAD_H
 
-#include <bits/ansi/clockid_t.h>
+#include <abi-bits/clockid_t.h>
 // TODO: pthread is not required to define size_t.
 #include <bits/size_t.h>
 #include <bits/posix/pthread_t.h>
