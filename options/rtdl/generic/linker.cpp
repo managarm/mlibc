@@ -1192,65 +1192,65 @@ void Loader::linkObjects(SharedObject *root) {
 	_buildTlsMaps();
 
 	// Promote objects to the desired scope.
-	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
-		if ((*it)->globalRts == 0 && _loadScope->isGlobal)
-			(*it)->globalRts = _linkRts;
+	for(auto object : _linkBfs) {
+		if (object->globalRts == 0 && _loadScope->isGlobal)
+			object->globalRts = _linkRts;
 
-		_loadScope->appendObject(*it);
+		_loadScope->appendObject(object);
 	}
 
 	// Process regular relocations.
-	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
+	for(auto object : _linkBfs) {
 		// Some objects have already been linked before.
-		if((*it)->objectRts < _linkRts)
+		if(object->objectRts < _linkRts)
 			continue;
 
-		if((*it)->dynamic == nullptr)
+		if(object->dynamic == nullptr)
 			continue;
 
 		if(verbose)
-			mlibc::infoLogger() << "rtdl: Linking " << (*it)->name << frg::endlog;
+			mlibc::infoLogger() << "rtdl: Linking " << object->name << frg::endlog;
 
-		__ensure(!(*it)->wasLinked);
+		__ensure(!object->wasLinked);
 
 		// TODO: Support this.
-		if((*it)->symbolicResolution)
+		if(object->symbolicResolution)
 			mlibc::infoLogger() << "\e[31mrtdl: DT_SYMBOLIC is not implemented correctly!\e[39m"
 					<< frg::endlog;
 
-		_processStaticRelocations(*it);
-		_processLazyRelocations(*it);
+		_processStaticRelocations(object);
+		_processLazyRelocations(object);
 	}
 
 	// Process copy relocations.
-	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
-		if(!(*it)->isMainObject)
+	for(auto object : _linkBfs) {
+		if(!object->isMainObject)
 			continue;
 
 		// Some objects have already been linked before.
-		if((*it)->objectRts < _linkRts)
+		if(object->objectRts < _linkRts)
 			continue;
 
-		if((*it)->dynamic == nullptr)
+		if(object->dynamic == nullptr)
 			continue;
 
-		processCopyRelocations(*it);
+		processCopyRelocations(object);
 	}
 
-	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
-		(*it)->wasLinked = true;
+	for(auto object : _linkBfs) {
+		object->wasLinked = true;
 
-		if((*it)->inLinkMap)
+		if(object->inLinkMap)
 			continue;
 
 		auto linkMap = reinterpret_cast<LinkMap*>(globalDebugInterface.head);
 
-		(*it)->linkMap.prev = linkMap;
-		(*it)->linkMap.next = linkMap->next;
+		object->linkMap.prev = linkMap;
+		object->linkMap.next = linkMap->next;
 		if(linkMap->next)
-			linkMap->next->prev = &((*it)->linkMap);
-		linkMap->next = &((*it)->linkMap);
-		(*it)->inLinkMap = true;
+			linkMap->next->prev = &(object->linkMap);
+		linkMap->next = &(object->linkMap);
+		object->inLinkMap = true;
 	}
 }
 
@@ -1262,8 +1262,7 @@ void Loader::_buildTlsMaps() {
 		__ensure(!_linkBfs.empty());
 		__ensure(_linkBfs.front()->isMainObject);
 
-		for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
-			SharedObject *object = *it;
+		for(auto object : _linkBfs) {
 			__ensure(object->tlsModel == TlsModel::null);
 
 			if(object->tlsSegmentSize == 0)
@@ -1304,9 +1303,7 @@ void Loader::_buildTlsMaps() {
 		// Reserve some additional space for future libraries.
 		runtimeTlsMap->initialLimit = runtimeTlsMap->initialPtr + 64;
 	}else{
-		for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
-			SharedObject *object = *it;
-
+		for(auto object : _linkBfs) {
 			if(object->tlsModel != TlsModel::null)
 				continue;
 			if(object->tlsSegmentSize == 0)
@@ -1368,13 +1365,12 @@ void Loader::initObjects() {
 
 	// Convert the breadth-first representation to a depth-first post-order representation,
 	// so that every object is initialized *after* its dependencies.
-	for(auto it = _linkBfs.begin(); it != _linkBfs.end(); ++it) {
-		if(!(*it)->scheduledForInit)
-			_scheduleInit((*it));
+	for(auto object : _linkBfs) {
+		if(!object->scheduledForInit)
+			_scheduleInit(object);
 	}
 
-	for(auto it = _initQueue.begin(); it != _initQueue.end(); ++it) {
-		SharedObject *object = *it;
+	for(auto object : _initQueue) {
 		if(!object->wasInitialized)
 			doInitialize(object);
 	}
