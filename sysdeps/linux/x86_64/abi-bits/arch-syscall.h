@@ -20,6 +20,7 @@
 #define SYS_access 21
 #define SYS_pipe 22
 #define SYS_select 23
+#define SYS_sched_yield 24
 #define SYS_madvise 28
 #define SYS_dup 32
 #define SYS_pause 34
