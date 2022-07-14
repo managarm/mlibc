@@ -423,6 +423,11 @@ int sys_seteuid(uid_t euid) {
 	}
 }
 
+pid_t sys_gettid() {
+	// TODO: use an actual gettid syscall.
+	return sys_getpid();
+}
+
 pid_t sys_getpid() {
 	SignalGuard sguard;
 	HelAction actions[3];
