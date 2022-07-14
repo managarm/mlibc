@@ -5,7 +5,7 @@
 #include <abi-bits/gid_t.h>
 #include <abi-bits/pid_t.h>
 #include <bits/size_t.h>
-#include <bits/posix/socklen_t.h>
+#include <abi-bits/socklen_t.h>
 #include <bits/ssize_t.h>
 #include <abi-bits/uid_t.h>
 #include <bits/posix/iovec.h>
@@ -22,12 +22,6 @@ extern "C" {
 struct sockaddr {
 	sa_family_t sa_family;
 	char sa_data[14];
-};
-
-struct cmsghdr {
-	socklen_t cmsg_len;
-	int cmsg_level;
-	int cmsg_type;
 };
 
 // Control message format:
