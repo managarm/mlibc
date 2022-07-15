@@ -43,24 +43,23 @@ tools:
           - args: ['make', '-j@PARALLELISM@', 'all-gcc']
         install:
           - args: ['make', 'install-gcc']
-       # TODO: Fix libgcc, seems to require <sys/syscall.h> now, and we don't implement that yet.
-#      - name: libgcc
-#        tools_required:
-#          - tool: gcc
-#            stage_dependencies: [compiler]
-#        compile:
-#          - args: ['make', '-j@PARALLELISM@', 'all-target-libgcc']
-#        install:
-#          - args: ['make', 'install-target-libgcc']
-       # TODO: to build libstdc++, we need to pass -rpath and --dynamic-linker.
-#      - name: libstdc++
-#        tools_required:
-#          - tool: gcc
-#            stage_dependencies: [libgcc]
-#        compile:
-#          - args: ['make', '-j@PARALLELISM@', 'all-target-libstdc++-v3']
-#        install:
-#          - args: ['make', 'install-target-libstdc++-v3']
+      - name: libgcc
+        tools_required:
+          - tool: gcc
+            stage_dependencies: [compiler]
+        compile:
+          - args: ['make', '-j@PARALLELISM@', 'all-target-libgcc']
+        install:
+          - args: ['make', 'install-target-libgcc']
+      # TODO: libstdc++ requires some patching before it will work.
+      # - name: libstdc++
+      #   tools_required:
+      #     - tool: gcc
+      #       stage_dependencies: [libgcc]
+      #   compile:
+      #     - args: ['make', '-j@PARALLELISM@', 'all-target-libstdc++-v3']
+      #   install:
+      #     - args: ['make', 'install-target-libstdc++-v3']
 
 packages:
   - name: mlibc
