@@ -6,10 +6,6 @@
 #include <bits/off_t.h>
 #include <bits/size_t.h>
 
-#ifdef __MLIBC_LINUX_OPTION
-#include <linux/memfd.h>
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
