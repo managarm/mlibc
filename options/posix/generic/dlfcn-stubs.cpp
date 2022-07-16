@@ -37,6 +37,13 @@ void *dlsym(void *__restrict handle, const char *__restrict string) {
 	return __dlapi_resolve(handle, string, ra);
 }
 
+[[gnu::noinline]]
+void *dlvsym(void *__restrict handle, const char *__restrict string, const char *__restrict version) {
+	mlibc::infoLogger() << "mlibc: dlvsym ignores version " << version << frg::endlog;
+	auto ra = __builtin_extract_return_addr(__builtin_return_address(0));
+	return __dlapi_resolve(handle, string, ra);
+}
+
 //gnu extensions
 int dladdr(const void *ptr, Dl_info *out) {
 	__dlapi_symbol info;
