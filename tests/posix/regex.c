@@ -17,12 +17,12 @@ int main(void) {
 
 	printf("Whole pattern: \"%.*s\" at %zd-%zd.\n",
 		(int)(matches[0].rm_eo - matches[0].rm_so), &testString[matches[0].rm_so],
-		(size_t)matches[0].rm_so, (size_t)(matches[0].rm_eo - 1));
+		(ssize_t)matches[0].rm_so, (ssize_t)(matches[0].rm_eo - 1));
 	assert(matches[0].rm_so == 13 && matches[0].rm_eo == 22);
 
 	printf("Substring: \"%.*s\" at %zd-%zd.\n",
 		(int)(matches[1].rm_eo - matches[1].rm_so), &testString[matches[1].rm_so],
-		(size_t)matches[1].rm_so, (size_t)matches[1].rm_eo - 1);
+		(ssize_t)matches[1].rm_so, (ssize_t)matches[1].rm_eo - 1);
 	assert(matches[1].rm_so == 13 && matches[1].rm_eo == 17);
 
 	regfree(&reg);
