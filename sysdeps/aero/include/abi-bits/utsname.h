@@ -1,1 +1,1 @@
-../../../../abis/mlibc/utsname.h
+../../../../abis/linux/utsname.h
