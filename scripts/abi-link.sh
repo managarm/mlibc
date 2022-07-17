@@ -7,6 +7,6 @@ declare -a ports=()
 
 for file in "${files[@]}"; do
 	for port in "${ports[@]}"; do
-	    ln -rs abis/$abi/$file sysdeps/$port/include/abi-bits/$file
+	    ln -rsiv abis/$abi/$file sysdeps/$port/include/abi-bits/$file
 	done
 done
