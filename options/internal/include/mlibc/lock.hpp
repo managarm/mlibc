@@ -116,10 +116,12 @@ struct FutexLockImpl {
 		else
 			__ensure((state & ownerMask) == 1);
 
-		// Wake the futex if there were waiters.
-		if(state & waitersBit)
-			if(int e = mlibc::sys_futex_wake((int *)&_state); e)
-				__ensure(!"sys_futex_wake() failed");
+		if(state & waitersBit) {
+			// Wake the futex if there were waiters. Since the mutex might not exist at this location
+			// anymore, we must conservatively ignore EACCES and EINVAL which may occur as a result.
+			int e = mlibc::sys_futex_wake((int *)&_state);
+			__ensure(e >= 0 || e == EACCES || e == EINVAL);
+		}
 	}
 private:
 	uint32_t _state;
