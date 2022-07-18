@@ -25,12 +25,16 @@ int fcntl(int fd, int command, ...) {
 }
 
 int openat(int dirfd, const char *pathname, int flags, ...) {
+	va_list args;
+	va_start(args, flags);
+	mode_t mode = flags & O_CREAT ? va_arg(args, mode_t) : 0;
 	int fd;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_openat, -1);
-	if(int e = mlibc::sys_openat(dirfd, pathname, flags, &fd); e) {
+	if(int e = mlibc::sys_openat(dirfd, pathname, flags, mode, &fd); e) {
 		errno = e;
 		return -1;
 	}
+	va_end(args);
 	return fd;
 }
 

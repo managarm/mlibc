@@ -253,7 +253,7 @@ int sys_getcwd(char *buffer, size_t size) {
 	return 0;
 }
 
-int sys_openat(int dirfd, const char *path, int flags, int *fd) {
+int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	__syscall_ret ret = __syscall(2, dirfd, path, flags, 0);
 
 	if (ret.errno != 0)
@@ -263,8 +263,8 @@ int sys_openat(int dirfd, const char *path, int flags, int *fd) {
 	return 0;
 }
 
-int sys_open(const char *path, int flags, mode_t, int *fd) {
-	return sys_openat(AT_FDCWD, path, flags, fd);
+int sys_open(const char *path, int flags, mode_t mode, int *fd) {
+	return sys_openat(AT_FDCWD, path, flags, mode, fd);
 }
 
 int sys_open_dir(const char *path, int *handle) {

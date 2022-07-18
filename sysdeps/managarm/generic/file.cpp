@@ -3733,10 +3733,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 }
 
 int sys_open(const char *path, int flags, mode_t mode, int *fd) {
-	return sys_openat(AT_FDCWD, path, flags, fd);
+	return sys_openat(AT_FDCWD, path, flags, mode, fd);
 }
 
-int sys_openat(int dirfd, const char *path, int flags, int *fd) {
+int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	SignalGuard sguard;
 
 	uint32_t proto_flags = 0;
