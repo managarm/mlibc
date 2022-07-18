@@ -4881,7 +4881,7 @@ int sys_memfd_create(const char *name, int flags, int *fd) {
 int sys_uname(struct utsname *buf) {
 	__ensure(buf);
 	mlibc::infoLogger() << "\e[31mmlibc: uname() returns static information\e[39m" << frg::endlog;
-	strcpy(buf->sysname, MLIBC_SYSTEM_NAME);
+	strcpy(buf->sysname, "Managarm");
 	strcpy(buf->nodename, "?");
 	strcpy(buf->release, "?");
 	strcpy(buf->version, "?");
