@@ -8,6 +8,9 @@ libc_sources += files(
 
 if not no_headers
 	install_headers(
+		'include/fstab.h',
+	)
+	install_headers(
 		'include/arpa/nameser.h',
 		subdir: 'arpa'
 	)
