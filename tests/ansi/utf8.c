@@ -6,9 +6,9 @@
 #include <locale.h>
 
 #define EXPECT(func) ({ \
-		if(res != n) { \
+		if(res != expected_ret) { \
 			printf(#func " decoded %d bytes (expected %d bytes), at %s:%d\n", \
-					res, n, __FILE__, line); \
+					res, expected_ret, __FILE__, line); \
 			fflush(stdout); \
 			abort(); \
 		} \
@@ -22,23 +22,23 @@
 
 void verify_decode(const char *input, wchar_t expected, int line) {
 	wchar_t wc;
-	int n = strlen(input);
-	int res;
+	int bytes = *input ? strlen(input) : 1;
+	int expected_ret = *input ? strlen(input) : 0;
 
 	// Check mbrtowc().
 	mbstate_t state;
 	memset(&state, 0, sizeof(state));
 	assert(mbrtowc(NULL, NULL, -1, &state) == 0);
-	res = mbrtowc(&wc, input, n, &state);
+	int res = mbrtowc(&wc, input, bytes, &state);
 	EXPECT("mbrtowc");
-	res = mbrtowc(NULL, input, n, &state);
+	res = mbrtowc(NULL, input, bytes, &state);
 	EXPECT("mbrtowc (pwc == NULL)");
 
 	// Check mbtowc().
 	assert(mbtowc(NULL, NULL, -1) == 0);
-	res = mbtowc(&wc, input, n);
+	res = mbtowc(&wc, input, bytes);
 	EXPECT("mbtowc");
-	res = mbtowc(NULL, input, n);
+	res = mbtowc(NULL, input, bytes);
 	EXPECT("mbtowc (pwc == NULL)");
 }
 
@@ -52,4 +52,5 @@ int main() {
 	verify_decode("\xE2\x82\xAC", 0x20AC);
 	verify_decode("\xED\x95\x9C", 0xD55C);
 	verify_decode("\xF0\x90\x8D\x88", 0x10348);
+	verify_decode("", L'\0');
 }

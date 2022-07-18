@@ -70,9 +70,8 @@ size_t mbrtowc(wchar_t *wcp, const char *mbs, size_t mb_limit, mbstate_t *stp) {
 	}
 
 	wchar_t temp = 0;
-	if(!wcp) {
+	if(!wcp)
 		wcp = &temp;
-	}
 
 	mlibc::code_seq<const char> nseq{mbs, mbs + mb_limit};
 	mlibc::code_seq<wchar_t> wseq{wcp, wcp + 1};
@@ -83,10 +82,13 @@ size_t mbrtowc(wchar_t *wcp, const char *mbs, size_t mb_limit, mbstate_t *stp) {
 		errno = EILSEQ;
 		return static_cast<size_t>(-1);
 	}else{
-		size_t n = nseq.it - mbs;
-		if(!n) // Null-terminate resulting wide string.
+		if (*mbs) {
+			return nseq.it - mbs;
+		} else {
+			*stp = __MLIBC_MBSTATE_INITIALIZER;
 			*wcp = 0;
-		return n;
+			return 0;
+		}
 	}
 }
 

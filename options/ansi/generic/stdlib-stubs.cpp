@@ -379,14 +379,14 @@ int mbtowc(wchar_t *__restrict wc, const char *__restrict mb, size_t max_size) {
 	auto cc = mlibc::current_charcode();
 	__ensure(max_size);
 
+	// If wc is NULL, decode into a single local character which we discard
+	// to obtain the length.
+	wchar_t tmp_wc;
+	if (!wc)
+		wc = &tmp_wc;
+
 	if (mb) {
 		if (*mb) {
-			// If wc is NULL, decode into a single local character which we discard
-			// to obtain the length.
-			wchar_t tmp_wc;
-			if (!wc)
-				wc = &tmp_wc;
-
 			mlibc::code_seq<wchar_t> wseq{wc, wc + 1};
 			mlibc::code_seq<const char> nseq{mb, mb + max_size};
 			auto e = cc->decode_wtranscode(nseq, wseq, mbtowc_state);
@@ -395,6 +395,7 @@ int mbtowc(wchar_t *__restrict wc, const char *__restrict mb, size_t max_size) {
 
 			return nseq.it - mb;
 		} else {
+			*wc = L'\0';
 			return 0; // When mbs is a null byte, return 0
 		}
 	} else {
