@@ -40,6 +40,9 @@ if not no_headers
 		'include/sys/errno.h',
 		'include/sys/signal.h',
 		'include/sys/ucontext.h',
+		'include/sys/personality.h',
+		'include/sys/timeb.h',
+		'include/sys/mtio.h',
 		subdir: 'sys'
 	)
 	install_headers(
