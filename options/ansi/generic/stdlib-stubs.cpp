@@ -20,6 +20,7 @@
 #include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/strtofp.hpp>
 #include <mlibc/strtol.hpp>
+#include <mlibc/global-config.hpp>
 
 #ifdef __MLIBC_POSIX_OPTION
 #include <pthread.h>
@@ -437,19 +438,9 @@ size_t wcstombs(char *mb_string, const wchar_t *wc_string, size_t max_size) {
 	return wcsrtombs(mb_string, &wc_string, max_size, 0);
 }
 
-static bool debugMalloc() {
-	static bool debug = [] () -> bool {
-		// TODO: We should use a locking variant of getenv here to guard
-		// against concurrent modifications of the environment.
-		auto value = getenv("MLIBC_DEBUG_MALLOC");
-		return value && !strcmp(value, "1");
-	}(); // Immediately invoked.
-	return debug;
-}
-
 void free(void *ptr) {
 	// TODO: Print PID only if POSIX option is enabled.
-	if(debugMalloc()) {
+	if (mlibc::globalConfig().debugMalloc) {
 		mlibc::infoLogger() << "mlibc (PID ?): free() on "
 				<< ptr << frg::endlog;
 		if((uintptr_t)ptr & 1)
@@ -461,7 +452,7 @@ void free(void *ptr) {
 void *malloc(size_t size) {
 	auto nptr = getAllocator().allocate(size);
 	// TODO: Print PID only if POSIX option is enabled.
-	if(debugMalloc())
+	if (mlibc::globalConfig().debugMalloc)
 		mlibc::infoLogger() << "mlibc (PID ?): malloc() returns "
 				<< nptr << frg::endlog;
 	return nptr;
@@ -470,7 +461,7 @@ void *malloc(size_t size) {
 void *realloc(void *ptr, size_t size) {
 	auto nptr = getAllocator().reallocate(ptr, size);
 	// TODO: Print PID only if POSIX option is enabled.
-	if(debugMalloc())
+	if (mlibc::globalConfig().debugMalloc)
 		mlibc::infoLogger() << "mlibc (PID ?): realloc() on "
 				<< ptr << " returns " << nptr << frg::endlog;
 	return nptr;
