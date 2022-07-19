@@ -4,4 +4,5 @@
 #mesondefine MLIBC_MAP_DSO_SEGMENTS
 #mesondefine MLIBC_MAP_FILE_WINDOWS
 #mesondefine MLIBC_STATIC_BUILD
+#mesondefine MLIBC_DEBUG_ALLOCATOR
 
