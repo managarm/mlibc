@@ -330,9 +330,15 @@ struct servent *getservbyname(const char *name, const char *proto) {
 	static struct servent ret;
 	if (ret.s_name) {
 		free(ret.s_name);
-		for (char **alias = ret.s_aliases; *alias != NULL; alias++)
+		ret.s_name = nullptr;
+
+		for (char **alias = ret.s_aliases; *alias != NULL; alias++) {
 			free(*alias);
+			*alias = nullptr;
+		}
+
 		free(ret.s_proto);
+		ret.s_proto = nullptr;
 	}
 
 	mlibc::service_result serv_buf{getAllocator()};
@@ -385,9 +391,15 @@ struct servent *getservbyport(int port, const char *proto) {
 	static struct servent ret;
 	if (ret.s_name) {
 		free(ret.s_name);
-		for (char **alias = ret.s_aliases; *alias != NULL; alias++)
+		ret.s_name = nullptr;
+
+		for (char **alias = ret.s_aliases; *alias != NULL; alias++) {
 			free(*alias);
+			*alias = nullptr;
+		}
+
 		free(ret.s_proto);
+		ret.s_proto = nullptr;
 	}
 
 	mlibc::service_result serv_buf{getAllocator()};
