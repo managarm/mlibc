@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include <mlibc/lock.hpp>
+#include <mlibc/allocator.hpp>
 #include <frg/list.hpp>
 
 namespace mlibc {
@@ -97,6 +98,11 @@ private:
 	int _fd;
 	bool _force_unbuffered;
 };
+
+template <typename T>
+void file_dispose_cb(abstract_file *base) {
+	frg::destruct(getAllocator(), static_cast<T *>(base));
+}
 
 } // namespace mlibc
 
