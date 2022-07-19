@@ -108,7 +108,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 	}
 
 	auto out = (struct mlibc::ai_buf *) calloc(serv_count * addr_count,
-			sizeof(struct addrinfo));
+			sizeof(struct mlibc::ai_buf));
 
 	if (node && !canon.size())
 		canon = frg::string<MemoryAllocator>{node, getAllocator()};
@@ -330,9 +330,15 @@ struct servent *getservbyname(const char *name, const char *proto) {
 	static struct servent ret;
 	if (ret.s_name) {
 		free(ret.s_name);
-		for (char **alias = ret.s_aliases; *alias != NULL; alias++)
+		ret.s_name = nullptr;
+
+		for (char **alias = ret.s_aliases; *alias != NULL; alias++) {
 			free(*alias);
+			*alias = nullptr;
+		}
+
 		free(ret.s_proto);
+		ret.s_proto = nullptr;
 	}
 
 	mlibc::service_result serv_buf{getAllocator()};
@@ -385,9 +391,15 @@ struct servent *getservbyport(int port, const char *proto) {
 	static struct servent ret;
 	if (ret.s_name) {
 		free(ret.s_name);
-		for (char **alias = ret.s_aliases; *alias != NULL; alias++)
+		ret.s_name = nullptr;
+
+		for (char **alias = ret.s_aliases; *alias != NULL; alias++) {
 			free(*alias);
+			*alias = nullptr;
+		}
+
 		free(ret.s_proto);
+		ret.s_proto = nullptr;
 	}
 
 	mlibc::service_result serv_buf{getAllocator()};
