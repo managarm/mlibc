@@ -108,7 +108,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 	}
 
 	auto out = (struct mlibc::ai_buf *) calloc(serv_count * addr_count,
-			sizeof(struct addrinfo));
+			sizeof(struct mlibc::ai_buf));
 
 	if (node && !canon.size())
 		canon = frg::string<MemoryAllocator>{node, getAllocator()};
