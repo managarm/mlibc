@@ -1,12 +1,15 @@
 #include <errno.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 #include <net/if.h>
 
 #include <bits/ensure.h>
 #include <mlibc/posix-sysdeps.hpp>
 
-void if_freenameindex(struct if_nameindex *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void if_freenameindex(struct if_nameindex *idx) {
+	free(idx);
 }
 
 char *if_indextoname(unsigned int index, char *name) {
