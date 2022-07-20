@@ -1,12 +1,13 @@
 #include <errno.h>
 #include <net/if.h>
+#include <stdlib.h>
 
 #include <bits/ensure.h>
+#include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 
 void if_freenameindex(struct if_nameindex *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: if_freenameindex is a no-op" << frg::endlog;
 }
 
 char *if_indextoname(unsigned int index, char *name) {
