@@ -733,6 +733,13 @@ int sys_madvise(void *addr, size_t length, int advice) {
 	return 0;
 }
 
+int sys_msync(void *addr, size_t length, int flags) {
+	auto ret = do_syscall(SYS_msync, addr, length, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_reboot(int cmd) {
 	auto ret = do_syscall(SYS_reboot, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, cmd, nullptr);
 	if (int e = sc_error(ret); e)

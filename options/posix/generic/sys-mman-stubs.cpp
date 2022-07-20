@@ -49,9 +49,13 @@ int posix_madvise(void *, size_t, int) {
 	return ENOSYS;
 }
 
-int msync(void *, size_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int msync(void *addr, size_t length, int flags) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_msync, -1);
+	if(int e = mlibc::sys_msync(addr, length, flags); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 void *mremap(void *pointer, size_t size, size_t new_size, int flags, ...) {
