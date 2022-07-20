@@ -33,7 +33,7 @@ static int ends_with(const char *suffix, const char *s) {
 }
 
 static int contains(const char *pattern, const char *s) {
-	return !!strstr(pattern, s);
+	return !!strstr(s, pattern);
 }
 
 static int callback(struct dl_phdr_info *info, size_t size, void *data) {
@@ -50,10 +50,8 @@ static int callback(struct dl_phdr_info *info, size_t size, void *data) {
 	if (contains(LDSO_PATTERN, info->dlpi_name))
 		found->found_ldso++;
 
-	// Temporarily disable this to work around issue #579.
-	// if (!strcmp("", info->dlpi_name))
-	// 	found->found_self++;
-	found->found_self = 1;
+	if (!strcmp("", info->dlpi_name))
+		found->found_self++;
 
 	assert(info->dlpi_phdr);
 	return 0;
@@ -85,8 +83,7 @@ int main() {
 	assert(!dl_iterate_phdr(callback, &found));
 	assert(found.found_ldso == 1);
 	assert(found.found_self == 1);
-	// Temporary workaround for issue #585.
-	// assert(found.found_foo == 1);
+	assert(found.found_foo == 1);
 	assert(found.found_foo > 0);
 	assert(found.found_bar == 1);
 
