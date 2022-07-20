@@ -97,6 +97,7 @@ ssize_t recv(int sockfd, void *__restrict buf, size_t len, int flags) {
 
 ssize_t recvfrom(int sockfd, void *__restrict buf, size_t len, int flags,
 		struct sockaddr *__restrict src_addr, socklen_t *__restrict addrlen) {
+#ifndef __linux__
 	struct iovec iov = {};
 	iov.iov_base = buf;
 	iov.iov_len = len;
@@ -116,6 +117,15 @@ ssize_t recvfrom(int sockfd, void *__restrict buf, size_t len, int flags,
 	if(addrlen)
 		*addrlen = hdr.msg_namelen;
 	return ret;
+#else
+	ssize_t length;
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_recvfrom, -1);
+	if(int e = mlibc::sys_recvfrom(sockfd, buf, len, flags, src_addr, addrlen, &length); e) {
+		errno = e;
+		return -1;
+	}
+	return length;
+#endif
 }
 
 ssize_t recvmsg(int fd, struct msghdr *hdr, int flags) {
@@ -139,6 +149,7 @@ ssize_t send(int fd, const void *buffer, size_t size, int flags) {
 
 ssize_t sendto(int fd, const void *buffer, size_t size, int flags,
 		const struct sockaddr *sock_addr, socklen_t addr_length) {
+#ifndef __linux__
 	struct iovec iov = {};
 	iov.iov_base = const_cast<void *>(buffer);
 	iov.iov_len = size;
@@ -150,6 +161,15 @@ ssize_t sendto(int fd, const void *buffer, size_t size, int flags,
 	hdr.msg_iovlen = 1;
 
 	return sendmsg(fd, &hdr, flags);
+#else
+	ssize_t length;
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sendto, -1);
+	if(int e = mlibc::sys_sendto(fd, buffer, size, flags, sock_addr, addr_length, &length); e) {
+		errno = e;
+		return -1;
+	}
+	return length;
+#endif
 }
 
 ssize_t sendmsg(int fd, const struct msghdr *hdr, int flags) {

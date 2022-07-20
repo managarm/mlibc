@@ -616,6 +616,22 @@ int sys_listen(int fd, int backlog) {
 	return 0;
 }
 
+ssize_t sys_sendto(int fd, const void *buffer, size_t size, int flags, const struct sockaddr *sock_addr, socklen_t addr_length, ssize_t *length) {
+	auto ret = do_cp_syscall(SYS_sendto, fd, buffer, size, flags, sock_addr, addr_length);
+        if (int e = sc_error(ret); e)
+                return e;
+        *length = sc_int_result<ssize_t>(ret);
+        return 0;
+}
+
+ssize_t sys_recvfrom(int fd, void *buffer, size_t size, int flags, struct sockaddr *sock_addr, socklen_t *addr_length, ssize_t *length) {
+	auto ret = do_cp_syscall(SYS_recvfrom, fd, buffer, size, flags, sock_addr, addr_length);
+        if (int e = sc_error(ret); e)
+                return e;
+        *length = sc_int_result<ssize_t>(ret);
+        return 0;
+}
+
 int sys_getpriority(int which, id_t who, int *value) {
 	auto ret = do_syscall(SYS_getpriority, which, who);
 	if (int e = sc_error(ret); e) {

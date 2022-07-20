@@ -30,6 +30,8 @@
 #define SYS_socket 41
 #define SYS_connect 42
 #define SYS_accept 43
+#define SYS_sendto 44
+#define SYS_recvfrom 45
 #define SYS_sendmsg 46
 #define SYS_recvmsg 47
 #define SYS_shutdown 48
