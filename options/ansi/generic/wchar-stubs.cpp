@@ -744,8 +744,8 @@ int wcwidth(wchar_t ucs) {
 
 int wcswidth(const wchar_t *wcs, size_t n) {
 	int ret = 0;
-	for(size_t i = 0; i < n && wcs[n]; i++) {
-		int cols = wcwidth(wcs[n]);
+	for(size_t i = 0; i < n && wcs[i]; i++) {
+		int cols = wcwidth(wcs[i]);
 		if (cols < 0)
 			return -1;
 		ret += cols;
