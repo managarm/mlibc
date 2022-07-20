@@ -874,7 +874,7 @@ void *accessDtv(SharedObject *object) {
 		auto ndtv = frg::construct_n<void *>(getAllocator(), runtimeTlsMap->indices.size());
 		memset(ndtv, 0, sizeof(void *) * runtimeTlsMap->indices.size());
 		memcpy(ndtv, tcb_ptr->dtvPointers, sizeof(void *) * tcb_ptr->dtvSize);
-		frg::destruct(getAllocator(), tcb_ptr->dtvPointers);
+		frg::destruct_n(getAllocator(), tcb_ptr->dtvPointers, tcb_ptr->dtvSize);
 		tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
 		tcb_ptr->dtvPointers = ndtv;
 	}
