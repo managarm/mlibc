@@ -27,6 +27,8 @@ off_t ftello(FILE *stream);
 int dprintf(int fd, const char *format, ...);
 int vdprintf(int fd, const char *format, __gnuc_va_list args);
 
+char *fgetln(FILE *, size_t *);
+
 #ifdef __cplusplus
 }
 #endif
