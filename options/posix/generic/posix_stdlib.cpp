@@ -452,9 +452,9 @@ long double strtold_l(const char *__restrict__, char ** __restrict__, locale_t) 
 	__builtin_unreachable();
 }
 
-float strtof_l(const char *__restrict__, char **__restrict__, locale_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+float strtof_l(const char *__restrict__ nptr, char **__restrict__ endptr, locale_t) {
+	mlibc::infoLogger() << "mlibc: strtof_l ignores locales" << frg::endlog;
+	return strtof(nptr, endptr);
 }
 
 int strcoll_l(const char *, const char *, locale_t) {
