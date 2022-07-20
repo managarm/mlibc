@@ -79,8 +79,8 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	return 0;
 }
 
-int sys_openat(int dirfd, const char *path, int flags, int *fd) {
-	auto ret = do_syscall(SYS_openat, dirfd, path, flags);
+int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
+	auto ret = do_syscall(SYS_openat, dirfd, path, flags, mode);
 	if (int e = sc_error(ret); e)
 		return e;
 	*fd = sc_int_result<int>(ret);
