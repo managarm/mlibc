@@ -22,8 +22,9 @@ char *if_indextoname(unsigned int index, char *name) {
 }
 
 struct if_nameindex *if_nameindex(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: if_nameindex() is a no-op" << frg::endlog;
+	errno = ENOSYS;
+	return NULL;
 }
 
 unsigned int if_nametoindex(const char *name) {
