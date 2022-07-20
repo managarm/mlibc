@@ -155,7 +155,7 @@ static int match_bracket(const char *p, int k, int kfold)
 			if (l < 0) return 0;
 			p += l-1;
 		}
-		if (wc==k || wc==kfold) return !inv;
+		if (wc==(wchar_t)k || wc==(wchar_t)kfold) return !inv;
 	}
 	return inv;
 }
