@@ -1865,6 +1865,38 @@ int sys_personality(unsigned long persona, int *out) {
 	return 0;
 }
 
+int sys_ioperm(unsigned long int from, unsigned long int num, int turn_on) {
+#if defined(SYS_ioperm)
+	auto ret = do_syscall(SYS_ioperm, from, num, turn_on);
+
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+
+	return 0;
+#else
+	(void) from;
+	(void) num;
+	(void) turn_on;
+	return ENOSYS;
+#endif
+}
+
+int sys_iopl(int level) {
+#if defined(SYS_iopl)
+	auto ret = do_syscall(SYS_iopl, level);
+
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+
+	return 0;
+#else
+	(void) level;
+	return ENOSYS;
+#endif
+}
+
 #endif // __MLIBC_GLIBC_OPTION
 
 } // namespace mlibc
