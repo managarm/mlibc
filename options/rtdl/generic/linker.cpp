@@ -1652,7 +1652,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 						+ symbol_index * sizeof(Elf64_Sym));
 				ObjectSymbol r(object, symbol);
-				frg::optional<ObjectSymbol> p = object->localScope->resolveSymbol(r, 0);
+				frg::optional<ObjectSymbol> p = object->localScope->resolveSymbol(r.getString(), 0);
 
 				if (!p) {
 					__ensure(ELF64_ST_BIND(symbol->st_info) != STB_WEAK);
