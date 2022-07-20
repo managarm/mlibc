@@ -38,3 +38,22 @@ unsigned long getauxval(unsigned long type) {
 	return value;
 }
 
+// XXX(qookie):
+// This is here because libgcc will call into __getauxval on glibc Linux
+// (which is what it believes we are due to the aarch64-linux-gnu toolchain)
+// in order to find AT_HWCAP to discover if LSE atomics are supported.
+//
+// This is not necessary on a custom Linux toolchain and is purely an artifact of
+// using the host toolchain.
+
+// __gnu_linux__ is the define checked by libgcc
+#if defined(__aarch64__) && defined(__gnu_linux__)
+
+extern "C" unsigned long __getauxval(unsigned long type) {
+	unsigned long value = 0;
+	if(peekauxval(type, &value))
+		return 0;
+	return value;
+}
+
+#endif

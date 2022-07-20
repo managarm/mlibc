@@ -11,6 +11,7 @@
 #include <mlibc/rtdl-abi.hpp>
 #include <mlibc/stack_protector.hpp>
 #include <internal-config.h>
+#include <abi-bits/auxv.h>
 #include "linker.hpp"
 
 #ifdef __MLIBC_POSIX_OPTION
@@ -197,6 +198,19 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		case DT_RELAENT:
 		case DT_RELACOUNT:
 		case DT_DEBUG:
+
+// This is here because libgcc will add a global constructor on glibc Linux
+// (which is what it believes we are due to the aarch64-linux-gnu toolchain)
+// in order to check if LSE atomics are supported.
+//
+// This is not necessary on a custom Linux toolchain and is purely an artifact of
+// using the host toolchain.
+
+// __gnu_linux__ is the define checked by libgcc
+#if defined(__aarch64__) && defined(__gnu_linux__)
+		case DT_INIT_ARRAY:
+		case DT_INIT_ARRAYSZ:
+#endif
 			continue;
 		default:
 			__ensure(!"Unexpected dynamic entry in program interpreter");
@@ -605,3 +619,37 @@ void __dlapi_enter(uintptr_t *entry_stack) {
 #endif
 }
 
+// XXX(qookie):
+// This is here because libgcc will call into __getauxval on glibc Linux
+// (which is what it believes we are due to the aarch64-linux-gnu toolchain)
+// in order to find AT_HWCAP to discover if LSE atomics are supported.
+//
+// This is not necessary on a custom Linux toolchain and is purely an artifact of
+// using the host toolchain.
+
+// __gnu_linux__ is the define checked by libgcc
+#if defined(__aarch64__) && defined(__gnu_linux__)
+
+extern "C" unsigned long __getauxval(unsigned long type) {
+	// Find the auxiliary vector by skipping args and environment.
+	auto aux = entryStack;
+	aux += *aux + 1; // Skip argc and all arguments
+	__ensure(!*aux);
+	aux++;
+	while(*aux) // Now, we skip the environment.
+		aux++;
+	aux++;
+
+	// Parse the auxiliary vector.
+	while(true) {
+		auto value = aux + 1;
+		if(*aux == AT_NULL) {
+			return 0;
+		}else if(*aux == type) {
+			return *value;
+		}
+		aux += 2;
+	}
+}
+
+#endif
