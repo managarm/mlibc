@@ -9,6 +9,8 @@
 
 extern "C" size_t __init_array_start[];
 extern "C" size_t __init_array_end[];
+extern "C" size_t __preinit_array_start[];
+extern "C" size_t __preinit_array_end[];
 
 static int constructors_ran_already = 0;
 

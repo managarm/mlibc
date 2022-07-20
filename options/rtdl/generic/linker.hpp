@@ -135,7 +135,10 @@ struct SharedObject {
 	// object initialization information
 	InitFuncPtr initPtr = nullptr;
 	InitFuncPtr *initArray = nullptr;
+	InitFuncPtr *preInitArray = nullptr;
 	size_t initArraySize = 0;
+	size_t preInitArraySize = 0;
+
 
 	// TODO: read this from the PHDR
 	size_t tlsSegmentSize, tlsAlignment, tlsImageSize;
@@ -260,7 +263,7 @@ public: // TODO: Make this private again. (Was made public for __dlapi_reverse()
 
 class Loader {
 public:
-	Loader(Scope *scope, bool is_initial_link, uint64_t rts);
+	Loader(Scope *scope, SharedObject *mainExecutable, bool is_initial_link, uint64_t rts);
 
 public:
 	void linkObjects(SharedObject *root);
@@ -280,6 +283,7 @@ private:
 	void _scheduleInit(SharedObject *object);
 
 private:
+	SharedObject *_mainExecutable;
 	Scope *_globalScope;
 	bool _isInitialLink;
 	uint64_t _linkRts;

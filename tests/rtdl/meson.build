@@ -2,6 +2,7 @@ rtdl_test_cases = [
 	'dl_iterate_phdr',
 	'rtld_next',
 	'soname',
+	'preinit',
 ]
 
 foreach test_name : rtdl_test_cases 
@@ -12,6 +13,7 @@ foreach test_name : rtdl_test_cases
 	test_depends = []
 	test_native_link_with = []
 	test_native_depends = []
+	test_additional_link_args = []
 
 	# Build the needed DSOs for the test. This sets the variables above.
 	subdir(test_name)
@@ -22,7 +24,7 @@ foreach test_name : rtdl_test_cases
 		build_rpath: test_rpath,
 		override_options: test_override_options,
 		c_args: test_c_args,
-		link_args: test_link_args
+		link_args: test_link_args + test_additional_link_args,
 	)
 	test(test_name, exec, suite: 'rtdl', depends: test_depends)
 
@@ -35,7 +37,7 @@ foreach test_name : rtdl_test_cases
 			# https://bugzilla.redhat.com/show_bug.cgi?id=1449604
 			override_options: 'b_sanitize=undefined',
 			c_args: ['-D_GNU_SOURCE', '-DUSE_HOST_LIBC'],
-			link_args: ['-ldl'],
+			link_args: ['-ldl'] + test_additional_link_args,
 			native: true,
 		)
 		test(test_name, exec, suite: ['host-libc', 'rtdl'], depends: test_native_depends)

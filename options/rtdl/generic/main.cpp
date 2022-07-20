@@ -276,7 +276,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 
 	globalDebugInterface.head = &executableSO->linkMap;
 	executableSO->inLinkMap = true;
-	Loader linker{globalScope.get(), true, 1};
+	Loader linker{globalScope.get(), executableSO, true, 1};
 	linker.linkObjects(executableSO);
 
 	mlibc::initStackGuard(stack_entropy);
@@ -363,7 +363,7 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 		return nullptr;
 	}
 
-	Loader linker{globalScope.get(), false, rts};
+	Loader linker{globalScope.get(), nullptr, false, rts};
 	linker.linkObjects(object);
 	linker.initObjects();
 
