@@ -7,6 +7,7 @@
 #include <mlibc-config.h>
 #include <bits/ensure.h>
 #include <abi-bits/fcntl.h>
+#include <abi-bits/socklen_t.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/thread-entry.hpp>
@@ -287,6 +288,24 @@ int sys_msg_send(int sockfd, const struct msghdr *msg, int flags, ssize_t *lengt
                 return e;
         *length = sc_int_result<ssize_t>(ret);
         return 0;
+}
+
+ssize_t sys_sendto(int fd, const void *buffer, size_t size, int flags, const struct sockaddr *sock_addr, socklen_t addr_length, ssize_t *length) {
+	auto ret = do_cp_syscall(SYS_sendto, fd, buffer, size, flags, sock_addr, addr_length);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	*length = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+ssize_t sys_recvfrom(int fd, void *buffer, size_t size, int flags, struct sockaddr *sock_addr, socklen_t *addr_length, ssize_t *length) {
+	auto ret = do_cp_syscall(SYS_recvfrom, fd, buffer, size, flags, sock_addr, addr_length);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	*length = sc_int_result<ssize_t>(ret);
+	return 0;
 }
 
 int sys_msg_recv(int sockfd, struct msghdr *msg, int flags, ssize_t *length) {

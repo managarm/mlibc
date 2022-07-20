@@ -98,6 +98,15 @@ ssize_t recv(int sockfd, void *__restrict buf, size_t len, int flags) {
 
 ssize_t recvfrom(int sockfd, void *__restrict buf, size_t len, int flags,
 		struct sockaddr *__restrict src_addr, socklen_t *__restrict addrlen) {
+	if(mlibc::sys_recvfrom) {
+		ssize_t length;
+		if(int e = mlibc::sys_recvfrom(sockfd, buf, len, flags, src_addr, addrlen, &length); e) {
+			errno = e;
+			return -1;
+		}
+		return length;
+	}
+
 	struct iovec iov = {};
 	iov.iov_base = buf;
 	iov.iov_len = len;
@@ -140,6 +149,15 @@ ssize_t send(int fd, const void *buffer, size_t size, int flags) {
 
 ssize_t sendto(int fd, const void *buffer, size_t size, int flags,
 		const struct sockaddr *sock_addr, socklen_t addr_length) {
+	if(mlibc::sys_sendto) {
+		ssize_t length;
+		if(int e = mlibc::sys_sendto(fd, buffer, size, flags, sock_addr, addr_length, &length); e) {
+			errno = e;
+			return -1;
+		}
+		return length;
+	}
+
 	struct iovec iov = {};
 	iov.iov_base = const_cast<void *>(buffer);
 	iov.iov_len = size;
