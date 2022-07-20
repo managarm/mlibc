@@ -118,9 +118,8 @@ const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
 				return dst;
 			break;
 		case AF_INET6:
-			__ensure(!"ipv6 is not implemented!");
-			__builtin_unreachable();
-			break;
+			mlibc::infoLogger() << "inet_pton: ipv6 is not implemented!" << frg::endlog;
+			/* fallthrough */
 		default:
 			errno = EAFNOSUPPORT;
 			return NULL;
