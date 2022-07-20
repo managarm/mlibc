@@ -191,3 +191,7 @@ int vdprintf(int fd, const char *format, __gnuc_va_list args) {
 	return ret;
 }
 
+char *fgetln(FILE *, size_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
