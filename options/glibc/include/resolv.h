@@ -34,6 +34,18 @@ typedef struct __res_state {
 	struct sockaddr_in nsaddr_list[MAXNS];
 	char *dnsrch[MAXDNSRCH + 1];
 	char defdname[256];
+	union {
+		char pad[52];
+		struct {
+			uint16_t nscount;
+			uint16_t nsmap[MAXNS];
+			int nssocks[MAXNS];
+			uint16_t nscount6;
+			uint16_t nsinit;
+			struct sockaddr_in6	*nsaddrs[MAXNS];
+			unsigned int _initstamp[2];
+		} _ext;
+	} _u;
 } *res_state;
 struct __res_state *__res_state(void);
 #define _res (*__res_state())
