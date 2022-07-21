@@ -35,8 +35,11 @@
 #define MADV_DONTNEED 4
 #define MADV_FREE 8
 
-// Linux extension:
+// Linux extensions:
 #define MREMAP_MAYMOVE 1
 #define MREMAP_FIXED 2
+
+#define MFD_CLOEXEC 1U
+#define MFD_ALLOW_SEALING 2U
 
 #endif // _ABIBITS_MMAP_FLAGS_H

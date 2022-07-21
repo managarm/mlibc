@@ -38,4 +38,7 @@
 #define MREMAP_MAYMOVE 1
 #define MREMAP_FIXED 2
 
+#define MFD_CLOEXEC 1U
+#define MFD_ALLOW_SEALING 2U
+
 #endif // _ABIBITS_VM_FLAGS_H
