@@ -29,6 +29,11 @@ extern HIDDEN void *_GLOBAL_OFFSET_TABLE_[];
 extern HIDDEN Elf64_Dyn _DYNAMIC[];
 #endif
 
+namespace mlibc {
+	// Declared in options/internal/mlibc/tcb.hpp.
+	bool tcb_available_flag = false;
+}
+
 mlibc::RtdlConfig rtdlConfig;
 
 uintptr_t *entryStack;
@@ -284,11 +289,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	auto tcb = allocateTcb();
 	if(mlibc::sys_tcb_set(tcb))
 		__ensure(!"sys_tcb_set() failed");
-	if(mlibc::sys_futex_tid) {
-		tcb->tid = mlibc::sys_futex_tid();
-	}else{
-		tcb->tid = 1;
-	}
+	tcb->tid = mlibc::this_tid();
+	mlibc::tcb_available_flag = true;
 
 	globalDebugInterface.ver = 1;
 	globalDebugInterface.brk = &dl_debug_state;
