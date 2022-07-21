@@ -954,7 +954,7 @@ pid_t sys_getpid() {
 
 pid_t sys_gettid() {
 	auto ret = do_syscall(SYS_gettid);
-	// getpid() always succeeds.
+	// gettid() always succeeds.
 	return sc_int_result<pid_t>(ret);
 }
 
@@ -1010,6 +1010,12 @@ void sys_exit(int status) {
 
 #define FUTEX_WAIT 0
 #define FUTEX_WAKE 1
+
+int sys_futex_tid() {
+	auto ret = do_syscall(SYS_gettid);
+	// gettid() always succeeds.
+	return sc_int_result<pid_t>(ret);
+}
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	auto ret = do_cp_syscall(SYS_sys_futex, pointer, FUTEX_WAIT, expected, time);
