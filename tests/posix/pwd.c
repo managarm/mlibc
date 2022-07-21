@@ -49,8 +49,6 @@ int main()
 
 	errno = 0;
 	result = getpwent();
-	assert(errno == 0);
-	// If the tests succeeded until here, there should definitely be an entry.
 	assert(result);
 
 	pwd = *result;
@@ -71,11 +69,7 @@ int main()
 
 	errno = 0;
 	result = getpwent();
-	assert(errno == 0);
 	assert(result);
-
-	fprintf(stderr, "pwd1 name is %s strlen is %lu\n", pwd.pw_name, strlen(pwd.pw_name));
-	fprintf(stderr, "pwd2 name is %s strlen is %lu\n", result->pw_name, strlen(result->pw_name));
 
 	assert(!strcmp(pwd.pw_name, result->pw_name));
 	assert(!strcmp(pwd.pw_passwd, result->pw_passwd));

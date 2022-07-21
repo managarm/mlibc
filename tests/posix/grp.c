@@ -80,7 +80,6 @@ int main()
 
 	result = getgrent();
 	assert(result);
-	assert(errno == 0);
 	grp.gr_name = strdup(result->gr_name);
 	if(result->gr_passwd) {
 		password = true;
@@ -96,11 +95,9 @@ int main()
 		assert(grp.gr_passwd);
 
 	endgrent();
-	assert(errno == 0);
 
 	result = getgrent();
 	assert(result);
-	assert(errno == 0);
 	assert(strcmp(result->gr_name, grp.gr_name) == 0);
 	if(password)
 		assert(strcmp(result->gr_passwd, grp.gr_passwd) == 0);
