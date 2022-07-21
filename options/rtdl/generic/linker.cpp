@@ -29,7 +29,7 @@ constexpr bool logBaseAddresses = false;
 constexpr bool logRpath = false;
 constexpr bool eagerBinding = true;
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__i386__)
 constexpr inline bool tlsAboveTp = false;
 #elif defined(__aarch64__)
 constexpr inline bool tlsAboveTp = true;
