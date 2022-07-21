@@ -57,7 +57,7 @@ DebugInterface globalDebugInterface;
 
 // Use a PC-relative instruction sequence to find our runtime load address.
 uintptr_t getLdsoBase() {
-#if defined(__x86_64__) || defined(__aarch64__)
+#if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__)
 	// On x86_64, the first GOT entry holds the link-time address of _DYNAMIC.
 	// TODO: This isn't guaranteed on AArch64, so this might fail with some linkers.
 	auto linktime_dynamic = reinterpret_cast<uintptr_t>(_GLOBAL_OFFSET_TABLE_[0]);
