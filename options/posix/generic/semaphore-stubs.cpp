@@ -36,8 +36,15 @@ int sem_wait(sem_t *sem) {
 		if (!(state & semaphoreCountMask)) {
 			if (__atomic_compare_exchange_n(&sem->__mlibc_count, &state, semaphoreHasWaiters,
 						false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
-				if(int e = mlibc::sys_futex_wait((int *)&sem->__mlibc_count, state, nullptr); e)
-					__ensure(!"sys_futex_wait() failed");
+				int e = mlibc::sys_futex_wait((int *)&sem->__mlibc_count, state, nullptr);
+				if (e == 0 || e == EAGAIN) {
+					continue;
+				} else if (e == EINTR) {
+					errno = EINTR;
+					return -1;
+				} else {
+					mlibc::panicLogger() << "sys_futex_wait() failed with error code " << e << frg::endlog;
+				}
 			}
 		} else {
 			unsigned int desired = (state - 1);
