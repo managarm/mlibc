@@ -8,16 +8,28 @@
 #include <mlibc/debug.hpp>
 
 namespace {
-	thread_local passwd global_entry;
+	FILE *global_file; // Used by setpwent/getpwent/endpwent.
 
-	bool extract_entry(frg::string_view line, passwd *entry) {
-		if (entry == &global_entry) {
-			__ensure(!entry->pw_name);
-			__ensure(!entry->pw_dir);
-			__ensure(!entry->pw_shell);
-			__ensure(!entry->pw_passwd);
+	bool open_global_file() {
+		if(!global_file) {
+			global_file = fopen("/etc/passwd", "r");
+			if(!global_file) {
+				errno = EIO;
+				return false;
+			}
 		}
 
+		return true;
+	}
+
+	void close_global_file() {
+		if(global_file) {
+			fclose(global_file);
+			global_file = nullptr;
+		}
+	}
+
+	bool extract_entry(frg::string_view line, passwd *entry) {
 		frg::string_view segments[8];
 
 		// Parse the line into 7 or 8 segments.
@@ -105,28 +117,53 @@ namespace {
 }
 
 struct passwd *getpwent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	static passwd entry;
+	char line[512];
+
+	if(!open_global_file()) {
+		return nullptr;
+	}
+
+	if (fgets(line, 512, global_file)) {
+		clear_entry(&entry);
+		if(!extract_entry(line, &entry)) {
+			errno = EINVAL;	// I suppose this can be a valid errno?
+			return nullptr;
+		}
+		return &entry;
+	}
+
+	if(ferror(global_file)) {
+		errno = EIO;
+	}
+
+	return nullptr;
 }
 
 struct passwd *getpwnam(const char *name) {
+	static passwd entry;
 	auto file = fopen("/etc/passwd", "r");
 	if(!file)
 		return nullptr;
 
 	char line[512];
 	while(fgets(line, 512, file)) {
-		clear_entry(&global_entry);
-		if(!extract_entry(line, &global_entry))
+		clear_entry(&entry);
+		if(!extract_entry(line, &entry))
 			continue;
-		if(!strcmp(global_entry.pw_name, name)) {
+		if(!strcmp(entry.pw_name, name)) {
 			fclose(file);
-			return &global_entry;
+			return &entry;
 		}
 	}
 
+	int err = errno;
+	if(ferror(file)) {
+		err = EIO;
+	}
+
 	fclose(file);
-	errno = ESRCH;
+	errno = err;
 	return nullptr;
 }
 
@@ -150,33 +187,44 @@ int getpwnam_r(const char *name, struct passwd *pwd, char *buffer, size_t size, 
 				return ERANGE;
 
 			copy_to_buffer(pwd, buffer, size);
-			*result = pwd;		
+			*result = pwd;
 			return 0;
 		}
 	}
 
+	int ret = 0;
+	if(ferror(file)) {
+		ret = EIO;
+	}
+
 	fclose(file);
-	return 0;
+	return ret;
 }
 
 struct passwd *getpwuid(uid_t uid) {
+	static passwd entry;
 	auto file = fopen("/etc/passwd", "r");
 	if(!file)
 		return nullptr;
 
 	char line[512];
 	while(fgets(line, 512, file)) {
-		clear_entry(&global_entry);
-		if(!extract_entry(line, &global_entry))
+		clear_entry(&entry);
+		if(!extract_entry(line, &entry))
 			continue;
-		if(global_entry.pw_uid == uid) {
+		if(entry.pw_uid == uid) {
 			fclose(file);
-			return &global_entry;
+			return &entry;
 		}
 	}
 
+	int err = ESRCH;
+	if(ferror(file)) {
+		err = EIO;
+	}
+
 	fclose(file);
-	errno = ESRCH;
+	errno = err;
 	return nullptr;
 }
 
@@ -200,20 +248,30 @@ int getpwuid_r(uid_t uid, struct passwd *pwd, char *buffer, size_t size, struct 
 				return ERANGE;
 
 			copy_to_buffer(pwd, buffer, size);
-			*result = pwd;		
+			*result = pwd;
 			return 0;
 		}
 	}
 
+	int ret = 0;
+	if(ferror(file)) {
+		ret = EIO;
+	}
+
 	fclose(file);
-	return 0;
+	return ret;
 }
 
 void setpwent(void) {
-	__ensure(!"Not implemented");
+	if(!open_global_file()) {
+		return;
+	}
+	rewind(global_file);
 }
 
-void endpwent(void) { }
+void endpwent(void) {
+	close_global_file();
+}
 
 int putpwent(const struct passwd *, FILE *) {
 	__ensure(!"Not implemented");

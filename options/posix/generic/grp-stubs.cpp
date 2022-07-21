@@ -10,7 +10,26 @@
 #include <mlibc/posix-sysdeps.hpp>
 
 namespace {
-	thread_local group global_entry;
+	FILE *global_file;
+
+	bool open_global_file() {
+		if(!global_file) {
+			global_file = fopen("/etc/group", "r");
+			if(!global_file) {
+				errno = EIO;
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	void close_global_file() {
+		if(global_file) {
+			fclose(global_file);
+			global_file = nullptr;
+		}
+	}
 
 	template<typename F>
 	void walk_segments(frg::string_view line, char delimiter, F fn) {
@@ -37,11 +56,6 @@ namespace {
 	}
 
 	bool extract_entry(frg::string_view line, group *entry) {
-		if (entry == &global_entry) {
-			__ensure(!entry->gr_name);
-			__ensure(!entry->gr_mem);
-		}
-
 		frg::string_view segments[5];
 
 		// Parse the line into 3 or 4 segments (depending if the group has members or not)
@@ -54,12 +68,11 @@ namespace {
 		if(n < 3) // n can be 3 when there are no members in the group
 			return false;
 
-		// segments[1] is the password; it is not exported to struct group.
-		// The other segments are consumed below.
-
 		// TODO: Handle strndup() and malloc() failure.
 		auto name = strndup(segments[0].data(), segments[0].size());
 		__ensure(name);
+
+		auto passwd = strndup(segments[1].data(), segments[1].size());
 
 		auto gid = segments[2].to_number<int>();
 		if(!gid)
@@ -81,6 +94,7 @@ namespace {
 		members[k] = nullptr;
 
 		entry->gr_name = name;
+		entry->gr_passwd = passwd;
 		entry->gr_gid = *gid;
 		entry->gr_mem = members;
 		return true;
@@ -106,8 +120,6 @@ namespace {
 
 		char line[512];
 		while(fgets(line, 512, file)) {
-			if (entry == &global_entry)
-				clear_entry(&global_entry);
 			if(!extract_entry(line, entry))
 				continue;
 			if(cond(entry)) {
@@ -116,8 +128,13 @@ namespace {
 			}
 		}
 
+		int err = ESRCH;
+		if(ferror(file)) {
+			err = EIO;
+		}
+
 		fclose(file);
-		return ESRCH;
+		return err;
 	}
 
 	int copy_to_buffer(struct group *grp, char *buffer, size_t size) {
@@ -166,17 +183,37 @@ namespace {
 }
 
 void endgrent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	close_global_file();
 }
 
 struct group *getgrent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	static group entry;
+	char line[512];
+
+	if(!open_global_file()) {
+		return nullptr;
+	}
+
+	if(fgets(line, 512, global_file)) {
+		clear_entry(&entry);
+		if(!extract_entry(line, &entry)) {
+			errno = EINVAL;
+			return nullptr;
+		}
+		return &entry;
+	}
+
+	if(ferror(global_file)) {
+		errno = EIO;
+	}
+
+	return nullptr;
 }
 
 struct group *getgrgid(gid_t gid) {
-	int err = walk_file(&global_entry, [&] (group *entry) {
+	static group entry;
+
+	int err = walk_file(&entry, [&] (group *entry) {
 		return entry->gr_gid == gid;
 	});
 
@@ -185,7 +222,7 @@ struct group *getgrgid(gid_t gid) {
 		return nullptr;
 	}
 
-	return &global_entry;
+	return &entry;
 }
 
 int getgrgid_r(gid_t gid, struct group *grp, char *buffer, size_t size, struct group **result) {
@@ -203,12 +240,14 @@ int getgrgid_r(gid_t gid, struct group *grp, char *buffer, size_t size, struct g
 		return err;
 	}
 
-	*result = grp;		
+	*result = grp;
 	return 0;
 }
 
 struct group *getgrnam(const char *name) {
-	int err = walk_file(&global_entry, [&] (group *entry) {
+	static group entry;
+
+	int err = walk_file(&entry, [&] (group *entry) {
 		return !strcmp(entry->gr_name, name);
 	});
 
@@ -217,7 +256,7 @@ struct group *getgrnam(const char *name) {
 		return nullptr;
 	}
 
-	return &global_entry;
+	return &entry;
 }
 
 int getgrnam_r(const char *name, struct group *grp, char *buffer, size_t size, struct group **result) {
@@ -236,13 +275,15 @@ int getgrnam_r(const char *name, struct group *grp, char *buffer, size_t size, s
 		return err;
 	}
 
-	*result = grp;		
+	*result = grp;
 	return 0;
 }
 
 void setgrent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	if(!open_global_file()) {
+		return;
+	}
+	rewind(global_file);
 }
 
 int setgroups(size_t size, const gid_t *list) {

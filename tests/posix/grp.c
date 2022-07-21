@@ -38,6 +38,7 @@ int main()
 	char *buf;
 	size_t bufsize;
 	int s;
+	bool password = false;
 
 	bufsize = sysconf(_SC_GETGR_R_SIZE_MAX);
 	assert(bufsize > 0 && bufsize < 0x100000);
@@ -72,5 +73,38 @@ int main()
 	// This is not guaranteed.
 	assert(s == ESRCH);
 #endif
+
+	errno = 0;
+	setgrent();
+	assert(errno == 0);
+
+	result = getgrent();
+	assert(result);
+	grp.gr_name = strdup(result->gr_name);
+	if(result->gr_passwd) {
+		password = true;
+	}
+	grp.gr_passwd = strdup(result->gr_passwd);
+	grp.gr_gid = result->gr_gid;
+	assert(grp.gr_name);
+	if(password)
+		assert(grp.gr_passwd);
+
+	assert(grp.gr_name);
+	if(password)
+		assert(grp.gr_passwd);
+
+	endgrent();
+
+	result = getgrent();
+	assert(result);
+	assert(strcmp(result->gr_name, grp.gr_name) == 0);
+	if(password)
+		assert(strcmp(result->gr_passwd, grp.gr_passwd) == 0);
+	assert(result->gr_gid == grp.gr_gid);
+
+	free(grp.gr_name);
+	if(password)
+		free(grp.gr_passwd);
 	free(buf);
 }
