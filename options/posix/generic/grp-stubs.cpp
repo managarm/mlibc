@@ -12,6 +12,25 @@
 namespace {
 	FILE *global_file;
 
+	bool open_global_file() {
+		if(!global_file) {
+			global_file = fopen("/etc/group", "r");
+			if(!global_file) {
+				errno = EIO;
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	void close_global_file() {
+		if(global_file) {
+			fclose(global_file);
+			global_file = nullptr;
+		}
+	}
+
 	template<typename F>
 	void walk_segments(frg::string_view line, char delimiter, F fn) {
 		size_t s = 0;
@@ -164,22 +183,15 @@ namespace {
 }
 
 void endgrent(void) {
-	if(global_file) {
-		fclose(global_file);
-		global_file = nullptr;
-	}
+	close_global_file();
 }
 
 struct group *getgrent(void) {
 	static group entry;
 	char line[512];
 
-	if(!global_file) {
-		global_file = fopen("/etc/group", "r");
-		if(!global_file) {
-			errno = EIO;
-			return nullptr;
-		}
+	if(!open_global_file()) {
+		return nullptr;
 	}
 
 	if(fgets(line, 512, global_file)) {
@@ -268,15 +280,10 @@ int getgrnam_r(const char *name, struct group *grp, char *buffer, size_t size, s
 }
 
 void setgrent(void) {
-	if(!global_file) {
-		global_file = fopen("/etc/group", "r");
-		if(!global_file) {
-			errno = EIO;
-			return;
-		}
-	} else {
-		rewind(global_file);
+	if(!open_global_file()) {
+		return;
 	}
+	rewind(global_file);
 }
 
 int setgroups(size_t size, const gid_t *list) {

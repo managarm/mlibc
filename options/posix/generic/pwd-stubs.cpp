@@ -10,6 +10,25 @@
 namespace {
 	FILE *global_file; // Used by setpwent/getpwent/endpwent.
 
+	bool open_global_file() {
+		if(!global_file) {
+			global_file = fopen("/etc/passwd", "r");
+			if(!global_file) {
+				errno = EIO;
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	void close_global_file() {
+		if(global_file) {
+			fclose(global_file);
+			global_file = nullptr;
+		}
+	}
+
 	bool extract_entry(frg::string_view line, passwd *entry) {
 		frg::string_view segments[8];
 
@@ -101,12 +120,8 @@ struct passwd *getpwent(void) {
 	static passwd entry;
 	char line[512];
 
-	if(!global_file) {
-		global_file = fopen("/etc/passwd", "r");
-		if(!global_file) {
-			errno = EIO;
-			return nullptr;
-		}
+	if(!open_global_file()) {
+		return nullptr;
 	}
 
 	if (fgets(line, 512, global_file)) {
@@ -248,22 +263,14 @@ int getpwuid_r(uid_t uid, struct passwd *pwd, char *buffer, size_t size, struct 
 }
 
 void setpwent(void) {
-	if(!global_file) {
-		global_file = fopen("/etc/passwd", "r");
-		if(!global_file) {
-			errno = EIO;
-			return;
-		}
-	} else {
-		rewind(global_file);
+	if(!open_global_file()) {
+		return;
 	}
+	rewind(global_file);
 }
 
 void endpwent(void) {
-	if(global_file) {
-		fclose(global_file);
-		global_file = nullptr;
-	}
+	close_global_file();
 }
 
 int putpwent(const struct passwd *, FILE *) {
