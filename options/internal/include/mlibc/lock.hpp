@@ -20,11 +20,8 @@ struct FutexLockImpl {
 	static constexpr uint32_t ownerMask = (static_cast<uint32_t>(1) << 30) - 1;
 
 	void lock() {
-		unsigned int this_tid, expected = 0;
-		if constexpr (Recursive)
-			this_tid = mlibc::this_tid();
-		else
-			this_tid = 1;
+		unsigned int this_tid = mlibc::this_tid();
+		unsigned int expected = 0;
 
 		while(true) {
 			if(!expected) {
@@ -70,11 +67,8 @@ struct FutexLockImpl {
 	}
 
 	bool try_lock() {
-		unsigned int this_tid, expected = __atomic_load_n(&_state, __ATOMIC_RELAXED);
-		if constexpr (Recursive)
-			this_tid = mlibc::this_tid();
-		else
-			this_tid = 1;
+		unsigned int this_tid = mlibc::this_tid();
+		unsigned int expected = __atomic_load_n(&_state, __ATOMIC_RELAXED);
 
 		if(!expected) {
 			// Try to take the mutex here.
@@ -110,11 +104,7 @@ struct FutexLockImpl {
 
 		// Reset the mutex to the unlocked state.
 		auto state = __atomic_exchange_n(&_state, 0, __ATOMIC_RELEASE);
-
-		if constexpr (Recursive)
-			__ensure((state & ownerMask) == mlibc::this_tid());
-		else
-			__ensure((state & ownerMask) == 1);
+		__ensure((state & ownerMask) == mlibc::this_tid());
 
 		if(state & waitersBit) {
 			// Wake the futex if there were waiters. Since the mutex might not exist at this location
