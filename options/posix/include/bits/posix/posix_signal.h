@@ -90,6 +90,7 @@ int killpg(int, int);
 int sigtimedwait(const sigset_t *set, siginfo_t *info, const struct timespec *timeout);
 
 int sigwait(const sigset_t *set, int *sig);
+int sigwaitinfo(const sigset_t *__restrict set, siginfo_t *__restrict info);
 
 #ifdef __cplusplus
 }

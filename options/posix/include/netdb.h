@@ -2,6 +2,7 @@
 #define _NETDB_H
 
 #include <stdint.h>
+#include <bits/size_t.h>
 #include <bits/posix/in_port_t.h>
 #include <bits/posix/in_addr_t.h>
 #include <bits/posix/socklen_t.h>
@@ -106,6 +107,10 @@ int getaddrinfo(const char *__restrict, const char *__restrict,
 struct hostent *gethostent(void);
 struct hostent *gethostbyname(const char *);
 struct hostent *gethostbyaddr(const void *, socklen_t, int);
+int gethostbyaddr_r(const void *__restrict, socklen_t, int, struct hostent *__restrict,
+					char *__restrict, size_t, struct hostent **__restrict, int *__restrict);
+int gethostbyname_r(const char *__restrict, struct hostent *__restrict, char *__restrict, size_t,
+					struct hostent **__restrict, int *__restrict);
 int getnameinfo(const struct sockaddr *__restrict, socklen_t,
 		char *__restrict, socklen_t, char *__restrict, socklen_t, int);
 struct netent *getnetbyaddr(uint32_t, int);
