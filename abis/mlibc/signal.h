@@ -8,6 +8,7 @@
 
 #include <abi-bits/pid_t.h>
 #include <abi-bits/uid_t.h>
+#include <bits/types.h>
 #include <bits/size_t.h>
 
 union sigval {
@@ -94,8 +95,7 @@ typedef void (*__sighandler) (int);
 #define SEGV_MAPERR 1
 #define SEGV_ACCERR 2
 
-// TODO: replace this by uint64_t
-typedef long sigset_t;
+typedef __mlibc_uint64 sigset_t;
 
 #define SIGUNUSED SIGSYS
 
@@ -163,7 +163,7 @@ struct sigaction {
 	void (*sa_sigaction)(int, siginfo_t *, void *);
 };
 
-#if defined(__x86_64__) || defined(__aarch64__)
+#if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__)
 // TODO: This is wrong for AArch64.
 
 typedef struct {

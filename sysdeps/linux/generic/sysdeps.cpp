@@ -303,6 +303,9 @@ int sys_sigaction(int signum, const struct sigaction *act,
 		kernel_act.restorer = __mlibc_signal_restore;
 		kernel_act.mask = act->sa_mask;
 	}
+
+	static_assert(sizeof(sigset_t) == 8);
+
         auto ret = do_syscall(SYS_rt_sigaction, signum, act ?
 			&kernel_act : NULL, oldact ?
 			&kernel_oldact : NULL, sizeof(sigset_t));
