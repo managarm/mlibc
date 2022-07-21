@@ -761,19 +761,20 @@ int pthread_mutex_destroy(pthread_mutex_t *mutex) {
 int pthread_mutex_lock(pthread_mutex_t *mutex) {
 	SCOPE_TRACE();
 
+	unsigned int this_tid = mlibc::this_tid();
 	unsigned int expected = 0;
 	while(true) {
 		if(!expected) {
 			// Try to take the mutex here.
 			if(__atomic_compare_exchange_n(&mutex->__mlibc_state,
-					&expected, mlibc::this_tid(), false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
+					&expected, this_tid, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
 				__ensure(!mutex->__mlibc_recursion);
 				mutex->__mlibc_recursion = 1;
 				return 0;
 			}
 		}else{
 			// If this (recursive) mutex is already owned by us, increment the recursion level.
-			if((expected & mutex_owner_mask) == mlibc::this_tid()) {
+			if((expected & mutex_owner_mask) == this_tid) {
 				if(!(mutex->__mlibc_flags & mutexRecursive)) {
 					if (mutex->__mlibc_flags & mutexErrorCheck)
 						return EDEADLK;
@@ -810,18 +811,19 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 int pthread_mutex_trylock(pthread_mutex_t *mutex) {
 	SCOPE_TRACE();
 
+	unsigned int this_tid = mlibc::this_tid();
 	unsigned int expected = __atomic_load_n(&mutex->__mlibc_state, __ATOMIC_RELAXED);
 	if(!expected) {
 		// Try to take the mutex here.
 		if(__atomic_compare_exchange_n(&mutex->__mlibc_state,
-						&expected, mlibc::this_tid(), false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
+						&expected, this_tid, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
 			__ensure(!mutex->__mlibc_recursion);
 			mutex->__mlibc_recursion = 1;
 			return 0;
 		}
 	} else {
 		// If this (recursive) mutex is already owned by us, increment the recursion level.
-		if((expected & mutex_owner_mask) == mlibc::this_tid()) {
+		if((expected & mutex_owner_mask) == this_tid) {
 			if(!(mutex->__mlibc_flags & mutexRecursive)) {
 				return EBUSY;
 			}
@@ -855,13 +857,14 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
 	// After this point the mutex is unlocked, and therefore we cannot access its contents as it
 	// may have been destroyed by another thread.
 
-	if ((flags & mutexErrorCheck) && (state & mutex_owner_mask) != mlibc::this_tid())
+	unsigned int this_tid = mlibc::this_tid();
+	if ((flags & mutexErrorCheck) && (state & mutex_owner_mask) != this_tid)
 		return EPERM;
 
 	if ((flags & mutexErrorCheck) && !(state & mutex_owner_mask))
 		return EINVAL;
 
-	__ensure((state & mutex_owner_mask) == mlibc::this_tid());
+	__ensure((state & mutex_owner_mask) == this_tid);
 
 	if(state & mutex_waiters_bit) {
 		// Wake the futex if there were waiters. Since the mutex might not exist at this location
