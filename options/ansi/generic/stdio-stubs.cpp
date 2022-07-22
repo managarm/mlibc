@@ -456,6 +456,12 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
             }
         }
 
+		// Leading whitespace is skipped for most conversions except these.
+		if (*fmt != 'c' && *fmt != '[' && *fmt != 'n') {
+			while (isspace(handler.look_ahead()))
+				handler.consume();
+		}
+
         switch (*fmt) {
             case 'd':
             case 'u':
