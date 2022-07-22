@@ -12,6 +12,11 @@ sources:
   - name: mlibc
     git: 'https://github.com/managarm/mlibc.git'
     branch: 'master'
+  - name: linux
+    url: 'https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.18.12.tar.xz'
+    extract_path: 'linux-5.18.12'
+    format: 'tar.xz'
+    version: '5.8.12'
 
 tools:
   - name: gcc
@@ -37,6 +42,7 @@ tools:
       - name: compiler
         pkgs_required:
          - mlibc
+         - linux-headers
         compile:
           # GCC complains if the include directory is non-existant.
           - args: ['mkdir', '-p', '@SYSROOT_DIR@/usr/include']
@@ -173,3 +179,16 @@ packages:
         environ:
           DESTDIR: '@THIS_COLLECT_DIR@'
         quiet: true
+
+  - name: linux-headers
+    architecture: '@OPTION:arch@'
+    from_source: linux
+    configure:
+      # custom build system requires in tree-ish builds
+      - args: ['cp', '-Tr', '@THIS_SOURCE_DIR@', '.']
+    build:
+      - args:
+        - 'make'
+        - 'O=@THIS_COLLECT_DIR@'
+        - 'ARCH=@OPTION:arch@'
+        - 'headers_install'
