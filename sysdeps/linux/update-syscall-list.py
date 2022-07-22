@@ -22,7 +22,11 @@ LOGGER = logging.getLogger(__name__)
 
 # ADD NEW ARCHITECTURES HERE: these should match directory names in Linuxes arch/
 # directory or the second element of one of the harnesses below
-WANTED_ARCHES = ["riscv64", "x86_64"]
+WANTED_ARCHES = ["riscv64", "x86_64", "arm64"]
+# How to translate from Linux arch directory names to gnutools architecture fields
+LINUX_GNU_TRANSLATION = {
+    "arm64": "aarch64"
+}
 
 argp = argparse.ArgumentParser()
 argp.add_argument("kver", help="Kernel version to download", default="latest")
@@ -280,6 +284,8 @@ def main(ctx: Context):
         wanted_arch = x[1]
         if wanted_arch not in WANTED_ARCHES:
             continue
+
+        wanted_arch = LINUX_GNU_TRANSLATION.get(wanted_arch, wanted_arch)
 
         with open(wanted_arch + "/syscallnos.h", "w") as f:
             print("#ifndef __MLIBC_SYSCALLNOS_h", file=f)
