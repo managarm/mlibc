@@ -101,7 +101,9 @@ internal_conf.set('MLIBC_DEBUG_ALLOCATOR', get_option('debug_allocator'))
 #----------------------------------------------------------------------------------------
 
 # Process sysdeps first, as sysdeps might want to disable unsupported options.
+provides_bits_syscall_h = false
 if host_machine.system() == 'linux'
+	provides_bits_syscall_h = true
 	disable_linux_headers = true
 	rtdl_include_dirs += include_directories('sysdeps/linux/include')
 	libc_include_dirs += include_directories('sysdeps/linux/include')
@@ -151,6 +153,7 @@ mlibc_conf.set('__MLIBC_ICONV_OPTION', not disable_iconv_option)
 mlibc_conf.set('__MLIBC_GLIBC_OPTION', not disable_glibc_option)
 mlibc_conf.set('__MLIBC_CRYPT_OPTION', not disable_crypt_option)
 mlibc_conf.set('__MLIBC_BSD_OPTION', not disable_bsd_option)
+mlibc_conf.set('__MLIBC_SYSDEP_HAS_BITS_SYSCALL_H', provides_bits_syscall_h)
 
 if not disable_ansi_option
 	rtdl_include_dirs += include_directories('options/ansi/include')
