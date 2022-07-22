@@ -105,6 +105,7 @@ if not no_headers
 		'include/abi-bits/socklen_t.h',
 		'include/abi-bits/statfs.h',
 		'include/abi-bits/statvfs.h',
+		'include/abi-bits/ioctls.h',
 		subdir: 'abi-bits'
 	)
 endif
