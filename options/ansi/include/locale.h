@@ -65,7 +65,7 @@ struct lconv *localeconv(void);
 
 // posix extension
 
-#ifdef __MLIBC_POSIX_OPTION
+#if __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_locale.h>
 #endif // __MLIBC_POSIX_OPTION
 

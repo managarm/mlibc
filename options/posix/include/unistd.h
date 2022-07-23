@@ -12,9 +12,9 @@
 #include <abi-bits/gid_t.h>
 #include <abi-bits/pid_t.h>
 
-#if defined(__MLIBC_SYSDEP_HAS_BITS_SYSCALL_H) && defined(__MLIBC_LINUX_OPTION)
+#if __MLIBC_SYSDEP_HAS_BITS_SYSCALL_H && __MLIBC_LINUX_OPTION
 #include <bits/syscall.h>
-#endif
+#endif /* __MLIBC_SYSDEP_HAS_BITS_SYSCALL_H && __MLIBC_LINUX_OPTION */
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,7 +34,7 @@ extern "C" {
 #define _POSIX_THREAD_SAFE_FUNCTIONS _POSIX_VERSION
 #define _POSIX_MONOTONIC_CLOCK 0
 
-#ifdef __MLIBC_CRYPT_OPTION
+#if __MLIBC_CRYPT_OPTION
 #define _XOPEN_CRYPT 1
 #endif
 
@@ -258,7 +258,7 @@ int getresuid(uid_t *ruid, uid_t *euid, uid_t *suid);
 int getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid);
 
 // Glibc doesn't provide them by default anymore, lock behind an option
-#ifdef __MLIBC_CRYPT_OPTION
+#if __MLIBC_CRYPT_OPTION
 char *crypt(const char *, const char *);
 void encrypt(char block[64], int flags);
 #endif
@@ -267,7 +267,7 @@ void encrypt(char block[64], int flags);
 }
 #endif
 
-#ifdef __MLIBC_LINUX_OPTION
+#if __MLIBC_LINUX_OPTION
 #	include <bits/linux/linux_unistd.h>
 #endif
 

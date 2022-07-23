@@ -22,7 +22,7 @@
 #include <mlibc/strtol.hpp>
 #include <mlibc/global-config.hpp>
 
-#ifdef __MLIBC_POSIX_OPTION
+#if __MLIBC_POSIX_OPTION
 #include <pthread.h>
 #endif // __MLIBC_POSIX_OPTION
 
@@ -216,7 +216,7 @@ int system(const char *command) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fork && mlibc::sys_waitpid &&
 			mlibc::sys_execve && mlibc::sys_sigprocmask && mlibc::sys_sigaction, -1);
 
-#ifdef __MLIBC_POSIX_OPTION
+#if __MLIBC_POSIX_OPTION
 	pthread_testcancel();
 #endif // __MLIBC_POSIX_OPTION
 

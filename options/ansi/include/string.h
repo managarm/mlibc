@@ -66,7 +66,7 @@ void *memmem(const void *, size_t, const void *, size_t);
  * provided the XPG one under basename, we'll have to diverge from GNU here and
  * provide __mlibc_gnu_basename instead.
  */
-#if defined(__MLIBC_GLIBC_OPTION) && defined(_GNU_SOURCE) && !defined(basename)
+#if __MLIBC_GLIBC_OPTION && defined(_GNU_SOURCE) && !defined(basename)
 char *__mlibc_gnu_basename_c(const char *path);
 
 # ifdef __cplusplus
@@ -89,7 +89,7 @@ static inline char *__mlibc_gnu_basename(char *path) {
 }
 #endif
 
-#ifdef __MLIBC_POSIX_OPTION
+#if __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_string.h>
 #endif
 

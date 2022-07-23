@@ -5,7 +5,7 @@
 #include <abi-bits/ioctls.h>
 
 // On Linux, sys/ioctl.h includes the termios ioctls.
-#ifdef __MLIBC_LINUX_OPTION
+#if __MLIBC_LINUX_OPTION
 #	include <asm/ioctls.h>
 #endif
 

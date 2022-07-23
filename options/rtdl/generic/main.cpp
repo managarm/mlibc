@@ -14,7 +14,7 @@
 #include <abi-bits/auxv.h>
 #include "linker.hpp"
 
-#ifdef __MLIBC_POSIX_OPTION
+#if __MLIBC_POSIX_OPTION
 #include <dlfcn.h>
 #endif
 
@@ -416,7 +416,7 @@ const mlibc::RtdlConfig &__dlapi_get_config() {
 	return rtdlConfig;
 }
 
-#ifdef __MLIBC_POSIX_OPTION
+#if __MLIBC_POSIX_OPTION
 
 extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_open(const char *file, int flags, void *returnAddress) {
@@ -667,7 +667,7 @@ int __dlapi_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void*), 
 
 extern "C" [[ gnu::visibility("default") ]]
 void __dlapi_enter(uintptr_t *entry_stack) {
-#ifdef MLIBC_STATIC_BUILD
+#if MLIBC_STATIC_BUILD
 	interpreterMain(entry_stack);
 #else
 	(void)entry_stack;

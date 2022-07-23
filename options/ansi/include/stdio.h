@@ -222,7 +222,7 @@ int fputs_unlocked(const char *, FILE *);
 }
 #endif
 
-#ifdef __MLIBC_POSIX_OPTION
+#if __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_stdio.h>
 #endif
 

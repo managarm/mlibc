@@ -73,7 +73,7 @@ int __mlibc_cpu_count(cpu_set_t *set);
 // Linux extension
 int clone(int (*)(void *), void *, int, void *, ...);
 
-#ifdef __MLIBC_LINUX_OPTION
+#if __MLIBC_LINUX_OPTION
 #include <bits/linux/linux_sched.h>
 #endif
 

@@ -3,7 +3,7 @@
 
 #include <mlibc-config.h>
 
-#ifdef __MLIBC_LINUX_OPTION
+#if __MLIBC_LINUX_OPTION
 #include <asm/ioctl.h>
 #include <linux/ppp_defs.h>
 

@@ -27,7 +27,7 @@ typedef struct {
 	sigset_t sigset;
 } sigjmp_buf[1];
 
-#ifdef __MLIBC_POSIX_OPTION
+#if __MLIBC_POSIX_OPTION
 __attribute__ (( returns_twice )) int sigsetjmp(sigjmp_buf buffer, int savesigs);
 __attribute__ (( noreturn )) void siglongjmp(sigjmp_buf buffer, int value);
 #endif // __MLIBC_POSIX_OPTION
