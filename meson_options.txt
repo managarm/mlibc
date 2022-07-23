@@ -11,3 +11,5 @@ option('disable_iconv_option', type: 'boolean', value : false)
 option('disable_intl_option', type: 'boolean', value : false)
 option('disable_glibc_option', type: 'boolean', value : false)
 option('disable_bsd_option', type: 'boolean', value : false)
+option('debug_allocator', type : 'boolean', value : false,
+	description : 'Enable the debug allocator, which uses mmap for every allocation and adds guard pages for each allocation')

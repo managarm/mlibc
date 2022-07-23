@@ -94,6 +94,7 @@ endif
 internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
 internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', false)
 internal_conf.set('MLIBC_MAP_FILE_WINDOWS', false)
+internal_conf.set('MLIBC_DEBUG_ALLOCATOR', get_option('debug_allocator'))
 
 #----------------------------------------------------------------------------------------
 # Configuration based on sysdeps.
