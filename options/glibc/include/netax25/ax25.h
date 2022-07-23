@@ -37,8 +37,8 @@ struct ax25_parms_struct {
 	unsigned short values[AX25_MAX_VALUES];
 };
 
-#if defined(__linux__) || defined(__MLIBC_LINUX_OPTION)
-#include <linux/sockios.h>
+#ifdef __MLIBC_LINUX_OPTION
+#include <abi-bits/ioctls.h>
 
 #define SIOCAX25GETUID (SIOCPROTOPRIVATE)
 #define SIOCAX25ADDUID (SIOCPROTOPRIVATE + 1)
