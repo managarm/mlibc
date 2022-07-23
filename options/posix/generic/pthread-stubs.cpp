@@ -495,12 +495,17 @@ void pthread_testcancel(void) {
 	}
 }
 int pthread_cancel(pthread_t thread) {
+	if (!mlibc::sys_tgkill) {
+		MLIBC_MISSING_SYSDEP();
+		return ENOSYS;
+	}
+
 	auto tcb = reinterpret_cast<Tcb *>(thread);
 	// Check if the TCB is valid, somewhat..
 	if (tcb->selfPointer != tcb)
 		return ESRCH;
 
-	int old_value = tcb->cancelBits;
+	int old_value = __atomic_load_n(&tcb->cancelBits, __ATOMIC_RELAXED);
 	while (1) {
 		int bitmask = tcbCancelTriggerBit;
 
@@ -513,12 +518,18 @@ int pthread_cancel(pthread_t thread) {
 					new_value, true, __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
 			if (mlibc::tcb_cancel_enabled(new_value)) {
 				pid_t pid = getpid();
-				if (!mlibc::sys_tgkill) {
-					MLIBC_MISSING_SYSDEP();
-					return ENOSYS;
-				}
 
-				return mlibc::sys_tgkill(pid, tcb->tid, SIGCANCEL);
+				int res = mlibc::sys_tgkill(pid, tcb->tid, SIGCANCEL);
+
+				current_value = __atomic_load_n(&tcb->cancelBits, __ATOMIC_RELAXED);
+
+				// If we can't find the thread anymore, it's possible that it exited between
+				// us setting the cancel trigger bit, and us sending the signal. Check the
+				// cancelBits for tcbExitingBit to confirm that.
+				// XXX(qookie): This will be an use-after-free once we start freeing TCBs on
+				//              exit. Perhaps the TCB should be refcounted.
+				if (!(res == ESRCH && (current_value & tcbExitingBit)))
+					return res;
 			}
 
 			break;
