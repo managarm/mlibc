@@ -89,7 +89,7 @@ namespace mlibc {
 
 	template<typename... T>
 	sc_result_t do_cp_syscall(int sc, T... args) {
-#if defined(__MLIBC_POSIX_OPTION) && !defined(MLIBC_BUILDING_RTDL)
+#if __MLIBC_POSIX_OPTION && !MLIBC_BUILDING_RTDL
 		auto result = static_cast<sc_result_t>(do_nargs_cp_syscall(sc, sc_cast(args)...));
 		if (int e = sc_error(result); e) {
 			auto tcb = reinterpret_cast<Tcb*>(get_current_tcb());

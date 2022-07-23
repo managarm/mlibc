@@ -8,9 +8,9 @@
 extern "C" {
 #endif
 
-#ifdef __MLIBC_LINUX_OPTION
+#if __MLIBC_LINUX_OPTION
 #	include <linux/if_ether.h>
-#endif
+#endif /* __MLIBC_LINUX_OPTION */
 
 struct ether_addr {
 	uint8_t ether_addr_octet[6];

@@ -342,7 +342,7 @@ int sys_isatty(int fd) {
 	return 1;
 }
 
-#ifdef __MLIBC_POSIX_OPTION
+#if __MLIBC_POSIX_OPTION
 
 #include <sys/ioctl.h>
 #include <sys/utsname.h>

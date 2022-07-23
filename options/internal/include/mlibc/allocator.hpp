@@ -6,7 +6,7 @@
 #include <frg/slab.hpp>
 #include <internal-config.h>
 
-#ifndef MLIBC_DEBUG_ALLOCATOR
+#if !MLIBC_DEBUG_ALLOCATOR
 
 struct VirtualAllocator {
 public:

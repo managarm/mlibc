@@ -131,7 +131,7 @@ int shm_unlink(const char *name) {
 	return unlink(name);
 }
 
-#ifdef __MLIBC_LINUX_OPTION
+#if __MLIBC_LINUX_OPTION
 int memfd_create(const char *name, unsigned int flags) {
 	int ret = -1;
 
@@ -158,4 +158,4 @@ int mincore(void *, size_t, unsigned char *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
-#endif
+#endif /* __MLIBC_LINUX_OPTION */

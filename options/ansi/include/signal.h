@@ -36,11 +36,11 @@ int raise(int sig);
 }
 #endif
 
-#ifdef __MLIBC_POSIX_OPTION
+#if __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_signal.h>
 #endif
 
-#ifdef __MLIBC_GLIBC_OPTION
+#if __MLIBC_GLIBC_OPTION
 #	include <bits/glibc/glibc_signal.h>
 #endif
 

@@ -7,7 +7,7 @@
 #include <mlibc/internal-sysdeps.hpp>
 #include <internal-config.h>
 
-#ifndef MLIBC_DEBUG_ALLOCATOR
+#if !MLIBC_DEBUG_ALLOCATOR
 
 // --------------------------------------------------------
 // Globals
@@ -193,4 +193,4 @@ MemoryAllocator &getAllocator() {
 	return singleton.get();
 }
 
-#endif
+#endif /* !MLIBC_DEBUG_ALLOCATOR */

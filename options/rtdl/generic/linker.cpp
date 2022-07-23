@@ -33,7 +33,7 @@ constexpr inline bool tlsAboveTp = true;
 extern DebugInterface globalDebugInterface;
 extern uintptr_t __stack_chk_guard;
 
-#ifdef MLIBC_STATIC_BUILD
+#if MLIBC_STATIC_BUILD
 extern "C" size_t __init_array_start[];
 extern "C" size_t __init_array_end[];
 extern "C" size_t __preinit_array_start[];
@@ -129,7 +129,7 @@ SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
 		name.data(), std::move(path), true, rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 
-#ifdef MLIBC_STATIC_BUILD
+#if MLIBC_STATIC_BUILD
 	object->initArray = reinterpret_cast<InitFuncPtr*>(__init_array_start);
 	object->initArraySize = static_cast<size_t>((uintptr_t)__init_array_end -
 			(uintptr_t)__init_array_start);
@@ -442,7 +442,7 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 			if(phdr->p_flags & PF_X)
 				prot |= PROT_EXEC;
 
-			#ifdef MLIBC_MAP_DSO_SEGMENTS
+			#if MLIBC_MAP_DSO_SEGMENTS
 				// TODO: Map with (prot | PROT_WRITE) here,
 				// then mprotect() to remove PROT_WRITE if that is necessary.
 				void *map_pointer;

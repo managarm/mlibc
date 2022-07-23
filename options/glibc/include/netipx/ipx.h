@@ -8,7 +8,7 @@ typedef struct ipx_config_data {
 	unsigned char ipxcfg_auto_create_interfaces;
 } ipx_config_data;
 
-#ifdef __MLIBC_LINUX_OPTION
+#if __MLIBC_LINUX_OPTION
 #include <abi-bits/ioctls.h>
 
 #define SIOCAIPXITFCRT (SIOCPROTOPRIVATE)

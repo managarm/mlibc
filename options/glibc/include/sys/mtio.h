@@ -84,7 +84,7 @@ struct mtconfiginfo {
 #define MTSETPART 33
 #define MTMKPART 34
 
-#ifdef __MLIBC_LINUX_OPTION
+#if __MLIBC_LINUX_OPTION
 #include <asm/ioctl.h>
 
 #define MTIOCTOP _IOR('m', 1, struct mtop)
