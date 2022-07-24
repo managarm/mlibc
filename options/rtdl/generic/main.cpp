@@ -36,6 +36,8 @@ namespace mlibc {
 
 mlibc::RtdlConfig rtdlConfig;
 
+bool ldShowAuxv = false;
+
 uintptr_t *entryStack;
 frg::manual_box<ObjectRepository> initialRepository;
 frg::manual_box<Scope> globalScope;
@@ -210,8 +212,22 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	aux += *aux + 1; // First, we skip argc and all args.
 	__ensure(!*aux);
 	aux++;
-	while(*aux) // Now, we skip the environment.
+	while(*aux) { // Loop through the environment.
+		auto env = reinterpret_cast<char *>(*aux);
+		frg::string_view view{env};
+		size_t s = view.find_first('=');
+
+		if(s == size_t(-1))
+			mlibc::panicLogger() << "rtdl: environment '" << env << "' is missing a '='" << frg::endlog;
+
+		auto value = const_cast<char *>(view.data() + s + 1);
+
+		if(view.sub_string(0, s) == "LD_SHOW_AUXV" && value && *value && *value != '0') {
+			ldShowAuxv = true;
+		}
+
 		aux++;
+	}
 	aux++;
 
 	// Parse the actual vector.
@@ -219,6 +235,47 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		auto value = aux + 1;
 		if(!(*aux))
 			break;
+
+		if(ldShowAuxv) {
+			switch(*aux) {
+				case AT_PHDR: mlibc::infoLogger() << "AT_PHDR: 0x" << frg::hex_fmt{*value} << frg::endlog; break;
+				case AT_PHENT: mlibc::infoLogger() << "AT_PHENT: " << *value << frg::endlog; break;
+				case AT_PHNUM: mlibc::infoLogger() << "AT_PHNUM: " << *value << frg::endlog; break;
+				case AT_ENTRY: mlibc::infoLogger() << "AT_ENTRY: 0x" << frg::hex_fmt{*value} << frg::endlog; break;
+				case AT_PAGESZ: mlibc::infoLogger() << "AT_PAGESZ: " << *value << frg::endlog; break;
+				case AT_BASE: mlibc::infoLogger() << "AT_BASE: 0x" << frg::hex_fmt{*value} << frg::endlog; break;
+				case AT_FLAGS: mlibc::infoLogger() << "AT_FLAGS: 0x" << frg::hex_fmt{*value} << frg::endlog; break;
+				case AT_NOTELF: mlibc::infoLogger() << "AT_NOTELF: " << frg::hex_fmt{*value} << frg::endlog; break;
+				case AT_UID: mlibc::infoLogger() << "AT_UID: " << *value << frg::endlog; break;
+				case AT_EUID: mlibc::infoLogger() << "AT_EUID: " << *value << frg::endlog; break;
+				case AT_GID: mlibc::infoLogger() << "AT_GID: " << *value << frg::endlog; break;
+				case AT_EGID: mlibc::infoLogger() << "AT_EGID: " << *value << frg::endlog; break;
+#ifdef AT_PLATFORM
+ 				case AT_PLATFORM: mlibc::infoLogger() << "AT_PLATFORM: " << reinterpret_cast<const char *>(*value) << frg::endlog; break;
+#endif
+#ifdef AT_HWCAP
+				case AT_HWCAP: mlibc::infoLogger() << "AT_HWCAP: " << frg::hex_fmt{*value} << frg::endlog; break;
+#endif
+#ifdef AT_CLKTCK
+				case AT_CLKTCK: mlibc::infoLogger() << "AT_CLKTCK: " << *value << frg::endlog; break;
+#endif
+#ifdef AT_FPUCW
+				case AT_FPUCW: mlibc::infoLogger() << "AT_FPUCW: " << frg::hex_fmt{*value} << frg::endlog; break;
+#endif
+#ifdef AT_SECURE
+ 				case AT_SECURE: mlibc::infoLogger() << "AT_SECURE: " << *value << frg::endlog; break;
+#endif
+#ifdef AT_RANDOM
+ 				case AT_RANDOM: mlibc::infoLogger() << "AT_RANDOM: 0x" << frg::hex_fmt{*value} << frg::endlog; break;
+#endif
+#ifdef AT_EXECFN
+				case AT_EXECFN: mlibc::infoLogger() << "AT_EXECFN: " << reinterpret_cast<const char *>(*value) << frg::endlog; break;
+#endif
+#ifdef AT_SYSINFO_EHDR
+				case AT_SYSINFO_EHDR: mlibc::infoLogger() << "AT_SYSINFO_EHDR: 0x" << frg::hex_fmt{*value} << frg::endlog; break;
+#endif
+			}
+		}
 
 		// TODO: Whitelist auxiliary vector entries here?
 		switch(*aux) {
