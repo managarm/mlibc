@@ -62,6 +62,7 @@ if not no_headers
 		'include/abi-bits/inotify.h',
 		'include/abi-bits/clockid_t.h',
 		'include/abi-bits/shm.h',
+		'include/abi-bits/mqueue.h',
 		subdir: 'abi-bits'
 	)
 

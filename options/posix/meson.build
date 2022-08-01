@@ -89,6 +89,7 @@ if not no_headers
 		'include/ucontext.h',
 		'include/wordexp.h',
 		'include/semaphore.h',
+		'include/mqueue.h',
 	)
 	install_headers(
 		'include/arpa/inet.h',
