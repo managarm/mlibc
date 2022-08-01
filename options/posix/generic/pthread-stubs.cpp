@@ -1303,3 +1303,8 @@ int pthread_rwlock_unlock(pthread_rwlock_t *rw) {
 		return 0;
 	}
 }
+
+int pthread_getcpuclockid(pthread_t, clockid_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

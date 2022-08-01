@@ -862,7 +862,7 @@ int sys_delete_module(const char *name, unsigned flags) {
 	return 0;
 }
 
-int sys_syslog(int type, char *bufp, int len, int *out) {
+int sys_klogctl(int type, char *bufp, int len, int *out) {
 	auto ret = do_syscall(SYS_syslog, type, bufp, len);
 	if (int e = sc_error(ret); e)
 		return e;

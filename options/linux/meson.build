@@ -25,6 +25,7 @@ libc_sources += files(
 	'generic/ifaddrs.cpp',
 	'generic/sys-sysinfo.cpp',
 	'generic/module.cpp',
+	'generic/sys-klog.cpp',
 )
 
 if not no_headers
@@ -75,6 +76,7 @@ if not no_headers
 		'include/sys/fsuid.h',
 		'include/sys/vt.h',
 		'include/sys/sysinfo.h',
+		'include/sys/klog.h',
 		subdir: 'sys'
 	)
 endif

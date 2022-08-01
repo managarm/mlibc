@@ -386,6 +386,12 @@ char *realpath(const char *path, char *out) {
 		ls = 0;
 	}
 
+	if(resolv.size() == 1) {
+		resolv.resize(0);
+		resolv.push_back('/');
+		resolv.push_back(0);
+	}
+
 	if(debugPathResolution)
 		mlibc::infoLogger() << "mlibc realpath(): Returns '" << resolv.data() << "'" << frg::endlog;
 
@@ -434,8 +440,9 @@ int posix_openpt(int flags) {
 	return fd;
 }
 
-int unlockpt(int) {
-	return 0;
+int unlockpt(int fd) {
+	int unlock = 0;
+	return ioctl(fd, TIOCSPTLCK, &unlock);
 }
 
 int grantpt(int) {

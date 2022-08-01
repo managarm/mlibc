@@ -114,5 +114,20 @@ int main() {
 	assert(!strcmp(path, TEST_BASE "/dir2"));
 	free(path);
 
+	path = realpath("/tmp", NULL);
+	assert(path);
+	assert(!strcmp(path, "/tmp"));
+	free(path);
+
+	path = realpath("/", NULL);
+	assert(path);
+	assert(!strcmp(path, "/"));
+	free(path);
+
+	path = realpath("//", NULL);
+	assert(path);
+	assert(!strcmp(path, "/"));
+	free(path);
+
 	cleanup(1);
 }

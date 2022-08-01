@@ -287,6 +287,8 @@ int pthread_rwlock_tryrdlock(pthread_rwlock_t *);
 int pthread_rwlock_rdlock(pthread_rwlock_t *);
 int pthread_rwlock_unlock(pthread_rwlock_t *);
 
+int pthread_getcpuclockid(pthread_t, clockid_t *);
+
 #ifdef __cplusplus
 }
 #endif
