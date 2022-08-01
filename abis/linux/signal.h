@@ -161,6 +161,15 @@ typedef struct __stack {
 #define SIGEV_NONE 1
 #define SIGEV_THREAD 2
 
+#define SEGV_MAPERR 1
+#define SEGV_ACCERR 2
+
+#define BUS_ADRALN 1
+
+#define ILL_ILLOPC 1
+#define ILL_ILLTRP 4
+#define ILL_PRVOPC 5
+
 #define NSIG 65
 
 #define SI_ASYNCNL (-60)
