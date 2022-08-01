@@ -11,6 +11,7 @@
 #include <mlibc/rtdl-abi.hpp>
 #include <mlibc/stack_protector.hpp>
 #include <internal-config.h>
+#include <abi-bits/auxv.h>
 #include "linker.hpp"
 
 #ifdef __MLIBC_POSIX_OPTION
@@ -166,6 +167,11 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	const char *execfn = "(executable)";
 
 #ifndef MLIBC_STATIC_BUILD
+	using ctor_fn = void(*)(void);
+
+	ctor_fn *ldso_ctors = nullptr;
+	size_t num_ldso_ctors = 0;
+
 	auto ldso_base = getLdsoBase();
 	if(logStartup) {
 		mlibc::infoLogger() << "ldso: Own base address is: 0x"
@@ -189,6 +195,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		switch(ent->d_tag) {
 		case DT_STRTAB: strtab_offset = ent->d_un.d_ptr; break;
 		case DT_SONAME: soname_str = ent->d_un.d_val; break;
+		case DT_INIT_ARRAY: ldso_ctors = reinterpret_cast<ctor_fn *>(ent->d_un.d_ptr + ldso_base); break;
+		case DT_INIT_ARRAYSZ: num_ldso_ctors = ent->d_un.d_val / sizeof(ctor_fn); break;
 		case DT_HASH:
 		case DT_GNU_HASH:
 		case DT_STRSZ:
@@ -291,6 +299,29 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		aux += 2;
 	}
 	globalDebugInterface.base = reinterpret_cast<void*>(ldso_base);
+
+// This is here because libgcc will add a global constructor on glibc Linux
+// (which is what it believes we are due to the aarch64-linux-gnu toolchain)
+// in order to check if LSE atomics are supported.
+//
+// This is not necessary on a custom Linux toolchain and is purely an artifact of
+// using the host toolchain.
+#if defined(__aarch64__) && defined(__gnu_linux__)
+	for (size_t i = 0; i < num_ldso_ctors; i++) {
+		if(logStartup)
+			mlibc::infoLogger() << "ldso: Running own constructor at "
+					<< reinterpret_cast<void *>(ldso_ctors[i])
+					<< frg::endlog;
+		ldso_ctors[i]();
+	}
+#else
+	if (num_ldso_ctors > 0) {
+		mlibc::panicLogger() << "ldso: Found unexpected own global constructor(s), init_array starts at: "
+				<< ldso_ctors
+				<< frg::endlog;
+	}
+#endif
+
 #else
 	auto ehdr = reinterpret_cast<Elf64_Ehdr*>(__ehdr_start);
 	phdr_pointer = reinterpret_cast<void*>((uintptr_t)ehdr->e_phoff + (uintptr_t)ehdr);
@@ -662,3 +693,37 @@ void __dlapi_enter(uintptr_t *entry_stack) {
 #endif
 }
 
+// XXX(qookie):
+// This is here because libgcc will call into __getauxval on glibc Linux
+// (which is what it believes we are due to the aarch64-linux-gnu toolchain)
+// in order to find AT_HWCAP to discover if LSE atomics are supported.
+//
+// This is not necessary on a custom Linux toolchain and is purely an artifact of
+// using the host toolchain.
+
+// __gnu_linux__ is the define checked by libgcc
+#if defined(__aarch64__) && defined(__gnu_linux__)
+
+extern "C" unsigned long __getauxval(unsigned long type) {
+	// Find the auxiliary vector by skipping args and environment.
+	auto aux = entryStack;
+	aux += *aux + 1; // Skip argc and all arguments
+	__ensure(!*aux);
+	aux++;
+	while(*aux) // Now, we skip the environment.
+		aux++;
+	aux++;
+
+	// Parse the auxiliary vector.
+	while(true) {
+		auto value = aux + 1;
+		if(*aux == AT_NULL) {
+			return 0;
+		}else if(*aux == type) {
+			return *value;
+		}
+		aux += 2;
+	}
+}
+
+#endif

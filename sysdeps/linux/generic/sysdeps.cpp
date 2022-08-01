@@ -50,6 +50,9 @@ int sys_tcb_set(void *pointer) {
 #elif defined(__riscv)
 	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
 	asm volatile ("mv tp, %0" :: "r"(thread_data));
+#elif defined (__aarch64__)
+	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb) - 0x10;
+	asm volatile ("msr tpidr_el0, %0" :: "r"(thread_data));
 #else
 #error "Missing architecture specific code."
 #endif
@@ -481,6 +484,11 @@ int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out) {
 	// TODO: We should change the sysdep so that we don't need to do this.
 	auto tls = reinterpret_cast<char *>(tcb) + sizeof(Tcb);
 	tcb = reinterpret_cast<void *>(tls);
+#elif defined(__aarch64__)
+	// TP should point to the address 16 bytes before the end of the TCB.
+	// TODO: We should change the sysdep so that we don't need to do this.
+	auto tp = reinterpret_cast<char *>(tcb) + sizeof(Tcb) - 0x10;
+	tcb = reinterpret_cast<void *>(tp);
 #endif
 
 	auto ret = __mlibc_spawn_thread(flags, stack, pid_out, NULL, tcb);
@@ -503,6 +511,8 @@ int sys_before_cancellable_syscall(ucontext_t *uct) {
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.gregs[REG_RIP]);
 #elif defined(__riscv)
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.sc_regs.pc);
+#elif defined(__aarch64__)
+	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.pc);
 #else
 #error "Missing architecture specific code."
 #endif

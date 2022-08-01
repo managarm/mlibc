@@ -646,7 +646,9 @@ int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *pid_out) {
 
 int sys_tcb_set(void *pointer) {
 #if defined(__aarch64__)
-	asm volatile ("msr tpidr_el0, %0" :: "r"(pointer));
+	uintptr_t addr = reinterpret_cast<uintptr_t>(pointer);
+	addr += sizeof(Tcb) - 0x10;
+	asm volatile ("msr tpidr_el0, %0" :: "r"(addr));
 #else
 	HEL_CHECK(helWriteFsBase(pointer));
 #endif
