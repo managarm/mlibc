@@ -1,7 +1,7 @@
 #ifndef _ABIBITS_SOCKET_H
 #define _ABIBITS_SOCKET_H
 
-#include <bits/posix/socklen_t.h>
+#include <abi-bits/socklen_t.h>
 #include <bits/posix/iovec.h>
 
 #ifdef __cplusplus
@@ -28,6 +28,12 @@ struct sockaddr_storage {
 struct mmsghdr {
 	struct msghdr msg_hdr;
 	unsigned int  msg_len;
+};
+
+struct cmsghdr {
+	socklen_t cmsg_len;
+	int cmsg_level;
+	int cmsg_type;
 };
 
 #ifdef __cplusplus

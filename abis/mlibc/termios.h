@@ -1,6 +1,11 @@
 #ifndef _ABIBITS_TERMIOS_H
 #define _ABIBITS_TERMIOS_H
 
+#if __MLIBC_BUILDING_MLIBC
+#warning abis/mlibc/termios.h is deprecated. We suggest to use abis/linux/termios.h instead. \
+	Note that this will potentially require kernel changes.
+#endif
+
 typedef unsigned int cc_t;
 typedef unsigned int speed_t;
 typedef unsigned int tcflag_t;

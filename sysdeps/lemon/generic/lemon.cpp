@@ -140,8 +140,7 @@ void sys_yield(){
 	syscall(SYS_YIELD);
 }
 
-int sys_clone(void *entry, void *user_arg, void *tcb, pid_t *tid_out){
-	auto stack = prepare_stack(entry, user_arg, tcb);
+int sys_clone(void *tcb, pid_t *tid_out, void *stack){
 	pid_t tid = syscall(SYS_SPAWN_THREAD, __mlibc_start_thread, stack);
 
 	if(tid < 0){

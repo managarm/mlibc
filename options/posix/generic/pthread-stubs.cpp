@@ -1,10 +1,13 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <errno.h>
+#include <inttypes.h>
 
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>
@@ -55,12 +58,19 @@ static constexpr unsigned int mutex_excl_bit = static_cast<uint32_t>(1) << 30;
 static constexpr unsigned int rc_count_mask = (static_cast<uint32_t>(1) << 31) - 1;
 static constexpr unsigned int rc_waiters_bit = static_cast<uint32_t>(1) << 31;
 
+static constexpr size_t default_stacksize = 0x200000;
+static constexpr size_t default_guardsize = 4096;
+
 // ----------------------------------------------------------------------------
 // pthread_attr and pthread functions.
 // ----------------------------------------------------------------------------
 
 // pthread_attr functions.
-int pthread_attr_init(pthread_attr_t *) {
+int pthread_attr_init(pthread_attr_t *attr) {
+	*attr = pthread_attr_t{};
+	attr->__mlibc_stacksize = default_stacksize;
+	attr->__mlibc_guardsize = default_guardsize;
+	attr->__mlibc_detachstate = PTHREAD_CREATE_JOINABLE;
 	return 0;
 }
 
@@ -68,84 +78,276 @@ int pthread_attr_destroy(pthread_attr_t *) {
 	return 0;
 }
 
-int pthread_attr_getdetachstate(const pthread_attr_t *, int *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate) {
+	*detachstate = attr->__mlibc_detachstate;
+	return 0;
 }
+int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate) {
+	if (detachstate != PTHREAD_CREATE_DETACHED &&
+			detachstate != PTHREAD_CREATE_JOINABLE)
+		return EINVAL;
 
-int pthread_attr_setdetachstate(pthread_attr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_attr_getstacksize(const pthread_attr_t *__restrict, size_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_attr_setstacksize(pthread_attr_t *, size_t) {
-	mlibc::infoLogger() << "mlibc: pthread_attr_setstacksize() is not implemented correctly" << frg::endlog;
+	attr->__mlibc_detachstate = detachstate;
 	return 0;
 }
 
-int pthread_attr_getguardsize(const pthread_attr_t *__restrict, size_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getstacksize(const pthread_attr_t *__restrict attr, size_t *__restrict stacksize) {
+	*stacksize = attr->__mlibc_stacksize;
+	return 0;
 }
 
-int pthread_attr_setguardsize(pthread_attr_t *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize) {
+	if (stacksize < PTHREAD_STACK_MIN)
+		return EINVAL;
+	attr->__mlibc_stacksize = stacksize;
+	return 0;
 }
 
-int pthread_attr_getscope(const pthread_attr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getstackaddr(const pthread_attr_t *attr, void **stackaddr) {
+	*stackaddr = attr->__mlibc_stackaddr;
+	return 0;
+}
+int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr) {
+	attr->__mlibc_stackaddr = stackaddr;
+	return 0;
 }
 
-int pthread_attr_setscope(pthread_attr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getstack(const pthread_attr_t *attr, void **stackaddr, size_t *stacksize) {
+	*stackaddr = attr->__mlibc_stackaddr;
+	*stacksize = attr->__mlibc_stacksize;
+	return 0;
+}
+int pthread_attr_setstack(pthread_attr_t *attr, void *stackaddr, size_t stacksize) {
+	if (stacksize < PTHREAD_STACK_MIN)
+		return EINVAL;
+	attr->__mlibc_stacksize = stacksize;
+	attr->__mlibc_stackaddr = stackaddr;
+	return 0;
 }
 
-int pthread_attr_getschedpolicy(const pthread_attr_t *__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getguardsize(const pthread_attr_t *__restrict attr, size_t *__restrict guardsize) {
+	*guardsize = attr->__mlibc_guardsize;
+	return 0;
+}
+int pthread_attr_setguardsize(pthread_attr_t *attr, size_t guardsize) {
+	attr->__mlibc_guardsize = guardsize;
+	return 0;
 }
 
-int pthread_attr_setschedpolicy(pthread_attr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getscope(const pthread_attr_t *attr, int *scope) {
+	*scope = attr->__mlibc_scope;
+	return 0;
+}
+int pthread_attr_setscope(pthread_attr_t *attr, int scope) {
+	if (scope != PTHREAD_SCOPE_SYSTEM &&
+			scope != PTHREAD_SCOPE_PROCESS)
+		return EINVAL;
+	if (scope == PTHREAD_SCOPE_PROCESS)
+		return ENOTSUP;
+	attr->__mlibc_scope = scope;
+	return 0;
 }
 
-int pthread_attr_getschedparam(const pthread_attr_t *__restrict, struct sched_param *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getinheritsched(const pthread_attr_t *attr, int *inheritsched) {
+	*inheritsched = attr->__mlibc_inheritsched;
+	return 0;
+}
+int pthread_attr_setinheritsched(pthread_attr_t *attr, int inheritsched) {
+	if (inheritsched != PTHREAD_INHERIT_SCHED &&
+			inheritsched != PTHREAD_EXPLICIT_SCHED)
+		return EINVAL;
+	attr->__mlibc_inheritsched = inheritsched;
+	return 0;
 }
 
-int pthread_attr_setschedparam(pthread_attr_t *__restrict, const struct sched_param *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getschedparam(const pthread_attr_t *__restrict attr, struct sched_param *__restrict schedparam) {
+	*schedparam = attr->__mlibc_schedparam;
+	return 0;
+}
+int pthread_attr_setschedparam(pthread_attr_t *__restrict attr, const struct sched_param *__restrict schedparam) {
+	// TODO: this is supposed to return EINVAL for when the schedparam doesn't make sense
+	// for the given schedpolicy.
+	attr->__mlibc_schedparam = *schedparam;
+	return 0;
 }
 
-int pthread_attr_getinheritsched(const pthread_attr_t *__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getschedpolicy(const pthread_attr_t *__restrict attr, int *__restrict policy) {
+	*policy = attr->__mlibc_schedpolicy;
+	return 0;
+}
+int pthread_attr_setschedpolicy(pthread_attr_t *__restrict attr, int policy) {
+	if (policy != SCHED_FIFO && policy != SCHED_RR &&
+			policy != SCHED_OTHER)
+		return EINVAL;
+	attr->__mlibc_schedpolicy = policy;
+	return 0;
 }
 
-int pthread_attr_setinheritsched(pthread_attr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_attr_getaffinity_np(const pthread_attr_t *__restrict attr,
+		size_t cpusetsize, cpu_set_t *__restrict cpusetp) {
+	if (!attr)
+		return EINVAL;
+
+	if (!attr->__mlibc_cpuset) {
+		memset(cpusetp, -1, cpusetsize);
+		return 0;
+	}
+
+	for (size_t cnt = cpusetsize; cnt < attr->__mlibc_cpusetsize; cnt++)
+		if (reinterpret_cast<char*>(attr->__mlibc_cpuset)[cnt] != '\0')
+			return ERANGE;
+
+	auto p = memcpy(cpusetp, attr->__mlibc_cpuset,
+			std::min(cpusetsize, attr->__mlibc_cpusetsize));
+	if (cpusetsize > attr->__mlibc_cpusetsize)
+		memset(p, '\0', cpusetsize - attr->__mlibc_cpusetsize);
+
+	return 0;
+}
+
+int pthread_attr_setaffinity_np(pthread_attr_t *__restrict attr,
+		size_t cpusetsize, const cpu_set_t *__restrict cpusetp) {
+	if (!attr)
+		return EINVAL;
+
+	if (!cpusetp || !cpusetsize) {
+		attr->__mlibc_cpuset = NULL;
+		attr->__mlibc_cpusetsize = 0;
+		return 0;
+	}
+
+	if (attr->__mlibc_cpusetsize != cpusetsize) {
+		auto newp = realloc(attr->__mlibc_cpuset, cpusetsize);
+		if (!newp)
+			return ENOMEM;
+
+		attr->__mlibc_cpuset = static_cast<cpu_set_t*>(newp);
+		attr->__mlibc_cpusetsize = cpusetsize;
+	}
+
+	memcpy(attr->__mlibc_cpuset, cpusetp, cpusetsize);
+	return 0;
+}
+
+int pthread_attr_getsigmask_np(const pthread_attr_t *__restrict attr,
+		sigset_t *__restrict sigmask) {
+	if (!attr)
+		return EINVAL;
+
+	if (!attr->__mlibc_sigmaskset) {
+		sigemptyset(sigmask);
+		return PTHREAD_ATTR_NO_SIGMASK_NP;
+	}
+
+	*sigmask = attr->__mlibc_sigmask;
+
+	return 0;
+}
+int pthread_attr_setsigmask_np(pthread_attr_t *__restrict attr,
+		const sigset_t *__restrict sigmask) {
+	if (!attr)
+		return EINVAL;
+
+	if (!sigmask) {
+		attr->__mlibc_sigmaskset = 0;
+		return 0;
+	}
+
+	attr->__mlibc_sigmask = *sigmask;
+	attr->__mlibc_sigmaskset = 1;
+
+	// Filter out internally used signals.
+	sigdelset(&attr->__mlibc_sigmask, SIGCANCEL);
+
+	return 0;
+}
+
+namespace {
+	void get_own_stackinfo(void **stack_addr, size_t *stack_size) {
+		auto fp = fopen("/proc/self/maps", "r");
+		if (!fp) {
+			mlibc::infoLogger() << "mlibc pthreads: /proc/self/maps does not exist! Producing incorrect"
+				" stack results!" << frg::endlog;
+			return;
+		}
+
+		char line[256];
+		auto sp = mlibc::get_sp();
+		while (fgets(line, 256, fp)) {
+			uintptr_t from, to;
+			if(sscanf(line, "%lx-%lx", &from, &to) != 2)
+				continue;
+			if (sp < to && sp > from) {
+				// We need to return the lowest byte of the stack.
+				*stack_addr = reinterpret_cast<void*>(from);
+				*stack_size = to - from;
+				fclose(fp);
+				return;
+			}
+		}
+
+		fclose(fp);
+	}
+}
+
+int pthread_getattr_np(pthread_t thread, pthread_attr_t *attr) {
+	auto tcb = reinterpret_cast<Tcb*>(thread);
+	*attr = pthread_attr_t{};
+
+	if (!tcb->stackAddr || !tcb->stackSize) {
+		get_own_stackinfo(&attr->__mlibc_stackaddr, &attr->__mlibc_stacksize);
+	} else {
+		attr->__mlibc_stacksize = tcb->stackSize;
+		attr->__mlibc_stackaddr = tcb->stackAddr;
+	}
+
+	attr->__mlibc_guardsize = tcb->guardSize;
+	attr->__mlibc_detachstate = tcb->isJoinable ? PTHREAD_CREATE_JOINABLE : PTHREAD_CREATE_DETACHED;
+	mlibc::infoLogger() << "pthread_getattr_np(): Implementation is incomplete!" << frg::endlog;
+	return 0;
 }
 
 extern "C" Tcb *__rtdl_allocateTcb();
 
 // pthread functions.
-int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict,
+int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict attrp,
 		void *(*entry) (void *), void *__restrict user_arg) {
 	auto new_tcb = __rtdl_allocateTcb();
 	pid_t tid;
-	mlibc::sys_clone(reinterpret_cast<void *>(entry), user_arg, new_tcb, &tid);
+	pthread_attr_t attr = {};
+	if (!attrp)
+		pthread_attr_init(&attr);
+	else
+		attr = *attrp;
+
+	if (attr.__mlibc_cpuset)
+		mlibc::infoLogger() << "pthread_create(): cpuset is ignored!" << frg::endlog;
+	if (attr.__mlibc_sigmaskset)
+		mlibc::infoLogger() << "pthread_create(): sigmask is ignored!" << frg::endlog;
+
+	// TODO: due to alignment guarantees, the stackaddr and stacksize might change
+	// when the stack is allocated. Currently this isn't propagated to the TCB,
+	// but it should be.
+	void *stack = attr.__mlibc_stackaddr;
+	if (!mlibc::sys_prepare_stack) {
+		MLIBC_MISSING_SYSDEP();
+		return ENOSYS;
+	}
+	int ret = mlibc::sys_prepare_stack(&stack, reinterpret_cast<void*>(entry),
+			user_arg, new_tcb, &attr.__mlibc_stacksize, &attr.__mlibc_guardsize);
+	if (ret)
+		return ret;
+
+	if (!mlibc::sys_clone) {
+		MLIBC_MISSING_SYSDEP();
+		return ENOSYS;
+	}
+	new_tcb->stackSize = attr.__mlibc_stacksize;
+	new_tcb->guardSize = attr.__mlibc_guardsize;
+	new_tcb->stackAddr = reinterpret_cast<void*>(
+			reinterpret_cast<uintptr_t>(stack)
+			- attr.__mlibc_stacksize - attr.__mlibc_guardsize);
+	mlibc::sys_clone(new_tcb, &tid, stack);
 	*thread = reinterpret_cast<pthread_t>(new_tcb);
 
 	__atomic_store_n(&new_tcb->tid, tid, __ATOMIC_RELAXED);
@@ -293,21 +495,6 @@ int pthread_setname_np(pthread_t, const char *) {
 }
 
 int pthread_getname_np(pthread_t, char *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_attr_setstack(pthread_attr_t *, void *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_attr_getstack(const pthread_attr_t *, void **, size_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int pthread_getattr_np(pthread_t, pthread_attr_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -686,58 +873,85 @@ int pthread_once(pthread_once_t *once, void (*function) (void)) {
 // pthread_mutexattr functions
 int pthread_mutexattr_init(pthread_mutexattr_t *attr) {
 	SCOPE_TRACE();
-
-	memset(attr, 0, sizeof(pthread_mutexattr_t));
+	attr->__mlibc_type = PTHREAD_MUTEX_DEFAULT;
+	attr->__mlibc_robust = PTHREAD_MUTEX_STALLED;
+	attr->__mlibc_pshared = PTHREAD_PROCESS_PRIVATE;
+	attr->__mlibc_protocol = PTHREAD_PRIO_NONE;
 	return 0;
 }
 
-int pthread_mutexattr_destroy(pthread_mutexattr_t *) {
+int pthread_mutexattr_destroy(pthread_mutexattr_t *attr) {
 	SCOPE_TRACE();
-
+	memset(attr, 0, sizeof(*attr));
 	return 0;
 }
 
-int pthread_mutexattr_gettype(const pthread_mutexattr_t *__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutexattr_gettype(const pthread_mutexattr_t *__restrict attr,
+		int *__restrict type) {
+	*type = attr->__mlibc_type;
+	return 0;
 }
 
 int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type) {
-	SCOPE_TRACE();
+	if (type != PTHREAD_MUTEX_NORMAL && type != PTHREAD_MUTEX_ERRORCHECK
+			&& type != PTHREAD_MUTEX_RECURSIVE)
+		return EINVAL;
 
-	// TODO: return EINVAL instead of asserting.
-	__ensure(type == PTHREAD_MUTEX_NORMAL || type == PTHREAD_MUTEX_ERRORCHECK
-			|| type == PTHREAD_MUTEX_RECURSIVE);
 	attr->__mlibc_type = type;
 	return 0;
 }
 
-int pthread_mutexattr_getrobust(const pthread_mutexattr_t *__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutexattr_getrobust(const pthread_mutexattr_t *__restrict attr,
+		int *__restrict robust) {
+	*robust = attr->__mlibc_robust;
+	return 0;
 }
-int pthread_mutexattr_setrobust(pthread_mutexattr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutexattr_setrobust(pthread_mutexattr_t *attr, int robust) {
+	if (robust != PTHREAD_MUTEX_STALLED && robust != PTHREAD_MUTEX_ROBUST)
+		return EINVAL;
+
+	attr->__mlibc_robust = robust;
+	return 0;
 }
 
-int pthread_mutexattr_getpshared(const pthread_mutexattr_t *, int *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutexattr_getpshared(const pthread_mutexattr_t *attr, int *pshared) {
+	*pshared = attr->__mlibc_pshared;
+	return 0;
 }
-int pthread_mutexattr_setpshared(pthread_mutexattr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutexattr_setpshared(pthread_mutexattr_t *attr, int pshared) {
+	if (pshared != PTHREAD_PROCESS_PRIVATE && pshared != PTHREAD_PROCESS_SHARED)
+		return EINVAL;
+
+	attr->__mlibc_pshared = pshared;
+	return 0;
 }
 
-int pthread_mutexattr_getprotocol(const pthread_mutexattr_t *__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutexattr_getprotocol(const pthread_mutexattr_t *__restrict attr,
+		int *__restrict protocol) {
+	*protocol = attr->__mlibc_protocol;
+	return 0;
 }
 
-int pthread_mutexattr_setprotocol(pthread_mutexattr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutexattr_setprotocol(pthread_mutexattr_t *attr, int protocol) {
+	if (protocol != PTHREAD_PRIO_NONE && protocol != PTHREAD_PRIO_INHERIT
+			&& protocol != PTHREAD_PRIO_PROTECT)
+		return EINVAL;
+
+	attr->__mlibc_protocol = protocol;
+	return 0;
+}
+
+int pthread_mutexattr_getprioceiling(const pthread_mutexattr_t *__restrict attr,
+		int *__restrict prioceiling) {
+	(void)attr;
+	(void)prioceiling;
+	return EINVAL;
+}
+
+int pthread_mutexattr_setprioceiling(pthread_mutexattr_t *attr, int prioceiling) {
+	(void)attr;
+	(void)prioceiling;
+	return EINVAL;
 }
 
 // pthread_mutex functions
@@ -745,12 +959,15 @@ int pthread_mutex_init(pthread_mutex_t *__restrict mutex,
 		const pthread_mutexattr_t *__restrict attr) {
 	SCOPE_TRACE();
 
-	auto type = attr ? attr->__mlibc_type : 0;
-	auto robust = attr ? attr->__mlibc_robust : 0;
+	auto type = attr ? attr->__mlibc_type : PTHREAD_MUTEX_DEFAULT;
+	auto robust = attr ? attr->__mlibc_robust : PTHREAD_MUTEX_STALLED;
+	auto protocol = attr ? attr->__mlibc_protocol : PTHREAD_PRIO_NONE;
+	auto pshared = attr ? attr->__mlibc_pshared : PTHREAD_PROCESS_PRIVATE;
 
 	mutex->__mlibc_state = 0;
 	mutex->__mlibc_recursion = 0;
 	mutex->__mlibc_flags = 0;
+	mutex->__mlibc_prioceiling = 0; // TODO: We don't implement this.
 
 	if(type == PTHREAD_MUTEX_RECURSIVE) {
 		mutex->__mlibc_flags |= mutexRecursive;
@@ -760,7 +977,10 @@ int pthread_mutex_init(pthread_mutex_t *__restrict mutex,
 		__ensure(type == PTHREAD_MUTEX_NORMAL);
 	}
 
+	// TODO: Other values aren't supported yet.
 	__ensure(robust == PTHREAD_MUTEX_STALLED);
+	__ensure(protocol == PTHREAD_PRIO_NONE);
+	__ensure(pshared == PTHREAD_PROCESS_PRIVATE);
 
 	return 0;
 }
@@ -896,41 +1116,55 @@ int pthread_mutex_consistent(pthread_mutex_t *) {
 // pthread_condattr and pthread_cond functions.
 // ----------------------------------------------------------------------------
 
-int pthread_condattr_init(pthread_condattr_t *) {
-	SCOPE_TRACE();
-
-	mlibc::infoLogger() << "mlibc: pthread_condattr_init() is not implemented correctly" << frg::endlog;
-	return 0;
-}
-int pthread_condattr_destroy(pthread_condattr_t *) {
-	SCOPE_TRACE();
-
-	mlibc::infoLogger() << "mlibc: pthread_condattr_destroy() is not implemented correctly" << frg::endlog;
+int pthread_condattr_init(pthread_condattr_t *attr) {
+	attr->__mlibc_pshared = PTHREAD_PROCESS_PRIVATE;
+	attr->__mlibc_clock = CLOCK_REALTIME;
 	return 0;
 }
 
-int pthread_condattr_getclock(const pthread_condattr_t *__restrict, clockid_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-int pthread_condattr_setclock(pthread_condattr_t *, clockid_t) {
-	SCOPE_TRACE();
-
-	mlibc::infoLogger() << "mlibc: pthread_condattr_setclock() is not implemented correctly" << frg::endlog;
+int pthread_condattr_destroy(pthread_condattr_t *attr) {
+	memset(attr, 0, sizeof(*attr));
 	return 0;
 }
 
-int pthread_condattr_getpshared(const pthread_condattr_t *__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-int pthread_condattr_setpshared(pthread_condattr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_condattr_getclock(const pthread_condattr_t *__restrict attr,
+		clockid_t *__restrict clock) {
+	*clock = attr->__mlibc_clock;
+	return 0;
 }
 
-int pthread_cond_init(pthread_cond_t *__restrict cond, const pthread_condattr_t *__restrict) {
+int pthread_condattr_setclock(pthread_condattr_t *attr, clockid_t clock) {
+	if (clock != CLOCK_REALTIME && clock != CLOCK_MONOTONIC
+			&& clock != CLOCK_MONOTONIC_RAW && clock != CLOCK_REALTIME_COARSE
+			&& clock != CLOCK_MONOTONIC_COARSE && clock != CLOCK_BOOTTIME)
+		return EINVAL;
+
+	attr->__mlibc_clock = clock;
+	return 0;
+}
+
+int pthread_condattr_getpshared(const pthread_condattr_t *__restrict attr,
+		int *__restrict pshared) {
+	*pshared = attr->__mlibc_pshared;
+	return 0;
+}
+
+int pthread_condattr_setpshared(pthread_condattr_t *attr, int pshared) {
+	if (pshared != PTHREAD_PROCESS_PRIVATE && pshared != PTHREAD_PROCESS_SHARED)
+		return EINVAL;
+
+	attr->__mlibc_pshared = pshared;
+	return 0;
+}
+
+int pthread_cond_init(pthread_cond_t *__restrict cond, const pthread_condattr_t *__restrict attr) {
 	SCOPE_TRACE();
+
+	auto clock = attr ? attr->__mlibc_clock : CLOCK_REALTIME;
+	auto pshared = attr ? attr->__mlibc_pshared : PTHREAD_PROCESS_PRIVATE;
+
+	cond->__mlibc_clock = clock;
+	cond->__mlibc_flags = pshared;
 
 	__atomic_store_n(&cond->__mlibc_seq, 1, __ATOMIC_RELAXED);
 
@@ -949,6 +1183,9 @@ int pthread_cond_wait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restri
 
 int pthread_cond_timedwait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restrict mutex,
 		const struct timespec *__restrict abstime) {
+	// TODO: pshared isn't supported yet.
+	__ensure(cond->__mlibc_flags == 0);
+
 	constexpr long nanos_per_second = 1'000'000'000;
 	if (abstime && (abstime->tv_nsec < 0 || abstime->tv_nsec >= nanos_per_second))
 		return EINVAL;
@@ -965,9 +1202,8 @@ int pthread_cond_timedwait(pthread_cond_t *__restrict cond, pthread_mutex_t *__r
 			// Adjust for the fact that sys_futex_wait accepts a *timeout*, but
 			// pthread_cond_timedwait accepts an *absolute time*.
 			// Note: mlibc::sys_clock_get is available unconditionally.
-			// TODO: allow clock to be configured via a condattr.
 			struct timespec now;
-			if (mlibc::sys_clock_get(CLOCK_REALTIME, &now.tv_sec, &now.tv_nsec))
+			if (mlibc::sys_clock_get(cond->__mlibc_clock, &now.tv_sec, &now.tv_nsec))
 				__ensure(!"sys_clock_get() failed");
 
 			struct timespec timeout;
@@ -989,9 +1225,9 @@ int pthread_cond_timedwait(pthread_cond_t *__restrict cond, pthread_mutex_t *__r
 				__ensure(timeout.tv_nsec >= 0);
 			}
 
-			e = mlibc::sys_futex_wait(&cond->__mlibc_seq, seq, &timeout);
+			e = mlibc::sys_futex_wait((int *)&cond->__mlibc_seq, seq, &timeout);
 		} else {
-			e = mlibc::sys_futex_wait(&cond->__mlibc_seq, seq, nullptr);
+			e = mlibc::sys_futex_wait((int *)&cond->__mlibc_seq, seq, nullptr);
 		}
 
 		if (pthread_mutex_lock(mutex))
@@ -1043,28 +1279,112 @@ int pthread_cond_broadcast(pthread_cond_t *cond) {
 // pthread_barrierattr and pthread_barrier functions.
 // ----------------------------------------------------------------------------
 
-int pthread_barrierattr_init(pthread_barrierattr_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_barrierattr_init(pthread_barrierattr_t *attr) {
+	attr->__mlibc_pshared = PTHREAD_PROCESS_PRIVATE;
+	return 0;
 }
+
+int pthread_barrierattr_getpshared(const pthread_barrierattr_t *__restrict attr,
+		int *__restrict pshared) {
+	*pshared = attr->__mlibc_pshared;
+	return 0;
+}
+
+int pthread_barrierattr_setpshared(pthread_barrierattr_t *attr, int pshared) {
+	if (pshared != PTHREAD_PROCESS_SHARED && pshared != PTHREAD_PROCESS_PRIVATE)
+		return EINVAL;
+
+	attr->__mlibc_pshared = pshared;
+	return 0;
+}
+
 int pthread_barrierattr_destroy(pthread_barrierattr_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return 0;
 }
 
-int pthread_barrier_init(pthread_barrier_t *__restrict, const pthread_barrierattr_t *__restrict,
-		unsigned int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-int pthread_barrier_destroy(pthread_barrier_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_barrier_init(pthread_barrier_t *__restrict barrier,
+		const pthread_barrierattr_t *__restrict attr, unsigned count) {
+	if (count == 0)
+		return EINVAL;
+
+	barrier->__mlibc_waiting = 0;
+	barrier->__mlibc_inside = 0;
+	barrier->__mlibc_seq = 0;
+	barrier->__mlibc_count = count;
+
+	// Since we don't implement these yet, set a flag to error later.
+	auto pshared = attr ? attr->__mlibc_pshared : PTHREAD_PROCESS_PRIVATE;
+	barrier->__mlibc_flags = pshared;
+
+	return 0;
 }
 
-int pthread_barrier_wait(pthread_barrier_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_barrier_destroy(pthread_barrier_t *barrier) {
+	// Wait until there are no threads still using the barrier.
+	unsigned inside = 0;
+	do {
+		unsigned expected = __atomic_load_n(&barrier->__mlibc_inside, __ATOMIC_RELAXED);
+		if (expected == 0)
+			break;
+
+		int e = mlibc::sys_futex_wait((int *)&barrier->__mlibc_inside, expected, nullptr);
+		if (e != 0 && e != EAGAIN && e != EINTR)
+			mlibc::panicLogger() << "mlibc: sys_futex_wait() returned error " << e << frg::endlog;
+	} while (inside > 0);
+
+	memset(barrier, 0, sizeof *barrier);
+	return 0;
+}
+
+int pthread_barrier_wait(pthread_barrier_t *barrier) {
+	if (barrier->__mlibc_flags != 0) {
+		mlibc::panicLogger() << "mlibc: pthread_barrier_t flags were non-zero"
+			<< frg::endlog;
+	}
+
+	// inside is incremented on entry and decremented on exit.
+	// This is used to synchronise with pthread_barrier_destroy, to ensure that a thread doesn't pass
+	// the barrier and immediately destroy its state while other threads still rely on it.
+
+	__atomic_fetch_add(&barrier->__mlibc_inside, 1, __ATOMIC_ACQUIRE);
+
+	auto leave = [&](){
+		unsigned inside = __atomic_sub_fetch(&barrier->__mlibc_inside, 1, __ATOMIC_RELEASE);
+		if (inside == 0)
+			mlibc::sys_futex_wake((int *)&barrier->__mlibc_inside);
+	};
+
+	unsigned seq = __atomic_load_n(&barrier->__mlibc_seq, __ATOMIC_ACQUIRE);
+
+	while (true) {
+		unsigned expected = __atomic_load_n(&barrier->__mlibc_waiting, __ATOMIC_RELAXED);
+		bool swapped = __atomic_compare_exchange_n(&barrier->__mlibc_waiting, &expected, expected + 1, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE);
+
+		if (swapped) {
+			if (expected + 1 == barrier->__mlibc_count) {
+				// We were the last thread to hit the barrier. Reset waiters and wake the others.
+				__atomic_fetch_add(&barrier->__mlibc_seq, 1, __ATOMIC_ACQUIRE);
+				__atomic_store_n(&barrier->__mlibc_waiting, 0, __ATOMIC_RELEASE);
+
+				mlibc::sys_futex_wake((int *)&barrier->__mlibc_seq);
+
+				leave();
+				return PTHREAD_BARRIER_SERIAL_THREAD;
+			}
+
+			while (true) {
+				int e = mlibc::sys_futex_wait((int *)&barrier->__mlibc_seq, seq, nullptr);
+				if (e != 0 && e != EAGAIN && e != EINTR)
+					mlibc::panicLogger() << "mlibc: sys_futex_wait() returned error " << e << frg::endlog;
+
+				unsigned newSeq = __atomic_load_n(&barrier->__mlibc_seq, __ATOMIC_ACQUIRE);
+				if (newSeq > seq) {
+					leave();
+					return 0;
+				}
+			}
+		}
+	}
 }
 
 // ----------------------------------------------------------------------------

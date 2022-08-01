@@ -2,6 +2,7 @@
 #define _ABIBITS_SOCKET_H
 
 #include <stddef.h>
+#include <abi-bits/socklen_t.h>
 #include <bits/posix/iovec.h>
 
 #ifdef __cplusplus
@@ -12,12 +13,12 @@ typedef unsigned short sa_family_t;
 
 struct msghdr {
 	void *msg_name;
-	int msg_namelen;
+	socklen_t msg_namelen;
 	struct iovec *msg_iov;
-	size_t msg_iovlen;
+	size_t msg_iovlen; /* int in POSIX */
 	void *msg_control;
-	size_t msg_controllen;
-	unsigned int msg_flags;
+	size_t msg_controllen; /* socklen_t in POSIX */
+	int msg_flags;
 };
 
 struct sockaddr_storage {
@@ -28,6 +29,12 @@ struct sockaddr_storage {
 struct mmsghdr {
 	struct msghdr msg_hdr;
 	unsigned int  msg_len;
+};
+
+struct cmsghdr {
+	size_t cmsg_len; /* socklen_t in POSIX */
+	int cmsg_level;
+	int cmsg_type;
 };
 
 #ifdef __cplusplus

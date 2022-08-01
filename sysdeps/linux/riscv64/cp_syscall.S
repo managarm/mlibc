@@ -13,7 +13,7 @@ __mlibc_do_asm_cp_syscall:
 	mv a4, a5
 	mv a5, a6
 	ld a6, -8(sp) // a7
-	lw t0, -56(tp) // Tcb::cancelBits. See asserts in tcb.hpp.
+	lw t0, -80(tp) // Tcb::cancelBits. See asserts in tcb.hpp.
 __mlibc_syscall_begin:
 	// tcbCancelEnableBit && tcbCancelTriggerBit
 	li t1, (1 << 0) | (1 << 2)

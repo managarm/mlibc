@@ -5,11 +5,7 @@
 #include <sys/mman.h>
 #include <stdint.h>
 #include <stddef.h>
-
-namespace {
-	constexpr unsigned int STACK_SIZE = 0x200000;
-	constexpr unsigned int GUARD_SIZE = 0x2000;
-}
+#include <errno.h>
 
 extern "C" void __mlibc_enter_thread(void *entry, void *user_arg) {
 	// The linux kernel already sets the TCB in sys_clone().
@@ -31,20 +27,36 @@ extern "C" void __mlibc_enter_thread(void *entry, void *user_arg) {
 
 namespace mlibc {
 
-void *prepare_stack(void *entry, void *user_arg) {
-	uintptr_t map = reinterpret_cast<uintptr_t>(
-			mmap(nullptr, STACK_SIZE + GUARD_SIZE,
-				PROT_NONE,
-				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
-			);
-	__ensure(reinterpret_cast<void*>(map) != MAP_FAILED);
-	int ret = mprotect(reinterpret_cast<void*>(map + GUARD_SIZE), STACK_SIZE,
-			PROT_READ | PROT_WRITE);
-	__ensure(!ret);
+static constexpr size_t default_stacksize = 0x200000;
 
-	auto sp = reinterpret_cast<uintptr_t*>(map + STACK_SIZE + GUARD_SIZE);
+int sys_prepare_stack(void **stack, void *entry, void *user_arg, void *tcb, size_t *stack_size, size_t *guard_size) {
+	(void)tcb;
+	if (!*stack_size)
+		*stack_size = default_stacksize;
+
+	uintptr_t map;
+	if (*stack) {
+		map = reinterpret_cast<uintptr_t>(*stack);
+		*guard_size = 0;
+	} else {
+		map = reinterpret_cast<uintptr_t>(
+				mmap(nullptr, *stack_size + *guard_size,
+					PROT_NONE,
+					MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+				);
+		if (reinterpret_cast<void*>(map) == MAP_FAILED)
+			return EAGAIN;
+		int ret = mprotect(reinterpret_cast<void*>(map + *guard_size), *stack_size,
+				PROT_READ | PROT_WRITE);
+		if(ret)
+			return EAGAIN;
+		map += *stack_size + *guard_size;
+	}
+
+	auto sp = reinterpret_cast<uintptr_t*>(map);
 	*--sp = reinterpret_cast<uintptr_t>(user_arg);
 	*--sp = reinterpret_cast<uintptr_t>(entry);
-	return sp;
+	*stack = reinterpret_cast<void*>(sp);
+	return 0;
 }
 } // namespace mlibc

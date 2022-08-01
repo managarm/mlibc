@@ -12,4 +12,10 @@ inline Tcb *get_current_tcb() {
 	return reinterpret_cast<Tcb *>(ptr + 0x10 - sizeof(Tcb));
 }
 
+inline uintptr_t get_sp() {
+	uintptr_t sp;
+	asm ("mov %0, sp" : "=r"(sp));
+	return sp;
+}
+
 } // namespace mlibc

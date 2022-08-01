@@ -44,6 +44,12 @@ if not no_headers
 		'include/abi-bits/clockid_t.h',
 		'include/abi-bits/shm.h',
 		'include/abi-bits/mqueue.h',
+		'include/abi-bits/suseconds_t.h',
+		'include/abi-bits/fsfilcnt_t.h',
+		'include/abi-bits/fsblkcnt_t.h',
+		'include/abi-bits/socklen_t.h',
+		'include/abi-bits/statfs.h',
+		'include/abi-bits/statvfs.h',
 		subdir: 'abi-bits'
 	)
 endif

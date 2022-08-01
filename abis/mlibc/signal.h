@@ -1,6 +1,11 @@
 #ifndef _ABIBITS_SIGNAL_H
 #define _ABIBITS_SIGNAL_H
 
+#if __MLIBC_BUILDING_MLIBC
+#warning abis/mlibc/signal.h is deprecated. We suggest to use abis/linux/signal.h instead. \
+	Note that this will potentially require kernel changes.
+#endif
+
 #include <abi-bits/pid_t.h>
 #include <abi-bits/uid_t.h>
 #include <bits/size_t.h>
