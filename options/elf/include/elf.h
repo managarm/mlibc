@@ -549,6 +549,31 @@ typedef struct {
 
 #define ELF_NOTE_GNU "GNU"
 
+/* Values for a_type
+ * these are standard values and shared across at least glibc, musl and freebsd
+ */
+
+#define AT_NULL 0
+#define AT_IGNORE 1
+#define AT_EXECFD 2
+#define AT_PHDR 3
+#define AT_PHENT 4
+#define AT_PHNUM 5
+#define AT_PAGESZ 6
+#define AT_BASE 7
+#define AT_FLAGS 8
+#define AT_ENTRY 9
+#define AT_NOTELF 10
+#define AT_UID 11
+#define AT_EUID 12
+#define AT_GID 13
+#define AT_EGID 14
+
+/* rtdl requires presence of some a_type (AT_*) values that are not standardized in the ELF spec */
+#if !defined(AT_EXECFN) || !defined(AT_RANDOM) || !defined(AT_SECURE)
+#error "sysdeps' auxv.h is missing some defines that are required for rtdl operation"
+#endif
+
 #ifdef __cplusplus
 }
 #endif
