@@ -53,11 +53,19 @@ if not headers_only
 	libc_deps += frigg_dep
 	rtdl_deps += frigg_dep
 
+	libsmarter_dep = dependency(
+		'libsmarter',
+		default_options: [],
+		fallback: ['libsmarter', 'libsmarter_dep'],
+	)
+	libc_deps += libsmarter_dep
+	rtdl_deps += libsmarter_dep
+
 	add_languages('c', 'cpp')
 	c_compiler = meson.get_compiler('c')
 
-	add_project_arguments('-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', language: ['c', 'cpp'])
-	add_project_arguments('-nostdinc', '-fno-builtin', language: ['c', 'cpp'])
+	add_project_arguments('-D__MLIBC_BUILDING_MLIBC', '-DLIBSMARTER_FORCE_FREESTANDING', language: ['c', 'cpp'])
+	add_project_arguments('-nostdinc', '-fno-builtin', '-Wno-unused-function', language: ['c', 'cpp'])
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
@@ -259,6 +267,7 @@ endif
 rtdl_sources += [
 	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',
+	'options/internal/gcc-extra/cxxabi.cpp',
 	'options/internal/generic/allocator.cpp',
 	'options/internal/generic/debug.cpp',
 	'options/internal/generic/ensure.cpp',
