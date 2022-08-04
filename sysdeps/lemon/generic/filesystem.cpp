@@ -1,5 +1,6 @@
 #include <lemon/syscall.h>
 
+#include <asm/ioctls.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -146,9 +147,6 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result){
 
 #ifndef MLIBC_BUILDING_RTDL
 
-#define LEMON_TIOCGATTR 0xB301
-#define LEMON_TIOCSATTR 0xB302
-
 int sys_isatty(int fd) {
 	struct winsize ws;
 	long ret = sys_ioctl(fd, TIOCGWINSZ, &ws, 0);
@@ -163,7 +161,7 @@ int sys_tcgetattr(int fd, struct termios *attr) {
 		return e;
 
 	int ret;
-	sys_ioctl(fd, LEMON_TIOCGATTR, attr, &ret);
+	sys_ioctl(fd, TCGETS, attr, &ret);
 
 	if(ret)
 		return -ret;
@@ -180,7 +178,7 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 	}
 
 	int ret;
-	sys_ioctl(fd, LEMON_TIOCSATTR, const_cast<struct termios*>(attr), &ret);
+	sys_ioctl(fd, TCSETS, const_cast<struct termios*>(attr), &ret);
 
 	if(ret)
 		return -ret;
