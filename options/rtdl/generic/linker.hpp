@@ -47,9 +47,10 @@ struct ObjectRepository {
 			uint64_t rts);
 
 	SharedObject *requestObjectWithName(frg::string_view name,
-			SharedObject *origin, uint64_t rts);
+			SharedObject *origin, Scope *localScope, bool createScope, uint64_t rts);
 
-	SharedObject *requestObjectAtPath(frg::string_view path, uint64_t rts);
+	SharedObject *requestObjectAtPath(frg::string_view path,
+			Scope *localScope, bool createScope, uint64_t rts);
 
 	SharedObject *findCaller(void *address);
 
@@ -66,7 +67,7 @@ private:
 
 	void _parseDynamic(SharedObject *object);
 
-	void _discoverDependencies(SharedObject *object, uint64_t rts);
+	void _discoverDependencies(SharedObject *object, Scope *localScope, uint64_t rts);
 
 	void _addLoadedObject(SharedObject *object);
 
@@ -106,10 +107,10 @@ struct LinkMap {
 struct SharedObject {
 	// path is copied
 	SharedObject(const char *name, frg::string<MemoryAllocator> path,
-		bool is_main_object, uint64_t object_rts);
+		bool is_main_object, Scope *localScope, uint64_t object_rts);
 
 	SharedObject(const char *name, const char *path, bool is_main_object,
-		uint64_t object_rts);
+		Scope *localScope, uint64_t object_rts);
 
 	frg::string<MemoryAllocator> name;
 	frg::string<MemoryAllocator> path;
@@ -243,19 +244,28 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 struct Scope {
 	using ResolveFlags = uint32_t;
 	static inline constexpr ResolveFlags resolveCopy = 1;
+	static inline constexpr ResolveFlags skipGlobalAfterRts = 1 << 1;
+
+	static frg::optional<ObjectSymbol> resolveGlobalOrLocal(Scope &globalScope,
+			Scope *localScope, frg::string_view string, uint64_t skipRts, ResolveFlags flags);
+	static frg::optional<ObjectSymbol> resolveGlobalOrLocalNext(Scope &globalScope,
+			Scope *localScope, frg::string_view string, SharedObject *origin);
 
 	Scope(bool isGlobal = false);
 
 	void appendObject(SharedObject *object);
 
-	frg::optional<ObjectSymbol> resolveSymbol(frg::string_view string, ResolveFlags flags);
-	frg::optional<ObjectSymbol> resolveNext(frg::string_view string, SharedObject *target);
+	frg::optional<ObjectSymbol> resolveSymbol(frg::string_view string, uint64_t skipRts, ResolveFlags flags);
 
 	bool isGlobal;
+
 private:
+	frg::optional<ObjectSymbol> _resolveNext(frg::string_view string, SharedObject *target);
 public: // TODO: Make this private again. (Was made public for __dlapi_reverse()).
 	frg::vector<SharedObject *, MemoryAllocator> _objects;
 };
+
+extern frg::manual_box<Scope> globalScope;
 
 // --------------------------------------------------------
 // Loader
@@ -284,7 +294,7 @@ private:
 
 private:
 	SharedObject *_mainExecutable;
-	Scope *_globalScope;
+	Scope *_loadScope;
 	bool _isInitialLink;
 	uint64_t _linkRts;
 

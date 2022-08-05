@@ -4,7 +4,6 @@
 #include <dlfcn.h>
 #include <stdio.h>
 
-
 #ifdef USE_HOST_LIBC
 #define LDSO_PATTERN "ld-linux-"
 #define LIBFOO "libnative-foo.so"
@@ -59,33 +58,32 @@ static int callback(struct dl_phdr_info *info, size_t size, void *data) {
 
 int main() {
 	struct result found = { 0 };
-	printf("---\n");
 	assert(!dl_iterate_phdr(callback, &found));
 	assert(found.found_ldso == 1);
 	assert(found.found_self == 1);
 	assert(found.found_foo == 0);
 	assert(found.found_bar == 0);
+	printf("---\n");
 
 	memset(&found, 0, sizeof(found));
 	void *bar = dlopen(LIBBAR, RTLD_LOCAL | RTLD_NOW);
 	assert(bar);
-	printf("---\n");
 	assert(!dl_iterate_phdr(callback, &found));
 	assert(found.found_ldso == 1);
 	assert(found.found_self == 1);
-	assert(found.found_foo == 1); // Since bar depends on foo.
 	assert(found.found_bar == 1);
+	assert(found.found_foo == 1); // Since bar depends on foo.
+	printf("---\n");
 
 	memset(&found, 0, sizeof(found));
 	void *foo = dlopen(LIBFOO, RTLD_GLOBAL | RTLD_NOW);
 	assert(foo);
-	printf("---\n");
 	assert(!dl_iterate_phdr(callback, &found));
 	assert(found.found_ldso == 1);
 	assert(found.found_self == 1);
 	assert(found.found_foo == 1);
-	assert(found.found_foo > 0);
 	assert(found.found_bar == 1);
+	printf("---\n");
 
 	dlclose(bar);
 	dlclose(foo);

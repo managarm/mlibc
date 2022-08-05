@@ -121,7 +121,7 @@ extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
 	auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
 			+ symbol_index * sizeof(Elf64_Sym));
 	ObjectSymbol r(object, symbol);
-	auto p = object->localScope->resolveSymbol(r.getString(), 0);
+	auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, r.getString(), object->objectRts, 0);
 	if(!p)
 		mlibc::panicLogger() << "Unresolved JUMP_SLOT symbol" << frg::endlog;
 
@@ -423,11 +423,8 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 	if (logDlCalls)
 		mlibc::infoLogger() << "rtdl: __dlapi_open(" << (file ? file : "nullptr") << ")" << frg::endlog;
 
-	auto unhandled = RTLD_NOLOAD | RTLD_LOCAL | RTLD_DEEPBIND;
-	if (flags & unhandled) {
-		mlibc::infoLogger() << "rtdl: dlopen flag " << (flags & unhandled)
-			<< "is unsupported" << frg::endlog;
-	}
+	if (flags & RTLD_DEEPBIND)
+		mlibc::infoLogger() << "rtdl: dlopen(RTLD_DEEPBIND) is unsupported" << frg::endlog;
 
 	if(!file)
 		return executableSO;
@@ -436,52 +433,36 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 	auto rts = rtsCounter++;
 
 	SharedObject *object;
-	if(frg::string_view{file}.find_first('/') == size_t(-1)) {
-		// In order to know which RUNPATH / RPATH to process, we must find the calling object.
-		SharedObject *origin = initialRepository->findCaller(returnAddress);
-		if (!origin) {
-			mlibc::panicLogger() << "rtdl: unable to determine calling object of dlopen "
-				<< "(ra = " << returnAddress << ")" << frg::endlog;
+	if (flags & RTLD_NOLOAD) {
+		object = initialRepository->findLoadedObject(file);
+		if (object && object->globalRts == 0 && (flags & RTLD_GLOBAL)) {
+			// The object was opened with RTLD_LOCAL, but we are called with RTLD_NOLOAD | RTLD_GLOBAL.
+			// According to the man page, we should promote to the global scope here.
+			object->globalRts = rts;
+			globalScope->appendObject(object);
+		}
+	} else {
+		if (frg::string_view{file}.find_first('/') == size_t(-1)) {
+			// In order to know which RUNPATH / RPATH to process, we must find the calling object.
+			SharedObject *origin = initialRepository->findCaller(returnAddress);
+			if (!origin) {
+				mlibc::panicLogger() << "rtdl: unable to determine calling object of dlopen "
+					<< "(ra = " << returnAddress << ")" << frg::endlog;
+			}
+
+			object = initialRepository->requestObjectWithName(file, origin, nullptr, !(flags & RTLD_GLOBAL), rts);
+		} else {
+			object = initialRepository->requestObjectAtPath(file, nullptr, !(flags & RTLD_GLOBAL), rts);
 		}
 
-		object = initialRepository->requestObjectWithName(file, origin, rts);
-	}else{
-		object = initialRepository->requestObjectAtPath(file, rts);
-	}
-	if(!object) {
-		lastError = "Cannot locate requested DSO";
-		return nullptr;
-	}
-
-	Loader linker{globalScope.get(), nullptr, false, rts};
-	linker.linkObjects(object);
-	linker.initObjects();
-
-	// Build the object scope. TODO: Use the Loader object to do this.
-	if(!object->localScope) {
-		struct Token { };
-
-		using Set = frg::hash_map<SharedObject *, Token,
-				frg::hash<SharedObject *>, MemoryAllocator>;
-		Set set{frg::hash<SharedObject *>{}, getAllocator()};
-
-		object->localScope = frg::construct<Scope>(getAllocator());
-		frg::vector<SharedObject *, MemoryAllocator> queue{getAllocator()};
-
-		object->localScope->appendObject(object);
-		set.insert(object, Token{});
-		queue.push(object);
-
-		// Loop over indices (not iterators) here: We are adding elements in the loop!
-		for(size_t i = 0; i < queue.size(); i++) {
-			auto current = queue[i];
-			if(set.get(current))
-				continue;
-
-			object->localScope->appendObject(current);
-			set.insert(current, Token{});
-			queue.push(current);
+		if(!object) {
+			lastError = "Cannot locate requested DSO";
+			return nullptr;
 		}
+
+		Loader linker{(flags & RTLD_GLOBAL) ? globalScope.get() : object->localScope, nullptr, false, rts};
+		linker.linkObjects(object);
+		linker.initObjects();
 	}
 
 	dl_debug_state();
@@ -510,7 +491,7 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
 	frg::optional<ObjectSymbol> target;
 
 	if (handle == RTLD_DEFAULT) {
-		target = globalScope->resolveSymbol(string, 0);
+		target = globalScope->resolveSymbol(string, 0, 0);
 	} else if (handle == RTLD_NEXT) {
 		SharedObject *origin = initialRepository->findCaller(returnAddress);
 		if (!origin) {
@@ -518,7 +499,7 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
 				<< "(ra = " << returnAddress << ")" << frg::endlog;
 		}
 
-		target = globalScope->resolveNext(string, origin);
+		target = Scope::resolveGlobalOrLocalNext(*globalScope, origin->localScope, string, origin);
 	} else {
 		// POSIX does not unambiguously state how dlsym() is supposed to work; it just
 		// states that "The symbol resolution algorithm used shall be dependency order
