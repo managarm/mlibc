@@ -62,27 +62,10 @@ void *memmem(const void *, size_t, const void *, size_t);
 
 /* Handling the basename mess:
  * If <libgen.h> is included *at all*, we use the XPG-defined basename
- * implementation, otherwise, we use the GNU one. Since our ABI previously
- * provided the XPG one under basename, we'll have to diverge from GNU here and
- * provide __mlibc_gnu_basename instead.
+ * implementation, otherwise, we use the GNU one.
  */
 #if defined(__MLIBC_GLIBC_OPTION) && defined(_GNU_SOURCE) && !defined(basename)
-char *__mlibc_gnu_basename_c(const char *path);
-
-# ifdef __cplusplus
-extern "C++" {
-static inline const char *__mlibc_gnu_basename(const char *path) {
-	return __mlibc_gnu_basename_c(path);
-}
-static inline char *__mlibc_gnu_basename(char *path) {
-	return __mlibc_gnu_basename_c(path);
-}
-}
-# else
-#  define __mlibc_gnu_basename __mlibc_gnu_basename_c
-# endif
-
-#define basename __mlibc_gnu_basename
+char *basename(const char *path);
 #endif
 
 #ifdef __cplusplus

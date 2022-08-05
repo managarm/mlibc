@@ -6,13 +6,8 @@
 extern "C" {
 #endif
 
-#if defined(basename) && defined(_GNU_SOURCE)
-/* see: ./options/ansi/include/string.h, search for __mlibc_gnu_basename */
-# undef basename
-#endif
-
-char *basename(char *);
-#define basename basename
+char *__mlibc_xpg_basename(char *);
+#define basename __mlibc_xpg_basename
 char *dirname(char *);
 
 #ifdef __cplusplus

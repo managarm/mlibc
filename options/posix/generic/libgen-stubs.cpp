@@ -5,7 +5,9 @@
 
 #include <mlibc/debug.hpp>
 
-// Adopted from musl's code.
+// The functions in this file are adapted from musl.
+
+// Note that 'basename' here is defined to be __mlibc_xpg_basename by libgen.h.
 char *basename(char *s) {
 	// This empty string behavior is specified by POSIX.
 	if (!s || !*s)
