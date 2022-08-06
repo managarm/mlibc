@@ -14,6 +14,7 @@
 #include <fs.frigg_bragi.hpp>
 
 #include <protocols/posix/data.hpp>
+#include <protocols/posix/supercalls.hpp>
 
 // --------------------------------------------------------
 // POSIX I/O functions.
@@ -27,7 +28,7 @@ void cacheFileTable() {
 		return;
 
 	posix::ManagarmProcessData data;
-	HEL_CHECK(helSyscall1(kHelCallSuper + 1, reinterpret_cast<HelWord>(&data)));
+	HEL_CHECK(helSyscall1(kHelCallSuper + posix::superGetProcessData, reinterpret_cast<HelWord>(&data)));
 	posixLane = data.posixLane;
 	fileTable = data.fileTable;
 }

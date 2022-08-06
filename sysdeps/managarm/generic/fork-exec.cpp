@@ -21,6 +21,7 @@
 #include <mlibc/thread-entry.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <posix.frigg_bragi.hpp>
+#include <protocols/posix/supercalls.hpp>
 
 namespace mlibc {
 
@@ -118,7 +119,7 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 
 void sys_exit(int status) {
 	// This implementation is inherently signal-safe.
-	HEL_CHECK(helSyscall1(kHelCallSuper + 4, status));
+	HEL_CHECK(helSyscall1(kHelCallSuper + posix::superExit, status));
 	__builtin_trap();
 }
 
@@ -161,7 +162,7 @@ int sys_fork(pid_t *child) {
 	__ensure(!res);
 
 	HelWord out;
-	HEL_CHECK(helSyscall0_1(kHelCallSuper + 2, &out));
+	HEL_CHECK(helSyscall0_1(kHelCallSuper + posix::superFork, &out));
 	*child = out;
 
 	if(!out) {
@@ -187,7 +188,7 @@ int sys_execve(const char *path, char *const argv[], char *const envp[]) {
 
 	uintptr_t out;
 
-	HEL_CHECK(helSyscall6_1(kHelCallSuper + 3,
+	HEL_CHECK(helSyscall6_1(kHelCallSuper + posix::superExecve,
 			reinterpret_cast<uintptr_t>(path),
 			strlen(path),
 			reinterpret_cast<uintptr_t>(args_area.data()),
@@ -630,7 +631,7 @@ int sys_getrusage(int scope, struct rusage *usage) {
 
 int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
 	HelWord pid = 0;
-	HEL_CHECK(helSyscall2_1(kHelCallSuper + 9,
+	HEL_CHECK(helSyscall2_1(kHelCallSuper + posix::superClone,
 				reinterpret_cast<HelWord>(__mlibc_start_thread),
 				reinterpret_cast<HelWord>(stack),
 				&pid));
@@ -654,7 +655,7 @@ int sys_tcb_set(void *pointer) {
 
 void sys_thread_exit() {
 	// This implementation is inherently signal-safe.
-	HEL_CHECK(helSyscall1(kHelCallSuper + 4, 0));
+	HEL_CHECK(helSyscall1(kHelCallSuper + posix::superExit, 0));
 	__builtin_trap();
 }
 
