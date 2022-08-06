@@ -414,38 +414,11 @@ int sys_close(int fd) {
 }
 
 int sys_futex_tid() {
-	cacheFileTable();
-	HelAction actions[3];
+	HelWord tid = 0;
+	HEL_CHECK(helSyscall0_1(kHelCallSuper + posix::superGetTid,
+				&tid));
 
-	managarm::posix::GetTidRequest<MemoryAllocator> req(getAllocator());
-
-	if(!globalQueue.valid())
-		globalQueue.initialize();
-
-	frg::string<MemoryAllocator> ser(getAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(posixLane, actions, 3, globalQueue->getHandle(), 0, 0));
-
-	auto element = globalQueue->dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	return resp.pid();
+	return tid;
 }
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {

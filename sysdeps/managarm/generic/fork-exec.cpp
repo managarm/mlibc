@@ -26,27 +26,11 @@
 namespace mlibc {
 
 int sys_futex_tid() {
-	SignalGuard sguard;
+	HelWord tid = 0;
+	HEL_CHECK(helSyscall0_1(kHelCallSuper + posix::superGetTid,
+				&tid));
 
-	managarm::posix::GetTidRequest<MemoryAllocator> req(getSysdepsAllocator());
-
-	auto [offer, sendHead, recvResp] =
-		exchangeMsgsSync(
-			getPosixLane(),
-			helix_ng::offer(
-				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-				helix_ng::recvInline()
-			)
-		);
-
-	HEL_CHECK(offer.error());
-	HEL_CHECK(sendHead.error());
-	HEL_CHECK(recvResp.error());
-
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	return resp.pid();
+	return tid;
 }
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
@@ -434,8 +418,7 @@ pid_t sys_getpid() {
 	HelAction actions[3];
 	globalQueue.trim();
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::GET_PID);
+	managarm::posix::GetPidRequest<MemoryAllocator> req(getSysdepsAllocator());
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
