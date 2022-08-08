@@ -26,7 +26,6 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);
 [[gnu::weak]] int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev);
 [[gnu::weak]] int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
 		int timeout, const sigset_t *sigmask, int *raised);
-[[gnu::weak]] int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events);
 [[gnu::weak]] int sys_mount(const char *source, const char *target,
 		const char *fstype, unsigned long flags, const void *data);
 [[gnu::weak]] int sys_umount2(const char *target, int flags);
