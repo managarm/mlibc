@@ -3722,6 +3722,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		mlibc::infoLogger() << "\e[35mmlibc: VT_ACTIVATE/VT_WAITACTIVE are no-ops" << frg::endlog;
 		*result = 0;
 		return 0;
+	}else if(request == TIOCSPTLCK) {
+		mlibc::infoLogger() << "\e[35mmlibc: TIOCSPTLCK is a no-op" << frg::endlog;
+		*result = 0;
+		return 0;
 	}
 
 	mlibc::infoLogger() << "mlibc: Unexpected ioctl with"
