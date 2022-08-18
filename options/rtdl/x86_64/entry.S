@@ -7,3 +7,5 @@ _start:
 	call interpreterMain
 
 	jmp *%rax
+.section .note.GNU-stack,"",%progbits
+

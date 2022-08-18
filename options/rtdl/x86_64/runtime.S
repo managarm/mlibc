@@ -32,3 +32,5 @@ pltRelocateStub:
 	add $16, %rsp
 	jmp *%r11
 
+.section .note.GNU-stack,"",%progbits
+

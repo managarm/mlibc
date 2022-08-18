@@ -58,3 +58,5 @@ pltRelocateStub:
 	add sp, sp, #16
 	br x9
 
+.section .note.GNU-stack,"",%progbits
+

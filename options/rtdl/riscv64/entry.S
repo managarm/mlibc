@@ -7,3 +7,5 @@ _start:
 
 	jr a0
 
+.section .note.GNU-stack,"",%progbits
+

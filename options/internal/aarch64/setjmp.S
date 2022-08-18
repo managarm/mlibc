@@ -58,3 +58,5 @@ longjmp:
 
 	mov x0, x1
 	ret
+.section .note.GNU-stack,"",%progbits
+
