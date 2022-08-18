@@ -7,7 +7,7 @@ double cimag(double complex z) {
 }
 
 float cimagf(float complex z) {
-    return __imag__(z)
+    return __imag__(z);
 }
 
 long double cimagl(long double complex z) {
