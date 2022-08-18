@@ -23,3 +23,5 @@ __mlibc_spawn_thread:
 
 .parent:
 	ret
+.section .note.GNU-stack,"",%progbits
+

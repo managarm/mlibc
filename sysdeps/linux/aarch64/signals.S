@@ -4,3 +4,5 @@
 __mlibc_signal_restore:
 	mov x8,#139 // SYS_rt_sigreturn
 	svc 0
+.section .note.GNU-stack,"",%progbits
+
