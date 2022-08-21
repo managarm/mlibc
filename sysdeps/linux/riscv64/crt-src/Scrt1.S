@@ -14,3 +14,5 @@ _start:
 	unimp
 
 
+.section .note.GNU-stack,"",%progbits
+

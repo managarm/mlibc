@@ -25,3 +25,5 @@ __CTOR_LIST__:
 .global __DTOR_LIST__
 __DTOR_LIST__:
 
+.section .note.GNU-stack,"",%progbits
+

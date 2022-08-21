@@ -6,3 +6,5 @@ __mlibc_signal_restore:
 	syscall
 	ud2
 
+.section .note.GNU-stack,"",%progbits
+

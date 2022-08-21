@@ -6,3 +6,5 @@ __mlibc_signal_restore:
 	svc 0
 	brk #1
 
+.section .note.GNU-stack,"",%progbits
+

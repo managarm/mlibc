@@ -7,3 +7,5 @@ _start:
 	bl __mlibc_entry
 	brk #0
 
+.section .note.GNU-stack,"",%progbits
+

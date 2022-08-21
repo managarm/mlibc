@@ -48,3 +48,5 @@ longjmp:
 	mov 0x10(%ecx), %esp
 	jmp *0x14(%ecx)
 
+.section .note.GNU-stack,"",%progbits
+
