@@ -449,9 +449,9 @@ int grantpt(int) {
 	return 0;
 }
 
-double strtod_l(const char *__restrict__, char ** __restrict__, locale_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+double strtod_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t) {
+	mlibc::infoLogger() << "mlibc: strtod_l ignores locale!" << frg::endlog;
+	return strtod(nptr, endptr);
 }
 
 long double strtold_l(const char *__restrict__, char ** __restrict__, locale_t) {
