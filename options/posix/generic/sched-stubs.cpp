@@ -1,5 +1,6 @@
 
 #include <bits/ensure.h>
+#include <errno.h>
 #include <sched.h>
 
 #include <mlibc/debug.hpp>
@@ -15,9 +16,13 @@ int sched_yield(void) {
 	return 0;
 }
 
-int sched_getaffinity(pid_t, size_t, cpu_set_t *) {
-	mlibc::infoLogger() << "\e[31mmlibc: sched_getaffinity() always fails\e[39m" << frg::endlog;
-	return -1;
+int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getaffinity, -1);
+	if(int e = mlibc::sys_getaffinity(pid, cpusetsize, mask); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int sched_get_priority_max(int) {

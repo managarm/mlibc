@@ -300,6 +300,11 @@ struct hostent *gethostbyname(const char *name) {
 	return &h;
 }
 
+struct hostent *gethostbyname2(const char *, int) {
+	__ensure(!"gethostbyname2() not implemented");
+	__builtin_unreachable();
+}
+
 struct hostent *gethostbyaddr(const void *, socklen_t, int) {
 	__ensure(!"gethostbyaddr() not implemented");
 	__builtin_unreachable();
