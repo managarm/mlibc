@@ -1,0 +1,15 @@
+name: Detect ifdef/defined (mis)use
+
+on: [push, pull_request]
+
+jobs:
+  find-misuse:
+    runs-on: ubuntu-latest
+    steps:
+    - run:
+        printf '(^#ifdef[[:space:]]\+|defined\s*[(]\s*)((%s)([^_A-Za-z0-9]|$))' \
+                  "$(echo "$(awk '/#mesondefine/ { print $2 }' mlibc-config.h.in)" | tr '\n' '|')" \
+                | { ! xargs -I '{}' grep --color=always -PR '{}' \
+                || { echo 'found misuse'; exit 1; }; }
+
+# vim: set sw=2 :
