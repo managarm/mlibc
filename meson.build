@@ -92,16 +92,18 @@ if not headers_only
 endif
 
 internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
-internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', false)
-internal_conf.set('MLIBC_MAP_FILE_WINDOWS', false)
-internal_conf.set('MLIBC_DEBUG_ALLOCATOR', get_option('debug_allocator'))
+internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', false)
+internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', false)
+internal_conf.set10('MLIBC_DEBUG_ALLOCATOR', get_option('debug_allocator'))
 
 #----------------------------------------------------------------------------------------
 # Configuration based on sysdeps.
 #----------------------------------------------------------------------------------------
 
 # Process sysdeps first, as sysdeps might want to disable unsupported options.
+provides_bits_syscall_h = false
 if host_machine.system() == 'linux'
+	provides_bits_syscall_h = true
 	disable_linux_headers = true
 	rtdl_include_dirs += include_directories('sysdeps/linux/include')
 	libc_include_dirs += include_directories('sysdeps/linux/include')
@@ -114,8 +116,8 @@ elif host_machine.system() == 'managarm'
 	# TODO: Adopt the include_directories() commands from the managarm meson.build.
 	rtdl_include_dirs += include_directories('sysdeps/managarm/include')
 	libc_include_dirs += include_directories('sysdeps/managarm/include')
-	internal_conf.set('MLIBC_MAP_DSO_SEGMENTS', true)
-	internal_conf.set('MLIBC_MAP_FILE_WINDOWS', true)
+	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
+	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/managarm')
 elif host_machine.system() == 'ironclad'
 	# disable_linux_option = true
@@ -143,14 +145,15 @@ endif
 # Configuration based on enabled options.
 #----------------------------------------------------------------------------------------
 
-mlibc_conf.set('__MLIBC_ANSI_OPTION', not disable_ansi_option)
-mlibc_conf.set('__MLIBC_POSIX_OPTION', not disable_posix_option)
-mlibc_conf.set('__MLIBC_LINUX_OPTION', not disable_linux_option)
-mlibc_conf.set('__MLIBC_INTL_OPTION', not disable_intl_option)
-mlibc_conf.set('__MLIBC_ICONV_OPTION', not disable_iconv_option)
-mlibc_conf.set('__MLIBC_GLIBC_OPTION', not disable_glibc_option)
-mlibc_conf.set('__MLIBC_CRYPT_OPTION', not disable_crypt_option)
-mlibc_conf.set('__MLIBC_BSD_OPTION', not disable_bsd_option)
+mlibc_conf.set10('__MLIBC_ANSI_OPTION', not disable_ansi_option)
+mlibc_conf.set10('__MLIBC_POSIX_OPTION', not disable_posix_option)
+mlibc_conf.set10('__MLIBC_LINUX_OPTION', not disable_linux_option)
+mlibc_conf.set10('__MLIBC_INTL_OPTION', not disable_intl_option)
+mlibc_conf.set10('__MLIBC_ICONV_OPTION', not disable_iconv_option)
+mlibc_conf.set10('__MLIBC_GLIBC_OPTION', not disable_glibc_option)
+mlibc_conf.set10('__MLIBC_CRYPT_OPTION', not disable_crypt_option)
+mlibc_conf.set10('__MLIBC_BSD_OPTION', not disable_bsd_option)
+mlibc_conf.set10('__MLIBC_SYSDEP_HAS_BITS_SYSCALL_H', provides_bits_syscall_h)
 
 if not disable_ansi_option
 	rtdl_include_dirs += include_directories('options/ansi/include')

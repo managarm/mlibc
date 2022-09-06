@@ -121,7 +121,7 @@ int putenv(char *string) {
 
 } // namespace mlibc
 
-#ifdef __MLIBC_POSIX_OPTION
+#if __MLIBC_POSIX_OPTION
 
 int putenv(char *string) {
 	return mlibc::putenv(string);
@@ -161,4 +161,4 @@ int clearenv(void) {
 	return 0;
 }
 
-#endif // __MLIBC_POSIX_OPTION
+#endif /* __MLIBC_POSIX_OPTION */

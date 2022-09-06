@@ -7,10 +7,6 @@ extern "C" {
 
 #include <mlibc-config.h>
 
-#if defined(__linux__) || defined(__MLIBC_LINUX_OPTION)
-#include <asm/ioctl.h>
-#endif
-
 struct mtop {
 	short int mt_op;
 	int mt_count;
@@ -88,7 +84,9 @@ struct mtconfiginfo {
 #define MTSETPART 33
 #define MTMKPART 34
 
-#if defined(__linux__) || defined(__MLIBC_LINUX_OPTION)
+#if __MLIBC_LINUX_OPTION
+#include <asm/ioctl.h>
+
 #define MTIOCTOP _IOR('m', 1, struct mtop)
 #define MTIOCGET _IOR('m', 2, struct mtget)
 #define MTIOCPOS _IOR('m', 3, struct mtpos)

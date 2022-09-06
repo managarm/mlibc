@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
-#ifdef __MLIBC_GLIBC_OPTION
+#if __MLIBC_GLIBC_OPTION
 #include <stdio_ext.h>
 #endif
 
@@ -709,7 +709,7 @@ int ungetc(int c, FILE *file_base) {
 	return file->unget(c);
 }
 
-#ifdef __MLIBC_GLIBC_OPTION
+#if __MLIBC_GLIBC_OPTION
 void __fpurge(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	frg::unique_lock lock(file->_lock);

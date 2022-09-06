@@ -403,7 +403,8 @@ char *strerror(int e) {
 	case ENOTSUP: s = "Operation not supported (ENOTSUP)"; break;
 	case ENOTTY: s = "Inappropriate ioctl for device (ENOTTY)"; break;
 	case EOVERFLOW: s = "Value too large for defined datatype (EOVERFLOW)"; break;
-#ifndef __linux__
+#if EOPNOTSUPP != ENOTSUP
+	/* these are aliases on the mlibc abi */
 	case EOPNOTSUPP: s = "Operation not supported (EOPNOTSUP)"; break;
 #endif
 	case EOWNERDEAD: s = "Owner died (EOWNERDEAD)"; break;

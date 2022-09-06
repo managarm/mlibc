@@ -22,7 +22,7 @@ struct file_window {
 		if(mlibc::sys_stat(mlibc::fsfd_target::fd, fd, "", 0, &info))
 			mlibc::panicLogger() << "mlibc: Error getting TZinfo stats" << frg::endlog;
 
-#ifdef MLIBC_MAP_FILE_WINDOWS
+#if MLIBC_MAP_FILE_WINDOWS
 		if(mlibc::sys_vm_map(nullptr, (size_t)info.st_size, PROT_READ, MAP_PRIVATE,
 				fd, 0, &_ptr))
 			mlibc::panicLogger() << "mlibc: Error mapping TZinfo" << frg::endlog;

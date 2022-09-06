@@ -35,7 +35,7 @@ int toupper(int c);
 }
 #endif
 
-#ifdef __MLIBC_POSIX_OPTION
+#if __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_ctype.h>
 #endif
 

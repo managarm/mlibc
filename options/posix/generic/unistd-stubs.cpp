@@ -717,11 +717,11 @@ unsigned long sysconf(int number) {
 			// Linux defines it as 2048.
 			return 2048;
 		case _SC_XOPEN_CRYPT:
-#ifdef __MLIBC_CRYPT_OPTION
+#if __MLIBC_CRYPT_OPTION
 			return _XOPEN_CRYPT;
 #else
 			return -1;
-#endif
+#endif /* __MLIBC_CRYPT_OPTION */
 		case _SC_NPROCESSORS_CONF:
 			// TODO: actually return a proper value for _SC_NPROCESSORS_CONF
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_NPROCESSORS_CONF) unconditionally returns 1\e[39m" << frg::endlog;
@@ -1160,7 +1160,7 @@ int getresgid(gid_t *, gid_t *, gid_t *) {
 	__builtin_unreachable();
 }
 
-#ifdef __MLIBC_CRYPT_OPTION
+#if __MLIBC_CRYPT_OPTION
 void encrypt(char[64], int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

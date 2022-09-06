@@ -41,7 +41,7 @@ wint_t towctrans(wint_t, wctrans_t);
 }
 #endif
 
-#ifdef __MLIBC_POSIX_OPTION
+#if __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_wctype.h>
 #endif
 
