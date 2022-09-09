@@ -65,6 +65,10 @@ struct ipv6_mreq {
 #define INET_ADDRSTRLEN  16
 #define INET6_ADDRSTRLEN 46
 
+#define IPV6_MULTICAST_HOPS 18
+
+#define IP_MULTICAST_TTL 33
+
 #define IPPORT_RESERVED 1024
 
 #define IPPROTO_IP       0
