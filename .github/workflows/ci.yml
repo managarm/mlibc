@@ -56,7 +56,7 @@ jobs:
     compile-sysdeps:
         strategy:
             matrix:
-                sysdeps: [dripos, lemon, aero, ironclad, vinix]
+                sysdeps: [dripos, lemon, aero, ironclad, vinix, lyre]
         name: Compile sysdeps
         runs-on: ubuntu-20.04
         steps:
