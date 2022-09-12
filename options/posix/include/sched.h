@@ -53,7 +53,7 @@ struct sched_param {
 	int sched_priority;
 };
 
-int sched_yield();
+int sched_yield(void);
 
 struct __mlibc_cpu_set {
 	unsigned long __bits[128/sizeof(long)];
