@@ -37,7 +37,9 @@ void sys_exit(int status) {
 	__builtin_unreachable();
 }
 
-int sys_kill(pid_t pid, int signal) STUB_ONLY
+#ifndef MLIBC_BUILDING_RTDL
+
+int sys_kill(pid_t, int) STUB_ONLY
 
 int sys_tcgetattr(int fd, struct termios *attr) {
 	int ret;
@@ -67,10 +69,14 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 	return 0;
 }
 
+#endif
+
 int sys_tcb_set(void *pointer) {
 	__syscall(SYS_set_fs_base, pointer);
 	return 0;
 }
+
+#ifndef MLIBC_BUILDING_RTDL
 
 int sys_ppoll(struct pollfd *fds, int nfds, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
 	__syscall_ret ret = __syscall(SYS_ppoll, fds, nfds, timeout, sigmask);
@@ -90,14 +96,13 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	return sys_ppoll(fds, count, &ts, NULL, num_events);
 }
 
-int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
-					int timeout, const sigset_t *sigmask, int *raised) STUB_ONLY
+int sys_epoll_pwait(int, struct epoll_event *, int,
+					int, const sigset_t *, int *) STUB_ONLY
 
-int sys_epoll_create(int flags, int *fd) STUB_ONLY
+int sys_epoll_create(int, int *) STUB_ONLY
 
-int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) STUB_ONLY
+int sys_epoll_ctl(int, int, int, struct epoll_event *) STUB_ONLY
 
-#ifndef MLIBC_BUILDING_RTDL
 int sys_pselect(int nfds, fd_set *read_set, fd_set *write_set,
 		fd_set *except_set, const struct timespec *timeout,
 		const sigset_t *sigmask, int *num_events) {
@@ -164,6 +169,7 @@ int sys_pselect(int nfds, fd_set *read_set, fd_set *write_set,
 
 	return 0;
 }
+
 #endif
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
@@ -187,7 +193,9 @@ int sys_futex_wake(int *pointer) {
 	return num_woken;
 }
 
-int sys_timerfd_create(int flags, int *fd) STUB_ONLY
+#ifndef MLIBC_BUILDING_RTDL
+
+int sys_timerfd_create(int, int *) STUB_ONLY
 
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	__syscall_ret ret = __syscall(SYS_ioctl, fd, request, arg);
@@ -218,6 +226,8 @@ int sys_getcwd(char *buffer, size_t size) {
 	return 0;
 }
 
+#endif
+
 int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	__syscall_ret ret = __syscall(SYS_openat, dirfd, path, flags, mode);
 
@@ -232,6 +242,8 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	return sys_openat(AT_FDCWD, path, flags, mode, fd);
 }
 
+#ifndef MLIBC_BUILDING_RTDL
+
 int sys_open_dir(const char *path, int *handle) {
 	return sys_openat(AT_FDCWD, path, O_DIRECTORY, 0, handle);
 }
@@ -242,8 +254,6 @@ struct ReadDirState {
 	void *buffer;
 };
 
-
-#ifndef MLIBC_BUILDING_RTDL
 static frg::hash_map<int, ReadDirState *, frg::hash<int>, MemoryAllocator> open_dirs{frg::hash<int>{}, getAllocator()};
 
 static ReadDirState *get_dir_state(int fdnum) {
@@ -276,7 +286,7 @@ retry:
 
 	size_t offset = 0;
 	while (offset < max_size) {
-		struct dirent *ent = (struct dirent *)(state->buffer + state->offset);
+		struct dirent *ent = (struct dirent *)((char *)state->buffer + state->offset);
 		if (ent->d_reclen == 0) {
 			break;
 		}
@@ -285,7 +295,7 @@ retry:
 			break;
 		}
 
-		memcpy(buffer + offset, ent, ent->d_reclen);
+		memcpy((char *)buffer + offset, ent, ent->d_reclen);
 		offset += ent->d_reclen;
 		state->offset += ent->d_reclen;
 	}
@@ -293,6 +303,7 @@ retry:
 	*bytes_read = offset;
 	return 0;
 }
+
 #endif
 
 int sys_close(int fd) {
@@ -325,6 +336,8 @@ int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
 	*bytes_read = ret_value;
 	return 0;
 }
+
+#ifndef MLIBC_BUILDING_RTDL
 
 int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
 	__syscall_ret ret = __syscall(SYS_write, fd, buf, count);
@@ -382,13 +395,15 @@ int sys_chmod(const char *pathname, mode_t mode) {
 	return sys_fchmodat(AT_FDCWD, pathname, mode, 0);
 }
 
-int sys_rmdir(const char *path) STUB_ONLY
+int sys_rmdir(const char *) STUB_ONLY
+
+#endif
 
 int sys_vm_map(void *hint, size_t size, int prot, int flags,
 			   int fd, off_t offset, void **window) {
 	__syscall_ret ret = __syscall(SYS_mmap, hint, size, (uint64_t)prot << 32 | flags, fd, offset);
 	void *ret_value = (void *)ret.ret;
-    if (ret_value == MAP_FAILED) {
+	if (ret_value == MAP_FAILED) {
 		return ret.errno;
 	}
 	*window = ret_value;
@@ -397,13 +412,17 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags,
 
 int sys_vm_unmap(void *pointer, size_t size) {
 	__syscall_ret ret = __syscall(SYS_unmmap, pointer, size);
-    if ((int)ret.ret == -1) {
+	if ((int)ret.ret == -1) {
 		return ret.errno;
 	}
 	return 0;
 }
 
-int sys_vm_protect(void *pointer, size_t size, int prot) STUB_ONLY
+#ifndef MLIBC_BUILDING_RTDL
+
+int sys_vm_protect(void *, size_t, int) STUB_ONLY
+
+#endif
 
 int sys_anon_allocate(size_t size, void **pointer) {
 	return sys_vm_map(NULL, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS, -1, 0, pointer);
@@ -413,51 +432,53 @@ int sys_anon_free(void *pointer, size_t size) {
 	return sys_vm_unmap(pointer, size);
 }
 
+#ifndef MLIBC_BUILDING_RTDL
+
 pid_t sys_getpid() {
-    __syscall_ret ret = __syscall(SYS_getpid);
-    return (pid_t)ret.ret;
+	__syscall_ret ret = __syscall(SYS_getpid);
+	return (pid_t)ret.ret;
 }
 
 pid_t sys_getppid() {
-    return 0;
+	return 0;
 }
 
 uid_t sys_getuid() {
-    return 0;
+	return 0;
 }
 
 uid_t sys_geteuid() {
-    return 0;
+	return 0;
 }
 
 gid_t sys_getgid() {
-    return 0;
+	return 0;
 }
 
-int sys_setgid(gid_t gid) {
-    return 0;
+int sys_setgid(gid_t) {
+	return 0;
 }
 
-pid_t sys_getpgid(pid_t pid, pid_t *pgid) {
-    return 0;
+pid_t sys_getpgid(pid_t, pid_t *) {
+	return 0;
 }
 
 gid_t sys_getegid() {
-    return 0;
+	return 0;
 }
 
-int sys_setpgid(pid_t pid, pid_t pgid) {
-    return 0;
+int sys_setpgid(pid_t, pid_t) {
+	return 0;
 }
 
-int sys_ttyname(int fd, char *buf, size_t size) {
-    return ENOSYS;
+int sys_ttyname(int, char *, size_t) {
+	return ENOSYS;
 }
 
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
-	struct timespec buf = {0};
+	struct timespec buf;
 	__syscall_ret ret = __syscall(SYS_getclock, clock, &buf);
-    if ((int)ret.ret == -1) {
+	if ((int)ret.ret == -1) {
 		return ret.errno;
 	}
 	*secs = buf.tv_sec;
@@ -488,7 +509,8 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 }
 
 int sys_faccessat(int dirfd, const char *pathname, int mode, int flags) {
-    struct stat buf;
+	(void)flags;
+	struct stat buf;
 	if (int r = sys_stat(fsfd_target::fd_path, dirfd, pathname, mode & AT_SYMLINK_FOLLOW, &buf)) {
 		return r;
 	}
@@ -501,7 +523,7 @@ int sys_access(const char *path, int mode) {
 
 int sys_pipe(int *fds, int flags) {
 	__syscall_ret ret = __syscall(SYS_pipe, fds, flags);
-    if ((int)ret.ret == -1) {
+	if ((int)ret.ret == -1) {
 		return ret.errno;
 	}
 	return 0;
@@ -537,7 +559,7 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	return 0;
 }
 
-int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) STUB_ONLY
+int sys_socketpair(int, int, int, int *) STUB_ONLY
 
 int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	__syscall_ret ret = __syscall(SYS_bind, fd, addr_ptr, addr_length);
@@ -622,6 +644,7 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 		return 0;
 	} else {
 		mlibc::panicLogger() << "mlibc: Unexpected setsockopt() call, layer: " << layer << " number: " << number << frg::endlog;
+		sys_libc_panic();
 	}
 }
 
@@ -652,12 +675,12 @@ int sys_listen(int fd, int backlog) {
 	return 0;
 }
 
-int sys_inotify_create(int flags, int *fd) STUB_ONLY
+int sys_inotify_create(int, int *) STUB_ONLY
 
 int sys_fork(pid_t *child) {
 	__syscall_ret ret = __syscall(SYS_fork);
 	pid_t ret_value = (pid_t)ret.ret;
-    if (ret_value == -1) {
+	if (ret_value == -1) {
 		return ret.errno;
 	}
 	*child = ret_value;
@@ -666,13 +689,13 @@ int sys_fork(pid_t *child) {
 
 int sys_execve(const char *path, char *const argv[], char *const envp[]) {
 	__syscall_ret ret = __syscall(SYS_exec, path, argv, envp);
-    return ret.errno;
+	return ret.errno;
 }
 
 int sys_fcntl(int fd, int request, va_list args, int *result) {
 	__syscall_ret ret = __syscall(SYS_fcntl, fd, request, va_arg(args, uint64_t));
 	int ret_value = (int)ret.ret;
-    if (ret_value == -1) {
+	if (ret_value == -1) {
 		return ret.errno;
 	}
 	*result = ret_value;
@@ -680,9 +703,10 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 }
 
 int sys_dup(int fd, int flags, int *newfd) {
+	(void)flags;
 	__syscall_ret ret = __syscall(SYS_fcntl, fd, F_DUPFD, 0);
 	int ret_value = (int)ret.ret;
-    if (ret_value == -1) {
+	if (ret_value == -1) {
 		return ret.errno;
 	}
 	*newfd = ret_value;
@@ -691,23 +715,23 @@ int sys_dup(int fd, int flags, int *newfd) {
 
 int sys_dup2(int fd, int flags, int newfd) {
 	__syscall_ret ret = __syscall(SYS_dup3, fd, newfd, flags);
-    if ((int)ret.ret == -1) {
+	if ((int)ret.ret == -1) {
 		return ret.errno;
 	}
 	return 0;
 }
 
-int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
-    mlibc::infoLogger() << "mlibc: sys_sigprocmask() is a stub" << frg::endlog;
-    return 0;
+int sys_sigprocmask(int, const sigset_t *__restrict, sigset_t *__restrict) {
+	mlibc::infoLogger() << "mlibc: sys_sigprocmask() is a stub" << frg::endlog;
+	return 0;
 }
 
-int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) {
-    mlibc::infoLogger() << "mlibc: sys_sigaction() is a stub" << frg::endlog;
-    return 0;
+int sys_sigaction(int, const struct sigaction *, struct sigaction *) {
+	mlibc::infoLogger() << "mlibc: sys_sigaction() is a stub" << frg::endlog;
+	return 0;
 }
 
-int sys_signalfd_create(sigset_t mask, int flags, int *fd) STUB_ONLY
+int sys_signalfd_create(sigset_t, int, int *) STUB_ONLY
 
 int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
 	if (ru != NULL) {
@@ -717,7 +741,7 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 again:
 	__syscall_ret ret = __syscall(SYS_waitpid, pid, status, flags);
 	pid_t ret_value = (pid_t)ret.ret;
-    if (ret_value == -1) {
+	if (ret_value == -1) {
 		if (ret.errno == EINTR) {
 			goto again;
 		}
@@ -727,15 +751,14 @@ again:
 	return 0;
 }
 
-int sys_getgroups(size_t size, const gid_t *list, int *_ret) STUB_ONLY
+int sys_getgroups(size_t, const gid_t *, int *) STUB_ONLY
 
-int sys_mount(const char *source, const char *target, const char *fstype, unsigned long flags, const void *data) STUB_ONLY
+int sys_mount(const char *, const char *, const char *, unsigned long, const void *) STUB_ONLY
 
-int sys_umount2(const char *target, int flags) STUB_ONLY
+int sys_umount2(const char *, int) STUB_ONLY
 
-#ifndef MLIBC_BUILDING_RTDL
 int sys_gethostname(char *buffer, size_t bufsize) {
-	struct utsname utsname = {0};
+	struct utsname utsname;
 	if (int err = sys_uname(&utsname)) {
 		return err;
 	}
@@ -743,17 +766,16 @@ int sys_gethostname(char *buffer, size_t bufsize) {
 		return ENAMETOOLONG;
 	}
 	strncpy(buffer, utsname.nodename, bufsize);
-    return 0;
+	return 0;
 }
-#endif
 
-int sys_sethostname(const char *buffer, size_t bufsize) STUB_ONLY
+int sys_sethostname(const char *, size_t) STUB_ONLY
 
 int sys_sleep(time_t *secs, long *nanos) {
 	struct timespec time = {.tv_sec = *secs, .tv_nsec = *nanos};
 	struct timespec rem = {.tv_sec = 0, .tv_nsec = 0};
 	__syscall_ret ret = __syscall(SYS_sleep, &time, &rem);
-    if ((int)ret.ret == -1) {
+	if ((int)ret.ret == -1) {
 		return ret.errno;
 	}
 	*secs = rem.tv_sec;
@@ -761,33 +783,35 @@ int sys_sleep(time_t *secs, long *nanos) {
 	return 0;
 }
 
-int sys_getitimer(int which, struct itimerval *curr_value) {
+int sys_getitimer(int, struct itimerval *) {
 	mlibc::infoLogger() << "mlibc: sys_getitimer() is unimplemented" << frg::endlog;
 	return ENOSYS;
 }
 
-int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
+int sys_setitimer(int, const struct itimerval *, struct itimerval *) {
 	mlibc::infoLogger() << "mlibc: sys_setitimer() is unimplemented" << frg::endlog;
 	return ENOSYS;
 }
 
 int sys_umask(mode_t mode, mode_t *old) {
-    __syscall_ret ret = __syscall(SYS_umask, mode);
+	__syscall_ret ret = __syscall(SYS_umask, mode);
 	*old = (mode_t)ret.ret;
 	return 0;
 }
 
 int sys_uname(struct utsname *buf) {
 	__syscall_ret ret = __syscall(SYS_uname, buf);
-    if ((int)ret.ret == -1) {
+	if ((int)ret.ret == -1) {
 		return ret.errno;
 	}
 	return 0;
 }
 
-int sys_fsync(int fd) {
+int sys_fsync(int) {
 	mlibc::infoLogger() << "sys_fsync is a stub" << frg::endlog;
 	return 0;
 }
+
+#endif
 
 } // namespace mlibc
