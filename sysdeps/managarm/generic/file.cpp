@@ -2487,8 +2487,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 					<< frg::hex_fmt(param->pixel_format) << frg::endlog;
 		__ensure(param->pixel_format == DRM_FORMAT_XRGB8888
 				|| param->pixel_format == DRM_FORMAT_ARGB8888);
-		__ensure(!param->flags);
-		__ensure(!param->modifier[0]);
+		__ensure(!param->flags || param->flags == DRM_MODE_FB_MODIFIERS);
+		__ensure(!param->modifier[0] || param->modifier[0] == DRM_FORMAT_MOD_INVALID);
 		__ensure(!param->offsets[0]);
 
 		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
