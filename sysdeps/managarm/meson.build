@@ -36,6 +36,7 @@ libc_sources += files(
 	'generic/entry.cpp',
 	'generic/file.cpp',
 	'generic/fork-exec.cpp',
+	'generic/ioctl.cpp',
 	'generic/memory.cpp',
 	'generic/mount.cpp',
 	'generic/signals.cpp',
