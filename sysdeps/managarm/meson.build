@@ -32,10 +32,12 @@ libc_include_dirs += include_directories('../../../ports/libdrm/include')
 libc_include_dirs += managarm_incl
 
 libc_sources += files(
+	'generic/drm.cpp',
 	'generic/ensure.cpp',
 	'generic/entry.cpp',
 	'generic/file.cpp',
 	'generic/fork-exec.cpp',
+	'generic/ioctl.cpp',
 	'generic/memory.cpp',
 	'generic/mount.cpp',
 	'generic/signals.cpp',
