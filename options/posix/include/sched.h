@@ -68,7 +68,7 @@ int sched_get_priority_min(int policy);
 int unshare(int flags);
 
 int __mlibc_cpu_isset(int cpu, cpu_set_t *set);
-int __mlibc_cpu_count(cpu_set_t *set);
+int __mlibc_cpu_count(const cpu_set_t *set);
 
 // Linux extension
 int clone(int (*)(void *), void *, int, void *, ...);

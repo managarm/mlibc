@@ -1,6 +1,7 @@
 
 #include <bits/ensure.h>
 #include <errno.h>
+#include <limits.h>
 #include <sched.h>
 
 #include <mlibc/debug.hpp>
@@ -40,9 +41,18 @@ int __mlibc_cpu_isset(int, cpu_set_t *) {
 	__builtin_unreachable();
 }
 
-int __mlibc_cpu_count(cpu_set_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int __mlibc_cpu_count(const cpu_set_t *set) {
+	size_t count = 0;
+	const unsigned char *ptr = reinterpret_cast<const unsigned char *>(set);
+
+	for(size_t i = 0; i < sizeof(cpu_set_t); i++) {
+		for(size_t bit = 0; bit < CHAR_BIT; bit++) {
+			if((1 << bit) & ptr[i])
+				count++;
+		}
+	}
+
+	return count;
 }
 
 int unshare(int) {
