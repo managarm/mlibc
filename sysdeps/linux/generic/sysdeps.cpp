@@ -951,6 +951,15 @@ int sys_mlockall(int flags) {
 	return 0;
 }
 
+int sys_get_min_priority(int policy, int *out) {
+	auto ret = do_syscall(SYS_sched_get_priority_min, policy);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<int>(ret);
+
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {

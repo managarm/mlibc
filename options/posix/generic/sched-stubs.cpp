@@ -31,9 +31,15 @@ int sched_get_priority_max(int) {
 	__builtin_unreachable();
 }
 
-int sched_get_priority_min(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int sched_get_priority_min(int policy) {
+	int res = 0;
+
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_get_min_priority, -1);
+	if(int e = sysdep(policy, &res); e) {
+		errno = e;
+		return -1;
+	}
+	return res;
 }
 
 int __mlibc_cpu_isset(int, cpu_set_t *) {
