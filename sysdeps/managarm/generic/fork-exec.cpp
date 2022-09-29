@@ -579,6 +579,20 @@ int sys_getrusage(int scope, struct rusage *usage) {
 	return 0;
 }
 
+int sys_setschedparam(void *tcb, int policy, const struct sched_param *param) {
+	if(tcb != mlibc::get_current_tcb()) {
+		return ESRCH;
+	}
+
+	if(policy != SCHED_OTHER) {
+		return EINVAL;
+	}
+
+	HEL_CHECK(helSetPriority(kHelThisThread, param->sched_priority));
+
+	return 0;
+}
+
 int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
 	HelWord pid = 0;
 	HEL_CHECK(helSyscall2_1(kHelCallSuper + posix::superClone,
