@@ -579,6 +579,20 @@ int sys_getrusage(int scope, struct rusage *usage) {
 	return 0;
 }
 
+int sys_getschedparam(void *tcb, int *policy, struct sched_param *param) {
+	if(tcb != mlibc::get_current_tcb()) {
+		return ESRCH;
+	}
+
+	*policy = SCHED_OTHER;
+	int prio = 0;
+	// TODO(no92): use helGetPriority(kHelThisThread) here
+	mlibc::infoLogger() << "\e[31mlibc: sys_getschedparam always returns priority 0\e[39m" << frg::endlog;
+	param->sched_priority = prio;
+
+	return 0;
+}
+
 int sys_setschedparam(void *tcb, int policy, const struct sched_param *param) {
 	if(tcb != mlibc::get_current_tcb()) {
 		return ESRCH;
