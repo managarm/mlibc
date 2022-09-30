@@ -253,51 +253,6 @@ int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *n
 
 } //namespace mlibc
 
-HelHandle __raw_map(int fd) {
-	SignalGuard sguard;
-	HelAction actions[4];
-	globalQueue.trim();
-
-	auto handle = getHandleForFd(fd);
-	if (!handle)
-		return 0;
-
-	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_req_type(managarm::fs::CntReqType::MMAP);
-	req.set_fd(fd);
-
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionPullDescriptor;
-	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 4,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto pull_memory = parseHandle(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(pull_memory->error);
-
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	return pull_memory->handle;
-}
-
 namespace mlibc {
 
 int sys_fcntl(int fd, int request, va_list args, int *result) {
