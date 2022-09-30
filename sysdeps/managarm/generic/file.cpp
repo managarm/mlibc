@@ -1608,8 +1608,6 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 
 int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	SignalGuard sguard;
-	HelAction actions[5];
-	globalQueue.trim();
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -1620,42 +1618,22 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	req.set_fd(fd);
 	req.set_size(size);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionImbueCredentials;
-	actions[2].handle = kHelThisThread;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionSendFromBuffer;
-	actions[3].flags = kHelItemChain;
-	actions[3].buffer = const_cast<void *>(data);
-	actions[3].length = size;
-	actions[4].type = kHelActionRecvInline;
-	actions[4].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 5,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto imbue_creds = parseSimple(element);
-	auto send_data = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(imbue_creds->error);
-	HEL_CHECK(send_data->error);
-	HEL_CHECK(recv_resp->error);
-
+	auto [offer, send_req, imbue_creds, send_data, recv_resp] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::imbueCredentials(),
+			helix_ng::sendBuffer(data, size),
+			helix_ng::recvInline())
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(imbue_creds.error());
+	HEL_CHECK(send_data.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 	// TODO: implement NO_SUCH_FD
 /*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
