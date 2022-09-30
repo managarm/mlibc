@@ -831,8 +831,6 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	}
 
 	SignalGuard sguard;
-	HelAction actions[6];
-	globalQueue.trim();
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_SENDMSG);
@@ -853,53 +851,25 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		}
 	}
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
+	auto [offer, send_req, send_data, imbue_creds, send_addr, recv_resp] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::sendBufferSg(sglist, hdr->msg_iovlen),
+			helix_ng::imbueCredentials(),
+			helix_ng::sendBuffer(hdr->msg_name, hdr->msg_namelen),
+			helix_ng::recvInline())
+	);
 
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-
-	actions[2].type = kHelActionSendFromBufferSg;
-	actions[2].flags = kHelItemChain;
-	actions[2].buffer = &sglist;
-	actions[2].length = hdr->msg_iovlen;
-
-	actions[3].type = kHelActionImbueCredentials;
-	actions[3].handle = kHelThisThread;
-	actions[3].flags = kHelItemChain;
-
-	actions[4].type = kHelActionSendFromBuffer;
-	actions[4].flags = kHelItemChain;
-	actions[4].buffer = hdr->msg_name;
-	actions[4].length = hdr->msg_namelen;
-
-	actions[5].type = kHelActionRecvInline;
-	actions[5].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 6,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto send_data = parseSimple(element);
-	auto imbue_creds = parseSimple(element);
-	auto send_addr = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(send_data->error);
-	HEL_CHECK(imbue_creds->error);
-	HEL_CHECK(send_addr->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_data.error());
+	HEL_CHECK(imbue_creds.error());
+	HEL_CHECK(send_addr.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 	if(resp.error() == managarm::fs::Errors::BROKEN_PIPE) {
 		return EPIPE;
