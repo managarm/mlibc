@@ -140,8 +140,6 @@ int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) 
 int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 		socklen_t *actual_length) {
 	SignalGuard sguard;
-	HelAction actions[4];
-	globalQueue.trim();
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -152,40 +150,25 @@ int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 	req.set_fd(fd);
 	req.set_size(max_addr_length);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionRecvToBuffer;
-	actions[3].flags = 0;
-	actions[3].buffer = addr_ptr;
-	actions[3].length = max_addr_length;
-	HEL_CHECK(helSubmitAsync(handle, actions, 4,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto recv_addr = parseLength(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	auto [offer, send_req, recv_resp, recv_addr] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline(),
+			helix_ng::recvBuffer(addr_ptr, max_addr_length))
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+	HEL_CHECK(recv_addr.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
 		return ENOTSOCK;
 	}
 	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	HEL_CHECK(recv_addr->error);
+	HEL_CHECK(recv_addr.error());
 	*actual_length = resp.file_size();
 	return 0;
 }
