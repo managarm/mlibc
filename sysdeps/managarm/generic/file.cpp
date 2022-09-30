@@ -1178,8 +1178,6 @@ int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
 	__ensure(timeout >= 0 || timeout == -1); // TODO: Report errors correctly.
 
 	SignalGuard sguard;
-	HelAction actions[4];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::EPOLL_WAIT);
@@ -1193,42 +1191,26 @@ int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
 		req.set_sigmask_needed(false);
 	}
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionRecvToBuffer;
-	actions[3].flags = 0;
-	actions[3].buffer = ev;
-	actions[3].length = n * sizeof(struct epoll_event);
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 4,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto recv_data = parseLength(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(recv_data->error);
+	auto [offer, send_req, recv_resp, recv_data] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline(),
+			helix_ng::recvBuffer(ev, n * sizeof(struct epoll_event)))
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+	HEL_CHECK(recv_data.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::posix::Errors::BAD_FD) {
 		return EBADF;
 	}
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	__ensure(!(recv_data->length % sizeof(struct epoll_event)));
-	*raised = recv_data->length / sizeof(struct epoll_event);
+	__ensure(!(recv_data.actualLength() % sizeof(struct epoll_event)));
+	*raised = recv_data.actualLength() / sizeof(struct epoll_event);
 	return 0;
 }
 
