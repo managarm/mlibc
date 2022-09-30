@@ -1992,50 +1992,31 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 
 int sys_readlink(const char *path, void *data, size_t max_size, ssize_t *length) {
 	SignalGuard sguard;
-	HelAction actions[4];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::READLINK);
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionRecvToBuffer;
-	actions[3].flags = 0;
-	actions[3].buffer = data;
-	actions[3].length = max_size;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 4,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto recv_data = parseLength(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(recv_data->error);
+	auto [offer, send_req, recv_resp, recv_data] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline(),
+			helix_ng::recvBuffer(data, max_size))
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		return ENOENT;
 	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		return EINVAL;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		*length = recv_data->length;
+		*length = recv_data.actualLength();
 		return 0;
 	}
 }
