@@ -934,8 +934,6 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 		return EBADF;
 
 	SignalGuard sguard;
-	HelAction actions[7];
-	globalQueue.trim();
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_RECVMSG);
@@ -944,69 +942,36 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	req.set_addr_size(hdr->msg_namelen);
 	req.set_ctrl_size(hdr->msg_controllen);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
+	auto [offer, send_req, imbue_creds, recv_resp, recv_addr, recv_data, recv_ctrl] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::imbueCredentials(),
+			helix_ng::recvInline(),
+			helix_ng::recvBuffer(hdr->msg_name, hdr->msg_namelen),
+			helix_ng::recvBuffer(hdr->msg_iov[0].iov_base, hdr->msg_iov[0].iov_len),
+			helix_ng::recvBuffer(hdr->msg_control, hdr->msg_controllen))
+	);
 
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-
-	actions[2].type = kHelActionImbueCredentials;
-	actions[2].handle = kHelThisThread;
-	actions[2].flags = kHelItemChain;
-
-	actions[3].type = kHelActionRecvInline;
-	actions[3].flags = kHelItemChain;
-
-	actions[4].type = kHelActionRecvToBuffer;
-	actions[4].flags = kHelItemChain;
-	actions[4].buffer = hdr->msg_name;
-	actions[4].length = hdr->msg_namelen;
-
-	actions[5].type = kHelActionRecvToBuffer;
-	actions[5].flags = kHelItemChain;
-	actions[5].buffer = hdr->msg_iov[0].iov_base;
-	actions[5].length = hdr->msg_iov[0].iov_len;
-
-	actions[6].type = kHelActionRecvToBuffer;
-	actions[6].flags = 0;
-	actions[6].buffer = hdr->msg_control;
-	actions[6].length = hdr->msg_controllen;
-	HEL_CHECK(helSubmitAsync(handle, actions, 7,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto imbue_creds = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto recv_addr = parseLength(element);
-	auto recv_data = parseLength(element);
-	auto recv_ctrl = parseLength(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(imbue_creds->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(imbue_creds.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 	if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
 		return EAGAIN;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		HEL_CHECK(recv_addr->error);
-		HEL_CHECK(recv_data->error);
-		HEL_CHECK(recv_ctrl->error);
+		HEL_CHECK(recv_addr.error());
+		HEL_CHECK(recv_data.error());
+		HEL_CHECK(recv_ctrl.error());
 
 		hdr->msg_namelen = resp.addr_size();
-		hdr->msg_controllen = recv_ctrl->length;
-		*length = recv_data->length;
+		hdr->msg_controllen = recv_ctrl.actualLength();
+		*length = recv_data.actualLength();
 		return 0;
 	}
 }
