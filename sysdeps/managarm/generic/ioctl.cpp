@@ -502,55 +502,34 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			// TODO: Check with the Linux ABI if we have to do this.
 			memset(arg, 0, _IOC_SIZE(request));
 
-			HelAction actions[4];
-			globalQueue.trim();
-
 			managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 			req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
 			req.set_command(EVIOCGBIT(0, 0));
 			req.set_size(_IOC_SIZE(request));
 
-			frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-			req.SerializeToString(&ser);
-			actions[0].type = kHelActionOffer;
-			actions[0].flags = kHelItemAncillary;
-			actions[1].type = kHelActionSendFromBuffer;
-			actions[1].flags = kHelItemChain;
-			actions[1].buffer = ser.data();
-			actions[1].length = ser.size();
-			actions[2].type = kHelActionRecvInline;
-			actions[2].flags = kHelItemChain;
-			actions[3].type = kHelActionRecvToBuffer;
-			actions[3].flags = 0;
-			actions[3].buffer = arg;
-			actions[3].length = _IOC_SIZE(request);
-			HEL_CHECK(helSubmitAsync(handle, actions, 4,
-					globalQueue.getQueue(), 0, 0));
+			auto [offer, send_req, recv_resp, recv_data] = exchangeMsgsSync(
+				handle,
+				helix_ng::offer(
+					helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+					helix_ng::recvInline(),
+					helix_ng::recvBuffer(arg, _IOC_SIZE(request)))
+			);
 
-			auto element = globalQueue.dequeueSingle();
-			auto offer = parseHandle(element);
-			auto send_req = parseSimple(element);
-			auto recv_resp = parseInline(element);
-			auto recv_data = parseLength(element);
-
-			HEL_CHECK(offer->error);
-			HEL_CHECK(send_req->error);
-			if(recv_resp->error == kHelErrDismissed)
+			HEL_CHECK(offer.error());
+			HEL_CHECK(send_req.error());
+			if(recv_resp.error() == kHelErrDismissed)
 				return EINVAL;
-			HEL_CHECK(recv_resp->error);
-			HEL_CHECK(recv_data->error);
+			HEL_CHECK(recv_resp.error());
+			HEL_CHECK(recv_data.error());
 
 			managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-			resp.ParseFromArray(recv_resp->data, recv_resp->length);
+			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-			*result = recv_data->length;
+			*result = recv_data.actualLength();
 			return 0;
 		}else{
 			// TODO: Check with the Linux ABI if we have to do this.
 			memset(arg, 0, _IOC_SIZE(request));
-
-			HelAction actions[4];
-			globalQueue.trim();
 
 			managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 			req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
@@ -558,40 +537,25 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			req.set_input_type(type);
 			req.set_size(_IOC_SIZE(request));
 
-			frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-			req.SerializeToString(&ser);
-			actions[0].type = kHelActionOffer;
-			actions[0].flags = kHelItemAncillary;
-			actions[1].type = kHelActionSendFromBuffer;
-			actions[1].flags = kHelItemChain;
-			actions[1].buffer = ser.data();
-			actions[1].length = ser.size();
-			actions[2].type = kHelActionRecvInline;
-			actions[2].flags = kHelItemChain;
-			actions[3].type = kHelActionRecvToBuffer;
-			actions[3].flags = 0;
-			actions[3].buffer = arg;
-			actions[3].length = _IOC_SIZE(request);
-			HEL_CHECK(helSubmitAsync(handle, actions, 4,
-					globalQueue.getQueue(), 0, 0));
+			auto [offer, send_req, recv_resp, recv_data] = exchangeMsgsSync(
+				handle,
+				helix_ng::offer(
+					helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+					helix_ng::recvInline(),
+					helix_ng::recvBuffer(arg, _IOC_SIZE(request)))
+			);
 
-			auto element = globalQueue.dequeueSingle();
-			auto offer = parseHandle(element);
-			auto send_req = parseSimple(element);
-			auto recv_resp = parseInline(element);
-			auto recv_data = parseLength(element);
-
-			HEL_CHECK(offer->error);
-			HEL_CHECK(send_req->error);
-			if(recv_resp->error == kHelErrDismissed)
+			HEL_CHECK(offer.error());
+			HEL_CHECK(send_req.error());
+			if(recv_resp.error() == kHelErrDismissed)
 				return EINVAL;
-			HEL_CHECK(recv_resp->error);
-			HEL_CHECK(recv_data->error);
+			HEL_CHECK(recv_resp.error());
+			HEL_CHECK(recv_data.error());
 
 			managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-			resp.ParseFromArray(recv_resp->data, recv_resp->length);
+			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-			*result = recv_data->length;
+			*result = recv_data.actualLength();
 			return 0;
 		}
 	}else if(_IOC_TYPE(request) == 'E'
