@@ -1653,8 +1653,6 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 
 int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 	SignalGuard sguard;
-	HelAction actions[5];
-	globalQueue.trim();
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -1666,40 +1664,21 @@ int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 	req.set_size(n);
 	req.set_offset(off);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionImbueCredentials;
-	actions[2].handle = kHelThisThread;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionRecvInline;
-	actions[3].flags = kHelItemChain;
-	actions[4].type = kHelActionRecvToBuffer;
-	actions[4].flags = 0;
-	actions[4].buffer = buf;
-	actions[4].length = n;
-	HEL_CHECK(helSubmitAsync(handle, actions, 5,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto imbue_creds = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto recv_data = parseLength(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(imbue_creds->error);
-	HEL_CHECK(recv_resp->error);
+	auto [offer, send_req, imbue_creds, recv_resp, recv_data] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::imbueCredentials(),
+			helix_ng::recvInline(),
+			helix_ng::recvBuffer(buf, n))
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(imbue_creds.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 /*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
 		return EBADF;
 	}else*/
@@ -1712,8 +1691,8 @@ int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 		return 0;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		HEL_CHECK(recv_data->error);
-		*bytes_read = recv_data->length;
+		HEL_CHECK(recv_data.error());
+		*bytes_read = recv_data.actualLength();
 		return 0;
 	}
 }
