@@ -252,6 +252,10 @@ elif host_machine.system() == 'lemon'
 	rtld_include_dirs += include_directories('sysdeps/lemon/include')
 	libc_include_dirs += include_directories('sysdeps/lemon/include')
 	subdir('sysdeps/lemon')
+elif host_machine.system() == 'polaris'
+	rtdl_include_dirs += include_directories('sysdeps/polaris/include')
+	libc_include_dirs += include_directories('sysdeps/polaris/include')
+	subdir('sysdeps/polaris')
 elif host_machine.system() == 'dripos'
 	rtld_include_dirs += include_directories('sysdeps/dripos/include')
 	libc_include_dirs += include_directories('sysdeps/dripos/include')

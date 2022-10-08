@@ -18,7 +18,7 @@ jobs:
         name: Build mlibc
         runs-on: ubuntu-22.04
         container:
-          image: ghcr.io/managarm/mlibc-crossers:latest
+          image: ghcr.io/neptune650/mlibc-crossers:latest
         steps:
           - name: Install prerequisites
             run: |
@@ -84,11 +84,11 @@ jobs:
     compile-sysdeps:
         strategy:
             matrix:
-                sysdeps: [dripos, lemon, aero, ironclad, lyre, keyronex, managarm, vinix, astral]
+                sysdeps: [dripos, lemon, aero, ironclad, lyre, keyronex, polaris, managarm, vinix, astral]
         name: Compile sysdeps
         runs-on: ubuntu-22.04
         container:
-          image: ghcr.io/managarm/mlibc-crossers:latest
+          image: ghcr.io/neptune650/mlibc-crossers:latest
         steps:
           - name: Install prerequisites
             run: |

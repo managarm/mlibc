@@ -11,7 +11,7 @@ jobs:
     name: Compare ABIs
     runs-on: ubuntu-22.04
     container:
-      image: ghcr.io/managarm/mlibc-crossers:latest
+      image: ghcr.io/neptune650/mlibc-crossers:latest
     defaults:
       run:
         shell: bash
