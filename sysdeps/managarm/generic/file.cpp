@@ -839,6 +839,10 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 
 	for(auto cmsg = CMSG_FIRSTHDR(hdr); cmsg; cmsg = CMSG_NXTHDR(hdr, cmsg)) {
 		__ensure(cmsg->cmsg_level == SOL_SOCKET);
+		if(cmsg->cmsg_type == SCM_CREDENTIALS) {
+			mlibc::infoLogger() << "mlibc: SCM_CREDENTIALS requested but we don't handle that yet!" << frg::endlog;
+			return EINVAL;
+		}
 		__ensure(cmsg->cmsg_type == SCM_RIGHTS);
 		__ensure(cmsg->cmsg_len >= sizeof(struct cmsghdr));
 
