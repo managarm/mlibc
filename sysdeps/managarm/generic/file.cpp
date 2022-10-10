@@ -2139,11 +2139,12 @@ int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_writ
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 
-	auto [offer, send_head, send_tail, imbue_creds, recv_resp] = exchangeMsgsSync(
+	auto [offer, send_head, imbue_creds, to_write, recv_resp] = exchangeMsgsSync(
 		handle,
 		helix_ng::offer(
-			helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			helix_ng::imbueCredentials(),
+			helix_ng::sendBuffer(buf, n),
 			helix_ng::recvInline()
 		)
 	);
@@ -2151,6 +2152,7 @@ int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_writ
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(imbue_creds.error());
+	HEL_CHECK(to_write.error());
 	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2167,7 +2169,6 @@ int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_writ
 		return EINVAL;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		HEL_CHECK(send_tail.error());
 		*bytes_written = n;
 		return 0;
 	}
