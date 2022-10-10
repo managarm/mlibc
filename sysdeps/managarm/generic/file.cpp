@@ -891,6 +891,12 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		return EDESTADDRREQ;
 	}else if(resp.error() == managarm::fs::Errors::ADDRESS_NOT_AVAILABLE) {
 		return EADDRNOTAVAIL;
+	}else if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+		return EINVAL;
+	}else if(resp.error() == managarm::fs::Errors::AF_NOT_SUPPORTED) {
+		return EAFNOSUPPORT;
+	}else if(resp.error() == managarm::fs::Errors::MESSAGE_TOO_LARGE) {
+		return EMSGSIZE;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*length = resp.size();
