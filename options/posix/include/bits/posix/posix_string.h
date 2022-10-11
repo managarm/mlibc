@@ -16,6 +16,7 @@ char *strsep(char **stringp, const char *delim);
 char *strsignal(int sig);
 char *stpcpy(char *__restrict, const char *__restrict);
 char *stpncpy(char *__restrict, const char *__restrict, size_t n);
+void *memccpy(void *__restrict dest, const void *__restrict src, int c, size_t n);
 
 int strcoll_l(const char *s1, const char *s2, locale_t locale);
 

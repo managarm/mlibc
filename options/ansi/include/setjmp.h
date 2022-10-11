@@ -12,7 +12,7 @@ extern "C" {
 
 // [C11/7.13] Non-local jumps
 
-typedef struct {
+typedef struct __jmp_buf {
 	struct __mlibc_jmpbuf_register_state reg_state;
 } jmp_buf[1];
 

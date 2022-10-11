@@ -142,6 +142,11 @@ char *strndupa(const char *, size_t) {
 	__builtin_unreachable();
 }
 
+void *memccpy(void *__restrict, const void *__restrict, int, size_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 // This implementation was taken from musl
 void *memrchr(const void *m, int c, size_t n) {
 	const unsigned char *s = (const unsigned char *)m;
