@@ -460,6 +460,13 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 			return nullptr;
 		}
 
+		// If the local scope is requested, but the local scope is a nullptr, use the global scope anyway.
+		if(!(flags & RTLD_GLOBAL)) {
+			if(object->localScope == nullptr) {
+				object->localScope = globalScope.get();
+			}
+		}
+
 		Loader linker{(flags & RTLD_GLOBAL) ? globalScope.get() : object->localScope, nullptr, false, rts};
 		linker.linkObjects(object);
 		linker.initObjects();
