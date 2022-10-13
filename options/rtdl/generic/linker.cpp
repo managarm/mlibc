@@ -458,16 +458,14 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 				prot |= PROT_EXEC;
 
 			#if MLIBC_MAP_DSO_SEGMENTS
-				// TODO: Map with (prot | PROT_WRITE) here,
-				// then mprotect() to remove PROT_WRITE if that is necessary.
 				void *map_pointer;
 				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
-						backed_map_size, prot,
+						backed_map_size, prot | PROT_WRITE,
 						MAP_PRIVATE | MAP_FIXED, fd, phdr->p_offset - misalign, &map_pointer))
 					__ensure(!"sys_vm_map failed");
 				if(total_map_size > backed_map_size)
 					if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address + backed_map_size),
-							total_map_size - backed_map_size, prot,
+							total_map_size - backed_map_size, prot | PROT_WRITE,
 							MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
 						__ensure(!"sys_vm_map failed");
 
@@ -494,6 +492,10 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 				readExactlyOrDie(fd, reinterpret_cast<char *>(map_address) + misalign,
 						phdr->p_filesz);
 			#endif
+			// Take care of removing superfluous permissions.
+			if(mlibc::sys_vm_protect && ((prot & PROT_WRITE) == 0))
+				if(mlibc::sys_vm_protect(map_pointer, total_map_size, prot))
+					mlibc::infoLogger() << "mlibc: sys_vm_protect() failed in ld.so" << frg::endlog;
 		}else if(phdr->p_type == PT_TLS) {
 			object->tlsSegmentSize = phdr->p_memsz;
 			object->tlsAlignment = phdr->p_align;
