@@ -52,74 +52,48 @@ int sys_chdir(const char *path) {
 
 int sys_fchdir(int fd) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::FCHDIR);
 	req.set_fd(fd);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
 }
 
 int sys_chroot(const char *path) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::CHROOT);
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
 }
@@ -131,38 +105,25 @@ int sys_mkdir(const char *path, mode_t mode) {
 int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 	(void)mode;
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::MKDIRAT);
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 	req.set_fd(dirfd);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
 		return EEXIST;
 	} else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
@@ -292,51 +253,6 @@ int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *n
 
 } //namespace mlibc
 
-HelHandle __raw_map(int fd) {
-	SignalGuard sguard;
-	HelAction actions[4];
-	globalQueue.trim();
-
-	auto handle = getHandleForFd(fd);
-	if (!handle)
-		return 0;
-
-	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_req_type(managarm::fs::CntReqType::MMAP);
-	req.set_fd(fd);
-
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionPullDescriptor;
-	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 4,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto pull_memory = parseHandle(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(pull_memory->error);
-
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	return pull_memory->handle;
-}
-
 namespace mlibc {
 
 int sys_fcntl(int fd, int request, va_list args, int *result) {
@@ -354,75 +270,45 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		*result = newfd;
 		return 0;
 	}else if(request == F_GETFD) {
-		HelAction actions[3];
-		globalQueue.trim();
-
 		managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_request_type(managarm::posix::CntReqType::FD_GET_FLAGS);
 		req.set_fd(fd);
 
-		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-		req.SerializeToString(&ser);
-		actions[0].type = kHelActionOffer;
-		actions[0].flags = kHelItemAncillary;
-		actions[1].type = kHelActionSendFromBuffer;
-		actions[1].flags = kHelItemChain;
-		actions[1].buffer = ser.data();
-		actions[1].length = ser.size();
-		actions[2].type = kHelActionRecvInline;
-		actions[2].flags = 0;
-		HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-				globalQueue.getQueue(), 0, 0));
-
-		auto element = globalQueue.dequeueSingle();
-		auto offer = parseHandle(element);
-		auto send_req = parseSimple(element);
-		auto recv_resp = parseInline(element);
-
-		HEL_CHECK(offer->error);
-		HEL_CHECK(send_req->error);
-		HEL_CHECK(recv_resp->error);
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
 
 		managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if(resp.error() == managarm::posix::Errors::NO_SUCH_FD)
 			return EBADF;
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*result = resp.flags();
 		return 0;
 	}else if(request == F_SETFD) {
-		HelAction actions[3];
-		globalQueue.trim();
-
 		managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_request_type(managarm::posix::CntReqType::FD_SET_FLAGS);
 		req.set_fd(fd);
 		req.set_flags(va_arg(args, int));
 
-		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-		req.SerializeToString(&ser);
-		actions[0].type = kHelActionOffer;
-		actions[0].flags = kHelItemAncillary;
-		actions[1].type = kHelActionSendFromBuffer;
-		actions[1].flags = kHelItemChain;
-		actions[1].buffer = ser.data();
-		actions[1].length = ser.size();
-		actions[2].type = kHelActionRecvInline;
-		actions[2].flags = 0;
-		HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-				globalQueue.getQueue(), 0, 0));
-
-		auto element = globalQueue.dequeueSingle();
-		auto offer = parseHandle(element);
-		auto send_req = parseSimple(element);
-		auto recv_resp = parseInline(element);
-
-		HEL_CHECK(offer->error);
-		HEL_CHECK(send_req->error);
-		HEL_CHECK(recv_resp->error);
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
 
 		managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if(resp.error() == managarm::posix::Errors::NO_SUCH_FD)
 			return EBADF;
 		else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS)
@@ -432,8 +318,6 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		return 0;
 	}else if(request == F_GETFL) {
 		SignalGuard sguard;
-		HelAction actions[3];
-		globalQueue.trim();
 
 		auto handle = getHandleForFd(fd);
 		if (!handle)
@@ -443,30 +327,18 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		req.set_req_type(managarm::fs::CntReqType::PT_GET_FILE_FLAGS);
 		req.set_fd(fd);
 
-		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-		req.SerializeToString(&ser);
-		actions[0].type = kHelActionOffer;
-		actions[0].flags = kHelItemAncillary;
-		actions[1].type = kHelActionSendFromBuffer;
-		actions[1].flags = kHelItemChain;
-		actions[1].buffer = ser.data();
-		actions[1].length = ser.size();
-		actions[2].type = kHelActionRecvInline;
-		actions[2].flags = 0;
-		HEL_CHECK(helSubmitAsync(handle, actions, 3,
-				globalQueue.getQueue(), 0, 0));
-
-		auto element = globalQueue.dequeueSingle();
-		auto offer = parseHandle(element);
-		auto send_req = parseSimple(element);
-		auto recv_resp = parseInline(element);
-
-		HEL_CHECK(offer->error);
-		HEL_CHECK(send_req->error);
-		HEL_CHECK(recv_resp->error);
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
 			mlibc::infoLogger() << "\e[31mmlibc: fcntl(F_GETFL) unimplemented for this file\e[39m" << frg::endlog;
 			return EINVAL;
@@ -476,8 +348,6 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		return 0;
 	}else if(request == F_SETFL) {
 		SignalGuard sguard;
-		HelAction actions[3];
-		globalQueue.trim();
 
 		auto handle = getHandleForFd(fd);
 		if (!handle)
@@ -488,30 +358,18 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		req.set_fd(fd);
 		req.set_flags(va_arg(args, int));
 
-		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-		req.SerializeToString(&ser);
-		actions[0].type = kHelActionOffer;
-		actions[0].flags = kHelItemAncillary;
-		actions[1].type = kHelActionSendFromBuffer;
-		actions[1].flags = kHelItemChain;
-		actions[1].buffer = ser.data();
-		actions[1].length = ser.size();
-		actions[2].type = kHelActionRecvInline;
-		actions[2].flags = 0;
-		HEL_CHECK(helSubmitAsync(handle, actions, 3,
-				globalQueue.getQueue(), 0, 0));
-
-		auto element = globalQueue.dequeueSingle();
-		auto offer = parseHandle(element);
-		auto send_req = parseSimple(element);
-		auto recv_resp = parseInline(element);
-
-		HEL_CHECK(offer->error);
-		HEL_CHECK(send_req->error);
-		HEL_CHECK(recv_resp->error);
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-		resp.ParseFromArray(recv_resp->data, recv_resp->length);
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
 			mlibc::infoLogger() << "\e[31mmlibc: fcntl(F_SETFL) unimplemented for this file\e[39m" << frg::endlog;
 			return EINVAL;
@@ -606,36 +464,21 @@ int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) 
 	if (!handle)
 		return EBADF;
 
-	HelAction actions[3];
-	globalQueue.trim();
-
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_READ_ENTRIES);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 3,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::fs::Errors::END_OF_FILE) {
 		*bytes_read = 0;
 		return 0;
@@ -653,37 +496,24 @@ int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) 
 
 int sys_ttyname(int fd, char *buf, size_t size) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::TTY_NAME);
 	req.set_fd(fd);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() ==  managarm::posix::Errors::BAD_FD) {
 		return EBADF;
 	}else if(resp.error() == managarm::posix::Errors::NOT_A_TTY) {
@@ -705,43 +535,26 @@ int sys_fdatasync(int) {
 
 int sys_getcwd(char *buffer, size_t size) {
 	SignalGuard sguard;
-	HelAction actions[4];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::GETCWD);
 	req.set_size(size);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionRecvToBuffer;
-	actions[3].flags = 0;
-	actions[3].buffer = buffer;
-	actions[3].length = size;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 4,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp, recv_path] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline(),
+			helix_ng::recvBuffer(buffer, size))
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto recv_path = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(recv_path->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+	HEL_CHECK(recv_path.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	if(static_cast<size_t>(resp.size()) >= size)
 		return ERANGE;
@@ -780,8 +593,6 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 
 int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::VM_REMAP);
@@ -789,30 +600,19 @@ int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) {
 	req.set_size(size);
 	req.set_new_size(new_size);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	*window = reinterpret_cast<void *>(resp.offset());
 	return 0;
@@ -820,8 +620,6 @@ int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) {
 
 int sys_vm_protect(void *pointer, size_t size, int prot) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::VM_PROTECT);
@@ -829,104 +627,67 @@ int sys_vm_protect(void *pointer, size_t size, int prot) {
 	req.set_size(size);
 	req.set_mode(prot);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
 }
 
 int sys_vm_unmap(void *pointer, size_t size) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::VM_UNMAP);
 	req.set_address(reinterpret_cast<uintptr_t>(pointer));
 	req.set_size(size);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
 }
 
 int sys_setsid(pid_t *sid) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::SETSID);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::posix::Errors::ACCESS_DENIED) {
 		*sid = -1;
 		return EPERM;
@@ -996,37 +757,24 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 
 int sys_pipe(int *fds, int flags) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::PIPE_CREATE);
 	req.set_flags(flags);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	__ensure(resp.fds_size() == 2);
 	fds[0] = resp.fds(0);
@@ -1083,8 +831,6 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	}
 
 	SignalGuard sguard;
-	HelAction actions[6];
-	globalQueue.trim();
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_SENDMSG);
@@ -1105,53 +851,25 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		}
 	}
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
+	auto [offer, send_req, send_data, imbue_creds, send_addr, recv_resp] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::sendBufferSg(sglist, hdr->msg_iovlen),
+			helix_ng::imbueCredentials(),
+			helix_ng::sendBuffer(hdr->msg_name, hdr->msg_namelen),
+			helix_ng::recvInline())
+	);
 
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-
-	actions[2].type = kHelActionSendFromBufferSg;
-	actions[2].flags = kHelItemChain;
-	actions[2].buffer = &sglist;
-	actions[2].length = hdr->msg_iovlen;
-
-	actions[3].type = kHelActionImbueCredentials;
-	actions[3].handle = kHelThisThread;
-	actions[3].flags = kHelItemChain;
-
-	actions[4].type = kHelActionSendFromBuffer;
-	actions[4].flags = kHelItemChain;
-	actions[4].buffer = hdr->msg_name;
-	actions[4].length = hdr->msg_namelen;
-
-	actions[5].type = kHelActionRecvInline;
-	actions[5].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 6,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto send_data = parseSimple(element);
-	auto imbue_creds = parseSimple(element);
-	auto send_addr = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(send_data->error);
-	HEL_CHECK(imbue_creds->error);
-	HEL_CHECK(send_addr->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_data.error());
+	HEL_CHECK(imbue_creds.error());
+	HEL_CHECK(send_addr.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 	if(resp.error() == managarm::fs::Errors::BROKEN_PIPE) {
 		return EPIPE;
@@ -1186,8 +904,6 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 		return EBADF;
 
 	SignalGuard sguard;
-	HelAction actions[7];
-	globalQueue.trim();
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_RECVMSG);
@@ -1196,69 +912,36 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	req.set_addr_size(hdr->msg_namelen);
 	req.set_ctrl_size(hdr->msg_controllen);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
+	auto [offer, send_req, imbue_creds, recv_resp, recv_addr, recv_data, recv_ctrl] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::imbueCredentials(),
+			helix_ng::recvInline(),
+			helix_ng::recvBuffer(hdr->msg_name, hdr->msg_namelen),
+			helix_ng::recvBuffer(hdr->msg_iov[0].iov_base, hdr->msg_iov[0].iov_len),
+			helix_ng::recvBuffer(hdr->msg_control, hdr->msg_controllen))
+	);
 
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-
-	actions[2].type = kHelActionImbueCredentials;
-	actions[2].handle = kHelThisThread;
-	actions[2].flags = kHelItemChain;
-
-	actions[3].type = kHelActionRecvInline;
-	actions[3].flags = kHelItemChain;
-
-	actions[4].type = kHelActionRecvToBuffer;
-	actions[4].flags = kHelItemChain;
-	actions[4].buffer = hdr->msg_name;
-	actions[4].length = hdr->msg_namelen;
-
-	actions[5].type = kHelActionRecvToBuffer;
-	actions[5].flags = kHelItemChain;
-	actions[5].buffer = hdr->msg_iov[0].iov_base;
-	actions[5].length = hdr->msg_iov[0].iov_len;
-
-	actions[6].type = kHelActionRecvToBuffer;
-	actions[6].flags = 0;
-	actions[6].buffer = hdr->msg_control;
-	actions[6].length = hdr->msg_controllen;
-	HEL_CHECK(helSubmitAsync(handle, actions, 7,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto imbue_creds = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto recv_addr = parseLength(element);
-	auto recv_data = parseLength(element);
-	auto recv_ctrl = parseLength(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(imbue_creds->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(imbue_creds.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 	if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
 		return EAGAIN;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		HEL_CHECK(recv_addr->error);
-		HEL_CHECK(recv_data->error);
-		HEL_CHECK(recv_ctrl->error);
+		HEL_CHECK(recv_addr.error());
+		HEL_CHECK(recv_data.error());
+		HEL_CHECK(recv_ctrl.error());
 
 		hdr->msg_namelen = resp.addr_size();
-		hdr->msg_controllen = recv_ctrl->length;
-		*length = recv_data->length;
+		hdr->msg_controllen = recv_ctrl.actualLength();
+		*length = recv_data.actualLength();
 		return 0;
 	}
 }
@@ -1344,8 +1027,6 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	__ensure(timeout >= 0 || timeout == -1); // TODO: Report errors correctly.
 
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::EPOLL_CALL);
@@ -1356,30 +1037,19 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 		req.add_events(fds[i].events);
 	}
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	__ensure(resp.events_size() == count);
 
@@ -1398,8 +1068,6 @@ int sys_epoll_create(int flags, int *fd) {
 	__ensure(!(flags & ~(EPOLL_CLOEXEC)));
 
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	uint32_t proto_flags = 0;
 	if(flags & EPOLL_CLOEXEC)
@@ -1409,30 +1077,19 @@ int sys_epoll_create(int flags, int *fd) {
 	req.set_request_type(managarm::posix::CntReqType::EPOLL_CREATE);
 	req.set_flags(proto_flags);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	*fd = resp.fd();
 	return 0;
@@ -1440,8 +1097,6 @@ int sys_epoll_create(int flags, int *fd) {
 
 int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	if(mode == EPOLL_CTL_ADD) {
@@ -1462,30 +1117,19 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 	req.set_fd(epfd);
 	req.set_newfd(fd);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::posix::Errors::BAD_FD) {
 		return EBADF;
 	} else if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
@@ -1504,8 +1148,6 @@ int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
 	__ensure(timeout >= 0 || timeout == -1); // TODO: Report errors correctly.
 
 	SignalGuard sguard;
-	HelAction actions[4];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::EPOLL_WAIT);
@@ -1519,79 +1161,50 @@ int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
 		req.set_sigmask_needed(false);
 	}
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionRecvToBuffer;
-	actions[3].flags = 0;
-	actions[3].buffer = ev;
-	actions[3].length = n * sizeof(struct epoll_event);
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 4,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto recv_data = parseLength(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(recv_data->error);
+	auto [offer, send_req, recv_resp, recv_data] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline(),
+			helix_ng::recvBuffer(ev, n * sizeof(struct epoll_event)))
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+	HEL_CHECK(recv_data.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::posix::Errors::BAD_FD) {
 		return EBADF;
 	}
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	__ensure(!(recv_data->length % sizeof(struct epoll_event)));
-	*raised = recv_data->length / sizeof(struct epoll_event);
+	__ensure(!(recv_data.actualLength() % sizeof(struct epoll_event)));
+	*raised = recv_data.actualLength() / sizeof(struct epoll_event);
 	return 0;
 }
 
 int sys_timerfd_create(int clockid, int flags, int *fd) {
 	(void) clockid;
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::TIMERFD_CREATE);
 	req.set_flags(flags);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	*fd = resp.fd();
 	return 0;
@@ -1601,8 +1214,6 @@ int sys_timerfd_settime(int fd, int,
 		const struct itimerspec *value, struct itimerspec *oldvalue) {
 	__ensure(!oldvalue);
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::TIMERFD_SETTIME);
@@ -1612,30 +1223,19 @@ int sys_timerfd_settime(int fd, int,
 	req.set_interval_secs(value->it_interval.tv_sec);
 	req.set_interval_nanos(value->it_interval.tv_nsec);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
 }
@@ -1650,38 +1250,25 @@ int sys_signalfd_create(const sigset_t *masks, int flags, int *fd)  {
 		proto_flags |= managarm::posix::OpenFlags::OF_NONBLOCK;
 
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::SIGNALFD_CREATE);
 	req.set_flags(proto_flags);
 	req.set_sigset(*masks);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	*fd = resp.fd();
 	return 0;
@@ -1991,8 +1578,6 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 
 int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	SignalGuard sguard;
-	HelAction actions[5];
-	globalQueue.trim();
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -2003,42 +1588,22 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	req.set_fd(fd);
 	req.set_size(size);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionImbueCredentials;
-	actions[2].handle = kHelThisThread;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionSendFromBuffer;
-	actions[3].flags = kHelItemChain;
-	actions[3].buffer = const_cast<void *>(data);
-	actions[3].length = size;
-	actions[4].type = kHelActionRecvInline;
-	actions[4].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 5,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto imbue_creds = parseSimple(element);
-	auto send_data = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(imbue_creds->error);
-	HEL_CHECK(send_data->error);
-	HEL_CHECK(recv_resp->error);
-
+	auto [offer, send_req, imbue_creds, send_data, recv_resp] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::imbueCredentials(),
+			helix_ng::sendBuffer(data, size),
+			helix_ng::recvInline())
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(imbue_creds.error());
+	HEL_CHECK(send_data.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 	// TODO: implement NO_SUCH_FD
 /*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
@@ -2058,8 +1623,6 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 
 int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 	SignalGuard sguard;
-	HelAction actions[5];
-	globalQueue.trim();
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -2071,40 +1634,21 @@ int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 	req.set_size(n);
 	req.set_offset(off);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionImbueCredentials;
-	actions[2].handle = kHelThisThread;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionRecvInline;
-	actions[3].flags = kHelItemChain;
-	actions[4].type = kHelActionRecvToBuffer;
-	actions[4].flags = 0;
-	actions[4].buffer = buf;
-	actions[4].length = n;
-	HEL_CHECK(helSubmitAsync(handle, actions, 5,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto imbue_creds = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto recv_data = parseLength(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(imbue_creds->error);
-	HEL_CHECK(recv_resp->error);
+	auto [offer, send_req, imbue_creds, recv_resp, recv_data] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::imbueCredentials(),
+			helix_ng::recvInline(),
+			helix_ng::recvBuffer(buf, n))
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(imbue_creds.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 /*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
 		return EBADF;
 	}else*/
@@ -2117,8 +1661,8 @@ int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 		return 0;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		HEL_CHECK(recv_data->error);
-		*bytes_read = recv_data->length;
+		HEL_CHECK(recv_data.error());
+		*bytes_read = recv_data.actualLength();
 		return 0;
 	}
 }
@@ -2254,8 +1798,6 @@ int sys_close(int fd) {
 
 int sys_dup(int fd, int flags, int *newfd) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	__ensure(!(flags & ~(O_CLOEXEC)));
 
@@ -2268,30 +1810,19 @@ int sys_dup(int fd, int flags, int *newfd) {
 	req.set_fd(fd);
 	req.set_flags(proto_flags);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() == managarm::posix::Errors::BAD_FD) {
 		return EBADF;
 	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
@@ -2306,8 +1837,6 @@ int sys_dup(int fd, int flags, int *newfd) {
 
 int sys_dup2(int fd, int flags, int newfd) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::DUP2);
@@ -2315,30 +1844,19 @@ int sys_dup2(int fd, int flags, int newfd) {
 	req.set_newfd(newfd);
 	req.set_flags(flags);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 	if (resp.error() == managarm::posix::Errors::BAD_FD) {
 		return EBADF;
@@ -2444,50 +1962,31 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 
 int sys_readlink(const char *path, void *data, size_t max_size, ssize_t *length) {
 	SignalGuard sguard;
-	HelAction actions[4];
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::READLINK);
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionRecvToBuffer;
-	actions[3].flags = 0;
-	actions[3].buffer = data;
-	actions[3].length = max_size;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 4,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-	auto recv_data = parseLength(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
-	HEL_CHECK(recv_data->error);
+	auto [offer, send_req, recv_resp, recv_data] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline(),
+			helix_ng::recvBuffer(data, max_size))
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		return ENOENT;
 	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		return EINVAL;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		*length = recv_data->length;
+		*length = recv_data.actualLength();
 		return 0;
 	}
 }
@@ -2524,8 +2023,6 @@ int sys_rmdir(const char *path) {
 
 int sys_ftruncate(int fd, size_t size) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -2535,30 +2032,18 @@ int sys_ftruncate(int fd, size_t size) {
 	req.set_req_type(managarm::fs::CntReqType::PT_TRUNCATE);
 	req.set_size(size);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 3,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
 		return EINVAL;
 	} else {
@@ -2569,8 +2054,6 @@ int sys_ftruncate(int fd, size_t size) {
 
 int sys_fallocate(int fd, off_t offset, size_t size) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -2581,30 +2064,18 @@ int sys_fallocate(int fd, off_t offset, size_t size) {
 	req.set_rel_offset(offset);
 	req.set_size(size);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 3,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 	return 0;
 }
@@ -2651,9 +2122,6 @@ int sys_access(const char *path, int mode) {
 
 int sys_faccessat(int dirfd, const char *pathname, int, int flags) {
 	SignalGuard sguard;
-	HelAction actions[3];
-
-	globalQueue.trim();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::ACCESSAT);
@@ -2661,30 +2129,19 @@ int sys_faccessat(int dirfd, const char *pathname, int, int flags) {
 	req.set_fd(dirfd);
 	req.set_flags(flags);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(getPosixLane(), actions, 3,
-			globalQueue.getQueue(), 0, 0));
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
 
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		return ENOENT;
 	}else if(resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
@@ -2699,8 +2156,6 @@ int sys_faccessat(int dirfd, const char *pathname, int, int flags) {
 
 int sys_flock(int fd, int opts) {
 	SignalGuard sguard;
-	HelAction actions[3];
-	globalQueue.trim();
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::FLOCK);
@@ -2711,30 +2166,18 @@ int sys_flock(int fd, int opts) {
 		return EBADF;
 	}
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
-	actions[0].type = kHelActionOffer;
-	actions[0].flags = kHelItemAncillary;
-	actions[1].type = kHelActionSendFromBuffer;
-	actions[1].flags = kHelItemChain;
-	actions[1].buffer = ser.data();
-	actions[1].length = ser.size();
-	actions[2].type = kHelActionRecvInline;
-	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(handle, actions, 3,
-			globalQueue.getQueue(), 0, 0));
-
-	auto element = globalQueue.dequeueSingle();
-	auto offer = parseHandle(element);
-	auto send_req = parseSimple(element);
-	auto recv_resp = parseInline(element);
-
-	HEL_CHECK(offer->error);
-	HEL_CHECK(send_req->error);
-	HEL_CHECK(recv_resp->error);
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline())
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::posix::Errors::WOULD_BLOCK) {
 		return EWOULDBLOCK;
 	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
