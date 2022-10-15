@@ -34,6 +34,7 @@ int sys_close(int fd);
 // mlibc assumes that anonymous memory returned by sys_vm_map() is zeroed by the kernel / whatever is behind the sysdeps
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window);
 int sys_vm_unmap(void *pointer, size_t size);
+[[gnu::weak]] int sys_vm_protect(void *pointer, size_t size, int prot);
 
 } //namespace mlibc
 
