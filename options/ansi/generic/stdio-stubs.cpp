@@ -841,44 +841,9 @@ int fgetc(FILE *stream) {
 }
 
 char *fgets(char *__restrict buffer, size_t max_size, FILE *__restrict stream) {
-	__ensure(max_size > 0);
 	auto file = static_cast<mlibc::abstract_file *>(stream);
 	frg::unique_lock lock(file->_lock);
-	for(size_t i = 0; ; i++) {
-		if (i == max_size - 1) {
-			buffer[i] = 0;
-			return buffer;
-		}
-
-		auto c = fgetc_unlocked(stream);
-
-		// If fgetc() fails, there is either an EOF or an I/O error.
-		if(c == EOF) {
-//			if(ferror(stream)) {
-//				// Technically, we do not have to terminate the buffer in this case;
-//				// do it anyway to avoid UB if apps do not check our result.
-//				buffer[i] = 0;
-//				return nullptr;
-//			}
-
-			// EOF is only an error if no chars have been read yet.
-			//__ensure(feof(stream));
-			if(i) {
-				buffer[i] = 0;
-				return buffer;
-			}else{
-				// In this case, the buffer is not changed.
-				return nullptr;
-			}
-		}else{
-			buffer[i] = c;
-		}
-
-		if(c == '\n') {
-			buffer[i + 1] = 0;
-			return buffer;
-		}
-	}
+    return fgets_unlocked(buffer, max_size, stream);
 }
 
 int fputc_unlocked(int c, FILE *stream) {
@@ -1253,8 +1218,41 @@ size_t fwrite_unlocked(const void *buffer, size_t size, size_t count, FILE *file
 	}
 }
 
-char *fgets_unlocked(char *, int, FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+char *fgets_unlocked(char *__restrict buffer, int max_size, FILE *stream) {
+    __ensure(max_size > 0);
+    for(int i = 0; ; i++) {
+        if (i == max_size - 1) {
+            buffer[i] = 0;
+            return buffer;
+        }
 
+        auto c = fgetc_unlocked(stream);
+
+        // If fgetc() fails, there is either an EOF or an I/O error.
+        if(c == EOF) {
+            // if(ferror(stream)) {
+            //  // Technically, we do not have to terminate the buffer in this case;
+            //  // do it anyway to avoid UB if apps do not check our result.
+            //  buffer[i] = 0;
+            //  return nullptr;
+            // }
+
+            // EOF is only an error if no chars have been read yet.
+            //__ensure(feof(stream));
+            if(i) {
+                buffer[i] = 0;
+                return buffer;
+            }else{
+                // In this case, the buffer is not changed.
+                return nullptr;
+            }
+        }else{
+            buffer[i] = c;
+        }
+
+        if(c == '\n') {
+            buffer[i + 1] = 0;
+            return buffer;
+        }
+    }
+}
