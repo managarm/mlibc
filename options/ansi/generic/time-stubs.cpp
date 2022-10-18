@@ -325,6 +325,12 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			c++;
 			break;
 		}
+		case 'x': {
+			return strftime(dest, max_size, mlibc::nl_langinfo(D_FMT), tm);
+		}
+		case 'X': {
+			return strftime(dest, max_size, mlibc::nl_langinfo(T_FMT), tm);
+		}
 		case '\0': {
 			chunk = snprintf(p, space, "%%");
 			if(chunk >= space)
@@ -333,7 +339,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			break;
 		}
 		default:
-			__ensure(!"Unknown format type.");
+			mlibc::panicLogger() << "mlibc: strftime unknown format type: " << c << frg::endlog;
 		}
 	}
 
