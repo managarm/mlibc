@@ -18,9 +18,13 @@ int mprotect(void *pointer, size_t size, int prot) {
 	return 0;
 }
 
-int mlock(const void *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int mlock(const void *addr, size_t len) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_mlock, -1);
+	if(int e = mlibc::sys_mlock(addr, len); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int mlockall(int flags) {
