@@ -839,6 +839,10 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 
 	for(auto cmsg = CMSG_FIRSTHDR(hdr); cmsg; cmsg = CMSG_NXTHDR(hdr, cmsg)) {
 		__ensure(cmsg->cmsg_level == SOL_SOCKET);
+		if(cmsg->cmsg_type == SCM_CREDENTIALS) {
+			mlibc::infoLogger() << "mlibc: SCM_CREDENTIALS requested but we don't handle that yet!" << frg::endlog;
+			return EINVAL;
+		}
 		__ensure(cmsg->cmsg_type == SCM_RIGHTS);
 		__ensure(cmsg->cmsg_len >= sizeof(struct cmsghdr));
 
@@ -887,6 +891,12 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		return EDESTADDRREQ;
 	}else if(resp.error() == managarm::fs::Errors::ADDRESS_NOT_AVAILABLE) {
 		return EADDRNOTAVAIL;
+	}else if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+		return EINVAL;
+	}else if(resp.error() == managarm::fs::Errors::AF_NOT_SUPPORTED) {
+		return EAFNOSUPPORT;
+	}else if(resp.error() == managarm::fs::Errors::MESSAGE_TOO_LARGE) {
+		return EMSGSIZE;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*length = resp.size();
@@ -2077,7 +2087,16 @@ int sys_fallocate(int fd, off_t offset, size_t size) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+		return EINVAL;
+	}else if(resp.error() == managarm::fs::Errors::INSUFFICIENT_PERMISSIONS) {
+		return EPERM;
+	}else if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+		return EINVAL;
+	}else{
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		return 0;
+	}
 	return 0;
 }
 
