@@ -93,6 +93,7 @@ endif
 
 internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
 internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', false)
+internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', false)
 internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', false)
 internal_conf.set10('MLIBC_DEBUG_ALLOCATOR', get_option('debug_allocator'))
 
@@ -107,6 +108,8 @@ if host_machine.system() == 'linux'
 	disable_linux_headers = true
 	rtdl_include_dirs += include_directories('sysdeps/linux/include')
 	libc_include_dirs += include_directories('sysdeps/linux/include')
+	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
+	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
 	subdir('sysdeps/linux')
 elif host_machine.system() == 'aero'
 	rtdl_include_dirs += include_directories('sysdeps/aero/include')
