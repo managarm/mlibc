@@ -12,7 +12,9 @@
 #include <internal-config.h>
 #include "linker.hpp"
 
+#if !MLIBC_MMAP_ALLOCATE_DSO
 uintptr_t libraryBase = 0x41000000;
+#endif
 
 constexpr bool verbose = false;
 constexpr bool stillSlightlyVerbose = false;
@@ -424,8 +426,25 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	}
 
 	__ensure(!(object->baseAddress & (hugeSize - 1)));
+
+#if MLIBC_MMAP_ALLOCATE_DSO
+	void *mappedAddr = nullptr;
+
+	if (mlibc::sys_vm_map(nullptr,
+			highest_address - object->baseAddress, PROT_NONE,
+			MAP_PRIVATE | MAP_ANONYMOUS, -1, 0, &mappedAddr)) {
+		mlibc::panicLogger() << "sys_vm_map failed when allocating address space for DSO \""
+				<< object->name << "\""
+				<< ", base " << (void *)object->baseAddress
+				<< ", requested " << (highest_address - object->baseAddress) << " bytes"
+				<< frg::endlog;
+	}
+
+	object->baseAddress = reinterpret_cast<uintptr_t>(mappedAddr);
+#else
 	object->baseAddress = libraryBase;
 	libraryBase += (highest_address + (hugeSize - 1)) & ~(hugeSize - 1);
+#endif
 
 	if(verbose || logBaseAddresses)
 		mlibc::infoLogger() << "rtdl: Loading " << object->name
