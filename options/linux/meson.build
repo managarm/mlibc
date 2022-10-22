@@ -16,6 +16,7 @@ libc_sources += files(
 	'generic/sys-timerfd.cpp',
 	'generic/sys-eventfd.cpp',
 	'generic/sys-reboot.cpp',
+	'generic/sys-xattr.cpp',
 	'generic/utmp-stubs.cpp',
 	'generic/utmpx.cpp',
 	'generic/linux-unistd.cpp',
@@ -78,6 +79,7 @@ if not no_headers
 		'include/sys/vt.h',
 		'include/sys/sysinfo.h',
 		'include/sys/klog.h',
+		'include/sys/xattr.h',
 		subdir: 'sys'
 	)
 endif

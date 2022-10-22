@@ -28,6 +28,7 @@ void __ensure_warn(const char *assertion, const char *file, unsigned int line,
 				errno = ENOSYS; \
 				return (ret); \
 			} \
+			sysdep; \
 		})
 
 #define MLIBC_STUB_BODY { MLIBC_UNIMPLEMENTED(); __builtin_unreachable(); }
