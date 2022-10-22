@@ -87,9 +87,8 @@ int sigaltstack(const stack_t *__restrict ss, stack_t *__restrict oss);
 int kill(pid_t, int);
 int killpg(int, int);
 
-int sigtimedwait(const sigset_t *set, siginfo_t *info, const struct timespec *timeout);
-
-int sigwait(const sigset_t *set, int *sig);
+int sigtimedwait(const sigset_t *__restrict set, siginfo_t *__restrict info, const struct timespec *__restrict timeout);
+int sigwait(const sigset_t *__restrict set, int *__restrict sig);
 int sigwaitinfo(const sigset_t *__restrict set, siginfo_t *__restrict info);
 
 #ifdef __cplusplus
