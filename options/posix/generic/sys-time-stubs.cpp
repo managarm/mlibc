@@ -84,7 +84,11 @@ int timer_gettime(timer_t, struct itimerspec *) {
 	__builtin_unreachable();
 }
 
-int timer_delete(timer_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int timer_delete(timer_t t) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timer_delete, -1);
+	if(int e = mlibc::sys_timer_delete(t); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
