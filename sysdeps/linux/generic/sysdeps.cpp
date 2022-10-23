@@ -656,6 +656,47 @@ int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval
 	return 0;
 }
 
+/* Linux' uapi does some weird union stuff in place of `sigev_tid`, which we conveniently ignore */
+struct linux_uapi_sigevent {
+	union sigval sigev_value;
+	int sigev_signo;
+	int sigev_notify;
+	int sigev_tid;
+};
+
+int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__restrict res) {
+	struct linux_uapi_sigevent ksev;
+	struct linux_uapi_sigevent *ksevp = 0;
+	int timer_id;
+
+	switch(evp ? evp->sigev_notify : SIGEV_SIGNAL) {
+		case SIGEV_NONE:
+		case SIGEV_SIGNAL: {
+			if(evp) {
+				ksev.sigev_value = evp->sigev_value;
+				ksev.sigev_signo = evp->sigev_signo;
+				ksev.sigev_notify = evp->sigev_notify;
+				ksev.sigev_tid = 0;
+				ksevp = &ksev;
+			}
+
+			auto ret = do_syscall(SYS_timer_create, clk, ksevp, &timer_id);
+			if (int e = sc_error(ret); e) {
+				return e;
+			}
+			*res = (void *) (intptr_t) timer_id;
+			break;
+		}
+		case SIGEV_THREAD:
+			__ensure(!"sys_timer_create with evp->sigev_notify == SIGEV_THREAD is unimplemented");
+			[[fallthrough]];
+		default:
+			return EINVAL;
+	}
+
+	return 0;
+}
+
 int sys_timer_settime(timer_t t, int flags, const struct itimerspec *__restrict val, struct itimerspec *__restrict old) {
 	auto ret = do_syscall(SYS_timer_settime, t, flags, val, old);
 	if (int e = sc_error(ret); e) {
