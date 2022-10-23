@@ -74,9 +74,13 @@ int timer_create(clockid_t, struct sigevent *__restrict, timer_t *__restrict) {
 	__builtin_unreachable();
 }
 
-int timer_settime(timer_t, int, const struct itimerspec *__restrict, struct itimerspec *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int timer_settime(timer_t t, int flags, const struct itimerspec *__restrict val, struct itimerspec *__restrict old) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timer_settime, -1);
+	if(int e = mlibc::sys_timer_settime(t, flags, val, old); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int timer_gettime(timer_t, struct itimerspec *) {

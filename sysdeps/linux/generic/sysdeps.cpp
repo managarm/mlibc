@@ -656,6 +656,14 @@ int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval
 	return 0;
 }
 
+int sys_timer_settime(timer_t t, int flags, const struct itimerspec *__restrict val, struct itimerspec *__restrict old) {
+	auto ret = do_syscall(SYS_timer_settime, t, flags, val, old);
+	if (int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
+}
+
 int sys_timer_delete(timer_t t) {
 	__ensure((intptr_t) t >= 0);
 	auto ret = do_syscall(SYS_timer_delete, t);
