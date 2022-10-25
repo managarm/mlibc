@@ -168,8 +168,18 @@ int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	return 0;
+	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	}else if(resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	}else if(resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
+		return ENOTDIR;
+	}else{
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		return 0;
+	}
 }
 
 int sys_link(const char *old_path, const char *new_path) {
