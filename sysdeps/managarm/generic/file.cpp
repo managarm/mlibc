@@ -2285,6 +2285,23 @@ int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
 	}
 }
 
+int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
+	(void)dirfd;
+	(void)pathname;
+	(void)owner;
+	(void)group;
+	(void)flags;
+	mlibc::infoLogger() << "mlibc: sys_fchownat is a stub!" << frg::endlog;
+	return 0;
+}
+
+int sys_umask(mode_t mode, mode_t *old) {
+	(void)mode;
+	mlibc::infoLogger() << "mlibc: sys_umask is a stub, hardcoding 022!" << frg::endlog;
+	*old = 022;
+	return 0;
+}
+
 int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
 	SignalGuard sguard;
 
