@@ -1060,18 +1060,22 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	__ensure(resp.events_size() == count);
+	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	} else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		__ensure(resp.events_size() == count);
 
-	int m = 0;
-	for(nfds_t i = 0; i < count; i++) {
-		if(resp.events(i))
-			m++;
-		fds[i].revents = resp.events(i);
+		int m = 0;
+		for(nfds_t i = 0; i < count; i++) {
+			if(resp.events(i))
+				m++;
+			fds[i].revents = resp.events(i);
+		}
+
+		*num_events = m;
+		return 0;
 	}
-
-	*num_events = m;
-	return 0;
 }
 
 int sys_epoll_create(int flags, int *fd) {
