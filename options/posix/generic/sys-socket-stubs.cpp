@@ -11,7 +11,7 @@
 int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length) {
 	int newfd;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_accept, -1);
-	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length); e) {
+	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length, 0); e) {
 		errno = e;
 		return -1;
 	}
@@ -21,17 +21,9 @@ int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict a
 int accept4(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length, int flags) {
 	int newfd;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_accept, -1);
-	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length); e) {
+	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length, flags); e) {
 		errno = e;
 		return -1;
-	}
-
-	if(flags & SOCK_NONBLOCK) {
-		fcntl(newfd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
-	}
-
-	if(flags & SOCK_CLOEXEC) {
-		fcntl(newfd, F_SETFD, flags | FD_CLOEXEC);
 	}
 
 	return newfd;
