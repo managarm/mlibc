@@ -54,6 +54,7 @@ if not no_headers
 		'include/linux/if.h',
 		'include/linux/kdev_t.h',
 		'include/linux/reboot.h',
+		'include/linux/capability.h',
 		subdir: 'linux'
 	)
 	install_headers(
