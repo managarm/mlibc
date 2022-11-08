@@ -30,6 +30,7 @@ struct flock {
 };
 
 int creat(const char *, mode_t);
+int fallocate(int fd, int mode, off_t offset, off_t len);
 int fcntl(int fd, int command, ...);
 int open(const char *path, int flags, ...);
 int openat(int, const char *, int, ...);
