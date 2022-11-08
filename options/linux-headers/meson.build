@@ -56,6 +56,7 @@ if not no_headers
 		'include/linux/reboot.h',
 		'include/linux/capability.h',
 		'include/linux/resource.h',
+		'include/linux/hid.h',
 		subdir: 'linux'
 	)
 	install_headers(
