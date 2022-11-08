@@ -22,4 +22,6 @@ typedef __u32 __le32;
 typedef __u64 __be64;
 typedef __u64 __le64;
 
+#define __aligned_u64 __u64 __attribute__((aligned(8)))
+
 #endif // _LINUX_TYPES_H
