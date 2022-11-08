@@ -16,6 +16,22 @@ struct ifaddrmsg {
 	uint32_t ifa_index;
 };
 
+enum {
+	IFA_UNSPEC,
+	IFA_ADDRESS,
+	IFA_LOCAL,
+	IFA_LABEL,
+	IFA_BROADCAST,
+	IFA_ANYCAST,
+	IFA_CACHEINFO,
+	IFA_MULTICAST,
+	IFA_FLAGS,
+	IFA_RT_PRIORITY,
+	IFA_TARGET_NETNSID,
+	IFA_PROTO,
+	__IFA_MAX,
+};
+
 struct ifa_cacheinfo {
 	uint32_t ifa_prefered;
 	uint32_t ifa_valid;
