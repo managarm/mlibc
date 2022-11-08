@@ -58,6 +58,7 @@ if not no_headers
 		'include/linux/resource.h',
 		'include/linux/hid.h',
 		'include/linux/loop.h',
+		'include/linux/rtc.h',
 		subdir: 'linux'
 	)
 	install_headers(
