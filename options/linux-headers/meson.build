@@ -74,4 +74,8 @@ if not no_headers
 		'include/linux/hdlc/ioctl.h',
 		subdir: 'linux/hdlc'
 	)
+	install_headers(
+		'include/mtd/mtd-user.h',
+		subdir: 'mtd'
+	)
 endif
