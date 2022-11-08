@@ -62,6 +62,7 @@ if not no_headers
 		'include/linux/fiemap.h',
 		'include/linux/falloc.h',
 		'include/linux/prctl.h',
+		'include/linux/bpf.h',
 		subdir: 'linux'
 	)
 	install_headers(
