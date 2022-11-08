@@ -57,6 +57,7 @@ if not no_headers
 		'include/linux/capability.h',
 		'include/linux/resource.h',
 		'include/linux/hid.h',
+		'include/linux/loop.h',
 		subdir: 'linux'
 	)
 	install_headers(
