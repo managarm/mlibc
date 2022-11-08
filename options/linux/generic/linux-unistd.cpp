@@ -16,3 +16,8 @@ int vhangup(void) {
 int getdtablesize(void){
 	return sysconf(_SC_OPEN_MAX);
 }
+
+int syncfs(int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
