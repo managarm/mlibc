@@ -101,6 +101,7 @@ struct cmsghdr {
 // Linux extensions.
 #define MSG_DONTWAIT 0x1000
 #define MSG_CMSG_CLOEXEC 0x2000
+#define MSG_MORE 0x4000
 
 // GNU (?) extension: Protocol family constants.
 
@@ -122,6 +123,7 @@ struct cmsghdr {
 #define PF_NETROM 15
 #define PF_ROSE 16
 #define PF_TIPC 30
+#define PF_ALG 38
 #define PF_MAX 46
 
 #define AF_INET PF_INET
@@ -143,6 +145,7 @@ struct cmsghdr {
 #define AF_NETROM PF_NETROM
 #define AF_ROSE PF_ROSE
 #define AF_TIPC PF_TIPC
+#define AF_ALG PF_ALG
 #define AF_MAX PF_MAX
 
 #define SHUT_RD 1
