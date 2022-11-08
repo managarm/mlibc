@@ -60,6 +60,7 @@ if not no_headers
 		'include/linux/loop.h',
 		'include/linux/rtc.h',
 		'include/linux/fiemap.h',
+		'include/linux/falloc.h',
 		subdir: 'linux'
 	)
 	install_headers(
