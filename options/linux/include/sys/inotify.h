@@ -33,6 +33,11 @@ extern "C" {
 #define IN_Q_OVERFLOW 0x4000
 #define IN_UNMOUNT 0x2000
 
+#define IN_ALL_EVENTS (IN_ACCESS | IN_MODIFY | IN_ATTRIB | IN_CLOSE_WRITE | \
+			 IN_CLOSE_NOWRITE | IN_OPEN | IN_MOVED_FROM | \
+			 IN_MOVED_TO | IN_DELETE | IN_CREATE | IN_DELETE_SELF | \
+			 IN_MOVE_SELF)
+
 struct inotify_event {
 	int wd;
 	unsigned int mask;
