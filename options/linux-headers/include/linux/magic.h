@@ -28,6 +28,7 @@ extern "C" {
 #define MSDOS_SUPER_MAGIC 0x4d44
 #define BTRFS_SUPER_MAGIC 0x9123683E
 #define REISERFS_SUPER_MAGIC 0x52654973
+#define AUTOFS_SUPER_MAGIC 0x0187
 
 #ifdef __cplusplus
 }
