@@ -10,6 +10,7 @@ extern "C" {
 
 #define IF_NAMESIZE 16
 #define IFNAMSIZ IF_NAMESIZE
+#define ALTIFNAMSIZ 128
 
 struct if_nameindex {
 	unsigned int if_index;
