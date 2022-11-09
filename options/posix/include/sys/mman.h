@@ -1,6 +1,7 @@
 #ifndef _SYS_MMAN_H
 #define _SYS_MMAN_H
 
+#include <mlibc-config.h>
 #include <abi-bits/mode_t.h>
 #include <abi-bits/vm-flags.h>
 #include <bits/off_t.h>
