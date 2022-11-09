@@ -13,3 +13,8 @@ int sched_getcpu(void) {
 	}
 	return 0;
 }
+
+int setns(int, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
