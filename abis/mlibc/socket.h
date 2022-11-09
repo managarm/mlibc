@@ -51,6 +51,7 @@ struct cmsghdr {
 #define SOCK_RAW 2
 #define SOCK_SEQPACKET 3
 #define SOCK_STREAM 4
+#define SOCK_DCCP 5
 #define SOCK_NONBLOCK 0x10000
 #define SOCK_CLOEXEC 0x20000
 #define SOCK_RDM 0x40000
@@ -84,6 +85,9 @@ struct cmsghdr {
 #define SO_PROTOCOL 23
 #define SO_REUSEPORT 24
 #define SO_TIMESTAMP 25
+#define SO_PEERSEC 26
+#define SO_BINDTODEVICE 27
+#define SO_DOMAIN 28
 
 #define SOMAXCONN 1
 
