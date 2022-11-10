@@ -22,6 +22,7 @@ struct timezone {
 
 // TODO: this function is [OB]. disable it by default and add a macro to enable it
 int gettimeofday(struct timeval *__restrict result, void *__restrict unused);
+int settimeofday(const struct timeval *result, const struct timezone *zone);
 
 void timeradd(const struct timeval *a, const struct timeval *b, struct timeval *res);
 void timersub(const struct timeval *a, const struct timeval *b, struct timeval *res);

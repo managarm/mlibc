@@ -21,6 +21,11 @@ int gettimeofday(struct timeval *__restrict result, void *__restrict unused) {
 	return 0;
 }
 
+int settimeofday(const struct timeval *, const struct timezone *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 void timeradd(const struct timeval *a, const struct timeval *b, struct timeval *res) {
 	res->tv_sec = a->tv_sec + b->tv_sec;
 	res->tv_usec = a->tv_usec + b->tv_usec;
