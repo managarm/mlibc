@@ -4,8 +4,10 @@
 
 #include <sys/ioctl.h>
 
+#define BLKROSET _IO(0x12, 93)
 #define BLKROGET _IO(0x12, 94)
 #define BLKRRPART _IO(0x12, 95)
+#define BLKGETSIZE64 _IOR(0x12, 114, size_t)
 #define BLKIOMIN _IO(0x12, 120)
 #define BLKIOOPT _IO(0x12, 121)
 #define BLKALIGNOFF _IO(0x12, 122)
