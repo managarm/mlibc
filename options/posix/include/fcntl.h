@@ -48,6 +48,9 @@ struct file_handle {
 int name_to_handle_at(int, const char *, struct file_handle *, int *, int);
 int open_by_handle_at(int, struct file_handle *, int);
 
+#define F_SETPIPE_SZ 1031
+#define F_GETPIPE_SZ 1032
+
 #ifdef __cplusplus
 }
 #endif
