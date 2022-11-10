@@ -112,4 +112,5 @@
 #define ERESTART 1106
 #define EUSERS 1107
 #define ECHRNG 1108
+#define ELIBBAD 1109
 #endif // _ABIBITS_ERRNO_H
