@@ -59,6 +59,7 @@ if not no_headers
 		'include/linux/hid.h',
 		'include/linux/loop.h',
 		'include/linux/rtc.h',
+		'include/linux/fiemap.h',
 		subdir: 'linux'
 	)
 	install_headers(

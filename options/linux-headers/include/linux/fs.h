@@ -3,6 +3,7 @@
 #define _LINUX_FS_H
 
 #include <sys/ioctl.h>
+#include <linux/fiemap.h>
 
 #define BLKROSET _IO(0x12, 93)
 #define BLKROGET _IO(0x12, 94)
@@ -15,6 +16,7 @@
 
 #define FS_IOC_GETFLAGS _IOR('f', 1, long)
 #define FS_IOC_SETFLAGS _IOW('f', 2, long)
+#define FS_IOC_FIEMAP _IOWR('f', 11, struct fiemap)
 
 #define FS_COMPR_FL		0x00000004
 #define FS_IMMUTABLE_FL	0x00000010
