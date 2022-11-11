@@ -113,4 +113,7 @@
 #define EUSERS 1107
 #define ECHRNG 1108
 #define ELIBBAD 1109
+#define EL2HLT 1110
+#define EL3HLT 1111
+#define EKEYEXPIRED 1112
 #endif // _ABIBITS_ERRNO_H
