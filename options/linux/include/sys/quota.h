@@ -7,6 +7,14 @@
 #define SUBCMDSHIFT 8
 #define QCMD(cmd, type) (((cmd) << SUBCMDSHIFT) | ((type) & SUBCMDMASK))
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int quotactl(int cmd, const char *special, int id, caddr_t addr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _SYS_QUOTA_H
