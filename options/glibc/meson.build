@@ -14,6 +14,7 @@ libc_sources += files(
 	'generic/execinfo.cpp',
 	'generic/string.cpp',
 	'generic/personality.cpp',
+	'generic/gshadow.cpp',
 )
 
 if not no_headers
