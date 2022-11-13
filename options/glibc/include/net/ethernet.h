@@ -34,6 +34,8 @@ struct ether_header {
 	uint16_t ether_type;
 };
 
+#define ETHER_ADDR_LEN 6
+
 #ifdef __cplusplus
 }
 #endif
