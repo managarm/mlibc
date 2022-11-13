@@ -57,6 +57,7 @@ struct cmsghdr {
 #define SOCK_RDM 0x40000
 
 #define SOL_SOCKET 1
+#define SOL_IPV6 41
 #define SOL_PACKET 263
 #define SOL_NETLINK 270
 
