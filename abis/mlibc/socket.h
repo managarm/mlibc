@@ -89,6 +89,9 @@ struct cmsghdr {
 #define SO_BINDTODEVICE 27
 #define SO_DOMAIN 28
 #define SO_PASSSEC 29
+#define SO_TIMESTAMPNS 30
+#define SO_PRIORITY 31
+#define SO_MARK 32
 
 #define SOMAXCONN 1
 
