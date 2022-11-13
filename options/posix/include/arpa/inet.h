@@ -31,6 +31,9 @@ const char *inet_ntop(int, const void *__restrict, char *__restrict,
 		socklen_t);
 int inet_pton(int, const char *__restrict, void *__restrict);
 
+struct in_addr inet_makeaddr(in_addr_t net, in_addr_t host);
+in_addr_t inet_netof(struct in_addr in);
+
 #ifdef __cplusplus
 }
 #endif

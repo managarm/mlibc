@@ -214,3 +214,12 @@ int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 	return 1;
 }
 
+struct in_addr inet_makeaddr(in_addr_t, in_addr_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+in_addr_t inet_netof(struct in_addr) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
