@@ -117,4 +117,5 @@
 #define EL3HLT 1111
 #define EKEYEXPIRED 1112
 #define ECOMM 1113
+#define EBADE 1114
 #endif // _ABIBITS_ERRNO_H
