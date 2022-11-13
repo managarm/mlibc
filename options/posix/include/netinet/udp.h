@@ -1,6 +1,8 @@
 #ifndef _NETINET_UDP_H
 #define _NETINET_UDP_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
