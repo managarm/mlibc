@@ -62,6 +62,11 @@ struct nd_router_solicit {
 	struct icmp6_hdr nd_rs_hdr;
 };
 
+#define nd_rs_type nd_rs_hdr.icmp6_type
+#define nd_rs_code nd_rs_hdr.icmp6_code
+#define nd_rs_cksum nd_rs_hdr.icmp6_cksum
+#define nd_rs_reserved nd_rs_hdr.icmp6_data32[0]
+
 struct nd_router_advert {
 	struct icmp6_hdr nd_ra_hdr;
 	uint32_t nd_ra_reachable;
