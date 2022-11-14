@@ -138,3 +138,8 @@ int sigisemptyset(const sigset_t *set) {
 }
 #endif // __MLIBC_GLIBC_OPTION
 
+int sigqueue(pid_t, int, const union sigval) {
+	__ensure(!"sigqueue() not implemented");
+	__builtin_unreachable();
+}
+
