@@ -16,6 +16,7 @@ if not no_headers
 		'include/linux/fb.h',
 		'include/linux/filter.h',
 		'include/linux/fs.h',
+		'include/linux/fuse.h',
 		'include/linux/hdreg.h',
 		'include/linux/input-event-codes.h',
 		'include/linux/input.h',
