@@ -15,6 +15,7 @@ libc_sources += files(
 	'generic/string.cpp',
 	'generic/personality.cpp',
 	'generic/gshadow.cpp',
+	'generic/sys-timex.cpp',
 )
 
 if not no_headers
@@ -48,6 +49,7 @@ if not no_headers
 		'include/sys/timeb.h',
 		'include/sys/mtio.h',
 		'include/sys/endian.h',
+		'include/sys/timex.h',
 		subdir: 'sys'
 	)
 	install_headers(
