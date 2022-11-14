@@ -202,6 +202,9 @@ int pthread_attr_setsigmask_np(pthread_attr_t *__restrict, const sigset_t *__res
 
 int pthread_getattr_np(pthread_t, pthread_attr_t *);
 
+int pthread_getaffinity_np(pthread_t thread, size_t cpusetsize, cpu_set_t *cpuset);
+int pthread_setaffinity_np(pthread_t thread, size_t cpusetsize, const cpu_set_t *cpuset);
+
 // pthread functions.
 int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict,
 		void *(*) (void *), void *__restrict);
