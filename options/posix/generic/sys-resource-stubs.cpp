@@ -50,3 +50,8 @@ int setrlimit(int resource, const struct rlimit *limit) {
 	}
 	return 0;
 }
+
+int prlimit(pid_t, int, const struct rlimit *, struct rlimit *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
