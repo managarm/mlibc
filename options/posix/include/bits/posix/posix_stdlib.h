@@ -29,6 +29,7 @@ int unsetenv(const char *);
 
 int mkstemp(char *);
 int mkostemp(char *, int flags);
+int mkostemps(char *pattern, int suffixlen, int flags);
 char *mkdtemp(char *path);
 
 char *realpath(const char *__restrict, char *__restrict);
