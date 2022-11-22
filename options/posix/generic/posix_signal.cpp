@@ -83,19 +83,33 @@ int killpg(pid_t pgrp, int sig) {
 	return -1;
 }
 
-int sigtimedwait(const sigset_t *, siginfo_t *, const struct timespec *) {
-	__ensure(!"sigtimedwait() not implemented");
-	__builtin_unreachable();
+int sigtimedwait(const sigset_t *__restrict set, siginfo_t *__restrict info, const struct timespec *__restrict timeout) {
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sigtimedwait, -1);
+
+	int signo;
+
+	if (int e = sysdep(set, info, timeout, &signo)) {
+		errno = e;
+		return -1;
+	}
+
+	return signo;
 }
 
-int sigwaitinfo(const sigset_t *__restrict, siginfo_t *__restrict) {
-	__ensure(!"sigtimedwait() not implemented");
-	__builtin_unreachable();
+int sigwaitinfo(const sigset_t *__restrict set, siginfo_t *__restrict info) {
+	// NOTE: This assumes the sysdep behavior noted in mlibc/posix-sysdeps.hpp
+	return sigtimedwait(set, info, nullptr);
 }
 
-int sigwait(const sigset_t *, int *) {
-	__ensure(!"sigwait() not implemented");
-	__builtin_unreachable();
+int sigwait(const sigset_t *__restrict set, int *__restrict sig) {
+	if (int e = sigwaitinfo(set, nullptr); e < 0) {
+		return e;
+	} else {
+		if (sig)
+			*sig = e;
+
+		return 0;
+	}
 }
 
 int sigpending(sigset_t *) {

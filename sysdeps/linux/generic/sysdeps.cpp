@@ -1367,4 +1367,16 @@ int sys_flistxattr(int fd, char *list, size_t size, ssize_t *nread) {
 	*nread = sc_int_result<ssize_t>(ret);
 	return 0;
 }
+
+int sys_sigtimedwait(const sigset_t *__restrict set, siginfo_t *__restrict info, const struct timespec *__restrict timeout, int *out_signal) {
+	auto ret = do_syscall(SYS_rt_sigtimedwait, set, info, timeout, NSIG / 8);
+
+	if (int e = sc_error(ret); e)
+		return e;
+
+	*out_signal = sc_int_result<int>(ret);
+
+	return 0;
+}
+
 } // namespace mlibc
