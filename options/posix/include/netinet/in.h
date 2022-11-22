@@ -84,6 +84,8 @@ uint16_t ntohs(uint16_t);
 #define IN_CLASSB_NET 0xffff0000
 #define IN_CLASSC_NET 0xffffff00
 
+#define IN_LOOPBACKNET 127
+
 #ifdef __cplusplus
 }
 #endif

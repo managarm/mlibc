@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #define NS_PACKETSZ	512
+#define NS_MAXDNAME 1025
 
 typedef	enum __ns_rcode {
 	ns_r_noerror = 0,
@@ -134,6 +135,7 @@ typedef struct {
 } HEADER;
 
 #define PACKETSZ	NS_PACKETSZ
+#define MAXDNAME	NS_MAXDNAME
 
 #define NOERROR		ns_r_noerror
 #define FORMERR		ns_r_formerr
