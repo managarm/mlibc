@@ -262,7 +262,7 @@ struct _fpstate {
 
 typedef struct {
 	unsigned long gregs[NGREG];
-	struct _fpstate *fpstate;
+	struct _fpstate *fpregs;
 	unsigned long __reserved1[8];
 } mcontext_t;
 
