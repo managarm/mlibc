@@ -14,6 +14,18 @@ extern "C" {
 #define BR_STATE_FORWARDING 3
 #define BR_STATE_BLOCKING 4
 
+enum {
+	IFLA_BRIDGE_FLAGS,
+	IFLA_BRIDGE_MODE,
+	IFLA_BRIDGE_VLAN_INFO,
+	IFLA_BRIDGE_VLAN_TUNNEL_INFO,
+	IFLA_BRIDGE_MRP,
+	IFLA_BRIDGE_CFM,
+	IFLA_BRIDGE_MST,
+	__IFLA_BRIDGE_MAX,
+};
+#define IFLA_BRIDGE_MAX (__IFLA_BRIDGE_MAX - 1)
+
 struct br_port_msg {
 	uint8_t  family;
 	uint32_t ifindex;
@@ -26,6 +38,11 @@ enum {
 	__MDBA_SET_ENTRY_MAX,
 };
 #define MDBA_SET_ENTRY_MAX (__MDBA_SET_ENTRY_MAX - 1)
+
+struct bridge_vlan_info {
+	uint16_t flags;
+	uint16_t vid;
+};
 
 #ifdef __cplusplus
 }

@@ -115,6 +115,7 @@ struct cmsghdr {
 #define PF_ISDN 11
 #define PF_SNA 12
 #define PF_PACKET 13
+#define PF_MAX 46
 
 #define AF_INET PF_INET
 #define AF_INET6 PF_INET6
@@ -123,7 +124,15 @@ struct cmsghdr {
 #define AF_UNSPEC PF_UNSPEC
 #define AF_NETLINK PF_NETLINK
 #define AF_BRIDGE PF_BRIDGE
+#define AF_APPLETALK PF_APPLETALK
+#define AF_BLUETOOTH PF_BLUETOOTH
+#define AF_DECnet PF_DECnet
+#define AF_IPX PF_IPX
+#define AF_ISDN PF_ISDN
+#define AF_SNA PF_SNA
 #define AF_PACKET PF_PACKET
+#define AF_PACKET PF_PACKET
+#define AF_MAX PF_MAX
 
 #define SHUT_RD 1
 #define SHUT_RDWR 2

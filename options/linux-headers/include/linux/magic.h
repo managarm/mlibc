@@ -20,6 +20,8 @@ extern "C" {
 #define USBDEVICE_SUPER_MAGIC 0x9fa2
 #define HUGETLBFS_MAGIC 0x958458f6
 #define CGROUP_SUPER_MAGIC 0x27e0eb
+#define BINFMTFS_MAGIC 0x42494e4d
+#define SYSFS_MAGIC 0x62656572
 
 /* Other file systems */
 #define EXT2_SUPER_MAGIC 0xEF53
