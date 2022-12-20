@@ -37,6 +37,7 @@ all_test_cases = [
 	'posix/pthread_key',
 	'posix/pthread_thread_local',
 	'posix/pthread_attr',
+	'posix/pthread_schedparam',
 	'posix/pwd',
 	'posix/fdopen',
 	'posix/getaddrinfo',

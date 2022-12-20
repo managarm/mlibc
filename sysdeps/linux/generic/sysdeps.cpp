@@ -951,6 +951,47 @@ int sys_mlockall(int flags) {
 	return 0;
 }
 
+int sys_get_min_priority(int policy, int *out) {
+	auto ret = do_syscall(SYS_sched_get_priority_min, policy);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<int>(ret);
+
+	return 0;
+}
+
+int sys_getschedparam(void *tcb, int *policy, struct sched_param *param) {
+	auto t = reinterpret_cast<Tcb *>(tcb);
+
+	if(!t->tid) {
+		return ESRCH;
+	}
+
+	auto ret_param = do_syscall(SYS_sched_getparam, t->tid, param);
+	if (int e = sc_error(ret_param); e)
+		return e;
+
+	auto ret_sched = do_syscall(SYS_sched_getscheduler, t->tid, param);
+	if (int e = sc_error(ret_sched); e)
+		return e;
+	*policy = sc_int_result<int>(ret_sched);
+
+	return 0;
+}
+
+int sys_setschedparam(void *tcb, int policy, const struct sched_param *param) {
+	auto t = reinterpret_cast<Tcb *>(tcb);
+
+	if(!t->tid) {
+		return ESRCH;
+	}
+
+	auto ret = do_syscall(SYS_sched_setscheduler, t->tid, policy, param);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {

@@ -499,14 +499,26 @@ int pthread_getname_np(pthread_t, char *, size_t) {
 	__builtin_unreachable();
 }
 
-int pthread_setschedparam(pthread_t, int, const struct sched_param *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param) {
+	auto tcb = reinterpret_cast<Tcb*>(thread);
+
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setschedparam, ENOSYS);
+	if(int e = mlibc::sys_setschedparam(tcb, policy, param); e) {
+		return e;
+	}
+
+	return 0;
 }
 
-int pthread_getschedparam(pthread_t, int *, struct sched_param *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param) {
+	auto tcb = reinterpret_cast<Tcb*>(thread);
+
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getschedparam, ENOSYS);
+	if(int e = mlibc::sys_getschedparam(tcb, policy, param); e) {
+		return e;
+	}
+
+	return 0;
 }
 
 //pthread cancel functions
