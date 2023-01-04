@@ -13,6 +13,7 @@ extern "C" {
 #define TCP_KEEPCNT 6
 #define TCP_DEFER_ACCEPT 9
 #define TCP_CONGESTION 13
+#define TCP_FASTOPEN 23
 
 #define SOL_TCP 6
 
