@@ -119,4 +119,5 @@
 #define ECOMM 1113
 #define EBADE 1114
 #define EHWPOISON 1115
+#define EBADRQC 1116
 #endif // _ABIBITS_ERRNO_H
