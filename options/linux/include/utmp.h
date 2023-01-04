@@ -59,6 +59,7 @@ struct lastlog {
 
 void setutent(void);
 struct utmp *getutent(void);
+int getutent_r(struct utmp *, struct utmp **);
 void endutent(void);
 struct utmp *pututline(const struct utmp *);
 struct utmp *getutline(const struct utmp *);
