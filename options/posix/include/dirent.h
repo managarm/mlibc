@@ -38,6 +38,8 @@ struct dirent64 {
 
 #undef __MLIBC_DIRENT_BODY
 
+#define IFTODT(mode) (((mode) & 0170000) >> 12)
+
 struct __mlibc_dir_struct {
 	int __handle;
 	__mlibc_size __ent_next;
