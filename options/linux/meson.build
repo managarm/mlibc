@@ -28,6 +28,7 @@ libc_sources += files(
 	'generic/sys-klog.cpp',
 	'generic/sched.cpp',
 	'generic/sys-quota.cpp',
+	'generic/capabilities.cpp',
 )
 
 if not no_headers
