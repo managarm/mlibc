@@ -16,6 +16,8 @@ typedef struct __user_cap_data_struct {
 
 #define CAP_TO_INDEX(x) ((x) >> 5)
 
+#define CAP_KILL 5
+#define CAP_SETPCAP 8
 #define CAP_SYS_ADMIN 21
 
 #endif // _LINUX_CAPABILITY_H

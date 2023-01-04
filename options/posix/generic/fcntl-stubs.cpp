@@ -11,6 +11,11 @@ int creat(const char *pathname, mode_t mode) {
 	return open(pathname, O_CREAT|O_WRONLY|O_TRUNC, mode);
 }
 
+int fallocate(int, int, off_t, off_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 int fcntl(int fd, int command, ...) {
 	va_list args;
 	va_start(args, command);

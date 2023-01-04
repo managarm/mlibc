@@ -131,3 +131,10 @@ int sigaltstack(const stack_t *__restrict ss, stack_t *__restrict oss) {
 
 	return 0;
 }
+
+#if __MLIBC_GLIBC_OPTION
+int sigisemptyset(const sigset_t *set) {
+	return !(*set);
+}
+#endif // __MLIBC_GLIBC_OPTION
+
