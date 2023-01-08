@@ -118,6 +118,7 @@ if not no_headers
 		'include/netinet/ip.h',
 		'include/netinet/tcp.h',
 		'include/netinet/icmp6.h',
+		'include/netinet/if_ether.h',
 		subdir: 'netinet'
 	)
 	install_headers(
