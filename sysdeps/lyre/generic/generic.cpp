@@ -93,7 +93,7 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	struct timespec ts;
 	ts.tv_sec = timeout / 1000;
 	ts.tv_nsec = (timeout % 1000) * 1000000;
-	return sys_ppoll(fds, count, &ts, NULL, num_events);
+	return sys_ppoll(fds, count, timeout < 0 ? NULL : &ts, NULL, num_events);
 }
 
 int sys_epoll_pwait(int, struct epoll_event *, int,
