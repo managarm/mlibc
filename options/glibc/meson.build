@@ -43,6 +43,7 @@ if not no_headers
 		'include/sys/personality.h',
 		'include/sys/timeb.h',
 		'include/sys/mtio.h',
+		'include/sys/endian.h',
 		subdir: 'sys'
 	)
 	install_headers(
