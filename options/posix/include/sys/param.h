@@ -5,6 +5,7 @@
 #include <endian.h>
 #include <limits.h>
 
+#define NBBY CHAR_BIT
 #define NGROUPS NGROUPS_MAX
 
 // Report the same value as Linux here.
