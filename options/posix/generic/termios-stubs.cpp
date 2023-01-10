@@ -49,9 +49,13 @@ int tcflow(int fd, int action) {
 	return 0;
 }
 
-int tcflush(int, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int tcflush(int fd, int queue_selector) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_tcflush, -1);
+	if(int e = mlibc::sys_tcflush(fd, queue_selector); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int tcgetattr(int fd, struct termios *attr) {
