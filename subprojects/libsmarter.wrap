@@ -1,0 +1,4 @@
+[wrap-git]
+directory = libsmarter
+url = https://github.com/managarm/libsmarter.git
+revision = master
