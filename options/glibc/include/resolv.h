@@ -29,11 +29,15 @@ int res_init(void);
 /* From musl: Unused; purely for broken apps
  * To avoid an massive struct, only add the items requested. */
 typedef struct __res_state {
+	int retrans;
+	int retry;
 	unsigned long options;
 	int nscount;
 	struct sockaddr_in nsaddr_list[MAXNS];
 	char *dnsrch[MAXDNSRCH + 1];
 	char defdname[256];
+	unsigned ndots:4;
+	unsigned nsort:4;
 	union {
 		char pad[52];
 		struct {
