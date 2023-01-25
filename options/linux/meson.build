@@ -82,5 +82,9 @@ if not no_headers
 		'include/sys/xattr.h',
 		subdir: 'sys'
 	)
+	install_headers(
+		'include/linux/libc-compat.h',
+		subdir: 'linux'
+	)
 endif
 

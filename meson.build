@@ -31,7 +31,6 @@ build_tests_host_libc = get_option('build_tests_host_libc')
 disable_ansi_option = get_option('disable_ansi_option')
 disable_posix_option = get_option('disable_posix_option')
 disable_linux_option = get_option('disable_linux_option')
-disable_linux_headers = get_option('disable_linux_headers_option')
 disable_iconv_option = get_option('disable_iconv_option')
 disable_intl_option = get_option('disable_intl_option')
 disable_glibc_option = get_option('disable_glibc_option')
@@ -105,9 +104,20 @@ internal_conf.set10('MLIBC_DEBUG_ALLOCATOR', get_option('debug_allocator'))
 provides_bits_syscall_h = false
 if host_machine.system() == 'linux'
 	provides_bits_syscall_h = true
-	disable_linux_headers = true
 	rtdl_include_dirs += include_directories('sysdeps/linux/include')
 	libc_include_dirs += include_directories('sysdeps/linux/include')
+
+	if get_option('linux_kernel_headers') == ''
+		error('linux_kernel_headers is not set')
+	endif
+
+	if not import('fs').is_dir(get_option('linux_kernel_headers'))
+		error('linux_kernel_headers is not set to a valid path')
+	endif
+
+	rtdl_include_dirs += include_directories(get_option('linux_kernel_headers'))
+	libc_include_dirs += include_directories(get_option('linux_kernel_headers'))
+
 	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
 	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
 	subdir('sysdeps/linux')
@@ -182,8 +192,18 @@ if not disable_intl_option
 endif
 
 if not disable_linux_option
+	if get_option('linux_kernel_headers') == ''
+		error('linux_kernel_headers is not set')
+	endif
+
+	if not import('fs').is_dir(get_option('linux_kernel_headers'))
+		error('linux_kernel_headers is not set to a valid path')
+	endif
+
 	rtdl_include_dirs += include_directories('options/linux/include')
 	libc_include_dirs += include_directories('options/linux/include')
+	rtdl_include_dirs += include_directories(get_option('linux_kernel_headers'))
+	libc_include_dirs += include_directories(get_option('linux_kernel_headers'))
 endif
 
 if not disable_glibc_option
@@ -199,8 +219,6 @@ if not disable_bsd_option
 	libc_include_dirs += include_directories('options/bsd/include')
 endif
 
-rtdl_include_dirs += include_directories('options/linux-headers/include')
-libc_include_dirs += include_directories('options/linux-headers/include')
 rtdl_include_dirs += include_directories('options/elf/include')
 libc_include_dirs += include_directories('options/elf/include')
 libc_include_dirs += include_directories('.')
@@ -289,7 +307,6 @@ subdir('options/posix')
 subdir('options/lsb')
 subdir('options/glibc')
 subdir('options/linux')
-subdir('options/linux-headers')
 subdir('options/iconv')
 subdir('options/intl')
 subdir('options/crypt')
