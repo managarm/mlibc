@@ -563,7 +563,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			return 0;
 		}
 	}else if(_IOC_TYPE(request) == 'E'
-			&& _IOC_NR(request) == _IOC_NR(EVIOSCLOCKID)) {
+			&& _IOC_NR(request) == _IOC_NR(EVIOCSCLOCKID)) {
 		auto param = reinterpret_cast<int *>(arg);
 
 		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
