@@ -205,6 +205,9 @@ int sys_vm_unmap(void *pointer, size_t size);
 
 [[gnu::weak]] int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events);
 
+[[gnu::weak]] int sys_if_indextoname(unsigned int index, char *name);
+[[gnu::weak]] int sys_if_nametoindex(const char *name, unsigned int *ret);
+
 } //namespace mlibc
 
 #endif // MLIBC_POSIX_SYSDEPS

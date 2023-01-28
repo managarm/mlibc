@@ -344,6 +344,7 @@ int sys_isatty(int fd) {
 
 #if __MLIBC_POSIX_OPTION
 
+#include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
 #include <sys/stat.h>
@@ -989,6 +990,46 @@ int sys_setschedparam(void *tcb, int policy, const struct sched_param *param) {
 	auto ret = do_syscall(SYS_sched_setscheduler, t->tid, policy, param);
 	if (int e = sc_error(ret); e)
 		return e;
+	return 0;
+}
+
+int sys_if_indextoname(unsigned int index, char *name) {
+	int fd = socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, AF_UNSPEC);
+
+	if(fd < 0)
+		return 0;
+
+	struct ifreq ifr;
+	ifr.ifr_ifindex = index;
+
+	int ret = sys_ioctl(fd, SIOCGIFNAME, &ifr, NULL);
+	close(fd);
+
+	if(ret < 0) {
+		if(ret == ENODEV)
+			return ENXIO;
+		return ret;
+	}
+
+	strncpy(name, ifr.ifr_name, IF_NAMESIZE);
+
+	return 0;
+}
+
+int sys_if_nametoindex(const char *name, unsigned int *ret) {
+	int fd = socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, AF_UNSPEC);
+
+	if(fd < 0)
+		return -1;
+
+	struct ifreq ifr;
+	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
+
+	int r = ioctl(fd, SIOCGIFINDEX, &ifr);
+	close(fd);
+
+	*ret = (r < 0) ? r : ifr.ifr_ifindex;
+
 	return 0;
 }
 

@@ -76,6 +76,7 @@ all_test_cases = [
 	'posix/basename',
 	'posix/regex',
 	'posix/sigtimedwait',
+	'posix/if_indextoname',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'linux/xattr',
