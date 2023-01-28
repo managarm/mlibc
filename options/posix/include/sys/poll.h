@@ -3,6 +3,7 @@
 
 #include <bits/types.h>
 #include <abi-bits/poll.h>
+#include <abi-bits/signal.h>
 
 typedef __mlibc_size nfds_t;
 
@@ -17,6 +18,7 @@ struct pollfd {
 };
 
 int poll(struct pollfd *, nfds_t, int);
+int ppoll(struct pollfd *fds, nfds_t nfds, const struct timespec *timeout_ts, const sigset_t *sigmask);
 
 #ifdef __cplusplus
 }
