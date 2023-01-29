@@ -6,6 +6,7 @@ endif
 ansi_sources = files(
 	'generic/stdlib-stubs.cpp',
 	'generic/assert-stubs.cpp',
+	'generic/complex-stubs.cpp',
 	'generic/ctype-stubs.cpp',
 	'generic/environment.cpp',
 	'generic/errno-stubs.cpp',
