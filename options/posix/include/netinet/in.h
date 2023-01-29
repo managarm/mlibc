@@ -21,14 +21,14 @@ uint32_t ntohl(uint32_t);
 uint16_t ntohs(uint16_t);
 
 #define IN6_IS_ADDR_UNSPECIFIED(a) ({ \
-    uint32_t *_a = (uint32_t *)((a)->s6_addr); \
+    uint32_t *_a = (uint32_t *)(((struct in6_addr *) a)->s6_addr); \
     !_a[0] && \
     !_a[1] && \
     !_a[2] && \
     !_a[3];  \
 })
 #define IN6_IS_ADDR_LOOPBACK(a) ({ \
-    uint32_t *_a = (uint32_t *)((a)->s6_addr); \
+    uint32_t *_a = (uint32_t *)(((struct in6_addr *) a)->s6_addr); \
     !_a[0] && \
     !_a[1] && \
     !_a[2] && \
@@ -36,15 +36,15 @@ uint16_t ntohs(uint16_t);
 })
 #define IN6_IS_ADDR_MULTICAST(a) (((const uint8_t *) (a))[0] == 0xff)
 #define IN6_IS_ADDR_LINKLOCAL(a) ({ \
-    uint32_t *_a = (uint32_t *)((a)->s6_addr); \
+    uint32_t *_a = (uint32_t *)(((struct in6_addr *) a)->s6_addr); \
     _a[0] & htonl(0xffc00000) == htonl(0xfe800000); \
 })
 #define IN6_IS_ADDR_SITELOCAL(a) ({ \
-    uint32_t *_a = (uint32_t *)((a)->s6_addr); \
+    uint32_t *_a = (uint32_t *)(((struct in6_addr *) a)->s6_addr); \
     _a[0] & htonl(0xffc00000) == htonl(0xfec00000); \
 })
 #define IN6_IS_ADDR_V4MAPPED(a) ({ \
-    uint32_t *_a = (uint32_t *)((a)->s6_addr); \
+    uint32_t *_a = (uint32_t *)(((struct in6_addr *) a)->s6_addr); \
     !_a[0] && \
     !_a[1] && \
      _a[2] == htonl(0xffff); \

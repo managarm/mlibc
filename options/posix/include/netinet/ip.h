@@ -40,6 +40,8 @@ struct ip {
 	struct in_addr ip_src, ip_dst;
 };
 
+#define IPVERSION 4
+
 #ifdef __cplusplus
 }
 #endif

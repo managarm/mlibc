@@ -14,7 +14,7 @@ struct sockaddr_un {
 };
 
 // Evaluate to actual length of the `sockaddr_un' structure.
-#define SUN_LEN(ptr) ((size_t) offsetof(struct sockaddr_un, sun_path))
+#define SUN_LEN(ptr) ((size_t) offsetof(struct sockaddr_un, sun_path) + strlen((ptr)->sun_path))
 
 #ifdef __cplusplus
 }
