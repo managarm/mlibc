@@ -1638,6 +1638,8 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 		return ENOSPC;
 	}else if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
 		return EAGAIN;
+	}else if(resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
+		return ENOTCONN;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*bytes_written = resp.size();
