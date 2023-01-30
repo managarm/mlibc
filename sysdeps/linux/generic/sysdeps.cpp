@@ -1,6 +1,5 @@
 #include <errno.h>
 #include <limits.h>
-#include <linux/reboot.h>
 
 #include <type_traits>
 
@@ -749,13 +748,6 @@ int sys_msync(void *addr, size_t length, int flags) {
 	return 0;
 }
 
-int sys_reboot(int cmd) {
-	auto ret = do_syscall(SYS_reboot, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, cmd, nullptr);
-	if (int e = sc_error(ret); e)
-		return e;
-	return 0;
-}
-
 int sys_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask) {
 	auto ret = do_syscall(SYS_sched_getaffinity, pid, cpusetsize, mask);
 	if (int e = sc_error(ret); e)
@@ -1034,6 +1026,19 @@ int sys_if_nametoindex(const char *name, unsigned int *ret) {
 }
 
 #endif // __MLIBC_POSIX_OPTION
+
+#if __MLIBC_LINUX_OPTION
+
+#include <linux/reboot.h>
+
+int sys_reboot(int cmd) {
+	auto ret = do_syscall(SYS_reboot, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, cmd, nullptr);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+#endif // __MLIBC_LINUX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {
 	auto ret = do_syscall(SYS_times, tms);
