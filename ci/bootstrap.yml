@@ -1,5 +1,6 @@
 declare_options:
   - name: arch
+    default: x86_64
 
 sources:
   - name: gcc
@@ -12,11 +13,12 @@ sources:
   - name: mlibc
     git: 'https://github.com/managarm/mlibc.git'
     branch: 'master'
+
   - name: linux
-    url: 'https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.18.12.tar.xz'
-    extract_path: 'linux-5.18.12'
+    url: 'https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.1.8.tar.xz'
+    extract_path: 'linux-6.1.8'
     format: 'tar.xz'
-    version: '5.8.12'
+    version: '6.1.8'
 
 tools:
   - name: gcc
@@ -71,6 +73,8 @@ packages:
   - name: mlibc
     architecture: '@OPTION:arch@'
     from_source: mlibc
+    pkgs_required:
+      - linux-headers
     configure:
       - args:
         - 'meson'
@@ -81,6 +85,7 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
         - "-Dwerror=true"
+        - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
     build:
@@ -93,6 +98,8 @@ packages:
   - name: mlibc-static
     architecture: '@OPTION:arch@'
     from_source: mlibc
+    pkgs_required:
+      - linux-headers
     configure:
       - args:
         - 'meson'
@@ -103,6 +110,7 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=static"
         - "-Dwerror=true"
+        - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
     build:
@@ -114,6 +122,8 @@ packages:
 
   - name: mlibc-shared
     from_source: mlibc
+    pkgs_required:
+      - linux-headers
     configure:
       - args:
         - 'meson'
@@ -124,6 +134,7 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=shared"
         - "-Dwerror=true"
+        - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
     build:
@@ -136,6 +147,8 @@ packages:
   - name: mlibc-ansi-only
     architecture: '@OPTION:arch@'
     from_source: mlibc
+    pkgs_required:
+      - linux-headers
     configure:
       - args:
         - 'meson'
@@ -150,6 +163,7 @@ packages:
         - "-Ddisable_linux_option=true"
         - "-Ddisable_glibc_option=true"
         - "-Ddisable_bsd_option=true"
+        - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
     build:
@@ -162,6 +176,8 @@ packages:
   - name: mlibc-headers-only
     architecture: '@OPTION:arch@'
     from_source: mlibc
+    pkgs_required:
+      - linux-headers
     configure:
       - args:
         - 'meson'
@@ -171,6 +187,7 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Dwerror=true"
         - "-Dheaders_only=true"
+        - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
     build:
@@ -187,8 +204,14 @@ packages:
       # custom build system requires in tree-ish builds
       - args: ['cp', '-Tr', '@THIS_SOURCE_DIR@', '.']
     build:
-      - args:
-        - 'make'
-        - 'O=@THIS_COLLECT_DIR@'
-        - 'ARCH=@OPTION:arch@'
-        - 'headers_install'
+      - args: |
+          LINUX_ARCH="@OPTION:arch@"
+          case "$LINUX_ARCH" in
+            "aarch64")
+              LINUX_ARCH="arm64"
+              ;;
+            "riscv64")
+              LINUX_ARCH="riscv"
+              ;;
+          esac
+          make O=@THIS_COLLECT_DIR@ ARCH="$LINUX_ARCH" headers_install
