@@ -75,11 +75,15 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		if(resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
+			return ENOTCONN;
+		} else {
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
-		*argp = resp.fionread_count();
+			*argp = resp.fionread_count();
 
-		return 0;
+			return 0;
+		}
 	}
 	case FIOCLEX: {
 		managarm::posix::IoctlFioclexRequest<MemoryAllocator> req(getSysdepsAllocator());

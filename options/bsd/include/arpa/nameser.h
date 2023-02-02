@@ -5,8 +5,9 @@
 extern "C" {
 #endif
 
-#define NS_PACKETSZ	512
+#define NS_PACKETSZ 512
 #define NS_MAXDNAME 1025
+#define NS_MAXLABEL 63
 
 typedef	enum __ns_rcode {
 	ns_r_noerror = 0,

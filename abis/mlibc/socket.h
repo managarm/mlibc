@@ -56,6 +56,8 @@ struct cmsghdr {
 #define SOCK_RDM 0x40000
 
 #define SOL_SOCKET 1
+#define SOL_PACKET 263
+#define SOL_NETLINK 270
 
 #define SO_ACCEPTCONN 1
 #define SO_BROADCAST 2
@@ -93,6 +95,7 @@ struct cmsghdr {
 #define MSG_PEEK 0x20
 #define MSG_TRUNC 0x40
 #define MSG_WAITALL 0x80
+#define MSG_FIN 0x200
 #define MSG_CONFIRM 0x800
 
 // Linux extensions.
@@ -115,6 +118,10 @@ struct cmsghdr {
 #define PF_ISDN 11
 #define PF_SNA 12
 #define PF_PACKET 13
+#define PF_AX25 14
+#define PF_NETROM 15
+#define PF_ROSE 16
+#define PF_TIPC 30
 #define PF_MAX 46
 
 #define AF_INET PF_INET
@@ -132,6 +139,10 @@ struct cmsghdr {
 #define AF_SNA PF_SNA
 #define AF_PACKET PF_PACKET
 #define AF_PACKET PF_PACKET
+#define AF_AX25 PF_AX25
+#define AF_NETROM PF_NETROM
+#define AF_ROSE PF_ROSE
+#define AF_TIPC PF_TIPC
 #define AF_MAX PF_MAX
 
 #define SHUT_RD 1

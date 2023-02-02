@@ -40,6 +40,7 @@ libc_sources += files(
 	'generic/ioctl.cpp',
 	'generic/memory.cpp',
 	'generic/mount.cpp',
+	'generic/net.cpp',
 	'generic/signals.cpp',
 	'generic/socket.cpp',
 	'generic/time.cpp'

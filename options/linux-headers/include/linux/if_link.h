@@ -145,6 +145,9 @@ enum {
 
 #define IFLA_MAX (__IFLA_MAX - 1)
 
+#define IFLA_RTA(r) ((struct rtattr *) (((char *) (r)) + NLMSG_ALIGN(sizeof(struct ifinfomsg))))
+#define IFLA_PAYLOAD(n) NLMSG_PAYLOAD(n, sizeof(struct ifinfomsg))
+
 enum {
 	IFLA_INET6_UNSPEC,
 	IFLA_INET6_FLAGS,

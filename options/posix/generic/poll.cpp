@@ -16,3 +16,13 @@ int poll(struct pollfd *fds, nfds_t count, int timeout) {
 	return num_events;
 }
 
+int ppoll(struct pollfd *fds, nfds_t nfds, const struct timespec *timeout_ts, const sigset_t *sigmask) {
+	sigset_t origmask;
+	int timeout = (timeout_ts == NULL) ? -1 : (timeout_ts->tv_sec * 1000 + timeout_ts->tv_nsec / 1000000);
+
+	sigprocmask(SIG_SETMASK, sigmask, &origmask);
+	int ready = poll(fds, nfds, timeout);
+	sigprocmask(SIG_SETMASK, &origmask, NULL);
+
+	return ready;
+}
