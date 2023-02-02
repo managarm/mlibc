@@ -2,6 +2,8 @@
 #ifndef  _GETOPT_H
 #define  _GETOPT_H
 
+#include <mlibc-config.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -18,6 +20,9 @@ extern char *optarg;
 extern int optind;
 extern int opterr;
 extern int optopt;
+#if __MLIBC_BSD_OPTION
+extern int optreset;
+#endif //__MLIBC_BSD_OPTION
 
 int getopt(int, char *const [], const char *);
 int getopt_long(int, char *const[], const char *, const struct option *, int *);

@@ -73,12 +73,19 @@ int getopt_common(int argc, char * const argv[], const char *optstring, const st
 
 	// glibc extension: Setting optind to zero causes a full reset.
 	// TODO: Should we really reset opterr and the other flags?
-	if(!optind) {
+	if(!optind
+#if __MLIBC_BSD_OPTION
+		|| optreset
+#endif //__MLIBC_BSD_OPTION
+		) {
 		optarg = nullptr;
 		optind = 1;
 		opterr = 1;
 		optopt = 0;
 		__optpos = 1;
+#if __MLIBC_BSD_OPTION
+		optreset = 0;
+#endif //__MLIBC_BSD_OPTION
 	}
 
 	auto isOptionArg = [](char *arg){
