@@ -1602,6 +1602,21 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	}
 }
 
+int sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
+	for(int i = 0; i < iovc; i++) {
+		ssize_t intermed = 0;
+
+		if(int e = sys_read(fd, iovs[i].iov_base, iovs[i].iov_len, &intermed); e)
+			return e;
+		else if(intermed == 0)
+			break;
+
+		*bytes_read += intermed;
+	}
+
+	return 0;
+}
+
 int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	SignalGuard sguard;
 

@@ -112,6 +112,14 @@ int sys_read(int fd, void *buffer, size_t size, ssize_t *bytes_read) {
 	return 0;
 }
 
+int sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
+	auto ret = do_cp_syscall(SYS_readv, fd, iovs, iovc);
+	if(int e = sc_error(ret); e)
+		return e;
+	*bytes_read = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
 int sys_write(int fd, const void *buffer, size_t size, ssize_t *bytes_written) {
 	auto ret = do_cp_syscall(SYS_write, fd, buffer, size);
 	if(int e = sc_error(ret); e)

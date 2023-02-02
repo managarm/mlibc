@@ -49,6 +49,7 @@ int sys_open(const char *pathname, int flags, mode_t mode, int *fd);
 		size_t *bytes_read);
 
 int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read);
+[[gnu::weak]] int sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read);
 
 int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);
 [[gnu::weak]] int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read);
