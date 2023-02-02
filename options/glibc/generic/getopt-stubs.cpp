@@ -14,6 +14,9 @@ int optind = 1;
 int opterr = 1;
 int optopt;
 
+int __optreset = 0;
+extern int optreset __attribute__((weak, alias ("__optreset")));
+
 namespace {
 	int __optpos = 1;
 }
@@ -25,11 +28,12 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 
 	// glibc extension: Setting optind to zero causes a full reset.
 	// TODO: Should we really reset opterr and the other flags?
-	if(!optind) {
+	if(!optind || optreset) {
 		optarg = nullptr;
 		optind = 1;
 		opterr = 1;
 		optopt = 0;
+		optreset = 0;
 		__optpos = 1;
 	}
 
