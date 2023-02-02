@@ -110,6 +110,7 @@ if not no_headers
 	)
 	install_headers(
 		'include/net/if.h',
+		'include/net/if_arp.h',
 		subdir: 'net'
 	)
 	install_headers(

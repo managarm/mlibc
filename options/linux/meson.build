@@ -48,10 +48,6 @@ if not no_headers
 		subdir: 'bits/linux'
 	)
 	install_headers(
-		'include/net/if_arp.h',
-		subdir: 'net'
-	)
-	install_headers(
 		'include/netpacket/packet.h',
 		subdir: 'netpacket'
 	)
