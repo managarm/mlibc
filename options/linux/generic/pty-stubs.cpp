@@ -13,7 +13,6 @@
 #include <mlibc/linux-sysdeps.hpp>
 
 int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win) {
-	__ensure(!name);
 	__ensure(!ios);
 
 	if (win) {
@@ -29,11 +28,13 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 	}
 
 	char spath[32];
-	if(ptsname_r(ptmx_fd, spath, 32))
+	if(!name)
+		name = spath;
+	if(ptsname_r(ptmx_fd, name, 32))
 		return -1;
 
 	int pts_fd;
-	if(int e = mlibc::sys_open(spath, O_RDWR | O_NOCTTY, 0, &pts_fd); e) {
+	if(int e = mlibc::sys_open(name, O_RDWR | O_NOCTTY, 0, &pts_fd); e) {
 		errno = e;
 		return -1;
 	}
