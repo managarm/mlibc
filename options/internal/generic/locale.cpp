@@ -73,6 +73,10 @@ char *nl_langinfo(nl_item item) {
 				__ensure(!"ABDAY_* constants don't seem to be contiguous!");
 				__builtin_unreachable();
 		}
+	}else if(item == D_FMT) {
+		return const_cast<char *>("%m/%d/%y");
+	}else if(item == T_FMT) {
+		return const_cast<char *>("%H:%M:%S");
 	}else{
 		mlibc::infoLogger() << "mlibc: nl_langinfo item "
 				<< item << " is not implemented properly" << frg::endlog;

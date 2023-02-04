@@ -234,11 +234,11 @@ int rename(const char *path, const char *new_path) {
 
 int renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_renameat, -1);
-    if(int e = mlibc::sys_renameat(olddirfd, old_path, newdirfd, new_path); e) {
-        errno = e;
-        return -1;
-    }
-    return 0;
+	if(int e = mlibc::sys_renameat(olddirfd, old_path, newdirfd, new_path); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 FILE *tmpfile(void) {
@@ -264,7 +264,7 @@ void setbuf(FILE *__restrict stream, char *__restrict buffer) {
 // setvbuf() is provided by the POSIX sublibrary
 
 void setlinebuf(FILE *stream) {
-    setvbuf(stream, NULL, _IOLBF, 0);
+	setvbuf(stream, NULL, _IOLBF, 0);
 }
 
 void setbuffer(FILE *f, char *buf, size_t size) {
@@ -296,165 +296,165 @@ int printf(const char *__restrict format, ...) {
 }
 
 namespace {
-    enum {
-        SCANF_TYPE_CHAR,
-        SCANF_TYPE_SHORT,
-        SCANF_TYPE_INTMAX,
-        SCANF_TYPE_L,
-        SCANF_TYPE_LL,
-        SCANF_TYPE_PTRDIFF,
-        SCANF_TYPE_SIZE_T,
-        SCANF_TYPE_INT
-    };
+	enum {
+		SCANF_TYPE_CHAR,
+		SCANF_TYPE_SHORT,
+		SCANF_TYPE_INTMAX,
+		SCANF_TYPE_L,
+		SCANF_TYPE_LL,
+		SCANF_TYPE_PTRDIFF,
+		SCANF_TYPE_SIZE_T,
+		SCANF_TYPE_INT
+	};
 }
 
 static void store_int(void *dest, unsigned int size, unsigned long long i) {
-    switch (size) {
-        case SCANF_TYPE_CHAR:
-            *(char *)dest = i;
-            break;
-        case SCANF_TYPE_SHORT:
-            *(short *)dest = i;
-            break;
-        case SCANF_TYPE_INTMAX:
-            *(intmax_t *)dest = i;
-            break;
-        case SCANF_TYPE_L:
-            *(long *)dest = i;
-            break;
-        case SCANF_TYPE_LL:
-            *(long long *)dest = i;
-            break;
-        case SCANF_TYPE_PTRDIFF:
-            *(ptrdiff_t *)dest = i;
-            break;
-        case SCANF_TYPE_SIZE_T:
-            *(size_t *)dest = i;
-            break;
-        /* fallthrough */
-        case SCANF_TYPE_INT:
-        default:
-            *(int *)dest = i;
-            break;
-    }
+	switch (size) {
+		case SCANF_TYPE_CHAR:
+			*(char *)dest = i;
+			break;
+		case SCANF_TYPE_SHORT:
+			*(short *)dest = i;
+			break;
+		case SCANF_TYPE_INTMAX:
+			*(intmax_t *)dest = i;
+			break;
+		case SCANF_TYPE_L:
+			*(long *)dest = i;
+			break;
+		case SCANF_TYPE_LL:
+			*(long long *)dest = i;
+			break;
+		case SCANF_TYPE_PTRDIFF:
+			*(ptrdiff_t *)dest = i;
+			break;
+		case SCANF_TYPE_SIZE_T:
+			*(size_t *)dest = i;
+			break;
+		/* fallthrough */
+		case SCANF_TYPE_INT:
+		default:
+			*(int *)dest = i;
+			break;
+	}
 }
 
 template<typename H>
 static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
-    int match_count = 0;
-    for (; *fmt; fmt++) {
+	int match_count = 0;
+	for (; *fmt; fmt++) {
 
-        if (isspace(*fmt)) {
-            while (isspace(fmt[1])) fmt++;
-            while (isspace(handler.look_ahead()))
-                    handler.consume();
-            continue;
-        }
+		if (isspace(*fmt)) {
+			while (isspace(fmt[1])) fmt++;
+			while (isspace(handler.look_ahead()))
+					handler.consume();
+			continue;
+		}
 
-        if (*fmt != '%' || fmt[1] == '%') {
-            if (*fmt == '%')
-                fmt++;
-            char c = handler.consume();
-            if (c != *fmt)
-                break;
-            continue;
-        }
+		if (*fmt != '%' || fmt[1] == '%') {
+			if (*fmt == '%')
+				fmt++;
+			char c = handler.consume();
+			if (c != *fmt)
+				break;
+			continue;
+		}
 
-        void *dest = NULL;
-        /* %n$ format */
-        if (isdigit(*fmt) && fmt[1] == '$') {
-            /* TODO: dest = get_arg_at_pos(args, *fmt -'0'); */
-            fmt += 3;
-        } else {
-            if (fmt[1] != '*') {
-                dest = va_arg(args, void*);
-            }
-            fmt++;
-        }
+		void *dest = NULL;
+		/* %n$ format */
+		if (isdigit(*fmt) && fmt[1] == '$') {
+			/* TODO: dest = get_arg_at_pos(args, *fmt -'0'); */
+			fmt += 3;
+		} else {
+			if (fmt[1] != '*') {
+				dest = va_arg(args, void*);
+			}
+			fmt++;
+		}
 
-        int width = 0;
-        if (*fmt == '*') {
-            fmt++;
-        } else if (*fmt == '\'') {
-        /* TODO: numeric seperators locale stuff */
-             mlibc::infoLogger() << "do_scanf: \' not implemented!" << frg::endlog;
-            fmt++;
-            continue;
-        } else if (*fmt == 'm') {
-            /* TODO: allocate buffer for them */
-            mlibc::infoLogger() << "do_scanf: m not implemented!" << frg::endlog;
-            fmt++;
-            continue;
-        } else if (*fmt >= '0' && *fmt <= '9') {
-            /* read in width specifier */
-            width = 0;
-            while (*fmt >= '0' && *fmt <= '9') {
-                width = width * 10 + (*fmt - '0');
-                fmt++;
-                continue;
-            }
-        }
+		int width = 0;
+		if (*fmt == '*') {
+			fmt++;
+		} else if (*fmt == '\'') {
+		/* TODO: numeric seperators locale stuff */
+			 mlibc::infoLogger() << "do_scanf: \' not implemented!" << frg::endlog;
+			fmt++;
+			continue;
+		} else if (*fmt == 'm') {
+			/* TODO: allocate buffer for them */
+			mlibc::infoLogger() << "do_scanf: m not implemented!" << frg::endlog;
+			fmt++;
+			continue;
+		} else if (*fmt >= '0' && *fmt <= '9') {
+			/* read in width specifier */
+			width = 0;
+			while (*fmt >= '0' && *fmt <= '9') {
+				width = width * 10 + (*fmt - '0');
+				fmt++;
+				continue;
+			}
+		}
 
-        /* type modifiers */
-        unsigned int type = SCANF_TYPE_INT;
-        unsigned int base = 10;
-        switch (*fmt) {
-            case 'h': {
-                if (fmt[1] == 'h') {
-                    type = SCANF_TYPE_CHAR;
-                    fmt += 2;
-                    break;
-                }
-                type = SCANF_TYPE_SHORT;
-                fmt++;
-                break;
-            }
-            case 'j': {
-                type = SCANF_TYPE_INTMAX;
-                fmt++;
-                break;
-            }
-            case 'l': {
-                if (fmt[1] == 'l') {
-                    type = SCANF_TYPE_LL;
-                    fmt += 2;
-                    break;
-                }
-                type = SCANF_TYPE_L;
-                fmt++;
-                break;
-            }
-            case 'L': {
-                type = SCANF_TYPE_LL;
-                fmt++;
-                break;
-            }
-            case 'q': {
-                type = SCANF_TYPE_LL;
-                fmt++;
-                break;
-            }
-            case 't': {
-                type = SCANF_TYPE_PTRDIFF;
-                fmt++;
-                break;
-            }
-             case 'z': {
-                type = SCANF_TYPE_SIZE_T;
-                fmt++;
-                break;
-            }
-            case '0': {
-                if (fmt[1] == 'x' || fmt[1] == 'X') {
-                    base = 16;
-                    fmt += 2;
-                    break;
-                }
-                base = 8;
-                fmt++;
-                break;
-            }
-        }
+		/* type modifiers */
+		unsigned int type = SCANF_TYPE_INT;
+		unsigned int base = 10;
+		switch (*fmt) {
+			case 'h': {
+				if (fmt[1] == 'h') {
+					type = SCANF_TYPE_CHAR;
+					fmt += 2;
+					break;
+				}
+				type = SCANF_TYPE_SHORT;
+				fmt++;
+				break;
+			}
+			case 'j': {
+				type = SCANF_TYPE_INTMAX;
+				fmt++;
+				break;
+			}
+			case 'l': {
+				if (fmt[1] == 'l') {
+					type = SCANF_TYPE_LL;
+					fmt += 2;
+					break;
+				}
+				type = SCANF_TYPE_L;
+				fmt++;
+				break;
+			}
+			case 'L': {
+				type = SCANF_TYPE_LL;
+				fmt++;
+				break;
+			}
+			case 'q': {
+				type = SCANF_TYPE_LL;
+				fmt++;
+				break;
+			}
+			case 't': {
+				type = SCANF_TYPE_PTRDIFF;
+				fmt++;
+				break;
+			}
+			 case 'z': {
+				type = SCANF_TYPE_SIZE_T;
+				fmt++;
+				break;
+			}
+			case '0': {
+				if (fmt[1] == 'x' || fmt[1] == 'X') {
+					base = 16;
+					fmt += 2;
+					break;
+				}
+				base = 8;
+				fmt++;
+				break;
+			}
+		}
 
 		// Leading whitespace is skipped for most conversions except these.
 		if (*fmt != 'c' && *fmt != '[' && *fmt != 'n') {
@@ -462,220 +462,220 @@ static int do_scanf(H &handler, const char *fmt, __gnuc_va_list args) {
 				handler.consume();
 		}
 
-        switch (*fmt) {
-            case 'd':
-            case 'u':
-                base = 10;
-                [[fallthrough]];
-            case 'i': {
-                unsigned long long res = 0;
-                char c = handler.look_ahead();
-                switch (base) {
-                    case 10:
-                        while (c >= '0' && c <= '9') {
-                            handler.consume();
-                            res = res * 10 + (c - '0');
-                            c = handler.look_ahead();
-                        }
-                        break;
-                    case 16:
-                        if (c == '0') {
-                            handler.consume();
-                            c = handler.look_ahead();
-                            if (c == 'x') {
-                                handler.consume();
-                                c = handler.look_ahead();
-                            }
-                        }
-                        while (true) {
-                            if (c >= '0' && c <= '9') {
-                                handler.consume();
-                                res = res * 16 + (c - '0');
-                            } else if (c >= 'a' && c <= 'f') {
-                                handler.consume();
-                                res = res * 16 + (c - 'a' + 10);
-                            } else if (c >= 'A' && c <= 'F') {
-                                handler.consume();
-                                res = res * 16 + (c - 'A' + 10);
-                            } else {
-                                break;
-                            }
-                            c = handler.look_ahead();
-                        }
-                        break;
-                    case 8:
-                        while (c >= '0' && c <= '7') {
-                            handler.consume();
-                            res = res * 10 + (c - '0');
-                            c = handler.look_ahead();
-                        }
-                        break;
-                }
-                if (dest)
-                    store_int(dest, type, res);
-                break;
-            }
-            case 'o': {
-                unsigned long long res = 0;
-                char c = handler.look_ahead();
-                while (c >= '0' && c <= '7') {
-                    handler.consume();
-                    res = res * 10 + (c - '0');
-                    c = handler.look_ahead();
-                }
-                if (dest)
-                    store_int(dest, type, res);
-                break;
-            }
-            case 'x':
-            case 'X': {
-                unsigned long long res = 0;
-                char c = handler.look_ahead();
-                if (c == '0') {
-                    handler.consume();
-                    c = handler.look_ahead();
-                    if (c == 'x') {
-                        handler.consume();
-                        c = handler.look_ahead();
-                    }
-                }
-                while (true) {
-                    if (c >= '0' && c <= '9') {
-                        handler.consume();
-                        res = res * 16 + (c - '0');
-                    } else if (c >= 'a' && c <= 'f') {
-                        handler.consume();
-                        res = res * 16 + (c - 'a' + 10);
-                    } else if (c >= 'A' && c <= 'F') {
-                        handler.consume();
-                        res = res * 16 + (c - 'A' + 10);
-                    } else {
-                        break;
-                    }
-                    c = handler.look_ahead();
-                }
-                if (dest)
-                    store_int(dest, type, res);
-                break;
-            }
-            case 's': {
-                char *typed_dest = (char *)dest;
-                char c = handler.look_ahead();
-                int count = 0;
-                while (c && !isspace(c)) {
-                    handler.consume();
-                    if (typed_dest)
-                        typed_dest[count] = c;
-                    c = handler.look_ahead();
-                    count++;
-                    if (width && count >= width)
-                        break;
-                }
-                if (typed_dest)
-                    typed_dest[count] = '\0';
-                break;
-            }
-            case 'c': {
-                char *typed_dest = (char *)dest;
-                char c = handler.look_ahead();
-                int count = 0;
-                if (!width)
-                    width = 1;
-                while (c && count < width) {
-                    handler.consume();
-                    if (typed_dest)
-                        typed_dest[count] = c;
-                    c = handler.look_ahead();
-                    count++;
-                }
-                break;
-            }
-            case '[': {
-                fmt++;
-                int invert = 0;
-                if (*fmt == '^') {
-                    invert = 1;
-                    fmt++;
-                }
+		switch (*fmt) {
+			case 'd':
+			case 'u':
+				base = 10;
+				[[fallthrough]];
+			case 'i': {
+				unsigned long long res = 0;
+				char c = handler.look_ahead();
+				switch (base) {
+					case 10:
+						while (c >= '0' && c <= '9') {
+							handler.consume();
+							res = res * 10 + (c - '0');
+							c = handler.look_ahead();
+						}
+						break;
+					case 16:
+						if (c == '0') {
+							handler.consume();
+							c = handler.look_ahead();
+							if (c == 'x') {
+								handler.consume();
+								c = handler.look_ahead();
+							}
+						}
+						while (true) {
+							if (c >= '0' && c <= '9') {
+								handler.consume();
+								res = res * 16 + (c - '0');
+							} else if (c >= 'a' && c <= 'f') {
+								handler.consume();
+								res = res * 16 + (c - 'a' + 10);
+							} else if (c >= 'A' && c <= 'F') {
+								handler.consume();
+								res = res * 16 + (c - 'A' + 10);
+							} else {
+								break;
+							}
+							c = handler.look_ahead();
+						}
+						break;
+					case 8:
+						while (c >= '0' && c <= '7') {
+							handler.consume();
+							res = res * 10 + (c - '0');
+							c = handler.look_ahead();
+						}
+						break;
+				}
+				if (dest)
+					store_int(dest, type, res);
+				break;
+			}
+			case 'o': {
+				unsigned long long res = 0;
+				char c = handler.look_ahead();
+				while (c >= '0' && c <= '7') {
+					handler.consume();
+					res = res * 10 + (c - '0');
+					c = handler.look_ahead();
+				}
+				if (dest)
+					store_int(dest, type, res);
+				break;
+			}
+			case 'x':
+			case 'X': {
+				unsigned long long res = 0;
+				char c = handler.look_ahead();
+				if (c == '0') {
+					handler.consume();
+					c = handler.look_ahead();
+					if (c == 'x') {
+						handler.consume();
+						c = handler.look_ahead();
+					}
+				}
+				while (true) {
+					if (c >= '0' && c <= '9') {
+						handler.consume();
+						res = res * 16 + (c - '0');
+					} else if (c >= 'a' && c <= 'f') {
+						handler.consume();
+						res = res * 16 + (c - 'a' + 10);
+					} else if (c >= 'A' && c <= 'F') {
+						handler.consume();
+						res = res * 16 + (c - 'A' + 10);
+					} else {
+						break;
+					}
+					c = handler.look_ahead();
+				}
+				if (dest)
+					store_int(dest, type, res);
+				break;
+			}
+			case 's': {
+				char *typed_dest = (char *)dest;
+				char c = handler.look_ahead();
+				int count = 0;
+				while (c && !isspace(c)) {
+					handler.consume();
+					if (typed_dest)
+						typed_dest[count] = c;
+					c = handler.look_ahead();
+					count++;
+					if (width && count >= width)
+						break;
+				}
+				if (typed_dest)
+					typed_dest[count] = '\0';
+				break;
+			}
+			case 'c': {
+				char *typed_dest = (char *)dest;
+				char c = handler.look_ahead();
+				int count = 0;
+				if (!width)
+					width = 1;
+				while (c && count < width) {
+					handler.consume();
+					if (typed_dest)
+						typed_dest[count] = c;
+					c = handler.look_ahead();
+					count++;
+				}
+				break;
+			}
+			case '[': {
+				fmt++;
+				int invert = 0;
+				if (*fmt == '^') {
+					invert = 1;
+					fmt++;
+				}
 
-                char scanset[257];
-                memset(&scanset[0], invert, sizeof(char) * 257);
-                scanset[0] = '\0';
+				char scanset[257];
+				memset(&scanset[0], invert, sizeof(char) * 257);
+				scanset[0] = '\0';
 
-                if (*fmt == '-') {
-                    fmt++;
-                    scanset[1+'-'] = 1 - invert;
-                } else if (*fmt == ']') {
-                    fmt++;
-                    scanset[1+']'] = 1 - invert;
-                }
+				if (*fmt == '-') {
+					fmt++;
+					scanset[1+'-'] = 1 - invert;
+				} else if (*fmt == ']') {
+					fmt++;
+					scanset[1+']'] = 1 - invert;
+				}
 
-                for (; *fmt != ']'; fmt++) {
-                    if (!*fmt) return EOF;
-                    if (*fmt == '-' && *fmt != ']') {
-                        fmt++;
-                        for (char c = *(fmt - 2); c < *fmt; c++)
-                            scanset[1 + c] = 1 - invert;
-                    }
-                    scanset[1 + *fmt] = 1 - invert;
-                }
+				for (; *fmt != ']'; fmt++) {
+					if (!*fmt) return EOF;
+					if (*fmt == '-' && *fmt != ']') {
+						fmt++;
+						for (char c = *(fmt - 2); c < *fmt; c++)
+							scanset[1 + c] = 1 - invert;
+					}
+					scanset[1 + *fmt] = 1 - invert;
+				}
 
-                char *typed_dest = (char *)dest;
-                int count = 0;
-                char c = handler.look_ahead();
-                while (c && (!width || count < width)) {
-                    handler.consume();
-                    if (!scanset[1 + c])
-                        break;
-                    if (typed_dest)
-                        typed_dest[count] = c;
-                    c = handler.look_ahead();
-                    count++;
-                }
-                if (typed_dest)
-                    typed_dest[count] = '\0';
-                break;
-            }
-            case 'p': {
-                unsigned long long res = 0;
-                char c = handler.look_ahead();
-                if (c == '0') {
-                    handler.consume();
-                    c = handler.look_ahead();
-                    if (c == 'x') {
-                        handler.consume();
-                        c = handler.look_ahead();
-                    }
-                }
-                while (true) {
-                    if (c >= '0' && c <= '9') {
-                        handler.consume();
-                        res = res * 16 + (c - '0');
-                    } else if (c >= 'a' && c <= 'f') {
-                        handler.consume();
-                        res = res * 16 + (c - 'a');
-                    } else if (c >= 'A' && c <= 'F') {
-                        handler.consume();
-                        res = res * 16 + (c - 'A');
-                    } else {
-                        break;
-                    }
-                    c = handler.look_ahead();
-                }
-                void **typed_dest = (void **)dest;
-                *typed_dest = (void *)(uintptr_t)res;
-                break;
-            }
-            case 'n': {
-                int *typed_dest = (int *)dest;
-                if (typed_dest)
-                    *typed_dest = handler.num_consumed;
-                continue;
-            }
-        }
-        if (dest) match_count++;
-    }
-    return match_count;
+				char *typed_dest = (char *)dest;
+				int count = 0;
+				char c = handler.look_ahead();
+				while (c && (!width || count < width)) {
+					handler.consume();
+					if (!scanset[1 + c])
+						break;
+					if (typed_dest)
+						typed_dest[count] = c;
+					c = handler.look_ahead();
+					count++;
+				}
+				if (typed_dest)
+					typed_dest[count] = '\0';
+				break;
+			}
+			case 'p': {
+				unsigned long long res = 0;
+				char c = handler.look_ahead();
+				if (c == '0') {
+					handler.consume();
+					c = handler.look_ahead();
+					if (c == 'x') {
+						handler.consume();
+						c = handler.look_ahead();
+					}
+				}
+				while (true) {
+					if (c >= '0' && c <= '9') {
+						handler.consume();
+						res = res * 16 + (c - '0');
+					} else if (c >= 'a' && c <= 'f') {
+						handler.consume();
+						res = res * 16 + (c - 'a');
+					} else if (c >= 'A' && c <= 'F') {
+						handler.consume();
+						res = res * 16 + (c - 'A');
+					} else {
+						break;
+					}
+					c = handler.look_ahead();
+				}
+				void **typed_dest = (void **)dest;
+				*typed_dest = (void *)(uintptr_t)res;
+				break;
+			}
+			case 'n': {
+				int *typed_dest = (int *)dest;
+				if (typed_dest)
+					*typed_dest = handler.num_consumed;
+				continue;
+			}
+		}
+		if (dest) match_count++;
+	}
+	return match_count;
 }
 
 int scanf(const char *__restrict format, ...) {
@@ -841,44 +841,9 @@ int fgetc(FILE *stream) {
 }
 
 char *fgets(char *__restrict buffer, size_t max_size, FILE *__restrict stream) {
-	__ensure(max_size > 0);
 	auto file = static_cast<mlibc::abstract_file *>(stream);
 	frg::unique_lock lock(file->_lock);
-	for(size_t i = 0; ; i++) {
-		if (i == max_size - 1) {
-			buffer[i] = 0;
-			return buffer;
-		}
-
-		auto c = fgetc_unlocked(stream);
-
-		// If fgetc() fails, there is either an EOF or an I/O error.
-		if(c == EOF) {
-//			if(ferror(stream)) {
-//				// Technically, we do not have to terminate the buffer in this case;
-//				// do it anyway to avoid UB if apps do not check our result.
-//				buffer[i] = 0;
-//				return nullptr;
-//			}
-
-			// EOF is only an error if no chars have been read yet.
-			//__ensure(feof(stream));
-			if(i) {
-				buffer[i] = 0;
-				return buffer;
-			}else{
-				// In this case, the buffer is not changed.
-				return nullptr;
-			}
-		}else{
-			buffer[i] = c;
-		}
-
-		if(c == '\n') {
-			buffer[i + 1] = 0;
-			return buffer;
-		}
-	}
+	return fgets_unlocked(buffer, max_size, stream);
 }
 
 int fputc_unlocked(int c, FILE *stream) {
@@ -1253,8 +1218,32 @@ size_t fwrite_unlocked(const void *buffer, size_t size, size_t count, FILE *file
 	}
 }
 
-char *fgets_unlocked(char *, int, FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+char *fgets_unlocked(char *__restrict buffer, int max_size, FILE *stream) {
+	__ensure(max_size > 0);
+	for(int i = 0; ; i++) {
+		if(i == max_size - 1) {
+			buffer[i] = 0;
+			return buffer;
+		}
 
+		auto c = fgetc_unlocked(stream);
+
+		// If fgetc() fails, there is either an EOF or an I/O error.
+		if(c == EOF) {
+			if(i) {
+				buffer[i] = 0;
+				return buffer;
+			} else {
+				// In this case, the buffer is not changed.
+				return nullptr;
+			}
+		} else {
+			buffer[i] = c;
+		}
+
+		if(c == '\n') {
+			buffer[i + 1] = 0;
+			return buffer;
+		}
+	}
+}
