@@ -25,7 +25,7 @@ namespace mlibc {
 
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
 	// This implementation is inherently signal-safe.
-	if(clock == CLOCK_MONOTONIC) {
+	if(clock == CLOCK_MONOTONIC || clock == CLOCK_MONOTONIC_COARSE) {
 		uint64_t tick;
 		HEL_CHECK(helGetClock(&tick));
 		*secs = tick / 1000000000;
@@ -65,11 +65,6 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 		HEL_CHECK(helGetClock(&tick));
 		*secs = tick / 1000000000;
 		*nanos = tick % 1000000000;
-	}else if(clock == CLOCK_MONOTONIC_COARSE) {
-		mlibc::infoLogger() << "\e[31mmlibc: clock_gettime does not support CLOCK_MONOTONIC_COARSE"
-				"\e[39m" << frg::endlog;
-		*secs = 0;
-		*nanos = 0;
 	}else if(clock == CLOCK_BOOTTIME) {
 		mlibc::infoLogger() << "\e[31mmlibc: clock_gettime does not support CLOCK_BOOTTIME"
 				"\e[39m" << frg::endlog;

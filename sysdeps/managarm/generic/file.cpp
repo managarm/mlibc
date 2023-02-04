@@ -827,16 +827,18 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 }
 
 int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *length) {
-	HelSgItem sglist[4];
-	__ensure(hdr->msg_iovlen <= 4);
+	frg::vector<HelSgItem, MemoryAllocator> sglist{getSysdepsAllocator()};
 	auto handle = getHandleForFd(sockfd);
 	if (!handle)
 		return EBADF;
 
 	size_t overall_size = 0;
 	for(int i = 0; i < hdr->msg_iovlen; i++) {
-		sglist[i].buffer = hdr->msg_iov[i].iov_base;
-		sglist[i].length = hdr->msg_iov[i].iov_len;
+		HelSgItem item{
+			.buffer = hdr->msg_iov[i].iov_base,
+			.length = hdr->msg_iov[i].iov_len,
+		};
+		sglist.push_back(item);
 		overall_size += hdr->msg_iov[i].iov_len;
 	}
 
@@ -869,7 +871,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		handle,
 		helix_ng::offer(
 			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-			helix_ng::sendBufferSg(sglist, hdr->msg_iovlen),
+			helix_ng::sendBufferSg(sglist.data(), hdr->msg_iovlen),
 			helix_ng::imbueCredentials(),
 			helix_ng::sendBuffer(hdr->msg_name, hdr->msg_namelen),
 			helix_ng::recvInline())
@@ -1598,6 +1600,21 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 		*bytes_read = recv_data.actualLength();
 		return 0;
 	}
+}
+
+int sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
+	for(int i = 0; i < iovc; i++) {
+		ssize_t intermed = 0;
+
+		if(int e = sys_read(fd, iovs[i].iov_base, iovs[i].iov_len, &intermed); e)
+			return e;
+		else if(intermed == 0)
+			break;
+
+		*bytes_read += intermed;
+	}
+
+	return 0;
 }
 
 int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {

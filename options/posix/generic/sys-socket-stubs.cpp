@@ -1,6 +1,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <sys/socket.h>
 
 #include <bits/ensure.h>
@@ -153,6 +154,9 @@ ssize_t sendto(int fd, const void *buffer, size_t size, int flags,
 }
 
 ssize_t sendmsg(int fd, const struct msghdr *hdr, int flags) {
+	if(hdr->msg_iovlen > IOV_MAX)
+		return EMSGSIZE;
+
 	ssize_t length;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_msg_send, -1);
 	if(int e = mlibc::sys_msg_send(fd, hdr, flags, &length); e) {
