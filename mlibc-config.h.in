@@ -2,6 +2,7 @@
 #define _MLIBC_CONFIG_H
 
 #mesondefine __MLIBC_ANSI_OPTION
+#mesondefine __MLIBC_BSD_OPTION
 #mesondefine __MLIBC_POSIX_OPTION
 #mesondefine __MLIBC_LINUX_OPTION
 #mesondefine __MLIBC_INTL_OPTION
