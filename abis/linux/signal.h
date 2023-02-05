@@ -165,10 +165,20 @@ typedef struct __stack {
 #define SEGV_ACCERR 2
 
 #define BUS_ADRALN 1
+#define BUS_ADRERR 2
+#define BUS_OBJERR 3
+#define BUS_MCEERR_AR 4
+#define BUS_MCEERR_AO 5
 
 #define ILL_ILLOPC 1
+#define ILL_ILLOPN 2
+#define ILL_ILLADR 3
 #define ILL_ILLTRP 4
 #define ILL_PRVOPC 5
+#define ILL_PRVREG 6
+#define ILL_COPROC 7
+#define ILL_BADSTK 8
+#define ILL_BADIADDR 9
 
 #define NSIG 65
 
