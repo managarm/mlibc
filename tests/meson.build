@@ -20,6 +20,7 @@ all_test_cases = [
 	'ansi/fopen',
 	'ansi/memmem',
 	'ansi/creal-cimag',
+	'ansi/fenv',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
@@ -185,7 +186,7 @@ foreach test_name : all_test_cases
 			build_rpath: meson.build_root(),
 			override_options: host_libc_sanitize_options,
 			c_args: ['-D_GNU_SOURCE', '-DUSE_HOST_LIBC', '-pthread'],
-			link_args: ['-lresolv', '-ldl', '-pthread'],
+			link_args: ['-lresolv', '-ldl', '-pthread', '-lm'],
 			native: true,
 		)
 		test(test_short_name, exec, suite: ['host-libc', test_subdir], should_fail: should_fail)
