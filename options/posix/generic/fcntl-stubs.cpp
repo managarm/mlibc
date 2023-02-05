@@ -12,8 +12,9 @@ int creat(const char *pathname, mode_t mode) {
 }
 
 int fallocate(int, int, off_t, off_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: fallocate() is a no-op" << frg::endlog;
+	errno = ENOSYS;
+	return -1;
 }
 
 int fcntl(int fd, int command, ...) {
