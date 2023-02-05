@@ -283,7 +283,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*param = resp.pts_index();
-		*result = resp.result();
+		if(result)
+			*result = resp.result();
 		return 0;
 	}
 	case TIOCGPGRP: {
@@ -563,7 +564,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			return 0;
 		}
 	}else if(_IOC_TYPE(request) == 'E'
-			&& _IOC_NR(request) == _IOC_NR(EVIOSCLOCKID)) {
+			&& _IOC_NR(request) == _IOC_NR(EVIOCSCLOCKID)) {
 		auto param = reinterpret_cast<int *>(arg);
 
 		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -668,7 +669,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return 0;
 	}else if(request == TIOCSPTLCK) {
 		mlibc::infoLogger() << "\e[35mmlibc: TIOCSPTLCK is a no-op" << frg::endlog;
-		*result = 0;
+		if(result)
+			*result = 0;
 		return 0;
 	}
 

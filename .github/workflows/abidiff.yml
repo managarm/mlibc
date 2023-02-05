@@ -17,7 +17,7 @@ jobs:
         run: |
           sudo apt-get install ninja-build g++-10 abigail-tools
           sudo pip3 install setuptools
-          sudo pip3 install meson
+          sudo pip3 install meson xbstrap
 
       - name: Checkout base branch
         if: ${{ github.base_ref }}
@@ -54,23 +54,45 @@ jobs:
             git -C mlibc-base reset --hard HEAD^
           fi
 
+      - name: Set up linux kernel headers
+        run: |
+            mkdir -p linux-headers-base/{src,build}
+            cp mlibc-base/ci/bootstrap.yml linux-headers-base/src/
+            (
+              cd linux-headers-base/build
+              xbstrap init ../src
+              xbstrap install linux-headers
+            )
+            mkdir -p linux-headers-branch/{src,build}
+            cp mlibc-branch/ci/bootstrap.yml linux-headers-branch/src/
+            (
+              cd linux-headers-branch/build
+              xbstrap init ../src
+              xbstrap install linux-headers
+            )
+            cat > linux-headers-base/build/bootstrap-site.yml << EOF
+            define_options:
+              arch: ${{matrix.arch}}
+            EOF
+            cp linux-headers-base/build/bootstrap-site.yml linux-headers-branch/build/bootstrap-site.yml
+
       - name: Build and install both copies
         run: |
           set -xe
           export C=gcc-10 CXX=g++-10
           mkdir root-base root-branch
           (
-            cd mlibc-base
-            # defaults to all features, linux build
-            meson --buildtype=debugoptimized build
-            ninja -C build
-            DESTDIR="$GITHUB_WORKSPACE/root-base" ninja -C build install
-          )
-          (
             cd mlibc-branch
-            meson --buildtype=debugoptimized build
+            meson --buildtype=debugoptimized -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include build
             ninja -C build
             DESTDIR="$GITHUB_WORKSPACE/root-branch" ninja -C build install
+          )
+          (
+            cd mlibc-base
+            # defaults to all features, linux build
+            meson --buildtype=debugoptimized -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-base/build/packages/linux-headers/usr/include build
+            ninja -C build
+            DESTDIR="$GITHUB_WORKSPACE/root-base" ninja -C build install
           )
       - name: Compare
         run: |

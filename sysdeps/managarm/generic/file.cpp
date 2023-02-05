@@ -1,6 +1,7 @@
 #include <asm/ioctls.h>
 #include <dirent.h>
 #include <errno.h>
+#include <stdio.h>
 #include <sys/eventfd.h>
 #include <sys/inotify.h>
 #include <sys/signalfd.h>
@@ -2467,6 +2468,25 @@ int sys_uname(struct utsname *buf) {
 
 int sys_madvise(void *, size_t, int) {
 	mlibc::infoLogger() << "mlibc: sys_madvise is a stub!" << frg::endlog;
+	return 0;
+}
+
+int sys_ptsname(int fd, char *buffer, size_t length) {
+	int index;
+	if(int e = sys_ioctl(fd, TIOCGPTN, &index, NULL); e)
+		return e;
+	if((size_t)snprintf(buffer, length, "/dev/pts/%d", index) >= length) {
+		return ERANGE;
+	}
+	return 0;
+}
+
+int sys_unlockpt(int fd) {
+	int unlock = 0;
+
+	if(int e = sys_ioctl(fd, TIOCSPTLCK, &unlock, NULL); e)
+		return e;
+
 	return 0;
 }
 

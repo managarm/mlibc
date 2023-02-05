@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <asm/ioctls.h>
 
 #include <frg/small_vector.hpp>
 #include <mlibc/allocator.hpp>
@@ -411,22 +410,24 @@ char *realpath(const char *path, char *out) {
 // ----------------------------------------------------------------------------
 
 int ptsname_r(int fd, char *buffer, size_t length) {
-	int index;
-	if(ioctl(fd, TIOCGPTN, &index))
-		return -1;
-	if((size_t)snprintf(buffer, length, "/dev/pts/%d", index) >= length) {
-		errno = ERANGE;
-		return -1;
-	}
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ptsname, ENOSYS);
+
+	if(int e = sysdep(fd, buffer, length); e)
+		return e;
+
 	return 0;
 }
 
 char *ptsname(int fd) {
-	int index;
 	static char buffer[128];
-	if(ioctl(fd, TIOCGPTN, &index))
+
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ptsname, NULL);
+
+	if(int e = sysdep(fd, buffer, 128); e) {
+		errno = e;
 		return NULL;
-	snprintf(buffer, 128, "/dev/pts/%d", index);
+	}
+
 	return buffer;
 }
 
@@ -441,8 +442,14 @@ int posix_openpt(int flags) {
 }
 
 int unlockpt(int fd) {
-	int unlock = 0;
-	return ioctl(fd, TIOCSPTLCK, &unlock);
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_unlockpt, -1);
+
+	if(int e = sysdep(fd); e) {
+		errno = e;
+		return -1;
+	}
+
+	return 0;
 }
 
 int grantpt(int) {

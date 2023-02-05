@@ -31,6 +31,7 @@ The following custom meson options are accepted, in addition to the [built-in op
 - `mlibc_no_headers`: Don't install headers; only build `libc.so` and `ld.so`.
 - `build_tests`: Build the test suite (see below).
 - `disable_x_option`: Disable `x` component of mlibc functionality. See `meson_options.txt` for a full list of possible values for `x`. This may be used to e.g disable POSIX and glibc extensions.
+- `linux_kernel_headers`: Allows for directing mlibc to installed linux headers. [These can be obtained easily](https://docs.kernel.org/kbuild/headers_install.html), placed in a directory and this option set to the corresponding path. This is required if the linux option is enabled, i.e. when the linux option is not disabled.
 
 The type of library to be built (static, shared, or both) is controlled by meson's `default_library` option. Passing `-Ddefault_library=static` effectively disables the dynamic linker.
 

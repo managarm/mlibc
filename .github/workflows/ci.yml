@@ -70,12 +70,26 @@ jobs:
                 sudo pip3 install meson xbstrap
           - name: Checkout
             uses: actions/checkout@v2
+            with:
+              path: src/mlibc/
+          - name: Set up linux kernel headers
+            run: |
+                mkdir -p build/mlibc/
+                cp src/mlibc/ci/bootstrap.yml src/
+                (
+                  cd build
+                  xbstrap init ../src
+                  xbstrap install linux-headers
+                )
           - name: Compile sysdeps
             run: |
-                meson \
+                meson setup \
                     "-Dc_args=['-fno-stack-protector', '-U__linux__']" \
                     "-Dcpp_args=['-fno-stack-protector', '-U__linux__']" \
                     "-Dbuild_tests=true" \
                     "-Db_sanitize=undefined" \
-                    --cross-file ci/${{matrix.sysdeps}}.cross-file compile-${{matrix.sysdeps}}
+                    "-Dlinux_kernel_headers=$(pwd)/packages/linux-headers/usr/include" \
+                    --cross-file ../src/mlibc/ci/${{matrix.sysdeps}}.cross-file compile-${{matrix.sysdeps}} \
+                    "../src/mlibc/"
                 ninja -C compile-${{matrix.sysdeps}}
+            working-directory: build/
