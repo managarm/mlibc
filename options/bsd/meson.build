@@ -4,6 +4,7 @@ endif
 
 libc_sources += files(
 	'generic/arpa-nameser-stubs.cpp',
+	'generic/ether.cpp',
 )
 
 if not no_headers
@@ -18,5 +19,9 @@ if not no_headers
 	install_headers(
 		'include/sys/queue.h',
 		subdir: 'sys'
+	)
+	install_headers(
+		'include/netinet/ether.h',
+		subdir: 'netinet'
 	)
 endif

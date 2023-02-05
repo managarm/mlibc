@@ -94,8 +94,16 @@ struct group_source_req {
 #define IPPROTO_UDP 6
 #define IPPROTO_IGMP 7
 #define IPPROTO_IPIP 8
+#define IPPROTO_DCCP 33
+#define IPPROTO_ROUTING 43
+#define IPPROTO_GRE 47
 #define IPPROTO_ESP 50
 #define IPPROTO_AH 51
+#define IPPROTO_ICMPV6 58
+#define IPPROTO_DSTOPTS 60
+#define IPPROTO_COMP 108
+#define IPPROTO_SCTP 132
+#define IPPROTO_MAX 256
 
 #define INADDR_ANY ((in_addr_t)0x00000000)
 #define INADDR_BROADCAST ((in_addr_t)0xffffffff)

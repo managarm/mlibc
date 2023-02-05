@@ -110,12 +110,16 @@ if not no_headers
 	)
 	install_headers(
 		'include/net/if.h',
+		'include/net/if_arp.h',
 		subdir: 'net'
 	)
 	install_headers(
 		'include/netinet/in.h',
 		'include/netinet/ip.h',
 		'include/netinet/tcp.h',
+		'include/netinet/icmp6.h',
+		'include/netinet/if_ether.h',
+		'include/netinet/udp.h',
 		subdir: 'netinet'
 	)
 	install_headers(
