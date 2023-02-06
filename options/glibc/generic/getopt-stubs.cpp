@@ -1,5 +1,3 @@
-
-
 #include <assert.h>
 #include <bits/ensure.h>
 #include <getopt.h>
@@ -7,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <frg/optional.hpp>
 #include <mlibc/debug.hpp>
 
 char *optarg;
@@ -15,22 +14,78 @@ int opterr = 1;
 int optopt;
 
 namespace {
-	int __optpos = 1;
-}
 
-int getopt_long(int argc, char * const argv[], const char *optstring,
-		const struct option *longopts, int *longindex) {
+int __optpos = 1;
+
+enum GetoptMode {
+	Short,
+	Long,
+	LongOnly,
+};
+
+int getopt_common(int argc, char * const argv[], const char *optstring, const struct option *longopts, int *longindex, enum GetoptMode mode) {
+	auto longopt_consume = [&](const char *arg, char *s, int k, bool colon) -> frg::optional<int> {
+		// Consume the option and its argument.
+		if(longopts[k].has_arg == required_argument) {
+			if(s) {
+				// Consume the long option and its argument.
+				optarg = s + 1;
+				optind++;
+			}else if(argv[optind + 1]) {
+				// Consume the long option.
+				optind++;
+
+				// Consume the option's argument.
+				optarg = argv[optind];
+				optind++;
+			}else{
+				/*	If an error was detected, and the first character of optstring is not a colon,
+					and the external variable opterr is nonzero (which is the default),
+					getopt() prints an error message. */
+				if(!colon && opterr)
+					fprintf(stderr, "--%s requires an argument.\n", arg);
+				/*	If the first character of optstring is a colon (':'), then getopt()
+					returns ':' instead of '?' to indicate a missing option argument. */
+				return colon ? ':' : '?';
+			}
+		}else if(longopts[k].has_arg == optional_argument) {
+			if(s) {
+				// Consume the long option and its argument.
+				optarg = s + 1;
+				optind++;
+			}else{
+				// Consume the long option.
+				optarg = nullptr;
+				optind++;
+			}
+		}else{
+			__ensure(longopts[k].has_arg == no_argument);
+
+			// Consume the long option.
+			optind++;
+		}
+
+		return frg::null_opt;
+	};
+
 	bool colon = optstring[0] == ':';
 	bool stop_at_first_nonarg = (optstring[0] == '+' || getenv("POSIXLY_CORRECT"));
 
 	// glibc extension: Setting optind to zero causes a full reset.
 	// TODO: Should we really reset opterr and the other flags?
-	if(!optind) {
+	if(!optind
+#if __MLIBC_BSD_OPTION
+		|| optreset
+#endif //__MLIBC_BSD_OPTION
+		) {
 		optarg = nullptr;
 		optind = 1;
 		opterr = 1;
 		optopt = 0;
 		__optpos = 1;
+#if __MLIBC_BSD_OPTION
+		optreset = 0;
+#endif //__MLIBC_BSD_OPTION
 	}
 
 	auto isOptionArg = [](char *arg){
@@ -94,45 +149,8 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 			if(longindex)
 				*longindex = k;
 
-			// Consume the option and its argument.
-			if(longopts[k].has_arg == required_argument) {
-				if(s) {
-					// Consume the long option and its argument.
-					optarg = s + 1;
-					optind++;
-				}else if(argv[optind + 1]) {
-					// Consume the long option.
-					optind++;
-
-					// Consume the option's argument.
-					optarg = argv[optind];
-					optind++;
-				}else{
-					/*	If an error was detected, and the first character of optstring is not a colon,
-						and the external variable opterr is nonzero (which is the default),
-						getopt() prints an error message. */
-					if(!colon && opterr)
-						fprintf(stderr, "--%s requires an argument.\n", arg);
-					/*	If the first character of optstring is a colon (':'), then getopt()
-						returns ':' instead of '?' to indicate a missing option argument. */
-					return colon ? ':' : '?';
-				}
-			}else if(longopts[k].has_arg == optional_argument) {
-				if(s) {
-					// Consume the long option and its argument.
-					optarg = s + 1;
-					optind++;
-				}else{
-					// Consume the long option.
-					optarg = nullptr;
-					optind++;
-				}
-			}else{
-				__ensure(longopts[k].has_arg == no_argument);
-
-				// Consume the long option.
-				optind++;
-			}
+			if(auto r = longopt_consume(arg, s, k, colon); r)
+				return r.value();
 
 			if(!longopts[k].flag) {
 				return longopts[k].val;
@@ -144,6 +162,38 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 			/* handle short options, i.e. options with only one dash prefixed; e.g. `program -s` */
 			unsigned int i = __optpos;
 			while(true) {
+				if(mode == GetoptMode::LongOnly) {
+					const char *lo_arg = &arg[1];
+					auto s = strchr(lo_arg, '=');
+					size_t n = s ? (s - lo_arg) : strlen(lo_arg);
+					int k = -1;
+
+					for(int longopt = 0; longopts[longopt].name; longopt++) {
+						if(strncmp(lo_arg, longopts[longopt].name, n) || longopts[longopt].name[n])
+							continue;
+
+						if(k >= 0) {
+							if(opterr)
+								fprintf(stderr, "Multiple option declaration detected: %s\n", arg);
+							return '?';
+						}
+
+						k = longopt;
+					}
+
+					if(k != -1) {
+						if(auto r = longopt_consume(lo_arg, s, k, colon); r)
+							return r.value();
+
+						if(!longopts[k].flag) {
+							return longopts[k].val;
+						}else{
+							*longopts[k].flag = longopts[k].val;
+							return 0;
+						}
+					}
+				}
+
 				auto opt = strchr(optstring, arg[i]);
 				if(opt) {
 					if(opt[1] == ':') {
@@ -190,8 +240,14 @@ int getopt_long(int argc, char * const argv[], const char *optstring,
 	return -1;
 }
 
-int getopt_long_only(int, char *const[], const char *, const struct option *, int *) {
-	mlibc::infoLogger() << "\e[31mmlibc: getopt_long_only() is only a stub\e[39m" << frg::endlog;
-	return -1;
 }
 
+int getopt_long(int argc, char * const argv[], const char *optstring,
+		const struct option *longopts, int *longindex) {
+	return getopt_common(argc, argv, optstring, longopts, longindex, GetoptMode::Long);
+}
+
+int getopt_long_only(int argc, char * const argv[], const char *optstring,
+		const struct option *longopts, int *longindex) {
+	return getopt_common(argc, argv, optstring, longopts, longindex, GetoptMode::LongOnly);
+}

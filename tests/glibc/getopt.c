@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <getopt.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,7 +60,7 @@ void test2() {
 		"-c",
 	};
 
-	puts("Situation: we pass a non-existant short option in argv");
+	fputs("Situation: we pass a non-existant short option in argv\n", stderr);
 
 	optind = 0;
 	int c = getopt_long(COUNT_OF(test_argv), test_argv, "ab:", longopts, NULL);
@@ -67,7 +68,7 @@ void test2() {
 	assert(c == '?');
 	assert(optopt == 'c');
 
-	puts("Situation: we pass a non-existant short option in argv, while passing a leading colon in optstring");
+	fputs("Situation: we pass a non-existant short option in argv, while passing a leading colon in optstring\n", stderr);
 	optind = 0;
 
 	c = getopt_long(COUNT_OF(test_argv), test_argv, ":ab:", longopts, NULL);
@@ -75,7 +76,7 @@ void test2() {
 	assert(c == '?');
 	assert(optopt == 'c');
 
-	puts("Situation: we omit the required arg to a short option");
+	fputs("Situation: we omit the required arg to a short option\n", stderr);
 	optind = 0;
 
 	c = getopt_long(COUNT_OF(test_argv), test_argv, "ab:c:", longopts, NULL);
@@ -83,7 +84,7 @@ void test2() {
 	assert(c == '?');
 	assert(optopt == 'c');
 
-	puts("Situation: we omit the required arg to a short option, while passing a leading colon in optstring");
+	fputs("Situation: we omit the required arg to a short option, while passing a leading colon in optstring\n", stderr);
 	optind = 0;
 
 	c = getopt_long(COUNT_OF(test_argv), test_argv, ":ab:c:", longopts, NULL);
@@ -103,7 +104,7 @@ void test3() {
 		"-cmanagarm",
 	};
 
-	puts("Situation: we pass a concatenated argument to a short option");
+	fputs("Situation: we pass a concatenated argument to a short option\n", stderr);
 
 	optind = 0;
 	int c = getopt_long(COUNT_OF(test_argv), test_argv, "ab:c:", longopts, NULL);
@@ -124,7 +125,7 @@ void test4() {
 		"-acmanagarm",
 	};
 
-	puts("Situation: we pass concatenated short options to getopt");
+	fputs("Situation: we pass concatenated short options to getopt\n", stderr);
 
 	optind = 0;
 	int c = getopt_long(COUNT_OF(test_argv), test_argv, "ab:c:", longopts, NULL);
@@ -151,7 +152,7 @@ void test5() {
 
 	int test_argc = 3;
 
-	puts("Situation: testing `su - managarm`");
+	fputs("Situation: testing `su - managarm`\n", stderr);
 
 	optind = 0;
 	int c = getopt_long(test_argc, test_argv, "ab:", longopts, NULL);
@@ -235,6 +236,46 @@ void test7() {
 	assert(!strcmp(command, "hwdb"));
 }
 
+void test8() {
+	const char *shortopts = "b:cde";
+
+	int foo = false;
+	int bar = false;
+
+	const struct option longopts[] = {
+		{"foo", required_argument, &foo, 'x'},
+		{"bar", required_argument, &bar, 'y'},
+		{NULL, no_argument, NULL, 0}
+	};
+
+	int test_argc = 6;
+
+	char *test_argv[] = {
+		"dummy",
+		"-foo",
+		"abc",
+		"-bar=def",
+		"ghi",
+		"jkl"
+	};
+
+	#ifdef __GLIBC__
+		optind = 0;
+	#else
+		optreset = 1;
+	#endif
+	optopt = 0;
+	int c = getopt_long_only(test_argc, test_argv, shortopts, longopts, NULL);
+	dump(c);
+	assert(foo && !c);
+	assert(optind == 3);
+
+	c = getopt_long_only(test_argc, test_argv, shortopts, longopts, NULL);
+	dump(c);
+	assert(bar && !c);
+	assert(optind == 4);
+}
+
 int main() {
 	test1();
 	test2();
@@ -243,4 +284,5 @@ int main() {
 	test5();
 	test6();
 	test7();
+	test8();
 }

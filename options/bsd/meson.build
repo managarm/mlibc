@@ -5,6 +5,7 @@ endif
 libc_sources += files(
 	'generic/arpa-nameser-stubs.cpp',
 	'generic/ether.cpp',
+	'generic/getopt.cpp',
 )
 
 if not no_headers
