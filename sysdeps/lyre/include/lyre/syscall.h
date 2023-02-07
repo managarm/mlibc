@@ -37,7 +37,7 @@
 #define SYS_sleep 31
 #define SYS_ppoll 32
 #define SYS_umask 33
-#define SYS_getmemstat 34
+#define SYS_mprotect 34
 #define SYS_getclock 35
 #define SYS_socket 36
 #define SYS_bind 37
@@ -46,6 +46,8 @@
 #define SYS_accept 40
 #define SYS_getpeername 41
 #define SYS_recvmsg 42
+#define SYS_new_thread 43
+#define SYS_exit_thread 44
 
 struct __syscall_ret {
 	uint64_t ret;
@@ -53,7 +55,7 @@ struct __syscall_ret {
 };
 
 #define __SYSCALL_EXPAND(...) \
-    struct __syscall_ret ret; \
+	struct __syscall_ret ret; \
 	asm volatile ( \
 		"mov %%rsp, %%r10\n\t" \
 		"lea 1f(%%rip), %%r11\n\t" \

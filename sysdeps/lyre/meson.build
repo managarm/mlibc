@@ -5,7 +5,9 @@ rtdl_sources += files(
 
 libc_sources += files(
 	'generic/entry.cpp',
-	'generic/generic.cpp'
+	'generic/generic.cpp',
+	'generic/thread.cpp',
+	'generic/thread.S'
 )
 
 if not no_headers
@@ -56,7 +58,6 @@ if not no_headers
 	)
 
 	install_headers(
-		'include/lyre/memstat.h',
 		'include/lyre/syscall.h',
 		subdir: 'lyre',
 	)

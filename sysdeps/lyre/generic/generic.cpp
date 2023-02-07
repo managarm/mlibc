@@ -39,6 +39,26 @@ void sys_exit(int status) {
 
 #ifndef MLIBC_BUILDING_RTDL
 
+[[noreturn]] void sys_thread_exit() {
+	__syscall(SYS_exit_thread);
+	__builtin_unreachable();
+}
+
+extern "C" void __mlibc_thread_entry();
+
+int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
+	(void)tcb;
+
+	__syscall_ret ret = __syscall(SYS_new_thread, (uintptr_t)__mlibc_thread_entry, (uintptr_t)stack);
+	int ret_value = (int)ret.ret;
+	if (ret_value == -1) {
+		return ret.errno;
+	}
+
+	*pid_out = ret_value;
+	return 0;
+}
+
 int sys_kill(pid_t, int) STUB_ONLY
 
 int sys_tcgetattr(int fd, struct termios *attr) {
@@ -420,7 +440,13 @@ int sys_vm_unmap(void *pointer, size_t size) {
 
 #ifndef MLIBC_BUILDING_RTDL
 
-int sys_vm_protect(void *, size_t, int) STUB_ONLY
+int sys_vm_protect(void *pointer, size_t size, int prot) {
+	__syscall_ret ret = __syscall(SYS_mprotect, pointer, size, prot);
+	if ((int)ret.ret == -1) {
+		return ret.errno;
+	}
+	return 0;
+}
 
 #endif
 
@@ -751,7 +777,10 @@ again:
 	return 0;
 }
 
-int sys_getgroups(size_t, const gid_t *, int *) STUB_ONLY
+int sys_getgroups(size_t, const gid_t *, int *) {
+	mlibc::infoLogger() << "mlibc: sys_getgroups() is unimplemented" << frg::endlog;
+	return ENOSYS;
+}
 
 int sys_mount(const char *, const char *, const char *, unsigned long, const void *) STUB_ONLY
 
