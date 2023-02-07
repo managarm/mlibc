@@ -97,3 +97,6 @@ fetestexcept:
 	or %esi,%eax
 	and %edi,%eax
 	ret
+
+.section .note.GNU-stack,"",%progbits
+
