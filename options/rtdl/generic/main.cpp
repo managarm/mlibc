@@ -442,6 +442,9 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 			globalScope->appendObject(object);
 		}
 	} else {
+		bool isGlobal = flags & RTLD_GLOBAL;
+		Scope *newScope = isGlobal ? globalScope.get() : nullptr;
+
 		if (frg::string_view{file}.find_first('/') == size_t(-1)) {
 			// In order to know which RUNPATH / RPATH to process, we must find the calling object.
 			SharedObject *origin = initialRepository->findCaller(returnAddress);
@@ -450,9 +453,9 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 					<< "(ra = " << returnAddress << ")" << frg::endlog;
 			}
 
-			object = initialRepository->requestObjectWithName(file, origin, nullptr, !(flags & RTLD_GLOBAL), rts);
+			object = initialRepository->requestObjectWithName(file, origin, newScope, !isGlobal, rts);
 		} else {
-			object = initialRepository->requestObjectAtPath(file, nullptr, !(flags & RTLD_GLOBAL), rts);
+			object = initialRepository->requestObjectAtPath(file, newScope, !isGlobal, rts);
 		}
 
 		if(!object) {
@@ -460,7 +463,7 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 			return nullptr;
 		}
 
-		Loader linker{(flags & RTLD_GLOBAL) ? globalScope.get() : object->localScope, nullptr, false, rts};
+		Loader linker{object->localScope, nullptr, false, rts};
 		linker.linkObjects(object);
 		linker.initObjects();
 	}
