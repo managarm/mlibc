@@ -82,6 +82,12 @@ all_test_cases = [
 	'posix/readv-writev',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
+	'glibc/error_message_count',
+	'glibc/error_one_per_line',
+	'glibc/error_print_progname',
+	'glibc/error_expect_fail',
+	'glibc/error',
+	'glibc/error_at_line',
 	'linux/xattr',
 ]
 
@@ -91,6 +97,12 @@ endif
 
 fail_test_cases = [
 	'posix/abort',
+	'glibc/error_expect_fail',
+]
+
+wrapped_test_cases = [
+	'glibc/error',
+	'glibc/error_at_line',
 ]
 
 host_libc_excluded_test_cases = [
@@ -147,6 +159,8 @@ else
 	endif
 endif
 
+py = import('python').find_installation('python3')
+
 foreach test_name : all_test_cases
 	test_subdir = test_name.split('/')[0]
 	test_short_name = test_name.split('/')[1]
@@ -174,7 +188,20 @@ foreach test_name : all_test_cases
 		link_args: test_link_args,
 		pie: use_pie,
 	)
-	test(test_short_name, exec, suite: test_subdir, should_fail: should_fail)
+
+	if wrapped_test_cases.contains(test_name)
+		test(test_short_name,
+			py,
+			suite: test_subdir,
+			should_fail: should_fail,
+			args: [
+				meson.source_root() + '/tests/' + test_name + '.py',
+				exec
+			]
+		)
+	else
+		test(test_short_name, exec, suite: test_subdir, should_fail: should_fail)
+	endif
 
 	if build_tests_host_libc and not host_libc_excluded_test_cases.contains(test_name)
 		if test_name in host_libc_noasan_test_cases
