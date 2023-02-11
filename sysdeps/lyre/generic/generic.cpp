@@ -684,6 +684,16 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	return 0;
 }
 
+int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *length) {
+    __syscall_ret ret = __syscall(SYS_sendmsg, sockfd, hdr, flags);
+    ssize_t ret_value = (ssize_t)ret.ret;
+    if (ret_value == -1) {
+        return ret.errno;
+    }
+    *length = ret_value;
+    return 0;
+}
+
 int sys_peername(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length) {
 	__syscall_ret ret = __syscall(SYS_getpeername, fd, addr_ptr, &max_addr_length);
 	if ((int)ret.ret == -1) {
