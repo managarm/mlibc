@@ -12,8 +12,11 @@ extern "C" {
 #define MS_NOEXEC 16
 #define MS_SYNCHRONOUS 32
 #define MS_NOATIME 64
-#define MS_PRIVATE 128
-#define MS_REC 256
+#define MS_REC 128
+
+#define MS_PRIVATE (1<<18)
+#define MS_SLAVE (1<<19)
+#define MS_SHARED (1<<20)
 
 int mount(const char *source, const char *target,
 		const char *fstype, unsigned long flags, const void *data);

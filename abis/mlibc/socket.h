@@ -51,6 +51,7 @@ struct cmsghdr {
 #define SOCK_RAW 2
 #define SOCK_SEQPACKET 3
 #define SOCK_STREAM 4
+#define SOCK_DCCP 5
 #define SOCK_NONBLOCK 0x10000
 #define SOCK_CLOEXEC 0x20000
 #define SOCK_RDM 0x40000
@@ -84,6 +85,9 @@ struct cmsghdr {
 #define SO_PROTOCOL 23
 #define SO_REUSEPORT 24
 #define SO_TIMESTAMP 25
+#define SO_PEERSEC 26
+#define SO_BINDTODEVICE 27
+#define SO_DOMAIN 28
 
 #define SOMAXCONN 1
 
@@ -101,6 +105,7 @@ struct cmsghdr {
 // Linux extensions.
 #define MSG_DONTWAIT 0x1000
 #define MSG_CMSG_CLOEXEC 0x2000
+#define MSG_MORE 0x4000
 
 // GNU (?) extension: Protocol family constants.
 
@@ -122,6 +127,7 @@ struct cmsghdr {
 #define PF_NETROM 15
 #define PF_ROSE 16
 #define PF_TIPC 30
+#define PF_ALG 38
 #define PF_MAX 46
 
 #define AF_INET PF_INET
@@ -143,6 +149,7 @@ struct cmsghdr {
 #define AF_NETROM PF_NETROM
 #define AF_ROSE PF_ROSE
 #define AF_TIPC PF_TIPC
+#define AF_ALG PF_ALG
 #define AF_MAX PF_MAX
 
 #define SHUT_RD 1

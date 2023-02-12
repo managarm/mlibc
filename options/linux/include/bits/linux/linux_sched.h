@@ -4,5 +4,6 @@
 
 // Glibc extension
 int sched_getcpu(void);
+int setns(int fd, int nstype);
 
 #endif // _LINUX_SCHED_H

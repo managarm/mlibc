@@ -12,6 +12,7 @@ libc_sources += files(
 	'generic/glibc-signal.cpp',
 	'generic/execinfo.cpp',
 	'generic/string.cpp',
+	'generic/personality.cpp',
 )
 
 if not no_headers
