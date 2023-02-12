@@ -94,13 +94,13 @@ SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 	__ensure(!findLoadedObject(name));
 
 	auto object = frg::construct<SharedObject>(getAllocator(),
-		name.data(), std::move(path), false, nullptr, rts);
+		name.data(), std::move(path), false, globalScope.get(), rts);
 	object->baseAddress = base_address;
 	object->dynamic = dynamic;
 	_parseDynamic(object);
 
 	_addLoadedObject(object);
-	_discoverDependencies(object, nullptr, rts);
+	_discoverDependencies(object, globalScope.get(), rts);
 
 	return object;
 }
@@ -112,12 +112,12 @@ SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 	__ensure(!findLoadedObject(name));
 
 	auto object = frg::construct<SharedObject>(getAllocator(),
-		name.data(), std::move(path), true, nullptr, rts);
+		name.data(), std::move(path), true, globalScope.get(), rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 	_parseDynamic(object);
 
 	_addLoadedObject(object);
-	_discoverDependencies(object, nullptr, rts);
+	_discoverDependencies(object, globalScope.get(), rts);
 
 	return object;
 }
@@ -128,7 +128,7 @@ SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
 		uint64_t rts) {
 	__ensure(!findLoadedObject(name));
 	auto object = frg::construct<SharedObject>(getAllocator(),
-		name.data(), std::move(path), true, nullptr, rts);
+		name.data(), std::move(path), true, globalScope.get(), rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 
 #if MLIBC_STATIC_BUILD
@@ -244,6 +244,8 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 		localScope = frg::construct<Scope>(getAllocator());
 	}
 
+	__ensure(localScope != nullptr);
+
 	auto object = frg::construct<SharedObject>(getAllocator(),
 		name.data(), std::move(chosenPath), false, localScope, rts);
 
@@ -275,6 +277,8 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path,
 		// TODO: Free this when the scope is no longer needed.
 		localScope = frg::construct<Scope>(getAllocator());
 	}
+
+	__ensure(localScope != nullptr);
 
 	auto object = frg::construct<SharedObject>(getAllocator(),
 		name.data(), path.data(), false, localScope, rts);

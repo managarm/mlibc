@@ -8,6 +8,7 @@ rtdl_test_cases = [
 	'scope2',
 	'scope3',
 	'scope4',
+	'scope5',
 ]
 
 foreach test_name : rtdl_test_cases 
