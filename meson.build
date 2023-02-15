@@ -138,10 +138,6 @@ elif host_machine.system() == 'ironclad'
 	rtdl_include_dirs += include_directories('sysdeps/ironclad/include')
 	libc_include_dirs += include_directories('sysdeps/ironclad/include')
 	subdir('sysdeps/ironclad')
-elif host_machine.system() == 'vinix'
-	rtdl_include_dirs += include_directories('sysdeps/vinix/include')
-	libc_include_dirs += include_directories('sysdeps/vinix/include')
-	subdir('sysdeps/vinix')
 elif host_machine.system() == 'lyre'
 	rtdl_include_dirs += include_directories('sysdeps/lyre/include')
 	libc_include_dirs += include_directories('sysdeps/lyre/include')
