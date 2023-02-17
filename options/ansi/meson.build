@@ -47,6 +47,7 @@ if not no_headers
 	install_headers(
 		'include/bits/ansi/timespec.h',
 		'include/bits/ansi/time_t.h',
+		'include/bits/ansi/fenv.h',
 		subdir: 'bits/ansi'
 	)
 endif
