@@ -12,14 +12,17 @@
 
 namespace mlibc {
 
-int
-sys_mount(const char *source, const char *target, const char *fstype, unsigned long, const void *) {
+int sys_mount(const char *source, const char *target, const char *fstype, unsigned long,
+		const void * data) {
 	SignalGuard sguard;
 
 	managarm::posix::MountRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), source ? source : ""));
 	req.set_target_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), target ? target : ""));
 	req.set_fs_type(frg::string<MemoryAllocator>(getSysdepsAllocator(), fstype ? fstype : ""));
+	if(data){
+		req.set_arguments(frg::string<MemoryAllocator>(getSysdepsAllocator(), (char*)data));
+	}
 
 	auto [offer, send_head, send_tail, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
