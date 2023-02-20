@@ -74,6 +74,21 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if(resp.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
+	} else if(resp.error() == managarm::fs::Errors::ADDRESS_IN_USE) {
+		return EADDRINUSE;
+	} else if(resp.error() == managarm::fs::Errors::ALREADY_EXISTS) {
+		return EINVAL;
+	} else if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+		return EINVAL;
+	} else if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+		return EINVAL;
+	} else if(resp.error() == managarm::fs::Errors::ACCESS_DENIED) {
+		return EACCES;
+	} else if(resp.error() == managarm::fs::Errors::ADDRESS_NOT_AVAILABLE) {
+		return EADDRNOTAVAIL;
+	}
 	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 	return 0;
 }
