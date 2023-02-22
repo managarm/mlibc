@@ -20,6 +20,7 @@ jobs:
                 sudo pip3 install setuptools
                 sudo pip3 install -U jsonschema
                 sudo pip3 install meson xbstrap
+                sudo pip3 install pyexpect
           - name: Prepare directories
             run: |
                 mkdir src/

@@ -14,10 +14,14 @@ int waitid(idtype_t, id_t, siginfo_t *, int) {
 
 pid_t waitpid(pid_t pid, int *status, int flags) {
 	pid_t ret;
+	int tmp_status = 0;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_waitpid, -1);
-	if(int e = mlibc::sys_waitpid(pid, status, flags, NULL, &ret); e) {
+	if(int e = mlibc::sys_waitpid(pid, &tmp_status, flags, NULL, &ret); e) {
 		errno = e;
 		return -1;
+	}
+	if(status) {
+		*status = tmp_status;
 	}
 	return ret;
 }
