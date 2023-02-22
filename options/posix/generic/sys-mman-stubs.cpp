@@ -159,7 +159,7 @@ int madvise(void *addr, size_t length, int advice) {
 }
 
 int mincore(void *, size_t, unsigned char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	errno = ENOSYS;
+	return -1;
 }
 #endif /* __MLIBC_LINUX_OPTION */

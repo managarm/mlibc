@@ -9,5 +9,8 @@
 #define POLLRDHUP 0x20
 #define POLLNVAL 0x40
 #define POLLWRNORM 0x80
+#define POLLRDNORM 0x100
+#define POLLWRBAND 0x200
+#define POLLRDBAND 0x400
 
 #endif // _ABIBITS_POLL_H
