@@ -586,7 +586,7 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 }
 
 int sys_socketpair(int domain, int type, int protocol, int *fds) {
-    __syscall_ret ret = __syscall(SYS_socketpair, domain, type, protocol, fds);
+	__syscall_ret ret = __syscall(SYS_socketpair, domain, type, protocol, fds);
 	if ((int)ret.ret == -1) {
 		return ret.errno;
 	}
