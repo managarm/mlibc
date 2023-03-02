@@ -585,7 +585,13 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	return 0;
 }
 
-int sys_socketpair(int, int, int, int *) STUB_ONLY
+int sys_socketpair(int domain, int type, int protocol, int *fds) {
+    __syscall_ret ret = __syscall(SYS_socketpair, domain, type, protocol, fds);
+	if ((int)ret.ret == -1) {
+		return ret.errno;
+	}
+	return 0;
+}
 
 int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	__syscall_ret ret = __syscall(SYS_bind, fd, addr_ptr, addr_length);

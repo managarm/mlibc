@@ -49,6 +49,7 @@
 #define SYS_new_thread 43
 #define SYS_exit_thread 44
 #define SYS_sendmsg 45
+#define SYS_socketpair 46
 
 struct __syscall_ret {
 	uint64_t ret;
