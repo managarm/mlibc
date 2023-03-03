@@ -585,7 +585,14 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	return 0;
 }
 
-int sys_socketpair(int, int, int, int *) STUB_ONLY
+int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
+	__syscall_ret ret = __syscall(SYS_socketpair, domain, type_and_flags, proto, fds);
+	int ret_value = (int)ret.ret;
+	if (ret_value == -1) {
+		return ret.errno;
+	}
+	return 0;
+}
 
 int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	__syscall_ret ret = __syscall(SYS_bind, fd, addr_ptr, addr_length);
@@ -614,64 +621,21 @@ int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_le
 }
 
 int sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
-	(void)fd;
-	(void)size;
-	if (layer == SOL_SOCKET && number == SO_PEERCRED) {
-		mlibc::infoLogger() << "mlibc: getsockopt() call with SOL_SOCKET and SO_PEERCRED is unimplemented" << frg::endlog;
-		*(int *)buffer = 0;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_SNDBUF) {
-		mlibc::infoLogger() << "mlibc: getsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented" << frg::endlog;
-		*(int *)buffer = 4096;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_TYPE) {
-		mlibc::infoLogger() << "mlibc: getsockopt() call with SOL_SOCKET and SO_TYPE is unimplemented, hardcoding SOCK_STREAM" << frg::endlog;
-		*(int *)buffer = SOCK_STREAM;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_ERROR) {
-		mlibc::infoLogger() << "mlibc: getsockopt() call with SOL_SOCKET and SO_ERROR is unimplemented, hardcoding 0" << frg::endlog;
-		*(int *)buffer = 0;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_KEEPALIVE) {
-		mlibc::infoLogger() << "mlibc: getsockopt() call with SOL_SOCKET and SO_KEEPALIVE is unimplemented, hardcoding 0" << frg::endlog;
-		*(int *)buffer = 0;
-		return 0;
-	} else {
-		mlibc::panicLogger() << "mlibc: Unexpected getsockopt() call, layer: " << layer << " number: " << number << frg::endlog;
+	__syscall_ret ret = __syscall(SYS_getsockopt, fd, layer, number, buffer, size);
+	ssize_t ret_value = (ssize_t)ret.ret;
+	if (ret_value == -1) {
+		return ret.errno;
 	}
-
 	return 0;
 }
 
 int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t size) {
-	(void)fd;
-	(void)buffer;
-	(void)size;
-	if (layer == SOL_SOCKET && number == SO_PASSCRED) {
-		mlibc::infoLogger() << "mlibc: setsockopt(SO_PASSCRED) is not implemented correctly" << frg::endlog;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_ATTACH_FILTER) {
-		mlibc::infoLogger() << "mlibc: setsockopt(SO_ATTACH_FILTER) is not implemented correctly" << frg::endlog;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_RCVBUFFORCE) {
-		mlibc::infoLogger() << "mlibc: setsockopt(SO_RCVBUFFORCE) is not implemented correctly" << frg::endlog;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_SNDBUF) {
-		mlibc::infoLogger() << "mlibc: setsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented" << frg::endlog;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_KEEPALIVE) {
-		mlibc::infoLogger() << "mlibc: setsockopt() call with SOL_SOCKET and SO_KEEPALIVE is unimplemented" << frg::endlog;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_REUSEADDR) {
-		mlibc::infoLogger() << "mlibc: setsockopt() call with SOL_SOCKET and SO_REUSEADDR is unimplemented" << frg::endlog;
-		return 0;
-	} else if (layer == AF_NETLINK && number == SO_ACCEPTCONN) {
-		mlibc::infoLogger() << "mlibc: setsockopt() call with AF_NETLINK and SO_ACCEPTCONN is unimplemented" << frg::endlog;
-		return 0;
-	} else {
-		mlibc::panicLogger() << "mlibc: Unexpected setsockopt() call, layer: " << layer << " number: " << number << frg::endlog;
-		sys_libc_panic();
+	__syscall_ret ret = __syscall(SYS_setsockopt, fd, layer, number, buffer, size);
+	ssize_t ret_value = (ssize_t)ret.ret;
+	if (ret_value == -1) {
+		return ret.errno;
 	}
+	return 0;
 }
 
 int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
