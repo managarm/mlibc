@@ -667,6 +667,15 @@ int sys_peername(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, s
 	return 0;
 }
 
+int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length) {
+	__syscall_ret ret = __syscall(SYS_getsockname, fd, addr_ptr, &max_addr_length);
+	if ((int)ret.ret == -1) {
+		return ret.errno;
+	}
+	*actual_length = max_addr_length;
+	return 0;
+}
+
 int sys_listen(int fd, int backlog) {
 	__syscall_ret ret = __syscall(SYS_listen, fd, backlog);
 	if ((int)ret.ret == -1) {

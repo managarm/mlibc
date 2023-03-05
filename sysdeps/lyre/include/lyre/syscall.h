@@ -52,6 +52,7 @@
 #define SYS_socketpair 46
 #define SYS_getsockopt 47
 #define SYS_setsockopt 48
+#define SYS_getsockname 49
 
 struct __syscall_ret {
 	uint64_t ret;
