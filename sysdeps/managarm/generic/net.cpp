@@ -14,20 +14,20 @@ int sys_if_indextoname(unsigned int index, char *name) {
 	if(r)
 		return r;
 
-    struct ifreq ifr;
-    ifr.ifr_ifindex = index;
+	struct ifreq ifr;
+	ifr.ifr_ifindex = index;
 
-    int res = 0;
+	int res = 0;
 	int ret = sys_ioctl(fd, SIOCGIFNAME, &ifr, &res);
-    close(fd);
+	close(fd);
 
-    if(ret < 0) {
-        if(ret == ENODEV)
-            return ENXIO;
+	if(ret < 0) {
+		if(ret == ENODEV)
+			return ENXIO;
 		return ret;
-    }
+	}
 
-    strncpy(name, ifr.ifr_name, IF_NAMESIZE);
+	strncpy(name, ifr.ifr_name, IF_NAMESIZE);
 
 	return 0;
 }
@@ -39,8 +39,8 @@ int sys_if_nametoindex(const char *name, unsigned int *ret) {
 	if(r)
 		return r;
 
-    struct ifreq ifr;
-    strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
+	struct ifreq ifr;
+	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 
 	int res = 0;
 	r = sys_ioctl(fd, SIOCGIFINDEX, &ifr, &res);
