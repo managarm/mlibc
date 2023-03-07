@@ -26,12 +26,12 @@ struct if_nameindex *if_nameindex(void) {
 }
 
 unsigned int if_nametoindex(const char *name) {
-	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_if_nametoindex, -1);
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_if_nametoindex, 0);
 	unsigned int ret = 0;
 
 	if(int e = sysdep(name, &ret); e) {
 		errno = e;
-		return -1;
+		return 0;
 	}
 
 	return ret;
