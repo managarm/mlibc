@@ -42,10 +42,14 @@ int sys_if_nametoindex(const char *name, unsigned int *ret) {
     struct ifreq ifr;
     strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 
-    r = ioctl(fd, SIOCGIFINDEX, &ifr);
-    close(fd);
+	int res = 0;
+	r = sys_ioctl(fd, SIOCGIFINDEX, &ifr, &res);
+	close(fd);
 
-    *ret = (r < 0) ? r : ifr.ifr_ifindex;
+	if(r < 0)
+		return r;
+
+	*ret = ifr.ifr_ifindex;
 
 	return 0;
 }
