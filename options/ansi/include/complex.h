@@ -102,7 +102,7 @@ float cargf(float complex);
 /* 7.3.9.2 The cimag functions */
 double cimag(double complex);
 float cimagf(float complex);
-/*long double cimagl(long double complex); */
+long double cimagl(long double complex);
 
 /* 7.3.9.3 The conj functions */
 double complex conj(double complex);
@@ -117,7 +117,7 @@ float complex cprojf(float complex);
 /* 7.3.9.5 The creal functions */
 double creal(double complex);
 float crealf(float complex);
-/*long double creall(long double complex); */
+long double creall(long double complex);
 
 #ifdef __cplusplus
 }
