@@ -1007,7 +1007,7 @@ int sys_if_indextoname(unsigned int index, char *name) {
 	int ret = sys_ioctl(fd, SIOCGIFNAME, &ifr, NULL);
 	close(fd);
 
-	if(ret < 0) {
+	if(ret) {
 		if(ret == ENODEV)
 			return ENXIO;
 		return ret;
@@ -1028,10 +1028,14 @@ int sys_if_nametoindex(const char *name, unsigned int *ret) {
 	struct ifreq ifr;
 	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 
-	r = ioctl(fd, SIOCGIFINDEX, &ifr);
+	r = sys_ioctl(fd, SIOCGIFINDEX, &ifr, NULL);
 	close(fd);
 
-	*ret = (r < 0) ? r : ifr.ifr_ifindex;
+	if(r) {
+		return r;
+	}
+
+	*ret = ifr.ifr_ifindex;
 
 	return 0;
 }
