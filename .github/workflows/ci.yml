@@ -82,9 +82,13 @@ jobs:
                   xbstrap init ../src
                   xbstrap install linux-headers
                 )
+          - name: Fetch libgcc-binaries
+            run: |
+                set -xe
+                git clone https://github.com/mintsuki/libgcc-binaries.git
           - name: Compile sysdeps
             run: |
-                meson setup \
+                LDFLAGS="-Wl,$(realpath ../libgcc-binaries/libgcc-x86_64.a)" meson setup \
                     "-Dc_args=['-fno-stack-protector', '-U__linux__']" \
                     "-Dcpp_args=['-fno-stack-protector', '-U__linux__']" \
                     "-Dbuild_tests=true" \
