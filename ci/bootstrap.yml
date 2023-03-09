@@ -3,10 +3,6 @@ declare_options:
     default: x86_64
 
 sources:
-  - name: libgcc-binaries
-    git: 'https://github.com/mintsuki/libgcc-binaries.git'
-    branch: 'trunk'
-
   - name: gcc
     git: 'git://gcc.gnu.org/git/gcc.git'
     tag: 'releases/gcc-10.3.0'
@@ -79,24 +75,19 @@ packages:
     from_source: mlibc
     pkgs_required:
       - linux-headers
-      - libgcc-binaries
     configure:
-      - args: |
-          set -xe
-          if test '@OPTION:arch@' = 'x86_64'; then \
-            export LDFLAGS='-Wl,@BUILD_ROOT@/packages/libgcc-binaries/libgcc-@OPTION:arch@.a'; \
-          fi
-          meson setup \
-            --prefix=/usr \
-            --libdir=lib \
-            --buildtype=debugoptimized \
-            -Dbuild_tests=true \
-            -Db_sanitize=undefined \
-            -Ddefault_library=both \
-            -Dwerror=true \
-            -Dlinux_kernel_headers='@BUILD_ROOT@/packages/linux-headers/usr/include' \
-            --cross-file='@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file' \
-            '@THIS_SOURCE_DIR@'
+      - args:
+        - 'meson'
+        - '--prefix=/usr'
+        - '--libdir=lib'
+        - '--buildtype=debugoptimized'
+        - "-Dbuild_tests=true"
+        - "-Db_sanitize=undefined"
+        - "-Ddefault_library=both"
+        - "-Dwerror=true"
+        - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
+        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
+        - '@THIS_SOURCE_DIR@'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -109,24 +100,19 @@ packages:
     from_source: mlibc
     pkgs_required:
       - linux-headers
-      - libgcc-binaries
     configure:
-      - args: |
-          set -xe
-          if test '@OPTION:arch@' = 'x86_64'; then \
-            export LDFLAGS='-Wl,@BUILD_ROOT@/packages/libgcc-binaries/libgcc-@OPTION:arch@.a'; \
-          fi
-          meson setup \
-            --prefix=/usr \
-            --libdir=lib \
-            --buildtype=debugoptimized \
-            -Dbuild_tests=true \
-            -Db_sanitize=undefined \
-            -Ddefault_library=static \
-            -Dwerror=true \
-            -Dlinux_kernel_headers='@BUILD_ROOT@/packages/linux-headers/usr/include' \
-            --cross-file='@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file' \
-            '@THIS_SOURCE_DIR@'
+      - args:
+        - 'meson'
+        - '--prefix=/usr'
+        - '--libdir=lib'
+        - '--buildtype=debugoptimized'
+        - "-Dbuild_tests=true"
+        - "-Db_sanitize=undefined"
+        - "-Ddefault_library=static"
+        - "-Dwerror=true"
+        - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
+        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
+        - '@THIS_SOURCE_DIR@'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -138,24 +124,19 @@ packages:
     from_source: mlibc
     pkgs_required:
       - linux-headers
-      - libgcc-binaries
     configure:
-      - args: |
-          set -xe
-          if test '@OPTION:arch@' = 'x86_64'; then \
-            export LDFLAGS='-Wl,@BUILD_ROOT@/packages/libgcc-binaries/libgcc-@OPTION:arch@.a'; \
-          fi
-          meson setup \
-            --prefix=/usr \
-            --libdir=lib \
-            --buildtype=debugoptimized \
-            -Dbuild_tests=true \
-            -Db_sanitize=undefined \
-            -Ddefault_library=shared \
-            -Dwerror=true \
-            -Dlinux_kernel_headers='@BUILD_ROOT@/packages/linux-headers/usr/include' \
-            --cross-file='@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file' \
-            '@THIS_SOURCE_DIR@'
+      - args:
+        - 'meson'
+        - '--prefix=/usr'
+        - '--libdir=lib'
+        - '--buildtype=debugoptimized'
+        - "-Dbuild_tests=true"
+        - "-Db_sanitize=undefined"
+        - "-Ddefault_library=shared"
+        - "-Dwerror=true"
+        - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
+        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
+        - '@THIS_SOURCE_DIR@'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -168,28 +149,23 @@ packages:
     from_source: mlibc
     pkgs_required:
       - linux-headers
-      - libgcc-binaries
     configure:
-      - args: |
-          set -xe
-          if test '@OPTION:arch@' = 'x86_64'; then \
-            export LDFLAGS='-Wl,@BUILD_ROOT@/packages/libgcc-binaries/libgcc-@OPTION:arch@.a'; \
-          fi
-          meson setup \
-            --prefix=/usr \
-            --libdir=lib \
-            --buildtype=debugoptimized \
-            -Dbuild_tests=true \
-            -Db_sanitize=undefined \
-            -Ddefault_library=both \
-            -Dwerror=true \
-            -Ddisable_posix_option=true \
-            -Ddisable_linux_option=true \
-            -Ddisable_glibc_option=true \
-            -Ddisable_bsd_option=true \
-            -Dlinux_kernel_headers='@BUILD_ROOT@/packages/linux-headers/usr/include' \
-            --cross-file='@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file' \
-            '@THIS_SOURCE_DIR@'
+      - args:
+        - 'meson'
+        - '--prefix=/usr'
+        - '--libdir=lib'
+        - '--buildtype=debugoptimized'
+        - "-Dbuild_tests=true"
+        - "-Db_sanitize=undefined"
+        - "-Ddefault_library=both"
+        - "-Dwerror=true"
+        - "-Ddisable_posix_option=true"
+        - "-Ddisable_linux_option=true"
+        - "-Ddisable_glibc_option=true"
+        - "-Ddisable_bsd_option=true"
+        - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
+        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
+        - '@THIS_SOURCE_DIR@'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -205,7 +181,6 @@ packages:
     configure:
       - args:
         - 'meson'
-        - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
@@ -221,15 +196,6 @@ packages:
         environ:
           DESTDIR: '@THIS_COLLECT_DIR@'
         quiet: true
-
-  - name: libgcc-binaries
-    architecture: '@OPTION:arch@'
-    from_source: libgcc-binaries
-    build:
-      - args: |
-          set -xe
-          mkdir -p '@THIS_COLLECT_DIR@'
-          cp -rp '@THIS_SOURCE_DIR@'/. '@THIS_COLLECT_DIR@'/
 
   - name: linux-headers
     architecture: '@OPTION:arch@'

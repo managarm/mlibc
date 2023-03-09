@@ -76,11 +76,6 @@ jobs:
             EOF
             cp linux-headers-base/build/bootstrap-site.yml linux-headers-branch/build/bootstrap-site.yml
 
-      - name: Fetch libgcc-binaries
-        run: |
-          set -xe
-          git clone https://github.com/mintsuki/libgcc-binaries.git
-
       - name: Build and install both copies
         run: |
           set -xe
@@ -88,14 +83,14 @@ jobs:
           mkdir root-base root-branch
           (
             cd mlibc-branch
-            LDFLAGS="-Wl,$(realpath ../libgcc-binaries/libgcc-x86_64.a)" meson setup --buildtype=debugoptimized -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include build
+            meson --buildtype=debugoptimized -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include build
             ninja -C build
             DESTDIR="$GITHUB_WORKSPACE/root-branch" ninja -C build install
           )
           (
             cd mlibc-base
             # defaults to all features, linux build
-            LDFLAGS="-Wl,$(realpath ../libgcc-binaries/libgcc-x86_64.a)" meson setup --buildtype=debugoptimized -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-base/build/packages/linux-headers/usr/include build
+            meson --buildtype=debugoptimized -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-base/build/packages/linux-headers/usr/include build
             ninja -C build
             DESTDIR="$GITHUB_WORKSPACE/root-base" ninja -C build install
           )
