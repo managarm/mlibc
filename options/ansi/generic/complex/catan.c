@@ -109,7 +109,7 @@ catan(double complex z)
 		goto ovrf;
 
 	t = 0.5 * atan2(2.0 * x, a);
-	w = _redupi(t);
+	w = __mlibc_redupi(t);
 
 	t = y - 1.0;
 	a = x2 + (t * t);

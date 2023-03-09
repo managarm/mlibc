@@ -78,7 +78,7 @@ ctan(double complex z)
 	d = cos(2.0 * creal(z)) + cosh(2.0 * cimag(z));
 
 	if (fabs(d) < 0.25)
-		d = _ctans(z);
+		d = __mlibc_ctans(z);
 
 	if (d == 0.0) {
 		/* mtherr ("ctan", OVERFLOW); */

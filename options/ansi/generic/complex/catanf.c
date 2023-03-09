@@ -58,7 +58,7 @@ catanf(float complex z)
 		goto ovrf;
 
 	t = 0.5f * atan2f(2.0f * x, a);
-	w = _redupif(t);
+	w = __mlibc_redupif(t);
 
 	t = y - 1.0f;
 	a = x2 + (t * t);
