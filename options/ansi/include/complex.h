@@ -12,6 +12,10 @@
 #define _Complex_I 1.0fi
 #define I _Complex_I
 
+#define CMPLX(x, y) ((double complex)__builtin_complex((double)(x), (double)(y)))
+#define CMPLXF(x, y) ((float complex)__builtin_complex((float)(x), (float)(y)))
+#define CMPLXL(x, y) ((long double complex)__builtin_complex((long double)(x), (long double)(y)))
+
 #ifdef __cplusplus
 extern "C" {
 #endif
