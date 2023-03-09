@@ -315,20 +315,17 @@ subdir('options/bsd')
 rtlib_deps = []
 
 if not headers_only
-	if host_machine.cpu_family() == 'aarch64' or host_machine.cpu_family() == 'riscv64'
-		# Some architectures require us to link with libgcc or compiler_rt
-		libgcc = meson.get_compiler('c').find_library('gcc', required: false)
+	libgcc = meson.get_compiler('c').find_library('gcc', required: false)
 
-		compiler_rt_name = 'libclang_rt.builtins-' + host_machine.cpu_family()
-		compiler_rt = meson.get_compiler('c').find_library(compiler_rt_name, required: false)
+	compiler_rt_name = 'libclang_rt.builtins-' + host_machine.cpu_family()
+	compiler_rt = meson.get_compiler('c').find_library(compiler_rt_name, required: false)
 
-		if libgcc.found()
-			rtlib_deps += libgcc
-		elif compiler_rt.found()
-			rtlib_deps += compiler_rt
-		else
-			error('neither libgcc nor ' + compiler_rt_name + ' was found')
-		endif
+	if libgcc.found()
+		rtlib_deps += libgcc
+	elif compiler_rt.found()
+		rtlib_deps += compiler_rt
+	else
+		error('neither libgcc nor ' + compiler_rt_name + ' was found')
 	endif
 
 	ld_cpp_args = [
