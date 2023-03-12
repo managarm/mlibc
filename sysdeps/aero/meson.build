@@ -11,6 +11,7 @@ libc_sources += files(
 	'generic/filesystem.cpp',
 	'generic/sockets.cpp',
 	'generic/signals.cpp',
+	'generic/time.cpp',
 )
 
 if not no_headers

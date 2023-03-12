@@ -64,6 +64,17 @@
 #define SYS_FUTEX_WAIT 57
 #define SYS_FUTEX_WAKE 58
 #define SYS_LINK 59
+#define SYS_BACKTRACE 60
+#define SYS_POLL 61
+#define SYS_EXIT_THREAD 62
+#define SYS_SOCK_RECV 63
+#define SYS_SETITIMER 64
+#define SYS_GETITIMER 65
+#define SYS_GETPPID 66
+#define SYS_SOCKET_PAIR 67
+#define SYS_RENAME 68
+#define SYS_MPROTECT 69
+#define SYS_SOCK_SEND 70
 
 // Invalid syscall used to trigger a log error in the kernel (as a hint)
 // so, that we can implement the syscall in the kernel.
