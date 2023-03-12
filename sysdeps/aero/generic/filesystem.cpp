@@ -37,15 +37,18 @@ int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
     return 0;
 }
 
-int sys_pwrite(int fd, const void *buffer, size_t count, off_t off, ssize_t *written) UNIMPLEMENTED("sys_pwrite")
-int sys_pread(int fd, void *buf, size_t count, off_t off, ssize_t *bytes_read) UNIMPLEMENTED("sys_pread")
+int sys_pwrite(int fd, const void *buffer, size_t count, off_t off,
+               ssize_t *written) UNIMPLEMENTED("sys_pwrite") 
+
+int sys_pread(int fd, void *buf, size_t count,
+                off_t off, ssize_t *bytes_read) UNIMPLEMENTED("sys_pread")
 
 int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
     auto result = syscall(SYS_SEEK, fd, offset, whence);
 
     if (result < 0) {
         return -result;
-	}
+    }
 
     *new_offset = result;
     return 0;
@@ -88,20 +91,22 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags,
     auto result = 0;
 
     switch (fsfdt) {
-        case fsfd_target::path: {
-            result = syscall(SYS_STAT, path, strlen(path), statbuf);
-            break;
-        }
+    case fsfd_target::path: {
+        result = syscall(SYS_STAT, path, strlen(path), statbuf);
+        break;
+    }
 
-        case fsfd_target::fd: {
-            result = syscall(SYS_FSTAT, fd, statbuf);
-            break;
-        }
+    case fsfd_target::fd: {
+        result = syscall(SYS_FSTAT, fd, statbuf);
+        break;
+    }
 
-        default: {
-			mlibc::infoLogger() << "mlibc warning: sys_stat: unsupported fsfd target" << frg::endlog;
-			return EINVAL;
-        }
+    default: {
+        mlibc::infoLogger()
+            << "mlibc warning: sys_stat: unsupported fsfd target"
+            << frg::endlog;
+        return EINVAL;
+    }
     }
 
     if (result < 0) {
@@ -118,7 +123,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
         return -sys_res;
     }
 
-    *result = sys_res;
+    if (result)
+        *result = sys_res;
     return 0;
 }
 
@@ -158,11 +164,6 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
     return 0;
 }
 
-int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
-    mlibc::infoLogger() << "sys_poll() is not implemented" << frg::endlog;
-    return 0;
-}
-
 int sys_mkdir(const char *path, mode_t) {
     auto result = syscall(SYS_MKDIR, path, strlen(path));
 
@@ -175,8 +176,9 @@ int sys_mkdir(const char *path, mode_t) {
 
 int sys_rmdir(const char *path) UNIMPLEMENTED("sys_rmdir")
 
-int sys_link(const char *srcpath, const char *destpath) {
-    auto result = syscall(SYS_LINK, srcpath, strlen(srcpath), destpath, strlen(destpath));
+    int sys_link(const char *srcpath, const char *destpath) {
+    auto result =
+        syscall(SYS_LINK, srcpath, strlen(srcpath), destpath, strlen(destpath));
 
     if (result < 0) {
         return -result;
@@ -190,7 +192,7 @@ int sys_unlinkat(int fd, const char *path, int flags) {
 
     if (result < 0) {
         return -result;
-	}
+    }
 
     return 0;
 }
@@ -243,9 +245,19 @@ int sys_open_dir(const char *path, int *handle) {
     return sys_open(path, O_DIRECTORY, 0, handle);
 }
 
-int sys_rename(const char *path, const char *new_path) UNIMPLEMENTED("sys_rename")
+int sys_rename(const char *path, const char *new_path) {
+    auto result =
+        syscall(SYS_RENAME, path, strlen(path), new_path, strlen(new_path));
 
-int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length) {
+    if (result < 0) {
+        return -result;
+    }
+
+    return 0;
+}
+
+int sys_readlink(const char *path, void *buffer, size_t max_size,
+                 ssize_t *length) {
     auto result = syscall(SYS_READ_LINK, path, strlen(path), buffer, max_size);
 
     if (result < 0) {
@@ -329,14 +341,8 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
     return 0;
 }
 
-int sys_epoll_pwait(
-    int epfd,
-    struct epoll_event *ev,
-    int n,
-    int timeout,
-    const sigset_t *sigmask,
-    int *raised
-) {
+int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n, int timeout,
+                    const sigset_t *sigmask, int *raised) {
     auto result = syscall(SYS_EPOLL_PWAIT, epfd, ev, n, timeout, sigmask);
 
     if (result < 0) {
@@ -357,4 +363,37 @@ int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
     *fd = result;
     return 0;
 }
+
+int sys_ppoll(struct pollfd *fds, int nfds, const struct timespec *timeout,
+              const sigset_t *sigmask, int *num_events) {
+    auto result = syscall(SYS_POLL, fds, nfds, timeout, sigmask);
+
+    if (result < 0) {
+        return -result;
+    }
+
+    *num_events = result;
+    return 0;
+}
+
+int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
+    struct timespec ts;
+    ts.tv_sec = timeout / 1000;
+    ts.tv_nsec = (timeout % 1000) * 1000000;
+
+    return sys_ppoll(fds, count, &ts, NULL, num_events);
+}
+
+#ifndef MLIBC_BUILDING_RTDL
+#include <stdio.h>
+int sys_ptsname(int fd, char *buffer, size_t length) {
+    int index;
+    if (int e = sys_ioctl(fd, TIOCGPTN, &index, NULL); e)
+        return e;
+    if ((size_t)snprintf(buffer, length, "/dev/pts/%d", index) >= length) {
+        return ERANGE;
+    }
+    return 0;
+}
+#endif
 } // namespace mlibc
