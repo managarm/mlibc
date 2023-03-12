@@ -2,7 +2,8 @@
 #include <aero/syscall.h>
 
 namespace mlibc {
-int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
+int sys_setitimer(int which, const struct itimerval *new_value,
+                  struct itimerval *old_value) {
     auto result = syscall(SYS_SETITIMER, which, new_value, old_value);
 
     if (result < 0) {
@@ -21,4 +22,4 @@ int sys_getitimer(int which, struct itimerval *curr_value) {
 
     return 0;
 }
-}
+} // namespace mlibc

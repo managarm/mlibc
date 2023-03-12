@@ -256,7 +256,7 @@ int sys_setsid(pid_t *sid) {
 
 int sys_seteuid(uid_t euid) UNIMPLEMENTED("sys_seteuid")
 
-gid_t sys_getgid() {
+    gid_t sys_getgid() {
     mlibc::infoLogger() << "mlibc: sys_setgid is a stub" << frg::endlog;
     return 0;
 }
@@ -294,11 +294,14 @@ int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
 
 void sys_thread_exit() UNIMPLEMENTED("sys_thread_exit")
 
-int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
-	if(ru) {
-		mlibc::infoLogger() << "mlibc: struct rusage in sys_waitpid is unsupported" << frg::endlog;
-		return ENOSYS;
-	}
+    int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru,
+                    pid_t *ret_pid) {
+    if (ru) {
+        mlibc::infoLogger()
+            << "mlibc: struct rusage in sys_waitpid is unsupported"
+            << frg::endlog;
+        return ENOSYS;
+    }
 
     auto result = syscall(SYS_WAITPID, pid, status, flags);
 
@@ -339,7 +342,8 @@ int sys_execve(const char *path, char *const argv[], char *const envp[]) {
     __builtin_unreachable();
 }
 
-// int sys_getentropy(void *buffer, size_t length) UNIMPLEMENTED("sys_getentropy")
+// int sys_getentropy(void *buffer, size_t length)
+// UNIMPLEMENTED("sys_getentropy")
 
 #endif
 } // namespace mlibc

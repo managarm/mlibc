@@ -28,7 +28,8 @@ LibraryGuard::LibraryGuard() {
 
 extern "C" void __mlibc_entry(int (*main_fn)(int argc, char *argv[],
                                              char *env[])) {
-    // TODO: call __dlapi_enter, otherwise static builds will break (see Linux sysdeps)
+    // TODO: call __dlapi_enter, otherwise static builds will break (see Linux
+    // sysdeps)
     auto result =
         main_fn(__mlibc_stack_data.argc, __mlibc_stack_data.argv, environ);
     exit(result);
