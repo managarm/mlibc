@@ -172,7 +172,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		for(size_t i = 0; i < resp.drm_fb_ids_size(); i++) {
 			if(i >= param->count_fbs)
-				 continue;
+				 break;
 			auto dest = reinterpret_cast<uint32_t *>(param->fb_id_ptr);
 			dest[i] = resp.drm_fb_ids(i);
 		}
@@ -180,7 +180,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		for(size_t i = 0; i < resp.drm_crtc_ids_size(); i++) {
 			if(i >= param->count_crtcs)
-				 continue;
+				 break;
 			auto dest = reinterpret_cast<uint32_t *>(param->crtc_id_ptr);
 			dest[i] = resp.drm_crtc_ids(i);
 		}
@@ -188,7 +188,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		for(size_t i = 0; i < resp.drm_connector_ids_size(); i++) {
 			if(i >= param->count_connectors)
-				 continue;
+				 break;
 			auto dest = reinterpret_cast<uint32_t *>(param->connector_id_ptr);
 			dest[i] = resp.drm_connector_ids(i);
 		}
@@ -258,6 +258,16 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 		param->pad = 0;
 		param->count_encoders = resp.drm_encoders_size();
 		param->count_modes = resp.drm_num_modes();
+
+		if(param->props_ptr) {
+			auto id_ptr = reinterpret_cast<uint32_t *>(param->props_ptr);
+
+			for(size_t i = 0; i < frg::min(static_cast<size_t>(param->count_props), resp.drm_obj_property_ids_size()); i++) {
+				id_ptr[i] = resp.drm_obj_property_ids(i);
+			}
+		}
+
+		param->count_props = resp.drm_obj_property_ids_size();
 
 		*result = resp.result();
 		return 0;

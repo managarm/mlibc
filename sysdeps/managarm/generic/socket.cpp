@@ -127,7 +127,10 @@ int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) 
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
 		return ENOENT;
+	} else if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+		return EINVAL;
 	}
+
 	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 	return 0;
 }
