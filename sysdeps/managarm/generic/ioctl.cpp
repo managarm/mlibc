@@ -35,6 +35,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return ioctl_drm(fd, request, arg, result, handle);
 	}
 
+	managarm::fs::IoctlRequest<MemoryAllocator> ioctl_req(getSysdepsAllocator());
+
 	switch(request) {
 	case FIONBIO: {
 		auto mode = reinterpret_cast<int *>(arg);
@@ -56,24 +58,25 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		if(!argp)
 			return EINVAL;
 
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(FIONREAD);
 
-		auto [offer, send_req, recv_resp] =
+		auto [offer, send_ioctl_req, send_req, recv_resp] =
 		exchangeMsgsSync(
 			handle,
 			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 				helix_ng::recvInline()
 			)
 		);
 
 		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if(resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
 			return ENOTCONN;
@@ -111,12 +114,12 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	case TCGETS: {
 		auto param = reinterpret_cast<struct termios *>(arg);
 
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 
-		auto [offer, send_req, recv_resp, recv_attrs] = exchangeMsgsSync(handle,
+		auto [offer, send_ioctl_req, send_req, recv_resp, recv_attrs] = exchangeMsgsSync(handle,
 			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 				helix_ng::recvInline(),
 				helix_ng::recvBuffer(param, sizeof(struct termios))
@@ -124,13 +127,14 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		);
 
 		HEL_CHECK(offer.error());
-		HEL_CHECK(send_req.error());
-		if(recv_resp.error() == kHelErrDismissed)
+		HEL_CHECK(send_ioctl_req.error());
+		if(send_req.error() == kHelErrDismissed)
 			return EINVAL;
+		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 		HEL_CHECK(recv_attrs.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		__ensure(recv_attrs.actualLength() == sizeof(struct termios));
@@ -140,12 +144,12 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	case TCSETS: {
 		auto param = reinterpret_cast<struct termios *>(arg);
 
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 
-		auto [offer, send_req, send_attrs, recv_resp] = exchangeMsgsSync(handle,
+		auto [offer, send_ioctl_req, send_req, send_attrs, recv_resp] = exchangeMsgsSync(handle,
 			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 				helix_ng::sendBuffer(param, sizeof(struct termios)),
 				helix_ng::recvInline()
@@ -153,39 +157,41 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		);
 
 		HEL_CHECK(offer.error());
-		HEL_CHECK(send_req.error());
-		if(send_attrs.error() == kHelErrDismissed)
+		HEL_CHECK(send_ioctl_req.error());
+		if(send_req.error() == kHelErrDismissed)
 			return EINVAL;
+		HEL_CHECK(send_req.error());
 		HEL_CHECK(send_attrs.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*result = resp.result();
 		return 0;
 	}
 	case TIOCSCTTY: {
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 
-		auto [offer, send_req, imbue_creds, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_ioctl_req, send_req, imbue_creds, recv_resp] = exchangeMsgsSync(
 			handle,
 			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 				helix_ng::imbueCredentials(),
 				helix_ng::recvInline())
 		);
 
 		HEL_CHECK(offer.error());
-		if(imbue_creds.error() == kHelErrDismissed)
+		if(send_req.error() == kHelErrDismissed)
 			return EINVAL;
+		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 		if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
@@ -200,24 +206,25 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	case TIOCGWINSZ: {
 		auto param = reinterpret_cast<struct winsize *>(arg);
 
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 
-		auto [offer, send_req, recv_resp] = exchangeMsgsSync(handle,
+		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(handle,
 			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 				helix_ng::recvInline()
 			)
 		);
 
 		HEL_CHECK(offer.error());
-		HEL_CHECK(send_req.error());
-		if(recv_resp.error() == kHelErrDismissed)
+		HEL_CHECK(send_ioctl_req.error());
+		if(send_req.error() == kHelErrDismissed)
 			return EINVAL;
+		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
 			return EINVAL;
@@ -233,27 +240,28 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	case TIOCSWINSZ: {
 		auto param = reinterpret_cast<const struct winsize *>(arg);
 
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 		req.set_pts_width(param->ws_col);
 		req.set_pts_height(param->ws_row);
 		req.set_pts_pixel_width(param->ws_xpixel);
 		req.set_pts_pixel_height(param->ws_ypixel);
 
-		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
 			handle,
 			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 				helix_ng::recvInline())
 		);
 		HEL_CHECK(offer.error());
-		HEL_CHECK(send_req.error());
-		if(recv_resp.error() == kHelErrDismissed)
+		HEL_CHECK(send_ioctl_req.error());
+		if(send_req.error() == kHelErrDismissed)
 			return EINVAL;
+		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
@@ -263,23 +271,24 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	case TIOCGPTN: {
 		auto param = reinterpret_cast<int *>(arg);
 
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 
-		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
 			handle,
 			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 				helix_ng::recvInline())
 		);
 		HEL_CHECK(offer.error());
-		HEL_CHECK(send_req.error());
-		if(recv_resp.error() == kHelErrDismissed)
+		HEL_CHECK(send_ioctl_req.error());
+		if(send_req.error() == kHelErrDismissed)
 			return EINVAL;
+		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*param = resp.pts_index();
@@ -288,17 +297,17 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return 0;
 	}
 	case TIOCGPGRP: {
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 
-		auto [offer, send_req, imbue_creds, recv_resp] =
+		auto [offer, send_ioctl_req, send_req, imbue_creds, recv_resp] =
 			exchangeMsgsSync(
 					handle,
 					helix_ng::offer(
+							helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 							helix_ng::sendBuffer(ser.data(), ser.size()),
 							helix_ng::imbueCredentials(),
 							helix_ng::recvInline()
@@ -306,15 +315,14 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			);
 
 		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
 		if(send_req.error())
 			return EINVAL;
 		HEL_CHECK(send_req.error());
-		if(imbue_creds.error() == kHelErrDismissed)
-			return EINVAL;
 		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if(resp.error() == managarm::fs::Errors::NOT_A_TERMINAL) {
 			return ENOTTY;
@@ -327,18 +335,18 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	case TIOCSPGRP: {
 		auto param = reinterpret_cast<int *>(arg);
 
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 		req.set_pgid((long int)param);
 
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 
-		auto [offer, send_req, imbue_creds, recv_resp] =
+		auto [offer, send_ioctl_req, send_req, imbue_creds, recv_resp] =
 			exchangeMsgsSync(
 					handle,
 					helix_ng::offer(
+							helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 							helix_ng::sendBuffer(ser.data(), ser.size()),
 							helix_ng::imbueCredentials(),
 							helix_ng::recvInline()
@@ -346,13 +354,14 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			);
 
 		HEL_CHECK(offer.error());
-		HEL_CHECK(send_req.error());
-		if(imbue_creds.error() == kHelErrDismissed)
+		HEL_CHECK(send_ioctl_req.error());
+		if(send_req.error() == kHelErrDismissed)
 			return EINVAL;
+		HEL_CHECK(send_req.error());
 		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if(resp.error() == managarm::fs::Errors::INSUFFICIENT_PERMISSIONS) {
 			return EPERM;
@@ -364,17 +373,17 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return 0;
 	}
 	case TIOCGSID: {
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 
-		auto [offer, send_req, imbue_creds, recv_resp] =
+		auto [offer, send_ioctl_req, send_req, imbue_creds, recv_resp] =
 			exchangeMsgsSync(
 					handle,
 					helix_ng::offer(
+							helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 							helix_ng::sendBuffer(ser.data(), ser.size()),
 							helix_ng::imbueCredentials(),
 							helix_ng::recvInline()
@@ -382,6 +391,9 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			);
 
 		HEL_CHECK(offer.error());
+		if(send_ioctl_req.error())
+			return EINVAL;
+		HEL_CHECK(send_ioctl_req.error());
 		if(send_req.error())
 			return EINVAL;
 		HEL_CHECK(send_req.error());
@@ -390,7 +402,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if(resp.error() == managarm::fs::Errors::NOT_A_TERMINAL) {
 			return ENOTTY;
@@ -401,29 +413,32 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return 0;
 	}
 	case CDROM_GET_CAPABILITY: {
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
 
-		auto [offer, send_req, recv_resp] =
+		auto [offer, send_ioctl_req, send_req, recv_resp] =
 			exchangeMsgsSync(
 					handle,
 					helix_ng::offer(
+						helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 						helix_ng::sendBuffer(ser.data(), ser.size()),
 						helix_ng::recvInline()
 					)
 			);
 
 		HEL_CHECK(offer.error());
+		if(send_ioctl_req.error())
+			return EINVAL;
+		HEL_CHECK(send_ioctl_req.error());
 		if(send_req.error())
 			return EINVAL;
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if(resp.error() == managarm::fs::Errors::NOT_A_TERMINAL) {
 			return ENOTTY;
@@ -507,27 +522,28 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			// TODO: Check with the Linux ABI if we have to do this.
 			memset(arg, 0, _IOC_SIZE(request));
 
-			managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-			req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+			managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 			req.set_command(EVIOCGBIT(0, 0));
 			req.set_size(_IOC_SIZE(request));
 
-			auto [offer, send_req, recv_resp, recv_data] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, send_req, recv_resp, recv_data] = exchangeMsgsSync(
 				handle,
 				helix_ng::offer(
+					helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 					helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 					helix_ng::recvInline(),
 					helix_ng::recvBuffer(arg, _IOC_SIZE(request)))
 			);
 
 			HEL_CHECK(offer.error());
-			HEL_CHECK(send_req.error());
-			if(recv_resp.error() == kHelErrDismissed)
+			HEL_CHECK(send_ioctl_req.error());
+			if(send_req.error() == kHelErrDismissed)
 				return EINVAL;
+			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
 			HEL_CHECK(recv_data.error());
 
-			managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 			*result = recv_data.actualLength();
@@ -536,28 +552,29 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			// TODO: Check with the Linux ABI if we have to do this.
 			memset(arg, 0, _IOC_SIZE(request));
 
-			managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-			req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+			managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 			req.set_command(EVIOCGBIT(1, 0));
 			req.set_input_type(type);
 			req.set_size(_IOC_SIZE(request));
 
-			auto [offer, send_req, recv_resp, recv_data] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, send_req, recv_resp, recv_data] = exchangeMsgsSync(
 				handle,
 				helix_ng::offer(
+					helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 					helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 					helix_ng::recvInline(),
 					helix_ng::recvBuffer(arg, _IOC_SIZE(request)))
 			);
 
 			HEL_CHECK(offer.error());
-			HEL_CHECK(send_req.error());
-			if(recv_resp.error() == kHelErrDismissed)
+			HEL_CHECK(send_ioctl_req.error());
+			if(send_req.error() == kHelErrDismissed)
 				return EINVAL;
+			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
 			HEL_CHECK(recv_data.error());
 
-			managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 			*result = recv_data.actualLength();
@@ -567,25 +584,26 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			&& _IOC_NR(request) == _IOC_NR(EVIOCSCLOCKID)) {
 		auto param = reinterpret_cast<int *>(arg);
 
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 		req.set_input_clock(*param);
 
-		auto [offer, send_req, recv_resp] = exchangeMsgsSync(handle,
+		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(handle,
 			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 				helix_ng::recvInline()
 			)
 		);
 
 		HEL_CHECK(offer.error());
-		HEL_CHECK(send_req.error());
-		if(recv_resp.error() == kHelErrDismissed)
+		HEL_CHECK(send_ioctl_req.error());
+		if(send_req.error() == kHelErrDismissed)
 			return EINVAL;
+		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*result = resp.result();
@@ -596,25 +614,26 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		auto param = reinterpret_cast<struct input_absinfo *>(arg);
 
 		auto type = _IOC_NR(request) - _IOC_NR(EVIOCGABS(0));
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_IOCTL);
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(EVIOCGABS(0));
 		req.set_input_type(type);
 
-		auto [offer, send_req, recv_resp] = exchangeMsgsSync(handle,
+		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(handle,
 			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 				helix_ng::recvInline()
 			)
 		);
 
 		HEL_CHECK(offer.error());
-		HEL_CHECK(send_req.error());
-		if(recv_resp.error() == kHelErrDismissed)
+		HEL_CHECK(send_ioctl_req.error());
+		if(send_req.error() == kHelErrDismissed)
 			return EINVAL;
+		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
