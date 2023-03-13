@@ -10,6 +10,8 @@
 #include <fcntl.h>
 #include <limits.h>
 
+#include <unistd.h>
+
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 
@@ -37,9 +39,11 @@ int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
     return 0;
 }
 
+// clang-format off
 int sys_pwrite(int fd, const void *buffer, size_t count, off_t off,
                ssize_t *written) UNIMPLEMENTED("sys_pwrite") 
 
+// clang-format off
 int sys_pread(int fd, void *buf, size_t count,
                 off_t off, ssize_t *bytes_read) UNIMPLEMENTED("sys_pread")
 
@@ -300,13 +304,6 @@ int sys_fcntl(int fd, int request, va_list args, int *result_value) {
     return 0;
 }
 
-int sys_pselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
-                const struct timespec *timeout, const sigset_t *sigmask,
-                int *num_events) {
-    mlibc::infoLogger() << "sys_pselect() is not implemented" << frg::endlog;
-    return 0;
-}
-
 // int sys_chmod(const char *pathname, mode_t mode) UNIMPLEMENTED("sys_chmod")
 
 int sys_pipe(int *fds, int flags) {
@@ -395,5 +392,87 @@ int sys_ptsname(int fd, char *buffer, size_t length) {
     }
     return 0;
 }
-#endif
+
+int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set,
+                fd_set *except_set, const struct timespec *timeout,
+                const sigset_t *sigmask, int *num_events) {
+    int fd = epoll_create1(0);
+    if (fd == -1)
+        return -1;
+
+    for (int k = 0; k < FD_SETSIZE; k++) {
+        struct epoll_event ev;
+        memset(&ev, 0, sizeof(struct epoll_event));
+
+        if (read_set && FD_ISSET(k, read_set))
+            ev.events |= EPOLLIN;
+        if (write_set && FD_ISSET(k, write_set))
+            ev.events |= EPOLLOUT;
+        if (except_set && FD_ISSET(k, except_set))
+            ev.events |= EPOLLPRI;
+
+        if (!ev.events)
+            continue;
+
+        ev.data.u32 = k;
+        if (epoll_ctl(fd, EPOLL_CTL_ADD, k, &ev))
+            return -1;
+    }
+
+    struct epoll_event evnts[16];
+    int n = epoll_pwait(
+        fd, evnts, 16,
+        timeout ? (timeout->tv_sec * 1000 + timeout->tv_nsec / 100) : -1,
+        sigmask);
+
+    if (n == -1)
+        return -1;
+
+    fd_set res_read_set;
+    fd_set res_write_set;
+    fd_set res_except_set;
+    FD_ZERO(&res_read_set);
+    FD_ZERO(&res_write_set);
+    FD_ZERO(&res_except_set);
+
+    int m = 0;
+
+    for (int i = 0; i < n; i++) {
+        int k = evnts[i].data.u32;
+
+        if (read_set && FD_ISSET(k, read_set) &&
+            evnts[i].events & (EPOLLIN | EPOLLERR | EPOLLHUP)) {
+            FD_SET(k, &res_read_set);
+            m++;
+        }
+
+        if (write_set && FD_ISSET(k, write_set) &&
+            evnts[i].events & (EPOLLOUT | EPOLLERR | EPOLLHUP)) {
+            FD_SET(k, &res_write_set);
+            m++;
+        }
+
+        if (except_set && FD_ISSET(k, except_set) &&
+            evnts[i].events & EPOLLPRI) {
+            FD_SET(k, &res_except_set);
+            m++;
+        }
+    }
+
+    if (close(fd))
+        __ensure("mlibc::pselect: close() failed on epoll file");
+
+    if (read_set)
+        memcpy(read_set, &res_read_set, sizeof(fd_set));
+
+    if (write_set)
+        memcpy(write_set, &res_write_set, sizeof(fd_set));
+
+    if (except_set)
+        memcpy(except_set, &res_except_set, sizeof(fd_set));
+
+    *num_events = m;
+    return 0;
+}
+#endif // #ifndef MLIBC_BUILDING_RTDL
 } // namespace mlibc
