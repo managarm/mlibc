@@ -328,9 +328,10 @@ char *realpath(const char *path, char *out) {
 				resolv[rsz - 1] = 0;
 
 				auto lsz = lnk.size();
-				lnk.resize((lsz - ls) + sz);
+				lnk.resize((lsz - ls) + sz + 1);
 				memmove(lnk.data() + sz, lnk.data() + ls, lsz - ls);
 				memcpy(lnk.data(), path, sz);
+				lnk[(lsz - ls) + sz] = 0;
 
 				ls = 0;
 
