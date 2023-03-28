@@ -107,14 +107,14 @@ int inet_aton(const char *string, struct in_addr *dest) {
 // ----------------------------------------------------------------------------
 const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
 		socklen_t size) {
-	auto source = reinterpret_cast<const struct in_addr*>(src);
 	if(!dst) {
 		errno = EINVAL;
 		return NULL;
 	}
 
 	switch (af) {
-		case AF_INET:
+		case AF_INET: {
+			auto source = reinterpret_cast<const struct in_addr*>(src);
 			if (snprintf(dst, size, "%d.%d.%d.%d",
 						source->s_addr & 0xff,
 						(source->s_addr & 0xffff) >> 8,
@@ -122,9 +122,61 @@ const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
 						source->s_addr >> 24) < (int)size)
 				return dst;
 			break;
-		case AF_INET6:
-			mlibc::infoLogger() << "inet_pton: ipv6 is not implemented!" << frg::endlog;
-			/* fallthrough */
+		}
+		case AF_INET6: {
+			auto source = reinterpret_cast<const struct in6_addr*>(src);
+			size_t cur_zeroes_off = 0;
+			size_t cur_zeroes_len = 0;
+			size_t max_zeroes_off = 0;
+			size_t max_zeroes_len = 0;
+
+			/* we look for the largest block of zeroed quartet(s) */
+			for(size_t i = 0; i < 8; i++) {
+				auto ptr = source->s6_addr + (i * 2);
+				if(!ptr[0] && !ptr[1]) {
+					cur_zeroes_len++;
+					if(max_zeroes_len < cur_zeroes_len) {
+						max_zeroes_len = cur_zeroes_len;
+						max_zeroes_off = cur_zeroes_off;
+					}
+				} else {
+					/* advance the offset to the next quartet to check */
+					cur_zeroes_len = 0;
+					cur_zeroes_off = i + 1;
+				}
+			}
+
+			size_t off = 0;
+			for(size_t i = 0; i < 8; i++) {
+				auto ptr = source->s6_addr + (i * 2);
+
+				/* if we are at the beginning of the largest block of zeroed quartets, place "::" */
+				if(i == max_zeroes_off && max_zeroes_len >= 2) {
+					if(off < size) {
+						dst[off++] = ':';
+					}
+					if(off < size) {
+						dst[off++] = ':';
+					}
+					i += max_zeroes_len - 1;
+
+					continue;
+				}
+
+				/* place a colon if we're not at the beginning of the string and it is not already there */
+				if(off && dst[off - 1] != ':') {
+					if(off < size) {
+						dst[off++] = ':';
+					}
+				}
+
+				off += snprintf(dst + off, size - off, "%x", ptr[0] << 8 | ptr[1]);
+			}
+
+			dst[off] = 0;
+
+			return dst;
+		}
 		default:
 			errno = EAFNOSUPPORT;
 			return NULL;
