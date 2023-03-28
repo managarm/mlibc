@@ -110,9 +110,9 @@ struct group_source_req {
 #define INADDR_LOOPBACK ((in_addr_t)0x7f000001)
 #define INADDR_NONE ((in_addr_t)0xffffffff)
 
-#define INET_ADDRSTRLEN 1
+#define INET_ADDRSTRLEN 16
 
-#define INET6_ADDRSTRLEN 1
+#define INET6_ADDRSTRLEN 46
 
 #define IPV6_JOIN_GROUP 1
 #define IPV6_LEAVE_GROUP 2
