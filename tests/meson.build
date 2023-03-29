@@ -80,6 +80,7 @@ all_test_cases = [
 	'posix/sigtimedwait',
 	'posix/if_indextoname',
 	'posix/readv-writev',
+	'posix/posix-timer',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
@@ -213,7 +214,7 @@ foreach test_name : all_test_cases
 			build_rpath: meson.build_root(),
 			override_options: host_libc_sanitize_options,
 			c_args: ['-D_GNU_SOURCE', '-DUSE_HOST_LIBC', '-pthread'],
-			link_args: ['-lresolv', '-ldl', '-pthread', '-lm'],
+			link_args: ['-lresolv', '-ldl', '-pthread', '-lm', '-lrt'],
 			native: true,
 		)
 		test(test_short_name, exec, suite: ['host-libc', test_subdir], should_fail: should_fail)

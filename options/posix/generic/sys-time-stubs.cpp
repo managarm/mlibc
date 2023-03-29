@@ -69,14 +69,22 @@ int setitimer(int which, const struct itimerval *new_value, struct itimerval *ol
 	return 0;
 }
 
-int timer_create(clockid_t, struct sigevent *__restrict, timer_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__restrict res) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timer_create, -1);
+	if(int e = mlibc::sys_timer_create(clk, evp, res); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
-int timer_settime(timer_t, int, const struct itimerspec *__restrict, struct itimerspec *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int timer_settime(timer_t t, int flags, const struct itimerspec *__restrict val, struct itimerspec *__restrict old) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timer_settime, -1);
+	if(int e = mlibc::sys_timer_settime(t, flags, val, old); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int timer_gettime(timer_t, struct itimerspec *) {
@@ -84,7 +92,11 @@ int timer_gettime(timer_t, struct itimerspec *) {
 	__builtin_unreachable();
 }
 
-int timer_delete(timer_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int timer_delete(timer_t t) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timer_delete, -1);
+	if(int e = mlibc::sys_timer_delete(t); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
