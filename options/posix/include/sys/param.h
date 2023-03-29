@@ -23,6 +23,8 @@ extern "C" {
 #undef MAX
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 
+#define howmany(x, y)  (((x) + ((y) - 1)) / (y))
+
 #ifdef __cplusplus
 }
 #endif
