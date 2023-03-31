@@ -4,6 +4,7 @@
 
 #include <abi-bits/pid_t.h>
 #include <bits/size_t.h>
+#include <mlibc-config.h>
 
 // MISSING: time_t, struct timespec
 
