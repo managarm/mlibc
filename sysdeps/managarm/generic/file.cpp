@@ -845,8 +845,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 
 	SignalGuard sguard;
 
-	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_req_type(managarm::fs::CntReqType::PT_SENDMSG);
+	managarm::fs::SendMsgRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_flags(flags);
 	req.set_size(overall_size);
 
@@ -868,10 +867,10 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		}
 	}
 
-	auto [offer, send_req, send_data, imbue_creds, send_addr, recv_resp] = exchangeMsgsSync(
+	auto [offer, send_head, send_tail, send_data, imbue_creds, send_addr, recv_resp] = exchangeMsgsSync(
 		handle,
 		helix_ng::offer(
-			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
 			helix_ng::sendBufferSg(sglist.data(), hdr->msg_iovlen),
 			helix_ng::imbueCredentials(),
 			helix_ng::sendBuffer(hdr->msg_name, hdr->msg_namelen),
@@ -879,13 +878,14 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	);
 
 	HEL_CHECK(offer.error());
-	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(send_tail.error());
 	HEL_CHECK(send_data.error());
 	HEL_CHECK(imbue_creds.error());
 	HEL_CHECK(send_addr.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::fs::SendMsgReply<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 	if(resp.error() == managarm::fs::Errors::BROKEN_PIPE) {
@@ -928,8 +928,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 
 	SignalGuard sguard;
 
-	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_req_type(managarm::fs::CntReqType::PT_RECVMSG);
+	managarm::fs::RecvMsgRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_flags(flags);
 	req.set_size(hdr->msg_iov[0].iov_len);
 	req.set_addr_size(hdr->msg_namelen);
@@ -951,7 +950,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	HEL_CHECK(imbue_creds.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::fs::RecvMsgReply<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 	if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
@@ -964,7 +963,8 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 
 		hdr->msg_namelen = resp.addr_size();
 		hdr->msg_controllen = recv_ctrl.actualLength();
-		*length = recv_data.actualLength();
+		hdr->msg_flags = resp.flags();
+		*length = resp.ret_val();
 		return 0;
 	}
 }
