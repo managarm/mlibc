@@ -132,16 +132,6 @@ char *strcasestr(const char *s, const char *pattern) {
 	return nullptr;
 }
 
-char *strdupa(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-char *strndupa(const char *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
 void *memccpy(void *__restrict, const void *__restrict, int, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

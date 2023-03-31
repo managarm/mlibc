@@ -82,6 +82,7 @@ all_test_cases = [
 	'posix/if_indextoname',
 	'posix/readv-writev',
 	'posix/posix-timer',
+	'posix/strdupa',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',

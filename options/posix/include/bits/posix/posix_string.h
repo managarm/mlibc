@@ -2,6 +2,7 @@
 #ifndef MLIBC_POSIX_STRING_H
 #define MLIBC_POSIX_STRING_H
 
+#include <alloca.h>
 #include <bits/posix/locale_t.h>
 
 #ifdef __cplusplus
@@ -23,10 +24,21 @@ int strcoll_l(const char *s1, const char *s2, locale_t locale);
 // GNU extensions.
 #if defined(_GNU_SOURCE)
 char *strcasestr(const char *, const char *);
-char *strdupa(const char *);
-char *strndupa(const char *, size_t);
+#define strdupa(x) ({ \
+	const char *str = (x); \
+	size_t len = strlen(str) + 1; \
+	char *buf = alloca(len); \
+	(char *) memcpy(buf, str, len); \
+})
+#define strndupa(x, y) ({ \
+	const char *str = (x); \
+	size_t len = strnlen(str, (y)) + 1; \
+	char *buf = alloca(len); \
+	buf[len - 1] = '\0'; \
+	(char *) memcpy(buf, str, len - 1); \
+})
 void *memrchr(const void *, int, size_t);
-#endif // defined(_GNU_SOURCE)
+#endif /* defined(_GNU_SOURCE) */
 
 // BSD extensions
 size_t strlcpy(char *d, const char *s, size_t n);
