@@ -21,10 +21,12 @@ void *memccpy(void *__restrict dest, const void *__restrict src, int c, size_t n
 int strcoll_l(const char *s1, const char *s2, locale_t locale);
 
 // GNU extensions.
+#if defined(_GNU_SOURCE)
 char *strcasestr(const char *, const char *);
 char *strdupa(const char *);
 char *strndupa(const char *, size_t);
 void *memrchr(const void *, int, size_t);
+#endif // defined(_GNU_SOURCE)
 
 // BSD extensions
 size_t strlcpy(char *d, const char *s, size_t n);
