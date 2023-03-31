@@ -107,11 +107,6 @@ int inet_aton(const char *string, struct in_addr *dest) {
 // ----------------------------------------------------------------------------
 const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
 		socklen_t size) {
-	if(!dst) {
-		errno = EINVAL;
-		return NULL;
-	}
-
 	switch (af) {
 		case AF_INET: {
 			auto source = reinterpret_cast<const struct in_addr*>(src);
