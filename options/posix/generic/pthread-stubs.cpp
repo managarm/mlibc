@@ -500,9 +500,15 @@ int pthread_setname_np(pthread_t thread, const char *name) {
 	return 0;
 }
 
-int pthread_getname_np(pthread_t, char *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_getname_np(pthread_t thread, char *name, size_t size) {
+	auto tcb = reinterpret_cast<Tcb*>(thread);
+
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_thread_getname, ENOSYS);
+	if(int e = sysdep(tcb, name, size); e) {
+		return e;
+	}
+
+	return 0;
 }
 
 int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param) {
@@ -1252,7 +1258,7 @@ int pthread_cond_timedwait(pthread_cond_t *__restrict cond, pthread_mutex_t *__r
 			__ensure(!"Failed to lock the mutex");
 
 		// There are four cases to handle:
-		//   1. e == 0: this indicates a (potentially spurious) wakeup. The value of 
+		//   1. e == 0: this indicates a (potentially spurious) wakeup. The value of
 		//      seq *must* be checked to distinguish these two cases.
 		//   2. e == EAGAIN: this indicates that the value of seq changed before we
 		//      went to sleep. We don't need to check seq in this case.

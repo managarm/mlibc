@@ -1150,6 +1150,39 @@ int sys_thread_setname(void *tcb, const char *name) {
 	return 0;
 }
 
+int sys_thread_getname(void *tcb, char *name, size_t size) {
+	auto t = reinterpret_cast<Tcb *>(tcb);
+	char *path;
+	int cs = 0;
+	ssize_t real_size = 0;
+
+	if(asprintf(&path, "/proc/self/task/%d/comm", t->tid) < 0) {
+		return ENOMEM;
+	}
+
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
+
+	int fd;
+	if(int e = sys_open(path, O_RDONLY | O_CLOEXEC, 0, &fd); e) {
+		return e;
+	}
+
+	if(int e = sys_read(fd, name, size, &real_size)) {
+		return e;
+	}
+
+	name[real_size - 1] = 0;
+	sys_close(fd);
+
+	pthread_setcancelstate(cs, 0);
+
+	if(static_cast<ssize_t>(size) <= real_size) {
+		return ERANGE;
+	}
+
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 #if __MLIBC_LINUX_OPTION
