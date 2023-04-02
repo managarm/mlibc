@@ -27,6 +27,7 @@ libc_sources += files(
 	'generic/module.cpp',
 	'generic/sys-klog.cpp',
 	'generic/sched.cpp',
+	'generic/sys-quota.cpp',
 )
 
 if not no_headers
@@ -76,6 +77,7 @@ if not no_headers
 		'include/sys/sysinfo.h',
 		'include/sys/klog.h',
 		'include/sys/xattr.h',
+		'include/sys/quota.h',
 		subdir: 'sys'
 	)
 	install_headers(

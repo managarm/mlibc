@@ -103,6 +103,7 @@ struct group_source_req {
 #define IPPROTO_DSTOPTS 60
 #define IPPROTO_COMP 108
 #define IPPROTO_SCTP 132
+#define IPPROTO_UDPLITE 136
 #define IPPROTO_MAX 256
 
 #define INADDR_ANY ((in_addr_t)0x00000000)

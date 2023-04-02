@@ -24,15 +24,13 @@ extern "C" {
 #define ETHERTYPE_IPV6 0x86dd
 #define ETHERTYPE_LOOPBACK 0x9000
 
-struct ether_addr {
-	uint8_t ether_addr_octet[6];
-} __attribute__ ((__packed__));
-
 struct ether_header {
 	uint8_t ether_dhost[6];
 	uint8_t ether_shost[6];
 	uint16_t ether_type;
 };
+
+#define ETHER_ADDR_LEN 6
 
 #ifdef __cplusplus
 }

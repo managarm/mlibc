@@ -88,6 +88,7 @@ struct cmsghdr {
 #define SO_PEERSEC 26
 #define SO_BINDTODEVICE 27
 #define SO_DOMAIN 28
+#define SO_PASSSEC 29
 
 #define SOMAXCONN 1
 
