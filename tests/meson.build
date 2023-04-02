@@ -90,6 +90,7 @@ all_test_cases = [
 	'glibc/error',
 	'glibc/error_at_line',
 	'linux/xattr',
+	'linux/pthread_setname_np',
 ]
 
 if host_machine.system() == 'linux'
