@@ -215,6 +215,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_ptsname(int fd, char *buffer, size_t length);
 [[gnu::weak]] int sys_unlockpt(int fd);
 
+[[gnu::weak]] int sys_thread_setname(void *tcb, const char *name);
+
 } //namespace mlibc
 
 #endif // MLIBC_POSIX_SYSDEPS

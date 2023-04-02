@@ -489,8 +489,14 @@ void pthread_cleanup_pop(int execute) {
 	frg::destruct(getAllocator(), hand);
 }
 
-int pthread_setname_np(pthread_t, const char *) {
-	mlibc::infoLogger() << "mlibc: pthread_setname_np is a stub" << frg::endlog;
+int pthread_setname_np(pthread_t thread, const char *name) {
+	auto tcb = reinterpret_cast<Tcb*>(thread);
+
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_thread_setname, ENOSYS);
+	if(int e = sysdep(tcb, name); e) {
+		return e;
+	}
+
 	return 0;
 }
 
