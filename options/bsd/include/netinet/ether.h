@@ -7,7 +7,13 @@
 extern "C" {
 #endif
 
+struct ether_addr {
+	uint8_t ether_addr_octet[6];
+} __attribute__ ((__packed__));
+
 char *ether_ntoa_r(const struct ether_addr *p_a, char *x);
+
+struct ether_addr *ether_aton(const char *asc);
 
 #ifdef __cplusplus
 }

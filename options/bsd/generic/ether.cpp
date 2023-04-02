@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <bits/ensure.h>
 #include <netinet/ether.h>
 
 char *ether_ntoa_r(const struct ether_addr *addr, char *buf) {
@@ -9,4 +10,10 @@ char *ether_ntoa_r(const struct ether_addr *addr, char *buf) {
 	}
 
 	return orig_ptr;
+}
+
+
+struct ether_addr *ether_aton(const char *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
 }
