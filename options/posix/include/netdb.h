@@ -23,6 +23,7 @@
 
 #define NI_NUMERICSERV 2
 #define NI_MAXSERV 32
+#define NI_IDN 32
 
 #define NI_MAXHOST 1025
 

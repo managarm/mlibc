@@ -82,6 +82,9 @@ struct winsize {
 #define IMAXBEL 0020000
 #define ECHOKE  0040000
 
+#define IUCLC 0001000
+#define IUTF8 0040000
+
 #ifdef __cplusplus
 }
 #endif

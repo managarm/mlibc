@@ -9,6 +9,8 @@ extern "C" {
 
 int msgget(key_t, int);
 
+int msgctl(int msqid, int cmd, struct msqid_ds *buf);
+
 #ifdef __cplusplus
 }
 #endif

@@ -10,3 +10,8 @@ int mq_setattr(mqd_t, const struct mq_attr *__restrict__, struct mq_attr *__rest
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+int mq_unlink(const char *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
