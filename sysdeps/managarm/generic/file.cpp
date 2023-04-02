@@ -107,20 +107,22 @@ int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 	(void)mode;
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::MKDIRAT);
-	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
+	managarm::posix::MkdirAtRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_fd(dirfd);
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 
-	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
-		getPosixLane(),
-		helix_ng::offer(
-			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-			helix_ng::recvInline())
-	);
+	auto [offer, send_head, send_tail, recv_resp] =
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
 
 	HEL_CHECK(offer.error());
-	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -2177,21 +2179,23 @@ int sys_access(const char *path, int mode) {
 int sys_faccessat(int dirfd, const char *pathname, int, int flags) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::ACCESSAT);
+	managarm::posix::AccessAtRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), pathname));
 	req.set_fd(dirfd);
 	req.set_flags(flags);
 
-	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
-		getPosixLane(),
-		helix_ng::offer(
-			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-			helix_ng::recvInline())
-	);
+	auto [offer, send_head, send_tail, recv_resp] =
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
 
 	HEL_CHECK(offer.error());
-	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
