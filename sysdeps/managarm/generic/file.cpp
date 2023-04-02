@@ -1406,7 +1406,7 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 int sys_openat(int dirfd, const char *path, int flags, mode_t, int *fd) {
 	SignalGuard sguard;
 
-	mlibc::infoLogger() << "\e[35mmlibc: sys_openat() ignored mode\e[39m"
+	mlibc::infoLogger() << "\e[35mmlibc: sys_openat() ignores mode\e[39m"
 				<< frg::endlog;
 
 	uint32_t proto_flags = 0;
