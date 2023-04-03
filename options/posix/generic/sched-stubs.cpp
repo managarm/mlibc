@@ -33,25 +33,6 @@ int sched_get_priority_min(int policy) {
 	return res;
 }
 
-int __mlibc_cpu_isset(int, cpu_set_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int __mlibc_cpu_count(const cpu_set_t *set) {
-	size_t count = 0;
-	const unsigned char *ptr = reinterpret_cast<const unsigned char *>(set);
-
-	for(size_t i = 0; i < sizeof(cpu_set_t); i++) {
-		for(size_t bit = 0; bit < CHAR_BIT; bit++) {
-			if((1 << bit) & ptr[i])
-				count++;
-		}
-	}
-
-	return count;
-}
-
 int sched_setscheduler(pid_t, int, const struct sched_param *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
