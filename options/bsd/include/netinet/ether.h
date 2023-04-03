@@ -1,15 +1,12 @@
 #ifndef _NETINET_ETHER_H
 #define _NETINET_ETHER_H
 
+#include <bits/ether_addr.h>
 #include <netinet/if_ether.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct ether_addr {
-	uint8_t ether_addr_octet[6];
-} __attribute__ ((__packed__));
 
 char *ether_ntoa_r(const struct ether_addr *p_a, char *x);
 

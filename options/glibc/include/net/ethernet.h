@@ -1,6 +1,7 @@
 #ifndef _NET_ETHERNET_H
 #define _NET_ETHERNET_H
 
+#include <bits/ether_addr.h>
 #include <stdint.h>
 #include <mlibc-config.h>
 
