@@ -307,6 +307,16 @@ int pthread_getattr_np(pthread_t thread, pthread_attr_t *attr) {
 	return 0;
 }
 
+int pthread_getaffinity_np(pthread_t, size_t, cpu_set_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_setaffinity_np(pthread_t, size_t, const cpu_set_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 extern "C" Tcb *__rtdl_allocateTcb();
 
 // pthread functions.

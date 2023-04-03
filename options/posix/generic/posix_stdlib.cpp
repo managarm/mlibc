@@ -176,6 +176,12 @@ int mkstemp(char *path) {
 	return mkostemp(path, 0);
 }
 
+int mkostemps(char *pattern, int suffixlen, int flags) {
+	(void)suffixlen;
+	mlibc::infoLogger() << "mlibc: mkostemps ignores suffixlen!" << frg::endlog;
+	return mkostemp(pattern, flags);
+}
+
 char *mkdtemp(char *pattern) {
 	mlibc::infoLogger() << "mlibc mkdtemp(" << pattern << ") called" << frg::endlog;
 	auto n = strlen(pattern);

@@ -83,6 +83,11 @@ ssize_t splice(int, off_t *, int, off_t *, size_t, unsigned int) {
 	__builtin_unreachable();
 }
 
+ssize_t vmsplice(int, const struct iovec *, size_t, unsigned int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 int open(const char *pathname, int flags, ...) {
 	mode_t mode = 0;
 

@@ -97,6 +97,8 @@ int sigwaitinfo(const sigset_t *__restrict set, siginfo_t *__restrict info);
 int sigisemptyset(const sigset_t *set);
 #endif // __MLIBC_GLIBC_OPTION
 
+int sigqueue(pid_t pid, int sig, const union sigval value);
+
 #ifdef __cplusplus
 }
 #endif

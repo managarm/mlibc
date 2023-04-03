@@ -18,6 +18,7 @@
 #define M_2_SQRTPI      1.12837916709551257390
 #define M_SQRT2         1.41421356237309504880
 #define M_SQRT1_2       0.70710678118654752440
+#define M_PIl           3.141592653589793238462643383279502884L
 
 // The following two definitions are from musl.
 #define FP_ILOGBNAN (-1 - (int)(((unsigned)-1) >> 1))

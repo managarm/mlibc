@@ -20,15 +20,25 @@ extern "C" {
 #define DT_SOCK 12
 #define DT_WHT 14
 
+#define __MLIBC_DIRENT_BODY ino_t d_ino; \
+			off_t d_off; \
+			unsigned short d_reclen; \
+			unsigned char d_type; \
+			char d_name[1024];
+
 struct dirent {
-	ino_t d_ino;
-	off_t d_off;
-	unsigned short d_reclen;
-	unsigned char d_type;
-	char d_name[1024];
+	__MLIBC_DIRENT_BODY
+};
+
+struct dirent64 {
+	__MLIBC_DIRENT_BODY
 };
 
 #define d_fileno d_ino
+
+#undef __MLIBC_DIRENT_BODY
+
+#define IFTODT(mode) (((mode) & 0170000) >> 12)
 
 struct __mlibc_dir_struct {
 	int __handle;
