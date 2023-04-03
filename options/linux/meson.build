@@ -29,6 +29,7 @@ libc_sources += files(
 	'generic/sched.cpp',
 	'generic/sys-quota.cpp',
 	'generic/capabilities.cpp',
+	'generic/cpuset.cpp',
 )
 
 if not no_headers
