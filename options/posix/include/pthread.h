@@ -195,6 +195,7 @@ int pthread_attr_setinheritsched(pthread_attr_t *__restrict, int);
 int pthread_attr_getschedparam(const pthread_attr_t *__restrict, struct sched_param *__restrict);
 int pthread_attr_setschedparam(pthread_attr_t *__restrict, const struct sched_param *__restrict);
 
+#if __MLIBC_LINUX_OPTION
 int pthread_attr_getaffinity_np(const pthread_attr_t *__restrict, size_t, cpu_set_t *__restrict);
 int pthread_attr_setaffinity_np(pthread_attr_t *__restrict, size_t, const cpu_set_t *__restrict);
 
@@ -205,6 +206,7 @@ int pthread_getattr_np(pthread_t, pthread_attr_t *);
 
 int pthread_getaffinity_np(pthread_t thread, size_t cpusetsize, cpu_set_t *cpuset);
 int pthread_setaffinity_np(pthread_t thread, size_t cpusetsize, const cpu_set_t *cpuset);
+#endif /* __MLIBC_LINUX_OPTION */
 
 // pthread functions.
 int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict,
