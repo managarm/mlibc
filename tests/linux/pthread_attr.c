@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <pthread.h>
+#include <stdio.h>
 #include <string.h>
 #include <signal.h>
 
@@ -72,7 +73,7 @@ static void test_getattrnp() {
 	// Check that we can read from the highest byte returned.
 	// pthread_getattr_np() should return the lowest byte
 	// of the stack.
-	assert(!*(char*)(stack + other_stacksize - 1));
+	printf("highest byte: %hhu\n", *(char *)(stack + other_stacksize - 1));
 
 	pthread_attr_destroy(&attr);
 }
