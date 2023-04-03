@@ -95,7 +95,6 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_setegid(gid_t egid);
 [[gnu::weak]] int sys_getgroups(size_t size, const gid_t *list, int *ret);
 [[gnu::weak]] void sys_yield();
-[[gnu::weak]] int sys_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask);
 [[gnu::weak]] int sys_sleep(time_t *secs, long *nanos);
 [[gnu::weak]] int sys_fork(pid_t *child);
 [[gnu::weak]] int sys_clone(void *tcb, pid_t *pid_out, void *stack);
