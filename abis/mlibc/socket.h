@@ -42,6 +42,7 @@ struct cmsghdr {
 
 #define SCM_RIGHTS 1
 #define SCM_TIMESTAMP SO_TIMESTAMP
+#define SCM_TIMESTAMPNS SO_TIMESTAMPNS
 
 //MISSING: CMSG_DATA, CMSG_NXTHDR, CMSG_FIRSTHDR
 
@@ -57,6 +58,7 @@ struct cmsghdr {
 #define SOCK_RDM 0x40000
 
 #define SOL_SOCKET 1
+#define SOL_IPV6 41
 #define SOL_PACKET 263
 #define SOL_NETLINK 270
 
@@ -89,6 +91,9 @@ struct cmsghdr {
 #define SO_BINDTODEVICE 27
 #define SO_DOMAIN 28
 #define SO_PASSSEC 29
+#define SO_TIMESTAMPNS 30
+#define SO_PRIORITY 31
+#define SO_MARK 32
 
 #define SOMAXCONN 1
 

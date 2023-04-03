@@ -13,4 +13,19 @@ struct sockaddr_ll {
 	unsigned char sll_addr[8];
 };
 
+struct packet_mreq {
+	int mr_ifindex;
+	unsigned short int mr_type;
+	unsigned short int mr_alen;
+	unsigned char mr_address[8];
+};
+
+#define PACKET_ADD_MEMBERSHIP 1
+#define PACKET_DROP_MEMBERSHIP 2
+
+#define PACKET_MR_MULTICAST 0
+#define PACKET_MR_PROMISC 1
+#define PACKET_MR_ALLMULTI 2
+#define PACKET_MR_UNICAST 3
+
 #endif // _NETPACKET_PACKET_H

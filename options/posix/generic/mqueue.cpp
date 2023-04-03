@@ -15,3 +15,8 @@ int mq_unlink(const char *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+mqd_t mq_open(const char *, int, ...) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

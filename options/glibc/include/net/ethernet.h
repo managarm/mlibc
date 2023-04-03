@@ -32,6 +32,8 @@ struct ether_header {
 
 #define ETHER_ADDR_LEN 6
 
+#define ETHERTYPE_IP 0x0800
+
 #ifdef __cplusplus
 }
 #endif
