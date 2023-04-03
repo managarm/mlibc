@@ -280,6 +280,7 @@ if not no_headers
 		'options/internal/include/bits/ssize_t.h',
 		'options/internal/include/bits/sigset_t.h',
 		'options/internal/include/bits/inline-definition.h',
+		'options/internal/include/bits/ether_addr.h',
 		subdir: 'bits'
 	)
 endif
