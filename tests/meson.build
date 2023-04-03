@@ -93,6 +93,7 @@ all_test_cases = [
 	'linux/xattr',
 	'linux/pthread_setname_np',
 	'linux/pthread_attr',
+	'linux/cpuset',
 ]
 
 if host_machine.system() == 'linux'
