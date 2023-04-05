@@ -17,13 +17,6 @@ extern "C" {
 
 #define O_NDELAY O_NONBLOCK
 
-#define POSIX_FADV_NORMAL 1
-#define POSIX_FADV_SEQUENTIAL 2
-#define POSIX_FADV_NOREUSE 3
-#define POSIX_FADV_DONTNEED 4
-#define POSIX_FADV_WILLNEED 5
-#define POSIX_FADV_RANDOM 6
-
 struct flock {
 	short l_type;
 	short l_whence;
