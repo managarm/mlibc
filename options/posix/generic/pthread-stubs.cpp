@@ -183,6 +183,7 @@ int pthread_attr_setschedpolicy(pthread_attr_t *__restrict attr, int policy) {
 	return 0;
 }
 
+#if __MLIBC_LINUX_OPTION
 int pthread_attr_getaffinity_np(const pthread_attr_t *__restrict attr,
 		size_t cpusetsize, cpu_set_t *__restrict cpusetp) {
 	if (!attr)
@@ -316,6 +317,7 @@ int pthread_setaffinity_np(pthread_t, size_t, const cpu_set_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+#endif // __MLIBC_LINUX_OPTION
 
 extern "C" Tcb *__rtdl_allocateTcb();
 
