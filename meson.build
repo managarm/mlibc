@@ -36,6 +36,7 @@ disable_intl_option = get_option('disable_intl_option')
 disable_glibc_option = get_option('disable_glibc_option')
 disable_crypt_option = get_option('disable_crypt_option')
 disable_bsd_option = get_option('disable_bsd_option')
+disable_libgcc_dependency = get_option('disable_libgcc_dependency')
 internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
@@ -316,17 +317,19 @@ subdir('options/bsd')
 rtlib_deps = []
 
 if not headers_only
-	libgcc = meson.get_compiler('c').find_library('gcc', required: false)
+	if not disable_libgcc_dependency
+		libgcc = meson.get_compiler('c').find_library('gcc', required: false)
 
-	compiler_rt_name = 'libclang_rt.builtins-' + host_machine.cpu_family()
-	compiler_rt = meson.get_compiler('c').find_library(compiler_rt_name, required: false)
+		compiler_rt_name = 'libclang_rt.builtins-' + host_machine.cpu_family()
+		compiler_rt = meson.get_compiler('c').find_library(compiler_rt_name, required: false)
 
-	if libgcc.found()
-		rtlib_deps += libgcc
-	elif compiler_rt.found()
-		rtlib_deps += compiler_rt
-	else
-		error('neither libgcc nor ' + compiler_rt_name + ' was found')
+		if libgcc.found()
+			rtlib_deps += libgcc
+		elif compiler_rt.found()
+			rtlib_deps += compiler_rt
+		else
+			error('neither libgcc nor ' + compiler_rt_name + ' was found')
+		endif
 	endif
 
 	ld_cpp_args = [
