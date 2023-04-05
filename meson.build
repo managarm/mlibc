@@ -283,6 +283,7 @@ if not no_headers
 		'options/internal/include/bits/sigset_t.h',
 		'options/internal/include/bits/inline-definition.h',
 		'options/internal/include/bits/ether_addr.h',
+		'options/internal/include/bits/cpu_set.h',
 		subdir: 'bits'
 	)
 endif

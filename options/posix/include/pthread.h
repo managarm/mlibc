@@ -3,6 +3,7 @@
 #define _PTHREAD_H
 
 #include <abi-bits/clockid_t.h>
+#include <bits/cpu_set.h>
 // TODO: pthread is not required to define size_t.
 #include <bits/size_t.h>
 #include <bits/posix/pthread_t.h>
