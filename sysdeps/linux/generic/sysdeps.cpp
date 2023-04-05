@@ -1636,4 +1636,19 @@ int sys_brk(void **out) {
 }
 #endif // __MLIBC_BSD_OPTION
 
+#if __MLIBC_GLIBC_OPTION
+
+int sys_personality(unsigned long persona, int *out) {
+	auto ret = do_syscall(SYS_personality, persona);
+
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+
+	*out = sc_int_result<int>(ret);
+	return 0;
+}
+
+#endif // __MLIBC_GLIBC_OPTION
+
 } // namespace mlibc
