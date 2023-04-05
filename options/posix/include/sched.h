@@ -3,6 +3,7 @@
 #define _SCHED_H
 
 #include <abi-bits/pid_t.h>
+#include <bits/cpu_set.h>
 #include <bits/size_t.h>
 #include <mlibc-config.h>
 
@@ -55,11 +56,6 @@ struct sched_param {
 };
 
 int sched_yield(void);
-
-struct __mlibc_cpu_set {
-	unsigned long __bits[128/sizeof(long)];
-};
-typedef struct __mlibc_cpu_set cpu_set_t;
 
 int sched_getscheduler(pid_t pid);
 int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask);
