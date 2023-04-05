@@ -34,7 +34,8 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 		return -1;
 
 	int pts_fd;
-	if(int e = mlibc::sys_open(name, O_RDWR | O_NOCTTY, 0, &pts_fd); e) {
+	unlockpt(ptmx_fd);
+	if(int e = mlibc::sys_open(spath, O_RDWR | O_NOCTTY, 0, &pts_fd); e) {
 		errno = e;
 		return -1;
 	}
