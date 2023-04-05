@@ -216,6 +216,7 @@ if not disable_crypt_option
 endif
 
 if not disable_bsd_option
+	rtdl_include_dirs += include_directories('options/bsd/include')
 	libc_include_dirs += include_directories('options/bsd/include')
 endif
 

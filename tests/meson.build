@@ -24,6 +24,7 @@ all_test_cases = [
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
+	'bsd/sbrk',
 	'posix/inet_ntop',
 	'posix/inet_pton',
 	'posix/access',
