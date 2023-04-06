@@ -2,6 +2,17 @@
 
 This document lists the ABI breaks that were made in each mlibc major version.
 
+## Version 4
+
+- [#814](https://github.com/managarm/mlibc/pull/814): `struct timex`'s `long int tai` changed to the correct `int tai`, and `int __padding[11]` got appended to the struct.
+- [#816](https://github.com/managarm/mlibc/pull/816): `sys_wait4` on Linux now correctly returns a `pid_t`, not an `int` as previously.
+- [#816](https://github.com/managarm/mlibc/pull/816): All `MS_*` macros of the `sys/mount.h` header were adjusted to match linux.
+- [#816](https://github.com/managarm/mlibc/pull/816): `struct epoll_event` now gets correctly packed on `x86_64`.
+- [#819](https://github.com/managarm/mlibc/pull/819): `str(n)dupa` is now defined as a pure macro, and not as a macro that points to a function.
+- [#828](https://github.com/managarm/mlibc/pull/828): Linux-specific functions previously included in the posix option in `pthreads.h` and `sched.h` are not correctly guarded behind the linux option.
+- [#828](https://github.com/managarm/mlibc/pull/828): The `CPU_*` macros of `sched.h` have been rewritten to resolve to internal mlibc implementations, and are now correctly guarded behind the linux option.
+- [#735](https://github.com/managarm/mlibc/pull/735): `sched_getcpu` and `setns` were previously mistakenly C++-mangled and not declared, which has now been rectified.
+
 ## Version 3
 
 - [#728](https://github.com/managarm/mlibc/pull/728):
