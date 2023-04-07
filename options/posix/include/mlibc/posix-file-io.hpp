@@ -11,6 +11,7 @@ struct mem_file : abstract_file {
 	mem_file(char **ptr, size_t *sizeloc, void (*do_dispose)(abstract_file *) = nullptr);
 
 	int close() override;
+	int reopen(const char *path, const char *mode) override;
 protected:
 	int determine_type(stream_type *type) override;
 	int determine_bufmode(buffer_mode *mode) override;

@@ -35,6 +35,7 @@ public:
 	void dispose();
 
 	virtual int close() = 0;
+	virtual int reopen(const char *path, const char *mode) = 0;
 
 	int read(char *buffer, size_t max_size, size_t *actual_size);
 	int write(const char *buffer, size_t max_size, size_t *actual_size);
@@ -82,6 +83,7 @@ struct fd_file : abstract_file {
 	int fd();
 
 	int close() override;
+	int reopen(const char *path, const char *mode) override;
 
 	static int parse_modestring(const char *mode);
 
