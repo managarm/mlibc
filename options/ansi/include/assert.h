@@ -16,6 +16,12 @@ void __assert_fail(const char *assertion, const char *file, unsigned int line,
 
 #endif // _ASSERT_H
 
+#include <mlibc-config.h>
+
+#if __MLIBC_GLIBC_OPTION
+#	include <bits/glibc/glibc_assert.h>
+#endif
+
 // NOTE: [7.2] requires this be outside the include guard
 #ifdef NDEBUG
 

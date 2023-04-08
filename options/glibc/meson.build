@@ -16,6 +16,7 @@ libc_sources += files(
 	'generic/personality.cpp',
 	'generic/gshadow.cpp',
 	'generic/sys-timex.cpp',
+	'generic/glibc-assert.cpp',
 )
 
 if not no_headers
@@ -77,6 +78,7 @@ if not no_headers
 	)
 	install_headers(
 		'include/bits/glibc/glibc_signal.h',
+		'include/bits/glibc/glibc_assert.h',
 		subdir: 'bits/glibc'
 	)
 endif
