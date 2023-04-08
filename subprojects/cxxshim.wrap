@@ -1,4 +1,4 @@
 [wrap-git]
 directory = cxxshim
 url = https://github.com/managarm/cxxshim.git
-revision = master
+revision = 1abc678c17a8b54bf9497065443c1d4b292accb9
