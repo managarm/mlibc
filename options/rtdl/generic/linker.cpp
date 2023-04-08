@@ -326,7 +326,7 @@ SharedObject *ObjectRepository::findLoadedObject(frg::string_view name) {
 	for (auto object : loadedObjects) {
 		// See if any object has a matching SONAME.
 		if (object->soName && name == object->soName)
-			return object;	
+			return object;
 	}
 
 	// TODO: We should also look at the device and inode here as a fallback.
@@ -709,7 +709,7 @@ void ObjectRepository::_discoverDependencies(SharedObject *object,
 		const char *library_str = (const char *)(object->baseAddress
 				+ object->stringTableOffset + dynamic->d_un.d_val);
 
-		auto library = requestObjectWithName(frg::string_view{library_str}, 
+		auto library = requestObjectWithName(frg::string_view{library_str},
 				object, localScope, false, rts);
 		if(!library)
 			mlibc::panicLogger() << "Could not satisfy dependency " << library_str << frg::endlog;
@@ -1132,7 +1132,7 @@ void Scope::appendObject(SharedObject *object) {
 frg::optional<ObjectSymbol> Scope::resolveGlobalOrLocal(Scope &globalScope,
 		Scope *localScope, frg::string_view string, uint64_t skipRts, ResolveFlags flags) {
 	auto sym = globalScope.resolveSymbol(string, skipRts, flags | skipGlobalAfterRts);
-	if(!sym && localScope) 
+	if(!sym && localScope)
 		sym = localScope->resolveSymbol(string, skipRts, flags | skipGlobalAfterRts);
 	return sym;
 }
@@ -1709,6 +1709,14 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				*((uint64_t *)rel_addr) += object->baseAddress;
 			}
 			break;
+#if defined(__x86_64__)
+		case R_X86_64_IRELATIVE: {
+			auto ptr = object->baseAddress + reloc->r_addend;
+			auto target = reinterpret_cast<Elf64_Addr (*)(void)>(ptr)();
+			*((uint64_t *)rel_addr) = target;
+			break;
+		}
+#endif
 // TODO: TLSDESC relocations aren't aarch64 specific
 #if defined(__aarch64__)
 		case R_AARCH64_TLSDESC: {
