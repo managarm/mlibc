@@ -17,6 +17,8 @@
 #define FTW_DEPTH 4
 #define FTW_CHDIR 8
 
+#define FTW_CONTINUE 0
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -112,6 +112,7 @@ struct cmsghdr {
 #define MSG_DONTWAIT 0x1000
 #define MSG_CMSG_CLOEXEC 0x2000
 #define MSG_MORE 0x4000
+#define MSG_FASTOPEN 0x20000000
 
 // GNU (?) extension: Protocol family constants.
 

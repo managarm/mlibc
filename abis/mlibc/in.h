@@ -125,6 +125,7 @@ struct group_source_req {
 #define IPV6_PMTUDISC_DONT 8
 #define IPV6_PMTUDISC_DO 9
 #define IPV6_MTU 10
+#define IPV6_2292PKTOPTIONS 11
 #define IPV6_MTU_DISCOVER 23
 #define IPV6_RECVERR 25
 #define IPV6_RECVPKTINFO 49
@@ -136,7 +137,9 @@ struct group_source_req {
 #define IP_TOS 1
 #define IP_TTL 2
 #define IP_OPTIONS 4
+#define IP_PMTUDISC_OMIT 5
 #define IP_PKTINFO 8
+#define IP_PKTOPTIONS 9
 #define IP_MTU_DISCOVER 10
 #define IP_RECVERR 11
 #define IP_RECVTTL 12

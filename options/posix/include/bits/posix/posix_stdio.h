@@ -29,6 +29,8 @@ int vdprintf(int fd, const char *format, __gnuc_va_list args);
 
 char *fgetln(FILE *, size_t *);
 
+#define RENAME_EXCHANGE (1 << 1)
+
 #ifdef __cplusplus
 }
 #endif
