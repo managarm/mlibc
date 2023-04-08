@@ -195,3 +195,8 @@ char *fgetln(FILE *, size_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+FILE *fopencookie(void *__restrict, const char *__restrict, cookie_io_functions_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

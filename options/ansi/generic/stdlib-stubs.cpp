@@ -297,14 +297,27 @@ void *bsearch(const void *key, const void *base, size_t count, size_t size,
 
 	return nullptr;
 }
+
+static int qsort_callback(const void *a, const void *b, void *arg) {
+	auto compare = reinterpret_cast<int (*)(const void *, const void *)>(arg);
+
+	return compare(a, b);
+}
+
 void qsort(void *base, size_t count, size_t size,
 		int (*compare)(const void *, const void *)) {
+	return qsort_r(base, count, size, qsort_callback, (void *) compare);
+}
+
+void qsort_r(void *base, size_t count, size_t size,
+		int (*compare)(const void *, const void *, void *),
+		void *arg) {
 	// TODO: implement a faster sort
 	for(size_t i = 0; i < count; i++) {
 		void *u = (void *)((uintptr_t)base + i * size);
 		for(size_t j = i + 1; j < count; j++) {
 			void *v = (void *)((uintptr_t)base + j * size);
-			if(compare(u, v) <= 0)
+			if(compare(u, v, arg) <= 0)
 				continue;
 
 			// swap u and v
@@ -317,14 +330,6 @@ void qsort(void *base, size_t count, size_t size,
 			}
 		}
 	}
-}
-
-void qsort_r(void *, size_t, size_t,
-		int (*compare)(const void *, const void *, void *),
-		void *) {
-	(void) compare;
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
 }
 
 int abs(int num) {
