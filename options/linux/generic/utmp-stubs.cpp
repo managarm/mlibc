@@ -104,3 +104,13 @@ struct utmp *getutline(const struct utmp *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+int utmpname(const char *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+struct utmp *getutid(const struct utmp *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

@@ -4,6 +4,7 @@
 #include <abi-bits/pid_t.h>
 #include <bits/posix/timeval.h>
 #include <bits/types.h>
+#include <paths.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,6 +24,12 @@ extern "C" {
 #define UT_LINESIZE 32
 #define UT_NAMESIZE 32
 #define UT_HOSTSIZE 256
+
+#define WTMP_FILE _PATH_WTMP
+#define WTMP_FILENAME _PATH_WTMP
+
+#define UTMP_FILE _PATH_UTMP
+#define UTMP_FILENAME _PATH_UTMP
 
 struct exit_status {
 	short int e_termination;
@@ -63,6 +70,8 @@ int getutent_r(struct utmp *, struct utmp **);
 void endutent(void);
 struct utmp *pututline(const struct utmp *);
 struct utmp *getutline(const struct utmp *);
+struct utmp *getutid(const struct utmp *);
+int utmpname(const char *);
 
 #ifdef __cplusplus
 }
