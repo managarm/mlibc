@@ -1,6 +1,8 @@
 #ifndef _ABIBITS_FCNTL_H
 #define _ABIBITS_FCNTL_H
 
+#include <abi-bits/pid_t.h>
+
 #define O_PATH 010000000
 
 #define O_ACCMODE (03 | O_PATH)
@@ -70,5 +72,10 @@
 #define AT_SYMLINK_FOLLOW 0x400
 #define AT_EACCESS 0x200
 #define AT_EMPTY_PATH 0x1000
+
+struct f_owner_ex {
+	int type;
+	pid_t pid;
+};
 
 #endif // _ABIBITS_FCNTL_H
