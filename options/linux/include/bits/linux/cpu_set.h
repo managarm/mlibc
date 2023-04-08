@@ -27,7 +27,7 @@ int __mlibc_cpu_count(const size_t setsize, const cpu_set_t *set);
 #define CPU_ZERO(set) CPU_ZERO_S(sizeof(cpu_set_t), set)
 
 #define CPU_SET_S(cpu, setsize, set) __mlibc_cpu_set((cpu), (setsize), (set))
-#define CPU_SET(cpu, set) CPU_ZERO_S(cpu, sizeof(cpu_set_t), set)
+#define CPU_SET(cpu, set) CPU_SET_S(cpu, sizeof(cpu_set_t), set)
 
 #define CPU_CLR_S(cpu, setsize, set) __mlibc_cpu_clear((cpu), (setsize), (set))
 #define CPU_CLR(cpu, set) CPU_CLR_S(cpu, sizeof(cpu_set_t), set)
