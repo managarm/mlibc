@@ -83,6 +83,7 @@ all_test_cases = [
 	'posix/if_indextoname',
 	'posix/readv-writev',
 	'posix/posix-timer',
+	'posix/strdupa',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
@@ -93,6 +94,8 @@ all_test_cases = [
 	'glibc/error_at_line',
 	'linux/xattr',
 	'linux/pthread_setname_np',
+	'linux/pthread_attr',
+	'linux/cpuset',
 ]
 
 if host_machine.system() == 'linux'

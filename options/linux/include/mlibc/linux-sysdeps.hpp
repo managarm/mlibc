@@ -1,6 +1,7 @@
 #ifndef MLIBC_LINUX_SYSDEPS
 #define MLIBC_LINUX_SYSDEPS
 
+#include <sched.h>
 #include <stdarg.h>
 #include <sys/epoll.h>
 #include <sys/sysinfo.h>
@@ -43,6 +44,8 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);
 [[gnu::weak]] int sys_getcpu(int *cpu);
 
 [[gnu::weak]] int sys_sysinfo(struct sysinfo *info);
+[[gnu::weak]] int sys_swapon(const char *path, int flags);
+[[gnu::weak]] int sys_swapoff(const char *path);
 
 [[gnu::weak]] int sys_setxattr(const char *path, const char *name,
 	const void *val, size_t size, int flags);
@@ -68,6 +71,8 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written);
 [[gnu::weak]] int sys_removexattr(const char *path, const char *name);
 [[gnu::weak]] int sys_lremovexattr(const char *path, const char *name);
 [[gnu::weak]] int sys_fremovexattr(int fd, const char *name);
+
+[[gnu::weak]] int sys_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask);
 
 } // namespace mlibc
 

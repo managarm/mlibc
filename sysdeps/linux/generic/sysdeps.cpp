@@ -426,7 +426,7 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 	auto ret = do_syscall(SYS_wait4, pid, status, flags, ru);
 	if (int e = sc_error(ret); e)
 			return e;
-	*ret_pid = sc_int_result<int>(ret);
+	*ret_pid = sc_int_result<pid_t>(ret);
 	return 0;
 }
 
@@ -453,6 +453,20 @@ int sys_setresuid(uid_t ruid, uid_t euid, uid_t suid) {
 
 int sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
 	auto ret = do_syscall(SYS_setresgid, rgid, egid, sgid);
+        if (int e = sc_error(ret); e)
+                return e;
+	return 0;
+}
+
+int sys_getresuid(uid_t *ruid, uid_t *euid, uid_t *suid) {
+	auto ret = do_syscall(SYS_getresuid, &ruid, &euid, &suid);
+        if (int e = sc_error(ret); e)
+                return e;
+	return 0;
+}
+
+int sys_getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid) {
+	auto ret = do_syscall(SYS_getresgid, &rgid, &egid, &sgid);
         if (int e = sc_error(ret); e)
                 return e;
 	return 0;
@@ -555,6 +569,13 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 	}
 
 	auto ret = do_syscall(SYS_ioctl, fd, req, attr);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_tcflush(int fd, int queue) {
+	auto ret = do_syscall(SYS_ioctl, fd, TCFLSH, queue);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -812,6 +833,20 @@ int sys_madvise(void *addr, size_t length, int advice) {
 
 int sys_msync(void *addr, size_t length, int flags) {
 	auto ret = do_syscall(SYS_msync, addr, length, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_swapon(const char *path, int flags) {
+	auto ret = do_syscall(SYS_swapon, path, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_swapoff(const char *path) {
+	auto ret = do_syscall(SYS_swapoff, path);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -1180,6 +1215,34 @@ int sys_thread_getname(void *tcb, char *name, size_t size) {
 		return ERANGE;
 	}
 
+	return 0;
+}
+
+int sys_mlock(const void *addr, size_t length) {
+	auto ret = do_syscall(SYS_mlock, addr, length);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_munlock(const void *addr, size_t length) {
+	auto ret = do_syscall(SYS_munlock, addr, length);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_munlockall(void) {
+	auto ret = do_syscall(SYS_munlockall);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_mincore(void *addr, size_t length, unsigned char *vec) {
+	auto ret = do_syscall(SYS_mincore, addr, length, vec);
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 

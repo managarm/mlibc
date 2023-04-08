@@ -29,6 +29,8 @@ libc_sources += files(
 	'generic/sched.cpp',
 	'generic/sys-quota.cpp',
 	'generic/capabilities.cpp',
+	'generic/cpuset.cpp',
+	'generic/sys-swap.cpp',
 )
 
 if not no_headers
@@ -47,6 +49,7 @@ if not no_headers
 	install_headers(
 		'include/bits/linux/linux_unistd.h',
 		'include/bits/linux/linux_sched.h',
+		'include/bits/linux/cpu_set.h',
 		subdir: 'bits/linux'
 	)
 	install_headers(
@@ -79,6 +82,7 @@ if not no_headers
 		'include/sys/klog.h',
 		'include/sys/xattr.h',
 		'include/sys/quota.h',
+		'include/sys/swap.h',
 		subdir: 'sys'
 	)
 	install_headers(

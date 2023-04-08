@@ -95,7 +95,6 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_setegid(gid_t egid);
 [[gnu::weak]] int sys_getgroups(size_t size, const gid_t *list, int *ret);
 [[gnu::weak]] void sys_yield();
-[[gnu::weak]] int sys_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask);
 [[gnu::weak]] int sys_sleep(time_t *secs, long *nanos);
 [[gnu::weak]] int sys_fork(pid_t *child);
 [[gnu::weak]] int sys_clone(void *tcb, pid_t *pid_out, void *stack);
@@ -133,8 +132,12 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_fchmod(int fd, mode_t mode);
 [[gnu::weak]] int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags);
 [[gnu::weak]] int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags);
+[[gnu::weak]] int sys_mlock(const void *addr, size_t length);
+[[gnu::weak]] int sys_munlock(const void *addr, size_t length);
 [[gnu::weak]] int sys_mlockall(int flags);
 [[gnu::weak]] int sys_mlock(const void *addr, size_t len);
+[[gnu::weak]] int sys_munlockall(void);
+[[gnu::weak]] int sys_mincore(void *addr, size_t length, unsigned char *vec);
 
 // mlibc assumes that anonymous memory returned by sys_vm_map() is zeroed by the kernel / whatever is behind the sysdeps
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window);
@@ -148,7 +151,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_tcgetattr(int fd, struct termios *attr);
 [[gnu::weak]] int sys_tcsetattr(int, int, const struct termios *attr);
 [[gnu::weak]] int sys_tcflow(int, int);
-[[gnu::weak]] int sys_tcflush(int, int);
+[[gnu::weak]] int sys_tcflush(int fd, int queue);
 [[gnu::weak]] int sys_tcdrain(int);
 [[gnu::weak]] int sys_pipe(int *fds, int flags);
 [[gnu::weak]] int sys_socketpair(int domain, int type_and_flags, int proto, int *fds);
@@ -204,6 +207,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 
 [[gnu::weak]] int sys_setresuid(uid_t ruid, uid_t euid, uid_t suid);
 [[gnu::weak]] int sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid);
+[[gnu::weak]] int sys_getresuid(uid_t *ruid, uid_t *euid, uid_t *suid);
+[[gnu::weak]] int sys_getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid);
 [[gnu::weak]] int sys_setreuid(uid_t ruid, uid_t euid);
 [[gnu::weak]] int sys_setregid(gid_t rgid, gid_t egid);
 

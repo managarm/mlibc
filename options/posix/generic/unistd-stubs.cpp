@@ -1159,14 +1159,22 @@ int setdomainname(const char *, size_t) {
 	__builtin_unreachable();
 }
 
-int getresuid(uid_t *, uid_t *, uid_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int getresuid(uid_t *ruid, uid_t *euid, uid_t *suid) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getresuid, -1);
+	if(int e = mlibc::sys_getresuid(ruid, euid, suid); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
-int getresgid(gid_t *, gid_t *, gid_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getresgid, -1);
+	if(int e = mlibc::sys_getresgid(rgid, egid, sgid); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 #if __MLIBC_CRYPT_OPTION

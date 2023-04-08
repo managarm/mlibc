@@ -238,3 +238,17 @@ void __ubsan_handle_missing_return(UnreachableData *data) {
 		<< LOG_NAME_LOC("reached end of a value-returning function without returning a value", data->loc)
 		<< frg::endlog;
 }
+
+struct NonNullArgData {
+	SourceLocation loc;
+	SourceLocation attr_loc;
+	int arg_index;
+};
+
+extern "C" [[gnu::visibility("hidden")]]
+void __ubsan_handle_nonnull_arg(NonNullArgData *data) {
+	mlibc::panicLogger()
+		<< LOG_NAME_LOC("null pointer passed to non-null argument", data->loc)
+		<< "argument " << data->arg_index << " is required to be non-null in "
+		<< data->attr_loc << frg::endlog;
+}
