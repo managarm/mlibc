@@ -21,6 +21,7 @@ all_test_cases = [
 	'ansi/memmem',
 	'ansi/creal-cimag',
 	'ansi/fenv',
+	'ansi/qsort',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
