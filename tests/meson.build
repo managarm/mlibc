@@ -96,6 +96,7 @@ all_test_cases = [
 	'linux/pthread_setname_np',
 	'linux/pthread_attr',
 	'linux/cpuset',
+	'linux/malloc-usable-size',
 ]
 
 if host_machine.system() == 'linux'
