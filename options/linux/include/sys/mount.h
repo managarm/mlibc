@@ -38,10 +38,14 @@ extern "C" {
 
 #define MNT_FORCE 1
 
+#ifndef __MLIBC_ABI_ONLY
+
 int mount(const char *source, const char *target,
 		const char *fstype, unsigned long flags, const void *data);
 int umount(const char *target);
 int umount2(const char *target, int flags);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

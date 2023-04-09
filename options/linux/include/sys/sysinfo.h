@@ -21,7 +21,11 @@ struct sysinfo {
 	char _f[20 - 2 * sizeof(long) - sizeof(int)]; // Padding to 64 bytes according to my man page
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int sysinfo(struct sysinfo *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

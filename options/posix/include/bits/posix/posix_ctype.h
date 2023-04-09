@@ -7,6 +7,8 @@ extern "C" {
 
 #include <bits/posix/locale_t.h>
 
+#ifndef __MLIBC_ABI_ONLY
+
 int isalnum_l(int c, locale_t loc);
 int isalpha_l(int c, locale_t loc);
 int isblank_l(int c, locale_t loc);
@@ -24,6 +26,8 @@ int isascii_l(int c, locale_t loc);
 
 int tolower_l(int c, locale_t loc);
 int toupper_l(int c, locale_t loc); 
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

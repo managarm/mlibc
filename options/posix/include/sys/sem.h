@@ -29,9 +29,13 @@ struct semid_ds {
 	unsigned long   sem_nsems;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int semget(key_t, int, int);
 int semop(int, struct sembuf *, size_t);
 int semctl(int, int, int, ...);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

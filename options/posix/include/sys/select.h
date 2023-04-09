@@ -22,6 +22,8 @@ typedef long int __fd_mask;
 typedef __fd_mask fd_mask;
 #define NFDBITS __NFDBITS
 
+#ifndef __MLIBC_ABI_ONLY
+
 void __FD_CLR(int fd, fd_set *);
 int __FD_ISSET(int fd, fd_set *);
 void __FD_SET(int fd, fd_set *);
@@ -36,6 +38,8 @@ int select(int, fd_set *__restrict, fd_set *__restrict, fd_set *__restrict,
 		struct timeval *__restrict);
 int pselect(int, fd_set *, fd_set *, fd_set *, const struct timespec *,
 		const sigset_t *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

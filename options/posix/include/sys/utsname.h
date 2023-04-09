@@ -8,7 +8,11 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 int uname(struct utsname *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

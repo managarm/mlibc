@@ -28,8 +28,12 @@ struct FTW {
 	int level;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int ftw(const char *, int (*)(const char *, const struct stat *, int), int);
 int nftw(const char *, int (*)(const char *, const struct stat *, int, struct FTW *), int, int);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

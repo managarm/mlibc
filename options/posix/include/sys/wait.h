@@ -20,6 +20,8 @@ typedef enum {
 	P_ALL, P_PID, P_PGID
 } idtype_t;
 
+#ifndef __MLIBC_ABI_ONLY
+
 pid_t wait(int *status);
 int waitid(idtype_t idtype, id_t id, siginfo_t *siginfo, int flags);
 pid_t waitpid(pid_t pid, int *status, int flags);
@@ -27,6 +29,8 @@ pid_t waitpid(pid_t pid, int *status, int flags);
 // GNU extensions.
 pid_t wait3(int *, int, struct rusage *);
 pid_t wait4(pid_t pid, int *status, int options, struct rusage *ru);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

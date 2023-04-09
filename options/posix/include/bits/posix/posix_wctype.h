@@ -8,6 +8,8 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 int iswalnum_l(wint_t, locale_t);
 int iswblank_l(wint_t, locale_t);
 int iswcntrl_l(wint_t, locale_t);
@@ -29,6 +31,8 @@ wint_t towupper_l(wint_t, locale_t);
 
 wctrans_t wctrans_l(const char *, locale_t);
 wint_t towctrans_l(wint_t, wctrans_t, locale_t);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

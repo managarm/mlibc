@@ -25,6 +25,8 @@ typedef struct __mlibc_mbstate mbstate_t;
 
 // MISSING: struct tm
 
+#ifndef __MLIBC_ABI_ONLY
+
 // [7.28.2] Wide formatted I/O functions
 
 int fwprintf(FILE *__restrict, const wchar_t *__restrict, ...);
@@ -121,6 +123,8 @@ int wcswidth(const wchar_t *, size_t);
 wchar_t *wcsdup(const wchar_t *s);
 int wcsncasecmp(const wchar_t*, const wchar_t*, size_t);
 int wcscasecmp(const wchar_t *, const wchar_t *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

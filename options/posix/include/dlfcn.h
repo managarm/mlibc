@@ -19,11 +19,15 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 int dlclose(void *);
 char *dlerror(void);
 void *dlopen(const char *, int);
 void *dlsym(void *__restrict, const char *__restrict);
 void *dlvsym(void *__restrict, const char *__restrict, const char *__restrict);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 //gnu extension
 typedef struct {
@@ -33,8 +37,12 @@ typedef struct {
 	void *dli_saddr;
 } Dl_info;
 
+#ifndef __MLIBC_ABI_ONLY
+
 int dladdr(const void *, Dl_info *);
 int dlinfo(void *, int, void *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

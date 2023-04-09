@@ -42,8 +42,12 @@ typedef struct glob_t {
 	int (*gl_stat) (const char *__restrict, struct stat *__restrict);
 } glob_t;
 
+#ifndef __MLIBC_ABI_ONLY
+
 int glob(const char *__restirct, int, int(*)(const char *, int), struct glob_t *__restrict);
 void globfree(struct glob_t *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

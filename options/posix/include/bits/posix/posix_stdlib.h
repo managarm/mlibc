@@ -8,6 +8,8 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 long random(void);
 double drand48(void);
 void srand48(long int);
@@ -58,6 +60,8 @@ char *canonicalize_file_name(const char *);
 void *reallocarray(void *, size_t, size_t);
 
 int clearenv(void);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

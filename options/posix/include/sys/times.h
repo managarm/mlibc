@@ -15,7 +15,11 @@ struct tms {
 	clock_t tms_cstime;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 clock_t times(struct tms *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

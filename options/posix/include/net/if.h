@@ -76,10 +76,14 @@ struct ifconf {
 #define ifc_buf ifc_ifcu.ifcu_buf
 #define ifc_req ifc_ifcu.ifcu_req
 
+#ifndef __MLIBC_ABI_ONLY
+
 void if_freenameindex(struct if_nameindex *);
 char *if_indextoname(unsigned int, char *);
 struct if_nameindex *if_nameindex(void);
 unsigned int if_nametoindex(const char *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #define IFF_UP 0x1
 #define IFF_BROADCAST 0x2

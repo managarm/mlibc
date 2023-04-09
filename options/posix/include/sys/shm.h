@@ -67,10 +67,14 @@ struct shminfo {
 	unsigned long __unused[4];
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 void *shmat(int, const void *, int);
 int shmctl(int, int, struct shmid_ds *);
 int shmdt(const void *);
 int shmget(key_t, size_t, int);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

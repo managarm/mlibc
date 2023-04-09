@@ -20,6 +20,8 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 /* 7.3.5 Trigonometric functions */
 /* 7.3.5.1 The cacos functions */
 double complex cacos(double complex);
@@ -122,6 +124,8 @@ float complex cprojf(float complex);
 double creal(double complex);
 float crealf(float complex);
 long double creall(long double complex);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

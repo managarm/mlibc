@@ -32,7 +32,11 @@ struct ipc_perm {
 	int __ipc_perm_seq;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 key_t ftok(const char *, int);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

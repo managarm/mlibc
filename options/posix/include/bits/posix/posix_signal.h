@@ -69,6 +69,8 @@ typedef unsigned long int greg_t;
 #define TRAP_BRKPT      1       /* process breakpoint */
 #define TRAP_TRACE      2       /* process trace trap */
 
+#ifndef __MLIBC_ABI_ONLY
+
 // functions to block / wait for signals
 int sigsuspend(const sigset_t *);
 int sigprocmask(int, const sigset_t *__restrict, sigset_t *__restrict);
@@ -98,6 +100,8 @@ int sigisemptyset(const sigset_t *set);
 #endif // __MLIBC_GLIBC_OPTION
 
 int sigqueue(pid_t pid, int sig, const union sigval value);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

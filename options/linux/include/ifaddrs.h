@@ -21,8 +21,12 @@ struct ifaddrs {
 	void *ifa_data;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int getifaddrs(struct ifaddrs **);
 void freeifaddrs(struct ifaddrs *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

@@ -5,7 +5,11 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 char *crypt(const char *, const char *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

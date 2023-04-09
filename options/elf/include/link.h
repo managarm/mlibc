@@ -43,9 +43,13 @@ struct r_debug {
 	Elf64_Addr r_ldbase;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int dl_iterate_phdr(int (*callback)(struct dl_phdr_info*, size_t, void*), void* data);
 
 extern ElfW(Dyn) _DYNAMIC[];
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

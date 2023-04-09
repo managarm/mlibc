@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 // Some programs define their own errno as an "extern int" if it is not a macro.
 #define errno __mlibc_errno
 extern __thread int __mlibc_errno;
@@ -19,6 +21,8 @@ extern char *program_invocation_name;
 extern char *program_invocation_short_name;
 extern char *__progname;
 extern char *__progname_full;
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

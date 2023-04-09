@@ -8,7 +8,11 @@ extern "C" {
 
 #include <unistd.h>
 
+#ifndef __MLIBC_ABI_ONLY
+
 ssize_t sendfile(int, int, off_t *, size_t);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

@@ -27,6 +27,8 @@ struct mntent {
 	int mnt_passno;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 FILE *setmntent(const char *, const char *);
 
 struct mntent *getmntent(FILE *);
@@ -38,6 +40,8 @@ int endmntent(FILE *);
 char *hasmntopt(const struct mntent *, const char *);
 
 struct mntent *getmntent_r(FILE *, struct mntent *,  char *, int);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

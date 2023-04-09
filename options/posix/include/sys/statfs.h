@@ -7,8 +7,12 @@ extern "C" {
 
 #include <abi-bits/statfs.h>
 
+#ifndef __MLIBC_ABI_ONLY
+
 int statfs(const char *, struct statfs *);
 int fstatfs(int, struct statfs *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

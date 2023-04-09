@@ -20,6 +20,8 @@ struct timezone {
 	int tz_dsttime;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 // TODO: this function is [OB]. disable it by default and add a macro to enable it
 int gettimeofday(struct timeval *__restrict result, void *__restrict unused);
 int settimeofday(const struct timeval *result, const struct timezone *zone);
@@ -29,9 +31,13 @@ void timersub(const struct timeval *a, const struct timeval *b, struct timeval *
 void timerclear(struct timeval *tvp);
 int timerisset(struct timeval *tvp);
 
+#endif /* !__MLIBC_ABI_ONLY */
+
 // timercmp taken from musl
 #define timercmp(s,t,op) ((s)->tv_sec == (t)->tv_sec ? \
 	(s)->tv_usec op (t)->tv_usec : (s)->tv_sec op (t)->tv_sec)
+
+#ifndef __MLIBC_ABI_ONLY
 
 int getitimer(int which, struct itimerval *curr_value);
 int setitimer(int which, const struct itimerval *new_value,
@@ -42,6 +48,8 @@ int timer_settime(timer_t timerid, int flags, const struct itimerspec *__restric
 	struct itimerspec *__restrict old_value);
 int timer_gettime(timer_t timerid, struct itimerspec *curr_value);
 int timer_delete(timer_t timerid);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 // The following 2 macros are taken from musl
 #define TIMEVAL_TO_TIMESPEC(tv, ts) ( \

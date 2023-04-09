@@ -16,6 +16,8 @@ struct group {
 	char **gr_mem;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 void endgrent(void);
 struct group *getgrent(void);
 struct group *getgrgid(gid_t);
@@ -31,6 +33,8 @@ int initgroups(const char *user, gid_t group);
 
 // Non standard extension
 int getgrouplist(const char *, gid_t, gid_t *, int *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

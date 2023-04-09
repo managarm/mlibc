@@ -13,6 +13,8 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 extern const struct in6_addr in6addr_any;
 extern const struct in6_addr in6addr_loopback;
 
@@ -20,6 +22,8 @@ uint32_t htonl(uint32_t);
 uint16_t htons(uint16_t);
 uint32_t ntohl(uint32_t);
 uint16_t ntohs(uint16_t);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #define IN6_IS_ADDR_UNSPECIFIED(a) ({ \
     uint32_t *_a = (uint32_t *)(((struct in6_addr *) a)->s6_addr); \

@@ -39,6 +39,8 @@ struct sched_param;
 #define POSIX_SPAWN_USEVFORK 64
 #define POSIX_SPAWN_SETSID 128
 
+#ifndef __MLIBC_ABI_ONLY
+
 int posix_spawn(pid_t *__restrict pid, const char *__restrict path,
 		const posix_spawn_file_actions_t *file_actions,
 		const posix_spawnattr_t *__restrict attrs,
@@ -69,6 +71,8 @@ int posix_spawnp(pid_t *__restrict pid, const char *__restrict file,
 		char *const argv[], char *const envp[]);
 
 // MISSING: all other functions
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
