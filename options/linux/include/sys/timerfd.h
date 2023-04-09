@@ -17,9 +17,13 @@ extern "C" {
 
 struct itimerspec;
 
+#ifndef __MLIBC_ABI_ONLY
+
 int timerfd_create(int, int);
 int timerfd_settime(int, int, const struct itimerspec *, struct itimerspec *);
 int timerfd_gettime(int, struct itimerspec *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

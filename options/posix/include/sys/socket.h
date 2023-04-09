@@ -71,6 +71,8 @@ struct ucred {
 	gid_t gid;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int accept(int, struct sockaddr *__restrict, socklen_t *__restrict);
 int accept4(int, struct sockaddr *__restrict, socklen_t *__restrict, int);
 int bind(int, const struct sockaddr *, socklen_t);
@@ -92,6 +94,8 @@ int shutdown(int, int);
 int sockatmark(int);
 int socket(int, int, int);
 int socketpair(int, int, int, int [2]);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

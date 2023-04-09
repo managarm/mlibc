@@ -46,10 +46,14 @@ struct inotify_event {
 	char name[];
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int inotify_init(void);
 int inotify_init1(int);
 int inotify_add_watch(int, const char *, uint32_t);
 int inotify_rm_watch(int, int);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

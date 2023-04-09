@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 // Character classification function [7.4.1]
 int isalnum(int c);
 int isalpha(int c);
@@ -27,6 +29,8 @@ int isascii(int c);
 // Character case mapping functions [7.4.2]
 int tolower(int c);
 int toupper(int c);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 // Borrowed from glibc
 #define	toascii(c)	((c) & 0x7f)

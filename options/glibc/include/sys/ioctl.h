@@ -13,7 +13,11 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 int ioctl(int fd, unsigned long request, ...);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #define FIONREAD 0x541B
 #define FIONBIO 0x5421

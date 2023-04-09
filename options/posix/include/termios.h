@@ -49,6 +49,8 @@ extern "C" {
 #define TIOCM_DTR 0x002
 #define TIOCM_RTS 0x004
 
+#ifndef __MLIBC_ABI_ONLY
+
 speed_t cfgetispeed(const struct termios *);
 speed_t cfgetospeed(const struct termios *);
 int cfsetispeed(struct termios *, speed_t);
@@ -61,6 +63,8 @@ int tcgetattr(int fd, struct termios *attr);
 pid_t tcgetsid(int);
 int tcsendbreak(int, int);
 int tcsetattr(int, int, const struct termios *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 // This is a linux extension
 

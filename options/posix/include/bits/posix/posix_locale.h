@@ -7,10 +7,14 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 locale_t newlocale(int category_mask, const char *locale, locale_t base);
 void freelocale(locale_t locobj);
 locale_t uselocale(locale_t locobj);
 locale_t duplocale(locale_t locobj);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

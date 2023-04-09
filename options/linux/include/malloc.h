@@ -9,6 +9,8 @@ extern "C" {
 #include <bits/size_t.h>
 #include <mlibc-config.h>
 
+#ifndef __MLIBC_ABI_ONLY
+
 // [7.22.3] Memory management functions
 void *calloc(size_t count, size_t size);
 void free(void *pointer);
@@ -19,6 +21,8 @@ void *memalign(size_t, size_t);
 #if __MLIBC_GLIBC_OPTION
 #include <bits/glibc/glibc_malloc.h>
 #endif
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

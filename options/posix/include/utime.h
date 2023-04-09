@@ -12,7 +12,11 @@ struct utimbuf {
 	time_t modtime;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int utime(const char *, const struct utimbuf *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

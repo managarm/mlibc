@@ -8,8 +8,12 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 int setfsuid(uid_t uid);
 int setfsgid(gid_t gid);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

@@ -31,6 +31,8 @@ struct sched_param {
 	int sched_priority;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int sched_yield(void);
 
 int sched_get_priority_max(int policy);
@@ -39,6 +41,8 @@ int sched_get_priority_min(int policy);
 int sched_setscheduler(pid_t pid, int policy, const struct sched_param *param);
 
 int sched_getparam(pid_t pid, struct sched_param *param);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

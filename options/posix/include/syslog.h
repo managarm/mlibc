@@ -55,6 +55,8 @@ extern "C" {
 #define LOG_INFO 6
 #define LOG_DEBUG 7
 
+#ifndef __MLIBC_ABI_ONLY
+
 void closelog(void);
 void openlog(const char *, int, int);
 int setlogmask(int);
@@ -62,6 +64,8 @@ void syslog(int, const char *, ...);
 
 // This is a linux extension
 void vsyslog(int, const char *, va_list);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

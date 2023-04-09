@@ -14,6 +14,8 @@ extern "C" {
 
 #define P_tmpdir "/tmp"
 
+#ifndef __MLIBC_ABI_ONLY
+
 int fileno(FILE *file);
 FILE *fdopen(int fd, const char *mode);
 
@@ -30,6 +32,8 @@ int vdprintf(int fd, const char *format, __gnuc_va_list args);
 
 char *fgetln(FILE *, size_t *);
 
+#endif /* !__MLIBC_ABI_ONLY */
+
 #define RENAME_EXCHANGE (1 << 1)
 
 // GNU extensions
@@ -45,7 +49,11 @@ typedef struct _IO_cookie_io_functions_t {
 	cookie_close_function_t *close;
 } cookie_io_functions_t;
 
+#ifndef __MLIBC_ABI_ONLY
+
 FILE *fopencookie(void *__restrict cookie, const char *__restrict mode, cookie_io_functions_t io_funcs);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

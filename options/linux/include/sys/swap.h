@@ -10,8 +10,12 @@ extern "C" {
 #define SWAP_FLAG_PRIO_SHIFT 0
 #define SWAP_FLAG_DISCARD 0x10000
 
+#ifndef __MLIBC_ABI_ONLY
+
 int swapon(const char *, int);
 int swapoff(const char *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

@@ -64,6 +64,8 @@ struct lastlog {
 #define ut_xtime ut_tv.tv_sec
 #define ut_addr ut_addr_v6[0]
 
+#ifndef __MLIBC_ABI_ONLY
+
 void setutent(void);
 struct utmp *getutent(void);
 int getutent_r(struct utmp *, struct utmp **);
@@ -72,6 +74,8 @@ struct utmp *pututline(const struct utmp *);
 struct utmp *getutline(const struct utmp *);
 struct utmp *getutid(const struct utmp *);
 int utmpname(const char *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

@@ -28,12 +28,16 @@ struct utmpx {
 	char __unused[20];
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 void updwtmpx(const char *, const struct utmpx *);
 int utmpxname(const char *);
 struct utmpx *pututxline(const struct utmpx *);
 struct utmpx *getutxent(void);
 void setutxent(void);
 void endutxent(void);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #define EMPTY           0
 #define RUN_LVL         1

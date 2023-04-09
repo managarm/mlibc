@@ -8,6 +8,8 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 int chmod(const char *, mode_t);
 int fchmod(int, mode_t);
 int fchmodat(int, const char *, mode_t, int);
@@ -24,6 +26,8 @@ int mknodat(int, const char *, mode_t, dev_t);
 int stat(const char *__restrict, struct stat *__restrict);
 mode_t umask(mode_t);
 int utimensat(int, const char *, const struct timespec times[2], int);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

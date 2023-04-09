@@ -16,8 +16,12 @@ typedef struct __jmp_buf {
 	struct __mlibc_jmpbuf_register_state reg_state;
 } jmp_buf[1];
 
+#ifndef __MLIBC_ABI_ONLY
+
 __attribute__ (( returns_twice )) int setjmp(jmp_buf buffer);
 __attribute__ (( noreturn )) void longjmp(jmp_buf buffer, int value);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 // POSIX Non-local jumps signal extensions
 
@@ -27,10 +31,14 @@ typedef struct {
 	sigset_t sigset;
 } sigjmp_buf[1];
 
+#ifndef __MLIBC_ABI_ONLY
+
 #if __MLIBC_POSIX_OPTION
 __attribute__ (( returns_twice )) int sigsetjmp(sigjmp_buf buffer, int savesigs);
 __attribute__ (( noreturn )) void siglongjmp(sigjmp_buf buffer, int value);
 #endif // __MLIBC_POSIX_OPTION
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

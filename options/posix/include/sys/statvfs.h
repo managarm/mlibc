@@ -7,8 +7,12 @@ extern "C" {
 
 #include <abi-bits/statvfs.h>
 
+#ifndef __MLIBC_ABI_ONLY
+
 int statvfs(const char *__restrict, struct statvfs *__restrict);
 int fstatvfs(int, struct statvfs *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

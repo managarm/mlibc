@@ -13,12 +13,16 @@ extern "C" {
 
 #define UIO_MAXIOV IOV_MAX
 
+#ifndef __MLIBC_ABI_ONLY
+
 ssize_t readv(int fd, const struct iovec *iov, int iovcnt);
 ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 
 // Non standard extensions, also found on modern BSD's
 ssize_t preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset);
 ssize_t pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

@@ -157,6 +157,8 @@ struct __mlibc_rwlockattr {
 };
 typedef struct __mlibc_rwlockattr pthread_rwlockattr_t;
 
+#ifndef __MLIBC_ABI_ONLY
+
 // ----------------------------------------------------------------------------
 // pthread_attr and pthread functions.
 // ----------------------------------------------------------------------------
@@ -347,6 +349,8 @@ int pthread_rwlock_rdlock(pthread_rwlock_t *);
 int pthread_rwlock_unlock(pthread_rwlock_t *);
 
 int pthread_getcpuclockid(pthread_t, clockid_t *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

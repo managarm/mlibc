@@ -25,6 +25,8 @@ struct flock {
 	pid_t l_pid;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int creat(const char *, mode_t);
 int fallocate(int fd, int mode, off_t offset, off_t len);
 int fcntl(int fd, int command, ...);
@@ -32,6 +34,8 @@ int open(const char *path, int flags, ...);
 int openat(int, const char *, int, ...);
 int posix_fadvise(int, off_t, off_t, int);
 int posix_fallocate(int, off_t, off_t);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 // This is a linux extension
 
@@ -41,11 +45,15 @@ struct file_handle {
         unsigned char f_handle[0];
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int name_to_handle_at(int, const char *, struct file_handle *, int *, int);
 int open_by_handle_at(int, struct file_handle *, int);
 
 ssize_t splice(int fd_in, off_t *off_in, int fd_out, off_t *off_out, size_t len, unsigned int flags);
 ssize_t vmsplice(int fd, const struct iovec *iov, size_t nr_segs, unsigned int flags);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #define SPLICE_F_MOVE 1
 #define SPLICE_F_NONBLOCK 2

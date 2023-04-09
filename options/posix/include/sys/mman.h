@@ -11,6 +11,8 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 void *mmap(void *, size_t, int, int, int, off_t);
 int mprotect(void *, size_t, int);
 int munmap(void *, size_t);
@@ -35,6 +37,8 @@ int memfd_create(const char *, unsigned int);
 int madvise(void *, size_t, int);
 int mincore(void *, size_t, unsigned char *);
 #endif /* __MLIBC_LINUX_OPTION */
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

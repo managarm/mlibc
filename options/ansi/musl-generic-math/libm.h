@@ -155,6 +155,8 @@ do {                                              \
 #define CMPLXF(x, y) __CMPLX(x, y, float)
 #define CMPLXL(x, y) __CMPLX(x, y, long double)
 
+#ifndef __MLIBC_ABI_ONLY
+
 /* fdlibm kernel functions */
 
 int    __rem_pio2_large(double*,double*,int,int,int);
@@ -181,5 +183,7 @@ long double __tanl(long double, long double, int);
 /* polynomial evaluation */
 long double __polevll(long double, const long double *, int);
 long double __p1evll(long double, const long double *, int);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #endif

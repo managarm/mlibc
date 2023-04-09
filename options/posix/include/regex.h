@@ -50,10 +50,14 @@ typedef struct {
 // Obsolete in POSIX.
 #define REG_ENOSYS -1
 
+#ifndef __MLIBC_ABI_ONLY
+
 int regcomp(regex_t *__restrict, const char *__restrict, int);
 int regexec(const regex_t *__restrict, const char *__restrict, size_t, regmatch_t *__restrict, int);
 size_t regerror(int, const regex_t *__restrict, char *__restrict, size_t);
 void regfree(regex_t *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

@@ -48,6 +48,8 @@ struct tm {
 	const char *tm_zone;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 // [7.27.2] Time manipulation functions
 
 clock_t clock(void);
@@ -68,6 +70,8 @@ size_t strftime(char *__restrict dest, size_t max_size,
 
 void tzset(void);
 
+#endif /* !__MLIBC_ABI_ONLY */
+
 #ifdef __cplusplus
 }
 #endif
@@ -86,6 +90,8 @@ void tzset(void);
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifndef __MLIBC_ABI_ONLY
 
 extern int daylight;
 extern long timezone;
@@ -107,6 +113,8 @@ char *strptime(const char *__restrict, const char *__restrict,
 		struct tm *__restrict);
 #endif /* __MLIBC_POSIX_OPTION */
 
+#endif /* !__MLIBC_ABI_ONLY */
+
 #ifdef __cplusplus
 }
 #endif
@@ -117,8 +125,12 @@ char *strptime(const char *__restrict, const char *__restrict,
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 time_t timelocal(struct tm *);
 time_t timegm(struct tm *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

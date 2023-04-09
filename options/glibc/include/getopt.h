@@ -15,6 +15,8 @@ struct option {
 	int val;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 extern char **environ;
 extern char *optarg;
 extern int optind;
@@ -27,6 +29,8 @@ extern int optreset;
 int getopt(int, char *const [], const char *);
 int getopt_long(int, char *const[], const char *, const struct option *, int *);
 int getopt_long_only(int, char *const[], const char *, const struct option *, int *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #define no_argument 0
 #define required_argument 1

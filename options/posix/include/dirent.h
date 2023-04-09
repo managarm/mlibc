@@ -50,6 +50,8 @@ struct __mlibc_dir_struct {
 
 typedef struct __mlibc_dir_struct DIR;
 
+#ifndef __MLIBC_ABI_ONLY
+
 int alphasort(const struct dirent **, const struct dirent **);
 int closedir(DIR *);
 int dirfd(DIR *);
@@ -63,6 +65,8 @@ int scandir(const char *, struct dirent ***, int (*)(const struct dirent *),
 void seekdir(DIR *, long);
 long telldir(DIR *);
 int versionsort(const struct dirent **, const struct dirent **);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

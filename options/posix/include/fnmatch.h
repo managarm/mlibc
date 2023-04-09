@@ -18,7 +18,11 @@ extern "C" {
 // fnmatch() return values.
 #define FNM_NOMATCH 1
 
+#ifndef __MLIBC_ABI_ONLY
+
 int fnmatch(const char *, const char *, int);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

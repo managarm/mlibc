@@ -6,11 +6,15 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 void __ensure_fail(const char *assertion, const char *file, unsigned int line,
 		const char *function);
 
 void __ensure_warn(const char *assertion, const char *file, unsigned int line,
 		const char *function);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #define __ensure(assertion) do { if(!(assertion)) \
 		__ensure_fail(#assertion, __FILE__, __LINE__, __func__); } while(0)

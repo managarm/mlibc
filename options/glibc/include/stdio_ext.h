@@ -12,6 +12,8 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 size_t __fbufsize(FILE *);
 size_t __fpending(FILE *);
 int __flbf(FILE *);
@@ -29,6 +31,8 @@ void _flushlbf(void);
 size_t __freadahead(FILE *);
 const char *__freadptr(FILE *, size_t *);
 void __fseterr(FILE *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

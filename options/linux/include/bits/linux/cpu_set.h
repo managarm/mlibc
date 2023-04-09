@@ -10,6 +10,8 @@ extern "C" {
 #include <limits.h>
 #include <stdlib.h>
 
+#ifndef __MLIBC_ABI_ONLY
+
 cpu_set_t *__mlibc_cpu_alloc(int num_cpus);
 size_t __mlibc_cpu_alloc_size(int num_cpus);
 
@@ -37,6 +39,8 @@ int __mlibc_cpu_count(const size_t setsize, const cpu_set_t *set);
 
 #define CPU_COUNT_S(setsize, set) __mlibc_cpu_count((setsize), (set))
 #define CPU_COUNT(set) CPU_COUNT_S(sizeof(cpu_set_t), set)
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

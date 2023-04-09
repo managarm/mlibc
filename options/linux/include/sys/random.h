@@ -12,7 +12,11 @@ extern "C" {
 #include <bits/ssize_t.h>
 #include <bits/size_t.h>
 
+#ifndef __MLIBC_ABI_ONLY
+
 ssize_t getrandom(void *, size_t, unsigned int);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

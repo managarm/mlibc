@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+/* Even though this is not strictly not-ABI, it is mlibc-printf specific therefore */
+/* gate behind !__MLIBC_ABI_ONLY */
+#ifndef __MLIBC_ABI_ONLY
+
 // TODO: This is extremly unelegant and fragile.
 #define PRId8 "d"
 #define PRIi8 "i"
@@ -105,6 +109,8 @@
 #define SCNd32 "d"
 #define SCNd64 "ld"
 
+#endif /* !__MLIBC_ABI_ONLY */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -114,12 +120,16 @@ typedef struct {
 	intmax_t rem;
 } imaxdiv_t;
 
+#ifndef __MLIBC_ABI_ONLY
+
 intmax_t imaxabs(intmax_t);
 imaxdiv_t imaxdiv(intmax_t, intmax_t);
 intmax_t strtoimax(const char *__restrict, char **__restrict, int);
 uintmax_t strtoumax(const char *__restrict, char **__restrict, int);
 intmax_t wcstoimax(const __WCHAR_TYPE__ *__restrict, __WCHAR_TYPE__ **__restrict, int);
 uintmax_t wcstoumax(const __WCHAR_TYPE__ *__restrict, __WCHAR_TYPE__ **__restrict, int);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

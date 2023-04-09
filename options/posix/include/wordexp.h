@@ -29,8 +29,12 @@ typedef struct {
 	size_t we_nbytes;
 } wordexp_t;
 
+#ifndef __MLIBC_ABI_ONLY
+
 int wordexp(const char *s, wordexp_t *p, int flags);
 void wordfree(wordexp_t *p);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

@@ -15,6 +15,8 @@ typedef enum {
   leaf
 } VISIT;
 
+#ifndef __MLIBC_ABI_ONLY
+
 void *tsearch(const void *, void **, int(*compar)(const void *, const void *));
 void *tfind(const void *, void *const *, int (*compar)(const void *, const void *));
 void *tdelete(const void *, void **, int(*compar)(const void *, const void *));
@@ -25,6 +27,8 @@ void *lsearch(const void *key, void *base, size_t *nelp, size_t width,
 		int (*compar)(const void *, const void *));
 void *lfind(const void *key, const void *base, size_t *nelp,
 		size_t width, int (*compar)(const void *, const void *));
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

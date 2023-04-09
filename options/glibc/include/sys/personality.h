@@ -45,7 +45,11 @@ enum {
 	PER_MASK = 0x00ff,
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int personality(unsigned long persona);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

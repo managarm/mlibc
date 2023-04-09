@@ -203,6 +203,8 @@ extern "C" {
 typedef __mlibc_intptr intptr_t;
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 int access(const char *path, int mode);
 unsigned int alarm(unsigned int seconds);
 int chdir(const char *path);
@@ -299,8 +301,12 @@ extern int optind;
 extern int opterr;
 extern int optopt;
 
+#endif /* !__MLIBC_ABI_ONLY */
+
 // Non-POSIX functions supported by Linux.
 typedef __mlibc_uint64 useconds_t;
+
+#ifndef __MLIBC_ABI_ONLY
 
 int getpagesize(void);
 char *get_current_dir_name(void);
@@ -329,6 +335,8 @@ int getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid);
 char *crypt(const char *, const char *);
 void encrypt(char block[64], int flags);
 #endif
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

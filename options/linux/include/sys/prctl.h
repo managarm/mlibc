@@ -131,7 +131,11 @@ struct prctl_mm_map {
 	uint32_t exe_fd;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int prctl (int, ...);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

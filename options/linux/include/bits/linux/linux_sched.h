@@ -34,6 +34,8 @@ extern "C" {
 #define CLONE_NEWNET 0x40000000
 #define CLONE_IO 0x80000000
 
+#ifndef __MLIBC_ABI_ONLY
+
 int sched_getscheduler(pid_t pid);
 int sched_setaffinity(pid_t pid, size_t cpusetsize, const cpu_set_t *mask);
 int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask);
@@ -47,6 +49,8 @@ int sched_getcpu(void);
 #if defined(_GNU_SOURCE)
 int setns(int fd, int nstype);
 #endif /* _GNU_SOURCE */
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

@@ -9,6 +9,8 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 char *strdup(const char *string);
 char *strndup(const char *, size_t);
 size_t strnlen(const char *, size_t);
@@ -43,6 +45,8 @@ void *memrchr(const void *, int, size_t);
 // BSD extensions
 size_t strlcpy(char *d, const char *s, size_t n);
 size_t strlcat(char *d, const char *s, size_t n);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

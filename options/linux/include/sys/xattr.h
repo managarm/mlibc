@@ -8,6 +8,8 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 int setxattr(const char *path, const char *name, const void *val, size_t size,
 	int flags);
 int lsetxattr(const char *path, const char *name, const void *val, size_t size,
@@ -26,6 +28,8 @@ ssize_t flistxattr(int fd, char *list, size_t size);
 int removexattr(const char *path, const char *name);
 int lremovexattr(const char *path, const char *name);
 int fremovexattr(int fd, const char *name);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

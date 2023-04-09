@@ -35,7 +35,11 @@ struct signalfd_siginfo {
 	uint8_t   pad[128-12*4-4*8-2];
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int signalfd(int, const sigset_t *, int);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

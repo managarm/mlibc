@@ -8,8 +8,12 @@ extern "C" {
 #include <stddef.h>
 #include <stdarg.h>
 
+#ifndef __MLIBC_ABI_ONLY
+
 // This seems to be a glibc thing, so constants are from glibc
 size_t parse_printf_format(const char * __restrict, size_t, int * __restrict);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 enum {
 	PA_INT,

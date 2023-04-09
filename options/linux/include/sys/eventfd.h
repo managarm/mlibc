@@ -14,9 +14,13 @@ typedef uint64_t eventfd_t;
 #define EFD_CLOEXEC O_CLOEXEC
 #define EFD_NONBLOCK O_NONBLOCK
 
+#ifndef __MLIBC_ABI_ONLY
+
 int eventfd(unsigned int, int);
 int eventfd_read(int, eventfd_t *);
 int eventfd_write(int, eventfd_t);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
