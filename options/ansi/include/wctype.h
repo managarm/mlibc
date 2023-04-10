@@ -11,6 +11,8 @@ extern "C" {
 typedef unsigned long wctype_t;
 typedef unsigned long wctrans_t;
 
+#ifndef __MLIBC_ABI_ONLY
+
 // [C11/7.30.2.2] Extensible wide character classification functions.
 
 int iswalnum(wint_t);
@@ -36,6 +38,8 @@ wint_t towupper(wint_t);
 
 wctrans_t wctrans(const char *);
 wint_t towctrans(wint_t, wctrans_t);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

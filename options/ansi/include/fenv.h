@@ -18,6 +18,8 @@ typedef struct {
 
 typedef __mlibc_uint16 fexcept_t;
 
+#ifndef __MLIBC_ABI_ONLY
+
 int feclearexcept(int);
 int fegetenv(fenv_t *);
 int fegetexceptflag(fexcept_t *, int);
@@ -29,6 +31,8 @@ int fesetexceptflag(const fexcept_t *, int);
 int fesetround(int);
 int fetestexcept(int);
 int feupdateenv(const fenv_t *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

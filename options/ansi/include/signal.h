@@ -19,6 +19,8 @@ typedef int sig_atomic_t;
 #define CLD_STOPPED 5
 #define CLD_CONTINUED 6
 
+#ifndef __MLIBC_ABI_ONLY
+
 // [7.14.1] signal() function
 
 __sighandler signal(int sig, __sighandler handler);
@@ -26,6 +28,8 @@ __sighandler signal(int sig, __sighandler handler);
 // [7.14.2] raise() function
 
 int raise(int sig);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #define _NSIG NSIG
 

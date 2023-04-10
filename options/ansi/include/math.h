@@ -53,6 +53,8 @@ typedef float float_t;
 #define FP_SUBNORMAL 8
 #define FP_ZERO 16
 
+#ifndef __MLIBC_ABI_ONLY
+
 int __fpclassify(double x);
 int __fpclassifyf(float x);
 int __fpclassifyl(long double x);
@@ -365,6 +367,8 @@ long double fmal(long double, long double, long double);
 
 extern int signgam;
 #define __signgam signgam
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
