@@ -17,9 +17,6 @@
 #include <float.h>
 #include <math.h>
 
-#define INT_MAX __INT_MAX__
-#define INT_MIN (-INT_MAX - 1)
-
 #if LDBL_MANT_DIG == 53 && LDBL_MAX_EXP == 1024
 #elif LDBL_MANT_DIG == 64 && LDBL_MAX_EXP == 16384 && __BYTE_ORDER == __LITTLE_ENDIAN
 union ldshape {
