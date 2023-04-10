@@ -141,6 +141,12 @@ elif host_machine.system() == 'ironclad'
 	rtdl_include_dirs += include_directories('sysdeps/ironclad/include')
 	libc_include_dirs += include_directories('sysdeps/ironclad/include')
 	subdir('sysdeps/ironclad')
+elif host_machine.system() == 'keyronex'
+	rtdl_include_dirs += include_directories('sysdeps/keyronex/include')
+	libc_include_dirs += include_directories('sysdeps/keyronex/include')
+	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
+	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
+	subdir('sysdeps/keyronex')
 elif host_machine.system() == 'lyre'
 	rtdl_include_dirs += include_directories('sysdeps/lyre/include')
 	libc_include_dirs += include_directories('sysdeps/lyre/include')
