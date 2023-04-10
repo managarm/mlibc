@@ -184,7 +184,7 @@ int dprintf(int fd, const char *format, ...) {
 	return result;
 }
 
-int vdprintf(int fd, const char *format, __gnuc_va_list args) {
+int vdprintf(int fd, const char *format, __builtin_va_list args) {
 	mlibc::fd_file file{fd};
 	int ret = vfprintf(&file, format, args);
 	file.flush();

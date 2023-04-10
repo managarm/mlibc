@@ -14,11 +14,6 @@
 extern "C" {
 #endif
 
-// This mechanism provides __gnu_va_list which is equivalent to va_list
-// We have to do this because stdio.h is not supposed to define va_list
-#define __need___va_list
-#include <stdarg.h>
-
 // [C11-7.21.1] I/O related types
 
 #define __MLIBC_EOF_BIT 1
@@ -128,30 +123,30 @@ __attribute__((format(gnu_scanf, 2, 3)))
 int sscanf(const char *__restrict buffer, const char *__restrict format, ...);
 
 __attribute__((format(gnu_printf, 2, 0)))
-int vfprintf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args);
+int vfprintf(FILE *__restrict stream, const char *__restrict format, __builtin_va_list args);
 
 __attribute__((format(gnu_scanf, 2, 0)))
-int vfscanf(FILE *__restrict stream, const char *__restrict format, __gnuc_va_list args);
+int vfscanf(FILE *__restrict stream, const char *__restrict format, __builtin_va_list args);
 
 __attribute__((format(gnu_printf, 1, 0)))
-int vprintf(const char *__restrict format, __gnuc_va_list args);
+int vprintf(const char *__restrict format, __builtin_va_list args);
 
 __attribute__((format(gnu_scanf, 1, 0)))
-int vscanf(const char *__restrict format, __gnuc_va_list args);
+int vscanf(const char *__restrict format, __builtin_va_list args);
 
 __attribute__((format(gnu_printf, 3, 0)))
 int vsnprintf(char *__restrict buffer, size_t max_size,
-		const char *__restrict format, __gnuc_va_list args);
+		const char *__restrict format, __builtin_va_list args);
 
 __attribute__((format(gnu_printf, 2, 0)))
-int vsprintf(char *__restrict buffer, const char *__restrict format, __gnuc_va_list args);
+int vsprintf(char *__restrict buffer, const char *__restrict format, __builtin_va_list args);
 
 __attribute__((format(gnu_scanf, 2, 0)))
-int vsscanf(const char *__restrict buffer, const char *__restrict format, __gnuc_va_list args);
+int vsscanf(const char *__restrict buffer, const char *__restrict format, __builtin_va_list args);
 
 // this is a gnu extension
 __attribute__((format(gnu_printf, 2, 0)))
-int vasprintf(char **, const char *, __gnuc_va_list);
+int vasprintf(char **, const char *, __builtin_va_list);
 
 // [C11-7.21.7] Character input/output functions
 

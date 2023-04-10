@@ -28,7 +28,7 @@ int fseeko(FILE *stream, off_t offset, int whence);
 off_t ftello(FILE *stream);
 
 int dprintf(int fd, const char *format, ...);
-int vdprintf(int fd, const char *format, __gnuc_va_list args);
+int vdprintf(int fd, const char *format, __builtin_va_list args);
 
 char *fgetln(FILE *, size_t *);
 
