@@ -2,9 +2,25 @@
 #include <mlibc/thread-entry.hpp>
 #include <mlibc/debug.hpp>
 #include <abi-bits/in.h>
+#include <abi-bits/errno.h>
 
 #include <aero/syscall.h>
 #include <stdint.h>
+
+namespace {
+
+int fcntl_helper(int fd, int request, int *result, ...) {
+	va_list args;
+	va_start(args, result);
+	if(!mlibc::sys_fcntl) {
+		return ENOSYS;
+	}
+	int ret = mlibc::sys_fcntl(fd, request, args, result);
+	va_end(args);
+	return ret;
+}
+
+}
 
 namespace mlibc {
 int sys_socket(int family, int type, int protocol, int *fd) {
@@ -50,7 +66,7 @@ int sys_listen(int fd, int backlog) {
 }
 
 int sys_accept(int sockfd, int *newfd, struct sockaddr *addr_ptr,
-               socklen_t *addr_length) {
+               socklen_t *addr_length, int flags) {
     auto result = syscall(SYS_ACCEPT, sockfd, addr_ptr, addr_length);
 
     if (result < 0) {
@@ -58,6 +74,19 @@ int sys_accept(int sockfd, int *newfd, struct sockaddr *addr_ptr,
     }
 
     *newfd = result;
+
+	if(flags & SOCK_NONBLOCK) {
+		int fcntl_ret = 0;
+		fcntl_helper(*newfd, F_GETFL, &fcntl_ret);
+		fcntl_helper(*newfd, F_SETFL, &fcntl_ret, fcntl_ret | O_NONBLOCK);
+	}
+
+	if(flags & SOCK_CLOEXEC) {
+		int fcntl_ret = 0;
+		fcntl_helper(*newfd, F_GETFD, &fcntl_ret);
+		fcntl_helper(*newfd, F_SETFD, &fcntl_ret, fcntl_ret | FD_CLOEXEC);
+	}
+
     return 0;
 }
 

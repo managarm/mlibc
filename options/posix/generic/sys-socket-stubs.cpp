@@ -11,7 +11,7 @@
 int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length) {
 	int newfd;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_accept, -1);
-	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length); e) {
+	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length, 0); e) {
 		errno = e;
 		return -1;
 	}
@@ -21,17 +21,9 @@ int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict a
 int accept4(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length, int flags) {
 	int newfd;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_accept, -1);
-	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length); e) {
+	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length, flags); e) {
 		errno = e;
 		return -1;
-	}
-
-	if(flags & SOCK_NONBLOCK) {
-		fcntl(newfd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
-	}
-
-	if(flags & SOCK_CLOEXEC) {
-		fcntl(newfd, F_SETFD, flags | FD_CLOEXEC);
 	}
 
 	return newfd;
@@ -98,6 +90,15 @@ ssize_t recv(int sockfd, void *__restrict buf, size_t len, int flags) {
 
 ssize_t recvfrom(int sockfd, void *__restrict buf, size_t len, int flags,
 		struct sockaddr *__restrict src_addr, socklen_t *__restrict addrlen) {
+	if(mlibc::sys_recvfrom) {
+		ssize_t length;
+		if(int e = mlibc::sys_recvfrom(sockfd, buf, len, flags, src_addr, addrlen, &length); e) {
+			errno = e;
+			return -1;
+		}
+		return length;
+	}
+
 	struct iovec iov = {};
 	iov.iov_base = buf;
 	iov.iov_len = len;
@@ -140,6 +141,15 @@ ssize_t send(int fd, const void *buffer, size_t size, int flags) {
 
 ssize_t sendto(int fd, const void *buffer, size_t size, int flags,
 		const struct sockaddr *sock_addr, socklen_t addr_length) {
+	if(mlibc::sys_sendto) {
+		ssize_t length;
+		if(int e = mlibc::sys_sendto(fd, buffer, size, flags, sock_addr, addr_length, &length); e) {
+			errno = e;
+			return -1;
+		}
+		return length;
+	}
+
 	struct iovec iov = {};
 	iov.iov_base = const_cast<void *>(buffer);
 	iov.iov_len = size;

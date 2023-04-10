@@ -77,7 +77,9 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd);
 [[gnu::weak]] int sys_socket(int family, int type, int protocol, int *fd);
 [[gnu::weak]] int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length);
+[[gnu::weak]] ssize_t sys_sendto(int fd, const void *buffer, size_t size, int flags, const struct sockaddr *sock_addr, socklen_t addr_length, ssize_t *length);
 [[gnu::weak]] int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length);
+[[gnu::weak]] ssize_t sys_recvfrom(int fd, void *buffer, size_t size, int flags, struct sockaddr *sock_addr, socklen_t *addr_length, ssize_t *length);
 [[gnu::weak]] int sys_listen(int fd, int backlog);
 [[gnu::weak]] gid_t sys_getgid();
 [[gnu::weak]] gid_t sys_getegid();
@@ -169,7 +171,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 // as an infinite timeout, making sigtimedwait(..., nullptr) equivalent to sigwaitinfo(...)
 [[gnu::weak]] int sys_sigtimedwait(const sigset_t *__restrict set, siginfo_t *__restrict info, const struct timespec *__restrict timeout, int *out_signal);
 [[gnu::weak]] int sys_kill(int, int);
-[[gnu::weak]] int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length);
+[[gnu::weak]] int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length, int flags);
 [[gnu::weak]] int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);
 [[gnu::weak]] int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);
 [[gnu::weak]] int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,

@@ -7,6 +7,7 @@
 #include <mlibc-config.h>
 #include <bits/ensure.h>
 #include <abi-bits/fcntl.h>
+#include <abi-bits/socklen_t.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/thread-entry.hpp>
@@ -287,6 +288,24 @@ int sys_msg_send(int sockfd, const struct msghdr *msg, int flags, ssize_t *lengt
                 return e;
         *length = sc_int_result<ssize_t>(ret);
         return 0;
+}
+
+ssize_t sys_sendto(int fd, const void *buffer, size_t size, int flags, const struct sockaddr *sock_addr, socklen_t addr_length, ssize_t *length) {
+	auto ret = do_cp_syscall(SYS_sendto, fd, buffer, size, flags, sock_addr, addr_length);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	*length = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+ssize_t sys_recvfrom(int fd, void *buffer, size_t size, int flags, struct sockaddr *sock_addr, socklen_t *addr_length, ssize_t *length) {
+	auto ret = do_cp_syscall(SYS_recvfrom, fd, buffer, size, flags, sock_addr, addr_length);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	*length = sc_int_result<ssize_t>(ret);
+	return 0;
 }
 
 int sys_msg_recv(int sockfd, struct msghdr *msg, int flags, ssize_t *length) {
@@ -609,8 +628,8 @@ int sys_faccessat(int dirfd, const char *pathname, int mode, int flags) {
 	return 0;
 }
 
-int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length) {
-	auto ret = do_syscall(SYS_accept, fd, addr_ptr, addr_length, 0, 0, 0);
+int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length, int flags) {
+	auto ret = do_syscall(SYS_accept4, fd, addr_ptr, addr_length, flags);
 	if (int e = sc_error(ret); e)
 		return e;
 	*newfd = sc_int_result<int>(ret);
@@ -1243,6 +1262,90 @@ int sys_mincore(void *addr, size_t length, unsigned char *vec) {
 	auto ret = do_syscall(SYS_mincore, addr, length, vec);
 	if (int e = sc_error(ret); e)
 		return e;
+	return 0;
+}
+
+int sys_memfd_create(const char *name, int flags, int *fd) {
+	auto ret = do_syscall(SYS_memfd_create, name, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*fd = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_fallocate(int fd, off_t offset, size_t size) {
+	auto ret = do_syscall(SYS_fallocate, fd, 0, offset, size);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_flock(int fd, int options) {
+	auto ret = do_syscall(SYS_flock, fd, options);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_seteuid(uid_t euid) {
+	return sys_setresuid(-1, euid, -1);
+}
+
+int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) {
+	auto ret = do_syscall(SYS_mremap, pointer, size, new_size, MREMAP_MAYMOVE);
+	// TODO: musl fixes up EPERM errors from the kernel.
+	if(int e = sc_error(ret); e)
+		return e;
+	*window = sc_ptr_result<void>(ret);
+	return 0;
+}
+
+int sys_link(const char *old_path, const char *new_path) {
+#ifdef SYS_link
+	auto ret = do_syscall(SYS_link, old_path, new_path);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+#else
+	auto ret = do_syscall(SYS_linkat, AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+#endif
+}
+
+// Inspired by musl (src/stat/statvfs.c:28 fixup function)
+static void statfs_to_statvfs(struct statfs *from, struct statvfs *to) {
+	*to = {
+		.f_bsize = from->f_bsize,
+		.f_frsize = from->f_frsize ? from->f_frsize : from->f_bsize,
+		.f_blocks = from->f_blocks,
+		.f_bfree = from->f_bfree,
+		.f_bavail = from->f_bavail,
+		.f_files = from->f_files,
+		.f_ffree = from->f_ffree,
+		.f_favail = from->f_ffree,
+		.f_fsid = (unsigned long) from->f_fsid.__val[0],
+		.f_flag = from->f_flags,
+		.f_namemax = from->f_namelen,
+	};
+}
+
+int sys_statvfs(const char *path, struct statvfs *out) {
+	struct statfs buf;
+	if(auto ret = sys_statfs(path, &buf); ret != 0) {
+		return ret;
+	}
+	statfs_to_statvfs(&buf, out);
+	return 0;
+}
+
+int sys_fstatvfs(int fd, struct statvfs *out) {
+	struct statfs buf;
+	if(auto ret = sys_fstatfs(fd, &buf); ret != 0) {
+		return ret;
+	}
+	statfs_to_statvfs(&buf, out);
 	return 0;
 }
 

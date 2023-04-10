@@ -10,9 +10,24 @@
 #include <fs.frigg_bragi.hpp>
 #include <posix.frigg_bragi.hpp>
 
+namespace {
+
+int fcntl_helper(int fd, int request, int *result, ...) {
+	va_list args;
+	va_start(args, result);
+	if(!mlibc::sys_fcntl) {
+		return ENOSYS;
+	}
+	int ret = mlibc::sys_fcntl(fd, request, args, result);
+	va_end(args);
+	return ret;
+}
+
+}
+
 namespace mlibc {
 
-int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length) {
+int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length, int flags) {
 	SignalGuard sguard;
 
 	managarm::posix::AcceptRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -44,6 +59,18 @@ int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_le
 			errno = e;
 			return -1;
 		}
+	}
+
+	if(flags & SOCK_NONBLOCK) {
+		int fcntl_ret = 0;
+		fcntl_helper(*newfd, F_GETFL, &fcntl_ret);
+		fcntl_helper(*newfd, F_SETFL, &fcntl_ret, fcntl_ret | O_NONBLOCK);
+	}
+
+	if(flags & SOCK_CLOEXEC) {
+		int fcntl_ret = 0;
+		fcntl_helper(*newfd, F_GETFD, &fcntl_ret);
+		fcntl_helper(*newfd, F_SETFD, &fcntl_ret, fcntl_ret | FD_CLOEXEC);
 	}
 
 	return 0;
