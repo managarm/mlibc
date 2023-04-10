@@ -21,8 +21,11 @@
 # error "Unsupported configuration, please define either LONG_MAX or __LONG_MAX__"
 #endif
 
+#undef INT_MAX
 #undef LLONG_MAX
 #undef ULLONG_MAX
+#define INT_MIN (-INT_MAX - 1)
+#define INT_MAX __INT_MAX__
 #define LLONG_MIN (-__LONG_LONG_MAX__ - 1LL)
 #define LLONG_MAX __LONG_LONG_MAX__
 #define ULLONG_MAX (__LONG_LONG_MAX__ * 2ULL + 1ULL)
