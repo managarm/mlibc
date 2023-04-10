@@ -38,6 +38,7 @@
 #define EAI_SYSTEM 9
 #define EAI_OVERFLOW 10
 #define EAI_NODATA 11
+#define EAI_ADDRFAMILY 12
 
 #define HOST_NOT_FOUND 1
 #define TRY_AGAIN      2
