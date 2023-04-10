@@ -1,6 +1,7 @@
 #include <lemon/syscall.h>
 
 #include <asm/ioctls.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -142,7 +143,12 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 }
 
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result){
-	return syscall(SYS_IOCTL, fd, request, arg, result);
+	long ret = syscall(SYS_IOCTL, fd, request, arg, result);
+
+	if(ret < 0)
+		return -ret;
+
+	return 0;
 }
 
 #ifndef MLIBC_BUILDING_RTDL
@@ -306,12 +312,17 @@ int sys_dup2(int fd, int flags, int newfd){
 int sys_fcntl(int fd, int request, va_list args, int* result){
 	if(request == F_DUPFD){
 		return sys_dup(fd, 0, result);
+	} else if (request == F_DUPFD_CLOEXEC) {
+		return sys_dup(fd, O_CLOEXEC, result);
 	} else if(request == F_GETFD){
-		*result = 0; // Lemon does not support O_CLOEXEC
+		*result = 0;
 		return 0;
 	} else if(request == F_SETFD){
-		*result = 0; // Lemon does not support O_CLOEXEC
-		return 0;
+		if(va_arg(args, int) & FD_CLOEXEC) {
+			return sys_ioctl(fd, FIOCLEX, NULL, result);
+		} else {
+			return sys_ioctl(fd, FIONCLEX, NULL, result);
+		}
 	} else if(request == F_GETFL){
 		int ret = syscall(SYS_GET_FILE_STATUS_FLAGS, fd);
 		if(ret < 0){
