@@ -263,6 +263,27 @@ sys_getcwd(char *buffer, size_t size)
 #endif
 
 int
+sys_dup(int fd, int flags, int *newfd)
+{
+	uintptr_t ret = syscall2(kPXSysDup2, fd, flags, NULL);
+	if (int e = sc_error(ret); e) {
+		return e;
+	}
+	*newfd = ret;
+	return 0;
+}
+
+int
+sys_dup2(int fd, int flags, int newfd)
+{
+	uintptr_t ret = syscall3(kPXSysDup3, fd, newfd, flags, NULL);
+	if (int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
+}
+
+int
 sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd)
 {
 	uintptr_t r = syscall4(kPXSysOpenAt, dirfd, (uintptr_t)path,
@@ -344,6 +365,15 @@ sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length)
 	if (int e = sc_error(ret); e)
 		return e;
 	*length = (ssize_t)ret;
+	return 0;
+}
+
+int
+sys_pipe(int *fds, int flags)
+{
+	uintptr_t ret = syscall2(kPXSysPipe, (uintptr_t)fds, flags, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 
