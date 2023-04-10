@@ -1,11 +1,6 @@
 #ifndef _WCHAR_H
 #define _WCHAR_H
 
-// This mechanism provides __gnu_va_list which is equivalent to va_list
-// We have to do this because wchar.h is not supposed to define va_list
-#define __need___va_list
-#include <stdarg.h>
-
 #include <bits/null.h>
 #include <bits/size_t.h>
 #include <bits/wchar_t.h>
@@ -31,18 +26,18 @@ typedef struct __mlibc_mbstate mbstate_t;
 
 int fwprintf(FILE *__restrict, const wchar_t *__restrict, ...);
 int fwscanf(FILE *__restrict, const wchar_t *__restrict, ...);
-int vfwprintf(FILE *__restrict, const wchar_t *__restrict, __gnuc_va_list);
-int vfwscanf(FILE *__restrict, const wchar_t *__restrict, __gnuc_va_list);
+int vfwprintf(FILE *__restrict, const wchar_t *__restrict, __builtin_va_list);
+int vfwscanf(FILE *__restrict, const wchar_t *__restrict, __builtin_va_list);
 
 int swprintf(wchar_t *__restrict, size_t, const wchar_t *__restrict, ...);
 int swscanf(wchar_t *__restrict, size_t, const wchar_t *__restrict, ...);
-int vswprintf(wchar_t *__restrict, size_t, const wchar_t *__restrict, __gnuc_va_list);
-int vswscanf(wchar_t *__restrict, size_t, const wchar_t *__restrict, __gnuc_va_list);
+int vswprintf(wchar_t *__restrict, size_t, const wchar_t *__restrict, __builtin_va_list);
+int vswscanf(wchar_t *__restrict, size_t, const wchar_t *__restrict, __builtin_va_list);
 
 int wprintf(const wchar_t *__restrict, ...);
 int wscanf(const wchar_t *__restrict, ...);
-int vwprintf(const wchar_t *__restrict, __gnuc_va_list);
-int vwscanf(const wchar_t *__restrict, __gnuc_va_list);
+int vwprintf(const wchar_t *__restrict, __builtin_va_list);
+int vwscanf(const wchar_t *__restrict, __builtin_va_list);
 
 // [7.28.3] Wide character I/O functions
 
