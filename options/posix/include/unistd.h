@@ -12,6 +12,7 @@
 #include <abi-bits/uid_t.h>
 #include <abi-bits/gid_t.h>
 #include <abi-bits/pid_t.h>
+#include <abi-bits/seek-whence.h>
 
 #if __MLIBC_SYSDEP_HAS_BITS_SYSCALL_H && __MLIBC_LINUX_OPTION
 #include <bits/syscall.h>
