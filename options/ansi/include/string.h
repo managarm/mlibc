@@ -9,6 +9,8 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 // [7.24.2] Copying functions
 
 void *memcpy(void *__restrict dest, const void *__restrict src, size_t size);
@@ -84,6 +86,8 @@ static inline char *__mlibc_gnu_basename(char *path) {
 
 #define basename __mlibc_gnu_basename
 #endif
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

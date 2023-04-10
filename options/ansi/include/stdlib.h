@@ -33,6 +33,8 @@ typedef struct {
 // TODO: this should not be a compile-time constant
 #define MB_CUR_MAX 4
 
+#ifndef __MLIBC_ABI_ONLY
+
 // [7.22.1] Numeric conversion functions
 
 double atof(const char *string);
@@ -107,6 +109,8 @@ int wctomb(char *mb_chr, wchar_t wc);
 
 size_t mbstowcs(wchar_t *__restrict wc_string, const char *__restrict mb_string, size_t max_size);
 size_t wcstombs(char *mb_string, const wchar_t *__restrict wc_string, size_t max_size);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #if __MLIBC_GLIBC_OPTION
 typedef int (*comparison_fn_t) (const void *, const void *);

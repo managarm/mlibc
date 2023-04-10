@@ -79,6 +79,8 @@ typedef size_t fpos_t;
 
 #define TMP_MAX 1024
 
+#ifndef __MLIBC_ABI_ONLY
+
 extern FILE *stderr;
 extern FILE *stdin;
 extern FILE *stdout;
@@ -217,6 +219,8 @@ size_t fwrite_unlocked(const void *__restrict, size_t, size_t, FILE *__restrict)
 
 char *fgets_unlocked(char *, int, FILE *);
 int fputs_unlocked(const char *, FILE *);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
