@@ -35,6 +35,7 @@ public:
 	void dispose();
 
 	virtual int close() = 0;
+	virtual int reopen(const char *path, const char *mode) = 0;
 
 	int read(char *buffer, size_t max_size, size_t *actual_size);
 	int write(const char *buffer, size_t max_size, size_t *actual_size);
@@ -55,6 +56,7 @@ protected:
 	virtual int io_write(const char *buffer, size_t max_size, size_t *actual_size) = 0;
 	virtual int io_seek(off_t offset, int whence, off_t *new_offset) = 0;
 
+	int _reset();
 private:
 	int _init_type();
 	int _init_bufmode();
@@ -62,7 +64,6 @@ private:
 	int _write_back();
 	int _save_pos();
 
-	int _reset();
 	void _ensure_allocation();
 
 	stream_type _type;
@@ -82,6 +83,7 @@ struct fd_file : abstract_file {
 	int fd();
 
 	int close() override;
+	int reopen(const char *path, const char *mode) override;
 
 	static int parse_modestring(const char *mode);
 

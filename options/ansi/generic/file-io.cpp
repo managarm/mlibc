@@ -444,6 +444,31 @@ int fd_file::close() {
 	return 0;
 }
 
+int fd_file::reopen(const char *path, const char *mode) {
+	int mode_flags = parse_modestring(mode);
+
+	int fd;
+	if(int e = sys_open(path, mode_flags, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH, &fd); e) {
+		return e;
+	}
+
+	flush();
+	close();
+	getAllocator().deallocate(__buffer_ptr, __buffer_size + ungetBufferSize);
+
+	__buffer_ptr = nullptr;
+	__unget_ptr = nullptr;
+	__buffer_size = 4096;
+	_reset();
+	_fd = fd;
+
+	if(mode_flags & O_APPEND) {
+		seek(0, SEEK_END);
+	}
+
+	return 0;
+}
+
 int fd_file::determine_type(stream_type *type) {
 	off_t offset;
 	int e = mlibc::sys_seek(_fd, 0, SEEK_CUR, &offset);

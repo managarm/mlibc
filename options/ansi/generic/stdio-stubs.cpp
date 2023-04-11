@@ -253,9 +253,16 @@ char *tmpnam(char *) {
 
 // fflush() is provided by the POSIX sublibrary
 // fopen() is provided by the POSIX sublibrary
-FILE *freopen(const char *__restrict, const char *__restrict, FILE *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+FILE *freopen(const char *__restrict path, const char *__restrict mode, FILE *__restrict f) {
+	auto file = static_cast<mlibc::abstract_file *>(f);
+	frg::unique_lock lock(file->_lock);
+
+	if(file->reopen(path, mode) == -1) {
+		errno = EINVAL;
+		return nullptr;
+	}
+
+    return f;
 }
 
 void setbuf(FILE *__restrict stream, char *__restrict buffer) {

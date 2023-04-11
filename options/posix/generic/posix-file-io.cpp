@@ -15,6 +15,11 @@ int mem_file::close() {
 	return 0;
 }
 
+int mem_file::reopen(const char *, const char *) {
+	mlibc::panicLogger() << "mlibc: freopen() on a mem_file stream is unimplemented!" << frg::endlog;
+	return -1;
+}
+
 int mem_file::determine_type(stream_type *type) {
 	*type = stream_type::file_like;
 	return 0;
