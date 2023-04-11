@@ -12,6 +12,7 @@
 #include <abi-bits/uid_t.h>
 #include <abi-bits/gid_t.h>
 #include <abi-bits/pid_t.h>
+#include <abi-bits/seek-whence.h>
 
 #if __MLIBC_SYSDEP_HAS_BITS_SYSCALL_H && __MLIBC_LINUX_OPTION
 #include <bits/syscall.h>
@@ -214,7 +215,7 @@ ssize_t confstr(int, char *, size_t);
 char *ctermid(char *s);
 int dup(int fd);
 int dup2(int src_fd, int dest_fd);
-__attribute__ ((noreturn)) void _exit(int status);
+__attribute__ ((__noreturn__)) void _exit(int status);
 void endusershell(void);
 int execl(const char *, const char *, ...);
 int execle(const char *, const char *, ...);
