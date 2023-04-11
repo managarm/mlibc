@@ -67,13 +67,13 @@ int posix_memalign(void **, size_t, size_t);
 
 // [7.22.4] Communication with the environment
 
-__attribute__ (( noreturn )) void abort(void);
+__attribute__((__noreturn__)) void abort(void);
 int atexit(void (*func)(void));
 int at_quick_exit(void (*func)(void));
-__attribute__ (( noreturn )) void exit(int status);
-__attribute__ (( noreturn )) void _Exit(int status);
+__attribute__((__noreturn__)) void exit(int status);
+__attribute__((__noreturn__)) void _Exit(int status);
 char *getenv(const char *name);
-__attribute__ (( noreturn )) void quick_exit(int status);
+__attribute__((__noreturn__)) void quick_exit(int status);
 int system(const char *string);
 
 // GLIBC extension.

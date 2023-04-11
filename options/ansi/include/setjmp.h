@@ -18,8 +18,8 @@ typedef struct __jmp_buf {
 
 #ifndef __MLIBC_ABI_ONLY
 
-__attribute__ (( returns_twice )) int setjmp(jmp_buf buffer);
-__attribute__ (( noreturn )) void longjmp(jmp_buf buffer, int value);
+__attribute__((__returns_twice__)) int setjmp(jmp_buf buffer);
+__attribute__((__noreturn__)) void longjmp(jmp_buf buffer, int value);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
@@ -34,8 +34,8 @@ typedef struct {
 #ifndef __MLIBC_ABI_ONLY
 
 #if __MLIBC_POSIX_OPTION
-__attribute__ (( returns_twice )) int sigsetjmp(sigjmp_buf buffer, int savesigs);
-__attribute__ (( noreturn )) void siglongjmp(sigjmp_buf buffer, int value);
+__attribute__((__returns_twice__)) int sigsetjmp(sigjmp_buf buffer, int savesigs);
+__attribute__((__noreturn__)) void siglongjmp(sigjmp_buf buffer, int value);
 #endif // __MLIBC_POSIX_OPTION
 
 #endif /* !__MLIBC_ABI_ONLY */

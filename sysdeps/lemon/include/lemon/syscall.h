@@ -117,35 +117,35 @@
 extern "C"{
 #endif
 
-__attribute__((always_inline))
+__attribute__((__always_inline__))
 static inline long syscalln0(uint64_t call) {
     volatile long ret;
     asm volatile("int $0x69" : "=a"(ret) : "a"(call)); 
     return ret;
 }
 
-__attribute__((always_inline))
+__attribute__((__always_inline__))
 static long syscalln1(uint64_t call, uint64_t arg0) {
     volatile long ret;
     asm volatile("int $0x69" : "=a"(ret) : "a"(call), "D"(arg0) : "memory"); 
     return ret;
 }
 
-__attribute__((always_inline))
+__attribute__((__always_inline__))
 static long syscalln2(uint64_t call, uint64_t arg0, uint64_t arg1) {
     volatile long ret;
     asm volatile("int $0x69" : "=a"(ret) : "a"(call), "D"(arg0), "S"(arg1) : "memory"); 
     return ret;
 }
 
-__attribute__((always_inline))
+__attribute__((__always_inline__))
 static long syscalln3(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2) {
     volatile long ret;
     asm volatile("int $0x69" : "=a"(ret) : "a"(call), "D"(arg0), "S"(arg1), "d"(arg2) : "memory"); 
     return ret;
 }
 
-__attribute__((always_inline))
+__attribute__((__always_inline__))
 static long syscalln4(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
     volatile long ret;
 	register uint64_t arg3r asm("r10") = arg3; // put arg3 in r10
@@ -153,7 +153,7 @@ static long syscalln4(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2
     return ret;
 }
 
-__attribute__((always_inline))
+__attribute__((__always_inline__))
 static long syscalln5(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4) {
     volatile long ret;
 	register uint64_t arg3r asm("r10") = arg3; // put arg3 in r10
@@ -162,7 +162,7 @@ static long syscalln5(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2
     return ret;
 }
 
-__attribute__((always_inline))
+__attribute__((__always_inline__))
 static long syscalln6(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     volatile long ret;
 	register uint64_t arg3r asm("r10") = arg3; // put arg3 in r10
@@ -174,16 +174,16 @@ static long syscalln6(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2
 
 #ifdef __cplusplus
 }
-    __attribute__((always_inline)) static inline long _syscall(uint64_t call) { return syscalln0(call); }
-    __attribute__((always_inline)) static inline long _syscall(uint64_t call, uint64_t arg0) { return syscalln1(call, arg0); }
-    __attribute__((always_inline)) static inline long _syscall(uint64_t call, uint64_t arg0, uint64_t arg1) { return syscalln2(call, arg0, arg1); }
-    __attribute__((always_inline)) static inline long _syscall(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2) { return syscalln3(call, arg0, arg1, arg2); }
-    __attribute__((always_inline)) static inline long _syscall(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3) { return syscalln4(call, arg0, arg1, arg2, arg3); }
-    __attribute__((always_inline)) static inline long _syscall(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4)  { return syscalln5(call, arg0, arg1, arg2, arg3, arg4); }
-    __attribute__((always_inline)) static inline long _syscall(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5)  { return syscalln6(call, arg0, arg1, arg2, arg3, arg4, arg5); }
+    __attribute__((__always_inline__)) static inline long _syscall(uint64_t call) { return syscalln0(call); }
+    __attribute__((__always_inline__)) static inline long _syscall(uint64_t call, uint64_t arg0) { return syscalln1(call, arg0); }
+    __attribute__((__always_inline__)) static inline long _syscall(uint64_t call, uint64_t arg0, uint64_t arg1) { return syscalln2(call, arg0, arg1); }
+    __attribute__((__always_inline__)) static inline long _syscall(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2) { return syscalln3(call, arg0, arg1, arg2); }
+    __attribute__((__always_inline__)) static inline long _syscall(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3) { return syscalln4(call, arg0, arg1, arg2, arg3); }
+    __attribute__((__always_inline__)) static inline long _syscall(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4)  { return syscalln5(call, arg0, arg1, arg2, arg3, arg4); }
+    __attribute__((__always_inline__)) static inline long _syscall(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5)  { return syscalln6(call, arg0, arg1, arg2, arg3, arg4, arg5); }
 
     template<typename... T>
-    __attribute__((always_inline)) static inline long syscall(uint64_t call, T... args){
+    __attribute__((__always_inline__)) static inline long syscall(uint64_t call, T... args){
         return _syscall(call, (uint64_t)(args)...);
     }
 #else

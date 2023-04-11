@@ -207,7 +207,7 @@ struct aero_dir_entry {
     size_t reclen;
     size_t filetyp;
     char name[];
-} __attribute__((packed));
+} __attribute__((__packed__));
 
 int sys_read_entries(int handle, void *buffer, size_t max_size,
                      size_t *bytes_read) {

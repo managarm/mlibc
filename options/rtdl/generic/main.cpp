@@ -18,8 +18,8 @@
 #include <dlfcn.h>
 #endif
 
-#define HIDDEN  __attribute__ ((visibility ("hidden")))
-#define EXPORT  __attribute__ ((visibility ("default")))
+#define HIDDEN  __attribute__((__visibility__("hidden")))
+#define EXPORT  __attribute__((__visibility__("default")))
 
 static constexpr bool logEntryExit = false;
 static constexpr bool logStartup = false;

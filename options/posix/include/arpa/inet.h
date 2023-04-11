@@ -30,7 +30,7 @@ int inet_aton(const char *, struct in_addr *);
 // Generic IP address manipulation.
 // ----------------------------------------------------------------------------
 const char *inet_ntop(int, const void *__restrict, char *__restrict,
-		socklen_t) __attribute__((nonnull(3)));
+		socklen_t) __attribute__((__nonnull__(3)));
 int inet_pton(int, const char *__restrict, void *__restrict);
 
 struct in_addr inet_makeaddr(in_addr_t net, in_addr_t host);
