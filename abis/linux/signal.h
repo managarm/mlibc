@@ -301,7 +301,7 @@ struct __riscv_d_ext_state {
 };
 
 struct __riscv_q_ext_state {
-	uint64_t f[64] __attribute__((aligned(16)));
+	uint64_t f[64] __attribute__((__aligned__(16)));
 	uint32_t fcsr;
 	uint32_t reserved[3];
 };

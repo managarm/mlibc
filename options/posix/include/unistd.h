@@ -215,7 +215,7 @@ ssize_t confstr(int, char *, size_t);
 char *ctermid(char *s);
 int dup(int fd);
 int dup2(int src_fd, int dest_fd);
-__attribute__ ((__noreturn__)) void _exit(int status);
+__attribute__((__noreturn__)) void _exit(int status);
 void endusershell(void);
 int execl(const char *, const char *, ...);
 int execle(const char *, const char *, ...);

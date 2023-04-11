@@ -307,7 +307,7 @@ private:
 // Namespace scope functions
 // --------------------------------------------------------
 
-extern "C" void pltRelocateStub() __attribute__ (( visibility("hidden") ));
+extern "C" void pltRelocateStub() __attribute__((__visibility__("hidden")));
 
 // --------------------------------------------------------
 // RTDL interface
