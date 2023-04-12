@@ -1142,15 +1142,7 @@ int pthread_condattr_setpshared(pthread_condattr_t *attr, int pshared) {
 int pthread_cond_init(pthread_cond_t *__restrict cond, const pthread_condattr_t *__restrict attr) {
 	SCOPE_TRACE();
 
-	auto clock = attr ? attr->__mlibc_clock : CLOCK_REALTIME;
-	auto pshared = attr ? attr->__mlibc_pshared : PTHREAD_PROCESS_PRIVATE;
-
-	cond->__mlibc_clock = clock;
-	cond->__mlibc_flags = pshared;
-
-	__atomic_store_n(&cond->__mlibc_seq, 1, __ATOMIC_RELAXED);
-
-	return 0;
+	return mlibc::thread_cond_init(cond, attr);
 }
 
 int pthread_cond_destroy(pthread_cond_t *) {

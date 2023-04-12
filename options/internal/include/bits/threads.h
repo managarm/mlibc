@@ -1,6 +1,7 @@
 #ifndef _INTERNAL_THREADS_H
 #define _INTERNAL_THREADS_H
 
+#include <abi-bits/clockid_t.h>
 #include <bits/size_t.h>
 #include <bits/cpu_set.h>
 #include <bits/sigset_t.h>
@@ -8,6 +9,10 @@
 // values for pthread_attr_{get,set}detachstate().
 #define __MLIBC_THREAD_CREATE_JOINABLE 0
 #define __MLIBC_THREAD_CREATE_DETACHED 1
+
+// values for pthread_mutexattr_{get,set}pshared().
+#define __MLIBC_THREAD_PROCESS_PRIVATE 0
+#define __MLIBC_THREAD_PROCESS_SHARED 1
 
 struct sched_param {
 	int sched_priority;
@@ -28,6 +33,17 @@ struct __mlibc_threadattr {
 	size_t __mlibc_cpusetsize;
 	sigset_t __mlibc_sigmask;
 	int __mlibc_sigmaskset;
+};
+
+struct __mlibc_cond {
+	unsigned int __mlibc_seq;
+	unsigned int __mlibc_flags;
+	clockid_t __mlibc_clock;
+};
+
+struct __mlibc_condattr {
+	int __mlibc_pshared;
+	clockid_t __mlibc_clock;
 };
 
 #endif /* _INTERNAL_THREADS_H */

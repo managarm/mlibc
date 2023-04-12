@@ -19,3 +19,7 @@ int thrd_join(thrd_t thr, int *res) {
 
 	return thrd_success;
 }
+
+int cnd_init(cnd_t *cond) {
+	return mlibc::thread_cond_init(cond, 0) == 0 ? thrd_success : thrd_error;
+}

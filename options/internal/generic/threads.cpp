@@ -87,4 +87,16 @@ int thread_attr_init(struct __mlibc_threadattr *attr) {
 	return 0;
 }
 
+int thread_cond_init(struct __mlibc_cond *__restrict cond, const struct __mlibc_condattr *__restrict attr) {
+	auto clock = attr ? attr->__mlibc_clock : CLOCK_REALTIME;
+	auto pshared = attr ? attr->__mlibc_pshared : __MLIBC_THREAD_PROCESS_PRIVATE;
+
+	cond->__mlibc_clock = clock;
+	cond->__mlibc_flags = pshared;
+
+	__atomic_store_n(&cond->__mlibc_seq, 1, __ATOMIC_RELAXED);
+
+	return 0;
+}
+
 } // namespace mlibc

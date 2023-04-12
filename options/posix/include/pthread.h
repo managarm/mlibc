@@ -50,8 +50,8 @@ extern "C" {
 #define PTHREAD_MUTEX_ROBUST 1
 
 // values for pthread_mutexattr_{get,set}pshared().
-#define PTHREAD_PROCESS_PRIVATE 0
-#define PTHREAD_PROCESS_SHARED 1
+#define PTHREAD_PROCESS_PRIVATE __MLIBC_THREAD_PROCESS_PRIVATE
+#define PTHREAD_PROCESS_SHARED __MLIBC_THREAD_PROCESS_SHARED
 
 // Values for pthread_mutexattr_{get,set}protocol()
 #define PTHREAD_PRIO_NONE 0
@@ -104,17 +104,8 @@ struct __mlibc_mutex {
 };
 typedef struct __mlibc_mutex pthread_mutex_t;
 
-struct  __mlibc_condattr_struct {
-	int __mlibc_pshared;
-	clockid_t __mlibc_clock;
-};
-typedef struct __mlibc_condattr_struct pthread_condattr_t;
+typedef struct __mlibc_condattr pthread_condattr_t;
 
-struct  __mlibc_cond {
-	unsigned int __mlibc_seq;
-	unsigned int __mlibc_flags;
-	clockid_t __mlibc_clock;
-};
 typedef struct __mlibc_cond pthread_cond_t;
 
 struct  __mlibc_barrierattr_struct {
