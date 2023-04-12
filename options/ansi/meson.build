@@ -88,6 +88,7 @@ if not no_headers
 		'include/stdio.h',
 		'include/stdlib.h',
 		'include/string.h',
+		'include/threads.h',
 		'include/time.h',
 		'include/wchar.h',
 		'include/wctype.h',
