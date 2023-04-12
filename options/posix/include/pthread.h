@@ -7,6 +7,7 @@
 // TODO: pthread is not required to define size_t.
 #include <bits/size_t.h>
 #include <bits/posix/pthread_t.h>
+#include <bits/threads.h>
 
 #include <signal.h>
 #include <stdint.h>
@@ -19,9 +20,8 @@
 extern "C" {
 #endif
 
-// values for pthread_attr_{get,set}detachstate().
-#define PTHREAD_CREATE_JOINABLE 0
-#define PTHREAD_CREATE_DETACHED 1
+#define PTHREAD_CREATE_JOINABLE __MLIBC_THREAD_CREATE_JOINABLE
+#define PTHREAD_CREATE_DETACHED __MLIBC_THREAD_CREATE_DETACHED
 
 // Values for pthread_attr_{get,set}scope
 #define PTHREAD_SCOPE_SYSTEM 0
@@ -78,20 +78,6 @@ extern "C" {
 #define PTHREAD_ATTR_NO_SIGMASK_NP (-1)
 
 // TODO: move to own file and include in sys/types.h
-struct __mlibc_threadattr {
-	size_t __mlibc_guardsize;
-	size_t __mlibc_stacksize;
-	void *__mlibc_stackaddr;
-	int __mlibc_detachstate;
-	int __mlibc_scope;
-	int __mlibc_inheritsched;
-	struct sched_param __mlibc_schedparam;
-	int __mlibc_schedpolicy;
-	cpu_set_t *__mlibc_cpuset;
-	size_t __mlibc_cpusetsize;
-	sigset_t __mlibc_sigmask;
-	int __mlibc_sigmaskset;
-};
 typedef struct __mlibc_threadattr pthread_attr_t;
 
 typedef uintptr_t pthread_key_t;

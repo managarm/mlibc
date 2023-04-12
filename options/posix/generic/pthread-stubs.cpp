@@ -18,6 +18,7 @@
 #include <mlibc/thread.hpp>
 #include <mlibc/tcb.hpp>
 #include <mlibc/tid.hpp>
+#include <mlibc/threads.hpp>
 
 static bool enableTrace = false;
 
@@ -324,48 +325,7 @@ extern "C" Tcb *__rtdl_allocateTcb();
 // pthread functions.
 int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict attrp,
 		void *(*entry) (void *), void *__restrict user_arg) {
-	auto new_tcb = __rtdl_allocateTcb();
-	pid_t tid;
-	pthread_attr_t attr = {};
-	if (!attrp)
-		pthread_attr_init(&attr);
-	else
-		attr = *attrp;
-
-	if (attr.__mlibc_cpuset)
-		mlibc::infoLogger() << "pthread_create(): cpuset is ignored!" << frg::endlog;
-	if (attr.__mlibc_sigmaskset)
-		mlibc::infoLogger() << "pthread_create(): sigmask is ignored!" << frg::endlog;
-
-	// TODO: due to alignment guarantees, the stackaddr and stacksize might change
-	// when the stack is allocated. Currently this isn't propagated to the TCB,
-	// but it should be.
-	void *stack = attr.__mlibc_stackaddr;
-	if (!mlibc::sys_prepare_stack) {
-		MLIBC_MISSING_SYSDEP();
-		return ENOSYS;
-	}
-	int ret = mlibc::sys_prepare_stack(&stack, reinterpret_cast<void*>(entry),
-			user_arg, new_tcb, &attr.__mlibc_stacksize, &attr.__mlibc_guardsize);
-	if (ret)
-		return ret;
-
-	if (!mlibc::sys_clone) {
-		MLIBC_MISSING_SYSDEP();
-		return ENOSYS;
-	}
-	new_tcb->stackSize = attr.__mlibc_stacksize;
-	new_tcb->guardSize = attr.__mlibc_guardsize;
-	new_tcb->stackAddr = reinterpret_cast<void*>(
-			reinterpret_cast<uintptr_t>(stack)
-			- attr.__mlibc_stacksize - attr.__mlibc_guardsize);
-	mlibc::sys_clone(new_tcb, &tid, stack);
-	*thread = reinterpret_cast<pthread_t>(new_tcb);
-
-	__atomic_store_n(&new_tcb->tid, tid, __ATOMIC_RELAXED);
-	mlibc::sys_futex_wake(&new_tcb->tid);
-
-	return 0;
+	return mlibc::thread_create(thread, attrp, reinterpret_cast<void *>(entry), user_arg, false);
 }
 
 pthread_t pthread_self(void) {
@@ -425,7 +385,7 @@ int pthread_exit(void *ret_val) {
 		}
 	}
 
-	self->returnValue = ret_val;
+	self->returnValue.voidPtr = ret_val;
 	__atomic_store_n(&self->didExit, 1, __ATOMIC_RELEASE);
 	mlibc::sys_futex_wake(&self->didExit);
 
@@ -447,7 +407,7 @@ int pthread_join(pthread_t thread, void **ret) {
 	}
 
 	if (ret)
-		*ret = tcb->returnValue;
+		*ret = tcb->returnValue.voidPtr;
 
 	// FIXME: destroy tcb here, currently we leak it
 
@@ -597,7 +557,7 @@ namespace {
 			int current_value = old_value;
 			if (__atomic_compare_exchange_n(&tcb->cancelBits, &current_value,
 						new_value, true,__ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
-				tcb->returnValue = PTHREAD_CANCELED;
+				tcb->returnValue.voidPtr = PTHREAD_CANCELED;
 
 				// Perform cancellation
 				__mlibc_do_cancel();

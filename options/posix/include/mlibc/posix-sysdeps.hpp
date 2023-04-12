@@ -34,9 +34,6 @@ namespace [[gnu::visibility("hidden")]] mlibc {
 void sys_libc_log(const char *message);
 [[noreturn]] void sys_libc_panic();
 
-int sys_futex_wait(int *pointer, int expected, const struct timespec *time);
-int sys_futex_wake(int *pointer);
-
 [[noreturn]] void sys_exit(int status);
 [[noreturn, gnu::weak]] void sys_thread_exit();
 int sys_clock_get(int clock, time_t *secs, long *nanos);
@@ -99,8 +96,6 @@ int sys_close(int fd);
 [[gnu::weak]] void sys_yield();
 [[gnu::weak]] int sys_sleep(time_t *secs, long *nanos);
 [[gnu::weak]] int sys_fork(pid_t *child);
-[[gnu::weak]] int sys_clone(void *tcb, pid_t *pid_out, void *stack);
-[[gnu::weak]] int sys_prepare_stack(void **stack, void *entry, void *user_arg, void* tcb, size_t *stack_size, size_t *guard_size);
 [[gnu::weak]] int sys_execve(const char *path, char *const argv[], char *const envp[]);
 [[gnu::weak]] int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set,
 		fd_set *except_set, const struct timespec *timeout, const sigset_t *sigmask, int *num_events);
