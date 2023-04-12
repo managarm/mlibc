@@ -56,6 +56,26 @@ int thread_create(struct __mlibc_thread_data **__restrict thread, const struct _
 	return 0;
 }
 
+int thread_join(struct __mlibc_thread_data *thread, void *ret) {
+	auto tcb = reinterpret_cast<Tcb *>(thread);
+
+	if (!__atomic_load_n(&tcb->isJoinable, __ATOMIC_ACQUIRE))
+		return EINVAL;
+
+	while (!__atomic_load_n(&tcb->didExit, __ATOMIC_ACQUIRE)) {
+		mlibc::sys_futex_wait(&tcb->didExit, 0, nullptr);
+	}
+
+	if(ret && tcb->returnValueType == TcbThreadReturnValue::Pointer)
+		*reinterpret_cast<void **>(ret) = tcb->returnValue.voidPtr;
+	else if(ret && tcb->returnValueType == TcbThreadReturnValue::Integer)
+		*reinterpret_cast<int *>(ret) = tcb->returnValue.intVal;
+
+	// FIXME: destroy tcb here, currently we leak it
+
+	return 0;
+}
+
 static constexpr size_t default_stacksize = 0x200000;
 static constexpr size_t default_guardsize = 4096;
 

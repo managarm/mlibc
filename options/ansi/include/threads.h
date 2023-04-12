@@ -28,6 +28,7 @@ typedef struct __mlibc_cond cnd_t;
 typedef int (*thrd_start_t)(void*);
 
 int thrd_create(thrd_t *thr, thrd_start_t func, void *arg);
+int thrd_join(thrd_t thr, int *res);
 
 #ifdef __cplusplus
 }

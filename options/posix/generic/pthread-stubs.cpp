@@ -397,21 +397,7 @@ int pthread_exit(void *ret_val) {
 }
 
 int pthread_join(pthread_t thread, void **ret) {
-	auto tcb = reinterpret_cast<Tcb *>(thread);
-
-	if (!__atomic_load_n(&tcb->isJoinable, __ATOMIC_ACQUIRE))
-		return EINVAL;
-
-	while (!__atomic_load_n(&tcb->didExit, __ATOMIC_ACQUIRE)) {
-		mlibc::sys_futex_wait(&tcb->didExit, 0, nullptr);
-	}
-
-	if (ret)
-		*ret = tcb->returnValue.voidPtr;
-
-	// FIXME: destroy tcb here, currently we leak it
-
-	return 0;
+	return mlibc::thread_join(thread, ret);
 }
 
 int pthread_detach(pthread_t thread) {
