@@ -20,6 +20,20 @@ int thrd_join(thrd_t thr, int *res) {
 	return thrd_success;
 }
 
+int mtx_init(mtx_t *mtx, int type) {
+	struct __mlibc_mutexattr attr;
+	mlibc::thread_mutexattr_init(&attr);
+
+	if(type & mtx_recursive) {
+		mlibc::thread_mutexattr_settype(&attr, __MLIBC_THREAD_MUTEX_RECURSIVE);
+	}
+
+	int res = mlibc::thread_mutex_init(mtx, &attr) == 0 ? thrd_success : thrd_error;
+	mlibc::thread_mutexattr_destroy(&attr);
+
+	return res;
+}
+
 void mtx_destroy(mtx_t *mtx) {
 	mlibc::thread_mutex_destroy(mtx);
 }

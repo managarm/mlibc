@@ -929,30 +929,7 @@ int pthread_mutex_init(pthread_mutex_t *__restrict mutex,
 		const pthread_mutexattr_t *__restrict attr) {
 	SCOPE_TRACE();
 
-	auto type = attr ? attr->__mlibc_type : PTHREAD_MUTEX_DEFAULT;
-	auto robust = attr ? attr->__mlibc_robust : PTHREAD_MUTEX_STALLED;
-	auto protocol = attr ? attr->__mlibc_protocol : PTHREAD_PRIO_NONE;
-	auto pshared = attr ? attr->__mlibc_pshared : PTHREAD_PROCESS_PRIVATE;
-
-	mutex->__mlibc_state = 0;
-	mutex->__mlibc_recursion = 0;
-	mutex->__mlibc_flags = 0;
-	mutex->__mlibc_prioceiling = 0; // TODO: We don't implement this.
-
-	if(type == PTHREAD_MUTEX_RECURSIVE) {
-		mutex->__mlibc_flags |= mutexRecursive;
-	}else if(type == PTHREAD_MUTEX_ERRORCHECK) {
-		mutex->__mlibc_flags |= mutexErrorCheck;
-	}else{
-		__ensure(type == PTHREAD_MUTEX_NORMAL);
-	}
-
-	// TODO: Other values aren't supported yet.
-	__ensure(robust == PTHREAD_MUTEX_STALLED);
-	__ensure(protocol == PTHREAD_PRIO_NONE);
-	__ensure(pshared == PTHREAD_PROCESS_PRIVATE);
-
-	return 0;
+	return mlibc::thread_mutex_init(mutex, attr);
 }
 
 int pthread_mutex_destroy(pthread_mutex_t *mutex) {

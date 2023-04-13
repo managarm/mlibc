@@ -8,6 +8,7 @@ int thread_create(struct __mlibc_thread_data **__restrict thread, const struct _
 int thread_attr_init(struct __mlibc_threadattr *attr);
 int thread_join(struct __mlibc_thread_data *thread, void *res);
 
+int thread_mutex_init(struct __mlibc_mutex *__restrict mutex, const struct __mlibc_mutexattr *__restrict attr);
 int thread_mutex_destroy(struct __mlibc_mutex *mutex);
 
 int thread_mutexattr_init(struct __mlibc_mutexattr *attr);

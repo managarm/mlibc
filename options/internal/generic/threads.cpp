@@ -87,6 +87,44 @@ int thread_attr_init(struct __mlibc_threadattr *attr) {
 	return 0;
 }
 
+static constexpr unsigned int mutexRecursive = 1;
+static constexpr unsigned int mutexErrorCheck = 2;
+
+// TODO: either use uint32_t or determine the bit based on sizeof(int).
+static constexpr unsigned int mutex_owner_mask = (static_cast<uint32_t>(1) << 30) - 1;
+static constexpr unsigned int mutex_waiters_bit = static_cast<uint32_t>(1) << 31;
+
+// Only valid for the internal __mlibc_m mutex of wrlocks.
+static constexpr unsigned int mutex_excl_bit = static_cast<uint32_t>(1) << 30;
+
+int thread_mutex_init(struct __mlibc_mutex *__restrict mutex,
+		const struct __mlibc_mutexattr *__restrict attr) {
+	auto type = attr ? attr->__mlibc_type : __MLIBC_THREAD_MUTEX_DEFAULT;
+	auto robust = attr ? attr->__mlibc_robust : __MLIBC_THREAD_MUTEX_STALLED;
+	auto protocol = attr ? attr->__mlibc_protocol : __MLIBC_THREAD_PRIO_NONE;
+	auto pshared = attr ? attr->__mlibc_pshared : __MLIBC_THREAD_PROCESS_PRIVATE;
+
+	mutex->__mlibc_state = 0;
+	mutex->__mlibc_recursion = 0;
+	mutex->__mlibc_flags = 0;
+	mutex->__mlibc_prioceiling = 0; // TODO: We don't implement this.
+
+	if(type == __MLIBC_THREAD_MUTEX_RECURSIVE) {
+		mutex->__mlibc_flags |= mutexRecursive;
+	}else if(type == __MLIBC_THREAD_MUTEX_ERRORCHECK) {
+		mutex->__mlibc_flags |= mutexErrorCheck;
+	}else{
+		__ensure(type == __MLIBC_THREAD_MUTEX_NORMAL);
+	}
+
+	// TODO: Other values aren't supported yet.
+	__ensure(robust == __MLIBC_THREAD_MUTEX_STALLED);
+	__ensure(protocol == __MLIBC_THREAD_PRIO_NONE);
+	__ensure(pshared == __MLIBC_THREAD_PROCESS_PRIVATE);
+
+	return 0;
+}
+
 int thread_mutex_destroy(struct __mlibc_mutex *mutex) {
 	__ensure(!mutex->__mlibc_state);
 	return 0;
