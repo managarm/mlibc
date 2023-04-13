@@ -51,8 +51,11 @@ void *memset(void *dest, int c, size_t size);
 char *strerror(int errnum);
 size_t strlen(const char *s);
 
-// POSIX extensions.
+#if __MLIBC_POSIX_OPTION && (defined(_BSD_SOURCE) || defined(_GNU_SOURCE))
+#include <strings.h>
+#endif
 
+// POSIX extensions.
 int strerror_r(int, char *, size_t);
 void *mempcpy(void *, const void *, size_t);
 
