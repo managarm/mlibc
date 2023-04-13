@@ -99,4 +99,8 @@ int thread_cond_init(struct __mlibc_cond *__restrict cond, const struct __mlibc_
 	return 0;
 }
 
+int thread_cond_destroy(struct __mlibc_cond *) {
+	return 0;
+}
+
 } // namespace mlibc

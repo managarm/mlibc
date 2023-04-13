@@ -31,6 +31,7 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg);
 int thrd_join(thrd_t thr, int *res);
 
 int cnd_init(cnd_t *cond);
+void cnd_destroy(cnd_t *cond);
 
 #ifdef __cplusplus
 }

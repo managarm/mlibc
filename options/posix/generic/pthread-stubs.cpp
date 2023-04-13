@@ -1145,10 +1145,10 @@ int pthread_cond_init(pthread_cond_t *__restrict cond, const pthread_condattr_t 
 	return mlibc::thread_cond_init(cond, attr);
 }
 
-int pthread_cond_destroy(pthread_cond_t *) {
+int pthread_cond_destroy(pthread_cond_t *cond) {
 	SCOPE_TRACE();
 
-	return 0;
+	return mlibc::thread_cond_destroy(cond);
 }
 
 int pthread_cond_wait(pthread_cond_t *__restrict cond, pthread_mutex_t *__restrict mutex) {
