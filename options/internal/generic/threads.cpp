@@ -103,4 +103,12 @@ int thread_cond_destroy(struct __mlibc_cond *) {
 	return 0;
 }
 
+int thread_cond_broadcast(struct __mlibc_cond *cond) {
+	__atomic_fetch_add(&cond->__mlibc_seq, 1, __ATOMIC_RELEASE);
+	if(int e = mlibc::sys_futex_wake((int *)&cond->__mlibc_seq); e)
+		__ensure(!"sys_futex_wake() failed");
+
+	return 0;
+}
+
 } // namespace mlibc

@@ -27,3 +27,7 @@ int cnd_init(cnd_t *cond) {
 void cnd_destroy(cnd_t *cond) {
 	mlibc::thread_cond_destroy(cond);
 }
+
+int cnd_broadcast(cnd_t *cond) {
+	return mlibc::thread_cond_broadcast(cond) == 0 ? thrd_success : thrd_error;
+}

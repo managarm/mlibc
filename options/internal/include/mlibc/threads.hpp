@@ -9,5 +9,6 @@ int thread_attr_init(struct __mlibc_threadattr *attr);
 int thread_join(struct __mlibc_thread_data *thread, void *res);
 int thread_cond_init(struct __mlibc_cond *__restrict cond, const struct __mlibc_condattr *__restrict attr);
 int thread_cond_destroy(struct __mlibc_cond *cond);
+int thread_cond_broadcast(struct __mlibc_cond *cond);
 
 }

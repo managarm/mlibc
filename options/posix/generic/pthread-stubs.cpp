@@ -1243,10 +1243,7 @@ int pthread_cond_signal(pthread_cond_t *cond) {
 int pthread_cond_broadcast(pthread_cond_t *cond) {
 	SCOPE_TRACE();
 
-	__atomic_fetch_add(&cond->__mlibc_seq, 1, __ATOMIC_RELEASE);
-	if(int e = mlibc::sys_futex_wake((int *)&cond->__mlibc_seq); e)
-		__ensure(!"sys_futex_wake() failed");
-	return 0;
+	return mlibc::thread_cond_broadcast(cond);
 }
 
 // ----------------------------------------------------------------------------
