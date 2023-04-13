@@ -96,12 +96,6 @@ struct  __mlibc_mutexattr {
 };
 typedef struct __mlibc_mutexattr pthread_mutexattr_t;
 
-struct __mlibc_mutex {
-	unsigned int __mlibc_state;
-	unsigned int __mlibc_recursion;
-	unsigned int __mlibc_flags;
-	int __mlibc_prioceiling;
-};
 typedef struct __mlibc_mutex pthread_mutex_t;
 
 typedef struct __mlibc_condattr pthread_condattr_t;

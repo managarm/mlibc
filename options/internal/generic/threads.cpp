@@ -87,6 +87,11 @@ int thread_attr_init(struct __mlibc_threadattr *attr) {
 	return 0;
 }
 
+int thread_mutex_destroy(struct __mlibc_mutex *mutex) {
+	__ensure(!mutex->__mlibc_state);
+	return 0;
+}
+
 int thread_cond_init(struct __mlibc_cond *__restrict cond, const struct __mlibc_condattr *__restrict attr) {
 	auto clock = attr ? attr->__mlibc_clock : CLOCK_REALTIME;
 	auto pshared = attr ? attr->__mlibc_pshared : __MLIBC_THREAD_PROCESS_PRIVATE;

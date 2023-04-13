@@ -35,6 +35,13 @@ struct __mlibc_threadattr {
 	int __mlibc_sigmaskset;
 };
 
+struct __mlibc_mutex {
+	unsigned int __mlibc_state;
+	unsigned int __mlibc_recursion;
+	unsigned int __mlibc_flags;
+	int __mlibc_prioceiling;
+};
+
 struct __mlibc_cond {
 	unsigned int __mlibc_seq;
 	unsigned int __mlibc_flags;

@@ -30,6 +30,8 @@ typedef int (*thrd_start_t)(void*);
 int thrd_create(thrd_t *thr, thrd_start_t func, void *arg);
 int thrd_join(thrd_t thr, int *res);
 
+void mtx_destroy(mtx_t *mtx);
+
 int cnd_init(cnd_t *cond);
 void cnd_destroy(cnd_t *cond);
 int cnd_broadcast(cnd_t *cond);
