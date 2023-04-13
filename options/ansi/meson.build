@@ -86,6 +86,7 @@ if not no_headers
 		'include/math.h',
 		'include/setjmp.h',
 		'include/signal.h',
+		'include/stdc-predef.h',
 		'include/stdio.h',
 		'include/stdlib.h',
 		'include/string.h',
