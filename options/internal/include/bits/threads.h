@@ -10,9 +10,24 @@
 #define __MLIBC_THREAD_CREATE_JOINABLE 0
 #define __MLIBC_THREAD_CREATE_DETACHED 1
 
+// values for pthread_mutexattr_{get,set}type().
+#define __MLIBC_THREAD_MUTEX_DEFAULT 0
+#define __MLIBC_THREAD_MUTEX_NORMAL 0
+#define __MLIBC_THREAD_MUTEX_ERRORCHECK 1
+#define __MLIBC_THREAD_MUTEX_RECURSIVE 2
+
 // values for pthread_mutexattr_{get,set}pshared().
 #define __MLIBC_THREAD_PROCESS_PRIVATE 0
 #define __MLIBC_THREAD_PROCESS_SHARED 1
+
+// values for pthread_mutexattr_{get,set}robust().
+#define __MLIBC_THREAD_MUTEX_STALLED 0
+#define __MLIBC_THREAD_MUTEX_ROBUST 1
+
+// Values for pthread_mutexattr_{get,set}protocol()
+#define __MLIBC_THREAD_PRIO_NONE 0
+#define __MLIBC_THREAD_PRIO_INHERIT 1
+#define __MLIBC_THREAD_PRIO_PROTECT 2
 
 struct sched_param {
 	int sched_priority;
@@ -39,6 +54,14 @@ struct __mlibc_mutex {
 	unsigned int __mlibc_state;
 	unsigned int __mlibc_recursion;
 	unsigned int __mlibc_flags;
+	int __mlibc_prioceiling;
+};
+
+struct __mlibc_mutexattr {
+	int __mlibc_type;
+	int __mlibc_robust;
+	int __mlibc_protocol;
+	int __mlibc_pshared;
 	int __mlibc_prioceiling;
 };
 

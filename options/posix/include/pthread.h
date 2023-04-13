@@ -40,23 +40,23 @@ extern "C" {
 #define PTHREAD_CANCEL_DISABLE 1
 
 // values for pthread_mutexattr_{get,set}type().
-#define PTHREAD_MUTEX_DEFAULT 0
-#define PTHREAD_MUTEX_NORMAL 0
-#define PTHREAD_MUTEX_ERRORCHECK 1
-#define PTHREAD_MUTEX_RECURSIVE 2
+#define PTHREAD_MUTEX_DEFAULT __MLIBC_THREAD_MUTEX_DEFAULT
+#define PTHREAD_MUTEX_NORMAL __MLIBC_THREAD_MUTEX_NORMAL
+#define PTHREAD_MUTEX_ERRORCHECK __MLIBC_THREAD_MUTEX_ERRORCHECK
+#define PTHREAD_MUTEX_RECURSIVE __MLIBC_THREAD_MUTEX_RECURSIVE
 
 // values for pthread_mutexattr_{get,set}robust().
-#define PTHREAD_MUTEX_STALLED 0
-#define PTHREAD_MUTEX_ROBUST 1
+#define PTHREAD_MUTEX_STALLED __MLIBC_THREAD_MUTEX_STALLED
+#define PTHREAD_MUTEX_ROBUST __MLIBC_THREAD_MUTEX_ROBUST
 
 // values for pthread_mutexattr_{get,set}pshared().
 #define PTHREAD_PROCESS_PRIVATE __MLIBC_THREAD_PROCESS_PRIVATE
 #define PTHREAD_PROCESS_SHARED __MLIBC_THREAD_PROCESS_SHARED
 
 // Values for pthread_mutexattr_{get,set}protocol()
-#define PTHREAD_PRIO_NONE 0
-#define PTHREAD_PRIO_INHERIT 1
-#define PTHREAD_PRIO_PROTECT 2
+#define PTHREAD_PRIO_NONE __MLIBC_THREAD_PRIO_NONE
+#define PTHREAD_PRIO_INHERIT __MLIBC_THREAD_PRIO_INHERIT
+#define PTHREAD_PRIO_PROTECT __MLIBC_THREAD_PRIO_PROTECT
 
 #define PTHREAD_ONCE_INIT {0}
 #define PTHREAD_COND_INITIALIZER {0}
@@ -87,13 +87,6 @@ struct __mlibc_once {
 };
 typedef struct __mlibc_once pthread_once_t;
 
-struct  __mlibc_mutexattr {
-	int __mlibc_type;
-	int __mlibc_robust;
-	int __mlibc_protocol;
-	int __mlibc_pshared;
-	int __mlibc_prioceiling;
-};
 typedef struct __mlibc_mutexattr pthread_mutexattr_t;
 
 typedef struct __mlibc_mutex pthread_mutex_t;

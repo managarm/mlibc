@@ -855,32 +855,20 @@ int pthread_once(pthread_once_t *once, void (*function) (void)) {
 // pthread_mutexattr functions
 int pthread_mutexattr_init(pthread_mutexattr_t *attr) {
 	SCOPE_TRACE();
-	attr->__mlibc_type = PTHREAD_MUTEX_DEFAULT;
-	attr->__mlibc_robust = PTHREAD_MUTEX_STALLED;
-	attr->__mlibc_pshared = PTHREAD_PROCESS_PRIVATE;
-	attr->__mlibc_protocol = PTHREAD_PRIO_NONE;
-	return 0;
+	return mlibc::thread_mutexattr_init(attr);
 }
 
 int pthread_mutexattr_destroy(pthread_mutexattr_t *attr) {
 	SCOPE_TRACE();
-	memset(attr, 0, sizeof(*attr));
-	return 0;
+	return mlibc::thread_mutexattr_destroy(attr);
 }
 
-int pthread_mutexattr_gettype(const pthread_mutexattr_t *__restrict attr,
-		int *__restrict type) {
-	*type = attr->__mlibc_type;
-	return 0;
+int pthread_mutexattr_gettype(const pthread_mutexattr_t *__restrict attr, int *__restrict type) {
+	return mlibc::thread_mutexattr_gettype(attr, type);
 }
 
 int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type) {
-	if (type != PTHREAD_MUTEX_NORMAL && type != PTHREAD_MUTEX_ERRORCHECK
-			&& type != PTHREAD_MUTEX_RECURSIVE)
-		return EINVAL;
-
-	attr->__mlibc_type = type;
-	return 0;
+	return mlibc::thread_mutexattr_settype(attr, type);
 }
 
 int pthread_mutexattr_getrobust(const pthread_mutexattr_t *__restrict attr,

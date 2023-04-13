@@ -92,6 +92,33 @@ int thread_mutex_destroy(struct __mlibc_mutex *mutex) {
 	return 0;
 }
 
+int thread_mutexattr_init(struct __mlibc_mutexattr *attr) {
+	attr->__mlibc_type = __MLIBC_THREAD_MUTEX_DEFAULT;
+	attr->__mlibc_robust = __MLIBC_THREAD_MUTEX_STALLED;
+	attr->__mlibc_pshared = __MLIBC_THREAD_PROCESS_PRIVATE;
+	attr->__mlibc_protocol = __MLIBC_THREAD_PRIO_NONE;
+	return 0;
+}
+
+int thread_mutexattr_destroy(struct __mlibc_mutexattr *attr) {
+	memset(attr, 0, sizeof(*attr));
+	return 0;
+}
+
+int thread_mutexattr_gettype(const struct __mlibc_mutexattr *__restrict attr, int *__restrict type) {
+	*type = attr->__mlibc_type;
+	return 0;
+}
+
+int thread_mutexattr_settype(struct __mlibc_mutexattr *attr, int type) {
+	if (type != __MLIBC_THREAD_MUTEX_NORMAL && type != __MLIBC_THREAD_MUTEX_ERRORCHECK
+			&& type != __MLIBC_THREAD_MUTEX_RECURSIVE)
+		return EINVAL;
+
+	attr->__mlibc_type = type;
+	return 0;
+}
+
 int thread_cond_init(struct __mlibc_cond *__restrict cond, const struct __mlibc_condattr *__restrict attr) {
 	auto clock = attr ? attr->__mlibc_clock : CLOCK_REALTIME;
 	auto pshared = attr ? attr->__mlibc_pshared : __MLIBC_THREAD_PROCESS_PRIVATE;
