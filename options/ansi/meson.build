@@ -92,6 +92,7 @@ if not no_headers
 		'include/string.h',
 		'include/threads.h',
 		'include/time.h',
+		'include/uchar.h',
 		'include/wchar.h',
 		'include/wctype.h',
 	)
