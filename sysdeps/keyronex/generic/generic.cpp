@@ -1,4 +1,5 @@
 #include <asm/ioctls.h>
+
 #include <bits/ensure.h>
 #include <dirent.h>
 #include <errno.h>
@@ -265,7 +266,7 @@ sys_getcwd(char *buffer, size_t size)
 int
 sys_dup(int fd, int flags, int *newfd)
 {
-	uintptr_t ret = syscall2(kPXSysDup2, fd, flags, NULL);
+	uintptr_t ret = syscall2(kPXSysDup, fd, flags, NULL);
 	if (int e = sc_error(ret); e) {
 		return e;
 	}
@@ -462,19 +463,48 @@ sys_getgid()
 }
 
 int
+sys_getsid(pid_t pid, pid_t *sid)
+{
+	auto ret = syscall1(kPXSysGetSID, pid, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	*sid = (pid_t)(ret);
+	return 0;
+}
+
+int
 sys_setgid(gid_t gid)
 {
 	(void)gid;
 	return 0;
 }
 
-pid_t
-sys_getpgid(pid_t pid, pid_t *pgid)
+int
+sys_getpgid(pid_t pid, pid_t *out)
 {
-	(void)pid;
-	mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!\n"
-			    << frg::endlog;
-	*pgid = 0;
+	auto ret = syscall1(kPXSysGetPGID, pid, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out = (pid_t)(ret);
+	return 0;
+}
+
+int
+sys_setpgid(pid_t pid, pid_t pgid)
+{
+	auto ret = syscall2(kPXSysSetPGID, pid, pgid, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int
+sys_setsid(pid_t *sid)
+{
+	auto ret = syscall0(kPXSysSetSID, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	*sid = (pid_t)ret;
 	return 0;
 }
 

@@ -1,11 +1,11 @@
-#include <stdint.h>
-#include <stdlib.h>
 #include <bits/ensure.h>
-#include <mlibc/debug.hpp>
-#include <mlibc/elf/startup.h>
-#include <mlibc/all-sysdeps.hpp>
 #include <bits/posix/posix_signal.h>
 #include <keyronex/syscall.h>
+#include <mlibc/all-sysdeps.hpp>
+#include <mlibc/debug.hpp>
+#include <mlibc/elf/startup.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 // defined by the POSIX library
 void __mlibc_initLocale();
@@ -21,107 +21,86 @@ struct LibraryGuard {
 
 static LibraryGuard guard;
 
-LibraryGuard::LibraryGuard() {
+LibraryGuard::LibraryGuard()
+{
 	__mlibc_initLocale();
 
 	// Parse the exec() stack.
 	mlibc::parse_exec_stack(__dlapi_entrystack(), &__mlibc_stack_data);
-	mlibc::set_startup_data(__mlibc_stack_data.argc, __mlibc_stack_data.argv,
-			__mlibc_stack_data.envp);
+	mlibc::set_startup_data(__mlibc_stack_data.argc,
+	    __mlibc_stack_data.argv, __mlibc_stack_data.envp);
 }
-
-struct GPRState {
-	uint64_t ds;
-	uint64_t es;
-	uint64_t rax;
-	uint64_t rbx;
-	uint64_t rcx;
-	uint64_t rdx;
-	uint64_t rsi;
-	uint64_t rdi;
-	uint64_t rbp;
-	uint64_t r8;
-	uint64_t r9;
-	uint64_t r10;
-	uint64_t r11;
-	uint64_t r12;
-	uint64_t r13;
-	uint64_t r14;
-	uint64_t r15;
-	uint64_t err;
-	uint64_t rip;
-	uint64_t cs;
-	uint64_t rflags;
-	uint64_t rsp;
-	uint64_t ss;
-};
 
 namespace mlibc {
-	int sys_sigentry(void *sigentry) {
-#if 0
-		__syscall_ret ret = __syscall(27, sigentry);
-		if (ret.errno != 0)
-			return ret.errno;
-#endif
-		(void)sigentry;
-		return 0;
-	}
-
-	[[noreturn]] int sys_sigreturn(void *context, sigset_t old_mask) {
-#if 0
-		__syscall(30, context, old_mask);
-#endif
-		(void)context;
-		(void)old_mask;
-		__builtin_unreachable();
-	}
+int
+sys_sigentry(void *sigentry)
+{
+	uintptr_t ret = syscall1(kPXSysSigEntry, (uintptr_t)sigentry, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
-static void __mlibc_sigentry(int which, siginfo_t *siginfo,
-		void (*sa)(int, siginfo_t *, void *),
-		GPRState *ret_context, sigset_t prev_mask) {
+[[noreturn]] int
+sys_sigreturn(ucontext_t *context)
+{
+	syscall1(kPXSysSigReturn, (uintptr_t)context, NULL);
+	__builtin_unreachable();
+}
+}
 
-/*
+static void
+__mlibc_sigentry(int which, siginfo_t *siginfo, void *handler,
+    bool is_sigaction, ucontext_t *ret_context)
+{
+#if 0
 	size_t *base_ptr = (size_t *)ret_context->rbp;
 
 	mlibc::infoLogger() << "Stacktrace:" << frg::endlog;
-	mlibc::infoLogger() << "  [" << (void *)ret_context->rip << "]" << frg::endlog;
+	mlibc::infoLogger()
+	    << "  [" << (void *)ret_context->rip << "]" << frg::endlog;
 	for (;;) {
 		size_t old_bp = base_ptr[0];
 		size_t ret_addr = base_ptr[1];
 		if (!ret_addr)
 			break;
 		size_t off;
-		mlibc::infoLogger() << "  [" << (void *)ret_addr << "]" << frg::endlog;
+		mlibc::infoLogger()
+		    << "  [" << (void *)ret_addr << "]" << frg::endlog;
 		if (!old_bp)
 			break;
 		base_ptr = (size_t *)old_bp;
 	}
-*/
+#endif
 
-	switch ((uintptr_t)sa) {
-		// DFL
-		case (uintptr_t)(-2):
-			mlibc::infoLogger() << "mlibc: Unhandled signal " << which << frg::endlog;
-			mlibc::sys_exit(128 + which);
-		// IGN
-		case (uintptr_t)(-3):
-			break;
-		default:
-			sa(which, siginfo, NULL);
-			break;
+	if ((uintptr_t)handler == (uintptr_t)SIG_DFL) {
+		mlibc::infoLogger()
+		    << "mlibc: Unhandled signal " << which << frg::endlog;
+		mlibc::sys_exit(128 + which);
+	} else if ((uintptr_t)handler == (uintptr_t)SIG_IGN) {
+		/* epsilon */
+	} else {
+		if (is_sigaction)
+			((void (*)(int, siginfo_t *, void *))handler)(which,
+			    siginfo, ret_context);
+		else
+			((void (*)(int))handler)(which);
 	}
 
-	mlibc::sys_sigreturn(ret_context, prev_mask);
+	mlibc::sys_sigreturn(ret_context);
 
 	__builtin_unreachable();
 }
 
-extern "C" void __mlibc_entry(int (*main_fn)(int argc, char *argv[], char *env[])) {
-	//mlibc::sys_sigentry((void *)__mlibc_sigentry);
+extern "C" void
+__mlibc_entry(int (*main_fn)(int argc, char *argv[], char *env[]))
+{
+	/* communicate the signal handler entry point to the kernel */
+	mlibc::sys_sigentry((void *)__mlibc_sigentry);
 
-	// TODO: call __dlapi_enter, otherwise static builds will break (see Linux sysdeps)
-	auto result = main_fn(__mlibc_stack_data.argc, __mlibc_stack_data.argv, environ);
+	// TODO: call __dlapi_enter, otherwise static builds will break (see
+	// Linux sysdeps)
+	auto result = main_fn(__mlibc_stack_data.argc, __mlibc_stack_data.argv,
+	    environ);
 	exit(result);
 }
-

@@ -33,12 +33,27 @@ enum posix_syscall {
 	kPXSysWaitPID,
 	kPXSysGetPID,
 	kPXSysGetPPID,
+	kPXSysGetPGID,
+	kPXSysSetPGID,
+	kPXSysGetSID,
+	kPXSysSetSID,
+
+	kPXSysSigAction,
+	kPXSysSigMask,
+	kPXSysSigSend,
+	kPXSysSigSuspend,
+	kPXSysSigTimedWait,
 
 	kPXSysEPollCreate,
 	kPXSysEPollCtl,
 	kPXSysEPollWait,
 
 	kPXSysUTSName,
+
+	/*! register signal entry function */
+	kPXSysSigEntry,
+	/*! return from a signal */
+	kPXSysSigReturn,
 };
 
 enum posix_stat_kind {
