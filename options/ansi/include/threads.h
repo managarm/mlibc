@@ -38,6 +38,7 @@ int mtx_unlock(mtx_t *mtx);
 int cnd_init(cnd_t *cond);
 void cnd_destroy(cnd_t *cond);
 int cnd_broadcast(cnd_t *cond);
+int cnd_wait(cnd_t *cond, mtx_t *mtx);
 
 #ifdef __cplusplus
 }

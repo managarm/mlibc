@@ -263,4 +263,83 @@ int thread_cond_broadcast(struct __mlibc_cond *cond) {
 	return 0;
 }
 
+int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *__restrict mutex,
+		const struct timespec *__restrict abstime) {
+	// TODO: pshared isn't supported yet.
+	__ensure(cond->__mlibc_flags == 0);
+
+	constexpr long nanos_per_second = 1'000'000'000;
+	if (abstime && (abstime->tv_nsec < 0 || abstime->tv_nsec >= nanos_per_second))
+		return EINVAL;
+
+	auto seq = __atomic_load_n(&cond->__mlibc_seq, __ATOMIC_ACQUIRE);
+
+	// TODO: handle locking errors and cancellation properly.
+	while (true) {
+		if (thread_mutex_unlock(mutex))
+			__ensure(!"Failed to unlock the mutex");
+
+		int e;
+		if (abstime) {
+			// Adjust for the fact that sys_futex_wait accepts a *timeout*, but
+			// pthread_cond_timedwait accepts an *absolute time*.
+			// Note: mlibc::sys_clock_get is available unconditionally.
+			struct timespec now;
+			if (mlibc::sys_clock_get(cond->__mlibc_clock, &now.tv_sec, &now.tv_nsec))
+				__ensure(!"sys_clock_get() failed");
+
+			struct timespec timeout;
+			timeout.tv_sec = abstime->tv_sec - now.tv_sec;
+			timeout.tv_nsec = abstime->tv_nsec - now.tv_nsec;
+
+			// Check if abstime has already passed.
+			if (timeout.tv_sec < 0 || (timeout.tv_sec == 0 && timeout.tv_nsec < 0)) {
+				if (thread_mutex_lock(mutex))
+					__ensure(!"Failed to lock the mutex");
+				return ETIMEDOUT;
+			} else if (timeout.tv_nsec >= nanos_per_second) {
+				timeout.tv_nsec -= nanos_per_second;
+				timeout.tv_sec++;
+				__ensure(timeout.tv_nsec < nanos_per_second);
+			} else if (timeout.tv_nsec < 0) {
+				timeout.tv_nsec += nanos_per_second;
+				timeout.tv_sec--;
+				__ensure(timeout.tv_nsec >= 0);
+			}
+
+			e = mlibc::sys_futex_wait((int *)&cond->__mlibc_seq, seq, &timeout);
+		} else {
+			e = mlibc::sys_futex_wait((int *)&cond->__mlibc_seq, seq, nullptr);
+		}
+
+		if (thread_mutex_lock(mutex))
+			__ensure(!"Failed to lock the mutex");
+
+		// There are four cases to handle:
+		//   1. e == 0: this indicates a (potentially spurious) wakeup. The value of
+		//      seq *must* be checked to distinguish these two cases.
+		//   2. e == EAGAIN: this indicates that the value of seq changed before we
+		//      went to sleep. We don't need to check seq in this case.
+		//   3. e == EINTR: a signal was delivered. The man page allows us to choose
+		//      whether to go to sleep again or to return 0, but we do the former
+		//      to match other libcs.
+		//   4. e == ETIMEDOUT: this should only happen if abstime is set.
+		if (e == 0) {
+			auto cur_seq = __atomic_load_n(&cond->__mlibc_seq, __ATOMIC_ACQUIRE);
+			if (cur_seq > seq)
+				return 0;
+		} else if (e == EAGAIN) {
+			__ensure(__atomic_load_n(&cond->__mlibc_seq, __ATOMIC_ACQUIRE) > seq);
+			return 0;
+		} else if (e == EINTR) {
+			continue;
+		} else if (e == ETIMEDOUT) {
+			__ensure(abstime);
+			return ETIMEDOUT;
+		} else {
+			mlibc::panicLogger() << "sys_futex_wait() failed with error " << e << frg::endlog;
+		}
+	}
+}
+
 } // namespace mlibc
