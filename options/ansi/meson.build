@@ -68,6 +68,7 @@ ansi_sources = files(
 	'generic/string-stubs.cpp',
 	'generic/threads.cpp',
 	'generic/time-stubs.cpp',
+	'generic/uchar.cpp',
 	'generic/wchar-stubs.cpp',
 	'generic/wctype.cpp',
 )

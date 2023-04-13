@@ -5,12 +5,17 @@
 extern "C" {
 #endif
 
+#include <bits/mbstate.h>
 #include <bits/size_t.h>
 
 #ifndef __cplusplus
 typedef __CHAR16_TYPE__ char16_t;
 typedef __CHAR32_TYPE__ char32_t;
 #endif /* __cplusplus */
+
+typedef struct __mlibc_mbstate mbstate_t;
+
+size_t c32rtomb(char *pmb, char32_t c32, mbstate_t *ps);
 
 #ifdef __cplusplus
 }
