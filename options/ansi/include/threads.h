@@ -32,6 +32,8 @@ int thrd_join(thrd_t thr, int *res);
 
 int mtx_init(mtx_t *mtx, int type);
 void mtx_destroy(mtx_t *mtx);
+int mtx_lock(mtx_t *mtx);
+int mtx_unlock(mtx_t *mtx);
 
 int cnd_init(cnd_t *cond);
 void cnd_destroy(cnd_t *cond);

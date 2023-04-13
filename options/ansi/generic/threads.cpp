@@ -38,6 +38,14 @@ void mtx_destroy(mtx_t *mtx) {
 	mlibc::thread_mutex_destroy(mtx);
 }
 
+int mtx_lock(mtx_t *mtx) {
+	return mlibc::thread_mutex_lock(mtx) == 0 ? thrd_success : thrd_error;
+}
+
+int mtx_unlock(mtx_t *mtx) {
+	return mlibc::thread_mutex_unlock(mtx) == 0 ? thrd_success : thrd_error;
+}
+
 int cnd_init(cnd_t *cond) {
 	return mlibc::thread_cond_init(cond, 0) == 0 ? thrd_success : thrd_error;
 }
