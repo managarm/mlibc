@@ -452,7 +452,7 @@ pid_t sys_getppid() {
 	return resp.pid();
 }
 
-pid_t sys_getsid(pid_t pid, pid_t *sid) {
+int sys_getsid(pid_t pid, pid_t *sid) {
 	SignalGuard sguard;
 
 	managarm::posix::GetSidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -483,7 +483,7 @@ pid_t sys_getsid(pid_t pid, pid_t *sid) {
 	}
 }
 
-pid_t sys_getpgid(pid_t pid, pid_t *pgid) {
+int sys_getpgid(pid_t pid, pid_t *pgid) {
 	SignalGuard sguard;
 
 	managarm::posix::GetPgidRequest<MemoryAllocator> req(getSysdepsAllocator());
