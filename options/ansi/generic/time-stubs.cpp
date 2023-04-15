@@ -202,7 +202,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			if(day < 0 || day > 6)
 				__ensure(!"Day not in bounds.");
 
-			chunk = snprintf(p, space, "%s", mlibc::nl_langinfo(DAY_1 + day));
+			chunk = snprintf(p, space, "%s", mlibc::nl_langinfo(ABDAY_1 + day));
 			if(chunk >= space)
 				return 0;
 			p += chunk;

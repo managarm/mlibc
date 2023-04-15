@@ -1,8 +1,16 @@
 #include <string.h>
 #include <time.h>
 #include <assert.h>
+#include <locale.h>
+#include <stdio.h>
 
 int main() {
+	// Date representation depends on locale, here only C is tested.
+	// Maybe consider testing more locales?
+	if (setlocale (LC_ALL, "C") == NULL) {
+		fputs("strftime testcase could not set locale, errors may be expected!", stderr);
+	}
+
 	char timebuf[16];
 	char result[16] = " 8";
 	struct tm tm;
@@ -24,6 +32,17 @@ int main() {
 	memset(timebuf, 0, sizeof(timebuf));
 	strftime(timebuf, sizeof(timebuf), "%X", &tm);
 	assert(!strcmp(timebuf, "17:17:00"));
+
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%a %A", &tm);
+	assert(!strcmp(timebuf, "Tue Tuesday"));
+
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%b %B %h", &tm);
+	assert(!strcmp(timebuf, "Mar March Mar"));
+
+	memset(timebuf, 0, sizeof(timebuf));
+	assert(!strftime(timebuf, sizeof(timebuf), "%a %A %a %A %b %B %h", &tm));
 
 	return 0;
 }
