@@ -50,32 +50,34 @@ sys_sigreturn(ucontext_t *context)
 }
 
 static void
-__mlibc_sigentry(int which, siginfo_t *siginfo, void *handler,
-    bool is_sigaction, ucontext_t *ret_context)
+do_stacktrace(ucontext_t *ctx)
 {
-#if 0
-	size_t *base_ptr = (size_t *)ret_context->rbp;
+	size_t *base_ptr = (size_t *)ctx->uc_mcontext.gregs[REG_RBP];
 
 	mlibc::infoLogger() << "Stacktrace:" << frg::endlog;
-	mlibc::infoLogger()
-	    << "  [" << (void *)ret_context->rip << "]" << frg::endlog;
+	mlibc::infoLogger() << "  [" << (void *)ctx->uc_mcontext.gregs[REG_RIP]
+			    << "]" << frg::endlog;
 	for (;;) {
 		size_t old_bp = base_ptr[0];
 		size_t ret_addr = base_ptr[1];
 		if (!ret_addr)
 			break;
-		size_t off;
 		mlibc::infoLogger()
 		    << "  [" << (void *)ret_addr << "]" << frg::endlog;
 		if (!old_bp)
 			break;
 		base_ptr = (size_t *)old_bp;
 	}
-#endif
+}
 
+static void
+__mlibc_sigentry(int which, siginfo_t *siginfo, void *handler,
+    bool is_sigaction, ucontext_t *ret_context)
+{
 	if ((uintptr_t)handler == (uintptr_t)SIG_DFL) {
 		mlibc::infoLogger()
 		    << "mlibc: Unhandled signal " << which << frg::endlog;
+		do_stacktrace(ret_context);
 		mlibc::sys_exit(128 + which);
 	} else if ((uintptr_t)handler == (uintptr_t)SIG_IGN) {
 		/* epsilon */
