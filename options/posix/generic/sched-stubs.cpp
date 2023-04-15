@@ -17,9 +17,15 @@ int sched_yield(void) {
 	return 0;
 }
 
-int sched_get_priority_max(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int sched_get_priority_max(int policy) {
+	int res = 0;
+
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_get_max_priority, -1);
+	if(int e = sysdep(policy, &res); e) {
+		errno = e;
+		return -1;
+	}
+	return res;
 }
 
 int sched_get_priority_min(int policy) {
