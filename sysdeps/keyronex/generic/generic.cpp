@@ -110,36 +110,6 @@ sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events)
 	    num_events);
 }
 
-#if 0 /* not ready yet */
-int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
-					int timeout, const sigset_t *sigmask, int *raised) {
-	__syscall_ret ret = __syscall(49, epfd, ev, n, timeout, sigmask);
-
-	if (ret.errno != 0)
-		return ret.errno;
-
-	*raised = (int)ret.ret;
-	return 0;
-}
-
-int sys_epoll_create(int flags, int *fd) {
-	__syscall_ret ret = __syscall(37, flags);
-
-	if (ret.errno != 0)
-		return ret.errno;
-
-	*fd = (int)ret.ret;
-	return 0;
-}
-
-int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
-	__syscall_ret ret = __syscall(47, epfd, mode, fd, ev);
-
-	return ret.errno;
-}
-
-#endif
-
 #ifndef MLIBC_BUILDING_RTDL
 int
 sys_pselect(int nfds, fd_set *read_set, fd_set *write_set, fd_set *except_set,
@@ -219,14 +189,16 @@ sys_futex_wait(int *pointer, int expected, const struct timespec *time)
 	(void)pointer;
 	(void)expected;
 	(void)time;
-	STUB_ONLY
+	mlibc::infoLogger() << "mlibc: futex_wait is a stub" << frg::endlog;
+	return 0;
 }
 
 int
 sys_futex_wake(int *pointer)
 {
 	(void)pointer;
-	STUB_ONLY
+	mlibc::infoLogger() << "mlibc: futex_wake is a stub" << frg::endlog;
+	return 0;
 }
 
 #ifndef MLIBC_BUILDING_RTDL
@@ -641,6 +613,15 @@ int
 sys_fsync(int)
 {
 	mlibc::infoLogger() << "mlibc: fsync is a stub" << frg::endlog;
+	return 0;
+}
+
+int
+sys_getentropy(void *buffer, size_t length)
+{
+	/* todo: improve lmao */
+	mlibc::infoLogger() << "mlibc: getentropy is a stub" << frg::endlog;
+	memset(buffer, 0x12345678, length);
 	return 0;
 }
 #endif

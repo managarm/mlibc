@@ -6,6 +6,7 @@ rtdl_sources += files(
 libc_sources += files(
 	'generic/entry.cpp',
 	'generic/generic.cpp',
+	'generic/linux.cpp',
 	'generic/signal.cpp',
 	'generic/thread.cpp',
 	'generic/thread.S'
