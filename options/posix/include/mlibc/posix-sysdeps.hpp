@@ -111,6 +111,7 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_setpriority(int which, id_t who, int prio);
 [[gnu::weak]] int sys_getschedparam(void *tcb, int *policy, struct sched_param *param);
 [[gnu::weak]] int sys_setschedparam(void *tcb, int policy, const struct sched_param *param);
+[[gnu::weak]] int sys_get_max_priority(int policy, int *out);
 [[gnu::weak]] int sys_get_min_priority(int policy, int *out);
 [[gnu::weak]] int sys_getcwd(char *buffer, size_t size);
 [[gnu::weak]] int sys_chdir(const char *path);
