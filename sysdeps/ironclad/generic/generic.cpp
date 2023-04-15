@@ -206,7 +206,7 @@ gid_t sys_getegid() {
 	return 0;
 }
 
-pid_t sys_getpgid(pid_t pid, pid_t *pgid) {
+int sys_getpgid(pid_t pid, pid_t *pgid) {
 	(void)pid;
 	mlibc::infoLogger() << "getpgid() is a stub" << frg::endlog;
 	*pgid = 0;

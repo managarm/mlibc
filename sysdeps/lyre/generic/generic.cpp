@@ -500,7 +500,7 @@ int sys_setgid(gid_t) {
 	return 0;
 }
 
-pid_t sys_getpgid(pid_t, pid_t *) {
+int sys_getpgid(pid_t, pid_t *) {
 	return 0;
 }
 

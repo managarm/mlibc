@@ -176,7 +176,7 @@ int sys_kill(int pid, int sig) {
     return 0;
 }
 
-pid_t sys_getpgid(pid_t pid, pid_t *pgid) {
+int sys_getpgid(pid_t pid, pid_t *pgid) {
     mlibc::infoLogger() << "sys_getpgid() is unimplemented" << frg::endlog;
     *pgid = 0;
 

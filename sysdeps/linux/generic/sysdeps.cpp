@@ -1597,7 +1597,7 @@ int sys_setpgid(pid_t pid, pid_t pgid) {
 	return 0;
 }
 
-pid_t sys_getsid(pid_t pid, pid_t *sid) {
+int sys_getsid(pid_t pid, pid_t *sid) {
 	auto ret = do_syscall(SYS_getsid, pid);
 	if (int e = sc_error(ret); e)
 		return e;
