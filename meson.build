@@ -160,6 +160,11 @@ elif host_machine.system() == 'dripos'
 	rtdl_include_dirs += include_directories('sysdeps/dripos/include')
 	libc_include_dirs += include_directories('sysdeps/dripos/include')
 	subdir('sysdeps/dripos')
+elif host_machine.system() == 'atlas'
+	rtdl_include_dirs += include_directories('sysdeps/atlas/include')
+	libc_include_dirs += include_directories('sysdeps/atlas/include')
+	subdir('sysdeps/atlas')
+
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
