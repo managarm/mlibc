@@ -73,13 +73,14 @@ jobs:
             uses: actions/checkout@v2
             with:
               path: src/mlibc/
-          - name: Set up linux kernel headers
+          - name: Set up freestanding headers and linux kernel headers
             run: |
                 mkdir -p build/mlibc/
                 cp src/mlibc/ci/bootstrap.yml src/
                 (
                   cd build
                   xbstrap init ../src
+                  xbstrap install freestanding-headers
                   xbstrap install linux-headers
                 )
           - name: Compile sysdeps
@@ -89,6 +90,7 @@ jobs:
                     "-Dcpp_args=['-fno-stack-protector', '-U__linux__']" \
                     "-Dbuild_tests=true" \
                     "-Db_sanitize=undefined" \
+                    "-Dfreestanding_headers=$(pwd)/packages/freestanding-headers/usr/include" \
                     "-Dlinux_kernel_headers=$(pwd)/packages/linux-headers/usr/include" \
                     --cross-file ../src/mlibc/ci/${{matrix.sysdeps}}.cross-file compile-${{matrix.sysdeps}} \
                     "../src/mlibc/"

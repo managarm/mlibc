@@ -14,6 +14,10 @@ sources:
     git: 'https://github.com/managarm/mlibc.git'
     branch: 'master'
 
+  - name: freestanding-headers
+    git: 'https://github.com/mintsuki/freestanding-headers.git'
+    branch: 'trunk'
+
   - name: linux
     url: 'https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.1.8.tar.xz'
     extract_path: 'linux-6.1.8'
@@ -44,6 +48,7 @@ tools:
       - name: compiler
         pkgs_required:
          - mlibc
+         - freestanding-headers
          - linux-headers
         compile:
           # GCC complains if the include directory is non-existant.
@@ -74,6 +79,7 @@ packages:
     architecture: '@OPTION:arch@'
     from_source: mlibc
     pkgs_required:
+      - freestanding-headers
       - linux-headers
     configure:
       - args:
@@ -85,6 +91,7 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
         - "-Dwerror=true"
+        - '-Dfreestanding_headers=@BUILD_ROOT@/packages/freestanding-headers/usr/include'
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
@@ -99,6 +106,7 @@ packages:
     architecture: '@OPTION:arch@'
     from_source: mlibc
     pkgs_required:
+      - freestanding-headers
       - linux-headers
     configure:
       - args:
@@ -110,6 +118,7 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=static"
         - "-Dwerror=true"
+        - '-Dfreestanding_headers=@BUILD_ROOT@/packages/freestanding-headers/usr/include'
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
@@ -123,6 +132,7 @@ packages:
   - name: mlibc-shared
     from_source: mlibc
     pkgs_required:
+      - freestanding-headers
       - linux-headers
     configure:
       - args:
@@ -134,6 +144,7 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=shared"
         - "-Dwerror=true"
+        - '-Dfreestanding_headers=@BUILD_ROOT@/packages/freestanding-headers/usr/include'
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
@@ -148,6 +159,7 @@ packages:
     architecture: '@OPTION:arch@'
     from_source: mlibc
     pkgs_required:
+      - freestanding-headers
       - linux-headers
     configure:
       - args:
@@ -163,6 +175,7 @@ packages:
         - "-Ddisable_linux_option=true"
         - "-Ddisable_glibc_option=true"
         - "-Ddisable_bsd_option=true"
+        - '-Dfreestanding_headers=@BUILD_ROOT@/packages/freestanding-headers/usr/include'
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
@@ -177,6 +190,7 @@ packages:
     architecture: '@OPTION:arch@'
     from_source: mlibc
     pkgs_required:
+      - freestanding-headers
       - linux-headers
     configure:
       - args:
@@ -187,6 +201,7 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Dwerror=true"
         - "-Dheaders_only=true"
+        - '-Dfreestanding_headers=@BUILD_ROOT@/packages/freestanding-headers/usr/include'
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
@@ -196,6 +211,17 @@ packages:
         environ:
           DESTDIR: '@THIS_COLLECT_DIR@'
         quiet: true
+
+  - name: freestanding-headers
+    architecture: '@OPTION:arch@'
+    from_source: freestanding-headers
+    configure:
+      - args: ['cp', '-rp', '@THIS_SOURCE_DIR@/.', '.']
+    build:
+      - args: |
+          set -e
+          mkdir -p '@THIS_COLLECT_DIR@/usr/include/freestanding-headers'
+          cp -rp *.h '@THIS_COLLECT_DIR@/usr/include/freestanding-headers/'
 
   - name: linux-headers
     architecture: '@OPTION:arch@'

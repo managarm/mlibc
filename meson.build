@@ -61,35 +61,6 @@ if not headers_only
 	add_project_arguments('-Werror=misleading-indentation', language: ['c', 'cpp'])
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
-
-	searchdirs = run_command(c_compiler.cmd_array(), '-print-search-dirs',
-				check: true).stdout()
-	searchdirs_arr = searchdirs.split('\n')
-	searchline = 'install: '
-	ccdir = ''
-	if c_compiler.get_id() == 'clang'
-		searchline = 'libraries: ='
-	endif
-
-	foreach line : searchdirs_arr
-		if line.startswith(searchline)
-			ccdir = line.strip(searchline)
-			ccdir = ccdir.split(':')[0]
-			break
-		endif
-	endforeach
-
-	if ccdir == ''
-		error('could not find compiler-specific header directory')
-	endif
-
-	if c_compiler.get_id() == 'gcc' and fs.exists(ccdir / 'include-fixed')
-		rtdl_include_dirs += include_directories(ccdir / 'include-fixed')
-		libc_include_dirs += include_directories(ccdir / 'include-fixed')
-	endif
-
-	rtdl_include_dirs += include_directories(ccdir / 'include')
-	libc_include_dirs += include_directories(ccdir / 'include')
 endif
 
 internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
@@ -181,6 +152,17 @@ mlibc_conf.set10('__MLIBC_SYSDEP_HAS_BITS_SYSCALL_H', provides_bits_syscall_h)
 if not disable_ansi_option
 	rtdl_include_dirs += include_directories('options/ansi/include')
 	libc_include_dirs += include_directories('options/ansi/include')
+
+	if get_option('freestanding_headers') == ''
+		error('freestanding_headers is not set')
+	endif
+
+	if not import('fs').is_dir(get_option('freestanding_headers'))
+		error('freestanding_headers is not set to a valid path')
+	endif
+
+	rtdl_include_dirs += include_directories(get_option('freestanding_headers'))
+	libc_include_dirs += include_directories(get_option('freestanding_headers'))
 endif
 
 if not disable_posix_option

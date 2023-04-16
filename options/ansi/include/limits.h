@@ -1,17 +1,17 @@
 #ifndef _LIMITS_H
 #define _LIMITS_H
 
-#define CHAR_BIT 8
+#include <freestanding-headers/limits.h>
 
 #ifdef LONG_MAX
-# ifdef LONG_MAX == INT32_MAX
+# if LONG_MAX == __INT32_MAX__
 #  define LONG_BIT 32
 # else
 // Safe assumption
 #  define LONG_BIT 64
 # endif
 #elif defined __LONG_MAX__
-# if __LONG_MAX__ == INT32_MAX
+# if __LONG_MAX__ == __INT32_MAX__
 #  define LONG_BIT 32
 # else
 // Safe assumption
@@ -20,15 +20,6 @@
 #else
 # error "Unsupported configuration, please define either LONG_MAX or __LONG_MAX__"
 #endif
-
-#undef INT_MAX
-#undef LLONG_MAX
-#undef ULLONG_MAX
-#define INT_MIN (-INT_MAX - 1)
-#define INT_MAX __INT_MAX__
-#define LLONG_MIN (-__LONG_LONG_MAX__ - 1LL)
-#define LLONG_MAX __LONG_LONG_MAX__
-#define ULLONG_MAX (__LONG_LONG_MAX__ * 2ULL + 1ULL)
 
 #define NAME_MAX 255
 #define PATH_MAX 4096

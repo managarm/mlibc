@@ -54,27 +54,29 @@ jobs:
             git -C mlibc-base reset --hard HEAD^
           fi
 
-      - name: Set up linux kernel headers
+      - name: Set up freestanding headers and linux kernel headers
         run: |
-            mkdir -p linux-headers-base/{src,build}
-            cp mlibc-base/ci/bootstrap.yml linux-headers-base/src/
+            mkdir -p ext-headers-base/{src,build}
+            cp mlibc-base/ci/bootstrap.yml ext-headers-base/src/
             (
-              cd linux-headers-base/build
+              cd ext-headers-base/build
               xbstrap init ../src
+              xbstrap install freestanding-headers
               xbstrap install linux-headers
             )
-            mkdir -p linux-headers-branch/{src,build}
-            cp mlibc-branch/ci/bootstrap.yml linux-headers-branch/src/
+            mkdir -p ext-headers-branch/{src,build}
+            cp mlibc-branch/ci/bootstrap.yml ext-headers-branch/src/
             (
-              cd linux-headers-branch/build
+              cd ext-headers-branch/build
               xbstrap init ../src
+              xbstrap install freestanding-headers
               xbstrap install linux-headers
             )
-            cat > linux-headers-base/build/bootstrap-site.yml << EOF
+            cat > ext-headers-base/build/bootstrap-site.yml << EOF
             define_options:
               arch: ${{matrix.arch}}
             EOF
-            cp linux-headers-base/build/bootstrap-site.yml linux-headers-branch/build/bootstrap-site.yml
+            cp ext-headers-base/build/bootstrap-site.yml ext-headers-branch/build/bootstrap-site.yml
 
       - name: Build and install both copies
         run: |
@@ -83,14 +85,14 @@ jobs:
           mkdir root-base root-branch
           (
             cd mlibc-branch
-            meson --buildtype=debugoptimized -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include build
+            meson --buildtype=debugoptimized -Dfreestanding_headers=$GITHUB_WORKSPACE/ext-headers-branch/build/packages/freestanding-headers/usr/include -Dlinux_kernel_headers=$GITHUB_WORKSPACE/ext-headers-branch/build/packages/linux-headers/usr/include build
             ninja -C build
             DESTDIR="$GITHUB_WORKSPACE/root-branch" ninja -C build install
           )
           (
             cd mlibc-base
             # defaults to all features, linux build
-            meson --buildtype=debugoptimized -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-base/build/packages/linux-headers/usr/include build
+            meson --buildtype=debugoptimized -Dfreestanding_headers=$GITHUB_WORKSPACE/ext-headers-base/build/packages/freestanding-headers/usr/include -Dlinux_kernel_headers=$GITHUB_WORKSPACE/ext-headers-base/build/packages/linux-headers/usr/include build
             ninja -C build
             DESTDIR="$GITHUB_WORKSPACE/root-base" ninja -C build install
           )
