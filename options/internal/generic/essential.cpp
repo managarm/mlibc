@@ -199,9 +199,8 @@ void *memmove(void *dest, const void *src, size_t size) {
 	char *dest_bytes = (char *)dest;
 	char *src_bytes = (char *)src;
 	if(dest_bytes < src_bytes) {
-		for(size_t i = 0; i < size; i++)
-			dest_bytes[i] = src_bytes[i];
-	}else{
+		memcpy(dest, src, size);
+	}else if(dest_bytes > src_bytes) {
 		for(size_t i = 0; i < size; i++)
 			dest_bytes[size - i - 1] = src_bytes[size - i - 1];
 	}
