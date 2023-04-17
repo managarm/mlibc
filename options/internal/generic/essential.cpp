@@ -26,84 +26,86 @@ namespace {
 		*reinterpret_cast<word<T> *>(p) = value;
 		p += sizeof(T);
 	}
+
+#ifdef __LP64__
+	void *forward_copy(void *__restrict dest, const void *__restrict src, size_t n) {
+		auto curDest = reinterpret_cast<unsigned char *>(dest);
+		auto curSrc = reinterpret_cast<const unsigned char *>(src);
+
+		while(n >= 8 * 8) {
+			auto w1 = alias_load<uint64_t>(curSrc);
+			auto w2 = alias_load<uint64_t>(curSrc);
+			auto w3 = alias_load<uint64_t>(curSrc);
+			auto w4 = alias_load<uint64_t>(curSrc);
+			auto w5 = alias_load<uint64_t>(curSrc);
+			auto w6 = alias_load<uint64_t>(curSrc);
+			auto w7 = alias_load<uint64_t>(curSrc);
+			auto w8 = alias_load<uint64_t>(curSrc);
+			alias_store<uint64_t>(curDest, w1);
+			alias_store<uint64_t>(curDest, w2);
+			alias_store<uint64_t>(curDest, w3);
+			alias_store<uint64_t>(curDest, w4);
+			alias_store<uint64_t>(curDest, w5);
+			alias_store<uint64_t>(curDest, w6);
+			alias_store<uint64_t>(curDest, w7);
+			alias_store<uint64_t>(curDest, w8);
+			n -= 8 * 8;
+		}
+		if(n >= 4 * 8) {
+			auto w1 = alias_load<uint64_t>(curSrc);
+			auto w2 = alias_load<uint64_t>(curSrc);
+			auto w3 = alias_load<uint64_t>(curSrc);
+			auto w4 = alias_load<uint64_t>(curSrc);
+			alias_store<uint64_t>(curDest, w1);
+			alias_store<uint64_t>(curDest, w2);
+			alias_store<uint64_t>(curDest, w3);
+			alias_store<uint64_t>(curDest, w4);
+			n -= 4 * 8;
+		}
+		if(n >= 2 * 8) {
+			auto w1 = alias_load<uint64_t>(curSrc);
+			auto w2 = alias_load<uint64_t>(curSrc);
+			alias_store<uint64_t>(curDest, w1);
+			alias_store<uint64_t>(curDest, w2);
+			n -= 2 * 8;
+		}
+		if(n >= 8) {
+			auto w = alias_load<uint64_t>(curSrc);
+			alias_store<uint64_t>(curDest, w);
+			n -= 8;
+		}
+		if(n >= 4) {
+			auto w = alias_load<uint32_t>(curSrc);
+			alias_store<uint32_t>(curDest, w);
+			n -= 4;
+		}
+		if(n >= 2) {
+			auto w = alias_load<uint16_t>(curSrc);
+			alias_store<uint16_t>(curDest, w);
+			n -= 2;
+		}
+		if(n)
+			*curDest = *curSrc;
+		return dest;
+	}
+#else // !__LP64__
+	void *forward_copy(void *dest, const void *src, size_t n) {
+		for(size_t i = 0; i < n; i++)
+			((char *)dest)[i] = ((const char *)src)[i];
+		return dest;
+	}
+#endif // __LP64__ / !__LP64__
 }
 
 // --------------------------------------------------------------------------------------
 // memcpy() implementation.
 // --------------------------------------------------------------------------------------
 
-#ifdef __LP64__
 
 void *memcpy(void *__restrict dest, const void *__restrict src, size_t n) {
-	auto curDest = reinterpret_cast<unsigned char *>(dest);
-	auto curSrc = reinterpret_cast<const unsigned char *>(src);
-
-	while(n >= 8 * 8) {
-		auto w1 = alias_load<uint64_t>(curSrc);
-		auto w2 = alias_load<uint64_t>(curSrc);
-		auto w3 = alias_load<uint64_t>(curSrc);
-		auto w4 = alias_load<uint64_t>(curSrc);
-		auto w5 = alias_load<uint64_t>(curSrc);
-		auto w6 = alias_load<uint64_t>(curSrc);
-		auto w7 = alias_load<uint64_t>(curSrc);
-		auto w8 = alias_load<uint64_t>(curSrc);
-		alias_store<uint64_t>(curDest, w1);
-		alias_store<uint64_t>(curDest, w2);
-		alias_store<uint64_t>(curDest, w3);
-		alias_store<uint64_t>(curDest, w4);
-		alias_store<uint64_t>(curDest, w5);
-		alias_store<uint64_t>(curDest, w6);
-		alias_store<uint64_t>(curDest, w7);
-		alias_store<uint64_t>(curDest, w8);
-		n -= 8 * 8;
-	}
-	if(n >= 4 * 8) {
-		auto w1 = alias_load<uint64_t>(curSrc);
-		auto w2 = alias_load<uint64_t>(curSrc);
-		auto w3 = alias_load<uint64_t>(curSrc);
-		auto w4 = alias_load<uint64_t>(curSrc);
-		alias_store<uint64_t>(curDest, w1);
-		alias_store<uint64_t>(curDest, w2);
-		alias_store<uint64_t>(curDest, w3);
-		alias_store<uint64_t>(curDest, w4);
-		n -= 4 * 8;
-	}
-	if(n >= 2 * 8) {
-		auto w1 = alias_load<uint64_t>(curSrc);
-		auto w2 = alias_load<uint64_t>(curSrc);
-		alias_store<uint64_t>(curDest, w1);
-		alias_store<uint64_t>(curDest, w2);
-		n -= 2 * 8;
-	}
-	if(n >= 8) {
-		auto w = alias_load<uint64_t>(curSrc);
-		alias_store<uint64_t>(curDest, w);
-		n -= 8;
-	}
-	if(n >= 4) {
-		auto w = alias_load<uint32_t>(curSrc);
-		alias_store<uint32_t>(curDest, w);
-		n -= 4;
-	}
-	if(n >= 2) {
-		auto w = alias_load<uint16_t>(curSrc);
-		alias_store<uint16_t>(curDest, w);
-		n -= 2;
-	}
-	if(n)
-		*curDest = *curSrc;
-	return dest;
+	return forward_copy(dest, src, n);
 }
 
-#else // !__LP64__
-
-void *memcpy(void *dest, const void *src, size_t n) {
-	for(size_t i = 0; i < n; i++)
-		((char *)dest)[i] = ((const char *)src)[i];
-	return dest;
-}
-
-#endif // __LP64__ / !__LP64__
 
 // --------------------------------------------------------------------------------------
 // memset() implementation.
@@ -199,7 +201,7 @@ void *memmove(void *dest, const void *src, size_t size) {
 	char *dest_bytes = (char *)dest;
 	char *src_bytes = (char *)src;
 	if(dest_bytes < src_bytes) {
-		memcpy(dest, src, size);
+		return forward_copy(dest, src, size);
 	}else if(dest_bytes > src_bytes) {
 		for(size_t i = 0; i < size; i++)
 			dest_bytes[size - i - 1] = src_bytes[size - i - 1];
