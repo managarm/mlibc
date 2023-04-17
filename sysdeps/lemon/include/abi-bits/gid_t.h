@@ -1,1 +1,1 @@
-../../../../abis/mlibc/gid_t.h
+../../../legacy-mlibc-abi/gid_t.h

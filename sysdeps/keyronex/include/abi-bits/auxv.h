@@ -1,1 +1,1 @@
-../../../../abis/linux/auxv.h
+../../../linux/include/abi-bits/auxv.h

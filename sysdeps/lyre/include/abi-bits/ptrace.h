@@ -1,1 +1,1 @@
-../../../../abis/linux/ptrace.h
+../../../linux/include/abi-bits/ptrace.h

@@ -1,1 +1,1 @@
-../../../../abis/mlibc/time.h
+../../../legacy-mlibc-abi/time.h

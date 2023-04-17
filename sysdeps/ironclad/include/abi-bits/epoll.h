@@ -1,1 +1,1 @@
-../../../../abis/mlibc/epoll.h
+../../../legacy-mlibc-abi/epoll.h

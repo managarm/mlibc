@@ -1,1 +1,1 @@
-../../../../abis/linux/suseconds_t.h
+../../../linux/include/abi-bits/suseconds_t.h

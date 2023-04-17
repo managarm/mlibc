@@ -1,1 +1,1 @@
-../../../../abis/linux/xattr.h
+../../../linux/include/abi-bits/xattr.h

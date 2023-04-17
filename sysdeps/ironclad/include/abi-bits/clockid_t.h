@@ -1,1 +1,1 @@
-../../../../abis/mlibc/clockid_t.h
+../../../legacy-mlibc-abi/clockid_t.h

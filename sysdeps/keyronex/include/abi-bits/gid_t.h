@@ -1,1 +1,1 @@
-../../../../abis/linux/gid_t.h
+../../../linux/include/abi-bits/gid_t.h

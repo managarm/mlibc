@@ -1,1 +1,1 @@
-../../../../abis/mlibc/mode_t.h
+../../../legacy-mlibc-abi/mode_t.h

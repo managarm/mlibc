@@ -1,1 +1,1 @@
-../../../../abis/linux/utsname.h
+../../../linux/include/abi-bits/utsname.h

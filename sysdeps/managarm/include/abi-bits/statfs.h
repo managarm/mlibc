@@ -1,1 +1,1 @@
-../../../../abis/linux/statfs.h
+../../../linux/include/abi-bits/statfs.h

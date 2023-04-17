@@ -1,1 +1,1 @@
-../../../../abis/linux/fsfilcnt_t.h
+../../../linux/include/abi-bits/fsfilcnt_t.h

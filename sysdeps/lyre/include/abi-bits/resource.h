@@ -1,1 +1,1 @@
-../../../../abis/linux/resource.h
+../../../linux/include/abi-bits/resource.h

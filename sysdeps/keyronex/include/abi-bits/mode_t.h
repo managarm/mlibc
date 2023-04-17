@@ -1,1 +1,1 @@
-../../../../abis/linux/mode_t.h
+../../../linux/include/abi-bits/mode_t.h

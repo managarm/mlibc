@@ -1,1 +1,1 @@
-../../../../abis/linux/fcntl.h
+../../../linux/include/abi-bits/fcntl.h

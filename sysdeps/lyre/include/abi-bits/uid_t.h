@@ -1,1 +1,1 @@
-../../../../abis/linux/uid_t.h
+../../../linux/include/abi-bits/uid_t.h

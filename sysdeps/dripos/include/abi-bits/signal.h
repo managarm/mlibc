@@ -1,1 +1,1 @@
-../../../../abis/mlibc/signal.h
+../../../legacy-mlibc-abi/signal.h

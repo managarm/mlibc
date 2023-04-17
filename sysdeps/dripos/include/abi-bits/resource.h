@@ -1,1 +1,1 @@
-../../../../abis/mlibc/resource.h
+../../../legacy-mlibc-abi/resource.h

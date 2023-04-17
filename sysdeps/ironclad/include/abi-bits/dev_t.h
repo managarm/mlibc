@@ -1,1 +1,1 @@
-../../../../abis/mlibc/dev_t.h
+../../../legacy-mlibc-abi/dev_t.h

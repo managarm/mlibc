@@ -1,1 +1,1 @@
-../../../../abis/mlibc/access.h
+../../../legacy-mlibc-abi/access.h

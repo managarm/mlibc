@@ -1,1 +1,1 @@
-../../../../abis/linux/nlink_t.h
+../../../linux/include/abi-bits/nlink_t.h

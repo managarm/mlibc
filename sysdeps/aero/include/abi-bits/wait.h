@@ -1,1 +1,1 @@
-../../../../abis/linux/wait.h
+../../../linux/include/abi-bits/wait.h

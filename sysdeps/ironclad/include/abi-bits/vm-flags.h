@@ -1,1 +1,1 @@
-../../../../abis/mlibc/vm-flags.h
+../../../legacy-mlibc-abi/vm-flags.h

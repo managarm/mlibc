@@ -1,1 +1,1 @@
-../../../../abis/mlibc/pid_t.h
+../../../legacy-mlibc-abi/pid_t.h

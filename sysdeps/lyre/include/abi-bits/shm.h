@@ -1,1 +1,1 @@
-../../../../abis/linux/shm.h
+../../../linux/include/abi-bits/shm.h

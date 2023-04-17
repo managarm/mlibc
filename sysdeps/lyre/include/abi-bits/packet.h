@@ -1,1 +1,1 @@
-../../../../abis/linux/packet.h
+../../../linux/include/abi-bits/packet.h

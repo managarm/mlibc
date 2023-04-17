@@ -1,1 +1,1 @@
-../../../../abis/mlibc/termios.h
+../../../legacy-mlibc-abi/termios.h

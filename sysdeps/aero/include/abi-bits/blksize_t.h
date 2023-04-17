@@ -1,1 +1,1 @@
-../../../../abis/mlibc/blksize_t.h
+../../../legacy-mlibc-abi/blksize_t.h

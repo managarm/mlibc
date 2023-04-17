@@ -1,1 +1,1 @@
-../../../../abis/linux/epoll.h
+../../../linux/include/abi-bits/epoll.h

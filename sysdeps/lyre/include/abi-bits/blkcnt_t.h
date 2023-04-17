@@ -1,1 +1,1 @@
-../../../../abis/linux/blkcnt_t.h
+../../../linux/include/abi-bits/blkcnt_t.h

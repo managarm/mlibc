@@ -1,1 +1,1 @@
-../../../../abis/mlibc/socket.h
+../../../legacy-mlibc-abi/socket.h

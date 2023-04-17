@@ -1,1 +1,1 @@
-../../../../abis/linux/inotify.h
+../../../linux/include/abi-bits/inotify.h

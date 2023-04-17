@@ -1,1 +1,1 @@
-../../../../abis/mlibc/inotify.h
+../../../legacy-mlibc-abi/inotify.h

@@ -1,1 +1,1 @@
-../../../../abis/linux/reboot.h
+../../../linux/include/abi-bits/reboot.h

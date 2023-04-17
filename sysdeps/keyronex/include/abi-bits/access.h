@@ -1,1 +1,1 @@
-../../../../abis/linux/access.h
+../../../linux/include/abi-bits/access.h

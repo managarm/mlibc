@@ -1,1 +1,1 @@
-../../../../abis/mlibc/fcntl.h
+../../../legacy-mlibc-abi/fcntl.h

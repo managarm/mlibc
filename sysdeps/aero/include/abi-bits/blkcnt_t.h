@@ -1,1 +1,1 @@
-../../../../abis/mlibc/blkcnt_t.h
+../../../legacy-mlibc-abi/blkcnt_t.h

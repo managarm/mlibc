@@ -1,1 +1,1 @@
-../../../../abis/mlibc/seek-whence.h
+../../../legacy-mlibc-abi/seek-whence.h

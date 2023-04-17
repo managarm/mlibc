@@ -1,1 +1,1 @@
-../../../../abis/mlibc/ino_t.h
+../../../legacy-mlibc-abi/ino_t.h

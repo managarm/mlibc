@@ -1,1 +1,1 @@
-../../../../abis/mlibc/poll.h
+../../../legacy-mlibc-abi/poll.h

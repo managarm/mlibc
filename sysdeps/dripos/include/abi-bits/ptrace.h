@@ -1,1 +1,1 @@
-../../../../abis/mlibc/ptrace.h
+../../../legacy-mlibc-abi/ptrace.h

@@ -1,1 +1,1 @@
-../../../../abis/mlibc/utsname.h
+../../../legacy-mlibc-abi/utsname.h

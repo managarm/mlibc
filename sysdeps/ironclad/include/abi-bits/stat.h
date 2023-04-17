@@ -1,1 +1,1 @@
-../../../../abis/mlibc/stat.h
+../../../legacy-mlibc-abi/stat.h

@@ -1,1 +1,1 @@
-../../../../abis/mlibc/limits.h
+../../../legacy-mlibc-abi/limits.h
