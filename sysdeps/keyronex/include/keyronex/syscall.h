@@ -25,6 +25,7 @@ enum posix_syscall {
 	kPXSysPipe,
 	kPXSysDup,
 	kPXSysDup3,
+	kPXSysLink,
 
 	kPXSysSetFSBase,
 	kPXSysExecVE,
@@ -48,6 +49,7 @@ enum posix_syscall {
 	kPXSysEPollCtl,
 	kPXSysEPollWait,
 
+	kPXSysSleep,
 	kPXSysUTSName,
 
 	/*! register signal entry function */

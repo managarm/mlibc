@@ -184,6 +184,17 @@ sys_pselect(int nfds, fd_set *read_set, fd_set *write_set, fd_set *except_set,
 #endif
 
 int
+sys_fcntl(int fd, int request, va_list args, int *result)
+{
+	(void)fd;
+	(void)request;
+	(void)args;
+	(void)result;
+	mlibc::infoLogger() << "fcntl() is a stub!" << frg::endlog;
+	return 0;
+}
+
+int
 sys_futex_wait(int *pointer, int expected, const struct timespec *time)
 {
 	(void)pointer;
@@ -296,6 +307,16 @@ int
 sys_close(int fd)
 {
 	return (int)syscall1(kPXSysClose, fd, NULL);
+}
+
+int
+sys_link(const char *old_path, const char *new_path)
+{
+	uintptr_t ret = syscall2(kPXSysLink, (uintptr_t)old_path,
+	    (uintptr_t)new_path, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 int
@@ -584,6 +605,15 @@ sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru,
 }
 
 #ifndef MLIBC_BUILDING_RTDL
+int
+sys_sleep(time_t *sec, long *nanosec)
+{
+	auto ret = syscall1(kPXSysSleep, *sec * 1000000000 + *nanosec, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int
 sys_uname(struct utsname *buf)
 {
