@@ -45,6 +45,17 @@ enum posix_syscall {
 	kPXSysSigSuspend,
 	kPXSysSigTimedWait,
 
+	kPXSysSocket,
+	kPXSysBind,
+	kPXSysConnect,
+	kPXSysListen,
+	kPXSysAccept,
+	kPXSysSendMsg,
+	kPXSysRecvMsg,
+	kPXSysSocketPair,
+	kPXSysGetSockOpt,
+	kPXSysSetSockOpt,
+
 	kPXSysEPollCreate,
 	kPXSysEPollCtl,
 	kPXSysEPollWait,

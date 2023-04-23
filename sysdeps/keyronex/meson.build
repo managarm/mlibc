@@ -8,6 +8,7 @@ libc_sources += files(
 	'generic/generic.cpp',
 	'generic/linux.cpp',
 	'generic/signal.cpp',
+	'generic/socket.cpp',
 	'generic/thread.cpp',
 	'generic/thread.S'
 )
