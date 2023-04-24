@@ -36,6 +36,11 @@ sys_sigaction(int signal, const struct sigaction *__restrict action,
 int
 sys_kill(int pid, int signal)
 {
+	if (signal == 0) {
+		mlibc::infoLogger() << "Sending signal 0! Allowing" << frg::endlog;
+		return 0;
+	}
+
 	auto ret = syscall2(kPXSysSigSend, pid, signal, NULL);
 	if (int e = sc_error(ret); e) {
 		return e;

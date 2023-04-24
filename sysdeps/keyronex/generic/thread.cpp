@@ -4,6 +4,7 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <bits/ensure.h>
 #include <mlibc/tcb.hpp>
+#include <keyronex/syscall.h>
 
 extern "C" void __mlibc_thread_trampoline(void *(*fn)(void *), Tcb *tcb, void *arg) {
 	if (mlibc::sys_tcb_set(tcb)) {
@@ -25,6 +26,20 @@ extern "C" void __mlibc_thread_trampoline(void *(*fn)(void *), Tcb *tcb, void *a
 #define DEFAULT_STACK 0x400000
 
 namespace mlibc {
+
+extern "C" void __mlibc_thread_entry();
+
+	int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
+		(void)tcb;
+
+		auto ret = syscall2(kPXSysForkThread, (uintptr_t)__mlibc_thread_entry, (uintptr_t)stack, NULL);
+		if (int e = sc_error(ret); e)
+			return e;
+
+		*tid_out = ret;
+		return 0;
+	}
+
 	int sys_prepare_stack(void **stack, void *entry, void *arg, void *tcb, size_t *stack_size, size_t *guard_size) {
 		// TODO guard
 
@@ -51,4 +66,5 @@ namespace mlibc {
 
 		return 0;
 	}
+
 }

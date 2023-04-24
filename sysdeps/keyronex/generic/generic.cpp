@@ -197,18 +197,18 @@ sys_fcntl(int fd, int request, va_list args, int *result)
 int
 sys_futex_wait(int *pointer, int expected, const struct timespec *time)
 {
-	(void)pointer;
-	(void)expected;
-	(void)time;
-	mlibc::infoLogger() << "mlibc: futex_wait is a stub" << frg::endlog;
+	auto ret = syscall3(kPXSysFutexWait, (uintptr_t)pointer, expected, (uintptr_t) time, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 
 int
 sys_futex_wake(int *pointer)
 {
-	(void)pointer;
-	mlibc::infoLogger() << "mlibc: futex_wake is a stub" << frg::endlog;
+	auto ret = syscall1(kPXSysFutexWake, (uintptr_t)pointer, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 
@@ -507,6 +507,12 @@ sys_getegid()
 	mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!\n"
 			    << frg::endlog;
 	return 0;
+}
+
+pid_t
+sys_gettid()
+{
+	return syscall0(kPXSysGetTID, NULL);
 }
 
 int

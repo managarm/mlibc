@@ -38,6 +38,7 @@ enum posix_syscall {
 	kPXSysSetPGID,
 	kPXSysGetSID,
 	kPXSysSetSID,
+	kPXSysGetTID,
 
 	kPXSysSigAction,
 	kPXSysSigMask,
@@ -62,6 +63,10 @@ enum posix_syscall {
 
 	kPXSysSleep,
 	kPXSysUTSName,
+
+	kPXSysForkThread,
+	kPXSysFutexWait,
+	kPXSysFutexWake,
 
 	/*! register signal entry function */
 	kPXSysSigEntry,
