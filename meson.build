@@ -328,7 +328,7 @@ if not headers_only
 	if not disable_libgcc_dependency
 		libgcc = meson.get_compiler('c').find_library('gcc', required: false)
 
-		compiler_rt_name = 'libclang_rt.builtins-' + host_machine.cpu_family()
+		compiler_rt_name = 'clang_rt.builtins-' + host_machine.cpu_family()
 		compiler_rt = meson.get_compiler('c').find_library(compiler_rt_name, required: false)
 
 		if libgcc.found()
