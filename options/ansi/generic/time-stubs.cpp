@@ -351,6 +351,12 @@ size_t strftime(char *__restrict dest, size_t max_size,
 	return (p - dest);
 }
 
+size_t strftime_l(char *__restrict dest, size_t max_size,
+		const char *__restrict format, const struct tm *__restrict tm, locale_t loc) {
+	return strftime(dest, max_size, format, tm);
+}
+
+
 size_t wcsftime(wchar_t *__restrict, size_t, const wchar_t *__restrict,
 		const struct tm *__restrict) {
 	mlibc::infoLogger() << "mlibc: wcsftime is a stub" << frg::endlog;

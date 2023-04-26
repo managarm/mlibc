@@ -67,7 +67,8 @@ struct tm *gmtime_r(const time_t *__restrict timer, struct tm *__restrict result
 struct tm *localtime(const time_t *timer);
 size_t strftime(char *__restrict dest, size_t max_size,
 		const char *__restrict format, const struct tm *__restrict ptr);
-
+size_t strftime_l(char *__restrict dest, size_t max_size,
+ 		const char *__restrict format, const struct tm *__restrict tm, locale_t loc);
 void tzset(void);
 
 #endif /* !__MLIBC_ABI_ONLY */

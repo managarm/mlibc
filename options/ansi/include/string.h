@@ -62,6 +62,12 @@ int ffsl(long i);
 int ffsll(long long i);
 void *memmem(const void *, size_t, const void *, size_t);
 
+// Implementation of missing functions required by libc++ 
+size_t strxfrm_l(char *__restrict dest, const char *__restrict src, size_t n, locale_t loc);
+int wcscoll_l(const wchar_t *, const wchar_t *, locale_t loc);
+int wcsxfrm_l(wchar_t *__restrict, const wchar_t *__restrict, size_t, locale_t loc);
+
+
 /* Handling the basename mess:
  * If <libgen.h> is included *at all*, we use the XPG-defined basename
  * implementation, otherwise, we use the GNU one. Since our ABI previously

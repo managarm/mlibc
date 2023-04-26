@@ -21,11 +21,8 @@
 # error "Unsupported configuration, please define either LONG_MAX or __LONG_MAX__"
 #endif
 
-#undef INT_MAX
 #undef LLONG_MAX
 #undef ULLONG_MAX
-#define INT_MIN (-INT_MAX - 1)
-#define INT_MAX __INT_MAX__
 #define LLONG_MIN (-__LONG_LONG_MAX__ - 1LL)
 #define LLONG_MAX __LONG_LONG_MAX__
 #define ULLONG_MAX (__LONG_LONG_MAX__ * 2ULL + 1ULL)
@@ -47,6 +44,27 @@
 # define SSIZE_MAX LONG_MAX
 #elif INTPTR_MAX == INT32_MAX
 # define SSIZE_MAX INT_MAX
+#endif
+
+#ifndef INT_MAX 
+# define INT_MAX 0xfffffff
+# define INT_MIN (-INT_MAX -1)
+#elif ! defined(LONG_MAX)
+# if defined(__x86_64__)
+#  define LONG_MAX 0x7fffffffffffffffL
+#  define LONG_MIN (-LONG_MAX-1)
+# endif
+#endif
+
+#ifndef UCHAR_MAX 
+#define UCHAR_MAX 255
+#endif
+
+#define UINT_MAX 0xffffffffU
+#define ULONG_MAX (2UL*LONG_MAX+1)
+
+#ifndef MB_LEN_MAX
+# define MB_LEN_MAX 4 
 #endif
 
 #define _POSIX_ARG_MAX 4096
