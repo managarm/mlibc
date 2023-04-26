@@ -21,12 +21,14 @@ __sc_word_t __do_syscall7(long, __sc_word_t, __sc_word_t, __sc_word_t, __sc_word
 		__sc_word_t, __sc_word_t, __sc_word_t);
 long __do_syscall_ret(unsigned long);
 
+// We will need better syscall() macros in C++ because they cannot compiled with
+// libc++ 
+
+#warning C++ syscall() macros are disabled because of incompatibility with libc++
+/**
 #ifdef __cplusplus
 extern "C++" {
 
-/* Defining a syscall as a macro is more problematic in C++, since there's a high chance of
- * a name collision e.g foo.syscall() or foo::syscall.
- */
 template<typename Arg0>
 long syscall(long n) {
 	return __do_syscall_ret(__do_syscall0(n));
@@ -60,8 +62,9 @@ long syscall(long n, Arg0 a0, Arg1 a1, Arg2 a2, Arg3 a3, Arg4 a4, Arg5 a5, Arg6 
 	return __do_syscall_ret(__do_syscall7(n, (long)a0, (long)a1, (long)a2, (long)a3, (long)a4, (long)a5, (long)a6));
 }
 
-} /* extern C++ */
+} 
 #else
+**/
 
 /* These syscall macros were copied from musl. */
 #define __scc(x) ((__sc_word_t)(x))
@@ -81,7 +84,7 @@ long syscall(long n, Arg0 a0, Arg1 a1, Arg2 a2, Arg3 a3, Arg4 a4, Arg5 a5, Arg6 
 #define __syscall(...) __SYSCALL_DISP(__syscall,__VA_ARGS__)
 #define syscall(...) __do_syscall_ret(__syscall(__VA_ARGS__))
 
-#endif
+//#endif
 
 #ifdef __cplusplus
 }

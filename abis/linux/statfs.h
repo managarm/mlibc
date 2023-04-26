@@ -24,5 +24,11 @@ struct statfs {
 	unsigned long __f_spare[4];
 };
 
+// These macros are taken from musl
+#define statfs64 statfs
+#define fstatfs64 fstatfs
+#define fsblkcnt64_t fsblkcnt_t
+#define fsfilcnt64_t fsfilcnt_t
+
 #endif /* _ABIBITS_STATFS_H */
 

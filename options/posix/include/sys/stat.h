@@ -27,6 +27,17 @@ int stat(const char *__restrict, struct stat *__restrict);
 mode_t umask(mode_t);
 int utimensat(int, const char *, const struct timespec times[2], int);
 
+// These macros are taken from musl
+#define stat64 stat
+#define fstat64 fstat
+#define lstat64 lstat
+#define fstatat64 fstatat
+#define blkcnt64_t blkcnt_t
+#define fsblkcnt64_t fsblkcnt_t
+#define fsfilcnt64_t fsfilcnt_t
+#define ino64_t ino_t
+#define off64_t off_t
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus

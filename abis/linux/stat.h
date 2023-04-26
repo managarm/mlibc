@@ -44,7 +44,7 @@ extern "C" {
 #endif
 
 #if defined(__x86_64__)
-
+ 
 struct stat {
 	dev_t st_dev;
 	ino_t st_ino;
@@ -90,5 +90,6 @@ struct stat {
 #ifdef __cplusplus
 }
 #endif
+
 
 #endif // _ABIBITS_STAT_H
