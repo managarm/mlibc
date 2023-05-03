@@ -26,6 +26,7 @@ enum posix_syscall {
 	kPXSysDup,
 	kPXSysDup3,
 	kPXSysLink,
+	kPXSysChDir,
 
 	kPXSysSetFSBase,
 	kPXSysExecVE,

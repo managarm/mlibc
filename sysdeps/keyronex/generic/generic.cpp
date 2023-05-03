@@ -662,4 +662,13 @@ sys_getentropy(void *buffer, size_t length)
 }
 #endif
 
+int
+sys_chdir(const char *path)
+{
+	uintptr_t ret = syscall1(kPXSysChDir, (uintptr_t)path, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 } // namespace mlibc
