@@ -197,7 +197,8 @@ sys_fcntl(int fd, int request, va_list args, int *result)
 int
 sys_futex_wait(int *pointer, int expected, const struct timespec *time)
 {
-	auto ret = syscall3(kPXSysFutexWait, (uintptr_t)pointer, expected, (uintptr_t) time, NULL);
+	auto ret = syscall3(kPXSysFutexWait, (uintptr_t)pointer, expected,
+	    (uintptr_t)time, NULL);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -661,6 +662,22 @@ sys_getentropy(void *buffer, size_t length)
 	return 0;
 }
 #endif
+
+int
+sys_mkdir(const char *path, mode_t mode)
+{
+	return sys_mkdirat(AT_FDCWD, path, mode);
+}
+
+int
+sys_mkdirat(int dirfd, const char *path, mode_t mode)
+{
+	uintptr_t ret = syscall3(kPXSysMkDirAt, dirfd, (uintptr_t)path, mode,
+	    NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
 
 int
 sys_chdir(const char *path)
