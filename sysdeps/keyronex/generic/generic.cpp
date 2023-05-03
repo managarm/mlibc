@@ -671,4 +671,14 @@ sys_chdir(const char *path)
 	return 0;
 }
 
+int
+sys_umask(mode_t mode, mode_t *old)
+{
+	uintptr_t ret = syscall1(kPXSysUMask, mode, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	*old = (mode_t)ret;
+	return 0;
+}
+
 } // namespace mlibc
