@@ -698,4 +698,21 @@ sys_umask(mode_t mode, mode_t *old)
 	return 0;
 }
 
+int
+sys_rename(const char *old_path, const char *new_path)
+{
+	return sys_renameat(AT_FDCWD, old_path, AT_FDCWD, new_path);
+}
+
+int
+sys_renameat(int old_dirfd, const char *old_path, int new_dirfd,
+    const char *new_path)
+{
+	auto ret = syscall4(kPXSysRenameAt, old_dirfd, (uintptr_t)old_path,
+	    new_dirfd, (uintptr_t)new_path, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 } // namespace mlibc
