@@ -558,6 +558,16 @@ sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags,
 }
 
 int
+sys_statfs(const char *path, struct statfs *buf)
+{
+	uintptr_t ret = syscall2(kPXSysStatFS, (uintptr_t)path, (uintptr_t)buf,
+	    NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int
 sys_faccessat(int dirfd, const char *pathname, int mode, int flags)
 {
 	(void)flags;
