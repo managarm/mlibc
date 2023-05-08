@@ -67,4 +67,10 @@ extern "C" void __mlibc_thread_entry();
 		return 0;
 	}
 
+	void sys_thread_exit() {
+		mlibc::panicLogger() << "mlibc: sys_thread_exit unimplemented!" << frg::endlog;
+		__builtin_unreachable();
+	}
+
+
 }

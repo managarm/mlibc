@@ -31,6 +31,7 @@ enum posix_syscall {
 	kPXSysMkDirAt,
 	kPXSysRenameAt,
 	kPXSysStatFS,
+	kPXSysFCntl,
 
 	kPXSysSetFSBase,
 	kPXSysExecVE,

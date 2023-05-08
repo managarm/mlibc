@@ -186,11 +186,10 @@ sys_pselect(int nfds, fd_set *read_set, fd_set *write_set, fd_set *except_set,
 int
 sys_fcntl(int fd, int request, va_list args, int *result)
 {
-	(void)fd;
-	(void)request;
-	(void)args;
-	(void)result;
-	mlibc::infoLogger() << "fcntl() is a stub!" << frg::endlog;
+	auto ret = syscall3(kPXSysFCntl, fd, request, (uintptr_t)args, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	*result = ret;
 	return 0;
 }
 
@@ -586,8 +585,7 @@ sys_statvfs(const char *path, struct statvfs *buf)
 	buf->f_ffree = sb.f_ffree;
 	buf->f_favail = sb.f_ffree;
 
-	buf->f_fsid = sb.f_fsid.__val[1] |
-	    (uint64_t)sb.f_fsid.__val[0] << 32;
+	buf->f_fsid = sb.f_fsid.__val[1] | (uint64_t)sb.f_fsid.__val[0] << 32;
 	buf->f_flag = sb.f_flags;
 	buf->f_namemax = sb.f_namelen;
 
