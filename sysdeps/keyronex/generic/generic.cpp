@@ -568,6 +568,33 @@ sys_statfs(const char *path, struct statfs *buf)
 }
 
 int
+sys_statvfs(const char *path, struct statvfs *buf)
+{
+	struct statfs sb;
+	uintptr_t ret = syscall2(kPXSysStatFS, (uintptr_t)path, (uintptr_t)&sb,
+	    NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+
+	buf->f_bsize = sb.f_bsize;
+	buf->f_frsize = sb.f_frsize;
+	buf->f_blocks = sb.f_blocks;
+	buf->f_bfree = sb.f_bfree;
+	buf->f_bavail = sb.f_bavail;
+
+	buf->f_files = sb.f_files;
+	buf->f_ffree = sb.f_ffree;
+	buf->f_favail = sb.f_ffree;
+
+	buf->f_fsid = sb.f_fsid.__val[1] |
+	    (uint64_t)sb.f_fsid.__val[0] << 32;
+	buf->f_flag = sb.f_flags;
+	buf->f_namemax = sb.f_namelen;
+
+	return 0;
+}
+
+int
 sys_faccessat(int dirfd, const char *pathname, int mode, int flags)
 {
 	(void)flags;
