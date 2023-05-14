@@ -186,7 +186,8 @@ sys_pselect(int nfds, fd_set *read_set, fd_set *write_set, fd_set *except_set,
 int
 sys_fcntl(int fd, int request, va_list args, int *result)
 {
-	auto ret = syscall3(kPXSysFCntl, fd, request, (uintptr_t)args, NULL);
+	auto ret = syscall3(kPXSysFCntl, fd, request, va_arg(args, uint64_t),
+	    NULL);
 	if (int e = sc_error(ret); e)
 		return e;
 	*result = ret;
