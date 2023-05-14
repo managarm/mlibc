@@ -63,12 +63,11 @@ sys_accept(int fd, int *newfd, struct sockaddr *addr, socklen_t *addrlen,
 int
 sys_msg_send(int fd, const struct msghdr *msg, int flags, ssize_t *length)
 {
-	(void)fd;
-	(void)msg;
-	(void)flags;
-	(void)length;
-	log_unimplemented();
-	return ENOSYS;
+	auto ret = syscall3(kPXSysSendMsg, fd, (uintptr_t)msg, flags, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	*length = ret;
+	return 0;
 }
 
 int
