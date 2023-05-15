@@ -69,6 +69,7 @@ enum posix_syscall {
 
 	kPXSysSleep,
 	kPXSysUTSName,
+	kPXSysClockGet,
 
 	kPXSysForkThread,
 	kPXSysFutexWait,

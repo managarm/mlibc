@@ -519,10 +519,9 @@ sys_gettid()
 int
 sys_clock_get(int clock, time_t *secs, long *nanos)
 {
-	/* todo */
-	(void)clock;
-	*secs = 0;
-	*nanos = 0;
+	auto ret = syscall1(kPXSysClockGet, clock, NULL);
+	*secs = ret / 1000000000;
+	*nanos = ret & (1000000000 - 1);
 	return 0;
 }
 
