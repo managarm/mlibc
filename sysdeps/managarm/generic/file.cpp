@@ -1561,6 +1561,10 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	if (!handle)
 		return EBADF;
 
+	HelHandle cancel_handle;
+	HEL_CHECK(helCreateOneshotEvent(&cancel_handle));
+	helix::UniqueDescriptor cancel_event{cancel_handle};
+
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::READ);
 	req.set_fd(fd);
@@ -1574,13 +1578,20 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 			handle,
 			helix_ng::offer(
 				helix_ng::sendBuffer(ser.data(), ser.size()),
+				helix_ng::pushDescriptor(cancel_event),
 				helix_ng::imbueCredentials(),
 				helix_ng::recvInline(),
 				helix_ng::recvBuffer(data, max_size)
 			)
 		);
 
+	if (offer.error() == kHelErrCancelled) {
+		HEL_CHECK(helRaiseEvent(cancel_event.getHandle()));
+		return EINTR;
+	}
+
 	HEL_CHECK(offer.error());
+	HEL_CHECK(push_req.error());
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(imbue_creds.error());
 	HEL_CHECK(recv_resp.error());
