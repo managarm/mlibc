@@ -133,8 +133,11 @@ private:
 						_lastProgress | kHelProgressWaiters,
 						false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE));
 
-			HEL_CHECK(helFutexWait(&_chunk->progressFutex,
-					_lastProgress | kHelProgressWaiters, -1));
+			int err = helFutexWait(&_chunk->progressFutex,
+					_lastProgress | kHelProgressWaiters, -1);
+			if (err == kHelErrCancelled)
+				continue;
+			HEL_CHECK(err);
 		}
 	}
 
