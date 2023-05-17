@@ -9,6 +9,9 @@
 #include <hel-syscalls.h>
 #include <hel.h>
 
+#include <frg/optional.hpp>
+#include <mlibc/debug.hpp>
+
 struct SignalGuard {
 	SignalGuard();
 
@@ -121,22 +124,27 @@ struct Queue {
 
 	void trim() {}
 
-	ElementHandle dequeueSingle() {
+	frg::optional<ElementHandle> dequeueSingle(bool ignoreCancel = true) {
 		while (true) {
 			__ensure(_retrieveIndex != _nextIndex);
 
-			bool done;
-			_waitProgressFutex(&done);
+			auto progress = _waitProgressFutex(ignoreCancel);
 
 			auto n = _numberOf(_retrieveIndex);
 			__ensure(_refCount[n]);
 
-			if (done) {
+			if (progress == FutexProgress::DONE) {
 				retire(n);
 
 				_lastProgress = 0;
 				_retrieveIndex = ((_retrieveIndex + 1) & kHelHeadMask);
 				continue;
+			}
+
+			if (progress == FutexProgress::CANCELLED) {
+				__ensure(!ignoreCancel);
+				mlibc::infoLogger() << "cancel detected" << frg::endlog;
+				return frg::null_opt;
 			}
 
 			// Dequeue the next element.
@@ -175,18 +183,21 @@ private:
 			HEL_CHECK(helFutexWake(&_queue->headFutex));
 	}
 
-	void _waitProgressFutex(bool *done) {
+	enum class FutexProgress {
+		DONE,
+		IN_PROGRESS,
+		CANCELLED,
+	};
+
+	FutexProgress _waitProgressFutex(bool ignoreCancel) {
 		while (true) {
 			auto futex = __atomic_load_n(&_retrieveChunk()->progressFutex, __ATOMIC_ACQUIRE);
 			__ensure(!(futex & ~(kHelProgressMask | kHelProgressWaiters | kHelProgressDone)));
 			do {
-				if (_lastProgress != (futex & kHelProgressMask)) {
-					*done = false;
-					return;
-				} else if (futex & kHelProgressDone) {
-					*done = true;
-					return;
-				}
+				if (_lastProgress != (futex & kHelProgressMask))
+					return FutexProgress::IN_PROGRESS;
+				else if (futex & kHelProgressDone)
+					return FutexProgress::DONE;
 
 				if (futex & kHelProgressWaiters)
 					break; // Waiters bit is already set (in a previous iteration).
@@ -199,9 +210,17 @@ private:
 			    __ATOMIC_ACQUIRE
 			));
 
-			HEL_CHECK(helFutexWait(
+			int err = helFutexWait(
 			    &_retrieveChunk()->progressFutex, _lastProgress | kHelProgressWaiters, -1
-			));
+			);
+			if (err == kHelErrCancelled) {
+				if (ignoreCancel) {
+					continue;
+				}
+
+				return FutexProgress::CANCELLED;
+			}
+			HEL_CHECK(err);
 		}
 	}
 
@@ -261,6 +280,7 @@ inline HelHandleResult *parseHandle(ElementHandle &element) {
 HelHandle getPosixLane();
 HelHandle *cacheFileTable();
 HelHandle getHandleForFd(int fd);
+void setCurrentRequestEvent(HelHandle event);
 void clearCachedInfos();
 
 extern thread_local Queue globalQueue;
@@ -278,11 +298,38 @@ auto exchangeMsgsSync(HelHandle descriptor, Args &&...args) {
 	);
 
 	auto element = globalQueue.dequeueSingle();
-	void *ptr = element.data();
+	__ensure(element);
+	void *ptr = element->data();
 
 	[&]<size_t... p>(std::index_sequence<p...>) {
-		(results.template get<p>().parse(ptr, element), ...);
+		(results.template get<p>().parse(ptr, *element), ...);
 	}(std::make_index_sequence<std::tuple_size_v<decltype(results)>>{});
+
+	return results;
+}
+
+template <typename... Args>
+auto exchangeMsgsSyncCancellable(HelHandle descriptor, HelHandle event, Args &&...args) {
+	auto results = helix_ng::createResultsTuple(args...);
+	auto actions = helix_ng::chainActionArrays(args...);
+
+	setCurrentRequestEvent(event);
+	HEL_CHECK(
+	    helSubmitAsync(descriptor, actions.data(), actions.size(), globalQueue.getQueue(), 0, 0)
+	);
+
+	auto element = globalQueue.dequeueSingle(false);
+	if (!element) {
+		element = globalQueue.dequeueSingle();
+		__ensure(element);
+	}
+	void *ptr = element->data();
+
+	[&]<size_t... p>(std::index_sequence<p...>) {
+		(results.template get<p>().parse(ptr, *element), ...);
+	}(std::make_index_sequence<std::tuple_size_v<decltype(results)>>{});
+
+	setCurrentRequestEvent(kHelNullHandle);
 
 	return results;
 }

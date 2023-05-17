@@ -148,7 +148,10 @@ int sys_sleep(time_t *secs, long *nanos) {
 	));
 
 	auto element = globalQueue.dequeueSingle();
-	auto result = parseSimple(element);
+	if (!element) {
+		return EINTR;
+	}
+	auto result = parseSimple(*element);
 	HEL_CHECK(result->error);
 
 	*secs = 0;
