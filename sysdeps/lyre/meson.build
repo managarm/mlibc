@@ -6,6 +6,9 @@ rtdl_sources += files(
 libc_sources += files(
 	'generic/entry.cpp',
 	'generic/generic.cpp',
+	'generic/mntent.cpp',
+	'generic/mount.cpp',
+	'generic/reboot.cpp',
 	'generic/thread.cpp',
 	'generic/thread.S'
 )
@@ -58,8 +61,36 @@ if not no_headers
 	)
 
 	install_headers(
+		'include/asm/ioctl.h',
+		'include/asm/ioctls.h',
+		subdir: 'asm',
+	)
+
+	install_headers(
+		'include/asm-generic/ioctl.h',
+		subdir: 'asm-generic',
+	)
+
+	install_headers(
+		'include/linux/ioctl.h',
+		'include/linux/fb.h',
+		subdir: 'linux',
+	)
+
+	install_headers(
+		'include/sys/reboot.h',
+		'include/sys/mount.h',
+		'include/sys/sysmacros.h',
+		subdir: 'sys',
+	)
+
+	install_headers(
 		'include/lyre/syscall.h',
 		subdir: 'lyre',
+	)
+
+	install_headers(
+		'include/mntent.h',
 	)
 endif
 
