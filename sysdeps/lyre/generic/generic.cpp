@@ -712,7 +712,10 @@ int sys_listen(int fd, int backlog) {
 	return 0;
 }
 
-int sys_inotify_create(int, int *) STUB_ONLY
+int sys_inotify_create(int, int *) {
+	mlibc::infoLogger() << "mlibc: sys_inotify_create() is unimplemented" << frg::endlog;
+	return ENOSYS;
+}
 
 int sys_fork(pid_t *child) {
 	__syscall_ret ret = __syscall(SYS_fork);

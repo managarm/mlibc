@@ -148,6 +148,7 @@ elif host_machine.system() == 'keyronex'
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/keyronex')
 elif host_machine.system() == 'lyre'
+	disable_linux_option = true
 	rtdl_include_dirs += include_directories('sysdeps/lyre/include')
 	libc_include_dirs += include_directories('sysdeps/lyre/include')
 	subdir('sysdeps/lyre')
