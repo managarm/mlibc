@@ -83,12 +83,11 @@ sys_msg_recv(int fd, struct msghdr *msg, int flags, ssize_t *length)
 int
 sys_socketpair(int domain, int type_and_flags, int proto, int *fds)
 {
-	(void)domain;
-	(void)type_and_flags;
-	(void)proto;
-	(void)fds;
-	log_unimplemented();
-	return ENOSYS;
+	auto ret = syscall4(kPXSysSocketPair, domain, type_and_flags, proto,
+	    (uintptr_t)fds, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 int
