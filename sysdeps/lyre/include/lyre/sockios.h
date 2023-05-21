@@ -1,7 +1,7 @@
 #ifndef _LYRE__SOCKIOS_H
 #define _LYRE__SOCKIOS_H
 
-#include <asm/sockios.h>
+#include <asm/ioctls.h>
 
 #define SIOCINQ FIONREAD
 #define SIOCOUTQ TIOCOUTQ
