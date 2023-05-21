@@ -10,6 +10,5 @@
 #mesondefine __MLIBC_GLIBC_OPTION
 #mesondefine __MLIBC_CRYPT_OPTION
 #mesondefine __MLIBC_SYSDEP_HAS_BITS_SYSCALL_H
-#mesondefine __MLIBC_BSD_OPTION
 
 #endif // _MLIBC_CONFIG_H
