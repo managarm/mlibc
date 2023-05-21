@@ -86,6 +86,7 @@ if not no_headers
 
 	install_headers(
 		'include/lyre/syscall.h',
+		'include/lyre/sockios.h',
 		subdir: 'lyre',
 	)
 
