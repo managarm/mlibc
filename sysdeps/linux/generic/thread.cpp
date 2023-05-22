@@ -15,10 +15,8 @@ extern "C" void __mlibc_enter_thread(void *entry, void *user_arg) {
 	while(!__atomic_load_n(&tcb->tid, __ATOMIC_RELAXED))
 		mlibc::sys_futex_wait(&tcb->tid, 0, nullptr);
 
-	void *(*func)(void *) = reinterpret_cast<void *(*)(void *)>(entry);
-	auto result = func(user_arg);
+	tcb->invokeThreadFunc(entry, user_arg);
 
-	tcb->returnValue = result;
 	__atomic_store_n(&tcb->didExit, 1, __ATOMIC_RELEASE);
 	mlibc::sys_futex_wake(&tcb->didExit);
 

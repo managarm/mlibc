@@ -14,7 +14,7 @@ extern "C" void __mlibc_thread_trampoline(void *(*fn)(void *), Tcb *tcb, void *a
 		mlibc::sys_futex_wait(&tcb->tid, 0, nullptr);
 	}
 
-	tcb->returnValue = fn(arg);
+	tcb->invokeThreadFunc(reinterpret_cast<void *>(fn), arg);
 
 	__atomic_store_n(&tcb->didExit, 1, __ATOMIC_RELEASE);
 	mlibc::sys_futex_wake(&tcb->didExit);

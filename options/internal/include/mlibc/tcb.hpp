@@ -79,15 +79,24 @@ namespace mlibc {
 #endif
 }
 
+enum class TcbThreadReturnValue {
+	Pointer,
+	Integer,
+};
+
 struct Tcb {
 	Tcb *selfPointer;
 	size_t dtvSize;
 	void **dtvPointers;
 	int tid;
 	int didExit;
-	void *returnValue;
+	union {
+		void *voidPtr;
+		int intVal;
+	} returnValue;
 	uintptr_t stackCanary;
 	int cancelBits;
+	TcbThreadReturnValue returnValueType;
 	struct AtforkHandler {
 		void (*prepare)(void);
 		void (*parent)(void);
@@ -121,6 +130,16 @@ struct Tcb {
 	size_t stackSize;
 	void *stackAddr;
 	size_t guardSize;
+
+	inline void invokeThreadFunc(void *entry, void *user_arg) {
+		if(returnValueType == TcbThreadReturnValue::Pointer) {
+			auto func = reinterpret_cast<void *(*)(void *)>(entry);
+			returnValue.voidPtr = func(user_arg);
+		} else {
+			auto func = reinterpret_cast<int (*)(void *)>(entry);
+			returnValue.intVal = func(user_arg);
+		}
+	}
 };
 
 // There are a few places where we assume the layout of the TCB:

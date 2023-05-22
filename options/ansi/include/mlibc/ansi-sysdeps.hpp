@@ -20,6 +20,12 @@ namespace [[gnu::visibility("hidden")]] mlibc {
 [[noreturn]] void sys_exit(int status);
 [[noreturn, gnu::weak]] void sys_thread_exit();
 
+[[gnu::weak]] int sys_prepare_stack(void **stack, void *entry, void *user_arg, void* tcb, size_t *stack_size, size_t *guard_size);
+[[gnu::weak]] int sys_clone(void *tcb, pid_t *pid_out, void *stack);
+
+int sys_futex_wait(int *pointer, int expected, const struct timespec *time);
+int sys_futex_wake(int *pointer);
+
 int sys_open(const char *pathname, int flags, mode_t mode, int *fd);
 [[gnu::weak]] int sys_flock(int fd, int options);
 

@@ -257,6 +257,7 @@ internal_sources = [
 	'options/internal/generic/sigset.cpp',
 	'options/internal/generic/strings.cpp',
 	'options/internal/generic/ubsan.cpp',
+	'options/internal/generic/threads.cpp',
 	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc/initfini.cpp',
@@ -291,6 +292,7 @@ if not no_headers
 		'options/internal/include/bits/inline-definition.h',
 		'options/internal/include/bits/ether_addr.h',
 		'options/internal/include/bits/cpu_set.h',
+		'options/internal/include/bits/threads.h',
 		subdir: 'bits'
 	)
 endif

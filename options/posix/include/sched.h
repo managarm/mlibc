@@ -3,6 +3,7 @@
 #define _SCHED_H
 
 #include <abi-bits/pid_t.h>
+#include <bits/threads.h>
 #include <bits/size_t.h>
 #include <mlibc-config.h>
 
@@ -26,10 +27,6 @@ extern "C" {
 #define SCHED_IDLE 5
 #define SCHED_DEADLINE 6
 #define SCHED_RESET_ON_FORK 0x40000000
-
-struct sched_param {
-	int sched_priority;
-};
 
 #ifndef __MLIBC_ABI_ONLY
 

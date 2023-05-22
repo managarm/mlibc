@@ -909,7 +909,7 @@ Tcb *allocateTcb() {
 	tcb_ptr->cancelBits = tcbCancelEnableBit;
 	tcb_ptr->didExit = 0;
 	tcb_ptr->isJoinable = 1;
-	tcb_ptr->returnValue = nullptr;
+	memset(&tcb_ptr->returnValue, 0, sizeof(tcb_ptr->returnValue));
 	tcb_ptr->localKeys = frg::construct<frg::array<Tcb::LocalKey, PTHREAD_KEYS_MAX>>(getAllocator());
 	tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
 	tcb_ptr->dtvPointers = frg::construct_n<void *>(getAllocator(), runtimeTlsMap->indices.size());
