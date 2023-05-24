@@ -27,6 +27,8 @@ typedef struct __mlibc_cond cnd_t;
 
 typedef int (*thrd_start_t)(void*);
 
+#ifndef __MLIBC_ABI_ONLY
+
 int thrd_create(thrd_t *thr, thrd_start_t func, void *arg);
 int thrd_join(thrd_t thr, int *res);
 
@@ -39,6 +41,8 @@ int cnd_init(cnd_t *cond);
 void cnd_destroy(cnd_t *cond);
 int cnd_broadcast(cnd_t *cond);
 int cnd_wait(cnd_t *cond, mtx_t *mtx);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
