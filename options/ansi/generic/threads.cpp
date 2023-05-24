@@ -1,4 +1,7 @@
 #include <abi-bits/errno.h>
+#include <bits/ensure.h>
+#include <mlibc/debug.hpp>
+#include <mlibc/thread.hpp>
 #include <mlibc/threads.hpp>
 #include <threads.h>
 
@@ -12,12 +15,43 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg) {
 	return (res == ENOMEM) ? thrd_nomem : thrd_error;
 }
 
+int thrd_equal(thrd_t t1, thrd_t t2) {
+	if(t1 == t2) {
+		return 1;
+	}
+	return 0;
+}
+
+thrd_t thrd_current(void) {
+	return reinterpret_cast<thrd_t>(mlibc::get_current_tcb());
+}
+
+int thrd_sleep(const struct timespec *, struct timespec *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+void thrd_yield(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int thrd_detach(thrd_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 int thrd_join(thrd_t thr, int *res) {
 	if(mlibc::thread_join(thr, res) != 0) {
 		return thrd_error;
 	}
 
 	return thrd_success;
+}
+
+__attribute__((__noreturn__)) void thrd_exit(int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
 }
 
 int mtx_init(mtx_t *mtx, int type) {
