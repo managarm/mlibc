@@ -30,7 +30,13 @@ typedef int (*thrd_start_t)(void*);
 #ifndef __MLIBC_ABI_ONLY
 
 int thrd_create(thrd_t *thr, thrd_start_t func, void *arg);
+int thrd_equal(thrd_t lhs, thrd_t rhs);
+thrd_t thrd_current(void);
+int thrd_sleep(const struct timespec *duration, struct timespec *remaining);
+void thrd_yield(void);
+int thrd_detach(thrd_t thr);
 int thrd_join(thrd_t thr, int *res);
+__attribute__((__noreturn__)) void thrd_exit(int res);
 
 int mtx_init(mtx_t *mtx, int type);
 void mtx_destroy(mtx_t *mtx);
