@@ -374,6 +374,7 @@ int sys_isatty(int fd) {
 
 #include <net/if.h>
 #include <sys/ioctl.h>
+#include <sys/ipc.h>
 #include <sys/user.h>
 #include <sys/utsname.h>
 #include <sys/stat.h>
@@ -1396,6 +1397,22 @@ int sys_sysconf(int num, long *ret) {
 		}
 	}
 
+	return 0;
+}
+
+int sys_semget(key_t key, int n, int fl, int *id) {
+	auto ret = do_syscall(SYS_semget, key, n, fl);
+	if(int e = sc_error(ret); e)
+		return e;
+	*id = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_semctl(int semid, int semnum, int cmd, void *semun, int *out) {
+	auto ret = do_syscall(SYS_semctl, semid, semnum, cmd | IPC_64, semun);
+	if(int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<int>(ret);
 	return 0;
 }
 
