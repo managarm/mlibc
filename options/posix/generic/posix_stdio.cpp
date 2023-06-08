@@ -29,9 +29,10 @@ private:
 	pid_t _popen_pid;
 };
 
-FILE *fmemopen(void *__restrict, size_t, const char *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+FILE *fmemopen(void *__restrict buf, size_t size, const char *__restrict) {
+	mlibc::infoLogger() << "mlibc warning: fmemopen() ignores the mode" << frg::endlog;
+
+	return frg::construct<mlibc::buf_file>(getAllocator(), (char*)buf, size);
 }
 
 int pclose(FILE *stream) {
