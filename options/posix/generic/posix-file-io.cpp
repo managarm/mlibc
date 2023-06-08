@@ -71,8 +71,7 @@ int mem_file::io_seek(off_t offset, int whence, off_t *new_offset) {
 			*new_offset = _pos;
 			break;
 		default:
-			__ensure(!"Unknown whence value passed!");
-			__builtin_unreachable();
+			return EINVAL;
 	}
 	return 0;
 }
