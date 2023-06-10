@@ -82,6 +82,59 @@ void mem_file::_update_ptrs() {
 	*_sizeloc = _buf.size() - 1;
 }
 
+int cookie_file::close() {
+	if(!_funcs.close) {
+		return 0;
+	}
+
+	return _funcs.close(_cookie);
+}
+
+int cookie_file::reopen(const char *, const char *) {
+	mlibc::panicLogger() << "mlibc: freopen() on a cookie_file stream is unimplemented!" << frg::endlog;
+	return -1;
+}
+
+int cookie_file::determine_type(stream_type *type) {
+	*type = stream_type::file_like;
+	return 0;
+}
+
+int cookie_file::determine_bufmode(buffer_mode *mode) {
+	*mode = buffer_mode::no_buffer;
+	return 0;
+}
+
+int cookie_file::io_read(char *buffer, size_t max_size, size_t *actual_size) {
+	if(!_funcs.read) {
+		return EOF;
+	}
+
+	*actual_size = _funcs.read(_cookie, buffer, max_size);
+
+	return 0;
+}
+
+int cookie_file::io_write(const char *buffer, size_t max_size, size_t *actual_size) {
+	if(!_funcs.write) {
+		return 0;
+	}
+
+	*actual_size = _funcs.write(_cookie, buffer, max_size);
+
+	return 0;
+}
+
+int cookie_file::io_seek(off_t offset, int whence, off_t *new_offset) {
+	if(!_funcs.seek) {
+		return ENOTSUP;
+	}
+
+	*new_offset = offset;
+
+	return _funcs.seek(_cookie, new_offset, whence);
+}
+
 } // namespace mlibc
 
 FILE *fdopen(int fd, const char *mode) {
