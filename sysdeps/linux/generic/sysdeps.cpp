@@ -374,8 +374,10 @@ int sys_isatty(int fd) {
 
 #include <net/if.h>
 #include <sys/ioctl.h>
+#include <sys/user.h>
 #include <sys/utsname.h>
 #include <sys/stat.h>
+#include <sys/sysinfo.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1346,6 +1348,54 @@ int sys_fstatvfs(int fd, struct statvfs *out) {
 		return ret;
 	}
 	statfs_to_statvfs(&buf, out);
+	return 0;
+}
+
+int sys_sysconf(int num, long *ret) {
+	switch(num) {
+		case _SC_OPEN_MAX: {
+			struct rlimit ru;
+			if(int e = sys_getrlimit(RLIMIT_NOFILE, &ru); e) {
+				return e;
+			}
+			*ret = (ru.rlim_cur == RLIM_INFINITY) ? -1 : ru.rlim_cur;
+			break;
+		}
+		case _SC_NPROCESSORS_ONLN: {
+			cpu_set_t set;
+			CPU_ZERO(&set);
+			if(int e = sys_getaffinity(0, sizeof(set), &set); e) {
+				return e;
+			}
+			*ret = CPU_COUNT(&set);
+			break;
+		}
+		case _SC_PHYS_PAGES: {
+			struct sysinfo info;
+			if(int e = sys_sysinfo(&info); e) {
+				return e;
+			}
+			unsigned unit = (info.mem_unit) ? info.mem_unit : 1;
+			*ret = std::min(long((info.totalram * unit) / PAGE_SIZE), LONG_MAX);
+			break;
+		}
+		case _SC_CHILD_MAX: {
+			struct rlimit ru;
+			if(int e = sys_getrlimit(RLIMIT_NPROC, &ru); e) {
+				return e;
+			}
+			*ret = (ru.rlim_cur == RLIM_INFINITY) ? -1 : ru.rlim_cur;
+			break;
+		}
+		case _SC_LINE_MAX: {
+			*ret = -1;
+			break;
+		}
+		default: {
+			return EINVAL;
+		}
+	}
+
 	return 0;
 }
 
