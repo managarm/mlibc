@@ -358,6 +358,9 @@ int sys_setsockopt(int fd, int layer, int number,
 	}else if(layer == SOL_SOCKET && number == SO_ACCEPTCONN) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_ACCEPTCONN is unimplemented\e[39m" << frg::endlog;
 		return 0;
+	}else if(layer == IPPROTO_TCP && number == TCP_KEEPIDLE) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_KEEPIDLE is unimplemented\e[39m" << frg::endlog;
+		return 0;
 	}else{
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call, layer: " << layer << " number: " << number << "\e[39m" << frg::endlog;
 		__builtin_unreachable();
