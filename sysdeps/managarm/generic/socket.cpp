@@ -2,6 +2,8 @@
 #include <bits/ensure.h>
 #include <errno.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
+#include <netinet/in.h>
 
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
