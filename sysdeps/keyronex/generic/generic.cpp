@@ -521,7 +521,7 @@ sys_clock_get(int clock, time_t *secs, long *nanos)
 {
 	auto ret = syscall1(kPXSysClockGet, clock, NULL);
 	*secs = ret / 1000000000;
-	*nanos = ret & (1000000000 - 1);
+	*nanos = ret % 1000000000;
 	return 0;
 }
 
@@ -693,7 +693,7 @@ sys_getentropy(void *buffer, size_t length)
 {
 	/* todo: improve lmao */
 	mlibc::infoLogger() << "mlibc: getentropy is a stub" << frg::endlog;
-	memset(buffer, 0x12345678, length);
+	memset(buffer, 123, length);
 	return 0;
 }
 #endif
