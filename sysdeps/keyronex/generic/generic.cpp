@@ -1,4 +1,5 @@
 #include <asm/ioctls.h>
+
 #include <bits/ensure.h>
 #include <dirent.h>
 #include <errno.h>
@@ -109,36 +110,6 @@ sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events)
 	    num_events);
 }
 
-#if 0 /* not ready yet */
-int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
-					int timeout, const sigset_t *sigmask, int *raised) {
-	__syscall_ret ret = __syscall(49, epfd, ev, n, timeout, sigmask);
-
-	if (ret.errno != 0)
-		return ret.errno;
-
-	*raised = (int)ret.ret;
-	return 0;
-}
-
-int sys_epoll_create(int flags, int *fd) {
-	__syscall_ret ret = __syscall(37, flags);
-
-	if (ret.errno != 0)
-		return ret.errno;
-
-	*fd = (int)ret.ret;
-	return 0;
-}
-
-int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
-	__syscall_ret ret = __syscall(47, epfd, mode, fd, ev);
-
-	return ret.errno;
-}
-
-#endif
-
 #ifndef MLIBC_BUILDING_RTDL
 int
 sys_pselect(int nfds, fd_set *read_set, fd_set *write_set, fd_set *except_set,
@@ -213,19 +184,33 @@ sys_pselect(int nfds, fd_set *read_set, fd_set *write_set, fd_set *except_set,
 #endif
 
 int
+sys_fcntl(int fd, int request, va_list args, int *result)
+{
+	auto ret = syscall3(kPXSysFCntl, fd, request, va_arg(args, uint64_t),
+	    NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	*result = ret;
+	return 0;
+}
+
+int
 sys_futex_wait(int *pointer, int expected, const struct timespec *time)
 {
-	(void)pointer;
-	(void)expected;
-	(void)time;
-	STUB_ONLY
+	auto ret = syscall3(kPXSysFutexWait, (uintptr_t)pointer, expected,
+	    (uintptr_t)time, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 int
 sys_futex_wake(int *pointer)
 {
-	(void)pointer;
-	STUB_ONLY
+	auto ret = syscall1(kPXSysFutexWake, (uintptr_t)pointer, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 #ifndef MLIBC_BUILDING_RTDL
@@ -261,6 +246,27 @@ sys_getcwd(char *buffer, size_t size)
 	return 0;
 }
 #endif
+
+int
+sys_dup(int fd, int flags, int *newfd)
+{
+	uintptr_t ret = syscall2(kPXSysDup, fd, flags, NULL);
+	if (int e = sc_error(ret); e) {
+		return e;
+	}
+	*newfd = ret;
+	return 0;
+}
+
+int
+sys_dup2(int fd, int flags, int newfd)
+{
+	uintptr_t ret = syscall3(kPXSysDup3, fd, newfd, flags, NULL);
+	if (int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
+}
 
 int
 sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd)
@@ -305,6 +311,16 @@ sys_close(int fd)
 }
 
 int
+sys_link(const char *old_path, const char *new_path)
+{
+	uintptr_t ret = syscall2(kPXSysLink, (uintptr_t)old_path,
+	    (uintptr_t)new_path, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int
 sys_seek(int fd, off_t offset, int whence, off_t *new_offset)
 {
 	uintptr_t ret = syscall3(kPXSysSeek, fd, offset, whence, NULL);
@@ -344,6 +360,15 @@ sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length)
 	if (int e = sc_error(ret); e)
 		return e;
 	*length = (ssize_t)ret;
+	return 0;
+}
+
+int
+sys_pipe(int *fds, int flags)
+{
+	uintptr_t ret = syscall2(kPXSysPipe, (uintptr_t)fds, flags, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 
@@ -432,19 +457,48 @@ sys_getgid()
 }
 
 int
+sys_getsid(pid_t pid, pid_t *sid)
+{
+	auto ret = syscall1(kPXSysGetSID, pid, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	*sid = (pid_t)(ret);
+	return 0;
+}
+
+int
 sys_setgid(gid_t gid)
 {
 	(void)gid;
 	return 0;
 }
 
-pid_t
-sys_getpgid(pid_t pid, pid_t *pgid)
+int
+sys_getpgid(pid_t pid, pid_t *out)
 {
-	(void)pid;
-	mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!\n"
-			    << frg::endlog;
-	*pgid = 0;
+	auto ret = syscall1(kPXSysGetPGID, pid, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out = (pid_t)(ret);
+	return 0;
+}
+
+int
+sys_setpgid(pid_t pid, pid_t pgid)
+{
+	auto ret = syscall2(kPXSysSetPGID, pid, pgid, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int
+sys_setsid(pid_t *sid)
+{
+	auto ret = syscall0(kPXSysSetSID, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	*sid = (pid_t)ret;
 	return 0;
 }
 
@@ -456,13 +510,18 @@ sys_getegid()
 	return 0;
 }
 
+pid_t
+sys_gettid()
+{
+	return syscall0(kPXSysGetTID, NULL);
+}
+
 int
 sys_clock_get(int clock, time_t *secs, long *nanos)
 {
-	/* todo */
-	(void)clock;
-	*secs = 0;
-	*nanos = 0;
+	auto ret = syscall1(kPXSysClockGet, clock, NULL);
+	*secs = ret / 1000000000;
+	*nanos = ret % 1000000000;
 	return 0;
 }
 
@@ -494,6 +553,42 @@ sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags,
 	    (uintptr_t)statbuf, NULL);
 	if (int e = sc_error(r); e)
 		return e;
+	return 0;
+}
+
+int
+sys_statfs(const char *path, struct statfs *buf)
+{
+	uintptr_t ret = syscall2(kPXSysStatFS, (uintptr_t)path, (uintptr_t)buf,
+	    NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int
+sys_statvfs(const char *path, struct statvfs *buf)
+{
+	struct statfs sb;
+	uintptr_t ret = syscall2(kPXSysStatFS, (uintptr_t)path, (uintptr_t)&sb,
+	    NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+
+	buf->f_bsize = sb.f_bsize;
+	buf->f_frsize = sb.f_frsize;
+	buf->f_blocks = sb.f_blocks;
+	buf->f_bfree = sb.f_bfree;
+	buf->f_bavail = sb.f_bavail;
+
+	buf->f_files = sb.f_files;
+	buf->f_ffree = sb.f_ffree;
+	buf->f_favail = sb.f_ffree;
+
+	buf->f_fsid = sb.f_fsid.__val[1] | (uint64_t)sb.f_fsid.__val[0] << 32;
+	buf->f_flag = sb.f_flags;
+	buf->f_namemax = sb.f_namelen;
+
 	return 0;
 }
 
@@ -553,6 +648,15 @@ sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru,
 
 #ifndef MLIBC_BUILDING_RTDL
 int
+sys_sleep(time_t *sec, long *nanosec)
+{
+	auto ret = syscall1(kPXSysSleep, *sec * 1000000000 + *nanosec, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int
 sys_uname(struct utsname *buf)
 {
 	uintptr_t ret = syscall1(kPXSysUTSName, (uintptr_t)buf, NULL);
@@ -583,6 +687,67 @@ sys_fsync(int)
 	mlibc::infoLogger() << "mlibc: fsync is a stub" << frg::endlog;
 	return 0;
 }
+
+int
+sys_getentropy(void *buffer, size_t length)
+{
+	/* todo: improve lmao */
+	mlibc::infoLogger() << "mlibc: getentropy is a stub" << frg::endlog;
+	memset(buffer, 123, length);
+	return 0;
+}
 #endif
+
+int
+sys_mkdir(const char *path, mode_t mode)
+{
+	return sys_mkdirat(AT_FDCWD, path, mode);
+}
+
+int
+sys_mkdirat(int dirfd, const char *path, mode_t mode)
+{
+	uintptr_t ret = syscall3(kPXSysMkDirAt, dirfd, (uintptr_t)path, mode,
+	    NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int
+sys_chdir(const char *path)
+{
+	uintptr_t ret = syscall1(kPXSysChDir, (uintptr_t)path, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int
+sys_umask(mode_t mode, mode_t *old)
+{
+	uintptr_t ret = syscall1(kPXSysUMask, mode, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	*old = (mode_t)ret;
+	return 0;
+}
+
+int
+sys_rename(const char *old_path, const char *new_path)
+{
+	return sys_renameat(AT_FDCWD, old_path, AT_FDCWD, new_path);
+}
+
+int
+sys_renameat(int old_dirfd, const char *old_path, int new_dirfd,
+    const char *new_path)
+{
+	auto ret = syscall4(kPXSysRenameAt, old_dirfd, (uintptr_t)old_path,
+	    new_dirfd, (uintptr_t)new_path, NULL);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
 
 } // namespace mlibc

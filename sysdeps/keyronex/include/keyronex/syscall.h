@@ -22,6 +22,16 @@ enum posix_syscall {
 	kPXSysStat,
 	kPXSysUnlinkAt,
 	kPXSysGetCWD,
+	kPXSysPipe,
+	kPXSysDup,
+	kPXSysDup3,
+	kPXSysLink,
+	kPXSysChDir,
+	kPXSysUMask,
+	kPXSysMkDirAt,
+	kPXSysRenameAt,
+	kPXSysStatFS,
+	kPXSysFCntl,
 
 	kPXSysSetFSBase,
 	kPXSysExecVE,
@@ -30,12 +40,45 @@ enum posix_syscall {
 	kPXSysWaitPID,
 	kPXSysGetPID,
 	kPXSysGetPPID,
+	kPXSysGetPGID,
+	kPXSysSetPGID,
+	kPXSysGetSID,
+	kPXSysSetSID,
+	kPXSysGetTID,
+
+	kPXSysSigAction,
+	kPXSysSigMask,
+	kPXSysSigSend,
+	kPXSysSigSuspend,
+	kPXSysSigTimedWait,
+
+	kPXSysSocket,
+	kPXSysBind,
+	kPXSysConnect,
+	kPXSysListen,
+	kPXSysAccept,
+	kPXSysSendMsg,
+	kPXSysRecvMsg,
+	kPXSysSocketPair,
+	kPXSysGetSockOpt,
+	kPXSysSetSockOpt,
 
 	kPXSysEPollCreate,
 	kPXSysEPollCtl,
 	kPXSysEPollWait,
 
+	kPXSysSleep,
 	kPXSysUTSName,
+	kPXSysClockGet,
+
+	kPXSysForkThread,
+	kPXSysFutexWait,
+	kPXSysFutexWake,
+
+	/*! register signal entry function */
+	kPXSysSigEntry,
+	/*! return from a signal */
+	kPXSysSigReturn,
 };
 
 enum posix_stat_kind {
