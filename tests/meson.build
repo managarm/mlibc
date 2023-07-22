@@ -45,6 +45,7 @@ all_test_cases = [
 	'posix/pthread_schedparam',
 	'posix/pwd',
 	'posix/fdopen',
+	'posix/fopencookie',
 	'posix/getaddrinfo',
 	'posix/getdelim',
 	'posix/getnameinfo',

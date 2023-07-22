@@ -51,7 +51,11 @@ typedef struct _IO_cookie_io_functions_t {
 
 #ifndef __MLIBC_ABI_ONLY
 
+#if defined(_GNU_SOURCE)
+
 FILE *fopencookie(void *__restrict cookie, const char *__restrict mode, cookie_io_functions_t io_funcs);
+
+#endif // defined(_GNU_SOURCE)
 
 #endif /* !__MLIBC_ABI_ONLY */
 
