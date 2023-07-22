@@ -254,7 +254,6 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			dest[i] = resp.drm_encoders(i);
 		}
 
-		param->count_props = 0;
 		param->encoder_id = resp.drm_encoder_id();
 		param->connector_type = resp.drm_connector_type();
 		param->connector_type_id = resp.drm_connector_type_id();
@@ -268,9 +267,11 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		if(param->props_ptr) {
 			auto id_ptr = reinterpret_cast<uint32_t *>(param->props_ptr);
+			auto val_ptr = reinterpret_cast<uint64_t *>(param->prop_values_ptr);
 
 			for(size_t i = 0; i < frg::min(static_cast<size_t>(param->count_props), resp.drm_obj_property_ids_size()); i++) {
 				id_ptr[i] = resp.drm_obj_property_ids(i);
+				val_ptr[i] = resp.drm_obj_property_values(i);
 			}
 		}
 
