@@ -7,6 +7,7 @@ all_test_cases = [
 	'ansi/strtol',
 	'ansi/abs',
 	'ansi/longjmp',
+	'ansi/mbrtoc32',
 	'ansi/strverscmp',
 	'ansi/strftime',
 	'ansi/strchr',
