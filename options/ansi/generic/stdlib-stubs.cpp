@@ -396,10 +396,26 @@ int mbtowc(wchar_t *__restrict wc, const char *__restrict mb, size_t max_size) {
 			mlibc::code_seq<wchar_t> wseq{wc, wc + 1};
 			mlibc::code_seq<const char> nseq{mb, mb + max_size};
 			auto e = cc->decode_wtranscode(nseq, wseq, mbtowc_state);
-			if (e != mlibc::charcode_error::null)
-				__ensure(!"decode_wtranscode() errors are not handled");
-
-			return nseq.it - mb;
+			switch(e) {
+				// We keep the state, so we can simply return here.
+				case mlibc::charcode_error::input_underflow:
+				case mlibc::charcode_error::null: {
+					return nseq.it - mb;
+				}
+				case mlibc::charcode_error::illegal_input: {
+					errno = -EILSEQ;
+					return -1;
+				}
+				case mlibc::charcode_error::dirty: {
+					mlibc::panicLogger() << "decode_wtranscode() charcode_error::dirty errors are not handled" << frg::endlog;
+					break;
+				}
+				case mlibc::charcode_error::output_overflow: {
+					mlibc::panicLogger() << "decode_wtranscode() charcode_error::output_overflow errors are not handled" << frg::endlog;
+					break;
+				}
+			}
+			__builtin_unreachable();
 		} else {
 			*wc = L'\0';
 			return 0; // When mbs is a null byte, return 0
