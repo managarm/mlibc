@@ -164,16 +164,18 @@ if host_machine.system() == 'linux'
 	rtdl_include_dirs += include_directories('sysdeps/linux/include')
 	libc_include_dirs += include_directories('sysdeps/linux/include')
 
-	if get_option('linux_kernel_headers') == ''
-		error('linux_kernel_headers is not set')
-	endif
+	if not headers_only
+		if get_option('linux_kernel_headers') == ''
+			error('linux_kernel_headers is not set')
+		endif
 
-	if not import('fs').is_dir(get_option('linux_kernel_headers'))
-		error('linux_kernel_headers is not set to a valid path')
-	endif
+		if not import('fs').is_dir(get_option('linux_kernel_headers'))
+			error('linux_kernel_headers is not set to a valid path')
+		endif
 
-	rtdl_include_dirs += include_directories(get_option('linux_kernel_headers'))
-	libc_include_dirs += include_directories(get_option('linux_kernel_headers'))
+		rtdl_include_dirs += include_directories(get_option('linux_kernel_headers'))
+		libc_include_dirs += include_directories(get_option('linux_kernel_headers'))
+	endif
 
 	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
 	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
@@ -254,12 +256,14 @@ if not disable_intl_option
 endif
 
 if not disable_linux_option
-	if get_option('linux_kernel_headers') == ''
-		error('linux_kernel_headers is not set')
-	endif
+	if not headers_only
+		if get_option('linux_kernel_headers') == ''
+			error('linux_kernel_headers is not set')
+		endif
 
-	if not import('fs').is_dir(get_option('linux_kernel_headers'))
-		error('linux_kernel_headers is not set to a valid path')
+		if not import('fs').is_dir(get_option('linux_kernel_headers'))
+			error('linux_kernel_headers is not set to a valid path')
+		endif
 	endif
 
 	rtdl_include_dirs += include_directories('options/linux/include')
