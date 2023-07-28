@@ -337,7 +337,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
-		req.set_pgid((long int)param);
+		req.set_pgid(*param);
 
 		frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 		req.SerializeToString(&ser);
