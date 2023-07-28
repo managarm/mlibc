@@ -1748,6 +1748,10 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	if (!handle)
 		return EBADF;
 
+	HelHandle cancel_handle;
+	HEL_CHECK(helCreateOneshotEvent(&cancel_handle));
+	helix::UniqueDescriptor cancel_event{cancel_handle};
+
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::READ);
 	req.set_fd(fd);
@@ -1756,29 +1760,31 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 
-	auto [offer, send_req, imbue_creds, recv_resp, recv_data] = exchangeMsgsSync(
-	    handle,
-	    helix_ng::offer(
-	        helix_ng::sendBuffer(ser.data(), ser.size()),
-	        helix_ng::imbueCredentials(),
-	        helix_ng::recvInline(),
-	        helix_ng::recvBuffer(data, max_size)
-	    )
-	);
+	auto [offer, push_req, send_req, imbue_creds, recv_resp, recv_data] =
+	    exchangeMsgsSyncCancellable(
+	        handle,
+	        cancel_handle,
+	        helix_ng::offer(
+	            helix_ng::sendBuffer(ser.data(), ser.size()),
+	            helix_ng::pushDescriptor(cancel_event),
+	            helix_ng::imbueCredentials(),
+	            helix_ng::recvInline(),
+	            helix_ng::recvBuffer(data, max_size)
+	        )
+	    );
 
 	HEL_CHECK(offer.error());
+	HEL_CHECK(push_req.error());
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(imbue_creds.error());
 	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() != managarm::fs::Errors::SUCCESS)
-		return resp.error() | toErrno;
-
 	HEL_CHECK(recv_data.error());
+
 	*bytes_read = recv_data.actualLength();
-	return 0;
+	return resp.error() | toErrno;
 }
 
 int sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
