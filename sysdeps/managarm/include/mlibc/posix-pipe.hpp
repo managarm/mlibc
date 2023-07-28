@@ -10,6 +10,7 @@
 #include <hel-syscalls.h>
 
 #include <frg/optional.hpp>
+#include <mlibc/debug.hpp>
 
 struct SignalGuard {
 	SignalGuard();
@@ -132,11 +133,11 @@ struct Queue {
 
 	void trim() { }
 	
-	frg::optional<ElementHandle> dequeueSingle() {
+	frg::optional<ElementHandle> dequeueSingle(bool ignoreCancel = true) {
 		while(true) {
 			__ensure(_retrieveIndex != _nextIndex);
 
-			auto progress = _waitProgressFutex();
+			auto progress = _waitProgressFutex(ignoreCancel);
 
 			auto n = _numberOf(_retrieveIndex);
 			__ensure(_refCount[n]);
@@ -149,8 +150,11 @@ struct Queue {
 				continue;
 			}
 
-			if (progress == FutexProgress::CANCELLED)
+			if (progress == FutexProgress::CANCELLED) {
+				__ensure(!ignoreCancel);
+				mlibc::infoLogger() << "cancel detected" << frg::endlog;
 				return frg::null_opt;
+			}
 
 			// Dequeue the next element.
 			auto ptr = (char *)_chunks[n] + sizeof(HelChunk) + _lastProgress;
@@ -200,7 +204,7 @@ private:
 		CANCELLED,
 	};
 
-	FutexProgress _waitProgressFutex() {
+	FutexProgress _waitProgressFutex(bool ignoreCancel) {
 		while(true) {
 			auto futex = __atomic_load_n(&_retrieveChunk()->progressFutex, __ATOMIC_ACQUIRE);
 			__ensure(!(futex & ~(kHelProgressMask | kHelProgressWaiters | kHelProgressDone)));
@@ -218,8 +222,15 @@ private:
 			
 			int err = helFutexWait(&_retrieveChunk()->progressFutex,
 					_lastProgress | kHelProgressWaiters, -1);
-			if (err == kHelErrCancelled)
+			if (err == kHelErrCancelled) {
+				if (ignoreCancel) {
+					mlibc::infoLogger() << "ignoring cancel" << frg::endlog;
+					continue;
+				}
+
+				mlibc::infoLogger() << "woke up from futex wait" << frg::endlog;
 				return FutexProgress::CANCELLED;
+			}
 			HEL_CHECK(err);
 		}
 	}
@@ -297,8 +308,6 @@ auto exchangeMsgsSync(HelHandle descriptor, Args &&...args) {
 		actions.size(), globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle();
-	while (!element)
-		element = globalQueue.dequeueSingle();
 	__ensure(element);
 	void *ptr = element->data();
 
@@ -318,11 +327,11 @@ auto exchangeMsgsSyncCancellable(HelHandle descriptor, HelHandle event,
 	HEL_CHECK(helSubmitAsync(descriptor, actions.data(),
 		actions.size(), globalQueue.getQueue(), 0, 0));
 
-	auto element = globalQueue.dequeueSingle();
+	auto element = globalQueue.dequeueSingle(false);
 	if (!element) {
 		HEL_CHECK(helRaiseEvent(event));
-		while (!element)
-			element = globalQueue.dequeueSingle();
+		element = globalQueue.dequeueSingle();
+		__ensure(element);
 	}
 	void *ptr = element->data();
 
