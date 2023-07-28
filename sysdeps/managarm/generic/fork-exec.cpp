@@ -57,20 +57,33 @@ int sys_futex_wake(int *pointer) {
 int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
 	SignalGuard sguard;
 
+	if (ru) {
+		mlibc::infoLogger() << "mlibc: struct rusage in sys_waitpid is unsupported" << frg::endlog;
+		return ENOSYS;
+	}
+
+	HelHandle cancel_handle;
+	HEL_CHECK(helCreateOneshotEvent(&cancel_handle));
+	helix::UniqueDescriptor cancel_event{cancel_handle};
+
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::WAIT);
 	req.set_pid(pid);
 	req.set_flags(flags);
 
-	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
+	auto [offer, send_head, push_descriptor, recv_resp] = exchangeMsgsSyncCancellable(
 	    getPosixLane(),
+	    cancel_handle,
 	    helix_ng::offer(
-	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+	        helix_ng::pushDescriptor(cancel_event),
+	        helix_ng::recvInline()
 	    )
 	);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
+	HEL_CHECK(push_descriptor.error());
 	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
