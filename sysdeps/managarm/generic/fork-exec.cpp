@@ -60,30 +60,41 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 		return ENOSYS;
 	}
 
-	SignalGuard sguard;
+	//SignalGuard sguard;
+
+	HelHandle cancel_handle;
+	HEL_CHECK(helCreateOneshotEvent(&cancel_handle));
+	helix::UniqueDescriptor cancel_event{cancel_handle};
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::WAIT);
 	req.set_pid(pid);
 	req.set_flags(flags);
 
-	auto [offer, send_head, recv_resp] =
-		exchangeMsgsSync(
+	auto [offer, send_head, push_descriptor, recv_resp] =
+		exchangeMsgsSyncCancellable(
 			getPosixLane(),
+			cancel_handle,
 			helix_ng::offer(
 				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::pushDescriptor(cancel_event),
 				helix_ng::recvInline()
 			)
 		);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
+	HEL_CHECK(push_descriptor.error());
 	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		return EINVAL;
+	}
+	if (resp.error() == managarm::posix::Errors::INTERRUPTED) {
+		mlibc::infoLogger() << "returning EINT" << frg::endlog;
+		return EINTR;
 	}
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	if(status)
