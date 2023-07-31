@@ -293,6 +293,7 @@ if not no_headers
 		'options/internal/include/bits/ether_addr.h',
 		'options/internal/include/bits/cpu_set.h',
 		'options/internal/include/bits/threads.h',
+		'options/internal/include/bits/winsize.h',
 		subdir: 'bits'
 	)
 endif

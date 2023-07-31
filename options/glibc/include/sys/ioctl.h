@@ -7,6 +7,7 @@
 // On Linux, sys/ioctl.h includes the termios ioctls.
 #if __MLIBC_LINUX_OPTION
 #	include <asm/ioctls.h>
+#	include <bits/winsize.h>
 #endif
 
 #ifdef __cplusplus

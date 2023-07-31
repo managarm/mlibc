@@ -9,6 +9,8 @@
 extern "C" {
 #endif
 
+#include <bits/winsize.h>
+
 // baud rate constants for speed_t
 #define B0       0
 #define B50      1
@@ -73,13 +75,6 @@ int tcsetattr(int, int, const struct termios *);
 #define TIOCGWINSZ 0x5413
 #define TIOCSWINSZ 0x5414
 #define TIOCGSID 0x5429
-
-struct winsize {
-	unsigned short ws_row;
-	unsigned short ws_col;
-	unsigned short ws_xpixel;
-	unsigned short ws_ypixel;
-};
 
 #define ECHOCTL 0001000
 #define FLUSHO  0010000
