@@ -176,13 +176,6 @@ int sys_kill(int pid, int sig) {
     return 0;
 }
 
-int sys_getpgid(pid_t pid, pid_t *pgid) {
-    mlibc::infoLogger() << "sys_getpgid() is unimplemented" << frg::endlog;
-    *pgid = 0;
-
-    return 0;
-}
-
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
     struct timespec ts;
     auto result = syscall(SYS_GETTIME, clock, &ts);
@@ -239,6 +232,21 @@ int sys_sleep(time_t *sec, long *nanosec) {
     return 0;
 }
 
+pid_t sys_getpgid(pid_t pid, pid_t *pgid) {
+    auto ret = syscall(SYS_GETPGID, pid);
+    if(int e = sc_error(ret); e)
+        return e;
+    *pgid = ret;
+    return 0;
+}
+
+int sys_setpgid(pid_t pid, pid_t pgid) {
+    auto ret = syscall(SYS_SETPGID, pid, pgid);
+    if(int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 uid_t sys_getuid() {
     mlibc::infoLogger() << "mlibc: sys_setuid is a stub" << frg::endlog;
     return 0;
@@ -250,7 +258,10 @@ uid_t sys_geteuid() {
 }
 
 int sys_setsid(pid_t *sid) {
-    mlibc::infoLogger() << "mlibc: sys_setsid is a stub" << frg::endlog;
+    auto ret = syscall(SYS_SETSID);
+    if(int e = sc_error(ret); e)
+        return e;
+    *sid = ret;
     return 0;
 }
 
