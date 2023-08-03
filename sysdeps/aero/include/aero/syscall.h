@@ -75,6 +75,10 @@
 #define SYS_RENAME 68
 #define SYS_MPROTECT 69
 #define SYS_SOCK_SEND 70
+#define SYS_TRACE 71
+#define SYS_SETPGID 72
+#define SYS_SETSID 73
+#define SYS_GETPGID 74
 
 // Invalid syscall used to trigger a log error in the kernel (as a hint)
 // so, that we can implement the syscall in the kernel.
@@ -216,5 +220,11 @@ template <typename... T>
 __attribute__((__always_inline__)) static inline long syscall(sc_word_t call,
                                                           T... args) {
     return _syscall(call, sc_cast(args)...);
+}
+
+inline int sc_error(long ret) {
+    if (ret < 0)
+        return -ret;
+    return 0;
 }
 #endif // SYSCALL_H

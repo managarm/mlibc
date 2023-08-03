@@ -155,14 +155,16 @@ int sys_tcgetattr(int fd, struct termios *attr) {
 }
 
 int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
-    if (optional_action)
-        mlibc::infoLogger()
-            << "mlibc: warning: sys_tcsetattr ignores optional_action"
-            << frg::endlog;
+    int req;
 
-    int result;
+    switch (optional_action) {
+		case TCSANOW: req = TCSETS; break;
+		case TCSADRAIN: req = TCSETSW; break;
+		case TCSAFLUSH: req = TCSETSF; break;
+		default: return EINVAL;
+	}
 
-    if (int e = sys_ioctl(fd, TCSETSF, (void *)attr, &result); e)
+    if (int e = sys_ioctl(fd, req, (void *)attr, NULL); e)
         return e;
 
     return 0;
@@ -178,9 +180,7 @@ int sys_mkdir(const char *path, mode_t) {
     return 0;
 }
 
-int sys_rmdir(const char *path) UNIMPLEMENTED("sys_rmdir")
-
-    int sys_link(const char *srcpath, const char *destpath) {
+int sys_link(const char *srcpath, const char *destpath) {
     auto result =
         syscall(SYS_LINK, srcpath, strlen(srcpath), destpath, strlen(destpath));
 
@@ -191,14 +191,15 @@ int sys_rmdir(const char *path) UNIMPLEMENTED("sys_rmdir")
     return 0;
 }
 
+int sys_rmdir(const char *path) {
+    return sys_unlinkat(AT_FDCWD, path, AT_REMOVEDIR);
+}
+
 int sys_unlinkat(int fd, const char *path, int flags) {
-    auto result = syscall(SYS_UNLINK, fd, path, strlen(path), flags);
-
-    if (result < 0) {
-        return -result;
-    }
-
-    return 0;
+	auto ret = syscall(SYS_UNLINK, fd, path, strlen(path), flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 struct aero_dir_entry {
