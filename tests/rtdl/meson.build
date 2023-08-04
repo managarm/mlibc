@@ -1,5 +1,6 @@
 rtdl_test_cases = [
 	'dl_iterate_phdr',
+	'dladdr_local',
 	'noload-promote',
 	'rtld_next',
 	'soname',
