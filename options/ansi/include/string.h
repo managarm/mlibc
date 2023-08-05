@@ -61,6 +61,8 @@ size_t strlen(const char *__s);
 
 /* POSIX extensions. */
 #if defined(_GNU_SOURCE)
+const char *strerrorname_np(int e);
+const char *strerrordesc_np(int e);
 char *strerror_r(int __errnum, char *__buffer, size_t __size) __asm__("__gnu_strerror_r");
 #else
 int strerror_r(int __errnum, char *__buffer, size_t __size);
