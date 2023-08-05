@@ -153,45 +153,6 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result){
 
 #ifndef MLIBC_BUILDING_RTDL
 
-int sys_isatty(int fd) {
-	struct winsize ws;
-	long ret = sys_ioctl(fd, TIOCGWINSZ, &ws, 0);
-
-	if(!ret) return 0;
-
-	return ENOTTY;
-}
-
-int sys_tcgetattr(int fd, struct termios *attr) {
-	if(int e = sys_isatty(fd))
-		return e;
-
-	int ret;
-	sys_ioctl(fd, TCGETS, attr, &ret);
-
-	if(ret)
-		return -ret;
-
-	return 0;
-}
-
-int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
-	if(int e = sys_isatty(fd))
-		return e;
-
-	if(optional_action){
-		mlibc::infoLogger() << "mlibc warning: sys_tcsetattr ignores optional_action" << frg::endlog;
-	}
-
-	int ret;
-	sys_ioctl(fd, TCSETS, const_cast<struct termios*>(attr), &ret);
-
-	if(ret)
-		return -ret;
-
-	return 0;
-}
-
 int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events){
 	long ret = syscall(SYS_POLL, fds, count, timeout);
 
