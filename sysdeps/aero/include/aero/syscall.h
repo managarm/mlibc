@@ -79,6 +79,7 @@
 #define SYS_SETPGID 72
 #define SYS_SETSID 73
 #define SYS_GETPGID 74
+#define SYS_SOCK_SHUTDOWN 75
 
 // Invalid syscall used to trigger a log error in the kernel (as a hint)
 // so, that we can implement the syscall in the kernel.

@@ -159,6 +159,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 		void *__restrict buffer, socklen_t *__restrict size);
 [[gnu::weak]] int sys_setsockopt(int fd, int layer, int number,
 		const void *buffer, socklen_t size);
+[[gnu::weak]] int sys_shutdown(int sockfd, int how);
 [[gnu::weak]] int sys_sigprocmask(int how, const sigset_t *__restrict set,
 		sigset_t *__restrict retrieve);
 [[gnu::weak]] int sys_sigaction(int, const struct sigaction *__restrict,

@@ -221,6 +221,13 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer,
     }
 }
 
+int sys_shutdown(int sockfd, int how) {
+    auto ret = syscall(SYS_SOCK_SHUTDOWN, sockfd, how);
+    if(int e = sc_error(ret); e)
+        return e;
+    return 0;    
+}
+
 int sys_if_nametoindex(const char *name, unsigned int *ret) {
     int fd = 0;
     int r = sys_socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, AF_UNSPEC, &fd);

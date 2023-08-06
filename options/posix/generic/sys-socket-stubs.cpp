@@ -187,8 +187,13 @@ int setsockopt(int fd, int layer, int number,
 	return mlibc::sys_setsockopt(fd, layer, number, buffer, size);
 }
 
-int shutdown(int, int) {
-	mlibc::infoLogger() << "mlibc: shutdown() is a no-op!" << frg::endlog;
+int shutdown(int sockfd, int how) {
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_shutdown, -1);
+	if(int e = sysdep(sockfd, how); e) {
+		errno = e;
+		return -1;
+	}
+
 	return 0;
 }
 
