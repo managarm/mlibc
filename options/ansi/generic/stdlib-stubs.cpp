@@ -138,6 +138,13 @@ void *aligned_alloc(size_t alignment, size_t size) {
 
 }
 void *calloc(size_t count, size_t size) {
+	// we want to ensure that count*size > SIZE_MAX doesn't happen
+	// to prevent overflowing, we divide both sides of the inequality by size and check with that
+	if(size && count > (SIZE_MAX / size)) {
+		errno = EINVAL;
+		return NULL;
+	}
+
 	// TODO: this could be done more efficient if the OS gives us already zero'd pages
 	void *ptr = malloc(count * size);
 	if(!ptr)
