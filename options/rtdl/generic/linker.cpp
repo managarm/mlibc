@@ -683,8 +683,11 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_TLSDESC_PLT: case DT_TLSDESC_GOT:
 			break;
 		default:
-			mlibc::panicLogger() << "Unexpected dynamic entry "
+			// Ignore unknown entries in the os-specific area as we don't use them.
+			if(dynamic->d_tag < DT_LOOS || dynamic->d_tag > DT_HIOS) {
+				mlibc::panicLogger() << "Unexpected dynamic entry "
 					<< (void *)dynamic->d_tag << " in object" << frg::endlog;
+			}
 		}
 	}
 
