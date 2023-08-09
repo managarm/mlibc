@@ -413,6 +413,25 @@ if not headers_only
 	library('dl', 'dummy-libs/libdl/src/dummy.cpp', install: true)
 endif
 
+summary_info = {}
+summary_info += {'Build tests': build_tests}
+summary_info += {'Build host-libc tests': build_tests_host_libc}
+summary(summary_info, bool_yn: true, section: 'tests')
+
+summary_info = {}
+summary_info += {'headers-only': headers_only}
+summary_info += {'ANSI option': not disable_ansi_option}
+summary_info += {'crypt option': not disable_crypt_option}
+summary_info += {'POSIX option': not disable_posix_option}
+summary_info += {'Linux option': not disable_linux_option}
+summary_info += {'iconv option': not disable_iconv_option}
+summary_info += {'intl option': not disable_intl_option}
+summary_info += {'glibc option': not disable_glibc_option}
+summary_info += {'BSD option': not disable_bsd_option}
+summary_info += {'debug allocator': get_option('debug_allocator')}
+summary_info += {'libgcc dependency': not disable_libgcc_dependency}
+summary(summary_info, bool_yn: true, section: 'mlibc options')
+
 if build_tests
 	subdir('tests/')
 endif
