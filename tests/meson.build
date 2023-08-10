@@ -25,6 +25,7 @@ all_test_cases = [
 	'ansi/qsort',
 	'ansi/freopen',
 	'ansi/strxfrm',
+	'ansi/calloc',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
@@ -125,7 +126,12 @@ host_libc_noasan_test_cases = [
 	'posix/pthread_attr', # does some stack overflowing to check stack size
 	'posix/posix_memalign',
 	'posix/search', # requires tdelete (#351)
+	'ansi/calloc', # does some overflowing
 ]
+
+extra_cflags_test_cases = {
+	'ansi/calloc': ['-Wno-alloc-size-larger-than'],
+}
 
 test_sources = []
 test_link_args = []
@@ -221,10 +227,17 @@ foreach test_name : all_test_cases
 		else
 			host_libc_sanitize_options = 'b_sanitize=address,undefined'
 		endif
+
+		if test_name in extra_cflags_test_cases
+			extra_cflags = extra_cflags_test_cases[test_name]
+		else
+			extra_cflags = []
+		endif
+
 		exec = executable('host-libc-' + test_exec_name, test_name + '.c',
 			build_rpath: meson.build_root(),
 			override_options: host_libc_sanitize_options,
-			c_args: ['-D_GNU_SOURCE', '-DUSE_HOST_LIBC', '-pthread'],
+			c_args: ['-D_GNU_SOURCE', '-DUSE_HOST_LIBC', '-pthread', extra_cflags],
 			link_args: ['-lresolv', '-ldl', '-pthread', '-lm', '-lrt'],
 			native: true,
 		)
