@@ -18,6 +18,7 @@ libc_sources += files(
 	'generic/sys-timex.cpp',
 	'generic/glibc-assert.cpp',
 	'generic/malloc.cpp',
+	'generic/sys-io.cpp',
 )
 
 if not no_headers
@@ -53,6 +54,7 @@ if not no_headers
 		'include/sys/endian.h',
 		'include/sys/timex.h',
 		'include/sys/kd.h',
+		'include/sys/io.h',
 		subdir: 'sys'
 	)
 	install_headers(

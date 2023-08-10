@@ -8,6 +8,9 @@ namespace  [[gnu::visibility("hidden")]] mlibc {
 
 [[gnu::weak]] int sys_personality(unsigned long persona, int *out);
 
+[[gnu::weak]] int sys_ioperm(unsigned long int from, unsigned long int num, int turn_on);
+[[gnu::weak]] int sys_iopl(int level);
+
 } // namespace mlibc
 
 #endif // MLIBC_GLIBC_SYSDEPS
