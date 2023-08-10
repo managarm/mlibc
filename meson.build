@@ -435,3 +435,15 @@ summary(summary_info, bool_yn: true, section: 'mlibc options')
 if build_tests
 	subdir('tests/')
 endif
+
+hdoc = find_program('hdoc', required: false)
+
+conf_data = configuration_data()
+conf_data.set('source_root', meson.source_root())
+conf_data.set('build_root', meson.build_root())
+configure_file(input: 'scripts/hdoc.toml.in',
+	output: '.hdoc.toml', configuration: conf_data)
+
+if hdoc.found()
+	run_target('hdoc', command : [hdoc.full_path(), '--verbose'])
+endif
