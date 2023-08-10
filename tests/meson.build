@@ -24,6 +24,7 @@ all_test_cases = [
 	'ansi/fenv',
 	'ansi/qsort',
 	'ansi/freopen',
+	'ansi/strxfrm',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',

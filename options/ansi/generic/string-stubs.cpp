@@ -102,9 +102,13 @@ int strncmp(const char *a, const char *b, size_t max_size) {
 }
 
 size_t strxfrm(char *__restrict dest, const char *__restrict src, size_t n) {
-	size_t l = strlen(src);
 	// NOTE: This might not work for non ANSI charsets.
-	strncpy(dest, src, n);
+	size_t l = strlen(src);
+
+	// man page: If the value returned is n or more, the contents of dest are indeterminate.
+	if(n > l)
+		strncpy(dest, src, n);
+
 	return l;
 }
 
