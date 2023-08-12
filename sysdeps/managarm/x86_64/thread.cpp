@@ -35,7 +35,7 @@ int sys_prepare_stack(void **stack, void *entry, void *user_arg, void *tcb, size
 
 	uintptr_t *sp;
 	if (*stack) {
-		sp = reinterpret_cast<uintptr_t *>(*stack);
+		sp = reinterpret_cast<uintptr_t *>(reinterpret_cast<uintptr_t>(*stack) + *stack_size);
 	} else {
 		sp = reinterpret_cast<uintptr_t *>(reinterpret_cast<uintptr_t>(
 					mmap(nullptr, *stack_size,
