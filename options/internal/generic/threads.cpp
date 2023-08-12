@@ -34,7 +34,7 @@ int thread_create(struct __mlibc_thread_data **__restrict thread, const struct _
 		return ENOSYS;
 	}
 	int ret = mlibc::sys_prepare_stack(&stack, entry,
-			user_arg, new_tcb, &attr.__mlibc_stacksize, &attr.__mlibc_guardsize);
+			user_arg, new_tcb, &attr.__mlibc_stacksize, &attr.__mlibc_guardsize, &new_tcb->stackAddr);
 	if (ret)
 		return ret;
 
@@ -44,9 +44,6 @@ int thread_create(struct __mlibc_thread_data **__restrict thread, const struct _
 	}
 	new_tcb->stackSize = attr.__mlibc_stacksize;
 	new_tcb->guardSize = attr.__mlibc_guardsize;
-	new_tcb->stackAddr = reinterpret_cast<void*>(
-			reinterpret_cast<uintptr_t>(stack)
-			- attr.__mlibc_stacksize - attr.__mlibc_guardsize);
 	new_tcb->returnValueType = (returns_int) ? TcbThreadReturnValue::Integer : TcbThreadReturnValue::Pointer;
 	mlibc::sys_clone(new_tcb, &tid, stack);
 	*thread = reinterpret_cast<struct __mlibc_thread_data *>(new_tcb);
