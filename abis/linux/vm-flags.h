@@ -14,6 +14,7 @@
 #define MAP_ANON      0x20
 #define MAP_ANONYMOUS 0x20
 #define MAP_NORESERVE 0x4000
+#define MAP_FIXED_NOREPLACE 0x100000
 
 #define MS_ASYNC 0x01
 #define MS_INVALIDATE 0x02

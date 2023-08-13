@@ -84,6 +84,8 @@ struct mtconfiginfo {
 #define MTSETPART 33
 #define MTMKPART 34
 
+#define GMT_WR_PROT(x) ((x) & 0x04000000)
+
 #if __MLIBC_LINUX_OPTION
 #include <asm/ioctl.h>
 

@@ -599,8 +599,15 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	*window = reinterpret_cast<void *>(resp.offset());
+	if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
+		return EEXIST;
+	}else if(resp.error() == managarm::posix::Errors::NO_MEMORY) {
+		return EFAULT;
+	}else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		*window = reinterpret_cast<void *>(resp.offset());
+	}
+
 	return 0;
 }
 
