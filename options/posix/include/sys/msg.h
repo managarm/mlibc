@@ -1,7 +1,7 @@
 #ifndef _SYS_MSG_H
 #define _SYS_MSG_H
 
-#include <sys/ipc.h>
+#include <abi-bits/msg.h>
 
 #ifdef __cplusplus
 extern "C" {
