@@ -81,8 +81,8 @@ jobs:
           - name: Compile sysdeps
             run: |
                 meson setup \
-                    "-Dc_args=['-fno-stack-protector', '-U__linux__']" \
-                    "-Dcpp_args=['-fno-stack-protector', '-U__linux__']" \
+                    "-Dc_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized']" \
+                    "-Dcpp_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized']" \
                     "-Dbuild_tests=true" \
                     "-Db_sanitize=undefined" \
                     "-Dlinux_kernel_headers=$(pwd)/packages/linux-headers/usr/include" \
