@@ -603,6 +603,8 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 		return EEXIST;
 	}else if(resp.error() == managarm::posix::Errors::NO_MEMORY) {
 		return EFAULT;
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
 	}else {
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*window = reinterpret_cast<void *>(resp.offset());
