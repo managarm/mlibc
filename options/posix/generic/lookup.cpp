@@ -141,7 +141,7 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 					buf.buf.push(std::move(buffer));
 					break;
 				case RECORD_CNAME:
-					canon_name = std::move(read_dns_name(response, it));
+					canon_name = read_dns_name(response, it);
 					buf.aliases.push(std::move(dns_name));
 					break;
 				default:
