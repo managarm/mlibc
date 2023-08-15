@@ -92,13 +92,18 @@ struct Tcb {
 	void **dtvPointers;
 	int tid;
 	int didExit;
+#if defined(__x86_64__)
+	uint8_t padding[8];
+#endif
+	uintptr_t stackCanary;
+	int cancelBits;
+
 	union {
 		void *voidPtr;
 		int intVal;
 	} returnValue;
-	uintptr_t stackCanary;
-	int cancelBits;
 	TcbThreadReturnValue returnValueType;
+
 	struct AtforkHandler {
 		void (*prepare)(void);
 		void (*parent)(void);
@@ -146,22 +151,30 @@ struct Tcb {
 
 // There are a few places where we assume the layout of the TCB:
 #if defined(__x86_64__)
-// sysdeps/linux/x86_64/cp_syscall.S uses the offset of cancelBits.
-// GCC also expects the stack canary to be at fs:0x28.
+// GCC expects the stack canary to be at fs:0x28.
 static_assert(offsetof(Tcb, stackCanary) == 0x28);
+// sysdeps/linux/x86_64/cp_syscall.S uses the offset of cancelBits.
 static_assert(offsetof(Tcb, cancelBits) == 0x30);
+#elif defined(__i386__)
+// GCC expects the stack canary to be at gs:0x14.
+// The offset differs from x86_64 due to the change in the pointer size
+// and removed padding before the stack canary.
+static_assert(offsetof(Tcb, stackCanary) == 0x14);
+// sysdeps/linux/x86/cp_syscall.S uses the offset of cancelBits.
+// It differs from x86_64 for the same reasons as the stack canary.
+static_assert(offsetof(Tcb, cancelBits) == 0x18);
 #elif defined(__aarch64__)
 // The thread pointer on AArch64 points to 16 bytes before the end of the TCB.
 // options/linker/aarch64/runtime.S uses the offset of dtvPointers.
-static_assert(sizeof(Tcb) - offsetof(Tcb, dtvPointers) - TP_TCB_OFFSET == 96);
+static_assert(sizeof(Tcb) - offsetof(Tcb, dtvPointers) - TP_TCB_OFFSET == 104);
 // sysdeps/linux/aarch64/cp_syscall.S uses the offset of cancelBits.
-static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) - TP_TCB_OFFSET == 64);
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) - TP_TCB_OFFSET == 80);
 #elif defined(__riscv) && __riscv_xlen == 64
 // The thread pointer on RISC-V points to *after* the TCB, and since
 // we need to access specific fields that means that the value in
 // sysdeps/linux/riscv64/cp_syscall.S needs to be updated whenever
 // the struct is expanded.
-static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 80);
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 96);
 #else
 #error "Missing architecture specific code."
 #endif
