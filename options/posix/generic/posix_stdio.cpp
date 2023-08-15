@@ -156,7 +156,7 @@ FILE *popen(const char *command, const char *typestr) {
 }
 
 FILE *open_memstream(char **buf, size_t *sizeloc) {
-	return frg::construct<mlibc::mem_file>(getAllocator(), buf, sizeloc,
+	return frg::construct<mlibc::memstream_mem_file>(getAllocator(), buf, sizeloc, O_RDWR,
 			mlibc::file_dispose_cb<mlibc::mem_file>);
 }
 

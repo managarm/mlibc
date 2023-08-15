@@ -6,15 +6,6 @@
 
 namespace mlibc {
 
-mem_file::mem_file(char **ptr, size_t *sizeloc, void (*do_dispose)(abstract_file *))
-: abstract_file{do_dispose}, _bufloc{ptr}, _sizeloc{sizeloc}, _buf{getAllocator()}, _pos{0} { }
-
-int mem_file::close() {
-	_update_ptrs();
-	_buf.detach();
-	return 0;
-}
-
 int mem_file::reopen(const char *, const char *) {
 	mlibc::panicLogger() << "mlibc: freopen() on a mem_file stream is unimplemented!" << frg::endlog;
 	return -1;
@@ -30,27 +21,49 @@ int mem_file::determine_bufmode(buffer_mode *mode) {
 	return 0;
 }
 
-int mem_file::io_read(char *, size_t, size_t *) {
-	return EINVAL;
+memstream_mem_file::memstream_mem_file(char **ptr, size_t *sizeloc, int flags, void (*do_dispose)(abstract_file *))
+: mem_file{flags, do_dispose}, _bufloc{ptr}, _sizeloc{sizeloc} { }
+
+
+int memstream_mem_file::close() {
+	_update_ptrs();
+	_buf.detach();
+
+	return 0;
 }
 
-int mem_file::io_write(const char *buffer, size_t max_size, size_t *actual_size) {
-	if (_pos + max_size >= _buf.size()) {
+int memstream_mem_file::io_read(char *buffer, size_t max_size, size_t *actual_size) {
+	if ((_pos >= 0 && _pos >= _max_size) || !max_size) {
+		*actual_size = 0;
+		return 0;
+	}
+
+	size_t bytes_read = std::min(size_t(_max_size - _pos), max_size);
+	memcpy(buffer, _buffer().data() + _pos, bytes_read);
+	_pos += bytes_read;
+	*actual_size = bytes_read;
+	return 0;
+}
+
+int memstream_mem_file::io_write(const char *buffer, size_t max_size, size_t *actual_size) {
+	if (_pos + max_size >= _buffer_size()) {
 		_buf.resize(_pos + max_size + 1, '\0');
 		_update_ptrs();
 	}
 
-	memcpy(_buf.data() + _pos, buffer, max_size);
+	size_t bytes_write = std::min(static_cast<size_t>(_buffer_size() - _pos), max_size);
+	memcpy(_buffer().data() + _pos, buffer, bytes_write);
 	_pos += max_size;
 	*actual_size = max_size;
+
 	return 0;
 }
 
-int mem_file::io_seek(off_t offset, int whence, off_t *new_offset) {
+int memstream_mem_file::io_seek(off_t offset, int whence, off_t *new_offset) {
 	switch (whence) {
 		case SEEK_SET:
 			_pos = offset;
-			if (_pos >= _buf.size()) {
+			if (_pos >= 0 && size_t(_pos) >= _buffer_size()) {
 				_buf.resize(_pos + 1, '\0');
 				_update_ptrs();
 			}
@@ -58,14 +71,14 @@ int mem_file::io_seek(off_t offset, int whence, off_t *new_offset) {
 			break;
 		case SEEK_CUR:
 			_pos += offset;
-			if (_pos >= _buf.size()) {
+			if (_pos >= 0 && size_t(_pos) >= _buffer_size()) {
 				_buf.resize(_pos + 1, '\0');
 				_update_ptrs();
 			}
 			*new_offset = _pos;
 			break;
 		case SEEK_END:
-			_pos = _buf.size() ? _buf.size() - 1 + offset : _buf.size() + offset;
+			_pos = _buffer_size() ? _buffer_size() - 1 + offset : _buffer_size() + offset;
 			_buf.resize(_pos + 1, '\0');
 			_update_ptrs();
 			*new_offset = _pos;
@@ -76,7 +89,7 @@ int mem_file::io_seek(off_t offset, int whence, off_t *new_offset) {
 	return 0;
 }
 
-void mem_file::_update_ptrs() {
+void memstream_mem_file::_update_ptrs() {
 	*_bufloc = _buf.data();
 	*_sizeloc = _buf.size() - 1;
 }
