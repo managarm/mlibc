@@ -547,6 +547,8 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 // --------------------------------------------------------
 
 void ObjectRepository::_parseDynamic(SharedObject *object) {
+	static bool rpathWarned = false;
+
 	if(!object->dynamic)
 		mlibc::infoLogger() << "ldso: Object '" << object->name
 				<< "' does not have a dynamic section" << frg::endlog;
@@ -635,7 +637,10 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 						<< frg::endlog;
 			break;
 		case DT_RPATH:
-			mlibc::infoLogger() << "\e[31mrtdl: RUNPATH not preferred over RPATH properly\e[39m" << frg::endlog;
+			if(!rpathWarned) {
+				rpathWarned = true;
+				mlibc::infoLogger() << "\e[31mrtdl: RUNPATH not preferred over RPATH properly\e[39m" << frg::endlog;
+			}
 			[[fallthrough]];
 		case DT_RUNPATH:
 			runpath_offset = dynamic->d_un.d_val;

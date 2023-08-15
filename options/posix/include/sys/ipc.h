@@ -20,6 +20,14 @@ extern "C" {
 
 #define IPC_PRIVATE ((key_t) 0)
 
+#if defined(__aarch64__)
+#define IPC_64 0x100
+#elif defined(__x86_64__) || (defined(__riscv) && __riscv_xlen == 64)
+#define IPC_64 0
+#else
+#error "Unsupported arch!"
+#endif
+
 typedef int key_t;
 
 struct ipc_perm {

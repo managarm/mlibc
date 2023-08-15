@@ -383,8 +383,10 @@ int abstract_file::_write_back() {
 int abstract_file::_save_pos() {
 	if (int e = _init_type(); e)
 		return e;
+	if (int e = _init_bufmode(); e)
+		return e;
 
-	if (_type == stream_type::file_like) {
+	if (_type == stream_type::file_like && _bufmode != buffer_mode::no_buffer) {
 		off_t new_offset;
 		auto seek_offset = (off_t(__offset) - off_t(__io_offset));
 		if (int e = io_seek(seek_offset, SEEK_CUR, &new_offset); e) {
