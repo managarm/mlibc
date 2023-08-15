@@ -21,6 +21,8 @@ struct passwd {
 	char *pw_shell;
 };
 
+#define NSS_BUFLEN_PASSWD 512
+
 #ifndef __MLIBC_ABI_ONLY
 
 void endpwent(void);
