@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <termios.h>
+#include <pwd.h>
 #include <sys/ioctl.h>
 
 #include <bits/ensure.h>
@@ -710,8 +711,7 @@ long sysconf(int number) {
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_NPROCESSORS_ONLN) returns fallback value 1\e[39m" << frg::endlog;
 			return 1;
 		case _SC_GETPW_R_SIZE_MAX:
-			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_GETPW_R_SIZE_MAX) returns fallback value 1024\e[39m" << frg::endlog;
-			return 1024;
+			return NSS_BUFLEN_PASSWD;
 		case _SC_GETGR_R_SIZE_MAX:
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_GETGR_R_SIZE_MAX) returns fallback value 1024\e[39m" << frg::endlog;
 			return 1024;
