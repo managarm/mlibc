@@ -183,7 +183,6 @@ int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_siz
 			__status_bits |= __MLIBC_ERROR_BIT;
 			return e;
 		}
-		__ensure(io_size > 0 && "io_write() is expected to always write at least one byte");
 		*actual_size = io_size;
 		return 0;
 	}

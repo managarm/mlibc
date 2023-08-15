@@ -94,6 +94,100 @@ void memstream_mem_file::_update_ptrs() {
 	*_sizeloc = _buf.size() - 1;
 }
 
+fmemopen_mem_file::fmemopen_mem_file(void *in_buf, size_t size, int flags, void (*do_dispose)(abstract_file *))
+: mem_file{flags, do_dispose}, _inBuffer{in_buf}, _inBufferSize{size} {
+	if(!_inBuffer) {
+		_inBuffer = getAllocator().allocate(size);
+		_needsDeallocation = true;
+	}
+
+	if(_flags & O_APPEND) {
+		// the initial seek-size for append is zero if buf was NULL, or the first '\0' found, or the size
+		_max_size = (_needsDeallocation) ? 0 : strnlen(reinterpret_cast<char *>(_inBuffer), _inBufferSize);
+		_pos = _max_size;
+	} else if((_flags & O_WRONLY || _flags & O_RDWR) && _flags & O_CREAT && _flags & O_TRUNC) {
+		// modes: "w", "w+"
+		_max_size = 0;
+	} else {
+		_max_size = size;
+	}
+}
+
+int fmemopen_mem_file::close() {
+	if(_needsDeallocation) {
+		getAllocator().free(_inBuffer);
+	}
+
+	return 0;
+}
+
+int fmemopen_mem_file::io_read(char *buffer, size_t max_size, size_t *actual_size) {
+	if ((_pos >= 0 && _pos >= _max_size) || !max_size) {
+		*actual_size = 0;
+		return 0;
+	}
+
+	size_t bytes_read = std::min(size_t(_max_size - _pos), max_size);
+	memcpy(buffer, _buffer().data() + _pos, bytes_read);
+	_pos += bytes_read;
+	*actual_size = bytes_read;
+	return 0;
+}
+
+int fmemopen_mem_file::io_write(const char *buffer, size_t max_size, size_t *actual_size) {
+	off_t bytes_write = std::min(static_cast<size_t>(_buffer_size() - _pos), max_size);
+	memcpy(_buffer().data() + _pos, buffer, bytes_write);
+	_pos += bytes_write;
+	*actual_size = bytes_write;
+
+	if(_pos > _max_size) {
+		_max_size = _pos;
+	}
+
+	// upon flushing, we need to put a null byte at the current position or at the end of the buffer
+	size_t null = _pos;
+	// a special case is if the mode is set to updating ('+'), then it always goes at the end
+	if(null >= _buffer_size() || _flags & O_RDWR) {
+		null = _buffer_size() - 1;
+	}
+
+	if(_buffer_size()) {
+		_buffer()[null] = '\0';
+	}
+
+	return 0;
+}
+
+int fmemopen_mem_file::io_seek(off_t offset, int whence, off_t *new_offset) {
+	switch (whence) {
+		case SEEK_SET:
+			if(offset < 0 || size_t(offset) > _buffer_size()) {
+				return EINVAL;
+			}
+			_pos = offset;
+			*new_offset = _pos;
+			break;
+		case SEEK_CUR:
+			// seeking to negative positions or positions larger than the buffer is disallowed in fmemopen(3)
+			if((_pos + offset) < 0 || size_t(_pos + offset) > _buffer_size()) {
+				return EINVAL;
+			}
+			_pos += offset;
+			*new_offset = _pos;
+			break;
+		case SEEK_END:
+			if((_max_size + offset) < 0 || size_t(_max_size + offset) > _buffer_size()) {
+				return EINVAL;
+			}
+			_pos = _max_size + offset;
+			*new_offset = _pos;
+			break;
+		default:
+			return EINVAL;
+	}
+	return 0;
+}
+
 int cookie_file::close() {
 	if(!_funcs.close) {
 		return 0;

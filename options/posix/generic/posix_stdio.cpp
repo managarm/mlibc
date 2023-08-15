@@ -32,9 +32,11 @@ private:
 	pid_t _popen_pid;
 };
 
-FILE *fmemopen(void *__restrict, size_t, const char *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+FILE *fmemopen(void *buf, size_t size, const char *__restrict mode) {
+	int flags = mlibc::fd_file::parse_modestring(mode);
+
+	return frg::construct<mlibc::fmemopen_mem_file>(getAllocator(), buf, size, flags,
+		mlibc::file_dispose_cb<mlibc::mem_file>);
 }
 
 int pclose(FILE *stream) {
