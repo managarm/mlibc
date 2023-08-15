@@ -18,6 +18,12 @@
 #include <mlibc/bsd-sysdeps.hpp>
 #include <mlibc/thread.hpp>
 
+namespace {
+
+constexpr bool logExecvpeTries = false;
+
+}
+
 unsigned int alarm(unsigned int seconds) {
 	struct itimerval it = {}, old = {};
 	it.it_value.tv_sec = seconds;
@@ -185,7 +191,9 @@ int execvpe(const char *file, char *const argv[], char *const envp[]) {
 		path += "/";
 		path += file;
 
-		mlibc::infoLogger() << "mlibc: execvpe() tries '" << path.data() << "'" << frg::endlog;
+		if(logExecvpeTries)
+			mlibc::infoLogger() << "mlibc: execvpe() tries '" << path.data() << "'" << frg::endlog;
+
 		int e = mlibc::sys_execve(path.data(), argv, envp);
 		__ensure(e && "sys_execve() is supposed to never return with success");
 		switch(e) {
