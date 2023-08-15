@@ -57,5 +57,13 @@ int main() {
 		assert(!strcmp(token, "MemTotal:"));
 		assert(amount == 16299664);
 	}
+
+	{
+		char buf[] = "SIGINT";
+		int sig;
+		int ret = sscanf(buf, "%d", &sig);
+		assert(!ret);
+	}
+
 	return 0;
 }

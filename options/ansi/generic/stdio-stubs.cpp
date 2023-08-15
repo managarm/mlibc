@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -479,6 +480,8 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				char c = handler.look_ahead();
 				switch (base) {
 					case 10:
+						if(!isdigit(c))
+							return match_count;
 						while (c >= '0' && c <= '9') {
 							handler.consume();
 							res = res * 10 + (c - '0');
