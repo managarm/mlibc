@@ -452,16 +452,6 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				fmt++;
 				break;
 			}
-			case '0': {
-				if (fmt[1] == 'x' || fmt[1] == 'X') {
-					base = 16;
-					fmt += 2;
-					break;
-				}
-				base = 8;
-				fmt++;
-				break;
-			}
 		}
 
 		// Leading whitespace is skipped for most conversions except these.
@@ -476,7 +466,24 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				base = 10;
 				[[fallthrough]];
 			case 'i': {
+				bool is_negative = false;
 				unsigned long long res = 0;
+
+				if((*fmt == 'i' || *fmt == 'd') && handler.look_ahead() == '-') {
+					handler.consume();
+					is_negative = true;
+				}
+
+				if(*fmt == 'i' && handler.look_ahead() == '0') {
+					handler.consume();
+					if(handler.look_ahead() == 'x') {
+						handler.consume();
+						base = 16;
+					} else {
+						base = 8;
+					}
+				}
+
 				char c = handler.look_ahead();
 				switch (base) {
 					case 10:
@@ -516,13 +523,17 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 					case 8:
 						while (c >= '0' && c <= '7') {
 							handler.consume();
-							res = res * 10 + (c - '0');
+							res = res * 8 + (c - '0');
 							c = handler.look_ahead();
 						}
 						break;
 				}
-				if (dest)
-					store_int(dest, type, res);
+				if (dest) {
+					if(is_negative)
+						store_int(dest, type, -res);
+					else
+						store_int(dest, type, res);
+				}
 				break;
 			}
 			case 'o': {
@@ -530,7 +541,7 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				char c = handler.look_ahead();
 				while (c >= '0' && c <= '7') {
 					handler.consume();
-					res = res * 10 + (c - '0');
+					res = res * 8 + (c - '0');
 					c = handler.look_ahead();
 				}
 				if (dest)
