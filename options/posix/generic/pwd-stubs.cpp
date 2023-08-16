@@ -118,13 +118,13 @@ namespace {
 
 struct passwd *getpwent(void) {
 	static passwd entry;
-	char line[512];
+	char line[NSS_BUFLEN_PASSWD];
 
 	if(!open_global_file()) {
 		return nullptr;
 	}
 
-	if (fgets(line, 512, global_file)) {
+	if (fgets(line, NSS_BUFLEN_PASSWD, global_file)) {
 		clear_entry(&entry);
 		if(!extract_entry(line, &entry)) {
 			errno = EINVAL;	// I suppose this can be a valid errno?
@@ -146,8 +146,8 @@ struct passwd *getpwnam(const char *name) {
 	if(!file)
 		return nullptr;
 
-	char line[512];
-	while(fgets(line, 512, file)) {
+	char line[NSS_BUFLEN_PASSWD];
+	while(fgets(line, NSS_BUFLEN_PASSWD, file)) {
 		clear_entry(&entry);
 		if(!extract_entry(line, &entry))
 			continue;
@@ -174,8 +174,8 @@ int getpwnam_r(const char *name, struct passwd *pwd, char *buffer, size_t size, 
 		return EIO;
 	}
 
-	char line[512];
-	while(fgets(line, 512, file)) {
+	char line[NSS_BUFLEN_PASSWD];
+	while(fgets(line, NSS_BUFLEN_PASSWD, file)) {
 		if(!extract_entry(line, pwd))
 			continue;
 		if(!strcmp(pwd->pw_name, name)) {
@@ -207,8 +207,8 @@ struct passwd *getpwuid(uid_t uid) {
 	if(!file)
 		return nullptr;
 
-	char line[512];
-	while(fgets(line, 512, file)) {
+	char line[NSS_BUFLEN_PASSWD];
+	while(fgets(line, NSS_BUFLEN_PASSWD, file)) {
 		clear_entry(&entry);
 		if(!extract_entry(line, &entry))
 			continue;
@@ -235,8 +235,8 @@ int getpwuid_r(uid_t uid, struct passwd *pwd, char *buffer, size_t size, struct 
 		return EIO;
 	}
 
-	char line[512];
-	while(fgets(line, 512, file)) {
+	char line[NSS_BUFLEN_PASSWD];
+	while(fgets(line, NSS_BUFLEN_PASSWD, file)) {
 		if(!extract_entry(line, pwd))
 			continue;
 		if(pwd->pw_uid == uid) {

@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <termios.h>
+#include <pwd.h>
 #include <sys/ioctl.h>
 
 #include <bits/ensure.h>
@@ -16,6 +17,12 @@
 #include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/bsd-sysdeps.hpp>
 #include <mlibc/thread.hpp>
+
+namespace {
+
+constexpr bool logExecvpeTries = false;
+
+}
 
 unsigned int alarm(unsigned int seconds) {
 	struct itimerval it = {}, old = {};
@@ -184,7 +191,9 @@ int execvpe(const char *file, char *const argv[], char *const envp[]) {
 		path += "/";
 		path += file;
 
-		mlibc::infoLogger() << "mlibc: execvpe() tries '" << path.data() << "'" << frg::endlog;
+		if(logExecvpeTries)
+			mlibc::infoLogger() << "mlibc: execvpe() tries '" << path.data() << "'" << frg::endlog;
+
 		int e = mlibc::sys_execve(path.data(), argv, envp);
 		__ensure(e && "sys_execve() is supposed to never return with success");
 		switch(e) {
@@ -710,8 +719,7 @@ long sysconf(int number) {
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_NPROCESSORS_ONLN) returns fallback value 1\e[39m" << frg::endlog;
 			return 1;
 		case _SC_GETPW_R_SIZE_MAX:
-			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_GETPW_R_SIZE_MAX) returns fallback value 1024\e[39m" << frg::endlog;
-			return 1024;
+			return NSS_BUFLEN_PASSWD;
 		case _SC_GETGR_R_SIZE_MAX:
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_GETGR_R_SIZE_MAX) returns fallback value 1024\e[39m" << frg::endlog;
 			return 1024;
