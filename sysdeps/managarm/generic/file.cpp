@@ -1103,12 +1103,14 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 }
 
 int sys_epoll_create(int flags, int *fd) {
-	__ensure(!(flags & ~(EPOLL_CLOEXEC)));
+	// Some applications assume EPOLL_CLOEXEC and O_CLOEXEC to be the same.
+	// They are on linux, but not yet on managarm.
+	__ensure(!(flags & ~(EPOLL_CLOEXEC | O_CLOEXEC)));
 
 	SignalGuard sguard;
 
 	uint32_t proto_flags = 0;
-	if(flags & EPOLL_CLOEXEC)
+	if(flags & EPOLL_CLOEXEC || flags & O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
