@@ -1671,7 +1671,9 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 		return ENOTCONN;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		*bytes_written = resp.size();
+		if(bytes_written) {
+			*bytes_written = resp.size();
+		}
 		return 0;
 	}
 }
