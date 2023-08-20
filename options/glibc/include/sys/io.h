@@ -7,9 +7,13 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 int ioperm(unsigned long int from, unsigned long int num, int turn_on);
 
 __attribute__((deprecated)) int iopl(int level);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __x86_64__
 __MLIBC_INLINE_DEFINITION unsigned char inb(unsigned short int port) {
