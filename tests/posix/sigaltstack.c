@@ -40,6 +40,9 @@ int main() {
 #if defined(__x86_64__)
 	asm volatile ("mov $0, %rsp\n"
 			"\t" "push $0");
+#elif defined(__i386__)
+	asm volatile ("mov $0, %esp\n"
+			"\t" "push $0");
 #elif defined(__aarch64__)
 	asm volatile ("mov sp, %0\n"
 			"\t" "stp x0, x1, [sp, #-16]!" :: "r"((uint64_t)0));

@@ -90,6 +90,8 @@ static void *stackaddr_worker(void *arg) {
 	void *sp;
 #if defined(__x86_64__)
 	asm volatile ("mov %%rsp, %0" : "=r"(sp));
+#elif defined(__i386__)
+	asm volatile ("mov %%esp, %0" : "=r"(sp));
 #elif defined(__aarch64__)
 	asm volatile ("mov %0, sp" : "=r"(sp));
 #elif defined (__riscv)
