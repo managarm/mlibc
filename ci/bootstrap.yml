@@ -24,6 +24,7 @@ packages:
     configure:
       - args:
         - 'meson'
+        - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
@@ -54,6 +55,7 @@ packages:
     configure:
       - args:
         - 'meson'
+        - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
@@ -80,6 +82,7 @@ packages:
     configure:
       - args:
         - 'meson'
+        - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
@@ -107,6 +110,7 @@ packages:
     configure:
       - args:
         - 'meson'
+        - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
@@ -138,6 +142,7 @@ packages:
     configure:
       - args:
         - 'meson'
+        - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
