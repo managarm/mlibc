@@ -1,0 +1,53 @@
+name: Check if ABI-only option is correct
+
+on: [push, pull_request]
+
+jobs:
+    run-abi-only:
+        strategy:
+            matrix:
+                sysdeps: [dripos, lemon, aero, ironclad, lyre, keyronex]
+        name: Run ABI-only check
+        runs-on: ubuntu-20.04
+        steps:
+            - name: Install prerequisites
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install ninja-build clang
+                  sudo pip3 install setuptools
+                  sudo pip3 install -U jsonschema
+                  sudo pip3 install meson xbstrap
+                  sudo pip3 install pyexpect
+            - name: Checkout
+              uses: actions/checkout@v2
+              with:
+                  path: src/mlibc/
+            - name: Set up linux kernel headers
+              run: |
+                  mkdir headers/
+                  mkdir -p build/mlibc/
+                  cp src/mlibc/ci/bootstrap.yml src/
+                  cd build
+                  xbstrap init ../src
+                  xbstrap install linux-headers
+            - name: Install mlibc headers
+              run: |
+                  meson setup \
+                    -Dprefix=`realpath ../headers` \
+                    -Dbuild_tests=false \
+                    -Dbuild_tests_host_libc=false \
+                    -Dheaders_only=true \
+                    -Dlinux_kernel_headers=$(pwd)/packages/linux-headers/usr/include \
+                    --cross-file ../src/mlibc/ci/${{matrix.sysdeps}}.cross-file compile-${{matrix.sysdeps}} \
+                    ../src/mlibc
+                  ninja -C compile-${{matrix.sysdeps}} install
+              working-directory: build/
+            - name: Run ABI-only checker
+              run: |
+                  realpath include
+                  ls `realpath include`
+                  python3 --version
+                  python3 ../src/mlibc/ci/abi-only.py `realpath .`
+              working-directory: headers/
+                
+                
