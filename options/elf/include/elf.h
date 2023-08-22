@@ -19,8 +19,9 @@ extern "C" {
 #define SHF_WRITE 1
 #define SHF_ALLOC 2
 #define SHF_EXECINSTR 4
-#define SHF_STRINGS 16
-#define SHF_TLS 512
+#define SHF_STRINGS 32
+#define SHF_INFO_LINK 64
+#define SHF_TLS 1024
 
 typedef uint64_t Elf64_Addr;
 typedef uint64_t Elf64_Off;
@@ -219,13 +220,22 @@ enum {
 enum {
 	R_X86_64_NONE = 0,
 	R_X86_64_64 = 1,
+	R_X86_64_PC32 = 2,
+	R_X86_64_PLT32 = 4,
 	R_X86_64_COPY = 5,
 	R_X86_64_GLOB_DAT = 6,
 	R_X86_64_JUMP_SLOT = 7,
 	R_X86_64_RELATIVE = 8,
+	R_X86_64_GOTPCREL = 9,
+	R_X86_64_32 = 10,
+	R_X86_64_32S = 11,
+	R_X86_64_PC16 = 13,
+	R_X86_64_PC8 = 15,
 	R_X86_64_DTPMOD64 = 16,
 	R_X86_64_DTPOFF64 = 17,
 	R_X86_64_TPOFF64 = 18,
+	R_X86_64_PC64 = 24,
+	R_X86_64_GOTPC32 = 26,
 	R_X86_64_IRELATIVE = 37,
 };
 
@@ -261,6 +271,12 @@ typedef struct {
 } Elf64_Rel;
 
 typedef struct {
+	Elf32_Addr r_offset;
+	Elf32_Word r_info;
+	Elf32_Sword r_addend;
+} Elf32_Rela;
+
+typedef struct {
 	Elf64_Addr r_offset;
 	Elf64_Xword r_info;
 	Elf64_Sxword r_addend;
@@ -271,6 +287,9 @@ __MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_SYM(Elf64_Xword info) {
 }
 __MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_TYPE(Elf64_Xword info) {
 	return info & 0xFFFFFFFF;
+}
+__MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_INFO(Elf64_Xword sym, Elf64_Xword type) {
+	return ((((Elf64_Xword)(sym)) << 32) + (type));
 }
 
 enum {
