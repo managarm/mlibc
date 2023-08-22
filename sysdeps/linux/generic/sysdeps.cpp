@@ -175,6 +175,10 @@ int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2
 
 int sys_vm_map(void *hint, size_t size, int prot, int flags,
 		int fd, off_t offset, void **window) {
+	if(offset % 4096)
+		return EINVAL;
+	if(size >= PTRDIFF_MAX)
+		return ENOMEM;
 	auto ret = do_syscall(SYS_mmap, hint, size, prot, flags, fd, offset);
 	// TODO: musl fixes up EPERM errors from the kernel.
 	if(int e = sc_error(ret); e)
