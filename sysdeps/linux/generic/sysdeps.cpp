@@ -179,7 +179,11 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags,
 		return EINVAL;
 	if(size >= PTRDIFF_MAX)
 		return ENOMEM;
+#if defined(SYS_mmap2)
+	auto ret = do_syscall(SYS_mmap2, hint, size, prot, flags, fd, offset/4096);
+#else
 	auto ret = do_syscall(SYS_mmap, hint, size, prot, flags, fd, offset);
+#endif
 	// TODO: musl fixes up EPERM errors from the kernel.
 	if(int e = sc_error(ret); e)
 		return e;
