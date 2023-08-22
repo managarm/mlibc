@@ -286,6 +286,7 @@ int sys_fstatfs(int fd, struct statfs *buf) {
 }
 
 extern "C" void __mlibc_signal_restore(void);
+extern "C" void __mlibc_signal_restore_rt(void);
 
 int sys_sigaction(int signum, const struct sigaction *act,
                 struct sigaction *oldact) {
@@ -300,7 +301,7 @@ int sys_sigaction(int signum, const struct sigaction *act,
 	if (act) {
 		kernel_act.handler = act->sa_handler;
 		kernel_act.flags = act->sa_flags | SA_RESTORER;
-		kernel_act.restorer = __mlibc_signal_restore;
+		kernel_act.restorer = (act->sa_flags & SA_SIGINFO) ? __mlibc_signal_restore_rt : __mlibc_signal_restore;
 		kernel_act.mask = act->sa_mask;
 	}
 
