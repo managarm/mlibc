@@ -10,7 +10,9 @@
 #	define PDP_ENDIAN __ORDER_PDP_ENDIAN__
 
 # 	define __BYTE_ORDER __BYTE_ORDER__
+#ifndef __LITTLE_ENDIAN // Linux kernel headers define this already
 #	define __LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
+#endif
 #	define __BIG_ENDIAN __ORDER_BIG_ENDIAN__
 #	define __PDP_ENDIAN __ORDER_PDP_ENDIAN__
 #else
