@@ -261,7 +261,11 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 	else
 		__ensure(fsfdt == fsfd_target::fd_path);
 
+#if defined(SYS_newfstatat)
 	auto ret = do_cp_syscall(SYS_newfstatat, fd, path, statbuf, flags);
+#else
+	auto ret = do_cp_syscall(SYS_fstatat64, fd, path, statbuf, flags);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
