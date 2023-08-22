@@ -8,6 +8,7 @@
 #include <bits/ensure.h>
 #include <abi-bits/fcntl.h>
 #include <abi-bits/socklen_t.h>
+#include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/thread-entry.hpp>
@@ -43,11 +44,42 @@ void sys_libc_panic() {
 	__builtin_trap();
 }
 
+#if defined(__i386__)
+
+struct user_desc {
+	unsigned int entry_number;
+	unsigned long base_addr;
+	unsigned int limit;
+	unsigned int seg_32bit: 1;
+	unsigned int contents: 2;
+	unsigned int read_exec_only: 1;
+	unsigned int limit_in_pages: 1;
+	unsigned int seg_not_present: 1;
+	unsigned int useable: 1;
+};
+
+#endif
+
 int sys_tcb_set(void *pointer) {
 #if defined(__x86_64__)
 	auto ret = do_syscall(SYS_arch_prctl, 0x1002 /* ARCH_SET_FS */, pointer);
 	if(int e = sc_error(ret); e)
 		return e;
+#elif defined(__i386__)
+	struct user_desc desc = {
+		.entry_number = static_cast<unsigned int>(-1),
+		.base_addr = uintptr_t(pointer),
+		.limit = 0xfffff,
+		.seg_32bit = 1,
+		.contents = 0,
+		.read_exec_only = 0,
+		.limit_in_pages = 1,
+		.seg_not_present = 0,
+		.useable = 1,
+	};
+	auto ret = do_syscall(SYS_set_thread_area, &desc);
+	__ensure(!sc_error(ret));
+	asm volatile ("movw %w0, %%gs" : : "q"(desc.entry_number * 8 + 3) :);
 #elif defined(__riscv)
 	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
 	asm volatile ("mv tp, %0" :: "r"(thread_data));
@@ -542,13 +574,31 @@ int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
 	// TODO: We should change the sysdep so that we don't need to do this.
 	auto tp = reinterpret_cast<char *>(tcb) + sizeof(Tcb) - 0x10;
 	tcb = reinterpret_cast<void *>(tp);
+#elif defined(__i386__)
+	/* get the entry number, as we don't request a new one here */
+	uint32_t gs;
+	asm volatile("movw %%gs, %w0" : "=q"(gs));
+
+	auto user_desc = reinterpret_cast<struct user_desc *>(getAllocator().allocate(sizeof(struct user_desc)));
+
+	user_desc->entry_number = (gs & 0xffff) >> 3;
+	user_desc->base_addr = uintptr_t(tcb);
+	user_desc->limit = 0xfffff;
+	user_desc->seg_32bit = 1;
+	user_desc->contents = 0;
+	user_desc->read_exec_only = 0;
+	user_desc->limit_in_pages = 1;
+	user_desc->seg_not_present = 0;
+	user_desc->useable = 1;
+
+	tcb = reinterpret_cast<void *>(user_desc);
 #endif
 
 	auto ret = __mlibc_spawn_thread(flags, stack, pid_out, NULL, tcb);
 	if (ret < 0)
 		return ret;
 
-        return 0;
+	return 0;
 }
 
 extern "C" const char __mlibc_syscall_begin[1];
