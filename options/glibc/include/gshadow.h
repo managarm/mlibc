@@ -15,7 +15,15 @@ struct sgrp {
 
 #ifndef __MLIBC_ABI_ONLY
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int getsgnam_r(const char *name, struct sgrp *result_buf, char *buffer, size_t len, struct sgrp **result);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !__MLIBC_ABI_ONLY */
 
