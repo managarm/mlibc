@@ -39,6 +39,9 @@ extern "C" {
 #define MS_NOUSER (1 << 31)
 
 #define MNT_FORCE 1
+#define MNT_DETACH 2
+#define MNT_EXPIRE 4
+#define UMOUNT_NOFOLLOW 8
 
 #undef BLKROSET
 #define BLKROSET _IO(0x12, 93)
