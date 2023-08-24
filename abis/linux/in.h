@@ -140,6 +140,7 @@ struct group_source_req {
 #define IP_TTL 2
 #define IP_PKTINFO 8
 #define IP_RECVERR 11
+#define IP_RECVTTL 12
 #define IP_MULTICAST_IF 32
 #define IP_MULTICAST_TTL 33
 #define IP_MULTICAST_LOOP 34
