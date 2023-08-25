@@ -146,6 +146,7 @@ struct group_source_req {
 #define IP_TTL 2
 #define IP_PKTINFO 8
 #define IP_PKTOPTIONS 9
+#define IP_MTU_DISCOVER 10
 #define IP_RECVERR 11
 #define IP_RECVTTL 12
 #define IP_MTU 14
@@ -175,6 +176,13 @@ struct group_source_req {
 
 #define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
 #define IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
+
+#define IP_PMTUDISC_DONT 0
+#define IP_PMTUDISC_WANT 1
+#define IP_PMTUDISC_DO 2
+#define IP_PMTUDISC_PROBE 3
+#define IP_PMTUDISC_INTERFACE 4
+#define IP_PMTUDISC_OMIT 5
 
 #define MCAST_JOIN_SOURCE_GROUP 46
 #define MCAST_LEAVE_SOURCE_GROUP 47
