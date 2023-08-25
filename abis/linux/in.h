@@ -145,6 +145,7 @@ struct group_source_req {
 #define IP_TOS 1
 #define IP_TTL 2
 #define IP_PKTINFO 8
+#define IP_PKTOPTIONS 9
 #define IP_RECVERR 11
 #define IP_RECVTTL 12
 #define IP_MTU 14
@@ -157,6 +158,7 @@ struct group_source_req {
 #define IP_DROP_SOURCE_MEMBERSHIP 40
 #define IP_UNICAST_IF 50
 
+#define IPV6_2292PKTOPTIONS 6
 #define IPV6_UNICAST_HOPS 16
 #define IPV6_MULTICAST_IF 17
 #define IPV6_MULTICAST_HOPS 18
