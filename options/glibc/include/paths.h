@@ -33,4 +33,9 @@
 #define	_PATH_VARRUN	"/var/run/"
 #define	_PATH_VARTMP	"/var/tmp/"
 
+#ifdef _GNU_SOURCE
+#define _PATH_UTMPX _PATH_UTMP
+#define _PATH_WTMPX _PATH_WTMP
+#endif
+
 #endif // _PATHS_H

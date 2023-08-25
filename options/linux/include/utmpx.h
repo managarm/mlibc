@@ -28,12 +28,16 @@ struct utmpx {
 	char __unused[20];
 };
 
+#define e_exit __e_exit
+#define e_termination __e_termination
+
 #ifndef __MLIBC_ABI_ONLY
 
 void updwtmpx(const char *, const struct utmpx *);
 int utmpxname(const char *);
 struct utmpx *pututxline(const struct utmpx *);
 struct utmpx *getutxent(void);
+struct utmpx *getutxid(const struct utmpx *id);
 void setutxent(void);
 void endutxent(void);
 
@@ -48,6 +52,10 @@ void endutxent(void);
 #define LOGIN_PROCESS   6
 #define USER_PROCESS    7
 #define DEAD_PROCESS    8
+
+#ifdef _GNU_SOURCE
+#define ACCOUNTING 9
+#endif
 
 #define __UT_HOSTSIZE 256
 #define __UT_NAMESIZE 32
