@@ -1,4 +1,10 @@
 .section .text
+
+.type __stack_chk_fail_local, %function
+.weak __stack_chk_fail_local
+__stack_chk_fail_local:
+	call __stack_chk_fail@plt
+
 .global _start
 
 .type _start, %function
