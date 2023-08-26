@@ -305,7 +305,7 @@ extern int optopt;
 #endif /* !__MLIBC_ABI_ONLY */
 
 // Non-POSIX functions supported by Linux.
-typedef __mlibc_uint64 useconds_t;
+typedef unsigned useconds_t;
 
 #ifndef __MLIBC_ABI_ONLY
 
