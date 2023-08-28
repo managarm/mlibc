@@ -5,6 +5,7 @@ fs = import('fs')
 rtdl_include_dirs = [
 	include_directories('options/internal/include'),
 	include_directories('options/internal' / host_machine.cpu_family() + '-include'),
+	include_directories('options/rtdl' / host_machine.cpu_family()),
 	include_directories('options/rtdl/include'),
 ]
 libc_include_dirs = [
