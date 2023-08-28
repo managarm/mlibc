@@ -1,1 +1,1 @@
-../../../../abis/mlibc/nlink_t.h
+../../../../abis/linux/nlink_t.h
