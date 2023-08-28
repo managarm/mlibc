@@ -5,6 +5,8 @@
 #include <bits/size_t.h>
 #include <frg/array.hpp>
 
+#include "elf.hpp"
+
 /*
  * Explanation of cancellation bits:
  *
@@ -151,9 +153,9 @@ static_assert(offsetof(Tcb, cancelBits) == 0x30);
 #elif defined(__aarch64__)
 // The thread pointer on AArch64 points to 16 bytes before the end of the TCB.
 // options/linker/aarch64/runtime.S uses the offset of dtvPointers.
-static_assert(sizeof(Tcb) - offsetof(Tcb, dtvPointers) - 0x10 == 96);
+static_assert(sizeof(Tcb) - offsetof(Tcb, dtvPointers) - TP_TCB_OFFSET == 96);
 // sysdeps/linux/aarch64/cp_syscall.S uses the offset of cancelBits.
-static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) - 0x10 == 64);
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) - TP_TCB_OFFSET == 64);
 #elif defined(__riscv) && __riscv_xlen == 64
 // The thread pointer on RISC-V points to *after* the TCB, and since
 // we need to access specific fields that means that the value in

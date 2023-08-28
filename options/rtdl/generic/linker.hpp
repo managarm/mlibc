@@ -6,6 +6,8 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/tcb.hpp>
 
+#include "elf.hpp"
+
 struct ObjectRepository;
 struct Scope;
 struct Loader;
@@ -33,7 +35,7 @@ struct ObjectRepository {
 	// This is primarily used to create a SharedObject for the RTDL itself.
 	SharedObject *injectObjectFromDts(frg::string_view name,
 			frg::string<MemoryAllocator> path,
-			uintptr_t base_address, Elf64_Dyn *dynamic, uint64_t rts);
+			uintptr_t base_address, elf_dyn *dynamic, uint64_t rts);
 
 	// This is used to create a SharedObject for the executable that we want to link.
 	SharedObject *injectObjectFromPhdrs(frg::string_view name,
@@ -100,7 +102,7 @@ struct DebugInterface {
 struct LinkMap {
 	uintptr_t base = 0;
 	const char *name = nullptr;
-	Elf64_Dyn *dynv = nullptr;
+	elf_dyn *dynv = nullptr;
 	LinkMap *next = nullptr, *prev = nullptr;
 };
 
@@ -129,7 +131,7 @@ struct SharedObject {
 	Scope *localScope;
 
 	// pointers to the dynamic table, GOT and entry point
-	Elf64_Dyn *dynamic = nullptr;
+	elf_dyn *dynamic = nullptr;
 	void **globalOffsetTable;
 	void *entry;
 
@@ -216,13 +218,13 @@ void *tryAccessDtv(SharedObject *object);
 // --------------------------------------------------------
 
 struct ObjectSymbol {
-	ObjectSymbol(SharedObject *object, const Elf64_Sym *symbol);
+	ObjectSymbol(SharedObject *object, const elf_sym *symbol);
 
 	SharedObject *object() {
 		return _object;
 	}
 
-	const Elf64_Sym *symbol() {
+	const elf_sym *symbol() {
 		return _symbol;
 	}
 
@@ -232,7 +234,7 @@ struct ObjectSymbol {
 
 private:
 	SharedObject *_object;
-	const Elf64_Sym *_symbol;
+	const elf_sym *_symbol;
 };
 
 frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_view string);

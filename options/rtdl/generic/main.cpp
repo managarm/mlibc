@@ -12,6 +12,8 @@
 #include <mlibc/stack_protector.hpp>
 #include <internal-config.h>
 #include <abi-bits/auxv.h>
+
+#include "elf.hpp"
 #include "linker.hpp"
 
 #if __MLIBC_POSIX_OPTION
@@ -27,7 +29,7 @@ static constexpr bool logDlCalls = false;
 
 #ifndef MLIBC_STATIC_BUILD
 extern HIDDEN void *_GLOBAL_OFFSET_TABLE_[];
-extern HIDDEN Elf64_Dyn _DYNAMIC[];
+extern HIDDEN elf_dyn _DYNAMIC[];
 #endif
 
 namespace mlibc {
@@ -84,22 +86,16 @@ extern "C" void relocateSelf() {
 
 	auto ldso_base = getLdsoBase();
 
-	for(size_t disp = 0; disp < rela_size; disp += sizeof(Elf64_Rela)) {
-		auto reloc = reinterpret_cast<Elf64_Rela *>(ldso_base + rela_offset + disp);
+	for(size_t disp = 0; disp < rela_size; disp += sizeof(elf_rela)) {
+		auto reloc = reinterpret_cast<elf_rela *>(ldso_base + rela_offset + disp);
 
-		Elf64_Xword type = ELF64_R_TYPE(reloc->r_info);
-		if(ELF64_R_SYM(reloc->r_info))
+		auto type = ELF_R_TYPE(reloc->r_info);
+		if(ELF_R_SYM(reloc->r_info))
 			__builtin_trap();
 
 		auto p = reinterpret_cast<uint64_t *>(ldso_base + reloc->r_offset);
 		switch(type) {
-#if defined(__x86_64__)
-		case R_X86_64_RELATIVE:
-#elif defined(__aarch64__)
-		case R_AARCH64_RELATIVE:
-#elif defined(__riscv)
-		case R_RISCV_RELATIVE:
-#endif
+		case R_RELATIVE:
 			*p = ldso_base + reloc->r_addend;
 			break;
 		default:
@@ -111,15 +107,16 @@ extern "C" void relocateSelf() {
 
 extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
 	__ensure(object->lazyExplicitAddend);
-	auto reloc = (Elf64_Rela *)(object->baseAddress + object->lazyRelocTableOffset
-			+ rel_index * sizeof(Elf64_Rela));
-	Elf64_Xword type = ELF64_R_TYPE(reloc->r_info);
-	Elf64_Xword symbol_index = ELF64_R_SYM(reloc->r_info);
+	auto reloc = (elf_rela *)(object->baseAddress + object->lazyRelocTableOffset
+			+ rel_index * sizeof(elf_rela));
+	auto type = ELF_R_TYPE(reloc->r_info);
+	auto symbol_index = ELF_R_SYM(reloc->r_info);
 
 	__ensure(type == R_X86_64_JUMP_SLOT);
+	__ensure(ELF_CLASS == 64);
 
-	auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
-			+ symbol_index * sizeof(Elf64_Sym));
+	auto symbol = (elf_sym *)(object->baseAddress + object->symbolTableOffset
+			+ symbol_index * sizeof(elf_sym));
 	ObjectSymbol r(object, symbol);
 	auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, r.getString(), object->objectRts, 0);
 	if(!p)
@@ -323,7 +320,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 #endif
 
 #else
-	auto ehdr = reinterpret_cast<Elf64_Ehdr*>(__ehdr_start);
+	auto ehdr = reinterpret_cast<elf_ehdr*>(__ehdr_start);
 	phdr_pointer = reinterpret_cast<void*>((uintptr_t)ehdr->e_phoff + (uintptr_t)ehdr);
 	phdr_entry_size = ehdr->e_phentsize;
 	phdr_count = ehdr->e_phnum;
@@ -574,7 +571,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 			if(cand.symbol()->st_shndx == SHN_UNDEF)
 				return false;
 
-			auto bind = ELF64_ST_BIND(cand.symbol()->st_info);
+			auto bind = ELF_ST_BIND(cand.symbol()->st_info);
 			if(bind != STB_GLOBAL && bind != STB_WEAK)
 				return false;
 
@@ -584,8 +581,8 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 		auto hash_table = (Elf64_Word *)(object->baseAddress + object->hashTableOffset);
 		auto num_symbols = hash_table[1];
 		for(size_t i = 0; i < num_symbols; i++) {
-			ObjectSymbol cand{object, (Elf64_Sym *)(object->baseAddress
-					+ object->symbolTableOffset + i * sizeof(Elf64_Sym))};
+			ObjectSymbol cand{object, (elf_sym *)(object->baseAddress
+					+ object->symbolTableOffset + i * sizeof(elf_sym))};
 			if(eligible(cand) && cand.virtualAddress() == reinterpret_cast<uintptr_t>(ptr)) {
 				if (logDlCalls)
 					mlibc::infoLogger() << "rtdl: Found symbol " << cand.getString() << " in object "
@@ -605,7 +602,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 		auto object = initialRepository->loadedObjects[i];
 
 		for(size_t j = 0; j < object->phdrCount; j++) {
-			auto phdr = (Elf64_Phdr *)((uintptr_t)object->phdrPointer + j * object->phdrEntrySize);
+			auto phdr = (elf_phdr *)((uintptr_t)object->phdrPointer + j * object->phdrEntrySize);
 			if(phdr->p_type != PT_LOAD) {
 				continue;
 			}

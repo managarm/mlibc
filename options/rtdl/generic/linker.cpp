@@ -1,6 +1,11 @@
-
-#include <elf.h>
+#include <stdint.h>
 #include <string.h>
+
+// keep a list of optional generic relocation types
+enum {
+	R_OFFSET =  (uintptr_t) -1,
+};
+
 
 #include <frg/manual_box.hpp>
 #include <mlibc/allocator.hpp>
@@ -10,6 +15,8 @@
 #include <mlibc/thread.hpp>
 #include <abi-bits/fcntl.h>
 #include <internal-config.h>
+
+#include "elf.hpp"
 #include "linker.hpp"
 
 #if !MLIBC_MMAP_ALLOCATE_DSO
@@ -90,7 +97,7 @@ ObjectRepository::ObjectRepository()
 
 SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 		frg::string<MemoryAllocator> path, uintptr_t base_address,
-		Elf64_Dyn *dynamic, uint64_t rts) {
+		elf_dyn *dynamic, uint64_t rts) {
 	__ensure(!findLoadedObject(name));
 
 	auto object = frg::construct<SharedObject>(getAllocator(),
@@ -305,7 +312,7 @@ SharedObject *ObjectRepository::findCaller(void *addr) {
 	for (auto [name, object] : _nameMap) {
 		// Search all PT_LOAD segments for the specified address.
 		for(size_t j = 0; j < object->phdrCount; j++) {
-			auto phdr = (Elf64_Phdr *)((uintptr_t)object->phdrPointer + j * object->phdrEntrySize);
+			auto phdr = (elf_phdr *)((uintptr_t)object->phdrPointer + j * object->phdrEntrySize);
 			if (phdr->p_type == PT_LOAD) {
 				uintptr_t start = object->baseAddress + phdr->p_vaddr;
 				uintptr_t end = start + phdr->p_memsz;
@@ -354,7 +361,7 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 
 	// segments are already mapped, so we just have to find the dynamic section
 	for(size_t i = 0; i < phdr_count; i++) {
-		auto phdr = (Elf64_Phdr *)((uintptr_t)phdr_pointer + i * phdr_entry_size);
+		auto phdr = (elf_phdr *)((uintptr_t)phdr_pointer + i * phdr_entry_size);
 		switch(phdr->p_type) {
 		case PT_PHDR:
 			// Determine the executable's base address (in the PIE case) by comparing
@@ -386,7 +393,7 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 	}
 
 	if(dynamic_offset)
-		object->dynamic = (Elf64_Dyn *)(object->baseAddress + *dynamic_offset);
+		object->dynamic = (elf_dyn *)(object->baseAddress + *dynamic_offset);
 	if(tls_offset)
 		object->tlsImagePtr = (void *)(object->baseAddress + *tls_offset);
 }
@@ -396,8 +403,8 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	__ensure(!object->isMainObject);
 
 	// read the elf file header
-	Elf64_Ehdr ehdr;
-	readExactlyOrDie(fd, &ehdr, sizeof(Elf64_Ehdr));
+	elf_ehdr ehdr;
+	readExactlyOrDie(fd, &ehdr, sizeof(elf_ehdr));
 
 	__ensure(ehdr.e_ident[0] == 0x7F
 			&& ehdr.e_ident[1] == 'E'
@@ -419,7 +426,7 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 
 	uintptr_t highest_address = 0;
 	for(int i = 0; i < ehdr.e_phnum; i++) {
-		auto phdr = (Elf64_Phdr *)(phdr_buffer + i * ehdr.e_phentsize);
+		auto phdr = (elf_phdr *)(phdr_buffer + i * ehdr.e_phentsize);
 
 		if(phdr->p_type != PT_LOAD)
 			continue;
@@ -457,7 +464,7 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	// Load all segments.
 	constexpr size_t pageSize = 0x1000;
 	for(int i = 0; i < ehdr.e_phnum; i++) {
-		auto phdr = (Elf64_Phdr *)(phdr_buffer + i * ehdr.e_phentsize);
+		auto phdr = (elf_phdr *)(phdr_buffer + i * ehdr.e_phentsize);
 
 		if(phdr->p_type == PT_LOAD) {
 			size_t misalign = phdr->p_vaddr & (pageSize - 1);
@@ -525,7 +532,7 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 			object->tlsImageSize = phdr->p_filesz;
 			object->tlsImagePtr = (void *)(object->baseAddress + phdr->p_vaddr);
 		}else if(phdr->p_type == PT_DYNAMIC) {
-			object->dynamic = (Elf64_Dyn *)(object->baseAddress + phdr->p_vaddr);
+			object->dynamic = (elf_dyn *)(object->baseAddress + phdr->p_vaddr);
 		}else if(phdr->p_type == PT_INTERP
 				|| phdr->p_type == PT_PHDR
 				|| phdr->p_type == PT_NOTE
@@ -560,7 +567,7 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 	frg::optional<ptrdiff_t> soname_offset;
 
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
-		Elf64_Dyn *dynamic = &object->dynamic[i];
+		elf_dyn *dynamic = &object->dynamic[i];
 		switch(dynamic->d_tag) {
 		// handle hash table, symbol table and string table
 		case DT_HASH:
@@ -580,7 +587,7 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			object->symbolTableOffset = dynamic->d_un.d_ptr;
 			break;
 		case DT_SYMENT:
-			__ensure(dynamic->d_un.d_val == sizeof(Elf64_Sym));
+			__ensure(dynamic->d_un.d_val == sizeof(elf_sym));
 			break;
 		// handle lazy relocation table
 		case DT_PLTGOT:
@@ -710,7 +717,7 @@ void ObjectRepository::_discoverDependencies(SharedObject *object,
 		Scope *localScope, uint64_t rts) {
 	// Load required dynamic libraries.
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
-		Elf64_Dyn *dynamic = &object->dynamic[i];
+		elf_dyn *dynamic = &object->dynamic[i];
 		if(dynamic->d_tag != DT_NEEDED)
 			continue;
 
@@ -757,24 +764,17 @@ SharedObject::SharedObject(const char *name, const char *path,
 			frg::string<MemoryAllocator> { path, getAllocator() },
 			is_main_object, localScope, object_rts) {}
 
-void processCopyRela(SharedObject *object, Elf64_Rela *reloc) {
-	Elf64_Xword type = ELF64_R_TYPE(reloc->r_info);
-	Elf64_Xword symbol_index = ELF64_R_SYM(reloc->r_info);
-#if defined(__x86_64__)
-	if(type != R_X86_64_COPY)
+void processCopyRela(SharedObject *object, elf_rela *reloc) {
+	auto type = ELF_R_TYPE(reloc->r_info);
+	auto symbol_index = ELF_R_SYM(reloc->r_info);
+
+	if(type != R_COPY)
 		return;
-#elif defined(__aarch64__)
-	if(type != R_AARCH64_COPY)
-		return;
-#elif defined(__riscv)
-	if (type != R_RISCV_COPY)
-		return;
-#endif
 
 	uintptr_t rel_addr = object->baseAddress + reloc->r_offset;
 
-	auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
-			+ symbol_index * sizeof(Elf64_Sym));
+	auto symbol = (elf_sym *)(object->baseAddress + object->symbolTableOffset
+			+ symbol_index * sizeof(elf_sym));
 	ObjectSymbol r(object, symbol);
 	frg::optional<ObjectSymbol> p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, r.getString(), object->objectRts, Scope::resolveCopy);
 	__ensure(p);
@@ -787,7 +787,7 @@ void processCopyRelocations(SharedObject *object) {
 	frg::optional<size_t> rela_length;
 
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
-		Elf64_Dyn *dynamic = &object->dynamic[i];
+		elf_dyn *dynamic = &object->dynamic[i];
 
 		switch(dynamic->d_tag) {
 		case DT_RELA:
@@ -797,14 +797,14 @@ void processCopyRelocations(SharedObject *object) {
 			rela_length = dynamic->d_un.d_val;
 			break;
 		case DT_RELAENT:
-			__ensure(dynamic->d_un.d_val == sizeof(Elf64_Rela));
+			__ensure(dynamic->d_un.d_val == sizeof(elf_rela));
 			break;
 		}
 	}
 
 	if(rela_offset && rela_length) {
-		for(size_t offset = 0; offset < *rela_length; offset += sizeof(Elf64_Rela)) {
-			auto reloc = (Elf64_Rela *)(object->baseAddress + *rela_offset + offset);
+		for(size_t offset = 0; offset < *rela_length; offset += sizeof(elf_rela)) {
+			auto reloc = (elf_rela *)(object->baseAddress + *rela_offset + offset);
 			processCopyRela(object, reloc);
 		}
 	}else{
@@ -980,7 +980,7 @@ void *tryAccessDtv(SharedObject *object) {
 // ObjectSymbol
 // --------------------------------------------------------
 
-ObjectSymbol::ObjectSymbol(SharedObject *object, const Elf64_Sym *symbol)
+ObjectSymbol::ObjectSymbol(SharedObject *object, const elf_sym *symbol)
 : _object(object), _symbol(symbol) { }
 
 const char *ObjectSymbol::getString() {
@@ -990,7 +990,7 @@ const char *ObjectSymbol::getString() {
 }
 
 uintptr_t ObjectSymbol::virtualAddress() {
-	auto bind = ELF64_ST_BIND(_symbol->st_info);
+	auto bind = ELF_ST_BIND(_symbol->st_info);
 	__ensure(bind == STB_GLOBAL || bind == STB_WEAK || bind == STB_GNU_UNIQUE);
 	__ensure(_symbol->st_shndx != SHN_UNDEF);
 	return _object->baseAddress + _symbol->st_value;
@@ -1028,7 +1028,7 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 		if(cand.symbol()->st_shndx == SHN_UNDEF)
 			return false;
 
-		auto bind = ELF64_ST_BIND(cand.symbol()->st_info);
+		auto bind = ELF_ST_BIND(cand.symbol()->st_info);
 		if(bind != STB_GLOBAL && bind != STB_WEAK && bind != STB_GNU_UNIQUE)
 			return false;
 
@@ -1042,8 +1042,8 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 
 		auto index = hash_table[2 + bucket];
 		while(index != 0) {
-			ObjectSymbol cand{object, (Elf64_Sym *)(object->baseAddress
-					+ object->symbolTableOffset + index * sizeof(Elf64_Sym))};
+			ObjectSymbol cand{object, (elf_sym *)(object->baseAddress
+					+ object->symbolTableOffset + index * sizeof(elf_sym))};
 			if(eligible(cand) && frg::string_view{cand.getString()} == string)
 				return cand;
 
@@ -1055,21 +1055,21 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 		__ensure(object->hashStyle == HashStyle::gnu);
 
 		struct GnuTable {
-			Elf64_Word nBuckets;
-			Elf64_Word symbolOffset;
-			Elf64_Word bloomSize;
-			Elf64_Word bloomShift;
+			uint32_t nBuckets;
+			uint32_t symbolOffset;
+			uint32_t bloomSize;
+			uint32_t bloomShift;
 		};
 
 		auto hash_table = reinterpret_cast<const GnuTable *>(object->baseAddress
 				+ object->hashTableOffset);
-		auto buckets = reinterpret_cast<const Elf64_Word *>(object->baseAddress
+		auto buckets = reinterpret_cast<const uint32_t *>(object->baseAddress
 				+ object->hashTableOffset + sizeof(GnuTable)
-				+ hash_table->bloomSize * sizeof(Elf64_Addr));
-		auto chains = reinterpret_cast<const Elf64_Word *>(object->baseAddress
+				+ hash_table->bloomSize * sizeof(elf_addr));
+		auto chains = reinterpret_cast<const uint32_t *>(object->baseAddress
 				+ object->hashTableOffset + sizeof(GnuTable)
-				+ hash_table->bloomSize * sizeof(Elf64_Addr)
-				+ hash_table->nBuckets * sizeof(Elf64_Word));
+				+ hash_table->bloomSize * sizeof(elf_addr)
+				+ hash_table->nBuckets * sizeof(uint32_t));
 
 		// TODO: Use the bloom filter.
 
@@ -1084,8 +1084,8 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 			// chains[] contains an array of hashes, parallel to the symbol table.
 			auto chash = chains[index - hash_table->symbolOffset];
 			if ((chash & ~1) == (hash & ~1)) {
-				ObjectSymbol cand{object, (Elf64_Sym *)(object->baseAddress
-						+ object->symbolTableOffset + index * sizeof(Elf64_Sym))};
+				ObjectSymbol cand{object, (elf_sym *)(object->baseAddress
+						+ object->symbolTableOffset + index * sizeof(elf_sym))};
 				if(eligible(cand) && frg::string_view{cand.getString()} == string)
 					return cand;
 			}
@@ -1637,7 +1637,7 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 	frg::optional<size_t> rela_length;
 
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
-		Elf64_Dyn *dynamic = &object->dynamic[i];
+		elf_dyn *dynamic = &object->dynamic[i];
 
 		switch(dynamic->d_tag) {
 		case DT_RELA:
@@ -1647,15 +1647,15 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 			rela_length = dynamic->d_un.d_val;
 			break;
 		case DT_RELAENT:
-			__ensure(dynamic->d_un.d_val == sizeof(Elf64_Rela));
+			__ensure(dynamic->d_un.d_val == sizeof(elf_rela));
 			break;
 		}
 	}
 
 	if(rela_offset && rela_length) {
-		for(size_t offset = 0; offset < *rela_length; offset += sizeof(Elf64_Rela)) {
-			auto reloc = (Elf64_Rela *)(object->baseAddress + *rela_offset + offset);
 			_processRela(object, reloc);
+		for(size_t offset = 0; offset < *rela_length; offset += sizeof(elf_rela)) {
+			auto reloc = (elf_rela *)(object->baseAddress + *rela_offset + offset);
 		}
 	}else{
 		__ensure(!rela_offset && !rela_length);
@@ -1688,40 +1688,34 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 		uintptr_t rel_addr = object->baseAddress + reloc->r_offset;
 
 		switch (type) {
-#if defined(__x86_64__)
-		case R_X86_64_JUMP_SLOT:
-#elif defined(__aarch64__)
-		case R_AARCH64_JUMP_SLOT:
-#elif defined(__riscv)
-		case R_RISCV_JUMP_SLOT:
-#endif
+		case R_JUMP_SLOT:
 			if(eagerBinding) {
-				auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
-						+ symbol_index * sizeof(Elf64_Sym));
+				auto symbol = (elf_sym *)(object->baseAddress + object->symbolTableOffset
+						+ symbol_index * sizeof(elf_sym));
 				ObjectSymbol r(object, symbol);
 				auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, r.getString(), object->objectRts, 0);
 
 				if(!p) {
-					if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
+					if(ELF_ST_BIND(symbol->st_info) != STB_WEAK)
 						mlibc::panicLogger() << "rtdl: Unresolved JUMP_SLOT symbol "
 								<< r.getString() << " in object " << object->name << frg::endlog;
 
 					if(verbose)
 						mlibc::infoLogger() << "rtdl: Unresolved weak JUMP_SLOT symbol "
 							<< r.getString() << " in object " << object->name << frg::endlog;
-					*((uint64_t *)rel_addr) = 0;
+					*((uintptr_t *)rel_addr) = 0;
 				}else{
-					*((uint64_t *)rel_addr) = p->virtualAddress();
+					*((uintptr_t *)rel_addr) = p->virtualAddress();
 				}
 			}else{
-				*((uint64_t *)rel_addr) += object->baseAddress;
+				*((uintptr_t *)rel_addr) += object->baseAddress;
 			}
 			break;
 #if defined(__x86_64__)
 		case R_X86_64_IRELATIVE: {
 			auto ptr = object->baseAddress + reloc->r_addend;
-			auto target = reinterpret_cast<Elf64_Addr (*)(void)>(ptr)();
-			*((uint64_t *)rel_addr) = target;
+			auto target = reinterpret_cast<uintptr_t (*)(void)>(ptr)();
+			*((uintptr_t *)rel_addr) = target;
 			break;
 		}
 #endif
@@ -1732,13 +1726,13 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 			SharedObject *target = nullptr;
 
 			if (symbol_index) {
-				auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
-						+ symbol_index * sizeof(Elf64_Sym));
+				auto symbol = (elf_sym *)(object->baseAddress + object->symbolTableOffset
+						+ symbol_index * sizeof(elf_sym));
 				ObjectSymbol r(object, symbol);
 				auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, r.getString(), object->objectRts, 0);
 
 				if (!p) {
-					__ensure(ELF64_ST_BIND(symbol->st_info) != STB_WEAK);
+					__ensure(ELF_ST_BIND(symbol->st_info) != STB_WEAK);
 					mlibc::panicLogger() << "rtdl: Unresolved TLSDESC for symbol "
 						<< r.getString() << " in object " << object->name << frg::endlog;
 				} else {
