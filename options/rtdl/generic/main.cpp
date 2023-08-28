@@ -740,7 +740,7 @@ void __dlapi_enter(uintptr_t *entry_stack) {
 // using the host toolchain.
 
 // __gnu_linux__ is the define checked by libgcc
-#if defined(__aarch64__) && defined(__gnu_linux__)
+#if defined(__aarch64__) && defined(__gnu_linux__) && !defined(MLIBC_STATIC_BUILD)
 
 extern "C" unsigned long __getauxval(unsigned long type) {
 	// Find the auxiliary vector by skipping args and environment.
