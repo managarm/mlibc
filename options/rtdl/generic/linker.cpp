@@ -1707,7 +1707,10 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 
 			if (target->tlsModel == TlsModel::initial) {
 				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
-				((uint64_t *)rel_addr)[1] = symValue + target->tlsOffset + addend;
+				// TODO: guard the subtraction of TCB size with `if constexpr (tlsAboveTp)`
+				// for the arch-generic case
+				__ensure(tlsAboveTp == true);
+				((uint64_t *)rel_addr)[1] = symValue + target->tlsOffset + addend - sizeof(Tcb);
 			} else {
 				struct TlsdescData {
 					uintptr_t tlsIndex;
