@@ -627,6 +627,9 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 #ifdef __riscv
 			// Work around https://sourceware.org/bugzilla/show_bug.cgi?id=24673.
 			ignored |= DF_TEXTREL;
+#else
+			if(dynamic->d_un.d_val & DF_TEXTREL)
+				mlibc::panicLogger() << "\e[31mrtdl: DF_TEXTREL is unimplemented" << frg::endlog;
 #endif
 			if(dynamic->d_un.d_val & ~ignored)
 				mlibc::infoLogger() << "\e[31mrtdl: DT_FLAGS(" << frg::hex_fmt{dynamic->d_un.d_val & ~ignored}
