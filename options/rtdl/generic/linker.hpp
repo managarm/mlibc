@@ -185,6 +185,73 @@ struct SharedObject {
 	size_t phdrCount = 0;
 };
 
+struct Relocation {
+	Relocation(SharedObject *object, elf_rela *r)
+	: object_{object}, type_{Addend::Explicit} {
+		offset_ = r->r_offset;
+		info_ = r->r_info;
+		addend_ = r->r_addend;
+	}
+
+	Relocation(SharedObject *object, elf_rel *r)
+	: object_{object}, type_{Addend::Implicit} {
+		offset_ = r->r_offset;
+		info_ = r->r_info;
+	}
+
+	SharedObject *object() {
+		return object_;
+	}
+
+	elf_info type() const {
+		return ELF_R_TYPE(info_);
+	}
+
+	elf_info symbol_index() const {
+		return ELF_R_SYM(info_);
+	}
+
+	elf_addr addend_rel() {
+		switch(type_) {
+			case Addend::Explicit:
+				return addend_;
+			case Addend::Implicit: {
+				auto ptr = reinterpret_cast<elf_addr *>(object_->baseAddress + offset_);
+				return *ptr;
+			}
+		}
+		__builtin_unreachable();
+	}
+
+	elf_addr addend_norel() {
+		switch(type_) {
+			case Addend::Explicit:
+				return addend_;
+			case Addend::Implicit:
+				return 0;
+		}
+		__builtin_unreachable();
+	}
+
+	void relocate(elf_addr addr) {
+		auto ptr = reinterpret_cast<void *>(object_->baseAddress + offset_);
+		memcpy(ptr, &addr, sizeof(addr));
+	}
+
+private:
+	enum class Addend {
+		Implicit,
+		Explicit
+	};
+
+	SharedObject *object_;
+	Addend type_;
+
+	elf_addr offset_;
+	elf_info info_;
+	elf_addend addend_ = 0;
+};
+
 void processCopyRelocations(SharedObject *object);
 
 // --------------------------------------------------------
@@ -286,7 +353,8 @@ private:
 
 	void _processStaticRelocations(SharedObject *object);
 	void _processLazyRelocations(SharedObject *object);
-	void _processRela(SharedObject *object, Elf64_Rela *reloc);
+
+	void _processRelocations(Relocation &rel);
 
 public:
 	void initObjects();

@@ -1433,208 +1433,119 @@ void Loader::_scheduleInit(SharedObject *object) {
 	object->onInitStack = false;
 }
 
-void Loader::_processRela(SharedObject *object, Elf64_Rela *reloc) {
-	Elf64_Xword type = ELF64_R_TYPE(reloc->r_info);
-	Elf64_Xword symbol_index = ELF64_R_SYM(reloc->r_info);
-
+void Loader::_processRelocations(Relocation &rel) {
 	// copy relocations have to be performed after all other relocations
-#if defined(__x86_64__)
-	if(type == R_X86_64_COPY)
+	if(rel.type() == R_COPY)
 		return;
-#elif defined(__aarch64__)
-	if(type == R_AARCH64_COPY)
-		return;
-#elif defined(__riscv)
-	if(type == R_RISCV_COPY)
-		return;
-#endif
 
 	// resolve the symbol if there is a symbol
 	frg::optional<ObjectSymbol> p;
-	if(symbol_index) {
-		auto symbol = (Elf64_Sym *)(object->baseAddress + object->symbolTableOffset
-				+ symbol_index * sizeof(Elf64_Sym));
-		ObjectSymbol r(object, symbol);
+	if(rel.symbol_index()) {
+		auto symbol = (elf_sym *)(rel.object()->baseAddress + rel.object()->symbolTableOffset
+				+ rel.symbol_index() * sizeof(elf_sym));
+		ObjectSymbol r(rel.object(), symbol);
 
-		p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope,
-				r.getString(), object->objectRts, 0);
+		p = Scope::resolveGlobalOrLocal(*globalScope, rel.object()->localScope,
+				r.getString(), rel.object()->objectRts, 0);
 		if(!p) {
-			if(ELF64_ST_BIND(symbol->st_info) != STB_WEAK)
+			if(ELF_ST_BIND(symbol->st_info) != STB_WEAK)
 				mlibc::panicLogger() << "Unresolved load-time symbol "
-						<< r.getString() << " in object " << object->name << frg::endlog;
+						<< r.getString() << " in object " << rel.object()->name << frg::endlog;
 
 			if(verbose)
 				mlibc::infoLogger() << "rtdl: Unresolved weak load-time symbol "
-						<< r.getString() << " in object " << object->name << frg::endlog;
+						<< r.getString() << " in object " << rel.object()->name << frg::endlog;
 		}
 	}
 
-	uintptr_t rel_addr = object->baseAddress + reloc->r_offset;
+	switch(rel.type()) {
+	case R_NONE:
+		break;
 
-	switch(type) {
-#if defined(__x86_64__)
-	case R_X86_64_64: {
-		__ensure(symbol_index);
-		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
-		*((uint64_t *)rel_addr) = symbol_addr + reloc->r_addend;
+	case R_JUMP_SLOT: {
+		__ensure(!rel.addend_norel());
+		uintptr_t symbol_addr = p ? p->virtualAddress() : 0;
+		rel.relocate(symbol_addr);
 	} break;
-	case R_X86_64_GLOB_DAT: {
-		__ensure(symbol_index);
-		__ensure(!reloc->r_addend);
-		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
-		*((uint64_t *)rel_addr) = symbol_addr;
+
+#if !defined(__riscv)
+	// on some architectures, R_GLOB_DAT can be defined to other relocations
+	case R_GLOB_DAT: {
+		__ensure(rel.symbol_index());
+		__ensure(p);
+		uintptr_t symbol_addr = p ? p->virtualAddress() : 0;
+		rel.relocate(symbol_addr + rel.addend_norel());
 	} break;
-	case R_X86_64_JUMP_SLOT: {
-		__ensure(symbol_index);
-		__ensure(!reloc->r_addend);
-		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
-		*((uint64_t *)rel_addr) = symbol_addr;
+#endif
+
+	case R_ABSOLUTE: {
+		__ensure(rel.symbol_index());
+		__ensure(p);
+		uintptr_t symbol_addr = p ? p->virtualAddress() : 0;
+		rel.relocate(symbol_addr + rel.addend_rel());
 	} break;
-	case R_X86_64_RELATIVE: {
-		__ensure(!symbol_index);
-		*((uint64_t *)rel_addr) = object->baseAddress + reloc->r_addend;
+
+	case R_RELATIVE: {
+		__ensure(!rel.symbol_index());
+		rel.relocate(rel.object()->baseAddress + rel.addend_rel());
 	} break;
-	// DTPMOD and DTPOFF are dynamic TLS relocations (for __tls_get_addr()).
+
+	// DTPMOD and DTPREL are dynamic TLS relocations (for __tls_get_addr()).
 	// TPOFF is a relocation to the initial TLS model.
-	case R_X86_64_DTPMOD64: {
-		__ensure(!reloc->r_addend);
-		if(symbol_index) {
+	case R_TLS_DTPMOD: {
+		// sets the first `sizeof(uintptr_t)` bytes of `struct __abi_tls_entry`
+		// this means that we can just use the `SharedObject *` to resolve whatever we need
+		__ensure(!rel.addend_rel());
+		if(rel.symbol_index()) {
 			__ensure(p);
-			*((uint64_t *)rel_addr) = (uint64_t)p->object();
+			rel.relocate(elf_addr(p->object()));
 		}else{
-			// TODO: is this behaviour actually documented anywhere?
 			if(stillSlightlyVerbose)
-				mlibc::infoLogger() << "rtdl: Warning: DTPOFF64 with no symbol"
-						" in object " << object->name << frg::endlog;
-			*((uint64_t *)rel_addr) = (uint64_t)object;
+				mlibc::infoLogger() << "rtdl: Warning: TLS_DTPMOD64 with no symbol in object "
+					<< rel.object()->name << frg::endlog;
+			rel.relocate(elf_addr(rel.object()));
 		}
 	} break;
-	case R_X86_64_DTPOFF64: {
+	case R_TLS_DTPREL: {
+		__ensure(rel.symbol_index());
 		__ensure(p);
-		__ensure(!reloc->r_addend);
-		*((uint64_t *)rel_addr) = p->symbol()->st_value;
+		rel.relocate(p->symbol()->st_value + rel.addend_rel() - TLS_DTV_OFFSET);
 	} break;
-	case R_X86_64_TPOFF64: {
-		if(symbol_index) {
+	case R_TLS_TPREL: {
+		uintptr_t off = rel.addend_rel();
+		uintptr_t tls_offset = 0;
+
+		if(rel.symbol_index()) {
 			__ensure(p);
-			__ensure(!reloc->r_addend);
 			if(p->object()->tlsModel != TlsModel::initial)
-				mlibc::panicLogger() << "rtdl: In object " << object->name
+				mlibc::panicLogger() << "rtdl: In object " << rel.object()->name
 						<< ": Static TLS relocation to symbol " << p->getString()
 						<< " in dynamically loaded object "
 						<< p->object()->name << frg::endlog;
-			*((uint64_t *)rel_addr) = p->object()->tlsOffset + p->symbol()->st_value;
+			off += p->symbol()->st_value;
+			tls_offset = p->object()->tlsOffset;
 		}else{
 			if(stillSlightlyVerbose)
 				mlibc::infoLogger() << "rtdl: Warning: TPOFF64 with no symbol"
-						" in object " << object->name << frg::endlog;
-			if(object->tlsModel != TlsModel::initial)
-				mlibc::panicLogger() << "rtdl: In object " << object->name
+						" in object " << rel.object()->name << frg::endlog;
+			if(rel.object()->tlsModel != TlsModel::initial)
+				mlibc::panicLogger() << "rtdl: In object " << rel.object()->name
 						<< ": Static TLS relocation to dynamically loaded object "
-						<< object->name << frg::endlog;
-			*((uint64_t *)rel_addr) = object->tlsOffset + reloc->r_addend;
+						<< rel.object()->name << frg::endlog;
+			tls_offset = rel.object()->tlsOffset;
 		}
-	} break;
-#elif defined(__aarch64__)
-	case R_AARCH64_ABS64: {
-		__ensure(symbol_index);
-		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
-		*((uint64_t *)rel_addr) = symbol_addr + reloc->r_addend;
-	} break;
-	case R_AARCH64_GLOB_DAT: {
-		__ensure(symbol_index);
-		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
-		*((uint64_t *)rel_addr) = symbol_addr + reloc->r_addend;
-	} break;
-	case R_AARCH64_RELATIVE: {
-		__ensure(!symbol_index);
-		*((uint64_t *)rel_addr) = object->baseAddress + reloc->r_addend;
-	} break;
-	case R_AARCH64_TLS_TPREL: {
-		if(symbol_index) {
-			__ensure(p);
-			__ensure(!reloc->r_addend);
-			if(p->object()->tlsModel != TlsModel::initial)
-				mlibc::panicLogger() << "rtdl: In object " << object->name
-						<< ": Static TLS relocation to dynamically loaded object "
-						<< p->object()->name << frg::endlog;
-			*((uint64_t *)rel_addr) = p->object()->tlsOffset + p->symbol()->st_value;
-		}else{
-			__ensure(!reloc->r_addend);
-			if(stillSlightlyVerbose)
-				mlibc::infoLogger() << "rtdl: Warning: TLS_TPREL with no symbol"
-						" in object " << object->name << frg::endlog;
-			if(object->tlsModel != TlsModel::initial)
-				mlibc::panicLogger() << "rtdl: In object " << object->name
-						<< ": Static TLS relocation to dynamically loaded object "
-						<< object->name << frg::endlog;
-			*((uint64_t *)rel_addr) = object->tlsOffset;
+
+		if constexpr (tlsAboveTp) {
+			off += tls_offset - sizeof(Tcb);
+		} else {
+			off += tls_offset;
 		}
+
+		rel.relocate(off);
 	} break;
-#elif defined(__riscv)
-	case R_RISCV_64: {
-		__ensure(symbol_index);
-		__ensure(p);
-		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
-		*((uint64_t *)rel_addr) = symbol_addr + reloc->r_addend;
-	} break;
-	case R_RISCV_JUMP_SLOT: {
-		__ensure(symbol_index);
-		__ensure(p);
-		__ensure(!reloc->r_addend);
-		uint64_t symbol_addr = p ? p->virtualAddress() : 0;
-		*((uint64_t *)rel_addr) = symbol_addr;
-	} break;
-	case R_RISCV_RELATIVE: {
-		__ensure(!symbol_index);
-		*((uint64_t *)rel_addr) = object->baseAddress + reloc->r_addend;
-	} break;
-	case R_RISCV_TLS_DTPMOD64: {
-		__ensure(!reloc->r_addend);
-		if(symbol_index) {
-			__ensure(p);
-			*((uint64_t *)rel_addr) = (uint64_t)p->object();
-		}else{
-			if(stillSlightlyVerbose)
-				mlibc::infoLogger() << "rtdl: Warning: TLS_DTPMOD64 with no symbol"
-						" in object " << object->name << frg::endlog;
-			*((uint64_t *)rel_addr) = (uint64_t)object;
-		}
-	} break;
-	case R_RISCV_TLS_DTPREL64: {
-		__ensure(symbol_index);
-		__ensure(p);
-		*((uint64_t *)rel_addr) = p->symbol()->st_value + reloc->r_addend - TLS_DTV_OFFSET;
-	} break;
-	case R_RISCV_TLS_TPREL64: {
-		// Note: this assumes that tcb_ptr + sizeof(Tcb) == tp.
-		if(symbol_index) {
-			__ensure(p);
-			__ensure(!reloc->r_addend);
-			if(p->object()->tlsModel != TlsModel::initial)
-				mlibc::panicLogger() << "rtdl: In object " << object->name
-						<< ": Static TLS relocation to dynamically loaded object "
-						<< p->object()->name << frg::endlog;
-			*((uint64_t *)rel_addr) = p->object()->tlsOffset - sizeof(Tcb) + p->symbol()->st_value;
-		}else{
-			__ensure(!reloc->r_addend);
-			if(stillSlightlyVerbose)
-				mlibc::infoLogger() << "rtdl: Warning: TLS_TPREL64 with no symbol"
-						" in object " << object->name << frg::endlog;
-			if(object->tlsModel != TlsModel::initial)
-				mlibc::panicLogger() << "rtdl: In object " << object->name
-						<< ": Static TLS relocation to dynamically loaded object "
-						<< object->name << frg::endlog;
-			*((uint64_t *)rel_addr) = object->tlsOffset - sizeof(Tcb);
-		}
-	} break;
-	case R_RISCV_NONE:
-		// Work around https://sourceware.org/bugzilla/show_bug.cgi?id=24673.
-		break;
-#endif
 	default:
 		mlibc::panicLogger() << "Unexpected relocation type "
-				<< (void *)type << frg::endlog;
+				<< (void *) rel.type() << frg::endlog;
 	}
 }
 
@@ -1671,14 +1582,23 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 	}
 
 	if(rela_offset && rela_length) {
-			_processRela(object, reloc);
 		__ensure(!rel_offset && !rel_length);
 
 		for(size_t offset = 0; offset < *rela_length; offset += sizeof(elf_rela)) {
 			auto reloc = (elf_rela *)(object->baseAddress + *rela_offset + offset);
+			auto r = Relocation(object, reloc);
+
+			_processRelocations(r);
 		}
-	}else{
+	}else if(rel_offset && rel_length) {
 		__ensure(!rela_offset && !rela_length);
+
+		for(size_t offset = 0; offset < *rel_length; offset += sizeof(elf_rel)) {
+			auto reloc = (elf_rel *)(object->baseAddress + *rel_offset + offset);
+			auto r = Relocation(object, reloc);
+
+			_processRelocations(r);
+		}
 	}
 }
 
