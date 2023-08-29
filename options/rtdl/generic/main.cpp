@@ -76,15 +76,21 @@ uintptr_t getLdsoBase() {
 extern "C" void relocateSelf() {
 	size_t rela_offset = 0;
 	size_t rela_size = 0;
+	size_t rel_offset = 0;
+	size_t rel_size = 0;
 	for(size_t i = 0; _DYNAMIC[i].d_tag != DT_NULL; i++) {
 		auto ent = &_DYNAMIC[i];
 		switch(ent->d_tag) {
+		case DT_REL: rel_offset = ent->d_un.d_ptr; break;
+		case DT_RELSZ: rel_size = ent->d_un.d_val; break;
 		case DT_RELA: rela_offset = ent->d_un.d_ptr; break;
 		case DT_RELASZ: rela_size = ent->d_un.d_val; break;
 		}
 	}
 
 	auto ldso_base = getLdsoBase();
+
+	__ensure((rel_offset != 0) ^ (rela_offset != 0));
 
 	for(size_t disp = 0; disp < rela_size; disp += sizeof(elf_rela)) {
 		auto reloc = reinterpret_cast<elf_rela *>(ldso_base + rela_offset + disp);
@@ -97,6 +103,23 @@ extern "C" void relocateSelf() {
 		switch(type) {
 		case R_RELATIVE:
 			*p = ldso_base + reloc->r_addend;
+			break;
+		default:
+			__builtin_trap();
+		}
+	}
+
+	for(size_t disp = 0; disp < rel_size; disp += sizeof(elf_rel)) {
+		auto reloc = reinterpret_cast<elf_rel *>(ldso_base + rel_offset + disp);
+
+		auto type = ELF_R_TYPE(reloc->r_info);
+		if(ELF_R_SYM(reloc->r_info))
+			__builtin_trap();
+
+		auto p = reinterpret_cast<uint64_t *>(ldso_base + reloc->r_offset);
+		switch(type) {
+		case R_RELATIVE:
+			*p += ldso_base;
 			break;
 		default:
 			__builtin_trap();
@@ -204,6 +227,10 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		case DT_RELAENT:
 		case DT_RELACOUNT:
 		case DT_DEBUG:
+		case DT_REL:
+		case DT_RELSZ:
+		case DT_RELENT:
+		case DT_RELCOUNT:
 			continue;
 		default:
 			__ensure(!"Unexpected dynamic entry in program interpreter");

@@ -605,6 +605,7 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 				object->lazyExplicitAddend = true;
 			}else{
 				__ensure(dynamic->d_un.d_val == DT_REL);
+				object->lazyExplicitAddend = false;
 			}
 			break;
 		// TODO: Implement this correctly!
@@ -685,6 +686,7 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_NEEDED: // we handle this later
 		case DT_FINI: case DT_FINI_ARRAY: case DT_FINI_ARRAYSZ:
 		case DT_RELA: case DT_RELASZ: case DT_RELAENT: case DT_RELACOUNT:
+		case DT_REL: case DT_RELSZ: case DT_RELENT: case DT_RELCOUNT:
 		case DT_VERSYM:
 		case DT_VERDEF: case DT_VERDEFNUM:
 		case DT_VERNEED: case DT_VERNEEDNUM:
@@ -1636,6 +1638,9 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 	frg::optional<uintptr_t> rela_offset;
 	frg::optional<size_t> rela_length;
 
+	frg::optional<uintptr_t> rel_offset;
+	frg::optional<size_t> rel_length;
+
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
 		elf_dyn *dynamic = &object->dynamic[i];
 
@@ -1649,11 +1654,22 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 		case DT_RELAENT:
 			__ensure(dynamic->d_un.d_val == sizeof(elf_rela));
 			break;
+		case DT_REL:
+			rel_offset = dynamic->d_un.d_ptr;
+			break;
+		case DT_RELSZ:
+			rel_length = dynamic->d_un.d_val;
+			break;
+		case DT_RELENT:
+			__ensure(dynamic->d_un.d_val == sizeof(elf_rel));
+			break;
 		}
 	}
 
 	if(rela_offset && rela_length) {
 			_processRela(object, reloc);
+		__ensure(!rel_offset && !rel_length);
+
 		for(size_t offset = 0; offset < *rela_length; offset += sizeof(elf_rela)) {
 			auto reloc = (elf_rela *)(object->baseAddress + *rela_offset + offset);
 		}
@@ -1680,12 +1696,28 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 		return;
 
 	// adjust the addresses of JUMP_SLOT relocations
-	__ensure(object->lazyExplicitAddend);
-	for(size_t offset = 0; offset < object->lazyTableSize; offset += sizeof(Elf64_Rela)) {
-		auto reloc = (Elf64_Rela *)(object->baseAddress + object->lazyRelocTableOffset + offset);
-		Elf64_Xword type = ELF64_R_TYPE(reloc->r_info);
-		Elf64_Xword symbol_index = ELF64_R_SYM(reloc->r_info);
-		uintptr_t rel_addr = object->baseAddress + reloc->r_offset;
+	__ensure(object->lazyExplicitAddend.has_value());
+	size_t rel_size = (*object->lazyExplicitAddend) ? sizeof(elf_rela) : sizeof(elf_rel);
+
+	for(size_t offset = 0; offset < object->lazyTableSize; offset += rel_size) {
+		elf_info type;
+		elf_info symbol_index;
+
+		uintptr_t rel_addr;
+		uintptr_t addend [[maybe_unused]] = 0;
+
+		if(*object->lazyExplicitAddend) {
+			auto reloc = (elf_rela *)(object->baseAddress + object->lazyRelocTableOffset + offset);
+			type = ELF_R_TYPE(reloc->r_info);
+			symbol_index = ELF_R_SYM(reloc->r_info);
+			rel_addr = object->baseAddress + reloc->r_offset;
+			addend = reloc->r_addend;
+		} else {
+			auto reloc = (elf_rel *)(object->baseAddress + object->lazyRelocTableOffset + offset);
+			type = ELF_R_TYPE(reloc->r_info);
+			symbol_index = ELF_R_SYM(reloc->r_info);
+			rel_addr = object->baseAddress + reloc->r_offset;
+		}
 
 		switch (type) {
 		case R_JUMP_SLOT:
@@ -1713,7 +1745,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 			break;
 #if defined(__x86_64__)
 		case R_X86_64_IRELATIVE: {
-			auto ptr = object->baseAddress + reloc->r_addend;
+			auto ptr = object->baseAddress + addend;
 			auto target = reinterpret_cast<uintptr_t (*)(void)>(ptr)();
 			*((uintptr_t *)rel_addr) = target;
 			break;
@@ -1748,7 +1780,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 
 			if (target->tlsModel == TlsModel::initial) {
 				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
-				((uint64_t *)rel_addr)[1] = symValue + target->tlsOffset + reloc->r_addend;
+				((uint64_t *)rel_addr)[1] = symValue + target->tlsOffset + addend;
 			} else {
 				struct TlsdescData {
 					uintptr_t tlsIndex;
@@ -1763,7 +1795,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				// TODO: We should free this when the DSO gets destroyed
 				auto data = frg::construct<TlsdescData>(getAllocator());
 				data->tlsIndex = target->tlsIndex;
-				data->addend = symValue + reloc->r_addend;
+				data->addend = symValue + addend;
 
 				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescDynamic);
 				((uint64_t *)rel_addr)[1] = reinterpret_cast<uintptr_t>(data);

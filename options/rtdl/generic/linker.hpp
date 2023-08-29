@@ -159,7 +159,7 @@ struct SharedObject {
 	// save the lazy JUMP_SLOT relocation table
 	uintptr_t lazyRelocTableOffset;
 	size_t lazyTableSize;
-	bool lazyExplicitAddend;
+	frg::optional<bool> lazyExplicitAddend;
 
 	bool symbolicResolution;
 	bool eagerBinding;
