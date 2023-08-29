@@ -6,6 +6,7 @@
 
 #define ST_RDONLY 1
 #define ST_NOSUID 2
+#define ST_MANDLOCK 64
 
 // On Linux, this struct is not directly used by the kernel.
 struct statvfs {

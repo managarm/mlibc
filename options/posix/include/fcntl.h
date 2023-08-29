@@ -65,6 +65,9 @@ ssize_t vmsplice(int fd, const struct iovec *iov, size_t nr_segs, unsigned int f
 #define F_SETPIPE_SZ 1031
 #define F_GETPIPE_SZ 1032
 
+#define FALLOC_FL_KEEP_SIZE 1
+#define FALLOC_FL_PUNCH_HOLE 2
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,6 +1,8 @@
 #ifndef _SYS_MOUNT_H
 #define _SYS_MOUNT_H
 
+#include <asm/ioctl.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -37,6 +39,40 @@ extern "C" {
 #define MS_NOUSER (1 << 31)
 
 #define MNT_FORCE 1
+#define MNT_DETACH 2
+#define MNT_EXPIRE 4
+#define UMOUNT_NOFOLLOW 8
+
+#undef BLKROSET
+#define BLKROSET _IO(0x12, 93)
+#undef BLKROGET
+#define BLKROGET _IO(0x12, 94)
+#undef BLKRRPART
+#define BLKRRPART _IO(0x12, 95)
+#undef BLKGETSIZE
+#define BLKGETSIZE _IO(0x12, 96)
+#undef BLKFLSBUF
+#define BLKFLSBUF _IO(0x12, 97)
+#undef BLKRASET
+#define BLKRASET _IO(0x12, 98)
+#undef BLKRAGET
+#define BLKRAGET _IO(0x12, 99)
+#undef BLKFRASET
+#define BLKFRASET _IO(0x12, 100)
+#undef BLKFRAGET
+#define BLKFRAGET _IO(0x12, 101)
+#undef BLKSECTSET
+#define BLKSECTSET _IO(0x12, 102)
+#undef BLKSECTGET
+#define BLKSECTGET _IO(0x12, 103)
+#undef BLKSSZGET
+#define BLKSSZGET _IO(0x12, 104)
+#undef BLKBSZGET
+#define BLKBSZGET _IOR(0x12, 112, size_t)
+#undef BLKBSZSET
+#define BLKBSZSET _IOW(0x12, 113, size_t)
+#undef BLKGETSIZE64
+#define BLKGETSIZE64 _IOR(0x12, 114, size_t)
 
 #ifndef __MLIBC_ABI_ONLY
 

@@ -110,36 +110,19 @@
 #define PR_CAP_AMBIENT_LOWER 3
 #define PR_CAP_AMBIENT_CLEAR_ALL 4
 
+#ifndef __MLIBC_ABI_ONLY
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct prctl_mm_map {
-	uint64_t start_code;
-	uint64_t end_code;
-	uint64_t start_data;
-	uint64_t end_data;
-	uint64_t start_brk;
-	uint64_t brk;
-	uint64_t start_stack;
-	uint64_t arg_start;
-	uint64_t arg_end;
-	uint64_t env_start;
-	uint64_t env_end;
-	uint64_t *auxv;
-	uint32_t auxv_size;
-	uint32_t exe_fd;
-};
-
-#ifndef __MLIBC_ABI_ONLY
-
 int prctl (int, ...);
-
-#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #endif // _SYS_PRCTL_H
 
