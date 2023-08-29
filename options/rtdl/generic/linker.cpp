@@ -677,7 +677,11 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			object->preInitArraySize = dynamic->d_un.d_val;
 			break;
 		case DT_DEBUG:
+#if ELF_CLASS == 32
+			dynamic->d_un.d_val = reinterpret_cast<Elf32_Word>(&globalDebugInterface);
+#elif ELF_CLASS == 64
 			dynamic->d_un.d_val = reinterpret_cast<Elf64_Xword>(&globalDebugInterface);
+#endif
 			break;
 		case DT_SONAME:
 			soname_offset = dynamic->d_un.d_val;
