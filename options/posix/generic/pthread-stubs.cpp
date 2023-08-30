@@ -277,7 +277,7 @@ namespace {
 		auto sp = mlibc::get_sp();
 		while (fgets(line, 256, fp)) {
 			uintptr_t from, to;
-			if(sscanf(line, "%lx-%lx", &from, &to) != 2)
+			if(sscanf(line, "%" SCNxPTR "-%" SCNxPTR, &from, &to) != 2)
 				continue;
 			if (sp < to && sp > from) {
 				// We need to return the lowest byte of the stack.
