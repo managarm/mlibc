@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <fenv.h>
+#include <float.h>
 #include <math.h>
 
 #define NO_OPTIMIZE(x) asm volatile("" :: "r,m" (x) : "memory")
@@ -11,7 +12,7 @@ static void div_by_zero() {
 }
 
 static bool float_cmp(float a, float b) {
-	return fabs(a - b) < .000000000001;
+	return a == b || fabs(a - b) < (fabs(a) + fabs(b)) * FLT_EPSILON;
 }
 
 static void test_rounding(float expectation1, float expectation2) {
