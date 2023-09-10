@@ -236,18 +236,42 @@ enum {
 	R_X86_64_TPOFF64 = 18,
 	R_X86_64_PC64 = 24,
 	R_X86_64_GOTPC32 = 26,
+	R_X86_64_TLSDESC = 36,
 	R_X86_64_IRELATIVE = 37,
 };
 
 enum {
+	R_386_NONE = 0,
+	R_386_32 = 1,
+	R_386_PC32 = 2,
+	R_386_COPY = 5,
+	R_386_GLOB_DAT = 6,
+	R_386_JMP_SLOT = 7,
+	R_386_RELATIVE = 8,
+	R_386_TLS_TPOFF = 14,
+	R_386_TLS_DTPMOD32 = 35,
+	R_386_TLS_DTPOFF32 = 36,
+	R_386_TLS_DESC = 41,
+	R_386_IRELATIVE = 42,
+};
+
+enum {
+	R_AARCH64_NONE = 0,
 	R_AARCH64_ABS64 = 257,
 	R_AARCH64_COPY = 1024,
 	R_AARCH64_GLOB_DAT = 1025,
 	R_AARCH64_JUMP_SLOT = 1026,
 	R_AARCH64_RELATIVE = 1027,
-	R_AARCH64_TLS_TPREL = 1030,
-	R_AARCH64_TLSDESC = 1031
+	R_AARCH64_TLS_DTPREL64 = 1028,
+	R_AARCH64_TLS_DTPMOD64 = 1029,
+	R_AARCH64_TLS_TPREL64 = 1030,
+	R_AARCH64_TLSDESC = 1031,
+	R_AARCH64_IRELATIVE = 1032,
 };
+
+#define R_AARCH64_TLS_DTPREL R_AARCH64_TLS_DTPREL64
+#define R_AARCH64_TLS_DTPMOD R_AARCH64_TLS_DTPMOD64
+#define R_AARCH64_TLS_TPREL R_AARCH64_TLS_TPREL64
 
 enum {
 	R_RISCV_NONE = 0,
@@ -262,8 +286,14 @@ enum {
 	R_RISCV_TLS_DTPREL64 = 9,
 	R_RISCV_TLS_TPREL32 = 10,
 	R_RISCV_TLS_TPREL64 = 11,
+	R_RISCV_TLSDESC = 12, // currently a draft but looking good
 	R_RISCV_IRELATIVE = 58
 };
+
+typedef struct {
+	Elf32_Addr r_offset;
+	Elf32_Word r_info;
+} Elf32_Rel;
 
 typedef struct {
 	Elf64_Addr r_offset;
@@ -290,6 +320,13 @@ __MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_TYPE(Elf64_Xword info) {
 }
 __MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_INFO(Elf64_Xword sym, Elf64_Xword type) {
 	return ((((Elf64_Xword)(sym)) << 32) + (type));
+}
+
+__MLIBC_INLINE_DEFINITION Elf32_Word ELF32_R_SYM(Elf32_Word info) {
+	return info >> 8;
+}
+__MLIBC_INLINE_DEFINITION Elf32_Word ELF32_R_TYPE(Elf32_Word info) {
+	return info & 0xFF;
 }
 
 enum {
@@ -363,6 +400,8 @@ enum {
 	DT_RPATH = 15,
 	DT_SYMBOLIC = 16,
 	DT_REL = 17,
+	DT_RELSZ = 18,
+	DT_RELENT = 19,
 	DT_TEXTREL = 22,
 	DT_BIND_NOW = 24,
 	DT_INIT_ARRAY = 25,
@@ -383,6 +422,7 @@ enum {
 	DT_TLSDESC_GOT = 0x6ffffef7,
 	DT_VERSYM = 0x6ffffff0,
 	DT_RELACOUNT = 0x6ffffff9,
+	DT_RELCOUNT = 0x6ffffffa,
 	DT_FLAGS_1 = 0x6ffffffb,
 	DT_VERDEF = 0x6ffffffc,
 	DT_VERDEFNUM = 0x6ffffffd,

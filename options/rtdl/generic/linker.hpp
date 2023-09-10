@@ -6,6 +6,8 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/tcb.hpp>
 
+#include "elf.hpp"
+
 struct ObjectRepository;
 struct Scope;
 struct Loader;
@@ -33,7 +35,7 @@ struct ObjectRepository {
 	// This is primarily used to create a SharedObject for the RTDL itself.
 	SharedObject *injectObjectFromDts(frg::string_view name,
 			frg::string<MemoryAllocator> path,
-			uintptr_t base_address, Elf64_Dyn *dynamic, uint64_t rts);
+			uintptr_t base_address, elf_dyn *dynamic, uint64_t rts);
 
 	// This is used to create a SharedObject for the executable that we want to link.
 	SharedObject *injectObjectFromPhdrs(frg::string_view name,
@@ -100,7 +102,7 @@ struct DebugInterface {
 struct LinkMap {
 	uintptr_t base = 0;
 	const char *name = nullptr;
-	Elf64_Dyn *dynv = nullptr;
+	elf_dyn *dynv = nullptr;
 	LinkMap *next = nullptr, *prev = nullptr;
 };
 
@@ -129,7 +131,7 @@ struct SharedObject {
 	Scope *localScope;
 
 	// pointers to the dynamic table, GOT and entry point
-	Elf64_Dyn *dynamic = nullptr;
+	elf_dyn *dynamic = nullptr;
 	void **globalOffsetTable;
 	void *entry;
 
@@ -157,7 +159,7 @@ struct SharedObject {
 	// save the lazy JUMP_SLOT relocation table
 	uintptr_t lazyRelocTableOffset;
 	size_t lazyTableSize;
-	bool lazyExplicitAddend;
+	frg::optional<bool> lazyExplicitAddend;
 
 	bool symbolicResolution;
 	bool eagerBinding;
@@ -181,6 +183,73 @@ struct SharedObject {
 	void *phdrPointer = nullptr;
 	size_t phdrEntrySize = 0;
 	size_t phdrCount = 0;
+};
+
+struct Relocation {
+	Relocation(SharedObject *object, elf_rela *r)
+	: object_{object}, type_{Addend::Explicit} {
+		offset_ = r->r_offset;
+		info_ = r->r_info;
+		addend_ = r->r_addend;
+	}
+
+	Relocation(SharedObject *object, elf_rel *r)
+	: object_{object}, type_{Addend::Implicit} {
+		offset_ = r->r_offset;
+		info_ = r->r_info;
+	}
+
+	SharedObject *object() {
+		return object_;
+	}
+
+	elf_info type() const {
+		return ELF_R_TYPE(info_);
+	}
+
+	elf_info symbol_index() const {
+		return ELF_R_SYM(info_);
+	}
+
+	elf_addr addend_rel() {
+		switch(type_) {
+			case Addend::Explicit:
+				return addend_;
+			case Addend::Implicit: {
+				auto ptr = reinterpret_cast<elf_addr *>(object_->baseAddress + offset_);
+				return *ptr;
+			}
+		}
+		__builtin_unreachable();
+	}
+
+	elf_addr addend_norel() {
+		switch(type_) {
+			case Addend::Explicit:
+				return addend_;
+			case Addend::Implicit:
+				return 0;
+		}
+		__builtin_unreachable();
+	}
+
+	void relocate(elf_addr addr) {
+		auto ptr = reinterpret_cast<void *>(object_->baseAddress + offset_);
+		memcpy(ptr, &addr, sizeof(addr));
+	}
+
+private:
+	enum class Addend {
+		Implicit,
+		Explicit
+	};
+
+	SharedObject *object_;
+	Addend type_;
+
+	elf_addr offset_;
+	elf_info info_;
+	elf_addend addend_ = 0;
 };
 
 void processCopyRelocations(SharedObject *object);
@@ -216,13 +285,13 @@ void *tryAccessDtv(SharedObject *object);
 // --------------------------------------------------------
 
 struct ObjectSymbol {
-	ObjectSymbol(SharedObject *object, const Elf64_Sym *symbol);
+	ObjectSymbol(SharedObject *object, const elf_sym *symbol);
 
 	SharedObject *object() {
 		return _object;
 	}
 
-	const Elf64_Sym *symbol() {
+	const elf_sym *symbol() {
 		return _symbol;
 	}
 
@@ -232,7 +301,7 @@ struct ObjectSymbol {
 
 private:
 	SharedObject *_object;
-	const Elf64_Sym *_symbol;
+	const elf_sym *_symbol;
 };
 
 frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_view string);
@@ -284,7 +353,8 @@ private:
 
 	void _processStaticRelocations(SharedObject *object);
 	void _processLazyRelocations(SharedObject *object);
-	void _processRela(SharedObject *object, Elf64_Rela *reloc);
+
+	void _processRelocations(Relocation &rel);
 
 public:
 	void initObjects();
