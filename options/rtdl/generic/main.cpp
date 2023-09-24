@@ -78,6 +78,8 @@ extern "C" void relocateSelf() {
 	size_t rela_size = 0;
 	size_t rel_offset = 0;
 	size_t rel_size = 0;
+	size_t relr_offset = 0;
+	size_t relr_size = 0;
 	for(size_t i = 0; _DYNAMIC[i].d_tag != DT_NULL; i++) {
 		auto ent = &_DYNAMIC[i];
 		switch(ent->d_tag) {
@@ -85,6 +87,8 @@ extern "C" void relocateSelf() {
 		case DT_RELSZ: rel_size = ent->d_un.d_val; break;
 		case DT_RELA: rela_offset = ent->d_un.d_ptr; break;
 		case DT_RELASZ: rela_size = ent->d_un.d_val; break;
+		case DT_RELR: relr_offset = ent->d_un.d_ptr; break;
+		case DT_RELRSZ: relr_size = ent->d_un.d_val; break;
 		}
 	}
 
@@ -123,6 +127,29 @@ extern "C" void relocateSelf() {
 			break;
 		default:
 			__builtin_trap();
+		}
+	}
+
+	elf_addr *addr = nullptr;
+	for(size_t disp = 0; disp < relr_size; disp += sizeof(elf_relr)) {
+		auto entry = *(elf_relr *)(ldso_base + relr_offset + disp);
+
+		// Even entry indicates the beginning address.
+		if(!(entry & 1)) {
+			addr = (elf_addr *)(ldso_base + entry);
+			__ensure(addr);
+			*addr++ += ldso_base;
+		}else {
+			// Odd entry indicates entry is a bitmap of the subsequent locations to be relocated.
+			for(int i = 0; entry; ++i) {
+				if(entry & 1) {
+					addr[i] += ldso_base;
+				}
+				entry >>= 1;
+			}
+
+			// Each entry describes at max 63 (on 64bit) or 31 (on 32bit) subsequent locations.
+			addr += CHAR_BIT * sizeof(elf_relr) - 1;
 		}
 	}
 }
@@ -231,6 +258,9 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		case DT_RELSZ:
 		case DT_RELENT:
 		case DT_RELCOUNT:
+		case DT_RELR:
+		case DT_RELRSZ:
+		case DT_RELRENT:
 			continue;
 		default:
 			__ensure(!"Unexpected dynamic entry in program interpreter");

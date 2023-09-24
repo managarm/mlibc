@@ -694,6 +694,7 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_FINI: case DT_FINI_ARRAY: case DT_FINI_ARRAYSZ:
 		case DT_RELA: case DT_RELASZ: case DT_RELAENT: case DT_RELACOUNT:
 		case DT_REL: case DT_RELSZ: case DT_RELENT: case DT_RELCOUNT:
+		case DT_RELR: case DT_RELRSZ: case DT_RELRENT:
 		case DT_VERSYM:
 		case DT_VERDEF: case DT_VERDEFNUM:
 		case DT_VERNEED: case DT_VERNEEDNUM:
@@ -1559,6 +1560,9 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 	frg::optional<uintptr_t> rel_offset;
 	frg::optional<size_t> rel_length;
 
+	frg::optional<uintptr_t> relr_offset;
+	frg::optional<size_t> relr_length;
+
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
 		elf_dyn *dynamic = &object->dynamic[i];
 
@@ -1581,6 +1585,15 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 		case DT_RELENT:
 			__ensure(dynamic->d_un.d_val == sizeof(elf_rel));
 			break;
+		case DT_RELR:
+			relr_offset = dynamic->d_un.d_ptr;
+			break;
+		case DT_RELRSZ:
+			relr_length = dynamic->d_un.d_val;
+			break;
+		case DT_RELRENT:
+			__ensure(dynamic->d_un.d_val == sizeof(elf_relr));
+			break;
 		}
 	}
 
@@ -1601,6 +1614,32 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 			auto r = Relocation(object, reloc);
 
 			_processRelocations(r);
+		}
+	}
+
+	if(relr_offset && relr_length) {
+		elf_addr *addr = nullptr;
+
+		for(size_t offset = 0; offset < *relr_length; offset += sizeof(elf_relr)) {
+			auto entry = *(elf_relr *)(object->baseAddress + *relr_offset + offset);
+
+			// Even entry indicates the beginning address.
+			if(!(entry & 1)) {
+				addr = (elf_addr *)(object->baseAddress + entry);
+				__ensure(addr);
+				*addr++ += object->baseAddress;
+			}else {
+				// Odd entry indicates entry is a bitmap of the subsequent locations to be relocated.
+				for(int i = 0; entry; ++i) {
+					if(entry & 1) {
+						addr[i] += object->baseAddress;
+					}
+					entry >>= 1;
+				}
+
+				// Each entry describes at max 63 (on 64bit) or 31 (on 32bit) subsequent locations.
+				addr += CHAR_BIT * sizeof(elf_relr) - 1;
+			}
 		}
 	}
 }
