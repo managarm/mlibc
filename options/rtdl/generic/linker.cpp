@@ -1475,7 +1475,6 @@ void Loader::_processRelocations(Relocation &rel) {
 	// on some architectures, R_GLOB_DAT can be defined to other relocations
 	case R_GLOB_DAT: {
 		__ensure(rel.symbol_index());
-		__ensure(p);
 		uintptr_t symbol_addr = p ? p->virtualAddress() : 0;
 		rel.relocate(symbol_addr + rel.addend_norel());
 	} break;
@@ -1483,7 +1482,6 @@ void Loader::_processRelocations(Relocation &rel) {
 
 	case R_ABSOLUTE: {
 		__ensure(rel.symbol_index());
-		__ensure(p);
 		uintptr_t symbol_addr = p ? p->virtualAddress() : 0;
 		rel.relocate(symbol_addr + rel.addend_rel());
 	} break;
