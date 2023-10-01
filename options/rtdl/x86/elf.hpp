@@ -9,6 +9,7 @@ using elf_phdr = Elf32_Phdr;
 using elf_dyn = Elf32_Dyn;
 using elf_rel = Elf32_Rel;
 using elf_rela = Elf32_Rela;
+using elf_relr = Elf32_Relr;
 using elf_sym = Elf32_Sym;
 using elf_addr = Elf32_Addr;
 

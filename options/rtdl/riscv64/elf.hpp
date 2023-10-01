@@ -9,6 +9,7 @@ using elf_phdr = Elf64_Phdr;
 using elf_dyn = Elf64_Dyn;
 using elf_rel = Elf64_Rel;
 using elf_rela = Elf64_Rela;
+using elf_relr = Elf64_Relr;
 using elf_sym = Elf64_Sym;
 using elf_addr = Elf64_Addr;
 

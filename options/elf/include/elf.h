@@ -312,6 +312,9 @@ typedef struct {
 	Elf64_Sxword r_addend;
 } Elf64_Rela;
 
+typedef Elf32_Word Elf32_Relr;
+typedef Elf64_Xword Elf64_Relr;
+
 __MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_SYM(Elf64_Xword info) {
 	return info >> 32;
 }
@@ -415,6 +418,9 @@ enum {
 	DT_FLAGS = 30,
 	DT_PREINIT_ARRAY = 32,
 	DT_PREINIT_ARRAYSZ = 33,
+	DT_RELRSZ = 35,
+	DT_RELR = 36,
+	DT_RELRENT = 37,
 	DT_LOOS = 0x6000000d,
 	DT_HIOS = 0x6ffff000,
 	DT_GNU_HASH = 0x6ffffef5,
