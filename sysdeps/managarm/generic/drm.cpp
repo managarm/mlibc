@@ -437,7 +437,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 		param->gamma_size = resp.drm_gamma_size();
 
 		// FIXME: this should be passed as a buffer with helix, but this has no bounded max size?
-		for(size_t i = 0; i < resp.drm_format_type_size(); i+= 4) {
+		for(size_t i = 0; i < resp.drm_format_type_size(); i++) {
 			if(i >= param->count_format_types) {
 				break;
 			}
