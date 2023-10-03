@@ -437,7 +437,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 		param->gamma_size = resp.drm_gamma_size();
 
 		// FIXME: this should be passed as a buffer with helix, but this has no bounded max size?
-		for(size_t i = 0; i < resp.drm_format_type_size(); i+= 4) {
+		for(size_t i = 0; i < resp.drm_format_type_size(); i++) {
 			if(i >= param->count_format_types) {
 				break;
 			}
@@ -585,6 +585,40 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
 		param->fb_id = resp.drm_fb_id();
+
+		*result = resp.result();
+		return 0;
+	}
+	case DRM_IOCTL_MODE_GETFB2: {
+		auto param = reinterpret_cast<drm_mode_fb_cmd2 *>(arg);
+
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_command(DRM_IOCTL_MODE_GETFB2);
+		req.set_drm_fb_id(param->fb_id);
+
+		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		param->width = resp.drm_width();
+		param->height = resp.drm_height();
+		param->pixel_format = resp.pixel_format();
+		param->modifier[0] = resp.modifier();
+		memcpy(param->handles, resp.drm_handles().data(), sizeof(uint32_t) * resp.drm_handles_size());
+		memcpy(param->pitches, resp.drm_pitches().data(), sizeof(uint32_t) * resp.drm_pitches_size());
+		memcpy(param->offsets, resp.drm_offsets().data(), sizeof(uint32_t) * resp.drm_offsets_size());
 
 		*result = resp.result();
 		return 0;
