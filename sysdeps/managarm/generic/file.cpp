@@ -1425,6 +1425,8 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t, int *fd) {
 				<< frg::endlog;
 
 	uint32_t proto_flags = 0;
+	if(flags & O_APPEND)
+		proto_flags |= managarm::posix::OpenFlags::OF_APPEND;
 	if(flags & O_CREAT)
 		proto_flags |= managarm::posix::OpenFlags::OF_CREATE;
 	if(flags & O_EXCL)
