@@ -1418,11 +1418,12 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	return sys_openat(AT_FDCWD, path, flags, mode, fd);
 }
 
-int sys_openat(int dirfd, const char *path, int flags, mode_t, int *fd) {
+int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	SignalGuard sguard;
 
-	mlibc::infoLogger() << "\e[35mmlibc: sys_openat() ignores mode\e[39m"
-				<< frg::endlog;
+	// We do not support O_TMPFILE.
+	if(flags & O_TMPFILE)
+		return EOPNOTSUPP;
 
 	uint32_t proto_flags = 0;
 	if(flags & O_CREAT)
@@ -1452,6 +1453,7 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t, int *fd) {
 	req.set_fd(dirfd);
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 	req.set_flags(proto_flags);
+	req.set_mode(mode);
 
 	auto [offer, sendHead, sendTail, recvResp] = exchangeMsgsSync(
 		getPosixLane(),
@@ -1522,6 +1524,8 @@ int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
 		return EBADF;
 	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		return EINVAL;
+	}else if(resp.error() == managarm::posix::Errors::INTERNAL_ERROR) {
+		return EIEIO;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
