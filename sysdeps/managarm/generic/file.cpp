@@ -1423,6 +1423,9 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t, int *fd) {
 
 	mlibc::infoLogger() << "\e[35mmlibc: sys_openat() ignores mode\e[39m"
 				<< frg::endlog;
+	// We do not support O_TMPFILE.
+	if(flags & O_TMPFILE)
+		return EOPNOTSUPP;
 
 	uint32_t proto_flags = 0;
 	if(flags & O_CREAT)
