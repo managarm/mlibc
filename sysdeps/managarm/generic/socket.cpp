@@ -370,6 +370,12 @@ int sys_setsockopt(int fd, int layer, int number,
 	}else if(layer == SOL_NETLINK && number == NETLINK_GET_STRICT_CHK) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_NETLINK and NETLINK_EXT_ACK is unimplemented\e[39m" << frg::endlog;
 		return 0;
+	}else if(layer == IPPROTO_TCP && number == TCP_KEEPINTVL) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_KEEPINTVL is unimplemented\e[39m" << frg::endlog;
+		return 0;
+	}else if(layer == IPPROTO_TCP && number == TCP_KEEPCNT) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_KEEPCNT is unimplemented\e[39m" << frg::endlog;
+		return 0;
 	}else{
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call, layer: " << layer << " number: " << number << "\e[39m" << frg::endlog;
 		__builtin_unreachable();
