@@ -455,6 +455,11 @@ char *strerror(int e) {
 	case ENOTUNIQ: s = "Name not unique on network (ENOTUNIQ)"; break;
 	case ERESTART: s = "Interrupted system call should be restarted (ERESTART)"; break;
 	case EUSERS: s = "Too many users (EUSERS)"; break;
+
+#ifdef EIEIO
+	case EIEIO: s = "Computer bought the farm; OS internal error (EIEIO)"; break;
+#endif
+
 	default:
 		s = "Unknown error code (?)";
 	}
