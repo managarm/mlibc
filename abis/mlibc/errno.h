@@ -120,4 +120,7 @@
 #define EBADE 1114
 #define EHWPOISON 1115
 #define EBADRQC 1116
+
+#define EIEIO 1524152434
+
 #endif // _ABIBITS_ERRNO_H
