@@ -1524,6 +1524,8 @@ int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
 		return EBADF;
 	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		return EINVAL;
+	}else if(resp.error() == managarm::posix::Errors::INTERNAL_ERROR) {
+		return EIEIO;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
