@@ -19,30 +19,32 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 		mlibc::infoLogger() << "mlibc: openpty ignores win argument" << frg::endlog;
 	}
 
-	// FIXME: Close the master FD if the slave open fails.
-
 	int ptmx_fd;
 	if(int e = mlibc::sys_open("/dev/ptmx", O_RDWR | O_NOCTTY, 0, &ptmx_fd); e) {
 		errno = e;
-		return -1;
+		goto fail;
 	}
 
 	char spath[32];
 	if(!name)
 		name = spath;
 	if(ptsname_r(ptmx_fd, name, 32))
-		return -1;
+		goto fail;
 
 	int pts_fd;
 	unlockpt(ptmx_fd);
-	if(int e = mlibc::sys_open(spath, O_RDWR | O_NOCTTY, 0, &pts_fd); e) {
+	if(int e = mlibc::sys_open(name, O_RDWR | O_NOCTTY, 0, &pts_fd); e) {
 		errno = e;
-		return -1;
+		goto fail;
 	}
 
 	*mfd = ptmx_fd;
 	*sfd = pts_fd;
 	return 0;
+
+fail:
+	mlibc::sys_close(ptmx_fd);
+	return -1;
 }
 
 int login_tty(int fd) {
