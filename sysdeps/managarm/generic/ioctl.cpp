@@ -17,14 +17,17 @@
 
 namespace mlibc {
 
+static constexpr bool logIoctls = false;
+
 int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle handle);
 
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
-//	mlibc::infoLogger() << "mlibc: ioctl with"
-//			<< " type: 0x" << frg::hex_fmt(_IOC_TYPE(request))
-//			<< ", number: 0x" << frg::hex_fmt(_IOC_NR(request))
-//			<< " (raw request: " << frg::hex_fmt(request) << ")"
-//			<< " on fd " << fd << frg::endlog;
+	if(logIoctls)
+		mlibc::infoLogger() << "mlibc: ioctl with"
+				<< " type: 0x" << frg::hex_fmt(_IOC_TYPE(request))
+				<< ", number: 0x" << frg::hex_fmt(_IOC_NR(request))
+				<< " (raw request: " << frg::hex_fmt(request) << ")"
+				<< " on fd " << fd << frg::endlog;
 
 	SignalGuard sguard;
 	auto handle = getHandleForFd(fd);
