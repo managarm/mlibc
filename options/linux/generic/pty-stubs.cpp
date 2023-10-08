@@ -13,12 +13,6 @@
 #include <mlibc/linux-sysdeps.hpp>
 
 int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win) {
-	__ensure(!ios);
-
-	if (win) {
-		mlibc::infoLogger() << "mlibc: openpty ignores win argument" << frg::endlog;
-	}
-
 	int ptmx_fd;
 	if(int e = mlibc::sys_open("/dev/ptmx", O_RDWR | O_NOCTTY, 0, &ptmx_fd); e) {
 		errno = e;
@@ -37,6 +31,12 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 		errno = e;
 		goto fail;
 	}
+
+	if(ios)
+		tcsetattr(ptmx_fd, TCSAFLUSH, ios);
+
+	if(win)
+		ioctl(ptmx_fd, TIOCSWINSZ, (void*)win);
 
 	*mfd = ptmx_fd;
 	*sfd = pts_fd;
