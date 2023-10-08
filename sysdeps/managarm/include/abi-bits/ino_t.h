@@ -1,1 +1,1 @@
-../../../../abis/mlibc/ino_t.h
+../../../../abis/linux/ino_t.h
