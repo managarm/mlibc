@@ -144,6 +144,9 @@ struct group_source_req {
 
 #define IP_TOS 1
 #define IP_TTL 2
+#define IP_HDRINCL 3
+#define IP_OPTIONS 4
+#define IP_RECVOPTS 6
 #define IP_PKTINFO 8
 #define IP_PKTOPTIONS 9
 #define IP_MTU_DISCOVER 10
