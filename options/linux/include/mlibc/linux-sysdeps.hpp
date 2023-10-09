@@ -73,8 +73,6 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 [[gnu::weak]] int sys_lremovexattr(const char *path, const char *name);
 [[gnu::weak]] int sys_fremovexattr(int fd, const char *name);
 
-[[gnu::weak]] int sys_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask);
-
 } // namespace mlibc
 
 #endif // MLIBX_LINUX_SYSDEPS
