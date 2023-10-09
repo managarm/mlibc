@@ -164,6 +164,7 @@ struct cmsghdr {
 #define AF_XDP          PF_XDP
 #define AF_MAX          PF_MAX
 
+#define SO_DEBUG        1
 #define SO_REUSEADDR    2
 #define SO_TYPE         3
 #define SO_ERROR        4
