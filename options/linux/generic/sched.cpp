@@ -3,6 +3,7 @@
 #include <sched.h>
 
 #include <mlibc/linux-sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 int sched_getcpu(void) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getcpu, -1);

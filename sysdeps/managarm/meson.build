@@ -41,6 +41,7 @@ libc_sources += files(
 	'generic/memory.cpp',
 	'generic/mount.cpp',
 	'generic/net.cpp',
+	'generic/sched.cpp',
 	'generic/signals.cpp',
 	'generic/socket.cpp',
 	'generic/time.cpp'

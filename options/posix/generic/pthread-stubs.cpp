@@ -309,14 +309,14 @@ int pthread_getattr_np(pthread_t thread, pthread_attr_t *attr) {
 	return 0;
 }
 
-int pthread_getaffinity_np(pthread_t, size_t, cpu_set_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_getaffinity_np(pthread_t thread, size_t cpusetsize, cpu_set_t *mask) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getthreadaffinity, ENOSYS);
+	return mlibc::sys_getthreadaffinity(reinterpret_cast<Tcb*>(thread)->tid, cpusetsize, mask);
 }
 
-int pthread_setaffinity_np(pthread_t, size_t, const cpu_set_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_setaffinity_np(pthread_t thread, size_t cpusetsize, const cpu_set_t *mask) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setthreadaffinity, ENOSYS);
+	return mlibc::sys_setthreadaffinity(reinterpret_cast<Tcb*>(thread)->tid, cpusetsize, mask);
 }
 #endif // __MLIBC_LINUX_OPTION
 
