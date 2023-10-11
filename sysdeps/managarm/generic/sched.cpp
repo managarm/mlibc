@@ -1,10 +1,12 @@
 #include <bits/ensure.h>
 #include <unistd.h>
+#include <pwd.h>
 
 #include <hel.h>
 #include <hel-syscalls.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/allocator.hpp>
+// #include <mlibc/arch-defs.hpp>
 #include <mlibc/posix-pipe.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 
@@ -93,6 +95,5 @@ int sys_setthreadaffinity(pid_t tid, size_t cpusetsize, const cpu_set_t *mask) {
 
 	return 0;
 }
-
 
 }

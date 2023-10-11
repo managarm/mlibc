@@ -44,6 +44,7 @@ libc_sources += files(
 	'generic/sched.cpp',
 	'generic/signals.cpp',
 	'generic/socket.cpp',
+	'generic/sysinfo.cpp',
 	'generic/time.cpp'
 )
 libc_sources += [

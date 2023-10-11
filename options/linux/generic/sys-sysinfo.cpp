@@ -6,6 +6,7 @@
 #include <mlibc/linux-sysdeps.hpp>
 
 int sysinfo(struct sysinfo *info) {
+	mlibc::infoLogger() << "mlibc: sysinfo top" << frg::endlog;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sysinfo, -1);
 	if(int e = mlibc::sys_sysinfo(info); e) {
 		errno = e;
