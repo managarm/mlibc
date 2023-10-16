@@ -24,6 +24,9 @@ enum {
 typedef struct __mlibc_thread_data *thrd_t;
 typedef struct __mlibc_mutex mtx_t;
 typedef struct __mlibc_cond cnd_t;
+#ifndef __cplusplus
+#define thread_local _Thread_local
+#endif
 
 typedef int (*thrd_start_t)(void*);
 
