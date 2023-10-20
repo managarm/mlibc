@@ -12,7 +12,7 @@ int sched_getcpu(void) {
 		errno = e;
 		return -1;
 	}
-	return 0;
+	return cpu;
 }
 
 int setns(int, int) {
