@@ -729,11 +729,10 @@ int sys_tcgetattr(int fd, struct termios *attr) {
 }
 
 int sys_tcsetattr(int fd, int when, const struct termios *attr) {
-	if(when != TCSANOW)
-		mlibc::infoLogger() << "\e[35mmlibc: tcsetattr() when argument ignored\e[39m"
-				<< frg::endlog;
-	int result;
-	if(int e = sys_ioctl(fd, TCSETS, const_cast<struct termios *>(attr), &result); e)
+	if(when < TCSANOW || when > TCSAFLUSH)
+		return EINVAL;
+
+	if(int e = sys_ioctl(fd, TCSETS, const_cast<struct termios *>(attr), nullptr); e)
 		return e;
 	return 0;
 }
