@@ -89,6 +89,10 @@ typedef unsigned int tcflag_t;
 #define HUPCL   0x0040
 #define CLOCAL  0x0080
 
+#if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
+#define CBAUD   0x100F
+#endif
+
 // bitwise constants for c_lflag in struct termios
 #define ECHO    0x0001
 #define ECHOE   0x0002
