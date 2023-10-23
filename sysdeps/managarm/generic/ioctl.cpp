@@ -5,6 +5,8 @@
 #include <linux/kd.h>
 #include <linux/vt.h>
 #include <sys/ioctl.h>
+#include <net/if.h>
+#include <netinet/in.h>
 
 #include <bits/ensure.h>
 #include <mlibc/all-sysdeps.hpp>
@@ -691,6 +693,133 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return 0;
 	}else if(request == TIOCSPTLCK) {
 		mlibc::infoLogger() << "\e[35mmlibc: TIOCSPTLCK is a no-op" << frg::endlog;
+		if(result)
+			*result = 0;
+		return 0;
+	}else if(request == SIOCGIFCONF) {
+		managarm::posix::NetserverIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, sendReq, recvResp] = exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(sendReq.error());
+		HEL_CHECK(recvResp.error());
+
+		managarm::posix::NetserverIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recvResp.data(), recvResp.length());
+		// TODO: this may fail
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+
+		ifconf *conf_ptr = (ifconf *)arg;
+		if(conf_ptr->ifc_ifcu.ifcu_buf == nullptr || conf_ptr->ifc_len < (int)resp.if_confs_size()) {
+			conf_ptr->ifc_len = (int)(resp.if_confs_size() * sizeof(ifreq));
+			return 0;
+		}
+
+		for(size_t i = 0; i < resp.if_confs_size(); ++i) {
+			auto &conf = resp.if_confs()[i];
+
+			sockaddr_in addr{};
+			addr.sin_family = AF_INET;
+			addr.sin_addr.s_addr = htonl(conf.ip4());
+			addr.sin_port = htons(conf.port());
+
+			ifreq *req = &conf_ptr->ifc_ifcu.ifcu_req[i];
+			strncpy(req->ifr_name, conf.name().data(), IFNAMSIZ);
+			memcpy(&req->ifr_addr, &addr, sizeof(addr));
+		}
+
+		if(result)
+			*result = 0;
+		return 0;
+	}else if(request == SIOCGIFNETMASK) {
+		managarm::posix::NetserverIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, sendReq, recvResp] = exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(sendReq.error());
+		HEL_CHECK(recvResp.error());
+
+		managarm::posix::NetserverIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recvResp.data(), recvResp.length());
+		// TODO: this may fail
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+
+		ifreq *req_ptr = (ifreq *)arg;
+		sockaddr_in addr{};
+		addr.sin_family = AF_INET;
+		addr.sin_addr.s_addr = htonl(resp.ip4_netmask());
+		memcpy(&req_ptr->ifr_netmask, &addr, sizeof(addr));
+
+		if(result)
+			*result = 0;
+		return 0;
+	}else if(request == SIOCGIFINDEX) {
+		managarm::posix::NetserverIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, sendReq, recvResp] = exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(sendReq.error());
+		HEL_CHECK(recvResp.error());
+
+		managarm::posix::NetserverIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recvResp.data(), recvResp.length());
+		// TODO: this may fail
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+
+		ifreq *req_ptr = (ifreq *)arg;
+		req_ptr->ifr_ifindex = resp.nic_index();
+
+		if(result)
+			*result = 0;
+		return 0;
+	}else if(request == SIOCGIFFLAGS) {
+		managarm::posix::NetserverIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, sendReq, recvResp] = exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(sendReq.error());
+		HEL_CHECK(recvResp.error());
+
+		managarm::posix::NetserverIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recvResp.data(), recvResp.length());
+		// TODO: this may fail
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+
+		ifreq *req_ptr = (ifreq *)arg;
+		req_ptr->ifr_flags = (short)resp.flags();
+
 		if(result)
 			*result = 0;
 		return 0;
