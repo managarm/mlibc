@@ -1825,7 +1825,9 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::fs::Errors::SEEK_ON_PIPE) {
 		return ESPIPE;
-	}else{
+	} else if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+		return EINVAL;
+	} else {
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*new_offset = resp.offset();
 		return 0;
