@@ -25,7 +25,7 @@ __attribute__((__noreturn__)) void longjmp(jmp_buf buffer, int value);
 
 // POSIX Non-local jumps signal extensions
 
-typedef struct {
+typedef struct __sigjmp_buf {
 	struct __mlibc_jmpbuf_register_state reg_state;
 	int savesigs;
 	sigset_t sigset;
