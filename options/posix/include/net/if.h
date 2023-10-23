@@ -85,6 +85,8 @@ unsigned int if_nametoindex(const char *);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
+#define IFHWADDRLEN 6
+
 #define IFF_UP 0x1
 #define IFF_BROADCAST 0x2
 #define IFF_DEBUG 0x4
