@@ -94,5 +94,9 @@ int sys_setthreadaffinity(pid_t tid, size_t cpusetsize, const cpu_set_t *mask) {
 	return 0;
 }
 
+int sys_getcpu(int *cpu) {
+	HEL_CHECK(helGetCurrentCpu(cpu));
+	return 0;
+}
 
 }
