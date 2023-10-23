@@ -7,6 +7,13 @@
 #include <abi-bits/uid_t.h>
 #include <bits/size_t.h>
 
+#define POLL_IN 1
+#define POLL_OUT 2
+#define POLL_MSG 3
+#define POLL_ERR 4
+#define POLL_PRI 5
+#define POLL_HUP 6
+
 union sigval {
 	int sival_int;
 	void *sival_ptr;
