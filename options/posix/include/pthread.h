@@ -180,7 +180,7 @@ int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict,
 		void *(*) (void *), void *__restrict);
 pthread_t pthread_self(void);
 int pthread_equal(pthread_t, pthread_t);
-int pthread_exit(void *);
+__attribute__ ((__noreturn__)) void pthread_exit(void *);
 
 int pthread_join(pthread_t, void **);
 int pthread_detach(pthread_t);

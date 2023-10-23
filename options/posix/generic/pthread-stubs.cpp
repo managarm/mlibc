@@ -354,11 +354,18 @@ namespace {
 	FutexLock key_mutex_;
 }
 
-int pthread_exit(void *ret_val) {
+namespace mlibc {
+	__attribute__ ((__noreturn__)) void do_exit() {
+		sys_thread_exit();
+		__builtin_unreachable();
+	}
+}
+
+__attribute__ ((__noreturn__)) void pthread_exit(void *ret_val) {
 	auto self = mlibc::get_current_tcb();
 
 	if (__atomic_load_n(&self->cancelBits, __ATOMIC_RELAXED) & tcbExitingBit)
-		return 0; // We are already exiting
+		mlibc::do_exit();
 
 	__atomic_fetch_or(&self->cancelBits, tcbExitingBit, __ATOMIC_RELAXED);
 
@@ -392,8 +399,7 @@ int pthread_exit(void *ret_val) {
 	// TODO: clean up thread resources when we are detached.
 
 	// TODO: do exit(0) when we're the only thread instead
-	mlibc::sys_thread_exit();
-	__builtin_unreachable();
+	mlibc::do_exit();
 }
 
 int pthread_join(pthread_t thread, void **ret) {
