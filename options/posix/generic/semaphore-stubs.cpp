@@ -98,7 +98,17 @@ int sem_unlink(const char *) {
 	__builtin_unreachable();
 }
 
-int sem_trywait(sem_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int sem_trywait(sem_t *sem) {
+	while (true) {
+		auto state = __atomic_load_n(&sem->__mlibc_count, __ATOMIC_ACQUIRE);
+
+		if (state & semaphoreHasWaiters) {
+			return EAGAIN;
+		}
+
+		auto desired = state - 1;
+		if (__atomic_compare_exchange_n(&sem->__mlibc_count, &state, desired, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED)) {
+			return 0;
+		}
+	}
 }
