@@ -14,6 +14,7 @@ extern "C" {
 #define ICMP6_FILTER_PASS 2
 #define ICMP6_FILTER_BLOCKOTHERS 3
 #define ICMP6_FILTER_PASSONLY 4
+#define ICMP6_ECHO_REQUEST 128
 
 struct icmp6_filter {
 	uint32_t icmp6_filt[8];
@@ -33,6 +34,12 @@ struct icmp6_hdr {
 #define icmp6_data32 icmp6_dataun.icmp6_un_data32
 #define icmp6_data16 icmp6_dataun.icmp6_un_data16
 #define icmp6_data8 icmp6_dataun.icmp6_un_data8
+
+#define icmp6_pptr icmp6_data32[0]
+#define icmp6_mtu icmp6_data32[0]
+#define icmp6_id icmp6_data16[0]
+#define icmp6_seq icmp6_data16[1]
+#define icmp6_maxdelay icmp6_data16[0]
 
 #define ICMP6_FILTER_WILLPASS(type, filterp) \
 	((((filterp)->icmp6_filt[(type) >> 5]) & (1U << ((type) & 31))) == 0)
