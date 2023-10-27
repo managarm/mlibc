@@ -4,9 +4,6 @@
 
 #define SG_IO 0x2285
 
-#define SG_DXFER_NONE (-1)
-#define SG_DXFER_FROM_DEV (-3)
-
 #define SG_FLAG_DIRECT_IO 1
 #define SG_FLAG_LUN_INHIBIT 2
 
@@ -15,7 +12,7 @@
 
 #define SG_DXFER_NONE -1
 #define SG_DXFER_TO_DEV -2
-#define SG_DXFER_TO_FROM_DEV -3
+#define SG_DXFER_FROM_DEV -3
 #define SG_DXFER_TO_FROM_DEV -4
 
 #ifdef __cplusplus
