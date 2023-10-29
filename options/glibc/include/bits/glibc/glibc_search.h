@@ -27,6 +27,10 @@ struct hsearch_data {
 
 #ifndef __MLIBC_ABI_ONLY
 
+int hcreate(size_t nel);
+void hdestroy(void);
+ENTRY *hsearch(ENTRY item, ACTION action);
+
 int hsearch_r(ENTRY item, ACTION action, ENTRY **ret, struct hsearch_data *htab);
 int hcreate_r(size_t num_elements, struct hsearch_data *htab);
 void hdestroy_r(struct hsearch_data *htab);

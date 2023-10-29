@@ -13,6 +13,8 @@ struct _ENTRY {
 	size_t used;
 };
 
+static struct hsearch_data htab;
+
 static size_t keyhash(char *k) {
 	unsigned char *p = (unsigned char *)k;
 	size_t h = 0;
@@ -122,4 +124,19 @@ void hdestroy_r(struct hsearch_data *htab) {
 	}
 	free(htab->table);
 	htab->table = 0;
+}
+
+int hcreate(size_t nel) {
+	return hcreate_r(nel, &htab);
+}
+
+void hdestroy(void) {
+	hdestroy_r(&htab);
+}
+
+ENTRY *hsearch(ENTRY item, ACTION action) {
+	ENTRY *e;
+
+	hsearch_r(item, action, &e, &htab);
+	return e;
 }
