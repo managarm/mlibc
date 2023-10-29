@@ -4,6 +4,8 @@
 
 #define SG_IO 0x2285
 
+#define SG_GET_VERSION_NUM 0x2282
+
 #define SG_DXFER_NONE (-1)
 #define SG_DXFER_FROM_DEV (-3)
 
