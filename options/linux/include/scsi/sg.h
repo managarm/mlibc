@@ -33,7 +33,7 @@ typedef struct sg_io_hdr {
     unsigned int dxfer_len;
     void *dxferp;
     unsigned char *cmdp;
-    void *sbp;
+    unsigned char *sbp;
     unsigned int timeout;
     unsigned int flags;
     int pack_id;
