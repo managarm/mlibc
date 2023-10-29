@@ -1,0 +1,10 @@
+name: Detect missing mlibc-config.h
+
+on: [push, pull_request]
+
+jobs:
+  find-misuse:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: chmod +x ./scripts/check-options-header-include.sh && ./scripts/check-options-header-include.sh
