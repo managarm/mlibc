@@ -3,6 +3,7 @@
 #define _SEARCH_H
 
 #include <stddef.h>
+#include <mlibc-config.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,6 +15,10 @@ typedef enum {
   endorder,
   leaf
 } VISIT;
+
+#if __MLIBC_GLIBC_OPTION
+#include <bits/glibc/glibc_search.h>
+#endif
 
 #ifndef __MLIBC_ABI_ONLY
 
