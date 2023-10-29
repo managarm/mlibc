@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-struct sg_io_hdr {
+typedef struct sg_io_hdr {
     int interface_id;
     int dxfer_direction;
     unsigned char cmd_len;
@@ -47,7 +47,7 @@ struct sg_io_hdr {
     int resid;
     unsigned int duration;
     unsigned int info;
-};
+} sg_io_hdr_t;
 
 struct sg_scsi_id {
     int host_no;
