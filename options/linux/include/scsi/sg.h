@@ -4,6 +4,8 @@
 
 #define SG_IO 0x2285
 
+#define SG_GET_VERSION_NUM 0x2282
+
 #define SG_DXFER_NONE (-1)
 #define SG_DXFER_FROM_DEV (-3)
 
@@ -22,7 +24,7 @@
 extern "C" {
 #endif
 
-struct sg_io_hdr {
+typedef struct sg_io_hdr {
     int interface_id;
     int dxfer_direction;
     unsigned char cmd_len;
@@ -31,7 +33,7 @@ struct sg_io_hdr {
     unsigned int dxfer_len;
     void *dxferp;
     unsigned char *cmdp;
-    void *sbp;
+    unsigned char *sbp;
     unsigned int timeout;
     unsigned int flags;
     int pack_id;
@@ -45,7 +47,7 @@ struct sg_io_hdr {
     int resid;
     unsigned int duration;
     unsigned int info;
-};
+} sg_io_hdr_t;
 
 struct sg_scsi_id {
     int host_no;
