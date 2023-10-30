@@ -8,6 +8,7 @@
 #include <bits/size_t.h>
 #include <bits/posix/pthread_t.h>
 #include <bits/threads.h>
+#include <mlibc-config.h>
 
 #include <signal.h>
 #include <stdint.h>
