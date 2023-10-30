@@ -12,8 +12,9 @@ extern "C" {
 #define FNM_PERIOD 0x4
 
 // GNU extensions for fnmatch() flags.
-#define	FNM_LEADING_DIR 0x8
-#define	FNM_CASEFOLD 0x10
+#define FNM_LEADING_DIR 0x8
+#define FNM_CASEFOLD 0x10
+#define FNM_EXTMATCH 0x20
 
 // fnmatch() return values.
 #define FNM_NOMATCH 1
