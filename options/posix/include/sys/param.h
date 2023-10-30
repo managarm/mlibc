@@ -26,6 +26,8 @@ extern "C" {
 
 #define howmany(x, y)  (((x) + ((y) - 1)) / (y))
 
+#define roundup(x, y)  ((((x) + ((y) - 1)) / (y)) * (y))
+
 #ifdef __cplusplus
 }
 #endif
