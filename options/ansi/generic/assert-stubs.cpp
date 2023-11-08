@@ -5,7 +5,7 @@
 
 #include <bits/ensure.h>
 
-[[noreturn]] void __assert_fail(const char *assertion, const char *file, unsigned int line,
+[[gnu::noreturn]] void __assert_fail(const char *assertion, const char *file, unsigned int line,
 		const char *function) {
 	fprintf(stderr, "In function %s, file %s:%d: Assertion '%s' failed!\n",
 			function, file, line, assertion);
