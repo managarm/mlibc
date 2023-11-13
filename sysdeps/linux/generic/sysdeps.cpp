@@ -555,7 +555,7 @@ int sys_before_cancellable_syscall(ucontext_t *uct) {
 #if defined(__x86_64__)
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.gregs[REG_RIP]);
 #elif defined(__riscv)
-	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.sc_regs.pc);
+	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.gregs[REG_PC]);
 #elif defined(__aarch64__)
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.pc);
 #else
