@@ -139,7 +139,7 @@ elif host_machine.system() == 'managarm'
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/managarm')
 elif host_machine.system() == 'ironclad'
-	# disable_linux_option = true
+	disable_linux_option = true
 	rtdl_include_dirs += include_directories('sysdeps/ironclad/include')
 	libc_include_dirs += include_directories('sysdeps/ironclad/include')
 	subdir('sysdeps/ironclad')
