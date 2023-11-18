@@ -127,4 +127,13 @@ int sys_sigsuspend(const sigset_t *set) {
 	return EINTR;
 }
 
+int sys_sigpending(sigset_t *set) {
+	uint64_t pendingMask;
+
+	HEL_CHECK(helSyscall0_1(kHelObserveSuperCall + posix::superSigGetPending, &pendingMask));
+	*set = pendingMask;
+
+	return 0;
+}
+
 } //namespace mlibc
