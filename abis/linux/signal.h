@@ -113,8 +113,7 @@ typedef void (*__sighandler) (int);
 #define SIGRTMIN 35
 #define SIGRTMAX 64
 
-// TODO: replace this by uint64_t
-typedef long sigset_t;
+typedef uint64_t sigset_t;
 
 // constants for sigprocmask()
 #define SIG_BLOCK 0
