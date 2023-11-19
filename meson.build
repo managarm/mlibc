@@ -85,11 +85,6 @@ if not headers_only
 		error('could not find compiler-specific header directory')
 	endif
 
-	if c_compiler.get_id() == 'gcc' and fs.exists(ccdir / 'include-fixed')
-		rtdl_include_dirs += include_directories(ccdir / 'include-fixed')
-		libc_include_dirs += include_directories(ccdir / 'include-fixed')
-	endif
-
 	rtdl_include_dirs += include_directories(ccdir / 'include')
 	libc_include_dirs += include_directories(ccdir / 'include')
 endif
