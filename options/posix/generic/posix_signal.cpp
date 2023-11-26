@@ -112,9 +112,15 @@ int sigwait(const sigset_t *__restrict set, int *__restrict sig) {
 	}
 }
 
-int sigpending(sigset_t *) {
-	__ensure(!"sigpending() not implemented");
-	__builtin_unreachable();
+int sigpending(sigset_t *set) {
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sigpending, -1);
+
+	if(int e = sysdep(set)) {
+		errno = e;
+		return -1;
+	}
+
+	return 0;
 }
 
 int sigaltstack(const stack_t *__restrict ss, stack_t *__restrict oss) {
