@@ -1,9 +1,11 @@
-	.ident "x86_64-managarm-mlibc crtn"
+.ident "x86_64-managarm-mlibc crtn"
 
-	.section .init
+.section .init
+	pop %rax
 	ret
 
-	.section .fini
+.section .fini
+	pop %rax
 	ret
 
-	.section .note.GNU-stack,"",%progbits
+.section .note.GNU-stack,"",%progbits
