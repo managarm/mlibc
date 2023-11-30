@@ -7,18 +7,27 @@
 #include <mlibc/posix-sysdeps.hpp>
 
 speed_t cfgetispeed(const struct termios *tios) {
-	return tios->ibaud;
+	return tios->c_cflag & CBAUD;
 }
+
 speed_t cfgetospeed(const struct termios *tios) {
-	return tios->obaud;
+	return tios->c_cflag & CBAUD;
 }
-int cfsetispeed(struct termios *, speed_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int cfsetispeed(struct termios *termios, speed_t speed) {
+	return speed ? cfsetospeed(termios, speed) : 0;
 }
-int cfsetospeed(struct termios *, speed_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int cfsetospeed(struct termios *termios, speed_t speed) {
+	if(speed & ~CBAUD) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	termios->c_cflag &= ~CBAUD;
+	termios->c_cflag |= speed;
+
+	return 0;
 }
 
 void cfmakeraw(struct termios *t) {

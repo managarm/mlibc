@@ -170,7 +170,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		*result = resp.result();
+		if(result)
+			*result = resp.result();
 		return 0;
 	}
 	case TIOCSCTTY: {

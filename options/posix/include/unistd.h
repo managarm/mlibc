@@ -196,7 +196,7 @@ extern "C" {
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
 
-#define _POSIX_VDISABLE (-1)
+#define _POSIX_VDISABLE '\0'
 
 #define L_ctermid 20
 
