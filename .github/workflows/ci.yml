@@ -9,18 +9,17 @@ jobs:
                 arch: [x86_64, riscv64, aarch64]
                 builds: [mlibc, mlibc-static, mlibc-shared, mlibc-ansi-only, mlibc-headers-only]
         name: Build mlibc
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-22.04
+        container:
+          image: ghcr.io/managarm/mlibc-crossers:latest
         steps:
           - name: Install prerequisites
-            # Note: the default jsonschema is too old.
-            #       xbstrap should fix this by demanding a recent version.
             run: |
-                sudo apt-get update
-                sudo apt-get install ninja-build g++-10 g++-10-riscv64-linux-gnu g++-10-aarch64-linux-gnu qemu-user
-                sudo pip3 install setuptools
-                sudo pip3 install -U jsonschema
-                sudo pip3 install meson xbstrap
-                sudo pip3 install pyexpect
+                apt-get update
+                apt-get install -y ninja-build qemu-user \
+                                python3-setuptools python3-jsonschema \
+                                python3-pexpect python3-pip netbase
+                pip install -U xbstrap pyexpect meson
           - name: Prepare directories
             run: |
                 mkdir src/
@@ -49,26 +48,23 @@ jobs:
           - name: Test mlibc
             run: 'meson test -v -C pkg-builds/${{matrix.builds}}'
             working-directory: build/
-          - name: Build GCC
-            if: ${{matrix.builds == 'mlibc' && matrix.arch == 'x86_64'}}
-            run: 'xbstrap install-tool gcc'
-            working-directory: build/
 
     compile-sysdeps:
         strategy:
             matrix:
                 sysdeps: [dripos, lemon, aero, ironclad, lyre, keyronex]
         name: Compile sysdeps
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-22.04
+        container:
+          image: ghcr.io/managarm/mlibc-crossers:latest
         steps:
           - name: Install prerequisites
-            # Note: the default jsonschema is too old.
-            #       xbstrap should fix this by demanding a recent version.
             run: |
-                sudo apt-get install ninja-build g++-10
-                sudo pip3 install setuptools
-                sudo pip3 install -U jsonschema
-                sudo pip3 install meson xbstrap
+                apt-get update
+                apt-get install -y ninja-build qemu-user \
+                                python3-setuptools python3-jsonschema \
+                                python3-pip
+                pip install -U xbstrap meson
           - name: Checkout
             uses: actions/checkout@v2
             with:
@@ -85,8 +81,8 @@ jobs:
           - name: Compile sysdeps
             run: |
                 meson setup \
-                    "-Dc_args=['-fno-stack-protector', '-U__linux__']" \
-                    "-Dcpp_args=['-fno-stack-protector', '-U__linux__']" \
+                    "-Dc_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized']" \
+                    "-Dcpp_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized']" \
                     "-Dbuild_tests=true" \
                     "-Db_sanitize=undefined" \
                     "-Dlinux_kernel_headers=$(pwd)/packages/linux-headers/usr/include" \

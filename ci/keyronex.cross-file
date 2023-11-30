@@ -1,6 +1,6 @@
 [binaries]
-c = ['gcc-10']
-cpp = ['g++-10']
+c = ['x86_64-linux-mlibc-gcc']
+cpp = ['x86_64-linux-mlibc-g++']
 
 [host_machine]
 system = 'keyronex'

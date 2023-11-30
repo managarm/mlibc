@@ -11,13 +11,20 @@ on:
 jobs:
   run-abidiff:
     name: Compare ABIs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/managarm/mlibc-crossers:latest
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Install prerequisites
         run: |
-          sudo apt-get install ninja-build g++-10 abigail-tools
-          sudo pip3 install setuptools
-          sudo pip3 install meson xbstrap
+          apt-get update
+          apt-get install -y ninja-build qemu-user \
+                             python3-setuptools python3-jsonschema \
+                             python3-pip abigail-tools
+          pip install -U xbstrap pyexpect meson
 
       - name: Checkout base branch
         if: ${{ github.base_ref }}
@@ -56,41 +63,59 @@ jobs:
 
       - name: Set up linux kernel headers
         run: |
-            mkdir -p linux-headers-base/{src,build}
-            cp mlibc-base/ci/bootstrap.yml linux-headers-base/src/
-            (
-              cd linux-headers-base/build
-              xbstrap init ../src
-              xbstrap install linux-headers
-            )
-            mkdir -p linux-headers-branch/{src,build}
-            cp mlibc-branch/ci/bootstrap.yml linux-headers-branch/src/
-            (
-              cd linux-headers-branch/build
-              xbstrap init ../src
-              xbstrap install linux-headers
-            )
-            cat > linux-headers-base/build/bootstrap-site.yml << EOF
-            define_options:
-              arch: ${{matrix.arch}}
-            EOF
-            cp linux-headers-base/build/bootstrap-site.yml linux-headers-branch/build/bootstrap-site.yml
+          set -x
+          mkdir -p linux-headers-base/{src,build}
+          cp mlibc-base/ci/bootstrap.yml linux-headers-base/src/
+          (
+            cd linux-headers-base/build
+            xbstrap init ../src
+            xbstrap install linux-headers
+          )
+          mkdir -p linux-headers-branch/{src,build}
+          cp mlibc-branch/ci/bootstrap.yml linux-headers-branch/src/
+          (
+            cd linux-headers-branch/build
+            xbstrap init ../src
+            xbstrap install linux-headers
+          )
+          cat > linux-headers-base/build/bootstrap-site.yml << EOF
+          define_options:
+            arch: ${{matrix.arch}}
+          EOF
+          cp linux-headers-base/build/bootstrap-site.yml linux-headers-branch/build/bootstrap-site.yml
 
       - name: Build and install both copies
         run: |
           set -xe
-          export C=gcc-10 CXX=g++-10
           mkdir root-base root-branch
+          cat > linux-x86_64.cross-file <<-EOF
+          [binaries]
+          c = ['x86_64-linux-mlibc-gcc']
+          cpp = ['x86_64-linux-mlibc-g++']
+          
+          [host_machine]
+          system = 'linux'
+          cpu_family = 'x86_64'
+          cpu = 'x86_64'
+          endian = 'little'
+          EOF
           (
             cd mlibc-branch
-            meson --buildtype=debugoptimized -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include build
+            meson setup \
+                  --cross-file=../linux-x86_64.cross-file \
+                  --buildtype=debugoptimized \
+                  -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include \
+                  build
             ninja -C build
             DESTDIR="$GITHUB_WORKSPACE/root-branch" ninja -C build install
           )
           (
             cd mlibc-base
-            # defaults to all features, linux build
-            meson --buildtype=debugoptimized -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-base/build/packages/linux-headers/usr/include build
+            meson setup \
+                  --cross-file=../linux-x86_64.cross-file \
+                  --buildtype=debugoptimized \
+                  -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include \
+                  build
             ninja -C build
             DESTDIR="$GITHUB_WORKSPACE/root-base" ninja -C build install
           )
@@ -98,6 +123,7 @@ jobs:
         run: |
           # TODO(arsen): does this require handling for version suffixes?
           set -e +x
+          exec 2>&1 # work around GHA foolishly decoupling stdout and stderr
 
           exitcode=0
           git -C mlibc-branch show -s --format=%s | grep -q abi-break || \

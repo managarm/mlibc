@@ -43,7 +43,9 @@ internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
 if not headers_only
-	cxxshim_dep = dependency('cxxshim', fallback: ['cxxshim', 'cxxshim_dep'])
+	cxxshim_dep = dependency('cxxshim',
+				 required: false,
+				 fallback: ['cxxshim', 'cxxshim_dep'])
 	libc_deps += cxxshim_dep
 	rtdl_deps += cxxshim_dep
 
@@ -57,6 +59,7 @@ if not headers_only
 
 	add_languages('c', 'cpp')
 	c_compiler = meson.get_compiler('c')
+	cpp_compiler = meson.get_compiler('cpp')
 
 	add_project_arguments('-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', language: ['c', 'cpp'])
 	add_project_arguments('-nostdinc', '-fno-builtin', language: ['c', 'cpp'])
@@ -92,6 +95,56 @@ if not headers_only
 
 	rtdl_include_dirs += include_directories(ccdir / 'include')
 	libc_include_dirs += include_directories(ccdir / 'include')
+
+	cplusplus_include_path = []
+
+	c_output = run_command(c_compiler.cmd_array(), '-E', '-v', '-x', 'c',
+			       '/dev/null', '-o', '-',
+			       capture: true,
+			       check: true).stderr().split('\n')
+
+	cpp_output = run_command(cpp_compiler.cmd_array(), '-E', '-v', '-x',
+				 'c++', '/dev/null', '-o', '-',
+				 capture: true,
+				 check: true).stderr().split('\n')
+
+	c_relevant_lines = []
+
+	relevantmarker = '#include <...>'
+	relevant_started = false
+
+	foreach line : c_output
+		if relevant_started
+			if not line.startswith(' ')
+				break
+			endif
+			c_relevant_lines += line.strip()
+		elif line.startswith(relevantmarker)
+			relevant_started = true
+		endif
+	endforeach
+
+	relevant_started = false
+
+	foreach line : cpp_output
+		if relevant_started
+			if not line.startswith(' ')
+				break
+			endif
+			debug('maybe relevant', line)
+			stripped = line.strip()
+			if stripped in c_relevant_lines
+				debug('not relevant (is C)', line)
+				continue
+			endif
+			cplusplus_include_path += include_directories(stripped)
+		elif line.startswith(relevantmarker)
+			relevant_started = true
+		endif
+	endforeach
+
+	rtdl_include_dirs += cplusplus_include_path
+	libc_include_dirs += cplusplus_include_path
 endif
 
 internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
@@ -111,16 +164,18 @@ if host_machine.system() == 'linux'
 	rtdl_include_dirs += include_directories('sysdeps/linux/include')
 	libc_include_dirs += include_directories('sysdeps/linux/include')
 
-	if get_option('linux_kernel_headers') == ''
-		error('linux_kernel_headers is not set')
-	endif
+	if not headers_only
+		if get_option('linux_kernel_headers') == ''
+			error('linux_kernel_headers is not set')
+		endif
 
-	if not import('fs').is_dir(get_option('linux_kernel_headers'))
-		error('linux_kernel_headers is not set to a valid path')
-	endif
+		if not import('fs').is_dir(get_option('linux_kernel_headers'))
+			error('linux_kernel_headers is not set to a valid path')
+		endif
 
-	rtdl_include_dirs += include_directories(get_option('linux_kernel_headers'))
-	libc_include_dirs += include_directories(get_option('linux_kernel_headers'))
+		rtdl_include_dirs += include_directories(get_option('linux_kernel_headers'))
+		libc_include_dirs += include_directories(get_option('linux_kernel_headers'))
+	endif
 
 	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
 	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
@@ -201,12 +256,14 @@ if not disable_intl_option
 endif
 
 if not disable_linux_option
-	if get_option('linux_kernel_headers') == ''
-		error('linux_kernel_headers is not set')
-	endif
+	if not headers_only
+		if get_option('linux_kernel_headers') == ''
+			error('linux_kernel_headers is not set')
+		endif
 
-	if not import('fs').is_dir(get_option('linux_kernel_headers'))
-		error('linux_kernel_headers is not set to a valid path')
+		if not import('fs').is_dir(get_option('linux_kernel_headers'))
+			error('linux_kernel_headers is not set to a valid path')
+		endif
 	endif
 
 	rtdl_include_dirs += include_directories('options/linux/include')

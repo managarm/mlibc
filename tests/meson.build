@@ -127,6 +127,7 @@ host_libc_noasan_test_cases = [
 	'posix/posix_memalign',
 	'posix/search', # requires tdelete (#351)
 	'ansi/calloc', # does some overflowing
+	'linux/pthread_attr', # encounters memory leaks
 ]
 
 extra_cflags_test_cases = {

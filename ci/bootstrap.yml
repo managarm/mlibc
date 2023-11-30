@@ -3,13 +3,6 @@ declare_options:
     default: x86_64
 
 sources:
-  - name: gcc
-    git: 'git://gcc.gnu.org/git/gcc.git'
-    tag: 'releases/gcc-10.3.0'
-    regenerate:
-      - args: ['./contrib/download_prerequisites']
-        workdir: '@THIS_SOURCE_DIR@'
-
   - name: mlibc
     git: 'https://github.com/managarm/mlibc.git'
     branch: 'master'
@@ -21,53 +14,6 @@ sources:
     version: '6.1.8'
 
 tools:
-  - name: gcc
-    from_source: gcc
-    configure:
-      - args:
-        - '@THIS_SOURCE_DIR@/configure'
-        - '--prefix=@PREFIX@'
-        - '--program-prefix=mlibc-'
-        - '--with-sysroot=@SYSROOT_DIR@'
-        - '--enable-languages=c,c++'
-        - '--disable-multilib'
-        - '--disable-bootstrap'
-        - '--disable-libgomp'
-        - '--with-specs=%{!static:%x{-rpath=@SYSROOT_DIR@/usr/lib} %x{-dynamic-linker=@SYSROOT_DIR@/usr/lib/ld.so}}'
-        # -g blows up GCC's binary size.
-        - 'CFLAGS=-O2'
-        - 'CXXFLAGS=-O2'
-        environ:
-          C: 'gcc-10'
-          CXX: 'g++-10'
-    stages:
-      - name: compiler
-        pkgs_required:
-         - mlibc
-         - linux-headers
-        compile:
-          # GCC complains if the include directory is non-existant.
-          - args: ['mkdir', '-p', '@SYSROOT_DIR@/usr/include']
-          - args: ['make', '-j@PARALLELISM@', 'all-gcc']
-        install:
-          - args: ['make', 'install-gcc']
-      - name: libgcc
-        tools_required:
-          - tool: gcc
-            stage_dependencies: [compiler]
-        compile:
-          - args: ['make', '-j@PARALLELISM@', 'all-target-libgcc']
-        install:
-          - args: ['make', 'install-target-libgcc']
-      # TODO: libstdc++ requires some patching before it will work.
-      # - name: libstdc++
-      #   tools_required:
-      #     - tool: gcc
-      #       stage_dependencies: [libgcc]
-      #   compile:
-      #     - args: ['make', '-j@PARALLELISM@', 'all-target-libstdc++-v3']
-      #   install:
-      #     - args: ['make', 'install-target-libstdc++-v3']
 
 packages:
   - name: mlibc
@@ -81,6 +27,8 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
+        - "-Dc_args=['-Wno-error=maybe-uninitialized']"
+        - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
@@ -88,6 +36,9 @@ packages:
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
         - '@THIS_SOURCE_DIR@'
+        environ:
+          CFLAGS: '-Wno-error=maybe-uninitialized'
+          CXXFLAGS: '-Wno-error=maybe-uninitialized'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -106,6 +57,8 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
+        - "-Dc_args=['-Wno-error=maybe-uninitialized']"
+        - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=static"
@@ -130,6 +83,8 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
+        - "-Dc_args=['-Wno-error=maybe-uninitialized']"
+        - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=shared"
@@ -155,6 +110,8 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
+        - "-Dc_args=['-Wno-error=maybe-uninitialized']"
+        - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
@@ -184,6 +141,8 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
+        - "-Dc_args=['-Wno-error=maybe-uninitialized']"
+        - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Db_sanitize=undefined"
         - "-Dwerror=true"
         - "-Dheaders_only=true"

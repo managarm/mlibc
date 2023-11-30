@@ -117,25 +117,27 @@ if not no_headers
 endif
 
 if not headers_only
-	crt_src = files(host_machine.cpu_family() / 'crt-src/crt0.S')
-	crt = custom_target('crt0',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: crt_src,
-		output: 'crt0.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
-
-	if host_machine.cpu_family() == 'x86_64'
-		crt_pie = custom_target('Scrt1',
+	crtstuff = ['crt0']
+	if host_machine.cpu_family() in ['x86_64', 'aarch64']
+		crtstuff += [
+			'Scrt1',
+			'crti',
+			'crtn'
+		]
+	endif
+	foreach crtthing : crtstuff
+		crtf = crtthing + '.S'
+		crt_src = files(host_machine.cpu_family() / 'crt-src' / crtf)
+		crt = custom_target(
+			crtthing,
 			build_by_default: true,
-			command: c_compiler.cmd_array() + ['-fPIE', '-c', '-o', '@OUTPUT@', '@INPUT@'],
-			input: 'x86_64/crt-src/Scrt1.S',
-			output: 'Scrt1.o',
+			command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+			input: crt_src,
+			output: crtthing + '.o',
 			install: true,
 			install_dir: get_option('libdir')
 		)
-	endif
+	endforeach
+
 endif
 

@@ -554,8 +554,6 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 // --------------------------------------------------------
 
 void ObjectRepository::_parseDynamic(SharedObject *object) {
-	static bool rpathWarned = false;
-
 	if(!object->dynamic)
 		mlibc::infoLogger() << "ldso: Object '" << object->name
 				<< "' does not have a dynamic section" << frg::endlog;
@@ -564,6 +562,8 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 	// Fix up these offsets to addresses after the loop, since the
 	// addresses depend on the value of DT_STRTAB.
 	frg::optional<ptrdiff_t> runpath_offset;
+	/* If true, ignore the RPATH.  */
+	bool runpath_found = false;
 	frg::optional<ptrdiff_t> soname_offset;
 
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
@@ -648,12 +648,13 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 						<< frg::endlog;
 			break;
 		case DT_RPATH:
-			if(!rpathWarned) {
-				rpathWarned = true;
-				mlibc::infoLogger() << "\e[31mrtdl: RUNPATH not preferred over RPATH properly\e[39m" << frg::endlog;
+			if (runpath_found) {
+				/* Ignore RPATH if RUNPATH was present.  */
+				break;
 			}
 			[[fallthrough]];
 		case DT_RUNPATH:
+			runpath_found = dynamic->d_tag == DT_RUNPATH;
 			runpath_offset = dynamic->d_un.d_val;
 			break;
 		case DT_INIT:
