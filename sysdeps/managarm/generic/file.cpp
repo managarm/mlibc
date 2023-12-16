@@ -769,8 +769,15 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+	if(resp.error() == managarm::posix::Errors::ADDRESS_FAMILY_NOT_SUPPORTED) {
 		return EAFNOSUPPORT;
+	} else if(resp.error() == managarm::posix::Errors::NOT_SUPPORTED
+		|| resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	} else if(resp.error() == managarm::posix::Errors::PROTOCOL_NOT_SUPPORTED) {
+		return EPROTONOSUPPORT;
+	} else if(resp.error() == managarm::posix::Errors::INTERNAL_ERROR) {
+		return EIEIO;
 	} else {
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*fd = resp.fd();
