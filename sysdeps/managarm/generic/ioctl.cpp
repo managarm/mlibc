@@ -4,6 +4,7 @@
 #include <linux/input.h>
 #include <linux/kd.h>
 #include <linux/vt.h>
+#include <linux/usb/cdc-wdm.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -906,6 +907,32 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 			return 0;
 		});
+	} else if(request == IOCTL_WDM_MAX_COMMAND) {
+		auto param = reinterpret_cast<int *>(arg);
+
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		*param = resp.size();
+		return 0;
 	}
 
 	mlibc::infoLogger() << "mlibc: Unexpected ioctl with"
