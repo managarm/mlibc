@@ -30,6 +30,7 @@ int unsetenv(const char *);
 // ----------------------------------------------------------------------------
 
 int mkstemp(char *);
+int mkstemps(char *pattern, int suffixlen);
 int mkostemp(char *, int flags);
 int mkostemps(char *pattern, int suffixlen, int flags);
 char *mkdtemp(char *path);

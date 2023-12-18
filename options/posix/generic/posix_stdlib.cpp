@@ -182,6 +182,10 @@ int mkostemps(char *pattern, int suffixlen, int flags) {
 	return mkostemp(pattern, flags);
 }
 
+int mkstemps(char *pattern, int suffixlen) {
+	return mkostemps(pattern, suffixlen, 0);
+}
+
 char *mkdtemp(char *pattern) {
 	mlibc::infoLogger() << "mlibc mkdtemp(" << pattern << ") called" << frg::endlog;
 	auto n = strlen(pattern);
