@@ -885,7 +885,7 @@ Tcb *allocateTcb() {
 
 	// To make sure that both the TCB and TLS data are sufficiently aligned, allocate
 	// slightly more than necessary and adjust alignment afterwards.
-	size_t alignOverhead = frg::min(alignof(Tcb), tlsMaxAlignment);
+	size_t alignOverhead = frg::max(alignof(Tcb), tlsMaxAlignment);
 	size_t allocSize = tlsInitialSize + sizeof(Tcb) + alignOverhead;
 	auto allocation = reinterpret_cast<uintptr_t>(getAllocator().allocate(allocSize));
 	memset(reinterpret_cast<void *>(allocation), 0, allocSize);
