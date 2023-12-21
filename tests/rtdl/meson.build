@@ -10,6 +10,7 @@ rtdl_test_cases = [
 	'scope3',
 	'scope4',
 	'scope5',
+	'tls_align',
 ]
 
 foreach test_name : rtdl_test_cases 
