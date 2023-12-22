@@ -35,6 +35,7 @@ libc_sources += files(
 	'generic/drm.cpp',
 	'generic/ensure.cpp',
 	'generic/entry.cpp',
+	'generic/errors.cpp',
 	'generic/file.cpp',
 	'generic/fork-exec.cpp',
 	'generic/ioctl.cpp',

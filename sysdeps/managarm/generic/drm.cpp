@@ -5,6 +5,7 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/errors.hpp>
 #include <mlibc/posix-pipe.hpp>
 
 #include <fs.frigg_bragi.hpp>
@@ -35,7 +36,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		param->version_major = resp.drm_version_major();
 		param->version_minor = resp.drm_version_minor();
@@ -80,15 +81,11 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-		if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-			return EINVAL;
-		}else{
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());;
 
-			param->value = resp.drm_value();
-			*result = resp.result();
-			return 0;
-		}
+		param->value = resp.drm_value();
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_SET_CLIENT_CAP: {
 		auto param = reinterpret_cast<drm_set_client_cap *>(arg);
@@ -113,15 +110,11 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-		if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-			return EINVAL;
-		}else{
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
-			param->value = resp.drm_value();
-			*result = resp.result();
-			return 0;
-		}
+		param->value = resp.drm_value();
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_GET_MAGIC: {
 		auto param = reinterpret_cast<drm_auth *>(arg);
@@ -174,7 +167,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		for(size_t i = 0; i < resp.drm_fb_ids_size(); i++) {
 			if(i >= param->count_fbs)
@@ -245,7 +238,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		for(size_t i = 0; i < resp.drm_encoders_size(); i++) {
 			if(i >= param->count_encoders)
@@ -429,7 +422,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		param->crtc_id = resp.drm_crtc_id();
 		param->fb_id = resp.drm_fb_id();
@@ -473,7 +466,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		// FIXME: send this via a helix_ng buffer
 		for(size_t i = 0; i < resp.drm_plane_res_size(); i++) {
@@ -511,7 +504,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		param->encoder_type = resp.drm_encoder_type();
 		param->crtc_id = resp.drm_crtc_id();
@@ -546,7 +539,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		param->handle = resp.drm_handle();
 		param->pitch = resp.drm_pitch();
@@ -582,7 +575,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		param->fb_id = resp.drm_fb_id();
 
@@ -610,7 +603,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		param->width = resp.drm_width();
 		param->height = resp.drm_height();
@@ -659,7 +652,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		param->fb_id = resp.drm_fb_id();
 
@@ -688,7 +681,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		*result = resp.result();
 		return 0;
@@ -715,7 +708,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		param->offset = resp.drm_offset();
 
@@ -746,7 +739,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		param->fb_id = resp.drm_fb_id();
 		param->x = resp.drm_x();
@@ -790,7 +783,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		*result = resp.result();
 		return 0;
@@ -819,7 +812,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		auto props = reinterpret_cast<uint32_t *>(param->props_ptr);
 		auto prop_vals = reinterpret_cast<uint64_t *>(param->prop_values_ptr);
@@ -862,7 +855,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		*result = resp.result();
 		return 0;
@@ -901,13 +894,10 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-		if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-			return EINVAL;
-		}else{
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-			*result = resp.result();
-			return 0;
-		}
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
+		
+		*result = resp.result();
+		return 0;
 	}
 	case DRM_IOCTL_MODE_CURSOR: {
 		auto param = reinterpret_cast<drm_mode_cursor *>(arg);
@@ -1003,7 +993,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		param->blob_id = resp.drm_blob_id();
 
@@ -1031,7 +1021,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		*result = resp.result();
 		return 0;
@@ -1131,7 +1121,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		param->fd = resp.drm_prime_fd();
 		*result = resp.result();
@@ -1160,11 +1150,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		if(resp.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
-			return EBADF;
-		} else {
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		}
+		FS_SUCCESS_OR_RETURN_ERROR(resp.error());
 
 		param->handle = resp.drm_prime_handle();
 		*result = resp.result();

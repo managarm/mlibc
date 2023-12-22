@@ -191,7 +191,7 @@ int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+	if(resp.error() == managarm::fs::Errors::NOT_A_SOCKET) {
 		return ENOTSOCK;
 	}
 	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
@@ -234,7 +234,7 @@ int sys_peername(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+	if(resp.error() == managarm::fs::Errors::NOT_A_SOCKET) {
 		return ENOTSOCK;
 	}else if(resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
 		return ENOTCONN;
@@ -364,11 +364,14 @@ int sys_setsockopt(int fd, int layer, int number,
 	}else if(layer == IPPROTO_TCP && number == TCP_KEEPIDLE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_KEEPIDLE is unimplemented\e[39m" << frg::endlog;
 		return 0;
+	}else if(layer == SOL_NETLINK && number == NETLINK_BROADCAST_ERROR) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_NETLINK and NETLINK_BROADCAST_ERROR is unimplemented\e[39m" << frg::endlog;
+		return 0;
 	}else if(layer == SOL_NETLINK && number == NETLINK_EXT_ACK) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_NETLINK and NETLINK_EXT_ACK is unimplemented\e[39m" << frg::endlog;
 		return 0;
 	}else if(layer == SOL_NETLINK && number == NETLINK_GET_STRICT_CHK) {
-		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_NETLINK and NETLINK_EXT_ACK is unimplemented\e[39m" << frg::endlog;
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_NETLINK and NETLINK_GET_STRICT_CHK is unimplemented\e[39m" << frg::endlog;
 		return 0;
 	}else if(layer == IPPROTO_TCP && number == TCP_KEEPINTVL) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_KEEPINTVL is unimplemented\e[39m" << frg::endlog;
