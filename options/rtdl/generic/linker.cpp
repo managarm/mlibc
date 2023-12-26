@@ -793,7 +793,28 @@ void processCopyRela(SharedObject *object, elf_rela *reloc) {
 	memcpy((void *)rel_addr, (void *)p->virtualAddress(), symbol->st_size);
 }
 
+void processCopyRel(SharedObject *object, elf_rel *reloc) {
+	auto type = ELF_R_TYPE(reloc->r_info);
+	auto symbol_index = ELF_R_SYM(reloc->r_info);
+
+	if(type != R_COPY)
+		return;
+
+	uintptr_t rel_addr = object->baseAddress + reloc->r_offset;
+
+	auto symbol = (elf_sym *)(object->baseAddress + object->symbolTableOffset
+			+ symbol_index * sizeof(elf_sym));
+	ObjectSymbol r(object, symbol);
+	frg::optional<ObjectSymbol> p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, r.getString(), object->objectRts, Scope::resolveCopy);
+	__ensure(p);
+
+	memcpy((void *)rel_addr, (void *)p->virtualAddress(), symbol->st_size);
+}
+
 void processCopyRelocations(SharedObject *object) {
+	frg::optional<uintptr_t> rel_offset;
+	frg::optional<size_t> rel_length;
+
 	frg::optional<uintptr_t> rela_offset;
 	frg::optional<size_t> rela_length;
 
@@ -801,6 +822,15 @@ void processCopyRelocations(SharedObject *object) {
 		elf_dyn *dynamic = &object->dynamic[i];
 
 		switch(dynamic->d_tag) {
+		case DT_REL:
+			rel_offset = dynamic->d_un.d_ptr;
+			break;
+		case DT_RELSZ:
+			rel_length = dynamic->d_un.d_val;
+			break;
+		case DT_RELENT:
+			__ensure(dynamic->d_un.d_val == sizeof(elf_rel));
+			break;
 		case DT_RELA:
 			rela_offset = dynamic->d_un.d_ptr;
 			break;
@@ -818,8 +848,14 @@ void processCopyRelocations(SharedObject *object) {
 			auto reloc = (elf_rela *)(object->baseAddress + *rela_offset + offset);
 			processCopyRela(object, reloc);
 		}
+	} else if(rel_offset && rel_length) {
+		for(size_t offset = 0; offset < *rel_length; offset += sizeof(elf_rel)) {
+			auto reloc = (elf_rel *)(object->baseAddress + *rel_offset + offset);
+			processCopyRel(object, reloc);
+		}
 	}else{
 		__ensure(!rela_offset && !rela_length);
+		__ensure(!rel_offset && !rel_length);
 	}
 }
 
