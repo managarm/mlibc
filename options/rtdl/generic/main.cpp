@@ -57,7 +57,7 @@ DebugInterface globalDebugInterface;
 
 // Use a PC-relative instruction sequence to find our runtime load address.
 uintptr_t getLdsoBase() {
-#if defined(__x86_64__) || defined(__aarch64__)
+#if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__)
 	// On x86_64, the first GOT entry holds the link-time address of _DYNAMIC.
 	// TODO: This isn't guaranteed on AArch64, so this might fail with some linkers.
 	auto linktime_dynamic = reinterpret_cast<uintptr_t>(_GLOBAL_OFFSET_TABLE_[0]);
@@ -740,7 +740,7 @@ void __dlapi_enter(uintptr_t *entry_stack) {
 // using the host toolchain.
 
 // __gnu_linux__ is the define checked by libgcc
-#if defined(__aarch64__) && defined(__gnu_linux__)
+#if defined(__aarch64__) && defined(__gnu_linux__) && !defined(MLIBC_STATIC_BUILD)
 
 extern "C" unsigned long __getauxval(unsigned long type) {
 	// Find the auxiliary vector by skipping args and environment.

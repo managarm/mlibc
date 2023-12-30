@@ -24,6 +24,7 @@ packages:
     configure:
       - args:
         - 'meson'
+        - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
@@ -54,6 +55,7 @@ packages:
     configure:
       - args:
         - 'meson'
+        - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
@@ -80,6 +82,7 @@ packages:
     configure:
       - args:
         - 'meson'
+        - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
@@ -107,6 +110,7 @@ packages:
     configure:
       - args:
         - 'meson'
+        - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
@@ -138,6 +142,7 @@ packages:
     configure:
       - args:
         - 'meson'
+        - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
@@ -161,7 +166,7 @@ packages:
     from_source: linux
     configure:
       # custom build system requires in tree-ish builds
-      - args: ['cp', '-Tr', '@THIS_SOURCE_DIR@', '.']
+      - args: ['cp', '-Tr', '@THIS_SOURCE_DIR@/', '.']
     build:
       - args: |
           LINUX_ARCH="@OPTION:arch@"

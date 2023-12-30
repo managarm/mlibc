@@ -11,6 +11,10 @@
 		auto dtvPtr = reinterpret_cast<char *>(tcbPtr->dtvPointers[0]);
 		return reinterpret_cast<void *>(dtvPtr + entry->offset + TLS_DTV_OFFSET);
 	}
+#elif defined(__i386__)
+	extern "C" __attribute__((regparm(1))) void *___tls_get_addr(struct __abi_tls_entry *entry) {
+		return __dlapi_get_tls(entry);
+	}
 #else
 	extern "C" void *__tls_get_addr(struct __abi_tls_entry *entry) {
 		return __dlapi_get_tls(entry);

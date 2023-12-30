@@ -56,7 +56,8 @@ longjmp:
 	ldp d12, d13, [x0, #144]
 	ldp d14, d15, [x0, #160]
 
-	mov x0, x1
-	ret
+	cmp w1, 0
+	csinc w0, w1, wzr, ne
+	br x30
 .section .note.GNU-stack,"",%progbits
 

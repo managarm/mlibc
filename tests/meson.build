@@ -1,3 +1,5 @@
+timeout_sec = 10
+
 all_test_cases = [
 	'ansi/alloc',
 	'ansi/sscanf',
@@ -152,7 +154,7 @@ if library_type == 'static'
 	test_c_args += '-no-pie'
 	test_link_args += ['-no-pie', '-static']
 	test_sources += [
-		'../options/internal/gcc-extra/mlibc_crtbegin.S',
+		'../options/internal' / host_machine.cpu_family() / 'mlibc_crtbegin.S',
 		'../options/internal' / host_machine.cpu_family() / 'mlibc_crtend.S',
 		crt,
 	]
@@ -216,10 +218,11 @@ foreach test_name : all_test_cases
 			args: [
 				meson.source_root() + '/tests/' + test_name + '.py',
 				exec
-			]
+			],
+			timeout: timeout_sec,
 		)
 	else
-		test(test_short_name, exec, suite: test_subdir, should_fail: should_fail)
+		test(test_short_name, exec, suite: test_subdir, should_fail: should_fail, timeout: timeout_sec)
 	endif
 
 	if build_tests_host_libc and not host_libc_excluded_test_cases.contains(test_name)
@@ -242,6 +245,6 @@ foreach test_name : all_test_cases
 			link_args: ['-lresolv', '-ldl', '-pthread', '-lm', '-lrt'],
 			native: true,
 		)
-		test(test_short_name, exec, suite: ['host-libc', test_subdir], should_fail: should_fail)
+		test(test_short_name, exec, suite: ['host-libc', test_subdir], should_fail: should_fail, timeout: timeout_sec)
 	endif
 endforeach

@@ -16,7 +16,7 @@ __mlibcTlsdescDynamic:
 	ldr x0, [x0, #8]
 	ldp x1, x2, [x0] // tlsIndex, addend
 	mrs x0, tpidr_el0 // tp
-	ldr x0, [x0, #-96] // tp->dtvPointers
+	ldr x0, [x0, #-104] // tp->dtvPointers
 	ldr x0, [x0, x1, lsl 3] // [tlsIndex]
 	add x0, x0, x2 // + addend
 	mrs x1, tpidr_el0 // tp

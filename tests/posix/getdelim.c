@@ -26,7 +26,7 @@ int main(void) {
 	fp = fopen(TEST_FILE, "r");
 	assert(fp);
 	while ((read = getline(&line, &len, fp)) != -1) {
-		printf("read line of length %zu, capacity %zu\n", read, len);
+		printf("read line of length %zd, capacity %zu\n", read, len);
 	}
 	assert(!ferror(fp));
 	free(line);
@@ -45,7 +45,7 @@ int main(void) {
 	fp = fopen(TEST_FILE, "r");
 	assert(fp);
 	while ((read = getdelim(&line, &len, 'b', fp)) != -1) {
-		printf("read line of length %zu, capacity %zu\n", read, len);
+		printf("read line of length %zd, capacity %zu\n", read, len);
 		assert((size_t)read == nchars + 1);
 	}
 

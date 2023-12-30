@@ -1,15 +1,16 @@
 #ifndef MLIBC_FENV_H
 #define MLIBC_FENV_H
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__i386__)
 
+#define FE_DENORMAL 2
 #define FE_DIVBYZERO 4
 #define FE_INEXACT 32
 #define FE_INVALID 1
 #define FE_OVERFLOW 8
 #define FE_UNDERFLOW 16
 
-#define FE_ALL_EXCEPT 63
+#define FE_ALL_EXCEPT (FE_DENORMAL | FE_DIVBYZERO | FE_INEXACT | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW)
 
 #define FE_TONEAREST 0
 #define FE_DOWNWARD 0x400

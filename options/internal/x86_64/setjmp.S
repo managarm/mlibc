@@ -46,7 +46,7 @@ longjmp:
 	mov  %rsi, %rax
 	test %rax, %rax
 	jnz 1f
-	xor %rax, %rax
+	inc %rax
 1:
 	mov  0x30(%rdi), %rsp
 	jmp  *0x38(%rdi)
