@@ -6,7 +6,7 @@ jobs:
     build-mlibc:
         strategy:
             matrix:
-                arch: [x86_64, riscv64, aarch64]
+                arch: [x86_64, riscv64, aarch64, x86]
                 builds: [mlibc, mlibc-static, mlibc-shared, mlibc-ansi-only, mlibc-headers-only]
         name: Build mlibc
         runs-on: ubuntu-22.04
