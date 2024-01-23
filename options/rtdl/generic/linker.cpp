@@ -8,6 +8,7 @@ enum {
 
 
 #include <frg/manual_box.hpp>
+#include <frg/small_vector.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/rtdl-sysdeps.hpp>
@@ -27,6 +28,7 @@ constexpr bool verbose = false;
 constexpr bool stillSlightlyVerbose = false;
 constexpr bool logBaseAddresses = false;
 constexpr bool logRpath = false;
+constexpr bool logLdPath = false;
 constexpr bool eagerBinding = true;
 
 #if defined(__x86_64__) || defined(__i386__)
@@ -41,6 +43,8 @@ constexpr inline bool tlsAboveTp = true;
 
 extern DebugInterface globalDebugInterface;
 extern uintptr_t __stack_chk_guard;
+
+extern frg::manual_box<frg::small_vector<frg::string_view, 4, MemoryAllocator>> libraryPaths;
 
 #if MLIBC_STATIC_BUILD
 extern "C" size_t __init_array_start[];
@@ -157,13 +161,6 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 	if (auto obj = findLoadedObject(name))
 		return obj;
 
-	const char *libdirs[4] = {
-		"/lib/",
-		"/lib64/",
-		"/usr/lib/",
-		"/usr/lib64/"
-	};
-
 	auto tryToOpen = [&] (const char *path) {
 		int fd;
 		if(auto x = mlibc::sys_open(path, O_RDONLY, 0, &fd); x) {
@@ -233,8 +230,12 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 	} else if (logRpath) {
 		mlibc::infoLogger() << "rtdl: no rpath set for object" << frg::endlog;
 	}
-	for(int i = 0; i < 4 && fd == -1; i++) {
-		auto path = frg::string<MemoryAllocator>{getAllocator(), libdirs[i]} + name + '\0';
+
+	for(size_t i = 0; i < libraryPaths->size() && fd == -1; i++) {
+		auto ldPath = (*libraryPaths)[i];
+		auto path = frg::string<MemoryAllocator>{getAllocator(), ldPath} + '/' + name;
+		if(logLdPath)
+			mlibc::infoLogger() << "rtdl: Trying to load " << name << " from ldpath " << ldPath << frg::endlog;
 		fd = tryToOpen(path.data());
 		if(fd >= 0) {
 			chosenPath = std::move(path);

@@ -3,6 +3,7 @@
 #include <link.h>
 
 #include <frg/manual_box.hpp>
+#include <frg/small_vector.hpp>
 
 #include <abi-bits/auxv.h>
 #include <mlibc/debug.hpp>
@@ -46,6 +47,9 @@ frg::manual_box<ObjectRepository> initialRepository;
 frg::manual_box<Scope> globalScope;
 
 frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
+
+// We use a small vector of size 4 to avoid memory allocation for the default library paths
+frg::manual_box<frg::small_vector<frg::string_view, 4, MemoryAllocator>> libraryPaths;
 
 static SharedObject *executableSO;
 extern HIDDEN char __ehdr_start[];
@@ -199,11 +203,27 @@ extern "C" [[gnu::alias("dl_debug_state"), gnu::visibility("default")]] void _dl
 // This symbol can be used by GDB to find the global interface structure
 [[ gnu::visibility("default") ]] DebugInterface *_dl_debug_addr = &globalDebugInterface;
 
+static void parseLibraryPaths(frg::string_view paths) {
+	size_t p = 0;
+	while(p < paths.size()) {
+		size_t s; // Offset of next colon or end of string.
+		if(size_t cs = paths.find_first(':', p); cs != size_t(-1)) {
+			s = cs;
+		}else{
+			s = paths.size();
+		}
+
+		libraryPaths->push_back(paths.sub_string(p, s - p));
+		p = s + 1;
+	}
+}
+
 extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	if(logEntryExit)
 		mlibc::infoLogger() << "Entering ld.so" << frg::endlog;
 	entryStack = entry_stack;
 	runtimeTlsMap.initialize();
+	libraryPaths.initialize(getAllocator());
 
 	void *phdr_pointer = 0;
 	size_t phdr_entry_size = 0;
@@ -282,15 +302,24 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		if(s == size_t(-1))
 			mlibc::panicLogger() << "rtdl: environment '" << env << "' is missing a '='" << frg::endlog;
 
+		auto name = view.sub_string(0, s);
 		auto value = const_cast<char *>(view.data() + s + 1);
 
-		if(view.sub_string(0, s) == "LD_SHOW_AUXV" && value && *value && *value != '0') {
+		if(name == "LD_SHOW_AUXV" && *value && *value != '0') {
 			ldShowAuxv = true;
+		}else if(name == "LD_LIBRARY_PATH" && *value) {
+			parseLibraryPaths(value);
 		}
 
 		aux++;
 	}
 	aux++;
+
+	// Add default library paths
+	libraryPaths->push_back("/lib/");
+	libraryPaths->push_back("/lib64/");
+	libraryPaths->push_back("/usr/lib/");
+	libraryPaths->push_back("/usr/lib64/");
 
 	// Parse the actual vector.
 	while(true) {
