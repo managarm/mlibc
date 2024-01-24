@@ -96,55 +96,57 @@ if not headers_only
 	rtdl_include_dirs += include_directories(ccdir / 'include')
 	libc_include_dirs += include_directories(ccdir / 'include')
 
-	cplusplus_include_path = []
+	if not cxxshim_dep.found()
+		cplusplus_include_path = []
 
-	c_output = run_command(c_compiler.cmd_array(), '-E', '-v', '-x', 'c',
-			       '/dev/null', '-o', '-',
-			       capture: true,
-			       check: true).stderr().split('\n')
+		c_output = run_command(c_compiler.cmd_array(), '-E', '-v', '-x', 'c',
+					'/dev/null', '-o', '-',
+					capture: true,
+					check: true).stderr().split('\n')
 
-	cpp_output = run_command(cpp_compiler.cmd_array(), '-E', '-v', '-x',
-				 'c++', '/dev/null', '-o', '-',
-				 capture: true,
-				 check: true).stderr().split('\n')
+		cpp_output = run_command(cpp_compiler.cmd_array(), '-E', '-v', '-x',
+					'c++', '/dev/null', '-o', '-',
+					capture: true,
+					check: true).stderr().split('\n')
 
-	c_relevant_lines = []
+		c_relevant_lines = []
 
-	relevantmarker = '#include <...>'
-	relevant_started = false
+		relevantmarker = '#include <...>'
+		relevant_started = false
 
-	foreach line : c_output
-		if relevant_started
-			if not line.startswith(' ')
-				break
+		foreach line : c_output
+			if relevant_started
+				if not line.startswith(' ')
+					break
+				endif
+				c_relevant_lines += line.strip()
+			elif line.startswith(relevantmarker)
+				relevant_started = true
 			endif
-			c_relevant_lines += line.strip()
-		elif line.startswith(relevantmarker)
-			relevant_started = true
-		endif
-	endforeach
+		endforeach
 
-	relevant_started = false
+		relevant_started = false
 
-	foreach line : cpp_output
-		if relevant_started
-			if not line.startswith(' ')
-				break
+		foreach line : cpp_output
+			if relevant_started
+				if not line.startswith(' ')
+					break
+				endif
+				debug('maybe relevant', line)
+				stripped = line.strip()
+				if stripped in c_relevant_lines
+					debug('not relevant (is C)', line)
+					continue
+				endif
+				cplusplus_include_path += include_directories(stripped)
+			elif line.startswith(relevantmarker)
+				relevant_started = true
 			endif
-			debug('maybe relevant', line)
-			stripped = line.strip()
-			if stripped in c_relevant_lines
-				debug('not relevant (is C)', line)
-				continue
-			endif
-			cplusplus_include_path += include_directories(stripped)
-		elif line.startswith(relevantmarker)
-			relevant_started = true
-		endif
-	endforeach
+		endforeach
 
-	rtdl_include_dirs += cplusplus_include_path
-	libc_include_dirs += cplusplus_include_path
+		rtdl_include_dirs += cplusplus_include_path
+		libc_include_dirs += cplusplus_include_path
+	endif
 endif
 
 internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
