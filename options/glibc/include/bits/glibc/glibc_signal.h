@@ -9,6 +9,12 @@ extern "C" {
 
 int tgkill(int, int, int);
 
+#if defined(_GNU_SOURCE)
+
+typedef void (*sighandler_t)(int);
+
+#endif
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus

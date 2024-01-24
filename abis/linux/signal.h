@@ -162,6 +162,7 @@ typedef struct __stack {
 #define SIGEV_SIGNAL 0
 #define SIGEV_NONE 1
 #define SIGEV_THREAD 2
+#define SIGEV_THREAD_ID 4
 
 #define SEGV_MAPERR 1
 #define SEGV_ACCERR 2
@@ -242,12 +243,15 @@ typedef struct __stack {
 #define NGREG 23
 #endif
 
+#include <bits/threads.h>
+
 struct sigevent {
 	union sigval sigev_value;
 	int sigev_notify;
 	int sigev_signo;
 	void (*sigev_notify_function)(union sigval);
-	// MISSING: sigev_notify_attributes
+	struct __mlibc_threadattr *sigev_notify_attributes;
+	pid_t sigev_notify_thread_id;
 };
 
 struct sigaction {
