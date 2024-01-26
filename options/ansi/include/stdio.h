@@ -101,51 +101,51 @@ void setbuffer(FILE *, char *, size_t);
 
 // [C11-7.21.6] Formatted input/output functions
 
-__attribute__((__format__(gnu_printf, 2, 3)))
+__attribute__((__format__(printf, 2, 3)))
 int fprintf(FILE *__restrict stream, const char *__restrict format, ...);
 
-__attribute__((__format__(gnu_scanf, 2, 3)))
+__attribute__((__format__(scanf, 2, 3)))
 int fscanf(FILE *__restrict stream, const char *__restrict format, ...);
 
-__attribute__((__format__(gnu_printf, 1, 2)))
+__attribute__((__format__(printf, 1, 2)))
 int printf(const char *__restrict format, ...);
 
-__attribute__((__format__(gnu_scanf, 1, 2)))
+__attribute__((__format__(scanf, 1, 2)))
 int scanf(const char *__restrict format, ...);
 
-__attribute__((__format__(gnu_printf, 3, 4)))
+__attribute__((__format__(printf, 3, 4)))
 int snprintf(char *__restrict buffer, size_t max_size, const char *__restrict format, ...);
 
-__attribute__((__format__(gnu_printf, 2, 3)))
+__attribute__((__format__(printf, 2, 3)))
 int sprintf(char *__restrict buffer, const char *__restrict format, ...);
 
-__attribute__((__format__(gnu_scanf, 2, 3)))
+__attribute__((__format__(scanf, 2, 3)))
 int sscanf(const char *__restrict buffer, const char *__restrict format, ...);
 
-__attribute__((__format__(gnu_printf, 2, 0)))
+__attribute__((__format__(printf, 2, 0)))
 int vfprintf(FILE *__restrict stream, const char *__restrict format, __builtin_va_list args);
 
-__attribute__((__format__(gnu_scanf, 2, 0)))
+__attribute__((__format__(scanf, 2, 0)))
 int vfscanf(FILE *__restrict stream, const char *__restrict format, __builtin_va_list args);
 
-__attribute__((__format__(gnu_printf, 1, 0)))
+__attribute__((__format__(printf, 1, 0)))
 int vprintf(const char *__restrict format, __builtin_va_list args);
 
-__attribute__((__format__(gnu_scanf, 1, 0)))
+__attribute__((__format__(scanf, 1, 0)))
 int vscanf(const char *__restrict format, __builtin_va_list args);
 
-__attribute__((__format__(gnu_printf, 3, 0)))
+__attribute__((__format__(printf, 3, 0)))
 int vsnprintf(char *__restrict buffer, size_t max_size,
 		const char *__restrict format, __builtin_va_list args);
 
-__attribute__((__format__(gnu_printf, 2, 0)))
+__attribute__((__format__(printf, 2, 0)))
 int vsprintf(char *__restrict buffer, const char *__restrict format, __builtin_va_list args);
 
-__attribute__((__format__(gnu_scanf, 2, 0)))
+__attribute__((__format__(scanf, 2, 0)))
 int vsscanf(const char *__restrict buffer, const char *__restrict format, __builtin_va_list args);
 
 // this is a gnu extension
-__attribute__((__format__(gnu_printf, 2, 0)))
+__attribute__((__format__(printf, 2, 0)))
 int vasprintf(char **, const char *, __builtin_va_list);
 
 // [C11-7.21.7] Character input/output functions
