@@ -213,8 +213,23 @@ static void parseLibraryPaths(frg::string_view paths) {
 			s = paths.size();
 		}
 
-		libraryPaths->push_back(paths.sub_string(p, s - p));
+		auto ldPath = paths.sub_string(p, s - p);
 		p = s + 1;
+
+		if(ldPath.size() == 0)
+			continue;
+
+		if(ldPath.ends_with("/")) {
+			size_t i = ldPath.size() - 1;
+			while(i > 0 && ldPath[i] == '/')
+				i--;
+			ldPath = ldPath.sub_string(0, i + 1);
+		}
+
+		if(ldPath == "/")
+			ldPath = "";
+
+		libraryPaths->push_back(ldPath);
 	}
 }
 
@@ -316,10 +331,10 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	aux++;
 
 	// Add default library paths
-	libraryPaths->push_back("/lib/");
-	libraryPaths->push_back("/lib64/");
-	libraryPaths->push_back("/usr/lib/");
-	libraryPaths->push_back("/usr/lib64/");
+	libraryPaths->push_back("/lib");
+	libraryPaths->push_back("/lib64");
+	libraryPaths->push_back("/usr/lib");
+	libraryPaths->push_back("/usr/lib64");
 
 	// Parse the actual vector.
 	while(true) {

@@ -235,7 +235,7 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 		auto ldPath = (*libraryPaths)[i];
 		auto path = frg::string<MemoryAllocator>{getAllocator(), ldPath} + '/' + name;
 		if(logLdPath)
-			mlibc::infoLogger() << "rtdl: Trying to load " << name << " from ldpath " << ldPath << frg::endlog;
+			mlibc::infoLogger() << "rtdl: Trying to load " << name << " from ldpath " << ldPath << "/" << frg::endlog;
 		fd = tryToOpen(path.data());
 		if(fd >= 0) {
 			chosenPath = std::move(path);
