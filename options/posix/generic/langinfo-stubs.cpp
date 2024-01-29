@@ -8,7 +8,7 @@ char *nl_langinfo(nl_item item) {
 	return mlibc::nl_langinfo(item);
 }
 
-char *nl_langinfo_1(nl_item, locale_t) {
+char *nl_langinfo_l(nl_item, locale_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
