@@ -37,7 +37,6 @@ libc_sources += files(
 	'generic/sys-select-stubs.cpp',
 	'generic/sys-shm.cpp',
 	'generic/sys-socket-stubs.cpp',
-	'generic/sys-statfs-stubs.cpp',
 	'generic/sys-stat-stubs.cpp',
 	'generic/sys-statvfs-stubs.cpp',
 	'generic/sys-times.cpp',
@@ -135,7 +134,6 @@ if not no_headers
 		'include/sys/sem.h',
 		'include/sys/shm.h',
 		'include/sys/socket.h',
-		'include/sys/statfs.h',
 		'include/sys/stat.h',
 		'include/sys/statvfs.h',
 		'include/sys/termios.h',
@@ -146,7 +144,6 @@ if not no_headers
 		'include/sys/uio.h',
 		'include/sys/un.h',
 		'include/sys/utsname.h',
-		'include/sys/vfs.h',
 		'include/sys/wait.h',
 		'include/sys/syslog.h',
 		subdir: 'sys'

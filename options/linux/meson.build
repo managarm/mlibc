@@ -31,6 +31,7 @@ libc_sources += files(
 	'generic/capabilities.cpp',
 	'generic/cpuset.cpp',
 	'generic/sys-swap.cpp',
+	'generic/sys-statfs-stubs.cpp',
 )
 
 if not no_headers
@@ -83,6 +84,8 @@ if not no_headers
 		'include/sys/xattr.h',
 		'include/sys/quota.h',
 		'include/sys/swap.h',
+		'include/sys/statfs.h',
+		'include/sys/vfs.h',
 		subdir: 'sys'
 	)
 	install_headers(
