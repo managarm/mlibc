@@ -22,7 +22,6 @@
 #include <sys/select.h>
 #include <sys/sem.h>
 #include <sys/statvfs.h>
-#include <sys/statfs.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sched.h>
@@ -191,8 +190,6 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_sigsuspend(const sigset_t *set);
 [[gnu::weak]] int sys_sigpending(sigset_t *set);
 [[gnu::weak]] int sys_setgroups(size_t size, const gid_t *list);
-[[gnu::weak]] int sys_statfs(const char *path, struct statfs *buf);
-[[gnu::weak]] int sys_fstatfs(int fd, struct statfs *buf);
 [[gnu::weak]] int sys_memfd_create(const char *name, int flags, int *fd);
 [[gnu::weak]] int sys_madvise(void *addr, size_t length, int advice);
 [[gnu::weak]] int sys_msync(void *addr, size_t length, int flags);

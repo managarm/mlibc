@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <sys/epoll.h>
 #include <sys/sysinfo.h>
+#include <sys/statfs.h>
 #include <poll.h>
 #include <abi-bits/pid_t.h>
 #include <abi-bits/mode_t.h>
@@ -72,6 +73,9 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 [[gnu::weak]] int sys_removexattr(const char *path, const char *name);
 [[gnu::weak]] int sys_lremovexattr(const char *path, const char *name);
 [[gnu::weak]] int sys_fremovexattr(int fd, const char *name);
+
+[[gnu::weak]] int sys_statfs(const char *path, struct statfs *buf);
+[[gnu::weak]] int sys_fstatfs(int fd, struct statfs *buf);
 
 } // namespace mlibc
 

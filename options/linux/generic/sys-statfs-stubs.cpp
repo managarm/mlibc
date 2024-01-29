@@ -4,7 +4,7 @@
 #include <bits/ensure.h>
 
 #include <mlibc/debug.hpp>
-#include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/linux-sysdeps.hpp>
 
 int statfs(const char *path, struct statfs *buf) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_statfs, -1);
