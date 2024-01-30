@@ -3,6 +3,7 @@
 
 #include <mlibc-config.h>
 #include <sys/socket.h>
+#include <stdint.h>
 
 typedef struct ipx_config_data {
 	unsigned char ipxcfg_auto_select_primary;
