@@ -59,7 +59,8 @@ if not no_headers
 		'include/abi-bits/ioctls.h',
 		'include/abi-bits/xattr.h',
 		'include/abi-bits/msg.h',
-		subdir: 'abi-bits'
+		subdir: 'abi-bits',
+		follow_symlinks: true
 	)
 	install_headers(
 		'include/lemon/syscall.h',
