@@ -3,6 +3,7 @@
 #define MLIBC_POSIX_STDLIB_H
 
 #include <bits/posix/locale_t.h>
+#include <bits/size_t.h>
 
 #ifdef __cplusplus
 extern "C" {
