@@ -16,6 +16,8 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
+typedef struct __mlibc_file_base FILE;
+
 int fileno(FILE *file);
 FILE *fdopen(int fd, const char *mode);
 

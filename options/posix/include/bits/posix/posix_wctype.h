@@ -10,6 +10,9 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
+typedef unsigned long wctype_t;
+typedef unsigned long wctrans_t;
+
 int iswalnum_l(wint_t, locale_t);
 int iswblank_l(wint_t, locale_t);
 int iswcntrl_l(wint_t, locale_t);
