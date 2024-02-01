@@ -6,19 +6,16 @@
 
 #define SG_GET_VERSION_NUM 0x2282
 
-#define SG_DXFER_NONE (-1)
-#define SG_DXFER_FROM_DEV (-3)
-
 #define SG_FLAG_DIRECT_IO 1
 #define SG_FLAG_LUN_INHIBIT 2
 
 #define SG_INFO_OK 0x0
 #define SG_INFO_OK_MASK 0x1
 
-#define SG_DXFER_NONE -1
-#define SG_DXFER_TO_DEV -2
-#define SG_DXFER_TO_FROM_DEV -3
-#define SG_DXFER_TO_FROM_DEV -4
+#define SG_DXFER_NONE (-1)
+#define SG_DXFER_TO_DEV (-2)
+#define SG_DXFER_FROM_DEV (-3)
+#define SG_DXFER_TO_FROM_DEV (-4)
 
 #ifdef __cplusplus
 extern "C" {
