@@ -472,6 +472,8 @@ if not headers_only
 	endif
 	library('resolv', 'dummy-libs/libresolv/src/dummy.cpp', install: true)
 	library('dl', 'dummy-libs/libdl/src/dummy.cpp', install: true)
+	library('ssp', 'dummy-libs/libssp/src/dummy.cpp', install: true)
+	library('ssp_nonshared', 'dummy-libs/libssp_nonshared/src/dummy.cpp', install: true)
 endif
 
 summary_info = {}
