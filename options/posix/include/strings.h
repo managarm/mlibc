@@ -17,6 +17,9 @@ int ffs(int word);
 int strcasecmp(const char *a, const char *b);
 int strncasecmp(const char *a, const char *b, size_t size);
 
+// Marked as obsolete in posix 2008 but used by at least tracker
+void bzero(void *s, size_t n);
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
