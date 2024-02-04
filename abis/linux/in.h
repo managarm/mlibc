@@ -4,6 +4,7 @@
 #include <bits/posix/in_addr_t.h>
 #include <bits/posix/in_port_t.h>
 #include <abi-bits/socket.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
