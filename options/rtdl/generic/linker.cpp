@@ -793,6 +793,23 @@ void processLateRelocation(Relocation rel) {
 		__ensure(p);
 		memcpy(rel.destination(), (void *)p->virtualAddress(), p->symbol()->st_size);
 		break;
+
+// TODO: R_IRELATIVE also exists on other architectures but will likely need a different implementation.
+#if defined(__x86_64__) || defined(__i386__)
+	case R_IRELATIVE: {
+		uintptr_t addr = rel.object()->baseAddress + rel.addend_rel();
+		auto* fn = reinterpret_cast<uintptr_t (*)()>(addr);
+		rel.relocate(fn());
+	} break;
+#elif defined(__aarch64__)
+	case R_IRELATIVE: {
+		uintptr_t addr = rel.object()->baseAddress + rel.addend_rel();
+		auto* fn = reinterpret_cast<uintptr_t (*)(uint64_t)>(addr);
+		// TODO: the function should get passed AT_HWCAP value.
+		rel.relocate(fn(0));
+	} break;
+#endif
+
 	default:
 		break;
 	}
@@ -1464,8 +1481,8 @@ void Loader::_scheduleInit(SharedObject *object) {
 }
 
 void Loader::_processRelocations(Relocation &rel) {
-	// copy relocations have to be performed after all other relocations
-	if(rel.type() == R_COPY)
+	// copy and irelative relocations have to be performed after all other relocations
+	if(rel.type() == R_COPY || rel.type() == R_IRELATIVE)
 		return;
 
 	// resolve the symbol if there is a symbol
