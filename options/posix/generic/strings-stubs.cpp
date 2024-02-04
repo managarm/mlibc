@@ -92,3 +92,8 @@ int strncasecmp(const char *a, const char *b, size_t size) {
 	return mlibc::strncasecmp(a, b, size);
 }
 
+// Marked as obsolete in posix 2008 but used by at least tracker
+void bzero(void *s, size_t n) {
+	memset(s, 0, n);
+}
+
