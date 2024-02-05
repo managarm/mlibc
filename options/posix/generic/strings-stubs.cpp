@@ -93,6 +93,14 @@ int strncasecmp(const char *a, const char *b, size_t size) {
 }
 
 // Marked as obsolete in posix 2008 but used by at least tracker
+int bcmp(const void *s1, const void *s2, size_t n) {
+	return memcmp(s1, s2, n);
+}
+
+void bcopy(const void *s1, void *s2, size_t n) {
+	memmove(s2, s1, n);
+}
+
 void bzero(void *s, size_t n) {
 	memset(s, 0, n);
 }
