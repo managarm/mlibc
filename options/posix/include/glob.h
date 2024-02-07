@@ -44,7 +44,7 @@ typedef struct glob_t {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int glob(const char *__restirct, int, int(*)(const char *, int), struct glob_t *__restrict);
+int glob(const char *__restrict, int, int(*)(const char *, int), struct glob_t *__restrict);
 void globfree(struct glob_t *);
 
 #endif /* !__MLIBC_ABI_ONLY */
