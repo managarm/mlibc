@@ -151,7 +151,7 @@ int vasprintf(char **, const char *, __builtin_va_list);
 // [C11-7.21.7] Character input/output functions
 
 int fgetc(FILE *stream);
-char *fgets(char *__restrict buffer, size_t max_size, FILE *__restrict stream);
+char *fgets(char *__restrict buffer, int max_size, FILE *__restrict stream);
 int fputc(int c, FILE *stream);
 int fputs(const char *__restrict string, FILE *__restrict stream);
 char *gets(char *s);
