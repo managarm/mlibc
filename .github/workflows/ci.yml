@@ -19,7 +19,7 @@ jobs:
                 apt-get install -y ninja-build qemu-user \
                                 python3-setuptools python3-jsonschema \
                                 python3-pexpect python3-pip netbase
-                pip install -U xbstrap pyexpect meson
+                pip install --break-system-packages -U xbstrap pyexpect meson
           - name: Prepare directories
             run: |
                 mkdir src/
@@ -64,7 +64,7 @@ jobs:
                 apt-get install -y ninja-build qemu-user \
                                 python3-setuptools python3-jsonschema \
                                 python3-pip
-                pip install -U xbstrap meson
+                pip install --break-system-packages -U xbstrap meson
           - name: Checkout
             uses: actions/checkout@v2
             with:

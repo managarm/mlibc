@@ -24,7 +24,7 @@ jobs:
           apt-get install -y ninja-build qemu-user \
                              python3-setuptools python3-jsonschema \
                              python3-pip abigail-tools
-          pip install -U xbstrap pyexpect meson
+          pip install --break-system-packages -U xbstrap pyexpect meson
 
       - name: Checkout base branch
         if: ${{ github.base_ref }}
