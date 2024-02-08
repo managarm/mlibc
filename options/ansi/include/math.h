@@ -368,6 +368,11 @@ long double fmal(long double, long double, long double);
 extern int signgam;
 #define __signgam signgam
 
+// BSD floating-point classification functions - obsolete
+
+int finite(double x);
+int finitef(float x);
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
