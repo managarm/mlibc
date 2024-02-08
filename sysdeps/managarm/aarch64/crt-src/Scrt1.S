@@ -1,7 +1,8 @@
 .section .text
 .global _start
 _start:
-	adr x0, main
+	mov x0, sp
+	adr x1, main
 
 	bl __mlibc_entry
 	brk #0
