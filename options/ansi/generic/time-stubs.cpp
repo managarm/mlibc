@@ -242,13 +242,26 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			c++;
 			break;
 		}
+		case 'l': {
+			int hour = tm->tm_hour;
+			if(!hour)
+				hour = 12;
+			if(hour > 12)
+				hour -= 12;
+			chunk = snprintf(p, space, "%2d", hour);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c++;
+			break;
+		}
 		case 'I': {
 			int hour = tm->tm_hour;
 			if(!hour)
 				hour = 12;
 			if(hour > 12)
 				hour -= 12;
-			chunk = snprintf(p, space, "%.2i", hour);
+			chunk = snprintf(p, space, "%.2d", hour);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
