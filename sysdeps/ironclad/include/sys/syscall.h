@@ -166,5 +166,22 @@
 #define SYSCALL_ACTUALLY_KILL        79
 #define SYSCALL_SIGNALPOST           80
 #define SYSCALL_SEND_SIGNAL          81
+#define SYSCALL_GETPRIO              82
+#define SYSCALL_SETPRIO              83
+#define SYSCALL_GETGID               84
+#define SYSCALL_GETEGID              85
+#define SYSCALL_SETGIDS              86
+#define SYSCALL_GETGROUPS            87
+#define SYSCALL_SETGROUPS            88
+#define SYSCALL_TTYNAME              89
+#define SYSCALL_FADVISE              90
+#define SYSCALL_SHMAT                91
+#define SYSCALL_SHMCTL               92
+#define SYSCALL_SHMDT                93
+#define SYSCALL_SHMGET               94
+#define SYSCALL_GETSOCKOPT           95
+#define SYSCALL_SETSOCKOPT           96
+#define SYSCALL_GETTIDID             97
+#define SYSCALL_SETTIDID             98
 
 #endif // _SYS_SYSCALL_H

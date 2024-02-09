@@ -14,7 +14,8 @@ libc_sources += files(
 	'generic/thread.cpp',
 	'generic/mac.cpp',
 	'generic/sched2.cpp',
-	'generic/thread.S'
+	'generic/thread.S',
+	'generic/utmpx.cpp'
 )
 
 if not no_headers
@@ -88,7 +89,8 @@ if not no_headers
 
 	install_headers(
 		'include/mntent.h',
-		'include/pty.h'
+		'include/pty.h',
+		'include/utmpx.h'
 	)
 endif
 
