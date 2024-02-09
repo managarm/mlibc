@@ -1,3 +1,4 @@
+#include <mlibc-config.h>
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
@@ -15,6 +16,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <sys/file.h>
+#include <mlibc/tcb.hpp>
 
 namespace mlibc {
 
@@ -41,6 +43,21 @@ void sys_exit(int status) {
 int sys_tcb_set(void *pointer) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_ARCH_PRCTL, 1, pointer);
+	return errno;
+}
+
+int sys_thread_getname(void *tcb, char *name, size_t size) {
+	int ret, errno;
+	auto t = reinterpret_cast<Tcb *>(tcb);
+	SYSCALL3(SYSCALL_GETTIDID, t->tid, name, size);
+	return errno;
+}
+
+int sys_thread_setname(void *tcb, const char *name) {
+	int ret, errno;
+	size_t len = strlen(name);
+	auto t = reinterpret_cast<Tcb *>(tcb);
+	SYSCALL3(SYSCALL_SETTIDID, t->tid, name, len);
 	return errno;
 }
 
@@ -177,13 +194,14 @@ int sys_ftruncate (int fd, size_t size) {
 }
 
 int sys_flock(int fd, int options) {
+	//  XXX: Shouldnt this use F_SETLKW and F_SETLK only when LOCK_NB ?
 	struct flock lock;
 	lock.l_whence = SEEK_SET;
 	lock.l_start = 0;
 	lock.l_len = (off_t)((uint64_t)-1);
 	lock.l_pid = sys_getpid();
 
-	switch (options) {
+	switch (options & ~(LOCK_NB)) {
 		case LOCK_SH:
 			lock.l_type = F_RDLCK;
 			break;
@@ -199,6 +217,19 @@ int sys_flock(int fd, int options) {
 
 	int ret, errno;
 	SYSCALL3(SYSCALL_FCNTL, fd, F_SETLK, &lock);
+	return errno;
+}
+
+int sys_getpriority(int which, id_t who, int *value) {
+	int ret, errno;
+	SYSCALL2(SYSCALL_GETPRIO, which, who);
+	*value = ret;
+	return errno;
+}
+
+int sys_setpriority(int which, id_t who, int value) {
+	int ret, errno;
+	SYSCALL3(SYSCALL_SETPRIO, which, who, value);
 	return errno;
 }
 
@@ -231,65 +262,15 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 }
 
 int sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
-	(void)fd;
-	(void)size;
-	if (layer == SOL_SOCKET && number == SO_PEERCRED) {
-		mlibc::infoLogger() << "mlibc: getsockopt() call with SOL_SOCKET and SO_PEERCRED is unimplemented" << frg::endlog;
-		*(int *)buffer = 0;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_SNDBUF) {
-		mlibc::infoLogger() << "mlibc: getsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented" << frg::endlog;
-		*(int *)buffer = 4096;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_TYPE) {
-		mlibc::infoLogger() << "mlibc: getsockopt() call with SOL_SOCKET and SO_TYPE is unimplemented, hardcoding SOCK_STREAM" << frg::endlog;
-		*(int *)buffer = SOCK_STREAM;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_ERROR) {
-		mlibc::infoLogger() << "mlibc: getsockopt() call with SOL_SOCKET and SO_ERROR is unimplemented, hardcoding 0" << frg::endlog;
-		*(int *)buffer = 0;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_KEEPALIVE) {
-		mlibc::infoLogger() << "mlibc: getsockopt() call with SOL_SOCKET and SO_KEEPALIVE is unimplemented, hardcoding 0" << frg::endlog;
-		*(int *)buffer = 0;
-		return 0;
-	} else {
-		mlibc::panicLogger() << "mlibc: Unexpected getsockopt() call, layer: " << layer << " number: " << number << frg::endlog;
-	}
-
-	return 0;
+	int ret, errno;
+	SYSCALL5(SYSCALL_GETSOCKOPT, fd, layer, number, buffer, size);
+	return errno;
 }
 
 int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t size) {
-	(void)fd;
-	(void)buffer;
-	(void)size;
-	if (layer == SOL_SOCKET && number == SO_PASSCRED) {
-		mlibc::infoLogger() << "mlibc: setsockopt(SO_PASSCRED) is not implemented correctly" << frg::endlog;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_ATTACH_FILTER) {
-		mlibc::infoLogger() << "mlibc: setsockopt(SO_ATTACH_FILTER) is not implemented correctly" << frg::endlog;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_RCVBUFFORCE) {
-		mlibc::infoLogger() << "mlibc: setsockopt(SO_RCVBUFFORCE) is not implemented correctly" << frg::endlog;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_SNDBUF) {
-		mlibc::infoLogger() << "mlibc: setsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented" << frg::endlog;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_KEEPALIVE) {
-		mlibc::infoLogger() << "mlibc: setsockopt() call with SOL_SOCKET and SO_KEEPALIVE is unimplemented" << frg::endlog;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_REUSEADDR) {
-		mlibc::infoLogger() << "mlibc: setsockopt() call with SOL_SOCKET and SO_REUSEADDR is unimplemented" << frg::endlog;
-		return 0;
-	} else if (layer == AF_NETLINK && number == SO_ACCEPTCONN) {
-		mlibc::infoLogger() << "mlibc: setsockopt() call with AF_NETLINK and SO_ACCEPTCONN is unimplemented" << frg::endlog;
-		return 0;
-	} else {
-		mlibc::panicLogger() << "mlibc: Unexpected setsockopt() call, layer: " << layer << " number: " << number << frg::endlog;
-	}
-
-	 return 0;
+	int ret, errno;
+	SYSCALL5(SYSCALL_SETSOCKOPT, fd, layer, number, buffer, size);
+	return errno;
 }
 
 int sys_vm_unmap(void *pointer, size_t size) {
@@ -303,6 +284,12 @@ int sys_vm_unmap(void *pointer, size_t size) {
 	}
 }
 
+int sys_getcwd(char *buf, size_t size) {
+	buf[0] = '/';
+	buf[1] = '\0';
+	return 0;
+}
+
 int sys_vm_protect(void *pointer, size_t size, int prot) {
 	int ret;
 	int errno;
@@ -310,6 +297,11 @@ int sys_vm_protect(void *pointer, size_t size, int prot) {
 	if (ret != 0) {
 		return errno;
 	}
+	return 0;
+}
+
+int sys_getsid(pid_t pid, pid_t *sid) {
+	//  STUB.
 	return 0;
 }
 
@@ -325,6 +317,19 @@ pid_t sys_getppid() {
 	int errno;
 	SYSCALL0(SYSCALL_GETPPID);
 	return ret;
+}
+
+int sys_getgroups(size_t size, const gid_t *list, int *retval) {
+	int ret, errno;
+	SYSCALL2(SYSCALL_GETGROUPS, size, list);
+	*retval = ret;
+	return errno;
+}
+
+int sys_setgroups(size_t size, const gid_t *list) {
+	int ret, errno;
+	SYSCALL2(SYSCALL_SETGROUPS, size, list);
+	return errno;
 }
 
 int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) {
@@ -356,16 +361,6 @@ int sys_isatty(int fd) {
 	} else {
 		return ENOTTY;
 	}
-}
-
-gid_t sys_getgid() {
-	// FIXME: Stub needed by mlibc.
-	return 0;
-}
-
-gid_t sys_getegid() {
-	// FIXME: Stub needed by mlibc.
-	return 0;
 }
 
 int sys_getpgid(pid_t pid, pid_t *pgid) {
@@ -457,12 +452,13 @@ int sys_uname(struct utsname *buf) {
 int sys_setpgid(pid_t pid, pid_t pgid) {
 	(void)pid;
 	(void)pgid;
-	mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!" << frg::endlog;
 	return 0;
 }
 
-int sys_ttyname(int, char *, size_t) {
-	return ENOSYS;
+int sys_ttyname(int fd, char *buff, size_t size) {
+	int ret, errno;
+	SYSCALL3(SYSCALL_TTYNAME, fd, buff, size);
+	return errno;
 }
 
 int sys_sethostname(const char *buff, size_t size) {
@@ -510,6 +506,13 @@ int sys_fchdir(int fd) {
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	int ret, errno;
 
+	if (request == TIOCGPGRP) {
+		*result = 0;
+		return 0;
+	} else if (request == TIOCSPGRP) {
+		return 0;
+	}
+
 	SYSCALL3(SYSCALL_IOCTL, fd, request, arg);
 
 	if (ret == -1) {
@@ -548,11 +551,12 @@ int sys_dup(int fd, int flags, int *newfd) {
 }
 
 int sys_dup2(int fd, int flags, int newfd) {
-	if (sys_close(newfd) != 0) {
-		 return EBADFD;
+	int ret = sys_close(newfd);
+	if (ret != 0 && ret != EBADFD) {
+		return EBADFD;
 	}
 
-	int ret, errno;
+	int errno;
 	if (flags & O_CLOEXEC) {
 		SYSCALL3(SYSCALL_FCNTL, fd, F_DUPFD_CLOEXEC, newfd);
 	} else {
@@ -595,6 +599,16 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 	 }
 
 	 return 0;
+}
+
+int sys_tcflow(int fd, int action) {
+	int ret;
+	return sys_ioctl(fd, TCXONC, &action, &ret);
+}
+
+int sys_tcflush(int fd, int action) {
+	int ret;
+	return sys_ioctl(fd, TCFLSH, &action, &ret);
 }
 
 int sys_access(const char *path, int mode) {
@@ -708,11 +722,7 @@ uid_t sys_geteuid() {
 
 int sys_setuid(uid_t uid) {
 	int ret, errno;
-	if (uid == 0) {
-		 SYSCALL2(SYSCALL_SETUIDS, uid, uid);
-	} else {
-		 SYSCALL2(SYSCALL_SETUIDS, uid, ((uint64_t)-1));
-	}
+	SYSCALL2(SYSCALL_SETUIDS, uid, uid);
 	return ret;
 }
 
@@ -720,6 +730,44 @@ int sys_seteuid(uid_t euid) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SETUIDS, ((uint64_t)-1), euid);
 	return ret;
+}
+
+int sys_setreuid(uid_t ruid, uid_t euid) {
+	int ret, errno;
+	SYSCALL2(SYSCALL_SETUIDS, ruid, euid);
+	return ret;
+}
+
+gid_t sys_getgid() {
+	uint64_t ret, errno;
+	SYSCALL0(SYSCALL_GETGID);
+	return (gid_t)ret;
+}
+
+gid_t sys_getegid() {
+	return sys_getgid();
+}
+
+int sys_setgid(gid_t gid) {
+	int ret, errno;
+	SYSCALL2(SYSCALL_SETGIDS, gid, gid);
+	return ret;
+}
+
+int sys_setegid(gid_t egid) {
+	int ret, errno;
+	SYSCALL2(SYSCALL_SETGIDS, ((uint64_t)-1), egid);
+	return ret;
+}
+
+int sys_setregid(gid_t rgid, gid_t egid) {
+	int ret, errno;
+	SYSCALL2(SYSCALL_SETGIDS, rgid, egid);
+	return ret;
+}
+
+int sys_setsid(pid_t *sid) {
+	return 0;
 }
 
 #ifndef MLIBC_BUILDING_RTDL
@@ -835,10 +883,13 @@ int sys_shutdown(int sockfd, int how) {
 	return errno;
 }
 
+int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
+	return ENOSYS;
+}
+
 int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
 	if (hdr->msg_control != NULL) {
-		mlibc::infoLogger() << "mlibc: recv() msg_control not supported!" << frg::endlog;
-		return EINVAL;
+		// mlibc::infoLogger() << "mlibc: recv() msg_control not supported!" << frg::endlog;
 	}
 
 	int ret;
@@ -860,8 +911,7 @@ int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
 
 int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
 	if (hdr->msg_control != NULL) {
-		mlibc::infoLogger() << "mlibc: recv() msg_control not supported!" << frg::endlog;
-		return EINVAL;
+		// mlibc::infoLogger() << "mlibc: recv() msg_control not supported!" << frg::endlog;
 	}
 
 	int ret;
@@ -904,7 +954,7 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	struct timespec ts;
 	ts.tv_sec = timeout / 1000;
 	ts.tv_nsec = (timeout % 1000) * 1000000;
-	return sys_ppoll(fds, count, timeout < 0 ? NULL : &ts, NULL, num_events);
+	return sys_ppoll(fds, count, timeout == -1 ? NULL : &ts, NULL, num_events);
 }
 
 int sys_pselect(int nfds, fd_set *read_set, fd_set *write_set,
@@ -1025,27 +1075,7 @@ int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2
 
 int sys_sysconf(int num, long *rret) {
 	long ret, errno;
-
-	// Translate the number for the POSIX compat of the sysconf.
-	int translated;
-	switch (num) {
-		case _SC_PAGE_SIZE:		  translated = 1;  break;
-		case _SC_OPEN_MAX:			translated = 2;  break;
-		case _SC_HOST_NAME_MAX:	 translated = 3;  break;
-		case _SC_NPROCESSORS_ONLN: translated = 6;  break;
-		case _SC_PHYS_PAGES:		 translated = 7;  break;
-		case _SC_CHILD_MAX:		  translated = 11; break;
-
-		// These are values that mlibc technically has to provide itself, but
-		// I personally dont like how ugly the hardcoded warnings look, so I just
-		// harcode them myself :)
-		case _SC_LINE_MAX: *rret = 4096; return 0;
-
-		// Default is for mlibc to handle it.
-		default: return EINVAL;
-	}
-
-	SYSCALL3(SYSCALL_SYSCONF, translated, 0, 0);
+	SYSCALL3(SYSCALL_SYSCONF, num, 0, 0);
 	*rret = ret;
 	return errno;
 }
@@ -1126,6 +1156,12 @@ int sys_umask(mode_t mode, mode_t *old) {
 	return errno;
 }
 
+int sys_fadvise(int fd, off_t offset, off_t length, int advice) {
+	int ret, errno;
+	SYSCALL4(SYSCALL_FADVISE, fd, offset, length, advice);
+	return errno;
+}
+
 int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length) {
 	ssize_t ret;
 	int errno;
@@ -1165,5 +1201,68 @@ int sys_mknodat(int dirfd, const char *path, mode_t mode, dev_t dev) {
 	return errno;
 }
 
+#define SC_LIST_MOUNTS 9
+struct mountinfo {
+	uint32_t type;
+	uint32_t flags;
+	char source[20];
+	uint32_t source_length;
+	char location[20];
+	uint32_t location_length;
+	uint64_t block_size;
+	uint64_t fragment_size;
+	uint64_t size_in_fragments;
+	uint64_t free_blocks;
+	uint64_t free_blocks_user;
+	uint64_t inode_count;
+	uint64_t free_inodes;
+	uint64_t free_inodes_user;
+	uint64_t max_filename;
+};
+
+#include <sys/mount.h>
+
+int sys_fstatvfs(int fd, struct statvfs *out) {
+	return sys_statvfs("/", out);
+}
+
+int sys_statvfs(const char *path, struct statvfs *out) {
+	long ret, errno;
+	struct mountinfo *buffer = (mountinfo *)malloc(5 * sizeof(struct mountinfo));
+	SYSCALL3(SYSCALL_SYSCONF, SC_LIST_MOUNTS, buffer, 5 * sizeof(struct mountinfo));
+	if (errno) {
+		free(buffer);
+		return errno;
+	} else if (ret > 5) {
+		free(buffer);
+		return 1;
+	}
+
+	for (int i = 0; i < ret; i++) {
+		if (!strncmp(path, buffer[i].location, buffer[i].location_length)) {
+			out->f_bsize  = buffer[i].block_size;
+			out->f_frsize = buffer[i].fragment_size;
+			out->f_blocks = buffer[i].size_in_fragments;
+			out->f_bfree  = buffer[i].free_blocks;
+			out->f_bavail = buffer[i].free_blocks_user;
+			out->f_files  = buffer[i].inode_count;
+			out->f_ffree  = buffer[i].free_inodes;
+			out->f_favail = buffer[i].free_inodes_user;
+			out->f_fsid = 0;
+			out->f_flag = buffer[i].flags;
+			out->f_namemax = buffer[i].max_filename;
+#ifdef __MLIBC_STRUCT_STATVFS_HAS_BASETYPE
+			if (buffer[i].type == MNT_EXT) {
+				strcpy(out->f_basetype, "ext");
+			} else {
+				strcpy(out->f_basetype, "fat");
+			}
+#endif
+			return 0;
+		}
+	}
+
+	return EINVAL;
+}
 #endif
 } // namespace mlibc
