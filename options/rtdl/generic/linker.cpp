@@ -776,43 +776,46 @@ SharedObject::SharedObject(const char *name, const char *path,
 			frg::string<MemoryAllocator> { path, getAllocator() },
 			is_main_object, localScope, object_rts) {}
 
-void processCopyRela(SharedObject *object, elf_rela *reloc) {
-	auto type = ELF_R_TYPE(reloc->r_info);
-	auto symbol_index = ELF_R_SYM(reloc->r_info);
+void processLateRelocation(Relocation rel) {
+	// resolve the symbol if there is a symbol
+	frg::optional<ObjectSymbol> p;
+	if(rel.symbol_index()) {
+		auto symbol = (elf_sym *)(rel.object()->baseAddress + rel.object()->symbolTableOffset
+				+ rel.symbol_index() * sizeof(elf_sym));
+		ObjectSymbol r(rel.object(), symbol);
 
-	if(type != R_COPY)
-		return;
+		p = Scope::resolveGlobalOrLocal(*globalScope, rel.object()->localScope,
+				r.getString(), rel.object()->objectRts, Scope::resolveCopy);
+	}
 
-	uintptr_t rel_addr = object->baseAddress + reloc->r_offset;
+	switch(rel.type()) {
+	case R_COPY:
+		__ensure(p);
+		memcpy(rel.destination(), (void *)p->virtualAddress(), p->symbol()->st_size);
+		break;
 
-	auto symbol = (elf_sym *)(object->baseAddress + object->symbolTableOffset
-			+ symbol_index * sizeof(elf_sym));
-	ObjectSymbol r(object, symbol);
-	frg::optional<ObjectSymbol> p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, r.getString(), object->objectRts, Scope::resolveCopy);
-	__ensure(p);
+// TODO: R_IRELATIVE also exists on other architectures but will likely need a different implementation.
+#if defined(__x86_64__) || defined(__i386__)
+	case R_IRELATIVE: {
+		uintptr_t addr = rel.object()->baseAddress + rel.addend_rel();
+		auto* fn = reinterpret_cast<uintptr_t (*)()>(addr);
+		rel.relocate(fn());
+	} break;
+#elif defined(__aarch64__)
+	case R_IRELATIVE: {
+		uintptr_t addr = rel.object()->baseAddress + rel.addend_rel();
+		auto* fn = reinterpret_cast<uintptr_t (*)(uint64_t)>(addr);
+		// TODO: the function should get passed AT_HWCAP value.
+		rel.relocate(fn(0));
+	} break;
+#endif
 
-	memcpy((void *)rel_addr, (void *)p->virtualAddress(), symbol->st_size);
+	default:
+		break;
+	}
 }
 
-void processCopyRel(SharedObject *object, elf_rel *reloc) {
-	auto type = ELF_R_TYPE(reloc->r_info);
-	auto symbol_index = ELF_R_SYM(reloc->r_info);
-
-	if(type != R_COPY)
-		return;
-
-	uintptr_t rel_addr = object->baseAddress + reloc->r_offset;
-
-	auto symbol = (elf_sym *)(object->baseAddress + object->symbolTableOffset
-			+ symbol_index * sizeof(elf_sym));
-	ObjectSymbol r(object, symbol);
-	frg::optional<ObjectSymbol> p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, r.getString(), object->objectRts, Scope::resolveCopy);
-	__ensure(p);
-
-	memcpy((void *)rel_addr, (void *)p->virtualAddress(), symbol->st_size);
-}
-
-void processCopyRelocations(SharedObject *object) {
+void processLateRelocations(SharedObject *object) {
 	frg::optional<uintptr_t> rel_offset;
 	frg::optional<size_t> rel_length;
 
@@ -847,12 +850,14 @@ void processCopyRelocations(SharedObject *object) {
 	if(rela_offset && rela_length) {
 		for(size_t offset = 0; offset < *rela_length; offset += sizeof(elf_rela)) {
 			auto reloc = (elf_rela *)(object->baseAddress + *rela_offset + offset);
-			processCopyRela(object, reloc);
+			auto r = Relocation(object, reloc);
+			processLateRelocation(r);
 		}
 	} else if(rel_offset && rel_length) {
 		for(size_t offset = 0; offset < *rel_length; offset += sizeof(elf_rel)) {
 			auto reloc = (elf_rel *)(object->baseAddress + *rel_offset + offset);
-			processCopyRel(object, reloc);
+			auto r = Relocation(object, reloc);
+			processLateRelocation(r);
 		}
 	}else{
 		__ensure(!rela_offset && !rela_length);
@@ -1315,7 +1320,7 @@ void Loader::linkObjects(SharedObject *root) {
 		if(object->dynamic == nullptr)
 			continue;
 
-		processCopyRelocations(object);
+		processLateRelocations(object);
 	}
 
 	for(auto object : _linkBfs) {
@@ -1476,8 +1481,8 @@ void Loader::_scheduleInit(SharedObject *object) {
 }
 
 void Loader::_processRelocations(Relocation &rel) {
-	// copy relocations have to be performed after all other relocations
-	if(rel.type() == R_COPY)
+	// copy and irelative relocations have to be performed after all other relocations
+	if(rel.type() == R_COPY || rel.type() == R_IRELATIVE)
 		return;
 
 	// resolve the symbol if there is a symbol

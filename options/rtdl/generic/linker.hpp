@@ -233,8 +233,12 @@ struct Relocation {
 		__builtin_unreachable();
 	}
 
+	void *destination() {
+		return reinterpret_cast<void *>(object_->baseAddress + offset_);
+	}
+
 	void relocate(elf_addr addr) {
-		auto ptr = reinterpret_cast<void *>(object_->baseAddress + offset_);
+		auto ptr = destination();
 		memcpy(ptr, &addr, sizeof(addr));
 	}
 
