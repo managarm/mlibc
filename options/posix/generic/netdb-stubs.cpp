@@ -480,3 +480,7 @@ void setservent(int) {
 	__builtin_unreachable();
 }
 
+const char *hstrerror(int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

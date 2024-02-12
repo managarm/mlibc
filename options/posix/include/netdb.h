@@ -136,6 +136,9 @@ void setnetent(int);
 void setprotoent(int);
 void setservent(int);
 
+// Deprecated GNU extension
+const char *hstrerror(int err);
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
