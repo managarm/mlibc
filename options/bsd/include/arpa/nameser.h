@@ -151,6 +151,11 @@ unsigned long ns_get32(const unsigned char *);
 void ns_put16(unsigned, unsigned char *);
 void ns_put32(unsigned long, unsigned char *);
 
+int ns_initparse(const unsigned char *msg, int msglen, ns_msg *handle);
+int ns_parserr(ns_msg *msg, ns_sect section, int rrnum, ns_rr *rr);
+int ns_name_uncompress(const unsigned char *msg, const unsigned char *eom,
+				    const unsigned char *src, char *dst, size_t dstsize);
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 typedef struct {
