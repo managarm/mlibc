@@ -1,3 +1,4 @@
+#include <mlibc/arch-defs.hpp>
 #include <stdint.h>
 #include <string.h>
 
@@ -438,6 +439,8 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	}
 
 	__ensure(!(object->baseAddress & (hugeSize - 1)));
+
+	highest_address = (highest_address + mlibc::page_size - 1) & ~(mlibc::page_size - 1);
 
 #if MLIBC_MMAP_ALLOCATE_DSO
 	void *mappedAddr = nullptr;
