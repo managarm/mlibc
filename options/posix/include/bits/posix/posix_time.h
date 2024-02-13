@@ -18,6 +18,7 @@ int utimes(const char *, const struct timeval[2]);
 
 // Not standardized, Linux and BSDs have it
 int futimes(int, const struct timeval[2]);
+int lutimes(const char *filename, const struct timeval tv[2]);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
