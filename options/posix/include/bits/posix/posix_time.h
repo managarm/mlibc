@@ -1,6 +1,7 @@
 #ifndef MLIBC_POSIX_TIME_H
 #define MLIBC_POSIX_TIME_H
 
+#include <bits/posix/timer_t.h>
 #include <bits/posix/timeval.h>
 
 #define TIMER_ABSTIME 1
@@ -10,6 +11,8 @@ extern "C" {
 #endif
 
 #ifndef __MLIBC_ABI_ONLY
+
+int timer_getoverrun(timer_t timerid);
 
 int utimes(const char *, const struct timeval[2]);
 

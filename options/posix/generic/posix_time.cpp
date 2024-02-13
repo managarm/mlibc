@@ -2,6 +2,12 @@
 #include <bits/ensure.h>
 #include <mlibc/posix-sysdeps.hpp>
 #include <errno.h>
+#include <time.h>
+
+int timer_getoverrun(timer_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 
 int utimes(const char *filename, const struct timeval times[2]) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_utimensat, -1);
