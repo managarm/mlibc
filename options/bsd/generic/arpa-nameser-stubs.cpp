@@ -1,4 +1,7 @@
+#include <errno.h>
 #include <arpa/nameser.h>
+#include <bits/ensure.h>
+#include <mlibc/debug.hpp>
 
 // The ns_get* and ns_put* functions are taken from musl.
 unsigned ns_get16(const unsigned char *cp) {
@@ -19,4 +22,20 @@ void ns_put32(unsigned long l, unsigned char *cp) {
 	*cp++ = l >> 16;
 	*cp++ = l >> 8;
 	*cp++ = l;
+}
+
+int ns_initparse(const unsigned char *, int, ns_msg *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int ns_parserr(ns_msg *, ns_sect, int, ns_rr *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int ns_name_uncompress(const unsigned char *, const unsigned char *,
+				    const unsigned char *, char *, size_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
 }
