@@ -7,3 +7,5 @@ _init:
 .global _fini
 _fini:
 	pushl %eax
+
+.section .note.GNU-stack,"",%progbits
