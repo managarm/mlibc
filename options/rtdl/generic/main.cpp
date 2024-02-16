@@ -167,7 +167,7 @@ extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
 	auto symbol_index = ELF_R_SYM(reloc->r_info);
 
 	__ensure(type == R_X86_64_JUMP_SLOT);
-	__ensure(ELF_CLASS == 64);
+	__ensure(ELF_CLASS == ELFCLASS64);
 
 	auto symbol = (elf_sym *)(object->baseAddress + object->symbolTableOffset
 			+ symbol_index * sizeof(elf_sym));
@@ -543,6 +543,7 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 		bool isGlobal = flags & RTLD_GLOBAL;
 		Scope *newScope = isGlobal ? globalScope.get() : nullptr;
 
+		frg::expected<LinkerError, SharedObject *> objectResult;
 		if (frg::string_view{file}.find_first('/') == size_t(-1)) {
 			// In order to know which RUNPATH / RPATH to process, we must find the calling object.
 			SharedObject *origin = initialRepository->findCaller(returnAddress);
@@ -551,15 +552,37 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 					<< "(ra = " << returnAddress << ")" << frg::endlog;
 			}
 
-			object = initialRepository->requestObjectWithName(file, origin, newScope, !isGlobal, rts);
+			objectResult = initialRepository->requestObjectWithName(file, origin, newScope, !isGlobal, rts);
 		} else {
-			object = initialRepository->requestObjectAtPath(file, newScope, !isGlobal, rts);
+			objectResult = initialRepository->requestObjectAtPath(file, newScope, !isGlobal, rts);
 		}
 
-		if(!object) {
-			lastError = "Cannot locate requested DSO";
+		if(!objectResult) {
+			switch (objectResult.error()) {
+			case LinkerError::success:
+				__builtin_unreachable();
+			case LinkerError::notFound:
+				lastError = "Cannot locate requested DSO";
+				break;
+			case LinkerError::fileTooShort:
+				lastError = "File too short";
+				break;
+			case LinkerError::notElf:
+				lastError = "File is not an ELF file";
+				break;
+			case LinkerError::wrongElfType:
+				lastError = "File has wrong ELF type";
+				break;
+			case LinkerError::outOfMemory:
+				lastError = "Out of memory";
+				break;
+			case LinkerError::invalidProgramHeader:
+				lastError = "File has invalid program header";
+				break;
+			}
 			return nullptr;
 		}
+		object = objectResult.value();
 
 		Loader linker{object->localScope, nullptr, false, rts};
 		linker.linkObjects(object);

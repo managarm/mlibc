@@ -2,7 +2,8 @@
 
 #include <elf.h>
 
-#define ELF_CLASS 32
+#define ELF_CLASS ELFCLASS32
+#define ELF_MACHINE EM_386
 
 using elf_ehdr = Elf32_Ehdr;
 using elf_phdr = Elf32_Phdr;

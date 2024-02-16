@@ -2,7 +2,8 @@
 
 #include <elf.h>
 
-#define ELF_CLASS 64
+#define ELF_CLASS ELFCLASS64
+#define ELF_MACHINE EM_RISCV
 
 using elf_ehdr = Elf64_Ehdr;
 using elf_phdr = Elf64_Phdr;

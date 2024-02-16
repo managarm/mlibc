@@ -64,23 +64,23 @@ size_t tlsMaxAlignment = 16;
 // part of the global scope is considered for symbol resolution.
 uint64_t rtsCounter = 2;
 
-void seekOrDie(int fd, int64_t offset) {
+bool trySeek(int fd, int64_t offset) {
 	off_t noff;
-	if(mlibc::sys_seek(fd, offset, SEEK_SET, &noff))
-		__ensure(!"sys_seek() failed");
+	return mlibc::sys_seek(fd, offset, SEEK_SET, &noff) == 0;
 }
 
-void readExactlyOrDie(int fd, void *data, size_t length) {
+bool tryReadExactly(int fd, void *data, size_t length) {
 	size_t offset = 0;
 	while(offset < length) {
 		ssize_t chunk;
 		if(mlibc::sys_read(fd, reinterpret_cast<char *>(data) + offset,
 				length - offset, &chunk))
-			__ensure(!"sys_read() failed");
+			return false;
 		__ensure(chunk > 0);
 		offset += chunk;
 	}
 	__ensure(offset == length);
+	return true;
 }
 
 void closeOrDie(int fd) {
@@ -157,7 +157,7 @@ SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
 	return object;
 }
 
-SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
+frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithName(frg::string_view name,
 		SharedObject *origin, Scope *localScope, bool createScope, uint64_t rts) {
 	if (auto obj = findLoadedObject(name))
 		return obj;
@@ -258,8 +258,12 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 	auto object = frg::construct<SharedObject>(getAllocator(),
 		name.data(), std::move(chosenPath), false, localScope, rts);
 
-	_fetchFromFile(object, fd);
+	auto result = _fetchFromFile(object, fd);
 	closeOrDie(fd);
+	if(!result) {
+		frg::destruct(getAllocator(), object);
+		return result.error();
+	}
 
 	_parseDynamic(object);
 
@@ -269,7 +273,7 @@ SharedObject *ObjectRepository::requestObjectWithName(frg::string_view name,
 	return object;
 }
 
-SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path,
+frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath(frg::string_view path,
 		Scope *localScope, bool createScope, uint64_t rts) {
 	// TODO: Support SONAME correctly.
 	auto lastSlash = path.find_last('/') + 1;
@@ -295,10 +299,16 @@ SharedObject *ObjectRepository::requestObjectAtPath(frg::string_view path,
 	frg::string<MemoryAllocator> no_prefix(getAllocator(), path);
 
 	int fd;
-	if(mlibc::sys_open((no_prefix + '\0').data(), O_RDONLY, 0, &fd))
-		return nullptr; // TODO: Free the SharedObject.
-	_fetchFromFile(object, fd);
+	if(mlibc::sys_open((no_prefix + '\0').data(), O_RDONLY, 0, &fd)) {
+		frg::destruct(getAllocator(), object);
+		return LinkerError::notFound;
+	}
+	auto result = _fetchFromFile(object, fd);
 	closeOrDie(fd);
+	if(!result) {
+		frg::destruct(getAllocator(), object);
+		return result.error();
+	}
 
 	_parseDynamic(object);
 
@@ -401,23 +411,38 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 }
 
 
-void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
+frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	__ensure(!object->isMainObject);
 
 	// read the elf file header
 	elf_ehdr ehdr;
-	readExactlyOrDie(fd, &ehdr, sizeof(elf_ehdr));
+	if(!tryReadExactly(fd, &ehdr, sizeof(elf_ehdr)))
+		return LinkerError::fileTooShort;
 
-	__ensure(ehdr.e_ident[0] == 0x7F
-			&& ehdr.e_ident[1] == 'E'
-			&& ehdr.e_ident[2] == 'L'
-			&& ehdr.e_ident[3] == 'F');
-	__ensure(ehdr.e_type == ET_EXEC || ehdr.e_type == ET_DYN);
+	if(ehdr.e_ident[0] != 0x7F
+			|| ehdr.e_ident[1] != 'E'
+			|| ehdr.e_ident[2] != 'L'
+			|| ehdr.e_ident[3] != 'F')
+		return LinkerError::notElf;
+
+	if((ehdr.e_type != ET_EXEC && ehdr.e_type != ET_DYN)
+			|| ehdr.e_machine != ELF_MACHINE
+			|| ehdr.e_ident[EI_CLASS] != ELF_CLASS)
+		return LinkerError::wrongElfType;
 
 	// read the elf program headers
 	auto phdr_buffer = (char *)getAllocator().allocate(ehdr.e_phnum * ehdr.e_phentsize);
-	seekOrDie(fd, ehdr.e_phoff);
-	readExactlyOrDie(fd, phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
+	if(!phdr_buffer)
+		return LinkerError::outOfMemory;
+
+	if(!trySeek(fd, ehdr.e_phoff)) {
+		getAllocator().deallocate(phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
+		return LinkerError::invalidProgramHeader;
+	}
+	if(!tryReadExactly(fd, phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize)) {
+		getAllocator().deallocate(phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
+		return LinkerError::invalidProgramHeader;
+	}
 
 	object->phdrPointer = phdr_buffer;
 	object->phdrCount = ehdr.e_phnum;
@@ -448,11 +473,13 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	if (mlibc::sys_vm_map(nullptr,
 			highest_address - object->baseAddress, PROT_NONE,
 			MAP_PRIVATE | MAP_ANONYMOUS, -1, 0, &mappedAddr)) {
-		mlibc::panicLogger() << "sys_vm_map failed when allocating address space for DSO \""
+		mlibc::infoLogger() << "sys_vm_map failed when allocating address space for DSO \""
 				<< object->name << "\""
 				<< ", base " << (void *)object->baseAddress
 				<< ", requested " << (highest_address - object->baseAddress) << " bytes"
 				<< frg::endlog;
+		getAllocator().deallocate(phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
+		return LinkerError::outOfMemory;
 	}
 
 	object->baseAddress = reinterpret_cast<uintptr_t>(mappedAddr);
@@ -522,9 +549,9 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 						MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
 					__ensure(!"sys_vm_map failed");
 
-				seekOrDie(fd, phdr->p_offset);
-				readExactlyOrDie(fd, reinterpret_cast<char *>(map_address) + misalign,
-						phdr->p_filesz);
+				__ensure(trySeek(fd, phdr->p_offset));
+				__ensure(tryReadExactly(fd, reinterpret_cast<char *>(map_address) + misalign,
+						phdr->p_filesz));
 			#endif
 			// Take care of removing superfluous permissions.
 			if(mlibc::sys_vm_protect && ((prot & PROT_WRITE) == 0))
@@ -551,6 +578,8 @@ void ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 					<< frg::hex_fmt(phdr->p_type) << " in DSO " << object->name << frg::endlog;
 		}
 	}
+
+	return frg::success;
 }
 
 // --------------------------------------------------------
@@ -685,9 +714,9 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			object->preInitArraySize = dynamic->d_un.d_val;
 			break;
 		case DT_DEBUG:
-#if ELF_CLASS == 32
+#if ELF_CLASS == ELFCLASS32
 			dynamic->d_un.d_val = reinterpret_cast<Elf32_Word>(&globalDebugInterface);
-#elif ELF_CLASS == 64
+#elif ELF_CLASS == ELFCLASS64
 			dynamic->d_un.d_val = reinterpret_cast<Elf64_Xword>(&globalDebugInterface);
 #endif
 			break;
@@ -743,7 +772,7 @@ void ObjectRepository::_discoverDependencies(SharedObject *object,
 				object, localScope, false, rts);
 		if(!library)
 			mlibc::panicLogger() << "Could not satisfy dependency " << library_str << frg::endlog;
-		object->dependencies.push(library);
+		object->dependencies.push(library.value());
 	}
 }
 

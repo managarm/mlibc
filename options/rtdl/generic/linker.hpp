@@ -3,6 +3,7 @@
 #include <frg/optional.hpp>
 #include <frg/string.hpp>
 #include <frg/vector.hpp>
+#include <frg/expected.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/tcb.hpp>
 
@@ -19,6 +20,16 @@ enum class TlsModel {
 	null,
 	initial,
 	dynamic
+};
+
+enum class LinkerError {
+	success,
+	notFound,
+	fileTooShort,
+	notElf,
+	wrongElfType,
+	outOfMemory,
+	invalidProgramHeader
 };
 
 // --------------------------------------------------------
@@ -48,10 +59,10 @@ struct ObjectRepository {
 			size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 			uint64_t rts);
 
-	SharedObject *requestObjectWithName(frg::string_view name,
+	frg::expected<LinkerError, SharedObject *> requestObjectWithName(frg::string_view name,
 			SharedObject *origin, Scope *localScope, bool createScope, uint64_t rts);
 
-	SharedObject *requestObjectAtPath(frg::string_view path,
+	frg::expected<LinkerError, SharedObject *> requestObjectAtPath(frg::string_view path,
 			Scope *localScope, bool createScope, uint64_t rts);
 
 	SharedObject *findCaller(void *address);
@@ -65,7 +76,7 @@ private:
 	void _fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer);
 
-	void _fetchFromFile(SharedObject *object, int fd);
+	frg::expected<LinkerError, void> _fetchFromFile(SharedObject *object, int fd);
 
 	void _parseDynamic(SharedObject *object);
 
