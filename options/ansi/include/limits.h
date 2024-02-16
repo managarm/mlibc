@@ -3,6 +3,10 @@
 
 #define CHAR_BIT 8
 
+#ifndef MB_LEN_MAX
+# define MB_LEN_MAX 4
+#endif
+
 #ifdef LONG_MAX
 # ifdef LONG_MAX == INT32_MAX
 #  define LONG_BIT 32
@@ -21,16 +25,59 @@
 # error "Unsupported configuration, please define either LONG_MAX or __LONG_MAX__"
 #endif
 
+#undef SCHAR_MIN
+#undef SCHAR_MAX
+#undef CHAR_MIN
+#undef CHAR_MAX
+#undef UCHAR_MAX
+#undef SHRT_MIN
+#undef SHRT_MAX
+#undef USHRT_MAX
 #undef INT_MIN
 #undef INT_MAX
 #undef UINT_MAX
+#undef LONG_MIN
+#undef LONG_MAX
+#undef ULONG_MAX
 #undef LLONG_MIN
 #undef LLONG_MAX
 #undef ULLONG_MAX
 
+#define SCHAR_MIN (-__SCHAR_MAX__ - 1)
+#define SCHAR_MAX __SCHAR_MAX__
+#if __SCHAR_MAX__ == __INT_MAX__
+# define UCHAR_MAX (__SCHAR_MAX__ * 2U + 1U)
+#else
+# define UCHAR_MAX (__SCHAR_MAX__ * 2 + 1)
+#endif
+
+#ifdef __CHAR_UNSIGNED__
+# define CHAR_MAX UCHAR_MAX
+# if __SCHAR_MAX__ == __INT_MAX__
+#  define CHAR_MIN 0U
+# else
+#  define CHAR_MIN 0
+# endif
+#else
+# define CHAR_MAX SCHAR_MAX
+# define CHAR_MIN SCHAR_MIN
+#endif
+
+#define SHRT_MIN (-__SHRT_MAX__ - 1)
+#define SHRT_MAX __SHRT_MAX__
+#if __SHRT_MAX_ == __INT_MAX__
+# define USHRT_MAX (__SHRT_MAX__ * 2U + 1U)
+#else
+# define USHRT_MAX (__SHRT_MAX__ * 2 + 1)
+#endif
+
 #define INT_MIN (-__INT_MAX__ - 1)
 #define INT_MAX __INT_MAX__
 #define UINT_MAX (__INT_MAX__ * 2 + 1)
+
+#define LONG_MIN (-__LONG_MAX__ - 1L)
+#define LONG_MAX __LONG_MAX__
+#define ULONG_MAX (__LONG_MAX__ * 2UL + 1UL)
 
 #define LLONG_MIN (-__LONG_LONG_MAX__ - 1LL)
 #define LLONG_MAX __LONG_LONG_MAX__

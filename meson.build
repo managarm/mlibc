@@ -43,6 +43,12 @@ internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
 if not headers_only
+	cshim_dep = dependency('cshim',
+				required: false,
+				fallback: ['cshim', 'cshim_dep'])
+	libc_deps += cshim_dep
+	rtdl_deps += cshim_dep
+
 	cxxshim_dep = dependency('cxxshim',
 				 required: false,
 				 fallback: ['cxxshim', 'cxxshim_dep'])
@@ -62,39 +68,41 @@ if not headers_only
 	cpp_compiler = meson.get_compiler('cpp')
 
 	add_project_arguments('-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', language: ['c', 'cpp'])
-	add_project_arguments('-nostdinc', '-fno-builtin', language: ['c', 'cpp'])
+	add_project_arguments('-nostdinc', '-fno-builtin', '-ffreestanding', language: ['c', 'cpp'])
 	add_project_arguments('-Werror=misleading-indentation', language: ['c', 'cpp'])
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
-	searchdirs = run_command(c_compiler.cmd_array(), '-print-search-dirs',
-				check: true).stdout()
-	searchdirs_arr = searchdirs.split('\n')
-	searchline = 'install: '
-	ccdir = ''
-	if c_compiler.get_id() == 'clang'
-		searchline = 'libraries: ='
-	endif
-
-	foreach line : searchdirs_arr
-		if line.startswith(searchline)
-			ccdir = line.strip(searchline)
-			ccdir = ccdir.split(':')[0]
-			break
+	if not cshim_dep.found()
+		searchdirs = run_command(c_compiler.cmd_array(), '-print-search-dirs',
+					check: true).stdout()
+		searchdirs_arr = searchdirs.split('\n')
+		searchline = 'install: '
+		ccdir = ''
+		if c_compiler.get_id() == 'clang'
+			searchline = 'libraries: ='
 		endif
-	endforeach
 
-	if ccdir == ''
-		error('could not find compiler-specific header directory')
+		foreach line : searchdirs_arr
+			if line.startswith(searchline)
+				ccdir = line.strip(searchline)
+				ccdir = ccdir.split(':')[0]
+				break
+			endif
+		endforeach
+
+		if ccdir == ''
+			error('could not find compiler-specific header directory')
+		endif
+
+		if c_compiler.get_id() == 'gcc' and fs.exists(ccdir / 'include-fixed')
+			rtdl_include_dirs += include_directories(ccdir / 'include-fixed')
+			libc_include_dirs += include_directories(ccdir / 'include-fixed')
+		endif
+
+		rtdl_include_dirs += include_directories(ccdir / 'include')
+		libc_include_dirs += include_directories(ccdir / 'include')
 	endif
-
-	if c_compiler.get_id() == 'gcc' and fs.exists(ccdir / 'include-fixed')
-		rtdl_include_dirs += include_directories(ccdir / 'include-fixed')
-		libc_include_dirs += include_directories(ccdir / 'include-fixed')
-	endif
-
-	rtdl_include_dirs += include_directories(ccdir / 'include')
-	libc_include_dirs += include_directories(ccdir / 'include')
 
 	if not cxxshim_dep.found()
 		cplusplus_include_path = []
