@@ -413,6 +413,7 @@ if not headers_only
 
 	ld_cpp_args = [
 		'-fvisibility=hidden',
+		'-fvisibility-inlines-hidden',
 		'-fno-stack-protector',
 		'-DMLIBC_BUILDING_RTDL'
 	]
