@@ -51,6 +51,8 @@ frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 // We use a small vector of size 4 to avoid memory allocation for the default library paths
 frg::manual_box<frg::small_vector<frg::string_view, 4, MemoryAllocator>> libraryPaths;
 
+frg::manual_box<frg::vector<frg::string_view, MemoryAllocator>> preloads;
+
 static SharedObject *executableSO;
 extern HIDDEN char __ehdr_start[];
 
@@ -203,34 +205,38 @@ extern "C" [[gnu::alias("dl_debug_state"), gnu::visibility("default")]] void _dl
 // This symbol can be used by GDB to find the global interface structure
 [[ gnu::visibility("default") ]] DebugInterface *_dl_debug_addr = &globalDebugInterface;
 
-static void parseLibraryPaths(frg::string_view paths) {
+static frg::vector<frg::string_view, MemoryAllocator> parseList(frg::string_view paths, frg::string_view separators) {
+	frg::vector<frg::string_view, MemoryAllocator> list{getAllocator()};
+
 	size_t p = 0;
 	while(p < paths.size()) {
 		size_t s; // Offset of next colon or end of string.
-		if(size_t cs = paths.find_first(':', p); cs != size_t(-1)) {
+		if(size_t cs = paths.find_first_of(separators, p); cs != size_t(-1)) {
 			s = cs;
 		}else{
 			s = paths.size();
 		}
 
-		auto ldPath = paths.sub_string(p, s - p);
+		auto path = paths.sub_string(p, s - p);
 		p = s + 1;
 
-		if(ldPath.size() == 0)
+		if(path.size() == 0)
 			continue;
 
-		if(ldPath.ends_with("/")) {
-			size_t i = ldPath.size() - 1;
-			while(i > 0 && ldPath[i] == '/')
+		if(path.ends_with("/")) {
+			size_t i = path.size() - 1;
+			while(i > 0 && path[i] == '/')
 				i--;
-			ldPath = ldPath.sub_string(0, i + 1);
+			path = path.sub_string(0, i + 1);
 		}
 
-		if(ldPath == "/")
-			ldPath = "";
+		if(path == "/")
+			path = "";
 
-		libraryPaths->push_back(ldPath);
+		list.push_back(path);
 	}
+
+	return list;
 }
 
 extern "C" void *interpreterMain(uintptr_t *entry_stack) {
@@ -239,6 +245,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	entryStack = entry_stack;
 	runtimeTlsMap.initialize();
 	libraryPaths.initialize(getAllocator());
+	preloads.initialize(getAllocator());
 
 	void *phdr_pointer = 0;
 	size_t phdr_entry_size = 0;
@@ -323,7 +330,10 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		if(name == "LD_SHOW_AUXV" && *value && *value != '0') {
 			ldShowAuxv = true;
 		}else if(name == "LD_LIBRARY_PATH" && *value) {
-			parseLibraryPaths(value);
+			for(auto path : parseList(value, ":;"))
+				libraryPaths->push_back(path);
+		}else if(name == "LD_PRELOAD" && *value) {
+			*preloads = parseList(value, " :");
 		}
 
 		aux++;
