@@ -1,6 +1,5 @@
-
-#ifndef _NETINET_ICMP6_H
-#define _NETINET_ICMP6_H
+#ifndef _GLIBC_NETINET_ICMP6_H
+#define _GLIBC_NETINET_ICMP6_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,5 +17,5 @@ extern "C" {
 }
 #endif
 
-#endif /* _NETINET_ICMP6_H */
+#endif /* _GLIBC_NETINET_ICMP6_H */
 

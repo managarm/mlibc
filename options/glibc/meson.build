@@ -77,13 +77,13 @@ if not no_headers
 	)
 	install_headers(
 		'include/netinet/in_systm.h',
-		'include/netinet/icmp6.h',
 		subdir: 'netinet'
 	)
 	install_headers(
 		'include/bits/glibc/glibc_signal.h',
 		'include/bits/glibc/glibc_assert.h',
 		'include/bits/glibc/glibc_malloc.h',
+		'include/bits/glibc/glibc_icmp6.h',
 		subdir: 'bits/glibc'
 	)
 endif
