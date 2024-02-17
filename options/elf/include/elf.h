@@ -23,6 +23,8 @@ extern "C" {
 #define SHF_INFO_LINK 64
 #define SHF_TLS 1024
 
+#define NT_AUXV 6
+
 typedef uint64_t Elf64_Addr;
 typedef uint64_t Elf64_Off;
 typedef uint16_t Elf64_Half;

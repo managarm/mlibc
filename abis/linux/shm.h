@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <unistd.h>
+
 struct shm_info {
 	int used_ids;
 	unsigned long shm_tot;
@@ -13,6 +15,8 @@ struct shm_info {
 	unsigned long swap_attempts;
 	unsigned long swap_successes;
 };
+
+#define SHMLBA (getpagesize())
 
 #ifdef __cplusplus
 }

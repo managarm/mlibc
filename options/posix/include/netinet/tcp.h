@@ -26,6 +26,7 @@ extern "C" {
 #define TCP_LAST_ACK 9
 #define TCP_LISTEN 10
 #define TCP_CLOSING 11
+#define TCP_QUICKACK 12
 
 #define SOL_TCP 6
 

@@ -15,6 +15,8 @@ typedef unsigned long long elf_greg_t;
 typedef elf_greg_t elf_gregset_t[ELF_NGREG];
 
 typedef struct user_fpregs_struct elf_fpregset_t;
+typedef struct user_regs_struct prgregset_t;
+typedef struct user_fpregs_struct prfpregset_t;
 
 #define ELF_PRARGSZ 80
 
@@ -40,6 +42,10 @@ struct elf_prstatus {
 	elf_gregset_t pr_reg;
 	int pr_fpvalid;
 };
+
+typedef pid_t lwpid_t;
+typedef void *psaddr_t;
+typedef struct elf_prstatus prstatus_t;
 
 #ifdef __cplusplus
 }

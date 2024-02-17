@@ -1420,6 +1420,7 @@ int pthread_rwlock_unlock(pthread_rwlock_t *rw) {
 }
 
 int pthread_getcpuclockid(pthread_t, clockid_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: pthread_getcpuclockid() always returns ENOENT"
+			<< frg::endlog;
+	return ENOENT;
 }

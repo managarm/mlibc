@@ -297,6 +297,10 @@ int sys_getsockopt(int fd, int layer, int number,
 		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_KEEPALIVE is unimplemented, hardcoding 0\e[39m" << frg::endlog;
 		*(int *)buffer = 0;
 		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_LINGER) {
+		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_LINGER is unimplemented, hardcoding 0\e[39m" << frg::endlog;
+		*(int *)buffer = 0;
+		return 0;
 	}else{
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call, layer: " << layer << " number: " << number << "\e[39m" << frg::endlog;
 		__builtin_unreachable();
@@ -351,6 +355,9 @@ int sys_setsockopt(int fd, int layer, int number,
 		return 0;
 	}else if(layer == SOL_SOCKET && number == SO_REUSEADDR) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_REUSEADDR is unimplemented\e[39m" << frg::endlog;
+		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_REUSEPORT) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_REUSEPORT is unimplemented\e[39m" << frg::endlog;
 		return 0;
 	}else if(layer == SOL_SOCKET && number == SO_RCVBUF) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_RCVBUF is unimplemented\e[39m" << frg::endlog;

@@ -191,6 +191,7 @@ extern "C" {
 #define _SC_MQ_PRIO_MAX 78
 #define _SC_RTSIG_MAX 79
 #define _SC_SIGQUEUE_MAX 80
+#define _SC_IOV_MAX 81
 
 #define STDERR_FILENO 2
 #define STDIN_FILENO 0
