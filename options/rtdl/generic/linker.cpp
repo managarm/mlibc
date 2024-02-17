@@ -46,6 +46,7 @@ extern DebugInterface globalDebugInterface;
 extern uintptr_t __stack_chk_guard;
 
 extern frg::manual_box<frg::small_vector<frg::string_view, 4, MemoryAllocator>> libraryPaths;
+extern frg::manual_box<frg::vector<frg::string_view, MemoryAllocator>> preloads;
 
 #if MLIBC_STATIC_BUILD
 extern "C" size_t __init_array_start[];
@@ -759,6 +760,24 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 
 void ObjectRepository::_discoverDependencies(SharedObject *object,
 		Scope *localScope, uint64_t rts) {
+	if(object->isMainObject) {
+		for(auto preload : *preloads) {
+			frg::expected<LinkerError, SharedObject *> libraryResult;
+			if (preload.find_first('/') == size_t(-1)) {
+				libraryResult = requestObjectWithName(preload, object, globalScope.get(), false, 1);
+			} else {
+				libraryResult = requestObjectAtPath(preload, globalScope.get(), false, 1);
+			}
+			if(!libraryResult)
+				mlibc::panicLogger() << "rtdl: Could not load preload " << preload << frg::endlog;
+
+			if(verbose)
+				mlibc::infoLogger() << "rtdl: Preloading " << preload << frg::endlog;
+
+			object->dependencies.push_back(libraryResult.value());
+		}
+	}
+
 	// Load required dynamic libraries.
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
 		elf_dyn *dynamic = &object->dynamic[i];
