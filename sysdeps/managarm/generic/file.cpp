@@ -832,7 +832,11 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if(resp.error() == managarm::posix::Errors::PROTOCOL_NOT_SUPPORTED) {
+		return EPROTONOSUPPORT;
+	} else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	}
 	__ensure(resp.fds_size() == 2);
 	fds[0] = resp.fds(0);
 	fds[1] = resp.fds(1);

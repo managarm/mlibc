@@ -626,23 +626,17 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 	case DRM_IOCTL_MODE_ADDFB2: {
 		auto param = reinterpret_cast<drm_mode_fb_cmd2 *>(arg);
 
-		if(param->pixel_format != DRM_FORMAT_XRGB8888)
-			mlibc::infoLogger() << "mlibc: Unexpected pixel format "
-					<< frg::hex_fmt(param->pixel_format) << frg::endlog;
-		__ensure(param->pixel_format == DRM_FORMAT_XRGB8888
-				|| param->pixel_format == DRM_FORMAT_ARGB8888);
 		__ensure(!param->flags || param->flags == DRM_MODE_FB_MODIFIERS);
 		__ensure(!param->modifier[0] || param->modifier[0] == DRM_FORMAT_MOD_INVALID);
 		__ensure(!param->offsets[0]);
 
 		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_command(DRM_IOCTL_MODE_ADDFB);
+		req.set_command(DRM_IOCTL_MODE_ADDFB2);
 
 		req.set_drm_width(param->width);
 		req.set_drm_height(param->height);
 		req.set_drm_pitch(param->pitches[0]);
-		req.set_drm_bpp(32);
-		req.set_drm_depth(24);
+		req.set_drm_fourcc(param->pixel_format);
 		req.set_drm_handle(param->handles[0]);
 
 		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
