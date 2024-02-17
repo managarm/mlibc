@@ -23,6 +23,7 @@
 #include <sys/sem.h>
 #include <sys/statvfs.h>
 #include <sys/time.h>
+#include <sys/times.h>
 #include <sys/wait.h>
 #include <sched.h>
 #include <termios.h>
