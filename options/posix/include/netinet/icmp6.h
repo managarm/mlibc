@@ -7,6 +7,11 @@ extern "C" {
 
 #include <stdint.h>
 #include <abi-bits/in.h>
+#include <mlibc-config.h>
+
+#if __MLIBC_GLIBC_OPTION
+#include <bits/glibc/glibc_icmp6.h>
+#endif // __MLIBC_GLIBC_OPTION
 
 #define ICMP6_FILTER 1
 
