@@ -202,7 +202,7 @@ foreach test_name : all_test_cases
 	should_fail = fail_test_cases.contains(test_name)
 	exec = executable(test_exec_name, [test_name + '.c', test_sources],
 		link_with: libc, include_directories: libc_include_dirs,
-		dependencies: rtlib_deps,
+		dependencies: rtdl_deps + rtlib_deps,
 		build_rpath: meson.build_root(),
 		override_options: test_override_options,
 		c_args: test_c_args,
