@@ -9,7 +9,7 @@ test_env += ['LD_LIBRARY_PATH=' + test_ld_path]
 test_native_env += ['LD_LIBRARY_PATH=' + test_ld_path]
 
 libfoo = shared_library('foo', 'libfoo.c',
-	link_with: libc, include_directories: libc_include_dirs,
+	dependencies: libc_dep,
 	link_args: test_additional_link_args,
 )
 

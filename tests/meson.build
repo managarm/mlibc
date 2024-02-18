@@ -149,7 +149,11 @@ test_link_args = []
 test_override_options = ['b_sanitize=none']
 
 if library_type == 'static'
-	libc = libc_static
+	libc_dep = declare_dependency(
+		include_directories: libc_include_dirs,
+		link_with: libc_static,
+		dependencies: [libc_deps, rtlib_deps]
+	)
 	use_pie = false
 	test_c_args += '-no-pie'
 	test_link_args += ['-no-pie', '-static']
@@ -159,7 +163,11 @@ if library_type == 'static'
 		crt,
 	]
 else
-	libc = libc_shared
+	libc_dep = declare_dependency(
+		include_directories: libc_include_dirs,
+		link_with: libc_shared,
+		dependencies: [libc_deps, rtlib_deps]
+	)
 	test_link_args += ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so']
 
 	if host_machine.system() in ['linux', 'managarm']
@@ -201,8 +209,7 @@ foreach test_name : all_test_cases
 
 	should_fail = fail_test_cases.contains(test_name)
 	exec = executable(test_exec_name, [test_name + '.c', test_sources],
-		link_with: libc, include_directories: libc_include_dirs,
-		dependencies: rtdl_deps + rtlib_deps,
+		dependencies: libc_dep,
 		build_rpath: meson.build_root(),
 		override_options: test_override_options,
 		c_args: test_c_args,
