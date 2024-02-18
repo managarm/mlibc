@@ -138,16 +138,18 @@ char *setstate(char *state) {
 // Path handling.
 // ----------------------------------------------------------------------------
 
-int mkostemp(char *pattern, int flags) {
-	flags &= ~O_WRONLY;
+
+int mkostemps(char *pattern, int suffixlen, int flags) {
 	auto n = strlen(pattern);
-	__ensure(n >= 6);
-	if(n < 6) {
+	if(n < (6 + static_cast<size_t>(suffixlen))) {
 		errno = EINVAL;
 		return -1;
 	}
+
+	flags &= ~O_WRONLY;
+
 	for(size_t i = 0; i < 6; i++) {
-		if(pattern[n - 6 + i] == 'X')
+		if(pattern[n - (6 + suffixlen) + i] == 'X')
 			continue;
 		errno = EINVAL;
 		return -1;
@@ -155,9 +157,9 @@ int mkostemp(char *pattern, int flags) {
 
 	// TODO: Do an exponential search.
 	for(size_t i = 0; i < 999999; i++) {
-		__ensure(sprintf(pattern + (n - 6), "%06zu", i) == 6);
-//		mlibc::infoLogger() << "mlibc: mkstemp candidate is "
-//				<< (const char *)pattern << frg::endlog;
+		char sfx = pattern[n - suffixlen];
+		__ensure(sprintf(pattern + (n - (6 + suffixlen)), "%06zu", i) == 6);
+		pattern[n - suffixlen] = sfx;
 
 		int fd;
 		if(int e = mlibc::sys_open(pattern, O_RDWR | O_CREAT | O_EXCL | flags, S_IRUSR | S_IWUSR, &fd); !e) {
@@ -172,14 +174,12 @@ int mkostemp(char *pattern, int flags) {
 	return -1;
 }
 
-int mkstemp(char *path) {
-	return mkostemp(path, 0);
+int mkostemp(char *pattern, int flags) {
+	return mkostemps(pattern, flags, 0);
 }
 
-int mkostemps(char *pattern, int suffixlen, int flags) {
-	(void)suffixlen;
-	mlibc::infoLogger() << "mlibc: mkostemps ignores suffixlen!" << frg::endlog;
-	return mkostemp(pattern, flags);
+int mkstemp(char *path) {
+	return mkostemp(path, 0);
 }
 
 int mkstemps(char *pattern, int suffixlen) {

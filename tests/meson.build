@@ -91,6 +91,7 @@ all_test_cases = [
 	'posix/readv-writev',
 	'posix/posix-timer',
 	'posix/strdupa',
+	'posix/mkstemp',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
