@@ -44,11 +44,45 @@ typedef struct {
 	void *dli_saddr;
 } Dl_info;
 
+#if defined(__i386__)
+#define DLFO_STRUCT_HAS_EH_DBASE 1
+#define DLFO_STRUCT_HAS_EH_COUNT 0
+#define DLFO_EH_SEGMENT_TYPE PT_GNU_EH_FRAME
+#elif defined(__arm__)
+#define DLFO_STRUCT_HAS_EH_DBASE 0
+#define DLFO_STRUCT_HAS_EH_COUNT 1
+#define DLFO_EH_SEGMENT_TYPE PT_ARM_EXIDX
+#else
+#define DLFO_STRUCT_HAS_EH_DBASE 0
+#define DLFO_STRUCT_HAS_EH_COUNT 0
+#define DLFO_EH_SEGMENT_TYPE PT_GNU_EH_FRAME
+#endif
+
+struct dl_find_object {
+	unsigned long long dlfo_flags;
+	void *dlfo_map_start;
+	void *dlfo_map_end;
+	struct link_map *dlfo_link_map;
+	void *dlfo_eh_frame;
+#if DLFO_STRUCT_HAS_EH_DBASE
+	void *dlfo_eh_dbase;
+#if __UINTPTR_WIDTH__ == 32
+	unsigned int __unused0;
+#endif
+#endif
+#if DLFO_STRUCT_HAS_EH_COUNT
+	int dlfo_eh_count;
+	unsigned int __unused1;
+#endif
+	unsigned long long __dlfo_unused[7];
+};
+
 #ifndef __MLIBC_ABI_ONLY
 
 int dladdr(const void *__ptr, Dl_info *__out);
 int dladdr1(const void *__ptr, Dl_info *__out, void **__extra, int __flags);
 int dlinfo(void *__restrict __handle, int __request, void *__restrict __info);
+int _dl_find_object(void *__address, struct dl_find_object *__result);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

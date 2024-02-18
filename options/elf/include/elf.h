@@ -354,6 +354,7 @@ enum {
 	PT_HISUNW = 0x6fffffff,
 	PT_HIOS = 0x6fffffff,
 	PT_LOPROC = 0x70000000,
+	PT_ARM_EXIDX = 0x70000001,
 	PT_RISCV_ATTRIBUTES = 0x70000003,
 	PT_HIPROC = 0x7fffffff,
 };
