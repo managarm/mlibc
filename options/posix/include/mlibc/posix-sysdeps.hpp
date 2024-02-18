@@ -233,6 +233,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_setaffinity(pid_t pid, size_t cpusetsize, const cpu_set_t *mask);
 [[gnu::weak]] int sys_setthreadaffinity(pid_t tid, size_t cpusetsize, const cpu_set_t *mask);
 
+[[gnu::weak]] int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options);
+
 } //namespace mlibc
 
 #endif // MLIBC_POSIX_SYSDEPS
