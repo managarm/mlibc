@@ -5,7 +5,7 @@ if host_machine.cpu_family() == 'riscv64'
 endif
 
 libfoo = shared_library('foo', 'libfoo.c',
-	link_with: libc, include_directories: libc_include_dirs,
+	dependencies: libc_dep,
 	override_options: 'b_sanitize=none',
 	link_args: test_additional_link_args,
 )

@@ -30,8 +30,8 @@ foreach test_name : rtdl_test_cases
 	subdir(test_name)
 
 	exec = executable('rtdl-' + test_name, [test_name / 'test.c', test_sources],
-		link_with: test_link_with + libc, include_directories: libc_include_dirs,
-		dependencies: rtdl_deps + rtlib_deps,
+		link_with: test_link_with,
+		dependencies: libc_dep,
 		build_rpath: test_rpath,
 		override_options: test_override_options,
 		c_args: test_c_args,

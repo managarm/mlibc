@@ -2,11 +2,11 @@
 no_tail_calls = '-fno-optimize-sibling-calls'
 
 libfoo = shared_library('foo', 'libfoo.c',
-	link_with: libc, include_directories: libc_include_dirs,
+	dependencies: libc_dep,
 	c_args: no_tail_calls,
 )
 libbar = shared_library('bar', 'libbar.c',
-	link_with: libc, include_directories: libc_include_dirs,
+	dependencies: libc_dep,
 	c_args: no_tail_calls,
 )
 test_link_with = [libfoo, libbar] # foo is linked before bar
