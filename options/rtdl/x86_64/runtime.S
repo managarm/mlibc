@@ -1,3 +1,30 @@
+.global __mlibcTlsdescStatic
+.hidden __mlibcTlsdescStatic
+.type __mlibcTlsdescStatic, @function
+__mlibcTlsdescStatic:
+	mov 8(%rax), %rax
+	ret
+
+.global __mlibcTlsdescDynamic
+.hidden __mlibcTlsdescDynamic
+.type __mlibcTlsdescDynamic, @function
+__mlibcTlsdescDynamic:
+	push %rbx
+	push %rcx
+
+	mov 8(%rax), %rax
+
+	mov (%rax), %rbx // index
+	mov 8(%rax), %rcx // addend
+
+	mov %fs:16, %rax // *tp->dtvPointers
+	mov (%rax, %rbx, 8), %rax // dtvPointers[0][index]
+	add %rcx, %rax // + addend
+	sub %fs:0, %rax
+
+	pop %rcx
+	pop %rbx
+	ret
 
 .global pltRelocateStub
 pltRelocateStub:

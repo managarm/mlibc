@@ -155,6 +155,8 @@ struct Tcb {
 static_assert(offsetof(Tcb, stackCanary) == 0x28);
 // sysdeps/linux/x86_64/cp_syscall.S uses the offset of cancelBits.
 static_assert(offsetof(Tcb, cancelBits) == 0x30);
+// options/linker/x86_64/runtime.S uses the offset of dtvPointers.
+static_assert(offsetof(Tcb, dtvPointers) == 16);
 #elif defined(__i386__)
 // GCC expects the stack canary to be at gs:0x14.
 // The offset differs from x86_64 due to the change in the pointer size
