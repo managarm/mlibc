@@ -26,8 +26,8 @@ int iswupper_l(wint_t, locale_t);
 int iswxdigit_l(wint_t, locale_t);
 int iswalpha_l(wint_t, locale_t);
 
-wctype_t wctype_l(const char *);
-int iswctype_l(wint_t, wctype_t);
+wctype_t wctype_l(const char *, locale_t);
+int iswctype_l(wint_t, wctype_t, locale_t);
 
 wint_t towlower_l(wint_t, locale_t);
 wint_t towupper_l(wint_t, locale_t);
