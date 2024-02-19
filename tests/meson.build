@@ -7,6 +7,7 @@ all_test_cases = [
 	'ansi/snprintf',
 	'ansi/utf8',
 	'ansi/strtol',
+	'ansi/strtof',
 	'ansi/abs',
 	'ansi/longjmp',
 	'ansi/mbrtoc32',
