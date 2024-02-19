@@ -18,7 +18,10 @@ static void check_key(int key, void *root) {
 	assert(**((int **) ret) == key);
 }
 
+static int freed = 0;
+
 static void free_key(void *key) {
+	freed++;
 	free(key);
 }
 
@@ -44,8 +47,7 @@ int main() {
 	void *ret = tfind((void*) &key, &root, compare);
 	assert(ret == NULL);
 
-	// tdelete is not implemented yet (#351)
-	(void)free_key;
-	// tdestroy(root, free_key);
+	tdestroy(root, free_key);
+	assert(freed == 12);
 	return 0;
 }
