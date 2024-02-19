@@ -27,8 +27,7 @@ extern "C++" {
 /* Defining a syscall as a macro is more problematic in C++, since there's a high chance of
  * a name collision e.g foo.syscall() or foo::syscall.
  */
-template<typename Arg0>
-long syscall(long n) {
+inline long syscall(long n) {
 	return __do_syscall_ret(__do_syscall0(n));
 }
 template<typename Arg0>
