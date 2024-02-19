@@ -245,7 +245,7 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 		}
 	}
 	if(fd == -1)
-		return nullptr;
+		return LinkerError::notFound;
 
 	if (createScope) {
 		__ensure(localScope == nullptr);
