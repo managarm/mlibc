@@ -3,7 +3,6 @@
 
 #include <abi-bits/pid_t.h>
 #include <bits/posix/timeval.h>
-#include <bits/types.h>
 #include <paths.h>
 
 #ifdef __cplusplus
@@ -46,7 +45,7 @@ struct utmp {
 	struct exit_status ut_exit;
 	long   ut_session;
 	struct timeval ut_tv;
-	__mlibc_int32 ut_addr_v6[4];
+	__INT32_TYPE__ ut_addr_v6[4];
 	char __unused[20];
 };
 

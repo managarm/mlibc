@@ -4,7 +4,6 @@
 #include <bits/null.h>
 #include <bits/size_t.h>
 #include <bits/wchar_t.h>
-#include <bits/wchar.h>
 #include <bits/wint_t.h>
 #include <bits/mbstate.h>
 

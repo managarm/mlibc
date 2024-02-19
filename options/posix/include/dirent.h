@@ -4,7 +4,6 @@
 
 #include <abi-bits/ino_t.h>
 #include <bits/off_t.h>
-#include <bits/types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,8 +41,8 @@ struct dirent64 {
 
 struct __mlibc_dir_struct {
 	int __handle;
-	__mlibc_size __ent_next;
-	__mlibc_size __ent_limit;
+	__SIZE_TYPE__ __ent_next;
+	__SIZE_TYPE__ __ent_limit;
 	char __ent_buffer[2048];
 	struct dirent __current;
 };

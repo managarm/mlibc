@@ -8,7 +8,6 @@
 
 #include <abi-bits/pid_t.h>
 #include <abi-bits/uid_t.h>
-#include <bits/types.h>
 #include <bits/size_t.h>
 
 union sigval {
@@ -95,7 +94,7 @@ typedef void (*__sighandler) (int);
 #define SEGV_MAPERR 1
 #define SEGV_ACCERR 2
 
-typedef __mlibc_uint64 sigset_t;
+typedef __UINT64_TYPE__ sigset_t;
 
 #define SIGUNUSED SIGSYS
 

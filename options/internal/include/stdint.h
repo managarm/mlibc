@@ -1,150 +1,140 @@
 #ifndef _MLIBC_STDINT_H
 #define _MLIBC_STDINT_H
 
-#include <bits/types.h>
-#include <bits/wchar.h>
+#if defined(__cpp_static_assert)
+#	define __MLIBC_STATIC_ASSERT(c, text) static_assert(c, text)
+#elif !defined(__cplusplus)
+#	define __MLIBC_STATIC_ASSERT(c, text) _Static_assert(c, text)
+#else
+#	define __MLIBC_STATIC_ASSERT(c, text)
+#endif
 
-// ----------------------------------------------------------------------------
-// Type definitions.
-// ----------------------------------------------------------------------------
+#define __MLIBC_CHECK_TYPE(T1, T2) __MLIBC_STATIC_ASSERT(sizeof(T1) == sizeof(T2),\
+	#T1 " != " #T2);
 
-// Fixed-width (signed).
-typedef __mlibc_int8  int8_t;
-typedef __mlibc_int16 int16_t;
-typedef __mlibc_int32 int32_t;
-typedef __mlibc_int64 int64_t;
+#undef __UINT_FAST8_MAX__
+#undef __UINT_FAST16_MAX__
+#undef __UINT_FAST32_MAX__
+#undef __UINT_FAST64_MAX__
 
-// Fixed-width (unsigned).
-typedef __mlibc_uint8  uint8_t;
-typedef __mlibc_uint16 uint16_t;
-typedef __mlibc_uint32 uint32_t;
-typedef __mlibc_uint64 uint64_t;
+#undef __INT_FAST8_MAX__
+#undef __INT_FAST16_MAX__
+#undef __INT_FAST32_MAX__
+#undef __INT_FAST64_MAX__
 
-// Least-width (signed).
-typedef __mlibc_int8  int_least8_t;
-typedef __mlibc_int16 int_least16_t;
-typedef __mlibc_int32 int_least32_t;
-typedef __mlibc_int64 int_least64_t;
+#undef __INT_FAST8_WIDTH__
+#undef __INT_FAST16_WIDTH__
+#undef __INT_FAST32_WIDTH__
+#undef __INT_FAST64_WIDTH__
 
-// Least-width (unsigned).
-typedef __mlibc_uint8  uint_least8_t;
-typedef __mlibc_uint16 uint_least16_t;
-typedef __mlibc_uint32 uint_least32_t;
-typedef __mlibc_uint64 uint_least64_t;
+#if defined (__x86_64__) || defined (__aarch64__) || (defined (__riscv) && __riscv_xlen == 64)
 
-// Fast-width (signed).
-typedef __mlibc_int_fast8  int_fast8_t;
-typedef __mlibc_int_fast16 int_fast16_t;
-typedef __mlibc_int_fast32 int_fast32_t;
-typedef __mlibc_int_fast64 int_fast64_t;
+#if defined (__GNUC__) && !defined (__clang__)
+	__MLIBC_CHECK_TYPE(__INT8_TYPE__, __INT_FAST8_TYPE__);
+	__MLIBC_CHECK_TYPE(__INT64_TYPE__, __INT_FAST16_TYPE__);
+	__MLIBC_CHECK_TYPE(__INT64_TYPE__, __INT_FAST32_TYPE__);
+	__MLIBC_CHECK_TYPE(__INT64_TYPE__, __INT_FAST64_TYPE__);
 
-// Fast-width (unsigned).
-typedef __mlibc_uint_fast8  uint_fast8_t;
-typedef __mlibc_uint_fast16 uint_fast16_t;
-typedef __mlibc_uint_fast32 uint_fast32_t;
-typedef __mlibc_uint_fast64 uint_fast64_t;
+	__MLIBC_CHECK_TYPE(__UINT8_TYPE__, __UINT_FAST8_TYPE__);
+	__MLIBC_CHECK_TYPE(__UINT64_TYPE__, __UINT_FAST16_TYPE__);
+	__MLIBC_CHECK_TYPE(__UINT64_TYPE__, __UINT_FAST32_TYPE__);
+	__MLIBC_CHECK_TYPE(__UINT64_TYPE__, __UINT_FAST64_TYPE__);
+#endif
 
-// Miscellaneous (signed).
-typedef __mlibc_intmax intmax_t;
-typedef __mlibc_intptr intptr_t;
+#undef __UINT_FAST8_TYPE__
+#undef __UINT_FAST16_TYPE__
+#undef __UINT_FAST32_TYPE__
+#undef __UINT_FAST64_TYPE__
 
-// Miscellaneous (unsigned).
-typedef __mlibc_uintmax uintmax_t;
-typedef __mlibc_uintptr uintptr_t;
+#undef __INT_FAST8_TYPE__
+#undef __INT_FAST16_TYPE__
+#undef __INT_FAST32_TYPE__
+#undef __INT_FAST64_TYPE__
 
-// ----------------------------------------------------------------------------
-// Constants.
-// ----------------------------------------------------------------------------
+#define __UINT_FAST8_TYPE__ __UINT8_TYPE__
+#define __UINT_FAST16_TYPE__ __UINT64_TYPE__
+#define __UINT_FAST32_TYPE__ __UINT64_TYPE__
+#define __UINT_FAST64_TYPE__ __UINT64_TYPE__
 
-// Fixed-width (signed).
-#define INT8_C(x)  __MLIBC_INT8_C(x)
-#define INT16_C(x) __MLIBC_INT16_C(x)
-#define INT32_C(x) __MLIBC_INT32_C(x)
-#define INT64_C(x) __MLIBC_INT64_C(x)
-#define INTMAX_C(x) __MLIBC_INTMAX_C(x)
+#define __INT_FAST8_TYPE__ __INT8_TYPE__
+#define __INT_FAST16_TYPE__ __INT64_TYPE__
+#define __INT_FAST32_TYPE__ __INT64_TYPE__
+#define __INT_FAST64_TYPE__ __INT64_TYPE__
 
-// Fixed-width (unsigned).
-#define UINT8_C(x)  __MLIBC_UINT8_C(x)
-#define UINT16_C(x) __MLIBC_UINT16_C(x)
-#define UINT32_C(x) __MLIBC_UINT32_C(x)
-#define UINT64_C(x) __MLIBC_UINT64_C(x)
-#define UINTMAX_C(x) __MLIBC_UINTMAX_C(x)
+#define __UINT_FAST8_MAX__ __UINT8_MAX__
+#define __UINT_FAST16_MAX__ __UINT64_MAX__
+#define __UINT_FAST32_MAX__ __UINT64_MAX__
+#define __UINT_FAST64_MAX__ __UINT64_MAX__
 
-// ----------------------------------------------------------------------------
-// Limits.
-// ----------------------------------------------------------------------------
+#define __INT_FAST8_MAX__ __INT8_MAX__
+#define __INT_FAST16_MAX__ __INT64_MAX__
+#define __INT_FAST32_MAX__ __INT64_MAX__
+#define __INT_FAST64_MAX__ __INT64_MAX__
 
-// Fixed-width (signed).
-#define INT8_MAX  __MLIBC_INT8_MAX
-#define INT16_MAX __MLIBC_INT16_MAX
-#define INT32_MAX __MLIBC_INT32_MAX
-#define INT64_MAX __MLIBC_INT64_MAX
+#define __INT_FAST8_WIDTH__ __INT8_WIDTH__
+#define __INT_FAST16_WIDTH__ __INT64_WIDTH__
+#define __INT_FAST32_WIDTH__ __INT64_WIDTH__
+#define __INT_FAST64_WIDTH__ __INT64_WIDTH__
 
-#define INT8_MIN  __MLIBC_INT8_MIN
-#define INT16_MIN __MLIBC_INT16_MIN
-#define INT32_MIN __MLIBC_INT32_MIN
-#define INT64_MIN __MLIBC_INT64_MIN
+#elif defined (__i386__)
 
-// Fixed-width (unsigned).
-#define UINT8_MAX  __MLIBC_UINT8_MAX
-#define UINT16_MAX __MLIBC_UINT16_MAX
-#define UINT32_MAX __MLIBC_UINT32_MAX
-#define UINT64_MAX __MLIBC_UINT64_MAX
+#if defined (__GNUC__) && !defined (__clang__)
+	__MLIBC_CHECK_TYPE(__INT8_TYPE__, __INT_FAST8_TYPE__);
+	__MLIBC_CHECK_TYPE(__INT32_TYPE__, __INT_FAST16_TYPE__);
+	__MLIBC_CHECK_TYPE(__INT32_TYPE__, __INT_FAST32_TYPE__);
+	__MLIBC_CHECK_TYPE(__INT64_TYPE__, __INT_FAST64_TYPE__);
 
-// Least-width (signed).
-#define INT_LEAST8_MAX  __MLIBC_INT8_MAX
-#define INT_LEAST16_MAX __MLIBC_INT16_MAX
-#define INT_LEAST32_MAX __MLIBC_INT32_MAX
-#define INT_LEAST64_MAX __MLIBC_INT64_MAX
+	__MLIBC_CHECK_TYPE(__UINT8_TYPE__, __UINT_FAST8_TYPE__);
+	__MLIBC_CHECK_TYPE(__UINT32_TYPE__, __UINT_FAST16_TYPE__);
+	__MLIBC_CHECK_TYPE(__UINT32_TYPE__, __UINT_FAST32_TYPE__);
+	__MLIBC_CHECK_TYPE(__UINT64_TYPE__, __UINT_FAST64_TYPE__);
+#endif
 
-#define INT_LEAST8_MIN  __MLIBC_INT8_MIN
-#define INT_LEAST16_MIN __MLIBC_INT16_MIN
-#define INT_LEAST32_MIN __MLIBC_INT32_MIN
-#define INT_LEAST64_MIN __MLIBC_INT64_MIN
+#undef __UINT_FAST8_TYPE__
+#undef __UINT_FAST16_TYPE__
+#undef __UINT_FAST32_TYPE__
+#undef __UINT_FAST64_TYPE__
 
-// Least-width (unsigned).
-#define UINT_LEAST8_MAX  __MLIBC_UINT8_MAX
-#define UINT_LEAST16_MAX __MLIBC_UINT16_MAX
-#define UINT_LEAST32_MAX __MLIBC_UINT32_MAX
-#define UINT_LEAST64_MAX __MLIBC_UINT64_MAX
+#undef __INT_FAST8_TYPE__
+#undef __INT_FAST16_TYPE__
+#undef __INT_FAST32_TYPE__
+#undef __INT_FAST64_TYPE__
 
-// Fast-width (signed).
-#define INT_FAST8_MAX  __MLIBC_INT_FAST8_MAX
-#define INT_FAST16_MAX __MLIBC_INT_FAST16_MAX
-#define INT_FAST32_MAX __MLIBC_INT_FAST32_MAX
-#define INT_FAST64_MAX __MLIBC_INT_FAST64_MAX
+#define __UINT_FAST8_TYPE__ __UINT8_TYPE__
+#define __UINT_FAST16_TYPE__ __UINT32_TYPE__
+#define __UINT_FAST32_TYPE__ __UINT32_TYPE__
+#define __UINT_FAST64_TYPE__ __UINT64_TYPE__
 
-#define INT_FAST8_MIN  __MLIBC_INT_FAST8_MIN
-#define INT_FAST16_MIN __MLIBC_INT_FAST16_MIN
-#define INT_FAST32_MIN __MLIBC_INT_FAST32_MIN
-#define INT_FAST64_MIN __MLIBC_INT_FAST64_MIN
+#define __INT_FAST8_TYPE__ __INT8_TYPE__
+#define __INT_FAST16_TYPE__ __INT32_TYPE__
+#define __INT_FAST32_TYPE__ __INT32_TYPE__
+#define __INT_FAST64_TYPE__ __INT64_TYPE__
 
-// Fast-width (unsigned).
-#define UINT_FAST8_MAX  __MLIBC_UINT_FAST8_MAX
-#define UINT_FAST16_MAX __MLIBC_UINT_FAST16_MAX
-#define UINT_FAST32_MAX __MLIBC_UINT_FAST32_MAX
-#define UINT_FAST64_MAX __MLIBC_UINT_FAST64_MAX
+#define __UINT_FAST8_MAX__ __UINT8_MAX__
+#define __UINT_FAST16_MAX__ __UINT32_MAX__
+#define __UINT_FAST32_MAX__ __UINT32_MAX__
+#define __UINT_FAST64_MAX__ __UINT64_MAX__
 
-// Miscellaneous (signed).
-#define INTMAX_MAX __MLIBC_INTMAX_MAX
-#define INTPTR_MAX __MLIBC_INTPTR_MAX
+#define __INT_FAST8_MAX__ __INT8_MAX__
+#define __INT_FAST16_MAX__ __INT32_MAX__
+#define __INT_FAST32_MAX__ __INT32_MAX__
+#define __INT_FAST64_MAX__ __INT64_MAX__
 
-#define INTMAX_MIN __MLIBC_INTMAX_MIN
-#define INTPTR_MIN __MLIBC_INTPTR_MIN
+#define __INT_FAST8_WIDTH__ __INT8_WIDTH__
+#define __INT_FAST16_WIDTH__ __INT32_WIDTH__
+#define __INT_FAST32_WIDTH__ __INT32_WIDTH__
+#define __INT_FAST64_WIDTH__ __INT64_WIDTH__
 
-// Miscellaneous (unsigned).
-#define UINTMAX_MAX __MLIBC_UINTMAX_MAX
-#define UINTPTR_MAX __MLIBC_UINTPTR_MAX
+#else
 
-// Other limits (signed).
-#define PTRDIFF_MAX    __MLIBC_PTRDIFF_MAX
-#define PTRDIFF_MIN    __MLIBC_PTRDIFF_MIN
-#define SIG_ATOMIC_MAX __MLIBC_SIG_ATOMIC_MAX
-#define SIG_ATOMIC_MIN __MLIBC_SIG_ATOMIC_MIN
-#define WINT_MAX       __MLIBC_WINT_MAX
-#define WINT_MIN       __MLIBC_WINT_MIN
+# error "Missing architecture specific code"
 
-// Other limits (unsigned).
-#define SIZE_MAX __MLIBC_SIZE_MAX
+#endif
+
+#if __has_include(<stdint-gcc.h>)
+# include <stdint-gcc.h>
+#else
+# include_next <stdint.h>
+#endif
 
 #endif // _MLIBC_STDINT_H

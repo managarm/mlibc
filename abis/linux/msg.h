@@ -3,7 +3,6 @@
 
 #include <sys/ipc.h>
 #include <bits/ansi/time_t.h>
-#include <bits/types.h>
 #include <abi-bits/pid_t.h>
 
 #ifdef __cplusplus
@@ -11,8 +10,8 @@ extern "C" {
 #endif
 
 #if defined(__i386__)
-typedef __mlibc_uint64 msglen_t;
-typedef __mlibc_uint64 msgqnum_t;
+typedef __UINT64_TYPE__ msglen_t;
+typedef __UINT64_TYPE__ msgqnum_t;
 #else
 typedef unsigned long msglen_t;
 typedef unsigned long msgqnum_t;

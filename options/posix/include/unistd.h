@@ -3,11 +3,9 @@
 #define _UNISTD_H
 
 #include <mlibc-config.h>
-#include <bits/types.h>
 #include <bits/size_t.h>
 #include <bits/ssize_t.h>
 #include <bits/off_t.h>
-#include <bits/types.h>
 #include <abi-bits/access.h>
 #include <abi-bits/uid_t.h>
 #include <abi-bits/gid_t.h>
@@ -202,7 +200,7 @@ extern "C" {
 #define L_ctermid 20
 
 #ifndef intptr_t
-typedef __mlibc_intptr intptr_t;
+typedef __INTPTR_TYPE__ intptr_t;
 #endif
 
 #ifndef __MLIBC_ABI_ONLY
@@ -307,9 +305,9 @@ extern int optopt;
 
 // Non-POSIX functions supported by Linux.
 #if UINTPTR_MAX == UINT64_MAX
-typedef __mlibc_uint64 useconds_t;
+typedef __UINT64_TYPE__ useconds_t;
 #else
-typedef __mlibc_uint32 useconds_t;
+typedef __UINT32_TYPE__ useconds_t;
 #endif
 
 #ifndef __MLIBC_ABI_ONLY

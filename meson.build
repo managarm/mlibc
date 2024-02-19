@@ -347,10 +347,8 @@ if not no_headers
 	)
 	install_headers(
 		'options/internal/include/bits/wchar_t.h',
-		'options/internal/include/bits/wchar.h',
 		'options/internal/include/bits/wint_t.h',
 		'options/internal/include/bits/size_t.h',
-		'options/internal/include/bits/types.h',
 		'options/internal/include/bits/ensure.h',
 		'options/internal/include/bits/machine.h',
 		'options/internal/include/bits/mbstate.h',
