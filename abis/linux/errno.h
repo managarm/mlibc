@@ -138,6 +138,6 @@
 
 
 // This is mlibc-specific.
-#define EIEIO           1524152434
+#define EIEIO           4095
 
 #endif // _ABIBITS_ERRNO_H
