@@ -52,7 +52,7 @@ jobs:
     compile-sysdeps:
         strategy:
             matrix:
-                sysdeps: [dripos, lemon, aero, ironclad, lyre, keyronex]
+                sysdeps: [dripos, lemon, aero, ironclad, lyre, keyronex, managarm]
         name: Compile sysdeps
         runs-on: ubuntu-22.04
         container:
@@ -65,10 +65,41 @@ jobs:
                                 python3-setuptools python3-jsonschema \
                                 python3-pip
                 pip install --break-system-packages -U xbstrap meson
+          - if: ${{ matrix.sysdeps == 'managarm' }}
+            name: Checkout bootstrap-managarm
+            uses: actions/checkout@v2
+            with:
+              repository: 'managarm/bootstrap-managarm'
+              path: src/
           - name: Checkout
             uses: actions/checkout@v2
             with:
               path: src/mlibc/
+          - if: ${{ matrix.sysdeps == 'managarm' }}
+            name: Set up managarm subprojects directory
+            run: |
+              mkdir -p src/mlibc/subprojects build
+              (
+                cd build
+                xbstrap init ../src
+                xbstrap regenerate libdrm
+              )
+          - if: ${{ matrix.sysdeps == 'managarm' }}
+            name: Clone managarm/managarm
+            uses: actions/checkout@v4
+            with:
+              repository: 'managarm/managarm'
+              path: 'src/mlibc/subprojects/managarm'
+          - if: ${{ matrix.sysdeps == 'managarm' }}
+            name: Clone managarm/bragi
+            uses: actions/checkout@v4
+            with:
+              repository: 'managarm/bragi'
+              path: 'src/mlibc/subprojects/bragi'
+          - if: ${{ matrix.sysdeps == 'managarm' }}
+            name: Install bragi
+            run: |
+                pip install --break-system-packages -U bragi
           - name: Set up linux kernel headers
             run: |
                 mkdir -p build/mlibc/
@@ -81,8 +112,8 @@ jobs:
           - name: Compile sysdeps
             run: |
                 meson setup \
-                    "-Dc_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized']" \
-                    "-Dcpp_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized']" \
+                    "-Dc_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized', '-D__${{matrix.sysdeps}}__']" \
+                    "-Dcpp_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized', '-D__${{matrix.sysdeps}}__']" \
                     "-Dbuild_tests=true" \
                     "-Db_sanitize=undefined" \
                     "-Dlinux_kernel_headers=$(pwd)/packages/linux-headers/usr/include" \
