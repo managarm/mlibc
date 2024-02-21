@@ -1492,6 +1492,13 @@ int sys_semctl(int semid, int semnum, int cmd, void *semun, int *out) {
 	return 0;
 }
 
+int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
+	auto ret = do_syscall(SYS_waitid, idtype, id, info, options, 0);
+	if(int e = sc_error(ret); e)
+		return e;
+	return sc_int_result<int>(ret);
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 #if __MLIBC_LINUX_OPTION
