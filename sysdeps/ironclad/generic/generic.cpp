@@ -1251,13 +1251,11 @@ int sys_statvfs(const char *path, struct statvfs *out) {
 			out->f_fsid = 0;
 			out->f_flag = buffer[i].flags;
 			out->f_namemax = buffer[i].max_filename;
-#ifdef __MLIBC_STRUCT_STATVFS_HAS_BASETYPE
 			if (buffer[i].type == MNT_EXT) {
 				strcpy(out->f_basetype, "ext");
 			} else {
 				strcpy(out->f_basetype, "fat");
 			}
-#endif
 			return 0;
 		}
 	}

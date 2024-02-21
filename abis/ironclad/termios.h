@@ -32,6 +32,9 @@ typedef unsigned int tcflag_t;
 #define IXOFF   0x0200
 #define IXON    0x0400
 #define PARMRK  0x0800
+#define ECHOCTL 0001000
+#define IMAXBEL 0020000
+#define ECHOKE  0004000
 
 // bitwise flags for c_oflag in struct termios
 #define OPOST   0x0001
