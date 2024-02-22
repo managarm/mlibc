@@ -174,7 +174,7 @@ else
 	)
 	test_link_args += ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so']
 
-	if host_machine.system() in ['linux', 'managarm']
+	if host_machine.system() in ['linux']
 		use_pie = true
 		test_sources += crt_pie
 	else
