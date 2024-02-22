@@ -94,6 +94,7 @@ all_test_cases = [
 	'posix/posix-timer',
 	'posix/strdupa',
 	'posix/mkstemp',
+	'posix/waitid',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',

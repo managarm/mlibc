@@ -7,9 +7,13 @@
 #include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 
-int waitid(idtype_t, id_t, siginfo_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_waitid, -1);
+	if(int e = sysdep(idtype, id, info, options); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 pid_t waitpid(pid_t pid, int *status, int flags) {

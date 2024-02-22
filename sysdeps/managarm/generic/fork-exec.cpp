@@ -92,6 +92,42 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 	return 0;
 }
 
+int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
+	SignalGuard sguard;
+
+	managarm::posix::WaitIdRequest<MemoryAllocator> req(getSysdepsAllocator());
+
+	req.set_idtype(idtype);
+	req.set_id(id);
+	req.set_flags(options);
+
+	auto [offer, send_head, recv_resp] =
+		exchangeMsgsSync(
+			getPosixLane(),
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline()
+			)
+		);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::WaitIdResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	}
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	info->si_pid = resp.pid();
+	info->si_uid = resp.uid();
+	info->si_signo = SIGCHLD;
+	info->si_status = resp.sig_status();
+	info->si_code = resp.sig_code();
+	return 0;
+}
+
 void sys_exit(int status) {
 	// This implementation is inherently signal-safe.
 	HEL_CHECK(helSyscall1(kHelCallSuper + posix::superExit, status));
