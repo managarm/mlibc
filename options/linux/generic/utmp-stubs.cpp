@@ -96,21 +96,21 @@ void endutent(void) {
 }
 
 struct utmp *pututline(const struct utmp *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "\e[31mmlibc: pututline() is a stub!\e[39m" << frg::endlog;
+	return NULL;
 }
 
 struct utmp *getutline(const struct utmp *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "\e[31mmlibc: getutline() is a stub!\e[39m" << frg::endlog;
+	return NULL;
 }
 
 int utmpname(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "\e[31mmlibc: utmpname() is a stub!\e[39m" << frg::endlog;
+	return -1;
 }
 
 struct utmp *getutid(const struct utmp *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "\e[31mmlibc: getutid() is a stub!\e[39m" << frg::endlog;
+	return NULL;
 }
