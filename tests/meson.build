@@ -142,11 +142,8 @@ extra_cflags_test_cases = {
 
 test_sources = []
 test_link_args = []
-test_c_args = []
+test_c_args = ['-D_GNU_SOURCE']
 use_pie = false
-
-test_c_args = []
-test_link_args = []
 
 # Our ubsan implementation can't be used by the tests themselves,
 # since it is internal to libc.so and ld.so.

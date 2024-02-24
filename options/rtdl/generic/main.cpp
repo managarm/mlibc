@@ -691,6 +691,8 @@ struct __dlapi_symbol {
 	void *base;
 	const char *symbol;
 	void *address;
+	const void *elf_symbol;
+	void *link_map;
 };
 
 extern "C" [[ gnu::visibility("default") ]]
@@ -726,6 +728,8 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 				info->base = reinterpret_cast<void *>(object->baseAddress);
 				info->symbol = cand.getString();
 				info->address = reinterpret_cast<void *>(cand.virtualAddress());
+				info->elf_symbol = cand.symbol();
+				info->link_map = &object->linkMap;
 				return 0;
 			}
 		}
@@ -748,6 +752,8 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 				info->base = reinterpret_cast<void *>(object->baseAddress);
 				info->symbol = nullptr;
 				info->address = 0;
+				info->elf_symbol = nullptr;
+				info->link_map = &object->linkMap;
 				return 0;
 			}
 		}

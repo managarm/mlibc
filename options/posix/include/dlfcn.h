@@ -2,6 +2,8 @@
 #ifndef _DLFCN_H
 #define _DLFCN_H
 
+#include <mlibc-config.h>
+
 #define RTLD_LOCAL 0
 #define RTLD_NOW 1
 #define RTLD_GLOBAL 2
@@ -12,6 +14,9 @@
 
 #define RTLD_NEXT ((void *)-1)
 #define RTLD_DEFAULT ((void *)0)
+
+#define RTLD_DL_SYMENT 1
+#define RTLD_DL_LINKMAP 2
 
 #define RTLD_DI_LINKMAP 2
 
@@ -29,6 +34,8 @@ void *dlvsym(void *__restrict, const char *__restrict, const char *__restrict);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
+#if defined(_GNU_SOURCE) && __MLIBC_GLIBC_OPTION
+
 //gnu extension
 typedef struct {
 	const char *dli_fname;
@@ -39,10 +46,13 @@ typedef struct {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int dladdr(const void *, Dl_info *);
-int dlinfo(void *, int, void *);
+int dladdr(const void *__ptr, Dl_info *__out);
+int dladdr1(const void *__ptr, Dl_info *__out, void **__extra, int __flags);
+int dlinfo(void *__restrict __handle, int __request, void *__restrict __info);
 
 #endif /* !__MLIBC_ABI_ONLY */
+
+#endif /* defined(_GNU_SOURCE) && __MLIBC_GLIBC_OPTION */
 
 #ifdef __cplusplus
 }
