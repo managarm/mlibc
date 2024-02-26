@@ -861,7 +861,7 @@ int fgetc(FILE *stream) {
 	return c;
 }
 
-char *fgets(char *__restrict buffer, size_t max_size, FILE *__restrict stream) {
+char *fgets(char *__restrict buffer, int max_size, FILE *__restrict stream) {
 	auto file = static_cast<mlibc::abstract_file *>(stream);
 	frg::unique_lock lock(file->_lock);
 	return fgets_unlocked(buffer, max_size, stream);
@@ -909,7 +909,7 @@ int getchar(void) {
 }
 
 char *gets(char *s){
-	return fgets(s, SIZE_MAX, stdin);
+	return fgets(s, INT_MAX, stdin);
 }
 
 int putc_unlocked(int c, FILE *stream) {
