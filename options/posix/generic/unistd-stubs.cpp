@@ -279,6 +279,8 @@ int ftruncate(int fd, off_t size) {
 	return 0;
 }
 
+[[gnu::alias("ftruncate")]] int ftruncate64(int fd, off64_t size);
+
 char *getcwd(char *buffer, size_t size) {
 	if (buffer) {
 		if (size == 0) {
@@ -791,6 +793,8 @@ int truncate(const char *, off_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+[[gnu::alias("truncate")]] int truncate64(const char *, off64_t);
 
 char *ttyname(int fd) {
 	const size_t size = 128;

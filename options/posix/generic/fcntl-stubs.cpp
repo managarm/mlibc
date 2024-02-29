@@ -106,3 +106,4 @@ int open(const char *pathname, int flags, ...) {
 	return fd;
 }
 
+[[gnu::alias("open")]] int open64(const char *pathname, int flags, ...);

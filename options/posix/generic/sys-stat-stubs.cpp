@@ -144,6 +144,8 @@ int lstat(const char *path, struct stat *result) {
 	return 0;
 }
 
+[[gnu::alias("lstat")]] int lstat64(const char *path, struct stat64 *result);
+
 int fstat(int fd, struct stat *result) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_stat, -1);
 	if(int e = mlibc::sys_stat(mlibc::fsfd_target::fd, fd, "", 0, result); e) {
@@ -153,3 +155,4 @@ int fstat(int fd, struct stat *result) {
 	return 0;
 }
 
+[[gnu::alias("fstat")]] int fstat64(int fd, struct stat64 *result);
