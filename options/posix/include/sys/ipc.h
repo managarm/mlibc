@@ -30,15 +30,19 @@ extern "C" {
 
 typedef int key_t;
 
-struct ipc_perm {
+struct ipc64_perm {
 	key_t __ipc_perm_key;
 	uid_t uid;
 	gid_t gid;
 	uid_t cuid;
 	gid_t cgid;
 	mode_t mode;
-	int __ipc_perm_seq;
+	short __ipc_perm_seq;
+	short __pad;
+	unsigned long __unused[2];
 };
+
+#define ipc_perm ipc64_perm
 
 #ifndef __MLIBC_ABI_ONLY
 
