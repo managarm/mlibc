@@ -1202,7 +1202,7 @@ int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
 	req.set_size(n);
 	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
 	if(sigmask != NULL) {
-		req.set_sigmask((long int)*sigmask);
+		req.set_sigmask(*reinterpret_cast<const int64_t *>(sigmask));
 		req.set_sigmask_needed(true);
 	} else {
 		req.set_sigmask_needed(false);
@@ -1301,7 +1301,7 @@ int sys_signalfd_create(const sigset_t *masks, int flags, int *fd)  {
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::SIGNALFD_CREATE);
 	req.set_flags(proto_flags);
-	req.set_sigset(*masks);
+	req.set_sigset(*reinterpret_cast<const uint64_t *>(masks));
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
 		getPosixLane(),

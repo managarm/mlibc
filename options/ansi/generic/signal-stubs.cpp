@@ -10,7 +10,7 @@ __sighandler signal(int sn, __sighandler handler) {
 	struct sigaction sa;
 	sa.sa_handler = handler;
 	sa.sa_flags = 0;
-	sa.sa_mask = 0;
+	sigemptyset(&sa.sa_mask);
 	struct sigaction old;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sigaction, SIG_ERR);
 	if(int e = mlibc::sys_sigaction(sn, &sa, &old)){
