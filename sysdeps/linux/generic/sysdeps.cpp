@@ -1731,14 +1731,14 @@ int sys_readlink(const char *path, void *buf, size_t bufsiz, ssize_t *len) {
 }
 
 int sys_getrlimit(int resource, struct rlimit *limit) {
-	auto ret = do_syscall(SYS_getrlimit, resource, limit);
+	auto ret = do_syscall(SYS_prlimit64, 0, resource, 0, limit);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int sys_setrlimit(int resource, const struct rlimit *limit) {
-	auto ret = do_syscall(SYS_setrlimit, resource, limit);
+	auto ret = do_syscall(SYS_prlimit64, 0, resource, limit, 0);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
