@@ -23,7 +23,8 @@ struct msghdr {
 
 struct sockaddr_storage {
 	sa_family_t ss_family;
-	char __padding[128 - sizeof(sa_family_t)];
+	char __padding[128 - sizeof(sa_family_t) - sizeof(long)];
+	long __force_alignment;
 };
 
 struct mmsghdr {
