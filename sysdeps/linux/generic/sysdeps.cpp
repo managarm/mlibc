@@ -289,12 +289,12 @@ extern "C" void __mlibc_signal_restore(void);
 extern "C" void __mlibc_signal_restore_rt(void);
 
 int sys_sigaction(int signum, const struct sigaction *act,
-                struct sigaction *oldact) {
+		struct sigaction *oldact) {
 	struct ksigaction {
 		void (*handler)(int);
 		unsigned long flags;
 		void (*restorer)(void);
-		sigset_t mask;
+		uint32_t mask[2];
 	};
 
 	struct ksigaction kernel_act, kernel_oldact;
@@ -302,24 +302,24 @@ int sys_sigaction(int signum, const struct sigaction *act,
 		kernel_act.handler = act->sa_handler;
 		kernel_act.flags = act->sa_flags | SA_RESTORER;
 		kernel_act.restorer = (act->sa_flags & SA_SIGINFO) ? __mlibc_signal_restore_rt : __mlibc_signal_restore;
-		kernel_act.mask = act->sa_mask;
+		memcpy(&kernel_act.mask, &act->sa_mask, sizeof(kernel_act.mask));
 	}
 
-	static_assert(sizeof(sigset_t) == 8);
+	static_assert(sizeof(kernel_act.mask) == 8);
 
-        auto ret = do_syscall(SYS_rt_sigaction, signum, act ?
-			&kernel_act : NULL, oldact ?
-			&kernel_oldact : NULL, sizeof(sigset_t));
-        if (int e = sc_error(ret); e)
-                return e;
+	auto ret = do_syscall(SYS_rt_sigaction, signum, act ?
+		&kernel_act : NULL, oldact ?
+		&kernel_oldact : NULL, sizeof(kernel_act.mask));
+	if (int e = sc_error(ret); e)
+		return e;
 
 	if (oldact) {
 		oldact->sa_handler = kernel_oldact.handler;
 		oldact->sa_flags = kernel_oldact.flags;
 		oldact->sa_restorer = kernel_oldact.restorer;
-		oldact->sa_mask = kernel_oldact.mask;
+		memcpy(&oldact->sa_mask, &kernel_oldact.mask, sizeof(kernel_oldact.mask));
 	}
-        return 0;
+	return 0;
 }
 
 int sys_socket(int domain, int type, int protocol, int *fd) {
@@ -451,23 +451,23 @@ int sys_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 }
 
 int sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
-                fd_set *exceptfds, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
-        // The Linux kernel really wants 7 arguments, even tho this is not supported
-        // To fix that issue, they use a struct as the last argument.
-        // See the man page of pselect and the glibc source code
-        struct {
-                sigset_t ss;
-                size_t ss_len;
-        } data;
-        data.ss = (uintptr_t)sigmask;
-        data.ss_len = NSIG / 8;
+		fd_set *exceptfds, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
+	// The Linux kernel really wants 7 arguments, even tho this is not supported
+	// To fix that issue, they use a struct as the last argument.
+	// See the man page of pselect and the glibc source code
+	struct {
+		uint32_t ss[2];
+		size_t ss_len;
+	} data;
+	memcpy(&data.ss, sigmask, sizeof(data.ss));
+	data.ss_len = sizeof(data.ss);
 
-        auto ret = do_cp_syscall(SYS_pselect6, nfds, readfds, writefds,
-                        exceptfds, timeout, &data);
-        if (int e = sc_error(ret); e)
-                return e;
-        *num_events = sc_int_result<int>(ret);
-        return 0;
+	auto ret = do_cp_syscall(SYS_pselect6, nfds, readfds, writefds,
+			exceptfds, timeout, &data);
+	if (int e = sc_error(ret); e)
+		return e;
+	*num_events = sc_int_result<int>(ret);
+	return 0;
 }
 
 int sys_pipe(int *fds, int flags) {

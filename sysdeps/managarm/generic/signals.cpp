@@ -27,12 +27,12 @@ int sys_sigprocmask(int how, const sigset_t *set, sigset_t *retrieve) {
 	// This implementation is inherently signal-safe.
 	uint64_t former, unused;
 	if(set) {
-		HEL_CHECK(helSyscall2_2(kHelObserveSuperCall + posix::superSigMask, how, *set, &former, &unused));
+		HEL_CHECK(helSyscall2_2(kHelObserveSuperCall + posix::superSigMask, how, *reinterpret_cast<const HelWord *>(set), &former, &unused));
 	}else{
 		HEL_CHECK(helSyscall2_2(kHelObserveSuperCall + posix::superSigMask, 0, 0, &former, &unused));
 	}
 	if(retrieve)
-		*retrieve = former;
+		*reinterpret_cast<uint64_t *>(retrieve) = former;
 	return 0;
 }
 
@@ -48,7 +48,7 @@ int sys_sigaction(int number, const struct sigaction *__restrict action,
 	if(action) {
 		req.set_mode(1);
 		req.set_flags(action->sa_flags);
-		req.set_sig_mask(action->sa_mask);
+		req.set_sig_mask(*reinterpret_cast<const uint64_t *>(&action->sa_mask));
 		if(action->sa_flags & SA_SIGINFO) {
 			req.set_sig_handler(reinterpret_cast<uintptr_t>(action->sa_sigaction));
 		}else{
@@ -82,7 +82,7 @@ int sys_sigaction(int number, const struct sigaction *__restrict action,
 
 	if(saved_action) {
 		saved_action->sa_flags = resp.flags();
-		saved_action->sa_mask = resp.sig_mask();
+		*reinterpret_cast<uint64_t *>(&saved_action->sa_mask) = resp.sig_mask();
 		if(resp.flags() & SA_SIGINFO) {
 			saved_action->sa_sigaction =
 					reinterpret_cast<void (*)(int, siginfo_t *, void *)>(resp.sig_handler());
@@ -120,7 +120,7 @@ int sys_sigsuspend(const sigset_t *set) {
 	//SignalGuard sguard;
 	uint64_t former, seq, unused;
 
-	HEL_CHECK(helSyscall2_2(kHelObserveSuperCall + posix::superSigMask, SIG_SETMASK, *set, &former, &seq));
+	HEL_CHECK(helSyscall2_2(kHelObserveSuperCall + posix::superSigMask, SIG_SETMASK, *reinterpret_cast<const HelWord *>(set), &former, &seq));
 	HEL_CHECK(helSyscall1(kHelObserveSuperCall + posix::superSigSuspend, seq));
 	HEL_CHECK(helSyscall2_2(kHelObserveSuperCall + posix::superSigMask, SIG_SETMASK, former, &unused, &unused));
 
@@ -131,7 +131,7 @@ int sys_sigpending(sigset_t *set) {
 	uint64_t pendingMask;
 
 	HEL_CHECK(helSyscall0_1(kHelObserveSuperCall + posix::superSigGetPending, &pendingMask));
-	*set = pendingMask;
+	*reinterpret_cast<uint64_t *>(set) = pendingMask;
 
 	return 0;
 }
