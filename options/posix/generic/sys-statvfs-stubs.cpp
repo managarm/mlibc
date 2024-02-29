@@ -13,6 +13,8 @@ int statvfs(const char *path, struct statvfs *out) {
 	return 0;
 }
 
+[[gnu::alias("statvfs")]] int statvfs64(const char *path, struct statvfs *out);
+
 int fstatvfs(int fd, struct statvfs *out) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fstatvfs, -1);
 	if(int e = mlibc::sys_fstatvfs(fd, out); e) {

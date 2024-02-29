@@ -58,6 +58,7 @@ int dirfd(DIR *);
 DIR *fdopendir(int);
 DIR *opendir(const char *);
 struct dirent *readdir(DIR *);
+struct dirent64 *readdir64(DIR *);
 int readdir_r(DIR *__restrict, struct dirent *__restrict, struct dirent **__restrict);
 void rewinddir(DIR *);
 int scandir(const char *, struct dirent ***, int (*)(const struct dirent *),

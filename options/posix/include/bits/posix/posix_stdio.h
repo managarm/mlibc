@@ -27,7 +27,9 @@ FILE *popen(const char*, const char *);
 FILE *open_memstream(char **, size_t *);
 
 int fseeko(FILE *stream, off_t offset, int whence);
+int fseeko64(FILE *stream, off64_t offset, int whence);
 off_t ftello(FILE *stream);
+off64_t ftello64(FILE *stream);
 
 int dprintf(int fd, const char *format, ...);
 int vdprintf(int fd, const char *format, __builtin_va_list args);

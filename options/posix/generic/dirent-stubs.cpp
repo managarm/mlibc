@@ -64,6 +64,7 @@ DIR *opendir(const char *path) {
 		return dir;
 	}
 }
+
 struct dirent *readdir(DIR *dir) {
 	__ensure(dir->__ent_next <= dir->__ent_limit);
 	if(dir->__ent_next == dir->__ent_limit) {
@@ -81,6 +82,9 @@ struct dirent *readdir(DIR *dir) {
 	dir->__ent_next += entp->d_reclen;
 	return &dir->__current;
 }
+
+[[gnu::alias("readdir")]] struct dirent64 *readdir64(DIR *dir);
+
 int readdir_r(DIR *dir, struct dirent *entry, struct dirent **result) {
 	if(!mlibc::sys_read_entries) {
 		MLIBC_MISSING_SYSDEP();

@@ -77,7 +77,7 @@ struct stat {
 	uid_t st_uid;
 	gid_t st_gid;
 	dev_t st_rdev;
-	unsigned long __pad1;
+	dev_t __pad1;
 	off_t st_size;
 	blksize_t st_blksize;
 	int __pad2;
@@ -85,8 +85,7 @@ struct stat {
 	struct timespec st_atim;
 	struct timespec st_mtim;
 	struct timespec st_ctim;
-	unsigned int __unused4;
-	unsigned int __unused5;
+	int __pad3[2];
 };
 
 #elif defined(__i386__)
@@ -115,6 +114,8 @@ struct stat {
 };
 
 #endif
+
+#define stat64 stat
 
 #ifdef __cplusplus
 }
