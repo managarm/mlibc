@@ -1447,14 +1447,14 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	if(flags & O_NOCTTY)
 		proto_flags |= managarm::posix::OpenFlags::OF_NOCTTY;
 
-	if(flags & O_RDONLY)
-		proto_flags |= managarm::posix::OpenFlags::OF_RDONLY;
-	else if(flags & O_WRONLY)
-		proto_flags |= managarm::posix::OpenFlags::OF_WRONLY;
-	else if(flags & O_RDWR)
-		proto_flags |= managarm::posix::OpenFlags::OF_RDWR;
-	else if(flags & O_PATH)
+	if(flags & O_PATH)
 		proto_flags |= managarm::posix::OpenFlags::OF_PATH;
+	else if((flags & O_ACCMODE) == O_RDONLY)
+		proto_flags |= managarm::posix::OpenFlags::OF_RDONLY;
+	else if((flags & O_ACCMODE) == O_WRONLY)
+		proto_flags |= managarm::posix::OpenFlags::OF_WRONLY;
+	else if((flags & O_ACCMODE) == O_RDWR)
+		proto_flags |= managarm::posix::OpenFlags::OF_RDWR;
 
 	managarm::posix::OpenAtRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_fd(dirfd);
