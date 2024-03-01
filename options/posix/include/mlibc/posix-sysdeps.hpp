@@ -179,7 +179,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 	socklen_t *actual_length);
 [[gnu::weak]] int sys_gethostname(char *buffer, size_t bufsize);
 [[gnu::weak]] int sys_sethostname(const char *buffer, size_t bufsize);
-[[gnu::weak]] int sys_mkfifoat(int dirfd, const char *path, int mode);
+[[gnu::weak]] int sys_mkfifoat(int dirfd, const char *path, mode_t mode);
 [[gnu::weak]] int sys_getentropy(void *buffer, size_t length);
 [[gnu::weak]] int sys_mknodat(int dirfd, const char *path, int mode, int dev);
 [[gnu::weak]] int sys_umask(mode_t mode, mode_t *old);
