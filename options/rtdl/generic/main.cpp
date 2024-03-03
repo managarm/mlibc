@@ -48,8 +48,8 @@ frg::manual_box<Scope> globalScope;
 
 frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
-// We use a small vector of size 4 to avoid memory allocation for the default library paths
-frg::manual_box<frg::small_vector<frg::string_view, 4, MemoryAllocator>> libraryPaths;
+// We use a small vector to avoid memory allocation for the default library paths
+frg::manual_box<frg::small_vector<frg::string_view, MLIBC_NUM_DEFAULT_LIBRARY_PATHS, MemoryAllocator>> libraryPaths;
 
 frg::manual_box<frg::vector<frg::string_view, MemoryAllocator>> preloads;
 
@@ -340,11 +340,9 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	}
 	aux++;
 
-	// Add default library paths
-	libraryPaths->push_back("/lib");
-	libraryPaths->push_back("/lib64");
-	libraryPaths->push_back("/usr/lib");
-	libraryPaths->push_back("/usr/lib64");
+	for (const frg::string_view path : parseList(MLIBC_DEFAULT_LIBRARY_PATHS, "\n")) {
+		libraryPaths->push_back(path);
+	}
 
 	// Parse the actual vector.
 	while(true) {
