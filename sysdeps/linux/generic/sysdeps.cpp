@@ -1,4 +1,5 @@
 #include <asm/ioctls.h>
+#include <stdint.h>
 #include <errno.h>
 #include <limits.h>
 
@@ -235,7 +236,11 @@ int sys_vm_unmap(void *pointer, size_t size) {
 
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
 	struct timespec tp = {};
+#if UINTPTR_MAX == UINT64_MAX
 	auto ret = do_syscall(SYS_clock_gettime, clock, &tp);
+#else
+	auto ret = do_syscall(SYS_clock_gettime64, clock, &tp);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	*secs = tp.tv_sec;
@@ -245,7 +250,11 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 
 int sys_clock_getres(int clock, time_t *secs, long *nanos) {
 	struct timespec tp = {};
+#if UINTPTR_MAX == UINT64_MAX
 	auto ret = do_syscall(SYS_clock_getres, clock, &tp);
+#else
+	auto ret = do_syscall(SYS_clock_getres_time64, clock, &tp);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	*secs = tp.tv_sec;
@@ -272,14 +281,22 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 }
 
 int sys_statfs(const char *path, struct statfs *buf) {
+#if UINTPTR_MAX == UINT64_MAX
 	auto ret = do_cp_syscall(SYS_statfs, path, buf);
+#else
+	auto ret = do_cp_syscall(SYS_statfs64, path, buf);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int sys_fstatfs(int fd, struct statfs *buf) {
+#if UINTPTR_MAX == UINT64_MAX
 	auto ret = do_cp_syscall(SYS_fstatfs, fd, buf);
+#else
+	auto ret = do_cp_syscall(SYS_fstatfs64, fd, buf);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -307,11 +324,11 @@ int sys_sigaction(int signum, const struct sigaction *act,
 
 	static_assert(sizeof(sigset_t) == 8);
 
-        auto ret = do_syscall(SYS_rt_sigaction, signum, act ?
-			&kernel_act : NULL, oldact ?
-			&kernel_oldact : NULL, sizeof(sigset_t));
-        if (int e = sc_error(ret); e)
-                return e;
+	auto ret = do_syscall(SYS_rt_sigaction, signum, act ?
+		&kernel_act : NULL, oldact ?
+		&kernel_oldact : NULL, sizeof(sigset_t));
+	if (int e = sc_error(ret); e)
+		return e;
 
 	if (oldact) {
 		oldact->sa_handler = kernel_oldact.handler;
@@ -763,9 +780,42 @@ int sys_setpriority(int which, id_t who, int prio) {
 }
 
 int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
+#if UINTPTR_MAX == UINT64_MAX
 	auto ret = do_syscall(SYS_setitimer, which, new_value, old_value);
+
 	if (int e = sc_error(ret); e)
 		return e;
+
+#else
+	if (new_value->it_interval.tv_sec > INT32_MAX)
+		return -ENOTSUP;
+	if (new_value->it_value.tv_sec > INT32_MAX)
+		return -ENOTSUP;
+
+	long new_isec = (long)new_value->it_interval.tv_sec;
+	long new_vsec = (long)new_value->it_value.tv_sec;
+
+	long new_raw[4] = {
+		new_isec, new_value->it_interval.tv_usec,
+		new_vsec, new_value->it_value.tv_usec,
+	};
+	long old_raw[4];
+
+	auto ret = do_syscall(SYS_setitimer, which, new_raw, old_raw);
+
+	if (int e = sc_error(ret); e) {
+		return e;
+	}
+
+
+	if (old_value) {
+		old_value->it_interval.tv_sec = old_raw[0];
+		old_value->it_interval.tv_usec = old_raw[1];
+		old_value->it_value.tv_sec = old_raw[2];
+		old_value->it_value.tv_usec = old_raw[3];
+	}
+
+#endif
 	return 0;
 }
 
@@ -811,7 +861,11 @@ int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__
 }
 
 int sys_timer_settime(timer_t t, int flags, const struct itimerspec *__restrict val, struct itimerspec *__restrict old) {
+#if UINTPTR_MAX == UINT64_MAX
 	auto ret = do_syscall(SYS_timer_settime, t, flags, val, old);
+#else 
+	auto ret = do_syscall(SYS_timer_settime64, t, flags, val, old);
+#endif
 	if (int e = sc_error(ret); e) {
 		return e;
 	}
@@ -1019,7 +1073,11 @@ int sys_timerfd_create(int clockid, int flags, int *fd) {
 }
 
 int sys_timerfd_settime(int fd, int flags, const struct itimerspec *value, struct itimerspec *oldvalue) {
+#if UINTPTR_MAX == UINT64_MAX
 	auto ret = do_syscall(SYS_timerfd_settime, fd, flags, value, oldvalue);
+#else
+	auto ret = do_syscall(SYS_timerfd_settime64, fd, flags, value, oldvalue);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -1579,9 +1637,15 @@ int sys_futex_tid() {
 }
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
+#if UINTPTR_MAX == UINT64_MAX
 	auto ret = do_cp_syscall(SYS_futex, pointer, FUTEX_WAIT, expected, time);
+#else
+	auto ret = do_cp_syscall(SYS_futex_time64, pointer, FUTEX_WAIT, expected, time);
+#endif
+	
 	if (int e = sc_error(ret); e)
 		return e;
+
 	return 0;
 }
 
