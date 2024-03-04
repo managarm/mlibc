@@ -1736,8 +1736,8 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 	}
 }
 
-// TODO: TLSDESC relocations aren't aarch64 specific
-#ifdef __aarch64__
+// TODO: TLSDESC relocations aren't aarch64/x86_64 specific
+#if defined(__aarch64__) || defined(__x86_64__)
 extern "C" void *__mlibcTlsdescStatic(void *);
 extern "C" void *__mlibcTlsdescDynamic(void *);
 #endif
@@ -1809,9 +1809,9 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 			break;
 		}
 #endif
-// TODO: TLSDESC relocations aren't aarch64 specific
-#if defined(__aarch64__)
-		case R_AARCH64_TLSDESC: {
+// TODO: TLSDESC relocations aren't aarch64/x86_64 specific
+#if defined(__aarch64__) || defined(__x86_64__)
+		case R_TLSDESC: {
 			size_t symValue = 0;
 			SharedObject *target = nullptr;
 
@@ -1838,10 +1838,11 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 
 			if (target->tlsModel == TlsModel::initial) {
 				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
-				// TODO: guard the subtraction of TCB size with `if constexpr (tlsAboveTp)`
-				// for the arch-generic case
-				__ensure(tlsAboveTp == true);
-				((uint64_t *)rel_addr)[1] = symValue + target->tlsOffset + addend - sizeof(Tcb);
+				uint64_t value = symValue + target->tlsOffset + addend;
+				if constexpr (tlsAboveTp) {
+					value -= sizeof(Tcb);
+				}
+				((uint64_t *)rel_addr)[1] = value;
 			} else {
 				struct TlsdescData {
 					uintptr_t tlsIndex;
