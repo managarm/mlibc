@@ -157,7 +157,26 @@ if not headers_only
 	endif
 endif
 
+default_library_paths = get_option('default_library_paths')
+if default_library_paths.length() == 0
+	target_word_size = {
+		'x86_64': 64,
+		'x86': 32,
+		'riscv64': 64,
+		'riscv32': 32,
+		'aarch64': 64,
+		'arm': 32
+	}
+	if target_word_size.get(target_machine.cpu_family()) == 64
+		default_library_paths = ['/lib', '/lib64', '/usr/lib', '/usr/lib64']
+	else
+		default_library_paths = ['/lib', '/usr/lib']
+	endif
+endif
+
 internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
+internal_conf.set_quoted('MLIBC_DEFAULT_LIBRARY_PATHS', '\\n'.join(default_library_paths))
+internal_conf.set('MLIBC_NUM_DEFAULT_LIBRARY_PATHS', default_library_paths.length())
 internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', false)
 internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', false)
 internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', false)

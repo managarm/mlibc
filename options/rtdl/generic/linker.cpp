@@ -45,7 +45,7 @@ constexpr inline bool tlsAboveTp = true;
 extern DebugInterface globalDebugInterface;
 extern uintptr_t __stack_chk_guard;
 
-extern frg::manual_box<frg::small_vector<frg::string_view, 4, MemoryAllocator>> libraryPaths;
+extern frg::manual_box<frg::small_vector<frg::string_view, MLIBC_NUM_DEFAULT_LIBRARY_PATHS, MemoryAllocator>> libraryPaths;
 extern frg::manual_box<frg::vector<frg::string_view, MemoryAllocator>> preloads;
 
 #if MLIBC_STATIC_BUILD
