@@ -375,7 +375,7 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
     return sys_ppoll(fds, count, &ts, NULL, num_events);
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 #include <stdio.h>
 int sys_ptsname(int fd, char *buffer, size_t length) {
     int index;
@@ -468,5 +468,5 @@ int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set,
     *num_events = m;
     return 0;
 }
-#endif // #ifndef MLIBC_BUILDING_RTDL
+#endif // #ifndef MLIBC_BUILDING_RTLD
 } // namespace mlibc

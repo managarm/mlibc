@@ -1,4 +1,4 @@
-rtdl_test_cases = [
+rtld_test_cases = [
 	'dl_iterate_phdr',
 	'dladdr_local',
 	'ld_library_path',
@@ -14,8 +14,8 @@ rtdl_test_cases = [
 	'tls_align',
 ]
 
-foreach test_name : rtdl_test_cases 
-	test_rpath = meson.build_root() / 'tests' / 'rtdl' / test_name / ''
+foreach test_name : rtld_test_cases 
+	test_rpath = meson.build_root() / 'tests' / 'rtld' / test_name / ''
 	test_rpath += ':$ORIGIN/' # Workaround old and buggy qemu-user on CI
 
 	test_env = []
@@ -29,7 +29,7 @@ foreach test_name : rtdl_test_cases
 	# Build the needed DSOs for the test. This sets the variables above.
 	subdir(test_name)
 
-	exec = executable('rtdl-' + test_name, [test_name / 'test.c', test_sources],
+	exec = executable('rtld-' + test_name, [test_name / 'test.c', test_sources],
 		link_with: test_link_with,
 		dependencies: libc_dep,
 		build_rpath: test_rpath,
@@ -37,7 +37,7 @@ foreach test_name : rtdl_test_cases
 		c_args: test_c_args,
 		link_args: test_link_args + test_additional_link_args,
 	)
-	test(test_name, exec, env: test_env, suite: 'rtdl', depends: test_depends)
+	test(test_name, exec, env: test_env, suite: 'rtld', depends: test_depends)
 
 	if build_tests_host_libc and not host_libc_excluded_test_cases.contains(test_name)
 		exec = executable('host-libc-' + test_name, test_name / 'test.c',
@@ -51,6 +51,6 @@ foreach test_name : rtdl_test_cases
 			link_args: ['-ldl'] + test_additional_link_args,
 			native: true,
 		)
-		test(test_name, exec, env: test_native_env, suite: ['host-libc', 'rtdl'], depends: test_native_depends)
+		test(test_name, exec, env: test_native_env, suite: ['host-libc', 'rtld'], depends: test_native_depends)
 	endif
 endforeach

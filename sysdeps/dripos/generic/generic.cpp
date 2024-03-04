@@ -62,7 +62,7 @@ int sys_anon_free(void *pointer, size_t size) {
 	return 0;
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 void sys_exit(int status) {
 	asm volatile ("syscall" :
 			: "a"(12), "D"(status)
@@ -70,7 +70,7 @@ void sys_exit(int status) {
 }
 #endif
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
 	return 0;
 }
@@ -123,7 +123,7 @@ int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
 	return 0;
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
 	ssize_t ret;
 	int sys_errno;
@@ -212,7 +212,7 @@ int sys_futex_wake(int *pointer) {
 }
 
 // All remaining functions are disabled in ldso.
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
 	int tid;
@@ -293,6 +293,6 @@ pid_t sys_getppid() {
 	return ppid;
 }
 
-#endif // MLIBC_BUILDING_RTDL
+#endif // MLIBC_BUILDING_RTLD
 
 } // namespace mlibc

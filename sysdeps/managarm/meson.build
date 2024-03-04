@@ -17,13 +17,13 @@ managarm_incl = include_directories(
 		'../../subprojects/managarm/hel/include',
 		'../../subprojects/bragi/include')
 
-rtdl_include_dirs += managarm_incl
-rtdl_sources += files(
+rtld_include_dirs += managarm_incl
+rtld_sources += files(
 	'generic/ensure.cpp',
 	'generic/memory.cpp',
-	'rtdl-generic/support.cpp',
+	'rtld-generic/support.cpp',
 )
-rtdl_sources += [
+rtld_sources += [
 	fs_bragi,
 	posix_bragi,
 ]

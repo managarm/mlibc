@@ -12,8 +12,8 @@ enum {
 #include <frg/small_vector.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/rtdl-sysdeps.hpp>
-#include <mlibc/rtdl-abi.hpp>
+#include <mlibc/rtld-sysdeps.hpp>
+#include <mlibc/rtld-abi.hpp>
 #include <mlibc/thread.hpp>
 #include <abi-bits/fcntl.h>
 #include <internal-config.h>
@@ -193,10 +193,10 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 		}
 		sPath += name;
 		if (logRpath)
-			mlibc::infoLogger() << "rtdl: trying in rpath " << sPath << frg::endlog;
+			mlibc::infoLogger() << "rtld: trying in rpath " << sPath << frg::endlog;
 		int fd = tryToOpen(sPath.data());
 		if (logRpath && fd >= 0)
-			mlibc::infoLogger() << "rtdl: found in rpath" << frg::endlog;
+			mlibc::infoLogger() << "rtld: found in rpath" << frg::endlog;
 		return frg::tuple { fd, std::move(sPath) };
 	};
 
@@ -230,14 +230,14 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 			}
 		}
 	} else if (logRpath) {
-		mlibc::infoLogger() << "rtdl: no rpath set for object" << frg::endlog;
+		mlibc::infoLogger() << "rtld: no rpath set for object" << frg::endlog;
 	}
 
 	for(size_t i = 0; i < libraryPaths->size() && fd == -1; i++) {
 		auto ldPath = (*libraryPaths)[i];
 		auto path = frg::string<MemoryAllocator>{getAllocator(), ldPath} + '/' + name;
 		if(logLdPath)
-			mlibc::infoLogger() << "rtdl: Trying to load " << name << " from ldpath " << ldPath << "/" << frg::endlog;
+			mlibc::infoLogger() << "rtld: Trying to load " << name << " from ldpath " << ldPath << "/" << frg::endlog;
 		fd = tryToOpen(path.data());
 		if(fd >= 0) {
 			chosenPath = std::move(path);
@@ -364,7 +364,7 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 	object->phdrEntrySize = phdr_entry_size;
 	object->phdrCount = phdr_count;
 	if(verbose)
-		mlibc::infoLogger() << "rtdl: Loading " << object->name << frg::endlog;
+		mlibc::infoLogger() << "rtld: Loading " << object->name << frg::endlog;
 
 	// Note: the entry pointer is absolute and not relative to the base address.
 	object->entry = entry_pointer;
@@ -381,7 +381,7 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			// the PHDR segment's load address against it's address in the ELF file.
 			object->baseAddress = reinterpret_cast<uintptr_t>(phdr_pointer) - phdr->p_vaddr;
 			if(verbose)
-				mlibc::infoLogger() << "rtdl: Executable is loaded at "
+				mlibc::infoLogger() << "rtld: Executable is loaded at "
 						<< (void *)object->baseAddress << frg::endlog;
 			break;
 		case PT_DYNAMIC:
@@ -490,7 +490,7 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 #endif
 
 	if(verbose || logBaseAddresses)
-		mlibc::infoLogger() << "rtdl: Loading " << object->name
+		mlibc::infoLogger() << "rtld: Loading " << object->name
 				<< " at " << (void *)object->baseAddress << frg::endlog;
 
 	// Load all segments.
@@ -663,10 +663,10 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			ignored |= DF_TEXTREL;
 #else
 			if(dynamic->d_un.d_val & DF_TEXTREL)
-				mlibc::panicLogger() << "\e[31mrtdl: DF_TEXTREL is unimplemented" << frg::endlog;
+				mlibc::panicLogger() << "\e[31mrtld: DF_TEXTREL is unimplemented" << frg::endlog;
 #endif
 			if(dynamic->d_un.d_val & ~ignored)
-				mlibc::infoLogger() << "\e[31mrtdl: DT_FLAGS(" << frg::hex_fmt{dynamic->d_un.d_val & ~ignored}
+				mlibc::infoLogger() << "\e[31mrtld: DT_FLAGS(" << frg::hex_fmt{dynamic->d_un.d_val & ~ignored}
 						<< ") is not implemented correctly!\e[39m"
 						<< frg::endlog;
 		} break;
@@ -677,7 +677,7 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			// The DF_1_NODELETE flag has a similar effect to RTLD_NODELETE, both of which we
 			// ignore because we don't implement dlclose().
 			if(dynamic->d_un.d_val & ~(DF_1_NOW | DF_1_PIE | DF_1_NODELETE))
-				mlibc::infoLogger() << "\e[31mrtdl: DT_FLAGS_1(" << frg::hex_fmt{dynamic->d_un.d_val}
+				mlibc::infoLogger() << "\e[31mrtld: DT_FLAGS_1(" << frg::hex_fmt{dynamic->d_un.d_val}
 						<< ") is not implemented correctly!\e[39m"
 						<< frg::endlog;
 			break;
@@ -769,10 +769,10 @@ void ObjectRepository::_discoverDependencies(SharedObject *object,
 				libraryResult = requestObjectAtPath(preload, globalScope.get(), false, 1);
 			}
 			if(!libraryResult)
-				mlibc::panicLogger() << "rtdl: Could not load preload " << preload << frg::endlog;
+				mlibc::panicLogger() << "rtld: Could not load preload " << preload << frg::endlog;
 
 			if(verbose)
-				mlibc::infoLogger() << "rtdl: Preloading " << preload << frg::endlog;
+				mlibc::infoLogger() << "rtld: Preloading " << preload << frg::endlog;
 
 			object->dependencies.push_back(libraryResult.value());
 		}
@@ -925,21 +925,21 @@ void doInitialize(SharedObject *object) {
 		__ensure(object->dependencies[i]->wasInitialized);
 
 	if(verbose)
-		mlibc::infoLogger() << "rtdl: Initialize " << object->name << frg::endlog;
+		mlibc::infoLogger() << "rtld: Initialize " << object->name << frg::endlog;
 
 	if(verbose)
-		mlibc::infoLogger() << "rtdl: Running DT_INIT function" << frg::endlog;
+		mlibc::infoLogger() << "rtld: Running DT_INIT function" << frg::endlog;
 	if(object->initPtr != nullptr)
 		object->initPtr();
 
 	if(verbose)
-		mlibc::infoLogger() << "rtdl: Running DT_INIT_ARRAY functions" << frg::endlog;
+		mlibc::infoLogger() << "rtld: Running DT_INIT_ARRAY functions" << frg::endlog;
 	__ensure((object->initArraySize % sizeof(InitFuncPtr)) == 0);
 	for(size_t i = 0; i < object->initArraySize / sizeof(InitFuncPtr); i++)
 		object->initArray[i]();
 
 	if(verbose)
-		mlibc::infoLogger() << "rtdl: Object initialization complete" << frg::endlog;
+		mlibc::infoLogger() << "rtld: Object initialization complete" << frg::endlog;
 	object->wasInitialized = true;
 }
 
@@ -963,7 +963,7 @@ void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, MemoryAllocator>
 			memcpy(tls_ptr, object->tlsImagePtr, object->tlsImageSize);
 
 			if (verbose) {
-				mlibc::infoLogger() << "rtdl: wrote tls image at " << (void *)tls_ptr
+				mlibc::infoLogger() << "rtld: wrote tls image at " << (void *)tls_ptr
 						<< ", size = 0x" << frg::hex_fmt{object->tlsSegmentSize} << frg::endlog;
 			}
 
@@ -1008,9 +1008,9 @@ Tcb *allocateTcb() {
 	__ensure((tcbAddress & (alignof(Tcb) - 1)) == 0);
 
 	if (verbose) {
-		mlibc::infoLogger() << "rtdl: tcb allocated at " << (void *)tcbAddress
+		mlibc::infoLogger() << "rtld: tcb allocated at " << (void *)tcbAddress
 				<< ", size = 0x" << frg::hex_fmt{sizeof(Tcb)} << frg::endlog;
-		mlibc::infoLogger() << "rtdl: tls allocated at " << (void *)tlsAddress
+		mlibc::infoLogger() << "rtld: tls allocated at " << (void *)tlsAddress
 				<< ", size = 0x" << frg::hex_fmt{tlsInitialSize} << frg::endlog;
 	}
 
@@ -1061,7 +1061,7 @@ void *accessDtv(SharedObject *object) {
 		tcb_ptr->dtvPointers[object->tlsIndex] = buffer;
 
 		if (verbose) {
-			mlibc::infoLogger() << "rtdl: accessDtv wrote tls image at " << buffer
+			mlibc::infoLogger() << "rtld: accessDtv wrote tls image at " << buffer
 					<< ", size = 0x" << frg::hex_fmt{object->tlsSegmentSize} << frg::endlog;
 		}
 	}
@@ -1212,7 +1212,7 @@ frg::optional<ObjectSymbol> Scope::_resolveNext(frg::string_view string,
 	}
 
 	if (i == _objects.size()) {
-		mlibc::infoLogger() << "rtdl: object passed to Scope::resolveAfter was not found" << frg::endlog;
+		mlibc::infoLogger() << "rtld: object passed to Scope::resolveAfter was not found" << frg::endlog;
 		return frg::optional<ObjectSymbol>();
 	}
 
@@ -1346,13 +1346,13 @@ void Loader::linkObjects(SharedObject *root) {
 			continue;
 
 		if(verbose)
-			mlibc::infoLogger() << "rtdl: Linking " << object->name << frg::endlog;
+			mlibc::infoLogger() << "rtld: Linking " << object->name << frg::endlog;
 
 		__ensure(!object->wasLinked);
 
 		// TODO: Support this.
 		if(object->symbolicResolution)
-			mlibc::infoLogger() << "\e[31mrtdl: DT_SYMBOLIC is not implemented correctly!\e[39m"
+			mlibc::infoLogger() << "\e[31mrtld: DT_SYMBOLIC is not implemented correctly!\e[39m"
 					<< frg::endlog;
 
 		_processStaticRelocations(object);
@@ -1431,7 +1431,7 @@ void Loader::_buildTlsMaps() {
 			}
 
 			if(verbose)
-				mlibc::infoLogger() << "rtdl: TLS of " << object->name
+				mlibc::infoLogger() << "rtld: TLS of " << object->name
 						<< " mapped to 0x" << frg::hex_fmt{object->tlsOffset}
 						<< ", size: " << object->tlsSegmentSize
 						<< ", alignment: " << object->tlsAlignment << frg::endlog;
@@ -1459,7 +1459,7 @@ void Loader::_buildTlsMaps() {
 					ptr += object->tlsAlignment - misalign;
 
 				if(ptr > runtimeTlsMap->initialLimit)
-					mlibc::panicLogger() << "rtdl: Static TLS space exhausted while while"
+					mlibc::panicLogger() << "rtld: Static TLS space exhausted while while"
 							" allocating TLS for " << object->name << frg::endlog;
 
 				object->tlsModel = TlsModel::initial;
@@ -1475,7 +1475,7 @@ void Loader::_buildTlsMaps() {
 				}
 
 				if(verbose)
-					mlibc::infoLogger() << "rtdl: TLS of " << object->name
+					mlibc::infoLogger() << "rtld: TLS of " << object->name
 							<< " mapped to 0x" << frg::hex_fmt{object->tlsOffset}
 							<< ", size: " << object->tlsSegmentSize
 							<< ", alignment: " << object->tlsAlignment << frg::endlog;
@@ -1491,7 +1491,7 @@ void Loader::initObjects() {
 
 	if (_mainExecutable && _mainExecutable->preInitArray) {
 		if (verbose)
-			mlibc::infoLogger() << "rtdl: Running DT_PREINIT_ARRAY functions" << frg::endlog;
+			mlibc::infoLogger() << "rtld: Running DT_PREINIT_ARRAY functions" << frg::endlog;
 
 		__ensure(_mainExecutable->isMainObject);
 		__ensure(!_mainExecutable->wasInitialized);
@@ -1551,7 +1551,7 @@ void Loader::_processRelocations(Relocation &rel) {
 						<< r.getString() << " in object " << rel.object()->name << frg::endlog;
 
 			if(verbose)
-				mlibc::infoLogger() << "rtdl: Unresolved weak load-time symbol "
+				mlibc::infoLogger() << "rtld: Unresolved weak load-time symbol "
 						<< r.getString() << " in object " << rel.object()->name << frg::endlog;
 		}
 	}
@@ -1597,7 +1597,7 @@ void Loader::_processRelocations(Relocation &rel) {
 			rel.relocate(elf_addr(p->object()));
 		}else{
 			if(stillSlightlyVerbose)
-				mlibc::infoLogger() << "rtdl: Warning: TLS_DTPMOD64 with no symbol in object "
+				mlibc::infoLogger() << "rtld: Warning: TLS_DTPMOD64 with no symbol in object "
 					<< rel.object()->name << frg::endlog;
 			rel.relocate(elf_addr(rel.object()));
 		}
@@ -1614,7 +1614,7 @@ void Loader::_processRelocations(Relocation &rel) {
 		if(rel.symbol_index()) {
 			__ensure(p);
 			if(p->object()->tlsModel != TlsModel::initial)
-				mlibc::panicLogger() << "rtdl: In object " << rel.object()->name
+				mlibc::panicLogger() << "rtld: In object " << rel.object()->name
 						<< ": Static TLS relocation to symbol " << p->getString()
 						<< " in dynamically loaded object "
 						<< p->object()->name << frg::endlog;
@@ -1622,10 +1622,10 @@ void Loader::_processRelocations(Relocation &rel) {
 			tls_offset = p->object()->tlsOffset;
 		}else{
 			if(stillSlightlyVerbose)
-				mlibc::infoLogger() << "rtdl: Warning: TPOFF64 with no symbol"
+				mlibc::infoLogger() << "rtld: Warning: TPOFF64 with no symbol"
 						" in object " << rel.object()->name << frg::endlog;
 			if(rel.object()->tlsModel != TlsModel::initial)
-				mlibc::panicLogger() << "rtdl: In object " << rel.object()->name
+				mlibc::panicLogger() << "rtld: In object " << rel.object()->name
 						<< ": Static TLS relocation to dynamically loaded object "
 						<< rel.object()->name << frg::endlog;
 			tls_offset = rel.object()->tlsOffset;
@@ -1787,11 +1787,11 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 
 				if(!p) {
 					if(ELF_ST_BIND(symbol->st_info) != STB_WEAK)
-						mlibc::panicLogger() << "rtdl: Unresolved JUMP_SLOT symbol "
+						mlibc::panicLogger() << "rtld: Unresolved JUMP_SLOT symbol "
 								<< r.getString() << " in object " << object->name << frg::endlog;
 
 					if(verbose)
-						mlibc::infoLogger() << "rtdl: Unresolved weak JUMP_SLOT symbol "
+						mlibc::infoLogger() << "rtld: Unresolved weak JUMP_SLOT symbol "
 							<< r.getString() << " in object " << object->name << frg::endlog;
 					*((uintptr_t *)rel_addr) = 0;
 				}else{
@@ -1823,7 +1823,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 
 				if (!p) {
 					__ensure(ELF_ST_BIND(symbol->st_info) != STB_WEAK);
-					mlibc::panicLogger() << "rtdl: Unresolved TLSDESC for symbol "
+					mlibc::panicLogger() << "rtld: Unresolved TLSDESC for symbol "
 						<< r.getString() << " in object " << object->name << frg::endlog;
 				} else {
 					target = p->object();

@@ -7,12 +7,12 @@
 #include <mlibc/threads.hpp>
 #include <mlibc/tcb.hpp>
 
-extern "C" Tcb *__rtdl_allocateTcb();
+extern "C" Tcb *__rtld_allocateTcb();
 
 namespace mlibc {
 
 int thread_create(struct __mlibc_thread_data **__restrict thread, const struct __mlibc_threadattr *__restrict attrp, void *entry, void *__restrict user_arg, bool returns_int) {
-	auto new_tcb = __rtdl_allocateTcb();
+	auto new_tcb = __rtld_allocateTcb();
 	pid_t tid;
 	struct __mlibc_threadattr attr = {};
 	if (!attrp)

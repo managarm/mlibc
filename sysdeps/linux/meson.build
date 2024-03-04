@@ -1,4 +1,4 @@
-rtdl_dso_sources += files(
+rtld_dso_sources += files(
 	host_machine.cpu_family() / 'arch-syscall.cpp',
 	'generic/sysdeps.cpp',
 )
@@ -8,7 +8,7 @@ linux_include_dirs = [
 	include_directories('include-internal/'),
 ]
 
-rtdl_include_dirs += linux_include_dirs
+rtld_include_dirs += linux_include_dirs
 libc_include_dirs += linux_include_dirs
 libc_sources += files(
 	host_machine.cpu_family() / 'signals.S',

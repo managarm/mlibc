@@ -1,6 +1,6 @@
 #include <internal-config.h>
 #include <mlibc/thread.hpp>
-#include <mlibc/rtdl-abi.hpp>
+#include <mlibc/rtld-abi.hpp>
 
 #if defined(__riscv) && defined(MLIBC_STATIC_BUILD)
 	// On RISC-V, linker optimisation is not guaranteed and so we may still get

@@ -770,7 +770,7 @@ int sys_setsid(pid_t *sid) {
 	return 0;
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 extern "C" void __mlibc_thread_entry();
 

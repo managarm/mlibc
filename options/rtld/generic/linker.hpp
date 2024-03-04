@@ -43,7 +43,7 @@ struct ObjectRepository {
 
 	ObjectRepository &operator= (const ObjectRepository &) = delete;
 
-	// This is primarily used to create a SharedObject for the RTDL itself.
+	// This is primarily used to create a SharedObject for the RTLD itself.
 	SharedObject *injectObjectFromDts(frg::string_view name,
 			frg::string<MemoryAllocator> path,
 			uintptr_t base_address, elf_dyn *dynamic, uint64_t rts);
@@ -395,8 +395,8 @@ private:
 extern "C" void pltRelocateStub() __attribute__((__visibility__("hidden")));
 
 // --------------------------------------------------------
-// RTDL interface
+// RTLD interface
 // --------------------------------------------------------
 
-void *rtdl_auxvector();
+void *rtld_auxvector();
 

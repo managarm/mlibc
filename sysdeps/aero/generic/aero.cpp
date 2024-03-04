@@ -150,7 +150,7 @@ void sys_exit(int status) {
     __builtin_unreachable();
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 pid_t sys_getpid() {
     auto result = syscall(SYS_GETPID);

@@ -24,9 +24,9 @@
 #	include <mlibc/bsd-sysdeps.hpp>
 #endif /* __MLIBC_BSD_OPTION */
 
-#if MLIBC_BUILDING_RTDL
-#	include <mlibc/rtdl-sysdeps.hpp>
-#endif /* MLIBC_BUILDING_RTDL */
+#if MLIBC_BUILDING_RTLD
+#	include <mlibc/rtld-sysdeps.hpp>
+#endif /* MLIBC_BUILDING_RTLD */
 
 #include <mlibc/internal-sysdeps.hpp>
 

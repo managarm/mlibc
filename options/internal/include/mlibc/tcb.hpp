@@ -72,11 +72,11 @@ namespace mlibc {
 		       == (tcbCancelEnableBit | tcbCancelTriggerBit);
 	}
 
-#if !MLIBC_STATIC_BUILD && !MLIBC_BUILDING_RTDL
+#if !MLIBC_STATIC_BUILD && !MLIBC_BUILDING_RTLD
 	// In non-static builds, libc.so always has a TCB available.
 	constexpr bool tcb_available_flag = true;
 #else
-	// Otherwise this will be set to true after RTDL has initialized the TCB.
+	// Otherwise this will be set to true after RTLD has initialized the TCB.
 	extern bool tcb_available_flag;
 #endif
 }

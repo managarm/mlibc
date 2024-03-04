@@ -7,9 +7,9 @@
 
 #include <abi-bits/auxv.h>
 #include <mlibc/debug.hpp>
-#include <mlibc/rtdl-sysdeps.hpp>
-#include <mlibc/rtdl-config.hpp>
-#include <mlibc/rtdl-abi.hpp>
+#include <mlibc/rtld-sysdeps.hpp>
+#include <mlibc/rtld-config.hpp>
+#include <mlibc/rtld-abi.hpp>
 #include <mlibc/stack_protector.hpp>
 #include <internal-config.h>
 #include <abi-bits/auxv.h>
@@ -38,7 +38,7 @@ namespace mlibc {
 	bool tcb_available_flag = false;
 }
 
-mlibc::RtdlConfig rtdlConfig;
+mlibc::RtldConfig rtldConfig;
 
 bool ldShowAuxv = false;
 
@@ -185,7 +185,7 @@ extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
 	return (void *)p->virtualAddress();
 }
 
-extern "C" [[ gnu::visibility("default") ]] void *__rtdl_allocateTcb() {
+extern "C" [[ gnu::visibility("default") ]] void *__rtld_allocateTcb() {
 	auto tcb = allocateTcb();
 	initTlsObjects(tcb, globalScope->_objects, false);
 	return tcb;
@@ -322,7 +322,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		size_t s = view.find_first('=');
 
 		if(s == size_t(-1))
-			mlibc::panicLogger() << "rtdl: environment '" << env << "' is missing a '='" << frg::endlog;
+			mlibc::panicLogger() << "rtld: environment '" << env << "' is missing a '='" << frg::endlog;
 
 		auto name = view.sub_string(0, s);
 		auto value = const_cast<char *>(view.data() + s + 1);
@@ -399,7 +399,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 			case AT_ENTRY: entry_pointer = reinterpret_cast<void *>(*value); break;
 			case AT_EXECFN: execfn = reinterpret_cast<const char *>(*value); break;
 			case AT_RANDOM: stack_entropy = reinterpret_cast<void*>(*value); break;
-			case AT_SECURE: rtdlConfig.secureRequired = reinterpret_cast<uintptr_t>(*value); break;
+			case AT_SECURE: rtldConfig.secureRequired = reinterpret_cast<uintptr_t>(*value); break;
 		}
 
 		aux += 2;
@@ -518,8 +518,8 @@ void *__dlapi_get_tls(struct __abi_tls_entry *entry) {
 }
 
 extern "C" [[ gnu::visibility("default") ]]
-const mlibc::RtdlConfig &__dlapi_get_config() {
-	return rtdlConfig;
+const mlibc::RtldConfig &__dlapi_get_config() {
+	return rtldConfig;
 }
 
 #if __MLIBC_POSIX_OPTION
@@ -527,10 +527,10 @@ const mlibc::RtdlConfig &__dlapi_get_config() {
 extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 	if (logDlCalls)
-		mlibc::infoLogger() << "rtdl: __dlapi_open(" << (file ? file : "nullptr") << ")" << frg::endlog;
+		mlibc::infoLogger() << "rtld: __dlapi_open(" << (file ? file : "nullptr") << ")" << frg::endlog;
 
 	if (flags & RTLD_DEEPBIND)
-		mlibc::infoLogger() << "rtdl: dlopen(RTLD_DEEPBIND) is unsupported" << frg::endlog;
+		mlibc::infoLogger() << "rtld: dlopen(RTLD_DEEPBIND) is unsupported" << frg::endlog;
 
 	if(!file)
 		return executableSO;
@@ -556,7 +556,7 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 			// In order to know which RUNPATH / RPATH to process, we must find the calling object.
 			SharedObject *origin = initialRepository->findCaller(returnAddress);
 			if (!origin) {
-				mlibc::panicLogger() << "rtdl: unable to determine calling object of dlopen "
+				mlibc::panicLogger() << "rtld: unable to determine calling object of dlopen "
 					<< "(ra = " << returnAddress << ")" << frg::endlog;
 			}
 
@@ -616,7 +616,7 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
 			quote = true;
 		}
 
-		mlibc::infoLogger() << "rtdl: __dlapi_resolve(" << (quote ? "\"" : "") << name
+		mlibc::infoLogger() << "rtld: __dlapi_resolve(" << (quote ? "\"" : "") << name
 			<< (quote ? "\"" : "") << ", \"" << string << "\")" << frg::endlog;
 	}
 
@@ -627,7 +627,7 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
 	} else if (handle == RTLD_NEXT) {
 		SharedObject *origin = initialRepository->findCaller(returnAddress);
 		if (!origin) {
-			mlibc::panicLogger() << "rtdl: unable to determine calling object of dlsym "
+			mlibc::panicLogger() << "rtld: unable to determine calling object of dlsym "
 				<< "(ra = " << returnAddress << ")" << frg::endlog;
 		}
 
@@ -676,7 +676,7 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
 
 	if (!target) {
 		if (logDlCalls)
-			mlibc::infoLogger() << "rtdl: could not resolve \"" << string << "\"" << frg::endlog;
+			mlibc::infoLogger() << "rtld: could not resolve \"" << string << "\"" << frg::endlog;
 
 		lastError = "Cannot resolve requested symbol";
 		return nullptr;
@@ -694,7 +694,7 @@ struct __dlapi_symbol {
 extern "C" [[ gnu::visibility("default") ]]
 int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 	if (logDlCalls)
-		mlibc::infoLogger() << "rtdl: __dlapi_reverse(" << ptr << ")" << frg::endlog;
+		mlibc::infoLogger() << "rtld: __dlapi_reverse(" << ptr << ")" << frg::endlog;
 
 	for(size_t i = 0; i < initialRepository->loadedObjects.size(); i++) {
 		auto object = initialRepository->loadedObjects[i];
@@ -717,7 +717,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 					+ object->symbolTableOffset + i * sizeof(elf_sym))};
 			if(eligible(cand) && cand.virtualAddress() == reinterpret_cast<uintptr_t>(ptr)) {
 				if (logDlCalls)
-					mlibc::infoLogger() << "rtdl: Found symbol " << cand.getString() << " in object "
+					mlibc::infoLogger() << "rtld: Found symbol " << cand.getString() << " in object "
 							<< object->path << frg::endlog;
 
 				info->file = object->path.data();
@@ -741,7 +741,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 			uintptr_t start = object->baseAddress + phdr->p_vaddr;
 			uintptr_t end = start + phdr->p_memsz;
 			if(reinterpret_cast<uintptr_t>(ptr) >= start && reinterpret_cast<uintptr_t>(ptr) < end) {
-				mlibc::infoLogger() << "rtdl: Found DSO " << object->path << frg::endlog;
+				mlibc::infoLogger() << "rtld: Found DSO " << object->path << frg::endlog;
 				info->file = object->path.data();
 				info->base = reinterpret_cast<void *>(object->baseAddress);
 				info->symbol = nullptr;
@@ -752,7 +752,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 	}
 
 	if (logDlCalls)
-		mlibc::infoLogger() << "rtdl: Could not find symbol in __dlapi_reverse()" << frg::endlog;
+		mlibc::infoLogger() << "rtld: Could not find symbol in __dlapi_reverse()" << frg::endlog;
 
 	return -1;
 }

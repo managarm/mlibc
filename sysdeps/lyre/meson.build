@@ -1,5 +1,5 @@
 
-rtdl_sources += files(
+rtld_sources += files(
 	'generic/generic.cpp'
 )
 

@@ -42,7 +42,7 @@ sys_exit(int status)
 	__builtin_unreachable();
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 int
 sys_tcgetattr(int fd, struct termios *attr)
 {
@@ -110,7 +110,7 @@ sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events)
 	    num_events);
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 int
 sys_pselect(int nfds, fd_set *read_set, fd_set *write_set, fd_set *except_set,
     const struct timespec *timeout, const sigset_t *sigmask, int *num_events)
@@ -213,7 +213,7 @@ sys_futex_wake(int *pointer)
 	return 0;
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 int
 sys_ioctl(int fd, unsigned long request, void *arg, int *result)
 {
@@ -235,7 +235,7 @@ sys_isatty(int fd)
 	return 0;
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 int
 sys_getcwd(char *buffer, size_t size)
 {
@@ -646,7 +646,7 @@ sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru,
 	return 0;
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 int
 sys_sleep(time_t *sec, long *nanosec)
 {
