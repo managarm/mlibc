@@ -12,7 +12,7 @@ struct timespec {
 	time_t tv_sec;
 	// tv_nspec is required to be long by the C standard.
 	// However linux kernel expects long long. So we add padding.
-	__MLIBC_FIELD_PADDED(long, tv_nsec, long long);
+	__MLIBC_FIELD_PADDED(long, long long, tv_nsec);
 };
 
 #endif // MLIBC_TIMESPEC_H

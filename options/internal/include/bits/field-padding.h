@@ -1,15 +1,9 @@
 #ifndef MLIBC_FIELD_PADDING_H
 #define MLIBC_FIELD_PADDING_H
 
-#ifdef __GNUC__
-
-#define __MLIBC_FIELD_PADDED(T, F, PT) \
-	PT : (sizeof(PT)-sizeof(T))*8*(BYTE_ORDER == BIG_ENDIAN); \
+#define __MLIBC_FIELD_PADDED(T, AT, F) \
+	AT : (sizeof(AT)-sizeof(T))*8*(__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__); \
 	T F; \
-	PT : (sizeof(PT)-sizeof(T))*8*(BYTE_ORDER == LITTLE_ENDIAN)
-
-#else
-#error "Unsupported compiler"
-#endif
+	AT : (sizeof(AT)-sizeof(T))*8*(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 
 #endif
