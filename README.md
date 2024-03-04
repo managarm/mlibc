@@ -39,9 +39,9 @@ We also support building with `-Db_sanitize=undefined` to use UBSan inside mlibc
 
 ## Running Tests
 
-The `mlibc` test suite can be run under a Linux host. To do this, first run from the project root:
+The `mlibc` test suite can be run under a Linux host. To do this, first install a set of kernel headers (as described [here](https://docs.kernel.org/kbuild/headers_install.html)), then run from the project root:
 ```
-meson -Dbuild_tests=true build
+meson setup -Dbuild_tests=true -Dlinux_kernel_headers=/path/to/kernel/headers/include build
 ```
 This will create a `build` directory. Then, `cd build` and run the tests (showing output) with:
 ```
