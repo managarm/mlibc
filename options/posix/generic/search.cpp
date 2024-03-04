@@ -122,10 +122,23 @@ void twalk(const void *, void (*action)(const void *, VISIT, int)) {
 	__builtin_unreachable();
 }
 
-void tdestroy(void *, void (*free_node)(void *)) {
-	(void)free_node;
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void tdestroy(void *root, void (*free_node)(void *)) {
+	auto *n = static_cast<node *>(root);
+	frg::stack<node *, MemoryAllocator> nodes(getAllocator());
+
+	while(n || !nodes.empty()) {
+		if(n == nullptr) {
+			n = nodes.top();
+			nodes.pop();
+			free_node(const_cast<void *>(n->key));
+			auto *next = static_cast<node *>(n->a[1]);
+			free(n);
+			n = next;
+		} else {
+			nodes.push(n);
+			n = static_cast<node *>(n->a[0]);
+		}
+	}
 }
 
 void *lsearch(const void *key, void *base, size_t *nelp, size_t width,
