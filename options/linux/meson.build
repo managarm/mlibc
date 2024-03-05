@@ -50,6 +50,7 @@ if not no_headers
 	install_headers(
 		'include/bits/linux/linux_unistd.h',
 		'include/bits/linux/linux_sched.h',
+		'include/bits/linux/linux_stat.h',
 		'include/bits/linux/cpu_set.h',
 		subdir: 'bits/linux'
 	)

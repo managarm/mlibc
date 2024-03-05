@@ -9,6 +9,7 @@
 #include <poll.h>
 #include <abi-bits/pid_t.h>
 #include <abi-bits/mode_t.h>
+#include <abi-bits/statx.h>
 #include <bits/ssize_t.h>
 #include <bits/size_t.h>
 
@@ -76,6 +77,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 
 [[gnu::weak]] int sys_statfs(const char *path, struct statfs *buf);
 [[gnu::weak]] int sys_fstatfs(int fd, struct statfs *buf);
+
+[[gnu::weak]] int sys_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf);
 
 } // namespace mlibc
 

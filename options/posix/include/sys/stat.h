@@ -3,6 +3,11 @@
 #define _SYS_STAT_H
 
 #include <bits/posix/stat.h>
+#include <mlibc-config.h>
+
+#if __MLIBC_LINUX_OPTION
+#include <bits/linux/linux_stat.h>
+#endif /* !__MLIBC_LINUX_OPTION */
 
 #ifdef __cplusplus
 extern "C" {
