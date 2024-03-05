@@ -2534,5 +2534,23 @@ int sys_getrlimit(int resource, struct rlimit *limit) {
 	}
 }
 
+int sys_sysconf(int num, long *ret) {
+	switch(num) {
+		case _SC_OPEN_MAX: {
+			struct rlimit ru;
+			if(int e = sys_getrlimit(RLIMIT_NOFILE, &ru); e) {
+				return e;
+			}
+			*ret = (ru.rlim_cur == RLIM_INFINITY) ? -1 : ru.rlim_cur;
+			break;
+		}
+		default: {
+			return EINVAL;
+		}
+	}
+
+	return 0;
+}
+
 } //namespace mlibc
 
