@@ -2522,5 +2522,17 @@ int sys_unlockpt(int fd) {
 	return 0;
 }
 
+int sys_getrlimit(int resource, struct rlimit *limit) {
+	switch(resource) {
+		case RLIMIT_NOFILE:
+			/* TODO: change this once we support more than 512 */
+			limit->rlim_cur = 512;
+			limit->rlim_max = 512;
+			return 0;
+		default:
+			return EINVAL;
+	}
+}
+
 } //namespace mlibc
 
