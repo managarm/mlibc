@@ -9,6 +9,33 @@ struct statx_timestamp {
 	__mlibc_uint32 __padding;
 };
 
+#define STATX_TYPE 0x1
+#define STATX_MODE 0x2
+#define STATX_NLINK 0x4
+#define STATX_UID 0x8
+#define STATX_GID 0x10
+#define STATX_ATIME 0x20
+#define STATX_MTIME 0x40
+#define STATX_CTIME 0x80
+#define STATX_INO 0x100
+#define STATX_SIZE 0x200
+#define STATX_BLOCKS 0x400
+#define STATX_BASIC_STATS 0x7ff
+#define STATX_BTIME 0x800
+#define STATX_MNT_ID 0x1000
+#define STATX_DIOALIGN 0x2000
+#define STATX_ALL 0xfff
+
+#define STATX_ATTR_COMPRESSED 0x4
+#define STATX_ATTR_IMMUTABLE 0x10
+#define STATX_ATTR_APPEND 0x20
+#define STATX_ATTR_NODUMP 0x40
+#define STATX_ATTR_ENCRYPTED 0x800
+#define STATX_ATTR_AUTOMOUNT 0x1000
+#define STATX_ATTR_MOUNT_ROOT 0x2000
+#define STATX_ATTR_VERITY 0x100000
+#define STATX_ATTR_DAX 0x200000
+
 struct statx {
 	__mlibc_uint32 stx_mask;
 
