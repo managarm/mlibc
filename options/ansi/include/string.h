@@ -64,6 +64,10 @@ int strerror_r(int, char *, size_t);
 void *mempcpy(void *, const void *, size_t);
 
 // GNU extensions.
+#ifdef _GNU_SOURCE
+const char *strerrorname_np(int e);
+const char *strerrordesc_np(int e);
+#endif
 int strverscmp(const char *l0, const char *r0);
 int ffsl(long i);
 int ffsll(long long i);

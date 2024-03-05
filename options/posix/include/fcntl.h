@@ -39,19 +39,27 @@ int posix_fallocate(int, off_t, off_t);
 
 // This is a linux extension
 
+#ifdef _GNU_SOURCE
+
 struct file_handle {
         unsigned int handle_bytes;
         int handle_type;
         unsigned char f_handle[0];
 };
 
+#endif /* _GNU_SOURCE */
+
 #ifndef __MLIBC_ABI_ONLY
+
+#ifdef _GNU_SOURCE
 
 int name_to_handle_at(int, const char *, struct file_handle *, int *, int);
 int open_by_handle_at(int, struct file_handle *, int);
 
 ssize_t splice(int fd_in, off_t *off_in, int fd_out, off_t *off_out, size_t len, unsigned int flags);
 ssize_t vmsplice(int fd, const struct iovec *iov, size_t nr_segs, unsigned int flags);
+
+#endif /* _GNU_SOURCE */
 
 #endif /* !__MLIBC_ABI_ONLY */
 
