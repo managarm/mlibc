@@ -77,6 +77,7 @@ if not no_headers
 		'include/abi-bits/fcntl.h',
 		'include/abi-bits/in.h',
 		'include/abi-bits/stat.h',
+		'include/abi-bits/statx.h',
 		'include/abi-bits/signal.h',
 		'include/abi-bits/reboot.h',
 		'include/abi-bits/resource.h',
