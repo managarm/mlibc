@@ -103,6 +103,7 @@ all_test_cases = [
 	'glibc/error_expect_fail',
 	'glibc/error',
 	'glibc/error_at_line',
+	'glibc/getgrouplist',
 	'linux/xattr',
 	'linux/pthread_setname_np',
 	'linux/pthread_attr',
