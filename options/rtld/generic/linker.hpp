@@ -355,7 +355,7 @@ extern frg::manual_box<Scope> globalScope;
 // Loader
 // --------------------------------------------------------
 
-class Loader {
+struct Loader {
 public:
 	Loader(Scope *scope, SharedObject *mainExecutable, bool is_initial_link, uint64_t rts);
 
