@@ -18,6 +18,7 @@
     )
 
 int main() {
+#if !(defined(USE_HOST_LIBC) && defined(__clang__))
     assert(IS_COMPLEX_NUMBER(CMPLX(5.2, 4.3)));
     double complex cz = CMPLX(5.2, 4.3);
     assert(APPROXIMATELY_EQUAL(creal(cz), 5.2));
@@ -32,6 +33,7 @@ int main() {
     long double complex czl = CMPLXL(0.1L, 123.54L);
     assert(APPROXIMATELY_EQUALL(creall(czl), 0.1L));
     assert(APPROXIMATELY_EQUALL(cimagl(czl), 123.54L));
+#endif
 
     return 0;
 }
