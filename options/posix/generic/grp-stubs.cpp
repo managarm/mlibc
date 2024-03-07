@@ -310,7 +310,30 @@ struct group *fgetgrent(FILE *) {
 	__builtin_unreachable();
 }
 
-int getgrouplist(const char *, gid_t, gid_t *, int *) {
-	mlibc::infoLogger() << "mlibc: getgrouplist is a stub" << frg::endlog;
-	return 0;
+int getgrouplist(const char *user, gid_t gid, gid_t *groups, int *ngroups) {
+	int n = 1;
+	int n_limit = *ngroups;
+	struct group grp;
+
+	if(n_limit >= 1)
+		*groups++ = gid;
+
+	int err = walk_file(&grp, [&] (group *entry) {
+		size_t i = 0;
+		for(; entry->gr_mem[i] && strcmp(user, entry->gr_mem[i]); i++);
+		if(!entry->gr_mem[i])
+			return false;
+		if(++n <= n_limit)
+			*groups++ = entry->gr_gid;
+		return false;
+	});
+
+	if(err != ESRCH) {
+		errno = err;
+		return -1;
+	}
+
+	*ngroups = n;
+
+	return (n > n_limit) ? -1 : n;
 }
