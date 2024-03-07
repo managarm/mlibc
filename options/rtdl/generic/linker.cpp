@@ -1412,14 +1412,14 @@ void Loader::_buildTlsMaps() {
 			object->tlsModel = TlsModel::initial;
 
 			if constexpr (tlsAboveTp) {
+				size_t misalign = (runtimeTlsMap->initialPtr + sizeof(Tcb)) & (object->tlsAlignment - 1);
+				if(misalign)
+					runtimeTlsMap->initialPtr += object->tlsAlignment - misalign;
+
 				// As per the comment in allocateTcb(), we may simply add sizeof(Tcb) to
 				// reach the TLS data.
 				object->tlsOffset = runtimeTlsMap->initialPtr + sizeof(Tcb);
 				runtimeTlsMap->initialPtr += object->tlsSegmentSize;
-
-				size_t misalign = runtimeTlsMap->initialPtr & (object->tlsAlignment - 1);
-				if(misalign)
-					runtimeTlsMap->initialPtr += object->tlsAlignment - misalign;
 			} else {
 				runtimeTlsMap->initialPtr += object->tlsSegmentSize;
 
