@@ -1,3 +1,4 @@
+#include "mlibc/debug.hpp"
 #include <asm/ioctls.h>
 #include <dirent.h>
 #include <errno.h>
@@ -1579,11 +1580,13 @@ int sys_mknodat(int dirfd, const char *path, int mode, int dev) {
 }
 
 int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
-	SignalGuard sguard;
-
 	auto handle = getHandleForFd(fd);
 	if (!handle)
 		return EBADF;
+
+	HelHandle cancel_handle;
+	HEL_CHECK(helCreateOneshotEvent(&cancel_handle));
+	helix::UniqueDescriptor cancel_event{cancel_handle};
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::READ);
@@ -1593,11 +1596,13 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 
-	auto [offer, send_req, imbue_creds, recv_resp, recv_data] =
-		exchangeMsgsSync(
+	auto [offer, push_req, send_req, imbue_creds, recv_resp, recv_data] =
+		exchangeMsgsSyncCancellable(
 			handle,
+			cancel_handle,
 			helix_ng::offer(
 				helix_ng::sendBuffer(ser.data(), ser.size()),
+				helix_ng::pushDescriptor(cancel_event),
 				helix_ng::imbueCredentials(),
 				helix_ng::recvInline(),
 				helix_ng::recvBuffer(data, max_size)
@@ -1605,6 +1610,7 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 		);
 
 	HEL_CHECK(offer.error());
+	HEL_CHECK(push_req.error());
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(imbue_creds.error());
 	HEL_CHECK(recv_resp.error());
@@ -1621,6 +1627,10 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	}else if(resp.error() == managarm::fs::Errors::END_OF_FILE) {
 		*bytes_read = 0;
 		return 0;
+	}else if(resp.error() == managarm::fs::Errors::INTERRUPTED) {
+		HEL_CHECK(recv_data.error());
+		*bytes_read = recv_data.actualLength();
+		return EINTR;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		HEL_CHECK(recv_data.error());
