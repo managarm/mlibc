@@ -187,9 +187,9 @@ else
 		test_link_args += '-no-pie'
 	endif
 
-	# Add the rtdl tests.
+	# Add the rtld tests.
 	if not disable_posix_option
-		subdir('rtdl')
+		subdir('rtld')
 	endif
 endif
 

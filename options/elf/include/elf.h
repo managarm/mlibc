@@ -655,9 +655,9 @@ typedef struct {
 #define AT_GID 13
 #define AT_EGID 14
 
-/* rtdl requires presence of some a_type (AT_*) values that are not standardized in the ELF spec */
+/* rtld requires presence of some a_type (AT_*) values that are not standardized in the ELF spec */
 #if !defined(AT_EXECFN) || !defined(AT_RANDOM) || !defined(AT_SECURE)
-#error "sysdeps' auxv.h is missing some defines that are required for rtdl operation"
+#error "sysdeps' auxv.h is missing some defines that are required for rtld operation"
 #endif
 
 #ifdef __cplusplus

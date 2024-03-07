@@ -52,7 +52,7 @@ void sys_exit(int status) {
 	__builtin_unreachable();
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 [[noreturn]] void sys_thread_exit() {
 	__syscall(SYS_exit_thread);
@@ -111,7 +111,7 @@ int sys_tcb_set(void *pointer) {
 	return 0;
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 int sys_ppoll(struct pollfd *fds, int nfds, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
 	__syscall_ret ret = __syscall(SYS_ppoll, fds, nfds, timeout, sigmask);
@@ -228,7 +228,7 @@ int sys_futex_wake(int *pointer) {
 	return num_woken;
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 int sys_timerfd_create(int, int *) STUB_ONLY
 
@@ -277,7 +277,7 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	return sys_openat(AT_FDCWD, path, flags, mode, fd);
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 int sys_open_dir(const char *path, int *handle) {
 	return sys_openat(AT_FDCWD, path, O_DIRECTORY, 0, handle);
@@ -346,7 +346,7 @@ int sys_close(int fd) {
 	if ((int)ret.ret == -1) {
 		return ret.errno;
 	}
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 	open_dirs.remove(fd);
 #endif
 	return 0;
@@ -372,7 +372,7 @@ int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
 	return 0;
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
 	__syscall_ret ret = __syscall(SYS_write, fd, buf, count);
@@ -453,7 +453,7 @@ int sys_vm_unmap(void *pointer, size_t size) {
 	return 0;
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 int sys_vm_protect(void *pointer, size_t size, int prot) {
 	__syscall_ret ret = __syscall(SYS_mprotect, pointer, size, prot);
@@ -473,7 +473,7 @@ int sys_anon_free(void *pointer, size_t size) {
 	return sys_vm_unmap(pointer, size);
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 pid_t sys_getpid() {
 	__syscall_ret ret = __syscall(SYS_getpid);

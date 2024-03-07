@@ -1,4 +1,4 @@
-rtdl_dso_sources += files(
+rtld_dso_sources += files(
 	'generic/aero.cpp',
 	'generic/filesystem.cpp',
 )

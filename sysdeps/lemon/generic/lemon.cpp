@@ -59,7 +59,7 @@ void sys_libc_log(const char* msg){
 	syscall(0, (uintptr_t)msg);
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 void sys_exit(int status){
 	syscall(SYS_EXIT, status);

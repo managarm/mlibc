@@ -151,7 +151,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result){
 	return 0;
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events){
 	long ret = syscall(SYS_POLL, fds, count, timeout);

@@ -1,5 +1,5 @@
-#ifndef MLIBC_RTDL_ABI
-#define MLIBC_RTDL_ABI
+#ifndef MLIBC_RTLD_ABI
+#define MLIBC_RTLD_ABI
 
 #include <stdint.h>
 
@@ -25,4 +25,4 @@ constexpr inline unsigned long TLS_DTV_OFFSET = 0;
 #error "Missing architecture specific code."
 #endif
 
-#endif // MLIBC_RTDL_ABI
+#endif // MLIBC_RTLD_ABI

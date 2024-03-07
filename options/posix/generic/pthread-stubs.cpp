@@ -320,7 +320,7 @@ int pthread_setaffinity_np(pthread_t thread, size_t cpusetsize, const cpu_set_t 
 }
 #endif // __MLIBC_LINUX_OPTION
 
-extern "C" Tcb *__rtdl_allocateTcb();
+extern "C" Tcb *__rtld_allocateTcb();
 
 // pthread functions.
 int pthread_create(pthread_t *__restrict thread, const pthread_attr_t *__restrict attrp,

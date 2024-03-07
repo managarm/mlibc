@@ -20,7 +20,7 @@
 #define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }
 #define UNUSED(x) (void)(x);
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 extern "C" long __do_syscall_ret(unsigned long ret) {
 	if(ret > -4096UL) {
 		errno = -ret;
@@ -232,7 +232,7 @@ int sys_vm_unmap(void *pointer, size_t size) {
 }
 
 // All remaining functions are disabled in ldso.
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
 	struct timespec tp = {};
@@ -1592,7 +1592,7 @@ void sys_exit(int status) {
 	__builtin_trap();
 }
 
-#endif // MLIBC_BUILDING_RTDL
+#endif // MLIBC_BUILDING_RTLD
 
 #define FUTEX_WAIT 0
 #define FUTEX_WAKE 1
