@@ -34,10 +34,13 @@ constexpr bool eagerBinding = true;
 
 #if defined(__x86_64__) || defined(__i386__)
 constexpr inline bool tlsAboveTp = false;
+constexpr inline uintptr_t tlsOffsetFromTp = 0;
 #elif defined(__aarch64__)
 constexpr inline bool tlsAboveTp = true;
+constexpr inline uintptr_t tlsOffsetFromTp = 16;
 #elif defined(__riscv)
 constexpr inline bool tlsAboveTp = true;
+constexpr inline uintptr_t tlsOffsetFromTp = 0;
 #else
 #	error Unknown architecture
 #endif
@@ -959,6 +962,11 @@ void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, MemoryAllocator>
 
 			char *tcb_ptr = reinterpret_cast<char *>(tcb);
 			auto tls_ptr = tcb_ptr + object->tlsOffset;
+
+			if constexpr (tlsAboveTp) {
+				tls_ptr += sizeof(Tcb);
+			}
+
 			memset(tls_ptr, 0, object->tlsSegmentSize);
 			memcpy(tls_ptr, object->tlsImagePtr, object->tlsImageSize);
 
@@ -1030,7 +1038,12 @@ Tcb *allocateTcb() {
 		auto object = runtimeTlsMap->indices[i];
 		if(object->tlsModel != TlsModel::initial)
 			continue;
-		tcb_ptr->dtvPointers[i] = reinterpret_cast<char *>(tcb_ptr) + object->tlsOffset;
+
+		if constexpr (tlsAboveTp) {
+			tcb_ptr->dtvPointers[i] = reinterpret_cast<char *>(tcb_ptr) + sizeof(Tcb) + object->tlsOffset;
+		} else {
+			tcb_ptr->dtvPointers[i] = reinterpret_cast<char *>(tcb_ptr) + object->tlsOffset;
+		}
 	}
 
 	return tcb_ptr;
@@ -1412,14 +1425,12 @@ void Loader::_buildTlsMaps() {
 			object->tlsModel = TlsModel::initial;
 
 			if constexpr (tlsAboveTp) {
-				// As per the comment in allocateTcb(), we may simply add sizeof(Tcb) to
-				// reach the TLS data.
-				object->tlsOffset = runtimeTlsMap->initialPtr + sizeof(Tcb);
-				runtimeTlsMap->initialPtr += object->tlsSegmentSize;
-
 				size_t misalign = runtimeTlsMap->initialPtr & (object->tlsAlignment - 1);
 				if(misalign)
 					runtimeTlsMap->initialPtr += object->tlsAlignment - misalign;
+
+				object->tlsOffset = runtimeTlsMap->initialPtr;
+				runtimeTlsMap->initialPtr += object->tlsSegmentSize;
 			} else {
 				runtimeTlsMap->initialPtr += object->tlsSegmentSize;
 
@@ -1453,26 +1464,28 @@ void Loader::_buildTlsMaps() {
 			// There are some libraries (e.g. Mesa) that require static TLS even though
 			// they expect to be dynamically loaded.
 			if(object->haveStaticTls) {
-				auto ptr = runtimeTlsMap->initialPtr + object->tlsSegmentSize;
-				size_t misalign = ptr & (object->tlsAlignment - 1);
-				if(misalign)
-					ptr += object->tlsAlignment - misalign;
-
-				if(ptr > runtimeTlsMap->initialLimit)
-					mlibc::panicLogger() << "rtld: Static TLS space exhausted while while"
-							" allocating TLS for " << object->name << frg::endlog;
-
 				object->tlsModel = TlsModel::initial;
 
 				if constexpr (tlsAboveTp) {
-					size_t tcbSize = ((sizeof(Tcb) + tlsMaxAlignment - 1) & ~(tlsMaxAlignment - 1));
+					size_t misalign = runtimeTlsMap->initialPtr & (object->tlsAlignment - 1);
+					if(misalign)
+						runtimeTlsMap->initialPtr += object->tlsAlignment - misalign;
 
-					object->tlsOffset = runtimeTlsMap->initialPtr + tcbSize;
-					runtimeTlsMap->initialPtr = ptr;
+					object->tlsOffset = runtimeTlsMap->initialPtr;
+					runtimeTlsMap->initialPtr += object->tlsSegmentSize;
 				} else {
-					runtimeTlsMap->initialPtr = ptr;
+					runtimeTlsMap->initialPtr += object->tlsSegmentSize;
+
+					size_t misalign = runtimeTlsMap->initialPtr & (object->tlsAlignment - 1);
+					if(misalign)
+						runtimeTlsMap->initialPtr += object->tlsAlignment - misalign;
+
 					object->tlsOffset = -runtimeTlsMap->initialPtr;
 				}
+
+				if(runtimeTlsMap->initialPtr > runtimeTlsMap->initialLimit)
+						mlibc::panicLogger() << "rtld: Static TLS space exhausted while while"
+								" allocating TLS for " << object->name << frg::endlog;
 
 				if(verbose)
 					mlibc::infoLogger() << "rtld: TLS of " << object->name
@@ -1631,12 +1644,7 @@ void Loader::_processRelocations(Relocation &rel) {
 			tls_offset = rel.object()->tlsOffset;
 		}
 
-		if constexpr (tlsAboveTp) {
-			off += tls_offset - sizeof(Tcb);
-		} else {
-			off += tls_offset;
-		}
-
+		off += tls_offset + tlsOffsetFromTp;
 		rel.relocate(off);
 	} break;
 	default:
@@ -1838,10 +1846,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 
 			if (target->tlsModel == TlsModel::initial) {
 				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
-				uint64_t value = symValue + target->tlsOffset + addend;
-				if constexpr (tlsAboveTp) {
-					value -= sizeof(Tcb);
-				}
+				uint64_t value = symValue + target->tlsOffset + tlsOffsetFromTp + addend;
 				((uint64_t *)rel_addr)[1] = value;
 			} else {
 				struct TlsdescData {
