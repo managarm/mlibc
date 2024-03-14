@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <sys/eventfd.h>
 #include <sys/inotify.h>
+#include <sys/reboot.h>
 #include <sys/signalfd.h>
 #include <unistd.h>
 
@@ -1331,6 +1332,37 @@ int sys_signalfd_create(const sigset_t *masks, int flags, int *fd)  {
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	*fd = resp.fd();
+	return 0;
+}
+
+int sys_reboot(int command) {
+	if(command != RB_POWER_OFF && command != RB_AUTOBOOT) {
+		mlibc::infoLogger() << "mlibc: Anything other than power off or reboot is not supported yet!" << frg::endlog;
+		return EINVAL;
+	}
+
+	SignalGuard sguard;
+
+	managarm::posix::RebootRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_cmd(command);
+
+	auto [offer, sendReq, recvResp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline()
+		)
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(sendReq.error());
+	HEL_CHECK(recvResp.error());
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recvResp.data(), recvResp.length());
+	if(resp.error() == managarm::posix::Errors::INSUFFICIENT_PERMISSION)
+		return EPERM;
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
 }
 
