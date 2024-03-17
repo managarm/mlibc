@@ -557,9 +557,14 @@ ssize_t readlink(const char *__restrict path, char *__restrict buffer, size_t ma
 	return length;
 }
 
-ssize_t readlinkat(int, const char *__restrict, char *__restrict, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+ssize_t readlinkat(int dirfd, const char *__restrict path, char *__restrict buffer, size_t max_size) {
+	ssize_t length;
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_readlinkat, -1);
+	if(int e = mlibc::sys_readlinkat(dirfd, path, buffer, max_size, &length); e) {
+		errno = e;
+		return -1;
+	}
+	return length;
 }
 
 int rmdir(const char *path) {
