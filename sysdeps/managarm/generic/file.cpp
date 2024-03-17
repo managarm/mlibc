@@ -2036,21 +2036,26 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 }
 
 int sys_readlink(const char *path, void *data, size_t max_size, ssize_t *length) {
+	return sys_readlinkat(AT_FDCWD, path, data, max_size, length);
+}
+
+int sys_readlinkat(int dirfd, const char *path, void *data, size_t max_size, ssize_t *length) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::READLINK);
+	managarm::posix::ReadlinkAtRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_fd(dirfd);
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 
-	auto [offer, send_req, recv_resp, recv_data] = exchangeMsgsSync(
+	auto [offer, send_head, send_tail, recv_resp, recv_data] = exchangeMsgsSync(
 		getPosixLane(),
 		helix_ng::offer(
-			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
 			helix_ng::recvInline(),
 			helix_ng::recvBuffer(data, max_size))
 	);
 	HEL_CHECK(offer.error());
-	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
