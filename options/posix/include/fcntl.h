@@ -60,6 +60,7 @@ ssize_t vmsplice(int fd, const struct iovec *iov, size_t nr_segs, unsigned int f
 #define SPLICE_F_MORE 4
 #define SPLICE_F_GIFT 8
 
+#define AT_STATX_SYNC_AS_STAT 0x0000
 #define AT_NO_AUTOMOUNT 0x800
 
 #define F_SETPIPE_SZ 1031
