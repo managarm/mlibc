@@ -107,7 +107,7 @@ static void _vsyslog(int priority, const char *message, va_list ap) {
 
 	pid = (log_opt & LOG_PID) ? getpid() : 0;
 	l = snprintf(buf, sizeof buf, "<%d>%s %n%s%s%.0d%s: ",
-		priority, timebuf, &hlen, log_ident, "[" + !pid, pid, "]" + !pid);
+		priority, timebuf, &hlen, log_ident, (pid ? "[" : ""), pid, (pid ? "]" : ""));
 	errno = errno_save;
 	l2 = vsnprintf(buf + l, sizeof buf - l, message, ap);
 	if(l2 >= 0) {
