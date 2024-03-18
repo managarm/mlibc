@@ -1610,7 +1610,7 @@ void Loader::_processRelocations(Relocation &rel) {
 	} break;
 	case R_TLS_TPREL: {
 		uintptr_t off = rel.addend_rel();
-		uintptr_t tls_offset = 0;
+		ssize_t tls_offset = 0;
 
 		if(rel.symbol_index()) {
 			__ensure(p);

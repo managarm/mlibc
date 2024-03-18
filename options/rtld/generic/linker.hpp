@@ -181,7 +181,7 @@ struct SharedObject {
 
 	TlsModel tlsModel;
 	size_t tlsIndex;
-	size_t tlsOffset;
+	ssize_t tlsOffset;
 
 	uint64_t globalRts;
 	bool wasLinked;
