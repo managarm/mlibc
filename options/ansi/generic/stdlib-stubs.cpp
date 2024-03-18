@@ -401,7 +401,7 @@ int mbtowc(wchar_t *__restrict wc, const char *__restrict mb, size_t max_size) {
 	if (mb) {
 		if (*mb) {
 			mlibc::code_seq<wchar_t> wseq{wc, wc + 1};
-			mlibc::code_seq<const char> nseq{mb, mb + max_size};
+			mlibc::code_seq<const char> nseq{mb, mb + frg::min(max_size, MB_CUR_MAX)};
 			auto e = cc->decode_wtranscode(nseq, wseq, mbtowc_state);
 			switch(e) {
 				// We keep the state, so we can simply return here.
