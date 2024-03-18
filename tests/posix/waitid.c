@@ -17,4 +17,6 @@ int main() {
 	assert(si.si_pid == pid);
 	assert(si.si_signo == SIGCHLD);
 	assert(si.si_code == CLD_EXITED);
+
+	return 0;
 }

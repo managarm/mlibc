@@ -8,4 +8,6 @@ int main() {
 	assert(error_message_count == 1);
 	error_at_line(0, EINVAL, __FILE__, __LINE__, "test error #2");
 	assert(error_message_count == 2);
+
+	return 0;
 }

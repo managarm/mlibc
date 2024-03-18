@@ -10,4 +10,6 @@ int main() {
 	assert(error_message_count == 1);
 	error_at_line(0, EINVAL, __FILE__, 0, "test error #2");
 	assert(error_message_count == 1);
+
+	return 0;
 }

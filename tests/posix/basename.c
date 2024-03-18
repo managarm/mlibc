@@ -14,4 +14,6 @@ int main() {
 	test_string("/", "/");
 	test_string(".", ".");
 	test_string("..", "..");
+
+	return 0;
 }

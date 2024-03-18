@@ -67,4 +67,6 @@ int main() {
 		assert(!ret);
 	}
 	free(p);
+
+	return 0;
 }

@@ -50,4 +50,6 @@ int main() {
 		str += ret;
 		loop++;
 	}
+
+	return 0;
 }

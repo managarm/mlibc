@@ -24,4 +24,6 @@ int main() {
 
 	assert(new_priority != -1 || !errno);
 	assert(new_priority == original_priority + 1);
+
+	return 0;
 }

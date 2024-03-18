@@ -53,4 +53,6 @@ int main() {
 	assert(hitBarrierCount == 3);
 
 	pthread_barrier_destroy(&barrier);
+
+	return 0;
 }

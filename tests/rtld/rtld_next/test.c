@@ -23,4 +23,6 @@ int main() {
 	assert(!strcmp(ret(), "foo"));
 
 	assert(barGetNext() == NULL);
+
+	return 0;
 }

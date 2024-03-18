@@ -17,4 +17,6 @@ int main() {
 		size_t *p = ptr;
 		assert(!p[i]);
 	}
+
+	return 0;
 }

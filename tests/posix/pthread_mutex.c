@@ -98,4 +98,6 @@ int main() {
 	testAttr();
 	testNormal();
 	testRecursive();
+
+	return 0;
 }

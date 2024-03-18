@@ -13,4 +13,6 @@ int main() {
 	void *foo = dlopen(LIBFOO, RTLD_NOW);
 	assert(foo);
 	dlclose(foo);
+
+	return 0;
 }

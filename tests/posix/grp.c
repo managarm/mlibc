@@ -107,4 +107,6 @@ int main()
 	if(password)
 		free(grp.gr_passwd);
 	free(buf);
+
+	return 0;
 }

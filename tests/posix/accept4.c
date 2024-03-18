@@ -120,4 +120,6 @@ int main() {
 		}
 		close(listen_fd);
 	}
+
+	return 0;
 }

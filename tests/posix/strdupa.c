@@ -11,4 +11,6 @@ int main() {
 
 	char *trimmed = strndupa(test, 5);
 	assert(!strcmp("Hello", trimmed));
+
+	return 0;
 }

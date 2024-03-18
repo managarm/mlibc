@@ -66,4 +66,6 @@ int main() {
 	assert(!ret);
 
 	assert(cookie.read && cookie.write && cookie.seek && cookie.close);
+
+	return 0;
 }

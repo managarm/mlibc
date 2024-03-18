@@ -85,4 +85,6 @@ int main()
 	free(pwd.pw_gecos);
 	free(pwd.pw_dir);
 	free(pwd.pw_shell);
+
+	return 0;
 }

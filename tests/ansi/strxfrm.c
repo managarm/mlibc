@@ -11,4 +11,6 @@ int main() {
 	assert(ret == 13);
 	int cmp = strncmp(dest, buf, 13);
 	assert(!cmp);
+
+	return 0;
 }

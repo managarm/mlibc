@@ -48,4 +48,6 @@ int main() {
 	assert(!close(fd));
 
 	unlink(TEST_FILE);
+
+	return 0;
 }
