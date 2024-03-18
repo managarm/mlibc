@@ -106,6 +106,14 @@ if not no_headers
 endif
 
 if not headers_only
+	c_compiler = meson.get_compiler('c')
+
+	if c_compiler.get_id() == 'gcc'
+		compiler_c_args = ['-Wno-unused', '-Wno-maybe-uninitialized']
+	elif c_compiler.get_id() == 'clang'
+		compiler_c_args = ['-Wno-unused-parameter', '-Wno-unused-but-set-variable']
+	endif
+
 	libc_sublibs += static_library('mlibc-musl-math',
 		'musl-generic-math/acos.c',
 		'musl-generic-math/acosf.c',
@@ -322,5 +330,5 @@ if not headers_only
 		pic: true,
 		include_directories: libc_include_dirs,
 		dependencies: libc_deps,
-		c_args: ['-Wno-unused', '-Wno-implicit', '-Wno-parentheses', '-Wno-sign-compare', '-Wno-attributes', '-Wno-unknown-pragmas', '-Wno-maybe-uninitialized'])
+		c_args: [compiler_c_args, '-Wno-implicit', '-Wno-parentheses', '-Wno-sign-compare', '-Wno-attributes', '-Wno-unknown-pragmas'])
 endif
