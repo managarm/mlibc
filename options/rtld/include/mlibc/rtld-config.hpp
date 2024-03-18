@@ -9,7 +9,10 @@ struct RtldConfig {
 
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern "C" const mlibc::RtldConfig &__dlapi_get_config();
+#pragma clang diagnostic pop
 
 #ifndef MLIBC_BUILDING_RTLD
 namespace mlibc {
