@@ -179,6 +179,8 @@ int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
 		return EBADF;
 	}else if(resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
 		return ENOTDIR;
+	}else if(resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
+		return EEXIST;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
