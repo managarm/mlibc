@@ -252,3 +252,31 @@ void __ubsan_handle_nonnull_arg(NonNullArgData *data) {
 		<< "argument " << data->arg_index << " is required to be non-null in "
 		<< data->attr_loc << frg::endlog;
 }
+
+struct FloatCastOverflowData {
+	SourceLocation loc;
+	const TypeDescriptor &from_type;
+	const TypeDescriptor &to_type;
+};
+
+extern "C" [[gnu::visibility("hidden")]]
+void __ubsan_handle_float_cast_overflow(FloatCastOverflowData *data, ValueHandle from) {
+	(void) from;
+	mlibc::panicLogger()
+		<< LOG_NAME_LOC("float cast overflow", data->loc)
+		<< "from " << data->from_type << " to "
+		<< data->to_type << frg::endlog;
+}
+
+struct FunctionTypeMismatchData {
+	SourceLocation loc;
+	const TypeDescriptor &type;
+};
+
+extern "C" [[gnu::visibility("hidden")]]
+void __ubsan_handle_function_type_mismatch(FunctionTypeMismatchData *data, ValueHandle from) {
+	(void) from;
+	mlibc::panicLogger()
+		<< LOG_NAME_LOC("function type mismatch", data->loc)
+		<< frg::endlog;
+}
