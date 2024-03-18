@@ -92,9 +92,6 @@ static constexpr unsigned int mutexErrorCheck = 2;
 static constexpr unsigned int mutex_owner_mask = (static_cast<uint32_t>(1) << 30) - 1;
 static constexpr unsigned int mutex_waiters_bit = static_cast<uint32_t>(1) << 31;
 
-// Only valid for the internal __mlibc_m mutex of wrlocks.
-static constexpr unsigned int mutex_excl_bit = static_cast<uint32_t>(1) << 30;
-
 int thread_mutex_init(struct __mlibc_mutex *__restrict mutex,
 		const struct __mlibc_mutexattr *__restrict attr) {
 	auto type = attr ? attr->__mlibc_type : __MLIBC_THREAD_MUTEX_DEFAULT;
