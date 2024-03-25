@@ -3,10 +3,16 @@
 #define MLIBC_TIMESPEC_H
 
 #include <bits/ansi/time_t.h>
+#include <bits/field-padding.h>
 
+// Equivalent of timespec64 in glibc.
+// Should be used only with 64-bit syscalls
+// or with appropriate compat syscalls.
 struct timespec {
 	time_t tv_sec;
-	long tv_nsec;
+	// tv_nspec is required to be long by the C standard.
+	// However linux kernel expects long long. So we add padding.
+	__MLIBC_FIELD_PADDED(long, long long, tv_nsec);
 };
 
 #endif // MLIBC_TIMESPEC_H
