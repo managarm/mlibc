@@ -32,6 +32,7 @@ libc_sources += files(
 	'generic/cpuset.cpp',
 	'generic/sys-swap.cpp',
 	'generic/sys-statfs-stubs.cpp',
+	'generic/sys-statx.cpp',
 )
 
 if not no_headers
