@@ -1653,7 +1653,7 @@ int sys_mknodat(int dirfd, const char *path, int mode, int dev) {
 	return 0;
 }
 
-int sys_mkfifoat(int dirfd, const char *path, int mode) {
+int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
 	return sys_mknodat(dirfd, path, mode | S_IFIFO, 0);
 }
 
