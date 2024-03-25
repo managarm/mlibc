@@ -63,7 +63,7 @@ struct statx {
 
 	__mlibc_uint64 stx_mnt_id;
 	__mlibc_uint32 stx_dio_mem_align;
-	__mlibc_uint32 stx_dio_mem_offset;
+	__mlibc_uint32 stx_dio_offset_align;
 
 	__mlibc_uint64 __padding1[12];
 };
