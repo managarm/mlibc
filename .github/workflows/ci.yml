@@ -8,6 +8,13 @@ jobs:
             matrix:
                 arch: [x86_64, riscv64, aarch64, x86]
                 builds: [mlibc, mlibc-static, mlibc-shared, mlibc-ansi-only, mlibc-headers-only]
+                compiler: [gcc, clang]
+                exclude:
+                  - compiler: clang
+                include:
+                  - arch: x86_64
+                    builds: mlibc
+                    compiler: clang
         name: Build mlibc
         runs-on: ubuntu-20.04
         container:
@@ -18,7 +25,7 @@ jobs:
                 apt-get update
                 apt-get install -y ninja-build qemu-user \
                                 python3-setuptools python3-jsonschema \
-                                python3-pexpect python3-pip netbase
+                                python3-pexpect python3-pip netbase clang lld
                 pip install --break-system-packages -U xbstrap pyexpect meson
           - name: Prepare directories
             run: |
@@ -39,6 +46,7 @@ jobs:
               cat > bootstrap-site.yml << EOF
               define_options:
                 arch: ${{matrix.arch}}
+                compiler: ${{matrix.compiler}}
               EOF
               xbstrap init ../src
             working-directory: build/

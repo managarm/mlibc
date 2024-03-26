@@ -16,4 +16,6 @@ int main() {
 	error_print_progname = &test_progname;
 	error(0, EINVAL, "test error #1");
 	assert(ran == true);
+
+	return 0;
 }

@@ -127,9 +127,9 @@ int main() {
 	assert(!strcmp(buf, "12"));
 	sprintf(buf, "%zd", (size_t)12);
 	assert(!strcmp(buf, "12"));
-	sprintf(buf, "%hd", 12);
+	sprintf(buf, "%hd", (short) 12);
 	assert(!strcmp(buf, "12"));
-	sprintf(buf, "%hhd", 12);
+	sprintf(buf, "%hhd", (char) 12);
 	assert(!strcmp(buf, "12"));
 
 	// Test 'x' with different size mods to see
@@ -142,9 +142,9 @@ int main() {
 	assert(!strcmp(buf, "c"));
 	sprintf(buf, "%zx", (size_t)12);
 	assert(!strcmp(buf, "c"));
-	sprintf(buf, "%hx", 12);
+	sprintf(buf, "%hx", (unsigned short) 12);
 	assert(!strcmp(buf, "c"));
-	sprintf(buf, "%hhx", 12);
+	sprintf(buf, "%hhx", (unsigned char) 12);
 	assert(!strcmp(buf, "c"));
 
 	// Test 'X' with different size mods to see
@@ -157,9 +157,9 @@ int main() {
 	assert(!strcmp(buf, "C"));
 	sprintf(buf, "%zX", (size_t)12);
 	assert(!strcmp(buf, "C"));
-	sprintf(buf, "%hX", 12);
+	sprintf(buf, "%hX", (unsigned short) 12);
 	assert(!strcmp(buf, "C"));
-	sprintf(buf, "%hhX", 12);
+	sprintf(buf, "%hhX", (unsigned char) 12);
 	assert(!strcmp(buf, "C"));
 
 	// Test 'o' with different size mods to see
@@ -172,9 +172,9 @@ int main() {
 	assert(!strcmp(buf, "14"));
 	sprintf(buf, "%zo", (size_t)12);
 	assert(!strcmp(buf, "14"));
-	sprintf(buf, "%ho", 12);
+	sprintf(buf, "%ho", (unsigned short) 12);
 	assert(!strcmp(buf, "14"));
-	sprintf(buf, "%hho", 12);
+	sprintf(buf, "%hho", (unsigned char) 12);
 	assert(!strcmp(buf, "14"));
 
 	// Test %n$ syntax.

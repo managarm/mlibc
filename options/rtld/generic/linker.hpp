@@ -181,7 +181,7 @@ struct SharedObject {
 
 	TlsModel tlsModel;
 	size_t tlsIndex;
-	size_t tlsOffset;
+	ssize_t tlsOffset;
 
 	uint64_t globalRts;
 	bool wasLinked;
@@ -355,7 +355,7 @@ extern frg::manual_box<Scope> globalScope;
 // Loader
 // --------------------------------------------------------
 
-class Loader {
+struct Loader {
 public:
 	Loader(Scope *scope, SharedObject *mainExecutable, bool is_initial_link, uint64_t rts);
 

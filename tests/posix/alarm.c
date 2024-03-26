@@ -31,4 +31,6 @@ int main() {
 		fprintf(stderr, "alarm handler fired %u times instead of 1\n", alarms_fired);
 		exit(1);
 	}
+
+	return 0;
 }

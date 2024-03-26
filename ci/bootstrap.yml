@@ -1,6 +1,8 @@
 declare_options:
   - name: arch
     default: x86_64
+  - name: compiler
+    default: gcc
 
 sources:
   - name: mlibc
@@ -13,7 +15,7 @@ sources:
     format: 'tar.xz'
     version: '6.1.8'
 
-tools:
+tools: []
 
 packages:
   - name: mlibc
@@ -28,14 +30,14 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
-        - "-Dc_args=['-Wno-error=maybe-uninitialized']"
-        - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
+        - "-Dc_args=['-Wno-error=maybe-uninitialized', '-Wno-unknown-warning-option']"
+        - "-Dcpp_args=['-Wno-error=maybe-uninitialized', '-Wno-unknown-warning-option']"
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
         - "-Dwerror=true"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
-        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
+        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
         environ:
           CFLAGS: '-Wno-error=maybe-uninitialized'
@@ -66,7 +68,7 @@ packages:
         - "-Ddefault_library=static"
         - "-Dwerror=true"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
-        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
+        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
     build:
       - args: ['ninja']
@@ -93,7 +95,7 @@ packages:
         - "-Ddefault_library=shared"
         - "-Dwerror=true"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
-        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
+        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
     build:
       - args: ['ninja']
@@ -125,7 +127,7 @@ packages:
         - "-Ddisable_glibc_option=true"
         - "-Ddisable_bsd_option=true"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
-        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
+        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
     build:
       - args: ['ninja']
@@ -152,7 +154,7 @@ packages:
         - "-Dwerror=true"
         - "-Dheaders_only=true"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
-        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@.cross-file"
+        - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
     build:
       - args: ['ninja']

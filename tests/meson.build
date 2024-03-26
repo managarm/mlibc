@@ -149,6 +149,18 @@ use_pie = false
 test_c_args = []
 test_link_args = []
 
+host_test_c_args = []
+
+c_compiler = meson.get_compiler('c')
+
+if c_compiler.get_id() == 'gcc'
+	test_c_args += []
+	host_test_c_args += []
+elif c_compiler.get_id() == 'clang'
+	test_c_args += ['-Wno-unknown-warning-option']
+	host_test_c_args += ['-Wno-unknown-warning-option']
+endif
+
 # Our ubsan implementation can't be used by the tests themselves,
 # since it is internal to libc.so and ld.so.
 test_override_options = ['b_sanitize=none']
@@ -253,7 +265,7 @@ foreach test_name : all_test_cases
 		exec = executable('host-libc-' + test_exec_name, test_name + '.c',
 			build_rpath: meson.build_root(),
 			override_options: host_libc_sanitize_options,
-			c_args: ['-D_GNU_SOURCE', '-DUSE_HOST_LIBC', '-pthread', extra_cflags],
+			c_args: [host_test_c_args + '-D_GNU_SOURCE', '-DUSE_HOST_LIBC', '-pthread', extra_cflags],
 			link_args: ['-lresolv', '-ldl', '-pthread', '-lm', '-lrt'],
 			native: true,
 		)

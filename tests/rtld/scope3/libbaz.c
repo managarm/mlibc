@@ -1,7 +1,7 @@
 int g = 2;
 
-int call_foo();
+int call_foo(void);
 
-int call_baz() {
+int call_baz(void) {
 	return call_foo();
 }

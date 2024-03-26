@@ -87,4 +87,6 @@ int main() {
 
 	assert(dlclose(foo_handle) == 0);
 	assert(dlclose(foo_handle) == 0);
+
+	return 0;
 }

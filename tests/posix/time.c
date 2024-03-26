@@ -188,4 +188,6 @@ int main() {
 	assert(!strcmp(buf, "%"));
 	memset(&tm, 0, sizeof(tm));
 #pragma GCC diagnostic pop
+
+	return 0;
 }

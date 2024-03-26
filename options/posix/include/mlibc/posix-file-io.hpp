@@ -93,7 +93,7 @@ protected:
 private:
 	void *_cookie;
 
-	int _flags;
+	[[maybe_unused]] int _flags;
 	cookie_io_functions_t _funcs;
 };
 

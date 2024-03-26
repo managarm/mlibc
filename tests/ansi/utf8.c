@@ -60,4 +60,6 @@ int main() {
 	verify_decode("\xED\x95\x9C", 0xD55C);
 	verify_decode("\xF0\x90\x8D\x88", 0x10348);
 	verify_decode("", L'\0');
+
+	return 0;
 }

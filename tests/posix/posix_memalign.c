@@ -18,4 +18,6 @@ int main() {
 	free(p);
 	assert(posix_memalign(&p, 256, 256) == 0 && p != NULL && (uintptr_t)p % 256 == 0);
 	free(p);
+
+	return 0;
 }

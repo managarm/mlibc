@@ -41,4 +41,6 @@ static void (*preinitFunctions[])(void) = {
 int main() {
 	assert(isFooDone() == 1);
 	assert(mainDone == 3);
+
+	return 0;
 }

@@ -9,8 +9,9 @@ size_t iconv(iconv_t cd, char **__restrict inbuf, size_t *__restrict inbytesleft
 	mlibc::infoLogger() << "iconv() is unimplemented!" << frg::endlog;
 	if(cd == (iconv_t)1) { // UTF-8 to UTF-8
 		mlibc::infoLogger() << "iconv() from and to are the same, memcpy it is" << frg::endlog;
-		memcpy(inbuf, outbuf, sizeof(inbuf));
-		return sizeof(outbuf);
+		memcpy(inbuf, outbuf, *inbytesleft);
+		*outbytesleft = *inbytesleft;
+		return *outbytesleft;
 	}
 	__ensure(!"iconv() not implemented");
 	__builtin_unreachable();

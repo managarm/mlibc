@@ -31,7 +31,7 @@ typedef struct {
 #define RAND_MAX 0x7FFFFFFF
 
 // TODO: this should not be a compile-time constant
-#define MB_CUR_MAX 4
+#define MB_CUR_MAX ((size_t)4)
 
 #ifndef __MLIBC_ABI_ONLY
 

@@ -47,7 +47,6 @@ private:
 #define SCOPE_TRACE() ScopeTrace(__FILE__, __LINE__, __FUNCTION__)
 
 static constexpr unsigned int mutexRecursive = 1;
-static constexpr unsigned int mutexErrorCheck = 2;
 
 // TODO: either use uint32_t or determine the bit based on sizeof(int).
 static constexpr unsigned int mutex_owner_mask = (static_cast<uint32_t>(1) << 30) - 1;

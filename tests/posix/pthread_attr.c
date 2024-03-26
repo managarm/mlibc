@@ -154,4 +154,6 @@ int main() {
 #if !defined(USE_HOST_LIBC) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
 	test_stack();
 #endif
+
+	return 0;
 }

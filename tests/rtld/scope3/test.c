@@ -36,4 +36,6 @@ int main() {
 
 	dlclose(libbar);
 	dlclose(libbaz);
+
+	return 0;
 }

@@ -18,4 +18,6 @@ int main() {
 	assert(dladdr((const void *)foo_global, &info) != 0);
 	
 	assert(dlclose(foo_handle) == 0);
+
+	return 0;
 }

@@ -24,4 +24,6 @@ int main() {
 	assert(dlsym(RTLD_DEFAULT, "foo"));
 
 	dlclose(foo);
+
+	return 0;
 }

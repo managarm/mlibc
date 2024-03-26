@@ -87,4 +87,6 @@ int main(void) {
 
 	// Delete the file
 	unlink(TEST_FILE);
+
+	return 0;
 }

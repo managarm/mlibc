@@ -33,4 +33,6 @@ int main() {
 
 	dlclose(bar);
 	dlclose(baz);
+
+	return 0;
 }

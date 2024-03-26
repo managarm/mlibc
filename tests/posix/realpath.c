@@ -130,4 +130,6 @@ int main() {
 	free(path);
 
 	cleanup(1);
+
+	return 0;
 }

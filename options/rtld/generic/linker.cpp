@@ -503,7 +503,8 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 
 		if(phdr->p_type == PT_LOAD) {
 			size_t misalign = phdr->p_vaddr & (pageSize - 1);
-			__ensure(phdr->p_memsz > 0);
+			if(!phdr->p_memsz)
+				continue;
 			__ensure(phdr->p_memsz >= phdr->p_filesz);
 
 			// If the following condition is violated, we cannot use mmap() the segment;
@@ -1622,7 +1623,7 @@ void Loader::_processRelocations(Relocation &rel) {
 	} break;
 	case R_TLS_TPREL: {
 		uintptr_t off = rel.addend_rel();
-		uintptr_t tls_offset = 0;
+		ssize_t tls_offset = 0;
 
 		if(rel.symbol_index()) {
 			__ensure(p);

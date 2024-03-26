@@ -29,4 +29,6 @@ int main() {
 	assert(policy == SCHED_FIFO);
 	assert(param.sched_priority == 10);
 	assert(!ret);
+
+	return 0;
 }

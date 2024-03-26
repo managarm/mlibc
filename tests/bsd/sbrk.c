@@ -6,4 +6,6 @@ int main() {
 	void *ret = sbrk(0);
 	assert(ret != (void *) -1);
 	assert(ret);
+
+	return 0;
 }

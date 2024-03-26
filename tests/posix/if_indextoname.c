@@ -8,4 +8,6 @@ int main() {
 	assert(name == if_indextoname(1, name));
 	printf("test: name '%s'\n", name);
 	assert(1 == if_nametoindex(name));
+
+	return 0;
 }

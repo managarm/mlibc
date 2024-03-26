@@ -177,7 +177,6 @@ size_t mbsnrtowcs(wchar_t *wcs, const char **mbsp, size_t mb_limit, size_t wc_li
 size_t wcsrtombs(char *mbs, const wchar_t **wcsp, size_t mb_limit, mbstate_t *stp) {
 	__ensure(wcsp && "wcsrtombs() with null input");
 	auto cc = mlibc::current_charcode();
-	mlibc::code_seq<char> nseq{mbs, mbs + mb_limit};
 	mlibc::code_seq<const wchar_t> wseq{*wcsp, nullptr};
 
 	if(!stp)
@@ -189,6 +188,8 @@ size_t wcsrtombs(char *mbs, const wchar_t **wcsp, size_t mb_limit, mbstate_t *st
 			__ensure(!"decode_wtranscode() errors are not handled");
 		return size;
 	}
+
+	mlibc::code_seq<char> nseq{mbs, mbs + mb_limit};
 
 	if(auto e = cc->encode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
 		__ensure(!"encode_wtranscode() errors are not handled");

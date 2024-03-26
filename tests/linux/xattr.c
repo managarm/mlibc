@@ -77,4 +77,6 @@ int main(void) {
 	soft_assert(memmem(buf, ret, "user.T1", 7), "user.T1 not found");
 	soft_assert(!memmem(buf, ret, "user.T2", 7), "user.T2 found");
 	soft_assert(!memmem(buf, ret, "user.T3", 7), "user.T3 found");
+
+	return 0;
 }

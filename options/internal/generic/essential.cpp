@@ -2,32 +2,23 @@
 #include <stdint.h>
 
 namespace {
-	// Needed since we cannot declare a templated enum.
-	template<typename T>
-	struct word_helper {
-		using underlying [[gnu::aligned(1)]] = T;
-		enum class [[gnu::may_alias]] word_enum : underlying { };
-	};
-
-	template<typename T>
-	using word = typename word_helper<T>::word_enum;
-
 	template<typename T>
 	[[gnu::always_inline]]
-	inline word<T> alias_load(const unsigned char *&p) {
-		word<T> value = *reinterpret_cast<const word<T> *>(p);
+	inline T alias_load(const unsigned char *&p) {
+		T value;
+		__builtin_memcpy(&value, p, sizeof(value));
 		p += sizeof(T);
 		return value;
 	}
 
 	template<typename T>
 	[[gnu::always_inline]]
-	inline void alias_store(unsigned char *&p, word<T> value) {
-		*reinterpret_cast<word<T> *>(p) = value;
+	inline void alias_store(unsigned char *&p, T value) {
+		__builtin_memcpy(p, &value, sizeof(value));
 		p += sizeof(T);
 	}
 
-#ifdef __LP64__
+#if defined(__LP64__) && !defined(__riscv)
 	void *forward_copy(void *__restrict dest, const void *__restrict src, size_t n) {
 		auto curDest = reinterpret_cast<unsigned char *>(dest);
 		auto curSrc = reinterpret_cast<const unsigned char *>(src);
@@ -118,12 +109,12 @@ void *memset(void *dest, int val, size_t n) {
 	unsigned char byte = val;
 
 	// Get rid of misalignment.
-	while(n && (reinterpret_cast<uintptr_t>(curDest) & 7)) {
+	while(n && (uintptr_t(curDest) & 7)) {
 		*curDest++ = byte;
 		--n;
 	}
 
-	auto pattern64 = static_cast<word<uint64_t>>(
+	auto pattern64 = static_cast<uint64_t>(
 			static_cast<uint64_t>(byte)
 			| (static_cast<uint64_t>(byte) << 8)
 			| (static_cast<uint64_t>(byte) << 16)
@@ -133,13 +124,13 @@ void *memset(void *dest, int val, size_t n) {
 			| (static_cast<uint64_t>(byte) << 48)
 			| (static_cast<uint64_t>(byte) << 56));
 
-	auto pattern32 = static_cast<word<uint32_t>>(
+	auto pattern32 = static_cast<uint32_t>(
 			static_cast<uint32_t>(byte)
 			| (static_cast<uint32_t>(byte) << 8)
 			| (static_cast<uint32_t>(byte) << 16)
 			| (static_cast<uint32_t>(byte) << 24));
 
-	auto pattern16 = static_cast<word<uint16_t>>(
+	auto pattern16 = static_cast<uint16_t>(
 			static_cast<uint16_t>(byte)
 			| (static_cast<uint16_t>(byte) << 8));
 

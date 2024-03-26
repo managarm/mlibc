@@ -33,4 +33,6 @@ int main() {
 
 	dlclose(foo);
 	dlclose(bar);
+
+	return 0;
 }

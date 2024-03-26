@@ -26,4 +26,6 @@ int main(void) {
 		times_called = 1;
 		longjmp(buf, 0);
 	}
+
+	return 0;
 }

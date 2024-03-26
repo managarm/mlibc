@@ -88,4 +88,6 @@ int main() {
 		parent_fn();
 	else
 		child_fn();
+
+	return 0;
 }

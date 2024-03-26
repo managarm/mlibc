@@ -3,4 +3,6 @@
 
 int main() {
 	error(0, EINVAL, "test: %s", "error");
+
+	return 0;
 }

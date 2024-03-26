@@ -1,1 +1,1 @@
-char *name() { return "foo"; }
+char *name(void) { return "foo"; }

@@ -442,8 +442,19 @@ if not headers_only
 		'-fvisibility=hidden',
 		'-fvisibility-inlines-hidden',
 		'-fno-stack-protector',
-		'-DMLIBC_BUILDING_RTLD'
+		'-DMLIBC_BUILDING_RTLD',
+		'-Wno-extern-c-compat',
+		'-Wno-unknown-pragmas',
 	]
+
+	libc_cpp_args = [
+		'-Wno-unknown-pragmas',
+	]
+
+	if c_compiler.get_id() == 'clang'
+		libc_cpp_args += ['-fno-sanitize=function']
+		ld_cpp_args += ['-fno-sanitize=function']
+	endif
 
 	libc_all_sources = [
 		libc_sources,
@@ -467,7 +478,7 @@ if not headers_only
 			install: false
 		)
 		libc_static = static_library('c', libc_all_sources,
-			cpp_args: static_cpp_args + ['-fno-stack-protector'],
+			cpp_args: static_cpp_args + ['-fno-stack-protector', libc_cpp_args],
 			include_directories: libc_include_dirs,
 			dependencies: libc_deps + rtlib_deps,
 			link_with: [ld_static_lib],
@@ -484,6 +495,7 @@ if not headers_only
 			install: true
 		)
 		libc_shared = shared_library('c', libc_all_sources + internal_dso_sources,
+			cpp_args: [libc_cpp_args],
 			include_directories: libc_include_dirs,
 			dependencies: libc_deps + rtlib_deps,
 			link_with: [ld_shared_lib],
@@ -492,17 +504,17 @@ if not headers_only
 		)
 	endif
 
-	library('pthread', 'dummy-libs/libpthread/src/dummy.cpp', install: true)
-	library('rt', 'dummy-libs/librt/src/dummy.cpp', install: true)
-	library('util', 'dummy-libs/libutil/src/dummy.cpp', install: true)
-	library('m', 'dummy-libs/libm/src/dummy.cpp', install: true)
+	library('pthread', 'dummy-libs/libpthread/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
+	library('rt', 'dummy-libs/librt/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
+	library('util', 'dummy-libs/libutil/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
+	library('m', 'dummy-libs/libm/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
 	if not disable_crypt_option
-		library('crypt', 'dummy-libs/libcrypt/src/dummy.cpp', install: true)
+		library('crypt', 'dummy-libs/libcrypt/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
 	endif
-	library('resolv', 'dummy-libs/libresolv/src/dummy.cpp', install: true)
-	library('dl', 'dummy-libs/libdl/src/dummy.cpp', install: true)
-	library('ssp', 'dummy-libs/libssp/src/dummy.cpp', install: true)
-	library('ssp_nonshared', 'dummy-libs/libssp_nonshared/src/dummy.cpp', install: true)
+	library('resolv', 'dummy-libs/libresolv/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
+	library('dl', 'dummy-libs/libdl/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
+	library('ssp', 'dummy-libs/libssp/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
+	library('ssp_nonshared', 'dummy-libs/libssp_nonshared/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
 endif
 
 summary_info = {}

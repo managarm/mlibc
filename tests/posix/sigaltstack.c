@@ -52,4 +52,6 @@ int main() {
 #else
 #	error Unknown architecture
 #endif
+
+	return 0;
 }

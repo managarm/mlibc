@@ -8,7 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int main(int, char *[]) {
+int main() {
 	int ngroups = 100;
 	struct passwd *pw;
 	struct group *gr;
