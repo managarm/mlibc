@@ -171,6 +171,8 @@ int fseeko(FILE *file_base, off_t offset, int whence) {
 	return 0;
 }
 
+[[gnu::alias("fseeko")]] int fseeko64(FILE *file_base, off64_t offset, int whence);
+
 off_t ftello(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	off_t current_offset;
@@ -180,6 +182,8 @@ off_t ftello(FILE *file_base) {
 	}
 	return current_offset;
 }
+
+[[gnu::alias("ftello")]] off64_t ftello64(FILE *file_base);
 
 int dprintf(int fd, const char *format, ...) {
 	va_list args;

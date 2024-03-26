@@ -689,6 +689,8 @@ struct __dlapi_symbol {
 	void *base;
 	const char *symbol;
 	void *address;
+	const void *elf_symbol;
+	void *link_map;
 };
 
 extern "C" [[ gnu::visibility("default") ]]
@@ -724,6 +726,8 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 				info->base = reinterpret_cast<void *>(object->baseAddress);
 				info->symbol = cand.getString();
 				info->address = reinterpret_cast<void *>(cand.virtualAddress());
+				info->elf_symbol = cand.symbol();
+				info->link_map = &object->linkMap;
 				return 0;
 			}
 		}
@@ -746,6 +750,8 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 				info->base = reinterpret_cast<void *>(object->baseAddress);
 				info->symbol = nullptr;
 				info->address = 0;
+				info->elf_symbol = nullptr;
+				info->link_map = &object->linkMap;
 				return 0;
 			}
 		}
@@ -805,6 +811,54 @@ void __dlapi_enter(uintptr_t *entry_stack) {
 	(void)entry_stack;
 #endif
 }
+
+#if __MLIBC_GLIBC_OPTION
+
+extern "C" [[gnu::visibility("default")]] int _dl_find_object(void *address, dl_find_object *result) {
+	for(const SharedObject *object : initialRepository->loadedObjects) {
+		if(object->baseAddress > (uintptr_t)address) {
+			continue;
+		}
+
+		if(object->inLinkMap)
+			result->dlfo_link_map = (link_map *)&object->linkMap;
+		else
+			result->dlfo_link_map = nullptr;
+
+		uintptr_t end_addr = 0;
+		for(size_t j = 0; j < object->phdrCount; j++) {
+			auto phdr = (elf_phdr *)((uintptr_t)object->phdrPointer + j * object->phdrEntrySize);
+			if(phdr->p_type == DLFO_EH_SEGMENT_TYPE) {
+				result->dlfo_eh_frame = (void *)(object->baseAddress + phdr->p_vaddr);
+				continue;
+			}
+			if(phdr->p_type != PT_LOAD) {
+				continue;
+			}
+			end_addr = frg::max(end_addr, phdr->p_vaddr + phdr->p_memsz);
+		}
+
+		result->dlfo_flags = 0;
+		result->dlfo_map_start = (void *)object->baseAddress;
+		result->dlfo_map_end = (void *)(object->baseAddress + end_addr);
+
+// TODO: fill these fields with proper values
+#if DLFO_STRUCT_HAS_EH_DBASE
+		mlibc::infoLogger() << "mlibc: _dl_find_object dlfo_eh_dbase is not implemented and always returns NULL" << frg::endlog;
+		result->dlfo_eh_dbase = nullptr;
+#endif // DLFO_STRUCT_HAS_EH_DBASE
+#if DLFO_STRUCT_HAS_EH_COUNT
+	mlibc::infoLogger() << "mlibc: _dl_find_object dlfo_eh_count is not implemented and always returns 0" << frg::endlog;
+		result->dlfo_eh_count = 0;
+#endif // DLFO_STRUCT_HAS_EH_COUNT
+
+		return 0;
+	}
+
+	return -1;
+}
+
+#endif // __MLIBC_GLIBC_OPTION
 
 // XXX(qookie):
 // This is here because libgcc will call into __getauxval on glibc Linux

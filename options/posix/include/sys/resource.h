@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-typedef unsigned long rlim_t;
+typedef unsigned long long rlim_t;
 
 struct rlimit {
 	rlim_t rlim_cur;

@@ -120,7 +120,9 @@ typedef void (*__sighandler) (int);
 #define SIGRTMIN 35
 #define SIGRTMAX 64
 
-typedef uint64_t sigset_t;
+typedef struct {
+	unsigned long sig[1024 / (8 * sizeof(long))];
+} sigset_t;
 
 // constants for sigprocmask()
 #define SIG_BLOCK 0
@@ -266,10 +268,11 @@ struct sigaction {
 		void (*sa_handler)(int);
 		void (*sa_sigaction)(int, siginfo_t *, void *);
 	} __sa_handler;
-	sigset_t sa_mask;
-	int sa_flags;
+	unsigned long sa_flags;
 	void (*sa_restorer)(void);
+	sigset_t sa_mask;
 };
+
 #define sa_handler __sa_handler.sa_handler
 #define sa_sigaction __sa_handler.sa_sigaction
 

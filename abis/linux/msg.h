@@ -10,19 +10,23 @@
 extern "C" {
 #endif
 
-#if defined(__i386__)
-typedef __mlibc_uint64 msglen_t;
-typedef __mlibc_uint64 msgqnum_t;
-#else
 typedef unsigned long msglen_t;
 typedef unsigned long msgqnum_t;
-#endif
 
-struct msqid_ds {
-	struct ipc_perm msg_perm;
+struct msqid64_ds {
+	struct ipc64_perm msg_perm;
+#if (UINTPTR_MAX == UINT64_MAX) /* || x32 ABI */
 	time_t msg_stime;
 	time_t msg_rtime;
 	time_t msg_ctime;
+#else
+	unsigned long msg_stime;
+	unsigned long msg_stime_high;
+	unsigned long msg_rtime;
+	unsigned long msg_rtime_high;
+	unsigned long msg_ctime;
+	unsigned long msg_ctime_high;
+#endif
 	unsigned long msg_cbytes;
 	msgqnum_t msg_qnum;
 	msglen_t msg_qbytes;
@@ -30,6 +34,8 @@ struct msqid_ds {
 	pid_t msg_lrpid;
 	unsigned long __unused[2];
 };
+
+#define msqid_ds msqid64_ds
 
 #ifdef __cplusplus
 }

@@ -143,11 +143,8 @@ extra_cflags_test_cases = {
 
 test_sources = []
 test_link_args = []
-test_c_args = []
+test_c_args = ['-D_GNU_SOURCE']
 use_pie = false
-
-test_c_args = []
-test_link_args = []
 
 host_test_c_args = []
 
