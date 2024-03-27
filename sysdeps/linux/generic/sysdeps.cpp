@@ -267,8 +267,19 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 #else
 	auto ret = do_cp_syscall(SYS_fstatat64, fd, path, statbuf, flags);
 #endif
-	if (int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e) {
 		return e;
+	}
+
+#if defined(__i386__)
+	statbuf->st_atim.tv_sec = statbuf->__st_atim32.tv_sec;
+	statbuf->st_atim.tv_nsec = statbuf->__st_atim32.tv_nsec;
+	statbuf->st_mtim.tv_sec = statbuf->__st_mtim32.tv_sec;
+	statbuf->st_mtim.tv_nsec = statbuf->__st_mtim32.tv_nsec;
+	statbuf->st_ctim.tv_sec = statbuf->__st_ctim32.tv_sec;
+	statbuf->st_ctim.tv_nsec = statbuf->__st_ctim32.tv_nsec;
+#endif
+
 	return 0;
 }
 
