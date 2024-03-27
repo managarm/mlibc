@@ -1,4 +1,4 @@
 [wrap-git]
 directory = cshim
 url = https://github.com/managarm/cshim.git
-revision = trunk
+revision = 2ec3cf90aac9207ce54eee70aa013910f5a6d243
