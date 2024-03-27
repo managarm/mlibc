@@ -10,7 +10,7 @@
 struct file_window {
 	file_window(const char *path) {
 		int fd;
-		if(mlibc::sys_open("/etc/localtime", O_RDONLY, 0, &fd))
+		if(mlibc::sys_open(path, O_RDONLY, 0, &fd))
 			mlibc::panicLogger() << "mlibc: Error opening file_window to "
 					<< path << frg::endlog;
 
