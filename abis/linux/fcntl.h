@@ -73,6 +73,9 @@
 #define AT_EACCESS 0x200
 #define AT_EMPTY_PATH 0x1000
 
+#define AT_STATX_FORCE_SYNC 0x2000
+#define AT_STATX_DONT_SYNC 0x4000
+#define AT_STATX_SYNC_TYPE 0x6000
 
 struct f_owner_ex {
 	int type;
