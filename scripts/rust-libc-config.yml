@@ -82,6 +82,9 @@ ignored_structs:
   - "epoll_event"
   - "ifreq"
   - "ifconf"
+  - "stat64"
+  - "statfs64"
+  - "statvfs64"
   # unix/linux_like/mod.rs
   - "in_addr"
   - "ip_mreq"
@@ -164,6 +167,9 @@ ignored_var_declarations:
   - "error_print_progname"
 
 ignored_macros:
+  - "e_exit"
+  - "e_termination"
+  - "stat64"
   - "CHARBITS"
   - "CHAR_MAX"
   - "CHAR_MIN"
@@ -335,6 +341,9 @@ ignored_macros:
   - "major"
   - "makedev"
   - "minor"
+  - "msqid_ds"
+  - "statvfs64"
+  - "ipc_perm"
   - "roundup"
   - "s6_addr"
   - "s6_addr16"
@@ -1976,6 +1985,13 @@ force_macro_type:
     - "TIOCGWINSZ"
     - "TIOCSCTTY"
     - "TIOCSWINSZ"
+    - "SA_NOCLDSTOP"
+    - "SA_NOCLDWAIT"
+    - "SA_NODEFER"
+    - "SA_ONSTACK"
+    - "SA_RESETHAND"
+    - "SA_RESTART"
+    - "SA_SIGINFO"
   "::c_uint":
     - "IGNBRK"
     - "BRKINT"
