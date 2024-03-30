@@ -1619,6 +1619,8 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 		return EINVAL;
 	}else if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
 		return EAGAIN;
+	}else if(resp.error() == managarm::fs::Errors::IS_DIRECTORY) {
+		return EISDIR;
 	}else if(resp.error() == managarm::fs::Errors::END_OF_FILE) {
 		*bytes_read = 0;
 		return 0;
