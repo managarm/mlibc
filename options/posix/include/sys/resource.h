@@ -39,7 +39,9 @@ int setpriority(int, id_t, int);
 
 int getrusage(int, struct rusage *);
 int getrlimit(int, struct rlimit *);
+int getrlimit64(int, struct rlimit *);
 int setrlimit(int, const struct rlimit *);
+int setrlimit64(int, const struct rlimit *);
 
 int prlimit(pid_t pid, int resource, const struct rlimit *new_limits, struct rlimit *old_limits);
 
