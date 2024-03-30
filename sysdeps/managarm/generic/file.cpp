@@ -1393,10 +1393,9 @@ int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
 	SignalGuard sguard;
 
 	uint32_t proto_flags = 0;
-	if (flags & EFD_NONBLOCK) proto_flags |= managarm::posix::OpenFlags::OF_NONBLOCK;
-	if (flags & EFD_CLOEXEC) proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
-	if (flags & EFD_SEMAPHORE)
-		return ENOSYS;
+	if (flags & EFD_NONBLOCK) proto_flags |= managarm::posix::EventFdFlags::NONBLOCK;
+	if (flags & EFD_CLOEXEC) proto_flags |= managarm::posix::EventFdFlags::CLOEXEC;
+	if (flags & EFD_SEMAPHORE) proto_flags |= managarm::posix::EventFdFlags::SEMAPHORE;
 
 	managarm::posix::EventfdCreateRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_flags(proto_flags);
