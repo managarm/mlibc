@@ -634,7 +634,7 @@ def parse(file: pathlib.Path, base_dir: pathlib.Path):
     try:
         tu = index.parse(
             base_dir / file,
-            args=[f"-I{p}" for p in config["includes"]] + ["-I" + str(base_dir)],
+            args=[f"-I{p}" for p in config["includes"]] + ["-I" + str(base_dir), "-D_GNU_SOURCE"],
             options=clang.cindex.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD
             | clang.cindex.TranslationUnit.PARSE_SKIP_FUNCTION_BODIES,
         )
