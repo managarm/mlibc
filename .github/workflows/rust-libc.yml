@@ -1,0 +1,50 @@
+name: Rust libc bindings
+
+on: [push, pull_request]
+
+jobs:
+    check-bindings:
+        name: Verify bindings generation
+        runs-on: ubuntu-20.04
+        container:
+          image: ghcr.io/managarm/mlibc-crossers:latest
+        steps:
+          - name: Install prerequisites
+            run: |
+                apt-get update
+                apt-get install -y ninja-build \
+                                python3-setuptools python3-jsonschema \
+                                python3-pexpect python3-pip python3-clang \
+                                netbase clang lld rustfmt
+                pip install --break-system-packages -U xbstrap pyexpect meson
+          - name: Prepare directories
+            run: |
+                mkdir src/
+                mkdir src/mlibc/
+                mkdir build/
+          - name: Checkout
+            uses: actions/checkout@v2
+            with:
+              path: src/mlibc/
+          - name: Prepare src/
+            run: |
+                cp mlibc/ci/bootstrap.yml .
+                touch mlibc/checkedout.xbstrap
+            working-directory: src/
+          - name: Prepare build/
+            run: |
+              cat > bootstrap-site.yml << EOF
+              define_options:
+                arch: x86_64
+                compiler: gcc
+              EOF
+              xbstrap init ../src
+            working-directory: build/
+          - name: Build mlibc
+            run: 'xbstrap install mlibc-headers-only'
+            working-directory: build/
+          - name: Run generator
+            run: |
+                python3 ./scripts/rust-libc.py ../../build/packages/mlibc-headers-only/usr/include | rustfmt
+            working-directory: src/mlibc/
+
