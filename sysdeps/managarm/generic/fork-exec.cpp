@@ -55,11 +55,6 @@ int sys_futex_wake(int *pointer) {
 }
 
 int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
-	if(ru) {
-		mlibc::infoLogger() << "mlibc: struct rusage in sys_waitpid is unsupported" << frg::endlog;
-		return ENOSYS;
-	}
-
 	SignalGuard sguard;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -89,6 +84,12 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 	if(status)
 		*status = resp.mode();
 	*ret_pid = resp.pid();
+
+	if(ru != nullptr) {
+		ru->ru_utime.tv_sec = resp.ru_user_time() / 1'000'000'000;
+		ru->ru_utime.tv_usec = (resp.ru_user_time() % 1'000'000'000) / 1'000;
+	}
+
 	return 0;
 }
 
