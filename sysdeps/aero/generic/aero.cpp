@@ -303,6 +303,11 @@ int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
     return 0;
 }
 
+int sys_thread_setname(void *tcb, const char *name) {
+    mlibc::infoLogger() << "The name of this thread is " << name << frg::endlog;
+    return 0;
+}
+
 void sys_thread_exit() {
     syscall(SYS_EXIT);
     __builtin_trap();

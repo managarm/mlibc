@@ -39,6 +39,16 @@ int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
     return 0;
 }
 
+int sys_fsync(int) {
+    mlibc::infoLogger() << "\e[35mmlibc: fsync is a stub\e[39m" << frg::endlog;
+    return 0;
+}
+
+int sys_fdatasync(int) {
+    mlibc::infoLogger() << "\e[35mmlibc: fdatasync() is a no-op\e[39m" << frg::endlog;
+    return 0;
+}
+
 // clang-format off
 int sys_pwrite(int fd, const void *buffer, size_t count, off_t off,
                ssize_t *written) UNIMPLEMENTED("sys_pwrite") 
