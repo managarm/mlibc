@@ -205,6 +205,17 @@ int sys_unlinkat(int fd, const char *path, int flags) {
 	return 0;
 }
 
+int sys_symlink(const char *target_path, const char *link_path) {
+	return sys_symlinkat(target_path, AT_FDCWD, link_path);
+}
+
+int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
+    auto ret = syscall(SYS_SYMLINK_AT, dirfd, target_path, strlen(target_path), link_path, strlen(link_path));
+    if (int e = sc_error(ret); e)
+        return e;
+    return 0;
+}
+
 struct aero_dir_entry {
     size_t inode;
     size_t offset;
