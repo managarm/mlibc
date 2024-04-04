@@ -303,10 +303,13 @@ int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
     return 0;
 }
 
-void sys_thread_exit() UNIMPLEMENTED("sys_thread_exit")
+void sys_thread_exit() {
+    syscall(SYS_EXIT);
+    __builtin_trap();
+}
 
-    int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru,
-                    pid_t *ret_pid) {
+int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru,
+                pid_t *ret_pid) {
     if (ru) {
         mlibc::infoLogger()
             << "mlibc: struct rusage in sys_waitpid is unsupported"
