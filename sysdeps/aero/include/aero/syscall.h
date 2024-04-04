@@ -80,6 +80,8 @@
 #define SYS_SETSID 73
 #define SYS_GETPGID 74
 #define SYS_SOCK_SHUTDOWN 75
+#define SYS_GETPEERNAME 76
+#define SYS_GETSOCKNAME 77
 
 // Invalid syscall used to trigger a log error in the kernel (as a hint)
 // so, that we can implement the syscall in the kernel.
