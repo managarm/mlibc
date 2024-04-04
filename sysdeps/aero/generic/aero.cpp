@@ -303,10 +303,18 @@ int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
     return 0;
 }
 
-void sys_thread_exit() UNIMPLEMENTED("sys_thread_exit")
+int sys_thread_setname(void *tcb, const char *name) {
+    mlibc::infoLogger() << "The name of this thread is " << name << frg::endlog;
+    return 0;
+}
 
-    int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru,
-                    pid_t *ret_pid) {
+void sys_thread_exit() {
+    syscall(SYS_EXIT);
+    __builtin_trap();
+}
+
+int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru,
+                pid_t *ret_pid) {
     if (ru) {
         mlibc::infoLogger()
             << "mlibc: struct rusage in sys_waitpid is unsupported"

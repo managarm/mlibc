@@ -77,6 +77,24 @@ if not headers_only
 		install: true,
 		install_dir: get_option('libdir')
 	)
+
+	custom_target('crti',
+		build_by_default: true,
+		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		input: 'crt-x86_64/crti.S',
+		output: 'crti.o',
+		install: true,
+		install_dir: get_option('libdir')
+	)
+
+	custom_target('crtn',
+		build_by_default: true,
+		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		input: 'crt-x86_64/crtn.S',
+		output: 'crtn.o',
+		install: true,
+		install_dir: get_option('libdir')
+	)
 endif
 
 if host_machine.cpu_family() == 'x86_64'

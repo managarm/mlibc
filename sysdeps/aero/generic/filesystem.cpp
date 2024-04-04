@@ -39,6 +39,16 @@ int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
     return 0;
 }
 
+int sys_fsync(int) {
+    mlibc::infoLogger() << "\e[35mmlibc: fsync is a stub\e[39m" << frg::endlog;
+    return 0;
+}
+
+int sys_fdatasync(int) {
+    mlibc::infoLogger() << "\e[35mmlibc: fdatasync() is a no-op\e[39m" << frg::endlog;
+    return 0;
+}
+
 // clang-format off
 int sys_pwrite(int fd, const void *buffer, size_t count, off_t off,
                ssize_t *written) UNIMPLEMENTED("sys_pwrite") 
@@ -193,6 +203,17 @@ int sys_unlinkat(int fd, const char *path, int flags) {
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
+}
+
+int sys_symlink(const char *target_path, const char *link_path) {
+	return sys_symlinkat(target_path, AT_FDCWD, link_path);
+}
+
+int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
+    auto ret = syscall(SYS_SYMLINK_AT, dirfd, target_path, strlen(target_path), link_path, strlen(link_path));
+    if (int e = sc_error(ret); e)
+        return e;
+    return 0;
 }
 
 struct aero_dir_entry {

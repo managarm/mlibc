@@ -221,6 +221,22 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer,
     }
 }
 
+int sys_peername(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length) {
+    auto ret = syscall(SYS_GETPEERNAME, fd, addr_ptr, &max_addr_length);
+	if(int e = sc_error(ret); e)
+		return e;
+	*actual_length = max_addr_length;
+	return 0;
+}
+
+int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length) {
+	auto ret = syscall(SYS_GETSOCKNAME, fd, addr_ptr, &max_addr_length);
+	if(int e = sc_error(ret); e)
+		return e;
+	*actual_length = max_addr_length;
+	return 0;
+}
+
 int sys_shutdown(int sockfd, int how) {
     auto ret = syscall(SYS_SOCK_SHUTDOWN, sockfd, how);
     if(int e = sc_error(ret); e)
