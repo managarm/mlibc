@@ -89,15 +89,15 @@ int sys_close(int fd) {
     return 0;
 }
 
-int sys_access(const char *filename, int mode) {
-    auto result =
-        syscall(SYS_ACCESS, AT_FDCWD, filename, strlen(filename), mode, 0);
-
-    if (result < 0) {
-        return -result;
-    }
-
+int sys_faccessat(int dirfd, const char *pathname, int mode, int flags) {
+    auto ret = syscall(SYS_ACCESS, dirfd, pathname, strlen(pathname), mode, flags);
+    if(int e = sc_error(ret); e)
+        return e;
     return 0;
+}
+
+int sys_access(const char *filename, int mode) {
+    return sys_faccessat(AT_FDCWD, filename, mode, 0);
 }
 
 int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags,
@@ -106,6 +106,7 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags,
     case fsfd_target::path:
         fd = AT_FDCWD;
         break;
+
     case fsfd_target::fd:
         flags |= AT_EMPTY_PATH;
     
