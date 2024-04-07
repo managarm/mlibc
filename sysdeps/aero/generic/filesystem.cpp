@@ -200,14 +200,14 @@ int sys_rmdir(const char *path) {
 }
 
 int sys_unlinkat(int fd, const char *path, int flags) {
-	auto ret = syscall(SYS_UNLINK, fd, path, strlen(path), flags);
-	if (int e = sc_error(ret); e)
-		return e;
-	return 0;
+    auto ret = syscall(SYS_UNLINK, fd, path, strlen(path), flags);
+    if (int e = sc_error(ret); e)
+        return e;
+    return 0;
 }
 
 int sys_symlink(const char *target_path, const char *link_path) {
-	return sys_symlinkat(target_path, AT_FDCWD, link_path);
+    return sys_symlinkat(target_path, AT_FDCWD, link_path);
 }
 
 int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
