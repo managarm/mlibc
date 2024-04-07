@@ -1,1 +1,1 @@
-../../../../abis/mlibc/fcntl.h
+../../../../abis/linux/fcntl.h
