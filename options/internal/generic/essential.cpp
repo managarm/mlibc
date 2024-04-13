@@ -189,14 +189,21 @@ void *memset(void *dest, int byte, size_t count) {
 // --------------------------------------------------------------------------------------
 
 void *memmove(void *dest, const void *src, size_t size) {
-	char *dest_bytes = (char *)dest;
-	char *src_bytes = (char *)src;
-	if(dest_bytes < src_bytes) {
+	// Use uintptr_t for pointer comparisons because otherwise it's undefined behaviour
+	// when dest and src point to different objects.
+	uintptr_t udest = reinterpret_cast<uintptr_t>(dest);
+	uintptr_t usrc = reinterpret_cast<uintptr_t>(src);
+
+	if(udest < usrc || usrc + size <= udest) {
 		return forward_copy(dest, src, size);
-	}else if(dest_bytes > src_bytes) {
+	} else if(udest > usrc) {
+		char *dest_bytes = (char *)dest;
+		char *src_bytes = (char *)src;
+
 		for(size_t i = 0; i < size; i++)
 			dest_bytes[size - i - 1] = src_bytes[size - i - 1];
 	}
+
 	return dest;
 }
 
