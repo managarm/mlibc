@@ -3,11 +3,15 @@
 #define _NETINET_IN_H
 
 #include <stdint.h>
-#include <endian.h>
 #include <sys/socket.h> // struct sockaddr
 #include <abi-bits/socket.h>
 #include <abi-bits/in.h>
 #include <arpa/inet.h>
+#include <mlibc-config.h>
+
+#if __MLIBC_GLIBC_OPTION
+	#include <endian.h>
+#endif //__MLIBC_GLIBC_OPTION
 
 #ifdef __cplusplus
 extern "C" {
