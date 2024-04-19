@@ -60,7 +60,7 @@ jobs:
     compile-sysdeps:
         strategy:
             matrix:
-                sysdeps: [dripos, lemon, aero, ironclad, lyre, keyronex, managarm]
+                sysdeps: [dripos, lemon, aero, ironclad, lyre, keyronex, managarm, vinix]
         name: Compile sysdeps
         runs-on: ubuntu-22.04
         container:
