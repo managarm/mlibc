@@ -437,8 +437,7 @@ int sys_anon_allocate(size_t size, void **pointer) {
 }
 
 int sys_anon_free(void *pointer, size_t size) {
-	(void)pointer; (void)size;
-	return 0;
+	return sys_vm_unmap(pointer, size);
 }
 
 #ifndef MLIBC_BUILDING_RTLD
