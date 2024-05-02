@@ -11,6 +11,23 @@ int statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct 
 	if(!mlibc::sys_statx) {
 		struct stat statbuf;
 		MLIBC_CHECK_OR_ENOSYS(mlibc::sys_stat, -1);
+
+		if (!(flags & AT_NO_AUTOMOUNT)) {
+			mlibc::infoLogger()
+				<< "mlibc: sys_statx is unavailable, and stat does not support not specifying AT_NO_MOUNTPOINT"
+				<< frg::endlog;
+		}
+
+		// AT_STATX_SYNC_AS_STAT is the default and behaves like good old stat
+		if ((flags & AT_STATX_FORCE_SYNC) || (flags & AT_STATX_DONT_SYNC)) {
+			mlibc::infoLogger()
+				<< "mlibc: sys_statx is unavailable, and stat does not support modes other than AT_STATX_SYNC_AS_STAT"
+				<< frg::endlog;
+		}
+
+		// Mask out flags not appropriate for regular stat
+		flags &= ~(AT_NO_AUTOMOUNT | AT_STATX_SYNC_AS_STAT | AT_STATX_FORCE_SYNC | AT_STATX_DONT_SYNC);
+
 		if(int e = mlibc::sys_stat(mlibc::fsfd_target::fd_path, dirfd, pathname, flags, &statbuf); e) {
 			errno = e;
 			return -1;
