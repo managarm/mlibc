@@ -2,13 +2,13 @@ if disable_glibc_option
 	subdir_done()
 endif
 libc_sources += files(
-	'generic/getopt-stubs.cpp',
-	'generic/stdio_ext-stubs.cpp',
+	'generic/getopt.cpp',
+	'generic/stdio_ext.cpp',
 	'generic/sys-ioctl.cpp',
 	'generic/err.cpp',
 	'generic/error.cpp',
-	'generic/resolv-stubs.cpp',
-	'generic/shadow-stubs.cpp',
+	'generic/resolv.cpp',
+	'generic/shadow.cpp',
 	'generic/printf.cpp',
 	'generic/glibc-signal.cpp',
 	'generic/execinfo.cpp',

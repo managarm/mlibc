@@ -2,7 +2,7 @@ if disable_intl_option
 	subdir_done()
 endif
 libc_sources += files(
-	'generic/libintl-stubs.cpp',
+	'generic/libintl.cpp',
 )
 
 if not no_headers
