@@ -23,7 +23,7 @@ namespace mlibc {
 		size_t n = 0;
 		while(message[n])
 			n++;
-		HEL_CHECK(helLog(message, n));
+		HEL_CHECK(helLog(kHelLogSeverityInfo, message, n));
 	}
 
 	void sys_libc_panic() {
