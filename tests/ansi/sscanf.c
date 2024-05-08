@@ -26,6 +26,8 @@ struct format_test_cases {
 	{"%%", "%", 0, T_NONE, 0},
 	{"%c", "         I am not a fan of this solution.", ' ', T_CHAR, 1},
 	{" %c", "           CBT (capybara therapy)", 'C', T_CHAR, 1},
+	{"%d %d %d", "  111111 I<3Managarm 1234", 111111, T_UINT, 1},
+	{"%c %d", "C", 'C', T_CHAR, 1}
 };
 
 #pragma GCC diagnostic ignored "-Wformat-security"
@@ -135,6 +137,12 @@ int main() {
 		int sig;
 		int ret = sscanf(buf, "%d", &sig);
 		assert(!ret);
+	}
+
+	{
+		char buf[50];
+		int ret = sscanf("", "%s", buf);
+		assert(ret == EOF);
 	}
 
 	test_matrix();

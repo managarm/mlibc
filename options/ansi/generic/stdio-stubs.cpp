@@ -349,9 +349,10 @@ static void store_int(void *dest, unsigned int size, unsigned long long i) {
 
 template<typename H>
 static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
+	#define NOMATCH_CHECK(cond) if(cond) return match_count // if cond is true, matching error
+	#define EOF_CHECK(cond) if(cond) return match_count ? match_count : EOF // if cond is true, no more data to read
 	int match_count = 0;
 	for (; *fmt; fmt++) {
-
 		if (isspace(*fmt)) {
 			while (isspace(fmt[1])) fmt++;
 			while (isspace(handler.look_ahead()))
@@ -363,8 +364,8 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 			if (*fmt == '%')
 				fmt++;
 			char c = handler.consume();
-			if (c != *fmt)
-				break;
+			EOF_CHECK(c == '\0');
+			NOMATCH_CHECK(c != *fmt);
 			continue;
 		}
 
@@ -468,8 +469,10 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 			case 'i': {
 				bool is_negative = false;
 				unsigned long long res = 0;
+				char c = handler.look_ahead();
+				EOF_CHECK(c == '\0');
 
-				if((*fmt == 'i' || *fmt == 'd') && handler.look_ahead() == '-') {
+				if((*fmt == 'i' || *fmt == 'd') && c == '-') {
 					handler.consume();
 					is_negative = true;
 				}
@@ -484,11 +487,11 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 					}
 				}
 
-				char c = handler.look_ahead();
+				c = handler.look_ahead();
+				int count = 0;
 				switch (base) {
 					case 10:
-						if(!isdigit(c))
-							return match_count;
+						NOMATCH_CHECK(!isdigit(c));
 						while (c >= '0' && c <= '9') {
 							handler.consume();
 							res = res * 10 + (c - '0');
@@ -496,14 +499,6 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 						}
 						break;
 					case 16:
-						if (c == '0') {
-							handler.consume();
-							c = handler.look_ahead();
-							if (c == 'x') {
-								handler.consume();
-								c = handler.look_ahead();
-							}
-						}
 						while (true) {
 							if (c >= '0' && c <= '9') {
 								handler.consume();
@@ -517,8 +512,10 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 							} else {
 								break;
 							}
+							count++;
 							c = handler.look_ahead();
 						}
+						NOMATCH_CHECK(count == 0);
 						break;
 					case 8:
 						while (c >= '0' && c <= '7') {
@@ -527,6 +524,7 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 							c = handler.look_ahead();
 						}
 						break;
+						// no need for a match check, the starting 0 was already consumed
 				}
 				if (dest) {
 					if(is_negative)
@@ -539,6 +537,8 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 			case 'o': {
 				unsigned long long res = 0;
 				char c = handler.look_ahead();
+				EOF_CHECK(c == '\0');
+				NOMATCH_CHECK(!(c >= '0' && c <= '7'));
 				while (c >= '0' && c <= '7') {
 					handler.consume();
 					res = res * 8 + (c - '0');
@@ -552,6 +552,8 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 			case 'X': {
 				unsigned long long res = 0;
 				char c = handler.look_ahead();
+				int count = 0;
+				EOF_CHECK(c == '\0');
 				if (c == '0') {
 					handler.consume();
 					c = handler.look_ahead();
@@ -573,8 +575,10 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 					} else {
 						break;
 					}
+					count++;
 					c = handler.look_ahead();
 				}
+				NOMATCH_CHECK(count == 0);
 				if (dest)
 					store_int(dest, type, res);
 				break;
@@ -583,6 +587,7 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				char *typed_dest = (char *)dest;
 				char c = handler.look_ahead();
 				int count = 0;
+				EOF_CHECK(c == '\0');
 				while (c && !isspace(c)) {
 					handler.consume();
 					if (typed_dest)
@@ -592,6 +597,7 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 					if (width && count >= width)
 						break;
 				}
+				NOMATCH_CHECK(count == 0);
 				if (typed_dest)
 					typed_dest[count] = '\0';
 				break;
@@ -599,6 +605,7 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 			case 'c': {
 				char *typed_dest = (char *)dest;
 				char c = handler.look_ahead();
+				EOF_CHECK(c == '\0');
 				int count = 0;
 				if (!width)
 					width = 1;
@@ -644,6 +651,7 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				char *typed_dest = (char *)dest;
 				int count = 0;
 				char c = handler.look_ahead();
+				EOF_CHECK(c == '\0');
 				while (c && (!width || count < width)) {
 					handler.consume();
 					if (!scanset[1 + c])
@@ -653,6 +661,7 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 					c = handler.look_ahead();
 					count++;
 				}
+				NOMATCH_CHECK(count == 0);
 				if (typed_dest)
 					typed_dest[count] = '\0';
 				break;
@@ -660,6 +669,9 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 			case 'p': {
 				unsigned long long res = 0;
 				char c = handler.look_ahead();
+				int count = 0;
+				EOF_CHECK(c == '\0');
+
 				if (c == '0') {
 					handler.consume();
 					c = handler.look_ahead();
@@ -668,6 +680,7 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 						c = handler.look_ahead();
 					}
 				}
+
 				while (true) {
 					if (c >= '0' && c <= '9') {
 						handler.consume();
@@ -681,8 +694,10 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 					} else {
 						break;
 					}
+					count++;
 					c = handler.look_ahead();
 				}
+				NOMATCH_CHECK(count == 0);
 				void **typed_dest = (void **)dest;
 				*typed_dest = (void *)(uintptr_t)res;
 				break;
