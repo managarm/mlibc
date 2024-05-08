@@ -228,10 +228,7 @@ int sys_futex_wake(int *pointer) {
 	if (ret.errno != 0)
 		return ret.errno;
 
-	int num_woken = ret.ret;
-
-	__ensure(num_woken >= 0 && num_woken <= 1);
-	return num_woken;
+	return 0;
 }
 
 #ifndef MLIBC_BUILDING_RTLD
