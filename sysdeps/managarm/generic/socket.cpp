@@ -2,7 +2,9 @@
 #include <bits/ensure.h>
 #include <errno.h>
 #include <sys/socket.h>
+#include <linux/filter.h>
 #include <linux/netlink.h>
+#include <linux/if_packet.h>
 #include <netinet/tcp.h>
 #include <netinet/in.h>
 
@@ -340,9 +342,40 @@ int sys_setsockopt(int fd, int layer, int number,
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		return 0;
 	}else if(layer == SOL_SOCKET && number == SO_ATTACH_FILTER) {
-		mlibc::infoLogger() << "\e[31mmlibc: setsockopt(SO_ATTACH_FILTER) is not implemented"
-				" correctly\e[39m" << frg::endlog;
-		return 0;
+		auto handle = getHandleForFd(fd);
+		if(!handle)
+			return EBADF;
+
+		if(size != sizeof(sock_fprog))
+			return EINVAL;
+
+		auto fprog = reinterpret_cast<const sock_fprog *>(buffer);
+
+		managarm::fs::SetSockOpt<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_layer(layer);
+		req.set_number(number);
+		req.set_optlen(fprog->len * sizeof(*fprog->filter));
+
+		auto [offer, send_req, send_buf, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::sendBuffer(fprog->filter, req.optlen()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_buf.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		if(resp.error() == managarm::fs::Errors::SUCCESS)
+			return 0;
+		else if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
+			return EINVAL;
+		else
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 	}else if(layer == SOL_SOCKET && number == SO_RCVBUFFORCE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt(SO_RCVBUFFORCE) is not implemented"
 				" correctly\e[39m" << frg::endlog;
