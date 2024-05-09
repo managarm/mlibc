@@ -341,6 +341,40 @@ int sys_setsockopt(int fd, int layer, int number,
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		return 0;
+	}else if(
+				(layer == SOL_PACKET && number == PACKET_AUXDATA) ||
+				(layer == SOL_SOCKET && number == SO_LOCK_FILTER)
+			) {
+		auto handle = getHandleForFd(fd);
+		if(!handle)
+			return EBADF;
+
+		managarm::fs::SetSockOpt<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_layer(layer);
+		req.set_number(number);
+		req.set_optlen(size);
+
+		auto [offer, send_req, send_buf, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::sendBuffer(buffer, size),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_buf.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		if(resp.error() == managarm::fs::Errors::SUCCESS)
+			return 0;
+		else if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
+			return EINVAL;
+		else
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
 	}else if(layer == SOL_SOCKET && number == SO_ATTACH_FILTER) {
 		auto handle = getHandleForFd(fd);
 		if(!handle)
