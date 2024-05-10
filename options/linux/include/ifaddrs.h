@@ -16,6 +16,8 @@ struct ifaddrs {
 	unsigned ifa_flags;
 	struct sockaddr *ifa_addr;
 	struct sockaddr *ifa_netmask;
+	// the man page (and glibc) place `ifa_broadaddr` and `ifa_dstaddr` in a union
+	// TODO: decide whether we should do it, too
 	struct sockaddr *ifa_broadaddr;
 	struct sockaddr *ifa_dstaddr;
 	void *ifa_data;
