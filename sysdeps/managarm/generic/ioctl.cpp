@@ -323,6 +323,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		if(send_req.error())
 			return EINVAL;
 		HEL_CHECK(send_req.error());
+		if(imbue_creds.error()) {
+			infoLogger() << "mlibc: TIOCGPGRP used on unexpected socket, returning EINVAL (FIXME)" << frg::endlog;
+			return EINVAL;
+		}
 		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(recv_resp.error());
 
