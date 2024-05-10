@@ -186,6 +186,9 @@ internal_conf.set10('MLIBC_DEBUG_ALLOCATOR', get_option('debug_allocator'))
 # Configuration based on sysdeps.
 #----------------------------------------------------------------------------------------
 
+rtld_include_dirs += include_directories('sysdeps/generic-helpers/include')
+libc_include_dirs += include_directories('sysdeps/generic-helpers/include')
+
 # Process sysdeps first, as sysdeps might want to disable unsupported options.
 provides_bits_syscall_h = false
 if host_machine.system() == 'linux'

@@ -1,6 +1,7 @@
 #ifndef MLIBC_LINUX_SYSDEPS
 #define MLIBC_LINUX_SYSDEPS
 
+#include <ifaddrs.h>
 #include <sched.h>
 #include <stdarg.h>
 #include <sys/epoll.h>
@@ -79,6 +80,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 [[gnu::weak]] int sys_fstatfs(int fd, struct statfs *buf);
 
 [[gnu::weak]] int sys_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf);
+
+[[gnu::weak]] int sys_getifaddrs(struct ifaddrs **);
 
 } // namespace mlibc
 

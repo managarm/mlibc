@@ -17,6 +17,12 @@
 #include <sys/syscall.h>
 #include "cxx-syscall.hpp"
 
+#if __MLIBC_LINUX_OPTION && !defined(MLIBC_BUILDING_RTLD)
+
+#include "generic-helpers/netlink.hpp"
+
+#endif
+
 #define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }
 #define UNUSED(x) (void)(x);
 
@@ -1530,6 +1536,18 @@ int sys_reboot(int cmd) {
 	auto ret = do_syscall(SYS_reboot, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, cmd, nullptr);
 	if (int e = sc_error(ret); e)
 		return e;
+	return 0;
+}
+
+int sys_getifaddrs(struct ifaddrs **out) {
+	*out = nullptr;
+
+	NetlinkHelper nl;
+	bool link_ret = nl.send_request(RTM_GETLINK) && nl.recv(&getifaddrs_callback, out);
+	__ensure(link_ret);
+	bool addr_ret = nl.send_request(RTM_GETADDR) && nl.recv(&getifaddrs_callback, out);
+	__ensure(addr_ret);
+
 	return 0;
 }
 
