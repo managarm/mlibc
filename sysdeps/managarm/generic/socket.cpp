@@ -1,4 +1,4 @@
-
+#include <array>
 #include <bits/ensure.h>
 #include <errno.h>
 #include <sys/socket.h>
@@ -309,6 +309,15 @@ int sys_getsockopt(int fd, int layer, int number,
 	}
 }
 
+namespace {
+
+std::array<std::pair<int, int>, 2> setsockopt_passthrough = {{
+	{ SOL_PACKET, PACKET_AUXDATA },
+	{ SOL_SOCKET, SO_LOCK_FILTER },
+}};
+
+}
+
 int sys_setsockopt(int fd, int layer, int number,
 		const void *buffer, socklen_t size) {
 	SignalGuard sguard;
@@ -341,10 +350,7 @@ int sys_setsockopt(int fd, int layer, int number,
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		return 0;
-	}else if(
-				(layer == SOL_PACKET && number == PACKET_AUXDATA) ||
-				(layer == SOL_SOCKET && number == SO_LOCK_FILTER)
-			) {
+	}else if(std::find(setsockopt_passthrough.begin(), setsockopt_passthrough.end(), std::pair<int, int>{layer, number}) != setsockopt_passthrough.end()) {
 		auto handle = getHandleForFd(fd);
 		if(!handle)
 			return EBADF;
@@ -372,6 +378,8 @@ int sys_setsockopt(int fd, int layer, int number,
 			return 0;
 		else if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
 			return EINVAL;
+		else if(resp.error() == managarm::fs::Errors::INVALID_PROTOCOL_OPTION)
+			return ENOPROTOOPT;
 		else
 			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
