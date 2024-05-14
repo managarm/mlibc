@@ -319,9 +319,10 @@ std::array<std::pair<int, int>, 5> setsockopt_readonly = {{
 	{ SOL_SOCKET, SO_TYPE },
 }};
 
-std::array<std::pair<int, int>, 2> setsockopt_passthrough = {{
+std::array<std::pair<int, int>, 3> setsockopt_passthrough = {{
 	{ SOL_PACKET, PACKET_AUXDATA },
 	{ SOL_SOCKET, SO_LOCK_FILTER },
+	{ SOL_IP, IP_PKTINFO },
 }};
 
 }
@@ -468,9 +469,6 @@ int sys_setsockopt(int fd, int layer, int number,
 		return 0;
 	}else if(layer == IPPROTO_TCP && number == TCP_KEEPCNT) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_KEEPCNT is unimplemented\e[39m" << frg::endlog;
-		return 0;
-	}else if(layer == IPPROTO_IP && number == IP_PKTINFO) {
-		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_IP and IP_PKTINFO is unimplemented\e[39m" << frg::endlog;
 		return 0;
 	}else{
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call, layer: " << layer << " number: " << number << "\e[39m" << frg::endlog;
