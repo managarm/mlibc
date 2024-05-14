@@ -311,6 +311,14 @@ int sys_getsockopt(int fd, int layer, int number,
 
 namespace {
 
+std::array<std::pair<int, int>, 5> setsockopt_readonly = {{
+	{ SOL_SOCKET, SO_ACCEPTCONN },
+	{ SOL_SOCKET, SO_DOMAIN },
+	{ SOL_SOCKET, SO_ERROR },
+	{ SOL_SOCKET, SO_PROTOCOL },
+	{ SOL_SOCKET, SO_TYPE },
+}};
+
 std::array<std::pair<int, int>, 2> setsockopt_passthrough = {{
 	{ SOL_PACKET, PACKET_AUXDATA },
 	{ SOL_SOCKET, SO_LOCK_FILTER },
@@ -383,6 +391,9 @@ int sys_setsockopt(int fd, int layer, int number,
 		else
 			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
+	}else if(std::find(setsockopt_readonly.begin(), setsockopt_readonly.end(), std::pair<int, int>{layer, number}) != setsockopt_readonly.end()) {
+		// this is purely read-only
+		return ENOPROTOOPT;
 	}else if(layer == SOL_SOCKET && number == SO_ATTACH_FILTER) {
 		auto handle = getHandleForFd(fd);
 		if(!handle)
@@ -439,9 +450,6 @@ int sys_setsockopt(int fd, int layer, int number,
 		return 0;
 	}else if(layer == IPPROTO_TCP && number == TCP_NODELAY) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_NODELAY is unimplemented\e[39m" << frg::endlog;
-		return 0;
-	}else if(layer == SOL_SOCKET && number == SO_ACCEPTCONN) {
-		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_ACCEPTCONN is unimplemented\e[39m" << frg::endlog;
 		return 0;
 	}else if(layer == IPPROTO_TCP && number == TCP_KEEPIDLE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_KEEPIDLE is unimplemented\e[39m" << frg::endlog;
