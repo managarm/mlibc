@@ -325,6 +325,10 @@ std::array<std::pair<int, int>, 3> setsockopt_passthrough = {{
 	{ SOL_IP, IP_PKTINFO },
 }};
 
+std::array<std::pair<int, int>, 2> setsockopt_passthrough_noopt = {{
+	{ SOL_SOCKET, SO_DETACH_FILTER },
+}};
+
 }
 
 int sys_setsockopt(int fd, int layer, int number,
@@ -391,7 +395,34 @@ int sys_setsockopt(int fd, int layer, int number,
 			return ENOPROTOOPT;
 		else
 			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	}else if(std::find(setsockopt_passthrough_noopt.begin(), setsockopt_passthrough_noopt.end(), std::pair<int, int>{layer, number}) != setsockopt_passthrough_noopt.end()) {
+		auto handle = getHandleForFd(fd);
+		if(!handle)
+			return EBADF;
 
+		managarm::fs::SetSockOpt<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_layer(layer);
+		req.set_number(number);
+		req.set_optlen(0);
+
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		if(resp.error() == managarm::fs::Errors::SUCCESS)
+			return 0;
+		else if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
+			return EINVAL;
+		else
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 	}else if(std::find(setsockopt_readonly.begin(), setsockopt_readonly.end(), std::pair<int, int>{layer, number}) != setsockopt_readonly.end()) {
 		// this is purely read-only
 		return ENOPROTOOPT;
