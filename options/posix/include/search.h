@@ -17,6 +17,10 @@ typedef enum {
   leaf
 } VISIT;
 
+#if __MLIBC_GLIBC_OPTION && defined(_GNU_SOURCE)
+#include <bits/glibc/glibc_search.h>
+#endif
+
 #ifndef __MLIBC_ABI_ONLY
 
 void *tsearch(const void *, void **, int(*compar)(const void *, const void *));
