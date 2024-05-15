@@ -38,7 +38,9 @@
 #define F_SETFL 6
 #define F_GETLK 7
 #define F_SETLK 8
+#define F_SETLK64 F_SETLK
 #define F_SETLKW 9
+#define F_SETLKW64 F_SETLKW
 #define F_GETOWN 10
 #define F_SETOWN 11
 

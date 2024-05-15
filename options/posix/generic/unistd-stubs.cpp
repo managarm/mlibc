@@ -538,6 +538,8 @@ ssize_t pread(int fd, void *buf, size_t n, off_t off) {
 	return num_read;
 }
 
+[[gnu::alias("pread")]] ssize_t pread64(int fd, void *buf, size_t n, off_t off);
+
 ssize_t pwrite(int fd, const void *buf, size_t n, off_t off) {
 	ssize_t num_written;
 
@@ -548,6 +550,8 @@ ssize_t pwrite(int fd, const void *buf, size_t n, off_t off) {
 	}
 	return num_written;
 }
+
+[[gnu::alias("pwrite")]] ssize_t pwrite64(int fd, const void *buf, size_t n, off_t off);
 
 ssize_t readlink(const char *__restrict path, char *__restrict buffer, size_t max_size) {
 	ssize_t length;

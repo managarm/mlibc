@@ -10,8 +10,9 @@ extern "C" {
 #ifndef __MLIBC_ABI_ONLY
 
 int statvfs(const char *__restrict, struct statvfs *__restrict);
-int statvfs64(const char *__restrict, struct statvfs *__restrict);
+int statvfs64(const char *__restrict, struct statvfs64 *__restrict);
 int fstatvfs(int, struct statvfs *);
+int fstatvfs64(int, struct statvfs64 *);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
