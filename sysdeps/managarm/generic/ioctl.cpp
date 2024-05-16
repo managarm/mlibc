@@ -6,6 +6,7 @@
 #include <linux/vt.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <net/if_arp.h>
 #include <netinet/in.h>
 
 #include <bits/ensure.h>
@@ -872,6 +873,34 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				return EINVAL;
 
 			ifr->ifr_mtu = resp.mtu();
+
+			return 0;
+		});
+	}else if(request == SIOCGIFBRDADDR) {
+		return handle_siocgif([](auto req, auto ifr) {
+			req.set_name(frg::string<MemoryAllocator>{ifr->ifr_name, getSysdepsAllocator()});
+		}, [](auto resp, auto ifr) {
+			if(resp.error() != managarm::fs::Errors::SUCCESS)
+				return EINVAL;
+
+			sockaddr_in addr{};
+			addr.sin_family = AF_INET;
+			addr.sin_addr = { htonl(resp.ip4_broadcast_addr()) };
+			memcpy(&ifr->ifr_broadaddr, &addr, sizeof(addr));
+
+			return 0;
+		});
+	} else if(request == SIOCGIFHWADDR) {
+		return handle_siocgif([](auto req, auto ifr) {
+			req.set_name(frg::string<MemoryAllocator>{ifr->ifr_name, getSysdepsAllocator()});
+		}, [](auto resp, auto ifr) {
+			if(resp.error() != managarm::fs::Errors::SUCCESS)
+				return EINVAL;
+
+			sockaddr addr{};
+			addr.sa_family = ARPHRD_ETHER;
+			memcpy(addr.sa_data, resp.mac().data(), 6);
+			memcpy(&ifr->ifr_hwaddr, &addr, sizeof(addr));
 
 			return 0;
 		});
