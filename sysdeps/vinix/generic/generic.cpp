@@ -391,7 +391,15 @@ int sys_fchmod(int fd, mode_t mode) {
 	return 0;
 }
 
-int sys_rmdir(const char *path) STUB_ONLY
+int sys_rmdir(const char *path) {
+	__syscall_ret ret = __syscall(37, AT_FDCWD, path);
+
+	if (ret.errno != 0) {
+		return ret.errno;
+	}
+
+	return 0;
+}
 
 #endif
 
