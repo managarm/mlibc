@@ -3,6 +3,7 @@
 
 #include <alloca.h>
 #include <mlibc-config.h>
+#include <abi-bits/wait.h>
 #include <bits/null.h>
 #include <bits/size_t.h>
 #include <bits/wchar_t.h>
