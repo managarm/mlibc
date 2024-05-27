@@ -867,21 +867,32 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	req.set_flags(flags);
 	req.set_size(overall_size);
 
+	req.set_has_cmsg_creds(false);
+	req.set_has_cmsg_rights(false);
 	for(auto cmsg = CMSG_FIRSTHDR(hdr); cmsg; cmsg = CMSG_NXTHDR(hdr, cmsg)) {
 		__ensure(cmsg->cmsg_level == SOL_SOCKET);
-		if(cmsg->cmsg_type == SCM_CREDENTIALS) {
-			mlibc::infoLogger() << "mlibc: SCM_CREDENTIALS requested but we don't handle that yet!" << frg::endlog;
-			return EINVAL;
-		}
-		__ensure(cmsg->cmsg_type == SCM_RIGHTS);
 		__ensure(cmsg->cmsg_len >= sizeof(struct cmsghdr));
-
-		size_t size = cmsg->cmsg_len - CMSG_ALIGN(sizeof(struct cmsghdr));
-		__ensure(!(size % sizeof(int)));
-		for(size_t off = 0; off < size; off += sizeof(int)) {
-			int fd;
-			memcpy(&fd, CMSG_DATA(cmsg) + off, sizeof(int));
-			req.add_fds(fd);
+		if(cmsg->cmsg_type == SCM_CREDENTIALS) {
+			req.set_has_cmsg_creds(true);
+			size_t size = cmsg->cmsg_len - CMSG_ALIGN(sizeof(struct cmsghdr));
+			__ensure(size == sizeof(struct ucred));
+			struct ucred creds;
+			memcpy(&creds, CMSG_DATA(cmsg), sizeof(struct ucred));
+			req.set_creds_pid(creds.pid);
+			req.set_creds_uid(creds.uid);
+			req.set_creds_gid(creds.gid);
+		} else if(cmsg->cmsg_type == SCM_RIGHTS) {
+			req.set_has_cmsg_rights(true);
+			size_t size = cmsg->cmsg_len - CMSG_ALIGN(sizeof(struct cmsghdr));
+			__ensure(!(size % sizeof(int)));
+			for(size_t off = 0; off < size; off += sizeof(int)) {
+				int fd;
+				memcpy(&fd, CMSG_DATA(cmsg) + off, sizeof(int));
+				req.add_fds(fd);
+			}
+		} else {
+			mlibc::infoLogger() << "mlibc: sys_msg_send only supports SCM_RIGHTS or SCM_CREDENTIALS, got: " << cmsg->cmsg_type << "!" << frg::endlog;
+			return EINVAL;
 		}
 	}
 
