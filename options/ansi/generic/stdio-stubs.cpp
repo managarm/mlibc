@@ -381,19 +381,32 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 			fmt++;
 		}
 
+		bool allocate_buf = false;
+		auto temp_dest = frg::string<MemoryAllocator>{getAllocator()};
+		int count = 0;
+
+		const auto append_to_buffer = [&](char c) {
+			if(allocate_buf) {
+				temp_dest += c;
+				count++;
+			} else {
+				char *typed_dest = (char *)dest;
+				if(typed_dest)
+					typed_dest[count++] = c;
+			}
+		};
+
 		int width = 0;
 		if (*fmt == '*') {
 			fmt++;
 		} else if (*fmt == '\'') {
-		/* TODO: numeric seperators locale stuff */
-			 mlibc::infoLogger() << "do_scanf: \' not implemented!" << frg::endlog;
+			/* TODO: numeric seperators locale stuff */
+			mlibc::infoLogger() << "do_scanf: \' not implemented!" << frg::endlog;
 			fmt++;
 			continue;
 		} else if (*fmt == 'm') {
-			/* TODO: allocate buffer for them */
-			mlibc::infoLogger() << "do_scanf: m not implemented!" << frg::endlog;
+			allocate_buf = true;
 			fmt++;
-			continue;
 		} else if (*fmt >= '0' && *fmt <= '9') {
 			/* read in width specifier */
 			width = 0;
@@ -584,35 +597,27 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				break;
 			}
 			case 's': {
-				char *typed_dest = (char *)dest;
 				char c = handler.look_ahead();
-				int count = 0;
 				EOF_CHECK(c == '\0');
 				while (c && !isspace(c)) {
 					handler.consume();
-					if (typed_dest)
-						typed_dest[count] = c;
+					append_to_buffer(c);
 					c = handler.look_ahead();
-					count++;
 					if (width && count >= width)
 						break;
 				}
 				NOMATCH_CHECK(count == 0);
-				if (typed_dest)
-					typed_dest[count] = '\0';
+				append_to_buffer('\0');
 				break;
 			}
 			case 'c': {
-				char *typed_dest = (char *)dest;
 				char c = handler.look_ahead();
 				EOF_CHECK(c == '\0');
-				int count = 0;
 				if (!width)
 					width = 1;
 				while (c && count < width) {
 					handler.consume();
-					if (typed_dest)
-						typed_dest[count] = c;
+					append_to_buffer(c);
 					c = handler.look_ahead();
 					count++;
 				}
@@ -648,22 +653,17 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 					scanset[1 + *fmt] = 1 - invert;
 				}
 
-				char *typed_dest = (char *)dest;
-				int count = 0;
 				char c = handler.look_ahead();
 				EOF_CHECK(c == '\0');
 				while (c && (!width || count < width)) {
 					handler.consume();
 					if (!scanset[1 + c])
 						break;
-					if (typed_dest)
-						typed_dest[count] = c;
+					append_to_buffer(c);
 					c = handler.look_ahead();
-					count++;
 				}
 				NOMATCH_CHECK(count == 0);
-				if (typed_dest)
-					typed_dest[count] = '\0';
+				append_to_buffer('\0');
 				break;
 			}
 			case 'p': {
@@ -709,6 +709,16 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				continue;
 			}
 		}
+
+		if(allocate_buf && dest) {
+			char *temp = (char *)getAllocator().allocate(temp_dest.size() + 1);
+			memcpy(temp, temp_dest.data(), temp_dest.size());
+			temp[temp_dest.size()] = '\0';
+
+			char **dest_ptr = (char **)dest;
+			*dest_ptr = temp;
+		}
+
 		if (dest) match_count++;
 	}
 	return match_count;
