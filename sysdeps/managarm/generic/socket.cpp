@@ -1,8 +1,10 @@
-
+#include <array>
 #include <bits/ensure.h>
 #include <errno.h>
 #include <sys/socket.h>
+#include <linux/filter.h>
 #include <linux/netlink.h>
+#include <linux/if_packet.h>
 #include <netinet/tcp.h>
 #include <netinet/in.h>
 
@@ -307,6 +309,28 @@ int sys_getsockopt(int fd, int layer, int number,
 	}
 }
 
+namespace {
+
+std::array<std::pair<int, int>, 5> setsockopt_readonly = {{
+	{ SOL_SOCKET, SO_ACCEPTCONN },
+	{ SOL_SOCKET, SO_DOMAIN },
+	{ SOL_SOCKET, SO_ERROR },
+	{ SOL_SOCKET, SO_PROTOCOL },
+	{ SOL_SOCKET, SO_TYPE },
+}};
+
+std::array<std::pair<int, int>, 3> setsockopt_passthrough = {{
+	{ SOL_PACKET, PACKET_AUXDATA },
+	{ SOL_SOCKET, SO_LOCK_FILTER },
+	{ SOL_IP, IP_PKTINFO },
+}};
+
+std::array<std::pair<int, int>, 2> setsockopt_passthrough_noopt = {{
+	{ SOL_SOCKET, SO_DETACH_FILTER },
+}};
+
+}
+
 int sys_setsockopt(int fd, int layer, int number,
 		const void *buffer, socklen_t size) {
 	SignalGuard sguard;
@@ -339,10 +363,104 @@ int sys_setsockopt(int fd, int layer, int number,
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		return 0;
+	}else if(std::find(setsockopt_passthrough.begin(), setsockopt_passthrough.end(), std::pair<int, int>{layer, number}) != setsockopt_passthrough.end()) {
+		auto handle = getHandleForFd(fd);
+		if(!handle)
+			return EBADF;
+
+		managarm::fs::SetSockOpt<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_layer(layer);
+		req.set_number(number);
+		req.set_optlen(size);
+
+		auto [offer, send_req, send_buf, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::sendBuffer(buffer, size),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_buf.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		if(resp.error() == managarm::fs::Errors::SUCCESS)
+			return 0;
+		else if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
+			return EINVAL;
+		else if(resp.error() == managarm::fs::Errors::INVALID_PROTOCOL_OPTION)
+			return ENOPROTOOPT;
+		else
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	}else if(std::find(setsockopt_passthrough_noopt.begin(), setsockopt_passthrough_noopt.end(), std::pair<int, int>{layer, number}) != setsockopt_passthrough_noopt.end()) {
+		auto handle = getHandleForFd(fd);
+		if(!handle)
+			return EBADF;
+
+		managarm::fs::SetSockOpt<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_layer(layer);
+		req.set_number(number);
+		req.set_optlen(0);
+
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		if(resp.error() == managarm::fs::Errors::SUCCESS)
+			return 0;
+		else if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
+			return EINVAL;
+		else
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	}else if(std::find(setsockopt_readonly.begin(), setsockopt_readonly.end(), std::pair<int, int>{layer, number}) != setsockopt_readonly.end()) {
+		// this is purely read-only
+		return ENOPROTOOPT;
 	}else if(layer == SOL_SOCKET && number == SO_ATTACH_FILTER) {
-		mlibc::infoLogger() << "\e[31mmlibc: setsockopt(SO_ATTACH_FILTER) is not implemented"
-				" correctly\e[39m" << frg::endlog;
-		return 0;
+		auto handle = getHandleForFd(fd);
+		if(!handle)
+			return EBADF;
+
+		if(size != sizeof(sock_fprog))
+			return EINVAL;
+
+		auto fprog = reinterpret_cast<const sock_fprog *>(buffer);
+
+		managarm::fs::SetSockOpt<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_layer(layer);
+		req.set_number(number);
+		req.set_optlen(fprog->len * sizeof(*fprog->filter));
+
+		auto [offer, send_req, send_buf, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::sendBuffer(fprog->filter, req.optlen()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_buf.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		if(resp.error() == managarm::fs::Errors::SUCCESS)
+			return 0;
+		else if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
+			return EINVAL;
+		else
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 	}else if(layer == SOL_SOCKET && number == SO_RCVBUFFORCE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt(SO_RCVBUFFORCE) is not implemented"
 				" correctly\e[39m" << frg::endlog;
@@ -365,11 +483,11 @@ int sys_setsockopt(int fd, int layer, int number,
 	}else if(layer == IPPROTO_TCP && number == TCP_NODELAY) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_NODELAY is unimplemented\e[39m" << frg::endlog;
 		return 0;
-	}else if(layer == SOL_SOCKET && number == SO_ACCEPTCONN) {
-		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_ACCEPTCONN is unimplemented\e[39m" << frg::endlog;
-		return 0;
 	}else if(layer == IPPROTO_TCP && number == TCP_KEEPIDLE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_KEEPIDLE is unimplemented\e[39m" << frg::endlog;
+		return 0;
+	}else if(layer == SOL_NETLINK && number == NETLINK_BROADCAST_ERROR) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_NETLINK and NETLINK_BROADCAST_ERROR is unimplemented\e[39m" << frg::endlog;
 		return 0;
 	}else if(layer == SOL_NETLINK && number == NETLINK_EXT_ACK) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_NETLINK and NETLINK_EXT_ACK is unimplemented\e[39m" << frg::endlog;

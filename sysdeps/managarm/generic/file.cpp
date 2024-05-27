@@ -531,7 +531,7 @@ int sys_ttyname(int fd, char *buf, size_t size) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if(resp.error() ==  managarm::posix::Errors::BAD_FD) {
+	if(resp.error() ==  managarm::posix::Errors::NO_SUCH_FD) {
 		return EBADF;
 	}else if(resp.error() == managarm::posix::Errors::NOT_A_TTY) {
 		return ENOTTY;
@@ -1621,6 +1621,8 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 		return EAGAIN;
 	}else if(resp.error() == managarm::fs::Errors::IS_DIRECTORY) {
 		return EISDIR;
+	}else if(resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
+		return ENOTCONN;
 	}else if(resp.error() == managarm::fs::Errors::END_OF_FILE) {
 		*bytes_read = 0;
 		return 0;

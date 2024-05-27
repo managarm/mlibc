@@ -999,15 +999,29 @@ size_t fwrite(const void *buffer, size_t size , size_t count, FILE *file_base) {
 	return fwrite_unlocked(buffer, size, count, file_base);
 }
 
-int fgetpos(FILE *__restrict, fpos_t *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int fgetpos(FILE *__restrict f, fpos_t *__restrict out) {
+	auto file = static_cast<mlibc::abstract_file *>(f);
+	off_t current_offset;
+
+	if(int e = file->tell(&current_offset); e) {
+		errno = e;
+		return -1;
+	}
+
+	*out = static_cast<fpos_t>(current_offset);
+
+	return 0;
 }
 
 // fseek() is provided by the POSIX sublibrary
-int fsetpos(FILE *, const fpos_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int fsetpos(FILE *f, const fpos_t *pos) {
+	auto file = static_cast<mlibc::abstract_file *>(f);
+	frg::unique_lock lock(file->_lock);
+	if(int e = file->seek(*pos, SEEK_SET); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 // ftell() is provided by the POSIX sublibrary
 

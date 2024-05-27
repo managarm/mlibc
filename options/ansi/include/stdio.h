@@ -9,6 +9,7 @@
 
 // Glibc extensions require ssize_t.
 #include <bits/ssize_t.h>
+#include <bits/off_t.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,7 +57,7 @@ struct __mlibc_file_base {
 };
 
 typedef struct __mlibc_file_base FILE;
-typedef size_t fpos_t;
+typedef off_t fpos_t;
 
 // [C11-7.21.1] I/O related macros
 

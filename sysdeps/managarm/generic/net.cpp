@@ -1,9 +1,9 @@
+#include <errno.h>
 #include <mlibc/all-sysdeps.hpp>
 #include <sys/ioctl.h>
-#include <net/if.h>
-#include <string.h>
-#include <errno.h>
 #include <unistd.h>
+
+#include "generic-helpers/netlink.hpp"
 
 namespace mlibc {
 
@@ -50,6 +50,18 @@ int sys_if_nametoindex(const char *name, unsigned int *ret) {
 		return r;
 
 	*ret = ifr.ifr_ifindex;
+
+	return 0;
+}
+
+int sys_getifaddrs(struct ifaddrs **out) {
+	NetlinkHelper nl;
+	*out = nullptr;
+
+	bool link_ret = nl.send_request(RTM_GETLINK) && nl.recv(&getifaddrs_callback, out);
+	__ensure(link_ret);
+	bool addr_ret = nl.send_request(RTM_GETADDR) && nl.recv(&getifaddrs_callback, out);
+	__ensure(addr_ret);
 
 	return 0;
 }
