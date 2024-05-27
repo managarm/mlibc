@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -143,6 +144,15 @@ int main() {
 		char buf[50];
 		int ret = sscanf("", "%s", buf);
 		assert(ret == EOF);
+	}
+
+	{
+		char *str = NULL;
+		int ret = sscanf("Managarm", "%ms", &str);
+		assert(ret == 1);
+		assert(str != NULL);
+		assert(!strcmp(str, "Managarm"));
+		free(str);
 	}
 
 	test_matrix();
