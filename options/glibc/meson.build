@@ -19,6 +19,7 @@ libc_sources += files(
 	'generic/glibc-assert.cpp',
 	'generic/malloc.cpp',
 	'generic/sys-io.cpp',
+	'generic/search.cpp'
 )
 
 if not no_headers
@@ -84,6 +85,7 @@ if not no_headers
 		'include/bits/glibc/glibc_assert.h',
 		'include/bits/glibc/glibc_malloc.h',
 		'include/bits/glibc/glibc_icmp6.h',
+		'include/bits/glibc/glibc_search.h',
 		subdir: 'bits/glibc'
 	)
 endif

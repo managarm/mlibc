@@ -24,3 +24,5 @@ int fstatfs(int fd, struct statfs *buf) {
 	return 0;
 }
 
+[[gnu::alias("fstatfs")]] int fstatfs64(int, struct statfs64 *);
+

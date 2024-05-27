@@ -355,6 +355,7 @@ internal_sources = [
 	'options/internal/generic/strings.cpp',
 	'options/internal/generic/ubsan.cpp',
 	'options/internal/generic/threads.cpp',
+	'options/internal/generic/search.cpp',
 	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc/initfini.cpp',
@@ -391,6 +392,7 @@ if not no_headers
 		'options/internal/include/bits/cpu_set.h',
 		'options/internal/include/bits/threads.h',
 		'options/internal/include/bits/winsize.h',
+		'options/internal/include/bits/search.h',
 		subdir: 'bits'
 	)
 endif

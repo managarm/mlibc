@@ -20,6 +20,7 @@ extern "C" {
 #define ICMP6_FILTER_BLOCKOTHERS 3
 #define ICMP6_FILTER_PASSONLY 4
 #define ICMP6_ECHO_REQUEST 128
+#define ICMP6_ECHO_REPLY 129
 
 struct icmp6_filter {
 	uint32_t icmp6_filt[8];

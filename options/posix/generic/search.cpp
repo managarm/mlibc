@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <new>
 #include <mlibc/allocator.hpp>
+#include <mlibc/search.hpp>
 #include <frg/stack.hpp>
 #include <stdlib.h>
 
@@ -161,4 +162,24 @@ void *lfind(const void *key, const void *base, size_t *nelp,
 	(void)compar;
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
+}
+
+namespace {
+	hsearch_data globalTable {};
+}
+
+int hcreate(size_t num_entries) {
+	return mlibc::hcreate_r(num_entries, &globalTable);
+}
+
+void hdestroy(void) {
+	mlibc::hdestroy_r(&globalTable);
+}
+
+ENTRY *hsearch(ENTRY item, ACTION action) {
+	ENTRY *ret;
+	if(mlibc::hsearch_r(item, action, &ret, &globalTable) == 0) {
+		return nullptr;
+	}
+	return ret;
 }

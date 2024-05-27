@@ -14,6 +14,7 @@ extern "C" {
 #ifndef __MLIBC_ABI_ONLY
 
 int flock(int, int);
+int flock64(int, int);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

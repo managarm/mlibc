@@ -17,7 +17,17 @@ extern "C" {
 
 #define O_NDELAY O_NONBLOCK
 
+/* WARNING: keep `flock` and `flock64` in sync or bad things will happen! */
+
 struct flock {
+	short l_type;
+	short l_whence;
+	off_t l_start;
+	off_t l_len;
+	pid_t l_pid;
+};
+
+struct flock64 {
 	short l_type;
 	short l_whence;
 	off_t l_start;
@@ -31,6 +41,7 @@ int creat(const char *, mode_t);
 int fallocate(int fd, int mode, off_t offset, off_t len);
 int fcntl(int fd, int command, ...);
 int open(const char *path, int flags, ...);
+int open64(const char *path, int flags, ...);
 int openat(int, const char *, int, ...);
 int posix_fadvise(int, off_t, off_t, int);
 int posix_fallocate(int, off_t, off_t);

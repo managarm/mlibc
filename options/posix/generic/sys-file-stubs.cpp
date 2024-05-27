@@ -14,3 +14,5 @@ int flock(int fd, int opt) {
 	return 0;
 }
 
+[[gnu::alias("flock")]] int flock64(int fd, int opt);
+

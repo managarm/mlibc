@@ -11,6 +11,7 @@ extern "C" {
 
 int statfs(const char *, struct statfs *);
 int fstatfs(int, struct statfs *);
+int fstatfs64(int, struct statfs64 *);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
