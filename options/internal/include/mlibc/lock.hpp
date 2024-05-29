@@ -50,7 +50,8 @@ struct FutexLockImpl {
 
 					// If the wait returns EAGAIN, that means that the waitersBit was just unset by
 					// some other thread. In this case, we should loop back around.
-					if (e && e != EAGAIN)
+					// Also loop around in case of a signal interrupting the wait
+					if (e && e != EAGAIN && e != EINTR)
 						mlibc::panicLogger() << "sys_futex_wait() failed with error code " << e << frg::endlog;
 
 					// Opportunistically try to take the lock after we wake up.

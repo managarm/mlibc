@@ -844,7 +844,10 @@ int pthread_once(pthread_once_t *once, void (*function) (void)) {
 		}else{
 			// a different thread is currently running the initializer.
 			__ensure(expected == onceLocked);
-			if(int e = mlibc::sys_futex_wait((int *)&once->__mlibc_done, onceLocked, nullptr); e)
+			// if the wait gets interrupted by a signal, check again.
+			// EAGAIN will also be a retry, as it means the other thread completed
+			// and changed the __mlibc_done variable to signal it before we actually went to sleep.
+			if(int e = mlibc::sys_futex_wait((int *)&once->__mlibc_done, onceLocked, nullptr); e && e != EINTR && e != EAGAIN)
 				__ensure(!"sys_futex_wait() failed");
 			expected =  __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
 		}
