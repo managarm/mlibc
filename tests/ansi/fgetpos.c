@@ -2,6 +2,8 @@
 #include <stdio.h>
 
 int main(int argc, char *argv[]) {
+	(void) argc;
+
 	FILE *f = fopen(argv[0], "r");
 	assert(f);
 
@@ -15,7 +17,7 @@ int main(int argc, char *argv[]) {
 	ret = fseek(f, 0, SEEK_END);
 	assert(!ret);
 
-	off_t end_off = ftell(f);
+	long end_off = ftell(f);
 
 	fpos_t end_pos;
 	ret = fgetpos(f, &end_pos);
@@ -23,9 +25,11 @@ int main(int argc, char *argv[]) {
 
 	ret = fsetpos(f, &start_pos);
 	assert(!ret);
-	assert(ftello(f) == 0);
+	assert(ftell(f) == 0);
 
 	ret = fsetpos(f, &end_pos);
 	assert(!ret);
-	assert(ftello(f) == end_off);
+	assert(ftell(f) == end_off);
+
+	return 0;
 }
