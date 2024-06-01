@@ -1,5 +1,11 @@
+managarm = subproject('managarm', default_options: [ 'provide_deps=true' ])
+hel_dep = managarm.get_variable('hel_dep')
+proto_posix_dep = managarm.get_variable('posix_extra_dep')
 
 bragi = find_program('bragi')
+bragi_dep = subproject('bragi').get_variable('bragi_dep')
+
+libdrm_dep = subproject('libdrm-headers').get_variable('libdrm_dep')
 
 bragi_gen = generator(bragi, arguments: [
 		'-l', 'frigg',
@@ -9,15 +15,9 @@ bragi_gen = generator(bragi, arguments: [
 	],
 	output: '@BASENAME@.frigg_bragi.hpp')
 
-fs_bragi = bragi_gen.process('../../subprojects/managarm/protocols/fs/fs.bragi')
-posix_bragi = bragi_gen.process('../../subprojects/managarm/protocols/posix/posix.bragi')
+fs_bragi = bragi_gen.process(managarm.get_variable('fs_bragi_files'))
+posix_bragi = bragi_gen.process(managarm.get_variable('posix_bragi_files'))
 
-managarm_incl = include_directories(
-		'../../subprojects/managarm/protocols/posix/include',
-		'../../subprojects/managarm/hel/include',
-		'../../subprojects/bragi/include')
-
-rtld_include_dirs += managarm_incl
 rtld_sources += files(
 	'generic/ensure.cpp',
 	'generic/memory.cpp',
@@ -28,8 +28,8 @@ rtld_sources += [
 	posix_bragi,
 ]
 
-libc_include_dirs += include_directories('../../../ports/libdrm/include')
-libc_include_dirs += managarm_incl
+libc_deps += [ bragi_dep, hel_dep, proto_posix_dep, libdrm_dep ]
+rtld_deps += [ bragi_dep, hel_dep, proto_posix_dep ]
 
 libc_sources += files(
 	'generic/drm.cpp',

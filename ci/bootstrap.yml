@@ -15,6 +15,12 @@ sources:
     format: 'tar.xz'
     version: '6.1.8'
 
+  - name: libdrm
+    subdir: 'ports'
+    git: 'https://github.com/gitlab-freedesktop-mirrors/drm'
+    tag: 'libdrm-2.4.115'
+    version: '2.4.115'
+
 tools: []
 
 packages:
@@ -23,6 +29,7 @@ packages:
     from_source: mlibc
     pkgs_required:
       - linux-headers
+      - libdrm-headers
     configure:
       - args:
         - 'meson'
@@ -54,6 +61,7 @@ packages:
     from_source: mlibc
     pkgs_required:
       - linux-headers
+      - libdrm-headers
     configure:
       - args:
         - 'meson'
@@ -81,6 +89,7 @@ packages:
     from_source: mlibc
     pkgs_required:
       - linux-headers
+      - libdrm-headers
     configure:
       - args:
         - 'meson'
@@ -109,6 +118,7 @@ packages:
     from_source: mlibc
     pkgs_required:
       - linux-headers
+      - libdrm-headers
     configure:
       - args:
         - 'meson'
@@ -141,6 +151,7 @@ packages:
     from_source: mlibc
     pkgs_required:
       - linux-headers
+      - libdrm-headers
     configure:
       - args:
         - 'meson'
@@ -181,3 +192,15 @@ packages:
               ;;
           esac
           make O=@THIS_COLLECT_DIR@ ARCH="$LINUX_ARCH" headers_install
+
+  - name: libdrm-headers
+    architecture: '@OPTION:arch@'
+    from_source: 'libdrm'
+    build:
+      - args: ['mkdir', '-p', '@THIS_COLLECT_DIR@/usr/src/libdrm-headers']
+      - args: |
+          cat << EOF > @THIS_COLLECT_DIR@/usr/src/libdrm-headers/meson.build
+          project('libdrm-headers')
+          libdrm_dep = declare_dependency(include_directories: include_directories('include'))
+          EOF
+      - args: ['cp', '-r', '@THIS_SOURCE_DIR@/include', '@THIS_COLLECT_DIR@/usr/src/libdrm-headers/include']
