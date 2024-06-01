@@ -54,6 +54,8 @@ float strtof_l(const char *__restrict string, char **__restrict end, locale_t lo
 
 int getloadavg(double *, int);
 
+int getsubopt(char **__restrict__ optionp, char *const *__restrict__ tokens, char **__restrict__ valuep);
+
 // GNU extension
 char *secure_getenv(const char *);
 char *canonicalize_file_name(const char *);
