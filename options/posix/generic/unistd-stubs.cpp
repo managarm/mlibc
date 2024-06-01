@@ -1164,9 +1164,34 @@ int chroot(const char *ptr) {
 	return 0;
 }
 
-int daemon(int, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int daemon(int nochdir, int noclose) {
+	switch(fork()) {
+		case 0: break;
+		case -1: return -1;
+		default: _exit(0);
+	}
+
+	if(setsid() < 0)
+		return -1;
+
+	if(!nochdir && chdir("/"))
+		return -1;
+
+	if(!noclose) {
+		int fd = open("/dev/null", O_RDWR);
+		if(fd < 0)
+			return -1;
+
+		bool failed = false;
+		if(dup2(fd, 0) < 0 || dup2(fd, 1) < 0 || dup2(fd, 2) < 0)
+			failed = true;
+		if(fd > 2)
+			close(fd);
+		if(failed)
+			return -1;
+	}
+
+	return 0;
 }
 
 char *ctermid(char *s) {
