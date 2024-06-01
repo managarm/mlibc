@@ -110,6 +110,8 @@ class Type:
                 return prefix + "::c_int"
             case ["unsigned", "char", *_]:
                 return prefix + "::c_uchar"
+            case ["unsigned", "short", *_]:
+                return prefix + "::c_ushort"
             case ["unsigned", "int", *_]:
                 return prefix + "::c_uint"
             case ["unsigned", "long", *_]:

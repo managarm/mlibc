@@ -75,14 +75,45 @@ long random(void) {
 	return k;
 }
 
-double drand48(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+// erand, drand and srand are borrowed from musl
+namespace {
+
+unsigned short seed_48[7] = { 0, 0, 0, 0xe66d, 0xdeec, 0x5, 0xb };
+
+uint64_t eand48_step(unsigned short *xi, unsigned short *lc) {
+	uint64_t x = xi[0] | (xi[1] + 0U) << 16 | (xi[2] + 0ULL) << 32;
+	uint64_t a = lc[0] | (lc[1] + 0U) << 16 | (lc[2] + 0ULL) << 32;
+	x = a*x + lc[3];
+	xi[0] = x;
+	xi[1] = x>>16;
+	xi[2] = x>>32;
+	return x & 0xffffffffffffull;
 }
 
-void srand48(long int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+} // namespace
+
+double erand48(unsigned short s[3]) {
+	union {
+		uint64_t u;
+		double f;
+	} x = { 0x3ff0000000000000ULL | eand48_step(s, seed_48+3)<<4 };
+	return x.f - 1.0;
+}
+
+double drand48(void) {
+	return erand48(seed_48);
+}
+
+unsigned short *seed48(unsigned short *s) {
+	static unsigned short p[3];
+	memcpy(p, seed_48, sizeof p);
+	memcpy(seed_48, s, sizeof p);
+	return p;
+}
+
+void srand48(long int seed) {
+	unsigned short arr[3] = { 0x330e, (unsigned short) seed, (unsigned short) (seed>>16) };
+	seed48(arr);
 }
 
 // Borrowed from musl

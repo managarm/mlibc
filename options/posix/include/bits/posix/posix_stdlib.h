@@ -13,6 +13,7 @@ extern "C" {
 
 long random(void);
 double drand48(void);
+double erand48(unsigned short s[3]);
 void srand48(long int);
 char *initstate(unsigned int, char *, size_t);
 char *setstate(char *);
