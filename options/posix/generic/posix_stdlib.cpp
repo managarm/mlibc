@@ -492,6 +492,11 @@ int getloadavg(double *, int) {
 	__builtin_unreachable();
 }
 
+int getsubopt(char **__restrict__, char *const *__restrict__, char **__restrict__) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 char *secure_getenv(const char *name) {
 	if (mlibc::rtldConfig().secureRequired)
 		return NULL;
