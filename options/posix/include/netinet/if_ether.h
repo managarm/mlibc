@@ -101,5 +101,10 @@ struct ether_arp {
 	uint8_t arp_tha[ETH_ALEN];
 	uint8_t arp_tpa[4];
 };
+#define arp_hrd ea_hdr.ar_hrd
+#define arp_pro ea_hdr.ar_pro
+#define arp_hln ea_hdr.ar_hln
+#define arp_pln ea_hdr.ar_pln
+#define arp_op  ea_hdr.ar_op
 
 #endif //_NETINET_IF_ETHER_H
