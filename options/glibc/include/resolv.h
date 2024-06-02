@@ -15,6 +15,8 @@
 #define MAXNS     3
 #define MAXDNSRCH 6
 
+#define _PATH_RESCONF "/etc/resolv.conf"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
