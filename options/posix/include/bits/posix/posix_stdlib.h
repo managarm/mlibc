@@ -13,6 +13,7 @@ extern "C" {
 
 long random(void);
 double drand48(void);
+double erand48(unsigned short s[3]);
 void srand48(long int);
 char *initstate(unsigned int, char *, size_t);
 char *setstate(char *);
@@ -53,6 +54,8 @@ long double strtold_l(const char *__restrict__ nptr, char ** __restrict__ endptr
 float strtof_l(const char *__restrict string, char **__restrict end, locale_t loc);
 
 int getloadavg(double *, int);
+
+int getsubopt(char **__restrict__ optionp, char *const *__restrict__ tokens, char **__restrict__ valuep);
 
 // GNU extension
 char *secure_getenv(const char *);

@@ -2111,6 +2111,12 @@ int sys_rmdir(const char *path) {
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
 		return ENOENT;
+	}else if(resp.error() == managarm::posix::Errors::DIRECTORY_NOT_EMPTY) {
+		return ENOTEMPTY;
+	}else if(resp.error() == managarm::posix::Errors::INTERNAL_ERROR) {
+		return EIEIO;
+	}else if(resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
+		return ENOTDIR;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
