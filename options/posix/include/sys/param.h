@@ -11,7 +11,6 @@
 // Report the same value as Linux here.
 #define MAXNAMLEN 255
 #define MAXPATHLEN 4096
-#define HOST_NAME_MAX 64
 #define MAXSYMLINKS 20
 #define MAXHOSTNAMELEN HOST_NAME_MAX
 
