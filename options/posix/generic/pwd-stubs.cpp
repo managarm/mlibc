@@ -278,8 +278,10 @@ static bool invalid(const char *s) {
 }
 
 int putpwent(const struct passwd *p, FILE *f) {
-	if (p == nullptr || invalid(p->pw_name) || invalid(p->pw_passwd) || invalid(p->pw_gecos) || invalid(p->pw_dir) || invalid(p->pw_shell))
-		return EINVAL;
+	if (p == nullptr || invalid(p->pw_name) || invalid(p->pw_passwd) || invalid(p->pw_gecos) || invalid(p->pw_dir) || invalid(p->pw_shell)) {
+		errno = EINVAL;
+		return -1;
+	}
 
 	// Taken from musl.
 	return fprintf(f, "%s:%s:%u:%u:%s:%s:%s\n", p->pw_name, p->pw_passwd, p->pw_uid, p->pw_gid, p->pw_gecos, p->pw_dir, p->pw_shell) < 0 ? -1 : 0;
