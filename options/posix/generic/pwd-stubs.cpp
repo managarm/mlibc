@@ -273,11 +273,11 @@ void endpwent(void) {
 	close_global_file();
 }
 
-static bool invalid(const char *s) {
-	return s == nullptr || strchr(s, '\n') || strchr(s, ':');
-}
-
 int putpwent(const struct passwd *p, FILE *f) {
+	auto invalid = [](const char *s) {
+		return s == nullptr || strchr(s, '\n') || strchr(s, ':');
+	};
+
 	if (p == nullptr || invalid(p->pw_name) || invalid(p->pw_passwd) || invalid(p->pw_gecos) || invalid(p->pw_dir) || invalid(p->pw_shell)) {
 		errno = EINVAL;
 		return -1;
