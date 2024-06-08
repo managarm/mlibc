@@ -306,8 +306,11 @@ if not disable_linux_option
 
 	rtld_include_dirs += include_directories('options/linux/include')
 	libc_include_dirs += include_directories('options/linux/include')
-	rtld_include_dirs += include_directories(get_option('linux_kernel_headers'))
-	libc_include_dirs += include_directories(get_option('linux_kernel_headers'))
+
+	linux_kernel_dep = declare_dependency(include_directories: include_directories(get_option('linux_kernel_headers')))
+
+	libc_deps += linux_kernel_dep
+	rtld_deps += linux_kernel_dep
 endif
 
 if not disable_glibc_option

@@ -84,15 +84,6 @@ jobs:
             with:
               path: src/mlibc/
           - if: ${{ matrix.sysdeps == 'managarm' }}
-            name: Set up managarm subprojects directory
-            run: |
-              mkdir -p src/mlibc/subprojects build
-              (
-                cd build
-                xbstrap init ../src
-                xbstrap regenerate libdrm
-              )
-          - if: ${{ matrix.sysdeps == 'managarm' }}
             name: Clone managarm/managarm
             uses: actions/checkout@v4
             with:
@@ -117,6 +108,12 @@ jobs:
                   xbstrap init ../src
                   xbstrap install linux-headers
                 )
+          - if: ${{ matrix.sysdeps == 'managarm' }}
+            name: Set up drm headers
+            run: |
+                xbstrap install libdrm-headers
+                ln -sv $(pwd)/packages/libdrm-headers/usr/src/libdrm-headers ../src/mlibc/subprojects/
+            working-directory: build/
           - name: Compile sysdeps
             run: |
                 meson setup \
