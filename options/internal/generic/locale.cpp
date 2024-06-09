@@ -83,6 +83,8 @@ char *nl_langinfo(nl_item item) {
 		return const_cast<char *>("%a %b %e %T %Y");
 	}else if(item == YESEXPR) {
 		return const_cast<char *>("^[yY]");
+	}else if(item == NOEXPR) {
+		return const_cast<char *>("^[nN]");
 	}else{
 		mlibc::infoLogger() << "mlibc: nl_langinfo item "
 				<< item << " is not implemented properly" << frg::endlog;
