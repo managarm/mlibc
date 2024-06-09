@@ -282,6 +282,14 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			c++;
 			break;
 		}
+		case 'k': {
+			chunk = snprintf(p, space, "%2d", tm->tm_hour);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c++;
+			break;
+		}
 		case 'I': {
 			int hour = tm->tm_hour;
 			if(!hour)
