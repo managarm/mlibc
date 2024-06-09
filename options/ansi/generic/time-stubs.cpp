@@ -311,6 +311,18 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			c++;
 			break;
 		}
+		case 'P': {
+			char *str = mlibc::nl_langinfo((tm->tm_hour < 12) ? AM_STR : PM_STR);
+			for(size_t i = 0; str[i]; i++)
+				str[i] = tolower(str[i]);
+
+			chunk = snprintf(p, space, "%s", str_lower);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c++;
+			break;
+		}
 		case 'C': {
 			chunk = snprintf(p, space, "%.2d", (1900 + tm->tm_year) / 100);
 			if(chunk >= space)
