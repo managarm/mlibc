@@ -311,6 +311,14 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			c++;
 			break;
 		}
+		case 'P': {
+			chunk = snprintf(p, space, "%s", (tm->tm_hour < 12) ? "am" : "pm");
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c++;
+			break;
+		}
 		case 'C': {
 			chunk = snprintf(p, space, "%.2d", (1900 + tm->tm_year) / 100);
 			if(chunk >= space)
