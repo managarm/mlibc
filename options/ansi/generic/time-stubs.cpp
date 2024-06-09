@@ -377,6 +377,14 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			c++;
 			break;
 		}
+		case 'n': {
+			chunk = snprintf(p, space, "\n");
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c++;
+			break;
+		}
 		case 't': {
 			chunk = snprintf(p, space, "\t");
 			if(chunk >= space)
