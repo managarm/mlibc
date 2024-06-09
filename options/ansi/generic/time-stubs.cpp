@@ -209,7 +209,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			break;
 		}
 		case 'D': {
-			chunk = snprintf(p, space, "%.2d/%.2d/%.2d", tm->tm_mon + 1, tm->tm_mday, tm->tm_year % 100);
+			chunk = snprintf(p, space, "%.2d/%.2d/%.2d", tm->tm_mon + 1, tm->tm_mday, (tm->tm_year + 1900) % 100);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
