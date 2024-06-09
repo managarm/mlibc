@@ -152,7 +152,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			break;
 		}
 		case 'Z': {
-			chunk = snprintf(p, space, "%s", "GMT");
+			chunk = snprintf(p, space, "%s", "UTC");
 			if(chunk >= space)
 				return 0;
 			p += chunk;
