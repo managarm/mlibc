@@ -77,6 +77,8 @@ char *nl_langinfo(nl_item item) {
 		return const_cast<char *>("%m/%d/%y");
 	}else if(item == T_FMT) {
 		return const_cast<char *>("%H:%M:%S");
+	}else if(item == T_FMT_AMPM) {
+		return const_cast<char *>("%I:%M:%S %p");
 	}else{
 		mlibc::infoLogger() << "mlibc: nl_langinfo item "
 				<< item << " is not implemented properly" << frg::endlog;
