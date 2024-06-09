@@ -245,8 +245,16 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			break;
 		}
 		case 'c': {
-			chunk = snprintf(p, space, "%d/%.2d/%.2d %.2d:%.2d:%.2d", 1900 + tm->tm_year,
-					tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+			int day = tm->tm_wday;
+			if(day < 0 || day > 6)
+				__ensure(!"Day not in bounds.");
+
+			int mon = tm->tm_mon;
+			if(mon < 0 || mon > 11)
+				__ensure(!"Month not in bounds.");
+
+			chunk = snprintf(p, space, "%s %s %2d %.2i:%.2i:%.2d %d", mlibc::nl_langinfo(ABDAY_1 + day), 
+					mlibc::nl_langinfo(ABMON_1 + mon), tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, 1900 + tm->tm_year);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
