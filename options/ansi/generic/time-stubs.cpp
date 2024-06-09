@@ -1,4 +1,5 @@
-
+#include <algorithm>
+#include <array>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -92,6 +93,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 		const char *__restrict format, const struct tm *__restrict tm) {
 	auto c = format;
 	auto p = dest;
+	[[maybe_unused]] bool use_alternative_symbols = false;
 
 	while(*c) {
 		int chunk;
@@ -105,6 +107,23 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			c++;
 			p++;
 			continue;
+		}
+
+		if(*(c + 1) == 'O') {
+			std::array<char, 15> valid{{'B', 'b', 'd', 'e', 'H', 'I', 'm', 'M', 'S', 'u', 'U', 'V', 'w', 'W', 'y'}};
+			auto next = *(c + 2);
+			if(std::find(valid.begin(), valid.end(), next) != valid.end()) {
+				use_alternative_symbols = true;
+				c++;
+			} else {
+				*p = '%';
+				p++;
+				c++;
+				*p = 'O';
+				p++;
+				c++;
+				continue;
+			}
 		}
 
 		switch(*++c) {
