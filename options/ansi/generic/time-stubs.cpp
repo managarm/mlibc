@@ -94,6 +94,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 	auto c = format;
 	auto p = dest;
 	[[maybe_unused]] bool use_alternative_symbols = false;
+	[[maybe_unused]] bool use_alternative_era_format = false;
 
 	while(*c) {
 		int chunk;
@@ -120,6 +121,21 @@ size_t strftime(char *__restrict dest, size_t max_size,
 				p++;
 				c++;
 				*p = 'O';
+				p++;
+				c++;
+				continue;
+			}
+		} else if(*(c + 1) == 'E') {
+			std::array<char, 6> valid{{'c', 'C', 'x', 'X', 'y', 'Y'}};
+			auto next = *(c + 2);
+			if(std::find(valid.begin(), valid.end(), next) != valid.end()) {
+				use_alternative_era_format = true;
+				c++;
+			} else {
+				*p = '%';
+				p++;
+				c++;
+				*p = 'E';
 				p++;
 				c++;
 				continue;
