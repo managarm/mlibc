@@ -287,6 +287,10 @@ int sys_getsockopt(int fd, int layer, int number,
 		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented\e[39m" << frg::endlog;
 		*(int *)buffer = 4096;
 		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_RCVBUF) {
+		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_RCVBUF is unimplemented\e[39m" << frg::endlog;
+		*(int *)buffer = 4096;
+		return 0;
 	}else if(layer == SOL_SOCKET && number == SO_TYPE) {
 		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_TYPE is unimplemented, hardcoding SOCK_STREAM\e[39m" << frg::endlog;
 		*(int *)buffer = SOCK_STREAM;
@@ -302,6 +306,18 @@ int sys_getsockopt(int fd, int layer, int number,
 	}else if(layer == SOL_SOCKET && number == SO_LINGER) {
 		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_LINGER is unimplemented, hardcoding 0\e[39m" << frg::endlog;
 		*(int *)buffer = 0;
+		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_PEERSEC) {
+		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_PEERSEC is unimplemented, hardcoding 0\e[39m" << frg::endlog;
+		*(int *)buffer = 0;
+		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_PEERGROUPS) {
+		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_PEERGROUPS is unimplemented, hardcoding 0\e[39m" << frg::endlog;
+		*(int *)buffer = 0;
+		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_ACCEPTCONN) {
+		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_ACCEPTCONN is unimplemented, hardcoding 1\e[39m" << frg::endlog;
+		*(int *)buffer = 1;
 		return 0;
 	}else{
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call, layer: " << layer << " number: " << number << "\e[39m" << frg::endlog;
@@ -468,6 +484,9 @@ int sys_setsockopt(int fd, int layer, int number,
 	}else if(layer == SOL_SOCKET && number == SO_SNDBUF) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented\e[39m" << frg::endlog;
 		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_SNDBUFFORCE) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_SNDBUFFORCE is unimplemented\e[39m" << frg::endlog;
+		return 0;
 	}else if(layer == SOL_SOCKET && number == SO_KEEPALIVE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_KEEPALIVE is unimplemented\e[39m" << frg::endlog;
 		return 0;
@@ -500,6 +519,9 @@ int sys_setsockopt(int fd, int layer, int number,
 		return 0;
 	}else if(layer == IPPROTO_TCP && number == TCP_KEEPCNT) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_KEEPCNT is unimplemented\e[39m" << frg::endlog;
+		return 0;
+	}else if(layer == SOL_NETLINK && number == NETLINK_ADD_MEMBERSHIP) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_NETLINK and NETLINK_ADD_MEMBERSHIP is unimplemented\e[39m" << frg::endlog;
 		return 0;
 	}else{
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call, layer: " << layer << " number: " << number << "\e[39m" << frg::endlog;
