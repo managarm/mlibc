@@ -770,6 +770,9 @@ long sysconf(int number) {
 		case _SC_HOST_NAME_MAX:
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_HOST_NAME_MAX) unconditionally returns fallback value 256\e[39m" << frg::endlog;
 			return 256;
+		case _SC_LOGIN_NAME_MAX:
+			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_LOGIN_NAME_MAX) unconditionally returns fallback value 256\e[39m" << frg::endlog;
+			return 256;
 		case _SC_FSYNC:
 			return _POSIX_FSYNC;
 		case _SC_SAVED_IDS:
