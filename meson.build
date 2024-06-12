@@ -201,6 +201,10 @@ if host_machine.system() == 'linux'
 			error('linux_kernel_headers is not set')
 		endif
 
+		if fs.is_samepath(get_option('linux_kernel_headers'), '/usr/include')
+			error('linux_kernel_headers must be set to a Linux kernel header install directory, not your /usr/include')
+		endif
+
 		if not import('fs').is_dir(get_option('linux_kernel_headers'))
 			error('linux_kernel_headers is not set to a valid path')
 		endif
@@ -297,6 +301,10 @@ if not disable_linux_option
 	if not headers_only
 		if get_option('linux_kernel_headers') == ''
 			error('linux_kernel_headers is not set')
+		endif
+
+		if fs.is_samepath(get_option('linux_kernel_headers'), '/usr/include')
+			error('linux_kernel_headers must be set to a Linux kernel header install directory, not your /usr/include')
 		endif
 
 		if not import('fs').is_dir(get_option('linux_kernel_headers'))
