@@ -3,7 +3,7 @@ hel_dep = managarm.get_variable('hel_dep')
 proto_posix_dep = managarm.get_variable('posix_extra_dep')
 
 bragi = find_program('bragi')
-bragi_dep = subproject('bragi').get_variable('bragi_dep')
+bragi_dep = subproject('bragi', default_options: ['install_headers=false']).get_variable('bragi_dep')
 
 libdrm_dep = subproject('libdrm-headers').get_variable('libdrm_dep')
 
