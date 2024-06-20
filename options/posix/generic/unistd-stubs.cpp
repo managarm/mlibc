@@ -114,7 +114,7 @@ int execle(const char *path, const char *arg0, ...) {
 	char *argv[argc + 1];
 	char **envp;
 	va_start(ap, arg0);
-	argv[0] = (char *)argv;
+	argv[0] = (char *)arg0;
 	for(i = 1; i <= argc; i++)
 		argv[i] = va_arg(ap, char *);
 	envp = va_arg(ap, char **);
