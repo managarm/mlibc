@@ -939,6 +939,8 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		return EAFNOSUPPORT;
 	}else if(resp.error() == managarm::fs::Errors::MESSAGE_TOO_LARGE) {
 		return EMSGSIZE;
+	}else if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+		return EOPNOTSUPP;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*length = resp.size();
