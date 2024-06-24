@@ -852,7 +852,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		return EBADF;
 
 	size_t overall_size = 0;
-	for(int i = 0; i < hdr->msg_iovlen; i++) {
+	for(size_t i = 0; i < hdr->msg_iovlen; i++) {
 		HelSgItem item{
 			.buffer = hdr->msg_iov[i].iov_base,
 			.length = hdr->msg_iov[i].iov_len,
