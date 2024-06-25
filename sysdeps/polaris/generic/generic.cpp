@@ -38,13 +38,11 @@ int sys_tcb_set(void *pointer) {
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	(void)time;
-	syscall(SYS_futex, pointer, 0, expected);
-	return 0;
+	return syscall(SYS_futex, pointer, 0, expected);
 }
 
 int sys_futex_wake(int *pointer) {
-	syscall(SYS_futex, pointer, 1, 0);
-	return 0;
+	return syscall(SYS_futex, pointer, 1, 0);
 }
 
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
@@ -330,21 +328,22 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 }
 
 int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
+	int ret = 0;
 	switch (fsfdt) {
 		case fsfd_target::fd:
-			syscall(SYS_fstatat, fd, "", statbuf, flags | AT_EMPTY_PATH);
+			ret = syscall(SYS_fstatat, fd, "", statbuf, flags | AT_EMPTY_PATH);
 			break;
 		case fsfd_target::path:
-			syscall(SYS_fstatat, AT_FDCWD, path, statbuf, flags);
+			ret = syscall(SYS_fstatat, AT_FDCWD, path, statbuf, flags);
 			break;
 		case fsfd_target::fd_path:
-			syscall(SYS_fstatat, fd, path, statbuf, flags);
+			ret = syscall(SYS_fstatat, fd, path, statbuf, flags);
 			break;
 		default:
 			__ensure(!"sys_stat: Invalid fsfdt");
 			__builtin_unreachable();
 	}
-	return 0;
+	return -ret;
 }
 
 int sys_faccessat(int dirfd, const char *pathname, int mode, int flags) {
