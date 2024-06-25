@@ -81,7 +81,7 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	return sys_openat(AT_FDCWD, path, flags, mode, fd);
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 int sys_tcgetattr(int fd, struct termios *attr) {
 	int ret;
@@ -176,7 +176,7 @@ retry:
 
 int sys_close(int fd) {
 	syscall(SYS_close, fd);
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 	open_dirs.remove(fd);
 #endif
 	return 0;
@@ -279,7 +279,7 @@ int sys_anon_free(void *pointer, size_t size) {
 	return sys_vm_unmap(pointer, size);
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 pid_t sys_getpid() {
 	return (pid_t)syscall(SYS_getpid);
