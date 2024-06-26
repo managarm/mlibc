@@ -10,7 +10,8 @@ libc_sources += files(
 	'generic/mount.cpp',
 	'generic/reboot.cpp',
 	'generic/thread.cpp',
-	'generic/thread.S'
+	'generic/thread.S',
+	'generic/utmpx.c',
 )
 
 if not no_headers
@@ -83,6 +84,7 @@ if not no_headers
 
 	install_headers(
 		'include/mntent.h',
+		'include/utmpx.h',
 	)
 endif
 
