@@ -777,6 +777,9 @@ long sysconf(int number) {
 			return _POSIX_FSYNC;
 		case _SC_SAVED_IDS:
 			return _POSIX_SAVED_IDS;
+		case _SC_SYMLOOP_MAX:
+			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_SYMLOOP_MAX) unconditionally returns fallback value 8\e[39m" << frg::endlog;
+			return 8;
 		default:
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf() call is not implemented, number: " << number << "\e[39m" << frg::endlog;
 			errno = EINVAL;
