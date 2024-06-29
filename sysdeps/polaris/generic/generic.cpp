@@ -15,6 +15,17 @@
 
 namespace mlibc {
 
+int fcntl_helper(int fd, int request, int *result, ...) {
+  va_list args;
+  va_start(args, result);
+  if (!mlibc::sys_fcntl) {
+    return ENOSYS;
+  }
+  int ret = mlibc::sys_fcntl(fd, request, args, result);
+  va_end(args);
+  return ret;
+}
+
 void sys_libc_log(const char *message) {
 	syscall(SYS_puts, message);
 }
@@ -483,6 +494,265 @@ int sys_uname(struct utsname *buf) {
 int sys_fsync(int) {
 	mlibc::infoLogger() << "sys_fsync is a stub" << frg::endlog;
 	return 0;
+}
+
+int sys_ppoll(struct pollfd *fds, int nfds, const struct timespec *timeout,
+              const sigset_t *sigmask, int *num_events) {
+  int ret = syscall(SYS_ppoll, fds, nfds, timeout, sigmask);
+
+  if (ret < 0)
+    return -ret;
+
+  *num_events = ret;
+  return 0;
+}
+
+int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
+  struct timespec ts;
+  ts.tv_sec = timeout / 1000;
+  ts.tv_nsec = (timeout % 1000) * 1000000;
+  return sys_ppoll(fds, count, timeout < 0 ? NULL : &ts, NULL, num_events);
+}
+
+int sys_pselect(int nfds, fd_set *read_set, fd_set *write_set,
+                fd_set *except_set, const struct timespec *timeout,
+                const sigset_t *sigmask, int *num_events) {
+  struct pollfd *fds = (struct pollfd *)calloc(nfds, sizeof(struct pollfd));
+  if (fds == NULL) {
+    return ENOMEM;
+  }
+
+  for (int i = 0; i < nfds; i++) {
+    struct pollfd *fd = &fds[i];
+
+    if (read_set && FD_ISSET(i, read_set)) {
+      fd->events |= POLLIN;
+    }
+    if (write_set && FD_ISSET(i, write_set)) {
+      fd->events |= POLLOUT;
+    }
+    if (except_set && FD_ISSET(i, except_set)) {
+      fd->events |= POLLPRI;
+    }
+
+    if (!fd->events) {
+      fd->fd = -1;
+      continue;
+    }
+    fd->fd = i;
+  }
+
+  int ret = sys_ppoll(fds, nfds, timeout, sigmask, num_events);
+  if (ret != 0) {
+    free(fds);
+    return ret;
+  }
+
+  fd_set res_read_set, res_write_set, res_except_set;
+  FD_ZERO(&res_read_set);
+  FD_ZERO(&res_write_set);
+  FD_ZERO(&res_except_set);
+
+  for (int i = 0; i < nfds; i++) {
+    struct pollfd *fd = &fds[i];
+
+    if (read_set && FD_ISSET(i, read_set) &&
+        (fd->revents & (POLLIN | POLLERR | POLLHUP)) != 0) {
+      FD_SET(i, &res_read_set);
+    }
+    if (write_set && FD_ISSET(i, write_set) &&
+        (fd->revents & (POLLOUT | POLLERR | POLLHUP)) != 0) {
+      FD_SET(i, &res_write_set);
+    }
+    if (except_set && FD_ISSET(i, except_set) && (fd->revents & POLLPRI) != 0) {
+      FD_SET(i, &res_except_set);
+    }
+  }
+
+  free(fds);
+  if (read_set) {
+    *read_set = res_read_set;
+  }
+  if (write_set) {
+    *write_set = res_write_set;
+  }
+  if (except_set) {
+    *except_set = res_except_set;
+  }
+
+  return 0;
+}
+
+int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
+  int ret = syscall(SYS_socket, domain, type_and_flags, proto);
+
+  if (ret < 0) {
+    return -ret;
+  }
+
+  *fd = (int)ret;
+  return 0;
+}
+
+int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
+  return -(syscall(SYS_socketpair, domain, type_and_flags, proto, fds));
+}
+
+int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
+  return -(syscall(SYS_bind, fd, addr_ptr, addr_length));
+}
+
+int sys_connect(int fd, const struct sockaddr *addr_ptr,
+                socklen_t addr_length) {
+  return -(syscall(SYS_connect, fd, addr_ptr, addr_length));
+}
+
+int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr,
+               socklen_t *addr_length, int flags) {
+  int ret = syscall(SYS_accept, fd, addr_ptr, addr_length);
+
+  if (ret < 0) {
+    return -ret;
+  }
+
+  *newfd = ret;
+
+  if (flags & SOCK_NONBLOCK) {
+    int fcntl_ret = 0;
+    fcntl_helper(*newfd, F_GETFL, &fcntl_ret);
+    fcntl_helper(*newfd, F_SETFL, &fcntl_ret, fcntl_ret | O_NONBLOCK);
+  }
+
+  if (flags & SOCK_CLOEXEC) {
+    int fcntl_ret = 0;
+    fcntl_helper(*newfd, F_GETFD, &fcntl_ret);
+    fcntl_helper(*newfd, F_SETFD, &fcntl_ret, fcntl_ret | FD_CLOEXEC);
+  }
+
+  return 0;
+}
+
+int sys_getsockopt(int fd, int layer, int number, void *__restrict buffer,
+                   socklen_t *__restrict size) {
+  (void)fd;
+  (void)size;
+  if (layer == SOL_SOCKET && number == SO_PEERCRED) {
+    mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and "
+                           "SO_PEERCRED is unimplemented\e[39m"
+                        << frg::endlog;
+    *(int *)buffer = 0;
+    return 0;
+  } else if (layer == SOL_SOCKET && number == SO_SNDBUF) {
+    mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and "
+                           "SO_SNDBUF is unimplemented\e[39m"
+                        << frg::endlog;
+    *(int *)buffer = 4096;
+    return 0;
+  } else if (layer == SOL_SOCKET && number == SO_TYPE) {
+    mlibc::infoLogger()
+        << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_TYPE is "
+           "unimplemented, hardcoding SOCK_STREAM\e[39m"
+        << frg::endlog;
+    *(int *)buffer = SOCK_STREAM;
+    return 0;
+  } else if (layer == SOL_SOCKET && number == SO_ERROR) {
+    mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and "
+                           "SO_ERROR is unimplemented, hardcoding 0\e[39m"
+                        << frg::endlog;
+    *(int *)buffer = 0;
+    return 0;
+  } else if (layer == SOL_SOCKET && number == SO_KEEPALIVE) {
+    mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and "
+                           "SO_KEEPALIVE is unimplemented, hardcoding 0\e[39m"
+                        << frg::endlog;
+    *(int *)buffer = 0;
+    return 0;
+  } else {
+    mlibc::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call, layer: "
+                         << layer << " number: " << number << "\e[39m"
+                         << frg::endlog;
+    __builtin_unreachable();
+  }
+
+  return 0;
+}
+
+int sys_setsockopt(int fd, int layer, int number, const void *buffer,
+                   socklen_t size) {
+  (void)fd;
+  (void)buffer;
+  (void)size;
+  if (layer == SOL_SOCKET && number == SO_PASSCRED) {
+    mlibc::infoLogger()
+        << "\e[31mmlibc: setsockopt(SO_PASSCRED) is not implemented"
+           " correctly\e[39m"
+        << frg::endlog;
+    return 0;
+  } else if (layer == SOL_SOCKET && number == SO_ATTACH_FILTER) {
+    mlibc::infoLogger()
+        << "\e[31mmlibc: setsockopt(SO_ATTACH_FILTER) is not implemented"
+           " correctly\e[39m"
+        << frg::endlog;
+    return 0;
+  } else if (layer == SOL_SOCKET && number == SO_RCVBUFFORCE) {
+    mlibc::infoLogger()
+        << "\e[31mmlibc: setsockopt(SO_RCVBUFFORCE) is not implemented"
+           " correctly\e[39m"
+        << frg::endlog;
+    return 0;
+  } else if (layer == SOL_SOCKET && number == SO_SNDBUF) {
+    mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and "
+                           "SO_SNDBUF is unimplemented\e[39m"
+                        << frg::endlog;
+    return 0;
+  } else if (layer == SOL_SOCKET && number == SO_KEEPALIVE) {
+    mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and "
+                           "SO_KEEPALIVE is unimplemented\e[39m"
+                        << frg::endlog;
+    return 0;
+  } else if (layer == SOL_SOCKET && number == SO_REUSEADDR) {
+    mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and "
+                           "SO_REUSEADDR is unimplemented\e[39m"
+                        << frg::endlog;
+    return 0;
+  } else if (layer == AF_NETLINK && number == SO_ACCEPTCONN) {
+    mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with AF_NETLINK and "
+                           "SO_ACCEPTCONN is unimplemented\e[39m"
+                        << frg::endlog;
+    return 0;
+  } else {
+    mlibc::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call, layer: "
+                         << layer << " number: " << number << "\e[39m"
+                         << frg::endlog;
+    __builtin_unreachable();
+  }
+}
+
+int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
+  ssize_t ret = syscall(SYS_recvmsg, sockfd, hdr, flags);
+
+  if (ret < 0) {
+    return -ret;
+  }
+
+  *length = ret;
+  return 0;
+}
+
+int sys_peername(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
+                 socklen_t *actual_length) {
+  int ret = syscall(SYS_getpeername, fd, addr_ptr, &max_addr_length);
+
+  if (ret < 0) {
+    return -ret;
+  }
+
+  *actual_length = max_addr_length;
+  return 0;
+}
+
+int sys_listen(int fd, int backlog) {
+  return -(syscall(SYS_listen, fd, backlog));
 }
 
 #endif
