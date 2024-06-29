@@ -36,6 +36,7 @@
 #define SYS_dup3 292
 #define SYS_pipe 293
 #define SYS_getclock 314
+#define SYS_ppoll 271
 #define SYS_socket 41
 #define SYS_connect 42
 #define SYS_accept 43
