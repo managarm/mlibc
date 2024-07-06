@@ -1,4 +1,5 @@
-
+#include <algorithm>
+#include <array>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -92,6 +93,8 @@ size_t strftime(char *__restrict dest, size_t max_size,
 		const char *__restrict format, const struct tm *__restrict tm) {
 	auto c = format;
 	auto p = dest;
+	[[maybe_unused]] bool use_alternative_symbols = false;
+	[[maybe_unused]] bool use_alternative_era_format = false;
 
 	while(*c) {
 		int chunk;
@@ -105,6 +108,38 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			c++;
 			p++;
 			continue;
+		}
+
+		if(*(c + 1) == 'O') {
+			std::array<char, 15> valid{{'B', 'b', 'd', 'e', 'H', 'I', 'm', 'M', 'S', 'u', 'U', 'V', 'w', 'W', 'y'}};
+			auto next = *(c + 2);
+			if(std::find(valid.begin(), valid.end(), next) != valid.end()) {
+				use_alternative_symbols = true;
+				c++;
+			} else {
+				*p = '%';
+				p++;
+				c++;
+				*p = 'O';
+				p++;
+				c++;
+				continue;
+			}
+		} else if(*(c + 1) == 'E') {
+			std::array<char, 6> valid{{'c', 'C', 'x', 'X', 'y', 'Y'}};
+			auto next = *(c + 2);
+			if(std::find(valid.begin(), valid.end(), next) != valid.end()) {
+				use_alternative_era_format = true;
+				c++;
+			} else {
+				*p = '%';
+				p++;
+				c++;
+				*p = 'E';
+				p++;
+				c++;
+				continue;
+			}
 		}
 
 		switch(*++c) {
@@ -133,7 +168,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			break;
 		}
 		case 'Z': {
-			chunk = snprintf(p, space, "%s", "GMT");
+			chunk = snprintf(p, space, "%s", "UTC");
 			if(chunk >= space)
 				return 0;
 			p += chunk;
@@ -190,7 +225,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			break;
 		}
 		case 'D': {
-			chunk = snprintf(p, space, "%.2d/%.2d/%.2d", tm->tm_mon + 1, tm->tm_mday, tm->tm_year % 100);
+			chunk = snprintf(p, space, "%.2d/%.2d/%.2d", tm->tm_mon + 1, tm->tm_mday, (tm->tm_year + 1900) % 100);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
@@ -226,8 +261,16 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			break;
 		}
 		case 'c': {
-			chunk = snprintf(p, space, "%d/%.2d/%.2d %.2d:%.2d:%.2d", 1900 + tm->tm_year,
-					tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+			int day = tm->tm_wday;
+			if(day < 0 || day > 6)
+				__ensure(!"Day not in bounds.");
+
+			int mon = tm->tm_mon;
+			if(mon < 0 || mon > 11)
+				__ensure(!"Month not in bounds.");
+
+			chunk = snprintf(p, space, "%s %s %2d %.2i:%.2i:%.2d %d", mlibc::nl_langinfo(ABDAY_1 + day),
+					mlibc::nl_langinfo(ABMON_1 + mon), tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, 1900 + tm->tm_year);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
@@ -255,6 +298,14 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			c++;
 			break;
 		}
+		case 'k': {
+			chunk = snprintf(p, space, "%2d", tm->tm_hour);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c++;
+			break;
+		}
 		case 'I': {
 			int hour = tm->tm_hour;
 			if(!hour)
@@ -270,6 +321,20 @@ size_t strftime(char *__restrict dest, size_t max_size,
 		}
 		case 'p': {
 			chunk = snprintf(p, space, "%s", mlibc::nl_langinfo((tm->tm_hour < 12) ? AM_STR : PM_STR));
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c++;
+			break;
+		}
+		case 'P': {
+			char *str = mlibc::nl_langinfo((tm->tm_hour < 12) ? AM_STR : PM_STR);
+			char *str_lower = reinterpret_cast<char *>(getAllocator().allocate(strlen(str) + 1));
+			for(size_t i = 0; str[i]; i++)
+				str_lower[i] = tolower(str[i]);
+			str_lower[strlen(str)] = '\0';
+
+			chunk = snprintf(p, space, "%s", str_lower);
 			if(chunk >= space)
 				return 0;
 			p += chunk;
@@ -324,6 +389,14 @@ size_t strftime(char *__restrict dest, size_t max_size,
 		}
 		case '%': {
 			chunk = snprintf(p, space, "%%");
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c++;
+			break;
+		}
+		case 'n': {
+			chunk = snprintf(p, space, "\n");
 			if(chunk >= space)
 				return 0;
 			p += chunk;
