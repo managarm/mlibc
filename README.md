@@ -11,7 +11,7 @@
 | Directory | Purpose |
 | --- | --- |
 | `options/` | (More or less) OS-independent headers and code.<br>`options/` is divided into subdirectories that can be enabled or disabled by ports.|
-| `sysdeps/` | OS-specific headers and code.<br>`sysdeps/` is divded into per-port subdirectories. Exactly one of those subdirectories is enabled in each build.|
+| `sysdeps/` | OS-specific headers and code.<br>`sysdeps/` is divided into per-port subdirectories. Exactly one of those subdirectories is enabled in each build.|
 | `abis/` | OS-specific interface headers ("ABI headers"). Those contain the constants and structs of the OS interface. For example, the numerical values of `SEEK_SET` or `O_CREAT` live here, as well as structs like `struct stat`. ABI headers are _only_ allowed to contain constants, structs and unions but _no_ function declarations or logic.<br>`abis/` is divided into per-OS subdirectories but this division is for organizational purposes only. Ports can still mix headers from different `abis/` subdirectories.|
 
 ## Porting mlibc to a new OS
