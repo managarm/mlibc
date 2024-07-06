@@ -269,7 +269,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			if(mon < 0 || mon > 11)
 				__ensure(!"Month not in bounds.");
 
-			chunk = snprintf(p, space, "%s %s %2d %.2i:%.2i:%.2d %d", mlibc::nl_langinfo(ABDAY_1 + day), 
+			chunk = snprintf(p, space, "%s %s %2d %.2i:%.2i:%.2d %d", mlibc::nl_langinfo(ABDAY_1 + day),
 					mlibc::nl_langinfo(ABMON_1 + mon), tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, 1900 + tm->tm_year);
 			if(chunk >= space)
 				return 0;
@@ -329,8 +329,10 @@ size_t strftime(char *__restrict dest, size_t max_size,
 		}
 		case 'P': {
 			char *str = mlibc::nl_langinfo((tm->tm_hour < 12) ? AM_STR : PM_STR);
+			char *str_lower = reinterpret_cast<char *>(getAllocator().allocate(strlen(str) + 1));
 			for(size_t i = 0; str[i]; i++)
-				str[i] = tolower(str[i]);
+				str_lower[i] = tolower(str[i]);
+			str_lower[strlen(str)] = '\0';
 
 			chunk = snprintf(p, space, "%s", str_lower);
 			if(chunk >= space)
