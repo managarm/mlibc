@@ -9,6 +9,8 @@
 extern "C" {
 #endif
 
+#define GETPID 11
+#define GETVAL 12
 #define GETALL 13
 #define SETVAL 16
 #define SETALL 17
