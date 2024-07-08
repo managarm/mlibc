@@ -335,9 +335,10 @@ std::array<std::pair<int, int>, 5> setsockopt_readonly = {{
 	{ SOL_SOCKET, SO_TYPE },
 }};
 
-std::array<std::pair<int, int>, 3> setsockopt_passthrough = {{
+std::array<std::pair<int, int>, 4> setsockopt_passthrough = {{
 	{ SOL_PACKET, PACKET_AUXDATA },
 	{ SOL_SOCKET, SO_LOCK_FILTER },
+	{ SOL_SOCKET, SO_BINDTODEVICE },
 	{ SOL_IP, IP_PKTINFO },
 }};
 
@@ -406,6 +407,8 @@ int sys_setsockopt(int fd, int layer, int number,
 		if(resp.error() == managarm::fs::Errors::SUCCESS)
 			return 0;
 		else if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
+			return EINVAL;
+		else if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT)
 			return EINVAL;
 		else if(resp.error() == managarm::fs::Errors::INVALID_PROTOCOL_OPTION)
 			return ENOPROTOOPT;
