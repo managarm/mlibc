@@ -30,7 +30,7 @@ no_headers = get_option('mlibc_no_headers')
 library_type = get_option('default_library')
 build_tests = get_option('build_tests')
 build_tests_host_libc = get_option('build_tests_host_libc')
-disable_ansi_option = get_option('disable_ansi_option')
+disable_ansi_option_tests = get_option('disable_ansi_option_tests')
 disable_posix_option = get_option('disable_posix_option')
 disable_linux_option = get_option('disable_linux_option')
 disable_iconv_option = get_option('disable_iconv_option')
@@ -264,7 +264,6 @@ endif
 # Configuration based on enabled options.
 #----------------------------------------------------------------------------------------
 
-mlibc_conf.set10('__MLIBC_ANSI_OPTION', not disable_ansi_option)
 mlibc_conf.set10('__MLIBC_POSIX_OPTION', not disable_posix_option)
 mlibc_conf.set10('__MLIBC_LINUX_OPTION', not disable_linux_option)
 mlibc_conf.set10('__MLIBC_INTL_OPTION', not disable_intl_option)
@@ -274,10 +273,8 @@ mlibc_conf.set10('__MLIBC_CRYPT_OPTION', not disable_crypt_option)
 mlibc_conf.set10('__MLIBC_BSD_OPTION', not disable_bsd_option)
 mlibc_conf.set10('__MLIBC_SYSDEP_HAS_BITS_SYSCALL_H', provides_bits_syscall_h)
 
-if not disable_ansi_option
-	rtld_include_dirs += include_directories('options/ansi/include')
-	libc_include_dirs += include_directories('options/ansi/include')
-endif
+rtld_include_dirs += include_directories('options/ansi/include')
+libc_include_dirs += include_directories('options/ansi/include')
 
 if not disable_posix_option
 	rtld_include_dirs += include_directories('options/posix/include')
@@ -537,7 +534,7 @@ summary(summary_info, bool_yn: true, section: 'tests')
 
 summary_info = {}
 summary_info += {'headers-only': headers_only}
-summary_info += {'ANSI option': not disable_ansi_option}
+summary_info += {'ANSI tests option': not disable_ansi_option_tests}
 summary_info += {'crypt option': not disable_crypt_option}
 summary_info += {'POSIX option': not disable_posix_option}
 summary_info += {'Linux option': not disable_linux_option}
