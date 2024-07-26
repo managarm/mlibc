@@ -2221,6 +2221,14 @@ int sys_unlinkat(int fd, const char *path, int flags) {
 		return EBUSY;
 	}else if(resp.error() == managarm::posix::Errors::IS_DIRECTORY) {
 		return EISDIR;
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	}else if(resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	}else if(resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
+		return ENOTDIR;
+	}else if(resp.error() == managarm::posix::Errors::DIRECTORY_NOT_EMPTY) {
+		return ENOTEMPTY;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
