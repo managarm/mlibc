@@ -36,6 +36,8 @@ int vdprintf(int fd, const char *format, __builtin_va_list args);
 
 char *fgetln(FILE *, size_t *);
 
+char *tempnam(const char *dir, const char *pfx);
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 #define RENAME_EXCHANGE (1 << 1)
