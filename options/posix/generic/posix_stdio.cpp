@@ -205,6 +205,11 @@ char *fgetln(FILE *, size_t *) {
 	__builtin_unreachable();
 }
 
+char *tempnam(const char *, const char *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 FILE *fopencookie(void *cookie, const char *__restrict mode, cookie_io_functions_t funcs) {
 	int flags = mlibc::fd_file::parse_modestring(mode);
 
