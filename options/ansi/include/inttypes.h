@@ -117,6 +117,8 @@
 #define SCNd32 "d"
 #define SCNd64 __PRI64 "d"
 
+#define SCNu16 "hu"
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
