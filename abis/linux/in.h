@@ -193,6 +193,7 @@ struct group_source_req {
 #define IP_PMTUDISC_INTERFACE 4
 #define IP_PMTUDISC_OMIT 5
 
+#define MCAST_JOIN_GROUP 42
 #define MCAST_BLOCK_SOURCE 43
 #define MCAST_UNBLOCK_SOURCE 44
 #define MCAST_JOIN_SOURCE_GROUP 46
