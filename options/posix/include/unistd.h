@@ -330,7 +330,7 @@ pid_t setsid(void);
 int setuid(uid_t);
 void setusershell(void);
 unsigned int sleep(unsigned int);
-void swab(const void *__restrict, void *__restrict, ssize_t);
+void swab(const void *_src, void *_dest, ssize_t n);
 int symlink(const char *, const char *);
 int symlinkat(const char *, int, const char *);
 void sync(void);
