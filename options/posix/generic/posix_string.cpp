@@ -152,6 +152,11 @@ void *memrchr(const void *m, int c, size_t n) {
 	return 0;
 }
 
+char *strerror_l(int errnum, locale_t) {
+	mlibc::infoLogger() << "mlibc: strerror_l locale is ignored!" << frg::endlog;
+	return strerror(errnum);
+}
+
 // BSD extensions.
 // Taken from musl
 size_t strlcpy(char *d, const char *s, size_t n) {
