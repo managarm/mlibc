@@ -116,6 +116,11 @@ void srand48(long int seed) {
 	seed48(arr);
 }
 
+long jrand48(unsigned short [3]) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 // Borrowed from musl
 void srandom(unsigned int seed) {
 	int k;
