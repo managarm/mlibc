@@ -83,6 +83,7 @@ Return stringToInteger(const Char *__restrict nptr, Char **__restrict endptr, in
 
 	bool hasOctalPrefix = s[0] == widen<Char>('0');
 	bool hasHexPrefix = hasOctalPrefix && (s[1] == widen<Char>('x') || s[1] == widen<Char>('X'));
+	bool hasBinPrefix = hasOctalPrefix && (s[1] == widen<Char>('b') || s[1] == widen<Char>('B'));
 
 	// There's two tricky cases we need to keep in mind here:
 	//   1. We should interpret "0x5" as hex 5 rather than octal 0.
@@ -91,6 +92,9 @@ Return stringToInteger(const Char *__restrict nptr, Char **__restrict endptr, in
 	if ((base == 0 || base == 16) && hasHexPrefix && char_detail<Char>::isHexDigit(s[2])) {
 		s += 2;
 		base = 16;
+	} else if ((base == 0 || base == 2) && hasBinPrefix) {
+		s += 2;
+		base = 2;
 	} else if ((base == 0 || base == 8) && hasOctalPrefix) {
 		base = 8;
 	} else if (base == 0) { 

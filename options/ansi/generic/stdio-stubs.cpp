@@ -54,7 +54,7 @@ struct PrintfAgent {
 		case 'p': case 's':
 			frg::do_printf_chars(*_formatter, t, opts, szmod, _vsp);
 			break;
-		case 'd': case 'i': case 'o': case 'x': case 'X': case 'u':
+		case 'd': case 'i': case 'o': case 'x': case 'X': case 'b': case 'B': case 'u':
 			frg::do_printf_ints(*_formatter, t, opts, szmod, _vsp);
 			break;
 		case 'f': case 'F': case 'g': case 'G': case 'e': case 'E':
@@ -585,6 +585,34 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 					} else if (c >= 'A' && c <= 'F') {
 						handler.consume();
 						res = res * 16 + (c - 'A' + 10);
+					} else {
+						break;
+					}
+					count++;
+					c = handler.look_ahead();
+				}
+				NOMATCH_CHECK(count == 0);
+				if (dest)
+					store_int(dest, type, res);
+				break;
+			}
+			case 'b': {
+				unsigned long long res = 0;
+				char c = handler.look_ahead();
+				int count = 0;
+				EOF_CHECK(c == '\0');
+				if (c == '0') {
+					handler.consume();
+					c = handler.look_ahead();
+					if (c == 'b' || c == 'B') {
+						handler.consume();
+						c = handler.look_ahead();
+					}
+				}
+				while (true) {
+					if (c == '0' || c == '1') {
+						handler.consume();
+						res = res * 2 + (c - '0');
 					} else {
 						break;
 					}
