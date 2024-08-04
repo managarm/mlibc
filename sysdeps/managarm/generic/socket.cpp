@@ -161,6 +161,8 @@ int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) 
 		return ENOENT;
 	} else if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
 		return EINVAL;
+	} else if(resp.error() == managarm::fs::Errors::CONNECTION_REFUSED) {
+		return ECONNREFUSED;
 	}
 
 	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
