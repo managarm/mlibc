@@ -302,6 +302,28 @@ if not disable_linux_option
 		if not import('fs').is_dir(get_option('linux_kernel_headers'))
 			error('linux_kernel_headers is not set to a valid path')
 		endif
+
+		cc_search_path = run_command(meson.get_compiler('cpp', native: true), '-E', '-Wp,-v', '-xc', '/dev/null', check: true).stderr()
+		search_paths = []
+
+		search_started = false
+		foreach line : cc_search_path.strip().splitlines()
+			if not search_started and line == '#include <...> search starts here:'
+				search_started = true
+				continue
+			elif search_started and line == 'End of search list.'
+				search_started = false
+			elif search_started
+				search_paths += line.strip()
+			endif
+		endforeach
+
+		foreach path : search_paths
+			if fs.is_samepath(get_option('linux_kernel_headers'), path)
+				warning('Please install Linux kernel headers to a directory using \'make headers_install\'.')
+				error('Using system include paths for \'linux_kernel_headers\' is unsupported!')
+			endif
+		endforeach
 	endif
 
 	rtld_include_dirs += include_directories('options/linux/include')
