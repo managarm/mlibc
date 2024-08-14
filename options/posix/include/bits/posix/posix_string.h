@@ -24,6 +24,8 @@ void *memccpy(void *__restrict dest, const void *__restrict src, int c, size_t n
 
 int strcoll_l(const char *s1, const char *s2, locale_t locale);
 
+char *strerror_l(int errnum, locale_t locale);
+
 // GNU extensions.
 #if defined(_GNU_SOURCE)
 char *strcasestr(const char *, const char *);
