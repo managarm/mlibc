@@ -270,6 +270,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		if(send_req.error() == kHelErrDismissed)
 			return EINVAL;
 		HEL_CHECK(send_req.error());
+		if(recv_resp.error() == kHelErrDismissed)
+			return EINVAL;
 		HEL_CHECK(recv_resp.error());
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
