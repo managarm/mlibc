@@ -144,7 +144,6 @@ extern "C" void relocateSelf() {
 		if(!(entry & 1)) {
 			addr = (elf_addr *)(ldso_base + entry);
 			__ensure(addr);
-			*addr++ += ldso_base;
 		}else {
 			// Odd entry indicates entry is a bitmap of the subsequent locations to be relocated.
 			for(int i = 0; entry; ++i) {

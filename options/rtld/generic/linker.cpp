@@ -1728,7 +1728,6 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 			if(!(entry & 1)) {
 				addr = (elf_addr *)(object->baseAddress + entry);
 				__ensure(addr);
-				*addr++ += object->baseAddress;
 			}else {
 				// Odd entry indicates entry is a bitmap of the subsequent locations to be relocated.
 				for(int i = 0; entry; ++i) {
