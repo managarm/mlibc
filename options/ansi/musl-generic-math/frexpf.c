@@ -13,6 +13,7 @@ float frexpf(float x, int *e)
 		} else *e = 0;
 		return x;
 	} else if (ee == 0xff) {
+		*e = 0;
 		return x;
 	}
 

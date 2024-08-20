@@ -13,6 +13,7 @@ double frexp(double x, int *e)
 		} else *e = 0;
 		return x;
 	} else if (ee == 0x7ff) {
+		*e = 0;
 		return x;
 	}
 
