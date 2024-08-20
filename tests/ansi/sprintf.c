@@ -110,12 +110,26 @@ int main() {
 	assert(!strcmp(buf, "0XC"));
 	sprintf(buf, "%#o", 12);
 	assert(!strcmp(buf, "014"));
+
 	sprintf(buf, "%#x", 0);
 	assert(!strcmp(buf, "0"));
 	sprintf(buf, "%#X", 0);
 	assert(!strcmp(buf, "0"));
 	sprintf(buf, "%#o", 0);
 	assert(!strcmp(buf, "0"));
+
+	// Disable -Wformat here because the compiler might not know about the b specifier.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+	sprintf(buf, "%#b", 12);
+	assert(!strcmp(buf, "0b1100"));
+	sprintf(buf, "%#B", 12);
+	assert(!strcmp(buf, "0B1100"));
+	sprintf(buf, "%#b", 0);
+	assert(!strcmp(buf, "0"));
+	sprintf(buf, "%#B", 0);
+	assert(!strcmp(buf, "0"));
+#pragma GCC diagnostic pop
 
 	// Test 'd' with different size mods to see
 	// if they work
@@ -176,6 +190,25 @@ int main() {
 	assert(!strcmp(buf, "14"));
 	sprintf(buf, "%hho", (unsigned char) 12);
 	assert(!strcmp(buf, "14"));
+
+	// Disable -Wformat here because the compiler might not know about the b specifier.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+	// Test 'b' with different size mods to see
+	// if they work
+	sprintf(buf, "%b", 12);
+	assert(!strcmp(buf, "1100"));
+	sprintf(buf, "%lb", 12L);
+	assert(!strcmp(buf, "1100"));
+	sprintf(buf, "%llb", 12LL);
+	assert(!strcmp(buf, "1100"));
+	sprintf(buf, "%zb", (size_t)12);
+	assert(!strcmp(buf, "1100"));
+	sprintf(buf, "%hb", (unsigned short) 12);
+	assert(!strcmp(buf, "1100"));
+	sprintf(buf, "%hhb", (unsigned char) 12);
+	assert(!strcmp(buf, "1100"));
+#pragma GCC diagnostic pop
 
 	// Test %n$ syntax.
 	sprintf(buf, "%1$d", 12);
