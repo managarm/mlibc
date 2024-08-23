@@ -10,10 +10,10 @@ sources:
     branch: 'master'
 
   - name: linux
-    url: 'https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.1.8.tar.xz'
-    extract_path: 'linux-6.1.8'
+    url: 'https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.9.9.tar.xz'
+    extract_path: 'linux-6.9.9'
     format: 'tar.xz'
-    version: '6.1.8'
+    version: '6.9.9'
 
   - name: libdrm
     subdir: 'ports'

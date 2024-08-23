@@ -10,6 +10,7 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
+char *ether_ntoa(const struct ether_addr *addr);
 char *ether_ntoa_r(const struct ether_addr *p_a, char *x);
 
 struct ether_addr *ether_aton(const char *asc);

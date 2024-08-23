@@ -5,6 +5,8 @@
 #include <sys/socket.h>
 #include <stdint.h>
 
+#define MAX_ADDR_LEN 7
+
 #define ARPOP_REQUEST 1
 #define ARPOP_REPLY 2
 #define ARPOP_RREQUEST 3
