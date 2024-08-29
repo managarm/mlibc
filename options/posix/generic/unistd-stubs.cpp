@@ -1137,19 +1137,59 @@ int access(const char *path, int mode) {
 	return 0;
 }
 
+namespace {
+	FILE *user_shell_global_file; // Used by setusershell/getusershell/endusershell.
+
+	bool user_shell_open_global_file() {
+		if(!user_shell_global_file) {
+			user_shell_global_file = fopen("/etc/shells", "r");
+			if(!user_shell_global_file) {
+				// if the file cannot be opened, we need to pretend one exists with
+				// these shells:
+				static char shells[] = "/bin/sh\n/bin/csh\n";
+
+				user_shell_global_file = fmemopen(shells, strlen(shells), "r");
+				if(user_shell_global_file == nullptr)
+					return false;
+			}
+		}
+
+		return true;
+	}
+
+	void user_shell_close_global_file() {
+		if(user_shell_global_file) {
+			fclose(user_shell_global_file);
+			user_shell_global_file = nullptr;
+		}
+	}
+}
+
 char *getusershell(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	static char shell[PATH_MAX];
+	if(!user_shell_open_global_file())
+		return nullptr;
+
+	if (fgets(shell, PATH_MAX, user_shell_global_file)){
+		shell[strcspn(shell, "\n")] = '\0';
+		return shell;
+	}
+
+	if(ferror(user_shell_global_file))
+		errno = EIO;
+
+	return nullptr;
 }
 
 void setusershell(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	if(!user_shell_open_global_file())
+		return;
+
+	rewind(user_shell_global_file);
 }
 
 void endusershell(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	user_shell_close_global_file();
 }
 
 int isatty(int fd) {
