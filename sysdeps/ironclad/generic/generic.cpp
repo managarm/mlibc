@@ -319,7 +319,7 @@ pid_t sys_getppid() {
 	return ret;
 }
 
-int sys_getgroups(size_t size, const gid_t *list, int *retval) {
+int sys_getgroups(size_t size, gid_t *list, int *retval) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_GETGROUPS, size, list);
 	*retval = ret;

@@ -1824,7 +1824,7 @@ int sys_getpgid(pid_t pid, pid_t *out) {
 	return 0;
 }
 
-int sys_getgroups(size_t size, const gid_t *list, int *retval) {
+int sys_getgroups(size_t size, gid_t *list, int *retval) {
 	auto ret = do_syscall(SYS_getgroups, size, list);
 	if (int e = sc_error(ret); e)
 		return e;
