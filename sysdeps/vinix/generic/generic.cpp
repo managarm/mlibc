@@ -839,7 +839,7 @@ again:
 	return 0;
 }
 
-int sys_getgroups(size_t size, const gid_t *list, int *_ret) {
+int sys_getgroups(size_t size, gid_t *list, int *_ret) {
 	__syscall_ret ret = __syscall(38, size, list);
 
 	if (ret.errno != 0)

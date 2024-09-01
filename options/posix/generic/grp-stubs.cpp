@@ -300,9 +300,41 @@ int initgroups(const char *, gid_t) {
 	return 0;
 }
 
-int putgrent(const struct group *, FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int putgrent(const struct group *g, FILE *f) {
+	auto invalid = [](const char *s) {
+		return s == nullptr || strchr(s, '\n') || strchr(s, ':');
+	};
+
+	if(g == nullptr || invalid(g->gr_name) || invalid(g->gr_passwd)) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	for(int i = 0; g->gr_mem != nullptr && g->gr_mem[i] != nullptr; ++i) {
+		if (invalid(g->gr_mem[i])) {
+			errno = EINVAL;
+			return -1;
+		}
+	}
+
+	// Taken from musl.
+	flockfile(f);
+
+	int r = fprintf(f, "%s:%s:%u:", g->gr_name, g->gr_passwd, g->gr_gid);
+	if(r < 0)
+		goto leave;
+
+	for(int i = 0; g->gr_mem != nullptr && g->gr_mem[i] != nullptr; ++i) {
+		r = fprintf(f, "%s%s", i ? "," : "", g->gr_mem[i]);
+		if(r < 0)
+			goto leave;
+	}
+
+	r = fputc('\n', f);
+
+leave:
+	funlockfile(f);
+	return r < 0 ? -1 : 0;
 }
 
 struct group *fgetgrent(FILE *) {

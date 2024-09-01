@@ -791,7 +791,7 @@ again:
 	return 0;
 }
 
-int sys_getgroups(size_t, const gid_t *, int *) {
+int sys_getgroups(size_t, gid_t *, int *) {
 	mlibc::infoLogger() << "mlibc: sys_getgroups() is unimplemented" << frg::endlog;
 	return ENOSYS;
 }
