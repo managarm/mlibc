@@ -65,7 +65,7 @@
 
 #define SHRT_MIN (-__SHRT_MAX__ - 1)
 #define SHRT_MAX __SHRT_MAX__
-#if __SHRT_MAX_ == __INT_MAX__
+#if __SHRT_MAX__ == __INT_MAX__
 # define USHRT_MAX (__SHRT_MAX__ * 2U + 1U)
 #else
 # define USHRT_MAX (__SHRT_MAX__ * 2 + 1)
@@ -73,7 +73,7 @@
 
 #define INT_MIN (-__INT_MAX__ - 1)
 #define INT_MAX __INT_MAX__
-#define UINT_MAX (__INT_MAX__ * 2 + 1)
+#define UINT_MAX (__INT_MAX__ * 2U + 1U)
 
 #define LONG_MIN (-__LONG_MAX__ - 1L)
 #define LONG_MAX __LONG_MAX__
