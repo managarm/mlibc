@@ -73,7 +73,7 @@
 
 #define INT_MIN (-__INT_MAX__ - 1)
 #define INT_MAX __INT_MAX__
-#define UINT_MAX (__INT_MAX__ * 2 + 1)
+#define UINT_MAX (__INT_MAX__ * 2U + 1U)
 
 #define LONG_MIN (-__LONG_MAX__ - 1L)
 #define LONG_MAX __LONG_MAX__
