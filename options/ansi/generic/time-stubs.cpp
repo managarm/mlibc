@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -9,7 +10,6 @@
 #include <ctype.h>
 
 #include <bits/ensure.h>
-#include <frg/array.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/file-window.hpp>
 #include <mlibc/ansi-sysdeps.hpp>
@@ -111,7 +111,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 		}
 
 		if(*(c + 1) == 'O') {
-			frg::array<char, 15> valid{{'B', 'b', 'd', 'e', 'H', 'I', 'm', 'M', 'S', 'u', 'U', 'V', 'w', 'W', 'y'}};
+			std::array<char, 15> valid{{'B', 'b', 'd', 'e', 'H', 'I', 'm', 'M', 'S', 'u', 'U', 'V', 'w', 'W', 'y'}};
 			auto next = *(c + 2);
 			if(std::find(valid.begin(), valid.end(), next) != valid.end()) {
 				use_alternative_symbols = true;
@@ -126,7 +126,7 @@ size_t strftime(char *__restrict dest, size_t max_size,
 				continue;
 			}
 		} else if(*(c + 1) == 'E') {
-			frg::array<char, 6> valid{{'c', 'C', 'x', 'X', 'y', 'Y'}};
+			std::array<char, 6> valid{{'c', 'C', 'x', 'X', 'y', 'Y'}};
 			auto next = *(c + 2);
 			if(std::find(valid.begin(), valid.end(), next) != valid.end()) {
 				use_alternative_era_format = true;
