@@ -507,12 +507,16 @@ if not headers_only
 			dependencies: rtld_deps + rtlib_deps,
 			install: true
 		)
+		hide_everything_ld = (meson.current_source_dir()
+				      / 'scripts/hide-everything.ld')
 		libc_shared = shared_library('c', libc_all_sources + internal_dso_sources,
 			cpp_args: [libc_cpp_args],
 			include_directories: libc_include_dirs,
 			dependencies: libc_deps + rtlib_deps,
 			link_with: [ld_shared_lib],
 			link_whole: libc_sublibs,
+			link_args: ['-Wl,--version-script,' + hide_everything_ld],
+			link_depends: [hide_everything_ld],
 			install: true
 		)
 	endif
