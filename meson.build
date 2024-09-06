@@ -43,17 +43,13 @@ internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
 if not headers_only
-	cshim_dep = dependency('cshim',
-				required: false,
-				fallback: ['cshim', 'cshim_dep'])
-	libc_deps += cshim_dep
-	rtld_deps += cshim_dep
-
-	cxxshim_dep = dependency('cxxshim',
-				 required: false,
-				 fallback: ['cxxshim', 'cxxshim_dep'])
-	libc_deps += cxxshim_dep
-	rtld_deps += cxxshim_dep
+	freestnd_cxx_hdrs_dep = dependency(
+		'freestnd-cxx-hdrs-' + host_machine.cpu_family(),
+		required: false,
+		fallback: ['freestnd-cxx-hdrs', 'freestnd_cxx_hdrs_dep'],
+	)
+	libc_deps += freestnd_cxx_hdrs_dep
+	rtld_deps += freestnd_cxx_hdrs_dep
 
 	frigg_dep = dependency(
 		'frigg',
@@ -73,7 +69,7 @@ if not headers_only
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
-	if not cshim_dep.found()
+	if not freestnd_cxx_hdrs_dep.found()
 		searchdirs = run_command(c_compiler.cmd_array(), '-print-search-dirs',
 					check: true).stdout()
 		searchdirs_arr = searchdirs.split('\n')
@@ -102,9 +98,7 @@ if not headers_only
 
 		rtld_include_dirs += include_directories(ccdir / 'include')
 		libc_include_dirs += include_directories(ccdir / 'include')
-	endif
 
-	if not cxxshim_dep.found()
 		cplusplus_include_path = []
 
 		c_output = run_command(c_compiler.cmd_array(), '-E', '-v', '-x', 'c',
