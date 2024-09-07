@@ -43,6 +43,14 @@ internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
 if not headers_only
+	freestnd_c_hdrs_dep = dependency(
+		'freestnd-c-hdrs-' + host_machine.cpu_family(),
+		required: false,
+		fallback: ['freestnd-c-hdrs', 'freestnd_c_hdrs_dep'],
+	)
+	libc_deps += freestnd_c_hdrs_dep
+	rtld_deps += freestnd_c_hdrs_dep
+
 	freestnd_cxx_hdrs_dep = dependency(
 		'freestnd-cxx-hdrs-' + host_machine.cpu_family(),
 		required: false,
@@ -69,7 +77,7 @@ if not headers_only
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
-	if not freestnd_cxx_hdrs_dep.found()
+	if not freestnd_c_hdrs_dep.found()
 		searchdirs = run_command(c_compiler.cmd_array(), '-print-search-dirs',
 					check: true).stdout()
 		searchdirs_arr = searchdirs.split('\n')
@@ -98,7 +106,9 @@ if not headers_only
 
 		rtld_include_dirs += include_directories(ccdir / 'include')
 		libc_include_dirs += include_directories(ccdir / 'include')
+	endif
 
+	if not freestnd_cxx_hdrs_dep.found()
 		cplusplus_include_path = []
 
 		c_output = run_command(c_compiler.cmd_array(), '-E', '-v', '-x', 'c',
