@@ -43,9 +43,17 @@ internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
 if not headers_only
+	add_languages('c', 'cpp')
+	c_compiler = meson.get_compiler('c')
+	cpp_compiler = meson.get_compiler('cpp')
+
+	target_triple = run_command(c_compiler.cmd_array(), '-dumpmachine', check: true).stdout()
+	use_freestnd_hdrs = get_option('use_freestnd_hdrs').disable_auto_if(
+			target_triple.to_lower().contains('mlibc'))
+
 	freestnd_c_hdrs_dep = dependency(
 		'freestnd-c-hdrs-' + host_machine.cpu_family(),
-		required: false,
+		required: use_freestnd_hdrs,
 		fallback: ['freestnd-c-hdrs', 'freestnd_c_hdrs_dep'],
 	)
 	libc_deps += freestnd_c_hdrs_dep
@@ -53,7 +61,7 @@ if not headers_only
 
 	freestnd_cxx_hdrs_dep = dependency(
 		'freestnd-cxx-hdrs-' + host_machine.cpu_family(),
-		required: false,
+		required: use_freestnd_hdrs,
 		fallback: ['freestnd-cxx-hdrs', 'freestnd_cxx_hdrs_dep'],
 	)
 	libc_deps += freestnd_cxx_hdrs_dep
@@ -66,10 +74,6 @@ if not headers_only
 	)
 	libc_deps += frigg_dep
 	rtld_deps += frigg_dep
-
-	add_languages('c', 'cpp')
-	c_compiler = meson.get_compiler('c')
-	cpp_compiler = meson.get_compiler('cpp')
 
 	add_project_arguments('-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', language: ['c', 'cpp'])
 	add_project_arguments('-nostdinc', '-fno-builtin', '-ffreestanding', language: ['c', 'cpp'])

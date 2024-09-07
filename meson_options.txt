@@ -15,3 +15,5 @@ option('linux_kernel_headers', type: 'string', value : '')
 option('default_library_paths', type: 'array', value: [])
 option('debug_allocator', type : 'boolean', value : false,
 	description : 'Enable the debug allocator, which uses mmap for every allocation and adds guard pages for each allocation')
+option('use_freestnd_hdrs', type : 'feature', value : 'auto',
+	description : 'Use freestnd-c{,xx}-hdrs instead of looking for compiler headers')
