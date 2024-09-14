@@ -479,18 +479,23 @@ int sys_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 
 int sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
 		fd_set *exceptfds, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
+	// The Linux kernel sometimes modifies the timeout argument.
+	struct timespec local_timeout;
+	if(timeout)
+		local_timeout = *timeout;
+
 	// The Linux kernel really wants 7 arguments, even tho this is not supported
 	// To fix that issue, they use a struct as the last argument.
 	// See the man page of pselect and the glibc source code
 	struct {
-		uint32_t ss[2];
+		const sigset_t *sigmask;
 		size_t ss_len;
 	} data;
-	memcpy(&data.ss, sigmask, sizeof(data.ss));
-	data.ss_len = sizeof(data.ss);
+	data.sigmask = sigmask;
+	data.ss_len = NSIG / 8;
 
 	auto ret = do_cp_syscall(SYS_pselect6, nfds, readfds, writefds,
-			exceptfds, timeout, &data);
+			exceptfds, timeout ? &local_timeout : nullptr, &data);
 	if (int e = sc_error(ret); e)
 		return e;
 	*num_events = sc_int_result<int>(ret);
