@@ -102,8 +102,9 @@ int sem_trywait(sem_t *sem) {
 	while (true) {
 		auto state = __atomic_load_n(&sem->__mlibc_count, __ATOMIC_ACQUIRE);
 
-		if (state & semaphoreHasWaiters) {
-			return EAGAIN;
+		if ((state & semaphoreHasWaiters) || !state) {
+			errno = EAGAIN;
+			return -1;
 		}
 
 		auto desired = state - 1;

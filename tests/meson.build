@@ -66,6 +66,7 @@ all_test_cases = [
 	'posix/index',
 	'posix/rindex',
 	'posix/search',
+	'posix/semaphore',
 	'posix/open_memstream',
 	'posix/popen',
 	'posix/system', # This test should be in the ANSI tests, but it depends on sys/wait.h
@@ -96,7 +97,7 @@ all_test_cases = [
 	'posix/strdupa',
 	'posix/mkstemp',
 	'posix/waitid',
-        'posix/usershell',
+	'posix/usershell',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
