@@ -28,6 +28,7 @@ struct MemoryAllocator {
 	void free(void *ptr);
 	void deallocate(void *ptr, size_t size);
 	void *reallocate(void *ptr, size_t size);
+	size_t get_size(void *ptr);
 };
 
 MemoryAllocator &getAllocator();
