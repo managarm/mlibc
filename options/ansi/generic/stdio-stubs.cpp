@@ -897,9 +897,9 @@ int vfwprintf(FILE *__restrict, const wchar_t *__restrict, __builtin_va_list) ML
 int vfwscanf(FILE *__restrict, const wchar_t *__restrict, __builtin_va_list) MLIBC_STUB_BODY
 
 int swprintf(wchar_t *__restrict, size_t, const wchar_t *__restrict, ...) MLIBC_STUB_BODY
-int swscanf(wchar_t *__restrict, size_t, const wchar_t *__restrict, ...) MLIBC_STUB_BODY
+int swscanf(wchar_t *__restrict, const wchar_t *__restrict, ...) MLIBC_STUB_BODY
 int vswprintf(wchar_t *__restrict, size_t, const wchar_t *__restrict, __builtin_va_list) MLIBC_STUB_BODY
-int vswscanf(wchar_t *__restrict, size_t, const wchar_t *__restrict, __builtin_va_list) MLIBC_STUB_BODY
+int vswscanf(wchar_t *__restrict, const wchar_t *__restrict, __builtin_va_list) MLIBC_STUB_BODY
 
 int wprintf(const wchar_t *__restrict, ...) MLIBC_STUB_BODY
 int wscanf(const wchar_t *__restrict, ...) MLIBC_STUB_BODY
