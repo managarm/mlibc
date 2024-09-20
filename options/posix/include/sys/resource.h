@@ -32,6 +32,8 @@ struct rlimit {
 	rlim_t rlim_max;
 };
 
+#define rlimit64 rlimit
+
 #ifndef __MLIBC_ABI_ONLY
 
 int getpriority(int, id_t);
