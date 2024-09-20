@@ -41,7 +41,7 @@ int mbsinit(const mbstate_t *stp) {
 	return !stp->__progress && !stp->__shift;
 }
 
-size_t mbrlen(const char *mbs, size_t mb_limit, mbstate_t *stp) {
+size_t mbrlen(const char *__restrict mbs, size_t mb_limit, mbstate_t *__restrict stp) {
 	auto cc = mlibc::current_charcode();
 	wchar_t wc;
 
@@ -59,7 +59,7 @@ size_t mbrlen(const char *mbs, size_t mb_limit, mbstate_t *stp) {
 	return nseq.it - mbs;
 }
 
-size_t mbrtowc(wchar_t *wcp, const char *mbs, size_t mb_limit, mbstate_t *stp) {
+size_t mbrtowc(wchar_t *__restrict wcp, const char *__restrict mbs, size_t mb_limit, mbstate_t *__restrict stp) {
 	auto cc = mlibc::current_charcode();
 
 	if(!stp)
@@ -92,7 +92,7 @@ size_t mbrtowc(wchar_t *wcp, const char *mbs, size_t mb_limit, mbstate_t *stp) {
 	}
 }
 
-size_t wcrtomb(char *mbs, wchar_t wc, mbstate_t *stp) {
+size_t wcrtomb(char *__restrict mbs, wchar_t wc, mbstate_t *__restrict stp) {
 	auto cc = mlibc::current_charcode();
 
 	// wcrtomb() always takes a mbstate_t.
@@ -114,7 +114,7 @@ size_t wcrtomb(char *mbs, wchar_t wc, mbstate_t *stp) {
 	}
 }
 
-size_t mbsrtowcs(wchar_t *wcs, const char **mbsp, size_t wc_limit, mbstate_t *stp) {
+size_t mbsrtowcs(wchar_t *__restrict wcs, const char **__restrict mbsp, size_t wc_limit, mbstate_t *__restrict stp) {
 	__ensure(mbsp);
 
 	auto cc = mlibc::current_charcode();
@@ -144,7 +144,7 @@ size_t mbsrtowcs(wchar_t *wcs, const char **mbsp, size_t wc_limit, mbstate_t *st
 	}
 }
 
-size_t mbsnrtowcs(wchar_t *wcs, const char **mbsp, size_t mb_limit, size_t wc_limit, mbstate_t *stp) {
+size_t mbsnrtowcs(wchar_t *__restrict wcs, const char **__restrict mbsp, size_t mb_limit, size_t wc_limit, mbstate_t *__restrict stp) {
 	__ensure(mbsp);
 
 	auto cc = mlibc::current_charcode();
@@ -174,7 +174,7 @@ size_t mbsnrtowcs(wchar_t *wcs, const char **mbsp, size_t mb_limit, size_t wc_li
 	}
 }
 
-size_t wcsrtombs(char *mbs, const wchar_t **wcsp, size_t mb_limit, mbstate_t *stp) {
+size_t wcsrtombs(char *__restrict mbs, const wchar_t **__restrict wcsp, size_t mb_limit, mbstate_t *__restrict stp) {
 	__ensure(wcsp && "wcsrtombs() with null input");
 	auto cc = mlibc::current_charcode();
 	mlibc::code_seq<const wchar_t> wseq{*wcsp, nullptr};
@@ -203,7 +203,7 @@ size_t wcsrtombs(char *mbs, const wchar_t **wcsp, size_t mb_limit, mbstate_t *st
 	}
 }
 
-size_t wcsnrtombs(char *mbs, const wchar_t **wcsp, size_t wc_limit, size_t mb_limit, mbstate_t *stp) {
+size_t wcsnrtombs(char *__restrict mbs, const wchar_t **__restrict wcsp, size_t wc_limit, size_t mb_limit, mbstate_t *__restrict stp) {
 	__ensure(wcsp && "wcsrtombs() with null input");
 	auto cc = mlibc::current_charcode();
 	mlibc::code_seq<char> nseq{mbs, mbs + mb_limit};

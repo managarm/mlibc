@@ -59,7 +59,7 @@ struct lconv {
 
 // [C11/7.11.1] setlocale() function
 
-char *setlocale(int category, const char *locale);
+char *setlocale(int __category, const char *__locale);
 
 // [C11/7.11.2] Locale inquiry function
 

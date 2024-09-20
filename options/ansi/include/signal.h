@@ -23,11 +23,11 @@ typedef int sig_atomic_t;
 
 // [7.14.1] signal() function
 
-__sighandler signal(int sig, __sighandler handler);
+__sighandler signal(int __sig, __sighandler __handler);
 
 // [7.14.2] raise() function
 
-int raise(int sig);
+int raise(int __sig);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

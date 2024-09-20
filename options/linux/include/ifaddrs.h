@@ -25,8 +25,8 @@ struct ifaddrs {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int getifaddrs(struct ifaddrs **);
-void freeifaddrs(struct ifaddrs *);
+int getifaddrs(struct ifaddrs **__ifap);
+void freeifaddrs(struct ifaddrs *__ifa);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

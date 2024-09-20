@@ -12,14 +12,14 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-cpu_set_t *__mlibc_cpu_alloc(int num_cpus);
-size_t __mlibc_cpu_alloc_size(int num_cpus);
+cpu_set_t *__mlibc_cpu_alloc(int __num_cpus);
+size_t __mlibc_cpu_alloc_size(int __num_cpus);
 
-void __mlibc_cpu_zero(const size_t setsize, cpu_set_t *set);
-void __mlibc_cpu_set(const int cpu, const size_t setsize, cpu_set_t *set);
-void __mlibc_cpu_clear(const int cpu, const size_t setsize, cpu_set_t *set);
-int __mlibc_cpu_isset(const int cpu, const size_t setsize, const cpu_set_t *set);
-int __mlibc_cpu_count(const size_t setsize, const cpu_set_t *set);
+void __mlibc_cpu_zero(const size_t __setsize, cpu_set_t *__set);
+void __mlibc_cpu_set(const int __cpu, const size_t __setsize, cpu_set_t *__set);
+void __mlibc_cpu_clear(const int __cpu, const size_t __setsize, cpu_set_t *__set);
+int __mlibc_cpu_isset(const int __cpu, const size_t __setsize, const cpu_set_t *__set);
+int __mlibc_cpu_count(const size_t __setsize, const cpu_set_t *__set);
 
 #define CPU_ALLOC_SIZE(n) __mlibc_cpu_alloc_size((n))
 #define CPU_ALLOC(n) __mlibc_cpu_alloc((n))

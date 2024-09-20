@@ -13,58 +13,58 @@ extern "C" {
 
 long random(void);
 double drand48(void);
-double erand48(unsigned short s[3]);
-unsigned short *seed48(unsigned short s[3]);
-void srand48(long int);
-long jrand48(unsigned short s[3]);
-char *initstate(unsigned int, char *, size_t);
-char *setstate(char *);
-void srandom(unsigned int);
+double erand48(unsigned short __s[3]);
+unsigned short *seed48(unsigned short __s[3]);
+void srand48(long int __seed);
+long jrand48(unsigned short __s[3]);
+char *initstate(unsigned int __seed, char *__state, size_t __size);
+char *setstate(char *__state);
+void srandom(unsigned int __seed);
 
 // ----------------------------------------------------------------------------
 // Environment.
 // ----------------------------------------------------------------------------
 
-int putenv(char *);
-int setenv(const char *, const char *, int);
-int unsetenv(const char *);
+int putenv(char *__string);
+int setenv(const char *__name, const char *__value, int __overwrite);
+int unsetenv(const char *__name);
 
 // ----------------------------------------------------------------------------
 // Path handling.
 // ----------------------------------------------------------------------------
 
-int mkstemp(char *);
-int mkstemps(char *pattern, int suffixlen);
-int mkostemp(char *, int flags);
-int mkostemps(char *pattern, int suffixlen, int flags);
-char *mkdtemp(char *path);
+int mkstemp(char *__pattern);
+int mkstemps(char *__pattern, int __suffixlen);
+int mkostemp(char *__pattern, int __flags);
+int mkostemps(char *__pattern, int __suffixlen, int __flags);
+char *mkdtemp(char *__path);
 
-char *realpath(const char *__restrict, char *__restrict);
+char *realpath(const char *__restrict __path, char *__restrict __out);
 
 // ----------------------------------------------------------------------------
 // Pseudoterminals
 // ----------------------------------------------------------------------------
 
-int posix_openpt(int flags);
-int grantpt(int fd);
-int unlockpt(int fd);
-char *ptsname(int fd);
-int ptsname_r(int fd, char *buf, size_t len);
+int posix_openpt(int __flags);
+int grantpt(int __fd);
+int unlockpt(int __fd);
+char *ptsname(int __fd);
+int ptsname_r(int __fd, char *__buf, size_t __len);
 
-double strtod_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc);
-long double strtold_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc);
-float strtof_l(const char *__restrict string, char **__restrict end, locale_t loc);
+double strtod_l(const char *__restrict__ __nptr, char ** __restrict__ __endptr, locale_t __loc);
+long double strtold_l(const char *__restrict__ __nptr, char ** __restrict__ __endptr, locale_t __loc);
+float strtof_l(const char *__restrict __string, char **__restrict __end, locale_t __loc);
 
-int getloadavg(double *, int);
+int getloadavg(double *__loadavg, int __count);
 
-int getsubopt(char **__restrict__ optionp, char *const *__restrict__ tokens, char **__restrict__ valuep);
+int getsubopt(char **__restrict__ __optionp, char *const *__restrict__ __tokens, char **__restrict__ __valuep);
 
 // GNU extension
-char *secure_getenv(const char *);
-char *canonicalize_file_name(const char *);
+char *secure_getenv(const char *__name);
+char *canonicalize_file_name(const char *__name);
 
 // BSD extension
-void *reallocarray(void *, size_t, size_t);
+void *reallocarray(void *__ptr, size_t __count, size_t __size);
 
 int clearenv(void);
 

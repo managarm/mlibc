@@ -12,8 +12,8 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int swapon(const char *, int);
-int swapoff(const char *);
+int swapon(const char *__path, int __flags);
+int swapoff(const char *__path);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

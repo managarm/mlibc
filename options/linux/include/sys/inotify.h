@@ -49,9 +49,9 @@ struct inotify_event {
 #ifndef __MLIBC_ABI_ONLY
 
 int inotify_init(void);
-int inotify_init1(int);
-int inotify_add_watch(int, const char *, uint32_t);
-int inotify_rm_watch(int, int);
+int inotify_init1(int __flags);
+int inotify_add_watch(int __ifd, const char *__path, uint32_t __mask);
+int inotify_rm_watch(int __ifd, int __wd);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

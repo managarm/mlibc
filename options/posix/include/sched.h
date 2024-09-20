@@ -32,12 +32,12 @@ extern "C" {
 
 int sched_yield(void);
 
-int sched_get_priority_max(int policy);
-int sched_get_priority_min(int policy);
+int sched_get_priority_max(int __policy);
+int sched_get_priority_min(int __policy);
 
-int sched_setscheduler(pid_t pid, int policy, const struct sched_param *param);
+int sched_setscheduler(pid_t __pid, int __policy, const struct sched_param *__param);
 
-int sched_getparam(pid_t pid, struct sched_param *param);
+int sched_getparam(pid_t __pid, struct sched_param *__param);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

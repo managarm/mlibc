@@ -9,23 +9,23 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int isalnum_l(int c, locale_t loc);
-int isalpha_l(int c, locale_t loc);
-int isblank_l(int c, locale_t loc);
-int iscntrl_l(int c, locale_t loc);
-int isdigit_l(int c, locale_t loc);
-int isgraph_l(int c, locale_t loc);
-int islower_l(int c, locale_t loc);
-int isprint_l(int c, locale_t loc);
-int ispunct_l(int c, locale_t loc);
-int isspace_l(int c, locale_t loc);
-int isupper_l(int c, locale_t loc);
-int isxdigit_l(int c, locale_t loc);
+int isalnum_l(int __c, locale_t __loc);
+int isalpha_l(int __c, locale_t __loc);
+int isblank_l(int __c, locale_t __loc);
+int iscntrl_l(int __c, locale_t __loc);
+int isdigit_l(int __c, locale_t __loc);
+int isgraph_l(int __c, locale_t __loc);
+int islower_l(int __c, locale_t __loc);
+int isprint_l(int __c, locale_t __loc);
+int ispunct_l(int __c, locale_t __loc);
+int isspace_l(int __c, locale_t __loc);
+int isupper_l(int __c, locale_t __loc);
+int isxdigit_l(int __c, locale_t __loc);
 
-int isascii_l(int c, locale_t loc);
+int isascii_l(int __c, locale_t __loc);
 
-int tolower_l(int c, locale_t loc);
-int toupper_l(int c, locale_t loc); 
+int tolower_l(int __c, locale_t __loc);
+int toupper_l(int __c, locale_t __loc); 
 
 #endif /* !__MLIBC_ABI_ONLY */
 

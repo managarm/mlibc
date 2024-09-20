@@ -10,7 +10,7 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int uname(struct utsname *);
+int uname(struct utsname *__name);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

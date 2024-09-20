@@ -7,10 +7,10 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int dup3(int fd, int newfd, int flags);
+int dup3(int __fd, int __newfd, int __flags);
 int vhangup(void);
 int getdtablesize(void);
-int syncfs(int fd);
+int syncfs(int __fd);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

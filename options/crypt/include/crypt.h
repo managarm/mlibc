@@ -7,7 +7,7 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-char *crypt(const char *, const char *);
+char *crypt(const char *__key, const char *__salt);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

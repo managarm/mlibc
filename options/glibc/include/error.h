@@ -9,8 +9,10 @@ extern "C"{
 
 #ifndef __MLIBC_ABI_ONLY
 
-void error(int status, int errnum, const char *format, ...);
-void error_at_line(int status, int errnum, const char *filename, unsigned int linenum, const char *format, ...);
+__attribute__((__format__(__printf__, 3, 4)))
+void error(int __status, int __errnum, const char *__format, ...);
+__attribute__((__format__(__printf__, 5, 6)))
+void error_at_line(int __status, int __errnum, const char *__filename, unsigned int __linenum, const char *__format, ...);
 
 extern unsigned int error_message_count;
 extern int error_one_per_line;

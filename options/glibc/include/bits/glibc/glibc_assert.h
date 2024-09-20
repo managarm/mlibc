@@ -7,8 +7,8 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-__attribute__ ((__noreturn__)) void __assert_fail_perror(int errno, const char *file, unsigned int line,
-		const char *function);
+__attribute__ ((__noreturn__)) void __assert_fail_perror(int __errno, const char *__file, unsigned int __line,
+		const char *__function);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

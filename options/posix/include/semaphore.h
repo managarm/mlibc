@@ -17,16 +17,16 @@ typedef struct sem_ {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int sem_init(sem_t *sem, int pshared, unsigned int initial_count);
-sem_t *sem_open(const char *, int, ...);
-int sem_close(sem_t *sem);
-int sem_unlink(const char *);
-int sem_destroy(sem_t *sem);
-int sem_wait(sem_t *sem);
-int sem_trywait(sem_t *sem);
-int sem_timedwait(sem_t *sem, const struct timespec *abstime);
-int sem_post(sem_t *sem);
-int sem_getvalue(sem_t *sem, int *sval);
+int sem_init(sem_t *__sem, int __pshared, unsigned int __initial_count);
+sem_t *sem_open(const char *__name, int __oflag, ...);
+int sem_close(sem_t *__sem);
+int sem_unlink(const char *__name);
+int sem_destroy(sem_t *__sem);
+int sem_wait(sem_t *__sem);
+int sem_trywait(sem_t *__sem);
+int sem_timedwait(sem_t *__sem, const struct timespec *__abstime);
+int sem_post(sem_t *__sem);
+int sem_getvalue(sem_t *__sem, int *__sval);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

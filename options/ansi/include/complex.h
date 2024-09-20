@@ -24,106 +24,106 @@ extern "C" {
 
 /* 7.3.5 Trigonometric functions */
 /* 7.3.5.1 The cacos functions */
-double complex cacos(double complex);
-float complex cacosf(float complex);
+double complex cacos(double complex __x);
+float complex cacosf(float complex __x);
 
 /* 7.3.5.2 The casin functions */
-double complex casin(double complex);
-float complex casinf(float complex);
+double complex casin(double complex __x);
+float complex casinf(float complex __x);
 
 /* 7.3.5.1 The catan functions */
-double complex catan(double complex);
-float complex catanf(float complex);
+double complex catan(double complex __x);
+float complex catanf(float complex __x);
 
 /* 7.3.5.1 The ccos functions */
-double complex ccos(double complex);
-float complex ccosf(float complex);
+double complex ccos(double complex __x);
+float complex ccosf(float complex __x);
 
 /* 7.3.5.1 The csin functions */
-double complex csin(double complex);
-float complex csinf(float complex);
+double complex csin(double complex __x);
+float complex csinf(float complex __x);
 
 /* 7.3.5.1 The ctan functions */
-double complex ctan(double complex);
-float complex ctanf(float complex);
+double complex ctan(double complex __x);
+float complex ctanf(float complex __x);
 
 /* 7.3.6 Hyperbolic functions */
 /* 7.3.6.1 The cacosh functions */
-double complex cacosh(double complex);
-float complex cacoshf(float complex);
+double complex cacosh(double complex __x);
+float complex cacoshf(float complex __x);
 
 /* 7.3.6.2 The casinh functions */
-double complex casinh(double complex);
-float complex casinhf(float complex);
+double complex casinh(double complex __x);
+float complex casinhf(float complex __x);
 
 /* 7.3.6.3 The catanh functions */
-double complex catanh(double complex);
-float complex catanhf(float complex);
+double complex catanh(double complex __x);
+float complex catanhf(float complex __x);
 
 /* 7.3.6.4 The ccosh functions */
-double complex ccosh(double complex);
-float complex ccoshf(float complex);
+double complex ccosh(double complex __x);
+float complex ccoshf(float complex __x);
 
 /* 7.3.6.5 The csinh functions */
-double complex csinh(double complex);
-float complex csinhf(float complex);
+double complex csinh(double complex __x);
+float complex csinhf(float complex __x);
 
 /* 7.3.6.6 The ctanh functions */
-double complex ctanh(double complex);
-float complex ctanhf(float complex);
+double complex ctanh(double complex __x);
+float complex ctanhf(float complex __x);
 
 /* 7.3.7 Exponential and logarithmic functions */
 /* 7.3.7.1 The cexp functions */
-double complex cexp(double complex);
-float complex cexpf(float complex);
+double complex cexp(double complex __x);
+float complex cexpf(float complex __x);
 
 /* 7.3.7.2 The clog functions */
-double complex clog(double complex);
-float complex clogf(float complex);
+double complex clog(double complex __x);
+float complex clogf(float complex __x);
 
 /* 7.3.8 Power and absolute-value functions */
 /* 7.3.8.1 The cabs functions */
 /*#ifndef __LIBM0_SOURCE__ */
 /* avoid conflict with historical cabs(struct complex) */
-/* double cabs(double complex) __RENAME(__c99_cabs);
-   float cabsf(float complex) __RENAME(__c99_cabsf);
+/* double cabs(double complex __x) __RENAME(__c99_cabs);
+   float cabsf(float complex __x) __RENAME(__c99_cabsf);
    #endif
 */
-double cabs(double complex) ;
-float cabsf(float complex) ;
+double cabs(double complex __x);
+float cabsf(float complex __x);
 
 /* 7.3.8.2 The cpow functions */
-double complex cpow(double complex, double complex);
-float complex cpowf(float complex, float complex);
+double complex cpow(double complex __x, double complex __y);
+float complex cpowf(float complex __x, float complex __y);
 
 /* 7.3.8.3 The csqrt functions */
-double complex csqrt(double complex);
-float complex csqrtf(float complex);
+double complex csqrt(double complex __x);
+float complex csqrtf(float complex __x);
 
 /* 7.3.9 Manipulation functions */
 /* 7.3.9.1 The carg functions */ 
-double carg(double complex);
-float cargf(float complex);
+double carg(double complex __x);
+float cargf(float complex __x);
 
 /* 7.3.9.2 The cimag functions */
-double cimag(double complex);
-float cimagf(float complex);
-long double cimagl(long double complex);
+double cimag(double complex __x);
+float cimagf(float complex __x);
+long double cimagl(long double complex __x);
 
 /* 7.3.9.3 The conj functions */
-double complex conj(double complex);
-float complex conjf(float complex);
-/*long double complex conjl(long double complex); */
+double complex conj(double complex __x);
+float complex conjf(float complex __x);
+/*long double complex conjl(long double complex __x); */
 
 /* 7.3.9.4 The cproj functions */
-double complex cproj(double complex);
-float complex cprojf(float complex);
-/*long double complex cprojl(long double complex); */
+double complex cproj(double complex __x);
+float complex cprojf(float complex __x);
+/*long double complex cprojl(long double complex __x); */
 
 /* 7.3.9.5 The creal functions */
-double creal(double complex);
-float crealf(float complex);
-long double creall(long double complex);
+double creal(double complex __x);
+float crealf(float complex __x);
+long double creall(long double complex __x);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

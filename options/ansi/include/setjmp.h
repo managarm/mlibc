@@ -13,29 +13,29 @@ extern "C" {
 // [C11/7.13] Non-local jumps
 
 typedef struct __jmp_buf {
-	struct __mlibc_jmpbuf_register_state reg_state;
+	struct __mlibc_jmpbuf_register_state __reg_state;
 } jmp_buf[1];
 
 #ifndef __MLIBC_ABI_ONLY
 
-__attribute__((__returns_twice__)) int setjmp(jmp_buf buffer);
-__attribute__((__noreturn__)) void longjmp(jmp_buf buffer, int value);
+__attribute__((__returns_twice__)) int setjmp(jmp_buf __buffer);
+__attribute__((__noreturn__)) void longjmp(jmp_buf __buffer, int __value);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
 // POSIX Non-local jumps signal extensions
 
 typedef struct __sigjmp_buf {
-	struct __mlibc_jmpbuf_register_state reg_state;
-	int savesigs;
-	sigset_t sigset;
+	struct __mlibc_jmpbuf_register_state __reg_state;
+	int __savesigs;
+	sigset_t __sigset;
 } sigjmp_buf[1];
 
 #ifndef __MLIBC_ABI_ONLY
 
 #if __MLIBC_POSIX_OPTION
-__attribute__((__returns_twice__)) int sigsetjmp(sigjmp_buf buffer, int savesigs);
-__attribute__((__noreturn__)) void siglongjmp(sigjmp_buf buffer, int value);
+__attribute__((__returns_twice__)) int sigsetjmp(sigjmp_buf __buffer, int __savesigs);
+__attribute__((__noreturn__)) void siglongjmp(sigjmp_buf __buffer, int __value);
 #endif // __MLIBC_POSIX_OPTION
 
 #endif /* !__MLIBC_ABI_ONLY */

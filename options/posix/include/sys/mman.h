@@ -13,30 +13,30 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-void *mmap(void *, size_t, int, int, int, off_t);
-void *mmap64(void *, size_t, int, int, int, off_t);
-int mprotect(void *, size_t, int);
-int munmap(void *, size_t);
+void *mmap(void *__addr, size_t __size, int __prot, int __flags, int __fd, off_t __offset);
+void *mmap64(void *__addr, size_t __size, int __prot, int __flags, int __fd, off64_t __offset);
+int mprotect(void *__addr, size_t __size, int __prot);
+int munmap(void *__addr, size_t __size);
 
-int mlock(const void *, size_t);
-int mlockall(int);
-int munlock(const void *, size_t);
+int mlock(const void *__addr, size_t __size);
+int mlockall(int __flags);
+int munlock(const void *__addr, size_t __size);
 int munlockall(void);
 
-int posix_madvise(void *, size_t, int);
-int msync(void *, size_t, int);
+int posix_madvise(void *__addr, size_t __size, int __advise);
+int msync(void *__addr, size_t __size, int __flags);
 
-int shm_open(const char *, int, mode_t);
-int shm_unlink(const char *);
+int shm_open(const char *__name, int __oflag, mode_t __mode);
+int shm_unlink(const char *__name);
 
 // Linux extension:
-void *mremap(void *, size_t, size_t, int, ...);
-int remap_file_pages(void *, size_t, int, size_t, int);
+void *mremap(void *__old_address, size_t __old_size, size_t __new_size, int __flags, ...);
+int remap_file_pages(void *__addr, size_t __size, int __prot, size_t __pgoff, int __flags);
 
 #if __MLIBC_LINUX_OPTION
-int memfd_create(const char *, unsigned int);
-int madvise(void *, size_t, int);
-int mincore(void *, size_t, unsigned char *);
+int memfd_create(const char *__name, unsigned int __flags);
+int madvise(void *__addr, size_t __size, int __advise);
+int mincore(void *__addr, size_t __size, unsigned char *__vec);
 #endif /* __MLIBC_LINUX_OPTION */
 
 #endif /* !__MLIBC_ABI_ONLY */

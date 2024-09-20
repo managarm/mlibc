@@ -7,7 +7,7 @@ extern "C" {
 
 #include <bits/size_t.h>
 
-size_t malloc_usable_size(void *ptr);
+size_t malloc_usable_size(void *__ptr);
 
 #ifdef __cplusplus
 }

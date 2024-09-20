@@ -12,13 +12,13 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int timer_getoverrun(timer_t timerid);
+int timer_getoverrun(timer_t __timerid);
 
-int utimes(const char *, const struct timeval[2]);
+int utimes(const char *__filename, const struct timeval __tv[2]);
 
 // Not standardized, Linux and BSDs have it
-int futimes(int, const struct timeval[2]);
-int lutimes(const char *filename, const struct timeval tv[2]);
+int futimes(int __fd, const struct timeval __tv[2]);
+int lutimes(const char *__filename, const struct timeval __tv[2]);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

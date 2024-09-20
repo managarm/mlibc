@@ -23,7 +23,7 @@ struct sysinfo {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int sysinfo(struct sysinfo *);
+int sysinfo(struct sysinfo *__info);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

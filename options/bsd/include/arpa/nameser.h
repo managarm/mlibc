@@ -146,15 +146,15 @@ typedef	struct __ns_rr {
 #define NS_PUT16(s, cp) ns_put16((s), ((cp) += 2) - 2)
 #define NS_PUT32(l, cp) ns_put32((l), ((cp) += 4) - 4)
 
-unsigned ns_get16(const unsigned char *);
-unsigned long ns_get32(const unsigned char *);
-void ns_put16(unsigned, unsigned char *);
-void ns_put32(unsigned long, unsigned char *);
+unsigned ns_get16(const unsigned char *__src);
+unsigned long ns_get32(const unsigned char *__src);
+void ns_put16(unsigned int __value, unsigned char *__src);
+void ns_put32(unsigned long __value, unsigned char *__src);
 
-int ns_initparse(const unsigned char *msg, int msglen, ns_msg *handle);
-int ns_parserr(ns_msg *msg, ns_sect section, int rrnum, ns_rr *rr);
-int ns_name_uncompress(const unsigned char *msg, const unsigned char *eom,
-				    const unsigned char *src, char *dst, size_t dstsize);
+int ns_initparse(const unsigned char *__msg, int __msglen, ns_msg *__handle);
+int ns_parserr(ns_msg *__msg, ns_sect __section, int __rrnum, ns_rr *__rr);
+int ns_name_uncompress(const unsigned char *__msg, const unsigned char *__eom,
+				    const unsigned char *__src, char *__dst, size_t __dstsize);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

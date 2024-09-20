@@ -69,18 +69,18 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-speed_t cfgetispeed(const struct termios *);
-speed_t cfgetospeed(const struct termios *);
-int cfsetispeed(struct termios *, speed_t);
-int cfsetospeed(struct termios *, speed_t);
-void cfmakeraw(struct termios *);
-int tcdrain(int);
-int tcflow(int, int);
-int tcflush(int, int);
-int tcgetattr(int fd, struct termios *attr);
-pid_t tcgetsid(int);
-int tcsendbreak(int, int);
-int tcsetattr(int, int, const struct termios *);
+speed_t cfgetispeed(const struct termios *__tios);
+speed_t cfgetospeed(const struct termios *__tios);
+int cfsetispeed(struct termios *__tios, speed_t __speed);
+int cfsetospeed(struct termios *__tios, speed_t __speed);
+void cfmakeraw(struct termios *__tios);
+int tcdrain(int __fd);
+int tcflow(int __fd, int __action);
+int tcflush(int __fd, int __queue_selector);
+int tcgetattr(int fd, struct termios *__attr);
+pid_t tcgetsid(int __fd);
+int tcsendbreak(int __fd, int __duration);
+int tcsetattr(int __fd, int __optional_actions, const struct termios *__attr);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

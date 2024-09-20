@@ -11,7 +11,7 @@ extern "C" {
 #ifndef __MLIBC_ABI_ONLY
 
 // This seems to be a glibc thing, so constants are from glibc
-size_t parse_printf_format(const char * __restrict, size_t, int * __restrict);
+size_t parse_printf_format(const char * __restrict __format, size_t __size, int * __restrict __argtypes);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

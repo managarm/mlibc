@@ -133,12 +133,12 @@ typedef struct {
 
 #ifndef __MLIBC_ABI_ONLY
 
-intmax_t imaxabs(intmax_t);
-imaxdiv_t imaxdiv(intmax_t, intmax_t);
-intmax_t strtoimax(const char *__restrict, char **__restrict, int);
-uintmax_t strtoumax(const char *__restrict, char **__restrict, int);
-intmax_t wcstoimax(const wchar_t *__restrict, wchar_t **__restrict, int);
-uintmax_t wcstoumax(const wchar_t *__restrict, wchar_t **__restrict, int);
+intmax_t imaxabs(intmax_t __x);
+imaxdiv_t imaxdiv(intmax_t __x, intmax_t __y);
+intmax_t strtoimax(const char *__restrict __string, char **__restrict __end, int __base);
+uintmax_t strtoumax(const char *__restrict __string, char **__restrict __end, int __base);
+intmax_t wcstoimax(const wchar_t *__restrict __string, wchar_t **__restrict __end, int __base);
+uintmax_t wcstoumax(const wchar_t *__restrict __string, wchar_t **__restrict __end, int __base);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

@@ -11,8 +11,8 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-char *nl_langinfo(nl_item);
-char *nl_langinfo_l(nl_item, locale_t);
+char *nl_langinfo(nl_item __item);
+char *nl_langinfo_l(nl_item __item, locale_t __loc);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

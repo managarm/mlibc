@@ -68,13 +68,13 @@ struct lastlog {
 
 void setutent(void);
 struct utmp *getutent(void);
-int getutent_r(struct utmp *, struct utmp **);
+int getutent_r(struct utmp *__buf, struct utmp **__res);
 void endutent(void);
-struct utmp *pututline(const struct utmp *);
-struct utmp *getutline(const struct utmp *);
-struct utmp *getutid(const struct utmp *);
-int utmpname(const char *);
-int login_tty(int fd);
+struct utmp *pututline(const struct utmp *__line);
+struct utmp *getutline(const struct utmp *__line);
+struct utmp *getutid(const struct utmp *__id);
+int utmpname(const char *__file);
+int login_tty(int __fd);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

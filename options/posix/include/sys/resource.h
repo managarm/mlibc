@@ -34,16 +34,16 @@ struct rlimit {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int getpriority(int, id_t);
-int setpriority(int, id_t, int);
+int getpriority(int __which, id_t __who);
+int setpriority(int __which, id_t __who, int __prio);
 
-int getrusage(int, struct rusage *);
-int getrlimit(int, struct rlimit *);
-int getrlimit64(int, struct rlimit *);
-int setrlimit(int, const struct rlimit *);
-int setrlimit64(int, const struct rlimit *);
+int getrusage(int __who, struct rusage *__usage);
+int getrlimit(int __resource, struct rlimit *__rlim);
+int getrlimit64(int __resource, struct rlimit *__rlim);
+int setrlimit(int __resource, const struct rlimit *__rlim);
+int setrlimit64(int __resource, const struct rlimit *__rlim);
 
-int prlimit(pid_t pid, int resource, const struct rlimit *new_limits, struct rlimit *old_limits);
+int prlimit(pid_t __pid, int __resource, const struct rlimit *__new_limits, struct rlimit *__old_limits);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

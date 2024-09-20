@@ -31,8 +31,8 @@ typedef struct {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int wordexp(const char *s, wordexp_t *p, int flags);
-void wordfree(wordexp_t *p);
+int wordexp(const char *__s, wordexp_t *__p, int __flags);
+void wordfree(wordexp_t *__p);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

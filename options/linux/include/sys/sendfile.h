@@ -10,7 +10,7 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-ssize_t sendfile(int, int, off_t *, size_t);
+ssize_t sendfile(int __out_fd, int __in_fd, off_t *__offset, size_t __size);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

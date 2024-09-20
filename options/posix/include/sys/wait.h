@@ -22,13 +22,13 @@ typedef enum {
 
 #ifndef __MLIBC_ABI_ONLY
 
-pid_t wait(int *status);
-int waitid(idtype_t idtype, id_t id, siginfo_t *siginfo, int flags);
-pid_t waitpid(pid_t pid, int *status, int flags);
+pid_t wait(int *__status);
+int waitid(idtype_t __idtype, id_t __id, siginfo_t *__siginfo, int __flags);
+pid_t waitpid(pid_t __pid, int *__status, int __flags);
 
 // GNU extensions.
-pid_t wait3(int *, int, struct rusage *);
-pid_t wait4(pid_t pid, int *status, int options, struct rusage *ru);
+pid_t wait3(int *__status, int __options, struct rusage *__ru);
+pid_t wait4(pid_t __pid, int *__status, int __options, struct rusage *__ru);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

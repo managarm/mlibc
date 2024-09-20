@@ -36,9 +36,9 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int sched_getscheduler(pid_t pid);
-int sched_setaffinity(pid_t pid, size_t cpusetsize, const cpu_set_t *mask);
-int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask);
+int sched_getscheduler(pid_t __pid);
+int sched_setaffinity(pid_t __pid, size_t __cpusetsize, const cpu_set_t *__mask);
+int sched_getaffinity(pid_t __pid, size_t __cpusetsize, cpu_set_t *__mask);
 
 int unshare(int flags);
 int clone(int (*)(void *), void *, int, void *, ...);

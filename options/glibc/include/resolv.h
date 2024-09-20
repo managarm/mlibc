@@ -23,10 +23,11 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int dn_expand(const unsigned char *, const unsigned char *,
-		const unsigned char *, char *, int);
+int dn_expand(const unsigned char *__msg, const unsigned char *__eomorig,
+		const unsigned char *__comp_dn, char *__exp_dn, int __size);
 
-int res_query(const char *, int, int, unsigned char *, int);
+int res_query(const char *__dname, int __class, int __type,
+		unsigned char *__answer, int __anslen);
 
 int res_init(void);
 
@@ -63,8 +64,8 @@ typedef struct __res_state {
 struct __res_state *__res_state(void);
 #define _res (*__res_state())
 
-int res_ninit(res_state);
-void res_nclose(res_state);
+int res_ninit(res_state __state);
+void res_nclose(res_state __state);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

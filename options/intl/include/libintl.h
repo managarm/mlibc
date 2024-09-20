@@ -8,20 +8,20 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-char *gettext(const char *msgid);
-char *dgettext(const char *domainname, const char *msgid);
-char *dcgettext(const char *domainname, const char *msgid,
-		int category);
+char *gettext(const char *__msgid);
+char *dgettext(const char *__domainname, const char *__msgid);
+char *dcgettext(const char *__domainname, const char *__msgid,
+		int __category);
 
-char *ngettext(const char *msgid, const char *msgid_plural, unsigned long int n);
-char *dngettext(const char *domainname, const char *msgid,
-		const char *msgid_plural, unsigned long int n);
-char *dcngettext(const char *domainname, const char *msgid,
-		const char *msgid_plural, unsigned long int n, int category);
+char *ngettext(const char *__msgid, const char *__msgid_plural, unsigned long int __n);
+char *dngettext(const char *__domainname, const char *__msgid,
+		const char *__msgid_plural, unsigned long int __n);
+char *dcngettext(const char *__domainname, const char *__msgid,
+		const char *__msgid_plural, unsigned long int __n, int __category);
 
-char *textdomain(const char *domainname);
-char *bindtextdomain(const char *domainname, const char *dirname);
-char *bind_textdomain_codeset(const char *domainname, const char *codeset);
+char *textdomain(const char *__domainname);
+char *bindtextdomain(const char *__domainname, const char *__dirname);
+char *bind_textdomain_codeset(const char *__domainname, const char *__codeset);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

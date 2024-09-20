@@ -78,10 +78,10 @@ struct ifconf {
 
 #ifndef __MLIBC_ABI_ONLY
 
-void if_freenameindex(struct if_nameindex *);
-char *if_indextoname(unsigned int, char *);
+void if_freenameindex(struct if_nameindex *__index);
+char *if_indextoname(unsigned int __index, char *__name);
 struct if_nameindex *if_nameindex(void);
-unsigned int if_nametoindex(const char *);
+unsigned int if_nametoindex(const char *__name);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

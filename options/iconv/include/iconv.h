@@ -11,9 +11,10 @@ typedef void *iconv_t;
 
 #ifndef __MLIBC_ABI_ONLY
 
-size_t iconv(iconv_t, char **__restrict, size_t *__restrict, char **__restrict, size_t *__restrict);
-int iconv_close(iconv_t);
-iconv_t iconv_open(const char *, const char *);
+size_t iconv(iconv_t __cd, char **__restrict __inbuf, size_t *__restrict __inbytesleft,
+		char **__restrict __outbuf, size_t *__restrict __outbytesleft);
+int iconv_close(iconv_t __cd);
+iconv_t iconv_open(const char *__tocode, const char *__fromcode);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

@@ -18,35 +18,36 @@ extern "C" {
 
 typedef struct __mlibc_file_base FILE;
 
-int fileno(FILE *file);
-FILE *fdopen(int fd, const char *mode);
+int fileno(FILE *__file);
+FILE *fdopen(int __fd, const char *__mode);
 
-FILE *fmemopen(void *__restrict, size_t, const char *__restrict);
-int pclose(FILE *);
-FILE *popen(const char*, const char *);
-FILE *open_memstream(char **, size_t *);
+FILE *fmemopen(void *__restrict __buf, size_t __size, const char *__restrict __mode);
+int pclose(FILE *__file);
+FILE *popen(const char *__command, const char *__type);
+FILE *open_memstream(char **__buf, size_t *__sizeloc);
 
-int fseeko(FILE *stream, off_t offset, int whence);
-int fseeko64(FILE *stream, off64_t offset, int whence);
-off_t ftello(FILE *stream);
-off64_t ftello64(FILE *stream);
+int fseeko(FILE *__stream, off_t __offset, int __whence);
+int fseeko64(FILE *__stream, off64_t __offset, int __whence);
+off_t ftello(FILE *__stream);
+off64_t ftello64(FILE *__stream);
 
-int dprintf(int fd, const char *format, ...);
-int vdprintf(int fd, const char *format, __builtin_va_list args);
+__attribute__((format(__printf__, 2, 3))) int dprintf(int __fd, const char *__format, ...);
+__attribute__((format(__printf__, 2, 0)))
+int vdprintf(int __fd, const char *__format, __builtin_va_list __args);
 
-char *fgetln(FILE *, size_t *);
+char *fgetln(FILE *__stream, size_t *__size);
 
-char *tempnam(const char *dir, const char *pfx);
+char *tempnam(const char *__dir, const char *__pfx);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
 #define RENAME_EXCHANGE (1 << 1)
 
 // GNU extensions
-typedef ssize_t (cookie_read_function_t)(void *, char *, size_t);
-typedef ssize_t (cookie_write_function_t)(void *, const char *, size_t);
-typedef int (cookie_seek_function_t)(void *, off_t *, int);
-typedef int (cookie_close_function_t)(void *);
+typedef ssize_t (cookie_read_function_t)(void *__cookie, char *__buffer, size_t __size);
+typedef ssize_t (cookie_write_function_t)(void *__cookie, const char *__buffer, size_t __size);
+typedef int (cookie_seek_function_t)(void *__cookie, off_t *, int);
+typedef int (cookie_close_function_t)(void *__cookie);
 
 typedef struct _IO_cookie_io_functions_t {
 	cookie_read_function_t *read;
@@ -59,7 +60,7 @@ typedef struct _IO_cookie_io_functions_t {
 
 #if defined(_GNU_SOURCE)
 
-FILE *fopencookie(void *__restrict cookie, const char *__restrict mode, cookie_io_functions_t io_funcs);
+FILE *fopencookie(void *__restrict __cookie, const char *__restrict __mode, cookie_io_functions_t __io_funcs);
 
 #endif // defined(_GNU_SOURCE)
 

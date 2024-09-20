@@ -13,8 +13,8 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int flock(int, int);
-int flock64(int, int);
+int flock(int __fd, int __op);
+int flock64(int __fd, int __op);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

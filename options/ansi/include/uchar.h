@@ -17,8 +17,8 @@ typedef struct __mlibc_mbstate mbstate_t;
 
 #ifndef __MLIBC_ABI_ONLY
 
-size_t c32rtomb(char *pmb, char32_t c32, mbstate_t *ps);
-size_t mbrtoc32(char32_t *pc32, const char *pmb, size_t max, mbstate_t *ps);
+size_t c32rtomb(char *__pmb, char32_t __c32, mbstate_t *__ps);
+size_t mbrtoc32(char32_t *__pc32, const char *__pmb, size_t __max, mbstate_t *__ps);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
