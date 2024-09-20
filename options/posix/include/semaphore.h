@@ -11,8 +11,21 @@ extern "C" {
 #define SEM_VALUE_MAX 0x7FFFFFFF
 #define SEM_FAILED ((sem_t *) 0)
 
-typedef struct sem_ {
-	unsigned int __mlibc_count;
+#if defined __x86_64__ && !defined __ILP32__
+#define __WORDSIZE 64
+#else
+#define __WORDSIZE 32
+#endif
+
+#if __WORDSIZE == 64
+#define __SIZEOF_SEM_T 32
+#else
+#define __SIZEOF_SEM_T 16
+#endif
+
+typedef union {
+  char __size[__SIZEOF_SEM_T];
+  long int __align;
 } sem_t;
 
 #ifndef __MLIBC_ABI_ONLY
