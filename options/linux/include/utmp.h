@@ -74,6 +74,7 @@ struct utmp *pututline(const struct utmp *);
 struct utmp *getutline(const struct utmp *);
 struct utmp *getutid(const struct utmp *);
 int utmpname(const char *);
+int login_tty(int fd);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <pty.h>
+#include <utmp.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
