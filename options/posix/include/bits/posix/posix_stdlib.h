@@ -14,6 +14,7 @@ extern "C" {
 long random(void);
 double drand48(void);
 double erand48(unsigned short s[3]);
+unsigned short *seed48(unsigned short s[3]);
 void srand48(long int);
 long jrand48(unsigned short s[3]);
 char *initstate(unsigned int, char *, size_t);
