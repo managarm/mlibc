@@ -2,6 +2,7 @@
 #define _STDINT_H
 
 #include <stdint.h>
+#include <bits/wchar_t.h>
 
 /* Even though this is not strictly not-ABI, it is mlibc-printf specific therefore */
 /* gate behind !__MLIBC_ABI_ONLY */
@@ -136,8 +137,8 @@ intmax_t imaxabs(intmax_t);
 imaxdiv_t imaxdiv(intmax_t, intmax_t);
 intmax_t strtoimax(const char *__restrict, char **__restrict, int);
 uintmax_t strtoumax(const char *__restrict, char **__restrict, int);
-intmax_t wcstoimax(const __WCHAR_TYPE__ *__restrict, __WCHAR_TYPE__ **__restrict, int);
-uintmax_t wcstoumax(const __WCHAR_TYPE__ *__restrict, __WCHAR_TYPE__ **__restrict, int);
+intmax_t wcstoimax(const wchar_t *__restrict, wchar_t **__restrict, int);
+uintmax_t wcstoumax(const wchar_t *__restrict, wchar_t **__restrict, int);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
