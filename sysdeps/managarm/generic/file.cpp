@@ -2582,7 +2582,32 @@ int sys_sysconf(int num, long *ret) {
 			break;
 		}
 		default: {
-			return EINVAL;
+			SignalGuard sguard;
+
+			managarm::posix::SysconfRequest<MemoryAllocator> req(getSysdepsAllocator());
+			req.set_num(num);
+
+			auto [offer, send_req, recv_resp] = exchangeMsgsSync(getPosixLane(),
+				helix_ng::offer(
+					helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+					helix_ng::recvInline()
+				)
+			);
+
+			HEL_CHECK(offer.error());
+			HEL_CHECK(send_req.error());
+			HEL_CHECK(recv_resp.error());
+
+			managarm::posix::SysconfResponse<MemoryAllocator> resp(getSysdepsAllocator());
+			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+			if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+				return EINVAL;
+			}
+
+			*ret = resp.value();
+
+			__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+			return 0;
 		}
 	}
 
