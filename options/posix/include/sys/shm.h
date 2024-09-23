@@ -69,10 +69,10 @@ struct shminfo {
 
 #ifndef __MLIBC_ABI_ONLY
 
-void *shmat(int, const void *, int);
-int shmctl(int, int, struct shmid_ds *);
-int shmdt(const void *);
-int shmget(key_t, size_t, int);
+void *shmat(int __shmid, const void *__shmaddr, int __shmflg);
+int shmctl(int __shmid, int __cmd, struct shmid_ds *__buf);
+int shmdt(const void *__shmaddr);
+int shmget(key_t __key, size_t __size, int __shmflg);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

@@ -30,8 +30,10 @@ struct FTW {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int ftw(const char *, int (*)(const char *, const struct stat *, int), int);
-int nftw(const char *, int (*)(const char *, const struct stat *, int, struct FTW *), int, int);
+int ftw(const char *__dirpath, int (*__fn)(const char *__fpath, const struct stat *__sb, int __typeflag),
+		int __nopenfd);
+int nftw(const char *__dirpath, int (*__fn)(const char *__fpath, const struct stat *__sb, int __typeflag,
+		struct FTW *__ftwbuf), int __nopenfd, int __flags);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

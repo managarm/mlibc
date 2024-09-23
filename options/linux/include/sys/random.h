@@ -14,7 +14,7 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-ssize_t getrandom(void *, size_t, unsigned int);
+ssize_t getrandom(void *__buffer, size_t __max_size, unsigned int __flags);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

@@ -52,20 +52,20 @@ typedef struct __mlibc_dir_struct DIR;
 
 #ifndef __MLIBC_ABI_ONLY
 
-int alphasort(const struct dirent **, const struct dirent **);
-int closedir(DIR *);
-int dirfd(DIR *);
-DIR *fdopendir(int);
-DIR *opendir(const char *);
-struct dirent *readdir(DIR *);
-struct dirent64 *readdir64(DIR *);
-int readdir_r(DIR *__restrict, struct dirent *__restrict, struct dirent **__restrict);
-void rewinddir(DIR *);
-int scandir(const char *, struct dirent ***, int (*)(const struct dirent *),
-		int (*)(const struct dirent **, const struct dirent **));
-void seekdir(DIR *, long);
-long telldir(DIR *);
-int versionsort(const struct dirent **, const struct dirent **);
+int alphasort(const struct dirent **__a, const struct dirent **__b);
+int closedir(DIR *__dirp);
+int dirfd(DIR *__dirp);
+DIR *fdopendir(int __fd);
+DIR *opendir(const char *__pathname);
+struct dirent *readdir(DIR *__dirp);
+struct dirent64 *readdir64(DIR *__dirp);
+int readdir_r(DIR *__restrict __dirp, struct dirent *__restrict __entry, struct dirent **__restrict __res);
+void rewinddir(DIR *__dirp);
+int scandir(const char *__pathname, struct dirent ***__res, int (*__select)(const struct dirent *__entry),
+		int (*__compare)(const struct dirent **__a, const struct dirent **__b));
+void seekdir(DIR *__dirp, long __loc);
+long telldir(DIR *__dirp);
+int versionsort(const struct dirent **__a, const struct dirent **__b);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

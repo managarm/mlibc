@@ -45,8 +45,8 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 	return num_events;
 }
 
-int pselect(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set,
-		const struct timespec *timeout,	const sigset_t *sigmask) {
+int pselect(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_set,
+		fd_set *__restrict except_set, const struct timespec *timeout, const sigset_t *sigmask) {
 	int num_events = 0;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pselect, -1);
 	if(int e = mlibc::sys_pselect(num_fds, read_set, write_set, except_set,

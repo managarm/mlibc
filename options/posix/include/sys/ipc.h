@@ -46,7 +46,7 @@ struct ipc64_perm {
 
 #ifndef __MLIBC_ABI_ONLY
 
-key_t ftok(const char *, int);
+key_t ftok(const char *__path, int __proj_id);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

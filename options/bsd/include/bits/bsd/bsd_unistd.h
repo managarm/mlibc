@@ -9,7 +9,7 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-void *sbrk(intptr_t increment);
+void *sbrk(intptr_t __increment);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

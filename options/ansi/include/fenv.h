@@ -20,17 +20,17 @@ typedef __mlibc_uint16 fexcept_t;
 
 #ifndef __MLIBC_ABI_ONLY
 
-int feclearexcept(int);
-int fegetenv(fenv_t *);
-int fegetexceptflag(fexcept_t *, int);
+int feclearexcept(int __excepts);
+int fegetenv(fenv_t *__envp);
+int fegetexceptflag(fexcept_t *__envp, int __excepts);
 int fegetround(void);
-int feholdexcept(fenv_t *);
-int feraiseexcept(int);
-int fesetenv(const fenv_t *);
-int fesetexceptflag(const fexcept_t *, int);
-int fesetround(int);
-int fetestexcept(int);
-int feupdateenv(const fenv_t *);
+int feholdexcept(fenv_t *__envp);
+int feraiseexcept(int __excepts);
+int fesetenv(const fenv_t *__envp);
+int fesetexceptflag(const fexcept_t *__envp, int __excepts);
+int fesetround(int __round);
+int fetestexcept(int __excepts);
+int feupdateenv(const fenv_t *__envp);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

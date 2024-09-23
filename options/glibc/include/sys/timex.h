@@ -65,9 +65,9 @@ struct timex {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int adjtimex(struct timex *);
-int clock_adjtime(clockid_t clk_id, struct timex *buf);
-int ntp_adjtime(struct timex *);
+int adjtimex(struct timex *__buf);
+int clock_adjtime(clockid_t __clockid, struct timex *__buf);
+int ntp_adjtime(struct timex *__buf);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

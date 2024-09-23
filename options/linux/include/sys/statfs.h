@@ -9,9 +9,9 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int statfs(const char *, struct statfs *);
-int fstatfs(int, struct statfs *);
-int fstatfs64(int, struct statfs64 *);
+int statfs(const char *__path, struct statfs *__buf);
+int fstatfs(int __fd, struct statfs *__buf);
+int fstatfs64(int __fd, struct statfs64 *__buf);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

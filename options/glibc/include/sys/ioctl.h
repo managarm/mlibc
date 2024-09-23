@@ -17,7 +17,7 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int ioctl(int fd, unsigned long request, ...);
+int ioctl(int __fd, unsigned long __request, ...);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

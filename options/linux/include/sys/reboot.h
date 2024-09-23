@@ -9,7 +9,7 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int reboot(int arg);
+int reboot(int __arg);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

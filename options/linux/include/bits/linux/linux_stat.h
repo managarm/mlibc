@@ -9,7 +9,7 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int statx(int, const char *, int, unsigned int, struct statx *);
+int statx(int __dirfd, const char *__pathname, int __flags, unsigned int __mask, struct statx *__statxbuf);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

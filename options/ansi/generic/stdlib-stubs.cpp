@@ -55,18 +55,18 @@ long long atoll(const char *string) {
 int sigprocmask(int, const sigset_t *__restrict, sigset_t *__restrict);
 extern "C" {
 	__attribute__((__returns_twice__)) int __sigsetjmp(sigjmp_buf buffer, int savesigs) {
-		buffer[0].savesigs = savesigs;
+		buffer[0].__savesigs = savesigs;
 		if (savesigs)
-			sigprocmask(0, NULL, &buffer[0].sigset);
+			sigprocmask(0, NULL, &buffer[0].__sigset);
 		return 0;
 	}
 }
 
 __attribute__((__noreturn__)) void siglongjmp(sigjmp_buf buffer, int value) {
-	if (buffer[0].savesigs)
-		sigprocmask(SIG_SETMASK, &buffer[0].sigset, NULL);
+	if (buffer[0].__savesigs)
+		sigprocmask(SIG_SETMASK, &buffer[0].__sigset, NULL);
 	jmp_buf b;
-	b[0].reg_state = buffer[0].reg_state;
+	b[0].__reg_state = buffer[0].__reg_state;
 	longjmp(b, value);
 }
 
@@ -438,7 +438,7 @@ int wctomb(char *, wchar_t) {
 	__builtin_unreachable();
 }
 
-size_t mbstowcs(wchar_t *wcs, const char *mbs, size_t wc_limit) {
+size_t mbstowcs(wchar_t *__restrict wcs, const char *__restrict mbs, size_t wc_limit) {
 	auto cc = mlibc::current_charcode();
 	__mlibc_mbstate st = __MLIBC_MBSTATE_INITIALIZER;
 	mlibc::code_seq<const char> nseq{mbs, nullptr};
@@ -462,8 +462,9 @@ size_t mbstowcs(wchar_t *wcs, const char *mbs, size_t wc_limit) {
 	}
 }
 
-size_t wcstombs(char *mb_string, const wchar_t *wc_string, size_t max_size) {
-	return wcsrtombs(mb_string, &wc_string, max_size, 0);
+size_t wcstombs(char *__restrict mb_string, const wchar_t *__restrict wc_string, size_t max_size) {
+	const wchar_t *wcs = wc_string;
+	return wcsrtombs(mb_string, &wcs, max_size, 0);
 }
 
 void free(void *ptr) {

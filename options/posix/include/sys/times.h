@@ -17,7 +17,7 @@ struct tms {
 
 #ifndef __MLIBC_ABI_ONLY
 
-clock_t times(struct tms *);
+clock_t times(struct tms *__tms);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

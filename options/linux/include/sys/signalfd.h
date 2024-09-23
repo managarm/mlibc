@@ -37,7 +37,7 @@ struct signalfd_siginfo {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int signalfd(int, const sigset_t *, int);
+int signalfd(int __fd, const sigset_t *__mask, int __flags);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

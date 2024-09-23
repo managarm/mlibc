@@ -27,13 +27,13 @@ struct passwd {
 
 void endpwent(void);
 struct passwd *getpwent(void);
-struct passwd *getpwnam(const char *);
-int getpwnam_r(const char *, struct passwd *, char *, size_t, struct passwd **);
-struct passwd *getpwuid(uid_t);
-int getpwuid_r(uid_t, struct passwd *, char *, size_t, struct passwd **);
+struct passwd *getpwnam(const char *__name);
+int getpwnam_r(const char *__name, struct passwd *__ret, char *__buf, size_t __buflen, struct passwd **__res);
+struct passwd *getpwuid(uid_t __uid);
+int getpwuid_r(uid_t __uid, struct passwd *__ret, char *__buf, size_t __buflen, struct passwd **__res);
 void setpwent(void);
-int putpwent(const struct passwd *, FILE *);
-struct passwd *fgetpwent(FILE *);
+int putpwent(const struct passwd *__pwd, FILE *__f);
+struct passwd *fgetpwent(FILE *__f);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

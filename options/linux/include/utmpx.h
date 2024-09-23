@@ -33,11 +33,11 @@ struct utmpx {
 
 #ifndef __MLIBC_ABI_ONLY
 
-void updwtmpx(const char *, const struct utmpx *);
-int utmpxname(const char *);
-struct utmpx *pututxline(const struct utmpx *);
+void updwtmpx(const char *__wtmp_file, const struct utmpx *__ut);
+int utmpxname(const char *__file);
+struct utmpx *pututxline(const struct utmpx *__line);
 struct utmpx *getutxent(void);
-struct utmpx *getutxid(const struct utmpx *id);
+struct utmpx *getutxid(const struct utmpx *__id);
 void setutxent(void);
 void endutxent(void);
 

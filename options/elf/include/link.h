@@ -45,7 +45,7 @@ struct r_debug {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int dl_iterate_phdr(int (*callback)(struct dl_phdr_info*, size_t, void*), void* data);
+int dl_iterate_phdr(int (*__callback)(struct dl_phdr_info* __info, size_t __size, void* __data), void* __data);
 
 extern ElfW(Dyn) _DYNAMIC[];
 

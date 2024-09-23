@@ -13,7 +13,7 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int quotactl(int cmd, const char *special, int id, caddr_t addr);
+int quotactl(int __cmd, const char *__special, int __id, caddr_t __addr);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

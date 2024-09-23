@@ -53,20 +53,20 @@ struct tm {
 // [7.27.2] Time manipulation functions
 
 clock_t clock(void);
-double difftime(time_t a, time_t b);
-time_t mktime(struct tm *ptr);
-time_t time(time_t *timer);
-int timespec_get(struct timespec *ptr, int base);
+double difftime(time_t __a, time_t __b);
+time_t mktime(struct tm *__ptr);
+time_t time(time_t *__timer);
+int timespec_get(struct timespec *__ptr, int __base);
 
 // [7.27.3] Time conversion functions
 
-char *asctime(const struct tm *ptr);
-char *ctime(const time_t *timer);
-struct tm *gmtime(const time_t *timer);
-struct tm *gmtime_r(const time_t *__restrict timer, struct tm *__restrict result);
-struct tm *localtime(const time_t *timer);
-size_t strftime(char *__restrict dest, size_t max_size,
-		const char *__restrict format, const struct tm *__restrict ptr);
+char *asctime(const struct tm *__ptr);
+char *ctime(const time_t *__timer);
+struct tm *gmtime(const time_t *__timer);
+struct tm *gmtime_r(const time_t *__restrict __timer, struct tm *__restrict __result);
+struct tm *localtime(const time_t *__timer);
+size_t strftime(char *__restrict __dest, size_t __max_size,
+		const char *__restrict __format, const struct tm *__restrict __ptr);
 
 void tzset(void);
 
@@ -97,20 +97,20 @@ extern int daylight;
 extern long timezone;
 extern char *tzname[2];
 
-int nanosleep(const struct timespec *, struct timespec *);
+int nanosleep(const struct timespec *__req, struct timespec *__rem);
 
-int clock_getres(clockid_t, struct timespec *);
-int clock_gettime(clockid_t, struct timespec *);
-int clock_nanosleep(clockid_t, int, const struct timespec *, struct timespec *);
-int clock_settime(clockid_t, const struct timespec *);
+int clock_getres(clockid_t __clockid, struct timespec *__res);
+int clock_gettime(clockid_t __clockid, struct timespec *__res);
+int clock_nanosleep(clockid_t __clockid, int __flags, const struct timespec *__req, struct timespec *__rem);
+int clock_settime(clockid_t __clockid, const struct timespec *__time);
 
-struct tm *localtime_r(const time_t *, struct tm *);
-char *asctime_r(const struct tm *tm, char *buf);
-char *ctime_r(const time_t *, char *);
+struct tm *localtime_r(const time_t *__timer, struct tm *__buf);
+char *asctime_r(const struct tm *__tm, char *__buf);
+char *ctime_r(const time_t *__timer, char *__buf);
 
 #if __MLIBC_POSIX_OPTION
-char *strptime(const char *__restrict, const char *__restrict,
-		struct tm *__restrict);
+char *strptime(const char *__restrict __buf, const char *__restrict __format,
+		struct tm *__restrict __tm);
 #endif /* __MLIBC_POSIX_OPTION */
 
 #endif /* !__MLIBC_ABI_ONLY */
@@ -127,8 +127,8 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-time_t timelocal(struct tm *);
-time_t timegm(struct tm *);
+time_t timelocal(struct tm *__tm);
+time_t timegm(struct tm *__tm);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

@@ -13,9 +13,9 @@ extern "C" {
 // mlibc extension: Like getauxval but handles errors in a sane way.
 // Success: Return 0.
 // Failure: Return -1 and set errno.
-int peekauxval(unsigned long type, unsigned long *value);
+int peekauxval(unsigned long __type, unsigned long *__value);
 
-unsigned long getauxval(unsigned long type);
+unsigned long getauxval(unsigned long __type);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

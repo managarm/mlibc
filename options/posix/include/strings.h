@@ -10,17 +10,17 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-char *index (const char *s, int c);
-char *rindex(const char *s, int c);
+char *index (const char *__s, int __c);
+char *rindex(const char *__s, int __c);
 
-int ffs(int word);
-int strcasecmp(const char *a, const char *b);
-int strncasecmp(const char *a, const char *b, size_t size);
+int ffs(int __word);
+int strcasecmp(const char *__a, const char *__b);
+int strncasecmp(const char *__a, const char *__b, size_t __size);
 
 /* Marked as obsolete in posix 2008 but used by at least tracker */
-int bcmp(const void *s1, const void *s2, size_t n);
-void bcopy(const void *s1, void *s2, size_t n);
-void bzero(void *s, size_t n);
+int bcmp(const void *__s1, const void *__s2, size_t __n);
+void bcopy(const void *__s1, void *__s2, size_t __n);
+void bzero(void *__s, size_t __n);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

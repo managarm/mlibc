@@ -13,9 +13,9 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-char *basename(char *);
+char *basename(char *__path);
 #define basename basename
-char *dirname(char *);
+char *dirname(char *__path);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

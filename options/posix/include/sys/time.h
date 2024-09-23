@@ -23,13 +23,13 @@ struct timezone {
 #ifndef __MLIBC_ABI_ONLY
 
 // TODO: this function is [OB]. disable it by default and add a macro to enable it
-int gettimeofday(struct timeval *__restrict result, void *__restrict unused);
-int settimeofday(const struct timeval *result, const struct timezone *zone);
+int gettimeofday(struct timeval *__restrict __result, void *__restrict __unused);
+int settimeofday(const struct timeval *__result, const struct timezone *__zone);
 
-void timeradd(const struct timeval *a, const struct timeval *b, struct timeval *res);
-void timersub(const struct timeval *a, const struct timeval *b, struct timeval *res);
-void timerclear(struct timeval *tvp);
-int timerisset(struct timeval *tvp);
+void timeradd(const struct timeval *__a, const struct timeval *__b, struct timeval *__res);
+void timersub(const struct timeval *__a, const struct timeval *__b, struct timeval *__res);
+void timerclear(struct timeval *__tvp);
+int timerisset(struct timeval *__tvp);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
@@ -39,15 +39,15 @@ int timerisset(struct timeval *tvp);
 
 #ifndef __MLIBC_ABI_ONLY
 
-int getitimer(int which, struct itimerval *curr_value);
-int setitimer(int which, const struct itimerval *new_value,
-	struct itimerval *old_value);
+int getitimer(int __which, struct itimerval *__curr_value);
+int setitimer(int __which, const struct itimerval *__new_value,
+	struct itimerval *__old_value);
 
-int timer_create(clockid_t clockid, struct sigevent *__restrict sevp, timer_t *__restrict timerid);
-int timer_settime(timer_t timerid, int flags, const struct itimerspec *__restrict new_value,
-	struct itimerspec *__restrict old_value);
-int timer_gettime(timer_t timerid, struct itimerspec *curr_value);
-int timer_delete(timer_t timerid);
+int timer_create(clockid_t __clockid, struct sigevent *__restrict __sevp, timer_t *__restrict __timerid);
+int timer_settime(timer_t __timerid, int __flags, const struct itimerspec *__restrict __new_value,
+	struct itimerspec *__restrict __old_value);
+int timer_gettime(timer_t __timerid, struct itimerspec *__curr_value);
+int timer_delete(timer_t __timerid);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

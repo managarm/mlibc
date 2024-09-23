@@ -47,7 +47,7 @@ enum {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int personality(unsigned long persona);
+int personality(unsigned long __persona);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

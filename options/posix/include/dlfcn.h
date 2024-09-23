@@ -26,11 +26,11 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int dlclose(void *);
+int dlclose(void *__handle);
 char *dlerror(void);
-void *dlopen(const char *, int);
-void *dlsym(void *__restrict, const char *__restrict);
-void *dlvsym(void *__restrict, const char *__restrict, const char *__restrict);
+void *dlopen(const char *__name, int __flags);
+void *dlsym(void *__restrict __handle, const char *__restrict __name);
+void *dlvsym(void *__restrict __handle, const char *__restrict __name, const char *__restrict __version);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

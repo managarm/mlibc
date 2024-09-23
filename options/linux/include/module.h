@@ -13,8 +13,8 @@ extern "C" {
  * for more information and the rationale behind it.
  * For our infrastructure, we expose them, and make it call into the sysdeps.
  */
-int init_module(void *module, unsigned long len, const char *args);
-int delete_module(const char *name, unsigned flags);
+int init_module(void *__module, unsigned long __len, const char *__args);
+int delete_module(const char *__name, unsigned __flags);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

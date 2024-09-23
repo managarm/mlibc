@@ -22,10 +22,11 @@ struct pollfd {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int poll(struct pollfd *, nfds_t, int);
+int poll(struct pollfd *__fds, nfds_t __nfds, int __timeout);
 
 #if __MLIBC_LINUX_OPTION
-int ppoll(struct pollfd *fds, nfds_t nfds, const struct timespec *timeout_ts, const sigset_t *sigmask);
+int ppoll(struct pollfd *__fds, nfds_t __nfds,
+		const struct timespec *__timeout_ts, const sigset_t *__sigmask);
 #endif // __MLIBC_LINUX_OPTION
 
 #endif /* !__MLIBC_ABI_ONLY */

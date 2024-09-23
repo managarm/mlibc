@@ -10,24 +10,24 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int setxattr(const char *path, const char *name, const void *val, size_t size,
-	int flags);
-int lsetxattr(const char *path, const char *name, const void *val, size_t size,
-	int flags);
-int fsetxattr(int fd, const char *name, const void *val, size_t size,
-	int flags);
+int setxattr(const char *__path, const char *__name, const void *__val, size_t __size,
+	int __flags);
+int lsetxattr(const char *__path, const char *__name, const void *__val, size_t __size,
+	int __flags);
+int fsetxattr(int __fd, const char *__name, const void *__val, size_t __size,
+	int __flags);
 
-ssize_t getxattr(const char *path, const char *name, void *val, size_t size);
-ssize_t lgetxattr(const char *path, const char *name, void *val, size_t size);
-ssize_t fgetxattr(int fd, const char *name, void *val, size_t size);
+ssize_t getxattr(const char *__path, const char *__name, void *__val, size_t __size);
+ssize_t lgetxattr(const char *__path, const char *__name, void *__val, size_t __size);
+ssize_t fgetxattr(int __fd, const char *__name, void *__val, size_t __size);
 
-ssize_t listxattr(const char *path, char *list, size_t size);
-ssize_t llistxattr(const char *path, char *list, size_t size);
-ssize_t flistxattr(int fd, char *list, size_t size);
+ssize_t listxattr(const char *__path, char *__list, size_t __size);
+ssize_t llistxattr(const char *__path, char *__list, size_t __size);
+ssize_t flistxattr(int __fd, char *__list, size_t __size);
 
-int removexattr(const char *path, const char *name);
-int lremovexattr(const char *path, const char *name);
-int fremovexattr(int fd, const char *name);
+int removexattr(const char *__path, const char *__name);
+int lremovexattr(const char *__path, const char *__name);
+int fremovexattr(int __fd, const char *__name);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

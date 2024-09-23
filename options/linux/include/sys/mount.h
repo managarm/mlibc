@@ -76,10 +76,10 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int mount(const char *source, const char *target,
-		const char *fstype, unsigned long flags, const void *data);
-int umount(const char *target);
-int umount2(const char *target, int flags);
+int mount(const char *__source, const char *__target,
+		const char *__fstype, unsigned long __flags, const void *__data);
+int umount(const char *__target);
+int umount2(const char *__target, int __flags);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

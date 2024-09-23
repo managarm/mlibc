@@ -58,12 +58,14 @@ extern "C" {
 #ifndef __MLIBC_ABI_ONLY
 
 void closelog(void);
-void openlog(const char *, int, int);
-int setlogmask(int);
-void syslog(int, const char *, ...);
+void openlog(const char *__ident, int __option, int __facility);
+int setlogmask(int __mask);
+__attribute__((__format__(__printf__, 2, 3)))
+void syslog(int __priority, const char *__format, ...);
 
 // This is a linux extension
-void vsyslog(int, const char *, va_list);
+__attribute__((__format__(__printf__, 2, 0)))
+void vsyslog(int __priority, const char *__format, va_list __args);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

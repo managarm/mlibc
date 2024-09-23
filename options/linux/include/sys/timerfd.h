@@ -19,9 +19,9 @@ struct itimerspec;
 
 #ifndef __MLIBC_ABI_ONLY
 
-int timerfd_create(int, int);
-int timerfd_settime(int, int, const struct itimerspec *, struct itimerspec *);
-int timerfd_gettime(int, struct itimerspec *);
+int timerfd_create(int __clockid, int __flags);
+int timerfd_settime(int __fd, int __flags, const struct itimerspec *__value, struct itimerspec *__oldvalue);
+int timerfd_gettime(int __fd, struct itimerspec *__value);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

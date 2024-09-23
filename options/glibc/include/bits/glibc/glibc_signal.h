@@ -7,11 +7,11 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int tgkill(int, int, int);
+int tgkill(int __tgid, int __tid, int __sig);
 
 #if defined(_GNU_SOURCE)
 
-typedef void (*sighandler_t)(int);
+typedef void (*sighandler_t)(int __signo);
 
 #endif
 

@@ -52,10 +52,11 @@ typedef struct {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int regcomp(regex_t *__restrict, const char *__restrict, int);
-int regexec(const regex_t *__restrict, const char *__restrict, size_t, regmatch_t *__restrict, int);
-size_t regerror(int, const regex_t *__restrict, char *__restrict, size_t);
-void regfree(regex_t *);
+int regcomp(regex_t *__restrict __regex, const char *__restrict __pattern, int __flags);
+int regexec(const regex_t *__restrict __regex, const char *__restrict __string, size_t __nmatch,
+		regmatch_t *__restrict __pmatch, int __flags);
+size_t regerror(int __errcode, const regex_t *__restrict __regex, char *__restrict __errbuf, size_t __errbuf_size);
+void regfree(regex_t *__regex);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

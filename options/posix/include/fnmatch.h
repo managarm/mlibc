@@ -21,7 +21,7 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int fnmatch(const char *, const char *, int);
+int fnmatch(const char *__pattern, const char *__string, int __flags);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

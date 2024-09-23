@@ -116,7 +116,7 @@
 extern "C" {
 #endif
 
-int prctl (int, ...);
+int prctl(int __op, ...);
 
 #ifdef __cplusplus
 }
