@@ -2589,5 +2589,43 @@ int sys_sysconf(int num, long *ret) {
 	return 0;
 }
 
+int sys_sysinfo(struct sysinfo *info) {
+	SignalGuard sguard;
+
+	managarm::posix::GetMemoryInformationRequest<MemoryAllocator> req(getSysdepsAllocator());
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::recvInline()
+		)
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::GetMemoryInformationResponse resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+	FILE *uptime = fopen("/proc/uptime", "r");
+	__ensure(uptime);
+	int uptime_sec;
+	int uptime_msec;
+	int idle_sec;
+	int idle_msec;
+	fscanf(uptime, "%d.%d %d.%d", &uptime_sec, &uptime_msec, &idle_sec, &idle_msec);
+	fclose(uptime);
+
+	// TODO: fill in missing fields.
+	*info = {};
+	info->uptime = uptime_sec;
+	info->totalram = resp.total_usable_memory();
+	info->freeram = resp.available_memory();
+	info->mem_unit = resp.memory_unit();
+
+	return 0;
+}
+
 } //namespace mlibc
 
