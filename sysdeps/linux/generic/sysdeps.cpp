@@ -1043,7 +1043,7 @@ int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
 }
 
 int sys_signalfd_create(const sigset_t *masks, int flags, int *fd) {
-	auto ret = do_syscall(SYS_signalfd4, *fd, masks, sizeof(sigset_t), flags);
+	auto ret = do_syscall(SYS_signalfd4, *fd, masks, NSIG / 8, flags);
 	if (int e = sc_error(ret); e)
 		return e;
 	*fd = sc_int_result<int>(ret);
