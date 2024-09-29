@@ -302,6 +302,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		case DT_RELR:
 		case DT_RELRSZ:
 		case DT_RELRENT:
+		case DT_FLAGS:
+		case DT_FLAGS_1:
 			continue;
 		default:
 			__ensure(!"Unexpected dynamic entry in program interpreter");
@@ -452,9 +454,13 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	auto ldso = initialRepository->injectObjectFromDts(ldso_soname,
 		frg::string<MemoryAllocator> { getAllocator() },
 		ldso_base, _DYNAMIC, 1);
-	ldso->phdrPointer = phdr_pointer;
-	ldso->phdrCount = phdr_count;
-	ldso->phdrEntrySize = phdr_entry_size;
+
+	auto ldso_ehdr = reinterpret_cast<elf_ehdr *>(__ehdr_start);
+	auto ldso_phdr = reinterpret_cast<elf_phdr *>(ldso_base + ldso_ehdr->e_phoff);
+
+	ldso->phdrPointer = ldso_phdr;
+	ldso->phdrCount = ldso_ehdr->e_phnum;
+	ldso->phdrEntrySize = ldso_ehdr->e_phentsize;
 
 	// TODO: support non-zero base addresses?
 	executableSO = initialRepository->injectObjectFromPhdrs(execfn,
@@ -490,7 +496,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	globalDebugInterface.state = 0;
 	dl_debug_state();
 
-	linker.initObjects();
+	linker.initObjects(initialRepository.get());
 
 	if(logEntryExit)
 		mlibc::infoLogger() << "Leaving ld.so, jump to "
@@ -519,6 +525,10 @@ void *__dlapi_get_tls(struct __abi_tls_entry *entry) {
 extern "C" [[ gnu::visibility("default") ]]
 const mlibc::RtldConfig &__dlapi_get_config() {
 	return rtldConfig;
+}
+
+extern "C" [[ gnu::visibility("default") ]] void __dlapi_exit() {
+	initialRepository->destructObjects();
 }
 
 #if __MLIBC_POSIX_OPTION
@@ -593,7 +603,7 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 
 		Loader linker{object->localScope, nullptr, false, rts};
 		linker.linkObjects(object);
-		linker.initObjects();
+		linker.initObjects(initialRepository.get());
 	}
 
 	dl_debug_state();
