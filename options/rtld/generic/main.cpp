@@ -302,9 +302,10 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		case DT_RELR:
 		case DT_RELRSZ:
 		case DT_RELRENT:
+		case DT_PLTGOT:
 			continue;
 		default:
-			__ensure(!"Unexpected dynamic entry in program interpreter");
+			mlibc::panicLogger() << "rtld: unexpected dynamic entry " << ent->d_tag << " in program interpreter" << frg::endlog;
 		}
 	}
 	__ensure(strtab_offset);
