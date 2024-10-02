@@ -513,6 +513,33 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGID)) {
 		memset(arg, 0, sizeof(struct input_id));
+		auto param = reinterpret_cast<struct input_id *>(arg);
+
+		managarm::fs::EvioGetIdRequest<MemoryAllocator> req(getSysdepsAllocator());
+
+		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::want_lane,
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		auto conversation = offer.descriptor();
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		auto resp = *bragi::parse_head_only<managarm::fs::EvioGetIdReply>(recv_resp, getSysdepsAllocator());
+		recv_resp.reset();
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		param->bustype = resp.bustype();
+		param->vendor = resp.vendor();
+		param->product = resp.product();
+		param->version = resp.version();
+
 		*result = 0;
 		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
