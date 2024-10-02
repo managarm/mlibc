@@ -507,7 +507,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 	if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGVERSION)) {
-		*reinterpret_cast<int *>(arg) = 0x010001; // should be EV_VERSION
+		*reinterpret_cast<int *>(arg) = EV_VERSION;
 		*result = 0;
 		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
