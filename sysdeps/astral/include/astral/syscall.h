@@ -1,0 +1,119 @@
+#ifndef _ASTRAL_SYSCALL_H
+#define _ASTRAL_SYSCALL_H
+
+#include <stddef.h>
+#include <stdint.h>
+
+#define SYSCALL_PRINT 0
+#define SYSCALL_MMAP 1
+#define SYSCALL_OPENAT 2
+#define SYSCALL_READ 3
+#define SYSCALL_SEEK 4
+#define SYSCALL_CLOSE 5
+#define SYSCALL_ARCHCTL 6
+#define SYSCALL_WRITE 7
+#define SYSCALL_GETPID 8
+#define SYSCALL_FSTAT 9
+#define SYSCALL_FSTATAT 10
+#define SYSCALL_FORK 11
+#define SYSCALL_EXECVE 12
+#define SYSCALL_EXIT 13
+#define SYSCALL_WAITPID 14
+#define SYSCALL_MUNMAP 15
+#define SYSCALL_GETDENTS 16
+#define SYSCALL_DUP 17
+#define SYSCALL_DUP2 18
+#define SYSCALL_DUP3 19
+#define SYSCALL_FCNTL 20
+#define SYSCALL_CHDIR 21
+#define SYSCALL_PIPE2 22
+#define SYSCALL_ISATTY 23
+#define SYSCALL_FACCESSAT 24
+#define SYSCALL_UNLINKAT 25
+#define SYSCALL_IOCTL 26
+#define SYSCALL_MKDIRAT 27
+#define SYSCALL_CLOCKGET 28
+#define SYSCALL_LINKAT 29
+#define SYSCALL_READLINKAT 30
+#define SYSCALL_FCHMOD 31
+#define SYSCALL_FCHMODAT 32
+#define SYSCALL_UMASK 33
+#define SYSCALL_POLL 34
+#define SYSCALL_NANOSLEEP 35
+#define SYSCALL_FTRUNCATE 36
+#define SYSCALL_MOUNT 37
+#define SYSCALL_FCHOWNAT 38
+#define SYSCALL_UTIMENSAT 39
+#define SYSCALL_RENAMEAT 40
+#define SYSCALL_SOCKET 41
+#define SYSCALL_BIND 42
+#define SYSCALL_SENDMSG 43
+#define SYSCALL_SETSOCKOPT 44
+#define SYSCALL_RECVMSG 45
+#define SYSCALL_LISTEN 46
+#define SYSCALL_CONNECT 47
+#define SYSCALL_ACCEPT 48
+#define SYSCALL_NEWTHREAD 49
+#define SYSCALL_THREADEXIT 50
+#define SYSCALL_FUTEX 51
+#define SYSCALL_GETTID 52
+#define SYSCALL_GETPPID 53
+#define SYSCALL_GETPGID 54
+#define SYSCALL_GETSID 55
+#define SYSCALL_SETSID 56
+#define SYSCALL_SETPGID 57
+#define SYSCALL_SIGACTION 58
+#define SYSCALL_SIGALTSTACK 59
+#define SYSCALL_SIGPROCMASK 60
+#define SYSCALL_KILL 61
+#define SYSCALL_SIGRETURN 62
+#define SYSCALL_UNAME 63
+#define SYSCALL_HOSTNAME 64
+#define SYSCALL_SYNC 65
+#define SYSCALL_FSYNC 66
+#define SYSCALL_FCHDIR 67
+#define SYSCALL_SETITIMER 68
+#define SYSCALL_GETITIMER 69
+#define SYSCALL_SOCKETPAIR 70
+#define SYSCALL_GETSOCKNAME 71
+#define SYSCALL_GETPEERNAME 72
+#define SYSCALL_CHROOT 73
+#define SYSCALL_PAUSE 74
+#define SYSCALL_PPOLL 75
+#define SYSCALL_PREAD 76
+#define SYSCALL_PWRITE 77
+#define SYSCALL_MKNODAT 78
+#define SYSCALL_GETRESUID 79
+#define SYSCALL_GETRESGID 80
+#define SYSCALL_SETRESUID 81
+#define SYSCALL_SETRESGID 82
+#define SYSCALL_MPROTECT 83
+#define SYSCALL_SETUID 84
+#define SYSCALL_SETEUID 85
+#define SYSCALL_SETGID 86
+#define SYSCALL_SETEGID 87
+#define SYSCALL_SIGSUSPEND 88
+#define SYSCALL_SIGTIMEDWAIT 89
+#define SYSCALL_SIGPENDING 90
+#define SYSCALL_KILLTHREAD 91
+
+#ifndef __MLIBC_ABI_ONLY
+
+static long syscall(long func, long* ret, uint64_t p1 = 0, uint64_t p2 = 0, uint64_t p3 = 0, uint64_t p4 = 0, uint64_t p5 = 0, uint64_t p6 = 0) {
+	volatile long err;
+
+	register uint64_t r4 asm("r10") = p4;
+	register uint64_t r5 asm("r8") = p5;
+	register uint64_t r6 asm("r9") = p6;
+
+	asm volatile("syscall"
+		: "=a"(*ret), "=d"(err)
+		: "a"(func), "D"(p1), "S"(p2), "d"(p3), "r"(r4),
+		"r"(r5), "r"(r6)
+		: "memory", "rcx", "r11");
+    return err;
+}
+
+#endif /* !__MLIBC_ABI_ONLY */
+
+#endif /* _ASTRAL_SYSCALL_H */

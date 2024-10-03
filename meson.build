@@ -264,6 +264,12 @@ elif host_machine.system() == 'dripos'
 	rtld_include_dirs += include_directories('sysdeps/dripos/include')
 	libc_include_dirs += include_directories('sysdeps/dripos/include')
 	subdir('sysdeps/dripos')
+elif host_machine.system() == 'astral'
+	rtld_include_dirs += include_directories('sysdeps/astral/include')
+	libc_include_dirs += include_directories('sysdeps/astral/include')
+	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
+	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
+	subdir('sysdeps/astral')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
