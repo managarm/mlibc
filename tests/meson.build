@@ -103,6 +103,7 @@ all_test_cases = [
 	'posix/waitid',
 	'posix/usershell',
 	'posix/shm',
+	'posix/swab',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
