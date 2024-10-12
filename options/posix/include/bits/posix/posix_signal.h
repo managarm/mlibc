@@ -26,6 +26,7 @@ extern "C" {
 #define TRAP_BRKPT      1       /* process breakpoint */
 #define TRAP_TRACE      2       /* process trace trap */
 
+#if defined(__x86_64__)
 // Start Glibc stuff
 
 struct _libc_fpxreg {
@@ -56,6 +57,7 @@ typedef struct _libc_fpstate *fpregset_t;
 // End Glibc stuff
 
 typedef unsigned long int greg_t;
+#endif
 
 #define FPE_INTDIV      1       /* integer divide by zero */
 #define FPE_INTOVF      2       /* integer overflow */
