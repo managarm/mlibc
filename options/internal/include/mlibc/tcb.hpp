@@ -177,6 +177,11 @@ static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) - TP_TCB_OFFSET == 80);
 // sysdeps/linux/riscv64/cp_syscall.S needs to be updated whenever
 // the struct is expanded.
 static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 96);
+#elif defined (__m68k__)
+// The thread pointer on m68k points to 0x7000 bytes *after* the end of the
+// TCB, so similarly to as on RISC-V, we need to keep the value in
+// sysdeps/linux/m68k/cp_syscall.S up-to-date.
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 0x30);
 #else
 #error "Missing architecture specific code."
 #endif

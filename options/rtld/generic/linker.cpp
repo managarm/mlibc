@@ -41,6 +41,9 @@ constexpr inline uintptr_t tlsOffsetFromTp = 16;
 #elif defined(__riscv)
 constexpr inline bool tlsAboveTp = true;
 constexpr inline uintptr_t tlsOffsetFromTp = 0;
+#elif defined(__m68k__)
+constexpr inline bool tlsAboveTp = true;
+constexpr inline ptrdiff_t tlsOffsetFromTp = -0x7000;
 #else
 #	error Unknown architecture
 #endif
@@ -737,7 +740,7 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_VERSYM:
 		case DT_VERDEF: case DT_VERDEFNUM:
 		case DT_VERNEED: case DT_VERNEEDNUM:
-#ifdef __riscv
+#if defined (__riscv) || defined (__m68k__)
 		case DT_TEXTREL: // Work around https://sourceware.org/bugzilla/show_bug.cgi?id=24673.
 #endif
 			break;
