@@ -4,9 +4,8 @@
 #include <mlibc-config.h>
 #include <internal-config.h>
 
-#if __MLIBC_ANSI_OPTION
-#	include <mlibc/ansi-sysdeps.hpp>
-#endif /* __MLIBC_ANSI_OPTION */
+/* The ANSI option is always enabled. */
+#include <mlibc/ansi-sysdeps.hpp>
 
 #if __MLIBC_POSIX_OPTION
 #	include <mlibc/posix-sysdeps.hpp>

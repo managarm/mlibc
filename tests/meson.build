@@ -213,9 +213,7 @@ foreach test_name : all_test_cases
 	test_short_name = test_name.split('/')[1]
 	test_exec_name = test_name.replace('/', '-')
 
-	if test_subdir == 'ansi' and disable_ansi_option
-		continue
-	elif test_subdir == 'bsd' and disable_bsd_option
+	if test_subdir == 'bsd' and disable_bsd_option
 		continue
 	elif test_subdir == 'glibc' and disable_glibc_option
 		continue
