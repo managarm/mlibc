@@ -22,7 +22,7 @@ LOGGER = logging.getLogger(__name__)
 
 # ADD NEW ARCHITECTURES HERE: these should match directory names in Linuxes arch/
 # directory or the second element of one of the harnesses below
-WANTED_ARCHES = ["riscv64", "x86_64", "arm64", "i386"]
+WANTED_ARCHES = ["riscv64", "x86_64", "arm64", "i386", "m68k"]
 # How to translate from Linux arch directory names to gnutools architecture fields
 LINUX_GNU_TRANSLATION = {
     "arm64": "aarch64",

@@ -67,6 +67,13 @@ struct user_desc {
 
 #endif
 
+#if defined(__m68k__)
+extern "C" void *__m68k_read_tp() {
+	auto ret = do_syscall(__NR_get_thread_area, 0);
+	return (void *)ret;
+}
+#endif
+
 int sys_tcb_set(void *pointer) {
 #if defined(__x86_64__)
 	auto ret = do_syscall(SYS_arch_prctl, 0x1002 /* ARCH_SET_FS */, pointer);
@@ -93,6 +100,10 @@ int sys_tcb_set(void *pointer) {
 #elif defined (__aarch64__)
 	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb) - 0x10;
 	asm volatile ("msr tpidr_el0, %0" :: "r"(thread_data));
+#elif defined (__m68k__)
+	auto ret = do_syscall(__NR_set_thread_area, (uintptr_t)pointer + 0x7000 + sizeof(Tcb));
+	if(int e = sc_error(ret); e)
+		return e;
 #else
 #error "Missing architecture specific code."
 #endif
@@ -658,6 +669,8 @@ int sys_before_cancellable_syscall(ucontext_t *uct) {
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.gregs[REG_PC]);
 #elif defined(__aarch64__)
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.pc);
+#elif defined(__m68k__)
+	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.gregs[R_PC]);
 #else
 #error "Missing architecture specific code."
 #endif
