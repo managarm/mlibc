@@ -360,9 +360,14 @@ char *realpath(const char *path, char *out) {
 
 			if (path[0] == '/') {
 				// Absolute path, replace resolv
-				resolv.resize(sz);
-				strncpy(resolv.data(), path, sz - 1);
-				resolv.data()[sz - 1] = 0;
+
+				// Ignore any trailing '/' so all results will not have one to keep consistency.
+				while(sz > 1 && path[sz - 1] == '/')
+					sz -= 1;
+
+				resolv.resize(sz + 1);
+				strncpy(resolv.data(), path, sz);
+				resolv.data()[sz] = 0;
 
 				if(debugPathResolution) {
 					mlibc::infoLogger() << "mlibc realpath(): Symlink is absolute, resolv: '"
