@@ -3,7 +3,7 @@ if disable_bsd_option
 endif
 
 libc_sources += files(
-	'generic/arpa-nameser-stubs.cpp',
+	'generic/arpa-nameser.cpp',
 	'generic/ether.cpp',
 	'generic/getopt.cpp',
 )

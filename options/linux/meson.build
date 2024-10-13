@@ -3,21 +3,21 @@ if disable_linux_option
 	subdir_done()
 endif
 libc_sources += files(
-	'generic/mntent-stubs.cpp',
-	'generic/pty-stubs.cpp',
+	'generic/mntent.cpp',
+	'generic/pty.cpp',
 	'generic/sys-epoll.cpp',
-	'generic/sys-inotify-stubs.cpp',
+	'generic/sys-inotify.cpp',
 	'generic/sys-mount.cpp',
-	'generic/sys-prctl-stubs.cpp',
-	'generic/sys-ptrace-stubs.cpp',
-	'generic/sys-random-stubs.cpp',
-	'generic/sys-sendfile-stubs.cpp',
+	'generic/sys-prctl.cpp',
+	'generic/sys-ptrace.cpp',
+	'generic/sys-random.cpp',
+	'generic/sys-sendfile.cpp',
 	'generic/sys-signalfd.cpp',
 	'generic/sys-timerfd.cpp',
 	'generic/sys-eventfd.cpp',
 	'generic/sys-reboot.cpp',
 	'generic/sys-xattr.cpp',
-	'generic/utmp-stubs.cpp',
+	'generic/utmp.cpp',
 	'generic/utmpx.cpp',
 	'generic/linux-unistd.cpp',
 	'generic/malloc.cpp',
@@ -31,7 +31,7 @@ libc_sources += files(
 	'generic/capabilities.cpp',
 	'generic/cpuset.cpp',
 	'generic/sys-swap.cpp',
-	'generic/sys-statfs-stubs.cpp',
+	'generic/sys-statfs.cpp',
 	'generic/sys-statx.cpp',
 )
 
