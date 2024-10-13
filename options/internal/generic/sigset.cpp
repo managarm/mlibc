@@ -20,8 +20,10 @@ int sigaddset(sigset_t *sigset, int sig) {
 		errno = EINVAL;
 		return -1;
 	}
-	auto ptr = reinterpret_cast<char *>(sigset);
-	ptr[signo / CHAR_BIT] |= (1 << (signo % CHAR_BIT));
+	auto ptr = reinterpret_cast<unsigned long *>(sigset);
+	int field = signo / (sizeof(unsigned long) * CHAR_BIT);
+	int bit = signo % (sizeof(unsigned long) * CHAR_BIT);
+	ptr[field] |= (1UL << bit);
 	return 0;
 }
 
@@ -31,8 +33,10 @@ int sigdelset(sigset_t *sigset, int sig) {
 		errno = EINVAL;
 		return -1;
 	}
-	auto ptr = reinterpret_cast<char *>(sigset);
-	ptr[signo / CHAR_BIT] &= ~(1 << (signo % CHAR_BIT));
+	auto ptr = reinterpret_cast<unsigned long *>(sigset);
+	int field = signo / (sizeof(unsigned long) * CHAR_BIT);
+	int bit = signo % (sizeof(unsigned long) * CHAR_BIT);
+	ptr[field] &= ~(1UL << bit);
 	return 0;
 }
 
@@ -42,6 +46,8 @@ int sigismember(const sigset_t *sigset, int sig) {
 		errno = EINVAL;
 		return -1;
 	}
-	auto ptr = reinterpret_cast<const char *>(sigset);
-	return (ptr[signo / CHAR_BIT] & (1 << (signo % CHAR_BIT))) != 0;
+	auto ptr = reinterpret_cast<const unsigned long *>(sigset);
+	int field = signo / (sizeof(unsigned long) * CHAR_BIT);
+	int bit = signo % (sizeof(unsigned long) * CHAR_BIT);
+	return (ptr[field] & (1UL << bit)) != 0;
 }
