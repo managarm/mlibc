@@ -69,6 +69,9 @@ struct ObjectRepository {
 
 	SharedObject *findLoadedObject(frg::string_view name);
 
+	void addObjectToDestructQueue(SharedObject *object);
+	void destructObjects();
+
 	// Used by dl_iterate_phdr: stores objects in the order they are loaded.
 	frg::vector<SharedObject *, MemoryAllocator> loadedObjects;
 
@@ -86,6 +89,9 @@ private:
 
 	frg::hash_map<frg::string_view, SharedObject *,
 			frg::hash<frg::string_view>, MemoryAllocator> _nameMap;
+
+	// Used for destructing the objects, stores all the objects in the order they are initialized.
+	frg::vector<SharedObject *, MemoryAllocator> _destructQueue;
 };
 
 // --------------------------------------------------------
@@ -148,9 +154,12 @@ struct SharedObject {
 
 	// object initialization information
 	InitFuncPtr initPtr = nullptr;
+	InitFuncPtr finiPtr = nullptr;
 	InitFuncPtr *initArray = nullptr;
+	InitFuncPtr *finiArray = nullptr;
 	InitFuncPtr *preInitArray = nullptr;
 	size_t initArraySize = 0;
+	size_t finiArraySize = 0;
 	size_t preInitArraySize = 0;
 
 
@@ -189,6 +198,8 @@ struct SharedObject {
 	bool scheduledForInit;
 	bool onInitStack;
 	bool wasInitialized;
+
+	bool wasDestroyed = false;
 
 	// PHDR related stuff, we only set these for the main executable
 	void *phdrPointer = nullptr;
@@ -372,7 +383,7 @@ private:
 	void _processRelocations(Relocation &rel);
 
 public:
-	void initObjects();
+	void initObjects(ObjectRepository *repository);
 
 private:
 	void _scheduleInit(SharedObject *object);

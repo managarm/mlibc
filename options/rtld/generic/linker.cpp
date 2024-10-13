@@ -54,6 +54,8 @@ extern frg::manual_box<frg::vector<frg::string_view, MemoryAllocator>> preloads;
 #if MLIBC_STATIC_BUILD
 extern "C" size_t __init_array_start[];
 extern "C" size_t __init_array_end[];
+extern "C" size_t __fini_array_start[];
+extern "C" size_t __fini_array_end[];
 extern "C" size_t __preinit_array_start[];
 extern "C" size_t __preinit_array_end[];
 #endif
@@ -102,7 +104,8 @@ uintptr_t alignUp(uintptr_t address, size_t align) {
 
 ObjectRepository::ObjectRepository()
 : loadedObjects{getAllocator()},
-	_nameMap{frg::hash<frg::string_view>{}, getAllocator()} {}
+	_nameMap{frg::hash<frg::string_view>{}, getAllocator()},
+	_destructQueue{getAllocator()} {}
 
 SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 		frg::string<MemoryAllocator> path, uintptr_t base_address,
@@ -151,6 +154,9 @@ SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
 	object->initArray = reinterpret_cast<InitFuncPtr*>(__init_array_start);
 	object->initArraySize = static_cast<size_t>((uintptr_t)__init_array_end -
 			(uintptr_t)__init_array_start);
+	object->finiArray = reinterpret_cast<InitFuncPtr*>(__fini_array_start);
+	object->finiArraySize = static_cast<size_t>((uintptr_t)__fini_array_end -
+			(uintptr_t)__fini_array_start);
 	object->preInitArray = reinterpret_cast<InitFuncPtr*>(__preinit_array_start);
 	object->preInitArraySize = static_cast<size_t>((uintptr_t)__preinit_array_end -
 			(uintptr_t)__preinit_array_start);
@@ -354,6 +360,19 @@ SharedObject *ObjectRepository::findLoadedObject(frg::string_view name) {
 
 	// TODO: We should also look at the device and inode here as a fallback.
 	return nullptr;
+}
+
+void ObjectRepository::addObjectToDestructQueue(SharedObject *object) {
+	_destructQueue.push_back(object);
+}
+
+void doDestruct(SharedObject *object);
+
+void ObjectRepository::destructObjects() {
+	for (size_t i = _destructQueue.size(); i > 0; i--) {
+		doDestruct(_destructQueue[i - 1]);
+	}
+	_destructQueue.clear();
 }
 
 // --------------------------------------------------------
@@ -699,12 +718,23 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			if(dynamic->d_un.d_ptr != 0)
 				object->initPtr = (InitFuncPtr)(object->baseAddress + dynamic->d_un.d_ptr);
 			break;
+		case DT_FINI:
+			if(dynamic->d_un.d_ptr != 0)
+				object->finiPtr = (InitFuncPtr)(object->baseAddress + dynamic->d_un.d_ptr);
+			break;
 		case DT_INIT_ARRAY:
 			if(dynamic->d_un.d_ptr != 0)
 				object->initArray = (InitFuncPtr *)(object->baseAddress + dynamic->d_un.d_ptr);
 			break;
+		case DT_FINI_ARRAY:
+			if(dynamic->d_un.d_ptr != 0)
+				object->finiArray = (InitFuncPtr *)(object->baseAddress + dynamic->d_un.d_ptr);
+			break;
 		case DT_INIT_ARRAYSZ:
 			object->initArraySize = dynamic->d_un.d_val;
+			break;
+		case DT_FINI_ARRAYSZ:
+			object->finiArraySize = dynamic->d_un.d_val;
 			break;
 		case DT_PREINIT_ARRAY:
 			if(dynamic->d_un.d_ptr != 0) {
@@ -730,7 +760,6 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			break;
 		// ignore unimportant tags
 		case DT_NEEDED: // we handle this later
-		case DT_FINI: case DT_FINI_ARRAY: case DT_FINI_ARRAYSZ:
 		case DT_RELA: case DT_RELASZ: case DT_RELAENT: case DT_RELACOUNT:
 		case DT_REL: case DT_RELSZ: case DT_RELENT: case DT_RELCOUNT:
 		case DT_RELR: case DT_RELRSZ: case DT_RELRENT:
@@ -924,9 +953,22 @@ void doInitialize(SharedObject *object) {
 	__ensure(object->wasLinked);
 	__ensure(!object->wasInitialized);
 
-	// if the object has dependencies we initialize them first
-	for(size_t i = 0; i < object->dependencies.size(); i++)
-		__ensure(object->dependencies[i]->wasInitialized);
+	// If the object has dependencies we initialize them first
+	// except in the case of a circular dependency.
+	for(auto dep : object->dependencies) {
+		bool circular = false;
+		for(auto dep2 : dep->dependencies) {
+			if(dep2 == object) {
+				circular = true;
+				break;
+			}
+		}
+
+		if(circular)
+			continue;
+
+		__ensure(dep->wasInitialized);
+	}
 
 	if(verbose)
 		mlibc::infoLogger() << "rtld: Initialize " << object->name << frg::endlog;
@@ -945,6 +987,46 @@ void doInitialize(SharedObject *object) {
 	if(verbose)
 		mlibc::infoLogger() << "rtld: Object initialization complete" << frg::endlog;
 	object->wasInitialized = true;
+}
+
+void doDestruct(SharedObject *object) {
+	if(!object->wasInitialized || object->wasDestroyed)
+		return;
+
+	// If the object has dependencies they are destroyed after this object
+	// except in the case of a circular dependency.
+	for(auto dep : object->dependencies) {
+		bool circular = false;
+		for(auto dep2 : dep->dependencies) {
+			if(dep2 == object) {
+				circular = true;
+				break;
+			}
+		}
+
+		if(circular)
+			continue;
+
+		__ensure(!dep->wasDestroyed);
+	}
+
+	if(verbose)
+		mlibc::infoLogger() << "rtld: Destruct " << object->name << frg::endlog;
+
+	if(verbose)
+		mlibc::infoLogger() << "rtld: Running DT_FINI_ARRAY functions" << frg::endlog;
+	__ensure((object->finiArraySize % sizeof(InitFuncPtr)) == 0);
+	for(size_t i = object->finiArraySize / sizeof(InitFuncPtr); i > 0; i--)
+		object->finiArray[i - 1]();
+
+	if(verbose)
+		mlibc::infoLogger() << "rtld: Running DT_FINI function" << frg::endlog;
+	if(object->finiPtr != nullptr)
+		object->finiPtr();
+
+	if(verbose)
+		mlibc::infoLogger() << "rtld: Object destruction complete" << frg::endlog;
+	object->wasDestroyed = true;
 }
 
 // --------------------------------------------------------
@@ -1500,7 +1582,7 @@ void Loader::_buildTlsMaps() {
 	}
 }
 
-void Loader::initObjects() {
+void Loader::initObjects(ObjectRepository *repository) {
 	initTlsObjects(mlibc::get_current_tcb(), _linkBfs, true);
 
 	if (_mainExecutable && _mainExecutable->preInitArray) {
@@ -1522,8 +1604,10 @@ void Loader::initObjects() {
 	}
 
 	for(auto object : _initQueue) {
-		if(!object->wasInitialized)
+		if(!object->wasInitialized) {
 			doInitialize(object);
+			repository->addObjectToDestructQueue(object);
+		}
 	}
 }
 
