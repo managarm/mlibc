@@ -9,7 +9,7 @@ extern "C" {
 #include <abi-bits/pid_t.h>
 #include <bits/posix/timeval.h>
 
-// Struct definition taken from musl
+/* Struct definition taken from musl */
 struct utmpx {
 	short ut_type;
 	short __ut_pad1;
@@ -65,4 +65,4 @@ void endutxent(void);
 }
 #endif
 
-#endif // _UTMPX_H
+#endif /* _UTMPX_H */

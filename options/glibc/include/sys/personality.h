@@ -55,4 +55,4 @@ int personality(unsigned long __persona);
 }
 #endif
 
-#endif // _SYS_PERSONALITY_H
+#endif /* _SYS_PERSONALITY_H */

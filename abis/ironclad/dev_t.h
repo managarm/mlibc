@@ -3,4 +3,4 @@
 
 typedef unsigned long dev_t;
 
-#endif // _ABIBITS_DEV_T_H
+#endif /* _ABIBITS_DEV_T_H */

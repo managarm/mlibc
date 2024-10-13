@@ -3,4 +3,4 @@
 
 typedef unsigned int id_t;
 
-#endif // _MLIBC_ID_T_H
+#endif /* _MLIBC_ID_T_H */

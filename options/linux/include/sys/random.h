@@ -22,5 +22,5 @@ ssize_t getrandom(void *__buffer, size_t __max_size, unsigned int __flags);
 }
 #endif
 
-#endif //_SYS_RANDOM_H
+#endif /*_SYS_RANDOM_H */
 

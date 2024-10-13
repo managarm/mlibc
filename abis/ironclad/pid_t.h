@@ -3,4 +3,4 @@
 
 typedef int pid_t;
 
-#endif // _ABIBITS_PID_T_H
+#endif /* _ABIBITS_PID_T_H */

@@ -9,4 +9,4 @@
 #define RB_SW_SUSPEND 0xd000fce2
 #define RB_KEXEC 0x45584543
 
-#endif // _ABIBITS_REBOOT_H
+#endif /* _ABIBITS_REBOOT_H */

@@ -108,9 +108,9 @@ struct stat {
 	} __st_atim32, __st_mtim32, __st_ctim32;
 	ino_t st_ino;
 
-	// These fields are not in the ABI. Their values are
-	// copied from __st_atim32, __st_mtim32, __st_ctim32
-	// accordingly.
+	/* These fields are not in the ABI. Their values are */
+	/* copied from __st_atim32, __st_mtim32, __st_ctim32 */
+	/* accordingly. */
 
 	struct timespec st_atim;
 	struct timespec st_mtim;
@@ -125,4 +125,4 @@ struct stat {
 }
 #endif
 
-#endif // _ABIBITS_STAT_H
+#endif /* _ABIBITS_STAT_H */

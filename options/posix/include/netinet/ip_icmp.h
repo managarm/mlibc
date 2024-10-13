@@ -81,4 +81,4 @@ struct icmp {
 }
 #endif
 
-#endif // _NETINET_ICMP_H
+#endif /* _NETINET_ICMP_H */

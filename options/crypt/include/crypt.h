@@ -15,4 +15,4 @@ char *crypt(const char *__key, const char *__salt);
 }
 #endif
 
-#endif // _CRYPT_H
+#endif /* _CRYPT_H */

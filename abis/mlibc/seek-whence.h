@@ -7,4 +7,4 @@
 #define SEEK_DATA 4
 #define SEEK_HOLE 5
 
-#endif // _ABIBITS_SEEK_WHENCE_H
+#endif /* _ABIBITS_SEEK_WHENCE_H */

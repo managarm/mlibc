@@ -73,4 +73,4 @@ void res_nclose(res_state __state);
 }
 #endif
 
-#endif // _RESOLV_H
+#endif /* _RESOLV_H */

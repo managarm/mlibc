@@ -66,4 +66,4 @@ struct stat {
 }
 #endif
 
-#endif // _ABIBITS_STAT_H
+#endif /* _ABIBITS_STAT_H */

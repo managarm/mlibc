@@ -263,4 +263,4 @@ typedef struct {
 }
 #endif
 
-#endif // _ARPA_NAMESER_H
+#endif /* _ARPA_NAMESER_H */

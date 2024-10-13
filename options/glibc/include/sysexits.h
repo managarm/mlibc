@@ -21,4 +21,4 @@
 #define EX__BASE	64
 #define EX__MAX		78
 
-#endif // _SYSEXITS_H
+#endif /* _SYSEXITS_H */

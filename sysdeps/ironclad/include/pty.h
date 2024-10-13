@@ -13,4 +13,4 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 }
 #endif
 
-#endif // _PTY_H
+#endif /* _PTY_H */

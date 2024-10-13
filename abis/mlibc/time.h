@@ -12,4 +12,4 @@ struct itimerval {
 #define ITIMER_VIRTUAL	1
 #define ITIMER_PROF	2
 
-#endif // _ABIBITS_TIME_H
+#endif /* _ABIBITS_TIME_H */

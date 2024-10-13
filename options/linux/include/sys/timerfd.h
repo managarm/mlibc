@@ -1,7 +1,7 @@
 #ifndef _SYS_TIMERFD_H
 #define _SYS_TIMERFD_H
 
-// musl includes those. Refactor and remove them?
+/* musl includes those. Refactor and remove them? */
 #include <time.h>
 #include <fcntl.h>
 
@@ -29,4 +29,4 @@ int timerfd_gettime(int __fd, struct itimerspec *__value);
 }
 #endif
 
-#endif // _SYS_TIMERFD_H
+#endif /* _SYS_TIMERFD_H */

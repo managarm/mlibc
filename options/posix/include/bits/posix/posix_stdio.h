@@ -6,7 +6,7 @@
 #include <bits/size_t.h>
 #include <bits/ssize_t.h>
 
-// MISSING: var_list
+/* MISSING: var_list */
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,7 +43,7 @@ char *tempnam(const char *__dir, const char *__pfx);
 
 #define RENAME_EXCHANGE (1 << 1)
 
-// GNU extensions
+/* GNU extensions */
 typedef ssize_t (cookie_read_function_t)(void *__cookie, char *__buffer, size_t __size);
 typedef ssize_t (cookie_write_function_t)(void *__cookie, const char *__buffer, size_t __size);
 typedef int (cookie_seek_function_t)(void *__cookie, off_t *, int);
@@ -62,7 +62,7 @@ typedef struct _IO_cookie_io_functions_t {
 
 FILE *fopencookie(void *__restrict __cookie, const char *__restrict __mode, cookie_io_functions_t __io_funcs);
 
-#endif // defined(_GNU_SOURCE)
+#endif /* defined(_GNU_SOURCE) */
 
 #endif /* !__MLIBC_ABI_ONLY */
 
@@ -70,7 +70,7 @@ FILE *fopencookie(void *__restrict __cookie, const char *__restrict __mode, cook
 }
 #endif
 
-// MISSING: various functions and macros
+/* MISSING: various functions and macros */
 
 #endif /* MLIBC_POSIX_STDIO_H */
 

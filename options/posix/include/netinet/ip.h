@@ -72,5 +72,5 @@ struct iphdr {
 }
 #endif
 
-#endif // _NETINET_IP_H
+#endif /* _NETINET_IP_H */
 

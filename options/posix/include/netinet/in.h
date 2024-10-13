@@ -3,7 +3,7 @@
 #define _NETINET_IN_H
 
 #include <stdint.h>
-#include <sys/socket.h> // struct sockaddr
+#include <sys/socket.h> /* struct sockaddr */
 #include <abi-bits/socket.h>
 #include <abi-bits/in.h>
 #include <arpa/inet.h>
@@ -11,7 +11,7 @@
 
 #if __MLIBC_GLIBC_OPTION
 	#include <endian.h>
-#endif //__MLIBC_GLIBC_OPTION
+#endif /*__MLIBC_GLIBC_OPTION */
 
 #ifdef __cplusplus
 extern "C" {
@@ -118,5 +118,5 @@ uint16_t ntohs(uint16_t __x);
 }
 #endif
 
-#endif // _NETINET_IN_H
+#endif /* _NETINET_IN_H */
 

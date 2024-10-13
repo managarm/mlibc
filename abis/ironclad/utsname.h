@@ -9,4 +9,4 @@ struct utsname {
 	char machine[65];
 };
 
-#endif // _ABIBITS_UTSNAME_T_H
+#endif /* _ABIBITS_UTSNAME_T_H */

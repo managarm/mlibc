@@ -63,7 +63,7 @@ int setlogmask(int __mask);
 __attribute__((__format__(__printf__, 2, 3)))
 void syslog(int __priority, const char *__format, ...);
 
-// This is a linux extension
+/* This is a linux extension */
 __attribute__((__format__(__printf__, 2, 0)))
 void vsyslog(int __priority, const char *__format, va_list __args);
 
@@ -73,5 +73,5 @@ void vsyslog(int __priority, const char *__format, va_list __args);
 }
 #endif
 
-#endif // _SYSLOG_H
+#endif /* _SYSLOG_H */
 

@@ -29,5 +29,5 @@ char *bind_textdomain_codeset(const char *__domainname, const char *__codeset);
 }
 #endif
 
-#endif // _LIBINTL_H
+#endif /* _LIBINTL_H */
 

@@ -18,5 +18,5 @@ int uname(struct utsname *__name);
 }
 #endif
 
-#endif // _SYS_UTSNAME_H
+#endif /* _SYS_UTSNAME_H */
 

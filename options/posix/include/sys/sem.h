@@ -43,4 +43,4 @@ int semctl(int __semid, int __semnum, int __op, ...);
 }
 #endif
 
-#endif // _SYS_SEM_H
+#endif /* _SYS_SEM_H */

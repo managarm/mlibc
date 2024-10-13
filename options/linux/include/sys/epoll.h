@@ -8,7 +8,7 @@
 
 #define EPOLL_NONBLOCK O_NONBLOCK
 
-// These constants match the Linux definitions.
+/* These constants match the Linux definitions. */
 #define EPOLLIN 0x001
 #define EPOLLPRI 0x002
 #define EPOLLOUT 0x004
@@ -63,4 +63,4 @@ int epoll_pwait(int __epfd, struct epoll_event *__events, int __maxevents, int _
 }
 #endif
 
-#endif // _SYS_EPOLL_H
+#endif /* _SYS_EPOLL_H */

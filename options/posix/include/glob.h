@@ -54,6 +54,6 @@ void globfree(struct glob_t *__pglog);
 }
 #endif
 
-#endif // _GLOB_H
+#endif /* _GLOB_H */
 
 

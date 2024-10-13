@@ -43,4 +43,4 @@ int set_mac_enforcement(unsigned long enforcement);
 }
 #endif
 
-#endif // _SYS_MAC_H
+#endif /* _SYS_MAC_H */

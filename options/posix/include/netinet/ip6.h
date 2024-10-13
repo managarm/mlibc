@@ -25,4 +25,4 @@ struct ip6_hdr {
 }
 #endif
 
-#endif // _NETINET_IP6_H
+#endif /* _NETINET_IP6_H */

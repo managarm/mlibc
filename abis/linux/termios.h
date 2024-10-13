@@ -5,7 +5,7 @@ typedef unsigned char cc_t;
 typedef unsigned int speed_t;
 typedef unsigned int tcflag_t;
 
-// indices for the c_cc array in struct termios
+/* indices for the c_cc array in struct termios */
 #define NCCS     32
 #define VINTR    0
 #define VQUIT    1
@@ -25,7 +25,7 @@ typedef unsigned int tcflag_t;
 #define VLNEXT   15
 #define VEOL2    16
 
-// bitwise flags for c_iflag in struct termios
+/* bitwise flags for c_iflag in struct termios */
 #define IGNBRK 0000001
 #define BRKINT 0000002
 #define IGNPAR 0000004
@@ -42,7 +42,7 @@ typedef unsigned int tcflag_t;
 #define IMAXBEL 0020000
 #define IUTF8 0040000
 
-// bitwise flags for c_oflag in struct termios
+/* bitwise flags for c_oflag in struct termios */
 #define OPOST 0000001
 #define OLCUC 0000002
 #define ONLCR 0000004
@@ -84,7 +84,7 @@ typedef unsigned int tcflag_t;
 #define VT0 0000000
 #define VT1 0040000
 
-// bitwise constants for c_cflag in struct termios
+/* bitwise constants for c_cflag in struct termios */
 #define CSIZE 0000060
 #define CS5 0000000
 #define CS6 0000020
@@ -98,7 +98,7 @@ typedef unsigned int tcflag_t;
 #define HUPCL 0002000
 #define CLOCAL 0004000
 
-// bitwise constants for c_lflag in struct termios
+/* bitwise constants for c_lflag in struct termios */
 #define ISIG 0000001
 #define ICANON 0000002
 #define ECHO 0000010

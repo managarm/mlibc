@@ -148,7 +148,7 @@ static long syscalln3(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2
 __attribute__((__always_inline__))
 static long syscalln4(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
     volatile long ret;
-	register uint64_t arg3r asm("r10") = arg3; // put arg3 in r10
+	register uint64_t arg3r asm("r10") = arg3; /* put arg3 in r10 */
     asm volatile("int $0x69" : "=a"(ret) : "a"(call), "D"(arg0), "S"(arg1), "d"(arg2), "r"(arg3r) : "memory"); 
     return ret;
 }
@@ -156,8 +156,8 @@ static long syscalln4(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2
 __attribute__((__always_inline__))
 static long syscalln5(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4) {
     volatile long ret;
-	register uint64_t arg3r asm("r10") = arg3; // put arg3 in r10
-	register uint64_t arg4r asm("r9") = arg4; // put arg4 in r9
+	register uint64_t arg3r asm("r10") = arg3; /* put arg3 in r10 */
+	register uint64_t arg4r asm("r9") = arg4; /* put arg4 in r9 */
     asm volatile("int $0x69" : "=a"(ret) : "a"(call), "D"(arg0), "S"(arg1), "d"(arg2), "r"(arg3r), "r"(arg4r) : "memory"); 
     return ret;
 }
@@ -165,9 +165,9 @@ static long syscalln5(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2
 __attribute__((__always_inline__))
 static long syscalln6(uint64_t call, uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     volatile long ret;
-	register uint64_t arg3r asm("r10") = arg3; // put arg3 in r10
-	register uint64_t arg4r asm("r9") = arg4; // put arg4 in r9
-	register uint64_t arg5r asm("r8") = arg5; // put arg5 in r8
+	register uint64_t arg3r asm("r10") = arg3; /* put arg3 in r10 */
+	register uint64_t arg4r asm("r9") = arg4; /* put arg4 in r9 */
+	register uint64_t arg5r asm("r8") = arg5; /* put arg5 in r8 */
     asm volatile("int $0x69" : "=a"(ret) : "a"(call), "D"(arg0), "S"(arg1), "d"(arg2), "r"(arg3r), "r"(arg4r), "r"(arg5r) : "memory"); 
     return ret;
 }

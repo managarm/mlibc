@@ -16,7 +16,7 @@ int timer_getoverrun(timer_t __timerid);
 
 int utimes(const char *__filename, const struct timeval __tv[2]);
 
-// Not standardized, Linux and BSDs have it
+/* Not standardized, Linux and BSDs have it */
 int futimes(int __fd, const struct timeval __tv[2]);
 int lutimes(const char *__filename, const struct timeval __tv[2]);
 
@@ -26,4 +26,4 @@ int lutimes(const char *__filename, const struct timeval __tv[2]);
 }
 #endif
 
-#endif // MLIBC_POSIX_TIME_H
+#endif /* MLIBC_POSIX_TIME_H */

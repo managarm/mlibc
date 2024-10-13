@@ -4,5 +4,5 @@
 
 typedef unsigned long nlink_t;
 
-#endif // _ABIBITS_NLINK_T_H
+#endif /* _ABIBITS_NLINK_T_H */
 

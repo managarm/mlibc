@@ -55,4 +55,4 @@ extern ElfW(Dyn) _DYNAMIC[];
 }
 #endif
 
-#endif // _LINK_H
+#endif /* _LINK_H */

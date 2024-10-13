@@ -9,4 +9,4 @@
 #include <linux/unistd.h>
 #include <bits/syscall_aliases.h>
 
-#endif // _SYS_SYSCALL_H
+#endif /* _SYS_SYSCALL_H */

@@ -13,4 +13,4 @@
 #define POLLWRBAND 0x0200
 #define POLLRDHUP 0x2000
 
-#endif // _ABIBITS_POLL_H
+#endif /* _ABIBITS_POLL_H */

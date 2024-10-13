@@ -93,4 +93,4 @@ struct f_owner_ex {
 #define POSIX_FADV_DONTNEED 4
 #define POSIX_FADV_NOREUSE 5
 
-#endif // _ABIBITS_FCNTL_H
+#endif /* _ABIBITS_FCNTL_H */

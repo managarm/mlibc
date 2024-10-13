@@ -86,4 +86,4 @@ long syscall(long n, Arg0 a0, Arg1 a1, Arg2 a2, Arg3 a3, Arg4 a4, Arg5 a5, Arg6 
 }
 #endif
 
-#endif // _MLIBC_SYSCALL_H
+#endif /* _MLIBC_SYSCALL_H */

@@ -51,4 +51,4 @@
 #error Unknown architecture
 #endif
 
-#endif // MLIBC_FENV_H
+#endif /* MLIBC_FENV_H */

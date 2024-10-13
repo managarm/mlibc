@@ -28,4 +28,4 @@ struct udphdr {
 }
 #endif
 
-#endif // _NETINET_UDP_H
+#endif /* _NETINET_UDP_H */

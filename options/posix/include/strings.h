@@ -28,5 +28,5 @@ void bzero(void *__s, size_t __n);
 }
 #endif
 
-#endif // _STRINGS_H
+#endif /* _STRINGS_H */
 

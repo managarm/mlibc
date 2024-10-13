@@ -123,4 +123,4 @@
 
 #define EIEIO 1524152434
 
-#endif // _ABIBITS_ERRNO_H
+#endif /* _ABIBITS_ERRNO_H */

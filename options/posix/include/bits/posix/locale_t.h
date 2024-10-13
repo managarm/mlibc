@@ -11,4 +11,4 @@ typedef void *locale_t;
 }
 #endif
 
-#endif // _LOCALE_T_H
+#endif /* _LOCALE_T_H */

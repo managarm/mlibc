@@ -21,4 +21,4 @@ struct ether_addr *ether_aton(const char *__asc);
 }
 #endif
 
-#endif //_NETINET_ETHER_H
+#endif /*_NETINET_ETHER_H */

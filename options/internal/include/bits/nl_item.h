@@ -78,5 +78,5 @@ typedef int nl_item;
 }
 #endif
 
-#endif // _NL_ITEM_H
+#endif /* _NL_ITEM_H */
 

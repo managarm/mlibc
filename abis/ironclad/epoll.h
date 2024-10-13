@@ -3,4 +3,4 @@
 
 #define EPOLL_CLOEXEC 1
 
-#endif // _ABIBITS_EPOLL_H
+#endif /* _ABIBITS_EPOLL_H */

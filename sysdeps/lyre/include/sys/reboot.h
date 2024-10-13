@@ -17,4 +17,4 @@ int reboot(int arg);
 }
 #endif
 
-#endif // MLIBC_SYS_REBOOT_H
+#endif /* MLIBC_SYS_REBOOT_H */

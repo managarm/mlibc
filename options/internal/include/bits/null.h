@@ -12,5 +12,5 @@
 #  define NULL 0
 #endif
 
-#endif // MLIBC_NULL_H
+#endif /* MLIBC_NULL_H */
 

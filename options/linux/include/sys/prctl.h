@@ -124,5 +124,5 @@ int prctl(int __op, ...);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
-#endif // _SYS_PRCTL_H
+#endif /* _SYS_PRCTL_H */
 

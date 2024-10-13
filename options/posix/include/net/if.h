@@ -113,6 +113,6 @@ unsigned int if_nametoindex(const char *__name);
 }
 #endif
 
-#endif // _NET_IF_H
+#endif /* _NET_IF_H */
 
 

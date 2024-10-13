@@ -21,4 +21,4 @@ int quotactl(int __cmd, const char *__special, int __id, caddr_t __addr);
 }
 #endif
 
-#endif // _SYS_QUOTA_H
+#endif /* _SYS_QUOTA_H */

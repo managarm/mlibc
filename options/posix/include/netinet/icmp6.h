@@ -11,7 +11,7 @@ extern "C" {
 
 #if __MLIBC_GLIBC_OPTION
 #include <bits/glibc/glibc_icmp6.h>
-#endif // __MLIBC_GLIBC_OPTION
+#endif /* __MLIBC_GLIBC_OPTION */
 
 #define ICMP6_FILTER 1
 
@@ -160,5 +160,5 @@ struct nd_redirect {
 }
 #endif
 
-#endif // _NETINET_ICMP6_H
+#endif /* _NETINET_ICMP6_H */
 

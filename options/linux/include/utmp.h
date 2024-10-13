@@ -82,4 +82,4 @@ int login_tty(int __fd);
 }
 #endif
 
-#endif // _UTMP_H
+#endif /* _UTMP_H */

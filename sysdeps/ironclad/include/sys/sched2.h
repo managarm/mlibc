@@ -21,4 +21,4 @@ int set_deadlines(int runtime, int period);
 }
 #endif
 
-#endif // _SYS_SCHED2_H
+#endif /* _SYS_SCHED2_H */

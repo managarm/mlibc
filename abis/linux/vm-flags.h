@@ -67,4 +67,4 @@
 #define MFD_ALLOW_SEALING 2U
 #define MFD_HUGETLB 4U
 
-#endif // _ABIBITS_VM_FLAGS_H
+#endif /* _ABIBITS_VM_FLAGS_H */

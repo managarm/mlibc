@@ -3,4 +3,4 @@
 
 #include <sys/poll.h>
 
-#endif // _POLL_H
+#endif /* _POLL_H */

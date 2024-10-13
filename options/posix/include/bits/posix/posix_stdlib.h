@@ -21,17 +21,17 @@ char *initstate(unsigned int __seed, char *__state, size_t __size);
 char *setstate(char *__state);
 void srandom(unsigned int __seed);
 
-// ----------------------------------------------------------------------------
-// Environment.
-// ----------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------- */
+/* Environment. */
+/* ---------------------------------------------------------------------------- */
 
 int putenv(char *__string);
 int setenv(const char *__name, const char *__value, int __overwrite);
 int unsetenv(const char *__name);
 
-// ----------------------------------------------------------------------------
-// Path handling.
-// ----------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------- */
+/* Path handling. */
+/* ---------------------------------------------------------------------------- */
 
 int mkstemp(char *__pattern);
 int mkstemps(char *__pattern, int __suffixlen);
@@ -41,9 +41,9 @@ char *mkdtemp(char *__path);
 
 char *realpath(const char *__restrict __path, char *__restrict __out);
 
-// ----------------------------------------------------------------------------
-// Pseudoterminals
-// ----------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------- */
+/* Pseudoterminals */
+/* ---------------------------------------------------------------------------- */
 
 int posix_openpt(int __flags);
 int grantpt(int __fd);
@@ -59,11 +59,11 @@ int getloadavg(double *__loadavg, int __count);
 
 int getsubopt(char **__restrict__ __optionp, char *const *__restrict__ __tokens, char **__restrict__ __valuep);
 
-// GNU extension
+/* GNU extension */
 char *secure_getenv(const char *__name);
 char *canonicalize_file_name(const char *__name);
 
-// BSD extension
+/* BSD extension */
 void *reallocarray(void *__ptr, size_t __count, size_t __size);
 
 int clearenv(void);
@@ -74,5 +74,5 @@ int clearenv(void);
 }
 #endif
 
-#endif // MLIBC_POSIX_STDLIB_H
+#endif /* MLIBC_POSIX_STDLIB_H */
 

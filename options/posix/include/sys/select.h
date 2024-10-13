@@ -45,5 +45,5 @@ int pselect(int __nfds, fd_set *__restrict __readfds, fd_set *__restrict __write
 }
 #endif
 
-#endif // _SYS_SELECT_H
+#endif /* _SYS_SELECT_H */
 

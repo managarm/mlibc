@@ -18,7 +18,7 @@ extern "C" {
 ssize_t readv(int __fd, const struct iovec *__iov, int __iovcnt);
 ssize_t writev(int __fd, const struct iovec *__iov, int __iovcnt);
 
-// Non standard extensions, also found on modern BSD's
+/* Non standard extensions, also found on modern BSD's */
 ssize_t preadv(int __fd, const struct iovec *__iov, int __iovcnt, off_t __offset);
 ssize_t pwritev(int __fd, const struct iovec *__iov, int __iovcnt, off_t __offset);
 
@@ -28,4 +28,4 @@ ssize_t pwritev(int __fd, const struct iovec *__iov, int __iovcnt, off_t __offse
 }
 #endif
 
-#endif // _SYS_UIO_H
+#endif /* _SYS_UIO_H */

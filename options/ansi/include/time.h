@@ -7,13 +7,13 @@
 #include <bits/ansi/timespec.h>
 #include <mlibc-config.h>
 
-// [7.27.1] Components of time
+/* [7.27.1] Components of time */
 
 #define CLOCKS_PER_SEC ((clock_t)1000000)
 
 #define TIME_UTC 1
 
-// POSIX extensions.
+/* POSIX extensions. */
 
 #define CLOCK_REALTIME 0
 #define CLOCK_MONOTONIC 1
@@ -30,9 +30,9 @@
 extern "C" {
 #endif
 
-// [7.27.1] Components of time
+/* [7.27.1] Components of time */
 
-typedef long clock_t; // Matches Linux' ABI.
+typedef long clock_t; /* Matches Linux' ABI. */
 
 struct tm {
 	int tm_sec;
@@ -50,7 +50,7 @@ struct tm {
 
 #ifndef __MLIBC_ABI_ONLY
 
-// [7.27.2] Time manipulation functions
+/* [7.27.2] Time manipulation functions */
 
 clock_t clock(void);
 double difftime(time_t __a, time_t __b);
@@ -58,7 +58,7 @@ time_t mktime(struct tm *__ptr);
 time_t time(time_t *__timer);
 int timespec_get(struct timespec *__ptr, int __base);
 
-// [7.27.3] Time conversion functions
+/* [7.27.3] Time conversion functions */
 
 char *asctime(const struct tm *__ptr);
 char *ctime(const time_t *__timer);
@@ -76,12 +76,12 @@ void tzset(void);
 }
 #endif
 
-// POSIX extensions.
+/* POSIX extensions. */
 
 #if __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_time.h>
 #	include <bits/posix/timer_t.h>
-#endif // __MLIBC_POSIX_OPTION
+#endif /* __MLIBC_POSIX_OPTION */
 
 #include <abi-bits/clockid_t.h>
 
@@ -119,7 +119,7 @@ char *strptime(const char *__restrict __buf, const char *__restrict __format,
 }
 #endif
 
-// GNU extensions.
+/* GNU extensions. */
 
 #ifdef __cplusplus
 extern "C" {
@@ -136,7 +136,7 @@ time_t timegm(struct tm *__tm);
 }
 #endif
 
-// Linux extensions.
+/* Linux extensions. */
 
 #ifdef __cplusplus
 extern "C" {
@@ -151,4 +151,4 @@ struct itimerspec {
 }
 #endif
 
-#endif // _TIME_H
+#endif /* _TIME_H */

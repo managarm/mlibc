@@ -51,4 +51,4 @@ int umount2(const char *target, int flags);
 }
 #endif
 
-#endif // _SYS_MOUNT_H
+#endif /* _SYS_MOUNT_H */

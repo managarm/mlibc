@@ -10,7 +10,7 @@ extern "C" {
 #define bswap_32(x) __builtin_bswap32(x)
 #define bswap_64(x) __builtin_bswap64(x)
 
-// Some programs like eudev call these functions instead
+/* Some programs like eudev call these functions instead */
 #define __bswap_16(x) __builtin_bswap16(x)
 #define __bswap_32(x) __builtin_bswap32(x)
 #define __bswap_64(x) __builtin_bswap64(x)
@@ -19,5 +19,5 @@ extern "C" {
 }
 #endif
 
-#endif // _BYTESWAP_H
+#endif /* _BYTESWAP_H */
 

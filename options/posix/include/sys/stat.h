@@ -40,5 +40,5 @@ int utimensat(int __dirfd, const char *__pathname, const struct timespec __times
 }
 #endif
 
-#endif // _SYS_STAT_H
+#endif /* _SYS_STAT_H */
 

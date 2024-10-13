@@ -40,8 +40,8 @@ extern "C" {
 #define _XOPEN_CRYPT 1
 #endif
 
-// MISSING: additional _POSIX and _XOPEN feature macros
-// MISSING: _POSIX_TIMESTAMP_RESOLUTION and _POSIX2_SYMLINKS
+/* MISSING: additional _POSIX and _XOPEN feature macros */
+/* MISSING: _POSIX_TIMESTAMP_RESOLUTION and _POSIX2_SYMLINKS */
 
 #define _CS_PATH 0
 #define _CS_POSIX_V6_WIDTH_RESTRICTED_ENVS 1
@@ -85,15 +85,15 @@ extern "C" {
 #define _CS_V6_ENV 1148
 #define _CS_V7_ENV 1149
 
-// MISSING: SEEK macros from stdio.h
+/* MISSING: SEEK macros from stdio.h */
 
 #define F_LOCK 1
 #define F_TEST 2
 #define F_TLOCK 3
 #define F_ULOCK 4
 
-// MISSING: _PC macros
-// For now, use the Linux ABI for _PC constants.
+/* MISSING: _PC macros */
+/* For now, use the Linux ABI for _PC constants. */
 #define _PC_LINK_MAX		0
 #define _PC_MAX_CANON		1
 #define _PC_MAX_INPUT		2
@@ -107,7 +107,7 @@ extern "C" {
 #define _PC_FILESIZEBITS 9
 #define _PC_SYMLINK_MAX 10
 
-// MISSING: remaining _SC_macros
+/* MISSING: remaining _SC_macros */
 #define _SC_ARG_MAX 0
 #define _SC_CHILD_MAX 1
 #define _SC_CLK_TCK 2
@@ -353,7 +353,7 @@ extern int optopt;
 
 #endif /* !__MLIBC_ABI_ONLY */
 
-// Non-POSIX functions supported by Linux.
+/* Non-POSIX functions supported by Linux. */
 #if UINTPTR_MAX == UINT64_MAX
 typedef __mlibc_uint64 useconds_t;
 #else
@@ -368,7 +368,7 @@ int usleep(useconds_t __usec);
 int chroot(const char *__path);
 int daemon(int __nochdir, int __noclose);
 
-// This is a Linux extension
+/* This is a Linux extension */
 pid_t gettid(void);
 int getentropy(void *__buffer, size_t __size);
 
@@ -384,7 +384,7 @@ int setdomainname(const char *__name, size_t __len);
 int getresuid(uid_t *__ruid, uid_t *__euid, uid_t *__suid);
 int getresgid(gid_t *__rgid, gid_t *__egid, gid_t *__sgid);
 
-// Glibc doesn't provide them by default anymore, lock behind an option
+/* Glibc doesn't provide them by default anymore, lock behind an option */
 #if __MLIBC_CRYPT_OPTION
 char *crypt(const char *__key, const char *__salt);
 void encrypt(char __block[64], int __flags);
@@ -404,5 +404,5 @@ void encrypt(char __block[64], int __flags);
 #	include <bits/bsd/bsd_unistd.h>
 #endif
 
-#endif // _UNISTD_H
+#endif /* _UNISTD_H */
 

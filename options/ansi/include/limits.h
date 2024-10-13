@@ -11,14 +11,14 @@
 # ifdef LONG_MAX == INT32_MAX
 #  define LONG_BIT 32
 # else
-// Safe assumption
+/* Safe assumption */
 #  define LONG_BIT 64
 # endif
 #elif defined __LONG_MAX__
 # if __LONG_MAX__ == INT32_MAX
 #  define LONG_BIT 32
 # else
-// Safe assumption
+/* Safe assumption */
 #  define LONG_BIT 64
 # endif
 #else
@@ -91,9 +91,9 @@
 #define CHARCLASS_NAME_MAX 14
 #define RE_DUP_MAX 255
 
-// This value is a guaranteed minimum, get the current maximum from sysconf
+/* This value is a guaranteed minimum, get the current maximum from sysconf */
 #define NGROUPS_MAX 8
-// POSIX states 9 is the minimum for NL_ARGMAX
+/* POSIX states 9 is the minimum for NL_ARGMAX */
 #define NL_ARGMAX 9
 
 #if INTPTR_MAX == INT64_MAX
@@ -114,4 +114,4 @@
 
 #include <abi-bits/limits.h>
 
-#endif // _LIMITS_H
+#endif /* _LIMITS_H */

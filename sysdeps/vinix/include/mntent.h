@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-// TODO: Refer to _PATH_MOUNTED
+/* TODO: Refer to _PATH_MOUNTED */
 #define MOUNTED "/etc/mtab"
 
 /* Generic mount options */
@@ -47,4 +47,4 @@ struct mntent *getmntent_r(FILE *, struct mntent *,  char *, int);
 }
 #endif
 
-#endif // _MNTENT_H
+#endif /* _MNTENT_H */

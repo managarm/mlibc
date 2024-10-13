@@ -107,4 +107,4 @@ struct ether_arp {
 #define arp_pln ea_hdr.ar_pln
 #define arp_op  ea_hdr.ar_op
 
-#endif //_NETINET_IF_ETHER_H
+#endif /*_NETINET_IF_ETHER_H */

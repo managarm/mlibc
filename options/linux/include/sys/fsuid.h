@@ -19,4 +19,4 @@ int setfsgid(gid_t __gid);
 }
 #endif
 
-#endif // _SYS_FSUID_H
+#endif /* _SYS_FSUID_H */

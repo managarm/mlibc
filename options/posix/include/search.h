@@ -44,4 +44,4 @@ ENTRY *hsearch(ENTRY __item, ACTION __action);
 }
 #endif
 
-#endif // _SEARCH_H
+#endif /* _SEARCH_H */

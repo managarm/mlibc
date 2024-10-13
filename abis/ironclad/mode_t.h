@@ -3,4 +3,4 @@
 
 typedef int mode_t;
 
-#endif // _ABIBITS_MODE_T_H
+#endif /* _ABIBITS_MODE_T_H */

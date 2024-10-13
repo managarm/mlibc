@@ -27,7 +27,7 @@ int poll(struct pollfd *__fds, nfds_t __nfds, int __timeout);
 #if __MLIBC_LINUX_OPTION
 int ppoll(struct pollfd *__fds, nfds_t __nfds,
 		const struct timespec *__timeout_ts, const sigset_t *__sigmask);
-#endif // __MLIBC_LINUX_OPTION
+#endif /* __MLIBC_LINUX_OPTION */
 
 #endif /* !__MLIBC_ABI_ONLY */
 
@@ -35,4 +35,4 @@ int ppoll(struct pollfd *__fds, nfds_t __nfds,
 }
 #endif
 
-#endif // _SYS_POLL_H
+#endif /* _SYS_POLL_H */

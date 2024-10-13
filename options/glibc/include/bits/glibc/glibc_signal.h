@@ -21,4 +21,4 @@ typedef void (*sighandler_t)(int __signo);
 }
 #endif
 
-#endif // MLIBC_GLIBC_SIGNAL_H
+#endif /* MLIBC_GLIBC_SIGNAL_H */

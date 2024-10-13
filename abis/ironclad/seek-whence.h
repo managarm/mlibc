@@ -5,4 +5,4 @@
 #define SEEK_CUR 2
 #define SEEK_END 4
 
-#endif // _ABIBITS_SEEK_WHENCE_H
+#endif /* _ABIBITS_SEEK_WHENCE_H */

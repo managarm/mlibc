@@ -4,7 +4,7 @@
 
 #include <abi-bits/clockid_t.h>
 #include <bits/cpu_set.h>
-// TODO: pthread is not required to define size_t.
+/* TODO: pthread is not required to define size_t. */
 #include <bits/size_t.h>
 #include <bits/posix/pthread_t.h>
 #include <bits/threads.h>
@@ -13,7 +13,7 @@
 #include <signal.h>
 #include <stdint.h>
 
-// pthread.h is required to include sched.h and time.h
+/* pthread.h is required to include sched.h and time.h */
 #include <sched.h>
 #include <time.h>
 
@@ -24,37 +24,37 @@ extern "C" {
 #define PTHREAD_CREATE_JOINABLE __MLIBC_THREAD_CREATE_JOINABLE
 #define PTHREAD_CREATE_DETACHED __MLIBC_THREAD_CREATE_DETACHED
 
-// Values for pthread_attr_{get,set}scope
+/* Values for pthread_attr_{get,set}scope */
 #define PTHREAD_SCOPE_SYSTEM 0
 #define PTHREAD_SCOPE_PROCESS 1
 
-// Values for pthread_attr_{get,set}inheritsched
+/* Values for pthread_attr_{get,set}inheritsched */
 #define PTHREAD_INHERIT_SCHED 0
 #define PTHREAD_EXPLICIT_SCHED 1
 
-// values for pthread_{get,set}canceltype().
+/* values for pthread_{get,set}canceltype(). */
 #define PTHREAD_CANCEL_DEFERRED 0
 #define PTHREAD_CANCEL_ASYNCHRONOUS 1
 
-// values for pthread_{get,set}cancelstate().
+/* values for pthread_{get,set}cancelstate(). */
 #define PTHREAD_CANCEL_ENABLE 0
 #define PTHREAD_CANCEL_DISABLE 1
 
-// values for pthread_mutexattr_{get,set}type().
+/* values for pthread_mutexattr_{get,set}type(). */
 #define PTHREAD_MUTEX_DEFAULT __MLIBC_THREAD_MUTEX_DEFAULT
 #define PTHREAD_MUTEX_NORMAL __MLIBC_THREAD_MUTEX_NORMAL
 #define PTHREAD_MUTEX_ERRORCHECK __MLIBC_THREAD_MUTEX_ERRORCHECK
 #define PTHREAD_MUTEX_RECURSIVE __MLIBC_THREAD_MUTEX_RECURSIVE
 
-// values for pthread_mutexattr_{get,set}robust().
+/* values for pthread_mutexattr_{get,set}robust(). */
 #define PTHREAD_MUTEX_STALLED __MLIBC_THREAD_MUTEX_STALLED
 #define PTHREAD_MUTEX_ROBUST __MLIBC_THREAD_MUTEX_ROBUST
 
-// values for pthread_mutexattr_{get,set}pshared().
+/* values for pthread_mutexattr_{get,set}pshared(). */
 #define PTHREAD_PROCESS_PRIVATE __MLIBC_THREAD_PROCESS_PRIVATE
 #define PTHREAD_PROCESS_SHARED __MLIBC_THREAD_PROCESS_SHARED
 
-// Values for pthread_mutexattr_{get,set}protocol()
+/* Values for pthread_mutexattr_{get,set}protocol() */
 #define PTHREAD_PRIO_NONE __MLIBC_THREAD_PRIO_NONE
 #define PTHREAD_PRIO_INHERIT __MLIBC_THREAD_PRIO_INHERIT
 #define PTHREAD_PRIO_PROTECT __MLIBC_THREAD_PRIO_PROTECT
@@ -68,7 +68,7 @@ extern "C" {
 
 #define PTHREAD_BARRIER_SERIAL_THREAD -1
 
-// values for pthread_key
+/* values for pthread_key */
 #define PTHREAD_DESTRUCTOR_ITERATIONS 8
 
 #define PTHREAD_INHERIT_SCHED 0
@@ -78,7 +78,7 @@ extern "C" {
 
 #define PTHREAD_ATTR_NO_SIGMASK_NP (-1)
 
-// TODO: move to own file and include in sys/types.h
+/* TODO: move to own file and include in sys/types.h */
 typedef struct __mlibc_threadattr pthread_attr_t;
 
 typedef uintptr_t pthread_key_t;
@@ -111,8 +111,8 @@ struct __mlibc_barrier {
 typedef struct __mlibc_barrier pthread_barrier_t;
 
 struct __mlibc_fair_rwlock {
-	unsigned int __mlibc_m; // Mutex.
-	unsigned int __mlibc_rc; // Reader count (not reference count).
+	unsigned int __mlibc_m; /* Mutex. */
+	unsigned int __mlibc_rc; /* Reader count (not reference count). */
 	unsigned int __mlibc_flags;
 };
 typedef struct __mlibc_fair_rwlock pthread_rwlock_t;
@@ -124,11 +124,11 @@ typedef struct __mlibc_rwlockattr pthread_rwlockattr_t;
 
 #ifndef __MLIBC_ABI_ONLY
 
-// ----------------------------------------------------------------------------
-// pthread_attr and pthread functions.
-// ----------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------- */
+/* pthread_attr and pthread functions. */
+/* ---------------------------------------------------------------------------- */
 
-// pthread_attr functions.
+/* pthread_attr functions. */
 int pthread_attr_init(pthread_attr_t *__attr);
 int pthread_attr_destroy(pthread_attr_t *__attr);
 
@@ -172,7 +172,7 @@ int pthread_getaffinity_np(pthread_t __thrd, size_t __cpusetsize, cpu_set_t *__c
 int pthread_setaffinity_np(pthread_t __thrd, size_t __cpusetsize, const cpu_set_t *__cpuset);
 #endif /* __MLIBC_LINUX_OPTION */
 
-// pthread functions.
+/* pthread functions. */
 int pthread_create(pthread_t *__restrict __thrd, const pthread_attr_t *__restrict __attr,
 		void *(*__fn) (void *__arg), void *__restrict __arg);
 pthread_t pthread_self(void);
@@ -203,9 +203,9 @@ int pthread_cancel(pthread_t __thrd);
 
 int pthread_atfork(void (*__prepare) (void), void (*__parent) (void), void (*__child) (void));
 
-// ----------------------------------------------------------------------------
-// pthread_key functions.
-// ----------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------- */
+/* pthread_key functions. */
+/* ---------------------------------------------------------------------------- */
 
 int pthread_key_create(pthread_key_t *__key, void (*__destructor) (void *__data));
 int pthread_key_delete(pthread_key_t __key);
@@ -213,17 +213,17 @@ int pthread_key_delete(pthread_key_t __key);
 void *pthread_getspecific(pthread_key_t __key);
 int pthread_setspecific(pthread_key_t __key, const void *__data);
 
-// ----------------------------------------------------------------------------
-// pthread_once functions.
-// ----------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------- */
+/* pthread_once functions. */
+/* ---------------------------------------------------------------------------- */
 
 int pthread_once(pthread_once_t *__once, void (*__fn) (void));
 
-// ----------------------------------------------------------------------------
-// pthread_mutexattr and pthread_mutex functions.
-// ----------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------- */
+/* pthread_mutexattr and pthread_mutex functions. */
+/* ---------------------------------------------------------------------------- */
 
-// pthread_mutexattr functions
+/* pthread_mutexattr functions */
 int pthread_mutexattr_init(pthread_mutexattr_t *__attr);
 int pthread_mutexattr_destroy(pthread_mutexattr_t *__attr);
 
@@ -242,7 +242,7 @@ int pthread_mutexattr_setprotocol(pthread_mutexattr_t *__attr, int __protocol);
 int pthread_mutexattr_getprioceiling(const pthread_mutexattr_t *__attr, int *__prioceiling);
 int pthread_mutexattr_setprioceiling(pthread_mutexattr_t *__attr, int __prioceiling);
 
-// pthread_mutex functions
+/* pthread_mutex functions */
 int pthread_mutex_init(pthread_mutex_t *__restrict __mtx, const pthread_mutexattr_t *__restrict __attr);
 int pthread_mutex_destroy(pthread_mutex_t *__mtx);
 
@@ -254,9 +254,9 @@ int pthread_mutex_unlock(pthread_mutex_t *__mtx);
 
 int pthread_mutex_consistent(pthread_mutex_t *__mtx);
 
-// ----------------------------------------------------------------------------
-// pthread_condattr and pthread_cond functions.
-// ----------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------- */
+/* pthread_condattr and pthread_cond functions. */
+/* ---------------------------------------------------------------------------- */
 
 int pthread_condattr_init(pthread_condattr_t *__attr);
 int pthread_condattr_destroy(pthread_condattr_t *__attr);
@@ -276,9 +276,9 @@ int pthread_cond_timedwait(pthread_cond_t *__restrict __cond, pthread_mutex_t *_
 int pthread_cond_signal(pthread_cond_t *__cond);
 int pthread_cond_broadcast(pthread_cond_t *__cond);
 
-// ----------------------------------------------------------------------------
-// pthread_barrierattr and pthread_barrier functions.
-// ----------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------- */
+/* pthread_barrierattr and pthread_barrier functions. */
+/* ---------------------------------------------------------------------------- */
 
 int pthread_barrierattr_init(pthread_barrierattr_t *__attr);
 int pthread_barrierattr_destroy(pthread_barrierattr_t *__attr);
@@ -292,9 +292,9 @@ int pthread_barrier_destroy(pthread_barrier_t *__barrier);
 
 int pthread_barrier_wait(pthread_barrier_t *__barrier);
 
-// ----------------------------------------------------------------------------
-// pthread_wrlockattr and pthread_rwlock functions.
-// ----------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------- */
+/* pthread_wrlockattr and pthread_rwlock functions. */
+/* ---------------------------------------------------------------------------- */
 
 int pthread_rwlockattr_init(pthread_rwlockattr_t *__attr);
 int pthread_rwlockattr_destroy(pthread_rwlockattr_t *__attr);
@@ -318,5 +318,5 @@ int pthread_getcpuclockid(pthread_t __thrd, clockid_t *__clockid);
 }
 #endif
 
-#endif // _PTHREAD_H
+#endif /* _PTHREAD_H */
 

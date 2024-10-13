@@ -36,7 +36,7 @@ void *dlvsym(void *__restrict __handle, const char *__restrict __name, const cha
 
 #if defined(_GNU_SOURCE) && __MLIBC_GLIBC_OPTION
 
-//gnu extension
+/*gnu extension */
 typedef struct {
 	const char *dli_fname;
 	void *dli_fbase;
@@ -92,5 +92,5 @@ int _dl_find_object(void *__address, struct dl_find_object *__result);
 }
 #endif
 
-#endif // _DLFCN_H
+#endif /* _DLFCN_H */
 

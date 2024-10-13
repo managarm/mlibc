@@ -184,4 +184,4 @@
 #define SYSCALL_GETTIDID             97
 #define SYSCALL_SETTIDID             98
 
-#endif // _SYS_SYSCALL_H
+#endif /* _SYS_SYSCALL_H */

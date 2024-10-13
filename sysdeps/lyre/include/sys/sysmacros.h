@@ -30,4 +30,4 @@ static unsigned long long int __mlibc_dev_makedev(
 }
 #endif
 
-#endif // _SYS_SYSMACROS_H
+#endif /* _SYS_SYSMACROS_H */

@@ -41,4 +41,4 @@ wint_t towctrans_l(wint_t __wc, wctrans_t __trans, locale_t __loc);
 }
 #endif
 
-#endif // _POSIX_WCTYPE_H
+#endif /* _POSIX_WCTYPE_H */

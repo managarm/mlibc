@@ -13,7 +13,7 @@ typedef unsigned long wctrans_t;
 
 #ifndef __MLIBC_ABI_ONLY
 
-// [C11/7.30.2.2] Extensible wide character classification functions.
+/* [C11/7.30.2.2] Extensible wide character classification functions. */
 
 int iswalnum(wint_t __wc);
 int iswalpha(wint_t __wc);
@@ -31,7 +31,7 @@ int iswxdigit(wint_t __wc);
 wctype_t wctype(const char *__string);
 int iswctype(wint_t __wc, wctype_t __type);
 
-// [C11/7.30.3] Wide character case mapping utilities.
+/* [C11/7.30.3] Wide character case mapping utilities. */
 
 wint_t towlower(wint_t __wc);
 wint_t towupper(wint_t __wc);
@@ -49,4 +49,4 @@ wint_t towctrans(wint_t __wc, wctrans_t __trans);
 #	include <bits/posix/posix_wctype.h>
 #endif
 
-#endif // _WCTYPE_H
+#endif /* _WCTYPE_H */

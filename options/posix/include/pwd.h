@@ -41,5 +41,5 @@ struct passwd *fgetpwent(FILE *__f);
 }
 #endif
 
-#endif // _PWD_H
+#endif /* _PWD_H */
 

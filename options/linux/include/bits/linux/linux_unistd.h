@@ -18,4 +18,4 @@ int syncfs(int __fd);
 }
 #endif
 
-#endif // _LINUX_UNISTD_H
+#endif /* _LINUX_UNISTD_H */

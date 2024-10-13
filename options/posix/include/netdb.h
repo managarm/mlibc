@@ -70,7 +70,7 @@ struct hostent {
 	char **h_addr_list;
 };
 
-#define h_addr h_addr_list[0] // Required by some programs
+#define h_addr h_addr_list[0] /* Required by some programs */
 
 struct netent {
 	char *n_name;
@@ -137,7 +137,7 @@ void setnetent(int __stayopen);
 void setprotoent(int __stayopen);
 void setservent(int __stayopen);
 
-// Deprecated GNU extension
+/* Deprecated GNU extension */
 const char *hstrerror(int __err);
 
 #endif /* !__MLIBC_ABI_ONLY */
@@ -146,4 +146,4 @@ const char *hstrerror(int __err);
 }
 #endif
 
-#endif // _NETDB_H
+#endif /* _NETDB_H */

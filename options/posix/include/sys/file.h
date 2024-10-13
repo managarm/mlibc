@@ -22,5 +22,5 @@ int flock64(int __fd, int __op);
 }
 #endif
 
-#endif // _SYS_FILE_H
+#endif /* _SYS_FILE_H */
 

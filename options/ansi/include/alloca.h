@@ -4,5 +4,5 @@
 
 #define alloca __builtin_alloca
 
-#endif // _ALLOCA_H
+#endif /* _ALLOCA_H */
 

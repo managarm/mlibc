@@ -2,7 +2,7 @@
 #ifndef _SYS_TTYDEFAULTS_H
 #define _SYS_TTYDEFAULTS_H
 
-// Values taken from musl
+/* Values taken from musl */
 
 #define TTYDEF_IFLAG (BRKINT | ISTRIP | ICRNL | IMAXBEL | IXON | IXANY)
 #define TTYDEF_OFLAG (OPOST | ONLCR | XTABS)
@@ -36,4 +36,4 @@
 #define CRPRNT CREPRINT
 #define CFLUSH CDISCARD
 
-#endif // _SYS_TTYDEFAULTS_H
+#endif /* _SYS_TTYDEFAULTS_H */

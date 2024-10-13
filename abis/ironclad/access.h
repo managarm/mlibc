@@ -6,4 +6,4 @@
 #define W_OK 4
 #define X_OK 8
 
-#endif // _ABIBITS_ACCESS_H
+#endif /* _ABIBITS_ACCESS_H */

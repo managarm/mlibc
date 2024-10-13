@@ -1,9 +1,9 @@
 #ifndef _SYS_SIGNALFD_H
 #define _SYS_SIGNALFD_H
 
-// TODO: Define sigset separately and remove this include.
+/* TODO: Define sigset separately and remove this include. */
 #include <signal.h>
-// musl includes those. Restructure this so we do not need them?
+/* musl includes those. Restructure this so we do not need them? */
 #include <stdint.h>
 #include <fcntl.h>
 
@@ -45,4 +45,4 @@ int signalfd(int __fd, const sigset_t *__mask, int __flags);
 }
 #endif
 
-#endif // _SYS_SIGNALFD_H
+#endif /* _SYS_SIGNALFD_H */

@@ -31,7 +31,7 @@ typedef struct {
 extern "C" {
 #endif
 
-// Argument for signal()
+/* Argument for signal() */
 typedef void (*__sighandler) (int);
 
 #define SIG_ERR ((__sighandler)(void *)(-1))
@@ -74,13 +74,13 @@ typedef void (*__sighandler) (int);
 #define SIGRTMAX 33
 #define SIGCANCEL 34
 
-// siginfo->si_info constants
-// SIGBUS
+/* siginfo->si_info constants */
+/* SIGBUS */
 #define BUS_ADRALN 1
 #define BUS_ADRERR 2
 #define BUS_OBJERR 3
 
-// SIGILL
+/* SIGILL */
 #define ILL_ILLOPC 1
 #define ILL_ILLOPN 2
 #define ILL_ILLADR 3
@@ -91,7 +91,7 @@ typedef void (*__sighandler) (int);
 #define ILL_BADSTK 8
 #define ILL_BADIADDR 9
 
-// SIGSEGV
+/* SIGSEGV */
 #define SEGV_MAPERR 1
 #define SEGV_ACCERR 2
 
@@ -99,7 +99,7 @@ typedef __mlibc_uint64 sigset_t;
 
 #define SIGUNUSED SIGSYS
 
-// constants for sigprocmask()
+/* constants for sigprocmask() */
 #define SIG_BLOCK 1
 #define SIG_UNBLOCK 2
 #define SIG_SETMASK 3
@@ -123,7 +123,7 @@ typedef struct __stack {
         int ss_flags;
 } stack_t;
 
-// constants for sigev_notify of struct sigevent
+/* constants for sigev_notify of struct sigevent */
 #define SIGEV_NONE 1
 #define SIGEV_SIGNAL 2
 #define SIGEV_THREAD 3
@@ -153,7 +153,7 @@ struct sigevent {
 	int sigev_signo;
 	union sigval sigev_value;
 	void (*sigev_notify_function)(union sigval);
-	// MISSING: sigev_notify_attributes
+	/* MISSING: sigev_notify_attributes */
 };
 
 struct sigaction {
@@ -164,7 +164,7 @@ struct sigaction {
 };
 
 #if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__)
-// TODO: This is wrong for AArch64.
+/* TODO: This is wrong for AArch64. */
 
 typedef struct {
 	unsigned long oldmask;
@@ -192,4 +192,4 @@ typedef struct __ucontext {
 }
 #endif
 
-#endif // _ABIBITS_SIGNAL_H
+#endif /* _ABIBITS_SIGNAL_H */

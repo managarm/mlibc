@@ -12,7 +12,7 @@ extern "C" {
 #define UTMPX_FILE "/var/run/utmp"
 #define WTMPX_FILE "/var/run/wtmp"
 
-// Struct definition taken from musl
+/* Struct definition taken from musl */
 struct utmpx {
 	short ut_type;
 	short __ut_pad1;
@@ -60,4 +60,4 @@ void endutxent(void);
 }
 #endif
 
-#endif // _UTMPX_H
+#endif /* _UTMPX_H */
