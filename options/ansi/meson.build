@@ -4,9 +4,9 @@ if disable_ansi_option
 endif
 
 ansi_sources = files(
-	'generic/stdlib-stubs.cpp',
-	'generic/assert-stubs.cpp',
-	'generic/complex-stubs.c',
+	'generic/stdlib.cpp',
+	'generic/assert.cpp',
+	'generic/complex.c',
 
 	'generic/complex/csqrt.c',
 	'generic/complex/csinhf.c',
@@ -55,21 +55,21 @@ ansi_sources = files(
 	'generic/complex/ccosf.c',
 	'generic/complex/casinh.c',
 
-	'generic/ctype-stubs.cpp',
+	'generic/ctype.cpp',
 	'generic/environment.cpp',
-	'generic/errno-stubs.cpp',
-	'generic/fenv-stubs.cpp',
+	'generic/errno.cpp',
+	'generic/fenv.cpp',
 	'generic/file-io.cpp',
-	'generic/inttypes-stubs.cpp',
-	'generic/locale-stubs.cpp',
-	'generic/signal-stubs.cpp',
-	'generic/stdio-stubs.cpp',
-	'generic/stdlib-stubs.cpp',
-	'generic/string-stubs.cpp',
+	'generic/inttypes.cpp',
+	'generic/locale.cpp',
+	'generic/signal.cpp',
+	'generic/stdio.cpp',
+	'generic/stdlib.cpp',
+	'generic/string.cpp',
 	'generic/threads.cpp',
-	'generic/time-stubs.cpp',
+	'generic/time.cpp',
 	'generic/uchar.cpp',
-	'generic/wchar-stubs.cpp',
+	'generic/wchar.cpp',
 	'generic/wctype.cpp',
 )
 

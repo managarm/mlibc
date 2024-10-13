@@ -3,7 +3,7 @@ if disable_crypt_option
 endif
 
 libc_sources += files(
-	'generic/crypt-stubs.cpp',
+	'generic/crypt.cpp',
 )
 
 if not no_headers
