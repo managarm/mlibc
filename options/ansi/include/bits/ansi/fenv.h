@@ -47,6 +47,30 @@
 #define FE_DOWNWARD 2
 #define FE_UPWARD 3
 
+#elif defined (__m68k__)
+
+#if __HAVE_68881__ || __mcffpu__ || __HAVE_FPU_
+
+#define FE_INEXACT    8
+#define FE_DIVBYZERO  16
+#define FE_UNDERFLOW  32
+#define FE_OVERFLOW   64
+#define FE_INVALID    128
+
+#define FE_ALL_EXCEPT 0xf8
+
+#define FE_TONEAREST  0
+#define FE_TOWARDZERO 16
+#define FE_DOWNWARD   32
+#define FE_UPWARD     48
+
+#else
+
+#define FE_ALL_EXCEPT 0
+#define FE_TONEAREST  0
+
+#endif
+
 #else
 #error Unknown architecture
 #endif

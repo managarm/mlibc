@@ -110,7 +110,7 @@ int main() {
 		assert(y == 0xfffff100);
 	}
 
-#if !defined(__i386__)
+#if !defined(__i386__) && !defined(__m68k__)
 	{
 		char buf[] = "fffffffff100";
 		unsigned long y = 0;

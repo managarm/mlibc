@@ -172,7 +172,8 @@ if default_library_paths.length() == 0
 		'riscv64': 64,
 		'riscv32': 32,
 		'aarch64': 64,
-		'arm': 32
+		'arm': 32,
+		'm68k': 32,
 	}
 	if target_word_size.get(target_machine.cpu_family()) == 64
 		default_library_paths = ['/lib', '/lib64', '/usr/lib', '/usr/lib64']

@@ -63,7 +63,7 @@ int main () {
 	DO_ERR_TEST("-999999999999999999999999999", LONG_MIN, ERANGE, strtol, 10);
 
 	// strtol
-#if defined(__i386__)
+#if defined(__i386__) || defined(__m68k__)
  	DO_TEST("-2147483648", LONG_MIN, -1, strtol, 10);
 	DO_TEST("2147483647", LONG_MAX, -1, strtol, 10);
  	DO_ERR_TEST("-2147483649", LONG_MIN, ERANGE, strtol, 10);
@@ -76,7 +76,7 @@ int main () {
 #endif
 
 	// wcstol
-#if defined(__i386__)
+#if defined(__i386__) || defined(__m68k__)
 	DO_TESTL(L"-2147483648", LONG_MIN, -1, wcstol, 10);
 	DO_TESTL(L"2147483647", LONG_MAX, -1, wcstol, 10);
 	DO_ERR_TESTL(L"2147483648", LONG_MAX, ERANGE, wcstol, 10);
@@ -100,7 +100,7 @@ int main () {
 	DO_ERR_TESTL(L"-9223372036854775809", LLONG_MIN, ERANGE, wcstoll, 10);
 
 	// strtoul
-#if defined(__i386__)
+#if defined(__i386__) || defined(__m68k__)
 	DO_TEST("-1", -(1UL), -1, strtoul, 10);
 	DO_TEST("2147483647", LONG_MAX, -1, strtoul, 10);
 	DO_TEST("4294967295", ULONG_MAX, -1, strtoul, 10);
@@ -115,7 +115,7 @@ int main () {
 #endif
 
 	// wcstoul
-#if defined(__i386__)
+#if defined(__i386__) || defined(__m68k__)
 	DO_TESTL(L"-1", -(1UL), -1, wcstoul, 10);
 	DO_TESTL(L"2147483647", LONG_MAX, -1, wcstoul, 10);
 	DO_TESTL(L"4294967295", ULONG_MAX, -1, wcstoul, 10);

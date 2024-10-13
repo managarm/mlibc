@@ -41,6 +41,9 @@ constexpr inline uintptr_t tlsOffsetFromTp = 16;
 #elif defined(__riscv)
 constexpr inline bool tlsAboveTp = true;
 constexpr inline uintptr_t tlsOffsetFromTp = 0;
+#elif defined(__m68k__)
+constexpr inline bool tlsAboveTp = true;
+constexpr inline ptrdiff_t tlsOffsetFromTp = -0x7000;
 #else
 #	error Unknown architecture
 #endif

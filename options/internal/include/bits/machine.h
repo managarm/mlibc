@@ -78,6 +78,23 @@ struct __mlibc_jmpbuf_register_state {
 	double fs10;
 	double fs11;
 };
+#elif defined (__m68k__)
+struct __mlibc_jmpbuf_register_state {
+	uint32_t d2;
+	uint32_t d3;
+	uint32_t d4;
+	uint32_t d5;
+	uint32_t d6;
+	uint32_t d7;
+	uint32_t a2;
+	uint32_t a3;
+	uint32_t a4;
+	uint32_t a5;
+	uint32_t a6;
+	uint32_t a7;
+	uint32_t sp;
+	uint32_t pc;
+};
 #else
 #  error "Missing architecture specific code"
 #endif

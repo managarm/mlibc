@@ -96,6 +96,8 @@ static void *stackaddr_worker(void *arg) {
 	asm volatile ("mov %0, sp" : "=r"(sp));
 #elif defined (__riscv)
 	asm volatile ("mv %0, sp" : "=r"(sp));
+#elif defined(__m68k__)
+	asm volatile ("move.l %%sp, %0" : "=r"(sp));
 #else
 #	error Unknown architecture
 #endif
