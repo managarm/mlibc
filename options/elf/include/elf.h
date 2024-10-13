@@ -292,6 +292,20 @@ enum {
 	R_RISCV_IRELATIVE = 58
 };
 
+enum {
+	R_68K_NONE = 0,
+	R_68K_32 = 1,
+	R_68K_PC32 = 4,
+	R_68K_COPY = 19,
+	R_68K_GLOB_DAT = 20,
+	R_68K_JMP_SLOT = 21,
+	R_68K_RELATIVE = 22,
+
+	R_68K_TLS_DTPMOD32 = 40,
+	R_68K_TLS_DTPREL32= 41,
+	R_68K_TLS_TPREL32= 42,
+};
+
 typedef struct {
 	Elf32_Addr r_offset;
 	Elf32_Word r_info;

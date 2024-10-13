@@ -49,6 +49,9 @@ int main() {
 #elif defined(__riscv) && __riscv_xlen == 64
 	asm volatile ("li sp, 0\n"
 			"\t" "sd zero, 0(sp)");
+#elif defined (__m68k__)
+	asm volatile ("move.l #0, %sp\n"
+			"\t" "move.l #0, -(%sp)");
 #else
 #	error Unknown architecture
 #endif
