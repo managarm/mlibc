@@ -1,8 +1,3 @@
-
-if disable_ansi_option
-	subdir_done()
-endif
-
 ansi_sources = files(
 	'generic/stdlib-stubs.cpp',
 	'generic/assert-stubs.cpp',
