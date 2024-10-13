@@ -29,7 +29,7 @@ int msync(void *__addr, size_t __size, int __flags);
 int shm_open(const char *__name, int __oflag, mode_t __mode);
 int shm_unlink(const char *__name);
 
-// Linux extension:
+/* Linux extension: */
 void *mremap(void *__old_address, size_t __old_size, size_t __new_size, int __flags, ...);
 int remap_file_pages(void *__addr, size_t __size, int __prot, size_t __pgoff, int __flags);
 
@@ -45,4 +45,4 @@ int mincore(void *__addr, size_t __size, unsigned char *__vec);
 }
 #endif
 
-#endif // _SYS_MMAN_H
+#endif /* _SYS_MMAN_H */

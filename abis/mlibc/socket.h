@@ -44,7 +44,7 @@ struct cmsghdr {
 #define SCM_TIMESTAMP SO_TIMESTAMP
 #define SCM_TIMESTAMPNS SO_TIMESTAMPNS
 
-//MISSING: CMSG_DATA, CMSG_NXTHDR, CMSG_FIRSTHDR
+/*MISSING: CMSG_DATA, CMSG_NXTHDR, CMSG_FIRSTHDR */
 
 #define SCM_CREDENTIALS 0x02
 
@@ -108,13 +108,13 @@ struct cmsghdr {
 #define MSG_FIN 0x200
 #define MSG_CONFIRM 0x800
 
-// Linux extensions.
+/* Linux extensions. */
 #define MSG_DONTWAIT 0x1000
 #define MSG_CMSG_CLOEXEC 0x2000
 #define MSG_MORE 0x4000
 #define MSG_FASTOPEN 0x20000000
 
-// GNU (?) extension: Protocol family constants.
+/* GNU (?) extension: Protocol family constants. */
 
 #define PF_INET 1
 #define PF_INET6 2

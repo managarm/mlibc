@@ -9,5 +9,5 @@ struct timespec {
 	long tv_nsec;
 };
 
-#endif // MLIBC_TIMESPEC_H
+#endif /* MLIBC_TIMESPEC_H */
 

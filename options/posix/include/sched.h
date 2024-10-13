@@ -7,9 +7,9 @@
 #include <bits/size_t.h>
 #include <mlibc-config.h>
 
-// MISSING: time_t, struct timespec
+/* MISSING: time_t, struct timespec */
 
-// MISSING: POSIX [PS], [SS] and [TSP] options
+/* MISSING: POSIX [PS], [SS] and [TSP] options */
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,5 +45,5 @@ int sched_getparam(pid_t __pid, struct sched_param *__param);
 }
 #endif
 
-#endif // _SCHED_H
+#endif /* _SCHED_H */
 

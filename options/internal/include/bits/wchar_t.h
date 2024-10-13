@@ -8,5 +8,5 @@ typedef __WCHAR_TYPE__ wchar_t;
 
 #endif
 
-#endif // MLIBC_WCHAR_T_H
+#endif /* MLIBC_WCHAR_T_H */
 

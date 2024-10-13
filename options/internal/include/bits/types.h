@@ -11,7 +11,7 @@ typedef __INT16_TYPE__ __mlibc_int16;
 typedef __INT32_TYPE__ __mlibc_int32;
 typedef __INT64_TYPE__ __mlibc_int64;
 
-// Clang and GCC have different mechanisms for INT32_C and friends.
+/* Clang and GCC have different mechanisms for INT32_C and friends. */
 #ifdef __clang__
 #	define __MLIBC_C_EXPAND_JOIN(x, suffix) x ## suffix
 #	define __MLIBC_C_JOIN(x, suffix) __MLIBC_C_EXPAND_JOIN(x, suffix)
@@ -58,7 +58,7 @@ typedef __INT64_TYPE__ __mlibc_int64;
 #define __MLIBC_UINT32_MAX __UINT32_MAX__
 #define __MLIBC_UINT64_MAX __UINT64_MAX__
 
-// Fast types (signed).
+/* Fast types (signed). */
 
 #if defined (__i386__)
 
@@ -152,7 +152,7 @@ typedef __mlibc_int64 __mlibc_int_fast64;
 #  error "Missing architecture specific code"
 #endif
 
-// Fast types (unsigned).
+/* Fast types (unsigned). */
 
 #if defined (__i386__)
 
@@ -246,7 +246,7 @@ typedef __mlibc_uint64 __mlibc_uint_fast64;
 #  error "Missing architecture specific code"
 #endif
 
-// Special types.
+/* Special types. */
 
 typedef __INTMAX_TYPE__  __mlibc_intmax;
 typedef __INTPTR_TYPE__  __mlibc_intptr;
@@ -265,7 +265,7 @@ typedef __SIZE_TYPE__    __mlibc_size;
 #define __MLIBC_UINTPTR_MAX __UINTPTR_MAX__
 #define __MLIBC_SIZE_MAX __SIZE_MAX__
 
-// Other limits.
+/* Other limits. */
 
 #define __MLIBC_WCHAR_MAX __WCHAR_MAX__
 #define __MLIBC_WCHAR_MIN __WCHAR_MIN__
@@ -276,9 +276,9 @@ typedef __SIZE_TYPE__    __mlibc_size;
 #define __MLIBC_SIG_ATOMIC_MAX __SIG_ATOMIC_MAX__
 #define __MLIBC_SIG_ATOMIC_MIN __SIG_ATOMIC_MIN__
 
-// ----------------------------------------------------------------------------
-// Sanity checking. Make sure that we agree with the compiler's ABI.
-// ----------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------- */
+/* Sanity checking. Make sure that we agree with the compiler's ABI. */
+/* ---------------------------------------------------------------------------- */
 
 #if defined(__cpp_static_assert)
 #	define __MLIBC_STATIC_ASSERT(c, text) static_assert(c, text)
@@ -291,7 +291,7 @@ typedef __SIZE_TYPE__    __mlibc_size;
 #define __MLIBC_CHECK_TYPE(T1, T2) __MLIBC_STATIC_ASSERT(sizeof(T1) == sizeof(T2),\
 	#T1 " != " #T2);
 
-// Least-width.
+/* Least-width. */
 __MLIBC_CHECK_TYPE(__mlibc_int8,  __INT_LEAST8_TYPE__);
 __MLIBC_CHECK_TYPE(__mlibc_int16, __INT_LEAST16_TYPE__);
 __MLIBC_CHECK_TYPE(__mlibc_int32, __INT_LEAST32_TYPE__);
@@ -302,8 +302,8 @@ __MLIBC_CHECK_TYPE(__mlibc_uint16, __UINT_LEAST16_TYPE__);
 __MLIBC_CHECK_TYPE(__mlibc_uint32, __UINT_LEAST32_TYPE__);
 __MLIBC_CHECK_TYPE(__mlibc_uint64, __UINT_LEAST64_TYPE__);
 
-// Fast-width.
-// Unfortunately, GCC and Clang disagree about fast types.
+/* Fast-width. */
+/* Unfortunately, GCC and Clang disagree about fast types. */
 #ifndef __clang__
 	__MLIBC_CHECK_TYPE(__mlibc_int_fast8,  __INT_FAST8_TYPE__);
 	__MLIBC_CHECK_TYPE(__mlibc_int_fast16, __INT_FAST16_TYPE__);
@@ -316,4 +316,4 @@ __MLIBC_CHECK_TYPE(__mlibc_uint64, __UINT_LEAST64_TYPE__);
 	__MLIBC_CHECK_TYPE(__mlibc_uint_fast64, __UINT_FAST64_TYPE__);
 #endif
 
-#endif // _MLIBC_INTERNAL_TYPES_H
+#endif /* _MLIBC_INTERNAL_TYPES_H */

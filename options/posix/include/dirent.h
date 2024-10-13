@@ -73,5 +73,5 @@ int versionsort(const struct dirent **__a, const struct dirent **__b);
 }
 #endif
 
-#endif // _DIRENT_H
+#endif /* _DIRENT_H */
 

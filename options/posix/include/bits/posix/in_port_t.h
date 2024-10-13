@@ -5,4 +5,4 @@
 
 typedef uint16_t in_port_t;
 
-#endif // MLIBC_IN_PORT_H
+#endif /* MLIBC_IN_PORT_H */

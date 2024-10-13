@@ -22,4 +22,4 @@ int delete_module(const char *__name, unsigned __flags);
 }
 #endif
 
-#endif // _MODULE_H
+#endif /* _MODULE_H */

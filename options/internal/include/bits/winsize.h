@@ -9,5 +9,5 @@ struct winsize {
 	unsigned short ws_ypixel;
 };
 
-#endif // MLIBC_WINSIZE_H
+#endif /* MLIBC_WINSIZE_H */
 

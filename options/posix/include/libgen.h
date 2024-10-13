@@ -23,6 +23,6 @@ char *dirname(char *__path);
 }
 #endif
 
-#endif // _LIBGEN_H
+#endif /* _LIBGEN_H */
 
 

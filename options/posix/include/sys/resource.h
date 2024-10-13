@@ -51,4 +51,4 @@ int prlimit(pid_t __pid, int __resource, const struct rlimit *__new_limits, stru
 }
 #endif
 
-#endif // _SYS_RESOURCE_H
+#endif /* _SYS_RESOURCE_H */

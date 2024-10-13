@@ -57,25 +57,25 @@ struct lconv {
 
 #ifndef __MLIBC_ABI_ONLY
 
-// [C11/7.11.1] setlocale() function
+/* [C11/7.11.1] setlocale() function */
 
 char *setlocale(int __category, const char *__locale);
 
-// [C11/7.11.2] Locale inquiry function
+/* [C11/7.11.2] Locale inquiry function */
 
 struct lconv *localeconv(void);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
-// posix extension
+/* posix extension */
 
 #if __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_locale.h>
-#endif // __MLIBC_POSIX_OPTION
+#endif /* __MLIBC_POSIX_OPTION */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _LOCALE_H
+#endif /* _LOCALE_H */
 

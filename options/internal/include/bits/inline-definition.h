@@ -15,5 +15,5 @@ extern "C" {
 }
 #endif
 
-#endif // MLIBC_INLINE_DEFINITION_H
+#endif /* MLIBC_INLINE_DEFINITION_H */
 

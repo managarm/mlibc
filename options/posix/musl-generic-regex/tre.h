@@ -1,4 +1,4 @@
-// Taken from musl tre.h
+/* Taken from musl tre.h */
 /*
   tre-internal.h - TRE internal definitions
 
@@ -36,7 +36,7 @@
 
 #define hidden __attribute__((__visibility__("hidden")))
 
-// TODO: These should probably go in limits.h
+/* TODO: These should probably go in limits.h */
 #define CHARCLASS_NAME_MAX 14
 #define RE_DUP_MAX 255
 

@@ -6,4 +6,4 @@
 #define AT_RANDOM 25
 #define AT_EXECFN 31
 
-#endif // _ABIBITS_AUXV_H
+#endif /* _ABIBITS_AUXV_H */

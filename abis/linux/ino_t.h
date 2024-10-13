@@ -6,5 +6,5 @@
 
 typedef __mlibc_uint64 ino_t;
 
-#endif // _ABIBITS_INO_T_H
+#endif /* _ABIBITS_INO_T_H */
 

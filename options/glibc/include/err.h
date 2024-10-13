@@ -29,5 +29,5 @@ void verrx(int __errnum, const char *__format, va_list __args);
 }
 #endif
 
-#endif // _ERR_H
+#endif /* _ERR_H */
 

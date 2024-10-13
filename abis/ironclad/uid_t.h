@@ -3,4 +3,4 @@
 
 typedef unsigned int uid_t;
 
-#endif // _ABIBITS_UID_T_H
+#endif /* _ABIBITS_UID_T_H */

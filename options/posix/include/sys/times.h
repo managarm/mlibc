@@ -1,7 +1,7 @@
 #ifndef _SYS_TIMES_H
 #define _SYS_TIMES_H
 
-// TODO: Only define the clock_t type.
+/* TODO: Only define the clock_t type. */
 #include <time.h>
 
 #ifdef __cplusplus
@@ -25,4 +25,4 @@ clock_t times(struct tms *__tms);
 }
 #endif
 
-#endif // _SYS_TIMES_H
+#endif /* _SYS_TIMES_H */

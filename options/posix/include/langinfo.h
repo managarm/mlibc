@@ -20,5 +20,5 @@ char *nl_langinfo_l(nl_item __item, locale_t __loc);
 }
 #endif
 
-#endif // _LANGINFO_H
+#endif /* _LANGINFO_H */
 

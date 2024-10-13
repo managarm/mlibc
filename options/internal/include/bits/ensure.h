@@ -41,5 +41,5 @@ void __ensure_warn(const char *assertion, const char *file, unsigned int line,
 }
 #endif
 
-#endif // MLIBC_ENSURE_H
+#endif /* MLIBC_ENSURE_H */
 

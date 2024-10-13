@@ -19,5 +19,5 @@ int forkpty(int *__mfd, char *__name, const struct termios *__ios, const struct 
 }
 #endif
 
-#endif // _PTY_H
+#endif /* _PTY_H */
 

@@ -41,4 +41,4 @@ struct rtc_time {
 }
 #endif
 
-#endif // _SYS_IRONCLAD_DEVICES_H
+#endif /* _SYS_IRONCLAD_DEVICES_H */

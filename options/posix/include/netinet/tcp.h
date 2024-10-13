@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-// Define some macros using same ABI as Linux
+/* Define some macros using same ABI as Linux */
 #define TCP_NODELAY 1
 #define TCP_MAXSEG 2
 #define TCP_KEEPIDLE 4
@@ -91,4 +91,4 @@ struct tcp_info {
 }
 #endif
 
-#endif // _NETINET_TCP_H
+#endif /* _NETINET_TCP_H */

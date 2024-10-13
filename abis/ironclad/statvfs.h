@@ -8,7 +8,7 @@
 #define ST_NOSUID 2
 #define ST_MANDLOCK 64
 
-// On Linux, this struct is not directly used by the kernel.
+/* On Linux, this struct is not directly used by the kernel. */
 struct statvfs {
 	unsigned long f_bsize;
 	unsigned long f_frsize;

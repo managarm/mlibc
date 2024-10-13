@@ -1,7 +1,7 @@
 #ifndef _ABIBITS_FCNTL_H
 #define _ABIBITS_FCNTL_H
 
-// reserve 3 bits for the access mode
+/* reserve 3 bits for the access mode */
 #define O_ACCMODE 0x0007
 #define O_EXEC 1
 #define O_RDONLY 2
@@ -9,7 +9,7 @@
 #define O_SEARCH 4
 #define O_WRONLY 5
 
-// these flags get their own bit
+/* these flags get their own bit */
 #define O_APPEND    0x000008
 #define O_CREAT     0x000010
 #define O_DIRECTORY 0x000020
@@ -29,7 +29,7 @@
 #define O_TMPFILE   0x080000
 #define O_DIRECT    0x100000
 
-// constants for fcntl()'s command argument
+/* constants for fcntl()'s command argument */
 #define F_DUPFD 1
 #define F_DUPFD_CLOEXEC 2
 #define F_GETFD 3
@@ -44,15 +44,15 @@
 #define F_GETOWN 10
 #define F_SETOWN 11
 
-// constants for struct flock's l_type member
+/* constants for struct flock's l_type member */
 #define F_RDLCK 1
 #define F_UNLCK 2
 #define F_WRLCK 3
 
-// constants for fcntl()'s additional argument of F_GETFD and F_SETFD
+/* constants for fcntl()'s additional argument of F_GETFD and F_SETFD */
 #define FD_CLOEXEC 1
 
-// Used by mmap
+/* Used by mmap */
 #define F_SEAL_SHRINK 0x0002
 #define F_SEAL_GROW   0x0004
 #define F_SEAL_WRITE  0x0008
@@ -80,4 +80,4 @@
 #define POSIX_FADV_WILLNEED 5
 #define POSIX_FADV_RANDOM 6
 
-#endif // _ABITBITS_FCNTL_H
+#endif /* _ABITBITS_FCNTL_H */

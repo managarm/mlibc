@@ -59,5 +59,5 @@ int inotify_rm_watch(int __ifd, int __wd);
 }
 #endif
 
-#endif //_SYS_INOTIFY_H
+#endif /*_SYS_INOTIFY_H */
 

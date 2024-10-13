@@ -24,36 +24,36 @@ struct sockaddr {
 	char sa_data[14];
 };
 
-// Control message format:
-// The offsets marked with ^ are aligned to alignof(size_t).
-//
-// |---HEADER---|---DATA---|---PADDING---|---HEADER---|...
-// ^            ^                        ^
-// |---------CMSG_LEN------|
-// |---------------CMSG_SPACE------------|
+/* Control message format: */
+/* The offsets marked with ^ are aligned to alignof(size_t). */
+/* */
+/* |---HEADER---|---DATA---|---PADDING---|---HEADER---|... */
+/* ^            ^                        ^ */
+/* |---------CMSG_LEN------| */
+/* |---------------CMSG_SPACE------------| */
 
-// Auxiliary macro. While there is basically no reason for applications
-// to use this, it is exported by glibc.
+/* Auxiliary macro. While there is basically no reason for applications */
+/* to use this, it is exported by glibc. */
 #define CMSG_ALIGN(s) (((s) + __alignof__(size_t) - 1) & \
 		~(__alignof__(size_t) - 1))
 
-// Basic macros to return content and padding size of a control message.
+/* Basic macros to return content and padding size of a control message. */
 #define CMSG_LEN(s) (CMSG_ALIGN(sizeof(struct cmsghdr)) + (s))
 #define CMSG_SPACE(s) (CMSG_ALIGN(sizeof(struct cmsghdr)) + CMSG_ALIGN(s))
 
-// Provides access to the data of a control message.
+/* Provides access to the data of a control message. */
 #define CMSG_DATA(c) ((char *)(c) + CMSG_ALIGN(sizeof(struct cmsghdr)))
 
 #define __MLIBC_CMSG_NEXT(c) ((char *)(c) + CMSG_ALIGN((c)->cmsg_len))
 #define __MLIBC_MHDR_LIMIT(m) ((char *)(m)->msg_control + (m)->msg_controllen)
 
-// For parsing control messages only.
-// Returns a pointer to the first header or nullptr if there is none.
+/* For parsing control messages only. */
+/* Returns a pointer to the first header or nullptr if there is none. */
 #define CMSG_FIRSTHDR(m) ((size_t)(m)->msg_controllen <= sizeof(struct cmsghdr) \
 	? (struct cmsghdr *)0 : (struct cmsghdr *) (m)->msg_control)
 
-// For parsing control messages only.
-// Returns a pointer to the next header or nullptr if there is none.
+/* For parsing control messages only. */
+/* Returns a pointer to the next header or nullptr if there is none. */
 #define CMSG_NXTHDR(m, c) \
 	((c)->cmsg_len < sizeof(struct cmsghdr) || \
 		(ptrdiff_t)(sizeof(struct cmsghdr) + CMSG_ALIGN((c)->cmsg_len)) \
@@ -103,5 +103,5 @@ int socketpair(int __domain, int __type, int __protocol, int __sv[2]);
 }
 #endif
 
-#endif // _UNISTD_H
+#endif /* _UNISTD_H */
 

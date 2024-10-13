@@ -8,4 +8,4 @@ struct iovec {
 	__mlibc_size iov_len;
 };
 
-#endif // MLIBC_IOVEC_H
+#endif /* MLIBC_IOVEC_H */

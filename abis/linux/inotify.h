@@ -6,4 +6,4 @@
 #define IN_CLOEXEC O_CLOEXEC
 #define IN_NONBLOCK O_NONBLOCK
 
-#endif // _ABIBITS_INOTIFY_H
+#endif /* _ABIBITS_INOTIFY_H */

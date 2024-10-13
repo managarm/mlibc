@@ -26,4 +26,4 @@ int eventfd_write(int __fd, eventfd_t __value);
 }
 #endif
 
-#endif // _SYS_EVENTFD_H
+#endif /* _SYS_EVENTFD_H */

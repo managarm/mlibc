@@ -15,7 +15,7 @@ extern "C" {
 #include <sys/ttydefaults.h>
 #endif
 
-// baud rate constants for speed_t
+/* baud rate constants for speed_t */
 #define B0       0
 #define B50      1
 #define B75      2
@@ -48,17 +48,17 @@ extern "C" {
 #define B3500000 0010016
 #define B4000000 0010017
 
-// constants for tcsetattr()
+/* constants for tcsetattr() */
 #define TCSANOW 0
 #define TCSADRAIN 1
 #define TCSAFLUSH 2
 
-// constants for tcflush()
+/* constants for tcflush() */
 #define TCIFLUSH 0
 #define TCOFLUSH 1
 #define TCIOFLUSH 2
 
-// constants for tcflow()
+/* constants for tcflow() */
 #define TCOOFF 0
 #define TCOON 1
 #define TCIOFF 2
@@ -84,7 +84,7 @@ int tcsetattr(int __fd, int __optional_actions, const struct termios *__attr);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
-// This is a linux extension
+/* This is a linux extension */
 
 #define TIOCSCTTY 0x540E
 #define TIOCGPGRP 0x540F
@@ -97,5 +97,5 @@ int tcsetattr(int __fd, int __optional_actions, const struct termios *__attr);
 }
 #endif
 
-#endif // _TERMIOS_H
+#endif /* _TERMIOS_H */
 

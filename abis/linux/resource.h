@@ -51,4 +51,4 @@ struct rusage {
 }
 #endif
 
-#endif // _ABIBITS_RESOURCE_H
+#endif /* _ABIBITS_RESOURCE_H */

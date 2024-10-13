@@ -33,4 +33,4 @@ int toupper_l(int __c, locale_t __loc);
 }
 #endif
 
-#endif // _POSIX_CTYPE_H
+#endif /* _POSIX_CTYPE_H */

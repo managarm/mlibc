@@ -73,4 +73,4 @@ struct vt_setactivate {
   struct vt_mode mode;
 };
 
-#endif // _ABIBITS_VT_H
+#endif /* _ABIBITS_VT_H */

@@ -22,4 +22,4 @@ int utime(const char *__filename, const struct utimbuf *__times);
 }
 #endif
 
-#endif // _UTIME_H
+#endif /* _UTIME_H */

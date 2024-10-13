@@ -4,7 +4,7 @@
 
 #include <bits/inline-definition.h>
 
-// this is a posix extension
+/* this is a posix extension */
 #define M_E             2.7182818284590452354
 #define M_LOG2E         1.4426950408889634074
 #define M_LOG10E        0.43429448190325182765
@@ -20,7 +20,7 @@
 #define M_SQRT1_2       0.70710678118654752440
 #define M_PIl           3.141592653589793238462643383279502884L
 
-// The following two definitions are from musl.
+/* The following two definitions are from musl. */
 #define FP_ILOGBNAN (-1 - (int)(((unsigned)-1) >> 1))
 #define FP_ILOGB0 FP_ILOGBNAN
 
@@ -37,16 +37,16 @@ typedef float float_t;
 #define INFINITY (__builtin_inff())
 #define NAN (__builtin_nanf(""))
 
-// [C11/7.12.1 Treatment of error conditions]
+/* [C11/7.12.1 Treatment of error conditions] */
 
 #define MATH_ERRNO 1
 #define MATH_ERREXCEPT 2
 #define math_errhandling 3
 
-// [C11/7.12.3 Classification macros]
+/* [C11/7.12.3 Classification macros] */
 
-// NOTE: fpclassify always returns exactly one of those constants
-// However making them bitwise disjoint simplifies isfinite() etc.
+/* NOTE: fpclassify always returns exactly one of those constants */
+/* However making them bitwise disjoint simplifies isfinite() etc. */
 #define FP_INFINITE 1
 #define FP_NAN 2
 #define FP_NORMAL 4
@@ -70,10 +70,10 @@ int __fpclassifyl(long double __x);
 #define isinf(x) (fpclassify(x) == FP_INFINITE)
 #define isnormal(x) (fpclassify(x) == FP_NORMAL)
 
-// FIXME: this is gcc specific
+/* FIXME: this is gcc specific */
 #define signbit(x) (__builtin_signbit(x))
 
-// [C11/7.12.14 Comparison macros]
+/* [C11/7.12.14 Comparison macros] */
 #define isunordered(x,y) (isnan((x)) ? ((void)(y),1) : isnan((y)))
 
 __MLIBC_INLINE_DEFINITION int __mlibc_isless(double_t __x, double_t __y) { return !isunordered(__x, __y) && __x < __y; }
@@ -92,7 +92,7 @@ __MLIBC_INLINE_DEFINITION int __mlibc_isgreaterequal(double_t __x, double_t __y)
 __MLIBC_INLINE_DEFINITION int __mlibc_isgreaterequalf(float_t __x, float_t __y) { return !isunordered(__x, __y) && __x >= __y; }
 __MLIBC_INLINE_DEFINITION int __mlibc_isgreaterequall(long double __x, long double __y) { return !isunordered(__x, __y) && __x >= __y; }
 
-// TODO: We chould use _Generic here but that does not work in C++ code.
+/* TODO: We chould use _Generic here but that does not work in C++ code. */
 #define __MLIBC_CHOOSE_COMPARISON(x, y, p) ( \
 	sizeof((x)+(y)) == sizeof(float) ? p##f(x, y) : \
 	sizeof((x)+(y)) == sizeof(double) ? p(x, y) : \
@@ -104,7 +104,7 @@ __MLIBC_INLINE_DEFINITION int __mlibc_isgreaterequall(long double __x, long doub
 #define isgreater(x, y) __MLIBC_CHOOSE_COMPARISON(x, y, __mlibc_isgreater)
 #define isgreaterequal(x, y) __MLIBC_CHOOSE_COMPARISON(x, y, __mlibc_isgreaterequal)
 
-// this is a gnu extension
+/* this is a gnu extension */
 void sincos(double __x, double *__sin, double *__cos);
 void sincosf(float __x, float *__sin, float *__cos);
 void sincosl(long double __x, long double *__sin, long double *__cos);
@@ -117,7 +117,7 @@ double pow10(double __x);
 float pow10f(float __x);
 long double pow10l(long double __x);
 
-// [C11/7.12.4 Trigonometric functions]
+/* [C11/7.12.4 Trigonometric functions] */
 
 double acos(double __x);
 float acosf(float __x);
@@ -147,7 +147,7 @@ double tan(double __x);
 float tanf(float __x);
 long double tanl(long double __x);
 
-// [C11/7.12.5 Hyperbolic functions]
+/* [C11/7.12.5 Hyperbolic functions] */
 
 double acosh(double __x);
 float acoshf(float __x);
@@ -173,7 +173,7 @@ double tanh(double __x);
 float tanhf(float __x);
 long double tanhl(long double __x);
 
-// [C11/7.12.6 Exponential and logarithmic functions]
+/* [C11/7.12.6 Exponential and logarithmic functions] */
 
 double exp(double __x);
 float expf(float __x);
@@ -231,7 +231,7 @@ double scalbln(double __x, long __power);
 float scalblnf(float __x, long __power);
 long double scalblnl(long double __x, long __power);
 
-// [C11/7.12.7 Power and absolute-value functions]
+/* [C11/7.12.7 Power and absolute-value functions] */
 
 double cbrt(double __x);
 float cbrtf(float __x);
@@ -253,7 +253,7 @@ double sqrt(double __x);
 float sqrtf(float __x);
 long double sqrtl(long double __x);
 
-// [C11/7.12.8 Error and gamma functions]
+/* [C11/7.12.8 Error and gamma functions] */
 
 double erf(double __x);
 float erff(float __x);
@@ -271,7 +271,7 @@ double tgamma(double __x);
 float tgammaf(float __x);
 long double tgammal(long double __x);
 
-// [C11/7.12.9 Nearest integer functions]
+/* [C11/7.12.9 Nearest integer functions] */
 
 double ceil(double __x);
 float ceilf(float __x);
@@ -313,7 +313,7 @@ double trunc(double __x);
 float truncf(float __x);
 long double truncl(long double __x);
 
-// [C11/7.12.10 Remainder functions]
+/* [C11/7.12.10 Remainder functions] */
 
 double fmod(double __x, double __y);
 float fmodf(float __x, float __y);
@@ -327,7 +327,7 @@ double remquo(double __x, double __y, int *__quotient);
 float remquof(float __x, float __y, int *__quotient);
 long double remquol(long double __x, long double __y, int *__quotient);
 
-// [C11/7.12.11 Manipulation functions]
+/* [C11/7.12.11 Manipulation functions] */
 
 double copysign(double __x, double __sign);
 float copysignf(float __x, float __sign);
@@ -345,7 +345,7 @@ double nexttoward(double __x, long double __dir);
 float nexttowardf(float __x, long double __dir);
 long double nexttowardl(long double __x, long double __dir);
 
-// [C11/7.12.12 Maximum, minimum and positive difference functions]
+/* [C11/7.12.12 Maximum, minimum and positive difference functions] */
 
 double fdim(double __x, double __y);
 float fdimf(float __x, float __y);
@@ -359,7 +359,7 @@ double fmin(double __x, double __y);
 float fminf(float __x, float __y);
 long double fminl(long double __x, long double __y);
 
-// [C11/7.12.13 Floating multiply-add]
+/* [C11/7.12.13 Floating multiply-add] */
 
 double fma(double __x, double __y, double __z);
 float fmaf(float __x, float __y, float __z);
@@ -368,7 +368,7 @@ long double fmal(long double __x, long double __y, long double __z);
 extern int signgam;
 #define __signgam signgam
 
-// BSD floating-point classification functions - obsolete
+/* BSD floating-point classification functions - obsolete */
 
 int finite(double __x);
 int finitef(float __x);
@@ -379,5 +379,5 @@ int finitef(float __x);
 }
 #endif
 
-#endif // _MATH_H
+#endif /* _MATH_H */
 

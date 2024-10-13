@@ -9,7 +9,7 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-// Character classification function [7.4.1]
+/* Character classification function [7.4.1] */
 int isalnum(int __c);
 int isalpha(int __c);
 int isblank(int __c);
@@ -23,16 +23,16 @@ int isspace(int __c);
 int isupper(int __c);
 int isxdigit(int __c);
 
-// glibc extensions.
+/* glibc extensions. */
 int isascii(int __c);
 
-// Character case mapping functions [7.4.2]
+/* Character case mapping functions [7.4.2] */
 int tolower(int __c);
 int toupper(int __c);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
-// Borrowed from glibc
+/* Borrowed from glibc */
 #define	toascii(c)	((c) & 0x7f)
 
 #ifdef __cplusplus
@@ -43,4 +43,4 @@ int toupper(int __c);
 #	include <bits/posix/posix_ctype.h>
 #endif
 
-#endif // _CTYPE_H
+#endif /* _CTYPE_H */

@@ -20,5 +20,5 @@ int fstatvfs64(int __fd, struct statvfs64 *__buf);
 }
 #endif
 
-#endif // _SYS_STATVFS_H
+#endif /* _SYS_STATVFS_H */
 

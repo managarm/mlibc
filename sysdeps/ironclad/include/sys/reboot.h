@@ -13,4 +13,4 @@ int reboot(int arg);
 }
 #endif
 
-#endif // _SYS_REBOOT_H
+#endif /* _SYS_REBOOT_H */

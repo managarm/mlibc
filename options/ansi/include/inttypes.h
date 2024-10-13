@@ -16,7 +16,7 @@
 #	define __PRIPTR ""
 #endif
 
-// TODO: This is extremly unelegant and fragile.
+/* TODO: This is extremly unelegant and fragile. */
 #define PRId8 "d"
 #define PRIi8 "i"
 #define PRIdLEAST8 "d"
@@ -146,4 +146,4 @@ uintmax_t wcstoumax(const wchar_t *__restrict __string, wchar_t **__restrict __e
 }
 #endif
 
-#endif // _STDINT_H
+#endif /* _STDINT_H */

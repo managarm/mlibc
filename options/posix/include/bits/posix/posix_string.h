@@ -26,7 +26,7 @@ int strcoll_l(const char *__s1, const char *__s2, locale_t __locale);
 
 char *strerror_l(int __errnum, locale_t __locale);
 
-// GNU extensions.
+/* GNU extensions. */
 #if defined(_GNU_SOURCE)
 char *strcasestr(const char *__s1, const char *__s2);
 #define strdupa(x) ({ \
@@ -45,7 +45,7 @@ char *strcasestr(const char *__s1, const char *__s2);
 void *memrchr(const void *__m, int __c, size_t __n);
 #endif /* defined(_GNU_SOURCE) */
 
-// BSD extensions
+/* BSD extensions */
 size_t strlcpy(char *__d, const char *__s, size_t __n);
 size_t strlcat(char *__d, const char *__s, size_t __n);
 
@@ -55,5 +55,5 @@ size_t strlcat(char *__d, const char *__s, size_t __n);
 }
 #endif
 
-#endif // MLIBC_POSIX_STRING_H
+#endif /* MLIBC_POSIX_STRING_H */
 

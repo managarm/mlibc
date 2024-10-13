@@ -19,7 +19,7 @@ union sigval {
 	void *sival_ptr;
 };
 
-// struct taken from musl.
+/* struct taken from musl. */
 
 typedef struct {
 	int si_signo, si_errno, si_code;
@@ -87,7 +87,7 @@ typedef struct {
 #define si_syscall __si_fields.__sigsys.si_syscall
 #define si_arch    __si_fields.__sigsys.si_arch
 
-// Required for sys_sigaction sysdep.
+/* Required for sys_sigaction sysdep. */
 #define SA_NOCLDSTOP 1
 #define SA_NOCLDWAIT 2
 #define SA_SIGINFO 4
@@ -101,7 +101,7 @@ typedef struct {
 extern "C" {
 #endif
 
-// Argument for signal()
+/* Argument for signal() */
 typedef void (*__sighandler) (int);
 
 #define SIG_ERR ((__sighandler)(void *)(-1))
@@ -124,7 +124,7 @@ typedef struct {
 	unsigned long sig[1024 / (8 * sizeof(long))];
 } sigset_t;
 
-// constants for sigprocmask()
+/* constants for sigprocmask() */
 #define SIG_BLOCK 0
 #define SIG_UNBLOCK 1
 #define SIG_SETMASK 2
@@ -167,7 +167,7 @@ typedef struct __stack {
 	size_t ss_size;
 } stack_t;
 
-// constants for sigev_notify of struct sigevent
+/* constants for sigev_notify of struct sigevent */
 #define SIGEV_SIGNAL 0
 #define SIGEV_NONE 1
 #define SIGEV_THREAD 2
@@ -276,7 +276,7 @@ struct sigaction {
 #define sa_handler __sa_handler.sa_handler
 #define sa_sigaction __sa_handler.sa_sigaction
 
-// Taken from the linux kernel headers
+/* Taken from the linux kernel headers */
 
 #if defined(__x86_64__) || defined(__i386__)
 
@@ -320,7 +320,7 @@ struct _fpstate {
 	uint16_t status;
 	uint16_t magic;
 
-	// FXSR FPU
+	/* FXSR FPU */
 
 	uint32_t _fxsr_env[6];
 	uint32_t mxscr;
@@ -347,7 +347,7 @@ typedef struct __ucontext {
 } ucontext_t;
 
 #elif defined(__riscv) && __riscv_xlen == 64
-// Definitions from Linux kernel headers.
+/* Definitions from Linux kernel headers. */
 
 #define NGREG 32
 
@@ -496,4 +496,4 @@ typedef struct __ucontext {
 }
 #endif
 
-#endif // _ABIBITS_SIGNAL_H
+#endif /* _ABIBITS_SIGNAL_H */

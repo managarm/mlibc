@@ -23,6 +23,6 @@ void set_startup_data(int argc, char **argv, char **envp);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
-} // namespace mlibc
+} /* namespace mlibc */
 
-#endif // MLIBC_ELF_STARTUP
+#endif /* MLIBC_ELF_STARTUP */

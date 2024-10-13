@@ -48,7 +48,7 @@ int posix_fallocate(int __fd, off_t __offset, off_t __size);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
-// This is a linux extension
+/* This is a linux extension */
 
 struct file_handle {
         unsigned int handle_bytes;
@@ -81,5 +81,5 @@ ssize_t vmsplice(int __fd, const struct iovec *__iov, size_t __nr_segs, unsigned
 }
 #endif
 
-#endif // _FCNTL_H
+#endif /* _FCNTL_H */
 

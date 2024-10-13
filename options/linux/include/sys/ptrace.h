@@ -51,5 +51,5 @@ long ptrace(int __op, ...);
 }
 #endif
 
-#endif // _SYS_PTRACE_H
+#endif /* _SYS_PTRACE_H */
 

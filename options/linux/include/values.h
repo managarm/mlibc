@@ -35,5 +35,5 @@
 
 #define BITSPERBYTE CHAR_BIT
 
-#endif // _VALUES_H
+#endif /* _VALUES_H */
 

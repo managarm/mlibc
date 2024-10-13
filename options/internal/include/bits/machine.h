@@ -82,5 +82,5 @@ struct __mlibc_jmpbuf_register_state {
 #  error "Missing architecture specific code"
 #endif
 
-#endif // MLIBC_MACHINE_H
+#endif /* MLIBC_MACHINE_H */
 

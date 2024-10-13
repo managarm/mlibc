@@ -3,4 +3,4 @@
 
 typedef __SIZE_TYPE__ size_t;
 
-#endif // MLIBC_SIZE_T_H
+#endif /* MLIBC_SIZE_T_H */

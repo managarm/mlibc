@@ -20,4 +20,4 @@ int ptrace(int request, pid_t pid, void *addr, void *data);
 }
 #endif
 
-#endif // _SYS_PTRACE_H
+#endif /* _SYS_PTRACE_H */

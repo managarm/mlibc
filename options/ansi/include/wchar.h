@@ -18,11 +18,11 @@ typedef struct __mlibc_file_base FILE;
 
 typedef struct __mlibc_mbstate mbstate_t;
 
-// MISSING: struct tm
+/* MISSING: struct tm */
 
 #ifndef __MLIBC_ABI_ONLY
 
-// [7.28.2] Wide formatted I/O functions
+/* [7.28.2] Wide formatted I/O functions */
 
 int fwprintf(FILE *__restrict __stream, const wchar_t *__restrict __format, ...);
 int fwscanf(FILE *__restrict __stream, const wchar_t *__restrict __format, ...);
@@ -39,7 +39,7 @@ int wscanf(const wchar_t *__restrict __format, ...);
 int vwprintf(const wchar_t *__restrict __format, __builtin_va_list __args);
 int vwscanf(const wchar_t *__restrict __format, __builtin_va_list __args);
 
-// [7.28.3] Wide character I/O functions
+/* [7.28.3] Wide character I/O functions */
 
 wint_t fgetwc(FILE *__stream);
 wchar_t *fgetws(wchar_t *__restrict __buffer, int __size, FILE *__restrict __stream);
@@ -52,7 +52,7 @@ wint_t putwc(wchar_t __wc, FILE *__stream);
 wint_t putwchar(wchar_t __wc);
 wint_t ungetwc(wint_t __wc, FILE *__stream);
 
-// [7.28.4] Wide string functions
+/* [7.28.4] Wide string functions */
 
 double wcstod(const wchar_t *__restrict __nptr, wchar_t **__restrict __endptr);
 float wcstof(const wchar_t *__restrict __nptr, wchar_t **__restrict __endptr);
@@ -89,7 +89,7 @@ wchar_t *wmemchr(const wchar_t *__s, wchar_t __wc, size_t __size);
 size_t wcslen(const wchar_t *__s);
 wchar_t *wmemset(wchar_t *__dest, wchar_t __wc, size_t __size);
 
-// [7.28.5] Wide date/time functions
+/* [7.28.5] Wide date/time functions */
 
 /* POSIX says:
  * The tag tm is declared as naming an incomplete structure type, the contents of which are
@@ -98,7 +98,7 @@ struct tm;
 size_t wcsftime(wchar_t *__restrict __buffer, size_t __max_size, const wchar_t *__restrict __format,
 		const struct tm *__restrict __time);
 
-// [7.28.6] Wide conversion functions
+/* [7.28.6] Wide conversion functions */
 
 wint_t btowc(int __wc);
 int wctob(wint_t __wc);
@@ -114,7 +114,7 @@ size_t wcsrtombs(char *__restrict __mbs, const wchar_t **__restrict __wcs, size_
 size_t wcsnrtombs(char *__restrict __mbs, const wchar_t **__restrict __wcs, size_t __mb_limit, size_t __wc_limit,
 		mbstate_t *__restrict __stp);
 
-// POSIX extensions
+/* POSIX extensions */
 int wcwidth(wchar_t __wc);
 int wcswidth(const wchar_t *__s, size_t __size);
 wchar_t *wcsdup(const wchar_t *__s);
@@ -127,4 +127,4 @@ int wcscasecmp(const wchar_t *__a, const wchar_t *__b);
 }
 #endif
 
-#endif // _WCHAR_H
+#endif /* _WCHAR_H */

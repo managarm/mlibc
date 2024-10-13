@@ -16,19 +16,19 @@ uint16_t htons(uint16_t __x);
 uint32_t ntohl(uint32_t __x);
 uint16_t ntohs(uint16_t __x);
 
-// ----------------------------------------------------------------------------
-// IPv4 address manipulation.
-// ----------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------- */
+/* IPv4 address manipulation. */
+/* ---------------------------------------------------------------------------- */
 
 in_addr_t inet_addr(const char *__cp);
 char *inet_ntoa(struct in_addr __in);
 
-// GLIBC replacement for inet_addr().
+/* GLIBC replacement for inet_addr(). */
 int inet_aton(const char *__cp, struct in_addr *__dest);
 
-// ----------------------------------------------------------------------------
-// Generic IP address manipulation.
-// ----------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------- */
+/* Generic IP address manipulation. */
+/* ---------------------------------------------------------------------------- */
 const char *inet_ntop(int __af, const void *__restrict __src, char *__restrict __dst,
 		socklen_t __size) __attribute__((__nonnull__(3)));
 int inet_pton(int __af, const char *__restrict __src, void *__restrict __dst);
@@ -42,5 +42,5 @@ in_addr_t inet_netof(struct in_addr __in);
 }
 #endif
 
-#endif // _ARPA_INET_H
+#endif /* _ARPA_INET_H */
 

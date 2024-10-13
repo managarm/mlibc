@@ -11,19 +11,19 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-// [7.24.2] Copying functions
+/* [7.24.2] Copying functions */
 
 void *memcpy(void *__restrict __dest, const void *__restrict __src, size_t __size);
 void *memmove(void *__dest, const void *__src, size_t __size);
 char *strcpy(char *__restrict __dest, const char *src);
 char *strncpy(char *__restrict __dest, const char *__src, size_t __max_size);
 
-// [7.24.3] Concatenation functions
+/* [7.24.3] Concatenation functions */
 
 char *strcat(char *__restrict __dest, const char *__restrict __src);
 char *strncat(char *__restrict __dest, const char *__restrict __src, size_t __max_size);
 
-// [7.24.4] Comparison functions
+/* [7.24.4] Comparison functions */
 
 int memcmp(const void *__a, const void *__b, size_t __size);
 int strcmp(const char *__a, const char *__b);
@@ -31,7 +31,7 @@ int strcoll(const char *__a, const char *__b);
 int strncmp(const char *__a, const char *__b, size_t __max_size);
 size_t strxfrm(char *__restrict __dest, const char *__restrict __src, size_t __max_size);
 
-// [7.24.5] Search functions
+/* [7.24.5] Search functions */
 
 void *memchr(const void *__s, int __c, size_t __size);
 char *strchr(const char *__s, int __c);
@@ -42,10 +42,10 @@ size_t strspn(const char *__s, const char *__chrs);
 char *strstr(const char *__pattern, const char *__s);
 char *strtok(char *__restrict __s, const char *__restrict __delimiter);
 
-// This is a GNU extension.
+/* This is a GNU extension. */
 char *strchrnul(const char * __s, int __c);
 
-// [7.24.6] Miscellaneous functions
+/* [7.24.6] Miscellaneous functions */
 
 void *memset(void *__dest, int __c, size_t __size);
 char *strerror(int __errnum);
@@ -59,11 +59,11 @@ size_t strlen(const char *__s);
 
 #ifndef __MLIBC_ABI_ONLY
 
-// POSIX extensions.
+/* POSIX extensions. */
 int strerror_r(int __errnum, char *__buffer, size_t __size);
 void *mempcpy(void *__dest, const void *__src, size_t __size);
 
-// GNU extensions.
+/* GNU extensions. */
 int strverscmp(const char *__l0, const char *__r0);
 int ffsl(long __i);
 int ffsll(long long __i);
@@ -104,4 +104,4 @@ static inline char *__mlibc_gnu_basename(char *__path) {
 #	include <bits/posix/posix_string.h>
 #endif
 
-#endif // _STRING_H
+#endif /* _STRING_H */

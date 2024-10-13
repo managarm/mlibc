@@ -215,4 +215,4 @@ struct group_source_req {
 #define __UAPI_DEF_IN6_PKTINFO  0
 #define __UAPI_DEF_IP6_MTUINFO  0
 
-#endif // _ABITBITS_IN_H
+#endif /* _ABITBITS_IN_H */

@@ -9,4 +9,4 @@ struct __mlibc_mbstate {
 
 #define __MLIBC_MBSTATE_INITIALIZER {0, 0, 0}
 
-#endif // MLIBC_MBSTATE_H
+#endif /* MLIBC_MBSTATE_H */

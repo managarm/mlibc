@@ -80,4 +80,4 @@ int shmget(key_t __key, size_t __size, int __shmflg);
 }
 #endif
 
-#endif // _SYS_SHM_H
+#endif /* _SYS_SHM_H */

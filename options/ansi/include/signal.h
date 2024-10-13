@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-// [7.14] Signal handling basics
+/* [7.14] Signal handling basics */
 
 typedef int sig_atomic_t;
 
@@ -21,11 +21,11 @@ typedef int sig_atomic_t;
 
 #ifndef __MLIBC_ABI_ONLY
 
-// [7.14.1] signal() function
+/* [7.14.1] signal() function */
 
 __sighandler signal(int __sig, __sighandler __handler);
 
-// [7.14.2] raise() function
+/* [7.14.2] raise() function */
 
 int raise(int __sig);
 
@@ -45,4 +45,4 @@ int raise(int __sig);
 #	include <bits/glibc/glibc_signal.h>
 #endif
 
-#endif // _SIGNAL_H
+#endif /* _SIGNAL_H */

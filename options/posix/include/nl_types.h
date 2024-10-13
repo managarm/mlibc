@@ -3,4 +3,4 @@
 
 
 
-#endif // NL_TYPES_H 
+#endif /* NL_TYPES_H */

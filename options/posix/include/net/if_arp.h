@@ -101,5 +101,5 @@ struct arpreq {
 	char arp_dev[16];
 };
 
-#endif // _NET_IF_ARP_H
+#endif /* _NET_IF_ARP_H */
 

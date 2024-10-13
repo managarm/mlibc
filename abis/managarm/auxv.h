@@ -6,11 +6,11 @@
 #define AT_EXECFN 31
 #define AT_SYSINFO_EHDR 33
 
-// managarm specific auxvector entries.
+/* managarm specific auxvector entries. */
 
 #define AT_XPIPE 0x1000
 #define AT_OPENFILES 0x1001
 #define AT_FS_SERVER 0x1102
 #define AT_MBUS_SERVER 0x1103
 
-#endif // _ABIBITS_AUXV_H
+#endif /* _ABIBITS_AUXV_H */

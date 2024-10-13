@@ -5,7 +5,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif // __cplusplus
+#endif /* __cplusplus */
 
 #ifndef __MLIBC_ABI_ONLY
 
@@ -18,6 +18,6 @@ int swapcontext(ucontext_t *__uctx, const ucontext_t *__newctx);
 
 #ifdef __cplusplus
 }
-#endif // __cplusplus
+#endif /* __cplusplus */
 
-#endif // _UCONTEXT_H
+#endif /* _UCONTEXT_H */

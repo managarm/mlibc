@@ -75,4 +75,4 @@ int ntp_adjtime(struct timex *__buf);
 }
 #endif
 
-#endif // _SYS_TIMEX_H
+#endif /* _SYS_TIMEX_H */

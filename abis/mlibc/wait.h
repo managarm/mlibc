@@ -27,4 +27,4 @@
 #define WTERMSIG(x) (((x) & 0xFF000000) >> 24)
 #define WCOREDUMP(x) ((x) & WCOREFLAG)
 
-#endif //_ABIBITS_WAIT_H
+#endif /*_ABIBITS_WAIT_H */

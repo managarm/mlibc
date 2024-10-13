@@ -19,5 +19,5 @@ int fstatfs64(int __fd, struct statfs64 *__buf);
 }
 #endif
 
-#endif // _SYS_STATFS_H
+#endif /* _SYS_STATFS_H */
 

@@ -37,4 +37,4 @@ struct packet_mreq {
 #define PACKET_MR_ALLMULTI 2
 #define PACKET_MR_UNICAST 3
 
-#endif // _NETPACKET_PACKET_H
+#endif /* _NETPACKET_PACKET_H */

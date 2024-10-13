@@ -4,5 +4,5 @@
 
 typedef long blksize_t;
 
-#endif // _ABIBITS_BLKSIZE_T_H
+#endif /* _ABIBITS_BLKSIZE_T_H */
 

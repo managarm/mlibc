@@ -1,5 +1,5 @@
-// This file is taken from musl
-// Path to original: include/paths.h
+/* This file is taken from musl */
+/* Path to original: include/paths.h */
 
 #ifndef _PATHS_H
 #define _PATHS_H
@@ -38,4 +38,4 @@
 #define _PATH_WTMPX _PATH_WTMP
 #endif
 
-#endif // _PATHS_H
+#endif /* _PATHS_H */

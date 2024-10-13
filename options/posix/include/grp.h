@@ -31,7 +31,7 @@ struct group *fgetgrent(FILE *__stream);
 int setgroups(size_t __size, const gid_t *__list);
 int initgroups(const char *__user, gid_t __group);
 
-// Non standard extension
+/* Non standard extension */
 int getgrouplist(const char *__user, gid_t __group, gid_t *__groups, int *__ngroups);
 
 #endif /* !__MLIBC_ABI_ONLY */
@@ -40,4 +40,4 @@ int getgrouplist(const char *__user, gid_t __group, gid_t *__groups, int *__ngro
 }
 #endif
 
-#endif // _GRP_H
+#endif /* _GRP_H */

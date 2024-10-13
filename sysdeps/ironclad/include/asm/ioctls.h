@@ -1,10 +1,10 @@
 #ifndef _ASM_IOCTLS_H
 #define _ASM_IOCTLS_H
 
-// List of all the IOCTLs supported, for further explanation on the meanings
-// please refer to documentation. If you did not get any, good luck!
-// Some IOCTL codes may be the same, in which case the device they are used in
-// gives them meaning. Cross-device IOCTLs have more distinct values.
+/* List of all the IOCTLs supported, for further explanation on the meanings */
+/* please refer to documentation. If you did not get any, good luck! */
+/* Some IOCTL codes may be the same, in which case the device they are used in */
+/* gives them meaning. Cross-device IOCTLs have more distinct values. */
 
 #define PS2MOUSE_2_1_SCALING     1
 #define PS2MOUSE_1_1_SCALING     2

@@ -24,4 +24,4 @@ int msgsnd(int __msqid, const void *__msgp, size_t __size, int __msgflg);
 }
 #endif
 
-#endif // _SYS_MSG_H
+#endif /* _SYS_MSG_H */

@@ -5,4 +5,4 @@
 
 typedef uint32_t in_addr_t;
 
-#endif // MLIBC_IN_ADDR_H
+#endif /* MLIBC_IN_ADDR_H */

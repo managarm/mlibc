@@ -137,7 +137,7 @@
 #define EHWPOISON       133
 
 
-// This is mlibc-specific.
+/* This is mlibc-specific. */
 #define EIEIO           4095
 
-#endif // _ABIBITS_ERRNO_H
+#endif /* _ABIBITS_ERRNO_H */

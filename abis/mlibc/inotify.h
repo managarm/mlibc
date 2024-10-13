@@ -4,4 +4,4 @@
 #define IN_CLOEXEC 1
 #define IN_NONBLOCK 2
 
-#endif // _ABIBITS_INOTIFY_H
+#endif /* _ABIBITS_INOTIFY_H */

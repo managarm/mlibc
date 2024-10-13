@@ -41,5 +41,5 @@ int nftw(const char *__dirpath, int (*__fn)(const char *__fpath, const struct st
 }
 #endif
 
-#endif // _FTW_H
+#endif /* _FTW_H */
 

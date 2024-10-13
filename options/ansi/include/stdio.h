@@ -7,7 +7,7 @@
 #include <bits/size_t.h>
 #include <mlibc-config.h>
 
-// Glibc extensions require ssize_t.
+/* Glibc extensions require ssize_t. */
 #include <bits/ssize_t.h>
 #include <bits/off_t.h>
 
@@ -15,51 +15,51 @@
 extern "C" {
 #endif
 
-// [C11-7.21.1] I/O related types
+/* [C11-7.21.1] I/O related types */
 
 #define __MLIBC_EOF_BIT 1
 #define __MLIBC_ERROR_BIT 2
 
 struct __mlibc_file_base {
-	// Buffer for I/O operations.
-	// We reserve a few extra bytes for ungetc operations. This means
-	// that __buffer_ptr will point a few bytes *into* the allocation.
+	/* Buffer for I/O operations. */
+	/* We reserve a few extra bytes for ungetc operations. This means */
+	/* that __buffer_ptr will point a few bytes *into* the allocation. */
 	char *__buffer_ptr;
 
-	// Number of bytes the buffer can hold.
+	/* Number of bytes the buffer can hold. */
 	size_t __buffer_size;
 
-	// Current offset inside the buffer.
+	/* Current offset inside the buffer. */
 	size_t __offset;
 
-	// Position inside the buffer that matches the current file pointer.
+	/* Position inside the buffer that matches the current file pointer. */
 	size_t __io_offset;
 
-	// Valid region of the buffer.
+	/* Valid region of the buffer. */
 	size_t __valid_limit;
 
-	// Begin and end of the dirty region inside the buffer.
+	/* Begin and end of the dirty region inside the buffer. */
 	size_t __dirty_begin;
 	size_t __dirty_end;
 
-	// This points to the same place as __buffer_ptr, or a few bytes earlier
-	// if there are bytes pushed by ungetc. If buffering is disabled, calls
-	// to ungetc will trigger an allocation.
+	/* This points to the same place as __buffer_ptr, or a few bytes earlier */
+	/* if there are bytes pushed by ungetc. If buffering is disabled, calls */
+	/* to ungetc will trigger an allocation. */
 	char *__unget_ptr;
 
-	// 0 if we are currently reading from the buffer.
-	// 1 if we are currently writing to the buffer.
-	// This is only really important for pipe-like streams.
+	/* 0 if we are currently reading from the buffer. */
+	/* 1 if we are currently writing to the buffer. */
+	/* This is only really important for pipe-like streams. */
 	int __io_mode;
 
-	// EOF and error bits.
+	/* EOF and error bits. */
 	int __status_bits;
 };
 
 typedef struct __mlibc_file_base FILE;
 typedef off_t fpos_t;
 
-// [C11-7.21.1] I/O related macros
+/* [C11-7.21.1] I/O related macros */
 
 #define _IOFBF 1
 #define _IOLBF 2
@@ -81,7 +81,7 @@ extern FILE *stderr;
 extern FILE *stdin;
 extern FILE *stdout;
 
-// [C11-7.21.4] Operations on files
+/* [C11-7.21.4] Operations on files */
 
 int remove(const char *__filename);
 int rename(const char *__old_path, const char *__new_path);
@@ -89,7 +89,7 @@ int renameat(int __olddirfd, const char *__old_path, int __newdirfd, const char 
 FILE *tmpfile(void);
 char *tmpnam(char *__buffer);
 
-// [C11-7.21.5] File access functions
+/* [C11-7.21.5] File access functions */
 
 int fclose(FILE *__stream);
 int fflush(FILE *__stream);
@@ -100,7 +100,7 @@ int setvbuf(FILE *__restrict __stream, char *__restrict __buffer, int __mode, si
 void setlinebuf(FILE *__stream);
 void setbuffer(FILE *__stream, char *__buffer, size_t __size);
 
-// [C11-7.21.6] Formatted input/output functions
+/* [C11-7.21.6] Formatted input/output functions */
 
 __attribute__((__format__(__printf__, 2, 3)))
 int fprintf(FILE *__restrict __stream, const char *__restrict __format, ...);
@@ -145,11 +145,11 @@ int vsprintf(char *__restrict __buffer, const char *__restrict __format, __built
 __attribute__((__format__(__scanf__, 2, 0)))
 int vsscanf(const char *__restrict __buffer, const char *__restrict __format, __builtin_va_list __args);
 
-// this is a gnu extension
+/* this is a gnu extension */
 __attribute__((__format__(__printf__, 2, 0)))
 int vasprintf(char **__buffer, const char *__format, __builtin_va_list __args);
 
-// [C11-7.21.7] Character input/output functions
+/* [C11-7.21.7] Character input/output functions */
 
 int fgetc(FILE *__stream);
 char *fgets(char *__restrict __buffer, int __max_size, FILE *__restrict __stream);
@@ -163,12 +163,12 @@ int putchar(int __c);
 int puts(const char *__string);
 int ungetc(int __c, FILE *__stream);
 
-// [C11-7.21.8] Direct input/output functions
+/* [C11-7.21.8] Direct input/output functions */
 
 size_t fread(void *__restrict __buffer, size_t __size, size_t __count, FILE *__restrict __stream);
 size_t fwrite(const void *__restrict __buffer, size_t __size, size_t __count, FILE *__restrict __stream);
 
-// [C11-7.21.9] File positioning functions
+/* [C11-7.21.9] File positioning functions */
 
 int fgetpos(FILE *__restrict __stream, fpos_t *__restrict __position);
 int fseek(FILE *__stream, long __offset, int __whence);
@@ -176,21 +176,21 @@ int fsetpos(FILE *__stream, const fpos_t *__position);
 long ftell(FILE *__stream);
 void rewind(FILE *__stream);
 
-// [C11-7.21.10] Error handling functions
+/* [C11-7.21.10] Error handling functions */
 
 void clearerr(FILE *__stream);
 int feof(FILE *__stream);
 int ferror(FILE *__stream);
 void perror(const char *__string);
 
-// POSIX unlocked I/O extensions.
+/* POSIX unlocked I/O extensions. */
 
 int getc_unlocked(FILE *__stream);
 int getchar_unlocked(void);
 int putc_unlocked(int __c, FILE *__stream);
 int putchar_unlocked(int __c);
 
-// GLIBC extensions.
+/* GLIBC extensions. */
 
 ssize_t getline(char **__linep, size_t *__sizep, FILE *__stream);
 ssize_t getdelim(char **__linep, size_t *__sizep, int __delim, FILE *__stream);
@@ -198,7 +198,7 @@ ssize_t getdelim(char **__linep, size_t *__sizep, int __delim, FILE *__stream);
 __attribute__((__format__(__printf__, 2, 3)))
 int asprintf(char **__buffer, const char *__format, ...);
 
-// Linux unlocked I/O extensions.
+/* Linux unlocked I/O extensions. */
 
 void flockfile(FILE *__stream);
 void funlockfile(FILE *__stream);
@@ -227,5 +227,5 @@ int fputs_unlocked(const char *__restrict __buffer, FILE *__restrict __stream);
 #	include <bits/posix/posix_stdio.h>
 #endif
 
-#endif // _STDIO_H
+#endif /* _STDIO_H */
 

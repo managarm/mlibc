@@ -26,7 +26,7 @@ typedef struct {
 	int __pad[16];
 } posix_spawn_file_actions_t;
 
-// MISSIG: sigset_t
+/* MISSIG: sigset_t */
 
 struct sched_param;
 
@@ -70,7 +70,7 @@ int posix_spawnp(pid_t *__restrict __pid, const char *__restrict __file,
 		const posix_spawnattr_t *__restrict __attrp,
 		char *const __argv[], char *const __envp[]);
 
-// MISSING: all other functions
+/* MISSING: all other functions */
 
 #endif /* !__MLIBC_ABI_ONLY */
 
@@ -78,5 +78,5 @@ int posix_spawnp(pid_t *__restrict __pid, const char *__restrict __file,
 }
 #endif
 
-#endif // SPAWN_H
+#endif /* SPAWN_H */
 

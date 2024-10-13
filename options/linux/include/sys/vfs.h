@@ -12,5 +12,5 @@ extern "C" {
 }
 #endif
 
-#endif // _SYS_VFS_H
+#endif /* _SYS_VFS_H */
 

@@ -34,4 +34,4 @@ int sem_getvalue(sem_t *__sem, int *__sval);
 }
 #endif
 
-#endif //_SEMAPHORE_H
+#endif /*_SEMAPHORE_H */

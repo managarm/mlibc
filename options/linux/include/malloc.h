@@ -11,7 +11,7 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-// [7.22.3] Memory management functions
+/* [7.22.3] Memory management functions */
 void *calloc(size_t __count, size_t __size);
 void free(void *__pointer);
 void *malloc(size_t __size);
@@ -28,5 +28,5 @@ void *memalign(size_t __alignment, size_t __size);
 }
 #endif
 
-#endif // _MALLOC_H
+#endif /* _MALLOC_H */
 

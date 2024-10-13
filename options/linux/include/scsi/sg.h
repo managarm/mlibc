@@ -73,5 +73,5 @@ typedef struct sg_req_info {
 }
 #endif
 
-#endif // _LINUX_SCSI_SG_H
+#endif /* _LINUX_SCSI_SG_H */
 
