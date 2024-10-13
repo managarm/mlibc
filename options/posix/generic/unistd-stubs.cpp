@@ -666,9 +666,15 @@ int setuid(uid_t uid) {
 	return 0;
 }
 
-void swab(const void *__restrict, void *__restrict, ssize_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void swab(const void *_src, void *_dest, ssize_t n) {
+	const char *src = reinterpret_cast<const char *>(_src);
+	char *dest = reinterpret_cast<char *>(_dest);
+	for(; n > 1; n -= 2) {
+		dest[0] = src[1];
+		dest[1] = src[0];
+		dest += 2;
+		src += 2;
+	}
 }
 
 int symlink(const char *target_path, const char *link_path) {
