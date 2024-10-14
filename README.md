@@ -1,4 +1,14 @@
-# mlibc is a C standard library
+# mlibc
+
+mlibc is a fully featured C standard library designed with portability in mind.
+
+We support a number of architectures (x86-64, AArch64, RISC-V, IA-32, m68k), and provide a clean syscall abstraction layer for new operating system ports to plug into.
+
+Unlike other portable C standard libraries like newlib, we aim for feature parity with glibc/musl, i.e full pthread support and GNU extensions.
+
+mlibc is capable enough to run a range of software, including Xorg, several Wayland compositors, Mesa, and web browsers like WebKitGTK -- though some features are still missing.
+
+Individual operating systems can opt in or out of certain features as desired; for example POSIX APIs like `pthread` are gated behind the POSIX 'option', Linux APIs like `epoll` are gated behind the Linux option, etc.
 
 ![Continuous Integration](https://github.com/managarm/mlibc/workflows/Continuous%20Integration/badge.svg)
 
