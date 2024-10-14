@@ -6,7 +6,7 @@ jobs:
     build-mlibc:
         strategy:
             matrix:
-                arch: [x86_64, riscv64, aarch64, x86]
+                arch: [x86_64, riscv64, aarch64, x86, m68k]
                 builds: [mlibc, mlibc-static, mlibc-shared, mlibc-ansi-only, mlibc-headers-only]
                 compiler: [gcc, clang]
                 exclude:
