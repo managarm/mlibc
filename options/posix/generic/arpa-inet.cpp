@@ -110,11 +110,12 @@ const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
 	switch (af) {
 		case AF_INET: {
 			auto source = reinterpret_cast<const struct in_addr*>(src);
+			uint32_t addr = ntohl(source->s_addr);
 			if (snprintf(dst, size, "%d.%d.%d.%d",
-						source->s_addr & 0xff,
-						(source->s_addr & 0xffff) >> 8,
-						(source->s_addr & 0xffffff) >> 16,
-						source->s_addr >> 24) < (int)size)
+					(addr >> 24) & 0xff,
+					(addr >> 16) & 0xff,
+					(addr >> 8) & 0xff,
+					addr & 0xff) < (int)size)
 				return dst;
 			break;
 		}
@@ -195,7 +196,8 @@ int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 				array[i] = value;
 			}
 			auto addr = reinterpret_cast<struct in_addr*>(dst);
-			memcpy(&addr->s_addr, array, 4);
+			uint32_t ip = (array[0] << 24) | (array[1] << 16) | (array[2] << 8) | array[3];
+			addr->s_addr = htonl(ip);
 			break;
 		}
 		case AF_INET6:
