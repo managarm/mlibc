@@ -21,7 +21,10 @@ static void *stacksize_worker(void *arg) {
 	size_t alloc_size = default_stacksize + default_stacksize/2;
 	void *area = alloca(alloc_size);
 	// If the allocated stack was not enough this will crash.
-	*(volatile int*)(area + alloc_size) = 1;
+	// Trample both the start and end of the area so it works on both upwards-
+	// and downwards-growing stacks.
+	*(volatile char*)area = 1;
+	*(volatile char*)(area + alloc_size - 1) = 1;
 	return NULL;
 }
 
