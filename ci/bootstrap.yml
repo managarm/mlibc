@@ -43,6 +43,7 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
         - "-Dwerror=true"
+        - "--warnlevel=2"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
@@ -75,6 +76,7 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=static"
         - "-Dwerror=true"
+        - "--warnlevel=2"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
@@ -103,6 +105,7 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=shared"
         - "-Dwerror=true"
+        - "--warnlevel=2"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
@@ -132,6 +135,7 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
         - "-Dwerror=true"
+        - "--warnlevel=2"
         - "-Ddisable_posix_option=true"
         - "-Ddisable_linux_option=true"
         - "-Ddisable_glibc_option=true"
@@ -163,6 +167,7 @@ packages:
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Db_sanitize=undefined"
         - "-Dwerror=true"
+        - "--warnlevel=2"
         - "-Dheaders_only=true"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"

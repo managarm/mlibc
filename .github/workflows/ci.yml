@@ -119,6 +119,8 @@ jobs:
                 meson setup \
                     "-Dc_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized', '-D__${{matrix.sysdeps}}__']" \
                     "-Dcpp_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized', '-D__${{matrix.sysdeps}}__']" \
+                    "-Dwerror=true" \
+                    "--warnlevel=2" \
                     "-Dbuild_tests=true" \
                     "-Db_sanitize=undefined" \
                     "-Dlinux_kernel_headers=$(pwd)/packages/linux-headers/usr/include" \
