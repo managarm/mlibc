@@ -7,14 +7,13 @@
 #include <bits/wchar.h>
 #include <bits/wint_t.h>
 #include <bits/mbstate.h>
+#include <bits/file.h>
 
 #define WEOF 0xffffffffU
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct __mlibc_file_base FILE;
 
 typedef struct __mlibc_mbstate mbstate_t;
 
