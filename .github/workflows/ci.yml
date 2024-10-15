@@ -53,6 +53,19 @@ jobs:
           - name: Build mlibc
             run: 'xbstrap install ${{matrix.builds}}'
             working-directory: build/
+          - name: Check public headers conform to C89
+            if: ${{matrix.builds == 'mlibc-headers-only'}}
+            working-directory: build/
+            run: |
+                GCC_ARCH="${{matrix.arch}}"
+                case "$GCC_ARCH" in
+                  "x86")
+                    GCC_ARCH="i686"
+                    ;;
+                esac
+                printf -- '-include\0%s\0' packages/${{matrix.builds}}/usr/include/**.h | \
+                  sed 's/complex.h/stdio.h/' | \
+                  xargs -0 $GCC_ARCH-linux-mlibc-gcc -x c -S /dev/null -o /dev/null -I packages/${{matrix.builds}}/usr/include -I packages/linux-headers/usr/include -nostdlib -std=c89 -Wpedantic -Wno-long-long -Werror -D__MLIBC_PEDANTIC_HEADER_CHECKER=1
           - name: Test mlibc
             run: 'meson test -v -C pkg-builds/${{matrix.builds}}'
             working-directory: build/
