@@ -48,7 +48,9 @@ extern "C" void __cxa_finalize(void *dso) {
 	}
 }
 
-extern "C" void *__dso_handle;
+// This is referenced by the compiler when generating constructors for global
+// C++ objects so that it can call __cxa_finalize with a unique argument.
+extern "C" { [[gnu::visibility("hidden")]] void *__dso_handle; }
 
 [[gnu::destructor]] void __mlibc_do_destructors() {
 	// In normal programs this call to __cxa_finalize is provided by libgcc.
