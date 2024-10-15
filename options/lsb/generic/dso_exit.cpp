@@ -32,11 +32,40 @@ extern "C" int __cxa_atexit(void (*function)(void *), void *argument, void *hand
 	return 0;
 }
 
+extern "C" void __dlapi_exit();
+
+extern "C" void __cxa_finalize(void *dso) {
+	ExitQueue &eq = getExitQueue();
+	if(!dso) {
+		for(size_t i = eq.size(); i > 0; i--) {
+			auto handler = &eq[i - 1];
+			if(!handler->function)
+				continue;
+
+			handler->function(handler->argument);
+			handler->function = nullptr;
+		}
+	}else {
+		for(size_t i = eq.size(); i > 0; i--) {
+			auto handler = &eq[i - 1];
+			if(handler->dsoHandle != dso || !handler->function)
+				continue;
+
+			handler->function(handler->argument);
+			handler->function = nullptr;
+		}
+	}
+}
+
 void __mlibc_do_finalize() {
 	ExitQueue &eq = getExitQueue();
 	for(size_t i = eq.size(); i > 0; i--) {
 		auto handler = &eq[i - 1];
+		if(handler->dsoHandle || !handler->function)
+			continue;
 		handler->function(handler->argument);
+		handler->function = nullptr;
 	}
-}
 
+	__dlapi_exit();
+}
