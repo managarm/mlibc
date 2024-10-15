@@ -957,23 +957,6 @@ void doInitialize(SharedObject *object) {
 	__ensure(object->wasLinked);
 	__ensure(!object->wasInitialized);
 
-	// If the object has dependencies we initialize them first
-	// except in the case of a circular dependency.
-	for(auto dep : object->dependencies) {
-		bool circular = false;
-		for(auto dep2 : dep->dependencies) {
-			if(dep2 == object) {
-				circular = true;
-				break;
-			}
-		}
-
-		if(circular)
-			continue;
-
-		__ensure(dep->wasInitialized);
-	}
-
 	if(verbose)
 		mlibc::infoLogger() << "rtld: Initialize " << object->name << frg::endlog;
 
@@ -996,23 +979,6 @@ void doInitialize(SharedObject *object) {
 void doDestruct(SharedObject *object) {
 	if(!object->wasInitialized || object->wasDestroyed)
 		return;
-
-	// If the object has dependencies they are destroyed after this object
-	// except in the case of a circular dependency.
-	for(auto dep : object->dependencies) {
-		bool circular = false;
-		for(auto dep2 : dep->dependencies) {
-			if(dep2 == object) {
-				circular = true;
-				break;
-			}
-		}
-
-		if(circular)
-			continue;
-
-		__ensure(!dep->wasDestroyed);
-	}
 
 	if(verbose)
 		mlibc::infoLogger() << "rtld: Destruct " << object->name << frg::endlog;
