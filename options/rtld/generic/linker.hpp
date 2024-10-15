@@ -3,6 +3,7 @@
 #include <frg/optional.hpp>
 #include <frg/string.hpp>
 #include <frg/vector.hpp>
+#include <frg/stack.hpp>
 #include <frg/expected.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/tcb.hpp>
@@ -91,7 +92,7 @@ private:
 			frg::hash<frg::string_view>, MemoryAllocator> _nameMap;
 
 	// Used for destructing the objects, stores all the objects in the order they are initialized.
-	frg::vector<SharedObject *, MemoryAllocator> _destructQueue;
+	frg::stack<SharedObject *, MemoryAllocator> _destructQueue;
 };
 
 // --------------------------------------------------------

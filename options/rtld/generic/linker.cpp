@@ -366,16 +366,17 @@ SharedObject *ObjectRepository::findLoadedObject(frg::string_view name) {
 }
 
 void ObjectRepository::addObjectToDestructQueue(SharedObject *object) {
-	_destructQueue.push_back(object);
+	_destructQueue.push(object);
 }
 
 void doDestruct(SharedObject *object);
 
 void ObjectRepository::destructObjects() {
-	for (size_t i = _destructQueue.size(); i > 0; i--) {
-		doDestruct(_destructQueue[i - 1]);
+	while (_destructQueue.size() > 0) {
+		auto top = _destructQueue.top();
+		doDestruct(top);
+		_destructQueue.pop();
 	}
-	_destructQueue.clear();
 }
 
 // --------------------------------------------------------
