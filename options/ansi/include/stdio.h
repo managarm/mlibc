@@ -4,6 +4,7 @@
 
 #include <abi-bits/seek-whence.h>
 #include <bits/null.h>
+#include <bits/file.h>
 #include <bits/size_t.h>
 #include <mlibc-config.h>
 
@@ -56,7 +57,6 @@ struct __mlibc_file_base {
 	int __status_bits;
 };
 
-typedef struct __mlibc_file_base FILE;
 typedef off_t fpos_t;
 
 /* [C11-7.21.1] I/O related macros */
