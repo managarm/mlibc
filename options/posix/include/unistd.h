@@ -36,10 +36,6 @@ extern "C" {
 #define _POSIX_THREAD_SAFE_FUNCTIONS _POSIX_VERSION
 #define _POSIX_MONOTONIC_CLOCK 0
 
-#if __MLIBC_CRYPT_OPTION
-#define _XOPEN_CRYPT 1
-#endif
-
 /* MISSING: additional _POSIX and _XOPEN feature macros */
 /* MISSING: _POSIX_TIMESTAMP_RESOLUTION and _POSIX2_SYMLINKS */
 
@@ -383,12 +379,6 @@ int setdomainname(const char *__name, size_t __len);
 
 int getresuid(uid_t *__ruid, uid_t *__euid, uid_t *__suid);
 int getresgid(gid_t *__rgid, gid_t *__egid, gid_t *__sgid);
-
-/* Glibc doesn't provide them by default anymore, lock behind an option */
-#if __MLIBC_CRYPT_OPTION
-char *crypt(const char *__key, const char *__salt);
-void encrypt(char __block[64], int __flags);
-#endif
 
 #endif /* !__MLIBC_ABI_ONLY */
 

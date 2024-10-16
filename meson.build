@@ -32,10 +32,7 @@ build_tests = get_option('build_tests')
 build_tests_host_libc = get_option('build_tests_host_libc')
 disable_posix_option = get_option('disable_posix_option')
 disable_linux_option = get_option('disable_linux_option')
-disable_iconv_option = get_option('disable_iconv_option')
-disable_intl_option = get_option('disable_intl_option')
 disable_glibc_option = get_option('disable_glibc_option')
-disable_crypt_option = get_option('disable_crypt_option')
 disable_bsd_option = get_option('disable_bsd_option')
 disable_libgcc_dependency = get_option('disable_libgcc_dependency')
 internal_conf = configuration_data()
@@ -280,10 +277,7 @@ endif
 
 mlibc_conf.set10('__MLIBC_POSIX_OPTION', not disable_posix_option)
 mlibc_conf.set10('__MLIBC_LINUX_OPTION', not disable_linux_option)
-mlibc_conf.set10('__MLIBC_INTL_OPTION', not disable_intl_option)
-mlibc_conf.set10('__MLIBC_ICONV_OPTION', not disable_iconv_option)
 mlibc_conf.set10('__MLIBC_GLIBC_OPTION', not disable_glibc_option)
-mlibc_conf.set10('__MLIBC_CRYPT_OPTION', not disable_crypt_option)
 mlibc_conf.set10('__MLIBC_BSD_OPTION', not disable_bsd_option)
 mlibc_conf.set10('__MLIBC_SYSDEP_HAS_BITS_SYSCALL_H', provides_bits_syscall_h)
 
@@ -293,15 +287,6 @@ libc_include_dirs += include_directories('options/ansi/include')
 if not disable_posix_option
 	rtld_include_dirs += include_directories('options/posix/include')
 	libc_include_dirs += include_directories('options/posix/include')
-endif
-
-if not disable_iconv_option
-	rtld_include_dirs += include_directories('options/iconv/include')
-	libc_include_dirs += include_directories('options/iconv/include')
-endif
-
-if not disable_intl_option
-	libc_include_dirs += include_directories('options/intl/include')
 endif
 
 if not disable_linux_option
@@ -327,10 +312,6 @@ endif
 if not disable_glibc_option
 	rtld_include_dirs += include_directories('options/glibc/include')
 	libc_include_dirs += include_directories('options/glibc/include')
-endif
-
-if not disable_crypt_option
-	libc_include_dirs += include_directories('options/crypt/include')
 endif
 
 if not disable_bsd_option
@@ -434,9 +415,6 @@ subdir('options/posix')
 subdir('options/lsb')
 subdir('options/glibc')
 subdir('options/linux')
-subdir('options/iconv')
-subdir('options/intl')
-subdir('options/crypt')
 subdir('options/bsd')
 
 rtlib_deps = []
@@ -536,9 +514,6 @@ if not headers_only
 	library('rt', 'dummy-libs/librt/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
 	library('util', 'dummy-libs/libutil/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
 	library('m', 'dummy-libs/libm/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
-	if not disable_crypt_option
-		library('crypt', 'dummy-libs/libcrypt/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
-	endif
 	library('resolv', 'dummy-libs/libresolv/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
 	library('dl', 'dummy-libs/libdl/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
 	library('ssp', 'dummy-libs/libssp/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
@@ -552,11 +527,8 @@ summary(summary_info, bool_yn: true, section: 'tests')
 
 summary_info = {}
 summary_info += {'headers-only': headers_only}
-summary_info += {'crypt option': not disable_crypt_option}
 summary_info += {'POSIX option': not disable_posix_option}
 summary_info += {'Linux option': not disable_linux_option}
-summary_info += {'iconv option': not disable_iconv_option}
-summary_info += {'intl option': not disable_intl_option}
 summary_info += {'glibc option': not disable_glibc_option}
 summary_info += {'BSD option': not disable_bsd_option}
 summary_info += {'debug allocator': get_option('debug_allocator')}
