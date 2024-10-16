@@ -5,7 +5,7 @@ shopt -s lastpipe
 errors_found=0
 
 find . -wholename '*include/*.h' -print0 | while read -rd $'\0' file; do
-	uses=$(grep -c -E "__MLIBC_(ANSI|BSD|POSIX|LINUX|INTL|ICONV|GLIBC|CRYPT)_OPTION" "$file")
+	uses=$(grep -c -E "__MLIBC_(ANSI|BSD|POSIX|LINUX|GLIBC)_OPTION" "$file")
 	if [ "$uses" -ne 0 ]; then
 		does_include=$(grep -c "#include <mlibc-config.h>" "$file")
 		if [ "$does_include" -eq 0 ]; then
