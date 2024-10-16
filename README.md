@@ -38,9 +38,9 @@ We recommend that new ports do not build from `master` as we occasionally make i
 The following custom meson options are accepted, in addition to the [built-in options](https://mesonbuild.com/Builtin-options.html). The options below are booleans which default to false (see `meson_options.txt`).
 
 - `headers_only`: Only install headers; don't build `libc.so` or `ld.so`.
-- `mlibc_no_headers`: Don't install headers; only build `libc.so` and `ld.so`.
+- `no_headers`: Don't install headers; only build `libc.so` and `ld.so`.
 - `build_tests`: Build the test suite (see below).
-- `disable_x_option`: Disable `x` component of mlibc functionality. See `meson_options.txt` for a full list of possible values for `x`. This may be used to e.g disable POSIX and glibc extensions.
+- `x_option`: Enable `x` component of mlibc functionality. See `meson_options.txt` for a full list of possible values for `x`. This may be used to e.g disable POSIX and glibc extensions.
 - `linux_kernel_headers`: Allows for directing mlibc to installed linux headers. [These can be obtained easily](https://docs.kernel.org/kbuild/headers_install.html), placed in a directory and this option set to the corresponding path. This is required if the linux option is enabled, i.e. when the linux option is not disabled.
 - `debug_allocator`: Replace the normal allocator with a debug allocator (see `mlibc/options/internal/generic/allocator.cpp` for implementation details).
 - `use_freestnd_hdrs`: Use freestnd-c{,xx}-hdrs instead of looking for compiler headers. Useful if not using a compiler with the correct target triple.

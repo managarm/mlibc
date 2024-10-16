@@ -1,5 +1,5 @@
 
-if disable_linux_option
+if not linux_option
 	subdir_done()
 endif
 libc_sources += files(

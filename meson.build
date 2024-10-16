@@ -26,15 +26,15 @@ libc_deps = [ ]
 rtld_deps = [ ]
 
 headers_only = get_option('headers_only')
-no_headers = get_option('mlibc_no_headers')
+no_headers = get_option('no_headers')
 library_type = get_option('default_library')
 build_tests = get_option('build_tests')
 build_tests_host_libc = get_option('build_tests_host_libc')
-disable_posix_option = get_option('disable_posix_option')
-disable_linux_option = get_option('disable_linux_option')
-disable_glibc_option = get_option('disable_glibc_option')
-disable_bsd_option = get_option('disable_bsd_option')
-disable_libgcc_dependency = get_option('disable_libgcc_dependency')
+posix_option = get_option('posix_option')
+linux_option = get_option('linux_option')
+glibc_option = get_option('glibc_option')
+bsd_option = get_option('bsd_option')
+libgcc_dependency = get_option('libgcc_dependency')
 internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
@@ -232,7 +232,7 @@ elif host_machine.system() == 'managarm'
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/managarm')
 elif host_machine.system() == 'ironclad'
-	disable_linux_option = true
+	linux_option = false
 	rtld_include_dirs += include_directories('sysdeps/ironclad/include')
 	libc_include_dirs += include_directories('sysdeps/ironclad/include')
 	subdir('sysdeps/ironclad')
@@ -243,12 +243,12 @@ elif host_machine.system() == 'keyronex'
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/keyronex')
 elif host_machine.system() == 'vinix'
-	disable_linux_option = true
+	linux_option = false
 	rtld_include_dirs += include_directories('sysdeps/vinix/include')
 	libc_include_dirs += include_directories('sysdeps/vinix/include')
 	subdir('sysdeps/vinix')
 elif host_machine.system() == 'lyre'
-	disable_linux_option = true
+	linux_option = false
 	rtld_include_dirs += include_directories('sysdeps/lyre/include')
 	libc_include_dirs += include_directories('sysdeps/lyre/include')
 	subdir('sysdeps/lyre')
@@ -257,7 +257,7 @@ elif host_machine.system() == 'lemon'
 	libc_include_dirs += include_directories('sysdeps/lemon/include')
 	subdir('sysdeps/lemon')
 elif host_machine.system() == 'dripos'
-	disable_linux_option = true
+	linux_option = false
 	rtld_include_dirs += include_directories('sysdeps/dripos/include')
 	libc_include_dirs += include_directories('sysdeps/dripos/include')
 	subdir('sysdeps/dripos')
@@ -275,21 +275,21 @@ endif
 # Configuration based on enabled options.
 #----------------------------------------------------------------------------------------
 
-mlibc_conf.set10('__MLIBC_POSIX_OPTION', not disable_posix_option)
-mlibc_conf.set10('__MLIBC_LINUX_OPTION', not disable_linux_option)
-mlibc_conf.set10('__MLIBC_GLIBC_OPTION', not disable_glibc_option)
-mlibc_conf.set10('__MLIBC_BSD_OPTION', not disable_bsd_option)
+mlibc_conf.set10('__MLIBC_POSIX_OPTION', posix_option)
+mlibc_conf.set10('__MLIBC_LINUX_OPTION', linux_option)
+mlibc_conf.set10('__MLIBC_GLIBC_OPTION', glibc_option)
+mlibc_conf.set10('__MLIBC_BSD_OPTION', bsd_option)
 mlibc_conf.set10('__MLIBC_SYSDEP_HAS_BITS_SYSCALL_H', provides_bits_syscall_h)
 
 rtld_include_dirs += include_directories('options/ansi/include')
 libc_include_dirs += include_directories('options/ansi/include')
 
-if not disable_posix_option
+if posix_option
 	rtld_include_dirs += include_directories('options/posix/include')
 	libc_include_dirs += include_directories('options/posix/include')
 endif
 
-if not disable_linux_option
+if linux_option
 	if not headers_only
 		if get_option('linux_kernel_headers') == ''
 			error('linux_kernel_headers is not set')
@@ -309,12 +309,12 @@ if not disable_linux_option
 	rtld_deps += linux_kernel_dep
 endif
 
-if not disable_glibc_option
+if glibc_option
 	rtld_include_dirs += include_directories('options/glibc/include')
 	libc_include_dirs += include_directories('options/glibc/include')
 endif
 
-if not disable_bsd_option
+if bsd_option
 	rtld_include_dirs += include_directories('options/bsd/include')
 	libc_include_dirs += include_directories('options/bsd/include')
 endif
@@ -420,7 +420,7 @@ subdir('options/bsd')
 rtlib_deps = []
 
 if not headers_only
-	if not disable_libgcc_dependency
+	if libgcc_dependency
 		libgcc = meson.get_compiler('c').find_library('gcc', required: false)
 
 		compiler_rt_name = 'libclang_rt.builtins-' + host_machine.cpu_family()
@@ -527,12 +527,12 @@ summary(summary_info, bool_yn: true, section: 'tests')
 
 summary_info = {}
 summary_info += {'headers-only': headers_only}
-summary_info += {'POSIX option': not disable_posix_option}
-summary_info += {'Linux option': not disable_linux_option}
-summary_info += {'glibc option': not disable_glibc_option}
-summary_info += {'BSD option': not disable_bsd_option}
+summary_info += {'POSIX option': posix_option}
+summary_info += {'Linux option': linux_option}
+summary_info += {'glibc option': glibc_option}
+summary_info += {'BSD option': bsd_option}
 summary_info += {'debug allocator': get_option('debug_allocator')}
-summary_info += {'libgcc dependency': not disable_libgcc_dependency}
+summary_info += {'libgcc dependency': libgcc_dependency}
 summary(summary_info, bool_yn: true, section: 'mlibc options')
 
 if build_tests

@@ -1,4 +1,4 @@
-if disable_glibc_option
+if not glibc_option
 	subdir_done()
 endif
 libc_sources += files(
