@@ -6,6 +6,8 @@ rtld_test_cases = [
 	'rtld_next',
 	'soname',
 	'preinit',
+	'destroy1',
+	'destroy2',
 	'scope1',
 	'scope2',
 	'scope3',
