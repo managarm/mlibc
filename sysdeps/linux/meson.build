@@ -17,7 +17,7 @@ libc_sources += files(
 	'generic/sysdeps.cpp',
 )
 
-if not disable_posix_option
+if posix_option
 	libc_sources += files(
 		'generic/thread.cpp',
 		host_machine.cpu_family() / 'cp_syscall.S',

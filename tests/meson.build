@@ -201,7 +201,7 @@ else
 	endif
 
 	# Add the rtld tests.
-	if not disable_posix_option
+	if posix_option
 		subdir('rtld')
 	endif
 endif
@@ -213,13 +213,13 @@ foreach test_name : all_test_cases
 	test_short_name = test_name.split('/')[1]
 	test_exec_name = test_name.replace('/', '-')
 
-	if test_subdir == 'bsd' and disable_bsd_option
+	if test_subdir == 'bsd' and not bsd_option
 		continue
-	elif test_subdir == 'glibc' and disable_glibc_option
+	elif test_subdir == 'glibc' and not glibc_option
 		continue
-	elif test_subdir == 'posix' and disable_posix_option
+	elif test_subdir == 'posix' and not posix_option
 		continue
-	elif test_subdir == 'linux' and disable_linux_option
+	elif test_subdir == 'linux' and not linux_option
 		continue
 	endif
 

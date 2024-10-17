@@ -1,4 +1,4 @@
-if disable_bsd_option
+if not bsd_option
 	subdir_done()
 endif
 

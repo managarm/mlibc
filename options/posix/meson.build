@@ -1,5 +1,5 @@
 
-if disable_posix_option
+if not posix_option
 	subdir_done()
 endif
 libc_sources += files(
