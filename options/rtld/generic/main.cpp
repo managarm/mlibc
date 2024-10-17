@@ -271,6 +271,11 @@ static frg::vector<frg::string_view, MemoryAllocator> parseList(frg::string_view
 	return list;
 }
 
+#ifndef MLIBC_STATIC_BUILD
+static constexpr uint64_t supportedDtFlags = DF_BIND_NOW;
+static constexpr uint64_t supportedDtFlags1 = DF_1_NOW;
+#endif
+
 extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	if(logEntryExit)
 		mlibc::infoLogger() << "Entering ld.so" << frg::endlog;
@@ -337,6 +342,20 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		case DT_RELRENT:
 		case DT_PLTGOT:
 			continue;
+		case DT_FLAGS: {
+			if((ent->d_un.d_val & ~supportedDtFlags) == 0) {
+				continue;
+			}
+			mlibc::panicLogger() << "rtld: unexpected DT_FLAGS value of " << frg::hex_fmt(ent->d_un.d_val) << " in program interpreter" << frg::endlog;
+			break;
+		}
+		case DT_FLAGS_1: {
+			if((ent->d_un.d_val & ~supportedDtFlags1) == 0) {
+				continue;
+			}
+			mlibc::panicLogger() << "rtld: unexpected DT_FLAGS_1 value of " << frg::hex_fmt(ent->d_un.d_val) << " in program interpreter" << frg::endlog;
+			break;
+		}
 		default:
 			mlibc::panicLogger() << "rtld: unexpected dynamic entry " << ent->d_tag << " in program interpreter" << frg::endlog;
 		}
