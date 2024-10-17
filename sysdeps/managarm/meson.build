@@ -1,3 +1,10 @@
+sysdep_supported_options = {
+	'posix': true,
+	'linux': true,
+	'glibc': true,
+	'bsd': true,
+}
+
 managarm = subproject('managarm', default_options: [ 'provide_deps=true' ])
 hel_dep = managarm.get_variable('hel_dep')
 proto_posix_dep = managarm.get_variable('posix_extra_dep')

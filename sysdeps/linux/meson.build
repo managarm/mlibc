@@ -1,3 +1,10 @@
+sysdep_supported_options = {
+	'posix': true,
+	'linux': true,
+	'glibc': true,
+	'bsd': true,
+}
+
 rtld_dso_sources += files(
 	host_machine.cpu_family() / 'arch-syscall.cpp',
 	'generic/sysdeps.cpp',
@@ -17,7 +24,7 @@ libc_sources += files(
 	'generic/sysdeps.cpp',
 )
 
-if posix_option
+if get_option('posix_option').allowed()
 	libc_sources += files(
 		'generic/thread.cpp',
 		host_machine.cpu_family() / 'cp_syscall.S',

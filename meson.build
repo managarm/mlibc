@@ -30,10 +30,6 @@ no_headers = get_option('no_headers')
 library_type = get_option('default_library')
 build_tests = get_option('build_tests')
 build_tests_host_libc = get_option('build_tests_host_libc')
-posix_option = get_option('posix_option')
-linux_option = get_option('linux_option')
-glibc_option = get_option('glibc_option')
-bsd_option = get_option('bsd_option')
 libgcc_dependency = get_option('libgcc_dependency')
 internal_conf = configuration_data()
 mlibc_conf = configuration_data()
@@ -232,7 +228,6 @@ elif host_machine.system() == 'managarm'
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/managarm')
 elif host_machine.system() == 'ironclad'
-	linux_option = false
 	rtld_include_dirs += include_directories('sysdeps/ironclad/include')
 	libc_include_dirs += include_directories('sysdeps/ironclad/include')
 	subdir('sysdeps/ironclad')
@@ -243,12 +238,10 @@ elif host_machine.system() == 'keyronex'
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/keyronex')
 elif host_machine.system() == 'vinix'
-	linux_option = false
 	rtld_include_dirs += include_directories('sysdeps/vinix/include')
 	libc_include_dirs += include_directories('sysdeps/vinix/include')
 	subdir('sysdeps/vinix')
 elif host_machine.system() == 'lyre'
-	linux_option = false
 	rtld_include_dirs += include_directories('sysdeps/lyre/include')
 	libc_include_dirs += include_directories('sysdeps/lyre/include')
 	subdir('sysdeps/lyre')
@@ -257,7 +250,6 @@ elif host_machine.system() == 'lemon'
 	libc_include_dirs += include_directories('sysdeps/lemon/include')
 	subdir('sysdeps/lemon')
 elif host_machine.system() == 'dripos'
-	linux_option = false
 	rtld_include_dirs += include_directories('sysdeps/dripos/include')
 	libc_include_dirs += include_directories('sysdeps/dripos/include')
 	subdir('sysdeps/dripos')
@@ -274,6 +266,11 @@ endif
 #----------------------------------------------------------------------------------------
 # Configuration based on enabled options.
 #----------------------------------------------------------------------------------------
+
+posix_option = get_option('posix_option').require(sysdep_supported_options.get('posix')).allowed()
+linux_option = get_option('linux_option').require(sysdep_supported_options.get('linux')).allowed()
+glibc_option = get_option('glibc_option').require(sysdep_supported_options.get('glibc')).allowed()
+bsd_option = get_option('bsd_option').require(sysdep_supported_options.get('bsd')).allowed()
 
 mlibc_conf.set10('__MLIBC_POSIX_OPTION', posix_option)
 mlibc_conf.set10('__MLIBC_LINUX_OPTION', linux_option)
@@ -527,10 +524,10 @@ summary(summary_info, bool_yn: true, section: 'tests')
 
 summary_info = {}
 summary_info += {'headers-only': headers_only}
-summary_info += {'POSIX option': posix_option}
-summary_info += {'Linux option': linux_option}
-summary_info += {'glibc option': glibc_option}
-summary_info += {'BSD option': bsd_option}
+summary_info += {'POSIX option': get_option('posix_option')}
+summary_info += {'Linux option': get_option('linux_option')}
+summary_info += {'glibc option': get_option('glibc_option')}
+summary_info += {'BSD option': get_option('bsd_option')}
 summary_info += {'debug allocator': get_option('debug_allocator')}
 summary_info += {'libgcc dependency': libgcc_dependency}
 summary(summary_info, bool_yn: true, section: 'mlibc options')

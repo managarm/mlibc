@@ -1,3 +1,10 @@
+sysdep_supported_options = {
+	'posix': true,
+	'linux': true,
+	'glibc': true,
+	'bsd': true,
+}
+
 rtld_dso_sources += files(
 	'generic/aero.cpp',
 	'generic/filesystem.cpp',
