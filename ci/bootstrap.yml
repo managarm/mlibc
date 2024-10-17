@@ -132,10 +132,10 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
         - "-Dwerror=true"
-        - "-Dposix_option=false"
-        - "-Dlinux_option=false"
-        - "-Dglibc_option=false"
-        - "-Dbsd_option=false"
+        - "-Dposix_option=disabled"
+        - "-Dlinux_option=disabled"
+        - "-Dglibc_option=disabled"
+        - "-Dbsd_option=disabled"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
