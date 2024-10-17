@@ -148,6 +148,11 @@ extern "C" void relocateSelf() {
 			*addr++ += ldso_base;
 		}else {
 			// Odd entry indicates entry is a bitmap of the subsequent locations to be relocated.
+
+			// The first bit of an entry is always a marker about whether the entry is an address or a bitmap,
+			// discard it.
+			entry >>= 1;
+
 			for(int i = 0; entry; ++i) {
 				if(entry & 1) {
 					addr[i] += ldso_base;
