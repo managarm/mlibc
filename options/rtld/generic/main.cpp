@@ -101,8 +101,6 @@ extern "C" void relocateSelf() {
 
 	auto ldso_base = getLdsoBase();
 
-	__ensure((rel_offset != 0) ^ (rela_offset != 0));
-
 	for(size_t disp = 0; disp < rela_size; disp += sizeof(elf_rela)) {
 		auto reloc = reinterpret_cast<elf_rela *>(ldso_base + rela_offset + disp);
 
