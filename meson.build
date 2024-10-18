@@ -363,6 +363,8 @@ if not no_headers
 		'options/internal/include/bits/wchar_t.h',
 		'options/internal/include/bits/wchar.h',
 		'options/internal/include/bits/wint_t.h',
+		'options/internal/include/bits/wctrans_t.h',
+		'options/internal/include/bits/wctype_t.h',
 		'options/internal/include/bits/size_t.h',
 		'options/internal/include/bits/types.h',
 		'options/internal/include/bits/ensure.h',
