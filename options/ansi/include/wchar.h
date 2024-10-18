@@ -15,8 +15,6 @@
 extern "C" {
 #endif
 
-typedef struct __mlibc_mbstate mbstate_t;
-
 /* MISSING: struct tm */
 
 #ifndef __MLIBC_ABI_ONLY
