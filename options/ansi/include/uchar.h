@@ -13,8 +13,6 @@ typedef __CHAR16_TYPE__ char16_t;
 typedef __CHAR32_TYPE__ char32_t;
 #endif /* __cplusplus */
 
-typedef struct __mlibc_mbstate mbstate_t;
-
 #ifndef __MLIBC_ABI_ONLY
 
 size_t c32rtomb(char *__pmb, char32_t __c32, mbstate_t *__ps);
