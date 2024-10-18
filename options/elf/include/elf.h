@@ -148,7 +148,7 @@ enum {
 	ET_REL = 1,
 	ET_EXEC = 2,
 	ET_DYN = 3,
-	ET_CORE = 4,
+	ET_CORE = 4
 };
 
 enum {
@@ -157,7 +157,7 @@ enum {
 };
 
 enum {
-	STN_UNDEF = 0,
+	STN_UNDEF = 0
 };
 
 typedef struct {
@@ -239,7 +239,7 @@ enum {
 	R_X86_64_PC64 = 24,
 	R_X86_64_GOTPC32 = 26,
 	R_X86_64_TLSDESC = 36,
-	R_X86_64_IRELATIVE = 37,
+	R_X86_64_IRELATIVE = 37
 };
 
 enum {
@@ -254,7 +254,7 @@ enum {
 	R_386_TLS_DTPMOD32 = 35,
 	R_386_TLS_DTPOFF32 = 36,
 	R_386_TLS_DESC = 41,
-	R_386_IRELATIVE = 42,
+	R_386_IRELATIVE = 42
 };
 
 enum {
@@ -268,7 +268,7 @@ enum {
 	R_AARCH64_TLS_DTPREL64 = 1029,
 	R_AARCH64_TLS_TPREL64 = 1030,
 	R_AARCH64_TLSDESC = 1031,
-	R_AARCH64_IRELATIVE = 1032,
+	R_AARCH64_IRELATIVE = 1032
 };
 
 #define R_AARCH64_TLS_DTPREL R_AARCH64_TLS_DTPREL64
@@ -303,7 +303,7 @@ enum {
 
 	R_68K_TLS_DTPMOD32 = 40,
 	R_68K_TLS_DTPREL32= 41,
-	R_68K_TLS_TPREL32= 42,
+	R_68K_TLS_TPREL32= 42
 };
 
 typedef struct {
@@ -370,7 +370,7 @@ enum {
 	PT_LOPROC = 0x70000000,
 	PT_ARM_EXIDX = 0x70000001,
 	PT_RISCV_ATTRIBUTES = 0x70000003,
-	PT_HIPROC = 0x7fffffff,
+	PT_HIPROC = 0x7fffffff
 };
 
 enum {
