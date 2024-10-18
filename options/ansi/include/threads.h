@@ -10,7 +10,7 @@ extern "C" {
 enum {
 	mtx_plain,
 	mtx_recursive,
-	mtx_timed,
+	mtx_timed
 };
 
 enum {
@@ -18,7 +18,7 @@ enum {
 	thrd_timedout,
 	thrd_busy,
 	thrd_error,
-	thrd_nomem,
+	thrd_nomem
 };
 
 typedef struct __mlibc_thread_data *thrd_t;
