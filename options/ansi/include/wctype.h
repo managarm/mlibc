@@ -3,13 +3,12 @@
 
 #include <mlibc-config.h>
 #include <bits/wint_t.h>
+#include <bits/wctype_t.h>
+#include <bits/wctrans_t.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef unsigned long wctype_t;
-typedef unsigned long wctrans_t;
 
 #ifndef __MLIBC_ABI_ONLY
 

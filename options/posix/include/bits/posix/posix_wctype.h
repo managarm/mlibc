@@ -3,15 +3,14 @@
 
 #include <bits/posix/locale_t.h>
 #include <bits/wint_t.h>
+#include <bits/wctype_t.h>
+#include <bits/wctrans_t.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #ifndef __MLIBC_ABI_ONLY
-
-typedef unsigned long wctype_t;
-typedef unsigned long wctrans_t;
 
 int iswalnum_l(wint_t __wc, locale_t __loc);
 int iswblank_l(wint_t __wc, locale_t __loc);
