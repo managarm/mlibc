@@ -326,14 +326,13 @@ typedef __SIZE_TYPE__    __mlibc_size;
 
 #if defined(__cpp_static_assert)
 #	define __MLIBC_STATIC_ASSERT(c, text) static_assert(c, text)
-#elif !defined(__cplusplus)
-#	define __MLIBC_STATIC_ASSERT(c, text) _Static_assert(c, text)
 #else
-#	define __MLIBC_STATIC_ASSERT(c, text)
+/* _Static_assert is an extension in C89/C99. */
+#	define __MLIBC_STATIC_ASSERT(c, text) __extension__ _Static_assert(c, text)
 #endif
 
 #define __MLIBC_CHECK_TYPE(T1, T2) __MLIBC_STATIC_ASSERT(sizeof(T1) == sizeof(T2),\
-	#T1 " != " #T2);
+	#T1 " != " #T2)
 
 /* Least-width. */
 __MLIBC_CHECK_TYPE(__mlibc_int8,  __INT_LEAST8_TYPE__);
