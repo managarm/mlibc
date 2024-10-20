@@ -54,7 +54,7 @@ struct tcp_info {
 	uint8_t tcpi_probes;
 	uint8_t tcpi_backoff;
 	uint8_t tcpi_options;
-	uint8_t tcpi_snd_wscale : 4, tcpi_rcv_wscale : 4;
+	__extension__ uint8_t tcpi_snd_wscale : 4, tcpi_rcv_wscale : 4;
 
 	uint32_t tcpi_rto;
 	uint32_t tcpi_ato;
