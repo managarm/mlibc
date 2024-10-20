@@ -11,18 +11,18 @@
 
 void __FD_CLR(int fd, fd_set *set) {
 	__ensure(fd < FD_SETSIZE);
-	set->__mlibc_elems[fd / 8] &= ~(1 << (fd % 8));
+	set->fds_bits[fd / 8] &= ~(1 << (fd % 8));
 }
 int __FD_ISSET(int fd, fd_set *set) {
 	__ensure(fd < FD_SETSIZE);
-	return set->__mlibc_elems[fd / 8] & (1 << (fd % 8));
+	return set->fds_bits[fd / 8] & (1 << (fd % 8));
 }
 void __FD_SET(int fd, fd_set *set) {
 	__ensure(fd < FD_SETSIZE);
-	set->__mlibc_elems[fd / 8] |= 1 << (fd % 8);
+	set->fds_bits[fd / 8] |= 1 << (fd % 8);
 }
 void __FD_ZERO(fd_set *set) {
-	memset(set->__mlibc_elems, 0, sizeof(fd_set));
+	memset(set->fds_bits, 0, sizeof(fd_set));
 }
 
 int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_set,

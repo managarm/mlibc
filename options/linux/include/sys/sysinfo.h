@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+/* TODO: This is from the Linux ABI. Make this an abi-bit. */
+
 struct sysinfo {
 	long uptime;
 	unsigned long loads[3];
@@ -18,7 +20,11 @@ struct sysinfo {
 	unsigned long totalhigh;
 	unsigned long freehigh;
 	unsigned int mem_unit;
+
+	/* This is how the kernel header defines it, so suppress the warning. */
+#if !defined(__MLIBC_PEDANTIC_HEADER_CHECKER)
 	char _f[20 - 2 * sizeof(long) - sizeof(int)]; /* Padding to 64 bytes according to my man page */
+#endif
 };
 
 #ifndef __MLIBC_ABI_ONLY
