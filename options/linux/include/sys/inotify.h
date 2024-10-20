@@ -43,7 +43,15 @@ struct inotify_event {
 	unsigned int mask;
 	unsigned int cookie;
 	unsigned int len;
+
+/*
+ * glibc uses a flexible array member here, but we get a warning and they don't:
+ * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=117241
+ */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 	char name[];
+#pragma GCC diagnostic pop
 };
 
 #ifndef __MLIBC_ABI_ONLY
