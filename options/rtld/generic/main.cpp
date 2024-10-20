@@ -345,8 +345,6 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		case DT_RELRSZ:
 		case DT_RELRENT:
 		case DT_PLTGOT:
-		case DT_FLAGS:
-		case DT_FLAGS_1:
 			continue;
 		case DT_FLAGS: {
 			if((ent->d_un.d_val & ~supportedDtFlags) == 0) {
