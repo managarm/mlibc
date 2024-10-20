@@ -350,15 +350,9 @@ internal_sources = [
 	'options/internal/generic/search.cpp',
 	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',
-	'options/internal/gcc/initfini.cpp',
 	'options/internal/gcc-extra/cxxabi.cpp',
 	'options/internal' / host_machine.cpu_family() / 'setjmp.S',
 	'options/internal' / host_machine.cpu_family() / 'fenv.S',
-]
-
-internal_dso_sources = [
-	'options/internal' / host_machine.cpu_family() / 'mlibc_crtbegin.S',
-	'options/internal' / host_machine.cpu_family() / 'mlibc_crtend.S',
 ]
 
 if not no_headers
@@ -495,7 +489,7 @@ if not headers_only
 		)
 		hide_everything_ld = (meson.current_source_dir()
 				      / 'scripts/hide-everything.ld')
-		libc_shared = shared_library('c', libc_all_sources + internal_dso_sources,
+		libc_shared = shared_library('c', libc_all_sources,
 			cpp_args: [libc_cpp_args],
 			include_directories: libc_include_dirs,
 			dependencies: libc_deps + rtlib_deps,

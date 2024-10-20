@@ -175,11 +175,7 @@ if library_type == 'static'
 	use_pie = false
 	test_c_args += '-no-pie'
 	test_link_args += ['-no-pie', '-static']
-	test_sources += [
-		'../options/internal' / host_machine.cpu_family() / 'mlibc_crtbegin.S',
-		'../options/internal' / host_machine.cpu_family() / 'mlibc_crtend.S',
-		crt,
-	]
+	test_sources += crt
 else
 	libc_dep = declare_dependency(
 		include_directories: libc_include_dirs,
