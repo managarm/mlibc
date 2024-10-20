@@ -2,6 +2,7 @@
 #define _SYS_INOTIFY_H
 
 #include <stdint.h>
+#include <features.h>
 #include <abi-bits/fcntl.h>
 #include <abi-bits/inotify.h>
 
@@ -43,7 +44,14 @@ struct inotify_event {
 	unsigned int mask;
 	unsigned int cookie;
 	unsigned int len;
+
+/*
+ * glibc uses a flexible array member here, but we get a warning and they don't:
+ * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=117241
+ */
+#if !defined(__MLIBC_PEDANTIC_HEADER_CHECKER)
 	char name[];
+#endif
 };
 
 #ifndef __MLIBC_ABI_ONLY
