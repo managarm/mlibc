@@ -119,24 +119,23 @@ struct stat {
 #elif defined (__m68k__)
 
 struct stat {
-	unsigned long long st_dev;
+	dev_t st_dev;
 	unsigned char __st_dev_padding[2];
 	unsigned long __st_ino;
-	unsigned int st_mode;
-	unsigned int st_nlink;
-	unsigned long st_uid;
-	unsigned long st_gid;
-	unsigned long long st_rdev;
+	mode_t st_mode;
+	nlink_t st_nlink;
+	uid_t st_uid;
+	gid_t st_gid;
+	dev_t st_rdev;
 	unsigned char __st_rdev_padding;
-	long long st_size;
-	unsigned long st_blksize;
-	unsigned long long st_blocks;
+	long long st_size; /* TODO: off64_t? */
+	blksize_t st_blksize;
+	blkcnt_t st_blocks;
 	struct timespec st_atim;
 	struct timespec st_mtim;
 	struct timespec st_ctim;
-	unsigned long long st_ino;
+	ino_t st_ino;
 };
-
 
 #endif
 
