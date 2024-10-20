@@ -7,8 +7,8 @@
 extern "C" {
 #endif
 
-struct udphdr {
-        union {
+__extension__ struct udphdr {
+        __extension__ union {
                 struct {
                         uint16_t uh_sport;
                         uint16_t uh_dport;
