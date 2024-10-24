@@ -1,6 +1,6 @@
 name: Rust libc bindings
 
-on: [push, pull_request]
+on: [push, pull_request, merge_group]
 
 jobs:
     check-bindings:

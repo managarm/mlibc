@@ -7,6 +7,9 @@ on:
   pull_request:
     branches-ignore:
       - abi-break
+  merge_group:
+    branches-ignore:
+      - abi-break
 
 jobs:
   run-abidiff:
