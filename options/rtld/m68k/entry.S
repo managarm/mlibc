@@ -1,5 +1,6 @@
-.global _start
-_start:
+#include "mlibc-asm/helpers.h"
+
+PROC_START(_start)
 	lea (_GLOBAL_OFFSET_TABLE_@GOTPC,%pc), %a0
 	lea (_DYNAMIC,%pc), %a1
 
@@ -15,5 +16,6 @@ _start:
 	jbsr interpreterMain@PLTPC
 
 	jmp (%a0)
+PROC_END(_start)
 
-.section .note.GNU-stack,"",%progbits
+GNU_STACK_NOTE()

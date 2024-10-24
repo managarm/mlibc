@@ -1,5 +1,6 @@
-.global _start
-_start:
+#include "mlibc-asm/helpers.h"
+
+PROC_START(_start)
 	pcaddu18i $ra, %call36(relocateSelf)
 	jirl $ra, $ra, 0
 
@@ -9,6 +10,7 @@ _start:
 	jirl $ra, $ra, 0
 
 	jr $a0
+PROC_END(_start)
 
-.section .note.GNU-stack,"",%progbits
+GNU_STACK_NOTE()
 
