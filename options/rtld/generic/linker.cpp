@@ -1488,6 +1488,20 @@ uintptr_t ObjectSymbol::virtualAddress() {
 	return _object->baseAddress + _symbol->st_value;
 }
 
+size_t ObjectSymbol::size() {
+	return _symbol->st_size;
+}
+
+bool ObjectSymbol::contains(uintptr_t addr) {
+	if(!size() && virtualAddress() == addr)
+		return true;
+
+	if(size() && addr >= virtualAddress() && addr < (virtualAddress() + size()))
+		return true;
+
+	return false;
+}
+
 // --------------------------------------------------------
 // Scope
 // --------------------------------------------------------
