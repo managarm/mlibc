@@ -5,6 +5,7 @@
 #include <frg/vector.hpp>
 #include <frg/stack.hpp>
 #include <frg/expected.hpp>
+#include <frg/manual_box.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/tcb.hpp>
 
