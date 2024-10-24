@@ -810,7 +810,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 		for(size_t i = 0; i < num_symbols; i++) {
 			ObjectSymbol cand{object, (elf_sym *)(object->baseAddress
 					+ object->symbolTableOffset + i * sizeof(elf_sym))};
-			if(eligible(cand) && cand.virtualAddress() == reinterpret_cast<uintptr_t>(ptr)) {
+			if(eligible(cand) && cand.contains(reinterpret_cast<uintptr_t>(ptr))) {
 				if (logDlCalls)
 					mlibc::infoLogger() << "rtld: Found symbol " << cand.getString() << " in object "
 							<< object->path << frg::endlog;
