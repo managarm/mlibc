@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+/* TODO: This is from the Linux ABI. Make this an abi-bit. */
+
 struct sysinfo {
 	long uptime;
 	unsigned long loads[3];
@@ -18,7 +20,12 @@ struct sysinfo {
 	unsigned long totalhigh;
 	unsigned long freehigh;
 	unsigned int mem_unit;
+
+	/* This is how the kernel header defines it, so suppress the warning. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 	char _f[20 - 2 * sizeof(long) - sizeof(int)]; /* Padding to 64 bytes according to my man page */
+#pragma GCC diagnostic pop
 };
 
 #ifndef __MLIBC_ABI_ONLY

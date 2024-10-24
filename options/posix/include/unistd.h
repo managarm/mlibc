@@ -241,9 +241,14 @@ extern "C" {
 
 #define L_ctermid 20
 
-#ifndef intptr_t
+/*
+ * Solving this likely requires us to 'factor out' the typedef into a new
+ * header file, or use a mechanism like musl's __NEED_intptr_t.
+ */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 typedef __mlibc_intptr intptr_t;
-#endif
+#pragma GCC diagnostic pop
 
 #ifndef __MLIBC_ABI_ONLY
 

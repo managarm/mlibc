@@ -62,6 +62,15 @@ long syscall(long n, Arg0 a0, Arg1 a1, Arg2 a2, Arg3 a3, Arg4 a4, Arg5 a5, Arg6 
 } /* extern C++ */
 #else
 
+/*
+ * Variadic macros are not supported in C89.
+ * glibc implements syscall() as a variadic function, which we've ruled out.
+ * musl uses them without checking the C standard in use. So suppressing
+ * the check here seems reasonable.
+ */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wvariadic-macros"
+
 /* These syscall macros were copied from musl. */
 #define __scc(x) ((__sc_word_t)(x))
 #define __syscall0(n) __do_syscall0(n)
@@ -79,6 +88,8 @@ long syscall(long n, Arg0 a0, Arg1 a1, Arg2 a2, Arg3 a3, Arg4 a4, Arg5 a5, Arg6 
 #define __SYSCALL_DISP(b,...) __SYSCALL_CONCAT(b,__SYSCALL_NARGS(__VA_ARGS__))(__VA_ARGS__)
 #define __syscall(...) __SYSCALL_DISP(__syscall,__VA_ARGS__)
 #define syscall(...) __do_syscall_ret(__syscall(__VA_ARGS__))
+
+#pragma GCC diagnostic pop
 
 #endif
 

@@ -5,6 +5,7 @@
 #include <bits/off_t.h>
 #include <bits/size_t.h>
 #include <bits/ssize_t.h>
+#include <bits/file.h>
 
 /* MISSING: var_list */
 
@@ -15,8 +16,6 @@ extern "C" {
 #define P_tmpdir "/tmp"
 
 #ifndef __MLIBC_ABI_ONLY
-
-typedef struct __mlibc_file_base FILE;
 
 int fileno(FILE *__file);
 FILE *fdopen(int __fd, const char *__mode);
