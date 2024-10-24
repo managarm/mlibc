@@ -118,6 +118,13 @@ enum class HashStyle {
 	gnu
 };
 
+struct GnuHashTableHeader {
+	uint32_t nBuckets;
+	uint32_t symbolOffset;
+	uint32_t bloomSize;
+	uint32_t bloomShift;
+};
+
 using InitFuncPtr = void (*)();
 
 // The ABI of this struct is fixed by GDB
