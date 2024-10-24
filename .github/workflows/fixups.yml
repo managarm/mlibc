@@ -1,7 +1,6 @@
 name: Check if PR has fixups
 
-on:
-  pull_request:
+on: [pull_request, merge_group]
 
 jobs:
   find-fixups:

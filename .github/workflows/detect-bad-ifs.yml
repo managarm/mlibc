@@ -1,6 +1,6 @@
 name: Detect ifdef/defined (mis)use
 
-on: [push, pull_request]
+on: [push, pull_request, merge_group]
 
 jobs:
   find-misuse:
