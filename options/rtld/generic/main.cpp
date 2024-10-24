@@ -880,9 +880,8 @@ void __dlapi_enter(uintptr_t *entry_stack) {
 
 extern "C" [[gnu::visibility("default")]] int _dl_find_object(void *address, dl_find_object *result) {
 	for(const SharedObject *object : initialRepository->loadedObjects) {
-		if(object->baseAddress > (uintptr_t)address) {
+		if(object->baseAddress > reinterpret_cast<uintptr_t>(address))
 			continue;
-		}
 
 		if(object->inLinkMap)
 			result->dlfo_link_map = (link_map *)&object->linkMap;
@@ -901,6 +900,9 @@ extern "C" [[gnu::visibility("default")]] int _dl_find_object(void *address, dl_
 			}
 			end_addr = frg::max(end_addr, phdr->p_vaddr + phdr->p_memsz);
 		}
+
+		if(reinterpret_cast<uintptr_t>(address) > object->baseAddress + end_addr)
+			continue;
 
 		result->dlfo_flags = 0;
 		result->dlfo_map_start = (void *)object->baseAddress;
