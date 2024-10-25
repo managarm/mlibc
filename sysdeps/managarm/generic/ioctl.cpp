@@ -507,19 +507,77 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 	if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGVERSION)) {
-		*reinterpret_cast<int *>(arg) = 0x010001; // should be EV_VERSION
+		*reinterpret_cast<int *>(arg) = EV_VERSION;
 		*result = 0;
 		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGID)) {
 		memset(arg, 0, sizeof(struct input_id));
+		auto param = reinterpret_cast<struct input_id *>(arg);
+
+		managarm::fs::EvioGetIdRequest<MemoryAllocator> req(getSysdepsAllocator());
+
+		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::want_lane,
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		auto conversation = offer.descriptor();
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		auto resp = *bragi::parse_head_only<managarm::fs::EvioGetIdReply>(recv_resp, getSysdepsAllocator());
+		recv_resp.reset();
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		param->bustype = resp.bustype();
+		param->vendor = resp.vendor();
+		param->product = resp.product();
+		param->version = resp.version();
+
 		*result = 0;
 		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
 			&& _IOC_NR(request) == _IOC_NR(EVIOCGNAME(0))) {
-		const char *s = "Managarm generic evdev";
-		auto chunk = frg::min(_IOC_SIZE(request), strlen(s) + 1);
-		memcpy(arg, s, chunk);
+		managarm::fs::EvioGetNameRequest<MemoryAllocator> req(getSysdepsAllocator());
+
+		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::want_lane,
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::recvInline())
+		);
+		HEL_CHECK(offer.error());
+		auto conversation = offer.descriptor();
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		auto preamble = bragi::read_preamble(recv_resp);
+		__ensure(!preamble.error());
+
+		frg::vector<uint8_t, MemoryAllocator> tailBuffer{getSysdepsAllocator()};
+		tailBuffer.resize(preamble.tail_size());
+		auto [recv_tail] = exchangeMsgsSync(
+			conversation.getHandle(),
+			helix_ng::recvBuffer(tailBuffer.data(), tailBuffer.size())
+		);
+
+		HEL_CHECK(recv_tail.error());
+
+		auto resp = *bragi::parse_head_tail<managarm::fs::EvioGetNameReply>(recv_resp, tailBuffer, getSysdepsAllocator());
+		recv_resp.reset();
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		auto chunk = frg::min(_IOC_SIZE(request), resp.name().size() + 1);
+		memcpy(arg, resp.name().data(), chunk);
 		*result = chunk;
 		return 0;
 	}else if(_IOC_TYPE(request) == 'E'
