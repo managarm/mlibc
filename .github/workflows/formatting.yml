@@ -1,0 +1,14 @@
+name: pre-commit
+
+on: [push, merge_group, pull_request]
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v3
+    - name: Install clang-format
+      run: |
+        pip install clang-format
+    - uses: pre-commit/action@v3.0.1
