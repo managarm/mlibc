@@ -1,0 +1,35 @@
+name: Miscellaneous checks
+
+on: [pull_request, merge_group]
+
+jobs:
+  misc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: 'Check for fixup commits'
+        run: |
+          set -e -o pipefail
+
+          git rev-list 'HEAD^..HEAD' \
+            | while read -r COMMIT; do
+            printf 'pondering commit %s\n' "$COMMIT"
+            git show -s "$COMMIT"
+            if git show -s --format='%s' "$COMMIT" | grep -q '^fixup! '; then
+              exit 1
+            fi
+          done
+
+      - name: 'Detect missing mlibc-config.h'
+        run: chmod +x ./scripts/check-options-header-include.sh && ./scripts/check-options-header-include.sh
+
+      - name: 'Detect ifdef/defined misuse'
+        run: |
+          printf '(^#ifn?def[[:space:]]+|defined[[:space:]]*[(][[:space:]]*)((%s)([^_A-Za-z0-9]|$))\0' \
+                    "$(printf '%s' "$(awk '/#mesondefine/ { print $2 }' mlibc-config.h.in)" | tr '\n' '|')" \
+                  | { ! xargs -0I '{}' grep --color=always -PR '{}' \
+                  || { echo 'found misuse'; exit 1; }; }
+
