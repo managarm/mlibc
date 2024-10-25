@@ -1,15 +1,10 @@
 name: Check for ABI breaks
 
 on:
-  push:
-    branches-ignore:
-      - abi-break
   pull_request:
     branches-ignore:
       - abi-break
   merge_group:
-    branches-ignore:
-      - abi-break
 
 jobs:
   run-abidiff:

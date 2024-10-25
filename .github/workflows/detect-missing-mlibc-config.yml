@@ -1,6 +1,6 @@
 name: Detect missing mlibc-config.h
 
-on: [push, pull_request, merge_group]
+on: [pull_request, merge_group]
 
 jobs:
   find-misuse:
