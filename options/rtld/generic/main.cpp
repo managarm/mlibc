@@ -838,7 +838,8 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 			uintptr_t start = object->baseAddress + phdr->p_vaddr;
 			uintptr_t end = start + phdr->p_memsz;
 			if(reinterpret_cast<uintptr_t>(ptr) >= start && reinterpret_cast<uintptr_t>(ptr) < end) {
-				mlibc::infoLogger() << "rtld: Found DSO " << object->path << frg::endlog;
+				if (logDlCalls)
+					mlibc::infoLogger() << "rtld: Found DSO " << object->path << frg::endlog;
 				info->file = object->path.data();
 				info->base = reinterpret_cast<void *>(object->baseAddress);
 				info->symbol = nullptr;
