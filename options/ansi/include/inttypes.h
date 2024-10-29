@@ -117,6 +117,7 @@
 
 #define SCNd32 "d"
 #define SCNd64 __PRI64 "d"
+#define SCNdFAST64 __PRI64 "d"
 
 #define SCNu16 "hu"
 
