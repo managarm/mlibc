@@ -407,6 +407,13 @@ typedef struct __ucontext {
 	mcontext_t uc_mcontext;
 } ucontext_t;
 
+struct sigcontext {
+  unsigned long int gregs[32];
+  unsigned long long int fpregs[66] __attribute__ ((__aligned__ (16)));
+};
+
+#warning amnogusd
+
 #elif defined (__aarch64__)
 
 #define NGREG 34
