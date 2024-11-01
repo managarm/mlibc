@@ -70,6 +70,7 @@ elif host_machine.cpu_family() == 'x86_64'
 		'x86_64/thread_entry.S',
 		'x86_64/thread.cpp'
 	)
+elif host_machine.cpu_family() == 'riscv64'
 else
 	error('Unknown architecture')
 endif
