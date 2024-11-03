@@ -53,7 +53,7 @@ int posix_fallocate(int __fd, off_t __offset, off_t __size);
 struct file_handle {
         unsigned int handle_bytes;
         int handle_type;
-        unsigned char f_handle[0];
+        __extension__ unsigned char f_handle[0];
 };
 #endif
 

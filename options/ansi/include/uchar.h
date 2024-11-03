@@ -8,10 +8,11 @@ extern "C" {
 #include <bits/mbstate.h>
 #include <bits/size_t.h>
 
-#ifndef __cplusplus
+/* These are builtin types since C++11. */
+#if !defined(__cplusplus) || __cplusplus < 201100L
 typedef __CHAR16_TYPE__ char16_t;
 typedef __CHAR32_TYPE__ char32_t;
-#endif /* __cplusplus */
+#endif
 
 #ifndef __MLIBC_ABI_ONLY
 
