@@ -1,0 +1,7 @@
+cc-runtime
+==========
+
+cc-runtime is a freestanding, easy to integrate subset of LLVM's compiler-rt
+libgcc-compatibility functions.
+
+Relevant licenses apply: see license headers in source files and LICENSE.TXT.

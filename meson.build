@@ -30,7 +30,6 @@ no_headers = get_option('no_headers')
 library_type = get_option('default_library')
 build_tests = get_option('build_tests')
 build_tests_host_libc = get_option('build_tests_host_libc')
-libgcc_dependency = get_option('libgcc_dependency')
 internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
@@ -75,6 +74,10 @@ if not headers_only
 	add_project_arguments('-nostdinc', '-fno-builtin', '-ffreestanding', language: ['c', 'cpp'])
 	add_project_arguments('-Werror=misleading-indentation', language: ['c', 'cpp'])
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
+	if target_machine.cpu_family() == 'aarch64'
+		add_project_arguments('-mno-outline-atomics', language: ['c', 'cpp'])
+	endif
+
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
 	if get_option('buildtype').startswith('debug')
@@ -430,6 +433,7 @@ rtld_sources += [
 
 rtld_dso_sources += ['options/rtld' / host_machine.cpu_family() / 'entry.S']
 
+subdir('cc-runtime')
 subdir('options/elf')
 subdir('options/ansi')
 subdir('options/posix')
@@ -441,26 +445,6 @@ subdir('options/bsd')
 rtlib_deps = []
 
 if not headers_only
-	if libgcc_dependency
-		libgcc = meson.get_compiler('c').find_library('gcc', required: false)
-
-		compiler_rt_name = 'libclang_rt.builtins-' + host_machine.cpu_family()
-		compiler_rt = meson.get_compiler('c').find_library(compiler_rt_name, required: false)
-
-		if not compiler_rt.found()
-			compiler_rt_name = 'libclang_rt.builtins'
-			compiler_rt = meson.get_compiler('c').find_library(compiler_rt_name, required: false)
-		endif
-
-		if libgcc.found()
-			rtlib_deps += libgcc
-		elif compiler_rt.found()
-			rtlib_deps += compiler_rt
-		else
-			error('neither libgcc nor ' + compiler_rt_name + ' was found')
-		endif
-	endif
-
 	ld_cpp_args = [
 		'-fvisibility=hidden',
 		'-fvisibility-inlines-hidden',
@@ -498,13 +482,14 @@ if not headers_only
 			cpp_args: ld_cpp_args + static_cpp_args,
 			include_directories: rtld_include_dirs,
 			dependencies: rtld_deps + rtlib_deps,
+			link_with: [cc_runtime],
 			install: false
 		)
 		libc_static = static_library('c', libc_all_sources,
 			cpp_args: static_cpp_args + ['-fno-stack-protector', libc_cpp_args],
 			include_directories: libc_include_dirs,
 			dependencies: libc_deps + rtlib_deps,
-			link_with: [ld_static_lib],
+			link_with: [cc_runtime, ld_static_lib],
 			link_whole: [libc_sublibs, ld_static_lib],
 			install: true
 		)
@@ -515,6 +500,7 @@ if not headers_only
 			cpp_args: ld_cpp_args,
 			include_directories: rtld_include_dirs,
 			dependencies: rtld_deps + rtlib_deps,
+			link_with: [cc_runtime],
 			install: true
 		)
 		hide_everything_ld = (meson.current_source_dir()
@@ -523,8 +509,8 @@ if not headers_only
 			cpp_args: [libc_cpp_args],
 			include_directories: libc_include_dirs,
 			dependencies: libc_deps + rtlib_deps,
-			link_with: [ld_shared_lib],
-			link_whole: libc_sublibs,
+			link_with: [cc_runtime, ld_shared_lib],
+			link_whole: [libc_sublibs],
 			link_args: ['-Wl,--version-script,' + hide_everything_ld],
 			link_depends: [hide_everything_ld],
 			install: true
@@ -553,7 +539,6 @@ summary_info += {'Linux option': get_option('linux_option')}
 summary_info += {'glibc option': get_option('glibc_option')}
 summary_info += {'BSD option': get_option('bsd_option')}
 summary_info += {'debug allocator': get_option('debug_allocator')}
-summary_info += {'libgcc dependency': libgcc_dependency}
 summary(summary_info, bool_yn: true, section: 'mlibc options')
 
 if build_tests
