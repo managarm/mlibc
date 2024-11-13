@@ -1,13 +1,13 @@
 #ifndef MLIBC_POSIX_PIPE
 #define MLIBC_POSIX_PIPE
 
+#include <cstddef>
 #include <signal.h>
 #include <stdint.h>
 #include <string.h>
-#include <cstddef>
 
-#include <hel.h>
 #include <hel-syscalls.h>
+#include <hel.h>
 
 struct SignalGuard {
 	SignalGuard();
@@ -16,7 +16,7 @@ struct SignalGuard {
 
 	~SignalGuard();
 
-	SignalGuard &operator= (const SignalGuard &) = delete;
+	SignalGuard &operator=(const SignalGuard &) = delete;
 };
 
 // We need an allocator for message structs in sysdeps functions; the "normal" mlibc
@@ -33,33 +33,24 @@ struct ElementHandle {
 		swap(u._data, v._data);
 	}
 
-	ElementHandle()
-	: _queue{nullptr}, _n{-1}, _data{nullptr} { }
+	ElementHandle() : _queue{nullptr}, _n{-1}, _data{nullptr} {}
 
-	ElementHandle(Queue *queue, int n, void *data)
-	: _queue{queue}, _n{n}, _data{data} { }
+	ElementHandle(Queue *queue, int n, void *data) : _queue{queue}, _n{n}, _data{data} {}
 
 	ElementHandle(const ElementHandle &other);
 
-	ElementHandle(ElementHandle &&other)
-	: ElementHandle{} {
-		swap(*this, other);
-	}
+	ElementHandle(ElementHandle &&other) : ElementHandle{} { swap(*this, other); }
 
 	~ElementHandle();
 
-	ElementHandle &operator= (ElementHandle other) {
+	ElementHandle &operator=(ElementHandle other) {
 		swap(*this, other);
 		return *this;
 	}
 
-	void *data() {
-		return _data;
-	}
+	void *data() { return _data; }
 
-	void advance(size_t size) {
-		_data = reinterpret_cast<char *>(_data) + size;
-	}
+	void advance(size_t size) { _data = reinterpret_cast<char *>(_data) + size; }
 
 private:
 	Queue *_queue;
@@ -68,19 +59,20 @@ private:
 };
 
 struct Queue {
-	Queue()
-	: _handle{kHelNullHandle} {
+	Queue() : _handle{kHelNullHandle} {
 		// We do not need to protect those allocations against signals as this constructor
 		// is only called during library initialization.
-		_chunks[0] = reinterpret_cast<HelChunk *>(getSysdepsAllocator().allocate(sizeof(HelChunk) + 4096));
-		_chunks[1] = reinterpret_cast<HelChunk *>(getSysdepsAllocator().allocate(sizeof(HelChunk) + 4096));
+		_chunks[0] =
+		    reinterpret_cast<HelChunk *>(getSysdepsAllocator().allocate(sizeof(HelChunk) + 4096));
+		_chunks[1] =
+		    reinterpret_cast<HelChunk *>(getSysdepsAllocator().allocate(sizeof(HelChunk) + 4096));
 
 		recreateQueue();
 	}
 
 	Queue(const Queue &) = delete;
 
-	Queue &operator= (const Queue &) = delete;
+	Queue &operator=(const Queue &) = delete;
 
 	void recreateQueue() {
 		// Reset the internal queue state.
@@ -89,12 +81,7 @@ struct Queue {
 		_lastProgress = 0;
 
 		// Setup the queue header.
-		HelQueueParameters params {
-			.flags = 0,
-			.ringShift = 1,
-			.numChunks = 2,
-			.chunkSize = 4096
-		};
+		HelQueueParameters params{.flags = 0, .ringShift = 1, .numChunks = 2, .chunkSize = 4096};
 		HEL_CHECK(helCreateQueue(&params, &_handle));
 
 		auto chunksOffset = (sizeof(HelQueue) + (sizeof(int) << 1) + 63) & ~size_t(63);
@@ -102,13 +89,19 @@ struct Queue {
 		auto overallSize = chunksOffset + params.numChunks * reservedPerChunk;
 
 		void *mapping;
-		HEL_CHECK(helMapMemory(_handle, kHelNullHandle, nullptr,
-				0, (overallSize + 0xFFF) & ~size_t(0xFFF),
-				kHelMapProtRead | kHelMapProtWrite, &mapping));
+		HEL_CHECK(helMapMemory(
+		    _handle,
+		    kHelNullHandle,
+		    nullptr,
+		    0,
+		    (overallSize + 0xFFF) & ~size_t(0xFFF),
+		    kHelMapProtRead | kHelMapProtWrite,
+		    &mapping
+		));
 
 		_queue = reinterpret_cast<HelQueue *>(mapping);
 		auto chunksPtr = reinterpret_cast<std::byte *>(mapping) + chunksOffset;
-		for(unsigned int i = 0; i < 2; ++i)
+		for (unsigned int i = 0; i < 2; ++i)
 			_chunks[i] = reinterpret_cast<HelChunk *>(chunksPtr + i * reservedPerChunk);
 
 		// Reset and enqueue the chunks.
@@ -124,14 +117,12 @@ struct Queue {
 		_wakeHeadFutex();
 	}
 
-	HelHandle getQueue() {
-		return _handle;
-	}
+	HelHandle getQueue() { return _handle; }
 
-	void trim() { }
-	
+	void trim() {}
+
 	ElementHandle dequeueSingle() {
-		while(true) {
+		while (true) {
 			__ensure(_retrieveIndex != _nextIndex);
 
 			bool done;
@@ -140,7 +131,7 @@ struct Queue {
 			auto n = _numberOf(_retrieveIndex);
 			__ensure(_refCount[n]);
 
-			if(done) {
+			if (done) {
 				retire(n);
 
 				_lastProgress = 0;
@@ -159,7 +150,7 @@ struct Queue {
 
 	void retire(int n) {
 		__ensure(_refCount[n]);
-		if(_refCount[n]-- > 1)
+		if (_refCount[n]-- > 1)
 			return;
 
 		// Reset and enqueue the chunk again.
@@ -171,46 +162,46 @@ struct Queue {
 		_wakeHeadFutex();
 	}
 
-	void reference(int n) {
-		_refCount[n]++;
-	}
+	void reference(int n) { _refCount[n]++; }
 
 private:
-	int _numberOf(int index) {
-		return _queue->indexQueue[index & 1];
-	}
+	int _numberOf(int index) { return _queue->indexQueue[index & 1]; }
 
-	HelChunk *_retrieveChunk() {
-		return _chunks[_numberOf(_retrieveIndex)];
-	}
+	HelChunk *_retrieveChunk() { return _chunks[_numberOf(_retrieveIndex)]; }
 
 	void _wakeHeadFutex() {
 		auto futex = __atomic_exchange_n(&_queue->headFutex, _nextIndex, __ATOMIC_RELEASE);
-		if(futex & kHelHeadWaiters)
+		if (futex & kHelHeadWaiters)
 			HEL_CHECK(helFutexWake(&_queue->headFutex));
 	}
 
 	void _waitProgressFutex(bool *done) {
-		while(true) {
+		while (true) {
 			auto futex = __atomic_load_n(&_retrieveChunk()->progressFutex, __ATOMIC_ACQUIRE);
 			__ensure(!(futex & ~(kHelProgressMask | kHelProgressWaiters | kHelProgressDone)));
 			do {
-				if(_lastProgress != (futex & kHelProgressMask)) {
+				if (_lastProgress != (futex & kHelProgressMask)) {
 					*done = false;
 					return;
-				}else if(futex & kHelProgressDone) {
+				} else if (futex & kHelProgressDone) {
 					*done = true;
 					return;
 				}
 
-				if(futex & kHelProgressWaiters)
+				if (futex & kHelProgressWaiters)
 					break; // Waiters bit is already set (in a previous iteration).
-			} while(!__atomic_compare_exchange_n(&_retrieveChunk()->progressFutex, &futex,
-						_lastProgress | kHelProgressWaiters,
-						false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE));
-			
-			HEL_CHECK(helFutexWait(&_retrieveChunk()->progressFutex,
-					_lastProgress | kHelProgressWaiters, -1));
+			} while (!__atomic_compare_exchange_n(
+			    &_retrieveChunk()->progressFutex,
+			    &futex,
+			    _lastProgress | kHelProgressWaiters,
+			    false,
+			    __ATOMIC_ACQUIRE,
+			    __ATOMIC_ACQUIRE
+			));
+
+			HEL_CHECK(helFutexWait(
+			    &_retrieveChunk()->progressFutex, _lastProgress | kHelProgressWaiters, -1
+			));
 		}
 	}
 
@@ -218,7 +209,7 @@ private:
 	HelHandle _handle;
 	HelQueue *_queue;
 	HelChunk *_chunks[2];
-	
+
 	// Index of the chunk that we are currently retrieving/inserting next.
 	int _retrieveIndex;
 	int _nextIndex;
@@ -231,7 +222,7 @@ private:
 };
 
 inline ElementHandle::~ElementHandle() {
-	if(_queue)
+	if (_queue)
 		_queue->retire(_n);
 }
 
@@ -242,7 +233,6 @@ inline ElementHandle::ElementHandle(const ElementHandle &other) {
 
 	_queue->reference(_n);
 }
-
 
 inline HelSimpleResult *parseSimple(ElementHandle &element) {
 	auto result = reinterpret_cast<HelSimpleResult *>(element.data());
@@ -278,23 +268,23 @@ extern thread_local Queue globalQueue;
 // This include is here because it needs ElementHandle to be declared
 #include <helix/ipc-structs.hpp>
 
-template <typename ...Args>
+template <typename... Args>
 auto exchangeMsgsSync(HelHandle descriptor, Args &&...args) {
 	auto results = helix_ng::createResultsTuple(args...);
 	auto actions = helix_ng::chainActionArrays(args...);
 
-	HEL_CHECK(helSubmitAsync(descriptor, actions.data(),
-		actions.size(), globalQueue.getQueue(), 0, 0));
+	HEL_CHECK(
+	    helSubmitAsync(descriptor, actions.data(), actions.size(), globalQueue.getQueue(), 0, 0)
+	);
 
 	auto element = globalQueue.dequeueSingle();
 	void *ptr = element.data();
 
-	[&]<size_t ...p>(std::index_sequence<p...>) {
+	[&]<size_t... p>(std::index_sequence<p...>) {
 		(results.template get<p>().parse(ptr, element), ...);
-	} (std::make_index_sequence<std::tuple_size_v<decltype(results)>>{});
+	}(std::make_index_sequence<std::tuple_size_v<decltype(results)>>{});
 
 	return results;
 }
-
 
 #endif // MLIBC_POSIX_PIPE

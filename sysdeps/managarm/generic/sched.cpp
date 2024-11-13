@@ -1,10 +1,10 @@
 #include <bits/ensure.h>
 #include <unistd.h>
 
-#include <hel.h>
 #include <hel-syscalls.h>
-#include <mlibc/debug.hpp>
+#include <hel.h>
 #include <mlibc/allocator.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 
@@ -24,15 +24,14 @@ int sys_getthreadaffinity(pid_t tid, size_t cpusetsize, cpu_set_t *mask) {
 	req.set_pid(tid);
 	req.set_size(cpusetsize);
 
-	auto [offer, send_head, recv_resp, recv_data] =
-		exchangeMsgsSync(
-			getPosixLane(),
-			helix_ng::offer(
-				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-				helix_ng::recvInline(),
-				helix_ng::recvBuffer(mask, cpusetsize)
-			)
-		);
+	auto [offer, send_head, recv_resp, recv_data] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+	        helix_ng::recvInline(),
+	        helix_ng::recvBuffer(mask, cpusetsize)
+	    )
+	);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
@@ -40,11 +39,12 @@ int sys_getthreadaffinity(pid_t tid, size_t cpusetsize, cpu_set_t *mask) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	
-	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+
+	if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		return EINVAL;
-	} else if(resp.error() != managarm::posix::Errors::SUCCESS) {
-		mlibc::infoLogger() << "mlibc: got unexpected error from posix in sys_getaffinity!" << frg::endlog;
+	} else if (resp.error() != managarm::posix::Errors::SUCCESS) {
+		mlibc::infoLogger() << "mlibc: got unexpected error from posix in sys_getaffinity!"
+		                    << frg::endlog;
 		return EIEIO;
 	}
 	HEL_CHECK(recv_data.error());
@@ -67,14 +67,12 @@ int sys_setthreadaffinity(pid_t tid, size_t cpusetsize, const cpu_set_t *mask) {
 	req.set_pid(tid);
 	req.set_mask(affinity_mask);
 
-	auto [offer, send_head, send_tail, recv_resp] =
-		exchangeMsgsSync(
-			getPosixLane(),
-			helix_ng::offer(
-				helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
-				helix_ng::recvInline()
-			)
-		);
+	auto [offer, send_head, send_tail, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
@@ -83,11 +81,12 @@ int sys_setthreadaffinity(pid_t tid, size_t cpusetsize, const cpu_set_t *mask) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	
-	if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+
+	if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		return EINVAL;
-	} else if(resp.error() != managarm::posix::Errors::SUCCESS) {
-		mlibc::infoLogger() << "mlibc: got unexpected error from posix in sys_getaffinity!" << frg::endlog;
+	} else if (resp.error() != managarm::posix::Errors::SUCCESS) {
+		mlibc::infoLogger() << "mlibc: got unexpected error from posix in sys_getaffinity!"
+		                    << frg::endlog;
 		return EIEIO;
 	}
 
@@ -99,4 +98,4 @@ int sys_getcpu(int *cpu) {
 	return 0;
 }
 
-}
+} // namespace mlibc

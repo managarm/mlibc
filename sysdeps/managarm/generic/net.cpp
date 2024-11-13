@@ -11,7 +11,7 @@ int sys_if_indextoname(unsigned int index, char *name) {
 	int fd = 0;
 	int r = sys_socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, AF_UNSPEC, &fd);
 
-	if(r)
+	if (r)
 		return r;
 
 	struct ifreq ifr;
@@ -21,8 +21,8 @@ int sys_if_indextoname(unsigned int index, char *name) {
 	int ret = sys_ioctl(fd, SIOCGIFNAME, &ifr, &res);
 	close(fd);
 
-	if(ret) {
-		if(ret == ENODEV)
+	if (ret) {
+		if (ret == ENODEV)
 			return ENXIO;
 		return ret;
 	}
@@ -36,7 +36,7 @@ int sys_if_nametoindex(const char *name, unsigned int *ret) {
 	int fd = 0;
 	int r = sys_socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, AF_UNSPEC, &fd);
 
-	if(r)
+	if (r)
 		return r;
 
 	struct ifreq ifr;
@@ -46,7 +46,7 @@ int sys_if_nametoindex(const char *name, unsigned int *ret) {
 	r = sys_ioctl(fd, SIOCGIFINDEX, &ifr, &res);
 	close(fd);
 
-	if(r)
+	if (r)
 		return r;
 
 	*ret = ifr.ifr_ifindex;
@@ -66,4 +66,4 @@ int sys_getifaddrs(struct ifaddrs **out) {
 	return 0;
 }
 
-} //namespace mlibc
+} // namespace mlibc

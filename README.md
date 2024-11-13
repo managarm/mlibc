@@ -49,6 +49,10 @@ The type of library to be built (static, shared, or both) is controlled by meson
 
 We also support building with `-Db_sanitize=undefined` to use UBSan inside mlibc. Note that this does not enable UBSan for external applications which link against `libc.so`, but it can be useful during development to detect internal bugs (e.g when adding new sysdeps).
 
+## Running pre-commit hooks
+
+To format your code before submitting a PR, you should install [`pre-commit`](https://pre-commit.com/). Then do `pre-commit install` to install the git hook which runs each time you commit. Alternatively, you can do `pre-commit run -a` to manually format all files.
+
 ## Running Tests
 
 The `mlibc` test suite can be run under a Linux host. To do this, first install a set of kernel headers (as described [here](https://docs.kernel.org/kbuild/headers_install.html)), then run from the project root:
