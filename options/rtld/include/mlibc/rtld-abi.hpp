@@ -1,7 +1,7 @@
 #ifndef MLIBC_RTLD_ABI
 #define MLIBC_RTLD_ABI
 
-#include <stdint.h>
+#include <stddef.h>
 
 #if defined(__x86_64__) || defined(__aarch64__) || defined(__i386__) || defined(__riscv) || defined (__m68k__)
 
