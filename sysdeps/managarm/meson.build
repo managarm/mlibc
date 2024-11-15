@@ -71,6 +71,9 @@ elif host_machine.cpu_family() == 'x86_64'
 		'x86_64/thread.cpp'
 	)
 elif host_machine.cpu_family() == 'riscv64'
+	libc_sources += files(
+		'riscv64/thread.cpp',
+	)
 else
 	error('Unknown architecture')
 endif
@@ -129,7 +132,7 @@ endif
 
 if not headers_only
 	crtstuff = ['crt0']
-	if host_machine.cpu_family() in ['x86_64', 'aarch64']
+	if host_machine.cpu_family() in ['x86_64', 'aarch64', 'riscv64']
 		crtstuff += [
 			'Scrt1',
 			'crti',
