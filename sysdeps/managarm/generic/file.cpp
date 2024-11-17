@@ -2560,6 +2560,8 @@ int sys_uname(struct utsname *buf) {
 	strcpy(buf->machine, "x86_64");
 #elif defined (__aarch64__)
 	strcpy(buf->machine, "aarch64");
+#elif defined (__riscv)
+	strcpy(buf->machine, "riscv64");
 #else
 #	error Unknown architecture
 #endif
