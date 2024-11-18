@@ -1323,6 +1323,7 @@ int sys_signalfd_create(const sigset_t *masks, int flags, int *fd) {
 	req.set_request_type(managarm::posix::CntReqType::SIGNALFD_CREATE);
 	req.set_flags(proto_flags);
 	req.set_sigset(*reinterpret_cast<const uint64_t *>(masks));
+	req.set_fd(*fd);
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
