@@ -27,7 +27,7 @@ int sched_getscheduler(pid_t) {
 
 int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getaffinity, -1);
-	if(int e = mlibc::sys_getaffinity(pid, cpusetsize, mask); e) {
+	if(int e = mlibc::sys_getaffinity(pid ? pid : mlibc::sys_getpid(), cpusetsize, mask); e) {
 		errno = e;
 		return -1;
 	}
