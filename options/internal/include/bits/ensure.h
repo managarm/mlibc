@@ -35,7 +35,7 @@ void __ensure_warn(const char *assertion, const char *file, unsigned int line,
 			sysdep; \
 		})
 
-#define MLIBC_STUB_BODY { MLIBC_UNIMPLEMENTED(); __builtin_unreachable(); }
+#define MLIBC_STUB_BODY ({ MLIBC_UNIMPLEMENTED(); __builtin_unreachable(); })
 
 #ifdef __cplusplus
 }
