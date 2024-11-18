@@ -349,8 +349,8 @@ static void store_int(void *dest, unsigned int size, unsigned long long i) {
 
 template<typename H>
 static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
-	#define NOMATCH_CHECK(cond) if(cond) return match_count // if cond is true, matching error
-	#define EOF_CHECK(cond) if(cond) return match_count ? match_count : EOF // if cond is true, no more data to read
+	#define NOMATCH_CHECK(cond) ({ if(cond) return match_count; }) // if cond is true, matching error
+	#define EOF_CHECK(cond) ({ if(cond) return match_count ? match_count : EOF; }) // if cond is true, no more data to read
 	int match_count = 0;
 	for (; *fmt; fmt++) {
 		if (isspace(*fmt)) {
