@@ -1,6 +1,7 @@
 #include <asm/ioctls.h>
 #include <dirent.h>
 #include <errno.h>
+#include <frg/small_vector.hpp>
 #include <stdio.h>
 #include <sys/eventfd.h>
 #include <sys/inotify.h>
@@ -847,7 +848,7 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 }
 
 int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *length) {
-	frg::vector<HelSgItem, MemoryAllocator> sglist{getSysdepsAllocator()};
+	frg::small_vector<HelSgItem, 8, MemoryAllocator> sglist{getSysdepsAllocator()};
 	auto handle = getHandleForFd(sockfd);
 	if (!handle)
 		return EBADF;
@@ -1739,6 +1740,64 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 		if(bytes_written) {
 			*bytes_written = resp.size();
 		}
+		return 0;
+	}
+}
+
+int sys_writev(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_written) {
+	frg::small_vector<HelSgItem, 8, MemoryAllocator> sglist{getSysdepsAllocator()};
+
+	size_t overall_size = 0;
+	for(int i = 0; i < iovc; i++) {
+		HelSgItem item{
+			.buffer = iovs[i].iov_base,
+			.length = iovs[i].iov_len,
+		};
+		sglist.push_back(item);
+		overall_size += iovs[i].iov_len;
+	}
+
+	SignalGuard sguard;
+
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
+
+	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_req_type(managarm::fs::CntReqType::WRITE);
+	req.set_fd(fd);
+	req.set_size(overall_size);
+
+	auto [offer, send_req, imbue_creds, send_data, recv_resp] = exchangeMsgsSync(
+		handle,
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			helix_ng::imbueCredentials(),
+			helix_ng::sendBufferSg(sglist.data(), iovc),
+			helix_ng::recvInline())
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(imbue_creds.error());
+	HEL_CHECK(send_data.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+	if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+		return EINVAL; // FD does not support writes.
+	}else if(resp.error() == managarm::fs::Errors::NO_SPACE_LEFT) {
+		return ENOSPC;
+	}else if(resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
+		return EAGAIN;
+	}else if(resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
+		return ENOTCONN;
+	}else{
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		if(bytes_written)
+			*bytes_written = resp.size();
+
 		return 0;
 	}
 }
