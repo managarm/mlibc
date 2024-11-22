@@ -125,6 +125,13 @@ struct nd_opt_prefix_info {
 #define ND_RA_FLAG_OTHER 0x40
 #define ND_RA_FLAG_MANAGED 0x80
 
+struct nd_opt_rd_hdr {
+	uint8_t nd_opt_rh_type;
+	uint8_t nd_opt_rh_len;
+	uint16_t nd_opt_rh_reserved1;
+	uint32_t nd_opt_rh_reserved2;
+};
+
 struct nd_opt_mtu {
 	uint8_t nd_opt_mtu_type;
 	uint8_t nd_opt_mtu_len;
@@ -136,6 +143,10 @@ struct nd_neighbor_solicit {
 	struct icmp6_hdr nd_ns_hdr;
 	struct in6_addr nd_ns_target;
 };
+
+#define nd_ns_type nd_ns_hdr.icmp6_type
+#define nd_ns_code nd_ns_hdr.icmp6_code
+#define nd_ns_cksum nd_ns_hdr.icmp6_cksum
 
 struct nd_neighbor_advert {
 	struct icmp6_hdr nd_na_hdr;
@@ -152,9 +163,21 @@ struct nd_redirect {
 	struct in6_addr nd_rd_dst;
 };
 
+#define nd_rd_type nd_rd_hdr.icmp6_type
+#define nd_rd_code nd_rd_hdr.icmp6_code
+#define nd_rd_cksum nd_rd_hdr.icmp6_cksum
+
 #define ND_NA_FLAG_OVERRIDE 0x00000020
 #define ND_NA_FLAG_SOLICITED 0x00000040
 #define ND_NA_FLAG_ROUTER 0x00000080
+
+struct nd_opt_home_agent_info {
+	uint8_t nd_opt_home_agent_info_type;
+	uint8_t nd_opt_home_agent_info_len;
+	uint16_t nd_opt_home_agent_info_reserved;
+	uint16_t nd_opt_home_agent_info_preference;
+	uint16_t nd_opt_home_agent_info_lifetime;
+};
 
 #ifdef __cplusplus
 }
