@@ -3,11 +3,13 @@
 #include <linux/cdrom.h>
 #include <linux/input.h>
 #include <linux/kd.h>
+#include <linux/sockios.h>
 #include <linux/usb/cdc-wdm.h>
 #include <linux/vt.h>
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <netinet/in.h>
+#include <scsi/sg.h>
 #include <sys/ioctl.h>
 
 #include <bits/ensure.h>
@@ -505,6 +507,18 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			*result = resp.result();
 			return 0;
 		}
+		case SIOCETHTOOL:
+			mlibc::infoLogger() << "\e[35mmlibc: SIOCETHTOOL is a stub" << frg::endlog;
+			*result = 0;
+			return ENOSYS;
+		case SIOCGSKNS:
+			mlibc::infoLogger() << "\e[35mmlibc: SIOCGSKNS is a stub" << frg::endlog;
+			*result = 0;
+			return ENOSYS;
+		case SG_IO:
+			mlibc::infoLogger() << "\e[35mmlibc: SG_IO is a stub" << frg::endlog;
+			*result = 0;
+			return ENOSYS;
 	} // end of switch()
 
 	if (_IOC_TYPE(request) == 'E' && _IOC_NR(request) == _IOC_NR(EVIOCGVERSION)) {
