@@ -4,3 +4,8 @@
 size_t malloc_usable_size(void *p) {
 	return getAllocator().get_size(p);
 }
+
+int malloc_info(int, FILE *) {
+	errno = ENOSYS;
+	return -1;
+}
