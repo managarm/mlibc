@@ -118,9 +118,20 @@ int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	info->si_pid = resp.pid();
 	info->si_uid = resp.uid();
-	info->si_signo = SIGCHLD;
-	info->si_status = resp.sig_status();
 	info->si_code = resp.sig_code();
+	switch (info->si_code) {
+		case CLD_EXITED:
+			info->si_status = WEXITSTATUS(resp.sig_status());
+			break;
+		case CLD_KILLED:
+		case CLD_DUMPED:
+		case CLD_STOPPED:
+			info->si_signo = WSTOPSIG(resp.sig_status());
+			break;
+		case CLD_CONTINUED:
+			info->si_signo = SIGCHLD;
+			break;
+	}
 	return 0;
 }
 
