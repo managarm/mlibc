@@ -69,8 +69,8 @@ int posix_fallocate(int fd, off_t offset, off_t size) {
 
 // This is a linux extension
 int name_to_handle_at(int, const char *, struct file_handle *, int *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	errno = ENOSYS;
+	return -1;
 }
 
 int open_by_handle_at(int, struct file_handle *, int) {
