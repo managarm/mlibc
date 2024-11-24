@@ -2740,4 +2740,37 @@ int sys_sysinfo(struct sysinfo *info) {
 	return 0;
 }
 
+int sys_fstatfs(int fd, struct statfs *buf) {
+	SignalGuard sguard;
+
+	managarm::posix::FstatfsRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_fd(fd);
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::FstatfsResponse resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+	if (resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	} else if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		// Check?
+		return ENOENT;
+	} else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		memset(buf, NULL, sizeof(struct statfs));
+		buf->f_type = resp.fstype();
+		return 0;
+	}
+}
+
 } // namespace mlibc
