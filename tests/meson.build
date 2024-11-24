@@ -117,6 +117,10 @@ all_test_cases = [
 	'linux/getifaddrs',
 ]
 
+all_cpp_test_cases = [
+	'posix/lookup',
+]
+
 if host_machine.system() == 'linux'
 	all_test_cases += 'glibc/linux-syscall'
 endif
@@ -150,7 +154,9 @@ extra_cflags_test_cases = {
 test_sources = []
 test_objects = []
 test_link_args = []
+test_cpp_link_args = ['-static']
 test_c_args = ['-D_GNU_SOURCE', '-fno-builtin']
+test_cpp_args = ['-D_GNU_SOURCE', '-fno-builtin']
 use_pie = false
 
 host_test_c_args = ['-fno-builtin']
@@ -162,6 +168,7 @@ if c_compiler.get_id() == 'gcc'
 	host_test_c_args += []
 elif c_compiler.get_id() == 'clang'
 	test_c_args += ['-Wno-unknown-warning-option']
+	test_cpp_args += ['-Wno-unknown-warning-option']
 	host_test_c_args += ['-Wno-unknown-warning-option']
 endif
 
@@ -169,7 +176,7 @@ endif
 # since it is internal to libc.so and ld.so.
 test_override_options = ['b_sanitize=none']
 
-if library_type == 'static'
+if library_type in ['both', 'static']
 	c_compiler = meson.get_compiler('c')
 	searchdirs = run_command(c_compiler.cmd_array(), '-print-search-dirs',
 				check: true).stdout()
@@ -201,7 +208,18 @@ if library_type == 'static'
 	if crtpath == ''
 		error('could not find crtbegin.o/crtend.o')
 	endif
-	test_objects += [crtpath / 'crtbegin.o', crtpath / 'crtend.o']
+
+	test_static_objects = [crtpath / 'crtbegin.o', crtpath / 'crtend.o']
+
+	libc_static_dep = declare_dependency(
+		include_directories: libc_include_dirs,
+		link_with: libc_static,
+		dependencies: [libc_deps, rtlib_deps]
+	)
+endif
+
+if library_type == 'static'
+	test_objects += test_static_objects
 
 	libc_dep = declare_dependency(
 		include_directories: libc_include_dirs,
@@ -211,6 +229,7 @@ if library_type == 'static'
 	use_pie = false
 	test_c_args += '-no-pie'
 	test_link_args += ['-no-pie', '-static']
+	test_cpp_link_args += ['-no-pie', '-static']
 	test_sources += crt
 else
 	libc_dep = declare_dependency(
@@ -304,3 +323,34 @@ foreach test_name : all_test_cases
 		test(test_short_name, exec, suite: ['host-libc', test_subdir], should_fail: should_fail, timeout: timeout_sec)
 	endif
 endforeach
+
+if library_type in ['both', 'static'] and c_compiler.get_id() == 'gcc'
+	foreach test_name : all_cpp_test_cases
+		test_subdir = test_name.split('/')[0]
+		test_short_name = test_name.split('/')[1]
+		test_exec_name = test_name.replace('/', '-')
+
+		if test_subdir == 'bsd' and not bsd_option
+			continue
+		elif test_subdir == 'glibc' and not glibc_option
+			continue
+		elif test_subdir == 'posix' and not posix_option
+			continue
+		elif test_subdir == 'linux' and not linux_option
+			continue
+		endif
+
+		should_fail = fail_test_cases.contains(test_name)
+		exec = executable(test_exec_name, [test_name + '.cpp'] + crt,
+			dependencies: libc_static_dep,
+			objects: test_static_objects,
+			build_rpath: meson.build_root(),
+			override_options: test_override_options,
+			cpp_args: test_cpp_args + static_cpp_args,
+			link_args: test_cpp_link_args,
+			pie: false,
+		)
+
+		test(test_short_name, exec, suite: test_subdir, should_fail: should_fail, timeout: timeout_sec)
+	endforeach
+endif
