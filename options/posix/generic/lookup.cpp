@@ -20,30 +20,49 @@ namespace {
 	constexpr unsigned int RECORD_PTR = 12;
 }
 
-static frg::string<MemoryAllocator> read_dns_name(char *buf, char *&it) {
+static frg::optional<frg::string<MemoryAllocator>> read_dns_name(uint8_t *buf,
+		size_t buf_size, uint8_t *&it) {
 	frg::string<MemoryAllocator> res{getAllocator()};
-	while (true) {
-		char code = *it++;
-		if ((code & 0xC0) == 0xC0) {
+	while(it < buf + buf_size) {
+		uint8_t code = *it++;
+		if((code & 0xC0) == 0xC0) {
 			// pointer
+			if(it + 1 > buf + buf_size) {
+				return frg::null_opt;
+			}
+
 			uint8_t offset = ((code & 0x3F) << 8) | *it++;
+			if(offset >= buf_size) {
+				return frg::null_opt;
+			}
+
 			auto offset_it = buf + offset;
-			return res + read_dns_name(buf, offset_it);
-		} else if (!(code & 0xC0)) {
-			if (!code)
-				break;
+			auto sub_name = read_dns_name(buf, buf_size, offset_it);
+			if(!sub_name) {
+				return frg::null_opt;
+			}
 
-			for (int i = 0; i < code; i++)
+			return res + *sub_name;
+		} else if(!(code & 0xC0)) {
+			if (!code) {
+				return res;
+			} else if(it + code > buf + buf_size) {
+				return frg::null_opt;
+			}
+
+			for (int i = 0; i < code; i++) {
 				res += (*it++);
+			}
 
-			if (*it)
+			if (it < buf + buf_size && *it) {
 				res += '.';
+			}
 		} else {
-			break;
+			return frg::null_opt;
 		}
 	}
 
-	return res;
+	return frg::null_opt;
 }
 
 int lookup_name_dns(struct lookup_result &buf, const char *name,
@@ -105,10 +124,10 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 		return -EAI_SYSTEM;
 	}
 
-	char response[256];
+	uint8_t response[1500];
 	ssize_t rlen;
 	int num_ans = 0;
-	while ((rlen = recvfrom(fd, response, 256, 0, NULL, NULL)) >= 0) {
+	while ((rlen = recvfrom(fd, response, sizeof(response), 0, NULL, NULL)) >= 0) {
 		if ((size_t)rlen < sizeof(struct dns_header))
 			continue;
 		auto response_header = reinterpret_cast<struct dns_header*>(response);
@@ -117,33 +136,48 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 
 		auto it = response + sizeof(struct dns_header);
 		for (int i = 0; i < ntohs(response_header->no_q); i++) {
-			auto dns_name = read_dns_name(response, it);
-			(void) dns_name;
+			auto dns_name = read_dns_name(response, sizeof(response), it);
+			if(!dns_name) {
+				return -EAI_FAIL;
+			}
 			it += 4;
 		}
 
 		for (int i = 0; i < ntohs(response_header->no_ans); i++) {
-			struct dns_addr_buf buffer;
-			auto dns_name = read_dns_name(response, it);
+			auto dns_name = read_dns_name(response, sizeof(response), it);
+			if(!dns_name) {
+				return -EAI_FAIL;
+			} else if(it + 10 > response + rlen) {
+				return -EAI_FAIL;
+			}
 
 			uint16_t rr_type = (it[0] << 8) | it[1];
 			uint16_t rr_class = (it[2] << 8) | it[3];
 			uint16_t rr_length = (it[8] << 8) | it[9];
 			it += 10;
 			(void)rr_class;
+			if(it + rr_length > response + rlen) {
+				return -EAI_FAIL;
+			}
 
+			struct dns_addr_buf buffer;
 			switch (rr_type) {
 				case RECORD_A:
 					memcpy(buffer.addr, it, rr_length);
 					it += rr_length;
 					buffer.family = AF_INET;
-					buffer.name = std::move(dns_name);
+					buffer.name = std::move(*dns_name);
 					buf.buf.push(std::move(buffer));
 					break;
-				case RECORD_CNAME:
-					canon_name = read_dns_name(response, it);
-					buf.aliases.push(std::move(dns_name));
+				case RECORD_CNAME: {
+					auto cname = read_dns_name(response, sizeof(response), it);
+					if(!cname) {
+						return -EAI_FAIL;
+					}
+					canon_name = std::move(*cname);
+					buf.aliases.push(std::move(*dns_name));
 					break;
+				}
 				default:
 					mlibc::infoLogger() << "lookup_name_dns: unknown rr type "
 						<< rr_type << frg::endlog;
@@ -234,10 +268,10 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 		return -EAI_SYSTEM;
 	}
 
-	char response[256];
+	uint8_t response[1500];
 	ssize_t rlen;
 	int num_ans = 0;
-	while ((rlen = recvfrom(fd, response, 256, 0, NULL, NULL)) >= 0) {
+	while ((rlen = recvfrom(fd, response, sizeof(response), 0, NULL, NULL)) >= 0) {
 		if ((size_t)rlen < sizeof(struct dns_header))
 			continue;
 		auto response_header = reinterpret_cast<struct dns_header*>(response);
@@ -246,31 +280,41 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 
 		auto it = response + sizeof(struct dns_header);
 		for (int i = 0; i < ntohs(response_header->no_q); i++) {
-			auto dns_name = read_dns_name(response, it);
-			(void) dns_name;
+			auto dns_name = read_dns_name(response, sizeof(response), it);
+			if(!dns_name) {
+				return -EAI_FAIL;
+			}
 			it += 4;
 		}
 
 		for (int i = 0; i < ntohs(response_header->no_ans); i++) {
-			struct dns_addr_buf buffer;
-			auto dns_name = read_dns_name(response, it);
+			auto dns_name = read_dns_name(response, sizeof(response), it);
+			if(!dns_name) {
+				return -EAI_FAIL;
+			} else if(it + 10 > response + rlen) {
+				return -EAI_FAIL;
+			}
 
 			uint16_t rr_type = (it[0] << 8) | it[1];
 			uint16_t rr_class = (it[2] << 8) | it[3];
 			uint16_t rr_length = (it[8] << 8) | it[9];
 			it += 10;
 			(void)rr_class;
-			(void)rr_length;
+			if(it + rr_length > response + rlen) {
+				return -EAI_FAIL;
+			}
 
-			(void)dns_name;
-
+			struct dns_addr_buf buffer;
 			switch (rr_type) {
 				case RECORD_PTR: {
-					auto ptr_name = read_dns_name(response, it);
-					if (ptr_name.size() >= name.size())
+					auto ptr_name = read_dns_name(response, sizeof(response), it);
+					if(!ptr_name) {
+						return -EAI_FAIL;
+					} else if(ptr_name->size() >= name.size()) {
 						return -EAI_OVERFLOW;
-					std::copy(ptr_name.begin(), ptr_name.end(), name.data());
-					name.data()[ptr_name.size()] = '\0';
+					}
+					std::copy(ptr_name->begin(), ptr_name->end(), name.data());
+					name.data()[ptr_name->size()] = '\0';
 					return 1;
 				}
 				default:
