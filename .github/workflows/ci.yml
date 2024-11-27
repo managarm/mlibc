@@ -16,7 +16,7 @@ jobs:
                     builds: mlibc
                     compiler: clang
         name: Build mlibc
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-22.04
         container:
           image: ghcr.io/managarm/mlibc-crossers:latest
         steps:
