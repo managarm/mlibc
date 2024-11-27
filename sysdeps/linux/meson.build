@@ -112,23 +112,26 @@ if not headers_only
 		install_dir: get_option('libdir')
 	)
 
-	custom_target('crti',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: host_machine.cpu_family() / 'crt-src/crti.S',
-		output: 'crti.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
+	# On RISC-V, crti.o and crtn.o are provided by GCC.
+	if host_machine.cpu_family() != 'riscv64'
+		custom_target('crti',
+			build_by_default: true,
+			command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+			input: host_machine.cpu_family() / 'crt-src/crti.S',
+			output: 'crti.o',
+			install: true,
+			install_dir: get_option('libdir')
+		)
 
-	custom_target('crtn',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: host_machine.cpu_family() / 'crt-src/crtn.S',
-		output: 'crtn.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
+		custom_target('crtn',
+			build_by_default: true,
+			command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+			input: host_machine.cpu_family() / 'crt-src/crtn.S',
+			output: 'crtn.o',
+			install: true,
+			install_dir: get_option('libdir')
+		)
+	endif
 
 	wrapper_conf = configuration_data()
 	wrapper_conf.set('LIBDIR', get_option('libdir'))
