@@ -1,0 +1,4 @@
+[wrap-git]
+directory = cc-runtime
+url = https://github.com/osdev0/cc-runtime.git
+revision = trunk
