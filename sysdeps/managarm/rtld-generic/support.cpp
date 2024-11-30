@@ -1,17 +1,17 @@
+#include <cstddef>
 #include <fcntl.h>
 #include <stdint.h>
 #include <string.h>
-#include <cstddef>
 
 #include <frg/manual_box.hpp>
 #include <frg/string.hpp>
-#include <hel.h>
 #include <hel-syscalls.h>
+#include <hel.h>
 
-#include <mlibc/allocator.hpp>
-#include <mlibc/all-sysdeps.hpp>
-#include <posix.frigg_bragi.hpp>
 #include <fs.frigg_bragi.hpp>
+#include <mlibc/all-sysdeps.hpp>
+#include <mlibc/allocator.hpp>
+#include <posix.frigg_bragi.hpp>
 
 #include <protocols/posix/data.hpp>
 #include <protocols/posix/supercalls.hpp>
@@ -24,16 +24,18 @@ HelHandle posixLane;
 HelHandle *fileTable;
 
 void cacheFileTable() {
-	if(fileTable)
+	if (fileTable)
 		return;
 
 	posix::ManagarmProcessData data;
-	HEL_CHECK(helSyscall1(kHelCallSuper + posix::superGetProcessData, reinterpret_cast<HelWord>(&data)));
+	HEL_CHECK(
+	    helSyscall1(kHelCallSuper + posix::superGetProcessData, reinterpret_cast<HelWord>(&data))
+	);
 	posixLane = data.posixLane;
 	fileTable = data.fileTable;
 }
 
-template<typename T>
+template <typename T>
 T load(void *ptr) {
 	T result;
 	memcpy(&result, ptr, sizeof(T));
@@ -43,14 +45,8 @@ T load(void *ptr) {
 // This Queue implementation is more simplistic than the ones in mlibc and helix.
 // In fact, we only manage a single chunk; this minimizes the memory usage of the queue.
 struct Queue {
-	Queue()
-	: _handle{kHelNullHandle}, _lastProgress(0) {
-		HelQueueParameters params {
-			.flags = 0,
-			.ringShift = 0,
-			.numChunks = 1,
-			.chunkSize = 4096
-		};
+	Queue() : _handle{kHelNullHandle}, _lastProgress(0) {
+		HelQueueParameters params{.flags = 0, .ringShift = 0, .numChunks = 1, .chunkSize = 4096};
 		HEL_CHECK(helCreateQueue(&params, &_handle));
 
 		auto chunksOffset = (sizeof(HelQueue) + (sizeof(int) << 0) + 63) & ~size_t(63);
@@ -58,13 +54,19 @@ struct Queue {
 		auto overallSize = chunksOffset + params.numChunks * reservedPerChunk;
 
 		void *mapping;
-		HEL_CHECK(helMapMemory(_handle, kHelNullHandle, nullptr,
-				0, (overallSize + 0xFFF) & ~size_t(0xFFF),
-				kHelMapProtRead | kHelMapProtWrite, &mapping));
+		HEL_CHECK(helMapMemory(
+		    _handle,
+		    kHelNullHandle,
+		    nullptr,
+		    0,
+		    (overallSize + 0xFFF) & ~size_t(0xFFF),
+		    kHelMapProtRead | kHelMapProtWrite,
+		    &mapping
+		));
 
 		_queue = reinterpret_cast<HelQueue *>(mapping);
-		_chunk = reinterpret_cast<HelChunk *>(
-				reinterpret_cast<std::byte *>(mapping) + chunksOffset);
+		_chunk =
+		    reinterpret_cast<HelChunk *>(reinterpret_cast<std::byte *>(mapping) + chunksOffset);
 
 		// Reset and enqueue the first chunk.
 		_chunk->progressFutex = 0;
@@ -77,17 +79,15 @@ struct Queue {
 
 	Queue(const Queue &) = delete;
 
-	Queue &operator= (const Queue &) = delete;
+	Queue &operator=(const Queue &) = delete;
 
-	HelHandle getHandle() {
-		return _handle;
-	}
+	HelHandle getHandle() { return _handle; }
 
 	void *dequeueSingle() {
-		while(true) {
+		while (true) {
 			bool done;
 			_waitProgressFutex(&done);
-			if(done) {
+			if (done) {
 				// Reset and enqueue the chunk again.
 				_chunk->progressFutex = 0;
 
@@ -110,31 +110,36 @@ struct Queue {
 private:
 	void _wakeHeadFutex() {
 		auto futex = __atomic_exchange_n(&_queue->headFutex, _nextIndex, __ATOMIC_RELEASE);
-		if(futex & kHelHeadWaiters)
+		if (futex & kHelHeadWaiters)
 			HEL_CHECK(helFutexWake(&_queue->headFutex));
 	}
 
 	void _waitProgressFutex(bool *done) {
-		while(true) {
+		while (true) {
 			auto futex = __atomic_load_n(&_chunk->progressFutex, __ATOMIC_ACQUIRE);
 			__ensure(!(futex & ~(kHelProgressMask | kHelProgressWaiters | kHelProgressDone)));
 			do {
-				if(_lastProgress != (futex & kHelProgressMask)) {
+				if (_lastProgress != (futex & kHelProgressMask)) {
 					*done = false;
 					return;
-				}else if(futex & kHelProgressDone) {
+				} else if (futex & kHelProgressDone) {
 					*done = true;
 					return;
 				}
 
-				if(futex & kHelProgressWaiters)
+				if (futex & kHelProgressWaiters)
 					break; // Waiters bit is already set (in a previous iteration).
-			} while(!__atomic_compare_exchange_n(&_chunk->progressFutex, &futex,
-						_lastProgress | kHelProgressWaiters,
-						false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE));
+			} while (!__atomic_compare_exchange_n(
+			    &_chunk->progressFutex,
+			    &futex,
+			    _lastProgress | kHelProgressWaiters,
+			    false,
+			    __ATOMIC_ACQUIRE,
+			    __ATOMIC_ACQUIRE
+			));
 
-			HEL_CHECK(helFutexWait(&_chunk->progressFutex,
-					_lastProgress | kHelProgressWaiters, -1));
+			HEL_CHECK(helFutexWait(&_chunk->progressFutex, _lastProgress | kHelProgressWaiters, -1)
+			);
 		}
 	}
 
@@ -156,8 +161,7 @@ HelSimpleResult *parseSimple(void *&element) {
 
 HelInlineResult *parseInline(void *&element) {
 	auto result = reinterpret_cast<HelInlineResult *>(element);
-	element = (char *)element + sizeof(HelInlineResult)
-			+ ((result->length + 7) & ~size_t(7));
+	element = (char *)element + sizeof(HelInlineResult) + ((result->length + 7) & ~size_t(7));
 	return result;
 }
 
@@ -181,10 +185,10 @@ int sys_tcb_set(void *pointer) {
 #elif defined(__aarch64__)
 	uintptr_t addr = reinterpret_cast<uintptr_t>(pointer);
 	addr += sizeof(Tcb) - 0x10;
-	asm volatile ("msr tpidr_el0, %0" :: "r"(addr));
+	asm volatile("msr tpidr_el0, %0" ::"r"(addr));
 #elif defined(__riscv) && __riscv_xlen == 64
 	uintptr_t tp = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
-	asm volatile ("mv tp, %0" : : "r"(tp) : "memory");
+	asm volatile("mv tp, %0" : : "r"(tp) : "memory");
 #else
 #error Unknown architecture
 #endif
@@ -201,7 +205,7 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	req.set_mode(mode);
 	req.set_path(frg::string<MemoryAllocator>(getAllocator(), path));
 
-	if(!globalQueue.valid())
+	if (!globalQueue.valid())
 		globalQueue.initialize();
 
 	frg::string<MemoryAllocator> head(getAllocator());
@@ -242,7 +246,7 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 
-	if(resp.error() == managarm::posix::Errors::FILE_NOT_FOUND)
+	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND)
 		return -1;
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	*fd = resp.fd();
@@ -260,7 +264,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	req.set_req_type(managarm::fs::CntReqType::SEEK_ABS);
 	req.set_rel_offset(offset);
 
-	if(!globalQueue.valid())
+	if (!globalQueue.valid())
 		globalQueue.initialize();
 
 	frg::string<MemoryAllocator> ser(getAllocator());
@@ -299,7 +303,7 @@ int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read) {
 	req.set_req_type(managarm::fs::CntReqType::READ);
 	req.set_size(length);
 
-	if(!globalQueue.valid())
+	if (!globalQueue.valid())
 		globalQueue.initialize();
 
 	frg::string<MemoryAllocator> ser(getAllocator());
@@ -352,7 +356,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 	req.set_fd(fd);
 	req.set_rel_offset(offset);
 
-	if(!globalQueue.valid())
+	if (!globalQueue.valid())
 		globalQueue.initialize();
 
 	frg::string<MemoryAllocator> ser(getAllocator());
@@ -365,8 +369,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(posixLane, actions, 3,
-			globalQueue->getHandle(), 0, 0));
+	HEL_CHECK(helSubmitAsync(posixLane, actions, 3, globalQueue->getHandle(), 0, 0));
 
 	auto element = globalQueue->dequeueSingle();
 	auto offer = parseHandle(element);
@@ -391,7 +394,7 @@ int sys_close(int fd) {
 	managarm::posix::CloseRequest<MemoryAllocator> req(getAllocator());
 	req.set_fd(fd);
 
-	if(!globalQueue.valid())
+	if (!globalQueue.valid())
 		globalQueue.initialize();
 
 	frg::string<MemoryAllocator> ser(getAllocator());
@@ -422,30 +425,28 @@ int sys_close(int fd) {
 
 int sys_futex_tid() {
 	HelWord tid = 0;
-	HEL_CHECK(helSyscall0_1(kHelCallSuper + posix::superGetTid,
-				&tid));
+	HEL_CHECK(helSyscall0_1(kHelCallSuper + posix::superGetTid, &tid));
 
 	return tid;
 }
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	// This implementation is inherently signal-safe.
-	if(time) {
-		if(helFutexWait(pointer, expected, time->tv_nsec + time->tv_sec * 1000000000))
+	if (time) {
+		if (helFutexWait(pointer, expected, time->tv_nsec + time->tv_sec * 1000000000))
 			return -1;
 		return 0;
 	}
-	if(helFutexWait(pointer, expected, -1))
+	if (helFutexWait(pointer, expected, -1))
 		return -1;
 	return 0;
 }
 
 int sys_futex_wake(int *pointer) {
 	// This implementation is inherently signal-safe.
-	if(helFutexWake(pointer))
+	if (helFutexWake(pointer))
 		return -1;
 	return 0;
 }
-
 
 } // namespace mlibc

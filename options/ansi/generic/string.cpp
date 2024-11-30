@@ -231,9 +231,9 @@ char *strchrnul(const char *s, int c) {
 	return const_cast<char *>(s + i);
 }
 
-double wcstod(const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
-float wcstof(const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
-long double wcstold(const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
+double wcstod(const wchar_t *__restrict, wchar_t **__restrict) { MLIBC_STUB_BODY; }
+float wcstof(const wchar_t *__restrict, wchar_t **__restrict) { MLIBC_STUB_BODY; }
+long double wcstold(const wchar_t *__restrict, wchar_t **__restrict) { MLIBC_STUB_BODY; }
 
 long wcstol(const wchar_t *__restrict nptr, wchar_t **__restrict endptr, int base)  {
 	return mlibc::stringToInteger<long, wchar_t>(nptr, endptr, base);
@@ -277,16 +277,16 @@ wchar_t *wcscat(wchar_t *__restrict dest, const wchar_t *__restrict src) {
 	return dest;
 }
 
-wchar_t *wcsncat(wchar_t *__restrict, const wchar_t *__restrict, size_t) MLIBC_STUB_BODY
+wchar_t *wcsncat(wchar_t *__restrict, const wchar_t *__restrict, size_t) { MLIBC_STUB_BODY; }
 
 int wcscmp(const wchar_t *l, const wchar_t *r) {
 	for(; *l == *r && *l && *r; l++, r++);
 	return *l - *r;
 }
 
-int wcscoll(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
-int wcsncmp(const wchar_t *, const wchar_t *, size_t) MLIBC_STUB_BODY
-int wcsxfrm(wchar_t *__restrict, const wchar_t *__restrict, size_t) MLIBC_STUB_BODY
+int wcscoll(const wchar_t *, const wchar_t *) { MLIBC_STUB_BODY; }
+int wcsncmp(const wchar_t *, const wchar_t *, size_t) { MLIBC_STUB_BODY; }
+int wcsxfrm(wchar_t *__restrict, const wchar_t *__restrict, size_t) { MLIBC_STUB_BODY; }
 
 int wmemcmp(const wchar_t *a, const wchar_t *b, size_t size) {
 	for(size_t i = 0; i < size; i++) {
@@ -307,8 +307,8 @@ wchar_t *wcschr(const wchar_t *s, wchar_t c) {
 	return *s ? (wchar_t *)s : 0;
 }
 
-size_t wcscspn(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
-wchar_t *wcspbrk(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
+size_t wcscspn(const wchar_t *, const wchar_t *) { MLIBC_STUB_BODY; }
+wchar_t *wcspbrk(const wchar_t *, const wchar_t *) { MLIBC_STUB_BODY; }
 
 wchar_t *wcsrchr(const wchar_t *s, wchar_t c) {
 	const wchar_t *p;
@@ -316,9 +316,9 @@ wchar_t *wcsrchr(const wchar_t *s, wchar_t c) {
 	return p >= s ? (wchar_t *)p : 0;
 }
 
-size_t wcsspn(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
-wchar_t *wcsstr(const wchar_t *, const wchar_t *) MLIBC_STUB_BODY
-wchar_t *wcstok(wchar_t *__restrict, const wchar_t *__restrict, wchar_t **__restrict) MLIBC_STUB_BODY
+size_t wcsspn(const wchar_t *, const wchar_t *) { MLIBC_STUB_BODY; }
+wchar_t *wcsstr(const wchar_t *, const wchar_t *) { MLIBC_STUB_BODY; }
+wchar_t *wcstok(wchar_t *__restrict, const wchar_t *__restrict, wchar_t **__restrict) { MLIBC_STUB_BODY; }
 
 wchar_t *wmemchr(const wchar_t *s, wchar_t c, size_t size) {
 	auto s_bytes = s;
