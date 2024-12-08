@@ -23,7 +23,13 @@ enum GetoptMode {
 	LongOnly,
 };
 
-int getopt_common(int argc, char * const argv[], const char *optstring, const struct option *longopts, int *longindex, enum GetoptMode mode) {
+bool isOptionArg(char *arg){
+	// If the first character of arg '-', and the arg is not exactly
+	// equal to "-" or "--", then the arg is an option argument.
+	return arg[0] == '-' && strcmp(arg, "-") && strcmp(arg, "--");
+}
+
+int getopt_core(int argc, char *const argv[], const char *optstring, const struct option *longopts, int *longindex, enum GetoptMode mode) {
 	auto longopt_consume = [&](const char *arg, char *s, int k, bool colon) -> frg::optional<int> {
 		// Consume the option and its argument.
 		if(longopts[k].has_arg == required_argument) {
@@ -87,12 +93,6 @@ int getopt_common(int argc, char * const argv[], const char *optstring, const st
 		optreset = 0;
 #endif //__MLIBC_BSD_OPTION
 	}
-
-	auto isOptionArg = [](char *arg){
-		// If the first character of arg '-', and the arg is not exactly
-		// equal to "-" or "--", then the arg is an option argument.
-		return arg[0] == '-' && strcmp(arg, "-") && strcmp(arg, "--");
-	};
 
 	while(optind < argc) {
 		char *arg = argv[optind];
@@ -238,6 +238,43 @@ int getopt_common(int argc, char * const argv[], const char *optstring, const st
 		}
 	}
 	return -1;
+}
+
+int getopt_common(int argc, char *const argv[], const char *optstring, const struct option *longopts, int *longindex, enum GetoptMode mode) {
+	auto permute = [argv](int dest, int src) {
+		auto av = const_cast<char **>(argv);
+		auto tmp = av[src];
+
+		for(int i = src; i > dest; i--) {
+			av[i] = av[i - 1];
+		}
+
+		av[dest] = tmp;
+	};
+
+	int pre_skip_optind = optind;
+	bool stop_at_first_nonarg = (optstring[0] == '+' || getenv("POSIXLY_CORRECT"));
+
+	if(!stop_at_first_nonarg) {
+		while(optind < argc) {
+			if(isOptionArg(argv[optind])) {
+				break;
+			}
+			optind++;
+		}
+	}
+
+	int last_optind = optind;
+	int ret = getopt_core(argc, argv, optstring, longopts, longindex, mode);
+
+	if(last_optind > pre_skip_optind) {
+		for(int i = 0; i < optind - last_optind; i++) {
+			permute(pre_skip_optind, optind - 1);
+		}
+		optind += pre_skip_optind - last_optind;
+	}
+
+	return ret;
 }
 
 }
