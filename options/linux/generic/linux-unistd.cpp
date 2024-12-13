@@ -3,6 +3,7 @@
 
 #include <errno.h>
 #include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/linux-sysdeps.hpp>
 #include <unistd.h>
 
 int dup3(int oldfd, int newfd, int flags) {
