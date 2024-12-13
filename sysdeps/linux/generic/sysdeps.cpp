@@ -2030,6 +2030,14 @@ int sys_splice(int in_fd, off_t *in_off, int out_fd, off_t *out_off, size_t size
 	return 0;
 }
 
+int sys_unshare(int flags) {
+	auto ret = do_syscall(SYS_unshare, flags);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
+}
+
 #if __MLIBC_BSD_OPTION
 int sys_brk(void **out) {
 	auto ret = do_syscall(SYS_brk, 0);
