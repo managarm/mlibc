@@ -109,8 +109,10 @@ char *asctime_r(const struct tm *__tm, char *__buf);
 char *ctime_r(const time_t *__timer, char *__buf);
 
 #if __MLIBC_POSIX_OPTION
+#include <abi-bits/pid_t.h>
 char *strptime(const char *__restrict __buf, const char *__restrict __format,
 		struct tm *__restrict __tm);
+int clock_getcpuclockid(pid_t __pid, clockid_t *__clockid);
 #endif /* __MLIBC_POSIX_OPTION */
 
 #endif /* !__MLIBC_ABI_ONLY */
