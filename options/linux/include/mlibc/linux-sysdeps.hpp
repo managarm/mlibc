@@ -11,6 +11,7 @@
 #include <abi-bits/pid_t.h>
 #include <abi-bits/mode_t.h>
 #include <abi-bits/statx.h>
+#include <bits/off_t.h>
 #include <bits/ssize_t.h>
 #include <bits/size_t.h>
 
@@ -82,6 +83,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 [[gnu::weak]] int sys_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf);
 
 [[gnu::weak]] int sys_getifaddrs(struct ifaddrs **);
+
+[[gnu::weak]] int sys_sendfile(int outfd, int infd, off_t *offset, size_t count, size_t *out);
 
 } // namespace mlibc
 
