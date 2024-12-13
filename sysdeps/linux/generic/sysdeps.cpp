@@ -2038,6 +2038,14 @@ int sys_unshare(int flags) {
 	return 0;
 }
 
+int sys_setns(int fd, int nstype) {
+	auto ret = do_syscall(SYS_setns, fd, nstype);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
+}
+
 #if __MLIBC_BSD_OPTION
 int sys_brk(void **out) {
 	auto ret = do_syscall(SYS_brk, 0);
