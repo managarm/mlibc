@@ -237,6 +237,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options);
 
 [[gnu::weak]] int sys_name_to_handle_at(int dirfd, const char *pathname, struct file_handle *handle, int *mount_id, int flags);
+[[gnu::weak]] int sys_splice(int in_fd, off_t *in_off, int out_fd, off_t *out_off, size_t size, unsigned int flags, size_t *out);
 
 } //namespace mlibc
 

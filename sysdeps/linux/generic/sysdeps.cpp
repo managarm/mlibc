@@ -2021,6 +2021,15 @@ int sys_name_to_handle_at(int dirfd, const char *pathname, struct file_handle *h
 	return sc_int_result<int>(ret);
 }
 
+int sys_splice(int in_fd, off_t *in_off, int out_fd, off_t *out_off, size_t size, unsigned int flags, size_t *out) {
+	auto ret = do_syscall(SYS_copy_file_range, in_fd, in_off, out_fd, out_off, size, flags);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	*out = sc_int_result<size_t>(ret);
+	return 0;
+}
+
 #if __MLIBC_BSD_OPTION
 int sys_brk(void **out) {
 	auto ret = do_syscall(SYS_brk, 0);
