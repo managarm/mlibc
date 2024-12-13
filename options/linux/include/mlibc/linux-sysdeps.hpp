@@ -88,6 +88,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 [[gnu::weak]] int sys_syncfs(int fd);
 [[gnu::weak]] int sys_unshare(int flags);
 [[gnu::weak]] int sys_linux_clone(int flags, void *stack, pid_t *out);
+[[gnu::weak]] int sys_setns(int fd, int nstype);
 
 } // namespace mlibc
 
