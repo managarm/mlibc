@@ -2055,6 +2055,14 @@ int sys_setns(int fd, int nstype) {
 	return 0;
 }
 
+int sys_setgroups(size_t size, const gid_t *list) {
+	auto ret = do_syscall(SYS_setgroups, size, list);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
+}
+
 #if __MLIBC_BSD_OPTION
 int sys_brk(void **out) {
 	auto ret = do_syscall(SYS_brk, 0);
