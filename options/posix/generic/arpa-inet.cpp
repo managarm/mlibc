@@ -181,6 +181,7 @@ const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
 	errno = ENOSPC;
 	return NULL;
 }
+
 int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 	switch (af) {
 		case AF_INET: {
@@ -200,9 +201,89 @@ int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 			addr->s_addr = htonl(ip);
 			break;
 		}
-		case AF_INET6:
-			mlibc::infoLogger() << "inet_pton: ipv6 is not implemented!" << frg::endlog;
-			/* fallthrough */
+		case AF_INET6: {
+			if(strchr(src, '.') != nullptr) {
+				mlibc::infoLogger() << "inet_pton: ipv4 in ipv6 address is not supported" << frg::endlog;
+				return 0;
+			}
+
+			const char *orig_src = src;
+			char *abbrev = strstr(src, "::");
+			if(abbrev && strstr(abbrev + 2, "::") != nullptr) {
+				return 0;
+			}
+
+			uint16_t addr[8] = {};
+			int len = abbrev ? abbrev - src : strlen(src);
+
+			int addr_len = 0;
+			while(*src && (src - orig_src) < len) {
+				char *end;
+				long int value = strtol(src, &end, 16);
+
+				if(value > 0xffff) {
+					return 0;
+				}
+				if(*end != '\0' && *end != ':') {
+					return 0;
+				}
+
+				src = end + 1;
+
+				if(addr_len >= 8) {
+					return 0;
+				}
+
+				addr[addr_len++] = htons(value);
+			}
+
+			if(abbrev) {
+				uint16_t array[8] = {};
+				int array_len = 0;
+
+				src = abbrev + 2;
+				while(*src) {
+					char *end;
+					long int value = strtol(src, &end, 16);
+
+					if(value > 0xffff) {
+						return 0;
+					}
+					if(*end != '\0' && *end != ':') {
+						return 0;
+					}
+
+					src = end + 1;
+
+					if(*end && !*src) {
+						return 0;
+					}
+					if(addr_len + array_len >= 8) {
+						return 0;
+					}
+
+					array[array_len++] = htons(value);
+				}
+
+				for(int i = 0; i < array_len; i++) {
+					addr[8 - array_len + i] = array[i];
+				}
+			} else if(addr_len != 8) {
+				return 0;
+			}
+
+			if(*src) {
+				return 0;
+			}
+
+			auto addr6 = reinterpret_cast<struct in6_addr*>(dst);
+
+			for(int i = 0; i < 8; i++) {
+				addr6->s6_addr16[i] = addr[i];
+			}
+
+			break;
+		}
 		default:
 			errno = EAFNOSUPPORT;
 			return -1;
