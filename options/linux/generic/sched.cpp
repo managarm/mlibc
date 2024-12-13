@@ -48,7 +48,18 @@ int sched_setaffinity(pid_t, size_t, const cpu_set_t *) {
 	__builtin_unreachable();
 }
 
-int clone(int (*)(void *), void *, int, void *, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int clone(int (*fn)(void *), void *stack, int flags, void *arg, ...) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_linux_clone, -1);
+	if(stack) {
+		mlibc::infoLogger() << "clone: stack argument is ignored" << frg::endlog;
+	}
+	pid_t ret;
+	if(int e = mlibc::sys_linux_clone(flags, NULL, &ret); e) {
+		errno = e;
+		return -1;
+	}
+	if(!ret) {
+		mlibc::sys_exit(fn(arg));
+	}
+	return ret;
 }
