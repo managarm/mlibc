@@ -53,6 +53,9 @@
 
 #define F_GETOWNER_UIDS 17
 
+#define F_SETLEASE 1024
+#define F_GETLEASE 1025
+#define F_NOTIFY 1026
 #define F_DUPFD_CLOEXEC 1030
 #define F_ADD_SEALS 1033
 #define F_GET_SEALS 1034
@@ -85,6 +88,8 @@ struct f_owner_ex {
 	int type;
 	pid_t pid;
 };
+
+#define F_OWNER_TID 0
 
 #define POSIX_FADV_NORMAL 0
 #define POSIX_FADV_RANDOM 1
