@@ -31,13 +31,13 @@ extern "C" {
 typedef int key_t;
 
 struct ipc64_perm {
-	key_t __ipc_perm_key;
+	key_t __key;
 	uid_t uid;
 	gid_t gid;
 	uid_t cuid;
 	gid_t cgid;
 	mode_t mode;
-	short __ipc_perm_seq;
+	short __seq;
 	short __pad;
 	unsigned long __unused[2];
 };

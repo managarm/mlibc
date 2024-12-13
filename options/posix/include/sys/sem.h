@@ -12,10 +12,16 @@ extern "C" {
 #define GETPID 11
 #define GETVAL 12
 #define GETALL 13
+#define GETNCNT 14
+#define GETZCNT 15
 #define SETVAL 16
 #define SETALL 17
 
 #define SEM_UNDO 0x1000
+
+#define SEM_STAT 18
+#define SEM_INFO 19
+#define SEM_STAT_ANY 20
 
 struct sembuf {
 	unsigned short int sem_num;
@@ -29,6 +35,19 @@ struct semid_ds {
 	time_t          sem_ctime;
 
 	unsigned long   sem_nsems;
+};
+
+struct seminfo {
+	int semmap;
+	int semmni;
+	int semmns;
+	int semmnu;
+	int semmsl;
+	int semopm;
+	int semume;
+	int semusz;
+	int semvmx;
+	int semaem;
 };
 
 #ifndef __MLIBC_ABI_ONLY
