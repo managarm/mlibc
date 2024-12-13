@@ -27,7 +27,11 @@ int getdtablesize(void){
 	return sysconf(_SC_OPEN_MAX);
 }
 
-int syncfs(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int syncfs(int fd) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_syncfs, -1);
+	if(int e = mlibc::sys_syncfs(fd); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
