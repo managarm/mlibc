@@ -86,6 +86,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 
 [[gnu::weak]] int sys_sendfile(int outfd, int infd, off_t *offset, size_t count, ssize_t *out);
 [[gnu::weak]] int sys_syncfs(int fd);
+[[gnu::weak]] int sys_unshare(int flags);
 
 } // namespace mlibc
 
