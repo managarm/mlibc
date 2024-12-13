@@ -503,3 +503,8 @@ char *strptime(const char *__restrict s, const char *__restrict format, struct t
 
 	return result;
 }
+
+int clock_getcpuclockid(pid_t, clockid_t *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
