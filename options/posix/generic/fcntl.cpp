@@ -82,9 +82,14 @@ int open_by_handle_at(int, struct file_handle *, int) {
 	__builtin_unreachable();
 }
 
-ssize_t splice(int, off_t *, int, off_t *, size_t, unsigned int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+ssize_t splice(int in_fd, off_t *in_off, int out_fd, off_t *out_off, size_t size, unsigned int flags) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_splice, -1);
+	size_t ret;
+	if(int e = mlibc::sys_splice(in_fd, in_off, out_fd, out_off, size, flags, &ret); e) {
+		errno = e;
+		return -1;
+	}
+	return ret;
 }
 
 ssize_t vmsplice(int, const struct iovec *, size_t, unsigned int) {
