@@ -236,6 +236,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 
 [[gnu::weak]] int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options);
 
+[[gnu::weak]] int sys_name_to_handle_at(int dirfd, const char *pathname, struct file_handle *handle, int *mount_id, int flags);
+
 } //namespace mlibc
 
 #endif // MLIBC_POSIX_SYSDEPS

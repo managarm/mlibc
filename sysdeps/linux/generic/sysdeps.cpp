@@ -2014,6 +2014,13 @@ int sys_syncfs(int fd) {
 	return 0;
 }
 
+int sys_name_to_handle_at(int dirfd, const char *pathname, struct file_handle *handle, int *mount_id, int flags) {
+	auto ret = do_syscall(SYS_name_to_handle_at, dirfd, pathname, handle, mount_id, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return sc_int_result<int>(ret);
+}
+
 #if __MLIBC_BSD_OPTION
 int sys_brk(void **out) {
 	auto ret = do_syscall(SYS_brk, 0);
