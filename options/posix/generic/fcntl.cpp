@@ -68,9 +68,13 @@ int posix_fallocate(int fd, off_t offset, off_t size) {
 }
 
 // This is a linux extension
-int name_to_handle_at(int, const char *, struct file_handle *, int *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int name_to_handle_at(int dirfd, const char *pathname, struct file_handle *handle, int *mount_id, int flags) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_name_to_handle_at, -1);
+	if(int e = mlibc::sys_name_to_handle_at(dirfd, pathname, handle, mount_id, flags); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int open_by_handle_at(int, struct file_handle *, int) {
