@@ -2006,6 +2006,14 @@ int sys_sendfile(int outfd, int infd, off_t *offset, size_t count, ssize_t *out)
 	return 0;
 }
 
+int sys_syncfs(int fd) {
+	auto ret = do_syscall(SYS_syncfs, fd);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
+}
+
 #if __MLIBC_BSD_OPTION
 int sys_brk(void **out) {
 	auto ret = do_syscall(SYS_brk, 0);
