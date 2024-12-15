@@ -31,6 +31,7 @@ namespace {
 	thread_local unsigned __mlibc_gsf_nesting;
 	thread_local void *__mlibc_cached_thread_page;
 	thread_local HelHandle *cachedFileTable;
+	thread_local HelHandle *cancelEvent;
 
 	// This construction is a bit weird: Even though the variables above
 	// are thread_local we still protect their initialization with a pthread_once_t
@@ -46,6 +47,7 @@ namespace {
 		__mlibc_cached_thread_page = data.threadPage;
 		cachedFileTable = data.fileTable;
 		__mlibc_clk_tracker_page = data.clockTrackerPage;
+		cancelEvent = data.cancelRequestEvent;
 	}
 }
 
@@ -101,6 +103,11 @@ HelHandle getHandleForFd(int fd) {
 		return 0;
 
 	return cacheFileTable()[fd];
+}
+
+void setCurrentRequestEvent(HelHandle event) {
+	pthread_once(&has_cached_infos, &actuallyCacheInfos);
+	__atomic_store_n(cancelEvent, event, __ATOMIC_RELEASE);
 }
 
 void clearCachedInfos() {

@@ -292,6 +292,7 @@ inline HelHandleResult *parseHandle(ElementHandle &element) {
 HelHandle getPosixLane();
 HelHandle *cacheFileTable();
 HelHandle getHandleForFd(int fd);
+void setCurrentRequestEvent(HelHandle event);
 void clearCachedInfos();
 
 extern thread_local Queue globalQueue;
@@ -324,12 +325,12 @@ auto exchangeMsgsSyncCancellable(HelHandle descriptor, HelHandle event,
 	auto results = helix_ng::createResultsTuple(args...);
 	auto actions = helix_ng::chainActionArrays(args...);
 
+	setCurrentRequestEvent(event);
 	HEL_CHECK(helSubmitAsync(descriptor, actions.data(),
 		actions.size(), globalQueue.getQueue(), 0, 0));
 
 	auto element = globalQueue.dequeueSingle(false);
 	if (!element) {
-		HEL_CHECK(helRaiseEvent(event));
 		element = globalQueue.dequeueSingle();
 		__ensure(element);
 	}
@@ -338,6 +339,8 @@ auto exchangeMsgsSyncCancellable(HelHandle descriptor, HelHandle event,
 	[&]<size_t ...p>(std::index_sequence<p...>) {
 		(results.template get<p>().parse(ptr, *element), ...);
 	} (std::make_index_sequence<std::tuple_size_v<decltype(results)>>{});
+
+	setCurrentRequestEvent(kHelNullHandle);
 
 	return results;
 }
