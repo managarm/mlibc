@@ -18,6 +18,10 @@
 #include <mlibc/bsd-sysdeps.hpp>
 #include <mlibc/thread.hpp>
 
+#if __MLIBC_LINUX_OPTION
+#include <mlibc/linux-sysdeps.hpp>
+#endif
+
 namespace {
 
 constexpr bool logExecvpeTries = false;
@@ -724,7 +728,24 @@ long sysconf(int number) {
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_OPEN_MAX) returns fallback value 256\e[39m" << frg::endlog;
 			return 256;
 		case _SC_PHYS_PAGES:
+#if __MLIBC_LINUX_OPTION
+			if(mlibc::sys_sysinfo) {
+				struct sysinfo info{};
+				if(mlibc::sys_sysinfo(&info) == 0)
+					return info.totalram * info.mem_unit / mlibc::page_size;
+			}
+#endif
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_PHYS_PAGES) returns fallback value 1024\e[39m" << frg::endlog;
+			return 1024;
+		case _SC_AVPHYS_PAGES:
+#if __MLIBC_LINUX_OPTION
+			if(mlibc::sys_sysinfo) {
+				struct sysinfo info{};
+				if(mlibc::sys_sysinfo(&info) == 0)
+					return info.freeram * info.mem_unit / mlibc::page_size;
+			}
+#endif
+			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_AVPHYS_PAGES) returns fallback value 1024\e[39m" << frg::endlog;
 			return 1024;
 		case _SC_NPROCESSORS_ONLN:
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_NPROCESSORS_ONLN) returns fallback value 1\e[39m" << frg::endlog;
