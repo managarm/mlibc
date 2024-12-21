@@ -2663,6 +2663,11 @@ int sys_sysconf(int num, long *ret) {
 			*ret = (ru.rlim_cur == RLIM_INFINITY) ? -1 : ru.rlim_cur;
 			break;
 		}
+		case _SC_PHYS_PAGES:
+		case _SC_AVPHYS_PAGES: {
+			// defer these to the generic implementation.
+			return EINVAL;
+		}
 		default: {
 			SignalGuard sguard;
 
