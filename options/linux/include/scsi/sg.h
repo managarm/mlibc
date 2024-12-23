@@ -17,6 +17,8 @@
 #define SG_DXFER_FROM_DEV (-3)
 #define SG_DXFER_TO_FROM_DEV (-4)
 
+#define SG_INFO_CHECK 0x1
+
 #ifdef __cplusplus
 extern "C" {
 #endif
