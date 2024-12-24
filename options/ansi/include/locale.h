@@ -13,6 +13,7 @@
 #define LC_NUMERIC 5
 #define LC_TIME 6
 #define LC_MESSAGES 7
+#define LC_MEASUREMENT 11
 
 #define LC_GLOBAL_LOCALE ((locale_t) -1L)
 
