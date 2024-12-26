@@ -15,6 +15,7 @@ rtld_test_cases = [
 	'scope5',
 	'tls_align',
 	'relr',
+	'symver',
 ]
 
 host_libc_rtld_nosan_test_cases = [
