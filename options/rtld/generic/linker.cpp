@@ -120,9 +120,11 @@ SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 	object->baseAddress = base_address;
 	object->dynamic = dynamic;
 	_parseDynamic(object);
+	_parseVerdef(object);
 
 	_addLoadedObject(object);
 	_discoverDependencies(object, globalScope.get(), rts);
+	_parseVerneed(object);
 
 	return object;
 }
@@ -137,9 +139,11 @@ SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 		name.data(), std::move(path), true, globalScope.get(), rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 	_parseDynamic(object);
+	_parseVerdef(object);
 
 	_addLoadedObject(object);
 	_discoverDependencies(object, globalScope.get(), rts);
+	_parseVerneed(object);
 
 	return object;
 }
@@ -279,9 +283,11 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 	}
 
 	_parseDynamic(object);
+	_parseVerdef(object);
 
 	_addLoadedObject(object);
 	_discoverDependencies(object, localScope, rts);
+	_parseVerneed(object);
 
 	return object;
 }
@@ -324,9 +330,11 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath
 	}
 
 	_parseDynamic(object);
+	_parseVerdef(object);
 
 	_addLoadedObject(object);
 	_discoverDependencies(object, localScope, rts);
+	_parseVerneed(object);
 
 	return object;
 }
@@ -762,14 +770,27 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_SONAME:
 			soname_offset = dynamic->d_un.d_val;
 			break;
+		// handle version information
+		case DT_VERSYM:
+			object->versionTableOffset = dynamic->d_un.d_ptr;
+			break;
+		case DT_VERDEF:
+			object->versionDefinitionTableOffset = dynamic->d_un.d_ptr;
+			break;
+		case DT_VERDEFNUM:
+			object->versionDefinitionCount = dynamic->d_un.d_val;
+			break;
+		case DT_VERNEED:
+			object->versionRequirementTableOffset = dynamic->d_un.d_ptr;
+			break;
+		case DT_VERNEEDNUM:
+			object->versionRequirementCount = dynamic->d_un.d_val;
+			break;
 		// ignore unimportant tags
 		case DT_NEEDED: // we handle this later
 		case DT_RELA: case DT_RELASZ: case DT_RELAENT: case DT_RELACOUNT:
 		case DT_REL: case DT_RELSZ: case DT_RELENT: case DT_RELCOUNT:
 		case DT_RELR: case DT_RELRSZ: case DT_RELRENT:
-		case DT_VERSYM:
-		case DT_VERDEF: case DT_VERDEFNUM:
-		case DT_VERNEED: case DT_VERNEEDNUM:
 #ifdef __riscv
 		case DT_TEXTREL: // Work around https://sourceware.org/bugzilla/show_bug.cgi?id=24673.
 #endif
@@ -792,6 +813,160 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 	if(soname_offset) {
 		object->soName = reinterpret_cast<const char *>(object->baseAddress
 				+ object->stringTableOffset + *soname_offset);
+	}
+}
+
+void ObjectRepository::_parseVerdef(SharedObject *object) {
+	if(!object->versionDefinitionTableOffset) {
+		if(verbose)
+			mlibc::infoLogger()
+				<< "mlibc: Object " << object->name
+				<< " defines no versions" << frg::endlog;
+		return;
+	}
+
+	if(verbose)
+		mlibc::infoLogger()
+			<< "mlibc: Object " << object->name
+			<< " defines " << object->versionDefinitionCount
+			<< " version(s)" << frg::endlog;
+
+	uintptr_t address =
+		object->baseAddress
+		+ object->versionDefinitionTableOffset;
+
+	for(size_t i = 0; i < object->versionDefinitionCount; i++) {
+		elf_verdef def;
+		memcpy(&def, reinterpret_cast<void *>(address), sizeof(elf_verdef));
+
+		// Required by spec.
+		__ensure(def.vd_version == 1);
+		__ensure(def.vd_cnt >= 1);
+		// TODO(qookie): Handle weak versions.
+		__ensure(!(def.vd_flags & ~VER_FLG_BASE));
+
+		// NOTE(qookie): glibc also ignores any additional Verdaux entries after the
+		// first one.
+		elf_verdaux aux;
+		memcpy(&aux, reinterpret_cast<void *>(address + def.vd_aux), sizeof(elf_verdaux));
+
+		const char *name =
+			reinterpret_cast<const char *>(
+				object->baseAddress
+				+ object->stringTableOffset + aux.vda_name);
+
+		if(verbose)
+			mlibc::infoLogger()
+				<< "mlibc: Object " << object->name
+				<< " defines version " << name
+				<< " (index " << def.vd_ndx << ")"
+				<< frg::endlog;
+
+		SymbolVersion ver{name, def.vd_hash};
+		object->definedVersions.push(ver);
+		object->knownVersions.insert(def.vd_ndx, ver);
+
+		address += def.vd_next;
+	}
+}
+
+void ObjectRepository::_parseVerneed(SharedObject *object) {
+	if(!object->versionRequirementTableOffset) {
+		if(verbose)
+			mlibc::infoLogger() << "mlibc: Object " << object->name << " requires no versions" << frg::endlog;
+		return;
+	}
+
+	if(verbose)
+		mlibc::infoLogger()
+			<< "mlibc: Object " << object->name
+			<< " requires " << object->versionRequirementCount
+			<< " version(s)" << frg::endlog;
+
+	uintptr_t address =
+		object->baseAddress
+		+ object->versionRequirementTableOffset;
+
+	for(size_t i = 0; i < object->versionRequirementCount; i++) {
+		elf_verneed need;
+		memcpy(&need, reinterpret_cast<void *>(address), sizeof(elf_verneed));
+
+		// Required by spec.
+		__ensure(need.vn_version == 1);
+
+		frg::string_view file =
+			reinterpret_cast<const char *>(
+				object->baseAddress
+				+ object->stringTableOffset + need.vn_file);
+
+		// Figure out the target object from file
+		SharedObject *target = nullptr;
+		for(auto dep : object->dependencies) {
+			if(verbose)
+				mlibc::infoLogger()
+					<< "mlibc: Trying " << dep->name << " (SONAME: "
+					<< dep->soName << ") to satisfy " << file << frg::endlog;
+			if(dep->name == file || (dep->soName && dep->soName == file)) {
+				target = dep;
+				break;
+			}
+		}
+		if(!target)
+			mlibc::panicLogger()
+				<< "mlibc: No object named \""
+				<< file
+				<< "\" found for VERNEED entry of object "
+				<< object->name << frg::endlog;
+
+		if(verbose)
+			mlibc::infoLogger()
+				<< "mlibc: Object " << object->name
+				<< " requires " << need.vn_cnt
+				<< " version(s) from DSO "
+				<< file << frg::endlog;
+
+		uintptr_t auxAddr = address + need.vn_aux;
+		for(size_t j = 0; j < need.vn_cnt; j++) {
+			elf_vernaux aux;
+			memcpy(&aux, reinterpret_cast<void *>(auxAddr), sizeof(elf_vernaux));
+
+			const char *name =
+				reinterpret_cast<const char *>(
+					object->baseAddress
+					+ object->stringTableOffset + aux.vna_name);
+
+
+			if(verbose)
+				mlibc::infoLogger()
+					<< "mlibc:   Object " << object->name
+					<< " requires version " << name
+					<< " (index " << aux.vna_other
+					<< ") from DSO " << file
+					<< frg::endlog;
+
+			frg::optional<SymbolVersion> ver;
+			for(auto &def : target->definedVersions) {
+				if(def.hash() != aux.vna_hash) continue;
+				if(def.name() == name) {
+					ver = def;
+					break;
+				}
+			}
+
+			if(!ver)
+				mlibc::panicLogger()
+					<< "mlibc: Object " << target->name
+					<< " does not define version \""
+					<< name << "\" needed by object "
+					<< object->name << frg::endlog;
+
+			bool isDefault = !(aux.vna_other & 0x8000);
+			// Bit 15 indicates whether the static linker should ignore this version.
+			object->knownVersions.insert(aux.vna_other & 0x7FFF, isDefault ? ver->makeDefault() : *ver);
+
+			auxAddr += aux.vna_next;
+		}
+		address += need.vn_next;
 	}
 }
 
@@ -850,7 +1025,9 @@ SharedObject::SharedObject(const char *name, frg::string<MemoryAllocator> path,
 		globalOffsetTable(nullptr), entry(nullptr), tlsSegmentSize(0),
 		tlsAlignment(0), tlsImageSize(0), tlsImagePtr(nullptr),
 		tlsInitialized(false), hashTableOffset(0), symbolTableOffset(0),
-		stringTableOffset(0), lazyRelocTableOffset(0), lazyTableSize(0),
+		stringTableOffset(0),
+		knownVersions({}, getAllocator()), definedVersions(getAllocator()),
+		lazyRelocTableOffset(0), lazyTableSize(0),
 		lazyExplicitAddend(false), symbolicResolution(false),
 		eagerBinding(false), haveStaticTls(false),
 		dependencies(getAllocator()), tlsModel(TlsModel::null),

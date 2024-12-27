@@ -14,6 +14,8 @@ struct ObjectRepository;
 struct Scope;
 struct Loader;
 struct SharedObject;
+struct ObjectSymbol;
+struct SymbolVersion;
 
 extern uint64_t rtsCounter;
 
@@ -32,6 +34,8 @@ enum class LinkerError {
 	outOfMemory,
 	invalidProgramHeader
 };
+
+uint32_t elf64Hash(frg::string_view string);
 
 // --------------------------------------------------------
 // ObjectRepository
@@ -83,6 +87,9 @@ private:
 	frg::expected<LinkerError, void> _fetchFromFile(SharedObject *object, int fd);
 
 	void _parseDynamic(SharedObject *object);
+
+	void _parseVerdef(SharedObject *object);
+	void _parseVerneed(SharedObject *object);
 
 	void _discoverDependencies(SharedObject *object, Scope *localScope, uint64_t rts);
 
@@ -174,6 +181,23 @@ struct SharedObject {
 	uintptr_t hashTableOffset;
 	uintptr_t symbolTableOffset;
 	uintptr_t stringTableOffset;
+
+	// Version tables of this shared object
+	uintptr_t versionTableOffset = 0;
+	uintptr_t versionDefinitionTableOffset = 0;
+	size_t versionDefinitionCount = 0;
+	uintptr_t versionRequirementTableOffset = 0;
+	size_t versionRequirementCount = 0;
+
+	// Versions we know about for this object's VERSYM.
+	frg::hash_map<
+		elf_version,
+		SymbolVersion,
+		frg::hash<unsigned int>,
+		MemoryAllocator
+	> knownVersions;
+	// Versions that this object defines.
+	frg::vector<SymbolVersion, MemoryAllocator> definedVersions;
 
 	const char *runPath = nullptr;
 
@@ -332,6 +356,68 @@ private:
 };
 
 frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_view string);
+
+// --------------------------------------------------------
+// SymbolVersion
+// --------------------------------------------------------
+
+struct SymbolVersion {
+	SymbolVersion(const char *name, uint32_t hash)
+	: _local{false}, _global{false}, _default{false}
+	, _name{name}, _hash{hash} { }
+
+	SymbolVersion(int idx)
+	: _local{idx == 0}, _global{idx == 1}, _default{false}
+	, _name{""}, _hash{0} { }
+
+	SymbolVersion(const char *name)
+	: _local{false}, _global{false}, _default{false}
+	, _name{name}, _hash{elf64Hash(name)} { }
+
+	bool isLocal() const {
+		return _local;
+	}
+
+	bool isGlobal() const {
+		return _global;
+	}
+
+	bool isDefault() const {
+		return _default;
+	}
+
+	frg::string_view name() const {
+		if(_local) return "(*local*)";
+		if(_global) return "(*global*)";
+		return _name;
+	}
+
+	uint32_t hash() const {
+		return _hash;
+	}
+
+	bool operator==(const SymbolVersion &other) const {
+		if(_local || other._local) return _local && other._local;
+		if(_global || other._global) return _global && other._global;
+		if(_hash != other._hash) return false;
+		return _name == other._name;
+	}
+
+	SymbolVersion makeDefault() const {
+		auto copy = *this;
+		copy._default = true;
+
+		return copy;
+	}
+
+private:
+	bool _local, _global;
+	bool _default;
+
+	frg::string_view _name;
+	uint32_t _hash;
+};
+
 
 // --------------------------------------------------------
 // Scope
