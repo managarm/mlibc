@@ -666,7 +666,7 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 }
 
 extern "C" [[ gnu::visibility("default") ]]
-void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
+void *__dlapi_resolve(void *handle, const char *string, void *returnAddress, const char *version) {
 	if (logDlCalls) {
 		const char *name;
 		bool quote = false;
@@ -685,6 +685,9 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
 
 	frg::optional<ObjectSymbol> target;
 	frg::optional<SymbolVersion> targetVersion = frg::null_opt;
+
+	if(version)
+		targetVersion = SymbolVersion{version};
 
 	if (handle == RTLD_DEFAULT) {
 		target = globalScope->resolveSymbol(string, 0, 0, targetVersion);
