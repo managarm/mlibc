@@ -230,6 +230,8 @@ struct SharedObject {
 	void *phdrPointer = nullptr;
 	size_t phdrEntrySize = 0;
 	size_t phdrCount = 0;
+
+	frg::tuple<ObjectSymbol, SymbolVersion> getSymbolByIndex(size_t index);
 };
 
 struct Relocation {
@@ -355,7 +357,8 @@ private:
 	const elf_sym *_symbol;
 };
 
-frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_view string);
+frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_view string,
+		frg::optional<SymbolVersion> version);
 
 // --------------------------------------------------------
 // SymbolVersion
@@ -429,20 +432,24 @@ struct Scope {
 	static inline constexpr ResolveFlags skipGlobalAfterRts = 1 << 1;
 
 	static frg::optional<ObjectSymbol> resolveGlobalOrLocal(Scope &globalScope,
-			Scope *localScope, frg::string_view string, uint64_t skipRts, ResolveFlags flags);
+			Scope *localScope, frg::string_view string, uint64_t skipRts, ResolveFlags flags,
+			frg::optional<SymbolVersion> version);
 	static frg::optional<ObjectSymbol> resolveGlobalOrLocalNext(Scope &globalScope,
-			Scope *localScope, frg::string_view string, SharedObject *origin);
+			Scope *localScope, frg::string_view string, SharedObject *origin,
+			frg::optional<SymbolVersion> version);
 
 	Scope(bool isGlobal = false);
 
 	void appendObject(SharedObject *object);
 
-	frg::optional<ObjectSymbol> resolveSymbol(frg::string_view string, uint64_t skipRts, ResolveFlags flags);
+	frg::optional<ObjectSymbol> resolveSymbol(frg::string_view string, uint64_t skipRts, ResolveFlags flags,
+			frg::optional<SymbolVersion> version);
 
 	bool isGlobal;
 
 private:
-	frg::optional<ObjectSymbol> _resolveNext(frg::string_view string, SharedObject *target);
+	frg::optional<ObjectSymbol> _resolveNext(frg::string_view string, SharedObject *target,
+			frg::optional<SymbolVersion> version);
 public: // TODO: Make this private again. (Was made public for __dlapi_reverse()).
 	frg::vector<SharedObject *, MemoryAllocator> _objects;
 };
