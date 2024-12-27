@@ -112,12 +112,28 @@ typedef struct {
 } Elf64_Verdaux;
 
 typedef struct {
+	Elf32_Half vn_version;
+	Elf32_Half vn_cnt;
+	Elf32_Word vn_file;
+	Elf32_Word vn_aux;
+	Elf32_Word vn_next;
+} Elf32_Verneed;
+
+typedef struct {
 	Elf64_Half vn_version;
 	Elf64_Half vn_cnt;
 	Elf64_Word vn_file;
 	Elf64_Word vn_aux;
 	Elf64_Word vn_next;
 } Elf64_Verneed;
+
+typedef struct {
+	Elf32_Word vna_hash;
+	Elf32_Half vna_flags;
+	Elf32_Half vna_other;
+	Elf32_Word vna_name;
+	Elf32_Word vna_next;
+} Elf32_Vernaux;
 
 typedef struct {
 	Elf64_Word vna_hash;
