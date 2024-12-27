@@ -17,6 +17,12 @@ using elf_addr = Elf32_Addr;
 using elf_info = Elf32_Word;
 using elf_addend = Elf32_Sword;
 
+using elf_version = Elf32_Half;
+using elf_verdef = Elf32_Verdef;
+using elf_verdaux = Elf32_Verdaux;
+using elf_verneed = Elf32_Verneed;
+using elf_vernaux = Elf32_Vernaux;
+
 #define ELF_R_SYM ELF32_R_SYM
 #define ELF_R_TYPE ELF32_R_TYPE
 #define ELF_ST_BIND ELF32_ST_BIND
