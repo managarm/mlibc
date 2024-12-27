@@ -686,6 +686,10 @@ typedef struct {
 #define AT_GID 13
 #define AT_EGID 14
 
+/* Values for Elfxx_Verdef::vd_flags and Elfxx_Vernaux::vna_flags */
+#define VER_FLG_BASE 1 /* Version definition of the file itself */
+#define VER_FLG_WEAK 2 /* Weak version identifier */
+
 /* rtld requires presence of some a_type (AT_*) values that are not standardized in the ELF spec */
 #if !defined(AT_EXECFN) || !defined(AT_RANDOM) || !defined(AT_SECURE)
 #error "sysdeps' auxv.h is missing some defines that are required for rtld operation"
