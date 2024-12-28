@@ -1,0 +1,11 @@
+[binaries]
+c = ['riscv64-elf-gcc']
+cpp = ['riscv64-elf-g++']
+ar = ['riscv64-elf-ar']
+ranlib = ['riscv64-elf-ranlib']
+
+[host_machine]
+system = 'demo'
+cpu_family = 'riscv64'
+cpu = 'unknown'
+endian = 'little'
