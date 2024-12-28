@@ -1,0 +1,9 @@
+setup: make cross file pointing to compiler
+
+meson setup --cross-file=ci/demo.cross-file build
+
+-Ddefault_library=static
+
+add sysdeps directory
+
+
