@@ -9,11 +9,13 @@
 #define SYS_WRITE 1
 #define SYS_MMAP 2
 
+// ANCHOR: stub
 #define STUB()                                                                 \
   ({                                                                           \
-    __ensure(!"STUB_ONLY function was called");                                \
+    __ensure(!"STUB function was called");                                     \
     __builtin_unreachable();                                                   \
   })
+// ANCHOR_END: stub
 
 namespace mlibc {
 
@@ -35,7 +37,7 @@ int sys_isatty(int fd) {
 
 int sys_write(int fd, void const *buf, size_t size, ssize_t *ret) {
   *ret = syscall(SYS_WRITE, fd, buf, size);
-  return ret == 0 ? 0 : -1;
+  return *ret >= 0 ? 0 : -1;
 }
 
 int sys_tcb_set(void *pointer) {
@@ -55,7 +57,9 @@ int sys_anon_allocate(size_t size, void **pointer) {
 
 int sys_anon_free(void *, unsigned long) { return 0; }
 
-int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) { return 0; }
+int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
+  return ESPIPE;
+}
 
 void sys_exit(int status) {
   syscall(SYS_EXIT, status);

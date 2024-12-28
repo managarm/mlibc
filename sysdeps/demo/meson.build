@@ -1,3 +1,4 @@
+# ANCHOR: sources-and-includes
 sysdep_supported_options = {
 	'posix': false,
 	'linux': false,
@@ -8,13 +9,17 @@ sysdep_supported_options = {
 rtld_sources += files(
 	'sysdeps.cpp',
 )
+rtld_include_dirs += include_directories('sysdeps/demo/include')
 
 libc_sources += files(
 	'entry.cpp',
 	'sysdeps.cpp',
 	'syscall.cpp',
 )
+libc_include_dirs += include_directories('sysdeps/demo/include')
+# ANCHOR_END: sources-and-includes
 
+# ANCHOR: abi-includes
 if not no_headers
 	install_headers(
 		'include/abi-bits/auxv.h',
@@ -41,7 +46,9 @@ if not no_headers
 		follow_symlinks: true
 	)
 endif
+# ANCHOR_END: abi-includes
 
+# ANCHOR: crt1
 if not headers_only
 	crt = custom_target('crt1',
 		build_by_default: true,
@@ -52,3 +59,4 @@ if not headers_only
 		install_dir: get_option('libdir')
 	)
 endif
+# ANCHOR_END: crt1
