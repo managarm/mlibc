@@ -1,7 +1,7 @@
 sysdep_supported_options = {
-    'posix': false,
+    'posix': true,
     'linux': false,
-    'glibc': false,
+    'glibc': true,
     'bsd': false,
 }
 
@@ -21,6 +21,9 @@ libc_sources += files(
     
 )
 
+add_project_arguments('-D_GNU_SOURCE', language: 'c')
+add_project_arguments('-D_GNU_SOURCE', language: 'cpp')
+
 if not no_headers
     install_headers(
         'include/obos/syscall.h',
@@ -28,6 +31,11 @@ if not no_headers
         'include/obos/vma.h',
         subdir: 'obos'
     )
+
+#    install_headers(
+#        'include/sys/ioctl.h',
+#        subdir: 'sys'
+#    )
 
     install_headers(
 		'include/abi-bits/auxv.h',

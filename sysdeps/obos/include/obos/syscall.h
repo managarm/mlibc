@@ -61,6 +61,9 @@ enum {
     Sys_ReadEntries, // 55
     Sys_ExecVE, // 56
     Sys_LibCLog, // 57
+    Sys_ProcessGetPID, // 58
+    Sys_ProcessGetPPID, // 59
+    Sys_FdOpenAt,
 };
 
 #ifdef __cplusplus

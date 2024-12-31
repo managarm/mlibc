@@ -1,7 +1,13 @@
 #include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
 #include <errno.h>
 
+#include <frg/logging.hpp>
+#include <mlibc/debug.hpp>
+
 #include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/internal-sysdeps.hpp>
 
 #include <obos/syscall.h>
@@ -11,11 +17,66 @@
 #include <abi-bits/errno.h>
 #include <abi-bits/fcntl.h>
 
-namespace [[gnu::visibility("hidden")]] mlibc {
+namespace mlibc {
+
+#define define_stub(signature, ret) \
+signature {\
+    mlibc::infoLogger() << "mlibc: " << __func__ << " is a stub!\n" \
+                        << frg::endlog; \
+    return (ret); \
+}
+
+int sys_sigprocmask(int how, const sigset_t *__restrict set,
+		sigset_t *__restrict retrieve)
+{
+    return 0;
+}
+int sys_sigaction(int, const struct sigaction *__restrict,
+		struct sigaction *__restrict)
+{
+    return 0;
+}
+
+//define_stub(int sys_isatty(int fd), 1)
 
 void sys_libc_log(char const* str)
 {
     syscall1(Sys_LibCLog, str);
+}
+
+int sys_isatty(int fd)
+{
+    if (fd <= 2) return 0;
+    return 1;
+}
+
+uid_t sys_getuid()
+{ return 0; }
+uid_t sys_geteuid()
+{ return 0; }
+
+gid_t sys_getgid()
+{ return 0; }
+gid_t sys_getegid() { return 0; }
+
+pid_t sys_gettid()
+{
+    return (pid_t)syscall1(Sys_ThreadGetTid, HANDLE_CURRENT);
+}
+pid_t sys_getpid()
+{
+    return (pid_t)syscall1(Sys_ProcessGetPID, HANDLE_CURRENT);
+}
+pid_t sys_getppid()
+{
+    return (pid_t)syscall1(Sys_ProcessGetPPID, HANDLE_CURRENT);
+}
+
+// TODO: Progress group IDs
+int sys_getpgid(pid_t pid, pid_t* pgid)
+{
+    *pgid = pid;
+    return 0;
 }
 
 [[noreturn]] void sys_libc_panic()
@@ -34,6 +95,8 @@ void sys_libc_log(char const* str)
 
 [[noreturn]] void sys_thread_exit()
 {
+    for (volatile bool b = true; b; )
+        asm volatile ("" :"=r"(b) : "r"(b) : "memory");
     sys_exit(0);
 }
 
@@ -107,6 +170,56 @@ static int parse_file_status(obos_status status)
     }
 }
 
+#ifndef MLIBC_BUILDING_RTLD
+static char* cwd;
+static size_t sz_cwd;
+static handle cwd_hnd = HANDLE_INVALID;
+
+int sys_getcwd(char *buffer, size_t size)
+{
+    if (cwd == NULL)
+    {
+        if (size < 2)
+            return ERANGE;
+        memcpy(buffer, "/\0", 2);
+        return 0;
+    }
+    if (size < sz_cwd)
+        return ERANGE;
+    memcpy(buffer, cwd, sz_cwd);
+    return 0;
+}
+
+int sys_chdir(const char *path)
+{
+    if (cwd_hnd != HANDLE_INVALID)
+        syscall1(Sys_HandleClose, cwd_hnd);
+
+    obos_status status = OBOS_STATUS_SUCCESS;
+    cwd_hnd = syscall2(Sys_OpenDir, path, &status);
+    if (int ec = parse_file_status(status); ec)
+        return ec;
+    // Keep the directory open to prevent anyone from deleting it while our CWD
+    // is set to it.
+
+    auto old_errno = errno;
+    free(cwd);
+    sz_cwd = strlen(path)+1;
+    cwd = (char*)malloc(sz_cwd);
+    memcpy(cwd, path, sz_cwd);
+    errno = old_errno;
+    return 0;
+}
+#else
+static handle cwd_hnd = HANDLE_INVALID;
+#endif
+
+int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set, const struct timespec *timeout, const sigset_t *sigmask, int *num_events)
+{
+    *num_events = 1;
+    return 0;
+}
+
 int sys_open(const char *pathname, int flags, mode_t mode, int *fd)
 {
     handle hnd = (handle)syscall0(Sys_FdAlloc);
@@ -123,7 +236,12 @@ int sys_open(const char *pathname, int flags, mode_t mode, int *fd)
     if (flags & O_DIRECT)
         real_flags |= 4 /* FD_OFLAGS_UNCACHED */;
 
-    obos_status st = (obos_status)syscall3(Sys_FdOpen, hnd, pathname, real_flags);
+    obos_status st = OBOS_STATUS_SUCCESS;
+
+    if (cwd_hnd == HANDLE_INVALID || pathname[0] == '/')
+        st = (obos_status)syscall3(Sys_FdOpen, hnd, pathname, real_flags);
+    else
+        st = (obos_status)syscall4(Sys_FdOpenAt, hnd, cwd_hnd, pathname, real_flags);
     if (int ec = parse_file_status(st); st != 0)
         return ec;
     *fd = hnd;
@@ -195,7 +313,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
         uint32_t flags;
         handle file;
         uintptr_t offset;
-    } extra_args = { prot_flags, real_flags, fd, offset };
+    } extra_args = { prot_flags, real_flags, (handle)fd, offset };
 
     obos_status status = OBOS_STATUS_SUCCESS;
 
