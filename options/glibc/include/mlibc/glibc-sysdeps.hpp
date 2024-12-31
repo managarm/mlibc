@@ -11,6 +11,10 @@ namespace  [[gnu::visibility("hidden")]] mlibc {
 [[gnu::weak]] int sys_ioperm(unsigned long int from, unsigned long int num, int turn_on);
 [[gnu::weak]] int sys_iopl(int level);
 
+#ifdef __riscv
+[[gnu::weak]] int sys_riscv_flush_icache(void *start, void *end, unsigned long flags);
+#endif
+
 } // namespace mlibc
 
 #endif // MLIBC_GLIBC_SYSDEPS
