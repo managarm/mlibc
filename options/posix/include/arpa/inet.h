@@ -21,6 +21,7 @@ uint16_t ntohs(uint16_t __x);
 /* ---------------------------------------------------------------------------- */
 
 in_addr_t inet_addr(const char *__cp);
+in_addr_t inet_network(const char *__cp);
 char *inet_ntoa(struct in_addr __in);
 
 /* GLIBC replacement for inet_addr(). */
