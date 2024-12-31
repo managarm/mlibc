@@ -207,10 +207,8 @@ extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
 	__ensure(type == R_X86_64_JUMP_SLOT);
 	__ensure(ELF_CLASS == ELFCLASS64);
 
-	auto symbol = (elf_sym *)(object->baseAddress + object->symbolTableOffset
-			+ symbol_index * sizeof(elf_sym));
-	ObjectSymbol r(object, symbol);
-	auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, r.getString(), object->objectRts, 0);
+	auto [sym, ver] = object->getSymbolByIndex(symbol_index);
+	auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, sym.getString(), object->objectRts, 0, ver);
 	if(!p)
 		mlibc::panicLogger() << "Unresolved JUMP_SLOT symbol" << frg::endlog;
 
@@ -668,7 +666,7 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 }
 
 extern "C" [[ gnu::visibility("default") ]]
-void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
+void *__dlapi_resolve(void *handle, const char *string, void *returnAddress, const char *version) {
 	if (logDlCalls) {
 		const char *name;
 		bool quote = false;
@@ -686,9 +684,13 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
 	}
 
 	frg::optional<ObjectSymbol> target;
+	frg::optional<SymbolVersion> targetVersion = frg::null_opt;
+
+	if(version)
+		targetVersion = SymbolVersion{version};
 
 	if (handle == RTLD_DEFAULT) {
-		target = globalScope->resolveSymbol(string, 0, 0);
+		target = globalScope->resolveSymbol(string, 0, 0, targetVersion);
 	} else if (handle == RTLD_NEXT) {
 		SharedObject *origin = initialRepository->findCaller(returnAddress);
 		if (!origin) {
@@ -696,7 +698,7 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
 				<< "(ra = " << returnAddress << ")" << frg::endlog;
 		}
 
-		target = Scope::resolveGlobalOrLocalNext(*globalScope, origin->localScope, string, origin);
+		target = Scope::resolveGlobalOrLocalNext(*globalScope, origin->localScope, string, origin, targetVersion);
 	} else {
 		// POSIX does not unambiguously state how dlsym() is supposed to work; it just
 		// states that "The symbol resolution algorithm used shall be dependency order
@@ -726,7 +728,7 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress) {
 		for(size_t i = 0; i < queue.size(); i++) {
 			auto current = queue[i];
 
-			target = resolveInObject(current, string);
+			target = resolveInObject(current, string, targetVersion);
 			if(target)
 				break;
 

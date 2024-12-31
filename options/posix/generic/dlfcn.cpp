@@ -15,7 +15,7 @@ struct __dlapi_symbol {
 
 extern "C" const char *__dlapi_error();
 extern "C" void *__dlapi_open(const char *, int, void *);
-extern "C" void *__dlapi_resolve(void *, const char *, void *);
+extern "C" void *__dlapi_resolve(void *, const char *, void *, const char *);
 extern "C" int __dlapi_reverse(const void *, __dlapi_symbol *);
 extern "C" int __dlapi_close(void *);
 
@@ -36,14 +36,13 @@ void *dlopen(const char *file, int flags) {
 [[gnu::noinline]]
 void *dlsym(void *__restrict handle, const char *__restrict string) {
 	auto ra = __builtin_extract_return_addr(__builtin_return_address(0));
-	return __dlapi_resolve(handle, string, ra);
+	return __dlapi_resolve(handle, string, ra, NULL);
 }
 
 [[gnu::noinline]]
 void *dlvsym(void *__restrict handle, const char *__restrict string, const char *__restrict version) {
-	mlibc::infoLogger() << "mlibc: dlvsym ignores version " << version << frg::endlog;
 	auto ra = __builtin_extract_return_addr(__builtin_return_address(0));
-	return __dlapi_resolve(handle, string, ra);
+	return __dlapi_resolve(handle, string, ra, version);
 }
 
 //gnu extensions
