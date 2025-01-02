@@ -81,6 +81,7 @@ int tcgetattr(int fd, struct termios *__attr);
 pid_t tcgetsid(int __fd);
 int tcsendbreak(int __fd, int __duration);
 int tcsetattr(int __fd, int __optional_actions, const struct termios *__attr);
+int cfsetspeed(struct termios *__tios, speed_t __speed);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

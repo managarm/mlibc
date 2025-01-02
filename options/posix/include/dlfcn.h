@@ -3,6 +3,7 @@
 #define _DLFCN_H
 
 #include <mlibc-config.h>
+#include <bits/size_t.h>
 
 #define RTLD_LOCAL 0
 #define RTLD_LAZY 1
@@ -19,6 +20,8 @@
 #define RTLD_DL_LINKMAP 2
 
 #define RTLD_DI_LINKMAP 2
+#define RTLD_DI_SERINFO 4
+#define RTLD_DI_SERINFOSIZE 5
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,6 +60,17 @@ typedef struct {
 #define DLFO_STRUCT_HAS_EH_COUNT 0
 #define DLFO_EH_SEGMENT_TYPE PT_GNU_EH_FRAME
 #endif
+
+typedef struct {
+	char *dls_name;
+	unsigned int dls_flags;
+} Dl_serpath;
+
+typedef struct {
+	size_t dls_size;
+	unsigned int dls_cnt;
+	Dl_serpath dls_serpath[1];
+} Dl_serinfo;
 
 struct dl_find_object {
 	unsigned long long dlfo_flags;

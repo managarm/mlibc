@@ -101,3 +101,7 @@ int tcsetattr(int fd, int opts, const struct termios *attr) {
 	return 0;
 }
 
+int cfsetspeed(struct termios *, speed_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
