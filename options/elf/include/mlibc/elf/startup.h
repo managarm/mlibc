@@ -1,12 +1,6 @@
 #ifndef MLIBC_ELF_STARTUP
 #define MLIBC_ELF_STARTUP
 
-#ifndef __MLIBC_ABI_ONLY
-
-void __mlibc_run_constructors();
-
-#endif /* !__MLIBC_ABI_ONLY */
-
 namespace mlibc {
 
 struct exec_stack_data {
@@ -14,6 +8,8 @@ struct exec_stack_data {
 	char **argv;
 	char **envp;
 };
+
+extern exec_stack_data entry_stack;
 
 #ifndef __MLIBC_ABI_ONLY
 

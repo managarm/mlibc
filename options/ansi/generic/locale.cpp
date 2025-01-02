@@ -71,7 +71,8 @@ namespace mlibc {
 	const locale_description *messages_facet;
 }
 
-void __mlibc_initLocale() {
+[[gnu::constructor]]
+static void init_locale() {
 	mlibc::collate_facet = &mlibc::c_locale;
 	mlibc::ctype_facet = &mlibc::c_locale;
 	mlibc::monetary_facet = &mlibc::c_locale;
