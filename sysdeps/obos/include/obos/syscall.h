@@ -24,7 +24,7 @@ enum {
     Sys_WaitOnObjects,
     Sys_ProcessOpen,  // Unimplemented
     Sys_ProcessStart,
-    Sys_ProcessKill,  // Unimplemented
+    Sys_KillProcess, // signal-related
     Sys_VirtualMemoryAlloc, // 22
     Sys_VirtualMemoryFree,
     Sys_VirtualMemoryProtect,
@@ -64,6 +64,7 @@ enum {
     Sys_ProcessGetPID, // 58
     Sys_ProcessGetPPID, // 59
     Sys_FdOpenAt,
+    Sys_MmFork, // 61
 };
 
 #ifdef __cplusplus

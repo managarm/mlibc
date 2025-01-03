@@ -81,19 +81,19 @@ int sys_sigaltstack(const stack_t *ss, stack_t *oss)
     return interpret_signal_status((obos_status)syscall2(Sys_SigAltStack, ss, oss));
 }
 
-int sys_kill(int tid, int sigval)
+int sys_kill(pid_t pid, int sigval)
 {
-    if (tid == -1)
+    if (pid == -1)
         return ENOSYS;
-    if (tid == 0)
+    if (pid == 0)
         return ENOSYS;
-    if (tid < -1)
-        tid = -tid;
+    if (pid < -1)
+        pid = -pid;
     // TODO: Support opening the threads of other processes?
-    handle hnd = (handle)syscall2(Sys_ThreadOpen, HANDLE_CURRENT, tid);
+    handle hnd = (handle)syscall1(Sys_ProcessOpen, pid);
     if (hnd == HANDLE_INVALID)
         return ESRCH;
-    int err = interpret_signal_status((obos_status)syscall2(Sys_Kill, hnd, sigval));
+    int err = interpret_signal_status((obos_status)syscall2(Sys_KillProcess, hnd, sigval));
     syscall1(Sys_HandleClose, hnd);
     return err;
 }
