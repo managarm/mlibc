@@ -6,6 +6,7 @@
 #define Sys_ProcessStart 0x14
 #define Sys_ThreadCreate 0x9
 #define Sys_ProcessGetPid 0x3A
+#define Sys_MmFork 0x3D
 
 #define HANDLE_CURRENT 0xfe000000
 
@@ -31,9 +32,8 @@ sys_fork:
 
     push rdi
 
-    // Clone (fork) the current VMM context
-    mov eax, Sys_HandleClone
-    mov rdi, HANDLE_CURRENT
+    // Fork the current VMM context
+    mov eax, Sys_MmFork
     syscall
     mov rbx, rax
 
