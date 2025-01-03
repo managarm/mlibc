@@ -11,7 +11,7 @@
 
 #define THREAD_PRIORITY_NORMAL 2
 
-.global sys_fork
+.global _ZN5mlibc8sys_forkEPi
 
 // rdi: input, pid_t* child
 // rbx: local, handle vmm_context
@@ -19,6 +19,7 @@
 // r13: local, handle thread_handle
 // r14: local, handle proc_handle
 
+_ZN5mlibc8sys_forkEPi:
 sys_fork:
     push rbx
     push r12
