@@ -94,6 +94,8 @@ fork_shim:
     pop r12
     pop rbx
 
+    xor rax,rax
+
     ret
 
 #if MLIBC_BUILDING_RTLD
