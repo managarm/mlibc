@@ -22,10 +22,14 @@
 
 _ZN5mlibc8sys_forkEPi:
 sys_fork:
+    push rbp
+    mov rbp, rsp
+
     push rbx
     push r12
     push r13
     push r14
+    push r15
 
     // Set *child to zero
     movd [rdi], 0
@@ -89,7 +93,19 @@ sys_fork:
     mov eax, Sys_HandleClose
     syscall
 
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+
+    leave
+    xor rax,rax
+    ret
+
 fork_shim:
+
+    pop r15
     pop r14
     pop r13
     pop r12
