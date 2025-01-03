@@ -26,18 +26,82 @@ signature {\
     return (ret); \
 }
 
+static int interpret_signal_status(obos_status st)
+{
+    switch (st)
+    {
+        case OBOS_STATUS_SUCCESS: return 0;
+        case OBOS_STATUS_INVALID_ARGUMENT: return EINVAL;
+        default: return ENOSYS;
+    }
+}
+
 int sys_sigprocmask(int how, const sigset_t *__restrict set,
 		sigset_t *__restrict retrieve)
 {
-    return 0;
+    if (how > 3)
+        return EINVAL;
+    // 'how' in oboskrnl has the same values as in Linux (the abi we "borrow" from).
+    return interpret_signal_status((obos_status)syscall3(Sys_SigProcMask, how, set, retrieve));
 }
-int sys_sigaction(int, const struct sigaction *__restrict,
-		struct sigaction *__restrict)
+
+typedef struct user_sigaction {
+    union {
+        void(*handler)(int signum);
+        void(*fn_sigaction)(int signum, siginfo_t* info, void* unknown);
+    } un;
+    // NOTE(oberrow): Set to __mlibc_restorer in the mlibc sysdeps.
+    uintptr_t trampoline_base; // required
+    uint32_t  flags;
+} user_sigaction;
+
+int sys_sigaction(int sigval, const struct sigaction *__restrict newact_mlibc,
+		struct sigaction *__restrict oldact_mlibc)
 {
-    return 0;
+    user_sigaction newact = {}, oldact = {};
+    if (newact_mlibc)
+    {
+        newact.un.handler = newact_mlibc->sa_handler;
+        newact.flags = newact_mlibc->sa_flags;
+        newact.trampoline_base = (uintptr_t)newact_mlibc->sa_restorer;
+    }
+    int err = interpret_signal_status((obos_status)syscall3(Sys_SigAction, sigval, newact_mlibc ? &newact : nullptr, oldact_mlibc ? &oldact : nullptr));
+    if (oldact_mlibc && !err)
+    {
+        oldact_mlibc->sa_handler = oldact.un.handler;
+        oldact_mlibc->sa_flags = oldact.flags;
+        oldact_mlibc->sa_restorer = (void(*)())oldact.trampoline_base;
+    }
+    return err;
+}
+
+int sys_sigaltstack(const stack_t *ss, stack_t *oss)
+{
+    // stack_t is the same on obos and on Linux (the abi we "borrow" from)
+    return interpret_signal_status((obos_status)syscall2(Sys_SigAltStack, ss, oss));
+}
+
+int sys_kill(int tid, int sigval)
+{
+    if (tid == -1)
+        return ENOSYS;
+    if (tid == 0)
+        return ENOSYS;
+    if (tid < -1)
+        tid = -tid;
+    // TODO: Support opening the threads of other processes?
+    handle hnd = (handle)syscall2(Sys_ThreadOpen, HANDLE_CURRENT, tid);
+    if (hnd == HANDLE_INVALID)
+        return ESRCH;
+    int err = interpret_signal_status((obos_status)syscall2(Sys_Kill, hnd, sigval));
+    syscall1(Sys_HandleClose, hnd);
+    return err;
 }
 
 //define_stub(int sys_isatty(int fd), 1)
+
+// Architecture-specific.
+//int sys_fork(pid_t* child)
 
 void sys_libc_log(char const* str)
 {
