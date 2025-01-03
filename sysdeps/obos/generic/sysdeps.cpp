@@ -140,7 +140,7 @@ pid_t sys_gettid()
 }
 pid_t sys_getpid()
 {
-    return (pid_t)syscall1(Sys_ProcessGetPID, HANDLE_CURRENT);
+    return (pid_t)syscall1(Sys_ProcessGetTid, HANDLE_CURRENT);
 }
 pid_t sys_getppid()
 {
