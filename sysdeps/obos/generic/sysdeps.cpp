@@ -98,6 +98,17 @@ int sys_kill(int tid, int sigval)
     return err;
 }
 
+int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid)
+{
+    (void)(pid);
+    (void)(status);
+    (void)(flags);
+    (void)(ru);
+    (void)(ret_pid);
+    // TODO(oberrow): sys_waitpid
+    return ENOSYS;
+}
+
 //define_stub(int sys_isatty(int fd), 1)
 
 // Architecture-specific.
