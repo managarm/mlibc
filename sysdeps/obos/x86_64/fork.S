@@ -113,6 +113,7 @@ fork_shim:
 
     xor rax,rax
 
+    pop rbp
     ret
 
 #if MLIBC_BUILDING_RTLD
