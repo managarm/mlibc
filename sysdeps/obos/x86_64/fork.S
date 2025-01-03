@@ -48,8 +48,9 @@ sys_fork:
     // Create a thread
     mov eax, Sys_ThreadCreate
     mov rdi, THREAD_PRIORITY_NORMAL
-    mov rsi, 0
-    mov rdx, r12
+    xor rsi,rsi
+    xor rdx,rdx
+    mov r8, r12
     syscall
     mov r13, rax
 
