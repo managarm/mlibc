@@ -13,11 +13,11 @@
 
 .global sys_fork
 
-; rdi: input, pid_t* child
-; rbx: local, handle vmm_context
-; r12: local, handle thr_context
-; r13: local, handle thread_handle
-; r14: local, handle proc_handle
+// rdi: input, pid_t* child
+// rbx: local, handle vmm_context
+// r12: local, handle thr_context
+// r13: local, handle thread_handle
+// r14: local, handle proc_handle
 
 sys_fork:
     push rbx
@@ -31,15 +31,15 @@ sys_fork:
     push rdi
 
     // Clone (fork) the current VMM context
-    mov eax, Sys_HandleCLone
+    mov eax, Sys_HandleClone
     mov rdi, HANDLE_CURRENT
     syscall
     mov rbx, rax
 
     // Make the thread context
-    lea rsi, [rsp+0x8] ; after the saved RDI register
+    lea rsi, [rsp+0x8] // after the saved RDI register
     mov eax, Sys_ThreadContextCreateFork
-    mov rdi, fork_shim
+    lea rdi, [rip+fork_shim]
     mov rdx, rbx
     syscall
     mov r12, rax
