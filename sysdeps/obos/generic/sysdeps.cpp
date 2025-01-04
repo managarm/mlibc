@@ -114,6 +114,7 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
         mlibc::infoLogger() << "mlibc:" << __func__ << " pid value " << pid << " is unsupported" << frg::endlog;
         return ENOSYS;
     }
+    mlibc::infoLogger() << flags << frg::endlog;
     int ec = 0;
     try_again:
     handle hnd = (handle)syscall1(pid == -1 ? Sys_ProcessGetChildHandle : Sys_ProcessOpen, pid);
