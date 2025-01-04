@@ -66,6 +66,7 @@ enum {
     Sys_FdOpenAt,
     Sys_MmFork, // 61
     Sys_ExitCurrentProcess, // 62
+    Sys_ProcessGetStatus,
 };
 
 #ifdef __cplusplus

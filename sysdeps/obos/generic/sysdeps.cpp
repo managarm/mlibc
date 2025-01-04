@@ -89,7 +89,6 @@ int sys_kill(pid_t pid, int sigval)
         return ENOSYS;
     if (pid < -1)
         pid = -pid;
-    // TODO: Support opening the threads of other processes?
     handle hnd = (handle)syscall1(Sys_ProcessOpen, pid);
     if (hnd == HANDLE_INVALID)
         return ESRCH;
@@ -103,10 +102,45 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
     (void)(pid);
     (void)(status);
     (void)(flags);
-    (void)(ru);
     (void)(ret_pid);
-    // TODO(oberrow): sys_waitpid
-    return ENOSYS;
+    // TODO(oberrow): struct rusage and pid values <= 0
+    if (ru)
+    {
+        mlibc::infoLogger() << "mlibc: " << __func__ << "struct rusage in sys_waitpid is unsupported" << frg::endlog;
+        return ENOSYS;
+    }
+    if (pid <= 0)
+    {
+        mlibc::infoLogger() << "mlibc:" << __func__ << "pid value " << pid << " is unsupported" << frg::endlog;
+        return ENOSYS;
+    }
+    int ec = 0;
+    try_again:
+    handle hnd = (handle)syscall1(Sys_ProcessOpen, pid);
+    if (hnd == HANDLE_INVALID)
+        return ESRCH;
+    obos_status st = (obos_status)syscall1(Sys_WaitOnObject, hnd);
+    switch (st)
+    {
+        case OBOS_STATUS_INVALID_ARGUMENT: ec = EINVAL; goto exit;
+        case OBOS_STATUS_ABORTED: ec = EINTR; goto exit;
+        default: break;
+    }
+    do
+    {
+        uint32_t sstatus = (uint32_t)syscall1(Sys_ProcessGetStatus, hnd);
+        if (WIFSTOPPED(sstatus) && ~flags & WSTOPPED)
+            goto try_again;
+        if (WIFCONTINUED(sstatus) && ~flags & WCONTINUED)
+            goto try_again;
+        if (WIFEXITED(sstatus) && ~flags & WEXITED)
+            goto try_again;
+        *ret_pid = pid;
+        *status = sstatus;
+    } while(0);
+    exit:
+    syscall1(Sys_HandleClose, hnd);
+    return ec;
 }
 
 //define_stub(int sys_isatty(int fd), 1)
