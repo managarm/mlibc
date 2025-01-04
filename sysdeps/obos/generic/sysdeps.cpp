@@ -103,20 +103,20 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
     (void)(status);
     (void)(flags);
     (void)(ret_pid);
-    // TODO(oberrow): struct rusage and pid values <= 0
+    // TODO(oberrow): struct rusage and pid values that are < -1 or zero
     if (ru)
     {
         mlibc::infoLogger() << "mlibc: " << __func__ << "struct rusage in sys_waitpid is unsupported" << frg::endlog;
         return ENOSYS;
     }
-    if (pid <= 0)
+    if (pid < -1 || pid == 0)
     {
-        mlibc::infoLogger() << "mlibc:" << __func__ << "pid value " << pid << " is unsupported" << frg::endlog;
+        mlibc::infoLogger() << "mlibc:" << __func__ << " pid value " << pid << " is unsupported" << frg::endlog;
         return ENOSYS;
     }
     int ec = 0;
     try_again:
-    handle hnd = (handle)syscall1(Sys_ProcessOpen, pid);
+    handle hnd = (handle)syscall1(pid == -1 ? Sys_ProcessGetChildHandle : Sys_ProcessOpen, pid);
     if (hnd == HANDLE_INVALID)
         return ESRCH;
     obos_status st = (obos_status)syscall1(Sys_WaitOnObject, hnd);
