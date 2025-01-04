@@ -114,6 +114,31 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 // Architecture-specific.
 //int sys_fork(pid_t* child)
 
+int sys_execve(const char *path, char *const argv[], char *const envp[])
+{
+    int ec = 0, fd = 0;
+    ec = sys_open(path, O_RDONLY, 0, &fd);
+    if (ec)
+        return ec;
+    off_t off = 0;
+    sys_seek(fd, 0, SEEK_END, &off);
+    sys_seek(fd, 0, SEEK_SET, 0);
+    void* buf = nullptr;
+    ec = sys_vm_map(nullptr, off, PROT_READ|PROT_WRITE, 0, fd, 0, &buf);
+    if (ec)
+        return ec;
+    obos_status st = (obos_status)syscall4(Sys_ExecVE, buf, off, argv, envp);
+    switch (st)
+    {
+        case OBOS_STATUS_UNIMPLEMENTED: return ENOSYS;
+        case OBOS_STATUS_INVALID_ARGUMENT: return EINVAL;
+        case OBOS_STATUS_PAGE_FAULT: return EFAULT;
+        case OBOS_STATUS_INVALID_FILE: return ENOEXEC;
+        case OBOS_STATUS_NOT_FOUND: return ENOENT;
+        default: __builtin_unreachable();
+    }
+}
+
 void sys_libc_log(char const* str)
 {
     syscall1(Sys_LibCLog, str);
