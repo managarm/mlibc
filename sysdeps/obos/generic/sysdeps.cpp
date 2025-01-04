@@ -188,15 +188,12 @@ int sys_getpgid(pid_t pid, pid_t* pgid)
 
 [[noreturn]] void sys_exit(int status)
 {
-    (void)(status);
-    syscall0(Sys_ExitCurrentThread);
+    syscall1(Sys_ExitCurrentProcess, status);
     __builtin_unreachable();
 }
 
 [[noreturn]] void sys_thread_exit()
 {
-    for (volatile bool b = true; b; )
-        asm volatile ("" :"=r"(b) : "r"(b) : "memory");
     sys_exit(0);
 }
 

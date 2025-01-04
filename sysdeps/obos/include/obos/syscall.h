@@ -65,6 +65,7 @@ enum {
     Sys_ProcessGetPPID, // 59
     Sys_FdOpenAt,
     Sys_MmFork, // 61
+    Sys_ExitCurrentProcess, // 62
 };
 
 #ifdef __cplusplus
