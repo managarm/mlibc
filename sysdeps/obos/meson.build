@@ -17,6 +17,7 @@ libc_sources += files(
     'generic/entry.cpp',
     'generic/sysdeps.cpp',
     'generic/mount.cpp',
+    'generic/mntent.cpp',
     host_machine.cpu_family() + '/thread.cpp',
     host_machine.cpu_family() + '/syscall.S',
     host_machine.cpu_family() + '/fork.S'
