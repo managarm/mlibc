@@ -27,6 +27,10 @@ add_project_arguments('-D_GNU_SOURCE', language: 'cpp')
 
 if not no_headers
     install_headers(
+        'include/mntent.h'
+    )
+
+    install_headers(
         'include/obos/syscall.h',
         'include/obos/error.h',
         'include/obos/vma.h',
