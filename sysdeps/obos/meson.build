@@ -16,6 +16,7 @@ rtld_sources += files(
 libc_sources += files(
     'generic/entry.cpp',
     'generic/sysdeps.cpp',
+    'generic/mount.cpp',
     host_machine.cpu_family() + '/thread.cpp',
     host_machine.cpu_family() + '/syscall.S',
     host_machine.cpu_family() + '/fork.S'
@@ -32,10 +33,10 @@ if not no_headers
         subdir: 'obos'
     )
 
-#    install_headers(
-#        'include/sys/ioctl.h',
-#        subdir: 'sys'
-#    )
+    install_headers(
+        'include/sys/mount.h',
+        subdir: 'sys'
+    )
 
     install_headers(
 		'include/abi-bits/auxv.h',
