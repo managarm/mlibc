@@ -61,7 +61,10 @@ if not headers_only
 
 	frigg_dep = dependency(
 		'frigg',
-		default_options: ['frigg_no_install=true'],
+		default_options: [
+                  'frigg_no_install=true',
+                  'build_tests=disabled'
+                ],
 		fallback: ['frigg', 'frigg_dep'],
 	)
 	libc_deps += frigg_dep
