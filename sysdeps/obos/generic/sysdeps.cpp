@@ -388,9 +388,12 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset)
     obos_status st = (obos_status)syscall3(Sys_FdSeek, fd, offset, whence);
     if (int ec = parse_file_status(st); ec)
         return ec;
-    *new_offset = syscall1(Sys_FdTellOff, fd);
-    if (*new_offset == -1)
-        return EBADF;
+    if (new_offset)
+    {
+        *new_offset = syscall1(Sys_FdTellOff, fd);
+        if (*new_offset == -1)
+            return EBADF;
+    }
     return 0;
 }
 
