@@ -1,6 +1,6 @@
 sysdep_supported_options = {
     'posix': true,
-# NOTE(oberrow): When you implement the linux option, remove the installed headers under sys
+# NOTE(oberrow): When you implement the linux option, remove the installed headers under sys, as well as generic/mount.cpp, generic/statfs.cpp, and generic/mntent.cpp
     'linux': false,
     'glibc': true,
     'bsd': false,
@@ -19,6 +19,7 @@ libc_sources += files(
     'generic/sysdeps.cpp',
     'generic/mount.cpp',
     'generic/mntent.cpp',
+    'generic/statfs.cpp',
     host_machine.cpu_family() + '/thread.cpp',
     host_machine.cpu_family() + '/syscall.S',
     host_machine.cpu_family() + '/fork.S'
