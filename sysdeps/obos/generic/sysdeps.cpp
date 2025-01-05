@@ -99,10 +99,6 @@ int sys_kill(pid_t pid, int sigval)
 
 int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid)
 {
-    (void)(pid);
-    (void)(status);
-    (void)(flags);
-    (void)(ret_pid);
     // TODO(oberrow): struct rusage and pid values that are < -1 or zero
     if (ru)
     {
@@ -114,9 +110,9 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
         mlibc::infoLogger() << "mlibc:" << __func__ << " pid value " << pid << " is unsupported" << frg::endlog;
         return ENOSYS;
     }
-    mlibc::infoLogger() << flags << frg::endlog;
+//    mlibc::infoLogger() << flags << frg::endlog;
     int ec = 0;
-    try_again:
+//  try_again:
     handle hnd = (handle)syscall1(pid == -1 ? Sys_ProcessGetChildHandle : Sys_ProcessOpen, pid);
     if (hnd == HANDLE_INVALID)
         return ESRCH;
@@ -130,12 +126,12 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
     do
     {
         uint32_t sstatus = (uint32_t)syscall1(Sys_ProcessGetStatus, hnd);
-        if (WIFSTOPPED(sstatus) && ~flags & WSTOPPED)
+        /*if (WIFSTOPPED(sstatus) && ~flags & WSTOPPED)
             goto try_again;
         if (WIFCONTINUED(sstatus) && ~flags & WCONTINUED)
             goto try_again;
         if (WIFEXITED(sstatus) && ~flags & WEXITED)
-            goto try_again;
+            goto try_again;*/
         *ret_pid = pid;
         *status = sstatus;
     } while(0);
