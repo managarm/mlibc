@@ -453,7 +453,7 @@ int sys_vm_unmap(void *pointer, size_t size)
     return sys_anon_free(pointer, size);
 }
 
-int sys_tcgetattr(int fd, struct termios *attr)
+/*int sys_tcgetattr(int fd, struct termios *attr)
 {
     infoLogger() << __func__ << " is unimplemented" << frg::endlog;
     return 0;
@@ -462,6 +462,6 @@ int sys_tcsetattr(int, int, const struct termios *attr)
 {
     infoLogger() << __func__ << " is unimplemented" << frg::endlog;
     return 0;
-}
+}*/
 
 } // namespace mlibc
