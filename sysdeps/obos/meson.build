@@ -1,5 +1,6 @@
 sysdep_supported_options = {
     'posix': true,
+# NOTE(oberrow): When you implement the linux option, remove the installed headers under sys
     'linux': false,
     'glibc': true,
     'bsd': false,
@@ -40,6 +41,8 @@ if not no_headers
 
     install_headers(
         'include/sys/mount.h',
+        'include/sys/statfs.h',
+        'include/sys/vfs.h',
         subdir: 'sys'
     )
 
