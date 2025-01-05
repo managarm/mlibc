@@ -377,12 +377,12 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written)
 
 int sys_seek(int fd, off_t offset, int whence, off_t *new_offset)
 {
-    if (offset == 0)
+    /*if (offset == 0 && whence == SEEK_CUR)
     {
         *new_offset = syscall1(Sys_FdTellOff, fd);
         if (*new_offset == -1)
             return EBADF;
-    }
+    }*/
     if (whence > SEEK_DATA)
         return ENOSYS;
     obos_status st = (obos_status)syscall3(Sys_FdSeek, fd, offset, whence);
