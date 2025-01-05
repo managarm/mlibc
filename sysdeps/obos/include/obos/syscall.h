@@ -67,7 +67,7 @@ enum {
     Sys_MmFork, // 61
     Sys_ExitCurrentProcess, // 62
     Sys_ProcessGetStatus,
-    Sys_ProcessGetChildHandle, // 64
+    Sys_WaitProcess, // 64
 };
 
 #ifdef __cplusplus

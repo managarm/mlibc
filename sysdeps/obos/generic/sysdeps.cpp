@@ -110,33 +110,21 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
         mlibc::infoLogger() << "mlibc:" << __func__ << " pid value " << pid << " is unsupported" << frg::endlog;
         return ENOSYS;
     }
-//    mlibc::infoLogger() << flags << frg::endlog;
     int ec = 0;
-//  try_again:
-    handle hnd = (handle)syscall1(pid == -1 ? Sys_ProcessGetChildHandle : Sys_ProcessOpen, pid);
+    handle hnd = pid == -1 ? HANDLE_ANY : (handle)syscall1(Sys_ProcessOpen, pid);
     if (hnd == HANDLE_INVALID)
         return ESRCH;
-    obos_status st = (obos_status)syscall1(Sys_WaitOnObject, hnd);
+    obos_status st = (obos_status)syscall4(Sys_WaitProcess, hnd, status, flags, ret_pid);
     switch (st)
     {
         case OBOS_STATUS_INVALID_ARGUMENT: ec = EINVAL; goto exit;
         case OBOS_STATUS_ABORTED: ec = EINTR; goto exit;
+        case OBOS_STATUS_NOT_FOUND: ec = ESRCH; goto exit;
         default: break;
     }
-    do
-    {
-        uint32_t sstatus = (uint32_t)syscall1(Sys_ProcessGetStatus, hnd);
-        /*if (WIFSTOPPED(sstatus) && ~flags & WSTOPPED)
-            goto try_again;
-        if (WIFCONTINUED(sstatus) && ~flags & WCONTINUED)
-            goto try_again;
-        if (WIFEXITED(sstatus) && ~flags & WEXITED)
-            goto try_again;*/
-        *ret_pid = pid;
-        *status = sstatus;
-    } while(0);
     exit:
-    syscall1(Sys_HandleClose, hnd);
+    if (hnd != HANDLE_ANY)
+        syscall1(Sys_HandleClose, hnd);
     return ec;
 }
 
