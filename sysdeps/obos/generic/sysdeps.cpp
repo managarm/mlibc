@@ -365,6 +365,11 @@ int sys_open(const char *pathname, int flags, mode_t mode, int *fd)
     return 0;
 }
 
+int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf)
+{
+    return parse_file_status((obos_status)syscall5(Sys_Stat, fsfdt, fd, path, flags, statbuf));
+}
+
 int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read)
 {
     return parse_file_status((obos_status)syscall4(Sys_FdRead, fd, buf, count, bytes_read));

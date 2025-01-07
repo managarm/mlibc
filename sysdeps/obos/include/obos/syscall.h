@@ -68,6 +68,7 @@ enum {
     Sys_ExitCurrentProcess, // 62
     Sys_ProcessGetStatus,
     Sys_WaitProcess, // 64
+    Sys_Stat,
 };
 
 #ifdef __cplusplus
