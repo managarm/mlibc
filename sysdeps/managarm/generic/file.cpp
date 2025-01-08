@@ -2,9 +2,11 @@
 #include <dirent.h>
 #include <errno.h>
 #include <frg/small_vector.hpp>
+#include <pthread.h>
 #include <stdio.h>
 #include <sys/eventfd.h>
 #include <sys/inotify.h>
+#include <sys/prctl.h>
 #include <sys/reboot.h>
 #include <sys/signalfd.h>
 #include <unistd.h>
@@ -2776,6 +2778,29 @@ int sys_fstatfs(int fd, struct statfs *buf) {
 		memset(buf, NULL, sizeof(struct statfs));
 		buf->f_type = resp.fstype();
 		return 0;
+	}
+}
+
+int sys_prctl(int option, va_list va, int *out) {
+	switch (option) {
+		case PR_CAPBSET_READ:
+			mlibc::infoLogger() << "mlibc: prctl PR_CAPBSET_READ is a stub!" << frg::endlog;
+			*out = 1;
+			return 0;
+		case PR_SET_NAME: {
+			const auto name = va_arg(va, char *);
+			*out = 0;
+			return pthread_setname_np(pthread_self(), name);
+		}
+		case PR_GET_NAME: {
+			const auto name = va_arg(va, char *);
+			*out = 0;
+			return pthread_getname_np(pthread_self(), name, 16);
+		}
+		default:
+			mlibc::infoLogger() << "mlibc: prctl: operation: " << option << " unimplemented!"
+			                    << frg::endlog;
+			return EINVAL;
 	}
 }
 
