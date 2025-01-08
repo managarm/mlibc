@@ -358,12 +358,13 @@ std::array<std::pair<int, int>, 5> setsockopt_readonly = {{
     {SOL_SOCKET, SO_TYPE},
 }};
 
-std::array<std::pair<int, int>, 5> setsockopt_passthrough = {{
+std::array<std::pair<int, int>, 6> setsockopt_passthrough = {{
     {SOL_PACKET, PACKET_AUXDATA},
     {SOL_SOCKET, SO_LOCK_FILTER},
     {SOL_SOCKET, SO_BINDTODEVICE},
     {SOL_IP, IP_PKTINFO},
     {SOL_NETLINK, NETLINK_ADD_MEMBERSHIP},
+    {SOL_NETLINK, NETLINK_PKTINFO},
 }};
 
 std::array<std::pair<int, int>, 2> setsockopt_passthrough_noopt = {{
