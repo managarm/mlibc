@@ -32,6 +32,9 @@ struct sysinfo {
 
 int sysinfo(struct sysinfo *__info);
 
+int get_nprocs(void);
+int get_nprocs_conf(void);
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
