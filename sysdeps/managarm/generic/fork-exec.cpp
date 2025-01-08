@@ -76,6 +76,8 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		return EINVAL;
+	} else if (resp.error() == managarm::posix::Errors::NO_CHILD_PROCESSES) {
+		return ECHILD;
 	}
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	if (status)
@@ -114,6 +116,8 @@ int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		return EINVAL;
+	} else if (resp.error() == managarm::posix::Errors::NO_CHILD_PROCESSES) {
+		return ECHILD;
 	}
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	info->si_pid = resp.pid();
