@@ -282,6 +282,7 @@ static int parse_file_status(obos_status status)
         case OBOS_STATUS_UNINITIALIZED: return EBADF;
         case OBOS_STATUS_EOF: return EIO;
         case OBOS_STATUS_ACCESS_DENIED: return EACCES;
+        case OBOS_STATUS_NO_SYSCALL: return ENOSYS;
         default: sys_libc_panic();
     }
 }
@@ -368,6 +369,76 @@ int sys_open(const char *pathname, int flags, mode_t mode, int *fd)
 int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf)
 {
     return parse_file_status((obos_status)syscall5(Sys_Stat, fsfdt, fd, path, flags, statbuf));
+}
+
+
+typedef struct drv_fs_info {
+    size_t fsBlockSize;
+    size_t freeBlocks; // in units of 'fsBlockSize'
+
+    size_t partBlockSize;
+    size_t szFs; // in units of 'partBlockSize'
+
+    size_t fileCount;
+    size_t availableFiles; // the count of files that can be made until the partition cannot hold anymore
+
+    size_t nameMax;
+
+    uint32_t flags;
+} drv_fs_info;
+
+enum {
+    FS_FLAGS_NOEXEC = 1<<0,
+    FS_FLAGS_RDONLY = 1<<1,
+};
+
+int sys_statvfs(const char *path, struct statvfs *out)
+{
+    obos_status status = OBOS_STATUS_SUCCESS;
+    handle hnd = (handle)syscall2(Sys_OpenDir, path, &status);
+    if (status != OBOS_STATUS_SUCCESS)
+        return parse_file_status(status);
+    int ec = sys_fstatvfs(hnd, out);
+    syscall1(Sys_HandleClose, hnd);
+    return ec;
+}
+
+int sys_fstatvfs(int fd, struct statvfs *out)
+{
+    handle hnd = (handle)fd;
+    if (HANDLE_TYPE(hnd) != 2 /* HANDLE_TYPE_DIRENT */)
+        return EINVAL;
+    if (!out)
+        return EINVAL;
+
+    drv_fs_info info = {};
+    obos_status status = (obos_status)syscall2(Sys_StatFSInfo, hnd, &info);
+    if (status != OBOS_STATUS_SUCCESS)
+        return parse_file_status(status);
+
+    out->f_bsize = info.fsBlockSize;
+    out->f_bfree = info.freeBlocks;
+    out->f_bavail = out->f_bfree;
+
+    out->f_frsize = info.partBlockSize;
+    out->f_blocks = info.szFs;
+
+    out->f_files = info.fileCount;
+    out->f_ffree = info.availableFiles;
+    out->f_favail = out->f_ffree;
+
+    out->f_fsid = 0;
+    out->f_namemax = info.nameMax;
+    out->f_flag = ST_NOSUID;
+
+    if (info.flags & FS_FLAGS_RDONLY)
+        out->f_flag |= ST_RDONLY;
+#ifdef ST_NOEXEC
+    if (info.flags & FS_FLAGS_NOEXEC)
+        out->f_flag |= ST_NOEXEC;
+#endif
+
+    return 0;
 }
 
 int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read)

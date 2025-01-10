@@ -69,6 +69,7 @@ enum {
     Sys_ProcessGetStatus,
     Sys_WaitProcess, // 64
     Sys_Stat,
+    Sys_StatFSInfo,
 };
 
 #ifdef __cplusplus
@@ -88,6 +89,8 @@ extern "C" {
 
 #define HANDLE_VALUE_MASK (0xffffff)
 #define HANDLE_TYPE_SHIFT (24UL)
+
+typedef uint8_t handle_type;
 
 #define HANDLE_TYPE(hnd) (handle_type)((hnd) >> HANDLE_TYPE_SHIFT)
 #define HANDLE_VALUE(hnd) (unsigned int)((hnd) & HANDLE_VALUE_MASK)
