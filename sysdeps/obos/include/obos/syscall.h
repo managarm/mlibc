@@ -70,6 +70,7 @@ enum {
     Sys_WaitProcess, // 64
     Sys_Stat,
     Sys_StatFSInfo,
+    Sys_SysConf,
 };
 
 #ifdef __cplusplus

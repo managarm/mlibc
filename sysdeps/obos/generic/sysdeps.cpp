@@ -529,6 +529,11 @@ int sys_vm_unmap(void *pointer, size_t size)
     return sys_anon_free(pointer, size);
 }
 
+int sys_sysconf(int num, int* ret)
+{
+    return syscall2(Sys_SysConf, num, ret) == OBOS_STATUS_SUCCESS ? 0 : ENOSYS;
+}
+
 /*int sys_tcgetattr(int fd, struct termios *attr)
 {
     infoLogger() << __func__ << " is unimplemented" << frg::endlog;
