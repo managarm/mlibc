@@ -334,8 +334,8 @@ static handle cwd_hnd = HANDLE_INVALID;
 int sys_open_dir(const char *path, int *hnd)
 {
 #ifndef MLIBC_BUILDING_RTLD
-    if (strcmp(path, "."))
-        path = cwd;
+    if (strcmp(path, ".") == 0)
+        path = cwd ? cwd : "/";
 #endif
     obos_status st = OBOS_STATUS_SUCCESS;
     handle dir = (handle)syscall2(Sys_OpenDir, path, &st);
