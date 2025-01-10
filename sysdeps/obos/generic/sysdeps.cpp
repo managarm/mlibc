@@ -359,7 +359,7 @@ int sys_open(const char *pathname, int flags, mode_t mode, int *fd)
         st = (obos_status)syscall3(Sys_FdOpen, hnd, pathname, real_flags);
     else
         st = (obos_status)syscall4(Sys_FdOpenAt, hnd, cwd_hnd, pathname, real_flags);
-    if (int ec = parse_file_status(st); st != 0)
+    if (int ec = parse_file_status(st); ec != 0)
         return ec;
     *fd = hnd;
 
