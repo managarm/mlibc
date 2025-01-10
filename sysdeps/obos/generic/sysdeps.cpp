@@ -331,6 +331,25 @@ int sys_chdir(const char *path)
 static handle cwd_hnd = HANDLE_INVALID;
 #endif
 
+int sys_open_dir(const char *path, int *hnd)
+{
+#ifndef MLIBC_BUILDING_RTLD
+    if (strcmp(path, "."))
+        path = cwd;
+#endif
+    obos_status st = OBOS_STATUS_SUCCESS;
+    handle dir = (handle)syscall2(Sys_OpenDir, path, &st);
+    if (obos_is_error(st))
+        return parse_file_status(st);
+    *hnd = (int)dir;
+    return 0;
+}
+
+int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read)
+{
+    return parse_file_status((obos_status)syscall4(Sys_ReadEntries, handle, buffer, max_size, bytes_read));
+}
+
 int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set, const struct timespec *timeout, const sigset_t *sigmask, int *num_events)
 {
     *num_events = 1;
