@@ -356,6 +356,30 @@ int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except
     return 0;
 }
 
+int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd)
+{
+    (void)mode;
+    int real_flags = 0;
+
+    if (~flags & O_WRONLY)
+        real_flags |= 1 /*FD_OFLAGS_READ*/;
+    if (flags & O_RDWR)
+        real_flags |= 1|2 /*FD_OFLAGS_READ|FD_OFLAGS_WRITE*/;
+    if (flags & O_CLOEXEC)
+        real_flags |= 8 /* FD_OFLAGS_NOEXEC */;
+    if (flags & O_DIRECT)
+        real_flags |= 4 /* FD_OFLAGS_UNCACHED */;
+
+    handle hnd = syscall0(Sys_FdAlloc);
+    obos_status st = (obos_status)syscall4(Sys_FdOpenAt, hnd, dirfd, path, real_flags);
+
+    if (int ec = parse_file_status(st); ec != 0)
+        return ec;
+    *fd = hnd;
+
+    return 0;
+}
+
 int sys_open(const char *pathname, int flags, mode_t mode, int *fd)
 {
     handle hnd = (handle)syscall0(Sys_FdAlloc);
