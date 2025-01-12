@@ -370,6 +370,8 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd)
     if (flags & O_DIRECT)
         real_flags |= 4 /* FD_OFLAGS_UNCACHED */;
 
+    mlibc::infoLogger() << (handle)dirfd << "\n";
+
     handle hnd = syscall0(Sys_FdAlloc);
     obos_status st = (obos_status)syscall4(Sys_FdOpenAt, hnd, dirfd, path, real_flags);
 
