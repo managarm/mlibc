@@ -147,10 +147,10 @@ extra_cflags_test_cases = {
 
 test_sources = []
 test_link_args = []
-test_c_args = ['-D_GNU_SOURCE']
+test_c_args = ['-D_GNU_SOURCE', '-fno-builtin']
 use_pie = false
 
-host_test_c_args = []
+host_test_c_args = ['-fno-builtin']
 
 c_compiler = meson.get_compiler('c')
 

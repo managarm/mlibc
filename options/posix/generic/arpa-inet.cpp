@@ -50,6 +50,12 @@ in_addr_t inet_addr(const char *p) {
 		return -1;
 	return a.s_addr;
 }
+
+in_addr_t inet_network(const char *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 char *inet_ntoa(struct in_addr addr) {
 	// string: xxx.yyy.zzz.aaa
 	// 4 * 3 + 3 + 1 = 12 + 4 = 16

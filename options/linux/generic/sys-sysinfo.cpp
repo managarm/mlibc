@@ -13,3 +13,13 @@ int sysinfo(struct sysinfo *info) {
 	}
 	return 0;
 }
+
+int get_nprocs(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int get_nprocs_conf(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

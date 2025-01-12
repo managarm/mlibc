@@ -12,30 +12,17 @@ extern "C" size_t __init_array_end[];
 extern "C" size_t __preinit_array_start[];
 extern "C" size_t __preinit_array_end[];
 
-static int constructors_ran_already = 0;
-
-struct global_constructor_guard {
-    global_constructor_guard() {
-        constructors_ran_already = 1;
-    }
-};
-
-static global_constructor_guard g;
-
-void __mlibc_run_constructors() {
-/*
-    if (!constructors_ran_already) {
-        size_t constructor_count = (size_t)__init_array_end - (size_t)__init_array_start;
-        constructor_count /= sizeof(void*);
-        for (size_t i = 0; i < constructor_count; i++) {
-            void (*ptr)(void) = (void(*)(void))(__init_array_start[i]);
-            ptr();
-        }
-    }
-*/
-}
+extern "C" uintptr_t *__dlapi_entrystack();
 
 namespace mlibc {
+
+exec_stack_data entry_stack;
+
+[[gnu::constructor]]
+void init_libc() {
+	mlibc::parse_exec_stack(__dlapi_entrystack(), &entry_stack);
+	mlibc::set_startup_data(entry_stack.argc, entry_stack.argv, entry_stack.envp);
+}
 
 void parse_exec_stack(void *opaque_sp, exec_stack_data *data) {
 	auto sp = reinterpret_cast<uintptr_t *>(opaque_sp);

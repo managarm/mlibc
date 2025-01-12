@@ -18,6 +18,7 @@ libc_sources += files(
 	'generic/sys-timex.cpp',
 	'generic/glibc-assert.cpp',
 	'generic/malloc.cpp',
+	'generic/sys-cachectl.cpp',
 	'generic/sys-io.cpp',
 	'generic/search.cpp'
 )
@@ -41,6 +42,7 @@ if not no_headers
 		'include/features.h'
 	)
 	install_headers(
+		'include/sys/cachectl.h',
 		'include/sys/dir.h',
 		'include/sys/ioctl.h',
 		'include/sys/user.h',

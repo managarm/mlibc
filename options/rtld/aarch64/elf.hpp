@@ -17,6 +17,12 @@ using elf_addr = Elf64_Addr;
 using elf_info = Elf64_Xword;
 using elf_addend = Elf64_Sxword;
 
+using elf_version = Elf64_Half;
+using elf_verdef = Elf64_Verdef;
+using elf_verdaux = Elf64_Verdaux;
+using elf_verneed = Elf64_Verneed;
+using elf_vernaux = Elf64_Vernaux;
+
 #define ELF_R_SYM ELF64_R_SYM
 #define ELF_R_TYPE ELF64_R_TYPE
 #define ELF_ST_BIND ELF64_ST_BIND

@@ -30,6 +30,7 @@ constexpr bool stillSlightlyVerbose = false;
 constexpr bool logBaseAddresses = false;
 constexpr bool logRpath = false;
 constexpr bool logLdPath = false;
+constexpr bool logSymbolVersions = false;
 constexpr bool eagerBinding = true;
 
 #if defined(__x86_64__) || defined(__i386__)
@@ -120,9 +121,11 @@ SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 	object->baseAddress = base_address;
 	object->dynamic = dynamic;
 	_parseDynamic(object);
+	_parseVerdef(object);
 
 	_addLoadedObject(object);
 	_discoverDependencies(object, globalScope.get(), rts);
+	_parseVerneed(object);
 
 	return object;
 }
@@ -137,9 +140,11 @@ SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 		name.data(), std::move(path), true, globalScope.get(), rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 	_parseDynamic(object);
+	_parseVerdef(object);
 
 	_addLoadedObject(object);
 	_discoverDependencies(object, globalScope.get(), rts);
+	_parseVerneed(object);
 
 	return object;
 }
@@ -279,9 +284,11 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 	}
 
 	_parseDynamic(object);
+	_parseVerdef(object);
 
 	_addLoadedObject(object);
 	_discoverDependencies(object, localScope, rts);
+	_parseVerneed(object);
 
 	return object;
 }
@@ -324,9 +331,11 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath
 	}
 
 	_parseDynamic(object);
+	_parseVerdef(object);
 
 	_addLoadedObject(object);
 	_discoverDependencies(object, localScope, rts);
+	_parseVerneed(object);
 
 	return object;
 }
@@ -762,14 +771,27 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_SONAME:
 			soname_offset = dynamic->d_un.d_val;
 			break;
+		// handle version information
+		case DT_VERSYM:
+			object->versionTableOffset = dynamic->d_un.d_ptr;
+			break;
+		case DT_VERDEF:
+			object->versionDefinitionTableOffset = dynamic->d_un.d_ptr;
+			break;
+		case DT_VERDEFNUM:
+			object->versionDefinitionCount = dynamic->d_un.d_val;
+			break;
+		case DT_VERNEED:
+			object->versionRequirementTableOffset = dynamic->d_un.d_ptr;
+			break;
+		case DT_VERNEEDNUM:
+			object->versionRequirementCount = dynamic->d_un.d_val;
+			break;
 		// ignore unimportant tags
 		case DT_NEEDED: // we handle this later
 		case DT_RELA: case DT_RELASZ: case DT_RELAENT: case DT_RELACOUNT:
 		case DT_REL: case DT_RELSZ: case DT_RELENT: case DT_RELCOUNT:
 		case DT_RELR: case DT_RELRSZ: case DT_RELRENT:
-		case DT_VERSYM:
-		case DT_VERDEF: case DT_VERDEFNUM:
-		case DT_VERNEED: case DT_VERNEEDNUM:
 #ifdef __riscv
 		case DT_TEXTREL: // Work around https://sourceware.org/bugzilla/show_bug.cgi?id=24673.
 #endif
@@ -792,6 +814,164 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 	if(soname_offset) {
 		object->soName = reinterpret_cast<const char *>(object->baseAddress
 				+ object->stringTableOffset + *soname_offset);
+	}
+}
+
+void ObjectRepository::_parseVerdef(SharedObject *object) {
+	if(!object->versionDefinitionTableOffset) {
+		if(verbose)
+			mlibc::infoLogger()
+				<< "mlibc: Object " << object->name
+				<< " defines no versions" << frg::endlog;
+		return;
+	}
+
+	if(verbose)
+		mlibc::infoLogger()
+			<< "mlibc: Object " << object->name
+			<< " defines " << object->versionDefinitionCount
+			<< " version(s)" << frg::endlog;
+
+	uintptr_t address =
+		object->baseAddress
+		+ object->versionDefinitionTableOffset;
+
+	for(size_t i = 0; i < object->versionDefinitionCount; i++) {
+		elf_verdef def;
+		memcpy(&def, reinterpret_cast<void *>(address), sizeof(elf_verdef));
+
+		// Required by spec.
+		__ensure(def.vd_version == 1);
+		__ensure(def.vd_cnt >= 1);
+		// TODO(qookie): Handle weak versions.
+		__ensure(!(def.vd_flags & ~VER_FLG_BASE));
+
+		// NOTE(qookie): glibc also ignores any additional Verdaux entries after the
+		// first one.
+		elf_verdaux aux;
+		memcpy(&aux, reinterpret_cast<void *>(address + def.vd_aux), sizeof(elf_verdaux));
+
+		const char *name =
+			reinterpret_cast<const char *>(
+				object->baseAddress
+				+ object->stringTableOffset + aux.vda_name);
+
+		if(verbose)
+			mlibc::infoLogger()
+				<< "mlibc: Object " << object->name
+				<< " defines version " << name
+				<< " (index " << def.vd_ndx << ")"
+				<< frg::endlog;
+
+		if(!(def.vd_flags & VER_FLG_BASE)) {
+			SymbolVersion ver{name, def.vd_hash};
+			object->definedVersions.push(ver);
+			object->knownVersions.insert(def.vd_ndx, ver);
+		}
+
+		address += def.vd_next;
+	}
+}
+
+void ObjectRepository::_parseVerneed(SharedObject *object) {
+	if(!object->versionRequirementTableOffset) {
+		if(verbose)
+			mlibc::infoLogger() << "mlibc: Object " << object->name << " requires no versions" << frg::endlog;
+		return;
+	}
+
+	if(verbose)
+		mlibc::infoLogger()
+			<< "mlibc: Object " << object->name
+			<< " requires " << object->versionRequirementCount
+			<< " version(s)" << frg::endlog;
+
+	uintptr_t address =
+		object->baseAddress
+		+ object->versionRequirementTableOffset;
+
+	for(size_t i = 0; i < object->versionRequirementCount; i++) {
+		elf_verneed need;
+		memcpy(&need, reinterpret_cast<void *>(address), sizeof(elf_verneed));
+
+		// Required by spec.
+		__ensure(need.vn_version == 1);
+
+		frg::string_view file =
+			reinterpret_cast<const char *>(
+				object->baseAddress
+				+ object->stringTableOffset + need.vn_file);
+
+		// Figure out the target object from file
+		SharedObject *target = nullptr;
+		for(auto dep : object->dependencies) {
+			if(verbose)
+				mlibc::infoLogger()
+					<< "mlibc: Trying " << dep->name << " (SONAME: "
+					<< dep->soName << ") to satisfy " << file << frg::endlog;
+			if(dep->name == file || (dep->soName && dep->soName == file)) {
+				target = dep;
+				break;
+			}
+		}
+		if(!target)
+			mlibc::panicLogger()
+				<< "mlibc: No object named \""
+				<< file
+				<< "\" found for VERNEED entry of object "
+				<< object->name << frg::endlog;
+
+		if(verbose)
+			mlibc::infoLogger()
+				<< "mlibc: Object " << object->name
+				<< " requires " << need.vn_cnt
+				<< " version(s) from DSO "
+				<< file << frg::endlog;
+
+		uintptr_t auxAddr = address + need.vn_aux;
+		for(size_t j = 0; j < need.vn_cnt; j++) {
+			elf_vernaux aux;
+			memcpy(&aux, reinterpret_cast<void *>(auxAddr), sizeof(elf_vernaux));
+
+			// TODO(qookie): Handle weak versions.
+			__ensure(!aux.vna_flags);
+
+			const char *name =
+				reinterpret_cast<const char *>(
+					object->baseAddress
+					+ object->stringTableOffset + aux.vna_name);
+
+			if(verbose)
+				mlibc::infoLogger()
+					<< "mlibc:   Object " << object->name
+					<< " requires version " << name
+					<< " (index " << aux.vna_other
+					<< ") from DSO " << file
+					<< frg::endlog;
+
+			frg::optional<SymbolVersion> ver;
+			for(auto &def : target->definedVersions) {
+				if(def.hash() != aux.vna_hash) continue;
+				if(def.name() == name) {
+					ver = def;
+					break;
+				}
+			}
+
+			if(!ver)
+				mlibc::panicLogger()
+					<< "mlibc: Object " << target->name
+					<< " does not define version \""
+					<< name << "\" needed by object "
+					<< object->name << frg::endlog;
+
+			bool isDefault = !(aux.vna_other & 0x8000);
+			// Bit 15 indicates whether the static linker should ignore this version.
+			object->knownVersions.insert(aux.vna_other & 0x7FFF, isDefault ? ver->makeDefault() : *ver);
+
+			auxAddr += aux.vna_next;
+		}
+		address += need.vn_next;
 	}
 }
 
@@ -850,7 +1030,9 @@ SharedObject::SharedObject(const char *name, frg::string<MemoryAllocator> path,
 		globalOffsetTable(nullptr), entry(nullptr), tlsSegmentSize(0),
 		tlsAlignment(0), tlsImageSize(0), tlsImagePtr(nullptr),
 		tlsInitialized(false), hashTableOffset(0), symbolTableOffset(0),
-		stringTableOffset(0), lazyRelocTableOffset(0), lazyTableSize(0),
+		stringTableOffset(0),
+		knownVersions({}, getAllocator()), definedVersions(getAllocator()),
+		lazyRelocTableOffset(0), lazyTableSize(0),
 		lazyExplicitAddend(false), symbolicResolution(false),
 		eagerBinding(false), haveStaticTls(false),
 		dependencies(getAllocator()), tlsModel(TlsModel::null),
@@ -864,16 +1046,73 @@ SharedObject::SharedObject(const char *name, const char *path,
 			frg::string<MemoryAllocator> { path, getAllocator() },
 			is_main_object, localScope, object_rts) {}
 
+frg::tuple<ObjectSymbol, SymbolVersion> SharedObject::getSymbolByIndex(size_t index) {
+	SymbolVersion ver{1}; // If we don't have any version information, treat all symbols as global.
+	ObjectSymbol sym{
+		this,
+		reinterpret_cast<elf_sym *>(
+			baseAddress
+			+ symbolTableOffset
+			+ index * sizeof(elf_sym))};
+
+	if(versionTableOffset) {
+		// Pull out the VERSYM entry for this symbol
+		elf_version verIdx;
+		memcpy(
+			&verIdx,
+			reinterpret_cast<void *>(
+				baseAddress
+				+ versionTableOffset
+				+ index * sizeof(elf_version)),
+			sizeof(elf_version)
+		);
+
+		// Bit 15 indicates that this version is not the default one.
+		bool isDefault = !(verIdx & 0x8000);
+		verIdx &= 0x7FFF;
+
+		// 0 and 1 are special, 0 is local, 1 is global (not in VERDEF/VERNEED)
+		if(verIdx != 0 && verIdx != 1) {
+			auto maybeVer = knownVersions.find(verIdx);
+			if(maybeVer == knownVersions.end())
+				mlibc::panicLogger()
+					<< "mlibc: Symbol " << sym.getString()
+					<< " of object " << name
+					<< " has invalid version index " << verIdx
+					<< frg::endlog;
+
+			ver = maybeVer->get<1>();
+		} else {
+			ver = SymbolVersion{verIdx};
+		}
+
+		if(isDefault)
+			ver = ver.makeDefault();
+
+		if(logSymbolVersions)
+			mlibc::infoLogger()
+				<< "mlibc: Symbol " << sym.getString()
+				<< " of object " << name
+				<< " has version " << ver.name()
+				<< " and " << (ver.isDefault() ? "is" : "isn't")
+				<< " the default version"
+				<< frg::endlog;
+	} else {
+		// If we have no version information, the only symbol we've got is the default.
+		ver = ver.makeDefault();
+	}
+
+	return {sym, ver};
+}
+
 void processLateRelocation(Relocation rel) {
 	// resolve the symbol if there is a symbol
 	frg::optional<ObjectSymbol> p;
 	if(rel.symbol_index()) {
-		auto symbol = (elf_sym *)(rel.object()->baseAddress + rel.object()->symbolTableOffset
-				+ rel.symbol_index() * sizeof(elf_sym));
-		ObjectSymbol r(rel.object(), symbol);
+		auto [sym, ver] = rel.object()->getSymbolByIndex(rel.symbol_index());
 
 		p = Scope::resolveGlobalOrLocal(*globalScope, rel.object()->localScope,
-				r.getString(), rel.object()->objectRts, Scope::resolveCopy);
+				sym.getString(), rel.object()->objectRts, Scope::resolveCopy, ver);
 	}
 
 	switch(rel.type()) {
@@ -1192,7 +1431,8 @@ uint32_t gnuHash(frg::string_view string) {
 }
 
 // TODO: move this to some namespace or class?
-frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_view string) {
+frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_view string,
+		frg::optional<SymbolVersion> version) {
 	// Checks if the symbol can be used to satisfy the dependency.
 	auto eligible = [&] (ObjectSymbol cand) {
 		if(cand.symbol()->st_shndx == SHN_UNDEF)
@@ -1205,6 +1445,21 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 		return true;
 	};
 
+	// Checks if the symbol's version matches the desired version.
+	auto correctVersion = [&] (SymbolVersion candVersion) {
+		// TODO(qookie): Not sure if local symbols should participate in dynamic symbol resolution
+		if(!version && (candVersion.isDefault() || candVersion.isLocal() || candVersion.isGlobal()))
+			return true;
+		// Caller requested default version, but this isn't it.
+		if(!version)
+			return false;
+		// If the requested version is global (caller has VERNEED but not for this symbol),
+		// use the default one.
+		if(version->isGlobal() && !candVersion.isGlobal() && !candVersion.isLocal() && candVersion.isDefault())
+			return true;
+		return *version == candVersion;
+	};
+
 	if (object->hashStyle == HashStyle::systemV) {
 		auto hash_table = (Elf64_Word *)(object->baseAddress + object->hashTableOffset);
 		Elf64_Word num_buckets = hash_table[0];
@@ -1212,9 +1467,8 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 
 		auto index = hash_table[2 + bucket];
 		while(index != 0) {
-			ObjectSymbol cand{object, (elf_sym *)(object->baseAddress
-					+ object->symbolTableOffset + index * sizeof(elf_sym))};
-			if(eligible(cand) && frg::string_view{cand.getString()} == string)
+			auto [cand, ver] = object->getSymbolByIndex(index);
+			if(eligible(cand) && frg::string_view{cand.getString()} == string && correctVersion(ver))
 				return cand;
 
 			index = hash_table[2 + num_buckets + index];
@@ -1254,9 +1508,8 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 			// chains[] contains an array of hashes, parallel to the symbol table.
 			auto chash = chains[index - hash_table->symbolOffset];
 			if ((chash & ~1) == (hash & ~1)) {
-				ObjectSymbol cand{object, (elf_sym *)(object->baseAddress
-						+ object->symbolTableOffset + index * sizeof(elf_sym))};
-				if(eligible(cand) && frg::string_view{cand.getString()} == string)
+				auto [cand, ver] = object->getSymbolByIndex(index);
+				if(eligible(cand) && frg::string_view{cand.getString()} == string && correctVersion(ver))
 					return cand;
 			}
 
@@ -1269,7 +1522,7 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 }
 
 frg::optional<ObjectSymbol> Scope::_resolveNext(frg::string_view string,
-		SharedObject *target) {
+		SharedObject *target, frg::optional<SymbolVersion> version) {
 	// Skip objects until we find the target, and only look for symbols after that.
 	size_t i;
 	for (i = 0; i < _objects.size(); i++) {
@@ -1286,7 +1539,7 @@ frg::optional<ObjectSymbol> Scope::_resolveNext(frg::string_view string,
 		if(_objects[i]->isMainObject)
 			continue;
 
-		frg::optional<ObjectSymbol> p = resolveInObject(_objects[i], string);
+		frg::optional<ObjectSymbol> p = resolveInObject(_objects[i], string, version);
 		if(p)
 			return p;
 	}
@@ -1308,25 +1561,28 @@ void Scope::appendObject(SharedObject *object) {
 }
 
 frg::optional<ObjectSymbol> Scope::resolveGlobalOrLocal(Scope &globalScope,
-		Scope *localScope, frg::string_view string, uint64_t skipRts, ResolveFlags flags) {
-	auto sym = globalScope.resolveSymbol(string, skipRts, flags | skipGlobalAfterRts);
+		Scope *localScope, frg::string_view string, uint64_t skipRts, ResolveFlags flags,
+		frg::optional<SymbolVersion> version) {
+	auto sym = globalScope.resolveSymbol(string, skipRts, flags | skipGlobalAfterRts, version);
 	if(!sym && localScope)
-		sym = localScope->resolveSymbol(string, skipRts, flags | skipGlobalAfterRts);
+		sym = localScope->resolveSymbol(string, skipRts, flags | skipGlobalAfterRts, version);
 	return sym;
 }
 
 frg::optional<ObjectSymbol> Scope::resolveGlobalOrLocalNext(Scope &globalScope,
-		Scope *localScope, frg::string_view string, SharedObject *origin) {
-	auto sym = globalScope._resolveNext(string, origin);
+		Scope *localScope, frg::string_view string, SharedObject *origin,
+		frg::optional<SymbolVersion> version) {
+	auto sym = globalScope._resolveNext(string, origin, version);
 	if(!sym && localScope) {
-		sym = localScope->_resolveNext(string, origin);
+		sym = localScope->_resolveNext(string, origin, version);
 	}
 	return sym;
 }
 
 // TODO: let this return uintptr_t
 frg::optional<ObjectSymbol> Scope::resolveSymbol(frg::string_view string,
-		uint64_t skipRts, ResolveFlags flags) {
+		uint64_t skipRts, ResolveFlags flags,
+		frg::optional<SymbolVersion> version) {
 	for (auto object : _objects) {
 		if((flags & resolveCopy) && object->isMainObject)
 			continue;
@@ -1340,7 +1596,7 @@ frg::optional<ObjectSymbol> Scope::resolveSymbol(frg::string_view string,
 				continue;
 		}
 
-		frg::optional<ObjectSymbol> p = resolveInObject(object, string);
+		frg::optional<ObjectSymbol> p = resolveInObject(object, string, version);
 		if(p)
 			return p;
 	}
@@ -1607,20 +1863,18 @@ void Loader::_processRelocations(Relocation &rel) {
 	// resolve the symbol if there is a symbol
 	frg::optional<ObjectSymbol> p;
 	if(rel.symbol_index()) {
-		auto symbol = (elf_sym *)(rel.object()->baseAddress + rel.object()->symbolTableOffset
-				+ rel.symbol_index() * sizeof(elf_sym));
-		ObjectSymbol r(rel.object(), symbol);
+		auto [sym, ver] = rel.object()->getSymbolByIndex(rel.symbol_index());
 
 		p = Scope::resolveGlobalOrLocal(*globalScope, rel.object()->localScope,
-				r.getString(), rel.object()->objectRts, 0);
+				sym.getString(), rel.object()->objectRts, 0, ver);
 		if(!p) {
-			if(ELF_ST_BIND(symbol->st_info) != STB_WEAK)
+			if(ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK)
 				mlibc::panicLogger() << "Unresolved load-time symbol "
-						<< r.getString() << " in object " << rel.object()->name << frg::endlog;
+						<< sym.getString() << " in object " << rel.object()->name << frg::endlog;
 
 			if(verbose)
 				mlibc::infoLogger() << "rtld: Unresolved weak load-time symbol "
-						<< r.getString() << " in object " << rel.object()->name << frg::endlog;
+						<< sym.getString() << " in object " << rel.object()->name << frg::endlog;
 		}
 	}
 
@@ -1848,19 +2102,17 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 		switch (type) {
 		case R_JUMP_SLOT:
 			if(eagerBinding) {
-				auto symbol = (elf_sym *)(object->baseAddress + object->symbolTableOffset
-						+ symbol_index * sizeof(elf_sym));
-				ObjectSymbol r(object, symbol);
-				auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, r.getString(), object->objectRts, 0);
+				auto [sym, ver] = object->getSymbolByIndex(symbol_index);
+				auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, sym.getString(), object->objectRts, 0, ver);
 
 				if(!p) {
-					if(ELF_ST_BIND(symbol->st_info) != STB_WEAK)
+					if(ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK)
 						mlibc::panicLogger() << "rtld: Unresolved JUMP_SLOT symbol "
-								<< r.getString() << " in object " << object->name << frg::endlog;
+								<< sym.getString() << " in object " << object->name << frg::endlog;
 
 					if(verbose)
 						mlibc::infoLogger() << "rtld: Unresolved weak JUMP_SLOT symbol "
-							<< r.getString() << " in object " << object->name << frg::endlog;
+							<< sym.getString() << " in object " << object->name << frg::endlog;
 					*((uintptr_t *)rel_addr) = 0;
 				}else{
 					*((uintptr_t *)rel_addr) = p->virtualAddress();
@@ -1884,15 +2136,13 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 			SharedObject *target = nullptr;
 
 			if (symbol_index) {
-				auto symbol = (elf_sym *)(object->baseAddress + object->symbolTableOffset
-						+ symbol_index * sizeof(elf_sym));
-				ObjectSymbol r(object, symbol);
-				auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, r.getString(), object->objectRts, 0);
+				auto [sym, ver] = object->getSymbolByIndex(symbol_index);
+				auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, sym.getString(), object->objectRts, 0, ver);
 
 				if (!p) {
-					__ensure(ELF_ST_BIND(symbol->st_info) != STB_WEAK);
+					__ensure(ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK);
 					mlibc::panicLogger() << "rtld: Unresolved TLSDESC for symbol "
-						<< r.getString() << " in object " << object->name << frg::endlog;
+						<< sym.getString() << " in object " << object->name << frg::endlog;
 				} else {
 					target = p->object();
 					if (p->symbol())

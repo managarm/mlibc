@@ -16,7 +16,7 @@ inline Tcb *get_current_tcb() {
 
 inline uintptr_t get_sp() {
 	uintptr_t sp;
-	asm ("mv %0, sp" : "=r"(sp));
+	asm volatile ("mv %0, sp" : "=r"(sp));
 	return sp;
 }
 

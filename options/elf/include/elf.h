@@ -112,12 +112,28 @@ typedef struct {
 } Elf64_Verdaux;
 
 typedef struct {
+	Elf32_Half vn_version;
+	Elf32_Half vn_cnt;
+	Elf32_Word vn_file;
+	Elf32_Word vn_aux;
+	Elf32_Word vn_next;
+} Elf32_Verneed;
+
+typedef struct {
 	Elf64_Half vn_version;
 	Elf64_Half vn_cnt;
 	Elf64_Word vn_file;
 	Elf64_Word vn_aux;
 	Elf64_Word vn_next;
 } Elf64_Verneed;
+
+typedef struct {
+	Elf32_Word vna_hash;
+	Elf32_Half vna_flags;
+	Elf32_Half vna_other;
+	Elf32_Word vna_name;
+	Elf32_Word vna_next;
+} Elf32_Vernaux;
 
 typedef struct {
 	Elf64_Word vna_hash;
@@ -669,6 +685,10 @@ typedef struct {
 #define AT_EUID 12
 #define AT_GID 13
 #define AT_EGID 14
+
+/* Values for Elfxx_Verdef::vd_flags and Elfxx_Vernaux::vna_flags */
+#define VER_FLG_BASE 1 /* Version definition of the file itself */
+#define VER_FLG_WEAK 2 /* Weak version identifier */
 
 /* rtld requires presence of some a_type (AT_*) values that are not standardized in the ELF spec */
 #if !defined(AT_EXECFN) || !defined(AT_RANDOM) || !defined(AT_SECURE)
