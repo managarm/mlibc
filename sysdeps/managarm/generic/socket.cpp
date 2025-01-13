@@ -351,6 +351,17 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		                    << frg::endlog;
 		*(int *)buffer = 1;
 		return 0;
+	} else if (layer == IPPROTO_TCP && number == TCP_MAXSEG) {
+		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with IPPROTO_TCP and TCP_MAXSEG is "
+		                       "unimplemented\e[39m"
+		                    << frg::endlog;
+		return 0;
+	} else if (layer == IPPROTO_TCP && number == TCP_CONGESTION) {
+		mlibc::infoLogger(
+		) << "\e[31mmlibc: getsockopt() call with IPPROTO_TCP and TCP_CONGESTION is "
+		     "unimplemented\e[39m"
+		  << frg::endlog;
+		return 0;
 	} else if (std::find(
 	               getsockopt_passthrough.begin(),
 	               getsockopt_passthrough.end(),
@@ -595,6 +606,11 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 		  << frg::endlog;
 		return 0;
 	} else if (layer == IPPROTO_TCP && number == TCP_NODELAY) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_NODELAY is "
+		                       "unimplemented\e[39m"
+		                    << frg::endlog;
+		return 0;
+	} else if (layer == IPPROTO_TCP && number == TCP_MAXSEG) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_NODELAY is "
 		                       "unimplemented\e[39m"
 		                    << frg::endlog;
