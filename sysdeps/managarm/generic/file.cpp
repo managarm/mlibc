@@ -1323,6 +1323,7 @@ int sys_signalfd_create(const sigset_t *masks, int flags, int *fd) {
 	req.set_request_type(managarm::posix::CntReqType::SIGNALFD_CREATE);
 	req.set_flags(proto_flags);
 	req.set_sigset(*reinterpret_cast<const uint64_t *>(masks));
+	req.set_fd(*fd);
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
@@ -2737,6 +2738,39 @@ int sys_sysinfo(struct sysinfo *info) {
 	info->mem_unit = resp.memory_unit();
 
 	return 0;
+}
+
+int sys_fstatfs(int fd, struct statfs *buf) {
+	SignalGuard sguard;
+
+	managarm::posix::FstatfsRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_fd(fd);
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::FstatfsResponse resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+	if (resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	} else if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		// Check?
+		return ENOENT;
+	} else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		memset(buf, NULL, sizeof(struct statfs));
+		buf->f_type = resp.fstype();
+		return 0;
+	}
 }
 
 } // namespace mlibc
