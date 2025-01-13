@@ -283,6 +283,8 @@ static int parse_file_status(obos_status status)
         case OBOS_STATUS_EOF: return EIO;
         case OBOS_STATUS_ACCESS_DENIED: return EACCES;
         case OBOS_STATUS_NO_SYSCALL: return ENOSYS;
+        case OBOS_STATUS_NOT_ENOUGH_MEMORY: return ENOSPC;
+        case OBOS_STATUS_PIPE_CLOSED: return EPIPE;
         default: sys_libc_panic();
     }
 }
