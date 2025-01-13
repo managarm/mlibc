@@ -71,6 +71,7 @@ enum {
     Sys_Stat,
     Sys_StatFSInfo,
     Sys_SysConf,
+    Sys_SetKLogLevel,
 };
 
 #ifdef __cplusplus
