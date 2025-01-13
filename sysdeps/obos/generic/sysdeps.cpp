@@ -391,7 +391,7 @@ int sys_open(const char *pathname, int flags, mode_t mode, int *fd)
     (void)(mode);
     uint32_t real_flags = 0;
 
-    if (~flags & O_WRONLY)
+    if (flags == O_RDONLY)
         real_flags |= 1 /*FD_OFLAGS_READ*/;
     if (flags & O_RDWR)
         real_flags |= 1|2 /*FD_OFLAGS_READ|FD_OFLAGS_WRITE*/;
