@@ -1500,6 +1500,10 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
 	if (flags & O_NOCTTY)
 		proto_flags |= managarm::posix::OpenFlags::OF_NOCTTY;
+	if (flags & O_NOFOLLOW)
+		proto_flags |= managarm::posix::OpenFlags::OF_NOFOLLOW;
+	if (flags & O_DIRECTORY)
+		proto_flags |= managarm::posix::OpenFlags::OF_DIRECTORY;
 
 	if (flags & O_PATH)
 		proto_flags |= managarm::posix::OpenFlags::OF_PATH;
@@ -1546,6 +1550,8 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 		return EISDIR;
 	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
 		return EINVAL;
+	} else if (resp.error() == managarm::posix::Errors::SYMBOLIC_LINK_LOOP) {
+		return ELOOP;
 	} else {
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*fd = resp.fd();
