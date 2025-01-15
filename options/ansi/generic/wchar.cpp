@@ -782,3 +782,8 @@ int wcscasecmp(const wchar_t *, const wchar_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+size_t wcsnlen(const wchar_t *, size_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

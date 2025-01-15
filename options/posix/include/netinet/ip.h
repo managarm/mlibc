@@ -19,6 +19,7 @@ extern "C" {
 #define IPTOS_CLASS_CS0 0x00
 #define IPTOS_CLASS_CS4 0x80
 #define IPTOS_CLASS_CS6 0xC0
+#define IPTOS_DSCP_EF 0xB8
 
 #define IPDEFTTL 64
 
