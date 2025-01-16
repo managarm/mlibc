@@ -2797,6 +2797,29 @@ int sys_prctl(int option, va_list va, int *out) {
 			*out = 0;
 			return pthread_getname_np(pthread_self(), name, 16);
 		}
+		case PR_SET_PDEATHSIG: {
+			managarm::posix::ParentDeathSignalRequest<MemoryAllocator> req{getSysdepsAllocator()};
+			const auto value = va_arg(va, int);
+			req.set_signal(value);
+
+			auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			    getPosixLane(),
+			    helix_ng::offer(
+			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+			    )
+			);
+
+			HEL_CHECK(offer.error());
+			HEL_CHECK(send_req.error());
+			HEL_CHECK(recv_resp.error());
+
+			managarm::posix::ParentDeathSignalResponse resp(getSysdepsAllocator());
+			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+			__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+			*out = 0;
+			return 0;
+		}
 		default:
 			mlibc::infoLogger() << "mlibc: prctl: operation: " << option << " unimplemented!"
 			                    << frg::endlog;
