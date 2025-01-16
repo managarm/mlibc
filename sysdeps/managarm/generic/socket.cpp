@@ -251,6 +251,15 @@ int sys_peername(
 	}
 }
 
+namespace {
+
+std::array<std::pair<int, int>, 2> getsockopt_passthrough = {{
+    {SOL_SOCKET, SO_PROTOCOL},
+    {SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS},
+}};
+
+}
+
 int
 sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
 	SignalGuard sguard;
@@ -341,6 +350,49 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		                    << frg::endlog;
 		*(int *)buffer = 1;
 		return 0;
+	} else if (std::find(
+	               getsockopt_passthrough.begin(),
+	               getsockopt_passthrough.end(),
+	               std::pair<int, int>{layer, number}
+	           )
+	           != getsockopt_passthrough.end()) {
+		auto handle = getHandleForFd(fd);
+		if (!handle)
+			return EBADF;
+
+		size_t buffer_size = size ? *size : 0;
+
+		managarm::fs::GetSockOpt<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_layer(layer);
+		req.set_number(number);
+		req.set_optlen(size ? *size : 0);
+
+		auto [offer, send_req, recv_resp, recv_buffer] = exchangeMsgsSync(
+		    handle,
+		    helix_ng::offer(
+		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		        helix_ng::recvInline(),
+		        helix_ng::recvBuffer(buffer, buffer_size)
+		    )
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+		HEL_CHECK(recv_buffer.error());
+
+		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		if (resp.error() == managarm::fs::Errors::SUCCESS)
+			return 0;
+		else if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
+			return EINVAL;
+		else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT)
+			return EINVAL;
+		else if (resp.error() == managarm::fs::Errors::INVALID_PROTOCOL_OPTION)
+			return ENOPROTOOPT;
+		else
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		__builtin_unreachable();
 	} else {
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call, layer: " << layer
 		                     << " number: " << number << "\e[39m" << frg::endlog;
@@ -358,12 +410,13 @@ std::array<std::pair<int, int>, 5> setsockopt_readonly = {{
     {SOL_SOCKET, SO_TYPE},
 }};
 
-std::array<std::pair<int, int>, 5> setsockopt_passthrough = {{
+std::array<std::pair<int, int>, 6> setsockopt_passthrough = {{
     {SOL_PACKET, PACKET_AUXDATA},
     {SOL_SOCKET, SO_LOCK_FILTER},
     {SOL_SOCKET, SO_BINDTODEVICE},
     {SOL_IP, IP_PKTINFO},
     {SOL_NETLINK, NETLINK_ADD_MEMBERSHIP},
+    {SOL_NETLINK, NETLINK_PKTINFO},
 }};
 
 std::array<std::pair<int, int>, 2> setsockopt_passthrough_noopt = {{
