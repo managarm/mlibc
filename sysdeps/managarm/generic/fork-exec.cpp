@@ -1,5 +1,6 @@
 
 // for _Exit()
+#include <bits/errors.hpp>
 #include <stdlib.h>
 
 #include <errno.h>
@@ -74,12 +75,9 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else if (resp.error() == managarm::posix::Errors::NO_CHILD_PROCESSES) {
-		return ECHILD;
-	}
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
 	if (status)
 		*status = resp.mode();
 	*ret_pid = resp.pid();
@@ -114,12 +112,9 @@ int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
 
 	managarm::posix::WaitIdResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else if (resp.error() == managarm::posix::Errors::NO_CHILD_PROCESSES) {
-		return ECHILD;
-	}
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
 	info->si_pid = resp.pid();
 	info->si_uid = resp.uid();
 	info->si_code = resp.sig_code();
@@ -267,14 +262,10 @@ int sys_setgid(gid_t gid) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::ACCESS_DENIED) {
-		return EPERM;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 gid_t sys_getegid() {
@@ -319,14 +310,10 @@ int sys_setegid(gid_t egid) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::ACCESS_DENIED) {
-		return EPERM;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 uid_t sys_getuid() {
@@ -371,14 +358,10 @@ int sys_setuid(uid_t uid) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::ACCESS_DENIED) {
-		return EPERM;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 uid_t sys_geteuid() {
@@ -423,14 +406,10 @@ int sys_seteuid(uid_t euid) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::ACCESS_DENIED) {
-		return EPERM;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 pid_t sys_gettid() {
@@ -504,11 +483,12 @@ int sys_getsid(pid_t pid, pid_t *sid) {
 	if (resp.error() == managarm::posix::Errors::NO_SUCH_RESOURCE) {
 		*sid = 0;
 		return ESRCH;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		*sid = resp.pid();
-		return 0;
+	} else if (resp.error() != managarm::posix::Errors::SUCCESS) {
+		return resp.error() | toErrno;
 	}
+
+	*sid = resp.pid();
+	return 0;
 }
 
 int sys_getpgid(pid_t pid, pid_t *pgid) {
@@ -533,11 +513,12 @@ int sys_getpgid(pid_t pid, pid_t *pgid) {
 	if (resp.error() == managarm::posix::Errors::NO_SUCH_RESOURCE) {
 		*pgid = 0;
 		return ESRCH;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		*pgid = resp.pid();
-		return 0;
+	} else if (resp.error() != managarm::posix::Errors::SUCCESS) {
+		return resp.error() | toErrno;
 	}
+
+	*pgid = resp.pid();
+	return 0;
 }
 
 int sys_setpgid(pid_t pid, pid_t pgid) {
@@ -561,16 +542,10 @@ int sys_setpgid(pid_t pid, pid_t pgid) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::INSUFFICIENT_PERMISSION) {
-		return EPERM;
-	} else if (resp.error() == managarm::posix::Errors::NO_SUCH_RESOURCE) {
-		return ESRCH;
-	} else if (resp.error() == managarm::posix::Errors::ACCESS_DENIED) {
-		return EACCES;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_getrusage(int scope, struct rusage *usage) {
@@ -595,7 +570,8 @@ int sys_getrusage(int scope, struct rusage *usage) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 
 	usage->ru_utime.tv_sec = resp.ru_user_time() / 1'000'000'000;
 	usage->ru_utime.tv_usec = (resp.ru_user_time() % 1'000'000'000) / 1'000;

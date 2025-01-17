@@ -3,6 +3,7 @@
 #include <errno.h>
 
 #include "fs.frigg_bragi.hpp"
+#include "posix.frigg_bragi.hpp"
 
 struct ToErrno {
 	template <typename E>
@@ -70,5 +71,66 @@ inline int operator|(managarm::fs::Errors e, ToErrno) {
 			return ECONNREFUSED;
 		case managarm::fs::Errors::INTERNAL_ERROR:
 			return EIO;
+	}
+}
+
+inline int operator|(managarm::posix::Errors e, ToErrno) {
+	switch (e) {
+		case managarm::posix::Errors::SUCCESS:
+			return 0;
+		case managarm::posix::Errors::FILE_NOT_FOUND:
+			return ENOENT;
+		case managarm::posix::Errors::END_OF_FILE:
+			return 0;
+		case managarm::posix::Errors::WOULD_BLOCK:
+			return EAGAIN;
+		case managarm::posix::Errors::BROKEN_PIPE:
+			return EPIPE;
+		case managarm::posix::Errors::ACCESS_DENIED:
+			return EPERM;
+		case managarm::posix::Errors::NOT_A_DIRECTORY:
+			return ENOTDIR;
+		case managarm::posix::Errors::INSUFFICIENT_PERMISSION:
+			return EPERM;
+		case managarm::posix::Errors::ALREADY_EXISTS:
+			return EEXIST;
+		case managarm::posix::Errors::ILLEGAL_OPERATION_TARGET:
+			return EINVAL;
+		case managarm::posix::Errors::NO_BACKING_DEVICE:
+			return ENXIO;
+		case managarm::posix::Errors::IS_DIRECTORY:
+			return EISDIR;
+		case managarm::posix::Errors::DIRECTORY_NOT_EMPTY:
+			return ENOTEMPTY;
+		case managarm::posix::Errors::INTERNAL_ERROR:
+			return EIO;
+		case managarm::posix::Errors::DEAD_FORK:
+			return EAGAIN;
+		case managarm::posix::Errors::ILLEGAL_REQUEST:
+			return ENOSYS;
+		case managarm::posix::Errors::ILLEGAL_ARGUMENTS:
+			return EINVAL;
+		case managarm::posix::Errors::NO_SUCH_FD:
+			return EBADF;
+		case managarm::posix::Errors::BAD_FD:
+			return EBADFD;
+		case managarm::posix::Errors::NOT_SUPPORTED:
+			return ENOTSUP;
+		case managarm::posix::Errors::RESOURCE_IN_USE:
+			return EBUSY;
+		case managarm::posix::Errors::NO_SUCH_RESOURCE:
+			return ESRCH;
+		case managarm::posix::Errors::NOT_A_TTY:
+			return ENOTTY;
+		case managarm::posix::Errors::PROTOCOL_NOT_SUPPORTED:
+			return EPROTONOSUPPORT;
+		case managarm::posix::Errors::ADDRESS_FAMILY_NOT_SUPPORTED:
+			return EAFNOSUPPORT;
+		case managarm::posix::Errors::NO_MEMORY:
+			return ENOMEM;
+		case managarm::posix::Errors::NO_CHILD_PROCESSES:
+			return ECHILD;
+		case managarm::posix::Errors::SYMBOLIC_LINK_LOOP:
+			return ELOOP;
 	}
 }
