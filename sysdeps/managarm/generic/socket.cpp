@@ -669,6 +669,11 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_RCVTIMEO is unimplemented\e[39m"
 		  << frg::endlog;
 		return 0;
+	} else if (layer == SOL_IP && number == IP_RECVERR) {
+		mlibc::infoLogger(
+		) << "\e[31mmlibc: setsockopt() call with SOL_IP and IP_RECVERR is unimplemented\e[39m"
+		  << frg::endlog;
+		return 0;
 	} else {
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call, layer: " << layer
 		                     << " number: " << number << "\e[39m" << frg::endlog;
