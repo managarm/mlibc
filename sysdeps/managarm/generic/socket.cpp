@@ -8,6 +8,7 @@
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 
+#include <bits/errors.hpp>
 #include <fs.frigg_bragi.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
@@ -382,17 +383,10 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		if (resp.error() == managarm::fs::Errors::SUCCESS)
-			return 0;
-		else if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
-			return EINVAL;
-		else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT)
-			return EINVAL;
-		else if (resp.error() == managarm::fs::Errors::INVALID_PROTOCOL_OPTION)
-			return ENOPROTOOPT;
-		else
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		__builtin_unreachable();
+		if (resp.error() != managarm::fs::Errors::SUCCESS)
+			return resp.error() | toErrno;
+
+		return 0;
 	} else {
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call, layer: " << layer
 		                     << " number: " << number << "\e[39m" << frg::endlog;
@@ -486,16 +480,10 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		if (resp.error() == managarm::fs::Errors::SUCCESS)
-			return 0;
-		else if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
-			return EINVAL;
-		else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT)
-			return EINVAL;
-		else if (resp.error() == managarm::fs::Errors::INVALID_PROTOCOL_OPTION)
-			return ENOPROTOOPT;
-		else
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		if (resp.error() != managarm::fs::Errors::SUCCESS)
+			return resp.error() | toErrno;
+
+		return 0;
 	} else if (std::find(
 	               setsockopt_passthrough_noopt.begin(),
 	               setsockopt_passthrough_noopt.end(),
@@ -523,12 +511,10 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		if (resp.error() == managarm::fs::Errors::SUCCESS)
-			return 0;
-		else if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
-			return EINVAL;
-		else
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		if (resp.error() != managarm::fs::Errors::SUCCESS)
+			return resp.error() | toErrno;
+
+		return 0;
 	} else if (std::find(
 	               setsockopt_readonly.begin(),
 	               setsockopt_readonly.end(),

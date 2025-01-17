@@ -3,6 +3,7 @@
 #include <sys/mount.h>
 
 #include <bits/ensure.h>
+#include <bits/errors.hpp>
 #include <bragi/helpers-frigg.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
@@ -34,9 +35,9 @@ sys_mount(const char *source, const char *target, const char *fstype, unsigned l
 
 	auto resp =
 	    *bragi::parse_head_only<managarm::posix::SvrResponse>(recv_resp, getSysdepsAllocator());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND)
-		return ENOENT;
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
 	return 0;
 }
 

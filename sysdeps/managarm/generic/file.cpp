@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include <bits/ensure.h>
+#include <bits/errors.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/posix-pipe.hpp>
@@ -47,12 +48,10 @@ int sys_chdir(const char *path) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_fchdir(int fd) {
@@ -127,20 +126,10 @@ int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
-		return EEXIST;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
-		return ENOTDIR;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_symlink(const char *target_path, const char *link_path) {
@@ -169,20 +158,10 @@ int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
-		return ENOTDIR;
-	} else if (resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
-		return EEXIST;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_link(const char *old_path, const char *new_path) {
@@ -213,16 +192,10 @@ int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_rename(const char *path, const char *new_path) {
@@ -252,12 +225,10 @@ int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *n
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 } // namespace mlibc
@@ -352,8 +323,10 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 			mlibc::infoLogger() << "\e[31mmlibc: fcntl(F_GETFL) unimplemented for this file\e[39m"
 			                    << frg::endlog;
 			return EINVAL;
+		} else if (resp.error() != managarm::fs::Errors::SUCCESS) {
+			return resp.error() | toErrno;
 		}
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
 		*result = resp.flags();
 		return 0;
 	} else if (request == F_SETFL) {
@@ -384,8 +357,10 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 			mlibc::infoLogger() << "\e[31mmlibc: fcntl(F_SETFL) unimplemented for this file\e[39m"
 			                    << frg::endlog;
 			return EINVAL;
+		} else if (resp.error() != managarm::fs::Errors::SUCCESS) {
+			return resp.error() | toErrno;
 		}
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
 		*result = 0;
 		return 0;
 	} else if (request == F_SETLK) {
@@ -428,10 +403,9 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 			) << "\e[31mmlibc: fcntl(F_ADD_SEALS) unimplemented for this file\e[39m"
 			  << frg::endlog;
 			return EINVAL;
-		} else if (resp.error() == managarm::fs::Errors::INSUFFICIENT_PERMISSIONS) {
-			return EPERM;
+		} else if (resp.error() != managarm::fs::Errors::SUCCESS) {
+			return resp.error() | toErrno;
 		}
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
 		*result = resp.seals();
 		return 0;
@@ -462,8 +436,10 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 			) << "\e[31mmlibc: fcntl(F_GET_SEALS) unimplemented for this file\e[39m"
 			  << frg::endlog;
 			return EINVAL;
+		} else if (resp.error() != managarm::fs::Errors::SUCCESS) {
+			return resp.error() | toErrno;
 		}
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
 		*result = resp.seals();
 		return 0;
 	} else {
@@ -499,16 +475,17 @@ int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) 
 	if (resp.error() == managarm::fs::Errors::END_OF_FILE) {
 		*bytes_read = 0;
 		return 0;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		__ensure(max_size > sizeof(struct dirent));
-		auto ent = new (buffer) struct dirent;
-		memset(ent, 0, sizeof(struct dirent));
-		memcpy(ent->d_name, resp.path().data(), resp.path().size());
-		ent->d_reclen = sizeof(struct dirent);
-		*bytes_read = sizeof(struct dirent);
-		return 0;
+	} else if (resp.error() != managarm::fs::Errors::SUCCESS) {
+		return resp.error() | toErrno;
 	}
+
+	__ensure(max_size > sizeof(struct dirent));
+	auto ent = new (buffer) struct dirent;
+	memset(ent, 0, sizeof(struct dirent));
+	memcpy(ent->d_name, resp.path().data(), resp.path().size());
+	ent->d_reclen = sizeof(struct dirent);
+	*bytes_read = sizeof(struct dirent);
+	return 0;
 }
 
 int sys_ttyname(int fd, char *buf, size_t size) {
@@ -531,17 +508,13 @@ int sys_ttyname(int fd, char *buf, size_t size) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::NOT_A_TTY) {
-		return ENOTTY;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		__ensure(size >= resp.path().size() + 1);
-		memcpy(buf, resp.path().data(), size);
-		buf[resp.path().size()] = '\0';
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	__ensure(size >= resp.path().size() + 1);
+	memcpy(buf, resp.path().data(), size);
+	buf[resp.path().size()] = '\0';
+	return 0;
 }
 
 int sys_fdatasync(int) {
@@ -602,17 +575,10 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	if (resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
-		return EEXIST;
-	} else if (resp.error() == managarm::posix::Errors::NO_MEMORY) {
-		return EFAULT;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		*window = reinterpret_cast<void *>(resp.offset());
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 
+	*window = reinterpret_cast<void *>(resp.offset());
 	return 0;
 }
 
@@ -831,11 +797,9 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	if (resp.error() == managarm::posix::Errors::PROTOCOL_NOT_SUPPORTED) {
-		return EPROTONOSUPPORT;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
 	__ensure(resp.fds_size() == 2);
 	fds[0] = resp.fds(0);
 	fds[1] = resp.fds(1);
@@ -918,35 +882,11 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	managarm::fs::SendMsgReply<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-	if (resp.error() == managarm::fs::Errors::BROKEN_PIPE) {
-		return EPIPE;
-	} else if (resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
-		return ENOTCONN;
-	} else if (resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
-		return EAGAIN;
-	} else if (resp.error() == managarm::fs::Errors::HOST_UNREACHABLE) {
-		return EHOSTUNREACH;
-	} else if (resp.error() == managarm::fs::Errors::ACCESS_DENIED) {
-		return EACCES;
-	} else if (resp.error() == managarm::fs::Errors::NETWORK_UNREACHABLE) {
-		return ENETUNREACH;
-	} else if (resp.error() == managarm::fs::Errors::DESTINATION_ADDRESS_REQUIRED) {
-		return EDESTADDRREQ;
-	} else if (resp.error() == managarm::fs::Errors::ADDRESS_NOT_AVAILABLE) {
-		return EADDRNOTAVAIL;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::AF_NOT_SUPPORTED) {
-		return EAFNOSUPPORT;
-	} else if (resp.error() == managarm::fs::Errors::MESSAGE_TOO_LARGE) {
-		return EMSGSIZE;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return EOPNOTSUPP;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		*length = resp.size();
-		return 0;
-	}
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*length = resp.size();
+	return 0;
 }
 
 int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
@@ -1199,16 +1139,9 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
-		return EEXIST;
-	} else if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
 	return 0;
 }
 
@@ -1246,10 +1179,9 @@ int sys_epoll_pwait(
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	}
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
 	__ensure(!(recv_data.actualLength() % sizeof(struct epoll_event)));
 	*raised = recv_data.actualLength() / sizeof(struct epoll_event);
 	return 0;
@@ -1431,15 +1363,11 @@ int sys_inotify_add_watch(int ifd, const char *path, uint32_t mask, int *wd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		*wd = resp.wd();
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*wd = resp.wd();
+	return 0;
 }
 
 int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
@@ -1536,29 +1464,11 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
-		return EEXIST;
-	} else if (resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
-		return ENOTDIR;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_OPERATION_TARGET) {
-		mlibc::infoLogger() << "\e[31mmlibc: openat unimplemented for this file " << path
-		                    << "\e[39m" << frg::endlog;
-		return EINVAL;
-	} else if (resp.error() == managarm::posix::Errors::NO_BACKING_DEVICE) {
-		return ENXIO;
-	} else if (resp.error() == managarm::posix::Errors::IS_DIRECTORY) {
-		return EISDIR;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else if (resp.error() == managarm::posix::Errors::SYMBOLIC_LINK_LOOP) {
-		return ELOOP;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		*fd = resp.fd();
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*fd = resp.fd();
+	return 0;
 }
 
 int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
@@ -1583,20 +1493,10 @@ int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
-		return EEXIST;
-	} else if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else if (resp.error() == managarm::posix::Errors::INTERNAL_ERROR) {
-		return EIEIO;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_mknodat(int dirfd, const char *path, int mode, int dev) {
@@ -1622,18 +1522,10 @@ int sys_mknodat(int dirfd, const char *path, int mode, int dev) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::ALREADY_EXISTS) {
-		return EEXIST;
-	} else if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
@@ -1668,26 +1560,12 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	/*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
-	        return EBADF;
-	    }else*/
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
-		return EAGAIN;
-	} else if (resp.error() == managarm::fs::Errors::IS_DIRECTORY) {
-		return EISDIR;
-	} else if (resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
-		return ENOTCONN;
-	} else if (resp.error() == managarm::fs::Errors::END_OF_FILE) {
-		*bytes_read = 0;
-		return 0;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		HEL_CHECK(recv_data.error());
-		*bytes_read = recv_data.actualLength();
-		return 0;
-	}
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	HEL_CHECK(recv_data.error());
+	*bytes_read = recv_data.actualLength();
+	return 0;
 }
 
 int sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
@@ -1735,25 +1613,13 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-	// TODO: implement NO_SUCH_FD
-	/*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
-	        return EBADF;
-	    }else*/
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return EINVAL; // FD does not support writes.
-	} else if (resp.error() == managarm::fs::Errors::NO_SPACE_LEFT) {
-		return ENOSPC;
-	} else if (resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
-		return EAGAIN;
-	} else if (resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
-		return ENOTCONN;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		if (bytes_written) {
-			*bytes_written = resp.size();
-		}
-		return 0;
-	}
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	if (bytes_written)
+		*bytes_written = resp.size();
+
+	return 0;
 }
 
 int sys_writev(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_written) {
@@ -1798,21 +1664,13 @@ int sys_writev(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_writte
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return EINVAL; // FD does not support writes.
-	} else if (resp.error() == managarm::fs::Errors::NO_SPACE_LEFT) {
-		return ENOSPC;
-	} else if (resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
-		return EAGAIN;
-	} else if (resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
-		return ENOTCONN;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		if (bytes_written)
-			*bytes_written = resp.size();
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
 
-		return 0;
-	}
+	if (bytes_written)
+		*bytes_written = resp.size();
+
+	return 0;
 }
 
 int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
@@ -1844,22 +1702,16 @@ int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	/*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
-	        return EBADF;
-	    }else*/
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
-		return EAGAIN;
-	} else if (resp.error() == managarm::fs::Errors::END_OF_FILE) {
+	if (resp.error() == managarm::fs::Errors::END_OF_FILE) {
 		*bytes_read = 0;
 		return 0;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	} else if (resp.error() == managarm::fs::Errors::SUCCESS) {
 		HEL_CHECK(recv_data.error());
 		*bytes_read = recv_data.actualLength();
 		return 0;
 	}
+
+	return resp.error() | toErrno;
 }
 
 int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_written) {
@@ -1896,21 +1748,11 @@ int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_writ
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
-		return EAGAIN;
-	} else if (resp.error() == managarm::fs::Errors::NO_SPACE_LEFT) {
-		return ENOSPC;
-	} else if (resp.error() == managarm::fs::Errors::SEEK_ON_PIPE) {
-		return ESPIPE;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		*bytes_written = n;
-		return 0;
-	}
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*bytes_written = n;
+	return 0;
 }
 
 int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
@@ -1948,15 +1790,11 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::fs::Errors::SEEK_ON_PIPE) {
-		return ESPIPE;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		*new_offset = resp.offset();
-		return 0;
-	}
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*new_offset = resp.offset();
+	return 0;
 }
 
 int sys_close(int fd) {
@@ -2016,13 +1854,8 @@ int sys_dup(int fd, int flags, int *newfd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 
 	*newfd = resp.fd();
 	return 0;
@@ -2050,14 +1883,8 @@ int sys_dup2(int fd, int flags, int newfd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-
-	if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 
 	return 0;
 }
@@ -2102,60 +1929,54 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
-		return ENOTDIR;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		memset(result, 0, sizeof(struct stat));
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 
-		switch (resp.file_type()) {
-			case managarm::posix::FileType::FT_REGULAR:
-				result->st_mode = S_IFREG;
-				break;
-			case managarm::posix::FileType::FT_DIRECTORY:
-				result->st_mode = S_IFDIR;
-				break;
-			case managarm::posix::FileType::FT_SYMLINK:
-				result->st_mode = S_IFLNK;
-				break;
-			case managarm::posix::FileType::FT_CHAR_DEVICE:
-				result->st_mode = S_IFCHR;
-				break;
-			case managarm::posix::FileType::FT_BLOCK_DEVICE:
-				result->st_mode = S_IFBLK;
-				break;
-			case managarm::posix::FileType::FT_SOCKET:
-				result->st_mode = S_IFSOCK;
-				break;
-			case managarm::posix::FileType::FT_FIFO:
-				result->st_mode = S_IFIFO;
-				break;
-			default:
-				__ensure(!resp.file_type());
-		}
+	memset(result, 0, sizeof(struct stat));
 
-		result->st_dev = 1;
-		result->st_ino = resp.fs_inode();
-		result->st_mode |= resp.mode();
-		result->st_nlink = resp.num_links();
-		result->st_uid = resp.uid();
-		result->st_gid = resp.gid();
-		result->st_rdev = resp.ref_devnum();
-		result->st_size = resp.file_size();
-		result->st_atim.tv_sec = resp.atime_secs();
-		result->st_atim.tv_nsec = resp.atime_nanos();
-		result->st_mtim.tv_sec = resp.mtime_secs();
-		result->st_mtim.tv_nsec = resp.mtime_nanos();
-		result->st_ctim.tv_sec = resp.ctime_secs();
-		result->st_ctim.tv_nsec = resp.ctime_nanos();
-		result->st_blksize = 4096;
-		result->st_blocks = resp.file_size() / 512 + 1;
-		return 0;
+	switch (resp.file_type()) {
+		case managarm::posix::FileType::FT_REGULAR:
+			result->st_mode = S_IFREG;
+			break;
+		case managarm::posix::FileType::FT_DIRECTORY:
+			result->st_mode = S_IFDIR;
+			break;
+		case managarm::posix::FileType::FT_SYMLINK:
+			result->st_mode = S_IFLNK;
+			break;
+		case managarm::posix::FileType::FT_CHAR_DEVICE:
+			result->st_mode = S_IFCHR;
+			break;
+		case managarm::posix::FileType::FT_BLOCK_DEVICE:
+			result->st_mode = S_IFBLK;
+			break;
+		case managarm::posix::FileType::FT_SOCKET:
+			result->st_mode = S_IFSOCK;
+			break;
+		case managarm::posix::FileType::FT_FIFO:
+			result->st_mode = S_IFIFO;
+			break;
+		default:
+			__ensure(!resp.file_type());
 	}
+
+	result->st_dev = 1;
+	result->st_ino = resp.fs_inode();
+	result->st_mode |= resp.mode();
+	result->st_nlink = resp.num_links();
+	result->st_uid = resp.uid();
+	result->st_gid = resp.gid();
+	result->st_rdev = resp.ref_devnum();
+	result->st_size = resp.file_size();
+	result->st_atim.tv_sec = resp.atime_secs();
+	result->st_atim.tv_nsec = resp.atime_nanos();
+	result->st_mtim.tv_sec = resp.mtime_secs();
+	result->st_mtim.tv_nsec = resp.mtime_nanos();
+	result->st_ctim.tv_sec = resp.ctime_secs();
+	result->st_ctim.tv_nsec = resp.ctime_nanos();
+	result->st_blksize = 4096;
+	result->st_blocks = resp.file_size() / 512 + 1;
+	return 0;
 }
 
 int sys_readlink(const char *path, void *data, size_t max_size, ssize_t *length) {
@@ -2184,15 +2005,11 @@ int sys_readlinkat(int dirfd, const char *path, void *data, size_t max_size, ssi
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		*length = recv_data.actualLength();
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*length = recv_data.actualLength();
+	return 0;
 }
 
 int sys_rmdir(const char *path) {
@@ -2215,18 +2032,10 @@ int sys_rmdir(const char *path) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::DIRECTORY_NOT_EMPTY) {
-		return ENOTEMPTY;
-	} else if (resp.error() == managarm::posix::Errors::INTERNAL_ERROR) {
-		return EIEIO;
-	} else if (resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
-		return ENOTDIR;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_ftruncate(int fd, size_t size) {
@@ -2252,12 +2061,10 @@ int sys_ftruncate(int fd, size_t size) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_fallocate(int fd, off_t offset, size_t size) {
@@ -2284,16 +2091,9 @@ int sys_fallocate(int fd, off_t offset, size_t size) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::INSUFFICIENT_PERMISSIONS) {
-		return EPERM;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
 	return 0;
 }
 
@@ -2319,24 +2119,10 @@ int sys_unlinkat(int fd, const char *path, int flags) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::RESOURCE_IN_USE) {
-		return EBUSY;
-	} else if (resp.error() == managarm::posix::Errors::IS_DIRECTORY) {
-		return EISDIR;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
-		return ENOTDIR;
-	} else if (resp.error() == managarm::posix::Errors::DIRECTORY_NOT_EMPTY) {
-		return ENOTEMPTY;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_access(const char *path, int mode) { return sys_faccessat(AT_FDCWD, path, mode, 0); }
@@ -2363,16 +2149,10 @@ int sys_faccessat(int dirfd, const char *pathname, int, int flags) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_flock(int fd, int opts) {
@@ -2399,14 +2179,10 @@ int sys_flock(int fd, int opts) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::WOULD_BLOCK) {
-		return EWOULDBLOCK;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_isatty(int fd) {
@@ -2467,18 +2243,10 @@ int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else if (resp.error() == managarm::posix::Errors::NOT_SUPPORTED) {
-		return ENOTSUP;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
@@ -2532,18 +2300,10 @@ int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	} else if (resp.error() == managarm::posix::Errors::NOT_SUPPORTED) {
-		return ENOTSUP;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_getentropy(void *buffer, size_t length) {
