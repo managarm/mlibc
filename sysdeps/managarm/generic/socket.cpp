@@ -407,19 +407,23 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 
 namespace {
 
-std::array<std::pair<int, int>, 5> setsockopt_readonly = {{
+std::array<std::pair<int, int>, 6> setsockopt_readonly = {{
     {SOL_SOCKET, SO_ACCEPTCONN},
     {SOL_SOCKET, SO_DOMAIN},
     {SOL_SOCKET, SO_ERROR},
     {SOL_SOCKET, SO_PROTOCOL},
     {SOL_SOCKET, SO_TYPE},
+    {SOL_IP, SO_PEERSEC},
 }};
 
-std::array<std::pair<int, int>, 6> setsockopt_passthrough = {{
+std::array<std::pair<int, int>, 9> setsockopt_passthrough = {{
     {SOL_PACKET, PACKET_AUXDATA},
     {SOL_SOCKET, SO_LOCK_FILTER},
     {SOL_SOCKET, SO_BINDTODEVICE},
+    {SOL_SOCKET, SO_TIMESTAMP},
     {SOL_IP, IP_PKTINFO},
+    {SOL_IP, IP_RECVTTL},
+    {SOL_IP, IP_RETOPTS},
     {SOL_NETLINK, NETLINK_ADD_MEMBERSHIP},
     {SOL_NETLINK, NETLINK_PKTINFO},
 }};
