@@ -10,8 +10,64 @@ extern "C" {
 #include <netinet/in.h>
 #include <netinet/ip.h>
 
+struct icmphdr {
+	uint8_t type;
+	uint8_t code;
+	uint16_t checksum;
+	union {
+		struct {
+			uint16_t id;
+			uint16_t sequence;
+		} echo;
+		uint32_t gateway;
+		struct {
+			uint16_t __unused;
+			uint16_t mtu;
+		} frag;
+		uint8_t reserved[4];
+	} un;
+};
+
 #define ICMP_ECHOREPLY 0
+#define ICMP_DEST_UNREACH 3
+#define ICMP_SOURCE_QUENCH 4
+#define ICMP_REDIRECT 5
 #define ICMP_ECHO 8
+#define ICMP_TIME_EXCEEDED 11
+#define ICMP_PARAMETERPROB 12
+#define ICMP_TIMESTAMP 13
+#define ICMP_TIMESTAMPREPLY 14
+#define ICMP_INFO_REQUEST 15
+#define ICMP_INFO_REPLY 16
+#define ICMP_ADDRESS 17
+#define ICMP_ADDRESSREPLY 18
+
+#define ICMP_NET_UNREACH 0
+#define ICMP_HOST_UNREACH 1
+#define ICMP_PROT_UNREACH 2
+#define ICMP_PORT_UNREACH 3
+#define ICMP_FRAG_NEEDED 4
+#define ICMP_SR_FAILED 5
+#define ICMP_NET_UNKNOWN 6
+#define ICMP_HOST_UNKNOWN 7
+#define ICMP_HOST_ISOLATED 8
+#define ICMP_NET_ANO 9
+#define ICMP_HOST_ANO 10
+#define ICMP_NET_UNR_TOS 11
+#define ICMP_HOST_UNR_TOS 12
+#define ICMP_PKT_FILTERED 13
+#define ICMP_PREC_VIOLATION 14
+#define ICMP_PREC_CUTOFF 15
+#define NR_ICMP_UNREACH 15
+
+#define ICMP_REDIR_NET 0
+#define ICMP_REDIR_HOST 1
+#define ICMP_REDIR_NETTOS 2
+#define ICMP_REDIR_HOSTTOS 3
+
+#define ICMP_EXC_TTL 0
+#define ICMP_EXC_FRAGTIME 1
+
 #define ICMP_ADVLENMIN (8 + sizeof(struct ip) + 8)
 
 struct icmp_ra_addr {
