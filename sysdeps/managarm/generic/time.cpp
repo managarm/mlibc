@@ -11,6 +11,8 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-pipe.hpp>
 
+#include "posix.frigg_bragi.hpp"
+
 struct TrackerPage {
 	uint64_t seqlock;
 	int32_t state;
@@ -79,6 +81,44 @@ int sys_clock_getres(int clock, time_t *secs, long *nanos) {
 	(void)secs;
 	(void)nanos;
 	mlibc::infoLogger() << "mlibc: clock_getres is a stub" << frg::endlog;
+	return 0;
+}
+
+int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
+	if (which != ITIMER_REAL) {
+		mlibc::infoLogger() << "mlibc: setitimers other than ITIMER_REAL are unsupported"
+		                    << frg::endlog;
+		return EINVAL;
+	}
+
+	managarm::posix::SetIntervalTimerRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_which(which);
+	req.set_value_sec(new_value->it_value.tv_sec);
+	req.set_value_usec(new_value->it_value.tv_usec);
+	req.set_interval_sec(new_value->it_interval.tv_sec);
+	req.set_interval_usec(new_value->it_interval.tv_usec);
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SetIntervalTimerResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+
+	if (old_value) {
+		old_value->it_value.tv_sec = resp.value_sec();
+		old_value->it_value.tv_usec = resp.value_usec();
+		old_value->it_interval.tv_sec = resp.interval_sec();
+		old_value->it_interval.tv_usec = resp.interval_usec();
+	}
+
 	return 0;
 }
 
