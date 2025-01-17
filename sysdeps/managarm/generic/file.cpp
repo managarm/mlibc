@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include <bits/ensure.h>
+#include <bits/errors.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/posix-pipe.hpp>
@@ -350,8 +351,10 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 			mlibc::infoLogger() << "\e[31mmlibc: fcntl(F_GETFL) unimplemented for this file\e[39m"
 			                    << frg::endlog;
 			return EINVAL;
+		} else if (resp.error() != managarm::fs::Errors::SUCCESS) {
+			return resp.error() | toErrno;
 		}
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
 		*result = resp.flags();
 		return 0;
 	} else if (request == F_SETFL) {
@@ -382,8 +385,10 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 			mlibc::infoLogger() << "\e[31mmlibc: fcntl(F_SETFL) unimplemented for this file\e[39m"
 			                    << frg::endlog;
 			return EINVAL;
+		} else if (resp.error() != managarm::fs::Errors::SUCCESS) {
+			return resp.error() | toErrno;
 		}
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
 		*result = 0;
 		return 0;
 	} else if (request == F_SETLK) {
@@ -426,10 +431,9 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 			) << "\e[31mmlibc: fcntl(F_ADD_SEALS) unimplemented for this file\e[39m"
 			  << frg::endlog;
 			return EINVAL;
-		} else if (resp.error() == managarm::fs::Errors::INSUFFICIENT_PERMISSIONS) {
-			return EPERM;
+		} else if (resp.error() != managarm::fs::Errors::SUCCESS) {
+			return resp.error() | toErrno;
 		}
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
 		*result = resp.seals();
 		return 0;
@@ -460,8 +464,10 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 			) << "\e[31mmlibc: fcntl(F_GET_SEALS) unimplemented for this file\e[39m"
 			  << frg::endlog;
 			return EINVAL;
+		} else if (resp.error() != managarm::fs::Errors::SUCCESS) {
+			return resp.error() | toErrno;
 		}
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
 		*result = resp.seals();
 		return 0;
 	} else {
@@ -497,16 +503,17 @@ int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) 
 	if (resp.error() == managarm::fs::Errors::END_OF_FILE) {
 		*bytes_read = 0;
 		return 0;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		__ensure(max_size > sizeof(struct dirent));
-		auto ent = new (buffer) struct dirent;
-		memset(ent, 0, sizeof(struct dirent));
-		memcpy(ent->d_name, resp.path().data(), resp.path().size());
-		ent->d_reclen = sizeof(struct dirent);
-		*bytes_read = sizeof(struct dirent);
-		return 0;
+	} else if (resp.error() != managarm::fs::Errors::SUCCESS) {
+		return resp.error() | toErrno;
 	}
+
+	__ensure(max_size > sizeof(struct dirent));
+	auto ent = new (buffer) struct dirent;
+	memset(ent, 0, sizeof(struct dirent));
+	memcpy(ent->d_name, resp.path().data(), resp.path().size());
+	ent->d_reclen = sizeof(struct dirent);
+	*bytes_read = sizeof(struct dirent);
+	return 0;
 }
 
 int sys_ttyname(int fd, char *buf, size_t size) {
@@ -916,35 +923,11 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	managarm::fs::SendMsgReply<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-	if (resp.error() == managarm::fs::Errors::BROKEN_PIPE) {
-		return EPIPE;
-	} else if (resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
-		return ENOTCONN;
-	} else if (resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
-		return EAGAIN;
-	} else if (resp.error() == managarm::fs::Errors::HOST_UNREACHABLE) {
-		return EHOSTUNREACH;
-	} else if (resp.error() == managarm::fs::Errors::ACCESS_DENIED) {
-		return EACCES;
-	} else if (resp.error() == managarm::fs::Errors::NETWORK_UNREACHABLE) {
-		return ENETUNREACH;
-	} else if (resp.error() == managarm::fs::Errors::DESTINATION_ADDRESS_REQUIRED) {
-		return EDESTADDRREQ;
-	} else if (resp.error() == managarm::fs::Errors::ADDRESS_NOT_AVAILABLE) {
-		return EADDRNOTAVAIL;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::AF_NOT_SUPPORTED) {
-		return EAFNOSUPPORT;
-	} else if (resp.error() == managarm::fs::Errors::MESSAGE_TOO_LARGE) {
-		return EMSGSIZE;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return EOPNOTSUPP;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		*length = resp.size();
-		return 0;
-	}
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*length = resp.size();
+	return 0;
 }
 
 int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
@@ -1666,26 +1649,12 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	/*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
-	        return EBADF;
-	    }else*/
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
-		return EAGAIN;
-	} else if (resp.error() == managarm::fs::Errors::IS_DIRECTORY) {
-		return EISDIR;
-	} else if (resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
-		return ENOTCONN;
-	} else if (resp.error() == managarm::fs::Errors::END_OF_FILE) {
-		*bytes_read = 0;
-		return 0;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		HEL_CHECK(recv_data.error());
-		*bytes_read = recv_data.actualLength();
-		return 0;
-	}
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	HEL_CHECK(recv_data.error());
+	*bytes_read = recv_data.actualLength();
+	return 0;
 }
 
 int sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
@@ -1733,25 +1702,13 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-	// TODO: implement NO_SUCH_FD
-	/*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
-	        return EBADF;
-	    }else*/
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return EINVAL; // FD does not support writes.
-	} else if (resp.error() == managarm::fs::Errors::NO_SPACE_LEFT) {
-		return ENOSPC;
-	} else if (resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
-		return EAGAIN;
-	} else if (resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
-		return ENOTCONN;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		if (bytes_written) {
-			*bytes_written = resp.size();
-		}
-		return 0;
-	}
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	if (bytes_written)
+		*bytes_written = resp.size();
+
+	return 0;
 }
 
 int sys_writev(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_written) {
@@ -1796,21 +1753,13 @@ int sys_writev(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_writte
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return EINVAL; // FD does not support writes.
-	} else if (resp.error() == managarm::fs::Errors::NO_SPACE_LEFT) {
-		return ENOSPC;
-	} else if (resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
-		return EAGAIN;
-	} else if (resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
-		return ENOTCONN;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		if (bytes_written)
-			*bytes_written = resp.size();
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
 
-		return 0;
-	}
+	if (bytes_written)
+		*bytes_written = resp.size();
+
+	return 0;
 }
 
 int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
@@ -1842,22 +1791,16 @@ int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	/*	if(resp.error() == managarm::fs::Errors::NO_SUCH_FD) {
-	        return EBADF;
-	    }else*/
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
-		return EAGAIN;
-	} else if (resp.error() == managarm::fs::Errors::END_OF_FILE) {
+	if (resp.error() == managarm::fs::Errors::END_OF_FILE) {
 		*bytes_read = 0;
 		return 0;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+	} else if (resp.error() == managarm::fs::Errors::SUCCESS) {
 		HEL_CHECK(recv_data.error());
 		*bytes_read = recv_data.actualLength();
 		return 0;
 	}
+
+	return resp.error() | toErrno;
 }
 
 int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_written) {
@@ -1894,21 +1837,11 @@ int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_writ
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
-		return EAGAIN;
-	} else if (resp.error() == managarm::fs::Errors::NO_SPACE_LEFT) {
-		return ENOSPC;
-	} else if (resp.error() == managarm::fs::Errors::SEEK_ON_PIPE) {
-		return ESPIPE;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		*bytes_written = n;
-		return 0;
-	}
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*bytes_written = n;
+	return 0;
 }
 
 int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
@@ -1946,15 +1879,11 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::fs::Errors::SEEK_ON_PIPE) {
-		return ESPIPE;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		*new_offset = resp.offset();
-		return 0;
-	}
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*new_offset = resp.offset();
+	return 0;
 }
 
 int sys_close(int fd) {
@@ -2250,12 +2179,10 @@ int sys_ftruncate(int fd, size_t size) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 int sys_fallocate(int fd, off_t offset, size_t size) {
@@ -2282,16 +2209,9 @@ int sys_fallocate(int fd, off_t offset, size_t size) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::INSUFFICIENT_PERMISSIONS) {
-		return EPERM;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		return 0;
-	}
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
 	return 0;
 }
 
