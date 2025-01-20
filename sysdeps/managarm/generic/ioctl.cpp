@@ -7,6 +7,7 @@
 #include <linux/sockios.h>
 #include <linux/usb/cdc-wdm.h>
 #include <linux/vt.h>
+#include <scsi/sg.h>
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <netinet/in.h>
