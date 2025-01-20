@@ -1209,6 +1209,12 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			                    << frg::endlog;
 			return 0;
 		}
+		case DRM_IOCTL_WAIT_VBLANK: {
+			mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_WAIT_VBLANK"
+			                       " is a noop\e[39m"
+			                    << frg::endlog;
+			return 0;
+		}
 		case DRM_IOCTL_PRIME_HANDLE_TO_FD: {
 			auto param = reinterpret_cast<drm_prime_handle *>(arg);
 
