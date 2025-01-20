@@ -3,6 +3,7 @@
 #include <linux/cdrom.h>
 #include <linux/input.h>
 #include <linux/kd.h>
+#include <linux/nvme_ioctl.h>
 #include <linux/sockios.h>
 #include <linux/usb/cdc-wdm.h>
 #include <linux/vt.h>
@@ -1092,6 +1093,62 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*result = resp.result();
 		*param = resp.size();
+		return 0;
+	} else if (request == NVME_IOCTL_ID) {
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+		    handle,
+		    helix_ng::offer(
+		        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		        helix_ng::recvInline()
+		    )
+		);
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		return 0;
+	} else if (request == NVME_IOCTL_ADMIN_CMD) {
+		auto param = reinterpret_cast<struct nvme_admin_cmd *>(arg);
+
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, send_ioctl_req, send_req, send_buffer, send_data, recv_resp, recv_data] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		            helix_ng::sendBuffer(param, sizeof(*param)),
+		            helix_ng::sendBuffer(reinterpret_cast<void *>(param->addr), param->data_len),
+		            helix_ng::recvInline(),
+		            helix_ng::recvBuffer(reinterpret_cast<void *>(param->addr), param->data_len)
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_buffer.error());
+		HEL_CHECK(send_data.error());
+		HEL_CHECK(recv_resp.error());
+		HEL_CHECK(recv_data.error());
+
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		param->result = resp.status();
 		return 0;
 	}
 
