@@ -21,6 +21,8 @@ struct ip6_hdr {
 	struct in6_addr ip6_dst;
 };
 
+#define ip6_nxt ip6_ctlun.ip6_un1.ip6_un1_nxt
+
 #ifdef __cplusplus
 }
 #endif

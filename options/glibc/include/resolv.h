@@ -31,6 +31,8 @@ int res_query(const char *__dname, int __class, int __type,
 
 int res_init(void);
 
+int dn_comp(const char *, unsigned char *, int, unsigned char **, unsigned char **);
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 /* From musl: Unused; purely for broken apps
