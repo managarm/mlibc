@@ -1975,6 +1975,97 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 	return 0;
 }
 
+int
+sys_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf) {
+	SignalGuard sguard;
+
+	managarm::posix::FstatAtRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), pathname));
+	req.set_fd(dirfd);
+
+	if (flags
+	    & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH | AT_NO_AUTOMOUNT | AT_STATX_SYNC_AS_STAT
+	        | AT_STATX_FORCE_SYNC | AT_STATX_DONT_SYNC)) {
+		return EINVAL;
+	}
+
+	if (!(flags & AT_EMPTY_PATH) && (!pathname || !strlen(pathname))) {
+		return ENOENT;
+	}
+
+	req.set_flags(flags);
+
+	auto [offer, send_head, send_tail, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(send_tail.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
+	} else if (resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	} else if (resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
+		return ENOTDIR;
+	} else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		memset(statxbuf, 0, sizeof(struct statx));
+
+		switch (resp.file_type()) {
+			case managarm::posix::FileType::FT_REGULAR:
+				statxbuf->stx_mode = S_IFREG;
+				break;
+			case managarm::posix::FileType::FT_DIRECTORY:
+				statxbuf->stx_mode = S_IFDIR;
+				break;
+			case managarm::posix::FileType::FT_SYMLINK:
+				statxbuf->stx_mode = S_IFLNK;
+				break;
+			case managarm::posix::FileType::FT_CHAR_DEVICE:
+				statxbuf->stx_mode = S_IFCHR;
+				break;
+			case managarm::posix::FileType::FT_BLOCK_DEVICE:
+				statxbuf->stx_mode = S_IFBLK;
+				break;
+			case managarm::posix::FileType::FT_SOCKET:
+				statxbuf->stx_mode = S_IFSOCK;
+				break;
+			case managarm::posix::FileType::FT_FIFO:
+				statxbuf->stx_mode = S_IFIFO;
+				break;
+			default:
+				__ensure(!resp.file_type());
+		}
+
+		statxbuf->stx_mask = mask; // TODO: Properly?
+		// statxbuf->st_dev = 1;
+		statxbuf->stx_ino = resp.fs_inode();
+		statxbuf->stx_mode |= resp.mode();
+		statxbuf->stx_nlink = resp.num_links();
+		statxbuf->stx_uid = resp.uid();
+		statxbuf->stx_gid = resp.gid();
+		// statxbuf->st_rdev = resp.ref_devnum();
+		statxbuf->stx_size = resp.file_size();
+		statxbuf->stx_atime.tv_sec = resp.atime_secs();
+		statxbuf->stx_atime.tv_nsec = resp.atime_nanos();
+		statxbuf->stx_mtime.tv_sec = resp.mtime_secs();
+		statxbuf->stx_mtime.tv_nsec = resp.mtime_nanos();
+		statxbuf->stx_ctime.tv_sec = resp.ctime_secs();
+		statxbuf->stx_ctime.tv_nsec = resp.ctime_nanos();
+		statxbuf->stx_blksize = 4096;
+		statxbuf->stx_blocks = resp.file_size() / 512 + 1;
+		return 0;
+	}
+}
+
 int sys_readlink(const char *path, void *data, size_t max_size, ssize_t *length) {
 	return sys_readlinkat(AT_FDCWD, path, data, max_size, length);
 }
