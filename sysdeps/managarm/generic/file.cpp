@@ -2510,15 +2510,16 @@ int sys_fstatfs(int fd, struct statfs *buf) {
 	managarm::posix::FstatfsRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_fd(fd);
 
-	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	auto [offer, send_head, send_tail, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
 	    helix_ng::offer(
-	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()), helix_ng::recvInline()
 	    )
 	);
 
 	HEL_CHECK(offer.error());
-	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::FstatfsResponse resp(getSysdepsAllocator());
@@ -2580,6 +2581,40 @@ int sys_prctl(int option, va_list va, int *out) {
 			mlibc::infoLogger() << "mlibc: prctl: operation: " << option << " unimplemented!"
 			                    << frg::endlog;
 			return EINVAL;
+	}
+}
+
+int sys_statfs(const char *path, struct statfs *buf) {
+	SignalGuard sguard;
+
+	managarm::posix::FstatfsRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_fd(-1);
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
+
+	auto [offer, send_head, send_tail, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(send_tail.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::FstatfsResponse resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+	if (resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	} else if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
+		return ENOENT;
+	} else {
+		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		memset(buf, NULL, sizeof(struct statfs));
+		buf->f_type = resp.fstype();
+		return 0;
 	}
 }
 
