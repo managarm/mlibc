@@ -351,6 +351,17 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		                    << frg::endlog;
 		*(int *)buffer = 1;
 		return 0;
+	} else if (layer == IPPROTO_TCP && number == TCP_MAXSEG) {
+		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with IPPROTO_TCP and TCP_MAXSEG is "
+		                       "unimplemented\e[39m"
+		                    << frg::endlog;
+		return 0;
+	} else if (layer == IPPROTO_TCP && number == TCP_CONGESTION) {
+		mlibc::infoLogger(
+		) << "\e[31mmlibc: getsockopt() call with IPPROTO_TCP and TCP_CONGESTION is "
+		     "unimplemented\e[39m"
+		  << frg::endlog;
+		return 0;
 	} else if (std::find(
 	               getsockopt_passthrough.begin(),
 	               getsockopt_passthrough.end(),
@@ -396,19 +407,23 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 
 namespace {
 
-std::array<std::pair<int, int>, 5> setsockopt_readonly = {{
+std::array<std::pair<int, int>, 6> setsockopt_readonly = {{
     {SOL_SOCKET, SO_ACCEPTCONN},
     {SOL_SOCKET, SO_DOMAIN},
     {SOL_SOCKET, SO_ERROR},
     {SOL_SOCKET, SO_PROTOCOL},
     {SOL_SOCKET, SO_TYPE},
+    {SOL_IP, SO_PEERSEC},
 }};
 
-std::array<std::pair<int, int>, 6> setsockopt_passthrough = {{
+std::array<std::pair<int, int>, 9> setsockopt_passthrough = {{
     {SOL_PACKET, PACKET_AUXDATA},
     {SOL_SOCKET, SO_LOCK_FILTER},
     {SOL_SOCKET, SO_BINDTODEVICE},
+    {SOL_SOCKET, SO_TIMESTAMP},
     {SOL_IP, IP_PKTINFO},
+    {SOL_IP, IP_RECVTTL},
+    {SOL_IP, IP_RETOPTS},
     {SOL_NETLINK, NETLINK_ADD_MEMBERSHIP},
     {SOL_NETLINK, NETLINK_PKTINFO},
 }};
@@ -599,6 +614,11 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 		                       "unimplemented\e[39m"
 		                    << frg::endlog;
 		return 0;
+	} else if (layer == IPPROTO_TCP && number == TCP_MAXSEG) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_NODELAY is "
+		                       "unimplemented\e[39m"
+		                    << frg::endlog;
+		return 0;
 	} else if (layer == IPPROTO_TCP && number == TCP_KEEPIDLE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_KEEPIDLE "
 		                       "is unimplemented\e[39m"
@@ -647,6 +667,11 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 	} else if (layer == SOL_SOCKET && number == SO_RCVTIMEO) {
 		mlibc::infoLogger(
 		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_RCVTIMEO is unimplemented\e[39m"
+		  << frg::endlog;
+		return 0;
+	} else if (layer == SOL_IP && number == IP_RECVERR) {
+		mlibc::infoLogger(
+		) << "\e[31mmlibc: setsockopt() call with SOL_IP and IP_RECVERR is unimplemented\e[39m"
 		  << frg::endlog;
 		return 0;
 	} else {
