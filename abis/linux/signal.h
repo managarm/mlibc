@@ -332,6 +332,26 @@ struct _fpstate {
 #endif
 };
 
+struct sigcontext {
+#if defined(__x86_64__)
+	unsigned long r8, r9, r10, r11, r12, r13, r14, r15;
+	unsigned long rdi, rsi, rbp, rbx, rdx, rax, rcx, rsp, rip, eflags;
+	unsigned short cs, gs, fs, __pad0;
+	unsigned long err, trapno, oldmask, cr2;
+	struct _fpstate *fpstate;
+	unsigned long __reserved1[8];
+#elif defined(__i386__)
+	unsigned short gs, __gsh, fs, __fsh, es, __esh, ds, __dsh;
+	unsigned long edi, esi, ebp, esp, ebx, edx, ecx, eax;
+	unsigned long trapno, err, eip;
+	unsigned short cs, __csh;
+	unsigned long eflags, esp_at_signal;
+	unsigned short ss, __ssh;
+	struct _fpstate *fpstate;
+	unsigned long oldmask, cr2;
+#endif
+};
+
 typedef struct {
 	unsigned long gregs[NGREG];
 	struct _fpstate *fpregs;
