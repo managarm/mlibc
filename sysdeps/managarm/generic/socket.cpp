@@ -332,6 +332,12 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		     "unimplemented\e[39m"
 		  << frg::endlog;
 		return 0;
+	} else if (layer == SOL_SOCKET && number == SO_PEERPIDFD) {
+		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_PEERPIDFD "
+		                       "is unimplemented, hardcoding 0\e[39m"
+		                    << frg::endlog;
+		*(int *)buffer = 0;
+		return 0;
 	} else if (std::find(
 	               getsockopt_passthrough.begin(),
 	               getsockopt_passthrough.end(),
