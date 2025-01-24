@@ -146,6 +146,7 @@ extra_cflags_test_cases = {
 }
 
 test_sources = []
+test_objects = []
 test_link_args = []
 test_c_args = ['-D_GNU_SOURCE', '-fno-builtin']
 use_pie = false
@@ -167,6 +168,39 @@ endif
 test_override_options = ['b_sanitize=none']
 
 if library_type == 'static'
+	c_compiler = meson.get_compiler('c')
+	searchdirs = run_command(c_compiler.cmd_array(), '-print-search-dirs',
+				check: true).stdout()
+	searchdirs_arr = searchdirs.split('\n')
+	searchline = 'libraries: ='
+	searchpaths = ''
+
+	foreach line : searchdirs_arr
+		if line.startswith(searchline)
+			searchpaths = line.strip(searchline)
+			break
+		endif
+	endforeach
+
+	if searchpaths == ''
+		error('could not find compiler-specific library directory')
+	endif
+
+	searchpaths_arr = searchpaths.split(':')
+	crtpath = ''
+	fs = import('fs')
+	foreach path : searchpaths_arr
+		if fs.exists(path / 'crtbegin.o')
+			crtpath = path
+			break
+		endif
+	endforeach
+
+	if crtpath == ''
+		error('could not find crtbegin.o/crtend.o')
+	endif
+	test_objects += [crtpath / 'crtbegin.o', crtpath / 'crtend.o']
+
 	libc_dep = declare_dependency(
 		include_directories: libc_include_dirs,
 		link_with: libc_static,
@@ -222,6 +256,7 @@ foreach test_name : all_test_cases
 	should_fail = fail_test_cases.contains(test_name)
 	exec = executable(test_exec_name, [test_name + '.c', test_sources],
 		dependencies: libc_dep,
+		objects: test_objects,
 		build_rpath: meson.build_root(),
 		override_options: test_override_options,
 		c_args: test_c_args,
