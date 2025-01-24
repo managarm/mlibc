@@ -959,8 +959,8 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	managarm::fs::RecvMsgReply<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-	if (resp.error() == managarm::fs::Errors::WOULD_BLOCK) {
-		return EAGAIN;
+	if (resp.error() != managarm::fs::Errors::SUCCESS) {
+			return resp.error() | toErrno;
 	} else {
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		HEL_CHECK(recv_addr.error());
@@ -2024,13 +2024,9 @@ int sys_statx(int dirfd, const char *pathname, int flags, unsigned int mask, str
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
-		return ENOTDIR;
-	} else {
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+	else {
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		memset(statxbuf, 0, sizeof(struct statx));
 
