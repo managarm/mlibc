@@ -4,6 +4,7 @@
 #include <linux/filter.h>
 #include <linux/if_packet.h>
 #include <linux/netlink.h>
+#include <asm/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
@@ -361,6 +362,12 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		) << "\e[31mmlibc: getsockopt() call with IPPROTO_TCP and TCP_CONGESTION is "
 		     "unimplemented\e[39m"
 		  << frg::endlog;
+		return 0;
+	} else if (layer == SOL_SOCKET && number == SO_PEERPIDFD) {
+		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_PEERPIDFD "
+		                       "is unimplemented, hardcoding 0\e[39m"
+		                    << frg::endlog;
+		*(int *)buffer = 0;
 		return 0;
 	} else if (std::find(
 	               getsockopt_passthrough.begin(),
