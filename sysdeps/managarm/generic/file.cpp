@@ -235,17 +235,49 @@ int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *n
 
 namespace mlibc {
 
+int do_dup2(int fd, int flags, int newfd, bool dupfd, int *outfd) {
+	SignalGuard sguard;
+
+	managarm::posix::Dup2Request<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_fd(fd);
+	req.set_newfd(newfd);
+	req.set_flags(flags);
+	req.set_dupfd(dupfd);
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::Dup2Response resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+	if(outfd)
+		*outfd = resp.fd();
+
+	return 0;
+}
+
 int sys_fcntl(int fd, int request, va_list args, int *result) {
 	SignalGuard sguard;
 	if (request == F_DUPFD) {
 		int newfd;
-		if (int e = sys_dup(fd, 0, &newfd); e)
+		int wantedFd = va_arg(args, int);
+		if (int e = do_dup2(fd, 0, wantedFd, true, &newfd); e)
 			return e;
 		*result = newfd;
 		return 0;
 	} else if (request == F_DUPFD_CLOEXEC) {
 		int newfd;
-		if (int e = sys_dup(fd, O_CLOEXEC, &newfd); e)
+		int wantedFd = va_arg(args, int);
+		if (int e = do_dup2(fd, O_CLOEXEC, wantedFd, true, &newfd); e)
 			return e;
 		*result = newfd;
 		return 0;
@@ -1862,31 +1894,7 @@ int sys_dup(int fd, int flags, int *newfd) {
 }
 
 int sys_dup2(int fd, int flags, int newfd) {
-	SignalGuard sguard;
-
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::DUP2);
-	req.set_fd(fd);
-	req.set_newfd(newfd);
-	req.set_flags(flags);
-
-	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
-	    getPosixLane(),
-	    helix_ng::offer(
-	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
-	    )
-	);
-
-	HEL_CHECK(offer.error());
-	HEL_CHECK(send_req.error());
-	HEL_CHECK(recv_resp.error());
-
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() != managarm::posix::Errors::SUCCESS)
-		return resp.error() | toErrno;
-
-	return 0;
+	return do_dup2(fd, flags, newfd, false, nullptr);
 }
 
 int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *result) {
