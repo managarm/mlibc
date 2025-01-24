@@ -255,9 +255,11 @@ int sys_peername(
 
 namespace {
 
-std::array<std::pair<int, int>, 2> getsockopt_passthrough = {{
+std::array<std::pair<int, int>, 4> getsockopt_passthrough = {{
     {SOL_SOCKET, SO_PROTOCOL},
     {SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS},
+	{SOL_SOCKET, SO_TYPE},
+	{SOL_SOCKET, SO_ACCEPTCONN},
 }};
 
 }
@@ -310,12 +312,6 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		  << frg::endlog;
 		*(int *)buffer = 4096;
 		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_TYPE) {
-		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_TYPE is "
-		                       "unimplemented, hardcoding SOCK_STREAM\e[39m"
-		                    << frg::endlog;
-		*(int *)buffer = SOCK_STREAM;
-		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_ERROR) {
 		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_ERROR is "
 		                       "unimplemented, hardcoding 0\e[39m"
@@ -345,12 +341,6 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		                       "is unimplemented, hardcoding 0\e[39m"
 		                    << frg::endlog;
 		*(int *)buffer = 0;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_ACCEPTCONN) {
-		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_ACCEPTCONN "
-		                       "is unimplemented, hardcoding 1\e[39m"
-		                    << frg::endlog;
-		*(int *)buffer = 1;
 		return 0;
 	} else if (layer == IPPROTO_TCP && number == TCP_MAXSEG) {
 		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with IPPROTO_TCP and TCP_MAXSEG is "
