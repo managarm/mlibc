@@ -48,6 +48,9 @@ extern "C" void __cxa_finalize(void *dso) {
 	}
 }
 
+// In static builds, these should be provided by the crtbegin.o/crtend.o that
+// is linked into the executable.
+#ifndef MLIBC_STATIC_BUILD
 // This is referenced by the compiler when generating constructors for global
 // C++ objects so that it can call __cxa_finalize with a unique argument.
 extern "C" { [[gnu::visibility("hidden")]] void *__dso_handle; }
@@ -56,6 +59,7 @@ extern "C" { [[gnu::visibility("hidden")]] void *__dso_handle; }
 	// In normal programs this call to __cxa_finalize is provided by libgcc.
 	__cxa_finalize(&__dso_handle);
 }
+#endif
 
 void __mlibc_do_finalize() {
 	// Invoke any handlers registered with atexit (NOT associated with a DSO).
