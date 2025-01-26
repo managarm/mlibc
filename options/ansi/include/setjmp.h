@@ -21,6 +21,15 @@ typedef struct __jmp_buf {
 __attribute__((__returns_twice__)) int setjmp(jmp_buf __buffer);
 __attribute__((__noreturn__)) void longjmp(jmp_buf __buffer, int __value);
 
+/* setjmp is defined as a function macro in the ISO C standard */
+#define setjmp(env) setjmp(env)
+
+#if __MLIBC_POSIX_OPTION
+__attribute__((__returns_twice__)) int _setjmp(jmp_buf __buffer);
+/* POSIX-2017.1 says _longjmp shall be declared as a function */
+__attribute__((__noreturn__)) void _longjmp(jmp_buf __buffer, int __value);
+#endif /* __MLIBC_POSIX_OPTION */
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 /* POSIX Non-local jumps signal extensions */

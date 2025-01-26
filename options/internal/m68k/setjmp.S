@@ -19,7 +19,10 @@ __setjmp:
 
 .global setjmp
 .type setjmp, "function"
+.global _setjmp
+.type _setjmp, "function"
 setjmp:
+_setjmp:
 	clr.l %d0
 	jmp __setjmp
 
@@ -31,7 +34,10 @@ sigsetjmp:
 
 .global longjmp
 .type longjmp, "function"
+.global _longjmp
+.type _longjmp, "function"
 longjmp:
+_longjmp:
 	movea.l 4(%sp),%a0
 	move.l 8(%sp),%d0
 	bne 1f
