@@ -43,6 +43,7 @@ mlibc::RtldConfig rtldConfig;
 bool ldShowAuxv = false;
 
 uintptr_t *entryStack;
+static constinit Tcb earlyTcb{};
 frg::manual_box<ObjectRepository> initialRepository;
 frg::manual_box<Scope> globalScope;
 
@@ -282,6 +283,15 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	if(logEntryExit)
 		mlibc::infoLogger() << "Entering ld.so" << frg::endlog;
 	entryStack = entry_stack;
+
+	// Set up an early TCB such that we can cache our own TID.
+	// The TID is needed to use futexes, so this caching saves a lot of syscalls.
+	earlyTcb.selfPointer = &earlyTcb;
+	earlyTcb.tid = mlibc::this_tid();
+	if(mlibc::sys_tcb_set(&earlyTcb))
+		__ensure(!"sys_tcb_set() failed");
+	mlibc::tcb_available_flag = true;
+
 	runtimeTlsMap.initialize();
 	libraryPaths.initialize(getAllocator());
 	preloads.initialize(getAllocator());
@@ -540,10 +550,9 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	mlibc::initStackGuard(stack_entropy);
 
 	auto tcb = allocateTcb();
+	tcb->tid = earlyTcb.tid;
 	if(mlibc::sys_tcb_set(tcb))
 		__ensure(!"sys_tcb_set() failed");
-	tcb->tid = mlibc::this_tid();
-	mlibc::tcb_available_flag = true;
 
 	globalDebugInterface.ver = 1;
 	globalDebugInterface.brk = &dl_debug_state;
