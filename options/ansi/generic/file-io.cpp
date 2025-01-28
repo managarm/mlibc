@@ -292,7 +292,9 @@ int abstract_file::tell(off_t *current_offset) {
 	if(int e = io_seek(0, SEEK_CUR, &seek_offset); e)
 		return e;
 
-	*current_offset = seek_offset + (off_t(__offset) - off_t(__io_offset));
+	*current_offset = seek_offset
+		+ (off_t(__offset) - off_t(__io_offset))
+		+ (off_t(__unget_ptr) - off_t(__buffer_ptr));
 	return 0;
 }
 
