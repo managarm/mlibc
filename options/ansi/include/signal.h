@@ -8,12 +8,9 @@
 extern "C" {
 #endif
 
-// [7.14] Signal handling basics
+/* [7.14] Signal handling basics */
 
 typedef int sig_atomic_t;
-
-// Argument for signal()
-typedef void (*__sighandler) (int);
 
 #define CLD_EXITED 1
 #define CLD_KILLED 2
@@ -22,13 +19,17 @@ typedef void (*__sighandler) (int);
 #define CLD_STOPPED 5
 #define CLD_CONTINUED 6
 
-// [7.14.1] signal() function
+#ifndef __MLIBC_ABI_ONLY
 
-__sighandler signal(int sig, __sighandler handler);
+/* [7.14.1] signal() function */
 
-// [7.14.2] raise() function
+__sighandler signal(int __sig, __sighandler __handler);
 
-int raise(int sig);
+/* [7.14.2] raise() function */
+
+int raise(int __sig);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #define _NSIG NSIG
 
@@ -44,4 +45,4 @@ int raise(int sig);
 #	include <bits/glibc/glibc_signal.h>
 #endif
 
-#endif // _SIGNAL_H
+#endif /* _SIGNAL_H */

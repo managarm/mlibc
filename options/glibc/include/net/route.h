@@ -1,9 +1,14 @@
 #ifndef _NET_ROUTE_H
 #define _NET_ROUTE_H
 
+#include <sys/socket.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define RTF_HOST 0x0004
+#define RTF_REJECT 0x0200
 
 struct rtentry {
 	unsigned long int rt_pad1;

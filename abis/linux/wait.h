@@ -25,4 +25,4 @@
 /* glibc extension, but also useful for kernels */
 #define W_EXITCODE(ret, sig) (((ret) << 8) | (sig))
 
-#endif //_ABIBITS_WAIT_H
+#endif /*_ABIBITS_WAIT_H */

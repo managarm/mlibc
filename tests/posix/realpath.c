@@ -17,6 +17,8 @@ void prepare() {
 	assert(!mkdir(TEST_BASE "/dir1", S_IRWXU));
 	assert(!mkdir(TEST_BASE "/dir2", S_IRWXU));
 	assert(!symlink(TEST_BASE "/dir2/", TEST_BASE "/dir1/abs-link"));
+	assert(!symlink(TEST_BASE "/dir2///", TEST_BASE "/dir1/abs-link-trail"));
+	assert(!symlink(TEST_BASE "/dir2", TEST_BASE "/dir1/abs-link-no-trail"));
 	assert(!chdir(TEST_BASE "/dir1"));
 	assert(!symlink("../dir2/", TEST_BASE "/dir1/rel-link"));
 }
@@ -25,12 +27,16 @@ void cleanup(int do_assert) {
 	if (do_assert) {
 		assert(!unlink(TEST_BASE "/dir1/rel-link"));
 		assert(!unlink(TEST_BASE "/dir1/abs-link"));
+		assert(!unlink(TEST_BASE "/dir1/abs-link-trail"));
+		assert(!unlink(TEST_BASE "/dir1/abs-link-no-trail"));
 		assert(!rmdir(TEST_BASE "/dir2"));
 		assert(!rmdir(TEST_BASE "/dir1"));
 		assert(!rmdir(TEST_BASE "/"));
 	} else {
 		unlink(TEST_BASE "/dir1/rel-link");
 		unlink(TEST_BASE "/dir1/abs-link");
+		unlink(TEST_BASE "/dir1/abs-link-trail");
+		unlink(TEST_BASE "/dir1/abs-link-no-trail");
 		rmdir(TEST_BASE "/dir2");
 		rmdir(TEST_BASE "/dir1");
 		rmdir(TEST_BASE "/");
@@ -53,6 +59,13 @@ void signal_handler(int sig, siginfo_t *info, void *ctx) {
 	abort();
 }
 
+#define TEST_PATH(rpath, expected) \
+	path = realpath(rpath, NULL); \
+	assert(path); \
+	assert(!strcmp(path, expected)); \
+	free(path);
+
+
 int main() {
 	char *path;
 
@@ -64,70 +77,24 @@ int main() {
 
 	prepare();
 
-	path = realpath(TEST_BASE "/dir1/", NULL);
-	assert(path);
-	assert(!strcmp(path, TEST_BASE "/dir1"));
-	free(path);
+	TEST_PATH(TEST_BASE "/dir1/",                           TEST_BASE "/dir1");
+	TEST_PATH(TEST_BASE "/dir1/../dir2",                    TEST_BASE "/dir2");
+	TEST_PATH(TEST_BASE "/dir1/abs-link/",                  TEST_BASE "/dir2");
+	TEST_PATH(TEST_BASE "/dir1/rel-link/",                  TEST_BASE "/dir2");
+	TEST_PATH(TEST_BASE "/dir1/abs-link/../",               TEST_BASE "");
+	TEST_PATH(TEST_BASE "/dir1/rel-link/../",               TEST_BASE "");
+	TEST_PATH(TEST_BASE "/dir1/abs-link/../dir1/abs-link/", TEST_BASE "/dir2");
+	TEST_PATH(TEST_BASE "/dir1/rel-link/../dir1/rel-link/", TEST_BASE "/dir2");
+	TEST_PATH(TEST_BASE "/dir1/abs-link/../dir1/rel-link/", TEST_BASE "/dir2");
+	TEST_PATH(TEST_BASE "/dir1/rel-link/../dir1/abs-link/", TEST_BASE "/dir2");
+	TEST_PATH(TEST_BASE "/dir1/abs-link-no-trail/",         TEST_BASE "/dir2");
+	TEST_PATH(TEST_BASE "/dir1/abs-link-trail/",            TEST_BASE "/dir2");
 
-	path = realpath(TEST_BASE "/dir1/../dir2", NULL);
-	assert(path);
-	assert(!strcmp(path, TEST_BASE "/dir2"));
-	free(path);
-
-	path = realpath(TEST_BASE "/dir1/abs-link/", NULL);
-	assert(path);
-	assert(!strcmp(path, TEST_BASE "/dir2"));
-	free(path);
-
-	path = realpath(TEST_BASE "/dir1/rel-link/", NULL);
-	assert(path);
-	assert(!strcmp(path, TEST_BASE "/dir2"));
-	free(path);
-
-	path = realpath(TEST_BASE "/dir1/abs-link/../", NULL);
-	assert(path);
-	assert(!strcmp(path, TEST_BASE ""));
-	free(path);
-
-	path = realpath(TEST_BASE "/dir1/rel-link/../", NULL);
-	assert(path);
-	assert(!strcmp(path, TEST_BASE ""));
-	free(path);
-
-	path = realpath(TEST_BASE "/dir1/abs-link/../dir1/abs-link/", NULL);
-	assert(path);
-	assert(!strcmp(path, TEST_BASE "/dir2"));
-	free(path);
-
-	path = realpath(TEST_BASE "/dir1/rel-link/../dir1/rel-link/", NULL);
-	assert(path);
-	assert(!strcmp(path, TEST_BASE "/dir2"));
-	free(path);
-
-	path = realpath(TEST_BASE "/dir1/abs-link/../dir1/rel-link/", NULL);
-	assert(path);
-	assert(!strcmp(path, TEST_BASE "/dir2"));
-	free(path);
-
-	path = realpath(TEST_BASE "/dir1/rel-link/../dir1/abs-link/", NULL);
-	assert(path);
-	assert(!strcmp(path, TEST_BASE "/dir2"));
-	free(path);
-
-	path = realpath("/tmp", NULL);
-	assert(path);
-	assert(!strcmp(path, "/tmp"));
-	free(path);
-
-	path = realpath("/", NULL);
-	assert(path);
-	assert(!strcmp(path, "/"));
-	free(path);
-
-	path = realpath("//", NULL);
-	assert(path);
-	assert(!strcmp(path, "/"));
-	free(path);
+	TEST_PATH("/tmp", "/tmp");
+	TEST_PATH("/",    "/");
+	TEST_PATH("//",   "/");
 
 	cleanup(1);
+
+	return 0;
 }

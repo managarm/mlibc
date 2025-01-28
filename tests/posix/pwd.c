@@ -79,10 +79,50 @@ int main()
 	assert(pwd.pw_uid == result->pw_uid);
 	assert(pwd.pw_gid == result->pw_gid);
 
-	free(buf);
 	free(pwd.pw_name);
 	free(pwd.pw_passwd);
 	free(pwd.pw_gecos);
 	free(pwd.pw_dir);
 	free(pwd.pw_shell);
+
+	pwd.pw_name = "managarm";
+	pwd.pw_passwd = "passwordhash";
+	pwd.pw_uid = 1234;
+	pwd.pw_gid = 12345;
+	pwd.pw_gecos = "/etc/password test";
+	pwd.pw_dir = "/home/managarm\n";
+	pwd.pw_shell = "/usr/bin/bash";
+
+	// tmpfile() cannot be used because its unimplemented in mlibc.
+	char filename[] = "pwdXXXXXX";
+	int tmpfd = mkstemp(filename);
+	assert(tmpfd);
+	FILE *tmp = fdopen(tmpfd, "w+");
+	assert(tmp);
+
+	assert(putpwent(NULL, tmp) < 0);
+	assert(putpwent(&pwd, tmp) < 0);
+
+	pwd.pw_dir = "/home/managarm:";
+	assert(putpwent(&pwd, tmp) < 0);
+
+	pwd.pw_dir = "/home/:managarm\n";
+	assert(putpwent(&pwd, tmp) < 0);
+
+	pwd.pw_dir = "/home/managarm";
+	assert(putpwent(&pwd, tmp) == 0);
+	rewind(tmp);
+
+	char *expected = "managarm:passwordhash:1234:12345:/etc/password test:/home/managarm:/usr/bin/bash\n";
+	size_t expectedlen = strlen(expected);
+
+	size_t readsize = fread(buf, 1, bufsize, tmp);
+	assert(readsize == expectedlen);
+	assert(strncmp(expected, buf, expectedlen) == 0);
+
+	fclose(tmp);
+	unlink(filename);
+	free(buf);
+
+	return 0;
 }

@@ -26,7 +26,6 @@
 #define S_IRUSR 0400
 #define S_IWUSR 0200
 #define S_IXUSR 0100
-#define S_IEXEC S_IXUSR
 #define S_IRWXG 070
 #define S_IRGRP 040
 #define S_IWGRP 020
@@ -38,6 +37,10 @@
 #define S_ISUID 04000
 #define S_ISGID 02000
 #define S_ISVTX 01000
+
+#define S_IREAD  S_IRUSR
+#define S_IWRITE S_IWUSR
+#define S_IEXEC  S_IXUSR
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,7 +76,7 @@ struct stat {
 	uid_t st_uid;
 	gid_t st_gid;
 	dev_t st_rdev;
-	unsigned long __pad1;
+	dev_t __pad1;
 	off_t st_size;
 	blksize_t st_blksize;
 	int __pad2;
@@ -81,14 +84,65 @@ struct stat {
 	struct timespec st_atim;
 	struct timespec st_mtim;
 	struct timespec st_ctim;
-	unsigned int __unused4;
-	unsigned int __unused5;
+	int __pad3[2];
+};
+
+#elif defined(__i386__)
+
+struct stat {
+	dev_t st_dev;
+	int __st_dev_padding;
+	long __st_ino_truncated;
+	mode_t st_mode;
+	nlink_t st_nlink;
+	uid_t st_uid;
+	gid_t st_gid;
+	dev_t st_rdev;
+	int __st_rdev_padding;
+	off_t st_size;
+	blksize_t st_blksize;
+	blkcnt_t st_blocks;
+	struct {
+		long tv_sec;
+		long tv_nsec;
+	} __st_atim32, __st_mtim32, __st_ctim32;
+	ino_t st_ino;
+
+	/* These fields are not in the ABI. Their values are */
+	/* copied from __st_atim32, __st_mtim32, __st_ctim32 */
+	/* accordingly. */
+
+	struct timespec st_atim;
+	struct timespec st_mtim;
+	struct timespec st_ctim;
+};
+#elif defined (__m68k__)
+
+struct stat {
+	dev_t st_dev;
+	unsigned char __st_dev_padding[2];
+	unsigned long __st_ino;
+	mode_t st_mode;
+	nlink_t st_nlink;
+	uid_t st_uid;
+	gid_t st_gid;
+	dev_t st_rdev;
+	unsigned char __st_rdev_padding;
+	long long st_size; /* TODO: off64_t? */
+	blksize_t st_blksize;
+	blkcnt_t st_blocks;
+	struct timespec st_atim;
+	struct timespec st_mtim;
+	struct timespec st_ctim;
+	ino_t st_ino;
 };
 
 #endif
+
+#define stat64 stat
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _ABIBITS_STAT_H
+#endif /* _ABIBITS_STAT_H */

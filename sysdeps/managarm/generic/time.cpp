@@ -1,15 +1,17 @@
 
 #include <bits/ensure.h>
-#include <time.h>
 #include <string.h>
 #include <sys/time.h>
+#include <time.h>
 
-#include <hel.h>
 #include <hel-syscalls.h>
-#include <mlibc/debug.hpp>
-#include <mlibc/allocator.hpp>
-#include <mlibc/posix-pipe.hpp>
+#include <hel.h>
 #include <mlibc/all-sysdeps.hpp>
+#include <mlibc/allocator.hpp>
+#include <mlibc/debug.hpp>
+#include <mlibc/posix-pipe.hpp>
+
+#include "posix.frigg_bragi.hpp"
 
 struct TrackerPage {
 	uint64_t seqlock;
@@ -25,12 +27,13 @@ namespace mlibc {
 
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
 	// This implementation is inherently signal-safe.
-	if(clock == CLOCK_MONOTONIC) {
+	if (clock == CLOCK_MONOTONIC || clock == CLOCK_MONOTONIC_RAW
+	    || clock == CLOCK_MONOTONIC_COARSE) {
 		uint64_t tick;
 		HEL_CHECK(helGetClock(&tick));
 		*secs = tick / 1000000000;
 		*nanos = tick % 1000000000;
-	}else if(clock == CLOCK_REALTIME) {
+	} else if (clock == CLOCK_REALTIME) {
 		cacheFileTable();
 
 		// Start the seqlock read.
@@ -48,34 +51,26 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 		// Calculate the current time.
 		uint64_t tick;
 		HEL_CHECK(helGetClock(&tick));
-		__ensure(tick >= (uint64_t)__mlibc_clk_tracker_page->refClock); // TODO: Respect the seqlock!
+		__ensure(
+		    tick >= (uint64_t)__mlibc_clk_tracker_page->refClock
+		); // TODO: Respect the seqlock!
 		tick -= ref;
 		tick += base;
 		*secs = tick / 1000000000;
 		*nanos = tick % 1000000000;
-	}else if(clock == CLOCK_PROCESS_CPUTIME_ID) {
+	} else if (clock == CLOCK_PROCESS_CPUTIME_ID) {
 		mlibc::infoLogger() << "\e[31mmlibc: clock_gettime does not support the CPU time clocks"
-				"\e[39m" << frg::endlog;
+		                       "\e[39m"
+		                    << frg::endlog;
 		*secs = 0;
 		*nanos = 0;
-	}else if(clock == CLOCK_MONOTONIC_RAW) {
-		mlibc::infoLogger() << "\e[31mmlibc: clock_gettime implements CLOCK_MONOTONIC_RAW as CLOCK_MONOTONIC"
-				"\e[39m" << frg::endlog;
+	} else if (clock == CLOCK_BOOTTIME) {
 		uint64_t tick;
 		HEL_CHECK(helGetClock(&tick));
+
 		*secs = tick / 1000000000;
 		*nanos = tick % 1000000000;
-	}else if(clock == CLOCK_MONOTONIC_COARSE) {
-		mlibc::infoLogger() << "\e[31mmlibc: clock_gettime does not support CLOCK_MONOTONIC_COARSE"
-				"\e[39m" << frg::endlog;
-		*secs = 0;
-		*nanos = 0;
-	}else if(clock == CLOCK_BOOTTIME) {
-		mlibc::infoLogger() << "\e[31mmlibc: clock_gettime does not support CLOCK_BOOTTIME"
-				"\e[39m" << frg::endlog;
-		*secs = 0;
-		*nanos = 0;
-	}else{
+	} else {
 		mlibc::panicLogger() << "mlibc: Unexpected clock " << clock << frg::endlog;
 	}
 	return 0;
@@ -89,5 +84,42 @@ int sys_clock_getres(int clock, time_t *secs, long *nanos) {
 	return 0;
 }
 
-} //namespace mlibc
+int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
+	if (which != ITIMER_REAL) {
+		mlibc::infoLogger() << "mlibc: setitimers other than ITIMER_REAL are unsupported"
+		                    << frg::endlog;
+		return EINVAL;
+	}
 
+	managarm::posix::SetIntervalTimerRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_which(which);
+	req.set_value_sec(new_value->it_value.tv_sec);
+	req.set_value_usec(new_value->it_value.tv_usec);
+	req.set_interval_sec(new_value->it_interval.tv_sec);
+	req.set_interval_usec(new_value->it_interval.tv_usec);
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SetIntervalTimerResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+
+	if (old_value) {
+		old_value->it_value.tv_sec = resp.value_sec();
+		old_value->it_value.tv_usec = resp.value_usec();
+		old_value->it_interval.tv_sec = resp.interval_sec();
+		old_value->it_interval.tv_usec = resp.interval_usec();
+	}
+
+	return 0;
+}
+
+} // namespace mlibc

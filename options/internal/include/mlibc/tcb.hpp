@@ -5,6 +5,8 @@
 #include <bits/size_t.h>
 #include <frg/array.hpp>
 
+#include "elf.hpp"
+
 /*
  * Explanation of cancellation bits:
  *
@@ -70,14 +72,19 @@ namespace mlibc {
 		       == (tcbCancelEnableBit | tcbCancelTriggerBit);
 	}
 
-#if !MLIBC_STATIC_BUILD && !MLIBC_BUILDING_RTDL
+#if !MLIBC_STATIC_BUILD && !MLIBC_BUILDING_RTLD
 	// In non-static builds, libc.so always has a TCB available.
 	constexpr bool tcb_available_flag = true;
 #else
-	// Otherwise this will be set to true after RTDL has initialized the TCB.
+	// Otherwise this will be set to true after RTLD has initialized the TCB.
 	extern bool tcb_available_flag;
 #endif
 }
+
+enum class TcbThreadReturnValue {
+	Pointer,
+	Integer,
+};
 
 struct Tcb {
 	Tcb *selfPointer;
@@ -85,9 +92,18 @@ struct Tcb {
 	void **dtvPointers;
 	int tid;
 	int didExit;
-	void *returnValue;
+#if defined(__x86_64__)
+	uint8_t padding[8];
+#endif
 	uintptr_t stackCanary;
 	int cancelBits;
+
+	union {
+		void *voidPtr;
+		int intVal;
+	} returnValue;
+	TcbThreadReturnValue returnValueType;
+
 	struct AtforkHandler {
 		void (*prepare)(void);
 		void (*parent)(void);
@@ -121,26 +137,51 @@ struct Tcb {
 	size_t stackSize;
 	void *stackAddr;
 	size_t guardSize;
+
+	inline void invokeThreadFunc(void *entry, void *user_arg) {
+		if(returnValueType == TcbThreadReturnValue::Pointer) {
+			auto func = reinterpret_cast<void *(*)(void *)>(entry);
+			returnValue.voidPtr = func(user_arg);
+		} else {
+			auto func = reinterpret_cast<int (*)(void *)>(entry);
+			returnValue.intVal = func(user_arg);
+		}
+	}
 };
 
 // There are a few places where we assume the layout of the TCB:
 #if defined(__x86_64__)
-// sysdeps/linux/x86_64/cp_syscall.S uses the offset of cancelBits.
-// GCC also expects the stack canary to be at fs:0x28.
+// GCC expects the stack canary to be at fs:0x28.
 static_assert(offsetof(Tcb, stackCanary) == 0x28);
+// sysdeps/linux/x86_64/cp_syscall.S uses the offset of cancelBits.
 static_assert(offsetof(Tcb, cancelBits) == 0x30);
+// options/linker/x86_64/runtime.S uses the offset of dtvPointers.
+static_assert(offsetof(Tcb, dtvPointers) == 16);
+#elif defined(__i386__)
+// GCC expects the stack canary to be at gs:0x14.
+// The offset differs from x86_64 due to the change in the pointer size
+// and removed padding before the stack canary.
+static_assert(offsetof(Tcb, stackCanary) == 0x14);
+// sysdeps/linux/x86/cp_syscall.S uses the offset of cancelBits.
+// It differs from x86_64 for the same reasons as the stack canary.
+static_assert(offsetof(Tcb, cancelBits) == 0x18);
 #elif defined(__aarch64__)
 // The thread pointer on AArch64 points to 16 bytes before the end of the TCB.
 // options/linker/aarch64/runtime.S uses the offset of dtvPointers.
-static_assert(sizeof(Tcb) - offsetof(Tcb, dtvPointers) - 0x10 == 96);
+static_assert(sizeof(Tcb) - offsetof(Tcb, dtvPointers) - TP_TCB_OFFSET == 104);
 // sysdeps/linux/aarch64/cp_syscall.S uses the offset of cancelBits.
-static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) - 0x10 == 64);
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) - TP_TCB_OFFSET == 80);
 #elif defined(__riscv) && __riscv_xlen == 64
 // The thread pointer on RISC-V points to *after* the TCB, and since
 // we need to access specific fields that means that the value in
 // sysdeps/linux/riscv64/cp_syscall.S needs to be updated whenever
 // the struct is expanded.
-static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 80);
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 96);
+#elif defined (__m68k__)
+// The thread pointer on m68k points to 0x7000 bytes *after* the end of the
+// TCB, so similarly to as on RISC-V, we need to keep the value in
+// sysdeps/linux/m68k/cp_syscall.S up-to-date.
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 0x30);
 #else
 #error "Missing architecture specific code."
 #endif

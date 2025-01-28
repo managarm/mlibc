@@ -1,4 +1,4 @@
-// Taken from musl tre.h
+/* Taken from musl tre.h */
 /*
   tre-internal.h - TRE internal definitions
 
@@ -36,7 +36,7 @@
 
 #define hidden __attribute__((__visibility__("hidden")))
 
-// TODO: These should probably go in limits.h
+/* TODO: These should probably go in limits.h */
 #define CHARCLASS_NAME_MAX 14
 #define RE_DUP_MAX 255
 
@@ -194,6 +194,8 @@ typedef struct tre_mem_struct {
   void **provided;
 } *tre_mem_t;
 
+#ifndef __MLIBC_ABI_ONLY
+
 #define tre_mem_new_impl   __tre_mem_new_impl
 #define tre_mem_alloc_impl __tre_mem_alloc_impl
 #define tre_mem_destroy    __tre_mem_destroy
@@ -235,3 +237,5 @@ hidden void tre_mem_destroy(tre_mem_t mem);
 #define xcalloc calloc
 #define xfree free
 #define xrealloc realloc
+
+#endif /* !__MLIBC_ABI_ONLY */

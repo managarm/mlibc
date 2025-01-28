@@ -55,17 +55,23 @@ extern "C" {
 #define LOG_INFO 6
 #define LOG_DEBUG 7
 
-void closelog(void);
-void openlog(const char *, int, int);
-int setlogmask(int);
-void syslog(int, const char *, ...);
+#ifndef __MLIBC_ABI_ONLY
 
-// This is a linux extension
-void vsyslog(int, const char *, va_list);
+void closelog(void);
+void openlog(const char *__ident, int __option, int __facility);
+int setlogmask(int __mask);
+__attribute__((__format__(__printf__, 2, 3)))
+void syslog(int __priority, const char *__format, ...);
+
+/* This is a linux extension */
+__attribute__((__format__(__printf__, 2, 0)))
+void vsyslog(int __priority, const char *__format, va_list __args);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _SYSLOG_H
+#endif /* _SYSLOG_H */
 

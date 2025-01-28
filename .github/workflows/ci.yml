@@ -1,25 +1,32 @@
 name: Continuous Integration
 
-on: [push, pull_request]
+on: [pull_request, merge_group]
 
 jobs:
     build-mlibc:
         strategy:
             matrix:
-                arch: [x86_64, riscv64, aarch64]
+                arch: [x86_64, riscv64, aarch64, x86, m68k]
                 builds: [mlibc, mlibc-static, mlibc-shared, mlibc-ansi-only, mlibc-headers-only]
+                compiler: [gcc, clang]
+                exclude:
+                  - compiler: clang
+                include:
+                  - arch: x86_64
+                    builds: mlibc
+                    compiler: clang
         name: Build mlibc
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-22.04
+        container:
+          image: ghcr.io/managarm/mlibc-crossers:latest
         steps:
           - name: Install prerequisites
-            # Note: the default jsonschema is too old.
-            #       xbstrap should fix this by demanding a recent version.
             run: |
-                sudo apt-get update
-                sudo apt-get install ninja-build g++-10 g++-10-riscv64-linux-gnu g++-10-aarch64-linux-gnu qemu-user
-                sudo pip3 install setuptools
-                sudo pip3 install -U jsonschema
-                sudo pip3 install meson xbstrap
+                apt-get update
+                apt-get install -y ninja-build qemu-user \
+                                python3-setuptools python3-jsonschema \
+                                python3-pexpect python3-pip netbase clang lld
+                pip install --break-system-packages -U xbstrap pyexpect meson
           - name: Prepare directories
             run: |
                 mkdir src/
@@ -39,43 +46,107 @@ jobs:
               cat > bootstrap-site.yml << EOF
               define_options:
                 arch: ${{matrix.arch}}
+                compiler: ${{matrix.compiler}}
               EOF
               xbstrap init ../src
             working-directory: build/
           - name: Build mlibc
             run: 'xbstrap install ${{matrix.builds}}'
             working-directory: build/
+          - name: Check public headers conform to ISO standards with pedantic warnings
+            if: ${{matrix.builds == 'mlibc-headers-only'}}
+            working-directory: build/
+            run: |
+                GCC_ARCH="${{matrix.arch}}"
+                case "$GCC_ARCH" in
+                  "x86")
+                    GCC_ARCH="i686"
+                    ;;
+                esac
+                ALL_INCLUDES="-- -include\0%s\0 packages/${{matrix.builds}}/usr/include/**.h"
+                GCC_ARGS="-S /dev/null -o /dev/null -I packages/${{matrix.builds}}/usr/include -I packages/linux-headers/usr/include -nostdlib -Werror -Wpedantic -Wsystem-headers"
+                GCC_C_ARGS="$GCC_ARCH-linux-mlibc-gcc -x c $GCC_ARGS"
+                GCC_CXX_ARGS="$GCC_ARCH-linux-mlibc-g++ -x c++ $GCC_ARGS"
+
+                # For C89, exclude complex.h. We also exclude -Wlong-long because fixing it mostly involves adding
+                # __extension__ to a bunch of places (and musl doesn't even bother).
+                printf $ALL_INCLUDES | sed 's/complex.h/stdio.h/' | xargs -0 $GCC_C_ARGS -std=c89 -Wno-long-long
+                printf $ALL_INCLUDES | xargs -0 $GCC_C_ARGS -std=c99
+                printf $ALL_INCLUDES | xargs -0 $GCC_C_ARGS -std=c11
+                printf $ALL_INCLUDES | xargs -0 $GCC_CXX_ARGS -std=c++98 -Wno-long-long
+                printf $ALL_INCLUDES | xargs -0 $GCC_CXX_ARGS -std=c++11
+                printf $ALL_INCLUDES | xargs -0 $GCC_CXX_ARGS -std=c++14
+                printf $ALL_INCLUDES | xargs -0 $GCC_CXX_ARGS -std=c++17
           - name: Test mlibc
             run: 'meson test -v -C pkg-builds/${{matrix.builds}}'
-            working-directory: build/
-          - name: Build GCC
-            if: ${{matrix.builds == 'mlibc' && matrix.arch == 'x86_64'}}
-            run: 'xbstrap install-tool gcc'
             working-directory: build/
 
     compile-sysdeps:
         strategy:
             matrix:
-                sysdeps: [dripos, lemon, aero, ironclad, vinix]
+                sysdeps: [dripos, lemon, aero, ironclad, lyre, keyronex, managarm, vinix, astral]
         name: Compile sysdeps
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-22.04
+        container:
+          image: ghcr.io/managarm/mlibc-crossers:latest
         steps:
           - name: Install prerequisites
-            # Note: the default jsonschema is too old.
-            #       xbstrap should fix this by demanding a recent version.
             run: |
-                sudo apt-get install ninja-build g++-10
-                sudo pip3 install setuptools
-                sudo pip3 install -U jsonschema
-                sudo pip3 install meson xbstrap
+                apt-get update
+                apt-get install -y ninja-build qemu-user \
+                                python3-setuptools python3-jsonschema \
+                                python3-pip
+                pip install --break-system-packages -U xbstrap meson
+          - if: ${{ matrix.sysdeps == 'managarm' }}
+            name: Checkout bootstrap-managarm
+            uses: actions/checkout@v2
+            with:
+              repository: 'managarm/bootstrap-managarm'
+              path: src/
           - name: Checkout
             uses: actions/checkout@v2
+            with:
+              path: src/mlibc/
+          - if: ${{ matrix.sysdeps == 'managarm' }}
+            name: Clone managarm/managarm
+            uses: actions/checkout@v4
+            with:
+              repository: 'managarm/managarm'
+              path: 'src/mlibc/subprojects/managarm'
+          - if: ${{ matrix.sysdeps == 'managarm' }}
+            name: Clone managarm/bragi
+            uses: actions/checkout@v4
+            with:
+              repository: 'managarm/bragi'
+              path: 'src/mlibc/subprojects/bragi'
+          - if: ${{ matrix.sysdeps == 'managarm' }}
+            name: Install bragi
+            run: |
+                pip install --break-system-packages -U bragi
+          - name: Set up linux kernel headers
+            run: |
+                mkdir -p build/mlibc/
+                cp src/mlibc/ci/bootstrap.yml src/
+                (
+                  cd build
+                  xbstrap init ../src
+                  xbstrap install linux-headers
+                )
+          - if: ${{ matrix.sysdeps == 'managarm' }}
+            name: Set up drm headers
+            run: |
+                xbstrap install libdrm-headers
+                ln -sv $(pwd)/packages/libdrm-headers/usr/src/libdrm-headers ../src/mlibc/subprojects/
+            working-directory: build/
           - name: Compile sysdeps
             run: |
-                meson \
-                    "-Dc_args=['-fno-stack-protector', '-U__linux__']" \
-                    "-Dcpp_args=['-fno-stack-protector', '-U__linux__']" \
+                meson setup \
+                    "-Dc_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized', '-D__${{matrix.sysdeps}}__']" \
+                    "-Dcpp_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized', '-D__${{matrix.sysdeps}}__']" \
                     "-Dbuild_tests=true" \
                     "-Db_sanitize=undefined" \
-                    --cross-file ci/${{matrix.sysdeps}}.cross-file compile-${{matrix.sysdeps}}
+                    "-Dlinux_kernel_headers=$(pwd)/packages/linux-headers/usr/include" \
+                    --cross-file ../src/mlibc/ci/${{matrix.sysdeps}}.cross-file compile-${{matrix.sysdeps}} \
+                    "../src/mlibc/"
                 ninja -C compile-${{matrix.sysdeps}}
+            working-directory: build/

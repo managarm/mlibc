@@ -1,1 +1,0 @@
-char *name() { return "foo"; }

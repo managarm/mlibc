@@ -1,3 +1,7 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <bits/ensure.h>
 #include <stdlib.h>
 #include <string.h>
@@ -132,12 +136,7 @@ char *strcasestr(const char *s, const char *pattern) {
 	return nullptr;
 }
 
-char *strdupa(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-char *strndupa(const char *, size_t) {
+void *memccpy(void *__restrict, const void *__restrict, int, size_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
@@ -151,6 +150,11 @@ void *memrchr(const void *m, int c, size_t n) {
 			return (void *)(s + n);
 	}
 	return 0;
+}
+
+char *strerror_l(int errnum, locale_t) {
+	mlibc::infoLogger() << "mlibc: strerror_l locale is ignored!" << frg::endlog;
+	return strerror(errnum);
 }
 
 // BSD extensions.

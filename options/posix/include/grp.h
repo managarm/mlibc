@@ -16,24 +16,28 @@ struct group {
 	char **gr_mem;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 void endgrent(void);
 struct group *getgrent(void);
-struct group *getgrgid(gid_t);
-int getgrgid_r(gid_t, struct group *, char *, size_t, struct group **);
-struct group *getgrnam(const char *);
-int getgrnam_r(const char *, struct group *, char *, size_t, struct group **);
+struct group *getgrgid(gid_t __gid);
+int getgrgid_r(gid_t __gid, struct group *__grp, char *__buf, size_t __buflen, struct group **__res);
+struct group *getgrnam(const char *__name);
+int getgrnam_r(const char *__name, struct group *__grp, char *__buf, size_t __buflen, struct group **__res);
 void setgrent(void);
-int putgrent(const struct group *, FILE *);
-struct group *fgetgrent(FILE *);
+int putgrent(const struct group *__grp, FILE *__stream);
+struct group *fgetgrent(FILE *__stream);
 
-int setgroups(size_t size, const gid_t *list);
-int initgroups(const char *user, gid_t group);
+int setgroups(size_t __size, const gid_t *__list);
+int initgroups(const char *__user, gid_t __group);
 
-// Non standard extension
-int getgrouplist(const char *, gid_t, gid_t *, int *);
+/* Non standard extension */
+int getgrouplist(const char *__user, gid_t __group, gid_t *__groups, int *__ngroups);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _GRP_H
+#endif /* _GRP_H */

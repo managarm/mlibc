@@ -9,6 +9,8 @@
 extern "C" {
 #endif
 
+#define GETPID 11
+#define GETVAL 12
 #define GETALL 13
 #define SETVAL 16
 #define SETALL 17
@@ -29,12 +31,16 @@ struct semid_ds {
 	unsigned long   sem_nsems;
 };
 
-int semget(key_t, int, int);
-int semop(int, struct sembuf *, size_t);
-int semctl(int, int, int, ...);
+#ifndef __MLIBC_ABI_ONLY
+
+int semget(key_t __key, int __nsems, int __semflg);
+int semop(int __semid, struct sembuf *__sops, size_t __nsops);
+int semctl(int __semid, int __semnum, int __op, ...);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _SYS_SEM_H
+#endif /* _SYS_SEM_H */

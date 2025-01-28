@@ -1,0 +1,13 @@
+[binaries]
+c = 'i686-linux-mlibc-gcc'
+cpp = 'i686-linux-mlibc-g++'
+exe_wrapper = 'qemu-i386'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'x86'
+cpu = 'i386'
+endian = 'little'
+
+[properties]
+skip_sanity_check = true

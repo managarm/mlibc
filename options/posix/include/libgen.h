@@ -11,14 +11,18 @@ extern "C" {
 # undef basename
 #endif
 
-char *basename(char *);
+#ifndef __MLIBC_ABI_ONLY
+
+char *basename(char *__path);
 #define basename basename
-char *dirname(char *);
+char *dirname(char *__path);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _LIBGEN_H
+#endif /* _LIBGEN_H */
 
 

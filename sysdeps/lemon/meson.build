@@ -1,5 +1,11 @@
+sysdep_supported_options = {
+	'posix': true,
+	'linux': true,
+	'glibc': true,
+	'bsd': true,
+}
 
-rtdl_sources += files(
+rtld_sources += files(
 	'generic/filesystem.cpp',
 	'generic/lemon.cpp',
 )
@@ -8,6 +14,7 @@ libc_sources += files(
 	'generic/entry.cpp',
 	'generic/filesystem.cpp',
 	'generic/lemon.cpp',
+	'generic/pty.cpp',
 	'generic/signals.cpp',
 	'generic/sockets.cpp',
 	'generic/thread_entry.S',
@@ -25,6 +32,7 @@ if not no_headers
 		'include/abi-bits/resource.h',
 		'include/abi-bits/signal.h',
 		'include/abi-bits/stat.h',
+		'include/abi-bits/statx.h',
 		'include/abi-bits/socket.h',
 		'include/abi-bits/termios.h',
 		'include/abi-bits/time.h',
@@ -56,7 +64,10 @@ if not no_headers
 		'include/abi-bits/statfs.h',
 		'include/abi-bits/statvfs.h',
 		'include/abi-bits/ioctls.h',
-		subdir: 'abi-bits'
+		'include/abi-bits/xattr.h',
+		'include/abi-bits/msg.h',
+		subdir: 'abi-bits',
+		follow_symlinks: true
 	)
 	install_headers(
 		'include/lemon/syscall.h',

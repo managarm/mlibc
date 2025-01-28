@@ -10,7 +10,7 @@ typedef unsigned int cc_t;
 typedef unsigned int speed_t;
 typedef unsigned int tcflag_t;
 
-// indices for the c_cc array in struct termios
+/* indices for the c_cc array in struct termios */
 #define NCCS    11
 #define VEOF     0
 #define VEOL     1
@@ -24,7 +24,7 @@ typedef unsigned int tcflag_t;
 #define VSUSP    9
 #define VTIME   10
 
-// bitwise flags for c_iflag in struct termios
+/* bitwise flags for c_iflag in struct termios */
 #define BRKINT  0x0001
 #define ICRNL   0x0002
 #define IGNBRK  0x0004
@@ -38,7 +38,7 @@ typedef unsigned int tcflag_t;
 #define IXON    0x0400
 #define PARMRK  0x0800
 
-// bitwise flags for c_oflag in struct termios
+/* bitwise flags for c_oflag in struct termios */
 #define OPOST   0x0001
 #define ONLCR   0x0002
 #define OCRNL   0x0004
@@ -75,7 +75,7 @@ typedef unsigned int tcflag_t;
 #define FF0     0x0000
 #define FF1     0x4000
 
-// bitwise constants for c_cflag in struct termios
+/* bitwise constants for c_cflag in struct termios */
 #define CSIZE   0x0003
 #define CS5     0x0000
 #define CS6     0x0001
@@ -89,7 +89,11 @@ typedef unsigned int tcflag_t;
 #define HUPCL   0x0040
 #define CLOCAL  0x0080
 
-// bitwise constants for c_lflag in struct termios
+#if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
+#define CBAUD   0x100F
+#endif
+
+/* bitwise constants for c_lflag in struct termios */
 #define ECHO    0x0001
 #define ECHOE   0x0002
 #define ECHOK   0x0004

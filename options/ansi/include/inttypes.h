@@ -2,8 +2,21 @@
 #define _STDINT_H
 
 #include <stdint.h>
+#include <bits/wchar_t.h>
 
-// TODO: This is extremly unelegant and fragile.
+/* Even though this is not strictly not-ABI, it is mlibc-printf specific therefore */
+/* gate behind !__MLIBC_ABI_ONLY */
+#ifndef __MLIBC_ABI_ONLY
+
+#if UINTPTR_MAX == UINT64_MAX
+#	define __PRI64 "l"
+#	define __PRIPTR "l"
+#else
+#	define __PRI64 "ll"
+#	define __PRIPTR ""
+#endif
+
+/* TODO: This is extremly unelegant and fragile. */
 #define PRId8 "d"
 #define PRIi8 "i"
 #define PRIdLEAST8 "d"
@@ -22,16 +35,16 @@
 #define PRIiLEAST32 "i"
 #define PRIdFAST32 "ld"
 #define PRIiFAST32 "li"
-#define PRId64 "ld"
-#define PRIi64 "li"
-#define PRIdLEAST64 "ld"
-#define PRIiLEAST64 "li"
-#define PRIdFAST64 "ld"
-#define PRIiFAST64 "li"
-#define PRIdMAX "ld"
-#define PRIiMAX "li"
-#define PRIdPTR "ld"
-#define PRIiPTR "li"
+#define PRId64 __PRI64 "d"
+#define PRIi64 __PRI64 "i"
+#define PRIdLEAST64 __PRI64 "d"
+#define PRIiLEAST64 __PRI64 "i"
+#define PRIdFAST64 __PRI64 "d"
+#define PRIiFAST64 __PRI64 "i"
+#define PRIdMAX __PRI64 "d"
+#define PRIiMAX __PRI64 "i"
+#define PRIdPTR __PRIPTR "d"
+#define PRIiPTR __PRIPTR "i"
 #define PRIo8 "o"
 #define PRIu8 "u"
 #define PRIx8 "x"
@@ -68,42 +81,47 @@
 #define PRIuFAST32 "lu"
 #define PRIxFAST32 "lx"
 #define PRIXFAST32 "lX"
-#define PRIo64 "lo"
-#define PRIu64 "lu"
-#define PRIx64 "lx"
-#define PRIX64 "lX"
-#define PRIoLEAST64 "lo"
-#define PRIuLEAST64 "lu"
-#define PRIxLEAST64 "lx"
-#define PRIXLEAST64 "lX"
-#define PRIoFAST64 "lo"
-#define PRIuFAST64 "lu"
-#define PRIxFAST64 "lx"
-#define PRIXFAST64 "lX"
-#define PRIoMAX "lo"
-#define PRIuMAX "lu"
-#define PRIxMAX "lx"
-#define PRIXMAX "lX"
-#define PRIoPTR "lo"
-#define PRIuPTR "lu"
-#define PRIxPTR "lx"
-#define PRIXPTR "lX"
+#define PRIo64 __PRI64 "o"
+#define PRIu64 __PRI64 "u"
+#define PRIx64 __PRI64 "x"
+#define PRIX64 __PRI64 "X"
+#define PRIoLEAST64 __PRI64 "o"
+#define PRIuLEAST64 __PRI64 "u"
+#define PRIxLEAST64 __PRI64 "x"
+#define PRIXLEAST64 __PRI64 "X"
+#define PRIoFAST64 __PRI64 "o"
+#define PRIuFAST64 __PRI64 "u"
+#define PRIxFAST64 __PRI64 "x"
+#define PRIXFAST64 __PRI64 "X"
+#define PRIoMAX __PRI64 "o"
+#define PRIuMAX __PRI64 "u"
+#define PRIxMAX __PRI64 "x"
+#define PRIXMAX __PRI64 "X"
+#define PRIoPTR __PRIPTR "o"
+#define PRIuPTR __PRIPTR "u"
+#define PRIxPTR __PRIPTR "x"
+#define PRIXPTR __PRIPTR "X"
 
 #define SCNu32 "u"
-#define SCNu64 "lu"
-#define SCNuMAX "lu"
+#define SCNu64 __PRI64 "u"
+#define SCNuMAX __PRI64 "u"
 #define SCNx16 "hx"
 #define SCNx32 "x"
-#define SCNx64 "lx"
-#define SCNxMAX "lx"
+#define SCNx64 __PRI64 "x"
+#define SCNxMAX __PRI64 "x"
 #define SCNi8 "hhi"
-#define SCNxPTR "lx"
+#define SCNxPTR __PRIPTR "x"
 
 #define SCNi8 "hhi"
-#define SCNi64 "li"
+#define SCNi64 __PRI64 "i"
 
 #define SCNd32 "d"
-#define SCNd64 "ld"
+#define SCNd64 __PRI64 "d"
+#define SCNdFAST64 __PRI64 "d"
+
+#define SCNu16 "hu"
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 extern "C" {
@@ -114,15 +132,19 @@ typedef struct {
 	intmax_t rem;
 } imaxdiv_t;
 
-intmax_t imaxabs(intmax_t);
-imaxdiv_t imaxdiv(intmax_t, intmax_t);
-intmax_t strtoimax(const char *__restrict, char **__restrict, int);
-uintmax_t strtoumax(const char *__restrict, char **__restrict, int);
-intmax_t wcstoimax(const __WCHAR_TYPE__ *__restrict, __WCHAR_TYPE__ **__restrict, int);
-uintmax_t wcstoumax(const __WCHAR_TYPE__ *__restrict, __WCHAR_TYPE__ **__restrict, int);
+#ifndef __MLIBC_ABI_ONLY
+
+intmax_t imaxabs(intmax_t __x);
+imaxdiv_t imaxdiv(intmax_t __x, intmax_t __y);
+intmax_t strtoimax(const char *__restrict __string, char **__restrict __end, int __base);
+uintmax_t strtoumax(const char *__restrict __string, char **__restrict __end, int __base);
+intmax_t wcstoimax(const wchar_t *__restrict __string, wchar_t **__restrict __end, int __base);
+uintmax_t wcstoumax(const wchar_t *__restrict __string, wchar_t **__restrict __end, int __base);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _STDINT_H
+#endif /* _STDINT_H */

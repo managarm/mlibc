@@ -9,4 +9,4 @@ struct timeval {
 	suseconds_t tv_usec;
 };
 
-#endif // MLIBC_TIMEVAL_H
+#endif /* MLIBC_TIMEVAL_H */

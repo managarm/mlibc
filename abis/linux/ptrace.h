@@ -56,4 +56,4 @@
 
 #define PTRACE_PEEKSIGINFO_SHARED 1
 
-#endif // _ABIBITS_PTRACE_H
+#endif /* _ABIBITS_PTRACE_H */

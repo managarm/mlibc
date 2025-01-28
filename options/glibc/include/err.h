@@ -7,19 +7,27 @@
 extern "C" {
 #endif
 
-void warn(const char *, ...);
-void vwarn(const char *, va_list);
-void warnx(const char *, ...);
-void vwarnx(const char *, va_list);
+#ifndef __MLIBC_ABI_ONLY
 
-__attribute__((noreturn)) void err(int, const char *, ...);
-__attribute__((noreturn)) void verr(int, const char *, va_list);
-__attribute__((noreturn)) void errx(int, const char *, ...);
-__attribute__((noreturn)) void verrx(int, const char *, va_list);
+__attribute__((__format__(__printf__, 1, 2))) void warn(const char *__format, ...);
+__attribute__((__format__(__printf__, 1, 0))) void vwarn(const char *__format, va_list __args);
+__attribute__((__format__(__printf__, 1, 2))) void warnx(const char *__format, ...);
+__attribute__((__format__(__printf__, 1, 0))) void vwarnx(const char *__format, va_list __args);
+
+__attribute__((__noreturn__, __format__(__printf__, 2, 3)))
+void err(int __errnum, const char *__format, ...);
+__attribute__((__noreturn__, __format__(__printf__, 2, 0)))
+void verr(int __errnum, const char *__format, va_list __args);
+__attribute__((__noreturn__, , __format__(__printf__, 2, 3)))
+void errx(int __errnum, const char *__format, ...);
+__attribute__((__noreturn__, __format__(__printf__, 2, 0)))
+void verrx(int __errnum, const char *__format, va_list __args);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _ERR_H
+#endif /* _ERR_H */
 

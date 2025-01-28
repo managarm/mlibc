@@ -1,0 +1,15 @@
+[project]
+name = "mlibc"
+use_system_includes = false
+git_repo_url = "https://github.com/managarm/mlibc/"
+git_default_branch = "master"
+
+[ignore]
+paths = [
+	"options/ansi/musl-generic-math/"
+]
+
+[paths]
+input_dir = "@source_root@"
+output_dir = "@build_root@/docs/"
+compile_commands = "@build_root@/compile_commands.json"

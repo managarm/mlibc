@@ -8,4 +8,6 @@ int main() {
 	wchar_t *dup_string = wcsdup(wide_string);
 	assert(!memcmp(wide_string, dup_string, (wcslen(wide_string) + 1) * sizeof(wchar_t)));
 	free(dup_string);
+
+	return 0;
 }

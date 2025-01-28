@@ -5,7 +5,7 @@
 
 namespace mlibc {
 	inline unsigned int this_tid() {
-		// During RTDL initialization, we don't have a TCB.
+		// During RTLD initialization, we don't have a TCB.
 		if (mlibc::tcb_available_flag) {
 			auto tcb = get_current_tcb();
 			return tcb->tid;

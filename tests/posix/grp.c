@@ -39,6 +39,12 @@ int main()
 	size_t bufsize;
 	int s;
 	bool password = false;
+	char *members[3];
+	char filename[] = "grpXXXXXX";
+	int tmpfd;
+	FILE *tmp;
+	char *expected = "managarm:passwordhash:12345:managarm,mlibc\n";
+	size_t readsize;
 
 	bufsize = sysconf(_SC_GETGR_R_SIZE_MAX);
 	assert(bufsize > 0 && bufsize < 0x100000);
@@ -106,5 +112,44 @@ int main()
 	free(grp.gr_name);
 	if(password)
 		free(grp.gr_passwd);
+
+	grp.gr_name = "managarm";
+	grp.gr_passwd = "passwordhash";
+	grp.gr_gid = 12345;
+	members[0] = "managarm";
+	members[1] = "mli:bc";
+	members[2] = NULL;
+	grp.gr_mem = members;
+
+	// tmpfile() cannot be used because its unimplemented in mlibc.
+	tmpfd = mkstemp(filename);
+	assert(tmpfd);
+	tmp = fdopen(tmpfd, "w+");
+	assert(tmp);
+
+	assert(putgrent(NULL, tmp) < 0);
+	assert(putgrent(&grp, tmp) < 0);
+
+	members[1] = "mlibc";
+
+	grp.gr_name = "mana:garm";
+	assert(putgrent(&grp, tmp) < 0);
+	grp.gr_name = "managarm";
+
+	grp.gr_passwd = "passwordhash\n";
+	assert(putgrent(&grp, tmp) < 0);
+	grp.gr_passwd = "passwordhash";
+
+	assert(putgrent(&grp, tmp) == 0);
+	rewind(tmp);
+
+	readsize = fread(buf, 1, bufsize, tmp);
+	assert(readsize == strlen(expected));
+	assert(strncmp(expected, buf, strlen(expected)) == 0);
+
+	fclose(tmp);
+	unlink(filename);
+
 	free(buf);
+	return 0;
 }

@@ -23,6 +23,8 @@
 
 #define NI_NUMERICSERV 2
 #define NI_MAXSERV 32
+#define NI_IDN 32
+#define NI_IDN_USE_STD3_ASCII_RULES 128
 
 #define NI_MAXHOST 1025
 
@@ -37,6 +39,7 @@
 #define EAI_SYSTEM 9
 #define EAI_OVERFLOW 10
 #define EAI_NODATA 11
+#define EAI_ADDRFAMILY 12
 
 #define HOST_NOT_FOUND 1
 #define TRY_AGAIN      2
@@ -52,8 +55,12 @@
 extern "C" {
 #endif
 
+#ifndef __MLIBC_ABI_ONLY
+
 int *__h_errno_location(void);
 #define h_errno (*__h_errno_location())
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 struct hostent {
 	char *h_name;
@@ -63,7 +70,7 @@ struct hostent {
 	char **h_addr_list;
 };
 
-#define h_addr h_addr_list[0] // Required by some programs
+#define h_addr h_addr_list[0] /* Required by some programs */
 
 struct netent {
 	char *n_name;
@@ -96,39 +103,47 @@ struct addrinfo {
 	struct addrinfo *ai_next;
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 void endhostent(void);
 void endnetent(void);
 void endprotoent(void);
 void endservent(void);
-void freeaddrinfo(struct addrinfo *);
-const char *gai_strerror(int);
-int getaddrinfo(const char *__restrict, const char *__restrict,
-		const struct addrinfo *__restrict, struct addrinfo **__restrict);
+void freeaddrinfo(struct addrinfo *__info);
+const char *gai_strerror(int __errnum);
+int getaddrinfo(const char *__restrict __node, const char *__restrict __service,
+		const struct addrinfo *__restrict __hints, struct addrinfo **__restrict __res);
 struct hostent *gethostent(void);
-struct hostent *gethostbyname(const char *);
-struct hostent *gethostbyaddr(const void *, socklen_t, int);
-int gethostbyaddr_r(const void *__restrict, socklen_t, int, struct hostent *__restrict,
-					char *__restrict, size_t, struct hostent **__restrict, int *__restrict);
-int gethostbyname_r(const char *__restrict, struct hostent *__restrict, char *__restrict, size_t,
-					struct hostent **__restrict, int *__restrict);
-int getnameinfo(const struct sockaddr *__restrict, socklen_t,
-		char *__restrict, socklen_t, char *__restrict, socklen_t, int);
-struct netent *getnetbyaddr(uint32_t, int);
-struct netent *getnetbyname(const char *);
+struct hostent *gethostbyname(const char *__name);
+struct hostent *gethostbyname2(const char *__name, int __flags);
+struct hostent *gethostbyaddr(const void *__addr, socklen_t __len, int __type);
+int gethostbyaddr_r(const void *__restrict __addr, socklen_t __len, int __type, struct hostent *__restrict __ret,
+					char *__restrict __buf, size_t __buflen, struct hostent **__restrict __res, int *__restrict __h_errnump);
+int gethostbyname_r(const char *__restrict __name, struct hostent *__restrict __ret, char *__restrict __buf, size_t __buflen,
+					struct hostent **__restrict __res, int *__restrict __h_errnump);
+int getnameinfo(const struct sockaddr *__restrict __addr, socklen_t __addrlen,
+		char *__restrict __host, socklen_t __hostlen, char *__restrict __serv, socklen_t __servlen, int __flags);
+struct netent *getnetbyaddr(uint32_t __net, int __type);
+struct netent *getnetbyname(const char *__name);
 struct netent *getnetent(void);
-struct protoent *getprotobyname(const char *);
-struct protoent *getprotobynumber(int);
+struct protoent *getprotobyname(const char *__name);
+struct protoent *getprotobynumber(int __proto);
 struct protoent *getprotoent(void);
-struct servent *getservbyname(const char *, const char *);
-struct servent *getservbyport(int, const char *);
+struct servent *getservbyname(const char *__name, const char *__proto);
+struct servent *getservbyport(int __port, const char *__proto);
 struct servent *getservent(void);
-void sethostent(int);
-void setnetent(int);
-void setprotoent(int);
-void setservent(int);
+void sethostent(int __stayopen);
+void setnetent(int __stayopen);
+void setprotoent(int __stayopen);
+void setservent(int __stayopen);
+
+/* Deprecated GNU extension */
+const char *hstrerror(int __err);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _NETDB_H
+#endif /* _NETDB_H */

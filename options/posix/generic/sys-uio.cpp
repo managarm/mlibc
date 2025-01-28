@@ -9,11 +9,20 @@
 #include <frg/vector.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 #include <bits/ensure.h>
 
-ssize_t readv(int, const struct iovec *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+ssize_t readv(int fd, const struct iovec *iovs, int iovc) {
+	ssize_t read_bytes = 0;
+
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_readv, -1);
+
+	if (int e = sysdep(fd, iovs, iovc, &read_bytes); e) {
+		errno = e;
+		return -1;
+	}
+
+	return read_bytes;
 }
 
 ssize_t writev(int fd, const struct iovec *iovs, int iovc) {

@@ -13,12 +13,12 @@ struct sockaddr_un {
 	char sun_path[108];
 };
 
-// Evaluate to actual length of the `sockaddr_un' structure.
-#define SUN_LEN(ptr) ((size_t) offsetof(struct sockaddr_un, sun_path))
+/* Evaluate to actual length of the `sockaddr_un' structure. */
+#define SUN_LEN(ptr) ((size_t) offsetof(struct sockaddr_un, sun_path) + strlen((ptr)->sun_path))
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _SYS_UN_H
+#endif /* _SYS_UN_H */
 

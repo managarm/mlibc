@@ -8,8 +8,12 @@
 #include <mlibc/tid.hpp>
 #include <bits/ensure.h>
 
+// alignas(4) is specified for the benefit of m68k, where default alignment is
+// 2 bytes for a uint32_t, while the futex syscall requires 4-byte alignment.
+// It is a no-op on any other architecture.
+
 template<bool Recursive>
-struct FutexLockImpl {
+struct alignas(4) FutexLockImpl {
 	FutexLockImpl() : _state{0}, _recursion{0} { }
 
 	FutexLockImpl(const FutexLockImpl &) = delete;
@@ -50,7 +54,8 @@ struct FutexLockImpl {
 
 					// If the wait returns EAGAIN, that means that the waitersBit was just unset by
 					// some other thread. In this case, we should loop back around.
-					if (e && e != EAGAIN)
+					// Also loop around in case of a signal interrupting the wait
+					if (e && e != EAGAIN && e != EINTR)
 						mlibc::panicLogger() << "sys_futex_wait() failed with error code " << e << frg::endlog;
 
 					// Opportunistically try to take the lock after we wake up.

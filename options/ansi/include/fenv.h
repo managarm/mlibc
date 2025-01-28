@@ -3,20 +3,7 @@
 #define _FENV_H
 
 #include <bits/types.h>
-
-#define FE_DIVBYZERO 4
-#define FE_INEXACT 32
-#define FE_INVALID 1
-#define FE_OVERFLOW 8
-#define FE_UNDERFLOW 16
-#define __FE_DENORM 2
-
-#define FE_ALL_EXCEPT 63
-
-#define FE_DOWNWARD 0x400
-#define FE_TONEAREST 0
-#define FE_TOWARDZERO 0xC00
-#define FE_UPWARD 0x800
+#include <bits/ansi/fenv.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,17 +18,21 @@ typedef struct {
 
 typedef __mlibc_uint16 fexcept_t;
 
-int feclearexcept(int);
-int fegetenv(fenv_t *);
-int fegetexceptflag(fexcept_t *, int);
+#ifndef __MLIBC_ABI_ONLY
+
+int feclearexcept(int __excepts);
+int fegetenv(fenv_t *__envp);
+int fegetexceptflag(fexcept_t *__envp, int __excepts);
 int fegetround(void);
-int feholdexcept(fenv_t *);
-int feraiseexcept(int);
-int fesetenv(const fenv_t *);
-int fesetexceptflag(const fexcept_t *, int);
-int fesetround(int);
-int fetestexcept(int);
-int feupdateenv(const fenv_t *);
+int feholdexcept(fenv_t *__envp);
+int feraiseexcept(int __excepts);
+int fesetenv(const fenv_t *__envp);
+int fesetexceptflag(const fexcept_t *__envp, int __excepts);
+int fesetround(int __round);
+int fetestexcept(int __excepts);
+int feupdateenv(const fenv_t *__envp);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
@@ -49,5 +40,5 @@ int feupdateenv(const fenv_t *);
 
 #define FE_DFL_ENV ((const fenv_t *) -1)
 
-#endif // _FENV_H
+#endif /* _FENV_H */
 

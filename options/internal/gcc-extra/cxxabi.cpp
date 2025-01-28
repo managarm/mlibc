@@ -9,8 +9,12 @@
 	extern "C" [[gnu::visibility("hidden")]] void _ZdlPv() { // operator delete (void *, size_t)
 		__ensure(!"operator delete called! delete expressions cannot be used in mlibc.");
 	}
-#else
-	extern "C" [[gnu::visibility("hidden")]] void _ZdlPvm() { // operator delete (void *, size_t)
-		__ensure(!"operator delete called! delete expressions cannot be used in mlibc.");
-	}
 #endif
+
+extern "C" [[gnu::visibility("hidden")]] void _ZdlPvj() { // operator delete (void *, unsigned int)
+	__ensure(!"operator delete called! delete expressions cannot be used in mlibc.");
+}
+
+extern "C" [[gnu::visibility("hidden")]] void _ZdlPvm() { // operator delete (void *, size_t)
+	__ensure(!"operator delete called! delete expressions cannot be used in mlibc.");
+}

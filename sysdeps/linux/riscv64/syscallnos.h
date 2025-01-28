@@ -246,6 +246,7 @@
 #define __NR_accept4 242
 #define __NR_recvmmsg 243
 #define __NR_arch_specific_syscall 244
+#define __NR_riscv_hwprobe 258
 #define __NR_riscv_flush_icache 259
 #define __NR_wait4 260
 #define __NR_prlimit64 261

@@ -23,12 +23,12 @@ void vwarnx(const char *fmt, va_list params) {
 	putc('\n', stderr);
 }
 
-__attribute__((noreturn)) void verr(int status, const char *fmt, va_list params) {
+__attribute__((__noreturn__)) void verr(int status, const char *fmt, va_list params) {
 	vwarn(fmt, params);
 	exit(status);
 }
 
-__attribute__((noreturn)) void verrx(int status, const char *fmt, va_list params) {
+__attribute__((__noreturn__)) void verrx(int status, const char *fmt, va_list params) {
 	vwarnx(fmt, params);
 	exit(status);
 }
@@ -49,14 +49,14 @@ void warnx(const char *fmt, ...) {
 	va_end(params);
 }
 
-__attribute__((noreturn)) void err(int status, const char *fmt, ...) {
+__attribute__((__noreturn__)) void err(int status, const char *fmt, ...) {
 	va_list params;
 	va_start(params, fmt);
 	verr(status, fmt, params);
 	va_end(params);
 }
 
-__attribute__((noreturn)) void errx(int status, const char *fmt, ...) {
+__attribute__((__noreturn__)) void errx(int status, const char *fmt, ...) {
 	va_list params;
 	va_start(params, fmt);
 	verrx(status, fmt, params);

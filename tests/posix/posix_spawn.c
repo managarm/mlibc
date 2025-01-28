@@ -33,6 +33,6 @@ void run_cmd(char *cmd)
 }
 
 int main() {
-    run_cmd("/usr/bin/true");
+    run_cmd(":");
     return 0;
 }

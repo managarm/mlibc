@@ -1,11 +1,16 @@
 #ifndef _ARPA_NAMESER_H
 #define _ARPA_NAMESER_H
 
+#include <stdint.h>
+#include <bits/size_t.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define NS_PACKETSZ	512
+#define NS_PACKETSZ 512
+#define NS_MAXDNAME 1025
+#define NS_MAXLABEL 63
 
 typedef	enum __ns_rcode {
 	ns_r_noerror = 0,
@@ -92,15 +97,66 @@ typedef enum __ns_class {
 	ns_c_max = 65536
 } ns_class;
 
+typedef enum __ns_sect {
+	ns_s_qd = 0,
+	ns_s_zn = 0,
+	ns_s_an = 1,
+	ns_s_pr = 1,
+	ns_s_ns = 2,
+	ns_s_ud = 2,
+	ns_s_ar = 3,
+	ns_s_max = 4
+} ns_sect;
+
+typedef struct __ns_msg {
+	const unsigned char	*_msg, *_eom;
+	uint16_t _id, _flags, _counts[ns_s_max];
+	const unsigned char	*_sections[ns_s_max];
+	ns_sect _sect;
+	int _rrnum;
+	const unsigned char	*_msg_ptr;
+} ns_msg;
+
+#define ns_msg_id(handle) ((handle)._id + 0)
+#define ns_msg_base(handle) ((handle)._msg + 0)
+#define ns_msg_end(handle) ((handle)._eom + 0)
+#define ns_msg_size(handle) ((handle)._eom - (handle)._msg)
+#define ns_msg_count(handle, section) ((handle)._counts[section] + 0)
+
+typedef	struct __ns_rr {
+	char name[NS_MAXDNAME];
+	uint16_t type;
+	uint16_t rr_class;
+	uint32_t ttl;
+	uint16_t rdlength;
+	const unsigned char *rdata;
+} ns_rr;
+
+#define ns_rr_name(rr)	(((rr).name[0] != '\0') ? (rr).name : ".")
+#define ns_rr_type(rr)	((ns_type)((rr).type + 0))
+#define ns_rr_class(rr)	((ns_class)((rr).rr_class + 0))
+#define ns_rr_ttl(rr)	((rr).ttl + 0)
+#define ns_rr_rdlen(rr)	((rr).rdlength + 0)
+#define ns_rr_rdata(rr)	((rr).rdata + 0)
+
+#ifndef __MLIBC_ABI_ONLY
+
 #define NS_GET16(s, cp) (void)((s) = ns_get16(((cp) += 2) - 2))
 #define NS_GET32(l, cp) (void)((l) = ns_get32(((cp) += 4) - 4))
 #define NS_PUT16(s, cp) ns_put16((s), ((cp) += 2) - 2)
 #define NS_PUT32(l, cp) ns_put32((l), ((cp) += 4) - 4)
 
-unsigned ns_get16(const unsigned char *);
-unsigned long ns_get32(const unsigned char *);
-void ns_put16(unsigned, unsigned char *);
-void ns_put32(unsigned long, unsigned char *);
+unsigned ns_get16(const unsigned char *__src);
+unsigned long ns_get32(const unsigned char *__src);
+void ns_put16(unsigned int __value, unsigned char *__src);
+void ns_put32(unsigned long __value, unsigned char *__src);
+
+int ns_initparse(const unsigned char *__msg, int __msglen, ns_msg *__handle);
+int ns_parserr(ns_msg *__msg, ns_sect __section, int __rrnum, ns_rr *__rr);
+int ns_name_uncompress(const unsigned char *__msg, const unsigned char *__eom,
+				    const unsigned char *__src, char *__dst, size_t __dstsize);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 typedef struct {
 	unsigned	id :16;
@@ -134,6 +190,7 @@ typedef struct {
 } HEADER;
 
 #define PACKETSZ	NS_PACKETSZ
+#define MAXDNAME	NS_MAXDNAME
 
 #define NOERROR		ns_r_noerror
 #define FORMERR		ns_r_formerr
@@ -206,4 +263,4 @@ typedef struct {
 }
 #endif
 
-#endif // _ARPA_NAMESER_H
+#endif /* _ARPA_NAMESER_H */

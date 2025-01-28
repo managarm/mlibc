@@ -4,6 +4,7 @@
 #include <bits/posix/in_addr_t.h>
 #include <bits/posix/in_port_t.h>
 #include <abi-bits/socket.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -94,17 +95,26 @@ struct group_source_req {
 #define IPPROTO_UDP 6
 #define IPPROTO_IGMP 7
 #define IPPROTO_IPIP 8
+#define IPPROTO_DCCP 33
+#define IPPROTO_ROUTING 43
+#define IPPROTO_GRE 47
 #define IPPROTO_ESP 50
 #define IPPROTO_AH 51
+#define IPPROTO_ICMPV6 58
+#define IPPROTO_DSTOPTS 60
+#define IPPROTO_COMP 108
+#define IPPROTO_SCTP 132
+#define IPPROTO_UDPLITE 136
+#define IPPROTO_MAX 256
 
 #define INADDR_ANY ((in_addr_t)0x00000000)
 #define INADDR_BROADCAST ((in_addr_t)0xffffffff)
 #define INADDR_LOOPBACK ((in_addr_t)0x7f000001)
 #define INADDR_NONE ((in_addr_t)0xffffffff)
 
-#define INET_ADDRSTRLEN 1
+#define INET_ADDRSTRLEN 16
 
-#define INET6_ADDRSTRLEN 1
+#define INET6_ADDRSTRLEN 46
 
 #define IPV6_JOIN_GROUP 1
 #define IPV6_LEAVE_GROUP 2
@@ -115,6 +125,8 @@ struct group_source_req {
 #define IPV6_V6ONLY 7
 #define IPV6_PMTUDISC_DONT 8
 #define IPV6_PMTUDISC_DO 9
+#define IPV6_MTU 10
+#define IPV6_2292PKTOPTIONS 11
 #define IPV6_MTU_DISCOVER 23
 #define IPV6_RECVERR 25
 #define IPV6_RECVPKTINFO 49
@@ -126,10 +138,14 @@ struct group_source_req {
 #define IP_TOS 1
 #define IP_TTL 2
 #define IP_OPTIONS 4
+#define IP_PMTUDISC_OMIT 5
 #define IP_PKTINFO 8
+#define IP_PKTOPTIONS 9
 #define IP_MTU_DISCOVER 10
 #define IP_RECVERR 11
 #define IP_RECVTTL 12
+#define IP_UNICAST_IF 13
+#define IP_MTU 14
 
 #define IP_DEFAULT_MULTICAST_TTL  1
 #define IP_MULTICAST_IF           32
@@ -150,4 +166,4 @@ struct group_source_req {
 #define IPV6_ADD_MEMBERSHIP  IPV6_JOIN_GROUP
 #define IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
 
-#endif // _ABIBITS_IN_H
+#endif /* _ABIBITS_IN_H */

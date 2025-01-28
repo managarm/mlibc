@@ -1,6 +1,8 @@
 #ifndef _ABIBITS_FCNTL_H
 #define _ABIBITS_FCNTL_H
 
+#include <abi-bits/pid_t.h>
+
 #define O_PATH 010000000
 
 #define O_ACCMODE (03 | O_PATH)
@@ -42,13 +44,18 @@
 
 #define F_GETLK 5
 #define F_SETLK 6
+#define F_SETLK64 F_SETLK
 #define F_SETLKW 7
+#define F_SETLKW64 F_SETLKW
 
 #define F_SETOWN_EX 15
 #define F_GETOWN_EX 16
 
 #define F_GETOWNER_UIDS 17
 
+#define F_SETLEASE 1024
+#define F_GETLEASE 1025
+#define F_NOTIFY 1026
 #define F_DUPFD_CLOEXEC 1030
 #define F_ADD_SEALS 1033
 #define F_GET_SEALS 1034
@@ -69,6 +76,26 @@
 #define AT_REMOVEDIR 0x200
 #define AT_SYMLINK_FOLLOW 0x400
 #define AT_EACCESS 0x200
+#define AT_NO_AUTOMOUNT 0x800
 #define AT_EMPTY_PATH 0x1000
 
-#endif // _ABIBITS_FCNTL_H
+#define AT_STATX_SYNC_AS_STAT 0x0000
+#define AT_STATX_FORCE_SYNC 0x2000
+#define AT_STATX_DONT_SYNC 0x4000
+#define AT_STATX_SYNC_TYPE 0x6000
+
+struct f_owner_ex {
+	int type;
+	pid_t pid;
+};
+
+#define F_OWNER_TID 0
+
+#define POSIX_FADV_NORMAL 0
+#define POSIX_FADV_RANDOM 1
+#define POSIX_FADV_SEQUENTIAL 2
+#define POSIX_FADV_WILLNEED 3
+#define POSIX_FADV_DONTNEED 4
+#define POSIX_FADV_NOREUSE 5
+
+#endif /* _ABIBITS_FCNTL_H */

@@ -3,4 +3,4 @@
 
 #include <abi-bits/vt.h>
 
-#endif // _SYS_VT_H
+#endif /* _SYS_VT_H */

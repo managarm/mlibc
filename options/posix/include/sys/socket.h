@@ -24,36 +24,36 @@ struct sockaddr {
 	char sa_data[14];
 };
 
-// Control message format:
-// The offsets marked with ^ are aligned to alignof(size_t).
-//
-// |---HEADER---|---DATA---|---PADDING---|---HEADER---|...
-// ^            ^                        ^
-// |---------CMSG_LEN------|
-// |---------------CMSG_SPACE------------|
+/* Control message format: */
+/* The offsets marked with ^ are aligned to alignof(size_t). */
+/* */
+/* |---HEADER---|---DATA---|---PADDING---|---HEADER---|... */
+/* ^            ^                        ^ */
+/* |---------CMSG_LEN------| */
+/* |---------------CMSG_SPACE------------| */
 
-// Auxiliary macro. While there is basically no reason for applications
-// to use this, it is exported by glibc.
+/* Auxiliary macro. While there is basically no reason for applications */
+/* to use this, it is exported by glibc. */
 #define CMSG_ALIGN(s) (((s) + __alignof__(size_t) - 1) & \
 		~(__alignof__(size_t) - 1))
 
-// Basic macros to return content and padding size of a control message.
+/* Basic macros to return content and padding size of a control message. */
 #define CMSG_LEN(s) (CMSG_ALIGN(sizeof(struct cmsghdr)) + (s))
 #define CMSG_SPACE(s) (CMSG_ALIGN(sizeof(struct cmsghdr)) + CMSG_ALIGN(s))
 
-// Provides access to the data of a control message.
+/* Provides access to the data of a control message. */
 #define CMSG_DATA(c) ((char *)(c) + CMSG_ALIGN(sizeof(struct cmsghdr)))
 
 #define __MLIBC_CMSG_NEXT(c) ((char *)(c) + CMSG_ALIGN((c)->cmsg_len))
 #define __MLIBC_MHDR_LIMIT(m) ((char *)(m)->msg_control + (m)->msg_controllen)
 
-// For parsing control messages only.
-// Returns a pointer to the first header or nullptr if there is none.
+/* For parsing control messages only. */
+/* Returns a pointer to the first header or nullptr if there is none. */
 #define CMSG_FIRSTHDR(m) ((size_t)(m)->msg_controllen <= sizeof(struct cmsghdr) \
 	? (struct cmsghdr *)0 : (struct cmsghdr *) (m)->msg_control)
 
-// For parsing control messages only.
-// Returns a pointer to the next header or nullptr if there is none.
+/* For parsing control messages only. */
+/* Returns a pointer to the next header or nullptr if there is none. */
 #define CMSG_NXTHDR(m, c) \
 	((c)->cmsg_len < sizeof(struct cmsghdr) || \
 		(ptrdiff_t)(sizeof(struct cmsghdr) + CMSG_ALIGN((c)->cmsg_len)) \
@@ -71,31 +71,37 @@ struct ucred {
 	gid_t gid;
 };
 
-int accept(int, struct sockaddr *__restrict, socklen_t *__restrict);
-int accept4(int, struct sockaddr *__restrict, socklen_t *__restrict, int);
-int bind(int, const struct sockaddr *, socklen_t);
-int connect(int, const struct sockaddr *, socklen_t);
-int getpeername(int, struct sockaddr *__restrict, socklen_t *__restrict);
-int getsockname(int, struct sockaddr *__restrict, socklen_t *__restrict);
-int getsockopt(int, int, int, void *__restrict, socklen_t *__restrict);
-int listen(int, int);
-ssize_t recv(int, void *, size_t, int);
-ssize_t recvfrom(int, void *__restrict, size_t, int, struct sockaddr *__restrict, socklen_t *__restrict);
-ssize_t recvmsg(int, struct msghdr *, int);
-ssize_t send(int, const void *, size_t, int);
-ssize_t sendmsg(int, const struct msghdr *, int);
-ssize_t sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_t);
-int recvmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags, struct timespec *timeout);
-int sendmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags);
-int setsockopt(int, int, int, const void *, socklen_t);
-int shutdown(int, int);
-int sockatmark(int);
-int socket(int, int, int);
-int socketpair(int, int, int, int [2]);
+#ifndef __MLIBC_ABI_ONLY
+
+int accept(int __sockfd, struct sockaddr *__restrict __addr, socklen_t *__restrict __addrlen);
+int accept4(int __sockfd, struct sockaddr *__restrict __addr, socklen_t *__restrict __addrlen, int __flags);
+int bind(int __sockfd, const struct sockaddr *__addr, socklen_t __addrlen);
+int connect(int __sockfd, const struct sockaddr *__addr, socklen_t __addrlen);
+int getpeername(int __sockfd, struct sockaddr *__restrict __addr, socklen_t *__restrict __addrlen);
+int getsockname(int __sockfd, struct sockaddr *__restrict __addr, socklen_t *__restrict __addrlen);
+int getsockopt(int __sockfd, int __level, int __optname, void *__restrict __optval, socklen_t *__restrict __optlen);
+int listen(int __sockfd, int __backlog);
+ssize_t recv(int __sockfd, void *__buf, size_t __size, int __flags);
+ssize_t recvfrom(int __sockfd, void *__restrict __buf, size_t __size, int __flags,
+		struct sockaddr *__restrict __src_addr, socklen_t *__restrict __addrlen);
+ssize_t recvmsg(int __sockfd, struct msghdr *__msg, int __flags);
+ssize_t send(int __sockfd, const void *__buf, size_t __size, int __flags);
+ssize_t sendmsg(int __sockfd, const struct msghdr *__msg, int __flags);
+ssize_t sendto(int __sockfd, const void *__buf, size_t __size, int __flags,
+		const struct sockaddr *__dest_addr, socklen_t __addrlen);
+int recvmmsg(int __sockfd, struct mmsghdr *__msgvec, unsigned int __vlen, int __flags, struct timespec *__timeout);
+int sendmmsg(int __sockfd, struct mmsghdr *__msgvec, unsigned int __vlen, int __flags);
+int setsockopt(int __sockfd, int __level, int __option_name, const void *__optval, socklen_t __optlen);
+int shutdown(int __sockfd, int __how);
+int sockatmark(int __sockfd);
+int socket(int __domain, int __type, int __protocol);
+int socketpair(int __domain, int __type, int __protocol, int __sv[2]);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _UNISTD_H
+#endif /* _UNISTD_H */
 

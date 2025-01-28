@@ -20,19 +20,35 @@ extern "C" {
 
 #define IPC_PRIVATE ((key_t) 0)
 
+#if defined(__aarch64__) || defined(__i386__) || defined(__m68k__)
+#define IPC_64 0x100
+#elif defined(__x86_64__) || (defined(__riscv) && __riscv_xlen == 64)
+#define IPC_64 0
+#else
+#error "Unsupported arch!"
+#endif
+
 typedef int key_t;
 
-struct ipc_perm {
+struct ipc64_perm {
 	key_t __ipc_perm_key;
 	uid_t uid;
 	gid_t gid;
 	uid_t cuid;
 	gid_t cgid;
 	mode_t mode;
-	int __ipc_perm_seq;
+	short __ipc_perm_seq;
+	short __pad;
+	unsigned long __unused[2];
 };
 
-key_t ftok(const char *, int);
+#define ipc_perm ipc64_perm
+
+#ifndef __MLIBC_ABI_ONLY
+
+key_t ftok(const char *__path, int __proj_id);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

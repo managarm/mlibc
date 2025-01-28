@@ -7,10 +7,14 @@
 extern "C" {
 #endif
 
-int reboot(int arg);
+#ifndef __MLIBC_ABI_ONLY
+
+int reboot(int __arg);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // MLIBC_SYS_REBOOT_H
+#endif /* MLIBC_SYS_REBOOT_H */

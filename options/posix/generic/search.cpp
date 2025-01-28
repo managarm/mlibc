@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <new>
 #include <mlibc/allocator.hpp>
+#include <mlibc/search.hpp>
 #include <frg/stack.hpp>
 #include <stdlib.h>
 
@@ -122,10 +123,23 @@ void twalk(const void *, void (*action)(const void *, VISIT, int)) {
 	__builtin_unreachable();
 }
 
-void tdestroy(void *, void (*free_node)(void *)) {
-	(void)free_node;
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void tdestroy(void *root, void (*free_node)(void *)) {
+	auto *n = static_cast<node *>(root);
+	frg::stack<node *, MemoryAllocator> nodes(getAllocator());
+
+	while(n || !nodes.empty()) {
+		if(n == nullptr) {
+			n = nodes.top();
+			nodes.pop();
+			free_node(const_cast<void *>(n->key));
+			auto *next = static_cast<node *>(n->a[1]);
+			free(n);
+			n = next;
+		} else {
+			nodes.push(n);
+			n = static_cast<node *>(n->a[0]);
+		}
+	}
 }
 
 void *lsearch(const void *key, void *base, size_t *nelp, size_t width,
@@ -148,4 +162,24 @@ void *lfind(const void *key, const void *base, size_t *nelp,
 	(void)compar;
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
+}
+
+namespace {
+	hsearch_data globalTable {};
+}
+
+int hcreate(size_t num_entries) {
+	return mlibc::hcreate_r(num_entries, &globalTable);
+}
+
+void hdestroy(void) {
+	mlibc::hdestroy_r(&globalTable);
+}
+
+ENTRY *hsearch(ENTRY item, ACTION action) {
+	ENTRY *ret;
+	if(mlibc::hsearch_r(item, action, &ret, &globalTable) == 0) {
+		return nullptr;
+	}
+	return ret;
 }

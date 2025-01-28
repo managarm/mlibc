@@ -21,17 +21,17 @@ typedef struct {
 	regoff_t rm_eo;
 } regmatch_t;
 
-// Flags for regcomp().
+/* Flags for regcomp(). */
 #define REG_EXTENDED 1
 #define REG_ICASE 2
 #define REG_NEWLINE 4
 #define REG_NOSUB 8
 
-// Flags for regexec().
+/* Flags for regexec(). */
 #define REG_NOTBOL 1
 #define REG_NOTEOL 2
 
-// Errors for regcomp() and regexec().
+/* Errors for regcomp() and regexec(). */
 #define REG_OK 0
 #define REG_NOMATCH 1
 #define REG_BADPAT 2
@@ -47,13 +47,18 @@ typedef struct {
 #define REG_ESPACE 12
 #define REG_BADRPT 13
 
-// Obsolete in POSIX.
+/* Obsolete in POSIX. */
 #define REG_ENOSYS -1
 
-int regcomp(regex_t *__restrict, const char *__restrict, int);
-int regexec(const regex_t *__restrict, const char *__restrict, size_t, regmatch_t *__restrict, int);
-size_t regerror(int, const regex_t *__restrict, char *__restrict, size_t);
-void regfree(regex_t *);
+#ifndef __MLIBC_ABI_ONLY
+
+int regcomp(regex_t *__restrict __regex, const char *__restrict __pattern, int __flags);
+int regexec(const regex_t *__restrict __regex, const char *__restrict __string, size_t __nmatch,
+		regmatch_t *__restrict __pmatch, int __flags);
+size_t regerror(int __errcode, const regex_t *__restrict __regex, char *__restrict __errbuf, size_t __errbuf_size);
+void regfree(regex_t *__regex);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

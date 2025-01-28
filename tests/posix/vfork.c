@@ -25,4 +25,6 @@ int main() {
 
 	assert(wait(&status) == pid);
 	assert(WIFEXITED(status) && WEXITSTATUS(status) == 12);
+
+	return 0;
 }

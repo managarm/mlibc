@@ -9,12 +9,16 @@ extern "C" {
 #include <bits/posix/locale_t.h>
 #include <bits/nl_item.h>
 
-char *nl_langinfo(nl_item);
-char *nl_langinfo_1(nl_item, locale_t);
+#ifndef __MLIBC_ABI_ONLY
+
+char *nl_langinfo(nl_item __item);
+char *nl_langinfo_l(nl_item __item, locale_t __loc);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _LANGINFO_H
+#endif /* _LANGINFO_H */
 

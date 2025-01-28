@@ -23,7 +23,8 @@ struct msghdr {
 
 struct sockaddr_storage {
 	sa_family_t ss_family;
-	char __padding[128 - sizeof(sa_family_t)];
+	char __padding[128 - sizeof(sa_family_t) - sizeof(long)];
+	long __force_alignment;
 };
 
 struct mmsghdr {
@@ -164,6 +165,7 @@ struct cmsghdr {
 #define AF_XDP          PF_XDP
 #define AF_MAX          PF_MAX
 
+#define SO_DEBUG        1
 #define SO_REUSEADDR    2
 #define SO_TYPE         3
 #define SO_ERROR        4

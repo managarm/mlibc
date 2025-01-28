@@ -5,9 +5,13 @@
 extern "C" {
 #endif
 
-int backtrace(void **, int);
-char **backtrace_symbols(void *const *, int);
-void backtrace_symbols_fd(void *const *, int, int);
+#ifndef __MLIBC_ABI_ONLY
+
+int backtrace(void **__buffer, int __size);
+char **backtrace_symbols(void *const *__buffer, int __size);
+void backtrace_symbols_fd(void *const *__buffer, int __size, int __fd);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }

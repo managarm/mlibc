@@ -41,11 +41,15 @@ struct ptrace_peeksiginfo_args {
 	int32_t nr;
 };
 
-long ptrace(int, ...);
+#ifndef __MLIBC_ABI_ONLY
+
+long ptrace(int __op, ...);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _SYS_PTRACE_H
+#endif /* _SYS_PTRACE_H */
 

@@ -141,7 +141,7 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 					buf.buf.push(std::move(buffer));
 					break;
 				case RECORD_CNAME:
-					canon_name = std::move(read_dns_name(response, it));
+					canon_name = read_dns_name(response, it);
 					buf.aliases.push(std::move(dns_name));
 					break;
 				default:
@@ -468,7 +468,7 @@ int lookup_name_ip(struct lookup_result &buf, const char *name, int family) {
 	}
 
 	if (family == AF_INET6) {
-		struct in6_addr addr{0};
+		struct in6_addr addr{};
 		int res = inet_pton(AF_INET6, name, &addr);
 
 		if (res <= 0)
@@ -495,7 +495,7 @@ int lookup_name_ip(struct lookup_result &buf, const char *name, int family) {
 		return 1;
 	}
 
-	struct in6_addr addr6{0};
+	struct in6_addr addr6{};
 	res = inet_pton(AF_INET6, name, &addr6);
 
 	if (res <= 0)

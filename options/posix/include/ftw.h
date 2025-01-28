@@ -17,6 +17,8 @@
 #define FTW_DEPTH 4
 #define FTW_CHDIR 8
 
+#define FTW_CONTINUE 0
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -26,12 +28,18 @@ struct FTW {
 	int level;
 };
 
-int ftw(const char *, int (*)(const char *, const struct stat *, int), int);
-int nftw(const char *, int (*)(const char *, const struct stat *, int, struct FTW *), int, int);
+#ifndef __MLIBC_ABI_ONLY
+
+int ftw(const char *__dirpath, int (*__fn)(const char *__fpath, const struct stat *__sb, int __typeflag),
+		int __nopenfd);
+int nftw(const char *__dirpath, int (*__fn)(const char *__fpath, const struct stat *__sb, int __typeflag,
+		struct FTW *__ftwbuf), int __nopenfd, int __flags);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _FTW_H
+#endif /* _FTW_H */
 

@@ -1,5 +1,5 @@
-// This file is taken from musl
-// Path to original: include/paths.h
+/* This file is taken from musl */
+/* Path to original: include/paths.h */
 
 #ifndef _PATHS_H
 #define _PATHS_H
@@ -33,4 +33,9 @@
 #define	_PATH_VARRUN	"/var/run/"
 #define	_PATH_VARTMP	"/var/tmp/"
 
-#endif // _PATHS_H
+#ifdef _GNU_SOURCE
+#define _PATH_UTMPX _PATH_UTMP
+#define _PATH_WTMPX _PATH_WTMP
+#endif
+
+#endif /* _PATHS_H */

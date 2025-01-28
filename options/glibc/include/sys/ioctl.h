@@ -4,16 +4,22 @@
 #include <mlibc-config.h>
 #include <abi-bits/ioctls.h>
 
-// On Linux, sys/ioctl.h includes the termios ioctls.
+/* On Linux, sys/ioctl.h includes the termios ioctls. */
 #if __MLIBC_LINUX_OPTION
 #	include <asm/ioctls.h>
+#	include <bits/winsize.h>
+#   include <sys/ttydefaults.h>
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int ioctl(int fd, unsigned long request, ...);
+#ifndef __MLIBC_ABI_ONLY
+
+int ioctl(int __fd, unsigned long __request, ...);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #define FIONREAD 0x541B
 #define FIONBIO 0x5421
@@ -24,6 +30,8 @@ int ioctl(int fd, unsigned long request, ...);
 #define SIOCGIFCONF 0x8912
 #define SIOCGIFFLAGS 0x8913
 #define SIOCSIFFLAGS 0x8914
+#define SIOCGIFMTU 0x8921
+#define SIOCSIFMTU 0x8922
 #define SIOCGIFINDEX 0x8933
 
 #define SIOCPROTOPRIVATE 0x89E0
@@ -33,4 +41,4 @@ int ioctl(int fd, unsigned long request, ...);
 }
 #endif
 
-#endif // _SYS_IOCTL_H
+#endif /* _SYS_IOCTL_H */

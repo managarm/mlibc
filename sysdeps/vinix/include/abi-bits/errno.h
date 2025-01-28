@@ -1,1 +1,1 @@
-../../../../abis/mlibc/errno.h
+../../../../abis/linux/errno.h

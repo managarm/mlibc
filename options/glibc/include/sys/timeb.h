@@ -11,4 +11,4 @@ extern "C" {
 }
 #endif
 
-#endif // _SYS_TIMEB_H
+#endif /* _SYS_TIMEB_H */

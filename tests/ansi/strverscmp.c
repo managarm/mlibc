@@ -13,4 +13,6 @@ int main() {
 
    res = strverscmp("jan1", "jan1");
    assert(res == 0);
+
+   return 0;
 }

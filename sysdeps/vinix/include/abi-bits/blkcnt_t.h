@@ -1,1 +1,1 @@
-../../../../abis/mlibc/blkcnt_t.h
+../../../../abis/linux/blkcnt_t.h

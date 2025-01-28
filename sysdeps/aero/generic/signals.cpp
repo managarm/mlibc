@@ -29,25 +29,20 @@ int sys_sigaction(int how, const struct sigaction *__restrict action,
 #endif
 
     auto sigreturn = (sc_word_t)__mlibc_signal_restore;
-
-    auto res = syscall(SYS_SIGACTION, how, (sc_word_t)action, sigreturn,
+    auto ret = syscall(SYS_SIGACTION, how, (sc_word_t)action, sigreturn,
                        (sc_word_t)old_action);
 
-    if (res < 0) {
-        return -res;
-    }
-
+    if(int e = sc_error(ret); e)
+        return e;
     return 0;
 }
 
 int sys_sigprocmask(int how, const sigset_t *__restrict set,
                     sigset_t *__restrict retrieve) {
-    auto result = syscall(SYS_SIGPROCMASK, how, set, retrieve);
 
-    if (result < 0) {
-        return -result;
-    }
-
-    return 0;
+    auto ret = syscall(SYS_SIGPROCMASK, how, set, retrieve);
+    if(int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 } // namespace mlibc

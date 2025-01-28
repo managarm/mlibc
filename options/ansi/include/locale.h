@@ -13,6 +13,7 @@
 #define LC_NUMERIC 5
 #define LC_TIME 6
 #define LC_MESSAGES 7
+#define LC_MEASUREMENT 11
 
 #define LC_GLOBAL_LOCALE ((locale_t) -1L)
 
@@ -22,6 +23,7 @@
 #define LC_COLLATE_MASK (1<<LC_COLLATE)
 #define LC_MONETARY_MASK (1<<LC_MONETARY)
 #define LC_MESSAGES_MASK (1<<LC_MESSAGES)
+#define LC_MEASUREMENT_MASK (1<<LC_MEASUREMENT)
 #define LC_ALL_MASK 0x7FFFFFFF
 
 #ifdef __cplusplus
@@ -55,23 +57,27 @@ struct lconv {
 	char int_n_sign_posn;
 };
 
-// [C11/7.11.1] setlocale() function
+#ifndef __MLIBC_ABI_ONLY
 
-char *setlocale(int category, const char *locale);
+/* [C11/7.11.1] setlocale() function */
 
-// [C11/7.11.2] Locale inquiry function
+char *setlocale(int __category, const char *__locale);
+
+/* [C11/7.11.2] Locale inquiry function */
 
 struct lconv *localeconv(void);
 
-// posix extension
+#endif /* !__MLIBC_ABI_ONLY */
+
+/* posix extension */
 
 #if __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_locale.h>
-#endif // __MLIBC_POSIX_OPTION
+#endif /* __MLIBC_POSIX_OPTION */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _LOCALE_H
+#endif /* _LOCALE_H */
 

@@ -1,23 +1,23 @@
 
-if disable_linux_option
+if not linux_option
 	subdir_done()
 endif
 libc_sources += files(
-	'generic/mntent-stubs.cpp',
-	'generic/poll-stubs.cpp',
-	'generic/pty-stubs.cpp',
+	'generic/mntent.cpp',
+	'generic/pty.cpp',
 	'generic/sys-epoll.cpp',
-	'generic/sys-inotify-stubs.cpp',
+	'generic/sys-inotify.cpp',
 	'generic/sys-mount.cpp',
-	'generic/sys-prctl-stubs.cpp',
-	'generic/sys-ptrace-stubs.cpp',
-	'generic/sys-random-stubs.cpp',
-	'generic/sys-sendfile-stubs.cpp',
+	'generic/sys-prctl.cpp',
+	'generic/sys-ptrace.cpp',
+	'generic/sys-random.cpp',
+	'generic/sys-sendfile.cpp',
 	'generic/sys-signalfd.cpp',
 	'generic/sys-timerfd.cpp',
 	'generic/sys-eventfd.cpp',
 	'generic/sys-reboot.cpp',
-	'generic/utmp-stubs.cpp',
+	'generic/sys-xattr.cpp',
+	'generic/utmp.cpp',
 	'generic/utmpx.cpp',
 	'generic/linux-unistd.cpp',
 	'generic/malloc.cpp',
@@ -27,6 +27,12 @@ libc_sources += files(
 	'generic/module.cpp',
 	'generic/sys-klog.cpp',
 	'generic/sched.cpp',
+	'generic/sys-quota.cpp',
+	'generic/capabilities.cpp',
+	'generic/cpuset.cpp',
+	'generic/sys-swap.cpp',
+	'generic/sys-statfs.cpp',
+	'generic/sys-statx.cpp',
 )
 
 if not no_headers
@@ -45,11 +51,9 @@ if not no_headers
 	install_headers(
 		'include/bits/linux/linux_unistd.h',
 		'include/bits/linux/linux_sched.h',
+		'include/bits/linux/linux_stat.h',
+		'include/bits/linux/cpu_set.h',
 		subdir: 'bits/linux'
-	)
-	install_headers(
-		'include/net/if_arp.h',
-		subdir: 'net'
 	)
 	install_headers(
 		'include/netpacket/packet.h',
@@ -79,7 +83,16 @@ if not no_headers
 		'include/sys/vt.h',
 		'include/sys/sysinfo.h',
 		'include/sys/klog.h',
+		'include/sys/xattr.h',
+		'include/sys/quota.h',
+		'include/sys/swap.h',
+		'include/sys/statfs.h',
+		'include/sys/vfs.h',
 		subdir: 'sys'
+	)
+	install_headers(
+		'include/linux/libc-compat.h',
+		subdir: 'linux'
 	)
 endif
 

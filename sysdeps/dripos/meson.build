@@ -1,5 +1,11 @@
+sysdep_supported_options = {
+	'posix': true,
+	'linux': false,
+	'glibc': true,
+	'bsd': true,
+}
 
-rtdl_sources += files(
+rtld_sources += files(
 	'generic/generic.cpp'
 )
 
@@ -20,6 +26,7 @@ if not no_headers
 		'include/abi-bits/in.h',
 		'include/abi-bits/resource.h',
 		'include/abi-bits/stat.h',
+		'include/abi-bits/statx.h',
 		'include/abi-bits/signal.h',
 		'include/abi-bits/socket.h',
 		'include/abi-bits/termios.h',
@@ -51,7 +58,10 @@ if not no_headers
 		'include/abi-bits/statfs.h',
 		'include/abi-bits/statvfs.h',
 		'include/abi-bits/ioctls.h',
-		subdir: 'abi-bits'
+		'include/abi-bits/xattr.h',
+		'include/abi-bits/msg.h',
+		subdir: 'abi-bits',
+		follow_symlinks: true
 	)
 endif
 

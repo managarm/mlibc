@@ -1,2 +1,2 @@
-// Maches glibc
+/* Maches glibc */
 #include <utmp.h>

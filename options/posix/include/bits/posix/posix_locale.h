@@ -7,13 +7,17 @@
 extern "C" {
 #endif
 
-locale_t newlocale(int category_mask, const char *locale, locale_t base);
-void freelocale(locale_t locobj);
-locale_t uselocale(locale_t locobj);
-locale_t duplocale(locale_t locobj);
+#ifndef __MLIBC_ABI_ONLY
+
+locale_t newlocale(int __category_mask, const char *__locale, locale_t __base);
+void freelocale(locale_t __locobj);
+locale_t uselocale(locale_t __locobj);
+locale_t duplocale(locale_t __locobj);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // MLIBC_POSIX_LOCALE_H
+#endif /* MLIBC_POSIX_LOCALE_H */

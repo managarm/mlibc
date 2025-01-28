@@ -1,24 +1,70 @@
-
-if disable_ansi_option
-	subdir_done()
-endif
-
 ansi_sources = files(
-	'generic/stdlib-stubs.cpp',
-	'generic/assert-stubs.cpp',
-	'generic/ctype-stubs.cpp',
+	'generic/stdlib.cpp',
+	'generic/assert.cpp',
+	'generic/complex.c',
+
+	'generic/complex/csqrt.c',
+	'generic/complex/csinhf.c',
+	'generic/complex/ccoshf.c',
+	'generic/complex/cacosh.c',
+	'generic/complex/casinf.c',
+	'generic/complex/clogf.c',
+	'generic/complex/csqrtf.c',
+	'generic/complex/cimag.c',
+	'generic/complex/catanh.c',
+	'generic/complex/carg.c',
+	'generic/complex/cproj.c',
+	'generic/complex/cephes_subr.c',
+	'generic/complex/ccos.c',
+	'generic/complex/cexp.c',
+	'generic/complex/crealf.c',
+	'generic/complex/cabs.c',
+	'generic/complex/csinh.c',
+	'generic/complex/casinhf.c',
+	'generic/complex/cephes_subrf.c',
+	'generic/complex/creal.c',
+	'generic/complex/casin.c',
+	'generic/complex/conjf.c',
+	'generic/complex/cpowf.c',
+	'generic/complex/cacosf.c',
+	'generic/complex/csinf.c',
+	'generic/complex/ctanh.c',
+	'generic/complex/ctanhf.c',
+	'generic/complex/cargf.c',
+	'generic/complex/cabsf.c',
+	'generic/complex/cpow.c',
+	'generic/complex/csin.c',
+	'generic/complex/cprojf.c',
+	'generic/complex/catan.c',
+	'generic/complex/ctanf.c',
+	'generic/complex/ctan.c',
+	'generic/complex/clog.c',
+	'generic/complex/catanf.c',
+	'generic/complex/cacos.c',
+	'generic/complex/cexpf.c',
+	'generic/complex/ccosh.c',
+	'generic/complex/cimagf.c',
+	'generic/complex/cacoshf.c',
+	'generic/complex/conj.c',
+	'generic/complex/catanhf.c',
+	'generic/complex/ccosf.c',
+	'generic/complex/casinh.c',
+
+	'generic/ctype.cpp',
 	'generic/environment.cpp',
-	'generic/errno-stubs.cpp',
-	'generic/fenv-stubs.cpp',
+	'generic/errno.cpp',
+	'generic/fenv.cpp',
 	'generic/file-io.cpp',
-	'generic/inttypes-stubs.cpp',
-	'generic/locale-stubs.cpp',
-	'generic/signal-stubs.cpp',
-	'generic/stdio-stubs.cpp',
-	'generic/stdlib-stubs.cpp',
-	'generic/string-stubs.cpp',
-	'generic/time-stubs.cpp',
-	'generic/wchar-stubs.cpp',
+	'generic/inttypes.cpp',
+	'generic/locale.cpp',
+	'generic/signal.cpp',
+	'generic/stdio.cpp',
+	'generic/stdlib.cpp',
+	'generic/string.cpp',
+	'generic/threads.cpp',
+	'generic/time.cpp',
+	'generic/uchar.cpp',
+	'generic/wchar.cpp',
 	'generic/wctype.cpp',
 )
 
@@ -36,21 +82,33 @@ if not no_headers
 		'include/math.h',
 		'include/setjmp.h',
 		'include/signal.h',
+		'include/stdc-predef.h',
 		'include/stdio.h',
 		'include/stdlib.h',
 		'include/string.h',
+		'include/threads.h',
 		'include/time.h',
+		'include/uchar.h',
 		'include/wchar.h',
 		'include/wctype.h',
 	)
 	install_headers(
 		'include/bits/ansi/timespec.h',
 		'include/bits/ansi/time_t.h',
+		'include/bits/ansi/fenv.h',
 		subdir: 'bits/ansi'
 	)
 endif
 
 if not headers_only
+	c_compiler = meson.get_compiler('c')
+
+	if c_compiler.get_id() == 'gcc'
+		compiler_c_args = ['-Wno-unused', '-Wno-maybe-uninitialized']
+	elif c_compiler.get_id() == 'clang'
+		compiler_c_args = ['-Wno-unused-parameter', '-Wno-unused-but-set-variable']
+	endif
+
 	libc_sublibs += static_library('mlibc-musl-math',
 		'musl-generic-math/acos.c',
 		'musl-generic-math/acosf.c',
@@ -266,5 +324,6 @@ if not headers_only
 		'musl-generic-math/truncl.c',
 		pic: true,
 		include_directories: libc_include_dirs,
-		c_args: ['-Wno-unused', '-Wno-implicit', '-Wno-parentheses', '-Wno-sign-compare', '-Wno-attributes', '-Wno-unknown-pragmas'])
+		dependencies: libc_deps,
+		c_args: [compiler_c_args, '-Wno-implicit', '-Wno-parentheses', '-Wno-sign-compare', '-Wno-attributes', '-Wno-unknown-pragmas'])
 endif

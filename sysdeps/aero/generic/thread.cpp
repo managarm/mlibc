@@ -17,12 +17,10 @@ extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, Tcb *tcb) {
     if (mlibc::sys_tcb_set(tcb))
         __ensure(!"sys_tcb_set() failed");
 
-    void *(*func)(void *) = reinterpret_cast<void *(*)(void *)>(entry);
-    auto result = func(user_arg);
+    tcb->invokeThreadFunc(entry, user_arg);
 
     auto self = reinterpret_cast<Tcb *>(tcb);
 
-    self->returnValue = result;
     __atomic_store_n(&self->didExit, 1, __ATOMIC_RELEASE);
     mlibc::sys_futex_wake(&self->didExit);
 
@@ -33,26 +31,25 @@ namespace mlibc {
 
 static constexpr size_t default_stacksize = 0x1000000;
 
-int sys_prepare_stack(void **stack, void *entry, void *user_arg, void *tcb, size_t *stack_size, size_t *guard_size) {
-	if (!*stack_size)
-		*stack_size = default_stacksize;
-	*guard_size = 0;
+int sys_prepare_stack(void **stack, void *entry, void *user_arg, void *tcb,
+                      size_t *stack_size, size_t *guard_size, void **stack_base) {
+    if (!*stack_size)
+        *stack_size = default_stacksize;
+    *guard_size = 0;
 
-	uintptr_t *sp;
-	if (*stack) {
-		sp = reinterpret_cast<uintptr_t *>(*stack);
-	} else {
-		sp = reinterpret_cast<uintptr_t *>(reinterpret_cast<uintptr_t>(
-					mmap(nullptr, *stack_size,
-						PROT_READ | PROT_WRITE,
-						MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
-					) + *stack_size);
-	}
+    if (*stack) {
+		*stack_base = *stack;
+    } else {
+        *stack_base = mmap(nullptr, *stack_size, PROT_READ | PROT_WRITE,
+                     MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    }
+	
+	uintptr_t *sp = reinterpret_cast<uintptr_t *>(reinterpret_cast<uintptr_t>(*stack_base) + *stack_size);
 
-	*--sp = reinterpret_cast<uintptr_t>(tcb);
-	*--sp = reinterpret_cast<uintptr_t>(user_arg);
-	*--sp = reinterpret_cast<uintptr_t>(entry);
-	*stack = reinterpret_cast<void*>(sp);
-	return 0;
+    *--sp = reinterpret_cast<uintptr_t>(tcb);
+    *--sp = reinterpret_cast<uintptr_t>(user_arg);
+    *--sp = reinterpret_cast<uintptr_t>(entry);
+    *stack = reinterpret_cast<void *>(sp);
+    return 0;
 }
 } // namespace mlibc

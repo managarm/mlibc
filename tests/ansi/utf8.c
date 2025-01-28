@@ -1,9 +1,16 @@
 #include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
 #include <locale.h>
+
+#if UINTPTR_MAX == UINT64_MAX
+#define WCHAR_SPEC ""
+#else
+#define WCHAR_SPEC "l"
+#endif
 
 #define EXPECT(func) ({ \
 		if(res != expected_ret) { \
@@ -13,7 +20,7 @@
 			abort(); \
 		} \
 		if(wc != expected) { \
-			printf(#func " output cp %x (expected cp %x), at %s:%d\n", wc, \
+			printf(#func " output cp %" WCHAR_SPEC "x (expected cp %" WCHAR_SPEC "x), at %s:%d\n", wc, \
 					expected, __FILE__, line); \
 			fflush(stdout); \
 			abort(); \
@@ -53,4 +60,6 @@ int main() {
 	verify_decode("\xED\x95\x9C", 0xD55C);
 	verify_decode("\xF0\x90\x8D\x88", 0x10348);
 	verify_decode("", L'\0');
+
+	return 0;
 }

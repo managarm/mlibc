@@ -1,9 +1,0 @@
-[binaries]
-c = ['gcc-10']
-cpp = ['g++-10']
-
-[host_machine]
-system = 'linux'
-cpu_family = 'x86_64'
-cpu = 'x86_64'
-endian = 'little'

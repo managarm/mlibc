@@ -62,29 +62,33 @@ static frg::vector<Slice, MemoryAllocator> create_slice(char *const arg[]) {
 }
 
 namespace mlibc {
-int sys_futex_tid() {
-    // SAFETY: gettid does not return any errors (ie. the call is always
-    // successful).
-    return syscall(SYS_GETTID);
-}
-
-int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
-    auto result = syscall(SYS_FUTEX_WAIT, pointer, expected, time);
+int sys_uname(struct utsname *buf) {
+    auto result = syscall(SYS_UNAME, buf);
 
     if (result < 0) {
         return -result;
     }
 
+    return result;
+}
+
+int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
+    // auto result = syscall(SYS_FUTEX_WAIT, pointer, expected, time);
+    //
+    // if (result < 0) {
+    //     return -result;
+    // }
+    //
     return 0;
 }
 
 int sys_futex_wake(int *pointer) {
-    auto result = syscall(SYS_FUTEX_WAKE, pointer);
-
-    if (result < 0) {
-        return -result;
-    }
-
+    // auto result = syscall(SYS_FUTEX_WAKE, pointer);
+    //
+    // if (result < 0) {
+    //     return -result;
+    // }
+    //
     return 0;
 }
 
@@ -114,6 +118,14 @@ int sys_vm_unmap(void *address, size_t size) {
     return syscall(SYS_MUNMAP, address, size);
 }
 
+int sys_vm_protect(void *pointer, size_t size, int prot) {
+    auto res = syscall(SYS_MPROTECT, pointer, size, prot);
+    if (res < 0)
+        return -res;
+
+    return 0;
+}
+
 int sys_anon_allocate(size_t size, void **pointer) {
     return sys_vm_map(nullptr, size, PROT_READ | PROT_WRITE,
                       MAP_PRIVATE | MAP_ANONYMOUS, -1, 0, pointer);
@@ -124,7 +136,9 @@ int sys_anon_free(void *pointer, size_t size) {
 }
 
 void sys_libc_panic() {
-    sys_libc_log("libc panic!");
+    mlibc::infoLogger() << "libc_panic: panicked at 'unknown'" << frg::endlog;
+    __ensure(!syscall(SYS_BACKTRACE));
+
     sys_exit(1);
 }
 
@@ -136,12 +150,19 @@ void sys_exit(int status) {
     __builtin_unreachable();
 }
 
-#ifndef MLIBC_BUILDING_RTDL
+#ifndef MLIBC_BUILDING_RTLD
 
 pid_t sys_getpid() {
     auto result = syscall(SYS_GETPID);
+    __ensure(result >= 0);
 
-    __ensure(result >= 0); // getpid() cannot fail.
+    return result;
+}
+
+pid_t sys_getppid() {
+    auto result = syscall(SYS_GETPPID);
+    __ensure(result != 0);
+
     return result;
 }
 
@@ -152,18 +173,6 @@ int sys_kill(int pid, int sig) {
         return -result;
     }
 
-    return 0;
-}
-
-pid_t sys_getpgid(pid_t pid, pid_t *pgid) {
-    mlibc::infoLogger() << "sys_getpgid() is unimplemented" << frg::endlog;
-    *pgid = 0;
-
-    return 0;
-}
-
-pid_t sys_getppid() {
-    mlibc::infoLogger() << "sys_getppid() is unimplemented" << frg::endlog;
     return 0;
 }
 
@@ -223,6 +232,21 @@ int sys_sleep(time_t *sec, long *nanosec) {
     return 0;
 }
 
+pid_t sys_getpgid(pid_t pid, pid_t *pgid) {
+    auto ret = syscall(SYS_GETPGID, pid);
+    if(int e = sc_error(ret); e)
+        return e;
+    *pgid = ret;
+    return 0;
+}
+
+int sys_setpgid(pid_t pid, pid_t pgid) {
+    auto ret = syscall(SYS_SETPGID, pid, pgid);
+    if(int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 uid_t sys_getuid() {
     mlibc::infoLogger() << "mlibc: sys_setuid is a stub" << frg::endlog;
     return 0;
@@ -233,10 +257,17 @@ uid_t sys_geteuid() {
     return 0;
 }
 
-int sys_setuid(uid_t uid) UNIMPLEMENTED("sys_setuid")
+int sys_setsid(pid_t *sid) {
+    auto ret = syscall(SYS_SETSID);
+    if(int e = sc_error(ret); e)
+        return e;
+    *sid = ret;
+    return 0;
+}
+
 int sys_seteuid(uid_t euid) UNIMPLEMENTED("sys_seteuid")
 
-gid_t sys_getgid() {
+    gid_t sys_getgid() {
     mlibc::infoLogger() << "mlibc: sys_setgid is a stub" << frg::endlog;
     return 0;
 }
@@ -256,26 +287,40 @@ int sys_setegid(gid_t egid) {
     return 0;
 }
 
-void sys_yield() UNIMPLEMENTED("sys_yield")
+void sys_yield() {
+    mlibc::infoLogger() << "mlibc: sys_yield is a stub" << frg::endlog;
+    __ensure(!syscall(SYS_BACKTRACE));
+}
 
 int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
-    auto tid = syscall(SYS_CLONE, (uintptr_t)__mlibc_start_thread, stack);
+    auto result = syscall(SYS_CLONE, (uintptr_t)__mlibc_start_thread, stack);
 
-    if (tid < 0) {
-        return -tid;
+    if (result < 0) {
+        return -result;
     }
 
-    *tid_out = (pid_t)tid;
+    *tid_out = (pid_t)result;
     return 0;
 }
 
-void sys_thread_exit() UNIMPLEMENTED("sys_thread_exit")
+int sys_thread_setname(void *tcb, const char *name) {
+    mlibc::infoLogger() << "The name of this thread is " << name << frg::endlog;
+    return 0;
+}
 
-int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
-	if(ru) {
-		mlibc::infoLogger() << "mlibc: struct rusage in sys_waitpid is unsupported" << frg::endlog;
-		return ENOSYS;
-	}
+void sys_thread_exit() {
+    syscall(SYS_EXIT);
+    __builtin_trap();
+}
+
+int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru,
+                pid_t *ret_pid) {
+    if (ru) {
+        mlibc::infoLogger()
+            << "mlibc: struct rusage in sys_waitpid is unsupported"
+            << frg::endlog;
+        return ENOSYS;
+    }
 
     auto result = syscall(SYS_WAITPID, pid, status, flags);
 
@@ -316,7 +361,8 @@ int sys_execve(const char *path, char *const argv[], char *const envp[]) {
     __builtin_unreachable();
 }
 
-// int sys_getentropy(void *buffer, size_t length) UNIMPLEMENTED("sys_getentropy")
+// int sys_getentropy(void *buffer, size_t length)
+// UNIMPLEMENTED("sys_getentropy")
 
 #endif
 } // namespace mlibc

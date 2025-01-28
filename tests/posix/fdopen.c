@@ -34,4 +34,6 @@ int main() {
 	assert(fread(buf, 1, strlen(str), file));
 	assert(!strcmp(buf, str));
 	fclose(file);
+
+	return 0;
 }

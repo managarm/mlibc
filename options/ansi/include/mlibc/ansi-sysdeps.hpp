@@ -20,6 +20,14 @@ namespace [[gnu::visibility("hidden")]] mlibc {
 [[noreturn]] void sys_exit(int status);
 [[noreturn, gnu::weak]] void sys_thread_exit();
 
+// If *stack is not null, it should point to the lowest addressable byte of the stack.
+// Returns the new stack pointer in *stack and the stack base in *stack_base.
+[[gnu::weak]] int sys_prepare_stack(void **stack, void *entry, void *user_arg, void* tcb, size_t *stack_size, size_t *guard_size, void **stack_base);
+[[gnu::weak]] int sys_clone(void *tcb, pid_t *pid_out, void *stack);
+
+int sys_futex_wait(int *pointer, int expected, const struct timespec *time);
+int sys_futex_wake(int *pointer);
+
 int sys_open(const char *pathname, int flags, mode_t mode, int *fd);
 [[gnu::weak]] int sys_flock(int fd, int options);
 

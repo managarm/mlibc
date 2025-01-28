@@ -22,24 +22,28 @@ typedef long int __fd_mask;
 typedef __fd_mask fd_mask;
 #define NFDBITS __NFDBITS
 
-void __FD_CLR(int fd, fd_set *);
-int __FD_ISSET(int fd, fd_set *);
-void __FD_SET(int fd, fd_set *);
-void __FD_ZERO(fd_set *);
+#ifndef __MLIBC_ABI_ONLY
+
+void __FD_CLR(int __fd, fd_set *__set);
+int __FD_ISSET(int __fd, fd_set *__set);
+void __FD_SET(int __fd, fd_set *__set);
+void __FD_ZERO(fd_set *__set);
 
 #define FD_CLR(fd, set) __FD_CLR(fd, set)
 #define FD_ISSET(fd, set) __FD_ISSET(fd, set)
 #define FD_SET(fd, set) __FD_SET(fd, set)
 #define FD_ZERO(set) __FD_ZERO(set)
 
-int select(int, fd_set *__restrict, fd_set *__restrict, fd_set *__restrict,
-		struct timeval *__restrict);
-int pselect(int, fd_set *, fd_set *, fd_set *, const struct timespec *,
-		const sigset_t *);
+int select(int __nfds, fd_set *__restrict __readfds, fd_set *__restrict __writefds,
+		fd_set *__restrict __exceptfds, struct timeval *__restrict __timeout);
+int pselect(int __nfds, fd_set *__restrict __readfds, fd_set *__restrict __writefds,
+		fd_set *__exceptfds, const struct timespec *__timeout, const sigset_t *__sigmask);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _SYS_SELECT_H
+#endif /* _SYS_SELECT_H */
 

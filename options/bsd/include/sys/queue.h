@@ -571,4 +571,4 @@ struct {								\
 	    ? ((head)->cqh_last)					\
 	    : (elm->field.cqe_prev))
 
-#endif // _SYS_QUEUE_H_
+#endif /* _SYS_QUEUE_H_ */

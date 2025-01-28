@@ -1,7 +1,10 @@
 #pragma once
 
 #mesondefine MLIBC_SYSTEM_NAME
+#mesondefine MLIBC_DEFAULT_LIBRARY_PATHS
+#mesondefine MLIBC_NUM_DEFAULT_LIBRARY_PATHS
 #mesondefine MLIBC_MAP_DSO_SEGMENTS
+#mesondefine MLIBC_MMAP_ALLOCATE_DSO
 #mesondefine MLIBC_MAP_FILE_WINDOWS
 #mesondefine MLIBC_STATIC_BUILD
 #mesondefine MLIBC_DEBUG_ALLOCATOR

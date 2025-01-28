@@ -11,7 +11,7 @@ extern "C" {
 #if defined(__x86_64__) || defined(__aarch64__) \
 	|| (defined(__riscv) && __riscv_xlen == 64)
 #	define ElfW(type) Elf64_ ## type
-#elif defined(__i386__)
+#elif defined(__i386__) || defined(__m68k__)
 #	define ElfW(type) Elf32_ ## type
 #else
 # 	error Unknown architecture
@@ -43,12 +43,16 @@ struct r_debug {
 	Elf64_Addr r_ldbase;
 };
 
-int dl_iterate_phdr(int (*callback)(struct dl_phdr_info*, size_t, void*), void* data);
+#ifndef __MLIBC_ABI_ONLY
+
+int dl_iterate_phdr(int (*__callback)(struct dl_phdr_info* __info, size_t __size, void* __data), void* __data);
 
 extern ElfW(Dyn) _DYNAMIC[];
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _LINK_H
+#endif /* _LINK_H */

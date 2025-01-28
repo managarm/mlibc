@@ -4,6 +4,7 @@
 #include <bits/posix/in_addr_t.h>
 #include <bits/posix/in_port_t.h>
 #include <abi-bits/socket.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,9 +40,50 @@ struct sockaddr_in6 {
 	uint32_t        sin6_scope_id;
 };
 
+#define MCAST_INCLUDE 1
+
+struct ip_mreq {
+	struct in_addr imr_multiaddr;
+	struct in_addr imr_interface;
+};
+
+struct ip_mreq_source {
+	struct in_addr imr_multiaddr;
+	struct in_addr imr_interface;
+	struct in_addr imr_sourceaddr;
+};
+
+struct ip_mreqn {
+	struct in_addr imr_multiaddr;
+	struct in_addr imr_address;
+	int imr_ifindex;
+};
+
 struct ipv6_mreq {
 	struct in6_addr ipv6mr_multiaddr;
 	unsigned        ipv6mr_interface;
+};
+
+struct in_pktinfo {
+	unsigned int ipi_ifindex;
+	struct in_addr ipi_spec_dst;
+	struct in_addr ipi_addr;
+};
+
+struct in6_pktinfo {
+	struct in6_addr ipi6_addr;
+	uint32_t ipi6_ifindex;
+};
+
+struct group_req {
+	uint32_t gr_interface;
+	struct sockaddr_storage gr_group;
+};
+
+struct group_source_req {
+	uint32_t gsr_interface;
+	struct sockaddr_storage gsr_group;
+	struct sockaddr_storage gsr_source;
 };
 
 #ifdef __cplusplus
@@ -101,4 +143,70 @@ struct ipv6_mreq {
 #define IPPROTO_RAW      255
 #define IPPROTO_MAX      256
 
-#endif // _ABITBITS_IN_H
+#define IP_TOS 1
+#define IP_TTL 2
+#define IP_HDRINCL 3
+#define IP_OPTIONS 4
+#define IP_RECVOPTS 6
+#define IP_RETOPTS 7
+#define IP_PKTINFO 8
+#define IP_PKTOPTIONS 9
+#define IP_MTU_DISCOVER 10
+#define IP_RECVERR 11
+#define IP_RECVTTL 12
+#define IP_MTU 14
+#define IP_MULTICAST_IF 32
+#define IP_MULTICAST_TTL 33
+#define IP_MULTICAST_LOOP 34
+#define IP_ADD_MEMBERSHIP 35
+#define IP_DROP_MEMBERSHIP 36
+#define IP_UNBLOCK_SOURCE 37
+#define IP_BLOCK_SOURCE 38
+#define IP_ADD_SOURCE_MEMBERSHIP 39
+#define IP_DROP_SOURCE_MEMBERSHIP 40
+#define IP_UNICAST_IF 50
+
+#define IPV6_2292PKTOPTIONS 6
+#define IPV6_2292HOPLIMIT 8
+#define IPV6_UNICAST_HOPS 16
+#define IPV6_MULTICAST_IF 17
+#define IPV6_MULTICAST_HOPS 18
+#define IPV6_MULTICAST_LOOP 19
+#define IPV6_JOIN_GROUP 20
+#define IPV6_LEAVE_GROUP 21
+#define IPV6_MTU_DISCOVER 23
+#define IPV6_MTU 24
+#define IPV6_RECVERR 25
+#define IPV6_V6ONLY 26
+#define IPV6_RECVPKTINFO 49
+#define IPV6_PKTINFO 50
+#define IPV6_RECVHOPLIMIT 51
+#define IPV6_HOPLIMIT 52
+
+#define IPV6_RECVTCLASS	66
+#define IPV6_TCLASS 67
+
+#define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
+#define IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
+
+#define IPV6_PMTUDISC_DONT 0
+#define IPV6_PMTUDISC_WANT 1
+#define IPV6_PMTUDISC_DO 2
+#define IPV6_PMTUDISC_PROBE 3
+#define IPV6_PMTUDISC_INTERFACE 4
+#define IPV6_PMTUDISC_OMIT 5
+
+#define IP_PMTUDISC_DONT 0
+#define IP_PMTUDISC_WANT 1
+#define IP_PMTUDISC_DO 2
+#define IP_PMTUDISC_PROBE 3
+#define IP_PMTUDISC_INTERFACE 4
+#define IP_PMTUDISC_OMIT 5
+
+#define MCAST_JOIN_GROUP 42
+#define MCAST_BLOCK_SOURCE 43
+#define MCAST_UNBLOCK_SOURCE 44
+#define MCAST_JOIN_SOURCE_GROUP 46
+#define MCAST_LEAVE_SOURCE_GROUP 47
+
+#endif /* _ABITBITS_IN_H */

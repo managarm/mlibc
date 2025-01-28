@@ -1,0 +1,14 @@
+FOO_1 {
+	global: foo;
+	local: *;
+};
+
+FOO_2 {
+	global: foo;
+	local: *;
+};
+
+FOO_3 {
+	global: foo;
+	local: *;
+};

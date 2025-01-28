@@ -1,9 +1,16 @@
 #include <assert.h>
 #include <locale.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <wchar.h>
+
+#if UINTPTR_MAX == UINT64_MAX
+#define WCHAR_SPEC ""
+#else
+#define WCHAR_SPEC "l"
+#endif
 
 /*
  * The code in this test is taken from https://github.com/termux/wcwidth/,
@@ -26,7 +33,7 @@ void assertWidthIs(int expected_width, wchar_t c) {
 	tests_run++;
 	int actual_width = wcwidth(c);
 	if (actual_width != expected_width) {
-		fprintf(stderr, "ERROR: wcwidth(U+%04x, '%lc') returned %d, expected %d\n", c, c, actual_width, expected_width);
+		fprintf(stderr, "ERROR: wcwidth(U+%04" WCHAR_SPEC "x, '%lc') returned %d, expected %d\n", c, (wint_t) c, actual_width, expected_width);
 		test_failures++;
 	}
 }

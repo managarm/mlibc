@@ -9,7 +9,7 @@ extern "C" {
 #include <abi-bits/pid_t.h>
 #include <bits/posix/timeval.h>
 
-// Struct definition taken from musl
+/* Struct definition taken from musl */
 struct utmpx {
 	short ut_type;
 	short __ut_pad1;
@@ -28,12 +28,20 @@ struct utmpx {
 	char __unused[20];
 };
 
-void updwtmpx(const char *, const struct utmpx *);
-int utmpxname(const char *);
-struct utmpx *pututxline(const struct utmpx *);
+#define e_exit __e_exit
+#define e_termination __e_termination
+
+#ifndef __MLIBC_ABI_ONLY
+
+void updwtmpx(const char *__wtmp_file, const struct utmpx *__ut);
+int utmpxname(const char *__file);
+struct utmpx *pututxline(const struct utmpx *__line);
 struct utmpx *getutxent(void);
+struct utmpx *getutxid(const struct utmpx *__id);
 void setutxent(void);
 void endutxent(void);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #define EMPTY           0
 #define RUN_LVL         1
@@ -45,8 +53,16 @@ void endutxent(void);
 #define USER_PROCESS    7
 #define DEAD_PROCESS    8
 
+#ifdef _GNU_SOURCE
+#define ACCOUNTING 9
+#endif
+
+#define __UT_HOSTSIZE 256
+#define __UT_NAMESIZE 32
+#define __UT_LINESIZE 32
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _UTMPX_H
+#endif /* _UTMPX_H */

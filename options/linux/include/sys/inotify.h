@@ -33,22 +33,39 @@ extern "C" {
 #define IN_Q_OVERFLOW 0x4000
 #define IN_UNMOUNT 0x2000
 
+#define IN_ALL_EVENTS (IN_ACCESS | IN_MODIFY | IN_ATTRIB | IN_CLOSE_WRITE | \
+			 IN_CLOSE_NOWRITE | IN_OPEN | IN_MOVED_FROM | \
+			 IN_MOVED_TO | IN_DELETE | IN_CREATE | IN_DELETE_SELF | \
+			 IN_MOVE_SELF)
+
 struct inotify_event {
 	int wd;
 	unsigned int mask;
 	unsigned int cookie;
 	unsigned int len;
+
+/*
+ * glibc uses a flexible array member here, but we get a warning and they don't:
+ * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=117241
+ */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 	char name[];
+#pragma GCC diagnostic pop
 };
 
+#ifndef __MLIBC_ABI_ONLY
+
 int inotify_init(void);
-int inotify_init1(int);
-int inotify_add_watch(int, const char *, uint32_t);
-int inotify_rm_watch(int, int);
+int inotify_init1(int __flags);
+int inotify_add_watch(int __ifd, const char *__path, uint32_t __mask);
+int inotify_rm_watch(int __ifd, int __wd);
+
+#endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //_SYS_INOTIFY_H
+#endif /*_SYS_INOTIFY_H */
 

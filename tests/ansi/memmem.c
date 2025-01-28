@@ -19,4 +19,6 @@ int main() {
 	char *needle4 = "23\0x45";
 	rv = memmem(haystack, 10, needle4, 6);
 	assert(rv == haystack + 4);
+
+	return 0;
 }
