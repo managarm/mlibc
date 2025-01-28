@@ -1,1 +1,1 @@
-../../../../abis/linux/signal.h
+../../../../abis/vinix/signal.h

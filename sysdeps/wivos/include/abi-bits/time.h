@@ -1,1 +1,1 @@
-../../../../abis/mlibc/time.h
+../../../../abis/linux/time.h

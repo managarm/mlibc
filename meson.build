@@ -257,7 +257,7 @@ elif host_machine.system() == 'dripos'
 	libc_include_dirs += include_directories('sysdeps/dripos/include')
 	subdir('sysdeps/dripos')
 elif host_machine.system() == 'wivos'
-	rtdl_include_dirs += include_directories('sysdeps/wivos/include')
+	rtld_include_dirs += include_directories('sysdeps/wivos/include')
 	libc_include_dirs += include_directories('sysdeps/wivos/include')
 	subdir('sysdeps/wivos')
 elif host_machine.system() == 'astral'

@@ -6,7 +6,6 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <asm/ioctls.h>
 #include <stdlib.h>
 
 #include <wivos/syscall.h>
