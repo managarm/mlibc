@@ -267,7 +267,20 @@ int sys_futex_wake(int *pointer)
 
 int sys_clock_get(int clock, time_t *secs, long *nanos)
 {
-    return ENOSYS;
+#if defined(__x86_64__)
+	enum { SysS_ClockGet = 0x80000002 };
+	// NOTE(oberrow): This clock is not precise.
+	obos_status st = (obos_status)syscall3(SysS_ClockGet, clock, secs, nanos);
+	switch (st)
+	{
+		case OBOS_STATUS_INVALID_ARGUMENT: return EINVAL;
+		case OBOS_STATUS_PAGE_FAULT: return EFAULT;
+		case OBOS_STATUS_SUCCESS: return 0;
+		default: return ENOSYS;
+	}
+#else
+	return ENOSYS;
+#endif
 }
 
 static int parse_file_status(obos_status status)
