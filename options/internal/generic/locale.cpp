@@ -81,6 +81,10 @@ char *nl_langinfo(nl_item item) {
 		return const_cast<char *>("%I:%M:%S %p");
 	}else if(item == D_T_FMT) {
 		return const_cast<char *>("%a %b %e %T %Y");
+	} else if (item == RADIXCHAR) {
+		return const_cast<char *>(".");
+	} else if (item == THOUSEP) {
+		return const_cast<char *>("");
 	}else if(item == YESEXPR) {
 		return const_cast<char *>("^[yY]");
 	}else if(item == NOEXPR) {
