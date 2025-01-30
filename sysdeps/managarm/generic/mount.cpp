@@ -21,6 +21,9 @@ sys_mount(const char *source, const char *target, const char *fstype, unsigned l
 	req.set_target_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), target ? target : ""));
 	req.set_fs_type(frg::string<MemoryAllocator>(getSysdepsAllocator(), fstype ? fstype : ""));
 
+	if(!fstype)
+		abort();
+
 	auto [offer, send_head, send_tail, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
 	    helix_ng::offer(

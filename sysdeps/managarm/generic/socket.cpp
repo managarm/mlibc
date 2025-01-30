@@ -129,6 +129,7 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 
 int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	SignalGuard sguard;
+	mlibc::infoLogger() << "mlibc: entering connect syscall" << frg::endlog;
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -157,6 +158,7 @@ int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) 
 	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	mlibc::infoLogger() << "mlibc: handling errors and exit connect syscall" << frg::endlog;
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
 		return ENOENT;
