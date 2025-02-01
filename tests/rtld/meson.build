@@ -13,6 +13,7 @@ rtld_test_cases = [
 	'scope3',
 	'scope4',
 	'scope5',
+	'search-order',
 	'tls_align',
 	'relr',
 	'symver',
@@ -48,7 +49,7 @@ foreach test_name : rtld_test_cases
 			link_args: test_link_args,
 		)
 		test(test_name, exec, suite: 'rtld')
-		if build_tests_host_libc and not host_libc_excluded_test_cases.contains(test_name)
+		if build_tests_host_libc and not host_libc_excluded_test_cases.contains('rtld' / test_name)
 			test(test_name, exec, suite: ['host-libc', 'rtld'])
 		endif
 		continue
@@ -66,7 +67,7 @@ foreach test_name : rtld_test_cases
 	# importantly LD_LIBRARY_PATH which is used by a few tests.
 	test(test_name, env, args: test_env + exec, suite: 'rtld', depends: test_depends)
 
-	if build_tests_host_libc and not host_libc_excluded_test_cases.contains(test_name)
+	if build_tests_host_libc and not host_libc_excluded_test_cases.contains('rtld' / test_name)
 		if test_name in host_libc_rtld_nosan_test_cases
 			host_libc_rtld_sanitize_options = 'b_sanitize=none'
 		else
