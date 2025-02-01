@@ -13,6 +13,7 @@ rtld_test_cases = [
 	'scope3',
 	'scope4',
 	'scope5',
+	'search-order',
 	'tls_align',
 	'relr',
 	'symver',
