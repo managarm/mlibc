@@ -33,9 +33,24 @@ foreach test_name : rtld_test_cases
 	test_native_link_with = []
 	test_native_depends = []
 	test_additional_link_args = []
+	test_skipped = false
 
 	# Build the needed DSOs for the test. This sets the variables above.
 	subdir(test_name)
+
+	if test_skipped
+		exec = executable('rtld-' + test_name, ['skipped.c', test_sources],
+			dependencies: libc_dep,
+			override_options: test_override_options,
+			c_args: test_c_args,
+			link_args: test_link_args,
+		)
+		test(test_name, exec, suite: 'rtld')
+		if build_tests_host_libc and not host_libc_excluded_test_cases.contains(test_name)
+			test(test_name, exec, suite: ['host-libc', 'rtld'])
+		endif
+		continue
+	endif
 
 	exec = executable('rtld-' + test_name, [test_name / 'test.c', test_sources],
 		link_with: test_link_with,
