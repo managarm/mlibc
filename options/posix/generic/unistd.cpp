@@ -9,6 +9,7 @@
 #include <termios.h>
 #include <pwd.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
@@ -908,8 +909,17 @@ char *getpass(const char *prompt) {
 }
 
 char *get_current_dir_name(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	char *pwd;
+	struct stat dotstat, pwdstat;
+
+	pwd = getenv ("PWD");
+	if(pwd != NULL && stat(".", &dotstat) == 0
+		&& stat(pwd, &pwdstat) == 0 && pwdstat.st_dev == dotstat.st_dev
+		&& pwdstat.st_ino == dotstat.st_ino)
+		/* The PWD value is correct.  Use it.  */
+		return strdup(pwd);
+
+	return getcwd((char *) NULL, 0);
 }
 
 // This is a Linux extension
@@ -997,6 +1007,7 @@ int usleep(useconds_t usecs) {
 }
 
 int dup(int fd) {
+	mlibc::infoLogger() << "mlibc: dup called" << frg::endlog;
 	int newfd;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_dup, -1);
 	if(int e = mlibc::sys_dup(fd, 0, &newfd); e) {
@@ -1007,6 +1018,7 @@ int dup(int fd) {
 }
 
 int dup2(int fd, int newfd) {
+	mlibc::infoLogger() << "mlibc: dup2 called" << frg::endlog;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_dup2, -1);
 	if(int e = mlibc::sys_dup2(fd, 0, newfd); e) {
 		errno = e;

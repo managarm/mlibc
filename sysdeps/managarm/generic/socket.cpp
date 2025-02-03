@@ -300,6 +300,7 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		creds.pid = resp.pid();
 		creds.uid = resp.uid();
 		creds.gid = resp.gid();
+		mlibc::infoLogger() << "GROTE KANKER: " << creds.pid << " and " << creds.uid << " and " << creds.gid << frg::endlog;
 		memcpy(buffer, &creds, sizeof(struct ucred));
 		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_SNDBUF) {
