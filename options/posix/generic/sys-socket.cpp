@@ -19,6 +19,7 @@ int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict a
 }
 
 int accept4(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length, int flags) {
+	mlibc::infoLogger() << "mlibc: accept4 called" << frg::endlog;
 	int newfd;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_accept, -1);
 	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length, flags); e) {

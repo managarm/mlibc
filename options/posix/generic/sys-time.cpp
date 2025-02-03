@@ -22,6 +22,8 @@ int gettimeofday(struct timeval *__restrict result, void *__restrict unused) {
 }
 
 int settimeofday(const struct timeval *, const struct timezone *) {
+	errno = ENOSYS;
+	return -1;
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

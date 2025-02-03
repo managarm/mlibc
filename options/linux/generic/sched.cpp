@@ -35,6 +35,8 @@ int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask) {
 }
 
 int unshare(int) {
+	errno = ENOSYS;
+	return -1;
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

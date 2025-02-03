@@ -4,6 +4,7 @@
 #include <linux/filter.h>
 #include <linux/if_packet.h>
 #include <linux/netlink.h>
+#include <asm/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
@@ -128,6 +129,7 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 
 int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	SignalGuard sguard;
+	mlibc::infoLogger() << "mlibc: entering connect syscall" << frg::endlog;
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -156,6 +158,7 @@ int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) 
 	HEL_CHECK(recv_resp.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	mlibc::infoLogger() << "mlibc: handling errors and exit connect syscall" << frg::endlog;
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
 		return ENOENT;
@@ -254,9 +257,11 @@ int sys_peername(
 
 namespace {
 
-std::array<std::pair<int, int>, 2> getsockopt_passthrough = {{
+std::array<std::pair<int, int>, 4> getsockopt_passthrough = {{
     {SOL_SOCKET, SO_PROTOCOL},
     {SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS},
+	{SOL_SOCKET, SO_TYPE},
+	{SOL_SOCKET, SO_ACCEPTCONN},
 }};
 
 }
@@ -295,6 +300,7 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		creds.pid = resp.pid();
 		creds.uid = resp.uid();
 		creds.gid = resp.gid();
+		mlibc::infoLogger() << "GROTE KANKER: " << creds.pid << " and " << creds.uid << " and " << creds.gid << frg::endlog;
 		memcpy(buffer, &creds, sizeof(struct ucred));
 		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_SNDBUF) {
@@ -308,12 +314,6 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		) << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_RCVBUF is unimplemented\e[39m"
 		  << frg::endlog;
 		*(int *)buffer = 4096;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_TYPE) {
-		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_TYPE is "
-		                       "unimplemented, hardcoding SOCK_STREAM\e[39m"
-		                    << frg::endlog;
-		*(int *)buffer = SOCK_STREAM;
 		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_ERROR) {
 		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_ERROR is "
@@ -345,12 +345,6 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		                    << frg::endlog;
 		*(int *)buffer = 0;
 		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_ACCEPTCONN) {
-		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_ACCEPTCONN "
-		                       "is unimplemented, hardcoding 1\e[39m"
-		                    << frg::endlog;
-		*(int *)buffer = 1;
-		return 0;
 	} else if (layer == IPPROTO_TCP && number == TCP_MAXSEG) {
 		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with IPPROTO_TCP and TCP_MAXSEG is "
 		                       "unimplemented\e[39m"
@@ -361,6 +355,12 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		) << "\e[31mmlibc: getsockopt() call with IPPROTO_TCP and TCP_CONGESTION is "
 		     "unimplemented\e[39m"
 		  << frg::endlog;
+		return 0;
+	} else if (layer == SOL_SOCKET && number == SO_PEERPIDFD) {
+		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_PEERPIDFD "
+		                       "is unimplemented, hardcoding 0\e[39m"
+		                    << frg::endlog;
+		*(int *)buffer = 0;
 		return 0;
 	} else if (std::find(
 	               getsockopt_passthrough.begin(),
@@ -672,6 +672,31 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 	} else if (layer == SOL_IP && number == IP_RECVERR) {
 		mlibc::infoLogger(
 		) << "\e[31mmlibc: setsockopt() call with SOL_IP and IP_RECVERR is unimplemented\e[39m"
+		  << frg::endlog;
+		return 0;
+	} else if (layer == SOL_SOCKET && number == SO_PASSSEC) {
+		mlibc::infoLogger(
+		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_PASSSEC is unimplemented\e[39m"
+		  << frg::endlog;
+		return ENOSYS;
+	} else if (layer == SOL_SOCKET && number == SO_TIMESTAMP) {
+		mlibc::infoLogger(
+		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_TIMESTAMP is unimplemented\e[39m"
+		  << frg::endlog;
+		return 0;
+	} else if (layer == SOL_IP && number == IP_RECVERR) {
+		mlibc::infoLogger(
+		) << "\e[31mmlibc: setsockopt() call with SOL_IP and IP_RECVERR is unimplemented\e[39m"
+		  << frg::endlog;
+		return 0;
+	} else if (layer == SOL_SOCKET && number == SO_PASSSEC) {
+		mlibc::infoLogger(
+		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_PASSSEC is unimplemented\e[39m"
+		  << frg::endlog;
+		return ENOSYS;
+	} else if (layer == SOL_SOCKET && number == SO_TIMESTAMP) {
+		mlibc::infoLogger(
+		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_TIMESTAMP is unimplemented\e[39m"
 		  << frg::endlog;
 		return 0;
 	} else {

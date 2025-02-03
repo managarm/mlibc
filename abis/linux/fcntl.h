@@ -65,6 +65,10 @@
 #define F_SEAL_GROW 0x0004
 #define F_SEAL_WRITE 0x0008
 
+#define F_OFD_GETLK 36
+#define F_OFD_SETLK 37
+#define F_OFD_SETLKW 38
+
 #define F_RDLCK 0
 #define F_WRLCK 1
 #define F_UNLCK 2

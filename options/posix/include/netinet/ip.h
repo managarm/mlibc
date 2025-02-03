@@ -110,6 +110,8 @@ struct iphdr {
 	uint32_t daddr;
 };
 
+#define	IPTOS_DSCP_EF 0xB8
+
 #ifdef __cplusplus
 }
 #endif
