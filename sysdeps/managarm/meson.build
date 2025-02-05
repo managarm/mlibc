@@ -15,10 +15,11 @@ bragi_dep = subproject('bragi', default_options: ['install_headers=false']).get_
 libdrm_dep = subproject('libdrm-headers').get_variable('libdrm_dep')
 
 bragi_gen = generator(bragi, arguments: [
-		'-l', 'frigg',
-		'--protobuf',
 		'@INPUT@',
-		'@OUTPUT@'
+		'-o',
+		'@OUTPUT@',
+		'cpp', '-l', 'frigg',
+		'--protobuf',
 	],
 	output: '@BASENAME@.frigg_bragi.hpp')
 
