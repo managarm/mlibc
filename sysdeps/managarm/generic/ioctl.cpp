@@ -64,11 +64,12 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		req_setup(req, ifr);
 
-		auto [offer, send_token_req, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_token_req, send_req, send_req_tail, recv_resp] = exchangeMsgsSync(
 		    getPosixLane(),
 		    helix_ng::offer(
+		        helix_ng::want_lane,
 		        helix_ng::sendBragiHeadOnly(token_req, getSysdepsAllocator()),
-		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
 		        helix_ng::recvInline()
 		    )
 		);
@@ -76,10 +77,24 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		HEL_CHECK(offer.error());
 		HEL_CHECK(send_token_req.error());
 		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_req_tail.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::IfreqReply<MemoryAllocator> resp(getSysdepsAllocator());
-		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		auto preamble = bragi::read_preamble(recv_resp);
+
+		frg::vector<uint8_t, MemoryAllocator> tailBuffer{getSysdepsAllocator()};
+		tailBuffer.resize(preamble.tail_size());
+		auto [recv_tail] = exchangeMsgsSync(
+		    offer.descriptor().getHandle(),
+		    helix_ng::recvBuffer(tailBuffer.data(), tailBuffer.size())
+		);
+
+		HEL_CHECK(recv_tail.error());
+
+		auto resp = *bragi::parse_head_tail<managarm::fs::IfreqReply>(
+		    recv_resp, tailBuffer, getSysdepsAllocator()
+		);
+		recv_resp.reset();
 
 		int ret = resp_parse(resp, ifr);
 
@@ -905,12 +920,12 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::IfreqRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 
-		auto [offer, send_token_req, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_token_req, send_req, send_tail, recv_resp] = exchangeMsgsSync(
 		    getPosixLane(),
 		    helix_ng::offer(
 		        helix_ng::want_lane,
 		        helix_ng::sendBragiHeadOnly(token_req, getSysdepsAllocator()),
-		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
 		        helix_ng::recvInline()
 		    )
 		);
@@ -920,6 +935,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		HEL_CHECK(offer.error());
 		HEL_CHECK(send_token_req.error());
 		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_tail.error());
 		HEL_CHECK(recv_resp.error());
 
 		auto preamble = bragi::read_preamble(recv_resp);
