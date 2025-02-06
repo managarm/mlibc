@@ -4,6 +4,7 @@
 
 #include <mlibc/linux-sysdeps.hpp>
 #include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/debug.hpp>
 
 int sched_getcpu(void) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getcpu, -1);
@@ -15,9 +16,13 @@ int sched_getcpu(void) {
 	return cpu;
 }
 
-int setns(int, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int setns(int fd, int nstype) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setns, -1);
+	if(int e = mlibc::sys_setns(fd, nstype); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int sched_getscheduler(pid_t) {
@@ -34,9 +39,13 @@ int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask) {
 	return 0;
 }
 
-int unshare(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int unshare(int flags) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_unshare, -1);
+	if(int e = mlibc::sys_unshare(flags); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int sched_setaffinity(pid_t, size_t, const cpu_set_t *) {
@@ -44,7 +53,18 @@ int sched_setaffinity(pid_t, size_t, const cpu_set_t *) {
 	__builtin_unreachable();
 }
 
-int clone(int (*)(void *), void *, int, void *, ...) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int clone(int (*fn)(void *), void *stack, int flags, void *arg, ...) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_linux_clone, -1);
+	if(stack) {
+		mlibc::infoLogger() << "clone: stack argument is ignored" << frg::endlog;
+	}
+	pid_t ret;
+	if(int e = mlibc::sys_linux_clone(flags, NULL, &ret); e) {
+		errno = e;
+		return -1;
+	}
+	if(!ret) {
+		mlibc::sys_exit(fn(arg));
+	}
+	return ret;
 }
