@@ -22,7 +22,10 @@ __setjmp:
 
 .global setjmp
 .type setjmp, "function"
+.global _setjmp
+.type _setjmp, "function"
 setjmp:
+_setjmp:
 	xor %edx, %edx
 	jmp __setjmp
 
@@ -34,7 +37,10 @@ sigsetjmp:
 
 .global longjmp
 .type longjmp, "function"
+.global _longjmp
+.type _longjmp, "function"
 longjmp:
+_longjmp:
 	mov 4(%esp), %ecx
 	mov 0x00(%ecx), %ebx
 	mov 0x04(%ecx), %ebp
