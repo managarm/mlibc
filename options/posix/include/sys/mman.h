@@ -29,11 +29,9 @@ int msync(void *__addr, size_t __size, int __flags);
 int shm_open(const char *__name, int __oflag, mode_t __mode);
 int shm_unlink(const char *__name);
 
-/* Linux extension: */
+#if __MLIBC_LINUX_OPTION
 void *mremap(void *__old_address, size_t __old_size, size_t __new_size, int __flags, ...);
 int remap_file_pages(void *__addr, size_t __size, int __prot, size_t __pgoff, int __flags);
-
-#if __MLIBC_LINUX_OPTION
 int memfd_create(const char *__name, unsigned int __flags);
 int madvise(void *__addr, size_t __size, int __advise);
 int mincore(void *__addr, size_t __size, unsigned char *__vec);
