@@ -13,6 +13,7 @@ rtld_test_cases = [
 	'scope3',
 	'scope4',
 	'scope5',
+	'search-order',
 	'tls_align',
 	'relr',
 	'symver',
@@ -26,16 +27,29 @@ foreach test_name : rtld_test_cases
 	test_rpath = meson.build_root() / 'tests' / 'rtld' / test_name / ''
 	test_rpath += ':$ORIGIN/' # Workaround old and buggy qemu-user on CI
 
-	test_env = []
+	test_env = environment()
 	test_link_with = []
 	test_depends = []
-	test_native_env = []
+	test_native_env = environment()
 	test_native_link_with = []
 	test_native_depends = []
 	test_additional_link_args = []
+	test_skipped = false
 
 	# Build the needed DSOs for the test. This sets the variables above.
 	subdir(test_name)
+
+	if test_skipped
+		exec = executable('rtld-' + test_name, ['skipped.c', test_sources],
+			dependencies: libc_dep,
+			link_args: test_link_args,
+		)
+		test(test_name, exec, suite: 'rtld')
+		if build_tests_host_libc and not host_libc_excluded_test_cases.contains(test_name)
+			test(test_name, exec, suite: ['host-libc', 'rtld'])
+		endif
+		continue
+	endif
 
 	exec = executable('rtld-' + test_name, [test_name / 'test.c', test_sources],
 		link_with: test_link_with,
