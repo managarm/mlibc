@@ -535,6 +535,11 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// so we have to set the ldso path after loading both.
 	ldso->path = executableSO->interpreterPath;
 
+	// We added the roots for the BFS, time for the actual BFS
+	for (size_t i = 0; i < initialRepository->dependencyQueue.size(); i++) {
+		auto current = initialRepository->dependencyQueue[i];
+		initialRepository->discoverDependenciesFromLoadedObject(current);
+	}
 #else
 	executableSO = initialRepository->injectStaticObject(execfn,
 			frg::string<MemoryAllocator>{ execfn, getAllocator() },
