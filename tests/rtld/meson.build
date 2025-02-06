@@ -26,10 +26,10 @@ foreach test_name : rtld_test_cases
 	test_rpath = meson.build_root() / 'tests' / 'rtld' / test_name / ''
 	test_rpath += ':$ORIGIN/' # Workaround old and buggy qemu-user on CI
 
-	test_env = []
+	test_env = environment()
 	test_link_with = []
 	test_depends = []
-	test_native_env = []
+	test_native_env = environment()
 	test_native_link_with = []
 	test_native_depends = []
 	test_additional_link_args = []

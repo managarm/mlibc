@@ -5,8 +5,8 @@
 test_rpath = '$ORIGIN/'
 
 test_ld_path = meson.build_root() / 'tests' / 'rtld' / test_name
-test_env += ['LD_LIBRARY_PATH=' + test_ld_path]
-test_native_env += ['LD_LIBRARY_PATH=' + test_ld_path]
+test_env.set('LD_LIBRARY_PATH', test_ld_path)
+test_native_env.set('LD_LIBRARY_PATH', test_ld_path)
 
 libfoo = shared_library('foo', 'libfoo.c',
 	dependencies: libc_dep,
