@@ -3,6 +3,7 @@
 #endif
 
 #include <bits/ensure.h>
+#include <bits/posix/posix_string.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -150,6 +151,11 @@ void *memrchr(const void *m, int c, size_t n) {
 			return (void *)(s + n);
 	}
 	return 0;
+}
+
+void explicit_bzero(void *s, size_t n) {
+	s = memset(s, 0, n);
+	asm volatile("" : : "r"(s) : "memory");
 }
 
 char *strerror_l(int errnum, locale_t) {

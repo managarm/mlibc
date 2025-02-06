@@ -65,3 +65,13 @@ ssize_t pwritev(int, const struct iovec *, int, off_t) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+ssize_t process_vm_readv(pid_t, const struct iovec *, unsigned long, const struct iovec *, unsigned long, unsigned long) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+ssize_t process_vm_writev(pid_t, const struct iovec *, unsigned long, const struct iovec *, unsigned long, unsigned long) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

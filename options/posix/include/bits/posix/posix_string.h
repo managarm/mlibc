@@ -43,6 +43,7 @@ char *strcasestr(const char *__s1, const char *__s2);
 	(char *) memcpy(__buf, __str, __len - 1); \
 })
 void *memrchr(const void *__m, int __c, size_t __n);
+void explicit_bzero(void *__s, size_t __n);
 #endif /* defined(_GNU_SOURCE) */
 
 /* BSD extensions */
