@@ -30,6 +30,8 @@ all_test_cases = [
 	'ansi/strxfrm',
 	'ansi/calloc',
 	'ansi/fgetpos',
+	'ansi/fputs',
+	'ansi/ftell',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
