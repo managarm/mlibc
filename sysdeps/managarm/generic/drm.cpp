@@ -1009,6 +1009,45 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 				return 0;
 			}
 		}
+		case DRM_IOCTL_MODE_CURSOR2: {
+			auto param = reinterpret_cast<drm_mode_cursor2 *>(arg);
+
+			managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
+			req.set_command(request);
+
+			req.set_drm_flags(param->flags);
+			req.set_drm_crtc_id(param->crtc_id);
+			req.set_drm_x(param->x);
+			req.set_drm_y(param->y);
+			req.set_drm_width(param->width);
+			req.set_drm_height(param->height);
+			req.set_drm_handle(param->handle);
+
+			auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+			    handle,
+			    helix_ng::offer(
+			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			        helix_ng::recvInline()
+			    )
+			);
+			HEL_CHECK(offer.error());
+			HEL_CHECK(send_ioctl_req.error());
+			HEL_CHECK(send_req.error());
+			HEL_CHECK(recv_resp.error());
+
+			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
+			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+			if (resp.error() == managarm::fs::Errors::NO_BACKING_DEVICE) {
+				return ENXIO;
+			} else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
+				return EINVAL;
+			} else {
+				*result = resp.result();
+				return 0;
+			}
+		}
 		case DRM_IOCTL_MODE_DESTROY_DUMB: {
 			auto param = reinterpret_cast<drm_mode_destroy_dumb *>(arg);
 

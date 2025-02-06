@@ -254,8 +254,9 @@ int sys_peername(
 
 namespace {
 
-std::array<std::pair<int, int>, 2> getsockopt_passthrough = {{
+std::array<std::pair<int, int>, 3> getsockopt_passthrough = {{
     {SOL_SOCKET, SO_PROTOCOL},
+    {SOL_SOCKET, SO_PEERCRED},
     {SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS},
 }};
 
@@ -265,39 +266,7 @@ int
 sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
 	SignalGuard sguard;
 
-	if (layer == SOL_SOCKET && number == SO_PEERCRED) {
-		if (*size != sizeof(struct ucred))
-			return EINVAL;
-
-		auto handle = getHandleForFd(fd);
-		if (!handle)
-			return EBADF;
-
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_GET_OPTION);
-		req.set_command(SO_PEERCRED);
-
-		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
-		    handle,
-		    helix_ng::offer(
-		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
-		    )
-		);
-		HEL_CHECK(offer.error());
-		HEL_CHECK(send_req.error());
-		HEL_CHECK(recv_resp.error());
-
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-
-		struct ucred creds;
-		creds.pid = resp.pid();
-		creds.uid = resp.uid();
-		creds.gid = resp.gid();
-		memcpy(buffer, &creds, sizeof(struct ucred));
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_SNDBUF) {
+	if (layer == SOL_SOCKET && number == SO_SNDBUF) {
 		mlibc::infoLogger(
 		) << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented\e[39m"
 		  << frg::endlog;
@@ -416,11 +385,12 @@ std::array<std::pair<int, int>, 6> setsockopt_readonly = {{
     {SOL_IP, SO_PEERSEC},
 }};
 
-std::array<std::pair<int, int>, 9> setsockopt_passthrough = {{
+std::array<std::pair<int, int>, 10> setsockopt_passthrough = {{
     {SOL_PACKET, PACKET_AUXDATA},
     {SOL_SOCKET, SO_LOCK_FILTER},
     {SOL_SOCKET, SO_BINDTODEVICE},
     {SOL_SOCKET, SO_TIMESTAMP},
+    {SOL_SOCKET, SO_PASSCRED},
     {SOL_IP, IP_PKTINFO},
     {SOL_IP, IP_RECVTTL},
     {SOL_IP, IP_RETOPTS},
@@ -437,40 +407,12 @@ std::array<std::pair<int, int>, 2> setsockopt_passthrough_noopt = {{
 int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t size) {
 	SignalGuard sguard;
 
-	if (layer == SOL_SOCKET && number == SO_PASSCRED) {
-		int value;
-		__ensure(size == sizeof(int));
-		memcpy(&value, buffer, sizeof(int));
-
-		auto handle = getHandleForFd(fd);
-		if (!handle)
-			return EBADF;
-
-		managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-		req.set_req_type(managarm::fs::CntReqType::PT_SET_OPTION);
-		req.set_command(SO_PASSCRED);
-		req.set_value(value);
-
-		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
-		    handle,
-		    helix_ng::offer(
-		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
-		    )
-		);
-		HEL_CHECK(offer.error());
-		HEL_CHECK(send_req.error());
-		HEL_CHECK(recv_resp.error());
-
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-		return 0;
-	} else if (std::find(
-	               setsockopt_passthrough.begin(),
-	               setsockopt_passthrough.end(),
-	               std::pair<int, int>{layer, number}
-	           )
-	           != setsockopt_passthrough.end()) {
+	if (std::find(
+	        setsockopt_passthrough.begin(),
+	        setsockopt_passthrough.end(),
+	        std::pair<int, int>{layer, number}
+	    )
+	    != setsockopt_passthrough.end()) {
 		auto handle = getHandleForFd(fd);
 		if (!handle)
 			return EBADF;
