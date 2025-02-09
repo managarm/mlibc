@@ -12,7 +12,7 @@
 
 #include <mlibc/debug.hpp>
 #include <mlibc/linux-sysdeps.hpp>
-
+#if 0
 int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win) {
 	int ptmx_fd;
 	if(int e = mlibc::sys_open("/dev/ptmx", O_RDWR | O_NOCTTY, 0, &ptmx_fd); e) {
@@ -47,7 +47,7 @@ fail:
 	mlibc::sys_close(ptmx_fd);
 	return -1;
 }
-
+#endif
 int login_tty(int fd) {
 	if(setsid() == -1)
 		return -1;

@@ -45,6 +45,8 @@
 #define SYS_listen 50
 #define SYS_getpeername 52
 #define SYS_socketpair 83
+#define SYS_threadnew 56
+#define SYS_threadexit 61
 
 extern "C" {
 using sc_word_t = long;

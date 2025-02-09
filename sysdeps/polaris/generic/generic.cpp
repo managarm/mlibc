@@ -28,6 +28,7 @@ int fcntl_helper(int fd, int request, int *result, ...) {
 
 void sys_libc_log(const char *message) {
 	syscall(SYS_puts, message);
+	syscall(SYS_puts, "\n");
 }
 
 void sys_exit(int status) {
@@ -57,7 +58,11 @@ int sys_futex_wake(int *pointer) {
 }
 
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
-	*result = (int)syscall(SYS_ioctl, fd, request, arg);
+	int ret = syscall(SYS_ioctl, fd, request, arg);
+	if (ret < 0) {
+		return -ret;
+	}
+	*result = ret;
 	return 0;
 }
 
@@ -91,6 +96,23 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 }
 
 #ifndef MLIBC_BUILDING_RTLD
+
+void sys_thread_exit() {
+	syscall(SYS_threadexit);
+	__builtin_unreachable();
+}
+
+extern "C" void __mlibc_thread_entry();
+
+int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
+	(void)tcb;
+
+	int ret = syscall(SYS_threadnew, (uintptr_t)__mlibc_thread_entry, (uintptr_t)stack);
+	if (ret < 0) { return -ret; }
+
+	*pid_out = ret;
+	return 0;
+}
 
 int sys_tcgetattr(int fd, struct termios *attr) {
 	int ret;
@@ -178,7 +200,7 @@ retry:
 	}
 
 	*bytes_read = offset;
-	return 0;
+	return ret;
 }
 
 #endif
@@ -235,8 +257,9 @@ int sys_readlink(const char *path, void *data, size_t max_size, ssize_t *length)
 }
 
 int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags) {
-	syscall(SYS_linkat, olddirfd, old_path, newdirfd, new_path, flags);
-	return 0;
+	int ret = syscall(SYS_linkat, olddirfd, old_path, newdirfd, new_path, flags);
+	ret = ret < 0 ? -ret : ret;
+	return ret;
 }
 
 int sys_link(const char *old_path, const char *new_path) {
@@ -244,13 +267,15 @@ int sys_link(const char *old_path, const char *new_path) {
 }
 
 int sys_unlinkat(int fd, const char *path, int flags) {
-	syscall(SYS_unlinkat, fd, path, flags);
-	return 0;
+	int ret = syscall(SYS_unlinkat, fd, path, flags);
+	ret = ret < 0 ? -ret : ret;
+	return ret;
 }
 
 int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
-	syscall(SYS_fchmodat, fd, pathname, mode, flags);
-	return 0;
+	int ret = syscall(SYS_fchmodat, fd, pathname, mode, flags);
+	ret = ret < 0 ? -ret : ret;
+	return ret;
 }
 
 int sys_fchmod(int fd, mode_t mode) {
@@ -372,20 +397,20 @@ int sys_access(const char *path, int mode) {
 
 int sys_pipe(int *fds, int flags) {
 	int ret = syscall(SYS_pipe, fds, flags);
-	if (ret < 0) {
-		return -ret;
-	}
-	return 0;
+	ret = ret < 0 ? -ret : ret;
+	return ret;
 }
 
 int sys_chdir(const char *path) {
-	syscall(SYS_chdir, path);
-	return 0;
+	int ret = syscall(SYS_chdir, path);
+	ret = ret < 0 ? -ret : ret;
+	return ret;
 }
 
 int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
-	syscall(SYS_mkdirat, dirfd, path, mode);
-	return 0;
+	int ret = syscall(SYS_mkdirat, dirfd, path, mode);
+	ret = ret < 0 ? -ret : ret;
+	return ret;
 }
 
 int sys_mkdir(const char *path, mode_t mode) {
@@ -430,8 +455,9 @@ int sys_dup(int fd, int flags, int *newfd) {
 }
 
 int sys_dup2(int fd, int flags, int newfd) {
-	syscall(SYS_dup3, fd, newfd, flags);
-	return 0;
+	int ret = syscall(SYS_dup3, fd, newfd, flags);
+	ret = ret < 0 ? -ret : ret;
+	return ret;
 }
 
 int sys_sigprocmask(int, const sigset_t *__restrict, sigset_t *__restrict) {
@@ -543,9 +569,9 @@ int sys_pselect(int nfds, fd_set *read_set, fd_set *write_set,
   }
 
   int ret = sys_ppoll(fds, nfds, timeout, sigmask, num_events);
-  if (ret != 0) {
+  if (ret < 0) {
     free(fds);
-    return ret;
+    return -ret;
   }
 
   fd_set res_read_set, res_write_set, res_except_set;

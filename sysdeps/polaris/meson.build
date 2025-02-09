@@ -1,10 +1,20 @@
+sysdep_supported_options = {
+	'posix': true,
+	'linux': false,
+	'glibc': true,
+	'bsd': true,
+}
+
 rtld_sources += files(
 	'generic/generic.cpp'
 )
 
 libc_sources += files(
 	'generic/entry.cpp',
-	'generic/generic.cpp'
+	'generic/generic.cpp',
+	'generic/pty.cpp',
+	'generic/thread.cpp',
+	'generic/thread.S'
 )
 
 if not no_headers
