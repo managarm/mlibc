@@ -9,6 +9,7 @@
 #include <termios.h>
 #include <pwd.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
@@ -908,8 +909,17 @@ char *getpass(const char *prompt) {
 }
 
 char *get_current_dir_name(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	char *pwd;
+	struct stat dotstat, pwdstat;
+
+	pwd = getenv ("PWD");
+	if(pwd != NULL && stat(".", &dotstat) == 0
+		&& stat(pwd, &pwdstat) == 0 && pwdstat.st_dev == dotstat.st_dev
+		&& pwdstat.st_ino == dotstat.st_ino)
+		/* The PWD value is correct.  Use it.  */
+		return strdup(pwd);
+
+	return getcwd((char *) NULL, 0);
 }
 
 // This is a Linux extension
