@@ -337,9 +337,24 @@ leave:
 	return r < 0 ? -1 : 0;
 }
 
-struct group *fgetgrent(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+struct group *fgetgrent(FILE *file) {
+	static group entry;
+	char line[512];
+
+	if(fgets(line, 512, file)) {
+		clear_entry(&entry);
+		if(!extract_entry(line, &entry)) {
+			errno = EINVAL;
+			return nullptr;
+		}
+		return &entry;
+	}
+
+	if(ferror(file)) {
+		errno = EIO;
+	}
+
+	return nullptr;
 }
 
 int getgrouplist(const char *user, gid_t gid, gid_t *groups, int *ngroups) {
