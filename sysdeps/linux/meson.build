@@ -80,6 +80,7 @@ if not no_headers
 		'include/abi-bits/ioctls.h',
 		'include/abi-bits/xattr.h',
 		'include/abi-bits/msg.h',
+		'include/abi-bits/random.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)
