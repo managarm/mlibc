@@ -22,6 +22,8 @@ host_libc_rtld_nosan_test_cases = [
 	'preinit',
 ]
 
+py = import('python').find_installation('python3')
+
 foreach test_name : rtld_test_cases
 	test_rpath = meson.global_build_root() / 'tests' / 'rtld' / test_name / ''
 	test_rpath += ':$ORIGIN/' # Workaround old and buggy qemu-user on CI
@@ -60,7 +62,13 @@ foreach test_name : rtld_test_cases
 		c_args: test_c_args,
 		link_args: test_link_args + test_additional_link_args,
 	)
-	test(test_name, exec, env: test_env, suite: 'rtld', depends: test_depends)
+	args = [
+		meson.global_source_root() + '/tests/rtld/env.py',
+		test_env,
+		exec,
+	]
+	# wrap the test so we can control the environment variables without meson interfering
+	test(test_name, py, args: args, suite: 'rtld', depends: test_depends)
 
 	if build_tests_host_libc and not host_libc_excluded_test_cases.contains(test_name)
 		if test_name in host_libc_rtld_nosan_test_cases
@@ -80,6 +88,11 @@ foreach test_name : rtld_test_cases
 			link_args: ['-ldl'] + test_additional_link_args,
 			native: true,
 		)
-		test(test_name, exec, env: test_native_env, suite: ['host-libc', 'rtld'], depends: test_native_depends)
+		args = [
+			meson.global_source_root() + '/tests/rtld/env.py',
+			test_native_env,
+			exec,
+		]
+		test(test_name, py, args: args, suite: ['host-libc', 'rtld'], depends: test_native_depends)
 	endif
 endforeach
