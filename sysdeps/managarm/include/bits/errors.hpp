@@ -72,6 +72,7 @@ inline int operator|(managarm::fs::Errors e, ToErrno) {
 		case managarm::fs::Errors::INTERNAL_ERROR:
 			return EIO;
 	}
+	__builtin_unreachable();
 }
 
 inline int operator|(managarm::posix::Errors e, ToErrno) {
@@ -133,4 +134,5 @@ inline int operator|(managarm::posix::Errors e, ToErrno) {
 		case managarm::posix::Errors::SYMBOLIC_LINK_LOOP:
 			return ELOOP;
 	}
+	__builtin_unreachable();
 }
