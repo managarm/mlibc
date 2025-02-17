@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/cdrom.h>
+#include <linux/fs.h>
 #include <linux/input.h>
 #include <linux/kd.h>
 #include <linux/nvme_ioctl.h>
@@ -1150,6 +1151,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		*result = resp.result();
 		param->result = resp.status();
 		return 0;
+	} else if (request == FICLONE || request == FICLONERANGE) {
+		mlibc::infoLogger() << "\e[35mmlibc: FICLONE/FICLONERANGE are no-ops" << frg::endlog;
+		*result = -1;
+		return EOPNOTSUPP;
 	}
 
 	mlibc::infoLogger() << "mlibc: Unexpected ioctl with"
