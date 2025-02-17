@@ -374,6 +374,17 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		lock->l_type = F_UNLCK;
 		mlibc::infoLogger() << "\e[31mmlibc: F_GETLK is stubbed!\e[39m" << frg::endlog;
 		return 0;
+	} else if (request == F_OFD_SETLK) {
+		mlibc::infoLogger() << "\e[31mmlibc: F_OFD_SETLK\e[39m" << frg::endlog;
+		return 0;
+	} else if (request == F_OFD_SETLKW) {
+		mlibc::infoLogger() << "\e[31mmlibc: F_OFD_SETLKW\e[39m" << frg::endlog;
+		return 0;
+	} else if (request == F_OFD_GETLK) {
+		struct flock *lock = va_arg(args, struct flock *);
+		lock->l_type = F_UNLCK;
+		mlibc::infoLogger() << "\e[31mmlibc: F_OFD_GETLK is stubbed!\e[39m" << frg::endlog;
+		return 0;
 	} else if (request == F_ADD_SEALS) {
 		auto seals = va_arg(args, int);
 		auto handle = getHandleForFd(fd);
