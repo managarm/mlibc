@@ -1,11 +1,12 @@
 #ifndef _SYS_MTIO_H
 #define _SYS_MTIO_H
 
+#include <mlibc-config.h>
+#include <sys/ioctl.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <mlibc-config.h>
 
 struct mtop {
 	short int mt_op;
@@ -87,8 +88,6 @@ struct mtconfiginfo {
 #define GMT_WR_PROT(x) ((x) & 0x04000000)
 
 #if __MLIBC_LINUX_OPTION
-#include <asm/ioctl.h>
-
 #define MTIOCTOP _IOR('m', 1, struct mtop)
 #define MTIOCGET _IOR('m', 2, struct mtget)
 #define MTIOCPOS _IOR('m', 3, struct mtpos)
