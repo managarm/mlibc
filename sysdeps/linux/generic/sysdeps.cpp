@@ -1997,6 +1997,63 @@ int sys_sigtimedwait(const sigset_t *__restrict set, siginfo_t *__restrict info,
 	return 0;
 }
 
+int sys_sendfile(int outfd, int infd, off_t *offset, size_t count, ssize_t *out) {
+	auto ret = do_syscall(SYS_sendfile, outfd, infd, offset, count);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	*out = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_syncfs(int fd) {
+	auto ret = do_syscall(SYS_syncfs, fd);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
+}
+
+int sys_name_to_handle_at(int dirfd, const char *pathname, struct file_handle *handle, int *mount_id, int flags) {
+	auto ret = do_syscall(SYS_name_to_handle_at, dirfd, pathname, handle, mount_id, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return sc_int_result<int>(ret);
+}
+
+int sys_splice(int in_fd, off_t *in_off, int out_fd, off_t *out_off, size_t size, unsigned int flags, ssize_t *out) {
+	auto ret = do_syscall(SYS_copy_file_range, in_fd, in_off, out_fd, out_off, size, flags);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	*out = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_unshare(int flags) {
+	auto ret = do_syscall(SYS_unshare, flags);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
+}
+
+int sys_setns(int fd, int nstype) {
+	auto ret = do_syscall(SYS_setns, fd, nstype);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
+}
+
+int sys_setgroups(size_t size, const gid_t *list) {
+	auto ret = do_syscall(SYS_setgroups, size, list);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
+}
+
 #if __MLIBC_BSD_OPTION
 int sys_brk(void **out) {
 	auto ret = do_syscall(SYS_brk, 0);
