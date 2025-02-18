@@ -609,6 +609,8 @@ int sys_setschedparam(void *tcb, int policy, const struct sched_param *param) {
 }
 
 int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
+	(void)tcb;
+
 	HelWord pid = 0;
 	HEL_CHECK(helSyscall2_1(
 	    kHelCallSuper + posix::superClone,
