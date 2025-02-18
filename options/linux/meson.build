@@ -90,9 +90,5 @@ if not no_headers
 		'include/sys/vfs.h',
 		subdir: 'sys'
 	)
-	install_headers(
-		'include/linux/libc-compat.h',
-		subdir: 'linux'
-	)
 endif
 

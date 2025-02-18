@@ -1,6 +1,7 @@
 #ifndef _ABIBITS_IN_H
 #define _ABIBITS_IN_H
 
+#include <mlibc-config.h>
 #include <bits/posix/in_addr_t.h>
 #include <bits/posix/in_port_t.h>
 #include <abi-bits/socket.h>
@@ -21,6 +22,7 @@ struct sockaddr_in {
 	uint8_t sin_zero[8];
 };
 
+#if !__MLIBC_LINUX_OPTION || (!defined(_UAPI_LINUX_IN6_H) && !defined(_UAPI_IPV6_H))
 struct in6_addr {
 	union {
 		uint8_t __s6_addr[16];
@@ -39,6 +41,17 @@ struct sockaddr_in6 {
 	struct in6_addr sin6_addr;
 	uint32_t        sin6_scope_id;
 };
+
+struct ipv6_mreq {
+	struct in6_addr ipv6mr_multiaddr;
+	unsigned        ipv6mr_interface;
+};
+
+struct in6_pktinfo {
+	struct in6_addr ipi6_addr;
+	uint32_t ipi6_ifindex;
+};
+#endif /* !__MLIBC_LINUX_OPTION || (!defined(_UAPI_LINUX_IN6_H) && !defined(_UAPI_IPV6_H)) */
 
 #define MCAST_INCLUDE 1
 
@@ -59,20 +72,10 @@ struct ip_mreqn {
 	int imr_ifindex;
 };
 
-struct ipv6_mreq {
-	struct in6_addr ipv6mr_multiaddr;
-	unsigned        ipv6mr_interface;
-};
-
 struct in_pktinfo {
 	unsigned int ipi_ifindex;
 	struct in_addr ipi_spec_dst;
 	struct in_addr ipi_addr;
-};
-
-struct in6_pktinfo {
-	struct in6_addr ipi6_addr;
-	uint32_t ipi6_ifindex;
 };
 
 struct group_req {
@@ -208,5 +211,25 @@ struct group_source_req {
 #define MCAST_UNBLOCK_SOURCE 44
 #define MCAST_JOIN_SOURCE_GROUP 46
 #define MCAST_LEAVE_SOURCE_GROUP 47
+
+#if __MLIBC_LINUX_OPTION
+
+#define __UAPI_DEF_IN_ADDR 0
+#define __UAPI_DEF_IN_CLASS 0
+#define __UAPI_DEF_IN_IPPROTO 0
+#define __UAPI_DEF_IN_PKTINFO 0
+#define __UAPI_DEF_IP_MREQ 0
+#define __UAPI_DEF_SOCKADDR_IN 0
+
+#define __UAPI_DEF_IN6_ADDR 0
+#define __UAPI_DEF_IN6_ADDR_ALT 1
+#define __UAPI_DEF_IN6_PKTINFO 0
+#define __UAPI_DEF_IP6_MTUINFO 0
+#define __UAPI_DEF_IPPROTO_V6 0
+#define __UAPI_DEF_IPV6_MREQ 0
+#define __UAPI_DEF_IPV6_OPTIONS 0
+#define __UAPI_DEF_SOCKADDR_IN6 0
+
+#endif /* __MLIBC_LINUX_OPTION */
 
 #endif /* _ABITBITS_IN_H */
