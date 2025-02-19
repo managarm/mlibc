@@ -509,10 +509,8 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if (resp.error() == managarm::fs::Errors::SUCCESS)
 			return 0;
-		else if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
-			return EINVAL;
 		else
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			return resp.error() | toErrno;
 	} else if (layer == SOL_SOCKET && number == SO_RCVBUFFORCE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt(SO_RCVBUFFORCE) is not implemented"
 		                       " correctly\e[39m"
@@ -621,8 +619,8 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 	} else {
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call, layer: " << layer
 		                     << " number: " << number << "\e[39m" << frg::endlog;
+		__builtin_unreachable();
 	}
-	__builtin_unreachable();
 }
 
 int sys_listen(int fd, int) {
