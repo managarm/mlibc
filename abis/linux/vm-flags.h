@@ -1,6 +1,8 @@
 #ifndef _ABIBITS_VM_FLAGS_H
 #define _ABIBITS_VM_FLAGS_H
 
+#include <mlibc-config.h>
+
 #define PROT_NONE  0x00
 #define PROT_READ  0x01
 #define PROT_WRITE 0x02
@@ -13,6 +15,9 @@
 #define MAP_FIXED     0x10
 #define MAP_ANON      0x20
 #define MAP_ANONYMOUS 0x20
+
+#if __MLIBC_LINUX_OPTION
+
 #define MAP_GROWSDOWN 0x100
 #define MAP_DENYWRITE 0x800
 #define MAP_EXECUTABLE 0x1000
@@ -24,6 +29,8 @@
 #define MAP_HUGETLB   0x40000
 #define MAP_SYNC      0x80000
 #define MAP_FIXED_NOREPLACE 0x100000
+
+#endif /* __MLIBC_LINUX_OPTION */
 
 #define MS_ASYNC 0x01
 #define MS_INVALIDATE 0x02
@@ -37,6 +44,8 @@
 #define POSIX_MADV_SEQUENTIAL 2
 #define POSIX_MADV_WILLNEED 3
 #define POSIX_MADV_DONTNEED 4
+
+#if __MLIBC_LINUX_OPTION
 
 #define MADV_NORMAL 0
 #define MADV_RANDOM 1
@@ -66,5 +75,7 @@
 #define MFD_CLOEXEC 1U
 #define MFD_ALLOW_SEALING 2U
 #define MFD_HUGETLB 4U
+
+#endif /* __MLIBC_LINUX_OPTION */
 
 #endif /* _ABIBITS_VM_FLAGS_H */
