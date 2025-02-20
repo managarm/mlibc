@@ -8,13 +8,9 @@
 
 #include <abi-bits/pid_t.h>
 #include <abi-bits/uid_t.h>
+#include <abi-bits/sigevent.h>
 #include <bits/types.h>
 #include <bits/size_t.h>
-
-union sigval {
-	int sival_int;
-	void *sival_ptr;
-};
 
 typedef struct {
 	int si_signo;
@@ -147,14 +143,6 @@ typedef struct __stack {
 #define CLD_TRAPPED 4
 #define CLD_STOPPED 5
 #define CLD_CONTINUED 6
-
-struct sigevent {
-	int sigev_notify;
-	int sigev_signo;
-	union sigval sigev_value;
-	void (*sigev_notify_function)(union sigval);
-	/* MISSING: sigev_notify_attributes */
-};
 
 struct sigaction {
 	void (*sa_handler)(int);

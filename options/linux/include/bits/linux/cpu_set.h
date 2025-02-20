@@ -1,5 +1,5 @@
-#ifndef _LINUX_CPU_SET_H
-#define _LINUX_CPU_SET_H
+#ifndef _BITS_LINUX_CPU_SET_H
+#define _BITS_LINUX_CPU_SET_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,4 +46,4 @@ int __mlibc_cpu_count(const size_t __setsize, const cpu_set_t *__set);
 }
 #endif
 
-#endif /* _LINUX_CPU_SET_H */
+#endif /* _BITS_LINUX_CPU_SET_H */

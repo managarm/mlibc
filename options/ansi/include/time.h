@@ -138,19 +138,4 @@ time_t timegm(struct tm *__tm);
 }
 #endif
 
-/* Linux extensions. */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct itimerspec {
-	struct timespec it_interval;
-	struct timespec it_value;
-};
-
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* _TIME_H */

@@ -66,7 +66,7 @@ struct dl_find_object {
 	void *dlfo_eh_frame;
 #if DLFO_STRUCT_HAS_EH_DBASE
 	void *dlfo_eh_dbase;
-#if __UINTPTR_WIDTH__ == 32
+#if __INTPTR_WIDTH__ == 32
 	unsigned int __unused0;
 #endif
 #endif

@@ -1,6 +1,6 @@
 
-#ifndef _LINUX_SCHED_H
-#define _LINUX_SCHED_H
+#ifndef _BITS_LINUX_SCHED_H
+#define _BITS_LINUX_SCHED_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,4 +56,4 @@ int setns(int fd, int nstype);
 }
 #endif
 
-#endif /* _LINUX_SCHED_H */
+#endif /* _BITS_LINUX_SCHED_H */

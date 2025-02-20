@@ -60,7 +60,12 @@ size_t strlen(const char *__s);
 #ifndef __MLIBC_ABI_ONLY
 
 /* POSIX extensions. */
+#if defined(_GNU_SOURCE)
+char *strerror_r(int __errnum, char *__buffer, size_t __size) __asm__("__gnu_strerror_r");
+#else
 int strerror_r(int __errnum, char *__buffer, size_t __size);
+#endif
+
 void *mempcpy(void *__dest, const void *__src, size_t __size);
 
 /* GNU extensions. */
