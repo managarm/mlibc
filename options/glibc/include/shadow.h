@@ -12,13 +12,13 @@ extern "C" {
 struct spwd {
 	char *sp_namp;
 	char *sp_pwdp;
-	int32_t sp_lstchg;
-	int32_t sp_min;
-	int32_t sp_max;
-	int32_t sp_warn;
-	int32_t sp_inact;
-	int32_t sp_expire;
-	uint32_t sp_flag;
+	long sp_lstchg;
+	long sp_min;
+	long sp_max;
+	long sp_warn;
+	long sp_inact;
+	long sp_expire;
+	unsigned long sp_flag;
 };
 
 #define SHADOW _PATH_SHADOW
