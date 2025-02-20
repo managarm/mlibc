@@ -108,6 +108,7 @@ uintptr_t alignUp(uintptr_t address, size_t align) {
 
 ObjectRepository::ObjectRepository()
 : loadedObjects{getAllocator()},
+	dependencyQueue{getAllocator()},
 	_nameMap{frg::hash<frg::string_view>{}, getAllocator()},
 	_destructQueue{getAllocator()} {}
 
@@ -123,9 +124,9 @@ SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 	_parseDynamic(object);
 	_parseVerdef(object);
 
+	object->wasVisited = true;
+	dependencyQueue.push_back(object);
 	_addLoadedObject(object);
-	_discoverDependencies(object, globalScope.get(), rts);
-	_parseVerneed(object);
 
 	return object;
 }
@@ -142,9 +143,9 @@ SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 	_parseDynamic(object);
 	_parseVerdef(object);
 
+	object->wasVisited = true;
+	dependencyQueue.push_back(object);
 	_addLoadedObject(object);
-	_discoverDependencies(object, globalScope.get(), rts);
-	_parseVerneed(object);
 
 	return object;
 }
@@ -285,10 +286,7 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 
 	_parseDynamic(object);
 	_parseVerdef(object);
-
 	_addLoadedObject(object);
-	_discoverDependencies(object, localScope, rts);
-	_parseVerneed(object);
 
 	return object;
 }
@@ -332,12 +330,14 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath
 
 	_parseDynamic(object);
 	_parseVerdef(object);
-
 	_addLoadedObject(object);
-	_discoverDependencies(object, localScope, rts);
-	_parseVerneed(object);
 
 	return object;
+}
+
+void ObjectRepository::discoverDependenciesFromLoadedObject(SharedObject *object) {
+	_discoverDependencies(object, object->localScope, object->objectRts);
+	_parseVerneed(object);
 }
 
 SharedObject *ObjectRepository::findCaller(void *addr) {
@@ -990,7 +990,12 @@ void ObjectRepository::_discoverDependencies(SharedObject *object,
 			if(verbose)
 				mlibc::infoLogger() << "rtld: Preloading " << preload << frg::endlog;
 
-			object->dependencies.push_back(libraryResult.value());
+			auto library = libraryResult.value();
+			object->dependencies.push_back(library);
+			if (library->wasVisited)
+				continue;
+			library->wasVisited = true;
+			dependencyQueue.push_back(library);
 		}
 	}
 
@@ -1003,11 +1008,17 @@ void ObjectRepository::_discoverDependencies(SharedObject *object,
 		const char *library_str = (const char *)(object->baseAddress
 				+ object->stringTableOffset + dynamic->d_un.d_val);
 
-		auto library = requestObjectWithName(frg::string_view{library_str},
+		auto libraryResult = requestObjectWithName(frg::string_view{library_str},
 				object, localScope, false, rts);
-		if(!library)
+		if(!libraryResult)
 			mlibc::panicLogger() << "Could not satisfy dependency " << library_str << frg::endlog;
-		object->dependencies.push(library.value());
+
+		auto library = libraryResult.value();
+		object->dependencies.push(library);
+		if (library->wasVisited)
+			continue;
+		library->wasVisited = true;
+		dependencyQueue.push_back(library);
 	}
 }
 
