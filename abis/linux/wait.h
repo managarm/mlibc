@@ -1,6 +1,8 @@
 #ifndef _ABIBITS_WAIT_H
 #define _ABIBITS_WAIT_H
 
+#include <mlibc-config.h>
+
 #define WNOHANG 1
 #define WUNTRACED 2
 #define WSTOPPED 2
@@ -8,8 +10,12 @@
 #define WCONTINUED 8
 #define WNOWAIT 0x01000000
 
+#if __MLIBC_LINUX_OPTION
+
 #define __WALL 0x40000000
 #define __WCLONE 0x80000000
+
+#endif /* __MLIBC_LINUX_OPTION */
 
 #define WCOREFLAG 0x80
 

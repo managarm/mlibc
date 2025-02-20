@@ -1,6 +1,12 @@
 #ifndef _ABIBITS_STATX_H
 #define _ABIBITS_STATX_H
 
+#include <mlibc-config.h>
+
+#if !__MLIBC_LINUX_OPTION
+#  error "statx() is inherently Linux specific. Enable the Linux option or do not use this header."
+#endif /* !__MLIBC_LINUX_OPTION */
+
 #include <bits/types.h>
 
 struct statx_timestamp {

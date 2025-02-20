@@ -8,7 +8,9 @@
 #include <bits/ensure.h>
 #include <abi-bits/fcntl.h>
 #include <abi-bits/socklen_t.h>
-#include <abi-bits/statx.h>
+#if __MLIBC_LINUX_OPTION
+#  include <abi-bits/statx.h>
+#endif
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
@@ -300,6 +302,7 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 	return 0;
 }
 
+#if __MLIBC_LINUX_OPTION
 static_assert(sizeof(struct statx) == 0x100); // Linux kernel requires it to be precisely 256 bytes.
 
 int sys_statx(int dirfd, const char *path, int flags, unsigned int mask, struct statx *statxbuf) {
@@ -308,6 +311,7 @@ int sys_statx(int dirfd, const char *path, int flags, unsigned int mask, struct 
 		return e;
 	return 0;
 }
+#endif
 
 int sys_statfs(const char *path, struct statfs *buf) {
 	auto ret = do_cp_syscall(SYS_statfs, path, buf);
