@@ -12,39 +12,81 @@
 #include <stdio.h>
 #include <ctype.h>
 
-namespace mlibc {
-
 namespace {
-	constexpr unsigned int RECORD_A = 1;
-	constexpr unsigned int RECORD_CNAME = 5;
-	constexpr unsigned int RECORD_PTR = 12;
-}
 
-static frg::string<MemoryAllocator> read_dns_name(char *buf, char *&it) {
+enum class DnsClass : uint16_t {
+	IN = 1,
+};
+
+enum class ResourceRecord : uint16_t {
+	A = 1,
+	NS = 2,
+	CNAME = 5,
+	PTR = 12,
+	TXT = 16,
+	AAAA = 28,
+	OPT = 41,
+};
+
+frg::optional<frg::string<MemoryAllocator>> read_dns_name(frg::span<uint8_t> buf, size_t &offset) {
 	frg::string<MemoryAllocator> res{getAllocator()};
-	while (true) {
-		char code = *it++;
-		if ((code & 0xC0) == 0xC0) {
+	while(offset < buf.size()) {
+		uint8_t code = buf[offset++];
+
+		if((code & 0xC0) == 0xC0) {
 			// pointer
-			uint8_t offset = ((code & 0x3F) << 8) | *it++;
-			auto offset_it = buf + offset;
-			return res + read_dns_name(buf, offset_it);
-		} else if (!(code & 0xC0)) {
-			if (!code)
-				break;
+			if(offset + 1 > buf.size()) {
+				return frg::null_opt;
+			}
 
-			for (int i = 0; i < code; i++)
-				res += (*it++);
+			uint8_t pointer_offset = ((code & 0x3F) << 8) | buf[offset++];
+			if(pointer_offset >= buf.size()) {
+				return frg::null_opt;
+			}
 
-			if (*it)
+			size_t sub_offset = pointer_offset;
+			auto sub_name = read_dns_name(buf, sub_offset);
+			if(!sub_name) {
+				return frg::null_opt;
+			}
+
+			return res + *sub_name;
+		} else if(!(code & 0xC0)) {
+			if (!code) {
+				return res;
+			} else if(offset + code > buf.size()) {
+				return frg::null_opt;
+			}
+
+			for (int i = 0; i < code; i++) {
+				res += buf[offset++];
+			}
+
+			if (offset < buf.size() && buf[offset]) {
 				res += '.';
+			}
 		} else {
-			break;
+			return frg::null_opt;
 		}
 	}
 
-	return res;
+	return frg::null_opt;
 }
+
+void writeUint16(frg::string<MemoryAllocator> &request, uint16_t val) {
+	request += static_cast<char>(val >> 8);
+	request += static_cast<char>(val & 0xFF);
+};
+
+uint16_t readUint16(frg::span<uint8_t> buf, size_t offset) {
+	uint16_t val = 0;
+	memcpy(&val, buf.data() + offset, sizeof(val));
+	return ntohs(val);
+}
+
+} // namespace
+
+namespace mlibc {
 
 int lookup_name_dns(struct lookup_result &buf, const char *name,
 		frg::string<MemoryAllocator> &canon_name) {
@@ -73,12 +115,8 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 	}
 
 	request += char(0);
-	// set question type to fetch A records
-	request += 0;
-	request += 1;
-	// set CLASS to IN
-	request += 0;
-	request += 1;
+	writeUint16(request, static_cast<uint16_t>(ResourceRecord::A));
+	writeUint16(request, static_cast<uint16_t>(DnsClass::IN));
 
 	struct sockaddr_in sin = {};
 	sin.sin_family = AF_INET;
@@ -105,48 +143,69 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 		return -EAI_SYSTEM;
 	}
 
-	char response[256];
+	uint8_t response[512];
 	ssize_t rlen;
 	int num_ans = 0;
-	while ((rlen = recvfrom(fd, response, 256, 0, NULL, NULL)) >= 0) {
+	while ((rlen = recvfrom(fd, response, sizeof(response), 0, NULL, NULL)) >= 0) {
 		if ((size_t)rlen < sizeof(struct dns_header))
 			continue;
-		auto response_header = reinterpret_cast<struct dns_header*>(response);
+		auto response_header = reinterpret_cast<struct dns_header *>(response);
 		if (response_header->identification != header.identification)
 			return -EAI_FAIL;
 
-		auto it = response + sizeof(struct dns_header);
+		auto view = frg::span<uint8_t>{response, static_cast<size_t>(rlen)};
+		size_t offset = sizeof(struct dns_header);
+
 		for (int i = 0; i < ntohs(response_header->no_q); i++) {
-			auto dns_name = read_dns_name(response, it);
-			(void) dns_name;
-			it += 4;
+			auto dns_name = read_dns_name(view, offset);
+			if(!dns_name)
+				return -EAI_FAIL;
+
+			// skip type and class
+			offset += 4;
 		}
 
 		for (int i = 0; i < ntohs(response_header->no_ans); i++) {
+			auto dns_name = read_dns_name(view, offset);
+			if(!dns_name) {
+				return -EAI_FAIL;
+			} else if(offset + 10 > view.size()) {
+				return -EAI_FAIL;
+			}
+
+			ResourceRecord rrType{readUint16(view, offset + 0)};
+			DnsClass rrClass{readUint16(view, offset + 2)};
+			// ignore TTL
+			uint16_t rrLength = readUint16(view, offset + 8);
+			offset += 10;
+
+			if(rrClass != DnsClass::IN || offset + rrLength > view.size()) {
+				return -EAI_FAIL;
+			}
+
 			struct dns_addr_buf buffer;
-			auto dns_name = read_dns_name(response, it);
-
-			uint16_t rr_type = (it[0] << 8) | it[1];
-			uint16_t rr_class = (it[2] << 8) | it[3];
-			uint16_t rr_length = (it[8] << 8) | it[9];
-			it += 10;
-			(void)rr_class;
-
-			switch (rr_type) {
-				case RECORD_A:
-					memcpy(buffer.addr, it, rr_length);
-					it += rr_length;
+			switch (rrType) {
+				case ResourceRecord::A:
+					memcpy(buffer.addr, &view[offset], rrLength);
+					offset += rrLength;
 					buffer.family = AF_INET;
-					buffer.name = std::move(dns_name);
+					buffer.name = std::move(*dns_name);
 					buf.buf.push(std::move(buffer));
 					break;
-				case RECORD_CNAME:
-					canon_name = read_dns_name(response, it);
-					buf.aliases.push(std::move(dns_name));
+				case ResourceRecord::CNAME: {
+					size_t suboffset = offset;
+					auto cname = read_dns_name(view, suboffset);
+					if(!cname) {
+						return -EAI_FAIL;
+					}
+					canon_name = std::move(*cname);
+					buf.aliases.push(std::move(*dns_name));
+					offset = suboffset;
 					break;
+				}
 				default:
 					mlibc::infoLogger() << "lookup_name_dns: unknown rr type "
-						<< rr_type << frg::endlog;
+						<< static_cast<uint16_t>(rrType) << frg::endlog;
 					break;
 			}
 		}
@@ -175,7 +234,7 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 	request.resize(sizeof(header));
 	memcpy(request.data(), &header, sizeof(header));
 
-	char addr_str[64];
+	char addr_str[INET6_ADDRSTRLEN];
 	if(!inet_ntop(family, addr.data(), addr_str, sizeof(addr_str))) {
 		switch(errno) {
 			case EAFNOSUPPORT:
@@ -201,13 +260,8 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 	} while(ptr != 0);
 
 	request += char(0);
-	// set question type to fetch PTR records
-	request += 0;
-	request += 12;
-	// set CLASS to IN
-	request += 0;
-	request += 1;
-
+	writeUint16(request, static_cast<uint16_t>(ResourceRecord::PTR));
+	writeUint16(request, static_cast<uint16_t>(DnsClass::IN));
 
 	struct sockaddr_in sin = {};
 	sin.sin_family = AF_INET;
@@ -234,48 +288,62 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 		return -EAI_SYSTEM;
 	}
 
-	char response[256];
+	uint8_t response[512];
 	ssize_t rlen;
 	int num_ans = 0;
-	while ((rlen = recvfrom(fd, response, 256, 0, NULL, NULL)) >= 0) {
+	while ((rlen = recvfrom(fd, response, sizeof(response), 0, NULL, NULL)) >= 0) {
 		if ((size_t)rlen < sizeof(struct dns_header))
 			continue;
 		auto response_header = reinterpret_cast<struct dns_header*>(response);
 		if (response_header->identification != header.identification)
 			return -EAI_FAIL;
 
-		auto it = response + sizeof(struct dns_header);
+		frg::span<uint8_t> view{response, static_cast<size_t>(rlen)};
+		size_t offset = sizeof(struct dns_header);
+
 		for (int i = 0; i < ntohs(response_header->no_q); i++) {
-			auto dns_name = read_dns_name(response, it);
-			(void) dns_name;
-			it += 4;
+			auto dns_name = read_dns_name(view, offset);
+			if(!dns_name)
+				return -EAI_FAIL;
+
+			offset += 4;
 		}
 
 		for (int i = 0; i < ntohs(response_header->no_ans); i++) {
+			auto dns_name = read_dns_name(view, offset);
+			if(!dns_name) {
+				return -EAI_FAIL;
+			} else if(offset + 10 > view.size()) {
+				return -EAI_FAIL;
+			}
+
+			ResourceRecord rrType{readUint16(view, offset + 0)};
+			DnsClass rrClass{readUint16(view, offset + 2)};
+			// ignore TTL
+			uint16_t rrLength = readUint16(view, offset + 8);
+
+			offset += 10;
+
+			if(rrClass != DnsClass::IN || offset + rrLength > view.size()) {
+				return -EAI_FAIL;
+			}
+
 			struct dns_addr_buf buffer;
-			auto dns_name = read_dns_name(response, it);
-
-			uint16_t rr_type = (it[0] << 8) | it[1];
-			uint16_t rr_class = (it[2] << 8) | it[3];
-			uint16_t rr_length = (it[8] << 8) | it[9];
-			it += 10;
-			(void)rr_class;
-			(void)rr_length;
-
-			(void)dns_name;
-
-			switch (rr_type) {
-				case RECORD_PTR: {
-					auto ptr_name = read_dns_name(response, it);
-					if (ptr_name.size() >= name.size())
+			switch (rrType) {
+				case ResourceRecord::PTR: {
+					auto ptr_name = read_dns_name(view, offset);
+					if(!ptr_name) {
+						return -EAI_FAIL;
+					} else if(ptr_name->size() >= name.size()) {
 						return -EAI_OVERFLOW;
-					std::copy(ptr_name.begin(), ptr_name.end(), name.data());
-					name.data()[ptr_name.size()] = '\0';
+					}
+					std::copy(ptr_name->begin(), ptr_name->end(), name.data());
+					name.data()[ptr_name->size()] = '\0';
 					return 1;
 				}
 				default:
 					mlibc::infoLogger() << "lookup_addr_dns: unknown rr type "
-						<< rr_type << frg::endlog;
+						<< static_cast<uint16_t>(rrType) << frg::endlog;
 					break;
 			}
 			num_ans += ntohs(response_header->no_ans);
