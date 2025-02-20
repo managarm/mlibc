@@ -9,6 +9,17 @@
 extern "C" {
 #endif
 
+struct msginfo {
+	int msgpool;
+	int msgmap;
+	int msgmax;
+	int msgmnb;
+	int msgmni;
+	int msgssz;
+	int msgtql;
+	unsigned short int msgseg;
+};
+
 #ifndef __MLIBC_ABI_ONLY
 
 int msgget(key_t __key, int __msgflg);
