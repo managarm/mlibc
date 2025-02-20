@@ -60,6 +60,7 @@ if not no_headers
 		'include/abi-bits/statvfs.h',
 		'include/abi-bits/ioctls.h',
 		'include/abi-bits/msg.h',
+		'include/abi-bits/rlim_t.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)
