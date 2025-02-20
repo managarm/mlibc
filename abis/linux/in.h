@@ -73,7 +73,7 @@ struct ip_mreqn {
 };
 
 struct in_pktinfo {
-	unsigned int ipi_ifindex;
+	int ipi_ifindex;
 	struct in_addr ipi_spec_dst;
 	struct in_addr ipi_addr;
 };
