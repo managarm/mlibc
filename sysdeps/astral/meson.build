@@ -68,6 +68,8 @@ if not no_headers
 		'include/abi-bits/vt.h',
 		'include/abi-bits/random.h',
 		'include/abi-bits/rlim_t.h',
+		'include/abi-bits/sigval.h',
+		'include/abi-bits/sigevent.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true,
 	)
