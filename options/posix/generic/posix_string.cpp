@@ -8,6 +8,7 @@
 #include <strings.h>
 #include <signal.h>
 
+#include <mlibc-config.h>
 #include <mlibc/debug.hpp>
 
 char *strdup(const char *string) {
@@ -94,8 +95,10 @@ char *strsignal(int sig) {
 	CASE_FOR(SIGSEGV)
 	CASE_FOR(SIGTERM)
 	CASE_FOR(SIGPROF)
+#if __MLIBC_LINUX_OPTION
 	CASE_FOR(SIGIO)
 	CASE_FOR(SIGPWR)
+#endif /* __MLIBC_LINUX_OPTION */
 	CASE_FOR(SIGALRM)
 	CASE_FOR(SIGBUS)
 	CASE_FOR(SIGCHLD)
@@ -116,7 +119,9 @@ char *strsignal(int sig) {
 	CASE_FOR(SIGVTALRM)
 	CASE_FOR(SIGXCPU)
 	CASE_FOR(SIGXFSZ)
+#if __MLIBC_LINUX_OPTION
 	CASE_FOR(SIGWINCH)
+#endif /* __MLIBC_LINUX_OPTION */
 	default:
 		mlibc::infoLogger() << "mlibc: Unknown signal number " << sig << frg::endlog;
 		s = "Unknown signal number";

@@ -32,41 +32,41 @@ typedef void (*__sighandler) (int);
 #define SIG_DFL ((__sighandler)(void *)(-2))
 #define SIG_IGN ((__sighandler)(void *)(-3))
 
-#define SIGHUP 1
-#define SIGINT 2
-#define SIGQUIT 3
-#define SIGILL 4
-#define SIGTRAP 5
-#define SIGABRT 6
-#define SIGBUS 7
-#define SIGFPE 8
-#define SIGKILL 9
-#define SIGUSR1 10
-#define SIGSEGV 11
-#define SIGUSR2 12
-#define SIGPIPE 13
-#define SIGALRM 14
+#define SIGABRT 1
+#define SIGALRM 2
+#define SIGBUS  3
+#define SIGCHLD 4
+#define SIGCONT 5
+#define SIGFPE  6
+#define SIGHUP  7
+#define SIGILL  8
+#define SIGINT  9
+#define SIGKILL 10
+#define SIGPIPE 11
+#define SIGQUIT 12
+#define SIGSEGV 13
+#define SIGSTOP 14
 #define SIGTERM 15
-#define SIGSTKFLT 16
-#define SIGCHLD 17
-#define SIGCONT 18
-#define SIGSTOP 19
-#define SIGTSTP 20
-#define SIGTTIN 21
-#define SIGTTOU 22
-#define SIGURG 23
-#define SIGXCPU 24
-#define SIGXFSZ 25
+#define SIGTSTP 16
+#define SIGTTIN 17
+#define SIGTTOU 18
+#define SIGUSR1 19
+#define SIGUSR2 20
+#define SIGPOLL 21
+#define SIGPROF 22
+#define SIGSYS  23
+#define SIGTRAP 24
+#define SIGURG  25
 #define SIGVTALRM 26
-#define SIGPROF 27
-#define SIGWINCH 28
-#define SIGIO 29
-#define SIGPOLL SIGIO
-#define SIGPWR 30
-#define SIGSYS 31
-#define SIGRTMIN 32
-#define SIGRTMAX 33
-#define SIGCANCEL SIGSYS
+#define SIGXCPU 27
+#define SIGXFSZ 28
+
+/* These values are not kernel-related, and are emulated for userland by the */
+/* libc, we will map them to SIGUSR2, which userland wont be able to use. */
+#define SIGCANCEL SIGUSR2
+#define SIGWINCH SIGUSR2
+#define SIGIO    SIGUSR2
+#define SIGPWR   SIGUSR2
 
 /* siginfo->si_info constants */
 /* SIGBUS */
@@ -152,15 +152,16 @@ struct sigevent {
 };
 
 struct sigaction {
-   union {
-	    void (*sa_handler)(int);
-       void (*sa_sigaction)(int, siginfo_t *, void *);
-   };
+	union {
+		void (*sa_handler)(int);
+		void (*sa_sigaction)(int, siginfo_t *, void *);
+	};
+	void (*sa_restorer)(void);
 	sigset_t sa_mask;
 	int sa_flags;
 };
 
-#if defined(__x86_64__) || defined(__aarch64__)
+#if defined(__x86_64__) || defined(__aarch64__) || (defined(__riscv) && __riscv_xlen == 64)
 /* TODO: This is wrong for AArch64. */
 
 typedef struct {
