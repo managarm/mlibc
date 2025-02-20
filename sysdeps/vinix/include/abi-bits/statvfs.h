@@ -1,1 +1,1 @@
-../../../../abis/lyre/statvfs.h
+../../../../abis/vinix/statvfs.h
