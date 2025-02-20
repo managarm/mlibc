@@ -1,1 +1,0 @@
-../../../../abis/linux/utsname.h

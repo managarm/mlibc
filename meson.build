@@ -244,10 +244,6 @@ elif host_machine.system() == 'vinix'
 	rtld_include_dirs += include_directories('sysdeps/vinix/include')
 	libc_include_dirs += include_directories('sysdeps/vinix/include')
 	subdir('sysdeps/vinix')
-elif host_machine.system() == 'lyre'
-	rtld_include_dirs += include_directories('sysdeps/lyre/include')
-	libc_include_dirs += include_directories('sysdeps/lyre/include')
-	subdir('sysdeps/lyre')
 elif host_machine.system() == 'lemon'
 	rtld_include_dirs += include_directories('sysdeps/lemon/include')
 	libc_include_dirs += include_directories('sysdeps/lemon/include')
