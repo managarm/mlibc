@@ -1,1 +1,1 @@
-../../../../abis/mlibc/poll.h
+../../../../abis/dripos/poll.h

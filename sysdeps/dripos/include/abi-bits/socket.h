@@ -1,1 +1,1 @@
-../../../../abis/mlibc/socket.h
+../../../../abis/dripos/socket.h

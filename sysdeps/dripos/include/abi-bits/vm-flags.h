@@ -1,1 +1,1 @@
-../../../../abis/mlibc/vm-flags.h
+../../../../abis/dripos/vm-flags.h

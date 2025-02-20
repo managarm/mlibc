@@ -1,1 +1,1 @@
-../../../../abis/mlibc/gid_t.h
+../../../../abis/lemon/gid_t.h

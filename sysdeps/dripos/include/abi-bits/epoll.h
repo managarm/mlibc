@@ -1,1 +1,1 @@
-../../../../abis/mlibc/epoll.h
+../../../../abis/dripos/epoll.h

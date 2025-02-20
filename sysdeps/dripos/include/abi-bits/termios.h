@@ -1,1 +1,1 @@
-../../../../abis/mlibc/termios.h
+../../../../abis/dripos/termios.h

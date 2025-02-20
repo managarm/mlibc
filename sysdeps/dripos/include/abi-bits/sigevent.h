@@ -1,1 +1,1 @@
-../../../../abis/mlibc/sigevent.h
+../../../../abis/dripos/sigevent.h

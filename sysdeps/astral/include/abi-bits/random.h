@@ -1,1 +1,1 @@
-../../../../abis/mlibc/random.h
+../../../../abis/astral/random.h

@@ -1,1 +1,1 @@
-../../../../abis/mlibc/gid_t.h
+../../../../abis/dripos/gid_t.h
