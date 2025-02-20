@@ -1,1 +1,1 @@
-../../../../abis/mlibc/ptrace.h
+../../../../abis/aero/ptrace.h

@@ -1,1 +1,1 @@
-../../../../abis/mlibc/stat.h
+../../../../abis/lemon/stat.h
