@@ -1,1 +1,1 @@
-../../../../abis/mlibc/clockid_t.h
+../../../../abis/aero/clockid_t.h

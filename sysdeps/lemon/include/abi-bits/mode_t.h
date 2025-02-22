@@ -1,1 +1,1 @@
-../../../../abis/mlibc/mode_t.h
+../../../../abis/lemon/mode_t.h

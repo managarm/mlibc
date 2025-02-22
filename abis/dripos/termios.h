@@ -2,8 +2,9 @@
 #define _ABIBITS_TERMIOS_H
 
 #if __MLIBC_BUILDING_MLIBC
-#warning abis/mlibc/termios.h is deprecated. We suggest to use abis/linux/termios.h instead. \
-	Note that this will potentially require kernel changes.
+#warning termios.h is a broken header originally from the deprecated "mlibc" ABI. \
+    We suggest to use abis/linux/termios.h instead. \
+    Note that this will potentially require kernel changes.
 #endif
 
 typedef unsigned int cc_t;

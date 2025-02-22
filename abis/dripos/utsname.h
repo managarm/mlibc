@@ -2,8 +2,9 @@
 #define _ABIBITS_UTSNAME_T_H
 
 #if __MLIBC_BUILDING_MLIBC
-#warning abis/mlibc/utsname.h is deprecated. We suggest to use abis/linux/utsname.h instead. \
-	Note that this will potentially require kernel changes.
+#warning utsname.h is a broken header originally from the deprecated "mlibc" ABI. \
+    We suggest to use abis/linux/utsname.h instead. \
+    Note that this will potentially require kernel changes.
 #endif
 
 struct utsname {

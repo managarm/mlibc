@@ -1,1 +1,1 @@
-../../../../abis/mlibc/gid_t.h
+../../../../abis/aero/gid_t.h
