@@ -2,8 +2,9 @@
 #define _ABIBITS_WAIT_H
 
 #if __MLIBC_BUILDING_MLIBC
-#warning abis/mlibc/wait.h is deprecated. We suggest to use abis/linux/wait.h instead. \
-	Note that this will potentially require kernel changes.
+#warning wait.h is a broken header originally from the deprecated "mlibc" ABI. \
+    We suggest to use abis/linux/wait.h instead. \
+    Note that this will potentially require kernel changes.
 #endif
 
 #define WCONTINUED 1

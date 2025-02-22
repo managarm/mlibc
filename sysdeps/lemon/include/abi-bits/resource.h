@@ -1,1 +1,1 @@
-../../../../abis/mlibc/resource.h
+../../../../abis/lemon/resource.h

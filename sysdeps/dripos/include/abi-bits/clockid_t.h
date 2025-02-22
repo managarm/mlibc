@@ -1,1 +1,1 @@
-../../../../abis/mlibc/clockid_t.h
+../../../../abis/dripos/clockid_t.h

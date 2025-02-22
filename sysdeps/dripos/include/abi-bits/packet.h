@@ -1,1 +1,1 @@
-../../../../abis/mlibc/packet.h
+../../../../abis/dripos/packet.h

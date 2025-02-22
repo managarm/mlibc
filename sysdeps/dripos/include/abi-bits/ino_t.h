@@ -1,1 +1,1 @@
-../../../../abis/mlibc/ino_t.h
+../../../../abis/dripos/ino_t.h
