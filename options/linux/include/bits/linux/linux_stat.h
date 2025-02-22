@@ -1,5 +1,5 @@
-#ifndef _LINUX_STAT_H
-#define _LINUX_STAT_H
+#ifndef _BITS_LINUX_STAT_H
+#define _BITS_LINUX_STAT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,4 +17,4 @@ int statx(int __dirfd, const char *__pathname, int __flags, unsigned int __mask,
 }
 #endif
 
-#endif
+#endif /* _BITS_LINUX_STAT_H */

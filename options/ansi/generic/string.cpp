@@ -1,3 +1,5 @@
+#undef _GNU_SOURCE
+
 #include <string.h>
 #include <errno.h>
 #include <wchar.h>
@@ -466,6 +468,12 @@ char *strerror(int e) {
 	return const_cast<char *>(s);
 }
 // strlen() is defined in options/internals.
+
+extern "C" char *__gnu_strerror_r(int e, char *buffer, size_t bufsz) {
+	auto s = strerror(e);
+	strncpy(buffer, s, bufsz);
+	return buffer;
+}
 
 // POSIX extensions.
 

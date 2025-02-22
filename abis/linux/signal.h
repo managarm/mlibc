@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <time.h>
+#include <abi-bits/sigevent.h>
 #include <abi-bits/pid_t.h>
 #include <abi-bits/uid_t.h>
 #include <bits/size_t.h>
@@ -13,11 +14,6 @@
 #define POLL_ERR 4
 #define POLL_PRI 5
 #define POLL_HUP 6
-
-union sigval {
-	int sival_int;
-	void *sival_ptr;
-};
 
 /* struct taken from musl. */
 
@@ -254,15 +250,6 @@ typedef struct __stack {
 
 #include <bits/threads.h>
 
-struct sigevent {
-	union sigval sigev_value;
-	int sigev_notify;
-	int sigev_signo;
-	void (*sigev_notify_function)(union sigval);
-	struct __mlibc_threadattr *sigev_notify_attributes;
-	pid_t sigev_notify_thread_id;
-};
-
 struct sigaction {
 	union {
 		void (*sa_handler)(int);
@@ -329,6 +316,26 @@ struct _fpstate {
 	struct _xmmreg _xmm[8];
 
 	uint32_t padding2[56];
+#endif
+};
+
+struct sigcontext {
+#if defined(__x86_64__)
+	unsigned long r8, r9, r10, r11, r12, r13, r14, r15;
+	unsigned long rdi, rsi, rbp, rbx, rdx, rax, rcx, rsp, rip, eflags;
+	unsigned short cs, gs, fs, __pad0;
+	unsigned long err, trapno, oldmask, cr2;
+	struct _fpstate *fpstate;
+	unsigned long __reserved1[8];
+#elif defined(__i386__)
+	unsigned short gs, __gsh, fs, __fsh, es, __esh, ds, __dsh;
+	unsigned long edi, esi, ebp, esp, ebx, edx, ecx, eax;
+	unsigned long trapno, err, eip;
+	unsigned short cs, __csh;
+	unsigned long eflags, esp_at_signal;
+	unsigned short ss, __ssh;
+	struct _fpstate *fpstate;
+	unsigned long oldmask, cr2;
 #endif
 };
 

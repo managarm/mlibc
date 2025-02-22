@@ -15,12 +15,34 @@ extern "C" {
 
 #define ICMP6_FILTER 1
 
+#define ICMP6_DST_UNREACH 1
+#define ICMP6_PACKET_TOO_BIG 2
+#define ICMP6_TIME_EXCEEDED 3
+#define ICMP6_PARAM_PROB 4
+
 #define ICMP6_FILTER_BLOCK 1
 #define ICMP6_FILTER_PASS 2
 #define ICMP6_FILTER_BLOCKOTHERS 3
 #define ICMP6_FILTER_PASSONLY 4
 #define ICMP6_ECHO_REQUEST 128
 #define ICMP6_ECHO_REPLY 129
+
+#define MLD_LISTENER_QUERY 130
+#define MLD_LISTENER_REPORT 131
+#define MLD_LISTENER_REDUCTION 132
+
+#define ICMP6_DST_UNREACH_NOROUTE 0
+#define ICMP6_DST_UNREACH_ADMIN 1
+#define ICMP6_DST_UNREACH_BEYONDSCOPE 2
+#define ICMP6_DST_UNREACH_ADDR 3
+#define ICMP6_DST_UNREACH_NOPORT 4
+
+#define ICMP6_TIME_EXCEED_TRANSIT 0
+#define ICMP6_TIME_EXCEED_REASSEMBLY 1
+
+#define ICMP6_PARAMPROB_HEADER 0
+#define ICMP6_PARAMPROB_NEXTHEADER 1
+#define ICMP6_PARAMPROB_OPTION 2
 
 struct icmp6_filter {
 	uint32_t icmp6_filt[8];
@@ -125,6 +147,13 @@ struct nd_opt_prefix_info {
 #define ND_RA_FLAG_OTHER 0x40
 #define ND_RA_FLAG_MANAGED 0x80
 
+struct nd_opt_rd_hdr {
+	uint8_t nd_opt_rh_type;
+	uint8_t nd_opt_rh_len;
+	uint16_t nd_opt_rh_reserved1;
+	uint32_t nd_opt_rh_reserved2;
+};
+
 struct nd_opt_mtu {
 	uint8_t nd_opt_mtu_type;
 	uint8_t nd_opt_mtu_len;
@@ -136,6 +165,10 @@ struct nd_neighbor_solicit {
 	struct icmp6_hdr nd_ns_hdr;
 	struct in6_addr nd_ns_target;
 };
+
+#define nd_ns_type nd_ns_hdr.icmp6_type
+#define nd_ns_code nd_ns_hdr.icmp6_code
+#define nd_ns_cksum nd_ns_hdr.icmp6_cksum
 
 struct nd_neighbor_advert {
 	struct icmp6_hdr nd_na_hdr;
@@ -152,9 +185,21 @@ struct nd_redirect {
 	struct in6_addr nd_rd_dst;
 };
 
+#define nd_rd_type nd_rd_hdr.icmp6_type
+#define nd_rd_code nd_rd_hdr.icmp6_code
+#define nd_rd_cksum nd_rd_hdr.icmp6_cksum
+
 #define ND_NA_FLAG_OVERRIDE 0x00000020
 #define ND_NA_FLAG_SOLICITED 0x00000040
 #define ND_NA_FLAG_ROUTER 0x00000080
+
+struct nd_opt_home_agent_info {
+	uint8_t nd_opt_home_agent_info_type;
+	uint8_t nd_opt_home_agent_info_len;
+	uint16_t nd_opt_home_agent_info_reserved;
+	uint16_t nd_opt_home_agent_info_preference;
+	uint16_t nd_opt_home_agent_info_lifetime;
+};
 
 #ifdef __cplusplus
 }

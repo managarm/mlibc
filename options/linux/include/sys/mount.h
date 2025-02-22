@@ -1,7 +1,7 @@
 #ifndef _SYS_MOUNT_H
 #define _SYS_MOUNT_H
 
-#include <asm/ioctl.h>
+#include <sys/ioctl.h>
 
 #ifdef __cplusplus
 extern "C" {

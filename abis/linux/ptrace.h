@@ -1,6 +1,12 @@
 #ifndef _ABIBITS_PTRACE_H
 #define _ABIBITS_PTRACE_H
 
+#include <mlibc-config.h>
+
+#if !__MLIBC_LINUX_OPTION
+#  error "ptrace() is inherently Linux specific. Enable the Linux option or do not use this header."
+#endif /* !__MLIBC_LINUX_OPTION */
+
 #define PTRACE_PEEKTEXT 1
 #define PTRACE_PEEKDATA 2
 #define PTRACE_PEEKUSER 3

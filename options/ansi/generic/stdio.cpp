@@ -934,7 +934,10 @@ int fputc(int c, FILE *stream) {
 }
 
 int fputs_unlocked(const char *__restrict string, FILE *__restrict stream) {
-	if(fwrite_unlocked(string, strlen(string), 1, stream) != 1)
+	// fwrite with a length of 0 will return 0, so we need to explicitly allow
+	// zero length strings.
+	size_t length = strlen(string);
+	if (length != 0 && fwrite_unlocked(string, length, 1, stream) != 1)
 		return EOF;
 	return 1;
 }

@@ -3,9 +3,10 @@
 
 #include <abi-bits/pid_t.h>
 #include <abi-bits/resource.h>
-#include <bits/posix/id_t.h>
+#include <abi-bits/rlim_t.h>
 #include <abi-bits/suseconds_t.h>
 #include <bits/ansi/time_t.h>
+#include <bits/posix/id_t.h>
 #include <bits/posix/timeval.h>
 
 #define PRIO_PROCESS 1
@@ -24,8 +25,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef unsigned long long rlim_t;
 
 struct rlimit {
 	rlim_t rlim_cur;

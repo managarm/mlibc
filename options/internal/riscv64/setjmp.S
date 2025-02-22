@@ -1,6 +1,9 @@
 .global setjmp
 .type setjmp, "function"
+.global _setjmp
+.type _setjmp, "function"
 setjmp:
+_setjmp:
 	sd ra, 0(a0)
 	sd s0, 8(a0)
 	sd s1, 16(a0)
@@ -37,7 +40,10 @@ sigsetjmp:
 
 .global longjmp
 .type longjmp, "function"
+.global _longjmp
+.type _longjmp, "function"
 longjmp:
+_longjmp:
 	ld ra,0(a0)
 	ld s0,8(a0)
 	ld s1,16(a0)

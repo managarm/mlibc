@@ -8,7 +8,9 @@
 #include <bits/ensure.h>
 #include <abi-bits/fcntl.h>
 #include <abi-bits/socklen_t.h>
-#include <abi-bits/statx.h>
+#if __MLIBC_LINUX_OPTION
+#  include <abi-bits/statx.h>
+#endif
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
@@ -300,6 +302,7 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 	return 0;
 }
 
+#if __MLIBC_LINUX_OPTION
 static_assert(sizeof(struct statx) == 0x100); // Linux kernel requires it to be precisely 256 bytes.
 
 int sys_statx(int dirfd, const char *path, int flags, unsigned int mask, struct statx *statxbuf) {
@@ -308,6 +311,7 @@ int sys_statx(int dirfd, const char *path, int flags, unsigned int mask, struct 
 		return e;
 	return 0;
 }
+#endif
 
 int sys_statfs(const char *path, struct statfs *buf) {
 	auto ret = do_cp_syscall(SYS_statfs, path, buf);
@@ -1232,6 +1236,20 @@ int sys_setschedparam(void *tcb, int policy, const struct sched_param *param) {
 	return 0;
 }
 
+int sys_getparam(pid_t pid, struct sched_param *param) {
+	auto ret = do_syscall(SYS_sched_getparam, pid, param);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_setparam(pid_t pid, const struct sched_param *param) {
+	auto ret = do_syscall(SYS_sched_setparam, pid, param);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_if_indextoname(unsigned int index, char *name) {
 	int fd = 0;
 	int r = sys_socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, AF_UNSPEC, &fd);
@@ -1994,6 +2012,63 @@ int sys_sigtimedwait(const sigset_t *__restrict set, siginfo_t *__restrict info,
 
 	*out_signal = sc_int_result<int>(ret);
 
+	return 0;
+}
+
+int sys_sendfile(int outfd, int infd, off_t *offset, size_t count, ssize_t *out) {
+	auto ret = do_syscall(SYS_sendfile, outfd, infd, offset, count);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	*out = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_syncfs(int fd) {
+	auto ret = do_syscall(SYS_syncfs, fd);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
+}
+
+int sys_name_to_handle_at(int dirfd, const char *pathname, struct file_handle *handle, int *mount_id, int flags) {
+	auto ret = do_syscall(SYS_name_to_handle_at, dirfd, pathname, handle, mount_id, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return sc_int_result<int>(ret);
+}
+
+int sys_splice(int in_fd, off_t *in_off, int out_fd, off_t *out_off, size_t size, unsigned int flags, ssize_t *out) {
+	auto ret = do_syscall(SYS_copy_file_range, in_fd, in_off, out_fd, out_off, size, flags);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	*out = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_unshare(int flags) {
+	auto ret = do_syscall(SYS_unshare, flags);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
+}
+
+int sys_setns(int fd, int nstype) {
+	auto ret = do_syscall(SYS_setns, fd, nstype);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
+	return 0;
+}
+
+int sys_setgroups(size_t size, const gid_t *list) {
+	auto ret = do_syscall(SYS_setgroups, size, list);
+	if(int e = sc_error(ret); e) {
+		return e;
+	}
 	return 0;
 }
 

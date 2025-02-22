@@ -6,6 +6,7 @@
 extern "C" {
 #endif
 
+#include <mlibc-config.h>
 #include <sys/socket.h>
 
 #define IF_NAMESIZE 16
@@ -106,8 +107,17 @@ unsigned int if_nametoindex(const char *__name);
 #define IFF_LOWER_UP 0x10000
 #define IFF_DORMANT 0x20000
 #define IFF_ECHO 0x40000
-#define IFF_VOLATILE (IFF_LOOPBACK|IFF_POINTOPOINT|IFF_BROADCAST| \
-        IFF_ECHO|IFF_MASTER|IFF_SLAVE|IFF_RUNNING|IFF_LOWER_UP|IFF_DORMANT)
+
+#if __MLIBC_LINUX_OPTION
+
+#define __UAPI_DEF_IF_IFCONF 0
+#define __UAPI_DEF_IF_IFMAP 0
+#define __UAPI_DEF_IF_IFNAMSIZ 0
+#define __UAPI_DEF_IF_IFREQ 0
+#define __UAPI_DEF_IF_NET_DEVICE_FLAGS 0
+#define __UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO 0
+
+#endif /* __MLIBC_LINUX_OPTION */
 
 #ifdef __cplusplus
 }

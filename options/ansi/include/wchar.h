@@ -117,6 +117,7 @@ int wcswidth(const wchar_t *__s, size_t __size);
 wchar_t *wcsdup(const wchar_t *__s);
 int wcsncasecmp(const wchar_t *__a, const wchar_t *__b, size_t __size);
 int wcscasecmp(const wchar_t *__a, const wchar_t *__b);
+size_t wcsnlen(const wchar_t *__s, size_t __maxlen);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

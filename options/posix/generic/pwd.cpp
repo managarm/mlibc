@@ -287,7 +287,23 @@ int putpwent(const struct passwd *p, FILE *f) {
 	return fprintf(f, "%s:%s:%u:%u:%s:%s:%s\n", p->pw_name, p->pw_passwd, p->pw_uid, p->pw_gid, p->pw_gecos, p->pw_dir, p->pw_shell) < 0 ? -1 : 0;
 }
 
-struct passwd *fgetpwent(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+struct passwd *fgetpwent(FILE *file) {
+	static passwd entry;
+	char line[NSS_BUFLEN_PASSWD];
+
+
+	if (fgets(line, NSS_BUFLEN_PASSWD, file)) {
+		clear_entry(&entry);
+		if(!extract_entry(line, &entry)) {
+			errno = EINVAL;	// I suppose this can be a valid errno?
+			return nullptr;
+		}
+		return &entry;
+	}
+
+	if(ferror(file)) {
+		errno = EIO;
+	}
+
+	return nullptr;
 }

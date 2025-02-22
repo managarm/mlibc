@@ -53,10 +53,17 @@ size_t __freadahead(FILE *file_base) {
 	}
 	return file_base->__valid_limit - file_base->__offset;
 }
+
 const char *__freadptr(FILE *, size_t *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+void __freadptrinc(FILE *, size_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 void __fseterr(FILE *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();

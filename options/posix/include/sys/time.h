@@ -43,12 +43,6 @@ int getitimer(int __which, struct itimerval *__curr_value);
 int setitimer(int __which, const struct itimerval *__new_value,
 	struct itimerval *__old_value);
 
-int timer_create(clockid_t __clockid, struct sigevent *__restrict __sevp, timer_t *__restrict __timerid);
-int timer_settime(timer_t __timerid, int __flags, const struct itimerspec *__restrict __new_value,
-	struct itimerspec *__restrict __old_value);
-int timer_gettime(timer_t __timerid, struct itimerspec *__curr_value);
-int timer_delete(timer_t __timerid);
-
 #endif /* !__MLIBC_ABI_ONLY */
 
 /* The following 2 macros are taken from musl */

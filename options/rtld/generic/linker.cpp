@@ -843,8 +843,7 @@ void ObjectRepository::_parseVerdef(SharedObject *object) {
 		// Required by spec.
 		__ensure(def.vd_version == 1);
 		__ensure(def.vd_cnt >= 1);
-		// TODO(qookie): Handle weak versions.
-		__ensure(!(def.vd_flags & ~VER_FLG_BASE));
+		__ensure(!(def.vd_flags & ~(VER_FLG_BASE | VER_FLG_WEAK)));
 
 		// NOTE(qookie): glibc also ignores any additional Verdaux entries after the
 		// first one.

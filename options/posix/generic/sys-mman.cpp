@@ -70,23 +70,6 @@ int msync(void *addr, size_t length, int flags) {
 	return 0;
 }
 
-void *mremap(void *pointer, size_t size, size_t new_size, int flags, ...) {
-	__ensure(flags == MREMAP_MAYMOVE);
-
-	void *window;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_vm_remap, (void *)-1);
-	if(int e = mlibc::sys_vm_remap(pointer, size, new_size, &window); e) {
-		errno = e;
-		return (void *)-1;
-	}
-	return window;
-}
-
-int remap_file_pages(void *, size_t, int, size_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
 void *mmap(void *hint, size_t size, int prot, int flags, int fd, off_t offset) {
 	void *window;
 	if(int e = mlibc::sys_vm_map(hint, size, prot, flags, fd, offset, &window); e) {
@@ -146,6 +129,23 @@ int shm_unlink(const char *name) {
 }
 
 #if __MLIBC_LINUX_OPTION
+void *mremap(void *pointer, size_t size, size_t new_size, int flags, ...) {
+	__ensure(flags == MREMAP_MAYMOVE);
+
+	void *window;
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_vm_remap, (void *)-1);
+	if(int e = mlibc::sys_vm_remap(pointer, size, new_size, &window); e) {
+		errno = e;
+		return (void *)-1;
+	}
+	return window;
+}
+
+int remap_file_pages(void *, size_t, int, size_t, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 int memfd_create(const char *name, unsigned int flags) {
 	int ret = -1;
 

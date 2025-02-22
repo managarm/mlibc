@@ -28,6 +28,11 @@ void res_nclose(res_state) {
 	return;
 }
 
+int dn_comp(const char *, unsigned char *, int, unsigned char **, unsigned char **) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 /* This is completely unused, and exists purely to satisfy broken apps. */
 
 struct __res_state *__res_state() {

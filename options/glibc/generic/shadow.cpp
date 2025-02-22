@@ -25,7 +25,7 @@ int putspent(const struct spwd *sp, FILE *f) {
 	auto str = [] (char *s) {
 		return ((s) ? (s) : "");
 	};
-	return fprintf(f, "%s:%s:%.*d:%.*d:%.*d:%.*d:%.*d:%.*d:%.*u\n",
+	return fprintf(f, "%s:%s:%.*ld:%.*ld:%.*ld:%.*ld:%.*ld:%.*ld:%.*u\n",
 		str(sp->sp_namp), str(sp->sp_pwdp), NUM(sp->sp_lstchg),
 		NUM(sp->sp_min), NUM(sp->sp_max), NUM(sp->sp_warn),
 		NUM(sp->sp_inact), NUM(sp->sp_expire), NUM((int)sp->sp_flag)) < 0 ? -1 : 0;
