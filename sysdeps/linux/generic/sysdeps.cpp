@@ -1236,6 +1236,20 @@ int sys_setschedparam(void *tcb, int policy, const struct sched_param *param) {
 	return 0;
 }
 
+int sys_getparam(pid_t pid, struct sched_param *param) {
+	auto ret = do_syscall(SYS_sched_getparam, pid, param);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_setparam(pid_t pid, const struct sched_param *param) {
+	auto ret = do_syscall(SYS_sched_setparam, pid, param);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_if_indextoname(unsigned int index, char *name) {
 	int fd = 0;
 	int r = sys_socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, AF_UNSPEC, &fd);

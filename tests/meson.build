@@ -59,6 +59,7 @@ all_test_cases = [
 	'posix/getaddrinfo',
 	'posix/getdelim',
 	'posix/getnameinfo',
+	'posix/getparam',
 	'posix/getservbyname',
 	'posix/getservbyport',
 	'posix/grp',
