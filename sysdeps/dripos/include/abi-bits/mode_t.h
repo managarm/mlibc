@@ -1,1 +1,1 @@
-../../../../abis/mlibc/mode_t.h
+../../../../abis/dripos/mode_t.h

@@ -1,1 +1,1 @@
-../../../../abis/mlibc/blkcnt_t.h
+../../../../abis/dripos/blkcnt_t.h

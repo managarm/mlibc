@@ -1,1 +1,1 @@
-../../../../abis/mlibc/nlink_t.h
+../../../../abis/aero/nlink_t.h

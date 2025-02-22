@@ -1,1 +1,1 @@
-../../../../abis/mlibc/resource.h
+../../../../abis/dripos/resource.h

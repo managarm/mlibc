@@ -1,1 +1,1 @@
-../../../../abis/mlibc/inotify.h
+../../../../abis/lemon/inotify.h

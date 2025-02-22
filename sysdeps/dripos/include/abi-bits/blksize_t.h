@@ -1,1 +1,1 @@
-../../../../abis/mlibc/blksize_t.h
+../../../../abis/dripos/blksize_t.h
