@@ -7,4 +7,4 @@ typedef unsigned long long int rlim_t;
 typedef unsigned long int rlim_t;
 #endif
 
-#endif // _ABIBITS_RLIM_T_H
+#endif /* _ABIBITS_RLIM_T_H */
