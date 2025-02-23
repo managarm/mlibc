@@ -49,6 +49,7 @@ if not no_headers
 		'include/abi-bits/packet.h',
 		'include/abi-bits/inotify.h',
 		'include/abi-bits/clockid_t.h',
+		'include/abi-bits/ipc.h',
 		'include/abi-bits/shm.h',
 		'include/abi-bits/mqueue.h',
 		'include/abi-bits/suseconds_t.h',

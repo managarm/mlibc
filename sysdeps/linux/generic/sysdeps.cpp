@@ -2131,4 +2131,38 @@ int sys_iopl(int level) {
 
 #endif // __MLIBC_GLIBC_OPTION
 
+#if __MLIBC_POSIX_OPTION
+
+int sys_shmat(void **seg_start, int shmid, const void *shmaddr, int shmflg) {
+	auto ret = do_syscall(SYS_shmat, shmid, shmaddr, shmflg);
+	if (int e = sc_error(ret); e)
+		return e;
+	*seg_start = sc_ptr_result<void>(ret);
+	return 0;
+}
+
+int sys_shmctl(int shmid, int cmd, struct shmid_ds *buf) {
+	auto ret = do_syscall(SYS_shmctl, shmid, cmd, buf);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_shmdt(const void *shmaddr) {
+	auto ret = do_syscall(SYS_shmdt, shmaddr);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_shmget(int *shm_id, key_t key, size_t size, int shmflg) {
+	auto ret = do_syscall(SYS_shmget, key, size, shmflg);
+	if (int e = sc_error(ret); e)
+		return e;
+	*shm_id = sc_int_result<int>(ret);
+	return 0;
+}
+
+#endif // __MLIBC_POSIX_OPTION
+
 } // namespace mlibc

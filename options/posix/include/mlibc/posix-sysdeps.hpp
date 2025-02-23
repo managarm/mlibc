@@ -25,6 +25,7 @@
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/wait.h>
+#include <sys/shm.h>
 #include <sched.h>
 #include <termios.h>
 #include <time.h>
@@ -240,6 +241,11 @@ int sys_vm_unmap(void *pointer, size_t size);
 
 [[gnu::weak]] int sys_name_to_handle_at(int dirfd, const char *pathname, struct file_handle *handle, int *mount_id, int flags);
 [[gnu::weak]] int sys_splice(int in_fd, off_t *in_off, int out_fd, off_t *out_off, size_t size, unsigned int flags, ssize_t *out);
+
+[[gnu::weak]] int sys_shmat(void **seg_start, int shmid, const void *shmaddr, int shmflg);
+[[gnu::weak]] int sys_shmctl(int shmid, int cmd, struct shmid_ds *buf);
+[[gnu::weak]] int sys_shmdt(const void *shmaddr);
+[[gnu::weak]] int sys_shmget(int *shm_id, key_t key, size_t size, int shmflg);
 
 } //namespace mlibc
 
