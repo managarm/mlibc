@@ -9,7 +9,7 @@ enum {
     Sys_Shutdown,
     Sys_HandleClose,
     Sys_HandleClone,
-    Sys_ThreadContextCreate, // 6
+    Sys_ThreadContextCreate,
     Sys_Suspend,
     Sys_ThreadOpen,
     Sys_ThreadCreate,
@@ -19,25 +19,25 @@ enum {
     Sys_ThreadPriority,
     Sys_ThreadAffinity,
     Sys_ThreadSetOwner,
-    Sys_ThreadGetTid, // 16
+    Sys_ThreadGetTid,
     Sys_WaitOnObject,
     Sys_WaitOnObjects,
-    Sys_ProcessOpen,  // Unimplemented
+    Sys_ProcessOpen,
     Sys_ProcessStart,
-    Sys_KillProcess, // signal-related
-    Sys_VirtualMemoryAlloc, // 22
+    Sys_KillProcess,
+    Sys_VirtualMemoryAlloc,
     Sys_VirtualMemoryFree,
     Sys_VirtualMemoryProtect,
-    Sys_VirtualMemoryLock, // Unimplemented
-    Sys_VirtualMemoryUnlock, // Unimplemented
+    Sys_VirtualMemoryLock,
+    Sys_VirtualMemoryUnlock,
     Sys_MakeNewContext,
     Sys_ContextExpandWSCapacity,
     Sys_ContextGetStat,
     Sys_GetUsedPhysicalMemoryCount,
     Sys_QueryPageInfo,
-    Sys_FutexWake, // 32
+    Sys_FutexWake,
     Sys_FutexWait,
-    Sys_FdAlloc, // 34
+    Sys_FdAlloc,
     Sys_FdOpen,
     Sys_FdOpenDirent,
     Sys_FdWrite,
@@ -48,26 +48,26 @@ enum {
     Sys_FdTellOff,
     Sys_FdEOF,
     Sys_FdIoctl,
-    Sys_FdFlush, // 45
+    Sys_FdFlush,
     Sys_PartProbeAllDrives,
-    Sys_PartProbeDrive, // 47
+    Sys_PartProbeDrive,
     Sys_SigReturn,
     Sys_Kill,
     Sys_SigAction,
     Sys_SigSuspend,
     Sys_SigProcMask,
-    Sys_SigAltStack, // 53
+    Sys_SigAltStack,
     Sys_OpenDir,
-    Sys_ReadEntries, // 55
-    Sys_ExecVE, // 56
-    Sys_LibCLog, // 57
-    Sys_ProcessGetPID, // 58
-    Sys_ProcessGetPPID, // 59
+    Sys_ReadEntries,
+    Sys_ExecVE,
+    Sys_LibCLog,
+    Sys_ProcessGetPID,
+    Sys_ProcessGetPPID,
     Sys_FdOpenAt,
-    Sys_MmFork, // 61
-    Sys_ExitCurrentProcess, // 62
+    Sys_MmFork,
+    Sys_ExitCurrentProcess,
     Sys_ProcessGetStatus,
-    Sys_WaitProcess, // 64
+    Sys_WaitProcess,
     Sys_Stat,
     Sys_StatFSInfo,
     Sys_SysConf,
