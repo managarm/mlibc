@@ -14,7 +14,7 @@
 #define MAP_ANON      0x08
 #define MAP_ANONYMOUS 0x08
 #define MAP_NORESERVE 0x10
-#define MAP_WC        0b10000
+#define MAP_WC        (1 << 4)
 
 #define MS_ASYNC 0x01
 #define MS_SYNC 0x02
@@ -28,19 +28,5 @@
 #define POSIX_MADV_RANDOM 3
 #define POSIX_MADV_DONTNEED 4
 #define POSIX_MADV_WILLNEED 5
-
-#define MADV_NORMAL 0
-#define MADV_RANDOM 1
-#define MADV_SEQUENTIAL 2
-#define MADV_WILLNEED 3
-#define MADV_DONTNEED 4
-#define MADV_FREE 8
-
-/* Linux extensions: */
-#define MREMAP_MAYMOVE 1
-#define MREMAP_FIXED 2
-
-#define MFD_CLOEXEC 1U
-#define MFD_ALLOW_SEALING 2U
 
 #endif /* _ABIBITS_MMAP_FLAGS_H */

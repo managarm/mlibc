@@ -46,6 +46,8 @@
 extern "C" {
 #endif
 
+#define st_birthtim st_btim
+
 struct stat {
 	dev_t st_dev;
 	ino_t st_ino;
@@ -58,6 +60,7 @@ struct stat {
 	struct timespec st_atim;
 	struct timespec st_mtim;
 	struct timespec st_ctim;
+	struct timespec st_btim;
 	blksize_t st_blksize;
 	blkcnt_t st_blocks;
 };

@@ -18,6 +18,7 @@ typedef unsigned int tcflag_t;
 #define VSTOP    8
 #define VSUSP    9
 #define VTIME   10
+#define VLNEXT   15
 
 /* bitwise flags for c_iflag in struct termios */
 #define BRKINT  0x0001
