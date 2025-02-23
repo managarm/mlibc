@@ -21,4 +21,6 @@ int main(void) {
 
     assert(shmctl(shmid, IPC_RMID, &buf) >= 0);
     assert(shmdt(attach_addr) == 0);
+
+    return 0;
 }
