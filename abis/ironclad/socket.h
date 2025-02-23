@@ -48,14 +48,13 @@ struct cmsghdr {
 
 #define SCM_CREDENTIALS 0x02
 
-#define SOCK_DGRAM 1
-#define SOCK_RAW 2
-#define SOCK_SEQPACKET 3
-#define SOCK_STREAM 4
-#define SOCK_DCCP 5
-#define SOCK_NONBLOCK 0x10000
-#define SOCK_CLOEXEC 0x20000
-#define SOCK_RDM 0x40000
+#define SOCK_DGRAM     (1 << 0)
+#define SOCK_RAW       (1 << 1)
+#define SOCK_STREAM    (1 << 2)
+#define SOCK_SEQPACKET (1 << 3)
+#define SOCK_NONBLOCK  (1 << 15)
+#define SOCK_CLOEXEC   (1 << 16)
+#define SOCK_CLOFORK   (1 << 17)
 
 #define SOL_SOCKET 1
 #define SOL_IPV6 41
