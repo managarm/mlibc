@@ -16,8 +16,11 @@
 
 #include <abi-bits/errno.h>
 #include <abi-bits/fcntl.h>
+#include <abi-bits/vm-flags.h>
 
 namespace mlibc {
+
+static int parse_file_status(obos_status status);
 
 #define define_stub(signature, ret) \
 signature {\
@@ -135,18 +138,7 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 
 int sys_execve(const char *path, char *const argv[], char *const envp[])
 {
-    int ec = 0, fd = 0;
-    ec = sys_open(path, O_RDONLY, 0, &fd);
-    if (ec)
-        return ec;
-    off_t off = 0;
-    sys_seek(fd, 0, SEEK_END, &off);
-    sys_seek(fd, 0, SEEK_SET, 0);
-    void* buf = nullptr;
-    ec = sys_vm_map(nullptr, off, PROT_READ|PROT_WRITE, 0, fd, 0, &buf);
-    if (ec)
-        return ec;
-    obos_status st = (obos_status)syscall4(Sys_ExecVE, buf, off, argv, envp);
+    obos_status st = (obos_status)syscall3(Sys_ExecVE, path, argv, envp);
     switch (st)
     {
         case OBOS_STATUS_UNIMPLEMENTED: return ENOSYS;
@@ -154,7 +146,7 @@ int sys_execve(const char *path, char *const argv[], char *const envp[])
         case OBOS_STATUS_PAGE_FAULT: return EFAULT;
         case OBOS_STATUS_INVALID_FILE: return ENOEXEC;
         case OBOS_STATUS_NOT_FOUND: return ENOENT;
-        default: __builtin_unreachable();
+        default: return parse_file_status(st);
     }
 }
 
@@ -555,14 +547,19 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
         real_flags |= VMA_FLAGS_PRIVATE;
     //if (flags & MAP_ANON)
     //    real_flags = 0;
+#if __MLIBC_LINUX_OPTION
     if (flags & MAP_STACK)
         real_flags |= VMA_FLAGS_GUARD_PAGE;
-    if (flags & MAP_HUGETLB)
-        real_flags |= VMA_FLAGS_HUGE_PAGE;
     if ((~flags & MAP_FIXED) && (~flags & MAP_FIXED_NOREPLACE))
         real_flags |= VMA_FLAGS_HINT;
     if (flags & MAP_POPULATE)
         real_flags |= VMA_FLAGS_PREFAULT;
+    if (flags & MAP_HUGETLB)
+        real_flags |= VMA_FLAGS_HUGE_PAGE;
+#else
+    if (~flags & MAP_FIXED)
+        real_flags |= VMA_FLAGS_HINT;
+#endif
 
     struct
     {
