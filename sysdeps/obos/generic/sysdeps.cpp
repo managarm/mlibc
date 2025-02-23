@@ -532,6 +532,21 @@ int sys_close(int fd)
     return parse_file_status((obos_status)syscall1(Sys_HandleClose, fd));
 }
 
+void sys_sync()
+{
+    syscall0(Sys_Sync);
+}
+
+int sys_fsync(int fd)
+{
+    return parse_file_status((obos_status)syscall1(Sys_FdFlush, fd));
+}
+
+int sys_fdatasync(int fd)
+{
+    return sys_fsync(fd);
+}
+
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window)
 {
     unsigned real_flags = 0;

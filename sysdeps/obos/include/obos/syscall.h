@@ -72,6 +72,14 @@ enum {
     Sys_StatFSInfo,
     Sys_SysConf,
     Sys_SetKLogLevel,
+    Sys_LoadDriver,
+    Sys_StartDriver,
+    Sys_UnloadDriver,
+    Sys_PnpLoadDriversAt,
+    Sys_FindDriverByName,
+    Sys_EnumerateLoadedDrivers,
+    Sys_QueryDriverName,
+    Sys_Sync,
 };
 
 #ifdef __cplusplus
