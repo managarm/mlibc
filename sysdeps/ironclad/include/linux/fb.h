@@ -1,5 +1,5 @@
-#ifndef _SYS_FB_H
-#define _SYS_FB_H
+#ifndef _LINUX_FB_H
+#define _LINUX_FB_H
 
 #include <stddef.h>
 
@@ -394,4 +394,4 @@ struct fb_cursor {
 #define FB_BACKLIGHT_MAX	0xFF
 
 
-#endif /* _SYS_FB_H */
+#endif /* _LINUX_FB_H */

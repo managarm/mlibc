@@ -78,6 +78,7 @@ if not no_headers
 		'include/sys/syscall.h',
 		'include/sys/reboot.h',
 		'include/sys/mount.h',
+		'include/sys/sysmacros.h',
 		'include/sys/ptrace.h',
 		subdir: 'sys'
 	)
@@ -89,6 +90,7 @@ if not no_headers
 
 	install_headers(
 		'include/linux/fb.h',
+		'include/linux/kvm.h',
 		subdir: 'linux'
 	)
 
@@ -103,7 +105,7 @@ if not headers_only
 	crt = custom_target('crt0',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-x86_64/crt0.S',
+		input: 'crt-' + host_machine.cpu_family() / 'crt0.S',
 		output: 'crt0.o',
 		install: true,
 		install_dir: get_option('libdir')
@@ -112,7 +114,7 @@ if not headers_only
 	custom_target('crti',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-x86_64/crti.S',
+		input: 'crt-' + host_machine.cpu_family() / 'crti.S',
 		output: 'crti.o',
 		install: true,
 		install_dir: get_option('libdir')
@@ -121,7 +123,7 @@ if not headers_only
 	custom_target('crtn',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-x86_64/crtn.S',
+		input: 'crt-' + host_machine.cpu_family() / 'crtn.S',
 		output: 'crtn.o',
 		install: true,
 		install_dir: get_option('libdir')

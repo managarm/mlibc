@@ -20,22 +20,47 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 	*sfd = fds[1];
 
 	if (name != NULL) {
-		ret = ttyname_r(*mfd, name, (size_t)-1);
-		if (ret) {
+		name = ttyname(*mfd);
+		if (!name) {
 			return -1;
 		}
 	}
-	if (ios != NULL) {
+
+	if (ios == NULL) {
+		struct termios termios;
+		termios.c_iflag = BRKINT | IGNPAR | ICRNL | IXON | IMAXBEL;
+		termios.c_oflag = OPOST | ONLCR;
+		termios.c_cflag = CS8 | CREAD;
+		termios.c_lflag = ISIG | ICANON | ECHO | ECHOE | ECHOK | ECHOCTL | ECHOKE;
+		termios.c_cc[VINTR] = CTRL('C');
+		termios.c_cc[VERASE] = 127; // Delete.
+		termios.c_cc[VEOF] = CTRL('D');
+		termios.c_cc[VSUSP] = CTRL('Z');
+		termios.ibaud = 38400;
+		termios.obaud = 38400;
+		ret = tcsetattr(*mfd, TCSANOW, &termios);
+	} else {
 		ret = tcsetattr(*mfd, TCSANOW, ios);
-		if (ret) {
-			return -1;
-		}
 	}
-	if (win != NULL) {
-		ret = ioctl(*mfd, TIOCGWINSZ, win);
-		if (ret) {
-			return -1;
-		}
+	if (ret) {
+		return -1;
 	}
+
+	if (win == NULL) {
+		struct winsize win_size = {
+			.ws_row = 24,
+			.ws_col = 80,
+			.ws_xpixel = 24 * 16,
+			.ws_ypixel = 80 * 16
+		};
+		ret = ioctl(*mfd, TIOCSWINSZ, &win_size);
+	} else {
+		ret = ioctl(*mfd, TIOCSWINSZ, win);
+	}
+
+	if (ret) {
+		return -1;
+	}
+
 	return ret;
 }
