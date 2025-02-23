@@ -1321,5 +1321,33 @@ int sys_statvfs(const char *path, struct statvfs *out) {
 int sys_getcwd(char *, size_t) {
 	__builtin_trap();
 }
+
+int sys_shmat(void **seg_start, int shmid, const void *shmaddr, int shmflg) {
+	void *ret;
+	int errno;
+	SYSCALL3(SYSCALL_SHMAT, shmid, shmaddr, shmflg);
+	*seg_start = ret;
+	return errno;
+}
+
+int sys_shmctl(int shmid, int cmd, struct shmid_ds *buf) {
+	int ret, errno;
+	SYSCALL3(SYSCALL_SHMCTL, shmid, cmd, buf);
+	return errno;
+}
+
+int sys_shmdt(const void *shmaddr) {
+	int ret, errno;
+	SYSCALL1(SYSCALL_SHMDT, shmaddr);
+	return errno;
+}
+
+int sys_shmget(int *shm_id, key_t key, size_t size, int shmflg) {
+	int ret, errno;
+	SYSCALL3(SYSCALL_SHMGET, key, size, shmflg);
+	*shm_id = ret;
+	return errno;
+}
+
 #endif
 } // namespace mlibc
