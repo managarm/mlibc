@@ -1,4 +1,3 @@
-#include <mlibc-config.h>
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
@@ -17,14 +16,21 @@
 #include <unistd.h>
 #include <sys/file.h>
 #include <mlibc/tcb.hpp>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdbool.h>
+#include <stddef.h>
+
+extern "C" void __mlibc_sigret(void);
 
 namespace mlibc {
 
 void sys_libc_log(const char *message) {
+#ifdef DEBUG
 	ssize_t unused;
-	char new_line = '\n';
 	sys_write(2, message, strlen(message), &unused);
-	sys_write(2, &new_line, 1, &unused);
+	sys_write(2, "\n", 1, &unused);
+#endif
 }
 
 void sys_libc_panic() {
@@ -71,16 +77,16 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	int path_len = strlen (path);
 	SYSCALL4(SYSCALL_OPEN, dirfd, path, path_len, flags);
 	if (ret != -1 && (flags & O_EXCL)) {
-		 SYSCALL1(SYSCALL_CLOSE, ret);
-		 return EEXIST;
+		SYSCALL1(SYSCALL_CLOSE, ret);
+		return EEXIST;
 	}
 
 	if (ret == -1 && (flags & O_CREAT)) {
-		 SYSCALL5(SYSCALL_MAKENODE, AT_FDCWD, path, path_len, mode, 0);
-		 if (ret == -1) {
-			  return errno;
-		 }
-		 SYSCALL4(SYSCALL_OPEN,	AT_FDCWD, path, path_len, flags);
+		SYSCALL5(SYSCALL_MAKENODE, AT_FDCWD, path, path_len, mode, 0);
+		if (ret == -1) {
+			return errno;
+		}
+		SYSCALL4(SYSCALL_OPEN, AT_FDCWD, path, path_len, flags);
 	} else if (ret != -1 && (flags & O_TRUNC)) {
 		// If the file cannot be truncated, dont sweat it, some software
 		// depends on some things being truncate-able that ironclad does not
@@ -284,12 +290,6 @@ int sys_vm_unmap(void *pointer, size_t size) {
 	}
 }
 
-int sys_getcwd(char *buf, size_t size) {
-	buf[0] = '/';
-	buf[1] = '\0';
-	return 0;
-}
-
 int sys_vm_protect(void *pointer, size_t size, int prot) {
 	int ret;
 	int errno;
@@ -332,10 +332,6 @@ int sys_setgroups(size_t size, const gid_t *list) {
 	return errno;
 }
 
-int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) {
-	return 0;
-}
-
 int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out) {
 	int ret, errno;
 	SYSCALL4(SYSCALL_PTRACE, req, pid, addr, data);
@@ -351,7 +347,9 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 }
 
 int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
-	return 0;
+	int ret, errno;
+	SYSCALL3(SYSCALL_SIGPROCMASK, how, set, retrieve);
+	return errno;
 }
 
 int sys_isatty(int fd) {
@@ -389,7 +387,7 @@ int sys_fork(pid_t *child) {
 	pid_t ret;
 	int errno;
 
-	SYSCALL6(SYSCALL_CLONE, 0, 0, 0, 0, 0, 1);
+	SYSCALL0(SYSCALL_FORK);
 
 	if (ret == -1) {
 		return errno;
@@ -530,12 +528,7 @@ void sys_yield(void) {
 
 int sys_kill(int pid, int sig) {
 	int ret, errno;
-	if (sig == SIGKILL) {
-		SYSCALL1(SYSCALL_ACTUALLY_KILL, pid);
-	} else {
-		SYSCALL2(SYSCALL_SEND_SIGNAL, pid, sig);
-	}
-
+	SYSCALL2(SYSCALL_SEND_SIGNAL, pid, sig);
 	return errno;
 }
 
@@ -546,7 +539,13 @@ int sys_dup(int fd, int flags, int *newfd) {
 	} else {
 		SYSCALL3(SYSCALL_FCNTL, fd, F_DUPFD, 0);
 	}
+
 	*newfd = ret;
+
+	if (errno == 0) {
+		SYSCALL3(SYSCALL_FCNTL, *newfd, F_SETFD, flags);
+	}
+
 	return errno;
 }
 
@@ -565,9 +564,13 @@ int sys_dup2(int fd, int flags, int newfd) {
 
 	if (ret != -1 && ret != newfd) {
 		return EBADFD;
-	} else {
-		return errno;
 	}
+
+	if (errno == 0) {
+		SYSCALL3(SYSCALL_FCNTL, newfd, F_SETFD, flags);
+	}
+
+	return errno;
 }
 
 int sys_tcgetattr(int fd, struct termios *attr) {
@@ -766,6 +769,32 @@ int sys_setregid(gid_t rgid, gid_t egid) {
 	return ret;
 }
 
+int sys_getresuid(uid_t *ruid, uid_t *euid, uid_t *suid) {
+	if (ruid) {
+		*ruid = sys_getuid();
+	}
+	if (euid) {
+		*euid = sys_geteuid();
+	}
+	if (suid) {
+		*suid = sys_getuid();
+	}
+	return 0;
+}
+
+int sys_getresgid(uid_t *rgid, uid_t *egid, uid_t *sgid) {
+	if (rgid) {
+		*rgid = sys_getgid();
+	}
+	if (egid) {
+		*egid = sys_getegid();
+	}
+	if (sgid) {
+		*sgid = sys_getgid();
+	}
+	return 0;
+}
+
 int sys_setsid(pid_t *sid) {
 	return 0;
 }
@@ -774,9 +803,22 @@ int sys_setsid(pid_t *sid) {
 
 extern "C" void __mlibc_thread_entry();
 
+int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) {
+	int ret, errno;
+
+	if (act != NULL) {
+		struct sigaction newact = *act;
+		newact.sa_restorer = __mlibc_sigret;
+		SYSCALL3(SYSCALL_SIGACTION, signum, &newact, oldact);
+	} else {
+		SYSCALL3(SYSCALL_SIGACTION, signum, NULL, oldact);
+	}
+	return errno;
+}
+
 int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
 	 int ret, errno;
-	 SYSCALL6(SYSCALL_CLONE, (uintptr_t)__mlibc_thread_entry, 0, stack, 0b10, tcb, 1);
+	 SYSCALL5(SYSCALL_CREATE_THREAD, (uintptr_t)__mlibc_thread_entry, 0, stack, tcb, 1);
 
 	 if (ret == -1) {
 		  return errno;
@@ -933,14 +975,12 @@ int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
 
 
 int sys_ppoll(struct pollfd *fds, int nfds, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
-	// XXX: Ironclad has no sigprogmask so this is basically a weird ppoll poll
-	// chimeral abomination.
 	int ret, errno;
 	if (timeout == NULL) {
-		 struct timespec t = {.tv_sec = (time_t)-1, .tv_nsec = (time_t)-1};
-		 SYSCALL3(SYSCALL_POLL, fds, nfds, &t);
+		struct timespec t = {.tv_sec = (time_t)-1, .tv_nsec = (time_t)-1};
+		SYSCALL4(SYSCALL_PPOLL, fds, nfds, &t, sigmask);
 	} else {
-		 SYSCALL3(SYSCALL_POLL, fds, nfds, timeout);
+		SYSCALL4(SYSCALL_PPOLL, fds, nfds, timeout, sigmask);
 	}
 	if (ret == -1) {
 		return errno;
@@ -1201,6 +1241,10 @@ int sys_mknodat(int dirfd, const char *path, mode_t mode, dev_t dev) {
 	return errno;
 }
 
+int sys_brk(void **out) {
+	return -1;
+}
+
 #define SC_LIST_MOUNTS 9
 struct mountinfo {
 	uint32_t type;
@@ -1238,29 +1282,44 @@ int sys_statvfs(const char *path, struct statvfs *out) {
 		return 1;
 	}
 
+	bool best_len = 0;
+	int  best_idx = 0;
 	for (int i = 0; i < ret; i++) {
 		if (!strncmp(path, buffer[i].location, buffer[i].location_length)) {
-			out->f_bsize  = buffer[i].block_size;
-			out->f_frsize = buffer[i].fragment_size;
-			out->f_blocks = buffer[i].size_in_fragments;
-			out->f_bfree  = buffer[i].free_blocks;
-			out->f_bavail = buffer[i].free_blocks_user;
-			out->f_files  = buffer[i].inode_count;
-			out->f_ffree  = buffer[i].free_inodes;
-			out->f_favail = buffer[i].free_inodes_user;
-			out->f_fsid = 0;
-			out->f_flag = buffer[i].flags;
-			out->f_namemax = buffer[i].max_filename;
-			if (buffer[i].type == MNT_EXT) {
-				strcpy(out->f_basetype, "ext");
-			} else {
-				strcpy(out->f_basetype, "fat");
+			if (buffer[i].location_length > best_len) {
+				best_len = buffer[i].location_length;
+				best_idx = i;
 			}
-			return 0;
 		}
 	}
 
-	return EINVAL;
+	if (best_len == 0) {
+		return EINVAL;
+	}
+
+	out->f_bsize  = buffer[best_idx].block_size;
+	out->f_frsize = buffer[best_idx].fragment_size;
+	out->f_blocks = buffer[best_idx].size_in_fragments;
+	out->f_bfree  = buffer[best_idx].free_blocks;
+	out->f_bavail = buffer[best_idx].free_blocks_user;
+	out->f_files  = buffer[best_idx].inode_count;
+	out->f_ffree  = buffer[best_idx].free_inodes;
+	out->f_favail = buffer[best_idx].free_inodes_user;
+	out->f_fsid = 0;
+	out->f_flag = buffer[best_idx].flags;
+	out->f_namemax = buffer[best_idx].max_filename;
+
+	switch (buffer[best_idx].type) {
+		case MNT_EXT: strcpy(out->f_basetype, "ext");   break;
+		case MNT_FAT: strcpy(out->f_basetype, "fat");   break;
+		default:      strcpy(out->f_basetype, "devfs"); break;
+	}
+
+	return 0;
+}
+
+int sys_getcwd(char *, size_t) {
+	__builtin_trap();
 }
 #endif
 } // namespace mlibc

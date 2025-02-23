@@ -7,10 +7,12 @@ extern "C" {
 
 #define MNT_EXT 1
 #define MNT_FAT 2
+#define MNT_DEV 3
 
-#define MS_RDONLY   0b001
-#define MS_REMOUNT  0b010
-#define MS_RELATIME 0b100
+#define MS_RDONLY   (1 << 0)
+#define MS_REMOUNT  (1 << 1)
+#define MS_RELATIME (1 << 2)
+#define MS_NOATIME  (1 << 3)
 
 #define MNT_FORCE 1
 

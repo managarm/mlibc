@@ -9,10 +9,10 @@
 extern "C" {
 #endif
 
-#define THREAD_RT     0b0001
-#define THREAD_MONO   0b0010
-#define THREAD_MLOCK  0b0100
-#define THREAD_BANNED 0b1000
+#define THREAD_RT     (1 << 0)
+#define THREAD_MONO   (1 << 1)
+#define THREAD_MLOCK  (1 << 2)
+#define THREAD_BANNED (1 << 3)
 int get_thread_sched(void);
 int set_thread_sched(int flags);
 int set_deadlines(int runtime, int period);
