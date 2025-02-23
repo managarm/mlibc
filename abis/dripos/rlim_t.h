@@ -3,4 +3,4 @@
 
 typedef unsigned long long rlim_t;
 
-#endif // _ABIBITS_RLIM_T_H
+#endif /* _ABIBITS_RLIM_T_H */
