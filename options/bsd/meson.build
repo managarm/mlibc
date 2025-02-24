@@ -6,6 +6,7 @@ libc_sources += files(
 	'generic/arpa-nameser.cpp',
 	'generic/ether.cpp',
 	'generic/getopt.cpp',
+	'generic/bsd_stdlib.cpp',
 )
 
 if not no_headers
@@ -26,6 +27,7 @@ if not no_headers
 		subdir: 'netinet'
 	)
 	install_headers(
+		'include/bits/bsd/bsd_stdlib.h',
 		'include/bits/bsd/bsd_unistd.h',
 		subdir: 'bits/bsd'
 	)

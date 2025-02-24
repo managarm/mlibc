@@ -36,6 +36,7 @@ all_test_cases = [
 	'bsd/reallocarray',
 	'bsd/strl',
 	'bsd/sbrk',
+	'bsd/getloadavg',
 	'posix/inet_ntop',
 	'posix/inet_pton',
 	'posix/access',

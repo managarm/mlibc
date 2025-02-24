@@ -1795,6 +1795,18 @@ int sys_readlink(const char *path, void *buf, size_t bufsiz, ssize_t *len) {
 	return 0;
 }
 
+#if __MLIBC_BSD_OPTION
+// getloadavg() adapted from musl
+int sys_getloadavg(double *samples) {
+	struct sysinfo si;
+	if (int e = sys_sysinfo(&si); e)
+		return e;
+	for (int i = 0; i < 3; i++)
+		samples[i] = 1.0 / (1 << SI_LOAD_SHIFT) * si.loads[i];
+	return 0;
+}
+#endif /* __MLIBC_BSD_OPTION */
+
 int sys_getrlimit(int resource, struct rlimit *limit) {
 	auto ret = do_syscall(SYS_prlimit64, 0, resource, 0, limit);
 	if (int e = sc_error(ret); e)

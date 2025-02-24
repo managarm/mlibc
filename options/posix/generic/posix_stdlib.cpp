@@ -528,11 +528,6 @@ int strcoll_l(const char *, const char *, locale_t) {
 	__builtin_unreachable();
 }
 
-int getloadavg(double *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
 int getsubopt(char **__restrict__, char *const *__restrict__, char **__restrict__) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
