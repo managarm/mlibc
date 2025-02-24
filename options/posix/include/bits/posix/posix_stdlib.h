@@ -55,8 +55,6 @@ double strtod_l(const char *__restrict__ __nptr, char ** __restrict__ __endptr, 
 long double strtold_l(const char *__restrict__ __nptr, char ** __restrict__ __endptr, locale_t __loc);
 float strtof_l(const char *__restrict __string, char **__restrict __end, locale_t __loc);
 
-int getloadavg(double *__loadavg, int __count);
-
 int getsubopt(char **__restrict__ __optionp, char *const *__restrict__ __tokens, char **__restrict__ __valuep);
 
 /* GNU extension */

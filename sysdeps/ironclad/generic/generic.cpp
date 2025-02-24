@@ -1349,5 +1349,18 @@ int sys_shmget(int *shm_id, key_t key, size_t size, int shmflg) {
 	return errno;
 }
 
+int sys_getloadavg(double *samples) {
+	int ret, errno;
+	int samples2[3];
+	SYSCALL3(SYSCALL_SYSCONF, 19, samples2, sizeof(samples2));
+	if (ret < 0) {
+		return errno;
+	}
+	for (int i = 0; i < 3; i++) {
+		samples[i] = samples2[i] / 100.0;
+	}
+	return 0;
+}
+
 #endif
 } // namespace mlibc
