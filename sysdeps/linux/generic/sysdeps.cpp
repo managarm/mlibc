@@ -2153,10 +2153,11 @@ int sys_shmat(void **seg_start, int shmid, const void *shmaddr, int shmflg) {
 	return 0;
 }
 
-int sys_shmctl(int shmid, int cmd, struct shmid_ds *buf) {
+int sys_shmctl(int *idx, int shmid, int cmd, struct shmid_ds *buf) {
 	auto ret = do_syscall(SYS_shmctl, shmid, cmd, buf);
 	if (int e = sc_error(ret); e)
 		return e;
+	*idx = sc_int_result<int>(ret);
 	return 0;
 }
 

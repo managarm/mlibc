@@ -243,7 +243,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_splice(int in_fd, off_t *in_off, int out_fd, off_t *out_off, size_t size, unsigned int flags, ssize_t *out);
 
 [[gnu::weak]] int sys_shmat(void **seg_start, int shmid, const void *shmaddr, int shmflg);
-[[gnu::weak]] int sys_shmctl(int shmid, int cmd, struct shmid_ds *buf);
+[[gnu::weak]] int sys_shmctl(int *idx, int shmid, int cmd, struct shmid_ds *buf);
 [[gnu::weak]] int sys_shmdt(const void *shmaddr);
 [[gnu::weak]] int sys_shmget(int *shm_id, key_t key, size_t size, int shmflg);
 

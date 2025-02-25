@@ -1330,9 +1330,10 @@ int sys_shmat(void **seg_start, int shmid, const void *shmaddr, int shmflg) {
 	return errno;
 }
 
-int sys_shmctl(int shmid, int cmd, struct shmid_ds *buf) {
+int sys_shmctl(int *idx, int shmid, int cmd, struct shmid_ds *buf) {
 	int ret, errno;
 	SYSCALL3(SYSCALL_SHMCTL, shmid, cmd, buf);
+	*idx = ret;
 	return errno;
 }
 
