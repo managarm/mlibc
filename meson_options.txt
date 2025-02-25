@@ -6,7 +6,6 @@ option('posix_option', type: 'feature', value : 'auto')
 option('linux_option', type: 'feature', value : 'auto')
 option('glibc_option', type: 'feature', value : 'auto')
 option('bsd_option', type: 'feature', value : 'auto')
-option('libgcc_dependency', type : 'boolean', value : true)
 option('linux_kernel_headers', type: 'string', value : '')
 option('default_library_paths', type: 'array', value: [])
 option('debug_allocator', type : 'boolean', value : false,
