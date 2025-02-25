@@ -16,12 +16,13 @@ void *shmat(int shmid, const void *shmaddr, int shmflg) {
 }
 
 int shmctl(int shmid, int cmd, struct shmid_ds *buf) {
+	int ret;
 	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_shmctl, -1);
-	if(int e = sysdep(shmid, cmd, buf); e) {
+	if(int e = sysdep(&ret, shmid, cmd, buf); e) {
 		errno = e;
 		return -1;
 	}
-	return 0;
+	return ret;
 }
 
 int shmdt(const void *shmaddr) {
