@@ -1449,11 +1449,15 @@ int sys_link(const char *old_path, const char *new_path) {
 		return e;
 	return 0;
 #else
-	auto ret = do_syscall(SYS_linkat, AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
+	return sys_linkat(AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
+#endif
+}
+
+int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags) {
+	auto ret = do_syscall(SYS_linkat, olddirfd, old_path, newdirfd, new_path, flags);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
-#endif
 }
 
 // Inspired by musl (src/stat/statvfs.c:28 fixup function)
