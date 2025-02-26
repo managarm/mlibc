@@ -537,41 +537,44 @@ int fd_file::parse_modestring(const char *mode) {
 	// Consume the first char; this must be 'r', 'w' or 'a'.
 	int flags = 0;
 	bool has_plus = strchr(mode, '+');
-	if(*mode == 'r') {
-		if(has_plus) {
+	if (*mode == 'r') {
+		if (has_plus) {
 			flags = O_RDWR;
-		}else{
+		} else {
 			flags = O_RDONLY;
 		}
-	}else if(*mode == 'w') {
-		if(has_plus) {
+	} else if (*mode == 'w') {
+		if (has_plus) {
 			flags = O_RDWR;
-		}else{
+		} else {
 			flags = O_WRONLY;
 		}
 		flags |= O_CREAT | O_TRUNC;
-	}else if(*mode == 'a') {
-		if(has_plus) {
+	} else if (*mode == 'a') {
+		if (has_plus) {
 			flags = O_APPEND | O_RDWR;
-		}else{
+		} else {
 			flags = O_APPEND | O_WRONLY;
 		}
 		flags |= O_CREAT;
-	}else{
+	} else {
 		mlibc::infoLogger() << "Illegal fopen() mode '" << *mode << "'" << frg::endlog;
 	}
 	mode += 1;
 
 	// Consume additional flags.
-	while(*mode) {
-		if(*mode == '+') {
+	while (*mode) {
+		if (*mode == '+') {
 			mode++; // This is already handled above.
-		}else if(*mode == 'b') {
+		} else if (*mode == 'b') {
 			mode++; // mlibc assumes that there is no distinction between text and binary.
-		}else if(*mode == 'e') {
+		} else if (*mode == 'e') {
 			flags |= O_CLOEXEC;
 			mode++;
-		}else{
+		} else if (*mode == 'x') {
+			flags |= O_EXCL;
+			mode++;
+		} else {
 			mlibc::infoLogger() << "Illegal fopen() flag '" << mode << "'" << frg::endlog;
 			mode++;
 		}
