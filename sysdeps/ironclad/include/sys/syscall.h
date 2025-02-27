@@ -111,6 +111,8 @@
 #define SYSCALL_FAILURE_POLICY       99
 #define SYSCALL_CREATE_THREAD       100
 #define SYSCALL_SIGNAL_RETURN       101
+#define SYSCALL_SIGALTSTACK         102
+#define SYSCALL_SIGSUSPEND          103
 
 #if defined(__x86_64__)
 #define SYSCALL0(NUM) ({ \
