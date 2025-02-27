@@ -352,6 +352,22 @@ int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restric
 	return errno;
 }
 
+int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
+	int ret, errno;
+	SYSCALL2(SYSCALL_SIGALTSTACK, ss, oss);
+	return errno;
+}
+
+int sys_sigsuspend(const sigset_t *set) {
+	int ret, errno;
+	SYSCALL1(SYSCALL_SIGSUSPEND, set);
+	return errno;
+}
+
+int sys_tgkill(int pid, int tid, int sig) {
+	return sys_kill(pid, sig);
+}
+
 int sys_isatty(int fd) {
 	struct termios t;
 	if (sys_tcgetattr(fd, &t) == 0) {
