@@ -42,6 +42,10 @@ int sched_setparam(pid_t __pid, const struct sched_param *__param);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
+#if __MLIBC_LINUX_OPTION
+#include <bits/linux/linux_sched.h>
+#endif
+
 #ifdef __cplusplus
 }
 #endif
