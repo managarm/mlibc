@@ -1130,8 +1130,34 @@ int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2
 }
 
 int sys_sysconf(int num, long *rret) {
-	long ret, errno;
-	SYSCALL3(SYSCALL_SYSCONF, num, 0, 0);
+	int abi_num;
+	switch (num) {
+		case _SC_PAGESIZE: abi_num = 1; break;
+		case _SC_OPEN_MAX: abi_num = 2; break;
+		case _SC_HOST_OPEN_MAX: abi_num = 3; break;
+		case _SC_AVPHYS_PAGES: abi_num = 4; break;
+		case _SC_PHYS_PAGES: abi_num = 5; break;
+		case _SC_NPROCESSORS_ONLN: abi_num = 6; break;
+		case _SC_TOTAL_PAGES: abi_num = 7; break;
+		case _SC_LIST_PROCS: abi_num = 8; break;
+		case _SC_LIST_MOUNTS: abi_num = 9; break;
+		case _SC_UNAME: abi_num = 10; break;
+		case _SC_CHILD_MAX: abi_num = 11; break;
+		case _SC_LIST_THREADS: abi_num = 12; break;
+		case _SC_LIST_CLUSTERS: abi_num = 13; break;
+		case _SC_LIST_NETINTER: abi_num = 14; break;
+		case _SC_DUMPLOGS: abi_num = 15; break;
+		case _SC_NGROUPS_MAX: abi_num = 16; break;
+		case _SC_SYMLOOP_MAX: abi_num = 17; break;
+		case _SC_LIST_FILELOCKS: abi_num = 18; break;
+		case _SC_LOADAVG: abi_num = 19; break;
+		case _SC_MEMINFO: abi_num = 20; break;
+		case _SC_LIST_PCI: abi_num = 21; break;
+		default: return EINVAL;
+	}
+	long ret;
+	int errno;
+	SYSCALL3(SYSCALL_SYSCONF, abi_num, 0, 0);
 	*rret = ret;
 	return errno;
 }
