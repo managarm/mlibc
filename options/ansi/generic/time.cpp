@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#if __MLIBC_POSIX_OPTION
+#include <unistd.h>
+#endif
+
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/file-window.hpp>
@@ -465,11 +469,126 @@ struct[[gnu::packed]] ttinfo {
 
 }
 
-// TODO(geert): this function doesn't parse the TZ environment variable
-// or properly handle the case where information might be missing from /etc/localtime
-// also we should probably unify the code for this and unix_local_from_gmt()
-void tzset(void) {
-	frg::unique_lock<FutexLock> lock(__time_lock);
+bool parse_tz(const char *tz, char *tz_name, char *tz_name_dst, size_t tz_name_max) {
+	// POSIX defines :*characters* as a valid but implementation-defined format.
+	// Seemingly, glibc ignores the initial colon and parses the rest as TZ.
+	// TODO: verify this with a test
+	if (*tz == ':')
+		tz++;
+
+	// The timezone name may be wrapped in angle brackets, in which case we
+	// parse them in quoted mode.
+	bool quoted = false;
+	if (*tz == '<') {
+		quoted = true;
+		tz++;
+	}
+
+	// Try parsing the timezone name.
+	auto *tzn = tz;
+	size_t tzn_len;
+	for (; *tz; tz++) {
+		tzn_len = tzn - tz;
+
+		if (tzn_len > tz_name_max) {
+			mlibc::infoLogger() << "mlibc: TZ name was longer than tz_name_max" << frg::endlog;
+			return true;
+		}
+
+		// Advance until the end of the timezone name.
+		if (isalpha(*tz))
+			continue;
+		if (quoted && (*tz == '+' || *tz == '-' || isdigit(*tz)))
+			continue;
+
+		// Check if the timezone name has a valid length.
+		if (tzn_len < 3)
+			return true;
+
+		// Consume the terminating angle bracket.
+		if (quoted && *tz == '>') {
+			tz++;
+		} else if (quoted) {
+			mlibc::infoLogger() << "mlibc: TZ name has unclosed angle bracket" << frg::endlog;
+			return true;
+		}
+
+		break;
+	}
+
+	// Parse +/- signs.
+	bool negative = false;
+	if (*tz == '+') {
+		tz++;
+	} else if (*tz == '-') {
+		negative = true;
+		tz++;
+	}
+
+	// If there's no offset, this can't be valid.
+	if (!isdigit(*tz))
+		return true;
+
+	// Parse the timezone offset; offset is hours, minutes, and seconds.
+	unsigned char offset[3] = { 0 };
+	for (int i = 0; i < 3; i++) {
+		if (!isdigit(*tz) && *tz != ':') {
+			mlibc::infoLogger() << "mlibc: invalid TZ offset" << frg::endlog;
+			return true;
+		}
+
+		// First digit
+		if (isdigit(*tz)) {
+			offset[i] = *tz - '0';
+			tz++;
+		}
+		// Second digit
+		if (isdigit(*tz)) {
+			offset[i] *= 10;
+			offset[i] += *tz - '0';
+			tz++;
+		}
+
+		// If this is the last component, stop parsing the offset.
+		if (*tz != ':')
+			break;
+		// Next component
+		tz++;
+	}
+
+	// Validate offsets
+	// TODO: Check what happens on offset[0] == 24.
+	if (offset[0] > 24 && offset[1] > 59 && offset[2] > 59) {
+		mlibc::infoLogger() << "mlibc: TZ offset out of bounds" << frg::endlog;
+		return true;
+	}
+
+	// TODO: parse *dst**offset*,*rule*
+
+	// If we're here, this MUST be of the POSIX timezone format.
+	// Write the TZ name to the buffer passed to the function.
+	memcpy(tz_name, tzn, tzn_len);
+	tz_name[tzn_len] = '\0';
+
+	timezone = offset[0] * 60 * 60 + offset[1] * 60 + offset[2];
+	if (negative)
+		timezone *= -1;
+	daylight = 0;
+
+	return false;
+}
+
+void parse_tzfile(const char *tz, char *tz_name, char *tz_name_dst, size_t tz_name_max) {
+	// POSIX defines :*characters* as a valid but implementation-defined format.
+	// This was originally introduced as a way to support geographical
+	// timezones in the format :Area/Location, but the colon was dropped in POSIX.
+	if (*tz == ':')
+		tz++;
+
+	const char *tzdir = getenv("TZDIR");
+	if (tzdir == NULL)
+		tzdir = "/usr/share/zoneinfo";
+
 	// TODO(geert): we can probably cache this somehow
 	tzfile tzfile_time;
 	memcpy(&tzfile_time, reinterpret_cast<char *>(get_localtime_window()->get()), sizeof(tzfile));
@@ -518,6 +637,39 @@ void tzset(void) {
 			daylight = 1;
 		}
 	}
+}
+
+// TODO(geert): this function doesn't properly handle the case where
+// information might be missing from /etc/localtime also we should probably
+// unify the code for this and unix_local_from_gmt()
+void tzset(void) {
+	frg::unique_lock<FutexLock> lock(__time_lock);
+
+	const char *tz = getenv("TZ");
+	if (tz == NULL)
+		tz = "/etc/localtime"; // well not actually
+	if (*tz)
+		tz = "UTC0";
+
+	size_t tz_name_max = TZNAME_MAX;
+#if __MLIBC_POSIX_OPTION
+	if (size_t sc_tz_name_max = sysconf(_SC_TZNAME_MAX); sc_tz_name_max > TZNAME_MAX)
+		tz_name_max = sc_tz_name_max;
+#endif
+
+	// 1 byte for null
+	char *tz_name = (char *) malloc(tz_name_max + 1);
+	char *tz_name_dst = (char *) malloc(tz_name_max + 1);
+	memset(tz_name, 0, tz_name_max + 1);
+	memset(tz_name_dst, 0, tz_name_max + 1);
+
+	if (!parse_tz(tz, tz_name, tz_name_dst, tz_name_max)) {
+		tzname[0] = tz_name;
+		tzname[1] = tz_name_dst;
+		return;
+	}
+
+	parse_tzfile(tz, tz_name, tz_name_dst, tz_name_max);
 }
 
 // POSIX extensions.
