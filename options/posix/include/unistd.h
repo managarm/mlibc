@@ -233,6 +233,24 @@ extern "C" {
 #define _SC_TRACE_INHERIT 183
 #define _SC_TRACE_LOG 184
 
+/* Port-specific _SC_* define values */
+
+#if defined (__ironclad__)
+#define _SC_TOTAL_PAGES 1000
+#define _SC_LIST_PROCS 1001
+#define _SC_LIST_MOUNTS 1002
+#define _SC_UNAME 1003
+#define _SC_LIST_THREADS 1004
+#define _SC_LIST_CLUSTERS 1005
+#define _SC_LIST_NETINTER 1006
+#define _SC_DUMPLOGS 1007
+#define _SC_HOST_OPEN_MAX 1008
+#define _SC_LIST_FILELOCKS 1009
+#define _SC_LOADAVG 1010
+#define _SC_MEMINFO 1011
+#define _SC_LIST_PCI 1012
+#endif /* defined (__ironclad__) */
+
 #define STDERR_FILENO 2
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
