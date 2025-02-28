@@ -451,17 +451,9 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 
 int sys_uname(struct utsname *buf) {
 	int ret, errno;
-
-	SYSCALL3(SYSCALL_SYSCONF, 10, buf, sizeof(struct utsname));
-
-	if (ret == -1) {
-		return errno;
-	}
-
-	return 0;
+	SYSCALL1(SYSCALL_UNAME, buf);
+	return errno;
 }
-
-
 
 int sys_setpgid(pid_t pid, pid_t pgid) {
 	(void)pid;
@@ -1129,37 +1121,51 @@ int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2
 	return errno;
 }
 
+struct meminfo {
+	uint64_t phys_total;
+	uint64_t phys_available;
+	uint64_t phys_free;
+	uint64_t shared_usage;
+	uint64_t kernel_usage;
+	uint64_t table_usage;
+	uint64_t poison_usage;
+};
+
 int sys_sysconf(int num, long *rret) {
-	int abi_num;
+	struct meminfo mem;
+	int ret, errno;
+
 	switch (num) {
-		case _SC_PAGESIZE: abi_num = 1; break;
-		case _SC_OPEN_MAX: abi_num = 2; break;
-		case _SC_HOST_OPEN_MAX: abi_num = 3; break;
-		case _SC_AVPHYS_PAGES: abi_num = 4; break;
-		case _SC_PHYS_PAGES: abi_num = 5; break;
-		case _SC_NPROCESSORS_ONLN: abi_num = 6; break;
-		case _SC_TOTAL_PAGES: abi_num = 7; break;
-		case _SC_LIST_PROCS: abi_num = 8; break;
-		case _SC_LIST_MOUNTS: abi_num = 9; break;
-		case _SC_UNAME: abi_num = 10; break;
-		case _SC_CHILD_MAX: abi_num = 11; break;
-		case _SC_LIST_THREADS: abi_num = 12; break;
-		case _SC_LIST_CLUSTERS: abi_num = 13; break;
-		case _SC_LIST_NETINTER: abi_num = 14; break;
-		case _SC_DUMPLOGS: abi_num = 15; break;
-		case _SC_NGROUPS_MAX: abi_num = 16; break;
-		case _SC_SYMLOOP_MAX: abi_num = 17; break;
-		case _SC_LIST_FILELOCKS: abi_num = 18; break;
-		case _SC_LOADAVG: abi_num = 19; break;
-		case _SC_MEMINFO: abi_num = 20; break;
-		case _SC_LIST_PCI: abi_num = 21; break;
-		default: return EINVAL;
+		case _SC_OPEN_MAX:
+			*rret = 100;
+			return 0;
+		case _SC_AVPHYS_PAGES:
+			SYSCALL1(SYSCALL_MEMINFO, &mem);
+			if (ret == 0) {
+				*rret = mem.phys_free / getpagesize();
+				return 0;
+			} else {
+				return EFAULT;
+			}
+		case _SC_PHYS_PAGES:
+			SYSCALL1(SYSCALL_MEMINFO, &mem);
+			if (ret == 0) {
+				*rret = mem.phys_available / getpagesize();
+				return 0;
+			} else {
+				return EFAULT;
+			}
+		case _SC_TOTAL_PAGES:
+			SYSCALL1(SYSCALL_MEMINFO, &mem);
+			if (ret == 0) {
+				*rret = mem.phys_total / getpagesize();
+				return 0;
+			} else {
+				return EFAULT;
+			}
+		default:
+			return EINVAL;
 	}
-	long ret;
-	int errno;
-	SYSCALL3(SYSCALL_SYSCONF, abi_num, 0, 0);
-	*rret = ret;
-	return errno;
 }
 
 int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
@@ -1315,7 +1321,7 @@ int sys_fstatvfs(int fd, struct statvfs *out) {
 int sys_statvfs(const char *path, struct statvfs *out) {
 	long ret, errno;
 	struct mountinfo *buffer = (mountinfo *)malloc(5 * sizeof(struct mountinfo));
-	SYSCALL3(SYSCALL_SYSCONF, SC_LIST_MOUNTS, buffer, 5 * sizeof(struct mountinfo));
+	SYSCALL2(SYSCALL_LISTMOUNTS, buffer, 5);
 	if (errno) {
 		free(buffer);
 		return errno;
@@ -1395,7 +1401,7 @@ int sys_shmget(int *shm_id, key_t key, size_t size, int shmflg) {
 int sys_getloadavg(double *samples) {
 	int ret, errno;
 	int samples2[3];
-	SYSCALL3(SYSCALL_SYSCONF, 19, samples2, sizeof(samples2));
+	SYSCALL2(SYSCALL_LOADAVG, samples2, 3);
 	if (ret < 0) {
 		return errno;
 	}

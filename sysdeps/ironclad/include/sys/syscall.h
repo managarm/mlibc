@@ -35,7 +35,7 @@
 #define SYSCALL_PIPE                 23
 #define SYSCALL_GETUID               24
 #define SYSCALL_RENAME               25
-#define SYSCALL_SYSCONF              26
+#define SYSCALL_LISTPROCS            26
 #define SYSCALL_SPAWN                27
 #define SYSCALL_GETTID               28
 #define SYSCALL_MANAGE_TCLUSTER      29
@@ -113,6 +113,16 @@
 #define SYSCALL_SIGNAL_RETURN       101
 #define SYSCALL_SIGALTSTACK         102
 #define SYSCALL_SIGSUSPEND          103
+#define SYSCALL_LISTMOUNTS          104
+#define SYSCALL_UNAME               105
+#define SYSCALL_LISTTHREADS         106
+#define SYSCALL_LISTCLUSTERS        107
+#define SYSCALL_LISTNETINTER        108
+#define SYSCALL_DUMPLOGS            109
+#define SYSCALL_LISTFLOCKS          110
+#define SYSCALL_LOADAVG             111
+#define SYSCALL_MEMINFO             112
+#define SYSCALL_LISTPCI             113
 
 #if defined(__x86_64__)
 #define SYSCALL0(NUM) ({ \
