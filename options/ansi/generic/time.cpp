@@ -575,6 +575,9 @@ bool parse_tz(const char *tz, char *tz_name, char *tz_name_dst, size_t tz_name_m
 		timezone *= -1;
 	daylight = 0;
 
+	mlibc::infoLogger() << "mlibc: TZ name " << tz_name << frg::endlog;
+	mlibc::infoLogger() << "mlibc: TZ offset " << timezone << frg::endlog;
+
 	return false;
 }
 
@@ -585,9 +588,32 @@ void parse_tzfile(const char *tz, char *tz_name, char *tz_name_dst, size_t tz_na
 	if (*tz == ':')
 		tz++;
 
-	const char *tzdir = getenv("TZDIR");
-	if (tzdir == NULL)
-		tzdir = "/usr/share/zoneinfo";
+	frg::string<MemoryAllocator> path {getAllocator()};
+	// TODO: generic path helpers in options/internal?
+	if (*tz == '/') {
+		path += tz;
+	} else if (*tz == '.') {
+		// FIXME: Figure out what we actually need to do in this case, consider
+		//        supporting relative paths or defaulting to UTC instead.
+		mlibc::infoLogger() << "mlibc: relative path in TZ not supported, "
+			"defaulting to /etc/localtime" << frg::endlog;
+		path += "/etc/localtime";
+	} else {
+		const char *tzdir = getenv("TZDIR");
+		if (tzdir == NULL || *tzdir == '\0') {
+			tzdir = "/usr/share/zoneinfo";
+		} else if (*tzdir != '/') {
+			mlibc::infoLogger() << "mlibc: non-absolute path in TZDIR not "
+				"supported, defaulting to /usr/share/zoneinfo" << frg::endlog;
+			tzdir = "/usr/share/zoneinfo";
+		}
+
+		path += tzdir;
+		path += "/";
+		path += tz;
+	}
+
+	mlibc::infoLogger() << "mlibc: reading TZ from " << path << frg::endlog;
 
 	// TODO(geert): we can probably cache this somehow
 	tzfile tzfile_time;
@@ -648,7 +674,7 @@ void tzset(void) {
 	const char *tz = getenv("TZ");
 	if (tz == NULL)
 		tz = "/etc/localtime"; // well not actually
-	if (*tz)
+	if (*tz == '\0')
 		tz = "UTC0";
 
 	size_t tz_name_max = TZNAME_MAX;
