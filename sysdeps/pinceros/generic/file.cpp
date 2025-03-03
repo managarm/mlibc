@@ -41,4 +41,8 @@ namespace mlibc
         MLIBC_UNIMPLEMENTED();
         return -1;
     }
+    int sys_vm_unmap(void */* pointer */, size_t /* size */) {
+        MLIBC_UNIMPLEMENTED();
+        return -1;
+    }
 } // namespace mlibc
