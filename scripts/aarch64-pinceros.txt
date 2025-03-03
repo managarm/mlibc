@@ -1,0 +1,10 @@
+[binaries]
+c = 'clang'
+cpp = 'clang++'
+strip = 'strip'
+
+[host_machine]
+system = 'pinceros'
+cpu_family = 'aarch64'
+cpu = 'aarch64'
+endian = 'little'

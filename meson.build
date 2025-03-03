@@ -248,6 +248,17 @@ elif host_machine.system() == 'dripos'
 	rtld_include_dirs += include_directories('sysdeps/dripos/include')
 	libc_include_dirs += include_directories('sysdeps/dripos/include')
 	subdir('sysdeps/dripos')
+elif host_machine.system() == 'pinceros'
+	disable_crypt_option = true
+	disable_posix_option = true
+	disable_linux_option = true
+	disable_iconv_option = true
+	disable_intl_option = true
+	disable_glibc_option = true
+	disable_bsd_option = true
+	rtld_include_dirs += include_directories('sysdeps/pinceros/include')
+	libc_include_dirs += include_directories('sysdeps/pinceros/include')
+	subdir('sysdeps/pinceros')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
