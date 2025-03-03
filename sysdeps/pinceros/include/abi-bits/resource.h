@@ -1,0 +1,1 @@
+../../../../abis/pinceros/resource.h
