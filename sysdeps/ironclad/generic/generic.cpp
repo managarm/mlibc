@@ -1131,11 +1131,33 @@ struct meminfo {
 	uint64_t poison_usage;
 };
 
+struct cpuinfo {
+	uint64_t conf_cores;
+	uint64_t onln_cores;
+};
+
 int sys_sysconf(int num, long *rret) {
 	struct meminfo mem;
+	struct cpuinfo cpu;
 	int ret, errno;
 
 	switch (num) {
+		case _SC_NPROCESSORS_CONF:
+			SYSCALL1(SYSCALL_GETCPUINFO, &cpu);
+			if (ret == 0) {
+				*rret = cpu.conf_cores;
+				return 0;
+			} else {
+				return EFAULT;
+			}
+		case _SC_NPROCESSORS_ONLN:
+			SYSCALL1(SYSCALL_GETCPUINFO, &cpu);
+			if (ret == 0) {
+				*rret = cpu.onln_cores;
+				return 0;
+			} else {
+				return EFAULT;
+			}
 		case _SC_OPEN_MAX:
 			*rret = 100;
 			return 0;
