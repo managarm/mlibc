@@ -123,6 +123,7 @@
 #define SYSCALL_LOADAVG             111
 #define SYSCALL_MEMINFO             112
 #define SYSCALL_LISTPCI             113
+#define SYSCALL_GETCPUINFO          114
 
 #if defined(__x86_64__)
 #define SYSCALL0(NUM) ({ \
