@@ -26,7 +26,7 @@ extern "C" void __mlibc_sigret(void);
 namespace mlibc {
 
 void sys_libc_log(const char *message) {
-#ifdef DEBUG
+#ifdef __MLIBC_DEBUG
 	ssize_t unused;
 	sys_write(2, message, strlen(message), &unused);
 	sys_write(2, "\n", 1, &unused);
