@@ -535,6 +535,11 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// so we have to set the ldso path after loading both.
 	ldso->path = executableSO->interpreterPath;
 
+	// Discover dependencies in a breadth-first search.
+	for (size_t i = 0; i < initialRepository->dependencyQueue.size(); i++) {
+		auto current = initialRepository->dependencyQueue[i];
+		initialRepository->discoverDependenciesFromLoadedObject(current);
+	}
 #else
 	executableSO = initialRepository->injectStaticObject(execfn,
 			frg::string<MemoryAllocator>{ execfn, getAllocator() },
@@ -662,7 +667,9 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 			}
 			return nullptr;
 		}
+
 		object = objectResult.value();
+		initialRepository->discoverDependenciesFromLoadedObject(object);
 
 		Loader linker{object->localScope, nullptr, false, rts};
 		linker.linkObjects(object);
