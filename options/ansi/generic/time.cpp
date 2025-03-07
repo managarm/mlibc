@@ -8,10 +8,8 @@
 #include <wchar.h>
 #include <stdlib.h>
 #include <ctype.h>
-
-#if __MLIBC_POSIX_OPTION
 #include <unistd.h>
-#endif
+#include <sys/stat.h>
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
@@ -581,7 +579,7 @@ bool parse_tz(const char *tz, char *tz_name, char *tz_name_dst, size_t tz_name_m
 	return false;
 }
 
-void parse_tzfile(const char *tz, size_t tz_name_max) {
+bool parse_tzfile(const char *tz, size_t tz_name_max) {
 	// POSIX defines :*characters* as a valid but implementation-defined format.
 	// This was originally introduced as a way to support geographical
 	// timezones in the format :Area/Location, but the colon was dropped in POSIX.
@@ -614,6 +612,13 @@ void parse_tzfile(const char *tz, size_t tz_name_max) {
 	}
 
 	mlibc::infoLogger() << "mlibc: reading TZ from " << path << frg::endlog;
+
+	// Check if file exists, otherwise fallback to the default.
+	struct stat stat_buf;
+	if (stat(path.data(), &stat_buf) != 0)
+		return true;
+
+	// FIXME: Make this fallible so the above check is not needed.
 	file_window window {path.data()};
 
 	// TODO(geert): we can probably cache this somehow
@@ -629,18 +634,18 @@ void parse_tzfile(const char *tz, size_t tz_name_max) {
 	if(tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i'
 			|| tzfile_time.magic[3] != 'f') {
 		mlibc::infoLogger() << "mlibc: " << path << " is not a valid TZinfo file" << frg::endlog;
-		return;
+		return true;
 	}
 
 	if(tzfile_time.version != '\0' && tzfile_time.version != '2' && tzfile_time.version != '3') {
 		mlibc::infoLogger() << "mlibc: " << path << " has an invalid TZinfo version"
 				<< frg::endlog;
-		return;
+		return true;
 	}
 
 	// There should be at least one entry in the ttinfo table.
-	// TODO: If there is not, we might want to fall back to UTC, no DST (?).
-	__ensure(tzfile_time.tzh_typecnt);
+	if (!tzfile_time.tzh_typecnt)
+		return true;
 
 	char *abbrevs = reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
 		+ tzfile_time.tzh_timecnt * sizeof(int32_t)
@@ -665,6 +670,8 @@ void parse_tzfile(const char *tz, size_t tz_name_max) {
 			daylight = 1;
 		}
 	}
+
+	return false;
 }
 
 // TODO(geert): this function doesn't properly handle the case where
@@ -675,15 +682,13 @@ void tzset(void) {
 
 	const char *tz = getenv("TZ");
 	if (tz == NULL)
-		tz = "/etc/localtime"; // well not actually
+		tz = "/etc/localtime";
 	if (*tz == '\0')
 		tz = "UTC0";
 
 	size_t tz_name_max = TZNAME_MAX;
-#if __MLIBC_POSIX_OPTION
 	if (size_t sc_tz_name_max = sysconf(_SC_TZNAME_MAX); sc_tz_name_max > TZNAME_MAX)
 		tz_name_max = sc_tz_name_max;
-#endif
 
 	// 1 byte for null
 	char *tz_name = (char *) malloc(tz_name_max + 1);
@@ -697,7 +702,13 @@ void tzset(void) {
 		return;
 	}
 
-	parse_tzfile(tz, tz_name_max);
+	// Try parsing as a geographic timezone.
+	if (parse_tzfile(tz, tz_name_max)) {
+		// This should always succeed.
+		__ensure(parse_tz("UTC0", tz_name, tz_name_dst, tz_name_max));
+		tzname[0] = tz_name;
+		tzname[1] = tz_name_dst;
+	}
 }
 
 // POSIX extensions.
