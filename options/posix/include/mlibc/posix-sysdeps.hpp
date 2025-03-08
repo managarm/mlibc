@@ -39,6 +39,7 @@ void sys_libc_log(const char *message);
 [[noreturn]] void sys_exit(int status);
 [[noreturn, gnu::weak]] void sys_thread_exit();
 int sys_clock_get(int clock, time_t *secs, long *nanos);
+[[gnu::weak]] int sys_clock_set(int clock, const struct timespec *tp);
 
 int sys_open(const char *pathname, int flags, mode_t mode, int *fd);
 [[gnu::weak]] int sys_flock(int fd, int options);
