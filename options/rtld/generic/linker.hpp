@@ -233,6 +233,8 @@ struct SharedObject {
 
 	bool wasVisited = false;
 
+	bool dependenciesDiscovered = false;
+
 	// PHDR related stuff, we only set these for the main executable
 	void *phdrPointer = nullptr;
 	size_t phdrEntrySize = 0;

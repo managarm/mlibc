@@ -539,6 +539,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	for (size_t i = 0; i < initialRepository->dependencyQueue.size(); i++) {
 		auto current = initialRepository->dependencyQueue[i];
 		initialRepository->discoverDependenciesFromLoadedObject(current);
+		current->dependenciesDiscovered = true;
 	}
 #else
 	executableSO = initialRepository->injectStaticObject(execfn,
@@ -670,6 +671,13 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 
 		object = objectResult.value();
 		initialRepository->discoverDependenciesFromLoadedObject(object);
+		for (size_t i = 0; i < initialRepository->dependencyQueue.size(); i++) {
+			auto current = initialRepository->dependencyQueue[i];
+			if(!current->dependenciesDiscovered) {
+				initialRepository->discoverDependenciesFromLoadedObject(current);
+				current->dependenciesDiscovered = true;
+			}
+		}
 
 		Loader linker{object->localScope, nullptr, false, rts};
 		linker.linkObjects(object);
