@@ -23,7 +23,7 @@ enum GetoptMode {
 	LongOnly,
 };
 
-int getopt_common(int argc, char * const argv[], const char *optstring, const struct option *longopts, int *longindex, enum GetoptMode mode) {
+int getopt_common_internal(int argc, char * const argv[], const char *optstring, const struct option *longopts, int *longindex, enum GetoptMode mode) {
 	auto longopt_consume = [&](const char *arg, char *s, int k, bool colon) -> frg::optional<int> {
 		// Consume the option and its argument.
 		if(longopts[k].has_arg == required_argument) {
@@ -71,23 +71,6 @@ int getopt_common(int argc, char * const argv[], const char *optstring, const st
 	bool colon = optstring[0] == ':';
 	bool stop_at_first_nonarg = (optstring[0] == '+' || getenv("POSIXLY_CORRECT"));
 
-	// glibc extension: Setting optind to zero causes a full reset.
-	// TODO: Should we really reset opterr and the other flags?
-	if(!optind
-#if __MLIBC_BSD_OPTION
-		|| optreset
-#endif //__MLIBC_BSD_OPTION
-		) {
-		optarg = nullptr;
-		optind = 1;
-		opterr = 1;
-		optopt = 0;
-		__optpos = 1;
-#if __MLIBC_BSD_OPTION
-		optreset = 0;
-#endif //__MLIBC_BSD_OPTION
-	}
-
 	auto isOptionArg = [](char *arg){
 		// If the first character of arg '-', and the arg is not exactly
 		// equal to "-" or "--", then the arg is an option argument.
@@ -98,6 +81,7 @@ int getopt_common(int argc, char * const argv[], const char *optstring, const st
 		char *arg = argv[optind];
 		if(!isOptionArg(arg)) {
 			if(stop_at_first_nonarg) {
+				optarg = nullptr;
 				return -1;
 			}
 
@@ -220,6 +204,7 @@ int getopt_common(int argc, char * const argv[], const char *optstring, const st
 						} else if(arg[i]) {
 							optind++;
 						} else {
+							optarg = nullptr;
 							return -1;
 						}
 					}
@@ -237,7 +222,65 @@ int getopt_common(int argc, char * const argv[], const char *optstring, const st
 			}
 		}
 	}
+
+	optarg = nullptr;
 	return -1;
+}
+
+void permute(char **argv, int dest, int src) {
+	assert(src > dest);
+	char *tmp = argv[src];
+	for(int i = src; i > dest; i--) {
+		argv[i] = argv[i - 1];
+	}
+	argv[dest] = tmp;
+}
+
+int getopt_common(int argc, char * const argv[], const char *optstring, const struct option *longopts, int *longindex, enum GetoptMode mode) {
+	// glibc extension: Setting optind to zero causes a full reset.
+	// TODO: Should we really reset opterr and the other flags?
+	if(!optind
+#if __MLIBC_BSD_OPTION
+		|| optreset
+#endif //__MLIBC_BSD_OPTION
+		) {
+		optarg = nullptr;
+		optind = 1;
+		optopt = 0;
+		__optpos = 1;
+#if __MLIBC_BSD_OPTION
+		optreset = 0;
+#endif //__MLIBC_BSD_OPTION
+	}
+
+	int skipped = optind;
+
+	if(optstring[0] != '+' && optstring[0] != '-') {
+		int i = optind;
+
+		for(;; i++) {
+			if(i >= argc || !argv[i]) {
+				optarg = nullptr;
+				return -1;
+			}
+			if(argv[i][0] == '-' && argv[i][1])
+				break;
+		}
+
+		optind = i;
+	}
+
+	int resumed = optind;
+	auto ret = getopt_common_internal(argc, argv, optstring, longopts, longindex, mode);
+
+	if(resumed > skipped) {
+		for(int i = 0; i < (optind - resumed); i++) {
+			permute(const_cast<char **>(argv), skipped, optind - 1);
+		}
+		optind = skipped + (optind - resumed);
+	}
+
+	return ret;
 }
 
 }
