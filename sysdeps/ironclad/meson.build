@@ -19,7 +19,6 @@ libc_sources += files(
 	'generic/pty.cpp',
 	'generic/thread.cpp',
 	'generic/mac.cpp',
-	'generic/sched2.cpp',
 	'generic/thread.S',
 	'generic/utmpx.cpp'
 )
@@ -73,8 +72,6 @@ if not no_headers
 		follow_symlinks: true
 	)
 	install_headers(
-		'include/sys/sched2.h',
-		'include/sys/ironclad_devices.h',
 		'include/sys/mac.h',
 		'include/sys/syscall.h',
 		'include/sys/reboot.h',

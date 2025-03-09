@@ -10,7 +10,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/syscall.h>
-#include <sys/ironclad_devices.h>
 #include <sched.h>
 #include <sys/mman.h>
 #include <unistd.h>
