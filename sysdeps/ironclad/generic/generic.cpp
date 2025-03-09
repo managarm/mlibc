@@ -1133,6 +1133,11 @@ struct meminfo {
 struct cpuinfo {
 	uint64_t conf_cores;
 	uint64_t onln_cores;
+	char model_name[64];
+	char vendor_name[64];
+	uint32_t base_mhz;
+	uint32_t max_mhz;
+	uint32_t ref_mhz;
 };
 
 int sys_sysconf(int num, long *rret) {
