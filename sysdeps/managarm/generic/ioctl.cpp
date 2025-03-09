@@ -1171,6 +1171,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		mlibc::infoLogger() << "\e[35mmlibc: FICLONE/FICLONERANGE are no-ops" << frg::endlog;
 		*result = -1;
 		return EOPNOTSUPP;
+	} else if (request == FS_IOC_GETFLAGS) {
+		mlibc::infoLogger() << "\e[35mmlibc: FS_IOC_GETFLAGS is a no-op" << frg::endlog;
+		*result = 0;
+		return ENOSYS;
 	}
 
 	mlibc::infoLogger() << "mlibc: Unexpected ioctl with"
