@@ -21,12 +21,32 @@ sources:
     tag: 'libdrm-2.4.115'
     version: '2.4.115'
 
-tools: []
+  - name: bragi
+    subdir: 'ports'
+    git: 'https://github.com/managarm/bragi.git'
+    branch: 'master'
+    rolling_version: true
+    version: '0.0pl@ROLLING_ID@'
+
+tools:
+  - name: host-bragi
+    labels: [aarch64, riscv64]
+    architecture: noarch
+    from_source: bragi
+    revision: 1
+    install:
+      - args: ['python3', '-m', 'venv', '.']
+        workdir: '@PREFIX@'
+      - args: ['bin/pip', 'install', '@THIS_SOURCE_DIR@']
+        workdir: '@PREFIX@'
+        isolate_network: false
 
 packages:
   - name: mlibc
     architecture: '@OPTION:arch@'
     from_source: mlibc
+    tools_required:
+      - host-bragi
     pkgs_required:
       - linux-headers
       - libdrm-headers
@@ -59,6 +79,8 @@ packages:
   - name: mlibc-static
     architecture: '@OPTION:arch@'
     from_source: mlibc
+    tools_required:
+      - host-bragi
     pkgs_required:
       - linux-headers
       - libdrm-headers
@@ -87,6 +109,8 @@ packages:
 
   - name: mlibc-shared
     from_source: mlibc
+    tools_required:
+      - host-bragi
     pkgs_required:
       - linux-headers
       - libdrm-headers
@@ -116,6 +140,8 @@ packages:
   - name: mlibc-ansi-only
     architecture: '@OPTION:arch@'
     from_source: mlibc
+    tools_required:
+      - host-bragi
     pkgs_required:
       - linux-headers
       - libdrm-headers
@@ -149,6 +175,8 @@ packages:
   - name: mlibc-headers-only
     architecture: '@OPTION:arch@'
     from_source: mlibc
+    tools_required:
+      - host-bragi
     pkgs_required:
       - linux-headers
       - libdrm-headers

@@ -95,7 +95,7 @@ jobs:
                 apt-get update
                 apt-get install -y ninja-build qemu-user \
                                 python3-setuptools python3-jsonschema \
-                                python3-pip
+                                python3-pip python3-venv
                 pip install --break-system-packages -U xbstrap meson
           - if: ${{ matrix.sysdeps == 'managarm' }}
             name: Checkout bootstrap-managarm
@@ -119,10 +119,6 @@ jobs:
             with:
               repository: 'managarm/bragi'
               path: 'src/mlibc/subprojects/bragi'
-          - if: ${{ matrix.sysdeps == 'managarm' }}
-            name: Install bragi
-            run: |
-                pip install --break-system-packages -U bragi
           - name: Set up linux kernel headers
             run: |
                 mkdir -p build/mlibc/
@@ -137,6 +133,11 @@ jobs:
             run: |
                 xbstrap install libdrm-headers
                 ln -sv $(pwd)/packages/libdrm-headers/usr/src/libdrm-headers ../src/mlibc/subprojects/
+            working-directory: build/
+          - if: ${{ matrix.sysdeps == 'managarm' }}
+            name: Install bragi
+            run: |
+                xbstrap install-tool host-bragi
             working-directory: build/
           - name: Compile sysdeps
             run: |
