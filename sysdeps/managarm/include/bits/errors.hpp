@@ -70,6 +70,8 @@ inline int operator|(managarm::fs::Errors e, ToErrno) {
 			return ENOTEMPTY;
 		case managarm::fs::Errors::CONNECTION_REFUSED:
 			return ECONNREFUSED;
+		case managarm::fs::Errors::ALREADY_CONNECTED:
+			return EISCONN;
 		case managarm::fs::Errors::INTERNAL_ERROR:
 			return EIO;
 	}
@@ -137,6 +139,8 @@ inline int operator|(managarm::posix::Errors e, ToErrno) {
 			return ECHILD;
 		case managarm::posix::Errors::SYMBOLIC_LINK_LOOP:
 			return ELOOP;
+		case managarm::posix::Errors::ALREADY_CONNECTED:
+			return EISCONN;
 	}
 
 	mlibc::panicLogger() << "unhandled managarm::posix::Errors " << static_cast<int32_t>(e)
