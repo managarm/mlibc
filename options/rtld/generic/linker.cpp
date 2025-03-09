@@ -558,12 +558,12 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 			#if MLIBC_MAP_DSO_SEGMENTS
 				void *map_pointer;
 				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
-						backed_map_size, prot | PROT_WRITE,
+						backed_map_size, PROT_READ | PROT_WRITE,
 						MAP_PRIVATE | MAP_FIXED, fd, phdr->p_offset - misalign, &map_pointer))
 					__ensure(!"sys_vm_map failed");
 				if(total_map_size > backed_map_size)
 					if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address + backed_map_size),
-							total_map_size - backed_map_size, prot | PROT_WRITE,
+							total_map_size - backed_map_size, PROT_READ | PROT_WRITE,
 							MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
 						__ensure(!"sys_vm_map failed");
 
@@ -582,7 +582,7 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 
 				void *map_pointer;
 				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
-						total_map_size, prot | PROT_WRITE,
+						total_map_size, PROT_READ | PROT_WRITE,
 						MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
 					__ensure(!"sys_vm_map failed");
 
@@ -590,10 +590,12 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 				__ensure(tryReadExactly(fd, reinterpret_cast<char *>(map_address) + misalign,
 						phdr->p_filesz));
 			#endif
-			// Take care of removing superfluous permissions.
-			if(mlibc::sys_vm_protect && ((prot & PROT_WRITE) == 0))
-				if(mlibc::sys_vm_protect(map_pointer, total_map_size, prot))
-					mlibc::infoLogger() << "mlibc: sys_vm_protect() failed in ld.so" << frg::endlog;
+			if (!mlibc::sys_vm_protect) {
+				__ensure(!"sys_vm_protect not provided");
+			}
+			if (mlibc::sys_vm_protect(reinterpret_cast<void *>(map_address), total_map_size, prot)) {
+				__ensure(!"sys_vm_protect failed");
+			}
 		}else if(phdr->p_type == PT_TLS) {
 			object->tlsSegmentSize = phdr->p_memsz;
 			object->tlsAlignment = phdr->p_align;
