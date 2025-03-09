@@ -104,8 +104,9 @@ int sys_sigaction(
 
 int sys_kill(int pid, int number) {
 	// This implementation is inherently signal-safe.
-	HEL_CHECK(helSyscall2(kHelObserveSuperCall + posix::superSigKill, pid, number));
-	return 0;
+	HelWord out;
+	HEL_CHECK(helSyscall2_1(kHelObserveSuperCall + posix::superSigKill, pid, number, &out));
+	return out;
 }
 
 int sys_tgkill(int, int tid, int number) { return sys_kill(tid, number); }
