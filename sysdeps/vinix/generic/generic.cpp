@@ -423,8 +423,6 @@ int sys_vm_unmap(void *pointer, size_t size) {
 	return 0;
 }
 
-#ifndef MLIBC_BUILDING_RTLD
-
 int sys_vm_protect(void *pointer, size_t size, int prot) {
 	__syscall_ret ret = __syscall(48, pointer, size, prot);
 
@@ -433,8 +431,6 @@ int sys_vm_protect(void *pointer, size_t size, int prot) {
 
 	return 0;
 }
-
-#endif
 
 int sys_anon_allocate(size_t size, void **pointer) {
 	return sys_vm_map(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE,

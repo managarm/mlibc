@@ -250,6 +250,13 @@ int sys_vm_unmap(void *pointer, size_t size) {
 	return 0;
 }
 
+int sys_vm_protect(void *pointer, size_t size, int prot) {
+	auto ret = do_syscall(SYS_mprotect, pointer, size, prot);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 // All remaining functions are disabled in ldso.
 #ifndef MLIBC_BUILDING_RTLD
 
@@ -1646,13 +1653,6 @@ gid_t sys_getegid() {
 
 int sys_kill(int pid, int sig) {
 	auto ret = do_syscall(SYS_kill, pid, sig);
-	if (int e = sc_error(ret); e)
-		return e;
-	return 0;
-}
-
-int sys_vm_protect(void *pointer, size_t size, int prot) {
-	auto ret = do_syscall(SYS_mprotect, pointer, size, prot);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
