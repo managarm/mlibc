@@ -65,6 +65,7 @@ struct utmpx *pututxline(const struct utmpx *added) {
 }
 
 int utmpxname(const char *path) {
+	(void)path;
 	endutxent();
 	setutxent();
 	if (utmpx_file > 0) {

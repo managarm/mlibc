@@ -29,6 +29,8 @@ void sys_libc_log(const char *message) {
 	ssize_t unused;
 	sys_write(2, message, strlen(message), &unused);
 	sys_write(2, "\n", 1, &unused);
+#else
+	(void)message;
 #endif
 }
 
@@ -301,6 +303,7 @@ int sys_vm_protect(void *pointer, size_t size, int prot) {
 
 int sys_getsid(pid_t pid, pid_t *sid) {
 	//  STUB.
+	(void)pid; (void)sid;
 	return 0;
 }
 
@@ -364,6 +367,7 @@ int sys_sigsuspend(const sigset_t *set) {
 }
 
 int sys_tgkill(int pid, int tid, int sig) {
+	(void)tid;
 	return sys_kill(pid, sig);
 }
 
@@ -643,7 +647,7 @@ struct futex_item {
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	int ret, errno;
-	struct futex_item item = {.addr = (uint64_t)pointer, .expected = expected, .flags = 0};
+	struct futex_item item = {.addr = (uint64_t)pointer, .expected = (uint32_t)expected, .flags = 0};
 	if (time == NULL) {
 		 struct timespec t = {(time_t)-1, (time_t)-1};
 		 SYSCALL4(SYSCALL_FUTEX, 0b01, &item, 1, &t);
@@ -693,6 +697,7 @@ int sys_rmdir(const char* path){
 }
 
 int sys_unlinkat(int fd, const char *path, int flags) {
+	(void)flags;
 	int ret, errno;
 	size_t path_len = strlen (path);
 	SYSCALL3(SYSCALL_UNLINK, fd, path, path_len);
@@ -803,6 +808,7 @@ int sys_getresgid(uid_t *rgid, uid_t *egid, uid_t *sgid) {
 }
 
 int sys_setsid(pid_t *sid) {
+	(void)sid;
 	return 0;
 }
 
@@ -933,10 +939,13 @@ int sys_shutdown(int sockfd, int how) {
 }
 
 int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
+	(void)which; (void)new_value; (void)old_value;
 	return ENOSYS;
 }
 
 int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
+	(void)flags;
+
 	if (hdr->msg_control != NULL) {
 		// mlibc::infoLogger() << "mlibc: recv() msg_control not supported!" << frg::endlog;
 	}
@@ -959,6 +968,8 @@ int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
 }
 
 int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
+	(void)flags;
+
 	if (hdr->msg_control != NULL) {
 		// mlibc::infoLogger() << "mlibc: recv() msg_control not supported!" << frg::endlog;
 	}
@@ -1316,6 +1327,7 @@ int sys_mknodat(int dirfd, const char *path, mode_t mode, dev_t dev) {
 }
 
 int sys_brk(void **out) {
+	(void)out;
 	return -1;
 }
 
@@ -1341,6 +1353,7 @@ struct mountinfo {
 #include <sys/mount.h>
 
 int sys_fstatvfs(int fd, struct statvfs *out) {
+	(void)fd;
 	return sys_statvfs("/", out);
 }
 
