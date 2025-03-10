@@ -7,6 +7,7 @@ rtld_dso_sources += files(
 
 libc_sources += files(
     'generic/ensure.cpp',
+    'generic/entry.cpp',
     'generic/file.cpp',
     'generic/fork-exec.cpp',
     'generic/memory.cpp',
