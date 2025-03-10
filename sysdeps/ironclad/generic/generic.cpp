@@ -1392,10 +1392,6 @@ int sys_statvfs(const char *path, struct statvfs *out) {
 	return 0;
 }
 
-int sys_getcwd(char *, size_t) {
-	__builtin_trap();
-}
-
 int sys_shmat(void **seg_start, int shmid, const void *shmaddr, int shmflg) {
 	void *ret;
 	int errno;

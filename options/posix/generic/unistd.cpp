@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/resource.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <limits.h>
 #include <termios.h>
 #include <pwd.h>
@@ -299,12 +300,139 @@ char *getcwd(char *buffer, size_t size) {
 		buffer = (char *)malloc(size);
 	}
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getcwd, nullptr);
-	if(int e = mlibc::sys_getcwd(buffer, size); e) {
+	if (mlibc::sys_getcwd) {
+		if(int e = mlibc::sys_getcwd(buffer, size); e) {
+			errno = e;
+			return NULL;
+		}
+		return buffer;
+	}
+
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_stat, nullptr);
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_openat, nullptr);
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_close, nullptr);
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_dup, nullptr);
+
+	struct stat root_stat;
+	if (int e = mlibc::sys_stat(mlibc::fsfd_target::fd_path, AT_FDCWD,
+	                            "/", AT_SYMLINK_NOFOLLOW,
+	                            &root_stat); e) {
 		errno = e;
 		return NULL;
 	}
 
+	struct stat cur_dir_stat;
+	if (int e = mlibc::sys_stat(mlibc::fsfd_target::fd_path, AT_FDCWD,
+	                            ".", AT_SYMLINK_NOFOLLOW,
+	                            &cur_dir_stat); e) {
+		errno = e;
+		return NULL;
+	}
+
+	if (cur_dir_stat.st_ino == root_stat.st_ino
+	 && cur_dir_stat.st_dev == root_stat.st_dev) {
+		if (size < 2) {
+			errno = ERANGE;
+			return NULL;
+		}
+		strcpy(buffer, "/");
+		return buffer;
+	}
+
+	size_t bufptr = size - 1;
+	buffer[bufptr] = 0;
+
+	int par_dir = AT_FDCWD;
+	bool last_run = false;
+
+	for (;;) {
+		int old_par_dir = par_dir;
+		if (int e = mlibc::sys_openat(old_par_dir, "..", O_RDONLY, 0, &par_dir); e) {
+			errno = e;
+			return NULL;
+		}
+		if (old_par_dir != AT_FDCWD) {
+			mlibc::sys_close(old_par_dir);
+		}
+
+		struct stat par_dir_stat;
+		if (int e = mlibc::sys_stat(mlibc::fsfd_target::fd, par_dir, nullptr,
+		                            0, &par_dir_stat); e) {
+			mlibc::sys_close(par_dir);
+			errno = e;
+			return NULL;
+		}
+
+		int par_dir_copy;
+		if (int e = mlibc::sys_dup(par_dir, 0, &par_dir_copy); e) {
+			mlibc::sys_close(par_dir);
+			errno = e;
+			return NULL;
+		}
+
+		DIR *par_dir_dir = fdopendir(par_dir_copy);
+		if (par_dir_dir == NULL) {
+			mlibc::sys_close(par_dir_copy);
+			mlibc::sys_close(par_dir);
+			return NULL;
+		}
+
+		if (par_dir_stat.st_ino == root_stat.st_ino
+		 && par_dir_stat.st_dev == root_stat.st_dev) {
+			last_run = true;
+		}
+
+		for (;;) {
+			struct dirent *cur_ent = readdir(par_dir_dir);
+			if (cur_ent == NULL) {
+				closedir(par_dir_dir);
+				mlibc::sys_close(par_dir);
+				return NULL;
+			}
+
+			if (strcmp(cur_ent->d_name, ".") == 0 || strcmp(cur_ent->d_name, "..") == 0) {
+				continue;
+			}
+
+			struct stat cur_ent_stat;
+			if (int e = mlibc::sys_stat(mlibc::fsfd_target::fd_path, par_dir,
+			                            cur_ent->d_name, AT_SYMLINK_NOFOLLOW,
+			                            &cur_ent_stat)) {
+				closedir(par_dir_dir);
+				mlibc::sys_close(par_dir);
+				errno = e;
+				return NULL;
+			}
+
+			if (cur_ent_stat.st_ino == cur_dir_stat.st_ino
+			 && cur_ent_stat.st_dev == cur_dir_stat.st_dev) {
+				size_t len = strlen(cur_ent->d_name);
+				if (len + 1 > bufptr + 1) {
+					closedir(par_dir_dir);
+					mlibc::sys_close(par_dir);
+					errno = ERANGE;
+					return NULL;
+				}
+				bufptr -= len;
+				memcpy(&buffer[bufptr], cur_ent->d_name, len);
+				bufptr--;
+				buffer[bufptr] = '/';
+				break;
+			}
+		}
+
+		closedir(par_dir_dir);
+
+		cur_dir_stat = par_dir_stat;
+
+		if (last_run) {
+			break;
+		}
+	}
+
+	mlibc::sys_close(par_dir);
+
+	memmove(buffer, &buffer[bufptr], strlen(&buffer[bufptr]) + 1);
 	return buffer;
 }
 
