@@ -46,8 +46,6 @@ char *hasmntopt(const struct mntent *mnt, const char *opt) {
 /* Adapted from musl */
 struct mntent *getmntent_r(FILE *f, struct mntent *mnt, char *linebuf, int buflen) {
 	bool use_internal = (linebuf == SENTINEL);
-	int len;
-	size_t i;
 
 	char source[60];
 	char target[30];

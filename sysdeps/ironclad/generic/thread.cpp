@@ -32,7 +32,7 @@ namespace mlibc {
 			if (*stack_base == MAP_FAILED) {
 				return errno;
 			}
-			munmap(*stack_base + *stack_size, mlibc::page_size);
+			munmap((char *)*stack_base + *stack_size, mlibc::page_size);
 		} else {
 			*stack_base = *stack;
 		}
