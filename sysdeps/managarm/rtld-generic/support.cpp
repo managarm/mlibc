@@ -23,6 +23,11 @@
 HelHandle posixLane;
 HelHandle *fileTable;
 
+extern "C" [[gnu::visibility("hidden")]] void abort() {
+	mlibc::panicLogger() << "rtld: abort() called" << frg::endlog;
+	__builtin_unreachable();
+}
+
 void cacheFileTable() {
 	if (fileTable)
 		return;
@@ -446,6 +451,44 @@ int sys_futex_wake(int *pointer) {
 	// This implementation is inherently signal-safe.
 	if (helFutexWake(pointer))
 		return -1;
+	return 0;
+}
+
+int sys_vm_protect(void *pointer, size_t size, int prot) {
+	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
+	req.set_request_type(managarm::posix::CntReqType::VM_PROTECT);
+	req.set_address(reinterpret_cast<uintptr_t>(pointer));
+	req.set_size(size);
+	req.set_mode(prot);
+
+	if (!globalQueue.valid())
+		globalQueue.initialize();
+
+	frg::string<MemoryAllocator> ser(getAllocator());
+	req.SerializeToString(&ser);
+
+	HelAction actions[3];
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = ser.data();
+	actions[1].length = ser.size();
+	actions[2].type = kHelActionRecvInline;
+	actions[2].flags = 0;
+	HEL_CHECK(helSubmitAsync(posixLane, actions, 3, globalQueue->getHandle(), 0, 0));
+
+	auto element = globalQueue->dequeueSingle();
+	auto offer = parseHandle(element);
+	auto send_req = parseSimple(element);
+	auto recv_resp = parseInline(element);
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_req->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
 }
 

@@ -546,6 +546,7 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 			auto map_address = object->baseAddress + phdr->p_vaddr - misalign;
 			auto backed_map_size = (phdr->p_filesz + misalign + pageSize - 1) & ~(pageSize - 1);
 			auto total_map_size = (phdr->p_memsz + misalign + pageSize - 1) & ~(pageSize - 1);
+			auto initial_prot = PROT_READ | PROT_WRITE;
 
 			int prot = 0;
 			if(phdr->p_flags & PF_R)
@@ -555,46 +556,51 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 			if(phdr->p_flags & PF_X)
 				prot |= PROT_EXEC;
 
-			#if MLIBC_MAP_DSO_SEGMENTS
-				void *map_pointer;
-				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
-						backed_map_size, PROT_READ | PROT_WRITE,
-						MAP_PRIVATE | MAP_FIXED, fd, phdr->p_offset - misalign, &map_pointer))
-					__ensure(!"sys_vm_map failed");
-				if(total_map_size > backed_map_size)
-					if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address + backed_map_size),
-							total_map_size - backed_map_size, PROT_READ | PROT_WRITE,
-							MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
-						__ensure(!"sys_vm_map failed");
+		#if MLIBC_MAP_DSO_SEGMENTS
+			// we can avoid the vm_protect call if we don't have to write to the segment
+			if(phdr->p_memsz == phdr->p_filesz)
+				initial_prot = prot;
 
-				if(mlibc::sys_vm_readahead)
-					if(mlibc::sys_vm_readahead(reinterpret_cast<void *>(map_address),
-							backed_map_size))
-						mlibc::infoLogger() << "mlibc: sys_vm_readahead() failed in ld.so"
-								<< frg::endlog;
-
-				// Clear the trailing area at the end of the backed mapping.
-				// We do not clear the leading area; programs are not supposed to access it.
-				memset(reinterpret_cast<void *>(map_address + misalign + phdr->p_filesz),
-						0, phdr->p_memsz - phdr->p_filesz);
-			#else
-				(void)backed_map_size;
-
-				void *map_pointer;
-				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
-						total_map_size, PROT_READ | PROT_WRITE,
+			void *map_pointer;
+			if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
+					backed_map_size, initial_prot,
+					MAP_PRIVATE | MAP_FIXED, fd, phdr->p_offset - misalign, &map_pointer))
+				__ensure(!"sys_vm_map failed");
+			if(total_map_size > backed_map_size)
+				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address + backed_map_size),
+						total_map_size - backed_map_size, initial_prot,
 						MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
 					__ensure(!"sys_vm_map failed");
 
-				__ensure(trySeek(fd, phdr->p_offset));
-				__ensure(tryReadExactly(fd, reinterpret_cast<char *>(map_address) + misalign,
-						phdr->p_filesz));
-			#endif
-			if (!mlibc::sys_vm_protect) {
-				__ensure(!"sys_vm_protect not provided");
-			}
-			if (mlibc::sys_vm_protect(reinterpret_cast<void *>(map_address), total_map_size, prot)) {
-				__ensure(!"sys_vm_protect failed");
+			if(mlibc::sys_vm_readahead)
+				if(mlibc::sys_vm_readahead(reinterpret_cast<void *>(map_address),
+						backed_map_size))
+					mlibc::infoLogger() << "mlibc: sys_vm_readahead() failed in ld.so"
+							<< frg::endlog;
+
+			// Clear the trailing area at the end of the backed mapping.
+			// We do not clear the leading area; programs are not supposed to access it.
+			memset(reinterpret_cast<void *>(map_address + misalign + phdr->p_filesz),
+					0, phdr->p_memsz - phdr->p_filesz);
+		#else
+			(void)backed_map_size;
+
+			void *map_pointer;
+			if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
+					total_map_size, initial_prot,
+					MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
+				__ensure(!"sys_vm_map failed");
+
+			__ensure(trySeek(fd, phdr->p_offset));
+			__ensure(tryReadExactly(fd, reinterpret_cast<char *>(map_address) + misalign,
+					phdr->p_filesz));
+		#endif
+			if(initial_prot != prot) {
+				if (!mlibc::sys_vm_protect)
+					__ensure(!"sys_vm_protect not provided");
+
+				if (mlibc::sys_vm_protect(reinterpret_cast<void *>(map_address), total_map_size, prot))
+					__ensure(!"sys_vm_protect failed");
 			}
 		}else if(phdr->p_type == PT_TLS) {
 			object->tlsSegmentSize = phdr->p_memsz;
