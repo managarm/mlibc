@@ -80,6 +80,7 @@ enum {
     Sys_EnumerateLoadedDrivers,
     Sys_QueryDriverName,
     Sys_Sync,
+    Sys_SleepMS,
 };
 
 #ifdef __cplusplus
