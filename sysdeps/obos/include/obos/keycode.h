@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 
+#define BIT(n) (1U << (n))
+
 enum modifiers {
     SHIFT = BIT(0),
     CTRL = BIT(1),
@@ -21,6 +23,8 @@ enum modifiers {
     KEY_RELEASED = BIT(7),
     NUMPAD = BIT(8),
 };
+
+#undef BIT
 
 /* NOTE: Only 7-bits! */
 typedef enum scancode {
