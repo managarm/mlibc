@@ -158,7 +158,7 @@ void sys_libc_log(char const* str)
 int sys_isatty(int fd)
 {
     if (fd <= 2) return 0;
-    return 1;
+    return ENOTTY;
 }
 
 uid_t sys_getuid()
