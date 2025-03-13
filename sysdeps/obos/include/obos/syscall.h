@@ -81,6 +81,8 @@ enum {
     Sys_QueryDriverName,
     Sys_Sync,
     Sys_SleepMS,
+    Sys_Mount,
+    Sys_Unmount,
 };
 
 #ifdef __cplusplus
