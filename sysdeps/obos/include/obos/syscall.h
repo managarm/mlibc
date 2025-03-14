@@ -83,6 +83,9 @@ enum {
     Sys_SleepMS,
     Sys_Mount,
     Sys_Unmount,
+    Sys_FdCreat,
+    Sys_FdOpenEx,
+    Sys_FdOpenAtEx,
 };
 
 #ifdef __cplusplus

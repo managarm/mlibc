@@ -294,56 +294,8 @@ static int parse_file_status(obos_status status)
     }
 }
 
-#ifndef MLIBC_BUILDING_RTLD
-static char* cwd;
-static size_t sz_cwd;
-static handle cwd_hnd = HANDLE_INVALID;
-
-int sys_getcwd(char *buffer, size_t size)
-{
-    if (cwd == NULL)
-    {
-        if (size < 2)
-            return ERANGE;
-        memcpy(buffer, "/\0", 2);
-        return 0;
-    }
-    if (size < sz_cwd)
-        return ERANGE;
-    memcpy(buffer, cwd, sz_cwd);
-    return 0;
-}
-
-int sys_chdir(const char *path)
-{
-    if (cwd_hnd != HANDLE_INVALID)
-        syscall1(Sys_HandleClose, cwd_hnd);
-
-    obos_status status = OBOS_STATUS_SUCCESS;
-    cwd_hnd = syscall2(Sys_OpenDir, path, &status);
-    if (int ec = parse_file_status(status); ec)
-        return ec;
-    // Keep the directory open to prevent anyone from deleting it while our CWD
-    // is set to it.
-
-    auto old_errno = errno;
-    free(cwd);
-    sz_cwd = strlen(path)+1;
-    cwd = (char*)malloc(sz_cwd);
-    memcpy(cwd, path, sz_cwd);
-    errno = old_errno;
-    return 0;
-}
-#else
-static handle cwd_hnd = HANDLE_INVALID;
-#endif
-
 int sys_open_dir(const char *path, int *hnd)
 {
-#ifndef MLIBC_BUILDING_RTLD
-    if (strcmp(path, ".") == 0)
-        path = cwd ? cwd : "/";
-#endif
     obos_status st = OBOS_STATUS_SUCCESS;
     handle dir = (handle)syscall2(Sys_OpenDir, path, &st);
     if (obos_is_error(st))
@@ -376,11 +328,11 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd)
         real_flags |= 8 /* FD_OFLAGS_NOEXEC */;
     if (flags & O_DIRECT)
         real_flags |= 4 /* FD_OFLAGS_UNCACHED */;
-
-    mlibc::infoLogger() << (handle)dirfd << "\n";
+    if (flags & O_CREAT)
+        real_flags |= 16 /* FD_OFLAGS_CREATE */;
 
     handle hnd = syscall0(Sys_FdAlloc);
-    obos_status st = (obos_status)syscall4(Sys_FdOpenAt, hnd, dirfd, path, real_flags);
+    obos_status st = (obos_status)syscall5(Sys_FdOpenAtEx, hnd, dirfd, path, real_flags, mode);
 
     if (int ec = parse_file_status(st); ec != 0)
         return ec;
@@ -406,13 +358,12 @@ int sys_open(const char *pathname, int flags, mode_t mode, int *fd)
         real_flags |= 8 /* FD_OFLAGS_NOEXEC */;
     if (flags & O_DIRECT)
         real_flags |= 4 /* FD_OFLAGS_UNCACHED */;
+    if (flags & O_CREAT)
+        real_flags |= 16 /* FD_OFLAGS_CREATE */;
 
     obos_status st = OBOS_STATUS_SUCCESS;
 
-    if (cwd_hnd == HANDLE_INVALID || pathname[0] == '/')
-        st = (obos_status)syscall3(Sys_FdOpen, hnd, pathname, real_flags);
-    else
-        st = (obos_status)syscall4(Sys_FdOpenAt, hnd, cwd_hnd, pathname, real_flags);
+    st = (obos_status)syscall4(Sys_FdOpenEx, hnd, pathname, real_flags, mode);
     if (int ec = parse_file_status(st); ec != 0)
         return ec;
     *fd = hnd;
@@ -607,6 +558,9 @@ int sys_sysconf(int num, long* ret)
 {
     return syscall2(Sys_SysConf, num, ret) == OBOS_STATUS_SUCCESS ? 0 : ENOSYS;
 }
+
+void sys_yield()
+{ syscall0(Sys_Yield); }
 
 /*int sys_tcgetattr(int fd, struct termios *attr)
 {
