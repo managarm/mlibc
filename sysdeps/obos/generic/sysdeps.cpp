@@ -150,11 +150,49 @@ int sys_execve(const char *path, char *const argv[], char *const envp[])
     }
 }
 
+#ifndef MLIBC_BUILDING_RTLD
+static char* cwd;
+static size_t sz_cwd;
+static handle cwd_hnd = HANDLE_INVALID;
+
 int sys_getcwd(char *buffer, size_t size)
 {
-    *buffer = '/';
+    if (cwd == NULL)
+    {
+        if (size < 2)
+            return ERANGE;
+        memcpy(buffer, "/\0", 2);
+        return 0;
+    }
+    if (size < sz_cwd)
+        return ERANGE;
+    memcpy(buffer, cwd, sz_cwd);
     return 0;
 }
+
+int sys_chdir(const char *path)
+{
+    if (cwd_hnd != HANDLE_INVALID)
+        syscall1(Sys_HandleClose, cwd_hnd);
+
+    obos_status status = OBOS_STATUS_SUCCESS;
+    cwd_hnd = syscall2(Sys_OpenDir, path, &status);
+    if (int ec = parse_file_status(status); ec)
+        return ec;
+    // Keep the directory open to prevent anyone from deleting it while our CWD
+    // is set to it.
+
+    auto old_errno = errno;
+    free(cwd);
+    sz_cwd = strlen(path)+1;
+    cwd = (char*)malloc(sz_cwd);
+    memcpy(cwd, path, sz_cwd);
+    errno = old_errno;
+    return 0;
+}
+#else
+static handle cwd_hnd = HANDLE_INVALID;
+#endif
 
 void sys_libc_log(char const* str)
 {
