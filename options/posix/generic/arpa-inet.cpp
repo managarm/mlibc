@@ -187,6 +187,7 @@ const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
 	errno = ENOSPC;
 	return NULL;
 }
+
 int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 	switch (af) {
 		case AF_INET: {
@@ -206,9 +207,87 @@ int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 			addr->s_addr = htonl(ip);
 			break;
 		}
-		case AF_INET6:
-			mlibc::infoLogger() << "inet_pton: ipv6 is not implemented!" << frg::endlog;
-			/* fallthrough */
+		case AF_INET6: {
+			size_t i = 0;
+			uint16_t array[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+			frg::optional<size_t> doubleColonOffset = frg::null_opt;
+
+			auto reservedRange = [&]() -> bool {
+				if(i && ((doubleColonOffset && doubleColonOffset.value()) || !doubleColonOffset)) {
+					return (ntohs(array[0]) >> 8) == 0;
+				}
+
+				return false;
+			};
+
+			for(; i < 8; i++) {
+				char *end = nullptr;
+				auto value = strtol(src, &end, 16);
+
+				if (value > UINT16_MAX)
+					return 0;
+				if(end[0] != '\0' && end[0] != ':' && end[0] != '.')
+					return 0;
+
+				if(end[0] == '.' && reservedRange() && i < 7) {
+					char *ipv4end = nullptr;
+					auto value0 = strtol(src, &ipv4end, 10);
+					if(ipv4end[0] != '.' || value0 > UINT8_MAX || src == ipv4end)
+						return 0;
+					src = ipv4end + 1;
+					auto value1 = strtol(src, &ipv4end, 10);
+					if(ipv4end[0] != '.' || value1 > UINT8_MAX || src == ipv4end)
+						return 0;
+					array[i++] = htons((value0 << 8) | value1);
+					src = ipv4end + 1;
+
+					auto value2 = strtol(src, &ipv4end, 10);
+					if(ipv4end[0] != '.' || value2 > UINT8_MAX || src == ipv4end)
+						return 0;
+					src = ipv4end + 1;
+					auto value3 = strtol(src, &ipv4end, 10);
+					if(value3 > UINT8_MAX || src == ipv4end)
+						return 0;
+					array[i] = htons((value2 << 8) | value3);
+					break;
+				} else if(end[0] == ':' && end[1] == ':') {
+					if(doubleColonOffset)
+						return 0;
+					doubleColonOffset = i + 1;
+					src = end + 2;
+				} else if(end[0] == ':' || end[0] == '\0') {
+					src = end + 1;
+				} else {
+					return 0;
+				}
+
+				array[i] = htons(value);
+
+				if(end[0] == '\0')
+					break;
+			}
+
+			auto addr = reinterpret_cast<struct in6_addr *>(dst);
+
+			if(doubleColonOffset) {
+				size_t suffix = i - doubleColonOffset.value() + 1;
+				memset(addr->s6_addr, 0, 16);
+
+				for(size_t j = 0; j < doubleColonOffset.value(); j++) {
+					addr->s6_addr16[j] = array[j];
+				}
+
+				for(size_t j = 0; j < suffix; j++) {
+					addr->s6_addr16[8 - suffix + j] = array[doubleColonOffset.value() + j];
+				}
+			} else {
+				for(size_t j = 0; j < 8; j++) {
+					addr->s6_addr16[j] = array[j];
+				}
+			}
+
+			break;
+		}
 		default:
 			errno = EAFNOSUPPORT;
 			return -1;
