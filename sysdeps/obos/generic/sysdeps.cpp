@@ -150,6 +150,12 @@ int sys_execve(const char *path, char *const argv[], char *const envp[])
     }
 }
 
+int sys_getcwd(char *buffer, size_t size)
+{
+    *buffer = '/';
+    return 0;
+}
+
 void sys_libc_log(char const* str)
 {
     syscall1(Sys_LibCLog, str);
