@@ -289,7 +289,9 @@ static int parse_file_status(obos_status status)
         case OBOS_STATUS_ACCESS_DENIED: return EACCES;
         case OBOS_STATUS_NO_SYSCALL: return ENOSYS;
         case OBOS_STATUS_NOT_ENOUGH_MEMORY: return ENOSPC;
+        case OBOS_STATUS_ALREADY_INITIALIZED: return EEXIST;
         case OBOS_STATUS_PIPE_CLOSED: return EPIPE;
+        case OBOS_STATUS_ALREADY_MOUNTED: return EBUSY;
         default: sys_libc_panic();
     }
 }
@@ -376,6 +378,14 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
     return parse_file_status((obos_status)syscall5(Sys_Stat, fsfdt, fd, path, flags, statbuf));
 }
 
+int sys_mkdir(const char *path, mode_t mode)
+{    
+    return parse_file_status((obos_status)syscall2(Sys_Mkdir, path, mode));
+}
+int sys_mkdirat(int dirfd, const char *path, mode_t mode)
+{
+    return parse_file_status((obos_status)syscall3(Sys_MkdirAt, (handle)dirfd, path, mode));
+}
 
 typedef struct drv_fs_info {
     size_t fsBlockSize;

@@ -86,6 +86,8 @@ enum {
     Sys_FdCreat,
     Sys_FdOpenEx,
     Sys_FdOpenAtEx,
+    Sys_Mkdir,
+    Sys_MkdirAt,
 };
 
 #ifdef __cplusplus
