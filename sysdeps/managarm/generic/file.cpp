@@ -9,6 +9,7 @@
 #include <sys/prctl.h>
 #include <sys/reboot.h>
 #include <sys/signalfd.h>
+#include <sys/sysmacros.h>
 #include <unistd.h>
 
 #include <bits/ensure.h>
@@ -2065,7 +2066,8 @@ sys_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct 
 		statxbuf->stx_nlink = resp.num_links();
 		statxbuf->stx_uid = resp.uid();
 		statxbuf->stx_gid = resp.gid();
-		// statxbuf->st_rdev = resp.ref_devnum();
+		statxbuf->stx_rdev_major = major(resp.ref_devnum());
+		statxbuf->stx_rdev_minor = minor(resp.ref_devnum());
 		statxbuf->stx_size = resp.file_size();
 		statxbuf->stx_atime.tv_sec = resp.atime_secs();
 		statxbuf->stx_atime.tv_nsec = resp.atime_nanos();
