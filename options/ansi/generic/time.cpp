@@ -167,6 +167,16 @@ size_t strftime(char *__restrict dest, size_t max_size,
 			c++;
 			break;
 		}
+		case 'z': {
+			auto min = tm->tm_gmtoff / 60;
+			auto diff = ((min / 60) * 100) + (min % 60);
+			chunk = snprintf(p, space, "%c%04d", diff >= 0 ? '+' : '-', abs(diff));
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c++;
+			break;
+		}
 		case 'Z': {
 			chunk = snprintf(p, space, "%s", "UTC");
 			if(chunk >= space)
