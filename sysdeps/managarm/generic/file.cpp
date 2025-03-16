@@ -2227,7 +2227,7 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 			__ensure(!resp.file_type());
 	}
 
-	result->st_dev = 1;
+	result->st_dev = resp.stat_dev();
 	result->st_ino = resp.fs_inode();
 	result->st_mode |= resp.mode();
 	result->st_nlink = resp.num_links();
@@ -2314,7 +2314,8 @@ sys_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct 
 		}
 
 		statxbuf->stx_mask = mask; // TODO: Properly?
-		// statxbuf->st_dev = 1;
+		statxbuf->stx_dev_major = major(resp.stat_dev());
+		statxbuf->stx_dev_minor = minor(resp.stat_dev());
 		statxbuf->stx_ino = resp.fs_inode();
 		statxbuf->stx_mode |= resp.mode();
 		statxbuf->stx_nlink = resp.num_links();
