@@ -2647,7 +2647,7 @@ int sys_fstatfs(int fd, struct statfs *buf) {
 int sys_prctl(int option, va_list va, int *out) {
 	switch (option) {
 		case PR_CAPBSET_READ:
-			mlibc::infoLogger() << "mlibc: prctl PR_CAPBSET_READ is a stub!" << frg::endlog;
+			// TODO: Implement PR_CAPBSET read if we ever support capabilities
 			*out = 1;
 			return 0;
 		case PR_SET_NAME: {
