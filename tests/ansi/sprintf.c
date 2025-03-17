@@ -220,5 +220,8 @@ int main() {
 	sprintf(buf, "%1$d %2$s %2$s", 12, "foo");
 	assert(!strcmp(buf, "12 foo foo"));
 
+	sprintf(buf, "%1$s%5$s%6$s%3$s%4$s%2$s", "a", "b", "u", "n", "h", "N");
+	assert(!strcmp(buf, "ahNunb"));
+
 	return 0;
 }
