@@ -22,6 +22,7 @@ int main() {
 	tm.tm_year = 121;
 	tm.tm_wday = 2;
 	tm.tm_yday = 39;
+	tm.tm_gmtoff = 3600;
 	strftime(timebuf, sizeof(timebuf), "%e", &tm);
 	assert(!strcmp(timebuf, result));
 
@@ -61,6 +62,10 @@ int main() {
 
 	memset(timebuf, 0, sizeof(timebuf));
 	assert(!strftime(timebuf, sizeof(timebuf), "%a %A %a %A %b %B %h", &tm));
+
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%z", &tm);
+	assert(!strcmp(timebuf, "+0100"));
 
 	return 0;
 }
