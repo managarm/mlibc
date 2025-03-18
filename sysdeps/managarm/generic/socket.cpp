@@ -338,28 +338,31 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		if (!handle)
 			return EBADF;
 
-		size_t buffer_size = size ? *size : 0;
-
 		managarm::fs::GetSockOpt<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_layer(layer);
 		req.set_number(number);
 		req.set_optlen(size ? *size : 0);
 
-		auto [offer, send_req, recv_resp, recv_buffer] = exchangeMsgsSync(
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
 		    handle,
 		    helix_ng::offer(
+		        helix_ng::want_lane,
 		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-		        helix_ng::recvInline(),
-		        helix_ng::recvBuffer(buffer, buffer_size)
+		        helix_ng::recvInline()
 		    )
 		);
 		HEL_CHECK(offer.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
-		HEL_CHECK(recv_buffer.error());
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		*size = resp.size();
+
+		auto [recv_buffer] =
+		    exchangeMsgsSync(offer.descriptor().getHandle(), helix_ng::recvBuffer(buffer, *size));
+		HEL_CHECK(recv_buffer.error());
+
 		if (resp.error() != managarm::fs::Errors::SUCCESS)
 			return resp.error() | toErrno;
 
