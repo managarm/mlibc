@@ -270,15 +270,11 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 	SignalGuard sguard;
 
 	if (layer == SOL_SOCKET && number == SO_SNDBUF) {
-		mlibc::infoLogger(
-		) << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented\e[39m"
-		  << frg::endlog;
+		// This is really only relevant on Linux
 		*(int *)buffer = 4096;
 		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_RCVBUF) {
-		mlibc::infoLogger(
-		) << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_RCVBUF is unimplemented\e[39m"
-		  << frg::endlog;
+		// This is really only relevant on Linux
 		*(int *)buffer = 4096;
 		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_ERROR) {
@@ -520,14 +516,10 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 		                    << frg::endlog;
 		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_SNDBUF) {
-		mlibc::infoLogger(
-		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented\e[39m"
-		  << frg::endlog;
+		// This is really only relevant on Linux
 		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_SNDBUFFORCE) {
-		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_SNDBUFFORCE "
-		                       "is unimplemented\e[39m"
-		                    << frg::endlog;
+		// This is really only relevant on Linux
 		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_KEEPALIVE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_KEEPALIVE is "

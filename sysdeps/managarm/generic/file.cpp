@@ -2647,7 +2647,7 @@ int sys_fstatfs(int fd, struct statfs *buf) {
 int sys_prctl(int option, va_list va, int *out) {
 	switch (option) {
 		case PR_CAPBSET_READ:
-			mlibc::infoLogger() << "mlibc: prctl PR_CAPBSET_READ is a stub!" << frg::endlog;
+			// TODO: Implement PR_CAPBSET read if we ever support capabilities
 			*out = 1;
 			return 0;
 		case PR_SET_NAME: {
@@ -2723,5 +2723,15 @@ int sys_statfs(const char *path, struct statfs *buf) {
 		return 0;
 	}
 }
+
+// We don't support extended attributes yet
+int sys_removexattr(const char *, const char *) { return ENOSYS; }
+
+int sys_lgetxattr(const char *, const char *, void *, size_t, ssize_t *) { return ENOSYS; }
+
+int sys_setxattr(const char *, const char *, const void *, size_t, int) { return ENOSYS; }
+
+// We don't implement name_to_handle_at
+int sys_name_to_handle_at(int, const char *, struct file_handle *, int *, int) { return ENOSYS; }
 
 } // namespace mlibc
