@@ -1232,14 +1232,13 @@ int sys_epoll_pwait(
 }
 
 int sys_timerfd_create(int clockid, int flags, int *fd) {
-	(void)clockid;
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::TIMERFD_CREATE);
+	managarm::posix::TimerFdCreateRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_clock(clockid);
 	req.set_flags(flags);
 
-	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	auto [offer, sendReq, recvResp] = exchangeMsgsSync(
 	    getPosixLane(),
 	    helix_ng::offer(
 	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
@@ -1247,29 +1246,32 @@ int sys_timerfd_create(int clockid, int flags, int *fd) {
 	);
 
 	HEL_CHECK(offer.error());
-	HEL_CHECK(send_req.error());
-	HEL_CHECK(recv_resp.error());
+	HEL_CHECK(sendReq.error());
+	HEL_CHECK(recvResp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	managarm::posix::TimerFdCreateResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recvResp.data(), recvResp.length());
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 	*fd = resp.fd();
 	return 0;
 }
 
-int sys_timerfd_settime(int fd, int, const struct itimerspec *value, struct itimerspec *oldvalue) {
+int sys_timerfd_settime(
+    int fd, int flags, const struct itimerspec *value, struct itimerspec *oldvalue
+) {
 	__ensure(!oldvalue);
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::TIMERFD_SETTIME);
+	managarm::posix::TimerFdSetRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_fd(fd);
-	req.set_time_secs(value->it_value.tv_sec);
-	req.set_time_nanos(value->it_value.tv_nsec);
-	req.set_interval_secs(value->it_interval.tv_sec);
-	req.set_interval_nanos(value->it_interval.tv_nsec);
+	req.set_flags(flags);
+	req.set_value_sec(value->it_value.tv_sec);
+	req.set_value_nsec(value->it_value.tv_nsec);
+	req.set_interval_sec(value->it_interval.tv_sec);
+	req.set_interval_nsec(value->it_interval.tv_nsec);
 
-	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	auto [offer, sendReq, recvResp] = exchangeMsgsSync(
 	    getPosixLane(),
 	    helix_ng::offer(
 	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
@@ -1277,12 +1279,14 @@ int sys_timerfd_settime(int fd, int, const struct itimerspec *value, struct itim
 	);
 
 	HEL_CHECK(offer.error());
-	HEL_CHECK(send_req.error());
-	HEL_CHECK(recv_resp.error());
+	HEL_CHECK(sendReq.error());
+	HEL_CHECK(recvResp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	managarm::posix::TimerFdSetResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recvResp.data(), recvResp.length());
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
 	return 0;
 }
 
