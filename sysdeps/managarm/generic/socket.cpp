@@ -108,23 +108,7 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::fs::Errors::ADDRESS_IN_USE) {
-		return EADDRINUSE;
-	} else if (resp.error() == managarm::fs::Errors::ALREADY_EXISTS) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::ACCESS_DENIED) {
-		return EACCES;
-	} else if (resp.error() == managarm::fs::Errors::ADDRESS_NOT_AVAILABLE) {
-		return EADDRNOTAVAIL;
-	}
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	return 0;
+	return resp.error() | toErrno;
 }
 
 int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
@@ -158,16 +142,7 @@ int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) 
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::CONNECTION_REFUSED) {
-		return ECONNREFUSED;
-	}
-
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	return 0;
+	return resp.error() | toErrno;
 }
 
 int sys_sockname(
@@ -198,13 +173,12 @@ int sys_sockname(
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return ENOTSOCK;
+	if (resp.error() == managarm::fs::Errors::SUCCESS) {
+		HEL_CHECK(recv_addr.error());
+		*actual_length = resp.file_size();
+		return 0;
 	}
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	HEL_CHECK(recv_addr.error());
-	*actual_length = resp.file_size();
-	return 0;
+	return resp.error() | toErrno;
 }
 
 int sys_peername(
@@ -242,15 +216,13 @@ int sys_peername(
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return ENOTSOCK;
-	} else if (resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
-		return ENOTCONN;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+	if (resp.error() == managarm::fs::Errors::SUCCESS) {
 		*actual_length = resp.file_size();
 		return 0;
 	}
+
+	return resp.error() | toErrno;
 }
 
 namespace {
@@ -359,10 +331,7 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		    exchangeMsgsSync(offer.descriptor().getHandle(), helix_ng::recvBuffer(buffer, *size));
 		HEL_CHECK(recv_buffer.error());
 
-		if (resp.error() != managarm::fs::Errors::SUCCESS)
-			return resp.error() | toErrno;
-
-		return 0;
+		return resp.error() | toErrno;
 	} else {
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call, layer: " << layer
 		                     << " number: " << number << "\e[39m" << frg::endlog;
@@ -433,10 +402,7 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		if (resp.error() != managarm::fs::Errors::SUCCESS)
-			return resp.error() | toErrno;
-
-		return 0;
+		return resp.error() | toErrno;
 	} else if (std::find(
 	               setsockopt_passthrough_noopt.begin(),
 	               setsockopt_passthrough_noopt.end(),
@@ -464,10 +430,7 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		if (resp.error() != managarm::fs::Errors::SUCCESS)
-			return resp.error() | toErrno;
-
-		return 0;
+		return resp.error() | toErrno;
 	} else if (std::find(
 	               setsockopt_readonly.begin(),
 	               setsockopt_readonly.end(),
@@ -506,10 +469,7 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		if (resp.error() == managarm::fs::Errors::SUCCESS)
-			return 0;
-		else
-			return resp.error() | toErrno;
+		return resp.error() | toErrno;
 	} else if (layer == SOL_SOCKET && number == SO_RCVBUFFORCE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt(SO_RCVBUFFORCE) is not implemented"
 		                       " correctly\e[39m"
@@ -642,8 +602,7 @@ int sys_listen(int fd, int) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	return 0;
+	return resp.error() | toErrno;
 }
 
 } // namespace mlibc
