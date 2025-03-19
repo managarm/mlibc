@@ -1414,6 +1414,32 @@ int sys_inotify_add_watch(int ifd, const char *path, uint32_t mask, int *wd) {
 	return 0;
 }
 
+int sys_inotify_rm_watch(int ifd, int wd) {
+	SignalGuard sguard;
+
+	managarm::posix::InotifyRmRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_ifd(ifd);
+	req.set_wd(wd);
+
+	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::InotifyRmReply<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
+}
+
 int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
 	SignalGuard sguard;
 
