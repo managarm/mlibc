@@ -136,6 +136,8 @@ wrapped_test_cases = [
 
 host_libc_excluded_test_cases = [
 	'bsd/strl', # These functions do not exist on Linux.
+	'glibc/error', # These tests depend on mlibc error messages.
+	'glibc/error_at_line', # These tests depend on mlibc error messages.
 ]
 host_libc_noasan_test_cases = [
 	'posix/pthread_cancel',
@@ -304,6 +306,20 @@ foreach test_name : all_test_cases
 			link_args: ['-lresolv', '-ldl', '-pthread', '-lm', '-lrt'],
 			native: true,
 		)
-		test(test_short_name, exec, suite: ['host-libc', test_subdir], should_fail: should_fail, timeout: timeout_sec)
+
+		if wrapped_test_cases.contains(test_name)
+			test(test_short_name,
+				py,
+				suite: ['host-libc', test_subdir],
+				should_fail: should_fail,
+				args: [
+					meson.source_root() + '/tests/' + test_name + '.py',
+					exec
+				],
+				timeout: timeout_sec,
+			)
+		else
+			test(test_short_name, exec, suite: ['host-libc', test_subdir], should_fail: should_fail, timeout: timeout_sec)
+		endif
 	endif
 endforeach
