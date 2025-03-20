@@ -18,6 +18,7 @@ all_test_cases = [
 	'ansi/wcsrtombs',
 	'ansi/wmemcmp',
 	'ansi/timegm',
+	'ansi/tz',
 	'ansi/ungetc',
 	'ansi/wcsdup',
 	'ansi/wcsncasecmp',
@@ -140,6 +141,7 @@ fail_test_cases = [
 ]
 
 wrapped_test_cases = [
+	'ansi/tz',
 	'glibc/error',
 	'glibc/error_at_line',
 ]
