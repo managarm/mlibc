@@ -20,12 +20,12 @@ struct file_window {
 		}
 		struct stat info;
 		if(mlibc::sys_stat(mlibc::fsfd_target::fd, fd, "", 0, &info))
-			mlibc::panicLogger() << "mlibc: Error getting TZinfo stats" << frg::endlog;
+			mlibc::panicLogger() << "mlibc: Error getting stats for " << path << frg::endlog;
 
 #if MLIBC_MAP_FILE_WINDOWS
 		if(mlibc::sys_vm_map(nullptr, (size_t)info.st_size, PROT_READ, MAP_PRIVATE,
 				fd, 0, &_ptr))
-			mlibc::panicLogger() << "mlibc: Error mapping TZinfo" << frg::endlog;
+			mlibc::panicLogger() << "mlibc: Error mapping file_window to " << path << frg::endlog;
 #else
 		_ptr = getAllocator().allocate(info.st_size);
 		__ensure(_ptr);
@@ -47,7 +47,7 @@ struct file_window {
 #endif
 
 		if(mlibc::sys_close(fd))
-			mlibc::panicLogger() << "mlibc: Error closing TZinfo" << frg::endlog;
+			mlibc::panicLogger() << "mlibc: Error closing file_window to " << path << frg::endlog;
 	}
 
 	// TODO: Write destructor to deallocate/unmap memory.
