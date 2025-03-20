@@ -112,6 +112,7 @@ all_test_cases = [
 	'glibc/error',
 	'glibc/error_at_line',
 	'glibc/getgrouplist',
+	'glibc/rpmatch',
 	'linux/xattr',
 	'linux/pthread_setname_np',
 	'linux/pthread_attr',

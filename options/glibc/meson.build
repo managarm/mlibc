@@ -20,7 +20,8 @@ libc_sources += files(
 	'generic/malloc.cpp',
 	'generic/sys-cachectl.cpp',
 	'generic/sys-io.cpp',
-	'generic/search.cpp'
+	'generic/search.cpp',
+	'generic/stdlib.cpp'
 )
 
 if not no_headers
@@ -88,6 +89,7 @@ if not no_headers
 		'include/bits/glibc/glibc_malloc.h',
 		'include/bits/glibc/glibc_icmp6.h',
 		'include/bits/glibc/glibc_search.h',
+		'include/bits/glibc/glibc_stdlib.h',
 		subdir: 'bits/glibc'
 	)
 endif
