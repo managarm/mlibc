@@ -15,6 +15,7 @@
 #include <sys/ioctl.h>
 
 #include <bits/ensure.h>
+#include <bits/errors.hpp>
 #include <bragi/helpers-frigg.hpp>
 #include <frg/vector.hpp>
 #include <mlibc/all-sysdeps.hpp>
@@ -291,17 +292,16 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			HEL_CHECK(offer.error());
 			HEL_CHECK(send_ioctl_req.error());
 			if (send_req.error() == kHelErrDismissed)
-				return EINVAL;
+				return ENOTTY;
 			HEL_CHECK(send_req.error());
 			if (recv_resp.error() == kHelErrDismissed)
-				return EINVAL;
+				return ENOTTY;
 			HEL_CHECK(recv_resp.error());
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
-				return EINVAL;
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			*result = resp.result();
 			param->ws_col = resp.pts_width();
