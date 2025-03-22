@@ -16,6 +16,7 @@ double drand48(void);
 double erand48(unsigned short __s[3]);
 unsigned short *seed48(unsigned short __s[3]);
 void srand48(long int __seed);
+long int mrand48(void);
 long jrand48(unsigned short __s[3]);
 char *initstate(unsigned int __seed, char *__state, size_t __size);
 char *setstate(char *__state);
