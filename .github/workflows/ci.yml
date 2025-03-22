@@ -56,14 +56,16 @@ jobs:
           - name: Check public headers conform to ISO standards with pedantic warnings
             if: ${{matrix.builds == 'mlibc-headers-only'}}
             working-directory: build/
+            shell: bash
             run: |
+                shopt -s globstar
                 GCC_ARCH="${{matrix.arch}}"
                 case "$GCC_ARCH" in
                   "x86")
                     GCC_ARCH="i686"
                     ;;
                 esac
-                ALL_INCLUDES="-- -include\0%s\0 packages/${{matrix.builds}}/usr/include/**.h"
+                ALL_INCLUDES="-- -include\0%s\0 packages/${{matrix.builds}}/usr/include/**/*.h"
                 GCC_ARGS="-S /dev/null -o /dev/null -I packages/${{matrix.builds}}/usr/include -I packages/linux-headers/usr/include -nostdlib -Werror -Wpedantic -Wsystem-headers"
                 GCC_C_ARGS="$GCC_ARCH-linux-mlibc-gcc -x c $GCC_ARGS"
                 GCC_CXX_ARGS="$GCC_ARCH-linux-mlibc-g++ -x c++ $GCC_ARGS"
