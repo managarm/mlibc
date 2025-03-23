@@ -800,8 +800,8 @@ int setuid(uid_t uid) {
 }
 
 void swab(const void *__restrict _src, void *__restrict _dest, ssize_t n) {
-	const char *src = reinterpret_cast<const char *>(_src);
-	char *dest = reinterpret_cast<char *>(_dest);
+	auto src = reinterpret_cast<const char *__restrict>(_src);
+	auto dest = reinterpret_cast<char *__restrict>(_dest);
 	for (ssize_t i = 0; i < n && n - i > 1; i += 2) {
 		dest[i] = src[i + 1];
 		dest[i + 1] = src[i];
