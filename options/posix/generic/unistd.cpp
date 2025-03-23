@@ -799,14 +799,12 @@ int setuid(uid_t uid) {
 	return 0;
 }
 
-void swab(const void *_src, void *_dest, ssize_t n) {
+void swab(const void *__restrict _src, void *__restrict _dest, ssize_t n) {
 	const char *src = reinterpret_cast<const char *>(_src);
 	char *dest = reinterpret_cast<char *>(_dest);
-	for(; n > 1; n -= 2) {
-		dest[0] = src[1];
-		dest[1] = src[0];
-		dest += 2;
-		src += 2;
+	for (ssize_t i = 0; i < n && n - i > 1; i += 2) {
+		dest[i] = src[i + 1];
+		dest[i + 1] = src[i];
 	}
 }
 
