@@ -55,9 +55,15 @@ To format your code before submitting a PR, you should install [`pre-commit`](ht
 
 ## Running Tests
 
-The `mlibc` test suite can be run under a Linux host. To do this, first install a set of kernel headers (as described [here](https://docs.kernel.org/kbuild/headers_install.html)), then run from the project root:
+The `mlibc` test suite can be run under a Linux host. To do this, first install a set of Linux kernel headers (as described [here](https://docs.kernel.org/kbuild/headers_install.html)).
+
+A convenience script is provided to download and install the Linux kernel headers into a local `linux-headers` directory:
 ```
-meson setup -Dbuild_tests=true -Dlinux_kernel_headers=/path/to/kernel/headers/include build
+./scripts/get-linux-headers.sh
+```
+Then run from the project root:
+```
+meson setup -Dbuild_tests=true -Dlinux_kernel_headers=./linux-headers build
 ```
 This will create a `build` directory. Then, `cd build` and run the tests (showing output) with:
 ```
