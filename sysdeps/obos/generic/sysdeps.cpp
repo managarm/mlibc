@@ -48,6 +48,10 @@ int sys_sigprocmask(int how, const sigset_t *__restrict set,
     return interpret_signal_status((obos_status)syscall3(Sys_SigProcMask, how, set, retrieve));
 }
 
+#ifndef MLIBC_BUILDING_RTLD
+
+extern "C" void __mlibc_restorer();
+
 typedef struct user_sigaction {
     union {
         void(*handler)(int signum);
@@ -66,7 +70,7 @@ int sys_sigaction(int sigval, const struct sigaction *__restrict newact_mlibc,
     {
         newact.un.handler = newact_mlibc->sa_handler;
         newact.flags = newact_mlibc->sa_flags;
-        newact.trampoline_base = (uintptr_t)newact_mlibc->sa_restorer;
+        newact.trampoline_base = (uintptr_t)__mlibc_restorer;
     }
     int err = interpret_signal_status((obos_status)syscall3(Sys_SigAction, sigval, newact_mlibc ? &newact : nullptr, oldact_mlibc ? &oldact : nullptr));
     if (oldact_mlibc && !err)
@@ -77,6 +81,8 @@ int sys_sigaction(int sigval, const struct sigaction *__restrict newact_mlibc,
     }
     return err;
 }
+
+#endif
 
 int sys_sigaltstack(const stack_t *ss, stack_t *oss)
 {

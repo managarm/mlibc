@@ -22,7 +22,8 @@ libc_sources += files(
     'generic/statfs.cpp',
     host_machine.cpu_family() + '/thread.cpp',
     host_machine.cpu_family() + '/syscall.S',
-    host_machine.cpu_family() + '/fork.S'
+    host_machine.cpu_family() + '/fork.S',
+    host_machine.cpu_family() + '/signal.S'
 )
 
 add_project_arguments('-D_GNU_SOURCE', language: 'c')
