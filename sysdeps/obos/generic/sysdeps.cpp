@@ -122,7 +122,7 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
     {
         case OBOS_STATUS_INVALID_ARGUMENT: ec = EINVAL; goto exit;
         case OBOS_STATUS_ABORTED: ec = EINTR; goto exit;
-        case OBOS_STATUS_NOT_FOUND: ec = ESRCH; goto exit;
+        case OBOS_STATUS_NOT_FOUND: ec = ECHILD; goto exit;
         default: break;
     }
     exit:
