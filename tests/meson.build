@@ -120,6 +120,7 @@ all_test_cases = [
 	'linux/cpuset',
 	'linux/malloc-usable-size',
 	'linux/getifaddrs',
+	'linux/pidfd',
 ]
 
 if host_machine.system() == 'linux'
