@@ -1,4 +1,5 @@
 #include <asm/ioctls.h>
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 
@@ -1611,6 +1612,51 @@ int sys_pidfd_open(pid_t pid, unsigned int flags, int *outfd) {
 		return e;
 	*outfd = sc_int_result<int>(ret);
 	return 0;
+}
+
+namespace {
+
+char *pidfdGetPidLine = nullptr;
+size_t pidfdGetPidLineSize = 0;
+
+} // namespace
+
+int sys_pidfd_getpid(int fd, pid_t *outpid) {
+	char *path = nullptr;
+	asprintf(&path, "/proc/self/fdinfo/%d", fd);
+
+	FILE *fdinfo = fopen(path, "r");
+	if (!fdinfo)
+		return errno;
+
+	while (getline(&pidfdGetPidLine, &pidfdGetPidLineSize, fdinfo) != -1) {
+		if (strncmp(pidfdGetPidLine, "Pid:", 4))
+			continue;
+
+		size_t numOffset = 4;
+		while (pidfdGetPidLine[numOffset] != '\0'
+		       && (pidfdGetPidLine[numOffset] == ' ' || pidfdGetPidLine[numOffset] == '\t')) {
+			numOffset++;
+		}
+
+		size_t digits = 0;
+
+		while (isdigit(pidfdGetPidLine[numOffset + digits]))
+			digits++;
+
+		pid_t pid = strtol(&pidfdGetPidLine[numOffset], nullptr, 10);
+
+		if (pid == 0)
+			return EREMOTE;
+		else if (pid == -1)
+			return ESRCH;
+
+		*outpid = pid;
+		return 0;
+	}
+
+	free(path);
+	return EBADF;
 }
 
 #endif // __MLIBC_LINUX_OPTION

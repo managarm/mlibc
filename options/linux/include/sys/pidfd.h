@@ -13,6 +13,7 @@ extern "C" {
 #endif
 
 int pidfd_open(pid_t __pid, unsigned int __flags);
+pid_t pidfd_getpid(int __fd);
 
 #ifdef __cplusplus
 }
