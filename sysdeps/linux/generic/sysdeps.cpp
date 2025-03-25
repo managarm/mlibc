@@ -1610,6 +1610,14 @@ int sys_getifaddrs(struct ifaddrs **out) {
 	return 0;
 }
 
+int sys_pidfd_open(pid_t pid, unsigned int flags, int *outfd) {
+	auto ret = do_syscall(SYS_pidfd_open, pid, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*outfd = sc_int_result<int>(ret);
+	return 0;
+}
+
 #endif // __MLIBC_LINUX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {

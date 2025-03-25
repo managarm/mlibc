@@ -33,6 +33,7 @@ libc_sources += files(
 	'generic/sys-swap.cpp',
 	'generic/sys-statfs.cpp',
 	'generic/sys-statx.cpp',
+	'generic/sys-pidfd.cpp',
 )
 
 if not no_headers
@@ -88,6 +89,7 @@ if not no_headers
 		'include/sys/swap.h',
 		'include/sys/statfs.h',
 		'include/sys/vfs.h',
+		'include/sys/pidfd.h',
 		subdir: 'sys'
 	)
 endif
