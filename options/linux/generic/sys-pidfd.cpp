@@ -32,3 +32,24 @@ pid_t pidfd_getpid(int fd) {
 
 	return pid;
 }
+
+int pidfd_send_signal(int pidfd, int sig, siginfo_t *info, unsigned int flags) {
+	if(info) {
+		mlibc::infoLogger() << "mlibc: pidfd_send_signal does not support passing siginfo_t info" << frg::endlog;
+		return EINVAL;
+	}
+
+	if(pidfd <  0) [[unlikely]] {
+		errno = EBADF;
+		return -1;
+	}
+
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pidfd_send_signal, -1);
+
+	if(int e = sysdep(pidfd, sig, info, flags); e) {
+		errno = e;
+		return -1;
+	}
+
+	return 0;
+}
