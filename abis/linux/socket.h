@@ -199,12 +199,20 @@ struct cmsghdr {
 #endif
 #endif
 
+#ifndef SO_RCVTIMEO_OLD
+#define SO_RCVTIMEO_OLD 20
+#endif
+
 #ifndef SO_SNDTIMEO
 #if __LONG_MAX == 0x7fffffff
 #define SO_SNDTIMEO     67
 #else
 #define SO_SNDTIMEO     21
 #endif
+#endif
+
+#ifndef SO_SNDTIMEO_OLD
+#define SO_SNDTIMEO_OLD 21
 #endif
 
 #ifndef SO_TIMESTAMP
