@@ -15,3 +15,15 @@ int pidfd_open(pid_t pid, unsigned int flags) {
 
 	return fd;
 }
+
+pid_t pidfd_getpid(int fd) {
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pidfd_getpid, -1);
+	pid_t pid = 0;
+
+	if(int e = sysdep(fd, &pid); e) {
+		errno = e;
+		return -1;
+	}
+
+	return pid;
+}

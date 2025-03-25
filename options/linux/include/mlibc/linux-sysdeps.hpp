@@ -90,6 +90,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 [[gnu::weak]] int sys_setns(int fd, int nstype);
 
 [[gnu::weak]] int sys_pidfd_open(pid_t pid, unsigned int flags, int *outfd);
+[[gnu::weak]] int sys_pidfd_getpid(int fd, pid_t *outpid);
 
 } // namespace mlibc
 

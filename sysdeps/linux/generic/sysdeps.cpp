@@ -1,4 +1,5 @@
 #include <asm/ioctls.h>
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 
@@ -1616,6 +1617,41 @@ int sys_pidfd_open(pid_t pid, unsigned int flags, int *outfd) {
 		return e;
 	*outfd = sc_int_result<int>(ret);
 	return 0;
+}
+
+namespace {
+
+char *pidfdGetPidLine = nullptr;
+size_t pidfdGetPidLineSize = 0;
+
+} // namespace
+
+int sys_pidfd_getpid(int fd, pid_t *outpid) {
+	char *path = nullptr;
+	asprintf(&path, "/proc/self/fdinfo/%d", fd);
+
+	FILE *fdinfo = fopen(path, "r");
+	if (!fdinfo)
+		return errno;
+
+	while (getline(&pidfdGetPidLine, &pidfdGetPidLineSize, fdinfo) != -1) {
+		pid_t pid;
+		int ret = sscanf(pidfdGetPidLine, "Pid: %d\n", &pid);
+
+		if(ret != 1)
+			continue;
+
+		if (pid == 0)
+			return EREMOTE;
+		else if (pid == -1)
+			return ESRCH;
+
+		*outpid = pid;
+		return 0;
+	}
+
+	free(path);
+	return EBADF;
 }
 
 #endif // __MLIBC_LINUX_OPTION
