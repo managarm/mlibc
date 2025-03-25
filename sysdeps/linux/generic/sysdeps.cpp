@@ -1654,6 +1654,13 @@ int sys_pidfd_getpid(int fd, pid_t *outpid) {
 	return EBADF;
 }
 
+int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info, unsigned int flags) {
+	auto ret = do_syscall(SYS_pidfd_send_signal, pidfd, sig, info, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #endif // __MLIBC_LINUX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {
