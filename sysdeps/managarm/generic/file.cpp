@@ -1392,6 +1392,40 @@ int sys_pidfd_getpid(int pidfd, pid_t *outpid) {
 	return 0;
 }
 
+int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info, unsigned int flags) {
+	SignalGuard sguard;
+
+	if (info) {
+		mlibc::infoLogger() << "mlibc: pidfd_send_signal does not support passing siginfo_t info"
+		                    << frg::endlog;
+		return EINVAL;
+	}
+
+	managarm::posix::PidfdSendSignalRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_pidfd(pidfd);
+	req.set_signal(sig);
+	req.set_flags(flags);
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::PidfdSendSignalResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
+}
+
 int sys_reboot(int command) {
 	if (command != RB_POWER_OFF && command != RB_AUTOBOOT) {
 		mlibc::infoLogger(
