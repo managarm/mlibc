@@ -1365,6 +1365,33 @@ int sys_pidfd_open(pid_t pid, unsigned int flags, int *outfd) {
 	return 0;
 }
 
+int sys_pidfd_getpid(int pidfd, pid_t *outpid) {
+	SignalGuard sguard;
+
+	managarm::posix::PidfdGetPidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_pidfd(pidfd);
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::PidfdGetPidResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*outpid = resp.pid();
+	return 0;
+}
+
 int sys_reboot(int command) {
 	if (command != RB_POWER_OFF && command != RB_AUTOBOOT) {
 		mlibc::infoLogger(
