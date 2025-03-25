@@ -1337,6 +1337,34 @@ int sys_signalfd_create(const sigset_t *masks, int flags, int *fd) {
 	return 0;
 }
 
+int sys_pidfd_open(pid_t pid, unsigned int flags, int *outfd) {
+	SignalGuard sguard;
+
+	managarm::posix::PidfdOpenRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_pid(pid);
+	req.set_flags(flags);
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::PidfdOpenResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*outfd = resp.fd();
+	return 0;
+}
+
 int sys_reboot(int command) {
 	if (command != RB_POWER_OFF && command != RB_AUTOBOOT) {
 		mlibc::infoLogger(
