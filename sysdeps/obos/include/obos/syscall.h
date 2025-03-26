@@ -91,6 +91,10 @@ enum {
     Sys_Chdir,
     Sys_ChdirEnt,
     Sys_GetCWD,
+    Sys_SetControllingTTY,
+    Sys_GetControllingTTY,
+    Sys_TTYName,
+    Sys_IsATTY,
 };
 
 #ifdef __cplusplus

@@ -174,12 +174,6 @@ void sys_libc_log(char const* str)
     syscall1(Sys_LibCLog, str);
 }
 
-int sys_isatty(int fd)
-{
-    if (fd <= 2) return 0;
-    return ENOTTY;
-}
-
 uid_t sys_getuid()
 { return 0; }
 uid_t sys_geteuid()
@@ -235,7 +229,7 @@ int sys_anon_allocate(size_t sz, void **pointer)
         uint32_t flags;
         handle file;
         uintptr_t offset;
-    } extra_args = {0,0,HANDLE_INVALID};
+    } extra_args = {0,0,HANDLE_INVALID,0};
     *pointer = (void*)syscall5(Sys_VirtualMemoryAlloc, HANDLE_CURRENT, NULL, sz, &extra_args, NULL);
     return 0;
 }
@@ -309,9 +303,14 @@ static int parse_file_status(obos_status status)
         case OBOS_STATUS_NO_SYSCALL: return ENOSYS;
         case OBOS_STATUS_NOT_ENOUGH_MEMORY: return ENOSPC;
         case OBOS_STATUS_ALREADY_INITIALIZED: return EEXIST;
+        case OBOS_STATUS_UNIMPLEMENTED: return ENOSYS;
         case OBOS_STATUS_PIPE_CLOSED: return EPIPE;
         case OBOS_STATUS_ALREADY_MOUNTED: return EBUSY;
         case OBOS_STATUS_NO_SPACE: return ERANGE;
+        case OBOS_STATUS_NOT_A_TTY: return ENOTTY;
+        case OBOS_STATUS_INVALID_IOCTL: return EINVAL;
+        case OBOS_STATUS_RETRY:
+        case OBOS_STATUS_TIMED_OUT: return EAGAIN;
         default: sys_libc_panic();
     }
 }
@@ -333,8 +332,58 @@ int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_re
 
 int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set, const struct timespec *timeout, const sigset_t *sigmask, int *num_events)
 {
+    (void)(num_fds && read_set && write_set && except_set && timeout && sigmask);
     *num_events = 1;
     return 0;
+}
+
+int sys_isatty(int fd)
+{
+    return parse_file_status((obos_status)syscall1(Sys_IsATTY, fd));
+}
+
+int sys_ttyname(int fd, char *buf, size_t size)
+{
+    return parse_file_status((obos_status)syscall3(Sys_TTYName, fd, buf, size));
+}
+
+#define TTY_IOCTL_SETATTR 0x01
+#define TTY_IOCTL_GETATTR 0x02
+#define TTY_IOCTL_FLOW 0x03
+#define TTY_IOCTL_FLUSH 0x04
+#define TTY_IOCTL_DRAIN 0x05
+
+int sys_tcgetattr(int fd, struct termios *attr)
+{
+    return parse_file_status((obos_status)syscall4(Sys_FdIoctl, fd, TTY_IOCTL_GETATTR, attr, sizeof(*attr)));
+}
+int sys_tcsetattr(int fd, int ign, const struct termios *attr)
+{
+    (void)ign;
+    return parse_file_status((obos_status)syscall4(Sys_FdIoctl, fd, TTY_IOCTL_SETATTR, attr, sizeof(*attr)));
+}
+int sys_tcflow(int fd, int how)
+{
+    (void)(fd && how);
+    return ENOSYS;
+}
+int sys_tcflush(int fd, int queue)
+{
+    (void)(fd && queue);
+    return ENOSYS;
+}
+int sys_tcdrain(int fd)
+{
+    return parse_file_status((obos_status)syscall4(Sys_FdIoctl, fd, TTY_IOCTL_DRAIN, nullptr, 0));
+}
+
+// TODO: How does *result differ from the return value.
+int sys_ioctl(int fd, unsigned long request, void *arg, int *result)
+{
+    int res = parse_file_status((obos_status)syscall4(Sys_FdIoctl, fd, request, arg, SIZE_MAX));
+    if (result)
+        *result = res;
+    return res;
 }
 
 int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd)
@@ -563,7 +612,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
         uint32_t flags;
         handle file;
         uintptr_t offset;
-    } extra_args = { prot_flags, real_flags, (handle)fd, offset };
+    } extra_args = { prot_flags, real_flags, (handle)fd, (uintptr_t)offset };
 
     obos_status status = OBOS_STATUS_SUCCESS;
 
