@@ -25,7 +25,8 @@ jobs:
                 apt-get update
                 apt-get install -y ninja-build qemu-user \
                                 python3-setuptools python3-jsonschema \
-                                python3-pexpect python3-pip netbase clang lld
+                                python3-pexpect python3-pip netbase clang lld \
+                                patchelf
                 pip install --break-system-packages -U xbstrap pyexpect meson
           - name: Prepare directories
             run: |
