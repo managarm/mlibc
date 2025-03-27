@@ -295,6 +295,7 @@ static int parse_file_status(obos_status status)
         case OBOS_STATUS_SUCCESS: return 0;
         case OBOS_STATUS_NOT_FOUND: return ENOENT;
         case OBOS_STATUS_INVALID_ARGUMENT: return EINVAL;
+        case OBOS_STATUS_INTERNAL_ERROR: return EIO;
         case OBOS_STATUS_PAGE_FAULT: return EFAULT;
         case OBOS_STATUS_NOT_A_FILE: return EISDIR;
         case OBOS_STATUS_UNINITIALIZED: return EBADF;
