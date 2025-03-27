@@ -11,7 +11,7 @@ int main() {
 	assert(errno);
 
 	errno = 0;
-	ptr = calloc(sizeof(size_t), 10);
+	ptr = calloc(10, sizeof(size_t));
 	assert(ptr);
 	for(size_t i = 0; i < 10; i++) {
 		size_t *p = ptr;

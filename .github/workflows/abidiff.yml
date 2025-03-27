@@ -9,9 +9,8 @@ on:
 jobs:
   run-abidiff:
     name: Compare ABIs
-    runs-on: ubuntu-22.04
-    container:
-      image: ghcr.io/managarm/mlibc-crossers:latest
+    runs-on: ubuntu-latest
+    container: debian:sid
     defaults:
       run:
         shell: bash
@@ -21,7 +20,7 @@ jobs:
           apt-get update
           apt-get install -y ninja-build qemu-user \
                              python3-setuptools python3-jsonschema \
-                             python3-pip abigail-tools
+                             python3-pip abigail-tools git rsync wget file
           pip install --break-system-packages -U xbstrap pyexpect meson
 
       - name: Checkout base branch
@@ -82,14 +81,19 @@ jobs:
           EOF
           cp linux-headers-base/build/bootstrap-site.yml linux-headers-branch/build/bootstrap-site.yml
 
+      - name: Get libgcc-binaries
+        run: |
+            set -e
+            wget -O /tmp/libgcc-x86_64.a https://github.com/osdev0/libgcc-binaries/raw/refs/heads/trunk/libgcc-x86_64.a
+
       - name: Build and install both copies
         run: |
           set -xe
           mkdir root-base root-branch
           cat > linux-x86_64.cross-file <<-EOF
           [binaries]
-          c = ['x86_64-linux-mlibc-gcc']
-          cpp = ['x86_64-linux-mlibc-g++']
+          c = 'gcc'
+          cpp = 'g++'
           
           [host_machine]
           system = 'linux'
@@ -99,9 +103,11 @@ jobs:
           EOF
           (
             cd mlibc-branch
-            meson setup \
+            LDFLAGS='-Wl,/tmp/libgcc-x86_64.a' meson setup \
                   --cross-file=../linux-x86_64.cross-file \
                   --buildtype=debugoptimized \
+                  -Dlibgcc_dependency=false \
+                  -Duse_freestnd_hdrs=enabled \
                   -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include \
                   build
             ninja -C build
@@ -109,9 +115,11 @@ jobs:
           )
           (
             cd mlibc-base
-            meson setup \
+            LDFLAGS='-Wl,/tmp/libgcc-x86_64.a' meson setup \
                   --cross-file=../linux-x86_64.cross-file \
                   --buildtype=debugoptimized \
+                  -Dlibgcc_dependency=false \
+                  -Duse_freestnd_hdrs=enabled \
                   -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include \
                   build
             ninja -C build
