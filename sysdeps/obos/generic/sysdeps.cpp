@@ -363,10 +363,10 @@ int sys_tcsetattr(int fd, int ign, const struct termios *attr)
     (void)ign;
     return parse_file_status((obos_status)syscall4(Sys_FdIoctl, fd, TTY_IOCTL_SETATTR, attr, sizeof(*attr)));
 }
-int sys_tcflow(int fd, int how)
+int sys_tcflow(int fd, int ehow)
 {
-    (void)(fd && how);
-    return ENOSYS;
+    uint32_t how = ehow;
+    return parse_file_status((obos_status)syscall4(Sys_FdIoctl, fd, TTY_IOCTL_FLOW, how, sizeof(how)));
 }
 int sys_tcflush(int fd, int queue)
 {
