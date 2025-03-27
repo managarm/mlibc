@@ -2,7 +2,7 @@
 
 mlibc is a fully featured C standard library designed with portability in mind.
 
-We support a number of architectures (x86-64, AArch64, RISC-V, IA-32, m68k), and provide a clean syscall abstraction layer for new operating system ports to plug into.
+We support a number of architectures (x86-64, AArch64, RISC-V, IA-32, m68k, LoongArch64), and provide a clean syscall abstraction layer for new operating system ports to plug into.
 
 Unlike other portable C standard libraries like newlib, we aim for feature parity with glibc/musl, i.e full pthread support and GNU extensions.
 

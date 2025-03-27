@@ -182,6 +182,8 @@ static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 96);
 // TCB, so similarly to as on RISC-V, we need to keep the value in
 // sysdeps/linux/m68k/cp_syscall.S up-to-date.
 static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 0x30);
+#elif defined(__loongarch64)
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 96);
 #else
 #error "Missing architecture specific code."
 #endif

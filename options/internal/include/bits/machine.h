@@ -95,6 +95,29 @@ struct __mlibc_jmpbuf_register_state {
 	uint32_t sp;
 	uint32_t pc;
 };
+#elif defined (__loongarch64)
+struct __mlibc_jmpbuf_register_state {
+	uint64_t ra;
+	uint64_t sp;
+	uint64_t u0;
+	uint64_t s0;
+	uint64_t s1;
+	uint64_t s2;
+	uint64_t s3;
+	uint64_t s4;
+	uint64_t s5;
+	uint64_t s6;
+	uint64_t s7;
+	uint64_t s8;
+	double fs0;
+	double fs1;
+	double fs2;
+	double fs3;
+	double fs4;
+	double fs5;
+	double fs6;
+	double fs7;
+};
 #else
 #  error "Missing architecture specific code"
 #endif

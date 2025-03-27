@@ -45,6 +45,9 @@ constexpr inline uintptr_t tlsOffsetFromTp = 0;
 #elif defined(__m68k__)
 constexpr inline bool tlsAboveTp = true;
 constexpr inline ptrdiff_t tlsOffsetFromTp = -0x7000;
+#elif defined(__loongarch64)
+constexpr inline bool tlsAboveTp = true;
+constexpr inline uintptr_t tlsOffsetFromTp = 0;
 #else
 #	error Unknown architecture
 #endif
@@ -1906,7 +1909,7 @@ void Loader::_processRelocations(Relocation &rel) {
 		rel.relocate(symbol_addr);
 	} break;
 
-#if !defined(__riscv)
+#if !defined(__riscv) && !defined(__loongarch64)
 	// on some architectures, R_GLOB_DAT can be defined to other relocations
 	case R_GLOB_DAT: {
 		__ensure(rel.symbol_index());

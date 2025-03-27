@@ -10,10 +10,10 @@ sources:
     branch: 'master'
 
   - name: linux
-    url: 'https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.9.9.tar.xz'
-    extract_path: 'linux-6.9.9'
+    url: 'https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.14.tar.xz'
+    extract_path: 'linux-6.14'
     format: 'tar.xz'
-    version: '6.9.9'
+    version: '6.14'
 
   - name: libdrm
     subdir: 'ports'
@@ -208,6 +208,9 @@ packages:
               ;;
             "riscv64")
               LINUX_ARCH="riscv"
+              ;;
+            "loongarch64")
+              LINUX_ARCH="loongarch"
               ;;
           esac
           make O=@THIS_COLLECT_DIR@ ARCH="$LINUX_ARCH" headers_install

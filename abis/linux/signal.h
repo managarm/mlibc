@@ -587,6 +587,48 @@ typedef struct __ucontext {
 	sigset_t uc_sigmask;
 } ucontext_t;
 
+#elif defined(__loongarch64)
+/* Taken from musl. */
+
+#define NGREG 32
+#define REG_RA 1
+#define REG_SP 3
+#define REG_S0 23
+#define REG_S1 24
+#define REG_A0 4
+#define REG_S2 25
+#define REG_NARGS 8
+
+typedef unsigned long greg_t, gregset_t[32];
+
+struct sigcontext {
+	unsigned long sc_pc;
+	unsigned long sc_regs[32];
+	unsigned sc_flags;
+	unsigned long sc_extcontext[1] __attribute__((__aligned__(16)));
+};
+
+typedef struct {
+	unsigned long pc;
+	unsigned long gregs[32];
+	unsigned flags;
+	unsigned long extcontext[1] __attribute__((__aligned__(16)));
+} mcontext_t;
+
+struct sigaltstack {
+	void *ss_sp;
+	int ss_flags;
+	size_t ss_size;
+};
+
+typedef struct __ucontext {
+	unsigned long uc_flags;
+	struct __ucontext *uc_link;
+	stack_t uc_stack;
+	sigset_t uc_sigmask;
+	long __uc_pad;
+	mcontext_t uc_mcontext;
+} ucontext_t;
 
 #else
 #error "Missing architecture specific code."
