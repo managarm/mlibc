@@ -2,8 +2,8 @@
 skip_sanity_check = true
 
 [binaries]
-c = ['riscv64-linux-mlibc-gcc']
-cpp = ['riscv64-linux-mlibc-g++']
+c = 'riscv64-linux-gnu-gcc'
+cpp = 'riscv64-linux-gnu-g++'
 exe_wrapper = 'qemu-riscv64'
 
 [host_machine]

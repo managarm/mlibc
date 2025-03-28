@@ -39,6 +39,8 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dc_args=['-Wno-error=maybe-uninitialized', '-Wno-unknown-warning-option']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized', '-Wno-unknown-warning-option']"
+        - "-Dlibgcc_dependency=false"
+        - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
@@ -49,6 +51,7 @@ packages:
         environ:
           CFLAGS: '-Wno-error=maybe-uninitialized'
           CXXFLAGS: '-Wno-error=maybe-uninitialized'
+          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -71,6 +74,8 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
+        - "-Dlibgcc_dependency=false"
+        - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=static"
@@ -78,6 +83,8 @@ packages:
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
+        environ:
+          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -99,6 +106,8 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
+        - "-Dlibgcc_dependency=false"
+        - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=shared"
@@ -106,6 +115,8 @@ packages:
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
+        environ:
+          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -128,6 +139,8 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
+        - "-Dlibgcc_dependency=false"
+        - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
@@ -139,6 +152,8 @@ packages:
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
+        environ:
+          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -161,12 +176,16 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
+        - "-Dlibgcc_dependency=false"
+        - "-Duse_freestnd_hdrs=enabled"
         - "-Db_sanitize=undefined"
         - "-Dwerror=true"
         - "-Dheaders_only=true"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
+        environ:
+          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']

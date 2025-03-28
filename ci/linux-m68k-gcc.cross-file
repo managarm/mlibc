@@ -1,6 +1,6 @@
 [binaries]
-c = 'm68k-linux-mlibc-gcc'
-cpp = 'm68k-linux-mlibc-g++'
+c = 'm68k-linux-gnu-gcc'
+cpp = 'm68k-linux-gnu-g++'
 exe_wrapper = 'qemu-m68k'
 
 [host_machine]
