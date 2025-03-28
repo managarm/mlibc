@@ -155,7 +155,7 @@ extra_cflags_test_cases = {
 test_sources = []
 test_objects = []
 test_link_args = []
-test_c_args = ['-D_GNU_SOURCE', '-fno-builtin']
+test_c_args = ['-D_GNU_SOURCE', '-U__MLIBC_DEBUG', '-U__MLIBC_BUILDING_MLIBC', '-fhosted', '-fno-builtin']
 use_pie = false
 
 host_test_c_args = ['-fno-builtin']
