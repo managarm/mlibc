@@ -1,4 +1,4 @@
-project('mlibc', default_options: ['warning_level=2', 'c_std=gnu11', 'cpp_std=c++20'])
+project('mlibc', default_options: ['warning_level=2', 'c_std=gnu11', 'cpp_std=c++20'], meson_version: '>=1.3.0')
 
 fs = import('fs')
 
@@ -35,7 +35,8 @@ internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
 if not headers_only
-	add_languages('c', 'cpp')
+	add_languages('c', 'cpp', native: true)
+	add_languages('c', 'cpp', native: false)
 	c_compiler = meson.get_compiler('c')
 	cpp_compiler = meson.get_compiler('cpp')
 
@@ -562,8 +563,8 @@ endif
 hdoc = find_program('hdoc', required: false)
 
 conf_data = configuration_data()
-conf_data.set('source_root', meson.source_root())
-conf_data.set('build_root', meson.build_root())
+conf_data.set('source_root', meson.global_source_root())
+conf_data.set('build_root', meson.global_build_root())
 configure_file(input: 'scripts/hdoc.toml.in',
 	output: '.hdoc.toml', configuration: conf_data)
 

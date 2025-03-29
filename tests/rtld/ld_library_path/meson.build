@@ -4,7 +4,7 @@
 
 test_rpath = '$ORIGIN/'
 
-test_ld_path = meson.build_root() / 'tests' / 'rtld' / test_name
+test_ld_path = meson.global_build_root() / 'tests' / 'rtld' / test_name
 test_env += ['LD_LIBRARY_PATH=' + test_ld_path]
 test_native_env += ['LD_LIBRARY_PATH=' + test_ld_path]
 
