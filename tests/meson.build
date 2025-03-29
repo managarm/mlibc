@@ -223,7 +223,7 @@ else
 		link_with: libc_shared,
 		dependencies: [libc_deps, rtlib_deps]
 	)
-	test_link_args += ['-Wl,--dynamic-linker=' + meson.build_root() + '/ld.so']
+	test_link_args += ['-Wl,--dynamic-linker=' + meson.global_build_root() + '/ld.so']
 
 	if host_machine.system() in ['linux']
 		use_pie = true
@@ -264,7 +264,7 @@ foreach test_name : all_test_cases
 	exec = executable(test_exec_name, [test_name + '.c', test_sources],
 		dependencies: libc_dep,
 		objects: test_objects,
-		build_rpath: meson.build_root(),
+		build_rpath: meson.global_build_root(),
 		override_options: test_override_options,
 		c_args: test_c_args,
 		link_args: test_link_args,
@@ -277,7 +277,7 @@ foreach test_name : all_test_cases
 			suite: test_subdir,
 			should_fail: should_fail,
 			args: [
-				meson.source_root() + '/tests/' + test_name + '.py',
+				meson.global_source_root() + '/tests/' + test_name + '.py',
 				exec
 			],
 			timeout: timeout_sec,
@@ -300,7 +300,7 @@ foreach test_name : all_test_cases
 		endif
 
 		exec = executable('host-libc-' + test_exec_name, test_name + '.c',
-			build_rpath: meson.build_root(),
+			build_rpath: meson.global_build_root(),
 			override_options: host_libc_sanitize_options,
 			c_args: [host_test_c_args + '-D_GNU_SOURCE', '-DUSE_HOST_LIBC', '-pthread', extra_cflags],
 			link_args: ['-lresolv', '-ldl', '-pthread', '-lm', '-lrt'],
