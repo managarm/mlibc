@@ -22,7 +22,7 @@ extern "C" {
 
 #if defined(__aarch64__) || defined(__i386__) || defined(__m68k__)
 #define IPC_64 0x100
-#elif defined(__x86_64__) || (defined(__riscv) && __riscv_xlen == 64)
+#elif defined(__x86_64__) || (defined(__riscv) && __riscv_xlen == 64) || defined(__loongarch64)
 #define IPC_64 0
 #else
 #error "Unsupported arch!"

@@ -117,8 +117,8 @@ if not headers_only
 		install_dir: get_option('libdir')
 	)
 
-	# On RISC-V, crti.o and crtn.o are provided by GCC.
-	if host_machine.cpu_family() != 'riscv64'
+	# On RISC-V and LoongArch, crti.o and crtn.o are provided by GCC.
+	if host_machine.cpu_family() != 'riscv64' and host_machine.cpu_family() != 'loongarch64'
 		custom_target('crti',
 			build_by_default: true,
 			command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],

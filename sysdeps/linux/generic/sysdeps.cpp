@@ -106,6 +106,9 @@ int sys_tcb_set(void *pointer) {
 	auto ret = do_syscall(__NR_set_thread_area, (uintptr_t)pointer + 0x7000 + sizeof(Tcb));
 	if(int e = sc_error(ret); e)
 		return e;
+#elif defined(__loongarch64)
+	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
+	asm volatile ("move $tp, %0" :: "r"(thread_data));
 #else
 #error "Missing architecture specific code."
 #endif
@@ -626,7 +629,7 @@ int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
 		| CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS
 		| CLONE_PARENT_SETTID;
 
-#if defined(__riscv)
+#if defined(__riscv) || defined(__loongarch64)
 	// TP should point to the address immediately after the TCB.
 	// TODO: We should change the sysdep so that we don't need to do this.
 	auto tls = reinterpret_cast<char *>(tcb) + sizeof(Tcb);
@@ -682,6 +685,8 @@ int sys_before_cancellable_syscall(ucontext_t *uct) {
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.pc);
 #elif defined(__m68k__)
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.gregs[R_PC]);
+#elif defined(__loongarch64)
+	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.pc);
 #else
 #error "Missing architecture specific code."
 #endif

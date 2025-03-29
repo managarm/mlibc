@@ -2,8 +2,8 @@
 #include <mlibc/thread.hpp>
 #include <mlibc/rtld-abi.hpp>
 
-#if (defined(__riscv) || defined(__m68k__)) && defined(MLIBC_STATIC_BUILD)
-	// On RISC-V and m68k, linker optimisation is not guaranteed and so we may
+#if (defined(__riscv) || defined(__m68k__) || defined(__loongarch64)) && defined(MLIBC_STATIC_BUILD)
+	// On RISC-V, m68k and loongarch64, linker optimisation is not guaranteed and so we may
 	// still get calls to this function in statically linked binaries.
 	// TODO: This will break dlopen calls from statically linked programs.
 	extern "C" void *__tls_get_addr(struct __abi_tls_entry *entry) {

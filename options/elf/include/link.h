@@ -7,16 +7,16 @@ extern "C" {
 
 #include <elf.h>
 #include <stddef.h>
-    
+
 #if defined(__x86_64__) || defined(__aarch64__) \
-	|| (defined(__riscv) && __riscv_xlen == 64)
+	|| (defined(__riscv) && __riscv_xlen == 64) || defined(__loongarch64)
 #	define ElfW(type) Elf64_ ## type
 #elif defined(__i386__) || defined(__m68k__)
 #	define ElfW(type) Elf32_ ## type
 #else
 # 	error Unknown architecture
 #endif
-    
+
 struct dl_phdr_info {
 	ElfW(Addr) dlpi_addr;
 	const char *dlpi_name;

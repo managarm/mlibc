@@ -64,7 +64,7 @@ struct shmid_ds {
 	time_t shm_dtime;
 	time_t shm_ctime;
 };
-#elif defined(__x86_64__) || defined(__aarch64__) || (defined(__riscv) && __riscv_xlen == 64)
+#elif defined(__x86_64__) || defined(__aarch64__) || (defined(__riscv) && __riscv_xlen == 64) || defined(__loongarch64)
 struct shmid_ds {
 	struct ipc_perm shm_perm;
 	size_t shm_segsz;

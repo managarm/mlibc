@@ -164,8 +164,6 @@
 #define __NR_uname 160
 #define __NR_sethostname 161
 #define __NR_setdomainname 162
-#define __NR_getrlimit 163
-#define __NR_setrlimit 164
 #define __NR_getrusage 165
 #define __NR_umask 166
 #define __NR_prctl 167
@@ -245,8 +243,6 @@
 #define __NR_perf_event_open 241
 #define __NR_accept4 242
 #define __NR_recvmmsg 243
-#define __NR_riscv_hwprobe 258
-#define __NR_riscv_flush_icache 259
 #define __NR_wait4 260
 #define __NR_prlimit64 261
 #define __NR_fanotify_init 262
@@ -305,7 +301,6 @@
 #define __NR_landlock_create_ruleset 444
 #define __NR_landlock_add_rule 445
 #define __NR_landlock_restrict_self 446
-#define __NR_memfd_secret 447
 #define __NR_process_mrelease 448
 #define __NR_futex_waitv 449
 #define __NR_set_mempolicy_home_node 450
