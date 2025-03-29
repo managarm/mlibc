@@ -1260,7 +1260,6 @@ int sys_timerfd_create(int clockid, int flags, int *fd) {
 int sys_timerfd_settime(
     int fd, int flags, const struct itimerspec *value, struct itimerspec *oldvalue
 ) {
-	__ensure(!oldvalue);
 	SignalGuard sguard;
 
 	managarm::posix::TimerFdSetRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -1286,6 +1285,13 @@ int sys_timerfd_settime(
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
+
+	if (oldvalue) {
+		oldvalue->it_value.tv_sec = resp.value_sec();
+		oldvalue->it_value.tv_nsec = resp.value_nsec();
+		oldvalue->it_interval.tv_sec = resp.interval_sec();
+		oldvalue->it_interval.tv_nsec = resp.interval_nsec();
+	}
 
 	return 0;
 }
