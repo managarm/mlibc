@@ -4,11 +4,20 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
+#include <time.h>
 
 int main(void) {
     size_t page_size = getpagesize();
 
-    int shmid = shmget(23123123, page_size, 0644 | IPC_CREAT | IPC_EXCL);
+    srand(time(NULL));
+
+    int shmid = -1;
+    for (int i = 0; i < 10; i++) {
+        shmid = shmget((key_t)rand(), page_size, 0644 | IPC_CREAT | IPC_EXCL);
+        if (shmid != -1) {
+            break;
+        }
+    }
     assert(shmid != -1);
 
     struct shmid_ds buf;
