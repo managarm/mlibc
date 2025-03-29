@@ -9,6 +9,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#if __MLIBC_POSIX_OPTION
+#include <unistd.h>
+#include <sys/stat.h>
+#endif
+
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/file-window.hpp>
@@ -21,6 +26,11 @@
 
 #include <frg/mutex.hpp>
 
+// The DST rules to use if TZ has no rules and we can't load posixinfo.
+// POSIX does not specify the default DST rules, for historical reasons
+// America/New_York is a common default.
+#define TZ_DEFAULT_RULE_STRING ",M3.2.0,M11.1.0"
+
 const char __utc[] = "UTC";
 
 // Variables defined by POSIX.
@@ -29,10 +39,6 @@ long timezone;
 char *tzname[2];
 
 static FutexLock __time_lock;
-static file_window *get_localtime_window() {
-	static file_window window{"/etc/localtime"};
-	return &window;
-}
 
 // Function taken from musl
 clock_t clock(void) {
@@ -455,6 +461,261 @@ size_t wcsftime(wchar_t *__restrict, size_t, const wchar_t *__restrict,
 
 namespace {
 
+// Given a pointer to a timezone string, extract a number and check if it's in
+// range; if it's not, return NULL. Otherwise, return a pointer to the first
+// character not part of the number.
+template<typename T>
+static const char *getnum(const char *str, T *nump, T min, T max) {
+	if (str == NULL || !isdigit(*str))
+		return NULL;
+
+	char c = *str;
+	T num = 0;
+	do {
+		num = num * 10 + (c - '0');
+		if (num > max)
+			return NULL;
+		c = *++str;
+	} while (isdigit(c));
+	if (num < min)
+		return NULL;
+	*nump = num;
+	return str;
+}
+
+// Given a pointer into a timezone string, extract an offset, in
+// [+-]hh[:mm[:ss]] form. If any error occurs, return NULL. Otherwise, return a
+// pointer to the first character not part of the time.
+static const char *getoffset(const char *str, long *offset) {
+	bool negative = false;
+	if (*str == '-') {
+		negative = true;
+		str++;
+	} else if (*str == '+') {
+		str++;
+	}
+
+	unsigned int num;
+	// `24 * 7 - 1` allows for quasi-POSIX rules like "M10.4.6/26", which does
+	// not conform to POSIX, but specifies the equivalent of "02:00 on the
+	// first Sunday on or after 23 Oct.
+	str = getnum<unsigned int>(str, &num, 0, 24 * 7 - 1);
+	if (str == NULL)
+		return NULL;
+	*offset = num * 60 * 60;
+	if (*str == ':') {
+		str++;
+		str = getnum<unsigned int>(str, &num, 0, 59);
+		if (str == NULL)
+			return NULL;
+		*offset += num * 60;
+		if (*str == ':') {
+			str++;
+			// Allows for leap seconds.
+			str = getnum<unsigned int>(str, &num, 0, 60);
+			if (str == NULL)
+				return NULL;
+			*offset += num;
+		}
+	}
+
+	if (negative)
+		*offset *= -1;
+
+	return str;
+}
+
+enum RuleType {
+	JULIAN_DAY, // Jn = Julian day
+	DAY_OF_YEAR, // n = day of year
+	MONTH_NTH_DAY_OF_WEEK, // Mm.n.d = month, week, day of week
+};
+
+struct Rule {
+	RuleType type;
+	uint16_t day;
+	uint8_t week;
+	uint8_t month;
+	long offset;
+};
+
+// Given a pointer into a timezone string, extract a rule in the form
+// date[/time]. If a valid rule is not found, return NULL; otherwise, return a
+// pointer to the first character not part of the rule.
+static const char *getrule(const char *str, Rule *rule) {
+	if (*str == 'J') { // Julian day
+		rule->type = JULIAN_DAY;
+		str++;
+		str = getnum<uint16_t>(str, &rule->day, 1, 365);
+	} else if (*str == 'M') { // Month, week, day
+		rule->type = MONTH_NTH_DAY_OF_WEEK;
+		str++;
+		str = getnum<uint8_t>(str, &rule->month, 1, 12);
+		if (str == NULL)
+			return NULL;
+		if (*str++ != '.')
+			return NULL;
+		str = getnum<uint8_t>(str, &rule->week, 1, 5);
+		if (str == NULL)
+			return NULL;
+		if (*str++ != '.')
+			return NULL;
+		str = getnum<uint16_t>(str, &rule->day, 0, 6);
+	} else if (isdigit(*str)) { // Day of year
+		rule->type = DAY_OF_YEAR;
+		str = getnum<uint16_t>(str, &rule->day, 0, 365);
+	} else {
+		return NULL;
+	}
+
+	if (str == NULL)
+		return NULL;
+
+	if (*str == '/') {
+		str++;
+		str = getoffset(str, &rule->offset);
+	} else {
+		// Fallback to 02:00:00.
+		rule->offset = 2 * 60 * 60;
+	}
+
+	return str;
+}
+
+static bool parse_tz(const char *tz, char *tz_name, char *tz_name_dst, size_t tz_name_max) {
+	// POSIX defines :*characters* as a valid but implementation-defined format.
+	// glibc ignores the initial colon and parses the rest as TZ.
+	if (*tz == ':')
+		tz++;
+
+	// The timezone name may be wrapped in angle brackets, in which case we
+	// parse them in quoted mode.
+	bool quoted = false;
+	if (*tz == '<') {
+		quoted = true;
+		tz++;
+	}
+
+	// Try parsing the timezone name.
+	auto *tzn = tz;
+	size_t tzn_len = 0;
+	for (;; tz++) {
+		tzn_len = tz - tzn;
+		if (*tz == '\0')
+			break;
+
+		if (tzn_len > tz_name_max)
+			return true;
+
+		// Advance until the end of the timezone name.
+		if (isalpha(*tz))
+			continue;
+		if (quoted && (*tz == '+' || *tz == '-' || isdigit(*tz)))
+			continue;
+
+		// Check if the timezone name has a valid length.
+		if (tzn_len < 3)
+			return true;
+
+		// Consume the terminating angle bracket.
+		if (quoted && *tz == '>') {
+			tz++;
+		} else if (quoted) {
+			mlibc::infoLogger() << "mlibc: TZ name has unclosed angle bracket" << frg::endlog;
+			return true;
+		}
+
+		break;
+	}
+
+	long offset = 0;
+	tz = getoffset(tz, &offset);
+	if (tz == NULL)
+		return true;
+
+	// If we're here, this MUST be of the POSIX timezone format.
+	// Write the TZ name to the buffer passed to the function.
+	memcpy(tz_name, tzn, tzn_len);
+	tz_name[tzn_len] = '\0';
+
+	timezone = offset;
+
+	// If there's nothing left to parse, we should set tz_name_dst to tz_name.
+	// This matches glibc behaviour.
+	if (*tz == '\0') {
+		memcpy(tz_name_dst, tzn, tzn_len);
+		tz_name_dst[tzn_len] = '\0';
+		return false;
+	}
+
+	// From now on, we won't return an error but silently stop parsing. This
+	// makes a parsing error on the rest of the TZ environment variable not
+	// prevent setting the values we parsed before this point. This matches
+	// glibc behaviour.
+
+	// The timezone name may be wrapped in angle brackets, in which case we
+	// parse them in quoted mode.
+	quoted = false;
+	if (*tz == '<') {
+		quoted = true;
+		tz++;
+	}
+
+	// Try parsing the alternate timezone (DST) name.
+	auto *tzn_dst = tz;
+	size_t tzn_len_dst = 0;
+	for (;; tz++) {
+		tzn_len_dst = tz - tzn_dst;
+		if (*tz == '\0')
+			break;
+
+		if (tzn_len_dst > tz_name_max)
+			return false;
+
+		// Advance until the end of the timezone name.
+		if (isalpha(*tz))
+			continue;
+		if (quoted && (*tz == '+' || *tz == '-' || isdigit(*tz)))
+			continue;
+
+		// Check if the timezone name has a valid length.
+		if (tzn_len_dst < 3)
+			return false;
+
+		// Consume the terminating angle bracket.
+		if (quoted && *tz == '>') {
+			tz++;
+		} else if (quoted) {
+			mlibc::infoLogger() << "mlibc: TZ name has unclosed angle bracket" << frg::endlog;
+			return false;
+		}
+
+		break;
+	}
+
+	// Write the TZ name to the buffer passed to the function.
+	memcpy(tz_name_dst, tzn_dst, tzn_len_dst);
+	tz_name_dst[tzn_len_dst] = '\0';
+
+	// Fallback to 1 hour ahead of standard time.
+	long offset_dst = offset - 60 * 60;
+	if (*tz != '\0' && *tz != ',' && *tz != ';') {
+		tz = getoffset(tz, &offset_dst);
+		if (tz == NULL)
+			return false;
+	}
+
+	// TODO: Attempt to fallback to posixrules before falling back to this.
+	if (*tz == '\0')
+		tz = TZ_DEFAULT_RULE_STRING;
+
+	// TODO: parse ,*rule*
+
+	daylight = 1;
+
+	return false;
+}
+
 struct tzfile {
 	uint8_t magic[4];
 	uint8_t version;
@@ -473,16 +734,54 @@ struct[[gnu::packed]] ttinfo {
 	unsigned char tt_abbrind;
 };
 
-}
 
-// TODO(geert): this function doesn't parse the TZ environment variable
-// or properly handle the case where information might be missing from /etc/localtime
-// also we should probably unify the code for this and unix_local_from_gmt()
-void tzset(void) {
-	frg::unique_lock<FutexLock> lock(__time_lock);
+static bool parse_tzfile(const char *tz) {
+	// POSIX defines :*characters* as a valid but implementation-defined format.
+	// This was originally introduced as a way to support geographical
+	// timezones in the format :Area/Location, but the colon was dropped in POSIX.
+	if (*tz == ':')
+		tz++;
+
+	frg::string<MemoryAllocator> path {getAllocator()};
+	// TODO: generic path helpers in options/internal?
+	if (*tz == '/') {
+		path += tz;
+	} else if (*tz == '.') {
+		// FIXME: Figure out what we actually need to do in this case, consider
+		//        supporting relative paths or defaulting to UTC instead.
+		mlibc::infoLogger() << "mlibc: relative path in TZ not supported, "
+			"defaulting to /etc/localtime" << frg::endlog;
+		path += "/etc/localtime";
+	} else {
+		const char *tzdir = getenv("TZDIR");
+		if (tzdir == NULL || *tzdir == '\0') {
+			tzdir = "/usr/share/zoneinfo";
+		} else if (*tzdir != '/') {
+			mlibc::infoLogger() << "mlibc: non-absolute path in TZDIR not "
+				"supported, defaulting to /usr/share/zoneinfo" << frg::endlog;
+			tzdir = "/usr/share/zoneinfo";
+		}
+
+		path += tzdir;
+		path += "/";
+		path += tz;
+	}
+
+	// Check if file exists, otherwise fallback to the default.
+	if (!mlibc::sys_stat) {
+		MLIBC_MISSING_SYSDEP();
+		__ensure(!"cannot proceed without sys_stat");
+	}
+	struct stat info;
+	if(mlibc::sys_stat(mlibc::fsfd_target::path, -1, path.data(), 0, &info))
+		return true;
+
+	// FIXME: Make this fallible so the above check is not needed.
+	file_window window {path.data()};
+
 	// TODO(geert): we can probably cache this somehow
 	tzfile tzfile_time;
-	memcpy(&tzfile_time, reinterpret_cast<char *>(get_localtime_window()->get()), sizeof(tzfile));
+	memcpy(&tzfile_time, reinterpret_cast<char *>(window.get()), sizeof(tzfile));
 	tzfile_time.tzh_ttisgmtcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_ttisgmtcnt);
 	tzfile_time.tzh_ttisstdcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_ttisstdcnt);
 	tzfile_time.tzh_leapcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_leapcnt);
@@ -492,28 +791,28 @@ void tzset(void) {
 
 	if(tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i'
 			|| tzfile_time.magic[3] != 'f') {
-		mlibc::infoLogger() << "mlibc: /etc/localtime is not a valid TZinfo file" << frg::endlog;
-		return;
+		mlibc::infoLogger() << "mlibc: " << path << " is not a valid TZinfo file" << frg::endlog;
+		return true;
 	}
 
 	if(tzfile_time.version != '\0' && tzfile_time.version != '2' && tzfile_time.version != '3') {
-		mlibc::infoLogger() << "mlibc: /etc/localtime has an invalid TZinfo version"
+		mlibc::infoLogger() << "mlibc: " << path << " has an invalid TZinfo version"
 				<< frg::endlog;
-		return;
+		return true;
 	}
 
 	// There should be at least one entry in the ttinfo table.
-	// TODO: If there is not, we might want to fall back to UTC, no DST (?).
-	__ensure(tzfile_time.tzh_typecnt);
+	if (!tzfile_time.tzh_typecnt)
+		return true;
 
-	char *abbrevs = reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
+	char *abbrevs = reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
 		+ tzfile_time.tzh_timecnt * sizeof(int32_t)
 		+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
 		+ tzfile_time.tzh_typecnt * sizeof(struct ttinfo);
 	// start from the last ttinfo entry, this matches the behaviour of glibc and musl
 	for (int i = tzfile_time.tzh_typecnt; i > 0; i--) {
 		ttinfo time_info;
-		memcpy(&time_info, reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
+		memcpy(&time_info, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
 				+ tzfile_time.tzh_timecnt * sizeof(int32_t)
 				+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
 				+ i * sizeof(ttinfo), sizeof(ttinfo));
@@ -528,6 +827,55 @@ void tzset(void) {
 			daylight = 1;
 		}
 	}
+
+	return false;
+}
+
+// Assumes __time_lock is taken
+// TODO(geert): this function doesn't properly handle the case where
+// information might be missing from the tzinfo file
+static void do_tzset(void) {
+	const char *tz = getenv("TZ");
+	if (tz == NULL)
+		tz = "/etc/localtime";
+	if (*tz == '\0')
+		tz = "UTC0";
+
+	size_t tz_name_max = TZNAME_MAX;
+#if __MLIBC_POSIX_OPTION
+	if (long sc_tz_name_max = sysconf(_SC_TZNAME_MAX); sc_tz_name_max > TZNAME_MAX)
+		tz_name_max = (size_t) sc_tz_name_max;
+#endif
+
+	// 1 byte for null
+	char *tz_name = (char *) malloc(tz_name_max + 1);
+	char *tz_name_dst = (char *) malloc(tz_name_max + 1);
+	memset(tz_name, 0, tz_name_max + 1);
+	memset(tz_name_dst, 0, tz_name_max + 1);
+
+	// Reset daylight in case the TZ environment variable changed.
+	daylight = 0;
+
+	if (!parse_tz(tz, tz_name, tz_name_dst, tz_name_max)) {
+		tzname[0] = tz_name;
+		tzname[1] = tz_name_dst;
+		return;
+	}
+
+	// Try parsing as a geographic timezone.
+	if (parse_tzfile(tz)) {
+		// This should always succeed.
+		__ensure(!parse_tz("UTC0", tz_name, tz_name_dst, tz_name_max));
+		tzname[0] = tz_name;
+		tzname[1] = tz_name_dst;
+	}
+}
+
+}
+
+void tzset(void) {
+	frg::unique_lock<FutexLock> lock(__time_lock);
+	do_tzset();
 }
 
 // POSIX extensions.
@@ -627,74 +975,17 @@ void yearday_from_date(unsigned int year, unsigned int month, unsigned int day, 
 // Looks up the local time rules for a given
 // UNIX GMT timestamp (seconds since 1970 GMT, ignoring leap seconds).
 // This function assumes the __time_lock has been taken
-// TODO(geert): if /etc/localtime isn't available this will fail... In that case
-// we should call tzset() and use the variables to compute the variables from
-// the tzset() global variables. Look at the musl code for how to do that
 int unix_local_from_gmt(time_t unix_gmt, time_t *offset, bool *dst, char **tm_zone) {
-	tzfile tzfile_time;
-	memcpy(&tzfile_time, reinterpret_cast<char *>(get_localtime_window()->get()), sizeof(tzfile));
-	tzfile_time.tzh_ttisgmtcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_ttisgmtcnt);
-	tzfile_time.tzh_ttisstdcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_ttisstdcnt);
-	tzfile_time.tzh_leapcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_leapcnt);
-	tzfile_time.tzh_timecnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_timecnt);
-	tzfile_time.tzh_typecnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_typecnt);
-	tzfile_time.tzh_charcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_charcnt);
+	do_tzset();
 
-	if(tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i'
-			|| tzfile_time.magic[3] != 'f') {
-		mlibc::infoLogger() << "mlibc: /etc/localtime is not a valid TZinfo file" << frg::endlog;
+	if (daylight) {
+		mlibc::infoLogger() << "mlibc: TODO support DST" << frg::endlog;
 		return -1;
 	}
 
-	if(tzfile_time.version != '\0' && tzfile_time.version != '2' && tzfile_time.version != '3') {
-		mlibc::infoLogger() << "mlibc: /etc/localtime has an invalid TZinfo version"
-				<< frg::endlog;
-		return -1;
-	}
-
-	int index = -1;
-	for(size_t i = 0; i < tzfile_time.tzh_timecnt; i++) {
-		int32_t ttime;
-		memcpy(&ttime, reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
-				+ i * sizeof(int32_t), sizeof(int32_t));
-		ttime = mlibc::bit_util<uint32_t>::byteswap(ttime);
-		// If we are before the first transition, the format dicates that
-		// the first ttinfo entry should be used (and not the ttinfo entry pointed
-		// to by the first transition time).
-		if(i && ttime > unix_gmt) {
-			index = i - 1;
-			break;
-		}
-	}
-
-	// The format dictates that if no transition is applicable,
-	// the first entry in the file is chosen.
-	uint8_t ttinfo_index = 0;
-	if(index >= 0) {
-		memcpy(&ttinfo_index, reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
-				+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-				+ index * sizeof(uint8_t), sizeof(uint8_t));
-	}
-
-	// There should be at least one entry in the ttinfo table.
-	// TODO: If there is not, we might want to fall back to UTC, no DST (?).
-	__ensure(tzfile_time.tzh_typecnt);
-
-	ttinfo time_info;
-	memcpy(&time_info, reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
-			+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-			+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
-			+ ttinfo_index * sizeof(ttinfo), sizeof(ttinfo));
-	time_info.tt_gmtoff = mlibc::bit_util<uint32_t>::byteswap(time_info.tt_gmtoff);
-
-	char *abbrevs = reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
-		+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-		+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
-		+ tzfile_time.tzh_typecnt * sizeof(struct ttinfo);
-
-	*offset = time_info.tt_gmtoff;
-	*dst = time_info.tt_isdst;
-	*tm_zone = abbrevs + time_info.tt_abbrind;
+	*offset = -timezone;
+	*dst = false;
+	*tm_zone = tzname[0];
 	return 0;
 }
 
