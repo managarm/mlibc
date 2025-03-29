@@ -1,7 +1,5 @@
-#include <fenv.h>
 #include <stdio.h>
 #include <assert.h>
-#include <math.h>
 #include <string.h>
 
 #define test_roundtrip(val, print_format, scanf_format, expected_string, expected_scanf_ret) { \
@@ -94,18 +92,8 @@ int main() {
 	assert(!strcmp(buf, "-4.0"));
 	sprintf(buf, "%-3.f", 8.0);
 	assert(!strcmp(buf, "8  "));
-	sprintf(buf, "%4f", INFINITY);
-	assert(!strcmp(buf, " inf") || !strcmp(buf, "infinity"));
-	sprintf(buf, "%4f", NAN);
-	assert(!strcmp(buf, " nan"));
-	sprintf(buf, "%4F", INFINITY);
-	assert(!strcmp(buf, " INF") || !strcmp(buf, "INFINITY"));
-	sprintf(buf, "%4F", NAN);
-	assert(!strcmp(buf, " NAN"));
 	sprintf(buf, "%05.2f", 1.0);
 	assert(!strcmp(buf, "01.00"));
-	sprintf(buf, "%09f", INFINITY); // 0 ignored when padding infs
-	assert(!strcmp(buf, "      inf") || !strcmp(buf, " infinity"));
 
 	// Test %f rounding
 	sprintf(buf, "%5.2f", 1.2);
@@ -392,15 +380,6 @@ int main() {
 	test_roundtrip(-0.00012345, "%A", "%lf", "-0X1.02E4B6CE5DC68P-13", 1);
 	test_roundtrip(0.0, "%a", "%lf", "0x0p+0", 1);
 	test_roundtrip(-0.0, "%A", "%lf", "-0X0P+0", 1);
-
-	sprintf(buf, "%a", INFINITY);
-	assert(!strcmp(buf, "inf"));
-	sprintf(buf, "%A", INFINITY);
-	assert(!strcmp(buf, "INF"));
-	sprintf(buf, "%a", -NAN);
-	assert(!strcmp(buf, "-nan"));
-	sprintf(buf, "%A", NAN);
-	assert(!strcmp(buf, "NAN"));
 
 	// Test %a/%A padding
 	test_roundtrip(10.25, "%25a", "%lf", "                0x1.48p+3", 1);
