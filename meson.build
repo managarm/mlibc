@@ -77,6 +77,10 @@ if not headers_only
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
+	if library_type == 'static'
+		add_project_arguments('-fdata-sections', '-ffunction-sections', language: ['c', 'cpp'])
+	endif
+
 	if get_option('buildtype').startswith('debug')
 		add_project_arguments('-D__MLIBC_DEBUG', language : ['c', 'cpp'])
 	endif
