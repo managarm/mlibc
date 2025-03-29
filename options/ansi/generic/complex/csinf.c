@@ -42,7 +42,7 @@ csinf(float complex z)
 	float complex w;
 	float ch, sh;
 
-	__mlibc_cchshf(cimagf(z), &ch, &sh);
+	_cchshf(cimagf(z), &ch, &sh);
 	w = sinf(crealf(z)) * ch + (cosf(crealf(z)) * sh) * I;
 	return w;
 }

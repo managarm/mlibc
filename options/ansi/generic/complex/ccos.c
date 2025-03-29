@@ -41,7 +41,7 @@ INDEX
 INDEX
         ccosf
 
-ANSI_SYNOPSIS
+SYNOPSIS
        #include <complex.h>
        double complex ccos(double complex <[z]>);
        float complex ccosf(float complex <[z]>);
@@ -75,7 +75,7 @@ ccos(double complex z)
 	double complex w;
 	double ch, sh;
 
-	__mlibc_cchsh(cimag(z), &ch, &sh);
+	_cchsh(cimag(z), &ch, &sh);
 	w = cos(creal(z)) * ch - (sin(creal(z)) * sh) * I;
 	return w;
 }

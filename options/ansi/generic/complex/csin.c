@@ -41,7 +41,7 @@ INDEX
 INDEX
         csinf
 
-ANSI_SYNOPSIS
+SYNOPSIS
        #include <complex.h>
        double complex csin(double complex <[z]>);
        float complex csinf(float complex <[z]>);
@@ -75,7 +75,7 @@ csin(double complex z)
 	double complex w;
 	double ch, sh;
 
-	__mlibc_cchsh(cimag(z), &ch, &sh);
+	_cchsh(cimag(z), &ch, &sh);
 	w = sin(creal(z)) * ch + (cos(creal(z)) * sh) * I;
 	return w;
 }
