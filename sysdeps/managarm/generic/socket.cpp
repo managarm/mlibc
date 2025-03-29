@@ -53,10 +53,9 @@ int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_le
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	if (resp.error() == managarm::posix::Errors::WOULD_BLOCK) {
-		return EWOULDBLOCK;
+	if (resp.error() != managarm::posix::Errors::SUCCESS) {
+		return resp.error() | toErrno;
 	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*newfd = resp.fd();
 	}
 
