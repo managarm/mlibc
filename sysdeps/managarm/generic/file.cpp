@@ -75,7 +75,8 @@ int sys_fchdir(int fd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 	return 0;
 }
 
@@ -99,7 +100,8 @@ int sys_chroot(const char *path) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 	return 0;
 }
 
@@ -299,9 +301,8 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 
 		managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		if (resp.error() == managarm::posix::Errors::NO_SUCH_FD)
-			return EBADF;
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		if (resp.error() != managarm::posix::Errors::SUCCESS)
+			return resp.error() | toErrno;
 		*result = resp.flags();
 		return 0;
 	} else if (request == F_SETFD) {
@@ -322,11 +323,8 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 
 		managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		if (resp.error() == managarm::posix::Errors::NO_SUCH_FD)
-			return EBADF;
-		else if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS)
-			return EINVAL;
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+		if (resp.error() != managarm::posix::Errors::SUCCESS)
+			return resp.error() | toErrno;
 		*result = static_cast<int>(resp.error());
 		return 0;
 	} else if (request == F_GETFL) {
@@ -589,7 +587,8 @@ int sys_getcwd(char *buffer, size_t size) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 	if (static_cast<size_t>(resp.size()) >= size)
 		return ERANGE;
 	return 0;
@@ -648,7 +647,9 @@ int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
 	*window = reinterpret_cast<void *>(resp.offset());
 	return 0;
 }
@@ -675,7 +676,9 @@ int sys_vm_protect(void *pointer, size_t size, int prot) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
 	return 0;
 }
 
@@ -700,7 +703,9 @@ int sys_vm_unmap(void *pointer, size_t size) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
 	return 0;
 }
 
@@ -723,11 +728,11 @@ int sys_setsid(pid_t *sid) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::ACCESS_DENIED) {
+	if (resp.error() != managarm::posix::Errors::SUCCESS) {
 		*sid = -1;
-		return EPERM;
+		return resp.error() | toErrno;
 	}
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+
 	*sid = resp.sid();
 	return 0;
 }
@@ -779,13 +784,11 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EAFNOSUPPORT;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		*fd = resp.fd();
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*fd = resp.fd();
+	return 0;
 }
 
 int sys_pipe(int *fds, int flags) {
@@ -808,7 +811,8 @@ int sys_pipe(int *fds, int flags) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 	__ensure(resp.fds_size() == 2);
 	fds[0] = resp.fds(0);
 	fds[1] = resp.fds(1);
@@ -1143,7 +1147,8 @@ int sys_epoll_create(int flags, int *fd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 	*fd = resp.fd();
 	return 0;
 }
@@ -1320,7 +1325,8 @@ int sys_signalfd_create(const sigset_t *masks, int flags, int *fd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 	*fd = resp.fd();
 	return 0;
 }
@@ -1351,9 +1357,8 @@ int sys_reboot(int command) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	if (resp.error() == managarm::posix::Errors::INSUFFICIENT_PERMISSION)
-		return EPERM;
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 	return 0;
 }
 
@@ -1384,7 +1389,8 @@ int sys_inotify_create(int flags, int *fd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 	*fd = resp.fd();
 	return 0;
 }
@@ -1472,7 +1478,8 @@ int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 	*fd = resp.fd();
 	return 0;
 }
@@ -1891,14 +1898,7 @@ int sys_close(int fd) {
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 
-	if (resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::SUCCESS) {
-		return 0;
-	} else {
-		__ensure(!"Unexpected error");
-		__builtin_unreachable();
-	}
+	return resp.error() | toErrno;
 }
 
 int sys_dup(int fd, int flags, int *newfd) {
@@ -2336,14 +2336,12 @@ int sys_isatty(int fd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	if (resp.error() == managarm::posix::Errors::NO_SUCH_FD) {
-		return EBADF;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		if (resp.mode())
-			return 0;
-		return ENOTTY;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	if (resp.mode())
+		return 0;
+	return ENOTTY;
 }
 
 int sys_chmod(const char *pathname, mode_t mode) {
@@ -2488,13 +2486,10 @@ int sys_memfd_create(const char *name, int flags, int *fd) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 
 	*fd = resp.fd();
-
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
 }
 
@@ -2588,13 +2583,11 @@ int sys_sysconf(int num, long *ret) {
 
 			managarm::posix::SysconfResponse<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-				return EINVAL;
-			}
+
+			if (resp.error() != managarm::posix::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			*ret = resp.value();
-
-			__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 			return 0;
 		}
 	}
@@ -2661,17 +2654,12 @@ int sys_fstatfs(int fd, struct statfs *buf) {
 	managarm::posix::FstatfsResponse resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-	if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		// Check?
-		return ENOENT;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		memset(buf, NULL, sizeof(struct statfs));
-		buf->f_type = resp.fstype();
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	memset(buf, NULL, sizeof(struct statfs));
+	buf->f_type = resp.fstype();
+	return 0;
 }
 
 int sys_prctl(int option, va_list va, int *out) {
@@ -2709,7 +2697,8 @@ int sys_prctl(int option, va_list va, int *out) {
 			managarm::posix::ParentDeathSignalResponse resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-			__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+			if (resp.error() != managarm::posix::Errors::SUCCESS)
+				return resp.error() | toErrno;
 			*out = 0;
 			return 0;
 		}
@@ -2742,16 +2731,12 @@ int sys_statfs(const char *path, struct statfs *buf) {
 	managarm::posix::FstatfsResponse resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-	if (resp.error() == managarm::posix::Errors::BAD_FD) {
-		return EBADF;
-	} else if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-		memset(buf, NULL, sizeof(struct statfs));
-		buf->f_type = resp.fstype();
-		return 0;
-	}
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	memset(buf, NULL, sizeof(struct statfs));
+	buf->f_type = resp.fstype();
+	return 0;
 }
 
 // We don't support extended attributes yet
