@@ -1,7 +1,10 @@
+#include <fcntl.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+
+#include <sys/stat.h>
 
 #include <frg/logging.hpp>
 #include <mlibc/debug.hpp>
@@ -17,6 +20,7 @@
 #include <abi-bits/errno.h>
 #include <abi-bits/fcntl.h>
 #include <abi-bits/vm-flags.h>
+#include <unistd.h>
 
 namespace mlibc {
 
@@ -366,7 +370,7 @@ int sys_tcsetattr(int fd, int ign, const struct termios *attr)
 int sys_tcflow(int fd, int ehow)
 {
     uint32_t how = ehow;
-    return parse_file_status((obos_status)syscall4(Sys_FdIoctl, fd, TTY_IOCTL_FLOW, how, sizeof(how)));
+    return parse_file_status((obos_status)syscall4(Sys_FdIoctl, fd, TTY_IOCTL_FLOW, &how, sizeof(how)));
 }
 int sys_tcflush(int fd, int queue)
 {
@@ -446,6 +450,56 @@ int sys_open(const char *pathname, int flags, mode_t mode, int *fd)
 int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf)
 {
     return parse_file_status((obos_status)syscall5(Sys_Stat, fsfdt, fd, path, flags, statbuf));
+}
+
+static int access_common(struct stat* st, int mode)
+{
+    const int uid = sys_getuid();
+    const int gid = sys_getgid();
+
+    mode_t mode_mask = 0;
+    if (uid == st->st_uid)
+        mode_mask |= (((mode & R_OK) ? 0400 : 0000) | ((mode & W_OK) ? 0200 : 0000) | (mode & X_OK) ? 0100 : 0000);
+    else if (gid == st->st_gid)
+        mode_mask |= (((mode & R_OK) ? 0040 : 0000) | ((mode & W_OK) ? 0020 : 0000) | (mode & X_OK) ? 0010 : 0000);
+    else
+        mode_mask |= (((mode & R_OK) ? 0004 : 0000) | ((mode & W_OK) ? 0002 : 0000) | (mode & X_OK) ? 0001 : 0000);
+    
+    return ((st->st_mode & 777) & mode_mask) == mode_mask;
+}
+
+int sys_access(const char *path, int mode)
+{
+    mode &= 7;
+
+    struct stat st = {};
+    int ec = sys_stat(fsfd_target::path, -1, path, 0, &st);
+    if (ec != 0)
+        return ec;
+    else if (mode == F_OK)
+        return 0;
+
+    return access_common(&st, mode);
+}
+
+int sys_faccessat(int dirfd, const char *pathname, int mode, int flags)
+{
+    mode &= 7;
+
+    fsfd_target fsfdt = fsfd_target::none;
+    if (dirfd == AT_FDCWD)
+        fsfdt = fsfd_target::path;
+    else
+        fsfdt = fsfd_target::fd;
+
+    struct stat st = {};
+    int ec = sys_stat(fsfdt, dirfd, pathname, flags, &st);
+        if (ec != 0)
+        return ec;
+    else if (mode == F_OK)
+        return 0;
+
+    return access_common(&st, mode);
 }
 
 int sys_mkdir(const char *path, mode_t mode)
