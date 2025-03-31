@@ -183,41 +183,43 @@ private:
 	HelChunk *_retrieveChunk() { return _chunks[_numberOf(_retrieveIndex)]; }
 
 	void _wakeHeadFutex() {
-		auto futex = __atomic_exchange_n(&_queue->headFutex, _nextIndex, __ATOMIC_RELEASE);
-		if (futex & kHelHeadWaiters)
-			HEL_CHECK(helFutexWake(&_queue->headFutex, UINT32_MAX));
+		__atomic_store_n(&_queue->headFutex, _nextIndex, __ATOMIC_RELEASE);
+		auto futex =
+		    __atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySupplyCqChunks, __ATOMIC_RELEASE);
+		if (!(futex & kHelKernelNotifySupplyCqChunks))
+			HEL_CHECK(helFutexWake(&_queue->kernelNotify, UINT32_MAX));
 	}
 
 	enum class FutexProgress {
+		NONE,
 		DONE,
 		PROGRESS,
 		CANCELLED,
 	};
 
+	// Postcondition: return value != FutexProgress::NONE.
 	FutexProgress _waitProgressFutex() {
+		auto check = [&]() -> FutexProgress {
+			auto progress = __atomic_load_n(&_retrieveChunk()->progressFutex, __ATOMIC_ACQUIRE);
+			__ensure(!(progress & ~(kHelProgressMask | kHelProgressDone)));
+			if (_lastProgress != (progress & kHelProgressMask))
+				return FutexProgress::PROGRESS;
+			else if (progress & kHelProgressDone)
+				return FutexProgress::DONE;
+			return FutexProgress::NONE;
+		};
+
+		if (auto result = check(); result != FutexProgress::NONE)
+			return result;
+
 		while (true) {
-			auto futex = __atomic_load_n(&_retrieveChunk()->progressFutex, __ATOMIC_ACQUIRE);
-			__ensure(!(futex & ~(kHelProgressMask | kHelProgressWaiters | kHelProgressDone)));
-			do {
-				if (_lastProgress != (futex & kHelProgressMask))
-					return FutexProgress::PROGRESS;
-				else if (futex & kHelProgressDone)
-					return FutexProgress::DONE;
+			auto futex =
+			    __atomic_fetch_and(&_queue->userNotify, ~kHelUserNotifyCqProgress, __ATOMIC_ACQUIRE);
 
-				if (futex & kHelProgressWaiters)
-					break; // Waiters bit is already set (in a previous iteration).
-			} while (!__atomic_compare_exchange_n(
-			    &_retrieveChunk()->progressFutex,
-			    &futex,
-			    _lastProgress | kHelProgressWaiters,
-			    false,
-			    __ATOMIC_ACQUIRE,
-			    __ATOMIC_ACQUIRE
-			));
+			if (auto result = check(); result != FutexProgress::NONE)
+				return result;
 
-			int err = helFutexWait(
-			    &_retrieveChunk()->progressFutex, _lastProgress | kHelProgressWaiters, -1
-			);
+			int err = helFutexWait(&_queue->userNotify, futex & ~kHelUserNotifyCqProgress, -1);
 
 			if (err == kHelErrCancelled)
 				return FutexProgress::CANCELLED;

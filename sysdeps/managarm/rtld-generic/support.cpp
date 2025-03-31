@@ -114,39 +114,35 @@ struct Queue {
 
 private:
 	void _wakeHeadFutex() {
-		auto futex = __atomic_exchange_n(&_queue->headFutex, _nextIndex, __ATOMIC_RELEASE);
-		if (futex & kHelHeadWaiters)
-			HEL_CHECK(helFutexWake(&_queue->headFutex, UINT32_MAX));
+		__atomic_store_n(&_queue->headFutex, _nextIndex, __ATOMIC_RELEASE);
+		auto futex =
+		    __atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySupplyCqChunks, __ATOMIC_RELEASE);
+		if (!(futex & kHelKernelNotifySupplyCqChunks))
+			HEL_CHECK(helFutexWake(&_queue->kernelNotify, UINT32_MAX));
 	}
 
 	void _waitProgressFutex(bool *done) {
+		auto check = [&]() -> bool {
+			auto progress = __atomic_load_n(&_chunk->progressFutex, __ATOMIC_ACQUIRE);
+			__ensure(!(progress & ~(kHelProgressMask | kHelProgressDone)));
+			if (_lastProgress != (progress & kHelProgressMask)) {
+				*done = false;
+				return true;
+			} else if (progress & kHelProgressDone) {
+				*done = true;
+				return true;
+			}
+			return false;
+		};
+
+		if (check())
+			return;
 		while (true) {
-			auto futex = __atomic_load_n(&_chunk->progressFutex, __ATOMIC_ACQUIRE);
-			__ensure(!(futex & ~(kHelProgressMask | kHelProgressWaiters | kHelProgressDone)));
-			do {
-				if (_lastProgress != (futex & kHelProgressMask)) {
-					*done = false;
-					return;
-				} else if (futex & kHelProgressDone) {
-					*done = true;
-					return;
-				}
-
-				if (futex & kHelProgressWaiters)
-					break; // Waiters bit is already set (in a previous iteration).
-			} while (!__atomic_compare_exchange_n(
-			    &_chunk->progressFutex,
-			    &futex,
-			    _lastProgress | kHelProgressWaiters,
-			    false,
-			    __ATOMIC_ACQUIRE,
-			    __ATOMIC_ACQUIRE
-			));
-
-			int err = helFutexWait(&_chunk->progressFutex, _lastProgress | kHelProgressWaiters, -1);
-			if (err == kHelErrCancelled)
-				continue;
-			HEL_CHECK(err);
+			auto futex =
+			    __atomic_fetch_and(&_queue->userNotify, ~kHelUserNotifyCqProgress, __ATOMIC_ACQUIRE);
+			if (check())
+				return;
+			HEL_CHECK(helFutexWait(&_queue->userNotify, futex & ~kHelUserNotifyCqProgress, -1));
 		}
 	}
 
