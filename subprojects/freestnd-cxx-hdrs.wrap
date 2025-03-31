@@ -1,4 +1,4 @@
 [wrap-git]
 directory = freestnd-cxx-hdrs
-url = https://github.com/osdev0/freestnd-cxx-hdrs.git
+url = https://codeberg.org/osdev/freestnd-cxx-hdrs.git
 revision = trunk
