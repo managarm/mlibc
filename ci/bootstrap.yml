@@ -17,9 +17,9 @@ sources:
 
   - name: libdrm
     subdir: 'ports'
-    git: 'https://github.com/gitlab-freedesktop-mirrors/drm'
-    tag: 'libdrm-2.4.115'
-    version: '2.4.115'
+    git: 'https://gitlab.freedesktop.org/mesa/drm.git'
+    tag: 'libdrm-2.4.124'
+    version: '2.4.124'
 
 tools: []
 
