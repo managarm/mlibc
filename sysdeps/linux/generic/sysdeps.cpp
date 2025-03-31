@@ -1,4 +1,5 @@
 #include <asm/ioctls.h>
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 
@@ -1607,6 +1608,56 @@ int sys_getifaddrs(struct ifaddrs **out) {
 	bool addr_ret = nl.send_request(RTM_GETADDR) && nl.recv(&getifaddrs_callback, out);
 	__ensure(addr_ret);
 
+	return 0;
+}
+
+int sys_pidfd_open(pid_t pid, unsigned int flags, int *outfd) {
+	auto ret = do_syscall(SYS_pidfd_open, pid, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*outfd = sc_int_result<int>(ret);
+	return 0;
+}
+
+namespace {
+
+char *pidfdGetPidLine = nullptr;
+size_t pidfdGetPidLineSize = 0;
+
+} // namespace
+
+int sys_pidfd_getpid(int fd, pid_t *outpid) {
+	char *path = nullptr;
+	asprintf(&path, "/proc/self/fdinfo/%d", fd);
+
+	FILE *fdinfo = fopen(path, "r");
+	if (!fdinfo)
+		return errno;
+
+	while (getline(&pidfdGetPidLine, &pidfdGetPidLineSize, fdinfo) != -1) {
+		pid_t pid;
+		int ret = sscanf(pidfdGetPidLine, "Pid: %d\n", &pid);
+
+		if(ret != 1)
+			continue;
+
+		if (pid == 0)
+			return EREMOTE;
+		else if (pid == -1)
+			return ESRCH;
+
+		*outpid = pid;
+		return 0;
+	}
+
+	free(path);
+	return EBADF;
+}
+
+int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info, unsigned int flags) {
+	auto ret = do_syscall(SYS_pidfd_send_signal, pidfd, sig, info, flags);
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 

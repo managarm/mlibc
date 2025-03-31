@@ -17,7 +17,7 @@ struct rusage;
 
 /* TODO: move to own file and include in sys/types.h */
 typedef enum {
-	P_ALL, P_PID, P_PGID
+	P_ALL, P_PID, P_PGID, P_PIDFD
 } idtype_t;
 
 #ifndef __MLIBC_ABI_ONLY
