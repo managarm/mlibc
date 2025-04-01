@@ -35,7 +35,7 @@ internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
 if not headers_only
-	add_languages('c', 'cpp', native: true)
+	add_languages('c', 'cpp', native: true, required: false)
 	add_languages('c', 'cpp', native: false)
 	c_compiler = meson.get_compiler('c')
 	cpp_compiler = meson.get_compiler('cpp')
