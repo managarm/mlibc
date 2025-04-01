@@ -33,6 +33,14 @@ int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out) {
 	return 0;
 }
 
+int sys_klogctl(int type, char *bufp, int len, int *out) {
+	auto r = menix_syscall(SYSCALL_SYSLOG, type, (size_t)bufp, len);
+	if (r.error)
+		return r.error;
+	*out = (int)r.value;
+	return 0;
+}
+
 int sys_reboot(int cmd) {
 	return menix_syscall(SYSCALL_REBOOT, MENIX_REBOOT_MAGIC1, MENIX_REBOOT_MAGIC2, cmd).error;
 }

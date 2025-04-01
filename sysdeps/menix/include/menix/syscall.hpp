@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 #define SYSCALL_EXIT 0
-#define SYSCALL_LOG 1
+#define SYSCALL_SYSLOG 1
 #define SYSCALL_UNAME 2
 #define SYSCALL_ARCHCTL 3
 #define SYSCALL_REBOOT 4
