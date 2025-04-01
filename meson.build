@@ -264,6 +264,10 @@ elif host_machine.system() == 'astral'
 	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/astral')
+elif host_machine.system() == 'menix'
+	rtld_include_dirs += include_directories('sysdeps/menix/include')
+	libc_include_dirs += include_directories('sysdeps/menix/include')
+	subdir('sysdeps/menix')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
