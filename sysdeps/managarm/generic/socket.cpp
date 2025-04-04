@@ -226,12 +226,13 @@ int sys_peername(
 
 namespace {
 
-std::array<std::pair<int, int>, 5> getsockopt_passthrough = {{
+std::array<std::pair<int, int>, 6> getsockopt_passthrough = {{
     {SOL_SOCKET, SO_PROTOCOL},
     {SOL_SOCKET, SO_PEERCRED},
     {SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS},
     {SOL_SOCKET, SO_TYPE},
     {SOL_SOCKET, SO_ACCEPTCONN},
+    {SOL_SOCKET, SO_PEERPIDFD},
 }};
 
 }
@@ -289,12 +290,6 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		     "unimplemented\e[39m"
 		  << frg::endlog;
 		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_PEERPIDFD) {
-		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_PEERPIDFD "
-		                       "is unimplemented, hardcoding 0\e[39m"
-		                    << frg::endlog;
-		*(int *)buffer = 0;
-		return 0;
 	} else if (std::find(
 	               getsockopt_passthrough.begin(),
 	               getsockopt_passthrough.end(),
@@ -310,16 +305,18 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		req.set_number(number);
 		req.set_optlen(size ? *size : 0);
 
-		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_req, send_creds, recv_resp] = exchangeMsgsSync(
 		    handle,
 		    helix_ng::offer(
 		        helix_ng::want_lane,
 		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		        helix_ng::imbueCredentials(),
 		        helix_ng::recvInline()
 		    )
 		);
 		HEL_CHECK(offer.error());
 		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_creds.error());
 		HEL_CHECK(recv_resp.error());
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
