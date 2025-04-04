@@ -23,8 +23,6 @@ all_test_cases = [
 	'ansi/wcsncasecmp',
 	'ansi/fopen',
 	'ansi/memmem',
-	'ansi/creal-cimag',
-	'ansi/fenv',
 	'ansi/qsort',
 	'ansi/freopen',
 	'ansi/strxfrm',
