@@ -40,15 +40,6 @@ jobs:
                 mkdir src/
                 mkdir src/mlibc/
                 mkdir build/
-          - name: Get libgcc-binaries
-            run: |
-                set -e
-                case "${{matrix.arch}}" in \
-                  x86) \
-                    wget -O /tmp/libgcc-${{matrix.arch}}.a https://github.com/osdev0/libgcc-binaries/raw/refs/heads/trunk/libgcc-i686.a;; \
-                  *) \
-                    wget -O /tmp/libgcc-${{matrix.arch}}.a https://github.com/osdev0/libgcc-binaries/raw/refs/heads/trunk/libgcc-${{matrix.arch}}.a;; \
-                esac
           - name: Checkout
             uses: actions/checkout@v2
             with:
@@ -156,16 +147,11 @@ jobs:
                 xbstrap install libdrm-headers
                 ln -sv $(pwd)/packages/libdrm-headers/usr/src/libdrm-headers ../src/mlibc/subprojects/
             working-directory: build/
-          - name: Get libgcc-binaries
-            run: |
-                set -e
-                wget -O /tmp/libgcc-x86_64.a https://github.com/osdev0/libgcc-binaries/raw/refs/heads/trunk/libgcc-x86_64.a
           - name: Compile sysdeps
             run: |
-                LDFLAGS="-Wl,/tmp/libgcc-x86_64.a" meson setup \
+                meson setup \
                     "-Dc_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized', '-D__${{matrix.sysdeps}}__']" \
                     "-Dcpp_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized', '-D__${{matrix.sysdeps}}__']" \
-                    "-Dlibgcc_dependency=false" \
                     "-Duse_freestnd_hdrs=enabled" \
                     "-Dbuild_tests=true" \
                     "-Db_sanitize=undefined" \

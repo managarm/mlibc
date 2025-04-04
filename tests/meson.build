@@ -269,6 +269,7 @@ foreach test_name : all_test_cases
 		override_options: test_override_options,
 		c_args: test_c_args,
 		link_args: test_link_args,
+		link_with: [cc_runtime],
 		pie: use_pie,
 	)
 
