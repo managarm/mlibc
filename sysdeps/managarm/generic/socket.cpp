@@ -346,12 +346,14 @@ std::array<std::pair<int, int>, 6> setsockopt_readonly = {{
     {SOL_IP, SO_PEERSEC},
 }};
 
-std::array<std::pair<int, int>, 10> setsockopt_passthrough = {{
+std::array<std::pair<int, int>, 12> setsockopt_passthrough = {{
     {SOL_PACKET, PACKET_AUXDATA},
     {SOL_SOCKET, SO_LOCK_FILTER},
     {SOL_SOCKET, SO_BINDTODEVICE},
     {SOL_SOCKET, SO_TIMESTAMP},
     {SOL_SOCKET, SO_PASSCRED},
+    {SOL_SOCKET, SO_RCVTIMEO},
+    {SOL_SOCKET, SO_SNDTIMEO},
     {SOL_IP, IP_PKTINFO},
     {SOL_IP, IP_RECVTTL},
     {SOL_IP, IP_RETOPTS},
@@ -537,11 +539,6 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 		                       "unimplemented\e[39m"
 		                    << frg::endlog;
 		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_SNDTIMEO) {
-		mlibc::infoLogger(
-		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_SNDTIMEO is unimplemented\e[39m"
-		  << frg::endlog;
-		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_OOBINLINE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_OOBINLINE is "
 		                       "unimplemented\e[39m"
@@ -550,11 +547,6 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 	} else if (layer == SOL_SOCKET && number == SO_PRIORITY) {
 		mlibc::infoLogger(
 		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_PRIORITY is unimplemented\e[39m"
-		  << frg::endlog;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_RCVTIMEO) {
-		mlibc::infoLogger(
-		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_RCVTIMEO is unimplemented\e[39m"
 		  << frg::endlog;
 		return 0;
 	} else if (layer == SOL_IP && number == IP_RECVERR) {
