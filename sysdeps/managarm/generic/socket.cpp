@@ -593,4 +593,33 @@ int sys_listen(int fd, int) {
 	return resp.error() | toErrno;
 }
 
+int sys_shutdown(int fd, int how) {
+	SignalGuard sguard;
+
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
+
+	managarm::fs::ShutdownSocket<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_how(how);
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	    handle,
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
+}
+
 } // namespace mlibc
