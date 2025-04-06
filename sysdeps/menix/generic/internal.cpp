@@ -5,6 +5,8 @@
 #include <mlibc/internal-sysdeps.hpp>
 #include <stddef.h>
 #include <string.h>
+#include <stdint.h>
+#include <mlibc/tcb.hpp>
 
 namespace mlibc {
 
@@ -25,12 +27,15 @@ int sys_tcb_set(void *pointer) {
 #elif defined(__aarch64__)
 	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb) - 0x10;
 	asm volatile("msr tpidr_el0, %0" ::"r"(thread_data));
+	return 0;
 #elif defined(__riscv)
 	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
 	asm volatile("mv tp, %0" ::"r"(thread_data));
+	return 0;
 #elif defined(__loongarch64)
 	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
 	asm volatile("move $tp, %0" ::"r"(thread_data));
+	return 0;
 #else
 #error "Unsupported architecture!"
 #endif
