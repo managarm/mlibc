@@ -761,7 +761,6 @@ int sys_tcdrain(int) {
 int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	constexpr int type_mask = int(0xF);
 	constexpr int flags_mask = ~int(0xF);
-	__ensure(!((type_and_flags & flags_mask) & ~(SOCK_CLOEXEC | SOCK_NONBLOCK)));
 
 	SignalGuard sguard;
 

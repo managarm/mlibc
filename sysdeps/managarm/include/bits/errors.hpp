@@ -141,6 +141,8 @@ inline int operator|(managarm::posix::Errors e, ToErrno) {
 			return ELOOP;
 		case managarm::posix::Errors::ALREADY_CONNECTED:
 			return EISCONN;
+		case managarm::posix::Errors::UNSUPPORTED_SOCKET_TYPE:
+			return ESOCKTNOSUPPORT;
 	}
 
 	mlibc::panicLogger() << "unhandled managarm::posix::Errors " << static_cast<int32_t>(e)
