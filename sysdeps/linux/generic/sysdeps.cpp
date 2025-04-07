@@ -1095,6 +1095,13 @@ int sys_timerfd_settime(int fd, int flags, const struct itimerspec *value, struc
 	return 0;
 }
 
+int sys_timerfd_gettime(int fd, struct itimerspec *its) {
+	auto ret = do_syscall(SYS_timerfd_gettime, fd, its);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_inotify_create(int flags, int *fd) {
 	auto ret = do_syscall(SYS_inotify_init1, flags);
 	if (int e = sc_error(ret); e)
