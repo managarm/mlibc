@@ -1586,8 +1586,11 @@ int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
 	return sc_int_result<int>(ret);
 }
 
-int sys_clock_set(int clock, const struct timespec *tp) {
-	auto ret = do_syscall(SYS_clock_settime, clock, tp);
+int sys_clock_set(int clock, time_t secs, long nanos) {
+	struct timespec tp{};
+	tp.tv_sec = secs;
+	tp.tv_nsec = nanos;
+	auto ret = do_syscall(SYS_clock_settime, clock, &tp);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;

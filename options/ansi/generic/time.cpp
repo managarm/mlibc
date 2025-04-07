@@ -577,9 +577,12 @@ int clock_nanosleep(clockid_t clockid, int, const struct timespec *req, struct t
 	return nanosleep(req, nullptr);
 }
 
-int clock_settime(clockid_t, const struct timespec *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int clock_settime(clockid_t clock, const struct timespec *time) {
+	if(int e = mlibc::sys_clock_set(clock, time->tv_sec, time->tv_nsec); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 time_t time(time_t *out) {

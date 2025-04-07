@@ -44,6 +44,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset);
 int sys_close(int fd);
 
 int sys_clock_get(int clock, time_t *secs, long *nanos);
+[[gnu::weak]] int sys_clock_set(int clock, time_t secs, long nanos);
 [[gnu::weak]] int sys_clock_getres(int clock, time_t *secs, long *nanos);
 [[gnu::weak]] int sys_sleep(time_t *secs, long *nanos);
 // In contrast to the isatty() library function, the sysdep function uses return value
