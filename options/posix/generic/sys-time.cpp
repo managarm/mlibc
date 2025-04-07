@@ -29,10 +29,7 @@ int settimeofday(const struct timeval *tv, const struct timezone *) {
 		errno = EINVAL;
 		return -1;
 	}
-	struct timespec ts = {};
-	ts.tv_sec = tv->tv_sec;
-	ts.tv_nsec = tv->tv_usec * 1000;
-	if(int e = mlibc::sys_clock_set(CLOCK_REALTIME, &ts); e) {
+	if(int e = mlibc::sys_clock_set(CLOCK_REALTIME, tv->tv_sec, tv->tv_usec * 1000); e) {
 		errno = e;
 		return -1;
 	}
