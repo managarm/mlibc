@@ -72,6 +72,8 @@ inline int operator|(managarm::fs::Errors e, ToErrno) {
 			return ECONNREFUSED;
 		case managarm::fs::Errors::ALREADY_CONNECTED:
 			return EISCONN;
+		case managarm::fs::Errors::NOT_A_SOCKET:
+			return ENOTSOCK;
 		case managarm::fs::Errors::INTERNAL_ERROR:
 			return EIO;
 	}
