@@ -80,11 +80,11 @@ class Type:
             ret_type = Type(c, pointee.get_result())
             if c.semantic_parent.spelling in config["force_raw_function_pointer"]:
                 return f'extern "C" fn({args})' + (
-                    f" -> {ret_type}" if ret_type != "c_void" else ""
+                    f" -> {ret_type}" if str(ret_type) != "c_void" else ""
                 )
             else:
                 return f'Option<unsafe extern "C" fn({args})' + (
-                    f" -> {ret_type}>" if ret_type != "c_void" else ">"
+                    f" -> {ret_type}>" if str(ret_type) != "c_void" else ">"
                 )
 
         is_mut = not pointee.spelling.startswith("const")

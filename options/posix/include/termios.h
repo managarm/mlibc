@@ -66,6 +66,12 @@ extern "C" {
 
 #define TIOCM_DTR 0x002
 #define TIOCM_RTS 0x004
+#define TIOCM_CTS 0x020
+#define TIOCM_CAR 0x040
+#define TIOCM_RNG 0x080
+#define TIOCM_DSR 0x100
+#define TIOCM_RI TIOCM_RNG
+#define TIOCM_CD TIOCM_CAR
 
 #ifndef __MLIBC_ABI_ONLY
 

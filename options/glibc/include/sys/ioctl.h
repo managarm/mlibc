@@ -21,6 +21,10 @@ int ioctl(int __fd, unsigned long __request, ...);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
+#define TIOCMGET 0x5415
+#define TIOCMBIS 0x5416
+#define TIOCMBIC 0x5417
+
 #define FIONREAD 0x541B
 #define FIONBIO 0x5421
 #define FIONCLEX 0x5450
