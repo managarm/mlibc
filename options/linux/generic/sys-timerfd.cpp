@@ -26,8 +26,12 @@ int timerfd_settime(int fd, int flags, const struct itimerspec *value,
 	return 0;
 }
 
-int timerfd_gettime(int, struct itimerspec *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int timerfd_gettime(int fd, struct itimerspec *its) {
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timerfd_gettime, -1);
+	if(int e = sysdep(fd, its); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 

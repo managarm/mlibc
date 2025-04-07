@@ -121,6 +121,7 @@ all_test_cases = [
 	'linux/malloc-usable-size',
 	'linux/getifaddrs',
 	'linux/pidfd',
+	'linux/timerfd',
 ]
 
 if host_machine.system() == 'linux'
