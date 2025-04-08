@@ -1,3 +1,7 @@
+#ifdef _GNU_SOURCE
+#undef _GNU_SOURCE
+#endif
+
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/cdrom.h>
