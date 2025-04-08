@@ -578,6 +578,7 @@ int clock_nanosleep(clockid_t clockid, int, const struct timespec *req, struct t
 }
 
 int clock_settime(clockid_t clock, const struct timespec *time) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_clock_set, -1);
 	if(int e = mlibc::sys_clock_set(clock, time->tv_sec, time->tv_nsec); e) {
 		errno = e;
 		return -1;
