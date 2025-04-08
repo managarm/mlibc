@@ -95,10 +95,12 @@
 
 #endif /* __MLIBC_LINUX_OPTION */
 
+#if defined(_GNU_SOURCE)
 struct f_owner_ex {
 	int type;
 	pid_t pid;
 };
+#endif /* _GNU_SOURCE */
 
 #define F_OWNER_TID 0
 
