@@ -1,3 +1,7 @@
+#ifdef _GNU_SOURCE
+#undef _GNU_SOURCE
+#endif
+
 #include <asm/ioctls.h>
 #include <dirent.h>
 #include <errno.h>
