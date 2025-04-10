@@ -14,6 +14,10 @@ libc_sources += files(
     'generic/time.cpp',
 )
 
+if library_type in ['static', 'both']
+    libc_sources += files('aarch64/dso_handle.S')
+endif
+
 if not headers_only
     crtstuff = ['crt0']
     if host_machine.cpu_family() in ['x86_64', 'aarch64']

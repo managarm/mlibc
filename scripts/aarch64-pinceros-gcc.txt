@@ -10,5 +10,5 @@ cpu = 'aarch64'
 endian = 'little'
 
 [properties]
-c_args = []
-cpp_args = []
+c_args = ['-DPINCEROS']
+cpp_args = ['-DPINCEROS']

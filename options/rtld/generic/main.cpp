@@ -869,10 +869,11 @@ extern "C" [[gnu::visibility("default")]] int _dl_find_object(void *address, dl_
 // using the host toolchain.
 
 // __gnu_linux__ is the define checked by libgcc
-#if defined(__aarch64__) && defined(__gnu_linux__) && !defined(MLIBC_STATIC_BUILD)
+#if defined(PINCEROS) || defined(__aarch64__) && defined(__gnu_linux__) && !defined(MLIBC_STATIC_BUILD)
 
 extern "C" unsigned long __getauxval(unsigned long type) {
 	// Find the auxiliary vector by skipping args and environment.
+	return 0;
 	auto aux = entryStack;
 	aux += *aux + 1; // Skip argc and all arguments
 	__ensure(!*aux);
