@@ -944,7 +944,11 @@ off64_t lseek64(int fd, off64_t offset, int whence) {
 }
 
 int close(int fd) {
-	return mlibc::sys_close(fd);
+	if (int e = mlibc::sys_close(fd); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 unsigned int sleep(unsigned int secs) {
