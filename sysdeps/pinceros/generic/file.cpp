@@ -71,13 +71,24 @@ namespace mlibc
         return -1;
     }
 
-    int sys_vm_map(void * /* hint */, size_t /* size */, int /* prot */, int /* flags */, int /* fd */, off_t /* offset */, void ** /* window */)
+    int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window)
     {
-        MLIBC_UNIMPLEMENTED();
-        return -1;
+        long ret = __do_syscall6(MMAP, hint, size, prot, flags, fd, offset);
+        if (ret < 0)
+        {
+            return -ret;
+        }
+        *window = (void *)ret;
+        return 0;
     }
-    int sys_vm_unmap(void */* pointer */, size_t /* size */) {
-        MLIBC_UNIMPLEMENTED();
-        return -1;
+
+    int sys_vm_unmap(void *pointer, size_t size)
+    {
+        long ret = __do_syscall2(MUNMAP, pointer, size);
+        if (ret < 0)
+        {
+            return -ret;
+        }
+        return 0;
     }
 } // namespace mlibc

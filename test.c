@@ -23,5 +23,15 @@ int main()
     }
     close(fd);
 
+    char *mapping = mmap(NULL, 4096, 0, 1 << 1, -1, 0);
+    mapping[0] = 'A';
+    munmap(mapping, 4096);
+
+    // I don't think file backed mappings are 100% functional right now, but let's at least check that I can map and unmap
+    int fd2 = openat(3, "test2.txt", 0, 0, NULL);
+    char *mapped_file = mmap(NULL, 4096, 0, 1 << 1, fd2, 0);
+    munmap(mapped_file, 4096);
+    close(fd2);
+
     exit(0);
 }
