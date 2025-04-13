@@ -12,7 +12,7 @@ libc_sources += files(
 	'generic/fork-exec.cpp',
 	'generic/memory.cpp',
 	'generic/time.cpp',
-	'generic/libc.cpp',
+	'generic/pinceros.cpp',
 )
 
 if not no_headers
