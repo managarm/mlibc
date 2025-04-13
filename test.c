@@ -33,5 +33,18 @@ int main()
     munmap(mapped_file, 4096);
     close(fd2);
 
+    int fd3 = openat(3, "test.txt", 0, 0, NULL);
+    int fd4 = dup3(fd3, fd3 + 1, 0);
+    if (fd4 != fd3 + 1) {
+        exit(1);
+    }
+    int fd5 = dup2(fd3, fd3 + 2);
+    if (fd5 != fd3 + 2) {
+        exit(1);
+    }
+    close(fd3);
+    close(fd4);
+    close(fd5);
+
     exit(0);
 }

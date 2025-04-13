@@ -71,6 +71,16 @@ namespace mlibc
         return -1;
     }
 
+    int sys_dup2(int fd, int flags, int newfd)
+    {
+        long ret = __do_syscall3(DUP3, fd, newfd, flags);
+        if (ret < 0)
+        {
+            return -ret;
+        }
+        return 0;
+    }
+
     int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window)
     {
         long ret = __do_syscall6(MMAP, hint, size, prot, flags, fd, offset);

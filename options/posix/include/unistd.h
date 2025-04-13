@@ -402,5 +402,9 @@ void encrypt(char block[64], int flags);
 #	include <bits/bsd/bsd_unistd.h>
 #endif
 
+#ifdef PINCEROS
+int dup3(int fd, int newfd, int flags);
+#endif
+
 #endif // _UNISTD_H
 

@@ -109,7 +109,7 @@
 #     -Wl,--no-dynamic-linker \
 #     -no-pie
 
-aarch64-linux-gnu-gcc -c test.c -I./build/install/usr/local/include
+aarch64-linux-gnu-gcc -c test.c -I./build/install/usr/local/include -DPINCEROS
 
 # aarch64-linux-gnu-ld -nostdlib test.o things.o -L./build/install/usr/local/lib -static \
 #     -o a.out \

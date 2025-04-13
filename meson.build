@@ -250,6 +250,8 @@ elif host_machine.system() == 'dripos'
 	subdir('sysdeps/dripos')
 elif host_machine.system() == 'pinceros'
 	disable_linux_option = true
+	add_project_arguments('-DPINCEROS', language : 'c')
+	add_project_arguments('-DPINCEROS', language : 'cpp')
 	rtld_include_dirs += include_directories('sysdeps/pinceros/include')
 	libc_include_dirs += include_directories('sysdeps/pinceros/include')
 	subdir('sysdeps/pinceros')

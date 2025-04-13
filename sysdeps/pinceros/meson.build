@@ -1,17 +1,18 @@
 rtld_dso_sources += files(
-    'generic/ensure.cpp',
-    'generic/file.cpp',
-    'generic/fork-exec.cpp',
-    'generic/memory.cpp',
+	'generic/ensure.cpp',
+	'generic/file.cpp',
+	'generic/fork-exec.cpp',
+	'generic/memory.cpp',
 )
 
 libc_sources += files(
-    'generic/ensure.cpp',
-    'generic/entry.cpp',
-    'generic/file.cpp',
-    'generic/fork-exec.cpp',
-    'generic/memory.cpp',
-    'generic/time.cpp',
+	'generic/ensure.cpp',
+	'generic/entry.cpp',
+	'generic/file.cpp',
+	'generic/fork-exec.cpp',
+	'generic/memory.cpp',
+	'generic/time.cpp',
+	'generic/libc.cpp',
 )
 
 if not no_headers
@@ -63,37 +64,37 @@ if not no_headers
 		'include/abi-bits/xattr.h',
 		'include/abi-bits/msg.h',
 		subdir: 'abi-bits',
-		follow_symlinks: true
+		follow_symlinks: true,
 	)
 
-	install_headers('include/' + host_machine.cpu_family() + '/syscall.h', subdir: 'sys')
+	install_headers(
+		'include/' + host_machine.cpu_family() + '/syscall.h',
+		'include/sys/pinceros.h',
+		subdir: 'sys',
+	)
 endif
 
 if library_type in ['static', 'both']
-    libc_sources += files('aarch64/dso_handle.S')
+	libc_sources += files('aarch64/dso_handle.S')
 endif
 
 if not headers_only
-    crtstuff = ['crt0']
-    if host_machine.cpu_family() in ['x86_64', 'aarch64']
-        crtstuff += [
-            'Scrt1',
-            'crti',
-            'crtn'
-        ]
-    endif
-    foreach crtthing : crtstuff
-        crtf = crtthing + '.S'
-        crt_src = files(host_machine.cpu_family() / 'crt-src' / crtf)
-        crt = custom_target(
-            crtthing,
-            build_by_default: true,
-            command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-            input: crt_src,
-            output: crtthing + '.o',
-            install: true,
-            install_dir: get_option('libdir')
-        )
-    endforeach
+	crtstuff = ['crt0']
+	if host_machine.cpu_family() in ['x86_64', 'aarch64']
+		crtstuff += ['Scrt1', 'crti', 'crtn']
+	endif
+	foreach crtthing : crtstuff
+		crtf = crtthing + '.S'
+		crt_src = files(host_machine.cpu_family() / 'crt-src' / crtf)
+		crt = custom_target(
+			crtthing,
+			build_by_default: true,
+			command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+			input: crt_src,
+			output: crtthing + '.o',
+			install: true,
+			install_dir: get_option('libdir'),
+		)
+	endforeach
 
 endif

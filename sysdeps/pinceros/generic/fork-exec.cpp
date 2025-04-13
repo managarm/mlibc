@@ -4,12 +4,6 @@
 
 namespace mlibc
 {
-    extern "C" [[noreturn]] void pincer_shutdown()
-    {
-        __do_syscall0(SHUTDOWN);
-        __builtin_unreachable();
-    }
-
     int sys_futex_tid()
     {
         MLIBC_UNIMPLEMENTED();
