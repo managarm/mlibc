@@ -116,10 +116,11 @@ aarch64-linux-gnu-gcc -c test.c -I./build/install/usr/local/include
 #     ./build/sysdeps/pinceros/crt0.o ./build/sysdeps/pinceros/crti.o \
 #     -lc /usr/lib/gcc/aarch64-linux-gnu/14.2.0/libgcc.a 
 
-aarch64-linux-gnu-ld -nostdlib test.o -L./build/install/usr/local/lib -static \
+aarch64-linux-gnu-ld -nostdlib test.o -L./build/install/usr/local/lib -static --no-omagic \
     -o a.out \
     ./build/sysdeps/pinceros/crt0.o ./build/sysdeps/pinceros/crti.o \
-    -lc /usr/lib/gcc/aarch64-linux-gnu/14.2.0/libgcc.a 
+    -lc /usr/lib/gcc/aarch64-linux-gnu/14.2.0/libgcc.a \
+    -T script.ld
 
 # specific path to libgcc.a in link flags
 # -I and -L
