@@ -153,4 +153,9 @@ int sys_sigpending(sigset_t *set) {
 	return 0;
 }
 
+int sys_pause() {
+	sigset_t mask = {};
+	return sys_sigsuspend(&mask);
+}
+
 } // namespace mlibc
