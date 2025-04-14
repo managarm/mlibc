@@ -18,8 +18,11 @@ Releases are tagged off of their respective major version branches once they are
 Major versions get a new, dedicated branch, which is created from `master` when deemed
 necessary, usually shortly before the tagging of the first release in the new major version
 branch. This branch is called `vN.x`, where `N` is the number of the major version
-(and `x` is just a literal "x"). The first tag on the major version branch is the `vN.0.0`
-release.
+(and `x` is just a literal "x").
+
+Submodules are fixed to specific commits when a major version branch is created.
+
+The first tag on the major version branch is the `vN.0.0` release.
 
 Minor versions and patch versions are tagged on their respective major version branches
 after the necessary commits are backported onto said branch from `master`.
