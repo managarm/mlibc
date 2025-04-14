@@ -1,4 +1,5 @@
 
+#include <mlibc/file-io.hpp>
 #include <stdio_ext.h>
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
@@ -34,9 +35,21 @@ int __fwriting(FILE *file_base) {
 	return file_base->__io_mode == 1;
 }
 
-int __fsetlocking(FILE *, int) {
-	mlibc::infoLogger() << "mlibc: __fsetlocking() is a no-op" << frg::endlog;
-	return FSETLOCKING_INTERNAL;
+int __fsetlocking(FILE *file_base, int state) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	bool oldstate = file->_lock.uselock;
+	if (state != FSETLOCKING_QUERY) {
+		if (state == FSETLOCKING_BYCALLER) {
+			file->_lock.uselock = false;
+		} else {
+			file->_lock.uselock = true;
+		}
+	}
+	if (oldstate) {
+		return FSETLOCKING_INTERNAL;
+	} else {
+		return FSETLOCKING_BYCALLER;
+	}
 }
 
 void _flushlbf(void) {
