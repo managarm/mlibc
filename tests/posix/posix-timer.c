@@ -33,6 +33,12 @@ int main() {
 
 	int sig;
 	timer_settime(timer, 0, &spec, NULL);
+
+	struct itimerspec its = {};
+	int ret = timer_gettime(timer, &its);
+	assert(ret == 0);
+	assert(its.it_value.tv_sec || its.it_value.tv_nsec);
+
 	sigwait(&set, &sig);
 
 	struct timeval end;

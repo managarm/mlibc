@@ -888,6 +888,14 @@ int sys_timer_settime(timer_t t, int flags, const struct itimerspec *__restrict 
 	return 0;
 }
 
+int sys_timer_gettime(timer_t t, struct itimerspec *val) {
+	auto ret = do_syscall(SYS_timer_gettime, t, val);
+	if (int e = sc_error(ret); e)
+		return e;
+
+	return 0;
+}
+
 int sys_timer_delete(timer_t t) {
 	__ensure((intptr_t) t >= 0);
 	auto ret = do_syscall(SYS_timer_delete, t);
