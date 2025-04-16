@@ -1,6 +1,11 @@
+#ifdef _GNU_SOURCE
+#undef _GNU_SOURCE
+#endif
+
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/cdrom.h>
+#include <linux/fiemap.h>
 #include <linux/fs.h>
 #include <linux/input.h>
 #include <linux/kd.h>
@@ -1173,6 +1178,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return EOPNOTSUPP;
 	} else if (request == FS_IOC_GETFLAGS) {
 		mlibc::infoLogger() << "\e[35mmlibc: FS_IOC_GETFLAGS is a no-op" << frg::endlog;
+		*result = 0;
+		return ENOSYS;
+	} else if (request == FS_IOC_FIEMAP) {
+		mlibc::infoLogger() << "\e[35mmlibc: FS_IOC_FIEMAP is a no-op" << frg::endlog;
 		*result = 0;
 		return ENOSYS;
 	}
