@@ -21,7 +21,26 @@ enum class buffer_mode {
 	line_buffer,
 	full_buffer
 };
+struct StdioLock {
+	bool uselock = true;
+	RecursiveFutexLock futexlock;
+	void lock() {
+		if (uselock) {
+			futexlock.lock();
+		}
 
+	}
+	void unlock() {
+		if (uselock) {
+			futexlock.unlock();
+		}
+	}
+	void try_lock() {
+		if (uselock) {
+			futexlock.try_lock();
+		}
+	}
+};
 struct abstract_file : __mlibc_file_base {
 public:
 	abstract_file(void (*do_dispose)(abstract_file *) = nullptr);
@@ -72,7 +91,7 @@ private:
 
 public:
 	// lock for file operations
-	RecursiveFutexLock _lock;
+	StdioLock _lock;
 	// All files are stored in a global linked list, so that they can be flushed at exit().
 	frg::default_list_hook<abstract_file> _list_hook;
 };
