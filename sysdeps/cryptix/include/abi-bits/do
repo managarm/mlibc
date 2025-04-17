@@ -1,0 +1,3 @@
+#!/bin/sh
+
+ln -s ../../../../abis/linux/$1.h $1.h

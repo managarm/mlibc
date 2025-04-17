@@ -201,7 +201,18 @@ libc_include_dirs += include_directories('sysdeps/generic-helpers/include')
 
 # Process sysdeps first, as sysdeps might want to disable unsupported options.
 provides_bits_syscall_h = false
-if host_machine.system() == 'linux'
+
+if host_machine.system() == 'cryptix'
+    disable_linux_option = false
+    disable_glibc_option = false
+    disable_posix_option = false
+    disable_ansi_option = false
+    disable_libgcc_dependency = false
+    debug_allocator = true
+    rtld_include_dirs += include_directories('sysdeps/cryptix/include')
+    libc_include_dirs += include_directories('sysdeps/cryptix/include')
+    subdir('sysdeps/cryptix')
+elif host_machine.system() == 'linux'
 	provides_bits_syscall_h = true
 	rtld_include_dirs += include_directories('sysdeps/linux/include')
 	libc_include_dirs += include_directories('sysdeps/linux/include')
