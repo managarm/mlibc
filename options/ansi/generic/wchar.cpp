@@ -1,5 +1,6 @@
 
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <wchar.h>
@@ -102,7 +103,7 @@ size_t wcrtomb(char *__restrict mbs, wchar_t wc, mbstate_t *__restrict stp) {
 	__ensure(mbs);
 
 	mlibc::code_seq<const wchar_t> wseq{&wc, &wc + 1};
-	mlibc::code_seq<char> nseq{mbs, mbs + 4}; // TODO: Replace 4 by some named constant.
+	mlibc::code_seq<char> nseq{mbs, mbs + MB_LEN_MAX};
 	if(auto e = cc->encode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
 		__ensure(!"encode_wtranscode() errors are not handled");
 		__builtin_unreachable();

@@ -41,12 +41,13 @@ struct PrintfAgent {
 		switch(t) {
 		case 'c':
 			if (szmod == frg::printf_size_mod::long_size) {
-				char c_buf[sizeof(wchar_t)];
+				char c_buf[MB_LEN_MAX];
 				auto c = static_cast<wchar_t>(va_arg(_vsp->args, wint_t));
 				mbstate_t shift_state = {};
-				if (wcrtomb(c_buf, c, &shift_state) == size_t(-1))
+				size_t res = wcrtomb(c_buf, c, &shift_state);
+				if (res == size_t(-1))
 					return frg::format_error::agent_error;
-				_formatter->append(c_buf);
+				_formatter->append(c_buf, res);
 				break;
 			}
 			frg::do_printf_chars(*_formatter, t, opts, szmod, _vsp);
