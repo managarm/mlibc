@@ -900,12 +900,13 @@ int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__
 
 	switch(evp ? evp->sigev_notify : SIGEV_SIGNAL) {
 		case SIGEV_NONE:
-		case SIGEV_SIGNAL: {
+		case SIGEV_SIGNAL:
+		case SIGEV_THREAD_ID: {
 			if(evp) {
 				ksev.sigev_value = evp->sigev_value;
 				ksev.sigev_signo = evp->sigev_signo;
 				ksev.sigev_notify = evp->sigev_notify;
-				ksev.sigev_tid = 0;
+				ksev.sigev_tid = (evp && evp->sigev_notify == SIGEV_THREAD_ID) ? evp->sigev_notify_thread_id : 0;
 				ksevp = &ksev;
 			}
 
