@@ -166,4 +166,30 @@ int sys_pause() {
 	return EINTR;
 }
 
+int sys_sigtimedwait(
+    const sigset_t *__restrict set,
+    siginfo_t *__restrict info,
+    const struct timespec *__restrict timeout,
+    int *out_signal
+) {
+	uint64_t nanos = timeout ? (timeout->tv_nsec + timeout->tv_sec * 1'000'000'000) : UINT64_MAX;
+	HelWord status;
+	HelWord signal;
+
+	HEL_CHECK(helSyscall3_2(
+	    kHelObserveSuperCall + posix::superSigTimedWait,
+	    *reinterpret_cast<const HelWord *>(set),
+	    nanos,
+	    reinterpret_cast<HelWord>(info),
+	    &status,
+	    &signal
+	));
+
+	if (status)
+		return status;
+
+	*out_signal = signal;
+	return 0;
+}
+
 } // namespace mlibc
