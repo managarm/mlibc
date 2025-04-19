@@ -203,11 +203,11 @@ libc_include_dirs += include_directories('sysdeps/generic-helpers/include')
 provides_bits_syscall_h = false
 
 if host_machine.system() == 'cryptix'
-    disable_linux_option = false
-    disable_glibc_option = false
-    disable_posix_option = false
-    disable_ansi_option = false
-    disable_libgcc_dependency = false
+    posix_option = true
+    linux_option = true
+    glibc_option = true
+    bsd_option = true
+    libgcc_dependency = true
     debug_allocator = true
     rtld_include_dirs += include_directories('sysdeps/cryptix/include')
     libc_include_dirs += include_directories('sysdeps/cryptix/include')
