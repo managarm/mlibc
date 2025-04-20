@@ -991,6 +991,30 @@ int sys_madvise(void *addr, size_t length, int advice) {
 	return 0;
 }
 
+int sys_posix_madvise(void *addr, size_t length, int advice) {
+	if(advice == POSIX_MADV_DONTNEED) {
+		// POSIX_MADV_DONTNEED is a no-op in both glibc and musl.
+		return 0;
+	}
+	switch(advice) {
+	case POSIX_MADV_NORMAL:
+		advice = MADV_NORMAL;
+		break;
+	case POSIX_MADV_RANDOM:
+		advice = MADV_RANDOM;
+		break;
+	case POSIX_MADV_SEQUENTIAL:
+		advice = MADV_SEQUENTIAL;
+		break;
+	case POSIX_MADV_WILLNEED:
+		advice = MADV_WILLNEED;
+		break;
+	default:
+		return EINVAL;
+	}
+	return sys_madvise(addr, length, advice);
+}
+
 int sys_msync(void *addr, size_t length, int flags) {
 	auto ret = do_syscall(SYS_msync, addr, length, flags);
 	if (int e = sc_error(ret); e)
