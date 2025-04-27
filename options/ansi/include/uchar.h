@@ -16,8 +16,8 @@ typedef __CHAR32_TYPE__ char32_t;
 
 #ifndef __MLIBC_ABI_ONLY
 
-size_t c32rtomb(char *__pmb, char32_t __c32, mbstate_t *__ps);
-size_t mbrtoc32(char32_t *__pc32, const char *__pmb, size_t __max, mbstate_t *__ps);
+size_t c32rtomb(char *__restrict __s, char32_t __c32, mbstate_t *__restrict __ps);
+size_t mbrtoc32(char32_t *__restrict __pc32, const char *__restrict __pmb, size_t __max, mbstate_t *__restrict __ps);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
