@@ -64,7 +64,7 @@ DebugInterface globalDebugInterface;
 
 // Use a PC-relative instruction sequence to find our runtime load address.
 uintptr_t getLdsoBase() {
-#if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__) || defined(__m68k__)
+#if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__) || defined(__m68k__) || defined(__loongarch64)
 	// On x86_64, the first GOT entry holds the link-time address of _DYNAMIC.
 	// TODO: This isn't guaranteed on AArch64, so this might fail with some linkers.
 	auto linktime_dynamic = reinterpret_cast<uintptr_t>(_GLOBAL_OFFSET_TABLE_[0]);
@@ -72,6 +72,8 @@ uintptr_t getLdsoBase() {
 	return runtime_dynamic - linktime_dynamic;
 #elif defined(__riscv)
 	return reinterpret_cast<uintptr_t>(&__ehdr_start);
+#else
+	#error Unknown architecture!
 #endif
 }
 
@@ -535,6 +537,12 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// so we have to set the ldso path after loading both.
 	ldso->path = executableSO->interpreterPath;
 
+	// Discover dependencies in a breadth-first search.
+	for (size_t i = 0; i < initialRepository->dependencyQueue.size(); i++) {
+		auto current = initialRepository->dependencyQueue[i];
+		initialRepository->discoverDependenciesFromLoadedObject(current);
+		current->dependenciesDiscovered = true;
+	}
 #else
 	executableSO = initialRepository->injectStaticObject(execfn,
 			frg::string<MemoryAllocator>{ execfn, getAllocator() },
@@ -662,7 +670,16 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 			}
 			return nullptr;
 		}
+
 		object = objectResult.value();
+		initialRepository->discoverDependenciesFromLoadedObject(object);
+		for (size_t i = 0; i < initialRepository->dependencyQueue.size(); i++) {
+			auto current = initialRepository->dependencyQueue[i];
+			if(!current->dependenciesDiscovered) {
+				initialRepository->discoverDependenciesFromLoadedObject(current);
+				current->dependenciesDiscovered = true;
+			}
+		}
 
 		Loader linker{object->localScope, nullptr, false, rts};
 		linker.linkObjects(object);

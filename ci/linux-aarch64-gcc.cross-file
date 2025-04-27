@@ -2,8 +2,8 @@
 skip_sanity_check = true
 
 [binaries]
-c = ['aarch64-linux-mlibc-gcc']
-cpp = ['aarch64-linux-mlibc-g++']
+c = 'aarch64-linux-gnu-gcc'
+cpp = 'aarch64-linux-gnu-g++'
 exe_wrapper = 'qemu-aarch64'
 
 [host_machine]

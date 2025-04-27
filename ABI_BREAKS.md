@@ -2,6 +2,10 @@
 
 This document lists the ABI breaks that were made in each mlibc major version.
 
+## Version 5, 6
+
+Numerous ABI breaks. These were not properly logged, and are therefore missing here. Pending update, if one ever comes.
+
 ## Version 4
 
 - [#814](https://github.com/managarm/mlibc/pull/814): `struct timex`'s `long int tai` changed to the correct `int tai`, and `int __padding[11]` got appended to the struct.

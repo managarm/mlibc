@@ -1,6 +1,6 @@
 [binaries]
-c = 'i686-linux-mlibc-gcc'
-cpp = 'i686-linux-mlibc-g++'
+c = 'i686-linux-gnu-gcc'
+cpp = 'i686-linux-gnu-g++'
 exe_wrapper = 'qemu-i386'
 
 [host_machine]

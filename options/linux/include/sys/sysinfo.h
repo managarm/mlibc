@@ -28,6 +28,8 @@ struct sysinfo {
 #pragma GCC diagnostic pop
 };
 
+#define SI_LOAD_SHIFT 16
+
 #ifndef __MLIBC_ABI_ONLY
 
 int sysinfo(struct sysinfo *__info);

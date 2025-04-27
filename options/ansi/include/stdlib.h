@@ -113,16 +113,18 @@ size_t wcstombs(char *__restrict __mb_string, const wchar_t *__restrict __wc_str
 
 #endif /* !__MLIBC_ABI_ONLY */
 
-#if __MLIBC_GLIBC_OPTION
-typedef int (*comparison_fn_t) (const void *__a, const void *__b);
-#endif
-
 #ifdef __cplusplus
 }
 #endif
 
+#if __MLIBC_BSD_OPTION
+#	include <bits/bsd/bsd_stdlib.h>
+#endif
 #if __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_stdlib.h>
+#endif
+#if __MLIBC_GLIBC_OPTION
+#	include <bits/glibc/glibc_stdlib.h>
 #endif
 
 #endif /* _STDLIB_H */

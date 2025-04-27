@@ -41,7 +41,7 @@ INDEX
 INDEX
         ctanf
 
-ANSI_SYNOPSIS
+SYNOPSIS
        #include <complex.h>
        double complex ctan(double complex <[z]>);
        float complex ctanf(float complex <[z]>);
@@ -78,7 +78,7 @@ ctan(double complex z)
 	d = cos(2.0 * creal(z)) + cosh(2.0 * cimag(z));
 
 	if (fabs(d) < 0.25)
-		d = __mlibc_ctans(z);
+		d = _ctans(z);
 
 	if (d == 0.0) {
 		/* mtherr ("ctan", OVERFLOW); */

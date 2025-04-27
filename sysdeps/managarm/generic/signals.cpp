@@ -104,8 +104,9 @@ int sys_sigaction(
 
 int sys_kill(int pid, int number) {
 	// This implementation is inherently signal-safe.
-	HEL_CHECK(helSyscall2(kHelObserveSuperCall + posix::superSigKill, pid, number));
-	return 0;
+	HelWord out;
+	HEL_CHECK(helSyscall2_1(kHelObserveSuperCall + posix::superSigKill, pid, number, &out));
+	return out;
 }
 
 int sys_tgkill(int, int tid, int number) { return sys_kill(tid, number); }
@@ -150,6 +151,19 @@ int sys_sigpending(sigset_t *set) {
 	*reinterpret_cast<uint64_t *>(set) = pendingMask;
 
 	return 0;
+}
+
+int sys_pause() {
+	HelWord set = 0;
+	uint64_t former, seq;
+
+	// no-op to obtain a seqnum
+	HEL_CHECK(
+	    helSyscall2_2(kHelObserveSuperCall + posix::superSigMask, SIG_BLOCK, set, &former, &seq)
+	);
+	HEL_CHECK(helSyscall1(kHelObserveSuperCall + posix::superSigSuspend, seq));
+
+	return EINTR;
 }
 
 } // namespace mlibc

@@ -44,9 +44,6 @@
 #ifdef	__NR_arch_prctl
 #	define SYS_arch_prctl __NR_arch_prctl
 #endif
-#ifdef	__NR_arch_specific_syscall
-#	define SYS_arch_specific_syscall __NR_arch_specific_syscall
-#endif
 #ifdef	__NR_arm_fadvise64_64
 #	define SYS_arm_fadvise64_64 __NR_arm_fadvise64_64
 #endif
@@ -73,6 +70,9 @@
 #endif
 #ifdef	__NR_cacheflush
 #	define SYS_cacheflush __NR_cacheflush
+#endif
+#ifdef	__NR_cachestat
+#	define SYS_cachestat __NR_cachestat
 #endif
 #ifdef	__NR_capget
 #	define SYS_capget __NR_capget
@@ -127,9 +127,6 @@
 #endif
 #ifdef	__NR_clone
 #	define SYS_clone __NR_clone
-#endif
-#ifdef	__NR_clone2
-#	define SYS_clone2 __NR_clone2
 #endif
 #ifdef	__NR_clone3
 #	define SYS_clone3 __NR_clone3
@@ -245,6 +242,9 @@
 #ifdef	__NR_fchmodat
 #	define SYS_fchmodat __NR_fchmodat
 #endif
+#ifdef	__NR_fchmodat2
+#	define SYS_fchmodat2 __NR_fchmodat2
+#endif
 #ifdef	__NR_fchown
 #	define SYS_fchown __NR_fchown
 #endif
@@ -323,11 +323,20 @@
 #ifdef	__NR_futex
 #	define SYS_futex __NR_futex
 #endif
+#ifdef	__NR_futex_requeue
+#	define SYS_futex_requeue __NR_futex_requeue
+#endif
 #ifdef	__NR_futex_time64
 #	define SYS_futex_time64 __NR_futex_time64
 #endif
+#ifdef	__NR_futex_wait
+#	define SYS_futex_wait __NR_futex_wait
+#endif
 #ifdef	__NR_futex_waitv
 #	define SYS_futex_waitv __NR_futex_waitv
+#endif
+#ifdef	__NR_futex_wake
+#	define SYS_futex_wake __NR_futex_wake
 #endif
 #ifdef	__NR_futimesat
 #	define SYS_futimesat __NR_futimesat
@@ -458,11 +467,11 @@
 #ifdef	__NR_getuid32
 #	define SYS_getuid32 __NR_getuid32
 #endif
-#ifdef	__NR_getunwind
-#	define SYS_getunwind __NR_getunwind
-#endif
 #ifdef	__NR_getxattr
 #	define SYS_getxattr __NR_getxattr
+#endif
+#ifdef	__NR_getxattrat
+#	define SYS_getxattrat __NR_getxattrat
 #endif
 #ifdef	__NR_getxgid
 #	define SYS_getxgid __NR_getxgid
@@ -584,8 +593,14 @@
 #ifdef	__NR_listen
 #	define SYS_listen __NR_listen
 #endif
+#ifdef	__NR_listmount
+#	define SYS_listmount __NR_listmount
+#endif
 #ifdef	__NR_listxattr
 #	define SYS_listxattr __NR_listxattr
+#endif
+#ifdef	__NR_listxattrat
+#	define SYS_listxattrat __NR_listxattrat
 #endif
 #ifdef	__NR_llistxattr
 #	define SYS_llistxattr __NR_llistxattr
@@ -605,6 +620,15 @@
 #ifdef	__NR_lsetxattr
 #	define SYS_lsetxattr __NR_lsetxattr
 #endif
+#ifdef	__NR_lsm_get_self_attr
+#	define SYS_lsm_get_self_attr __NR_lsm_get_self_attr
+#endif
+#ifdef	__NR_lsm_list_modules
+#	define SYS_lsm_list_modules __NR_lsm_list_modules
+#endif
+#ifdef	__NR_lsm_set_self_attr
+#	define SYS_lsm_set_self_attr __NR_lsm_set_self_attr
+#endif
 #ifdef	__NR_lstat
 #	define SYS_lstat __NR_lstat
 #endif
@@ -613,6 +637,9 @@
 #endif
 #ifdef	__NR_madvise
 #	define SYS_madvise __NR_madvise
+#endif
+#ifdef	__NR_map_shadow_stack
+#	define SYS_map_shadow_stack __NR_map_shadow_stack
 #endif
 #ifdef	__NR_mbind
 #	define SYS_mbind __NR_mbind
@@ -707,6 +734,9 @@
 #ifdef	__NR_mremap
 #	define SYS_mremap __NR_mremap
 #endif
+#ifdef	__NR_mseal
+#	define SYS_mseal __NR_mseal
+#endif
 #ifdef	__NR_msgctl
 #	define SYS_msgctl __NR_msgctl
 #endif
@@ -751,9 +781,6 @@
 #endif
 #ifdef	__NR_old_adjtimex
 #	define SYS_old_adjtimex __NR_old_adjtimex
-#endif
-#ifdef	__NR_old_getpagesize
-#	define SYS_old_getpagesize __NR_old_getpagesize
 #endif
 #ifdef	__NR_oldfstat
 #	define SYS_oldfstat __NR_oldfstat
@@ -1139,9 +1166,6 @@
 #ifdef	__NR_perfctr
 #	define SYS_perfctr __NR_perfctr
 #endif
-#ifdef	__NR_perfmonctl
-#	define SYS_perfmonctl __NR_perfmonctl
-#endif
 #ifdef	__NR_personality
 #	define SYS_personality __NR_personality
 #endif
@@ -1276,6 +1300,9 @@
 #endif
 #ifdef	__NR_removexattr
 #	define SYS_removexattr __NR_removexattr
+#endif
+#ifdef	__NR_removexattrat
+#	define SYS_removexattrat __NR_removexattrat
 #endif
 #ifdef	__NR_rename
 #	define SYS_rename __NR_rename
@@ -1541,6 +1568,9 @@
 #ifdef	__NR_setxattr
 #	define SYS_setxattr __NR_setxattr
 #endif
+#ifdef	__NR_setxattrat
+#	define SYS_setxattrat __NR_setxattrat
+#endif
 #ifdef	__NR_sgetmask
 #	define SYS_sgetmask __NR_sgetmask
 #endif
@@ -1622,6 +1652,9 @@
 #ifdef	__NR_statfs64
 #	define SYS_statfs64 __NR_statfs64
 #endif
+#ifdef	__NR_statmount
+#	define SYS_statmount __NR_statmount
+#endif
 #ifdef	__NR_statx
 #	define SYS_statx __NR_statx
 #endif
@@ -1666,9 +1699,6 @@
 #endif
 #ifdef	__NR_syscall
 #	define SYS_syscall __NR_syscall
-#endif
-#ifdef	__NR_syscalls
-#	define SYS_syscalls __NR_syscalls
 #endif
 #ifdef	__NR_sysfs
 #	define SYS_sysfs __NR_sysfs
@@ -1765,6 +1795,9 @@
 #endif
 #ifdef	__NR_unshare
 #	define SYS_unshare __NR_unshare
+#endif
+#ifdef	__NR_uretprobe
+#	define SYS_uretprobe __NR_uretprobe
 #endif
 #ifdef	__NR_uselib
 #	define SYS_uselib __NR_uselib

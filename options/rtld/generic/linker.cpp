@@ -45,6 +45,9 @@ constexpr inline uintptr_t tlsOffsetFromTp = 0;
 #elif defined(__m68k__)
 constexpr inline bool tlsAboveTp = true;
 constexpr inline ptrdiff_t tlsOffsetFromTp = -0x7000;
+#elif defined(__loongarch64)
+constexpr inline bool tlsAboveTp = true;
+constexpr inline uintptr_t tlsOffsetFromTp = 0;
 #else
 #	error Unknown architecture
 #endif
@@ -108,6 +111,7 @@ uintptr_t alignUp(uintptr_t address, size_t align) {
 
 ObjectRepository::ObjectRepository()
 : loadedObjects{getAllocator()},
+	dependencyQueue{getAllocator()},
 	_nameMap{frg::hash<frg::string_view>{}, getAllocator()},
 	_destructQueue{getAllocator()} {}
 
@@ -123,9 +127,9 @@ SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 	_parseDynamic(object);
 	_parseVerdef(object);
 
+	object->wasVisited = true;
+	dependencyQueue.push_back(object);
 	_addLoadedObject(object);
-	_discoverDependencies(object, globalScope.get(), rts);
-	_parseVerneed(object);
 
 	return object;
 }
@@ -142,9 +146,9 @@ SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 	_parseDynamic(object);
 	_parseVerdef(object);
 
+	object->wasVisited = true;
+	dependencyQueue.push_back(object);
 	_addLoadedObject(object);
-	_discoverDependencies(object, globalScope.get(), rts);
-	_parseVerneed(object);
 
 	return object;
 }
@@ -285,10 +289,7 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 
 	_parseDynamic(object);
 	_parseVerdef(object);
-
 	_addLoadedObject(object);
-	_discoverDependencies(object, localScope, rts);
-	_parseVerneed(object);
 
 	return object;
 }
@@ -332,12 +333,14 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath
 
 	_parseDynamic(object);
 	_parseVerdef(object);
-
 	_addLoadedObject(object);
-	_discoverDependencies(object, localScope, rts);
-	_parseVerneed(object);
 
 	return object;
+}
+
+void ObjectRepository::discoverDependenciesFromLoadedObject(SharedObject *object) {
+	_discoverDependencies(object, object->localScope, object->objectRts);
+	_parseVerneed(object);
 }
 
 SharedObject *ObjectRepository::findCaller(void *addr) {
@@ -546,6 +549,7 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 			auto map_address = object->baseAddress + phdr->p_vaddr - misalign;
 			auto backed_map_size = (phdr->p_filesz + misalign + pageSize - 1) & ~(pageSize - 1);
 			auto total_map_size = (phdr->p_memsz + misalign + pageSize - 1) & ~(pageSize - 1);
+			auto initial_prot = PROT_READ | PROT_WRITE;
 
 			int prot = 0;
 			if(phdr->p_flags & PF_R)
@@ -555,45 +559,52 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 			if(phdr->p_flags & PF_X)
 				prot |= PROT_EXEC;
 
-			#if MLIBC_MAP_DSO_SEGMENTS
-				void *map_pointer;
-				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
-						backed_map_size, prot | PROT_WRITE,
-						MAP_PRIVATE | MAP_FIXED, fd, phdr->p_offset - misalign, &map_pointer))
-					__ensure(!"sys_vm_map failed");
-				if(total_map_size > backed_map_size)
-					if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address + backed_map_size),
-							total_map_size - backed_map_size, prot | PROT_WRITE,
-							MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
-						__ensure(!"sys_vm_map failed");
+		#if MLIBC_MAP_DSO_SEGMENTS
+			// we can avoid the vm_protect call if we don't have to write to the segment
+			if(phdr->p_memsz == phdr->p_filesz)
+				initial_prot = prot;
 
-				if(mlibc::sys_vm_readahead)
-					if(mlibc::sys_vm_readahead(reinterpret_cast<void *>(map_address),
-							backed_map_size))
-						mlibc::infoLogger() << "mlibc: sys_vm_readahead() failed in ld.so"
-								<< frg::endlog;
-
-				// Clear the trailing area at the end of the backed mapping.
-				// We do not clear the leading area; programs are not supposed to access it.
-				memset(reinterpret_cast<void *>(map_address + misalign + phdr->p_filesz),
-						0, phdr->p_memsz - phdr->p_filesz);
-			#else
-				(void)backed_map_size;
-
-				void *map_pointer;
-				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
-						total_map_size, prot | PROT_WRITE,
+			void *map_pointer;
+			if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
+					backed_map_size, initial_prot,
+					MAP_PRIVATE | MAP_FIXED, fd, phdr->p_offset - misalign, &map_pointer))
+				__ensure(!"sys_vm_map failed");
+			if(total_map_size > backed_map_size)
+				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address + backed_map_size),
+						total_map_size - backed_map_size, initial_prot,
 						MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
 					__ensure(!"sys_vm_map failed");
 
-				__ensure(trySeek(fd, phdr->p_offset));
-				__ensure(tryReadExactly(fd, reinterpret_cast<char *>(map_address) + misalign,
-						phdr->p_filesz));
-			#endif
-			// Take care of removing superfluous permissions.
-			if(mlibc::sys_vm_protect && ((prot & PROT_WRITE) == 0))
-				if(mlibc::sys_vm_protect(map_pointer, total_map_size, prot))
-					mlibc::infoLogger() << "mlibc: sys_vm_protect() failed in ld.so" << frg::endlog;
+			if(mlibc::sys_vm_readahead)
+				if(mlibc::sys_vm_readahead(reinterpret_cast<void *>(map_address),
+						backed_map_size))
+					mlibc::infoLogger() << "mlibc: sys_vm_readahead() failed in ld.so"
+							<< frg::endlog;
+
+			// Clear the trailing area at the end of the backed mapping.
+			// We do not clear the leading area; programs are not supposed to access it.
+			memset(reinterpret_cast<void *>(map_address + misalign + phdr->p_filesz),
+					0, phdr->p_memsz - phdr->p_filesz);
+		#else
+			(void)backed_map_size;
+
+			void *map_pointer;
+			if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
+					total_map_size, initial_prot,
+					MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
+				__ensure(!"sys_vm_map failed");
+
+			__ensure(trySeek(fd, phdr->p_offset));
+			__ensure(tryReadExactly(fd, reinterpret_cast<char *>(map_address) + misalign,
+					phdr->p_filesz));
+		#endif
+			if(initial_prot != prot) {
+				if (!mlibc::sys_vm_protect)
+					__ensure(!"sys_vm_protect not provided");
+
+				if (mlibc::sys_vm_protect(reinterpret_cast<void *>(map_address), total_map_size, prot))
+					__ensure(!"sys_vm_protect failed");
+			}
 		}else if(phdr->p_type == PT_TLS) {
 			object->tlsSegmentSize = phdr->p_memsz;
 			object->tlsAlignment = phdr->p_align;
@@ -990,7 +1001,12 @@ void ObjectRepository::_discoverDependencies(SharedObject *object,
 			if(verbose)
 				mlibc::infoLogger() << "rtld: Preloading " << preload << frg::endlog;
 
-			object->dependencies.push_back(libraryResult.value());
+			auto library = libraryResult.value();
+			object->dependencies.push_back(library);
+			if (library->wasVisited)
+				continue;
+			library->wasVisited = true;
+			dependencyQueue.push_back(library);
 		}
 	}
 
@@ -1003,11 +1019,17 @@ void ObjectRepository::_discoverDependencies(SharedObject *object,
 		const char *library_str = (const char *)(object->baseAddress
 				+ object->stringTableOffset + dynamic->d_un.d_val);
 
-		auto library = requestObjectWithName(frg::string_view{library_str},
+		auto libraryResult = requestObjectWithName(frg::string_view{library_str},
 				object, localScope, false, rts);
-		if(!library)
+		if(!libraryResult)
 			mlibc::panicLogger() << "Could not satisfy dependency " << library_str << frg::endlog;
-		object->dependencies.push(library.value());
+
+		auto library = libraryResult.value();
+		object->dependencies.push(library);
+		if (library->wasVisited)
+			continue;
+		library->wasVisited = true;
+		dependencyQueue.push_back(library);
 	}
 }
 
@@ -1887,7 +1909,7 @@ void Loader::_processRelocations(Relocation &rel) {
 		rel.relocate(symbol_addr);
 	} break;
 
-#if !defined(__riscv)
+#if !defined(__riscv) && !defined(__loongarch64)
 	// on some architectures, R_GLOB_DAT can be defined to other relocations
 	case R_GLOB_DAT: {
 		__ensure(rel.symbol_index());

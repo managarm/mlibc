@@ -121,6 +121,11 @@ long jrand48(unsigned short [3]) {
 	__builtin_unreachable();
 }
 
+long int mrand48(void) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
 // Borrowed from musl
 void srandom(unsigned int seed) {
 	int k;
@@ -524,11 +529,6 @@ float strtof_l(const char *__restrict__ nptr, char **__restrict__ endptr, locale
 }
 
 int strcoll_l(const char *, const char *, locale_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
-
-int getloadavg(double *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }

@@ -45,53 +45,38 @@ char *hasmntopt(const struct mntent *mnt, const char *opt) {
 
 /* Adapted from musl */
 struct mntent *getmntent_r(FILE *f, struct mntent *mnt, char *linebuf, int buflen) {
-	int n[8];
 	bool use_internal = (linebuf == SENTINEL);
-	int len;
-	size_t i;
 
-	mnt->mnt_freq = 0;
-	mnt->mnt_passno = 0;
+	char source[60];
+	char target[30];
+	char fs[30];
+	char options[30];
+	int dump;
+	int pass;
 
 	do {
-		if(use_internal) {
+		if (use_internal) {
 			getline(&internal_buf, &internal_bufsize, f);
 			linebuf = internal_buf;
 		} else {
 			fgets(linebuf, buflen, f);
 		}
-		if(feof(f) || ferror(f)) {
-			return 0;
-		}
-		if(!strchr(linebuf, '\n')) {
-			fscanf(f, "%*[^\n]%*[\n]");
-			errno = ERANGE;
+
+		if (feof(f) || ferror(f)) {
 			return 0;
 		}
 
-		len = strlen(linebuf);
-		if(len > INT_MAX) {
+		if (sscanf(linebuf, "%s %s %s %s %d %d\n", source, target, fs, options,
+		           &dump, &pass) != 6) {
 			continue;
 		}
+	} while(linebuf[0] == '#');
 
-		for(i = 0; i < sizeof n / sizeof *n; i++) {
-			n[i] = len;
-		}
-
-		sscanf(linebuf, " %n%*s%n %n%*s%n %n%*s%n %n%*s%n %d %d",
-			n, n + 1, n + 2, n + 3, n + 4, n + 5, n + 6, n + 7,
-			&mnt->mnt_freq, &mnt->mnt_passno);
-	} while(linebuf[n[0]] == '#' || n[1] == len);
-
-	linebuf[n[1]] = 0;
-	linebuf[n[3]] = 0;
-	linebuf[n[5]] = 0;
-	linebuf[n[7]] = 0;
-
-	mnt->mnt_fsname = linebuf + n[0];
-	mnt->mnt_dir = linebuf + n[2];
-	mnt->mnt_type = linebuf + n[4];
-	mnt->mnt_opts = linebuf + n[6];
-
+	mnt->mnt_fsname = strdup(source);
+	mnt->mnt_dir    = strdup(target);
+	mnt->mnt_type   = strdup(fs);
+	mnt->mnt_opts   = strdup(options);
+	mnt->mnt_freq   = dump;
+	mnt->mnt_passno = pass;
 	return mnt;
 }

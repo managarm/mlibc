@@ -21,9 +21,19 @@ int gettimeofday(struct timeval *__restrict result, void *__restrict unused) {
 	return 0;
 }
 
-int settimeofday(const struct timeval *, const struct timezone *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int settimeofday(const struct timeval *tv, const struct timezone *) {
+	if(!tv)
+		return 0;
+	// tv_usec must be in the range 0, 999999
+	if(tv->tv_usec >= 1000000) {
+		errno = EINVAL;
+		return -1;
+	}
+	if(int e = mlibc::sys_clock_set(CLOCK_REALTIME, tv->tv_sec, tv->tv_usec * 1000); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 void timeradd(const struct timeval *a, const struct timeval *b, struct timeval *res) {

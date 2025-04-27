@@ -2,7 +2,7 @@
 #ifndef _FTW_H
 #define _FTW_H
 
-#include <bits/posix/stat.h>
+#include <sys/stat.h>
 
 #define FTW_F 1
 #define FTW_D 2

@@ -16,6 +16,7 @@ double drand48(void);
 double erand48(unsigned short __s[3]);
 unsigned short *seed48(unsigned short __s[3]);
 void srand48(long int __seed);
+long int mrand48(void);
 long jrand48(unsigned short __s[3]);
 char *initstate(unsigned int __seed, char *__state, size_t __size);
 char *setstate(char *__state);
@@ -54,8 +55,6 @@ int ptsname_r(int __fd, char *__buf, size_t __len);
 double strtod_l(const char *__restrict__ __nptr, char ** __restrict__ __endptr, locale_t __loc);
 long double strtold_l(const char *__restrict__ __nptr, char ** __restrict__ __endptr, locale_t __loc);
 float strtof_l(const char *__restrict __string, char **__restrict __end, locale_t __loc);
-
-int getloadavg(double *__loadavg, int __count);
 
 int getsubopt(char **__restrict__ __optionp, char *const *__restrict__ __tokens, char **__restrict__ __valuep);
 

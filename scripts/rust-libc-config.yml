@@ -9,8 +9,10 @@ ignored_files:
   - "arpa/nameser.h"
   - "bits/ensure.h"
   - "bits/glibc/glibc_assert.h"
+  - "bits/glibc/glibc_search.h"
   - "bits/glibc/glibc_signal.h"
   - "bits/null.h"
+  - "bits/search.h"
   - "bits/syscall.h"
   - "net/ethernet.h"
   - "net/if_arp.h"
@@ -385,6 +387,12 @@ ignored_macros:
   - "ut_name"
   - "ut_time"
   - "ut_xtime"
+  - "arp_hrd"
+  - "arp_pro"
+  - "arp_hln"
+  - "arp_pln"
+  - "arp_op"
+  - "MAXHOSTNAMELEN"
   # DO NOT REMOVE: mlibc internals
   - "MLIBC_UNIMPLEMENTED"
   - "MLIBC_MISSING_SYSDEP"
@@ -1880,6 +1888,9 @@ ignored_functions:
 
   - "cfmakeraw"
   - "cfsetspeed"
+
+  - "confstr"
+  - "strerror_r"
   # unix/linux_like/mod.rs
   - "sem_destroy"
   - "sem_init"
@@ -1953,24 +1964,24 @@ force_struct_member_type:
       type: "sighandler_t"
   "siginfo_t":
     - name: "__si_fields"
-      type: "[::c_char; 124]"
+      type: "[c_char; 112]"
   "stat":
     - name: "st_atim"
       replace:
         - name: "st_atime"
-          type: "::time_t"
+          type: "crate::time_t"
         - name: "st_atime_nsec"
           type: "i64"
     - name: "st_mtim"
       replace:
         - name: "st_mtime"
-          type: "::time_t"
+          type: "crate::time_t"
         - name: "st_mtime_nsec"
           type: "i64"
     - name: "st_ctim"
       replace:
         - name: "st_ctime"
-          type: "::time_t"
+          type: "crate::time_t"
         - name: "st_ctime_nsec"
           type: "i64"
 
@@ -1980,7 +1991,7 @@ force_struct_zero_fill:
   - "__mlibc_fair_rwlock"
 
 force_macro_type:
-  "::c_ulong":
+  "c_ulong":
     - "FIOCLEX"
     - "FIONBIO"
     - "FIONCLEX"
@@ -1998,7 +2009,18 @@ force_macro_type:
     - "SA_RESETHAND"
     - "SA_RESTART"
     - "SA_SIGINFO"
-  "::c_uint":
+    - "ST_RDONLY"
+    - "ST_NOSUID"
+    - "ST_NODEV"
+    - "ST_NOEXEC"
+    - "ST_SYNCHRONOUS"
+    - "ST_MANDLOCK"
+    - "ST_WRITE"
+    - "ST_APPEND"
+    - "ST_IMMUTABLE"
+    - "ST_NOATIME"
+    - "ST_NODIRATIME"
+  "c_uint":
     - "IGNBRK"
     - "BRKINT"
     - "IGNPAR"
@@ -2012,14 +2034,16 @@ force_macro_type:
     - "IXON"
     - "IXANY"
     - "IXOFF"
-  "::c_short":
+  "c_short":
     - "POLLWRNORM"
     - "POLLWRBAND"
   "usize":
     - "NCCS"
-    - "VEOF"
     - "PTHREAD_STACK_MIN"
-  "::speed_t":
+    - "VEOF"
+    - "VMIN"
+    - "VTIME"
+  "crate::speed_t":
     - "B0"
     - "B50"
     - "B75"
@@ -2051,9 +2075,12 @@ force_macro_type:
     - "B3000000"
     - "B3500000"
     - "B4000000"
-  "::tcflag_t":
+  "crate::tcflag_t":
     - "BS1"
     - "BSDLY"
+    - "CBAUD"
+    - "CBAUDEX"
+    - "CIBAUD"
     - "CLOCAL"
     - "CMSPAR"
     - "CR1"

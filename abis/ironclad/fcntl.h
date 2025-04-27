@@ -2,35 +2,35 @@
 #define _ABIBITS_FCNTL_H
 
 /* Flags supported by the kernel. */
-#define O_ACCMODE   0b000011
-#define O_RDONLY    00000001
-#define O_WRONLY    0b000010
-#define O_RDWR      0b000011
-#define O_APPEND    0b000100
-#define O_CLOEXEC   0b001000
-#define O_NOFOLLOW  0b010000
-#define O_NONBLOCK  0b100000
+#define O_ACCMODE   (3 << 0)
+#define O_RDONLY    (1 << 0)
+#define O_WRONLY    (1 << 1)
+#define O_RDWR      (3 << 0)
+#define O_APPEND    (1 << 2)
+#define O_CLOEXEC   (1 << 3)
+#define O_NOFOLLOW  (1 << 4)
+#define O_NONBLOCK  (1 << 5)
 
 /* Flags emulated by userland, we just have to make sure they dont overlap with */
 /* kernel flags. */
-#define O_CREAT 0b0010000000
-#define O_EXCL  0b0100000000
-#define O_TRUNC 0b1000000000
+#define O_CREAT (1 << 7)
+#define O_EXCL  (1 << 8)
+#define O_TRUNC (1 << 9)
 
 /* Stubbed flags, the value really doesnt matter as long as they dont overlap */
 /* with usable ones. */
 /* Implemented here as some software needs them to compile. */
-#define O_SEARCH    0b000000000010000000000
-#define O_EXEC      0b000000000100000000000
-#define O_NOCTTY    0b000000001000000000000
-#define O_DSYNC     0b000000010000000000000
-#define O_RSYNC     0b000000100000000000000
-#define O_SYNC      0b000001000000000000000
-#define O_PATH      0b000010000000000000000
-#define O_DIRECTORY 0b000100000000000000000
-#define O_LARGEFILE 0b001000000000000000000
-#define O_NOATIME   0b010000000000000000000
-#define O_TMPFILE   0b100000000000000000000
+#define O_SEARCH    (1 << 10)
+#define O_EXEC      (1 << 11)
+#define O_NOCTTY    (1 << 12)
+#define O_DSYNC     (1 << 13)
+#define O_RSYNC     (1 << 14)
+#define O_SYNC      (1 << 15)
+#define O_PATH      (1 << 16)
+#define O_DIRECTORY (1 << 17)
+#define O_LARGEFILE (1 << 18)
+#define O_NOATIME   (1 << 19)
+#define O_TMPFILE   (1 << 20)
 
 /* Fcntl flags. */
 #define FD_CLOEXEC   1

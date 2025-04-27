@@ -41,7 +41,7 @@ INDEX
 INDEX
         catanf
 
-ANSI_SYNOPSIS
+SYNOPSIS
        #include <complex.h>
        double complex catan(double complex <[z]>);
        float complex catanf(float complex <[z]>);
@@ -105,11 +105,9 @@ catan(double complex z)
 
 	x2 = x * x;
 	a = 1.0 - x2 - (y * y);
-	if (a == 0.0)
-		goto ovrf;
 
 	t = 0.5 * atan2(2.0 * x, a);
-	w = __mlibc_redupi(t);
+	w = _redupi(t);
 
 	t = y - 1.0;
 	a = x2 + (t * t);

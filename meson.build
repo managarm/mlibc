@@ -1,4 +1,4 @@
-project('mlibc', default_options: ['warning_level=2', 'c_std=gnu11', 'cpp_std=c++20'])
+project('mlibc', default_options: ['warning_level=2', 'c_std=gnu11', 'cpp_std=c++20'], meson_version: '>=1.3.0')
 
 fs = import('fs')
 
@@ -35,7 +35,8 @@ internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
 if not headers_only
-	add_languages('c', 'cpp')
+	add_languages('c', 'cpp', native: true, required: false)
+	add_languages('c', 'cpp', native: false)
 	c_compiler = meson.get_compiler('c')
 	cpp_compiler = meson.get_compiler('cpp')
 
@@ -75,6 +76,10 @@ if not headers_only
 	add_project_arguments('-Werror=misleading-indentation', language: ['c', 'cpp'])
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
+
+	if get_option('buildtype').startswith('debug')
+		add_project_arguments('-D__MLIBC_DEBUG', language : ['c', 'cpp'])
+	endif
 
 	if not freestnd_c_hdrs_dep.found()
 		searchdirs = run_command(c_compiler.cmd_array(), '-print-search-dirs',
@@ -170,6 +175,7 @@ if default_library_paths.length() == 0
 		'aarch64': 64,
 		'arm': 32,
 		'm68k': 32,
+		'loongarch64': 64,
 	}
 	if target_word_size.get(target_machine.cpu_family()) == 64
 		default_library_paths = ['/lib', '/lib64', '/usr/lib', '/usr/lib64']
@@ -262,6 +268,14 @@ elif host_machine.system() == 'obos'
     rtld_include_dirs += include_directories('sysdeps/obos/include')
     libc_include_dirs += include_directories('sysdeps/obos/include')
     subdir('sysdeps/obos')
+elif host_machine.system() == 'menix'
+	rtld_include_dirs += include_directories('sysdeps/menix/include')
+	libc_include_dirs += include_directories('sysdeps/menix/include')
+	subdir('sysdeps/menix')
+elif host_machine.system() == 'nyaux'
+	rtld_include_dirs += include_directories('sysdeps/nyaux/include')
+	libc_include_dirs += include_directories('sysdeps/nyaux/include')
+	subdir('sysdeps/nyaux')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
@@ -298,6 +312,28 @@ if linux_option
 		if not import('fs').is_dir(get_option('linux_kernel_headers'))
 			error('linux_kernel_headers is not set to a valid path')
 		endif
+
+		cc_search_path = run_command(meson.get_compiler('cpp', native: true), '-E', '-Wp,-v', '-xc', '/dev/null', check: true).stderr()
+		search_paths = []
+
+		search_started = false
+		foreach line : cc_search_path.strip().splitlines()
+			if not search_started and line == '#include <...> search starts here:'
+				search_started = true
+				continue
+			elif search_started and line == 'End of search list.'
+				search_started = false
+			elif search_started
+				search_paths += line.strip()
+			endif
+		endforeach
+
+		foreach path : search_paths
+			if fs.is_samepath(get_option('linux_kernel_headers'), path)
+				warning('Please install Linux kernel headers to a directory using \'make headers_install\'.')
+				error('Using system include paths for \'linux_kernel_headers\' is unsupported!')
+			endif
+		endforeach
 	endif
 
 	rtld_include_dirs += include_directories('options/linux/include')
@@ -539,8 +575,8 @@ endif
 hdoc = find_program('hdoc', required: false)
 
 conf_data = configuration_data()
-conf_data.set('source_root', meson.source_root())
-conf_data.set('build_root', meson.build_root())
+conf_data.set('source_root', meson.global_source_root())
+conf_data.set('build_root', meson.global_build_root())
 configure_file(input: 'scripts/hdoc.toml.in',
 	output: '.hdoc.toml', configuration: conf_data)
 

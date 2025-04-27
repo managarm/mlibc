@@ -3,3 +3,5 @@
 *.xbstrap
 # editor configs:
 .vscode
+compile_commands.json
+/linux-headers

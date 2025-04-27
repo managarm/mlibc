@@ -7,6 +7,7 @@
 #include <abi-bits/vm-flags.h>
 #include <bits/off_t.h>
 #include <bits/ssize_t.h>
+#include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/fsfd_target.hpp>
 
 #include <fcntl.h>
@@ -25,6 +26,7 @@
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/wait.h>
+#include <sys/shm.h>
 #include <sched.h>
 #include <termios.h>
 #include <time.h>
@@ -37,7 +39,7 @@ void sys_libc_log(const char *message);
 
 [[noreturn]] void sys_exit(int status);
 [[noreturn, gnu::weak]] void sys_thread_exit();
-int sys_clock_get(int clock, time_t *secs, long *nanos);
+
 
 int sys_open(const char *pathname, int flags, mode_t mode, int *fd);
 [[gnu::weak]] int sys_flock(int fd, int options);
@@ -196,6 +198,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_setgroups(size_t size, const gid_t *list);
 [[gnu::weak]] int sys_memfd_create(const char *name, int flags, int *fd);
 [[gnu::weak]] int sys_madvise(void *addr, size_t length, int advice);
+[[gnu::weak]] int sys_posix_madvise(void *addr, size_t length, int advice);
 [[gnu::weak]] int sys_msync(void *addr, size_t length, int flags);
 
 [[gnu::weak]] int sys_getitimer(int which, struct itimerval *curr_value);
@@ -240,6 +243,11 @@ int sys_vm_unmap(void *pointer, size_t size);
 
 [[gnu::weak]] int sys_name_to_handle_at(int dirfd, const char *pathname, struct file_handle *handle, int *mount_id, int flags);
 [[gnu::weak]] int sys_splice(int in_fd, off_t *in_off, int out_fd, off_t *out_off, size_t size, unsigned int flags, ssize_t *out);
+
+[[gnu::weak]] int sys_shmat(void **seg_start, int shmid, const void *shmaddr, int shmflg);
+[[gnu::weak]] int sys_shmctl(int *idx, int shmid, int cmd, struct shmid_ds *buf);
+[[gnu::weak]] int sys_shmdt(const void *shmaddr);
+[[gnu::weak]] int sys_shmget(int *shm_id, key_t key, size_t size, int shmflg);
 
 } //namespace mlibc
 

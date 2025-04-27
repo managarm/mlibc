@@ -10,16 +10,16 @@ sources:
     branch: 'master'
 
   - name: linux
-    url: 'https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.9.9.tar.xz'
-    extract_path: 'linux-6.9.9'
+    url: 'https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.14.tar.xz'
+    extract_path: 'linux-6.14'
     format: 'tar.xz'
-    version: '6.9.9'
+    version: '6.14'
 
   - name: libdrm
     subdir: 'ports'
-    git: 'https://github.com/gitlab-freedesktop-mirrors/drm'
-    tag: 'libdrm-2.4.115'
-    version: '2.4.115'
+    git: 'https://gitlab.freedesktop.org/mesa/drm.git'
+    tag: 'libdrm-2.4.124'
+    version: '2.4.124'
 
 tools: []
 
@@ -39,6 +39,8 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dc_args=['-Wno-error=maybe-uninitialized', '-Wno-unknown-warning-option']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized', '-Wno-unknown-warning-option']"
+        - "-Dlibgcc_dependency=false"
+        - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
@@ -49,6 +51,7 @@ packages:
         environ:
           CFLAGS: '-Wno-error=maybe-uninitialized'
           CXXFLAGS: '-Wno-error=maybe-uninitialized'
+          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -71,6 +74,8 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
+        - "-Dlibgcc_dependency=false"
+        - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=static"
@@ -78,6 +83,8 @@ packages:
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
+        environ:
+          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -99,6 +106,8 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
+        - "-Dlibgcc_dependency=false"
+        - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=shared"
@@ -106,6 +115,8 @@ packages:
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
+        environ:
+          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -128,6 +139,8 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
+        - "-Dlibgcc_dependency=false"
+        - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
@@ -139,6 +152,8 @@ packages:
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
+        environ:
+          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -161,12 +176,16 @@ packages:
         - '--buildtype=debugoptimized'
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
+        - "-Dlibgcc_dependency=false"
+        - "-Duse_freestnd_hdrs=enabled"
         - "-Db_sanitize=undefined"
         - "-Dwerror=true"
         - "-Dheaders_only=true"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
+        environ:
+          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -189,6 +208,9 @@ packages:
               ;;
             "riscv64")
               LINUX_ARCH="riscv"
+              ;;
+            "loongarch64")
+              LINUX_ARCH="loongarch"
               ;;
           esac
           make O=@THIS_COLLECT_DIR@ ARCH="$LINUX_ARCH" headers_install

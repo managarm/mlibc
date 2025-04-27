@@ -19,7 +19,6 @@ libc_sources += files(
 	'generic/pty.cpp',
 	'generic/thread.cpp',
 	'generic/mac.cpp',
-	'generic/sched2.cpp',
 	'generic/thread.S',
 	'generic/utmpx.cpp'
 )
@@ -56,6 +55,7 @@ if not no_headers
 		'include/abi-bits/poll.h',
 		'include/abi-bits/packet.h',
 		'include/abi-bits/clockid_t.h',
+		'include/abi-bits/ipc.h',
 		'include/abi-bits/shm.h',
 		'include/abi-bits/mqueue.h',
 		'include/abi-bits/suseconds_t.h',
@@ -72,12 +72,11 @@ if not no_headers
 		follow_symlinks: true
 	)
 	install_headers(
-		'include/sys/sched2.h',
-		'include/sys/ironclad_devices.h',
 		'include/sys/mac.h',
 		'include/sys/syscall.h',
 		'include/sys/reboot.h',
 		'include/sys/mount.h',
+		'include/sys/sysmacros.h',
 		'include/sys/ptrace.h',
 		subdir: 'sys'
 	)
@@ -89,6 +88,7 @@ if not no_headers
 
 	install_headers(
 		'include/linux/fb.h',
+		'include/linux/kvm.h',
 		subdir: 'linux'
 	)
 
@@ -103,7 +103,7 @@ if not headers_only
 	crt = custom_target('crt0',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-x86_64/crt0.S',
+		input: 'crt-' + host_machine.cpu_family() / 'crt0.S',
 		output: 'crt0.o',
 		install: true,
 		install_dir: get_option('libdir')
@@ -112,7 +112,7 @@ if not headers_only
 	custom_target('crti',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-x86_64/crti.S',
+		input: 'crt-' + host_machine.cpu_family() / 'crti.S',
 		output: 'crti.o',
 		install: true,
 		install_dir: get_option('libdir')
@@ -121,7 +121,7 @@ if not headers_only
 	custom_target('crtn',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-x86_64/crtn.S',
+		input: 'crt-' + host_machine.cpu_family() / 'crtn.S',
 		output: 'crtn.o',
 		install: true,
 		install_dir: get_option('libdir')

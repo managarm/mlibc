@@ -1,4 +1,3 @@
-#include <mlibc-config.h>
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
@@ -11,20 +10,28 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/syscall.h>
-#include <sys/ironclad_devices.h>
 #include <sched.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <sys/file.h>
 #include <mlibc/tcb.hpp>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdbool.h>
+#include <stddef.h>
+
+extern "C" void __mlibc_sigret(void);
 
 namespace mlibc {
 
 void sys_libc_log(const char *message) {
+#ifdef __MLIBC_DEBUG
 	ssize_t unused;
-	char new_line = '\n';
 	sys_write(2, message, strlen(message), &unused);
-	sys_write(2, &new_line, 1, &unused);
+	sys_write(2, "\n", 1, &unused);
+#else
+	(void)message;
+#endif
 }
 
 void sys_libc_panic() {
@@ -71,16 +78,16 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	int path_len = strlen (path);
 	SYSCALL4(SYSCALL_OPEN, dirfd, path, path_len, flags);
 	if (ret != -1 && (flags & O_EXCL)) {
-		 SYSCALL1(SYSCALL_CLOSE, ret);
-		 return EEXIST;
+		SYSCALL1(SYSCALL_CLOSE, ret);
+		return EEXIST;
 	}
 
 	if (ret == -1 && (flags & O_CREAT)) {
-		 SYSCALL5(SYSCALL_MAKENODE, AT_FDCWD, path, path_len, mode, 0);
-		 if (ret == -1) {
-			  return errno;
-		 }
-		 SYSCALL4(SYSCALL_OPEN,	AT_FDCWD, path, path_len, flags);
+		SYSCALL5(SYSCALL_MAKENODE, AT_FDCWD, path, path_len, mode, 0);
+		if (ret == -1) {
+			return errno;
+		}
+		SYSCALL4(SYSCALL_OPEN, AT_FDCWD, path, path_len, flags);
 	} else if (ret != -1 && (flags & O_TRUNC)) {
 		// If the file cannot be truncated, dont sweat it, some software
 		// depends on some things being truncate-able that ironclad does not
@@ -284,12 +291,6 @@ int sys_vm_unmap(void *pointer, size_t size) {
 	}
 }
 
-int sys_getcwd(char *buf, size_t size) {
-	buf[0] = '/';
-	buf[1] = '\0';
-	return 0;
-}
-
 int sys_vm_protect(void *pointer, size_t size, int prot) {
 	int ret;
 	int errno;
@@ -302,6 +303,7 @@ int sys_vm_protect(void *pointer, size_t size, int prot) {
 
 int sys_getsid(pid_t pid, pid_t *sid) {
 	//  STUB.
+	(void)pid; (void)sid;
 	return 0;
 }
 
@@ -332,10 +334,6 @@ int sys_setgroups(size_t size, const gid_t *list) {
 	return errno;
 }
 
-int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) {
-	return 0;
-}
-
 int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out) {
 	int ret, errno;
 	SYSCALL4(SYSCALL_PTRACE, req, pid, addr, data);
@@ -351,7 +349,26 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 }
 
 int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
-	return 0;
+	int ret, errno;
+	SYSCALL3(SYSCALL_SIGPROCMASK, how, set, retrieve);
+	return errno;
+}
+
+int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
+	int ret, errno;
+	SYSCALL2(SYSCALL_SIGALTSTACK, ss, oss);
+	return errno;
+}
+
+int sys_sigsuspend(const sigset_t *set) {
+	int ret, errno;
+	SYSCALL1(SYSCALL_SIGSUSPEND, set);
+	return errno;
+}
+
+int sys_tgkill(int pid, int tid, int sig) {
+	(void)tid;
+	return sys_kill(pid, sig);
 }
 
 int sys_isatty(int fd) {
@@ -389,7 +406,7 @@ int sys_fork(pid_t *child) {
 	pid_t ret;
 	int errno;
 
-	SYSCALL6(SYSCALL_CLONE, 0, 0, 0, 0, 0, 1);
+	SYSCALL0(SYSCALL_FORK);
 
 	if (ret == -1) {
 		return errno;
@@ -437,17 +454,9 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 
 int sys_uname(struct utsname *buf) {
 	int ret, errno;
-
-	SYSCALL3(SYSCALL_SYSCONF, 10, buf, sizeof(struct utsname));
-
-	if (ret == -1) {
-		return errno;
-	}
-
-	return 0;
+	SYSCALL1(SYSCALL_UNAME, buf);
+	return errno;
 }
-
-
 
 int sys_setpgid(pid_t pid, pid_t pgid) {
 	(void)pid;
@@ -530,12 +539,7 @@ void sys_yield(void) {
 
 int sys_kill(int pid, int sig) {
 	int ret, errno;
-	if (sig == SIGKILL) {
-		SYSCALL1(SYSCALL_ACTUALLY_KILL, pid);
-	} else {
-		SYSCALL2(SYSCALL_SEND_SIGNAL, pid, sig);
-	}
-
+	SYSCALL2(SYSCALL_SEND_SIGNAL, pid, sig);
 	return errno;
 }
 
@@ -546,7 +550,13 @@ int sys_dup(int fd, int flags, int *newfd) {
 	} else {
 		SYSCALL3(SYSCALL_FCNTL, fd, F_DUPFD, 0);
 	}
+
 	*newfd = ret;
+
+	if (errno == 0) {
+		SYSCALL3(SYSCALL_FCNTL, *newfd, F_SETFD, flags);
+	}
+
 	return errno;
 }
 
@@ -565,9 +575,13 @@ int sys_dup2(int fd, int flags, int newfd) {
 
 	if (ret != -1 && ret != newfd) {
 		return EBADFD;
-	} else {
-		return errno;
 	}
+
+	if (errno == 0) {
+		SYSCALL3(SYSCALL_FCNTL, newfd, F_SETFD, flags);
+	}
+
+	return errno;
 }
 
 int sys_tcgetattr(int fd, struct termios *attr) {
@@ -633,7 +647,7 @@ struct futex_item {
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	int ret, errno;
-	struct futex_item item = {.addr = (uint64_t)pointer, .expected = expected, .flags = 0};
+	struct futex_item item = {.addr = (uint64_t)pointer, .expected = (uint32_t)expected, .flags = 0};
 	if (time == NULL) {
 		 struct timespec t = {(time_t)-1, (time_t)-1};
 		 SYSCALL4(SYSCALL_FUTEX, 0b01, &item, 1, &t);
@@ -683,6 +697,7 @@ int sys_rmdir(const char* path){
 }
 
 int sys_unlinkat(int fd, const char *path, int flags) {
+	(void)flags;
 	int ret, errno;
 	size_t path_len = strlen (path);
 	SYSCALL3(SYSCALL_UNLINK, fd, path, path_len);
@@ -766,7 +781,34 @@ int sys_setregid(gid_t rgid, gid_t egid) {
 	return ret;
 }
 
+int sys_getresuid(uid_t *ruid, uid_t *euid, uid_t *suid) {
+	if (ruid) {
+		*ruid = sys_getuid();
+	}
+	if (euid) {
+		*euid = sys_geteuid();
+	}
+	if (suid) {
+		*suid = sys_getuid();
+	}
+	return 0;
+}
+
+int sys_getresgid(uid_t *rgid, uid_t *egid, uid_t *sgid) {
+	if (rgid) {
+		*rgid = sys_getgid();
+	}
+	if (egid) {
+		*egid = sys_getegid();
+	}
+	if (sgid) {
+		*sgid = sys_getgid();
+	}
+	return 0;
+}
+
 int sys_setsid(pid_t *sid) {
+	(void)sid;
 	return 0;
 }
 
@@ -774,9 +816,22 @@ int sys_setsid(pid_t *sid) {
 
 extern "C" void __mlibc_thread_entry();
 
+int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) {
+	int ret, errno;
+
+	if (act != NULL) {
+		struct sigaction newact = *act;
+		newact.sa_restorer = __mlibc_sigret;
+		SYSCALL3(SYSCALL_SIGACTION, signum, &newact, oldact);
+	} else {
+		SYSCALL3(SYSCALL_SIGACTION, signum, NULL, oldact);
+	}
+	return errno;
+}
+
 int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
 	 int ret, errno;
-	 SYSCALL6(SYSCALL_CLONE, (uintptr_t)__mlibc_thread_entry, 0, stack, 0b10, tcb, 1);
+	 SYSCALL5(SYSCALL_CREATE_THREAD, (uintptr_t)__mlibc_thread_entry, 0, stack, tcb, 1);
 
 	 if (ret == -1) {
 		  return errno;
@@ -884,10 +939,13 @@ int sys_shutdown(int sockfd, int how) {
 }
 
 int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
+	(void)which; (void)new_value; (void)old_value;
 	return ENOSYS;
 }
 
 int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
+	(void)flags;
+
 	if (hdr->msg_control != NULL) {
 		// mlibc::infoLogger() << "mlibc: recv() msg_control not supported!" << frg::endlog;
 	}
@@ -910,6 +968,8 @@ int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
 }
 
 int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
+	(void)flags;
+
 	if (hdr->msg_control != NULL) {
 		// mlibc::infoLogger() << "mlibc: recv() msg_control not supported!" << frg::endlog;
 	}
@@ -933,14 +993,12 @@ int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
 
 
 int sys_ppoll(struct pollfd *fds, int nfds, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
-	// XXX: Ironclad has no sigprogmask so this is basically a weird ppoll poll
-	// chimeral abomination.
 	int ret, errno;
 	if (timeout == NULL) {
-		 struct timespec t = {.tv_sec = (time_t)-1, .tv_nsec = (time_t)-1};
-		 SYSCALL3(SYSCALL_POLL, fds, nfds, &t);
+		struct timespec t = {.tv_sec = (time_t)-1, .tv_nsec = (time_t)-1};
+		SYSCALL4(SYSCALL_PPOLL, fds, nfds, &t, sigmask);
 	} else {
-		 SYSCALL3(SYSCALL_POLL, fds, nfds, timeout);
+		SYSCALL4(SYSCALL_PPOLL, fds, nfds, timeout, sigmask);
 	}
 	if (ret == -1) {
 		return errno;
@@ -1073,11 +1131,78 @@ int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2
 	return errno;
 }
 
+struct meminfo {
+	uint64_t phys_total;
+	uint64_t phys_available;
+	uint64_t phys_free;
+	uint64_t shared_usage;
+	uint64_t kernel_usage;
+	uint64_t table_usage;
+	uint64_t poison_usage;
+};
+
+struct cpuinfo {
+	uint64_t conf_cores;
+	uint64_t onln_cores;
+	char model_name[64];
+	char vendor_name[64];
+	uint32_t base_mhz;
+	uint32_t max_mhz;
+	uint32_t ref_mhz;
+};
+
 int sys_sysconf(int num, long *rret) {
-	long ret, errno;
-	SYSCALL3(SYSCALL_SYSCONF, num, 0, 0);
-	*rret = ret;
-	return errno;
+	struct meminfo mem;
+	struct cpuinfo cpu;
+	int ret, errno;
+
+	switch (num) {
+		case _SC_NPROCESSORS_CONF:
+			SYSCALL1(SYSCALL_GETCPUINFO, &cpu);
+			if (ret == 0) {
+				*rret = cpu.conf_cores;
+				return 0;
+			} else {
+				return EFAULT;
+			}
+		case _SC_NPROCESSORS_ONLN:
+			SYSCALL1(SYSCALL_GETCPUINFO, &cpu);
+			if (ret == 0) {
+				*rret = cpu.onln_cores;
+				return 0;
+			} else {
+				return EFAULT;
+			}
+		case _SC_OPEN_MAX:
+			*rret = 100;
+			return 0;
+		case _SC_AVPHYS_PAGES:
+			SYSCALL1(SYSCALL_MEMINFO, &mem);
+			if (ret == 0) {
+				*rret = mem.phys_free / getpagesize();
+				return 0;
+			} else {
+				return EFAULT;
+			}
+		case _SC_PHYS_PAGES:
+			SYSCALL1(SYSCALL_MEMINFO, &mem);
+			if (ret == 0) {
+				*rret = mem.phys_available / getpagesize();
+				return 0;
+			} else {
+				return EFAULT;
+			}
+		case _SC_TOTAL_PAGES:
+			SYSCALL1(SYSCALL_MEMINFO, &mem);
+			if (ret == 0) {
+				*rret = mem.phys_total / getpagesize();
+				return 0;
+			} else {
+				return EFAULT;
+			}
+		default:
+			return EINVAL;
+	}
 }
 
 int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
@@ -1201,6 +1326,11 @@ int sys_mknodat(int dirfd, const char *path, mode_t mode, dev_t dev) {
 	return errno;
 }
 
+int sys_brk(void **out) {
+	(void)out;
+	return -1;
+}
+
 #define SC_LIST_MOUNTS 9
 struct mountinfo {
 	uint32_t type;
@@ -1223,13 +1353,14 @@ struct mountinfo {
 #include <sys/mount.h>
 
 int sys_fstatvfs(int fd, struct statvfs *out) {
+	(void)fd;
 	return sys_statvfs("/", out);
 }
 
 int sys_statvfs(const char *path, struct statvfs *out) {
 	long ret, errno;
 	struct mountinfo *buffer = (mountinfo *)malloc(5 * sizeof(struct mountinfo));
-	SYSCALL3(SYSCALL_SYSCONF, SC_LIST_MOUNTS, buffer, 5 * sizeof(struct mountinfo));
+	SYSCALL2(SYSCALL_LISTMOUNTS, buffer, 5);
 	if (errno) {
 		free(buffer);
 		return errno;
@@ -1238,29 +1369,82 @@ int sys_statvfs(const char *path, struct statvfs *out) {
 		return 1;
 	}
 
+	bool best_len = 0;
+	int  best_idx = 0;
 	for (int i = 0; i < ret; i++) {
 		if (!strncmp(path, buffer[i].location, buffer[i].location_length)) {
-			out->f_bsize  = buffer[i].block_size;
-			out->f_frsize = buffer[i].fragment_size;
-			out->f_blocks = buffer[i].size_in_fragments;
-			out->f_bfree  = buffer[i].free_blocks;
-			out->f_bavail = buffer[i].free_blocks_user;
-			out->f_files  = buffer[i].inode_count;
-			out->f_ffree  = buffer[i].free_inodes;
-			out->f_favail = buffer[i].free_inodes_user;
-			out->f_fsid = 0;
-			out->f_flag = buffer[i].flags;
-			out->f_namemax = buffer[i].max_filename;
-			if (buffer[i].type == MNT_EXT) {
-				strcpy(out->f_basetype, "ext");
-			} else {
-				strcpy(out->f_basetype, "fat");
+			if (buffer[i].location_length > best_len) {
+				best_len = buffer[i].location_length;
+				best_idx = i;
 			}
-			return 0;
 		}
 	}
 
-	return EINVAL;
+	if (best_len == 0) {
+		return EINVAL;
+	}
+
+	out->f_bsize  = buffer[best_idx].block_size;
+	out->f_frsize = buffer[best_idx].fragment_size;
+	out->f_blocks = buffer[best_idx].size_in_fragments;
+	out->f_bfree  = buffer[best_idx].free_blocks;
+	out->f_bavail = buffer[best_idx].free_blocks_user;
+	out->f_files  = buffer[best_idx].inode_count;
+	out->f_ffree  = buffer[best_idx].free_inodes;
+	out->f_favail = buffer[best_idx].free_inodes_user;
+	out->f_fsid = 0;
+	out->f_flag = buffer[best_idx].flags;
+	out->f_namemax = buffer[best_idx].max_filename;
+
+	switch (buffer[best_idx].type) {
+		case MNT_EXT: strcpy(out->f_basetype, "ext");   break;
+		case MNT_FAT: strcpy(out->f_basetype, "fat");   break;
+		default:      strcpy(out->f_basetype, "devfs"); break;
+	}
+
+	return 0;
 }
+
+int sys_shmat(void **seg_start, int shmid, const void *shmaddr, int shmflg) {
+	void *ret;
+	int errno;
+	SYSCALL3(SYSCALL_SHMAT, shmid, shmaddr, shmflg);
+	*seg_start = ret;
+	return errno;
+}
+
+int sys_shmctl(int *idx, int shmid, int cmd, struct shmid_ds *buf) {
+	int ret, errno;
+	SYSCALL3(SYSCALL_SHMCTL, shmid, cmd, buf);
+	*idx = ret;
+	return errno;
+}
+
+int sys_shmdt(const void *shmaddr) {
+	int ret, errno;
+	SYSCALL1(SYSCALL_SHMDT, shmaddr);
+	return errno;
+}
+
+int sys_shmget(int *shm_id, key_t key, size_t size, int shmflg) {
+	int ret, errno;
+	SYSCALL3(SYSCALL_SHMGET, key, size, shmflg);
+	*shm_id = ret;
+	return errno;
+}
+
+int sys_getloadavg(double *samples) {
+	int ret, errno;
+	int samples2[3];
+	SYSCALL2(SYSCALL_LOADAVG, samples2, 3);
+	if (ret < 0) {
+		return errno;
+	}
+	for (int i = 0; i < 3; i++) {
+		samples[i] = samples2[i] / 100.0;
+	}
+	return 0;
+}
+
 #endif
 } // namespace mlibc

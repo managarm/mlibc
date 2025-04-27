@@ -69,6 +69,7 @@ if not no_headers
 		'include/abi-bits/packet.h',
 		'include/abi-bits/inotify.h',
 		'include/abi-bits/clockid_t.h',
+		'include/abi-bits/ipc.h',
 		'include/abi-bits/shm.h',
 		'include/abi-bits/mqueue.h',
 		'include/abi-bits/suseconds_t.h',
@@ -116,8 +117,8 @@ if not headers_only
 		install_dir: get_option('libdir')
 	)
 
-	# On RISC-V, crti.o and crtn.o are provided by GCC.
-	if host_machine.cpu_family() != 'riscv64'
+	# On RISC-V and LoongArch, crti.o and crtn.o are provided by GCC.
+	if host_machine.cpu_family() != 'riscv64' and host_machine.cpu_family() != 'loongarch64'
 		custom_target('crti',
 			build_by_default: true,
 			command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],

@@ -57,6 +57,8 @@
 #define F_SEAL_GROW   0x0004
 #define F_SEAL_WRITE  0x0008
 #define F_SEAL_SEAL   0x0010
+#define F_SETPIPE_SZ  1031
+#define F_GETPIPE_SZ  1032
 #define F_ADD_SEALS   1033
 #define F_GET_SEALS   1034
 

@@ -246,7 +246,6 @@
 #define __NR_perf_event_open 241
 #define __NR_accept4 242
 #define __NR_recvmmsg 243
-#define __NR_arch_specific_syscall 244
 #define __NR_wait4 260
 #define __NR_prlimit64 261
 #define __NR_fanotify_init 262
@@ -309,5 +308,20 @@
 #define __NR_process_mrelease 448
 #define __NR_futex_waitv 449
 #define __NR_set_mempolicy_home_node 450
-#define __NR_syscalls 451
+#define __NR_cachestat 451
+#define __NR_fchmodat2 452
+#define __NR_map_shadow_stack 453
+#define __NR_futex_wake 454
+#define __NR_futex_wait 455
+#define __NR_futex_requeue 456
+#define __NR_statmount 457
+#define __NR_listmount 458
+#define __NR_lsm_get_self_attr 459
+#define __NR_lsm_set_self_attr 460
+#define __NR_lsm_list_modules 461
+#define __NR_mseal 462
+#define __NR_setxattrat 463
+#define __NR_getxattrat 464
+#define __NR_listxattrat 465
+#define __NR_removexattrat 466
 #endif /* __MLIBC_SYSCALLNOS_h */

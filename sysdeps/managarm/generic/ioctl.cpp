@@ -1,6 +1,11 @@
+#ifdef _GNU_SOURCE
+#undef _GNU_SOURCE
+#endif
+
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/cdrom.h>
+#include <linux/fiemap.h>
 #include <linux/fs.h>
 #include <linux/input.h>
 #include <linux/kd.h>
@@ -15,6 +20,7 @@
 #include <sys/ioctl.h>
 
 #include <bits/ensure.h>
+#include <bits/errors.hpp>
 #include <bragi/helpers-frigg.hpp>
 #include <frg/vector.hpp>
 #include <mlibc/all-sysdeps.hpp>
@@ -64,11 +70,12 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		req_setup(req, ifr);
 
-		auto [offer, send_token_req, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_token_req, send_req, send_req_tail, recv_resp] = exchangeMsgsSync(
 		    getPosixLane(),
 		    helix_ng::offer(
+		        helix_ng::want_lane,
 		        helix_ng::sendBragiHeadOnly(token_req, getSysdepsAllocator()),
-		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
 		        helix_ng::recvInline()
 		    )
 		);
@@ -76,10 +83,24 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		HEL_CHECK(offer.error());
 		HEL_CHECK(send_token_req.error());
 		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_req_tail.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::IfreqReply<MemoryAllocator> resp(getSysdepsAllocator());
-		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		auto preamble = bragi::read_preamble(recv_resp);
+
+		frg::vector<uint8_t, MemoryAllocator> tailBuffer{getSysdepsAllocator()};
+		tailBuffer.resize(preamble.tail_size());
+		auto [recv_tail] = exchangeMsgsSync(
+		    offer.descriptor().getHandle(),
+		    helix_ng::recvBuffer(tailBuffer.data(), tailBuffer.size())
+		);
+
+		HEL_CHECK(recv_tail.error());
+
+		auto resp = *bragi::parse_head_tail<managarm::fs::IfreqReply>(
+		    recv_resp, tailBuffer, getSysdepsAllocator()
+		);
+		recv_resp.reset();
 
 		int ret = resp_parse(resp, ifr);
 
@@ -276,17 +297,16 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			HEL_CHECK(offer.error());
 			HEL_CHECK(send_ioctl_req.error());
 			if (send_req.error() == kHelErrDismissed)
-				return EINVAL;
+				return ENOTTY;
 			HEL_CHECK(send_req.error());
 			if (recv_resp.error() == kHelErrDismissed)
-				return EINVAL;
+				return ENOTTY;
 			HEL_CHECK(recv_resp.error());
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET)
-				return EINVAL;
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			*result = resp.result();
 			param->ws_col = resp.pts_width();
@@ -905,12 +925,12 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		managarm::fs::IfreqRequest<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 
-		auto [offer, send_token_req, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_token_req, send_req, send_tail, recv_resp] = exchangeMsgsSync(
 		    getPosixLane(),
 		    helix_ng::offer(
 		        helix_ng::want_lane,
 		        helix_ng::sendBragiHeadOnly(token_req, getSysdepsAllocator()),
-		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
 		        helix_ng::recvInline()
 		    )
 		);
@@ -920,6 +940,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		HEL_CHECK(offer.error());
 		HEL_CHECK(send_token_req.error());
 		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_tail.error());
 		HEL_CHECK(recv_resp.error());
 
 		auto preamble = bragi::read_preamble(recv_resp);
@@ -1155,6 +1176,14 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		mlibc::infoLogger() << "\e[35mmlibc: FICLONE/FICLONERANGE are no-ops" << frg::endlog;
 		*result = -1;
 		return EOPNOTSUPP;
+	} else if (request == FS_IOC_GETFLAGS) {
+		mlibc::infoLogger() << "\e[35mmlibc: FS_IOC_GETFLAGS is a no-op" << frg::endlog;
+		*result = 0;
+		return ENOSYS;
+	} else if (request == FS_IOC_FIEMAP) {
+		mlibc::infoLogger() << "\e[35mmlibc: FS_IOC_FIEMAP is a no-op" << frg::endlog;
+		*result = 0;
+		return ENOSYS;
 	}
 
 	mlibc::infoLogger() << "mlibc: Unexpected ioctl with"

@@ -39,7 +39,7 @@
 /* calculate cosh and sinh */
 
 void
-__mlibc_cchsh(double x, double *c, double *s)
+_cchsh(double x, double *c, double *s)
 {
 	double e, ei;
 
@@ -64,7 +64,7 @@ static const double DP3 = 1.14423774522196636802E-17;
 #define MACHEP 1.1e-16
 
 double
-__mlibc_redupi(double x)
+_redupi(double x)
 {
 	double t;
 	long i;
@@ -84,7 +84,7 @@ __mlibc_redupi(double x)
 /* Taylor series expansion for cosh(2y) - cos(2x) */
 
 double
-__mlibc_ctans(double complex z)
+_ctans(double complex z)
 {
 	double f, x, x2, y, y2, rn, t;
 	double d;
@@ -92,7 +92,7 @@ __mlibc_ctans(double complex z)
 	x = fabs(2.0 * creal(z));
 	y = fabs(2.0 * cimag(z));
 
-	x = __mlibc_redupi(x);
+	x = _redupi(x);
 
 	x = x * x;
 	y = y * y;

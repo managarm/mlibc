@@ -45,7 +45,7 @@ ctanf(float complex z)
 	d = cosf(2.0f * crealf(z)) + coshf(2.0f * cimagf(z));
 
 	if (fabsf(d) < 0.25f)
-		d = __mlibc_ctansf(z);
+		d = _ctansf(z);
 
 	if (d == 0.0f) {
 		/* mtherr ("ctan", OVERFLOW); */

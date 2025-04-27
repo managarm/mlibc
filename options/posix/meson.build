@@ -125,6 +125,7 @@ if not no_headers
 		subdir: 'netinet'
 	)
 	install_headers(
+		'include/sys/fcntl.h',
 		'include/sys/file.h',
 		'include/sys/ipc.h',
 		'include/sys/mman.h',

@@ -80,11 +80,11 @@ class Type:
             ret_type = Type(c, pointee.get_result())
             if c.semantic_parent.spelling in config["force_raw_function_pointer"]:
                 return f'extern "C" fn({args})' + (
-                    f" -> {ret_type}" if ret_type != "::c_void" else ""
+                    f" -> {ret_type}" if str(ret_type) != "c_void" else ""
                 )
             else:
-                return f'::Option<unsafe extern "C" fn({args})' + (
-                    f" -> {ret_type}>" if ret_type != "::c_void" else ">"
+                return f'Option<unsafe extern "C" fn({args})' + (
+                    f" -> {ret_type}>" if str(ret_type) != "c_void" else ">"
                 )
 
         is_mut = not pointee.spelling.startswith("const")
@@ -101,61 +101,61 @@ class Type:
 
         match tokens:
             case ["char", *_]:
-                return prefix + "::c_char"
+                return prefix + "c_char"
             case ["struct", x, *_] if x in config["force_local_type"]:
                 return prefix + x
             case ["struct", x, *_]:
-                return f"{prefix}::{x}"
+                return f"{prefix} crate::{x}"
             case ["int", *_]:
-                return prefix + "::c_int"
+                return prefix + "c_int"
             case ["unsigned", "char", *_]:
-                return prefix + "::c_uchar"
+                return prefix + "c_uchar"
             case ["unsigned", "short", *_]:
-                return prefix + "::c_ushort"
+                return prefix + "c_ushort"
             case ["unsigned", "int", *_]:
-                return prefix + "::c_uint"
+                return prefix + "c_uint"
             case ["unsigned", "long", *_]:
-                return prefix + "::c_ulong"
+                return prefix + "c_ulong"
             case ["unsigned", *_]:
                 log_err("unhandled unsigned type", f"'{t}'")
             case ["void", *_]:
-                return prefix + "::c_void"
+                return prefix + "c_void"
             case ["double", *_]:
-                return prefix + "::c_double"
+                return prefix + "c_double"
             case [*_]:
-                return prefix + "::" + t
+                return prefix + "crate::" + t
 
     def __str__(self):
         typename = str(self.kind)
         match self.kind:
             case TypeKind.VOID:
-                typename = "::c_void"
+                typename = "c_void"
             case TypeKind.LONG:
-                typename = "::c_long"
+                typename = "c_long"
             case TypeKind.LONGLONG:
-                typename = "::c_longlong"
+                typename = "c_longlong"
             case TypeKind.UINT:
-                typename = "::c_uint"
+                typename = "c_uint"
             case TypeKind.INT:
-                typename = "::c_int"
+                typename = "c_int"
             case TypeKind.ULONG:
-                typename = "::c_ulong"
+                typename = "c_ulong"
             case TypeKind.ULONGLONG:
-                typename = "::c_ulonglong"
+                typename = "c_ulonglong"
             case TypeKind.USHORT:
-                typename = "::c_ushort"
+                typename = "c_ushort"
             case TypeKind.SHORT:
-                typename = "::c_short"
+                typename = "c_short"
             case TypeKind.CHAR_S:
-                typename = "::c_char"
+                typename = "c_char"
             case TypeKind.UCHAR:
-                typename = "::c_uchar"
+                typename = "c_uchar"
             case TypeKind.DOUBLE:
-                typename = "::c_double"
+                typename = "c_double"
             case TypeKind.LONGDOUBLE:
-                typename = "::c_longdouble"
+                typename = "c_longdouble"
             case TypeKind.FLOAT:
-                typename = "::c_float"
+                typename = "c_float"
             case TypeKind.CONSTANTARRAY:
                 if self.convert_arrays_to_ptrs:
                     typename = self.convert_ptr_type(
@@ -171,7 +171,7 @@ class Type:
                 if self.is_va_list():
                     typename = "*mut c_char"
                 elif self.cursor.is_anonymous():
-                    typename = "::" + Type.cursor_name(self.cursor)
+                    typename = "crate::" + Type.cursor_name(self.cursor)
                 elif self.type.get_declaration().displayname in (
                     "uint8_t",
                     "__mlibc_uint8",
@@ -220,7 +220,7 @@ class Type:
                 elif self.type.get_declaration().displayname in ("__mlibc_size"):
                     typename = "usize"
                 else:
-                    typename = "::" + str(self.type.get_declaration().displayname)
+                    typename = "crate::" + str(self.type.get_declaration().displayname)
             case TypeKind.POINTER:
                 typename = self.convert_ptr_type(self.cursor, self.type)
             case TypeKind.TYPEDEF:
@@ -289,7 +289,7 @@ class RustBindingGenerator:
 
         if len(gen) >= 1:
             tokens = []
-            c_type = "::c_int"
+            c_type = "c_int"
             is_unsigned = False
             i = 0
             while not done and gen and i < len(gen):
@@ -346,7 +346,7 @@ class RustBindingGenerator:
                         f"{gen[i].kind} {gen[i].spelling} at {gen[0].location}, skipping macro",
                     )
                     done = True
-                c_type = "::c_" + ("u" if is_unsigned else "") + c_type
+                c_type = "c_" + ("u" if is_unsigned else "") + c_type
             if not self.is_ignored("macros", state.macros, cursor.displayname):
                 for name in config["force_macro_type"]:
                     if cursor.displayname in config["force_macro_type"][name]:
@@ -471,8 +471,8 @@ class RustBindingGenerator:
         emit(self.indent() + "}")
 
         if cursor.kind == CursorKind.ENUM_DECL:
-            emit(f"impl ::Copy for {Type.cursor_name(cursor)} " + "{}")
-            emit(f"impl ::Clone for {Type.cursor_name(cursor)} " + "{")
+            emit(f"impl Copy for {Type.cursor_name(cursor)} " + "{}")
+            emit(f"impl Clone for {Type.cursor_name(cursor)} " + "{")
             emit(f"\tfn clone(&self) -> {Type.cursor_name(cursor)} {{")
             emit("\t\t*self")
             emit("\t}")
@@ -584,7 +584,7 @@ class RustBindingGenerator:
                         self.in_function_block = True
                     emit(
                         f"\tpub fn {cursor.spelling}({arg_str})"
-                        + (f" -> {ret_type};" if ret_type != "::c_void" else ";")
+                        + (f" -> {ret_type};" if ret_type != "c_void" else ";")
                     )
                     state.functions.append(cursor.spelling)
                 case CursorKind.TRANSLATION_UNIT:

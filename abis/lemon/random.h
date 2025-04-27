@@ -4,4 +4,4 @@
 #define GRND_RANDOM 1
 #define GRND_NONBLOCK 2
 
-#endif // _ABIBITS_RANDOM_H
+#endif /* _ABIBITS_RANDOM_H */

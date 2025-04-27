@@ -53,10 +53,9 @@ int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_le
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	if (resp.error() == managarm::posix::Errors::WOULD_BLOCK) {
-		return EWOULDBLOCK;
+	if (resp.error() != managarm::posix::Errors::SUCCESS) {
+		return resp.error() | toErrno;
 	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		*newfd = resp.fd();
 	}
 
@@ -108,23 +107,7 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::fs::Errors::ADDRESS_IN_USE) {
-		return EADDRINUSE;
-	} else if (resp.error() == managarm::fs::Errors::ALREADY_EXISTS) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::ACCESS_DENIED) {
-		return EACCES;
-	} else if (resp.error() == managarm::fs::Errors::ADDRESS_NOT_AVAILABLE) {
-		return EADDRNOTAVAIL;
-	}
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	return 0;
+	return resp.error() | toErrno;
 }
 
 int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
@@ -158,16 +141,7 @@ int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) 
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
-		return ENOENT;
-	} else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-		return EINVAL;
-	} else if (resp.error() == managarm::fs::Errors::CONNECTION_REFUSED) {
-		return ECONNREFUSED;
-	}
-
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	return 0;
+	return resp.error() | toErrno;
 }
 
 int sys_sockname(
@@ -198,13 +172,12 @@ int sys_sockname(
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return ENOTSOCK;
+	if (resp.error() == managarm::fs::Errors::SUCCESS) {
+		HEL_CHECK(recv_addr.error());
+		*actual_length = resp.file_size();
+		return 0;
 	}
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	HEL_CHECK(recv_addr.error());
-	*actual_length = resp.file_size();
-	return 0;
+	return resp.error() | toErrno;
 }
 
 int sys_peername(
@@ -242,25 +215,24 @@ int sys_peername(
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
-	if (resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
-		return ENOTSOCK;
-	} else if (resp.error() == managarm::fs::Errors::NOT_CONNECTED) {
-		return ENOTCONN;
-	} else {
-		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+	if (resp.error() == managarm::fs::Errors::SUCCESS) {
 		*actual_length = resp.file_size();
 		return 0;
 	}
+
+	return resp.error() | toErrno;
 }
 
 namespace {
 
-std::array<std::pair<int, int>, 5> getsockopt_passthrough = {{
+std::array<std::pair<int, int>, 6> getsockopt_passthrough = {{
     {SOL_SOCKET, SO_PROTOCOL},
     {SOL_SOCKET, SO_PEERCRED},
     {SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS},
     {SOL_SOCKET, SO_TYPE},
     {SOL_SOCKET, SO_ACCEPTCONN},
+    {SOL_SOCKET, SO_PEERPIDFD},
 }};
 
 }
@@ -270,15 +242,11 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 	SignalGuard sguard;
 
 	if (layer == SOL_SOCKET && number == SO_SNDBUF) {
-		mlibc::infoLogger(
-		) << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented\e[39m"
-		  << frg::endlog;
+		// This is really only relevant on Linux
 		*(int *)buffer = 4096;
 		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_RCVBUF) {
-		mlibc::infoLogger(
-		) << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_RCVBUF is unimplemented\e[39m"
-		  << frg::endlog;
+		// This is really only relevant on Linux
 		*(int *)buffer = 4096;
 		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_ERROR) {
@@ -322,12 +290,6 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		     "unimplemented\e[39m"
 		  << frg::endlog;
 		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_PEERPIDFD) {
-		mlibc::infoLogger() << "\e[31mmlibc: getsockopt() call with SOL_SOCKET and SO_PEERPIDFD "
-		                       "is unimplemented, hardcoding 0\e[39m"
-		                    << frg::endlog;
-		*(int *)buffer = 0;
-		return 0;
 	} else if (std::find(
 	               getsockopt_passthrough.begin(),
 	               getsockopt_passthrough.end(),
@@ -338,32 +300,34 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 		if (!handle)
 			return EBADF;
 
-		size_t buffer_size = size ? *size : 0;
-
 		managarm::fs::GetSockOpt<MemoryAllocator> req(getSysdepsAllocator());
 		req.set_layer(layer);
 		req.set_number(number);
 		req.set_optlen(size ? *size : 0);
 
-		auto [offer, send_req, recv_resp, recv_buffer] = exchangeMsgsSync(
+		auto [offer, send_req, send_creds, recv_resp] = exchangeMsgsSync(
 		    handle,
 		    helix_ng::offer(
+		        helix_ng::want_lane,
 		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-		        helix_ng::recvInline(),
-		        helix_ng::recvBuffer(buffer, buffer_size)
+		        helix_ng::imbueCredentials(),
+		        helix_ng::recvInline()
 		    )
 		);
 		HEL_CHECK(offer.error());
 		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_creds.error());
 		HEL_CHECK(recv_resp.error());
-		HEL_CHECK(recv_buffer.error());
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		if (resp.error() != managarm::fs::Errors::SUCCESS)
-			return resp.error() | toErrno;
+		*size = resp.size();
 
-		return 0;
+		auto [recv_buffer] =
+		    exchangeMsgsSync(offer.descriptor().getHandle(), helix_ng::recvBuffer(buffer, *size));
+		HEL_CHECK(recv_buffer.error());
+
+		return resp.error() | toErrno;
 	} else {
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call, layer: " << layer
 		                     << " number: " << number << "\e[39m" << frg::endlog;
@@ -382,12 +346,14 @@ std::array<std::pair<int, int>, 6> setsockopt_readonly = {{
     {SOL_IP, SO_PEERSEC},
 }};
 
-std::array<std::pair<int, int>, 10> setsockopt_passthrough = {{
+std::array<std::pair<int, int>, 12> setsockopt_passthrough = {{
     {SOL_PACKET, PACKET_AUXDATA},
     {SOL_SOCKET, SO_LOCK_FILTER},
     {SOL_SOCKET, SO_BINDTODEVICE},
     {SOL_SOCKET, SO_TIMESTAMP},
     {SOL_SOCKET, SO_PASSCRED},
+    {SOL_SOCKET, SO_RCVTIMEO},
+    {SOL_SOCKET, SO_SNDTIMEO},
     {SOL_IP, IP_PKTINFO},
     {SOL_IP, IP_RECVTTL},
     {SOL_IP, IP_RETOPTS},
@@ -434,10 +400,7 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		if (resp.error() != managarm::fs::Errors::SUCCESS)
-			return resp.error() | toErrno;
-
-		return 0;
+		return resp.error() | toErrno;
 	} else if (std::find(
 	               setsockopt_passthrough_noopt.begin(),
 	               setsockopt_passthrough_noopt.end(),
@@ -465,10 +428,7 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		if (resp.error() != managarm::fs::Errors::SUCCESS)
-			return resp.error() | toErrno;
-
-		return 0;
+		return resp.error() | toErrno;
 	} else if (std::find(
 	               setsockopt_readonly.begin(),
 	               setsockopt_readonly.end(),
@@ -507,24 +467,17 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 
 		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		if (resp.error() == managarm::fs::Errors::SUCCESS)
-			return 0;
-		else
-			return resp.error() | toErrno;
+		return resp.error() | toErrno;
 	} else if (layer == SOL_SOCKET && number == SO_RCVBUFFORCE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt(SO_RCVBUFFORCE) is not implemented"
 		                       " correctly\e[39m"
 		                    << frg::endlog;
 		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_SNDBUF) {
-		mlibc::infoLogger(
-		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_SNDBUF is unimplemented\e[39m"
-		  << frg::endlog;
+		// This is really only relevant on Linux
 		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_SNDBUFFORCE) {
-		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_SNDBUFFORCE "
-		                       "is unimplemented\e[39m"
-		                    << frg::endlog;
+		// This is really only relevant on Linux
 		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_KEEPALIVE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_KEEPALIVE is "
@@ -586,11 +539,6 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 		                       "unimplemented\e[39m"
 		                    << frg::endlog;
 		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_SNDTIMEO) {
-		mlibc::infoLogger(
-		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_SNDTIMEO is unimplemented\e[39m"
-		  << frg::endlog;
-		return 0;
 	} else if (layer == SOL_SOCKET && number == SO_OOBINLINE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_OOBINLINE is "
 		                       "unimplemented\e[39m"
@@ -599,11 +547,6 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 	} else if (layer == SOL_SOCKET && number == SO_PRIORITY) {
 		mlibc::infoLogger(
 		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_PRIORITY is unimplemented\e[39m"
-		  << frg::endlog;
-		return 0;
-	} else if (layer == SOL_SOCKET && number == SO_RCVTIMEO) {
-		mlibc::infoLogger(
-		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_RCVTIMEO is unimplemented\e[39m"
 		  << frg::endlog;
 		return 0;
 	} else if (layer == SOL_IP && number == IP_RECVERR) {
@@ -647,8 +590,7 @@ int sys_listen(int fd, int) {
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
-	return 0;
+	return resp.error() | toErrno;
 }
 
 } // namespace mlibc

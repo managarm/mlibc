@@ -25,6 +25,7 @@
 #define CLOCK_BOOTTIME 7
 #define CLOCK_REALTIME_ALARM 8
 #define CLOCK_BOOTTIME_ALARM 9
+#define CLOCK_TAI 11
 
 #ifdef __cplusplus
 extern "C" {

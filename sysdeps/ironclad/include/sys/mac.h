@@ -9,34 +9,38 @@
 extern "C" {
 #endif
 
-#define MAC_CAP_SCHED   0b00000000001
-#define MAC_CAP_SPAWN   0b00000000010
-#define MAC_CAP_ENTROPY 0b00000000100
-#define MAC_CAP_SYS_MEM 0b00000001000
-#define MAC_CAP_USE_NET 0b00000010000
-#define MAC_CAP_SYS_NET 0b00000100000
-#define MAC_CAP_SYS_MNT 0b00001000000
-#define MAC_CAP_SYS_PWR 0b00010000000
-#define MAC_CAP_PTRACE  0b00100000000
-#define MAC_CAP_SETUID  0b01000000000
-#define MAC_CAP_SYS_MAC 0b10000000000
-#define MAC_CAP_CLOCK  0b100000000000
-#define MAC_CAP_SIGNALALL 0b1000000000000
+#define MAC_CAP_SCHED     (1 << 0)
+#define MAC_CAP_SPAWN     (1 << 1)
+#define MAC_CAP_ENTROPY   (1 << 2)
+#define MAC_CAP_SYS_MEM   (1 << 3)
+#define MAC_CAP_USE_NET   (1 << 4)
+#define MAC_CAP_SYS_NET   (1 << 5)
+#define MAC_CAP_SYS_MNT   (1 << 6)
+#define MAC_CAP_SYS_PWR   (1 << 7)
+#define MAC_CAP_PTRACE    (1 << 8)
+#define MAC_CAP_SETUID    (1 << 9)
+#define MAC_CAP_SYS_MAC   (1 << 10)
+#define MAC_CAP_CLOCK     (1 << 11)
+#define MAC_CAP_SIGNALALL (1 << 12)
+#define MAC_CAP_SETGID    (1 << 13)
+#define MAC_CAP_IPC       (1 << 14)
+#define MAC_CAP_SYS_LOG   (1 << 15)
+
 unsigned long get_mac_capabilities(void);
 int set_mac_capabilities(unsigned long request);
 
-#define MAC_PERM_CONTENTS 0b0000001
-#define MAC_PERM_READ     0b0000010
-#define MAC_PERM_WRITE    0b0000100
-#define MAC_PERM_EXEC     0b0001000
-#define MAC_PERM_APPEND   0b0010000
-#define MAC_PERM_FLOCK    0b0100000
-#define MAC_PERM_DEV      0b1000000
+#define MAC_PERM_CONTENTS (1 << 0)
+#define MAC_PERM_READ     (1 << 1)
+#define MAC_PERM_WRITE    (1 << 2)
+#define MAC_PERM_EXEC     (1 << 3)
+#define MAC_PERM_APPEND   (1 << 4)
+#define MAC_PERM_FLOCK    (1 << 5)
+#define MAC_PERM_DEV      (1 << 6)
 int add_mac_permissions(const char *path, int flags);
 
-#define MAC_DENY            0b001
-#define MAC_DENY_AND_SCREAM 0b010
-#define MAC_KILL            0b100
+#define MAC_DENY            (1 << 0)
+#define MAC_DENY_AND_SCREAM (1 << 1)
+#define MAC_KILL            (1 << 2)
 int set_mac_enforcement(unsigned long enforcement);
 
 #ifdef __cplusplus

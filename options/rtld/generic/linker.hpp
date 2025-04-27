@@ -70,6 +70,8 @@ struct ObjectRepository {
 	frg::expected<LinkerError, SharedObject *> requestObjectAtPath(frg::string_view path,
 			Scope *localScope, bool createScope, uint64_t rts);
 
+	void discoverDependenciesFromLoadedObject(SharedObject *object);
+
 	SharedObject *findCaller(void *address);
 
 	SharedObject *findLoadedObject(frg::string_view name);
@@ -79,6 +81,9 @@ struct ObjectRepository {
 
 	// Used by dl_iterate_phdr: stores objects in the order they are loaded.
 	frg::vector<SharedObject *, MemoryAllocator> loadedObjects;
+
+	// Used for breadth-first searching dependencies.
+	frg::vector<SharedObject *, MemoryAllocator> dependencyQueue;
 
 private:
 	void _fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
@@ -225,6 +230,10 @@ struct SharedObject {
 	bool wasInitialized;
 
 	bool wasDestroyed = false;
+
+	bool wasVisited = false;
+
+	bool dependenciesDiscovered = false;
 
 	// PHDR related stuff, we only set these for the main executable
 	void *phdrPointer = nullptr;

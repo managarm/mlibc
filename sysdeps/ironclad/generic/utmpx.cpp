@@ -22,7 +22,10 @@ void endutxent(void) {
 
 void setutxent(void) {
 	if (utmpx_file < 0) {
-		utmpx_file = open(UTMPX_FILE, O_RDWR | O_CREAT, 0755);
+		utmpx_file = open(UTMPX_FILE, O_RDWR | O_CREAT, 0664);
+		if (utmpx_file < 0) {
+			utmpx_file = open(UTMPX_FILE, O_RDONLY);
+		}
 	} else {
 		lseek(utmpx_file, 0, SEEK_SET);
 	}
@@ -62,11 +65,9 @@ struct utmpx *pututxline(const struct utmpx *added) {
 }
 
 int utmpxname(const char *path) {
-	if (utmpx_file > 0) {
-		close(utmpx_file);
-	}
-
-	utmpx_file = open(path, O_RDWR | O_CREAT, 0755);
+	(void)path;
+	endutxent();
+	setutxent();
 	if (utmpx_file > 0) {
 		lseek(utmpx_file, 0, SEEK_END);
 		return 1;

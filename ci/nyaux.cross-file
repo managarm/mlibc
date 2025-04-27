@@ -1,0 +1,12 @@
+[binaries]
+c = 'gcc'
+cpp = 'g++'
+
+[properties]
+needs_exe_wrapper = true
+
+[host_machine]
+system = 'nyaux'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'

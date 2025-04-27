@@ -10,7 +10,11 @@ extern "C" {
 #endif
 
 #if __MLIBC_LINUX_OPTION
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wvariadic-macros"
+#pragma GCC diagnostic ignored "-Wpedantic"
 #	include <linux/if_ether.h>
+#pragma GCC diagnostic pop
 #endif /* __MLIBC_LINUX_OPTION */
 
 #define ETHERTYPE_PUP 0x0200

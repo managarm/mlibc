@@ -15,10 +15,11 @@ bragi_dep = subproject('bragi', default_options: ['install_headers=false']).get_
 libdrm_dep = subproject('libdrm-headers').get_variable('libdrm_dep')
 
 bragi_gen = generator(bragi, arguments: [
-		'-l', 'frigg',
-		'--protobuf',
 		'@INPUT@',
-		'@OUTPUT@'
+		'-o',
+		'@OUTPUT@',
+		'cpp', '-l', 'frigg',
+		'--protobuf',
 	],
 	output: '@BASENAME@.frigg_bragi.hpp')
 
@@ -113,6 +114,7 @@ if not no_headers
 		'include/abi-bits/packet.h',
 		'include/abi-bits/inotify.h',
 		'include/abi-bits/clockid_t.h',
+		'include/abi-bits/ipc.h',
 		'include/abi-bits/shm.h',
 		'include/abi-bits/mqueue.h',
 		'include/abi-bits/suseconds_t.h',

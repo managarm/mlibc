@@ -1,1 +1,1 @@
-../../../../abis/linux/shm.h
+../../../../abis/astral/shm.h

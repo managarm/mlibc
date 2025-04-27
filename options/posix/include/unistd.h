@@ -233,6 +233,13 @@ extern "C" {
 #define _SC_TRACE_INHERIT 183
 #define _SC_TRACE_LOG 184
 
+/* Port-specific _SC_* define values */
+
+#if defined (__ironclad__)
+#define _SC_TOTAL_PAGES 1000
+#define _SC_HOST_OPEN_MAX 1001
+#endif /* defined (__ironclad__) */
+
 #define STDERR_FILENO 2
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1

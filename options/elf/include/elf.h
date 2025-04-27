@@ -322,6 +322,22 @@ enum {
 	R_68K_TLS_TPREL32= 42
 };
 
+enum {
+	R_LARCH_NONE = 0,
+	R_LARCH_32 = 1,
+	R_LARCH_64 = 2,
+	R_LARCH_RELATIVE = 3,
+	R_LARCH_COPY = 4,
+	R_LARCH_JUMP_SLOT = 5,
+	R_LARCH_TLS_DTPMOD32 = 6,
+	R_LARCH_TLS_DTPMOD64 = 7,
+	R_LARCH_TLS_DTPREL32 = 8,
+	R_LARCH_TLS_DTPREL64 = 9,
+	R_LARCH_TLS_TPREL32 = 10,
+	R_LARCH_TLS_TPREL64 = 11,
+	R_LARCH_IRELATIVE = 12
+};
+
 typedef struct {
 	Elf32_Addr r_offset;
 	Elf32_Word r_info;
@@ -612,6 +628,7 @@ typedef struct {
 #define EM_BLACKFIN		106
 #define EM_AARCH64		183
 #define EM_RISCV		243
+#define EM_LOONGARCH	258
 
 /* Linux notes this value as being interim; however applications are using this (Qt6), so we define it here. */
 #define EM_ALPHA		0x9026

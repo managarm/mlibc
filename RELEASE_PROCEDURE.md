@@ -1,18 +1,33 @@
-# Versioning
+# Release Procedure
 
-mlibc uses semantic versioning to denote releases.
-A bump in the major version signals an ABI break.
-A bump in the minor version signals a newly released set of features, while still maintaining ABI.
-A bump in the patch signals a bug-fix, while not adding new features.
+mlibc uses [semantic versioning v2.0.0](https://semver.org/spec/v2.0.0.html) to denote releases.
 
-# Release schedule
+In short:
+- A bump in the major version signals an ABI or API break, or otherwise any other major change
+involving compatibility breakage.
+- A bump in the minor version signals a newly released set of features, while still maintaining
+compatibility.
+- A bump in the patch signals a bug-fix, while not adding new features.
 
-A minor or major version will be released every two months (every even month). A release is turned into a major one
-when there is a pending ABI break, given that the ABI hasn't been broken in the last 6 months.
-A patch version will be released on-demand, as bugs are fixed.
+The `master` branch is where active development occurs, and where PRs get merged into. Changes
+that are deemed appropriate to be backported to a major version branch (including the current,
+latest major version branch) are cherry-picked there.
 
-When a new minor or major version is to be released, first a release candiate ("rc") will
-be released. This release candiate will become the definite release after a week. During
-this time, end-users shall test the rc and determine if there are breaking changes. Several
-rc's can be released (``rc-1``, ``rc-2``, etc.). Once the rc is confirmed to be in a stable
-state, the final version is to be released.
+Releases are tagged off of their respective major version branches once they are ready.
+
+Major versions get a new, dedicated branch, which is created from `master` when deemed
+necessary, usually shortly before the tagging of the first release in the new major version
+branch. This branch is called `vN.x`, where `N` is the number of the major version
+(and `x` is just a literal "x").
+
+Submodules are fixed to specific commits when a major version branch is created.
+
+The first tag on the major version branch is the `vN.0.0` release.
+
+Minor versions and patch versions are tagged on their respective major version branches
+after the necessary commits are backported onto said branch from `master`.
+
+## ABI_BREAKS.md
+
+The `ABI_BREAKS.md` file should be updated in `master` alongside any newly merged commit that
+does break ABI, in order to keep track of these changes.
