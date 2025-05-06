@@ -37,6 +37,7 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
+        - "-Dwerror=true"
         - "-Dc_args=['-Wno-error=maybe-uninitialized', '-Wno-unknown-warning-option']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized', '-Wno-unknown-warning-option']"
         - "-Dlibgcc_dependency=false"
@@ -44,7 +45,6 @@ packages:
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
-        - "-Dwerror=true"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
@@ -72,6 +72,7 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
+        - "-Dwerror=true"
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dlibgcc_dependency=false"
@@ -79,7 +80,6 @@ packages:
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=static"
-        - "-Dwerror=true"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
@@ -104,6 +104,7 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
+        - "-Dwerror=true"
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dlibgcc_dependency=false"
@@ -111,7 +112,6 @@ packages:
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=shared"
-        - "-Dwerror=true"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
@@ -137,6 +137,7 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
+        - "-Dwerror=true"
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dlibgcc_dependency=false"
@@ -144,7 +145,6 @@ packages:
         - "-Dbuild_tests=true"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
-        - "-Dwerror=true"
         - "-Dposix_option=disabled"
         - "-Dlinux_option=disabled"
         - "-Dglibc_option=disabled"
@@ -174,12 +174,12 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
+        - "-Dwerror=true"
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dlibgcc_dependency=false"
         - "-Duse_freestnd_hdrs=enabled"
         - "-Db_sanitize=undefined"
-        - "-Dwerror=true"
         - "-Dheaders_only=true"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
