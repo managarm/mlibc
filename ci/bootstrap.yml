@@ -37,8 +37,6 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
-        - "-Dc_args=['-Wno-error=maybe-uninitialized', '-Wno-unknown-warning-option']"
-        - "-Dcpp_args=['-Wno-error=maybe-uninitialized', '-Wno-unknown-warning-option']"
         - "-Dlibgcc_dependency=false"
         - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
@@ -49,8 +47,6 @@ packages:
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
         environ:
-          CFLAGS: '-Wno-error=maybe-uninitialized'
-          CXXFLAGS: '-Wno-error=maybe-uninitialized'
           LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
     build:
       - args: ['ninja']
@@ -72,8 +68,6 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
-        - "-Dc_args=['-Wno-error=maybe-uninitialized']"
-        - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dlibgcc_dependency=false"
         - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
@@ -104,8 +98,6 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
-        - "-Dc_args=['-Wno-error=maybe-uninitialized']"
-        - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dlibgcc_dependency=false"
         - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
@@ -137,8 +129,6 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
-        - "-Dc_args=['-Wno-error=maybe-uninitialized']"
-        - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dlibgcc_dependency=false"
         - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
@@ -174,8 +164,6 @@ packages:
         - '--prefix=/usr'
         - '--libdir=lib'
         - '--buildtype=debugoptimized'
-        - "-Dc_args=['-Wno-error=maybe-uninitialized']"
-        - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dlibgcc_dependency=false"
         - "-Duse_freestnd_hdrs=enabled"
         - "-Db_sanitize=undefined"

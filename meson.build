@@ -483,8 +483,8 @@ if not headers_only
 	]
 
 	if c_compiler.get_id() == 'clang'
-		libc_cpp_args += ['-fno-sanitize=function', '-Wno-vla-cxx-extension']
-		ld_cpp_args += ['-fno-sanitize=function']
+		libc_cpp_args += ['-Wno-vla-cxx-extension']
+		ld_cpp_args += []
 	endif
 
 	libc_all_sources = [
