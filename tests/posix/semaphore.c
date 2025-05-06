@@ -14,7 +14,7 @@ int main() {
 	assert(sem_trywait(&sem) == 0);
 	assert(sem_trywait(&sem) == 0);
 	assert(sem_trywait(&sem) == -1);
-	assert(errno = EAGAIN);
+	assert(errno == EAGAIN);
 	assert(sem_destroy(&sem) == 0);
 
 	sem_init(&sem, 0, 1);
