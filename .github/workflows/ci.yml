@@ -22,7 +22,7 @@ jobs:
           - name: Install prerequisites
             run: |
                 apt-get update
-                apt-get install -y ninja-build qemu-user \
+                apt-get install -y meson ninja-build qemu-user \
                                 python3-setuptools python3-jsonschema \
                                 python3-pexpect python3-pip netbase clang lld \
                                 git rsync wget
@@ -34,7 +34,7 @@ jobs:
                   *) \
                     apt-get install -y gcc-${{matrix.arch}}-linux-gnu g++-${{matrix.arch}}-linux-gnu;; \
                 esac
-                pip install --break-system-packages -U xbstrap pyexpect meson
+                pip install --break-system-packages -U xbstrap pyexpect
           - name: Prepare directories
             run: |
                 mkdir src/
@@ -111,10 +111,10 @@ jobs:
           - name: Install prerequisites
             run: |
                 apt-get update
-                apt-get install -y ninja-build qemu-user \
+                apt-get install -y meson ninja-build qemu-user \
                                 python3-setuptools python3-jsonschema \
                                 python3-pip git rsync wget
-                pip install --break-system-packages -U xbstrap meson
+                pip install --break-system-packages -U xbstrap
           - if: ${{ matrix.sysdeps == 'managarm' }}
             name: Checkout bootstrap-managarm
             uses: actions/checkout@v2
