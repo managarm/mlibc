@@ -18,10 +18,10 @@ jobs:
       - name: Install prerequisites
         run: |
           apt-get update
-          apt-get install -y ninja-build qemu-user \
+          apt-get install -y meson ninja-build qemu-user \
                              python3-setuptools python3-jsonschema \
                              python3-pip abigail-tools git rsync wget file
-          pip install --break-system-packages -U xbstrap pyexpect meson
+          pip install --break-system-packages -U xbstrap pyexpect
 
       - name: Checkout base branch
         if: ${{ github.base_ref }}
