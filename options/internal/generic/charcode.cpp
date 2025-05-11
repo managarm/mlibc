@@ -58,31 +58,23 @@ struct utf8_charcode {
 		// Encodes a single character from wseq + the current state and stores it in nseq.
 		// TODO: Convert decode_state to the same strategy.
 		charcode_error operator() (code_seq<char> &nseq, code_seq<const codepoint> &wseq) {
+#define WC_BUMP(wc) { *nseq.it = (wc); \
+	if (!(bool)nseq) { return charcode_error::output_overflow; } ++nseq.it; }
 			auto wc = *wseq.it;
 			if (wc <= 0x7F) {
-				*nseq.it = wc;
-				++nseq.it;
+				WC_BUMP(wc)
 			} else if (wc <= 0x7FF) {
-				*nseq.it = 0xC0 | (wc >> 6);
-				++nseq.it;
-				*nseq.it = 0x80 | (wc & 0x3f);
-				++nseq.it;
+				WC_BUMP(0xC0 | (wc >> 6))
+				WC_BUMP(0x80 | (wc & 0x3f))
 			} else if (wc <= 0xFFFF) {
-				*nseq.it = 0xE0 | (wc >> 12);
-				++nseq.it;
-				*nseq.it = 0x80 | ((wc >> 6) & 0x3f);
-				++nseq.it;
-				*nseq.it = 0x80 | (wc & 0x3f);
-				++nseq.it;
+				WC_BUMP(0xE0 | (wc >> 12))
+				WC_BUMP(0x80 | ((wc >> 6) & 0x3f))
+				WC_BUMP(0x80 | (wc & 0x3f))
 			} else if (wc <= 0x10FFFF) {
-				*nseq.it = 0xF0 | (wc >> 18);
-				++nseq.it;
-				*nseq.it = 0x80 | ((wc >> 12) & 0x3f);
-				++nseq.it;
-				*nseq.it = 0x80 | ((wc >> 6) & 0x3f);
-				++nseq.it;
-				*nseq.it = 0x80 | (wc & 0x3f);
-				++nseq.it;
+				WC_BUMP(0xF0 | (wc >> 18))
+				WC_BUMP(0x80 | ((wc >> 12) & 0x3f))
+				WC_BUMP(0x80 | ((wc >> 6) & 0x3f))
+				WC_BUMP(0x80 | (wc & 0x3f))
 			} else {
 				return charcode_error::illegal_input;
 			}
