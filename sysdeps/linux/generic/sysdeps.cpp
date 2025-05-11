@@ -587,14 +587,14 @@ int sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
 }
 
 int sys_getresuid(uid_t *ruid, uid_t *euid, uid_t *suid) {
-	auto ret = do_syscall(SYS_getresuid, &ruid, &euid, &suid);
+	auto ret = do_syscall(SYS_getresuid, ruid, euid, suid);
         if (int e = sc_error(ret); e)
                 return e;
 	return 0;
 }
 
 int sys_getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid) {
-	auto ret = do_syscall(SYS_getresgid, &rgid, &egid, &sgid);
+	auto ret = do_syscall(SYS_getresgid, rgid, egid, sgid);
         if (int e = sc_error(ret); e)
                 return e;
 	return 0;
