@@ -94,6 +94,15 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 [[gnu::weak]] int sys_pidfd_getpid(int fd, pid_t *outpid);
 [[gnu::weak]] int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info, unsigned int flags);
 
+[[gnu::weak]] int sys_process_vm_readv(pid_t pid,
+		const struct iovec *local_iov, unsigned long liovcnt,
+		const struct iovec *remote_iov, unsigned long riovcnt,
+		unsigned long flags, ssize_t *out);
+[[gnu::weak]] int sys_process_vm_writev(pid_t pid,
+		const struct iovec *local_iov, unsigned long liovcnt,
+		const struct iovec *remote_iov, unsigned long riovcnt,
+		unsigned long flags, ssize_t *out);
+
 } // namespace mlibc
 
 #endif // MLIBX_LINUX_SYSDEPS
