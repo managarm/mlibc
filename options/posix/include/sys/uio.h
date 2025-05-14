@@ -1,11 +1,13 @@
 #ifndef _SYS_UIO_H
 #define _SYS_UIO_H
 
+#include <abi-bits/pid_t.h>
 #include <bits/posix/iovec.h>
 #include <bits/ssize_t.h>
 #include <bits/off_t.h>
 #include <bits/size_t.h>
 #include <limits.h>
+#include <mlibc-config.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,5 +29,9 @@ ssize_t pwritev(int __fd, const struct iovec *__iov, int __iovcnt, off_t __offse
 #ifdef __cplusplus
 }
 #endif
+
+#if __MLIBC_LINUX_OPTION
+#include <bits/linux/linux_uio.h>
+#endif /* __MLIBC_LINUX_OPTION */
 
 #endif /* _SYS_UIO_H */
