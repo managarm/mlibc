@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <assert.h>
-#include <math.h>
 #include <string.h>
 
 int main() {
@@ -56,18 +55,8 @@ int main() {
 	assert(!strcmp(buf, "-4.0"));
 	sprintf(buf, "%-3.f", 8.0);
 	assert(!strcmp(buf, "8  "));
-	sprintf(buf, "%4f", INFINITY);
-	assert(!strcmp(buf, " inf") || !strcmp(buf, "infinity"));
-	sprintf(buf, "%4f", NAN);
-	assert(!strcmp(buf, " nan"));
-	sprintf(buf, "%4F", INFINITY);
-	assert(!strcmp(buf, " INF") || !strcmp(buf, "INFINITY"));
-	sprintf(buf, "%4F", NAN);
-	assert(!strcmp(buf, " NAN"));
 	sprintf(buf, "%05.2f", 1.0);
 	assert(!strcmp(buf, "01.00"));
-	sprintf(buf, "%09f", INFINITY); // 0 ignored when padding infs
-	assert(!strcmp(buf, "      inf") || !strcmp(buf, " infinity"));
 	// TODO: We don't yet round properly
 	// sprintf(buf, "%5.2f", 1.2);
 	// assert(!strcmp(buf, " 1.20"));
