@@ -2,6 +2,7 @@
 #include <drm/drm_fourcc.h>
 
 #include <bits/ensure.h>
+#include <bits/errors.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
@@ -191,8 +192,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			for (size_t i = 0; i < resp.drm_fb_ids_size(); i++) {
 				if (i >= param->count_fbs)
@@ -266,7 +267,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			for (size_t i = 0; i < resp.drm_encoders_size(); i++) {
 				if (i >= param->count_encoders)
@@ -462,7 +464,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			param->crtc_id = resp.drm_crtc_id();
 			param->fb_id = resp.drm_fb_id();
@@ -508,7 +511,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			// FIXME: send this via a helix_ng buffer
 			for (size_t i = 0; i < resp.drm_plane_res_size(); i++) {
@@ -547,7 +551,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			param->encoder_type = resp.drm_encoder_type();
 			param->crtc_id = resp.drm_crtc_id();
@@ -795,7 +800,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			param->fb_id = resp.drm_fb_id();
 			param->x = resp.drm_x();
