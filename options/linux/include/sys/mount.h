@@ -76,6 +76,11 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
+#define MNT_FORCE 1
+#define MNT_DETACH (1<<1)
+#define MNT_EXPIRE (1<<2)
+#define UMOUNT_NOFOLLOW (1<<3)
+
 int mount(const char *__source, const char *__target,
 		const char *__fstype, unsigned long __flags, const void *__data);
 int umount(const char *__target);
