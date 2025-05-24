@@ -207,9 +207,18 @@ struct spwd *getspnam(const char *name) {
 	return res;
 }
 
-struct spwd *fgetspent(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+struct spwd *fgetspent(FILE *f) {
+	static struct spwd sp;
+	static char *line;
+	struct spwd *res = 0;
+	size_t size = 0;
+	int cs;
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
+	if(getline(&line, &size, f) >= 0 && __parsespent(line, &sp) >= 0) {
+		res = &sp;
+	}
+	pthread_setcancelstate(cs, 0);
+	return res;
 }
 
 void endspent(void) {
