@@ -36,12 +36,11 @@
 #define SYSCALL_GETUID               24
 #define SYSCALL_RENAME               25
 #define SYSCALL_LISTPROCS            26
-#define SYSCALL_SPAWN                27
 #define SYSCALL_GETTID               28
 #define SYSCALL_MANAGE_TCLUSTER      29
 #define SYSCALL_FCNTL                30
 #define SYSCALL_EXIT_THREAD          31
-#define SYSCALL_GETRANDOM            32
+#define SYSCALL_GETENTROPY           32
 #define SYSCALL_MPROTECT             33
 #define SYSCALL_SYNC                 34
 #define SYSCALL_SET_MAC_CAPABILITIES 35
@@ -124,6 +123,8 @@
 #define SYSCALL_MEMINFO             112
 #define SYSCALL_LISTPCI             113
 #define SYSCALL_GETCPUINFO          114
+#define SYSCALL_SOCKETPAIR          115
+#define SYSCALL_MADVISE             116
 
 #if defined(__x86_64__)
 #define SYSCALL0(NUM) ({ \
