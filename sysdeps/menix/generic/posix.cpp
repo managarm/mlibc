@@ -475,12 +475,26 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 	return 0;
 }
 
-int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
-	auto r = menix_syscall(SYSCALL_POLL, (size_t)fds, count, timeout);
+int sys_ppoll(
+    struct pollfd *fds,
+    nfds_t count,
+    const struct timespec *timeout,
+    const sigset_t *sigmask,
+    int *num_events
+) {
+	auto r = menix_syscall(SYSCALL_PPOLL, (size_t)fds, count, (size_t)timeout, (size_t)sigmask);
 	if (r.error)
 		return r.error;
 	*num_events = (int)r.value;
 	return 0;
+}
+
+int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
+	struct timespec ts;
+	ts.tv_sec = timeout / 1000;
+	ts.tv_nsec = (timeout % 1000) * 1000000;
+
+	return sys_ppoll(fds, count, timeout != -1 ? &ts : NULL, NULL, num_events);
 }
 
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
