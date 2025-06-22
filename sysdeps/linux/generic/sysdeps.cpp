@@ -17,6 +17,7 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/rtld-sysdeps.hpp>
 #include <mlibc/thread-entry.hpp>
 #include <sys/syscall.h>
 
@@ -79,6 +80,26 @@ extern "C" void *__m68k_read_tp() {
 }
 #endif
 
+#if defined(__powerpc64__)
+typedef struct {
+	uint64_t hwcap_extn;
+	uint64_t hwcap;
+	uint32_t __unused;
+	uint32_t at_platform;
+	uintptr_t dso_slot2;
+	uintptr_t dso_slot1;
+	uintptr_t tar_save;
+	void *__private_ss;
+	uintptr_t ebb_handler;
+	uintptr_t ebb_ctx_pointer;
+	uintptr_t ebb_reserved1;
+	uintptr_t ebb_reserved2;
+	uintptr_t pointer_guard;
+	uintptr_t stack_guard;
+	void *dtv;
+} tcbhead_t;
+#endif
+
 int sys_tcb_set(void *pointer) {
 #if defined(__x86_64__)
 	auto ret = do_syscall(SYS_arch_prctl, 0x1002 /* ARCH_SET_FS */, pointer);
@@ -112,6 +133,16 @@ int sys_tcb_set(void *pointer) {
 #elif defined(__loongarch64)
 	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
 	asm volatile("move $tp, %0" ::"r"(thread_data));
+#elif defined(__powerpc64__)
+	// todo(localcc): fix this?
+	//	tcbhead_t* tcbhead = reinterpret_cast<tcbhead_t*>(reinterpret_cast<uintptr_t>(pointer) -
+	// sizeof(tcbhead_t)); 	const auto& aux_vec = get_aux_vec();
+	//    tcbhead->hwcap = (static_cast<uint64_t>(aux_vec.at_hwcap) << 32) | aux_vec.at_hwcap2;
+	//    tcbhead->hwcap_extn = (static_cast<uint64_t>(aux_vec.at_hwcap3) << 32) |
+	//    aux_vec.at_hwcap4; tcbhead->at_platform = aux_vec.at_platform;
+
+	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + 0x7000 + sizeof(Tcb);
+	asm volatile("mr 13, %0" ::"r"(thread_data));
 #else
 #error "Missing architecture specific code."
 #endif
@@ -663,6 +694,11 @@ int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
 	// TODO: We should change the sysdep so that we don't need to do this.
 	auto tp = reinterpret_cast<char *>(tcb) + sizeof(Tcb) - 0x10;
 	tcb = reinterpret_cast<void *>(tp);
+#elif defined(__powerpc64__)
+	// TP should point to the address 0x7000 bytes after the TCB.
+	// TODO: We should change the sysdep so that we don't need to do this.
+	auto tp = reinterpret_cast<char *>(tcb) + sizeof(Tcb) + 0x7000;
+	tcb = reinterpret_cast<void *>(tp);
 #elif defined(__i386__)
 	/* get the entry number, as we don't request a new one here */
 	uint32_t gs;
@@ -712,6 +748,8 @@ int sys_before_cancellable_syscall(ucontext_t *uct) {
 	auto pc = reinterpret_cast<void *>(uct->uc_mcontext.gregs[R_PC]);
 #elif defined(__loongarch64)
 	auto pc = reinterpret_cast<void *>(uct->uc_mcontext.pc);
+#elif defined(__powerpc64__)
+	auto pc = reinterpret_cast<void *>(uct->uc_mcontext.regs->pc);
 #else
 #error "Missing architecture specific code."
 #endif

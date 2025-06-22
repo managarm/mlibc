@@ -137,6 +137,27 @@ struct stat {
 	ino_t st_ino;
 };
 
+#elif defined(__powerpc64__)
+
+struct stat {
+	unsigned long st_dev;
+	unsigned long st_ino;
+	unsigned long st_nlink;
+	mode_t st_mode;
+	uid_t st_uid;
+	gid_t st_gid;
+	unsigned long st_rdev;
+	long st_size;
+	unsigned long st_blksize;
+	unsigned long st_blocks;
+	struct timespec st_atim;
+	struct timespec st_mtim;
+	struct timespec st_ctim;
+	unsigned long __unused4;
+	unsigned long __unused5;
+	unsigned long __unused6;
+};
+
 #endif
 
 #define stat64 stat

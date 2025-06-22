@@ -809,6 +809,9 @@
 #ifdef __NR_open_tree
 #define SYS_open_tree __NR_open_tree
 #endif
+#ifdef __NR_open_tree_attr
+#define SYS_open_tree_attr __NR_open_tree_attr
+#endif
 #ifdef __NR_openat
 #define SYS_openat __NR_openat
 #endif

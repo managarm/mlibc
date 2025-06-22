@@ -67,4 +67,7 @@ long double nextafterl(long double x, long double y) {
 		FORCE_EVAL(x * x + ux.f * ux.f);
 	return ux.f;
 }
+#elif LDBL_MANT_DIG == 106 && LDBL_MAX_EXP == 1024
+// todo(localcc): broken implementation to make things compile
+long double nextafterl(long double x, long double y) { return 0; }
 #endif

@@ -34,4 +34,22 @@ int __fpclassifyl(long double x) {
 		return u.i2.lo | u.i2.hi ? FP_NAN : FP_INFINITE;
 	return FP_NORMAL;
 }
+#elif LDBL_MANT_DIG == 106 && LDBL_MAX_EXP == 1024
+int __fpclassifyl(long double x) {
+	union ldshape u = {x};
+
+	if (isnan(u.i.hi))
+		return FP_NAN;
+	if (isinf(u.i.hi))
+		return FP_INFINITE;
+
+	if (u.i.hi == 0.0) {
+		if (u.i.lo == 0.0)
+			return FP_ZERO;
+		else
+			return fpclassify(u.i.lo);
+	}
+
+	return fpclassify(u.i.hi);
+}
 #endif

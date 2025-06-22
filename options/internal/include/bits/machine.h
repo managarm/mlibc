@@ -118,6 +118,16 @@ struct __mlibc_jmpbuf_register_state {
 	double fs6;
 	double fs7;
 };
+#elif defined(__powerpc64__)
+struct __mlibc_jmpbuf_register_state {
+	uint64_t gprs[17];
+	uint64_t fprs[17];
+	uint64_t lr;
+	uint64_t sp;
+	uint64_t toc;
+	uint32_t cr_fields;
+	// todo(localcc): VMX support
+};
 #else
 #error "Missing architecture specific code"
 #endif

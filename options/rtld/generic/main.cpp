@@ -17,7 +17,9 @@
 #include "linker.hpp"
 
 #if __MLIBC_POSIX_OPTION
+
 #include <dlfcn.h>
+
 #endif
 
 #define HIDDEN __attribute__((__visibility__("hidden")))
@@ -58,6 +60,10 @@ frg::manual_box<frg::vector<frg::string_view, MemoryAllocator>> preloads;
 static SharedObject *executableSO;
 extern HIDDEN char __ehdr_start[];
 
+#if defined(__powerpc64__)
+uintptr_t ldsoBase;
+#endif
+
 // Global debug interface variable
 DebugInterface globalDebugInterface;
 
@@ -74,12 +80,15 @@ uintptr_t getLdsoBase() {
 	return runtime_dynamic - linktime_dynamic;
 #elif defined(__riscv)
 	return reinterpret_cast<uintptr_t>(&__ehdr_start);
+#elif defined(__powerpc64__)
+	return ldsoBase;
 #else
 #error Unknown architecture!
 #endif
 }
 
-#if !defined(__m68k__)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(__riscv) || defined(__i386__)           \
+    || defined(__loongarch64)
 // Relocates the dynamic linker (i.e. this DSO) itself.
 // Assumptions:
 // - There are no references to external symbols.
@@ -180,7 +189,159 @@ extern "C" void relocateSelf() {
 		}
 	}
 }
-#else
+#elif defined(__powerpc64__)
+// ppc64 elfv1 can't rely on the OPD before relocations, therefore calling the getLdsoBase function
+// will fail
+extern "C" void relocateSelfPPC64(uintptr_t ldso_base) {
+	size_t rela_offset = 0;
+	size_t rela_size = 0;
+	size_t rel_offset = 0;
+	size_t rel_size = 0;
+	size_t relr_offset = 0;
+	size_t relr_size = 0;
+
+	size_t symtab_offset = 0;
+	size_t relplt_offset = 0;
+	size_t relplt_size = 0;
+	uint64_t relplt_type = 0;
+	for (size_t i = 0; _DYNAMIC[i].d_tag != DT_NULL; i++) {
+		auto ent = &_DYNAMIC[i];
+		switch (ent->d_tag) {
+			case DT_REL:
+				rel_offset = ent->d_un.d_ptr;
+				break;
+			case DT_RELSZ:
+				rel_size = ent->d_un.d_val;
+				break;
+			case DT_RELA:
+				rela_offset = ent->d_un.d_ptr;
+				break;
+			case DT_RELASZ:
+				rela_size = ent->d_un.d_val;
+				break;
+			case DT_RELR:
+				relr_offset = ent->d_un.d_ptr;
+				break;
+			case DT_RELRSZ:
+				relr_size = ent->d_un.d_val;
+				break;
+			case DT_JMPREL:
+				relplt_offset = ent->d_un.d_ptr;
+				break;
+			case DT_PLTRELSZ:
+				relplt_size = ent->d_un.d_val;
+				break;
+			case DT_PLTREL:
+				relplt_type = ent->d_un.d_val;
+				break;
+			case DT_SYMTAB:
+				symtab_offset = ent->d_un.d_ptr;
+				break;
+		}
+	}
+
+	for (size_t disp = 0; disp < rela_size; disp += sizeof(elf_rela)) {
+		auto reloc = reinterpret_cast<elf_rela *>(ldso_base + rela_offset + disp);
+
+		auto type = ELF_R_TYPE(reloc->r_info);
+		if (ELF_R_SYM(reloc->r_info))
+			__builtin_trap();
+
+		auto p = reinterpret_cast<uint64_t *>(ldso_base + reloc->r_offset);
+		switch (type) {
+			case R_RELATIVE:
+				*p = ldso_base + reloc->r_addend;
+				break;
+			default:
+				__builtin_trap();
+		}
+	}
+
+	for (size_t disp = 0; disp < rel_size; disp += sizeof(elf_rel)) {
+		auto reloc = reinterpret_cast<elf_rel *>(ldso_base + rel_offset + disp);
+
+		auto type = ELF_R_TYPE(reloc->r_info);
+		if (ELF_R_SYM(reloc->r_info))
+			__builtin_trap();
+
+		auto p = reinterpret_cast<uint64_t *>(ldso_base + reloc->r_offset);
+		switch (type) {
+			case R_RELATIVE:
+				*p += ldso_base;
+				break;
+			default:
+				__builtin_trap();
+		}
+	}
+
+	elf_addr *addr = nullptr;
+	for (size_t disp = 0; disp < relr_size; disp += sizeof(elf_relr)) {
+		auto entry = *(elf_relr *)(ldso_base + relr_offset + disp);
+
+		// Even entry indicates the beginning address.
+		if (!(entry & 1)) {
+			addr = (elf_addr *)(ldso_base + entry);
+			__ensure(addr);
+			*addr++ += ldso_base;
+		} else {
+			// Odd entry indicates entry is a bitmap of the subsequent locations to be relocated.
+
+			// The first bit of an entry is always a marker about whether the entry is an address or
+			// a bitmap, discard it.
+			entry >>= 1;
+
+			for (int i = 0; entry; ++i) {
+				if (entry & 1) {
+					addr[i] += ldso_base;
+				}
+				entry >>= 1;
+			}
+
+			// Each entry describes at max 63 (on 64bit) or 31 (on 32bit) subsequent locations.
+			addr += CHAR_BIT * sizeof(elf_relr) - 1;
+		}
+	}
+
+	// this is mostly copied from linker.cpp, but we need plt relocations here already
+	bool is_rela = relplt_type == DT_RELA;
+	size_t plt_rel_size = is_rela ? sizeof(elf_rela) : sizeof(elf_rel);
+	for (size_t disp = 0; disp < relplt_size; disp += plt_rel_size) {
+		elf_info type;
+		elf_info symbol_index;
+
+		uintptr_t rel_addr;
+		uintptr_t addend [[maybe_unused]] = 0;
+
+		if (is_rela) {
+			auto reloc = reinterpret_cast<elf_rela *>(ldso_base + relplt_offset + disp);
+			type = ELF_R_TYPE(reloc->r_info);
+			symbol_index = ELF_R_SYM(reloc->r_info);
+			rel_addr = ldso_base + reloc->r_offset;
+			addend = reloc->r_addend;
+		} else {
+			auto reloc = reinterpret_cast<elf_rel *>(ldso_base + relplt_offset + disp);
+			type = ELF_R_TYPE(reloc->r_info);
+			symbol_index = ELF_R_SYM(reloc->r_info);
+			rel_addr = ldso_base + reloc->r_offset;
+		}
+
+		elf_sym *symbol =
+		    reinterpret_cast<elf_sym *>(ldso_base + symtab_offset + symbol_index * sizeof(elf_sym));
+
+		// this only resolves jump slots in the current ldso, others will get
+		// resolved incorrectly but ld.so should not rely on external deps either way
+		switch (type) {
+			case R_JUMP_SLOT:
+				*reinterpret_cast<uintptr_t *>(rel_addr) = ldso_base + symbol->st_value;
+				break;
+			default:
+				__builtin_trap();
+		}
+	}
+
+	ldsoBase = ldso_base;
+}
+#elif defined(__m68k__)
 // m68k needs a tighter relocation function to avoid itself relying on the GOT.
 extern "C" void relocateSelf68k(elf_dyn *dynamic, uintptr_t ldso_base) {
 	size_t rela_offset = 0;
@@ -215,7 +376,9 @@ extern "C" void relocateSelf68k(elf_dyn *dynamic, uintptr_t ldso_base) {
 		}
 	}
 }
-#endif // !defined(__m68k__)
+#else
+#error Unknown architecture
+#endif
 #endif
 
 extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
@@ -405,6 +568,16 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 				    << " in program interpreter" << frg::endlog;
 				break;
 			}
+#if defined(__powerpc64__)
+			case DT_LOPROC:
+			case 0x70000003: // unknown
+			                 // we handle those on powerpc
+			case DT_JMPREL:
+			case DT_PLTRELSZ:
+			case DT_PLTREL:
+				continue;
+#endif
+
 			default:
 				mlibc::panicLogger() << "rtld: unexpected dynamic entry " << ent->d_tag
 				                     << " in program interpreter" << frg::endlog;

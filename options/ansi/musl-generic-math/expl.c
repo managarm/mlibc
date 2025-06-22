@@ -113,7 +113,8 @@ long double expl(long double x) {
 	x = 1.0 + 2.0 * x;
 	return scalbnl(x, k);
 }
-#elif LDBL_MANT_DIG == 113 && LDBL_MAX_EXP == 16384
+#elif (LDBL_MANT_DIG == 113 && LDBL_MAX_EXP == 16384)                                              \
+    || (LDBL_MANT_DIG == 106 && LDBL_MAX_EXP == 1024)
 // TODO: broken implementation to make things compile
 long double expl(long double x) { return exp(x); }
 #endif

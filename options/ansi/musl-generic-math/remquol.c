@@ -119,4 +119,7 @@ long double remquol(long double x, long double y, int *quo) {
 	*quo = sx ^ sy ? -(int)q : (int)q;
 	return sx ? -x : x;
 }
+#elif LDBL_MANT_DIG == 106 && LDBL_MAX_EXP == 1024
+// todo(localcc): broken implementation to make things compile
+long double remquol(long double x, long double y, int *quo) { return 0; }
 #endif

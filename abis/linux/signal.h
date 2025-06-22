@@ -4,6 +4,7 @@
 #include <abi-bits/pid_t.h>
 #include <abi-bits/sigevent.h>
 #include <abi-bits/uid_t.h>
+#include <asm/types.h>
 #include <bits/size_t.h>
 #include <stdint.h>
 #include <time.h>
@@ -152,8 +153,14 @@ typedef struct {
 #define SIGUNUSED SIGSYS
 #define SIGCANCEL 32
 
+#if defined(__powerpc64__)
+#define MINSIGSTKSZ 8192
+#define SIGSTKSZ 32768
+#else
 #define MINSIGSTKSZ 2048
 #define SIGSTKSZ 8192
+#endif
+
 #define SS_ONSTACK 1
 #define SS_DISABLE 2
 
@@ -619,6 +626,46 @@ typedef struct __ucontext {
 	sigset_t uc_sigmask;
 	long __uc_pad;
 	mcontext_t uc_mcontext;
+} ucontext_t;
+
+#elif defined(__powerpc64__)
+
+struct sigaltstack {
+	void *ss_sp;
+	int ss_flags;
+	size_t ss_size;
+};
+
+typedef unsigned long greg_t, gregset_t[48];
+typedef double fpreg_t, fpregset_t[33];
+
+typedef __vector128 vrreg_t;
+typedef vrreg_t vrregset_t[34];
+
+struct pt_regs {
+	greg_t gpr[32];
+	greg_t pc;
+};
+
+struct sigcontext {
+	unsigned long _unused[4];
+	int signal;
+	int _pad0;
+	unsigned long handler;
+	unsigned long oldmask;
+	struct pt_regs *regs;
+	gregset_t gp_regs;
+	fpregset_t fp_regs;
+	vrreg_t *v_regs;
+	long vmx_reserve[101];
+};
+
+typedef struct __ucontext {
+	unsigned long uc_flags;
+	struct ucontext *uc_link;
+	stack_t uc_stack;
+	sigset_t uc_sigmask;
+	struct sigcontext uc_mcontext;
 } ucontext_t;
 
 #else

@@ -65,6 +65,18 @@ union ldshape {
 		uint64_t lo;
 	} i2;
 };
+#elif LDBL_MANT_DIG == 106 && LDBL_MAX_EXP == 1024 && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+union ldshape {
+	long double f;
+	struct {
+		double hi;
+		double lo;
+	} i;
+	struct {
+		uint64_t hi;
+		uint64_t lo;
+	} i1;
+};
 #else
 #error Unsupported long double representation
 #endif

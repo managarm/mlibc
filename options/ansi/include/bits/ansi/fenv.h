@@ -87,6 +87,21 @@
 #define FE_UPWARD 0x200
 #define FE_DOWNWARD 0x300
 
+#elif defined(__powerpc64__)
+
+#define FE_DIVBYZERO 0x4000000
+#define FE_INEXACT 0x2000000
+#define FE_INVALID 0x20000000
+#define FE_OVERFLOW 0x10000000
+#define FE_UNDERFLOW 0x8000000
+
+#define FE_ALL_EXCEPT (FE_DIVBYZERO | FE_INEXACT | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW)
+
+#define FE_TONEAREST 0
+#define FE_DOWNWARD 0b11
+#define FE_TOWARDZERO 0b01
+#define FE_UPWARD 0b10
+
 #else
 #error Unknown architecture
 #endif

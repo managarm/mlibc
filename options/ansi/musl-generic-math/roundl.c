@@ -30,4 +30,7 @@ long double roundl(long double x) {
 		y = -y;
 	return y;
 }
+#elif LDBL_MANT_DIG == 106 && LDBL_MAX_EXP == 1024
+// todo(localcc): broken implementation to make things compile
+long double roundl(long double x) { return 0; }
 #endif

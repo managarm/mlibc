@@ -333,7 +333,8 @@ long double __lgammal_r(long double x, int *sg) {
 		r = nadj - r;
 	return r;
 }
-#elif LDBL_MANT_DIG == 113 && LDBL_MAX_EXP == 16384
+#elif (LDBL_MANT_DIG == 113 && LDBL_MAX_EXP == 16384)                                              \
+    || (LDBL_MANT_DIG == 106 && LDBL_MAX_EXP == 1024)
 // TODO: broken implementation to make things compile
 double __lgamma_r(double x, int *sg);
 

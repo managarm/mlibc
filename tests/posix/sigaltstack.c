@@ -61,6 +61,10 @@ int main() {
 	asm volatile("addi.d $sp, $r0, 0\n"
 	             "\t"
 	             "st.d $r0, $sp, 0");
+#elif defined(__powerpc64__)
+	asm volatile("li 1, 0\n"
+	             "\t"
+	             "std 3, 0(1)");
 #else
 #error Unknown architecture
 #endif

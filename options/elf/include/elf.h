@@ -307,6 +307,20 @@ enum {
 	R_LARCH_IRELATIVE = 12
 };
 
+enum {
+	R_PPC64_NONE = 0,
+	R_PPC64_JMP_SLOT = 21,
+	R_PPC64_ADDR64 = 38,
+	R_PPC64_GLOB_DAT = 20,
+	R_PPC64_RELATIVE = 22,
+	R_PPC64_IRELATIVE = 248,
+	R_PPC64_COPY = 19,
+	R_PPC64_DTPMOD64 = 68,
+	R_PPC64_DTPREL64 = 78,
+	R_PPC64_TPREL64 = 73,
+	R_PPC64_TLS = 67
+};
+
 typedef struct {
 	Elf32_Addr r_offset;
 	Elf32_Word r_info;
@@ -332,14 +346,11 @@ typedef struct {
 typedef Elf32_Word Elf32_Relr;
 typedef Elf64_Xword Elf64_Relr;
 
-__MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_SYM(Elf64_Xword info) { return info >> 32; }
-__MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_TYPE(Elf64_Xword info) { return info & 0xFFFFFFFF; }
-__MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_INFO(Elf64_Xword sym, Elf64_Xword type) {
-	return ((((Elf64_Xword)(sym)) << 32) + (type));
-}
-
-__MLIBC_INLINE_DEFINITION Elf32_Word ELF32_R_SYM(Elf32_Word info) { return info >> 8; }
-__MLIBC_INLINE_DEFINITION Elf32_Word ELF32_R_TYPE(Elf32_Word info) { return info & 0xFF; }
+#define ELF64_R_SYM(info) (info >> 32)
+#define ELF64_R_TYPE(info) (info & 0xFFFFFFFF)
+#define ELF64_R_INFO(sym, type) ((((Elf64_Xword)(sym)) << 32) + (type))
+#define ELF32_R_SYM(info) (info >> 8)
+#define ELF32_R_TYPE(info) (info & 0xff)
 
 enum {
 	PT_NULL = 0,
@@ -439,7 +450,8 @@ enum {
 	DT_VERDEF = 0x6ffffffc,
 	DT_VERDEFNUM = 0x6ffffffd,
 	DT_VERNEED = 0x6ffffffe,
-	DT_VERNEEDNUM = 0x6fffffff
+	DT_VERNEEDNUM = 0x6fffffff,
+	DT_LOPROC = 0x70000000,
 };
 
 enum {

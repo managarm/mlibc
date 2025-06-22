@@ -48,4 +48,33 @@ int ilogbl(long double x) {
 	}
 	return e - 0x3fff;
 }
+#elif LDBL_MANT_DIG == 106 && LDBL_MAX_EXP == 1024
+int ilogbl(long double x) {
+	union ldshape u = {x};
+
+	uint64_t hx = u.i1.hi & 0x7fffffffffffffffLL;
+	if (hx <= 0x0010000000000000LL) {
+		if (hx == 0) {
+			return FP_ILOGB0;
+		} else {
+			hx <<= 11;
+			int ix = 0;
+			for (ix = -1022; hx > 0; hx <<= 1)
+				ix -= 1;
+			return ix;
+		}
+	} else if (hx < 0x7ff0000000000000LL) {
+		int hexp = (hx >> 52) - 0x3ff;
+		if ((hx & 0x000fffffffffffffLL) == 0) {
+			if ((u.i1.hi ^ u.i1.lo) < 0 && (u.i1.lo & 0x7fffffffffffffffLL) != 0)
+				hexp--;
+		}
+		return hexp;
+	} else if (FP_ILOGBNAN != INT_MAX) {
+		if (hx == 0x7ff0000000000000LL)
+			return INT_MAX;
+	}
+
+	return FP_ILOGBNAN;
+}
 #endif

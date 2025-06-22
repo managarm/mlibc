@@ -26,7 +26,10 @@ long double scalbnl(long double x, int n) {
 		}
 	}
 	u.f = 1.0;
-	u.i.se = 0x3fff + n;
+	u.i.se = exp_bias + n;
 	return x * u.f;
 }
+#elif LDBL_MANT_DIG == 106 && LDBL_MAX_EXP == 1024
+// todo(localcc): broken implementation to make things compile
+long double scalbnl(long double x, int n) { return 0; }
 #endif
