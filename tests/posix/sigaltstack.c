@@ -38,25 +38,31 @@ int main() {
 
 	// This is used to trash the stack to ensure sigaltstack actually switched stacks.
 #if defined(__x86_64__)
-	asm volatile ("mov $0, %rsp\n"
-			"\t" "push $0");
+	asm volatile("mov $0, %rsp\n"
+	             "\t"
+	             "push $0");
 #elif defined(__i386__)
-	asm volatile ("mov $0, %esp\n"
-			"\t" "push $0");
+	asm volatile("mov $0, %esp\n"
+	             "\t"
+	             "push $0");
 #elif defined(__aarch64__)
-	asm volatile ("mov sp, %0\n"
-			"\t" "stp x0, x1, [sp, #-16]!" :: "r"((uint64_t)0));
+	asm volatile("mov sp, %0\n"
+	             "\t"
+	             "stp x0, x1, [sp, #-16]!" ::"r"((uint64_t)0));
 #elif defined(__riscv) && __riscv_xlen == 64
-	asm volatile ("li sp, 0\n"
-			"\t" "sd zero, 0(sp)");
-#elif defined (__m68k__)
-	asm volatile ("move.l #0, %sp\n"
-			"\t" "move.l #0, -(%sp)");
+	asm volatile("li sp, 0\n"
+	             "\t"
+	             "sd zero, 0(sp)");
+#elif defined(__m68k__)
+	asm volatile("move.l #0, %sp\n"
+	             "\t"
+	             "move.l #0, -(%sp)");
 #elif defined(__loongarch64)
-	asm volatile ("addi.d $sp, $r0, 0\n"
-		"\t" "st.d $r0, $sp, 0");
+	asm volatile("addi.d $sp, $r0, 0\n"
+	             "\t"
+	             "st.d $r0, $sp, 0");
 #else
-#	error Unknown architecture
+#error Unknown architecture
 #endif
 
 	return 0;

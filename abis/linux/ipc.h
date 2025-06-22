@@ -1,9 +1,9 @@
 #ifndef _ABIBITS_IPC_H
 #define _ABIBITS_IPC_H
 
-#include <abi-bits/uid_t.h>
 #include <abi-bits/gid_t.h>
 #include <abi-bits/mode_t.h>
+#include <abi-bits/uid_t.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,7 +18,7 @@ extern "C" {
 #define IPC_STAT 2
 #define IPC_INFO 3
 
-#define IPC_PRIVATE ((key_t) 0)
+#define IPC_PRIVATE ((key_t)0)
 
 #if defined(__aarch64__) || defined(__i386__) || defined(__m68k__)
 #define IPC_64 0x100

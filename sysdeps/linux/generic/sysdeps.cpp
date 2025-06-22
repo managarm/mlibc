@@ -5,20 +5,20 @@
 
 #include <type_traits>
 
-#include <mlibc-config.h>
-#include <bits/ensure.h>
 #include <abi-bits/fcntl.h>
 #include <abi-bits/socklen_t.h>
+#include <bits/ensure.h>
+#include <mlibc-config.h>
 #if __MLIBC_LINUX_OPTION
-#  include <abi-bits/statx.h>
+#include <abi-bits/statx.h>
 #endif
+#include "cxx-syscall.hpp"
+#include <limits.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/thread-entry.hpp>
-#include <limits.h>
 #include <sys/syscall.h>
-#include "cxx-syscall.hpp"
 
 #if __MLIBC_LINUX_OPTION && !defined(MLIBC_BUILDING_RTLD)
 
@@ -26,12 +26,16 @@
 
 #endif
 
-#define STUB_ONLY { __ensure(!"STUB_ONLY function was called"); __builtin_unreachable(); }
+#define STUB_ONLY                                                                                  \
+	{                                                                                              \
+		__ensure(!"STUB_ONLY function was called");                                                \
+		__builtin_unreachable();                                                                   \
+	}
 #define UNUSED(x) (void)(x);
 
 #ifndef MLIBC_BUILDING_RTLD
 extern "C" long __do_syscall_ret(unsigned long ret) {
-	if(ret > -4096UL) {
+	if (ret > -4096UL) {
 		errno = -ret;
 		return -1;
 	}
@@ -43,16 +47,14 @@ namespace mlibc {
 
 void sys_libc_log(const char *message) {
 	size_t n = 0;
-	while(message[n])
+	while (message[n])
 		n++;
 	do_syscall(SYS_write, 2, message, n);
 	char lf = '\n';
 	do_syscall(SYS_write, 2, &lf, 1);
 }
 
-void sys_libc_panic() {
-	__builtin_trap();
-}
+void sys_libc_panic() { __builtin_trap(); }
 
 #if defined(__i386__)
 
@@ -60,12 +62,12 @@ struct user_desc {
 	unsigned int entry_number;
 	unsigned long base_addr;
 	unsigned int limit;
-	unsigned int seg_32bit: 1;
-	unsigned int contents: 2;
-	unsigned int read_exec_only: 1;
-	unsigned int limit_in_pages: 1;
-	unsigned int seg_not_present: 1;
-	unsigned int useable: 1;
+	unsigned int seg_32bit : 1;
+	unsigned int contents : 2;
+	unsigned int read_exec_only : 1;
+	unsigned int limit_in_pages : 1;
+	unsigned int seg_not_present : 1;
+	unsigned int useable : 1;
 };
 
 #endif
@@ -80,36 +82,36 @@ extern "C" void *__m68k_read_tp() {
 int sys_tcb_set(void *pointer) {
 #if defined(__x86_64__)
 	auto ret = do_syscall(SYS_arch_prctl, 0x1002 /* ARCH_SET_FS */, pointer);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 #elif defined(__i386__)
 	struct user_desc desc = {
-		.entry_number = static_cast<unsigned int>(-1),
-		.base_addr = uintptr_t(pointer),
-		.limit = 0xfffff,
-		.seg_32bit = 1,
-		.contents = 0,
-		.read_exec_only = 0,
-		.limit_in_pages = 1,
-		.seg_not_present = 0,
-		.useable = 1,
+	    .entry_number = static_cast<unsigned int>(-1),
+	    .base_addr = uintptr_t(pointer),
+	    .limit = 0xfffff,
+	    .seg_32bit = 1,
+	    .contents = 0,
+	    .read_exec_only = 0,
+	    .limit_in_pages = 1,
+	    .seg_not_present = 0,
+	    .useable = 1,
 	};
 	auto ret = do_syscall(SYS_set_thread_area, &desc);
 	__ensure(!sc_error(ret));
-	asm volatile ("movw %w0, %%gs" : : "q"(desc.entry_number * 8 + 3) :);
+	asm volatile("movw %w0, %%gs" : : "q"(desc.entry_number * 8 + 3) :);
 #elif defined(__riscv)
 	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
-	asm volatile ("mv tp, %0" :: "r"(thread_data));
-#elif defined (__aarch64__)
+	asm volatile("mv tp, %0" ::"r"(thread_data));
+#elif defined(__aarch64__)
 	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb) - 0x10;
-	asm volatile ("msr tpidr_el0, %0" :: "r"(thread_data));
-#elif defined (__m68k__)
+	asm volatile("msr tpidr_el0, %0" ::"r"(thread_data));
+#elif defined(__m68k__)
 	auto ret = do_syscall(__NR_set_thread_area, (uintptr_t)pointer + 0x7000 + sizeof(Tcb));
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 #elif defined(__loongarch64)
 	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
-	asm volatile ("move $tp, %0" :: "r"(thread_data));
+	asm volatile("move $tp, %0" ::"r"(thread_data));
 #else
 #error "Missing architecture specific code."
 #endif
@@ -117,23 +119,22 @@ int sys_tcb_set(void *pointer) {
 }
 
 int sys_anon_allocate(size_t size, void **pointer) {
-	return sys_vm_map(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,
-			-1, 0, pointer);
+	return sys_vm_map(
+	    nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0, pointer
+	);
 }
-int sys_anon_free(void *pointer, size_t size) {
-	return sys_vm_unmap(pointer, size);
-}
+int sys_anon_free(void *pointer, size_t size) { return sys_vm_unmap(pointer, size); }
 
 int sys_fadvise(int fd, off_t offset, off_t length, int advice) {
 	auto ret = do_syscall(SYS_fadvise64, fd, offset, length, advice);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	auto ret = do_cp_syscall(SYS_openat, AT_FDCWD, path, flags, mode);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	*fd = sc_int_result<int>(ret);
 	return 0;
@@ -149,21 +150,21 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 
 int sys_close(int fd) {
 	auto ret = do_cp_syscall(SYS_close, fd);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int sys_dup2(int fd, int flags, int newfd) {
 	auto ret = do_cp_syscall(SYS_dup3, fd, newfd, flags);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int sys_read(int fd, void *buffer, size_t size, ssize_t *bytes_read) {
 	auto ret = do_cp_syscall(SYS_read, fd, buffer, size);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	*bytes_read = sc_int_result<ssize_t>(ret);
 	return 0;
@@ -171,7 +172,7 @@ int sys_read(int fd, void *buffer, size_t size, ssize_t *bytes_read) {
 
 int sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
 	auto ret = do_cp_syscall(SYS_readv, fd, iovs, iovc);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	*bytes_read = sc_int_result<ssize_t>(ret);
 	return 0;
@@ -179,16 +180,16 @@ int sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
 
 int sys_write(int fd, const void *buffer, size_t size, ssize_t *bytes_written) {
 	auto ret = do_cp_syscall(SYS_write, fd, buffer, size);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
-	if(bytes_written)
+	if (bytes_written)
 		*bytes_written = sc_int_result<ssize_t>(ret);
 	return 0;
 }
 
 int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	auto ret = do_syscall(SYS_lseek, fd, offset, whence);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	*new_offset = sc_int_result<off_t>(ret);
 	return 0;
@@ -196,28 +197,28 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 
 int sys_chmod(const char *pathname, mode_t mode) {
 	auto ret = do_cp_syscall(SYS_fchmodat, AT_FDCWD, pathname, mode);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int sys_fchmod(int fd, mode_t mode) {
 	auto ret = do_cp_syscall(SYS_fchmod, fd, mode);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
 	auto ret = do_cp_syscall(SYS_fchmodat, fd, pathname, mode, flags);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
 	auto ret = do_cp_syscall(SYS_fchownat, dirfd, pathname, owner, group, flags);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
@@ -229,19 +230,18 @@ int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2
 	return 0;
 }
 
-int sys_vm_map(void *hint, size_t size, int prot, int flags,
-		int fd, off_t offset, void **window) {
-	if(offset % 4096)
+int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
+	if (offset % 4096)
 		return EINVAL;
-	if(size >= PTRDIFF_MAX)
+	if (size >= PTRDIFF_MAX)
 		return ENOMEM;
 #if defined(SYS_mmap2)
-	auto ret = do_syscall(SYS_mmap2, hint, size, prot, flags, fd, offset/4096);
+	auto ret = do_syscall(SYS_mmap2, hint, size, prot, flags, fd, offset / 4096);
 #else
 	auto ret = do_syscall(SYS_mmap, hint, size, prot, flags, fd, offset);
 #endif
 	// TODO: musl fixes up EPERM errors from the kernel.
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	*window = sc_ptr_result<void>(ret);
 	return 0;
@@ -249,7 +249,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags,
 
 int sys_vm_unmap(void *pointer, size_t size) {
 	auto ret = do_syscall(SYS_munmap, pointer, size);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
@@ -341,8 +341,7 @@ int sys_fstatfs(int fd, struct statfs *buf) {
 extern "C" void __mlibc_signal_restore(void);
 extern "C" void __mlibc_signal_restore_rt(void);
 
-int sys_sigaction(int signum, const struct sigaction *act,
-		struct sigaction *oldact) {
+int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) {
 	struct ksigaction {
 		void (*handler)(int);
 		unsigned long flags;
@@ -354,15 +353,20 @@ int sys_sigaction(int signum, const struct sigaction *act,
 	if (act) {
 		kernel_act.handler = act->sa_handler;
 		kernel_act.flags = act->sa_flags | SA_RESTORER;
-		kernel_act.restorer = (act->sa_flags & SA_SIGINFO) ? __mlibc_signal_restore_rt : __mlibc_signal_restore;
+		kernel_act.restorer =
+		    (act->sa_flags & SA_SIGINFO) ? __mlibc_signal_restore_rt : __mlibc_signal_restore;
 		memcpy(&kernel_act.mask, &act->sa_mask, sizeof(kernel_act.mask));
 	}
 
 	static_assert(sizeof(kernel_act.mask) == 8);
 
-	auto ret = do_syscall(SYS_rt_sigaction, signum, act ?
-		&kernel_act : NULL, oldact ?
-		&kernel_oldact : NULL, sizeof(kernel_act.mask));
+	auto ret = do_syscall(
+	    SYS_rt_sigaction,
+	    signum,
+	    act ? &kernel_act : NULL,
+	    oldact ? &kernel_oldact : NULL,
+	    sizeof(kernel_act.mask)
+	);
 	if (int e = sc_error(ret); e)
 		return e;
 
@@ -376,33 +380,49 @@ int sys_sigaction(int signum, const struct sigaction *act,
 }
 
 int sys_socket(int domain, int type, int protocol, int *fd) {
-        auto ret = do_syscall(SYS_socket, domain, type, protocol);
-        if (int e = sc_error(ret); e)
-                return e;
-        *fd = sc_int_result<int>(ret);
-        return 0;
+	auto ret = do_syscall(SYS_socket, domain, type, protocol);
+	if (int e = sc_error(ret); e)
+		return e;
+	*fd = sc_int_result<int>(ret);
+	return 0;
 }
 
 int sys_msg_send(int sockfd, const struct msghdr *msg, int flags, ssize_t *length) {
-        auto ret = do_cp_syscall(SYS_sendmsg, sockfd, msg, flags);
-        if (int e = sc_error(ret); e)
-                return e;
-        *length = sc_int_result<ssize_t>(ret);
-        return 0;
+	auto ret = do_cp_syscall(SYS_sendmsg, sockfd, msg, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*length = sc_int_result<ssize_t>(ret);
+	return 0;
 }
 
-ssize_t sys_sendto(int fd, const void *buffer, size_t size, int flags, const struct sockaddr *sock_addr, socklen_t addr_length, ssize_t *length) {
+ssize_t sys_sendto(
+    int fd,
+    const void *buffer,
+    size_t size,
+    int flags,
+    const struct sockaddr *sock_addr,
+    socklen_t addr_length,
+    ssize_t *length
+) {
 	auto ret = do_cp_syscall(SYS_sendto, fd, buffer, size, flags, sock_addr, addr_length);
-	if(int e = sc_error(ret); e) {
+	if (int e = sc_error(ret); e) {
 		return e;
 	}
 	*length = sc_int_result<ssize_t>(ret);
 	return 0;
 }
 
-ssize_t sys_recvfrom(int fd, void *buffer, size_t size, int flags, struct sockaddr *sock_addr, socklen_t *addr_length, ssize_t *length) {
+ssize_t sys_recvfrom(
+    int fd,
+    void *buffer,
+    size_t size,
+    int flags,
+    struct sockaddr *sock_addr,
+    socklen_t *addr_length,
+    ssize_t *length
+) {
 	auto ret = do_cp_syscall(SYS_recvfrom, fd, buffer, size, flags, sock_addr, addr_length);
-	if(int e = sc_error(ret); e) {
+	if (int e = sc_error(ret); e) {
 		return e;
 	}
 	*length = sc_int_result<ssize_t>(ret);
@@ -410,24 +430,24 @@ ssize_t sys_recvfrom(int fd, void *buffer, size_t size, int flags, struct sockad
 }
 
 int sys_msg_recv(int sockfd, struct msghdr *msg, int flags, ssize_t *length) {
-        auto ret = do_cp_syscall(SYS_recvmsg, sockfd, msg, flags);
-        if (int e = sc_error(ret); e)
-                return e;
-        *length = sc_int_result<ssize_t>(ret);
-        return 0;
+	auto ret = do_cp_syscall(SYS_recvmsg, sockfd, msg, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*length = sc_int_result<ssize_t>(ret);
+	return 0;
 }
 
 int sys_fcntl(int fd, int cmd, va_list args, int *result) {
-        auto arg = va_arg(args, unsigned long);
-        // TODO: the api for linux differs for each command so fcntl()s might fail with -EINVAL
-        // we should implement all the different fcntl()s
+	auto arg = va_arg(args, unsigned long);
+	// TODO: the api for linux differs for each command so fcntl()s might fail with -EINVAL
+	// we should implement all the different fcntl()s
 	// TODO(geert): only some fcntl()s can fail with -EINTR, making do_cp_syscall useless
 	// on most fcntls(). Another reason to handle different fcntl()s seperately.
-        auto ret = do_cp_syscall(SYS_fcntl, fd, cmd, arg);
-        if (int e = sc_error(ret); e)
-                return e;
-        *result = sc_int_result<int>(ret);
-        return 0;
+	auto ret = do_cp_syscall(SYS_fcntl, fd, cmd, arg);
+	if (int e = sc_error(ret); e)
+		return e;
+	*result = sc_int_result<int>(ret);
+	return 0;
 }
 
 int sys_getcwd(char *buf, size_t size) {
@@ -446,15 +466,12 @@ int sys_unlinkat(int dfd, const char *path, int flags) {
 }
 
 int sys_sleep(time_t *secs, long *nanos) {
-	struct timespec req = {
-		.tv_sec = *secs,
-		.tv_nsec = *nanos
-	};
+	struct timespec req = {.tv_sec = *secs, .tv_nsec = *nanos};
 	struct timespec rem = {};
 
 	auto ret = do_cp_syscall(SYS_nanosleep, &req, &rem);
-        if (int e = sc_error(ret); e)
-                return e;
+	if (int e = sc_error(ret); e)
+		return e;
 
 	*secs = rem.tv_sec;
 	*nanos = rem.tv_nsec;
@@ -467,25 +484,26 @@ int sys_isatty(int fd) {
 	if (int e = sc_error(ret); e)
 		return e;
 	auto res = sc_int_result<unsigned long>(ret);
-	if(!res) return 0;
+	if (!res)
+		return 0;
 	return 1;
 }
 
 #if __MLIBC_POSIX_OPTION
 
+#include <fcntl.h>
 #include <net/if.h>
-#include <sys/ioctl.h>
-#include <sys/ipc.h>
-#include <sys/user.h>
-#include <sys/utsname.h>
-#include <sys/stat.h>
-#include <sys/sysinfo.h>
-#include <unistd.h>
+#include <pthread.h>
+#include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sched.h>
-#include <fcntl.h>
-#include <pthread.h>
+#include <sys/ioctl.h>
+#include <sys/ipc.h>
+#include <sys/stat.h>
+#include <sys/sysinfo.h>
+#include <sys/user.h>
+#include <sys/utsname.h>
+#include <unistd.h>
 
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	auto ret = do_syscall(SYS_ioctl, fd, request, arg);
@@ -497,17 +515,24 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 }
 
 int sys_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
-        auto ret = do_cp_syscall(SYS_connect, sockfd, addr, addrlen);
-        if (int e = sc_error(ret); e)
-                return e;
-        return 0;
+	auto ret = do_cp_syscall(SYS_connect, sockfd, addr, addrlen);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
-int sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
-		fd_set *exceptfds, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
+int sys_pselect(
+    int nfds,
+    fd_set *readfds,
+    fd_set *writefds,
+    fd_set *exceptfds,
+    const struct timespec *timeout,
+    const sigset_t *sigmask,
+    int *num_events
+) {
 	// The Linux kernel sometimes modifies the timeout argument.
 	struct timespec local_timeout;
-	if(timeout)
+	if (timeout)
 		local_timeout = *timeout;
 
 	// The Linux kernel really wants 7 arguments, even tho this is not supported
@@ -520,8 +545,9 @@ int sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
 	data.sigmask = sigmask;
 	data.ss_len = NSIG / 8;
 
-	auto ret = do_cp_syscall(SYS_pselect6, nfds, readfds, writefds,
-			exceptfds, timeout ? &local_timeout : nullptr, &data);
+	auto ret = do_cp_syscall(
+	    SYS_pselect6, nfds, readfds, writefds, exceptfds, timeout ? &local_timeout : nullptr, &data
+	);
 	if (int e = sc_error(ret); e)
 		return e;
 	*num_events = sc_int_result<int>(ret);
@@ -529,23 +555,23 @@ int sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
 }
 
 int sys_pipe(int *fds, int flags) {
-        if(flags) {
-                auto ret = do_syscall(SYS_pipe2, fds, flags);
-                if (int e = sc_error(ret); e)
-                        return e;
-                return 0;
-        } else {
-				auto ret = do_syscall(SYS_pipe2, fds, 0);
-                if (int e = sc_error(ret); e)
-                        return e;
-                return 0;
-        }
+	if (flags) {
+		auto ret = do_syscall(SYS_pipe2, fds, flags);
+		if (int e = sc_error(ret); e)
+			return e;
+		return 0;
+	} else {
+		auto ret = do_syscall(SYS_pipe2, fds, 0);
+		if (int e = sc_error(ret); e)
+			return e;
+		return 0;
+	}
 }
 
 int sys_fork(pid_t *child) {
 	auto ret = do_syscall(SYS_clone, SIGCHLD, 0);
 	if (int e = sc_error(ret); e)
-			return e;
+		return e;
 	*child = sc_int_result<int>(ret);
 	return 0;
 }
@@ -553,50 +579,50 @@ int sys_fork(pid_t *child) {
 int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
 	auto ret = do_syscall(SYS_wait4, pid, status, flags, ru);
 	if (int e = sc_error(ret); e)
-			return e;
+		return e;
 	*ret_pid = sc_int_result<pid_t>(ret);
 	return 0;
 }
 
 int sys_execve(const char *path, char *const argv[], char *const envp[]) {
-        auto ret = do_syscall(SYS_execve, path, argv, envp);
-        if (int e = sc_error(ret); e)
-                return e;
-        return 0;
+	auto ret = do_syscall(SYS_execve, path, argv, envp);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 int sys_sigprocmask(int how, const sigset_t *set, sigset_t *old) {
-        auto ret = do_syscall(SYS_rt_sigprocmask, how, set, old, NSIG / 8);
-        if (int e = sc_error(ret); e)
-                return e;
+	auto ret = do_syscall(SYS_rt_sigprocmask, how, set, old, NSIG / 8);
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 
 int sys_setresuid(uid_t ruid, uid_t euid, uid_t suid) {
 	auto ret = do_syscall(SYS_setresuid, ruid, euid, suid);
-        if (int e = sc_error(ret); e)
-                return e;
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 
 int sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
 	auto ret = do_syscall(SYS_setresgid, rgid, egid, sgid);
-        if (int e = sc_error(ret); e)
-                return e;
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 
 int sys_getresuid(uid_t *ruid, uid_t *euid, uid_t *suid) {
 	auto ret = do_syscall(SYS_getresuid, ruid, euid, suid);
-        if (int e = sc_error(ret); e)
-                return e;
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 
 int sys_getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid) {
 	auto ret = do_syscall(SYS_getresgid, rgid, egid, sgid);
-        if (int e = sc_error(ret); e)
-                return e;
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 
@@ -616,19 +642,16 @@ int sys_setregid(gid_t rgid, gid_t egid) {
 
 int sys_sysinfo(struct sysinfo *info) {
 	auto ret = do_syscall(SYS_sysinfo, info);
-        if (int e = sc_error(ret); e)
-                return e;
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 
-void sys_yield() {
-	do_syscall(SYS_sched_yield);
-}
+void sys_yield() { do_syscall(SYS_sched_yield); }
 
 int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
-	unsigned long flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND
-		| CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS
-		| CLONE_PARENT_SETTID;
+	unsigned long flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD
+	                      | CLONE_SYSVSEM | CLONE_SETTLS | CLONE_PARENT_SETTID;
 
 #if defined(__riscv) || defined(__loongarch64)
 	// TP should point to the address immediately after the TCB.
@@ -645,7 +668,8 @@ int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
 	uint32_t gs;
 	asm volatile("movw %%gs, %w0" : "=q"(gs));
 
-	auto user_desc = reinterpret_cast<struct user_desc *>(getAllocator().allocate(sizeof(struct user_desc)));
+	auto user_desc =
+	    reinterpret_cast<struct user_desc *>(getAllocator().allocate(sizeof(struct user_desc)));
 
 	user_desc->entry_number = (gs & 0xffff) >> 3;
 	user_desc->base_addr = uintptr_t(tcb);
@@ -677,17 +701,17 @@ extern "C" const char __mlibc_syscall_end[1];
 #endif
 int sys_before_cancellable_syscall(ucontext_t *uct) {
 #if defined(__x86_64__)
-	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.gregs[REG_RIP]);
+	auto pc = reinterpret_cast<void *>(uct->uc_mcontext.gregs[REG_RIP]);
 #elif defined(__i386__)
-	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.gregs[REG_EIP]);
+	auto pc = reinterpret_cast<void *>(uct->uc_mcontext.gregs[REG_EIP]);
 #elif defined(__riscv)
-	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.gregs[REG_PC]);
+	auto pc = reinterpret_cast<void *>(uct->uc_mcontext.gregs[REG_PC]);
 #elif defined(__aarch64__)
-	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.pc);
+	auto pc = reinterpret_cast<void *>(uct->uc_mcontext.pc);
 #elif defined(__m68k__)
-	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.gregs[R_PC]);
+	auto pc = reinterpret_cast<void *>(uct->uc_mcontext.gregs[R_PC]);
 #elif defined(__loongarch64)
-	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.pc);
+	auto pc = reinterpret_cast<void *>(uct->uc_mcontext.pc);
 #else
 #error "Missing architecture specific code."
 #endif
@@ -714,10 +738,17 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 	int req;
 
 	switch (optional_action) {
-		case TCSANOW: req = TCSETS; break;
-		case TCSADRAIN: req = TCSETSW; break;
-		case TCSAFLUSH: req = TCSETSF; break;
-		default: return EINVAL;
+		case TCSANOW:
+			req = TCSETS;
+			break;
+		case TCSADRAIN:
+			req = TCSETSW;
+			break;
+		case TCSAFLUSH:
+			req = TCSETSF;
+			break;
+		default:
+			return EINVAL;
 	}
 
 	auto ret = do_syscall(SYS_ioctl, fd, req, attr);
@@ -783,8 +814,9 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 	return 0;
 }
 
-int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
-		socklen_t *actual_length) {
+int sys_sockname(
+    int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length
+) {
 	auto ret = do_syscall(SYS_getsockname, fd, addr_ptr, &max_addr_length);
 	if (int e = sc_error(ret); e)
 		return e;
@@ -792,8 +824,9 @@ int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
 	return 0;
 }
 
-int sys_peername(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length,
-		socklen_t *actual_length) {
+int sys_peername(
+    int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length
+) {
 	auto ret = do_syscall(SYS_getpeername, fd, addr_ptr, &max_addr_length);
 	if (int e = sc_error(ret); e)
 		return e;
@@ -852,10 +885,10 @@ int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__
 	struct linux_uapi_sigevent *ksevp = 0;
 	int timer_id;
 
-	switch(evp ? evp->sigev_notify : SIGEV_SIGNAL) {
+	switch (evp ? evp->sigev_notify : SIGEV_SIGNAL) {
 		case SIGEV_NONE:
 		case SIGEV_SIGNAL: {
-			if(evp) {
+			if (evp) {
 				ksev.sigev_value = evp->sigev_value;
 				ksev.sigev_signo = evp->sigev_signo;
 				ksev.sigev_notify = evp->sigev_notify;
@@ -867,7 +900,7 @@ int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__
 			if (int e = sc_error(ret); e) {
 				return e;
 			}
-			*res = (void *) (intptr_t) timer_id;
+			*res = (void *)(intptr_t)timer_id;
 			break;
 		}
 		case SIGEV_THREAD:
@@ -880,7 +913,9 @@ int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__
 	return 0;
 }
 
-int sys_timer_settime(timer_t t, int flags, const struct itimerspec *__restrict val, struct itimerspec *__restrict old) {
+int sys_timer_settime(
+    timer_t t, int flags, const struct itimerspec *__restrict val, struct itimerspec *__restrict old
+) {
 	auto ret = do_syscall(SYS_timer_settime, t, flags, val, old);
 	if (int e = sc_error(ret); e) {
 		return e;
@@ -889,7 +924,7 @@ int sys_timer_settime(timer_t t, int flags, const struct itimerspec *__restrict 
 }
 
 int sys_timer_delete(timer_t t) {
-	__ensure((intptr_t) t >= 0);
+	__ensure((intptr_t)t >= 0);
 	auto ret = do_syscall(SYS_timer_delete, t);
 	if (int e = sc_error(ret); e) {
 		return e;
@@ -905,13 +940,11 @@ int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out) {
 	return 0;
 }
 
-int sys_open_dir(const char *path, int *fd) {
-	return sys_open(path, O_DIRECTORY, 0, fd);
-}
+int sys_open_dir(const char *path, int *fd) { return sys_open(path, O_DIRECTORY, 0, fd); }
 
 int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read) {
 	auto ret = do_syscall(SYS_getdents64, handle, buffer, max_size);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	*bytes_read = sc_int_result<int>(ret);
 	return 0;
@@ -919,7 +952,7 @@ int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_re
 
 int sys_prctl(int op, va_list ap, int *out) {
 	unsigned long x[4];
-	for(int i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++)
 		x[i] = va_arg(ap, unsigned long);
 
 	auto ret = do_syscall(SYS_prctl, op, x[0], x[1], x[2], x[3]);
@@ -1043,8 +1076,13 @@ int sys_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask) {
 	return 0;
 }
 
-int sys_mount(const char *source, const char *target,
-	const char *fstype, unsigned long flags, const void *data) {
+int sys_mount(
+    const char *source,
+    const char *target,
+    const char *fstype,
+    unsigned long flags,
+    const void *data
+) {
 	auto ret = do_syscall(SYS_mount, source, target, fstype, flags, data);
 	if (int e = sc_error(ret); e)
 		return e;
@@ -1080,7 +1118,9 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 	return 0;
 }
 
-int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n, int timeout, const sigset_t *sigmask, int *raised) {
+int sys_epoll_pwait(
+    int epfd, struct epoll_event *ev, int n, int timeout, const sigset_t *sigmask, int *raised
+) {
 	auto ret = do_syscall(SYS_epoll_pwait, epfd, ev, n, timeout, sigmask, NSIG / 8);
 	if (int e = sc_error(ret); e)
 		return e;
@@ -1112,7 +1152,9 @@ int sys_timerfd_create(int clockid, int flags, int *fd) {
 	return 0;
 }
 
-int sys_timerfd_settime(int fd, int flags, const struct itimerspec *value, struct itimerspec *oldvalue) {
+int sys_timerfd_settime(
+    int fd, int flags, const struct itimerspec *value, struct itimerspec *oldvalue
+) {
 	auto ret = do_syscall(SYS_timerfd_settime, fd, flags, value, oldvalue);
 	if (int e = sc_error(ret); e)
 		return e;
@@ -1170,7 +1212,8 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 	return 0;
 }
 
-int sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
+int
+sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
 	auto ret = do_syscall(SYS_getsockopt, fd, layer, number, buffer, size, 0);
 	if (int e = sc_error(ret); e)
 		return e;
@@ -1197,7 +1240,7 @@ int sys_ttyname(int fd, char *buf, size_t size) {
 		return errno;
 
 	char *procname;
-	if(int e = asprintf(&procname, "/proc/self/fd/%i", fd); e)
+	if (int e = asprintf(&procname, "/proc/self/fd/%i", fd); e)
 		return ENOMEM;
 	__ensure(procname);
 
@@ -1251,7 +1294,7 @@ int sys_get_min_priority(int policy, int *out) {
 int sys_getschedparam(void *tcb, int *policy, struct sched_param *param) {
 	auto t = reinterpret_cast<Tcb *>(tcb);
 
-	if(!t->tid) {
+	if (!t->tid) {
 		return ESRCH;
 	}
 
@@ -1270,7 +1313,7 @@ int sys_getschedparam(void *tcb, int *policy, struct sched_param *param) {
 int sys_setschedparam(void *tcb, int policy, const struct sched_param *param) {
 	auto t = reinterpret_cast<Tcb *>(tcb);
 
-	if(!t->tid) {
+	if (!t->tid) {
 		return ESRCH;
 	}
 
@@ -1298,7 +1341,7 @@ int sys_if_indextoname(unsigned int index, char *name) {
 	int fd = 0;
 	int r = sys_socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, AF_UNSPEC, &fd);
 
-	if(r)
+	if (r)
 		return r;
 
 	struct ifreq ifr;
@@ -1307,8 +1350,8 @@ int sys_if_indextoname(unsigned int index, char *name) {
 	int ret = sys_ioctl(fd, SIOCGIFNAME, &ifr, NULL);
 	close(fd);
 
-	if(ret) {
-		if(ret == ENODEV)
+	if (ret) {
+		if (ret == ENODEV)
 			return ENXIO;
 		return ret;
 	}
@@ -1322,7 +1365,7 @@ int sys_if_nametoindex(const char *name, unsigned int *ret) {
 	int fd = 0;
 	int r = sys_socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, AF_UNSPEC, &fd);
 
-	if(r)
+	if (r)
 		return r;
 
 	struct ifreq ifr;
@@ -1331,7 +1374,7 @@ int sys_if_nametoindex(const char *name, unsigned int *ret) {
 	r = sys_ioctl(fd, SIOCGIFINDEX, &ifr, NULL);
 	close(fd);
 
-	if(r) {
+	if (r) {
 		return r;
 	}
 
@@ -1342,9 +1385,9 @@ int sys_if_nametoindex(const char *name, unsigned int *ret) {
 
 int sys_ptsname(int fd, char *buffer, size_t length) {
 	int index;
-	if(int e = sys_ioctl(fd, TIOCGPTN, &index, NULL); e)
+	if (int e = sys_ioctl(fd, TIOCGPTN, &index, NULL); e)
 		return e;
-	if((size_t)snprintf(buffer, length, "/dev/pts/%d", index) >= length) {
+	if ((size_t)snprintf(buffer, length, "/dev/pts/%d", index) >= length) {
 		return ERANGE;
 	}
 	return 0;
@@ -1353,14 +1396,14 @@ int sys_ptsname(int fd, char *buffer, size_t length) {
 int sys_unlockpt(int fd) {
 	int unlock = 0;
 
-	if(int e = sys_ioctl(fd, TIOCSPTLCK, &unlock, NULL); e)
+	if (int e = sys_ioctl(fd, TIOCSPTLCK, &unlock, NULL); e)
 		return e;
 
 	return 0;
 }
 
 int sys_thread_setname(void *tcb, const char *name) {
-	if(strlen(name) > 15) {
+	if (strlen(name) > 15) {
 		return ERANGE;
 	}
 
@@ -1368,18 +1411,18 @@ int sys_thread_setname(void *tcb, const char *name) {
 	char *path;
 	int cs = 0;
 
-	if(asprintf(&path, "/proc/self/task/%d/comm", t->tid) < 0) {
+	if (asprintf(&path, "/proc/self/task/%d/comm", t->tid) < 0) {
 		return ENOMEM;
 	}
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 
 	int fd;
-	if(int e = sys_open(path, O_WRONLY, 0, &fd); e) {
+	if (int e = sys_open(path, O_WRONLY, 0, &fd); e) {
 		return e;
 	}
 
-	if(int e = sys_write(fd, name, strlen(name) + 1, NULL)) {
+	if (int e = sys_write(fd, name, strlen(name) + 1, NULL)) {
 		return e;
 	}
 
@@ -1396,18 +1439,18 @@ int sys_thread_getname(void *tcb, char *name, size_t size) {
 	int cs = 0;
 	ssize_t real_size = 0;
 
-	if(asprintf(&path, "/proc/self/task/%d/comm", t->tid) < 0) {
+	if (asprintf(&path, "/proc/self/task/%d/comm", t->tid) < 0) {
 		return ENOMEM;
 	}
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 
 	int fd;
-	if(int e = sys_open(path, O_RDONLY | O_CLOEXEC, 0, &fd); e) {
+	if (int e = sys_open(path, O_RDONLY | O_CLOEXEC, 0, &fd); e) {
 		return e;
 	}
 
-	if(int e = sys_read(fd, name, size, &real_size)) {
+	if (int e = sys_read(fd, name, size, &real_size)) {
 		return e;
 	}
 
@@ -1416,7 +1459,7 @@ int sys_thread_getname(void *tcb, char *name, size_t size) {
 
 	pthread_setcancelstate(cs, 0);
 
-	if(static_cast<ssize_t>(size) <= real_size) {
+	if (static_cast<ssize_t>(size) <= real_size) {
 		return ERANGE;
 	}
 
@@ -1473,14 +1516,12 @@ int sys_flock(int fd, int options) {
 	return 0;
 }
 
-int sys_seteuid(uid_t euid) {
-	return sys_setresuid(-1, euid, -1);
-}
+int sys_seteuid(uid_t euid) { return sys_setresuid(-1, euid, -1); }
 
 int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) {
 	auto ret = do_syscall(SYS_mremap, pointer, size, new_size, MREMAP_MAYMOVE);
 	// TODO: musl fixes up EPERM errors from the kernel.
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	*window = sc_ptr_result<void>(ret);
 	return 0;
@@ -1507,23 +1548,23 @@ int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new
 // Inspired by musl (src/stat/statvfs.c:28 fixup function)
 static void statfs_to_statvfs(struct statfs *from, struct statvfs *to) {
 	*to = {
-		.f_bsize = from->f_bsize,
-		.f_frsize = from->f_frsize ? from->f_frsize : from->f_bsize,
-		.f_blocks = from->f_blocks,
-		.f_bfree = from->f_bfree,
-		.f_bavail = from->f_bavail,
-		.f_files = from->f_files,
-		.f_ffree = from->f_ffree,
-		.f_favail = from->f_ffree,
-		.f_fsid = (unsigned long) from->f_fsid.__val[0],
-		.f_flag = from->f_flags,
-		.f_namemax = from->f_namelen,
+	    .f_bsize = from->f_bsize,
+	    .f_frsize = from->f_frsize ? from->f_frsize : from->f_bsize,
+	    .f_blocks = from->f_blocks,
+	    .f_bfree = from->f_bfree,
+	    .f_bavail = from->f_bavail,
+	    .f_files = from->f_files,
+	    .f_ffree = from->f_ffree,
+	    .f_favail = from->f_ffree,
+	    .f_fsid = (unsigned long)from->f_fsid.__val[0],
+	    .f_flag = from->f_flags,
+	    .f_namemax = from->f_namelen,
 	};
 }
 
 int sys_statvfs(const char *path, struct statvfs *out) {
 	struct statfs buf;
-	if(auto ret = sys_statfs(path, &buf); ret != 0) {
+	if (auto ret = sys_statfs(path, &buf); ret != 0) {
 		return ret;
 	}
 	statfs_to_statvfs(&buf, out);
@@ -1532,7 +1573,7 @@ int sys_statvfs(const char *path, struct statvfs *out) {
 
 int sys_fstatvfs(int fd, struct statvfs *out) {
 	struct statfs buf;
-	if(auto ret = sys_fstatfs(fd, &buf); ret != 0) {
+	if (auto ret = sys_fstatfs(fd, &buf); ret != 0) {
 		return ret;
 	}
 	statfs_to_statvfs(&buf, out);
@@ -1540,10 +1581,10 @@ int sys_fstatvfs(int fd, struct statvfs *out) {
 }
 
 int sys_sysconf(int num, long *ret) {
-	switch(num) {
+	switch (num) {
 		case _SC_OPEN_MAX: {
 			struct rlimit ru;
-			if(int e = sys_getrlimit(RLIMIT_NOFILE, &ru); e) {
+			if (int e = sys_getrlimit(RLIMIT_NOFILE, &ru); e) {
 				return e;
 			}
 			*ret = (ru.rlim_cur == RLIM_INFINITY) ? -1 : ru.rlim_cur;
@@ -1552,7 +1593,7 @@ int sys_sysconf(int num, long *ret) {
 		case _SC_NPROCESSORS_ONLN: {
 			cpu_set_t set;
 			CPU_ZERO(&set);
-			if(int e = sys_getaffinity(0, sizeof(set), &set); e) {
+			if (int e = sys_getaffinity(0, sizeof(set), &set); e) {
 				return e;
 			}
 			*ret = CPU_COUNT(&set);
@@ -1560,7 +1601,7 @@ int sys_sysconf(int num, long *ret) {
 		}
 		case _SC_PHYS_PAGES: {
 			struct sysinfo info;
-			if(int e = sys_sysinfo(&info); e) {
+			if (int e = sys_sysinfo(&info); e) {
 				return e;
 			}
 			unsigned unit = (info.mem_unit) ? info.mem_unit : 1;
@@ -1569,7 +1610,7 @@ int sys_sysconf(int num, long *ret) {
 		}
 		case _SC_CHILD_MAX: {
 			struct rlimit ru;
-			if(int e = sys_getrlimit(RLIMIT_NPROC, &ru); e) {
+			if (int e = sys_getrlimit(RLIMIT_NPROC, &ru); e) {
 				return e;
 			}
 			*ret = (ru.rlim_cur == RLIM_INFINITY) ? -1 : ru.rlim_cur;
@@ -1589,7 +1630,7 @@ int sys_sysconf(int num, long *ret) {
 
 int sys_semget(key_t key, int n, int fl, int *id) {
 	auto ret = do_syscall(SYS_semget, key, n, fl);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	*id = sc_int_result<int>(ret);
 	return 0;
@@ -1597,7 +1638,7 @@ int sys_semget(key_t key, int n, int fl, int *id) {
 
 int sys_semctl(int semid, int semnum, int cmd, void *semun, int *out) {
 	auto ret = do_syscall(SYS_semctl, semid, semnum, cmd | IPC_64, semun);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	*out = sc_int_result<int>(ret);
 	return 0;
@@ -1605,7 +1646,7 @@ int sys_semctl(int semid, int semnum, int cmd, void *semun, int *out) {
 
 int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
 	auto ret = do_syscall(SYS_waitid, idtype, id, info, options, 0);
-	if(int e = sc_error(ret); e)
+	if (int e = sc_error(ret); e)
 		return e;
 	return sc_int_result<int>(ret);
 }
@@ -1672,7 +1713,7 @@ int sys_pidfd_getpid(int fd, pid_t *outpid) {
 		pid_t pid;
 		int ret = sscanf(pidfdGetPidLine, "Pid: %d\n", &pid);
 
-		if(ret != 1)
+		if (ret != 1)
 			continue;
 
 		if (pid == 0)
@@ -1827,7 +1868,6 @@ int sys_mkdir(const char *path, mode_t mode) {
 		return e;
 	return 0;
 }
-
 
 int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 	auto ret = do_syscall(SYS_mkdirat, dirfd, path, mode);
@@ -2014,9 +2054,7 @@ int sys_dup(int fd, int flags, int *newfd) {
 	return 0;
 }
 
-void sys_sync() {
-	do_syscall(SYS_sync);
-}
+void sys_sync() { do_syscall(SYS_sync); }
 
 int sys_fsync(int fd) {
 	auto ret = do_syscall(SYS_fsync, fd);
@@ -2045,26 +2083,22 @@ int sys_getentropy(void *buffer, size_t length) {
 	return sys_getrandom(buffer, length, 0, &written);
 }
 
-int sys_setxattr(const char *path, const char *name, const void *val,
-		size_t size, int flags) {
+int sys_setxattr(const char *path, const char *name, const void *val, size_t size, int flags) {
 	auto ret = do_syscall(SYS_setxattr, path, name, val, size, flags);
 	return sc_error(ret);
 }
 
-int sys_lsetxattr(const char *path, const char *name, const void *val,
-		size_t size, int flags) {
+int sys_lsetxattr(const char *path, const char *name, const void *val, size_t size, int flags) {
 	auto ret = do_syscall(SYS_lsetxattr, path, name, val, size, flags);
 	return sc_error(ret);
 }
 
-int sys_fsetxattr(int fd, const char *name, const void *val,
-		size_t size, int flags) {
+int sys_fsetxattr(int fd, const char *name, const void *val, size_t size, int flags) {
 	auto ret = do_syscall(SYS_fsetxattr, fd, name, val, size, flags);
 	return sc_error(ret);
 }
 
-int sys_getxattr(const char *path, const char *name, void *val, size_t size,
-		ssize_t *nread) {
+int sys_getxattr(const char *path, const char *name, void *val, size_t size, ssize_t *nread) {
 	auto ret = do_syscall(SYS_getxattr, path, name, val, size);
 	if (int e = sc_error(ret); e) {
 		return e;
@@ -2074,8 +2108,7 @@ int sys_getxattr(const char *path, const char *name, void *val, size_t size,
 	return 0;
 }
 
-int sys_lgetxattr(const char *path, const char *name, void *val, size_t size,
-		ssize_t *nread) {
+int sys_lgetxattr(const char *path, const char *name, void *val, size_t size, ssize_t *nread) {
 	auto ret = do_syscall(SYS_lgetxattr, path, name, val, size);
 	if (int e = sc_error(ret); e) {
 		return e;
@@ -2085,8 +2118,7 @@ int sys_lgetxattr(const char *path, const char *name, void *val, size_t size,
 	return 0;
 }
 
-int sys_fgetxattr(int fd, const char *name, void *val, size_t size,
-		ssize_t *nread) {
+int sys_fgetxattr(int fd, const char *name, void *val, size_t size, ssize_t *nread) {
 	auto ret = do_syscall(SYS_fgetxattr, fd, name, val, size);
 	if (int e = sc_error(ret); e) {
 		return e;
@@ -2141,7 +2173,12 @@ int sys_flistxattr(int fd, char *list, size_t size, ssize_t *nread) {
 	return 0;
 }
 
-int sys_sigtimedwait(const sigset_t *__restrict set, siginfo_t *__restrict info, const struct timespec *__restrict timeout, int *out_signal) {
+int sys_sigtimedwait(
+    const sigset_t *__restrict set,
+    siginfo_t *__restrict info,
+    const struct timespec *__restrict timeout,
+    int *out_signal
+) {
 	auto ret = do_syscall(SYS_rt_sigtimedwait, set, info, timeout, NSIG / 8);
 
 	if (int e = sc_error(ret); e)
@@ -2154,7 +2191,7 @@ int sys_sigtimedwait(const sigset_t *__restrict set, siginfo_t *__restrict info,
 
 int sys_sendfile(int outfd, int infd, off_t *offset, size_t count, ssize_t *out) {
 	auto ret = do_syscall(SYS_sendfile, outfd, infd, offset, count);
-	if(int e = sc_error(ret); e) {
+	if (int e = sc_error(ret); e) {
 		return e;
 	}
 	*out = sc_int_result<ssize_t>(ret);
@@ -2163,22 +2200,32 @@ int sys_sendfile(int outfd, int infd, off_t *offset, size_t count, ssize_t *out)
 
 int sys_syncfs(int fd) {
 	auto ret = do_syscall(SYS_syncfs, fd);
-	if(int e = sc_error(ret); e) {
+	if (int e = sc_error(ret); e) {
 		return e;
 	}
 	return 0;
 }
 
-int sys_name_to_handle_at(int dirfd, const char *pathname, struct file_handle *handle, int *mount_id, int flags) {
+int sys_name_to_handle_at(
+    int dirfd, const char *pathname, struct file_handle *handle, int *mount_id, int flags
+) {
 	auto ret = do_syscall(SYS_name_to_handle_at, dirfd, pathname, handle, mount_id, flags);
 	if (int e = sc_error(ret); e)
 		return e;
 	return sc_int_result<int>(ret);
 }
 
-int sys_splice(int in_fd, off_t *in_off, int out_fd, off_t *out_off, size_t size, unsigned int flags, ssize_t *out) {
+int sys_splice(
+    int in_fd,
+    off_t *in_off,
+    int out_fd,
+    off_t *out_off,
+    size_t size,
+    unsigned int flags,
+    ssize_t *out
+) {
 	auto ret = do_syscall(SYS_copy_file_range, in_fd, in_off, out_fd, out_off, size, flags);
-	if(int e = sc_error(ret); e) {
+	if (int e = sc_error(ret); e) {
 		return e;
 	}
 	*out = sc_int_result<ssize_t>(ret);
@@ -2187,7 +2234,7 @@ int sys_splice(int in_fd, off_t *in_off, int out_fd, off_t *out_off, size_t size
 
 int sys_unshare(int flags) {
 	auto ret = do_syscall(SYS_unshare, flags);
-	if(int e = sc_error(ret); e) {
+	if (int e = sc_error(ret); e) {
 		return e;
 	}
 	return 0;
@@ -2195,7 +2242,7 @@ int sys_unshare(int flags) {
 
 int sys_setns(int fd, int nstype) {
 	auto ret = do_syscall(SYS_setns, fd, nstype);
-	if(int e = sc_error(ret); e) {
+	if (int e = sc_error(ret); e) {
 		return e;
 	}
 	return 0;
@@ -2203,7 +2250,7 @@ int sys_setns(int fd, int nstype) {
 
 int sys_setgroups(size_t size, const gid_t *list) {
 	auto ret = do_syscall(SYS_setgroups, size, list);
-	if(int e = sc_error(ret); e) {
+	if (int e = sc_error(ret); e) {
 		return e;
 	}
 	return 0;
@@ -2212,11 +2259,11 @@ int sys_setgroups(size_t size, const gid_t *list) {
 #if __MLIBC_BSD_OPTION
 int sys_brk(void **out) {
 	auto ret = do_syscall(SYS_brk, 0);
-	if(int e = sc_error(ret); e) {
+	if (int e = sc_error(ret); e) {
 		return e;
 	}
 
-	*out = (void *) sc_int_result<uintptr_t>(ret);
+	*out = (void *)sc_int_result<uintptr_t>(ret);
 	return 0;
 }
 #endif // __MLIBC_BSD_OPTION
@@ -2226,7 +2273,7 @@ int sys_brk(void **out) {
 int sys_personality(unsigned long persona, int *out) {
 	auto ret = do_syscall(SYS_personality, persona);
 
-	if(int e = sc_error(ret); e) {
+	if (int e = sc_error(ret); e) {
 		return e;
 	}
 
@@ -2238,15 +2285,15 @@ int sys_ioperm(unsigned long int from, unsigned long int num, int turn_on) {
 #if defined(SYS_ioperm)
 	auto ret = do_syscall(SYS_ioperm, from, num, turn_on);
 
-	if(int e = sc_error(ret); e) {
+	if (int e = sc_error(ret); e) {
 		return e;
 	}
 
 	return 0;
 #else
-	(void) from;
-	(void) num;
-	(void) turn_on;
+	(void)from;
+	(void)num;
+	(void)turn_on;
 	return ENOSYS;
 #endif
 }
@@ -2255,13 +2302,13 @@ int sys_iopl(int level) {
 #if defined(SYS_iopl)
 	auto ret = do_syscall(SYS_iopl, level);
 
-	if(int e = sc_error(ret); e) {
+	if (int e = sc_error(ret); e) {
 		return e;
 	}
 
 	return 0;
 #else
-	(void) level;
+	(void)level;
 	return ENOSYS;
 #endif
 }

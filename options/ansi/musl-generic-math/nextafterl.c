@@ -1,13 +1,9 @@
 #include "libm.h"
 
 #if LDBL_MANT_DIG == 53 && LDBL_MAX_EXP == 1024
-long double nextafterl(long double x, long double y)
-{
-	return nextafter(x, y);
-}
+long double nextafterl(long double x, long double y) { return nextafter(x, y); }
 #elif LDBL_MANT_DIG == 64 && LDBL_MAX_EXP == 16384
-long double nextafterl(long double x, long double y)
-{
+long double nextafterl(long double x, long double y) {
 	union ldshape ux, uy;
 
 	if (isnan(x) || isnan(y))
@@ -38,12 +34,11 @@ long double nextafterl(long double x, long double y)
 		return x + x;
 	/* raise underflow if ux is subnormal or zero */
 	if ((ux.i.se & 0x7fff) == 0)
-		FORCE_EVAL(x*x + ux.f*ux.f);
+		FORCE_EVAL(x * x + ux.f * ux.f);
 	return ux.f;
 }
 #elif LDBL_MANT_DIG == 113 && LDBL_MAX_EXP == 16384
-long double nextafterl(long double x, long double y)
-{
+long double nextafterl(long double x, long double y) {
 	union ldshape ux, uy;
 
 	if (isnan(x) || isnan(y))
@@ -69,7 +64,7 @@ long double nextafterl(long double x, long double y)
 		return x + x;
 	/* raise underflow if ux is subnormal or zero */
 	if ((ux.i.se & 0x7fff) == 0)
-		FORCE_EVAL(x*x + ux.f*ux.f);
+		FORCE_EVAL(x * x + ux.f * ux.f);
 	return ux.f;
 }
 #endif

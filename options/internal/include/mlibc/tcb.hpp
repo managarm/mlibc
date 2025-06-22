@@ -1,9 +1,9 @@
 #pragma once
 
-#include <stdint.h>
-#include <limits.h>
 #include <bits/size_t.h>
 #include <frg/array.hpp>
+#include <limits.h>
+#include <stdint.h>
 
 #include "elf.hpp"
 
@@ -34,52 +34,49 @@
  */
 
 namespace {
-	// Set when the cancellation is enabled
-	constexpr unsigned int tcbCancelEnableBit = 1 << 0;
-	// 1 - cancellation is asynchronous, 0 - cancellation is deferred
-	constexpr unsigned int tcbCancelAsyncBit = 1 << 1;
-	// Set when the thread has been cancelled
-	constexpr unsigned int tcbCancelTriggerBit = 1 << 2;
-	// Set when the thread is in the process of being cancelled.
-	constexpr unsigned int tcbCancelingBit = 1 << 3;
-	// Set when the thread is exiting.
-	constexpr unsigned int tcbExitingBit = 1 << 4;
-}
+// Set when the cancellation is enabled
+constexpr unsigned int tcbCancelEnableBit = 1 << 0;
+// 1 - cancellation is asynchronous, 0 - cancellation is deferred
+constexpr unsigned int tcbCancelAsyncBit = 1 << 1;
+// Set when the thread has been cancelled
+constexpr unsigned int tcbCancelTriggerBit = 1 << 2;
+// Set when the thread is in the process of being cancelled.
+constexpr unsigned int tcbCancelingBit = 1 << 3;
+// Set when the thread is exiting.
+constexpr unsigned int tcbExitingBit = 1 << 4;
+} // namespace
 
 namespace mlibc {
-	// Returns true when bitmask indicates thread has been asynchronously
-	// cancelled.
-	static constexpr bool tcb_async_cancelled(int value) {
-		return (value & (tcbCancelEnableBit | tcbCancelAsyncBit
-				| tcbCancelTriggerBit)) == (tcbCancelEnableBit
-					| tcbCancelAsyncBit | tcbCancelTriggerBit);
-	}
+// Returns true when bitmask indicates thread has been asynchronously
+// cancelled.
+static constexpr bool tcb_async_cancelled(int value) {
+	return (value & (tcbCancelEnableBit | tcbCancelAsyncBit | tcbCancelTriggerBit))
+	       == (tcbCancelEnableBit | tcbCancelAsyncBit | tcbCancelTriggerBit);
+}
 
-	// Returns true when bitmask indicates async cancellation is enabled.
-	static constexpr bool tcb_async_cancel(int value) {
-		return (value & (tcbCancelEnableBit | tcbCancelAsyncBit))
-			== (tcbCancelEnableBit | tcbCancelAsyncBit);
-	}
+// Returns true when bitmask indicates async cancellation is enabled.
+static constexpr bool tcb_async_cancel(int value) {
+	return (value & (tcbCancelEnableBit | tcbCancelAsyncBit))
+	       == (tcbCancelEnableBit | tcbCancelAsyncBit);
+}
 
-	// Returns true when bitmask indicates cancellation is enabled.
-	static constexpr bool tcb_cancel_enabled(int value) {
-		return (value & tcbCancelEnableBit);
-	}
+// Returns true when bitmask indicates cancellation is enabled.
+static constexpr bool tcb_cancel_enabled(int value) { return (value & tcbCancelEnableBit); }
 
-	// Returns true when bitmask indicates threas has been cancelled.
-	static constexpr bool tcb_cancelled(int value) {
-		return (value & (tcbCancelEnableBit | tcbCancelTriggerBit))
-		       == (tcbCancelEnableBit | tcbCancelTriggerBit);
-	}
+// Returns true when bitmask indicates threas has been cancelled.
+static constexpr bool tcb_cancelled(int value) {
+	return (value & (tcbCancelEnableBit | tcbCancelTriggerBit))
+	       == (tcbCancelEnableBit | tcbCancelTriggerBit);
+}
 
 #if !MLIBC_STATIC_BUILD && !MLIBC_BUILDING_RTLD
-	// In non-static builds, libc.so always has a TCB available.
-	constexpr bool tcb_available_flag = true;
+// In non-static builds, libc.so always has a TCB available.
+constexpr bool tcb_available_flag = true;
 #else
-	// Otherwise this will be set to true after RTLD has initialized the TCB.
-	extern bool tcb_available_flag;
+// Otherwise this will be set to true after RTLD has initialized the TCB.
+extern bool tcb_available_flag;
 #endif
-}
+} // namespace mlibc
 
 enum class TcbThreadReturnValue {
 	Pointer,
@@ -139,7 +136,7 @@ struct Tcb {
 	size_t guardSize;
 
 	inline void invokeThreadFunc(void *entry, void *user_arg) {
-		if(returnValueType == TcbThreadReturnValue::Pointer) {
+		if (returnValueType == TcbThreadReturnValue::Pointer) {
 			auto func = reinterpret_cast<void *(*)(void *)>(entry);
 			returnValue.voidPtr = func(user_arg);
 		} else {
@@ -177,7 +174,7 @@ static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) - TP_TCB_OFFSET == 80);
 // sysdeps/linux/riscv64/cp_syscall.S needs to be updated whenever
 // the struct is expanded.
 static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 96);
-#elif defined (__m68k__)
+#elif defined(__m68k__)
 // The thread pointer on m68k points to 0x7000 bytes *after* the end of the
 // TCB, so similarly to as on RISC-V, we need to keep the value in
 // sysdeps/linux/m68k/cp_syscall.S up-to-date.

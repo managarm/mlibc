@@ -3,7 +3,8 @@
 
 #include <stddef.h>
 
-#if defined(__x86_64__) || defined(__aarch64__) || defined(__i386__) || defined(__riscv) || defined (__m68k__) || defined(__loongarch64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(__i386__) || defined(__riscv)           \
+    || defined(__m68k__) || defined(__loongarch64)
 
 struct __abi_tls_entry {
 	struct SharedObject *object;

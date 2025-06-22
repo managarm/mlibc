@@ -8,19 +8,19 @@ extern "C" {
 #include <elf.h>
 #include <stddef.h>
 
-#if defined(__x86_64__) || defined(__aarch64__) \
-	|| (defined(__riscv) && __riscv_xlen == 64) || defined(__loongarch64)
-#	define ElfW(type) Elf64_ ## type
+#if defined(__x86_64__) || defined(__aarch64__) || (defined(__riscv) && __riscv_xlen == 64)        \
+    || defined(__loongarch64)
+#define ElfW(type) Elf64_##type
 #elif defined(__i386__) || defined(__m68k__)
-#	define ElfW(type) Elf32_ ## type
+#define ElfW(type) Elf32_##type
 #else
-# 	error Unknown architecture
+#error Unknown architecture
 #endif
 
 struct dl_phdr_info {
 	ElfW(Addr) dlpi_addr;
 	const char *dlpi_name;
-	const ElfW(Phdr) *dlpi_phdr;
+	const ElfW(Phdr) * dlpi_phdr;
 	ElfW(Half) dlpi_phnum;
 	unsigned long long int dlpi_adds;
 	unsigned long long int dlpi_subs;
@@ -31,7 +31,7 @@ struct dl_phdr_info {
 struct link_map {
 	Elf64_Addr l_addr;
 	char *l_name;
-	ElfW(Dyn) *l_ld;
+	ElfW(Dyn) * l_ld;
 	struct link_map *l_next, *l_prev;
 };
 
@@ -45,7 +45,9 @@ struct r_debug {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int dl_iterate_phdr(int (*__callback)(struct dl_phdr_info* __info, size_t __size, void* __data), void* __data);
+int dl_iterate_phdr(
+    int (*__callback)(struct dl_phdr_info *__info, size_t __size, void *__data), void *__data
+);
 
 extern ElfW(Dyn) _DYNAMIC[];
 

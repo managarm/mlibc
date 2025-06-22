@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 
-#if defined (__i386__)
+#if defined(__i386__)
 struct __mlibc_jmpbuf_register_state {
 	uint32_t ebx;
 	uint32_t ebp;
@@ -13,7 +13,7 @@ struct __mlibc_jmpbuf_register_state {
 	uint32_t esp;
 	uint32_t eip;
 };
-#elif defined (__x86_64__)
+#elif defined(__x86_64__)
 struct __mlibc_jmpbuf_register_state {
 	uint64_t rbx;
 	uint64_t rbp;
@@ -24,7 +24,7 @@ struct __mlibc_jmpbuf_register_state {
 	uint64_t rsp;
 	uint64_t rip;
 };
-#elif defined (__aarch64__)
+#elif defined(__aarch64__)
 struct __mlibc_jmpbuf_register_state {
 	uint64_t x19;
 	uint64_t x20;
@@ -49,7 +49,7 @@ struct __mlibc_jmpbuf_register_state {
 	uint64_t d14;
 	uint64_t d15;
 };
-#elif defined (__riscv) && __riscv_xlen == 64
+#elif defined(__riscv) && __riscv_xlen == 64
 struct __mlibc_jmpbuf_register_state {
 	uint64_t ra;
 	uint64_t s0;
@@ -78,7 +78,7 @@ struct __mlibc_jmpbuf_register_state {
 	double fs10;
 	double fs11;
 };
-#elif defined (__m68k__)
+#elif defined(__m68k__)
 struct __mlibc_jmpbuf_register_state {
 	uint32_t d2;
 	uint32_t d3;
@@ -95,7 +95,7 @@ struct __mlibc_jmpbuf_register_state {
 	uint32_t sp;
 	uint32_t pc;
 };
-#elif defined (__loongarch64)
+#elif defined(__loongarch64)
 struct __mlibc_jmpbuf_register_state {
 	uint64_t ra;
 	uint64_t sp;
@@ -119,8 +119,7 @@ struct __mlibc_jmpbuf_register_state {
 	double fs7;
 };
 #else
-#  error "Missing architecture specific code"
+#error "Missing architecture specific code"
 #endif
 
 #endif /* MLIBC_MACHINE_H */
-

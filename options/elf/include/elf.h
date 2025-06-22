@@ -1,9 +1,9 @@
 #ifndef _ELF_H
 #define _ELF_H
 
-#include <stdint.h>
-#include <bits/inline-definition.h>
 #include <abi-bits/auxv.h>
+#include <bits/inline-definition.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,56 +49,56 @@ typedef Elf32_Half Elf32_Versym;
 
 typedef struct {
 	unsigned char e_ident[EI_NIDENT]; /* ELF identification */
-	Elf32_Half e_type; /* Object file type */
-	Elf32_Half e_machine; /* Machine type */
-	Elf32_Word e_version; /* Object file version */
-	Elf32_Addr e_entry; /* Entry point address */
-	Elf32_Off e_phoff; /* Program header offset */
-	Elf32_Off e_shoff; /* Section header offset */
-	Elf32_Word e_flags; /* Processor-specific flags */
-	Elf32_Half e_ehsize; /* ELF header size */
-	Elf32_Half e_phentsize; /* Size of program header entry */
-	Elf32_Half e_phnum; /* Number of program header entries */
-	Elf32_Half e_shentsize; /* Size of section header entry */
-	Elf32_Half e_shnum; /* Number of section header entries */
-	Elf32_Half e_shstrndx; /* Section name string table index */
+	Elf32_Half e_type;                /* Object file type */
+	Elf32_Half e_machine;             /* Machine type */
+	Elf32_Word e_version;             /* Object file version */
+	Elf32_Addr e_entry;               /* Entry point address */
+	Elf32_Off e_phoff;                /* Program header offset */
+	Elf32_Off e_shoff;                /* Section header offset */
+	Elf32_Word e_flags;               /* Processor-specific flags */
+	Elf32_Half e_ehsize;              /* ELF header size */
+	Elf32_Half e_phentsize;           /* Size of program header entry */
+	Elf32_Half e_phnum;               /* Number of program header entries */
+	Elf32_Half e_shentsize;           /* Size of section header entry */
+	Elf32_Half e_shnum;               /* Number of section header entries */
+	Elf32_Half e_shstrndx;            /* Section name string table index */
 } Elf32_Ehdr;
 
 typedef struct {
 	unsigned char e_ident[EI_NIDENT]; /* ELF identification */
-	Elf64_Half e_type; /* Object file type */
-	Elf64_Half e_machine; /* Machine type */
-	Elf64_Word e_version; /* Object file version */
-	Elf64_Addr e_entry; /* Entry point address */
-	Elf64_Off e_phoff; /* Program header offset */
-	Elf64_Off e_shoff; /* Section header offset */
-	Elf64_Word e_flags; /* Processor-specific flags */
-	Elf64_Half e_ehsize; /* ELF header size */
-	Elf64_Half e_phentsize; /* Size of program header entry */
-	Elf64_Half e_phnum; /* Number of program header entries */
-	Elf64_Half e_shentsize; /* Size of section header entry */
-	Elf64_Half e_shnum; /* Number of section header entries */
-	Elf64_Half e_shstrndx; /* Section name string table index */
+	Elf64_Half e_type;                /* Object file type */
+	Elf64_Half e_machine;             /* Machine type */
+	Elf64_Word e_version;             /* Object file version */
+	Elf64_Addr e_entry;               /* Entry point address */
+	Elf64_Off e_phoff;                /* Program header offset */
+	Elf64_Off e_shoff;                /* Section header offset */
+	Elf64_Word e_flags;               /* Processor-specific flags */
+	Elf64_Half e_ehsize;              /* ELF header size */
+	Elf64_Half e_phentsize;           /* Size of program header entry */
+	Elf64_Half e_phnum;               /* Number of program header entries */
+	Elf64_Half e_shentsize;           /* Size of section header entry */
+	Elf64_Half e_shnum;               /* Number of section header entries */
+	Elf64_Half e_shstrndx;            /* Section name string table index */
 } Elf64_Ehdr;
 
 typedef struct {
 	Elf32_Half vd_version; /* Version revision */
-	Elf32_Half vd_flags; /* Version information */
-	Elf32_Half vd_ndx; /* Version Index */
-	Elf32_Half vd_cnt; /* Number of associated aux entries */
-	Elf32_Word vd_hash; /* Version name hash value */
-	Elf32_Word vd_aux; /* Offset in bytes to verdaux array */
-	Elf32_Word vd_next; /* Offset in bytes to next verdef entry */
+	Elf32_Half vd_flags;   /* Version information */
+	Elf32_Half vd_ndx;     /* Version Index */
+	Elf32_Half vd_cnt;     /* Number of associated aux entries */
+	Elf32_Word vd_hash;    /* Version name hash value */
+	Elf32_Word vd_aux;     /* Offset in bytes to verdaux array */
+	Elf32_Word vd_next;    /* Offset in bytes to next verdef entry */
 } Elf32_Verdef;
 
 typedef struct {
 	Elf64_Half vd_version; /* Version revision */
-	Elf64_Half vd_flags; /* Version information */
-	Elf64_Half vd_ndx; /* Version Index */
-	Elf64_Half vd_cnt; /* Number of associated aux entries */
-	Elf64_Word vd_hash; /* Version name hash value */
-	Elf64_Word vd_aux; /* Offset in bytes to verdaux array */
-	Elf64_Word vd_next; /* Offset in bytes to next verdef entry */
+	Elf64_Half vd_flags;   /* Version information */
+	Elf64_Half vd_ndx;     /* Version Index */
+	Elf64_Half vd_cnt;     /* Number of associated aux entries */
+	Elf64_Word vd_hash;    /* Version name hash value */
+	Elf64_Word vd_aux;     /* Offset in bytes to verdaux array */
+	Elf64_Word vd_next;    /* Offset in bytes to next verdef entry */
 } Elf64_Verdef;
 
 typedef struct {
@@ -159,22 +159,11 @@ typedef struct {
 	Elf64_Word l_flags;
 } Elf64_Lib;
 
-enum {
-	ET_NONE = 0,
-	ET_REL = 1,
-	ET_EXEC = 2,
-	ET_DYN = 3,
-	ET_CORE = 4
-};
+enum { ET_NONE = 0, ET_REL = 1, ET_EXEC = 2, ET_DYN = 3, ET_CORE = 4 };
 
-enum {
-	SHN_UNDEF = 0,
-	SHN_ABS = 0xFFF1
-};
+enum { SHN_UNDEF = 0, SHN_ABS = 0xFFF1 };
 
-enum {
-	STN_UNDEF = 0
-};
+enum { STN_UNDEF = 0 };
 
 typedef struct {
 	Elf32_Word st_name;
@@ -194,12 +183,8 @@ typedef struct {
 	Elf64_Xword st_size;
 } Elf64_Sym;
 
-__MLIBC_INLINE_DEFINITION unsigned char ELF64_ST_BIND(unsigned char info) {
-	return info >> 4;
-}
-__MLIBC_INLINE_DEFINITION unsigned char ELF64_ST_TYPE(unsigned char info) {
-	return info & 0x0F;
-}
+__MLIBC_INLINE_DEFINITION unsigned char ELF64_ST_BIND(unsigned char info) { return info >> 4; }
+__MLIBC_INLINE_DEFINITION unsigned char ELF64_ST_TYPE(unsigned char info) { return info & 0x0F; }
 __MLIBC_INLINE_DEFINITION unsigned char ELF64_ST_INFO(unsigned char bind, unsigned char type) {
 	return (bind << 4) | type;
 }
@@ -209,31 +194,15 @@ typedef struct {
 	Elf64_Half si_flags;
 } Elf64_Syminfo;
 
-__MLIBC_INLINE_DEFINITION unsigned char ELF32_ST_BIND(unsigned char info) {
-	return info >> 4;
-}
-__MLIBC_INLINE_DEFINITION unsigned char ELF32_ST_TYPE(unsigned char info) {
-	return info & 0xF;
-}
+__MLIBC_INLINE_DEFINITION unsigned char ELF32_ST_BIND(unsigned char info) { return info >> 4; }
+__MLIBC_INLINE_DEFINITION unsigned char ELF32_ST_TYPE(unsigned char info) { return info & 0xF; }
 __MLIBC_INLINE_DEFINITION unsigned char ELF32_ST_INFO(unsigned char bind, unsigned char type) {
 	return (bind << 4) | (type & 0xF);
 }
 
-enum {
-	STB_GLOBAL = 1,
-	STB_WEAK = 2,
-	STB_GNU_UNIQUE = 10,
-	STB_LOPROC = 13,
-	STB_HIPROC = 15
-};
+enum { STB_GLOBAL = 1, STB_WEAK = 2, STB_GNU_UNIQUE = 10, STB_LOPROC = 13, STB_HIPROC = 15 };
 
-enum {
-	STT_OBJECT = 1,
-	STT_FUNC = 2,
-	STT_TLS = 6,
-	STT_LOPROC = 13,
-	STT_HIPROC = 15
-};
+enum { STT_OBJECT = 1, STT_FUNC = 2, STT_TLS = 6, STT_LOPROC = 13, STT_HIPROC = 15 };
 
 enum {
 	R_X86_64_NONE = 0,
@@ -318,8 +287,8 @@ enum {
 	R_68K_RELATIVE = 22,
 
 	R_68K_TLS_DTPMOD32 = 40,
-	R_68K_TLS_DTPREL32= 41,
-	R_68K_TLS_TPREL32= 42
+	R_68K_TLS_DTPREL32 = 41,
+	R_68K_TLS_TPREL32 = 42
 };
 
 enum {
@@ -345,7 +314,7 @@ typedef struct {
 
 typedef struct {
 	Elf64_Addr r_offset;
-	uint64_t   r_info;
+	uint64_t r_info;
 } Elf64_Rel;
 
 typedef struct {
@@ -363,22 +332,14 @@ typedef struct {
 typedef Elf32_Word Elf32_Relr;
 typedef Elf64_Xword Elf64_Relr;
 
-__MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_SYM(Elf64_Xword info) {
-	return info >> 32;
-}
-__MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_TYPE(Elf64_Xword info) {
-	return info & 0xFFFFFFFF;
-}
+__MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_SYM(Elf64_Xword info) { return info >> 32; }
+__MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_TYPE(Elf64_Xword info) { return info & 0xFFFFFFFF; }
 __MLIBC_INLINE_DEFINITION Elf64_Xword ELF64_R_INFO(Elf64_Xword sym, Elf64_Xword type) {
 	return ((((Elf64_Xword)(sym)) << 32) + (type));
 }
 
-__MLIBC_INLINE_DEFINITION Elf32_Word ELF32_R_SYM(Elf32_Word info) {
-	return info >> 8;
-}
-__MLIBC_INLINE_DEFINITION Elf32_Word ELF32_R_TYPE(Elf32_Word info) {
-	return info & 0xFF;
-}
+__MLIBC_INLINE_DEFINITION Elf32_Word ELF32_R_SYM(Elf32_Word info) { return info >> 8; }
+__MLIBC_INLINE_DEFINITION Elf32_Word ELF32_R_TYPE(Elf32_Word info) { return info & 0xFF; }
 
 enum {
 	PT_NULL = 0,
@@ -405,32 +366,28 @@ enum {
 	PT_HIPROC = 0x7fffffff
 };
 
-enum {
-	PF_X = 1,
-	PF_W = 2,
-	PF_R = 4
-};
+enum { PF_X = 1, PF_W = 2, PF_R = 4 };
 
 typedef struct {
-	Elf32_Word p_type; /* Type of segment */
-	Elf32_Off p_offset; /* Offset in file */
-	Elf32_Addr p_vaddr; /* Virtual address in memory */
-	Elf32_Addr p_paddr; /* Reserved */
+	Elf32_Word p_type;   /* Type of segment */
+	Elf32_Off p_offset;  /* Offset in file */
+	Elf32_Addr p_vaddr;  /* Virtual address in memory */
+	Elf32_Addr p_paddr;  /* Reserved */
 	Elf32_Word p_filesz; /* Size of segment in file */
-	Elf32_Word p_memsz; /* Size of segment in memory */
-	Elf32_Word p_flags; /* Segment attributes */
-	Elf32_Word p_align; /* Alignment of segment */
+	Elf32_Word p_memsz;  /* Size of segment in memory */
+	Elf32_Word p_flags;  /* Segment attributes */
+	Elf32_Word p_align;  /* Alignment of segment */
 } Elf32_Phdr;
 
 typedef struct {
-	Elf64_Word p_type; /* Type of segment */
-	Elf64_Word p_flags; /* Segment attributes */
-	Elf64_Off p_offset; /* Offset in file */
-	Elf64_Addr p_vaddr; /* Virtual address in memory */
-	Elf64_Addr p_paddr; /* Reserved */
+	Elf64_Word p_type;    /* Type of segment */
+	Elf64_Word p_flags;   /* Segment attributes */
+	Elf64_Off p_offset;   /* Offset in file */
+	Elf64_Addr p_vaddr;   /* Virtual address in memory */
+	Elf64_Addr p_paddr;   /* Reserved */
 	Elf64_Xword p_filesz; /* Size of segment in file */
-	Elf64_Xword p_memsz; /* Size of segment in memory */
-	Elf64_Xword p_align; /* Alignment of segment */
+	Elf64_Xword p_memsz;  /* Size of segment in memory */
+	Elf64_Xword p_align;  /* Alignment of segment */
 } Elf64_Phdr;
 
 enum {
@@ -499,8 +456,8 @@ enum {
 };
 
 /* Valid values for note segment descriptor files for core files */
-#define NT_PRSTATUS	1
-#define NT_FPREGSET	2
+#define NT_PRSTATUS 1
+#define NT_FPREGSET 2
 #define NT_PRPSINFO 3
 
 /* Build ID bits as generated by ld --build-id */
@@ -549,10 +506,10 @@ typedef struct {
 } Elf64_Shdr;
 
 typedef struct {
-  uint64_t a_type;
-  union {
-    uint64_t a_val;
-  } a_un;
+	uint64_t a_type;
+	union {
+		uint64_t a_val;
+	} a_un;
 } Elf64_auxv_t;
 
 typedef struct {
@@ -563,123 +520,124 @@ typedef struct {
 } Elf32_auxv_t;
 
 typedef struct {
-  Elf32_Word n_namesz;
-  Elf32_Word n_descsz;
-  Elf32_Word n_type;
+	Elf32_Word n_namesz;
+	Elf32_Word n_descsz;
+	Elf32_Word n_type;
 } Elf32_Nhdr;
 
 typedef struct {
-  Elf64_Word n_namesz;
-  Elf64_Word n_descsz;
-  Elf64_Word n_type;
+	Elf64_Word n_namesz;
+	Elf64_Word n_descsz;
+	Elf64_Word n_type;
 } Elf64_Nhdr;
 
 /* ST_TYPE (subfield of st_info) values (symbol type) */
-#define STT_NOTYPE	0
-#define STT_OBJECT	1
-#define STT_FUNC	2
-#define STT_SECTION	3
-#define STT_FILE	4
+#define STT_NOTYPE 0
+#define STT_OBJECT 1
+#define STT_FUNC 2
+#define STT_SECTION 3
+#define STT_FILE 4
 
 /* ST_BIND (subfield of st_info) values (symbol binding) */
-#define STB_LOCAL	0
-#define STB_GLOBAL	1
-#define STB_WEAK	2
+#define STB_LOCAL 0
+#define STB_GLOBAL 1
+#define STB_WEAK 2
 
 /* sh_type (section type) values */
-#define SHT_NULL		0
-#define SHT_PROGBITS		1
-#define SHT_SYMTAB		2
-#define SHT_STRTAB		3
-#define SHT_RELA		4
-#define SHT_HASH    5
+#define SHT_NULL 0
+#define SHT_PROGBITS 1
+#define SHT_SYMTAB 2
+#define SHT_STRTAB 3
+#define SHT_RELA 4
+#define SHT_HASH 5
 #define SHT_DYNAMIC 6
-#define SHT_NOTE	  7
-#define SHT_NOBITS		8
-#define SHT_REL			9
-#define SHT_DYNSYM  11
-#define SHT_INIT_ARRAY		14
-#define SHT_FINI_ARRAY		15
-#define SHT_SYMTAB_SHNDX	18
+#define SHT_NOTE 7
+#define SHT_NOBITS 8
+#define SHT_REL 9
+#define SHT_DYNSYM 11
+#define SHT_INIT_ARRAY 14
+#define SHT_FINI_ARRAY 15
+#define SHT_SYMTAB_SHNDX 18
 
 /* special section indices */
-#define SHN_UNDEF	0
-#define SHN_LORESERVE	0xff00
-#define SHN_COMMON	0xfff2
-#define SHN_XINDEX	0xffff
-#define SHN_HIRESERVE	0xff00
+#define SHN_UNDEF 0
+#define SHN_LORESERVE 0xff00
+#define SHN_COMMON 0xfff2
+#define SHN_XINDEX 0xffff
+#define SHN_HIRESERVE 0xff00
 
 /* values for e_machine */
-#define EM_NONE			0
-#define EM_M32			1
-#define EM_SPARC		2
-#define EM_386			3
-#define EM_68K			4
-#define EM_MIPS			8
-#define EM_PARISC		15
-#define EM_PPC			20
-#define EM_PPC64		21
-#define EM_S390			22
-#define EM_ARM			40
-#define EM_SH			42
-#define EM_SPARCV9		43
-#define EM_IA_64		50
-#define EM_X86_64		62
-#define EM_BLACKFIN		106
-#define EM_AARCH64		183
-#define EM_RISCV		243
-#define EM_LOONGARCH	258
+#define EM_NONE 0
+#define EM_M32 1
+#define EM_SPARC 2
+#define EM_386 3
+#define EM_68K 4
+#define EM_MIPS 8
+#define EM_PARISC 15
+#define EM_PPC 20
+#define EM_PPC64 21
+#define EM_S390 22
+#define EM_ARM 40
+#define EM_SH 42
+#define EM_SPARCV9 43
+#define EM_IA_64 50
+#define EM_X86_64 62
+#define EM_BLACKFIN 106
+#define EM_AARCH64 183
+#define EM_RISCV 243
+#define EM_LOONGARCH 258
 
-/* Linux notes this value as being interim; however applications are using this (Qt6), so we define it here. */
-#define EM_ALPHA		0x9026
+/* Linux notes this value as being interim; however applications are using this (Qt6), so we define
+ * it here. */
+#define EM_ALPHA 0x9026
 
 /* values for e_version */
-#define EV_NONE		0
-#define EV_CURRENT	1
-#define EV_NUM		2
+#define EV_NONE 0
+#define EV_CURRENT 1
+#define EV_NUM 2
 
 /* e_indent constants */
-#define EI_MAG0		0
-#define ELFMAG0		0x7f
+#define EI_MAG0 0
+#define ELFMAG0 0x7f
 
-#define EI_MAG1		1
-#define ELFMAG1		'E'
+#define EI_MAG1 1
+#define ELFMAG1 'E'
 
-#define EI_MAG2		2
-#define ELFMAG2		'L'
+#define EI_MAG2 2
+#define ELFMAG2 'L'
 
-#define EI_MAG3		3
-#define ELFMAG3		'F'
+#define EI_MAG3 3
+#define ELFMAG3 'F'
 
-#define ELFMAG    "\177ELF"
-#define SELFMAG   4
+#define ELFMAG "\177ELF"
+#define SELFMAG 4
 
-#define EI_CLASS	4
-#define ELFCLASSNONE	0
-#define ELFCLASS32	1
-#define ELFCLASS64	2
-#define ELFCLASSNUM	3
+#define EI_CLASS 4
+#define ELFCLASSNONE 0
+#define ELFCLASS32 1
+#define ELFCLASS64 2
+#define ELFCLASSNUM 3
 
-#define EI_DATA		5
-#define ELFDATANONE	0
-#define ELFDATA2LSB	1
-#define ELFDATA2MSB	2
-#define ELFDATANUM	3
+#define EI_DATA 5
+#define ELFDATANONE 0
+#define ELFDATA2LSB 1
+#define ELFDATA2MSB 2
+#define ELFDATANUM 3
 
-#define EI_VERSION	6
+#define EI_VERSION 6
 
-#define EI_OSABI	7
-#define ELFOSABI_HPUX		1
-#define ELFOSABI_NETBSD		2
-#define ELFOSABI_GNU		3
+#define EI_OSABI 7
+#define ELFOSABI_HPUX 1
+#define ELFOSABI_NETBSD 2
+#define ELFOSABI_GNU 3
 #define ELFOSABI_LINUX ELFOSABI_GNU
-#define ELFOSABI_SOLARIS	6
-#define ELFOSABI_AIX		7
-#define ELFOSABI_IRIX		8
-#define ELFOSABI_FREEBSD	9
-#define ELFOSABI_OPENBSD	12
+#define ELFOSABI_SOLARIS 6
+#define ELFOSABI_AIX 7
+#define ELFOSABI_IRIX 8
+#define ELFOSABI_FREEBSD 9
+#define ELFOSABI_OPENBSD 12
 
-#define EI_ABIVERSION	8
+#define EI_ABIVERSION 8
 
 #define ELF_NOTE_GNU "GNU"
 

@@ -1,17 +1,17 @@
 #ifndef _ABIBITS_STAT_H
 #define _ABIBITS_STAT_H
 
-#include <abi-bits/uid_t.h>
-#include <abi-bits/gid_t.h>
-#include <bits/off_t.h>
-#include <abi-bits/mode_t.h>
-#include <abi-bits/dev_t.h>
-#include <abi-bits/ino_t.h>
-#include <abi-bits/blksize_t.h>
 #include <abi-bits/blkcnt_t.h>
+#include <abi-bits/blksize_t.h>
+#include <abi-bits/dev_t.h>
+#include <abi-bits/gid_t.h>
+#include <abi-bits/ino_t.h>
+#include <abi-bits/mode_t.h>
 #include <abi-bits/nlink_t.h>
+#include <abi-bits/uid_t.h>
 #include <bits/ansi/time_t.h>
 #include <bits/ansi/timespec.h>
+#include <bits/off_t.h>
 
 #define S_IFMT 0x0F000
 #define S_IFBLK 0x06000
@@ -38,9 +38,9 @@
 #define S_ISGID 02000
 #define S_ISVTX 01000
 
-#define S_IREAD  S_IRUSR
+#define S_IREAD S_IRUSR
 #define S_IWRITE S_IWUSR
-#define S_IEXEC  S_IXUSR
+#define S_IEXEC S_IXUSR
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,7 +66,7 @@ struct stat {
 	long __unused[3];
 };
 
-#elif (defined(__riscv) && __riscv_xlen == 64) || defined (__aarch64__) || defined(__loongarch64)
+#elif (defined(__riscv) && __riscv_xlen == 64) || defined(__aarch64__) || defined(__loongarch64)
 
 struct stat {
 	dev_t st_dev;
@@ -116,7 +116,7 @@ struct stat {
 	struct timespec st_mtim;
 	struct timespec st_ctim;
 };
-#elif defined (__m68k__)
+#elif defined(__m68k__)
 
 struct stat {
 	dev_t st_dev;

@@ -1,12 +1,12 @@
 #ifndef _ABIBITS_SIGNAL_H
 #define _ABIBITS_SIGNAL_H
 
-#include <stdint.h>
-#include <time.h>
-#include <abi-bits/sigevent.h>
 #include <abi-bits/pid_t.h>
+#include <abi-bits/sigevent.h>
 #include <abi-bits/uid_t.h>
 #include <bits/size_t.h>
+#include <stdint.h>
+#include <time.h>
 
 #define POLL_IN 1
 #define POLL_OUT 2
@@ -20,7 +20,7 @@
 typedef struct {
 	int si_signo, si_errno, si_code;
 	union {
-		char __pad[128 - 2*sizeof(int) - sizeof(long)];
+		char __pad[128 - 2 * sizeof(int) - sizeof(long)];
 		struct {
 			union {
 				struct {
@@ -62,26 +62,26 @@ typedef struct {
 		} __sigsys;
 	} __si_fields;
 } siginfo_t;
-#define si_pid     __si_fields.__si_common.__first.__piduid.si_pid
-#define si_uid     __si_fields.__si_common.__first.__piduid.si_uid
-#define si_status  __si_fields.__si_common.__second.__sigchld.si_status
-#define si_utime   __si_fields.__si_common.__second.__sigchld.si_utime
-#define si_stime   __si_fields.__si_common.__second.__sigchld.si_stime
-#define si_value   __si_fields.__si_common.__second.si_value
-#define si_addr    __si_fields.__sigfault.si_addr
+#define si_pid __si_fields.__si_common.__first.__piduid.si_pid
+#define si_uid __si_fields.__si_common.__first.__piduid.si_uid
+#define si_status __si_fields.__si_common.__second.__sigchld.si_status
+#define si_utime __si_fields.__si_common.__second.__sigchld.si_utime
+#define si_stime __si_fields.__si_common.__second.__sigchld.si_stime
+#define si_value __si_fields.__si_common.__second.si_value
+#define si_addr __si_fields.__sigfault.si_addr
 #define si_addr_lsb __si_fields.__sigfault.si_addr_lsb
-#define si_lower   __si_fields.__sigfault.__first.__addr_bnd.si_lower
-#define si_upper   __si_fields.__sigfault.__first.__addr_bnd.si_upper
-#define si_pkey    __si_fields.__sigfault.__first.si_pkey
-#define si_band    __si_fields.__sigpoll.si_band
-#define si_fd      __si_fields.__sigpoll.si_fd
+#define si_lower __si_fields.__sigfault.__first.__addr_bnd.si_lower
+#define si_upper __si_fields.__sigfault.__first.__addr_bnd.si_upper
+#define si_pkey __si_fields.__sigfault.__first.si_pkey
+#define si_band __si_fields.__sigpoll.si_band
+#define si_fd __si_fields.__sigpoll.si_fd
 #define si_timerid __si_fields.__si_common.__first.__timer.si_timerid
 #define si_overrun __si_fields.__si_common.__first.__timer.si_overrun
-#define si_ptr     si_value.sival_ptr
-#define si_int     si_value.sival_int
+#define si_ptr si_value.sival_ptr
+#define si_int si_value.sival_int
 #define si_call_addr __si_fields.__sigsys.si_call_addr
 #define si_syscall __si_fields.__sigsys.si_syscall
-#define si_arch    __si_fields.__sigsys.si_arch
+#define si_arch __si_fields.__sigsys.si_arch
 
 /* Required for sys_sigaction sysdep. */
 #define SA_NOCLDSTOP 1
@@ -98,7 +98,7 @@ extern "C" {
 #endif
 
 /* Argument for signal() */
-typedef void (*__sighandler) (int);
+typedef void (*__sighandler)(int);
 
 #define SIG_ERR ((__sighandler)(void *)(-1))
 #define SIG_DFL ((__sighandler)(void *)(0))
@@ -125,30 +125,30 @@ typedef struct {
 #define SIG_UNBLOCK 1
 #define SIG_SETMASK 2
 
-#define SIGHUP    1
-#define SIGQUIT   3
-#define SIGTRAP   5
-#define SIGIOT    SIGABRT
-#define SIGBUS    7
-#define SIGKILL   9
-#define SIGUSR1   10
-#define SIGUSR2   12
-#define SIGPIPE   13
-#define SIGALRM   14
+#define SIGHUP 1
+#define SIGQUIT 3
+#define SIGTRAP 5
+#define SIGIOT SIGABRT
+#define SIGBUS 7
+#define SIGKILL 9
+#define SIGUSR1 10
+#define SIGUSR2 12
+#define SIGPIPE 13
+#define SIGALRM 14
 #define SIGSTKFLT 16
-#define SIGCHLD   17
-#define SIGCONT   18
-#define SIGSTOP   19
-#define SIGTSTP   20
-#define SIGTTIN   21
-#define SIGTTOU   22
-#define SIGURG    23
-#define SIGXCPU   24
-#define SIGXFSZ   25
+#define SIGCHLD 17
+#define SIGCONT 18
+#define SIGSTOP 19
+#define SIGTSTP 20
+#define SIGTTIN 21
+#define SIGTTOU 22
+#define SIGURG 23
+#define SIGXCPU 24
+#define SIGXFSZ 25
 #define SIGVTALRM 26
-#define SIGWINCH  28
-#define SIGPOLL   29
-#define SIGSYS    31
+#define SIGWINCH 28
+#define SIGPOLL 29
+#define SIGSYS 31
 #define SIGUNUSED SIGSYS
 #define SIGCANCEL 32
 
@@ -359,17 +359,17 @@ typedef struct __ucontext {
 #define NGREG 32
 
 enum {
-  REG_PC = 0,
+	REG_PC = 0,
 #define REG_PC REG_PC
-  REG_RA = 1,
+	REG_RA = 1,
 #define REG_RA REG_RA
-  REG_SP = 2,
+	REG_SP = 2,
 #define REG_SP REG_SP
-  REG_TP = 4,
+	REG_TP = 4,
 #define REG_TP REG_TP
-  REG_S0 = 8,
+	REG_S0 = 8,
 #define REG_S0 REG_S0
-  REG_A0 = 10
+	REG_A0 = 10
 #define REG_A0 REG_A0
 };
 
@@ -404,7 +404,7 @@ typedef struct sigcontext {
 
 typedef struct __ucontext {
 	unsigned long uc_flags;
-	struct ucontext	*uc_link;
+	struct ucontext *uc_link;
 	stack_t uc_stack;
 	sigset_t uc_sigmask;
 #pragma GCC diagnostic push
@@ -414,7 +414,7 @@ typedef struct __ucontext {
 	mcontext_t uc_mcontext;
 } ucontext_t;
 
-#elif defined (__aarch64__)
+#elif defined(__aarch64__)
 
 #define NGREG 34
 
@@ -456,38 +456,29 @@ struct sve_context {
 	uint16_t vl;
 	uint16_t __reserved[3];
 };
-#define SVE_VQ_BYTES		16
-#define SVE_VQ_MIN		1
-#define SVE_VQ_MAX		512
-#define SVE_VL_MIN		(SVE_VQ_MIN * SVE_VQ_BYTES)
-#define SVE_VL_MAX		(SVE_VQ_MAX * SVE_VQ_BYTES)
-#define SVE_NUM_ZREGS		32
-#define SVE_NUM_PREGS		16
-#define sve_vl_valid(vl) \
-	((vl) % SVE_VQ_BYTES == 0 && (vl) >= SVE_VL_MIN && (vl) <= SVE_VL_MAX)
-#define sve_vq_from_vl(vl)	((vl) / SVE_VQ_BYTES)
-#define sve_vl_from_vq(vq)	((vq) * SVE_VQ_BYTES)
-#define SVE_SIG_ZREG_SIZE(vq)	((unsigned)(vq) * SVE_VQ_BYTES)
-#define SVE_SIG_PREG_SIZE(vq)	((unsigned)(vq) * (SVE_VQ_BYTES / 8))
-#define SVE_SIG_FFR_SIZE(vq)	SVE_SIG_PREG_SIZE(vq)
-#define SVE_SIG_REGS_OFFSET					\
-	((sizeof(struct sve_context) + (SVE_VQ_BYTES - 1))	\
-		/ SVE_VQ_BYTES * SVE_VQ_BYTES)
-#define SVE_SIG_ZREGS_OFFSET	SVE_SIG_REGS_OFFSET
-#define SVE_SIG_ZREG_OFFSET(vq, n) \
-	(SVE_SIG_ZREGS_OFFSET + SVE_SIG_ZREG_SIZE(vq) * (n))
-#define SVE_SIG_ZREGS_SIZE(vq) \
-	(SVE_SIG_ZREG_OFFSET(vq, SVE_NUM_ZREGS) - SVE_SIG_ZREGS_OFFSET)
-#define SVE_SIG_PREGS_OFFSET(vq) \
-	(SVE_SIG_ZREGS_OFFSET + SVE_SIG_ZREGS_SIZE(vq))
-#define SVE_SIG_PREG_OFFSET(vq, n) \
-	(SVE_SIG_PREGS_OFFSET(vq) + SVE_SIG_PREG_SIZE(vq) * (n))
-#define SVE_SIG_PREGS_SIZE(vq) \
-	(SVE_SIG_PREG_OFFSET(vq, SVE_NUM_PREGS) - SVE_SIG_PREGS_OFFSET(vq))
-#define SVE_SIG_FFR_OFFSET(vq) \
-	(SVE_SIG_PREGS_OFFSET(vq) + SVE_SIG_PREGS_SIZE(vq))
-#define SVE_SIG_REGS_SIZE(vq) \
-	(SVE_SIG_FFR_OFFSET(vq) + SVE_SIG_FFR_SIZE(vq) - SVE_SIG_REGS_OFFSET)
+#define SVE_VQ_BYTES 16
+#define SVE_VQ_MIN 1
+#define SVE_VQ_MAX 512
+#define SVE_VL_MIN (SVE_VQ_MIN * SVE_VQ_BYTES)
+#define SVE_VL_MAX (SVE_VQ_MAX * SVE_VQ_BYTES)
+#define SVE_NUM_ZREGS 32
+#define SVE_NUM_PREGS 16
+#define sve_vl_valid(vl) ((vl) % SVE_VQ_BYTES == 0 && (vl) >= SVE_VL_MIN && (vl) <= SVE_VL_MAX)
+#define sve_vq_from_vl(vl) ((vl) / SVE_VQ_BYTES)
+#define sve_vl_from_vq(vq) ((vq) * SVE_VQ_BYTES)
+#define SVE_SIG_ZREG_SIZE(vq) ((unsigned)(vq) * SVE_VQ_BYTES)
+#define SVE_SIG_PREG_SIZE(vq) ((unsigned)(vq) * (SVE_VQ_BYTES / 8))
+#define SVE_SIG_FFR_SIZE(vq) SVE_SIG_PREG_SIZE(vq)
+#define SVE_SIG_REGS_OFFSET                                                                        \
+	((sizeof(struct sve_context) + (SVE_VQ_BYTES - 1)) / SVE_VQ_BYTES * SVE_VQ_BYTES)
+#define SVE_SIG_ZREGS_OFFSET SVE_SIG_REGS_OFFSET
+#define SVE_SIG_ZREG_OFFSET(vq, n) (SVE_SIG_ZREGS_OFFSET + SVE_SIG_ZREG_SIZE(vq) * (n))
+#define SVE_SIG_ZREGS_SIZE(vq) (SVE_SIG_ZREG_OFFSET(vq, SVE_NUM_ZREGS) - SVE_SIG_ZREGS_OFFSET)
+#define SVE_SIG_PREGS_OFFSET(vq) (SVE_SIG_ZREGS_OFFSET + SVE_SIG_ZREGS_SIZE(vq))
+#define SVE_SIG_PREG_OFFSET(vq, n) (SVE_SIG_PREGS_OFFSET(vq) + SVE_SIG_PREG_SIZE(vq) * (n))
+#define SVE_SIG_PREGS_SIZE(vq) (SVE_SIG_PREG_OFFSET(vq, SVE_NUM_PREGS) - SVE_SIG_PREGS_OFFSET(vq))
+#define SVE_SIG_FFR_OFFSET(vq) (SVE_SIG_PREGS_OFFSET(vq) + SVE_SIG_PREGS_SIZE(vq))
+#define SVE_SIG_REGS_SIZE(vq) (SVE_SIG_FFR_OFFSET(vq) + SVE_SIG_FFR_SIZE(vq) - SVE_SIG_REGS_OFFSET)
 #define SVE_SIG_CONTEXT_SIZE(vq) (SVE_SIG_REGS_OFFSET + SVE_SIG_REGS_SIZE(vq))
 
 typedef struct __ucontext {
@@ -498,7 +489,7 @@ typedef struct __ucontext {
 	mcontext_t uc_mcontext;
 } ucontext_t;
 
-#elif defined (__m68k__)
+#elif defined(__m68k__)
 
 /* taken from musl */
 
