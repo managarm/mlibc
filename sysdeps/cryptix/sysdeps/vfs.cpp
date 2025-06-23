@@ -20,263 +20,339 @@
 
 #include <cryptix/syscall.h>
 
-namespace mlibc
-{
-    int sys_sysconf(int num, long* ret)
-    {
-        switch (num)
-        {
-            case _SC_OPEN_MAX:
-            case _SC_CHILD_MAX:
-            case _SC_LINE_MAX:
-            case _SC_PHYS_PAGES: *ret = INT32_MAX; break;
+namespace mlibc {
+int sys_sysconf(int num, long *ret) {
+	switch (num) {
+		case _SC_OPEN_MAX:
+		case _SC_CHILD_MAX:
+		case _SC_LINE_MAX:
+		case _SC_PHYS_PAGES:
+			*ret = INT32_MAX;
+			break;
 
-            default: return EINVAL;
-        }
+		default:
+			return EINVAL;
+	}
 
-        return 0;
-    }
+	return 0;
+}
 
-    int sys_read(int fd, void* buffer, size_t count, ssize_t* bytesRead)
-    {
-        auto ret = Syscall(SYS_READ, fd, buffer, count);
-        if (auto e = syscall_error(ret); e) return e;
+int sys_read(int fd, void *buffer, size_t count, ssize_t *bytesRead) {
+	auto ret = Syscall(SYS_READ, fd, buffer, count);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        *bytesRead = ssize_t(ret);
-        return 0;
-    }
-    int sys_write(int fd, void const* buffer, unsigned long bytes,
-                  long* bytesWritten)
-    {
+	*bytesRead = ssize_t(ret);
+	return 0;
+}
+int sys_write(int fd, void const *buffer, unsigned long bytes, long *bytesWritten) {
 
-        auto ret = Syscall(SYS_WRITE, fd, buffer, bytes);
-        if (auto e = syscall_error(ret); e) return e;
+	auto ret = Syscall(SYS_WRITE, fd, buffer, bytes);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        *bytesWritten = ret;
-        return 0;
-    }
-    int sys_open(const char* path, int flags, mode_t mode, int* fd)
-    {
-        auto ret = Syscall(SYS_OPENAT, AT_FDCWD, path, flags, mode);
-        if (auto e = syscall_error(ret); e) return e;
+	*bytesWritten = ret;
+	return 0;
+}
+int sys_open(const char *path, int flags, mode_t mode, int *fd) {
+	auto ret = Syscall(SYS_OPENAT, AT_FDCWD, path, flags, mode);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        *fd = ret;
-        return 0;
-    }
-    int sys_close(int fd)
-    {
-        auto ret = Syscall(SYS_CLOSE, fd);
-        if (auto e = syscall_error(ret); e) return e;
+	*fd = ret;
+	return 0;
+}
+int sys_close(int fd) {
+	auto ret = Syscall(SYS_CLOSE, fd);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        return 0;
-    }
+	return 0;
+}
 
-    int sys_stat(fsfd_target fsfdt, int fd, const char* path, int flags,
-                 struct stat* statbuf)
-    {
-        int ret = -1;
-        switch (fsfdt)
-        {
-            case fsfd_target::fd:
-                ret = Syscall(SYS_FSTATAT, fd, "", flags | AT_EMPTY_PATH,
-                              statbuf);
-                break;
-            case fsfd_target::path:
-                ret = Syscall(SYS_FSTATAT, AT_FDCWD, path, flags, statbuf);
-                break;
-            case fsfd_target::fd_path:
-                ret = Syscall(SYS_FSTATAT, fd, path, flags, statbuf);
-                break;
+int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
+	int ret = -1;
+	switch (fsfdt) {
+		case fsfd_target::fd:
+			ret = Syscall(SYS_FSTATAT, fd, "", flags | AT_EMPTY_PATH, statbuf);
+			break;
+		case fsfd_target::path:
+			ret = Syscall(SYS_FSTATAT, AT_FDCWD, path, flags, statbuf);
+			break;
+		case fsfd_target::fd_path:
+			ret = Syscall(SYS_FSTATAT, fd, path, flags, statbuf);
+			break;
 
-            default:
-                __ensure(!"sys_stat: invalid fsfdt");
-                __builtin_unreachable();
-        }
-        if (auto e = syscall_error(ret); e) return e;
+		default:
+			__ensure(!"sys_stat: invalid fsfdt");
+			__builtin_unreachable();
+	}
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        return 0;
-    }
-    int sys_seek(int fd, off_t offset, int whence, off_t* newOffset)
-    {
-        auto ret = Syscall(SYS_LSEEK, fd, offset, whence);
-        if (auto e = syscall_error(ret); e) return e;
+	return 0;
+}
+int sys_seek(int fd, off_t offset, int whence, off_t *newOffset) {
+	auto ret = Syscall(SYS_LSEEK, fd, offset, whence);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        *newOffset = off_t(ret);
-        return 0;
-    }
-    int sys_ioctl(int fd, unsigned long request, void* arg, int* result)
-    {
-        int ret = Syscall(SYS_IOCTL, fd, request, arg);
-        if (auto e = syscall_error(ret); e) return e;
+	*newOffset = off_t(ret);
+	return 0;
+}
+int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
+	int ret = Syscall(SYS_IOCTL, fd, request, arg);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        *result = ret;
-        return 0;
-    }
+	*result = ret;
+	return 0;
+}
 
-    int sys_access(const char* path, int mode)
-    {
-        int ret = Syscall(SYS_ACCESS, path, mode);
-        if (auto e = syscall_error(ret); e) return e;
+int sys_access(const char *path, int mode) {
+	int ret = Syscall(SYS_ACCESS, path, mode);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        return 0;
-    }
-    int sys_pipe(int* fds, int flags)
-    {
-        int ret = Syscall(SYS_PIPE, fds);
-        if (auto e = syscall_error(ret); e) return e;
+	return 0;
+}
+int sys_pipe(int *fds, int flags) {
+	int ret = Syscall(SYS_PIPE, fds);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        return 0;
-    }
-    int sys_dup(int fd, int flags, int* newfd)
-    {
-        // TODO(v1tr10l7): implement flags;
-        (void)flags;
-        auto ret = Syscall(SYS_DUP, fd);
-        if (auto e = syscall_error(ret); e) return e;
+	return 0;
+}
+int sys_dup(int fd, int flags, int *newfd) {
+	// TODO(v1tr10l7): implement flags;
+	(void)flags;
+	auto ret = Syscall(SYS_DUP, fd);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        *newfd = ret;
-        return 0;
-    }
-    int sys_dup2(int fd, int flags, int newfd)
-    {
-        // TODO(v1tr10l7): implement flags;
-        (void)flags;
-        auto ret = Syscall(SYS_DUP2, fd, newfd);
-        if (auto e = syscall_error(ret); e) return e;
+	*newfd = ret;
+	return 0;
+}
+int sys_dup2(int fd, int flags, int newfd) {
+	// TODO(v1tr10l7): implement flags;
+	(void)flags;
+	auto ret = Syscall(SYS_DUP2, fd, newfd);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        return 0;
-    }
+	return 0;
+}
 
-    int sys_uname(struct utsname* out)
-    {
-        auto ret = Syscall(SYS_UNAME, out);
-        if (auto e = syscall_error(ret); e) return e;
+int sys_uname(struct utsname *out) {
+	auto ret = Syscall(SYS_UNAME, out);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        return 0;
-    }
-    int sys_fcntl(int fd, int request, va_list args, int* result)
-    {
-        auto ret = Syscall(SYS_FCNTL, fd, request, args);
-        if (auto e = syscall_error(ret); e) return e;
+	return 0;
+}
+int sys_fcntl(int fd, int request, va_list args, int *result) {
+	auto ret = Syscall(SYS_FCNTL, fd, request, args);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        *result = ret;
-        return 0;
-    }
+	*result = ret;
+	return 0;
+}
 
-    int sys_getcwd(char* buffer, size_t size)
-    {
-        auto ret = Syscall(SYS_GETCWD, buffer, size);
-        if (auto e = syscall_error(ret); e) return e;
+int sys_getcwd(char *buffer, size_t size) {
+	auto ret = Syscall(SYS_GETCWD, buffer, size);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        return 0;
-    }
-    int sys_chdir(const char* path)
-    {
-        auto ret = Syscall(SYS_CHDIR, path);
-        if (auto e = syscall_error(ret); e) return e;
+	return 0;
+}
+int sys_chdir(const char *path) {
+	auto ret = Syscall(SYS_CHDIR, path);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        return 0;
-    }
-    int sys_fchdir(int fd)
-    {
-        auto ret = Syscall(SYS_FCHDIR, fd);
-        if (auto e = syscall_error(ret); e) return e;
+	return 0;
+}
+int sys_fchdir(int fd) {
+	auto ret = Syscall(SYS_FCHDIR, fd);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        return 0;
-    }
-    int sys_mkdir(const char* path, mode_t mode)
-    {
-        auto ret = Syscall(SYS_MKDIR, path, mode);
-        if (auto e = syscall_error(ret); e) return e;
+	return 0;
+}
+int sys_rename(const char *old_path, const char *new_path) {
+	auto ret = Syscall(SYS_RENAME, old_path, new_path);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        return 0;
-    }
-    int sys_mount(const char* source, const char* target, const char* fs_name,
-                  unsigned long flags, const void* data)
-    {
-        auto ret = Syscall(SYS_MOUNT, source, target, fs_name, flags, data);
-        if (auto e = syscall_error(ret); e) return e;
+	return 0;
+}
+int sys_mkdir(const char *path, mode_t mode) {
+	auto ret = Syscall(SYS_MKDIR, path, mode);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        return ret;
-    }
+	return 0;
+}
+int sys_link(const char *old_path, const char *new_path) {
+	auto ret = Syscall(SYS_LINK, old_path, new_path);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-    int sys_read_entries(int fdnum, void* buffer, size_t max_size,
-                         size_t* bytes_read)
-    {
-        auto ret = Syscall(SYS_GETDENTS64, fdnum, buffer, max_size);
-        if (auto e = syscall_error(ret); e) return e;
+	return 0;
+}
+int sys_readlink(const char *path, void *buffer, size_t maxSize, ssize_t *length) {
+	auto ret = Syscall(SYS_READLINK, path, buffer, maxSize);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        *bytes_read = ret;
-        return 0;
-    }
-    int sys_openat(int dirfd, const char* path, int flags, mode_t mode, int* fd)
-    {
-        int ret = Syscall(SYS_OPENAT, dirfd, path, flags, mode);
-        if (auto e = syscall_error(ret); e) return e;
+	*length = ret;
+	return 0;
+}
+int sys_statfs(const char *path, struct statfs *out) {
+	auto ret = Syscall(SYS_STATFS, path, out);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        *fd = ret;
-        return 0;
-    }
-    int sys_open_dir(const char* path, int* fd)
-    {
-        return sys_openat(AT_FDCWD, path, O_DIRECTORY, 0, fd);
-    }
+	return 0;
+}
 
-    int sys_fchmodat(int fd, const char* pathname, mode_t mode, int flags)
-    {
-        auto ret = Syscall(SYS_FCHMODAT, fd, pathname, mode, flags);
-        if (auto e = syscall_error(ret); e) return e;
+int sys_mount(
+    const char *source,
+    const char *target,
+    const char *fs_name,
+    unsigned long flags,
+    const void *data
+) {
+	auto ret = Syscall(SYS_MOUNT, source, target, fs_name, flags, data);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        return 0;
-    }
+	return ret;
+}
 
-    int sys_isatty(int fd)
-    {
-        winsize ws;
-        int     ret;
-        if (!sys_ioctl(fd, TIOCGWINSZ, &ws, &ret)) return 0;
+int sys_read_entries(int fdnum, void *buffer, size_t max_size, size_t *bytes_read) {
+	auto ret = Syscall(SYS_GETDENTS64, fdnum, buffer, max_size);
+	if (auto e = syscall_error(ret); e)
+		return e;
 
-        return ENOTTY;
-    }
-    int sys_ttyname(int fd, char* buf, size_t size)
-    {
-        buf[0] = 'T';
-        buf[1] = 0;
-        return 0;
-    }
+	*bytes_read = ret;
+	return 0;
+}
+int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
+	auto ret = Syscall(SYS_OPENAT, dirfd, path, flags, mode);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	*fd = ret;
+	return 0;
+}
+int sys_open_dir(const char *path, int *fd) {
+	return sys_openat(AT_FDCWD, path, O_DIRECTORY, 0, fd);
+}
+int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
+	auto ret = Syscall(SYS_MKDIRAT, dirfd, path, mode);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	return 0;
+}
+int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
+	auto ret = Syscall(SYS_RENAMEAT, olddirfd, old_path, newdirfd, new_path);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	return 0;
+}
+int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags) {
+	auto ret = Syscall(SYS_LINKAT, olddirfd, old_path, newdirfd, new_path, flags);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	return 0;
+}
+int sys_readlinkat(int dirfd, const char *path, char *buf, size_t bufsz, ssize_t *length) {
+	auto ret = Syscall(SYS_READLINKAT, dirfd, path, buf, bufsz);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	*length = ret;
+	return 0;
+}
+int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
+	auto ret = Syscall(SYS_FCHMODAT, fd, pathname, mode, flags);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	return 0;
+}
+
+int sys_isatty(int fd) {
+	winsize ws;
+	int ret;
+	if (!sys_ioctl(fd, TIOCGWINSZ, &ws, &ret))
+		return 0;
+
+	return ENOTTY;
+}
+int sys_ttyname(int fd, char *buf, size_t size) {
+	buf[0] = 'T';
+	buf[1] = 0;
+	return 0;
+}
 
 #ifndef TCGETS
-    constexpr size_t TCGETS  = 0x5401;
-    constexpr size_t TCSETS  = 0x5402;
-    constexpr size_t TCSETSW = 0x5403;
-    constexpr size_t TCSETSF = 0x5404;
+constexpr size_t TCGETS = 0x5401;
+constexpr size_t TCSETS = 0x5402;
+constexpr size_t TCSETSW = 0x5403;
+constexpr size_t TCSETSF = 0x5404;
 #endif
 
-    int sys_tcgetattr(int fd, struct termios* attr)
-    {
-        int ret;
-        if (int r = sys_ioctl(fd, TCGETS, attr, &ret) != 0) return r;
+int sys_tcgetattr(int fd, struct termios *attr) {
+	int ret;
+	if (int r = sys_ioctl(fd, TCGETS, attr, &ret) != 0)
+		return r;
 
-        return 0;
-    }
+	return 0;
+}
 
-    int sys_tcsetattr(int fd, int optional_action, const struct termios* attr)
-    {
-        int ret;
-        switch (optional_action)
-        {
-            case TCSANOW: optional_action = TCSETS; break;
-            case TCSADRAIN: optional_action = TCSETSW; break;
-            case TCSAFLUSH: optional_action = TCSETSF; break;
-            default: __ensure(!"Unsupported tcsetattr");
-        }
+int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
+	int ret;
+	switch (optional_action) {
+		case TCSANOW:
+			optional_action = TCSETS;
+			break;
+		case TCSADRAIN:
+			optional_action = TCSETSW;
+			break;
+		case TCSAFLUSH:
+			optional_action = TCSETSF;
+			break;
+		default:
+			__ensure(!"Unsupported tcsetattr");
+	}
 
-        if (int r = sys_ioctl(fd, optional_action, (void*)attr, &ret) != 0)
-            return r;
+	if (int r = sys_ioctl(fd, optional_action, (void *)attr, &ret) != 0)
+		return r;
 
-        return 0;
-    }
-    STUB_RET(int sys_pselect(int nfds, fd_set* readfds, fd_set* writefds,
-                             fd_set* exceptfds, const struct timespec* timeout,
-                             const sigset_t* sigmask, int* num_events));
+	return 0;
+}
+STUB_RET(
+    int sys_pselect(
+        int nfds,
+        fd_set *readfds,
+        fd_set *writefds,
+        fd_set *exceptfds,
+        const struct timespec *timeout,
+        const sigset_t *sigmask,
+        int *num_events
+    )
+);
+int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
+	auto ret = Syscall(SYS_UTIMENSAT, dirfd, pathname, times, flags);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	return 0;
+}
 } // namespace mlibc

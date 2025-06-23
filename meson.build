@@ -208,9 +208,13 @@ if host_machine.system() == 'cryptix'
     glibc_option = true
     bsd_option = true
     libgcc_dependency = true
-    debug_allocator = true
+    #debug_allocator = true
     rtld_include_dirs += include_directories('sysdeps/cryptix/include')
     libc_include_dirs += include_directories('sysdeps/cryptix/include')
+
+	#internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
+	#internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
+	#internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
     subdir('sysdeps/cryptix')
 elif host_machine.system() == 'linux'
 	provides_bits_syscall_h = true
