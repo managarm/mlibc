@@ -590,6 +590,7 @@ struct[[gnu::packed]] ttinfo {
 
 // Let's just assume there's a maximum of two for now.
 ttinfo tt_infos[2];
+Rule rules[2];
 
 static bool parse_tz(const char *tz, char *tz_name, char *tz_name_dst, size_t tz_name_max) {
 	// POSIX defines :*characters* as a valid but implementation-defined format.
@@ -722,16 +723,15 @@ static bool parse_tz(const char *tz, char *tz_name, char *tz_name_dst, size_t tz
 	if (*tz == '\0')
 		tz = TZ_DEFAULT_RULE_STRING;
 
-	Rule start, end;
 	if (*tz == ',') {
 		tz++;
-		tz = getrule(tz, &start);
+		tz = getrule(tz, &rules[0]);
 		if (tz == NULL)
 			return false;
 		if (*tz != ',')
 			return false;
 		tz++;
-		tz = getrule(tz, &end);
+		tz = getrule(tz, &rules[1]);
 		if (tz == NULL)
 			return false;
 		if (*tz != '\0')
