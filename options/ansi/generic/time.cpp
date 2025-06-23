@@ -498,7 +498,7 @@ static const char *getoffset(const char *str, long *offset) {
 	unsigned int num;
 	// `24 * 7 - 1` allows for quasi-POSIX rules like "M10.4.6/26", which does
 	// not conform to POSIX, but specifies the equivalent of "02:00 on the
-	// first Sunday on or after 23 Oct.
+	// first Sunday on or after 23 Oct".
 	str = getnum<unsigned int>(str, &num, 0, 24 * 7 - 1);
 	if (str == NULL)
 		return NULL;
@@ -536,7 +536,7 @@ struct Rule {
 	uint16_t day;
 	uint8_t week;
 	uint8_t month;
-	long offset;
+	long time;
 };
 
 // Given a pointer into a timezone string, extract a rule in the form
@@ -573,14 +573,23 @@ static const char *getrule(const char *str, Rule *rule) {
 
 	if (*str == '/') {
 		str++;
-		str = getoffset(str, &rule->offset);
+		str = getoffset(str, &rule->time);
 	} else {
 		// Fallback to 02:00:00.
-		rule->offset = 2 * 60 * 60;
+		rule->time = 2 * 60 * 60;
 	}
 
 	return str;
 }
+
+struct[[gnu::packed]] ttinfo {
+	int32_t tt_gmtoff;
+	unsigned char tt_isdst;
+	unsigned char tt_abbrind;
+};
+
+// Let's just assume there's a maximum of two for now.
+ttinfo tt_infos[2];
 
 static bool parse_tz(const char *tz, char *tz_name, char *tz_name_dst, size_t tz_name_max) {
 	// POSIX defines :*characters* as a valid but implementation-defined format.
@@ -639,6 +648,10 @@ static bool parse_tz(const char *tz, char *tz_name, char *tz_name_dst, size_t tz
 	tz_name[tzn_len] = '\0';
 
 	timezone = offset;
+
+	tt_infos[0].tt_gmtoff = -offset;
+	tt_infos[0].tt_isdst = false;
+	tt_infos[0].tt_abbrind = 0;
 
 	// If there's nothing left to parse, we should set tz_name_dst to tz_name.
 	// This matches glibc behaviour.
@@ -699,7 +712,7 @@ static bool parse_tz(const char *tz, char *tz_name, char *tz_name_dst, size_t tz
 
 	// Fallback to 1 hour ahead of standard time.
 	long offset_dst = offset - 60 * 60;
-	if (*tz != '\0' && *tz != ',' && *tz != ';') {
+	if (*tz != '\0' && *tz != ',') {
 		tz = getoffset(tz, &offset_dst);
 		if (tz == NULL)
 			return false;
@@ -709,7 +722,28 @@ static bool parse_tz(const char *tz, char *tz_name, char *tz_name_dst, size_t tz
 	if (*tz == '\0')
 		tz = TZ_DEFAULT_RULE_STRING;
 
-	// TODO: parse ,*rule*
+	Rule start, end;
+	if (*tz == ',') {
+		tz++;
+		tz = getrule(tz, &start);
+		if (tz == NULL)
+			return false;
+		if (*tz != ',')
+			return false;
+		tz++;
+		tz = getrule(tz, &end);
+		if (tz == NULL)
+			return false;
+		if (*tz != '\0')
+			return false;
+	} else {
+		mlibc::infoLogger() << "what do we even do here lol?" << frg::endlog;
+		return false;
+	}
+
+	tt_infos[1].tt_gmtoff = -offset_dst;
+	tt_infos[1].tt_isdst = true;
+	tt_infos[1].tt_abbrind = 0;
 
 	daylight = 1;
 
@@ -727,13 +761,6 @@ struct tzfile {
 	uint32_t tzh_typecnt;
 	uint32_t tzh_charcnt;
 };
-
-struct[[gnu::packed]] ttinfo {
-	int32_t tt_gmtoff;
-	unsigned char tt_isdst;
-	unsigned char tt_abbrind;
-};
-
 
 static bool parse_tzfile(const char *tz) {
 	// POSIX defines :*characters* as a valid but implementation-defined format.
@@ -982,15 +1009,15 @@ void yearday_from_date(unsigned int year, unsigned int month, unsigned int day, 
 int unix_local_from_gmt(time_t unix_gmt, time_t *offset, bool *dst, char **tm_zone) {
 	do_tzset();
 
-	if (daylight) {
-		mlibc::infoLogger() << "mlibc: TODO support DST" << frg::endlog;
-		return -1;
+	if (!daylight) {
+		*offset = -timezone;
+		*dst = false;
+		*tm_zone = tzname[0];
+		return 0;
 	}
 
-	*offset = -timezone;
-	*dst = false;
-	*tm_zone = tzname[0];
-	return 0;
+	mlibc::infoLogger() << "mlibc: TODO support DST" << frg::endlog;
+	return -1;
 }
 
 } //anonymous namespace
