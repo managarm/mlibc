@@ -41,9 +41,15 @@ pc:
     bl interpreterMain
     nop
 
+    stdu 1, -112(1)
+    std 2, 40(1)
+
     ld 2, 8(3) // loading toc and jumping to Scrt1.S entry
     ld 3, 0(3)
     mtctr 3
     bctr
+
+    addi 1, 1, 112
+    trap
 
 .section .note.GNU-stack,"",%progbits

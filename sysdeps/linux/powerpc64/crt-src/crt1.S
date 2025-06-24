@@ -8,9 +8,13 @@ _start:
 
 .text
 _realstart:
-    // todo(localcc): implement
-    trap
+    mr 3, 1
+
+    addis 4, 2, main@toc@ha
+    addi 4, 4, main@toc@l
+
+    bl __mlibc_entry
     nop
-    trap
+
 .section .note.GNU-stack,"",%progbits
 
