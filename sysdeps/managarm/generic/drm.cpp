@@ -904,6 +904,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			req.set_drm_crtc_id(param->crtc_id);
 			req.set_drm_fb_id(param->fb_id);
 			req.set_drm_cookie(param->user_data);
+			req.set_drm_flags(param->flags);
 
 			auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
 			    handle,
