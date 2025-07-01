@@ -448,16 +448,19 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 			req.set_command(request);
 			req.set_drm_plane_id(param->plane_id);
+			req.set_drm_format_types(param->count_format_types);
 
 			auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
+			        helix_ng::want_lane,
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			        helix_ng::recvInline()
 			    )
 			);
 			HEL_CHECK(offer.error());
+			auto conversation = offer.descriptor();
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -472,17 +475,17 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			param->possible_crtcs = resp.drm_possible_crtcs();
 			param->gamma_size = resp.drm_gamma_size();
 
-			// FIXME: this should be passed as a buffer with helix, but this has no bounded max
-			// size?
-			for (size_t i = 0; i < resp.drm_format_type_size(); i++) {
-				if (i >= param->count_format_types) {
-					break;
-				}
-				auto dest = reinterpret_cast<uint32_t *>(param->format_type_ptr);
-				dest[i] = resp.drm_format_type(i);
-			}
+			auto dest = reinterpret_cast<uint32_t *>(param->format_type_ptr);
+			auto [recv_formats] = exchangeMsgsSync(
+			    conversation.getHandle(),
+			    helix_ng::recvBuffer(
+			        dest,
+			        std::min(resp.drm_format_types(), param->count_format_types) * sizeof(uint32_t)
+			    )
+			);
+			HEL_CHECK(recv_formats.error());
 
-			param->count_format_types = resp.drm_format_type_size();
+			param->count_format_types = resp.drm_format_types();
 
 			*result = resp.result();
 			return 0;
