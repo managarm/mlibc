@@ -656,6 +656,10 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
+			memset(param->handles, 0, sizeof(param->handles));
+			memset(param->pitches, 0, sizeof(param->pitches));
+			memset(param->offsets, 0, sizeof(param->offsets));
+
 			param->width = resp.drm_width();
 			param->height = resp.drm_height();
 			param->pixel_format = resp.pixel_format();
