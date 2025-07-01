@@ -683,7 +683,6 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			auto param = reinterpret_cast<drm_mode_fb_cmd2 *>(arg);
 
 			__ensure(!param->flags || param->flags == DRM_MODE_FB_MODIFIERS);
-			__ensure(!param->modifier[0] || param->modifier[0] == DRM_FORMAT_MOD_INVALID);
 			__ensure(!param->offsets[0]);
 
 			managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -694,6 +693,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			req.set_drm_pitch(param->pitches[0]);
 			req.set_drm_fourcc(param->pixel_format);
 			req.set_drm_handle(param->handles[0]);
+			if (param->flags & DRM_MODE_FB_MODIFIERS)
+				req.set_drm_modifier(param->modifier[0]);
 
 			auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
 			    handle,
