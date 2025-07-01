@@ -404,16 +404,19 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 			req.set_command(request);
 			req.set_drm_blob_id(param->blob_id);
+			req.set_drm_blob_size(param->length);
 
 			auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
+			        helix_ng::want_lane,
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			        helix_ng::recvInline()
 			    )
 			);
 			HEL_CHECK(offer.error());
+			auto conversation = offer.descriptor();
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -429,14 +432,11 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			}
 
 			uint8_t *dest = reinterpret_cast<uint8_t *>(param->data);
-			for (size_t i = 0; i < resp.drm_property_blob_size(); i++) {
-				if (i >= param->length) {
-					continue;
-				}
-
-				dest[i] = resp.drm_property_blob(i);
-			}
-
+			auto [recv_data] = exchangeMsgsSync(
+			    conversation.getHandle(),
+			    helix_ng::recvBuffer(dest, std::min(param->length, resp.drm_property_blob_size()))
+			);
+			HEL_CHECK(recv_data.error());
 			param->length = resp.drm_property_blob_size();
 
 			*result = 0;
