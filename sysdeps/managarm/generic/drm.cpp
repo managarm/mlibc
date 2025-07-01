@@ -2,6 +2,7 @@
 #include <drm/drm_fourcc.h>
 
 #include <bits/ensure.h>
+#include <bits/errors.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
@@ -191,8 +192,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			for (size_t i = 0; i < resp.drm_fb_ids_size(); i++) {
 				if (i >= param->count_fbs)
@@ -266,7 +267,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			for (size_t i = 0; i < resp.drm_encoders_size(); i++) {
 				if (i >= param->count_encoders)
@@ -402,16 +404,19 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 			req.set_command(request);
 			req.set_drm_blob_id(param->blob_id);
+			req.set_drm_blob_size(param->length);
 
 			auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
+			        helix_ng::want_lane,
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			        helix_ng::recvInline()
 			    )
 			);
 			HEL_CHECK(offer.error());
+			auto conversation = offer.descriptor();
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -427,14 +432,11 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			}
 
 			uint8_t *dest = reinterpret_cast<uint8_t *>(param->data);
-			for (size_t i = 0; i < resp.drm_property_blob_size(); i++) {
-				if (i >= param->length) {
-					continue;
-				}
-
-				dest[i] = resp.drm_property_blob(i);
-			}
-
+			auto [recv_data] = exchangeMsgsSync(
+			    conversation.getHandle(),
+			    helix_ng::recvBuffer(dest, std::min(param->length, resp.drm_property_blob_size()))
+			);
+			HEL_CHECK(recv_data.error());
 			param->length = resp.drm_property_blob_size();
 
 			*result = 0;
@@ -446,40 +448,44 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
 			req.set_command(request);
 			req.set_drm_plane_id(param->plane_id);
+			req.set_drm_format_types(param->count_format_types);
 
 			auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
+			        helix_ng::want_lane,
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
 			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			        helix_ng::recvInline()
 			    )
 			);
 			HEL_CHECK(offer.error());
+			auto conversation = offer.descriptor();
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			param->crtc_id = resp.drm_crtc_id();
 			param->fb_id = resp.drm_fb_id();
 			param->possible_crtcs = resp.drm_possible_crtcs();
 			param->gamma_size = resp.drm_gamma_size();
 
-			// FIXME: this should be passed as a buffer with helix, but this has no bounded max
-			// size?
-			for (size_t i = 0; i < resp.drm_format_type_size(); i++) {
-				if (i >= param->count_format_types) {
-					break;
-				}
-				auto dest = reinterpret_cast<uint32_t *>(param->format_type_ptr);
-				dest[i] = resp.drm_format_type(i);
-			}
+			auto dest = reinterpret_cast<uint32_t *>(param->format_type_ptr);
+			auto [recv_formats] = exchangeMsgsSync(
+			    conversation.getHandle(),
+			    helix_ng::recvBuffer(
+			        dest,
+			        std::min(resp.drm_format_types(), param->count_format_types) * sizeof(uint32_t)
+			    )
+			);
+			HEL_CHECK(recv_formats.error());
 
-			param->count_format_types = resp.drm_format_type_size();
+			param->count_format_types = resp.drm_format_types();
 
 			*result = resp.result();
 			return 0;
@@ -508,7 +514,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			// FIXME: send this via a helix_ng buffer
 			for (size_t i = 0; i < resp.drm_plane_res_size(); i++) {
@@ -547,7 +554,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			param->encoder_type = resp.drm_encoder_type();
 			param->crtc_id = resp.drm_crtc_id();
@@ -651,6 +659,10 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
+			memset(param->handles, 0, sizeof(param->handles));
+			memset(param->pitches, 0, sizeof(param->pitches));
+			memset(param->offsets, 0, sizeof(param->offsets));
+
 			param->width = resp.drm_width();
 			param->height = resp.drm_height();
 			param->pixel_format = resp.pixel_format();
@@ -678,7 +690,6 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			auto param = reinterpret_cast<drm_mode_fb_cmd2 *>(arg);
 
 			__ensure(!param->flags || param->flags == DRM_MODE_FB_MODIFIERS);
-			__ensure(!param->modifier[0] || param->modifier[0] == DRM_FORMAT_MOD_INVALID);
 			__ensure(!param->offsets[0]);
 
 			managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -689,6 +700,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			req.set_drm_pitch(param->pitches[0]);
 			req.set_drm_fourcc(param->pixel_format);
 			req.set_drm_handle(param->handles[0]);
+			if (param->flags & DRM_MODE_FB_MODIFIERS)
+				req.set_drm_modifier(param->modifier[0]);
 
 			auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
 			    handle,
@@ -795,7 +808,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
 			param->fb_id = resp.drm_fb_id();
 			param->x = resp.drm_x();
@@ -898,6 +912,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			req.set_drm_crtc_id(param->crtc_id);
 			req.set_drm_fb_id(param->fb_id);
 			req.set_drm_cookie(param->user_data);
+			req.set_drm_flags(param->flags);
 
 			auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
 			    handle,
