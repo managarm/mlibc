@@ -143,8 +143,10 @@ private:
 			    __ATOMIC_ACQUIRE
 			));
 
-			HEL_CHECK(helFutexWait(&_chunk->progressFutex, _lastProgress | kHelProgressWaiters, -1)
-			);
+			int err = helFutexWait(&_chunk->progressFutex, _lastProgress | kHelProgressWaiters, -1);
+			if (err == kHelErrCancelled)
+				continue;
+			HEL_CHECK(err);
 		}
 	}
 
@@ -302,7 +304,10 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read) {
 	cacheFileTable();
 	auto lane = fileTable[fd];
-	HelAction actions[5];
+	HelAction actions[6];
+
+	HelHandle cancel_handle;
+	HEL_CHECK(helCreateOneshotEvent(&cancel_handle));
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_req_type(managarm::fs::CntReqType::READ);
@@ -319,25 +324,30 @@ int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read) {
 	actions[1].flags = kHelItemChain;
 	actions[1].buffer = ser.data();
 	actions[1].length = ser.size();
-	actions[2].type = kHelActionImbueCredentials;
-	actions[2].handle = kHelThisThread;
+	actions[2].type = kHelActionPushDescriptor;
+	actions[2].handle = cancel_handle;
 	actions[2].flags = kHelItemChain;
-	actions[3].type = kHelActionRecvInline;
+	actions[3].type = kHelActionImbueCredentials;
+	actions[3].handle = kHelThisThread;
 	actions[3].flags = kHelItemChain;
-	actions[4].type = kHelActionRecvToBuffer;
-	actions[4].flags = 0;
-	actions[4].buffer = data;
-	actions[4].length = length;
-	HEL_CHECK(helSubmitAsync(lane, actions, 5, globalQueue->getHandle(), 0, 0));
+	actions[4].type = kHelActionRecvInline;
+	actions[4].flags = kHelItemChain;
+	actions[5].type = kHelActionRecvToBuffer;
+	actions[5].flags = 0;
+	actions[5].buffer = data;
+	actions[5].length = length;
+	HEL_CHECK(helSubmitAsync(lane, actions, 6, globalQueue->getHandle(), 0, 0));
 
 	auto element = globalQueue->dequeueSingle();
 	auto offer = parseHandle(element);
 	auto send_req = parseSimple(element);
+	auto push_desc = parseSimple(element);
 	auto imbue_creds = parseSimple(element);
 	auto recv_resp = parseInline(element);
 	auto recv_data = parseLength(element);
 	HEL_CHECK(offer->error);
 	HEL_CHECK(send_req->error);
+	HEL_CHECK(push_desc->error);
 	HEL_CHECK(imbue_creds->error);
 	HEL_CHECK(recv_resp->error);
 	HEL_CHECK(recv_data->error);
