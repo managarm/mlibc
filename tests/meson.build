@@ -146,6 +146,7 @@ wrapped_test_cases = [
 
 host_libc_excluded_test_cases = [
 	'bsd/strl', # These functions do not exist on Linux.
+	'rtld/search-order', # See rtld/search-order/meson.build.
 ]
 host_libc_noasan_test_cases = [
 	'posix/pthread_cancel',

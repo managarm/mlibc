@@ -25,7 +25,7 @@ jobs:
                 apt-get install -y meson ninja-build qemu-user \
                                 python3-setuptools python3-jsonschema \
                                 python3-pexpect python3-pip netbase clang lld \
-                                git rsync wget
+                                git rsync wget patchelf
                 case "${{matrix.arch}}" in \
                   x86) \
                     apt-get install -y gcc-i686-linux-gnu g++-i686-linux-gnu;; \
