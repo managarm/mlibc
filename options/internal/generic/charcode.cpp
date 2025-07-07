@@ -54,35 +54,33 @@ struct utf8_charcode {
 		codepoint _cpoint;
 	};
 
+#define NSEQ_STORE(VAL) do { \
+	if (!static_cast<bool>(nseq)) { \
+		return charcode_error::output_overflow; \
+	} \
+	*nseq.it = (VAL); \
+	++nseq.it; \
+} while (0)
+
 	struct encode_state {
 		// Encodes a single character from wseq + the current state and stores it in nseq.
 		// TODO: Convert decode_state to the same strategy.
 		charcode_error operator() (code_seq<char> &nseq, code_seq<const codepoint> &wseq) {
 			auto wc = *wseq.it;
 			if (wc <= 0x7F) {
-				*nseq.it = wc;
-				++nseq.it;
+				NSEQ_STORE(wc);
 			} else if (wc <= 0x7FF) {
-				*nseq.it = 0xC0 | (wc >> 6);
-				++nseq.it;
-				*nseq.it = 0x80 | (wc & 0x3f);
-				++nseq.it;
+				NSEQ_STORE(0xC0 | (wc >> 6));
+				NSEQ_STORE(0x80 | (wc & 0x3f));
 			} else if (wc <= 0xFFFF) {
-				*nseq.it = 0xE0 | (wc >> 12);
-				++nseq.it;
-				*nseq.it = 0x80 | ((wc >> 6) & 0x3f);
-				++nseq.it;
-				*nseq.it = 0x80 | (wc & 0x3f);
-				++nseq.it;
+				NSEQ_STORE(0xE0 | (wc >> 12));
+				NSEQ_STORE(0x80 | ((wc >> 6) & 0x3f));
+				NSEQ_STORE(0x80 | (wc & 0x3f));
 			} else if (wc <= 0x10FFFF) {
-				*nseq.it = 0xF0 | (wc >> 18);
-				++nseq.it;
-				*nseq.it = 0x80 | ((wc >> 12) & 0x3f);
-				++nseq.it;
-				*nseq.it = 0x80 | ((wc >> 6) & 0x3f);
-				++nseq.it;
-				*nseq.it = 0x80 | (wc & 0x3f);
-				++nseq.it;
+				NSEQ_STORE(0xF0 | (wc >> 18));
+				NSEQ_STORE(0x80 | ((wc >> 12) & 0x3f));
+				NSEQ_STORE(0x80 | ((wc >> 6) & 0x3f));
+				NSEQ_STORE(0x80 | (wc & 0x3f));
 			} else {
 				return charcode_error::illegal_input;
 			}
@@ -90,6 +88,8 @@ struct utf8_charcode {
 			return charcode_error::null;
 		}
 	};
+
+#undef NSEQ_STORE
 };
 
 polymorphic_charcode::~polymorphic_charcode() = default;

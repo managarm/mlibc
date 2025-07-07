@@ -61,5 +61,18 @@ int main() {
 	verify_decode("\xF0\x90\x8D\x88", 0x10348);
 	verify_decode("", L'\0');
 
+	// Check wcrtomb.
+	char representation[MB_CUR_MAX];
+	representation[0] = '\0';
+	mbstate_t state;
+	memset(&state, 0, sizeof(state));
+	assert(wcrtomb(representation, L'1', &state) == 1);
+	assert(wcrtomb(representation, L'ß', &state) == 2);
+	assert(!strncmp(representation, "\xC3\x9F", 2));
+	assert(wcrtomb(representation, L'ࠑ', &state) == 3);
+	assert(!strncmp(representation, "\xE0\xA0\x91", 3));
+	assert(wcrtomb(representation, L'𒂲', &state) == 4);
+	assert(!strncmp(representation, "\xF0\x92\x82\xB2", 4));
+
 	return 0;
 }
