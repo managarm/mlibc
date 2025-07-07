@@ -2160,7 +2160,8 @@ sys_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct 
 	SignalGuard sguard;
 
 	managarm::posix::FstatAtRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), pathname));
+	if (pathname)
+		req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), pathname));
 	req.set_fd(dirfd);
 
 	if (flags

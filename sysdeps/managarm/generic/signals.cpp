@@ -153,4 +153,43 @@ int sys_sigpending(sigset_t *set) {
 	return 0;
 }
 
+int sys_pause() {
+	HelWord set = 0;
+	uint64_t former, seq;
+
+	// no-op to obtain a seqnum
+	HEL_CHECK(
+	    helSyscall2_2(kHelObserveSuperCall + posix::superSigMask, SIG_BLOCK, set, &former, &seq)
+	);
+	HEL_CHECK(helSyscall1(kHelObserveSuperCall + posix::superSigSuspend, seq));
+
+	return EINTR;
+}
+
+int sys_sigtimedwait(
+    const sigset_t *__restrict set,
+    siginfo_t *__restrict info,
+    const struct timespec *__restrict timeout,
+    int *out_signal
+) {
+	uint64_t nanos = timeout ? (timeout->tv_nsec + timeout->tv_sec * 1'000'000'000) : UINT64_MAX;
+	HelWord status;
+	HelWord signal;
+
+	HEL_CHECK(helSyscall3_2(
+	    kHelObserveSuperCall + posix::superSigTimedWait,
+	    *reinterpret_cast<const HelWord *>(set),
+	    nanos,
+	    reinterpret_cast<HelWord>(info),
+	    &status,
+	    &signal
+	));
+
+	if (status)
+		return status;
+
+	*out_signal = signal;
+	return 0;
+}
+
 } // namespace mlibc

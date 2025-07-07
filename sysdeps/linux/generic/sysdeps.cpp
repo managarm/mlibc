@@ -847,6 +847,52 @@ struct linux_uapi_sigevent {
 	int sigev_tid;
 };
 
+namespace {
+
+bool timerThreadInit = false;
+
+struct PosixTimerContext {
+	int setupSem = 0;
+	int workerSem = 0;
+	sigevent *sigev;
+};
+
+void timer_handle(int, siginfo_t *, void *) {
+}
+
+void *timer_setup(void *arg) {
+	auto ctx = reinterpret_cast<PosixTimerContext *>(arg);
+
+	sigset_t set;
+	sigaddset(&set, SIGTIMER);
+
+	// wait for parent setup to be complete
+	while(__atomic_load_n(&ctx->setupSem, __ATOMIC_RELAXED) == 0);
+	pthread_testcancel();
+
+	// copy out the function and argument, as the lifetime of the context ends with
+	// incrementing workerSem
+	auto notify = ctx->sigev->sigev_notify_function;
+	union sigval val = ctx->sigev->sigev_value;
+
+	// notify the parent that the context can be dropped
+	__atomic_store_n(&ctx->workerSem, 1, __ATOMIC_RELEASE);
+
+	siginfo_t si;
+	int signo;
+
+	while(true) {
+		while(sys_sigtimedwait(&set, &si, nullptr, &signo));
+		if(si.si_code == SI_TIMER && signo == SIGTIMER)
+			notify(val);
+		pthread_testcancel();
+	}
+
+	return nullptr;
+}
+
+}
+
 int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__restrict res) {
 	struct linux_uapi_sigevent ksev;
 	struct linux_uapi_sigevent *ksevp = 0;
@@ -854,12 +900,13 @@ int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__
 
 	switch(evp ? evp->sigev_notify : SIGEV_SIGNAL) {
 		case SIGEV_NONE:
-		case SIGEV_SIGNAL: {
+		case SIGEV_SIGNAL:
+		case SIGEV_THREAD_ID: {
 			if(evp) {
 				ksev.sigev_value = evp->sigev_value;
 				ksev.sigev_signo = evp->sigev_signo;
 				ksev.sigev_notify = evp->sigev_notify;
-				ksev.sigev_tid = 0;
+				ksev.sigev_tid = (evp && evp->sigev_notify == SIGEV_THREAD_ID) ? evp->sigev_notify_thread_id : 0;
 				ksevp = &ksev;
 			}
 
@@ -870,9 +917,75 @@ int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__
 			*res = (void *) (intptr_t) timer_id;
 			break;
 		}
-		case SIGEV_THREAD:
-			__ensure(!"sys_timer_create with evp->sigev_notify == SIGEV_THREAD is unimplemented");
-			[[fallthrough]];
+		case SIGEV_THREAD: {
+			if(!timerThreadInit) {
+				struct sigaction sa{};
+				sa.sa_flags = SA_SIGINFO | SA_RESTART;
+				sa.sa_sigaction = timer_handle;
+				sys_sigaction(SIGTIMER, &sa, 0);
+				timerThreadInit = true;
+			}
+
+			pthread_attr_t attr;
+			if(evp->sigev_notify_attributes)
+				attr = *evp->sigev_notify_attributes;
+			else
+				pthread_attr_init(&attr);
+
+			int ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+			if(ret)
+				return ret;
+
+			PosixTimerContext context{};
+			context.sigev = evp;
+
+			// mask for all signals except the libc-reserved RT signal range
+			sigset_t mask = {
+				#if ULONG_MAX == 0xFFFF'FFFF
+					0x7FFF'FFFF, 0xFFFF'FFFC
+				#else
+					0xFFFF'FFFC'7FFF'FFFF
+				#endif
+			};
+			// but also mask SIGTIMER
+			sigaddset(&mask, SIGTIMER);
+			sigset_t original_set;
+			do_syscall(SYS_rt_sigprocmask, SIG_BLOCK, &mask, &original_set, _NSIG / 8);
+
+			pthread_t pthread;
+			ret = pthread_create(&pthread, &attr, timer_setup, &context);
+
+			// restore previous signal mask
+			do_syscall(SYS_rt_sigprocmask, SIG_SETMASK, &original_set, 0, _NSIG / 8);
+
+			if(ret)
+				return ret;
+
+			auto tid = reinterpret_cast<Tcb*>(pthread)->tid;
+
+			linux_uapi_sigevent sigev{
+				.sigev_value = { .sival_ptr = nullptr },
+				.sigev_signo = SIGTIMER,
+				.sigev_notify = SIGEV_THREAD_ID,
+				.sigev_tid = tid,
+			};
+			ksevp = &sigev;
+
+			auto syscallret = do_syscall(SYS_timer_create, clk, ksevp, &timer_id);
+			if (int e = sc_error(syscallret); e) {
+				pthread_cancel(pthread);
+				__atomic_store_n(&context.setupSem, 1, __ATOMIC_RELEASE);
+				return e;
+			}
+
+			// notify worker that setup is complete
+			__atomic_store_n(&context.setupSem, 1, __ATOMIC_RELEASE);
+			// await worker setup to let the context go out of scope
+			while(__atomic_load_n(&context.workerSem, __ATOMIC_RELAXED) == 0);
+
+			*res = (void *) (intptr_t) timer_id;
+			break;
+		}
 		default:
 			return EINVAL;
 	}
@@ -885,6 +998,14 @@ int sys_timer_settime(timer_t t, int flags, const struct itimerspec *__restrict 
 	if (int e = sc_error(ret); e) {
 		return e;
 	}
+	return 0;
+}
+
+int sys_timer_gettime(timer_t t, struct itimerspec *val) {
+	auto ret = do_syscall(SYS_timer_gettime, t, val);
+	if (int e = sc_error(ret); e)
+		return e;
+
 	return 0;
 }
 
@@ -989,6 +1110,30 @@ int sys_madvise(void *addr, size_t length, int advice) {
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
+}
+
+int sys_posix_madvise(void *addr, size_t length, int advice) {
+	if(advice == POSIX_MADV_DONTNEED) {
+		// POSIX_MADV_DONTNEED is a no-op in both glibc and musl.
+		return 0;
+	}
+	switch(advice) {
+	case POSIX_MADV_NORMAL:
+		advice = MADV_NORMAL;
+		break;
+	case POSIX_MADV_RANDOM:
+		advice = MADV_RANDOM;
+		break;
+	case POSIX_MADV_SEQUENTIAL:
+		advice = MADV_SEQUENTIAL;
+		break;
+	case POSIX_MADV_WILLNEED:
+		advice = MADV_WILLNEED;
+		break;
+	default:
+		return EINVAL;
+	}
+	return sys_madvise(addr, length, advice);
 }
 
 int sys_msync(void *addr, size_t length, int flags) {
@@ -1668,6 +1813,30 @@ int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info, unsigned int flag
 	auto ret = do_syscall(SYS_pidfd_send_signal, pidfd, sig, info, flags);
 	if (int e = sc_error(ret); e)
 		return e;
+	return 0;
+}
+
+int sys_process_vm_readv(pid_t pid,
+		const struct iovec *local_iov, unsigned long liovcnt,
+		const struct iovec *remote_iov, unsigned long riovcnt,
+		unsigned long flags, ssize_t *out) {
+	auto ret = do_syscall(SYS_process_vm_readv, pid, local_iov, liovcnt,
+			remote_iov, riovcnt, flags);
+	if(int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_process_vm_writev(pid_t pid,
+		const struct iovec *local_iov, unsigned long liovcnt,
+		const struct iovec *remote_iov, unsigned long riovcnt,
+		unsigned long flags, ssize_t *out) {
+	auto ret = do_syscall(SYS_process_vm_writev, pid, local_iov, liovcnt,
+			remote_iov, riovcnt, flags);
+	if(int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<ssize_t>(ret);
 	return 0;
 }
 

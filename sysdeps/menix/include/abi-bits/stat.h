@@ -1,1 +1,1 @@
-../../../../abis/linux/stat.h
+../../../../abis/menix/stat.h

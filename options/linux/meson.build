@@ -14,6 +14,7 @@ libc_sources += files(
 	'generic/sys-sendfile.cpp',
 	'generic/sys-signalfd.cpp',
 	'generic/sys-timerfd.cpp',
+	'generic/sys-uio.cpp',
 	'generic/sys-eventfd.cpp',
 	'generic/sys-reboot.cpp',
 	'generic/sys-xattr.cpp',
@@ -53,6 +54,7 @@ if not no_headers
 		'include/bits/linux/linux_unistd.h',
 		'include/bits/linux/linux_sched.h',
 		'include/bits/linux/linux_stat.h',
+		'include/bits/linux/linux_uio.h',
 		'include/bits/linux/cpu_set.h',
 		subdir: 'bits/linux'
 	)

@@ -55,10 +55,12 @@ int munlockall(void) {
 }
 
 
-int posix_madvise(void *, size_t, int) {
-	mlibc::infoLogger() << "\e[31m" "mlibc: posix_madvise() fails unconditionally" "\e[39m"
-			<< frg::endlog;
-	return ENOSYS;
+int posix_madvise(void *addr, size_t length, int advice) {
+	if(!mlibc::sys_posix_madvise) {
+		MLIBC_MISSING_SYSDEP();
+		return ENOSYS;
+	}
+	return mlibc::sys_posix_madvise(addr, length, advice);
 }
 
 int msync(void *addr, size_t length, int flags) {

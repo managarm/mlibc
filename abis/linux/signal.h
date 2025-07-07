@@ -151,6 +151,7 @@ typedef struct {
 #define SIGSYS    31
 #define SIGUNUSED SIGSYS
 #define SIGCANCEL 32
+#define SIGTIMER  33
 
 #define MINSIGSTKSZ 2048
 #define SIGSTKSZ 8192

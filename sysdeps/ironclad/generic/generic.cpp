@@ -200,6 +200,16 @@ int sys_ftruncate (int fd, size_t size) {
 	return errno;
 }
 
+int sys_fallocate(int fd, off_t offset, size_t size) {
+	if (offset < 0 || size == 0) {
+		return EINVAL;
+	}
+
+	int ret, errno;
+	SYSCALL2(SYSCALL_TRUNCATE, fd, offset + size);
+	return errno;
+}
+
 int sys_flock(int fd, int options) {
 	//  XXX: Shouldnt this use F_SETLKW and F_SETLK only when LOCK_NB ?
 	struct flock lock;
@@ -265,6 +275,23 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 	int errno;
 	SYSCALL6(SYSCALL_MMAP, hint, size, prot, flags, fd, offset);
 	*window = ret;
+
+	if ((errno == ENOMEM) && ((flags & MAP_ANON) == 0)) {
+		int ret = sys_anon_allocate(size, window);
+		if (ret) {
+			return ret;
+		}
+		ssize_t len;
+		ret = sys_pread(fd, *window, size, offset, &len);
+		return 0;
+	}
+
+	return errno;
+}
+
+int sys_posix_madvise(void *addr, size_t length, int advice) {
+	int ret, errno;
+	SYSCALL3(SYSCALL_MADVISE, addr, length, advice);
 	return errno;
 }
 
@@ -674,7 +701,7 @@ int sys_pipe(int *fds, int flags) {
 int sys_getentropy(void *buffer, size_t length) {
 	ssize_t ret;
 	int errno;
-	SYSCALL2(SYSCALL_GETRANDOM, buffer, length);
+	SYSCALL2(SYSCALL_GETENTROPY, buffer, length);
 	return errno;
 }
 
@@ -692,15 +719,14 @@ int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 int sys_rmdir(const char* path){
 	int ret, errno;
 	size_t path_len = strlen (path);
-	SYSCALL3(SYSCALL_UNLINK, AT_FDCWD, path, path_len);
+	SYSCALL4(SYSCALL_UNLINK, AT_FDCWD, path, path_len, AT_REMOVEDIR);
 	return errno;
 }
 
 int sys_unlinkat(int fd, const char *path, int flags) {
-	(void)flags;
 	int ret, errno;
 	size_t path_len = strlen (path);
-	SYSCALL3(SYSCALL_UNLINK, fd, path, path_len);
+	SYSCALL4(SYSCALL_UNLINK, fd, path, path_len, flags);
 	return errno;
 }
 
@@ -713,14 +739,22 @@ int sys_link(const char* srcpath, const char* destpath) {
 }
 
 int sys_socket(int domain, int type, int protocol, int *fd) {
+	(void)protocol;
 	int ret, errno;
-	SYSCALL3(SYSCALL_SOCKET, domain, type, protocol);
+	SYSCALL2(SYSCALL_SOCKET, domain, type);
 	if (ret != -1) {
 		*fd = ret;
 		return 0;
 	} else {
 		return errno;
 	}
+}
+
+int sys_socketpair(int domain, int type, int protocol, int *fds) {
+	(void)protocol;
+	int ret, errno;
+	SYSCALL3(SYSCALL_SOCKETPAIR, domain, type, fds);
+	return errno;
 }
 
 uid_t sys_getuid() {
@@ -1157,6 +1191,12 @@ int sys_sysconf(int num, long *rret) {
 	int ret, errno;
 
 	switch (num) {
+		case _SC_LINE_MAX:
+			return 2048;
+		case _SC_NGROUPS_MAX:
+			return 0x10000;
+		case _SC_CHILD_MAX:
+			return 30;
 		case _SC_NPROCESSORS_CONF:
 			SYSCALL1(SYSCALL_GETCPUINFO, &cpu);
 			if (ret == 0) {
