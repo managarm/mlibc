@@ -1,4 +1,4 @@
-project('mlibc', version: '6.0.1', default_options: ['warning_level=2', 'c_std=gnu11', 'cpp_std=c++20'], meson_version: '>=1.3.0')
+project('mlibc', version: '6.1.0', default_options: ['warning_level=2', 'c_std=gnu11', 'cpp_std=c++20'], meson_version: '>=1.3.0')
 
 fs = import('fs')
 
