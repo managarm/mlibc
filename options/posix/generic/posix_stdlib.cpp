@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <wchar.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
@@ -529,6 +530,41 @@ long double strtold_l(const char *__restrict__, char ** __restrict__, locale_t) 
 float strtof_l(const char *__restrict__ nptr, char **__restrict__ endptr, locale_t) {
 	mlibc::infoLogger() << "mlibc: strtof_l ignores locales" << frg::endlog;
 	return strtof(nptr, endptr);
+}
+
+long strtol_l(const char *__restrict__ nptr, char** __restrict__ endptr, int base, locale_t __loc) {
+	mlibc::infoLogger() << "mlibc: strtol_l ignores locale!" << frg::endlog;
+	return strtol(nptr, endptr, base);
+}
+
+long long strtoll_l(const char *__restrict __string, char **__restrict __end, int __base, locale_t __loc) {
+	mlibc::infoLogger() << "mlibc: strtoll_l ignores locale!" << frg::endlog;
+	return strtoll(__string, __end, __base);
+}
+
+unsigned long long strtoull_l(const char *__restrict __string, char **__restrict __end, int __base, locale_t __loc) {
+	mlibc::infoLogger() << "mlibc: strtoull_l ignores locale!" << frg::endlog;
+	return strtoull(__string, __end, __base);
+}
+
+size_t strxfrm_l(char *__restrict __dest, const char *__restrict __src, size_t __max_size, locale_t __loc) {
+	mlibc::infoLogger() << "mlibc: strxfrm_l ignores locale!" << frg::endlog;
+	return strxfrm(__dest, __src, __max_size);
+}
+
+int wcscoll_l(const wchar_t *__a, const wchar_t *__b, locale_t __loc) {
+	mlibc::infoLogger() << "mlibc: wcscoll_l ignores locale!" << frg::endlog;
+	return wcscoll(__a, __b);
+}
+
+int wcsxfrm_l(wchar_t *__restrict __dest, const wchar_t *__restrict __src, size_t __size, locale_t __loc) {
+	mlibc::infoLogger() << "mlibc: wcsxfrm_l ignores locale!" << frg::endlog;
+	return wcsxfrm(__dest, __src, __size);
+}
+
+size_t strftime_l(char *__restrict __dest, size_t __max_size, const char *__restrict __format, const struct tm *__restrict __ptr, locale_t __loc) {
+	mlibc::infoLogger() << "mlibc: strftime_l ignores locale!" << frg::endlog;
+	return strftime(__dest, __max_size, __format, __ptr);
 }
 
 int strcoll_l(const char *, const char *, locale_t) {
