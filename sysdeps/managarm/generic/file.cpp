@@ -112,12 +112,12 @@ int sys_chroot(const char *path) {
 int sys_mkdir(const char *path, mode_t mode) { return sys_mkdirat(AT_FDCWD, path, mode); }
 
 int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
-	(void)mode;
 	SignalGuard sguard;
 
 	managarm::posix::MkdirAtRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_fd(dirfd);
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
+	req.set_mode(mode);
 
 	auto [offer, send_head, send_tail, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
