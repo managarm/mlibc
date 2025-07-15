@@ -8,12 +8,7 @@
 extern "C" {
 #endif
 
-struct option {
-	const char *name;
-	int has_arg;
-	int *flag;
-	int val;
-};
+#include <bits/getopt.h>
 
 #ifndef __MLIBC_ABI_ONLY
 
@@ -33,10 +28,6 @@ int getopt_long_only(int __argc, char *const __argv[], const char *__optstring,
 		const struct option *__longopts, int *__longindex);
 
 #endif /* !__MLIBC_ABI_ONLY */
-
-#define no_argument 0
-#define required_argument 1
-#define optional_argument 2
 
 #ifdef __cplusplus
 }
