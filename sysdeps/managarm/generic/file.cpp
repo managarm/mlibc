@@ -2523,9 +2523,26 @@ int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int 
 }
 
 int sys_umask(mode_t mode, mode_t *old) {
-	(void)mode;
-	mlibc::infoLogger() << "mlibc: sys_umask is a stub, hardcoding 022!" << frg::endlog;
-	*old = 022;
+	SignalGuard sguard;
+
+	managarm::posix::UmaskRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_newmask(mode);
+
+	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::UmaskResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	*old = resp.oldmask();
+
 	return 0;
 }
 
