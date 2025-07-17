@@ -20,7 +20,6 @@ libc_sources += files(
 	'generic/thread.cpp',
 	'generic/mac.cpp',
 	'generic/thread.S',
-	'generic/utmpx.cpp'
 )
 
 if not no_headers
@@ -68,6 +67,8 @@ if not no_headers
 		'include/abi-bits/rlim_t.h',
 		'include/abi-bits/sigval.h',
 		'include/abi-bits/sigevent.h',
+		'include/abi-bits/utmpx.h',
+		'include/abi-bits/utmp-defines.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)
@@ -95,7 +96,6 @@ if not no_headers
 	install_headers(
 		'include/mntent.h',
 		'include/pty.h',
-		'include/utmpx.h'
 	)
 endif
 

@@ -122,6 +122,8 @@ all_test_cases = [
 	'linux/getifaddrs',
 	'linux/pidfd',
 	'linux/timerfd',
+	'linux/utmp',
+	'linux/utmpx',
 ]
 
 if host_machine.system() == 'linux'

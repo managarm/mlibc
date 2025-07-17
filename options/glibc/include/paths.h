@@ -23,9 +23,9 @@
 #define	_PATH_SHADOW	"/etc/shadow"
 #define	_PATH_SHELLS	"/etc/shells"
 #define	_PATH_TTY	"/dev/tty"
-#define _PATH_UTMP	"/dev/null/utmp"
+#define _PATH_UTMP	"/var/run/utmp"
 #define	_PATH_VI	"/usr/bin/vi"
-#define _PATH_WTMP	"/dev/null/wtmp"
+#define _PATH_WTMP	"/var/log/wtmp"
 
 #define	_PATH_DEV	"/dev/"
 #define	_PATH_TMP	"/tmp/"
