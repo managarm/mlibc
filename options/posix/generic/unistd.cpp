@@ -16,6 +16,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/arch-defs.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/getopt.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/bsd-sysdeps.hpp>
 #include <mlibc/thread.hpp>
@@ -28,7 +29,7 @@ namespace {
 
 constexpr bool logExecvpeTries = false;
 
-}
+} // namespace
 
 unsigned int alarm(unsigned int seconds) {
 	struct itimerval it = {}, old = {};
@@ -479,54 +480,8 @@ int getlogin_r(char *, size_t) {
 	__builtin_unreachable();
 }
 
-// optarg and optind are provided to us by the GLIBC part of the mlibc.
-
-static char *scan = NULL; /* Private scan pointer. */
-
 int getopt(int argc, char *const argv[], const char *optstring) {
-	char c;
-	char *place;
-
-	optarg = NULL;
-
-	if (!scan || *scan == '\0') {
-		if (optind == 0)
-			optind++;
-
-		if (optind >= argc || argv[optind][0] != '-' || argv[optind][1] == '\0')
-			return EOF;
-		if (argv[optind][1] == '-' && argv[optind][2] == '\0') {
-			optind++;
-			return EOF;
-		}
-
-		scan = argv[optind]+1;
-		optind++;
-	}
-
-	c = *scan++;
-	place = strchr(optstring, c);
-
-	if (!place || c == ':') {
-		fprintf(stderr, "%s: unknown option -%c\n", argv[0], c);
-		return '?';
-	}
-
-	place++;
-	if (*place == ':') {
-		if (*scan != '\0') {
-			optarg = scan;
-			scan = NULL;
-		} else if( optind < argc ) {
-			optarg = argv[optind];
-			optind++;
-		} else {
-			fprintf(stderr, "%s: option requires argument -%c\n", argv[0], c);
-			return ':';
-		}
-	}
-
-	return c;
+	return mlibc::getopt_common(argc, argv, optstring, nullptr, nullptr, mlibc::GetoptMode::Short);
 }
 
 pid_t getpgid(pid_t pid) {

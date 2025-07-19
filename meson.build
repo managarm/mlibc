@@ -375,6 +375,7 @@ internal_sources = [
 	'options/internal/generic/ensure.cpp',
 	'options/internal/generic/essential.cpp',
 	'options/internal/generic/frigg.cpp',
+	'options/internal/generic/getopt.cpp',
 	'options/internal/generic/global-config.cpp',
 	'options/internal/generic/inline-emitter.cpp',
 	'options/internal/generic/locale.cpp',
@@ -417,6 +418,7 @@ if not no_headers
 		'options/internal/include/bits/threads.h',
 		'options/internal/include/bits/winsize.h',
 		'options/internal/include/bits/search.h',
+		'options/internal/include/bits/getopt.h',
 		subdir: 'bits'
 	)
 endif
