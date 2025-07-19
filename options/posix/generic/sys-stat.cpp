@@ -63,7 +63,6 @@ int mkdir(const char *path, mode_t mode) {
 }
 
 int mkdirat(int dirfd, const char *path, mode_t mode) {
-	mlibc::infoLogger() << "\e[31mmlibc: mkdirat() ignores its mode\e[39m" << frg::endlog;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_mkdirat, -1);
 	if(int e = mlibc::sys_mkdirat(dirfd, path, mode); e) {
 		errno = e;
