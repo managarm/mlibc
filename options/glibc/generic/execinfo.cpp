@@ -1,4 +1,8 @@
+#include <dlfcn.h>
 #include <execinfo.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <unistd.h>
 #include <unwind.h>
 
 #include <bits/ensure.h>
@@ -77,7 +81,25 @@ char **backtrace_symbols(void *const *, int) {
 	__builtin_unreachable();
 }
 
-void backtrace_symbols_fd(void *const *, int, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void backtrace_symbols_fd(void *const *buffer, int size, int fd) {
+	if (size <= 0 || fd < 0)
+		return;
+
+	for (int frame_num = 0; frame_num < size; frame_num++) {
+		Dl_info info;
+		if (dladdr(buffer[frame_num], &info) != 0) {
+			if (info.dli_fname != nullptr)
+				write(fd, info.dli_fname, strlen(info.dli_fname));
+
+			if (info.dli_sname != nullptr)
+				dprintf(fd, "(%s+0x%" PRIxPTR ") ", info.dli_sname,
+					reinterpret_cast<uintptr_t>(buffer[frame_num]) - reinterpret_cast<uintptr_t>(info.dli_saddr));
+			else if(info.dli_saddr)
+				dprintf(fd, "(+%p) ", info.dli_saddr);
+			else
+				dprintf(fd, "() ");
+		}
+
+		dprintf(fd, "[%p]\n", buffer[frame_num]);
+	}
 }
