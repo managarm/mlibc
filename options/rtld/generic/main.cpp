@@ -936,7 +936,7 @@ void __dlapi_enter(uintptr_t *entry_stack) {
 
 #if __MLIBC_GLIBC_OPTION
 
-extern "C" [[gnu::visibility("default")]] int _dl_find_object(void *address, dl_find_object *result) {
+extern "C" [[gnu::visibility("default")]] int __dlapi_find_object(void *address, dl_find_object *result) {
 	for(const SharedObject *object : initialRepository->loadedObjects) {
 		if(object->baseAddress > reinterpret_cast<uintptr_t>(address))
 			continue;
@@ -981,6 +981,10 @@ extern "C" [[gnu::visibility("default")]] int _dl_find_object(void *address, dl_
 
 	return -1;
 }
+
+#if !defined(MLIBC_STATIC_BUILD)
+extern "C" [[gnu::visibility("default"), gnu::alias("__dlapi_find_object")]] int _dl_find_object(void *address, dl_find_object *result);
+#endif
 
 #endif // __MLIBC_GLIBC_OPTION
 
