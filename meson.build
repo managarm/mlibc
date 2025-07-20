@@ -452,6 +452,7 @@ rtlib_deps = []
 
 if not headers_only
 	if libgcc_dependency
+		libgcc_eh = meson.get_compiler('c').find_library('gcc_eh', required: false)
 		libgcc = meson.get_compiler('c').find_library('gcc', required: false)
 
 		compiler_rt_name = 'libclang_rt.builtins-' + host_machine.cpu_family()
@@ -460,6 +461,10 @@ if not headers_only
 		if not compiler_rt.found()
 			compiler_rt_name = 'libclang_rt.builtins'
 			compiler_rt = meson.get_compiler('c').find_library(compiler_rt_name, required: false)
+		endif
+
+		if libgcc_eh.found()
+			libc_deps += libgcc_eh
 		endif
 
 		if libgcc.found()
