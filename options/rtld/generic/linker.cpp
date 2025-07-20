@@ -254,6 +254,35 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 		mlibc::infoLogger() << "rtld: no rpath set for object" << frg::endlog;
 	}
 
+	if(fd && !chosenPath.empty()) {
+		if (createScope) {
+			__ensure(localScope == nullptr);
+
+			// TODO: Free this when the scope is no longer needed.
+			localScope = frg::construct<Scope>(getAllocator());
+		}
+
+		__ensure(localScope != nullptr);
+
+		auto object = frg::construct<SharedObject>(getAllocator(),
+			name.data(), std::move(chosenPath), false, localScope, rts);
+
+		auto result = _fetchFromFile(object, fd);
+		closeOrDie(fd);
+		if(!result) {
+			frg::destruct(getAllocator(), object);
+			return result.error();
+		}
+
+		_parseDynamic(object);
+		_parseVerdef(object);
+		_addLoadedObject(object);
+
+		return object;
+	}
+
+	SharedObject *object = nullptr;
+
 	for(size_t i = 0; i < libraryPaths->size() && fd == -1; i++) {
 		auto ldPath = (*libraryPaths)[i];
 		auto path = frg::string<MemoryAllocator>{getAllocator(), ldPath} + '/' + name;
@@ -262,30 +291,33 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 		fd = tryToOpen(path.data());
 		if(fd >= 0) {
 			chosenPath = std::move(path);
-			break;
+
+			if (createScope) {
+				__ensure(localScope == nullptr);
+
+				// TODO: Free this when the scope is no longer needed.
+				localScope = frg::construct<Scope>(getAllocator());
+			}
+
+			__ensure(localScope != nullptr);
+
+			object = frg::construct<SharedObject>(getAllocator(),
+				name.data(), std::move(chosenPath), false, localScope, rts);
+
+			auto result = _fetchFromFile(object, fd);
+			closeOrDie(fd);
+			if(!result) {
+				frg::destruct(getAllocator(), object);
+				object = nullptr;
+				fd = -1;
+				continue;
+			} else {
+				break;
+			}
 		}
 	}
-	if(fd == -1)
+	if(fd == -1 || !object)
 		return LinkerError::notFound;
-
-	if (createScope) {
-		__ensure(localScope == nullptr);
-
-		// TODO: Free this when the scope is no longer needed.
-		localScope = frg::construct<Scope>(getAllocator());
-	}
-
-	__ensure(localScope != nullptr);
-
-	auto object = frg::construct<SharedObject>(getAllocator(),
-		name.data(), std::move(chosenPath), false, localScope, rts);
-
-	auto result = _fetchFromFile(object, fd);
-	closeOrDie(fd);
-	if(!result) {
-		frg::destruct(getAllocator(), object);
-		return result.error();
-	}
 
 	_parseDynamic(object);
 	_parseVerdef(object);
