@@ -2,34 +2,20 @@
 #define  _UTMP_H
 
 #include <abi-bits/pid_t.h>
+#include <abi-bits/utmp-defines.h>
 #include <bits/posix/timeval.h>
 #include <bits/types.h>
-#include <paths.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define EMPTY 0
-#define RUN_LVL 1
-#define BOOT_TIME 2
-#define NEW_TIME 3
-#define OLD_TIME 4
-#define INIT_PROCESS 5
-#define LOGIN_PROCESS 6
-#define USER_PROCESS 7
-#define DEAD_PROCESS 8
-#define ACCOUNTING 9
-
 #define UT_LINESIZE 32
 #define UT_NAMESIZE 32
 #define UT_HOSTSIZE 256
 
-#define WTMP_FILE _PATH_WTMP
-#define WTMP_FILENAME _PATH_WTMP
-
-#define UTMP_FILE _PATH_UTMP
-#define UTMP_FILENAME _PATH_UTMP
+#define UTMP_FILENAME UTMP_FILE
+#define WTMP_FILENAME WTMP_FILE
 
 struct exit_status {
 	short int e_termination;
@@ -74,6 +60,7 @@ struct utmp *pututline(const struct utmp *__line);
 struct utmp *getutline(const struct utmp *__line);
 struct utmp *getutid(const struct utmp *__id);
 int utmpname(const char *__file);
+void updwtmp(const char *wtmp_file, const struct utmp *ut);
 int login_tty(int __fd);
 
 #endif /* !__MLIBC_ABI_ONLY */

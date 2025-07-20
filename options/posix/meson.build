@@ -55,7 +55,8 @@ libc_sources += files(
 	'generic/sys-ipc.cpp',
 	'generic/time.cpp',
 	'generic/wordexp.cpp',
-	'generic/mqueue.cpp'
+	'generic/mqueue.cpp',
+	'generic/utmpx.cpp',
 )
 
 if not headers_only
@@ -103,6 +104,7 @@ if not no_headers
 		'include/wordexp.h',
 		'include/semaphore.h',
 		'include/mqueue.h',
+		'include/utmpx.h',
 	)
 	install_headers(
 		'include/arpa/inet.h',
