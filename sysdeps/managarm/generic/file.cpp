@@ -1583,6 +1583,9 @@ int sys_inotify_rm_watch(int ifd, int wd) {
 }
 
 int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
+	if (flags & ~(EFD_NONBLOCK | EFD_CLOEXEC | EFD_SEMAPHORE))
+		return EINVAL;
+
 	SignalGuard sguard;
 
 	uint32_t proto_flags = 0;
