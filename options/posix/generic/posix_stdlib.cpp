@@ -216,7 +216,7 @@ int mkostemps(char *pattern, int suffixlen, int flags) {
 }
 
 int mkostemp(char *pattern, int flags) {
-	return mkostemps(pattern, flags, 0);
+	return mkostemps(pattern, 0, flags);
 }
 
 int mkstemp(char *path) {
