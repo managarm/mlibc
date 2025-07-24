@@ -1200,7 +1200,8 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 int sys_epoll_pwait(
     int epfd, struct epoll_event *ev, int n, int timeout, const sigset_t *sigmask, int *raised
 ) {
-	__ensure(timeout >= 0 || timeout == -1); // TODO: Report errors correctly.
+	if (!(timeout >= 0 || timeout == -1))
+		return EINVAL;
 
 	SignalGuard sguard;
 
@@ -1209,7 +1210,7 @@ int sys_epoll_pwait(
 	req.set_fd(epfd);
 	req.set_size(n);
 	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
-	if (sigmask != NULL) {
+	if (sigmask != nullptr) {
 		req.set_sigmask(*reinterpret_cast<const int64_t *>(sigmask));
 		req.set_sigmask_needed(true);
 	} else {
@@ -1583,6 +1584,9 @@ int sys_inotify_rm_watch(int ifd, int wd) {
 }
 
 int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
+	if (flags & ~(EFD_NONBLOCK | EFD_CLOEXEC | EFD_SEMAPHORE))
+		return EINVAL;
+
 	SignalGuard sguard;
 
 	uint32_t proto_flags = 0;
