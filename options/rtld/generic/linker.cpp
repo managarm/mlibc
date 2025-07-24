@@ -254,6 +254,35 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 		mlibc::infoLogger() << "rtld: no rpath set for object" << frg::endlog;
 	}
 
+	if(fd && !chosenPath.empty()) {
+		if (createScope) {
+			__ensure(localScope == nullptr);
+
+			// TODO: Free this when the scope is no longer needed.
+			localScope = frg::construct<Scope>(getAllocator());
+		}
+
+		__ensure(localScope != nullptr);
+
+		auto object = frg::construct<SharedObject>(getAllocator(),
+			name.data(), std::move(chosenPath), false, localScope, rts);
+
+		auto result = _fetchFromFile(object, fd);
+		closeOrDie(fd);
+		if(!result) {
+			frg::destruct(getAllocator(), object);
+			return result.error();
+		}
+
+		_parseDynamic(object);
+		_parseVerdef(object);
+		_addLoadedObject(object);
+
+		return object;
+	}
+
+	SharedObject *object = nullptr;
+
 	for(size_t i = 0; i < libraryPaths->size() && fd == -1; i++) {
 		auto ldPath = (*libraryPaths)[i];
 		auto path = frg::string<MemoryAllocator>{getAllocator(), ldPath} + '/' + name;
@@ -262,30 +291,33 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 		fd = tryToOpen(path.data());
 		if(fd >= 0) {
 			chosenPath = std::move(path);
-			break;
+
+			if (createScope) {
+				__ensure(localScope == nullptr);
+
+				// TODO: Free this when the scope is no longer needed.
+				localScope = frg::construct<Scope>(getAllocator());
+			}
+
+			__ensure(localScope != nullptr);
+
+			object = frg::construct<SharedObject>(getAllocator(),
+				name.data(), std::move(chosenPath), false, localScope, rts);
+
+			auto result = _fetchFromFile(object, fd);
+			closeOrDie(fd);
+			if(!result) {
+				frg::destruct(getAllocator(), object);
+				object = nullptr;
+				fd = -1;
+				continue;
+			} else {
+				break;
+			}
 		}
 	}
-	if(fd == -1)
+	if(fd == -1 || !object)
 		return LinkerError::notFound;
-
-	if (createScope) {
-		__ensure(localScope == nullptr);
-
-		// TODO: Free this when the scope is no longer needed.
-		localScope = frg::construct<Scope>(getAllocator());
-	}
-
-	__ensure(localScope != nullptr);
-
-	auto object = frg::construct<SharedObject>(getAllocator(),
-		name.data(), std::move(chosenPath), false, localScope, rts);
-
-	auto result = _fetchFromFile(object, fd);
-	closeOrDie(fd);
-	if(!result) {
-		frg::destruct(getAllocator(), object);
-		return result.error();
-	}
 
 	_parseDynamic(object);
 	_parseVerdef(object);
@@ -811,7 +843,8 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			break;
 		default:
 			// Ignore unknown entries in the os-specific area as we don't use them.
-			if(dynamic->d_tag < DT_LOOS || dynamic->d_tag > DT_HIOS) {
+			if((dynamic->d_tag < DT_LOOS || dynamic->d_tag > DT_HIOS)
+			&& (dynamic->d_tag < DT_LOPROC || dynamic->d_tag > DT_HIPROC)) {
 				mlibc::panicLogger() << "Unexpected dynamic entry "
 					<< (void *)dynamic->d_tag << " in object" << frg::endlog;
 			}
@@ -1426,6 +1459,20 @@ uintptr_t ObjectSymbol::virtualAddress() {
 	return _object->baseAddress + _symbol->st_value;
 }
 
+size_t ObjectSymbol::size() {
+	return _symbol->st_size;
+}
+
+bool ObjectSymbol::contains(uintptr_t addr) {
+	if(!size() && virtualAddress() == addr)
+		return true;
+
+	if(size() && addr >= virtualAddress() && addr < (virtualAddress() + size()))
+		return true;
+
+	return false;
+}
+
 // --------------------------------------------------------
 // Scope
 // --------------------------------------------------------
@@ -1499,20 +1546,13 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 	}else{
 		__ensure(object->hashStyle == HashStyle::gnu);
 
-		struct GnuTable {
-			uint32_t nBuckets;
-			uint32_t symbolOffset;
-			uint32_t bloomSize;
-			uint32_t bloomShift;
-		};
-
-		auto hash_table = reinterpret_cast<const GnuTable *>(object->baseAddress
+		auto hash_table = reinterpret_cast<const GnuHashTableHeader *>(object->baseAddress
 				+ object->hashTableOffset);
 		auto buckets = reinterpret_cast<const uint32_t *>(object->baseAddress
-				+ object->hashTableOffset + sizeof(GnuTable)
+				+ object->hashTableOffset + sizeof(GnuHashTableHeader)
 				+ hash_table->bloomSize * sizeof(elf_addr));
 		auto chains = reinterpret_cast<const uint32_t *>(object->baseAddress
-				+ object->hashTableOffset + sizeof(GnuTable)
+				+ object->hashTableOffset + sizeof(GnuHashTableHeader)
 				+ hash_table->bloomSize * sizeof(elf_addr)
 				+ hash_table->nBuckets * sizeof(uint32_t));
 

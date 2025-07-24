@@ -805,12 +805,40 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 			return true;
 		};
 
-		auto hash_table = (Elf64_Word *)(object->baseAddress + object->hashTableOffset);
-		auto num_symbols = hash_table[1];
-		for(size_t i = 0; i < num_symbols; i++) {
+		size_t start_symbols =  0;
+		size_t num_symbols =  0;
+
+		if(object->hashStyle == HashStyle::systemV) {
+			auto hash_table = (Elf64_Word *)(object->baseAddress + object->hashTableOffset);
+
+			// nchain == number of symtab entries
+			num_symbols = hash_table[1];
+		} else if(object->hashStyle == HashStyle::gnu) {
+			size_t last_sym = 0;
+
+			auto hash_table = reinterpret_cast<GnuHashTableHeader *>(object->baseAddress + object->hashTableOffset);
+			auto bucket = reinterpret_cast<uint32_t *>(uintptr_t(hash_table) + sizeof(*hash_table) + (hash_table->bloomSize * sizeof(elf_addr)));
+			auto chains = reinterpret_cast<uint32_t *>(uintptr_t(bucket) + hash_table->nBuckets * 4);
+
+			for(size_t i = 0; i < hash_table->nBuckets; i++) {
+				if(bucket[i] > last_sym)
+					last_sym = bucket[i];
+			}
+
+			last_sym++;
+			while(!(chains[last_sym] & 1))
+				last_sym++;
+
+			start_symbols = hash_table->symbolOffset;
+			num_symbols = last_sym;
+		} else {
+			__ensure(!"unexpected hash style!");
+		}
+
+		for(size_t i = start_symbols; i < num_symbols; i++) {
 			ObjectSymbol cand{object, (elf_sym *)(object->baseAddress
 					+ object->symbolTableOffset + i * sizeof(elf_sym))};
-			if(eligible(cand) && cand.virtualAddress() == reinterpret_cast<uintptr_t>(ptr)) {
+			if(eligible(cand) && cand.contains(reinterpret_cast<uintptr_t>(ptr))) {
 				if (logDlCalls)
 					mlibc::infoLogger() << "rtld: Found symbol " << cand.getString() << " in object "
 							<< object->path << frg::endlog;
@@ -838,7 +866,8 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 			uintptr_t start = object->baseAddress + phdr->p_vaddr;
 			uintptr_t end = start + phdr->p_memsz;
 			if(reinterpret_cast<uintptr_t>(ptr) >= start && reinterpret_cast<uintptr_t>(ptr) < end) {
-				mlibc::infoLogger() << "rtld: Found DSO " << object->path << frg::endlog;
+				if (logDlCalls)
+					mlibc::infoLogger() << "rtld: Found DSO " << object->path << frg::endlog;
 				info->file = object->path.data();
 				info->base = reinterpret_cast<void *>(object->baseAddress);
 				info->symbol = nullptr;
@@ -907,7 +936,7 @@ void __dlapi_enter(uintptr_t *entry_stack) {
 
 #if __MLIBC_GLIBC_OPTION
 
-extern "C" [[gnu::visibility("default")]] int _dl_find_object(void *address, dl_find_object *result) {
+extern "C" [[gnu::visibility("default")]] int __dlapi_find_object(void *address, dl_find_object *result) {
 	for(const SharedObject *object : initialRepository->loadedObjects) {
 		if(object->baseAddress > reinterpret_cast<uintptr_t>(address))
 			continue;
@@ -952,6 +981,10 @@ extern "C" [[gnu::visibility("default")]] int _dl_find_object(void *address, dl_
 
 	return -1;
 }
+
+#if !defined(MLIBC_STATIC_BUILD)
+extern "C" [[gnu::visibility("default"), gnu::alias("__dlapi_find_object")]] int _dl_find_object(void *address, dl_find_object *result);
+#endif
 
 #endif // __MLIBC_GLIBC_OPTION
 
