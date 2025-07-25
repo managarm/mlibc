@@ -80,6 +80,10 @@ inline int operator|(managarm::fs::Errors e, ToErrno) {
 			return EINTR;
 		case managarm::fs::Errors::NO_SUCH_PROCESS:
 			return ESRCH;
+		case managarm::fs::Errors::NAME_TOO_LONG:
+			return ENAMETOOLONG;
+		case managarm::fs::Errors::NO_FILE_DESCRIPTORS_AVAILABLE:
+			return EMFILE;
 	}
 
 	mlibc::panicLogger() << "unhandled managarm::fs::Errors " << static_cast<int32_t>(e)
@@ -149,6 +153,10 @@ inline int operator|(managarm::posix::Errors e, ToErrno) {
 			return EISCONN;
 		case managarm::posix::Errors::UNSUPPORTED_SOCKET_TYPE:
 			return ESOCKTNOSUPPORT;
+		case managarm::posix::Errors::NAME_TOO_LONG:
+			return ENAMETOOLONG;
+		case managarm::posix::Errors::NO_FILE_DESCRIPTORS_AVAILABLE:
+			return EMFILE;
 		case managarm::posix::Errors::INTERRUPTED:
 			return EINTR;
 	}
