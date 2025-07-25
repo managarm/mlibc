@@ -2713,6 +2713,38 @@ int sys_unlockpt(int fd) {
 	return 0;
 }
 
+int sys_setrlimit(int resource, const struct rlimit *limit) {
+	switch (resource) {
+		case RLIMIT_NOFILE: {
+			SignalGuard sguard;
+
+			managarm::posix::SetResourceLimitRequest<MemoryAllocator> req(getSysdepsAllocator());
+			req.set_resource(resource);
+			req.set_cur(limit->rlim_cur);
+			req.set_max(limit->rlim_max);
+
+			auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			    getPosixLane(),
+			    helix_ng::offer(
+			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+			    )
+			);
+
+			HEL_CHECK(offer.error());
+			HEL_CHECK(send_req.error());
+			HEL_CHECK(recv_resp.error());
+
+			managarm::posix::SetResourceLimitResponse<MemoryAllocator> resp(getSysdepsAllocator());
+			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+			return resp.error() | toErrno;
+		}
+		default:
+			mlibc::infoLogger() << "mlibc: unhandled rlimit resource " << resource << frg::endlog;
+			return EINVAL;
+	}
+}
+
 int sys_getrlimit(int resource, struct rlimit *limit) {
 	switch (resource) {
 		case RLIMIT_NOFILE:
