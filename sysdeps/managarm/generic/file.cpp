@@ -18,6 +18,7 @@
 
 #include <bits/ensure.h>
 #include <bits/errors.hpp>
+#include <bragi/helpers-frigg.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/posix-pipe.hpp>
@@ -36,22 +37,22 @@ namespace mlibc {
 int sys_chdir(const char *path) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::CHDIR);
+	managarm::posix::ChdirRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 
-	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	auto [offer, send_req, send_tail, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
 	    helix_ng::offer(
-	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()), helix_ng::recvInline()
 	    )
 	);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::ChdirResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -87,22 +88,22 @@ int sys_fchdir(int fd) {
 int sys_chroot(const char *path) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::CHROOT);
+	managarm::posix::ChrootRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
 
-	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	auto [offer, send_req, send_tail, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
 	    helix_ng::offer(
-	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()), helix_ng::recvInline()
 	    )
 	);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::ChrootResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -503,21 +504,37 @@ int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) 
 	if (!handle)
 		return EBADF;
 
-	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_req_type(managarm::fs::CntReqType::PT_READ_ENTRIES);
+	managarm::fs::ReadEntriesRequest<MemoryAllocator> req(getSysdepsAllocator());
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
 	    handle,
 	    helix_ng::offer(
-	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	        helix_ng::want_lane,
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+	        helix_ng::recvInline()
 	    )
 	);
 	HEL_CHECK(offer.error());
+	auto conversation = offer.descriptor();
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	auto preamble = bragi::read_preamble(recv_resp);
+	__ensure(!preamble.error());
+
+	frg::vector<uint8_t, MemoryAllocator> tailBuffer{getSysdepsAllocator()};
+	tailBuffer.resize(preamble.tail_size());
+	auto [recv_tail] = exchangeMsgsSync(
+	    conversation.getHandle(), helix_ng::recvBuffer(tailBuffer.data(), tailBuffer.size())
+	);
+
+	HEL_CHECK(recv_tail.error());
+
+	auto resp = *bragi::parse_head_tail<managarm::fs::ReadEntriesResponse>(
+	    recv_resp, tailBuffer, getSysdepsAllocator()
+	);
+	recv_resp.reset();
+
 	if (resp.error() == managarm::fs::Errors::END_OF_FILE) {
 		*bytes_read = 0;
 		return 0;
