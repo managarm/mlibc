@@ -108,6 +108,22 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	*result = ret;
 	return 0;
 }
+int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
+	int ret = Syscall(SYS_PREAD64, fd, buf, n, off);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	*bytes_read = ret;
+	return 0;
+}
+int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_written) {
+	int ret = Syscall(SYS_PWRITE64, fd, buf, n, off);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	*bytes_written = ret;
+	return 0;
+}
 
 int sys_access(const char *path, int mode) {
 	int ret = Syscall(SYS_ACCESS, path, mode);
@@ -194,8 +210,22 @@ int sys_mkdir(const char *path, mode_t mode) {
 
 	return 0;
 }
+int sys_rmdir(const char *path) {
+	auto ret = Syscall(SYS_RMDIR, path);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	return 0;
+}
 int sys_link(const char *old_path, const char *new_path) {
 	auto ret = Syscall(SYS_LINK, old_path, new_path);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	return 0;
+}
+int sys_symlink(const char *target_path, const char *link_path) {
+	auto ret = Syscall(SYS_SYMLINK, target_path, link_path);
 	if (auto e = syscall_error(ret); e)
 		return e;
 
@@ -209,6 +239,29 @@ int sys_readlink(const char *path, void *buffer, size_t maxSize, ssize_t *length
 	*length = ret;
 	return 0;
 }
+int sys_chmod(const char *pathname, mode_t mode) {
+	auto ret = Syscall(SYS_CHMOD, pathname, mode);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	return 0;
+}
+int sys_fchmod(int fd, mode_t mode) {
+	auto ret = Syscall(SYS_FCHMOD, fd, mode);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	return 0;
+}
+int sys_umask(mode_t mode, mode_t *old_mode) {
+	auto ret = Syscall(SYS_UMASK, mode);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	*old_mode = ret;
+	return 0;
+}
+
 int sys_statfs(const char *path, struct statfs *out) {
 	auto ret = Syscall(SYS_STATFS, path, out);
 	if (auto e = syscall_error(ret); e)
@@ -257,6 +310,13 @@ int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 
 	return 0;
 }
+int sys_mknodat(int dirfd, const char *path, int mode, int dev) {
+	auto ret = Syscall(SYS_MKNODAT, dirfd, path, mode, dev);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	return 0;
+}
 int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
 	auto ret = Syscall(SYS_RENAMEAT, olddirfd, old_path, newdirfd, new_path);
 	if (auto e = syscall_error(ret); e)
@@ -266,6 +326,13 @@ int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *n
 }
 int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags) {
 	auto ret = Syscall(SYS_LINKAT, olddirfd, old_path, newdirfd, new_path, flags);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	return 0;
+}
+int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
+	auto ret = Syscall(SYS_SYMLINKAT, target_path, dirfd, link_path);
 	if (auto e = syscall_error(ret); e)
 		return e;
 
