@@ -66,15 +66,22 @@ constexpr size_t SYS_GETRLIMIT = 97;
 constexpr size_t SYS_GETRUSAGE = 98;
 constexpr size_t SYS_GETUID = 102;
 constexpr size_t SYS_GETGID = 104;
+constexpr size_t SYS_SETUID = 105;
+constexpr size_t SYS_SETGID = 106;
 constexpr size_t SYS_GETEUID = 107;
 constexpr size_t SYS_GETEGID = 108;
 constexpr size_t SYS_SETPGID = 109;
 constexpr size_t SYS_GETPPID = 110;
 constexpr size_t SYS_SETSID = 112;
+constexpr size_t SYS_SETREUID = 113;
+constexpr size_t SYS_SETREGID = 114;
+constexpr size_t SYS_SETRESUID = 117;
+constexpr size_t SYS_SETRESGID = 119;
 constexpr size_t SYS_GETPGID = 121;
 constexpr size_t SYS_GETSID = 124;
 constexpr size_t SYS_STATFS = 137;
 constexpr size_t SYS_ARCH_PRCTL = 158;
+constexpr size_t SYS_SYNC = 162;
 constexpr size_t SYS_MOUNT = 165;
 constexpr size_t SYS_UMOUNT = 166;
 constexpr size_t SYS_REBOOT = 169;
@@ -85,12 +92,14 @@ constexpr size_t SYS_OPENAT = 257;
 constexpr size_t SYS_MKDIRAT = 258;
 constexpr size_t SYS_MKNODAT = 259;
 constexpr size_t SYS_FSTATAT = 262;
+constexpr size_t SYS_UNLINKAT = 263;
 constexpr size_t SYS_RENAMEAT = 264;
 constexpr size_t SYS_LINKAT = 265;
 constexpr size_t SYS_SYMLINKAT = 266;
 constexpr size_t SYS_READLINKAT = 267;
 constexpr size_t SYS_FCHMODAT = 268;
 constexpr size_t SYS_UTIMENSAT = 280;
+constexpr size_t SYS_SYNCFS = 306;
 
 #pragma endregion
 

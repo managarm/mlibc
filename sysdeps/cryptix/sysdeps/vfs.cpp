@@ -269,7 +269,7 @@ int sys_statfs(const char *path, struct statfs *out) {
 
 	return 0;
 }
-
+void sys_sync() { Syscall(SYS_SYNC); }
 int sys_mount(
     const char *source,
     const char *target,
@@ -312,6 +312,13 @@ int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 }
 int sys_mknodat(int dirfd, const char *path, int mode, int dev) {
 	auto ret = Syscall(SYS_MKNODAT, dirfd, path, mode, dev);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	return 0;
+}
+int sys_unlinkat(int dirfd, const char *path, int flags) {
+	auto ret = Syscall(SYS_UNLINKAT, dirfd, path, flags);
 	if (auto e = syscall_error(ret); e)
 		return e;
 
@@ -417,6 +424,13 @@ STUB_RET(
 );
 int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
 	auto ret = Syscall(SYS_UTIMENSAT, dirfd, pathname, times, flags);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	return 0;
+}
+int sys_syncfs(int fd) {
+	auto ret = Syscall(SYS_SYNCFS, fd);
 	if (auto e = syscall_error(ret); e)
 		return e;
 
