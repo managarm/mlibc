@@ -211,12 +211,12 @@ int sys_peername(
 	if (recvResp.error() == kHelErrDismissed)
 		return ENOTSOCK;
 	HEL_CHECK(recvResp.error());
-	HEL_CHECK(recvData.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 
 	if (resp.error() == managarm::fs::Errors::SUCCESS) {
+		HEL_CHECK(recvData.error());
 		*actual_length = resp.file_size();
 		return 0;
 	}
@@ -235,7 +235,7 @@ std::array<std::pair<int, int>, 6> getsockopt_passthrough = {{
     {SOL_SOCKET, SO_PEERPIDFD},
 }};
 
-}
+} // namespace
 
 int
 sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
