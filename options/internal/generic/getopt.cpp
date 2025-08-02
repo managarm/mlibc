@@ -189,6 +189,7 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 			if(std::holds_alternative<std::monostate>(k)) {
 				if(opterr)
 					fprintf(stderr, "--%s is not a valid option.\n", arg);
+				optind++;
 				return '?';
 			} else if(std::holds_alternative<char>(k)) {
 				return std::get<char>(k);
