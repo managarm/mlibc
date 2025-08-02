@@ -770,6 +770,25 @@ void test28() {
 	assert(c == -1);
 }
 
+void test29() {
+	char *test_argv[] = {
+		"dummy",
+		"--a",
+	};
+
+	const struct option longopts[] = {
+		{"load-credentials", no_argument, NULL, 0x103},
+		{NULL, 0, NULL, 0},
+	};
+
+	optind = 0;
+	opterr = 1;
+	int c = getopt_long(COUNT_OF(test_argv), test_argv, "el:sSRp:m:t:Vh", longopts, NULL);
+	dump(c);
+	assert(c == '?');
+	assert(optind == 2);
+}
+
 int main() {
 	test1();
 	test2();
@@ -799,6 +818,7 @@ int main() {
 	test26();
 	test27();
 	test28();
+	test29();
 
 	return 0;
 }
