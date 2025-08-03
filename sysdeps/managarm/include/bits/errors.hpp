@@ -78,6 +78,8 @@ inline int operator|(managarm::fs::Errors e, ToErrno) {
 			return EIO;
 		case managarm::fs::Errors::INTERRUPTED:
 			return EINTR;
+		case managarm::fs::Errors::NO_SUCH_PROCESS:
+			return ESRCH;
 	}
 
 	mlibc::panicLogger() << "unhandled managarm::fs::Errors " << static_cast<int32_t>(e)
