@@ -789,6 +789,65 @@ void test29() {
 	assert(optind == 2);
 }
 
+void test30() {
+	const struct option longopts[] = {
+		{"long-opt", required_argument, NULL, 'l'},
+		{NULL, 0, NULL, 0}
+	};
+
+	char *test_argv[] = {
+		"getopt_test",
+		"non-arg1",
+		"--long-opt",
+		"val",
+		"non-arg2"
+	};
+
+	fputs("Situation: non-arguments before valid long arguments\n", stderr);
+
+	optind = 0;
+	int c = getopt_long(COUNT_OF(test_argv), test_argv, "+", longopts, NULL);
+	assert(c == -1);
+	assert(optind == 1);
+	assert(!strcmp(test_argv[0], "getopt_test"));
+	assert(!strcmp(test_argv[1], "non-arg1"));
+	assert(!strcmp(test_argv[2], "--long-opt"));
+	assert(!strcmp(test_argv[3], "val"));
+	assert(!strcmp(test_argv[4], "non-arg2"));
+
+	optind = 2;
+	while ((c = getopt_long(COUNT_OF(test_argv), test_argv, "+", longopts, NULL)) != -1) {
+		switch (c) {
+			case 'l':
+				assert(!strcmp(optarg, "val"));
+				break;
+			default:
+				break;
+		}
+	}
+
+	assert(c == -1);
+	assert(optind == 4);
+
+	optind = 0;
+	while ((c = getopt_long(COUNT_OF(test_argv), test_argv, "", longopts, NULL)) != -1) {
+		switch (c) {
+			case 'l':
+				assert(!strcmp(optarg, "val"));
+				break;
+			default:
+				break;
+		}
+	}
+
+	assert(optind == 3);
+	assert(!strcmp(test_argv[0], "getopt_test"));
+	assert(!strcmp(test_argv[1], "--long-opt"));
+	assert(!strcmp(test_argv[2], "val"));
+	assert(!strcmp(test_argv[3], "non-arg1"));
+	assert(!strcmp(test_argv[4], "non-arg2"));
+}
+
 int main() {
 	test1();
 	test2();
@@ -819,6 +878,7 @@ int main() {
 	test27();
 	test28();
 	test29();
+	test30();
 
 	return 0;
 }
