@@ -501,7 +501,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	auto r = menix_syscall(SYSCALL_IOCTL, fd, request, (size_t)arg);
 	if (r.error)
 		return r.error;
-	*result = r.value;
+	if (result)
+		*result = r.value;
 	return 0;
 }
 
