@@ -455,6 +455,30 @@ int sys_setresuid(uid_t ruid, uid_t euid, uid_t suid) {
 	return 0;
 }
 
+int sys_setreuid(uid_t ruid, uid_t euid) {
+	int real = sys_setuid(ruid);
+	if (real)
+		return real;
+
+	int effective = sys_seteuid(euid);
+	if (effective)
+		return effective;
+
+	return 0;
+}
+
+int sys_setregid(gid_t rgid, gid_t egid) {
+	int real = sys_setgid(rgid);
+	if (real)
+		return real;
+
+	int effective = sys_setegid(egid);
+	if (effective)
+		return effective;
+
+	return 0;
+}
+
 pid_t sys_gettid() {
 	// TODO: use an actual gettid syscall.
 	return sys_getpid();
