@@ -2899,6 +2899,17 @@ int sys_statfs(const char *path, struct statfs *buf) {
 	return 0;
 }
 
+int sys_getpriority(int, id_t, int *value) {
+	mlibc::infoLogger() << "\e[35mmlibc: getpriority() always returns 0\e[39m" << frg::endlog;
+	*value = 0;
+	return 0;
+}
+
+int sys_setpriority(int, id_t, int) {
+	mlibc::infoLogger() << "\e[35mmlibc: setpriority() is a stub\e[39m" << frg::endlog;
+	return 0;
+}
+
 // We don't support extended attributes yet
 int sys_removexattr(const char *, const char *) { return ENOSYS; }
 
