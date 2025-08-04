@@ -329,6 +329,21 @@ int sys_setegid(gid_t egid) {
 	return 0;
 }
 
+int sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
+	// TODO: handle saved set-user-ID
+	(void)sgid;
+
+	int real = sys_setgid(rgid);
+	if (real)
+		return real;
+
+	int effective = sys_setegid(egid);
+	if (effective)
+		return effective;
+
+	return 0;
+}
+
 uid_t sys_getuid() {
 	SignalGuard sguard;
 
@@ -421,6 +436,21 @@ int sys_seteuid(uid_t euid) {
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
+
+	return 0;
+}
+
+int sys_setresuid(uid_t ruid, uid_t euid, uid_t suid) {
+	// TODO: handle saved set-user-ID
+	(void)suid;
+
+	int real = sys_setuid(ruid);
+	if (real)
+		return real;
+
+	int effective = sys_seteuid(euid);
+	if (effective)
+		return effective;
 
 	return 0;
 }
