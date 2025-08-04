@@ -12,6 +12,11 @@
 
 namespace mlibc {
 
+int sys_getscheduler(pid_t, int *policy) {
+	*policy = SCHED_OTHER;
+	return 0;
+}
+
 int sys_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask) {
 	return sys_getthreadaffinity(pid, cpusetsize, mask);
 }
