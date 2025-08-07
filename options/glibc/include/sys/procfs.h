@@ -43,6 +43,27 @@ struct elf_prstatus {
 	int pr_fpvalid;
 };
 
+struct elf_prpsinfo {
+	char pr_state;
+	char pr_sname;
+	char pr_zomb;
+	char pr_nice;
+	unsigned long pr_flag;
+#if __INTPTR_WIDTH__ == 32
+	unsigned short int pr_uid;
+	unsigned short int pr_gid;
+#else
+	unsigned int pr_uid;
+	unsigned int pr_gid;
+#endif
+	int pr_pid;
+	int pr_ppid;
+	int pr_pgrp;
+	int pr_sid;
+	char pr_fname[16];
+	char pr_psargs[ELF_PRARGSZ];
+};
+
 typedef pid_t lwpid_t;
 typedef void *psaddr_t;
 typedef struct elf_prstatus prstatus_t;
