@@ -14,6 +14,7 @@ extern "C" {
 #define TCP_KEEPINTVL 5
 #define TCP_KEEPCNT 6
 #define TCP_DEFER_ACCEPT 9
+#define TCP_INFO 11
 #define TCP_CONGESTION 13
 #define TCP_FASTOPEN 23
 
