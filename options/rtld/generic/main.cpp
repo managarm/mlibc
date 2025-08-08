@@ -955,6 +955,19 @@ extern "C" [[gnu::visibility("default")]] int _dl_find_object(void *address, dl_
 
 #endif // __MLIBC_GLIBC_OPTION
 
+uintptr_t *rtld_auxvector() {
+	// Find the auxiliary vector by skipping args and environment.
+	auto aux = entryStack;
+	aux += *aux + 1; // Skip argc and all arguments
+	__ensure(!*aux);
+	aux++;
+	while(*aux) // Now, we skip the environment.
+		aux++;
+	aux++;
+
+	return aux;
+}
+
 // XXX(qookie):
 // This is here because libgcc will call into __getauxval on glibc Linux
 // (which is what it believes we are due to the aarch64-linux-gnu toolchain)
@@ -967,14 +980,8 @@ extern "C" [[gnu::visibility("default")]] int _dl_find_object(void *address, dl_
 #if defined(__aarch64__) && defined(__gnu_linux__) && !defined(MLIBC_STATIC_BUILD)
 
 extern "C" unsigned long __getauxval(unsigned long type) {
-	// Find the auxiliary vector by skipping args and environment.
-	auto aux = entryStack;
-	aux += *aux + 1; // Skip argc and all arguments
-	__ensure(!*aux);
-	aux++;
-	while(*aux) // Now, we skip the environment.
-		aux++;
-	aux++;
+	auto aux = rtld_auxvector();
+	__ensure(aux);
 
 	// Parse the auxiliary vector.
 	while(true) {
