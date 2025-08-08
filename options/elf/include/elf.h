@@ -231,6 +231,7 @@ enum {
 	STT_OBJECT = 1,
 	STT_FUNC = 2,
 	STT_TLS = 6,
+	STT_GNU_IFUNC = 10,
 	STT_LOPROC = 13,
 	STT_HIPROC = 15
 };
