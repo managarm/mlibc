@@ -512,5 +512,5 @@ extern "C" void pltRelocateStub() __attribute__((__visibility__("hidden")));
 // RTLD interface
 // --------------------------------------------------------
 
-void *rtld_auxvector();
+uintptr_t *rtld_auxvector();
 
