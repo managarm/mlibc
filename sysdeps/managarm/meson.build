@@ -138,6 +138,14 @@ if not no_headers
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)
+
+	if host_machine.cpu_family() == 'riscv64'
+		install_headers(
+			'include/abi-bits/riscv-hwprobe.h',
+			subdir: 'abi-bits',
+			follow_symlinks: true
+		)
+	endif
 endif
 
 if not headers_only

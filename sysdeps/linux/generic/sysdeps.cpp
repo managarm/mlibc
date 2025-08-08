@@ -75,6 +75,13 @@ extern "C" void *__m68k_read_tp() {
 	auto ret = do_syscall(__NR_get_thread_area, 0);
 	return (void *)ret;
 }
+#elif defined(__riscv)
+int sys_riscv_hwprobe(struct riscv_hwprobe *pairs, size_t pair_count, size_t cpusetsize, cpu_set_t *cpus, unsigned int flags) {
+	auto ret = do_syscall(SYS_riscv_hwprobe, pairs, pair_count, cpusetsize, cpus, flags);
+	if(int e = sc_error(ret); e)
+		return -e;
+	return sc_int_result<int>(ret);
+}
 #endif
 
 int sys_tcb_set(void *pointer) {
