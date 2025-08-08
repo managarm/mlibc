@@ -74,6 +74,7 @@ elif host_machine.cpu_family() == 'x86_64'
 elif host_machine.cpu_family() == 'riscv64'
 	libc_sources += files(
 		'riscv64/signals.S',
+		'riscv64/thread_entry.S',
 		'riscv64/thread.cpp',
 	)
 else
