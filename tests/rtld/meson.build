@@ -19,6 +19,13 @@ rtld_test_cases = [
 	'symver',
 ]
 
+if host_machine.cpu_family() != 'm68k'
+	rtld_test_cases += [
+		'ifunc',
+		'ifunc-dlopen',
+	]
+endif
+
 host_libc_rtld_nosan_test_cases = [
 	'preinit',
 ]
