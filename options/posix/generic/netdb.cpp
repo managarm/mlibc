@@ -75,6 +75,9 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 		if ((flags & mask) != flags)
 			return EAI_BADFLAGS;
 
+		if (hints->ai_flags & AI_CANONNAME && !node)
+			return EAI_BADFLAGS;
+
 		if (family != AF_INET && family != AF_INET6 && family != AF_UNSPEC)
 			return EAI_FAMILY;
 	}
