@@ -15,6 +15,9 @@
 namespace mlibc {
 
 namespace {
+	constexpr unsigned short RETURN_NOERROR [[maybe_unused]] = 0x0;
+	constexpr unsigned short RETURN_NXDOMAIN = 0x3;
+
 	constexpr unsigned int RECORD_A = 1;
 	constexpr unsigned int RECORD_CNAME = 5;
 	constexpr unsigned int RECORD_PTR = 12;
@@ -119,6 +122,9 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 		auto response_header = reinterpret_cast<struct dns_header*>(response);
 		if (response_header->identification != header.identification)
 			return -EAI_FAIL;
+
+		if ((ntohs(response_header->flags) & 0xF) == RETURN_NXDOMAIN)
+			return -EAI_NONAME;
 
 		auto it = response + sizeof(struct dns_header);
 		for (int i = 0; i < ntohs(response_header->no_q); i++) {

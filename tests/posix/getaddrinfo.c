@@ -216,5 +216,11 @@ int main() {
 	assert(ret == EAI_NONAME);
 	assert(res == NULL);
 
+	// Test for NXDOMAIN
+	hints = (struct addrinfo){0};
+	ret = getaddrinfo("this-domain-should-not-exist.nxdomain", NULL, &hints, &res);
+	assert(ret == EAI_NONAME);
+	assert(res == NULL);
+
 	return 0;
 }
