@@ -97,6 +97,7 @@
 #define TIOCPKT_NOSTOP           16
 #define TIOCPKT_DOSTOP           32
 #define TIOCPKT_IOCTL            64
-#define TIOCSER_TEMT	            0x01
+#define TIOCSER_TEMT	         0x01
+#define DEV_UUID                 0x9821
 
 #endif /* _ASM_IOCTLS_H */
