@@ -134,7 +134,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 					break;
 				case AF_INET6:
 					out[i].ai.ai_addrlen = sizeof(struct sockaddr_in6);
-					out[i].sa.sin6.sin6_family = htons(serv_buf[j].port);
+					out[i].sa.sin6.sin6_port = htons(serv_buf[j].port);
 					out[i].sa.sin6.sin6_family = AF_INET6;
 					memcpy(&out[i].sa.sin6.sin6_addr, addr_buf.buf[i].addr, 16);
 					break;

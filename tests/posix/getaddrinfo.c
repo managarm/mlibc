@@ -47,6 +47,22 @@ int main() {
 	assert(ret == EAI_NONAME);
 
 	freeaddrinfo(res);
+	res = NULL;
+
+	hints.ai_family = AF_INET6;
+	hints.ai_flags = AI_NUMERICHOST;
+	ret = getaddrinfo("::1", "1234", &hints, &res);
+	assert(ret == 0);
+
+	assert(res[0].ai_family == AF_INET6);
+	struct sockaddr_in6 *addr6 = (struct sockaddr_in6*) res[0].ai_addr;
+	assert(addr6->sin6_port == htons(1234));
+	assert(addr6->sin6_addr.s6_addr[15] == 1);
+	for (int i = 0; i < 15; i++) {
+		assert(addr6->sin6_addr.s6_addr[i] == 0);
+	}
+
+	freeaddrinfo(res);
 
 	return 0;
 }
