@@ -91,7 +91,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 			if (flags & AI_NUMERICHOST)
 			       addr_count = -EAI_NONAME;
 			else if ((addr_count = mlibc::lookup_name_hosts(addr_buf, node, canon)) <= 0)
-				addr_count = mlibc::lookup_name_dns(addr_buf, node, canon);
+				addr_count = mlibc::lookup_name_dns(addr_buf, node, canon, family);
 			else
 				addr_count = 1;
 		}
@@ -239,7 +239,7 @@ struct hostent *gethostbyname(const char *name) {
 	frg::string<MemoryAllocator> canon{getAllocator()};
 	int ret = 0;
 	if ((ret = mlibc::lookup_name_hosts(buf, name, canon)) <= 0)
-		ret = mlibc::lookup_name_dns(buf, name, canon);
+		ret = mlibc::lookup_name_dns(buf, name, canon, AF_UNSPEC);
 	if (ret <= 0) {
 		h_errno = HOST_NOT_FOUND;
 		return NULL;
