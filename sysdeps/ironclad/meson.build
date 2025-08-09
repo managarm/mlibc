@@ -89,7 +89,6 @@ if not no_headers
 
 	install_headers(
 		'include/linux/fb.h',
-		'include/linux/kvm.h',
 		subdir: 'linux'
 	)
 
