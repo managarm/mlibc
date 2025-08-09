@@ -18,7 +18,8 @@ namespace {
 	constexpr unsigned int RECORD_A = 1;
 	constexpr unsigned int RECORD_CNAME = 5;
 	constexpr unsigned int RECORD_PTR = 12;
-}
+	constexpr unsigned int RECORD_AAAA = 28;
+} // namespace
 
 static frg::string<MemoryAllocator> read_dns_name(char *buf, char *&it) {
 	frg::string<MemoryAllocator> res{getAllocator()};
@@ -47,7 +48,7 @@ static frg::string<MemoryAllocator> read_dns_name(char *buf, char *&it) {
 }
 
 int lookup_name_dns(struct lookup_result &buf, const char *name,
-		frg::string<MemoryAllocator> &canon_name) {
+		frg::string<MemoryAllocator> &canon_name, int family) {
 	frg::string<MemoryAllocator> request{getAllocator()};
 
 	int num_q = 1;
@@ -73,9 +74,13 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 	}
 
 	request += char(0);
-	// set question type to fetch A records
-	request += 0;
-	request += 1;
+	// set question type to fetch A or AAAA records
+	uint16_t qtype = RECORD_A;
+	if (family == AF_INET6)
+		qtype = RECORD_AAAA;
+
+	request += qtype >> 8;
+	request += qtype & 0xFF;
 	// set CLASS to IN
 	request += 0;
 	request += 1;
@@ -134,9 +139,22 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 
 			switch (rr_type) {
 				case RECORD_A:
+					if (family != AF_UNSPEC && family != AF_INET)
+						continue;
+
 					memcpy(buffer.addr, it, rr_length);
 					it += rr_length;
 					buffer.family = AF_INET;
+					buffer.name = std::move(dns_name);
+					buf.buf.push(std::move(buffer));
+					break;
+				case RECORD_AAAA:
+					if (family != AF_UNSPEC && family != AF_INET6)
+						continue;
+
+					memcpy(buffer.addr, it, rr_length);
+					it += rr_length;
+					buffer.family = AF_INET6;
 					buffer.name = std::move(dns_name);
 					buf.buf.push(std::move(buffer));
 					break;

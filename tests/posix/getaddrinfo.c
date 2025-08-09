@@ -3,7 +3,6 @@
 #include <stddef.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <stdio.h>
 
 int main() {
 	struct addrinfo *res = NULL;
@@ -63,6 +62,19 @@ int main() {
 	}
 
 	freeaddrinfo(res);
+	res = NULL;
+
+	hints.ai_family = AF_INET6;
+	hints.ai_flags = 0;
+	ret = getaddrinfo("example.net", "443", &hints, &res);
+	assert(ret == 0);
+
+	assert(res[0].ai_family == AF_INET6);
+	addr6 = (struct sockaddr_in6*)res[0].ai_addr;
+	assert(addr6->sin6_port == htons(443));
+
+	freeaddrinfo(res);
+	res = NULL;
 
 	return 0;
 }
