@@ -308,7 +308,7 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 }
 
 int lookup_name_hosts(struct lookup_result &buf, const char *name,
-		frg::string<MemoryAllocator> &canon_name) {
+		frg::string<MemoryAllocator> &canon_name, int family) {
 	auto file = fopen("/etc/hosts", "r");
 	if (!file) {
 		switch (errno) {
@@ -339,19 +339,21 @@ int lookup_name_hosts(struct lookup_result &buf, const char *name,
 		for (pos = line; !isspace(*pos); pos++);
 		*pos = '\0';
 
-		// TODO(geert): we assume ipv4 for now
-		struct in_addr addr;
-		if (!inet_aton(line, &addr))
-			continue;
+		struct dns_addr_buf buffer;
+
+		if ((family == AF_UNSPEC || family == AF_INET) && inet_pton(AF_INET, line, buffer.addr)) {
+			buffer.family = AF_INET;
+		} else if((family == AF_UNSPEC || family == AF_INET6) && inet_pton(AF_INET6, line, buffer.addr)) {
+			buffer.family = AF_INET6;
+		} else {
+			continue; // not a valid address
+		}
 
 		pos++;
 		for(; *pos && isspace(*pos); pos++);
 		char *end;
 		for(end = pos; *end && !isspace(*end); end++);
 
-		struct dns_addr_buf buffer;
-		memcpy(buffer.addr, &addr, 4);
-		buffer.family = AF_INET;
 		buffer.name = frg::string<MemoryAllocator>{pos,
 			static_cast<size_t>(end - pos), getAllocator()};
 		canon_name = buffer.name;

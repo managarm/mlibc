@@ -90,10 +90,8 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 		if ((addr_count = mlibc::lookup_name_ip(addr_buf, node, family)) <= 0) {
 			if (flags & AI_NUMERICHOST)
 			       addr_count = -EAI_NONAME;
-			else if ((addr_count = mlibc::lookup_name_hosts(addr_buf, node, canon)) <= 0)
+			else if ((addr_count = mlibc::lookup_name_hosts(addr_buf, node, canon, family)) <= 0)
 				addr_count = mlibc::lookup_name_dns(addr_buf, node, canon, family);
-			else
-				addr_count = 1;
 		}
 
 		if (addr_count < 0)
@@ -124,7 +122,10 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 				out[i].ai.ai_canonname = canon.data();
 			else
 				out[i].ai.ai_canonname = nullptr;
-			out[i].ai.ai_next = nullptr;
+
+			if(i)
+				out[i - 1].ai.ai_next = &out[i].ai;
+
 			switch (addr_buf.buf[i].family) {
 				case AF_INET:
 					out[i].ai.ai_addrlen = sizeof(struct sockaddr_in);
@@ -141,6 +142,9 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 			}
 		}
 	}
+	if (addr_count)
+		out[addr_count - 1].ai.ai_next = nullptr;
+
 	if (canon.size())
 		canon.detach();
 
@@ -238,7 +242,7 @@ struct hostent *gethostbyname(const char *name) {
 	struct mlibc::lookup_result buf;
 	frg::string<MemoryAllocator> canon{getAllocator()};
 	int ret = 0;
-	if ((ret = mlibc::lookup_name_hosts(buf, name, canon)) <= 0)
+	if ((ret = mlibc::lookup_name_hosts(buf, name, canon, AF_UNSPEC)) <= 0)
 		ret = mlibc::lookup_name_dns(buf, name, canon, AF_UNSPEC);
 	if (ret <= 0) {
 		h_errno = HOST_NOT_FOUND;

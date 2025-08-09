@@ -76,5 +76,29 @@ int main() {
 	freeaddrinfo(res);
 	res = NULL;
 
+	// Test with AF_INET
+	hints.ai_family = AF_INET;
+	ret = getaddrinfo("localhost", NULL, &hints, &res);
+	if (has_ipv4_addr()) {
+		assert(ret == 0);
+		for(struct addrinfo *p = res; p != NULL; p = p->ai_next) {
+			assert(p->ai_family == AF_INET);
+		}
+	} else {
+		assert(ret != 0);
+	}
+	freeaddrinfo(res);
+	res = NULL;
+
+	// Test with AF_INET6
+	hints.ai_family = AF_INET6;
+	ret = getaddrinfo("localhost", NULL, &hints, &res);
+	assert(ret == 0);
+	for(struct addrinfo *p = res; p != NULL; p = p->ai_next) {
+		assert(p->ai_family == AF_INET6);
+	}
+	freeaddrinfo(res);
+	res = NULL;
+
 	return 0;
 }
