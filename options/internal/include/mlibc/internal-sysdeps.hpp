@@ -10,6 +10,11 @@
 #include <abi-bits/stat.h>
 #include <mlibc/fsfd_target.hpp>
 
+#if defined(__riscv)
+#include <abi-bits/riscv-hwprobe.h>
+#include <bits/cpu_set.h>
+#endif
+
 namespace [[gnu::visibility("hidden")]] mlibc {
 
 void sys_libc_log(const char *message);
@@ -35,6 +40,10 @@ int sys_close(int fd);
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window);
 int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_vm_protect(void *pointer, size_t size, int prot);
+
+#if defined(__riscv)
+[[gnu::weak]] int sys_riscv_hwprobe(struct riscv_hwprobe *pairs, size_t pair_count, size_t cpusetsize, cpu_set_t *cpus, unsigned int flags);
+#endif
 
 } //namespace mlibc
 
