@@ -1,8 +1,57 @@
+#if !defined(USE_HOST_LIBC)
+#include <mlibc-config.h>
+#endif
+
 #include <netdb.h>
 #include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <net/if.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#if __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC)
+#include <ifaddrs.h>
+
+static bool has_ipv4_addr(void) {
+	struct ifaddrs *addrs;
+	if (getifaddrs(&addrs)) {
+		return false;
+	}
+
+	int found = 0;
+	for (struct ifaddrs *cur = addrs; cur; cur = cur->ifa_next) {
+		if (cur->ifa_addr && (cur->ifa_flags & IFF_UP) && cur->ifa_addr->sa_family == AF_INET && strncmp(cur->ifa_name, "lo", IF_NAMESIZE)) {
+			found = 1;
+			break;
+		}
+	}
+
+	freeifaddrs(addrs);
+	return found;
+}
+
+static bool has_ipv6_addr(void) {
+	struct ifaddrs *addrs;
+	if (getifaddrs(&addrs)) {
+		return false;
+	}
+
+	int found = 0;
+	for (struct ifaddrs *cur = addrs; cur; cur = cur->ifa_next) {
+		if (cur->ifa_addr && (cur->ifa_flags & IFF_UP) && cur->ifa_addr->sa_family == AF_INET6 && strncmp(cur->ifa_name, "lo", IF_NAMESIZE)) {
+			found = 1;
+			break;
+		}
+	}
+
+	freeifaddrs(addrs);
+	return found;
+}
+#endif // __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC)
 
 int main() {
 	struct addrinfo *res = NULL;
@@ -76,6 +125,7 @@ int main() {
 	freeaddrinfo(res);
 	res = NULL;
 
+#if __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC)
 	// Test with AF_INET
 	hints.ai_family = AF_INET;
 	ret = getaddrinfo("localhost", NULL, &hints, &res);
@@ -99,6 +149,41 @@ int main() {
 	}
 	freeaddrinfo(res);
 	res = NULL;
+
+	// Test AI_ADDRCONFIG
+	hints = (struct addrinfo){0};
+	hints.ai_flags = AI_ADDRCONFIG;
+	hints.ai_family = AF_UNSPEC;
+
+	ret = getaddrinfo("localhost", NULL, &hints, &res);
+
+	if (ret == 0) {
+		int found_ipv4 = 0;
+		int found_ipv6 = 0;
+		for(struct addrinfo *p = res; p != NULL; p = p->ai_next) {
+			if (p->ai_family == AF_INET)
+				found_ipv4 = 1;
+			else if (p->ai_family == AF_INET6)
+				found_ipv6 = 1;
+		}
+
+		if (has_ipv4_addr())
+			assert(found_ipv4);
+		else
+			assert(!found_ipv4);
+
+		if (has_ipv6_addr())
+			assert(found_ipv6);
+		else
+			assert(!found_ipv6);
+	} else {
+		// If getaddrinfo fails, it should be because no addresses are configured.
+		assert(!has_ipv4_addr() && !has_ipv6_addr());
+	}
+
+	freeaddrinfo(res);
+	res = NULL;
+#endif // __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC)
 
 	return 0;
 }

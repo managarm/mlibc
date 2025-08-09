@@ -5,6 +5,7 @@
 #include <mlibc/lookup.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/services.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 #include <frg/vector.hpp>
 #include <frg/array.hpp>
 #include <frg/span.hpp>
@@ -76,6 +77,27 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 
 		if (family != AF_INET && family != AF_INET6 && family != AF_UNSPEC)
 			return EAI_FAMILY;
+	}
+
+	if (flags & AI_ADDRCONFIG) {
+		if (mlibc::sys_inet_configured) {
+			bool ipv4 = false;
+			bool ipv6 = false;
+
+			if (int e = mlibc::sys_inet_configured(&ipv4, &ipv6); e) {
+				errno = e;
+				return EAI_SYSTEM;
+			}
+
+			if (!ipv4 && !ipv6)
+				return EAI_NONAME;
+			else if (ipv4 != ipv6)
+				family = ipv4 ? AF_INET : AF_INET6;
+		} else {
+			mlibc::infoLogger() << "mlibc: sys_inet_configured() not implemented, cannot handle getaddrinfo with AI_ADDRCONFIG" << frg::endlog;
+			errno = ENOSYS;
+			return EAI_SYSTEM;
+		}
 	}
 
 	mlibc::service_result serv_buf{getAllocator()};

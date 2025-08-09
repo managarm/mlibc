@@ -46,7 +46,7 @@ struct NetlinkHelper {
 		return send(fd_.value(), reinterpret_cast<void *>(&request), sizeof(request), 0) == sizeof(request);
 	}
 
-	bool recv(void cb(void *, nlmsghdr *), void *ctx) {
+	bool recv(void cb(void *, const nlmsghdr *), void *ctx) {
 		ssize_t read;
 
 		while((read = ::recv(fd_.value(), reinterpret_cast<msghdr *>(data_.data()), data_.size(), 0)) > 0) {
@@ -206,7 +206,7 @@ static_assert(offsetof(IfaddrHelper, ifa) == 0);
 /**
  * Callback function to be used with NetlinkHelper for implementing `sys_getifaddrs` by using rtnetlink.
  */
-void getifaddrs_callback(void *context, nlmsghdr *hdr) {
+void getifaddrs_callback(void *context, const nlmsghdr *hdr) {
 	ifaddrs **out = reinterpret_cast<ifaddrs **>(context);
 
 	if(hdr->nlmsg_type == RTM_NEWLINK) {
