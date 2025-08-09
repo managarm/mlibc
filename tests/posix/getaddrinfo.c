@@ -185,5 +185,36 @@ int main() {
 	res = NULL;
 #endif // __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC)
 
+	// Test AI_NUMERICSERV.
+	hints = (struct addrinfo){0};
+	hints.ai_flags = AI_NUMERICSERV;
+	hints.ai_family = AF_INET;
+
+	ret = getaddrinfo(NULL, "8080", &hints, &res);
+	assert(ret == 0);
+	assert(res->ai_family == AF_INET);
+	struct sockaddr_in *addr_in = (struct sockaddr_in *)res->ai_addr;
+	assert(addr_in->sin_port == htons(8080));
+	freeaddrinfo(res);
+	res = NULL;
+
+	ret = getaddrinfo(NULL, "http", &hints, &res);
+	assert(ret == EAI_NONAME);
+	assert(res == NULL);
+
+	hints.ai_family = AF_INET6;
+
+	ret = getaddrinfo(NULL, "9090", &hints, &res);
+	assert(ret == 0);
+	assert(res->ai_family == AF_INET6);
+	struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *)res->ai_addr;
+	assert(addr_in6->sin6_port == htons(9090));
+	freeaddrinfo(res);
+	res = NULL;
+
+	ret = getaddrinfo(NULL, "https", &hints, &res);
+	assert(ret == EAI_NONAME);
+	assert(res == NULL);
+
 	return 0;
 }
