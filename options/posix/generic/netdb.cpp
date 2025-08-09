@@ -123,8 +123,8 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 			if (canon.size())
 				out[i].ai.ai_canonname = canon.data();
 			else
-				out[i].ai.ai_canonname = NULL;
-			out[i].ai.ai_next = NULL;
+				out[i].ai.ai_canonname = nullptr;
+			out[i].ai.ai_next = nullptr;
 			switch (addr_buf.buf[i].family) {
 				case AF_INET:
 					out[i].ai.ai_addrlen = sizeof(struct sockaddr_in);
@@ -232,7 +232,7 @@ struct netent *getnetent(void) {
 struct hostent *gethostbyname(const char *name) {
 	if (!name) {
 		h_errno = HOST_NOT_FOUND;
-		return NULL;
+		return nullptr;
 	}
 
 	struct mlibc::lookup_result buf;
@@ -242,18 +242,18 @@ struct hostent *gethostbyname(const char *name) {
 		ret = mlibc::lookup_name_dns(buf, name, canon, AF_UNSPEC);
 	if (ret <= 0) {
 		h_errno = HOST_NOT_FOUND;
-		return NULL;
+		return nullptr;
 	}
 
 	static struct hostent h;
 	if (h.h_name) {
 		getAllocator().free(h.h_name);
-		for (int i = 0; h.h_aliases[i] != NULL; i++)
+		for (int i = 0; h.h_aliases[i] != nullptr; i++)
 			getAllocator().free(h.h_aliases[i]);
 		free(h.h_aliases);
 
 		if (h.h_addr_list) {
-			for (int i = 0; h.h_addr_list[i] != NULL; i++)
+			for (int i = 0; h.h_addr_list[i] != nullptr; i++)
 				free(h.h_addr_list[i]);
 			free(h.h_addr_list);
 		}
@@ -273,7 +273,7 @@ struct hostent *gethostbyname(const char *name) {
 		buf_name.detach();
 		alias_pos++;
 	}
-	h.h_aliases[alias_pos] = NULL;
+	h.h_aliases[alias_pos] = nullptr;
 	canon.detach();
 
 	// just pick the first family as the one for all addresses...??
@@ -281,7 +281,7 @@ struct hostent *gethostbyname(const char *name) {
 	if (h.h_addrtype != AF_INET && h.h_addrtype != AF_INET6) {
 		// this is not allowed per spec
 		h_errno = NO_DATA;
-		return NULL;
+		return nullptr;
 	}
 
 	// can only be AF_INET or AF_INET6
@@ -295,7 +295,7 @@ struct hostent *gethostbyname(const char *name) {
 		memcpy(h.h_addr_list[addr_pos], buf.buf[i].addr, h.h_length);
 		addr_pos++;
 	}
-	h.h_addr_list[addr_pos] = NULL;
+	h.h_addr_list[addr_pos] = nullptr;
 
 	return &h;
 }
@@ -349,7 +349,7 @@ struct servent *getservbyname(const char *name, const char *proto) {
 		free(ret.s_name);
 		ret.s_name = nullptr;
 
-		for (char **alias = ret.s_aliases; *alias != NULL; alias++) {
+		for (char **alias = ret.s_aliases; *alias != nullptr; alias++) {
 			free(*alias);
 			*alias = nullptr;
 		}
@@ -362,13 +362,13 @@ struct servent *getservbyname(const char *name, const char *proto) {
 	int count = mlibc::lookup_serv_by_name(serv_buf, name, iproto,
 			0, 0);
 	if (count <= 0)
-		return NULL;
+		return nullptr;
 
 	ret.s_name = serv_buf[0].name.data();
 	serv_buf[0].name.detach();
 	// Sanity check.
 	if (strncmp(name, serv_buf[0].name.data(), serv_buf[0].name.size()))
-		return NULL;
+		return nullptr;
 
 	ret.s_aliases = reinterpret_cast<char**>(malloc((serv_buf[0].aliases.size() + 1) * sizeof(char*)));
 	int alias_pos = 0;
@@ -377,7 +377,7 @@ struct servent *getservbyname(const char *name, const char *proto) {
 		buf_name.detach();
 		alias_pos++;
 	}
-	ret.s_aliases[alias_pos] = NULL;
+	ret.s_aliases[alias_pos] = nullptr;
 
 	ret.s_port = htons(serv_buf[0].port);
 
@@ -388,7 +388,7 @@ struct servent *getservbyname(const char *name, const char *proto) {
 		else if (serv_buf[0].protocol == IPPROTO_UDP)
 			proto_string = frg::string<MemoryAllocator>("udp", getAllocator());
 		else
-			return NULL;
+			return nullptr;
 	} else {
 		proto_string = frg::string<MemoryAllocator>(proto, getAllocator());
 	}
@@ -410,7 +410,7 @@ struct servent *getservbyport(int port, const char *proto) {
 		free(ret.s_name);
 		ret.s_name = nullptr;
 
-		for (char **alias = ret.s_aliases; *alias != NULL; alias++) {
+		for (char **alias = ret.s_aliases; *alias != nullptr; alias++) {
 			free(*alias);
 			*alias = nullptr;
 		}
@@ -422,7 +422,7 @@ struct servent *getservbyport(int port, const char *proto) {
 	mlibc::service_result serv_buf{getAllocator()};
 	int count = mlibc::lookup_serv_by_port(serv_buf, iproto, ntohs(port));
 	if (count <= 0)
-		return NULL;
+		return nullptr;
 
 	ret.s_name = serv_buf[0].name.data();
 	serv_buf[0].name.detach();
@@ -434,7 +434,7 @@ struct servent *getservbyport(int port, const char *proto) {
 		buf_name.detach();
 		alias_pos++;
 	}
-	ret.s_aliases[alias_pos] = NULL;
+	ret.s_aliases[alias_pos] = nullptr;
 
 	ret.s_port = port;
 
@@ -445,7 +445,7 @@ struct servent *getservbyport(int port, const char *proto) {
 		else if (serv_buf[0].protocol == IPPROTO_UDP)
 			proto_string = frg::string<MemoryAllocator>("udp", getAllocator());
 		else
-			return NULL;
+			return nullptr;
 	} else {
 		proto_string = frg::string<MemoryAllocator>(proto, getAllocator());
 	}
