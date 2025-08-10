@@ -158,6 +158,14 @@ int sys_dup2(int fd, int flags, int newfd) {
 
 	return 0;
 }
+int sys_socket(int family, int type, int protocol, int *fd) {
+	auto ret = Syscall(SYS_SOCKET, family, type, protocol);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	*fd = ret;
+	return 0;
+}
 
 int sys_uname(struct utsname *out) {
 	auto ret = Syscall(SYS_UNAME, out);
