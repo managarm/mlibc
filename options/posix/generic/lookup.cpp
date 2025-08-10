@@ -18,6 +18,8 @@ namespace {
 	constexpr unsigned int RECORD_A = 1;
 	constexpr unsigned int RECORD_CNAME = 5;
 	constexpr unsigned int RECORD_PTR = 12;
+
+	struct nameserver_data default_nameserver("127.0.0.1", AF_INET);
 }
 
 static frg::string<MemoryAllocator> read_dns_name(char *buf, char *&it) {
@@ -86,10 +88,27 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 	// for dns
 	sin.sin_port = htons(53);
 
-	auto nameserver = get_nameserver();
-	if (!inet_aton(nameserver ? nameserver->name.data() : "127.0.0.1", &sin.sin_addr)) {
-		mlibc::infoLogger() << "lookup_name_dns(): inet_aton() failed!" << frg::endlog;
-		return -EAI_SYSTEM;
+	int nameserver_idx = 0;
+	while (true) {
+		auto nameserver = get_nameserver(nameserver_idx++);
+		if (!nameserver) {
+			// no more nameservers in resolf.conf,
+			// use default
+			if (!inet_pton(default_nameserver.af, default_nameserver.name.data(), &sin.sin_addr)) {
+				mlibc::infoLogger() << "lookup_name_dns(): no nameservers available!" << frg::endlog;
+				return -EAI_SYSTEM;
+			}
+			break;
+		}
+
+		// TODO: ipv6
+		if (nameserver->af != AF_INET)
+			continue;
+
+		if (!inet_pton(nameserver->af, nameserver->name.data(), &sin.sin_addr))
+			continue;
+
+		break;
 	}
 
 	int fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -215,10 +234,27 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 	// for dns
 	sin.sin_port = htons(53);
 
-	auto nameserver = get_nameserver();
-	if (!inet_aton(nameserver ? nameserver->name.data() : "127.0.0.1", &sin.sin_addr)) {
-		mlibc::infoLogger() << "lookup_name_dns(): inet_aton() failed!" << frg::endlog;
-		return -EAI_SYSTEM;
+	int nameserver_idx = 0;
+	while (true) {
+		auto nameserver = get_nameserver(nameserver_idx++);
+		if (!nameserver) {
+			// no more nameservers in resolf.conf,
+			// use default
+			if (!inet_pton(default_nameserver.af, default_nameserver.name.data(), &sin.sin_addr)) {
+				mlibc::infoLogger() << "lookup_addr_dns(): no nameservers available!" << frg::endlog;
+				return -EAI_SYSTEM;
+			}
+			break;
+		}
+
+		// TODO: ipv6
+		if (nameserver->af != AF_INET)
+			continue;
+
+		if (!inet_pton(nameserver->af, nameserver->name.data(), &sin.sin_addr))
+			continue;
+
+		break;
 	}
 
 	int fd = socket(AF_INET, SOCK_DGRAM, 0);
