@@ -1,6 +1,7 @@
 #include <mlibc/lookup.hpp>
 #include <mlibc/resolv_conf.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/services.hpp>
 #include <bits/ensure.h>
 
 #include <frg/string.hpp>
@@ -88,11 +89,16 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 	request += 0;
 	request += 1;
 
+	mlibc::service_result serv_buf{getAllocator()};
+	int serv_count = mlibc::lookup_serv_by_name(serv_buf, "domain", IPPROTO_UDP, SOCK_DGRAM, 0);
+	if (serv_count < 0) {
+		mlibc::infoLogger() << "mlibc: could not resolve DNS service" << frg::endlog;
+		return -EAI_SERVICE;
+	}
+
 	struct sockaddr_in sin = {};
 	sin.sin_family = AF_INET;
-	// TODO(geert): we could probably make this use the service lookup
-	// for dns
-	sin.sin_port = htons(53);
+	sin.sin_port = htons(serv_buf[0].port);
 
 	auto nameserver = get_nameserver();
 	if (!inet_aton(nameserver ? nameserver->name.data() : "127.0.0.1", &sin.sin_addr)) {
@@ -232,12 +238,16 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 	request += 0;
 	request += 1;
 
+	mlibc::service_result serv_buf{getAllocator()};
+	int serv_count = mlibc::lookup_serv_by_name(serv_buf, "domain", IPPROTO_UDP, SOCK_DGRAM, 0);
+	if (serv_count < 0) {
+		mlibc::infoLogger() << "mlibc: could not resolve DNS service" << frg::endlog;
+		return -EAI_SERVICE;
+	}
 
 	struct sockaddr_in sin = {};
 	sin.sin_family = AF_INET;
-	// TODO(geert): we could probably make this use the service lookup
-	// for dns
-	sin.sin_port = htons(53);
+	sin.sin_port = htons(serv_buf[0].port);
 
 	auto nameserver = get_nameserver();
 	if (!inet_aton(nameserver ? nameserver->name.data() : "127.0.0.1", &sin.sin_addr)) {
