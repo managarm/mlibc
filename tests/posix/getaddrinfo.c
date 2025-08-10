@@ -222,5 +222,14 @@ int main() {
 	assert(ret == EAI_NONAME);
 	assert(res == NULL);
 
+	// Test AI_CANONNAME.
+	hints = (struct addrinfo){0};
+	hints.ai_flags = AI_CANONNAME;
+	ret = getaddrinfo("localhost.localdomain", NULL, &hints, &res);
+	assert(ret == 0);
+	assert(res->ai_canonname);
+	freeaddrinfo(res);
+	res = NULL;
+
 	return 0;
 }

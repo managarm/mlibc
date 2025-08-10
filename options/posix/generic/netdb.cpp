@@ -133,7 +133,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 	auto out = (struct mlibc::ai_buf *) calloc(serv_count * addr_count,
 			sizeof(struct mlibc::ai_buf));
 
-	if (node && !canon.size())
+	if (node && !canon.size() && (flags & AI_CANONNAME))
 		canon = frg::string<MemoryAllocator>{node, getAllocator()};
 
 	for (int i = 0, k = 0; i < addr_count; i++) {
@@ -143,10 +143,15 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 			out[i].ai.ai_protocol = serv_buf[j].protocol;
 			out[i].ai.ai_flags = flags;
 			out[i].ai.ai_addr = (struct sockaddr *) &out[i].sa;
-			if (canon.size())
+
+			// If `node` is not null, and if requested by the AI_CANONNAME flag,
+			// the `ai_canonname` field of the first returned addrinfo structure
+			// shall point to a null-terminated string containing the canonical name
+			// corresponding to the node argument. If the canonical name is not available,
+			// then the ai_canonname field shall refer to the `node` argument or a string with
+			// the same contents.
+			if (node && (flags & AI_CANONNAME) && i == 0)
 				out[i].ai.ai_canonname = canon.data();
-			else
-				out[i].ai.ai_canonname = nullptr;
 
 			if(i)
 				out[i - 1].ai.ai_next = &out[i].ai;
