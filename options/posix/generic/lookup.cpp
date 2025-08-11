@@ -1,6 +1,7 @@
 #include <mlibc/lookup.hpp>
 #include <mlibc/resolv_conf.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/services.hpp>
 #include <bits/ensure.h>
 
 #include <frg/string.hpp>
@@ -15,10 +16,14 @@
 namespace mlibc {
 
 namespace {
+	constexpr unsigned short RETURN_NOERROR [[maybe_unused]] = 0x0;
+	constexpr unsigned short RETURN_NXDOMAIN = 0x3;
+
 	constexpr unsigned int RECORD_A = 1;
 	constexpr unsigned int RECORD_CNAME = 5;
 	constexpr unsigned int RECORD_PTR = 12;
-}
+	constexpr unsigned int RECORD_AAAA = 28;
+} // namespace
 
 static frg::string<MemoryAllocator> read_dns_name(char *buf, char *&it) {
 	frg::string<MemoryAllocator> res{getAllocator()};
@@ -47,7 +52,7 @@ static frg::string<MemoryAllocator> read_dns_name(char *buf, char *&it) {
 }
 
 int lookup_name_dns(struct lookup_result &buf, const char *name,
-		frg::string<MemoryAllocator> &canon_name) {
+		frg::string<MemoryAllocator> &canon_name, int family) {
 	frg::string<MemoryAllocator> request{getAllocator()};
 
 	int num_q = 1;
@@ -73,18 +78,27 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 	}
 
 	request += char(0);
-	// set question type to fetch A records
-	request += 0;
-	request += 1;
+	// set question type to fetch A or AAAA records
+	uint16_t qtype = RECORD_A;
+	if (family == AF_INET6)
+		qtype = RECORD_AAAA;
+
+	request += qtype >> 8;
+	request += qtype & 0xFF;
 	// set CLASS to IN
 	request += 0;
 	request += 1;
 
+	mlibc::service_result serv_buf{getAllocator()};
+	int serv_count = mlibc::lookup_serv_by_name(serv_buf, "domain", IPPROTO_UDP, SOCK_DGRAM, 0);
+	if (serv_count < 0) {
+		mlibc::infoLogger() << "mlibc: could not resolve DNS service" << frg::endlog;
+		return -EAI_SERVICE;
+	}
+
 	struct sockaddr_in sin = {};
 	sin.sin_family = AF_INET;
-	// TODO(geert): we could probably make this use the service lookup
-	// for dns
-	sin.sin_port = htons(53);
+	sin.sin_port = htons(serv_buf[0].port);
 
 	auto nameserver = get_nameserver();
 	if (!inet_aton(nameserver ? nameserver->name.data() : "127.0.0.1", &sin.sin_addr)) {
@@ -108,12 +122,15 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 	char response[256];
 	ssize_t rlen;
 	int num_ans = 0;
-	while ((rlen = recvfrom(fd, response, 256, 0, NULL, NULL)) >= 0) {
+	while ((rlen = recvfrom(fd, response, 256, 0, nullptr, nullptr)) >= 0) {
 		if ((size_t)rlen < sizeof(struct dns_header))
 			continue;
 		auto response_header = reinterpret_cast<struct dns_header*>(response);
 		if (response_header->identification != header.identification)
 			return -EAI_FAIL;
+
+		if ((ntohs(response_header->flags) & 0xF) == RETURN_NXDOMAIN)
+			return -EAI_NONAME;
 
 		auto it = response + sizeof(struct dns_header);
 		for (int i = 0; i < ntohs(response_header->no_q); i++) {
@@ -134,9 +151,22 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 
 			switch (rr_type) {
 				case RECORD_A:
+					if (family != AF_UNSPEC && family != AF_INET)
+						continue;
+
 					memcpy(buffer.addr, it, rr_length);
 					it += rr_length;
 					buffer.family = AF_INET;
+					buffer.name = std::move(dns_name);
+					buf.buf.push(std::move(buffer));
+					break;
+				case RECORD_AAAA:
+					if (family != AF_UNSPEC && family != AF_INET6)
+						continue;
+
+					memcpy(buffer.addr, it, rr_length);
+					it += rr_length;
+					buffer.family = AF_INET6;
 					buffer.name = std::move(dns_name);
 					buf.buf.push(std::move(buffer));
 					break;
@@ -208,12 +238,16 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 	request += 0;
 	request += 1;
 
+	mlibc::service_result serv_buf{getAllocator()};
+	int serv_count = mlibc::lookup_serv_by_name(serv_buf, "domain", IPPROTO_UDP, SOCK_DGRAM, 0);
+	if (serv_count < 0) {
+		mlibc::infoLogger() << "mlibc: could not resolve DNS service" << frg::endlog;
+		return -EAI_SERVICE;
+	}
 
 	struct sockaddr_in sin = {};
 	sin.sin_family = AF_INET;
-	// TODO(geert): we could probably make this use the service lookup
-	// for dns
-	sin.sin_port = htons(53);
+	sin.sin_port = htons(serv_buf[0].port);
 
 	auto nameserver = get_nameserver();
 	if (!inet_aton(nameserver ? nameserver->name.data() : "127.0.0.1", &sin.sin_addr)) {
@@ -290,7 +324,7 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 }
 
 int lookup_name_hosts(struct lookup_result &buf, const char *name,
-		frg::string<MemoryAllocator> &canon_name) {
+		frg::string<MemoryAllocator> &canon_name, int family) {
 	auto file = fopen("/etc/hosts", "r");
 	if (!file) {
 		switch (errno) {
@@ -321,19 +355,21 @@ int lookup_name_hosts(struct lookup_result &buf, const char *name,
 		for (pos = line; !isspace(*pos); pos++);
 		*pos = '\0';
 
-		// TODO(geert): we assume ipv4 for now
-		struct in_addr addr;
-		if (!inet_aton(line, &addr))
-			continue;
+		struct dns_addr_buf buffer;
+
+		if ((family == AF_UNSPEC || family == AF_INET) && inet_pton(AF_INET, line, buffer.addr)) {
+			buffer.family = AF_INET;
+		} else if((family == AF_UNSPEC || family == AF_INET6) && inet_pton(AF_INET6, line, buffer.addr)) {
+			buffer.family = AF_INET6;
+		} else {
+			continue; // not a valid address
+		}
 
 		pos++;
 		for(; *pos && isspace(*pos); pos++);
 		char *end;
 		for(end = pos; *end && !isspace(*end); end++);
 
-		struct dns_addr_buf buffer;
-		memcpy(buffer.addr, &addr, 4);
-		buffer.family = AF_INET;
 		buffer.name = frg::string<MemoryAllocator>{pos,
 			static_cast<size_t>(end - pos), getAllocator()};
 		canon_name = buffer.name;

@@ -5,6 +5,7 @@
 #include <mlibc/lookup.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/services.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 #include <frg/vector.hpp>
 #include <frg/array.hpp>
 #include <frg/span.hpp>
@@ -74,8 +75,32 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 		if ((flags & mask) != flags)
 			return EAI_BADFLAGS;
 
+		if (hints->ai_flags & AI_CANONNAME && !node)
+			return EAI_BADFLAGS;
+
 		if (family != AF_INET && family != AF_INET6 && family != AF_UNSPEC)
 			return EAI_FAMILY;
+	}
+
+	if (flags & AI_ADDRCONFIG) {
+		if (mlibc::sys_inet_configured) {
+			bool ipv4 = false;
+			bool ipv6 = false;
+
+			if (int e = mlibc::sys_inet_configured(&ipv4, &ipv6); e) {
+				errno = e;
+				return EAI_SYSTEM;
+			}
+
+			if (!ipv4 && !ipv6)
+				return EAI_NONAME;
+			else if (ipv4 != ipv6)
+				family = ipv4 ? AF_INET : AF_INET6;
+		} else {
+			mlibc::infoLogger() << "mlibc: sys_inet_configured() not implemented, cannot handle getaddrinfo with AI_ADDRCONFIG" << frg::endlog;
+			errno = ENOSYS;
+			return EAI_SYSTEM;
+		}
 	}
 
 	mlibc::service_result serv_buf{getAllocator()};
@@ -90,10 +115,8 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 		if ((addr_count = mlibc::lookup_name_ip(addr_buf, node, family)) <= 0) {
 			if (flags & AI_NUMERICHOST)
 			       addr_count = -EAI_NONAME;
-			else if ((addr_count = mlibc::lookup_name_hosts(addr_buf, node, canon)) <= 0)
-				addr_count = mlibc::lookup_name_dns(addr_buf, node, canon);
-			else
-				addr_count = 1;
+			else if ((addr_count = mlibc::lookup_name_hosts(addr_buf, node, canon, family)) <= 0)
+				addr_count = mlibc::lookup_name_dns(addr_buf, node, canon, family);
 		}
 
 		if (addr_count < 0)
@@ -110,7 +133,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 	auto out = (struct mlibc::ai_buf *) calloc(serv_count * addr_count,
 			sizeof(struct mlibc::ai_buf));
 
-	if (node && !canon.size())
+	if (node && !canon.size() && (flags & AI_CANONNAME))
 		canon = frg::string<MemoryAllocator>{node, getAllocator()};
 
 	for (int i = 0, k = 0; i < addr_count; i++) {
@@ -120,11 +143,19 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 			out[i].ai.ai_protocol = serv_buf[j].protocol;
 			out[i].ai.ai_flags = flags;
 			out[i].ai.ai_addr = (struct sockaddr *) &out[i].sa;
-			if (canon.size())
+
+			// If `node` is not null, and if requested by the AI_CANONNAME flag,
+			// the `ai_canonname` field of the first returned addrinfo structure
+			// shall point to a null-terminated string containing the canonical name
+			// corresponding to the node argument. If the canonical name is not available,
+			// then the ai_canonname field shall refer to the `node` argument or a string with
+			// the same contents.
+			if (node && (flags & AI_CANONNAME) && i == 0)
 				out[i].ai.ai_canonname = canon.data();
-			else
-				out[i].ai.ai_canonname = NULL;
-			out[i].ai.ai_next = NULL;
+
+			if(i)
+				out[i - 1].ai.ai_next = &out[i].ai;
+
 			switch (addr_buf.buf[i].family) {
 				case AF_INET:
 					out[i].ai.ai_addrlen = sizeof(struct sockaddr_in);
@@ -134,13 +165,16 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 					break;
 				case AF_INET6:
 					out[i].ai.ai_addrlen = sizeof(struct sockaddr_in6);
-					out[i].sa.sin6.sin6_family = htons(serv_buf[j].port);
+					out[i].sa.sin6.sin6_port = htons(serv_buf[j].port);
 					out[i].sa.sin6.sin6_family = AF_INET6;
 					memcpy(&out[i].sa.sin6.sin6_addr, addr_buf.buf[i].addr, 16);
 					break;
 			}
 		}
 	}
+	if (addr_count)
+		out[addr_count - 1].ai.ai_next = nullptr;
+
 	if (canon.size())
 		canon.detach();
 
@@ -232,28 +266,28 @@ struct netent *getnetent(void) {
 struct hostent *gethostbyname(const char *name) {
 	if (!name) {
 		h_errno = HOST_NOT_FOUND;
-		return NULL;
+		return nullptr;
 	}
 
 	struct mlibc::lookup_result buf;
 	frg::string<MemoryAllocator> canon{getAllocator()};
 	int ret = 0;
-	if ((ret = mlibc::lookup_name_hosts(buf, name, canon)) <= 0)
-		ret = mlibc::lookup_name_dns(buf, name, canon);
+	if ((ret = mlibc::lookup_name_hosts(buf, name, canon, AF_UNSPEC)) <= 0)
+		ret = mlibc::lookup_name_dns(buf, name, canon, AF_UNSPEC);
 	if (ret <= 0) {
 		h_errno = HOST_NOT_FOUND;
-		return NULL;
+		return nullptr;
 	}
 
 	static struct hostent h;
 	if (h.h_name) {
 		getAllocator().free(h.h_name);
-		for (int i = 0; h.h_aliases[i] != NULL; i++)
+		for (int i = 0; h.h_aliases[i] != nullptr; i++)
 			getAllocator().free(h.h_aliases[i]);
 		free(h.h_aliases);
 
 		if (h.h_addr_list) {
-			for (int i = 0; h.h_addr_list[i] != NULL; i++)
+			for (int i = 0; h.h_addr_list[i] != nullptr; i++)
 				free(h.h_addr_list[i]);
 			free(h.h_addr_list);
 		}
@@ -273,7 +307,7 @@ struct hostent *gethostbyname(const char *name) {
 		buf_name.detach();
 		alias_pos++;
 	}
-	h.h_aliases[alias_pos] = NULL;
+	h.h_aliases[alias_pos] = nullptr;
 	canon.detach();
 
 	// just pick the first family as the one for all addresses...??
@@ -281,7 +315,7 @@ struct hostent *gethostbyname(const char *name) {
 	if (h.h_addrtype != AF_INET && h.h_addrtype != AF_INET6) {
 		// this is not allowed per spec
 		h_errno = NO_DATA;
-		return NULL;
+		return nullptr;
 	}
 
 	// can only be AF_INET or AF_INET6
@@ -295,7 +329,7 @@ struct hostent *gethostbyname(const char *name) {
 		memcpy(h.h_addr_list[addr_pos], buf.buf[i].addr, h.h_length);
 		addr_pos++;
 	}
-	h.h_addr_list[addr_pos] = NULL;
+	h.h_addr_list[addr_pos] = nullptr;
 
 	return &h;
 }
@@ -349,7 +383,7 @@ struct servent *getservbyname(const char *name, const char *proto) {
 		free(ret.s_name);
 		ret.s_name = nullptr;
 
-		for (char **alias = ret.s_aliases; *alias != NULL; alias++) {
+		for (char **alias = ret.s_aliases; *alias != nullptr; alias++) {
 			free(*alias);
 			*alias = nullptr;
 		}
@@ -362,13 +396,13 @@ struct servent *getservbyname(const char *name, const char *proto) {
 	int count = mlibc::lookup_serv_by_name(serv_buf, name, iproto,
 			0, 0);
 	if (count <= 0)
-		return NULL;
+		return nullptr;
 
 	ret.s_name = serv_buf[0].name.data();
 	serv_buf[0].name.detach();
 	// Sanity check.
 	if (strncmp(name, serv_buf[0].name.data(), serv_buf[0].name.size()))
-		return NULL;
+		return nullptr;
 
 	ret.s_aliases = reinterpret_cast<char**>(malloc((serv_buf[0].aliases.size() + 1) * sizeof(char*)));
 	int alias_pos = 0;
@@ -377,7 +411,7 @@ struct servent *getservbyname(const char *name, const char *proto) {
 		buf_name.detach();
 		alias_pos++;
 	}
-	ret.s_aliases[alias_pos] = NULL;
+	ret.s_aliases[alias_pos] = nullptr;
 
 	ret.s_port = htons(serv_buf[0].port);
 
@@ -388,7 +422,7 @@ struct servent *getservbyname(const char *name, const char *proto) {
 		else if (serv_buf[0].protocol == IPPROTO_UDP)
 			proto_string = frg::string<MemoryAllocator>("udp", getAllocator());
 		else
-			return NULL;
+			return nullptr;
 	} else {
 		proto_string = frg::string<MemoryAllocator>(proto, getAllocator());
 	}
@@ -410,7 +444,7 @@ struct servent *getservbyport(int port, const char *proto) {
 		free(ret.s_name);
 		ret.s_name = nullptr;
 
-		for (char **alias = ret.s_aliases; *alias != NULL; alias++) {
+		for (char **alias = ret.s_aliases; *alias != nullptr; alias++) {
 			free(*alias);
 			*alias = nullptr;
 		}
@@ -422,7 +456,7 @@ struct servent *getservbyport(int port, const char *proto) {
 	mlibc::service_result serv_buf{getAllocator()};
 	int count = mlibc::lookup_serv_by_port(serv_buf, iproto, ntohs(port));
 	if (count <= 0)
-		return NULL;
+		return nullptr;
 
 	ret.s_name = serv_buf[0].name.data();
 	serv_buf[0].name.detach();
@@ -434,7 +468,7 @@ struct servent *getservbyport(int port, const char *proto) {
 		buf_name.detach();
 		alias_pos++;
 	}
-	ret.s_aliases[alias_pos] = NULL;
+	ret.s_aliases[alias_pos] = nullptr;
 
 	ret.s_port = port;
 
@@ -445,7 +479,7 @@ struct servent *getservbyport(int port, const char *proto) {
 		else if (serv_buf[0].protocol == IPPROTO_UDP)
 			proto_string = frg::string<MemoryAllocator>("udp", getAllocator());
 		else
-			return NULL;
+			return nullptr;
 	} else {
 		proto_string = frg::string<MemoryAllocator>(proto, getAllocator());
 	}
