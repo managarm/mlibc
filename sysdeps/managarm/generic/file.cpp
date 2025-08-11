@@ -1104,10 +1104,9 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
-		return EINVAL;
+	if (resp.error() != managarm::posix::Errors::SUCCESS) {
+		return resp.error() | toErrno;
 	} else {
-		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		__ensure(resp.events_size() == count);
 
 		int m = 0;
