@@ -2636,7 +2636,10 @@ int sys_gethostname(char *buffer, size_t bufsize) {
 	return 0;
 }
 
-int sys_fsync(int) {
+int sys_fsync(int fd) {
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
 	mlibc::infoLogger() << "mlibc: fsync is a stub" << frg::endlog;
 	return 0;
 }
