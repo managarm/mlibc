@@ -17,7 +17,7 @@ jobs:
                     compiler: clang
         name: Build mlibc
         runs-on: ubuntu-latest
-        container: debian:sid
+        container: debian:trixie
         steps:
           - name: Install prerequisites
             run: |
@@ -106,7 +106,7 @@ jobs:
                 sysdeps: [dripos, lemon, aero, ironclad, keyronex, managarm, vinix, astral, menix, nyaux]
         name: Compile sysdeps
         runs-on: ubuntu-latest
-        container: debian:sid
+        container: debian:trixie
         steps:
           - name: Install prerequisites
             run: |

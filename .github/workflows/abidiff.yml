@@ -10,7 +10,7 @@ jobs:
   run-abidiff:
     name: Compare ABIs
     runs-on: ubuntu-latest
-    container: debian:sid
+    container: debian:trixie
     defaults:
       run:
         shell: bash
