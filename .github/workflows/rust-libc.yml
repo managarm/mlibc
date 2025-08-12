@@ -6,7 +6,7 @@ jobs:
     check-bindings:
         name: Verify bindings generation
         runs-on: ubuntu-latest
-        container: debian:sid
+        container: debian:trixie
         steps:
           - name: Install prerequisites
             run: |
