@@ -1,11 +1,13 @@
+#include "mlibc-asm/helpers.h"
 
-.global _start
-_start:
+PROC_START(_start)
 	bl relocateSelf
 
 	mov x0, sp
 	bl interpreterMain
 
 	br x0
-.section .note.GNU-stack,"",%progbits
+PROC_END(_start)
+
+GNU_STACK_NOTE()
 

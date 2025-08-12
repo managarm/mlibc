@@ -1499,20 +1499,13 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 	}else{
 		__ensure(object->hashStyle == HashStyle::gnu);
 
-		struct GnuTable {
-			uint32_t nBuckets;
-			uint32_t symbolOffset;
-			uint32_t bloomSize;
-			uint32_t bloomShift;
-		};
-
-		auto hash_table = reinterpret_cast<const GnuTable *>(object->baseAddress
+		auto hash_table = reinterpret_cast<const GnuHashTableHeader *>(object->baseAddress
 				+ object->hashTableOffset);
 		auto buckets = reinterpret_cast<const uint32_t *>(object->baseAddress
-				+ object->hashTableOffset + sizeof(GnuTable)
+				+ object->hashTableOffset + sizeof(GnuHashTableHeader)
 				+ hash_table->bloomSize * sizeof(elf_addr));
 		auto chains = reinterpret_cast<const uint32_t *>(object->baseAddress
-				+ object->hashTableOffset + sizeof(GnuTable)
+				+ object->hashTableOffset + sizeof(GnuHashTableHeader)
 				+ hash_table->bloomSize * sizeof(elf_addr)
 				+ hash_table->nBuckets * sizeof(uint32_t));
 
