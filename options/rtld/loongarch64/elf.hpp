@@ -26,6 +26,7 @@ using elf_vernaux = Elf64_Vernaux;
 #define ELF_R_SYM ELF64_R_SYM
 #define ELF_R_TYPE ELF64_R_TYPE
 #define ELF_ST_BIND ELF64_ST_BIND
+#define ELF_ST_TYPE ELF64_ST_TYPE
 
 #define R_NONE R_LARCH_NONE
 #define R_JUMP_SLOT R_LARCH_JUMP_SLOT
@@ -38,3 +39,10 @@ using elf_vernaux = Elf64_Vernaux;
 #define R_TLS_DTPREL R_LARCH_TLS_DTPREL64
 #define R_TLS_TPREL R_LARCH_TLS_TPREL64
 // There appears to be no R_TLSDESC-equivalent
+
+struct ifunc_arg {
+	unsigned long _size;
+	unsigned long _hwcap;
+};
+
+using ifunc_handler = elf_addr (*)(ifunc_arg *);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <elf.h>
+#include <sys/hwprobe.h>
 
 #define ELF_CLASS ELFCLASS64
 #define ELF_MACHINE EM_RISCV
@@ -26,6 +27,7 @@ using elf_vernaux = Elf64_Vernaux;
 #define ELF_R_SYM ELF64_R_SYM
 #define ELF_R_TYPE ELF64_R_TYPE
 #define ELF_ST_BIND ELF64_ST_BIND
+#define ELF_ST_TYPE ELF64_ST_TYPE
 
 #define R_NONE R_RISCV_NONE
 #define R_JUMP_SLOT R_RISCV_JUMP_SLOT
@@ -41,3 +43,5 @@ using elf_vernaux = Elf64_Vernaux;
 #define R_TLSDESC R_RISCV_TLSDESC
 
 #define TP_TCB_OFFSET 0
+
+using ifunc_handler = elf_addr (*)(uint64_t, __riscv_hwprobe_t, void *);

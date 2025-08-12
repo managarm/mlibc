@@ -92,6 +92,14 @@ if not no_headers
 		follow_symlinks: true
 	)
 
+	if host_machine.cpu_family() == 'riscv64'
+		install_headers(
+			'include/abi-bits/riscv-hwprobe.h',
+			subdir: 'abi-bits',
+			follow_symlinks: true
+		)
+	endif
+
 	install_headers('include/syscall.h')
 	install_headers('include/sys/syscall.h', subdir: 'sys')
 	install_headers(
