@@ -122,6 +122,7 @@ all_test_cases = [
 	'linux/getifaddrs',
 	'linux/pidfd',
 	'linux/timerfd',
+	'linux/ppoll',
 	'linux/utmp',
 	'linux/utmpx',
 ]
