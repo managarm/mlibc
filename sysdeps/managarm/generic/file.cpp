@@ -1768,33 +1768,28 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	if (!handle)
 		return EBADF;
 
-	HelHandle cancel_handle;
-	HEL_CHECK(helCreateOneshotEvent(&cancel_handle));
-	helix::UniqueDescriptor cancel_event{cancel_handle};
-
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::READ);
 	req.set_fd(fd);
 	req.set_size(max_size);
+	req.set_cancellation_id(allocateCancellationId());
 
 	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 
-	auto [offer, push_req, send_req, imbue_creds, recv_resp, recv_data] =
-	    exchangeMsgsSyncCancellable(
-	        handle,
-	        cancel_handle,
-	        helix_ng::offer(
-	            helix_ng::sendBuffer(ser.data(), ser.size()),
-	            helix_ng::pushDescriptor(cancel_event),
-	            helix_ng::imbueCredentials(),
-	            helix_ng::recvInline(),
-	            helix_ng::recvBuffer(data, max_size)
-	        )
-	    );
+	auto [offer, send_req, imbue_creds, recv_resp, recv_data] = exchangeMsgsSyncCancellable(
+	    handle,
+	    req.cancellation_id(),
+	    fd,
+	    helix_ng::offer(
+	        helix_ng::sendBuffer(ser.data(), ser.size()),
+	        helix_ng::imbueCredentials(),
+	        helix_ng::recvInline(),
+	        helix_ng::recvBuffer(data, max_size)
+	    )
+	);
 
 	HEL_CHECK(offer.error());
-	HEL_CHECK(push_req.error());
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(imbue_creds.error());
 	HEL_CHECK(recv_resp.error());

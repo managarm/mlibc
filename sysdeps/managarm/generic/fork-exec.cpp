@@ -62,28 +62,23 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 		return ENOSYS;
 	}
 
-	HelHandle cancel_handle;
-	HEL_CHECK(helCreateOneshotEvent(&cancel_handle));
-	helix::UniqueDescriptor cancel_event{cancel_handle};
-
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::WAIT);
 	req.set_pid(pid);
 	req.set_flags(flags);
+	req.set_cancellation_id(allocateCancellationId());
 
-	auto [offer, send_head, push_descriptor, recv_resp] = exchangeMsgsSyncCancellable(
+	auto [offer, send_head, recv_resp] = exchangeMsgsSyncCancellable(
 	    getPosixLane(),
-	    cancel_handle,
+	    req.cancellation_id(),
+	    -1,
 	    helix_ng::offer(
-	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
-	        helix_ng::pushDescriptor(cancel_event),
-	        helix_ng::recvInline()
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
 	    )
 	);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
-	HEL_CHECK(push_descriptor.error());
 	HEL_CHECK(recv_resp.error());
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
@@ -91,9 +86,12 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
 
+	*ret_pid = resp.pid();
+	if (*ret_pid == 0)
+		return 0;
+
 	if (status)
 		*status = resp.mode();
-	*ret_pid = resp.pid();
 
 	if (ru != nullptr) {
 		ru->ru_utime.tv_sec = resp.ru_user_time() / 1'000'000'000;

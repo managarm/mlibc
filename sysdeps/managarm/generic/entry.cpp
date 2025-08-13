@@ -28,7 +28,7 @@ namespace {
 thread_local unsigned __mlibc_gsf_nesting;
 thread_local void *__mlibc_cached_thread_page;
 thread_local HelHandle *cachedFileTable;
-thread_local HelHandle *cancelEvent;
+thread_local posix::ManagarmRequestCancellationData *cancelEvent;
 
 // This construction is a bit weird: Even though the variables above
 // are thread_local we still protect their initialization with a pthread_once_t
@@ -106,10 +106,25 @@ HelHandle getHandleForFd(int fd) {
 
 void clearCachedInfos() { has_cached_infos = PTHREAD_ONCE_INIT; }
 
-void setCurrentRequestEvent(HelHandle event) {
+void resetCancellationId() {
 	pthread_once(&has_cached_infos, &actuallyCacheInfos);
-	__atomic_store_n(cancelEvent, event, __ATOMIC_RELEASE);
+	__atomic_store_n(&cancelEvent->cancellationId, 0, __ATOMIC_RELEASE);
 }
+
+void setCancellationId(uint64_t id, HelHandle handle, int fd) {
+	pthread_once(&has_cached_infos, &actuallyCacheInfos);
+
+	cancelEvent->lane = handle;
+	cancelEvent->fd = fd;
+
+	__atomic_store_n(&cancelEvent->cancellationId, id, __ATOMIC_RELEASE);
+}
+
+namespace {
+thread_local uint64_t cancellationId = 1;
+} // namespace
+
+uint64_t allocateCancellationId() { return cancellationId++; }
 
 extern char **environ;
 

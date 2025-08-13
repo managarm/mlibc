@@ -282,8 +282,10 @@ inline HelHandleResult *parseHandle(ElementHandle &element) {
 HelHandle getPosixLane();
 HelHandle *cacheFileTable();
 HelHandle getHandleForFd(int fd);
-void setCurrentRequestEvent(HelHandle event);
+void resetCancellationId();
+void setCancellationId(uint64_t event, HelHandle handle, int fd);
 void clearCachedInfos();
+uint64_t allocateCancellationId();
 
 extern thread_local Queue globalQueue;
 
@@ -310,14 +312,14 @@ auto exchangeMsgsSync(HelHandle descriptor, Args &&...args) {
 }
 
 template <typename... Args>
-auto exchangeMsgsSyncCancellable(HelHandle descriptor, HelHandle event, Args &&...args) {
+auto exchangeMsgsSyncCancellable(HelHandle descriptor, uint64_t cancelId, int fd, Args &&...args) {
 	auto results = helix_ng::createResultsTuple(args...);
 	auto actions = helix_ng::chainActionArrays(args...);
 
-	setCurrentRequestEvent(event);
 	HEL_CHECK(
 	    helSubmitAsync(descriptor, actions.data(), actions.size(), globalQueue.getQueue(), 0, 0)
 	);
+	setCancellationId(cancelId, descriptor, fd);
 
 	auto element = globalQueue.dequeueSingle();
 	void *ptr = element.data();
@@ -326,7 +328,7 @@ auto exchangeMsgsSyncCancellable(HelHandle descriptor, HelHandle event, Args &&.
 		(results.template get<p>().parse(ptr, element), ...);
 	}(std::make_index_sequence<std::tuple_size_v<decltype(results)>>{});
 
-	setCurrentRequestEvent(kHelNullHandle);
+	resetCancellationId();
 
 	return results;
 }
