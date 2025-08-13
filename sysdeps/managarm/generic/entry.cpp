@@ -26,9 +26,8 @@ thread_local void *__mlibc_clk_tracker_page;
 
 namespace {
 thread_local unsigned __mlibc_gsf_nesting;
-thread_local void *__mlibc_cached_thread_page;
+thread_local posix::ThreadPage *__mlibc_cached_thread_page;
 thread_local HelHandle *cachedFileTable;
-thread_local posix::ManagarmRequestCancellationData *cancelEvent;
 
 // This construction is a bit weird: Even though the variables above
 // are thread_local we still protect their initialization with a pthread_once_t
@@ -46,7 +45,6 @@ void actuallyCacheInfos() {
 	__mlibc_cached_thread_page = data.threadPage;
 	cachedFileTable = data.fileTable;
 	__mlibc_clk_tracker_page = data.clockTrackerPage;
-	cancelEvent = data.cancelRequestEvent;
 }
 } // namespace
 
@@ -54,9 +52,9 @@ SignalGuard::SignalGuard() {
 	pthread_once(&has_cached_infos, &actuallyCacheInfos);
 	if (!__mlibc_cached_thread_page)
 		return;
-	auto p = reinterpret_cast<unsigned int *>(__mlibc_cached_thread_page);
+
 	if (!__mlibc_gsf_nesting)
-		__atomic_store_n(p, 1, __ATOMIC_RELAXED);
+		__atomic_store_n(&__mlibc_cached_thread_page->globalSignalFlag, 1, __ATOMIC_RELAXED);
 	__mlibc_gsf_nesting++;
 }
 
@@ -64,11 +62,12 @@ SignalGuard::~SignalGuard() {
 	pthread_once(&has_cached_infos, &actuallyCacheInfos);
 	if (!__mlibc_cached_thread_page)
 		return;
-	auto p = reinterpret_cast<unsigned int *>(__mlibc_cached_thread_page);
+
 	__ensure(__mlibc_gsf_nesting > 0);
 	__mlibc_gsf_nesting--;
 	if (!__mlibc_gsf_nesting) {
-		unsigned int result = __atomic_exchange_n(p, 0, __ATOMIC_RELAXED);
+		unsigned int result =
+		    __atomic_exchange_n(&__mlibc_cached_thread_page->globalSignalFlag, 0, __ATOMIC_RELAXED);
 		if (result == 2) {
 			HEL_CHECK(helSyscall0(kHelCallSuper + posix::superSigRaise));
 		} else {
@@ -108,16 +107,16 @@ void clearCachedInfos() { has_cached_infos = PTHREAD_ONCE_INIT; }
 
 void resetCancellationId() {
 	pthread_once(&has_cached_infos, &actuallyCacheInfos);
-	__atomic_store_n(&cancelEvent->cancellationId, 0, __ATOMIC_RELEASE);
+	__atomic_store_n(&__mlibc_cached_thread_page->cancellationId, 0, __ATOMIC_RELEASE);
 }
 
 void setCancellationId(uint64_t id, HelHandle handle, int fd) {
 	pthread_once(&has_cached_infos, &actuallyCacheInfos);
 
-	cancelEvent->lane = handle;
-	cancelEvent->fd = fd;
+	__mlibc_cached_thread_page->lane = handle;
+	__mlibc_cached_thread_page->fd = fd;
 
-	__atomic_store_n(&cancelEvent->cancellationId, id, __ATOMIC_RELEASE);
+	__atomic_store_n(&__mlibc_cached_thread_page->cancellationId, id, __ATOMIC_RELEASE);
 }
 
 namespace {
