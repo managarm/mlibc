@@ -1847,6 +1847,14 @@ int sys_process_vm_writev(pid_t pid,
 	return 0;
 }
 
+int sys_ppoll(struct pollfd *fds, nfds_t count, const struct timespec *ts, const sigset_t *mask, int *num_events) {
+	auto ret = do_syscall(SYS_ppoll, fds, count, ts, mask, NSIG / 8);
+	if (int e = sc_error(ret); e)
+		return e;
+	*num_events = sc_int_result<int>(ret);
+	return 0;
+}
+
 #endif // __MLIBC_LINUX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {
