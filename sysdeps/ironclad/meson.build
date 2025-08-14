@@ -108,28 +108,37 @@ if not no_headers
 endif
 
 if not headers_only
-	crt = custom_target('crt0',
+	crt = custom_target(
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-' + host_machine.cpu_family() / 'crt0.S',
+		input: files('crt-' + host_machine.cpu_family() / 'crt0.S'),
 		output: 'crt0.o',
 		install: true,
 		install_dir: get_option('libdir')
 	)
 
-	custom_target('crti',
+	crt_pie = custom_target(
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-' + host_machine.cpu_family() / 'crti.S',
+		input: files('crt-' + host_machine.cpu_family() / 'Scrt1.S'),
+		output: 'Scrt1.o',
+		install: true,
+		install_dir: get_option('libdir')
+	)
+
+	custom_target(
+		build_by_default: true,
+		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		input: files('crt-' + host_machine.cpu_family() / 'crti.S'),
 		output: 'crti.o',
 		install: true,
 		install_dir: get_option('libdir')
 	)
 
-	custom_target('crtn',
+	custom_target(
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-' + host_machine.cpu_family() / 'crtn.S',
+		input: files('crt-' + host_machine.cpu_family() / 'crtn.S'),
 		output: 'crtn.o',
 		install: true,
 		install_dir: get_option('libdir')

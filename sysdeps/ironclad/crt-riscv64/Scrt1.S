@@ -12,7 +12,7 @@ _start:
 
 	mv a0, sp
 	la a1, main
-	call __mlibc_entry
+	call __mlibc_entry@plt
 	unimp
 
 # Load gp from .preinit_array since it may be used by the executable's .init_array.

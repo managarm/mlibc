@@ -1,11 +1,15 @@
-.section .init
-.global _init
+	.ident "x86_64-ironclad-mlibc crti"
+
+	.section .init
+	.globl	_init
+	.type	_init,@function
 _init:
 	push %rax
 
-.section .fini
-.global _fini
+	.section .fini
+	.globl	_fini
+	.type	_fini,@function
 _fini:
 	push %rax
-.section .note.GNU-stack,"",%progbits
 
+.section .note.GNU-stack,"",%progbits
