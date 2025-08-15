@@ -675,19 +675,29 @@ int sys_setschedparam(void *tcb, int policy, const struct sched_param *param) {
 	return 0;
 }
 
-int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
+int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
 	(void)tcb;
 
-	HelWord pid = 0;
-	HEL_CHECK(helSyscall2_1(
+	HelWord posixErr = 0;
+	HelWord tid = 0;
+	posix::superCloneArgs args{
+	    .flags = (CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD),
+	};
+
+	HEL_CHECK(helSyscall3_2(
 	    kHelCallSuper + posix::superClone,
 	    reinterpret_cast<HelWord>(__mlibc_start_thread),
 	    reinterpret_cast<HelWord>(stack),
-	    &pid
+	    reinterpret_cast<HelWord>(&args),
+	    &posixErr,
+	    &tid
 	));
 
-	if (pid_out)
-		*pid_out = pid;
+	if (posixErr)
+		return managarm::posix::Errors(posixErr) | toErrno;
+
+	if (tid_out)
+		*tid_out = tid;
 
 	return 0;
 }
