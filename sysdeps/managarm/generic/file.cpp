@@ -2908,6 +2908,48 @@ int sys_prctl(int option, va_list va, int *out) {
 			*out = 0;
 			return 0;
 		}
+		case PR_GET_DUMPABLE: {
+			managarm::posix::ProcessDumpableRequest<MemoryAllocator> req{getSysdepsAllocator()};
+
+			auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			    getPosixLane(),
+			    helix_ng::offer(
+			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+			    )
+			);
+			HEL_CHECK(offer.error());
+			HEL_CHECK(send_req.error());
+			HEL_CHECK(recv_resp.error());
+
+			managarm::posix::ProcessDumpableResponse resp(getSysdepsAllocator());
+			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+			if (resp.error() != managarm::posix::Errors::SUCCESS)
+				return resp.error() | toErrno;
+			*out = resp.value();
+			return 0;
+		}
+		case PR_SET_DUMPABLE: {
+			const auto dumpable = va_arg(va, long);
+			managarm::posix::ProcessDumpableRequest<MemoryAllocator> req{getSysdepsAllocator()};
+			req.set_set(1);
+			req.set_new_value(dumpable);
+
+			auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+			    getPosixLane(),
+			    helix_ng::offer(
+			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+			    )
+			);
+			HEL_CHECK(offer.error());
+			HEL_CHECK(send_req.error());
+			HEL_CHECK(recv_resp.error());
+
+			managarm::posix::ProcessDumpableResponse resp(getSysdepsAllocator());
+			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+			if (resp.error() != managarm::posix::Errors::SUCCESS)
+				return resp.error() | toErrno;
+			return 0;
+		}
 		default:
 			mlibc::infoLogger() << "mlibc: prctl: operation: " << option << " unimplemented!"
 			                    << frg::endlog;
