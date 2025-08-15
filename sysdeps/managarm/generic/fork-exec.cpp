@@ -478,8 +478,10 @@ int sys_setregid(gid_t rgid, gid_t egid) {
 }
 
 pid_t sys_gettid() {
-	// TODO: use an actual gettid syscall.
-	return sys_getpid();
+	HelWord tid = 0;
+	HEL_CHECK(helSyscall0_1(kHelCallSuper + posix::superGetTid, &tid));
+
+	return tid;
 }
 
 pid_t sys_getpid() {
