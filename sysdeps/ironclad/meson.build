@@ -16,7 +16,6 @@ libc_sources += files(
 	'generic/mntent.cpp',
 	'generic/mount.cpp',
 	'generic/reboot.cpp',
-	'generic/pty.cpp',
 	'generic/thread.cpp',
 	'generic/mac.cpp',
 	'generic/thread.S',
@@ -103,7 +102,6 @@ if not no_headers
 
 	install_headers(
 		'include/mntent.h',
-		'include/pty.h',
 	)
 endif
 
