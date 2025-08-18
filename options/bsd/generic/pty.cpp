@@ -1,17 +1,15 @@
 
-#include <asm/ioctls.h>
 #include <bits/ensure.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pty.h>
-#include <utmp.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <stdlib.h>
 
 #include <mlibc/debug.hpp>
-#include <mlibc/linux-sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
 int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win) {
 	int ptmx_fd;
@@ -47,6 +45,8 @@ fail:
 	mlibc::sys_close(ptmx_fd);
 	return -1;
 }
+
+extern "C" int login_tty(int fd);
 
 int login_tty(int fd) {
 	if(setsid() == -1)

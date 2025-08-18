@@ -4,7 +4,6 @@ if not linux_option
 endif
 libc_sources += files(
 	'generic/mntent.cpp',
-	'generic/pty.cpp',
 	'generic/sys-epoll.cpp',
 	'generic/sys-inotify.cpp',
 	'generic/sys-mount.cpp',
@@ -42,7 +41,6 @@ if not no_headers
 		'include/malloc.h',
 		'include/memory.h',
 		'include/mntent.h',
-		'include/pty.h',
 		'include/utmp.h',
 		'include/values.h',
 		'include/lastlog.h',
