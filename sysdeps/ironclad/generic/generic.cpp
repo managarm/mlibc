@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <sys/ioctl.h>
 #include <asm/ioctls.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1510,6 +1511,62 @@ int sys_getloadavg(double *samples) {
 	for (int i = 0; i < 3; i++) {
 		samples[i] = samples2[i] / 100.0;
 	}
+	return 0;
+}
+
+int sys_openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win) {
+	int ret;
+	int fds[2];
+	SYSCALL1(SYSCALL_OPENPTY, fds);
+	if (errno) {
+		return errno;
+	}
+	*mfd = fds[0];
+	*sfd = fds[1];
+
+	if (name != NULL) {
+		name = ttyname(*mfd);
+		if (!name) {
+			return errno;
+		}
+	}
+
+	if (ios == NULL) {
+		struct termios termios;
+		termios.c_iflag = BRKINT | IGNPAR | ICRNL | IXON | IMAXBEL;
+		termios.c_oflag = OPOST | ONLCR;
+		termios.c_cflag = CS8 | CREAD;
+		termios.c_lflag = ISIG | ICANON | ECHO | ECHOE | ECHOK | ECHOCTL | ECHOKE;
+		termios.c_cc[VINTR] = CTRL('C');
+		termios.c_cc[VERASE] = 127; // Delete.
+		termios.c_cc[VEOF] = CTRL('D');
+		termios.c_cc[VSUSP] = CTRL('Z');
+		termios.ibaud = 38400;
+		termios.obaud = 38400;
+		ret = tcsetattr(*mfd, TCSANOW, &termios);
+	} else {
+		ret = tcsetattr(*mfd, TCSANOW, ios);
+	}
+	if (ret) {
+		return errno;
+	}
+
+	if (win == NULL) {
+		struct winsize win_size = {
+			.ws_row = 24,
+			.ws_col = 80,
+			.ws_xpixel = 24 * 16,
+			.ws_ypixel = 80 * 16
+		};
+		ret = ioctl(*mfd, TIOCSWINSZ, &win_size);
+	} else {
+		ret = ioctl(*mfd, TIOCSWINSZ, win);
+	}
+
+	if (ret) {
+		return errno;
+	}
+
 	return 0;
 }
 
