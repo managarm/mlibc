@@ -10,8 +10,17 @@
 
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/bsd-sysdeps.hpp>
 
 int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win) {
+	if(mlibc::sys_openpty) {
+		if(int e = mlibc::sys_openpty(mfd, sfd, name, ios, win); e) {
+			errno = e;
+			return -1;
+		}
+		return 0;
+	}
+
 	int ptmx_fd;
 	if(int e = mlibc::sys_open("/dev/ptmx", O_RDWR | O_NOCTTY, 0, &ptmx_fd); e) {
 		errno = e;
