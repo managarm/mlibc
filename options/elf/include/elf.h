@@ -483,7 +483,9 @@ enum {
 	DT_VERDEF = 0x6ffffffc,
 	DT_VERDEFNUM = 0x6ffffffd,
 	DT_VERNEED = 0x6ffffffe,
-	DT_VERNEEDNUM = 0x6fffffff
+	DT_VERNEEDNUM = 0x6fffffff,
+	DT_LOPROC = 0x70000000,
+	DT_HIPROC = 0x7fffffff
 };
 
 enum {
