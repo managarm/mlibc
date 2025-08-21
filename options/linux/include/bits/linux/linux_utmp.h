@@ -1,5 +1,5 @@
-#ifndef  _UTMP_H
-#define  _UTMP_H
+#ifndef  _BITS_LINUX_UTMP_H
+#define  _BITS_LINUX_UTMP_H
 
 #include <abi-bits/pid_t.h>
 #include <abi-bits/utmp-defines.h>
@@ -61,7 +61,6 @@ struct utmp *getutline(const struct utmp *__line);
 struct utmp *getutid(const struct utmp *__id);
 int utmpname(const char *__file);
 void updwtmp(const char *wtmp_file, const struct utmp *ut);
-int login_tty(int __fd);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
@@ -69,4 +68,4 @@ int login_tty(int __fd);
 }
 #endif
 
-#endif /* _UTMP_H */
+#endif /* _BITS_LINUX_UTMP_H */
