@@ -45,9 +45,9 @@ jobs:
                 set -e
                 case "${{matrix.arch}}" in \
                   x86) \
-                    wget -O /tmp/libgcc-${{matrix.arch}}.a https://github.com/osdev0/libgcc-binaries/raw/refs/heads/trunk/libgcc-i686.a;; \
+                    wget -O /tmp/libgcc-${{matrix.arch}}.a https://github.com/osdev0/libgcc-binaries/releases/latest/download/libgcc-i686.a;; \
                   *) \
-                    wget -O /tmp/libgcc-${{matrix.arch}}.a https://github.com/osdev0/libgcc-binaries/raw/refs/heads/trunk/libgcc-${{matrix.arch}}.a;; \
+                    wget -O /tmp/libgcc-${{matrix.arch}}.a https://github.com/osdev0/libgcc-binaries/releases/latest/download/libgcc-${{matrix.arch}}.a;; \
                 esac
           - name: Checkout
             uses: actions/checkout@v2
@@ -159,7 +159,7 @@ jobs:
           - name: Get libgcc-binaries
             run: |
                 set -e
-                wget -O /tmp/libgcc-x86_64.a https://github.com/osdev0/libgcc-binaries/raw/refs/heads/trunk/libgcc-x86_64.a
+                wget -O /tmp/libgcc-x86_64.a https://github.com/osdev0/libgcc-binaries/releases/latest/download/libgcc-x86_64.a
           - name: Compile sysdeps
             run: |
                 LDFLAGS="-Wl,/tmp/libgcc-x86_64.a" meson setup \

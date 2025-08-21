@@ -84,7 +84,7 @@ jobs:
       - name: Get libgcc-binaries
         run: |
             set -e
-            wget -O /tmp/libgcc-x86_64.a https://github.com/osdev0/libgcc-binaries/raw/refs/heads/trunk/libgcc-x86_64.a
+            wget -O /tmp/libgcc-x86_64.a https://github.com/osdev0/libgcc-binaries/releases/latest/download/libgcc-x86_64.a
 
       - name: Build and install both copies
         run: |
