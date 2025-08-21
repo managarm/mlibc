@@ -41,7 +41,6 @@ if not no_headers
 		'include/malloc.h',
 		'include/memory.h',
 		'include/mntent.h',
-		'include/utmp.h',
 		'include/values.h',
 		'include/lastlog.h',
 		'include/module.h',
@@ -51,6 +50,7 @@ if not no_headers
 		'include/bits/linux/linux_sched.h',
 		'include/bits/linux/linux_stat.h',
 		'include/bits/linux/linux_uio.h',
+		'include/bits/linux/linux_utmp.h',
 		'include/bits/linux/cpu_set.h',
 		subdir: 'bits/linux'
 	)

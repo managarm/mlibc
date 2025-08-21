@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <pty.h>
+#include <utmp.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -54,8 +55,6 @@ fail:
 	mlibc::sys_close(ptmx_fd);
 	return -1;
 }
-
-extern "C" int login_tty(int fd);
 
 int login_tty(int fd) {
 	if(setsid() == -1)
