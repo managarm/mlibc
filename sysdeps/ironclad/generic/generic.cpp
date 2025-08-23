@@ -1532,7 +1532,7 @@ int sys_openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const
 	}
 
 	if (ios == NULL) {
-		struct termios termios;
+		struct termios termios = {};
 		termios.c_iflag = BRKINT | IGNPAR | ICRNL | IXON | IMAXBEL;
 		termios.c_oflag = OPOST | ONLCR;
 		termios.c_cflag = CS8 | CREAD;
