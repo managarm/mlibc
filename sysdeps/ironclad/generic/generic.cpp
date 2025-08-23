@@ -219,7 +219,6 @@ int sys_fallocate(int fd, off_t offset, size_t size) {
 }
 
 int sys_flock(int fd, int options) {
-	//  XXX: Shouldnt this use F_SETLKW and F_SETLK only when LOCK_NB ?
 	struct flock lock;
 	lock.l_whence = SEEK_SET;
 	lock.l_start = 0;
@@ -240,8 +239,9 @@ int sys_flock(int fd, int options) {
 			return -1;
 	}
 
+	int command = options & LOCK_NB ? F_SETLK : F_SETLKW;
 	int ret, errno;
-	SYSCALL3(SYSCALL_FCNTL, fd, F_SETLK, &lock);
+	SYSCALL3(SYSCALL_FCNTL, fd, command, &lock);
 	return errno;
 }
 
