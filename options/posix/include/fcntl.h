@@ -55,17 +55,18 @@ struct file_handle {
         int handle_type;
         __extension__ unsigned char f_handle[0];
 };
-#endif
+#endif /* _GNU_SOURCE */
 
 #ifndef __MLIBC_ABI_ONLY
 
 #ifdef _GNU_SOURCE
 int name_to_handle_at(int __dirfd, const char *__path, struct file_handle *__handle, int *__mount_id, int __flags);
 int open_by_handle_at(int __dirfd, struct file_handle *__handle, int __flags);
-#endif
 
 ssize_t splice(int __fd_in, off_t *__off_in, int __fd_out, off_t *__off_out, size_t __len, unsigned int __flags);
 ssize_t vmsplice(int __fd, const struct iovec *__iov, size_t __nr_segs, unsigned int __flags);
+
+#endif /* _GNU_SOURCE */
 
 #endif /* !__MLIBC_ABI_ONLY */
 
