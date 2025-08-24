@@ -52,7 +52,18 @@ void setutxent(void) {
 
 	if(!utmpxFd) {
 		int fd;
+
+		// If we are opening the utmp file as a non-root user with a root-made
+		// utmp, we need to open as a reader instead of a writer, O_RDWR will
+		// fail as no write permission can be obtained with 0644.
+		//
+		// The operations that need writing like updates will naturally fail
+		// because of the underlying sysdep failing.
 		int err = mlibc::sys_open(utmpxPath, O_RDWR | O_CREAT | O_CLOEXEC, 0644, &fd);
+		if(err == EACCES) {
+			err = mlibc::sys_open(utmpxPath, O_RDONLY | O_CLOEXEC, 0644, &fd);
+		}
+
 		if(err) {
 			mlibc::infoLogger() << "\e[31mmlibc: setutxent() failed to open " << utmpxPath << ": "
 			                    << strerror(err) << "\e[39m" << frg::endlog;
