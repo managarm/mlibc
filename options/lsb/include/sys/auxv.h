@@ -1,8 +1,7 @@
 #ifndef _SYS_AUXV_H
 #define _SYS_AUXV_H
 
-#define AT_NULL 0
-#include <abi-bits/auxv.h>
+#include <elf.h>
 
 #ifdef __cplusplus
 extern "C" {
