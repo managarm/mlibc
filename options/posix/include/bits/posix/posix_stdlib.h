@@ -55,6 +55,13 @@ int ptsname_r(int __fd, char *__buf, size_t __len);
 double strtod_l(const char *__restrict__ __nptr, char ** __restrict__ __endptr, locale_t __loc);
 long double strtold_l(const char *__restrict__ __nptr, char ** __restrict__ __endptr, locale_t __loc);
 float strtof_l(const char *__restrict __string, char **__restrict __end, locale_t __loc);
+long strtol_l(const char *__restrict__ nptr, char** __restrict__ endptr, int base, locale_t __loc);
+long long strtoll_l(const char *__restrict __string, char **__restrict __end, int __base, locale_t __loc);
+unsigned long long strtoull_l(const char *__restrict __string, char **__restrict __end, int __base, locale_t __loc);
+size_t strxfrm_l(char *__restrict __dest, const char *__restrict __src, size_t __max_size, locale_t __loc);
+int wcscoll_l(const wchar_t *__a, const wchar_t *__b, locale_t __loc);
+int wcsxfrm_l(wchar_t *__restrict __dest, const wchar_t *__restrict __src, size_t __size, locale_t __loc);
+size_t strftime_l(char *__restrict __dest, size_t __max_size, const char *__restrict __format, const struct tm *__restrict __ptr, locale_t __loc);
 
 int getsubopt(char **__restrict__ __optionp, char *const *__restrict__ __tokens, char **__restrict__ __valuep);
 
