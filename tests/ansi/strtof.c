@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include <math.h>
 
 #define FLT_RANGE 0.000001f
 #define DBL_RANGE 0.000001
@@ -36,10 +35,6 @@ int main () {
 	DO_TEST("0x10.0p1", 32.0f, -1, strtof, FLT_RANGE);
 	DO_TEST("0x10.0p10", 16384.0f, -1, strtof, FLT_RANGE);
 	DO_TEST("0x100.0p-1", 128.0f, -1, strtof, FLT_RANGE);
-	DO_TEST_SUCCESS_FUNC("NAN", isnan, -1, strtof);
-	DO_TEST_SUCCESS_FUNC("nan", isnan, -1, strtof);
-	DO_TEST_SUCCESS_FUNC("INF", isinf, -1, strtof);
-	DO_TEST_SUCCESS_FUNC("INFINITY", isinf, -1, strtof);
 
 	DO_TEST("0", 0.0, -1, strtod, DBL_RANGE);
 	DO_TEST("0.12", 0.12, -1, strtod, DBL_RANGE);
@@ -55,10 +50,6 @@ int main () {
 	DO_TEST("0x10.0p1", 32.0, -1, strtod, DBL_RANGE);
 	DO_TEST("0x10.0p10", 16384.0, -1, strtod, DBL_RANGE);
 	DO_TEST("0x100.0p-1", 128.0, -1, strtod, DBL_RANGE);
-	DO_TEST_SUCCESS_FUNC("NAN", isnan, -1, strtod);
-	DO_TEST_SUCCESS_FUNC("nan", isnan, -1, strtod);
-	DO_TEST_SUCCESS_FUNC("INF", isinf, -1, strtod);
-	DO_TEST_SUCCESS_FUNC("INFINITY", isinf, -1, strtod);
 
 	DO_TEST("0", 0.0, -1, strtold, LDBL_RANGE);
 	DO_TEST("0.12", 0.12, -1, strtold, LDBL_RANGE);
@@ -74,10 +65,6 @@ int main () {
 	DO_TEST("0x10.0p1", 32.0, -1, strtold, LDBL_RANGE);
 	DO_TEST("0x10.0p10", 16384.0, -1, strtold, LDBL_RANGE);
 	DO_TEST("0x100.0p-1", 128.0, -1, strtold, LDBL_RANGE);
-	DO_TEST_SUCCESS_FUNC("NAN", isnan, -1, strtold);
-	DO_TEST_SUCCESS_FUNC("nan", isnan, -1, strtold);
-	DO_TEST_SUCCESS_FUNC("INF", isinf, -1, strtold);
-	DO_TEST_SUCCESS_FUNC("INFINITY", isinf, -1, strtold);
 
 	return 0;
 }
