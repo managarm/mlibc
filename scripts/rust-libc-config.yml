@@ -87,6 +87,7 @@ ignored_structs:
   - "stat64"
   - "statfs64"
   - "statvfs64"
+  - "timezone"
   # unix/linux_like/mod.rs
   - "in_addr"
   - "ip_mreq"
@@ -113,6 +114,22 @@ ignored_structs:
   - "sockaddr_storage"
   - "utsname"
   - "sigevent"
+  # unix/mod.rs
+  - "iovec"
+  - "ipv6_mreq"
+  - "timeval"
+  - "rusage"
+  - "timespec"
+  - "itimerval"
+  - "linger"
+  - "winsize"
+  - "group"
+  - "hostent"
+  - "protoent"
+  - "servent"
+  - "rlimit"
+  - "tms"
+  - "pollfd"
   # unix/align.rs
   - "in6_addr"
 
@@ -136,8 +153,7 @@ forced_structs:
   - "__ucontext"
   - "__stack"
 
-forced_empty_structs:
-  - "__mlibc_thread_data"
+forced_empty_structs: []
 
 ignored_enums:
   - "idtype_t"
@@ -145,6 +161,8 @@ ignored_enums:
 
 ignored_unions:
   - "epoll_data"
+  # unix/mod.rs
+  - "sigval"
 
 ignored_var_declarations:
   - "stdout"
@@ -392,6 +410,11 @@ ignored_macros:
   - "arp_pln"
   - "arp_op"
   - "MAXHOSTNAMELEN"
+  - "UTMPX_FILE"
+  - "WTMPX_FILE"
+  - "no_argument"
+  - "required_argument"
+  - "optional_argument"
   # DO NOT REMOVE: mlibc internals
   - "MLIBC_UNIMPLEMENTED"
   - "MLIBC_MISSING_SYSDEP"
@@ -646,11 +669,17 @@ ignored_macros:
   - "MADV_DONTNEED_LOCKED"
 
   - "IFF_UP"
+  - "IFF_BROADCAST"
   - "IFF_DEBUG"
+  - "IFF_LOOPBACK"
+  - "IFF_POINTOPOINT"
   - "IFF_NOTRAILERS"
+  - "IFF_RUNNING"
   - "IFF_NOARP"
   - "IFF_PROMISC"
   - "IFF_ALLMULTI"
+  - "IFF_MASTER"
+  - "IFF_SLAVE"
   - "IFF_MULTICAST"
   - "IFF_PORTSEL"
   - "IFF_AUTOMEDIA"
@@ -1163,12 +1192,28 @@ ignored_macros:
   - "PIPE_BUF"
 
   - "SI_LOAD_SHIFT"
+  - "SI_ASYNCNL"
+  - "SI_USER"
+  - "SI_KERNEL"
+  - "SI_QUEUE"
+  - "SI_TIMER"
+  - "SI_MESGQ"
+  - "SI_ASYNCIO"
+  - "SI_SIGIO"
+  - "SI_TKILL"
+  - "SI_ASYNCNL"
 
   - "BUS_ADRALN"
   - "BUS_ADRERR"
   - "BUS_OBJERR"
   - "BUS_MCEERR_AR"
   - "BUS_MCEERR_AO"
+
+  - "TRAP_BRKPT"
+  - "TRAP_TRACE"
+  - "TRAP_BRANCH"
+  - "TRAP_HWBKPT"
+  - "TRAP_UNK"
 
   - "CLD_EXITED"
   - "CLD_KILLED"
@@ -1485,6 +1530,7 @@ ignored_types:
   - "epoll_data_t"
   - "locale_t"
   - "fd_set"
+  - "pthread_t"
   # unix/mod.rs
   - "size_t"
   - "pid_t"
@@ -1622,6 +1668,7 @@ ignored_functions:
   - "memcpy"
   - "memmove"
   - "memset"
+  - "memccpy"
 
   - "getpwnam"
   - "getpwuid"
@@ -1751,6 +1798,7 @@ ignored_functions:
   - "flock"
   - "times"
   - "pthread_self"
+  - "pthread_equal"
   - "pthread_join"
   - "pthread_exit"
   - "pthread_attr_init"
@@ -1870,6 +1918,11 @@ ignored_functions:
   - "getline"
   - "lockf"
 
+  - "htonl"
+  - "htons"
+  - "ntohl"
+  - "ntohs"
+
   - "getsid"
   - "pause"
   - "mkdirat"
@@ -1890,7 +1943,10 @@ ignored_functions:
 
   - "confstr"
   - "strerror_r"
+
+  - "aligned_alloc"
   # unix/linux_like/mod.rs
+  - "ioctl"
   - "sem_destroy"
   - "sem_init"
   - "fdatasync"
@@ -1902,6 +1958,7 @@ ignored_functions:
   - "dirfd"
   - "pthread_getattr_np"
   - "pthread_attr_getstack"
+  - "pthread_attr_setstack"
   - "memalign"
   - "setgroups"
   - "pipe2"
@@ -1946,6 +2003,38 @@ ignored_functions:
   - "recvmsg"
   - "uname"
   - "strchrnul"
+  - "strftime"
+  - "strftime_l"
+  - "strptime"
+  - "mkostemp"
+  - "mkostemps"
+  - "getdomainname"
+  - "setdomainname"
+  - "fstatfs64"
+  - "statvfs64"
+  - "fstatvfs64"
+  - "statfs64"
+  - "creat64"
+  - "fstat64"
+  - "fstatat64"
+  - "ftruncate64"
+  - "lseek64"
+  - "lstat64"
+  - "mmap64"
+  - "open64"
+  - "openat64"
+  - "posix_fadvise64"
+  - "pread64"
+  - "pwrite64"
+  - "readdir64"
+  - "readdir64_r"
+  - "stat64"
+  - "truncate64"
+  - "preadv64"
+  - "pwritev64"
+  - "forkpty"
+  - "openpty"
+  - "statx"
 
 forced_functions:
   - "__errno_location"
@@ -2042,6 +2131,7 @@ force_macro_type:
     - "VEOF"
     - "VMIN"
     - "VTIME"
+    - "SIGSTKSZ"
   "crate::speed_t":
     - "B0"
     - "B50"
