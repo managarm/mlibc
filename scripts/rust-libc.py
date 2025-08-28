@@ -10,7 +10,7 @@
 #
 # HOW TO USE
 #
-# > python rust-libc <path/to/your/installed/mlibc/headers> [<single-header.h>]
+# > python rust-libc <path/to/your/installed/mlibc/headers> <cross-gcc> [<single-header.h>]
 #
 # By default, the script parses all header files in the directory supplied, except for when a
 # single header is provided, where it will only parse that.
@@ -20,6 +20,7 @@ import io
 import os
 import pathlib
 import string
+import subprocess
 import sys
 
 import clang.cindex
@@ -658,10 +659,29 @@ def parse(file: pathlib.Path, base_dir: pathlib.Path):
         parser.from_cursor(base_dir, file, tu.cursor, no_system_includes)
 
 
+def gcc_install_path(gcc: str) -> pathlib.Path | None:
+    try:
+        result = subprocess.run(
+            [gcc, '-print-search-dirs'],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        for line in result.stdout.splitlines():
+            if line.startswith('install:'):
+                return (pathlib.Path(line.removeprefix('install: ').strip()) / 'include').resolve()
+    except subprocess.CalledProcessError as e:
+        print(f"Error running {gcc}:", e)
+    except FileNotFoundError:
+        print(f"{gcc} not found")
+    return None
+
+
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
     argparser.add_argument("-n", dest="dry_run", action="store_true")
     argparser.add_argument("path")
+    argparser.add_argument("gcc")
     argparser.add_argument("file", nargs="?")
 
     args = argparser.parse_args()
@@ -674,6 +694,16 @@ if __name__ == "__main__":
         config = yaml.load(f, yaml.CSafeLoader)
 
     path = pathlib.Path(args.path)
+
+    gcc_include_path = gcc_install_path(args.gcc)
+    if not gcc_include_path:
+        print("could not determine gcc's include directory")
+        exit(1)
+
+    gcc_include_path = os.path.relpath(pathlib.Path(gcc_include_path), pathlib.Path.cwd())
+    if "includes" not in config:
+            config["includes"] = list()
+    config["includes"].insert(0, gcc_include_path)
 
     with io.open(os.path.join(os.path.dirname(__file__), "rust-libc-header.rs"), "r") as f:
         emit(f.read())
