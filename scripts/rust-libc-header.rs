@@ -13,6 +13,17 @@ pub type stat64 = crate::stat;
 pub type statfs64 = crate::statfs;
 pub type statvfs64 = crate::statvfs;
 pub type idtype_t = c_uint;
+pub type Ioctl = c_ulong;
+pub type pthread_t = *mut c_void;
+
+pub type __u8 = c_uchar;
+pub type __u16 = c_ushort;
+pub type __s16 = c_short;
+pub type __u32 = c_uint;
+pub type __s32 = c_int;
+pub type __u64 = c_ulonglong;
+pub type __s64 = c_longlong;
+
 pub const RTLD_DEFAULT: *mut c_void = 0i64 as *mut c_void;
 pub const RLIM_INFINITY: crate::rlim_t = !0;
 
@@ -120,12 +131,6 @@ s_no_extra_traits! {
     }
 }
 
-impl fmt::Debug for ifreq {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ifreq").finish()
-    }
-}
-
 safe_f! {
     pub {const} fn makedev(major: c_uint, minor: c_uint) -> crate::dev_t {
         let major = major as crate::dev_t;
@@ -137,17 +142,15 @@ safe_f! {
         dev |= (minor & 0xffffff00) << 12;
         dev
     }
-}
 
-f! {
-    pub fn major(dev: crate::dev_t) -> c_uint {
+    pub {const} fn major(dev: crate::dev_t) -> c_uint {
         let mut major = 0;
         major |= (dev & 0x00000000000fff00) >> 8;
         major |= (dev & 0xfffff00000000000) >> 32;
         major as c_uint
     }
 
-    pub fn minor(dev: crate::dev_t) -> c_uint {
+    pub {const} fn minor(dev: crate::dev_t) -> c_uint {
         let mut minor = 0;
         minor |= (dev & 0x00000000000000ff) >> 0;
         minor |= (dev & 0x00000ffffff00000) >> 12;
@@ -160,18 +163,31 @@ extern "C" {
     pub fn strerror_r(errnum: c_int, buf: *mut c_char, buflen: size_t) -> c_int;
 }
 
-#[repr(C)]
-struct __siginfo_fields {
-    fields: [c_int; 1],
-}
-
 impl siginfo_t {
-    unsafe fn sifields(&self) -> &__siginfo_fields {
-        &(*(self.__si_fields.as_ptr() as *const __siginfo_fields))
+    pub unsafe fn si_status(&self) -> c_int {
+        #[repr(C)]
+        struct siginfo_sigchld {
+            _si_signo: c_int,
+            _si_errno: c_int,
+            _si_code: c_int,
+            si_pid: crate::pid_t,
+            si_uid: crate::uid_t,
+            si_status: c_int,
+            si_utime: crate::clock_t,
+            si_stime: crate::clock_t,
+        }
+        (*(self as *const siginfo_t as *const siginfo_sigchld)).si_status
     }
 
-    pub unsafe fn si_status(&self) -> c_int {
-        self.sifields().fields[0]
+    pub unsafe fn si_addr(&self) -> *mut c_void {
+        #[repr(C)]
+        struct siginfo_sigfault {
+            _si_signo: c_int,
+            _si_errno: c_int,
+            _si_code: c_int,
+            si_addr: *mut c_void,
+        }
+        (*(self as *const siginfo_t as *const siginfo_sigfault)).si_addr
     }
 }
 
