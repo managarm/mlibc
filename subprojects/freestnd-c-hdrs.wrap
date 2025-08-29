@@ -1,4 +1,4 @@
 [wrap-git]
-directory = freestnd-c-hdrs
 url = https://github.com/osdev0/freestnd-c-hdrs.git
-revision = 4039f438fb1dc1064d8e98f70e1cf122f91b763b
+revision = d33711241b46ecb8f2ad33927fcefdcb3ac0162e
+patch_directory = freestnd-c-hdrs
