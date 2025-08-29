@@ -83,30 +83,38 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	int ret, errno;
 
-	int path_len = strlen (path);
+	int path_len = strlen(path);
 	SYSCALL4(SYSCALL_OPEN, dirfd, path, path_len, flags);
 	if (ret != -1 && (flags & O_EXCL)) {
 		SYSCALL1(SYSCALL_CLOSE, ret);
 		return EEXIST;
 	}
 
-	if (ret == -1 && (flags & O_CREAT)) {
+	// We implement creating files in this sysdep.
+	if ((errno == ENOENT) && (flags & O_CREAT)) {
 		SYSCALL5(SYSCALL_MAKENODE, AT_FDCWD, path, path_len, mode, 0);
 		if (ret == -1) {
 			return errno;
 		}
 		SYSCALL4(SYSCALL_OPEN, AT_FDCWD, path, path_len, flags);
-	} else if (ret != -1 && (flags & O_TRUNC)) {
-		// If the file cannot be truncated, dont sweat it, some software
-		// depends on some things being truncate-able that ironclad does not
-		// allow. For example, some devices.
-		sys_ftruncate(ret, 0);
-	} else if (ret != -1 && (flags & O_DIRECTORY)) {
-		struct stat st;
-		sys_stat(fsfd_target::fd, ret, NULL, 0, &st);
-		if (!S_ISDIR (st.st_mode)) {
-			ret	= -1;
-			errno = ENOTDIR;
+	}
+
+	// Handle some post-opening triggers.
+	if (ret != -1) {
+		if (flags & O_TRUNC) {
+			// If the file cannot be truncated, dont sweat it, some software
+			// depends on some things being truncate-able that ironclad does
+			// not allow. For example, some devices.
+			sys_ftruncate(ret, 0);
+		}
+		if (flags & O_DIRECTORY) {
+			struct stat st;
+			sys_stat(fsfd_target::fd, ret, NULL, 0, &st);
+			if (!S_ISDIR (st.st_mode)) {
+				SYSCALL1(SYSCALL_CLOSE, ret);
+				ret	= -1;
+				errno = ENOTDIR;
+			}
 		}
 	}
 
@@ -285,6 +293,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 	*window = ret;
 
 	if ((errno == ENOMEM) && ((flags & MAP_ANON) == 0)) {
+		mlibc::infoLogger() << "mlibc: emulating file mmap" << frg::endlog;
 		int ret = sys_anon_allocate(size, window);
 		if (ret) {
 			return ret;
@@ -393,12 +402,6 @@ int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restric
 int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SIGALTSTACK, ss, oss);
-	return errno;
-}
-
-int sys_sigsuspend(const sigset_t *set) {
-	int ret, errno;
-	SYSCALL1(SYSCALL_SIGSUSPEND, set);
 	return errno;
 }
 
@@ -1053,12 +1056,7 @@ int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
 
 int sys_ppoll(struct pollfd *fds, int nfds, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
 	int ret, errno;
-	if (timeout == NULL) {
-		struct timespec t = {.tv_sec = (time_t)-1, .tv_nsec = (time_t)-1};
-		SYSCALL4(SYSCALL_PPOLL, fds, nfds, &t, sigmask);
-	} else {
-		SYSCALL4(SYSCALL_PPOLL, fds, nfds, timeout, sigmask);
-	}
+	SYSCALL4(SYSCALL_PPOLL, fds, nfds, timeout, sigmask);
 	if (ret == -1) {
 		return errno;
 	}
@@ -1072,6 +1070,14 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	ts.tv_sec = timeout / 1000;
 	ts.tv_nsec = (timeout % 1000) * 1000000;
 	return sys_ppoll(fds, count, timeout == -1 ? NULL : &ts, NULL, num_events);
+}
+
+int sys_pause(void) {
+	return sys_ppoll(NULL, 0, NULL, NULL, NULL);
+}
+
+int sys_sigsuspend(const sigset_t *set) {
+	return sys_ppoll(NULL, 0, NULL, set, NULL);
 }
 
 int sys_pselect(int nfds, fd_set *read_set, fd_set *write_set,
@@ -1214,6 +1220,7 @@ int sys_sysconf(int num, long *rret) {
 	struct meminfo mem;
 	struct cpuinfo cpu;
 	int ret, errno;
+	long secs, nanos;
 
 	switch (num) {
 		case _SC_LINE_MAX:
@@ -1268,6 +1275,14 @@ int sys_sysconf(int num, long *rret) {
 		case _SC_THREAD_STACK_MIN:
 			*rret = 0x1000;
 			return 0;
+		case _SC_CLK_TCK:
+			ret = sys_clock_getres(CLOCK_MONOTONIC, &secs, &nanos);
+			if (ret == 0) {
+				*rret = 1000000000 / nanos;
+				return 0;
+			} else {
+				return ret;
+			}
 		default:
 			return EINVAL;
 	}
