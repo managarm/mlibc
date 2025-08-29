@@ -1,0 +1,11 @@
+[package]
+name = "generate-rust-libc-ignorelist"
+version = "0.1.0"
+description = "A program to generate the configuration for the rust-libc binding generator that respects the types that the libc crate already pre-defines for us."
+license = "MIT"
+edition = "2024"
+publish = false
+
+[dependencies]
+syn = { version = "2.0", features = ["full", "visit"] }
+quote = "1.0"
