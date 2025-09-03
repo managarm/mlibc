@@ -26,7 +26,7 @@ thread_local void *__mlibc_clk_tracker_page;
 
 namespace {
 thread_local unsigned __mlibc_gsf_nesting;
-thread_local void *__mlibc_cached_thread_page;
+thread_local posix::ThreadPage *__mlibc_cached_thread_page;
 thread_local HelHandle *cachedFileTable;
 
 // This construction is a bit weird: Even though the variables above
@@ -52,9 +52,9 @@ SignalGuard::SignalGuard() {
 	pthread_once(&has_cached_infos, &actuallyCacheInfos);
 	if (!__mlibc_cached_thread_page)
 		return;
-	auto p = reinterpret_cast<unsigned int *>(__mlibc_cached_thread_page);
+
 	if (!__mlibc_gsf_nesting)
-		__atomic_store_n(p, 1, __ATOMIC_RELAXED);
+		__atomic_store_n(&__mlibc_cached_thread_page->globalSignalFlag, 1, __ATOMIC_RELAXED);
 	__mlibc_gsf_nesting++;
 }
 
@@ -62,11 +62,12 @@ SignalGuard::~SignalGuard() {
 	pthread_once(&has_cached_infos, &actuallyCacheInfos);
 	if (!__mlibc_cached_thread_page)
 		return;
-	auto p = reinterpret_cast<unsigned int *>(__mlibc_cached_thread_page);
+
 	__ensure(__mlibc_gsf_nesting > 0);
 	__mlibc_gsf_nesting--;
 	if (!__mlibc_gsf_nesting) {
-		unsigned int result = __atomic_exchange_n(p, 0, __ATOMIC_RELAXED);
+		unsigned int result =
+		    __atomic_exchange_n(&__mlibc_cached_thread_page->globalSignalFlag, 0, __ATOMIC_RELAXED);
 		if (result == 2) {
 			HEL_CHECK(helSyscall0(kHelCallSuper + posix::superSigRaise));
 		} else {
@@ -103,6 +104,26 @@ HelHandle getHandleForFd(int fd) {
 }
 
 void clearCachedInfos() { has_cached_infos = PTHREAD_ONCE_INIT; }
+
+void resetCancellationId() {
+	pthread_once(&has_cached_infos, &actuallyCacheInfos);
+	__atomic_store_n(&__mlibc_cached_thread_page->cancellationId, 0, __ATOMIC_RELEASE);
+}
+
+void setCancellationId(uint64_t id, HelHandle handle, int fd) {
+	pthread_once(&has_cached_infos, &actuallyCacheInfos);
+
+	__mlibc_cached_thread_page->lane = handle;
+	__mlibc_cached_thread_page->fd = fd;
+
+	__atomic_store_n(&__mlibc_cached_thread_page->cancellationId, id, __ATOMIC_RELEASE);
+}
+
+namespace {
+thread_local uint64_t cancellationId = 1;
+} // namespace
+
+uint64_t allocateCancellationId() { return cancellationId++; }
 
 extern char **environ;
 

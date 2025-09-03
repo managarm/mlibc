@@ -1,116 +1,181 @@
-#include <utmp.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <utmp.h>
 
 #include <bits/ensure.h>
+#include <frg/mutex.hpp>
+#include <frg/spinlock.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/utmp.hpp>
+#include <mlibc/posix-sysdeps.hpp>
 
-/*
- * The code in this file is largely based on glibc.
- * This includes:
- * - setutent
- * - read_last_entry
- * - getutent
- * - getutent_r
- * - endutent
- */
-static int fd = -1;
-static off_t offset;
+namespace {
 
-static struct utmp last_entry;
+constexpr const char *defaultUtmpPath = UTMP_FILE;
+
+const char *utmpPath = defaultUtmpPath;
+frg::ticket_spinlock utmpMutex;
+
+frg::optional<int> utmpFd = frg::null_opt;
+
+utmp returned;
+
+} // namespace
 
 void setutent(void) {
-	if(fd < 0) {
-		fd = open("/run/utmp", O_RDONLY | O_LARGEFILE | O_CLOEXEC);
-		if(fd == -1) {
-			return;
+	frg::unique_lock lock{utmpMutex};
+
+	if(!utmpFd) {
+		int fd;
+		int err = mlibc::sys_open(utmpPath, O_RDWR | O_CREAT | O_CLOEXEC, 0644, &fd);
+		if(err) {
+			mlibc::infoLogger() << "\e[31mmlibc: setutent() failed to open " << utmpPath << ": "
+			                    << strerror(err) << "\e[39m" << frg::endlog;
+			utmpFd = frg::null_opt;
+		} else {
+			utmpFd = fd;
 		}
-	}
-
-	lseek(fd, 0, SEEK_SET);
-	offset = 0;
-}
-
-static ssize_t read_last_entry(void) {
-	struct utmp buf;
-	ssize_t bytes_read = pread(fd, &buf, sizeof(buf), offset);
-
-	if(bytes_read < 0) {
-		return -1;
-	} else if(bytes_read != sizeof(buf)) {
-		// EOF
-		return 0;
 	} else {
-		last_entry = buf;
-		offset += sizeof(buf);
-		return 1;
+		off_t discard;
+		mlibc::sys_seek(utmpFd.value(), 0, SEEK_SET, &discard);
 	}
 }
 
 struct utmp *getutent(void) {
-	struct utmp *result;
-	static struct utmp *buf;
-	if(buf == NULL) {
-		buf = (struct utmp *)malloc(sizeof(struct utmp));
-		if(buf == NULL) {
-			return NULL;
-		}
+	frg::unique_lock lock{utmpMutex};
+
+	if(!utmpFd)
+		setutent();
+	if(!utmpFd) {
+		errno = ENOENT;
+		return nullptr;
 	}
 
-	if(getutent_r(buf, &result) < 0) {
-		return NULL;
+	if(int e = mlibc::getUtmpEntry(*utmpFd, &returned); e) {
+		errno = e;
+		return nullptr;
 	}
-	return result;
+
+	return &returned;
 }
 
 int getutent_r(struct utmp *buf, struct utmp **res) {
-	int saved_errno = errno;
+	frg::unique_lock lock{utmpMutex};
 
-	if(fd < 0) {
+	if(!utmpFd)
 		setutent();
+	if(!utmpFd) {
+		*res = nullptr;
+		errno = ENOENT;
+		return -1;
 	}
 
-	ssize_t bytes_read = read_last_entry();
-
-	if(bytes_read <= 0) {
-		if(bytes_read == 0) {
-			errno = saved_errno;
-			*res = NULL;
-			return -1;
-		}
+	if(int e = mlibc::getUtmpEntry(*utmpFd, buf); e) {
+		*res = nullptr;
+		errno = e;
+		return -1;
 	}
 
-	memcpy(buf, &last_entry, sizeof(struct utmp));
 	*res = buf;
-
 	return 0;
 }
 
 void endutent(void) {
-	if(fd >= 0) {
-		close(fd);
-		fd = -1;
+	frg::unique_lock lock{utmpMutex};
+
+	if(utmpFd) {
+		mlibc::sys_close(utmpFd.value());
+		utmpFd = frg::null_opt;
 	}
 }
 
-struct utmp *pututline(const struct utmp *) {
-	mlibc::infoLogger() << "\e[31mmlibc: pututline() is a stub!\e[39m" << frg::endlog;
-	return NULL;
+struct utmp *pututline(const struct utmp *ut) {
+	frg::unique_lock lock{utmpMutex};
+
+	if(!utmpFd)
+		setutent();
+	if(!utmpFd) {
+		errno = ENOENT;
+		return nullptr;
+	}
+
+	if(int e = mlibc::putUtmpEntry(*utmpFd, ut); e) {
+		errno = e;
+		return nullptr;
+	}
+
+	return (utmp *) ut;
 }
 
-struct utmp *getutline(const struct utmp *) {
-	mlibc::infoLogger() << "\e[31mmlibc: getutline() is a stub!\e[39m" << frg::endlog;
-	return NULL;
+struct utmp *getutline(const struct utmp *ut) {
+	frg::unique_lock lock{utmpMutex};
+
+	if(!utmpFd)
+		setutent();
+	if(!utmpFd) {
+		errno = ENOENT;
+		return nullptr;
+	}
+
+	if(int e = mlibc::getUtmpEntryByType(*utmpFd, ut, &returned); e) {
+		errno = e;
+		return nullptr;
+	}
+
+	return &returned;
 }
 
-int utmpname(const char *) {
-	mlibc::infoLogger() << "\e[31mmlibc: utmpname() is a stub!\e[39m" << frg::endlog;
-	return -1;
+int utmpname(const char *file) {
+	frg::unique_lock lock{utmpMutex};
+
+	if(strcmp(file, utmpPath)) {
+		if(!strcmp(file, defaultUtmpPath)) {
+			free((void *) utmpPath);
+			utmpPath = defaultUtmpPath;
+		} else {
+			char *name = strdup(file);
+			if(!name)
+				return -1;
+
+			if(utmpPath != defaultUtmpPath)
+				free((void *) utmpPath);
+
+			utmpPath = name;
+		}
+	}
+
+	return 0;
 }
 
-struct utmp *getutid(const struct utmp *) {
-	mlibc::infoLogger() << "\e[31mmlibc: getutid() is a stub!\e[39m" << frg::endlog;
-	return NULL;
+struct utmp *getutid(const struct utmp *ut) {
+	frg::unique_lock lock{utmpMutex};
+
+	if(!utmpFd)
+		setutent();
+	if(!utmpFd) {
+		errno = ENOENT;
+		return nullptr;
+	}
+
+	if(int e = mlibc::getUtmpEntryById(*utmpFd, ut, &returned); e) {
+		errno = e;
+		return nullptr;
+	}
+
+	return &returned;
+}
+
+void updwtmp(const char *file, const struct utmp *ut) {
+	int fd;
+	int err = mlibc::sys_open(file, O_RDWR | O_CREAT | O_CLOEXEC | O_APPEND, 0644, &fd);
+	if(err) {
+		mlibc::infoLogger() << "\e[31mmlibc: updwtmp() failed to open " << file << ": "
+							<< strerror(err) << "\e[39m" << frg::endlog;
+		return;
+	}
+
+	mlibc::putUtmpEntry(fd, ut);
+	mlibc::sys_close(fd);
 }

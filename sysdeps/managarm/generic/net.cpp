@@ -66,4 +66,50 @@ int sys_getifaddrs(struct ifaddrs **out) {
 	return 0;
 }
 
+#if !defined(MLIBC_BUILDING_RTLD)
+int sys_inet_configured(bool *ipv4, bool *ipv6) {
+	struct context {
+		bool *ipv4;
+		bool *ipv6;
+	} context = {.ipv4 = ipv4, .ipv6 = ipv6};
+
+	NetlinkHelper nl;
+	if (!nl.send_request(RTM_GETADDR)) {
+		*ipv4 = false;
+		*ipv6 = false;
+		return 0;
+	}
+
+	auto ret = nl.recv(
+	    [](void *data, const nlmsghdr *hdr) {
+		    if (hdr->nlmsg_type == RTM_NEWADDR || hdr->nlmsg_len >= sizeof(struct ifaddrmsg)) {
+			    const struct ifaddrmsg *ifaddr =
+			        reinterpret_cast<const struct ifaddrmsg *>(NLMSG_DATA(hdr));
+			    struct context *ctx = reinterpret_cast<struct context *>(data);
+
+			    char name[IF_NAMESIZE];
+			    auto interfaceNameResult = sys_if_indextoname(ifaddr->ifa_index, name);
+
+			    if (interfaceNameResult || !strncmp(name, "lo", IF_NAMESIZE))
+				    return;
+
+			    if (ifaddr->ifa_family == AF_INET)
+				    *ctx->ipv4 = true;
+			    else if (ifaddr->ifa_family == AF_INET6)
+				    *ctx->ipv6 = true;
+		    }
+	    },
+	    &context
+	);
+
+	if (!ret) {
+		*ipv4 = false;
+		*ipv6 = false;
+		return 0;
+	}
+
+	return 0;
+}
+#endif // !defined(MLIBC_BUILDING_RTLD)
+
 } // namespace mlibc

@@ -1,5 +1,6 @@
 /subprojects/*
 !/subprojects/*.wrap
+!/subprojects/packagefiles
 *.xbstrap
 # editor configs:
 .vscode

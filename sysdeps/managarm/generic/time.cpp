@@ -88,6 +88,8 @@ int sys_clock_getres(int clock, time_t *secs, long *nanos) {
 }
 
 int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
+	SignalGuard sguard;
+
 	if (which != ITIMER_REAL) {
 		mlibc::infoLogger() << "mlibc: setitimers other than ITIMER_REAL are unsupported"
 		                    << frg::endlog;
@@ -180,6 +182,8 @@ void *timer_setup(void *arg) {
 } // namespace
 
 int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__restrict res) {
+	SignalGuard sguard;
+
 	if (!res)
 		return EINVAL;
 
@@ -316,6 +320,8 @@ int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__
 int sys_timer_settime(
     timer_t t, int flags, const struct itimerspec *__restrict val, struct itimerspec *__restrict old
 ) {
+	SignalGuard sguard;
+
 	auto timerHandle = reinterpret_cast<TimerHandle *>(t);
 	managarm::posix::TimerSetRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_timer(timerHandle->id);
@@ -351,6 +357,8 @@ int sys_timer_settime(
 }
 
 int sys_timer_gettime(timer_t t, struct itimerspec *val) {
+	SignalGuard sguard;
+
 	auto timerHandle = reinterpret_cast<TimerHandle *>(t);
 	managarm::posix::TimerGetRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_timer((timerHandle->id));
@@ -381,6 +389,8 @@ int sys_timer_gettime(timer_t t, struct itimerspec *val) {
 }
 
 int sys_timer_delete(timer_t t) {
+	SignalGuard sguard;
+
 	auto timerHandle = reinterpret_cast<TimerHandle *>(t);
 
 	if (timerHandle->notify_type == SIGEV_THREAD) {

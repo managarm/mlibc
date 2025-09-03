@@ -20,6 +20,7 @@ libc_include_dirs += linux_include_dirs
 libc_sources += files(
 	host_machine.cpu_family() / 'signals.S',
 	host_machine.cpu_family() / 'arch-syscall.cpp',
+	host_machine.cpu_family() / 'assembly-asserts.cpp',
 	'generic/entry.cpp',
 	'generic/sysdeps.cpp',
 )
@@ -85,9 +86,19 @@ if not no_headers
 		'include/abi-bits/rlim_t.h',
 		'include/abi-bits/sigval.h',
 		'include/abi-bits/sigevent.h',
+		'include/abi-bits/utmpx.h',
+		'include/abi-bits/utmp-defines.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)
+
+	if host_machine.cpu_family() == 'riscv64'
+		install_headers(
+			'include/abi-bits/riscv-hwprobe.h',
+			subdir: 'abi-bits',
+			follow_symlinks: true
+		)
+	endif
 
 	install_headers('include/syscall.h')
 	install_headers('include/sys/syscall.h', subdir: 'sys')

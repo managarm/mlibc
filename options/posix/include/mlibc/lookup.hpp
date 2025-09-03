@@ -45,10 +45,10 @@ struct ai_buf {
 };
 
 int lookup_name_dns(struct lookup_result &buf, const char *name,
-		frg::string<MemoryAllocator> &canon_name);
+		frg::string<MemoryAllocator> &canon_name, int family);
 int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int family);
 int lookup_name_hosts(struct lookup_result &buf, const char *name,
-		frg::string<MemoryAllocator> &canon_name);
+		frg::string<MemoryAllocator> &canon_name, int family);
 int lookup_addr_hosts(frg::span<char> name, frg::array<uint8_t, 16> &addr, int family);
 int lookup_name_null(struct lookup_result &buf, int flags, int family);
 int lookup_name_ip(struct lookup_result &buf, const char *name, int family);

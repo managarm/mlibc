@@ -16,11 +16,9 @@ libc_sources += files(
 	'generic/mntent.cpp',
 	'generic/mount.cpp',
 	'generic/reboot.cpp',
-	'generic/pty.cpp',
 	'generic/thread.cpp',
 	'generic/mac.cpp',
 	'generic/thread.S',
-	'generic/utmpx.cpp'
 )
 
 if not no_headers
@@ -68,9 +66,20 @@ if not no_headers
 		'include/abi-bits/rlim_t.h',
 		'include/abi-bits/sigval.h',
 		'include/abi-bits/sigevent.h',
+		'include/abi-bits/utmpx.h',
+		'include/abi-bits/utmp-defines.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)
+
+	if host_machine.cpu_family() == 'riscv64'
+		install_headers(
+			'include/abi-bits/riscv-hwprobe.h',
+			subdir: 'abi-bits',
+			follow_symlinks: true
+		)
+	endif
+
 	install_headers(
 		'include/sys/mac.h',
 		'include/sys/syscall.h',
@@ -88,40 +97,46 @@ if not no_headers
 
 	install_headers(
 		'include/linux/fb.h',
-		'include/linux/kvm.h',
 		subdir: 'linux'
 	)
 
 	install_headers(
 		'include/mntent.h',
-		'include/pty.h',
-		'include/utmpx.h'
 	)
 endif
 
 if not headers_only
-	crt = custom_target('crt0',
+	crt = custom_target(
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-' + host_machine.cpu_family() / 'crt0.S',
-		output: 'crt0.o',
+		input: files('crt-' + host_machine.cpu_family() / 'crt1.S'),
+		output: 'crt1.o',
 		install: true,
 		install_dir: get_option('libdir')
 	)
 
-	custom_target('crti',
+	crt_pie = custom_target(
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-' + host_machine.cpu_family() / 'crti.S',
+		input: files('crt-' + host_machine.cpu_family() / 'Scrt1.S'),
+		output: 'Scrt1.o',
+		install: true,
+		install_dir: get_option('libdir')
+	)
+
+	custom_target(
+		build_by_default: true,
+		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		input: files('crt-' + host_machine.cpu_family() / 'crti.S'),
 		output: 'crti.o',
 		install: true,
 		install_dir: get_option('libdir')
 	)
 
-	custom_target('crtn',
+	custom_target(
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-' + host_machine.cpu_family() / 'crtn.S',
+		input: files('crt-' + host_machine.cpu_family() / 'crtn.S'),
 		output: 'crtn.o',
 		install: true,
 		install_dir: get_option('libdir')

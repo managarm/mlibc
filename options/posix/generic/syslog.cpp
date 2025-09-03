@@ -140,11 +140,10 @@ void syslog(int priority, const char *format, ...) {
 }
 
 void vsyslog(int priority, const char *message, va_list ap) {
-	int cs;
-	if(!(log_mask & LOG_MASK(priority & 7)) || (priority & ~0x3ff)) {
-		mlibc::infoLogger() << "\e[31mmlibc: syslog: log_mask or priority out of range, not printing anything\e[39m" << frg::endlog;
+	if (!(log_mask & LOG_MASK(priority & 7)) || (priority & ~0x3ff))
 		return;
-	}
+
+	int cs;
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	frg::unique_lock<FutexLock> lock(__syslog_lock);
 	_vsyslog(priority, message, ap);

@@ -6,7 +6,7 @@ jobs:
     check-bindings:
         name: Verify bindings generation
         runs-on: ubuntu-latest
-        container: debian:sid
+        container: debian:trixie
         steps:
           - name: Install prerequisites
             run: |
@@ -44,6 +44,6 @@ jobs:
             working-directory: build/
           - name: Run generator
             run: |
-                python3 ./scripts/rust-libc.py ../../build/packages/mlibc-headers-only/usr/include | rustfmt
+                python3 ./scripts/rust-libc.py ../../build/packages/mlibc-headers-only/usr/include gcc | rustfmt
             working-directory: src/mlibc/
 

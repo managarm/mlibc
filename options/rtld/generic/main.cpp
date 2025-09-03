@@ -805,9 +805,37 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 			return true;
 		};
 
-		auto hash_table = (Elf64_Word *)(object->baseAddress + object->hashTableOffset);
-		auto num_symbols = hash_table[1];
-		for(size_t i = 0; i < num_symbols; i++) {
+		size_t start_symbols =  0;
+		size_t num_symbols =  0;
+
+		if(object->hashStyle == HashStyle::systemV) {
+			auto hash_table = (Elf64_Word *)(object->baseAddress + object->hashTableOffset);
+
+			// nchain == number of symtab entries
+			num_symbols = hash_table[1];
+		} else if(object->hashStyle == HashStyle::gnu) {
+			size_t last_sym = 0;
+
+			auto hash_table = reinterpret_cast<GnuHashTableHeader *>(object->baseAddress + object->hashTableOffset);
+			auto bucket = reinterpret_cast<uint32_t *>(uintptr_t(hash_table) + sizeof(*hash_table) + (hash_table->bloomSize * sizeof(elf_addr)));
+			auto chains = reinterpret_cast<uint32_t *>(uintptr_t(bucket) + hash_table->nBuckets * 4);
+
+			for(size_t i = 0; i < hash_table->nBuckets; i++) {
+				if(bucket[i] > last_sym)
+					last_sym = bucket[i];
+			}
+
+			last_sym++;
+			while(!(chains[last_sym] & 1))
+				last_sym++;
+
+			start_symbols = hash_table->symbolOffset;
+			num_symbols = last_sym;
+		} else {
+			__ensure(!"unexpected hash style!");
+		}
+
+		for(size_t i = start_symbols; i < num_symbols; i++) {
 			ObjectSymbol cand{object, (elf_sym *)(object->baseAddress
 					+ object->symbolTableOffset + i * sizeof(elf_sym))};
 			if(eligible(cand) && cand.virtualAddress() == reinterpret_cast<uintptr_t>(ptr)) {
@@ -838,7 +866,8 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 			uintptr_t start = object->baseAddress + phdr->p_vaddr;
 			uintptr_t end = start + phdr->p_memsz;
 			if(reinterpret_cast<uintptr_t>(ptr) >= start && reinterpret_cast<uintptr_t>(ptr) < end) {
-				mlibc::infoLogger() << "rtld: Found DSO " << object->path << frg::endlog;
+				if (logDlCalls)
+					mlibc::infoLogger() << "rtld: Found DSO " << object->path << frg::endlog;
 				info->file = object->path.data();
 				info->base = reinterpret_cast<void *>(object->baseAddress);
 				info->symbol = nullptr;
@@ -955,6 +984,19 @@ extern "C" [[gnu::visibility("default")]] int _dl_find_object(void *address, dl_
 
 #endif // __MLIBC_GLIBC_OPTION
 
+uintptr_t *rtld_auxvector() {
+	// Find the auxiliary vector by skipping args and environment.
+	auto aux = entryStack;
+	aux += *aux + 1; // Skip argc and all arguments
+	__ensure(!*aux);
+	aux++;
+	while(*aux) // Now, we skip the environment.
+		aux++;
+	aux++;
+
+	return aux;
+}
+
 // XXX(qookie):
 // This is here because libgcc will call into __getauxval on glibc Linux
 // (which is what it believes we are due to the aarch64-linux-gnu toolchain)
@@ -967,14 +1009,8 @@ extern "C" [[gnu::visibility("default")]] int _dl_find_object(void *address, dl_
 #if defined(__aarch64__) && defined(__gnu_linux__) && !defined(MLIBC_STATIC_BUILD)
 
 extern "C" unsigned long __getauxval(unsigned long type) {
-	// Find the auxiliary vector by skipping args and environment.
-	auto aux = entryStack;
-	aux += *aux + 1; // Skip argc and all arguments
-	__ensure(!*aux);
-	aux++;
-	while(*aux) // Now, we skip the environment.
-		aux++;
-	aux++;
+	auto aux = rtld_auxvector();
+	__ensure(aux);
 
 	// Parse the auxiliary vector.
 	while(true) {

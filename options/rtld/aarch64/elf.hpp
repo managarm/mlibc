@@ -26,6 +26,7 @@ using elf_vernaux = Elf64_Vernaux;
 #define ELF_R_SYM ELF64_R_SYM
 #define ELF_R_TYPE ELF64_R_TYPE
 #define ELF_ST_BIND ELF64_ST_BIND
+#define ELF_ST_TYPE ELF64_ST_TYPE
 
 #define R_NONE R_AARCH64_NONE
 #define R_JUMP_SLOT R_AARCH64_JUMP_SLOT
@@ -41,3 +42,13 @@ using elf_vernaux = Elf64_Vernaux;
 #define R_TLSDESC R_AARCH64_TLSDESC
 
 #define TP_TCB_OFFSET (16)
+
+struct ifunc_arg {
+	unsigned long _size;
+	unsigned long _hwcap;
+	unsigned long _hwcap2;
+	unsigned long _hwcap3;
+	unsigned long _hwcap4;
+};
+
+using ifunc_handler = elf_addr (*)(uint64_t, ifunc_arg *);

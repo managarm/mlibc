@@ -77,6 +77,76 @@ size_t tlsMaxAlignment = 16;
 // part of the global scope is considered for symbol resolution.
 uint64_t rtsCounter = 2;
 
+namespace {
+
+unsigned long getauxval(unsigned long type) {
+	auto aux = reinterpret_cast<uintptr_t *>(rtld_auxvector());
+	__ensure(aux);
+
+	// Parse the auxiliary vector.
+	while(true) {
+		auto value = aux + 1;
+		if(*aux == AT_NULL) {
+			return 0;
+		}else if(*aux == type) {
+			return *value;
+		}
+		aux += 2;
+	}
+}
+
+#if defined(__riscv)
+
+#include <sys/hwprobe.h>
+
+int __riscv_hwprobe(struct riscv_hwprobe *pairs, size_t pair_count, size_t cpusetsize, cpu_set_t *cpus, unsigned int flags) {
+	return mlibc::sys_riscv_hwprobe(pairs, pair_count, cpusetsize, cpus, flags);
+}
+
+#endif
+
+elf_addr handleIfunc(elf_addr addr) {
+	#if defined(__aarch64__)
+		auto hwcap = getauxval(AT_HWCAP);
+
+		ifunc_arg ifunc_arg = {
+			._size = sizeof(ifunc_arg),
+			._hwcap = hwcap,
+		#if defined(AT_HWCAP2)
+			._hwcap2 = getauxval(AT_HWCAP2),
+		#else
+			._hwcap2 = 0,
+		#endif
+		#if defined(AT_HWCAP3)
+			._hwcap3 = getauxval(AT_HWCAP3),
+		#else
+			._hwcap3 = 0,
+		#endif
+		#if defined(AT_HWCAP4)
+			._hwcap4 = getauxval(AT_HWCAP4),
+		#else
+			._hwcap4 = 0,
+		#endif
+		};
+
+		return reinterpret_cast<ifunc_handler>(addr)(hwcap | (1ULL << 62), &ifunc_arg);
+	#elif defined(__riscv)
+		auto hwcap = getauxval(AT_HWCAP);
+		return reinterpret_cast<ifunc_handler>(addr)
+			(hwcap, &__riscv_hwprobe, nullptr);
+	#elif defined(__loongarch64)
+		ifunc_arg ifunc_arg = {
+			._size = sizeof(ifunc_arg),
+			._hwcap = getauxval(AT_HWCAP),
+		};
+		return reinterpret_cast<ifunc_handler>(addr)(&ifunc_arg);
+	#elif defined(__i386__) || defined(__x86_64__) || defined(__m68k__)
+		return reinterpret_cast<ifunc_handler>(addr)();
+	#endif
+}
+
+} // namespace
+
 bool trySeek(int fd, int64_t offset) {
 	off_t noff;
 	return mlibc::sys_seek(fd, offset, SEEK_SET, &noff) == 0;
@@ -1142,21 +1212,9 @@ void processLateRelocation(Relocation rel) {
 		memcpy(rel.destination(), (void *)p->virtualAddress(), p->symbol()->st_size);
 		break;
 
-// TODO: R_IRELATIVE also exists on other architectures but will likely need a different implementation.
-#if defined(__x86_64__) || defined(__i386__)
-	case R_IRELATIVE: {
-		uintptr_t addr = rel.object()->baseAddress + rel.addend_rel();
-		auto* fn = reinterpret_cast<uintptr_t (*)()>(addr);
-		rel.relocate(fn());
-	} break;
-#elif defined(__aarch64__)
-	case R_IRELATIVE: {
-		uintptr_t addr = rel.object()->baseAddress + rel.addend_rel();
-		auto* fn = reinterpret_cast<uintptr_t (*)(uint64_t)>(addr);
-		// TODO: the function should get passed AT_HWCAP value.
-		rel.relocate(fn(0));
-	} break;
-#endif
+	case R_IRELATIVE:
+		rel.relocate(handleIfunc(rel.object()->baseAddress + rel.addend_rel()));
+		break;
 
 	default:
 		break;
@@ -1423,6 +1481,10 @@ uintptr_t ObjectSymbol::virtualAddress() {
 	auto bind = ELF_ST_BIND(_symbol->st_info);
 	__ensure(bind == STB_GLOBAL || bind == STB_WEAK || bind == STB_GNU_UNIQUE);
 	__ensure(_symbol->st_shndx != SHN_UNDEF);
+
+	if (ELF_ST_TYPE(_symbol->st_info) == STT_GNU_IFUNC)
+		return handleIfunc(_object->baseAddress + _symbol->st_value);
+
 	return _object->baseAddress + _symbol->st_value;
 }
 
@@ -1499,20 +1561,13 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 	}else{
 		__ensure(object->hashStyle == HashStyle::gnu);
 
-		struct GnuTable {
-			uint32_t nBuckets;
-			uint32_t symbolOffset;
-			uint32_t bloomSize;
-			uint32_t bloomShift;
-		};
-
-		auto hash_table = reinterpret_cast<const GnuTable *>(object->baseAddress
+		auto hash_table = reinterpret_cast<const GnuHashTableHeader *>(object->baseAddress
 				+ object->hashTableOffset);
 		auto buckets = reinterpret_cast<const uint32_t *>(object->baseAddress
-				+ object->hashTableOffset + sizeof(GnuTable)
+				+ object->hashTableOffset + sizeof(GnuHashTableHeader)
 				+ hash_table->bloomSize * sizeof(elf_addr));
 		auto chains = reinterpret_cast<const uint32_t *>(object->baseAddress
-				+ object->hashTableOffset + sizeof(GnuTable)
+				+ object->hashTableOffset + sizeof(GnuHashTableHeader)
 				+ hash_table->bloomSize * sizeof(elf_addr)
 				+ hash_table->nBuckets * sizeof(uint32_t));
 

@@ -5,6 +5,7 @@
 #include <frg/vector.hpp>
 #include <frg/stack.hpp>
 #include <frg/expected.hpp>
+#include <frg/manual_box.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/tcb.hpp>
 
@@ -115,6 +116,13 @@ enum class HashStyle {
 	none,
 	systemV,
 	gnu
+};
+
+struct GnuHashTableHeader {
+	uint32_t nBuckets;
+	uint32_t symbolOffset;
+	uint32_t bloomSize;
+	uint32_t bloomShift;
 };
 
 using InitFuncPtr = void (*)();
@@ -512,5 +520,5 @@ extern "C" void pltRelocateStub() __attribute__((__visibility__("hidden")));
 // RTLD interface
 // --------------------------------------------------------
 
-void *rtld_auxvector();
+uintptr_t *rtld_auxvector();
 

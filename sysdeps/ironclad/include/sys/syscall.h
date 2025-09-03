@@ -31,13 +31,14 @@
 #define SYSCALL_CHDIR                19
 #define SYSCALL_IOCTL                20
 #define SYSCALL_SCHED_YIELD          21
-#define SYSCALL_DELETE_TCLUSTER      22
+#define SYSCALL_GET_MIN_PRIO         22
 #define SYSCALL_PIPE                 23
 #define SYSCALL_GETUID               24
 #define SYSCALL_RENAME               25
 #define SYSCALL_LISTPROCS            26
+#define SYSCALL_GETSID               27
 #define SYSCALL_GETTID               28
-#define SYSCALL_MANAGE_TCLUSTER      29
+#define SYSCALL_GET_MAX_PRIO         29
 #define SYSCALL_FCNTL                30
 #define SYSCALL_EXIT_THREAD          31
 #define SYSCALL_GETENTROPY           32
@@ -62,8 +63,7 @@
 #define SYSCALL_PTRACE               51
 #define SYSCALL_LISTEN               52
 #define SYSCALL_ACCEPT               53
-#define SYSCALL_GETRLIMIT            54
-#define SYSCALL_SETRLIMIT            55
+#define SYSCALL_RLIMIT               54
 #define SYSCALL_ACCESS               56
 #define SYSCALL_PPOLL                57
 #define SYSCALL_GETEUID              58
@@ -72,8 +72,8 @@
 #define SYSCALL_UMASK                61
 #define SYSCALL_REBOOT               62
 #define SYSCALL_FCHOWN               63
-#define SYSCALL_PREAD                64
-#define SYSCALL_PWRITE               65
+#define SYSCALL_GETPGID              64
+#define SYSCALL_SETPGID              65
 #define SYSCALL_GETSOCKNAME          66
 #define SYSCALL_GETPEERNAME          67
 #define SYSCALL_SHUTDOWN             68
@@ -85,8 +85,8 @@
 #define SYSCALL_SENDTO               74
 #define SYSCALL_CONFIG_NETINTER      75
 #define SYSCALL_UTIMES               76
-#define SYSCALL_CREATE_TCLUSTER      77
-#define SYSCALL_SWITCH_TCLUSTER      78
+#define SYSCALL_GET_SCHEDULER        77
+#define SYSCALL_SET_SCHEDULER        78
 #define SYSCALL_SIGPROCMASK          79
 #define SYSCALL_SIGACTION            80
 #define SYSCALL_SEND_SIGNAL          81
@@ -115,7 +115,6 @@
 #define SYSCALL_LISTMOUNTS          104
 #define SYSCALL_UNAME               105
 #define SYSCALL_LISTTHREADS         106
-#define SYSCALL_LISTCLUSTERS        107
 #define SYSCALL_LISTNETINTER        108
 #define SYSCALL_DUMPLOGS            109
 #define SYSCALL_LISTFLOCKS          110
@@ -125,6 +124,28 @@
 #define SYSCALL_GETCPUINFO          114
 #define SYSCALL_SOCKETPAIR          115
 #define SYSCALL_MADVISE             116
+#define SYSCALL_NVMM_CAPABILITY     117
+#define SYSCALL_NVMM_MACHINE_CREATE 118
+#define SYSCALL_NVMM_MACHINE_DEL    119
+#define SYSCALL_NVMM_MACHINE_CONF   120
+#define SYSCALL_NVMM_VCPU_CREATE    121
+#define SYSCALL_NVMM_VCPU_DESTROY   122
+#define SYSCALL_NVMM_VCPU_CONF      123
+#define SYSCALL_NVMM_VCPU_SETSTATE  124
+#define SYSCALL_NVMM_VCPU_GETSTATE  125
+#define SYSCALL_NVMM_VCPU_INJECT    126
+#define SYSCALL_NVMM_VCPU_RUN       127
+#define SYSCALL_NVMM_GPA_MAP        128
+#define SYSCALL_NVMM_GPA_UNMAP      129
+#define SYSCALL_NVMM_HVA_MAP        130
+#define SYSCALL_NVMM_HVA_UNMAP      131
+#define SYSCALL_NVMM_GVA2GPA        132
+#define SYSCALL_NVMM_GPA2HVA        133
+#define SYSCALL_NVMM_ASSIST_IO      134
+#define SYSCALL_NVMM_ASSIST_MEM     135
+#define SYSCALL_NVMM_VCPU_DUMP      136
+#define SYSCALL_NVMM_VCPU_STOP      137
+#define SYSCALL_SETSID              138
 
 #if defined(__x86_64__)
 #define SYSCALL0(NUM) ({ \

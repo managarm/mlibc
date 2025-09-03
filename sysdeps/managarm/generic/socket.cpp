@@ -211,12 +211,12 @@ int sys_peername(
 	if (recvResp.error() == kHelErrDismissed)
 		return ENOTSOCK;
 	HEL_CHECK(recvResp.error());
-	HEL_CHECK(recvData.error());
 
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 
 	if (resp.error() == managarm::fs::Errors::SUCCESS) {
+		HEL_CHECK(recvData.error());
 		*actual_length = resp.file_size();
 		return 0;
 	}
@@ -235,7 +235,7 @@ std::array<std::pair<int, int>, 6> getsockopt_passthrough = {{
     {SOL_SOCKET, SO_PEERPIDFD},
 }};
 
-}
+} // namespace
 
 int
 sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
@@ -591,6 +591,35 @@ int sys_listen(int fd, int) {
 	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	return resp.error() | toErrno;
+}
+
+int sys_shutdown(int fd, int how) {
+	SignalGuard sguard;
+
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
+
+	managarm::fs::ShutdownSocket<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_how(how);
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	    handle,
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
 }
 
 } // namespace mlibc

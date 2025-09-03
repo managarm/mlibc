@@ -424,6 +424,13 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
+			uint8_t *dest = reinterpret_cast<uint8_t *>(param->data);
+			auto [recv_data] = exchangeMsgsSync(
+			    conversation.getHandle(),
+			    helix_ng::recvBuffer(dest, std::min(param->length, resp.drm_property_blob_size()))
+			);
+			HEL_CHECK(recv_data.error());
+
 			if (resp.error() != managarm::fs::Errors::SUCCESS) {
 				mlibc::infoLogger() << "\e[31mmlibc: DRM_IOCTL_MODE_GETPROPBLOB(" << param->blob_id
 				                    << ") error " << (int)resp.error() << "\e[39m" << frg::endlog;
@@ -431,12 +438,6 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 				return EINVAL;
 			}
 
-			uint8_t *dest = reinterpret_cast<uint8_t *>(param->data);
-			auto [recv_data] = exchangeMsgsSync(
-			    conversation.getHandle(),
-			    helix_ng::recvBuffer(dest, std::min(param->length, resp.drm_property_blob_size()))
-			);
-			HEL_CHECK(recv_data.error());
 			param->length = resp.drm_property_blob_size();
 
 			*result = 0;
@@ -1222,13 +1223,14 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_GEM_CLOSE"
 			                       " is a noop\e[39m"
 			                    << frg::endlog;
+			*result = 0;
 			return 0;
 		}
 		case DRM_IOCTL_WAIT_VBLANK: {
 			mlibc::infoLogger() << "\e[35mmlibc: DRM_IOCTL_WAIT_VBLANK"
 			                       " is a noop\e[39m"
 			                    << frg::endlog;
-			return 0;
+			return EOPNOTSUPP;
 		}
 		case DRM_IOCTL_PRIME_HANDLE_TO_FD: {
 			auto param = reinterpret_cast<drm_prime_handle *>(arg);

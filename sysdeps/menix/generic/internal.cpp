@@ -41,7 +41,7 @@ int sys_tcb_set(void *pointer) {
 #endif
 }
 
-int sys_futex_tid() { return menix_syscall(SYSCALL_GETTID).error; }
+int sys_futex_tid() { return menix_syscall(SYSCALL_GETTID).value; }
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	return menix_syscall(SYSCALL_FUTEX_WAIT, (size_t)pointer, expected, (size_t)time).error;

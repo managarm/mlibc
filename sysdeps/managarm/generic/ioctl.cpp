@@ -31,6 +31,10 @@
 #include <fs.frigg_bragi.hpp>
 #include <posix.frigg_bragi.hpp>
 
+// avoid flock redefinition
+#define HAVE_ARCH_STRUCT_FLOCK
+#include <linux/timerfd.h>
+
 namespace mlibc {
 
 static constexpr bool logIoctls = false;
@@ -1171,6 +1175,32 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*result = resp.result();
 		param->result = resp.status();
+		return 0;
+	} else if (request == TFD_IOC_SET_TICKS) {
+		if (!arg)
+			return EFAULT;
+		auto param = reinterpret_cast<uint64_t *>(arg);
+
+		managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+		req.set_ticks(*param);
+
+		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+		    handle,
+		    helix_ng::offer(
+		        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		        helix_ng::recvInline()
+		    )
+		);
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		return 0;
 	} else if (request == FICLONE || request == FICLONERANGE) {
 		mlibc::infoLogger() << "\e[35mmlibc: FICLONE/FICLONERANGE are no-ops" << frg::endlog;

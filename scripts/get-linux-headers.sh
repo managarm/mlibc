@@ -3,7 +3,7 @@
 set -ex
 
 LINUX_MAJOR=v6.x
-LINUX_VERSION=6.13.8
+LINUX_VERSION=6.16
 : "${ARCH:=$(uname -m)}"
 
 curl -Lo linux-$LINUX_VERSION.tar.xz https://cdn.kernel.org/pub/linux/kernel/$LINUX_MAJOR/linux-$LINUX_VERSION.tar.xz
