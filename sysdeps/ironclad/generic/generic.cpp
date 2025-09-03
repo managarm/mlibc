@@ -584,6 +584,18 @@ void sys_yield(void) {
 	SYSCALL0(SYSCALL_SCHED_YIELD);
 }
 
+int sys_getparam(pid_t pid, struct sched_param *param) {
+	int ret, errno;
+	SYSCALL2(SYSCALL_GET_SCHEDULER, pid, param);
+	return errno;
+}
+
+int sys_setparam(pid_t pid, const struct sched_param *param) {
+	int ret, errno;
+	SYSCALL2(SYSCALL_SET_SCHEDULER, pid, param);
+	return errno;
+}
+
 int sys_kill(int pid, int sig) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SEND_SIGNAL, pid, sig);
