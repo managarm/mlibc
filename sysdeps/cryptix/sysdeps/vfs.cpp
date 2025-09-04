@@ -166,6 +166,13 @@ int sys_socket(int family, int type, int protocol, int *fd) {
 	*fd = ret;
 	return 0;
 }
+int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
+	auto ret = Syscall(SYS_BIND, fd, addr_ptr, addr_length);
+	if (auto e = syscall_error(ret); e)
+		return e;
+
+	return 0;
+}
 
 int sys_uname(struct utsname *out) {
 	auto ret = Syscall(SYS_UNAME, out);

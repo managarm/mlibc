@@ -214,7 +214,7 @@ if host_machine.system() == 'cryptix'
 
 	#internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
 	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
-	#internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
+	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
     subdir('sysdeps/cryptix')
 elif host_machine.system() == 'linux'
 	provides_bits_syscall_h = true
