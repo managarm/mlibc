@@ -883,9 +883,6 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_RELA: case DT_RELASZ: case DT_RELAENT: case DT_RELACOUNT:
 		case DT_REL: case DT_RELSZ: case DT_RELENT: case DT_RELCOUNT:
 		case DT_RELR: case DT_RELRSZ: case DT_RELRENT:
-#ifdef __riscv
-		case DT_TEXTREL: // Work around https://sourceware.org/bugzilla/show_bug.cgi?id=24673.
-#endif
 			break;
 		case DT_TLSDESC_PLT: case DT_TLSDESC_GOT:
 			break;
