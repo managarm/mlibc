@@ -1,3 +1,4 @@
+#include "mlibc/internal-sysdeps.hpp"
 #include <mlibc/arch-defs.hpp>
 #include <stdint.h>
 #include <string.h>
@@ -501,6 +502,10 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			object->tlsImageSize = phdr->p_filesz;
 			tls_offset = phdr->p_vaddr;
 			break;
+		case PT_LOAD:
+			if (phdr->p_flags & PF_X)
+				object->exec_phdrs.push_back(phdr);
+			break;
 		case PT_INTERP:
 			object->interpreterPath = frg::string<MemoryAllocator>{
 				(char*)(object->baseAddress + phdr->p_vaddr),
@@ -626,8 +631,14 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 				prot |= PROT_READ;
 			if(phdr->p_flags & PF_W)
 				prot |= PROT_WRITE;
-			if(phdr->p_flags & PF_X)
+			if(phdr->p_flags & PF_X){
 				prot |= PROT_EXEC;
+				// possible use-after-free?
+				// if someone ever frees the phdr_buffer, then this is a use-after-free
+				// but currently we seem to leak it
+				// :)
+				object->exec_phdrs.push_back(phdr);
+			}
 
 		#if MLIBC_MAP_DSO_SEGMENTS
 			// we can avoid the vm_protect call if we don't have to write to the segment
@@ -775,18 +786,17 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 				object->eagerBinding = true;
 
 			auto ignored = DF_BIND_NOW | DF_SYMBOLIC | DF_STATIC_TLS;
-#ifdef __riscv
-			// Work around https://sourceware.org/bugzilla/show_bug.cgi?id=24673.
 			ignored |= DF_TEXTREL;
-#else
 			if(dynamic->d_un.d_val & DF_TEXTREL)
-				mlibc::panicLogger() << "\e[31mrtld: DF_TEXTREL is unimplemented" << frg::endlog;
-#endif
+				object->haveTextRel = true;
 			if(dynamic->d_un.d_val & ~ignored)
 				mlibc::infoLogger() << "\e[31mrtld: DT_FLAGS(" << frg::hex_fmt{dynamic->d_un.d_val & ~ignored}
 						<< ") is not implemented correctly!\e[39m"
 						<< frg::endlog;
 		} break;
+		case DT_TEXTREL:
+			object->haveTextRel = true;
+			break;
 		case DT_FLAGS_1:
 			if(dynamic->d_un.d_val & DF_1_NOW)
 				object->eagerBinding = true;
@@ -895,6 +905,19 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 	if(soname_offset) {
 		object->soName = reinterpret_cast<const char *>(object->baseAddress
 				+ object->stringTableOffset + *soname_offset);
+	}
+	if (object->haveTextRel)
+	{
+		for (auto &phdr_ptr : object->exec_phdrs)
+		{
+			elf_phdr* phdr = (elf_phdr*)phdr_ptr;
+			void* addr = (void*)(phdr->p_vaddr + (uintptr_t)object->baseAddress);
+			int prot = PROT_WRITE | PROT_READ | PROT_EXEC;
+			if (mlibc::sys_vm_protect)
+				mlibc::sys_vm_protect(addr, phdr->p_memsz, prot);
+			else
+				__ensure(!"sys_vm_protect required when DF_TEXTREL/DT_TEXTREL is present");
+		}
 	}
 }
 
@@ -1129,7 +1152,8 @@ SharedObject::SharedObject(const char *name, frg::string<MemoryAllocator> path,
 		dependencies(getAllocator()), tlsModel(TlsModel::null),
 		tlsOffset(0), globalRts(0), wasLinked(false),
 		scheduledForInit(false), onInitStack(false),
-		wasInitialized(false) { }
+		wasInitialized(false),
+		exec_phdrs(getAllocator()) { }
 
 SharedObject::SharedObject(const char *name, const char *path,
 	bool is_main_object, Scope *localScope, uint64_t object_rts)
@@ -1787,6 +1811,25 @@ void Loader::linkObjects(SharedObject *root) {
 		linkMap->next = &(object->linkMap);
 		object->inLinkMap = true;
 	}
+
+	for (auto object : _linkBfs)
+	{
+		// Remap exec phdrs as RX if the object has DF/DT_TEXTREL present
+		// in the dynamic header
+		if (object->haveTextRel)
+		{
+			for (auto &phdr_ptr : object->exec_phdrs)
+			{
+				elf_phdr* phdr = (elf_phdr*)phdr_ptr;
+				void* addr = (void*)(phdr->p_vaddr + (uintptr_t)object->baseAddress);
+				int prot = PROT_READ | PROT_EXEC;
+				if (mlibc::sys_vm_protect)
+					mlibc::sys_vm_protect(addr, phdr->p_memsz, prot);
+				else
+					__ensure(!"sys_vm_protect required when DF_TEXTREL/DT_TEXTREL is present");
+			}
+		}
+	}
 }
 
 void Loader::_buildTlsMaps() {
@@ -1972,6 +2015,14 @@ void Loader::_processRelocations(Relocation &rel) {
 		rel.relocate(symbol_addr + rel.addend_norel());
 	} break;
 #endif
+
+	case R_PC32:
+	{
+		__ensure(rel.symbol_index());
+		uintptr_t symbol_addr = p ? p->virtualAddress() : 0;
+		rel.relocate(symbol_addr + rel.addend_norel() - (elf_addr)rel.destination());
+		break;
+	}
 
 	case R_ABSOLUTE: {
 		__ensure(rel.symbol_index());
