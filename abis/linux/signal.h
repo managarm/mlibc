@@ -93,6 +93,11 @@ typedef struct {
 #define SA_RESETHAND 0x80000000
 #define SA_RESTORER 0x04000000
 
+/* SA_NOMASK is an alias for SA_NODEFER */
+/* SA_ONESHOT is an alias for SA_RESETHAND */
+#define SA_NOMASK SA_NODEFER
+#define SA_ONESHOT SA_RESETHAND
+
 #ifdef __cplusplus
 extern "C" {
 #endif
