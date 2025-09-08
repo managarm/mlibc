@@ -34,7 +34,6 @@ using elf_vernaux = Elf64_Vernaux;
 #define R_ABSOLUTE R_RISCV_64
 #define R_GLOB_DAT R_RISCV_64
 #define R_RELATIVE R_RISCV_RELATIVE
-#define R_PC32 R_RISCV_PC32
 #define R_IRELATIVE R_RISCV_IRELATIVE
 // #define R_OFFSET
 #define R_COPY R_RISCV_COPY
