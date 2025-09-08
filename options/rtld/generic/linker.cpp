@@ -1,4 +1,4 @@
-#include "mlibc/internal-sysdeps.hpp"
+#include <mlibc/internal-sysdeps.hpp>
 #include <mlibc/arch-defs.hpp>
 #include <stdint.h>
 #include <string.h>
@@ -903,12 +903,10 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		object->soName = reinterpret_cast<const char *>(object->baseAddress
 				+ object->stringTableOffset + *soname_offset);
 	}
-	if (object->haveTextRel)
-	{
-		for (auto &phdr_ptr : object->exec_phdrs)
-		{
-			elf_phdr* phdr = (elf_phdr*)phdr_ptr;
-			void* addr = (void*)(phdr->p_vaddr + (uintptr_t)object->baseAddress);
+	if(object->haveTextRel) {
+		for(auto &phdr_ptr : object->exec_phdrs) {
+			elf_phdr* phdr = (elf_phdr *)phdr_ptr;
+			void* addr = (void *)(phdr->p_vaddr + (uintptr_t)object->baseAddress);
 			int prot = PROT_WRITE | PROT_READ | PROT_EXEC;
 			if (mlibc::sys_vm_protect)
 				mlibc::sys_vm_protect(addr, phdr->p_memsz, prot);
@@ -1813,12 +1811,10 @@ void Loader::linkObjects(SharedObject *root) {
 	{
 		// Remap exec phdrs as RX if the object has DF/DT_TEXTREL present
 		// in the dynamic header
-		if (object->haveTextRel)
-		{
-			for (auto &phdr_ptr : object->exec_phdrs)
-			{
-				elf_phdr* phdr = (elf_phdr*)phdr_ptr;
-				void* addr = (void*)(phdr->p_vaddr + (uintptr_t)object->baseAddress);
+		if(object->haveTextRel) {
+			for(auto &phdr_ptr : object->exec_phdrs) {
+				elf_phdr* phdr = (elf_phdr *)phdr_ptr;
+				void* addr = (void *)(phdr->p_vaddr + (uintptr_t)object->baseAddress);
 				int prot = PROT_READ | PROT_EXEC;
 				if (mlibc::sys_vm_protect)
 					mlibc::sys_vm_protect(addr, phdr->p_memsz, prot);
@@ -2013,6 +2009,7 @@ void Loader::_processRelocations(Relocation &rel) {
 	} break;
 #endif
 
+#ifdef R_PC32
 	case R_PC32:
 	{
 		__ensure(rel.symbol_index());
@@ -2020,6 +2017,7 @@ void Loader::_processRelocations(Relocation &rel) {
 		rel.relocate(symbol_addr + rel.addend_norel() - (elf_addr)rel.destination());
 		break;
 	}
+#endif
 
 	case R_ABSOLUTE: {
 		__ensure(rel.symbol_index());
