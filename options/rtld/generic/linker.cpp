@@ -785,8 +785,7 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			if(dynamic->d_un.d_val & DF_BIND_NOW)
 				object->eagerBinding = true;
 
-			auto ignored = DF_BIND_NOW | DF_SYMBOLIC | DF_STATIC_TLS;
-			ignored |= DF_TEXTREL;
+			auto ignored = DF_BIND_NOW | DF_SYMBOLIC | DF_STATIC_TLS | DF_TEXTREL;
 			if(dynamic->d_un.d_val & DF_TEXTREL)
 				object->haveTextRel = true;
 			if(dynamic->d_un.d_val & ~ignored)
