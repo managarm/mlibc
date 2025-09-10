@@ -3,10 +3,11 @@
 #include <menix/archctl.hpp>
 #include <menix/syscall.hpp>
 #include <mlibc/internal-sysdeps.hpp>
-#include <stddef.h>
-#include <string.h>
-#include <stdint.h>
 #include <mlibc/tcb.hpp>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <errno.h>
 
 namespace mlibc {
 
@@ -96,8 +97,17 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 int sys_close(int fd) { return menix_syscall(SYSCALL_CLOSE, fd).error; }
 
 int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
-	(void)fsfdt;
-	return menix_syscall(SYSCALL_FSTAT, fd, (size_t)path, flags, (size_t)statbuf).error;
+	switch (fsfdt) {
+		case fsfd_target::path:
+			return menix_syscall(SYSCALL_FSTATAT, AT_FDCWD, (size_t)path, (size_t)statbuf, flags)
+			    .error;
+		case fsfd_target::fd_path:
+			return menix_syscall(SYSCALL_FSTATAT, fd, (size_t)path, (size_t)statbuf, flags).error;
+		case fsfd_target::fd:
+			return menix_syscall(SYSCALL_FSTAT, fd, (size_t)statbuf).error;
+		default:
+			return EINVAL;
+	}
 }
 
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
