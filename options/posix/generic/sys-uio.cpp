@@ -29,6 +29,19 @@ ssize_t writev(int fd, const struct iovec *iovs, int iovc) {
 	__ensure(iovc);
 
 	ssize_t written = 0;
+
+	auto sysdep = mlibc::sys_writev;
+	if(sysdep) {
+		int e = sysdep(fd, iovs, iovc, &written);
+		if(e) {
+			errno = e;
+			return -1;
+		}
+		return written;
+	}
+
+	// TODO: this implementation is not safe to use in signal contexts
+	mlibc::infoLogger() << "mlibc: falling back to signal-unsafe writev implementation!" << frg::endlog;
 	size_t bytes = 0;
 	for(int i = 0; i < iovc; i++) {
 		if(SSIZE_MAX - bytes < iovs[i].iov_len) {
