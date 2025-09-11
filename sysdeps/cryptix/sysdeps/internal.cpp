@@ -33,22 +33,4 @@ namespace mlibc
 
         __builtin_unreachable();
     }
-
-    STUB_RET(int sys_clone([[maybe_unused]] void*  tcb,
-                           [[maybe_unused]] pid_t* pid_out,
-                           [[maybe_unused]] void*  stack));
-    STUB_RET(int sys_kill([[maybe_unused]] pid_t, [[maybe_unused]] int));
-
-    //////
-    int sys_tcb_set(void* pointer)
-    {
-        auto ret = Syscall(SYS_ARCH_PRCTL, 0x1002, pointer);
-        if (auto e = syscall_error(ret); e) return e;
-
-        return ret;
-    }
-
-    STUB_RET(int sys_futex_wait(int* pointer, int expected,
-                                const struct timespec* time));
-    STUB_RET(int sys_futex_wake([[maybe_unused]] int* pointer));
 } // namespace mlibc

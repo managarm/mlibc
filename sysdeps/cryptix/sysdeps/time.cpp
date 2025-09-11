@@ -1,7 +1,3 @@
-#include <cstddef>
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <cryptix/syscall.h>
 
 #include <execinfo.h>
