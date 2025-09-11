@@ -273,6 +273,14 @@ elif host_machine.system() == 'nyaux'
 	rtld_include_dirs += include_directories('sysdeps/nyaux/include')
 	libc_include_dirs += include_directories('sysdeps/nyaux/include')
 	subdir('sysdeps/nyaux')
+elif host_machine.system() == 'cryptix'
+    rtld_include_dirs += include_directories('sysdeps/cryptix/include')
+    libc_include_dirs += include_directories('sysdeps/cryptix/include')
+
+	#internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
+	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
+	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
+    subdir('sysdeps/cryptix')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
