@@ -1,1 +1,1 @@
-../../../../abis/cryptix/statx.h
+../../../../abis/linux/statx.h
