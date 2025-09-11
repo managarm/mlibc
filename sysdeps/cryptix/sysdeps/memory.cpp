@@ -46,8 +46,8 @@ namespace mlibc
     }
     int sys_vm_protect(void* pointer, size_t size, int prot)
     {
-        // auto ret = Syscall(SYS_MPROTECT, pointer, size, prot);
-        // if (auto e = syscall_error(ret); e) return e;
+        auto ret = Syscall(SYS_MPROTECT, pointer, size, prot);
+        if (auto e = syscall_error(ret); e) return e;
 
         return 0;
     }

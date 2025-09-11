@@ -392,8 +392,13 @@ namespace mlibc
     }
     int sys_ttyname(int fd, char* buf, size_t size)
     {
-        buf[0] = 'T';
-        buf[1] = 0;
+        ssize_t out_size = size;
+        for (size_t i = 0; i < size; i++)
+            buf[i] = 'a';
+
+        sys_libc_log("readlink\n");
+        sys_readlink("/proc/1/fd/0", buf, size, &out_size);
+
         return 0;
     }
 

@@ -1,7 +1,6 @@
 #include <cryptix/syscall.h>
 
 #include <execinfo.h>
-#include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 
 #include <sys/mman.h>

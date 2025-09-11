@@ -1,5 +1,5 @@
-#include <cstddef>
-#include <cstdint>
+#include <stddef.h>
+#include <stdint.h>
 
 #define SyscallInvoker "syscall"
 

@@ -1,4 +1,3 @@
-
 .section .text
 .global __mlibc_spawn_thread
 .type __mlibc_spawn_thread, "function"

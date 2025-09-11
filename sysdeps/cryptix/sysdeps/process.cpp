@@ -1,8 +1,19 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/tcb.hpp>
 
 #include <algorithm>
 #include <cryptix/syscall.h>
+
+#ifndef MLIBC_BUILDING_RTLD
+    #include <errno.h>
+    #include <pthread.h>
+    #include <stdio.h>
+#endif
+
+extern "C" int  __mlibc_spawn_thread(int flags, void* stack, void* pid_out,
+                                     void* child_tid, void* tcb);
+extern "C" void __mlibc_enter_thread(void* entry, void* user_arg);
 
 namespace mlibc
 {
@@ -139,17 +150,19 @@ namespace mlibc
         return 0;
     }
 
+#ifndef MLIBC_BUILDING_RTLD
     int sys_clone(void* tcb, pid_t* pid_out, void* stack)
     {
         unsigned long flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND
                             | CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS
                             | CLONE_PARENT_SETTID;
 
-        auto ret = Syscall(SYS_CLONE, flags, stack, pid_out, nullptr, tcb);
-        if (auto e = syscall_error(ret); e) return e;
+        auto ret = __mlibc_spawn_thread(flags, stack, pid_out, nullptr, tcb);
+        if (ret < 0) return ret;
 
         return 0;
     }
+#endif
     int sys_fork(pid_t* child)
     {
         auto ret = Syscall(SYS_FORK);
@@ -203,4 +216,12 @@ namespace mlibc
         memcpy(buffer, data.nodename, std::min(bufsize, hostname_size));
         return 0;
     }
+
+#ifndef MLIBC_BUILDING_RTLD
+    [[noreturn]] void sys_thread_exit()
+    {
+        sys_exit(0);
+        __builtin_trap();
+    }
+#endif
 }; // namespace mlibc
