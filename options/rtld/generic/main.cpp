@@ -820,14 +820,15 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 			auto bucket = reinterpret_cast<uint32_t *>(uintptr_t(hash_table) + sizeof(*hash_table) + (hash_table->bloomSize * sizeof(elf_addr)));
 			auto chains = reinterpret_cast<uint32_t *>(uintptr_t(bucket) + hash_table->nBuckets * 4);
 
-			for(size_t i = 0; i < hash_table->nBuckets; i++) {
-				if(bucket[i] > last_sym)
+			if (hash_table->nBuckets) {
+				for(size_t i = 0; i < hash_table->nBuckets; i++) {
+				if(last_sym < bucket[i])
 					last_sym = bucket[i];
-			}
+				}
 
-			last_sym++;
-			while(!(chains[last_sym] & 1))
-				last_sym++;
+				while(!(chains[last_sym - hash_table->symbolOffset] & 1))
+					last_sym++;
+			}
 
 			start_symbols = hash_table->symbolOffset;
 			num_symbols = last_sym;
