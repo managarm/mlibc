@@ -264,6 +264,7 @@ elif host_machine.system() == 'astral'
 	libc_include_dirs += include_directories('sysdeps/astral/include')
 	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
+	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
 	subdir('sysdeps/astral')
 elif host_machine.system() == 'menix'
 	rtld_include_dirs += include_directories('sysdeps/menix/include')
