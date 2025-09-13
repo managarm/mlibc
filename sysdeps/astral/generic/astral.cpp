@@ -4,7 +4,7 @@
 
 #ifndef MLIBC_BUILDING_RTLD
 
-int syscall_archctl(int func, void *arg) {
+int arch_ctl(int func, void *arg) {
 	long ret;
 	long error = syscall(SYSCALL_ARCHCTL, &ret, func, (uint64_t)arg);
 	if(error)
