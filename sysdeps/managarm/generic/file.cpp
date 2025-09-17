@@ -1102,14 +1102,17 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::EPOLL_CALL);
 	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
+	req.set_cancellation_id(allocateCancellationId());
 
 	for (nfds_t i = 0; i < count; i++) {
 		req.add_fds(fds[i].fd);
 		req.add_events(fds[i].events);
 	}
 
-	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	auto [offer, send_req, recv_resp] = exchangeMsgsSyncCancellable(
 	    getPosixLane(),
+	    req.cancellation_id(),
+	    -1,
 	    helix_ng::offer(
 	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
 	    )
