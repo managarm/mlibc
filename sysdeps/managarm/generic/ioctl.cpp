@@ -10,7 +10,6 @@
 #include <linux/input.h>
 #include <linux/kd.h>
 #include <linux/nvme_ioctl.h>
-#include <linux/sockios.h>
 #include <linux/usb/cdc-wdm.h>
 #include <linux/vt.h>
 #include <net/if.h>
@@ -31,9 +30,9 @@
 #include <fs.frigg_bragi.hpp>
 #include <posix.frigg_bragi.hpp>
 
-// avoid flock redefinition
-#define HAVE_ARCH_STRUCT_FLOCK
-#include <linux/timerfd.h>
+#define SIOCETHTOOL 0x8946
+#define SIOCGSKNS 0x894C
+#define TFD_IOC_SET_TICKS _IOW('T', 0, __u64)
 
 namespace mlibc {
 
