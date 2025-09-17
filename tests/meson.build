@@ -85,6 +85,7 @@ all_test_cases = [
 	'posix/rlimits',
 	'posix/accept4',
 	'posix/setpriority',
+	'posix/nice',
 	'posix/alarm',
 	'posix/abort', # This test should be in the ANSI tests, but it depends on sigaction
 	'posix/timer',

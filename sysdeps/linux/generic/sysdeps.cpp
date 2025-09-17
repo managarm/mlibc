@@ -839,6 +839,32 @@ int sys_setpriority(int which, id_t who, int prio) {
 	return 0;
 }
 
+// the first argument of the get/set priority calls is a PRIO_PROCESS constant.
+// the actual macro is not used at the moment because of a wrong #define
+// FIXME once the abi fix PR is merged
+int sys_nice(int increment, int *new_nice) {
+	int current;
+	if (int e = sys_getpriority(0, 0, &current); e)
+		return e;
+
+	if (increment == 0) {
+		*new_nice = current;
+		return 0;
+	}
+
+	// the system call silently clamps the value to the nice range
+	if (int e = sys_setpriority(0, 0, current + increment); e)
+		return e;
+
+	if (int e = sys_getpriority(0, 0, &current); e)
+		return e;
+
+	// NOTE: according to man 2 getpriority, the internal priority values in linux are
+	// in the range 40..1. So we have to convert it.
+	*new_nice = 20 - current;
+	return 0;
+}
+
 int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
 	auto ret = do_syscall(SYS_setitimer, which, new_value, old_value);
 	if (int e = sc_error(ret); e)

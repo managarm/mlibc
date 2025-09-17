@@ -253,6 +253,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 
 [[gnu::weak]] int sys_inet_configured(bool *ipv4, bool *ipv6);
 
+[[gnu::weak]] int sys_nice(int nice, int *new_nice);
+
 } //namespace mlibc
 
 #endif // MLIBC_POSIX_SYSDEPS
