@@ -571,9 +571,16 @@ int lockf(int fd, int op, off_t size) {
 	return -1;
 }
 
-int nice(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int nice(int nice) {
+	int new_nice;
+
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_nice, -1);
+	if(int e = mlibc::sys_nice(nice, &new_nice); e) {
+		errno = e;
+		return -1;
+	}
+
+	return new_nice;
 }
 
 long pathconf(const char *, int name) {

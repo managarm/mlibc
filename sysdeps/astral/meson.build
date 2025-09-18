@@ -76,14 +76,29 @@ if not no_headers
 		subdir: 'abi-bits',
 		follow_symlinks: true,
 	)
+        install_headers(
+                'include/astral/syscall.h',
+                'include/astral/archctl.h',
+                subdir: 'astral',
+                follow_symlinks: true,
+        )
 endif
 
 if not headers_only
-	crt = custom_target('crt0',
+	crt = custom_target('crt1',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-x86_64/crt0.S',
-		output: 'crt0.o',
+		input: 'crt-x86_64/crt1.S',
+		output: 'crt1.o',
+		install: true,
+		install_dir: get_option('libdir')
+	)
+
+        crt_pie = custom_target('Scrt1',
+		build_by_default: true,
+		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		input: 'crt-x86_64/crt1.S',
+		output: 'Scrt1.o',
 		install: true,
 		install_dir: get_option('libdir')
 	)
