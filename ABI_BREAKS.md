@@ -24,6 +24,7 @@ Numerous ABI breaks. These were not properly logged, and are therefore missing h
 - [#1460](https://github.com/managarm/mlibc/pull/1460): the alignment of `fd_set` was fixed.
 - [#1460](https://github.com/managarm/mlibc/pull/1460): the layout of `struct semid_ds` was fixed.
 - [#1460](https://github.com/managarm/mlibc/pull/1460): `<sys/user.h>` previously always defined structs for x86_64, which were changed to now be correct for all supported architectures.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): `off_t` and `off64_t` are now always 64-bit instead of `long`.
 
 ## Version 5
 
