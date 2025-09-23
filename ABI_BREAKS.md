@@ -23,6 +23,7 @@ Numerous ABI breaks. These were not properly logged, and are therefore missing h
 - [#1460](https://github.com/managarm/mlibc/pull/1460): `PRIO_*` values were fixed to align with the values Linux syscalls expect.
 - [#1460](https://github.com/managarm/mlibc/pull/1460): the alignment of `fd_set` was fixed.
 - [#1460](https://github.com/managarm/mlibc/pull/1460): the layout of `struct semid_ds` was fixed.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): `<sys/user.h>` previously always defined structs for x86_64, which were changed to now be correct for all supported architectures.
 
 ## Version 5
 
