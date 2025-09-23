@@ -10,6 +10,7 @@ Numerous ABI breaks. These were not properly logged, and are therefore missing h
 - [#1458](https://github.com/managarm/mlibc/pull/1458): due to incorrect macro usage, `LONG_BIT` was previously always defined to 64, even on 32-bit architectures. Now, it is set to 32 on 32-bit architectures.
 - [#1458](https://github.com/managarm/mlibc/pull/1458): `PRI*FAST*` macros had values that caused `-Wformat` warnings on 32-bit architectures, which got fixed.
 - [#1458](https://github.com/managarm/mlibc/pull/1458): `ND_NA_FLAG_*` macros were incorrectly not byte-swapped on big-endian architectures.
+- [#1458](https://github.com/managarm/mlibc/pull/1458): some members of `struct link_map` were always using `Elf64_Addr` instead of the correct `ElfW(Addr)` type.
 
 ## Version 5
 
