@@ -29,6 +29,7 @@ struct semid_ds {
 	time_t          sem_ctime;
 
 	unsigned long   sem_nsems;
+	unsigned long   __unused[2];
 };
 
 #ifndef __MLIBC_ABI_ONLY
