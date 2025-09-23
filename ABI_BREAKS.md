@@ -13,6 +13,7 @@ Numerous ABI breaks. These were not properly logged, and are therefore missing h
 - [#1458](https://github.com/managarm/mlibc/pull/1458): some members of `struct link_map` were always using `Elf64_Addr` instead of the correct `ElfW(Addr)` type.
 - [#1459](https://github.com/managarm/mlibc/pull/1459): the sizing of `blksize_t` and `nlink_t` was incorrect, which lead to incorrect layouts of Linux's `struct stat` for most architectures (i.e. non-x86)
 - [#1459](https://github.com/managarm/mlibc/pull/1459): the layout of `struct statvfs` and `struct statvfs64` was incorrect
+- [#1459](https://github.com/managarm/mlibc/pull/1459): some `O_*` and `F_*` macros in `<fcntl.h>` were incorrect on some architectures and were fixed.
 
 ## Version 5
 
