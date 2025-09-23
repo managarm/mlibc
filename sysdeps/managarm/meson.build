@@ -139,6 +139,7 @@ if not no_headers
 		'include/abi-bits/utmp-defines.h',
 		'include/abi-bits/fd_set.h',
 		'include/abi-bits/sem.h',
+		'include/abi-bits/route.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)
