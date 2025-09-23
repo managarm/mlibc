@@ -7,6 +7,7 @@ This document lists the ABI breaks that were made in each mlibc major version.
 Numerous ABI breaks. These were not properly logged, and are therefore missing here. Pending update, if one ever comes.
 
 - [#1458](https://github.com/managarm/mlibc/pull/1458): mlibc only defined `fenv_t` for x86(_64) before, new we define it correctly for all supported architectures.
+- [#1458](https://github.com/managarm/mlibc/pull/1458): due to incorrect macro usage, `LONG_BIT` was previously always defined to 64, even on 32-bit architectures. Now, it is set to 32 on 32-bit architectures.
 
 ## Version 5
 

@@ -7,24 +7,6 @@
 # define MB_LEN_MAX 4
 #endif
 
-#ifdef LONG_MAX
-# ifdef LONG_MAX == INT32_MAX
-#  define LONG_BIT 32
-# else
-/* Safe assumption */
-#  define LONG_BIT 64
-# endif
-#elif defined __LONG_MAX__
-# if __LONG_MAX__ == INT32_MAX
-#  define LONG_BIT 32
-# else
-/* Safe assumption */
-#  define LONG_BIT 64
-# endif
-#else
-# error "Unsupported configuration, please define either LONG_MAX or __LONG_MAX__"
-#endif
-
 #undef SCHAR_MIN
 #undef SCHAR_MAX
 #undef CHAR_MIN
@@ -99,10 +81,17 @@
 /* POSIX states 9 is the minimum for NL_ARGMAX */
 #define NL_ARGMAX 9
 
-#if INTPTR_MAX == INT64_MAX
+#if __INTPTR_MAX__ == __INT64_MAX__
 # define SSIZE_MAX LONG_MAX
-#elif INTPTR_MAX == INT32_MAX
+#elif __INTPTR_MAX__ == __INT32_MAX__
 # define SSIZE_MAX INT_MAX
+#endif
+
+#if __LONG_MAX__ == __INT32_MAX__
+# define LONG_BIT 32
+#else
+/* Safe assumption */
+# define LONG_BIT 64
 #endif
 
 #define _POSIX_ARG_MAX 4096
