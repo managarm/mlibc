@@ -9,6 +9,7 @@ Numerous ABI breaks. These were not properly logged, and are therefore missing h
 - [#1458](https://github.com/managarm/mlibc/pull/1458): mlibc only defined `fenv_t` for x86(_64) before, new we define it correctly for all supported architectures.
 - [#1458](https://github.com/managarm/mlibc/pull/1458): due to incorrect macro usage, `LONG_BIT` was previously always defined to 64, even on 32-bit architectures. Now, it is set to 32 on 32-bit architectures.
 - [#1458](https://github.com/managarm/mlibc/pull/1458): `PRI*FAST*` macros had values that caused `-Wformat` warnings on 32-bit architectures, which got fixed.
+- [#1458](https://github.com/managarm/mlibc/pull/1458): `ND_NA_FLAG_*` macros were incorrectly not byte-swapped on big-endian architectures.
 
 ## Version 5
 
