@@ -1684,8 +1684,12 @@ static void statfs_to_statvfs(struct statfs *from, struct statvfs *to) {
 		.f_ffree = from->f_ffree,
 		.f_favail = from->f_ffree,
 		.f_fsid = (unsigned long) from->f_fsid.__val[0],
+#if __INTPTR_WIDTH__ == 32
+		.__f_unused = 0,
+#endif
 		.f_flag = from->f_flags,
 		.f_namemax = from->f_namelen,
+		.f_spare = { 0 },
 	};
 }
 
