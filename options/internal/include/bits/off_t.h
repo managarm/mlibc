@@ -3,7 +3,7 @@
 
 #include <bits/types.h>
 
-typedef long off_t;
+typedef __mlibc_int64 off_t;
 typedef __mlibc_int64 off64_t;
 
 #endif /* MLIBC_OFF_T_H */
