@@ -18,6 +18,7 @@ Numerous ABI breaks. These were not properly logged, and are therefore missing h
 - [#1459](https://github.com/managarm/mlibc/pull/1459): fixed incorrect layout of `struct shmid_ds`
 - [#1459](https://github.com/managarm/mlibc/pull/1459): the layouts of `sigcontext`, `ucontext_t` and `mcontext_t` were incorrect in multiple architectures and got fixed.
 - [#1459](https://github.com/managarm/mlibc/pull/1459): the layout of `struct msqid64_ds` was incorrect due to a silently incorrect ifdef, which was fixed but broke ABI.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): the size of the `d_name` member of `dirent` was changed to `NAME_MAX+1` in order to align with the maximum permitted value size by POSIX.
 
 ## Version 5
 
