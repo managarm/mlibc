@@ -91,8 +91,11 @@
 #define CHARCLASS_NAME_MAX 14
 #define RE_DUP_MAX 255
 
+#if !defined(NGROUPS_MAX)
 /* This value is a guaranteed minimum, get the current maximum from sysconf */
 #define NGROUPS_MAX 8
+#endif /* !defined(NGROUPS_MAX) */
+
 /* POSIX states 9 is the minimum for NL_ARGMAX */
 #define NL_ARGMAX 9
 
