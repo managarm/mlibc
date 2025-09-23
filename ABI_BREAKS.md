@@ -2,7 +2,13 @@
 
 This document lists the ABI breaks that were made in each mlibc major version.
 
-## Version 5, 6
+## Version 6
+
+Numerous ABI breaks. These were not properly logged, and are therefore missing here. Pending update, if one ever comes.
+
+- [#1458](https://github.com/managarm/mlibc/pull/1458): mlibc only defined `fenv_t` for x86(_64) before, new we define it correctly for all supported architectures.
+
+## Version 5
 
 Numerous ABI breaks. These were not properly logged, and are therefore missing here. Pending update, if one ever comes.
 
