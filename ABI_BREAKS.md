@@ -20,6 +20,9 @@ Numerous ABI breaks. These were not properly logged, and are therefore missing h
 - [#1459](https://github.com/managarm/mlibc/pull/1459): the layout of `struct msqid64_ds` was incorrect due to a silently incorrect ifdef, which was fixed but broke ABI.
 - [#1460](https://github.com/managarm/mlibc/pull/1460): the size of the `d_name` member of `dirent` was changed to `NAME_MAX+1` in order to align with the maximum permitted value size by POSIX.
 - [#1460](https://github.com/managarm/mlibc/pull/1460): the `wcsxfrm` and `confstr` function had incorrect return types, which were fixed.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): `PRIO_*` values were fixed to align with the values Linux syscalls expect.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): the alignment of `fd_set` was fixed.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): the layout of `struct semid_ds` was fixed.
 
 ## Version 5
 
