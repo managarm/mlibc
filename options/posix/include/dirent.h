@@ -24,7 +24,7 @@ extern "C" {
 /* The character array d_name is of unspecified size, but the number of bytes preceding
  * the terminating null byte will not exceed {NAME_MAX}. */
 #define __MLIBC_DIRENT_BODY ino_t d_ino; \
-			off_t d_off; \
+			off64_t d_off; \
 			unsigned short d_reclen; \
 			unsigned char d_type; \
 			char d_name[NAME_MAX+1];
