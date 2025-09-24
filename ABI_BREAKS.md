@@ -16,6 +16,7 @@ Numerous ABI breaks. These were not properly logged, and are therefore missing h
 - [#1459](https://github.com/managarm/mlibc/pull/1459): some `O_*` and `F_*` macros in `<fcntl.h>` were incorrect on some architectures and were fixed.
 - [#1459](https://github.com/managarm/mlibc/pull/1459): values of `POLLWRNORM` and `POLLWRBAND` were incorrect on m68k
 - [#1459](https://github.com/managarm/mlibc/pull/1459): fixed incorrect layout of `struct shmid_ds`
+- [#1459](https://github.com/managarm/mlibc/pull/1459): the layouts of `sigcontext`, `ucontext_t` and `mcontext_t` were incorrect in multiple architectures and got fixed.
 
 ## Version 5
 
