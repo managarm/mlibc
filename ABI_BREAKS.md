@@ -17,6 +17,7 @@ Numerous ABI breaks. These were not properly logged, and are therefore missing h
 - [#1459](https://github.com/managarm/mlibc/pull/1459): values of `POLLWRNORM` and `POLLWRBAND` were incorrect on m68k
 - [#1459](https://github.com/managarm/mlibc/pull/1459): fixed incorrect layout of `struct shmid_ds`
 - [#1459](https://github.com/managarm/mlibc/pull/1459): the layouts of `sigcontext`, `ucontext_t` and `mcontext_t` were incorrect in multiple architectures and got fixed.
+- [#1459](https://github.com/managarm/mlibc/pull/1459): the layout of `struct msqid64_ds` was incorrect due to a silently incorrect ifdef, which was fixed but broke ABI.
 
 ## Version 5
 

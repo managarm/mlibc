@@ -15,7 +15,7 @@ typedef unsigned long msgqnum_t;
 
 struct msqid64_ds {
 	struct ipc64_perm msg_perm;
-#if (UINTPTR_MAX == UINT64_MAX) /* || x32 ABI */
+#if (__INTPTR_WIDTH__ == 64) /* || x32 ABI */
 	time_t msg_stime;
 	time_t msg_rtime;
 	time_t msg_ctime;
