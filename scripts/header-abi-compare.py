@@ -401,7 +401,7 @@ def parse(
     clang_args += [f"-I{base_dir}"]
     clang_args += [f"-I{base_dir / f"{args.arch}-linux-gnu"}"]
     clang_args += [f"--target={f"{args.arch}-linux-gnu"}"]
-    clang_args += ["-D_GNU_SOURCE", "-Wno-macro-redefined"]
+    clang_args += ["-D_GNU_SOURCE", "-D_FILE_OFFSET_BITS=64", "-Wno-macro-redefined"]
 
     try:
         tu = index.parse(
@@ -607,6 +607,9 @@ def compare_states(a, b):
                 "-o",
                 f"{tempdir.name}/test-a-preprocessed.hpp",
                 f"{tempdir.name}/test-a-primary.hpp",
+                "-D_GNU_SOURCE",
+                "-D_FILE_OFFSET_BITS=64",
+                "-Wno-macro-redefined",
             ],
             capture_output=True,
         )
@@ -624,6 +627,9 @@ def compare_states(a, b):
                 "-o",
                 f"{tempdir.name}/test-b-preprocessed.hpp",
                 f"{tempdir.name}/test-b-primary.hpp",
+                "-D_GNU_SOURCE",
+                "-D_FILE_OFFSET_BITS=64",
+                "-Wno-macro-redefined",
             ],
             capture_output=True,
         )
@@ -680,6 +686,9 @@ def compare_states(a, b):
                 "-o",
                 f"{tempdir.name}/test-a",
                 f"{tempdir.name}/test-a.cpp",
+                "-D_GNU_SOURCE",
+                "-D_FILE_OFFSET_BITS=64",
+                "-Wno-macro-redefined",
             ],
             capture_output=True,
         )
@@ -697,6 +706,9 @@ def compare_states(a, b):
                 "-o",
                 f"{tempdir.name}/test-b",
                 f"{tempdir.name}/test-b.cpp",
+                "-D_GNU_SOURCE",
+                "-D_FILE_OFFSET_BITS=64",
+                "-Wno-macro-redefined",
             ],
             capture_output=True,
         )
