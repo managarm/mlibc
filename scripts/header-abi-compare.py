@@ -671,6 +671,7 @@ def compare_states(a, b):
                 f"{tempdir.name}/test-a-primary.hpp",
                 "-D_GNU_SOURCE",
                 "-D_FILE_OFFSET_BITS=64",
+                "-D_REGEX_LARGE_OFFSETS"
                 "-Wno-macro-redefined",
             ],
             capture_output=True,
@@ -691,6 +692,7 @@ def compare_states(a, b):
                 f"{tempdir.name}/test-b-primary.hpp",
                 "-D_GNU_SOURCE",
                 "-D_FILE_OFFSET_BITS=64",
+                "-D_REGEX_LARGE_OFFSETS"
                 "-Wno-macro-redefined",
             ],
             capture_output=True,
@@ -750,6 +752,7 @@ def compare_states(a, b):
                 f"{tempdir.name}/test-a.cpp",
                 "-D_GNU_SOURCE",
                 "-D_FILE_OFFSET_BITS=64",
+                "-D_REGEX_LARGE_OFFSETS"
                 "-Wno-macro-redefined",
             ],
             capture_output=True,
@@ -770,6 +773,7 @@ def compare_states(a, b):
                 f"{tempdir.name}/test-b.cpp",
                 "-D_GNU_SOURCE",
                 "-D_FILE_OFFSET_BITS=64",
+                "-D_REGEX_LARGE_OFFSETS"
                 "-Wno-macro-redefined",
             ],
             capture_output=True,
