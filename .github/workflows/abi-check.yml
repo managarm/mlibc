@@ -90,7 +90,7 @@ jobs:
       - name: Build mlibc
         run: |
           set -e
-          xbstrap install mlibc-static mlibc-headers-only
+          xbstrap install mlibc-headers-only
         working-directory: build/
 
       - name: Download glibc

@@ -230,6 +230,18 @@ class StructDecl:
 
 
 @dataclass
+class Typedef:
+    name: str
+    location: clang.cindex.SourceLocation
+
+    def __init__(self, c: clang.cindex.Cursor):
+        self.c = c
+        self.name = c.spelling
+        self.location = c.location
+        self.alignment = c.type.get_align()
+        self.size = c.type.get_size()
+
+@dataclass
 class State:
     """
     Represents the parsed state of a set of headers.
@@ -240,6 +252,7 @@ class State:
     macros: typing.Dict[str, MacroDefinition] = field(default_factory=dict)
     enums: typing.Dict[str, EnumDecl] = field(default_factory=dict)
     structs: typing.Dict[str, StructDecl] = field(default_factory=dict)
+    typedefs: typing.Dict[str, StructDecl] = field(default_factory=dict)
 
     def __init__(self, path: pathlib.Path):
         self.path = path
@@ -247,6 +260,7 @@ class State:
         self.macros = dict()
         self.enums = dict()
         self.structs = dict()
+        self.typedefs = dict()
 
 
 @dataclass
@@ -355,6 +369,8 @@ class Comparison:
                         if not children:
                             return
 
+                        state.typedefs.update({cursor.spelling: Typedef(cursor)})
+
                         if children[0].kind == CursorKind.TYPE_REF:
                             child_struct_name = children[0].spelling.removeprefix(
                                 "struct "
@@ -401,7 +417,7 @@ def parse(
     clang_args += [f"-I{base_dir}"]
     clang_args += [f"-I{base_dir / f"{args.arch}-linux-gnu"}"]
     clang_args += [f"--target={f"{args.arch}-linux-gnu"}"]
-    clang_args += ["-D_GNU_SOURCE", "-Wno-macro-redefined"]
+    clang_args += ["-D_GNU_SOURCE", "-D_FILE_OFFSET_BITS=64", "-Wno-macro-redefined"]
 
     try:
         tu = index.parse(
@@ -498,15 +514,30 @@ def compare_states(a, b):
             for s in sorted(b_unique_symbols):
                 print(f"{s} defined in {b.functions[s].location}")
 
+    def loc(s):
+        return f"{s.location.file}:{s.location.line}"
+
     if args.structs:
 
-        def loc(s):
-            return f"{s.location.file}:{s.location.line}"
+        for mapping in config["equivalent_structs"]:
+            (a_name, b_name), = mapping.items()
+            a_name = a_name.removeprefix("struct ")
+            b_name = b_name.removeprefix("struct ")
+            if a_name not in a.structs or b_name not in b.structs:
+                continue
+            if c.is_ignored("structs", [], a_name) or c.is_ignored("structs", [], b_name):
+                continue
+            if (a_name in a.typedefs and c.is_ignored("typedefs", [], a_name)) or (c.is_ignored("typedefs", [], b_name)):
+                continue
+            b.structs[a_name] = b.structs[b_name]
 
         common_structs = sorted(set(a.structs) & set(b.structs))
         lines = []
 
         for name in common_structs:
+            if c.is_ignored("typedefs", [], name):
+                continue;
+
             sa = a.structs[name]
             sb = b.structs[name]
 
@@ -526,6 +557,37 @@ def compare_states(a, b):
             print()
             print(
                 f"checking {len(common_structs)} structs for size/alignment mismatches:"
+            )
+            for line in lines:
+                print(line)
+
+    if args.typedefs:
+        common_typedefs = sorted(set(a.typedefs) & set(b.typedefs))
+        lines = []
+
+        for name in common_typedefs:
+            if (name in a.structs or name in b.structs) and c.is_ignored("structs", [], name):
+                continue;
+
+            ta = a.typedefs[name]
+            tb = b.typedefs[name]
+
+            if ta.alignment != tb.alignment and ta.alignment > 0 and tb.alignment > 0:
+                lines.append(
+                    f"\t{name}: alignment {ta.alignment} vs. {tb.alignment} ({loc(ta)}, {loc(tb)})"
+                )
+                errors_emitted += 1
+
+            if ta.size != tb.size and ta.size > 0 and tb.size > 0:
+                lines.append(
+                    f"\t{name}: size {ta.size} vs. {tb.size} ({loc(ta)}, {loc(tb)})"
+                )
+                errors_emitted += 1
+
+        if lines:
+            print()
+            print(
+                f"checking {len(common_typedefs)} typedefs for size/alignment mismatches:"
             )
             for line in lines:
                 print(line)
@@ -607,6 +669,10 @@ def compare_states(a, b):
                 "-o",
                 f"{tempdir.name}/test-a-preprocessed.hpp",
                 f"{tempdir.name}/test-a-primary.hpp",
+                "-D_GNU_SOURCE",
+                "-D_FILE_OFFSET_BITS=64",
+                "-D_REGEX_LARGE_OFFSETS"
+                "-Wno-macro-redefined",
             ],
             capture_output=True,
         )
@@ -624,6 +690,10 @@ def compare_states(a, b):
                 "-o",
                 f"{tempdir.name}/test-b-preprocessed.hpp",
                 f"{tempdir.name}/test-b-primary.hpp",
+                "-D_GNU_SOURCE",
+                "-D_FILE_OFFSET_BITS=64",
+                "-D_REGEX_LARGE_OFFSETS"
+                "-Wno-macro-redefined",
             ],
             capture_output=True,
         )
@@ -680,6 +750,10 @@ def compare_states(a, b):
                 "-o",
                 f"{tempdir.name}/test-a",
                 f"{tempdir.name}/test-a.cpp",
+                "-D_GNU_SOURCE",
+                "-D_FILE_OFFSET_BITS=64",
+                "-D_REGEX_LARGE_OFFSETS"
+                "-Wno-macro-redefined",
             ],
             capture_output=True,
         )
@@ -697,6 +771,10 @@ def compare_states(a, b):
                 "-o",
                 f"{tempdir.name}/test-b",
                 f"{tempdir.name}/test-b.cpp",
+                "-D_GNU_SOURCE",
+                "-D_FILE_OFFSET_BITS=64",
+                "-D_REGEX_LARGE_OFFSETS"
+                "-Wno-macro-redefined",
             ],
             capture_output=True,
         )
@@ -769,10 +847,13 @@ if __name__ == "__main__":
         "-s", dest="structs", action="store_true", help="check structs"
     )
     argparser.add_argument(
+        "-t", dest="typedefs", action="store_true", help="check structs"
+    )
+    argparser.add_argument(
         "-v", "--verbose", dest="verbose", action="store_true", help="verbose output"
     )
     argparser.add_argument(
-        "-t",
+        "-T",
         dest="dump_tree",
         action="store_true",
         help="dump tree (for debug, extremely verbose)",

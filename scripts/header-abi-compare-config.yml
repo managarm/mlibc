@@ -65,20 +65,30 @@ ignored_structs:
   - ifaddrs
   - lastlog
   - regmatch_t
+  - sem_t
   - sigevent
   - utmp
   - utmpx
-  - wordexp_t
 
 ignored_typedefs:
   # opaque structs where users can't rely on any particular layout
   - cnd_t
+  - fpos_t
+  - jmp_buf
   - mtx_t
   - pthread_attr_t
+  - pthread_barrier_t
   - pthread_cond_t
   - pthread_condattr_t
   - pthread_mutex_t
   - pthread_mutexattr_t
+  - pthread_rwlock_t
+  - pthread_rwlockattr_t
+  - sigjmp_buf
+  - wordexp_t
+
+  # glibc skill issue: regoff_t should be at least ptrdiff_t or ssize_t-sized, but glibc uses int
+  - regmatch_t
 
 # macros we ignore for being libc-level constructs or being allowed to diverge
 ignored_macros:
@@ -131,6 +141,7 @@ ignored_macros:
   - _PATH_VARDB
   - _POSIX_OPEN_MAX
   - PTHREAD_DESTRUCTOR_ITERATIONS
+  - PTHREAD_STACK_MIN
   - MINSIGSTKSZ
   - SIGSTKSZ
   - _PC_FILESIZEBITS
@@ -286,3 +297,7 @@ forced_structs:
   - "__mlibc_mutexattr"
   - "__mlibc_cond"
   - "__mlibc_condattr"
+  - "__ucontext"
+
+forced_typedefs:
+  - "__ucontext"
