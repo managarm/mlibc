@@ -362,11 +362,7 @@ extern int optopt;
 #endif /* !__MLIBC_ABI_ONLY */
 
 /* Non-POSIX functions supported by Linux. */
-#if UINTPTR_MAX == UINT64_MAX
-typedef __mlibc_uint64 useconds_t;
-#else
 typedef __mlibc_uint32 useconds_t;
-#endif
 
 #ifndef __MLIBC_ABI_ONLY
 
