@@ -136,6 +136,6 @@ jobs:
             $extra_args \
             ./glibc/usr/*-linux-gnu/include/ \
             ./packages/mlibc-headers-only/usr/include/ \
-            -Mmfs >> $GITHUB_STEP_SUMMARY 2>&1
+            -Mmfst >> $GITHUB_STEP_SUMMARY 2>&1
           echo '```' >> $GITHUB_STEP_SUMMARY
         working-directory: build/
