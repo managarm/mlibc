@@ -193,6 +193,15 @@ int sys_write(int fd, const void *buffer, size_t size, ssize_t *bytes_written) {
 	return 0;
 }
 
+int sys_writev(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_written) {
+	auto ret = do_cp_syscall(SYS_writev, fd, iovs, iovc);
+	if(int e = sc_error(ret); e)
+		return e;
+	if(bytes_written)
+		*bytes_written = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
 int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	auto ret = do_syscall(SYS_lseek, fd, offset, whence);
 	if(int e = sc_error(ret); e)

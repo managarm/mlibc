@@ -368,6 +368,10 @@ struct ObjectSymbol {
 	const char *getString();
 
 	uintptr_t virtualAddress();
+	size_t size();
+
+	// returns whether the address refers to the symbol
+	bool contains(uintptr_t addr);
 
 private:
 	SharedObject *_object;

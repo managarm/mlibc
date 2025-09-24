@@ -69,7 +69,8 @@ elif host_machine.cpu_family() == 'x86_64'
 	libc_sources += files(
 		'x86_64/signals.S',
 		'x86_64/thread_entry.S',
-		'x86_64/thread.cpp'
+		'x86_64/thread.cpp',
+		'x86_64/assembly-asserts.cpp',
 	)
 elif host_machine.cpu_family() == 'riscv64'
 	libc_sources += files(
