@@ -159,8 +159,10 @@ bool tryReadExactly(int fd, void *data, size_t length) {
 		if(mlibc::sys_read(fd, reinterpret_cast<char *>(data) + offset,
 				length - offset, &chunk))
 			return false;
-		__ensure(chunk > 0);
-		offset += chunk;
+		if (chunk > 0)
+			offset += chunk;
+		else
+			return false;
 	}
 	__ensure(offset == length);
 	return true;
