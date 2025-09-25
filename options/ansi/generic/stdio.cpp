@@ -415,17 +415,31 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 
 		bool allocate_buf = false;
 		auto temp_dest = frg::string<MemoryAllocator>{getAllocator()};
+		auto temp_wdest = frg::basic_string<wchar_t, MemoryAllocator>{getAllocator()};
 		int count = 0;
 
 		const auto append_to_buffer = [&](char c) {
 			if(allocate_buf) {
 				temp_dest += c;
-				count++;
 			} else {
 				char *typed_dest = (char *)dest;
 				if(typed_dest)
-					typed_dest[count++] = c;
+					typed_dest[count] = c;
 			}
+
+			count++;
+		};
+
+		const auto append_to_wbuffer = [&](wchar_t c) {
+			if(allocate_buf) {
+				temp_wdest += c;
+			} else {
+				wchar_t *typed_dest = (wchar_t *)dest;
+				if(typed_dest)
+					typed_dest[count] = c;
+			}
+
+			count++;
 		};
 
 		int width = 0;
@@ -661,13 +675,23 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				EOF_CHECK(c == '\0');
 				while (c && !isspace(c)) {
 					handler.consume();
-					append_to_buffer(c);
+
+					if(type == SCANF_TYPE_L)
+						append_to_wbuffer(c);
+					else
+						append_to_buffer(c);
+
 					c = handler.look_ahead();
 					if (width && count >= width)
 						break;
 				}
 				NOMATCH_CHECK(count == 0);
-				append_to_buffer('\0');
+
+				if(type == SCANF_TYPE_L)
+					append_to_wbuffer(L'\0');
+				else
+					append_to_buffer('\0');
+
 				break;
 			}
 			case 'c': {
@@ -677,9 +701,13 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 					width = 1;
 				while (c && count < width) {
 					handler.consume();
-					append_to_buffer(c);
+
+					if(type == SCANF_TYPE_L)
+						append_to_wbuffer(c);
+					else
+						append_to_buffer(c);
+
 					c = handler.look_ahead();
-					count++;
 				}
 				break;
 			}
@@ -719,11 +747,21 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 					handler.consume();
 					if (!scanset[1 + c])
 						break;
-					append_to_buffer(c);
+
+					if(type == SCANF_TYPE_L)
+						append_to_wbuffer(c);
+					else
+						append_to_buffer(c);
+
 					c = handler.look_ahead();
 				}
 				NOMATCH_CHECK(count == 0);
-				append_to_buffer('\0');
+
+				if(type == SCANF_TYPE_L)
+					append_to_wbuffer(L'\0');
+				else
+					append_to_buffer('\0');
+
 				break;
 			}
 			case 'p': {
@@ -771,12 +809,21 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 		}
 
 		if(allocate_buf && dest) {
-			char *temp = (char *)getAllocator().allocate(temp_dest.size() + 1);
-			memcpy(temp, temp_dest.data(), temp_dest.size());
-			temp[temp_dest.size()] = '\0';
+			if(type == SCANF_TYPE_L) {
+				wchar_t *temp = (wchar_t *)getAllocator().allocate((temp_wdest.size() + 1) * sizeof(wchar_t));
+				memcpy(temp, temp_wdest.data(), temp_wdest.size() * sizeof(wchar_t));
+				temp[temp_wdest.size()] = L'\0';
 
-			char **dest_ptr = (char **)dest;
-			*dest_ptr = temp;
+				wchar_t **dest_ptr = (wchar_t **)dest;
+				*dest_ptr = temp;
+			} else {
+				char *temp = (char *)getAllocator().allocate(temp_dest.size() + 1);
+				memcpy(temp, temp_dest.data(), temp_dest.size());
+				temp[temp_dest.size()] = '\0';
+
+				char **dest_ptr = (char **)dest;
+				*dest_ptr = temp;
+			}
 		}
 
 		if (dest) match_count++;
