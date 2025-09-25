@@ -71,9 +71,40 @@ struct PrintfAgent {
 			_formatter->append(strerror(errno));
 			break;
 		case 'n': {
-			__ensure(szmod == frg::printf_size_mod::default_size);
-			auto p = va_arg(_vsp->args, int *);
-			*p = _formatter->count;
+			switch(szmod) {
+			case frg::printf_size_mod::default_size: {
+				auto p = va_arg(_vsp->args, int *);
+				*p = _formatter->count;
+			} break;
+			case frg::printf_size_mod::char_size: {
+				auto p = va_arg(_vsp->args, signed char *);
+				*p = static_cast<signed char>(_formatter->count);
+			} break;
+			case frg::printf_size_mod::short_size: {
+				auto p = va_arg(_vsp->args, short *);
+				*p = static_cast<short>(_formatter->count);
+			} break;
+			case frg::printf_size_mod::long_size: {
+				auto p = va_arg(_vsp->args, long *);
+				*p = static_cast<long>(_formatter->count);
+			} break;
+			case frg::printf_size_mod::longlong_size: {
+				auto p = va_arg(_vsp->args, long long *);
+				*p = static_cast<long long>(_formatter->count);
+			} break;
+			case frg::printf_size_mod::longdouble_size:
+				__ensure(!"Illegal size for %n printf modifier");
+				break;
+			case frg::printf_size_mod::native_size: {
+				auto p = va_arg(_vsp->args, ptrdiff_t *);
+				*p = static_cast<ptrdiff_t>(_formatter->count);
+			} break;
+			case frg::printf_size_mod::intmax_size: {
+				auto p = va_arg(_vsp->args, intmax_t *);
+				*p = static_cast<intmax_t>(_formatter->count);
+			} break;
+			}
+
 			break;
 		}
 		default:
