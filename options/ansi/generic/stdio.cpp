@@ -531,16 +531,21 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				char c = handler.look_ahead();
 				EOF_CHECK(c == '\0');
 
-				if((*fmt == 'i' || *fmt == 'd') && c == '-') {
+				if(c == '-') {
 					handler.consume();
 					is_negative = true;
-				}
+				} else if(c == '+')
+					handler.consume();
 
 				if(*fmt == 'i' && handler.look_ahead() == '0') {
 					handler.consume();
-					if(handler.look_ahead() == 'x') {
+					c = handler.look_ahead();
+					if(tolower(c) == 'x') {
 						handler.consume();
 						base = 16;
+					} else if(tolower(c) == 'b') {
+						handler.consume();
+						base = 2;
 					} else {
 						base = 8;
 					}
@@ -582,9 +587,18 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 							res = res * 8 + (c - '0');
 							c = handler.look_ahead();
 						}
-						break;
 						// no need for a match check, the starting 0 was already consumed
+						break;
+					case 2:
+						NOMATCH_CHECK(c != '0' && c != '1');
+						while (c == '0' || c == '1') {
+							handler.consume();
+							res = res * 2 + (c - '0');
+							c = handler.look_ahead();
+						}
+						break;
 				}
+
 				if (dest) {
 					if(is_negative)
 						store_int(dest, type, -res);
@@ -594,29 +608,52 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				break;
 			}
 			case 'o': {
+				bool is_negative = false;
 				unsigned long long res = 0;
 				char c = handler.look_ahead();
 				EOF_CHECK(c == '\0');
+
+				if(c == '-') {
+					handler.consume();
+					is_negative = true;
+				} else if(c == '+')
+					handler.consume();
+
+				c = handler.look_ahead();
 				NOMATCH_CHECK(!(c >= '0' && c <= '7'));
 				while (c >= '0' && c <= '7') {
 					handler.consume();
 					res = res * 8 + (c - '0');
 					c = handler.look_ahead();
 				}
-				if (dest)
-					store_int(dest, type, res);
+
+				if (dest) {
+					if(is_negative)
+						store_int(dest, type, -res);
+					else
+						store_int(dest, type, res);
+				}
 				break;
 			}
 			case 'x':
 			case 'X': {
+				bool is_negative = false;
 				unsigned long long res = 0;
 				char c = handler.look_ahead();
 				int count = 0;
 				EOF_CHECK(c == '\0');
+
+				if(c == '-') {
+					handler.consume();
+					is_negative = true;
+				} else if(c == '+')
+					handler.consume();
+
+				c = handler.look_ahead();
 				if (c == '0') {
 					handler.consume();
 					c = handler.look_ahead();
-					if (c == 'x') {
+					if (tolower(c) == 'x') {
 						handler.consume();
 						c = handler.look_ahead();
 					}
@@ -638,19 +675,32 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 					c = handler.look_ahead();
 				}
 				NOMATCH_CHECK(count == 0);
-				if (dest)
-					store_int(dest, type, res);
+
+				if (dest) {
+					if(is_negative)
+						store_int(dest, type, -res);
+					else
+						store_int(dest, type, res);
+				}
 				break;
 			}
 			case 'b': {
+				bool is_negative = false;
 				unsigned long long res = 0;
 				char c = handler.look_ahead();
 				int count = 0;
 				EOF_CHECK(c == '\0');
+
+				if(c == '-') {
+					handler.consume();
+					is_negative = true;
+				} else if(c == '+')
+					handler.consume();
+
 				if (c == '0') {
 					handler.consume();
 					c = handler.look_ahead();
-					if (c == 'b' || c == 'B') {
+					if (tolower(c) == 'b') {
 						handler.consume();
 						c = handler.look_ahead();
 					}
@@ -666,8 +716,13 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 					c = handler.look_ahead();
 				}
 				NOMATCH_CHECK(count == 0);
-				if (dest)
-					store_int(dest, type, res);
+
+				if (dest) {
+					if(is_negative)
+						store_int(dest, type, -res);
+					else
+						store_int(dest, type, res);
+				}
 				break;
 			}
 			case 's': {
@@ -773,7 +828,7 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				if (c == '0') {
 					handler.consume();
 					c = handler.look_ahead();
-					if (c == 'x') {
+					if (tolower(c) == 'x') {
 						handler.consume();
 						c = handler.look_ahead();
 					}
@@ -785,10 +840,10 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 						res = res * 16 + (c - '0');
 					} else if (c >= 'a' && c <= 'f') {
 						handler.consume();
-						res = res * 16 + (c - 'a');
+						res = res * 16 + (c - 'a' + 10);
 					} else if (c >= 'A' && c <= 'F') {
 						handler.consume();
-						res = res * 16 + (c - 'A');
+						res = res * 16 + (c - 'A' + 10);
 					} else {
 						break;
 					}
