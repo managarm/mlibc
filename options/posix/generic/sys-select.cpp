@@ -29,7 +29,7 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 		fd_set *__restrict except_set, struct timeval *__restrict timeout) {
 	int num_events = 0;
 	struct timespec timeouts = {};
-	struct timespec *timeout_ptr = NULL;
+	struct timespec *timeout_ptr = nullptr;
 	if (timeout) {
 		timeouts.tv_sec = timeout->tv_sec;
 		timeouts.tv_nsec = timeout->tv_usec * 1000;
@@ -38,7 +38,7 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 
     MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pselect, -1);
 	if(int e = mlibc::sys_pselect(num_fds, read_set, write_set, except_set,
-				timeout_ptr, NULL, &num_events); e) {
+				timeout_ptr, nullptr, &num_events); e) {
 		errno = e;
 		return -1;
 	}

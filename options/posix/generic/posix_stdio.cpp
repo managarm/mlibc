@@ -49,7 +49,7 @@ int pclose(FILE *stream) {
 
 	fclose(file);
 
-	if (mlibc::sys_waitpid(pid, &status, 0, NULL, &pid) != 0) {
+	if (mlibc::sys_waitpid(pid, &status, 0, nullptr, &pid) != 0) {
 	    errno = ECHILD;
 	    return -1;
 	}
@@ -65,14 +65,14 @@ FILE *popen(const char *command, const char *typestr) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fork && mlibc::sys_dup2 && mlibc::sys_execve &&
 			mlibc::sys_sigprocmask && mlibc::sys_sigaction && mlibc::sys_pipe, nullptr);
 
-	if (typestr == NULL) {
+	if (typestr == nullptr) {
 		errno = EINVAL;
 		return nullptr;
 	}
 
-	if (strstr(typestr, "w") != NULL) {
+	if (strstr(typestr, "w") != nullptr) {
 		is_write = true;
-	} else if (strstr(typestr, "r") != NULL) {
+	} else if (strstr(typestr, "r") != nullptr) {
 		is_write = false;
 	} else {
 		errno = EINVAL;
@@ -80,7 +80,7 @@ FILE *popen(const char *command, const char *typestr) {
 	}
 
 	bool cloexec = false;
-	if (strstr(typestr, "e") != NULL) {
+	if (strstr(typestr, "e") != nullptr) {
 		// Set FD_CLOEXEC on the new file descriptor
 		cloexec = true;
 	}

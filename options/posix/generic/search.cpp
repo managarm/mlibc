@@ -61,11 +61,11 @@ namespace {
 
 		return rotate(nodep, height_a < height_b);
 	}
-}
+} // namespace
 
 void *tsearch(const void *key, void **rootp, int(*compar)(const void *, const void *)) {
 	if (!rootp)
-		return NULL;
+		return nullptr;
 
 	struct node *n = static_cast<struct node *>(*rootp);
 	frg::stack<struct node **, MemoryAllocator> nodes(getAllocator());
@@ -83,9 +83,9 @@ void *tsearch(const void *key, void **rootp, int(*compar)(const void *, const vo
 
 	struct node *insert = static_cast<struct node*>(malloc(sizeof(struct node)));
 	if (!insert)
-		return NULL;
+		return nullptr;
 	insert->key = key;
-	insert->a[0] = insert->a[1] = NULL;
+	insert->a[0] = insert->a[1] = nullptr;
 	insert->h = 1;
 
 	(*nodes.top()) = insert;
@@ -97,7 +97,7 @@ void *tsearch(const void *key, void **rootp, int(*compar)(const void *, const vo
 // This implementation is taken from musl
 void *tfind(const void *key, void *const *rootp, int (*compar)(const void *, const void *)) {
 	if(!rootp)
-		return 0;
+		return nullptr;
 
 	struct node *n = (struct node *)*rootp;
 	for(;;) {
@@ -166,7 +166,7 @@ void *lfind(const void *key, const void *base, size_t *nelp,
 
 namespace {
 	hsearch_data globalTable {};
-}
+} // namespace
 
 int hcreate(size_t num_entries) {
 	return mlibc::hcreate_r(num_entries, &globalTable);

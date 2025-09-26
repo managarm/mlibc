@@ -47,7 +47,7 @@ namespace {
 		static frg::eternal<file_list> list;
 		return list.get();
 	};
-}
+} // namespace
 
 // For pipe-like streams (seek returns ESPIPE), we need to make sure
 // that the buffer only ever contains all-dirty or all-clean data.
@@ -602,7 +602,7 @@ namespace {
 			}
 		}
 	} global_stdio_guard;
-}
+} // namespace
 
 FILE *stderr = &stderr_file;
 FILE *stdin = &stdin_file;
@@ -665,7 +665,7 @@ long ftell(FILE *file_base) {
 }
 
 int fflush_unlocked(FILE *file_base) {
-	if(file_base == NULL) {
+	if(file_base == nullptr) {
 		// Only flush the files but do not close them.
 		for(auto it : mlibc::global_file_list()) {
 			if(int e = it->flush(); e)
@@ -680,7 +680,7 @@ int fflush_unlocked(FILE *file_base) {
 	return 0;
 }
 int fflush(FILE *file_base) {
-	if(file_base == NULL) {
+	if(file_base == nullptr) {
 		// Only flush the files but do not close them.
 		for(auto it : mlibc::global_file_list()) {
 			frg::unique_lock lock(it->_lock);

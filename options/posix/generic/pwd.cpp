@@ -114,7 +114,7 @@ namespace {
 		entry->pw_passwd = nullptr;
 		entry->pw_shell = nullptr;
 	}
-}
+} // namespace
 
 struct passwd *getpwent(void) {
 	static passwd entry;

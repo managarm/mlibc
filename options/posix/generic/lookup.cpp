@@ -271,7 +271,7 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 	char response[256];
 	ssize_t rlen;
 	int num_ans = 0;
-	while ((rlen = recvfrom(fd, response, 256, 0, NULL, NULL)) >= 0) {
+	while ((rlen = recvfrom(fd, response, 256, 0, nullptr, nullptr)) >= 0) {
 		if ((size_t)rlen < sizeof(struct dns_header))
 			continue;
 		auto response_header = reinterpret_cast<struct dns_header*>(response);

@@ -24,4 +24,4 @@ GlobalConfig::GlobalConfig() {
 	debugMalloc = envEnabled("MLIBC_DEBUG_MALLOC");
 }
 
-}
+} // namespace mlibc

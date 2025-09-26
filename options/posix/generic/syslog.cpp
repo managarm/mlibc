@@ -101,7 +101,7 @@ static void _vsyslog(int priority, const char *message, va_list ap) {
 	if(!(priority & LOG_FACMASK))
 		priority |= log_facility;
 
-	now = time(NULL);
+	now = time(nullptr);
 	gmtime_r(&now, &tm);
 	strftime(timebuf, sizeof timebuf, "%b %e %T", &tm);
 
@@ -147,5 +147,5 @@ void vsyslog(int priority, const char *message, va_list ap) {
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	frg::unique_lock<FutexLock> lock(__syslog_lock);
 	_vsyslog(priority, message, ap);
-	pthread_setcancelstate(cs, 0);
+	pthread_setcancelstate(cs, nullptr);
 }

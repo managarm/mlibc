@@ -15,7 +15,7 @@ char *if_indextoname(unsigned int index, char *name) {
 
 	if(int e = sysdep(index, name); e) {
 		errno = e;
-		return NULL;
+		return nullptr;
 	}
 
 	return name;
@@ -24,7 +24,7 @@ char *if_indextoname(unsigned int index, char *name) {
 struct if_nameindex *if_nameindex(void) {
 	mlibc::infoLogger() << "mlibc: if_nameindex() is a no-op" << frg::endlog;
 	errno = ENOSYS;
-	return NULL;
+	return nullptr;
 }
 
 unsigned int if_nametoindex(const char *name) {

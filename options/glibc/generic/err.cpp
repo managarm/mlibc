@@ -12,7 +12,7 @@ void vwarn(const char *fmt, va_list params) {
 		vfprintf(stderr, fmt, params);
                 fwrite(": ", 1, 2, stderr);
 	}
-	perror(NULL);
+	perror(nullptr);
 }
 
 void vwarnx(const char *fmt, va_list params) {

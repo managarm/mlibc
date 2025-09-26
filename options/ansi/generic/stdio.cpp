@@ -273,7 +273,7 @@ void setbuf(FILE *__restrict stream, char *__restrict buffer) {
 // setvbuf() is provided by the POSIX sublibrary
 
 void setlinebuf(FILE *stream) {
-	setvbuf(stream, NULL, _IOLBF, 0);
+	setvbuf(stream, nullptr, _IOLBF, 0);
 }
 
 void setbuffer(FILE *f, char *buf, size_t size) {
@@ -315,7 +315,7 @@ namespace {
 		SCANF_TYPE_SIZE_T,
 		SCANF_TYPE_INT
 	};
-}
+} // namespace
 
 static void store_int(void *dest, unsigned int size, unsigned long long i) {
 	switch (size) {
@@ -370,7 +370,7 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 			continue;
 		}
 
-		void *dest = NULL;
+		void *dest = nullptr;
 		/* %n$ format */
 		if (isdigit(*fmt) && fmt[1] == '$') {
 			/* TODO: dest = get_arg_at_pos(args, *fmt -'0'); */
