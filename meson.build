@@ -498,6 +498,7 @@ if not headers_only
 
 	libc_cpp_args = [
 		'-Wno-unknown-pragmas',
+		'-DFRG_HAVE_LIBC',
 	]
 
 	if c_compiler.get_id() == 'clang'
@@ -519,7 +520,6 @@ if not headers_only
 	if library_type in ['static', 'both']
 		static_cpp_args = [
 			'-DMLIBC_STATIC_BUILD',
-			'-DFRIGG_HAVE_LIBC',
 		]
 		ld_static_lib = static_library(ld_library_name, rtld_sources,
 			name_prefix: '',
