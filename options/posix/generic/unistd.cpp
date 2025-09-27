@@ -65,7 +65,7 @@ int chown(const char *path, uid_t uid, gid_t gid) {
 	return 0;
 }
 
-ssize_t confstr(int name, char *buf, size_t len) {
+size_t confstr(int name, char *buf, size_t len) {
 	const char *str = "";
 	if (name == _CS_PATH) {
 		str = "/bin:/usr/bin";

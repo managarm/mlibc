@@ -45,7 +45,7 @@ char *tempnam(const char *__dir, const char *__pfx);
 /* GNU extensions */
 typedef ssize_t (cookie_read_function_t)(void *__cookie, char *__buffer, size_t __size);
 typedef ssize_t (cookie_write_function_t)(void *__cookie, const char *__buffer, size_t __size);
-typedef int (cookie_seek_function_t)(void *__cookie, off_t *, int);
+typedef int (cookie_seek_function_t)(void *__cookie, off64_t *, int);
 typedef int (cookie_close_function_t)(void *__cookie);
 
 typedef struct _IO_cookie_io_functions_t {
