@@ -208,7 +208,7 @@ int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__
 			struct sigaction sa{};
 			sa.sa_flags = SA_SIGINFO | SA_RESTART;
 			sa.sa_sigaction = timer_handle;
-			sys_sigaction(SIGTIMER, &sa, 0);
+			sys_sigaction(SIGTIMER, &sa, nullptr);
 			timerThreadInit = true;
 		}
 

@@ -2697,7 +2697,7 @@ int sys_madvise(void *, size_t, int) {
 
 int sys_ptsname(int fd, char *buffer, size_t length) {
 	int index;
-	if (int e = sys_ioctl(fd, TIOCGPTN, &index, NULL); e)
+	if (int e = sys_ioctl(fd, TIOCGPTN, &index, nullptr); e)
 		return e;
 	if ((size_t)snprintf(buffer, length, "/dev/pts/%d", index) >= length) {
 		return ERANGE;
@@ -2708,7 +2708,7 @@ int sys_ptsname(int fd, char *buffer, size_t length) {
 int sys_unlockpt(int fd) {
 	int unlock = 0;
 
-	if (int e = sys_ioctl(fd, TIOCSPTLCK, &unlock, NULL); e)
+	if (int e = sys_ioctl(fd, TIOCSPTLCK, &unlock, nullptr); e)
 		return e;
 
 	return 0;

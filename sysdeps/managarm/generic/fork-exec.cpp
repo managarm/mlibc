@@ -744,13 +744,13 @@ int sys_thread_setname(void *tcb, const char *name) {
 		return e;
 	}
 
-	if (int e = sys_write(fd, name, strlen(name) + 1, NULL)) {
+	if (int e = sys_write(fd, name, strlen(name) + 1, nullptr)) {
 		return e;
 	}
 
 	sys_close(fd);
 
-	pthread_setcancelstate(cs, 0);
+	pthread_setcancelstate(cs, nullptr);
 
 	return 0;
 }
@@ -779,7 +779,7 @@ int sys_thread_getname(void *tcb, char *name, size_t size) {
 	name[real_size - 1] = 0;
 	sys_close(fd);
 
-	pthread_setcancelstate(cs, 0);
+	pthread_setcancelstate(cs, nullptr);
 
 	if (static_cast<ssize_t>(size) <= real_size) {
 		return ERANGE;
