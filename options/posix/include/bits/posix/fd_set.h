@@ -3,7 +3,7 @@
 
 #include <bits/types.h>
 
-typedef struct {
+typedef struct __attribute__((__aligned__(__alignof__(long)))) {
 	__mlibc_uint8 fds_bits[128];
 } fd_set;
 

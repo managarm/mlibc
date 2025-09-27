@@ -348,8 +348,29 @@ struct sigcontext {
 typedef struct {
 	unsigned long gregs[NGREG];
 	struct _fpstate *fpregs;
+#if defined(__x86_64__)
 	unsigned long __reserved1[8];
+#elif defined(__i386__)
+	unsigned long oldmask;
+	unsigned long cr2;
+#endif
 } mcontext_t;
+
+#if defined(__i386__)
+
+struct _ucontext_fpstate {
+	uint32_t cw;
+	uint32_t sw;
+	uint32_t tag;
+	uint32_t ipoff;
+	uint32_t cssel;
+	uint32_t dataoff;
+	uint32_t datasel;
+	struct _fpreg _st[8];
+	uint16_t status;
+};
+
+#endif
 
 typedef struct __ucontext {
 	unsigned long uc_flags;
@@ -357,6 +378,12 @@ typedef struct __ucontext {
 	stack_t uc_stack;
 	mcontext_t uc_mcontext;
 	sigset_t uc_sigmask;
+#if defined(__x86_64__)
+	struct _fpstate __fpregs_mem;
+#else
+	struct _ucontext_fpstate __fpregs_mem;
+#endif
+	unsigned long __ssp[4];
 } ucontext_t;
 
 #elif defined(__riscv) && __riscv_xlen == 64
@@ -410,7 +437,7 @@ typedef struct sigcontext {
 
 typedef struct __ucontext {
 	unsigned long uc_flags;
-	struct ucontext	*uc_link;
+	struct __ucontext *uc_link;
 	stack_t uc_stack;
 	sigset_t uc_sigmask;
 #pragma GCC diagnostic push
@@ -430,7 +457,7 @@ typedef struct sigcontext {
 	uint64_t sp;
 	uint64_t pc;
 	uint64_t pstate;
-	uint8_t __reserved[4096];
+	uint8_t __reserved[4096]  __attribute__ ((__aligned__ (16)));
 } mcontext_t;
 
 #define FPSIMD_MAGIC 0x46508001
@@ -611,14 +638,17 @@ struct sigcontext {
 	unsigned long sc_pc;
 	unsigned long sc_regs[32];
 	unsigned sc_flags;
-	unsigned long sc_extcontext[1] __attribute__((__aligned__(16)));
+	__extension__ unsigned long sc_extcontext[0] __attribute__((__aligned__(16)));
 };
 
 typedef struct {
 	unsigned long pc;
 	unsigned long gregs[32];
 	unsigned flags;
-	unsigned long extcontext[1] __attribute__((__aligned__(16)));
+/* this is just plain incompatible with pre-C99; hiding this does not change size or alignment */
+#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
+	__extension__ unsigned long extcontext[0] __attribute__((__aligned__(16)));
+#endif
 } mcontext_t;
 
 struct sigaltstack {
@@ -633,7 +663,7 @@ typedef struct __ucontext {
 	stack_t uc_stack;
 	sigset_t uc_sigmask;
 	long __uc_pad;
-	mcontext_t uc_mcontext;
+	__extension__ mcontext_t uc_mcontext;
 } ucontext_t;
 
 #else

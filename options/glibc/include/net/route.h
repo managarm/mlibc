@@ -20,7 +20,11 @@ struct rtentry {
 	unsigned long int rt_pad3;
 	unsigned char rt_tos;
 	unsigned char rt_class;
+#if __INTPTR_WIDTH__ == 64
 	short int rt_pad4[3];
+#else
+	short int rt_pad4;
+#endif
 	short int rt_metric;
 	char *rt_dev;
 	unsigned long int rt_mtu;

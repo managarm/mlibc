@@ -71,7 +71,7 @@ wchar_t *wcsncat(wchar_t *__restrict __dest, const wchar_t *__restrict __src, si
 int wcscmp(const wchar_t *__a, const wchar_t *__b);
 int wcscoll(const wchar_t *__a, const wchar_t *__b);
 int wcsncmp(const wchar_t *__a, const wchar_t *__b, size_t __size);
-int wcsxfrm(wchar_t *__restrict __dest, const wchar_t *__restrict __src, size_t __size);
+size_t wcsxfrm(wchar_t *__restrict __dest, const wchar_t *__restrict __src, size_t __size);
 int wmemcmp(const wchar_t *__a, const wchar_t *__b, size_t __size);
 
 wchar_t *wcschr(const wchar_t *__s, wchar_t __wc);
