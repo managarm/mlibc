@@ -53,7 +53,7 @@ size_t strlen(const char *__s);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
-#if __MLIBC_POSIX_OPTION && (defined(_BSD_SOURCE) || defined(_GNU_SOURCE))
+#if __MLIBC_POSIX_OPTION && defined(_DEFAULT_SOURCE)
 #include <strings.h>
 #endif
 
