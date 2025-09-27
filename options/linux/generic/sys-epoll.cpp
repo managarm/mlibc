@@ -49,7 +49,7 @@ int epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 int epoll_wait(int epfd, struct epoll_event *evnts, int n, int timeout) {
 	int raised;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_epoll_pwait, -1);
-	if(int e = mlibc::sys_epoll_pwait(epfd, evnts, n, timeout, NULL, &raised)) {
+	if(int e = mlibc::sys_epoll_pwait(epfd, evnts, n, timeout, nullptr, &raised)) {
 		errno = e;
 		return -1;
 	}

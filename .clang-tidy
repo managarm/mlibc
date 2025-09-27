@@ -1,0 +1,21 @@
+---
+Checks:
+  - '-*'
+  - 'bugprone-use-after-move'
+  - 'llvm-namespace-comment'
+  - 'modernize-make-shared'
+  - 'modernize-type-traits'
+  - 'modernize-unary-static-assert'
+  - 'modernize-use-nullptr'
+  - 'modernize-use-override'
+  - 'readability-enum-initial-value'
+  - 'readability-redundant-smartptr-get'
+HeaderFileExtensions:
+  - h
+  - hpp
+ImplementationFileExtensions:
+  - c
+  - cpp
+FormatStyle: none
+SystemHeaders: false
+UseColor: true

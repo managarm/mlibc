@@ -56,7 +56,7 @@ static int lookup_serv_file_port(service_result &buf, int proto, int port) {
 			*pos = '\0';
 		}
 
-		char *end = NULL;
+		char *end = nullptr;
 		for (pos = line; *pos; pos++) {
 			for (; isalpha(*pos); pos++);
 			int rport = strtoul(pos, &end, 10);
@@ -134,7 +134,7 @@ static int lookup_serv_file_name(service_result &buf, const char *name,
 		for(pos = line; *pos && !isspace(*pos); pos++)
 			;
 
-		char *end = NULL;
+		char *end = nullptr;
 		int port = strtoul(pos, &end, 10);
 		if (port > 65535 || end == pos)
 			continue;

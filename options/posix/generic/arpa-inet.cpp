@@ -181,11 +181,11 @@ const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
 		}
 		default:
 			errno = EAFNOSUPPORT;
-			return NULL;
+			return nullptr;
 	}
 
 	errno = ENOSPC;
-	return NULL;
+	return nullptr;
 }
 
 int inet_pton(int af, const char *__restrict src, void *__restrict dst) {

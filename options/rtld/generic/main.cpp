@@ -36,7 +36,7 @@ extern HIDDEN elf_dyn _DYNAMIC[];
 namespace mlibc {
 	// Declared in options/internal/mlibc/tcb.hpp.
 	bool tcb_available_flag = false;
-}
+} // namespace mlibc
 
 mlibc::RtldConfig rtldConfig;
 
@@ -298,10 +298,10 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	libraryPaths.initialize(getAllocator());
 	preloads.initialize(getAllocator());
 
-	void *phdr_pointer = 0;
+	void *phdr_pointer = nullptr;
 	size_t phdr_entry_size = 0;
 	size_t phdr_count = 0;
-	void *entry_pointer = 0;
+	void *entry_pointer = nullptr;
 	void *stack_entropy = nullptr;
 
 	const char *execfn = "(executable)";
@@ -322,8 +322,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 #ifdef __x86_64__
 	// These entries are reserved on x86_64.
 	// TODO: Use a fake PLT stub that reports an error message?
-	_GLOBAL_OFFSET_TABLE_[1] = 0;
-	_GLOBAL_OFFSET_TABLE_[2] = 0;
+	_GLOBAL_OFFSET_TABLE_[1] = nullptr;
+	_GLOBAL_OFFSET_TABLE_[2] = nullptr;
 #endif
 
 	// Validate our own dynamic section.
@@ -872,7 +872,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 				info->file = object->path.data();
 				info->base = reinterpret_cast<void *>(object->baseAddress);
 				info->symbol = nullptr;
-				info->address = 0;
+				info->address = nullptr;
 				info->elf_symbol = nullptr;
 				info->link_map = &object->linkMap;
 				return 0;

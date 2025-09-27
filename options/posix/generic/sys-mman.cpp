@@ -100,17 +100,17 @@ namespace {
 		if(*(p = strchrnul(name, '/')) || p == name ||
 			(p - name <= 2 && name[0] == '.' && p[-1] == '.')) {
 			errno = EINVAL;
-			return 0;
+			return nullptr;
 		}
 		if(p - name > NAME_MAX) {
 			errno = ENAMETOOLONG;
-			return 0;
+			return nullptr;
 		}
 		memcpy(buf, "/dev/shm/", 9);
 		memcpy(buf + 9, name, p - name + 1);
 		return buf;
 	}
-}
+} // namespace
 
 int shm_open(const char *name, int flags, mode_t mode) {
 	int cs;
@@ -119,7 +119,7 @@ int shm_open(const char *name, int flags, mode_t mode) {
 		return -1;
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	int fd = open(name, flags | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK, mode);
-	pthread_setcancelstate(cs, 0);
+	pthread_setcancelstate(cs, nullptr);
 	return fd;
 }
 

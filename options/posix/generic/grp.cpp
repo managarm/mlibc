@@ -180,7 +180,7 @@ namespace {
 		__ensure(gr_name <= buffer + size);
 		return 0;
 	}
-}
+} // namespace
 
 void endgrent(void) {
 	close_global_file();

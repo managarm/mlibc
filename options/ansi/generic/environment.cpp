@@ -11,7 +11,7 @@
 
 namespace {
 	char *empty_environment[] = { nullptr };
-}
+} // namespace
 
 char **environ = empty_environment;
 

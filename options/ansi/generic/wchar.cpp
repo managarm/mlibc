@@ -17,7 +17,7 @@ namespace {
 	__mlibc_mbstate mbrtowc_state = __MLIBC_MBSTATE_INITIALIZER;
 	__mlibc_mbstate mbsrtowcs_state = __MLIBC_MBSTATE_INITIALIZER;
 	__mlibc_mbstate wcsrtombs_state = __MLIBC_MBSTATE_INITIALIZER;
-}
+} // namespace
 
 wint_t btowc(int c) {
 	if(c == EOF)
@@ -723,7 +723,7 @@ bool intable(struct width_interval* table, int table_length, int c) {
 	return false;
 }
 
-}
+} // namespace
 
 int wcwidth(wchar_t ucs) {
 	// NOTE: created by hand, there isn't anything identifiable other than
@@ -760,7 +760,7 @@ wchar_t *wcsdup(const wchar_t *s) {
 	size_t len = wcslen(s);
 	wchar_t *ret = (wchar_t *) malloc(sizeof(wchar_t) * (len + 1));
 	if(!ret)
-		return NULL;
+		return nullptr;
 	wmemcpy(ret, s, len + 1);
 	return ret;
 }

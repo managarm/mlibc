@@ -137,7 +137,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 		state->input_index++;
 
 	if(input[state->input_index] == '\0')
-		return NULL;
+		return nullptr;
 
 	while(format[state->format_index] != '\0'){
 		if(format[state->format_index] != '%'){
@@ -147,7 +147,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 			}
 			else {
 				if(format[state->format_index] != input[state->input_index++])
-					return NULL;
+					return nullptr;
 			}
 			state->format_index++;
 			continue;
@@ -156,13 +156,13 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 		switch(format[state->format_index]){
 			case '%':
 				if(input[state->input_index++] != '%')
-					return NULL;
+					return nullptr;
 				break;
 			case 'a':
 			case 'A': {
 				if (!matchLanginfoItem(DAY_1, 7, tm->tm_wday, state->has_day_of_week) && \
 					!matchLanginfoItem(ABDAY_1, 7, tm->tm_wday, state->has_day_of_week))
-					return NULL;
+					return nullptr;
 				break;
 			}
 			case 'b':
@@ -170,7 +170,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 			case 'h': {
 				if (!matchLanginfoItem(MON_1, 12, tm->tm_mon, state->has_month) && \
 					!matchLanginfoItem(ABMON_1, 12, tm->tm_mon, state->has_month))
-					return NULL;
+					return nullptr;
 				break;
 			}
 			case 'c':
@@ -181,7 +181,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				int product = 0, n = 0;
 				sscanf(&input[state->input_index], "%d%n", &product, &n);
 				if(n == 0 || 2 < n)
-					return NULL;
+					return nullptr;
 				state->input_index += n;
 				state->century = product;
 				state->has_century = true;
@@ -190,7 +190,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 			case 'd': //`%d` and `%e` are equivalent
 			case 'e': {
 				if(!matchNumericRange(1, 31, tm->tm_mday, &state->has_day_of_month))
-					return NULL;
+					return nullptr;
 				break;
 			}
 			case 'D': { //equivalent to `%m/%d/%y`
@@ -198,37 +198,37 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				state->format_index = 0;
 
 				char *result = strptime_internal(input, "%m/%d/%y", tm, state);
-				if(result == NULL)
-					return NULL;
+				if(result == nullptr)
+					return nullptr;
 
 				state->format_index = pre_fi;
 				break;
 			}
 			case 'H': {
 				if(!matchNumericRange(0, 23, tm->tm_hour, nullptr))
-					return NULL;
+					return nullptr;
 				break;
 			}
 			case 'I': {
 				if(!matchNumericRange(1, 12, tm->tm_hour, nullptr))
-					return NULL;
+					return nullptr;
 				break;
 			}
 			case 'j': {
 				if(!matchNumericRange(1, 366, tm->tm_yday, &state->has_day_of_year))
-					return NULL;
+					return nullptr;
 				tm->tm_yday--;
 				break;
 			}
 			case 'm': {
 				if(!matchNumericRange(1, 12, tm->tm_mon, &state->has_month))
-					return NULL;
+					return nullptr;
 				tm->tm_mon--;
 				break;
 			}
 			case 'M': {
 				if(!matchNumericRange(0, 59, tm->tm_min, nullptr))
-					return NULL;
+					return nullptr;
 				break;
 			}
 			case 'n':
@@ -237,7 +237,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				while(isspace(input[state->input_index++]))
 					n++;
 				if(n == 0)
-					return NULL;
+					return nullptr;
 				state->input_index--;
 				break;
 			}
@@ -264,8 +264,8 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				state->format_index = 0;
 
 				char *result = strptime_internal(input, "%I:%M:%S %p", tm, state);
-				if(result == NULL)
-					return NULL;
+				if(result == nullptr)
+					return nullptr;
 
 				state->format_index = pre_fi;
 				break;
@@ -275,15 +275,15 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				state->format_index = 0;
 
 				char *result = strptime_internal(input, "%H:%M", tm, state);
-				if(result == NULL)
-					return NULL;
+				if(result == nullptr)
+					return nullptr;
 
 				state->format_index = pre_fi;
 				break;
 			}
 			case 'S': {
 				if(!matchNumericRange(0, 60, tm->tm_sec, nullptr))
-					return NULL;
+					return nullptr;
 				break;
 			}
 			case 'T': { //equivalent to `%H:%M:%S`
@@ -291,8 +291,8 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				state->format_index = 0;
 
 				char *result = strptime_internal(input, "%H:%M:%S", tm, state);
-				if(result == NULL)
-					return NULL;
+				if(result == nullptr)
+					return nullptr;
 
 				state->format_index = pre_fi;
 				break;
@@ -305,7 +305,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				int product = 0, n = 0;
 				sscanf(&input[state->input_index], "%d%n", &product, &n);
 				if(n == 0 || 1 < n)
-					return NULL;
+					return nullptr;
 				state->input_index += n;
 				tm->tm_wday = product;
 				state->has_day_of_week = true;
@@ -327,7 +327,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				int product = 0, n = 0;
 				sscanf(&input[state->input_index], "%d%n", &product, &n);
 				if(n == 0 || 2 < n)
-					return NULL;
+					return nullptr;
 				if(product < 69)
 					product += 100;
 				state->input_index += n;
@@ -339,7 +339,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				int product = 0, n = 0;
 				sscanf(&input[state->input_index], "%d%n", &product, &n);
 				if(n == 0 || 4 < n)
-					return NULL;
+					return nullptr;
 				state->input_index += n;
 				tm->tm_year = product - 1900;
 				state->has_year = true;
@@ -354,8 +354,8 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				state->format_index = 0;
 
 				char *result = strptime_internal(input, "%Y-%m-%d", tm, state);
-				if(result == NULL)
-					return NULL;
+				if(result == nullptr)
+					return nullptr;
 
 				state->format_index = pre_fi;
 				break;
@@ -370,7 +370,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				break;
 			case 'u': {
 				if(!matchNumericRange(1, 7, tm->tm_wday, nullptr))
-					return NULL;
+					return nullptr;
 				tm->tm_wday--;
 				break;
 			}
@@ -446,7 +446,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				*/
 			}
 			default:
-				return NULL;
+				return nullptr;
 		}
 		state->format_index++;
 	}
@@ -461,8 +461,8 @@ char *strptime(const char *__restrict s, const char *__restrict format, struct t
 
 	char *result = strptime_internal(s, format, tm, &state);
 
-	if(result == NULL)
-		return NULL;
+	if(result == nullptr)
+		return nullptr;
 
 	if(state.has_century && !state.full_year_given){
 		int full_year = state.century * 100;

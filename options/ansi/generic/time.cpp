@@ -73,7 +73,7 @@ char *asctime(const struct tm *ptr) {
 char *ctime(const time_t *timer) {
 	struct tm *tm = localtime(timer);
 	if(!tm) {
-		return 0;
+		return nullptr;
 	}
 	return asctime(tm);
 }
@@ -473,7 +473,7 @@ struct[[gnu::packed]] ttinfo {
 	unsigned char tt_abbrind;
 };
 
-}
+} // namespace
 
 // TODO(geert): this function doesn't parse the TZ environment variable
 // or properly handle the case where information might be missing from /etc/localtime

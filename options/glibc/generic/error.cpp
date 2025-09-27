@@ -7,7 +7,7 @@
 
 unsigned int error_message_count = 0;
 int error_one_per_line = 0;
-void (*error_print_progname)(void) = NULL;
+void (*error_print_progname)(void) = nullptr;
 
 void error(int status, int errnum, const char *format, ...) {
 	va_list args;

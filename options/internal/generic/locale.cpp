@@ -96,4 +96,4 @@ char *nl_langinfo(nl_item item) {
 	}
 }
 
-}
+} // namespace mlibc

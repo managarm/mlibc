@@ -37,7 +37,7 @@ void *dlopen(const char *file, int flags) {
 [[gnu::noinline]]
 void *dlsym(void *__restrict handle, const char *__restrict string) {
 	auto ra = __builtin_extract_return_addr(__builtin_return_address(0));
-	return __dlapi_resolve(handle, string, ra, NULL);
+	return __dlapi_resolve(handle, string, ra, nullptr);
 }
 
 [[gnu::noinline]]

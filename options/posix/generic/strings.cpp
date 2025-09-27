@@ -26,7 +26,7 @@ namespace {
 		return 0;
 	}
 
-}
+} // namespace
 
 // On RISC-V, __builtin_ffs just calls into ffs, so we can't use it here.
 #if defined(__has_builtin) && !defined(__riscv)

@@ -149,7 +149,7 @@ void *memrchr(const void *m, int c, size_t n) {
 		if(s[n] == c)
 			return (void *)(s + n);
 	}
-	return 0;
+	return nullptr;
 }
 
 char *strerror_l(int errnum, locale_t) {
