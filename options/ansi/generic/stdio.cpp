@@ -856,9 +856,35 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				break;
 			}
 			case 'n': {
-				int *typed_dest = (int *)dest;
-				if (typed_dest)
-					*typed_dest = handler.num_consumed;
+				if(dest) {
+					switch(type) {
+					case SCANF_TYPE_CHAR:
+						*(signed char *)dest = (signed char)handler.num_consumed;
+						break;
+					case SCANF_TYPE_SHORT:
+						*(short *)dest = (short)handler.num_consumed;
+						break;
+					case SCANF_TYPE_INTMAX:
+						*(intmax_t *)dest = (intmax_t)handler.num_consumed;
+						break;
+					case SCANF_TYPE_L:
+						*(long *)dest = (long)handler.num_consumed;
+						break;
+					case SCANF_TYPE_LL:
+						*(long long *)dest = (long long)handler.num_consumed;
+						break;
+					case SCANF_TYPE_PTRDIFF:
+						*(ptrdiff_t *)dest = (ptrdiff_t)handler.num_consumed;
+						break;
+					case SCANF_TYPE_SIZE_T:
+						*(size_t *)dest = (size_t)handler.num_consumed;
+						break;
+					case SCANF_TYPE_INT:
+						*(int *)dest = (int)handler.num_consumed;
+						break;
+					}
+				}
+
 				continue;
 			}
 		}
