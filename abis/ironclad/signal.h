@@ -160,7 +160,6 @@ typedef struct {
 } mcontext_t;
 
 typedef struct __ucontext {
-	unsigned long uc_flags;
 	struct __ucontext *uc_link;
 	stack_t uc_stack;
 	mcontext_t uc_mcontext;

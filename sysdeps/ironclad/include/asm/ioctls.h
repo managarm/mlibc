@@ -98,6 +98,6 @@
 #define TIOCPKT_DOSTOP           32
 #define TIOCPKT_IOCTL            64
 #define TIOCSER_TEMT	         0x01
-#define DEV_UUID                 0x9821
+#define DEV_PARTUUID             0x9821
 
 #endif /* _ASM_IOCTLS_H */

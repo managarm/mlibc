@@ -111,10 +111,11 @@
 #define SYSCALL_CREATE_THREAD       100
 #define SYSCALL_SIGNAL_RETURN       101
 #define SYSCALL_SIGALTSTACK         102
-#define SYSCALL_SIGSUSPEND          103
+#define SYSCALL_RECVSOCKCTL         103
 #define SYSCALL_LISTMOUNTS          104
 #define SYSCALL_UNAME               105
 #define SYSCALL_LISTTHREADS         106
+#define SYSCALL_SENDSOCKCTL         107
 #define SYSCALL_LISTNETINTER        108
 #define SYSCALL_DUMPLOGS            109
 #define SYSCALL_LISTFLOCKS          110
@@ -146,6 +147,8 @@
 #define SYSCALL_NVMM_VCPU_DUMP      136
 #define SYSCALL_NVMM_VCPU_STOP      137
 #define SYSCALL_SETSID              138
+#define SYSCALL_PCI_READ            139
+#define SYSCALL_PCI_WRITE           140
 
 #if defined(__x86_64__)
 #define SYSCALL0(NUM) ({ \
