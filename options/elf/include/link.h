@@ -29,7 +29,7 @@ struct dl_phdr_info {
 };
 
 struct link_map {
-	Elf64_Addr l_addr;
+	ElfW(Addr) l_addr;
 	char *l_name;
 	ElfW(Dyn) *l_ld;
 	struct link_map *l_next, *l_prev;
@@ -38,9 +38,9 @@ struct link_map {
 struct r_debug {
 	int r_version;
 	struct link_map *r_map;
-	Elf64_Addr r_brk;
+	ElfW(Addr) r_brk;
 	enum { RT_CONSISTENT, RT_ADD, RT_DELETE } r_state;
-	Elf64_Addr r_ldbase;
+	ElfW(Addr) r_ldbase;
 };
 
 #ifndef __MLIBC_ABI_ONLY
