@@ -189,9 +189,15 @@ struct nd_redirect {
 #define nd_rd_code nd_rd_hdr.icmp6_code
 #define nd_rd_cksum nd_rd_hdr.icmp6_cksum
 
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #define ND_NA_FLAG_OVERRIDE 0x00000020
 #define ND_NA_FLAG_SOLICITED 0x00000040
 #define ND_NA_FLAG_ROUTER 0x00000080
+#else
+#define ND_NA_FLAG_OVERRIDE 0x20000000
+#define ND_NA_FLAG_SOLICITED 0x40000000
+#define ND_NA_FLAG_ROUTER 0x80000000
+#endif
 
 struct nd_opt_home_agent_info {
 	uint8_t nd_opt_home_agent_info_type;
