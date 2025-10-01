@@ -628,8 +628,8 @@ int sys_dup(int fd, int flags, int *newfd) {
 
 int sys_dup2(int fd, int flags, int newfd) {
 	int ret = sys_close(newfd);
-	if (ret != 0 && ret != EBADFD) {
-		return EBADFD;
+	if (ret != 0 && ret != EBADF) {
+		return EBADF;
 	}
 
 	int errno;
@@ -640,7 +640,7 @@ int sys_dup2(int fd, int flags, int newfd) {
 	}
 
 	if (ret != -1 && ret != newfd) {
-		return EBADFD;
+		return EBADF;
 	}
 
 	if (errno == 0) {
