@@ -329,9 +329,9 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 
 		return resp.error() | toErrno;
 	} else {
-		mlibc::panicLogger() << "\e[31mmlibc: Unexpected getsockopt() call, layer: " << layer
-		                     << " number: " << number << "\e[39m" << frg::endlog;
-		__builtin_unreachable();
+		mlibc::infoLogger() << "\e[31mmlibc: Unexpected getsockopt() call, layer: " << layer
+		                    << " number: " << number << "\e[39m" << frg::endlog;
+		return EINVAL;
 	}
 }
 
@@ -560,9 +560,9 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 		  << frg::endlog;
 		return ENOSYS;
 	} else {
-		mlibc::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call, layer: " << layer
-		                     << " number: " << number << "\e[39m" << frg::endlog;
-		__builtin_unreachable();
+		mlibc::infoLogger() << "\e[31mmlibc: Unexpected setsockopt() call, layer: " << layer
+		                    << " number: " << number << "\e[39m" << frg::endlog;
+		return EINVAL;
 	}
 }
 

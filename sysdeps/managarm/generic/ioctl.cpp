@@ -1217,8 +1217,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	                    << " type: 0x" << frg::hex_fmt(_IOC_TYPE(request)) << ", number: 0x"
 	                    << frg::hex_fmt(_IOC_NR(request))
 	                    << " (raw request: " << frg::hex_fmt(request) << ")" << frg::endlog;
-	__ensure(!"Illegal ioctl request");
-	__builtin_unreachable();
+
+	return ENOSYS;
 }
 
 } // namespace mlibc
