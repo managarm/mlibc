@@ -112,6 +112,9 @@
 #define _POSIX_TZNAME_MAX 6
 #define _XOPEN_NAME_MAX 255
 
+/* This value is a guaranteed minimum, get the current maximum from sysconf */
+#define TZNAME_MAX _POSIX_TZNAME_MAX
+
 #define PTHREAD_STACK_MIN 16384
 #define PTHREAD_KEYS_MAX 1024
 
