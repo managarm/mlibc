@@ -39,10 +39,6 @@ long timezone;
 char *tzname[2];
 
 static FutexLock __time_lock;
-static file_window *get_localtime_window() {
-	static file_window window{"/etc/localtime"};
-	return &window;
-}
 
 // Function taken from musl
 clock_t clock(void) {
@@ -1009,75 +1005,18 @@ void yearday_from_date(unsigned int year, unsigned int month, unsigned int day, 
 // Looks up the local time rules for a given
 // UNIX GMT timestamp (seconds since 1970 GMT, ignoring leap seconds).
 // This function assumes the __time_lock has been taken
-// TODO(geert): if /etc/localtime isn't available this will fail... In that case
-// we should call tzset() and use the variables to compute the variables from
-// the tzset() global variables. Look at the musl code for how to do that
 int unix_local_from_gmt(time_t unix_gmt, time_t *offset, bool *dst, char **tm_zone) {
-	tzfile tzfile_time;
-	memcpy(&tzfile_time, reinterpret_cast<char *>(get_localtime_window()->get()), sizeof(tzfile));
-	tzfile_time.tzh_ttisgmtcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_ttisgmtcnt);
-	tzfile_time.tzh_ttisstdcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_ttisstdcnt);
-	tzfile_time.tzh_leapcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_leapcnt);
-	tzfile_time.tzh_timecnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_timecnt);
-	tzfile_time.tzh_typecnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_typecnt);
-	tzfile_time.tzh_charcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_charcnt);
+	do_tzset();
 
-	if(tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i'
-			|| tzfile_time.magic[3] != 'f') {
-		mlibc::infoLogger() << "mlibc: /etc/localtime is not a valid TZinfo file" << frg::endlog;
-		return -1;
+	if (!daylight) {
+		*offset = -timezone;
+		*dst = false;
+		*tm_zone = tzname[0];
+		return 0;
 	}
 
-	if(tzfile_time.version != '\0' && tzfile_time.version != '2' && tzfile_time.version != '3') {
-		mlibc::infoLogger() << "mlibc: /etc/localtime has an invalid TZinfo version"
-				<< frg::endlog;
-		return -1;
-	}
-
-	int index = -1;
-	for(size_t i = 0; i < tzfile_time.tzh_timecnt; i++) {
-		int32_t ttime;
-		memcpy(&ttime, reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
-				+ i * sizeof(int32_t), sizeof(int32_t));
-		ttime = mlibc::bit_util<uint32_t>::byteswap(ttime);
-		// If we are before the first transition, the format dicates that
-		// the first ttinfo entry should be used (and not the ttinfo entry pointed
-		// to by the first transition time).
-		if(i && ttime > unix_gmt) {
-			index = i - 1;
-			break;
-		}
-	}
-
-	// The format dictates that if no transition is applicable,
-	// the first entry in the file is chosen.
-	uint8_t ttinfo_index = 0;
-	if(index >= 0) {
-		memcpy(&ttinfo_index, reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
-				+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-				+ index * sizeof(uint8_t), sizeof(uint8_t));
-	}
-
-	// There should be at least one entry in the ttinfo table.
-	// TODO: If there is not, we might want to fall back to UTC, no DST (?).
-	__ensure(tzfile_time.tzh_typecnt);
-
-	ttinfo time_info;
-	memcpy(&time_info, reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
-			+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-			+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
-			+ ttinfo_index * sizeof(ttinfo), sizeof(ttinfo));
-	time_info.tt_gmtoff = mlibc::bit_util<uint32_t>::byteswap(time_info.tt_gmtoff);
-
-	char *abbrevs = reinterpret_cast<char *>(get_localtime_window()->get()) + sizeof(tzfile)
-		+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-		+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
-		+ tzfile_time.tzh_typecnt * sizeof(struct ttinfo);
-
-	*offset = time_info.tt_gmtoff;
-	*dst = time_info.tt_isdst;
-	*tm_zone = abbrevs + time_info.tt_abbrind;
-	return 0;
+	mlibc::infoLogger() << "mlibc: TODO support DST" << frg::endlog;
+	return -1;
 }
 
 } //anonymous namespace
