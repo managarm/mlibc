@@ -822,6 +822,8 @@ long sysconf(int number) {
 		case _SC_OPEN_MAX:
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_OPEN_MAX) returns fallback value 256\e[39m" << frg::endlog;
 			return 256;
+		case _SC_TZNAME_MAX:
+			return -1;
 		case _SC_PHYS_PAGES:
 #if __MLIBC_LINUX_OPTION
 			if(mlibc::sys_sysinfo) {
