@@ -51,7 +51,7 @@ int sys_flock(int fd, int options) {
 	return r.error;
 }
 
-int sys_open_dir(const char *path, int *handle) { return sys_open(path, O_DIRECTORY, 0, handle); }
+int sys_open_dir(const char *path, int *handle) { return sys_open(path, O_RDONLY | O_DIRECTORY, 0600, handle); }
 
 int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read) {
 	auto r = menix_syscall(SYSCALL_GETDENTS, handle, (size_t)buffer, (size_t)max_size);
