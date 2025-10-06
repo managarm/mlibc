@@ -95,8 +95,8 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	}
 
 	// We implement creating files in this sysdep.
-	if ((errno == ENOENT) && (flags & O_CREAT)) {
-		SYSCALL5(SYSCALL_MAKENODE, AT_FDCWD, path, path_len, mode, 0);
+	if ((errno == ENOENT) && (flags & O_CREAT) && ((flags & O_DIRECTORY) == 0)) {
+		SYSCALL5(SYSCALL_MAKENODE, AT_FDCWD, path, path_len, S_IFREG | mode, 0);
 		if (ret == -1) {
 			return errno;
 		}
@@ -359,6 +359,13 @@ pid_t sys_getpid() {
 	pid_t ret;
 	int errno;
 	SYSCALL0(SYSCALL_GETPID);
+	return ret;
+}
+
+pid_t sys_gettid() {
+	pid_t ret;
+	int errno;
+	SYSCALL0(SYSCALL_GETTID);
 	return ret;
 }
 
@@ -755,10 +762,7 @@ int sys_mkdir(const char *path, mode_t mode) {
 }
 
 int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
-	int ret, errno;
-	size_t path_len = strlen (path);
-	SYSCALL5(SYSCALL_MAKENODE, dirfd, path, path_len, S_IFDIR | mode, 0);
-	return errno;
+	return sys_mknodat(dirfd, path, S_IFDIR | mode, 0);
 }
 
 int sys_rmdir(const char* path){
@@ -1414,12 +1418,21 @@ int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *n
 	return errno;
 }
 
-int sys_mknodat(int dirfd, const char *path, mode_t mode, dev_t dev) {
+int sys_mknodat(int dirfd, const char *path, int mode, int dev) {
 	int ret;
 	int errno;
 	size_t len = strlen(path);
 	SYSCALL5(SYSCALL_MAKENODE, dirfd, path, len, mode, dev);
 	return errno;
+}
+
+int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
+	return sys_mknodat(dirfd, path, S_IFIFO | mode, 0);
+}
+
+int sys_unlockpt(int fd) {
+	int unlock = 0;
+	return sys_ioctl(fd, TIOCSPTLCK, &unlock, NULL);
 }
 
 int sys_symlink(const char *target, const char *link_path) {
