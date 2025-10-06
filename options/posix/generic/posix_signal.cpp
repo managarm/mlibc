@@ -16,6 +16,9 @@ int sigsuspend(const sigset_t *sigmask) {
 }
 
 int pthread_sigmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
+	if (set && how != SIG_BLOCK && how != SIG_SETMASK && how != SIG_UNBLOCK)
+		return EINVAL;
+
  	if(mlibc::sys_thread_sigmask) {
 	 	if(int e = mlibc::sys_thread_sigmask(how, set, retrieve); e) {
 	 	 	return e;
