@@ -31,7 +31,7 @@ inline int operator|(managarm::fs::Errors e, ToErrno) {
 		case managarm::fs::Errors::BROKEN_PIPE:
 			return EPIPE;
 		case managarm::fs::Errors::ACCESS_DENIED:
-			return EPERM;
+			return EACCES;
 		case managarm::fs::Errors::NOT_DIRECTORY:
 			return ENOTDIR;
 		case managarm::fs::Errors::AF_NOT_SUPPORTED:
