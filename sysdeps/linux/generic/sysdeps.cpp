@@ -1080,6 +1080,20 @@ int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_re
 	return 0;
 }
 
+int sys_capget(cap_user_header_t hdrp, cap_user_data_t datap) {
+	auto ret = do_syscall(SYS_capget, hdrp, datap);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_capset(cap_user_header_t hdrp, const cap_user_data_t datap) {
+	auto ret = do_syscall(SYS_capset, hdrp, datap);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_prctl(int op, va_list ap, int *out) {
 	unsigned long x[4];
 	for(int i = 0; i < 4; i++)

@@ -8,6 +8,7 @@
 #include <sys/sysinfo.h>
 #include <sys/statfs.h>
 #include <poll.h>
+#include <linux/capability.h>
 #include <abi-bits/pid_t.h>
 #include <abi-bits/mode_t.h>
 #include <abi-bits/statx.h>
@@ -45,6 +46,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 [[gnu::weak]] int sys_signalfd_create(const sigset_t *, int flags, int *fd);
 [[gnu::weak]] int sys_reboot(int cmd);
 [[gnu::weak]] int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out);
+[[gnu::weak]] int sys_capget(cap_user_header_t hdrp, cap_user_data_t datap);
+[[gnu::weak]] int sys_capset(cap_user_header_t hdrp, const cap_user_data_t datap);
 [[gnu::weak]] int sys_prctl(int option, va_list va, int *out);
 [[gnu::weak]] int sys_init_module(void *module, unsigned long length, const char *args);
 [[gnu::weak]] int sys_delete_module(const char *name, unsigned flags);
