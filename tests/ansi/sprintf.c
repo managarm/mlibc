@@ -71,6 +71,8 @@ int main() {
 	sprintf(buf, "%04.3u", 12);
 	assert(!strcmp(buf, " 012"));
 #pragma GCC diagnostic pop
+	sprintf(buf, "%+04d", 0);
+	assert(!strcmp(buf, "+000"));
 
 	// Test %f padding.
 	// TODO: Test printing of huge numbers (larger than 2^64)
