@@ -20,6 +20,7 @@
 #include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/strtofp.hpp>
 #include <mlibc/strtol.hpp>
+#include <mlibc/threads.hpp>
 #include <mlibc/global-config.hpp>
 
 #if __MLIBC_POSIX_OPTION
@@ -35,6 +36,8 @@ namespace {
 	// The string functions mbstowcs() and wcstombs() do *not* have this state.
 	thread_local __mlibc_mbstate mblen_state = __MLIBC_MBSTATE_INITIALIZER;
 	thread_local __mlibc_mbstate mbtowc_state = __MLIBC_MBSTATE_INITIALIZER;
+
+	__mlibc_mutex exit_mutex = __MLIBC_THREAD_MUTEX_INITIALIZER;
 } // namespace
 
 double atof(const char *string) {
@@ -200,6 +203,10 @@ int at_quick_exit(void (*func)(void)) {
 }
 
 void exit(int status) {
+	// for concurrent calls to exit() or quick_exit(), all but the first shall block until termination
+	// see https://austingroupbugs.net/view.php?id=1845
+	mlibc::thread_mutex_lock(&exit_mutex);
+
 	__mlibc_do_finalize();
 	mlibc::sys_exit(status);
 }
