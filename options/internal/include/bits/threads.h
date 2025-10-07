@@ -29,6 +29,8 @@
 #define __MLIBC_THREAD_PRIO_INHERIT 1
 #define __MLIBC_THREAD_PRIO_PROTECT 2
 
+#define __MLIBC_THREAD_MUTEX_INITIALIZER {0, 0, 0, 0}
+
 struct sched_param {
 	int sched_priority;
 };
