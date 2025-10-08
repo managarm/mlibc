@@ -21,6 +21,7 @@ int strncasecmp(const char *__a, const char *__b, size_t __size);
 int bcmp(const void *__s1, const void *__s2, size_t __n);
 void bcopy(const void *__s1, void *__s2, size_t __n);
 void bzero(void *__s, size_t __n);
+void explicit_bzero(void *__s, size_t __len);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
