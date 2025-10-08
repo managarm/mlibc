@@ -33,6 +33,7 @@ all_test_cases = [
 	'ansi/fgetpos',
 	'ansi/fputs',
 	'ansi/ftell',
+	'ansi/locale',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
@@ -106,6 +107,7 @@ all_test_cases = [
 	'posix/usershell',
 	'posix/shm',
 	'posix/swab',
+	'posix/locale',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
@@ -161,6 +163,7 @@ host_libc_noasan_test_cases = [
 	'posix/pthread_attr', # does some stack overflowing to check stack size
 	'posix/posix_memalign',
 	'posix/search', # requires tdelete (#351)
+	'posix/locale', # encounters memory leaks
 	'ansi/calloc', # does some overflowing
 	'linux/pthread_attr', # encounters memory leaks
 ]
