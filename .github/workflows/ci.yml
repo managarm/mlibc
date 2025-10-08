@@ -127,6 +127,8 @@ jobs:
           - name: Test mlibc
             run: 'meson test -v -C pkg-builds/${{matrix.builds}}'
             working-directory: build/
+            env:
+              LANG: "en_US.utf8"
 
     compile-sysdeps:
         strategy:

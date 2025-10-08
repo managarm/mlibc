@@ -10,6 +10,9 @@
 #include <wctype.h>
 
 int main() {
+	const char *setloc = setlocale(LC_ALL, "C");
+	assert(setloc && *setloc);
+
 	char buffer[10];
 	int ret = snprintf(buffer, 10, "%d", 123456789);
 	assert(strncmp("123456789", buffer, 10) == 0);

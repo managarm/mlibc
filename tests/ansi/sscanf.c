@@ -1,3 +1,4 @@
+#include <locale.h>
 #include <math.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -77,6 +78,9 @@ static void test_matrix() {
 }
 
 int main() {
+	const char *ret = setlocale(LC_ALL, "C");
+	assert(ret && *ret);
+
 	{
 		int x = 0;
 		char buf[] = "12345";
@@ -531,6 +535,16 @@ int main() {
 
 	assert(sscanf("zz-zxx-mmm", "%7[zx-]", char_value) == 1);
 	assert(strcmp(char_value, "zz-zxx-") == 0);
+
+	if (!setlocale(LC_ALL, "de_DE.utf8")) {
+		puts("setlocale(de_DE.utf8) failed!");
+		exit(1);
+	}
+
+	assert(sscanf("12,34", "%d", &int_value) == 1);
+	assert(int_value == 12);
+	assert(sscanf("12,34", "%f", &float_value) == 1);
+	// assert(float_value >= 12.34 - 0.01 && float_value <= 12.34 + 0.01);
 
 	return 0;
 }

@@ -260,12 +260,15 @@ packages:
       - args: |
           ARCH="@OPTION:arch@"
           LOCALEDEF_FLAGS=""
-          if [ "$ARCH" == "m68k" ]; then
+          if [[ "$ARCH" == "m68k" ]]; then
             LOCALEDEF_FLAGS="--big-endian"
           fi
           mkdir -p @THIS_COLLECT_DIR@/usr/lib/locale/
           localedef $LOCALEDEF_FLAGS -fUTF-8 -ien_US --prefix=@THIS_COLLECT_DIR@ --no-archive en_US.utf8
           localedef $LOCALEDEF_FLAGS -fUTF-8 -iC --prefix=@THIS_COLLECT_DIR@ --no-archive C.utf8
+          localedef $LOCALEDEF_FLAGS -fUTF-8 -ide_DE --prefix=@THIS_COLLECT_DIR@ --no-archive de_DE.utf8
+          localedef $LOCALEDEF_FLAGS -fUTF-8 -ide_DE --prefix=@THIS_COLLECT_DIR@ --no-archive de_DE
+          localedef $LOCALEDEF_FLAGS -fUTF-8 -iru_RU --prefix=@THIS_COLLECT_DIR@ --no-archive ru_RU.utf8
         environ:
           I18NPATH: '@THIS_SOURCE_DIR@/localedata/'
 
@@ -277,5 +280,8 @@ packages:
           mkdir -p @THIS_COLLECT_DIR@/usr/lib/locale/
           localedef -fUTF-8 -ien_US --prefix=@THIS_COLLECT_DIR@ --no-archive en_US.utf8
           localedef -fUTF-8 -iC --prefix=@THIS_COLLECT_DIR@ --no-archive C.utf8
+          localedef -fUTF-8 -ide_DE --prefix=@THIS_COLLECT_DIR@ --no-archive de_DE.utf8
+          localedef -fUTF-8 -ide_DE --prefix=@THIS_COLLECT_DIR@ --no-archive de_DE
+          localedef -fUTF-8 -iru_RU --prefix=@THIS_COLLECT_DIR@ --no-archive ru_RU.utf8
         environ:
           I18NPATH: '@THIS_SOURCE_DIR@/localedata/'

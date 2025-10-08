@@ -1,4 +1,5 @@
 #include <fenv.h>
+#include <locale.h>
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
@@ -13,6 +14,9 @@
 }
 
 int main() {
+	const char *ret = setlocale(LC_ALL, "C");
+	assert(ret && *ret);
+
 	char buf[64] = { 0 };
 	sprintf(buf, "%d", 12);
 	assert(!strcmp(buf, "12"));
