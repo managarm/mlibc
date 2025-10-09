@@ -15,6 +15,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/bsd-sysdeps.hpp>
 #include <mlibc/rtld-config.hpp>
 
 namespace {
@@ -492,6 +493,33 @@ char *ptsname(int fd) {
 }
 
 int posix_openpt(int flags) {
+	if(mlibc::sys_openpty) {
+		int mfd, sfd;
+		if(int e = mlibc::sys_openpty(&mfd, &sfd, NULL, NULL, NULL); e) {
+			errno = e;
+			return -1;
+		}
+		if(int e = mlibc::sys_close(sfd); e) {
+			mlibc::sys_close(mfd);
+			errno = e;
+			return -1;
+		}
+		int fdflags = 0;
+		if(flags & O_CLOEXEC) {
+			fdflags |= FD_CLOEXEC;
+		}
+		if(flags & O_CLOFORK) {
+			fdflags |= FD_CLOFORK;
+		}
+		if(fdflags) {
+			fcntl(mfd, F_SETFD, fdflags);
+		}
+		if(!(flags & O_NOCTTY)) {
+			ioctl(mfd, TIOCSCTTY);
+		}
+		return mfd;
+	}
+
 	int fd;
 	if(int e = mlibc::sys_open("/dev/ptmx", flags, 0, &fd); e) {
 		errno = e;
