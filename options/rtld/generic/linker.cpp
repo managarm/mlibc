@@ -881,7 +881,8 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			break;
 		default:
 			// Ignore unknown entries in the os-specific area as we don't use them.
-			if(dynamic->d_tag < DT_LOOS || dynamic->d_tag > DT_HIOS) {
+			if((dynamic->d_tag < DT_LOOS || dynamic->d_tag > DT_HIOS)
+			&& (dynamic->d_tag < DT_LOPROC || dynamic->d_tag > DT_HIPROC)) {
 				mlibc::panicLogger() << "Unexpected dynamic entry "
 					<< (void *)dynamic->d_tag << " in object" << frg::endlog;
 			}
@@ -1486,6 +1487,20 @@ uintptr_t ObjectSymbol::virtualAddress() {
 		return handleIfunc(_object->baseAddress + _symbol->st_value);
 
 	return _object->baseAddress + _symbol->st_value;
+}
+
+size_t ObjectSymbol::size() {
+	return _symbol->st_size;
+}
+
+bool ObjectSymbol::contains(uintptr_t addr) {
+	if(!size() && virtualAddress() == addr)
+		return true;
+
+	if(size() && addr >= virtualAddress() && addr < (virtualAddress() + size()))
+		return true;
+
+	return false;
 }
 
 // --------------------------------------------------------

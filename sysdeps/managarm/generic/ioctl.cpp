@@ -10,7 +10,6 @@
 #include <linux/input.h>
 #include <linux/kd.h>
 #include <linux/nvme_ioctl.h>
-#include <linux/sockios.h>
 #include <linux/usb/cdc-wdm.h>
 #include <linux/vt.h>
 #include <net/if.h>
@@ -31,9 +30,9 @@
 #include <fs.frigg_bragi.hpp>
 #include <posix.frigg_bragi.hpp>
 
-// avoid flock redefinition
-#define HAVE_ARCH_STRUCT_FLOCK
-#include <linux/timerfd.h>
+#define SIOCETHTOOL 0x8946
+#define SIOCGSKNS 0x894C
+#define TFD_IOC_SET_TICKS _IOW('T', 0, __u64)
 
 namespace mlibc {
 
@@ -413,10 +412,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			if (resp.error() == managarm::fs::Errors::NOT_A_TERMINAL) {
-				return ENOTTY;
-			}
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 			*result = resp.result();
 			*static_cast<int *>(arg) = resp.pid();
 			return 0;
@@ -1220,8 +1217,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	                    << " type: 0x" << frg::hex_fmt(_IOC_TYPE(request)) << ", number: 0x"
 	                    << frg::hex_fmt(_IOC_NR(request))
 	                    << " (raw request: " << frg::hex_fmt(request) << ")" << frg::endlog;
-	__ensure(!"Illegal ioctl request");
-	__builtin_unreachable();
+
+	return ENOSYS;
 }
 
 } // namespace mlibc

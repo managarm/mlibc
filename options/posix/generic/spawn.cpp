@@ -80,7 +80,7 @@ static int child(void *args_vp) {
 			if (i - 32 < 3) {
 				sa.sa_handler = SIG_IGN;
 			} else {;
-				sigaction(i, 0, &sa);
+				sigaction(i, nullptr, &sa);
 				if(sa.sa_handler == SIG_IGN)
 					continue;
 				sa.sa_handler = SIG_DFL;
@@ -88,7 +88,7 @@ static int child(void *args_vp) {
 		} else {
 			continue;
 		}
-		sigaction(i, &sa, 0);
+		sigaction(i, &sa, nullptr);
 	}
 
 	if(attr->__flags & POSIX_SPAWN_SETSID) {
@@ -172,7 +172,7 @@ static int child(void *args_vp) {
 	fcntl(p, F_SETFD, FD_CLOEXEC);
 
 	pthread_sigmask(SIG_SETMASK, (attr->__flags & POSIX_SPAWN_SETSIGMASK)
-		? &attr->__mask : &args->oldmask, 0);
+		? &attr->__mask : &args->oldmask, nullptr);
 
 	if(use_execvpe)
 		execvpe(args->path, args->argv, args->envp);
@@ -232,7 +232,7 @@ int posix_spawn(pid_t *__restrict res, const char *__restrict path,
 		if(read(args.p[0], &ec, sizeof ec) != sizeof ec)
 			ec = 0;
 		else
-			waitpid(pid, 0, 0);
+			waitpid(pid, nullptr, 0);
 	} else {
 		ec = -pid;
 	}
@@ -243,8 +243,8 @@ int posix_spawn(pid_t *__restrict res, const char *__restrict path,
 		*res = pid;
 
 fail:
-	pthread_sigmask(SIG_SETMASK, &args.oldmask, 0);
-	pthread_setcancelstate(cs, 0);
+	pthread_sigmask(SIG_SETMASK, &args.oldmask, nullptr);
+	pthread_setcancelstate(cs, nullptr);
 
 	return ec;
 }
@@ -303,7 +303,7 @@ int posix_spawnattr_setpgroup(posix_spawnattr_t *attr, pid_t pgroup) {
 }
 
 int posix_spawn_file_actions_init(posix_spawn_file_actions_t *file_actions) {
-	file_actions->__actions = 0;
+	file_actions->__actions = nullptr;
 	return 0;
 }
 
@@ -327,7 +327,7 @@ int posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t *file_actions,
 	op->fd = newfildes;
 	if((op->next = (struct fdop *)file_actions->__actions))
 		op->next->prev = op;
-	op->prev = 0;
+	op->prev = nullptr;
 	file_actions->__actions = op;
 	return 0;
 }
@@ -341,7 +341,7 @@ int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *file_actions,
 	op->fd = fildes;
 	if((op->next = (struct fdop *)file_actions->__actions))
 		op->next->prev = op;
-	op->prev = 0;
+	op->prev = nullptr;
 	file_actions->__actions = op;
 	return 0;
 }
@@ -358,7 +358,7 @@ int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t *__restrict file
 	strcpy(op->path, path);
 	if((op->next = (struct fdop *)file_actions->__actions))
 		op->next->prev = op;
-	op->prev = 0;
+	op->prev = nullptr;
 	file_actions->__actions = op;
 	return 0;
 }

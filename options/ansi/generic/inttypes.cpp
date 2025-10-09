@@ -24,7 +24,7 @@ template <class T> T strtoxmax(const char *it, char **out, int base) {
 	const unsigned char *s = (const unsigned char *)it;
 	int c;
 
-	if(std::is_signed<T>::value) {
+	if(std::is_signed_v<T>) {
 		if(*s == '+') {
 			s++;
 		}else if(*s == '-') {
@@ -73,7 +73,7 @@ parse_digits:
 		it++;
 	}
 
-	if(std::is_signed<T>::value) {
+	if(std::is_signed_v<T>) {
 		if(negate)
 			v = -v;
 	}

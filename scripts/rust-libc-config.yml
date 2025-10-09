@@ -583,6 +583,8 @@ ignored_macros:
   - "SIGPIPE"
   - "SIGALRM"
   - "SIGTERM"
+  - "SA_NOMASK"
+  - "SA_ONESHOT"
   - "PROT_NONE"
   - "PROT_READ"
   - "PROT_WRITE"

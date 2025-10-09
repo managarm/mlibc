@@ -36,7 +36,7 @@ extern HIDDEN elf_dyn _DYNAMIC[];
 namespace mlibc {
 	// Declared in options/internal/mlibc/tcb.hpp.
 	bool tcb_available_flag = false;
-}
+} // namespace mlibc
 
 mlibc::RtldConfig rtldConfig;
 
@@ -298,10 +298,10 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	libraryPaths.initialize(getAllocator());
 	preloads.initialize(getAllocator());
 
-	void *phdr_pointer = 0;
+	void *phdr_pointer = nullptr;
 	size_t phdr_entry_size = 0;
 	size_t phdr_count = 0;
-	void *entry_pointer = 0;
+	void *entry_pointer = nullptr;
 	void *stack_entropy = nullptr;
 
 	const char *execfn = "(executable)";
@@ -322,8 +322,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 #ifdef __x86_64__
 	// These entries are reserved on x86_64.
 	// TODO: Use a fake PLT stub that reports an error message?
-	_GLOBAL_OFFSET_TABLE_[1] = 0;
-	_GLOBAL_OFFSET_TABLE_[2] = 0;
+	_GLOBAL_OFFSET_TABLE_[1] = nullptr;
+	_GLOBAL_OFFSET_TABLE_[2] = nullptr;
 #endif
 
 	// Validate our own dynamic section.
@@ -820,14 +820,15 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 			auto bucket = reinterpret_cast<uint32_t *>(uintptr_t(hash_table) + sizeof(*hash_table) + (hash_table->bloomSize * sizeof(elf_addr)));
 			auto chains = reinterpret_cast<uint32_t *>(uintptr_t(bucket) + hash_table->nBuckets * 4);
 
-			for(size_t i = 0; i < hash_table->nBuckets; i++) {
-				if(bucket[i] > last_sym)
+			if (hash_table->nBuckets) {
+				for(size_t i = 0; i < hash_table->nBuckets; i++) {
+				if(last_sym < bucket[i])
 					last_sym = bucket[i];
-			}
+				}
 
-			last_sym++;
-			while(!(chains[last_sym] & 1))
-				last_sym++;
+				while(!(chains[last_sym - hash_table->symbolOffset] & 1))
+					last_sym++;
+			}
 
 			start_symbols = hash_table->symbolOffset;
 			num_symbols = last_sym;
@@ -838,7 +839,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 		for(size_t i = start_symbols; i < num_symbols; i++) {
 			ObjectSymbol cand{object, (elf_sym *)(object->baseAddress
 					+ object->symbolTableOffset + i * sizeof(elf_sym))};
-			if(eligible(cand) && cand.virtualAddress() == reinterpret_cast<uintptr_t>(ptr)) {
+			if(eligible(cand) && cand.contains(reinterpret_cast<uintptr_t>(ptr))) {
 				if (logDlCalls)
 					mlibc::infoLogger() << "rtld: Found symbol " << cand.getString() << " in object "
 							<< object->path << frg::endlog;
@@ -871,7 +872,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 				info->file = object->path.data();
 				info->base = reinterpret_cast<void *>(object->baseAddress);
 				info->symbol = nullptr;
-				info->address = 0;
+				info->address = nullptr;
 				info->elf_symbol = nullptr;
 				info->link_map = &object->linkMap;
 				return 0;
@@ -936,7 +937,7 @@ void __dlapi_enter(uintptr_t *entry_stack) {
 
 #if __MLIBC_GLIBC_OPTION
 
-extern "C" [[gnu::visibility("default")]] int _dl_find_object(void *address, dl_find_object *result) {
+extern "C" [[gnu::visibility("default")]] int __dlapi_find_object(void *address, dl_find_object *result) {
 	for(const SharedObject *object : initialRepository->loadedObjects) {
 		if(object->baseAddress > reinterpret_cast<uintptr_t>(address))
 			continue;
@@ -981,6 +982,10 @@ extern "C" [[gnu::visibility("default")]] int _dl_find_object(void *address, dl_
 
 	return -1;
 }
+
+#if !defined(MLIBC_STATIC_BUILD)
+extern "C" [[gnu::visibility("default"), gnu::alias("__dlapi_find_object")]] int _dl_find_object(void *address, dl_find_object *result);
+#endif
 
 #endif // __MLIBC_GLIBC_OPTION
 

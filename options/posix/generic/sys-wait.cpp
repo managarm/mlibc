@@ -20,7 +20,7 @@ pid_t waitpid(pid_t pid, int *status, int flags) {
 	pid_t ret;
 	int tmp_status = 0;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_waitpid, -1);
-	if(int e = mlibc::sys_waitpid(pid, &tmp_status, flags, NULL, &ret); e) {
+	if(int e = mlibc::sys_waitpid(pid, &tmp_status, flags, nullptr, &ret); e) {
 		errno = e;
 		return -1;
 	}

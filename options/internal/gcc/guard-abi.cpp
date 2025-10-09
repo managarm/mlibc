@@ -40,7 +40,7 @@ struct Guard {
 
 static_assert(sizeof(Guard) == sizeof(int64_t));
 
-} // namespace { }
+} // namespace
 
 extern "C" [[ gnu::visibility("hidden") ]] void __cxa_pure_virtual() {
 	mlibc::panicLogger() << "mlibc: Pure virtual function called from IP "

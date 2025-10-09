@@ -40,6 +40,38 @@ namespace mlibc {
 		return 0;
 	}
 
+	int sys_inet_configured(bool *ipv4, bool *ipv6) {
+		// there is no ipv6 support in the kernel currently and no way of checking for configured interfaces
+		*ipv4 = true;
+		*ipv6 = false;
+		return 0;
+	}
+
+	int sys_getcpu(int *cpu) {
+		long ret;
+		// can never fail
+		syscall(SYSCALL_GETCPU, &ret);
+		*cpu = ret;
+		return 0;
+	}
+
+	int sys_flock(int fd, int options) {
+		long r;
+		return syscall(SYSCALL_FLOCK, &r, fd, options);
+	}
+
+	int sys_nice(int nice, int *ret) {
+		long r = -1;
+		long e = syscall(SYSCALL_NICE, &r, nice);
+		*ret = r;
+		return e;
+	}
+
+	int sys_shutdown(int sockfd, int how) {
+		long ret;
+		return syscall(SYSCALL_SHUTDOWN, &ret, sockfd, how);
+	}
+
 	int sys_tgkill(int pid, int tid, int sig) {
 		long ret;
 		return syscall(SYSCALL_KILLTHREAD, &ret, pid, tid, sig);
@@ -161,7 +193,18 @@ namespace mlibc {
 		*bytes_written = writec;
 		return error;
 	}
-	
+
+	int sys_getrlimit(int resource, struct rlimit *limit) {
+		switch(resource) {
+		case RLIMIT_NOFILE:
+			limit->rlim_cur = RLIM_INFINITY;
+			limit->rlim_max = RLIM_INFINITY;
+			return 0;
+		default:
+			return EINVAL;
+		}
+	}
+
 	#ifndef MLIBC_BUILDING_RTLD
 
 	typedef struct {
@@ -371,6 +414,12 @@ namespace mlibc {
 	}
 
 	int sys_futex_tid() {
+		long ret;
+		syscall(SYSCALL_GETTID, &ret);
+		return ret;
+	}
+
+	pid_t sys_gettid() {
 		long ret;
 		syscall(SYSCALL_GETTID, &ret);
 		return ret;
@@ -771,7 +820,7 @@ namespace mlibc {
 
 	int sys_tcb_set(void *pointer) {
 		long r;
-		return syscall(SYSCALL_ARCHCTL, &r, ARCH_CTL_FSBASE, (uint64_t)pointer);
+		return syscall(SYSCALL_ARCHCTL, &r, ARCH_CTL_SET_FSBASE, (uint64_t)pointer);
 	}
 
 	#define FUTEX_WAIT 0

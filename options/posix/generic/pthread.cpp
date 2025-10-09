@@ -212,7 +212,7 @@ int pthread_attr_setaffinity_np(pthread_attr_t *__restrict attr,
 		return EINVAL;
 
 	if (!cpusetp || !cpusetsize) {
-		attr->__mlibc_cpuset = NULL;
+		attr->__mlibc_cpuset = nullptr;
 		attr->__mlibc_cpusetsize = 0;
 		return 0;
 	}
@@ -289,7 +289,7 @@ namespace {
 
 		fclose(fp);
 	}
-}
+} // namespace
 
 int pthread_getattr_np(pthread_t thread, pthread_attr_t *attr) {
 	auto tcb = reinterpret_cast<Tcb*>(thread);
@@ -351,14 +351,14 @@ namespace {
 	> key_globals_{};
 
 	FutexLock key_mutex_;
-}
+} // namespace
 
 namespace mlibc {
 	__attribute__ ((__noreturn__)) void do_exit() {
 		sys_thread_exit();
 		__builtin_unreachable();
 	}
-}
+} // namespace mlibc
 
 __attribute__ ((__noreturn__)) void pthread_exit(void *ret_val) {
 	auto self = mlibc::get_current_tcb();
@@ -559,7 +559,7 @@ namespace {
 			old_value = current_value;
 		}
 	}
-}
+} // namespace
 
 namespace mlibc {
 namespace {
@@ -571,7 +571,7 @@ struct PthreadSignalInstaller {
 		sa.sa_flags = SA_SIGINFO;
 		auto e = ENOSYS;
 		if(sys_sigaction)
-			e = sys_sigaction(SIGCANCEL, &sa, NULL);
+			e = sys_sigaction(SIGCANCEL, &sa, nullptr);
 		// Opt-out of cancellation support.
 		if(e == ENOSYS)
 			return;
@@ -649,9 +649,9 @@ int pthread_setcancelstate(int state, int *oldstate) {
 			sigset_t set = {};
 			sigaddset(&set, SIGCANCEL);
 			if (new_value & PTHREAD_CANCEL_ENABLE)
-				sigprocmask(SIG_UNBLOCK, &set, NULL);
+				sigprocmask(SIG_UNBLOCK, &set, nullptr);
 			else
-				sigprocmask(SIG_BLOCK, &set, NULL);
+				sigprocmask(SIG_BLOCK, &set, nullptr);
 			break;
 		}
 
@@ -1248,7 +1248,7 @@ namespace {
 		if(m & mutex_waiters_bit)
 			mlibc::sys_futex_wake((int *)&rw->__mlibc_m);
 	}
-}
+} // namespace
 
 int pthread_rwlockattr_init(pthread_rwlockattr_t *attr) {
 	attr->__mlibc_pshared = PTHREAD_PROCESS_PRIVATE;

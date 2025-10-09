@@ -19,7 +19,7 @@
 
 namespace {
 	constexpr bool debugPathResolution = false;
-}
+} // namespace
 
 // Borrowed from musl
 static uint32_t init[] = {
@@ -149,7 +149,7 @@ char *initstate(unsigned int seed, char *state, size_t size) {
 	void *old;
 
 	if(size < 8)
-		return 0;
+		return nullptr;
 	old = savestate();
 	if(size < 32)
 		n = 0;
@@ -233,13 +233,13 @@ char *mkdtemp(char *pattern) {
 	__ensure(n >= 6);
 	if(n < 6) {
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 	for(size_t i = 0; i < 6; i++) {
 		if(pattern[n - 6 + i] == 'X')
 			continue;
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
 	// TODO: Do an exponential search.
@@ -249,12 +249,12 @@ char *mkdtemp(char *pattern) {
 			return pattern;
 		}else if(e != EEXIST) {
 			errno = e;
-			return NULL;
+			return nullptr;
 		}
 	}
 
 	errno = EEXIST;
-	return NULL;
+	return nullptr;
 }
 
 char *realpath(const char *path, char *out) {
@@ -278,7 +278,7 @@ char *realpath(const char *path, char *out) {
 			// getcwd could smash errno on failure + resize (ERANGE) + success,
 			// so we have to save and restore errno in that scenario.
 			char *ret = getcwd(resolv.data(), resolv.size());
-			if(ret != NULL) {
+			if(ret != nullptr) {
 				break;
 			}
 
@@ -485,20 +485,27 @@ char *ptsname(int fd) {
 
 	if(int e = sysdep(fd, buffer, 128); e) {
 		errno = e;
-		return NULL;
+		return nullptr;
 	}
 
 	return buffer;
 }
 
 int posix_openpt(int flags) {
-	int fd;
-	if(int e = mlibc::sys_open("/dev/ptmx", flags, 0, &fd); e) {
-		errno = e;
-		return -1;
+	int fd, e;
+
+	if(mlibc::sys_openpt) {
+		e = mlibc::sys_openpt(flags, &fd);
+	} else {
+		e = mlibc::sys_open("/dev/ptmx", flags, 0, &fd);
 	}
 
-	return fd;
+	if (e) {
+		errno = e;
+		return -1;
+	} else {
+		return fd;
+	}
 }
 
 int unlockpt(int fd) {
@@ -543,7 +550,7 @@ int getsubopt(char **__restrict__, char *const *__restrict__, char **__restrict_
 
 char *secure_getenv(const char *name) {
 	if (mlibc::rtldConfig().secureRequired)
-		return NULL;
+		return nullptr;
 	else
 		return getenv(name);
 }
@@ -551,12 +558,12 @@ char *secure_getenv(const char *name) {
 void *reallocarray(void *ptr, size_t m, size_t n) {
 	if(n && m > -1 / n) {
 		errno = ENOMEM;
-		return 0;
+		return nullptr;
 	}
 
 	return realloc(ptr, m * n);
 }
 
 char *canonicalize_file_name(const char *name) {
-	return realpath(name, NULL);
+	return realpath(name, nullptr);
 }

@@ -89,24 +89,24 @@ static int we_askshell(const char *words, wordexp_t *we, int flags) {
 		serrno = errno;
 		close(pdes[0]);
 		close(pdes[1]);
-		(void)sigprocmask(SIG_SETMASK, &oldsigblock, NULL);
+		(void)sigprocmask(SIG_SETMASK, &oldsigblock, nullptr);
 		errno = serrno;
 		return WRDE_NOSPACE;
 	} else if(pid == 0) {
 		/*
 		 * We are the child; make /bin/sh expand `words'.
 		 */
-		(void)sigprocmask(SIG_SETMASK, &oldsigblock, NULL);
+		(void)sigprocmask(SIG_SETMASK, &oldsigblock, nullptr);
 		if((pdes[1] != STDOUT_FILENO ? dup2(pdes[1], STDOUT_FILENO) : fcntl(pdes[1], F_SETFD, 0)) < 0)
 			_exit(1);
 
 		execl(SHELL_PATH, SHELL_NAME, flags & WRDE_UNDEF ? "-u" : "+u",
 			"-c", "IFS=$1;eval \"$2\";eval \"set -- $3\";IFS=;a=\"$*\";"
 			"printf '%08x' \"$#\" \"${#a}\";printf '%s\\0' \"$@\"", "",
-			ifs != NULL ? ifs : " \t\n",
+			ifs != nullptr ? ifs : " \t\n",
 			flags & WRDE_SHOWERR ? "" : "exec 2>/dev/null",
 			words,
-			(char *)NULL);
+			(char *)nullptr);
 		_exit(1);
 	}
 
@@ -123,8 +123,8 @@ static int we_askshell(const char *words, wordexp_t *we, int flags) {
 		goto cleanup;
 	}
 	wbuf[8] = bbuf[8] = '\0';
-	nwords = strtol(wbuf, NULL, 16);
-	nbytes = strtol(bbuf, NULL, 16) + nwords;
+	nwords = strtol(wbuf, nullptr, 16);
+	nbytes = strtol(bbuf, nullptr, 16) + nwords;
 
 	/*
 	 * Allocate or reallocate (when flags & WRDE_APPEND) the word vector
@@ -138,20 +138,20 @@ static int we_askshell(const char *words, wordexp_t *we, int flags) {
 	we->we_wordc += nwords;
 	we->we_nbytes += nbytes;
 
-	if((new_wordv = (char **) realloc(we->we_wordv, (we->we_wordc + 1 + (flags & WRDE_DOOFFS ?  we->we_offs : 0)) * sizeof(char *))) == NULL) {
+	if((new_wordv = (char **) realloc(we->we_wordv, (we->we_wordc + 1 + (flags & WRDE_DOOFFS ?  we->we_offs : 0)) * sizeof(char *))) == nullptr) {
 		error = WRDE_NOSPACE;
 		goto cleanup;
 	}
 
 	we->we_wordv = new_wordv;
 
-	if((nstrings = (char *) realloc(we->we_strings, we->we_nbytes)) == NULL) {
+	if((nstrings = (char *) realloc(we->we_strings, we->we_nbytes)) == nullptr) {
 		error = WRDE_NOSPACE;
 		goto cleanup;
 	}
 
 	for(size_t i = 0; i < vofs; i++) {
-		if(we->we_wordv[i] != NULL)
+		if(we->we_wordv[i] != nullptr)
 			we->we_wordv[i] += nstrings - we->we_strings;
 	}
 	we->we_strings = nstrings;
@@ -170,7 +170,7 @@ cleanup:
 		wpid = waitpid(pid, &status, 0);
 	} while(wpid < 0 && errno == EINTR);
 
-	(void)sigprocmask(SIG_SETMASK, &oldsigblock, NULL);
+	(void)sigprocmask(SIG_SETMASK, &oldsigblock, nullptr);
 
 	if(error != 0) {
 		errno = serrno;
@@ -186,20 +186,20 @@ cleanup:
 	 */
 	if(vofs == 0 && flags & WRDE_DOOFFS) {
 		while (vofs < we->we_offs)
-			we->we_wordv[vofs++] = NULL;
+			we->we_wordv[vofs++] = nullptr;
 	}
 
 	p = we->we_strings + sofs;
 	while (nwords-- != 0) {
 		we->we_wordv[vofs++] = p;
-		if((np = (char *) memchr(p, '\0', nbytes)) == NULL)
+		if((np = (char *) memchr(p, '\0', nbytes)) == nullptr)
 			return WRDE_NOSPACE;
 
 		nbytes -= np - p + 1;
 		p = np + 1;
 	}
 
-	we->we_wordv[vofs] = NULL;
+	we->we_wordv[vofs] = nullptr;
 	return 0;
 }
 
@@ -312,8 +312,8 @@ int wordexp(const char * __restrict words, wordexp_t * __restrict we, int flags)
 
 	if((flags & WRDE_APPEND) == 0) {
 		we->we_wordc = 0;
-		we->we_wordv = NULL;
-		we->we_strings = NULL;
+		we->we_wordv = nullptr;
+		we->we_strings = nullptr;
 		we->we_nbytes = 0;
 	}
 
@@ -331,12 +331,12 @@ int wordexp(const char * __restrict words, wordexp_t * __restrict we, int flags)
 }
 
 void wordfree(wordexp_t *we) {
-	if (we == NULL)
+	if (we == nullptr)
 		return;
 	free(we->we_wordv);
 	free(we->we_strings);
-	we->we_wordv = NULL;
-	we->we_strings = NULL;
+	we->we_wordv = nullptr;
+	we->we_strings = nullptr;
 	we->we_nbytes = 0;
 	we->we_wordc = 0;
 }

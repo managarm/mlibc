@@ -91,8 +91,11 @@
 #define CHARCLASS_NAME_MAX 14
 #define RE_DUP_MAX 255
 
+#if !defined(NGROUPS_MAX)
 /* This value is a guaranteed minimum, get the current maximum from sysconf */
 #define NGROUPS_MAX 8
+#endif /* !defined(NGROUPS_MAX) */
+
 /* POSIX states 9 is the minimum for NL_ARGMAX */
 #define NL_ARGMAX 9
 
@@ -108,6 +111,9 @@
 #define _POSIX_NAME_MAX 14
 #define _POSIX_TZNAME_MAX 6
 #define _XOPEN_NAME_MAX 255
+
+/* This value is a guaranteed minimum, get the current maximum from sysconf */
+#define TZNAME_MAX _POSIX_TZNAME_MAX
 
 #define PTHREAD_STACK_MIN 16384
 #define PTHREAD_KEYS_MAX 1024

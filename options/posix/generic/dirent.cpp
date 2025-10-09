@@ -97,7 +97,7 @@ int readdir_r(DIR *dir, struct dirent *entry, struct dirent **result) {
 			__ensure(!"mlibc::sys_read_entries() failed");
 		dir->__ent_next = 0;
 		if(!dir->__ent_limit) {
-			*result = NULL;
+			*result = nullptr;
 			return 0;
 		}
 	}

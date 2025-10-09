@@ -18,6 +18,7 @@ extern "C" void *__dlapi_open(const char *, int, void *);
 extern "C" void *__dlapi_resolve(void *, const char *, void *, const char *);
 extern "C" int __dlapi_reverse(const void *, __dlapi_symbol *);
 extern "C" int __dlapi_close(void *);
+extern "C" int __dlapi_find_object(void *__address, dl_find_object *__result);
 
 int dlclose(void *handle) {
 	return __dlapi_close(handle);
@@ -36,7 +37,7 @@ void *dlopen(const char *file, int flags) {
 [[gnu::noinline]]
 void *dlsym(void *__restrict handle, const char *__restrict string) {
 	auto ra = __builtin_extract_return_addr(__builtin_return_address(0));
-	return __dlapi_resolve(handle, string, ra, NULL);
+	return __dlapi_resolve(handle, string, ra, nullptr);
 }
 
 [[gnu::noinline]]
@@ -89,6 +90,10 @@ int dladdr1(const void *ptr, Dl_info *out, void **extra, int flags) {
 int dlinfo(void *__restrict, int, void *__restrict) {
 	__ensure(!"dlinfo() not implemented");
 	__builtin_unreachable();
+}
+
+int _dl_find_object(void *address, struct dl_find_object *result) {
+	return __dlapi_find_object(address, result);
 }
 
 #endif // __MLIBC_GLIBC_OPTION

@@ -88,6 +88,14 @@
 
 #if __MLIBC_LINUX_OPTION
 
+#define DN_ACCESS 1
+#define DN_MODIFY 2
+#define DN_CREATE 4
+#define DN_DELETE 8
+#define DN_RENAME 16
+#define DN_ATTRIB 32
+#define DN_MULTISHOT 0x80000000
+
 #define AT_STATX_SYNC_AS_STAT 0x0000
 #define AT_STATX_FORCE_SYNC 0x2000
 #define AT_STATX_DONT_SYNC 0x4000
@@ -103,6 +111,8 @@ struct f_owner_ex {
 #endif /* _GNU_SOURCE */
 
 #define F_OWNER_TID 0
+#define F_OWNER_PID 1
+#define F_OWNER_PGRP 2
 
 #define POSIX_FADV_NORMAL 0
 #define POSIX_FADV_RANDOM 1

@@ -9,7 +9,7 @@
 #include <mlibc/posix-sysdeps.hpp>
 
 int uname(struct utsname *p) {
-	if (p == NULL) {
+	if (p == nullptr) {
 		errno = EFAULT;
 		return -1;
 	}

@@ -319,7 +319,7 @@ double pow(double x, double y)
 	r = (z*t1)/(t1-2.0) - (w + z*w);
 	z = 1.0 - (r-z);
 	GET_HIGH_WORD(j, z);
-	j += n<<20;
+	j += (int32_t) ((uint32_t)n<<20);
 	if ((j>>20) <= 0)  /* subnormal output */
 		z = scalbn(z,n);
 	else

@@ -1,0 +1,141 @@
+name: "Check for ABI differences vs. glibc"
+
+on:
+  pull_request:
+  merge_group:
+
+jobs:
+  run-abicheck:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, riscv64, aarch64, x86, m68k, loongarch64]
+    name: Compare ABI against glibc
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Install prerequisites
+        run: |
+          arch="${{matrix.arch}}"
+          case "$arch" in
+            x86)
+              arch="i386"
+              ;;
+            x86_64)
+              arch="amd64"
+              ;;
+            aarch64)
+              arch="arm64"
+              ;;
+            loongarch64)
+              arch="loong64"
+              ;;
+          esac
+          dpkg --add-architecture $arch
+          apt-get update
+          apt-get install -y meson ninja-build qemu-user \
+                             python3-setuptools python3-jsonschema \
+                             python3-pip python3-clang \
+                             git wget file rsync clang
+          case "${{matrix.arch}}" in \
+            x86) \
+              apt-get install -y gcc-i686-linux-gnu g++-i686-linux-gnu;; \
+            x86_64) \
+              apt-get install -y gcc g++;; \
+            *) \
+              apt-get install -y gcc-${{matrix.arch}}-linux-gnu g++-${{matrix.arch}}-linux-gnu;; \
+          esac
+          pip install --break-system-packages -U xbstrap pyexpect
+
+      - name: Prepare directories
+        run: |
+            mkdir src/
+            mkdir src/mlibc/
+            mkdir build/
+
+      - name: Checkout branch
+        uses: actions/checkout@v2
+        with:
+          path: src/mlibc
+          submodules: true
+
+      - name: Get libgcc-binaries
+        run: |
+            set -e
+            case "${{matrix.arch}}" in \
+              x86) \
+                wget -O /tmp/libgcc-${{matrix.arch}}.a https://github.com/osdev0/libgcc-binaries/releases/latest/download/libgcc-i686.a;; \
+              *) \
+                wget -O /tmp/libgcc-${{matrix.arch}}.a https://github.com/osdev0/libgcc-binaries/releases/latest/download/libgcc-${{matrix.arch}}.a;; \
+            esac
+
+      - name: Prepare src/
+        run: |
+            cp mlibc/ci/bootstrap.yml .
+            touch mlibc/checkedout.xbstrap
+        working-directory: src/
+
+      - name: Prepare build/
+        run: |
+          cat > bootstrap-site.yml << EOF
+          define_options:
+            arch: ${{matrix.arch}}
+          EOF
+          xbstrap init ../src
+        working-directory: build/
+
+      - name: Build mlibc
+        run: |
+          set -e
+          xbstrap install mlibc-headers-only
+        working-directory: build/
+
+      - name: Download glibc
+        run: |
+          set -e
+          arch="${{matrix.arch}}"
+          case "$arch" in
+            x86)
+              arch="i386"
+              ;;
+            x86_64)
+              arch="amd64"
+              ;;
+            aarch64)
+              arch="arm64"
+              ;;
+            loongarch64)
+              arch="loong64"
+              ;;
+          esac
+          apt-get download libc6-dev-$arch-cross
+          dpkg-deb -x libc6-dev-*.deb ./glibc
+        working-directory: build/
+
+      # TODO: remove `--exit-with-zero-for-abi-mismatches` once this is green
+      - name: Run checks
+        run: |
+          arch="${{matrix.arch}}"
+          triple="$arch-linux-gnu"
+          case "$arch" in
+            x86)
+              arch="i386"
+              triple="i686-linux-gnu"
+              ;;
+          esac
+          extra_args="--ld-library-path /usr/$triple/"
+          echo "Comparing ABI of mlibc against glibc for ${{matrix.arch}}" >> $GITHUB_STEP_SUMMARY
+          echo '```diff' >> $GITHUB_STEP_SUMMARY
+          python3 ../src/mlibc/scripts/header-abi-compare.py \
+            --config ../src/mlibc/scripts/header-abi-compare-config.yml \
+            --arch "$arch" \
+            --exit-with-zero-for-abi-mismatches \
+            $extra_args \
+            ./glibc/usr/*-linux-gnu/include/ \
+            ./packages/mlibc-headers-only/usr/include/ \
+            -Mmfs >> $GITHUB_STEP_SUMMARY 2>&1
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        working-directory: build/

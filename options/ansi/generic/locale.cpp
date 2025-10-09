@@ -36,7 +36,7 @@ namespace {
 		CHAR_MAX, // int_p_sign_posn
 		CHAR_MAX // int_n_sign_posn
 	};
-}
+} // namespace
 
 namespace mlibc {
 	struct locale_description {
@@ -69,7 +69,7 @@ namespace mlibc {
 	const locale_description *numeric_facet;
 	const locale_description *time_facet;
 	const locale_description *messages_facet;
-}
+} // namespace mlibc
 
 [[gnu::constructor]]
 static void init_locale() {
@@ -159,7 +159,7 @@ char *setlocale(int category, const char *name) {
 
 namespace {
 	lconv effective_lc;
-}
+} // namespace
 
 struct lconv *localeconv(void) {
 	// Numeric locale.

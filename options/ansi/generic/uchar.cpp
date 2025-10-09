@@ -13,7 +13,7 @@ size_t mbrtoc32(char32_t *__restrict pc32, const char *__restrict pmb, size_t ma
 		ps = &internal_state;
 
 	if(!pmb)
-		return mbrtoc32(0, "", 1, ps);
+		return mbrtoc32(nullptr, "", 1, ps);
 
 	wchar_t wc;
 	size_t ret = mbrtowc(&wc, pmb, max, ps);

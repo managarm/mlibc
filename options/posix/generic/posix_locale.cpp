@@ -7,7 +7,7 @@ namespace {
 bool newlocale_seen = false;
 bool uselocale_seen = false;
 
-}
+} // namespace
 
 locale_t newlocale(int, const char *, locale_t) {
 	// Due to all of the locale functions being stubs, the locale will not be used

@@ -85,14 +85,18 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 
 	int path_len = strlen(path);
 	SYSCALL4(SYSCALL_OPEN, dirfd, path, path_len, flags);
-	if (ret != -1 && (flags & O_EXCL)) {
+
+	// Have to check for O_CREAT since there is a pesky Linux-specific O_EXCL
+	// extension that makes it not fail if we are opening a block device.
+	// Otherwise O_EXCL with the file existing should be always a failure.
+	if (ret != -1 && (flags & O_EXCL) && (flags & O_CREAT)) {
 		SYSCALL1(SYSCALL_CLOSE, ret);
 		return EEXIST;
 	}
 
 	// We implement creating files in this sysdep.
-	if ((errno == ENOENT) && (flags & O_CREAT)) {
-		SYSCALL5(SYSCALL_MAKENODE, AT_FDCWD, path, path_len, mode, 0);
+	if ((errno == ENOENT) && (flags & O_CREAT) && ((flags & O_DIRECTORY) == 0)) {
+		SYSCALL5(SYSCALL_MAKENODE, AT_FDCWD, path, path_len, S_IFREG | mode, 0);
 		if (ret == -1) {
 			return errno;
 		}
@@ -293,7 +297,6 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 	*window = ret;
 
 	if ((errno == ENOMEM) && ((flags & MAP_ANON) == 0)) {
-		mlibc::infoLogger() << "mlibc: emulating file mmap" << frg::endlog;
 		int ret = sys_anon_allocate(size, window);
 		if (ret) {
 			return ret;
@@ -356,6 +359,13 @@ pid_t sys_getpid() {
 	pid_t ret;
 	int errno;
 	SYSCALL0(SYSCALL_GETPID);
+	return ret;
+}
+
+pid_t sys_gettid() {
+	pid_t ret;
+	int errno;
+	SYSCALL0(SYSCALL_GETTID);
 	return ret;
 }
 
@@ -524,6 +534,10 @@ int sys_ttyname(int fd, char *buff, size_t size) {
 	return errno;
 }
 
+int sys_ptsname(int fd, char *buff, size_t size) {
+	return sys_ttyname(fd, buff, size);
+}
+
 int sys_sethostname(const char *buff, size_t size) {
 	int ret, errno;
 
@@ -621,8 +635,8 @@ int sys_dup(int fd, int flags, int *newfd) {
 
 int sys_dup2(int fd, int flags, int newfd) {
 	int ret = sys_close(newfd);
-	if (ret != 0 && ret != EBADFD) {
-		return EBADFD;
+	if (ret != 0 && ret != EBADF) {
+		return EBADF;
 	}
 
 	int errno;
@@ -633,7 +647,7 @@ int sys_dup2(int fd, int flags, int newfd) {
 	}
 
 	if (ret != -1 && ret != newfd) {
-		return EBADFD;
+		return EBADF;
 	}
 
 	if (errno == 0) {
@@ -748,10 +762,7 @@ int sys_mkdir(const char *path, mode_t mode) {
 }
 
 int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
-	int ret, errno;
-	size_t path_len = strlen (path);
-	SYSCALL5(SYSCALL_MAKENODE, dirfd, path, path_len, S_IFDIR | mode, 0);
-	return errno;
+	return sys_mknodat(dirfd, path, S_IFDIR | mode, 0);
 }
 
 int sys_rmdir(const char* path){
@@ -1018,19 +1029,16 @@ int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval
 }
 
 int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
-	(void)flags;
+	int ret, errno;
 
 	if (hdr->msg_control != NULL) {
-		// mlibc::infoLogger() << "mlibc: recv() msg_control not supported!" << frg::endlog;
+		SYSCALL3(SYSCALL_RECVSOCKCTL, fd, hdr->msg_control, hdr->msg_controllen);
 	}
 
-	int ret;
 	size_t count = 0;
-	int errno;
-
 	for (int i = 0; i < hdr->msg_iovlen; i++) {
-		SYSCALL6(SYSCALL_RECVFROM, fd, hdr->msg_iov->iov_base, hdr->msg_iov->iov_len,
-					hdr->msg_flags, hdr->msg_name, hdr->msg_namelen);
+		SYSCALL6(SYSCALL_RECVFROM, fd, hdr->msg_iov[i].iov_base, hdr->msg_iov[i].iov_len,
+					flags, hdr->msg_name, hdr->msg_namelen);
 		if (ret == -1) {
 			return errno;
 		}
@@ -1042,19 +1050,16 @@ int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
 }
 
 int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
-	(void)flags;
+	int ret, errno;
 
 	if (hdr->msg_control != NULL) {
-		// mlibc::infoLogger() << "mlibc: recv() msg_control not supported!" << frg::endlog;
+		SYSCALL3(SYSCALL_SENDSOCKCTL, fd, hdr->msg_control, hdr->msg_controllen);
 	}
 
-	int ret;
 	size_t count = 0;
-	int errno;
-
 	for (int i = 0; i < hdr->msg_iovlen; i++) {
-		SYSCALL6(SYSCALL_SENDTO, fd, hdr->msg_iov->iov_base, hdr->msg_iov->iov_len,
-					hdr->msg_flags, hdr->msg_name, hdr->msg_namelen);
+		SYSCALL6(SYSCALL_SENDTO, fd, hdr->msg_iov[i].iov_base, hdr->msg_iov[i].iov_len,
+					flags, hdr->msg_name, hdr->msg_namelen);
 		if (ret == -1) {
 			return errno;
 		}
@@ -1258,7 +1263,7 @@ int sys_sysconf(int num, long *rret) {
 				return EFAULT;
 			}
 		case _SC_OPEN_MAX:
-			*rret = 100;
+			*rret = 1024;
 			return 0;
 		case _SC_AVPHYS_PAGES:
 			SYSCALL1(SYSCALL_MEMINFO, &mem);
@@ -1413,11 +1418,61 @@ int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *n
 	return errno;
 }
 
-int sys_mknodat(int dirfd, const char *path, mode_t mode, dev_t dev) {
+int sys_mknodat(int dirfd, const char *path, int mode, int dev) {
 	int ret;
 	int errno;
 	size_t len = strlen(path);
 	SYSCALL5(SYSCALL_MAKENODE, dirfd, path, len, mode, dev);
+	return errno;
+}
+
+int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
+	return sys_mknodat(dirfd, path, S_IFIFO | mode, 0);
+}
+
+int sys_openpt(int oflags, int *fd) {
+	int sfd, e;
+
+	if (e = sys_openpty(fd, &sfd, NULL, NULL, NULL); e) {
+		return e;
+	}
+	sys_close(sfd);
+
+	int fdflags = 0;
+	if (oflags & O_CLOEXEC) {
+		fdflags |= FD_CLOEXEC;
+	}
+	if (oflags & O_CLOFORK) {
+		fdflags |= FD_CLOFORK;
+	}
+	if (fdflags) {
+		fcntl(*fd, F_SETFD, fdflags);
+	}
+
+	// We ignore non O_RDWR passed in oflags since that doesnt bond well with
+	// the openpty interface.
+	if (!(oflags & O_NOCTTY)) {
+		ioctl(*fd, TIOCSCTTY);
+	}
+
+	return e;
+}
+
+int sys_unlockpt(int fd) {
+	int unlock = 0;
+	return sys_ioctl(fd, TIOCSPTLCK, &unlock, NULL);
+}
+
+int sys_symlink(const char *target, const char *link_path) {
+	return sys_symlinkat(target, AT_FDCWD, link_path);
+}
+
+int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
+	int ret;
+	int errno;
+	size_t target_len = strlen(target_path);
+	size_t link_len = strlen(link_path);
+	SYSCALL5(SYSCALL_SYMLINK, dirfd, target_path, target_len, link_path, link_len);
 	return errno;
 }
 

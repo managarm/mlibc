@@ -306,7 +306,7 @@ wchar_t *wcschr(const wchar_t *s, wchar_t c) {
 	if(!c)
 		return (wchar_t *)s + wcslen(s);
 	for(; *s && *s != c; s++);
-	return *s ? (wchar_t *)s : 0;
+	return *s ? (wchar_t *)s : nullptr;
 }
 
 size_t wcscspn(const wchar_t *, const wchar_t *) { MLIBC_STUB_BODY; }
@@ -315,7 +315,7 @@ wchar_t *wcspbrk(const wchar_t *, const wchar_t *) { MLIBC_STUB_BODY; }
 wchar_t *wcsrchr(const wchar_t *s, wchar_t c) {
 	const wchar_t *p;
 	for(p = s + wcslen(s); p >= s && *p != c; p--);
-	return p >= s ? (wchar_t *)p : 0;
+	return p >= s ? (wchar_t *)p : nullptr;
 }
 
 size_t wcsspn(const wchar_t *, const wchar_t *) { MLIBC_STUB_BODY; }

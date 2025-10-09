@@ -26,7 +26,7 @@ namespace {
 		return 0;
 	}
 
-}
+} // namespace
 
 // On RISC-V, __builtin_ffs just calls into ffs, so we can't use it here.
 #if defined(__has_builtin) && !defined(__riscv)
@@ -103,5 +103,11 @@ void bcopy(const void *s1, void *s2, size_t n) {
 
 void bzero(void *s, size_t n) {
 	memset(s, 0, n);
+}
+
+void explicit_bzero(void *s, size_t len) {
+  memset (s, 0, len);
+  // Compiler barrier to prevent optimizing away the memset
+  asm volatile ("" ::: "memory");
 }
 

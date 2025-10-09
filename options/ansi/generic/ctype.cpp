@@ -234,7 +234,7 @@ namespace {
 		ct_xdigit,
 		ct_count
 	};
-}
+} // namespace
 
 wctype_t wctype(const char *cs) {
 	frg::string_view s{cs};

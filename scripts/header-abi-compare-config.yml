@@ -1,0 +1,303 @@
+# additional includes to supply via `-I` arguments
+includes: []
+
+# paths relative to includedir whose files we don't want to parse themselves,
+# but whose content we want to analyze if they're included from another header.
+base_skipped_directories:
+  - bits
+# paths relative to includedir that we want to completely ignore, even for transitive includes
+base_ignored_directories:
+  - finclude
+  - gnu
+
+# same as the two above, but for files
+base_skipped_files: []
+base_ignored_files: []
+
+# record mapping from base (glibc) to mlibc
+map_record_to_struct:
+  - "__SOCKADDR_ARG": "struct sockaddr *restrict"
+  - "__CONST_SOCKADDR_ARG": "const struct sockaddr *"
+
+# struct equivalence mapping from base (glibc) to mlibc
+equivalent_structs:
+  - "struct _IO_FILE": "struct __mlibc_file_base"
+  - "__mbstate_t": "struct __mlibc_mbstate"
+  - "cnd_t": "struct __mlibc_cond"
+  - "mtx_t": "struct __mlibc_mutex"
+  - "struct __locale_struct": "void"
+  - "pthread_mutexattr_t": "struct __mlibc_mutexattr"
+  - "pthread_mutex_t": "struct __mlibc_mutex"
+  - "pthread_condattr_t": "struct __mlibc_condattr"
+  - "pthread_barrierattr_t": "struct __mlibc_barrierattr"
+  - "pthread_rwlockattr_t": "struct __mlibc_rwlockattr"
+  - "pthread_rwlock_t": "struct __mlibc_fair_rwlock"
+  - "union pthread_attr_t": "struct __mlibc_threadattr"
+  - "pthread_barrier_t": "struct __mlibc_barrier"
+  - "pthread_cond_t": "struct __mlibc_cond"
+  - "__sigset_t": "sigset_t"
+  - "struct ucontext_t": "struct __ucontext"
+  - "struct __dirstream": "struct __mlibc_dir_struct"
+  - "sem_t": "struct sem_"
+  - "struct stat64": "struct stat"
+  - "struct msqid64_ds": "struct msqid_ds"
+  - "struct msqid_ds": "struct msqid64_ds"
+  - "struct rlimit64": "struct rlimit"
+  - "glob_t": "struct glob_t"
+  - "stack_t": "struct __stack"
+  - "__useconds_t": "useconds_t"
+
+# files to ignore, relative to includedir
+ignored_files:
+  - math.h
+  - tgmath.h
+  - regexp.h
+  - sys/asm.h
+  - sys/elf.h
+  - sys/vm86.h
+
+ignored_structs:
+  # structs to ignore because we expose the kernel layout
+  - fd_set
+  - semid_ds
+
+  # libc-level constructs that are allowed to differ, and probably do
+  - ifaddrs
+  - lastlog
+  - regmatch_t
+  - sem_t
+  - sigevent
+  - utmp
+  - utmpx
+
+ignored_typedefs:
+  # opaque structs where users can't rely on any particular layout
+  - cnd_t
+  - fpos_t
+  - jmp_buf
+  - mtx_t
+  - pthread_attr_t
+  - pthread_barrier_t
+  - pthread_cond_t
+  - pthread_condattr_t
+  - pthread_mutex_t
+  - pthread_mutexattr_t
+  - pthread_rwlock_t
+  - pthread_rwlockattr_t
+  - sigjmp_buf
+  - wordexp_t
+
+  # glibc skill issue: regoff_t should be at least ptrdiff_t or ssize_t-sized, but glibc uses int
+  - regmatch_t
+
+# macros we ignore for being libc-level constructs or being allowed to diverge
+ignored_macros:
+  - AT_XPIPE
+  - AT_OPENFILES
+  - AT_FS_SERVER
+  - AT_MBUS_SERVER
+  - _Complex_I
+  - FTW_F
+  - FTW_D
+  - FTW_DNR
+  - FTW_DP
+  - FTW_NS
+  - FTW_SL
+  - FTW_SLN
+  - FTW_PHYS
+  - FTW_MOUNT
+  - FTW_DEPTH
+  - FTW_CHDIR
+  - FTW_CONTINUE
+  - WRDE_APPEND
+  - WRDE_DOOFFS
+  - WRDE_NOCMD
+  - WRDE_REUSE
+  - WRDE_SHOWERR
+  - WRDE_UNDEF
+  - WRDE_SUCCESS
+  - WRDE_BADCHAR
+  - WRDE_BADVAL
+  - WRDE_CMDSUB
+  - WRDE_NOSPACE
+  - WRDE_SYNTAX
+  - PF_MAX
+  - SOMAXCONN
+  - IPPROTO_MAX
+  - FOPEN_MAX
+  - FILENAME_MAX
+  - TMP_MAX
+  - LINE_MAX
+  - CHARCLASS_NAME_MAX
+  - RE_DUP_MAX
+  - SIGRTMIN
+  - L_ctermid
+  - L_tmpnam
+  - _IOFBF
+  - _IOLBF
+  - _IONBF
+  - _PATH_DEFPATH
+  - _PATH_STDPATH
+  - _PATH_VARDB
+  - _POSIX_OPEN_MAX
+  - PTHREAD_DESTRUCTOR_ITERATIONS
+  - PTHREAD_STACK_MIN
+  - MINSIGSTKSZ
+  - SIGSTKSZ
+  - _PC_FILESIZEBITS
+  - _PC_SYMLINK_MAX
+  - NL_ARGMAX
+  - MB_LEN_MAX
+  - ABDAY_1
+  - ABDAY_2
+  - ABDAY_3
+  - ABDAY_4
+  - ABDAY_5
+  - ABDAY_6
+  - ABDAY_7
+  - DAY_1
+  - DAY_2
+  - DAY_3
+  - DAY_4
+  - DAY_5
+  - DAY_6
+  - DAY_7
+  - ABMON_1
+  - ABMON_2
+  - ABMON_3
+  - ABMON_4
+  - ABMON_5
+  - ABMON_6
+  - ABMON_7
+  - ABMON_8
+  - ABMON_9
+  - ABMON_10
+  - ABMON_11
+  - ABMON_12
+  - MON_1
+  - MON_2
+  - MON_3
+  - MON_4
+  - MON_5
+  - MON_6
+  - MON_7
+  - MON_8
+  - MON_9
+  - MON_10
+  - MON_11
+  - MON_12
+  - AM_STR
+  - PM_STR
+  - D_T_FMT
+  - D_FMT
+  - T_FMT
+  - T_FMT_AMPM
+  - ERA
+  - ERA_D_FMT
+  - ALT_DIGITS
+  - ERA_D_T_FMT
+  - ERA_T_FMT
+  - CODESET
+  - CRNCYSTR
+  - RADIXCHAR
+  - DECIMAL_POINT
+  - THOUSEP
+  - THOUSANDS_SEP
+  - YESEXPR
+  - NOEXPR
+  - LC_ALL
+  - LC_COLLATE
+  - LC_CTYPE
+  - LC_MONETARY
+  - LC_NUMERIC
+  - LC_TIME
+  - LC_MESSAGES
+  - LC_MEASUREMENT
+  - LC_GLOBAL_LOCALE
+  - LC_CTYPE_MASK
+  - LC_NUMERIC_MASK
+  - LC_TIME_MASK
+  - LC_COLLATE_MASK
+  - LC_MONETARY_MASK
+  - LC_MESSAGES_MASK
+  - LC_MEASUREMENT_MASK
+  - LC_ALL_MASK
+  - AI_PASSIVE
+  - AI_CANONNAME
+  - AI_NUMERICHOST
+  - AI_V4MAPPED
+  - AI_ALL
+  - AI_ADDRCONFIG
+  - AI_NUMERICSERV
+  - NI_NOFQDN
+  - NI_NUMERICHOST
+  - NI_NAMEREQD
+  - NI_NUMERICSCOPE
+  - NI_DGRAM
+  - NI_NUMERICSERV
+  - NI_MAXSERV
+  - NI_IDN
+  - NI_IDN_USE_STD3_ASCII_RULES
+  - NI_MAXHOST
+  - EAI_AGAIN
+  - EAI_BADFLAGS
+  - EAI_FAIL
+  - EAI_FAMILY
+  - EAI_MEMORY
+  - EAI_NONAME
+  - EAI_SERVICE
+  - EAI_SOCKTYPE
+  - EAI_SYSTEM
+  - EAI_OVERFLOW
+  - EAI_NODATA
+  - EAI_ADDRFAMILY
+  - GLOB_APPEND
+  - GLOB_DOOFFS
+  - GLOB_ERR
+  - GLOB_MARK
+  - GLOB_NOCHECK
+  - GLOB_NOESCAPE
+  - GLOB_NOSORT
+  - GLOB_PERIOD
+  - GLOB_TILDE
+  - GLOB_TILDE_CHECK
+  - GLOB_BRACE
+  - GLOB_NOMAGIC
+  - GLOB_ALTDIRFUNC
+  - GLOB_ONLYDIR
+  - GLOB_MAGCHAR
+  - GLOB_ABORTED
+  - GLOB_NOMATCH
+  - GLOB_NOSPACE
+  - GLOB_NOSYS
+  - BUFSIZ
+  - F_LOCK
+  - F_TEST
+  - F_TLOCK
+  - F_ULOCK
+  - O_LARGEFILE
+  - FSETLOCKING_INTERNAL
+  - FSETLOCKING_BYCALLER
+  - FSETLOCKING_QUERY
+  - NSS_BUFLEN_PASSWD
+
+# enum members whose value should not be dependended on
+ignored_enum_constants:
+  - thrd_timedout
+  - thrd_busy
+  - thrd_error
+  - thrd_nomem
+
+# structs that would get ignored by default (with leading double underscores) that we
+# don't actually want to get ignored
+forced_structs:
+  - "__mlibc_thread_data"
+  - "__mlibc_threadattr"
+  - "__mlibc_mutex"
+  - "__mlibc_mutexattr"
+  - "__mlibc_cond"
+  - "__mlibc_condattr"
+  - "__ucontext"
+
+forced_typedefs:
+  - "__ucontext"

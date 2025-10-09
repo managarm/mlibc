@@ -85,7 +85,7 @@ int listen(int fd, int backlog) {
 }
 
 ssize_t recv(int sockfd, void *__restrict buf, size_t len, int flags) {
-	return recvfrom(sockfd, buf, len, flags, NULL, NULL);
+	return recvfrom(sockfd, buf, len, flags, nullptr, nullptr);
 }
 
 ssize_t recvfrom(int sockfd, void *__restrict buf, size_t len, int flags,

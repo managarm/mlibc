@@ -17,11 +17,11 @@ void error_at_line(int __status, int __errnum, const char *__filename, unsigned 
 extern unsigned int error_message_count;
 extern int error_one_per_line;
 extern void (*error_print_progname)(void);
-	
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
 }
 #endif
-	
+
 #endif /* _ERROR_H */

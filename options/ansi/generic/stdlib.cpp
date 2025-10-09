@@ -20,6 +20,7 @@
 #include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/strtofp.hpp>
 #include <mlibc/strtol.hpp>
+#include <mlibc/threads.hpp>
 #include <mlibc/global-config.hpp>
 
 #if __MLIBC_POSIX_OPTION
@@ -35,10 +36,12 @@ namespace {
 	// The string functions mbstowcs() and wcstombs() do *not* have this state.
 	thread_local __mlibc_mbstate mblen_state = __MLIBC_MBSTATE_INITIALIZER;
 	thread_local __mlibc_mbstate mbtowc_state = __MLIBC_MBSTATE_INITIALIZER;
-}
+
+	__mlibc_mutex exit_mutex = __MLIBC_THREAD_MUTEX_INITIALIZER;
+} // namespace
 
 double atof(const char *string) {
-	return strtod(string, NULL);
+	return strtod(string, nullptr);
 }
 int atoi(const char *string) {
 	return strtol(string, nullptr, 10);
@@ -57,14 +60,14 @@ extern "C" {
 	__attribute__((__returns_twice__)) int __sigsetjmp(sigjmp_buf buffer, int savesigs) {
 		buffer[0].__savesigs = savesigs;
 		if (savesigs)
-			sigprocmask(0, NULL, &buffer[0].__sigset);
+			sigprocmask(0, nullptr, &buffer[0].__sigset);
 		return 0;
 	}
 }
 
 __attribute__((__noreturn__)) void siglongjmp(sigjmp_buf buffer, int value) {
 	if (buffer[0].__savesigs)
-		sigprocmask(SIG_SETMASK, &buffer[0].__sigset, NULL);
+		sigprocmask(SIG_SETMASK, &buffer[0].__sigset, nullptr);
 	jmp_buf b;
 	b[0].__reg_state = buffer[0].__reg_state;
 	longjmp(b, value);
@@ -142,7 +145,7 @@ void *calloc(size_t count, size_t size) {
 	// to prevent overflowing, we divide both sides of the inequality by size and check with that
 	if(size && count > (SIZE_MAX / size)) {
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
 	// TODO: this could be done more efficient if the OS gives us already zero'd pages
@@ -200,6 +203,10 @@ int at_quick_exit(void (*func)(void)) {
 }
 
 void exit(int status) {
+	// for concurrent calls to exit() or quick_exit(), all but the first shall block until termination
+	// see https://austingroupbugs.net/view.php?id=1845
+	mlibc::thread_mutex_lock(&exit_mutex);
+
 	__mlibc_do_finalize();
 	mlibc::sys_exit(status);
 }
@@ -261,7 +268,7 @@ int system(const char *command) {
 		int err;
 		pid_t unused;
 
-		while ((err = mlibc::sys_waitpid(child, &status, 0, NULL, &unused)) < 0) {
+		while ((err = mlibc::sys_waitpid(child, &status, 0, nullptr, &unused)) < 0) {
 			if (err == EINTR)
 				continue;
 
@@ -464,7 +471,7 @@ size_t mbstowcs(wchar_t *__restrict wcs, const char *__restrict mbs, size_t wc_l
 
 size_t wcstombs(char *__restrict mb_string, const wchar_t *__restrict wc_string, size_t max_size) {
 	const wchar_t *wcs = wc_string;
-	return wcsrtombs(mb_string, &wcs, max_size, 0);
+	return wcsrtombs(mb_string, &wcs, max_size, nullptr);
 }
 
 void free(void *ptr) {
