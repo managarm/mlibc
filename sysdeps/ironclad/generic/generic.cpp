@@ -1430,6 +1430,34 @@ int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
 	return sys_mknodat(dirfd, path, S_IFIFO | mode, 0);
 }
 
+int sys_openpt(int oflags, int *fd) {
+	int sfd, e;
+
+	if (e = sys_openpty(fd, &sfd, NULL, NULL, NULL); e) {
+		return e;
+	}
+	sys_close(sfd);
+
+	int fdflags = 0;
+	if (oflags & O_CLOEXEC) {
+		fdflags |= FD_CLOEXEC;
+	}
+	if (oflags & O_CLOFORK) {
+		fdflags |= FD_CLOFORK;
+	}
+	if (fdflags) {
+		fcntl(*fd, F_SETFD, fdflags);
+	}
+
+	// We ignore non O_RDWR passed in oflags since that doesnt bond well with
+	// the openpty interface.
+	if (!(oflags & O_NOCTTY)) {
+		ioctl(*fd, TIOCSCTTY);
+	}
+
+	return e;
+}
+
 int sys_unlockpt(int fd) {
 	int unlock = 0;
 	return sys_ioctl(fd, TIOCSPTLCK, &unlock, NULL);
