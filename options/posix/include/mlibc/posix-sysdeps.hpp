@@ -256,6 +256,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 
 [[gnu::weak]] int sys_nice(int nice, int *new_nice);
 
+[[gnu::weak]] int sys_openpt(int oflags, int *fd);
+
 } //namespace mlibc
 
 #endif // MLIBC_POSIX_SYSDEPS

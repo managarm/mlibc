@@ -492,13 +492,20 @@ char *ptsname(int fd) {
 }
 
 int posix_openpt(int flags) {
-	int fd;
-	if(int e = mlibc::sys_open("/dev/ptmx", flags, 0, &fd); e) {
-		errno = e;
-		return -1;
+	int fd, e;
+
+	if(mlibc::sys_openpt) {
+		e = mlibc::sys_openpt(flags, &fd);
+	} else {
+		e = mlibc::sys_open("/dev/ptmx", flags, 0, &fd);
 	}
 
-	return fd;
+	if (e) {
+		errno = e;
+		return -1;
+	} else {
+		return fd;
+	}
 }
 
 int unlockpt(int fd) {
