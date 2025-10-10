@@ -1,6 +1,10 @@
 #ifndef MLIBC_FENV_H
 #define MLIBC_FENV_H
 
+#if !defined(__ASSEMBLER__)
+#include <bits/types.h>
+#endif /* !defined(__ASSEMBLER__) */
+
 #if defined(__x86_64__) || defined(__i386__)
 
 #define FE_DENORMAL 2
@@ -17,6 +21,17 @@
 #define FE_UPWARD 0x800
 #define FE_TOWARDZERO 0xC00
 
+typedef __mlibc_uint16 fexcept_t;
+
+typedef struct {
+	__mlibc_uint32 __control_word;
+	__mlibc_uint32 __status_word;
+	__mlibc_uint32 __unused[5];
+#if defined(__x86_64__)
+	__mlibc_uint32 __mxcsr;
+#endif
+} fenv_t;
+
 #elif defined(__aarch64__)
 
 #define FE_INVALID 1
@@ -32,6 +47,13 @@
 #define FE_DOWNWARD 0x800000
 #define FE_TOWARDZERO 0xC00000
 
+typedef unsigned int fexcept_t;
+
+typedef struct {
+	unsigned int __fpcr;
+	unsigned int __fpsr;
+} fenv_t;
+
 #elif defined(__riscv) && __riscv_xlen == 64
 
 #define FE_INEXACT 1
@@ -46,6 +68,9 @@
 #define FE_TOWARDZERO 1
 #define FE_DOWNWARD 2
 #define FE_UPWARD 3
+
+typedef unsigned int fexcept_t;
+typedef unsigned int fenv_t;
 
 #elif defined (__m68k__)
 
@@ -71,6 +96,14 @@
 
 #endif
 
+#if !defined(__ASSEMBLER__)
+typedef unsigned int fexcept_t;
+
+typedef struct {
+	fexcept_t __excepts;
+} fenv_t;
+#endif /* !defined(__ASSEMBLER__) */
+
 #elif defined(__loongarch64)
 
 #define FE_INEXACT 0x010000
@@ -85,6 +118,12 @@
 #define FE_TOWARDZERO 0x100
 #define FE_UPWARD 0x200
 #define FE_DOWNWARD 0x300
+
+typedef unsigned int fexcept_t;
+
+typedef struct {
+	unsigned int __fp_control_register;
+} fenv_t;
 
 #else
 #error Unknown architecture
