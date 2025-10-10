@@ -67,6 +67,7 @@ typedef int nl_item;
 #define CODESET 0x30000
 
 #define CRNCYSTR 0x40000
+#define CURRENCY_SYMBOL 0x40001
 
 #define RADIXCHAR 0x50000
 #define DECIMAL_POINT RADIXCHAR
