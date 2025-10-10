@@ -264,7 +264,7 @@ unsigned int alarm(unsigned int __seconds);
 int chdir(const char *__path);
 int chown(const char *__path, uid_t __uid, gid_t __gid);
 int close(int __fd);
-ssize_t confstr(int __name, char *__buf, size_t __size);
+size_t confstr(int __name, char *__buf, size_t __size);
 char *ctermid(char *__s);
 int dup(int __fd);
 int dup2(int __src_fd, int __dest_fd);
@@ -362,11 +362,7 @@ extern int optopt;
 #endif /* !__MLIBC_ABI_ONLY */
 
 /* Non-POSIX functions supported by Linux. */
-#if UINTPTR_MAX == UINT64_MAX
-typedef __mlibc_uint64 useconds_t;
-#else
 typedef __mlibc_uint32 useconds_t;
-#endif
 
 #ifndef __MLIBC_ABI_ONLY
 

@@ -610,7 +610,7 @@ typedef struct {
 #define SHN_LORESERVE	0xff00
 #define SHN_COMMON	0xfff2
 #define SHN_XINDEX	0xffff
-#define SHN_HIRESERVE	0xff00
+#define SHN_HIRESERVE	0xffff
 
 /* values for e_machine */
 #define EM_NONE			0
