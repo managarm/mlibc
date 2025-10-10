@@ -317,15 +317,6 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 		return e;
 	}
 
-#if defined(__i386__)
-	statbuf->st_atim.tv_sec = statbuf->__st_atim32.tv_sec;
-	statbuf->st_atim.tv_nsec = statbuf->__st_atim32.tv_nsec;
-	statbuf->st_mtim.tv_sec = statbuf->__st_mtim32.tv_sec;
-	statbuf->st_mtim.tv_nsec = statbuf->__st_mtim32.tv_nsec;
-	statbuf->st_ctim.tv_sec = statbuf->__st_ctim32.tv_sec;
-	statbuf->st_ctim.tv_nsec = statbuf->__st_ctim32.tv_nsec;
-#endif
-
 	return 0;
 }
 
@@ -1693,8 +1684,12 @@ static void statfs_to_statvfs(struct statfs *from, struct statvfs *to) {
 		.f_ffree = from->f_ffree,
 		.f_favail = from->f_ffree,
 		.f_fsid = (unsigned long) from->f_fsid.__val[0],
+#if __INTPTR_WIDTH__ == 32
+		.__f_unused = 0,
+#endif
 		.f_flag = from->f_flags,
 		.f_namemax = from->f_namelen,
+		.f_spare = { 0 },
 	};
 }
 
