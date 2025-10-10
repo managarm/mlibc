@@ -40,6 +40,7 @@ libc_deps += [ bragi_dep, hel_dep, proto_posix_dep, libdrm_dep ]
 rtld_deps += [ bragi_dep, hel_dep, proto_posix_dep ]
 
 libc_sources += files(
+	'generic/capability.cpp',
 	'generic/drm.cpp',
 	'generic/ensure.cpp',
 	'generic/entry.cpp',
