@@ -905,7 +905,7 @@ void timer_handle(int, siginfo_t *, void *) {
 void *timer_setup(void *arg) {
 	auto ctx = reinterpret_cast<PosixTimerContext *>(arg);
 
-	sigset_t set;
+	sigset_t set{};
 	sigaddset(&set, SIGTIMER);
 
 	// wait for parent setup to be complete
@@ -920,7 +920,7 @@ void *timer_setup(void *arg) {
 	// notify the parent that the context can be dropped
 	__atomic_store_n(&ctx->workerSem, 1, __ATOMIC_RELEASE);
 
-	siginfo_t si;
+	siginfo_t si{};
 	int signo;
 
 	while(true) {

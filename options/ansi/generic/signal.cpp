@@ -34,6 +34,11 @@ int raise(int sig) {
 
 // This is a POSIX extension, but we have it in here for sigsetjmp
 int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
+	if (set && how != SIG_BLOCK && how != SIG_SETMASK && how != SIG_UNBLOCK) {
+		errno = EINVAL;
+		return -1;
+	}
+
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sigprocmask, -1);
 	if(int e = mlibc::sys_sigprocmask(how, set, retrieve); e) {
 		errno = e;
