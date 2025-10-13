@@ -3,6 +3,7 @@
 
 #include <mlibc/charcode.hpp>
 #include <mlibc/locale.hpp>
+#include <wctype.h>
 
 namespace mlibc {
 
@@ -28,6 +29,9 @@ struct charset {
 	bool is_upper(codepoint c, mlibc::localeinfo *l);
 	codepoint to_lower(codepoint c, mlibc::localeinfo *l);
 	codepoint to_upper(codepoint c, mlibc::localeinfo *l);
+
+	wctype_t wctype(frg::string_view name, mlibc::localeinfo *l);
+	bool iswctype(wint_t wc, wctype_t, mlibc::localeinfo *l);
 };
 
 charset *current_charset();

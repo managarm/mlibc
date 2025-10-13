@@ -2,6 +2,7 @@
 #include <bits/ensure.h>
 #include <mlibc/charset.hpp>
 #include <mlibc/debug.hpp>
+#include <wchar.h>
 
 namespace {
 
@@ -155,6 +156,34 @@ codepoint charset::to_upper(codepoint c, mlibc::localeinfo *l) {
 	auto index = l->ctype.map_offset();
 	auto entry = l->ctype.class_table(index);
 	return wctrans_table_lookup(entry, c);
+}
+
+wctype_t charset::wctype(frg::string_view name, mlibc::localeinfo *l) {
+	size_t offset = 0;
+	auto class_names = l->ctype.class_names();
+
+	for (size_t i = 0; offset < class_names.size(); i++) {
+		auto end = class_names.find_first('\0', offset);
+
+		if (end == size_t(-1) || end == offset)
+			break;
+
+		if (name == class_names.sub_string(offset, end - offset))
+			return l->ctype.class_offset() + i;
+
+		offset = end + 1;
+	}
+
+	return 0;
+}
+
+bool charset::iswctype(wint_t wc, wctype_t t, mlibc::localeinfo *l) {
+	if (t == 0 || wc == static_cast<wint_t>(WEOF))
+		return 0;
+
+	auto table = l->ctype.get(__NL_ITEM(LC_CTYPE, t)).asUint32Span();
+
+	return wctype_table_lookup(table, wc);
 }
 
 charset *current_charset() {

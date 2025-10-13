@@ -218,71 +218,12 @@ int iswcntrl(wint_t nc) {
 // iswctype functions.
 // --------------------------------------------------------------------------------------
 
-namespace {
-	enum {
-		ct_null,
-		ct_alnum,
-		ct_alpha,
-		ct_blank,
-		ct_cntrl,
-		ct_digit,
-		ct_graph,
-		ct_lower,
-		ct_print,
-		ct_punct,
-		ct_space,
-		ct_upper,
-		ct_xdigit,
-		ct_count
-	};
-} // namespace
-
 wctype_t wctype(const char *cs) {
-	frg::string_view s{cs};
-	if(s == "alnum") return ct_alnum;
-	if(s == "alpha") return ct_alpha;
-	if(s == "blank") return ct_blank;
-	if(s == "cntrl") return ct_cntrl;
-	if(s == "digit") return ct_digit;
-	if(s == "graph") return ct_graph;
-	if(s == "lower") return ct_lower;
-	if(s == "print") return ct_print;
-	if(s == "punct") return ct_punct;
-	if(s == "space") return ct_space;
-	if(s == "upper") return ct_upper;
-	if(s == "xdigit") return ct_xdigit;
-	mlibc::infoLogger() << "mlibc: wctype(\"" << cs << "\") is not supported" << frg::endlog;
-	return ct_null;
+	return mlibc::current_charset()->wctype({cs}, mlibc::getActiveLocale());
 }
 
 int iswctype(wint_t wc, wctype_t type) {
-	switch (type) {
-		case ct_alnum:
-			return iswalnum(wc);
-		case ct_alpha:
-			return iswalpha(wc);
-		case ct_blank:
-			return iswblank(wc);
-		case ct_cntrl:
-			return iswcntrl(wc);
-		case ct_digit:
-			return iswdigit(wc);
-		case ct_graph:
-			return iswgraph(wc);
-		case ct_lower:
-			return iswlower(wc);
-		case ct_print:
-			return iswprint(wc);
-		case ct_punct:
-			return iswpunct(wc);
-		case ct_space:
-			return iswspace(wc);
-		case ct_upper:
-			return iswupper(wc);
-		case ct_xdigit:
-			return iswxdigit(wc);
-	}
-	return 0;
+	return mlibc::current_charset()->iswctype(wc, type, mlibc::getActiveLocale());
 }
 
 // --------------------------------------------------------------------------------------
