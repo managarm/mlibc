@@ -71,6 +71,14 @@ if not headers_only
 	libc_deps += frigg_dep
 	rtld_deps += frigg_dep
 
+	libsmarter_dep = dependency(
+		'libsmarter',
+		default_options: [],
+		fallback: ['libsmarter', 'libsmarter_dep'],
+	)
+	libc_deps += libsmarter_dep
+	rtld_deps += libsmarter_dep
+
 	add_project_arguments('-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', language: ['c', 'cpp'])
 	add_project_arguments('-nostdinc', '-fno-builtin', '-ffreestanding', language: ['c', 'cpp'])
 	add_project_arguments('-Werror=misleading-indentation', language: ['c', 'cpp'])
