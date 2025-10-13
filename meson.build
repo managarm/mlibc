@@ -88,6 +88,14 @@ if not headers_only
 	libc_deps += frigg_dep
 	rtld_deps += frigg_dep
 
+	libsmarter_dep = dependency(
+		'libsmarter',
+		default_options: [],
+		fallback: ['libsmarter', 'libsmarter_dep'],
+	)
+	libc_deps += libsmarter_dep
+	rtld_deps += libsmarter_dep
+
 	mlibc_c_args = ['-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', '-nostdinc', '-fno-builtin', '-ffreestanding']
 	mlibc_link_args = ['-nostdlib']
 	add_project_arguments('-Werror=misleading-indentation', language: ['c', 'cpp'])
