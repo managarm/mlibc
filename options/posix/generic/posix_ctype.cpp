@@ -217,12 +217,14 @@ int iswalpha_l(wint_t c, locale_t l) {
 	return mlibc::current_charset()->is_alpha(cp, static_cast<mlibc::localeinfo *>(l));
 }
 
-wctype_t wctype_l(const char* p, locale_t) {
-	return wctype(p);
+wctype_t wctype_l(const char* p, locale_t loc) {
+	auto l = static_cast<mlibc::localeinfo *>(loc);
+	return mlibc::current_charset()->wctype({p}, l);
 }
 
-int iswctype_l(wint_t w, wctype_t t, locale_t) {
-	return iswctype(w, t);
+int iswctype_l(wint_t wc, wctype_t t, locale_t loc) {
+	auto l = static_cast<mlibc::localeinfo *>(loc);
+	return mlibc::current_charset()->iswctype(wc, t, l);
 }
 
 wint_t towlower_l(wint_t c, locale_t l) {
