@@ -14,6 +14,8 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/stdlib.hpp>
+#include <mlibc/locale.hpp>
+#include <mlibc/strtofp.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/rtld-config.hpp>
 
@@ -498,19 +500,16 @@ int grantpt(int) {
 	return 0;
 }
 
-double strtod_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t) {
-	mlibc::infoLogger() << "mlibc: strtod_l ignores locale!" << frg::endlog;
-	return strtod(nptr, endptr);
+double strtod_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc) {
+	return mlibc::strtofp<double>(nptr, endptr, static_cast<mlibc::localeinfo *>(loc));
 }
 
-long double strtold_l(const char *__restrict__, char ** __restrict__, locale_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+long double strtold_l(const char *__restrict__ nptr, char ** __restrict__ endptr, locale_t loc) {
+	return mlibc::strtofp<long double>(nptr, endptr, static_cast<mlibc::localeinfo *>(loc));
 }
 
-float strtof_l(const char *__restrict__ nptr, char **__restrict__ endptr, locale_t) {
-	mlibc::infoLogger() << "mlibc: strtof_l ignores locales" << frg::endlog;
-	return strtof(nptr, endptr);
+float strtof_l(const char *__restrict__ nptr, char **__restrict__ endptr, locale_t loc) {
+	return mlibc::strtofp<float>(nptr, endptr, static_cast<mlibc::localeinfo *>(loc));
 }
 
 int strcoll_l(const char *, const char *, locale_t) {
