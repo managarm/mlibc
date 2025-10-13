@@ -4,6 +4,7 @@
 
 #include <bits/ensure.h>
 #include <mlibc/charset.hpp>
+#include <mlibc/locale.hpp>
 
 // --------------------------------------------------------------------------------------
 // char ctype functions.
@@ -14,7 +15,7 @@ int isalpha(int nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_alpha(cp);
+	return mlibc::current_charset()->is_alpha(cp, mlibc::getActiveLocale());
 }
 
 int isdigit(int nc) {
@@ -22,7 +23,7 @@ int isdigit(int nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_digit(cp);
+	return mlibc::current_charset()->is_digit(cp, mlibc::getActiveLocale());
 }
 
 int isxdigit(int nc) {
@@ -30,7 +31,7 @@ int isxdigit(int nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_xdigit(cp);
+	return mlibc::current_charset()->is_xdigit(cp, mlibc::getActiveLocale());
 }
 
 int isalnum(int nc) {
@@ -38,7 +39,7 @@ int isalnum(int nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_alnum(cp);
+	return mlibc::current_charset()->is_alnum(cp, mlibc::getActiveLocale());
 }
 
 int ispunct(int nc) {
@@ -46,7 +47,7 @@ int ispunct(int nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_punct(cp);
+	return mlibc::current_charset()->is_punct(cp, mlibc::getActiveLocale());
 }
 
 int isgraph(int nc) {
@@ -54,7 +55,7 @@ int isgraph(int nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_graph(cp);
+	return mlibc::current_charset()->is_graph(cp, mlibc::getActiveLocale());
 }
 
 int isblank(int nc) {
@@ -62,7 +63,7 @@ int isblank(int nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_blank(cp);
+	return mlibc::current_charset()->is_blank(cp, mlibc::getActiveLocale());
 }
 
 int isspace(int nc) {
@@ -70,7 +71,7 @@ int isspace(int nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_space(cp);
+	return mlibc::current_charset()->is_space(cp, mlibc::getActiveLocale());
 }
 
 int isprint(int nc) {
@@ -78,7 +79,7 @@ int isprint(int nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_print(cp);
+	return mlibc::current_charset()->is_print(cp, mlibc::getActiveLocale());
 }
 
 int islower(int nc) {
@@ -86,7 +87,7 @@ int islower(int nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_lower(cp);
+	return mlibc::current_charset()->is_lower(cp, mlibc::getActiveLocale());
 }
 
 int isupper(int nc) {
@@ -94,7 +95,7 @@ int isupper(int nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_upper(cp);
+	return mlibc::current_charset()->is_upper(cp, mlibc::getActiveLocale());
 }
 
 int iscntrl(int nc) {
@@ -102,7 +103,7 @@ int iscntrl(int nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::generic_is_control(cp);
+	return mlibc::current_charset()->is_cntrl(cp, mlibc::getActiveLocale());
 }
 
 int isascii(int nc) {
@@ -122,7 +123,7 @@ int iswalpha(wint_t nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_alpha(cp);
+	return mlibc::current_charset()->is_alpha(cp, mlibc::getActiveLocale());
 }
 
 int iswdigit(wint_t nc) {
@@ -130,7 +131,7 @@ int iswdigit(wint_t nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_digit(cp);
+	return mlibc::current_charset()->is_digit(cp, mlibc::getActiveLocale());
 }
 
 int iswxdigit(wint_t nc) {
@@ -138,7 +139,7 @@ int iswxdigit(wint_t nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_xdigit(cp);
+	return mlibc::current_charset()->is_xdigit(cp, mlibc::getActiveLocale());
 }
 
 int iswalnum(wint_t nc) {
@@ -146,7 +147,7 @@ int iswalnum(wint_t nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_alnum(cp);
+	return mlibc::current_charset()->is_alnum(cp, mlibc::getActiveLocale());
 }
 
 int iswpunct(wint_t nc) {
@@ -154,7 +155,7 @@ int iswpunct(wint_t nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_punct(cp);
+	return mlibc::current_charset()->is_punct(cp, mlibc::getActiveLocale());
 }
 
 int iswgraph(wint_t nc) {
@@ -162,7 +163,7 @@ int iswgraph(wint_t nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_graph(cp);
+	return mlibc::current_charset()->is_graph(cp, mlibc::getActiveLocale());
 }
 
 int iswblank(wint_t nc) {
@@ -170,7 +171,7 @@ int iswblank(wint_t nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_blank(cp);
+	return mlibc::current_charset()->is_blank(cp, mlibc::getActiveLocale());
 }
 
 int iswspace(wint_t nc) {
@@ -178,7 +179,7 @@ int iswspace(wint_t nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_space(cp);
+	return mlibc::current_charset()->is_space(cp, mlibc::getActiveLocale());
 }
 
 int iswprint(wint_t nc) {
@@ -186,7 +187,7 @@ int iswprint(wint_t nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_print(cp);
+	return mlibc::current_charset()->is_print(cp, mlibc::getActiveLocale());
 }
 
 int iswlower(wint_t nc) {
@@ -194,7 +195,7 @@ int iswlower(wint_t nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_lower(cp);
+	return mlibc::current_charset()->is_lower(cp, mlibc::getActiveLocale());
 }
 
 int iswupper(wint_t nc) {
@@ -202,7 +203,7 @@ int iswupper(wint_t nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::current_charset()->is_upper(cp);
+	return mlibc::current_charset()->is_upper(cp, mlibc::getActiveLocale());
 }
 
 int iswcntrl(wint_t nc) {
@@ -210,7 +211,7 @@ int iswcntrl(wint_t nc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
 		return 0;
-	return mlibc::generic_is_control(cp);
+	return mlibc::current_charset()->is_cntrl(cp, mlibc::getActiveLocale());
 }
 
 // --------------------------------------------------------------------------------------
@@ -288,20 +289,14 @@ int iswctype(wint_t wc, wctype_t type) {
 // char conversion functions.
 // --------------------------------------------------------------------------------------
 
-int tolower(int nc) {
-	auto cc = mlibc::current_charcode();
-	mlibc::codepoint cp;
-	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
-		return nc;
-	return mlibc::current_charset()->to_lower(cp);
+int tolower(int c) {
+	auto l = mlibc::getActiveLocale();
+	return c >= -128 && c < 256 ? l->ctype.map_tolower()[c + 128] : c;
 }
 
-int toupper(int nc) {
-	auto cc = mlibc::current_charcode();
-	mlibc::codepoint cp;
-	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
-		return nc;
-	return mlibc::current_charset()->to_upper(cp);
+int toupper(int c) {
+	auto l = mlibc::getActiveLocale();
+	return c >= -128 && c < 256 ? l->ctype.map_toupper()[c + 128] : c;
 }
 
 // --------------------------------------------------------------------------------------
@@ -313,7 +308,7 @@ wint_t towlower(wint_t wc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(wc, cp); e != mlibc::charcode_error::null)
 		return wc;
-	return mlibc::current_charset()->to_lower(cp);
+	return mlibc::current_charset()->to_lower(cp, mlibc::getActiveLocale());
 }
 
 wint_t towupper(wint_t wc) {
@@ -321,6 +316,5 @@ wint_t towupper(wint_t wc) {
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(wc, cp); e != mlibc::charcode_error::null)
 		return wc;
-	return mlibc::current_charset()->to_upper(cp);
+	return mlibc::current_charset()->to_upper(cp, mlibc::getActiveLocale());
 }
-
