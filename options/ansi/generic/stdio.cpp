@@ -17,6 +17,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/file-io.hpp>
+#include <mlibc/locale.hpp>
 #include <mlibc/ansi-sysdeps.hpp>
 #include <frg/mutex.hpp>
 #include <frg/expected.hpp>
@@ -25,7 +26,14 @@
 template<typename F>
 struct PrintfAgent {
 	PrintfAgent(F *formatter, frg::va_struct *vsp)
-	: _formatter{formatter}, _vsp{vsp} { }
+	: _formatter{formatter}, _vsp{vsp} {
+		auto l = mlibc::getActiveLocale();
+		locale_opts = frg::locale_options(
+			l->numeric.get(DECIMAL_POINT).asString().data(),
+			l->numeric.get(THOUSANDS_SEP).asString().data(),
+			reinterpret_cast<const char *>(l->numeric.get(GROUPING).asByteSpan().data())
+		);
+	}
 
 	frg::expected<frg::format_error> operator() (char c) {
 		_formatter->append(c);
@@ -56,10 +64,10 @@ struct PrintfAgent {
 			frg::do_printf_chars(*_formatter, t, opts, szmod, _vsp);
 			break;
 		case 'd': case 'i': case 'o': case 'x': case 'X': case 'b': case 'B': case 'u':
-			frg::do_printf_ints(*_formatter, t, opts, szmod, _vsp);
+			frg::do_printf_ints(*_formatter, t, opts, szmod, _vsp, locale_opts);
 			break;
 		case 'f': case 'F': case 'g': case 'G': case 'e': case 'E':
-			frg::do_printf_floats(*_formatter, t, opts, szmod, _vsp);
+			frg::do_printf_floats(*_formatter, t, opts, szmod, _vsp, locale_opts);
 			break;
 		case 'm':
 			__ensure(!opts.fill_zeros);
@@ -118,6 +126,7 @@ struct PrintfAgent {
 
 private:
 	F *_formatter;
+	frg::locale_options locale_opts;
 	frg::va_struct *_vsp;
 };
 
