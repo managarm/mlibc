@@ -7,6 +7,13 @@ extern "C" {
 
 #include <bits/posix/timeval.h>
 
+#define PRIO_PROCESS 1
+#define PRIO_PGRP 2
+#define PRIO_USER 3
+
+#define PRIO_MIN (-20)
+#define PRIO_MAX 20
+
 #define RUSAGE_SELF 1
 #define RUSAGE_CHILDREN 2
 
