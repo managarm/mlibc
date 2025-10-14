@@ -6,6 +6,7 @@
 namespace mlibc {
 
 int strncasecmp(const char *a, const char *b, size_t size);
+size_t strnlen(const char *s, size_t n);
 
 } // namespace mlibc
 
