@@ -196,7 +196,34 @@ struct nl_identification : nl_category<LC_IDENTIFICATION, _NL_NUM_LC_IDENTIFICAT
 	nl_identification();
 };
 
+struct localeinfo {
+	frg::string<MemoryAllocator> localeName = {"C", getAllocator()};
+
+	mlibc::nl_ctype ctype = {};
+	mlibc::nl_numeric numeric = {};
+	mlibc::nl_time time = {};
+	mlibc::nl_collate collate = {};
+	mlibc::nl_monetary monetary = {};
+	mlibc::nl_messages messages = {};
+	mlibc::nl_paper paper = {};
+	mlibc::nl_name name = {};
+	mlibc::nl_address address = {};
+	mlibc::nl_telephone telephone = {};
+	mlibc::nl_measurement measurement = {};
+	mlibc::nl_identification identification = {};
+};
+
+bool applyCategory(int category, const char *name, localeinfo *info);
+localeinfo *loadLocale(int category, const char *name, localeinfo *base);
+localeinfo *useThreadLocalLocale(localeinfo *loc);
+localeinfo *useGlobalLocale(localeinfo *loc);
+void freeLocale(localeinfo *loc);
+
+localeinfo *getActiveLocale();
+localeinfo *getGlobalLocale();
+
 char *nl_langinfo(nl_item item);
+char *nl_langinfo_l(nl_item item, localeinfo *l);
 
 } // namespace mlibc
 
