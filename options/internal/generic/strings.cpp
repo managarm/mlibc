@@ -19,4 +19,11 @@ int strncasecmp(const char *a, const char *b, size_t size) {
 	return 0;
 }
 
+size_t strnlen(const char *s, size_t n) {
+	size_t len = 0;
+	while(len < n && s[len])
+		++len;
+	return len;
+}
+
 } // namespace mlibc
