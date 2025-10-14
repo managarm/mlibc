@@ -373,6 +373,7 @@ configure_file(input: 'mlibc-config.h.in',
 
 internal_sources = [
 	'options/internal/generic/allocator.cpp',
+	'options/internal/generic/c-locale-defaults.cpp',
 	'options/internal/generic/charcode.cpp',
 	'options/internal/generic/charset.cpp',
 	'options/internal/generic/debug.cpp',
