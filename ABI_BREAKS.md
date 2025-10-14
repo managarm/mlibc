@@ -27,6 +27,7 @@ Numerous ABI breaks. These were not properly logged, and are therefore missing h
 - [#1460](https://github.com/managarm/mlibc/pull/1460): `off_t` and `off64_t` are now always 64-bit instead of `long`.
 - [#1460](https://github.com/managarm/mlibc/pull/1460): fixed the layout of `struct rtentry` on 32-bit architectures.
 - [#1460](https://github.com/managarm/mlibc/pull/1460): `useconds_t` was turned into a 32-bit value, as it only needs to hold microsecond values worth up to a second.
+- [#1492](https://github.com/managarm/mlibc/pull/1492): changes the values of `LC_*` macros and `nl_item` values to match glibc, so that glibc locale files can be consumed.
 
 ## Version 5
 
