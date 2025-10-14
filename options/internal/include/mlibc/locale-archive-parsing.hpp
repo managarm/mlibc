@@ -218,3 +218,320 @@ struct category {
 	int glibc_val;
 	std::tuple<Parsers...> parsers;
 };
+
+auto numeric_parser = category{
+    .name = "LC_NUMERIC",
+    .glibc_val = LC_NUMERIC,
+    .parsers = std::make_tuple(
+        parse_string,    // decimal_point
+        parse_string,    // thousands_sep
+        parse_bytearray, // grouping
+        parse<wchar_t>,  // numeric_decimal_point_wc
+        parse<wchar_t>,  // numeric_thousands_sep_wc,
+        parse_string     // codeset
+    )
+};
+
+auto messages_parser = category{
+    .name = "LC_MESSAGES",
+    .glibc_val = LC_MESSAGES,
+    .parsers = std::make_tuple(
+        parse_string, // yesexpr
+        parse_string, // noexpr
+        parse_string, // yesstr
+        parse_string, // nostr
+        parse_string  // codeset
+    )
+};
+
+auto monetary_parser = category{
+    .name = "LC_MONETARY",
+    .glibc_val = LC_MONETARY,
+    .parsers = std::make_tuple(
+        parse_string,    // int_curr_symbol
+        parse_string,    // currency_symbol
+        parse_string,    // mon_decimal_point
+        parse_string,    // mon_thousands_sep
+        parse_bytearray, // mon_grouping
+        parse_string,    // positive_sign
+        parse_string,    // negative_sign
+        parse<uint8_t>,  // int_frac_digits
+        parse<uint8_t>,  // frac_digits
+        parse<uint8_t>,  // p_cs_precedes
+        parse<uint16_t>, // p_sep_by_space
+        parse<uint8_t>,  // n_cs_precedes
+        parse<uint16_t>, // n_sep_by_space
+        parse<uint32_t>, // p_sign_posn
+        parse<uint32_t>, // n_sign_posn
+        parse_string,    // crncystr
+        parse_int_elem,  // int_p_cs_precedes
+        parse_int_elem,  // int_n_cs_precedes
+        parse_int_elem,  // int_p_sep_by_space
+        parse_int_elem,  // int_n_sep_by_space
+        parse_int_elem,  // int_p_sign_posn
+        parse_int_elem   // int_n_sign_posn
+    )
+};
+
+auto time_parser = category{
+    .name = "LC_TIME",
+    .glibc_val = LC_TIME,
+    .parsers = std::make_tuple(
+        parse_string, // abday1
+        parse_string, // abday2
+        parse_string, // abday3
+        parse_string, // abday4
+        parse_string, // abday5
+        parse_string, // abday6
+        parse_string, // abday7
+        parse_string, // day1
+        parse_string, // day2
+        parse_string, // day3
+        parse_string, // day4
+        parse_string, // day5
+        parse_string, // day6
+        parse_string, // day7
+        parse_string, // abmon1
+        parse_string, // abmon2
+        parse_string, // abmon3
+        parse_string, // abmon4
+        parse_string, // abmon5
+        parse_string, // abmon6
+        parse_string, // abmon7
+        parse_string, // abmon8
+        parse_string, // abmon9
+        parse_string, // abmon10
+        parse_string, // abmon11
+        parse_string, // abmon12
+        parse_string, // mon1
+        parse_string, // mon2
+        parse_string, // mon3
+        parse_string, // mon4
+        parse_string, // mon5
+        parse_string, // mon6
+        parse_string, // mon7
+        parse_string, // mon8
+        parse_string, // mon9
+        parse_string, // mon10
+        parse_string, // mon11
+        parse_string, // mon12
+        parse_string, // am
+        parse_string, // pm
+        parse_string, // d_t_fmt
+        parse_string, // d_fmt
+        parse_string, // t_fmt
+        parse_string, // t_fmt_ampm
+        parse_string, // era
+        parse_string, // era_year
+        parse_string, // era_d_fmt
+        parse_string, // alt_digits
+        parse_string, // era_d_t_fmt
+        parse_string  // era_t_fmt
+    )
+};
+
+auto collate_parser = category{
+    .name = "LC_COLLATE",
+    .glibc_val = LC_COLLATE,
+    .parsers = std::make_tuple(
+        parse<uint32_t>, // nrules
+        parse_string,    // rulesets
+        parse_string,    // tablemb
+        parse_string,    // weightmb
+        parse_string,    // extramb
+        parse_string,    // indirectmb
+        parse_string,    // tablewc
+        parse_string,    // weightwc
+        parse_string,    // extrawc
+        parse_string,    // indirectwc
+        parse<uint32_t>, // symb-hash-sizemb
+        parse_string,    // symb-tablemb
+        parse_string,    // symb-extramb
+        parse_string,    // collseqmb
+        parse_string,    // collseqwc
+        parse_string     // codeset
+    )
+};
+
+auto ctype_parser = category{
+    .name = "LC_CTYPE",
+    .glibc_val = LC_CTYPE,
+    .parsers = std::make_tuple(
+        parse_bytearray,              // class
+        parse_uint32array<256 + 128>, // toupper
+        parse_ignore,                 // gap1
+        parse_uint32array<256 + 128>, // tolower
+        parse_ignore,                 // gap2
+        parse_bytearray,              // class32
+        parse_ignore,                 // gap3
+        parse_ignore,                 // gap4
+        parse_ignore,                 // gap5
+        parse_ignore,                 // gap6
+        parse_stringlist<10, 32>,     // class_names
+        parse_stringlist<2, 32>,      // map_names
+        parse_ignore,                 // TODO: width
+        parse<uint32_t>,              // mb_cur_max
+        parse_string,                 // codeset_name
+        parse_ignore,                 // TODO: toupper32
+        parse_ignore,                 // TODO: tolower32
+        parse<uint32_t>,              // class_offset
+        parse<uint32_t>,              // map_offset
+        parse<uint32_t>,              // indigits_mb_len
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_ignore,
+        parse_bytearray,
+        parse_bytearray,
+        parse_bytearray,
+        parse_bytearray,
+        parse_bytearray,
+        parse_bytearray,
+        parse_bytearray,
+        parse_bytearray,
+        parse_bytearray,
+        parse_bytearray,
+        parse_bytearray,
+        parse_bytearray,
+        parse_bytearray,
+        parse_bytearray,
+        parse_bytearray,
+        parse_bytearray
+    )
+};
+
+auto paper_parser = category{
+    .name = "LC_PAPER",
+    .glibc_val = LC_PAPER,
+    .parsers = std::make_tuple(
+        parse<uint32_t>, // height
+        parse<uint32_t>, // width
+        parse_string     // codeset
+    )
+};
+
+auto name_parser = category{
+    .name = "LC_NAME",
+    .glibc_val = LC_NAME,
+    .parsers = std::make_tuple(
+        parse_string, // fmt
+        parse_string, // gen
+        parse_string, // mr
+        parse_string, // mrs
+        parse_string, // miss
+        parse_string, // ms
+        parse_string  // codeset
+    )
+};
+
+auto address_parser = category{
+    .name = "LC_ADDRESS",
+    .glibc_val = LC_ADDRESS,
+    .parsers = std::make_tuple(
+        parse_string,    // postal_fmt
+        parse_string,    // country_name
+        parse_string,    // country_post
+        parse_string,    // country_ab2
+        parse_string,    // country_ab3
+        parse_string,    // country_car
+        parse<uint32_t>, // country_num
+        parse_string,    // country_isbn
+        parse_string,    // lang_name
+        parse_string,    // lang_ab
+        parse_string,    // lang_term
+        parse_string,    // lang_lib
+        parse_string     // codeset
+    )
+};
+
+auto telephone_parser = category{
+    .name = "LC_TELEPHONE",
+    .glibc_val = LC_TELEPHONE,
+    .parsers = std::make_tuple(
+        parse_string, // tel_int_fmt
+        parse_string, // tel_dom_fmt
+        parse_string, // int_select
+        parse_string, // int_prefix
+        parse_string  // codeset
+    )
+};
+
+auto measurement_parser = category{
+    .name = "LC_MEASUREMENT",
+    .glibc_val = LC_MEASUREMENT,
+    .parsers = std::make_tuple(
+        parse<uint8_t>, // measurement
+        parse_string    // codeset
+    )
+};
+
+auto identification_parser = category{
+    .name = "LC_IDENTIFICATION",
+    .glibc_val = LC_IDENTIFICATION,
+    .parsers = std::make_tuple(
+        parse_string, // title
+        parse_string, // source
+        parse_string, // address
+        parse_string, // contact
+        parse_string, // email
+        parse_string, // tel
+        parse_string, // fax
+        parse_string, // language
+        parse_string, // territory
+        parse_string, // audience
+        parse_string, // application
+        parse_string, // abbreviation
+        parse_string, // revision
+        parse_string, // date
+        parse_string, // category
+        parse_string  // codeset
+    )
+};
