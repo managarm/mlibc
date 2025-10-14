@@ -376,6 +376,7 @@ internal_sources = [
 	'options/internal/generic/c-locale-defaults.cpp',
 	'options/internal/generic/charcode.cpp',
 	'options/internal/generic/charset.cpp',
+	'options/internal/generic/ctype.cpp',
 	'options/internal/generic/debug.cpp',
 	'options/internal/generic/ensure.cpp',
 	'options/internal/generic/essential.cpp',

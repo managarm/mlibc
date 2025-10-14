@@ -77,6 +77,7 @@ struct category_item {
 template<int Category, size_t N>
 struct nl_category {
 	std::array<category_item, (N & 0xFFFF)> members;
+	frg::string<MemoryAllocator> localeName{"C", getAllocator()};
 
 	const category_item &get(nl_item item) {
 		__ensure(item >> 16 == Category);
@@ -196,7 +197,43 @@ struct nl_identification : nl_category<LC_IDENTIFICATION, _NL_NUM_LC_IDENTIFICAT
 	nl_identification();
 };
 
+struct localeinfo {
+	frg::string<MemoryAllocator> localeName = {"C", getAllocator()};
+
+	mlibc::nl_ctype ctype = {};
+	mlibc::nl_numeric numeric = {};
+	mlibc::nl_time time = {};
+	mlibc::nl_collate collate = {};
+	mlibc::nl_monetary monetary = {};
+	mlibc::nl_messages messages = {};
+	mlibc::nl_paper paper = {};
+	mlibc::nl_name name = {};
+	mlibc::nl_address address = {};
+	mlibc::nl_telephone telephone = {};
+	mlibc::nl_measurement measurement = {};
+	mlibc::nl_identification identification = {};
+
+	/* Reset a category back to C locale. */
+	void resetCategory(int category);
+	/* Update the LC_ALL locale name string. */
+	void updateLocaleName();
+	/* Return the locale name for the category; equivalent to getlocalename_l(3) */
+	frg::string<MemoryAllocator> &getCategoryLocaleName(int category);
+};
+
+bool applyCategory(int category, frg::string_view  name, localeinfo *info);
+int loadLocale(int category_mask, frg::string_view name, localeinfo **base);
+#if __MLIBC_POSIX_OPTION
+localeinfo *useThreadLocalLocale(localeinfo *loc);
+#endif
+localeinfo *useGlobalLocale(localeinfo *loc);
+void freeLocale(localeinfo *loc);
+
+localeinfo *getActiveLocale();
+localeinfo *getGlobalLocale();
+
 char *nl_langinfo(nl_item item);
+char *nl_langinfo_l(nl_item item, localeinfo *l);
 
 } // namespace mlibc
 
