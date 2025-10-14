@@ -163,6 +163,17 @@ int main() {
 		free(str);
 	}
 
+	{
+		// From openjdk
+		char buf[] = "SomeOption=someValue";
+		char name[256];
+		char punct;
+		int ret = sscanf(buf, "%255[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_]%c", name, &punct);
+		assert(ret == 2);
+		assert(punct == '=');
+		assert(!strcmp(name, "SomeOption"));
+	}
+
 	test_matrix();
 
 #pragma GCC diagnostic push
