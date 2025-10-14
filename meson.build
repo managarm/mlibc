@@ -384,6 +384,7 @@ internal_sources = [
 	'options/internal/generic/global-config.cpp',
 	'options/internal/generic/inline-emitter.cpp',
 	'options/internal/generic/locale.cpp',
+	'options/internal/generic/locale-defaults.cpp',
 	'options/internal/generic/sigset.cpp',
 	'options/internal/generic/strings.cpp',
 	'options/internal/generic/ubsan.cpp',
