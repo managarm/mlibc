@@ -799,9 +799,9 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				char c = handler.look_ahead();
 				EOF_CHECK(c == '\0');
 				while (c && (!width || count < width)) {
-					handler.consume();
 					if (!scanset[1 + c])
 						break;
+					handler.consume();
 
 					if(type == SCANF_TYPE_L)
 						append_to_wbuffer(c);
