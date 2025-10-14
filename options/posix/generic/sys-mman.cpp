@@ -81,7 +81,14 @@ void *mmap(void *hint, size_t size, int prot, int flags, int fd, off_t offset) {
 	return window;
 }
 
-[[gnu::alias("mmap")]] void *mmap64(void *hint, size_t size, int prot, int flags, int fd, off64_t offset);
+void *mmap64(void *hint, size_t size, int prot, int flags, int fd, off64_t offset) {
+	void *window;
+	if(int e = mlibc::sys_vm_map(hint, size, prot, flags, fd, offset, &window); e) {
+		errno = e;
+		return (void *)-1;
+	}
+	return window;
+}
 
 int munmap(void *pointer, size_t size) {
 	if(int e = mlibc::sys_vm_unmap(pointer, size); e) {

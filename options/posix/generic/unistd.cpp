@@ -65,7 +65,7 @@ int chown(const char *path, uid_t uid, gid_t gid) {
 	return 0;
 }
 
-ssize_t confstr(int name, char *buf, size_t len) {
+size_t confstr(int name, char *buf, size_t len) {
 	const char *str = "";
 	if (name == _CS_PATH) {
 		str = "/bin:/usr/bin";
@@ -286,7 +286,14 @@ int ftruncate(int fd, off_t size) {
 	return 0;
 }
 
-[[gnu::alias("ftruncate")]] int ftruncate64(int fd, off64_t size);
+int ftruncate64(int fd, off64_t size) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ftruncate, -1);
+	if(int e = mlibc::sys_ftruncate(fd, size); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
+}
 
 char *getcwd(char *buffer, size_t size) {
 	if (buffer) {
@@ -918,7 +925,10 @@ int truncate(const char *, off_t) {
 	__builtin_unreachable();
 }
 
-[[gnu::alias("truncate")]] int truncate64(const char *, off64_t);
+int truncate64(const char *, off64_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
 
 char *ttyname(int fd) {
 	const size_t size = 128;
@@ -1068,7 +1078,7 @@ off_t lseek(int fd, off_t offset, int whence) {
 }
 
 off64_t lseek64(int fd, off64_t offset, int whence) {
-	off64_t new_offset;
+	off_t new_offset;
 	if(int e = mlibc::sys_seek(fd, offset, whence, &new_offset); e) {
 		errno = e;
 		return (off64_t)-1;

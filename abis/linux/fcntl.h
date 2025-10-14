@@ -19,15 +19,26 @@
 #define O_NONBLOCK     04000
 #define O_DSYNC       010000
 #define O_ASYNC       020000
-#define O_DIRECT      040000
-#define O_DIRECTORY  0200000
-#define O_NOFOLLOW   0400000
 #define O_CLOEXEC   02000000
 #define O_SYNC      04010000
 #define O_RSYNC     04010000
-#define O_LARGEFILE  0100000
 #define O_NOATIME   01000000
-#define O_TMPFILE  020000000
+
+#if defined(__x86_64__) || defined(__i386__) || defined(__riscv) || defined(__loongarch64)
+#define O_DIRECT      040000
+#define O_LARGEFILE  0100000
+#define O_DIRECTORY  0200000
+#define O_NOFOLLOW   0400000
+#elif defined(__aarch64__) || defined(__m68k__)
+#define O_DIRECTORY   040000
+#define O_NOFOLLOW   0100000
+#define O_DIRECT     0200000
+#define O_LARGEFILE  0400000
+#else
+#warning "Missing <fcntl.h> support for this architecture!"
+#endif
+
+#define O_TMPFILE (020000000 | O_DIRECTORY)
 
 #define O_EXEC O_PATH
 #define O_SEARCH O_PATH
@@ -43,11 +54,23 @@
 #define F_SETSIG 10
 #define F_GETSIG 11
 
-#define F_GETLK 5
-#define F_SETLK 6
-#define F_SETLK64 F_SETLK
-#define F_SETLKW 7
-#define F_SETLKW64 F_SETLKW
+#if __INTPTR_WIDTH__ == 64
+
+#define F_GETLK64 5
+#define F_SETLK64 6
+#define F_SETLKW64 7
+
+#else /* __INTPTR_WIDTH__ == 64 */
+
+#define F_GETLK64 12
+#define F_SETLK64 13
+#define F_SETLKW64 14
+
+#endif
+
+#define F_GETLK F_GETLK64
+#define F_SETLK F_SETLK64
+#define F_SETLKW F_SETLKW64
 
 #define F_SETOWN_EX 15
 #define F_GETOWN_EX 16
