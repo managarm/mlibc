@@ -338,6 +338,8 @@ int main() {
 	assert(!strcmp(buf, "0.00012345"));
 	sprintf(buf, "%g", 0.000012345); // Should use e-notation
 	assert(!strcmp(buf, "1.2345e-05"));
+	sprintf(buf, "%12g", -1.2345);
+	assert(!strcmp(buf, "     -1.2345"));
 
 	// %g precision
 	sprintf(buf, "%.3g", 12345.0);
