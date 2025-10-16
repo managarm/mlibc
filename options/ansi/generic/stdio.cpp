@@ -58,7 +58,7 @@ struct PrintfAgent {
 		case 'd': case 'i': case 'o': case 'x': case 'X': case 'b': case 'B': case 'u':
 			frg::do_printf_ints(*_formatter, t, opts, szmod, _vsp);
 			break;
-		case 'f': case 'F': case 'g': case 'G': case 'e': case 'E':
+		case 'f': case 'F': case 'g': case 'G': case 'e': case 'E': case 'a': case 'A':
 			frg::do_printf_floats(*_formatter, t, opts, szmod, _vsp);
 			break;
 		case 'm':
