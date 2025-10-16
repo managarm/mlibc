@@ -4,6 +4,14 @@
 #include <math.h>
 #include <string.h>
 
+#define test_roundtrip(val, print_format, scanf_format, expected_string, expected_scanf_ret) { \
+	double d = val; \
+	sprintf(buf, print_format, val); \
+	assert(!strcmp(buf, expected_string)); \
+	assert(sscanf(buf, scanf_format, &d) == expected_scanf_ret); \
+	assert(d == val); \
+}
+
 int main() {
 	char buf[64] = { 0 };
 	sprintf(buf, "%d", 12);
@@ -368,6 +376,39 @@ int main() {
 	assert(!strcmp(buf, "1200"));
 	sprintf(buf, "%#g", 1200.0);
 	assert(!strcmp(buf, "1200.00"));
+
+	// %a + %A
+	test_roundtrip(3.14, "%a", "%lf", "0x1.91eb851eb851fp+1", 1);
+	test_roundtrip(3.14, "%A", "%lf", "0X1.91EB851EB851FP+1", 1);
+	test_roundtrip(12345.0, "%a", "%lf", "0x1.81c8p+13", 1);
+	test_roundtrip(12345.0, "%A", "%lf", "0X1.81C8P+13", 1);
+
+	sprintf(buf, "%.3a", 12345.0);
+	assert(!strcmp(buf, "0x1.81cp+13"));
+	sprintf(buf, "%.3A", 12345.0);
+	assert(!strcmp(buf, "0X1.81CP+13"));
+
+	test_roundtrip(0.00012345, "%a", "%lf", "0x1.02e4b6ce5dc68p-13", 1);
+	test_roundtrip(-0.00012345, "%A", "%lf", "-0X1.02E4B6CE5DC68P-13", 1);
+	test_roundtrip(0.0, "%a", "%lf", "0x0p+0", 1);
+	test_roundtrip(-0.0, "%A", "%lf", "-0X0P+0", 1);
+
+	sprintf(buf, "%a", INFINITY);
+	assert(!strcmp(buf, "inf"));
+	sprintf(buf, "%A", INFINITY);
+	assert(!strcmp(buf, "INF"));
+	sprintf(buf, "%a", -NAN);
+	assert(!strcmp(buf, "-nan"));
+	sprintf(buf, "%A", NAN);
+	assert(!strcmp(buf, "NAN"));
+
+	// Test %a/%A padding
+	test_roundtrip(10.25, "%25a", "%lf", "                0x1.48p+3", 1);
+	test_roundtrip(10.25, "%-25a", "%lf", "0x1.48p+3                ", 1);
+	test_roundtrip(10.25, "%25A", "%lf", "                0X1.48P+3", 1);
+	test_roundtrip(10.25, "%-25A", "%lf", "0X1.48P+3                ", 1);
+	test_roundtrip(-10.25, "%25a", "%lf", "               -0x1.48p+3", 1);
+	test_roundtrip(-10.25, "%-25a", "%lf", "-0x1.48p+3               ", 1);
 
 	return 0;
 }
