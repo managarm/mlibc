@@ -463,9 +463,15 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 			case AT_PHENT: phdr_entry_size = *value; break;
 			case AT_PHNUM: phdr_count = *value; break;
 			case AT_ENTRY: entry_pointer = reinterpret_cast<void *>(*value); break;
+#ifdef AT_EXECFN
 			case AT_EXECFN: execfn = reinterpret_cast<const char *>(*value); break;
+#endif
+#ifdef AT_RANDOM
 			case AT_RANDOM: stack_entropy = reinterpret_cast<void*>(*value); break;
+#endif
+#ifdef AT_SECURE
 			case AT_SECURE: rtldConfig.secureRequired = reinterpret_cast<uintptr_t>(*value); break;
+#endif
 		}
 
 		aux += 2;
