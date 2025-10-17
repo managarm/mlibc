@@ -106,6 +106,7 @@ all_test_cases = [
 	'posix/usershell',
 	'posix/shm',
 	'posix/swab',
+	'posix/select',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
