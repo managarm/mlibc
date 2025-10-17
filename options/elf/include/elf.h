@@ -701,10 +701,6 @@ typedef struct {
 #define AT_FLAGS 8
 #define AT_ENTRY 9
 #define AT_NOTELF 10
-#define AT_UID 11
-#define AT_EUID 12
-#define AT_GID 13
-#define AT_EGID 14
 
 /* Values for Elfxx_Verdef::vd_flags and Elfxx_Vernaux::vna_flags */
 #define VER_FLG_BASE 1 /* Version definition of the file itself */
