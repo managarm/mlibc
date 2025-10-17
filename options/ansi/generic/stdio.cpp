@@ -58,7 +58,7 @@ struct PrintfAgent {
 		case 'd': case 'i': case 'o': case 'x': case 'X': case 'b': case 'B': case 'u':
 			frg::do_printf_ints(*_formatter, t, opts, szmod, _vsp);
 			break;
-		case 'f': case 'F': case 'g': case 'G': case 'e': case 'E':
+		case 'f': case 'F': case 'g': case 'G': case 'e': case 'E': case 'a': case 'A':
 			frg::do_printf_floats(*_formatter, t, opts, szmod, _vsp);
 			break;
 		case 'm':
@@ -336,19 +336,19 @@ int printf(const char *__restrict format, ...) {
 }
 
 namespace {
-	enum {
-		SCANF_TYPE_CHAR,
-		SCANF_TYPE_SHORT,
-		SCANF_TYPE_INTMAX,
-		SCANF_TYPE_L,
-		SCANF_TYPE_LL,
-		SCANF_TYPE_PTRDIFF,
-		SCANF_TYPE_SIZE_T,
-		SCANF_TYPE_INT
-	};
-} // namespace
 
-static void store_int(void *dest, unsigned int size, unsigned long long i) {
+	enum {
+	SCANF_TYPE_CHAR,
+	SCANF_TYPE_SHORT,
+	SCANF_TYPE_INTMAX,
+	SCANF_TYPE_L,
+	SCANF_TYPE_LL,
+	SCANF_TYPE_PTRDIFF,
+	SCANF_TYPE_SIZE_T,
+	SCANF_TYPE_INT
+};
+
+void store_int(void *dest, unsigned int size, unsigned long long i) {
 	switch (size) {
 		case SCANF_TYPE_CHAR:
 			*(char *)dest = i;
@@ -379,8 +379,22 @@ static void store_int(void *dest, unsigned int size, unsigned long long i) {
 	}
 }
 
+void store_float(void *dest, unsigned int size, long double f) {
+	switch (size) {
+		case SCANF_TYPE_LL:
+			*(long double *)dest = f;
+			break;
+		case SCANF_TYPE_L:
+			*(double *)dest = f;
+			break;
+		default:
+			*(float *)dest = f;
+			break;
+	}
+}
+
 template<typename H>
-static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
+int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 	#define NOMATCH_CHECK(cond) ({ if(cond) return match_count; }) // if cond is true, matching error
 	#define EOF_CHECK(cond) ({ if(cond) return match_count ? match_count : EOF; }) // if cond is true, no more data to read
 	int match_count = 0;
@@ -887,6 +901,163 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 
 				continue;
 			}
+			case 'a':
+			case 'A':
+			case 'e':
+			case 'E':
+			case 'f':
+			case 'F':
+			case 'g':
+			case 'G': {
+				bool is_negative = false;
+				long double divisor = 10;
+				long double result = 0;
+				int base = 10;
+				int count = 0;
+				bool dot = false; // set to true once a decimal point has been hit
+				char c = handler.look_ahead();
+				EOF_CHECK(c == '\0');
+
+				if (c == '-' || c == '+') {
+					handler.consume();
+					is_negative = c == '-';
+					c = handler.look_ahead();
+				}
+
+				// nan?
+				if (tolower(c) == 'n') {
+					handler.consume();
+					c = handler.look_ahead();
+					if (tolower(c) != 'a')
+						return match_count;
+
+					handler.consume();
+					c = handler.look_ahead();
+					if (tolower(c) != 'n')
+						return match_count;
+
+					handler.consume();
+					if (dest)
+						store_float(dest, type, NAN);
+
+					break;
+				}
+
+				// inf?
+				if (tolower(c) == 'i') {
+					handler.consume();
+					c = handler.look_ahead();
+					size_t i = 0;
+					for (; i < strlen("nfinity"); i++) {
+						if (tolower(c) != "nfinity"[i])
+							break;
+						handler.consume();
+						c = handler.look_ahead();
+					}
+
+					NOMATCH_CHECK(i != 2 && i != 7);
+
+					if (dest)
+						store_float(dest, type, is_negative ? -INFINITY : INFINITY);
+
+					break;
+				}
+
+				if (c == '0') {
+					handler.consume();
+					c = handler.look_ahead();
+
+					if (c == 'x' || c == 'X') {
+						divisor = 16;
+						base = 16;
+						handler.consume();
+						c = handler.look_ahead();
+					}
+				}
+
+				while ((base == 16 ? isxdigit(c) : isdigit(c)) || (dot == false && c == '.')) {
+					handler.consume();
+					if (c == '.') {
+						dot = true;
+						c = handler.look_ahead();
+						continue;
+					}
+
+					long double character_value;
+					if (base == 10 || (c >= '0' && c <= '9'))
+						character_value = c - '0';
+					else if (base == 16 && tolower(c) >= 'a' && tolower(c) <= 'f')
+						character_value = tolower(c) - 'a' + 10;
+					else
+						break;
+
+					if (dot) {
+						result = result + character_value / divisor;
+						divisor *= base;
+					} else {
+						result = result * base + character_value;
+					}
+
+					++count;
+					c = handler.look_ahead();
+				}
+
+				NOMATCH_CHECK(count == 0);
+
+				if (c == 'e' || c == 'E') {
+					handler.consume();
+					c = handler.look_ahead();
+
+					bool exp_negative = false;
+
+					if (c == '-' || c == '+') {
+						handler.consume();
+						exp_negative = c == '-';
+						c = handler.look_ahead();
+					}
+
+					int exp = 0;
+
+					while (isdigit(c)) {
+						handler.consume();
+						exp = exp * 10 + (c - '0');
+						c = handler.look_ahead();
+					}
+
+					if (exp_negative)
+						exp = -exp;
+
+					result *= pow(10.0, exp);
+				} else if (c == 'p' || c == 'P') {
+					handler.consume();
+					c = handler.look_ahead();
+
+					bool exp_negative = false;
+
+					if (c == '-' || c == '+') {
+						handler.consume();
+						exp_negative = c == '-';
+						c = handler.look_ahead();
+					}
+
+					int exp = 0;
+
+					while (isdigit(c)) {
+						handler.consume();
+						exp = exp * 10 + (c - '0');
+						c = handler.look_ahead();
+					}
+
+					if (exp_negative)
+						exp = -exp;
+
+					result *= pow(2.0, exp);
+				}
+
+				if (dest)
+					store_float(dest, type, is_negative ? -result : result);
+				break;
+			}
 		}
 
 		if(allocate_buf && dest) {
@@ -911,6 +1082,8 @@ static int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 	}
 	return match_count;
 }
+
+} // namespace
 
 int scanf(const char *__restrict format, ...) {
 	va_list args;
