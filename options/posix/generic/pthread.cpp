@@ -566,7 +566,7 @@ namespace {
 
 struct PthreadSignalInstaller {
 	PthreadSignalInstaller() {
-		struct sigaction sa;
+		struct sigaction sa{};
 		sa.sa_sigaction = sigcancel_handler;
 		sa.sa_flags = SA_SIGINFO;
 		auto e = ENOSYS;
