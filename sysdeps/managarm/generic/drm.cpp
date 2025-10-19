@@ -1298,17 +1298,12 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			*result = resp.result();
 			return 0;
 		}
-		// ioctls above DRM_COMMAND_BASE are overloaded for each driver.
-		case DRM_IOCTL_VIRTGPU_GET_CAPS: {
-			mlibc::infoLogger() << "mlibc: DRM_IOCTL_VIRTGPU_GET_CAPS always returns EINVAL" << frg::endlog;
-			return EINVAL;
-		}
 	}
 
-	mlibc::infoLogger() << "mlibc: Unexpected DRM ioctl with number: 0x" << frg::hex_fmt(_IOC_NR(request))
+	mlibc::infoLogger() << "mlibc: Unexpected DRM ioctl with number: 0x"
+	                    << frg::hex_fmt(_IOC_NR(request))
 	                    << " (raw request: " << frg::hex_fmt(request) << ")" << frg::endlog;
-	__ensure(!"Illegal ioctl request");
-	__builtin_unreachable();
+	return EINVAL;
 }
 
 } // namespace mlibc
