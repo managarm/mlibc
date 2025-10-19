@@ -1,9 +1,9 @@
 #ifndef _SYS_PROCFS_H
 #define _SYS_PROCFS_H
 
-#include <sys/user.h>
-#include <sys/time.h>
 #include <abi-bits/pid_t.h>
+#include <abi-bits/signal.h>
+#include <sys/time.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,7 +11,14 @@ extern "C" {
 
 typedef unsigned long elf_greg_t;
 
-#define ELF_NGREG (sizeof (struct user_regs_struct) / sizeof (elf_greg_t))
+#if defined(__x86_64__) || defined(__i386__) || defined(__loongarch64) || defined(__m68k__)
+#	include <sys/user.h>
+
+#	define ELF_NGREG (sizeof (struct user_regs_struct) / sizeof (elf_greg_t))
+#elif defined(__aarch64__) || defined(__riscv)
+#	define ELF_NGREG NGREG
+#endif
+
 typedef elf_greg_t elf_gregset_t[ELF_NGREG];
 
 typedef struct user_fpregs_struct elf_fpregset_t;

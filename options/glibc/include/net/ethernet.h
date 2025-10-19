@@ -33,7 +33,7 @@ struct ether_header {
 	uint8_t ether_dhost[6];
 	uint8_t ether_shost[6];
 	uint16_t ether_type;
-};
+} __attribute__((packed));
 
 #define ETHER_ADDR_LEN 6
 

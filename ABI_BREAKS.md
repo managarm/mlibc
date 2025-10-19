@@ -18,6 +18,15 @@ Numerous ABI breaks. These were not properly logged, and are therefore missing h
 - [#1459](https://github.com/managarm/mlibc/pull/1459): fixed incorrect layout of `struct shmid_ds`
 - [#1459](https://github.com/managarm/mlibc/pull/1459): the layouts of `sigcontext`, `ucontext_t` and `mcontext_t` were incorrect in multiple architectures and got fixed.
 - [#1459](https://github.com/managarm/mlibc/pull/1459): the layout of `struct msqid64_ds` was incorrect due to a silently incorrect ifdef, which was fixed but broke ABI.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): the size of the `d_name` member of `dirent` was changed to `NAME_MAX+1` in order to align with the maximum permitted value size by POSIX.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): the `wcsxfrm` and `confstr` function had incorrect return types, which were fixed.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): `PRIO_*` values were fixed to align with the values Linux syscalls expect.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): the alignment of `fd_set` was fixed.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): the layout of `struct semid_ds` was fixed.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): `<sys/user.h>` previously always defined structs for x86_64, which were changed to now be correct for all supported architectures.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): `off_t` and `off64_t` are now always 64-bit instead of `long`.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): fixed the layout of `struct rtentry` on 32-bit architectures.
+- [#1460](https://github.com/managarm/mlibc/pull/1460): `useconds_t` was turned into a 32-bit value, as it only needs to hold microsecond values worth up to a second.
 
 ## Version 5
 

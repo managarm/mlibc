@@ -10,5 +10,6 @@
 #define HOST_NAME_MAX 255
 
 #define OPEN_MAX 256
+#define NAME_MAX 255
 
 #endif /*_ABIBITS_LIMITS_H */

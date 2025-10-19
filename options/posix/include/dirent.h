@@ -2,6 +2,7 @@
 #ifndef _DIRENT_H
 #define _DIRENT_H
 
+#include <abi-bits/limits.h>
 #include <abi-bits/ino_t.h>
 #include <bits/off_t.h>
 #include <bits/types.h>
@@ -20,11 +21,13 @@ extern "C" {
 #define DT_SOCK 12
 #define DT_WHT 14
 
+/* The character array d_name is of unspecified size, but the number of bytes preceding
+ * the terminating null byte will not exceed {NAME_MAX}. */
 #define __MLIBC_DIRENT_BODY ino_t d_ino; \
 			off_t d_off; \
 			unsigned short d_reclen; \
 			unsigned char d_type; \
-			char d_name[1024];
+			char d_name[NAME_MAX+1];
 
 struct dirent {
 	__MLIBC_DIRENT_BODY
