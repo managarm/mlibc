@@ -123,6 +123,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			} else {
 				fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
 			}
+			*result = 0;
 			return 0;
 		}
 		case FIONREAD: {
@@ -160,7 +161,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 				__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
 				*argp = resp.fionread_count();
-
+				*result = 0;
 				return 0;
 			}
 		}
@@ -184,6 +185,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recvResp.data(), recvResp.length());
 			__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
+			*result = 0;
 			return 0;
 		}
 		case TCGETS: {
@@ -710,6 +712,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		param[0] = resp.values_size();
 
+		*result = 0;
 		return 0;
 	} else if (_IOC_TYPE(request) == 'E' && _IOC_NR(request) == _IOC_NR(EVIOCGLED(0))) {
 		// Returns the current LED state.
@@ -1198,6 +1201,7 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		*result = 0;
 		return 0;
 	} else if (request == FICLONE || request == FICLONERANGE) {
 		mlibc::infoLogger() << "\e[35mmlibc: FICLONE/FICLONERANGE are no-ops" << frg::endlog;
