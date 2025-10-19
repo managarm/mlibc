@@ -29,8 +29,12 @@ struct statvfs {
 	fsfilcnt_t f_ffree;
 	fsfilcnt_t f_favail;
 	unsigned long f_fsid;
+#if __INTPTR_WIDTH__ == 32
+	int __f_unused;
+#endif
 	unsigned long f_flag;
 	unsigned long f_namemax;
+	unsigned int f_spare[6];
 };
 
 /* WARNING: keep `statvfs` and `statvfs64` in sync or bad things will happen! */
@@ -44,8 +48,12 @@ struct statvfs64 {
 	fsfilcnt_t f_ffree;
 	fsfilcnt_t f_favail;
 	unsigned long f_fsid;
+#if __INTPTR_WIDTH__ == 32
+	int __f_unused;
+#endif
 	unsigned long f_flag;
 	unsigned long f_namemax;
+	unsigned int f_spare[6];
 };
 
 #endif /* _ABIBITS_STATVFS_H */

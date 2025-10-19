@@ -50,19 +50,16 @@ typedef unsigned long shmatt_t;
 struct shmid_ds {
 	struct ipc_perm shm_perm;
 	size_t shm_segsz;
-	unsigned long __shm_atime_lo;
+	unsigned long shm_atime;
 	unsigned long __shm_atime_hi;
-	unsigned long __shm_dtime_lo;
+	unsigned long shm_dtime;
 	unsigned long __shm_dtime_hi;
-	unsigned long __shm_ctime_lo;
+	unsigned long shm_ctime;
 	unsigned long __shm_ctime_hi;
 	pid_t shm_cpid;
 	pid_t shm_lpid;
 	unsigned long shm_nattch;
-	unsigned long __unused[3];
-	time_t shm_atime;
-	time_t shm_dtime;
-	time_t shm_ctime;
+	unsigned long __unused[2];
 };
 #elif defined(__x86_64__) || defined(__aarch64__) || (defined(__riscv) && __riscv_xlen == 64) || defined(__loongarch64)
 struct shmid_ds {

@@ -11,6 +11,13 @@ Numerous ABI breaks. These were not properly logged, and are therefore missing h
 - [#1458](https://github.com/managarm/mlibc/pull/1458): `PRI*FAST*` macros had values that caused `-Wformat` warnings on 32-bit architectures, which got fixed.
 - [#1458](https://github.com/managarm/mlibc/pull/1458): `ND_NA_FLAG_*` macros were incorrectly not byte-swapped on big-endian architectures.
 - [#1458](https://github.com/managarm/mlibc/pull/1458): some members of `struct link_map` were always using `Elf64_Addr` instead of the correct `ElfW(Addr)` type.
+- [#1459](https://github.com/managarm/mlibc/pull/1459): the sizing of `blksize_t` and `nlink_t` was incorrect, which lead to incorrect layouts of Linux's `struct stat` for most architectures (i.e. non-x86)
+- [#1459](https://github.com/managarm/mlibc/pull/1459): the layout of `struct statvfs` and `struct statvfs64` was incorrect
+- [#1459](https://github.com/managarm/mlibc/pull/1459): some `O_*` and `F_*` macros in `<fcntl.h>` were incorrect on some architectures and were fixed.
+- [#1459](https://github.com/managarm/mlibc/pull/1459): values of `POLLWRNORM` and `POLLWRBAND` were incorrect on m68k
+- [#1459](https://github.com/managarm/mlibc/pull/1459): fixed incorrect layout of `struct shmid_ds`
+- [#1459](https://github.com/managarm/mlibc/pull/1459): the layouts of `sigcontext`, `ucontext_t` and `mcontext_t` were incorrect in multiple architectures and got fixed.
+- [#1459](https://github.com/managarm/mlibc/pull/1459): the layout of `struct msqid64_ds` was incorrect due to a silently incorrect ifdef, which was fixed but broke ABI.
 
 ## Version 5
 
