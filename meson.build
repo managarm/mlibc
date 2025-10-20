@@ -422,6 +422,7 @@ if not no_headers
 		'options/internal/include/bits/ensure.h',
 		'options/internal/include/bits/machine.h',
 		'options/internal/include/bits/mbstate.h',
+		'options/internal/include/bits/locale.h',
 		'options/internal/include/bits/nl_item.h',
 		'options/internal/include/bits/null.h',
 		'options/internal/include/bits/off_t.h',
