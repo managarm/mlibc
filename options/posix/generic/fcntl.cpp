@@ -36,7 +36,7 @@ int openat(int dirfd, const char *pathname, int flags, ...) {
 	mode_t mode = 0;
 	int fd;
 
-	if((flags & (O_CREAT | O_TMPFILE)))
+	if((flags & O_CREAT || (flags & O_TMPFILE) == O_TMPFILE))
 		mode = va_arg(args, mode_t);
 
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_openat, -1);
@@ -100,7 +100,7 @@ ssize_t vmsplice(int, const struct iovec *, size_t, unsigned int) {
 int open(const char *pathname, int flags, ...) {
 	mode_t mode = 0;
 
-	if ((flags & O_CREAT) || (flags & O_TMPFILE)) {
+	if ((flags & O_CREAT) || (flags & O_TMPFILE) == O_TMPFILE) {
 		va_list args;
 		va_start(args, flags);
 		mode = va_arg(args, mode_t);

@@ -1647,7 +1647,7 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	SignalGuard sguard;
 
 	// We do not support O_TMPFILE.
-	if (flags & O_TMPFILE)
+	if ((flags & O_TMPFILE) == O_TMPFILE)
 		return EOPNOTSUPP;
 
 	uint32_t proto_flags = 0;
@@ -1668,7 +1668,7 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 		proto_flags |= managarm::posix::OpenFlags::OF_NOCTTY;
 	if (flags & O_NOFOLLOW)
 		proto_flags |= managarm::posix::OpenFlags::OF_NOFOLLOW;
-	if (flags & O_DIRECTORY)
+	if ((flags & O_TMPFILE) == O_DIRECTORY)
 		proto_flags |= managarm::posix::OpenFlags::OF_DIRECTORY;
 
 	if (flags & O_PATH)
