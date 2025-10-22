@@ -8,6 +8,7 @@
 #include <wchar.h>
 #include <ctype.h>
 #include <limits.h>
+#include <math.h>
 
 #include <abi-bits/fcntl.h>
 
