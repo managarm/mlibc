@@ -383,6 +383,10 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	aux += *aux + 1; // First, we skip argc and all args.
 	__ensure(!*aux);
 	aux++;
+
+	const char *env_ld_library_path = nullptr;
+	const char *env_ld_preload = nullptr;
+
 	while(*aux) { // Loop through the environment.
 		auto env = reinterpret_cast<char *>(*aux);
 		frg::string_view view{env};
@@ -397,19 +401,14 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		if(name == "LD_SHOW_AUXV" && *value && *value != '0') {
 			ldShowAuxv = true;
 		}else if(name == "LD_LIBRARY_PATH" && *value) {
-			for(auto path : parseList(value, ":;"))
-				libraryPaths->push_back(path);
+			env_ld_library_path = value;
 		}else if(name == "LD_PRELOAD" && *value) {
-			*preloads = parseList(value, " :");
+			env_ld_preload = value;
 		}
 
 		aux++;
 	}
 	aux++;
-
-	for (const frg::string_view path : parseList(MLIBC_DEFAULT_LIBRARY_PATHS, "\n")) {
-		libraryPaths->push_back(path);
-	}
 
 	// Parse the actual vector.
 	while(true) {
@@ -472,6 +471,24 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		aux += 2;
 	}
 	globalDebugInterface.base = reinterpret_cast<void*>(ldso_base);
+
+	// Handle the LD_LIBRARY_PATH and LD_PRELOAD environment variables.
+	// This is done here as it needs to know if rtldConfig.secureRequired is set.
+	if (rtldConfig.secureRequired) {
+		mlibc::infoLogger() << "rtld: running in secure mode" << frg::endlog;
+	} else {
+		if (env_ld_library_path) {
+			for(auto path : parseList(env_ld_library_path, ":;"))
+				libraryPaths->push_back(path);
+		}
+
+		if (env_ld_preload)
+			*preloads = parseList(env_ld_preload, " :");
+	}
+
+	for (const frg::string_view path : parseList(MLIBC_DEFAULT_LIBRARY_PATHS, "\n")) {
+		libraryPaths->push_back(path);
+	}
 
 // This is here because libgcc will add a global constructor on glibc Linux
 // (which is what it believes we are due to the aarch64-linux-gnu toolchain)

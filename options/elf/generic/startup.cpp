@@ -3,9 +3,14 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+
 #include <bits/ensure.h>
 #include <mlibc/elf/startup.h>
 #include <mlibc/environment.hpp>
+#include <mlibc/rtld-config.hpp>
+#include <mlibc/debug.hpp>
+
+#include <frg/string.hpp>
 
 extern "C" size_t __init_array_start[];
 extern "C" size_t __init_array_end[];
@@ -13,6 +18,14 @@ extern "C" size_t __preinit_array_start[];
 extern "C" size_t __preinit_array_end[];
 
 extern "C" uintptr_t *__dlapi_entrystack();
+
+namespace {
+	const char *secure_ignore[] = {
+		"LD_PRELOAD",
+		"LD_LIBRARY_PATH",
+		nullptr
+	};
+}
 
 namespace mlibc {
 
@@ -48,10 +61,29 @@ void set_startup_data(int argc, char **argv, char **envp) {
 
 	// Initialize environ.
 	// TODO: Copy the arguments instead of pointing to them?
+	auto should_ignore_when_secure = [](frg::string_view view) {
+		auto it = secure_ignore;
+		while(*it && view != *it)
+			++it;
+
+		return *it != nullptr;
+	};
+
 	auto ev = envp;
 	while(*ev) {
-		auto fail = mlibc::putenv(*ev);
-		__ensure(!fail);
+		frg::string_view view{*ev};
+		size_t s = view.find_first('=');
+		if(s == size_t(-1)) {
+			mlibc::panicLogger() << "mlibc: environment string \""
+					<< frg::escape_fmt{view.data(), view.size()}
+					<< "\" does not contain an equals sign (=)" << frg::endlog;
+		}
+
+		if(!mlibc::rtldConfig().secureRequired || !should_ignore_when_secure(view.sub_string(0, s))) {
+			auto fail = mlibc::putenv(*ev);
+			__ensure(!fail);
+		}
+
 		ev++;
 	}
 }
