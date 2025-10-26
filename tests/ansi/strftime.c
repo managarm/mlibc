@@ -67,5 +67,10 @@ int main() {
 	strftime(timebuf, sizeof(timebuf), "%z", &tm);
 	assert(!strcmp(timebuf, "+0100"));
 
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%U", &tm);
+	fprintf(stderr, "'%s'\n", timebuf);
+	assert(!strcmp(timebuf, "06"));
+
 	return 0;
 }

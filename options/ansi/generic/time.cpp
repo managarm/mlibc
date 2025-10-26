@@ -433,6 +433,14 @@ size_t strftime(char *__restrict dest, size_t max_size,
 		case 'X': {
 			return strftime(dest, max_size, mlibc::nl_langinfo(T_FMT), tm);
 		}
+		case 'U': {
+			chunk = snprintf(p, space, "%02d", (tm->tm_yday + 7 - tm->tm_wday) / 7);
+			if(chunk >= space)
+				return 0;
+			p += chunk;
+			c++;
+			break;
+		}
 		case '\0': {
 			chunk = snprintf(p, space, "%%");
 			if(chunk >= space)
