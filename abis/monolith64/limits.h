@@ -1,0 +1,10 @@
+#ifndef _ABIBITS_LIMITS_H
+#define _ABIBITS_LIMITS_H
+
+#define IOV_MAX 1024
+#define LOGIN_NAME_MAX 256
+#define HOST_NAME_MAX 64
+#define NAME_MAX 255
+#define OPEN_MAX 256
+
+#endif /*_ABIBITS_LIMITS_H */

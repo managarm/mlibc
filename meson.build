@@ -274,6 +274,10 @@ elif host_machine.system() == 'nyaux'
 	rtld_include_dirs += include_directories('sysdeps/nyaux/include')
 	libc_include_dirs += include_directories('sysdeps/nyaux/include')
 	subdir('sysdeps/nyaux')
+elif host_machine.system() == 'monolith64'
+    rtld_include_dirs += include_directories('sysdeps/monolith64/include')
+    libc_include_dirs += include_directories('sysdeps/monolith64/include')
+    subdir('sysdeps/monolith64')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
@@ -389,6 +393,7 @@ internal_sources = [
 	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc-extra/cxxabi.cpp',
+  'options/internal/x86_64/dso_handle.S',
 	'options/internal' / host_machine.cpu_family() / 'setjmp.S',
 	'options/internal' / host_machine.cpu_family() / 'fenv.S',
 ]

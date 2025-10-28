@@ -1,0 +1,1 @@
+../../../../abis/monolith64/wait.h
