@@ -529,5 +529,8 @@ int main() {
 	assert(sscanf("aacd", "%2[ac]", char_value) == 1);
 	assert(strcmp(char_value, "aa") == 0);
 
+	assert(sscanf("zz-zxx-mmm", "%7[zx-]", char_value) == 1);
+	assert(strcmp(char_value, "zz-zxx-") == 0);
+
 	return 0;
 }

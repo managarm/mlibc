@@ -802,19 +802,23 @@ int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				}
 
 				for (; *fmt != ']'; fmt++) {
+					auto fmt_unsigned = reinterpret_cast<const unsigned char *>(fmt);
+
 					if (!*fmt) return EOF;
-					if (*fmt == '-' && *fmt != ']') {
+					if (*fmt == '-' && *(fmt + 1) != ']') {
 						fmt++;
-						for (char c = *(fmt - 2); c < *fmt; c++)
+						fmt_unsigned++;
+						for (unsigned char c = *(fmt_unsigned - 2); c < *fmt_unsigned; c++)
 							scanset[1 + c] = 1 - invert;
 					}
-					scanset[1 + *fmt] = 1 - invert;
+					scanset[1 + *fmt_unsigned] = 1 - invert;
 				}
 
 				char c = handler.look_ahead();
 				EOF_CHECK(c == '\0');
 				while (c && (!width || count < width)) {
-					if (!scanset[1 + c])
+					unsigned char uc = static_cast<unsigned char>(c);
+					if (!scanset[1 + uc])
 						break;
 					handler.consume();
 
