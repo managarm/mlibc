@@ -7,7 +7,7 @@ namespace mlibc {
 // --- syscall numbers for your OS ---
 constexpr uint64_t SYS_WRITE = 1;
 constexpr uint64_t SYS_READ  = 2;
-constexpr uint64_t SYS_EXIT  = 3;
+constexpr uint64_t SYS_EXIT  = 9;
 
 // --- write to file descriptor ---
 ssize_t sys_write(int fd, const void *buf, size_t count) {
@@ -44,16 +44,17 @@ ssize_t sys_read(int fd, void *buf, size_t count) {
 }
 
 // --- exit process ---
-[[noreturn]] void sys_exit(int status) {
-    asm volatile (
-        "mov %0, %%rax\n\t"
-        "mov %1, %%rdi\n\t"
+[[noreturn]] inline void sys_exit(int status) {
+    asm volatile(
+        "mov %[num], %%rax\n\t"
+        "mov %[code], %%rdi\n\t"
         "int $0x69\n\t"
         :
-        : "r"(SYS_EXIT), "r"((uint64_t)status)
+        : [num] "r"(SYS_EXIT), [code] "r"((uint64_t)status)
         : "rax", "rdi", "memory"
     );
-    for (;;) {} // fallback
+
+    __builtin_unreachable(); // better than for(;;)
 }
 
 // --- optional: write directly to framebuffer ---
