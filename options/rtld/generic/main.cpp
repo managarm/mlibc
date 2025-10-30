@@ -635,16 +635,13 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 	// TODO: Thread-safety!
 	auto rts = rtsCounter++;
 
-	SharedObject *object;
-	if (flags & RTLD_NOLOAD) {
-		object = initialRepository->findLoadedObject(file);
-		if (object && object->globalRts == 0 && (flags & RTLD_GLOBAL)) {
-			// The object was opened with RTLD_LOCAL, but we are called with RTLD_NOLOAD | RTLD_GLOBAL.
-			// According to the man page, we should promote to the global scope here.
-			object->globalRts = rts;
-			globalScope->appendObject(object);
-		}
-	} else {
+	SharedObject *object = initialRepository->findLoadedObject(file);
+	if (object && object->globalRts == 0 && (flags & RTLD_GLOBAL)) {
+		// The object was opened with RTLD_LOCAL, but we are called with RTLD_GLOBAL.
+		// According to the man page, we should promote to the global scope here.
+		object->globalRts = rts;
+		globalScope->appendObject(object);
+	} else if ((flags & RTLD_NOLOAD) == 0) {
 		bool isGlobal = flags & RTLD_GLOBAL;
 		Scope *newScope = isGlobal ? globalScope.get() : nullptr;
 
