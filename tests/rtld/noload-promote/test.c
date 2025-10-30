@@ -18,6 +18,10 @@ int main() {
 	assert(dlopen(LIBFOO, RTLD_NOLOAD | RTLD_GLOBAL | RTLD_NOW) == foo);
 	assert(dlsym(RTLD_DEFAULT, "foo") != NULL);
 
+	// If the same shared object is opened again with dlopen(), the same object handle is returned.
+	assert(dlopen(LIBFOO, RTLD_GLOBAL | RTLD_NOW) == foo);
+	assert(dlopen(LIBFOO, RTLD_NOLOAD | RTLD_GLOBAL | RTLD_NOW) == foo);
+
 	assert(dlopen("does-not-exist.so.1337", RTLD_NOLOAD | RTLD_GLOBAL | RTLD_NOW) == NULL);
 
 	return 0;

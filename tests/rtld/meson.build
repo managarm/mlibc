@@ -3,6 +3,7 @@ rtld_test_cases = [
 	'dladdr_local',
 	'ld_library_path',
 	'noload-promote',
+	'promote-lib',
 	'rtld_next',
 	'soname',
 	'preinit',
