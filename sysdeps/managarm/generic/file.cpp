@@ -22,6 +22,7 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/posix-pipe.hpp>
+#include <protocols/posix/supercalls.hpp>
 
 #include <fs.frigg_bragi.hpp>
 #include <posix.frigg_bragi.hpp>
@@ -1124,6 +1125,75 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if (resp.error() != managarm::posix::Errors::SUCCESS) {
+		return resp.error() | toErrno;
+	} else {
+		__ensure(resp.events_size() == count);
+
+		int m = 0;
+		for (nfds_t i = 0; i < count; i++) {
+			if (resp.events(i))
+				m++;
+			fds[i].revents = resp.events(i);
+		}
+
+		*num_events = m;
+		return 0;
+	}
+}
+
+int sys_ppoll(
+    struct pollfd *fds,
+    nfds_t count,
+    const struct timespec *ts,
+    const sigset_t *mask,
+    int *num_events
+) {
+	uint64_t former = 0, seq = 0, unused;
+
+	if (mask)
+		HEL_CHECK(helSyscall2_2(
+		    kHelObserveSuperCall + posix::superSigMask,
+		    SIG_SETMASK,
+		    *reinterpret_cast<const HelWord *>(mask),
+		    &former,
+		    &seq
+		));
+
+	SignalGuard guard;
+	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_request_type(managarm::posix::CntReqType::EPOLL_CALL);
+	req.set_timeout(ts ? (ts->tv_sec * 1'000'000'000 + ts->tv_nsec) : -1);
+	req.set_cancellation_id(allocateCancellationId());
+	req.set_signal_seq(seq);
+	req.set_has_signal_seq(mask != nullptr);
+
+	for (nfds_t i = 0; i < count; i++) {
+		req.add_fds(fds[i].fd);
+		req.add_events(fds[i].events);
+	}
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSyncCancellable(
+	    getPosixLane(),
+	    req.cancellation_id(),
+	    -1,
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+	if (mask)
+		HEL_CHECK(helSyscall2_2(
+		    kHelObserveSuperCall + posix::superSigMask, SIG_SETMASK, former, &unused, &unused
+		));
+
 	if (resp.error() != managarm::posix::Errors::SUCCESS) {
 		return resp.error() | toErrno;
 	} else {
