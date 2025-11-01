@@ -343,7 +343,9 @@ wchar_t *wmemset(wchar_t *d, wchar_t c, size_t n) {
 	return ret;
 }
 
-char *strerror(int e) {
+namespace {
+
+const char *strerror_base(int e) {
 	const char *s;
 	switch(e) {
 	case EAGAIN: s = "Operation would block (EAGAIN)"; break;
@@ -463,10 +465,21 @@ char *strerror(int e) {
 #endif
 
 	default:
-		s = "Unknown error code (?)";
+		s = nullptr;
 	}
+	return s;
+}
+
+} // anonymous namespace
+
+char *strerror(int e) {
+	const char *s = strerror_base(e);
+	if(s == nullptr)
+		s = "Unknown error code (?)";
+
 	return const_cast<char *>(s);
 }
+
 // strlen() is defined in options/internals.
 
 extern "C" char *__gnu_strerror_r(int e, char *buffer, size_t bufsz) {
@@ -491,6 +504,132 @@ void *mempcpy(void *dest, const void *src, size_t len) {
 }
 
 // GNU extensions.
+const char *strerrorname_np(int e) {
+	const char *s;
+#define X(x) case x: s = #x; break;
+	switch(e) {
+	X(EAGAIN)
+	X(EACCES)
+	X(EBADF)
+	X(EEXIST)
+	X(EFAULT)
+	X(EINTR)
+	X(EINVAL)
+	X(EIO)
+	X(EISDIR)
+	X(ENOENT)
+	X(ENOMEM)
+	X(ENOTDIR)
+	X(ENOSYS)
+	X(EPERM)
+	X(EPIPE)
+	X(ESPIPE)
+	X(ENXIO)
+	X(ENOEXEC)
+	X(ENOSPC)
+	X(ENOTSOCK)
+	X(ENOTCONN)
+	X(EDOM)
+	X(EILSEQ)
+	X(ERANGE)
+	X(E2BIG)
+	X(EADDRINUSE)
+	X(EADDRNOTAVAIL)
+	X(EAFNOSUPPORT)
+	X(EALREADY)
+	X(EBADMSG)
+	X(EBUSY)
+	X(ECANCELED)
+	X(ECHILD)
+	X(ECONNABORTED)
+	X(ECONNREFUSED)
+	X(ECONNRESET)
+	X(EDEADLK)
+	X(EDESTADDRREQ)
+	X(EDQUOT)
+	X(EFBIG)
+	X(EHOSTUNREACH)
+	X(EIDRM)
+	X(EINPROGRESS)
+	X(EISCONN)
+	X(ELOOP)
+	X(EMFILE)
+	X(EMLINK)
+	X(EMSGSIZE)
+	X(EMULTIHOP)
+	X(ENAMETOOLONG)
+	X(ENETDOWN)
+	X(ENETRESET)
+	X(ENETUNREACH)
+	X(ENFILE)
+	X(ENOBUFS)
+	X(ENODEV)
+	X(ENOLCK)
+	X(ENOLINK)
+	X(ENOMSG)
+	X(ENOPROTOOPT)
+	X(ENOTEMPTY)
+	X(ENOTRECOVERABLE)
+	X(ENOTSUP)
+	X(ENOTTY)
+	X(EOVERFLOW)
+#if EOPNOTSUPP != ENOTSUP
+	/* these are aliases on the mlibc abi */
+	X(EOPNOTSUPP)
+#endif
+	X(EOWNERDEAD)
+	X(EPROTO)
+	X(EPROTONOSUPPORT)
+	X(EPROTOTYPE)
+	X(EROFS)
+	X(ESRCH)
+	X(ESTALE)
+	X(ETIMEDOUT)
+	X(ETXTBSY)
+	X(EXDEV)
+	X(ENODATA)
+	X(ETIME)
+	X(ENOKEY)
+	X(ESHUTDOWN)
+	X(EHOSTDOWN)
+	X(EBADFD)
+	X(ENOMEDIUM)
+	X(ENOTBLK)
+	X(ENONET)
+	X(EPFNOSUPPORT)
+	X(ESOCKTNOSUPPORT)
+	X(ESTRPIPE)
+	X(EREMOTEIO)
+	X(ERFKILL)
+	X(EBADR)
+	X(EUNATCH)
+	X(EMEDIUMTYPE)
+	X(EREMOTE)
+	X(EKEYREJECTED)
+	X(EUCLEAN)
+	X(EBADSLT)
+	X(ENOANO)
+	X(ENOCSI)
+	X(ENOSTR)
+	X(ETOOMANYREFS)
+	X(ENOPKG)
+	X(EKEYREVOKED)
+	X(EXFULL)
+	X(ELNRNG)
+	X(ENOTUNIQ)
+	X(ERESTART)
+	X(EUSERS)
+	default:
+		s = nullptr;
+	}
+#undef X
+	return s;
+}
+
+const char *strerrordesc_np(int e) {
+	return strerror_base(e);
+}
+
 // Taken from musl.
 int strverscmp(const char *l0, const char *r0) {
 	const unsigned char *l = (const unsigned char *)l0;
