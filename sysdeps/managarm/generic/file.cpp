@@ -2866,7 +2866,7 @@ int sys_fstatfs(int fd, struct statfs *buf) {
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
 
-	memset(buf, NULL, sizeof(struct statfs));
+	memset(buf, 0, sizeof(struct statfs));
 	buf->f_type = resp.fstype();
 	return 0;
 }
@@ -2985,7 +2985,7 @@ int sys_statfs(const char *path, struct statfs *buf) {
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
 
-	memset(buf, NULL, sizeof(struct statfs));
+	memset(buf, 0, sizeof(struct statfs));
 	buf->f_type = resp.fstype();
 	return 0;
 }
