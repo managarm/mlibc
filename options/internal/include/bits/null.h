@@ -9,7 +9,11 @@
 #ifndef __cplusplus
 #  define NULL ((void *)0)
 #else
-#  define NULL 0
+#  if __cplusplus >= 201103L
+#    define NULL nullptr
+#  else
+#    define NULL 0L
+#  endif
 #endif
 
 #endif /* MLIBC_NULL_H */
