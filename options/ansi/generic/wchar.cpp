@@ -1,3 +1,8 @@
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE
+#endif
+
+#define _POSIX_C_SOURCE 202405L
 
 #include <errno.h>
 #include <limits.h>
