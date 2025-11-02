@@ -1,5 +1,5 @@
-#ifndef _POSIX_WCTYPE_H
-#define _POSIX_WCTYPE_H
+#ifndef _MLIBC_POSIX_WCTYPE_H
+#define _MLIBC_POSIX_WCTYPE_H
 
 #include <bits/posix/locale_t.h>
 #include <bits/wint_t.h>
@@ -40,4 +40,4 @@ wint_t towctrans_l(wint_t __wc, wctrans_t __trans, locale_t __loc);
 }
 #endif
 
-#endif /* _POSIX_WCTYPE_H */
+#endif /* _MLIBC_POSIX_WCTYPE_H */

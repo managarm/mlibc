@@ -1,5 +1,5 @@
-#ifndef MLIBC_STAT_H
-#define MLIBC_STAT_H
+#ifndef _MLIBC_POSIX_STAT_H
+#define _MLIBC_POSIX_STAT_H
 
 #include <abi-bits/stat.h>
 
@@ -20,5 +20,5 @@
 #define st_mtime st_mtim.tv_sec
 #define st_ctime st_ctim.tv_sec
 
-#endif /* MLIBC_STAT_H */
+#endif /* _MLIBC_POSIX_STAT_H */
 

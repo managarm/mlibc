@@ -1,5 +1,5 @@
-#ifndef _POSIX_CTYPE_H
-#define _POSIX_CTYPE_H
+#ifndef _MLIBC_POSIX_CTYPE_H
+#define _MLIBC_POSIX_CTYPE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,7 +25,7 @@ int isxdigit_l(int __c, locale_t __loc);
 int isascii_l(int __c, locale_t __loc);
 
 int tolower_l(int __c, locale_t __loc);
-int toupper_l(int __c, locale_t __loc); 
+int toupper_l(int __c, locale_t __loc);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
@@ -33,4 +33,4 @@ int toupper_l(int __c, locale_t __loc);
 }
 #endif
 
-#endif /* _POSIX_CTYPE_H */
+#endif /* _MLIBC_POSIX_CTYPE_H */

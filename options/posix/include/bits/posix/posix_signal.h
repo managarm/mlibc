@@ -1,6 +1,6 @@
 
-#ifndef MLIBC_POSIX_SIGNAL_H
-#define MLIBC_POSIX_SIGNAL_H
+#ifndef _MLIBC_POSIX_SIGNAL_H
+#define _MLIBC_POSIX_SIGNAL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -109,5 +109,5 @@ int sigqueue(pid_t __pid, int __sig, const union sigval __value);
 }
 #endif
 
-#endif /* MLIBC_POSIX_SIGNAL_H */
+#endif /* _MLIBC_POSIX_SIGNAL_H */
 

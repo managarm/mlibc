@@ -1,6 +1,6 @@
 
-#ifndef MLIBC_POSIX_STRING_H
-#define MLIBC_POSIX_STRING_H
+#ifndef _MLIBC_POSIX_STRING_H
+#define _MLIBC_POSIX_STRING_H
 
 #include <alloca.h>
 #include <bits/posix/locale_t.h>
@@ -55,5 +55,5 @@ size_t strlcat(char *__d, const char *__s, size_t __n);
 }
 #endif
 
-#endif /* MLIBC_POSIX_STRING_H */
+#endif /* _MLIBC_POSIX_STRING_H */
 

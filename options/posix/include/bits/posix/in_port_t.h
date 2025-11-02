@@ -1,8 +1,8 @@
-#ifndef MLIBC_IN_PORT_H
-#define MLIBC_IN_PORT_H
+#ifndef _MLIBC_POSIX_IN_PORT_H
+#define _MLIBC_POSIX_IN_PORT_H
 
 #include <stdint.h>
 
 typedef uint16_t in_port_t;
 
-#endif /* MLIBC_IN_PORT_H */
+#endif /* _MLIBC_POSIX_IN_PORT_H */
