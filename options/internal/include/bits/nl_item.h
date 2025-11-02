@@ -1,6 +1,6 @@
 
-#ifndef _NL_ITEM_H
-#define _NL_ITEM_H
+#ifndef _MLIBC_INTERNAL_NL_ITEM_H
+#define _MLIBC_INTERNAL_NL_ITEM_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -582,5 +582,5 @@ enum { /* NOLINT(readability-enum-initial-value) */
 }
 #endif
 
-#endif /* _NL_ITEM_H */
+#endif /* _MLIBC_INTERNAL_NL_ITEM_H */
 

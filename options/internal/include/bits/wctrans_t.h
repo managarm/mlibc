@@ -1,6 +1,6 @@
-#ifndef MLIBC_WCTRANS_T_H
-#define MLIBC_WCTRANS_T_H
+#ifndef _MLIBC_INTERNAL_WCTRANS_T_H
+#define _MLIBC_INTERNAL_WCTRANS_T_H
 
 typedef unsigned long wctrans_t;
 
-#endif /* MLIBC_WCTRANS_T_H */
+#endif /* _MLIBC_INTERNAL_WCTRANS_T_H */

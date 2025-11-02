@@ -1,6 +1,6 @@
 
-#ifndef _BITS_LOCALE_H
-#define _BITS_LOCALE_H
+#ifndef _MLIBC_INTERNAL_BITS_LOCALE_H
+#define _MLIBC_INTERNAL_BITS_LOCALE_H
 
 #include <mlibc-config.h>
 
@@ -46,5 +46,5 @@ extern "C" {
 }
 #endif
 
-#endif /* _BITS_LOCALE_H */
+#endif /* _MLIBC_INTERNAL_BITS_LOCALE_H */
 

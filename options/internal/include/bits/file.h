@@ -1,6 +1,6 @@
-#ifndef MLIBC_FILE_T_H
-#define MLIBC_FILE_T_H
+#ifndef _MLIBC_INTERNAL_FILE_T_H
+#define _MLIBC_INTERNAL_FILE_T_H
 
 typedef struct __mlibc_file_base FILE;
 
-#endif /* MLIBC_FILE_T_H */
+#endif /* _MLIBC_INTERNAL_FILE_T_H */
