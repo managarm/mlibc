@@ -2,7 +2,6 @@
 #ifndef _MLIBC_POSIX_STRING_H
 #define _MLIBC_POSIX_STRING_H
 
-#include <alloca.h>
 #include <bits/posix/locale_t.h>
 #include <bits/size_t.h>
 
@@ -32,13 +31,13 @@ char *strcasestr(const char *__s1, const char *__s2);
 #define strdupa(x) ({ \
 	const char *__str = (x); \
 	size_t __len = strlen(__str) + 1; \
-	char *__buf = alloca(__len); \
+	char *__buf = __builtin_alloca(__len); \
 	(char *) memcpy(__buf, __str, __len); \
 })
 #define strndupa(x, y) ({ \
 	const char *__str = (x); \
 	size_t __len = strnlen(__str, (y)) + 1; \
-	char *__buf = alloca(__len); \
+	char *__buf = __builtin_alloca(__len); \
 	__buf[__len - 1] = '\0'; \
 	(char *) memcpy(__buf, __str, __len - 1); \
 })

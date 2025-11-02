@@ -15,7 +15,7 @@ extern "C" {
 
 void *memcpy(void *__restrict __dest, const void *__restrict __src, size_t __size);
 void *memmove(void *__dest, const void *__src, size_t __size);
-char *strcpy(char *__restrict __dest, const char *src);
+char *strcpy(char *__restrict __dest, const char *__src);
 char *strncpy(char *__restrict __dest, const char *__src, size_t __max_size);
 
 /* [7.24.3] Concatenation functions */
@@ -66,14 +66,6 @@ char *strerror_r(int __errnum, char *__buffer, size_t __size) __asm__("__gnu_str
 int strerror_r(int __errnum, char *__buffer, size_t __size);
 #endif
 
-void *mempcpy(void *__dest, const void *__src, size_t __size);
-
-/* GNU extensions. */
-int strverscmp(const char *__l0, const char *__r0);
-int ffsl(long __i);
-int ffsll(long long __i);
-void *memmem(const void *__haystack, size_t __haystacklen, const void *__needle, size_t __needlelen);
-
 /* Handling the basename mess:
  * If <libgen.h> is included *at all*, we use the XPG-defined basename
  * implementation, otherwise, we use the GNU one. Since our ABI previously
@@ -107,6 +99,9 @@ static inline char *__mlibc_gnu_basename(char *__path) {
 
 #if __MLIBC_POSIX_OPTION
 #	include <bits/posix/posix_string.h>
+#endif
+#if __MLIBC_GLIBC_OPTION
+#	include <bits/glibc/glibc_string.h>
 #endif
 
 #endif /* _STRING_H */

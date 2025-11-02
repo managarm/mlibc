@@ -14,6 +14,12 @@ char *index (const char *__s, int __c);
 char *rindex(const char *__s, int __c);
 
 int ffs(int __word);
+
+#if defined(_DEFAULT_SOURCE)
+int ffsl(long __i);
+int ffsll(long long __i);
+#endif
+
 int strcasecmp(const char *__a, const char *__b);
 int strncasecmp(const char *__a, const char *__b, size_t __size);
 
