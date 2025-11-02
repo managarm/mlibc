@@ -16,11 +16,14 @@ extern __thread int __mlibc_errno;
 int *__errno_location(void);
 
 /* Linux extensions. */
+#if defined(_GNU_SOURCE)
 
 extern char *program_invocation_name;
 extern char *program_invocation_short_name;
 extern char *__progname;
 extern char *__progname_full;
+
+#endif
 
 #endif /* !__MLIBC_ABI_ONLY */
 

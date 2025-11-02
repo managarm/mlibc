@@ -1,6 +1,6 @@
 
-#ifndef MLIBC_POSIX_STDIO_H
-#define MLIBC_POSIX_STDIO_H
+#ifndef _MLIBC_POSIX_STDIO_H
+#define _MLIBC_POSIX_STDIO_H
 
 #include <bits/off_t.h>
 #include <bits/size_t.h>
@@ -71,6 +71,6 @@ FILE *fopencookie(void *__restrict __cookie, const char *__restrict __mode, cook
 
 /* MISSING: various functions and macros */
 
-#endif /* MLIBC_POSIX_STDIO_H */
+#endif /* _MLIBC_POSIX_STDIO_H */
 
 

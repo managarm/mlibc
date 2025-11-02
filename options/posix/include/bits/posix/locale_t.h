@@ -1,5 +1,5 @@
-#ifndef _LOCALE_T_H
-#define _LOCALE_T_H
+#ifndef _MLIBC_POSIX_LOCALE_T_H
+#define _MLIBC_POSIX_LOCALE_T_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,4 +11,4 @@ typedef void *locale_t;
 }
 #endif
 
-#endif /* _LOCALE_T_H */
+#endif /* _MLIBC_POSIX_LOCALE_T_H */

@@ -1,5 +1,5 @@
-#ifndef _INTERNAL_THREADS_H
-#define _INTERNAL_THREADS_H
+#ifndef _MLIBC_INTERNAL_THREADS_H
+#define _MLIBC_INTERNAL_THREADS_H
 
 #include <abi-bits/clockid_t.h>
 #include <bits/size_t.h>
@@ -78,4 +78,4 @@ struct __mlibc_condattr {
 	clockid_t __mlibc_clock;
 };
 
-#endif /* _INTERNAL_THREADS_H */
+#endif /* _MLIBC_INTERNAL_THREADS_H */

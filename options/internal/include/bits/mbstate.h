@@ -1,5 +1,5 @@
-#ifndef MLIBC_MBSTATE_H
-#define MLIBC_MBSTATE_H
+#ifndef _MLIBC_INTERNAL_MBSTATE_H
+#define _MLIBC_INTERNAL_MBSTATE_H
 
 typedef struct __mlibc_mbstate {
 	short __progress;
@@ -9,4 +9,4 @@ typedef struct __mlibc_mbstate {
 
 #define __MLIBC_MBSTATE_INITIALIZER {0, 0, 0}
 
-#endif /* MLIBC_MBSTATE_H */
+#endif /* _MLIBC_INTERNAL_MBSTATE_H */

@@ -30,7 +30,10 @@ int dlclose(void *__handle);
 char *dlerror(void);
 void *dlopen(const char *__name, int __flags);
 void *dlsym(void *__restrict __handle, const char *__restrict __name);
+
+#if defined(_GNU_SOURCE)
 void *dlvsym(void *__restrict __handle, const char *__restrict __name, const char *__restrict __version);
+#endif
 
 #endif /* !__MLIBC_ABI_ONLY */
 

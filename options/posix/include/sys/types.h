@@ -5,6 +5,7 @@
 #include <bits/size_t.h>
 #include <bits/ssize_t.h>
 #include <bits/off_t.h>
+#include <bits/reclen_t.h>
 
 #include <bits/posix/id_t.h>
 #include <abi-bits/uid_t.h>

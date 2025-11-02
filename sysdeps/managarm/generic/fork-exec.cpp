@@ -547,10 +547,7 @@ int sys_getsid(pid_t pid, pid_t *sid) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::NO_SUCH_RESOURCE) {
-		*sid = 0;
-		return ESRCH;
-	} else if (resp.error() != managarm::posix::Errors::SUCCESS) {
+	if (resp.error() != managarm::posix::Errors::SUCCESS) {
 		return resp.error() | toErrno;
 	}
 
@@ -577,10 +574,7 @@ int sys_getpgid(pid_t pid, pid_t *pgid) {
 
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() == managarm::posix::Errors::NO_SUCH_RESOURCE) {
-		*pgid = 0;
-		return ESRCH;
-	} else if (resp.error() != managarm::posix::Errors::SUCCESS) {
+	if (resp.error() != managarm::posix::Errors::SUCCESS) {
 		return resp.error() | toErrno;
 	}
 

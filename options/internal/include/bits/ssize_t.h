@@ -1,6 +1,6 @@
 
-#ifndef MLIBC_SSIZE_T_H
-#define MLIBC_SSIZE_T_H
+#ifndef _MLIBC_INTERNAL_SSIZE_T_H
+#define _MLIBC_INTERNAL_SSIZE_T_H
 
 /* TODO: use ptrdiff_t instead? */
 #if __UINTPTR_MAX__ == __UINT64_MAX__
@@ -11,5 +11,5 @@ typedef int ssize_t;
 #error "unsupported architecture"
 #endif
 
-#endif /* MLIBC_SSIZE_T_H */
+#endif /* _MLIBC_INTERNAL_SSIZE_T_H */
 

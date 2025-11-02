@@ -5,6 +5,9 @@
 #include <abi-bits/limits.h>
 #include <abi-bits/ino_t.h>
 #include <bits/off_t.h>
+#include <bits/size_t.h>
+#include <bits/ssize_t.h>
+#include <bits/reclen_t.h>
 #include <bits/types.h>
 
 #ifdef __cplusplus
@@ -25,7 +28,7 @@ extern "C" {
  * the terminating null byte will not exceed {NAME_MAX}. */
 #define __MLIBC_DIRENT_BODY ino_t d_ino; \
 			off_t d_off; \
-			unsigned short d_reclen; \
+			reclen_t d_reclen; \
 			unsigned char d_type; \
 			char d_name[NAME_MAX+1];
 

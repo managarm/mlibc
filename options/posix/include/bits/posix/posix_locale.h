@@ -1,5 +1,5 @@
-#ifndef MLIBC_POSIX_LOCALE_H
-#define MLIBC_POSIX_LOCALE_H
+#ifndef _MLIBC_POSIX_LOCALE_H
+#define _MLIBC_POSIX_LOCALE_H
 
 #include <bits/posix/locale_t.h>
 
@@ -20,4 +20,4 @@ locale_t duplocale(locale_t __locobj);
 }
 #endif
 
-#endif /* MLIBC_POSIX_LOCALE_H */
+#endif /* _MLIBC_POSIX_LOCALE_H */

@@ -1,6 +1,6 @@
 
-#ifndef MLIBC_MACHINE_H
-#define MLIBC_MACHINE_H
+#ifndef _MLIBC_INTERNAL_MACHINE_H
+#define _MLIBC_INTERNAL_MACHINE_H
 
 #include <stdint.h>
 
@@ -122,5 +122,5 @@ struct __mlibc_jmpbuf_register_state {
 #  error "Missing architecture specific code"
 #endif
 
-#endif /* MLIBC_MACHINE_H */
+#endif /* _MLIBC_INTERNAL_MACHINE_H */
 
