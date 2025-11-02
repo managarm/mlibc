@@ -12,7 +12,7 @@
 #  if __cplusplus >= 201103L
 #    define NULL nullptr
 #  else
-#    define NULL 0L
+#    define NULL __null
 #  endif
 #endif
 
