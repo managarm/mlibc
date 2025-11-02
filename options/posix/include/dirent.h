@@ -5,6 +5,8 @@
 #include <abi-bits/limits.h>
 #include <abi-bits/ino_t.h>
 #include <bits/off_t.h>
+#include <bits/size_t.h>
+#include <bits/ssize_t.h>
 #include <bits/reclen_t.h>
 #include <bits/types.h>
 
