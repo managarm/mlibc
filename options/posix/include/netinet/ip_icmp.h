@@ -70,6 +70,8 @@ struct icmphdr {
 
 #define ICMP_ADVLENMIN (8 + sizeof(struct ip) + 8)
 
+#define ICMP_MINLEN 8
+
 struct icmp_ra_addr {
 	uint32_t ira_addr;
 	uint32_t ira_preference;
