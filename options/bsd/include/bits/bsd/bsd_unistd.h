@@ -1,5 +1,5 @@
-#ifndef _BSD_UNISTD_H
-#define _BSD_UNISTD_H
+#ifndef _MLIBC_BSD_UNISTD_H
+#define _MLIBC_BSD_UNISTD_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,4 +17,4 @@ void *sbrk(intptr_t __increment);
 }
 #endif
 
-#endif /* _BSD_UNISTD_H */
+#endif /* _MLIBC_BSD_UNISTD_H */
