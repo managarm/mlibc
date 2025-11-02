@@ -2,9 +2,7 @@
 
 This document lists the ABI breaks that were made in each mlibc major version.
 
-## Version 6
-
-Numerous ABI breaks. These were not properly logged, and are therefore missing here. Pending update, if one ever comes.
+## Version 7
 
 - [#1458](https://github.com/managarm/mlibc/pull/1458): mlibc only defined `fenv_t` for x86(_64) before, new we define it correctly for all supported architectures.
 - [#1458](https://github.com/managarm/mlibc/pull/1458): due to incorrect macro usage, `LONG_BIT` was previously always defined to 64, even on 32-bit architectures. Now, it is set to 32 on 32-bit architectures.
@@ -29,6 +27,10 @@ Numerous ABI breaks. These were not properly logged, and are therefore missing h
 - [#1460](https://github.com/managarm/mlibc/pull/1460): `useconds_t` was turned into a 32-bit value, as it only needs to hold microsecond values worth up to a second.
 - [#1492](https://github.com/managarm/mlibc/pull/1492): changes the values of `LC_*` macros and `nl_item` values to match glibc, so that glibc locale files can be consumed.
 - [#1492](https://github.com/managarm/mlibc/pull/1492): fix `struct epoll_event` alignment on x86
+
+## Version 6
+
+Numerous ABI breaks. These were not properly logged, and are therefore missing here. Pending update, if one ever comes.
 
 ## Version 5
 
