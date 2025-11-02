@@ -37,15 +37,22 @@ void *dlvsym(void *__restrict __handle, const char *__restrict __name, const cha
 
 #endif /* !__MLIBC_ABI_ONLY */
 
-#if defined(_GNU_SOURCE) && __MLIBC_GLIBC_OPTION
+#if (defined(_GNU_SOURCE) && __MLIBC_GLIBC_OPTION) || defined(__MLIBC_POSIX2024)
 
-/*gnu extension */
 typedef struct {
 	const char *dli_fname;
 	void *dli_fbase;
 	const char *dli_sname;
 	void *dli_saddr;
 } Dl_info;
+
+typedef Dl_info Dl_info_t;
+
+int dladdr(const void *__ptr, Dl_info_t *__out);
+
+#endif /* (defined(_GNU_SOURCE) && __MLIBC_GLIBC_OPTION) || defined(__MLIBC_POSIX2024) */
+
+#if defined(_GNU_SOURCE) && __MLIBC_GLIBC_OPTION
 
 #if defined(__i386__)
 #define DLFO_STRUCT_HAS_EH_DBASE 1
@@ -82,8 +89,7 @@ struct dl_find_object {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int dladdr(const void *__ptr, Dl_info *__out);
-int dladdr1(const void *__ptr, Dl_info *__out, void **__extra, int __flags);
+int dladdr1(const void *__ptr, Dl_info_t *__out, void **__extra, int __flags);
 int dlinfo(void *__restrict __handle, int __request, void *__restrict __info);
 int _dl_find_object(void *__address, struct dl_find_object *__result);
 
