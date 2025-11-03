@@ -39,7 +39,7 @@ struct statvfs {
 	unsigned int f_spare[6];
 };
 
-#if __MLIBC_LINUX_OPTION
+#if __MLIBC_LINUX_OPTION && defined(_LARGEFILE64_SOURCE)
 /* WARNING: keep `statvfs` and `statvfs64` in sync or bad things will happen! */
 struct statvfs64 {
 	unsigned long f_bsize;
@@ -58,7 +58,7 @@ struct statvfs64 {
 	unsigned long f_namemax;
 	unsigned int f_spare[6];
 };
-#endif /* !__MLIBC_LINUX_OPTION */
+#endif /* __MLIBC_LINUX_OPTION && defined(_LARGEFILE64_SOURCE) */
 
 #endif /* _ABIBITS_STATVFS_H */
 
