@@ -9,8 +9,8 @@ extern "C" {
 #ifndef __MLIBC_ABI_ONLY
 
 /* NOTE: This is not ISO C. Declared in LSB */
-__attribute__ ((__noreturn__)) void __assert_fail(const char *assertion, const char *file, unsigned int line,
-		const char *function);
+__attribute__ ((__noreturn__)) void __assert_fail(const char *__assertion, const char *__file, unsigned int __line,
+		const char *__function);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
