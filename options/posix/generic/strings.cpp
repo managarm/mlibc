@@ -104,10 +104,3 @@ void bcopy(const void *s1, void *s2, size_t n) {
 void bzero(void *s, size_t n) {
 	memset(s, 0, n);
 }
-
-void explicit_bzero(void *s, size_t len) {
-  memset (s, 0, len);
-  // Compiler barrier to prevent optimizing away the memset
-  asm volatile ("" ::: "memory");
-}
-

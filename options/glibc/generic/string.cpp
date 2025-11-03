@@ -93,3 +93,9 @@ void *memmem(const void *hs, size_t haystackLen, const void *nd, size_t needleLe
 
 	return nullptr;
 }
+
+void explicit_bzero(void *s, size_t len) {
+  memset (s, 0, len);
+  // Compiler barrier to prevent optimizing away the memset
+  asm volatile ("" ::: "memory");
+}

@@ -3,6 +3,7 @@
 #define _STRINGS_H
 
 #include <bits/size_t.h>
+#include <mlibc-config.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -10,10 +11,9 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-char *index (const char *__s, int __c);
-char *rindex(const char *__s, int __c);
-
+#if defined(_DEFAULT_SOURCE) || !__MLIBC_POSIX2008 || __MLIBC_XOPEN >= 700
 int ffs(int __word);
+#endif
 
 #if defined(_DEFAULT_SOURCE)
 int ffsl(long __i);
@@ -23,11 +23,15 @@ int ffsll(long long __i);
 int strcasecmp(const char *__a, const char *__b);
 int strncasecmp(const char *__a, const char *__b, size_t __size);
 
-/* Marked as obsolete in posix 2008 but used by at least tracker */
+#if defined(_DEFAULT_SOURCE) || !__MLIBC_POSIX2008
+/* Marked as obsolete in POSIX 2008 but used by at least tracker */
 int bcmp(const void *__s1, const void *__s2, size_t __n);
 void bcopy(const void *__s1, void *__s2, size_t __n);
 void bzero(void *__s, size_t __n);
-void explicit_bzero(void *__s, size_t __len);
+
+char *index (const char *__s, int __c);
+char *rindex(const char *__s, int __c);
+#endif
 
 #endif /* !__MLIBC_ABI_ONLY */
 
