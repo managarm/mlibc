@@ -274,13 +274,9 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
 
-			if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-				return EINVAL;
-			} else if (resp.error() == managarm::fs::Errors::INSUFFICIENT_PERMISSIONS) {
-				return EPERM;
-			}
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 			*result = resp.result();
 			return 0;
 		}
@@ -450,12 +446,9 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-			if (resp.error() == managarm::fs::Errors::INSUFFICIENT_PERMISSIONS) {
-				return EPERM;
-			} else if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
-				return EINVAL;
-			}
-			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
+
 			*result = resp.result();
 			return 0;
 		}
