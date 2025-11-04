@@ -47,6 +47,25 @@ namespace mlibc {
 		return 0;
 	}
 
+	int sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
+		long r;
+		int error = syscall(SYSCALL_READV, &r, fd, (uint64_t)iovs, iovc);
+		*bytes_read = r;
+		return error;
+	}
+
+	int sys_writev(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_written) {
+		long r;
+		int error = syscall(SYSCALL_WRITEV, &r, fd, (uint64_t)iovs, iovc);
+		*bytes_written = r;
+		return error;
+	}
+
+	int sys_sysinfo(struct sysinfo *info) {
+		long r;
+		return syscall(SYSCALL_SYSINFO, &r, (uint64_t)info);
+	}
+
 	int sys_getcpu(int *cpu) {
 		long ret;
 		// can never fail
