@@ -348,6 +348,36 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 			*result = resp.result();
 			return 0;
 		}
+		case TIOCNOTTY: {
+			managarm::fs::GenericIoctlRequest<MemoryAllocator> req(getSysdepsAllocator());
+			req.set_command(request);
+
+			auto [offer, send_ioctl_req, send_req, imbue_creds, recv_resp] = exchangeMsgsSync(
+			    handle,
+			    helix_ng::offer(
+			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			        helix_ng::imbueCredentials(),
+			        helix_ng::recvInline()
+			    )
+			);
+
+			HEL_CHECK(offer.error());
+			HEL_CHECK(send_ioctl_req.error());
+			if (imbue_creds.error() == kHelErrDismissed)
+				return ENOTTY;
+			HEL_CHECK(imbue_creds.error());
+			HEL_CHECK(send_req.error());
+			HEL_CHECK(recv_resp.error());
+
+			managarm::fs::GenericIoctlReply<MemoryAllocator> resp(getSysdepsAllocator());
+			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
+
+			*result = resp.result();
+			return 0;
+		}
 		case TIOCGPTN: {
 			auto param = reinterpret_cast<int *>(arg);
 
