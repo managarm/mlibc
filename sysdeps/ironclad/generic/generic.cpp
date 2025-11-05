@@ -589,7 +589,9 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return errno;
 	}
 
-	*result = ret;
+	if (result != NULL) {
+		*result = ret;
+	}
 	return 0;
 }
 
@@ -1025,7 +1027,7 @@ int sys_shutdown(int sockfd, int how) {
 
 int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
 	(void)which; (void)new_value; (void)old_value;
-	return ENOSYS;
+	return 0;
 }
 
 int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
@@ -1095,6 +1097,11 @@ int sys_pause(void) {
 
 int sys_sigsuspend(const sigset_t *set) {
 	return sys_ppoll(NULL, 0, NULL, set, NULL);
+}
+
+int sys_sigpending(sigset_t *set) {
+	*set = 0;
+	return 0;
 }
 
 int sys_pselect(int nfds, fd_set *read_set, fd_set *write_set,
@@ -1453,6 +1460,10 @@ int sys_openpt(int oflags, int *fd) {
 	// the openpty interface.
 	if (!(oflags & O_NOCTTY)) {
 		ioctl(*fd, TIOCSCTTY);
+	}
+	if (oflags & O_NONBLOCK) {
+		fdflags = fcntl(*fd, F_GETFL);
+		fcntl(*fd, F_SETFL, fdflags | O_NONBLOCK);
 	}
 
 	return e;
