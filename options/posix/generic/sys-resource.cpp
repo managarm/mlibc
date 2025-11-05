@@ -3,6 +3,7 @@
 #include <sys/resource.h>
 
 #include <bits/ensure.h>
+#include <mlibc-config.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 
@@ -42,7 +43,9 @@ int getrlimit(int resource, struct rlimit *limit) {
 	return 0;
 }
 
+#if __MLIBC_LINUX_OPTION
 [[gnu::alias("getrlimit")]] int getrlimit64(int resource, struct rlimit *limit);
+#endif /* !__MLIBC_LINUX_OPTION */
 
 int setrlimit(int resource, const struct rlimit *limit) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setrlimit, -1);
@@ -53,7 +56,9 @@ int setrlimit(int resource, const struct rlimit *limit) {
 	return 0;
 }
 
+#if __MLIBC_LINUX_OPTION
 [[gnu::alias("setrlimit")]] int setrlimit64(int resource, const struct rlimit *limit);
+#endif /* !__MLIBC_LINUX_OPTION */
 
 int prlimit(pid_t, int, const struct rlimit *, struct rlimit *) {
 	__ensure(!"Not implemented");

@@ -9,6 +9,7 @@
 #include <fcntl.h>
 
 #include <bits/ensure.h>
+#include <mlibc-config.h>
 #include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/file-io.hpp>
@@ -171,7 +172,9 @@ int fseeko(FILE *file_base, off_t offset, int whence) {
 	return 0;
 }
 
+#if __MLIBC_LINUX_OPTION
 [[gnu::alias("fseeko")]] int fseeko64(FILE *file_base, off64_t offset, int whence);
+#endif /* !__MLIBC_LINUX_OPTION */
 
 off_t ftello(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
@@ -183,7 +186,9 @@ off_t ftello(FILE *file_base) {
 	return current_offset;
 }
 
+#if __MLIBC_LINUX_OPTION
 [[gnu::alias("ftello")]] off64_t ftello64(FILE *file_base);
+#endif /* !__MLIBC_LINUX_OPTION */
 
 int dprintf(int fd, const char *format, ...) {
 	va_list args;

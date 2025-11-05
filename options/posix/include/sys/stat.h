@@ -19,11 +19,15 @@ int chmod(const char *__pathname, mode_t __mode);
 int fchmod(int __fd, mode_t __mode);
 int fchmodat(int __fd, const char *__pathname, mode_t __mode, int __flags);
 int fstat(int __fd, struct stat *__result);
+#if __MLIBC_LINUX_OPTION
 int fstat64(int __fd, struct stat64 *__result);
+#endif /* !__MLIBC_LINUX_OPTION */
 int fstatat(int __fd, const char *__restrict __pathname, struct stat *__restrict __buf, int __flags);
 int futimens(int __fd, const struct timespec __times[2]);
 int lstat(const char *__restrict __pathname, struct stat *__restrict __buf);
+#if __MLIBC_LINUX_OPTION
 int lstat64(const char *__restrict __pathname, struct stat64 *__restrict __buf);
+#endif /* !__MLIBC_LINUX_OPTION */
 int mkdir(const char *__pathname, mode_t __mode);
 int mkdirat(int __dirfd, const char *__pathname, mode_t __mode);
 int mkfifo(const char *__pathname, mode_t __mode);

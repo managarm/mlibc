@@ -2,6 +2,8 @@
 #ifndef _MLIBC_POSIX_STDIO_H
 #define _MLIBC_POSIX_STDIO_H
 
+#include <mlibc-config.h>
+
 #include <bits/off_t.h>
 #include <bits/size_t.h>
 #include <bits/ssize_t.h>
@@ -26,9 +28,13 @@ FILE *popen(const char *__command, const char *__type);
 FILE *open_memstream(char **__buf, size_t *__sizeloc);
 
 int fseeko(FILE *__stream, off_t __offset, int __whence);
+#if __MLIBC_LINUX_OPTION
 int fseeko64(FILE *__stream, off64_t __offset, int __whence);
+#endif /* !__MLIBC_LINUX_OPTION */
 off_t ftello(FILE *__stream);
+#if __MLIBC_LINUX_OPTION
 off64_t ftello64(FILE *__stream);
+#endif /* !__MLIBC_LINUX_OPTION */
 
 __attribute__((format(__printf__, 2, 3))) int dprintf(int __fd, const char *__format, ...);
 __attribute__((format(__printf__, 2, 0)))
