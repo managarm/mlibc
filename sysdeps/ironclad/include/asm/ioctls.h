@@ -61,7 +61,7 @@
 #define TIOCGRS485               0x542E
 #define TIOCSRS485               0x542F
 #define TIOCGPTN                 3
-#define TIOCSPTLCK               3
+#define TIOCSPTLCK               0x5430
 #define TIOCGDEV                 3
 #define TCGETX                   0x5432
 #define TCSETX                   0x5433
