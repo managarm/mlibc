@@ -106,10 +106,13 @@
 #define AT_REMOVEDIR 0x200
 #define AT_SYMLINK_FOLLOW 0x400
 #define AT_EACCESS 0x200
+
+#if defined(_GNU_SOURCE)
 #define AT_NO_AUTOMOUNT 0x800
 #define AT_EMPTY_PATH 0x1000
+#endif
 
-#if __MLIBC_LINUX_OPTION
+#if __MLIBC_LINUX_OPTION && defined(_GNU_SOURCE)
 
 #define DN_ACCESS 1
 #define DN_MODIFY 2
@@ -124,7 +127,7 @@
 #define AT_STATX_DONT_SYNC 0x4000
 #define AT_STATX_SYNC_TYPE 0x6000
 
-#endif /* __MLIBC_LINUX_OPTION */
+#endif /* __MLIBC_LINUX_OPTION && defined(_GNU_SOURCE) */
 
 #if defined(_GNU_SOURCE)
 struct f_owner_ex {

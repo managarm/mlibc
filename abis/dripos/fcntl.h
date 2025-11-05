@@ -62,16 +62,20 @@
 #define F_ADD_SEALS   1033
 #define F_GET_SEALS   1034
 
-#define AT_EMPTY_PATH 1
 #define AT_SYMLINK_FOLLOW 2
 #define AT_SYMLINK_NOFOLLOW 4
 #define AT_REMOVEDIR 8
 #define AT_EACCESS 512
+
+#if defined(_GNU_SOURCE)
+#define AT_EMPTY_PATH 1
 #define AT_NO_AUTOMOUNT 1024
+
 #define AT_STATX_SYNC_AS_STAT 0
 #define AT_STATX_FORCE_SYNC 2048
 #define AT_STATX_DONT_SYNC 4096
 #define AT_STATX_SYNC_TYPE 6144
+#endif /* defined(_GNU_SOURCE) */
 
 #define AT_FDCWD -100
 

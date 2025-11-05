@@ -83,6 +83,8 @@
 #define AT_SYMLINK_FOLLOW (1 << 9)
 #define AT_REMOVEDIR (1 << 10)
 #define AT_EACCESS (1 << 11)
+
+#if defined(_GNU_SOURCE)
 #define AT_NO_AUTOMOUNT (1 << 12)
 #define AT_EMPTY_PATH (1 << 13)
 
@@ -98,6 +100,7 @@
 #define AT_STATX_FORCE_SYNC (1 << 14)
 #define AT_STATX_DONT_SYNC (1 << 15)
 #define AT_STATX_SYNC_TYPE (AT_STATX_FORCE_SYNC | AT_STATX_DONT_SYNC)
+#endif /* defined(_GNU_SOURCE) */
 
 #if defined(_GNU_SOURCE)
 struct f_owner_ex {
