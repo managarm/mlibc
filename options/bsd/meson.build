@@ -19,6 +19,7 @@ if not no_headers
 	install_headers(
 		'include/arpa/nameser.h',
 		'include/arpa/nameser_compat.h',
+		'include/arpa/telnet.h',
 		subdir: 'arpa'
 	)
 	install_headers(
