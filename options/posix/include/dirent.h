@@ -2,6 +2,8 @@
 #ifndef _DIRENT_H
 #define _DIRENT_H
 
+#include <mlibc-config.h>
+
 #include <abi-bits/limits.h>
 #include <abi-bits/ino_t.h>
 #include <bits/off_t.h>
@@ -64,7 +66,9 @@ int dirfd(DIR *__dirp);
 DIR *fdopendir(int __fd);
 DIR *opendir(const char *__pathname);
 struct dirent *readdir(DIR *__dirp);
+#if __MLIBC_LINUX_OPTION
 struct dirent64 *readdir64(DIR *__dirp);
+#endif /* !__MLIBC_LINUX_OPTION */
 int readdir_r(DIR *__restrict __dirp, struct dirent *__restrict __entry, struct dirent **__restrict __res);
 void rewinddir(DIR *__dirp);
 int scandir(const char *__pathname, struct dirent ***__res, int (*__select)(const struct dirent *__entry),

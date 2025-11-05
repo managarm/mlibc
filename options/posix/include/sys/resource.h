@@ -1,6 +1,8 @@
 #ifndef _SYS_RESOURCE_H
 #define _SYS_RESOURCE_H
 
+#include <mlibc-config.h>
+
 #include <abi-bits/pid_t.h>
 #include <abi-bits/resource.h>
 #include <abi-bits/rlim_t.h>
@@ -31,9 +33,13 @@ int setpriority(int __which, id_t __who, int __prio);
 
 int getrusage(int __who, struct rusage *__usage);
 int getrlimit(int __resource, struct rlimit *__rlim);
+#if __MLIBC_LINUX_OPTION
 int getrlimit64(int __resource, struct rlimit *__rlim);
+#endif /* !__MLIBC_LINUX_OPTION */
 int setrlimit(int __resource, const struct rlimit *__rlim);
+#if __MLIBC_LINUX_OPTION
 int setrlimit64(int __resource, const struct rlimit *__rlim);
+#endif /* !__MLIBC_LINUX_OPTION */
 
 int prlimit(pid_t __pid, int __resource, const struct rlimit *__new_limits, struct rlimit *__old_limits);
 

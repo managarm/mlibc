@@ -2,6 +2,8 @@
 #ifndef _FCNTL_H
 #define _FCNTL_H
 
+#include <mlibc-config.h>
+
 #include <abi-bits/fcntl.h>
 #include <abi-bits/seek-whence.h>
 #include <abi-bits/mode_t.h>
@@ -27,6 +29,7 @@ struct flock {
 	pid_t l_pid;
 };
 
+#if __MLIBC_LINUX_OPTION
 struct flock64 {
 	short l_type;
 	short l_whence;
@@ -34,6 +37,7 @@ struct flock64 {
 	off_t l_len;
 	pid_t l_pid;
 };
+#endif /* !__MLIBC_LINUX_OPTION */
 
 #ifndef __MLIBC_ABI_ONLY
 
@@ -41,7 +45,9 @@ int creat(const char *__path, mode_t __mode);
 int fallocate(int __fd, int __mode, off_t __offset, off_t __len);
 int fcntl(int __fd, int __command, ...);
 int open(const char *__path, int __flags, ...);
+#if __MLIBC_LINUX_OPTION
 int open64(const char *__path, int __flags, ...);
+#endif /* !__MLIBC_LINUX_OPTION */
 int openat(int __dirfd, const char *__path, int __flags, ...);
 int posix_fadvise(int __fd, off_t __offset, off_t __size, int __advice);
 int posix_fallocate(int __fd, off_t __offset, off_t __size);

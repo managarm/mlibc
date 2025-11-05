@@ -14,7 +14,9 @@ extern "C" {
 #ifndef __MLIBC_ABI_ONLY
 
 void *mmap(void *__addr, size_t __size, int __prot, int __flags, int __fd, off_t __offset);
+#if __MLIBC_LINUX_OPTION
 void *mmap64(void *__addr, size_t __size, int __prot, int __flags, int __fd, off64_t __offset);
+#endif /* !__MLIBC_LINUX_OPTION */
 int mprotect(void *__addr, size_t __size, int __prot);
 int munmap(void *__addr, size_t __size);
 

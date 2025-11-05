@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 
+#include <mlibc-config.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 
@@ -115,4 +116,6 @@ int open(const char *pathname, int flags, ...) {
 	return fd;
 }
 
+#if __MLIBC_LINUX_OPTION
 [[gnu::alias("open")]] int open64(const char *pathname, int flags, ...);
+#endif /* !__MLIBC_LINUX_OPTION */

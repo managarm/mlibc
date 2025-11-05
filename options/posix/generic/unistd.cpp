@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 
 #include <bits/ensure.h>
+#include <mlibc-config.h>
 #include <mlibc/allocator.hpp>
 #include <mlibc/arch-defs.hpp>
 #include <mlibc/debug.hpp>
@@ -286,7 +287,9 @@ int ftruncate(int fd, off_t size) {
 	return 0;
 }
 
+#if __MLIBC_LINUX_OPTION
 [[gnu::alias("ftruncate")]] int ftruncate64(int fd, off64_t size);
+#endif /* !__MLIBC_LINUX_OPTION */
 
 char *getcwd(char *buffer, size_t size) {
 	if (buffer) {
@@ -633,7 +636,9 @@ ssize_t pread(int fd, void *buf, size_t n, off_t off) {
 	return num_read;
 }
 
+#if __MLIBC_LINUX_OPTION
 [[gnu::alias("pread")]] ssize_t pread64(int fd, void *buf, size_t n, off_t off);
+#endif /* !__MLIBC_LINUX_OPTION */
 
 ssize_t pwrite(int fd, const void *buf, size_t n, off_t off) {
 	ssize_t num_written;
@@ -646,7 +651,9 @@ ssize_t pwrite(int fd, const void *buf, size_t n, off_t off) {
 	return num_written;
 }
 
+#if __MLIBC_LINUX_OPTION
 [[gnu::alias("pwrite")]] ssize_t pwrite64(int fd, const void *buf, size_t n, off_t off);
+#endif /* !__MLIBC_LINUX_OPTION */
 
 ssize_t readlink(const char *__restrict path, char *__restrict buffer, size_t max_size) {
 	ssize_t length;
@@ -918,7 +925,9 @@ int truncate(const char *, off_t) {
 	__builtin_unreachable();
 }
 
+#if __MLIBC_LINUX_OPTION
 [[gnu::alias("truncate")]] int truncate64(const char *, off64_t);
+#endif /* !__MLIBC_LINUX_OPTION */
 
 char *ttyname(int fd) {
 	const size_t size = 128;
