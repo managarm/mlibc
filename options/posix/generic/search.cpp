@@ -53,7 +53,7 @@ namespace {
 		struct node *node = *nodep;
 		int height_a = height(static_cast<struct node *>(node->a[0]));
 		int height_b = height(static_cast<struct node *>(node->a[1]));
-		if (height_a - height_b < 2) {
+		if (abs(height_a - height_b) < 2) {
 			int old = node->h;
 			node->h = height_a < height_b ? height_b + 1 : height_a + 1;
 			return node->h - old;
