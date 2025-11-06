@@ -96,7 +96,7 @@ void *tsearch(const void *key, void **rootp, int(*compar)(const void *, const vo
 
 // This implementation is taken from musl
 void *tfind(const void *key, void *const *rootp, int (*compar)(const void *, const void *)) {
-	if(!rootp)
+	if(!*rootp)
 		return nullptr;
 
 	struct node *n = (struct node *)*rootp;
@@ -117,10 +117,54 @@ void *tdelete(const void *, void **, int(*compar)(const void *, const void *)) {
 	__builtin_unreachable();
 }
 
-void twalk(const void *, void (*action)(const void *, VISIT, int)) {
-	(void)action;
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void twalk(const void *rootp, void (*action)(const void *, VISIT, int)) {
+	if (!rootp)
+		return;
+
+	struct walk_node {
+		const struct node *node;
+		VISIT v;
+	};
+	int depth = 0;
+	const struct node *node = static_cast<const struct node *>(rootp);
+	frg::stack<struct walk_node, MemoryAllocator> nodes(getAllocator());
+
+	struct walk_node wn = {node, VISIT::preorder};
+	nodes.push(wn);
+
+	while(!nodes.empty()) {
+		wn = nodes.top();
+		nodes.pop();
+
+		if (!wn.node->a[0] && !wn.node->a[1])
+			wn.v = VISIT::leaf;
+
+		action(wn.node, wn.v, depth);
+
+		struct node *next_child = nullptr;
+		switch (wn.v) {
+			case VISIT::endorder:
+			case VISIT::leaf:
+				--depth;
+				break;
+			case VISIT::preorder:
+				next_child = static_cast<struct node *>(wn.node->a[0]);
+				wn.v = VISIT::postorder;
+				nodes.push(wn);
+				break;
+			case VISIT::postorder:
+				next_child = static_cast<struct node *>(wn.node->a[1]);
+				wn.v = VISIT::endorder;
+				nodes.push(wn);
+				break;
+		}
+
+		if (next_child) {
+			++depth;
+			struct walk_node tmp = {next_child, VISIT::preorder};
+			nodes.push(tmp);
+		}
+	}
 }
 
 void tdestroy(void *root, void (*free_node)(void *)) {

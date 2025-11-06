@@ -26,6 +26,29 @@ static void free_key(void *key) {
 	free(key);
 }
 
+static int walk_visits[12];
+static void walk(const void *n, VISIT v, int depth) {
+	(void)depth;
+	int i = **((int **)n);
+
+	switch (v) {
+		case preorder:
+			assert(walk_visits[i] == 0);
+			break;
+		case postorder:
+			assert(walk_visits[i] == 1);
+			break;
+		case endorder:
+			assert(walk_visits[i] == 2);
+			break;
+		case leaf:
+			assert(walk_visits[i] == 0);
+			break;
+	}
+
+	++walk_visits[i];
+}
+
 int main() {
 	void *root = NULL;
 	for (int i = 0; i < 12; i++) {
@@ -47,6 +70,9 @@ int main() {
 	int key = -1;
 	void *ret = tfind((void*) &key, &root, compare);
 	assert(ret == NULL);
+
+	// Verify twalk works
+	twalk(root, walk);
 
 	tdestroy(root, free_key);
 	assert(freed == 12);
