@@ -74,8 +74,30 @@ int main() {
 	// Verify twalk works
 	twalk(root, walk);
 
+	// Test tdelete
+	// root + 2 children
+	key = 7;
+	ret = tdelete(&key, &root, compare);
+	assert(ret);
+	ret = tdelete(&key, &root, compare);
+	assert(ret == NULL);
+
+	// no children + rebalancing
+	key = 8;
+	ret = tdelete(&key, &root, compare);
+	assert(ret);
+	ret = tdelete(&key, &root, compare);
+	assert(ret == NULL);
+
+	// one child
+	key = 5;
+	ret = tdelete(&key, &root, compare);
+	assert(ret);
+	ret = tdelete(&key, &root, compare);
+	assert(ret == NULL);
+
 	tdestroy(root, free_key);
-	assert(freed == 12);
+	assert(freed == 9);
 
 	assert(hcreate(3));
 
