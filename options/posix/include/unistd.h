@@ -268,7 +268,9 @@ size_t confstr(int __name, char *__buf, size_t __size);
 char *ctermid(char *__s);
 int dup(int __fd);
 int dup2(int __src_fd, int __dest_fd);
+#if (_POSIX_C_SOURCE-0 >= 202405L) || (_XOPEN_SOURCE-0 >= 800) || defined(_GNU_SOURCE)
 int dup3(int __fd, int __newfd, int __flags);
+#endif
 __attribute__((__noreturn__)) void _exit(int __status);
 void endusershell(void);
 int execl(const char *__path, const char *__arg, ...);
