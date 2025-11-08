@@ -47,6 +47,7 @@
 #define F_GETLK      9
 #define F_SETLK      10
 #define F_SETLKW     11
+#define F_DUPFD_CLOFORK 12
 
 #define F_RDLCK 1
 #define F_UNLCK 2

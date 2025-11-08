@@ -83,6 +83,12 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	int ret, errno;
 
+	// Check clashing sysdep-implemented files here before we do anything else.
+	if ((flags & O_CREAT) && ((flags & O_WRONLY) == 0)) {
+		return EISDIR;
+	}
+
+	// Attempt to open.
 	int path_len = strlen(path);
 	SYSCALL4(SYSCALL_OPEN, dirfd, path, path_len, flags);
 
@@ -94,7 +100,6 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 		return EEXIST;
 	}
 
-	// We implement creating files in this sysdep.
 	if ((errno == ENOENT) && (flags & O_CREAT) && ((flags & O_DIRECTORY) == 0)) {
 		SYSCALL5(SYSCALL_MAKENODE, AT_FDCWD, path, path_len, S_IFREG | mode, 0);
 		if (ret == -1) {
@@ -620,40 +625,46 @@ int sys_kill(int pid, int sig) {
 
 int sys_dup(int fd, int flags, int *newfd) {
 	int ret, errno;
-	if (flags & O_CLOEXEC) {
-		SYSCALL3(SYSCALL_FCNTL, fd, F_DUPFD_CLOEXEC, 0);
-	} else {
-		SYSCALL3(SYSCALL_FCNTL, fd, F_DUPFD, 0);
+	SYSCALL3(SYSCALL_FCNTL, fd, F_DUPFD, 0);
+
+	if (errno == 0 && flags != 0) {
+		int fcntl_flags = 0;
+		if (flags & O_CLOEXEC) {
+			fcntl_flags |= FD_CLOEXEC;
+		}
+		if (flags & O_CLOFORK) {
+			fcntl_flags |= FD_CLOFORK;
+		}
+		SYSCALL3(SYSCALL_FCNTL, ret, F_SETFD, fcntl_flags);
 	}
 
 	*newfd = ret;
-
-	if (errno == 0) {
-		SYSCALL3(SYSCALL_FCNTL, *newfd, F_SETFD, flags);
-	}
-
 	return errno;
 }
 
 int sys_dup2(int fd, int flags, int newfd) {
+	// We are to do nothing if they are equal.
+	if (fd == newfd) {
+		return 0;
+	}
+
 	int ret = sys_close(newfd);
 	if (ret != 0 && ret != EBADF) {
 		return EBADF;
 	}
 
 	int errno;
-	if (flags & O_CLOEXEC) {
-		SYSCALL3(SYSCALL_FCNTL, fd, F_DUPFD_CLOEXEC, newfd);
-	} else {
-		SYSCALL3(SYSCALL_FCNTL, fd, F_DUPFD, newfd);
-	}
+	SYSCALL3(SYSCALL_FCNTL, fd, F_DUPFD, newfd);
 
-	if (ret != -1 && ret != newfd) {
-		return EBADF;
-	}
-
-	if (errno == 0) {
-		SYSCALL3(SYSCALL_FCNTL, newfd, F_SETFD, flags);
+	if (errno == 0 && flags != 0) {
+		int fcntl_flags = 0;
+		if (flags & O_CLOEXEC) {
+			fcntl_flags |= FD_CLOEXEC;
+		}
+		if (flags & O_CLOFORK) {
+			fcntl_flags |= FD_CLOFORK;
+		}
+		SYSCALL3(SYSCALL_FCNTL, ret, F_SETFD, fcntl_flags);
 	}
 
 	return errno;
