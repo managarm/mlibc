@@ -1,5 +1,5 @@
-#ifndef MLIBC_FENV_H
-#define MLIBC_FENV_H
+#ifndef _MLIBC_ANSI_FENV_H
+#define _MLIBC_ANSI_FENV_H
 
 #if !defined(__ASSEMBLER__)
 #include <bits/types.h>
@@ -129,4 +129,4 @@ typedef struct {
 #error Unknown architecture
 #endif
 
-#endif /* MLIBC_FENV_H */
+#endif /* _MLIBC_ANSI_FENV_H */
