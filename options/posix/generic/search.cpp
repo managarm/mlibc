@@ -53,7 +53,7 @@ namespace {
 		struct node *node = *nodep;
 		int height_a = height(static_cast<struct node *>(node->a[0]));
 		int height_b = height(static_cast<struct node *>(node->a[1]));
-		if (height_a - height_b < 2) {
+		if (abs(height_a - height_b) < 2) {
 			int old = node->h;
 			node->h = height_a < height_b ? height_b + 1 : height_a + 1;
 			return node->h - old;
@@ -96,7 +96,7 @@ void *tsearch(const void *key, void **rootp, int(*compar)(const void *, const vo
 
 // This implementation is taken from musl
 void *tfind(const void *key, void *const *rootp, int (*compar)(const void *, const void *)) {
-	if(!rootp)
+	if(!*rootp)
 		return nullptr;
 
 	struct node *n = (struct node *)*rootp;
@@ -111,16 +111,136 @@ void *tfind(const void *key, void *const *rootp, int (*compar)(const void *, con
 	return n;
 }
 
-void *tdelete(const void *, void **, int(*compar)(const void *, const void *)) {
-	(void)compar;
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void *tdelete(const void *key, void **rootp, int(*compar)(const void *, const void *)) {
+	if (!*rootp)
+		return nullptr;
+
+	struct node *node_parent = nullptr;
+	struct node *n = static_cast<struct node *>(*rootp);
+	frg::stack<struct node **, MemoryAllocator> nodes(getAllocator());
+	nodes.push(reinterpret_cast<struct node **>(rootp));
+	int c = 0;
+	for (;;) {
+		if (!n)
+			break;
+		c = compar(key, n->key);
+		if (!c)
+			break;
+
+		nodes.push(reinterpret_cast<struct node **>(&n->a[c > 0]));
+		node_parent = n;
+		n = static_cast<struct node *>(n->a[c > 0]);
+	}
+
+	if (!n)
+		return nullptr;
+
+	int child_count = 0;
+	if (n->a[0])
+		++child_count;
+	if (n->a[1])
+		++child_count;
+
+	struct node **nodep = nodes.top();
+
+	// 3 cases:
+	// - no children, remove node
+	// - one child, replace node with it
+	// - two children, the predecessor replaces the node and balance up from the parent of the predecessor
+	switch (child_count) {
+		case 0:
+			nodes.pop();
+			*nodep = nullptr;
+			break;
+		case 1:
+			*nodep = static_cast<struct node *>(n->a[0] ? n->a[0] : n->a[1]);
+			break;
+		case 2: {
+			struct node *pred_parent = n;
+			struct node *predecessor = static_cast<struct node *>(n->a[0]);
+
+			while (predecessor->a[1]) {
+				pred_parent = predecessor;
+				predecessor = static_cast<struct node *>(predecessor->a[1]);
+				nodes.push(reinterpret_cast<struct node **>(&pred_parent->a[1]));
+			}
+
+			// predecessor can only have a left child
+			if (pred_parent == n) {
+				// special case, predecessor is a direct child (left) of node
+				// set right child to the deleted node's right child
+				predecessor->a[1] = n->a[1];
+			} else {
+				// the predecessor will always be a right child
+				// replace the predecessor's place with its left child (if any)
+				pred_parent->a[1] = predecessor->a[0];
+				predecessor->a[0] = static_cast<struct node *>(n->a[0]);
+				predecessor->a[1] = static_cast<struct node *>(n->a[1]);
+				nodes.pop();
+			}
+			*nodep = predecessor;
+			break;
+		}
+	}
+
+	free(static_cast<void *>(n));
+
+	// go up balancing the tree
+	while (!nodes.empty() && balance_tree(nodes.top()))
+		nodes.pop();
+
+	// NOTE: this WILL return a dangling pointer. this is expected behaviour (see glibc's manual page)
+	return node_parent ? node_parent : n;
 }
 
-void twalk(const void *, void (*action)(const void *, VISIT, int)) {
-	(void)action;
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void twalk(const void *root, void (*action)(const void *, VISIT, int)) {
+	if (!root)
+		return;
+
+	struct walk_node {
+		const struct node *node;
+		VISIT v;
+	};
+	int depth = 0;
+	const struct node *node = static_cast<const struct node *>(root);
+	frg::stack<struct walk_node, MemoryAllocator> nodes(getAllocator());
+
+	struct walk_node wn = {node, VISIT::preorder};
+	nodes.push(wn);
+
+	while(!nodes.empty()) {
+		wn = nodes.top();
+		nodes.pop();
+
+		if (!wn.node->a[0] && !wn.node->a[1])
+			wn.v = VISIT::leaf;
+
+		action(wn.node, wn.v, depth);
+
+		struct node *next_child = nullptr;
+		switch (wn.v) {
+			case VISIT::endorder:
+			case VISIT::leaf:
+				--depth;
+				break;
+			case VISIT::preorder:
+				next_child = static_cast<struct node *>(wn.node->a[0]);
+				wn.v = VISIT::postorder;
+				nodes.push(wn);
+				break;
+			case VISIT::postorder:
+				next_child = static_cast<struct node *>(wn.node->a[1]);
+				wn.v = VISIT::endorder;
+				nodes.push(wn);
+				break;
+		}
+
+		if (next_child) {
+			++depth;
+			struct walk_node tmp = {next_child, VISIT::preorder};
+			nodes.push(tmp);
+		}
+	}
 }
 
 void tdestroy(void *root, void (*free_node)(void *)) {

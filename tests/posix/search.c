@@ -26,6 +26,29 @@ static void free_key(void *key) {
 	free(key);
 }
 
+static int walk_visits[12];
+static void walk(const void *n, VISIT v, int depth) {
+	(void)depth;
+	int i = **((int **)n);
+
+	switch (v) {
+		case preorder:
+			assert(walk_visits[i] == 0);
+			break;
+		case postorder:
+			assert(walk_visits[i] == 1);
+			break;
+		case endorder:
+			assert(walk_visits[i] == 2);
+			break;
+		case leaf:
+			assert(walk_visits[i] == 0);
+			break;
+	}
+
+	++walk_visits[i];
+}
+
 int main() {
 	void *root = NULL;
 	for (int i = 0; i < 12; i++) {
@@ -48,8 +71,33 @@ int main() {
 	void *ret = tfind((void*) &key, &root, compare);
 	assert(ret == NULL);
 
+	// Verify twalk works
+	twalk(root, walk);
+
+	// Test tdelete
+	// root + 2 children
+	key = 7;
+	ret = tdelete(&key, &root, compare);
+	assert(ret);
+	ret = tdelete(&key, &root, compare);
+	assert(ret == NULL);
+
+	// no children + rebalancing
+	key = 8;
+	ret = tdelete(&key, &root, compare);
+	assert(ret);
+	ret = tdelete(&key, &root, compare);
+	assert(ret == NULL);
+
+	// one child
+	key = 5;
+	ret = tdelete(&key, &root, compare);
+	assert(ret);
+	ret = tdelete(&key, &root, compare);
+	assert(ret == NULL);
+
 	tdestroy(root, free_key);
-	assert(freed == 12);
+	assert(freed == 9);
 
 	assert(hcreate(3));
 
