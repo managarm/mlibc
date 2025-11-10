@@ -71,6 +71,14 @@ if not headers_only
 	libc_deps += frigg_dep
 	rtld_deps += frigg_dep
 
+	libsmarter_dep = dependency(
+		'libsmarter',
+		default_options: [],
+		fallback: ['libsmarter', 'libsmarter_dep'],
+	)
+	libc_deps += libsmarter_dep
+	rtld_deps += libsmarter_dep
+
 	add_project_arguments('-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', language: ['c', 'cpp'])
 	add_project_arguments('-nostdinc', '-fno-builtin', '-ffreestanding', language: ['c', 'cpp'])
 	add_project_arguments('-Werror=misleading-indentation', language: ['c', 'cpp'])
@@ -221,6 +229,7 @@ if host_machine.system() == 'linux'
 
 	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
 	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
+	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/linux')
 elif host_machine.system() == 'aero'
 	rtld_include_dirs += include_directories('sysdeps/aero/include')
@@ -371,8 +380,10 @@ configure_file(input: 'mlibc-config.h.in',
 
 internal_sources = [
 	'options/internal/generic/allocator.cpp',
+	'options/internal/generic/c-locale-defaults.cpp',
 	'options/internal/generic/charcode.cpp',
 	'options/internal/generic/charset.cpp',
+	'options/internal/generic/ctype.cpp',
 	'options/internal/generic/debug.cpp',
 	'options/internal/generic/ensure.cpp',
 	'options/internal/generic/essential.cpp',
@@ -381,6 +392,7 @@ internal_sources = [
 	'options/internal/generic/global-config.cpp',
 	'options/internal/generic/inline-emitter.cpp',
 	'options/internal/generic/locale.cpp',
+	'options/internal/generic/locale-defaults.cpp',
 	'options/internal/generic/sigset.cpp',
 	'options/internal/generic/strings.cpp',
 	'options/internal/generic/ubsan.cpp',
