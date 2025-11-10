@@ -22,9 +22,9 @@
 extern "C" {
 #endif
 
-#define _POSIX_VERSION 200809L
+#define _POSIX_VERSION 202405L
 #define _POSIX2_VERSION _POSIX_VERSION
-#define _XOPEN_VERSION 700
+#define _XOPEN_VERSION 800
 
 #define _POSIX_FSYNC _POSIX_VERSION
 #define _POSIX_IPV6 _POSIX_VERSION
@@ -268,7 +268,7 @@ size_t confstr(int __name, char *__buf, size_t __size);
 char *ctermid(char *__s);
 int dup(int __fd);
 int dup2(int __src_fd, int __dest_fd);
-#if (_POSIX_C_SOURCE-0 >= 202405L) || (_XOPEN_SOURCE-0 >= 800) || defined(_GNU_SOURCE)
+#if __MLIBC_POSIX2024 || defined(_GNU_SOURCE)
 int dup3(int __fd, int __newfd, int __flags);
 #endif
 __attribute__((__noreturn__)) void _exit(int __status);
