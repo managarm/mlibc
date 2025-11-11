@@ -9,6 +9,7 @@
 #include <bits/ensure.h>
 #include <mlibc/posix-sysdeps.hpp>
 
+#ifdef CBAUD
 speed_t cfgetispeed(const struct termios *tios) {
 	return tios->c_cflag & CBAUD;
 }
@@ -32,6 +33,7 @@ int cfsetospeed(struct termios *termios, speed_t speed) {
 
 	return 0;
 }
+#endif
 
 void cfmakeraw(struct termios *t) {
 	t->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
