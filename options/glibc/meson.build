@@ -2,6 +2,7 @@ if not glibc_option
 	subdir_done()
 endif
 libc_sources += files(
+	'generic/dlfcn.cpp',
 	'generic/getopt.cpp',
 	'generic/stdio_ext.cpp',
 	'generic/sys-ioctl.cpp',
