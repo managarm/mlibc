@@ -650,8 +650,8 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 			// In order to know which RUNPATH / RPATH to process, we must find the calling object.
 			SharedObject *origin = initialRepository->findCaller(returnAddress);
 			if (!origin) {
-				mlibc::panicLogger() << "rtld: unable to determine calling object of dlopen "
-					<< "(ra = " << returnAddress << ")" << frg::endlog;
+				// When we can't find the origin, assume it's the main executable (copies glibc behavior)
+				origin = executableSO;
 			}
 
 			objectResult = initialRepository->requestObjectWithName(file, origin, newScope, !isGlobal, rts);
