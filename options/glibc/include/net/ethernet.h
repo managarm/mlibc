@@ -2,6 +2,7 @@
 #define _NET_ETHERNET_H
 
 #include <bits/ether_addr.h>
+#include <bits/types.h>
 #include <stdint.h>
 #include <mlibc-config.h>
 
@@ -15,6 +16,8 @@ extern "C" {
 #pragma GCC diagnostic ignored "-Wpedantic"
 #	include <linux/if_ether.h>
 #pragma GCC diagnostic pop
+#else
+#define ETH_FRAME_LEN 1514
 #endif /* __MLIBC_LINUX_OPTION */
 
 #define ETHERTYPE_PUP 0x0200
@@ -36,6 +39,9 @@ struct ether_header {
 } __attribute__((packed));
 
 #define ETHER_ADDR_LEN 6
+
+#define ETHER_CRC_LEN 4
+#define ETHER_MAX_LEN (ETH_FRAME_LEN + ETHER_CRC_LEN)
 
 #define ETHERTYPE_IP 0x0800
 
