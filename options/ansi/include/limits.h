@@ -65,7 +65,6 @@
 #define LLONG_MAX __LONG_LONG_MAX__
 #define ULLONG_MAX (__LONG_LONG_MAX__ * 2ULL + 1ULL)
 
-#define NAME_MAX 255
 #define PATH_MAX 4096
 #define LINE_MAX 4096
 #define PIPE_BUF 4096
@@ -108,5 +107,11 @@
 #define PTHREAD_KEYS_MAX 1024
 
 #include <abi-bits/limits.h>
+
+#define IOV_MAX __MLIBC_IOV_MAX
+#define LOGIN_NAME_MAX __MLIBC_LOGIN_NAME_MAX
+#define HOST_NAME_MAX __MLIBC_HOST_NAME_MAX
+#define NAME_MAX __MLIBC_NAME_MAX
+#define OPEN_MAX __MLIBC_OPEN_MAX
 
 #endif /* _LIMITS_H */

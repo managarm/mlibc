@@ -403,7 +403,7 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 }
 
 int sys_ttyname(int fd, char *buf, size_t size) {
-	if (size >= NAME_MAX) {
+	if (size >= __MLIBC_NAME_MAX) {
 		mlibc::panicLogger() << "ttyname size too small" << frg::endlog;
 		__builtin_unreachable();
 	}

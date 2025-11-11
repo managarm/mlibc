@@ -2,6 +2,7 @@ if not glibc_option
 	subdir_done()
 endif
 libc_sources += files(
+	'generic/dlfcn.cpp',
 	'generic/getopt.cpp',
 	'generic/stdio_ext.cpp',
 	'generic/sys-ioctl.cpp',
@@ -90,6 +91,7 @@ if not no_headers
 		'include/bits/glibc/glibc_icmp6.h',
 		'include/bits/glibc/glibc_search.h',
 		'include/bits/glibc/glibc_stdlib.h',
+		'include/bits/glibc/glibc_string.h',
 		subdir: 'bits/glibc'
 	)
 endif

@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>

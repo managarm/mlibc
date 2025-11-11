@@ -1,14 +1,94 @@
 #ifndef _MLIBC_CONFIG_H
 #define _MLIBC_CONFIG_H
 
+/* undefine our helper macros to allow use of #if checking */
+#undef __MLIBC_POSIX1
+#undef __MLIBC_POSIX2
+#undef __MLIBC_POSIX1993
+#undef __MLIBC_POSIX1995
+#undef __MLIBC_POSIX2001
+#undef __MLIBC_POSIX2008
+#undef __MLIBC_POSIX2024
+#undef __MLIBC_XOPEN
+
+/* TODO: handle C spec revisions */
+
 #ifdef _GNU_SOURCE
 #	undef _DEFAULT_SOURCE
 #	define _DEFAULT_SOURCE 1
+#	undef _LARGEFILE64_SOURCE
+#	define _LARGEFILE64_SOURCE 1
+#	undef _POSIX_C_SOURCE
+#	define _POSIX_C_SOURCE 202405L /* POSIX 2024 */
+#	undef _XOPEN_SOURCE
+#	define _XOPEN_SOURCE 800
 #endif
 
-#if (defined(_DEFAULT_SOURCE) || (!defined(__STRICT_ANSI__) && !defined(_POSIX_SOURCE) && !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)))
+#if (defined(_DEFAULT_SOURCE) \
+	|| (!defined(__STRICT_ANSI__) \
+	&& !defined(_POSIX_SOURCE) \
+	&& !defined(_POSIX_C_SOURCE) \
+	&& !defined(_XOPEN_SOURCE)))
 #	undef _DEFAULT_SOURCE
 #	define _DEFAULT_SOURCE	1
+#endif
+
+#if defined(_POSIX_SOURCE) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 1
+#endif
+
+#if defined(_XOPEN_SOURCE) && !defined(_POSIX_C_SOURCE)
+#	if (_XOPEN_SOURCE-0) < 500
+#		define _POSIX_C_SOURCE 2
+#	elif (_XOPEN_SOURCE-0) < 600
+#		define _POSIX_C_SOURCE 199506L
+#	elif (_XOPEN_SOURCE-0) < 700
+#		define _POSIX_C_SOURCE 200112L
+#	elif (_XOPEN_SOURCE-0) < 800
+#		define _POSIX_C_SOURCE 200809L
+#	elif (_XOPEN_SOURCE-0) >= 800
+#		define _POSIX_C_SOURCE 202405L
+#	endif
+#endif /* defined(_XOPEN_SOURCE) */
+
+#if (_POSIX_C_SOURCE-0) >= 1 || defined(_XOPEN_SOURCE)
+#	define __MLIBC_POSIX1 1
+#endif
+
+#if (_POSIX_C_SOURCE-0) >= 2 || defined(_XOPEN_SOURCE)
+#	define __MLIBC_POSIX2 1
+#endif
+
+#if (_POSIX_C_SOURCE-0) >= 199309L
+#	define __MLIBC_POSIX1993 1
+#endif
+
+#if (_POSIX_C_SOURCE-0) >= 199506L
+#	define __MLIBC_POSIX1995 1
+#endif
+
+#if (_POSIX_C_SOURCE-0) >= 200112L
+#	define __MLIBC_POSIX2001 1
+#endif
+
+#if (_POSIX_C_SOURCE-0) >= 200809L
+#	define __MLIBC_POSIX2008 1
+#endif
+
+#if (_POSIX_C_SOURCE-0) >= 202405L
+#	define __MLIBC_POSIX2024 1
+#endif
+
+#if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE-0) < 500
+#	define __MLIBC_XOPEN 1
+#elif (_XOPEN_SOURCE-0) < 600
+#	define __MLIBC_XOPEN 500
+#elif (_XOPEN_SOURCE-0) < 700
+#	define __MLIBC_XOPEN 600
+#elif (_XOPEN_SOURCE-0) < 800
+#	define __MLIBC_XOPEN 700
+#elif (_XOPEN_SOURCE-0) >= 800
+#	define __MLIBC_XOPEN 800
 #endif
 
 #mesondefine __MLIBC_BSD_OPTION

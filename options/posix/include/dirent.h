@@ -32,21 +32,17 @@ extern "C" {
 			off_t d_off; \
 			reclen_t d_reclen; \
 			unsigned char d_type; \
-			char d_name[NAME_MAX+1];
+			char d_name[__MLIBC_NAME_MAX+1];
 
 struct dirent {
 	__MLIBC_DIRENT_BODY
 };
 
-struct dirent64 {
-	__MLIBC_DIRENT_BODY
-};
-
 #define d_fileno d_ino
 
-#undef __MLIBC_DIRENT_BODY
-
+#if defined(_DEFAULT_SOURCE)
 #define IFTODT(mode) (((mode) & 0170000) >> 12)
+#endif
 
 struct __mlibc_dir_struct {
 	int __handle;
@@ -66,16 +62,29 @@ int dirfd(DIR *__dirp);
 DIR *fdopendir(int __fd);
 DIR *opendir(const char *__pathname);
 struct dirent *readdir(DIR *__dirp);
-#if __MLIBC_LINUX_OPTION
-struct dirent64 *readdir64(DIR *__dirp);
-#endif /* !__MLIBC_LINUX_OPTION */
 int readdir_r(DIR *__restrict __dirp, struct dirent *__restrict __entry, struct dirent **__restrict __res);
 void rewinddir(DIR *__dirp);
 int scandir(const char *__pathname, struct dirent ***__res, int (*__select)(const struct dirent *__entry),
 		int (*__compare)(const struct dirent **__a, const struct dirent **__b));
+
+#if __MLIBC_LINUX_OPTION && defined(_LARGEFILE64_SOURCE)
+struct dirent64 {
+	__MLIBC_DIRENT_BODY
+};
+
+struct dirent64 *readdir64(DIR *__dirp);
+#endif /* __MLIBC_LINUX_OPTION && defined(_LARGEFILE64_SOURCE) */
+
+#undef __MLIBC_DIRENT_BODY
+
+#if defined(_DEFAULT_SOURCE) || defined(_XOPEN_SOURCE)
 void seekdir(DIR *__dirp, long __loc);
 long telldir(DIR *__dirp);
+#endif
+
+#if defined(_GNU_SOURCE)
 int versionsort(const struct dirent **__a, const struct dirent **__b);
+#endif
 
 #endif /* !__MLIBC_ABI_ONLY */
 

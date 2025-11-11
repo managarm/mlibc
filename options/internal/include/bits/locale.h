@@ -3,24 +3,25 @@
 #define _MLIBC_INTERNAL_BITS_LOCALE_H
 
 #include <mlibc-config.h>
+#include <bits/locale-internals.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define LC_CTYPE 0
-#define LC_NUMERIC 1
-#define LC_TIME 2
-#define LC_COLLATE 3
-#define LC_MONETARY 4
-#define LC_MESSAGES 5
-#define LC_ALL 6
-#define LC_PAPER 7
-#define LC_NAME 8
-#define LC_ADDRESS 9
-#define LC_TELEPHONE 10
-#define LC_MEASUREMENT 11
-#define LC_IDENTIFICATION 12
+#define LC_CTYPE __LC_CTYPE
+#define LC_NUMERIC __LC_NUMERIC
+#define LC_TIME __LC_TIME
+#define LC_COLLATE __LC_COLLATE
+#define LC_MONETARY __LC_MONETARY
+#define LC_MESSAGES __LC_MESSAGES
+#define LC_ALL __LC_ALL
+#define LC_PAPER __LC_PAPER
+#define LC_NAME __LC_NAME
+#define LC_ADDRESS __LC_ADDRESS
+#define LC_TELEPHONE __LC_TELEPHONE
+#define LC_MEASUREMENT __LC_MEASUREMENT
+#define LC_IDENTIFICATION __LC_IDENTIFICATION
 
 #if __MLIBC_POSIX_OPTION
 #include <bits/posix/locale_t.h>

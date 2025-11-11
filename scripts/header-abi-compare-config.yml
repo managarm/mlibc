@@ -52,6 +52,7 @@ ignored_files:
   - math.h
   - tgmath.h
   - regexp.h
+  - scsi/scsi.h
   - sys/asm.h
   - sys/elf.h
   - sys/vm86.h
@@ -280,6 +281,13 @@ ignored_macros:
   - FSETLOCKING_BYCALLER
   - FSETLOCKING_QUERY
   - NSS_BUFLEN_PASSWD
+# feature test macros
+  - _LARGEFILE64_SOURCE
+  - _POSIX_C_SOURCE
+  - _POSIX_SOURCE
+  - _XOPEN_SOURCE
+  - _POSIX_VERSION
+  - _XOPEN_VERSION
 
 # enum members whose value should not be dependended on
 ignored_enum_constants:

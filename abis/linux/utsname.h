@@ -7,7 +7,11 @@ struct utsname {
 	char release[65];
 	char version[65];
 	char machine[65];
+#if defined(_GNU_SOURCE)
 	char domainname[65];
+#else
+	char __domainname[65];
+#endif
 };
 
 #endif /* _ABIBITS_UTSNAME_T_H */

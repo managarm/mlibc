@@ -68,7 +68,9 @@
 #define AT_REMOVEDIR        500
 #define AT_EACCESS          512
 #define AT_FDCWD            (-100)
+#if defined(_GNU_SOURCE)
 #define AT_EMPTY_PATH       1
+#endif
 #define AT_SYMLINK_FOLLOW   0
 #define AT_SYMLINK_NOFOLLOW 2
 
