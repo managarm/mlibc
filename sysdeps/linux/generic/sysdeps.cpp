@@ -1476,6 +1476,13 @@ int Sysdeps<Tgkill>::operator()(int tgid, int tid, int sig) {
 	return 0;
 }
 
+int Sysdeps<Fchown>::operator()(int fd, uid_t owner, gid_t group) {
+	auto ret = do_cp_syscall(SYS_fchown, fd, owner, group);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int Sysdeps<Fchownat>::operator()(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
 	auto ret = do_cp_syscall(SYS_fchownat, dirfd, pathname, owner, group, flags);
 	if(int e = sc_error(ret); e)

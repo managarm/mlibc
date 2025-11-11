@@ -228,7 +228,7 @@ int faccessat(int dirfd, const char *pathname, int mode, int flags) {
 }
 
 int fchown(int fd, uid_t uid, gid_t gid) {
-	if(int e = mlibc::sysdep_or_enosys<Fchownat>(fd, "", uid, gid, AT_EMPTY_PATH); e) {
+	if(int e = mlibc::sysdep_or_enosys<Fchown>(fd, uid, gid); e) {
 		errno = e;
 		return -1;
 	}
