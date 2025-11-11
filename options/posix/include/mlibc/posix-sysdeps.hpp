@@ -196,6 +196,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_before_cancellable_syscall(ucontext_t *uctx);
 [[gnu::weak]] int sys_tgkill(int tgid, int tid, int sig);
 
+[[gnu::weak]] int sys_fchown(int fd, uid_t owner, gid_t group);
 [[gnu::weak]] int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags);
 [[gnu::weak]] int sys_sigaltstack(const stack_t *ss, stack_t *oss);
 [[gnu::weak]] int sys_sigsuspend(const sigset_t *set);
