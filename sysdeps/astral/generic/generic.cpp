@@ -530,6 +530,10 @@ namespace mlibc {
 		return syscall(SYSCALL_FCHOWNAT, &ret, dirfd, (uint64_t)pathname, owner, group, flags);
 	}
 
+	int sys_fchown(int fd, uid_t owner, gid_t group) {
+		return sys_fchownat(fd, "", owner, group, AT_EMPTY_PATH);
+	}
+
 	int sys_mount(const char *source, const char *target, const char *fstype, unsigned long flags, const void *data) {
 		long ret;
 		return syscall(SYSCALL_MOUNT, &ret, (uint64_t)source, (uint64_t)target, (uint64_t)fstype, flags, (uint64_t)data);

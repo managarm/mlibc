@@ -55,7 +55,7 @@ int posix_fallocate(int __fd, off_t __offset, off_t __size);
 #endif /* !__MLIBC_ABI_ONLY */
 
 /* This is a linux extension */
-#ifdef _GNU_SOURCE
+#if defined(_GNU_SOURCE) || defined(__MLIBC_BUILDING_MLIBC)
 struct file_handle {
         unsigned int handle_bytes;
         int handle_type;
