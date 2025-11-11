@@ -54,6 +54,7 @@ libc_sources += files(
 	'generic/sys-sem.cpp',
 	'generic/sys-ipc.cpp',
 	'generic/time.cpp',
+	'generic/wchar.cpp',
 	'generic/wordexp.cpp',
 	'generic/mqueue.cpp',
 	'generic/utmpx.cpp',
