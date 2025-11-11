@@ -37,7 +37,7 @@ void *dlvsym(void *__restrict __handle, const char *__restrict __name, const cha
 
 #endif /* !__MLIBC_ABI_ONLY */
 
-#if defined(_GNU_SOURCE) && __MLIBC_GLIBC_OPTION
+#if (defined(_GNU_SOURCE) || defined(__MLIBC_BUILDING_MLIBC)) && __MLIBC_GLIBC_OPTION
 
 /*gnu extension */
 typedef struct {
@@ -89,7 +89,7 @@ int _dl_find_object(void *__address, struct dl_find_object *__result);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
-#endif /* defined(_GNU_SOURCE) && __MLIBC_GLIBC_OPTION */
+#endif /* (defined(_GNU_SOURCE) || defined(__MLIBC_BUILDING_MLIBC)) && __MLIBC_GLIBC_OPTION */
 
 #ifdef __cplusplus
 }
