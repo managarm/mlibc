@@ -16,6 +16,8 @@
 extern "C" {
 #endif
 
+typedef __builtin_va_list va_list;
+
 /* [C11-7.21.1] I/O related types */
 
 #define __MLIBC_EOF_BIT 1
@@ -78,8 +80,11 @@ typedef off_t fpos_t;
 #ifndef __MLIBC_ABI_ONLY
 
 extern FILE *stderr;
+#define stderr stderr
 extern FILE *stdin;
+#define stdin stdin
 extern FILE *stdout;
+#define stdout stdout
 
 /* [C11-7.21.4] Operations on files */
 
@@ -97,8 +102,11 @@ FILE *fopen(const char *__restrict __filename, const char *__restrict __mode);
 FILE *freopen(const char *__restrict __filename, const char *__restrict __mode, FILE *__restrict __stream);
 void setbuf(FILE *__restrict __stream, char *__restrict __buffer);
 int setvbuf(FILE *__restrict __stream, char *__restrict __buffer, int __mode, size_t __size);
+
+#if defined(_DEFAULT_SOURCE)
 void setlinebuf(FILE *__stream);
 void setbuffer(FILE *__stream, char *__buffer, size_t __size);
+#endif
 
 /* [C11-7.21.6] Formatted input/output functions */
 
@@ -155,7 +163,12 @@ int fgetc(FILE *__stream);
 char *fgets(char *__restrict __buffer, int __max_size, FILE *__restrict __stream);
 int fputc(int __c, FILE *__stream);
 int fputs(const char *__restrict __string, FILE *__restrict __stream);
+
+/* only expose `gets` for pre-C11 and pre-C++14 */
+#if defined(__cplusplus) ? (__cplusplus < 201402L) : (defined(__STDC_VERSION__) && __STDC_VERSION__ < 201112L)
 char *gets(char *__s);
+#endif
+
 int getc(FILE *__stream);
 int getchar(void);
 int putc(int __c, FILE *__stream);
@@ -204,6 +217,7 @@ void flockfile(FILE *__stream);
 void funlockfile(FILE *__stream);
 int ftrylockfile(FILE *__stream);
 
+#if defined(_DEFAULT_SOURCE)
 void clearerr_unlocked(FILE *__stream);
 int feof_unlocked(FILE *__stream);
 int ferror_unlocked(FILE *__stream);
@@ -213,9 +227,12 @@ int fgetc_unlocked(FILE *__stream);
 int fputc_unlocked(int __c, FILE *__stream);
 size_t fread_unlocked(void *__restrict __buffer, size_t __size, size_t __count, FILE *__restrict __stream);
 size_t fwrite_unlocked(const void *__restrict __buffer, size_t __size, size_t __count, FILE *__restrict __stream);
+#endif
 
+#if defined(_GNU_SOURCE)
 char *fgets_unlocked(char *__restrict __buffer, int __size, FILE *__restrict __stream);
 int fputs_unlocked(const char *__restrict __buffer, FILE *__restrict __stream);
+#endif
 
 #endif /* !__MLIBC_ABI_ONLY */
 
