@@ -7,6 +7,7 @@ extern "C" {
 #endif
 
 #include <bits/locale-internals.h>
+#include <mlibc-config.h>
 
 typedef int nl_item;
 
@@ -315,7 +316,7 @@ enum { /* NOLINT(readability-enum-initial-value) */
 	__ALTMON_10,
 	__ALTMON_11,
 	__ALTMON_12,
-#ifdef _GNU_SOURCE
+#if defined(_GNU_SOURCE) || __MLIBC_POSIX2024
 #define ALTMON_1 __ALTMON_1
 #define ALTMON_2 __ALTMON_2
 #define ALTMON_3 __ALTMON_3
@@ -355,6 +356,20 @@ enum { /* NOLINT(readability-enum-initial-value) */
 	_NL_ABALTMON_10,
 	_NL_ABALTMON_11,
 	_NL_ABALTMON_12,
+#if defined(_GNU_SOURCE) || __MLIBC_POSIX2024
+#define ABALTMON_1 _NL_ABALTMON_1
+#define ABALTMON_2 _NL_ABALTMON_2
+#define ABALTMON_3 _NL_ABALTMON_3
+#define ABALTMON_4 _NL_ABALTMON_4
+#define ABALTMON_5 _NL_ABALTMON_5
+#define ABALTMON_6 _NL_ABALTMON_6
+#define ABALTMON_7 _NL_ABALTMON_7
+#define ABALTMON_8 _NL_ABALTMON_8
+#define ABALTMON_9 _NL_ABALTMON_9
+#define ABALTMON_10 _NL_ABALTMON_10
+#define ABALTMON_11 _NL_ABALTMON_11
+#define ABALTMON_12 _NL_ABALTMON_12
+#endif
 
 	_NL_WABALTMON_1,
 	_NL_WABALTMON_2,
