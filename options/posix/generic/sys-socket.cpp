@@ -8,6 +8,8 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 
+static_assert(std::is_unsigned_v<sa_family_t>, "sa_family_t must be unsigned!");
+
 int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length) {
 	int newfd;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_accept, -1);

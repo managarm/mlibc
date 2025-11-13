@@ -1,14 +1,13 @@
 #ifndef _ABIBITS_SOCKET_H
 #define _ABIBITS_SOCKET_H
 
+#include <abi-bits/sa_family_t.h>
 #include <abi-bits/socklen_t.h>
 #include <bits/posix/iovec.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef unsigned int sa_family_t;
 
 struct msghdr {
 	void *msg_name;
