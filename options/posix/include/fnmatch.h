@@ -2,6 +2,8 @@
 #ifndef _FNMATCH_H
 #define _FNMATCH_H
 
+#include <mlibc-config.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -11,10 +13,16 @@ extern "C" {
 #define FNM_NOESCAPE 0x2
 #define FNM_PERIOD 0x4
 
-/* GNU extensions for fnmatch() flags. */
-#define FNM_LEADING_DIR 0x8
+#if defined(_GNU_SOURCE) || __MLIBC_POSIX2024
 #define FNM_CASEFOLD 0x10
+#define FNM_IGNORECASE FNM_CASEFOLD
+#endif /* defined(_GNU_SOURCE) || __MLIBC_POSIX2024 */
+
+/* GNU extensions for fnmatch() flags. */
+#if defined(_GNU_SOURCE)
+#define FNM_LEADING_DIR 0x8
 #define FNM_EXTMATCH 0x20
+#endif /* defined(_GNU_SOURCE) */
 
 /* fnmatch() return values. */
 #define FNM_NOMATCH 1
