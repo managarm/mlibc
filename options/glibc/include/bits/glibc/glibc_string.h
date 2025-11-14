@@ -12,7 +12,6 @@ int strverscmp(const char *__l0, const char *__r0);
 #endif
 
 #if defined(_DEFAULT_SOURCE)
-void *memmem(const void *__haystack, size_t __haystacklen, const void *__needle, size_t __needlelen);
 void *mempcpy(void *__dest, const void *__src, size_t __size);
 
 void explicit_bzero(void *__s, size_t __len);

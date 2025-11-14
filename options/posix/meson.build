@@ -106,6 +106,7 @@ if not no_headers
 		'include/semaphore.h',
 		'include/mqueue.h',
 		'include/utmpx.h',
+		'include/endian.h',
 	)
 	install_headers(
 		'include/arpa/inet.h',
