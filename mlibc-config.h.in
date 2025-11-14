@@ -81,13 +81,13 @@
 
 #if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE-0) < 500
 #	define __MLIBC_XOPEN 1
-#elif (_XOPEN_SOURCE-0) < 600
+#elif defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE-0) < 600
 #	define __MLIBC_XOPEN 500
-#elif (_XOPEN_SOURCE-0) < 700
+#elif defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE-0) < 700
 #	define __MLIBC_XOPEN 600
-#elif (_XOPEN_SOURCE-0) < 800
+#elif defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE-0) < 800
 #	define __MLIBC_XOPEN 700
-#elif (_XOPEN_SOURCE-0) >= 800
+#elif defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE-0) >= 800
 #	define __MLIBC_XOPEN 800
 #endif
 

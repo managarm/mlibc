@@ -84,6 +84,8 @@ inline int operator|(managarm::fs::Errors e, ToErrno) {
 			return ENAMETOOLONG;
 		case managarm::fs::Errors::NO_FILE_DESCRIPTORS_AVAILABLE:
 			return EMFILE;
+		case managarm::fs::Errors::NOT_SUPPORTED:
+			return ENOTSUP;
 	}
 
 	mlibc::panicLogger() << "unhandled managarm::fs::Errors " << static_cast<int32_t>(e)
