@@ -1,8 +1,8 @@
 [binaries]
-c = ['riscv64-elf-gcc']
-cpp = ['riscv64-elf-g++']
-ar = ['riscv64-elf-ar']
-ranlib = ['riscv64-elf-ranlib']
+c = ['riscv64-linux-gnu-gcc']
+cpp = ['riscv64-linux-gnu-g++']
+ar = ['riscv64-linux-gnu-ar']
+ranlib = ['riscv64-linux-gnu-ranlib']
 
 [host_machine]
 system = 'demo'

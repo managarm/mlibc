@@ -8,15 +8,16 @@ sysdep_supported_options = {
 
 rtld_sources += files(
 	'sysdeps.cpp',
+	'syscall.cpp',
 )
-rtld_include_dirs += include_directories('sysdeps/demo/include')
+rtld_include_dirs += include_directories('include')
 
 libc_sources += files(
 	'entry.cpp',
 	'sysdeps.cpp',
 	'syscall.cpp',
 )
-libc_include_dirs += include_directories('sysdeps/demo/include')
+libc_include_dirs += include_directories('include')
 # ANCHOR_END: sources-and-includes
 
 # ANCHOR: abi-includes
@@ -42,6 +43,9 @@ if not no_headers
 		'include/abi-bits/uid_t.h',
 		'include/abi-bits/vm-flags.h',
 		'include/abi-bits/wait.h',
+		'include/abi-bits/riscv-hwprobe.h',
+		'include/abi-bits/sigevent.h',
+		'include/abi-bits/sigval.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)

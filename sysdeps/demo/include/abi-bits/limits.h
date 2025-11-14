@@ -1,1 +1,1 @@
-../../../linux/include/abi-bits/limits.h
+../../../../abis/linux/limits.h

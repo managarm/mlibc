@@ -1,15 +1,11 @@
 #include <bits/syscall.h>
 #include <errno.h>
 
-using sc_word_t = long;
-
 extern "C" long __do_syscall_ret(unsigned long ret) {
-	if(ret > -4096UL) {
-		errno = -ret;
-		return -1;
-	}
 	return ret;
 }
+
+using sc_word_t = long;
 
 sc_word_t __do_syscall0(long sc) {
 	register int sc_reg asm("a7") = sc;

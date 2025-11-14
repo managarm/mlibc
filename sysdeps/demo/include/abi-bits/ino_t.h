@@ -1,1 +1,1 @@
-../../../linux/include/abi-bits/ino_t.h
+../../../../abis/linux/ino_t.h

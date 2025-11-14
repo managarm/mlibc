@@ -1,1 +1,1 @@
-../../../linux/include/abi-bits/clockid_t.h
+../../../../abis/linux/clockid_t.h

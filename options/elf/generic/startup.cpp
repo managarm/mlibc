@@ -49,6 +49,8 @@ void parse_exec_stack(void *opaque_sp, exec_stack_data *data) {
 
 // TODO: This does not have to be here; we could also move it to options/internal.
 void set_startup_data(int argc, char **argv, char **envp) {
+#if __MLIBC_GLIBC_OPTION
+	// program_invocation_name is a glibc extension
 	if(argc) {
 		program_invocation_name = argv[0];
 
@@ -58,6 +60,10 @@ void set_startup_data(int argc, char **argv, char **envp) {
 			program_invocation_short_name = argv[0];
 		}
 	}
+#else
+	// supress the unused argument warnings
+	(void)argc, (void)argv;
+#endif
 
 	// Initialize environ.
 	// TODO: Copy the arguments instead of pointing to them?

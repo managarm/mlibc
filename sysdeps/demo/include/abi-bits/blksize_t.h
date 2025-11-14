@@ -1,1 +1,1 @@
-../../../linux/include/abi-bits/blksize_t.h
+../../../../abis/linux/blksize_t.h

@@ -1,1 +1,1 @@
-../../../linux/include/abi-bits/errno.h
+../../../../abis/linux/errno.h

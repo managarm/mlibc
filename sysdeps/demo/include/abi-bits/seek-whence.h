@@ -1,1 +1,1 @@
-../../../linux/include/abi-bits/seek-whence.h
+../../../../abis/linux/seek-whence.h

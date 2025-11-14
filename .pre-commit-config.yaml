@@ -12,6 +12,7 @@ repos:
             options/ansi/generic/complex/.*|
             options/posix/musl-generic-regex/.*
           )
-        # Only enable on Managarm sysdeps for now.
+        # Only enable on Managarm and Demo sysdeps for now.
         files:
           sysdeps/managarm/
+          sysdeps/demo/
