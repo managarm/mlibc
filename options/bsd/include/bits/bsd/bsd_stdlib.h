@@ -6,9 +6,13 @@
 extern "C" {
 #endif
 
+#include <mlibc-config.h>
+
 #ifndef __MLIBC_ABI_ONLY
 
+#if defined(_DEFAULT_SOURCE)
 int getloadavg(double *__loadavg, int __count);
+#endif
 
 #endif /* !__MLIBC_ABI_ONLY */
 
