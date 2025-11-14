@@ -34,7 +34,6 @@ if not no_headers
 		'include/paths.h',
 		'include/sysexits.h',
 		'include/resolv.h',
-		'include/endian.h',
 		'include/ar.h',
 		'include/shadow.h',
 		'include/memory.h',
