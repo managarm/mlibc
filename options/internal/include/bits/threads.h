@@ -78,4 +78,34 @@ struct __mlibc_condattr {
 	clockid_t __mlibc_clock;
 };
 
+struct __mlibc_barrier {
+	unsigned int __mlibc_waiting;
+	unsigned int __mlibc_inside;
+	unsigned int __mlibc_count;
+	unsigned int __mlibc_seq;
+	unsigned int __mlibc_flags;
+};
+
+struct  __mlibc_barrierattr_struct {
+	int __mlibc_pshared;
+};
+
+struct __mlibc_fair_rwlock {
+	unsigned int __mlibc_m; /* Mutex. */
+	unsigned int __mlibc_rc; /* Reader count (not reference count). */
+	unsigned int __mlibc_flags;
+};
+
+struct __mlibc_rwlockattr {
+	int __mlibc_pshared;
+};
+
+struct __mlibc_once {
+	unsigned int __mlibc_done;
+};
+
+struct __mlibc_spinlock {
+	unsigned int __lock;
+};
+
 #endif /* _MLIBC_INTERNAL_THREADS_H */

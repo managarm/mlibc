@@ -81,55 +81,7 @@ extern "C" {
 
 #define PTHREAD_ATTR_NO_SIGMASK_NP (-1)
 
-/* TODO: move to own file and include in sys/types.h */
-typedef struct __mlibc_threadattr pthread_attr_t;
-
-typedef uintptr_t pthread_key_t;
-
-struct __mlibc_once {
-	unsigned int __mlibc_done;
-};
-typedef struct __mlibc_once pthread_once_t;
-
-typedef struct __mlibc_mutexattr pthread_mutexattr_t;
-
-typedef struct __mlibc_mutex pthread_mutex_t;
-
-typedef struct __mlibc_condattr pthread_condattr_t;
-
-typedef struct __mlibc_cond pthread_cond_t;
-
-struct  __mlibc_barrierattr_struct {
-	int __mlibc_pshared;
-};
-typedef struct __mlibc_barrierattr_struct pthread_barrierattr_t;
-
-struct __mlibc_barrier {
-	unsigned int __mlibc_waiting;
-	unsigned int __mlibc_inside;
-	unsigned int __mlibc_count;
-	unsigned int __mlibc_seq;
-	unsigned int __mlibc_flags;
-};
-typedef struct __mlibc_barrier pthread_barrier_t;
-
-struct __mlibc_fair_rwlock {
-	unsigned int __mlibc_m; /* Mutex. */
-	unsigned int __mlibc_rc; /* Reader count (not reference count). */
-	unsigned int __mlibc_flags;
-};
-typedef struct __mlibc_fair_rwlock pthread_rwlock_t;
-
-struct __mlibc_rwlockattr {
-	int __mlibc_pshared;
-};
-typedef struct __mlibc_rwlockattr pthread_rwlockattr_t;
-
-struct __mlibc_spinlock {
-	unsigned int __lock;
-};
-
-typedef struct __mlibc_spinlock pthread_spinlock_t;
+#include <bits/posix/pthread_types.h>
 
 #ifndef __MLIBC_ABI_ONLY
 
