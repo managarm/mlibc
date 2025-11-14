@@ -73,27 +73,6 @@ void *mempcpy(void *dest, const void *src, size_t len) {
 	return (char *)memcpy(dest, src, len) + len;
 }
 
-void *memmem(const void *hs, size_t haystackLen, const void *nd, size_t needleLen) {
-	const char *haystack = static_cast<const char *>(hs);
-	const char *needle = static_cast<const char *>(nd);
-
-	for (size_t i = 0; i < haystackLen; i++) {
-		bool found = true;
-
-		for (size_t j = 0; j < needleLen; j++) {
-			if (i + j >= haystackLen || haystack[i + j] != needle[j]) {
-				found = false;
-				break;
-			}
-		}
-
-		if(found)
-			return const_cast<char *>(&haystack[i]);
-	}
-
-	return nullptr;
-}
-
 void explicit_bzero(void *s, size_t len) {
   memset (s, 0, len);
   // Compiler barrier to prevent optimizing away the memset

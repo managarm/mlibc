@@ -44,9 +44,14 @@ char *strcasestr(const char *__s1, const char *__s2);
 void *memrchr(const void *__m, int __c, size_t __n);
 #endif /* defined(_GNU_SOURCE) */
 
-/* BSD extensions */
+#if defined(_DEFAULT_SOURCE) || __MLIBC_POSIX2024
 size_t strlcpy(char *__d, const char *__s, size_t __n);
 size_t strlcat(char *__d, const char *__s, size_t __n);
+#endif /* defined(_DEFAULT_SOURCE) || __MLIBC_POSIX2024 */
+
+#if defined(_GNU_SOURCE) || __MLIBC_POSIX2024
+void *memmem(const void *__haystack, size_t __haystacklen, const void *__needle, size_t __needlelen);
+#endif /* defined(_GNU_SOURCE) || __MLIBC_POSIX2024 */
 
 #endif /* !__MLIBC_ABI_ONLY */
 
