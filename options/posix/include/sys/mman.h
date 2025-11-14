@@ -14,11 +14,12 @@ extern "C" {
 #ifndef __MLIBC_ABI_ONLY
 
 void *mmap(void *__addr, size_t __size, int __prot, int __flags, int __fd, off_t __offset);
-#if __MLIBC_LINUX_OPTION
-void *mmap64(void *__addr, size_t __size, int __prot, int __flags, int __fd, off64_t __offset);
-#endif /* !__MLIBC_LINUX_OPTION */
 int mprotect(void *__addr, size_t __size, int __prot);
 int munmap(void *__addr, size_t __size);
+
+#if __MLIBC_LINUX_OPTION && defined(_LARGEFILE64_SOURCE)
+void *mmap64(void *__addr, size_t __size, int __prot, int __flags, int __fd, off64_t __offset);
+#endif /* __MLIBC_LINUX_OPTION && defined(_LARGEFILE64_SOURCE) */
 
 int mlock(const void *__addr, size_t __size);
 int mlockall(int __flags);
@@ -31,13 +32,16 @@ int msync(void *__addr, size_t __size, int __flags);
 int shm_open(const char *__name, int __oflag, mode_t __mode);
 int shm_unlink(const char *__name);
 
-#if __MLIBC_LINUX_OPTION
+#if __MLIBC_LINUX_OPTION && defined(_GNU_SOURCE)
 void *mremap(void *__old_address, size_t __old_size, size_t __new_size, int __flags, ...);
 int remap_file_pages(void *__addr, size_t __size, int __prot, size_t __pgoff, int __flags);
 int memfd_create(const char *__name, unsigned int __flags);
+#endif /* __MLIBC_LINUX_OPTION && defined(_GNU_SOURCE) */
+
+#if __MLIBC_LINUX_OPTION && defined(_DEFAULT_SOURCE)
 int madvise(void *__addr, size_t __size, int __advise);
 int mincore(void *__addr, size_t __size, unsigned char *__vec);
-#endif /* __MLIBC_LINUX_OPTION */
+#endif /* __MLIBC_LINUX_OPTION && defined(_DEFAULT_SOURCE) */
 
 #endif /* !__MLIBC_ABI_ONLY */
 
