@@ -2,9 +2,10 @@
 #define _ABIBITS_IN_H
 
 #include <mlibc-config.h>
+#include <abi-bits/sa_family_t.h>
+#include <abi-bits/sockaddr_storage.h>
 #include <bits/posix/in_addr_t.h>
 #include <bits/posix/in_port_t.h>
-#include <abi-bits/socket.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -47,14 +48,16 @@ struct ipv6_mreq {
 	unsigned        ipv6mr_interface;
 };
 
+#if defined(_GNU_SOURCE)
 struct in6_pktinfo {
 	struct in6_addr ipi6_addr;
 	uint32_t ipi6_ifindex;
 };
+#endif /* defined(_GNU_SOURCE) */
+
 #endif /* !__MLIBC_LINUX_OPTION || (!defined(_UAPI_LINUX_IN6_H) && !defined(_UAPI_IPV6_H)) */
 
-#define MCAST_INCLUDE 1
-
+#if defined(_DEFAULT_SOURCE)
 struct ip_mreq {
 	struct in_addr imr_multiaddr;
 	struct in_addr imr_interface;
@@ -88,6 +91,8 @@ struct group_source_req {
 	struct sockaddr_storage gsr_group;
 	struct sockaddr_storage gsr_source;
 };
+
+#endif /* defined(_DEFAULT_SOURCE) */
 
 #ifdef __cplusplus
 }
@@ -167,7 +172,10 @@ struct group_source_req {
 #define IP_BLOCK_SOURCE 38
 #define IP_ADD_SOURCE_MEMBERSHIP 39
 #define IP_DROP_SOURCE_MEMBERSHIP 40
+
+#if defined(_DEFAULT_SOURCE)
 #define IP_UNICAST_IF 50
+#endif /* defined(_DEFAULT_SOURCE) */
 
 #define IPV6_2292PKTOPTIONS 6
 #define IPV6_2292HOPLIMIT 8
@@ -206,11 +214,13 @@ struct group_source_req {
 #define IP_PMTUDISC_INTERFACE 4
 #define IP_PMTUDISC_OMIT 5
 
+#if defined(_DEFAULT_SOURCE)
 #define MCAST_JOIN_GROUP 42
 #define MCAST_BLOCK_SOURCE 43
 #define MCAST_UNBLOCK_SOURCE 44
 #define MCAST_JOIN_SOURCE_GROUP 46
 #define MCAST_LEAVE_SOURCE_GROUP 47
+#endif /* defined(_DEFAULT_SOURCE) */
 
 #if __MLIBC_LINUX_OPTION
 
