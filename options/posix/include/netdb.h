@@ -6,6 +6,7 @@
 #include <bits/posix/in_port_t.h>
 #include <bits/posix/in_addr_t.h>
 #include <abi-bits/socklen_t.h>
+#include <mlibc-config.h>
 
 #define AI_PASSIVE 0x01
 #define AI_CANONNAME 0x02
@@ -22,11 +23,16 @@
 #define NI_DGRAM 0x10
 
 #define NI_NUMERICSERV 2
-#define NI_MAXSERV 32
+
+#if defined(_GNU_SOURCE)
 #define NI_IDN 32
 #define NI_IDN_USE_STD3_ASCII_RULES 128
+#endif /* defined(_GNU_SOURCE) */
 
+#if defined(_DEFAULT_SOURCE)
+#define NI_MAXSERV 32
 #define NI_MAXHOST 1025
+#endif /* defined(_DEFAULT_SOURCE) */
 
 #define EAI_AGAIN 1
 #define EAI_BADFLAGS 2
@@ -38,14 +44,22 @@
 #define EAI_SOCKTYPE 8
 #define EAI_SYSTEM 9
 #define EAI_OVERFLOW 10
+
+#if defined(_GNU_SOURCE)
 #define EAI_NODATA 11
 #define EAI_ADDRFAMILY 12
+#endif /* defined(_GNU_SOURCE) */
 
+#if defined(_DEFAULT_SOURCE) || (defined(__MLIBC_XOPEN) && __MLIBC_XOPEN < 700)
 #define HOST_NOT_FOUND 1
 #define TRY_AGAIN      2
 #define NO_RECOVERY    3
 #define NO_DATA        4
+#endif /* defined(_DEFAULT_SOURCE) || (defined(__MLIBC_XOPEN) && __MLIBC_XOPEN < 700) */
+
+#if defined(_DEFAULT_SOURCE)
 #define NO_ADDRESS     NO_DATA
+#endif /* defined(_DEFAULT_SOURCE) */
 
 #define IPPORT_RESERVED 1024
 
@@ -114,13 +128,6 @@ const char *gai_strerror(int __errnum);
 int getaddrinfo(const char *__restrict __node, const char *__restrict __service,
 		const struct addrinfo *__restrict __hints, struct addrinfo **__restrict __res);
 struct hostent *gethostent(void);
-struct hostent *gethostbyname(const char *__name);
-struct hostent *gethostbyname2(const char *__name, int __flags);
-struct hostent *gethostbyaddr(const void *__addr, socklen_t __len, int __type);
-int gethostbyaddr_r(const void *__restrict __addr, socklen_t __len, int __type, struct hostent *__restrict __ret,
-					char *__restrict __buf, size_t __buflen, struct hostent **__restrict __res, int *__restrict __h_errnump);
-int gethostbyname_r(const char *__restrict __name, struct hostent *__restrict __ret, char *__restrict __buf, size_t __buflen,
-					struct hostent **__restrict __res, int *__restrict __h_errnump);
 int getnameinfo(const struct sockaddr *__restrict __addr, socklen_t __addrlen,
 		char *__restrict __host, socklen_t __hostlen, char *__restrict __serv, socklen_t __servlen, int __flags);
 struct netent *getnetbyaddr(uint32_t __net, int __type);
@@ -137,8 +144,18 @@ void setnetent(int __stayopen);
 void setprotoent(int __stayopen);
 void setservent(int __stayopen);
 
+#if defined(_DEFAULT_SOURCE)
+struct hostent *gethostbyname(const char *__name);
+struct hostent *gethostbyname2(const char *__name, int __flags);
+struct hostent *gethostbyaddr(const void *__addr, socklen_t __len, int __type);
+int gethostbyaddr_r(const void *__restrict __addr, socklen_t __len, int __type, struct hostent *__restrict __ret,
+					char *__restrict __buf, size_t __buflen, struct hostent **__restrict __res, int *__restrict __h_errnump);
+int gethostbyname_r(const char *__restrict __name, struct hostent *__restrict __ret, char *__restrict __buf, size_t __buflen,
+					struct hostent **__restrict __res, int *__restrict __h_errnump);
+
 /* Deprecated GNU extension */
 const char *hstrerror(int __err);
+#endif /* defined(_DEFAULT_SOURCE) */
 
 #endif /* !__MLIBC_ABI_ONLY */
 

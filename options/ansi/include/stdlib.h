@@ -1,12 +1,15 @@
 #ifndef _STDLIB_H
 #define _STDLIB_H
 
-#include <alloca.h>
 #include <mlibc-config.h>
 #include <abi-bits/wait.h>
 #include <bits/null.h>
 #include <bits/size_t.h>
 #include <bits/wchar_t.h>
+
+#if defined(_DEFAULT_SOURCE)
+#include <alloca.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,8 +56,11 @@ unsigned long long strtoull(const char *__restrict __string, char **__restrict _
 /* [7.22.2] Pseudo-random sequence generation functions */
 
 int rand(void);
-int rand_r(unsigned *__seed);
 void srand(unsigned int __seed);
+
+#if defined(_DEFAULT_SOURCE) || (__MLIBC_POSIX1 && !__MLIBC_POSIX2024)
+int rand_r(unsigned *__seed);
+#endif /* defined(_DEFAULT_SOURCE) || (__MLIBC_POSIX1 && !__MLIBC_POSIX2024) */
 
 /* [7.22.3] Memory management functions */
 
@@ -78,7 +84,9 @@ __attribute__((__noreturn__)) void quick_exit(int __status);
 int system(const char *__string);
 
 /* GLIBC extension. */
+#if defined(_DEFAULT_SOURCE) || (__MLIBC_XOPEN >= 500 && __MLIBC_XOPEN < 700)
 char *mktemp(char *__pattern);
+#endif /* defined(_DEFAULT_SOURCE) || (__MLIBC_XOPEN >= 500 && __MLIBC_XOPEN < 700) */
 
 /* [7.22.5] Searching and sorting utilities */
 

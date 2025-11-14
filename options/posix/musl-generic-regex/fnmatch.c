@@ -13,6 +13,10 @@
  * - Rich Felker, April 2012
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <string.h>
 #include <fnmatch.h>
 #include <stdlib.h>
