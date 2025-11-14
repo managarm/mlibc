@@ -1,6 +1,7 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <string.h>
+#include <sys/socket.h>
 
 int main() {
 	struct in_addr addr;

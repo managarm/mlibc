@@ -2,16 +2,11 @@
 #ifndef _NETINET_IN_H
 #define _NETINET_IN_H
 
-#include <stdint.h>
-#include <sys/socket.h> /* struct sockaddr */
-#include <abi-bits/socket.h>
 #include <abi-bits/in.h>
+#include <abi-bits/sa_family_t.h>
 #include <arpa/inet.h>
 #include <mlibc-config.h>
-
-#if __MLIBC_GLIBC_OPTION
-	#include <endian.h>
-#endif /*__MLIBC_GLIBC_OPTION */
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,8 +106,10 @@ uint16_t ntohs(uint16_t __x);
 
 #define IN_LOOPBACKNET 127
 
+#if defined(_DEFAULT_SOURCE)
 #define MCAST_EXCLUDE 0
 #define MCAST_INCLUDE 1
+#endif /* defined(_DEFAULT_SOURCE) */
 
 #ifdef __cplusplus
 }
