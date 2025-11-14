@@ -57,7 +57,7 @@ int sys_anon_allocate(size_t size, void **pointer) {
 
 int sys_anon_free(void *, unsigned long) { return 0; }
 
-int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
+int sys_seek(int , off_t , int , off_t *) {
   return ESPIPE;
 }
 
@@ -66,13 +66,15 @@ void sys_exit(int status) {
   __builtin_unreachable();
 }
 
-int sys_close(int fd) { STUB(); }
-int sys_futex_wake(int *pointer) { STUB(); }
+int sys_close(int ) { STUB(); }
+int sys_futex_wake(int *) { STUB(); }
 int sys_futex_wait(int *, int, timespec const *) { STUB(); }
 int sys_read(int, void *, unsigned long, long *) { STUB(); }
 int sys_open(const char *, int, unsigned int, int *) { STUB(); }
-int sys_vm_map(void *addr, size_t len, int prot, int flags, int fd,
-               off_t offset, void **ret) {
+int sys_vm_map(void *, size_t , int , int , int ,
+               off_t , void **) {
   STUB();
 }
+int sys_clock_get(int , time_t *, long *) { STUB(); }
+
 } // namespace mlibc
