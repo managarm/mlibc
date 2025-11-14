@@ -15,9 +15,21 @@ struct msghdr {
 	void *msg_name;
 	socklen_t msg_namelen;
 	struct iovec *msg_iov;
-	size_t msg_iovlen; /* int in POSIX */
+#if __INTPTR_WIDTH__ == 64 && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+	int __pad0;
+#endif
+	int msg_iovlen;
+#if __INTPTR_WIDTH__ == 64 && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+	int __pad0;
+#endif
 	void *msg_control;
-	size_t msg_controllen; /* socklen_t in POSIX */
+#if __INTPTR_WIDTH__ == 64 && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+	int __pad1;
+#endif
+	socklen_t msg_controllen;
+#if __INTPTR_WIDTH__ == 64 && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+	int __pad1;
+#endif
 	int msg_flags;
 };
 
@@ -33,7 +45,13 @@ struct mmsghdr {
 };
 
 struct cmsghdr {
-	size_t cmsg_len; /* socklen_t in POSIX */
+#if __INTPTR_WIDTH__ == 64 && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+	int __pad;
+#endif
+	socklen_t cmsg_len;
+#if __INTPTR_WIDTH__ == 64 && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+	int __pad;
+#endif
 	int cmsg_level;
 	int cmsg_type;
 };
