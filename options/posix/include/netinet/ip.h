@@ -71,13 +71,14 @@ extern "C" {
 #define IPDEFTTL 64
 
 struct ip {
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 	unsigned int ip_hl:4;
 	unsigned int ip_v:4;
-#endif
-#if __BYTE_ORDER == __BIG_ENDIAN
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 	unsigned int ip_v:4;
 	unsigned int ip_hl:4;
+#else
+#error Invalid endianness?
 #endif
 	uint8_t ip_tos;
 	unsigned short ip_len;
@@ -96,14 +97,14 @@ struct ip {
 #define IPVERSION 4
 
 struct iphdr {
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 	unsigned int ihl:4;
 	unsigned int version:4;
-#elif __BYTE_ORDER == __BIG_ENDIAN
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 	unsigned int version:4;
 	unsigned int ihl:4;
 #else
-# error	"Please fix <endian.h>"
+#error Invalid endianness?
 #endif
 	uint8_t tos;
 	uint16_t tot_len;
