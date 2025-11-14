@@ -32,7 +32,6 @@ if not no_headers
 	)
 	install_headers(
 		'include/bits/bsd/bsd_stdlib.h',
-		'include/bits/bsd/bsd_unistd.h',
 		subdir: 'bits/bsd'
 	)
 endif
