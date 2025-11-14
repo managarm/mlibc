@@ -129,12 +129,12 @@
 
 #endif /* __MLIBC_LINUX_OPTION && defined(_GNU_SOURCE) */
 
-#if defined(_GNU_SOURCE)
+#if defined(_GNU_SOURCE) || __MLIBC_POSIX2024
 struct f_owner_ex {
 	int type;
 	pid_t pid;
 };
-#endif /* _GNU_SOURCE */
+#endif /* defined(_GNU_SOURCE) || __MLIBC_POSIX2024 */
 
 #define F_OWNER_TID 0
 #define F_OWNER_PID 1

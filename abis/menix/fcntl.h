@@ -102,12 +102,12 @@
 #define AT_STATX_SYNC_TYPE (AT_STATX_FORCE_SYNC | AT_STATX_DONT_SYNC)
 #endif /* defined(_GNU_SOURCE) */
 
-#if defined(_GNU_SOURCE)
+#if defined(_GNU_SOURCE) || __MLIBC_POSIX2024
 struct f_owner_ex {
 	int type;
 	pid_t pid;
 };
-#endif /* _GNU_SOURCE */
+#endif /* defined(_GNU_SOURCE) || __MLIBC_POSIX2024 */
 
 #define F_OWNER_TID 0
 
