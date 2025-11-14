@@ -5,7 +5,6 @@
 #include <abi-bits/sigevent.h>
 #include <bits/ansi/timespec.h>
 #include <bits/posix/timer_t.h>
-#include <bits/posix/timeval.h>
 
 #define TIMER_ABSTIME 1
 
@@ -21,12 +20,6 @@ struct itimerspec {
 #ifndef __MLIBC_ABI_ONLY
 
 int timer_getoverrun(timer_t __timerid);
-
-int utimes(const char *__filename, const struct timeval __tv[2]);
-
-/* Not standardized, Linux and BSDs have it */
-int futimes(int __fd, const struct timeval __tv[2]);
-int lutimes(const char *__filename, const struct timeval __tv[2]);
 
 int timer_create(clockid_t __clockid, struct sigevent *__restrict __sevp, timer_t *__restrict __timerid);
 int timer_settime(timer_t __timerid, int __flags, const struct itimerspec *__restrict __new_value,

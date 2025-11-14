@@ -4,6 +4,7 @@
 #include <mlibc/posix-sysdeps.hpp>
 #include <errno.h>
 #include <time.h>
+#include <sys/time.h>
 
 int timer_getoverrun(timer_t) {
 	__ensure(!"Not implemented");
