@@ -16,6 +16,7 @@
 
 #include "elf.hpp"
 #include "linker.hpp"
+#include "mlibc/ansi-sysdeps.hpp"
 
 #if __MLIBC_POSIX_OPTION
 #include <dlfcn.h>
