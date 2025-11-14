@@ -47,6 +47,7 @@
 
 #if __MLIBC_LINUX_OPTION
 
+#if defined(_DEFAULT_SOURCE)
 #define MADV_NORMAL 0
 #define MADV_RANDOM 1
 #define MADV_SEQUENTIAL 2
@@ -68,13 +69,16 @@
 #define MADV_PAGEOUT 21
 #define MADV_HWPOISON 100
 #define MADV_SOFT_OFFLINE 101
+#endif /* defined(_DEFAULT_SOURCE) */
 
+#if defined(_GNU_SOURCE)
 #define MREMAP_MAYMOVE 1
 #define MREMAP_FIXED 2
 
 #define MFD_CLOEXEC 1U
 #define MFD_ALLOW_SEALING 2U
 #define MFD_HUGETLB 4U
+#endif /* defined(_GNU_SOURCE) */
 
 #endif /* __MLIBC_LINUX_OPTION */
 
