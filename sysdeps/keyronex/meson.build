@@ -76,6 +76,7 @@ if not no_headers
 		'include/abi-bits/sem.h',
 		'include/abi-bits/route.h',
 		'include/abi-bits/sa_family_t.h',
+		'include/abi-bits/sockaddr_storage.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)

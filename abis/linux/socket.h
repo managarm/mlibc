@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <abi-bits/sa_family_t.h>
 #include <abi-bits/socklen_t.h>
+#include <abi-bits/sockaddr_storage.h>
 #include <bits/posix/iovec.h>
 
 #ifdef __cplusplus
@@ -30,12 +31,6 @@ struct msghdr {
 	int __pad1;
 #endif
 	int msg_flags;
-};
-
-struct sockaddr_storage {
-	sa_family_t ss_family;
-	char __padding[128 - sizeof(sa_family_t) - sizeof(long)];
-	long __force_alignment;
 };
 
 struct mmsghdr {
