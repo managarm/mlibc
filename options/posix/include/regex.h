@@ -5,7 +5,11 @@
 extern "C" {
 #endif
 
+#define __need_ptrdiff_t
 #include <stddef.h>
+#undef __need_ptrdiff_t
+
+#include <bits/size_t.h>
 
 typedef ptrdiff_t regoff_t;
 
