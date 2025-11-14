@@ -12,6 +12,10 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <poll.h>
+#include <frg/scope_exit.hpp>
+#include <mlibc/ansi-sysdeps.hpp>
+#include <time.h>
 
 namespace mlibc {
 
@@ -23,6 +27,24 @@ namespace {
 	constexpr unsigned int RECORD_CNAME = 5;
 	constexpr unsigned int RECORD_PTR = 12;
 	constexpr unsigned int RECORD_AAAA = 28;
+
+	int get_poll_timeout(struct timespec *original_time) {
+		struct timespec current_time;
+		if (int e = mlibc::sys_clock_get(CLOCK_MONOTONIC, &current_time.tv_sec, &current_time.tv_nsec); e)
+			mlibc::panicLogger() << "mlibc: sys_clock_get() failed with error code: " << e << frg::endlog;
+
+		current_time.tv_sec -= original_time->tv_sec;
+		current_time.tv_nsec -= original_time->tv_nsec;
+		if (current_time.tv_nsec < 0) {
+			--current_time.tv_sec;
+			current_time.tv_nsec = 1000000000 + current_time.tv_nsec;
+		}
+
+		// poll timeout unit is msec
+		// default timeout is 5 seconds
+		// TODO resolv.conf can specify a timeout and we ignore it currently.
+		return frg::max(5000l - (current_time.tv_sec * 1000 + current_time.tv_nsec / 1000000), 0l);
+	}
 } // namespace
 
 static frg::string<MemoryAllocator> read_dns_name(char *buf, char *&it) {
@@ -112,6 +134,10 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 		return -EAI_SYSTEM;
 	}
 
+	frg::scope_exit close_fd{[&] {
+		close(fd);
+	}};
+
 	size_t sent = sendto(fd, request.data(), request.size(), 0,
 			(struct sockaddr*)&sin, sizeof(sin));
 	if (sent != request.size()) {
@@ -120,11 +146,27 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 	}
 
 	char response[256];
-	ssize_t rlen;
 	int num_ans = 0;
-	while ((rlen = recvfrom(fd, response, 256, 0, nullptr, nullptr)) >= 0) {
+	int fds_ready;
+	struct timespec start_time;
+
+	struct pollfd pollfd;
+	pollfd.fd = fd;
+	pollfd.events = POLLIN;
+
+	if (int e = mlibc::sys_clock_get(CLOCK_MONOTONIC, &start_time.tv_sec, &start_time.tv_nsec); e)
+		mlibc::panicLogger() << "mlibc: sys_clock_get() failed with error code: " << e << frg::endlog;
+
+	while ((fds_ready = poll(&pollfd, 1, get_poll_timeout(&start_time))) > 0) {
+		ssize_t rlen = recvfrom(fd, response, 256, 0, nullptr, nullptr);
+		if (rlen < 0) {
+			mlibc::infoLogger() << "lookup_name_dns(): recvfrom() failed" << frg::endlog;
+			return -EAI_SYSTEM;
+		}
+
 		if ((size_t)rlen < sizeof(struct dns_header))
 			continue;
+
 		auto response_header = reinterpret_cast<struct dns_header*>(response);
 		if (response_header->identification != header.identification)
 			return -EAI_FAIL;
@@ -186,7 +228,9 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 			break;
 	}
 
-	close(fd);
+	if (fds_ready == 0)
+		return -EAI_AGAIN;
+
 	return buf.buf.size();
 }
 
@@ -261,19 +305,40 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 		return -EAI_SYSTEM;
 	}
 
+	frg::scope_exit close_fd{[&] {
+		close(fd);
+	}};
+
 	size_t sent = sendto(fd, request.data(), request.size(), 0,
 			(struct sockaddr*)&sin, sizeof(sin));
+
 	if (sent != request.size()) {
 		mlibc::infoLogger() << "lookup_name_dns(): sendto() failed to send everything" << frg::endlog;
 		return -EAI_SYSTEM;
 	}
 
 	char response[256];
-	ssize_t rlen;
 	int num_ans = 0;
-	while ((rlen = recvfrom(fd, response, 256, 0, nullptr, nullptr)) >= 0) {
+	int fds_ready;
+	struct timespec start_time;
+
+	struct pollfd pollfd;
+	pollfd.fd = fd;
+	pollfd.events = POLLIN;
+
+	if (int e = mlibc::sys_clock_get(CLOCK_MONOTONIC, &start_time.tv_sec, &start_time.tv_nsec); e)
+		mlibc::panicLogger() << "mlibc: sys_clock_get() failed with error code: " << e << frg::endlog;
+
+	while ((fds_ready = poll(&pollfd, 1, get_poll_timeout(&start_time))) > 0) {
+		ssize_t rlen = recvfrom(fd, response, 256, 0, nullptr, nullptr);
+		if (rlen < 0) {
+			mlibc::infoLogger() << "lookup_name_dns(): recvfrom() failed" << frg::endlog;
+			return -EAI_SYSTEM;
+		}
+
 		if ((size_t)rlen < sizeof(struct dns_header))
 			continue;
+
 		auto response_header = reinterpret_cast<struct dns_header*>(response);
 		if (response_header->identification != header.identification)
 			return -EAI_FAIL;
@@ -319,7 +384,9 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 		}
 	}
 
-	close(fd);
+	if (fds_ready == 0)
+		return -EAI_AGAIN;
+
 	return 0;
 }
 
