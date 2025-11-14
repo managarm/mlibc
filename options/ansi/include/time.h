@@ -33,7 +33,7 @@ extern "C" {
 
 /* [7.27.1] Components of time */
 
-typedef long clock_t; /* Matches Linux' ABI. */
+#include <bits/ansi/clock_t.h>
 
 struct tm {
 	int tm_sec;

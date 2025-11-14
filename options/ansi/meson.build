@@ -96,6 +96,7 @@ if not no_headers
 		'include/bits/ansi/timespec.h',
 		'include/bits/ansi/time_t.h',
 		'include/bits/ansi/fenv.h',
+		'include/bits/ansi/clock_t.h',
 		subdir: 'bits/ansi'
 	)
 endif
