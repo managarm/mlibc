@@ -1,11 +1,12 @@
 #ifndef _TIME_H
 #define _TIME_H
 
+#include <mlibc-config.h>
+
 #include <bits/null.h>
 #include <bits/size_t.h>
 #include <bits/ansi/time_t.h>
 #include <bits/ansi/timespec.h>
-#include <mlibc-config.h>
 
 /* [7.27.1] Components of time */
 
@@ -69,7 +70,9 @@ struct tm *localtime(const time_t *__timer);
 size_t strftime(char *__restrict __dest, size_t __max_size,
 		const char *__restrict __format, const struct tm *__restrict __ptr);
 
+#if __MLIBC_POSIX1
 void tzset(void);
+#endif
 
 #endif /* !__MLIBC_ABI_ONLY */
 
@@ -94,9 +97,14 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
+#if defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN
 extern int daylight;
 extern long timezone;
+#endif
+
+#if __MLIBC_POSIX1
 extern char *tzname[2];
+#endif
 
 int nanosleep(const struct timespec *__req, struct timespec *__rem);
 
@@ -106,13 +114,19 @@ int clock_nanosleep(clockid_t __clockid, int __flags, const struct timespec *__r
 int clock_settime(clockid_t __clockid, const struct timespec *__time);
 
 struct tm *localtime_r(const time_t *__timer, struct tm *__buf);
+
+#if defined(_DEFAULT_SOURCE) || (__MLIBC_POSIX1 && !__MLIBC_POSIX2024)
 char *asctime_r(const struct tm *__tm, char *__buf);
 char *ctime_r(const time_t *__timer, char *__buf);
+#endif
 
 #if __MLIBC_POSIX_OPTION
-#include <abi-bits/pid_t.h>
+#if __MLIBC_XOPEN
 char *strptime(const char *__restrict __buf, const char *__restrict __format,
 		struct tm *__restrict __tm);
+#endif /* __MLIBC_XOPEN */
+
+#include <abi-bits/pid_t.h>
 int clock_getcpuclockid(pid_t __pid, clockid_t *__clockid);
 #endif /* __MLIBC_POSIX_OPTION */
 
@@ -130,8 +144,10 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
+#if defined(_DEFAULT_SOURCE)
 time_t timelocal(struct tm *__tm);
 time_t timegm(struct tm *__tm);
+#endif /* defined(_DEFAULT_SOURCE) */
 
 #endif /* !__MLIBC_ABI_ONLY */
 
