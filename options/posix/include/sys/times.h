@@ -1,8 +1,7 @@
 #ifndef _SYS_TIMES_H
 #define _SYS_TIMES_H
 
-/* TODO: Only define the clock_t type. */
-#include <time.h>
+#include <bits/ansi/clock_t.h>
 
 #ifdef __cplusplus
 extern "C" {
