@@ -161,14 +161,16 @@ int pthread_attr_setinheritsched(pthread_attr_t *attr, int inheritsched) {
 	return 0;
 }
 
+static_assert(sizeof(__mlibc_sched_param) == sizeof(struct sched_param), "__mlibc_sched_param needs to be identical to struct sched_param");
+
 int pthread_attr_getschedparam(const pthread_attr_t *__restrict attr, struct sched_param *__restrict schedparam) {
-	*schedparam = attr->__mlibc_schedparam;
+	memcpy(schedparam, &attr->__mlibc_schedparam, sizeof(*schedparam));
 	return 0;
 }
 int pthread_attr_setschedparam(pthread_attr_t *__restrict attr, const struct sched_param *__restrict schedparam) {
 	// TODO: this is supposed to return EINVAL for when the schedparam doesn't make sense
 	// for the given schedpolicy.
-	attr->__mlibc_schedparam = *schedparam;
+	memcpy(&attr->__mlibc_schedparam, schedparam, sizeof(attr->__mlibc_schedparam));
 	return 0;
 }
 
