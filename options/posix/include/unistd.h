@@ -37,6 +37,17 @@ extern "C" {
 #define _POSIX_THREAD_SAFE_FUNCTIONS _POSIX_VERSION
 #define _POSIX_MONOTONIC_CLOCK 0
 
+/* mmap, msync, munmap */
+#define _POSIX_MAPPED_FILES _POSIX_VERSION
+/* mlockall, munlockall */
+#define _POSIX_MEMLOCK _POSIX_VERSION
+/* mlock, munlock */
+#define _POSIX_MEMLOCK_RANGE _POSIX_VERSION
+/* mmap, munmap, shm_open, shm_unlink */
+#define _POSIX_SHARED_MEMORY_OBJECTS _POSIX_VERSION
+/* open, msync, fsync, fdatasync */
+#define _POSIX_SYNCHRONIZED_IO _POSIX_VERSION
+
 /* MISSING: additional _POSIX and _XOPEN feature macros */
 /* MISSING: _POSIX_TIMESTAMP_RESOLUTION and _POSIX2_SYMLINKS */
 
