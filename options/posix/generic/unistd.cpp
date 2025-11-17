@@ -889,11 +889,9 @@ long sysconf(int number) {
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_NPROCESSORS_CONF) unconditionally returns fallback value 1\e[39m" << frg::endlog;
 			return 1;
 		case _SC_HOST_NAME_MAX:
-			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_HOST_NAME_MAX) unconditionally returns fallback value 256\e[39m" << frg::endlog;
-			return 256;
+			return HOST_NAME_MAX;
 		case _SC_LOGIN_NAME_MAX:
-			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_LOGIN_NAME_MAX) unconditionally returns fallback value 256\e[39m" << frg::endlog;
-			return 256;
+			return LOGIN_NAME_MAX;
 		case _SC_FSYNC:
 			return _POSIX_FSYNC;
 		case _SC_SAVED_IDS:
@@ -901,6 +899,20 @@ long sysconf(int number) {
 		case _SC_SYMLOOP_MAX:
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_SYMLOOP_MAX) unconditionally returns fallback value 8\e[39m" << frg::endlog;
 			return 8;
+		case _SC_VERSION:
+			return _POSIX_VERSION;
+		case _SC_2_VERSION:
+			return _POSIX2_VERSION;
+		case _SC_XOPEN_VERSION:
+			return _XOPEN_VERSION;
+		case _SC_MEMLOCK:
+			return _POSIX_MEMLOCK;
+		case _SC_MEMLOCK_RANGE:
+			return _POSIX_MEMLOCK_RANGE;
+		case _SC_MAPPED_FILES:
+			return _POSIX_MAPPED_FILES;
+		case _SC_SHARED_MEMORY_OBJECTS:
+			return _POSIX_SHARED_MEMORY_OBJECTS;
 		default:
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf() call is not implemented, number: " << number << "\e[39m" << frg::endlog;
 			errno = EINVAL;

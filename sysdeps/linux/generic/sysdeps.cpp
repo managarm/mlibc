@@ -1721,7 +1721,11 @@ int sys_sysconf(int num, long *ret) {
 			*ret = (ru.rlim_cur == RLIM_INFINITY) ? -1 : ru.rlim_cur;
 			break;
 		}
+		case _SC_NPROCESSORS_CONF:
 		case _SC_NPROCESSORS_ONLN: {
+			/* TODO: glibc seems to try to read sysfs files first:
+			 * `/sys/devices/system/cpu/{online,possible}`, failing that `/proc/stat`.
+			 */
 			cpu_set_t set;
 			CPU_ZERO(&set);
 			if(int e = sys_getaffinity(0, sizeof(set), &set); e) {
