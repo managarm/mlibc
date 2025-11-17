@@ -34,11 +34,23 @@ int unsetenv(const char *__name);
 /* Path handling. */
 /* ---------------------------------------------------------------------------- */
 
+/* Moved from XSI to Base in Issue 7. */
+#if defined(_DEFAULT_SOURCE) || __MLIBC_POSIX2008 || __MLIBC_XOPEN < 700
 int mkstemp(char *__pattern);
-int mkstemps(char *__pattern, int __suffixlen);
-int mkostemp(char *__pattern, int __flags);
-int mkostemps(char *__pattern, int __suffixlen, int __flags);
+#endif /* defined(_DEFAULT_SOURCE) || __MLIBC_POSIX2008 || __MLIBC_XOPEN < 700 */
+
+/* Introduced in Issue 7. */
+#if defined(_DEFAULT_SOURCE) || __MLIBC_POSIX2024
 char *mkdtemp(char *__path);
+#endif
+
+/* Introduced in Issue 8, previously a GNU extension. */
+#if defined(_GNU_SOURCE) || __MLIBC_POSIX2024
+int mkostemp(char *__pattern, int __flags);
+#endif
+
+int mkstemps(char *__pattern, int __suffixlen);
+int mkostemps(char *__pattern, int __suffixlen, int __flags);
 
 char *realpath(const char *__restrict __path, char *__restrict __out);
 

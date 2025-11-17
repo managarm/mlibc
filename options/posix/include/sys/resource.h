@@ -15,7 +15,9 @@
 #define RLIM_SAVED_MAX ((rlim_t)-1)
 #define RLIM_SAVED_CUR ((rlim_t)-1)
 
+#if defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN
 #define RLIM_NLIMITS RLIMIT_NLIMITS
+#endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
 #ifdef __cplusplus
 extern "C" {
