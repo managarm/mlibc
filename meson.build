@@ -74,6 +74,9 @@ if not headers_only
 	add_project_arguments('-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', language: ['c', 'cpp'])
 	add_project_arguments('-nostdinc', '-fno-builtin', '-ffreestanding', language: ['c', 'cpp'])
 	add_project_arguments('-Werror=misleading-indentation', language: ['c', 'cpp'])
+	add_project_arguments('-D_DEFAULT_SOURCE', '-D_GNU_SOURCE', language: ['c', 'cpp'])
+	add_project_arguments('-D_POSIX_SOURCE', '-D_POSIX_C_SOURCE=202405L', language: ['c', 'cpp'])
+	add_project_arguments('-D_XOPEN_SOURCE=800', language: ['c', 'cpp'])
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
