@@ -134,9 +134,6 @@
 #define SYSCALL_SETPRIORITY 128
 #define SYSCALL_SCHED_GETPARAM 129
 #define SYSCALL_SCHED_SETPARAM 130
-#define SYSCALL_GETCPU 131
-#define SYSCALL_SYSINFO 132
-#define SYSCALL_PTRACE 133
 
 struct syscall_result {
 	size_t value;
