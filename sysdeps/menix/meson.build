@@ -14,6 +14,8 @@ libc_sources += files(
 	'generic/internal.cpp',
 	'generic/posix.cpp',
 	'generic/thread.cpp',
+	'generic/mntent.cpp',
+	'generic/mount.cpp',
 	host_machine.cpu_family() / 'thread.S',
 )
 
@@ -84,7 +86,12 @@ if not no_headers
 	install_headers(
 		'include/sys/sysmacros.h',
 		'include/sys/ioccom.h',
+		'include/sys/mount.h',
 		subdir: 'sys'
+	)
+
+	install_headers(
+		'include/mntent.h'
 	)
 endif
 
