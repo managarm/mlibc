@@ -103,7 +103,7 @@ jobs:
     compile-sysdeps:
         strategy:
             matrix:
-                sysdeps: [dripos, lemon, aero, ironclad, keyronex, managarm, vinix, astral, menix, nyaux]
+                sysdeps: [dripos, lemon, aero, ironclad, keyronex, managarm, vinix, astral, menix, nyaux, demo]
         name: Compile sysdeps
         runs-on: ubuntu-latest
         container: debian:trixie
@@ -115,6 +115,9 @@ jobs:
                                 python3-setuptools python3-jsonschema \
                                 python3-pip git rsync wget
                 pip install --break-system-packages -U xbstrap
+                if [ "${{matrix.sysdeps}}" = "demo" ]; then
+                  apt-get install -y gcc-riscv64-linux-gnu g++-riscv64-linux-gnu
+                fi
           - if: ${{ matrix.sysdeps == 'managarm' }}
             name: Checkout bootstrap-managarm
             uses: actions/checkout@v2
@@ -159,10 +162,14 @@ jobs:
           - name: Get libgcc-binaries
             run: |
                 set -e
-                wget -O /tmp/libgcc-x86_64.a https://github.com/osdev0/libgcc-binaries/releases/latest/download/libgcc-x86_64.a
+                if [ "${{matrix.sysdeps}}" = "demo" ]; then
+                  wget -O /tmp/libgcc.a https://github.com/osdev0/libgcc-binaries/releases/latest/download/libgcc-riscv64.a
+                else
+                  wget -O /tmp/libgcc.a https://github.com/osdev0/libgcc-binaries/releases/latest/download/libgcc-x86_64.a
+                fi
           - name: Compile sysdeps
             run: |
-                LDFLAGS="-Wl,/tmp/libgcc-x86_64.a" meson setup \
+                LDFLAGS="-Wl,/tmp/libgcc.a" meson setup \
                     "-Dc_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized', '-D__${{matrix.sysdeps}}__']" \
                     "-Dcpp_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized', '-D__${{matrix.sysdeps}}__']" \
                     "-Dlibgcc_dependency=false" \

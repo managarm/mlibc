@@ -274,6 +274,10 @@ elif host_machine.system() == 'nyaux'
 	rtld_include_dirs += include_directories('sysdeps/nyaux/include')
 	libc_include_dirs += include_directories('sysdeps/nyaux/include')
 	subdir('sysdeps/nyaux')
+# ANCHOR: demo-sysdeps
+elif host_machine.system() == 'demo'
+	subdir('sysdeps/demo')
+# ANCHOR_END: demo-sysdeps
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif

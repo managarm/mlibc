@@ -1,0 +1,11 @@
+[binaries]
+c = ['riscv64-linux-gnu-gcc']
+cpp = ['riscv64-linux-gnu-g++']
+ar = ['riscv64-linux-gnu-ar']
+ranlib = ['riscv64-linux-gnu-ranlib']
+
+[host_machine]
+system = 'demo'
+cpu_family = 'riscv64'
+cpu = 'unknown'
+endian = 'little'
