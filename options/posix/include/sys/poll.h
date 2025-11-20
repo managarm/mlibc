@@ -24,10 +24,10 @@ struct pollfd {
 
 int poll(struct pollfd *__fds, nfds_t __nfds, int __timeout);
 
-#if __MLIBC_LINUX_OPTION
+#if defined(_GNU_SOURCE) || __MLIBC_POSIX2024
 int ppoll(struct pollfd *__fds, nfds_t __nfds,
 		const struct timespec *__timeout_ts, const sigset_t *__sigmask);
-#endif /* __MLIBC_LINUX_OPTION */
+#endif /* defined(_GNU_SOURCE) || __MLIBC_POSIX2024 */
 
 #endif /* !__MLIBC_ABI_ONLY */
 
