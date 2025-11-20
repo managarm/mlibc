@@ -25,4 +25,8 @@
 #define _IOC_NEWLEN(ioc, len) (((~(IOCPARM_MASK << 16)) & (ioc)) | (((len) & IOCPARM_MASK) << 16))
 #define _IOC_NEWTYPE(ioc, type) _IOC_NEWLEN((ioc), sizeof(type))
 
+#ifndef _SYS_IOCTL_H
+int ioctl(int __fd, unsigned long __request, ...);
+#endif /* _SYS_IOCTL_H */
+
 #endif /* _SYS_IOCCOM_H */
