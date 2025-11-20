@@ -43,7 +43,7 @@ struct PrintfAgent {
 		case 'c':
 			if (szmod == frg::printf_size_mod::long_size) {
 				char c_buf[MB_LEN_MAX];
-				auto c = static_cast<wchar_t>(va_arg(_vsp->args, wint_t));
+				auto c = static_cast<wchar_t>(frg::pop_arg<wint_t>(_vsp, &opts));
 				mbstate_t shift_state = {};
 				size_t res = wcrtomb(c_buf, c, &shift_state);
 				if (res == size_t(-1))
@@ -74,34 +74,34 @@ struct PrintfAgent {
 		case 'n': {
 			switch(szmod) {
 			case frg::printf_size_mod::default_size: {
-				auto p = va_arg(_vsp->args, int *);
+				auto p = frg::pop_arg<int *>(_vsp, &opts);
 				*p = _formatter->count;
 			} break;
 			case frg::printf_size_mod::char_size: {
-				auto p = va_arg(_vsp->args, signed char *);
+				auto p = frg::pop_arg<signed char *>(_vsp, &opts);
 				*p = static_cast<signed char>(_formatter->count);
 			} break;
 			case frg::printf_size_mod::short_size: {
-				auto p = va_arg(_vsp->args, short *);
+				auto p = frg::pop_arg<short *>(_vsp, &opts);
 				*p = static_cast<short>(_formatter->count);
 			} break;
 			case frg::printf_size_mod::long_size: {
-				auto p = va_arg(_vsp->args, long *);
+				auto p = frg::pop_arg<long *>(_vsp, &opts);
 				*p = static_cast<long>(_formatter->count);
 			} break;
 			case frg::printf_size_mod::longlong_size: {
-				auto p = va_arg(_vsp->args, long long *);
+				auto p = frg::pop_arg<long long *>(_vsp, &opts);
 				*p = static_cast<long long>(_formatter->count);
 			} break;
 			case frg::printf_size_mod::longdouble_size:
 				__ensure(!"Illegal size for %n printf modifier");
 				break;
 			case frg::printf_size_mod::native_size: {
-				auto p = va_arg(_vsp->args, ptrdiff_t *);
+				auto p = frg::pop_arg<ptrdiff_t *>(_vsp, &opts);
 				*p = static_cast<ptrdiff_t>(_formatter->count);
 			} break;
 			case frg::printf_size_mod::intmax_size: {
-				auto p = va_arg(_vsp->args, intmax_t *);
+				auto p = frg::pop_arg<intmax_t *>(_vsp, &opts);
 				*p = static_cast<intmax_t>(_formatter->count);
 			} break;
 			}
