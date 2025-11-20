@@ -3,6 +3,7 @@
 
 #include <bits/winsize.h>
 #include <sys/ttydefaults.h>
+#include <sys/ioccom.h>
 
 #define RTC_RD_TIME 1
 #define RTC_SET_TIME 2
