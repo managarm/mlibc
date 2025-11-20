@@ -16,10 +16,6 @@ int poll(struct pollfd *fds, nfds_t count, int timeout) {
 	return num_events;
 }
 
-#if __MLIBC_LINUX_OPTION
-
-#include <mlibc/linux-sysdeps.hpp>
-
 int ppoll(struct pollfd *fds, nfds_t nfds, const struct timespec *timeout_ts, const sigset_t *sigmask) {
 	if (mlibc::sys_ppoll) {
 		int num_events;
@@ -39,5 +35,3 @@ int ppoll(struct pollfd *fds, nfds_t nfds, const struct timespec *timeout_ts, co
 
 	return ready;
 }
-#endif // __MLIBC_LINUX_OPTION
-
