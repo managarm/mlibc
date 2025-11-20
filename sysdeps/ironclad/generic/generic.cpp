@@ -1084,9 +1084,9 @@ int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
 }
 
 
-int sys_ppoll(struct pollfd *fds, int nfds, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
+int sys_ppoll(struct pollfd *fds, nfds_t count, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
 	int ret, errno;
-	SYSCALL4(SYSCALL_PPOLL, fds, nfds, timeout, sigmask);
+	SYSCALL4(SYSCALL_PPOLL, fds, count, timeout, sigmask);
 	if (ret == -1) {
 		return errno;
 	}
