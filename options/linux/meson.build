@@ -22,7 +22,6 @@ libc_sources += files(
 	'generic/linux-unistd.cpp',
 	'generic/malloc.cpp',
 	'generic/sys-fsuid.cpp',
-	'generic/ifaddrs.cpp',
 	'generic/sys-sysinfo.cpp',
 	'generic/module.cpp',
 	'generic/sys-klog.cpp',
@@ -38,7 +37,6 @@ libc_sources += files(
 
 if not no_headers
 	install_headers(
-		'include/ifaddrs.h',
 		'include/malloc.h',
 		'include/memory.h',
 		'include/mntent.h',
