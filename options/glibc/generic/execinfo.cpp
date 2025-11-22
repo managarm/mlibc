@@ -58,7 +58,8 @@ int backtrace(void **buffer, int size) {
 	if (!libgccHandle) {
 		libgccHandle = dlopen("libgcc_s.so.1", RTLD_LAZY | RTLD_LOCAL);
 		if (!libgccHandle || libgccHandle.value() == nullptr) {
-			mlibc::infoLogger() << "Failed to load libgcc_s.so.1: " << (dlerror() ? dlerror() : "") << frg::endlog;
+			auto error = dlerror();
+			mlibc::infoLogger() << "Failed to load libgcc_s.so.1: " << (error ? error : "") << frg::endlog;
 			return 0;
 		}
 
