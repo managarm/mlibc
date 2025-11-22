@@ -16,6 +16,7 @@ libc_sources += files(
 	'generic/thread.cpp',
 	'generic/mntent.cpp',
 	'generic/mount.cpp',
+	'generic/reboot.cpp',
 	host_machine.cpu_family() / 'thread.S',
 )
 
@@ -87,6 +88,7 @@ if not no_headers
 		'include/sys/sysmacros.h',
 		'include/sys/ioccom.h',
 		'include/sys/mount.h',
+		'include/sys/reboot.h',
 		subdir: 'sys'
 	)
 

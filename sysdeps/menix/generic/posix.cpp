@@ -2,7 +2,6 @@
 #include <abi-bits/pid_t.h>
 #include <errno.h>
 #include <frg/logging.hpp>
-#include <menix/power.hpp>
 #include <menix/syscall.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
