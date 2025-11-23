@@ -82,9 +82,9 @@ void seekdir(DIR *__dirp, long __loc);
 long telldir(DIR *__dirp);
 #endif
 
-#if defined(_GNU_SOURCE)
+#if __MLIBC_GLIBC_OPTION && defined(_GNU_SOURCE)
 int versionsort(const struct dirent **__a, const struct dirent **__b);
-#endif
+#endif /* __MLIBC_GLIBC_OPTION && defined(_GNU_SOURCE) */
 
 #endif /* !__MLIBC_ABI_ONLY */
 

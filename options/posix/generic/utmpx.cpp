@@ -3,7 +3,6 @@
 #include <frg/mutex.hpp>
 #include <frg/spinlock.hpp>
 #include <mlibc/debug.hpp>
-#include <paths.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <utmpx.h>

@@ -9,7 +9,6 @@
 #include <limits.h>
 #include <termios.h>
 #include <pwd.h>
-#include <sys/ioctl.h>
 #include <sys/stat.h>
 
 #include <bits/ensure.h>
@@ -19,8 +18,11 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/getopt.hpp>
 #include <mlibc/posix-sysdeps.hpp>
-#include <mlibc/bsd-sysdeps.hpp>
 #include <mlibc/thread.hpp>
+
+#if __MLIBC_BSD_OPTION
+#include <mlibc/bsd-sysdeps.hpp>
+#endif
 
 #if __MLIBC_LINUX_OPTION
 #include <mlibc/linux-sysdeps.hpp>
@@ -921,15 +923,25 @@ long sysconf(int number) {
 }
 
 pid_t tcgetpgrp(int fd) {
-	int pgrp;
-	if(ioctl(fd, TIOCGPGRP, &pgrp) < 0) {
+	int pgrp, scratch;
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ioctl, -1);
+	if(int e = mlibc::sys_ioctl(fd, TIOCGPGRP, &pgrp, &scratch); e) {
+		errno = e;
 		return -1;
 	}
+
 	return pgrp;
 }
 
 int tcsetpgrp(int fd, pid_t pgrp) {
-	return ioctl(fd, TIOCSPGRP, &pgrp);
+	int scratch;
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ioctl, -1);
+	if(int e = mlibc::sys_ioctl(fd, TIOCSPGRP, &pgrp, &scratch); e) {
+		errno = e;
+		return -1;
+	}
+
+	return 0;
 }
 
 int truncate(const char *, off_t) {

@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
 #include <sys/stat.h>
 
 #include <frg/small_vector.hpp>

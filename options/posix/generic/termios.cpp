@@ -4,7 +4,6 @@
 
 #include <errno.h>
 #include <termios.h>
-#include <sys/ioctl.h>
 
 #include <bits/ensure.h>
 #include <mlibc/posix-sysdeps.hpp>
@@ -80,8 +79,10 @@ int tcgetattr(int fd, struct termios *attr) {
 }
 
 pid_t tcgetsid(int fd) {
-	int sid;
-	if(ioctl(fd, TIOCGSID, &sid) < 0) {
+	int sid, scratch;
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ioctl, -1);
+	if(int e = mlibc::sys_ioctl(fd, TIOCGSID, &sid, &scratch); e) {
+		errno = e;
 		return -1;
 	}
 	return sid;

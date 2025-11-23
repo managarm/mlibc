@@ -58,7 +58,7 @@ ssize_t writev(int fd, const struct iovec *iovs, int iovc) {
 	for(int i = 0; i < iovc; i++) {
 		size_t copy = frg::min(iovs[i].iov_len, to_copy);
 
-		bp = (char *)mempcpy((void *)bp, (void *)iovs[i].iov_base, copy);
+		bp = (char *)memcpy((void *)bp, (void *)iovs[i].iov_base, copy) + copy;
 
 		to_copy -= copy;
 		if(to_copy == 0)

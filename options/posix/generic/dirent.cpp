@@ -183,6 +183,10 @@ long telldir(DIR *) {
 	__builtin_unreachable();
 }
 
+#if __MLIBC_GLIBC_OPTION
+
 int versionsort(const struct dirent **a, const struct dirent **b) {
 	return strverscmp((*a)->d_name, (*b)->d_name);
 }
+
+#endif // __MLIBC_GLIBC_OPTION
