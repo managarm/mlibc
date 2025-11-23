@@ -105,7 +105,6 @@ jobs:
             cd mlibc-branch
             LDFLAGS='-Wl,/tmp/libgcc-x86_64.a' meson setup \
                   --cross-file=../linux-x86_64.cross-file \
-                  --buildtype=debugoptimized \
                   -Dlibgcc_dependency=false \
                   -Duse_freestnd_hdrs=enabled \
                   -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include \
@@ -117,7 +116,6 @@ jobs:
             cd mlibc-base
             LDFLAGS='-Wl,/tmp/libgcc-x86_64.a' meson setup \
                   --cross-file=../linux-x86_64.cross-file \
-                  --buildtype=debugoptimized \
                   -Dlibgcc_dependency=false \
                   -Duse_freestnd_hdrs=enabled \
                   -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include \

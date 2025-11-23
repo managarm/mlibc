@@ -1,4 +1,13 @@
-project('mlibc', default_options: ['warning_level=2', 'c_std=gnu11', 'cpp_std=c++23'], meson_version: '>=1.3.0')
+project(
+	'mlibc',
+	default_options: [
+		'cpp_std=c++23',
+		'c_std=gnu11',
+		'buildtype=debugoptimized',
+		'warning_level=2',
+	],
+	meson_version: '>=1.3.0',
+)
 
 fs = import('fs')
 
