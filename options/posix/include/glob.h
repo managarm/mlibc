@@ -29,17 +29,29 @@ extern "C" {
 #define GLOB_NOSPACE 3
 #define GLOB_NOSYS 4
 
+#if defined(_GNU_SOURCE)
 struct stat;
+#endif
+
 typedef struct glob_t {
 	size_t gl_pathc;
 	char **gl_pathv;
 	size_t gl_offs;
 	int gl_flags;
 	void (*gl_closedir) (void *);
+#if defined(_GNU_SOURCE)
 	struct dirent *(*gl_readdir) (void *);
+#else
+	void *(*gl_readdir) (void *);
+#endif
 	void *(*gl_opendir) (const char *);
+#if defined(_GNU_SOURCE)
 	int (*gl_lstat) (const char *__restrict, struct stat *__restrict);
 	int (*gl_stat) (const char *__restrict, struct stat *__restrict);
+#else
+	int (*gl_lstat) (const char *__restrict, void *__restrict);
+	int (*gl_stat) (const char *__restrict, void *__restrict);
+#endif
 } glob_t;
 
 #ifndef __MLIBC_ABI_ONLY
