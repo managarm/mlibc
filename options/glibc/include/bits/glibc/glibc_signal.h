@@ -1,5 +1,5 @@
-#ifndef MLIBC_GLIBC_SIGNAL_H
-#define MLIBC_GLIBC_SIGNAL_H
+#ifndef _MLIBC_GLIBC_SIGNAL_H
+#define _MLIBC_GLIBC_SIGNAL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,4 +21,4 @@ typedef void (*sighandler_t)(int __signo);
 }
 #endif
 
-#endif /* MLIBC_GLIBC_SIGNAL_H */
+#endif /* _MLIBC_GLIBC_SIGNAL_H */

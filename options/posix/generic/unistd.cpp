@@ -8,6 +8,7 @@
 #include <dirent.h>
 #include <limits.h>
 #include <termios.h>
+#include <stdio.h>
 #include <pwd.h>
 #include <sys/stat.h>
 

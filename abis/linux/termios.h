@@ -142,14 +142,4 @@ struct termios {
 	speed_t obaud;
 };
 
-#define NCC 8
-struct termio {
-	unsigned short c_iflag;
-	unsigned short c_oflag;
-	unsigned short c_cflag;
-	unsigned short c_lflag;
-	unsigned char c_line;
-	unsigned char c_cc[NCC];
-};
-
 #endif

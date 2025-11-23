@@ -1,5 +1,5 @@
-#ifndef MLIBC_GLIBC_STDLIB_H
-#define MLIBC_GLIBC_STDLIB_H
+#ifndef _MLIBC_GLIBC_STDLIB_H
+#define _MLIBC_GLIBC_STDLIB_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,4 +21,4 @@ int rpmatch(const char *__resp);
 }
 #endif
 
-#endif /* MLIBC_GLIBC_STDLIB_H */
+#endif /* _MLIBC_GLIBC_STDLIB_H */

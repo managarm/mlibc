@@ -29,18 +29,22 @@
 #define POSIX_MADV_DONTNEED 4
 #define POSIX_MADV_WILLNEED 5
 
+#if defined(_DEFAULT_SOURCE)
 #define MADV_NORMAL 0
 #define MADV_RANDOM 1
 #define MADV_SEQUENTIAL 2
 #define MADV_WILLNEED 3
 #define MADV_DONTNEED 4
 #define MADV_FREE 8
+#endif /* defined(_DEFAULT_SOURCE) */
 
 /* Linux extensions: */
+#if defined(_GNU_SOURCE)
 #define MREMAP_MAYMOVE 1
 #define MREMAP_FIXED 2
 
 #define MFD_CLOEXEC 1U
 #define MFD_ALLOW_SEALING 2U
+#endif /* defined(_GNU_SOURCE) */
 
 #endif /* _ABIBITS_MMAP_FLAGS_H */
