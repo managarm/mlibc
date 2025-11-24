@@ -107,6 +107,7 @@ if not no_headers
 		'include/mqueue.h',
 		'include/utmpx.h',
 		'include/endian.h',
+		'include/tar.h',
 	)
 	install_headers(
 		'include/arpa/inet.h',
