@@ -5,6 +5,7 @@
 
 #include <mlibc/debug.hpp>
 #include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/sysdeps.hpp>
 
 __sighandler signal(int sn, __sighandler handler) {
 	struct sigaction sa;
@@ -21,10 +22,9 @@ __sighandler signal(int sn, __sighandler handler) {
 }
 
 int raise(int sig) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getpid && mlibc::sys_kill, -1);
-	pid_t pid = mlibc::sys_getpid();
+	pid_t pid = sysdeps.getpid();
 
-	if (int e = mlibc::sys_kill(pid, sig)) {
+	if (int e = sysdeps.kill(pid, sig)) {
 		errno = e;
 		return -1;
 	}
@@ -34,8 +34,7 @@ int raise(int sig) {
 
 // This is a POSIX extension, but we have it in here for sigsetjmp
 int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sigprocmask, -1);
-	if(int e = mlibc::sys_sigprocmask(how, set, retrieve); e) {
+	if(int e = sysdeps.sigprocmask(how, set, retrieve); e) {
 		errno = e;
 		return -1;
 	}

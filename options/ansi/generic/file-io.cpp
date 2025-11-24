@@ -18,6 +18,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/file-io.hpp>
 #include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/sysdeps.hpp>
 #include <mlibc/lock.hpp>
 
 namespace mlibc {
@@ -513,7 +514,7 @@ int fd_file::determine_bufmode(buffer_mode *mode) {
 
 int fd_file::io_read(char *buffer, size_t max_size, size_t *actual_size) {
 	ssize_t s;
-	if(int e = mlibc::sys_read(_fd, buffer, max_size, &s); e)
+	if(int e = sysdeps.read(_fd, buffer, max_size, &s); e)
 		return e;
 	*actual_size = s;
 	return 0;
@@ -521,14 +522,14 @@ int fd_file::io_read(char *buffer, size_t max_size, size_t *actual_size) {
 
 int fd_file::io_write(const char *buffer, size_t max_size, size_t *actual_size) {
 	ssize_t s;
-	if(int e = mlibc::sys_write(_fd, buffer, max_size, &s); e)
+	if(int e = sysdeps.write(_fd, buffer, max_size, &s); e)
 		return e;
 	*actual_size = s;
 	return 0;
 }
 
 int fd_file::io_seek(off_t offset, int whence, off_t *new_offset) {
-	if(int e = mlibc::sys_seek(_fd, offset, whence, new_offset); e)
+	if(int e = sysdeps.seek(_fd, offset, whence, new_offset); e)
 		return e;
 	return 0;
 }
