@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#if __MLIBC_LINUX_OPTION
+#if __MLIBC_LINUX_OPTION && defined(_GNU_SOURCE)
 #include <bits/linux/linux_sched.h>
 #include <bits/linux/cpu_set.h>
 #endif
