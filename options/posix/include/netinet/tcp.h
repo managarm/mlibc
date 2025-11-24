@@ -1,8 +1,6 @@
 #ifndef _NETINET_TCP_H
 #define _NETINET_TCP_H
 
-#include <stdint.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,6 +29,7 @@ extern "C" {
 #define TCP_CLOSING 11
 #define TCP_QUICKACK 12
 
+#if defined(_DEFAULT_SOURCE)
 #define SOL_TCP 6
 
 #define TCPI_OPT_TIMESTAMPS 1
@@ -39,6 +38,8 @@ extern "C" {
 #define TCPI_OPT_ECN 8
 #define TCPI_OPT_ECN_SEEN 16
 #define TCPI_OPT_SYN_DATA 32
+
+#include <stdint.h>
 
 enum tcp_ca_state {
 	TCP_CA_Open = 0,
@@ -87,6 +88,7 @@ struct tcp_info {
 
 	uint32_t tcpi_total_retrans;
 };
+#endif /* defined(_DEFAULT_SOURCE) */
 
 #ifdef __cplusplus
 }

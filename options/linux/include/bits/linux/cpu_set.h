@@ -7,8 +7,6 @@ extern "C" {
 
 #include <bits/cpu_set.h>
 #include <bits/size_t.h>
-#include <limits.h>
-#include <stdlib.h>
 
 #ifndef __MLIBC_ABI_ONLY
 
