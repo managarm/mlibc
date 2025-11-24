@@ -542,9 +542,53 @@ int strcoll_l(const char *, const char *, locale_t) {
 	__builtin_unreachable();
 }
 
-int getsubopt(char **__restrict__, char *const *__restrict__, char **__restrict__) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int getsubopt(char **__restrict__ optionp, char *const *__restrict__ keylistp, char **__restrict__ valuep) {
+	*valuep = nullptr;
+
+	if (!optionp || !*optionp)
+		return -1;
+
+	char *s = *optionp;
+
+	// We diverge from glibc here as POSIX specifies that options should be tokens or tokens with
+	// values between commas; this implies that the empty string between two commas is not a token,
+	// and ignoring whitespace is sane behavior here. This seems to be in line with *BSD behavior.
+	for(; *s && (*s == ',' || *s == ' ' || *s == '\t'); s++);
+
+	if (!*s) {
+		*optionp = s;
+		return -1;
+	}
+
+	char *subopt = s;
+
+	for(; *++s && *s != ',' && *s != '=';);
+
+	if (*s) {
+		// If there's an equals sign, set the value pointer, and skip over the value part of the token.
+		// Terminate the token.
+
+		if (*s == '=') {
+			*s = '\0';
+			for (*valuep = ++s; *s && *s != ','; s++);
+
+			if (*s)
+				*s++ = '\0';
+		} else {
+			*s++ = '\0';
+		}
+
+		for (; *s && (*s == ',' || *s == ' ' || *s == '\t'); s++);
+	}
+
+	*optionp = s;
+
+	for (int cnt = 0; *keylistp; keylistp++, cnt++) {
+		if (!strcmp(subopt, *keylistp))
+			return cnt;
+	}
+
+	return -1;
 }
 
 char *secure_getenv(const char *name) {

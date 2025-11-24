@@ -105,6 +105,7 @@ all_test_cases = [
 	'posix/select',
 	'posix/wcsdup',
 	'posix/wcsncasecmp',
+	'posix/getsubopt',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
