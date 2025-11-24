@@ -11,6 +11,7 @@
 #include <limits.h>
 
 #include <frg/random.hpp>
+#include <frg/vector.hpp>
 #include <mlibc/debug.hpp>
 #include <bits/ensure.h>
 #include <bits/sigset_t.h>
@@ -196,10 +197,20 @@ int atexit(void (*func)(void)) {
 	__cxa_atexit((void (*) (void *))func, nullptr, nullptr);
 	return 0;
 }
+
+namespace {
+
+frg::vector<void (*)(void), MemoryAllocator> quickExitQueue{getAllocator()};
+__mlibc_mutex quickExitQueueMutex = __MLIBC_THREAD_MUTEX_INITIALIZER;
+
+} // namespace
+
 int at_quick_exit(void (*func)(void)) {
-	(void)func;
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::thread_mutex_lock(&quickExitQueueMutex);
+	quickExitQueue.push(func);
+	mlibc::thread_mutex_unlock(&quickExitQueueMutex);
+
+	return 0;
 }
 
 void exit(int status) {
@@ -216,9 +227,15 @@ void _Exit(int status) {
 }
 
 // getenv() is provided by POSIX
-void quick_exit(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void quick_exit(int status) {
+	mlibc::thread_mutex_lock(&quickExitQueueMutex);
+
+	while (!quickExitQueue.empty()) {
+		auto func = quickExitQueue.pop();
+		func();
+	}
+
+	mlibc::sys_exit(status);
 }
 
 extern char **environ;
