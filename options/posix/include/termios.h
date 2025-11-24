@@ -2,6 +2,8 @@
 #ifndef _TERMIOS_H
 #define _TERMIOS_H
 
+#include <mlibc-config.h>
+
 #include <abi-bits/pid_t.h>
 #include <abi-bits/termios.h>
 
@@ -64,6 +66,7 @@ extern "C" {
 #define TCIOFF 2
 #define TCION 3
 
+#if defined(_DEFAULT_SOURCE)
 #define TIOCM_DTR 0x002
 #define TIOCM_RTS 0x004
 #define TIOCM_CTS 0x020
@@ -72,6 +75,7 @@ extern "C" {
 #define TIOCM_DSR 0x100
 #define TIOCM_RI TIOCM_RNG
 #define TIOCM_CD TIOCM_CAR
+#endif /* defined(_DEFAULT_SOURCE) */
 
 #ifndef __MLIBC_ABI_ONLY
 
@@ -79,25 +83,28 @@ speed_t cfgetispeed(const struct termios *__tios);
 speed_t cfgetospeed(const struct termios *__tios);
 int cfsetispeed(struct termios *__tios, speed_t __speed);
 int cfsetospeed(struct termios *__tios, speed_t __speed);
-void cfmakeraw(struct termios *__tios);
 int tcdrain(int __fd);
 int tcflow(int __fd, int __action);
 int tcflush(int __fd, int __queue_selector);
-int tcgetattr(int fd, struct termios *__attr);
+int tcgetattr(int __fd, struct termios *__attr);
 pid_t tcgetsid(int __fd);
 int tcsendbreak(int __fd, int __duration);
 int tcsetattr(int __fd, int __optional_actions, const struct termios *__attr);
 
+#if defined(_DEFAULT_SOURCE)
+void cfmakeraw(struct termios *__tios);
+#endif /* defined(_DEFAULT_SOURCE) */
+
 #endif /* !__MLIBC_ABI_ONLY */
 
-/* This is a linux extension */
-
+#if defined(_DEFAULT_SOURCE)
 #define TIOCSCTTY 0x540E
 #define TIOCGPGRP 0x540F
 #define TIOCSPGRP 0x5410
 #define TIOCGWINSZ 0x5413
 #define TIOCSWINSZ 0x5414
 #define TIOCGSID 0x5429
+#endif /* defined(_DEFAULT_SOURCE) */
 
 #ifdef __cplusplus
 }

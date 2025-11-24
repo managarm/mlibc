@@ -1645,8 +1645,8 @@ int sys_openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const
 		termios.c_cc[VERASE] = 127; // Delete.
 		termios.c_cc[VEOF] = CTRL('D');
 		termios.c_cc[VSUSP] = CTRL('Z');
-		termios.ibaud = 38400;
-		termios.obaud = 38400;
+		termios.c_ibaud = 38400;
+		termios.c_obaud = 38400;
 		ret = tcsetattr(*mfd, TCSANOW, &termios);
 	} else {
 		ret = tcsetattr(*mfd, TCSANOW, ios);

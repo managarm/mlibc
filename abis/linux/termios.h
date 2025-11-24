@@ -138,8 +138,8 @@ struct termios {
 	tcflag_t c_lflag;
 	cc_t c_line;
 	cc_t c_cc[NCCS];
-	speed_t ibaud;
-	speed_t obaud;
+	speed_t c_ibaud;
+	speed_t c_obaud;
 };
 
 #endif
