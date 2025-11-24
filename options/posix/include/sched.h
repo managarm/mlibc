@@ -3,13 +3,13 @@
 #define _SCHED_H
 
 #include <abi-bits/pid_t.h>
+#include <bits/ansi/time_t.h>
+#include <bits/ansi/timespec.h>
 #include <bits/threads.h>
 #include <bits/size_t.h>
 #include <mlibc-config.h>
 
-/* MISSING: time_t, struct timespec */
-
-/* MISSING: POSIX [PS], [SS] and [TSP] options */
+/* MISSING: parts of POSIX [PS], [SS] and [TSP] options */
 
 #ifdef __cplusplus
 extern "C" {
