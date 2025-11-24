@@ -42,6 +42,7 @@
 
 #define O_EXEC O_PATH
 #define O_SEARCH O_PATH
+#define O_TTY_INIT 0
 
 #define F_DUPFD  0
 #define F_GETFD  1
@@ -146,5 +147,21 @@ struct f_owner_ex {
 #define POSIX_FADV_WILLNEED 3
 #define POSIX_FADV_DONTNEED 4
 #define POSIX_FADV_NOREUSE 5
+
+#define S_IRWXU 0700
+#define S_IRUSR 0400
+#define S_IWUSR 0200
+#define S_IXUSR 0100
+#define S_IRWXG 070
+#define S_IRGRP 040
+#define S_IWGRP 020
+#define S_IXGRP 010
+#define S_IRWXO 07
+#define S_IROTH 04
+#define S_IWOTH 02
+#define S_IXOTH 01
+#define S_ISUID 04000
+#define S_ISGID 02000
+#define S_ISVTX 01000
 
 #endif /* _ABIBITS_FCNTL_H */
