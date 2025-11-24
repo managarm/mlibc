@@ -160,6 +160,10 @@
 
 #include <abi-bits/limits.h>
 
+#if __MLIBC_POSIX_OPTION
+#include <abi-bits/sig-limits.h>
+#endif
+
 #define IOV_MAX __MLIBC_IOV_MAX
 #define LOGIN_NAME_MAX __MLIBC_LOGIN_NAME_MAX
 #define HOST_NAME_MAX __MLIBC_HOST_NAME_MAX
