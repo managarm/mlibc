@@ -20,6 +20,7 @@
 
 #define TSUID 04000
 #define TSGID 02000
+#define TSVTX 01000
 #define TUREAD 00400
 #define TUWRITE 00200
 #define TUEXEC 00100
@@ -29,9 +30,5 @@
 #define TOREAD 00004
 #define TOWRITE 00002
 #define TOEXEC 00001
-
-#if defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN
-#define TSVTX 01000
-#endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
 #endif /* _TAR_H */
