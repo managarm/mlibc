@@ -117,6 +117,27 @@ struct PrintfAgent {
 		return {};
 	}
 
+	std::optional<frg::printf_arg_type> format_type(char t, frg::printf_size_mod sz) {
+		switch(t) {
+			case 'c':
+				if (sz == frg::printf_size_mod::long_size)
+					return frg::printf_arg_type::WCHAR;
+				else
+					return frg::printf_arg_type::CHAR;
+			case 's': case 'n':
+				return frg::printf_arg_type::POINTER;
+			case 'f': case 'F': case 'g': case 'G': case 'e': case 'E': case 'a': case 'A':
+				return frg::printf_arg_type::DOUBLE;
+			case 'd': case 'i': case 'b': case 'B': case 'o': case 'x': case 'X': case 'u':
+				return frg::printf_arg_type::INT;
+			default:
+				_formatter->append("unknown format '");
+				_formatter->append(t);
+				_formatter->append('\'');
+				return std::nullopt;
+		}
+	}
+
 private:
 	F *_formatter;
 	frg::va_struct *_vsp;
@@ -1133,9 +1154,11 @@ int vfprintf(FILE *__restrict stream, const char *__restrict format, __builtin_v
 	frg::unique_lock lock(file->_lock);
 	StreamPrinter p{stream};
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
-	auto res = frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
-	if (!res)
-		return -static_cast<int>(res.error());
+	auto res = frg::printf_format<NL_ARGMAX>(PrintfAgent{&p, &vs}, format, &vs);
+	if (!res) {
+		errno = EINVAL;
+		return -1;
+	}
 
 	return p.count;
 }
@@ -1187,9 +1210,11 @@ int vsnprintf(char *__restrict buffer, size_t max_size,
 	va_copy(vs.args, args);
 	LimitedPrinter p{buffer, max_size ? max_size - 1 : 0};
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
-	auto res = frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
-	if (!res)
-		return -static_cast<int>(res.error());
+	auto res = frg::printf_format<NL_ARGMAX>(PrintfAgent{&p, &vs}, format, &vs);
+	if (!res) {
+		errno = EINVAL;
+		return -1;
+	}
 	if (max_size)
 		p.buffer[frg::min(max_size - 1, p.count)] = 0;
 	return p.count;
@@ -1202,9 +1227,11 @@ int vsprintf(char *__restrict buffer, const char *__restrict format, __builtin_v
 	va_copy(vs.args, args);
 	BufferPrinter p(buffer);
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
-	auto res = frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
-	if (!res)
-		return -static_cast<int>(res.error());
+	auto res = frg::printf_format<NL_ARGMAX>(PrintfAgent{&p, &vs}, format, &vs);
+	if (!res) {
+		errno = EINVAL;
+		return -1;
+	}
 	p.buffer[p.count] = 0;
 	return p.count;
 }
@@ -1502,9 +1529,11 @@ int vasprintf(char **out, const char *format, __builtin_va_list args) {
 	va_copy(vs.args, args);
 	ResizePrinter p;
 //	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
-	auto res = frg::printf_format(PrintfAgent{&p, &vs}, format, &vs);
-	if (!res)
-		return -static_cast<int>(res.error());
+	auto res = frg::printf_format<NL_ARGMAX>(PrintfAgent{&p, &vs}, format, &vs);
+	if (!res) {
+		errno = EINVAL;
+		return -1;
+	}
 	p.expand();
 	p.buffer[p.count] = 0;
 	*out = p.buffer;

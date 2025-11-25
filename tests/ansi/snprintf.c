@@ -1,3 +1,5 @@
+#include <errno.h>
+#include <locale.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -419,6 +421,40 @@ int main() {
 	assert(strcmp(buf, "") == 0);
 	assert(snprintf(buf, 128, "%.0o", 0) == 0);
 	assert(strcmp(buf, "") == 0);
+
+	ret = snprintf(buf, 128, "%1$0*4$.*2$f%3$s", 1.0, 2, "d", 6);
+	fprintf(stderr, "ret %d '%.128s'\n", ret, buf);
+	assert(!strncmp(buf, "001.00d", 128));
+
+#if !USE_HOST_LIBC
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+#pragma GCC diagnostic ignored "-Wformat-extra-args"
+	ret = snprintf(buf, 128, "%1$0.*4$f%3$s", 1.0, 2, "d", 2);
+	fprintf(stderr, "ret %d '%.128s'\n", ret, buf);
+	assert(ret < 0);
+	assert(errno == EINVAL);
+#pragma GCC diagnostic pop
+#endif // !USE_HOST_LIBC
+
+	size_t out = 0;
+	uint16_t mid = 0;
+	ret = snprintf(buf, 128, "%2$c%4$hn%1$s%3$zn", "ello world", 'h', &out, &mid);
+	fprintf(stderr, "ret %d '%.128s' out=%zu\n", ret, buf, out);
+	assert(!strncmp(buf, "hello world", 128));
+	assert(mid == 1);
+	assert(out == 11);
+	assert(ret == 11);
+
+	ret = snprintf(buf, 128, "%2$0*1$.*3$Lf", 9, 1234.56789L, 3);
+	assert(!strncmp(buf, "01234.568", 128));
+
+	setlocale(LC_ALL, "C.utf8");
+
+	int written = 0;
+	ret = snprintf(buf, 128, "%1$lc%2$n", (wint_t) L'π', &written);
+	fprintf(stderr, "ret %d '%.128s' out=%d\n", ret, buf, written);
+	assert(written == 2);
 
 	return 0;
 }
