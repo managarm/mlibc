@@ -1,14 +1,14 @@
 #ifndef _ABIBITS_SOCKET_H
 #define _ABIBITS_SOCKET_H
 
+#include <abi-bits/sa_family_t.h>
+#include <abi-bits/sockaddr_storage.h>
 #include <abi-bits/socklen_t.h>
 #include <bits/posix/iovec.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef unsigned int sa_family_t;
 
 struct msghdr {
 	void *msg_name;
@@ -18,11 +18,6 @@ struct msghdr {
 	void *msg_control;
 	socklen_t msg_controllen;
 	int msg_flags;
-};
-
-struct sockaddr_storage {
-	sa_family_t ss_family;
-	char __padding[128 - sizeof(sa_family_t)];
 };
 
 struct mmsghdr {

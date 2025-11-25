@@ -46,6 +46,8 @@ if not no_headers
 		'include/abi-bits/riscv-hwprobe.h',
 		'include/abi-bits/sigevent.h',
 		'include/abi-bits/sigval.h',
+		'include/abi-bits/sa_family_t.h',
+		'include/abi-bits/sockaddr_storage.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)

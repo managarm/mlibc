@@ -5,11 +5,15 @@
 extern "C" {
 #endif
 
+#ifdef _GNU_SOURCE
 #include <abi-bits/statx.h>
+#endif
 
 #ifndef __MLIBC_ABI_ONLY
 
+#ifdef _GNU_SOURCE
 int statx(int __dirfd, const char *__pathname, int __flags, unsigned int __mask, struct statx *__statxbuf);
+#endif
 
 #endif /* !__MLIBC_ABI_ONLY */
 

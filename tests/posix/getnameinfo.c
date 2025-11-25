@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <stddef.h>
 #include <string.h>
+#include <sys/socket.h>
 
 int main() {
 	struct sockaddr_in addr;

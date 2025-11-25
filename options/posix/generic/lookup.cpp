@@ -7,6 +7,7 @@
 #include <frg/string.hpp>
 #include <mlibc/allocator.hpp>
 #include <string.h>
+#include <sys/socket.h>
 #include <errno.h>
 #include <arpa/inet.h>
 #include <unistd.h>

@@ -131,7 +131,9 @@ struct stat {
 
 #endif
 
+#if defined(_DEFAULT_SOURCE) || defined(_LARGEFILE64_SOURCE)
 #define stat64 stat
+#endif
 
 #ifdef __cplusplus
 }
