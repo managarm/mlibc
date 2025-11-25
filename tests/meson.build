@@ -56,6 +56,7 @@ all_test_cases = [
 	'posix/fmemopen',
 	'posix/getaddrinfo',
 	'posix/getdelim',
+	'posix/gethostbyname',
 	'posix/getnameinfo',
 	'posix/getparam',
 	'posix/getservbyname',
