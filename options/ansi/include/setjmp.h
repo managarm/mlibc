@@ -3,8 +3,9 @@
 #define _SETJMP_H
 
 #include <mlibc-config.h>
+
+#include <abi-bits/sigset_t.h>
 #include <bits/machine.h>
-#include <abi-bits/signal.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,6 +15,8 @@ extern "C" {
 
 typedef struct __jmp_buf {
 	struct __mlibc_jmpbuf_register_state __reg_state;
+	int __savesigs;
+	sigset_t __sigset;
 } jmp_buf[1];
 
 #ifndef __MLIBC_ABI_ONLY
@@ -32,13 +35,7 @@ __attribute__((__noreturn__)) void _longjmp(jmp_buf __buffer, int __value);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
-/* POSIX Non-local jumps signal extensions */
-
-typedef struct __sigjmp_buf {
-	struct __mlibc_jmpbuf_register_state __reg_state;
-	int __savesigs;
-	sigset_t __sigset;
-} sigjmp_buf[1];
+typedef jmp_buf sigjmp_buf;
 
 #ifndef __MLIBC_ABI_ONLY
 
