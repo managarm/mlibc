@@ -290,8 +290,9 @@ struct hostent *gethostbyname(const char *name) {
 	struct mlibc::lookup_result buf;
 	frg::string<MemoryAllocator> canon{getAllocator()};
 	int ret = 0;
-	if ((ret = mlibc::lookup_name_hosts(buf, name, canon, AF_UNSPEC)) <= 0)
-		ret = mlibc::lookup_name_dns(buf, name, canon, AF_UNSPEC);
+	if ((ret = mlibc::lookup_name_ip(buf, name, AF_INET)) <= 0)
+		if ((ret = mlibc::lookup_name_hosts(buf, name, canon, AF_UNSPEC)) <= 0)
+			ret = mlibc::lookup_name_dns(buf, name, canon, AF_UNSPEC);
 	if (ret <= 0) {
 		h_errno = HOST_NOT_FOUND;
 		return nullptr;
