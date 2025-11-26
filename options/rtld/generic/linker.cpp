@@ -9,7 +9,9 @@ enum {
 
 
 #include <frg/manual_box.hpp>
+#include <frg/scope_exit.hpp>
 #include <frg/small_vector.hpp>
+#include <frg/unique.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/rtld-sysdeps.hpp>
@@ -159,8 +161,10 @@ bool tryReadExactly(int fd, void *data, size_t length) {
 		if(mlibc::sys_read(fd, reinterpret_cast<char *>(data) + offset,
 				length - offset, &chunk))
 			return false;
-		__ensure(chunk > 0);
-		offset += chunk;
+		if (chunk > 0)
+			offset += chunk;
+		else
+			return false;
 	}
 	__ensure(offset == length);
 	return true;
@@ -254,17 +258,18 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 	if (auto obj = findLoadedObject(name))
 		return obj;
 
-	auto tryToOpen = [&] (const char *path) {
+	auto tryToOpen = [&] (const char *path) -> frg::optional<int> {
 		int fd;
 		if(auto x = mlibc::sys_open(path, O_RDONLY, 0, &fd); x) {
-			return -1;
+			return frg::null_opt;
 		}
 		return fd;
 	};
 
 	// TODO(arsen): this process can probably undergo heavy optimization, by
 	// preprocessing the rpath only once on parse
-	auto processRpath = [&] (frg::string_view path) {
+	auto processRpath = [&] (frg::string_view path)
+	-> frg::expected<LinkerError, frg::tuple<frg::string<MemoryAllocator>, int>> {
 		frg::string<MemoryAllocator> sPath { getAllocator() };
 		if (path.starts_with("$ORIGIN")) {
 			frg::string_view dirname = origin->path;
@@ -283,60 +288,17 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 			sPath += '/';
 		}
 		sPath += name;
+
 		if (logRpath)
 			mlibc::infoLogger() << "rtld: trying in rpath " << sPath << frg::endlog;
-		int fd = tryToOpen(sPath.data());
-		if (logRpath && fd >= 0)
+
+		auto fd = tryToOpen(sPath.data());
+		if (!fd)
+			return LinkerError::notFound;
+		if (logRpath)
 			mlibc::infoLogger() << "rtld: found in rpath" << frg::endlog;
-		return frg::tuple { fd, std::move(sPath) };
+		return frg::tuple { std::move(sPath), fd.value() };
 	};
-
-	frg::string<MemoryAllocator> chosenPath { getAllocator() };
-	int fd = -1;
-	if (origin && origin->runPath) {
-		size_t start = 0;
-		size_t idx = 0;
-		frg::string_view rpath { origin->runPath };
-		auto next = [&] () {
-			idx = rpath.find_first(':', start);
-			if (idx == (size_t)-1)
-				idx = rpath.size();
-		};
-		for (next(); idx < rpath.size(); next()) {
-			auto path = rpath.sub_string(start, idx - start);
-			start = idx + 1;
-			auto [fd_, fullPath] = processRpath(path);
-			if (fd_ != -1) {
-				fd = fd_;
-				chosenPath = std::move(fullPath);
-				break;
-			}
-		}
-		if (fd == -1) {
-			auto path = rpath.sub_string(start, rpath.size() - start);
-			auto [fd_, fullPath] = processRpath(path);
-			if (fd_ != -1) {
-				fd = fd_;
-				chosenPath = std::move(fullPath);
-			}
-		}
-	} else if (logRpath) {
-		mlibc::infoLogger() << "rtld: no rpath set for object" << frg::endlog;
-	}
-
-	for(size_t i = 0; i < libraryPaths->size() && fd == -1; i++) {
-		auto ldPath = (*libraryPaths)[i];
-		auto path = frg::string<MemoryAllocator>{getAllocator(), ldPath} + '/' + name;
-		if(logLdPath)
-			mlibc::infoLogger() << "rtld: Trying to load " << name << " from ldpath " << ldPath << "/" << frg::endlog;
-		fd = tryToOpen(path.data());
-		if(fd >= 0) {
-			chosenPath = std::move(path);
-			break;
-		}
-	}
-	if(fd == -1)
-		return LinkerError::notFound;
 
 	if (createScope) {
 		__ensure(localScope == nullptr);
@@ -345,17 +307,87 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 		localScope = frg::construct<Scope>(getAllocator());
 	}
 
+	// Avoid leaking the localScope on error returns
+	frg::scope_exit localScopeGuard{[&]{
+		if (createScope)
+			frg::destruct(getAllocator(), localScope);
+	}};
+
 	__ensure(localScope != nullptr);
 
-	auto object = frg::construct<SharedObject>(getAllocator(),
-		name.data(), std::move(chosenPath), false, localScope, rts);
+	frg::expected<LinkerError, frg::unique_ptr<SharedObject, MemoryAllocator>> res = LinkerError::notFound;
 
-	auto result = _fetchFromFile(object, fd);
-	closeOrDie(fd);
-	if(!result) {
-		frg::destruct(getAllocator(), object);
-		return result.error();
+	auto trySharedObjectSetup = [&] (frg::string<MemoryAllocator> path, int fd) -> frg::expected<LinkerError, frg::unique_ptr<SharedObject, MemoryAllocator>> {
+		auto object = frg::make_unique<SharedObject>(getAllocator(),
+			name.data(), std::move(path), false, localScope, rts);
+
+		auto result = _fetchFromFile(object.get(), fd);
+		closeOrDie(fd);
+		if(!result) {
+			if (verbose || stillSlightlyVerbose)
+				mlibc::infoLogger() << "rtld: failed to open " << name << frg::endlog;
+			return result.error();
+		}
+		return object;
+	};
+
+	if (origin && origin->runPath) {
+		size_t start = 0;
+		size_t idx = 0;
+		frg::string_view rpath { origin->runPath };
+
+		auto next = [&] () {
+			idx = rpath.find_first(':', start);
+			if (idx == (size_t)-1)
+				idx = rpath.size();
+		};
+
+		for (next(); idx < rpath.size(); next()) {
+			auto path = rpath.sub_string(start, idx - start);
+			start = idx + 1;
+			auto rpathResult = processRpath(path);
+			if (rpathResult) {
+				res = trySharedObjectSetup(rpathResult.value().get<0>(), rpathResult.value().get<1>());
+				if (res)
+					break;
+				// continue on loading failures, as we want to use the first compatible DSO we
+				// find; this can occur e.g. on multilib systems, where DSOs of the wrong
+				// architecture can be present.
+			}
+		}
+		if (!res) {
+			auto path = rpath.sub_string(start, rpath.size() - start);
+			auto rpathResult = processRpath(path);
+			if (rpathResult)
+				res = trySharedObjectSetup(rpathResult.value().get<0>(), rpathResult.value().get<1>());
+		}
+	} else if (logRpath) {
+		mlibc::infoLogger() << "rtld: no rpath set for object" << frg::endlog;
 	}
+
+	for(size_t i = 0; i < libraryPaths->size() && !res; i++) {
+		auto ldPath = (*libraryPaths)[i];
+		auto path = frg::string<MemoryAllocator>{getAllocator(), ldPath} + '/' + name;
+		if(logLdPath)
+			mlibc::infoLogger() << "rtld: Trying to load " << name << " from ldpath " << ldPath << "/" << frg::endlog;
+
+		auto fd = tryToOpen(path.data());
+		if(fd) {
+			res = trySharedObjectSetup(path, fd.value());
+			if (res)
+				break;
+			// continue on loading failures, as we want to use the first compatible DSO we find;
+			// this can occur e.g. on multilib systems, where DSOs of the wrong architecture can
+			// be present.
+		}
+	}
+
+	if(!res)
+		return res.error();
+
+	// the localScope is used by the SharedObject
+	localScopeGuard.release();
+	auto object = res.value().release();
 
 	_parseDynamic(object);
 	_parseVerdef(object);
