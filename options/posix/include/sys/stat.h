@@ -36,7 +36,7 @@ int mknod(const char *__pathname, mode_t __mode, dev_t __dev);
 int mknodat(int __dirfd, const char *__pathname, mode_t __mode, dev_t __dev);
 #endif
 
-#if defined(_DEFAULT_SOURCE) || defined(_LARGEFILE64_SOURCE)
+#if __MLIBC_LINUX_OPTION && (defined(_DEFAULT_SOURCE) || defined(_LARGEFILE64_SOURCE))
 int fstat64(int __fd, struct stat64 *__result);
 int lstat64(const char *__restrict __pathname, struct stat64 *__restrict __buf);
 #endif
