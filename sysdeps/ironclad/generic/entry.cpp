@@ -10,11 +10,17 @@ extern "C" void __dlapi_enter(uintptr_t *);
 
 extern char **environ;
 
-extern "C" void __mlibc_sigret(void) {
+namespace {
+extern "C" void __mlibc_sigret_inner(void) {
 	int ret, errno;
 	SYSCALL0(SYSCALL_SIGNAL_RETURN);
 	mlibc::panicLogger() << "mlibc: failed to exit signal with " << errno << frg::endlog;
 	__builtin_unreachable();
+}
+}
+
+extern "C" __attribute__((naked)) void __mlibc_sigret(void) {
+	asm("call __mlibc_sigret_inner");
 }
 
 extern "C" void __mlibc_entry(uintptr_t *entry_stack, int (*main_fn)(int argc, char *argv[], char *env[])) {
