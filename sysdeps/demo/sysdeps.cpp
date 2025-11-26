@@ -75,6 +75,7 @@ int sys_vm_map(void *, size_t , int , int , int ,
                off_t , void **) {
   STUB();
 }
+int sys_vm_unmap(void *, size_t) { STUB(); }
 int sys_clock_get(int , time_t *, long *) { STUB(); }
 
 } // namespace mlibc
