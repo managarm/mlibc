@@ -30,8 +30,12 @@ struct FTW {
 
 #ifndef __MLIBC_ABI_ONLY
 
+/* Removed in POSIX 2024 */
+#if defined(_DEFAULT_SOURCE) || (__MLIBC_POSIX1 && !__MLIBC_POSIX2024)
 int ftw(const char *__dirpath, int (*__fn)(const char *__fpath, const struct stat *__sb, int __typeflag),
 		int __nopenfd);
+#endif
+
 int nftw(const char *__dirpath, int (*__fn)(const char *__fpath, const struct stat *__sb, int __typeflag,
 		struct FTW *__ftwbuf), int __nopenfd, int __flags);
 
