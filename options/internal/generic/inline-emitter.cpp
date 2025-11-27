@@ -10,7 +10,3 @@
 #if __MLIBC_LINUX_OPTION
 #include <sys/sysmacros.h>
 #endif /* __MLIBC_LINUX_OPTION */
-
-#ifndef MLIBC_BUILDING_RTLD
-#include <math.h>
-#endif

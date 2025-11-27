@@ -20,8 +20,6 @@ all_test_cases = [
 	'ansi/tz',
 	'ansi/ungetc',
 	'ansi/fopen',
-	'ansi/creal-cimag',
-	'ansi/fenv',
 	'ansi/qsort',
 	'ansi/freopen',
 	'ansi/strxfrm',
