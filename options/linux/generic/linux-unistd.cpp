@@ -11,10 +11,6 @@ int vhangup(void) {
 	__builtin_unreachable();
 }
 
-int getdtablesize(void){
-	return sysconf(_SC_OPEN_MAX);
-}
-
 int syncfs(int fd) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_syncfs, -1);
 	if(int e = mlibc::sys_syncfs(fd); e) {

@@ -170,11 +170,13 @@ if not no_headers
 		'include/bits/posix/posix_stdlib.h',
 		'include/bits/posix/posix_string.h',
 		'include/bits/posix/posix_time.h',
+		'include/bits/posix/posix_sys_time.h',
 		'include/bits/posix/posix_wctype.h',
 		'include/bits/posix/stat.h',
 		'include/bits/posix/timeval.h',
 		'include/bits/posix/pthread_t.h',
 		'include/bits/posix/timer_t.h',
+		'include/bits/posix/pthread_types.h',
 		subdir: 'bits/posix'
 	)
 endif

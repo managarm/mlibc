@@ -2,15 +2,18 @@
 #ifndef _MATH_H
 #define _MATH_H
 
+#include <mlibc-config.h>
+
 #include <bits/inline-definition.h>
 
-/* this is a posix extension */
+#if defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN
 #define M_E             2.7182818284590452354
 #define M_LOG2E         1.4426950408889634074
 #define M_LOG10E        0.43429448190325182765
 #define M_LN2           0.69314718055994530942
 #define M_LN10          2.30258509299404568402
 #define M_PI            3.14159265358979323846
+#define M_PIl           3.141592653589793238462643383279502884L
 #define M_PI_2          1.57079632679489661923
 #define M_PI_4          0.78539816339744830962
 #define M_1_PI          0.31830988618379067154
@@ -18,7 +21,7 @@
 #define M_2_SQRTPI      1.12837916709551257390
 #define M_SQRT2         1.41421356237309504880
 #define M_SQRT1_2       0.70710678118654752440
-#define M_PIl           3.141592653589793238462643383279502884L
+#endif
 
 /* The following two definitions are from musl. */
 #define FP_ILOGBNAN (-1 - (int)(((unsigned)-1) >> 1))
@@ -104,7 +107,7 @@ __MLIBC_INLINE_DEFINITION int __mlibc_isgreaterequall(long double __x, long doub
 #define isgreater(x, y) __MLIBC_CHOOSE_COMPARISON(x, y, __mlibc_isgreater)
 #define isgreaterequal(x, y) __MLIBC_CHOOSE_COMPARISON(x, y, __mlibc_isgreaterequal)
 
-/* this is a gnu extension */
+#if defined(_GNU_SOURCE)
 void sincos(double __x, double *__sin, double *__cos);
 void sincosf(float __x, float *__sin, float *__cos);
 void sincosl(long double __x, long double *__sin, long double *__cos);
@@ -116,6 +119,7 @@ long double exp10l(long double __x);
 double pow10(double __x);
 float pow10f(float __x);
 long double pow10l(long double __x);
+#endif /* defined(_GNU_SOURCE) */
 
 /* [C11/7.12.4 Trigonometric functions] */
 
@@ -365,13 +369,16 @@ double fma(double __x, double __y, double __z);
 float fmaf(float __x, float __y, float __z);
 long double fmal(long double __x, long double __y, long double __z);
 
+#if defined(_GNU_SOURCE) || __MLIBC_XOPEN
 extern int signgam;
 #define __signgam signgam
+#endif
 
+#if defined(_GNU_SOURCE)
 /* BSD floating-point classification functions - obsolete */
-
 int finite(double __x);
 int finitef(float __x);
+#endif
 
 #endif /* !__MLIBC_ABI_ONLY */
 

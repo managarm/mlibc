@@ -995,6 +995,10 @@ int getpagesize() {
 	return mlibc::page_size;
 }
 
+int getdtablesize(void){
+	return sysconf(_SC_OPEN_MAX);
+}
+
 // Code taken from musl
 // GLIBC extension for stdin/stdout
 char *getpass(const char *prompt) {

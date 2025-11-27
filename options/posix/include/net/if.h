@@ -7,17 +7,23 @@ extern "C" {
 #endif
 
 #include <mlibc-config.h>
-#include <sys/socket.h>
 
-#define IF_NAMESIZE 16
-#define IFNAMSIZ IF_NAMESIZE
-#define ALTIFNAMSIZ 128
-#define IFALIASZ 256
+#if defined(_DEFAULT_SOURCE)
+#include <sys/types.h>
+#include <sys/socket.h>
+#endif
 
 struct if_nameindex {
 	unsigned int if_index;
 	char *if_name;
 };
+
+#define IF_NAMESIZE 16
+
+#if defined(_DEFAULT_SOURCE)
+#define IFNAMSIZ IF_NAMESIZE
+#define ALTIFNAMSIZ 128
+#define IFALIASZ 256
 
 struct ifmap {
 	unsigned long mem_start;
@@ -76,6 +82,7 @@ struct ifconf {
 
 #define ifc_buf ifc_ifcu.ifcu_buf
 #define ifc_req ifc_ifcu.ifcu_req
+#endif /* defined(_DEFAULT_SOURCE) */
 
 #ifndef __MLIBC_ABI_ONLY
 
@@ -86,6 +93,7 @@ unsigned int if_nametoindex(const char *__name);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
+#if defined(_DEFAULT_SOURCE)
 #define IFHWADDRLEN 6
 
 #define IFF_UP 0x1
@@ -107,6 +115,7 @@ unsigned int if_nametoindex(const char *__name);
 #define IFF_LOWER_UP 0x10000
 #define IFF_DORMANT 0x20000
 #define IFF_ECHO 0x40000
+#endif /* defined(_DEFAULT_SOURCE) */
 
 #if __MLIBC_LINUX_OPTION
 
