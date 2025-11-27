@@ -65,6 +65,7 @@ extern "C" {
 #define PTHREAD_COND_INITIALIZER {0}
 #define PTHREAD_MUTEX_INITIALIZER __MLIBC_THREAD_MUTEX_INITIALIZER
 #define PTHREAD_RWLOCK_INITIALIZER {0, 0, 0}
+#define PTHREAD_SPIN_INITIALIZER {0}
 
 #define PTHREAD_CANCELED ((void*) -1)
 
@@ -123,6 +124,12 @@ struct __mlibc_rwlockattr {
 	int __mlibc_pshared;
 };
 typedef struct __mlibc_rwlockattr pthread_rwlockattr_t;
+
+struct __mlibc_spinlock {
+	unsigned int __lock;
+};
+
+typedef struct __mlibc_spinlock pthread_spinlock_t;
 
 #ifndef __MLIBC_ABI_ONLY
 
@@ -313,6 +320,15 @@ int pthread_rwlock_rdlock(pthread_rwlock_t *__rwlock);
 int pthread_rwlock_unlock(pthread_rwlock_t *__rwlock);
 
 int pthread_getcpuclockid(pthread_t __thrd, clockid_t *__clockid);
+
+/* ---------------------------------------------------------------------------- */
+/* pthread_spin functions. */
+/* ---------------------------------------------------------------------------- */
+int pthread_spin_init(pthread_spinlock_t *__lock, int __pshared);
+int pthread_spin_destroy(pthread_spinlock_t *__lock);
+int pthread_spin_lock(pthread_spinlock_t *__lock);
+int pthread_spin_trylock(pthread_spinlock_t *__lock);
+int pthread_spin_unlock(pthread_spinlock_t *__lock);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

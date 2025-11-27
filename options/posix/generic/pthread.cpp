@@ -12,6 +12,7 @@
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>
 #include <frg/array.hpp>
+#include <frg/spinlock.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
@@ -1425,4 +1426,43 @@ int pthread_getcpuclockid(pthread_t, clockid_t *) {
 	mlibc::infoLogger() << "mlibc: pthread_getcpuclockid() always returns ENOENT"
 			<< frg::endlog;
 	return ENOENT;
+}
+
+int pthread_spin_init(pthread_spinlock_t *__lock, int) {
+	__lock->__lock = 0;
+	return 0;
+}
+
+int pthread_spin_destroy(pthread_spinlock_t*) {
+	return 0;
+}
+
+int pthread_spin_lock(pthread_spinlock_t *__lock) {
+	unsigned int desired = mlibc::this_tid();
+	unsigned int expected = 0;
+
+	while(!__atomic_compare_exchange_n(&__lock->__lock, &expected, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
+		if (expected == desired)
+			return EDEADLK;
+		frg::detail::loophint();
+		expected = 0;
+	}
+
+	return 0;
+}
+
+int pthread_spin_trylock(pthread_spinlock_t *__lock) {
+	unsigned int desired = mlibc::this_tid();
+	unsigned int expected = 0;
+
+	if (!__atomic_compare_exchange_n(&__lock->__lock, &expected, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
+		return EBUSY;
+	
+	return 0;
+}
+
+int pthread_spin_unlock(pthread_spinlock_t *__lock) {
+	__ensure(__atomic_load_n(&__lock->__lock, __ATOMIC_RELAXED) == mlibc::this_tid());
+	__atomic_store_n(&__lock->__lock, 0, __ATOMIC_RELEASE);
+	return 0;
 }
