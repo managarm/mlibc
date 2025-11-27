@@ -80,6 +80,7 @@ float complex cexpf(float complex __x);
 /* 7.3.7.2 The clog functions */
 double complex clog(double complex __x);
 float complex clogf(float complex __x);
+long double complex clogl(long double complex __x);
 
 /* 7.3.8 Power and absolute-value functions */
 /* 7.3.8.1 The cabs functions */
@@ -91,6 +92,7 @@ float complex clogf(float complex __x);
 */
 double cabs(double complex __x);
 float cabsf(float complex __x);
+long double cabsl(long double complex __x);
 
 /* 7.3.8.2 The cpow functions */
 double complex cpow(double complex __x, double complex __y);
@@ -104,6 +106,7 @@ float complex csqrtf(float complex __x);
 /* 7.3.9.1 The carg functions */ 
 double carg(double complex __x);
 float cargf(float complex __x);
+long double cargl(long double complex __x);
 
 /* 7.3.9.2 The cimag functions */
 double cimag(double complex __x);
