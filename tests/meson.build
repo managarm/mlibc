@@ -50,6 +50,7 @@ all_test_cases = [
 	'posix/pthread_thread_local',
 	'posix/pthread_attr',
 	'posix/pthread_schedparam',
+	'posix/pthread_spin',
 	'posix/pwd',
 	'posix/fdopen',
 	'posix/fopencookie',
