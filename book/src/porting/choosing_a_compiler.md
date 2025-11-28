@@ -1,6 +1,6 @@
 # Choosing a compiler
 
-To compile [`mlibc`](https://github.com/managarm/mlibc) and any userspace programs which link against it, you'll need a suitable compiler. For that, you will need to build a full [OS Specific Toolchain](https://wiki.osdev.org/OS_Specific_Toolchain). Using your host's compiler or a generic toolchain could lead into strange build failures and is not recommended nor supported.
+To compile [`mlibc`](https://github.com/managarm/mlibc) and any userspace programs which link against it, you'll need a suitable compiler. For that, you will need to build a full [OS Specific Toolchain](https://osdev.wiki/OS_Specific_Toolchain). Using your host's compiler or a generic toolchain could lead into strange build failures and is not recommended nor supported.
 
 After that, you'll have a compiler that implicitly links against (m)libc. For [`mlibc-demo-os`](https://github.com/64/mlibc-demo-os), we'll rely on the host's `riscv64-linux-gnu-gcc` compiler to avoid setting up a hosted OS-specific compiler for a brief demo. The `CC` variable will be used to indicate the C compiler in Makefiles.
 
