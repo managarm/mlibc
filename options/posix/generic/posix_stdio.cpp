@@ -13,6 +13,7 @@
 #include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/file-io.hpp>
+#include <mlibc/sysdeps.hpp>
 #include <mlibc/posix-file-io.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 
@@ -64,7 +65,7 @@ FILE *popen(const char *command, const char *typestr) {
 	FILE *ret = nullptr;
 
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fork && mlibc::sys_dup2 && mlibc::sys_execve &&
-			mlibc::sys_sigprocmask && mlibc::sys_sigaction && mlibc::sys_pipe, nullptr);
+		(hasSysdep<&mlibc::Sysdeps::sigprocmask, mlibc::AnsiSysdeps>()) && mlibc::sys_sigaction && mlibc::sys_pipe, nullptr);
 
 	if (typestr == nullptr) {
 		errno = EINVAL;
@@ -103,7 +104,7 @@ FILE *popen(const char *command, const char *typestr) {
 
 	sigemptyset(&new_mask);
 	sigaddset(&new_mask, SIGCHLD);
-	mlibc::sys_sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
+	sysdeps.sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
 
 	int parent_end = is_write ? 1 : 0;
 	int child_end = is_write ? 0 : 1;
@@ -116,7 +117,7 @@ FILE *popen(const char *command, const char *typestr) {
 		// For the child
 		mlibc::sys_sigaction(SIGINT, &old_int, nullptr);
 		mlibc::sys_sigaction(SIGQUIT, &old_quit, nullptr);
-		mlibc::sys_sigprocmask(SIG_SETMASK, &old_mask, nullptr);
+		sysdeps.sigprocmask(SIG_SETMASK, &old_mask, nullptr);
 
 		mlibc::sys_close(fds[parent_end]);
 
@@ -153,7 +154,7 @@ FILE *popen(const char *command, const char *typestr) {
 
 	mlibc::sys_sigaction(SIGINT, &old_int, nullptr);
 	mlibc::sys_sigaction(SIGQUIT, &old_quit, nullptr);
-	mlibc::sys_sigprocmask(SIG_SETMASK, &old_mask, nullptr);
+	sysdeps.sigprocmask(SIG_SETMASK, &old_mask, nullptr);
 
 	return ret;
 }
