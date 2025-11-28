@@ -3,6 +3,8 @@ declare_options:
     default: x86_64
   - name: compiler
     default: gcc
+  - name: multilib-path
+    default: ''
 
 sources:
   - name: mlibc
@@ -21,6 +23,11 @@ sources:
     tag: 'libdrm-2.4.124'
     version: '2.4.124'
 
+  - name: glibc
+    git: 'https://github.com/bminor/glibc.git'
+    tag: 'glibc-2.42'
+    version: '2.42'
+
 tools: []
 
 packages:
@@ -30,6 +37,7 @@ packages:
     pkgs_required:
       - linux-headers
       - libdrm-headers
+      - locale-data
     configure:
       - args:
         - 'meson'
@@ -41,6 +49,8 @@ packages:
         - "-Dlibgcc_dependency=false"
         - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
+        - "-Dbuild_tests_cross_libc=true"
+        - "-Dcross_libc_ld_prefix=@OPTION:multilib-path@"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
         - "-Dwerror=true"
@@ -64,6 +74,7 @@ packages:
     pkgs_required:
       - linux-headers
       - libdrm-headers
+      - locale-data
     configure:
       - args:
         - 'meson'
@@ -75,6 +86,8 @@ packages:
         - "-Dlibgcc_dependency=false"
         - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
+        - "-Dbuild_tests_cross_libc=true"
+        - "-Dcross_libc_ld_prefix=@OPTION:multilib-path@"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=static"
         - "-Dwerror=true"
@@ -95,6 +108,7 @@ packages:
     pkgs_required:
       - linux-headers
       - libdrm-headers
+      - locale-data
     configure:
       - args:
         - 'meson'
@@ -106,6 +120,8 @@ packages:
         - "-Dlibgcc_dependency=false"
         - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
+        - "-Dbuild_tests_cross_libc=true"
+        - "-Dcross_libc_ld_prefix=@OPTION:multilib-path@"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=shared"
         - "-Dwerror=true"
@@ -127,6 +143,7 @@ packages:
     pkgs_required:
       - linux-headers
       - libdrm-headers
+      - locale-data
     configure:
       - args:
         - 'meson'
@@ -138,6 +155,8 @@ packages:
         - "-Dlibgcc_dependency=false"
         - "-Duse_freestnd_hdrs=enabled"
         - "-Dbuild_tests=true"
+        - "-Dbuild_tests_cross_libc=true"
+        - "-Dcross_libc_ld_prefix=@OPTION:multilib-path@"
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
         - "-Dwerror=true"
@@ -221,3 +240,19 @@ packages:
           libdrm_dep = declare_dependency(include_directories: include_directories('include'))
           EOF
       - args: ['cp', '-r', '@THIS_SOURCE_DIR@/include', '@THIS_COLLECT_DIR@/usr/src/libdrm-headers/include']
+
+  - name: locale-data
+    architecture: noarch
+    from_source: 'glibc'
+    build:
+      - args: |
+          ARCH="@OPTION:arch@"
+          LOCALEDEF_FLAGS=""
+          if [ "$ARCH" == "m68k" ]; then
+            LOCALEDEF_FLAGS="--big-endian"
+          fi
+          mkdir -p @THIS_COLLECT_DIR@/usr/lib/locale/
+          localedef $LOCALEDEF_FLAGS -fUTF-8 -ien_US --prefix=@THIS_COLLECT_DIR@ --no-archive en_US.utf8
+          localedef $LOCALEDEF_FLAGS -fUTF-8 -iC --prefix=@THIS_COLLECT_DIR@ --no-archive C.utf8
+        environ:
+          I18NPATH: '@THIS_SOURCE_DIR@/localedata/'

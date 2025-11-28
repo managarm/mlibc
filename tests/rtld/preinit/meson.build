@@ -7,7 +7,7 @@ endif
 libfoo = shared_library('foo', ['libfoo.c'],
 	dependencies: libc_dep,
 	override_options: 'b_sanitize=none',
-	link_args: test_additional_link_args,
+	link_args: test_additional_link_args + mlibc_link_args,
 )
 test_link_with = [libfoo]
 

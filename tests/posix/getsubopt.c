@@ -18,7 +18,7 @@ int main() {
                 fprintf(stderr, "  Unknown option or error: %s\n", value);
 
 				// glibc does not skip commas, nor whitespace.
-#ifdef USE_HOST_LIBC
+#if USE_HOST_LIBC || USE_CROSS_LIBC
 				break;
 #else
 				exit(1);

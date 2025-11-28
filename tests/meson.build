@@ -159,6 +159,7 @@ host_libc_excluded_test_cases = [
 	'glibc/error', # These tests depend on mlibc error messages.
 	'glibc/error_at_line', # These tests depend on mlibc error messages.
 	'rtld/search-order', # See rtld/search-order/meson.build.
+	'rtld/fail-load', # glibc gives non-deterministic errors
 ]
 host_libc_noasan_test_cases = [
 	'posix/pthread_cancel',
@@ -167,6 +168,11 @@ host_libc_noasan_test_cases = [
 	'posix/search', # requires tdelete (#351)
 	'ansi/calloc', # does some overflowing
 	'linux/pthread_attr', # encounters memory leaks
+]
+
+cross_libc_excluded_test_cases = [
+	'ansi/fenv',
+	'posix/pthread_cancel',
 ]
 
 extra_cflags_test_cases = {
@@ -287,8 +293,8 @@ foreach test_name : all_test_cases
 		objects: test_objects,
 		build_rpath: meson.global_build_root(),
 		override_options: test_override_options,
-		c_args: test_c_args,
-		link_args: test_link_args,
+		c_args: mlibc_c_args + test_c_args,
+		link_args: mlibc_link_args + test_link_args,
 		pie: use_pie,
 	)
 
@@ -323,7 +329,7 @@ foreach test_name : all_test_cases
 		exec = executable('host-libc-' + test_exec_name, test_name + '.c',
 			build_rpath: meson.global_build_root(),
 			override_options: host_libc_sanitize_options,
-			c_args: [host_test_c_args + '-D_GNU_SOURCE', '-DUSE_HOST_LIBC', '-pthread', extra_cflags],
+			c_args: [host_test_c_args + '-D_GNU_SOURCE', '-DUSE_HOST_LIBC', '-pthread', '-fno-builtin', extra_cflags],
 			link_args: ['-lresolv', '-ldl', '-pthread', '-lm', '-lrt'],
 			native: true,
 		)
@@ -341,6 +347,31 @@ foreach test_name : all_test_cases
 			)
 		else
 			test(test_short_name, exec, suite: ['host-libc', test_subdir], should_fail: should_fail, timeout: timeout_sec)
+		endif
+	endif
+
+	if build_tests_cross_libc and not cross_libc_excluded_test_cases.contains(test_name)
+		if test_name in extra_cflags_test_cases
+			extra_cflags = extra_cflags_test_cases[test_name]
+		else
+			extra_cflags = []
+		endif
+
+		exec = executable('cross-libc-' + test_exec_name, test_name + '.c',
+			build_rpath: meson.global_build_root(),
+			override_options: test_override_options,
+			c_args: ['-D_GNU_SOURCE', '-DUSE_CROSS_LIBC', '-pthread', '-fno-builtin', extra_cflags],
+			link_args: ['-lresolv', '-ldl', '-pthread', '-lm', '-lrt'],
+		)
+
+		# TODO: handle wrapped tests
+		if not wrapped_test_cases.contains(test_name)
+			test(test_short_name, exec,
+				suite: ['cross-libc', test_subdir],
+				should_fail: should_fail,
+				timeout: timeout_sec,
+				env: ['QEMU_LD_PREFIX=' + cross_libc_ld_prefix]
+			)
 		endif
 	endif
 endforeach

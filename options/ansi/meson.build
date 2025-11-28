@@ -329,5 +329,6 @@ if not headers_only
 		pic: true,
 		include_directories: libc_include_dirs,
 		dependencies: libc_deps,
-		c_args: [compiler_c_args, '-Wno-implicit', '-Wno-parentheses', '-Wno-sign-compare', '-Wno-attributes', '-Wno-unknown-pragmas'])
+		c_args: [mlibc_c_args, compiler_c_args, '-Wno-implicit', '-Wno-parentheses', '-Wno-sign-compare', '-Wno-attributes', '-Wno-unknown-pragmas'],
+		link_args: [mlibc_link_args])
 endif

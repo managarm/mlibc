@@ -8,12 +8,6 @@
 #include <stdbool.h>
 #include <errno.h>
 
-#ifdef USE_HOST_LIBC
-#define TEST_PORT 31337
-#else
-#define TEST_PORT 42069
-#endif
-
 static struct sockaddr_in connect_addr, accept_addr;
 static int listen_fd;
 
@@ -73,7 +67,7 @@ static int socket_setup(void)
 	memset(&addr, 0, sizeof(struct sockaddr_in));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	addr.sin_port = htons(TEST_PORT);
+	addr.sin_port = htons(0);
 
 	int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -97,6 +91,13 @@ static int socket_setup(void)
 		exit(1);
 	}
 
+	socklen_t len = sizeof(connect_addr);
+	ret = getsockname(socket_fd, (struct sockaddr *)&connect_addr, &len);
+	if(ret == -1) {
+		perror("getsockname");
+		exit(1);
+	}
+
 	ret = listen(socket_fd, 5);
 
 	if(ret == -1) {
@@ -108,11 +109,6 @@ static int socket_setup(void)
 }
 
 int main() {
-	memset(&connect_addr, 0, sizeof(connect_addr));
-	connect_addr.sin_family = AF_INET;
-	connect_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-	connect_addr.sin_port = htons(TEST_PORT);
-
 	for(size_t i = 0; i < 4; i++) {
 		listen_fd = socket_setup();
 		if(!run_test(permutations[i])) {

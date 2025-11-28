@@ -5,6 +5,7 @@ on: [pull_request, merge_group]
 jobs:
     build-mlibc:
         strategy:
+            fail-fast: false
             matrix:
                 arch: [x86_64, riscv64, aarch64, x86, m68k, loongarch64]
                 builds: [mlibc, mlibc-static, mlibc-shared, mlibc-ansi-only, mlibc-headers-only]
@@ -19,13 +20,39 @@ jobs:
         runs-on: ubuntu-latest
         container: debian:trixie
         steps:
+          - name: Setup
+            run: |
+                case "${{matrix.arch}}" in
+                  x86)
+                    DEBIAN_ARCH=i386
+                    DEBIAN_MULTILIB=i686
+                    ;;
+                  x86_64)
+                    DEBIAN_ARCH=amd64
+                    DEBIAN_MULTILIB=x86_64
+                    ;;
+                  aarch64)
+                    DEBIAN_ARCH=arm64
+                    DEBIAN_MULTILIB=aarch64
+                    ;;
+                  loongarch64)
+                    DEBIAN_ARCH=loong64
+                    DEBIAN_MULTILIB=loongarch64
+                    ;;
+                  *)
+                    DEBIAN_ARCH=${{matrix.arch}}
+                    DEBIAN_MULTILIB=${{matrix.arch}}
+                    ;;
+                esac
+                echo "DEBIAN_ARCH=$DEBIAN_ARCH" >> "$GITHUB_ENV"
+                echo "DEBIAN_MULTILIB=$DEBIAN_MULTILIB" >> "$GITHUB_ENV"
           - name: Install prerequisites
             run: |
                 apt-get update
                 apt-get install -y meson ninja-build qemu-user \
                                 python3-setuptools python3-jsonschema \
                                 python3-pexpect python3-pip netbase clang lld \
-                                git rsync wget patchelf
+                                git rsync wget patchelf libc6-dev-$DEBIAN_ARCH-cross
                 case "${{matrix.arch}}" in \
                   x86) \
                     apt-get install -y gcc-i686-linux-gnu g++-i686-linux-gnu;; \
@@ -64,6 +91,7 @@ jobs:
               define_options:
                 arch: ${{matrix.arch}}
                 compiler: ${{matrix.compiler}}
+                multilib-path: "/usr/$DEBIAN_MULTILIB-linux-gnu"
               EOF
               xbstrap init ../src
             working-directory: build/
@@ -99,6 +127,8 @@ jobs:
           - name: Test mlibc
             run: 'meson test -v -C pkg-builds/${{matrix.builds}}'
             working-directory: build/
+            env:
+              LOCPATH: "${{ github.workspace }}/build/packages/locale-data/usr/lib/locale/"
 
     compile-sysdeps:
         strategy:

@@ -18,13 +18,13 @@ static void test_affinity() {
 	pthread_attr_destroy(&attr);
 }
 
-#if !defined(USE_HOST_LIBC) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
+#if (!defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
 static void test_sigmask() {
 	pthread_attr_t attr;
 	sigset_t set;
 	sigemptyset(&set);
 	sigaddset(&set, SIGUSR1);
-#ifndef USE_HOST_LIBC
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
 	sigaddset(&set, SIGCANCEL);
 #endif
 
@@ -37,7 +37,7 @@ static void test_sigmask() {
 	assert(!pthread_attr_getsigmask_np(&attr, &other_set));
 
 	assert(sigismember(&other_set, SIGUSR1));
-#ifndef USE_HOST_LIBC
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
 	// Test whether internal signals get filtered properly.
 	assert(!sigismember(&other_set, SIGCANCEL));
 #endif
@@ -77,11 +77,11 @@ static void test_getattrnp() {
 
 	pthread_attr_destroy(&attr);
 }
-#endif // !defined(USE_HOST_LIBC) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
+#endif // (!defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
 
 int main() {
 	test_affinity();
-#if !defined(USE_HOST_LIBC) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
+#if (!defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
 	test_sigmask();
 	test_getattrnp();
 #endif
