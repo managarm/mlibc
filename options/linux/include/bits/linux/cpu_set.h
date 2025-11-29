@@ -38,6 +38,8 @@ int __mlibc_cpu_count(const size_t __setsize, const cpu_set_t *__set);
 #define CPU_COUNT_S(setsize, set) __mlibc_cpu_count((setsize), (set))
 #define CPU_COUNT(set) CPU_COUNT_S(sizeof(cpu_set_t), set)
 
+#define CPU_SETSIZE __CPU_SETSIZE
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus

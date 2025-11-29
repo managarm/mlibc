@@ -31,8 +31,10 @@
 
 #define __MLIBC_THREAD_MUTEX_INITIALIZER {0, 0, 0, 0}
 
-struct sched_param {
-	int sched_priority;
+/* KEEP IN SYNC WITH `struct sched_param`! */
+struct __mlibc_sched_param {
+	int __sched_priority;
+	/* TODO: add missing [SS|TSP] fields */
 };
 
 struct __mlibc_thread_data;
@@ -44,7 +46,7 @@ struct __mlibc_threadattr {
 	int __mlibc_detachstate;
 	int __mlibc_scope;
 	int __mlibc_inheritsched;
-	struct sched_param __mlibc_schedparam;
+	struct __mlibc_sched_param __mlibc_schedparam;
 	int __mlibc_schedpolicy;
 	cpu_set_t *__mlibc_cpuset;
 	size_t __mlibc_cpusetsize;
