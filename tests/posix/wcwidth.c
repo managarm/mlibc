@@ -33,13 +33,14 @@ void assertWidthIs(int expected_width, wchar_t c) {
 	tests_run++;
 	int actual_width = wcwidth(c);
 	if (actual_width != expected_width) {
-		fprintf(stderr, "ERROR: wcwidth(U+%04" WCHAR_SPEC "x, '%lc') returned %d, expected %d\n", c, (wint_t) c, actual_width, expected_width);
+		printf("ERROR: wcwidth(U+%04" WCHAR_SPEC "x, '%lc') returned %d, expected %d\n", c, (wint_t) c, actual_width, expected_width);
 		test_failures++;
 	}
 }
 
 int main() {
 	setlocale(LC_CTYPE, "C.UTF-8");
+
 	assertWidthIs(1, 'a');
 	assertWidthIs(1, L'ö');
 
@@ -54,7 +55,7 @@ int main() {
 	assertWidthIs(2, 0x2070E);
 	assertWidthIs(2, 0x20731);
 
-#ifndef USE_HOST_LIBC
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
 	assertWidthIs(1, 0x11A3);
 #endif
 

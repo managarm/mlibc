@@ -12,9 +12,9 @@ if patchelf.found()
 	test_env += ['LD_LIBRARY_PATH=']
 	test_native_env += ['LD_LIBRARY_PATH=']
 
-	libfoo = shared_library('foo', 'libfoo.c', link_args: test_additional_link_args)
+	libfoo = shared_library('foo', 'libfoo.c', link_args: test_additional_link_args + mlibc_link_args)
 	libbar_unpatched = shared_library('bar-unpatched', 'libbar.c',
-		link_args: test_additional_link_args,
+		link_args: test_additional_link_args + mlibc_link_args,
 		override_options: 'b_sanitize=none',
 		dependencies: libc_dep,
 		link_with: libfoo)

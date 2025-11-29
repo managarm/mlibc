@@ -28,7 +28,7 @@ struct format_test_cases {
 	{"%u", "0420", 420, T_UINT, 1},
 	{"%o", "0420", 0420, T_UINT, 1},
 	{"%x", "0xCB7", 0xCB7, T_UINT, 1},
-#ifndef USE_HOST_LIBC
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
 	{"%b", "0b1011", 0b1011, T_UINT, 1},
 	{"%b", "0B1011", 0b1011, T_UINT, 1},
 #endif

@@ -48,7 +48,7 @@ int main () {
 	DO_TEST("-1101110100110100100000", -3624224, -1, strtol, 2);
 	DO_TEST("0x6fffff", 0x6fffff, -1, strtol, 0);
 	DO_TEST("0666", 0666, -1, strtol, 0);
-#ifndef USE_HOST_LIBC
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
 	DO_TEST("1100", 0b1100, -1, strtol, 2);
 	DO_TEST("0b1100", 0b1100, -1, strtol, 0);
 	DO_TEST("0B1100", 0b1100, -1, strtol, 0);

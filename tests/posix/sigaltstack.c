@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 static jmp_buf env;

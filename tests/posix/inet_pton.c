@@ -113,7 +113,7 @@ int main() {
 	{
 		int ret = inet_pton(AF_INET6, "1100::FFFF:204.152.189.116", &test6);
 		(void) ret;
-#if !defined(USE_HOST_LIBC)
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
 		assert(!ret);
 #endif
 	}

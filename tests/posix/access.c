@@ -6,6 +6,8 @@
 
 #ifdef USE_HOST_LIBC
 #define TEST_FILE "access-host-libc.tmp"
+#elif defined(USE_CROSS_LIBC)
+#define TEST_FILE "access-cross-libc.tmp"
 #else
 #define TEST_FILE "access.tmp"
 #endif

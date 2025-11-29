@@ -39,6 +39,14 @@ no_headers = get_option('no_headers')
 library_type = get_option('default_library')
 build_tests = get_option('build_tests')
 build_tests_host_libc = get_option('build_tests_host_libc')
+build_tests_cross_libc = get_option('build_tests_cross_libc')
+cross_libc_ld_prefix = get_option('cross_libc_ld_prefix')
+
+# Disable cross-libc tests if no multilib is given, or build == host
+if cross_libc_ld_prefix == '' or build_machine.cpu_family() == host_machine.cpu_family()
+	build_tests_cross_libc = false
+endif
+
 libgcc_dependency = get_option('libgcc_dependency')
 internal_conf = configuration_data()
 mlibc_conf = configuration_data()
@@ -80,11 +88,10 @@ if not headers_only
 	libc_deps += frigg_dep
 	rtld_deps += frigg_dep
 
-	add_project_arguments('-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', language: ['c', 'cpp'])
-	add_project_arguments('-nostdinc', '-fno-builtin', '-ffreestanding', language: ['c', 'cpp'])
+	mlibc_c_args = ['-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', '-nostdinc', '-fno-builtin', '-ffreestanding']
+	mlibc_link_args = ['-nostdlib']
 	add_project_arguments('-Werror=misleading-indentation', language: ['c', 'cpp'])
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
-	add_project_link_arguments('-nostdlib', language: ['c', 'cpp'])
 
 	if get_option('buildtype').startswith('debug')
 		add_project_arguments('-D__MLIBC_DEBUG', language : ['c', 'cpp'])
@@ -505,12 +512,12 @@ if not headers_only
 		'-DMLIBC_BUILDING_RTLD',
 		'-Wno-extern-c-compat',
 		'-Wno-unknown-pragmas',
-	]
+	] + mlibc_c_args
 
 	libc_cpp_args = [
 		'-Wno-unknown-pragmas',
 		'-DFRG_HAVE_LIBC',
-	]
+	] + mlibc_c_args
 
 	if c_compiler.get_id() == 'clang'
 		libc_cpp_args += ['-fno-sanitize=function', '-Wno-vla-cxx-extension']
@@ -534,13 +541,16 @@ if not headers_only
 		]
 		ld_static_lib = static_library(ld_library_name, rtld_sources,
 			name_prefix: '',
-			cpp_args: ld_cpp_args + static_cpp_args,
+			cpp_args: mlibc_c_args + ld_cpp_args + static_cpp_args,
+			link_args: mlibc_link_args,
 			include_directories: rtld_include_dirs,
 			dependencies: rtld_deps + rtlib_deps,
 			install: false
 		)
 		libc_static = static_library('c', libc_all_sources,
+			c_args: mlibc_c_args,
 			cpp_args: static_cpp_args + ['-fno-stack-protector', libc_cpp_args],
+			link_args: mlibc_link_args,
 			include_directories: libc_include_dirs,
 			dependencies: libc_deps + rtlib_deps,
 			link_with: [ld_static_lib],
@@ -551,7 +561,8 @@ if not headers_only
 	if library_type in ['shared', 'both']
 		ld_shared_lib = shared_library(ld_library_name, rtld_sources + rtld_dso_sources,
 			name_prefix: '',
-			cpp_args: ld_cpp_args,
+			cpp_args: mlibc_c_args + ld_cpp_args,
+			link_args: mlibc_link_args,
 			include_directories: rtld_include_dirs,
 			dependencies: rtld_deps + rtlib_deps,
 			install: true
@@ -559,30 +570,32 @@ if not headers_only
 		hide_everything_ld = (meson.current_source_dir()
 				      / 'scripts/hide-everything.ld')
 		libc_shared = shared_library('c', libc_all_sources,
+			c_args: [mlibc_c_args],
 			cpp_args: [libc_cpp_args],
 			include_directories: libc_include_dirs,
 			dependencies: libc_deps + rtlib_deps,
 			link_with: [ld_shared_lib],
 			link_whole: libc_sublibs,
-			link_args: ['-Wl,--version-script,' + hide_everything_ld],
+			link_args: ['-Wl,--version-script,' + hide_everything_ld, mlibc_link_args],
 			link_depends: [hide_everything_ld],
 			install: true
 		)
 	endif
 
-	library('pthread', 'dummy-libs/libpthread/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
-	library('rt', 'dummy-libs/librt/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
-	library('util', 'dummy-libs/libutil/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
-	library('m', 'dummy-libs/libm/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
-	library('resolv', 'dummy-libs/libresolv/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
-	library('dl', 'dummy-libs/libdl/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
-	library('ssp', 'dummy-libs/libssp/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
-	library('ssp_nonshared', 'dummy-libs/libssp_nonshared/src/dummy.cpp', cpp_args: libc_cpp_args, install: true)
+	library('pthread', 'dummy-libs/libpthread/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
+	library('rt', 'dummy-libs/librt/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
+	library('util', 'dummy-libs/libutil/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
+	library('m', 'dummy-libs/libm/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
+	library('resolv', 'dummy-libs/libresolv/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
+	library('dl', 'dummy-libs/libdl/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
+	library('ssp', 'dummy-libs/libssp/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
+	library('ssp_nonshared', 'dummy-libs/libssp_nonshared/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
 endif
 
 summary_info = {}
 summary_info += {'Build tests': build_tests}
 summary_info += {'Build host-libc tests': build_tests_host_libc}
+summary_info += {'Build cross-libc tests': build_tests_cross_libc}
 summary(summary_info, bool_yn: true, section: 'tests')
 
 summary_info = {}

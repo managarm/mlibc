@@ -25,9 +25,9 @@ void *worker(void* arg) {
 int main() {
 	assert(!pthread_spin_init(&lock, PTHREAD_PROCESS_PRIVATE));
 	assert(!pthread_spin_lock(&lock));
-	
+
 	/* glibc does not implement this optional POSIX behavior and hangs */
-#ifndef USE_HOST_LIBC
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
 	assert(pthread_spin_lock(&lock) == EDEADLK);
 #endif
 

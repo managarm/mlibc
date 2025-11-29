@@ -1,8 +1,8 @@
 # Create two libraries with the same SONAME.
 bar_soname = '-Wl,-soname=libbar.so'
 
-libfoo = shared_library('foo', 'libfoo.c', link_args: '-Wl,-soname=libbar.so')
-libbar = shared_library('bar', 'libbar.c', link_args: '-Wl,-soname=libbar.so')
+libfoo = shared_library('foo', 'libfoo.c', link_args: ['-Wl,-soname=libbar.so'] + mlibc_link_args)
+libbar = shared_library('bar', 'libbar.c', link_args: ['-Wl,-soname=libbar.so'] + mlibc_link_args)
 test_depends = [libfoo, libbar]
 
 libfoo_native = shared_library('native-foo', 'libfoo.c',

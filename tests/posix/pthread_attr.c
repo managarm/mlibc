@@ -134,7 +134,7 @@ static void test_stackaddr() {
 }
 #pragma GCC diagnostic pop
 
-#if !defined(USE_HOST_LIBC) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
+#if (!defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
 static void test_stack() {
 	pthread_attr_t attr;
 	void *stackaddr = (void*)1;
@@ -158,7 +158,7 @@ int main() {
 	test_schedparam();
 	test_schedpolicy();
 	test_stackaddr();
-#if !defined(USE_HOST_LIBC) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
+#if (!defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
 	test_stack();
 #endif
 

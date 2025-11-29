@@ -10,13 +10,13 @@ test_native_env += ['LD_LIBRARY_PATH=' + test_ld_path]
 
 libfoo = shared_library('foo', 'libfoo.c',
 	dependencies: libc_dep,
-	link_args: test_additional_link_args,
+	link_args: test_additional_link_args + mlibc_link_args,
 )
 
 test_depends = [libfoo]
 
 libfoo_native = shared_library('native-foo', 'libfoo.c',
-	link_args: ['-ldl'] + test_additional_link_args,
+	link_args: ['-ldl'] + test_additional_link_args + mlibc_link_args,
 	native: true
 )
 test_native_depends = [libfoo_native]

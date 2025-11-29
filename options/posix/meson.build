@@ -71,7 +71,8 @@ if not headers_only
 		pic: true,
 		include_directories: libc_include_dirs,
 		dependencies: libc_deps,
-		c_args: ['-Wno-unused', '-Wno-implicit', '-Wno-parentheses', '-Wno-sign-compare', '-Wno-attributes', '-Wno-unknown-pragmas', '-Wno-implicit-fallthrough', '-Wno-unused-parameter']
+		c_args: mlibc_c_args + ['-Wno-unused', '-Wno-implicit', '-Wno-parentheses', '-Wno-sign-compare', '-Wno-attributes', '-Wno-unknown-pragmas', '-Wno-implicit-fallthrough', '-Wno-unused-parameter'],
+		link_args: mlibc_link_args,
 	)
 endif
 
