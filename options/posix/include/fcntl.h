@@ -12,6 +12,9 @@
 #include <bits/ssize_t.h>
 #include <bits/size_t.h>
 
+#include <sys/stat.h>
+#include <unistd.h>
+
 #if defined(_GNU_SOURCE)
 #include <bits/posix/iovec.h>
 #endif

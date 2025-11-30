@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <mlibc-config.h>
 #include <stdint.h>
+#include <sys/socket.h>
 
 #ifdef __cplusplus
 extern "C" {
