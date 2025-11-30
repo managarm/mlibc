@@ -63,7 +63,7 @@ struct sockaddr {
 /* Returns a pointer to the next header or nullptr if there is none. */
 #define CMSG_NXTHDR(m, c) \
 	((c)->cmsg_len < sizeof(struct cmsghdr) || \
-		(ptrdiff_t)(sizeof(struct cmsghdr) + __CMSG_ALIGN((c)->cmsg_len)) \
+		(ssize_t)(sizeof(struct cmsghdr) + __CMSG_ALIGN((c)->cmsg_len)) \
 			>= __MLIBC_MHDR_LIMIT(m) - (char *)(c) \
 	? (struct cmsghdr *)0 : (struct cmsghdr *)__MLIBC_CMSG_NEXT(c))
 
