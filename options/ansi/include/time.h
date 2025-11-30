@@ -70,7 +70,7 @@ struct tm *localtime(const time_t *__timer);
 size_t strftime(char *__restrict __dest, size_t __max_size,
 		const char *__restrict __format, const struct tm *__restrict __ptr);
 
-#if __MLIBC_POSIX1
+#if defined(_DEFAULT_SOURCE) || __MLIBC_POSIX1
 void tzset(void);
 #endif
 
