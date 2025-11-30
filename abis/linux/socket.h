@@ -91,7 +91,7 @@ struct cmsghdr {
 #define AF_INET         2
 #define AF_INET6        10
 
-#if defined(_DEFAULT_SOURCE)
+#if defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN
 #define PF_UNSPEC       0
 #define PF_LOCAL        1
 #define PF_UNIX         PF_LOCAL
@@ -187,7 +187,7 @@ struct cmsghdr {
 #define AF_SMC          PF_SMC
 #define AF_XDP          PF_XDP
 #define AF_MAX          PF_MAX
-#endif /* defined(_DEFAULT_SOURCE) */
+#endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
 #define SO_DEBUG        1
 #define SO_REUSEADDR    2
