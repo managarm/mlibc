@@ -37,14 +37,28 @@ int sys_futex_tid() {
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	// This implementation is inherently signal-safe.
+	int err = 0;
+
 	if (time) {
-		if (helFutexWait(pointer, expected, time->tv_nsec + time->tv_sec * 1000000000))
-			return -1;
-		return 0;
+		uint64_t tick;
+		HEL_CHECK(helGetClock(&tick));
+
+		err = helFutexWait(pointer, expected, tick + time->tv_nsec + time->tv_sec * 1000000000);
+	} else {
+		err = helFutexWait(pointer, expected, -1);
 	}
-	if (helFutexWait(pointer, expected, -1))
-		return -1;
-	return 0;
+
+	switch (err) {
+		case kHelErrNone: return 0;
+		case kHelErrTimeout: return ETIMEDOUT;
+		case kHelErrCancelled: return EINTR;
+		case kHelErrIllegalArgs: return EINVAL;
+		default: {
+			mlibc::infoLogger() << "mlibc: helFutexWait returned unexpected error "
+								<< err << frg::endlog;
+			return EINVAL;
+		}
+	}
 }
 
 int sys_futex_wake(int *pointer) {
