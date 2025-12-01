@@ -3,6 +3,8 @@
 
 #ifdef USE_HOST_LIBC
 #define TEST_FILE "ungetc-host-libc.tmp"
+#elif defined(USE_CROSS_LIBC)
+#define TEST_FILE "ungetc-cross-libc.tmp"
 #else
 #define TEST_FILE "ungetc.tmp"
 #endif
@@ -49,7 +51,7 @@ void test(int buffering) {
 		assert(fgetc(f) == c - '0' + 'a');
 	}
 
-#ifndef USE_HOST_LIBC
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
 	// Too many ungetcs should fail.
 	int eof = 0;
 	for (int i = 0; i < 100; i++) {

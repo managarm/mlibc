@@ -1,4 +1,4 @@
-#if !defined(USE_HOST_LIBC)
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
 #include <mlibc-config.h>
 #endif
 
@@ -13,7 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#if __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC)
+#if __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC) || defined(USE_CROSS_LIBC)
 #include <ifaddrs.h>
 
 static bool has_ipv4_addr(void) {
@@ -51,7 +51,7 @@ static bool has_ipv6_addr(void) {
 	freeifaddrs(addrs);
 	return found;
 }
-#endif // __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC)
+#endif // __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC) || defined(USE_CROSS_LIBC)
 
 int main() {
 	struct addrinfo *res = NULL;
@@ -125,7 +125,7 @@ int main() {
 	freeaddrinfo(res);
 	res = NULL;
 
-#if __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC)
+#if __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC) || defined(USE_CROSS_LIBC)
 	// Test with AF_INET
 	hints.ai_family = AF_INET;
 	ret = getaddrinfo("localhost", NULL, &hints, &res);
@@ -183,7 +183,7 @@ int main() {
 
 	freeaddrinfo(res);
 	res = NULL;
-#endif // __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC)
+#endif // __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC) || defined(USE_CROSS_LIBC)
 
 	// Test AI_NUMERICSERV.
 	hints = (struct addrinfo){0};

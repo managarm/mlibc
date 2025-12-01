@@ -8,6 +8,8 @@
 
 #ifdef USE_HOST_LIBC
 #define TEST_BASE "/tmp/mlibc-realpath-host-libc"
+#elif defined(USE_CROSS_LIBC)
+#define TEST_BASE "/tmp/mlibc-realpath-cross-libc"
 #else
 #define TEST_BASE "/tmp/mlibc-realpath"
 #endif

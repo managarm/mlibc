@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <limits.h>
 #include <locale.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -426,7 +427,7 @@ int main() {
 	fprintf(stderr, "ret %d '%.128s'\n", ret, buf);
 	assert(!strncmp(buf, "001.00d", 128));
 
-#if !USE_HOST_LIBC
+#if !USE_HOST_LIBC && !USE_CROSS_LIBC
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat"
 #pragma GCC diagnostic ignored "-Wformat-extra-args"
@@ -435,7 +436,7 @@ int main() {
 	assert(ret < 0);
 	assert(errno == EINVAL);
 #pragma GCC diagnostic pop
-#endif // !USE_HOST_LIBC
+#endif // !USE_HOST_LIBC && !USE_CROSS_LIBC
 
 	size_t out = 0;
 	uint16_t mid = 0;
@@ -451,10 +452,12 @@ int main() {
 
 	setlocale(LC_ALL, "C.utf8");
 
-	int written = 0;
-	ret = snprintf(buf, 128, "%1$lc%2$n", (wint_t) L'π', &written);
-	fprintf(stderr, "ret %d '%.128s' out=%d\n", ret, buf, written);
-	assert(written == 2);
+	if (MB_LEN_MAX > 1) {
+		int written = 0;
+		ret = snprintf(buf, 128, "%1$lc%2$n", (wint_t) L'π', &written);
+		fprintf(stderr, "ret %d '%.128s' out=%d\n", ret, buf, written);
+		assert(written == 2);
+	}
 
 	return 0;
 }

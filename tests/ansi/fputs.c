@@ -4,6 +4,8 @@
 
 #ifdef USE_HOST_LIBC
 #define TEST_FILE "fputs-host-libc.tmp"
+#elif defined(USE_CROSS_LIBC)
+#define TEST_FILE "fputs-cross-libc.tmp"
 #else
 #define TEST_FILE "fputs.tmp"
 #endif

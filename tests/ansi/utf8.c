@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,11 +55,13 @@ int main() {
 
 #define verify_decode(in, out) verify_decode(in, out, __LINE__)
 	verify_decode("\x24", 0x24);
-	verify_decode("\xC2\xA2", 0xA2);
-	verify_decode("\xE0\xA4\xB9", 0x939);
-	verify_decode("\xE2\x82\xAC", 0x20AC);
-	verify_decode("\xED\x95\x9C", 0xD55C);
-	verify_decode("\xF0\x90\x8D\x88", 0x10348);
+	if (MB_LEN_MAX > 1) {
+		verify_decode("\xC2\xA2", 0xA2);
+		verify_decode("\xE0\xA4\xB9", 0x939);
+		verify_decode("\xE2\x82\xAC", 0x20AC);
+		verify_decode("\xED\x95\x9C", 0xD55C);
+		verify_decode("\xF0\x90\x8D\x88", 0x10348);
+	}
 	verify_decode("", L'\0');
 
 	// Check wcrtomb.

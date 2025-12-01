@@ -23,7 +23,7 @@ int main() {
 	free(p);
 
 	// It seems that glibc doesn't report error in these cases.
-#if !(defined(USE_HOST_LIBC) && defined(__GLIBC__))
+#if !((defined(USE_HOST_LIBC) || defined(USE_CROSS_LIBC)) && defined(__GLIBC__))
 	// size % align must be 0
 	p = aligned_alloc(256, 1);
 	assert(errno == EINVAL);
