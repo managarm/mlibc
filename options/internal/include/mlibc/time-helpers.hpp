@@ -12,7 +12,7 @@ namespace mlibc {
 // Converts the absolute time `abstime` to a relative time `reltime`.
 // Returns false if the conversion failed (e.g. due to over-/underflow).
 // If the absolute time has already passed, `reltime` is set to 0.
-bool time_absolute_to_relative(const clockid_t clock, const struct timespec *__restrict abstime, struct timespec *reltime) {
+inline bool time_absolute_to_relative(const clockid_t clock, const struct timespec *__restrict abstime, struct timespec *reltime) {
 	constexpr long nanos_per_second = 1'000'000'000;
 
 	if (clock != CLOCK_REALTIME && clock != CLOCK_MONOTONIC) {

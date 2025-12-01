@@ -6,6 +6,7 @@
 #include <mlibc/lock.hpp>
 #include <mlibc/threads.hpp>
 #include <mlibc/tcb.hpp>
+#include <mlibc/time-helpers.hpp>
 
 extern "C" Tcb *__rtld_allocateTcb();
 
@@ -290,7 +291,7 @@ int thread_cond_broadcast(struct __mlibc_cond *cond) {
 }
 
 int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *__restrict mutex,
-		const struct timespec *__restrict abstime) {
+		const struct timespec *__restrict abstime, clockid_t clockid) {
 	// TODO: pshared isn't supported yet.
 	__ensure(cond->__mlibc_flags == 0);
 
@@ -309,28 +310,15 @@ int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *_
 		if (abstime) {
 			// Adjust for the fact that sys_futex_wait accepts a *timeout*, but
 			// pthread_cond_timedwait accepts an *absolute time*.
-			// Note: mlibc::sys_clock_get is available unconditionally.
-			struct timespec now;
-			if (mlibc::sys_clock_get(cond->__mlibc_clock, &now.tv_sec, &now.tv_nsec))
-				__ensure(!"sys_clock_get() failed");
-
 			struct timespec timeout;
-			timeout.tv_sec = abstime->tv_sec - now.tv_sec;
-			timeout.tv_nsec = abstime->tv_nsec - now.tv_nsec;
-
-			// Check if abstime has already passed.
-			if (timeout.tv_sec < 0 || (timeout.tv_sec == 0 && timeout.tv_nsec < 0)) {
+			if (!mlibc::time_absolute_to_relative(clockid, abstime, &timeout)) {
+				if (thread_mutex_lock(mutex))
+					__ensure(!"Failed to lock the mutex");
+				return EINVAL;
+			} else if (timeout.tv_sec == 0 && timeout.tv_nsec == 0) {
 				if (thread_mutex_lock(mutex))
 					__ensure(!"Failed to lock the mutex");
 				return ETIMEDOUT;
-			} else if (timeout.tv_nsec >= nanos_per_second) {
-				timeout.tv_nsec -= nanos_per_second;
-				timeout.tv_sec++;
-				__ensure(timeout.tv_nsec < nanos_per_second);
-			} else if (timeout.tv_nsec < 0) {
-				timeout.tv_nsec += nanos_per_second;
-				timeout.tv_sec--;
-				__ensure(timeout.tv_nsec >= 0);
 			}
 
 			e = mlibc::sys_futex_wait((int *)&cond->__mlibc_seq, seq, &timeout);

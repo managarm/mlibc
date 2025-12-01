@@ -235,6 +235,8 @@ int pthread_cond_destroy(pthread_cond_t *__cond);
 int pthread_cond_wait(pthread_cond_t *__restrict __cond, pthread_mutex_t *__restrict __mtx);
 int pthread_cond_timedwait(pthread_cond_t *__restrict __cond, pthread_mutex_t *__restrict __mtx,
 		const struct timespec *__restrict __abs_timeout);
+int pthread_cond_clockwait(pthread_cond_t *__restrict __cond, pthread_mutex_t *__restrict __mtx,
+		clockid_t __clockid, const struct timespec *__restrict __abs_timeout);
 int pthread_cond_signal(pthread_cond_t *__cond);
 int pthread_cond_broadcast(pthread_cond_t *__cond);
 
