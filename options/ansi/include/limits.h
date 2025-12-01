@@ -109,7 +109,7 @@
 #define _POSIX_MQ_PRIO_MAX 32
 #define _POSIX_NAME_MAX 14
 #define _POSIX_NGROUPS_MAX 8
-#define _POSIX_OPEN_MAX 16
+#define _POSIX_OPEN_MAX 20
 #define _POSIX_PATH_MAX 256
 #define _POSIX_PIPE_BUF 512
 #define _POSIX_RE_DUP_MAX 255
@@ -117,7 +117,7 @@
 #define _POSIX_SEM_NSEMS_MAX 256
 #define _POSIX_SEM_VALUE_MAX 32767
 #define _POSIX_SIGQUEUE_MAX 32
-#define _POSIX_SSIZE_MAX SSIZE_MAX
+#define _POSIX_SSIZE_MAX 32767
 #define _POSIX_SS_REPL_MAX 4
 #define _POSIX_STREAM_MAX 8
 #define _POSIX_SYMLINK_MAX 255
@@ -159,6 +159,10 @@
 #define PTHREAD_KEYS_MAX 1024
 
 #include <abi-bits/limits.h>
+
+#if __MLIBC_POSIX_OPTION
+#include <abi-bits/sig-limits.h>
+#endif
 
 #define IOV_MAX __MLIBC_IOV_MAX
 #define LOGIN_NAME_MAX __MLIBC_LOGIN_NAME_MAX

@@ -21,7 +21,11 @@ extern "C" {
 char *tempnam(const char *__dir, const char *__pfx);
 #endif /* defined(_DEFAULT_SOURCE) || (defined(__MLIBC_XOPEN) && __MLIBC_XOPEN < 800) */
 
+#define L_ctermid 20
+
 #ifndef __MLIBC_ABI_ONLY
+
+char *ctermid(char *__s);
 
 int fileno(FILE *__file);
 FILE *fdopen(int __fd, const char *__mode);

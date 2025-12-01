@@ -4,9 +4,6 @@
 #define __MLIBC_IOV_MAX 1024
 #define __MLIBC_LOGIN_NAME_MAX 256
 
-/* Niceness related */
-#define NZERO 20
-
 /* Maximum hostname length, posix defines it as 255 */
 #define __MLIBC_HOST_NAME_MAX 255
 
