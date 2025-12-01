@@ -20,6 +20,7 @@
 #include <mlibc/tcb.hpp>
 #include <mlibc/tid.hpp>
 #include <mlibc/threads.hpp>
+#include <mlibc/time-helpers.hpp>
 
 static bool enableTrace = false;
 
@@ -1190,7 +1191,7 @@ int pthread_barrier_wait(pthread_barrier_t *barrier) {
 // ----------------------------------------------------------------------------
 
 namespace {
-	void rwlock_m_lock(pthread_rwlock_t *rw, bool excl) {
+	int rwlock_m_lock(pthread_rwlock_t *rw, bool excl, const struct timespec *__restrict timeout = nullptr) {
 		unsigned int m_expected = __atomic_load_n(&rw->__mlibc_m, __ATOMIC_RELAXED);
 		while(true) {
 			if(m_expected) {
@@ -1205,7 +1206,9 @@ namespace {
 				}
 
 				// Wait on the futex.
-				mlibc::sys_futex_wait((int *)&rw->__mlibc_m, m_expected | mutex_waiters_bit, nullptr);
+				int e = mlibc::sys_futex_wait((int *)&rw->__mlibc_m, m_expected | mutex_waiters_bit, timeout);
+				if (e != 0 && e != EAGAIN && e != EINTR)
+					return e;
 
 				// Opportunistically try to take the lock after we wake up.
 				m_expected = 0;
@@ -1219,6 +1222,8 @@ namespace {
 					break;
 			}
 		}
+
+		return 0;
 	}
 
 	int rwlock_m_trylock(pthread_rwlock_t *rw, bool excl) {
@@ -1336,7 +1341,7 @@ int pthread_rwlock_wrlock(pthread_rwlock_t *rw) {
 
 		// Try to set the waiters bit.
 		if(!(rc_expected & rc_waiters_bit)) {
-			unsigned int desired = rc_expected | rc_count_mask;
+			unsigned int desired = rc_expected | rc_waiters_bit;
 			if(!__atomic_compare_exchange_n(&rw->__mlibc_rc,
 					&rc_expected, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
 				continue;
@@ -1344,6 +1349,70 @@ int pthread_rwlock_wrlock(pthread_rwlock_t *rw) {
 
 		// Wait on the futex.
 		mlibc::sys_futex_wait((int *)&rw->__mlibc_rc, rc_expected | rc_waiters_bit, nullptr);
+
+		// Re-check the reader counter.
+		rc_expected = __atomic_load_n(&rw->__mlibc_rc, __ATOMIC_ACQUIRE);
+	}
+
+	return 0;
+}
+
+int pthread_rwlock_timedwrlock(pthread_rwlock_t *rw, const struct timespec *__restrict abstime) {
+	return pthread_rwlock_clockwrlock(rw, CLOCK_REALTIME, abstime);
+}
+
+int pthread_rwlock_clockwrlock(pthread_rwlock_t *rw, clockid_t clock, const struct timespec *__restrict abstime) {
+	SCOPE_TRACE();
+
+	if (rw->__mlibc_flags != 0) {
+		mlibc::panicLogger() << "mlibc: pthread_rwlock_t flags were non-zero"
+			<< frg::endlog;
+	}
+
+	// Adjust for the fact that sys_futex_wait accepts a *timeout*, but
+	// pthread_rwlock_timedwrlock accepts an *absolute time*.
+	struct timespec timeout;
+	if (!mlibc::time_absolute_to_relative(clock, abstime, &timeout))
+		return EINVAL;
+	if (timeout.tv_sec == 0 && timeout.tv_nsec == 0) {
+		int e = pthread_rwlock_trywrlock(rw);
+		if (e == EBUSY)
+			return ETIMEDOUT;
+		return e;
+	}
+
+	// Take the __mlibc_m mutex.
+	// Will be released in pthread_rwlock_unlock().
+	if (int e = rwlock_m_lock(rw, true, &timeout); e)
+		return ETIMEDOUT;
+
+	// Now wait until there are no more readers.
+	unsigned int rc_expected = __atomic_load_n(&rw->__mlibc_rc, __ATOMIC_ACQUIRE);
+	while(true) {
+		if(!rc_expected)
+			break;
+
+		__ensure(rc_expected & rc_count_mask);
+
+		// Try to set the waiters bit.
+		if(!(rc_expected & rc_waiters_bit)) {
+			unsigned int desired = rc_expected | rc_waiters_bit;
+			if(!__atomic_compare_exchange_n(&rw->__mlibc_rc,
+					&rc_expected, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
+				continue;
+		}
+
+		if (!mlibc::time_absolute_to_relative(clock, abstime, &timeout))
+			return EINVAL;
+		if (timeout.tv_sec == 0 && timeout.tv_nsec == 0)
+			return ETIMEDOUT;
+
+		// Wait on the futex.
+		int e = mlibc::sys_futex_wait((int *)&rw->__mlibc_rc, rc_expected | rc_waiters_bit, &timeout);
+		if (e != 0 && e != EAGAIN && e != EINTR) {
+			rwlock_m_unlock(rw);
+			return e;
+		}
 
 		// Re-check the reader counter.
 		rc_expected = __atomic_load_n(&rw->__mlibc_rc, __ATOMIC_ACQUIRE);
@@ -1379,6 +1448,39 @@ int pthread_rwlock_rdlock(pthread_rwlock_t *rw) {
 
 	// Increment the reader count while holding the __mlibc_m mutex.
 	rwlock_m_lock(rw, false);
+	__atomic_fetch_add(&rw->__mlibc_rc, 1, __ATOMIC_ACQUIRE);
+	rwlock_m_unlock(rw);
+
+	return 0;
+}
+
+int pthread_rwlock_timedrdlock(pthread_rwlock_t *rw, const struct timespec *__restrict abstime) {
+	return pthread_rwlock_clockrdlock(rw, CLOCK_REALTIME, abstime);
+}
+
+int pthread_rwlock_clockrdlock(pthread_rwlock_t *rw, clockid_t clock, const struct timespec *__restrict abstime) {
+	SCOPE_TRACE();
+
+	if (rw->__mlibc_flags != 0) {
+		mlibc::panicLogger() << "mlibc: pthread_rwlock_t flags were non-zero"
+			<< frg::endlog;
+	}
+
+	// Adjust for the fact that sys_futex_wait accepts a *timeout*, but
+	// pthread_rwlock_timedwrlock accepts an *absolute time*.
+	struct timespec timeout;
+	if (!mlibc::time_absolute_to_relative(clock, abstime, &timeout))
+		return EINVAL;
+	if (timeout.tv_sec == 0 && timeout.tv_nsec == 0) {
+		if (int e = pthread_rwlock_tryrdlock(rw); e != EBUSY)
+			return e;
+		return ETIMEDOUT;
+	}
+
+	// Increment the reader count while holding the __mlibc_m mutex.
+	if (int e = rwlock_m_lock(rw, false, &timeout); e)
+		return e;
+
 	__atomic_fetch_add(&rw->__mlibc_rc, 1, __ATOMIC_ACQUIRE);
 	rwlock_m_unlock(rw);
 
