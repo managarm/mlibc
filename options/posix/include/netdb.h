@@ -7,6 +7,7 @@
 #include <bits/posix/in_addr_t.h>
 #include <abi-bits/socklen_t.h>
 #include <mlibc-config.h>
+#include <sys/socket.h>
 
 #define AI_PASSIVE 0x01
 #define AI_CANONNAME 0x02

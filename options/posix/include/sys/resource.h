@@ -10,6 +10,7 @@
 #include <bits/ansi/time_t.h>
 #include <bits/posix/id_t.h>
 #include <bits/posix/timeval.h>
+#include <sys/time.h>
 
 #define RLIM_INFINITY ((rlim_t)-1)
 #define RLIM_SAVED_MAX ((rlim_t)-1)
