@@ -108,6 +108,8 @@ all_test_cases = [
 	'posix/wcsdup',
 	'posix/wcsncasecmp',
 	'posix/getsubopt',
+	'posix/pthread_rwlock_timedrdlock',
+	'posix/pthread_rwlock_timedwrlock',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
