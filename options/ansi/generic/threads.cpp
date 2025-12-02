@@ -90,6 +90,18 @@ int mtx_timedlock(mtx_t *__restrict mtx, const struct timespec *__restrict absti
 	}
 }
 
+int mtx_trylock(mtx_t *mtx) {
+	auto ret = mlibc::thread_mutex_trylock(mtx);
+	switch (ret) {
+		case 0:
+			return thrd_success;
+		case EBUSY:
+			return thrd_busy;
+		default:
+			return thrd_error;
+	}
+}
+
 int mtx_unlock(mtx_t *mtx) {
 	return mlibc::thread_mutex_unlock(mtx) == 0 ? thrd_success : thrd_error;
 }

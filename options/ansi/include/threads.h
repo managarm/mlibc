@@ -45,6 +45,7 @@ int mtx_init(mtx_t *__mtx, int __type);
 void mtx_destroy(mtx_t *__mtx);
 int mtx_lock(mtx_t *__mtx);
 int mtx_timedlock(mtx_t *__restrict __mtx, const struct timespec *__restrict __abstime);
+int mtx_trylock(mtx_t *__mtx);
 int mtx_unlock(mtx_t *__mtx);
 
 int cnd_init(cnd_t *__cond);
