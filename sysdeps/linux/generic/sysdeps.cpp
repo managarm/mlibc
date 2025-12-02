@@ -453,6 +453,8 @@ int sys_unlinkat(int dfd, const char *path, int flags) {
 }
 
 int sys_sleep(time_t *secs, long *nanos) {
+	__ensure(*nanos < 1'000'000'000);
+
 	struct timespec req = {
 		.tv_sec = *secs,
 		.tv_nsec = *nanos
