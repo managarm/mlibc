@@ -180,6 +180,31 @@ int thread_mutex_lock(struct __mlibc_mutex *mutex) {
 	}
 }
 
+int thread_mutex_trylock(struct __mlibc_mutex *mutex) {
+	unsigned int this_tid = mlibc::this_tid();
+	unsigned int expected = __atomic_load_n(&mutex->__mlibc_state, __ATOMIC_RELAXED);
+	if(!expected) {
+		// Try to take the mutex here.
+		if(__atomic_compare_exchange_n(&mutex->__mlibc_state,
+						&expected, this_tid, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
+			__ensure(!mutex->__mlibc_recursion);
+			mutex->__mlibc_recursion = 1;
+			return 0;
+		}
+	} else {
+		// If this (recursive) mutex is already owned by us, increment the recursion level.
+		if((expected & mutex_owner_mask) == this_tid) {
+			if(!(mutex->__mlibc_flags & mutexRecursive)) {
+				return EBUSY;
+			}
+			++mutex->__mlibc_recursion;
+			return 0;
+		}
+	}
+
+	return EBUSY;
+}
+
 int thread_mutex_unlock(struct __mlibc_mutex *mutex) {
 	// Decrement the recursion level and unlock if we hit zero.
 	__ensure(mutex->__mlibc_recursion);

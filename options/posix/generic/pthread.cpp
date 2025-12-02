@@ -48,8 +48,6 @@ private:
 
 #define SCOPE_TRACE() ScopeTrace(__FILE__, __LINE__, __FUNCTION__)
 
-static constexpr unsigned int mutexRecursive = 1;
-
 // TODO: either use uint32_t or determine the bit based on sizeof(int).
 static constexpr unsigned int mutex_owner_mask = (static_cast<uint32_t>(1) << 30) - 1;
 static constexpr unsigned int mutex_waiters_bit = static_cast<uint32_t>(1) << 31;
@@ -955,29 +953,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
 int pthread_mutex_trylock(pthread_mutex_t *mutex) {
 	SCOPE_TRACE();
 
-	unsigned int this_tid = mlibc::this_tid();
-	unsigned int expected = __atomic_load_n(&mutex->__mlibc_state, __ATOMIC_RELAXED);
-	if(!expected) {
-		// Try to take the mutex here.
-		if(__atomic_compare_exchange_n(&mutex->__mlibc_state,
-						&expected, this_tid, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
-			__ensure(!mutex->__mlibc_recursion);
-			mutex->__mlibc_recursion = 1;
-			return 0;
-		}
-	} else {
-		// If this (recursive) mutex is already owned by us, increment the recursion level.
-		if((expected & mutex_owner_mask) == this_tid) {
-			if(!(mutex->__mlibc_flags & mutexRecursive)) {
-				return EBUSY;
-			}
-			++mutex->__mlibc_recursion;
-			return 0;
-		}
-	}
-
-	return EBUSY;
-}
+	return mlibc::thread_mutex_trylock(mutex);
 
 int pthread_mutex_timedlock(pthread_mutex_t *__restrict,
 		const struct timespec *__restrict) {
