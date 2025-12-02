@@ -115,7 +115,6 @@ jobs:
           dpkg-deb -x libc6-dev-*.deb ./glibc
         working-directory: build/
 
-      # TODO: remove `--exit-with-zero-for-abi-mismatches` once this is green
       - name: Run checks
         run: |
           arch="${{matrix.arch}}"
@@ -132,7 +131,6 @@ jobs:
           python3 ../src/mlibc/scripts/header-abi-compare.py \
             --config ../src/mlibc/scripts/header-abi-compare-config.yml \
             --arch "$arch" \
-            --exit-with-zero-for-abi-mismatches \
             $extra_args \
             ./glibc/usr/*-linux-gnu/include/ \
             ./packages/mlibc-headers-only/usr/include/ \
