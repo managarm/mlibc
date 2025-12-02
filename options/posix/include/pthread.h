@@ -212,6 +212,8 @@ int pthread_mutex_lock(pthread_mutex_t *__mtx);
 int pthread_mutex_trylock(pthread_mutex_t *__mtx);
 int pthread_mutex_timedlock(pthread_mutex_t *__restrict __mtx,
 		const struct timespec *__restrict __abs_timeout);
+int pthread_mutex_clocklock(pthread_mutex_t *__restrict __mtx,
+		clockid_t __clockid, const struct timespec *__restrict __abs_timeout);
 int pthread_mutex_unlock(pthread_mutex_t *__mtx);
 
 int pthread_mutex_consistent(pthread_mutex_t *__mtx);

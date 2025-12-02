@@ -1,6 +1,10 @@
-#include <pthread.h>
 #include <assert.h>
+#include <err.h>
 #include <errno.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 #define TEST_ATTR(attr, field, value) ({ \
 		int x; \
@@ -94,10 +98,78 @@ static void testRecursive() {
 	pthread_mutex_destroy(&mutex);
 }
 
+pthread_mutex_t timedMutex;
+pthread_barrier_t timedMutexBarrier;
+
+void *testTimedLockWorker(void *arg) {
+	(void) arg;
+
+	pthread_mutex_lock(&timedMutex);
+	pthread_barrier_wait(&timedMutexBarrier);
+	usleep(1500000);
+	pthread_mutex_unlock(&timedMutex);
+
+	return NULL;
+}
+
+static void testTimedLock() {
+	pthread_t test_thread;
+
+	int ret = pthread_barrier_init(&timedMutexBarrier, NULL, 2);
+	assert(ret == 0);
+	ret = pthread_mutex_init(&timedMutex, NULL);
+	assert(ret == 0);
+
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	ts.tv_sec += 1;
+
+	ret = pthread_mutex_timedlock(&timedMutex, &ts);
+	assert(ret == 0);
+
+	ret = pthread_mutex_unlock(&timedMutex);
+	assert(ret == 0);
+
+	ret = pthread_create(&test_thread, NULL, testTimedLockWorker, NULL);
+	if (ret != 0) {
+		err(ret, "pthread_create");
+		exit(1);
+	}
+
+	pthread_barrier_wait(&timedMutexBarrier);
+
+	struct timespec startTime;
+	clock_gettime(CLOCK_REALTIME, &startTime);
+	ts = startTime;
+	ts.tv_sec += 1;
+	ret = pthread_mutex_timedlock(&timedMutex, &ts);
+	assert(ret == ETIMEDOUT);
+
+	struct timespec endTime;
+	clock_gettime(CLOCK_REALTIME, &endTime);
+
+	struct timespec diff;
+	diff.tv_sec = endTime.tv_sec - startTime.tv_sec;
+	diff.tv_nsec = endTime.tv_nsec - startTime.tv_nsec;
+	if (diff.tv_nsec < 0) {
+		diff.tv_sec -= 1;
+		diff.tv_nsec += 1000000000;
+	}
+
+	assert(diff.tv_sec >= 1);
+
+	ret = pthread_join(test_thread, NULL);
+	assert(ret == 0);
+
+	pthread_barrier_destroy(&timedMutexBarrier);
+	pthread_mutex_destroy(&timedMutex);
+}
+
 int main() {
 	testAttr();
 	testNormal();
 	testRecursive();
+	testTimedLock();
 
 	return 0;
 }

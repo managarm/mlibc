@@ -954,11 +954,18 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex) {
 	SCOPE_TRACE();
 
 	return mlibc::thread_mutex_trylock(mutex);
+}
 
-int pthread_mutex_timedlock(pthread_mutex_t *__restrict,
-		const struct timespec *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int pthread_mutex_timedlock(pthread_mutex_t *__restrict mutex,
+		const struct timespec *__restrict abstime) {
+	return pthread_mutex_clocklock(mutex, CLOCK_REALTIME, abstime);
+}
+
+int pthread_mutex_clocklock(pthread_mutex_t *__restrict mutex,
+		clockid_t clockid, const struct timespec *__restrict abstime) {
+	SCOPE_TRACE();
+
+	return mlibc::thread_mutex_timedlock(mutex, abstime, clockid);
 }
 
 int pthread_mutex_unlock(pthread_mutex_t *mutex) {

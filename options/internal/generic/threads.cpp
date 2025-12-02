@@ -132,7 +132,7 @@ int thread_mutex_destroy(struct __mlibc_mutex *mutex) {
 	return 0;
 }
 
-int thread_mutex_lock(struct __mlibc_mutex *mutex) {
+int thread_mutex_timedlock(struct __mlibc_mutex *mutex, const struct timespec *__restrict abstime, clockid_t clockid) {
 	unsigned int this_tid = mlibc::this_tid();
 	unsigned int expected = 0;
 	while(true) {
@@ -160,7 +160,24 @@ int thread_mutex_lock(struct __mlibc_mutex *mutex) {
 
 			// Wait on the futex if the waiters flag is set.
 			if(expected & mutex_waiters_bit) {
-				int e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected, nullptr);
+				int e;
+				if (abstime) {
+					// Adjust for the fact that sys_futex_wait accepts a *timeout*, but
+					// we accept an *absolute time*.
+					struct timespec timeout;
+					if (!mlibc::time_absolute_to_relative(clockid, abstime, &timeout))
+						return EINVAL;
+
+					if (timeout.tv_sec == 0 && timeout.tv_nsec == 0)
+						return ETIMEDOUT;
+
+					e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected, &timeout);
+
+					if (e == ETIMEDOUT)
+						return e;
+				} else {
+					e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected, nullptr);
+				}
 
 				// If the wait returns EAGAIN, that means that the mutex_waiters_bit was just unset by
 				// some other thread. In this case, we should loop back around.
@@ -179,6 +196,10 @@ int thread_mutex_lock(struct __mlibc_mutex *mutex) {
 			}
 		}
 	}
+}
+
+int thread_mutex_lock(struct __mlibc_mutex *mutex) {
+	return thread_mutex_timedlock(mutex, nullptr, 0);
 }
 
 int thread_mutex_trylock(struct __mlibc_mutex *mutex) {
