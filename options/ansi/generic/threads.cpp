@@ -4,6 +4,7 @@
 #include <mlibc/thread.hpp>
 #include <mlibc/threads.hpp>
 #include <threads.h>
+#include <time.h>
 
 int thrd_create(thrd_t *thr, thrd_start_t func, void *arg) {
 	int res = mlibc::thread_create(thr, nullptr, reinterpret_cast<void *>(func), arg, true);
@@ -94,4 +95,16 @@ int cnd_broadcast(cnd_t *cond) {
 
 int cnd_wait(cnd_t *cond, mtx_t *mtx) {
 	return mlibc::thread_cond_timedwait(cond, mtx, nullptr, 0) == 0 ? thrd_success : thrd_error;
+}
+
+int cnd_timedwait(cnd_t *__restrict cond, mtx_t *__restrict mutex, const struct timespec *__restrict abstime) {
+	auto ret = mlibc::thread_cond_timedwait(cond, mutex, abstime, CLOCK_REALTIME);
+	switch (ret) {
+		case 0:
+			return thrd_success;
+		case ETIMEDOUT:
+			return thrd_timedout;
+		default:
+			return thrd_error;
+	}
 }
