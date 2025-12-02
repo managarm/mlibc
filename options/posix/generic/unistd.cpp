@@ -1135,8 +1135,10 @@ unsigned int sleep(unsigned int secs) {
 
 // In contrast to sleep() this functions returns 0/-1 on success/failure.
 int usleep(useconds_t usecs) {
-	time_t seconds = 0;
-	long nanos = usecs * 1000;
+	constexpr long usec_per_sec = 1'000'000;
+
+	time_t seconds = usecs / usec_per_sec;
+	long nanos = (usecs % usec_per_sec) * 1000;
 	if(!mlibc::sys_sleep) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_sleep()");

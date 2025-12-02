@@ -1,5 +1,6 @@
 #pragma once
 
+#include <abi-bits/clockid_t.h>
 #include <bits/ansi/timespec.h>
 #include <bits/threads.h>
 
@@ -12,6 +13,8 @@ int thread_join(struct __mlibc_thread_data *thread, void *res);
 int thread_mutex_init(struct __mlibc_mutex *__restrict mutex, const struct __mlibc_mutexattr *__restrict attr);
 int thread_mutex_destroy(struct __mlibc_mutex *mutex);
 int thread_mutex_lock(struct __mlibc_mutex *mutex);
+int thread_mutex_timedlock(struct __mlibc_mutex *mutex, const struct timespec *__restrict abstime, clockid_t __clockid);
+int thread_mutex_trylock(struct __mlibc_mutex *mutex);
 int thread_mutex_unlock(struct __mlibc_mutex *mutex);
 
 int thread_mutexattr_init(struct __mlibc_mutexattr *attr);
@@ -22,6 +25,6 @@ int thread_mutexattr_settype(struct __mlibc_mutexattr *attr, int type);
 int thread_cond_init(struct __mlibc_cond *__restrict cond, const struct __mlibc_condattr *__restrict attr);
 int thread_cond_destroy(struct __mlibc_cond *cond);
 int thread_cond_broadcast(struct __mlibc_cond *cond);
-int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *__restrict mutex, const struct timespec *__restrict abstime);
+int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *__restrict mutex, const struct timespec *__restrict abstime, clockid_t __clockid);
 
-}
+} // namespace mlibc

@@ -6,6 +6,7 @@
 #include <mlibc/lock.hpp>
 #include <mlibc/threads.hpp>
 #include <mlibc/tcb.hpp>
+#include <mlibc/time-helpers.hpp>
 
 extern "C" Tcb *__rtld_allocateTcb();
 
@@ -131,7 +132,7 @@ int thread_mutex_destroy(struct __mlibc_mutex *mutex) {
 	return 0;
 }
 
-int thread_mutex_lock(struct __mlibc_mutex *mutex) {
+int thread_mutex_timedlock(struct __mlibc_mutex *mutex, const struct timespec *__restrict abstime, clockid_t clockid) {
 	unsigned int this_tid = mlibc::this_tid();
 	unsigned int expected = 0;
 	while(true) {
@@ -159,7 +160,24 @@ int thread_mutex_lock(struct __mlibc_mutex *mutex) {
 
 			// Wait on the futex if the waiters flag is set.
 			if(expected & mutex_waiters_bit) {
-				int e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected, nullptr);
+				int e;
+				if (abstime) {
+					// Adjust for the fact that sys_futex_wait accepts a *timeout*, but
+					// we accept an *absolute time*.
+					struct timespec timeout;
+					if (!mlibc::time_absolute_to_relative(clockid, abstime, &timeout))
+						return EINVAL;
+
+					if (timeout.tv_sec == 0 && timeout.tv_nsec == 0)
+						return ETIMEDOUT;
+
+					e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected, &timeout);
+
+					if (e == ETIMEDOUT)
+						return e;
+				} else {
+					e = mlibc::sys_futex_wait((int *)&mutex->__mlibc_state, expected, nullptr);
+				}
 
 				// If the wait returns EAGAIN, that means that the mutex_waiters_bit was just unset by
 				// some other thread. In this case, we should loop back around.
@@ -178,6 +196,35 @@ int thread_mutex_lock(struct __mlibc_mutex *mutex) {
 			}
 		}
 	}
+}
+
+int thread_mutex_lock(struct __mlibc_mutex *mutex) {
+	return thread_mutex_timedlock(mutex, nullptr, 0);
+}
+
+int thread_mutex_trylock(struct __mlibc_mutex *mutex) {
+	unsigned int this_tid = mlibc::this_tid();
+	unsigned int expected = __atomic_load_n(&mutex->__mlibc_state, __ATOMIC_RELAXED);
+	if(!expected) {
+		// Try to take the mutex here.
+		if(__atomic_compare_exchange_n(&mutex->__mlibc_state,
+						&expected, this_tid, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
+			__ensure(!mutex->__mlibc_recursion);
+			mutex->__mlibc_recursion = 1;
+			return 0;
+		}
+	} else {
+		// If this (recursive) mutex is already owned by us, increment the recursion level.
+		if((expected & mutex_owner_mask) == this_tid) {
+			if(!(mutex->__mlibc_flags & mutexRecursive)) {
+				return EBUSY;
+			}
+			++mutex->__mlibc_recursion;
+			return 0;
+		}
+	}
+
+	return EBUSY;
 }
 
 int thread_mutex_unlock(struct __mlibc_mutex *mutex) {
@@ -265,7 +312,7 @@ int thread_cond_broadcast(struct __mlibc_cond *cond) {
 }
 
 int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *__restrict mutex,
-		const struct timespec *__restrict abstime) {
+		const struct timespec *__restrict abstime, clockid_t clockid) {
 	// TODO: pshared isn't supported yet.
 	__ensure(cond->__mlibc_flags == 0);
 
@@ -284,28 +331,15 @@ int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *_
 		if (abstime) {
 			// Adjust for the fact that sys_futex_wait accepts a *timeout*, but
 			// pthread_cond_timedwait accepts an *absolute time*.
-			// Note: mlibc::sys_clock_get is available unconditionally.
-			struct timespec now;
-			if (mlibc::sys_clock_get(cond->__mlibc_clock, &now.tv_sec, &now.tv_nsec))
-				__ensure(!"sys_clock_get() failed");
-
 			struct timespec timeout;
-			timeout.tv_sec = abstime->tv_sec - now.tv_sec;
-			timeout.tv_nsec = abstime->tv_nsec - now.tv_nsec;
-
-			// Check if abstime has already passed.
-			if (timeout.tv_sec < 0 || (timeout.tv_sec == 0 && timeout.tv_nsec < 0)) {
+			if (!mlibc::time_absolute_to_relative(clockid, abstime, &timeout)) {
+				if (thread_mutex_lock(mutex))
+					__ensure(!"Failed to lock the mutex");
+				return EINVAL;
+			} else if (timeout.tv_sec == 0 && timeout.tv_nsec == 0) {
 				if (thread_mutex_lock(mutex))
 					__ensure(!"Failed to lock the mutex");
 				return ETIMEDOUT;
-			} else if (timeout.tv_nsec >= nanos_per_second) {
-				timeout.tv_nsec -= nanos_per_second;
-				timeout.tv_sec++;
-				__ensure(timeout.tv_nsec < nanos_per_second);
-			} else if (timeout.tv_nsec < 0) {
-				timeout.tv_nsec += nanos_per_second;
-				timeout.tv_sec--;
-				__ensure(timeout.tv_nsec >= 0);
 			}
 
 			e = mlibc::sys_futex_wait((int *)&cond->__mlibc_seq, seq, &timeout);
