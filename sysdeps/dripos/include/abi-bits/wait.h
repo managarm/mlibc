@@ -1,1 +1,0 @@
-../../../../abis/dripos/wait.h

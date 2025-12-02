@@ -1,1 +1,0 @@
-../../../../abis/dripos/mode_t.h

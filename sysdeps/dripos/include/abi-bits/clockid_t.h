@@ -1,1 +1,0 @@
-../../../../abis/dripos/clockid_t.h
