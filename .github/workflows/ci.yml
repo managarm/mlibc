@@ -133,7 +133,7 @@ jobs:
     compile-sysdeps:
         strategy:
             matrix:
-                sysdeps: [lemon, aero, ironclad, keyronex, managarm, vinix, astral, menix, nyaux, demo]
+                sysdeps: [lemon, aero, ironclad, keyronex, managarm, astral, menix, nyaux, demo]
         name: Compile sysdeps
         runs-on: ubuntu-latest
         container: debian:trixie

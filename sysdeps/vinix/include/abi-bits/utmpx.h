@@ -1,1 +1,0 @@
-../../../../abis/vinix/utmpx.h
