@@ -1,6 +1,7 @@
 #ifndef _LINUX_FB_H
 #define _LINUX_FB_H
 
+#include <stdint.h>
 #include <stddef.h>
 
 /* Definitions of frame buffers						*/
