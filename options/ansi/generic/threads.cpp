@@ -77,6 +77,19 @@ int mtx_lock(mtx_t *mtx) {
 	return mlibc::thread_mutex_lock(mtx) == 0 ? thrd_success : thrd_error;
 }
 
+int mtx_timedlock(mtx_t *__restrict mtx, const struct timespec *__restrict abstime) {
+	auto ret = mlibc::thread_mutex_timedlock(mtx, abstime, CLOCK_REALTIME);
+
+	switch (ret) {
+		case 0:
+			return thrd_success;
+		case ETIMEDOUT:
+			return thrd_timedout;
+		default:
+			return thrd_error;
+	}
+}
+
 int mtx_unlock(mtx_t *mtx) {
 	return mlibc::thread_mutex_unlock(mtx) == 0 ? thrd_success : thrd_error;
 }
