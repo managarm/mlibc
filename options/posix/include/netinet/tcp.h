@@ -1,6 +1,8 @@
 #ifndef _NETINET_TCP_H
 #define _NETINET_TCP_H
 
+#include <mlibc-config.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
