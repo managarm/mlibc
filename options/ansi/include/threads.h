@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <bits/ansi/timespec.h>
 #include <bits/threads.h>
 
 enum {

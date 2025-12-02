@@ -1,5 +1,8 @@
 #include <abi-bits/errno.h>
 #include <bits/ensure.h>
+#include <errno.h>
+#include <mlibc-config.h>
+#include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/thread.hpp>
 #include <mlibc/threads.hpp>
@@ -27,9 +30,35 @@ thrd_t thrd_current(void) {
 	return reinterpret_cast<thrd_t>(mlibc::get_current_tcb());
 }
 
-int thrd_sleep(const struct timespec *, struct timespec *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int thrd_sleep(const struct timespec *duration, struct timespec *remaining) {
+	if(!mlibc::sys_sleep) {
+		MLIBC_MISSING_SYSDEP();
+		__ensure(!"Cannot continue without sys_sleep()");
+	}
+
+	if (duration->tv_nsec < 0 || duration->tv_nsec >= 1'000'000'000) {
+#if __MLIBC_POSIX_OPTION
+		errno = EINVAL;
+#endif
+		return -2;
+	}
+
+	struct timespec tmp = *duration;
+	int e = mlibc::sys_sleep(&tmp.tv_sec, &tmp.tv_nsec);
+
+	switch (e) {
+		case 0:
+			return 0;
+		case EINTR:
+			if (remaining)
+				*remaining = tmp;
+#if __MLIBC_POSIX_OPTION
+			errno = EINTR;
+#endif
+			return -1;
+		default:
+			return -2;
+	}
 }
 
 void thrd_yield(void) {
