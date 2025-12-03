@@ -29,4 +29,9 @@
 
 #include <mlibc/internal-sysdeps.hpp>
 
+/* List of API-specific sysdeps.hpp files comes here. */
+#if __has_include(<mlibc/linux-reboot-sysdeps.hpp>)
+#	include <mlibc/linux-reboot-sysdeps.hpp>
+#endif
+
 #endif /* MLIBC_ALL_SYSDEPS */

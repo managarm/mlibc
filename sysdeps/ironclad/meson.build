@@ -15,7 +15,6 @@ libc_sources += files(
 	'generic/generic.cpp',
 	'generic/mntent.cpp',
 	'generic/mount.cpp',
-	'generic/reboot.cpp',
 	'generic/thread.cpp',
 	'generic/mac.cpp',
 	'generic/thread.S',
@@ -30,7 +29,6 @@ if not no_headers
 		'include/abi-bits/errno.h',
 		'include/abi-bits/fcntl.h',
 		'include/abi-bits/in.h',
-		'include/abi-bits/reboot.h',
 		'include/abi-bits/resource.h',
 		'include/abi-bits/stat.h',
 		'include/abi-bits/signal.h',
@@ -89,7 +87,6 @@ if not no_headers
 	install_headers(
 		'include/sys/mac.h',
 		'include/sys/syscall.h',
-		'include/sys/reboot.h',
 		'include/sys/mount.h',
 		'include/sys/sysmacros.h',
 		'include/sys/ptrace.h',
@@ -110,6 +107,9 @@ if not no_headers
 		'include/mntent.h',
 	)
 endif
+
+# List of supported APIs goes here!
+subdir('apis/linux/reboot')
 
 if not headers_only
 	crt = custom_target(

@@ -28,7 +28,6 @@ if not no_headers
 		'include/abi-bits/errno.h',
 		'include/abi-bits/fcntl.h',
 		'include/abi-bits/in.h',
-		'include/abi-bits/reboot.h',
 		'include/abi-bits/resource.h',
 		'include/abi-bits/stat.h',
 		'include/abi-bits/statx.h',
@@ -95,6 +94,9 @@ if not no_headers
 		subdir: 'keyronex',
 	)
 endif
+
+# List of supported APIs goes here!
+subdir('apis/linux/reboot')
 
 if not headers_only
 	crt = custom_target('crt0',

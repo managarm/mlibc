@@ -1,5 +1,5 @@
-#ifndef _ABIBITS_REBOOT_H
-#define _ABIBITS_REBOOT_H
+#ifndef _ABIBITS_LINUX_REBOOT_H
+#define _ABIBITS_LINUX_REBOOT_H
 
 #define RB_AUTOBOOT    0xdeadb007
 #define RB_HALT_SYSTEM 0xdeaddead
@@ -9,4 +9,4 @@
 #define RB_SW_SUSPEND  0xdead2222
 #define RB_KEXEC       0xdeadecec
 
-#endif /* _ABIBITS_REBOOT_H */
+#endif /* _ABIBITS_LINUX_REBOOT_H */
