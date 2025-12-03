@@ -1,1 +1,0 @@
-../../../../abis/lemon/errno.h

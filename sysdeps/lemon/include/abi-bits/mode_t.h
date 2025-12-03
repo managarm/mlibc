@@ -1,1 +1,0 @@
-../../../../abis/lemon/mode_t.h

@@ -1,1 +1,0 @@
-../../../../abis/aero/resource.h

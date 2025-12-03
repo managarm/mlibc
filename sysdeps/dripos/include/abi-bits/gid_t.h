@@ -1,1 +1,0 @@
-../../../../abis/dripos/gid_t.h

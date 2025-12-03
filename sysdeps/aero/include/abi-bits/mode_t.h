@@ -1,1 +1,0 @@
-../../../../abis/aero/mode_t.h

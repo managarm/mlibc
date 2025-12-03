@@ -233,12 +233,6 @@ if host_machine.system() == 'linux'
 	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
 	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
 	subdir('sysdeps/linux')
-elif host_machine.system() == 'aero'
-	rtld_include_dirs += include_directories('sysdeps/aero/include')
-	libc_include_dirs += include_directories('sysdeps/aero/include')
-	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
-	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
-	subdir('sysdeps/aero')
 elif host_machine.system() == 'managarm'
 	# TODO: Adopt the include_directories() commands from the managarm meson.build.
 	rtld_include_dirs += include_directories('sysdeps/managarm/include')
@@ -258,18 +252,6 @@ elif host_machine.system() == 'keyronex'
 	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/keyronex')
-elif host_machine.system() == 'vinix'
-	rtld_include_dirs += include_directories('sysdeps/vinix/include')
-	libc_include_dirs += include_directories('sysdeps/vinix/include')
-	subdir('sysdeps/vinix')
-elif host_machine.system() == 'lemon'
-	rtld_include_dirs += include_directories('sysdeps/lemon/include')
-	libc_include_dirs += include_directories('sysdeps/lemon/include')
-	subdir('sysdeps/lemon')
-elif host_machine.system() == 'dripos'
-	rtld_include_dirs += include_directories('sysdeps/dripos/include')
-	libc_include_dirs += include_directories('sysdeps/dripos/include')
-	subdir('sysdeps/dripos')
 elif host_machine.system() == 'astral'
 	rtld_include_dirs += include_directories('sysdeps/astral/include')
 	libc_include_dirs += include_directories('sysdeps/astral/include')
