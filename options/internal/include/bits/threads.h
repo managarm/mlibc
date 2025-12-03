@@ -30,6 +30,9 @@
 #define __MLIBC_THREAD_PRIO_PROTECT 2
 
 #define __MLIBC_THREAD_MUTEX_INITIALIZER {0, 0, 0, 0}
+#define __MLIBC_THREAD_ONCE_INITIALIZER {0}
+
+#define __MLIBC_THREAD_DESTRUCTOR_ITERATIONS 8
 
 /* KEEP IN SYNC WITH `struct sched_param`! */
 struct __mlibc_sched_param {

@@ -7,6 +7,10 @@ extern "C" {
 
 #include <bits/ansi/timespec.h>
 #include <bits/threads.h>
+#include <bits/types.h>
+
+#define ONCE_FLAG_INIT __MLIBC_THREAD_ONCE_INITIALIZER
+#define TSS_DTOR_ITERATIONS __MLIBC_THREAD_DESTRUCTOR_ITERATIONS
 
 enum {
 	mtx_plain,
@@ -22,16 +26,21 @@ enum {
 	thrd_nomem
 };
 
+typedef struct __mlibc_once once_flag;
 typedef struct __mlibc_thread_data *thrd_t;
 typedef struct __mlibc_mutex mtx_t;
 typedef struct __mlibc_cond cnd_t;
+typedef __mlibc_uintptr tss_t;
+typedef void (*tss_dtor_t)(void *__val);
+typedef int (*thrd_start_t)(void* __arg);
+
 #ifndef __cplusplus
 #define thread_local _Thread_local
 #endif
 
-typedef int (*thrd_start_t)(void* __arg);
-
 #ifndef __MLIBC_ABI_ONLY
+
+void call_once(once_flag *__flag, void (*__func)(void));
 
 int thrd_create(thrd_t *__thr, thrd_start_t __func, void *__arg);
 int thrd_equal(thrd_t __lhs, thrd_t __rhs);
@@ -54,6 +63,11 @@ void cnd_destroy(cnd_t *__cond);
 int cnd_broadcast(cnd_t *__cond);
 int cnd_wait(cnd_t *__cond, mtx_t *__mtx);
 int cnd_timedwait(cnd_t *__restrict __cond, mtx_t *__restrict __mutex, const struct timespec *__restrict __abstime);
+
+int tss_create(tss_t *__key, tss_dtor_t __dtor);
+void tss_delete(tss_t __key);
+void *tss_get(tss_t __key);
+int tss_set(tss_t __key, void *__val);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

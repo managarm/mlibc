@@ -9,6 +9,10 @@
 #include <threads.h>
 #include <time.h>
 
+void call_once(once_flag *flag, void (*func)(void)) {
+	mlibc::thread_once(flag, func);
+}
+
 int thrd_create(thrd_t *thr, thrd_start_t func, void *arg) {
 	int res = mlibc::thread_create(thr, nullptr, reinterpret_cast<void *>(func), arg, true);
 
@@ -79,9 +83,8 @@ int thrd_join(thrd_t thr, int *res) {
 	return thrd_success;
 }
 
-__attribute__((__noreturn__)) void thrd_exit(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+__attribute__((__noreturn__)) void thrd_exit(int ret_val) {
+	mlibc::thread_exit({.integer = ret_val});
 }
 
 int mtx_init(mtx_t *mtx, int type) {
@@ -161,4 +164,20 @@ int cnd_timedwait(cnd_t *__restrict cond, mtx_t *__restrict mutex, const struct 
 		default:
 			return thrd_error;
 	}
+}
+
+int tss_create(tss_t *key, tss_dtor_t dtor) {
+	return mlibc::thread_key_create(key, dtor) == 0 ? thrd_success : thrd_error;
+}
+
+void tss_delete(tss_t key) {
+	mlibc::thread_key_delete(key);
+}
+
+void *tss_get(tss_t key) {
+	return mlibc::thread_key_get(key);
+}
+
+int tss_set(tss_t key, void *val) {
+	return mlibc::thread_key_set(key, val) == 0 ? thrd_success : thrd_error;
 }

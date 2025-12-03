@@ -339,68 +339,8 @@ int pthread_equal(pthread_t t1, pthread_t t2) {
 	return 0;
 }
 
-namespace {
-	struct key_global_info {
-		bool in_use;
-
-		void (*dtor)(void *);
-		uint64_t generation;
-	};
-
-	constinit frg::array<
-		key_global_info,
-		PTHREAD_KEYS_MAX
-	> key_globals_{};
-
-	FutexLock key_mutex_;
-} // namespace
-
-namespace mlibc {
-	__attribute__ ((__noreturn__)) void do_exit() {
-		sys_thread_exit();
-		__builtin_unreachable();
-	}
-} // namespace mlibc
-
 __attribute__ ((__noreturn__)) void pthread_exit(void *ret_val) {
-	auto self = mlibc::get_current_tcb();
-
-	if (__atomic_load_n(&self->cancelBits, __ATOMIC_RELAXED) & tcbExitingBit)
-		mlibc::do_exit();
-
-	__atomic_fetch_or(&self->cancelBits, tcbExitingBit, __ATOMIC_RELAXED);
-
-	auto hand = self->cleanupEnd;
-	while (hand) {
-		auto old = hand;
-		hand->func(hand->arg);
-		hand = hand->prev;
-		frg::destruct(getAllocator(), old);
-	}
-
-	for (size_t j = 0; j < PTHREAD_DESTRUCTOR_ITERATIONS; j++) {
-		for (size_t i = 0; i < PTHREAD_KEYS_MAX; i++) {
-			if (auto v = pthread_getspecific(i)) {
-				key_mutex_.lock();
-				auto dtor = key_globals_[i].dtor;
-				key_mutex_.unlock();
-
-				if (dtor) {
-					dtor(v);
-					(*self->localKeys)[i].value = nullptr;
-				}
-			}
-		}
-	}
-
-	self->returnValue.voidPtr = ret_val;
-	__atomic_store_n(&self->didExit, 1, __ATOMIC_RELEASE);
-	mlibc::sys_futex_wake(&self->didExit);
-
-	// TODO: clean up thread resources when we are detached.
-
-	// TODO: do exit(0) when we're the only thread instead
-	mlibc::do_exit();
+	mlibc::thread_exit({.voidPtr = ret_val});
 }
 
 int pthread_join(pthread_t thread, void **ret) {
@@ -748,114 +688,35 @@ int pthread_atfork(void (*prepare) (void), void (*parent) (void), void (*child) 
 int pthread_key_create(pthread_key_t *out, void (*destructor)(void *)) {
 	SCOPE_TRACE();
 
-	auto g = frg::guard(&key_mutex_);
-
-	pthread_key_t key = PTHREAD_KEYS_MAX;
-	for (size_t i = 0; i < PTHREAD_KEYS_MAX; i++) {
-		if (!key_globals_[i].in_use) {
-			key = i;
-			break;
-		}
-	}
-
-	if (key == PTHREAD_KEYS_MAX)
-		return EAGAIN;
-
-	key_globals_[key].in_use = true;
-	key_globals_[key].dtor = destructor;
-
-	*out = key;
-
-	return 0;
+	return mlibc::thread_key_create(out, destructor);
 }
 
 int pthread_key_delete(pthread_key_t key) {
 	SCOPE_TRACE();
 
-	auto g = frg::guard(&key_mutex_);
-
-	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use)
-		return EINVAL;
-
-	key_globals_[key].in_use = false;
-	key_globals_[key].dtor = nullptr;
-	key_globals_[key].generation++;
-
+	mlibc::thread_key_delete(key);
 	return 0;
 }
 
 void *pthread_getspecific(pthread_key_t key) {
 	SCOPE_TRACE();
 
-	auto self = mlibc::get_current_tcb();
-	auto g = frg::guard(&key_mutex_);
-
-	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use)
-		return nullptr;
-
-	if (key_globals_[key].generation > (*self->localKeys)[key].generation) {
-		(*self->localKeys)[key].value = nullptr;
-		(*self->localKeys)[key].generation = key_globals_[key].generation;
-	}
-
-	return (*self->localKeys)[key].value;
+	return mlibc::thread_key_get(key);
 }
 
 int pthread_setspecific(pthread_key_t key, const void *value) {
 	SCOPE_TRACE();
 
-	auto self = mlibc::get_current_tcb();
-	auto g = frg::guard(&key_mutex_);
-
-	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use)
-		return EINVAL;
-
-	(*self->localKeys)[key].value = const_cast<void *>(value);
-	(*self->localKeys)[key].generation = key_globals_[key].generation;
-
-	return 0;
+	return mlibc::thread_key_set(key, value);
 }
 
 // ----------------------------------------------------------------------------
 // pthread_once functions.
 // ----------------------------------------------------------------------------
 
-static constexpr unsigned int onceComplete = 1;
-static constexpr unsigned int onceLocked = 2;
-
 int pthread_once(pthread_once_t *once, void (*function) (void)) {
 	SCOPE_TRACE();
-
-	auto expected = __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
-
-	// fast path: the function was already run.
-	while(!(expected & onceComplete)) {
-		if(!expected) {
-			// try to acquire the mutex.
-			if(!__atomic_compare_exchange_n(&once->__mlibc_done,
-					&expected, onceLocked, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
-				continue;
-
-			function();
-
-			// unlock the mutex.
-			__atomic_exchange_n(&once->__mlibc_done, onceComplete, __ATOMIC_RELEASE);
-			if(int e = mlibc::sys_futex_wake((int *)&once->__mlibc_done); e)
-				__ensure(!"sys_futex_wake() failed");
-			return 0;
-		}else{
-			// a different thread is currently running the initializer.
-			__ensure(expected == onceLocked);
-			// if the wait gets interrupted by a signal, check again.
-			// EAGAIN will also be a retry, as it means the other thread completed
-			// and changed the __mlibc_done variable to signal it before we actually went to sleep.
-			if(int e = mlibc::sys_futex_wait((int *)&once->__mlibc_done, onceLocked, nullptr); e && e != EINTR && e != EAGAIN)
-				__ensure(!"sys_futex_wait() failed");
-			expected =  __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
-		}
-	}
-
-	return 0;
+	return mlibc::thread_once(once, function);
 }
 
 // ----------------------------------------------------------------------------
