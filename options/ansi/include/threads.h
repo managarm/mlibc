@@ -8,6 +8,8 @@ extern "C" {
 #include <bits/ansi/timespec.h>
 #include <bits/threads.h>
 
+#define ONCE_FLAG_INIT __MLIBC_THREAD_ONCE_INITIALIZER
+
 enum {
 	mtx_plain,
 	mtx_recursive,
@@ -22,6 +24,7 @@ enum {
 	thrd_nomem
 };
 
+typedef struct __mlibc_once once_flag;
 typedef struct __mlibc_thread_data *thrd_t;
 typedef struct __mlibc_mutex mtx_t;
 typedef struct __mlibc_cond cnd_t;
@@ -32,6 +35,8 @@ typedef struct __mlibc_cond cnd_t;
 typedef int (*thrd_start_t)(void* __arg);
 
 #ifndef __MLIBC_ABI_ONLY
+
+void call_once(once_flag *__flag, void (*__func)(void));
 
 int thrd_create(thrd_t *__thr, thrd_start_t __func, void *__arg);
 int thrd_equal(thrd_t __lhs, thrd_t __rhs);

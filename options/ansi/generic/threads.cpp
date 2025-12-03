@@ -9,6 +9,10 @@
 #include <threads.h>
 #include <time.h>
 
+void call_once(once_flag *flag, void (*func)(void)) {
+	mlibc::thread_once(flag, func);
+}
+
 int thrd_create(thrd_t *thr, thrd_start_t func, void *arg) {
 	int res = mlibc::thread_create(thr, nullptr, reinterpret_cast<void *>(func), arg, true);
 
