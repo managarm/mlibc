@@ -1,9 +1,13 @@
 #include <abi-bits/errno.h>
 #include <bits/ensure.h>
+#include <errno.h>
+#include <mlibc-config.h>
+#include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/thread.hpp>
 #include <mlibc/threads.hpp>
 #include <threads.h>
+#include <time.h>
 
 int thrd_create(thrd_t *thr, thrd_start_t func, void *arg) {
 	int res = mlibc::thread_create(thr, nullptr, reinterpret_cast<void *>(func), arg, true);
@@ -26,9 +30,35 @@ thrd_t thrd_current(void) {
 	return reinterpret_cast<thrd_t>(mlibc::get_current_tcb());
 }
 
-int thrd_sleep(const struct timespec *, struct timespec *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int thrd_sleep(const struct timespec *duration, struct timespec *remaining) {
+	if(!mlibc::sys_sleep) {
+		MLIBC_MISSING_SYSDEP();
+		__ensure(!"Cannot continue without sys_sleep()");
+	}
+
+	if (duration->tv_nsec < 0 || duration->tv_nsec >= 1'000'000'000) {
+#if __MLIBC_POSIX_OPTION
+		errno = EINVAL;
+#endif
+		return -2;
+	}
+
+	struct timespec tmp = *duration;
+	int e = mlibc::sys_sleep(&tmp.tv_sec, &tmp.tv_nsec);
+
+	switch (e) {
+		case 0:
+			return 0;
+		case EINTR:
+			if (remaining)
+				*remaining = tmp;
+#if __MLIBC_POSIX_OPTION
+			errno = EINTR;
+#endif
+			return -1;
+		default:
+			return -2;
+	}
 }
 
 void thrd_yield(void) {
@@ -76,6 +106,31 @@ int mtx_lock(mtx_t *mtx) {
 	return mlibc::thread_mutex_lock(mtx) == 0 ? thrd_success : thrd_error;
 }
 
+int mtx_timedlock(mtx_t *__restrict mtx, const struct timespec *__restrict abstime) {
+	auto ret = mlibc::thread_mutex_timedlock(mtx, abstime, CLOCK_REALTIME);
+
+	switch (ret) {
+		case 0:
+			return thrd_success;
+		case ETIMEDOUT:
+			return thrd_timedout;
+		default:
+			return thrd_error;
+	}
+}
+
+int mtx_trylock(mtx_t *mtx) {
+	auto ret = mlibc::thread_mutex_trylock(mtx);
+	switch (ret) {
+		case 0:
+			return thrd_success;
+		case EBUSY:
+			return thrd_busy;
+		default:
+			return thrd_error;
+	}
+}
+
 int mtx_unlock(mtx_t *mtx) {
 	return mlibc::thread_mutex_unlock(mtx) == 0 ? thrd_success : thrd_error;
 }
@@ -94,4 +149,16 @@ int cnd_broadcast(cnd_t *cond) {
 
 int cnd_wait(cnd_t *cond, mtx_t *mtx) {
 	return mlibc::thread_cond_timedwait(cond, mtx, nullptr, 0) == 0 ? thrd_success : thrd_error;
+}
+
+int cnd_timedwait(cnd_t *__restrict cond, mtx_t *__restrict mutex, const struct timespec *__restrict abstime) {
+	auto ret = mlibc::thread_cond_timedwait(cond, mutex, abstime, CLOCK_REALTIME);
+	switch (ret) {
+		case 0:
+			return thrd_success;
+		case ETIMEDOUT:
+			return thrd_timedout;
+		default:
+			return thrd_error;
+	}
 }
