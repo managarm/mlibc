@@ -116,7 +116,7 @@ private:
 	void _wakeHeadFutex() {
 		auto futex = __atomic_exchange_n(&_queue->headFutex, _nextIndex, __ATOMIC_RELEASE);
 		if (futex & kHelHeadWaiters)
-			HEL_CHECK(helFutexWake(&_queue->headFutex));
+			HEL_CHECK(helFutexWake(&_queue->headFutex, UINT32_MAX));
 	}
 
 	void _waitProgressFutex(bool *done) {
@@ -451,7 +451,7 @@ int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 
 int sys_futex_wake(int *pointer) {
 	// This implementation is inherently signal-safe.
-	if (helFutexWake(pointer))
+	if (helFutexWake(pointer, UINT32_MAX))
 		return -1;
 	return 0;
 }
