@@ -63,7 +63,7 @@ int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 
 int sys_futex_wake(int *pointer) {
 	// This implementation is inherently signal-safe.
-	if (helFutexWake(pointer))
+	if (helFutexWake(pointer, UINT32_MAX))
 		return -1;
 	return 0;
 }
