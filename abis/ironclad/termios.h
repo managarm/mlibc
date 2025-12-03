@@ -18,7 +18,6 @@ typedef unsigned int tcflag_t;
 #define VSTOP    8
 #define VSUSP    9
 #define VTIME   10
-#define VLNEXT   15
 
 /* bitwise flags for c_iflag in struct termios */
 #define BRKINT  0x0001
@@ -33,9 +32,6 @@ typedef unsigned int tcflag_t;
 #define IXOFF   0x0200
 #define IXON    0x0400
 #define PARMRK  0x0800
-#define ECHOCTL 0001000
-#define IMAXBEL 0020000
-#define ECHOKE  0004000
 
 /* bitwise flags for c_oflag in struct termios */
 #define OPOST   0x0001
@@ -102,7 +98,6 @@ typedef unsigned int tcflag_t;
 #define ISIG    0x0040
 #define NOFLSH  0x0080
 #define TOSTOP  0x0100
-#define ECHOPRT 0x0200
 
 struct termios {
 	tcflag_t c_iflag;
