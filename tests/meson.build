@@ -110,6 +110,7 @@ all_test_cases = [
 	'posix/getsubopt',
 	'posix/pthread_rwlock_timedrdlock',
 	'posix/pthread_rwlock_timedwrlock',
+	'posix/sigsetjmp',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
