@@ -263,10 +263,6 @@ elif host_machine.system() == 'menix'
 	rtld_include_dirs += include_directories('sysdeps/menix/include')
 	libc_include_dirs += include_directories('sysdeps/menix/include')
 	subdir('sysdeps/menix')
-elif host_machine.system() == 'nyaux'
-	rtld_include_dirs += include_directories('sysdeps/nyaux/include')
-	libc_include_dirs += include_directories('sysdeps/nyaux/include')
-	subdir('sysdeps/nyaux')
 # ANCHOR: demo-sysdeps
 elif host_machine.system() == 'demo'
 	subdir('sysdeps/demo')
