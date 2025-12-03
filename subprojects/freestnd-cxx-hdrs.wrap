@@ -1,4 +1,4 @@
 [wrap-git]
-url = https://codeberg.org/OSDev/freestnd-cxx-hdrs.git
+url = https://github.com/osdev0/freestnd-cxx-hdrs.git
 revision = a6b351e0ab3e74e5789b01fa1447e4cd62373da7
 patch_directory = freestnd-cxx-hdrs
