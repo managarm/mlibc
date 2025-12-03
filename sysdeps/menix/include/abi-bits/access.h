@@ -1,1 +1,1 @@
-../../../../abis/linux/access.h
+../../../../abis/menix/access.h

@@ -1,5 +1,9 @@
-#ifndef _ASM_IOCTLS_H
-#define _ASM_IOCTLS_H
+#ifndef _ABIBITS_IOCTLS_H
+#define _ABIBITS_IOCTLS_H
+
+#include <bits/winsize.h>
+#include <sys/ttydefaults.h>
+#include <sys/ioccom.h>
 
 #define RTC_RD_TIME 1
 #define RTC_SET_TIME 2
@@ -91,4 +95,13 @@
 #define TIOCPKT_IOCTL 64
 #define TIOCSER_TEMT 0x01
 
-#endif /* _ASM_IOCTLS_H */
+#define SIOCPROTOPRIVATE 0x89E0
+#define SIOCGIFNAME 0x8910
+#define SIOCGIFCONF 0x8912
+#define SIOCGIFFLAGS 0x8913
+#define SIOCSIFFLAGS 0x8914
+#define SIOCGIFINDEX 0x8933
+#define SIOCATMARK 0x8905
+#define SIOCGIFHWADDR 0x8927
+
+#endif /* _ABIBITS_IOCTLS_H */

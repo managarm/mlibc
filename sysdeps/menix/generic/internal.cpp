@@ -8,12 +8,12 @@
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
+#include <syslog.h>
 
 namespace mlibc {
 
 void sys_libc_log(const char *message) {
-	menix_syscall(SYSCALL_WRITE, 1, (size_t)message, strlen(message));
-	menix_syscall(SYSCALL_WRITE, 1, (size_t)"\n", 1);
+	menix_syscall(SYSCALL_SYSLOG, LOG_INFO, (size_t)message, strlen(message));
 }
 
 [[noreturn]] void sys_libc_panic() {

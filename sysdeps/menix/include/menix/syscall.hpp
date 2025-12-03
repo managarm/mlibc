@@ -134,9 +134,58 @@
 #define SYSCALL_SETPRIORITY 128
 #define SYSCALL_SCHED_GETPARAM 129
 #define SYSCALL_SCHED_SETPARAM 130
-#define SYSCALL_GETCPU 131
-#define SYSCALL_SYSINFO 132
-#define SYSCALL_PTRACE 133
+
+#if defined(__x86_64__)
+#define MENIX_ASM_REG_NUM "rax"
+#define MENIX_ASM_REG_RET "rax"
+#define MENIX_ASM_REG_ERR "rdx"
+#define MENIX_ASM_REG_A0 "rdi"
+#define MENIX_ASM_REG_A1 "rsi"
+#define MENIX_ASM_REG_A2 "rdx"
+#define MENIX_ASM_REG_A3 "r10"
+#define MENIX_ASM_REG_A4 "r8"
+#define MENIX_ASM_REG_A5 "r9"
+#define MENIX_ASM_SYSCALL "syscall"
+#define MENIX_ASM_CLOBBER "memory", "rcx", "r11"
+#elif defined(__aarch64__)
+#define MENIX_ASM_REG_NUM "x8"
+#define MENIX_ASM_REG_RET "x0"
+#define MENIX_ASM_REG_ERR "x1"
+#define MENIX_ASM_REG_A0 "x0"
+#define MENIX_ASM_REG_A1 "x1"
+#define MENIX_ASM_REG_A2 "x2"
+#define MENIX_ASM_REG_A3 "x3"
+#define MENIX_ASM_REG_A4 "x4"
+#define MENIX_ASM_REG_A5 "x5"
+#define MENIX_ASM_SYSCALL "svc 0"
+#define MENIX_ASM_CLOBBER "memory"
+#elif defined(__riscv) && (__riscv_xlen == 64)
+#define MENIX_ASM_REG_NUM "a7"
+#define MENIX_ASM_REG_RET "a0"
+#define MENIX_ASM_REG_ERR "a1"
+#define MENIX_ASM_REG_A0 "a0"
+#define MENIX_ASM_REG_A1 "a1"
+#define MENIX_ASM_REG_A2 "a2"
+#define MENIX_ASM_REG_A3 "a3"
+#define MENIX_ASM_REG_A4 "a4"
+#define MENIX_ASM_REG_A5 "a5"
+#define MENIX_ASM_SYSCALL "ecall"
+#define MENIX_ASM_CLOBBER "memory"
+#elif defined(__loongarch64)
+#define MENIX_ASM_REG_NUM "a7"
+#define MENIX_ASM_REG_RET "a0"
+#define MENIX_ASM_REG_ERR "a1"
+#define MENIX_ASM_REG_A0 "a0"
+#define MENIX_ASM_REG_A1 "a1"
+#define MENIX_ASM_REG_A2 "a2"
+#define MENIX_ASM_REG_A3 "a3"
+#define MENIX_ASM_REG_A4 "a4"
+#define MENIX_ASM_REG_A5 "a5"
+#define MENIX_ASM_SYSCALL "syscall 0"
+#define MENIX_ASM_CLOBBER "memory"
+#else
+#error "Unsupported architecture!"
+#endif
 
 struct syscall_result {
 	size_t value;
@@ -146,78 +195,108 @@ static_assert(sizeof(syscall_result) == 16);
 
 #ifndef __MLIBC_ABI_ONLY
 
-[[gnu::always_inline]]
-inline syscall_result menix_syscall(
-    size_t num,
-    size_t a0 = 0,
-    size_t a1 = 0,
-    size_t a2 = 0,
-    size_t a3 = 0,
-    size_t a4 = 0,
-    size_t a5 = 0
-) {
-	syscall_result r;
-#if defined(__x86_64__)
-	register size_t r3 asm("r10") = a3;
-	register size_t r4 asm("r8") = a4;
-	register size_t r5 asm("r9") = a5;
+static inline syscall_result menix_syscall(size_t num) {
+	register size_t rnum asm(MENIX_ASM_REG_NUM) = num;
+	register size_t value asm(MENIX_ASM_REG_RET);
+	register size_t err asm(MENIX_ASM_REG_ERR);
+	asm volatile(MENIX_ASM_SYSCALL : "=r"(value), "=r"(err) : "r"(rnum) : MENIX_ASM_CLOBBER);
 
-	asm volatile("syscall"
-	             : "=a"(r.value), "=d"(r.error)
-	             : "a"(num), "D"(a0), "S"(a1), "d"(a2), "r"(r3), "r"(r4), "r"(r5)
-	             : "memory", "rcx", "r11");
-#elif defined(__aarch64__)
-	register size_t snum asm("x8") = num;
-	register size_t value asm("x0");
-	register size_t error asm("x1");
-	register size_t r0 asm("x0") = a0;
-	register size_t r1 asm("x1") = a1;
-	register size_t r2 asm("x2") = a2;
-	register size_t r3 asm("x3") = a3;
-	register size_t r4 asm("x4") = a4;
-	register size_t r5 asm("x5") = a5;
-	asm volatile("svc 0"
-	             : "=r"(value), "=r"(error)
-	             : "r"(snum), "r"(r0), "r"(r1), "r"(r2), "r"(r3), "r"(r4), "r"(r5)
-	             : "memory");
-	r.value = value;
-	r.error = error;
-#elif defined(__riscv) && (__riscv_xlen == 64)
-	register size_t snum asm("a7") = num;
-	register size_t value asm("a0");
-	register size_t error asm("a1");
-	register size_t r0 asm("a0") = a0;
-	register size_t r1 asm("a1") = a1;
-	register size_t r2 asm("a2") = a2;
-	register size_t r3 asm("a3") = a3;
-	register size_t r4 asm("a4") = a4;
-	register size_t r5 asm("a5") = a5;
-	asm volatile("ecall"
-	             : "=r"(value), "=r"(error)
-	             : "r"(snum), "r"(r0), "r"(r1), "r"(r2), "r"(r3), "r"(r4), "r"(r5)
-	             : "memory");
-	r.value = value;
-	r.error = error;
-#elif defined(__loongarch64)
-	register size_t snum asm("a7") = num;
-	register size_t value asm("a0");
-	register size_t error asm("a1");
-	register size_t r0 asm("a0") = a0;
-	register size_t r1 asm("a1") = a1;
-	register size_t r2 asm("a2") = a2;
-	register size_t r3 asm("a3") = a3;
-	register size_t r4 asm("a4") = a4;
-	register size_t r5 asm("a5") = a5;
-	asm volatile("syscall 0"
-	             : "=r"(value), "=r"(error)
-	             : "r"(snum), "r"(r0), "r"(r1), "r"(r2), "r"(r3), "r"(r4), "r"(r5)
-	             : "memory");
-	r.value = value;
-	r.error = error;
-#else
-#error "Unsupported architecture!"
-#endif
-	return r;
+	return {value, err};
+}
+
+static inline syscall_result menix_syscall(size_t num, size_t a0) {
+	register size_t rnum asm(MENIX_ASM_REG_NUM) = num;
+	register size_t value asm(MENIX_ASM_REG_RET);
+	register size_t err asm(MENIX_ASM_REG_ERR);
+	register size_t r0 asm(MENIX_ASM_REG_A0) = a0;
+	asm volatile(MENIX_ASM_SYSCALL
+	             : "=r"(value), "=r"(err)
+	             : "r"(rnum), "r"(r0)
+	             : MENIX_ASM_CLOBBER);
+
+	return {value, err};
+}
+
+static inline syscall_result menix_syscall(size_t num, size_t a0, size_t a1) {
+	register size_t rnum asm(MENIX_ASM_REG_NUM) = num;
+	register size_t value asm(MENIX_ASM_REG_RET);
+	register size_t err asm(MENIX_ASM_REG_ERR);
+	register size_t r0 asm(MENIX_ASM_REG_A0) = a0;
+	register size_t r1 asm(MENIX_ASM_REG_A1) = a1;
+	asm volatile(MENIX_ASM_SYSCALL
+	             : "=r"(value), "=r"(err)
+	             : "r"(rnum), "r"(r0), "r"(r1)
+	             : MENIX_ASM_CLOBBER);
+
+	return {value, err};
+}
+
+static inline syscall_result menix_syscall(size_t num, size_t a0, size_t a1, size_t a2) {
+	register size_t rnum asm(MENIX_ASM_REG_NUM) = num;
+	register size_t value asm(MENIX_ASM_REG_RET);
+	register size_t err asm(MENIX_ASM_REG_ERR);
+	register size_t r0 asm(MENIX_ASM_REG_A0) = a0;
+	register size_t r1 asm(MENIX_ASM_REG_A1) = a1;
+	register size_t r2 asm(MENIX_ASM_REG_A2) = a2;
+	asm volatile(MENIX_ASM_SYSCALL
+	             : "=r"(value), "=r"(err)
+	             : "r"(rnum), "r"(r0), "r"(r1), "r"(r2)
+	             : MENIX_ASM_CLOBBER);
+
+	return {value, err};
+}
+
+static inline syscall_result menix_syscall(size_t num, size_t a0, size_t a1, size_t a2, size_t a3) {
+	register size_t rnum asm(MENIX_ASM_REG_NUM) = num;
+	register size_t value asm(MENIX_ASM_REG_RET);
+	register size_t err asm(MENIX_ASM_REG_ERR);
+	register size_t r0 asm(MENIX_ASM_REG_A0) = a0;
+	register size_t r1 asm(MENIX_ASM_REG_A1) = a1;
+	register size_t r2 asm(MENIX_ASM_REG_A2) = a2;
+	register size_t r3 asm(MENIX_ASM_REG_A3) = a3;
+	asm volatile(MENIX_ASM_SYSCALL
+	             : "=r"(value), "=r"(err)
+	             : "r"(rnum), "r"(r0), "r"(r1), "r"(r2), "r"(r3)
+	             : MENIX_ASM_CLOBBER);
+
+	return {value, err};
+}
+
+static inline syscall_result
+menix_syscall(size_t num, size_t a0, size_t a1, size_t a2, size_t a3, size_t a4) {
+	register size_t rnum asm(MENIX_ASM_REG_NUM) = num;
+	register size_t value asm(MENIX_ASM_REG_RET);
+	register size_t err asm(MENIX_ASM_REG_ERR);
+	register size_t r0 asm(MENIX_ASM_REG_A0) = a0;
+	register size_t r1 asm(MENIX_ASM_REG_A1) = a1;
+	register size_t r2 asm(MENIX_ASM_REG_A2) = a2;
+	register size_t r3 asm(MENIX_ASM_REG_A3) = a3;
+	register size_t r4 asm(MENIX_ASM_REG_A4) = a4;
+	asm volatile(MENIX_ASM_SYSCALL
+	             : "=r"(value), "=r"(err)
+	             : "r"(rnum), "r"(r0), "r"(r1), "r"(r2), "r"(r3), "r"(r4)
+	             : MENIX_ASM_CLOBBER);
+
+	return {value, err};
+}
+
+static inline syscall_result
+menix_syscall(size_t num, size_t a0, size_t a1, size_t a2, size_t a3, size_t a4, size_t a5) {
+	register size_t rnum asm(MENIX_ASM_REG_NUM) = num;
+	register size_t value asm(MENIX_ASM_REG_RET);
+	register size_t err asm(MENIX_ASM_REG_ERR);
+	register size_t r0 asm(MENIX_ASM_REG_A0) = a0;
+	register size_t r1 asm(MENIX_ASM_REG_A1) = a1;
+	register size_t r2 asm(MENIX_ASM_REG_A2) = a2;
+	register size_t r3 asm(MENIX_ASM_REG_A3) = a3;
+	register size_t r4 asm(MENIX_ASM_REG_A4) = a4;
+	register size_t r5 asm(MENIX_ASM_REG_A5) = a5;
+	asm volatile(MENIX_ASM_SYSCALL
+	             : "=r"(value), "=r"(err)
+	             : "r"(rnum), "r"(r0), "r"(r1), "r"(r2), "r"(r3), "r"(r4), "r"(r5)
+	             : MENIX_ASM_CLOBBER);
+
+	return {value, err};
 }
 
 #endif /* !__MLIBC_ABI_ONLY */
