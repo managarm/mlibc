@@ -10,6 +10,12 @@ int thread_create(struct __mlibc_thread_data **__restrict thread, const struct _
 int thread_attr_init(struct __mlibc_threadattr *attr);
 int thread_join(struct __mlibc_thread_data *thread, void *res);
 
+union thread_exit_return {
+	void *voidPtr;
+	int integer;
+};
+__attribute__ ((__noreturn__)) void thread_exit(thread_exit_return ret_val);
+
 int thread_mutex_init(struct __mlibc_mutex *__restrict mutex, const struct __mlibc_mutexattr *__restrict attr);
 int thread_mutex_destroy(struct __mlibc_mutex *mutex);
 int thread_mutex_lock(struct __mlibc_mutex *mutex);
@@ -26,5 +32,10 @@ int thread_cond_init(struct __mlibc_cond *__restrict cond, const struct __mlibc_
 int thread_cond_destroy(struct __mlibc_cond *cond);
 int thread_cond_broadcast(struct __mlibc_cond *cond);
 int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *__restrict mutex, const struct timespec *__restrict abstime, clockid_t __clockid);
+
+int thread_key_create(__mlibc_uintptr *out, void (*destructor)(void *));
+int thread_key_delete(__mlibc_uintptr key);
+void *thread_key_get(__mlibc_uintptr key);
+int thread_key_set(__mlibc_uintptr key, const void *value);
 
 } // namespace mlibc

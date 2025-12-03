@@ -31,6 +31,8 @@
 
 #define __MLIBC_THREAD_MUTEX_INITIALIZER {0, 0, 0, 0}
 
+#define __MLIBC_THREAD_DESTRUCTOR_ITERATIONS 8
+
 /* KEEP IN SYNC WITH `struct sched_param`! */
 struct __mlibc_sched_param {
 	int __sched_priority;

@@ -1,7 +1,10 @@
 #include <abi-bits/errno.h>
 #include <bits/threads.h>
 #include <bits/ensure.h>
+#include <frg/allocation.hpp>
+#include <frg/mutex.hpp>
 #include <mlibc/all-sysdeps.hpp>
+#include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/lock.hpp>
 #include <mlibc/threads.hpp>
@@ -9,6 +12,24 @@
 #include <mlibc/time-helpers.hpp>
 
 extern "C" Tcb *__rtld_allocateTcb();
+
+namespace {
+
+struct key_global_info {
+	bool in_use;
+
+	void (*dtor)(void *);
+	uint64_t generation;
+};
+
+constinit frg::array<
+	key_global_info,
+	PTHREAD_KEYS_MAX
+> key_globals_{};
+
+FutexLock key_mutex_;
+
+} // namespace
 
 namespace mlibc {
 
@@ -79,6 +100,60 @@ int thread_join(struct __mlibc_thread_data *thread, void *ret) {
 	// FIXME: destroy tcb here, currently we leak it
 
 	return 0;
+}
+
+namespace {
+
+__attribute__ ((__noreturn__)) void do_exit() {
+	sys_thread_exit();
+	__builtin_unreachable();
+}
+
+} // namespace
+
+__attribute__ ((__noreturn__)) void thread_exit(thread_exit_return ret_val) {
+	auto self = get_current_tcb();
+
+	if (__atomic_load_n(&self->cancelBits, __ATOMIC_RELAXED) & tcbExitingBit)
+		mlibc::do_exit();
+
+	__atomic_fetch_or(&self->cancelBits, tcbExitingBit, __ATOMIC_RELAXED);
+
+	auto hand = self->cleanupEnd;
+	while (hand) {
+		auto old = hand;
+		hand->func(hand->arg);
+		hand = hand->prev;
+		frg::destruct(getAllocator(), old);
+	}
+
+	for (size_t j = 0; j < __MLIBC_THREAD_DESTRUCTOR_ITERATIONS; j++) {
+		for (size_t i = 0; i < PTHREAD_KEYS_MAX; i++) {
+			if (auto v = thread_key_get(i)) {
+				key_mutex_.lock();
+				auto dtor = key_globals_[i].dtor;
+				key_mutex_.unlock();
+
+				if (dtor) {
+					dtor(v);
+					(*self->localKeys)[i].value = nullptr;
+				}
+			}
+		}
+	}
+
+	if(self->returnValueType == TcbThreadReturnValue::Pointer)
+		self->returnValue.voidPtr = ret_val.voidPtr;
+	else if(self->returnValueType == TcbThreadReturnValue::Integer)
+		self->returnValue.intVal = ret_val.integer;
+
+	__atomic_store_n(&self->didExit, 1, __ATOMIC_RELEASE);
+	sys_futex_wake(&self->didExit);
+
+	// TODO: clean up thread resources when we are detached.
+
+	// TODO: do exit(0) when we're the only thread instead
+	mlibc::do_exit();
 }
 
 static constexpr size_t default_stacksize = 0x200000;
@@ -375,6 +450,69 @@ int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *_
 			mlibc::panicLogger() << "sys_futex_wait() failed with error " << e << frg::endlog;
 		}
 	}
+}
+
+int thread_key_create(__mlibc_uintptr *out, void (*destructor)(void *)) {
+	auto g = frg::guard(&key_mutex_);
+
+	__mlibc_uintptr key = PTHREAD_KEYS_MAX;
+	for (size_t i = 0; i < PTHREAD_KEYS_MAX; i++) {
+		if (!key_globals_[i].in_use) {
+			key = i;
+			break;
+		}
+	}
+
+	if (key == PTHREAD_KEYS_MAX)
+		return EAGAIN;
+
+	key_globals_[key].in_use = true;
+	key_globals_[key].dtor = destructor;
+
+	*out = key;
+
+	return 0;
+}
+
+int thread_key_delete(__mlibc_uintptr key) {
+	auto g = frg::guard(&key_mutex_);
+
+	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use)
+		return EINVAL;
+
+	key_globals_[key].in_use = false;
+	key_globals_[key].dtor = nullptr;
+	key_globals_[key].generation++;
+
+	return 0;
+}
+
+void *thread_key_get(__mlibc_uintptr key) {
+	auto self = mlibc::get_current_tcb();
+	auto g = frg::guard(&key_mutex_);
+
+	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use)
+		return nullptr;
+
+	if (key_globals_[key].generation > (*self->localKeys)[key].generation) {
+		(*self->localKeys)[key].value = nullptr;
+		(*self->localKeys)[key].generation = key_globals_[key].generation;
+	}
+
+	return (*self->localKeys)[key].value;
+}
+
+int thread_key_set(__mlibc_uintptr key, const void *value) {
+	auto self = mlibc::get_current_tcb();
+	auto g = frg::guard(&key_mutex_);
+
+	if (key >= PTHREAD_KEYS_MAX || !key_globals_[key].in_use)
+		return EINVAL;
+
+	(*self->localKeys)[key].value = const_cast<void *>(value);
+	(*self->localKeys)[key].generation = key_globals_[key].generation;
+
+	return 0;
 }
 
 } // namespace mlibc
