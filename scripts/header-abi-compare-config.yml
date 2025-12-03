@@ -80,6 +80,7 @@ ignored_typedefs:
   - fpos_t
   - jmp_buf
   - mtx_t
+  - tss_t
   - pthread_attr_t
   - pthread_barrier_t
   - pthread_barrierattr_t

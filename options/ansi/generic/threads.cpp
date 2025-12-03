@@ -166,3 +166,19 @@ int cnd_timedwait(cnd_t *__restrict cond, mtx_t *__restrict mutex, const struct 
 			return thrd_error;
 	}
 }
+
+int tss_create(tss_t *key, tss_dtor_t dtor) {
+	return mlibc::thread_key_create(key, dtor) == 0 ? thrd_success : thrd_error;
+}
+
+void tss_delete(tss_t key) {
+	mlibc::thread_key_delete(key);
+}
+
+void *tss_get(tss_t key) {
+	return mlibc::thread_key_get(key);
+}
+
+int tss_set(tss_t key, void *val) {
+	return mlibc::thread_key_set(key, val) == 0 ? thrd_success : thrd_error;
+}
