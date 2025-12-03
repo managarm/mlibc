@@ -1,7 +1,7 @@
-#ifndef MLIBC_SYS_REBOOT_H
-#define MLIBC_SYS_REBOOT_H
+#ifndef _MLIBC_SYS_REBOOT_H
+#define _MLIBC_SYS_REBOOT_H
 
-#include <abi-bits/reboot.h>
+#include <abi-bits/linux/reboot.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,4 +17,4 @@ int reboot(int __arg);
 }
 #endif
 
-#endif /* MLIBC_SYS_REBOOT_H */
+#endif /* _MLIBC_SYS_REBOOT_H */

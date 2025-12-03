@@ -1030,6 +1030,12 @@ int sys_peername(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, s
 	return errno;
 }
 
+int sys_reboot(int what) {
+	int ret, errno;
+	SYSCALL2(SYSCALL_REBOOT, what, 0);
+	return errno;
+}
+
 int sys_shutdown(int sockfd, int how) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SHUTDOWN, sockfd, how);
