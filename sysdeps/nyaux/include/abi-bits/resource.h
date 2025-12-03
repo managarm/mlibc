@@ -1,1 +1,0 @@
-../../../../abis/linux/resource.h
