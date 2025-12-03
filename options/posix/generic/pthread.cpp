@@ -714,42 +714,9 @@ int pthread_setspecific(pthread_key_t key, const void *value) {
 // pthread_once functions.
 // ----------------------------------------------------------------------------
 
-static constexpr unsigned int onceComplete = 1;
-static constexpr unsigned int onceLocked = 2;
-
 int pthread_once(pthread_once_t *once, void (*function) (void)) {
 	SCOPE_TRACE();
-
-	auto expected = __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
-
-	// fast path: the function was already run.
-	while(!(expected & onceComplete)) {
-		if(!expected) {
-			// try to acquire the mutex.
-			if(!__atomic_compare_exchange_n(&once->__mlibc_done,
-					&expected, onceLocked, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
-				continue;
-
-			function();
-
-			// unlock the mutex.
-			__atomic_exchange_n(&once->__mlibc_done, onceComplete, __ATOMIC_RELEASE);
-			if(int e = mlibc::sys_futex_wake((int *)&once->__mlibc_done); e)
-				__ensure(!"sys_futex_wake() failed");
-			return 0;
-		}else{
-			// a different thread is currently running the initializer.
-			__ensure(expected == onceLocked);
-			// if the wait gets interrupted by a signal, check again.
-			// EAGAIN will also be a retry, as it means the other thread completed
-			// and changed the __mlibc_done variable to signal it before we actually went to sleep.
-			if(int e = mlibc::sys_futex_wait((int *)&once->__mlibc_done, onceLocked, nullptr); e && e != EINTR && e != EAGAIN)
-				__ensure(!"sys_futex_wait() failed");
-			expected =  __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
-		}
-	}
-
-	return 0;
+	return mlibc::thread_once(once, function);
 }
 
 // ----------------------------------------------------------------------------
