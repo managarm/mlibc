@@ -390,14 +390,6 @@ int sys_socket(int domain, int type, int protocol, int *fd) {
         return 0;
 }
 
-int sys_msg_send(int sockfd, const struct msghdr *msg, int flags, ssize_t *length) {
-        auto ret = do_cp_syscall(SYS_sendmsg, sockfd, msg, flags);
-        if (int e = sc_error(ret); e)
-                return e;
-        *length = sc_int_result<ssize_t>(ret);
-        return 0;
-}
-
 ssize_t sys_sendto(int fd, const void *buffer, size_t size, int flags, const struct sockaddr *sock_addr, socklen_t addr_length, ssize_t *length) {
 	auto ret = do_cp_syscall(SYS_sendto, fd, buffer, size, flags, sock_addr, addr_length);
 	if(int e = sc_error(ret); e) {
@@ -414,14 +406,6 @@ ssize_t sys_recvfrom(int fd, void *buffer, size_t size, int flags, struct sockad
 	}
 	*length = sc_int_result<ssize_t>(ret);
 	return 0;
-}
-
-int sys_msg_recv(int sockfd, struct msghdr *msg, int flags, ssize_t *length) {
-        auto ret = do_cp_syscall(SYS_recvmsg, sockfd, msg, flags);
-        if (int e = sc_error(ret); e)
-                return e;
-        *length = sc_int_result<ssize_t>(ret);
-        return 0;
 }
 
 int sys_fcntl(int fd, int cmd, va_list args, int *result) {
@@ -487,6 +471,7 @@ int sys_isatty(int fd) {
 #include <sys/ipc.h>
 #include <sys/user.h>
 #include <sys/utsname.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/sysinfo.h>
 #include <unistd.h>
@@ -495,6 +480,41 @@ int sys_isatty(int fd) {
 #include <sched.h>
 #include <fcntl.h>
 #include <pthread.h>
+
+int sys_msg_send(int sockfd, const struct msghdr *msg, int flags, ssize_t *length) {
+	// Work around ABI mismatches: POSIX requires us to expose some members of a particular type,
+	// and Linux kernel ABI is using larger types. Our fix is to add padding members to preserve
+	// struct layout and zero them out here.
+#if __INTPTR_WIDTH__ == 64
+	const_cast<msghdr *>(msg)->__pad0 = 0;
+	const_cast<msghdr *>(msg)->__pad1 = 0;
+
+	for (auto cmsg = CMSG_FIRSTHDR(msg); cmsg; cmsg = CMSG_NXTHDR(msg, cmsg))
+		cmsg->__pad = 0;
+#endif /* __INTPTR_WIDTH__ == 64 */
+
+	auto ret = do_cp_syscall(SYS_sendmsg, sockfd, msg, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*length = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_msg_recv(int sockfd, struct msghdr *msg, int flags, ssize_t *length) {
+	// Work around ABI mismatches: POSIX requires us to expose some members of a particular type,
+	// and Linux kernel ABI is using larger types. Our fix is to add padding members to preserve
+	// struct layout and zero them out here.
+#if __INTPTR_WIDTH__ == 64
+	const_cast<msghdr *>(msg)->__pad0 = 0;
+	const_cast<msghdr *>(msg)->__pad1 = 0;
+#endif /* __INTPTR_WIDTH__ == 64 */
+
+	auto ret = do_cp_syscall(SYS_recvmsg, sockfd, msg, flags);
+	if (int e = sc_error(ret); e)
+			return e;
+	*length = sc_int_result<ssize_t>(ret);
+	return 0;
+}
 
 int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	auto ret = do_syscall(SYS_ioctl, fd, request, arg);
