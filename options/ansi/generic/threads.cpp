@@ -83,9 +83,8 @@ int thrd_join(thrd_t thr, int *res) {
 	return thrd_success;
 }
 
-__attribute__((__noreturn__)) void thrd_exit(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+__attribute__((__noreturn__)) void thrd_exit(int ret_val) {
+	mlibc::thread_exit({.integer = ret_val});
 }
 
 int mtx_init(mtx_t *mtx, int type) {
