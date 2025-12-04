@@ -348,16 +348,7 @@ int pthread_join(pthread_t thread, void **ret) {
 }
 
 int pthread_detach(pthread_t thread) {
-	auto tcb = reinterpret_cast<Tcb*>(thread);
-	if (!__atomic_load_n(&tcb->isJoinable, __ATOMIC_RELAXED))
-		return EINVAL;
-
-	int expected = 1;
-	if(!__atomic_compare_exchange_n(&tcb->isJoinable, &expected, 0, false, __ATOMIC_RELEASE,
-				__ATOMIC_RELAXED))
-		return EINVAL;
-
-	return 0;
+	return mlibc::thread_detach(thread);
 }
 
 void pthread_cleanup_push(void (*func) (void *), void *arg) {

@@ -138,6 +138,19 @@ int thread_join(struct __mlibc_thread_data *thread, void *ret) {
 	return 0;
 }
 
+int thread_detach(struct __mlibc_thread_data *thread) {
+	auto tcb = reinterpret_cast<Tcb *>(thread);
+	if (!__atomic_load_n(&tcb->isJoinable, __ATOMIC_RELAXED))
+		return EINVAL;
+
+	int expected = 1;
+	if(!__atomic_compare_exchange_n(&tcb->isJoinable, &expected, 0, false, __ATOMIC_RELEASE,
+				__ATOMIC_RELAXED))
+		return EINVAL;
+
+	return 0;
+}
+
 namespace {
 
 __attribute__ ((__noreturn__)) void do_exit() {

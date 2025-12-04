@@ -74,9 +74,8 @@ void thrd_yield(void) {
 	}
 }
 
-int thrd_detach(thrd_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int thrd_detach(thrd_t thr) {
+	return mlibc::thread_detach(thr) == 0 ? thrd_success : thrd_error;
 }
 
 int thrd_join(thrd_t thr, int *res) {
