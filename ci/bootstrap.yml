@@ -248,7 +248,7 @@ packages:
       - args: |
           ARCH="@OPTION:arch@"
           LOCALEDEF_FLAGS=""
-          if [ "$ARCH" == "m68k" ]; then
+          if [[ "$ARCH" == "m68k" ]]; then
             LOCALEDEF_FLAGS="--big-endian"
           fi
           mkdir -p @THIS_COLLECT_DIR@/usr/lib/locale/
