@@ -98,7 +98,6 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_setgid(gid_t gid);
 [[gnu::weak]] int sys_setegid(gid_t egid);
 [[gnu::weak]] int sys_getgroups(size_t size, gid_t *list, int *ret);
-[[gnu::weak]] void sys_yield();
 [[gnu::weak]] int sys_sleep(time_t *secs, long *nanos);
 [[gnu::weak]] int sys_fork(pid_t *child);
 [[gnu::weak]] int sys_execve(const char *path, char *const argv[], char *const envp[]);
