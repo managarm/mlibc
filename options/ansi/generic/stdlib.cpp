@@ -58,7 +58,8 @@ long long atoll(const char *string) {
 // to avoid exporting sigprocmask when posix is disabled.
 int sigprocmask(int, const sigset_t *__restrict, sigset_t *__restrict);
 extern "C" {
-	__attribute__((__returns_twice__)) int __sigsetjmp(sigjmp_buf buffer, int savesigs) {
+	[[gnu::visibility("hidden")]]
+	int __sigsetjmp(sigjmp_buf buffer, int savesigs) {
 		buffer[0].__savesigs = savesigs;
 		if (savesigs)
 			sigprocmask(0, nullptr, &buffer[0].__sigset);

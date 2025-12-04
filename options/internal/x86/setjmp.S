@@ -1,4 +1,5 @@
 
+.hidden __setjmp
 .type __setjmp, "function"
 __setjmp:
 	mov 4(%esp), %eax       # Save argument (buffer) in edi
@@ -18,7 +19,7 @@ __setjmp:
 	ret
 
 1:
-	jmp __sigsetjmp@PLT
+	jmp __sigsetjmp
 
 .global setjmp
 .type setjmp, "function"
