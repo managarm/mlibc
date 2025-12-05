@@ -1,9 +1,8 @@
-.global setjmp
-.type setjmp, "function"
-.global _setjmp
-.type _setjmp, "function"
-setjmp:
-_setjmp:
+#include "mlibc-asm/helpers.h"
+
+.hidden __setjmp
+.type __setjmp, "function"
+__setjmp:
 	st.d $ra, $a0, 0
 	st.d $sp, $a0, 8
 	st.d $r21, $a0, 16
@@ -25,13 +24,27 @@ _setjmp:
 	fst.d $fs5, $a0, 144
 	fst.d $fs6, $a0, 152
 	fst.d $fs7, $a0, 160
-	move $a0, $r0
+	bnez $t1, 1f
+	move $a0, $zero
 	ret
+
+1:
+	b __sigsetjmp
+
+.global setjmp
+.type setjmp, "function"
+.global _setjmp
+.type _setjmp, "function"
+setjmp:
+_setjmp:
+	move $t1, $zero
+	b __setjmp
 
 .global sigsetjmp
 .type sigsetjmp, "function"
 sigsetjmp:
-	break 0 // TODO
+	addi.w $t1, $zero, 1
+	b __setjmp
 
 .global longjmp
 .type longjmp, "function"
@@ -64,5 +77,5 @@ _longjmp:
 	add.d   $a0, $a0, $a1
 	jr      $ra
 
-.section .note.GNU-stack,"",%progbits
+GNU_STACK_NOTE()
 

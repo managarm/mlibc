@@ -1,7 +1,9 @@
+#include "mlibc-asm/helpers.h"
 
+.hidden __setjmp
 .type __setjmp, "function"
 __setjmp:
-	mov 4(%esp), %eax       # Save argument (buffer) in edi
+	mov 4(%esp), %eax       # Save argument (buffer) in eax
 	mov %ebx, 0x00(%eax)
 	mov %ebp, 0x04(%eax)
 	mov %esi, 0x08(%eax)
@@ -18,7 +20,7 @@ __setjmp:
 	ret
 
 1:
-	jmp __sigsetjmp@PLT
+	jmp __sigsetjmp
 
 .global setjmp
 .type setjmp, "function"
@@ -48,12 +50,9 @@ _longjmp:
 	mov 0x0c(%ecx), %edi
 
 	mov 8(%esp), %eax
-	test %eax, %eax
-	jnz 1f
-	inc %eax
-1:
+	cmp $1, %eax # sets CF if eax < 1
+	adc $0, %eax # add CF to eax
 	mov 0x10(%ecx), %esp
 	jmp *0x14(%ecx)
 
-.section .note.GNU-stack,"",%progbits
-
+GNU_STACK_NOTE()
