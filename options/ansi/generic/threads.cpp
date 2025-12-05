@@ -66,13 +66,16 @@ int thrd_sleep(const struct timespec *duration, struct timespec *remaining) {
 }
 
 void thrd_yield(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	if(mlibc::sys_yield) {
+		mlibc::sys_yield();
+	}else{
+		// Missing sched_yield() is not an error.
+		MLIBC_MISSING_SYSDEP();
+	}
 }
 
-int thrd_detach(thrd_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int thrd_detach(thrd_t thr) {
+	return mlibc::thread_detach(thr) == 0 ? thrd_success : thrd_error;
 }
 
 int thrd_join(thrd_t thr, int *res) {
