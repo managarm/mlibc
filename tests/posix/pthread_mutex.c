@@ -1,10 +1,11 @@
 #include <assert.h>
-#include <err.h>
 #include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <string.h>
 
 #define TEST_ATTR(attr, field, value) ({ \
 		int x; \
@@ -132,7 +133,7 @@ static void testTimedLock() {
 
 	ret = pthread_create(&test_thread, NULL, testTimedLockWorker, NULL);
 	if (ret != 0) {
-		err(ret, "pthread_create");
+		fprintf(stderr, "pthread_create: %s\n", strerror(ret));
 		exit(1);
 	}
 

@@ -14,9 +14,8 @@ The list of sysdeps for every option can be found under its include directory. F
 
 ## Enabling more options
 
-For the demo sysdeps, only the bare minimum is enabled. However, most software you would want to port over will need more options enabled. The toggleable options in mlibc are:
+For the demo sysdeps, only the POSIX option is enabled. However, there are ports that will need more options enabled. The other toggleable options in mlibc are:
 
-- POSIX option, for APIs defined by posix like `fork` and `wait`
 - Linux option, for Linux-specific system calls like `epoll_create` and `statx`. Note that this option requires you to provide Linux kernel headers.
 - glibc option, for glibc-specific extensions like `backtrace` and `getopt_long`. Make sure your gcc port has `gnu-user.h` in its `tm_file` if you enable this option.
 - BSD option, for BSD-specific extensions like `openpty` and `getloadavg`
@@ -37,7 +36,7 @@ elif host_machine.system() == 'demo'
 
 ## Porting software
 
-With mlibc working, you are now ready to start [porting software](https://wiki.osdev.org/Cross-Porting_Software). For your sanity, use a compiler which targets your OS and has a sysroot directory.
+With mlibc working, you are now ready to start [porting software](https://osdev.wiki/Cross-Porting_Software). For your sanity, use a compiler which targets your OS and has a sysroot directory.
 
 If you run into build failures, make sure that you have enabled the options needed by the application as well as defined the ABI correctly. If you truly believe something is an mlibc bug, please reach out to us [on Discord](https://discord.gg/7WB6Ur3) in `#mlibc-dev` or [open an issue](https://github.com/managarm/mlibc/issues/new).
 
