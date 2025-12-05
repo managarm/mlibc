@@ -301,9 +301,25 @@ FILE *tmpfile(void) {
 	__builtin_unreachable();
 }
 
-char *tmpnam(char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+char *tmpnam(char *buf) {
+	static thread_local char internalBuffer[L_tmpnam];
+	char *result = buf ? buf : internalBuffer;
+
+	for (size_t i = 0; i < 100; i++) {
+		int ret = snprintf(result, L_tmpnam, "/tmp/tmpnam_%06X", rand() & 0xFFFFFF);
+		if (ret < 18)
+			return nullptr;
+
+		int fd;
+		ret = mlibc::sys_open(result, O_RDONLY, 0666, &fd);
+		if (ret == 0) {
+			mlibc::sys_close(fd);
+		} else {
+			return result;
+		}
+	}
+
+	return nullptr;
 }
 
 // fflush() is provided by the POSIX sublibrary
