@@ -13,6 +13,7 @@
 #include <frg/small_vector.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/stdlib.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/rtld-config.hpp>
 
@@ -180,38 +181,13 @@ char *setstate(char *state) {
 
 
 int mkostemps(char *pattern, int suffixlen, int flags) {
-	auto n = strlen(pattern);
-	if(n < (6 + static_cast<size_t>(suffixlen))) {
-		errno = EINVAL;
+	int fd = 0;
+	if (int e = mlibc::mkostemps(pattern, suffixlen, flags, &fd); e) {
+		errno = e;
 		return -1;
 	}
 
-	flags &= ~O_WRONLY;
-
-	for(size_t i = 0; i < 6; i++) {
-		if(pattern[n - (6 + suffixlen) + i] == 'X')
-			continue;
-		errno = EINVAL;
-		return -1;
-	}
-
-	// TODO: Do an exponential search.
-	for(size_t i = 0; i < 999999; i++) {
-		char sfx = pattern[n - suffixlen];
-		__ensure(sprintf(pattern + (n - (6 + suffixlen)), "%06zu", i) == 6);
-		pattern[n - suffixlen] = sfx;
-
-		int fd;
-		if(int e = mlibc::sys_open(pattern, O_RDWR | O_CREAT | O_EXCL | flags, S_IRUSR | S_IWUSR, &fd); !e) {
-			return fd;
-		}else if(e != EEXIST) {
-			errno = e;
-			return -1;
-		}
-	}
-
-	errno = EEXIST;
-	return -1;
+	return fd;
 }
 
 int mkostemp(char *pattern, int flags) {
