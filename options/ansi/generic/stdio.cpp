@@ -19,6 +19,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/file-io.hpp>
 #include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/stdlib.hpp>
 #include <frg/mutex.hpp>
 #include <frg/expected.hpp>
 #include <frg/printf.hpp>
@@ -297,13 +298,44 @@ int renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_p
 }
 
 FILE *tmpfile(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_unlinkat, nullptr);
+
+	int fd = 0;
+	char pattern[] = "/tmp/tmpfile_XXXXXX";
+	int res = mlibc::mkostemps(pattern, 0, 0, &fd);
+	if (res)
+		return nullptr;
+
+	res = mlibc::sys_unlinkat(AT_FDCWD, pattern, 0);
+	if (res) {
+		mlibc::sys_close(fd);
+		errno = res;
+		return nullptr;
+	}
+
+	return frg::construct<mlibc::fd_file>(getAllocator(), fd, mlibc::file_dispose_cb<mlibc::fd_file>);
+
 }
 
-char *tmpnam(char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+char *tmpnam(char *buf) {
+	static thread_local char internalBuffer[L_tmpnam];
+	char *result = buf ? buf : internalBuffer;
+
+	for (size_t i = 0; i < 100; i++) {
+		int ret = snprintf(result, L_tmpnam, "/tmp/tmpnam_%06X", rand() & 0xFFFFFF);
+		if (ret < 18)
+			return nullptr;
+
+		int fd;
+		ret = mlibc::sys_open(result, O_RDONLY, 0666, &fd);
+		if (ret == 0) {
+			mlibc::sys_close(fd);
+		} else {
+			return result;
+		}
+	}
+
+	return nullptr;
 }
 
 // fflush() is provided by the POSIX sublibrary

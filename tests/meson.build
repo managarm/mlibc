@@ -29,6 +29,7 @@ all_test_cases = [
 	'ansi/fgetpos',
 	'ansi/fputs',
 	'ansi/ftell',
+	'ansi/tmpfile',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
