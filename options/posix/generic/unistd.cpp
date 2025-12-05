@@ -263,13 +263,13 @@ int fdatasync(int fd) {
 }
 
 int fexecve(int, char *const [], char *const []) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: " << __FUNCTION__ << " not implemented!" << frg::endlog;
+	return errno = ENOSYS, -1;
 }
 
 long fpathconf(int, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: " << __FUNCTION__ << " not implemented!" << frg::endlog;
+	return errno = ENOSYS, -1;
 }
 
 int fsync(int fd) {
@@ -454,8 +454,8 @@ int getgroups(int size, gid_t list[]) {
 }
 
 long gethostid(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: " << __FUNCTION__ << " not implemented!" << frg::endlog;
+	return errno = ENOSYS, -1;
 }
 
 int gethostname(char *buffer, size_t bufsize) {
@@ -482,8 +482,8 @@ char *getlogin(void) {
 }
 
 int getlogin_r(char *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: " << __FUNCTION__ << " not implemented!" << frg::endlog;
+	return errno = ENOSYS, -1;
 }
 
 int getopt(int argc, char *const argv[], const char *optstring) {
@@ -946,8 +946,8 @@ int tcsetpgrp(int fd, pid_t pgrp) {
 }
 
 int truncate(const char *, off_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: " << __FUNCTION__ << " not implemented!" << frg::endlog;
+	return errno = ENOSYS, -1;
 }
 
 #if __MLIBC_LINUX_OPTION
