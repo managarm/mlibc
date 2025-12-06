@@ -236,8 +236,8 @@ int faccessat(int dirfd, const char *pathname, int mode, int flags) {
 }
 
 int fchown(int fd, uid_t uid, gid_t gid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fchownat, -1);
-	if(int e = mlibc::sys_fchownat(fd, "", uid, gid, AT_EMPTY_PATH); e) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fchown, -1);
+	if(int e = mlibc::sys_fchown(fd, uid, gid); e) {
 		errno = e;
 		return -1;
 	}
