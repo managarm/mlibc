@@ -15,6 +15,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
+#include <mlibc/sysdeps.hpp>
 #include <mlibc/thread-entry.hpp>
 #include <limits.h>
 #include <sys/syscall.h>
@@ -594,7 +595,7 @@ int sys_execve(const char *path, char *const argv[], char *const envp[]) {
         return 0;
 }
 
-int sys_sigprocmask(int how, const sigset_t *set, sigset_t *old) {
+int Sysdeps::sigprocmask(int how, const sigset_t *set, sigset_t *old) {
         auto ret = do_syscall(SYS_rt_sigprocmask, how, set, old, NSIG / 8);
         if (int e = sc_error(ret); e)
                 return e;

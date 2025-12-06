@@ -1,7 +1,9 @@
 #ifndef MLIBC_ANSI_SYSDEPS
 #define MLIBC_ANSI_SYSDEPS
 
+#include <errno.h>
 #include <stddef.h>
+#include <signal.h>
 
 #include <abi-bits/seek-whence.h>
 #include <abi-bits/vm-flags.h>
@@ -10,15 +12,13 @@
 #include <bits/off_t.h>
 #include <bits/ssize_t.h>
 #include <bits/ansi/time_t.h>
-#include <signal.h>
-#include <stdarg.h>
 
 struct rusage;
 
 namespace [[gnu::visibility("hidden")]] mlibc {
 
 [[noreturn]] void sys_exit(int status);
-[[noreturn, gnu::weak]] void sys_thread_exit();
+[[noreturn]] void sys_thread_exit();
 
 // If *stack is not null, it should point to the lowest addressable byte of the stack.
 // Returns the new stack pointer in *stack and the stack base in *stack_base.
@@ -65,8 +65,35 @@ int sys_clock_get(int clock, time_t *secs, long *nanos);
 [[gnu::weak]] int sys_execve(const char *path, char *const argv[], char *const envp[]);
 [[gnu::weak]] void sys_yield();
 
-[[gnu::weak]] pid_t sys_getpid();
+pid_t sys_getpid();
 [[gnu::weak]] int sys_kill(int, int);
+
+#define ENOSYS_BODY { return ENOSYS; }
+
+struct AnsiSysdeps {
+	int prepare_stack(void **stack, void *entry, void *user_arg, void* tcb, size_t *stack_size, size_t *guard_size, void **stack_base) ENOSYS_BODY;
+	int clone(void *tcb, pid_t *pid_out, void *stack) ENOSYS_BODY;
+	int flock(int fd, int options) ENOSYS_BODY;
+	int open_dir(const char *path, int *handle) ENOSYS_BODY;
+	int read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read) ENOSYS_BODY;
+	int pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) ENOSYS_BODY;
+	int clock_set(int clock, time_t secs, long nanos) ENOSYS_BODY;
+	int clock_getres(int clock, time_t *secs, long *nanos) ENOSYS_BODY;
+	int sleep(time_t *secs, long *nanos) ENOSYS_BODY;
+	int isatty(int fd) ENOSYS_BODY;
+	int rmdir(const char *path) ENOSYS_BODY;
+	int unlinkat(int dirfd, const char *path, int flags) ENOSYS_BODY;
+	int rename(const char *path, const char *new_path) ENOSYS_BODY;
+	int renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) ENOSYS_BODY;
+	int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) ENOSYS_BODY;
+	int sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict) ENOSYS_BODY;
+
+	int fork(pid_t *child) ENOSYS_BODY;
+	int waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) ENOSYS_BODY;
+	int execve(const char *path, char *const argv[], char *const envp[]) ENOSYS_BODY;
+
+	int kill(int, int) ENOSYS_BODY;
+};
 
 } //namespace mlibc
 

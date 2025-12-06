@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mlibc/global-config.hpp>
+#include <mlibc/sysdeps.hpp>
+
+constinit SysdepsImpl<mlibc::Sysdeps> sysdeps;
 
 namespace mlibc {
 
