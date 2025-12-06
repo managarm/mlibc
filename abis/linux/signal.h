@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <abi-bits/sigevent.h>
+#include <abi-bits/sigset_t.h>
 #include <abi-bits/pid_t.h>
 #include <abi-bits/uid_t.h>
 #include <bits/size_t.h>
@@ -120,10 +121,6 @@ typedef void (*__sighandler) (int);
 #define SIGPWR 30
 #define SIGRTMIN 35
 #define SIGRTMAX 64
-
-typedef struct {
-	unsigned long sig[1024 / (8 * sizeof(long))];
-} sigset_t;
 
 /* constants for sigprocmask() */
 #define SIG_BLOCK 0
