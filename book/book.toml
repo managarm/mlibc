@@ -1,6 +1,5 @@
 [book]
 authors = ["Matt Staveley-Taylor", "Matheus A."]
 language = "en"
-multilingual = false
 src = "src"
 title = "mlibc User Guide"
