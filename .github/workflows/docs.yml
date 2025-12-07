@@ -1,0 +1,45 @@
+name: Documentation
+
+on: [push, pull_request]
+
+jobs:
+    build-docs:
+        name: Build documentation
+        runs-on: ubuntu-24.04
+        steps:
+          - name: Install prerequisites
+            run: |
+                sudo apt-get install doxygen ninja-build
+                sudo pip3 install meson
+          - name: Install mdbook
+            run: |
+                set -e
+                wget -O mdbook.tar.gz https://github.com/rust-lang/mdBook/releases/download/v0.4.20/mdbook-v0.4.20-x86_64-unknown-linux-gnu.tar.gz
+                sha512sum --check <<EOF
+                bc184123378814c0d28ffb13d88736bcfab64cfabb140f42c331e41f4fd7ea3fee24e480f78fe8f6f3f13bddd57bda7dcc215e6fc7f4a606177903dd10881a74  mdbook.tar.gz
+                EOF
+                tar xf mdbook.tar.gz
+                sudo install -D mdbook /usr/local/bin/mdbook
+          - name: Install rsync-ssl
+            run: |
+                wget https://raw.githubusercontent.com/WayneD/rsync/c3f7414c450faaf6a8281cc4a4403529aeb7d859/rsync-ssl
+                sudo install -D rsync-ssl /usr/local/bin/rsync-ssl
+          - name: Checkout
+            uses: actions/checkout@v2
+            with:
+              path: src/
+          - name: Build handbook
+            run: |
+              set -ex
+              mdbook build -d $(pwd)/book src/book
+          - name: Upload handbook artifact
+            uses: actions/upload-artifact@v4
+            with:
+                name: handbook
+                path: book
+          - name: Upload handbook to docs.managarm.org
+            if: github.ref == 'refs/heads/master'
+            env:
+                RSYNC_PASSWORD: ${{ secrets.RSYNC_DOCUMENTATION_PASSWD }}
+            run:
+                rsync-ssl -a --delete book/ docs@rsync.managarm.org::docs/mlibc-book/
