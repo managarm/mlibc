@@ -32,6 +32,7 @@ all_test_cases = [
 	'ansi/tmpfile',
 	'ansi/mbstowcs',
 	'ansi/locale',
+	'ansi/asctime',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
