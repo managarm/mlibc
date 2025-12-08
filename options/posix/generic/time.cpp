@@ -1,10 +1,12 @@
 #include <ctype.h>
+#include <errno.h>
 #include <langinfo.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 
 #include <bits/ensure.h>
+#include <mlibc/debug.hpp>
 #include <mlibc/strings.hpp>
 
 namespace {
@@ -505,6 +507,6 @@ char *strptime(const char *__restrict s, const char *__restrict format, struct t
 }
 
 int clock_getcpuclockid(pid_t, clockid_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: clock_getcpuclockid unconditionally returns ENOSYS" << frg::endlog;
+	return ENOSYS;
 }
