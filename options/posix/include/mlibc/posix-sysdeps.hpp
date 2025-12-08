@@ -199,6 +199,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_sigaltstack(const stack_t *ss, stack_t *oss);
 [[gnu::weak]] int sys_sigsuspend(const sigset_t *set);
 [[gnu::weak]] int sys_sigpending(sigset_t *set);
+[[gnu::weak]] int sys_sigqueue(pid_t pid, int sig, const union sigval val);
 [[gnu::weak]] int sys_setgroups(size_t size, const gid_t *list);
 [[gnu::weak]] int sys_memfd_create(const char *name, int flags, int *fd);
 [[gnu::weak]] int sys_madvise(void *addr, size_t length, int advice);

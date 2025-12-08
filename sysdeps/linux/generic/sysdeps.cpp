@@ -2516,6 +2516,21 @@ int sys_shmget(int *shm_id, key_t key, size_t size, int shmflg) {
 	return 0;
 }
 
+int sys_sigqueue(pid_t pid, int sig, const union sigval val) {
+	siginfo_t si;
+	memset(&si, 0, sizeof(si));
+	si.si_signo = sig;
+	si.si_code = SI_QUEUE;
+	si.si_value = val;
+	si.si_uid = mlibc::sys_getuid();
+	si.si_pid = mlibc::sys_getpid();
+
+	auto ret = do_syscall(SYS_rt_sigqueueinfo, pid, sig, &si);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #if !defined(MLIBC_BUILDING_RTLD)
 int sys_inet_configured(bool *ipv4, bool *ipv6) {
 	struct context {
