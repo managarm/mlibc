@@ -136,9 +136,22 @@ char *strcasestr(const char *s, const char *pattern) {
 	return nullptr;
 }
 
-void *memccpy(void *__restrict, const void *__restrict, int, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void *memccpy(void *__restrict dest, const void *__restrict src, int c, size_t n) {
+	auto *d = static_cast<unsigned char *>(dest);
+	const auto *s = static_cast<const unsigned char *>(src);
+	const unsigned char target = static_cast<unsigned char>(c);
+
+	for (size_t i = 0; i < n; i++) {
+		*d = *s;
+
+		if (*d == target)
+			return static_cast<void *>(d + 1);
+
+		d++;
+		s++;
+	}
+
+	return nullptr;
 }
 
 // This implementation was taken from musl
