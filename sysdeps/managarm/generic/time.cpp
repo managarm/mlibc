@@ -81,9 +81,8 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 
 int sys_clock_getres(int clock, time_t *secs, long *nanos) {
 	(void)clock;
-	(void)secs;
-	(void)nanos;
-	mlibc::infoLogger() << "mlibc: clock_getres is a stub" << frg::endlog;
+	*secs = 0;
+	*nanos = 1;
 	return 0;
 }
 
