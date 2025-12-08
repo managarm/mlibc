@@ -9,9 +9,9 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-#if __MLIBC_XOPEN
+#if defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN
 int utimes(const char *__filename, const struct timeval __tv[2]);
-#endif
+#endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
 /* Not standardized, Linux and BSDs have it */
 #if defined(_DEFAULT_SOURCE)
