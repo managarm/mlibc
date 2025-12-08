@@ -6,9 +6,14 @@
 #include <time.h>
 #include <sys/time.h>
 
-int timer_getoverrun(timer_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int timer_getoverrun(timer_t t) {
+	int out = 0;
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timer_getoverrun, -1);
+	if(int e = mlibc::sys_timer_getoverrun(t, &out); e) {
+		errno = e;
+		return -1;
+	}
+	return out;
 }
 
 int utimes(const char *filename, const struct timeval times[2]) {

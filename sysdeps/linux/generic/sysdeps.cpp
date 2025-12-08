@@ -1073,6 +1073,15 @@ int sys_timer_delete(timer_t t) {
 	return 0;
 }
 
+int sys_timer_getoverrun(timer_t t, int *out) {
+	auto ret = do_syscall(SYS_timer_getoverrun, t);
+	if (int e = sc_error(ret); e)
+		return e;
+
+	*out = sc_int_result<int>(ret);
+	return 0;
+}
+
 int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out) {
 	auto ret = do_syscall(SYS_ptrace, req, pid, addr, data);
 	if (int e = sc_error(ret); e)

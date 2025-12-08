@@ -211,6 +211,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_timer_settime(timer_t t, int flags, const struct itimerspec *__restrict val, struct itimerspec *__restrict old);
 [[gnu::weak]] int sys_timer_gettime(timer_t t, struct itimerspec *val);
 [[gnu::weak]] int sys_timer_delete(timer_t t);
+[[gnu::weak]] int sys_timer_getoverrun(timer_t t, int *out);
 [[gnu::weak]] int sys_times(struct tms *tms, clock_t *out);
 [[gnu::weak]] int sys_uname(struct utsname *buf);
 [[gnu::weak]] int sys_pause();
