@@ -35,6 +35,7 @@ typedef char *__caddr_t;
 #if defined(_DEFAULT_SOURCE)
 #include <abi-bits/fd_set.h>
 #include <endian.h>
+#include <stdint.h>
 #include <sys/select.h>
 
 typedef unsigned int u_int;
@@ -47,10 +48,6 @@ typedef off64_t loff_t;
 typedef unsigned long int ulong;
 typedef unsigned short int ushort;
 typedef unsigned int uint;
-#endif /* defined(_DEFAULT_SOURCE) */
-
-#if defined(_GNU_SOURCE)
-#include <stdint.h>
 
 typedef uint8_t u_int8_t;
 typedef uint16_t u_int16_t;
@@ -60,7 +57,7 @@ typedef uint64_t u_int64_t;
 /* BSD extensions */
 typedef int64_t quad_t;
 typedef uint64_t u_quad_t;
-#endif /* defined(_GNU_SOURCE) */
+#endif /* defined(_DEFAULT_SOURCE) */
 
 #endif /* _SYS_TYPES_H */
 
