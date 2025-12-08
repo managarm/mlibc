@@ -457,9 +457,15 @@ int mbtowc(wchar_t *__restrict wc, const char *__restrict mb, size_t max_size) {
 	}
 }
 
-int wctomb(char *, wchar_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int wctomb(char *s, wchar_t wc) {
+	static mbstate_t state;
+
+	if (s == nullptr) {
+		memset(&state, 0, sizeof(state));
+		return 0;
+	}
+
+    return wcrtomb(s, wc, &state);
 }
 
 size_t mbstowcs(wchar_t *__restrict wcs, const char *__restrict mbs, size_t wc_limit) {
