@@ -116,6 +116,7 @@ all_test_cases = [
 	'posix/pthread_rwlock_timedwrlock',
 	'posix/sigsetjmp',
 	'posix/locale',
+	'posix/jrand48',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
