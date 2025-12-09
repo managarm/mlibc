@@ -31,11 +31,21 @@
 // America/New_York is a common default.
 #define TZ_DEFAULT_RULE_STRING ",M3.2.0,M11.1.0"
 
+namespace {
+
 const char __utc[] = "UTC";
+
+constexpr size_t tznameNormal = 0;
+constexpr size_t tznameDST = 1;
+
+frg::string<MemoryAllocator> tznameStorage[2] = { {getAllocator()}, {getAllocator()} };
+
+} // namespace
 
 // Variables defined by POSIX.
 int daylight;
 long timezone;
+// [0] holds normal time, [1] holds DST
 char *tzname[2];
 
 static FutexLock __time_lock;
@@ -861,12 +871,14 @@ bool parse_tzfile(const char *tz) {
 				+ i * sizeof(ttinfo), sizeof(ttinfo));
 		time_info.tt_gmtoff = mlibc::bit_util<uint32_t>::byteswap(time_info.tt_gmtoff);
 		if (!time_info.tt_isdst && !found_std) {
-			tzname[0] = abbrevs + time_info.tt_abbrind;
+			tznameStorage[tznameNormal] = {abbrevs + time_info.tt_abbrind, getAllocator()};
+			tzname[tznameNormal] = tznameStorage[tznameNormal].data();
 			timezone = -time_info.tt_gmtoff;
 			found_std = true;
 		}
 		if (time_info.tt_isdst && !found_dst) {
-			tzname[1] = abbrevs + time_info.tt_abbrind;
+			tznameStorage[tznameDST] = {abbrevs + time_info.tt_abbrind, getAllocator()};
+			tzname[tznameDST] = tznameStorage[tznameDST].data();
 			timezone = -time_info.tt_gmtoff;
 			daylight = 1;
 			found_dst = true;
@@ -907,8 +919,8 @@ void do_tzset(void) {
 	daylight = 0;
 
 	if (!parse_tz(tz, tz_name, tz_name_dst, tz_name_max)) {
-		tzname[0] = tz_name;
-		tzname[1] = tz_name_dst;
+		tzname[tznameNormal] = tz_name;
+		tzname[tznameDST] = tz_name_dst;
 		return;
 	}
 
@@ -916,8 +928,8 @@ void do_tzset(void) {
 	if (parse_tzfile(tz)) {
 		// This should always succeed.
 		__ensure(!parse_tz("UTC0", tz_name, tz_name_dst, tz_name_max));
-		tzname[0] = tz_name;
-		tzname[1] = tz_name_dst;
+		tzname[tznameNormal] = tz_name;
+		tzname[tznameDST] = tz_name_dst;
 	}
 }
 
@@ -1103,7 +1115,7 @@ bool is_in_dst(time_t unix_gmt) {
 	}
 }
 
-int unix_local_from_gmt_tzfile(time_t unix_gmt, time_t *offset, bool *dst, char **tm_zone) {
+int unix_local_from_gmt_tzfile(time_t unix_gmt, time_t *offset, bool *dst, frg::string<MemoryAllocator> &tm_zone) {
 	const char *tz = getenv("TZ");
 
 	if (!tz || *tz == '\0')
@@ -1187,7 +1199,7 @@ int unix_local_from_gmt_tzfile(time_t unix_gmt, time_t *offset, bool *dst, char 
 
 	*offset = time_info.tt_gmtoff;
 	*dst = time_info.tt_isdst;
-	*tm_zone = abbrevs + time_info.tt_abbrind;
+	tm_zone = {abbrevs + time_info.tt_abbrind, getAllocator()};
 	return 0;
 }
 
@@ -1197,13 +1209,17 @@ int unix_local_from_gmt_tzfile(time_t unix_gmt, time_t *offset, bool *dst, char 
 int unix_local_from_gmt(time_t unix_gmt, time_t *offset, bool *dst, char **tm_zone) {
 	do_tzset();
 
-	if (daylight && rules[0].type == TZFILE)
-		return unix_local_from_gmt_tzfile(unix_gmt, offset, dst, tm_zone);
+	if (daylight && rules[0].type == TZFILE) {
+		int ret = unix_local_from_gmt_tzfile(unix_gmt, offset, dst, tznameStorage[tznameDST]);
+		if (ret == 0)
+			*tm_zone = tzname[tznameDST] = tznameStorage[tznameDST].data();
+		return ret;
+	}
 
 	if (daylight && is_in_dst(unix_gmt)) {
-		*offset = tt_infos[1].tt_gmtoff;
+		*offset = tt_infos[tznameDST].tt_gmtoff;
 		*dst = true;
-		*tm_zone = tzname[1];
+		*tm_zone = tzname[tznameDST];
 		return 0;
 	}
 
