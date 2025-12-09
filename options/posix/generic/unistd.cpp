@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <pwd.h>
 #include <sys/stat.h>
+#include <abi-bits/ioctls.h>
 
 #include <bits/ensure.h>
 #include <mlibc-config.h>

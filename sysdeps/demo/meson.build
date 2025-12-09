@@ -33,6 +33,7 @@ if not no_headers
 		'include/abi-bits/fcntl.h',
 		'include/abi-bits/gid_t.h',
 		'include/abi-bits/ino_t.h',
+		'include/abi-bits/ioctls.h',
 		'include/abi-bits/limits.h',
 		'include/abi-bits/mode_t.h',
 		'include/abi-bits/nlink_t.h',
