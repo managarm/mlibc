@@ -30,6 +30,7 @@ all_test_cases = [
 	'ansi/fputs',
 	'ansi/ftell',
 	'ansi/tmpfile',
+	'ansi/mbstowcs',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
@@ -201,6 +202,19 @@ elif c_compiler.get_id() == 'clang'
 	host_test_c_args += ['-Wno-unknown-warning-option']
 endif
 
+host_test_locpath = get_option('host_test_locpath')
+cross_test_locpath = get_option('cross_test_locpath')
+
+host_env = []
+if host_test_locpath != ''
+	host_env += ['LOCPATH=' + host_test_locpath]
+endif
+
+cross_env = []
+if cross_test_locpath != ''
+	cross_env += ['LOCPATH=' + cross_test_locpath]
+endif
+
 # Our ubsan implementation can't be used by the tests themselves,
 # since it is internal to libc.so and ld.so.
 test_override_options = ['b_sanitize=none']
@@ -312,9 +326,10 @@ foreach test_name : all_test_cases
 				exec
 			],
 			timeout: timeout_sec,
+			env: cross_env,
 		)
 	else
-		test(test_short_name, exec, suite: test_subdir, should_fail: should_fail, timeout: timeout_sec)
+		test(test_short_name, exec, suite: test_subdir, should_fail: should_fail, timeout: timeout_sec, env: cross_env)
 	endif
 
 	if build_tests_host_libc and not host_libc_excluded_test_cases.contains(test_name)
@@ -348,9 +363,10 @@ foreach test_name : all_test_cases
 					exec
 				],
 				timeout: timeout_sec,
+				env: host_env,
 			)
 		else
-			test(test_short_name, exec, suite: ['host-libc', test_subdir], should_fail: should_fail, timeout: timeout_sec)
+			test(test_short_name, exec, suite: ['host-libc', test_subdir], should_fail: should_fail, timeout: timeout_sec, env: host_env)
 		endif
 	endif
 
@@ -374,7 +390,7 @@ foreach test_name : all_test_cases
 				suite: ['cross-libc', test_subdir],
 				should_fail: should_fail,
 				timeout: timeout_sec,
-				env: ['QEMU_LD_PREFIX=' + cross_libc_ld_prefix]
+				env: ['QEMU_LD_PREFIX=' + cross_libc_ld_prefix] + cross_env
 			)
 		endif
 	endif

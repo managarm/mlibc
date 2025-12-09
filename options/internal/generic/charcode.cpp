@@ -40,10 +40,12 @@ struct utf8_charcode {
 					return charcode_error::illegal_input;
 				}
 			}else{
-				// TODO: Return an error.
-				__ensure((uc & 0b1100'0000) == 0b1000'0000);
-				_cpoint = (_cpoint << 6) | (uc & 0x3F);
-				--_progress;
+				if((uc & 0b1100'0000) == 0b1000'0000) {
+                    _cpoint = (_cpoint << 6) | (uc & 0x3F);
+                    --_progress;
+                } else {
+                    return charcode_error::illegal_input;
+                }
 			}
 			++seq.it;
 			return charcode_error::null;

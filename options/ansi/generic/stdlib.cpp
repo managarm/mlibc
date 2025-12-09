@@ -477,8 +477,8 @@ size_t mbstowcs(wchar_t *__restrict wcs, const char *__restrict mbs, size_t wc_l
 	}
 
 	if(auto e = cc->decode_wtranscode(nseq, wseq, st); e != mlibc::charcode_error::null) {
-		__ensure(!"decode_wtranscode() errors are not handled");
-		__builtin_unreachable();
+		errno = EILSEQ;
+		return size_t(-1);
 	}else{
 		size_t n = wseq.it - wcs;
 		if(n < wc_limit) // Null-terminate resulting wide string.
