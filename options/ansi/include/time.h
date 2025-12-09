@@ -102,7 +102,7 @@ extern int daylight;
 extern long timezone;
 #endif
 
-#if __MLIBC_POSIX1
+#if defined(_DEFAULT_SOURCE) || __MLIBC_POSIX1
 extern char *tzname[2];
 #endif
 
