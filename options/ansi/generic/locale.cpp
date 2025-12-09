@@ -1,159 +1,111 @@
 
 #include <limits.h>
 #include <locale.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <bits/ensure.h>
 
 #include <mlibc/debug.hpp>
+#include <mlibc/locale.hpp>
 #include <frg/optional.hpp>
 
-namespace {
-	// Values of the C locale are defined by the C standard.
-	constexpr lconv c_lconv = {
-		const_cast<char *>("."), // decimal_point
-		const_cast<char *>(""), // thousands_sep
-		const_cast<char *>(""), // grouping
-		const_cast<char *>(""), // mon_decimal_point
-		const_cast<char *>(""), // mon_thousands_sep
-		const_cast<char *>(""), // mon_grouping
-		const_cast<char *>(""), // positive_sign
-		const_cast<char *>(""), // negative_sign
-		const_cast<char *>(""), // currency_symbol
-		CHAR_MAX, // frac_digits
-		CHAR_MAX, // p_cs_precedes
-		CHAR_MAX, // n_cs_precedes
-		CHAR_MAX, // p_sep_by_space
-		CHAR_MAX, // n_sep_by_space
-		CHAR_MAX, // p_sign_posn
-		CHAR_MAX, // n_sign_posn
-		const_cast<char *>(""), // int_curr_symbol
-		CHAR_MAX, // int_frac_digits
-		CHAR_MAX, // int_p_cs_precedes
-		CHAR_MAX, // int_n_cs_precedes
-		CHAR_MAX, // int_p_sep_by_space
-		CHAR_MAX, // int_n_sep_by_space
-		CHAR_MAX, // int_p_sign_posn
-		CHAR_MAX // int_n_sign_posn
-	};
-} // namespace
+char *setlocale(int category, const char *name) {
+	if (name && *name == '\0') {
+		auto lc_all = getenv("LC_ALL");
 
-namespace mlibc {
-	struct locale_description {
-		// Identifier of this locale. used in setlocale().
-		const char *name;
-		lconv lc;
-	};
+		if (lc_all && strlen(lc_all) && category == LC_ALL) {
+			auto global = mlibc::getGlobalLocale();
+			if (mlibc::loadLocale(LC_ALL_MASK, lc_all, &global))
+				return nullptr;
 
-	constinit const locale_description c_locale{
-		.name = "C",
-		.lc = c_lconv
-	};
+			global->updateLocaleName();
+			mlibc::useGlobalLocale(global);
+			return global->getCategoryLocaleName(category).data();
+		} else {
+			int categoryEnvMask = 0;
 
-	constinit const locale_description posix_locale{
-		.name = "POSIX",
-		.lc = c_lconv
-	};
+			auto applyEnvCategory = [&](const char *categoryName, int val) {
+				if (auto e = getenv(categoryName); e && strlen(e)) {
+					if (!mlibc::applyCategory(val, e, mlibc::getGlobalLocale())) {
+						return false;
+					} else {
+						categoryEnvMask |= (1 << val);
+					}
+				}
+				return true;
+			};
 
-	const locale_description *query_locale_description(const char *name) {
-		if(!strcmp(name, "C"))
-			return &c_locale;
-		if(!strcmp(name, "POSIX"))
-			return &posix_locale;
-		return nullptr;
+			auto applyLang = [&](int val, const char *locale) {
+				if (!((1 << val) & categoryEnvMask))
+					if (!mlibc::applyCategory(val, locale, mlibc::getGlobalLocale()))
+						return false;
+
+				return true;
+			};
+
+			if (!applyEnvCategory("LC_CTYPE", LC_CTYPE)) return nullptr;
+			if (!applyEnvCategory("LC_NUMERIC", LC_NUMERIC)) return nullptr;
+			if (!applyEnvCategory("LC_TIME", LC_TIME)) return nullptr;
+			if (!applyEnvCategory("LC_COLLATE", LC_COLLATE)) return nullptr;
+			if (!applyEnvCategory("LC_MONETARY", LC_MONETARY)) return nullptr;
+			if (!applyEnvCategory("LC_MESSAGES", LC_MESSAGES)) return nullptr;
+			if (!applyEnvCategory("LC_PAPER", LC_PAPER)) return nullptr;
+			if (!applyEnvCategory("LC_NAME", LC_NAME)) return nullptr;
+			if (!applyEnvCategory("LC_ADDRESS", LC_ADDRESS)) return nullptr;
+			if (!applyEnvCategory("LC_TELEPHONE", LC_TELEPHONE)) return nullptr;
+			if (!applyEnvCategory("LC_MEASUREMENT", LC_MEASUREMENT)) return nullptr;
+			if (!applyEnvCategory("LC_IDENTIFICATION", LC_IDENTIFICATION)) return nullptr;
+
+			auto lang = getenv("LANG");
+			if (lang && strlen(lang)) {
+				if (!applyLang(LC_CTYPE, lang)) return nullptr;
+				if (!applyLang(LC_NUMERIC, lang)) return nullptr;
+				if (!applyLang(LC_TIME, lang)) return nullptr;
+				if (!applyLang(LC_COLLATE, lang)) return nullptr;
+				if (!applyLang(LC_MONETARY, lang)) return nullptr;
+				if (!applyLang(LC_MESSAGES, lang)) return nullptr;
+				if (!applyLang(LC_PAPER, lang)) return nullptr;
+				if (!applyLang(LC_NAME, lang)) return nullptr;
+				if (!applyLang(LC_ADDRESS, lang)) return nullptr;
+				if (!applyLang(LC_TELEPHONE, lang)) return nullptr;
+				if (!applyLang(LC_MEASUREMENT, lang)) return nullptr;
+				if (!applyLang(LC_IDENTIFICATION, lang)) return nullptr;
+			} else {
+				if (!applyLang(LC_CTYPE, "C")) return nullptr;
+				if (!applyLang(LC_NUMERIC, "C")) return nullptr;
+				if (!applyLang(LC_TIME, "C")) return nullptr;
+				if (!applyLang(LC_COLLATE, "C")) return nullptr;
+				if (!applyLang(LC_MONETARY, "C")) return nullptr;
+				if (!applyLang(LC_MESSAGES, "C")) return nullptr;
+				if (!applyLang(LC_PAPER, "C")) return nullptr;
+				if (!applyLang(LC_NAME, "C")) return nullptr;
+				if (!applyLang(LC_ADDRESS, "C")) return nullptr;
+				if (!applyLang(LC_TELEPHONE, "C")) return nullptr;
+				if (!applyLang(LC_MEASUREMENT, "C")) return nullptr;
+				if (!applyLang(LC_IDENTIFICATION, "C")) return nullptr;
+			}
+
+			mlibc::getGlobalLocale()->updateLocaleName();
+			return mlibc::getGlobalLocale()->getCategoryLocaleName(category).data();
+		}
 	}
 
-	const locale_description *collate_facet;
-	const locale_description *ctype_facet;
-	const locale_description *monetary_facet;
-	const locale_description *numeric_facet;
-	const locale_description *time_facet;
-	const locale_description *messages_facet;
-} // namespace mlibc
-
-[[gnu::constructor]]
-static void init_locale() {
-	mlibc::collate_facet = &mlibc::c_locale;
-	mlibc::ctype_facet = &mlibc::c_locale;
-	mlibc::monetary_facet = &mlibc::c_locale;
-	mlibc::numeric_facet = &mlibc::c_locale;
-	mlibc::time_facet = &mlibc::c_locale;
-	mlibc::messages_facet = &mlibc::c_locale;
-}
-
-char *setlocale(int category, const char *name) {
-	if(category == LC_ALL) {
-		// ´TODO: Implement correct return value when categories differ.
-		auto current_desc = mlibc::collate_facet;
-		__ensure(current_desc == mlibc::ctype_facet);
-		__ensure(current_desc == mlibc::monetary_facet);
-		__ensure(current_desc == mlibc::numeric_facet);
-		__ensure(current_desc == mlibc::time_facet);
-		__ensure(current_desc == mlibc::messages_facet);
-
-		if(name) {
-			// Our default C locale is the C locale.
-			if(!strlen(name))
-				name = "C";
-
-			auto new_desc = mlibc::query_locale_description(name);
-			if(!new_desc) {
-				mlibc::infoLogger() << "mlibc: Locale " << name
-						<< " is not supported" << frg::endlog;
-				return nullptr;
-			}
-
-			mlibc::collate_facet = new_desc;
-			mlibc::ctype_facet = new_desc;
-			mlibc::monetary_facet = new_desc;
-			mlibc::numeric_facet = new_desc;
-			mlibc::time_facet = new_desc;
-			mlibc::messages_facet = new_desc;
-		}
-		return const_cast<char *>(current_desc->name);
-	}else{
-		const mlibc::locale_description **facet_ptr;
-		switch(category) {
-		case LC_COLLATE:
-			facet_ptr = &mlibc::collate_facet;
-			break;
-		case LC_CTYPE:
-			facet_ptr = &mlibc::ctype_facet;
-			break;
-		case LC_MONETARY:
-			facet_ptr = &mlibc::monetary_facet;
-			break;
-		case LC_NUMERIC:
-			facet_ptr = &mlibc::numeric_facet;
-			break;
-		case LC_TIME:
-			facet_ptr = &mlibc::time_facet;
-			break;
-		case LC_MESSAGES:
-			facet_ptr = &mlibc::messages_facet;
-			break;
-		default:
-			mlibc::infoLogger() << "mlibc: Unexpected value " << category
-					<< " for category in setlocale()" << frg::endlog;
+	if (name && category == LC_ALL) {
+		auto global = mlibc::getGlobalLocale();
+		if (mlibc::loadLocale(LC_ALL_MASK, name, &global))
 			return nullptr;
-		}
 
-		auto current_desc = *facet_ptr;
-		if(name) {
-			// Our default C locale is the C locale.
-			if(!strlen(name))
-				name = "C";
-
-			auto new_desc = mlibc::query_locale_description(name);
-			if(!new_desc) {
-				mlibc::infoLogger() << "mlibc: Locale " << name
-						<< " is not supported" << frg::endlog;
-				return nullptr;
-			}
-
-			*facet_ptr = new_desc;
-		}
-		return const_cast<char *>(current_desc->name);
+		global->updateLocaleName();
+		mlibc::useGlobalLocale(global);
+		return global->getCategoryLocaleName(category).data();
+	} else if (name) {
+		if (!mlibc::applyCategory(category, name, mlibc::getGlobalLocale()))
+			return nullptr;
+		mlibc::getGlobalLocale()->updateLocaleName();
+		return mlibc::getGlobalLocale()->getCategoryLocaleName(category).data();
+	} else {
+		return mlibc::getGlobalLocale()->getCategoryLocaleName(category).data();
 	}
 }
 
@@ -162,35 +114,35 @@ namespace {
 } // namespace
 
 struct lconv *localeconv(void) {
+	auto cur = mlibc::getActiveLocale();
+
 	// Numeric locale.
-	const auto &numeric_lc = mlibc::numeric_facet->lc;
-	effective_lc.decimal_point = numeric_lc.decimal_point;
-	effective_lc.thousands_sep = numeric_lc.thousands_sep;
-	effective_lc.grouping = numeric_lc.grouping;
+	effective_lc.decimal_point = const_cast<char *>(cur->numeric.get(DECIMAL_POINT).asString().data());
+	effective_lc.thousands_sep = const_cast<char *>(cur->numeric.get(THOUSANDS_SEP).asString().data());
+	effective_lc.grouping = const_cast<char *>(reinterpret_cast<const char *>(cur->numeric.get(GROUPING).asByteSpan().data()));
 
 	// Monetary locale.
-	const auto &monetary_lc = mlibc::monetary_facet->lc;
-	effective_lc.mon_decimal_point = monetary_lc.mon_decimal_point;
-	effective_lc.mon_thousands_sep = monetary_lc.mon_thousands_sep;
-	effective_lc.mon_grouping = monetary_lc.mon_grouping;
-	effective_lc.positive_sign = monetary_lc.positive_sign;
-	effective_lc.negative_sign = monetary_lc.negative_sign;
-	effective_lc.currency_symbol = monetary_lc.currency_symbol;
-	effective_lc.frac_digits = monetary_lc.frac_digits;
-	effective_lc.p_cs_precedes = monetary_lc.p_cs_precedes;
-	effective_lc.n_cs_precedes = monetary_lc.n_cs_precedes;
-	effective_lc.p_sep_by_space = monetary_lc.p_sep_by_space;
-	effective_lc.n_sep_by_space = monetary_lc.n_sep_by_space;
-	effective_lc.p_sign_posn = monetary_lc.p_sign_posn;
-	effective_lc.n_sign_posn = monetary_lc.n_sign_posn;
-	effective_lc.int_curr_symbol = monetary_lc.int_curr_symbol;
-	effective_lc.int_frac_digits = monetary_lc.int_frac_digits;
-	effective_lc.int_p_cs_precedes = monetary_lc.int_p_cs_precedes;
-	effective_lc.int_n_cs_precedes = monetary_lc.int_n_cs_precedes;
-	effective_lc.int_p_sep_by_space = monetary_lc.int_p_sep_by_space;
-	effective_lc.int_n_sep_by_space = monetary_lc.int_n_sep_by_space;
-	effective_lc.int_p_sign_posn = monetary_lc.int_p_sign_posn;
-	effective_lc.int_n_sign_posn = monetary_lc.int_n_sign_posn;
+	effective_lc.mon_decimal_point = const_cast<char *>(cur->monetary.get(MON_DECIMAL_POINT).asString().data());
+	effective_lc.mon_thousands_sep = const_cast<char *>(cur->monetary.get(MON_THOUSANDS_SEP).asString().data());
+	effective_lc.mon_grouping = const_cast<char *>(reinterpret_cast<const char *>(cur->monetary.get(MON_GROUPING).asByteSpan().data()));
+	effective_lc.positive_sign = const_cast<char *>(cur->monetary.get(POSITIVE_SIGN).asString().data());
+	effective_lc.negative_sign = const_cast<char *>(cur->monetary.get(NEGATIVE_SIGN).asString().data());
+	effective_lc.currency_symbol = const_cast<char *>(cur->monetary.get(CURRENCY_SYMBOL).asString().data());
+	effective_lc.frac_digits = cur->monetary.get(FRAC_DIGITS).asUint32();
+	effective_lc.p_cs_precedes = cur->monetary.get(P_CS_PRECEDES).asUint32();
+	effective_lc.n_cs_precedes = cur->monetary.get(N_CS_PRECEDES).asUint32();
+	effective_lc.p_sep_by_space = cur->monetary.get(P_SEP_BY_SPACE).asUint32();
+	effective_lc.n_sep_by_space = cur->monetary.get(N_SEP_BY_SPACE).asUint32();
+	effective_lc.p_sign_posn = cur->monetary.get(P_SIGN_POSN).asUint32();
+	effective_lc.n_sign_posn = cur->monetary.get(N_SIGN_POSN).asUint32();
+	effective_lc.int_curr_symbol = const_cast<char *>(cur->monetary.get(INT_CURR_SYMBOL).asString().data());
+	effective_lc.int_frac_digits = cur->monetary.get(INT_FRAC_DIGITS).asUint32();
+	effective_lc.int_p_cs_precedes = cur->monetary.get(INT_P_CS_PRECEDES).asUint32();
+	effective_lc.int_n_cs_precedes = cur->monetary.get(INT_N_CS_PRECEDES).asUint32();
+	effective_lc.int_p_sep_by_space = cur->monetary.get(INT_P_SEP_BY_SPACE).asUint32();
+	effective_lc.int_n_sep_by_space = cur->monetary.get(INT_N_SEP_BY_SPACE).asUint32();
+	effective_lc.int_p_sign_posn = cur->monetary.get(INT_P_SIGN_POSN).asUint32();
+	effective_lc.int_n_sign_posn = cur->monetary.get(INT_N_SIGN_POSN).asUint32();
 
 	return &effective_lc;
 }

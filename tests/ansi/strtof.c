@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <locale.h>
 #include <math.h>
 
 #define FLT_RANGE 0.000001f
@@ -22,6 +23,8 @@
 	assert(pEnd == (off == -1 ? s + strlen(s) : s + off)); })
 
 int main () {
+	setlocale(LC_ALL, "C");
+
 	DO_TEST("0", 0.0f, -1, strtof, FLT_RANGE);
 	DO_TEST("0.12", 0.12f, -1, strtof, FLT_RANGE);
 	DO_TEST("12", 12.0f, -1, strtof, FLT_RANGE);

@@ -1,37 +1,41 @@
 #include <bits/posix/posix_locale.h>
 #include <bits/ensure.h>
+#include <frg/allocation.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/locale.hpp>
 
-namespace {
-
-bool newlocale_seen = false;
-bool uselocale_seen = false;
-
-} // namespace
-
-locale_t newlocale(int, const char *, locale_t) {
-	// Due to all of the locale functions being stubs, the locale will not be used
-	if(!newlocale_seen) {
-		mlibc::infoLogger() << "mlibc: newlocale() is a no-op" << frg::endlog;
-		newlocale_seen = true;
+locale_t newlocale(int category, const char *name, locale_t base) {
+	mlibc::localeinfo *loc = static_cast<mlibc::localeinfo *>(base);
+	if (int e = mlibc::loadLocale(category, name, &loc); e) {
+		errno = e;
+		return nullptr;
 	}
-	return nullptr;
+
+	return loc;
 }
 
-void freelocale(locale_t) {
-	mlibc::infoLogger() << "mlibc: freelocale() is a no-op" << frg::endlog;
-	return;
+void freelocale(locale_t loc) {
+	mlibc::freeLocale(reinterpret_cast<mlibc::localeinfo *>(loc));
 }
 
-locale_t uselocale(locale_t) {
-	if(!uselocale_seen) {
-		mlibc::infoLogger() << "mlibc: uselocale() is a no-op" << frg::endlog;
-		uselocale_seen = true;
+locale_t uselocale(locale_t loc) {
+	return mlibc::useThreadLocalLocale(reinterpret_cast<mlibc::localeinfo *>(loc));
+}
+
+locale_t duplocale(locale_t loc) {
+	auto newloc = frg::construct<mlibc::localeinfo>(getAllocator(), *reinterpret_cast<mlibc::localeinfo *>(loc));
+	return newloc;
+}
+
+const char *getlocalename_l(int category, locale_t loc) {
+	if (category < LC_CTYPE || category > LC_IDENTIFICATION || !loc) {
+		return nullptr;
 	}
-	return nullptr;
-}
 
-locale_t duplocale(locale_t) {
-	mlibc::infoLogger() << "mlibc: duplocale() is a no-op" << frg::endlog;
-	return nullptr;
+	mlibc::localeinfo *l;
+	if (loc == LC_GLOBAL_LOCALE)
+		l = mlibc::getGlobalLocale();
+	else
+		l = static_cast<mlibc::localeinfo *>(loc);
+	return l->getCategoryLocaleName(category).data();
 }
