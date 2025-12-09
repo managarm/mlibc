@@ -25,3 +25,16 @@ locale_t duplocale(locale_t) {
 	mlibc::infoLogger() << "mlibc: duplocale() is a no-op" << frg::endlog;
 	return nullptr;
 }
+
+const char *getlocalename_l(int category, locale_t loc) {
+	if (category < LC_CTYPE || category > LC_IDENTIFICATION || !loc) {
+		return nullptr;
+	}
+
+	mlibc::localeinfo *l;
+	if (loc == LC_GLOBAL_LOCALE)
+		l = mlibc::getGlobalLocale();
+	else
+		l = static_cast<mlibc::localeinfo *>(loc);
+	return l->getCategoryLocaleName(category).data();
+}
