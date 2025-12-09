@@ -1,5 +1,6 @@
 #include <bits/posix/posix_locale.h>
 #include <bits/ensure.h>
+#include <frg/allocation.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/locale.hpp>
 
@@ -21,9 +22,9 @@ locale_t uselocale(locale_t loc) {
 	return mlibc::useThreadLocalLocale(reinterpret_cast<mlibc::localeinfo *>(loc));
 }
 
-locale_t duplocale(locale_t) {
-	mlibc::infoLogger() << "mlibc: duplocale() is a no-op" << frg::endlog;
-	return nullptr;
+locale_t duplocale(locale_t loc) {
+	auto newloc = frg::construct<mlibc::localeinfo>(getAllocator(), *reinterpret_cast<mlibc::localeinfo *>(loc));
+	return newloc;
 }
 
 const char *getlocalename_l(int category, locale_t loc) {

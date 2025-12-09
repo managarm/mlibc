@@ -37,6 +37,16 @@ int main() {
 	locale_t german = newlocale(LC_ALL_MASK, "de_DE.utf8", 0);
 	assert(german != 0);
 
+	locale_t duploc = duplocale(german);
+	assert(duploc);
+
+	duploc = newlocale(LC_ALL_MASK, "en_US.utf8", duploc);
+	assert(duploc);
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
+	assert(!strcmp(getlocalename_l(LC_ALL, duploc), "en_US.utf8"));
+#endif
+	freelocale(duploc);
+
 	locale_t posix = newlocale(LC_ALL_MASK, "POSIX", 0);
 	assert(posix != 0);
 
