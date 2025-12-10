@@ -366,7 +366,7 @@ foreach test_name : all_test_cases
 				suite: ['host-libc', test_subdir],
 				should_fail: should_fail,
 				args: [
-					meson.source_root() + '/tests/' + test_name + '.py',
+					meson.project_source_root() + '/tests/' + test_name + '.py',
 					exec
 				],
 				timeout: timeout_sec,
