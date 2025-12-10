@@ -23,8 +23,10 @@ locale_t uselocale(locale_t loc) {
 }
 
 locale_t duplocale(locale_t loc) {
-	auto newloc = frg::construct<mlibc::localeinfo>(getAllocator(), *reinterpret_cast<mlibc::localeinfo *>(loc));
-	return newloc;
+	if (loc == LC_GLOBAL_LOCALE)
+		return frg::construct<mlibc::localeinfo>(getAllocator(), *mlibc::getGlobalLocale());
+
+	return frg::construct<mlibc::localeinfo>(getAllocator(), *reinterpret_cast<mlibc::localeinfo *>(loc));
 }
 
 const char *getlocalename_l(int category, locale_t loc) {
