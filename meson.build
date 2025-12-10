@@ -57,6 +57,10 @@ if not headers_only
 	c_compiler = meson.get_compiler('c')
 	cpp_compiler = meson.get_compiler('cpp')
 
+	if cpp_compiler.get_id() == 'gcc' and not cpp_compiler.version().version_compare('>=13.1.0')
+		error('GCC version 13 or higher is required; found version ' + cpp_compiler.version())
+	endif
+
 	target_triple = run_command(c_compiler.cmd_array(), '-dumpmachine', check: true).stdout()
 	use_freestnd_hdrs = get_option('use_freestnd_hdrs').disable_auto_if(
 			target_triple.to_lower().contains('mlibc'))
