@@ -88,9 +88,13 @@ pid_t tcgetsid(int fd) {
 	return sid;
 }
 
-int tcsendbreak(int, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int tcsendbreak(int fd, int dur) {
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_tcsendbreak, -1);
+	if(int e = sysdep(fd, dur); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int tcsetattr(int fd, int opts, const struct termios *attr) {

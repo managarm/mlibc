@@ -155,6 +155,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_setsid(pid_t *sid);
 [[gnu::weak]] int sys_tcgetattr(int fd, struct termios *attr);
 [[gnu::weak]] int sys_tcsetattr(int, int, const struct termios *attr);
+[[gnu::weak]] int sys_tcsendbreak(int fd, int dur);
 [[gnu::weak]] int sys_tcflow(int, int);
 [[gnu::weak]] int sys_tcflush(int fd, int queue);
 [[gnu::weak]] int sys_tcdrain(int);
