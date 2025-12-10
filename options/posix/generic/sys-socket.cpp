@@ -199,9 +199,15 @@ int shutdown(int sockfd, int how) {
 	return 0;
 }
 
-int sockatmark(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int sockatmark(int sockfd) {
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sockatmark, -1);
+	int out = 0;
+	if(int e = sysdep(sockfd, &out); e) {
+		errno = e;
+		return -1;
+	}
+
+	return out;
 }
 
 int socket(int family, int type, int protocol) {

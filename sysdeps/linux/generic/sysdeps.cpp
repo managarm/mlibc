@@ -852,6 +852,13 @@ int sys_shutdown(int sockfd, int how) {
 	return 0;
 }
 
+int sys_sockatmark(int sockfd, int *out) {
+	auto ret = do_syscall(SYS_ioctl, sockfd, SIOCATMARK, out);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_getpriority(int which, id_t who, int *value) {
 	auto ret = do_syscall(SYS_getpriority, which, who);
 	if (int e = sc_error(ret); e) {
