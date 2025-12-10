@@ -118,14 +118,12 @@ void srand48(long int seed) {
 	seed48(arr);
 }
 
-long jrand48(unsigned short [3]) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+long jrand48(unsigned short s[3]) {
+	return (int32_t) (eand48_step(s, seed_48 + 3) >> 16);
 }
 
 long int mrand48(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return jrand48(seed_48);
 }
 
 // Borrowed from musl

@@ -157,8 +157,13 @@ int sigisemptyset(const sigset_t *set) {
 }
 #endif // __MLIBC_GLIBC_OPTION
 
-int sigqueue(pid_t, int, const union sigval) {
-	__ensure(!"sigqueue() not implemented");
-	__builtin_unreachable();
+int sigqueue(pid_t pid, int sig, const union sigval val) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sigqueue, -1);
+	if (int e = mlibc::sys_sigqueue(pid, sig, val); e) {
+		errno = e;
+		return -1;
+	}
+
+	return 0;
 }
 
