@@ -510,9 +510,9 @@ float strtof_l(const char *__restrict__ nptr, char **__restrict__ endptr, locale
 	return mlibc::strtofp<float>(nptr, endptr, static_cast<mlibc::localeinfo *>(loc));
 }
 
-int strcoll_l(const char *, const char *, locale_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int strcoll_l(const char *a, const char *b, locale_t) {
+	// TODO: strcoll_l should take "LC_COLLATE" into account.
+	return strcmp(a, b);
 }
 
 int getsubopt(char **__restrict__ optionp, char *const *__restrict__ keylistp, char **__restrict__ valuep) {
