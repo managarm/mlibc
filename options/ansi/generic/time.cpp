@@ -942,7 +942,7 @@ void tzset(void) {
 
 // POSIX extensions.
 
-int nanosleep(const struct timespec *req, struct timespec *) {
+int nanosleep(const struct timespec *req, struct timespec *rem) {
 	if (req->tv_sec < 0 || req->tv_nsec > 999999999 || req->tv_nsec < 0) {
 		errno = EINVAL;
 		return -1;
@@ -956,12 +956,13 @@ int nanosleep(const struct timespec *req, struct timespec *) {
 	struct timespec tmp = *req;
 
 	int e = mlibc::sys_sleep(&tmp.tv_sec, &tmp.tv_nsec);
-	if (!e) {
+	if (!e)
 		return 0;
-	} else {
-		errno = e;
-		return -1;
-	}
+	else if (e == EINTR)
+		*rem = tmp;
+
+	errno = e;
+	return -1;
 }
 
 int clock_getres(clockid_t clockid, struct timespec *res) {
