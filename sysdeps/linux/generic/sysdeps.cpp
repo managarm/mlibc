@@ -755,6 +755,13 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 	return 0;
 }
 
+int sys_tcsendbreak(int fd, int) {
+	auto ret = do_syscall(SYS_ioctl, fd, TCSBRK, 0);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_tcflush(int fd, int queue) {
 	auto ret = do_syscall(SYS_ioctl, fd, TCFLSH, queue);
 	if (int e = sc_error(ret); e)
@@ -842,6 +849,13 @@ int sys_shutdown(int sockfd, int how) {
 	if (int e = sc_error(ret); e) {
 		return e;
 	}
+	return 0;
+}
+
+int sys_sockatmark(int sockfd, int *out) {
+	auto ret = do_syscall(SYS_ioctl, sockfd, SIOCATMARK, out);
+	if (int e = sc_error(ret); e)
+		return e;
 	return 0;
 }
 

@@ -155,6 +155,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_setsid(pid_t *sid);
 [[gnu::weak]] int sys_tcgetattr(int fd, struct termios *attr);
 [[gnu::weak]] int sys_tcsetattr(int, int, const struct termios *attr);
+[[gnu::weak]] int sys_tcsendbreak(int fd, int dur);
 [[gnu::weak]] int sys_tcflow(int, int);
 [[gnu::weak]] int sys_tcflush(int fd, int queue);
 [[gnu::weak]] int sys_tcdrain(int);
@@ -168,6 +169,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_setsockopt(int fd, int layer, int number,
 		const void *buffer, socklen_t size);
 [[gnu::weak]] int sys_shutdown(int sockfd, int how);
+[[gnu::weak]] int sys_sockatmark(int sockfd, int *out);
 [[gnu::weak]] int sys_sigprocmask(int how, const sigset_t *__restrict set,
 		sigset_t *__restrict retrieve);
 [[gnu::weak]] int sys_thread_sigmask(int how, const sigset_t *__restrict set,
