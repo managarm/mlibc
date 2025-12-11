@@ -1143,7 +1143,11 @@ int usleep(useconds_t usecs) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_sleep()");
 	}
-	return mlibc::sys_sleep(&seconds, &nanos);
+	if (int e = mlibc::sys_sleep(&seconds, &nanos); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int dup(int fd) {
