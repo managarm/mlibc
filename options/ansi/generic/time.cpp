@@ -982,10 +982,36 @@ int clock_gettime(clockid_t clock, struct timespec *time) {
 	return 0;
 }
 
-int clock_nanosleep(clockid_t clockid, int, const struct timespec *req, struct timespec *) {
-	mlibc::infoLogger() << "clock_nanosleep is implemented as nanosleep!" << frg::endlog;
+int clock_nanosleep(clockid_t clockid, int flags, const struct timespec *req, struct timespec *rem) {
 	__ensure(clockid == CLOCK_REALTIME || clockid == CLOCK_MONOTONIC);
-	return nanosleep(req, nullptr);
+
+	if (flags & TIMER_ABSTIME) {
+		time_t secs = 0;
+		long nanos = 0;
+		if(int e = mlibc::sys_clock_get(clockid, &secs, &nanos); e) {
+			errno = e;
+			return -1;
+		}
+
+		struct timespec relativeTime;
+
+		if (secs > req->tv_sec)
+			return 0;
+		else if (secs == req->tv_sec && nanos >= req->tv_nsec)
+			return 0;
+		else {
+			relativeTime.tv_sec = req->tv_sec - secs;
+			relativeTime.tv_nsec = req->tv_nsec - nanos;
+			if (relativeTime.tv_nsec < 0) {
+				relativeTime.tv_sec -= 0;
+				relativeTime.tv_nsec += 1e9;
+			}
+		}
+
+		return nanosleep(&relativeTime, rem);
+	}
+
+	return nanosleep(req, rem);
 }
 
 int clock_settime(clockid_t clock, const struct timespec *time) {
