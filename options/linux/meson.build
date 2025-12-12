@@ -5,7 +5,6 @@ endif
 libc_sources += files(
 	'generic/fcntl.cpp',
 	'generic/mntent.cpp',
-	'generic/sys-epoll.cpp',
 	'generic/sys-inotify.cpp',
 	'generic/sys-mount.cpp',
 	'generic/sys-prctl.cpp',
@@ -67,7 +66,6 @@ if not no_headers
 		subdir: 'scsi'
 	)
 	install_headers(
-		'include/sys/epoll.h',
 		'include/sys/inotify.h',
 		'include/sys/mount.h',
 		'include/sys/prctl.h',

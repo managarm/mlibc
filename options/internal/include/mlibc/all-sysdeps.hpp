@@ -23,6 +23,10 @@
 #	include <mlibc/bsd-sysdeps.hpp>
 #endif /* __MLIBC_BSD_OPTION */
 
+#if __MLIBC_LINUX_EPOLL_OPTION
+#	include <mlibc/linux-epoll-sysdeps.hpp>
+#endif /* __MLIBC_LINUX_EPOLL_OPTION */
+
 #if MLIBC_BUILDING_RTLD
 #	include <mlibc/rtld-sysdeps.hpp>
 #endif /* MLIBC_BUILDING_RTLD */

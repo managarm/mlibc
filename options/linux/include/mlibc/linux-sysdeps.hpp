@@ -4,7 +4,6 @@
 #include <ifaddrs.h>
 #include <sched.h>
 #include <stdarg.h>
-#include <sys/epoll.h>
 #include <sys/sysinfo.h>
 #include <sys/statfs.h>
 #include <poll.h>
@@ -29,10 +28,6 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 [[gnu::weak]] int sys_inotify_create(int flags, int *fd);
 [[gnu::weak]] int sys_inotify_add_watch(int ifd, const char *path, uint32_t mask, int *wd);
 [[gnu::weak]] int sys_inotify_rm_watch(int ifd, int wd);
-[[gnu::weak]] int sys_epoll_create(int flags, int *fd);
-[[gnu::weak]] int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev);
-[[gnu::weak]] int sys_epoll_pwait(int epfd, struct epoll_event *ev, int n,
-		int timeout, const sigset_t *sigmask, int *raised);
 [[gnu::weak]] int sys_mount(const char *source, const char *target,
 		const char *fstype, unsigned long flags, const void *data);
 [[gnu::weak]] int sys_umount2(const char *target, int flags);
