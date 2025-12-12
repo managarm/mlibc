@@ -73,8 +73,12 @@ int getsockname(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restr
 
 int getsockopt(int fd, int layer, int number,
 		void *__restrict buffer, socklen_t *__restrict size) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getsockopt, -1);
-	return mlibc::sys_getsockopt(fd, layer, number, buffer, size);
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getsockopt, -1);
+	if (int e = sysdep(fd, layer, number, buffer, size); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int listen(int fd, int backlog) {
@@ -185,8 +189,12 @@ int sendmmsg(int, struct mmsghdr *, unsigned int, int) {
 
 int setsockopt(int fd, int layer, int number,
 		const void *buffer, socklen_t size) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setsockopt, -1);
-	return mlibc::sys_setsockopt(fd, layer, number, buffer, size);
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setsockopt, -1);
+	if (int e = sysdep(fd, layer, number, buffer, size); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 int shutdown(int sockfd, int how) {
