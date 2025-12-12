@@ -288,10 +288,10 @@ endif
 # Configuration based on enabled options.
 #----------------------------------------------------------------------------------------
 
-posix_option = get_option('posix_option').require(sysdep_supported_options.get('posix')).allowed()
-linux_option = get_option('linux_option').require(sysdep_supported_options.get('linux')).allowed()
-glibc_option = get_option('glibc_option').require(sysdep_supported_options.get('glibc')).allowed()
-bsd_option = get_option('bsd_option').require(sysdep_supported_options.get('bsd')).allowed()
+posix_option = get_option('posix_option').require(sysdep_supported_options.get('posix', false)).allowed()
+linux_option = get_option('linux_option').require(sysdep_supported_options.get('linux', false)).allowed()
+glibc_option = get_option('glibc_option').require(sysdep_supported_options.get('glibc', false)).allowed()
+bsd_option = get_option('bsd_option').require(sysdep_supported_options.get('bsd', false)).allowed()
 linux_epoll_option = sysdep_supported_options.get('linux-epoll', linux_option)
 
 mlibc_conf.set10('__MLIBC_POSIX_OPTION', posix_option)
