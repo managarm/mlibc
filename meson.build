@@ -481,23 +481,17 @@ rtlib_deps = []
 
 if not headers_only
 	if libgcc_dependency
-		libgcc = meson.get_compiler('c').find_library('gcc', required: false)
+		cpp_compiler = meson.get_compiler('cpp')
+		cpp_link_args = get_option('cpp_link_args')
+		libgcc_path = run_command(cpp_compiler.cmd_array(), cpp_link_args, '-print-libgcc-file-name',
+							capture: true, check: true).stdout().strip()
 
-		compiler_rt_name = 'libclang_rt.builtins-' + host_machine.cpu_family()
-		compiler_rt = meson.get_compiler('c').find_library(compiler_rt_name, required: false)
-
-		if not compiler_rt.found()
-			compiler_rt_name = 'libclang_rt.builtins'
-			compiler_rt = meson.get_compiler('c').find_library(compiler_rt_name, required: false)
+		if not fs.is_file(libgcc_path)
+			error('libgcc/compiler-rt library (' + libgcc_path + ') is missing')
 		endif
 
-		if libgcc.found()
-			rtlib_deps += libgcc
-		elif compiler_rt.found()
-			rtlib_deps += compiler_rt
-		else
-			error('neither libgcc nor ' + compiler_rt_name + ' was found')
-		endif
+		libgcc = declare_dependency(link_args: libgcc_path)
+		rtlib_deps += libgcc
 	endif
 
 	ld_cpp_args = [
