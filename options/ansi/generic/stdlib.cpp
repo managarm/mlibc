@@ -20,6 +20,7 @@
 #include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/strtofp.hpp>
 #include <mlibc/strtol.hpp>
+#include <mlibc/sysdeps.hpp>
 #include <mlibc/threads.hpp>
 #include <mlibc/global-config.hpp>
 
@@ -245,7 +246,7 @@ int system(const char *command) {
 	pid_t child;
 
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fork && mlibc::sys_waitpid &&
-			mlibc::sys_execve && mlibc::sys_sigprocmask && mlibc::sys_sigaction, -1);
+		mlibc::sys_execve && (hasSysdep<&mlibc::Sysdeps::sigprocmask, mlibc::AnsiSysdeps>()) && mlibc::sys_sigaction, -1);
 
 #if __MLIBC_POSIX_OPTION
 	pthread_testcancel();
@@ -266,14 +267,14 @@ int system(const char *command) {
 
 	sigemptyset(&new_mask);
 	sigaddset(&new_mask, SIGCHLD);
-	mlibc::sys_sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
+	sysdeps.sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
 
 	if (int e = mlibc::sys_fork(&child)) {
 		errno = e;
 	} else if (!child) {
 		mlibc::sys_sigaction(SIGINT, &old_int, nullptr);
 		mlibc::sys_sigaction(SIGQUIT, &old_quit, nullptr);
-		mlibc::sys_sigprocmask(SIG_SETMASK, &old_mask, nullptr);
+		sysdeps.sigprocmask(SIG_SETMASK, &old_mask, nullptr);
 
 		const char *args[] = {
 			"sh", "-c", command, nullptr
@@ -296,7 +297,7 @@ int system(const char *command) {
 
 	mlibc::sys_sigaction(SIGINT, &old_int, nullptr);
 	mlibc::sys_sigaction(SIGQUIT, &old_quit, nullptr);
-	mlibc::sys_sigprocmask(SIG_SETMASK, &old_mask, nullptr);
+	sysdeps.sigprocmask(SIG_SETMASK, &old_mask, nullptr);
 
 	return status;
 }
