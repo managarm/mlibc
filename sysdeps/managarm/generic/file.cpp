@@ -3079,4 +3079,67 @@ int sys_setxattr(const char *, const char *, const void *, size_t, int) { return
 // We don't implement name_to_handle_at
 int sys_name_to_handle_at(int, const char *, struct file_handle *, int *, int) { return ENOSYS; }
 
+int sys_setgroups(size_t size, const gid_t *list) {
+	SignalGuard sguard;
+
+	managarm::posix::SetGroupsRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_entries(size);
+
+	auto [offer, send_req, send_list, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+	        helix_ng::sendBuffer(list, sizeof(*list) * size),
+	        helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_list.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SetGroupsResponse resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+	return 0;
+}
+
+int sys_getgroups(size_t size, gid_t *list, int *ret) {
+	SignalGuard sguard;
+
+	managarm::posix::GetGroupsRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_size(size);
+
+	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::want_lane,
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+	        helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	auto conversation = offer.descriptor();
+	HEL_CHECK(send_req.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::GetGroupsResponse resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	auto [recv_list] = exchangeMsgsSync(
+		conversation.getHandle(), helix_ng::recvBuffer(list, sizeof(*list) * resp.entries())
+	);
+	HEL_CHECK(recv_list.error());
+
+	*ret = resp.entries();
+	return 0;
+}
+
 } // namespace mlibc
