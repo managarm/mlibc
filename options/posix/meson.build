@@ -178,6 +178,7 @@ if not no_headers
 		'include/bits/posix/pthread_t.h',
 		'include/bits/posix/timer_t.h',
 		'include/bits/posix/pthread_types.h',
+		'include/bits/posix/pthread_attr_t.h',
 		subdir: 'bits/posix'
 	)
 endif
