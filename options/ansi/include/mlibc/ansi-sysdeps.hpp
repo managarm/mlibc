@@ -10,6 +10,7 @@
 #include <bits/off_t.h>
 #include <bits/ssize_t.h>
 #include <bits/ansi/time_t.h>
+#include <bits/ansi/timespec.h>
 #include <signal.h>
 #include <stdarg.h>
 
