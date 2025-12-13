@@ -98,12 +98,7 @@ void cfmakeraw(struct termios *__tios);
 #endif /* !__MLIBC_ABI_ONLY */
 
 #if defined(_DEFAULT_SOURCE)
-#define TIOCSCTTY 0x540E
-#define TIOCGPGRP 0x540F
-#define TIOCSPGRP 0x5410
-#define TIOCGWINSZ 0x5413
-#define TIOCSWINSZ 0x5414
-#define TIOCGSID 0x5429
+#include <abi-bits/ioctls.h>
 #endif /* defined(_DEFAULT_SOURCE) */
 
 #ifdef __cplusplus

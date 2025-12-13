@@ -2604,6 +2604,14 @@ int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
 	return 0;
 }
 
+int sys_fchown(int fd, uid_t owner, gid_t group) {
+	(void)fd;
+	(void)owner;
+	(void)group;
+	mlibc::infoLogger() << "mlibc: sys_fchown is a stub!" << frg::endlog;
+	return 0;
+}
+
 int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
 	(void)dirfd;
 	(void)pathname;

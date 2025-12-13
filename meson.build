@@ -103,6 +103,9 @@ if not headers_only
 	mlibc_c_args = ['-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', '-nostdinc', '-fno-builtin', '-ffreestanding']
 	mlibc_link_args = ['-nostdlib']
 	add_project_arguments('-Werror=misleading-indentation', language: ['c', 'cpp'])
+	add_project_arguments('-D_DEFAULT_SOURCE', '-D_GNU_SOURCE', language: ['c', 'cpp'])
+	add_project_arguments('-D_POSIX_SOURCE', '-D_POSIX_C_SOURCE=202405L', language: ['c', 'cpp'])
+	add_project_arguments('-D_XOPEN_SOURCE=800', language: ['c', 'cpp'])
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 
 	if get_option('buildtype').startswith('debug')
