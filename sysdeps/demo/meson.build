@@ -1,9 +1,6 @@
 # ANCHOR: supported-options
 sysdep_supported_options = {
 	'posix': true,
-	'linux': false,
-	'glibc': false,
-	'bsd': false,
 }
 # ANCHOR_END: supported-options
 
