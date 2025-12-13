@@ -3,8 +3,9 @@
 #define _SETJMP_H
 
 #include <mlibc-config.h>
+
+#include <abi-bits/sigset_t.h>
 #include <bits/machine.h>
-#include <abi-bits/signal.h>
 
 #ifdef __cplusplus
 extern "C" {

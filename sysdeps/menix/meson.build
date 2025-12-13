@@ -71,6 +71,7 @@ if not no_headers
 		'include/abi-bits/utsname.h',
 		'include/abi-bits/vm-flags.h',
 		'include/abi-bits/wait.h',
+		'include/abi-bits/sigset_t.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true,
 	)

@@ -31,8 +31,6 @@ int raise(int __sig);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
-#define _NSIG NSIG
-
 #ifdef __cplusplus
 }
 #endif

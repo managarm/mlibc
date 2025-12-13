@@ -49,7 +49,7 @@ struct sockaddr {
 #define CMSG_SPACE(s) (__CMSG_ALIGN(sizeof(struct cmsghdr)) + __CMSG_ALIGN(s))
 
 /* Provides access to the data of a control message. */
-#define CMSG_DATA(c) ((char *)(c) + __CMSG_ALIGN(sizeof(struct cmsghdr)))
+#define CMSG_DATA(c) ((unsigned char *)(c) + __CMSG_ALIGN(sizeof(struct cmsghdr)))
 
 #define __MLIBC_CMSG_NEXT(c) ((char *)(c) + __CMSG_ALIGN((c)->cmsg_len))
 #define __MLIBC_MHDR_LIMIT(m) ((char *)(m)->msg_control + (m)->msg_controllen)

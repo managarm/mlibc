@@ -13,8 +13,8 @@ template<class T> struct remove_reference<T&> { typedef T type; };
 // Assume that the struct has a member named 'sig'.
 template<typename T>
 struct sigset_type_helper {
-	using type = typename remove_reference<decltype(T::sig[0])>::type;
-	static_assert(offsetof(T, sig) == 0);
+	using type = typename remove_reference<decltype(T::__sig[0])>::type;
+	static_assert(offsetof(T, __sig) == 0);
 };
 
 template<>

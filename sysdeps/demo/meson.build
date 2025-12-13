@@ -70,6 +70,7 @@ if not no_headers
 		'include/abi-bits/mqueue.h',
 		'include/abi-bits/utmp-defines.h',
 		'include/abi-bits/utmpx.h',
+		'include/abi-bits/sigset_t.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)

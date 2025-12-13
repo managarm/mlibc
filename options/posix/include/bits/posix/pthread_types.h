@@ -2,8 +2,8 @@
 #define _MLIBC_POSIX_BITS_PTHREAD_TYPTES_HPP
 
 #include <bits/types.h>
+#include <bits/posix/pthread_attr_t.h>
 
-typedef struct __mlibc_threadattr pthread_attr_t;
 typedef struct __mlibc_barrier pthread_barrier_t;
 typedef struct __mlibc_barrierattr_struct pthread_barrierattr_t;
 typedef struct __mlibc_cond pthread_cond_t;
