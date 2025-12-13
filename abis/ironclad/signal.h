@@ -3,6 +3,7 @@
 
 #include <abi-bits/pid_t.h>
 #include <abi-bits/sigevent.h>
+#include <abi-bits/sigset_t.h>
 #include <abi-bits/uid_t.h>
 #include <bits/size_t.h>
 
@@ -87,9 +88,6 @@ typedef void (*__sighandler) (int);
 /* SIGSEGV */
 #define SEGV_MAPERR 1
 #define SEGV_ACCERR 2
-
-/* TODO: replace this by uint64_t */
-typedef long sigset_t;
 
 #define SIGUNUSED SIGSYS
 
