@@ -1415,7 +1415,7 @@ int puts(const char *string) {
 	}
 
 	size_t unused;
-	if (!file->write("\n", 1, &unused)) {
+	if (file->write("\n", 1, &unused)) {
 		return EOF;
 	}
 
