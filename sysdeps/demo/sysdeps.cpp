@@ -32,17 +32,22 @@ void sys_libc_log(const char *msg) {
 
 int sys_isatty(int fd) {
   (void)fd;
+  // this returns ENOTTY when it is not a tty, but we do not have a proper implementation
+  // so always return that a file is a tty
   return 0;
 }
 
 int sys_write(int fd, void const *buf, size_t size, ssize_t *ret) {
+
   *ret = syscall(SYS_WRITE, fd, buf, size);
-  return *ret >= 0 ? 0 : -1;
+  // this can never fail in the demo os
+  return 0;
 }
 
 int sys_tcb_set(void *pointer) {
   uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
   asm volatile("mv tp, %0" ::"r"(thread_data));
+  // this can never fail in the demo os
   return 0;
 }
 
@@ -51,14 +56,14 @@ int sys_anon_allocate(size_t size, void **pointer) {
                      MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   *pointer = (void *)out;
   if (*pointer == MAP_FAILED)
-    return -1;
+    return ENOMEM; // the syscall does not return a proper errno, so use ENOMEM
   return 0;
 }
 
-int sys_anon_free(void *, unsigned long) { return 0; }
+int sys_anon_free(void *, unsigned long) { return 0; } // no-op
 
 int sys_seek(int , off_t , int , off_t *) {
-  return ESPIPE;
+  return ESPIPE; // no proper file implementation, everything is a tty so return ESPIPE
 }
 
 void sys_exit(int status) {
