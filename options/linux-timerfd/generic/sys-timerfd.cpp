@@ -4,7 +4,7 @@
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
-#include <mlibc/linux-sysdeps.hpp>
+#include <mlibc/linux-timerfd-sysdeps.hpp>
 
 int timerfd_create(int clockid, int flags) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timerfd_create, -1);
