@@ -2605,12 +2605,32 @@ int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
 }
 
 int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
-	(void)dirfd;
-	(void)pathname;
-	(void)owner;
-	(void)group;
-	(void)flags;
-	mlibc::infoLogger() << "mlibc: sys_fchownat is a stub!" << frg::endlog;
+	SignalGuard sguard;
+
+	managarm::posix::FchownAtRequest<MemoryAllocator> req(getSysdepsAllocator());
+	req.set_fd(dirfd);
+	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), pathname));
+	req.set_uid(owner);
+	req.set_gid(group);
+	req.set_flags(flags);
+
+	auto [offer, send_head, send_tail, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(send_tail.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::FchownAtResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
 	return 0;
 }
 
