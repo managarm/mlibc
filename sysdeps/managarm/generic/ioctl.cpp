@@ -896,6 +896,27 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 		*result = 0;
 		return 0;
+	} else if (request == VT_GETMODE) {
+		auto param = reinterpret_cast<struct vt_mode *>(arg);
+
+		param->mode = VT_AUTO;
+		param->waitv = 0;
+		param->relsig = 0;
+		param->acqsig = 0;
+		param->frsig = 0;
+
+		mlibc::infoLogger() << "\e[35mmlibc: VT_GETMODE is hardcoded to VT_AUTO" << frg::endlog;
+
+		*result = 0;
+		return 0;
+	} else if(request == VT_OPENQRY) {
+		auto param = reinterpret_cast<int *>(arg);
+		*param = 2; // Second VT
+
+		mlibc::infoLogger() << "\e[35mmlibc: VT_OPENQRY is hardcoded to 2" << frg::endlog;
+
+		*result = 0;
+		return 0;
 	} else if (request == VT_SETMODE) {
 		// auto param = reinterpret_cast<struct vt_mode *>(arg);
 		mlibc::infoLogger() << "\e[35mmlibc: VT_SETMODE is a no-op" << frg::endlog;
