@@ -67,7 +67,7 @@ typedef off_t fpos_t;
 #define _IOLBF 2
 #define _IONBF 3
 
-#define BUFSIZ 512
+#define BUFSIZ 4096
 
 #define EOF (-1)
 
