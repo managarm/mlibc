@@ -3074,6 +3074,60 @@ int sys_prctl(int option, va_list va, int *out) {
 	}
 }
 
+static int do_statvfs(int fd, const char *path, struct statvfs *buf) {
+	SignalGuard sguard;
+
+	managarm::posix::FstatfsRequest<MemoryAllocator> req(getSysdepsAllocator());
+
+	if (path) {
+		req.set_fd(-1);
+		req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
+	} else {
+		req.set_fd(fd);
+	}
+
+	auto [offer, send_head, send_tail, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(send_tail.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::FstatfsResponse resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	memset(buf, 0, sizeof(struct statvfs));
+	buf->f_bsize = resp.block_size();
+	buf->f_frsize = resp.fragment_size();
+	buf->f_blocks = resp.num_blocks();
+	buf->f_bfree = resp.blocks_free();
+	buf->f_bavail = resp.blocks_free_user();
+	buf->f_files = resp.num_inodes();
+	buf->f_ffree = resp.inodes_free();
+	buf->f_favail = resp.inodes_free_user();
+	buf->f_fsid = (static_cast<uint64_t>(resp.fsid0()) << 32) | resp.fsid1();
+	buf->f_flag = resp.flags();
+	buf->f_namemax = resp.max_name_length();
+
+	return 0;
+}
+
+int sys_statvfs(const char *path, struct statvfs *buf) {
+	return do_statvfs(-1, path, buf);
+}
+
+int sys_fstatvfs(int fd, struct statvfs *buf) {
+	return do_statvfs(fd, nullptr, buf);
+}
+
 int sys_getpriority(int, id_t, int *value) {
 	mlibc::infoLogger() << "\e[35mmlibc: getpriority() always returns 0\e[39m" << frg::endlog;
 	*value = 0;
