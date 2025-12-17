@@ -70,6 +70,14 @@ if not no_headers
 endif
 
 if not headers_only
+	crt = custom_target('Scrt0',
+		build_by_default: true,
+		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		input: 'Scrt0.S',
+		output: 'Scrt0.o',
+		install: true,
+		install_dir: get_option('libdir')
+	)
 	crt = custom_target('crt0',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
