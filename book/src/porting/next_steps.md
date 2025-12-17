@@ -16,13 +16,14 @@ The list of sysdeps for every option can be found under its include directory. F
 
 For the demo sysdeps, only the POSIX option is enabled. However, there are ports that will need more options enabled. The other toggleable options in mlibc are:
 
-| Option          | Description                                                                                                                                            |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `linux`         | For source compatiblity with Linux programs. Note that this option requires you to provide Linux kernel headers.                                       |
-| `linux-epoll`   | For `epoll_*` functions. Included in `linux`, but can be compiled standalone.                                                                          |
-| `linux-timerfd` | For `timerfd_*` functions. Included in `linux`, but can be compiled standalone.                                                                        |
-| `glibc`         | For glibc-specific extensions like `backtrace` and `getopt_long`. Make sure your gcc port has `gnu-user.h` in its `tm_file` if you enable this option. |
-| `bsd`           | for BSD-specific extensions like `openpty` and `getloadavg`                                                                                            |
+| Option           | Description                                                                                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `linux`          | For source compatiblity with Linux programs. Note that this option requires you to provide Linux kernel headers.                                       |
+| `linux-epoll`    | For `epoll_*` functions. Included in `linux`, but can be compiled standalone.                                                                          |
+| `linux-timerfd`  | For `timerfd_*` functions. Included in `linux`, but can be compiled standalone.                                                                        |
+| `linux-signalfd` | For `signalfd_*` functions. Included in `linux`, but can be compiled standalone.                                                                       |
+| `glibc`          | For glibc-specific extensions like `backtrace` and `getopt_long`. Make sure your gcc port has `gnu-user.h` in its `tm_file` if you enable this option. |
+| `bsd`            | for BSD-specific extensions like `openpty` and `getloadavg`                                                                                            |
 
 
 ## Enabling more mlibc features
