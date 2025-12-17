@@ -99,6 +99,7 @@
 #mesondefine __MLIBC_LINUX_EPOLL_OPTION
 #mesondefine __MLIBC_LINUX_TIMERFD_OPTION
 #mesondefine __MLIBC_LINUX_SIGNALFD_OPTION
+#mesondefine __MLIBC_LINUX_EVENTFD_OPTION
 #mesondefine __MLIBC_POSIX_OPTION
 #mesondefine __MLIBC_LINUX_OPTION
 #mesondefine __MLIBC_GLIBC_OPTION

@@ -2,7 +2,8 @@
 #include <errno.h>
 
 #include <bits/ensure.h>
-#include <mlibc/linux-sysdeps.hpp>
+#include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/linux-eventfd-sysdeps.hpp>
 
 int eventfd(unsigned int initval, int flags) {
 	int fd = 0;
