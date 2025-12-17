@@ -3,9 +3,9 @@
 
 #include <mlibc-config.h>
 
-#if !__MLIBC_LINUX_OPTION
-#  error "<linux/reboot.h> is inherently Linux specific. Enable the Linux option or do not use this header."
-#endif /* !__MLIBC_LINUX_OPTION */
+#if !__MLIBC_LINUX_REBOOT_OPTION
+#  error "<sys/reboot.h> is tied to the linux-reboot option. Enable it or do not use this header."
+#endif /* !__MLIBC_LINUX_REBOOT_OPTION */
 
 #define RB_AUTOBOOT 0x01234567
 #define RB_HALT_SYSTEM 0xcdef0123
