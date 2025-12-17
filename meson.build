@@ -294,6 +294,7 @@ glibc_option = get_option('glibc_option').require(sysdep_supported_options.get('
 bsd_option = get_option('bsd_option').require(sysdep_supported_options.get('bsd', false)).allowed()
 linux_epoll_option = sysdep_supported_options.get('linux-epoll', linux_option)
 linux_timerfd_option = sysdep_supported_options.get('linux-timerfd', linux_option)
+linux_signalfd_option = sysdep_supported_options.get('linux-signalfd', linux_option)
 
 mlibc_conf.set10('__MLIBC_POSIX_OPTION', posix_option)
 mlibc_conf.set10('__MLIBC_LINUX_OPTION', linux_option)
@@ -301,6 +302,7 @@ mlibc_conf.set10('__MLIBC_GLIBC_OPTION', glibc_option)
 mlibc_conf.set10('__MLIBC_BSD_OPTION', bsd_option)
 mlibc_conf.set10('__MLIBC_LINUX_EPOLL_OPTION', linux_epoll_option)
 mlibc_conf.set10('__MLIBC_LINUX_TIMERFD_OPTION', linux_timerfd_option)
+mlibc_conf.set10('__MLIBC_LINUX_SIGNALFD_OPTION', linux_signalfd_option)
 mlibc_conf.set10('__MLIBC_SYSDEP_HAS_BITS_SYSCALL_H', provides_bits_syscall_h)
 
 rtld_include_dirs += include_directories('options/ansi/include')
@@ -371,6 +373,11 @@ endif
 if linux_timerfd_option
 	rtld_include_dirs += include_directories('options/linux-timerfd/include')
 	libc_include_dirs += include_directories('options/linux-timerfd/include')
+endif
+
+if linux_signalfd_option
+	rtld_include_dirs += include_directories('options/linux-signalfd/include')
+	libc_include_dirs += include_directories('options/linux-signalfd/include')
 endif
 
 rtld_include_dirs += include_directories('options/elf/include')
@@ -492,6 +499,7 @@ subdir('options/linux')
 subdir('options/bsd')
 subdir('options/linux-epoll')
 subdir('options/linux-timerfd')
+subdir('options/linux-signalfd')
 
 rtlib_deps = []
 
