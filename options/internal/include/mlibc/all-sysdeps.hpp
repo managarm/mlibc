@@ -31,6 +31,10 @@
 #	include <mlibc/linux-timerfd-sysdeps.hpp>
 #endif /* __MLIBC_LINUX_TIMERFD_OPTION */
 
+#if __MLIBC_LINUX_SIGNALFD_OPTION
+#	include <mlibc/linux-signalfd-sysdeps.hpp>
+#endif /* __MLIBC_LINUX_SIGNALFD_OPTION */
+
 #if MLIBC_BUILDING_RTLD
 #	include <mlibc/rtld-sysdeps.hpp>
 #endif /* MLIBC_BUILDING_RTLD */

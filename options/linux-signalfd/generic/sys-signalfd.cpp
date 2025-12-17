@@ -4,7 +4,7 @@
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
-#include <mlibc/linux-sysdeps.hpp>
+#include <mlibc/linux-signalfd-sysdeps.hpp>
 
 int signalfd(int fd, const sigset_t *mask, int flags) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_signalfd_create, -1);

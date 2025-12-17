@@ -32,7 +32,6 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 		const char *fstype, unsigned long flags, const void *data);
 [[gnu::weak]] int sys_umount2(const char *target, int flags);
 [[gnu::weak]] int sys_eventfd_create(unsigned int initval, int flags, int *fd);
-[[gnu::weak]] int sys_signalfd_create(const sigset_t *, int flags, int *fd);
 [[gnu::weak]] int sys_reboot(int cmd);
 [[gnu::weak]] int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out);
 [[gnu::weak]] int sys_capget(cap_user_header_t hdrp, cap_user_data_t datap);
