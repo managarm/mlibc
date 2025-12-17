@@ -2930,11 +2930,17 @@ int sys_sysinfo(struct sysinfo *info) {
 	return 0;
 }
 
-int sys_fstatfs(int fd, struct statfs *buf) {
+static int do_statfs(int fd, const char *path, struct statfs *buf) {
 	SignalGuard sguard;
 
 	managarm::posix::FstatfsRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_fd(fd);
+
+	if (path) {
+		req.set_fd(-1);
+		req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
+	} else {
+		req.set_fd(fd);
+	}
 
 	auto [offer, send_head, send_tail, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
@@ -2956,7 +2962,27 @@ int sys_fstatfs(int fd, struct statfs *buf) {
 
 	memset(buf, 0, sizeof(struct statfs));
 	buf->f_type = resp.fstype();
+	buf->f_bsize = resp.block_size();
+	buf->f_blocks = resp.num_blocks();
+	buf->f_bfree = resp.blocks_free();
+	buf->f_bavail = resp.blocks_free_user();
+	buf->f_files = resp.num_inodes();
+	buf->f_ffree = resp.inodes_free();
+	buf->f_fsid.__val[0] = resp.fsid0();
+	buf->f_fsid.__val[1] = resp.fsid1();
+	buf->f_namelen = resp.max_name_length();
+	buf->f_frsize = resp.fragment_size();
+	buf->f_flags = resp.flags();
+
 	return 0;
+}
+
+int sys_statfs(const char *path, struct statfs *buf) {
+	return do_statfs(-1, path, buf);
+}
+
+int sys_fstatfs(int fd, struct statfs *buf) {
+	return do_statfs(fd, nullptr, buf);
 }
 
 int sys_prctl(int option, va_list va, int *out) {
@@ -3046,36 +3072,6 @@ int sys_prctl(int option, va_list va, int *out) {
 			                    << frg::endlog;
 			return EINVAL;
 	}
-}
-
-int sys_statfs(const char *path, struct statfs *buf) {
-	SignalGuard sguard;
-
-	managarm::posix::FstatfsRequest<MemoryAllocator> req(getSysdepsAllocator());
-	req.set_fd(-1);
-	req.set_path(frg::string<MemoryAllocator>(getSysdepsAllocator(), path));
-
-	auto [offer, send_head, send_tail, recv_resp] = exchangeMsgsSync(
-	    getPosixLane(),
-	    helix_ng::offer(
-	        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()), helix_ng::recvInline()
-	    )
-	);
-
-	HEL_CHECK(offer.error());
-	HEL_CHECK(send_head.error());
-	HEL_CHECK(send_tail.error());
-	HEL_CHECK(recv_resp.error());
-
-	managarm::posix::FstatfsResponse resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-
-	if (resp.error() != managarm::posix::Errors::SUCCESS)
-		return resp.error() | toErrno;
-
-	memset(buf, 0, sizeof(struct statfs));
-	buf->f_type = resp.fstype();
-	return 0;
 }
 
 int sys_getpriority(int, id_t, int *value) {
