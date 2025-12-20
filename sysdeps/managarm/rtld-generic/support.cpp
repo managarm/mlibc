@@ -48,13 +48,12 @@ T load(void *ptr) {
 }
 
 // This Queue implementation is more simplistic than the ones in mlibc and helix.
-// In fact, we only manage a single chunk; this minimizes the memory usage of the queue.
 struct Queue {
-	Queue() : _handle{kHelNullHandle}, _lastProgress(0) {
-		HelQueueParameters params{.flags = 0, .ringShift = 0, .numChunks = 1, .chunkSize = 4096};
+	Queue() : _handle{kHelNullHandle}, _retrieveChunk{0}, _tailChunk{0}, _lastProgress{0} {
+		HelQueueParameters params{.flags = 0, .numChunks = 2, .chunkSize = 4096};
 		HEL_CHECK(helCreateQueue(&params, &_handle));
 
-		auto chunksOffset = (sizeof(HelQueue) + (sizeof(int) << 0) + 63) & ~size_t(63);
+		auto chunksOffset = (sizeof(HelQueue) + 63) & ~size_t(63);
 		auto reservedPerChunk = (sizeof(HelChunk) + params.chunkSize + 63) & ~size_t(63);
 		auto overallSize = chunksOffset + params.numChunks * reservedPerChunk;
 
@@ -70,15 +69,25 @@ struct Queue {
 		));
 
 		_queue = reinterpret_cast<HelQueue *>(mapping);
-		_chunk =
-		    reinterpret_cast<HelChunk *>(reinterpret_cast<std::byte *>(mapping) + chunksOffset);
+		auto chunksPtr = reinterpret_cast<std::byte *>(mapping) + chunksOffset;
+		for (unsigned int i = 0; i < 2; ++i)
+			_chunks[i] = reinterpret_cast<HelChunk *>(chunksPtr + i * reservedPerChunk);
 
-		// Reset and enqueue the first chunk.
-		_chunk->progressFutex = 0;
+		// Reset all chunks.
+		for (unsigned int i = 0; i < 2; ++i) {
+			_chunks[i]->next = 0;
+			_chunks[i]->progressFutex = 0;
+		}
 
-		_queue->indexQueue[0] = 0;
-		_queue->headFutex = 1;
-		_nextIndex = 1;
+		// Set cqFirst to the initial chunk.
+		__atomic_store_n(&_queue->cqFirst, 0 | kHelNextPresent, __ATOMIC_RELEASE);
+
+		// Supply the remaining chunks.
+		_tailChunk = 0;
+		for (unsigned int i = 1; i < 2; ++i) {
+			__atomic_store_n(&_chunks[_tailChunk]->next, i | kHelNextPresent, __ATOMIC_RELEASE);
+			_tailChunk = i;
+		}
 		_wakeHeadFutex();
 	}
 
@@ -93,19 +102,25 @@ struct Queue {
 			bool done;
 			_waitProgressFutex(&done);
 			if (done) {
-				// Reset and enqueue the chunk again.
-				_chunk->progressFutex = 0;
+				auto cn = _retrieveChunk;
+				auto next = __atomic_load_n(&_chunks[cn]->next, __ATOMIC_ACQUIRE);
 
-				_queue->indexQueue[0] = 0;
-				_nextIndex = ((_nextIndex + 1) & kHelHeadMask);
+				// Reset and supply the chunk again.
+				_chunks[cn]->next = 0;
+				_chunks[cn]->progressFutex = 0;
+				__atomic_store_n(&_chunks[_tailChunk]->next, cn | kHelNextPresent, __ATOMIC_RELEASE);
+				_tailChunk = cn;
 				_wakeHeadFutex();
 
 				_lastProgress = 0;
+				// Otherwise, the kernel would not have set the done bit.
+				__ensure(next & kHelNextPresent);
+				_retrieveChunk = next & ~kHelNextPresent;
 				continue;
 			}
 
 			// Dequeue the next element.
-			auto ptr = (char *)_chunk + sizeof(HelChunk) + _lastProgress;
+			auto ptr = (char *)_chunks[_retrieveChunk] + sizeof(HelChunk) + _lastProgress;
 			auto element = load<HelElement>(ptr);
 			_lastProgress += sizeof(HelElement) + element.length;
 			return ptr + sizeof(HelElement);
@@ -114,7 +129,6 @@ struct Queue {
 
 private:
 	void _wakeHeadFutex() {
-		__atomic_store_n(&_queue->headFutex, _nextIndex, __ATOMIC_RELEASE);
 		auto futex =
 		    __atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySupplyCqChunks, __ATOMIC_RELEASE);
 		if (!(futex & kHelKernelNotifySupplyCqChunks))
@@ -123,7 +137,7 @@ private:
 
 	void _waitProgressFutex(bool *done) {
 		auto check = [&]() -> bool {
-			auto progress = __atomic_load_n(&_chunk->progressFutex, __ATOMIC_ACQUIRE);
+			auto progress = __atomic_load_n(&_chunks[_retrieveChunk]->progressFutex, __ATOMIC_ACQUIRE);
 			__ensure(!(progress & ~(kHelProgressMask | kHelProgressDone)));
 			if (_lastProgress != (progress & kHelProgressMask)) {
 				*done = false;
@@ -149,8 +163,9 @@ private:
 private:
 	HelHandle _handle;
 	HelQueue *_queue;
-	HelChunk *_chunk;
-	int _nextIndex;
+	HelChunk *_chunks[2];
+	int _retrieveChunk;
+	int _tailChunk;
 	int _lastProgress;
 };
 
