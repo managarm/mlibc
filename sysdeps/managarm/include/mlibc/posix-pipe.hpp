@@ -190,7 +190,7 @@ private:
 		auto futex =
 		    __atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySupplyCqChunks, __ATOMIC_RELEASE);
 		if (!(futex & kHelKernelNotifySupplyCqChunks))
-			HEL_CHECK(helFutexWake(&_queue->kernelNotify, UINT32_MAX));
+			HEL_CHECK(helDriveQueue(_handle, 0));
 	}
 
 	enum class FutexProgress {
@@ -216,13 +216,12 @@ private:
 			return result;
 
 		while (true) {
-			auto futex =
-			    __atomic_fetch_and(&_queue->userNotify, ~kHelUserNotifyCqProgress, __ATOMIC_ACQUIRE);
+			__atomic_fetch_and(&_queue->userNotify, ~kHelUserNotifyCqProgress, __ATOMIC_ACQUIRE);
 
 			if (auto result = check(); result != FutexProgress::NONE)
 				return result;
 
-			int err = helFutexWait(&_queue->userNotify, futex & ~kHelUserNotifyCqProgress, -1);
+			int err = helDriveQueue(_handle, kHelDriveWaitCqProgress);
 
 			if (err == kHelErrCancelled)
 				return FutexProgress::CANCELLED;
