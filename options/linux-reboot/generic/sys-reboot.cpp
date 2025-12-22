@@ -1,7 +1,7 @@
 #include <errno.h>
 #include <sys/reboot.h>
 #include <bits/ensure.h>
-#include <mlibc/linux-sysdeps.hpp>
+#include <mlibc/linux-reboot-sysdeps.hpp>
 
 int reboot(int what) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_reboot, -1);

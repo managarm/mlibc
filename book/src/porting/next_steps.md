@@ -23,6 +23,7 @@ For the demo sysdeps, only the POSIX option is enabled. However, there are ports
 | `linux-timerfd`  | For `timerfd_*` functions. Included in `linux`, but can be compiled standalone.                                                                        |
 | `linux-signalfd` | For `signalfd_*` functions. Included in `linux`, but can be compiled standalone.                                                                       |
 | `linux-eventfd`  | For `eventfd_*` functions. Included in `linux`, but can be compiled standalone.                                                                        |
+| `linux-reboot`   | For `reboot*` functions. Included in `linux`, but can be compiled standalone.                                                                          |
 | `glibc`          | For glibc-specific extensions like `backtrace` and `getopt_long`. Make sure your gcc port has `gnu-user.h` in its `tm_file` if you enable this option. |
 | `bsd`            | for BSD-specific extensions like `openpty` and `getloadavg`                                                                                            |
 
