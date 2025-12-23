@@ -22,6 +22,7 @@
 #include <mlibc/strtol.hpp>
 #include <mlibc/threads.hpp>
 #include <mlibc/global-config.hpp>
+#include <mlibc/exit.hpp>
 
 #if __MLIBC_POSIX_OPTION
 #include <pthread.h>
@@ -217,6 +218,8 @@ void exit(int status) {
 	// for concurrent calls to exit() or quick_exit(), all but the first shall block until termination
 	// see https://austingroupbugs.net/view.php?id=1845
 	mlibc::thread_mutex_lock(&exit_mutex);
+
+	mlibc::processIsExiting.store(true, std::memory_order_relaxed);
 
 	__mlibc_do_finalize();
 	mlibc::sys_exit(status);

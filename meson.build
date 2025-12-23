@@ -405,6 +405,7 @@ internal_sources = [
 	'options/internal/generic/debug.cpp',
 	'options/internal/generic/ensure.cpp',
 	'options/internal/generic/essential.cpp',
+	'options/internal/generic/exiting.cpp',
 	'options/internal/generic/frigg.cpp',
 	'options/internal/generic/getopt.cpp',
 	'options/internal/generic/global-config.cpp',
