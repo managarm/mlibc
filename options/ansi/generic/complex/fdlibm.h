@@ -14,4 +14,9 @@ typedef union {
         double parts[2];
 } double_complex;
 
+typedef union {
+        long double complex z;
+        long double parts[2];
+} long_double_complex;
+
 #endif
