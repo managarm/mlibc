@@ -463,6 +463,16 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 	return sys_ioctl(fd, req, (void *)attr, &ret);
 }
 
+int sys_tcgetwinsize(int fd, struct winsize *winsz) {
+	int result;
+	return sys_ioctl(fd, TIOCGWINSZ, winsz, &result);
+}
+
+int sys_tcsetwinsize(int fd, const struct winsize *winsz) {
+	int result;
+	return sys_ioctl(fd, TIOCSWINSZ, const_cast<struct winsize *>(winsz), &result);
+}
+
 int sys_pipe(int *fds, int flags) { return menix_syscall(SYSCALL_PIPE, (size_t)fds, flags).error; }
 
 int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {

@@ -90,6 +90,8 @@ int tcgetattr(int __fd, struct termios *__attr);
 pid_t tcgetsid(int __fd);
 int tcsendbreak(int __fd, int __duration);
 int tcsetattr(int __fd, int __optional_actions, const struct termios *__attr);
+int tcgetwinsize(int __fd, struct winsize *__winsz);
+int tcsetwinsize(int __fd, const struct winsize *__winsz);
 
 #if defined(_DEFAULT_SOURCE)
 void cfmakeraw(struct termios *__tios);
