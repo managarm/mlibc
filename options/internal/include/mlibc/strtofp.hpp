@@ -105,55 +105,65 @@ T strtofp(const char *str, char **endptr, mlibc::localeinfo *l) {
 
 	if (!hex) {
 		if (*tmp == 'e' || *tmp == 'E') {
-			tmp++;
+			// offset so we look ahead instead of incrementing tmp for a possibly-invalid exponent
+			size_t expOff = 1;
 
-			bool exp_negative = *tmp == '-';
-			if (*tmp == '+' || *tmp == '-')
-				tmp++;
+			bool exp_negative = tmp[expOff] == '-';
+			if (tmp[expOff] == '+' || tmp[expOff] == '-')
+				expOff++;
 
-			int exp = 0;
-			while (true) {
-				if (!isdigit_l(*tmp, l))
-					break;
-				exp *= 10;
-				exp += *tmp - '0';
-				tmp++;
-			}
+			if (isdigit_l(tmp[expOff], l)) {
+				tmp += expOff;
 
-			if (!exp_negative) {
-				for (int i = 0; i < exp; ++i) {
-					result *= static_cast<T>(10);
+				int exp = 0;
+				while (true) {
+					if (!isdigit_l(*tmp, l))
+						break;
+					exp *= 10;
+					exp += *tmp - '0';
+					tmp++;
 				}
-			} else {
-				for (int i = 0; i < exp; ++i) {
-					result /= static_cast<T>(10);
+
+				if (!exp_negative) {
+					for (int i = 0; i < exp; ++i) {
+						result *= static_cast<T>(10);
+					}
+				} else {
+					for (int i = 0; i < exp; ++i) {
+						result /= static_cast<T>(10);
+					}
 				}
 			}
 		}
 	} else {
 		if (*tmp == 'p' || *tmp == 'P') {
-			tmp++;
+			// offset so we look ahead instead of incrementing tmp for a possibly-invalid exponent
+			size_t expOff = 1;
 
-			bool exp_negative = *tmp == '-';
-			if (*tmp == '+' || *tmp == '-')
-				tmp++;
+			bool exp_negative = tmp[expOff] == '-';
+			if (tmp[expOff] == '+' || tmp[expOff] == '-')
+				expOff++;
 
-			int exp = 0;
-			while (true) {
-				if (!isdigit_l(*tmp, l))
-					break;
-				exp *= 10;
-				exp += *tmp - '0';
-				tmp++;
-			}
+			if (isdigit_l(tmp[expOff], l)) {
+				tmp += expOff;
 
-			if (!exp_negative) {
-				for (int i = 0; i < exp; ++i) {
-					result *= static_cast<T>(2);
+				int exp = 0;
+				while (true) {
+					if (!isdigit_l(*tmp, l))
+						break;
+					exp *= 10;
+					exp += *tmp - '0';
+					tmp++;
 				}
-			} else {
-				for (int i = 0; i < exp; ++i) {
-					result /= static_cast<T>(2);
+
+				if (!exp_negative) {
+					for (int i = 0; i < exp; ++i) {
+						result *= static_cast<T>(2);
+					}
+				} else {
+					for (int i = 0; i < exp; ++i) {
+						result /= static_cast<T>(2);
+					}
 				}
 			}
 		}
