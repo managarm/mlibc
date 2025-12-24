@@ -38,6 +38,10 @@ struct dirent {
 	__MLIBC_DIRENT_BODY
 };
 
+struct posix_dent {
+	__MLIBC_DIRENT_BODY
+};
+
 #define d_fileno d_ino
 
 #if defined(_DEFAULT_SOURCE)
@@ -66,6 +70,7 @@ int readdir_r(DIR *__restrict __dirp, struct dirent *__restrict __entry, struct 
 void rewinddir(DIR *__dirp);
 int scandir(const char *__pathname, struct dirent ***__res, int (*__select)(const struct dirent *__entry),
 		int (*__compare)(const struct dirent **__a, const struct dirent **__b));
+ssize_t posix_getdents(int __fildes, void *__buf, size_t __nbyte, int __flags);
 
 #if __MLIBC_LINUX_OPTION && defined(_LARGEFILE64_SOURCE)
 struct dirent64 {
