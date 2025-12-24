@@ -4,6 +4,7 @@
 #include <abi-bits/clockid_t.h>
 #include <abi-bits/sigevent.h>
 #include <bits/ansi/timespec.h>
+#include <bits/ansi/tm.h>
 #include <bits/posix/timer_t.h>
 
 #define TIMER_ABSTIME 1
