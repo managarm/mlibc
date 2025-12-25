@@ -8,7 +8,9 @@
 #include <hel.h>
 
 #include <bits/ensure.h>
+#include <frg/array.hpp>
 #include <frg/optional.hpp>
+#include <frg/span.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <protocols/posix/data.hpp>
@@ -67,7 +69,7 @@ private:
 };
 
 struct Queue {
-	Queue() : _handle{kHelNullHandle} {
+	Queue() : _handle{kHelNullHandle}, _numSqChunks{2} {
 		// We do not need to protect those allocations against signals as this constructor
 		// is only called during library initialization.
 		_chunks[0] =
@@ -89,13 +91,14 @@ struct Queue {
 		_lastProgress = 0;
 
 		// Setup the queue header.
-		HelQueueParameters params{.flags = 0, .numChunks = 2, .chunkSize = 4096};
+		HelQueueParameters params{.flags = 0, .numChunks = 2, .chunkSize = 4096, .numSqChunks = _numSqChunks};
 		HEL_CHECK(helCreateQueue(&params, &_handle));
 		setQueueHandle(_handle);
 
+		auto totalChunks = params.numChunks + params.numSqChunks;
 		auto chunksOffset = (sizeof(HelQueue) + 63) & ~size_t(63);
 		auto reservedPerChunk = (sizeof(HelChunk) + params.chunkSize + 63) & ~size_t(63);
-		auto overallSize = chunksOffset + params.numChunks * reservedPerChunk;
+		auto overallSize = chunksOffset + totalChunks * reservedPerChunk;
 
 		void *mapping;
 		HEL_CHECK(helMapMemory(
@@ -113,7 +116,7 @@ struct Queue {
 		for (unsigned int i = 0; i < 2; ++i)
 			_chunks[i] = reinterpret_cast<HelChunk *>(chunksPtr + i * reservedPerChunk);
 
-		// Reset all chunks.
+		// Reset all CQ chunks.
 		for (unsigned int i = 0; i < 2; ++i) {
 			_chunks[i]->next = 0;
 			_chunks[i]->progressFutex = 0;
@@ -123,18 +126,97 @@ struct Queue {
 		// Set cqFirst to the initial chunk.
 		__atomic_store_n(&_queue->cqFirst, 0 | kHelNextPresent, __ATOMIC_RELEASE);
 
-		// Supply the remaining chunks.
+		// Supply the remaining CQ chunks.
 		_tailChunk = 0;
 		for (unsigned int i = 1; i < 2; ++i) {
 			__atomic_store_n(&_chunks[_tailChunk]->next, i | kHelNextPresent, __ATOMIC_RELEASE);
 			_tailChunk = i;
 		}
 		_wakeHeadFutex();
+
+		// Initialize SQ state if we have SQ chunks.
+		if (_numSqChunks > 0) {
+			// Store pointers to SQ chunks.
+			for (unsigned int i = 0; i < _numSqChunks; ++i) {
+				_sqChunks[i] = reinterpret_cast<HelChunk *>(
+				    chunksPtr + (2 + i) * reservedPerChunk);
+			}
+
+			// SQ is initialized by the kernel. Read sqFirst to get the first SQ chunk.
+			auto sqFirst = __atomic_load_n(&_queue->sqFirst, __ATOMIC_ACQUIRE);
+			_sqCurrentChunk = sqFirst & ~kHelNextPresent;
+			_sqProgress = 0;
+			_chunkSize = params.chunkSize;
+		}
 	}
 
 	HelHandle getQueue() { return _handle; }
 
 	void trim() {}
+
+	// Push an element to the submission queue using a gather list.
+	void pushSq(uint32_t opcode, uintptr_t context,
+			frg::span<const frg::span<const std::byte>> segments) {
+		__ensure(_numSqChunks > 0);
+
+		size_t dataLength = 0;
+		for (auto seg : segments)
+			dataLength += seg.size();
+
+		auto elementSize = sizeof(HelElement) + dataLength;
+
+		// Check if we need to move to the next SQ chunk.
+		if (_sqProgress + elementSize > _chunkSize) {
+			// Wait for next chunk to become available.
+			auto nextWord = __atomic_load_n(&_sqChunks[_sqCurrentChunk - 2]->next, __ATOMIC_ACQUIRE);
+			while(!(nextWord & kHelNextPresent)) {
+				__atomic_fetch_and(&_queue->userNotify, ~kHelUserNotifySupplySqChunks, __ATOMIC_ACQUIRE);
+
+				nextWord = __atomic_load_n(&_sqChunks[_sqCurrentChunk - 2]->next, __ATOMIC_ACQUIRE);
+				if(nextWord & kHelNextPresent)
+					break;
+
+				HEL_CHECK(helDriveQueue(_handle, 0));
+			}
+
+			// Mark current chunk as done.
+			__atomic_store_n(&_sqChunks[_sqCurrentChunk - 2]->progressFutex,
+			                 _sqProgress | kHelProgressDone, __ATOMIC_RELEASE);
+
+			// Signal the kernel.
+			auto futex = __atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySqProgress, __ATOMIC_RELEASE);
+			if (!(futex & kHelKernelNotifySqProgress))
+				HEL_CHECK(helDriveQueue(_handle, 0));
+
+			_sqCurrentChunk = nextWord & ~kHelNextPresent;
+			_sqProgress = 0;
+		}
+
+		// Write the element to the SQ chunk.
+		auto ptr = reinterpret_cast<char *>(_sqChunks[_sqCurrentChunk - 2]) +
+		           sizeof(HelChunk) + _sqProgress;
+		auto element = reinterpret_cast<HelElement *>(ptr);
+		element->length = dataLength;
+		element->opcode = opcode;
+		element->context = reinterpret_cast<void *>(context);
+
+		// Copy each segment.
+		size_t offset = 0;
+		for (auto seg : segments) {
+			memcpy(ptr + sizeof(HelElement) + offset, seg.data(), seg.size());
+			offset += seg.size();
+		}
+
+		_sqProgress += elementSize;
+
+		// Update the progress futex.
+		__atomic_store_n(&_sqChunks[_sqCurrentChunk - 2]->progressFutex, _sqProgress, __ATOMIC_RELEASE);
+
+		// Signal the kernel.
+		auto futex = __atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySqProgress, __ATOMIC_RELEASE);
+		if (!(futex & kHelKernelNotifySqProgress))
+			HEL_CHECK(helDriveQueue(_handle, 0));
+	}
 
 	frg::optional<ElementHandle> dequeueSingleUnlessCancelled() {
 		while (true) {
@@ -255,6 +337,15 @@ private:
 
 	// Number of ElementHandle objects alive.
 	int _refCount[2];
+
+	// Number of SQ chunks configured.
+	unsigned int _numSqChunks;
+
+	// SQ state (only used if _numSqChunks > 0).
+	HelChunk *_sqChunks[2];  // Max 2 SQ chunks for now.
+	int _sqCurrentChunk;
+	int _sqProgress;
+	size_t _chunkSize;
 };
 
 inline ElementHandle::~ElementHandle() {
