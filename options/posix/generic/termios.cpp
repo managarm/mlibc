@@ -106,3 +106,21 @@ int tcsetattr(int fd, int opts, const struct termios *attr) {
 	return 0;
 }
 
+int tcgetwinsize(int fd, struct winsize *winsz) {
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_tcgetwinsize, -1);
+	if(int e = sysdep(fd, winsz); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
+}
+
+int tcsetwinsize(int fd, const struct winsize *winsz) {
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_tcsetwinsize, -1);
+	if(int e = sysdep(fd, winsz); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
+}
+

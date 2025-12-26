@@ -783,6 +783,20 @@ int sys_tcflow(int fd, int action) {
 	return 0;
 }
 
+int sys_tcgetwinsize(int fd, struct winsize *winsz) {
+	auto ret = do_syscall(SYS_ioctl, fd, TIOCGWINSZ, winsz);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_tcsetwinsize(int fd, const struct winsize *winsz) {
+	auto ret = do_syscall(SYS_ioctl, fd, TIOCSWINSZ, winsz);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_access(const char *path, int mode) {
 	auto ret = do_syscall(SYS_faccessat, AT_FDCWD, path, mode, 0);
 	if (int e = sc_error(ret); e)

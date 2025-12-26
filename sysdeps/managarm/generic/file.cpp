@@ -777,6 +777,16 @@ int sys_tcdrain(int) {
 	return 0;
 }
 
+int sys_tcgetwinsize(int fd, struct winsize *winsz) {
+	int result;
+	return sys_ioctl(fd, TIOCGWINSZ, winsz, &result);
+}
+
+int sys_tcsetwinsize(int fd, const struct winsize *winsz) {
+	int result;
+	return sys_ioctl(fd, TIOCSWINSZ, const_cast<struct winsize *>(winsz), &result);
+}
+
 int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	constexpr int type_mask = int(0xF);
 	constexpr int flags_mask = ~int(0xF);
