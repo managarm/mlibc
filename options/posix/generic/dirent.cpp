@@ -85,6 +85,21 @@ struct dirent *readdir(DIR *dir) {
 	return &dir->__current;
 }
 
+ssize_t posix_getdents(int fildes, void *buf, size_t nbyte, int flags) {
+	if (flags) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_read_entries, -1);
+	size_t bytes_read = 0;
+	if(int e = sysdep(fildes, buf, nbyte, &bytes_read); e) {
+		errno = e;
+		return -1;
+	}
+	return bytes_read;
+}
+
 #if __MLIBC_LINUX_OPTION
 [[gnu::alias("readdir")]] struct dirent64 *readdir64(DIR *dir);
 #endif /* !__MLIBC_LINUX_OPTION */
