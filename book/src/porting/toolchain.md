@@ -2,7 +2,7 @@
 
 To compile [`mlibc`](https://github.com/managarm/mlibc) and any userspace programs which link against it, you'll need a suitable compiler. For that, you will need to build a full [OS Specific Toolchain](https://wiki.osdev.org/OS_Specific_Toolchain). Using your host's compiler or a generic toolchain could lead into strange build failures and is not recommended nor supported.
 
-For [mlibc-demo-os](https://github.com/managarm/mlibc-demo-os), the `riscv64-demo-gcc` toolchain is used. The patches (with comments) to add support for it in Binutils and GCC are available [here](https://github.com/managarm/mlibc-demo-os/tree/main/user/patches).
+For [mlibc-demo-os](https://github.com/managarm/mlibc-demo-os), the `riscv64-demo-gcc` toolchain is used. The patches (with comments) to add support for it in Binutils and GCC are available [here](https://github.com/managarm/mlibc-demo-os/tree/main/user/patches). The patches for architectures other than riscv64 will differ, so keep that in mind.
 
 The first step is downloading the sources for [Binutils](https://ftpmirror.gnu.org/binutils/) and [GCC](https://ftpmirror.gnu.org/gcc/), then applying your patches. The versions used in this guide are Binutils 2.45.1 and GCC 15.2.0.
 
