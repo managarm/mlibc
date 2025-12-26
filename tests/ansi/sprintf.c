@@ -414,5 +414,22 @@ int main() {
 	test_roundtrip(-10.25, "%25a", "%lf", "               -0x1.48p+3", 1);
 	test_roundtrip(-10.25, "%-25a", "%lf", "-0x1.48p+3               ", 1);
 
+	setlocale(LC_ALL, "en_US.utf8");
+
+	sprintf(buf, "%'f", 42.69);
+	assert(!strcmp(buf, "42.690000"));
+
+	sprintf(buf, "%'20f", 1337420.69);
+	assert(!strcmp(buf, "    1,337,420.690000"));
+
+	sprintf(buf, "%'-20f", 1337420.69);
+	assert(!strcmp(buf, "1,337,420.690000    "));
+
+	sprintf(buf, "%'-10g", 1337.69);
+	assert(!strcmp(buf, "1,337.69  "));
+
+	sprintf(buf, "%'10g", 1337.69);
+	assert(!strcmp(buf, "  1,337.69"));
+
 	return 0;
 }
