@@ -19,6 +19,7 @@
 #include <mlibc/file-io.hpp>
 #include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/lock.hpp>
+#include <mlibc/exit.hpp>
 
 namespace mlibc {
 
@@ -392,7 +393,8 @@ int abstract_file::_save_pos() {
 		auto seek_offset = (off_t(__offset) - off_t(__io_offset));
 		if (int e = io_seek(seek_offset, SEEK_CUR, &new_offset); e) {
 			__status_bits |= __MLIBC_ERROR_BIT;
-			mlibc::infoLogger() << "hit io_seek() error " << e << frg::endlog;
+			if(!mlibc::processIsExiting.load(std::memory_order_relaxed))
+				mlibc::infoLogger() << "hit io_seek() error " << e << frg::endlog;
 			return e;
 		}
 		return 0;
@@ -596,7 +598,7 @@ namespace {
 		~stdio_guard() {
 			// Only flush the files but do not close them.
 			for(auto it : mlibc::global_file_list()) {
-				if(int e = it->flush(); e)
+				if(int e = it->flush(); e && !mlibc::processIsExiting.load(std::memory_order_relaxed))
 					mlibc::infoLogger() << "mlibc warning: Failed to flush file before exit()"
 							<< frg::endlog;
 			}
