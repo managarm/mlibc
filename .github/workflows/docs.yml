@@ -38,7 +38,7 @@ jobs:
                 name: handbook
                 path: book
           - name: Upload handbook to docs.managarm.org
-            if: github.ref == 'refs/heads/master'
+            if: github.repository_owner == 'managarm' && github.ref == 'refs/heads/master'
             env:
                 RSYNC_PASSWORD: ${{ secrets.RSYNC_DOCUMENTATION_PASSWD }}
             run:
