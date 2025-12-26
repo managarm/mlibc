@@ -177,9 +177,8 @@ int sys_sleep(time_t *secs, long *nanos) {
 	uint64_t now;
 	HEL_CHECK(helGetClock(&now));
 
-	uint64_t async_id;
 	HEL_CHECK(helSubmitAwaitClock(
-	    now + uint64_t(*secs) * 1000000000 + uint64_t(*nanos), globalQueue.getQueue(), 0, &async_id
+	    now + uint64_t(*secs) * 1000000000 + uint64_t(*nanos), globalQueue.getQueue(), 0, 0
 	));
 
 	auto element = globalQueue.dequeueSingle();
