@@ -226,13 +226,14 @@ int sys_peername(
 
 namespace {
 
-std::array<std::pair<int, int>, 6> getsockopt_passthrough = {{
+std::array<std::pair<int, int>, 7> getsockopt_passthrough = {{
     {SOL_SOCKET, SO_PROTOCOL},
     {SOL_SOCKET, SO_PEERCRED},
     {SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS},
     {SOL_SOCKET, SO_TYPE},
     {SOL_SOCKET, SO_ACCEPTCONN},
     {SOL_SOCKET, SO_PEERPIDFD},
+	{SOL_SOCKET, SO_BINDTODEVICE},
 }};
 
 } // namespace
