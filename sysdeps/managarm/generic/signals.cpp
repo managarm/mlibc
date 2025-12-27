@@ -25,22 +25,24 @@ namespace mlibc {
 
 int sys_sigprocmask(int how, const sigset_t *set, sigset_t *retrieve) {
 	// This implementation is inherently signal-safe.
-	uint64_t former, unused;
+	uint64_t err, former, unused;
 	if (set) {
-		HEL_CHECK(helSyscall2_2(
+		HEL_CHECK(helSyscall2_3(
 		    kHelObserveSuperCall + posix::superSigMask,
 		    how,
 		    *reinterpret_cast<const HelWord *>(set),
+		    &err,
 		    &former,
 		    &unused
 		));
 	} else {
-		HEL_CHECK(helSyscall2_2(kHelObserveSuperCall + posix::superSigMask, 0, 0, &former, &unused)
+		HEL_CHECK(
+		    helSyscall2_3(kHelObserveSuperCall + posix::superSigMask, 0, 0, &err, &former, &unused)
 		);
 	}
-	if (retrieve)
+	if (retrieve && err == 0)
 		*reinterpret_cast<uint64_t *>(retrieve) = former;
-	return 0;
+	return err;
 }
 
 int sys_sigaction(
@@ -127,19 +129,22 @@ int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
 
 int sys_sigsuspend(const sigset_t *set) {
 	// SignalGuard sguard;
-	uint64_t former, seq, unused;
+	uint64_t err, former, seq, unused;
 
-	HEL_CHECK(helSyscall2_2(
+	HEL_CHECK(helSyscall2_3(
 	    kHelObserveSuperCall + posix::superSigMask,
 	    SIG_SETMASK,
 	    *reinterpret_cast<const HelWord *>(set),
+	    &err,
 	    &former,
 	    &seq
 	));
+	__ensure(err == 0);
 	HEL_CHECK(helSyscall1(kHelObserveSuperCall + posix::superSigSuspend, seq));
-	HEL_CHECK(helSyscall2_2(
-	    kHelObserveSuperCall + posix::superSigMask, SIG_SETMASK, former, &unused, &unused
+	HEL_CHECK(helSyscall2_3(
+	    kHelObserveSuperCall + posix::superSigMask, SIG_SETMASK, former, &err, &unused, &unused
 	));
+	__ensure(err == 0);
 
 	return EINTR;
 }
@@ -155,12 +160,13 @@ int sys_sigpending(sigset_t *set) {
 
 int sys_pause() {
 	HelWord set = 0;
-	uint64_t former, seq;
+	uint64_t err, former, seq;
 
 	// no-op to obtain a seqnum
 	HEL_CHECK(
-	    helSyscall2_2(kHelObserveSuperCall + posix::superSigMask, SIG_BLOCK, set, &former, &seq)
+	    helSyscall2_3(kHelObserveSuperCall + posix::superSigMask, SIG_BLOCK, set, &err, &former, &seq)
 	);
+	__ensure(err == 0);
 	HEL_CHECK(helSyscall1(kHelObserveSuperCall + posix::superSigSuspend, seq));
 
 	return EINTR;
