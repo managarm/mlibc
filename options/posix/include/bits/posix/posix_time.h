@@ -3,8 +3,11 @@
 
 #include <abi-bits/clockid_t.h>
 #include <abi-bits/sigevent.h>
+#include <bits/size_t.h>
 #include <bits/ansi/timespec.h>
+#include <bits/ansi/tm.h>
 #include <bits/posix/timer_t.h>
+#include <bits/posix/locale_t.h>
 
 #define TIMER_ABSTIME 1
 
@@ -26,6 +29,8 @@ int timer_settime(timer_t __timerid, int __flags, const struct itimerspec *__res
 	struct itimerspec *__restrict __old_value);
 int timer_gettime(timer_t __timerid, struct itimerspec *__curr_value);
 int timer_delete(timer_t __timerid);
+
+size_t strftime_l(char *__restrict __s, size_t __maxsize, const char *__restrict __format, const struct tm *__restrict __timeptr, locale_t __locale);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

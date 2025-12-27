@@ -22,6 +22,7 @@ int main() {
 	tm.tm_year = 121;
 	tm.tm_wday = 2;
 	tm.tm_yday = 39;
+	tm.tm_zone = "CET";
 	tm.tm_gmtoff = 3600;
 	strftime(timebuf, sizeof(timebuf), "%e", &tm);
 	assert(!strcmp(timebuf, result));
@@ -75,6 +76,37 @@ int main() {
 	strftime(timebuf, sizeof(timebuf), "%U", &tm);
 	fprintf(stderr, "'%s'\n", timebuf);
 	assert(!strcmp(timebuf, "06"));
+
+	char *locale = setlocale(LC_ALL, "de_DE.utf8");
+	assert(locale && strlen(locale));
+
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%a %A", &tm);
+	assert(!strcmp(timebuf, "Di Dienstag"));
+
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%b %B %h", &tm);
+	assert(!strcmp(timebuf, "Mär März Mär"));
+
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%c", &tm);
+	assert(!strcmp(timebuf, "Di 08 Mär 2021 17:17:00 CET"));
+
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%p", &tm);
+	assert(!strcmp(timebuf, ""));
+
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%r", &tm);
+	assert(!strcmp(timebuf, "05:17:00 "));
+
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%x", &tm);
+	assert(!strcmp(timebuf, "08.03.2021"));
+
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%X", &tm);
+	assert(!strcmp(timebuf, "17:17:00"));
 
 	return 0;
 }
