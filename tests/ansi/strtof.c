@@ -39,6 +39,9 @@ int main () {
 	DO_TEST("0x10.0p1", 32.0f, -1, strtof, FLT_RANGE);
 	DO_TEST("0x10.0p10", 16384.0f, -1, strtof, FLT_RANGE);
 	DO_TEST("0x100.0p-1", 128.0f, -1, strtof, FLT_RANGE);
+	DO_TEST("42.1end", 42.1f, 4, strtof, FLT_RANGE);
+	DO_TEST("42.1pinvalid", 42.1f, 4, strtof, FLT_RANGE);
+	DO_TEST("42.1nope", 42.1f, 4, strtof, FLT_RANGE);
 	DO_TEST_SUCCESS_FUNC("NAN", isnan, -1, strtof);
 	DO_TEST_SUCCESS_FUNC("nan", isnan, -1, strtof);
 	DO_TEST_SUCCESS_FUNC("INF", isinf, -1, strtof);
@@ -58,6 +61,9 @@ int main () {
 	DO_TEST("0x10.0p1", 32.0, -1, strtod, DBL_RANGE);
 	DO_TEST("0x10.0p10", 16384.0, -1, strtod, DBL_RANGE);
 	DO_TEST("0x100.0p-1", 128.0, -1, strtod, DBL_RANGE);
+	DO_TEST("42.1end", 42.1, 4, strtod, DBL_RANGE);
+	DO_TEST("42.1pinvalid", 42.1, 4, strtod, DBL_RANGE);
+	DO_TEST("42.1nope", 42.1, 4, strtod, DBL_RANGE);
 	DO_TEST_SUCCESS_FUNC("NAN", isnan, -1, strtod);
 	DO_TEST_SUCCESS_FUNC("nan", isnan, -1, strtod);
 	DO_TEST_SUCCESS_FUNC("INF", isinf, -1, strtod);
@@ -76,7 +82,10 @@ int main () {
 	DO_TEST("0x12.13", 18.07421875, -1, strtold, LDBL_RANGE);
 	DO_TEST("0x10.0p1", 32.0, -1, strtold, LDBL_RANGE);
 	DO_TEST("0x10.0p10", 16384.0, -1, strtold, LDBL_RANGE);
-	DO_TEST("0x100.0p-1", 128.0, -1, strtold, LDBL_RANGE);
+	DO_TEST("0x100.0p-1", 128.0, -1, strtold, LDBL_RANGE);\
+	DO_TEST("42.1end", 42.1, 4, strtold, LDBL_RANGE);
+	DO_TEST("42.1pinvalid", 42.1, 4, strtold, LDBL_RANGE);
+	DO_TEST("42.1nope", 42.1, 4, strtold, LDBL_RANGE);
 	DO_TEST_SUCCESS_FUNC("NAN", isnan, -1, strtold);
 	DO_TEST_SUCCESS_FUNC("nan", isnan, -1, strtold);
 	DO_TEST_SUCCESS_FUNC("INF", isinf, -1, strtold);
