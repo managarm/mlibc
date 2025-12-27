@@ -1,0 +1,18 @@
+test_additional_link_args = [
+	'-Wl,-Bsymbolic'
+]
+
+libfoo = shared_library('foo', ['libfoo.c'],
+	dependencies: libc_dep,
+	override_options: ['b_sanitize=none'],
+	link_args: test_additional_link_args + mlibc_link_args,
+)
+test_link_with = [libfoo]
+
+libfoo_native = shared_library('native-foo', ['libfoo.c'],
+	c_args: ['-D_GNU_SOURCE', '-DUSE_HOST_LIBC'],
+	link_args: ['-ldl'] + test_additional_link_args,
+	override_options: ['b_sanitize=none'],
+	native: true
+)
+test_native_link_with = [libfoo_native]

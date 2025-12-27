@@ -19,6 +19,7 @@ rtld_test_cases = [
 	'relr',
 	'symver',
 	'fail-load',
+	'dt_symbolic',
 ]
 
 if host_machine.cpu_family() != 'm68k'
