@@ -255,14 +255,14 @@ auto monetary_parser = category{
         parse_bytearray, // mon_grouping
         parse_string,    // positive_sign
         parse_string,    // negative_sign
-        parse<uint8_t>,  // int_frac_digits
-        parse<uint8_t>,  // frac_digits
-        parse<uint8_t>,  // p_cs_precedes
-        parse<uint16_t>, // p_sep_by_space
-        parse<uint8_t>,  // n_cs_precedes
-        parse<uint16_t>, // n_sep_by_space
-        parse<uint32_t>, // p_sign_posn
-        parse<uint32_t>, // n_sign_posn
+        parse_int_elem,  // int_frac_digits
+        parse_int_elem,  // frac_digits
+        parse_int_elem,  // p_cs_precedes
+        parse_int_elem,  // p_sep_by_space
+        parse_int_elem,  // n_cs_precedes
+        parse_int_elem,  // n_sep_by_space
+        parse_int_elem,  // p_sign_posn
+        parse_int_elem,  // n_sign_posn
         parse_string,    // crncystr
         parse_int_elem,  // int_p_cs_precedes
         parse_int_elem,  // int_n_cs_precedes

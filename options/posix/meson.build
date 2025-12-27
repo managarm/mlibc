@@ -58,6 +58,7 @@ libc_sources += files(
 	'generic/wordexp.cpp',
 	'generic/mqueue.cpp',
 	'generic/utmpx.cpp',
+	'generic/monetary.cpp',
 )
 
 if not headers_only
@@ -110,6 +111,7 @@ if not no_headers
 		'include/endian.h',
 		'include/tar.h',
 		'include/cpio.h',
+		'include/monetary.h',
 	)
 	install_headers(
 		'include/arpa/inet.h',

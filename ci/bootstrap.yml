@@ -267,7 +267,7 @@ packages:
           localedef $LOCALEDEF_FLAGS -fUTF-8 -ien_US --prefix=@THIS_COLLECT_DIR@ --no-archive en_US.utf8
           localedef $LOCALEDEF_FLAGS -fUTF-8 -iC --prefix=@THIS_COLLECT_DIR@ --no-archive C.utf8
           localedef $LOCALEDEF_FLAGS -fUTF-8 -ide_DE --prefix=@THIS_COLLECT_DIR@ --no-archive de_DE.utf8
-          localedef $LOCALEDEF_FLAGS -fUTF-8 -ide_DE --prefix=@THIS_COLLECT_DIR@ --no-archive de_DE
+          localedef $LOCALEDEF_FLAGS -fANSI_X3.4-1968 -ide_DE --prefix=@THIS_COLLECT_DIR@ --no-archive de_DE
           localedef $LOCALEDEF_FLAGS -fUTF-8 -iru_RU --prefix=@THIS_COLLECT_DIR@ --no-archive ru_RU.utf8
         environ:
           I18NPATH: '@THIS_SOURCE_DIR@/localedata/'
@@ -281,7 +281,7 @@ packages:
           localedef -fUTF-8 -ien_US --prefix=@THIS_COLLECT_DIR@ --no-archive en_US.utf8
           localedef -fUTF-8 -iC --prefix=@THIS_COLLECT_DIR@ --no-archive C.utf8
           localedef -fUTF-8 -ide_DE --prefix=@THIS_COLLECT_DIR@ --no-archive de_DE.utf8
-          localedef -fUTF-8 -ide_DE --prefix=@THIS_COLLECT_DIR@ --no-archive de_DE
+          localedef -fANSI_X3.4-1968 -ide_DE --prefix=@THIS_COLLECT_DIR@ --no-archive de_DE
           localedef -fUTF-8 -iru_RU --prefix=@THIS_COLLECT_DIR@ --no-archive ru_RU.utf8
         environ:
           I18NPATH: '@THIS_SOURCE_DIR@/localedata/'

@@ -119,6 +119,7 @@ all_test_cases = [
 	'posix/jrand48',
 	'posix/sigqueue',
 	'posix/memccpy',
+	'posix/strfmon',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
