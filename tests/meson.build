@@ -120,6 +120,7 @@ all_test_cases = [
 	'posix/sigqueue',
 	'posix/memccpy',
 	'posix/strfmon',
+	'posix/sig2str',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
