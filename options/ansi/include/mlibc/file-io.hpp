@@ -21,6 +21,13 @@ enum class buffer_mode {
 	line_buffer,
 	full_buffer
 };
+
+enum class stream_orientation : int {
+	byte = -1,
+	none = 0,
+	wide = 1,
+};
+
 struct StdioLock {
 	bool uselock = true;
 	RecursiveFutexLock futexlock;
@@ -94,6 +101,8 @@ public:
 	StdioLock _lock;
 	// All files are stored in a global linked list, so that they can be flushed at exit().
 	frg::default_list_hook<abstract_file> _list_hook;
+
+	stream_orientation _orientation = stream_orientation::none;
 };
 
 struct fd_file : abstract_file {

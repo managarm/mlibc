@@ -1426,7 +1426,19 @@ wint_t fgetwc(FILE *) { MLIBC_STUB_BODY; }
 wchar_t *fgetws(wchar_t *__restrict, int, FILE *__restrict) { MLIBC_STUB_BODY; }
 wint_t fputwc(wchar_t, FILE *) { MLIBC_STUB_BODY; }
 int fputws(const wchar_t *__restrict, FILE *__restrict) { MLIBC_STUB_BODY; }
-int fwide(FILE *, int) { MLIBC_STUB_BODY; }
+
+int fwide(FILE *stream, int mode) {
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+	frg::unique_lock lock(file->_lock);
+
+	if (mode > 0 && file->_orientation == mlibc::stream_orientation::none)
+		file->_orientation = mlibc::stream_orientation::wide;
+	else if (mode < 0 && file->_orientation == mlibc::stream_orientation::none)
+		file->_orientation = mlibc::stream_orientation::byte;
+
+	return std::to_underlying(file->_orientation);
+}
+
 wint_t getwc(FILE *) { MLIBC_STUB_BODY; }
 wint_t getwchar(void) { MLIBC_STUB_BODY; }
 wint_t putwc(wchar_t, FILE *) { MLIBC_STUB_BODY; }
