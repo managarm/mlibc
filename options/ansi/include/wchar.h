@@ -30,9 +30,9 @@ int vfwprintf(FILE *__restrict __stream, const wchar_t *__restrict __format, __b
 int vfwscanf(FILE *__restrict __stream, const wchar_t *__restrict __format, __builtin_va_list __args);
 
 int swprintf(wchar_t *__restrict __buffer, size_t __max_size, const wchar_t *__restrict __format, ...);
-int swscanf(wchar_t *__restrict __buffer, const wchar_t *__restrict __format, ...);
+int swscanf(const wchar_t *__restrict __buffer, const wchar_t *__restrict __format, ...);
 int vswprintf(wchar_t *__restrict __buffer, size_t __max_size, const wchar_t *__restrict __format, __builtin_va_list __args);
-int vswscanf(wchar_t *__restrict __buffer, const wchar_t *__restrict __format, __builtin_va_list __args);
+int vswscanf(const wchar_t *__restrict __buffer, const wchar_t *__restrict __format, __builtin_va_list __args);
 
 int wprintf(const wchar_t *__restrict __format, ...);
 int wscanf(const wchar_t *__restrict __format, ...);
