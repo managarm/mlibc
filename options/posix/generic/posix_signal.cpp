@@ -302,3 +302,19 @@ int str2sig(const char *__restrict str, int *__restrict pnum) {
 
 	return -1;
 }
+
+void psiginfo(const siginfo_t *pinfo, const char *message) {
+	psignal(pinfo->si_signo, message);
+}
+
+void psignal(int signum, const char *message) {
+	auto name = strsignal(signum);
+
+	flockfile(stderr);
+	auto save_mode = stderr->__io_mode;
+
+	fprintf(stderr, "%s%s%s\n", message ? message : "", message ? ": " : "", name);
+
+	stderr->__io_mode = save_mode;
+	funlockfile(stderr);
+}

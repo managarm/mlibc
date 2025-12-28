@@ -102,6 +102,9 @@ int sigqueue(pid_t __pid, int __sig, const union sigval __value);
 int sig2str(int __signum, char *__str);
 int str2sig(const char *__restrict __str, int *__restrict __pnum);
 
+void psiginfo(const siginfo_t *__pinfo, const char *__message);
+void psignal(int __signum, const char *__message);
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
