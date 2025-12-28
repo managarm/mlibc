@@ -1156,16 +1156,19 @@ int sys_ppoll(
     const sigset_t *mask,
     int *num_events
 ) {
-	uint64_t former = 0, seq = 0, unused;
+	uint64_t former = 0, seq = 0, err = 0, unused;
 
-	if (mask)
-		HEL_CHECK(helSyscall2_2(
+	if (mask) {
+		HEL_CHECK(helSyscall2_3(
 		    kHelObserveSuperCall + posix::superSigMask,
 		    SIG_SETMASK,
 		    *reinterpret_cast<const HelWord *>(mask),
+		    &err,
 		    &former,
 		    &seq
 		));
+		__ensure(err == 0);
+	}
 
 	SignalGuard guard;
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -1196,10 +1199,12 @@ int sys_ppoll(
 	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
-	if (mask)
-		HEL_CHECK(helSyscall2_2(
-		    kHelObserveSuperCall + posix::superSigMask, SIG_SETMASK, former, &unused, &unused
+	if (mask) {
+		HEL_CHECK(helSyscall2_3(
+		    kHelObserveSuperCall + posix::superSigMask, SIG_SETMASK, former, &err, &unused, &unused
 		));
+		__ensure(err == 0);
+	}
 
 	if (resp.error() != managarm::posix::Errors::SUCCESS) {
 		return resp.error() | toErrno;
