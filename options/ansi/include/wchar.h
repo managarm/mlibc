@@ -10,6 +10,8 @@
 #include <bits/file.h>
 #include <mlibc-config.h>
 
+typedef __builtin_va_list va_list;
+
 #define WEOF ((wint_t)0xffffffffU)
 
 #ifdef __cplusplus
@@ -124,6 +126,12 @@ int wcsncasecmp(const wchar_t *__a, const wchar_t *__b, size_t __size);
 int wcscasecmp(const wchar_t *__a, const wchar_t *__b);
 size_t wcsnlen(const wchar_t *__s, size_t __maxlen);
 #endif /* __MLIBC_POSIX2008 */
+
+#if __MLIBC_POSIX_OPTION
+
+#include <bits/posix/locale_t.h>
+
+#endif /* __MLIBC_POSIX_OPTION */
 
 #endif /* !__MLIBC_ABI_ONLY */
 
