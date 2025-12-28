@@ -10,7 +10,7 @@
 #include <bits/file.h>
 #include <mlibc-config.h>
 
-#define WEOF 0xffffffffU
+#define WEOF ((wint_t)0xffffffffU)
 
 #ifdef __cplusplus
 extern "C" {
