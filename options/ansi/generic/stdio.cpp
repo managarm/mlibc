@@ -272,6 +272,31 @@ wint_t fgetwc_unlocked(mlibc::abstract_file *f) {
 	return wc;
 }
 
+wint_t ungetwc_unlocked(wint_t c, mlibc::abstract_file *f) {
+	if (!f->check_orientation(mlibc::stream_orientation::wide)) {
+		f->__status_bits |= __MLIBC_ERROR_BIT;
+		errno = EIO;
+		return WEOF;
+	}
+
+	if (c == WEOF)
+		return WEOF;
+
+	char buf[MB_LEN_MAX];
+	mbstate_t state = { };
+	auto encoding = wcrtomb(buf, static_cast<wchar_t>(c), &state);
+	if (encoding == size_t(-1))
+		return WEOF;
+
+	for (size_t i = 0; i < encoding; i--) {
+		int ret = f->unget(buf[i]);
+		if (ret == EOF)
+			return WEOF;
+	}
+
+	return c;
+}
+
 } // namespace
 
 struct StreamPrinter {
@@ -1660,7 +1685,12 @@ wint_t putwchar(wchar_t c) {
 }
 
 // wide-oriented (POSIX)
-wint_t ungetwc(wint_t, FILE *) { MLIBC_STUB_BODY; }
+wint_t ungetwc(wint_t c, FILE *stream) {
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+	frg::unique_lock lock(file->_lock);
+
+	return ungetwc_unlocked(c, file);
+}
 
 // byte-oriented (POSIX)
 size_t fread(void *buffer, size_t size, size_t count, FILE *file_base) {
