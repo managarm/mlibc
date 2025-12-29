@@ -450,6 +450,8 @@ int fd_file::close() {
 }
 
 int fd_file::reopen(const char *path, const char *mode) {
+	flush();
+
 	int mode_flags = parse_modestring(mode);
 
 	int fd;
@@ -457,7 +459,6 @@ int fd_file::reopen(const char *path, const char *mode) {
 		return e;
 	}
 
-	flush();
 	close();
 	getAllocator().deallocate(__buffer_ptr, __buffer_size + ungetBufferSize);
 
