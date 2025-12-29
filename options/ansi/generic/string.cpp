@@ -5,6 +5,7 @@
 #include <wchar.h>
 
 #include <bits/ensure.h>
+#include <mlibc/strtofp.hpp>
 #include <mlibc/strtol.hpp>
 
 // memset() is defined in options/internals.
@@ -232,9 +233,17 @@ char *strchrnul(const char *s, int c) {
 	return const_cast<char *>(s + i);
 }
 
-double wcstod(const wchar_t *__restrict, wchar_t **__restrict) { MLIBC_STUB_BODY; }
-float wcstof(const wchar_t *__restrict, wchar_t **__restrict) { MLIBC_STUB_BODY; }
-long double wcstold(const wchar_t *__restrict, wchar_t **__restrict) { MLIBC_STUB_BODY; }
+double wcstod(const wchar_t *__restrict string, wchar_t **__restrict end) {
+	return mlibc::strtofp<double, wchar_t>(string, end, mlibc::getActiveLocale());
+}
+
+float wcstof(const wchar_t *__restrict string, wchar_t **__restrict end) {
+	return mlibc::strtofp<float, wchar_t>(string, end, mlibc::getActiveLocale());
+}
+
+long double wcstold(const wchar_t *__restrict string, wchar_t **__restrict end) {
+	return mlibc::strtofp<long double, wchar_t>(string, end, mlibc::getActiveLocale());
+}
 
 long wcstol(const wchar_t *__restrict nptr, wchar_t **__restrict endptr, int base)  {
 	return mlibc::stringToInteger<long, wchar_t>(nptr, endptr, base);
