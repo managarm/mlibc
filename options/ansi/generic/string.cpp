@@ -324,7 +324,20 @@ wchar_t *wcschr(const wchar_t *s, wchar_t c) {
 	return *s ? (wchar_t *)s : nullptr;
 }
 
-size_t wcscspn(const wchar_t *, const wchar_t *) { MLIBC_STUB_BODY; }
+size_t wcscspn(const wchar_t *ws, const wchar_t *reject) {
+	if (reject[0] == L'\0')
+		return wcslen(ws);
+
+	if (reject[1] == L'\0') {
+		auto match = wcschr(ws, reject[0]);
+		return match ? match - ws : wcslen(ws);
+	}
+
+	const wchar_t *i = ws;
+	for (; *i && !wcschr(reject, *i); i++);
+	return i - ws;
+}
+
 wchar_t *wcspbrk(const wchar_t *, const wchar_t *) { MLIBC_STUB_BODY; }
 
 wchar_t *wcsrchr(const wchar_t *s, wchar_t c) {
