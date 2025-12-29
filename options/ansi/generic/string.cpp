@@ -363,7 +363,24 @@ size_t wcsspn(const wchar_t *ws, const wchar_t *accept) {
 	}
 }
 
-wchar_t *wcsstr(const wchar_t *, const wchar_t *) { MLIBC_STUB_BODY; }
+wchar_t *wcsstr(const wchar_t *haystack, const wchar_t *needle) {
+	for(size_t i = 0; haystack[i]; i++) {
+		bool found = true;
+		for(size_t j = 0; needle[j]; j++) {
+			if(!needle[j] || haystack[i + j] == needle[j])
+				continue;
+
+			found = false;
+			break;
+		}
+
+		if(found)
+			return const_cast<wchar_t *>(&haystack[i]);
+	}
+
+	return nullptr;
+}
+
 wchar_t *wcstok(wchar_t *__restrict, const wchar_t *__restrict, wchar_t **__restrict) { MLIBC_STUB_BODY; }
 
 wchar_t *wmemchr(const wchar_t *s, wchar_t c, size_t size) {
