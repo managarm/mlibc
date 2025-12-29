@@ -154,6 +154,62 @@ private:
 	frg::va_struct *_vsp;
 };
 
+namespace {
+
+size_t fwrite_unlocked_ignore_orientation(const void *buffer, size_t size, size_t count, mlibc::abstract_file *file) {
+	if(!size || !count)
+		return 0;
+
+	// Distinguish two cases here: If the object size is one, we perform byte-wise writes.
+	// Otherwise, we try to write each object individually.
+	if(size == 1) {
+		size_t progress = 0;
+		while(progress < count) {
+			size_t chunk;
+			if(file->write((const char *)buffer + progress,
+					count - progress, &chunk)) {
+				// TODO: Handle I/O errors.
+				mlibc::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
+						<< frg::endlog;
+				break;
+			}else if(!chunk) {
+				// TODO: Handle eof.
+				break;
+			}
+
+			progress += chunk;
+		}
+
+		return progress;
+	}else{
+		for(size_t i = 0; i < count; i++) {
+			size_t progress = 0;
+			while(progress < size) {
+				size_t chunk;
+				if(file->write((const char *)buffer + i * size + progress,
+						size - progress, &chunk)) {
+					// TODO: Handle I/O errors.
+					mlibc::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
+							<< frg::endlog;
+					break;
+				}else if(!chunk) {
+					// TODO: Handle eof.
+					break;
+				}
+
+				progress += chunk;
+			}
+
+			if(progress < size)
+				return i;
+		}
+
+		return count;
+	}
+}
+
+} // namespace
+
 struct StreamPrinter {
 	StreamPrinter(FILE *stream)
 	: stream(stream), count(0) { }
@@ -1754,55 +1810,13 @@ size_t fread_unlocked(void *buffer, size_t size, size_t count, FILE *file_base) 
 // byte-oriented
 size_t fwrite_unlocked(const void *buffer, size_t size, size_t count, FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
-	if(!size || !count)
-		return 0;
 
-	// Distinguish two cases here: If the object size is one, we perform byte-wise writes.
-	// Otherwise, we try to write each object individually.
-	if(size == 1) {
-		size_t progress = 0;
-		while(progress < count) {
-			size_t chunk;
-			if(file->write((const char *)buffer + progress,
-					count - progress, &chunk)) {
-				// TODO: Handle I/O errors.
-				mlibc::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
-						<< frg::endlog;
-				break;
-			}else if(!chunk) {
-				// TODO: Handle eof.
-				break;
-			}
+	if (file->_orientation == mlibc::stream_orientation::wide)
+		return EOF;
+	else if (file->_orientation == mlibc::stream_orientation::none)
+		file->_orientation = mlibc::stream_orientation::byte;
 
-			progress += chunk;
-		}
-
-		return progress;
-	}else{
-		for(size_t i = 0; i < count; i++) {
-			size_t progress = 0;
-			while(progress < size) {
-				size_t chunk;
-				if(file->write((const char *)buffer + i * size + progress,
-						size - progress, &chunk)) {
-					// TODO: Handle I/O errors.
-					mlibc::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
-							<< frg::endlog;
-					break;
-				}else if(!chunk) {
-					// TODO: Handle eof.
-					break;
-				}
-
-				progress += chunk;
-			}
-
-			if(progress < size)
-				return i;
-		}
-
-		return count;
-	}
+	return fwrite_unlocked_ignore_orientation(buffer, size, count, file);
 }
 
 // byte-oriented
