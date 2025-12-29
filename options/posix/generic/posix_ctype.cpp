@@ -248,6 +248,6 @@ wctrans_t wctrans_l(const char* c, locale_t l) {
 	return find_wctrans(c, static_cast<mlibc::localeinfo *>(l));
 }
 
-wint_t towctrans_l(wint_t c, wctrans_t desc, locale_t) {
-	return towctrans(c, desc);
+wint_t towctrans_l(wint_t c, wctrans_t desc, locale_t l) {
+	return mlibc::current_charset()->towctrans(c, desc, static_cast<mlibc::localeinfo *>(l));
 }
