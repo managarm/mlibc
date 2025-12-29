@@ -21,10 +21,29 @@ int main() {
 
 	assert(fwide(fp, 0) > 0);
 
+	int ret = fseek(fp, 0, SEEK_SET);
+	assert(ret == 0);
+
+	wint_t wint = fgetwc(fp);
+	assert(wint == L'A');
+
+	wint = fgetwc(fp);
+	fprintf(stderr, "wint = %x errno = %d (%s)\n", wint, errno, strerror(errno));
+	assert(wint == L'€');
+
+	wint = fgetwc(fp);
+	fprintf(stderr, "wint = %x errno = %d (%s)\n", wint, errno, strerror(errno));
+	assert(wint == L'\u2603');
+
+	wint = fgetwc(fp);
+	fprintf(stderr, "wint = %x errno = %d (%s)\n", wint, errno, strerror(errno));
+	assert(wint == WEOF);
+	assert(feof(fp));
+
 	fp = freopen(NULL, "r+", fp);
 	assert(fp);
 
-	int ret = fseek(fp, 0, SEEK_SET);
+	ret = fseek(fp, 0, SEEK_SET);
 	assert(ret == 0);
 
 	unsigned char buffer[10];
