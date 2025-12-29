@@ -324,39 +324,62 @@ int fputws_unlocked(const wchar_t *__restrict ws, mlibc::abstract_file *f) {
 
 } // namespace
 
+template <typename Char>
 struct StreamPrinter {
-	StreamPrinter(FILE *stream)
+	using value_type = Char;
+
+	StreamPrinter(mlibc::abstract_file *stream)
 	: stream(stream), count(0) { }
 
-	void append(char c) {
-		fwrite_unlocked(&c, 1, 1, stream);
+	void append(Char c) {
+		if constexpr (std::is_same_v<Char, char>)
+			fwrite_unlocked(&c, 1, 1, stream);
+		else
+			fputwc_unlocked(c, stream);
 		count++;
 	}
 
-	void append(const char *str) {
-		fwrite_unlocked(str, strlen(str), 1, stream);
-		count += strlen(str);
+	void append(const Char *str) {
+		if constexpr (std::is_same_v<Char, char>) {
+			fwrite_unlocked(str, strlen(str), 1, stream);
+			count += strlen(str);
+		} else {
+			while (*str) {
+				fputwc_unlocked(*str++, stream);
+				count++;
+			}
+		}
 	}
 
-	void append(const char *str, size_t n) {
-		fwrite_unlocked(str, n, 1, stream);
-		count += n;
+	void append(const Char *str, size_t n) {
+		if constexpr (std::is_same_v<Char, char>) {
+			fwrite_unlocked(str, n, 1, stream);
+			count += n;
+		} else {
+			for (size_t i = 0; i < n && str[i]; i++) {
+				fputwc_unlocked(str[i], stream);
+				count++;
+			}
+		}
 	}
 
-	FILE *stream;
+	mlibc::abstract_file *stream;
 	size_t count;
 };
 
+template <typename Char>
 struct BufferPrinter {
-	BufferPrinter(char *buffer)
+	using value_type = Char;
+
+	BufferPrinter(Char *buffer)
 	: buffer(buffer), count(0) { }
 
-	void append(char c) {
+	void append(Char c) {
 		buffer[count] = c;
 		count++;
 	}
 
-	void append(const char *str) {
+	void append(const Char *str) {
 		// TODO: use strcat
 		for(size_t i = 0; str[i]; i++) {
 			buffer[count] = str[i];
@@ -364,7 +387,7 @@ struct BufferPrinter {
 		}
 	}
 
-	void append(const char *str, size_t n) {
+	void append(const Char *str, size_t n) {
 		// TODO: use strcat
 		for(size_t i = 0; i < n; i++) {
 			buffer[count] = str[i];
@@ -372,38 +395,43 @@ struct BufferPrinter {
 		}
 	}
 
-	char *buffer;
+	Char *buffer;
 	size_t count;
 };
 
+template <typename Char>
 struct LimitedPrinter {
-	LimitedPrinter(char *buffer, size_t limit)
+	using value_type = Char;
+
+	LimitedPrinter(Char *buffer, size_t limit)
 	: buffer(buffer), limit(limit), count(0) { }
 
-	void append(char c) {
+	void append(Char c) {
 		if(count < limit)
 			buffer[count] = c;
 		count++;
 	}
 
-	void append(const char *str) {
+	void append(const Char *str) {
 		// TODO: use strcat
 		for(size_t i = 0; str[i]; i++)
 			append(str[i]);
 	}
 
-	void append(const char *str, size_t n) {
+	void append(const Char *str, size_t n) {
 		// TODO: use strcat
 		for(size_t i = 0; i < n; i++)
 			append(str[i]);
 	}
 
-	char *buffer;
+	Char *buffer;
 	size_t limit;
 	size_t count;
 };
 
 struct ResizePrinter {
+	using value_type = char;
+
 	ResizePrinter()
 	: buffer(nullptr), limit(0), count(0) { }
 
@@ -1369,7 +1397,7 @@ int vfprintf(FILE *__restrict stream, const char *__restrict format, __builtin_v
 	va_copy(vs.args, args);
 	auto file = static_cast<mlibc::abstract_file *>(stream);
 	frg::unique_lock lock(file->_lock);
-	StreamPrinter p{stream};
+	StreamPrinter<char> p{file};
 	if (mlibc::globalConfig().debugPrintf)
 		mlibc::infoLogger() << "vfprintf(\"" << format << "\")" << frg::endlog;
 	auto res = frg::printf_format<NL_ARGMAX>(PrintfAgent{&p, &vs}, format, &vs);
