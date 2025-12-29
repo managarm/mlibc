@@ -468,6 +468,7 @@ int fd_file::reopen(const char *path, const char *mode) {
 	_reset();
 	_fd = fd;
 	_orientation = stream_orientation::none;
+	_mbstate = {};
 
 	if(mode_flags & O_APPEND) {
 		seek(0, SEEK_END);

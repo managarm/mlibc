@@ -1,6 +1,7 @@
 #ifndef MLIBC_FILE_IO_HPP
 #define MLIBC_FILE_IO_HPP
 
+#include <bits/mbstate.h>
 #include <stdio.h>
 
 #include <mlibc/lock.hpp>
@@ -103,6 +104,7 @@ public:
 	frg::default_list_hook<abstract_file> _list_hook;
 
 	stream_orientation _orientation = stream_orientation::none;
+	mbstate_t _mbstate = {};
 };
 
 struct fd_file : abstract_file {

@@ -22,6 +22,7 @@
 #include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/stdlib.hpp>
 #include <mlibc/global-config.hpp>
+#include <mlibc/ctype.hpp>
 #include <frg/mutex.hpp>
 #include <frg/expected.hpp>
 #include <frg/printf.hpp>
@@ -206,6 +207,35 @@ size_t fwrite_unlocked_ignore_orientation(const void *buffer, size_t size, size_
 
 		return count;
 	}
+}
+
+wint_t fputwc_unlocked(wchar_t c, mlibc::abstract_file *f) {
+	if (f->_orientation == mlibc::stream_orientation::byte)
+		return WEOF;
+	else if (f->_orientation == mlibc::stream_orientation::none)
+		f->_orientation = mlibc::stream_orientation::wide;
+
+	if (mlibc::iswascii(c)) {
+		char d = c;
+		if(fwrite_unlocked_ignore_orientation(&d, 1, 1, f) != 1)
+			c = WEOF;
+	} else {
+		char mbbuf[MB_LEN_MAX];
+		int mbbuf_len = wcrtomb(mbbuf, c, &f->_mbstate);
+
+		if (mbbuf_len < 0) {
+			c = WEOF;
+			f->__status_bits |= __MLIBC_ERROR_BIT;
+		} else {
+			int written = fwrite_unlocked_ignore_orientation(mbbuf, 1, mbbuf_len, f);
+			if (written != mbbuf_len) {
+				c = WEOF;
+				f->__status_bits |= __MLIBC_ERROR_BIT;
+			}
+		}
+	}
+
+	return c;
 }
 
 } // namespace
@@ -1541,7 +1571,11 @@ wint_t fgetwc(FILE *) { MLIBC_STUB_BODY; }
 wchar_t *fgetws(wchar_t *__restrict, int, FILE *__restrict) { MLIBC_STUB_BODY; }
 
 // wide-oriented (POSIX)
-wint_t fputwc(wchar_t, FILE *) { MLIBC_STUB_BODY; }
+wint_t fputwc(wchar_t c, FILE *stream) {
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+	frg::unique_lock lock(file->_lock);
+	return fputwc_unlocked(c, file);
+}
 
 // wide-oriented (POSIX)
 int fputws(const wchar_t *__restrict, FILE *__restrict) { MLIBC_STUB_BODY; }
@@ -1564,9 +1598,19 @@ wint_t getwc(FILE *) { MLIBC_STUB_BODY; }
 wint_t getwchar(void) { MLIBC_STUB_BODY; }
 
 // wide-oriented (POSIX)
-wint_t putwc(wchar_t, FILE *) { MLIBC_STUB_BODY; }
+wint_t putwc(wchar_t c, FILE *f) {
+	auto file = static_cast<mlibc::abstract_file *>(f);
+	frg::unique_lock lock(file->_lock);
+	return fputwc_unlocked(c, file);
+}
+
 // wide-oriented (POSIX)
-wint_t putwchar(wchar_t) { MLIBC_STUB_BODY; }
+wint_t putwchar(wchar_t c) {
+	auto file = static_cast<mlibc::abstract_file *>(stdout);
+	frg::unique_lock lock(file->_lock);
+	return fputwc_unlocked(c, file);
+}
+
 // wide-oriented (POSIX)
 wint_t ungetwc(wint_t, FILE *) { MLIBC_STUB_BODY; }
 
