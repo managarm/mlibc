@@ -145,6 +145,10 @@ struct nl_ctype : nl_category<LC_CTYPE, _NL_NUM_LC_CTYPE> {
 		return get(_NL_CTYPE_CLASS_NAMES).asString();
 	}
 
+	frg::string_view map_names() {
+		return get(_NL_CTYPE_MAP_NAMES).asString();
+	}
+
 	uint32_t class_offset() {
 		return get(_NL_CTYPE_CLASS_OFFSET).asUint32();
 	}

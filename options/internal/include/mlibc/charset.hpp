@@ -30,6 +30,8 @@ struct charset {
 	codepoint to_lower(codepoint c, mlibc::localeinfo *l);
 	codepoint to_upper(codepoint c, mlibc::localeinfo *l);
 
+	wint_t towctrans(wint_t wc, wctrans_t index, mlibc::localeinfo *l);
+
 	wctype_t wctype(frg::string_view name, mlibc::localeinfo *l);
 	bool iswctype(wint_t wc, wctype_t, mlibc::localeinfo *l);
 };

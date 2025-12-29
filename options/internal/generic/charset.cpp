@@ -177,6 +177,11 @@ wctype_t charset::wctype(frg::string_view name, mlibc::localeinfo *l) {
 	return 0;
 }
 
+wint_t charset::towctrans(wint_t wc, wctrans_t index, mlibc::localeinfo *l) {
+	auto entry = l->ctype.class_table(index);
+	return wctrans_table_lookup(entry, wc);
+}
+
 bool charset::iswctype(wint_t wc, wctype_t t, mlibc::localeinfo *l) {
 	if (t == 0 || wc == static_cast<wint_t>(WEOF))
 		return 0;
