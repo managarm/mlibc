@@ -735,6 +735,7 @@ void rewind(FILE *file_base) {
 	file_base->__status_bits &= ~(__MLIBC_EOF_BIT | __MLIBC_ERROR_BIT);
 }
 
+// byte-oriented (POSIX)
 int ungetc(int c, FILE *file_base) {
 	if (c == EOF)
 		return EOF;

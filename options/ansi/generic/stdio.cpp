@@ -374,6 +374,7 @@ void setbuffer(FILE *f, char *buf, size_t size) {
 	setvbuf(f, buf, buf ? _IOFBF : _IONBF, size);
 }
 
+// byte-oriented (POSIX)
 int fprintf(FILE *__restrict stream, const char *__restrict format, ...) {
 	va_list args;
 	va_start(args, format);
@@ -382,6 +383,7 @@ int fprintf(FILE *__restrict stream, const char *__restrict format, ...) {
 	return result;
 }
 
+// byte-oriented (POSIX)
 int fscanf(FILE *__restrict stream, const char *__restrict format, ...) {
 	va_list args;
 	va_start(args, format);
@@ -390,6 +392,7 @@ int fscanf(FILE *__restrict stream, const char *__restrict format, ...) {
 	return result;
 }
 
+// byte-oriented (POSIX)
 int printf(const char *__restrict format, ...) {
 	va_list args;
 	va_start(args, format);
@@ -1152,6 +1155,7 @@ int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 
 } // namespace
 
+// byte-oriented (POSIX)
 int scanf(const char *__restrict format, ...) {
 	va_list args;
 	va_start(args, format);
@@ -1186,6 +1190,7 @@ int sscanf(const char *__restrict buffer, const char *__restrict format, ...) {
 	return result;
 }
 
+// byte-oriented (POSIX)
 int vfprintf(FILE *__restrict stream, const char *__restrict format, __builtin_va_list args) {
 	frg::va_struct vs;
 	frg::arg arg_list[NL_ARGMAX + 1];
@@ -1234,6 +1239,7 @@ int vfscanf(FILE *__restrict stream, const char *__restrict format, __builtin_va
 	return do_scanf(handler, format, args);
 }
 
+// byte-oriented (POSIX)
 int vprintf(const char *__restrict format, __builtin_va_list args){
 	return vfprintf(stdout, format, args);
 }
@@ -1296,6 +1302,7 @@ int vsscanf(const char *__restrict buffer, const char *__restrict format, __buil
 	return result;
 }
 
+// wide-oriented (POSIX)
 int fwprintf(FILE *__restrict stream, const wchar_t *__restrict format, ...) {
 	va_list args;
 	va_start(args, format);
@@ -1304,8 +1311,12 @@ int fwprintf(FILE *__restrict stream, const wchar_t *__restrict format, ...) {
 	return result;
 }
 
+// wide-oriented (POSIX)
 int fwscanf(FILE *__restrict, const wchar_t *__restrict, ...) { MLIBC_STUB_BODY; }
+
+// wide-oriented (POSIX)
 int vfwprintf(FILE *__restrict, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
+// wide-oriented (POSIX)
 int vfwscanf(FILE *__restrict, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
 
 int swprintf(wchar_t *__restrict buffer, size_t n, const wchar_t *__restrict format, ...) {
@@ -1320,6 +1331,7 @@ int swscanf(const wchar_t *__restrict, const wchar_t *__restrict, ...) { MLIBC_S
 int vswprintf(wchar_t *__restrict, size_t, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
 int vswscanf(const wchar_t *__restrict, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
 
+// wide-oriented (POSIX)
 int wprintf(const wchar_t *__restrict format, ...) {
 	va_list args;
 	va_start(args, format);
@@ -1328,6 +1340,7 @@ int wprintf(const wchar_t *__restrict format, ...) {
 	return result;
 }
 
+// wide-oriented (POSIX)
 int wscanf(const wchar_t *__restrict, ...) { MLIBC_STUB_BODY; }
 
 int vwprintf(const wchar_t *__restrict format, __builtin_va_list args) {
@@ -1336,6 +1349,7 @@ int vwprintf(const wchar_t *__restrict format, __builtin_va_list args) {
 
 int vwscanf(const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
 
+// byte-oriented (POSIX)
 int fgetc(FILE *stream) {
 	char c;
 	auto bytes_read = fread(&c, 1, 1, stream);
@@ -1344,6 +1358,7 @@ int fgetc(FILE *stream) {
 	return c;
 }
 
+// byte-oriented (POSIX)
 char *fgets(char *__restrict buffer, int max_size, FILE *__restrict stream) {
 	auto file = static_cast<mlibc::abstract_file *>(stream);
 	frg::unique_lock lock(file->_lock);
@@ -1357,12 +1372,14 @@ int fputc_unlocked(int c, FILE *stream) {
 	return 1;
 }
 
+// byte-oriented (POSIX)
 int fputc(int c, FILE *stream) {
 	auto file = static_cast<mlibc::abstract_file *>(stream);
 	frg::unique_lock lock(file->_lock);
 	return fputc_unlocked(c, stream);
 }
 
+// byte-oriented
 int fputs_unlocked(const char *__restrict string, FILE *__restrict stream) {
 	// fwrite with a length of 0 will return 0, so we need to explicitly allow
 	// zero length strings.
@@ -1372,24 +1389,29 @@ int fputs_unlocked(const char *__restrict string, FILE *__restrict stream) {
 	return 1;
 }
 
+// byte-oriented (POSIX)
 int fputs(const char *__restrict string, FILE *__restrict stream) {
 	auto file = static_cast<mlibc::abstract_file *>(stream);
 	frg::unique_lock lock(file->_lock);
 	return fputs_unlocked(string, stream);
 }
 
+// byte-oriented
 int getc_unlocked(FILE *stream) {
 	return fgetc_unlocked(stream);
 }
 
+// byte-oriented (POSIX)
 int getc(FILE *stream) {
 	return fgetc(stream);
 }
 
+// byte-oriented
 int getchar_unlocked(void) {
 	return fgetc_unlocked(stdin);
 }
 
+// byte-oriented (POSIX)
 int getchar(void) {
 	return fgetc(stdin);
 }
@@ -1398,6 +1420,7 @@ char *gets(char *s){
 	return fgets(s, INT_MAX, stdin);
 }
 
+// byte-oriented
 int putc_unlocked(int c, FILE *stream) {
 	char d = c;
 	if(fwrite_unlocked(&d, 1, 1, stream) != 1)
@@ -1405,6 +1428,7 @@ int putc_unlocked(int c, FILE *stream) {
 	return c;
 }
 
+// byte-oriented (POSIX)
 int putc(int c, FILE *stream) {
 	auto file = static_cast<mlibc::abstract_file *>(stream);
 	frg::unique_lock lock(file->_lock);
@@ -1415,12 +1439,14 @@ int putchar_unlocked(int c) {
 	return putc_unlocked(c, stdout);
 }
 
+// byte-oriented (POSIX)
 int putchar(int c) {
 	auto file = static_cast<mlibc::abstract_file *>(stdout);
 	frg::unique_lock lock(file->_lock);
 	return putchar_unlocked(c);
 }
 
+// byte-oriented (POSIX)
 int puts(const char *string) {
 	auto file = static_cast<mlibc::abstract_file *>(stdout);
 	frg::unique_lock lock(file->_lock);
@@ -1447,9 +1473,15 @@ int puts(const char *string) {
 	return 1;
 }
 
+// wide-oriented (POSIX)
 wint_t fgetwc(FILE *) { MLIBC_STUB_BODY; }
+// wide-oriented (POSIX)
 wchar_t *fgetws(wchar_t *__restrict, int, FILE *__restrict) { MLIBC_STUB_BODY; }
+
+// wide-oriented (POSIX)
 wint_t fputwc(wchar_t, FILE *) { MLIBC_STUB_BODY; }
+
+// wide-oriented (POSIX)
 int fputws(const wchar_t *__restrict, FILE *__restrict) { MLIBC_STUB_BODY; }
 
 int fwide(FILE *stream, int mode) {
@@ -1464,18 +1496,26 @@ int fwide(FILE *stream, int mode) {
 	return std::to_underlying(file->_orientation);
 }
 
+// wide-oriented (POSIX)
 wint_t getwc(FILE *) { MLIBC_STUB_BODY; }
+// wide-oriented (POSIX)
 wint_t getwchar(void) { MLIBC_STUB_BODY; }
+
+// wide-oriented (POSIX)
 wint_t putwc(wchar_t, FILE *) { MLIBC_STUB_BODY; }
+// wide-oriented (POSIX)
 wint_t putwchar(wchar_t) { MLIBC_STUB_BODY; }
+// wide-oriented (POSIX)
 wint_t ungetwc(wint_t, FILE *) { MLIBC_STUB_BODY; }
 
+// byte-oriented (POSIX)
 size_t fread(void *buffer, size_t size, size_t count, FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	frg::unique_lock lock(file->_lock);
 	return fread_unlocked(buffer, size, count, file_base);
 }
 
+// byte-oriented (POSIX)
 size_t fwrite(const void *buffer, size_t size , size_t count, FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	frg::unique_lock lock(file->_lock);
@@ -1530,10 +1570,12 @@ void perror(const char *string) {
 
 // POSIX extensions.
 
+// byte-oriented (POSIX)
 ssize_t getline(char **line, size_t *n, FILE *stream) {
 	return getdelim(line, n, '\n', stream);
 }
 
+// byte-oriented (POSIX)
 ssize_t getdelim(char **line, size_t *n, int delim, FILE *stream) {
 	// Otherwise, we cannot store the buffer / size.
 	if(!line || !n) {
@@ -1644,6 +1686,7 @@ int ferror_unlocked(FILE *file_base) {
 	return file_base->__status_bits & __MLIBC_ERROR_BIT;
 }
 
+// byte-oriented
 int fgetc_unlocked(FILE *stream) {
 	unsigned char d;
 	if(fread_unlocked(&d, 1, 1, stream) != 1)
@@ -1651,6 +1694,7 @@ int fgetc_unlocked(FILE *stream) {
 	return (int)d;
 }
 
+// byte-oriented
 size_t fread_unlocked(void *buffer, size_t size, size_t count, FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	if(!size || !count)
@@ -1700,6 +1744,7 @@ size_t fread_unlocked(void *buffer, size_t size, size_t count, FILE *file_base) 
 	}
 }
 
+// byte-oriented
 size_t fwrite_unlocked(const void *buffer, size_t size, size_t count, FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	if(!size || !count)
@@ -1753,6 +1798,7 @@ size_t fwrite_unlocked(const void *buffer, size_t size, size_t count, FILE *file
 	}
 }
 
+// byte-oriented
 char *fgets_unlocked(char *__restrict buffer, int max_size, FILE *__restrict stream) {
 	__ensure(max_size > 0);
 	for(int i = 0; ; i++) {
