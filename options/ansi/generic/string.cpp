@@ -296,7 +296,10 @@ int wcscmp(const wchar_t *l, const wchar_t *r) {
 	return *l - *r;
 }
 
-int wcscoll(const wchar_t *, const wchar_t *) { MLIBC_STUB_BODY; }
+int wcscoll(const wchar_t *l, const wchar_t *r) {
+	// TODO: fix once we implement collation
+	return wcscmp(l, r);
+}
 
 int wcsncmp(const wchar_t *l, const wchar_t *r, size_t n) {
 	for(; n && *l == *r && *l && *r; n--, l++, r++);
