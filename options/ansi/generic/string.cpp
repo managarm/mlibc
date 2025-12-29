@@ -381,7 +381,24 @@ wchar_t *wcsstr(const wchar_t *haystack, const wchar_t *needle) {
 	return nullptr;
 }
 
-wchar_t *wcstok(wchar_t *__restrict, const wchar_t *__restrict, wchar_t **__restrict) { MLIBC_STUB_BODY; }
+wchar_t *wcstok(wchar_t *__restrict ws, const wchar_t *__restrict delim, wchar_t **__restrict ptr) {
+	if (!ws && !(ws = *ptr))
+		return NULL;
+
+	ws += wcsspn(ws, delim);
+
+	if (!*ws)
+		return *ptr = nullptr;
+
+	*ptr = ws + wcscspn(ws, delim);
+
+	if (**ptr)
+		*(*ptr)++ = 0;
+	else
+		*ptr = nullptr;
+
+	return ws;
+}
 
 wchar_t *wmemchr(const wchar_t *s, wchar_t c, size_t size) {
 	auto s_bytes = s;
