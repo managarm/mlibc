@@ -1,6 +1,9 @@
 
 #include <errno.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <bits/ensure.h>
 
@@ -167,3 +170,151 @@ int sigqueue(pid_t pid, int sig, const union sigval val) {
 	return 0;
 }
 
+int sig2str(int signum, char *str) {
+	const char *name = nullptr;
+
+	if (signum > SIGRTMIN && signum < SIGRTMAX) {
+		snprintf(str, SIG2STR_MAX, "RTMIN+%d", signum - SIGRTMIN);
+		return 0;
+	}
+
+#define CASE_FOR(x) case SIG##x: name = #x; break;
+
+	switch (signum) {
+		CASE_FOR(RTMIN)
+		CASE_FOR(RTMAX)
+
+		CASE_FOR(HUP)
+		CASE_FOR(INT)
+		CASE_FOR(QUIT)
+		CASE_FOR(ILL)
+		CASE_FOR(TRAP)
+		CASE_FOR(ABRT)
+		CASE_FOR(BUS)
+		CASE_FOR(FPE)
+		CASE_FOR(KILL)
+		CASE_FOR(USR1)
+		CASE_FOR(SEGV)
+		CASE_FOR(USR2)
+		CASE_FOR(PIPE)
+		CASE_FOR(ALRM)
+		CASE_FOR(TERM)
+#ifdef SIGSTKFLT
+		CASE_FOR(STKFLT)
+#endif
+		CASE_FOR(CHLD)
+		CASE_FOR(CONT)
+		CASE_FOR(STOP)
+		CASE_FOR(TSTP)
+		CASE_FOR(TTIN)
+		CASE_FOR(TTOU)
+		CASE_FOR(URG)
+		CASE_FOR(XCPU)
+		CASE_FOR(XFSZ)
+		CASE_FOR(VTALRM)
+		CASE_FOR(PROF)
+		CASE_FOR(WINCH)
+		CASE_FOR(POLL)
+		CASE_FOR(PWR)
+		CASE_FOR(SYS)
+		CASE_FOR(CANCEL)
+#ifdef SIGTIMER
+		CASE_FOR(TIMER)
+#endif
+
+#undef CASE_FOR
+
+		default:
+			return -1;
+	}
+
+	strlcpy(str, name, SIG2STR_MAX);
+	return 0;
+}
+
+int str2sig(const char *__restrict str, int *__restrict pnum) {
+#define CASE_FOR(x) if (!strcmp(str, #x)) { *pnum = SIG##x; return 0; }
+
+	CASE_FOR(RTMIN)
+	CASE_FOR(RTMAX)
+
+	CASE_FOR(HUP)
+	CASE_FOR(INT)
+	CASE_FOR(QUIT)
+	CASE_FOR(ILL)
+	CASE_FOR(TRAP)
+	CASE_FOR(ABRT)
+	CASE_FOR(BUS)
+	CASE_FOR(FPE)
+	CASE_FOR(KILL)
+	CASE_FOR(USR1)
+	CASE_FOR(SEGV)
+	CASE_FOR(USR2)
+	CASE_FOR(PIPE)
+	CASE_FOR(ALRM)
+	CASE_FOR(TERM)
+#ifdef SIGSTKFLT
+	CASE_FOR(STKFLT)
+#endif
+	CASE_FOR(CHLD)
+	CASE_FOR(CONT)
+	CASE_FOR(STOP)
+	CASE_FOR(TSTP)
+	CASE_FOR(TTIN)
+	CASE_FOR(TTOU)
+	CASE_FOR(URG)
+	CASE_FOR(XCPU)
+	CASE_FOR(XFSZ)
+	CASE_FOR(VTALRM)
+	CASE_FOR(PROF)
+	CASE_FOR(WINCH)
+	CASE_FOR(POLL)
+	CASE_FOR(PWR)
+	CASE_FOR(SYS)
+	CASE_FOR(CANCEL)
+#ifdef SIGTIMER
+	CASE_FOR(TIMER)
+#endif
+
+#undef CASE_FOR
+
+	if (!strncmp(str, "RTMIN+", 6)) {
+		char *endptr = nullptr;
+		errno = 0;
+		auto offset = strtol(str + 6, &endptr, 10);
+
+		if (errno || *endptr != '\0' || offset < 0 || (SIGRTMIN + offset >= SIGRTMAX))
+			return -1;
+
+		*pnum = SIGRTMIN + offset;
+		return 0;
+	} else if (!strncmp(str, "RTMAX-", 6)) {
+		char *endptr = nullptr;
+		errno = 0;
+		auto offset = strtol(str + 6, &endptr, 10);
+
+		if (errno || *endptr != '\0' || offset < 0 || (SIGRTMAX - offset <= SIGRTMIN))
+			return -1;
+
+		*pnum = SIGRTMAX - offset;
+		return 0;
+	}
+
+	return -1;
+}
+
+void psiginfo(const siginfo_t *pinfo, const char *message) {
+	psignal(pinfo->si_signo, message);
+}
+
+void psignal(int signum, const char *message) {
+	auto name = strsignal(signum);
+
+	flockfile(stderr);
+	auto save_mode = stderr->__io_mode;
+
+	fprintf(stderr, "%s%s%s\n", message ? message : "", message ? ": " : "", name);
+
+	stderr->__io_mode = save_mode;
+	funlockfile(stderr);
+}
