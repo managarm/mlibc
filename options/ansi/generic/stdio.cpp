@@ -239,6 +239,39 @@ wint_t fputwc_unlocked(wchar_t c, mlibc::abstract_file *f) {
 	return c;
 }
 
+wint_t fgetwc_unlocked(mlibc::abstract_file *f) {
+	if (!f->check_orientation(mlibc::stream_orientation::wide)) {
+		f->__status_bits |= __MLIBC_ERROR_BIT;
+		errno = EIO;
+		return WEOF;
+	}
+
+	mbstate_t state = { };
+	size_t conversion_res = 0;
+	wchar_t wc = L'\0';
+
+	do {
+		size_t read = 0;
+		char c = '\0';
+		int err = f->read(&c, 1, &read);
+		if (err) {
+			errno = err;
+			return WEOF;
+		} else if (!read) {
+			return WEOF;
+		}
+
+		conversion_res = mbrtowc(&wc, &c, 1, &state);
+		if (conversion_res == size_t(-1)) {
+			f->__status_bits |= __MLIBC_ERROR_BIT;
+			errno = EILSEQ;
+			return WEOF;
+		}
+	} while (conversion_res == size_t(-2));
+
+	return wc;
+}
+
 } // namespace
 
 struct StreamPrinter {
@@ -1567,7 +1600,12 @@ int puts(const char *string) {
 }
 
 // wide-oriented (POSIX)
-wint_t fgetwc(FILE *) { MLIBC_STUB_BODY; }
+wint_t fgetwc(FILE *stream) {
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+	frg::unique_lock lock(file->_lock);
+	return fgetwc_unlocked(file);
+}
+
 // wide-oriented (POSIX)
 wchar_t *fgetws(wchar_t *__restrict, int, FILE *__restrict) { MLIBC_STUB_BODY; }
 
@@ -1594,9 +1632,18 @@ int fwide(FILE *stream, int mode) {
 }
 
 // wide-oriented (POSIX)
-wint_t getwc(FILE *) { MLIBC_STUB_BODY; }
+wint_t getwc(FILE *stream) {
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+	frg::unique_lock lock(file->_lock);
+	return fgetwc_unlocked(file);
+}
+
 // wide-oriented (POSIX)
-wint_t getwchar(void) { MLIBC_STUB_BODY; }
+wint_t getwchar(void) {
+	auto file = static_cast<mlibc::abstract_file *>(stdout);
+	frg::unique_lock lock(file->_lock);
+	return fgetwc_unlocked(file);
+}
 
 // wide-oriented (POSIX)
 wint_t putwc(wchar_t c, FILE *f) {
