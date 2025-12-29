@@ -278,7 +278,18 @@ wchar_t *wcscat(wchar_t *__restrict dest, const wchar_t *__restrict src) {
 	return dest;
 }
 
-wchar_t *wcsncat(wchar_t *__restrict, const wchar_t *__restrict, size_t) { MLIBC_STUB_BODY; }
+wchar_t *wcsncat(wchar_t *__restrict dest, const wchar_t *__restrict src, size_t max_size) {
+	auto dest_bytes = static_cast<wchar_t *>(dest);
+	auto src_bytes = static_cast<const wchar_t *>(src);
+	dest_bytes += wcslen(dest);
+	size_t i = 0;
+	while(*src_bytes && i < max_size) {
+		*(dest_bytes++) = *(src_bytes++);
+		i++;
+	}
+	*dest_bytes = 0;
+	return dest;
+}
 
 int wcscmp(const wchar_t *l, const wchar_t *r) {
 	for(; *l == *r && *l && *r; l++, r++);
