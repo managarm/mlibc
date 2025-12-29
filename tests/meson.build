@@ -39,6 +39,7 @@ all_test_cases = [
 	'ansi/locale',
 	'ansi/asctime',
 	'ansi/wcstof',
+	'ansi/fputwc',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
