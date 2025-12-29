@@ -338,7 +338,15 @@ size_t wcscspn(const wchar_t *ws, const wchar_t *reject) {
 	return i - ws;
 }
 
-wchar_t *wcspbrk(const wchar_t *, const wchar_t *) { MLIBC_STUB_BODY; }
+wchar_t *wcspbrk(const wchar_t *ws, const wchar_t *accept) {
+	size_t n = 0;
+	while (ws[n]) {
+		if (wcschr(accept, ws[n]))
+			return const_cast<wchar_t *>(ws + n);
+		n++;
+	}
+	return nullptr;
+}
 
 wchar_t *wcsrchr(const wchar_t *s, wchar_t c) {
 	const wchar_t *p;
