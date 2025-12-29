@@ -13,7 +13,15 @@ int main(void) {
 	// ✨⛔
 	assert(mblen("\xE2\x9C\xA8\xE2\x9B\x94", 10) == 3);
 
+	// ✨⛔
+	assert(mblen("\xE2\x9C\xA8\xE2\x9B\x94", 3) == 3);
+
 	// truncated ✨
 	assert(mblen("\xE2\x9C", 10) == -1);
 	assert(errno == EILSEQ);
+
+	assert(mblen("", 1) == 0);
+	assert(mblen("\0a", 2) == 0);
+
+	return 0;
 }
