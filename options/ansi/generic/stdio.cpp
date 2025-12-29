@@ -297,6 +297,31 @@ wint_t ungetwc_unlocked(wint_t c, mlibc::abstract_file *f) {
 	return c;
 }
 
+int fputws_unlocked(const wchar_t *__restrict ws, mlibc::abstract_file *f) {
+	if (!f->check_orientation(mlibc::stream_orientation::wide)) {
+		f->__status_bits |= __MLIBC_ERROR_BIT;
+		errno = EIO;
+		return -1;
+	}
+
+	char buf[512];
+	auto len = wcsrtombs(buf, (const wchar_t **__restrict)&ws, sizeof(buf), &f->_mbstate);
+	if (len == size_t(-1))
+		return -1;
+
+	while (ws && len) {
+		auto written = fwrite_unlocked_ignore_orientation(buf, 1, len, f);
+		if (written != len)
+			return 1;
+
+		len = wcsrtombs(buf, (const wchar_t **__restrict)&ws, sizeof(buf), &f->_mbstate);
+		if (len == size_t(-1))
+			return -1;
+	}
+
+	return 1;
+}
+
 } // namespace
 
 struct StreamPrinter {
@@ -1664,7 +1689,11 @@ wint_t fputwc(wchar_t c, FILE *stream) {
 }
 
 // wide-oriented (POSIX)
-int fputws(const wchar_t *__restrict, FILE *__restrict) { MLIBC_STUB_BODY; }
+int fputws(const wchar_t *__restrict ws, FILE *__restrict file_base) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	frg::unique_lock lock(file->_lock);
+	return fputws_unlocked(ws, file);
+}
 
 int fwide(FILE *stream, int mode) {
 	auto file = static_cast<mlibc::abstract_file *>(stream);
