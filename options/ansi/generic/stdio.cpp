@@ -1296,19 +1296,44 @@ int vsscanf(const char *__restrict buffer, const char *__restrict format, __buil
 	return result;
 }
 
-int fwprintf(FILE *__restrict, const wchar_t *__restrict, ...) { MLIBC_STUB_BODY; }
+int fwprintf(FILE *__restrict stream, const wchar_t *__restrict format, ...) {
+	va_list args;
+	va_start(args, format);
+	int result = vfwprintf(stream, format, args);
+	va_end(args);
+	return result;
+}
+
 int fwscanf(FILE *__restrict, const wchar_t *__restrict, ...) { MLIBC_STUB_BODY; }
 int vfwprintf(FILE *__restrict, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
 int vfwscanf(FILE *__restrict, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
 
-int swprintf(wchar_t *__restrict, size_t, const wchar_t *__restrict, ...) { MLIBC_STUB_BODY; }
+int swprintf(wchar_t *__restrict buffer, size_t n, const wchar_t *__restrict format, ...) {
+	va_list args;
+	va_start(args, format);
+	int result = vswprintf(buffer, n, format, args);
+	va_end(args);
+	return result;
+}
+
 int swscanf(const wchar_t *__restrict, const wchar_t *__restrict, ...) { MLIBC_STUB_BODY; }
 int vswprintf(wchar_t *__restrict, size_t, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
 int vswscanf(const wchar_t *__restrict, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
 
-int wprintf(const wchar_t *__restrict, ...) { MLIBC_STUB_BODY; }
+int wprintf(const wchar_t *__restrict format, ...) {
+	va_list args;
+	va_start(args, format);
+	int result = vfwprintf(stdout, format, args);
+	va_end(args);
+	return result;
+}
+
 int wscanf(const wchar_t *__restrict, ...) { MLIBC_STUB_BODY; }
-int vwprintf(const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
+
+int vwprintf(const wchar_t *__restrict format, __builtin_va_list args) {
+	return vfwprintf(stdout, format, args);
+}
+
 int vwscanf(const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
 
 int fgetc(FILE *stream) {
