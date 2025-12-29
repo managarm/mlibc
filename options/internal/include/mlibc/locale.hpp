@@ -47,6 +47,12 @@ struct category_item {
 		return std::get<frg::string_view>(value);
 	}
 
+	frg::basic_string_view<wchar_t> asWideString() const {
+		if (std::holds_alternative<std::monostate>(value))
+			return {L""};
+		return std::get<frg::basic_string_view<wchar_t>>(value);
+	}
+
 	uint32_t asUint32() const {
 		return std::get<uint32_t>(value);
 	}
