@@ -14,7 +14,12 @@ struct utf8_charcode {
 		decode_state()
 		: _progress{0}, _cpoint{0} { }
 
+		decode_state(int progress, codepoint cpoint)
+		: _progress{progress}, _cpoint{cpoint} { }
+
+		// Zero means we are not in the middle of parsing a codepoint.
 		auto progress() { return _progress; }
+		// Unicode codepoint number; only valid if progress == 0, otherwise opaque value.
 		auto cpoint() { return _cpoint; }
 
 		charcode_error operator() (code_seq<const char> &seq) {
@@ -41,11 +46,11 @@ struct utf8_charcode {
 				}
 			}else{
 				if((uc & 0b1100'0000) == 0b1000'0000) {
-                    _cpoint = (_cpoint << 6) | (uc & 0x3F);
-                    --_progress;
-                } else {
-                    return charcode_error::illegal_input;
-                }
+					_cpoint = (_cpoint << 6) | (uc & 0x3F);
+					--_progress;
+				} else {
+					return charcode_error::illegal_input;
+				}
 			}
 			++seq.it;
 			return charcode_error::null;
@@ -110,10 +115,8 @@ struct polymorphic_charcode_adapter : polymorphic_charcode {
 
 	charcode_error decode(code_seq<const char> &nseq, code_seq<codepoint> &wseq,
 			__mlibc_mbstate &st) override {
-		__ensure(!st.__progress); // TODO: Update st with ds.progress() and ds.cpoint().
-
 		code_seq<const char> decode_nseq = nseq;
-		typename G::decode_state ds;
+		typename G::decode_state ds(st.__progress, st.__cpoint);
 
 		while(decode_nseq && wseq) {
 			// Consume the next code unit.
@@ -126,50 +129,48 @@ struct polymorphic_charcode_adapter : polymorphic_charcode {
 				nseq.it = decode_nseq.it;
 				if(!ds.cpoint()) // Stop on null characters.
 					return charcode_error::null;
-				*wseq.it = ds.cpoint();
-				++wseq.it;
+				*wseq.it++ = ds.cpoint();
 			}
 		}
 
-		if(ds.progress())
+		if(ds.progress()) {
+			st.__cpoint = ds.cpoint();
+			st.__progress = ds.progress();
 			return charcode_error::input_underflow;
-		return charcode_error::null;
+		}
+		return charcode_error::input_exhausted;
 	}
 
 	charcode_error decode_wtranscode(code_seq<const char> &nseq, code_seq<wchar_t> &wseq,
 			__mlibc_mbstate &st) override {
-		__ensure(!st.__progress); // TODO: Update st with ds.progress() and ds.cpoint().
+		typename G::decode_state ds(st.__progress, st.__cpoint);
 
-		code_seq<const char> decode_nseq = nseq;
-		typename G::decode_state ds;
-
-		while(decode_nseq && wseq) {
+		while(nseq && wseq) {
 			// Consume the next code unit.
-			if(auto e = ds(decode_nseq); e != charcode_error::null)
+			if(auto e = ds(nseq); e != charcode_error::null)
 				return e;
 
 			// Produce a new code point.
 			if(!ds.progress()) {
-				nseq.it = decode_nseq.it;
 				// "Commit" consumed code units (as there was no decode error).
 				if(!ds.cpoint()) // Stop on null characters.
 					return charcode_error::null;
-				*wseq.it = ds.cpoint();
-				++wseq.it;
+				*wseq.it++ = ds.cpoint();
 			}
 		}
 
+		st.__cpoint = ds.cpoint();
+		st.__progress = ds.progress();
 		if(ds.progress())
 			return charcode_error::input_underflow;
-		return charcode_error::null;
+
+		return charcode_error::input_exhausted;
 	}
 
 	charcode_error decode_wtranscode_length(code_seq<const char> &nseq, size_t *n,
 			__mlibc_mbstate &st) override {
-		__ensure(!st.__progress); // TODO: Update st with ds.progress() and ds.cpoint().
-
 		code_seq<const char> decode_nseq = nseq;
-		typename G::decode_state ds;
+		typename G::decode_state ds(st.__progress, st.__cpoint);
 
 		*n = 0;
 		while(decode_nseq) {
@@ -188,7 +189,7 @@ struct polymorphic_charcode_adapter : polymorphic_charcode {
 
 		if(ds.progress())
 			return charcode_error::input_underflow;
-		return charcode_error::null;
+		return charcode_error::input_exhausted;
 	}
 
 	charcode_error encode_wtranscode(code_seq<char> &nseq, code_seq<const wchar_t> &wseq,
