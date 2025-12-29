@@ -54,8 +54,13 @@ size_t mbrlen(const char *__restrict mbs, size_t mb_limit, mbstate_t *__restrict
 
 	mlibc::code_seq<const char> nseq{mbs, mbs + mb_limit};
 	mlibc::code_seq<wchar_t> wseq{&wc, &wc + 1};
-	if(auto e = cc->decode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null)
-		__ensure(!"decode_wtranscode() errors are not handled");
+	if(auto e = cc->decode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
+		if(e == mlibc::charcode_error::input_underflow)
+			return static_cast<size_t>(-2);
+		__ensure(e == mlibc::charcode_error::illegal_input);
+		errno = EILSEQ;
+		return static_cast<size_t>(-1);
+	}
 	return nseq.it - mbs;
 }
 
@@ -104,8 +109,9 @@ size_t wcrtomb(char *__restrict mbs, wchar_t wc, mbstate_t *__restrict stp) {
 	mlibc::code_seq<const wchar_t> wseq{&wc, &wc + 1};
 	mlibc::code_seq<char> nseq{mbs, mbs + MB_LEN_MAX};
 	if(auto e = cc->encode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
-		__ensure(!"encode_wtranscode() errors are not handled");
-		__builtin_unreachable();
+		__ensure(e == mlibc::charcode_error::illegal_input);
+		errno = EILSEQ;
+		return static_cast<size_t>(-1);
 	}else{
 		size_t n = nseq.it - mbs;
 		if(!n) // Null-terminate resulting wide string.
@@ -120,21 +126,25 @@ size_t mbsrtowcs(wchar_t *__restrict wcs, const char **__restrict mbsp, size_t w
 	auto cc = mlibc::current_charcode();
 	__mlibc_mbstate st = __MLIBC_MBSTATE_INITIALIZER;
 	mlibc::code_seq<const char> nseq{*mbsp, nullptr};
-	mlibc::code_seq<wchar_t> wseq{wcs, wcs + wc_limit};
+	mlibc::code_seq<wchar_t> wseq{wcs, wcs ? wcs + wc_limit : nullptr};
 
 	if(!stp)
 		stp = &mbsrtowcs_state;
 
 	if(!wcs) {
 		size_t size;
-		if(auto e = cc->decode_wtranscode_length(nseq, &size, st); e != mlibc::charcode_error::null)
-			__ensure(!"decode_wtranscode() errors are not handled");
+		if(auto e = cc->decode_wtranscode_length(nseq, &size, st); e != mlibc::charcode_error::null) {
+			__ensure(e == mlibc::charcode_error::illegal_input || e == mlibc::charcode_error::input_underflow);
+			errno = EILSEQ;
+			return static_cast<size_t>(-1);
+		}
 		return size;
 	}
 
 	if(auto e = cc->decode_wtranscode(nseq, wseq, st); e != mlibc::charcode_error::null) {
-		__ensure(!"decode_wtranscode() errors are not handled");
-		__builtin_unreachable();
+		__ensure(e == mlibc::charcode_error::illegal_input || e == mlibc::charcode_error::input_underflow);
+		errno = EILSEQ;
+		return static_cast<size_t>(-1);
 	}else{
 		size_t n = wseq.it - wcs;
 		if(n < wc_limit) // Null-terminate resulting wide string.
@@ -150,21 +160,25 @@ size_t mbsnrtowcs(wchar_t *__restrict wcs, const char **__restrict mbsp, size_t 
 	auto cc = mlibc::current_charcode();
 	__mlibc_mbstate st = __MLIBC_MBSTATE_INITIALIZER;
 	mlibc::code_seq<const char> nseq{*mbsp, (*mbsp) + mb_limit};
-	mlibc::code_seq<wchar_t> wseq{wcs, wcs + wc_limit};
+	mlibc::code_seq<wchar_t> wseq{wcs, wcs ? wcs + wc_limit : nullptr};
 
 	if(!stp)
 		stp = &mbsrtowcs_state;
 
 	if(!wcs) {
 		size_t size;
-		if(auto e = cc->decode_wtranscode_length(nseq, &size, st); e != mlibc::charcode_error::null)
-			__ensure(!"decode_wtranscode() errors are not handled");
+		if(auto e = cc->decode_wtranscode_length(nseq, &size, st); e != mlibc::charcode_error::null && e != mlibc::charcode_error::input_underflow) {
+			__ensure(e == mlibc::charcode_error::illegal_input);
+			errno = EILSEQ;
+			return static_cast<size_t>(-1);
+		}
 		return size;
 	}
 
-	if(auto e = cc->decode_wtranscode(nseq, wseq, st); e != mlibc::charcode_error::null) {
-		__ensure(!"decode_wtranscode() errors are not handled");
-		__builtin_unreachable();
+	if(auto e = cc->decode_wtranscode(nseq, wseq, st); e != mlibc::charcode_error::null && e != mlibc::charcode_error::input_underflow) {
+		__ensure(e == mlibc::charcode_error::illegal_input);
+		errno = EILSEQ;
+		return static_cast<size_t>(-1);
 	}else{
 		size_t n = wseq.it - wcs;
 		if(n < wc_limit) // Null-terminate resulting wide string.
@@ -184,16 +198,20 @@ size_t wcsrtombs(char *__restrict mbs, const wchar_t **__restrict wcsp, size_t m
 
 	if(!mbs) {
 		size_t size;
-		if(auto e = cc->encode_wtranscode_length(wseq, &size, *stp); e != mlibc::charcode_error::null)
-			__ensure(!"decode_wtranscode() errors are not handled");
+		if(auto e = cc->encode_wtranscode_length(wseq, &size, *stp); e != mlibc::charcode_error::null) {
+			__ensure(e == mlibc::charcode_error::illegal_input || e == mlibc::charcode_error::input_underflow);
+			errno = EILSEQ;
+			return static_cast<size_t>(-1);
+		}
 		return size;
 	}
 
 	mlibc::code_seq<char> nseq{mbs, mbs + mb_limit};
 
 	if(auto e = cc->encode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
-		__ensure(!"encode_wtranscode() errors are not handled");
-		__builtin_unreachable();
+		__ensure(e == mlibc::charcode_error::illegal_input || e == mlibc::charcode_error::input_underflow);
+		errno = EILSEQ;
+		return static_cast<size_t>(-1);
 	}else{
 		*wcsp = wseq.it;
 		size_t n = nseq.it - mbs;
@@ -206,7 +224,7 @@ size_t wcsrtombs(char *__restrict mbs, const wchar_t **__restrict wcsp, size_t m
 size_t wcsnrtombs(char *__restrict mbs, const wchar_t **__restrict wcsp, size_t wc_limit, size_t mb_limit, mbstate_t *__restrict stp) {
 	__ensure(wcsp && "wcsrtombs() with null input");
 	auto cc = mlibc::current_charcode();
-	mlibc::code_seq<char> nseq{mbs, mbs + mb_limit};
+	mlibc::code_seq<char> nseq{mbs, mbs ? mbs + mb_limit : nullptr};
 	mlibc::code_seq<const wchar_t> wseq{*wcsp, (*wcsp) + wc_limit};
 
 	if(!stp)
@@ -214,14 +232,18 @@ size_t wcsnrtombs(char *__restrict mbs, const wchar_t **__restrict wcsp, size_t 
 
 	if(!mbs) {
 		size_t size;
-		if(auto e = cc->encode_wtranscode_length(wseq, &size, *stp); e != mlibc::charcode_error::null)
-			__ensure(!"decode_wtranscode() errors are not handled");
+		if(auto e = cc->encode_wtranscode_length(wseq, &size, *stp); e != mlibc::charcode_error::null && e != mlibc::charcode_error::input_underflow) {
+			__ensure(e == mlibc::charcode_error::illegal_input);
+			errno = EILSEQ;
+			return static_cast<size_t>(-1);
+		}
 		return size;
 	}
 
-	if(auto e = cc->encode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null) {
-		__ensure(!"encode_wtranscode() errors are not handled");
-		__builtin_unreachable();
+	if(auto e = cc->encode_wtranscode(nseq, wseq, *stp); e != mlibc::charcode_error::null && e != mlibc::charcode_error::input_underflow) {
+		__ensure(e == mlibc::charcode_error::illegal_input);
+		errno = EILSEQ;
+		return static_cast<size_t>(-1);
 	}else{
 		*wcsp = wseq.it;
 		size_t n = nseq.it - mbs;

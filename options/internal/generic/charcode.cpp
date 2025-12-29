@@ -242,7 +242,7 @@ struct polymorphic_charcode_adapter : polymorphic_charcode {
 				return e;
 			}
 
-			++(*n);
+			*n += encode_nseq.it - temp;
 			++wseq.it;
 		}
 

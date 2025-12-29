@@ -58,6 +58,9 @@ A convenience script is provided to download and install the Linux kernel header
 ```
 ./scripts/get-linux-headers.sh
 ```
+
+You will also need `pyexpect` and the following locales installed: `de_DE de_DE.utf8 ru_RU.utf8 en_US.utf8 C.utf8`
+
 Then run from the project root:
 ```
 meson setup -Dbuild_tests=true -Dlinux_kernel_headers=./linux-headers build
