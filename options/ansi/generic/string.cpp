@@ -306,7 +306,17 @@ int wcsncmp(const wchar_t *l, const wchar_t *r, size_t n) {
 	return n ? (*l < *r ? -1 : *l > *r) : 0;
 }
 
-size_t wcsxfrm(wchar_t *__restrict, const wchar_t *__restrict, size_t) { MLIBC_STUB_BODY; }
+size_t wcsxfrm(wchar_t *__restrict dest, const wchar_t *__restrict src, size_t n) {
+	// TODO: fix once we implement collation
+	// NOTE: This might not work for non ANSI charsets.
+	size_t l = wcslen(src);
+
+	// man page: If the value returned is n or more, the contents of dest are indeterminate.
+	if(n > l)
+		wcsncpy(dest, src, n);
+
+	return l;
+}
 
 int wmemcmp(const wchar_t *a, const wchar_t *b, size_t size) {
 	for(size_t i = 0; i < size; i++) {
