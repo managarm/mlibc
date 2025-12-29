@@ -631,6 +631,10 @@ int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int 
 	return menix_syscall(SYSCALL_FCHOWNAT, dirfd, (size_t)pathname, owner, group, flags).error;
 }
 
+int sys_fchown(int fd, uid_t owner, gid_t group) {
+	return sys_fchownat(fd, "", owner, group, AT_EMPTY_PATH);
+}
+
 int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
 	return menix_syscall(SYSCALL_SIGALTSTACK, (size_t)ss, (size_t)oss).error;
 }

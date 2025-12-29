@@ -505,35 +505,77 @@ char *strerror(int e) {
 	case EXDEV: s = "Invalid cross-device link (EXDEV)"; break;
 	case ENODATA: s = "No data available (ENODATA)"; break;
 	case ETIME: s = "Timer expired (ETIME)"; break;
+#ifdef ENOKEY
 	case ENOKEY: s = "Required key not available (ENOKEY)"; break;
+#endif
 	case ESHUTDOWN: s = "Cannot send after transport endpoint shutdown (ESHUTDOWN)"; break;
 	case EHOSTDOWN: s = "Host is down (EHOSTDOWN)"; break;
+#ifdef EBADFD
 	case EBADFD: s = "File descriptor in bad state (EBADFD)"; break;
+#endif
+#ifdef ENOMEDIUM
 	case ENOMEDIUM: s = "No medium found (ENOMEDIUM)"; break;
+#endif
 	case ENOTBLK: s = "Block device required (ENOTBLK)"; break;
+#ifdef ENONET
 	case ENONET: s = "Machine is not on the network (ENONET)"; break;
+#endif
 	case EPFNOSUPPORT: s = "Protocol family not supported (EPFNOSUPPORT)"; break;
 	case ESOCKTNOSUPPORT: s = "Socket type not supported (ESOCKTNOSUPPORT)"; break;
+#ifdef ESTRPIPE
 	case ESTRPIPE: s = "Streams pipe error (ESTRPIPE)"; break;
+#endif
+#ifdef EREMOTEIO
 	case EREMOTEIO: s = "Remote I/O error (EREMOTEIO)"; break;
+#endif
+#ifdef ERFKILL
 	case ERFKILL: s = "Operation not possible due to RF-kill (ERFKILL)"; break;
+#endif
+#ifdef EBADR
 	case EBADR: s = "Invalid request descriptor (EBADR)"; break;
+#endif
+#ifdef EUNATCH
 	case EUNATCH: s = "Protocol driver not attached (EUNATCH)"; break;
+#endif
+#ifdef EMEDIUMTYPE
 	case EMEDIUMTYPE: s = "Wrong medium type (EMEDIUMTYPE)"; break;
+#endif
 	case EREMOTE: s = "Object is remote (EREMOTE)"; break;
+#ifdef EKEYREJECTED
 	case EKEYREJECTED: s = "Key was rejected by service (EKEYREJECTED)"; break;
+#endif
+#ifdef EUCLEAN
 	case EUCLEAN: s = "Structure needs cleaning (EUCLEAN)"; break;
+#endif
+#ifdef EBADSLT
 	case EBADSLT: s = "Invalid slot (EBADSLT)"; break;
+#endif
+#ifdef ENOANO
 	case ENOANO: s = "No anode (ENOANO)"; break;
+#endif
+#ifdef ENOCSI
 	case ENOCSI: s = "No CSI structure available (ENOCSI)"; break;
+#endif
 	case ENOSTR: s = "Device not a stream (ENOSTR)"; break;
 	case ETOOMANYREFS: s = "Too many references: cannot splice (ETOOMANYREFS)"; break;
+#ifdef ENOPKG
 	case ENOPKG: s = "Package not installed (ENOPKG)"; break;
+#endif
+#ifdef EKEYREVOKED
 	case EKEYREVOKED: s = "Key has been revoked (EKEYREVOKED)"; break;
+#endif
+#ifdef EXFULL
 	case EXFULL: s = "Exchange full (EXFULL)"; break;
+#endif
+#ifdef ELNRNG
 	case ELNRNG: s = "Link number out of range (ELNRNG)"; break;
+#endif
+#ifdef ENOTUNIQ
 	case ENOTUNIQ: s = "Name not unique on network (ENOTUNIQ)"; break;
+#endif
+#ifdef ERESTART
 	case ERESTART: s = "Interrupted system call should be restarted (ERESTART)"; break;
+#endif
 	case EUSERS: s = "Too many users (EUSERS)"; break;
 
 #ifdef EIEIO

@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include <float.h>
 #include <math.h>
 //#include "libc.h"
