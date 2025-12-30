@@ -24,6 +24,7 @@ GlobalConfig::GlobalConfig() {
 	debugMalloc = envEnabled("MLIBC_DEBUG_MALLOC");
 	debugPrintf = envEnabled("MLIBC_DEBUG_PRINTF");
 	debugLocale = envEnabled("MLIBC_DEBUG_LOCALE");
+	debugPthreadTrace = envEnabled("MLIBC_DEBUG_PTHREAD_TRACE");
 }
 
 } // namespace mlibc

@@ -9,6 +9,7 @@ struct GlobalConfig {
 	bool debugMalloc;
 	bool debugPrintf;
 	bool debugLocale;
+	bool debugPthreadTrace;
 };
 
 inline const GlobalConfig &globalConfig() {
