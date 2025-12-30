@@ -1632,7 +1632,29 @@ wint_t fgetwc(FILE *stream) {
 }
 
 // wide-oriented (POSIX)
-wchar_t *fgetws(wchar_t *__restrict, int, FILE *__restrict) { MLIBC_STUB_BODY; }
+wchar_t *fgetws(wchar_t *__restrict ws, int n, FILE *__restrict stream) {
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+	frg::unique_lock lock(file->_lock);
+
+	if (!n)
+		return ws;
+
+	for(int i = 0; i < (n - 1); i++) {
+		wint_t c = fgetwc_unlocked(file);
+		if (c == WEOF)
+			break;
+		*ws++ = c;
+		if (c == L'\n')
+			break;
+	}
+
+	*ws = 0;
+
+	if (file->__status_bits & __MLIBC_ERROR_BIT)
+		return nullptr;
+
+	return ws;
+}
 
 // wide-oriented (POSIX)
 wint_t fputwc(wchar_t c, FILE *stream) {
