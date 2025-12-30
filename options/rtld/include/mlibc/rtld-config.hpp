@@ -5,6 +5,8 @@ namespace mlibc {
 
 struct RtldConfig {
 	bool secureRequired;
+	bool debug;
+	bool debugVerbose;
 };
 
 }
@@ -22,6 +24,6 @@ inline const RtldConfig &rtldConfig() {
 }
 
 }
-#endif
+#endif // MLIBC_BUILDING_RTLD
 
 #endif // MLIBC_RTLD_CONFIG
