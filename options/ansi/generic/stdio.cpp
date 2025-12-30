@@ -21,6 +21,7 @@
 #include <mlibc/locale.hpp>
 #include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/stdlib.hpp>
+#include <mlibc/global-config.hpp>
 #include <frg/mutex.hpp>
 #include <frg/expected.hpp>
 #include <frg/printf.hpp>
@@ -1194,7 +1195,8 @@ int vfprintf(FILE *__restrict stream, const char *__restrict format, __builtin_v
 	auto file = static_cast<mlibc::abstract_file *>(stream);
 	frg::unique_lock lock(file->_lock);
 	StreamPrinter p{stream};
-//	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
+	if (mlibc::globalConfig().debugPrintf)
+		mlibc::infoLogger() << "vfprintf(\"" << format << "\")" << frg::endlog;
 	auto res = frg::printf_format<NL_ARGMAX>(PrintfAgent{&p, &vs}, format, &vs);
 	if (!res) {
 		errno = EINVAL;
@@ -1249,7 +1251,9 @@ int vsnprintf(char *__restrict buffer, size_t max_size,
 	vs.arg_list = arg_list;
 	va_copy(vs.args, args);
 	LimitedPrinter p{buffer, max_size ? max_size - 1 : 0};
-//	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
+	if (mlibc::globalConfig().debugPrintf)
+		mlibc::infoLogger() << "vsnprintf(\"" << format << "\")" << frg::endlog;
+
 	auto res = frg::printf_format<NL_ARGMAX>(PrintfAgent{&p, &vs}, format, &vs);
 	if (!res) {
 		errno = EINVAL;
@@ -1266,7 +1270,9 @@ int vsprintf(char *__restrict buffer, const char *__restrict format, __builtin_v
 	vs.arg_list = arg_list;
 	va_copy(vs.args, args);
 	BufferPrinter p(buffer);
-//	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
+
+	if (mlibc::globalConfig().debugPrintf)
+		mlibc::infoLogger() << "vsprintf(\"" << format << "\")" << frg::endlog;
 	auto res = frg::printf_format<NL_ARGMAX>(PrintfAgent{&p, &vs}, format, &vs);
 	if (!res) {
 		errno = EINVAL;
@@ -1568,7 +1574,8 @@ int vasprintf(char **out, const char *format, __builtin_va_list args) {
 	vs.arg_list = arg_list;
 	va_copy(vs.args, args);
 	ResizePrinter p;
-//	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
+	if (mlibc::globalConfig().debugPrintf)
+		mlibc::infoLogger() << "vasprintf(\"" << format << "\")" << frg::endlog;
 	auto res = frg::printf_format<NL_ARGMAX>(PrintfAgent{&p, &vs}, format, &vs);
 	if (!res) {
 		errno = EINVAL;

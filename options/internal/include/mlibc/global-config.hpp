@@ -5,8 +5,9 @@ namespace mlibc {
 
 struct GlobalConfig {
 	GlobalConfig();
-	
+
 	bool debugMalloc;
+	bool debugPrintf;
 };
 
 inline const GlobalConfig &globalConfig() {
