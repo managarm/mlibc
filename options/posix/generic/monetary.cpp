@@ -12,7 +12,7 @@ namespace {
 #define EMIT(...) if (!sink.append(__VA_ARGS__)) { errno = E2BIG; return -1; }
 
 struct BufferSink {
-	using value_type = char;
+	using char_type = char;
 
 	char *__restrict buffer;
 	size_t maxsize;
