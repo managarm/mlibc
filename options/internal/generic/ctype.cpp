@@ -43,4 +43,12 @@ int tolower_l(int nc, localeinfo *loc) {
 	return mlibc::current_charset()->to_lower(cp, loc);
 }
 
+int iswascii(int nc) {
+	auto cc = mlibc::platform_wide_charcode();
+	mlibc::codepoint cp;
+	if(auto e = cc->promote(nc, cp); e != mlibc::charcode_error::null)
+		return 0;
+	return cp <= 0x7F;
+}
+
 } // namespace mlibc
