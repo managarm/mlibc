@@ -11,8 +11,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-constexpr bool debugLocale = false;
-
 #pragma mark - locale-archive format description
 
 namespace LocaleArchive {

@@ -8,6 +8,7 @@ struct GlobalConfig {
 
 	bool debugMalloc;
 	bool debugPrintf;
+	bool debugLocale;
 };
 
 inline const GlobalConfig &globalConfig() {

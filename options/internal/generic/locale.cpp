@@ -7,6 +7,7 @@
 #include <mlibc-config.h>
 #include <mlibc/ctype.hpp>
 #include <mlibc/file-window.hpp>
+#include <mlibc/global-config.hpp>
 #include <mlibc/locale-archive-parsing.hpp>
 #include <mlibc/locale.hpp>
 #include <stdlib.h>
@@ -249,7 +250,7 @@ frg::vector<frg::string<MemoryAllocator>, MemoryAllocator> buildLocaleList(Decom
 	// lang
 	ret.push_back(frg::string<MemoryAllocator>{*lang, getAllocator()});
 
-	if (debugLocale) {
+	if (mlibc::globalConfig().debugLocale) {
 		mlibc::infoLogger() << "mlibc: locale name list for '" << ret[0] << "':" << frg::endlog;
 		for (auto e : ret)
 			mlibc::infoLogger() << frg::fmt("\t'{}'", e) << frg::endlog;
@@ -503,7 +504,7 @@ bool findLocaleArchiveRecord(int category, frg::string_view name, mlibc::localei
 
 	auto recordOff = findLocaleRecord(name);
 	if (!recordOff) {
-		if (debugLocale)
+		if (mlibc::globalConfig().debugLocale)
 			mlibc::infoLogger() << "mlibc: Locale '" << name
 				<< "' not found in locale database" << frg::endlog;
 		return false;
@@ -711,7 +712,7 @@ int loadLocale(int category_mask, frg::string_view name, localeinfo **base) {
 	}
 
 	if (error) {
-		if (debugLocale)
+		if (mlibc::globalConfig().debugLocale)
 			mlibc::infoLogger() << "mlibc: Failed to load locale '" << (name.size() ? name : "(null)")
 				<< "' for category mask 0x" << frg::hex_fmt{category_mask} << frg::endlog;
 
