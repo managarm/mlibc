@@ -45,6 +45,7 @@ all_test_cases = [
 	'ansi/fgetws',
 	'ansi/swscanf',
 	'ansi/fwscanf',
+	'ansi/swprintf',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
