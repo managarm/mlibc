@@ -26,6 +26,7 @@ GlobalConfig::GlobalConfig() {
 	debugLocale = envEnabled("MLIBC_DEBUG_LOCALE");
 	debugPthreadTrace = envEnabled("MLIBC_DEBUG_PTHREAD_TRACE");
 	debugPathResolution = envEnabled("MLIBC_DEBUG_PATH_RESOLUTION");
+	debugMonetaryLengths = envEnabled("MLIBC_DEBUG_MONETARY_LENGTHS");
 }
 
 } // namespace mlibc

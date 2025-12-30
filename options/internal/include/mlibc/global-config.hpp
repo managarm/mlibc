@@ -11,6 +11,7 @@ struct GlobalConfig {
 	bool debugLocale;
 	bool debugPthreadTrace;
 	bool debugPathResolution;
+	bool debugMonetaryLengths;
 };
 
 inline const GlobalConfig &globalConfig() {
