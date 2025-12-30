@@ -10,6 +10,7 @@ struct GlobalConfig {
 	bool debugPrintf;
 	bool debugLocale;
 	bool debugPthreadTrace;
+	bool debugPathResolution;
 };
 
 inline const GlobalConfig &globalConfig() {

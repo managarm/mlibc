@@ -18,10 +18,7 @@
 #include <mlibc/strtofp.hpp>
 #include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/rtld-config.hpp>
-
-namespace {
-	constexpr bool debugPathResolution = false;
-} // namespace
+#include <mlibc/global-config.hpp>
 
 // Borrowed from musl
 static uint32_t init[] = {
@@ -233,7 +230,7 @@ char *mkdtemp(char *pattern) {
 }
 
 char *realpath(const char *path, char *out) {
-	if(debugPathResolution)
+	if(mlibc::globalConfig().debugPathResolution)
 		mlibc::infoLogger() << "mlibc realpath(): Called on '" << path << "'" << frg::endlog;
 	frg::string_view path_view{path};
 
@@ -280,7 +277,7 @@ char *realpath(const char *path, char *out) {
 	size_t ls = 0;
 
 	auto process_segment = [&] (frg::string_view s_view) -> int {
-		if(debugPathResolution)
+		if(mlibc::globalConfig().debugPathResolution)
 			mlibc::infoLogger() << "mlibc realpath(): resolv is '" << resolv.data() << "'"
 					<< ", segment is " << s_view.data()
 					<< ", size: " << s_view.size() << frg::endlog;
@@ -311,7 +308,7 @@ char *realpath(const char *path, char *out) {
 			MLIBC_MISSING_SYSDEP();
 			return ENOSYS;
 		}
-		if(debugPathResolution)
+		if(mlibc::globalConfig().debugPathResolution)
 			mlibc::infoLogger() << "mlibc realpath(): stat()ing '"
 					<< resolv.data() << "'" << frg::endlog;
 		struct stat st;
@@ -320,7 +317,7 @@ char *realpath(const char *path, char *out) {
 			return e;
 
 		if(S_ISLNK(st.st_mode)) {
-			if(debugPathResolution) {
+			if(mlibc::globalConfig().debugPathResolution) {
 				mlibc::infoLogger() << "mlibc realpath(): Encountered symlink '"
 					<< resolv.data() << "'" << frg::endlog;
 			}
@@ -336,7 +333,7 @@ char *realpath(const char *path, char *out) {
 			if (int e = mlibc::sys_readlink(resolv.data(), path, 512, &sz); e)
 				return e;
 
-			if(debugPathResolution) {
+			if(mlibc::globalConfig().debugPathResolution) {
 				mlibc::infoLogger() << "mlibc realpath(): Symlink resolves to '"
 					<< frg::string_view{path, static_cast<size_t>(sz)} << "'" << frg::endlog;
 			}
@@ -352,7 +349,7 @@ char *realpath(const char *path, char *out) {
 				strncpy(resolv.data(), path, sz);
 				resolv.data()[sz] = 0;
 
-				if(debugPathResolution) {
+				if(mlibc::globalConfig().debugPathResolution) {
 					mlibc::infoLogger() << "mlibc realpath(): Symlink is absolute, resolv: '"
 						<< resolv.data() << "'" << frg::endlog;
 				}
@@ -369,7 +366,7 @@ char *realpath(const char *path, char *out) {
 
 				ls = 0;
 
-				if(debugPathResolution) {
+				if(mlibc::globalConfig().debugPathResolution) {
 					mlibc::infoLogger() << "mlibc realpath(): Symlink is relative, resolv: '"
 						<< resolv.data() << "' lnk: '"
 						<< frg::string_view{lnk.data(), lnk.size()} << "'" << frg::endlog;
@@ -426,7 +423,7 @@ char *realpath(const char *path, char *out) {
 		resolv.push_back(0);
 	}
 
-	if(debugPathResolution)
+	if(mlibc::globalConfig().debugPathResolution)
 		mlibc::infoLogger() << "mlibc realpath(): Returns '" << resolv.data() << "'" << frg::endlog;
 
 	if(resolv.size() > PATH_MAX) {
