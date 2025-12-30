@@ -1834,7 +1834,24 @@ int fwscanf(FILE *__restrict stream, const wchar_t *__restrict format, ...) {
 }
 
 // wide-oriented (POSIX)
-int vfwprintf(FILE *__restrict, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
+int vfwprintf(FILE *__restrict stream, const wchar_t *__restrict format, __builtin_va_list args) {
+	frg::va_struct vs;
+	frg::arg arg_list[NL_ARGMAX + 1];
+	vs.arg_list = arg_list;
+	va_copy(vs.args, args);
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+	frg::unique_lock lock(file->_lock);
+	StreamPrinter<wchar_t> p{file};
+//	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
+	auto res = frg::printf_format<wchar_t, NL_ARGMAX>(PrintfAgent<wchar_t, decltype(p)>{&p, &vs}, format, &vs);
+	if (!res) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	return p.count;
+}
+
 // wide-oriented (POSIX)
 int vfwscanf(FILE *__restrict stream, const wchar_t *__restrict format, __builtin_va_list args) {
 	auto file = static_cast<mlibc::abstract_file *>(stream);
@@ -1889,7 +1906,25 @@ int swscanf(const wchar_t *__restrict buffer, const wchar_t *__restrict format, 
 	return result;
 }
 
-int vswprintf(wchar_t *__restrict, size_t, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
+int vswprintf(wchar_t *__restrict buffer, size_t n, const wchar_t *__restrict format, __builtin_va_list args) {
+	frg::va_struct vs;
+	frg::arg arg_list[NL_ARGMAX + 1];
+	vs.arg_list = arg_list;
+	va_copy(vs.args, args);
+	LimitedPrinter<wchar_t> p{buffer, n ? n - 1 : 0};
+//	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
+	auto res = frg::printf_format<wchar_t, NL_ARGMAX>(PrintfAgent<wchar_t, decltype(p)>{&p, &vs}, format, &vs);
+	if (!res) {
+		errno = EINVAL;
+		return -1;
+	} else if (p.count >= n) {
+		errno = E2BIG;
+		return -1;
+	}
+	if (n)
+		p.buffer[frg::min(n - 1, p.count)] = 0;
+	return p.count;
+}
 
 int vswscanf(const wchar_t *__restrict buffer, const wchar_t *__restrict format, __builtin_va_list args) {
 	struct {
