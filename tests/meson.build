@@ -41,6 +41,7 @@ all_test_cases = [
 	'ansi/wcstof',
 	'ansi/fputwc',
 	'ansi/ungetwc',
+	'ansi/fgetws',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
