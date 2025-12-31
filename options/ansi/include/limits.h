@@ -71,7 +71,11 @@
 #define LINE_MAX 4096
 #define PIPE_BUF 4096
 
+#define FILESIZEBITS 64
+
 #define CHARCLASS_NAME_MAX 14
+#define COLL_WEIGHTS_MAX 255
+#define GETENTROPY_MAX 256
 #define RE_DUP_MAX 255
 
 #if !defined(NGROUPS_MAX)
@@ -146,11 +150,19 @@
 
 #define _POSIX2_LINE_MAX 2048
 
+#define BC_BASE_MAX _POSIX2_BC_BASE_MAX
+#define BC_DIM_MAX _POSIX2_BC_DIM_MAX
+#define BC_SCALE_MAX _POSIX2_BC_SCALE_MAX
+#define BC_STRING_MAX _POSIX2_BC_STRING_MAX
+#define EXPR_NEST_MAX _POSIX2_EXPR_NEST_MAX
 /* This value is a guaranteed minimum, get the current maximum from sysconf */
 #define TZNAME_MAX _POSIX_TZNAME_MAX
 
 /* POSIX states 9 is the minimum for NL_ARGMAX */
 #define NL_ARGMAX 9
+#define NL_MSGMAX INT_MAX
+#define NL_SETMAX INT_MAX
+#define NL_TEXTMAX INT_MAX
 #if __MLIBC_XOPEN
 #define NL_LANGMAX _POSIX2_LINE_MAX
 #endif /* __MLIBC_XOPEN */

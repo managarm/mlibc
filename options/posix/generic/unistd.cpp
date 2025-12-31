@@ -593,6 +593,8 @@ long pathconf(const char *, int name) {
 	switch (name) {
 	case _PC_NAME_MAX:
 		return NAME_MAX;
+	case _PC_FILESIZEBITS:
+		return FILESIZEBITS;
 	default:
 		mlibc::infoLogger() << "missing pathconf() entry " << name << frg::endlog;
 		errno = EINVAL;
@@ -832,6 +834,8 @@ long sysconf(int number) {
 		case _SC_OPEN_MAX:
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_OPEN_MAX) returns fallback value 256\e[39m" << frg::endlog;
 			return 256;
+		case _SC_COLL_WEIGHTS_MAX:
+			return COLL_WEIGHTS_MAX;
 		case _SC_TZNAME_MAX:
 			return -1;
 		case _SC_PHYS_PAGES:
@@ -1067,8 +1071,8 @@ pid_t gettid(void) {
 
 int getentropy(void *buffer, size_t length) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getentropy, -1);
-	if(length > 256) {
-		errno = EIO;
+	if(length > GETENTROPY_MAX) {
+		errno = EINVAL;
 		return -1;
 	}
 	if(int e = mlibc::sys_getentropy(buffer, length); e) {
