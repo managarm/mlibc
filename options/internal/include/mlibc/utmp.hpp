@@ -7,6 +7,7 @@
 #include <bits/ensure.h>
 #include <bits/posix/timeval.h>
 #include <bits/size_t.h>
+#include <utmpx.h>
 #include <mlibc/ansi-sysdeps.hpp>
 #include <string.h>
 #include <type_traits>
@@ -29,7 +30,7 @@ int getUtmpEntry(int fd, U *res) {
 	ssize_t read = 0;
 	char *ptr = reinterpret_cast<char *>(res);
 
-	int err = mlibc::sys_read(fd, ptr, sizeof(U), &read);
+	int err = sys_read(fd, ptr, sizeof(U), &read);
 	if(err)
 		return err;
 
@@ -41,7 +42,7 @@ int getUtmpEntry(int fd, U *res) {
 	progress = read;
 
 	while(read) {
-		err = mlibc::sys_read(fd, ptr + progress, sizeof(U) - progress, &read);
+		err = sys_read(fd, ptr + progress, sizeof(U) - progress, &read);
 		if(err)
 			return err;
 
@@ -99,17 +100,19 @@ int putUtmpEntry(int fd, const U *ut) {
 	char *ptr = (char *) ut;
 
 	off_t discard;
-	if(int e = mlibc::sys_seek(fd, 0, SEEK_END, &discard); e)
+	if(int e = sys_seek(fd, 0, SEEK_END, &discard); e)
 		return e;
 
 	while(progress < sizeof(U)) {
 		ssize_t written = 0;
-		if(int e = mlibc::sys_write(fd, ptr + progress, sizeof(U) - progress, &written); e)
+		if(int e = sys_write(fd, ptr + progress, sizeof(U) - progress, &written); e)
 			return e;
 		progress += written;
 	}
 
 	return 0;
 }
+
+struct utmpx *getutxline_r(const struct utmpx *__ut, struct utmpx *__buffer);
 
 } // namespace mlibc

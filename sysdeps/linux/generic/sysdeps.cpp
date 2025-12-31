@@ -480,6 +480,9 @@ int sys_isatty(int fd) {
 #include <sched.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <pwd.h>
+
+#include <mlibc/utmp.hpp>
 
 int sys_msg_send(int sockfd, const struct msghdr *msg, int flags, ssize_t *length) {
 	// Work around ABI mismatches: POSIX requires us to expose some members of a particular type,
@@ -1855,6 +1858,44 @@ int sys_clock_set(int clock, time_t secs, long nanos) {
 	return 0;
 }
 
+int sys_getlogin_r(char *name, size_t name_len) {
+	int cs = 0;
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
+
+	int fd;
+	if(sys_open("/proc/self/loginuid", O_RDONLY, 0, &fd))
+		return EINVAL;
+
+
+	char buf[12];
+	ssize_t bytes_read = 0;
+	if(int e = sys_read(fd, buf, sizeof(buf), &bytes_read); e || !bytes_read)
+		return EINVAL;
+
+	char *uid_end = nullptr;
+	auto uid = strtol(buf, &uid_end, 10);
+	if (uid_end == buf || uid < 0)
+		return EINVAL;
+
+	sys_close(fd);
+
+	pthread_setcancelstate(cs, nullptr);
+
+	struct passwd pwd;
+	struct passwd *tpwd;
+	char pwbuf[1024];
+	if (getpwuid_r(uid, &pwd, pwbuf, sizeof(pwbuf), &tpwd) || tpwd == NULL)
+		return EINVAL;
+
+	size_t needed = strlen(pwd.pw_name) + 1;
+	if (needed > name_len)
+		return ERANGE;
+
+	memcpy(name, pwd.pw_name, needed);
+
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 #if __MLIBC_LINUX_OPTION
@@ -2550,8 +2591,8 @@ int sys_sigqueue(pid_t pid, int sig, const union sigval val) {
 	si.si_signo = sig;
 	si.si_code = SI_QUEUE;
 	si.si_value = val;
-	si.si_uid = mlibc::sys_getuid();
-	si.si_pid = mlibc::sys_getpid();
+	si.si_uid = sys_getuid();
+	si.si_pid = sys_getpid();
 
 	auto ret = do_syscall(SYS_rt_sigqueueinfo, pid, sig, &si);
 	if (int e = sc_error(ret); e)

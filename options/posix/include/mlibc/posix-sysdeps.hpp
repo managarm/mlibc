@@ -228,6 +228,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_setreuid(uid_t ruid, uid_t euid);
 [[gnu::weak]] int sys_setregid(gid_t rgid, gid_t egid);
 
+[[gnu::weak]] int sys_getlogin_r(char *name, size_t name_len);
+
 [[gnu::weak]] int sys_if_indextoname(unsigned int index, char *name);
 [[gnu::weak]] int sys_if_nametoindex(const char *name, unsigned int *ret);
 
