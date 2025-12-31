@@ -126,6 +126,7 @@ all_test_cases = [
 	'posix/memccpy',
 	'posix/strfmon',
 	'posix/sig2str',
+	'posix/getlogin_r',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
