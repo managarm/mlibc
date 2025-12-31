@@ -5,8 +5,13 @@ namespace mlibc {
 
 struct GlobalConfig {
 	GlobalConfig();
-	
+
 	bool debugMalloc;
+	bool debugPrintf;
+	bool debugLocale;
+	bool debugPthreadTrace;
+	bool debugPathResolution;
+	bool debugMonetaryLengths;
 };
 
 inline const GlobalConfig &globalConfig() {

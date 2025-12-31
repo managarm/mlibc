@@ -21,13 +21,12 @@
 #include <mlibc/tid.hpp>
 #include <mlibc/threads.hpp>
 #include <mlibc/time-helpers.hpp>
-
-static bool enableTrace = false;
+#include <mlibc/global-config.hpp>
 
 struct ScopeTrace {
 	ScopeTrace(const char *file, int line, const char *function)
 	: _file(file), _line(line), _function(function) {
-		if(!enableTrace)
+		if(!mlibc::globalConfig().debugPthreadTrace)
 			return;
 		mlibc::infoLogger() << "trace: Enter scope "
 				<< _file << ":" << _line << " (in function "
@@ -35,7 +34,7 @@ struct ScopeTrace {
 	}
 
 	~ScopeTrace() {
-		if(!enableTrace)
+		if(!mlibc::globalConfig().debugPthreadTrace)
 			return;
 		mlibc::infoLogger() << "trace: Exit scope" << frg::endlog;
 	}

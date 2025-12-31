@@ -4,11 +4,10 @@
 #include <frg/printf.hpp>
 #include <mlibc/ctype.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/global-config.hpp>
 #include <mlibc/locale.hpp>
 
 namespace {
-
-constexpr bool debugLengths = false;
 
 #define EMIT(...) if (!sink.append(__VA_ARGS__)) { errno = E2BIG; return -1; }
 
@@ -296,7 +295,7 @@ ssize_t strfmon_internal(char *__restrict s, size_t maxsize, mlibc::localeinfo *
 		// fill length due to field width
 		size_t width_fill_length = (field_width && *field_width > (currency_length + num_len + left_precision_fill_length)) ? (*field_width - (currency_length + num_len + left_precision_fill_length)) : 0;
 
-		if constexpr (debugLengths) {
+		if (mlibc::globalConfig().debugMonetaryLengths) {
 			mlibc::infoLogger() << frg::fmt("Calculated lengths:") << frg::endlog;
 			mlibc::infoLogger() << frg::fmt("\tcurrency={} sign_length={}", currency_length, sign_length) << frg::endlog;
 			mlibc::infoLogger() << frg::fmt("\tint={} integral={} fractional={} num={}", int_length, integral_length, fractional_length, num_len) << frg::endlog;

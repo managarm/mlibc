@@ -24,10 +24,6 @@
 #define HIDDEN  __attribute__((__visibility__("hidden")))
 #define EXPORT  __attribute__((__visibility__("default")))
 
-static constexpr bool logEntryExit = false;
-static constexpr bool logStartup = false;
-static constexpr bool logDlCalls = false;
-
 #ifndef MLIBC_STATIC_BUILD
 extern HIDDEN void *_GLOBAL_OFFSET_TABLE_[];
 extern HIDDEN elf_dyn _DYNAMIC[];
@@ -38,9 +34,14 @@ namespace mlibc {
 	bool tcb_available_flag = false;
 } // namespace mlibc
 
-mlibc::RtldConfig rtldConfig;
-
-bool ldShowAuxv = false;
+mlibc::RtldConfig rtldConfig = {
+	// set automatically when AT_SECURE is passed by the kernel
+	// disables LD_LIBRARY_PATH and LD_PRELOAD
+	.secureRequired = false,
+	// set to enable rtld logging, also can be enabled by environment variables:
+	.debug = false, // MLIBC_RTLD_DEBUG=1
+	.debugVerbose = false // MLIBC_RTLD_DEBUG_VERBOSE=1
+};
 
 uintptr_t *entryStack;
 static constinit Tcb earlyTcb{};
@@ -282,7 +283,7 @@ static constexpr uint64_t supportedDtFlags1 = DF_1_NOW;
 #endif
 
 extern "C" void *interpreterMain(uintptr_t *entry_stack) {
-	if(logEntryExit)
+	if(rtldConfig.debug)
 		mlibc::infoLogger() << "Entering ld.so" << frg::endlog;
 	entryStack = entry_stack;
 
@@ -313,7 +314,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	size_t num_ldso_ctors = 0;
 
 	auto ldso_base = getLdsoBase();
-	if(logStartup) {
+	if(rtldConfig.debug) {
 		mlibc::infoLogger() << "ldso: Own base address is: 0x"
 				<< frg::hex_fmt(ldso_base) << frg::endlog;
 		mlibc::infoLogger() << "ldso: Own dynamic section is at: " << _DYNAMIC << frg::endlog;
@@ -387,6 +388,19 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	const char *env_ld_library_path = nullptr;
 	const char *env_ld_preload = nullptr;
 
+	auto match_config = [](frg::string_view v) {
+		const frg::tuple<const frg::string_view, bool &> config_mapping[] = {
+			{"MLIBC_RTLD_DEBUG", rtldConfig.debug},
+			{"MLIBC_RTLD_DEBUG_VERBOSE", rtldConfig.debug},
+			{"MLIBC_RTLD_DEBUG_VERBOSE", rtldConfig.debugVerbose}
+		};
+
+		for (auto [env, config] : config_mapping) {
+			if (v == env)
+				config = true;
+		}
+	};
+
 	while(*aux) { // Loop through the environment.
 		auto env = reinterpret_cast<char *>(*aux);
 		frg::string_view view{env};
@@ -398,12 +412,12 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		auto name = view.sub_string(0, s);
 		auto value = const_cast<char *>(view.data() + s + 1);
 
-		if(name == "LD_SHOW_AUXV" && *value && *value != '0') {
-			ldShowAuxv = true;
-		}else if(name == "LD_LIBRARY_PATH" && *value) {
+		if(name == "LD_LIBRARY_PATH" && *value) {
 			env_ld_library_path = value;
 		}else if(name == "LD_PRELOAD" && *value) {
 			env_ld_preload = value;
+		}else if (*value && *value != '\0'){
+			match_config(name);
 		}
 
 		aux++;
@@ -416,7 +430,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		if(!(*aux))
 			break;
 
-		if(ldShowAuxv) {
+		if(rtldConfig.debug) {
 			switch(*aux) {
 				case AT_PHDR: mlibc::infoLogger() << "AT_PHDR: 0x" << frg::hex_fmt{*value} << frg::endlog; break;
 				case AT_PHENT: mlibc::infoLogger() << "AT_PHENT: " << *value << frg::endlog; break;
@@ -475,7 +489,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// Handle the LD_LIBRARY_PATH and LD_PRELOAD environment variables.
 	// This is done here as it needs to know if rtldConfig.secureRequired is set.
 	if (rtldConfig.secureRequired) {
-		mlibc::infoLogger() << "rtld: running in secure mode" << frg::endlog;
+		if (rtldConfig.debug)
+			mlibc::infoLogger() << "rtld: running in secure mode" << frg::endlog;
 	} else {
 		if (env_ld_library_path) {
 			for(auto path : parseList(env_ld_library_path, ":;"))
@@ -498,7 +513,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 // using the host toolchain.
 #if defined(__aarch64__) && defined(__gnu_linux__)
 	for (size_t i = 0; i < num_ldso_ctors; i++) {
-		if(logStartup)
+		if(rtldConfig.debug)
 			mlibc::infoLogger() << "ldso: Running own constructor at "
 					<< reinterpret_cast<void *>(ldso_ctors[i])
 					<< frg::endlog;
@@ -522,7 +537,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	__ensure(phdr_pointer);
 	__ensure(entry_pointer);
 
-	if(logStartup)
+	if(rtldConfig.debug)
 		mlibc::infoLogger() << "ldso: Executable PHDRs are at " << phdr_pointer
 				<< frg::endlog;
 
@@ -586,7 +601,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 
 	linker.initObjects(initialRepository.get());
 
-	if(logEntryExit)
+	if(rtldConfig.debug)
 		mlibc::infoLogger() << "Leaving ld.so, jump to "
 				<< (void *)executableSO->entry << frg::endlog;
 	return executableSO->entry;
@@ -623,7 +638,7 @@ extern "C" [[ gnu::visibility("default") ]] void __dlapi_exit() {
 
 extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_open(const char *file, int flags, void *returnAddress) {
-	if (logDlCalls)
+	if (rtldConfig.debug)
 		mlibc::infoLogger() << "rtld: __dlapi_open(" << (file ? file : "nullptr") << ")" << frg::endlog;
 
 	if (flags & RTLD_DEEPBIND)
@@ -707,7 +722,7 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 
 extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_resolve(void *handle, const char *string, void *returnAddress, const char *version) {
-	if (logDlCalls) {
+	if (rtldConfig.debug) {
 		const char *name;
 		bool quote = false;
 		if (handle == RTLD_DEFAULT) {
@@ -782,7 +797,7 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress, con
 	}
 
 	if (!target) {
-		if (logDlCalls)
+		if (rtldConfig.debug)
 			mlibc::infoLogger() << "rtld: could not resolve \"" << string << "\"" << frg::endlog;
 
 		lastError = "Cannot resolve requested symbol";
@@ -802,7 +817,7 @@ struct __dlapi_symbol {
 
 extern "C" [[ gnu::visibility("default") ]]
 int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
-	if (logDlCalls)
+	if (rtldConfig.debug)
 		mlibc::infoLogger() << "rtld: __dlapi_reverse(" << ptr << ")" << frg::endlog;
 
 	for(size_t i = 0; i < initialRepository->loadedObjects.size(); i++) {
@@ -854,7 +869,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 			ObjectSymbol cand{object, (elf_sym *)(object->baseAddress
 					+ object->symbolTableOffset + i * sizeof(elf_sym))};
 			if(eligible(cand) && cand.contains(reinterpret_cast<uintptr_t>(ptr))) {
-				if (logDlCalls)
+				if (rtldConfig.debug)
 					mlibc::infoLogger() << "rtld: Found symbol " << cand.getString() << " in object "
 							<< object->path << frg::endlog;
 
@@ -881,7 +896,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 			uintptr_t start = object->baseAddress + phdr->p_vaddr;
 			uintptr_t end = start + phdr->p_memsz;
 			if(reinterpret_cast<uintptr_t>(ptr) >= start && reinterpret_cast<uintptr_t>(ptr) < end) {
-				if (logDlCalls)
+				if (rtldConfig.debug)
 					mlibc::infoLogger() << "rtld: Found DSO " << object->path << frg::endlog;
 				info->file = object->path.data();
 				info->base = reinterpret_cast<void *>(object->baseAddress);
@@ -894,7 +909,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 		}
 	}
 
-	if (logDlCalls)
+	if (rtldConfig.debug)
 		mlibc::infoLogger() << "rtld: Could not find symbol in __dlapi_reverse()" << frg::endlog;
 
 	return -1;
@@ -902,7 +917,7 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 
 extern "C" [[ gnu::visibility("default") ]]
 int __dlapi_close(void *) {
-	if (logDlCalls)
+	if (rtldConfig.debug)
 		mlibc::infoLogger() << "mlibc: dlclose() is a no-op" << frg::endlog;
 	return 0;
 }
