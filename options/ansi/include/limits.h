@@ -71,6 +71,8 @@
 #define LINE_MAX 4096
 #define PIPE_BUF 4096
 
+#define FILESIZEBITS 64
+
 #define CHARCLASS_NAME_MAX 14
 #define GETENTROPY_MAX 256
 #define RE_DUP_MAX 255
