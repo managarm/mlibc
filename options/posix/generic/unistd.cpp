@@ -1,16 +1,15 @@
-#include <stdio.h>
+#include <dirent.h>
 #include <errno.h>
+#include <limits.h>
+#include <pwd.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/resource.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <limits.h>
-#include <termios.h>
-#include <stdio.h>
-#include <pwd.h>
 #include <sys/stat.h>
+#include <termios.h>
+#include <unistd.h>
 
 #include <bits/ensure.h>
 #include <mlibc-config.h>
@@ -267,9 +266,17 @@ int fexecve(int, char *const [], char *const []) {
 	return errno = ENOSYS, -1;
 }
 
-long fpathconf(int, int) {
-	mlibc::infoLogger() << "mlibc: " << __FUNCTION__ << " not implemented!" << frg::endlog;
-	return errno = ENOSYS, -1;
+long fpathconf(int, int name) {
+	switch (name) {
+	case _PC_NAME_MAX:
+		return NAME_MAX;
+	case _PC_FILESIZEBITS:
+		return FILESIZEBITS;
+	default:
+		mlibc::infoLogger() << "missing fpathconf() entry " << name << frg::endlog;
+		errno = EINVAL;
+		return -1;
+	}
 }
 
 int fsync(int fd) {
