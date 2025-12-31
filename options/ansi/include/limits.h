@@ -72,6 +72,7 @@
 #define PIPE_BUF 4096
 
 #define CHARCLASS_NAME_MAX 14
+#define GETENTROPY_MAX 256
 #define RE_DUP_MAX 255
 
 #if !defined(NGROUPS_MAX)

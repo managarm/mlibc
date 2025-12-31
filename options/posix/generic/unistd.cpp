@@ -1067,8 +1067,8 @@ pid_t gettid(void) {
 
 int getentropy(void *buffer, size_t length) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getentropy, -1);
-	if(length > 256) {
-		errno = EIO;
+	if(length > GETENTROPY_MAX) {
+		errno = EINVAL;
 		return -1;
 	}
 	if(int e = mlibc::sys_getentropy(buffer, length); e) {
