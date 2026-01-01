@@ -24,16 +24,6 @@ int setns(int fd, int nstype) {
 	return 0;
 }
 
-int sched_getscheduler(pid_t pid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getscheduler, -1);
-	int policy;
-	if(int e = mlibc::sys_getscheduler(pid, &policy); e) {
-		errno = e;
-		return -1;
-	}
-	return policy;
-}
-
 int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getaffinity, -1);
 	if(int e = mlibc::sys_getaffinity(pid, cpusetsize, mask); e) {

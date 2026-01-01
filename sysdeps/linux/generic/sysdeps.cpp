@@ -1469,6 +1469,14 @@ int sys_mlockall(int flags) {
 	return 0;
 }
 
+int sys_get_max_priority(int policy, int *out) {
+	auto ret = do_syscall(SYS_sched_get_priority_max, policy);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<int>(ret);
+	return 0;
+}
+
 int sys_get_min_priority(int policy, int *out) {
 	auto ret = do_syscall(SYS_sched_get_priority_min, policy);
 	if (int e = sc_error(ret); e)
@@ -1505,6 +1513,21 @@ int sys_setschedparam(void *tcb, int policy, const struct sched_param *param) {
 	}
 
 	auto ret = do_syscall(SYS_sched_setscheduler, t->tid, policy, param);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_getscheduler(pid_t pid, int *sched) {
+	auto ret = do_syscall(SYS_sched_getscheduler, pid);
+	if (int e = sc_error(ret); e)
+		return e;
+	*sched = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_setscheduler(pid_t pid, int policy, const struct sched_param *param) {
+	auto ret = do_syscall(SYS_sched_setscheduler, pid, policy, param);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -2098,6 +2121,13 @@ int sys_sigsuspend(const sigset_t *set) {
 	return 0;
 }
 
+int sys_sigpending(sigset_t *set) {
+	auto ret = do_syscall(SYS_rt_sigpending, set, NSIG / 8);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
 	auto ret = do_syscall(SYS_sigaltstack, ss, oss);
 	if (int e = sc_error(ret); e)
@@ -2201,6 +2231,14 @@ int sys_readlink(const char *path, void *buf, size_t bufsiz, ssize_t *len) {
 	if (int e = sc_error(ret); e)
 		return e;
 	*len = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_readlinkat(int dirfd, const char *path, void *buffer, size_t max_size, ssize_t *length) {
+	auto ret = do_syscall(SYS_readlinkat, dirfd, path, buffer, max_size);
+	if (int e = sc_error(ret); e)
+		return e;
+	*length = sc_int_result<ssize_t>(ret);
 	return 0;
 }
 

@@ -111,6 +111,7 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_getschedparam(void *tcb, int *policy, struct sched_param *param);
 [[gnu::weak]] int sys_setschedparam(void *tcb, int policy, const struct sched_param *param);
 [[gnu::weak]] int sys_getscheduler(pid_t pid, int *policy);
+[[gnu::weak]] int sys_setscheduler(pid_t pid, int policy, const struct sched_param *param);
 [[gnu::weak]] int sys_getparam(pid_t pid, struct sched_param *param);
 [[gnu::weak]] int sys_setparam(pid_t pid, const struct sched_param *param);
 [[gnu::weak]] int sys_get_max_priority(int policy, int *out);

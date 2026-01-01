@@ -40,7 +40,6 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
-int sched_getscheduler(pid_t __pid);
 int sched_setaffinity(pid_t __pid, size_t __cpusetsize, const cpu_set_t *__mask);
 int sched_getaffinity(pid_t __pid, size_t __cpusetsize, cpu_set_t *__mask);
 
