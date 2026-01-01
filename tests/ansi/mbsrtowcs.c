@@ -52,5 +52,31 @@ int main() {
 	assert(wc3[1] == L'⛔');
 	assert(wc3[2] == L'\0');
 
+	p = "\xC0\x81";
+	src = p;
+	memset(&state, 0, sizeof(state));
+	assert(mbsrtowcs(wc3, &src, 3, &state) == (size_t) -1);
+
+	p = "\xF1\x80\x80\x80";
+	src = p;
+	wc = 0;
+	memset(&state, 0, sizeof(state));
+	assert(mbsrtowcs(&wc, &src, 1, &state) == 1);
+	assert(wc == 0x40000);
+
+	p = "\xED\xA0\x80";
+	src = p;
+	wc = 0;
+	memset(&state, 0, sizeof(state));
+	assert(mbsrtowcs(&wc, &src, 1, &state) == (size_t) -1);
+	assert(errno == EILSEQ);
+
+	p = "\xF4\x90\x00\x00";
+	src = p;
+	wc = 0;
+	memset(&state, 0, sizeof(state));
+	assert(mbsrtowcs(&wc, &src, 1, &state) == (size_t) -1);
+	assert(errno == EILSEQ);
+
 	return 0;
 }

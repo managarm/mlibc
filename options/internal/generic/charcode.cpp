@@ -29,12 +29,18 @@ struct utf8_charcode {
 					// ASCII-compatible.
 					_cpoint = uc;
 				}else if((uc & 0b1110'0000) == 0b1100'0000) {
+					// exclude overlong encodings
+					if (uc < 0xC2)
+						return charcode_error::illegal_input;
 					_cpoint = uc & 0b1'1111;
 					_progress = 1;
 				}else if((uc & 0b1111'0000) == 0b1110'0000) {
 					_cpoint = uc & 0b1111;
 					_progress = 2;
 				}else if((uc & 0b1111'1000) == 0b1111'0000) {
+					// exclude 4-byte sequences greater than U+10FFFF
+					if (uc >= 0xF5)
+						return charcode_error::illegal_input;
 					_cpoint = uc & 0b111;
 					_progress = 3;
 				}else{
@@ -46,6 +52,23 @@ struct utf8_charcode {
 				}
 			}else{
 				if((uc & 0b1100'0000) == 0b1000'0000) {
+					if (_progress == 2) {
+						// exclude overlong 3-byte encodings
+						if (_cpoint == 0 && uc < 0xA0)
+							return charcode_error::illegal_input;
+						// exclude surrogate pairs (U+D800 - U+DFFF)
+						if (_cpoint == 0x0D && uc >= 0xA0)
+							return charcode_error::illegal_input;
+					}
+					if (_progress == 3) {
+						// exclude overlong 4-byte encodings
+						if (_cpoint == 0 && uc < 0x90)
+							return charcode_error::illegal_input;
+						// exclude 4-byte sequences greater than U+10FFFF
+						if (_cpoint == 4 && uc >= 0x90)
+							return charcode_error::illegal_input;
+					}
+
 					_cpoint = (_cpoint << 6) | (uc & 0x3F);
 					--_progress;
 				} else {
