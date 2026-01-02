@@ -446,6 +446,7 @@ wchar_t *wmemset(wchar_t *d, wchar_t c, size_t n) {
 char *strerror(int e) {
 	const char *s;
 	switch(e) {
+	case 0: s = "Success"; break;
 	case EAGAIN: s = "Operation would block (EAGAIN)"; break;
 	case EACCES: s = "Access denied (EACCESS)"; break;
 	case EBADF:  s = "Bad file descriptor (EBADF)"; break;
@@ -571,7 +572,7 @@ char *strerror(int e) {
 
 extern "C" char *__gnu_strerror_r(int e, char *buffer, size_t bufsz) {
 	auto s = strerror(e);
-	strncpy(buffer, s, bufsz);
+	mlibc::strlcpy(buffer, s, bufsz);
 	return buffer;
 }
 
@@ -579,9 +580,10 @@ extern "C" char *__gnu_strerror_r(int e, char *buffer, size_t bufsz) {
 
 int strerror_r(int e, char *buffer, size_t bufsz) {
 	auto s = strerror(e);
-	strncpy(buffer, s, bufsz);
+	// POSIX: implementations are encouraged to null terminate strerrbuf when failing with
+	// [ERANGE] for any size other than bufsz of zero
 	// Note that strerror_r does not set errno on error!
-	if(strlen(s) >= bufsz)
+	if(mlibc::strlcpy(buffer, s, bufsz) >= bufsz)
 		return ERANGE;
 	return 0;
 }

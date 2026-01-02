@@ -9,6 +9,7 @@
 #include <signal.h>
 
 #include <mlibc/debug.hpp>
+#include <mlibc/strings.hpp>
 
 char *strdup(const char *string) {
 	auto num_bytes = strlen(string);
@@ -192,16 +193,8 @@ void *memmem(const void *hs, size_t haystackLen, const void *nd, size_t needleLe
 }
 
 // BSD extensions.
-// Taken from musl
 size_t strlcpy(char *d, const char *s, size_t n) {
-	char *d0 = d;
-
-	if(!n--)
-		goto finish;
-	for(; n && (*d=*s); n--, s++, d++);
-	*d = 0;
-finish:
-	return d-d0 + strlen(s);
+	return mlibc::strlcpy(d, s, n);
 }
 
 size_t strlcat(char *d, const char *s, size_t n) {
@@ -209,5 +202,5 @@ size_t strlcat(char *d, const char *s, size_t n) {
 	if(l == n) {
 		return l + strlen(s);
 	}
-	return l + strlcpy(d + l, s, n - l);
+	return l + mlibc::strlcpy(d + l, s, n - l);
 }
