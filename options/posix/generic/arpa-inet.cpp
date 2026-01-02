@@ -52,9 +52,11 @@ in_addr_t inet_addr(const char *p) {
 	return a.s_addr;
 }
 
-in_addr_t inet_network(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+in_addr_t inet_network(const char *p) {
+	struct in_addr a;
+	if(!inet_aton(p, &a))
+		return -1;
+	return ntohl(a.s_addr);
 }
 
 char *inet_ntoa(struct in_addr addr) {
