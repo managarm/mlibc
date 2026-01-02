@@ -446,6 +446,7 @@ wchar_t *wmemset(wchar_t *d, wchar_t c, size_t n) {
 char *strerror(int e) {
 	const char *s;
 	switch(e) {
+	case 0: s = "Success"; break;
 	case EAGAIN: s = "Operation would block (EAGAIN)"; break;
 	case EACCES: s = "Access denied (EACCESS)"; break;
 	case EBADF:  s = "Bad file descriptor (EBADF)"; break;
