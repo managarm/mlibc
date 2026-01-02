@@ -74,6 +74,10 @@ int main() {
 	assert(line_read_entry->ut_pid == getpid());
 	endutxent();
 
+	line_read_entry = getutxline(&line_entry);
+	assert(!strcmp("root", line_read_entry->ut_user));
+	endutxent();
+
 	// Test updwtmpx.
 	char wtmpx_path[] = "/tmp/mlibc-wtmpx-test-XXXXXX";
 	int wtmpx_fd = mkstemp(wtmpx_path);
