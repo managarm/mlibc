@@ -129,6 +129,7 @@ all_test_cases = [
 	'posix/strfmon',
 	'posix/sig2str',
 	'posix/getlogin_r',
+	'posix/inet_aton',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
