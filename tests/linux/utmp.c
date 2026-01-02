@@ -79,6 +79,10 @@ int main() {
 	assert(line_read_entry->ut_pid == 1234);
 	endutent();
 
+	line_read_entry = getutline(&line_entry);
+	assert(line_read_entry);
+	assert(line_read_entry->ut_pid == 1234);
+
 	// Test getutent_r
 	struct utmp buf;
 	struct utmp *res_r;

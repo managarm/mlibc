@@ -26,10 +26,10 @@ utmpx returned;
 namespace mlibc {
 
 struct utmpx *getutxline_r(const struct utmpx *ut, struct utmpx *buffer) {
-	frg::unique_lock lock{utmpxMutex};
-
 	if(!utmpxFd)
 		setutxent();
+
+	frg::unique_lock lock{utmpxMutex};
 	if(!utmpxFd) {
 		errno = ENOENT;
 		return nullptr;
@@ -99,10 +99,10 @@ void setutxent(void) {
 }
 
 struct utmpx *getutxent(void) {
-	frg::unique_lock lock{utmpxMutex};
-
 	if(!utmpxFd)
 		setutxent();
+
+	frg::unique_lock lock{utmpxMutex};
 	if(!utmpxFd) {
 		errno = ENOENT;
 		return nullptr;
@@ -117,10 +117,10 @@ struct utmpx *getutxent(void) {
 }
 
 struct utmpx *pututxline(const struct utmpx *ut) {
-	frg::unique_lock lock{utmpxMutex};
-
 	if(!utmpxFd)
 		setutxent();
+
+	frg::unique_lock lock{utmpxMutex};
 	if(!utmpxFd) {
 		errno = ENOENT;
 		return nullptr;
@@ -157,10 +157,10 @@ int utmpxname(const char *file) {
 }
 
 struct utmpx *getutxid(const struct utmpx *ut) {
-	frg::unique_lock lock{utmpxMutex};
-
 	if(!utmpxFd)
 		setutxent();
+
+	frg::unique_lock lock{utmpxMutex};
 	if(!utmpxFd) {
 		errno = ENOENT;
 		return nullptr;

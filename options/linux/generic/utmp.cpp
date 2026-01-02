@@ -44,10 +44,10 @@ void setutent(void) {
 }
 
 struct utmp *getutent(void) {
-	frg::unique_lock lock{utmpMutex};
-
 	if(!utmpFd)
 		setutent();
+
+	frg::unique_lock lock{utmpMutex};
 	if(!utmpFd) {
 		errno = ENOENT;
 		return nullptr;
@@ -62,10 +62,10 @@ struct utmp *getutent(void) {
 }
 
 int getutent_r(struct utmp *buf, struct utmp **res) {
-	frg::unique_lock lock{utmpMutex};
-
 	if(!utmpFd)
 		setutent();
+
+	frg::unique_lock lock{utmpMutex};
 	if(!utmpFd) {
 		*res = nullptr;
 		errno = ENOENT;
@@ -92,10 +92,10 @@ void endutent(void) {
 }
 
 struct utmp *pututline(const struct utmp *ut) {
-	frg::unique_lock lock{utmpMutex};
-
 	if(!utmpFd)
 		setutent();
+
+	frg::unique_lock lock{utmpMutex};
 	if(!utmpFd) {
 		errno = ENOENT;
 		return nullptr;
@@ -110,10 +110,10 @@ struct utmp *pututline(const struct utmp *ut) {
 }
 
 struct utmp *getutline(const struct utmp *ut) {
-	frg::unique_lock lock{utmpMutex};
-
 	if(!utmpFd)
 		setutent();
+
+	frg::unique_lock lock{utmpMutex};
 	if(!utmpFd) {
 		errno = ENOENT;
 		return nullptr;
@@ -150,10 +150,10 @@ int utmpname(const char *file) {
 }
 
 struct utmp *getutid(const struct utmp *ut) {
-	frg::unique_lock lock{utmpMutex};
-
 	if(!utmpFd)
 		setutent();
+
+	frg::unique_lock lock{utmpMutex};
 	if(!utmpFd) {
 		errno = ENOENT;
 		return nullptr;
