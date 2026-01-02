@@ -1,1 +1,1 @@
-../../../../abis/linux/socklen_t.h
+../../../../abis/menix/socklen_t.h
