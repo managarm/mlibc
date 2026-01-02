@@ -85,21 +85,7 @@
 #define AT_EACCESS (1 << 11)
 
 #if defined(_GNU_SOURCE)
-#define AT_NO_AUTOMOUNT (1 << 12)
-#define AT_EMPTY_PATH (1 << 13)
-
-#define DN_ACCESS 1
-#define DN_MODIFY 2
-#define DN_CREATE 4
-#define DN_DELETE 8
-#define DN_RENAME 16
-#define DN_ATTRIB 32
-#define DN_MULTISHOT 0x80000000
-
-#define AT_STATX_SYNC_AS_STAT 0x0000
-#define AT_STATX_FORCE_SYNC (1 << 14)
-#define AT_STATX_DONT_SYNC (1 << 15)
-#define AT_STATX_SYNC_TYPE (AT_STATX_FORCE_SYNC | AT_STATX_DONT_SYNC)
+#define AT_EMPTY_PATH (1 << 12)
 #endif /* defined(_GNU_SOURCE) */
 
 #if defined(_GNU_SOURCE) || __MLIBC_POSIX2024
@@ -118,4 +104,4 @@ struct f_owner_ex {
 #define POSIX_FADV_DONTNEED 4
 #define POSIX_FADV_NOREUSE 5
 
-#endif
+#endif /* _ABIBITS_FCNTL_H */
