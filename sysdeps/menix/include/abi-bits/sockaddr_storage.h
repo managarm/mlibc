@@ -1,1 +1,1 @@
-../../../../abis/linux/sockaddr_storage.h
+../../../../abis/menix/sockaddr_storage.h

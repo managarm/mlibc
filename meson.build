@@ -275,6 +275,9 @@ elif host_machine.system() == 'astral'
 elif host_machine.system() == 'menix'
 	rtld_include_dirs += include_directories('sysdeps/menix/include')
 	libc_include_dirs += include_directories('sysdeps/menix/include')
+	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
+	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
+	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/menix')
 # ANCHOR: demo-sysdeps
 elif host_machine.system() == 'demo'

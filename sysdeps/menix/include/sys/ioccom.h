@@ -1,14 +1,14 @@
 #ifndef _SYS_IOCCOM_H
 #define _SYS_IOCCOM_H
 
-#define IOCPARM_SHIFT 13
+#define IOCPARM_SHIFT 14
 #define IOCPARM_MASK ((1 << IOCPARM_SHIFT) - 1)
 #define IOCPARM_LEN(x) (((x) >> 16) & IOCPARM_MASK)
 #define IOCBASECMD(x) ((x) & ~(IOCPARM_MASK << 16))
 #define IOCGROUP(x) (((x) >> 8) & 0xff)
 #define IOCPARM_MAX (1 << IOCPARM_SHIFT)
 
-#define IOC_VOID 0x20000000UL
+#define IOC_VOID 0UL
 #define IOC_OUT 0x40000000UL
 #define IOC_IN 0x80000000UL
 #define IOC_INOUT (IOC_IN | IOC_OUT)
