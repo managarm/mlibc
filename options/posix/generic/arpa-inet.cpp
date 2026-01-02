@@ -52,9 +52,11 @@ in_addr_t inet_addr(const char *p) {
 	return a.s_addr;
 }
 
-in_addr_t inet_network(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+in_addr_t inet_network(const char *p) {
+	struct in_addr a;
+	if(!inet_aton(p, &a))
+		return -1;
+	return ntohl(a.s_addr);
 }
 
 char *inet_ntoa(struct in_addr addr) {
@@ -67,45 +69,73 @@ char *inet_ntoa(struct in_addr addr) {
 		(proper >> 8) & 0xff, proper & 0xff);
 	return buffer;
 }
+
 int inet_aton(const char *string, struct in_addr *dest) {
-	int array[4];
-	int i = 0;
-	char *end;
+	const char *s = string;
+	unsigned long parts[4];
+	size_t count = 0;
 
-	for (; i < 4; i++) {
-		array[i] = strtoul(string, &end, 0);
-		if (*end && *end != '.')
+	while (true) {
+		if (isspace(*s))
 			return 0;
-		if (!*end)
+
+		char *end = nullptr;
+		auto val = strtoul(s, &end, 0);
+		if (s == end)
+			return 0;
+
+		if (s > string && *(s - 1) == '-')
+			return 0;
+
+		if (count >= 4)
+			return 0;
+		parts[count++] = val;
+
+		if (*end == '.') {
+			s = end + 1;
+			if (*s == '\0')
+				return 0;
+		} else if (*end == '\0') {
 			break;
-		string = end + 1;
+		} else {
+			return 0;
+		}
 	}
 
-	switch (i) {
-		case 0:
-			dest->s_addr = htonl(array[0]);
-			break;
-		case 1:
-			if (array[0] > 255 || array[1] > 0xffffff)
+	uint32_t addr = 0;
+
+	switch (count) {
+		case 1: {
+			if (parts[0] > 0xFFFFFFFF)
 				return 0;
-			dest->s_addr = htonl((array[0] << 24) | array[1]);
+			addr = parts[0];
 			break;
-		case 2:
-			if (array[0] > 255 || array[1] > 255 ||
-					array[2] > 0xffff)
+		}
+		case 2: {
+			if (parts[0] > 0xFF || parts[1] > 0xFFFFFF)
 				return 0;
-			dest->s_addr = htonl((array[0] << 24) | (array[1] << 16) |
-				array[2]);
+			addr = ((parts[0] & 0xFF) << 24) | (parts[1] & 0xFFFFFF);
 			break;
-		case 3:
-			if (array[0] > 255 || array[1] > 255 ||
-					array[2] > 255 || array[3] > 255)
+		}
+		case 3: {
+			if (parts[0] > 0xFF || parts[1] > 0xFF || parts[2] > 0xFFFF)
 				return 0;
-			dest->s_addr = htonl((array[0] << 24) | (array[1] << 16) |
-				(array[2] << 8) | array[3]);
+			addr = ((parts[0] & 0xFF) << 24) | ((parts[1] & 0xFF) << 16) | (parts[2] & 0xFFFF);
 			break;
+		}
+		case 4: {
+			if (parts[0] > 0xFF || parts[1] > 0xFF || parts[2] > 0xFF || parts[3] > 0xFF)
+				return 0;
+			addr = ((parts[0] & 0xFF) << 24) | ((parts[1] & 0xFF) << 16) | ((parts[2] & 0xFF) << 8)
+			       | (parts[3] & 0xFF);
+			break;
+		}
+		default:
+			__ensure(!"count needs to be in [1, 4]");
 	}
 
+	if (dest)
+		dest->s_addr = htonl(addr);
 	return 1;
 }
 
