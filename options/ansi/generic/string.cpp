@@ -571,7 +571,7 @@ char *strerror(int e) {
 
 extern "C" char *__gnu_strerror_r(int e, char *buffer, size_t bufsz) {
 	auto s = strerror(e);
-	strncpy(buffer, s, bufsz);
+	mlibc::strlcpy(buffer, s, bufsz);
 	return buffer;
 }
 
@@ -579,9 +579,10 @@ extern "C" char *__gnu_strerror_r(int e, char *buffer, size_t bufsz) {
 
 int strerror_r(int e, char *buffer, size_t bufsz) {
 	auto s = strerror(e);
-	strncpy(buffer, s, bufsz);
+	// POSIX: implementations are encouraged to null terminate strerrbuf when failing with
+	// [ERANGE] for any size other than bufsz of zero
 	// Note that strerror_r does not set errno on error!
-	if(strlen(s) >= bufsz)
+	if(mlibc::strlcpy(buffer, s, bufsz) >= bufsz)
 		return ERANGE;
 	return 0;
 }
