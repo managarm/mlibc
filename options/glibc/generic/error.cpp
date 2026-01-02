@@ -14,7 +14,7 @@ void error(int status, int errnum, const char *format, ...) {
 	va_start(args, format);
 
 	error_message_count++;
-	
+
 	fflush(stdout);
 	if(error_print_progname) {
 		error_print_progname();
@@ -24,13 +24,10 @@ void error(int status, int errnum, const char *format, ...) {
 	vfprintf(stderr, format, args);
 	va_end(args);
 
-	if(errnum) {
-		fprintf(stderr, ": %s\n", strerror(errnum));
-	}
+	fprintf(stderr, ": %s\n", strerror(errnum));
 
-	if(status) {
+	if(status)
 		exit(status);
-	}
 }
 
 void error_at_line(int status, int errnum, const char *filename, unsigned int linenum, const char *format, ...) {
