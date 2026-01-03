@@ -1804,11 +1804,6 @@ void Loader::linkObjects(SharedObject *root) {
 
 		__ensure(!object->wasLinked);
 
-		// TODO: Support this.
-		if(object->symbolicResolution)
-			mlibc::infoLogger() << "\e[31mrtld: DT_SYMBOLIC is not implemented correctly!\e[39m"
-					<< frg::endlog;
-
 		_processStaticRelocations(object);
 		_processLazyRelocations(object);
 	}
@@ -1997,8 +1992,13 @@ void Loader::_processRelocations(Relocation &rel) {
 	if(rel.symbol_index()) {
 		auto [sym, ver] = rel.object()->getSymbolByIndex(rel.symbol_index());
 
-		p = Scope::resolveGlobalOrLocal(*globalScope, rel.object()->localScope,
-				sym.getString(), rel.object()->objectRts, 0, ver);
+		if (rel.object()->symbolicResolution)
+			p = resolveInObject(rel.object(), sym.getString(), ver);
+
+		if (!p)
+			p = Scope::resolveGlobalOrLocal(*globalScope, rel.object()->localScope,
+					sym.getString(), rel.object()->objectRts, 0, ver);
+
 		if(!p) {
 			if(ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK)
 				mlibc::panicLogger() << "Unresolved load-time symbol "

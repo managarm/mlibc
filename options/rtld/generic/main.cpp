@@ -745,7 +745,16 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress, con
 		targetVersion = SymbolVersion{version};
 
 	if (handle == RTLD_DEFAULT) {
-		target = globalScope->resolveSymbol(string, 0, 0, targetVersion);
+		SharedObject *origin = initialRepository->findCaller(returnAddress);
+		if (!origin)
+			mlibc::panicLogger() << "rtld: unable to determine calling object of dlsym "
+				<< "(ra = " << returnAddress << ")" << frg::endlog;
+
+		if (origin->symbolicResolution)
+			target = resolveInObject(origin, string, targetVersion);
+
+		if (!target)
+			target = globalScope->resolveSymbol(string, 0, 0, targetVersion);
 	} else if (handle == RTLD_NEXT) {
 		SharedObject *origin = initialRepository->findCaller(returnAddress);
 		if (!origin) {
