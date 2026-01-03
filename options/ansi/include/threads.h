@@ -62,6 +62,7 @@ int mtx_unlock(mtx_t *__mtx);
 int cnd_init(cnd_t *__cond);
 void cnd_destroy(cnd_t *__cond);
 int cnd_broadcast(cnd_t *__cond);
+int cnd_signal(cnd_t *__cond);
 int cnd_wait(cnd_t *__cond, mtx_t *__mtx);
 int cnd_timedwait(cnd_t *__restrict __cond, mtx_t *__restrict __mutex, const struct timespec *__restrict __abstime);
 
