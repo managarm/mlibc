@@ -100,8 +100,10 @@ int pthread_attr_setdetachstate(pthread_attr_t *__attr, int __state);
 int pthread_attr_getstacksize(const pthread_attr_t *__restrict __attr, size_t *__restrict __stacksize);
 int pthread_attr_setstacksize(pthread_attr_t *__attr, size_t __stacksize);
 
+#if defined(_DEFAULT_SOURCE) || (__MLIBC_POSIX1 && !__MLIBC_POSIX2008)
 int pthread_attr_getstackaddr(const pthread_attr_t *__attr, void **__stackaddr);
 int pthread_attr_setstackaddr(pthread_attr_t *__attr, void *__stackaddr);
+#endif /* defined(_DEFAULT_SOURCE) || (__MLIBC_POSIX1 && !__MLIBC_POSIX2008) */
 
 int pthread_attr_getstack(const pthread_attr_t *__attr, void **__stackaddr, size_t *__stacksize);
 int pthread_attr_setstack(pthread_attr_t *__attr, void *__stackaddr, size_t __stacksize);
