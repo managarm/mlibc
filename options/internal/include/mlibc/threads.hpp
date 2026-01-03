@@ -33,6 +33,7 @@ int thread_mutexattr_settype(struct __mlibc_mutexattr *attr, int type);
 
 int thread_cond_init(struct __mlibc_cond *__restrict cond, const struct __mlibc_condattr *__restrict attr);
 int thread_cond_destroy(struct __mlibc_cond *cond);
+int thread_cond_signal(struct __mlibc_cond *cond);
 int thread_cond_broadcast(struct __mlibc_cond *cond);
 int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *__restrict mutex, const struct timespec *__restrict abstime, clockid_t __clockid);
 

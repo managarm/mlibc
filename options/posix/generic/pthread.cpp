@@ -913,7 +913,7 @@ int pthread_cond_clockwait(pthread_cond_t *__restrict cond, pthread_mutex_t *__r
 int pthread_cond_signal(pthread_cond_t *cond) {
 	SCOPE_TRACE();
 
-	return pthread_cond_broadcast(cond);
+	return mlibc::thread_cond_signal(cond);
 }
 
 int pthread_cond_broadcast(pthread_cond_t *cond) {
