@@ -72,7 +72,7 @@ int sem_post(sem_t *sem) {
 	auto state = __atomic_exchange_n(&sem->__mlibc_count, old_count + 1, __ATOMIC_RELEASE);
 
 	if (state & semaphoreHasWaiters)
-		if (int e = mlibc::sys_futex_wake((int *)&sem->__mlibc_count); e)
+		if (int e = mlibc::sys_futex_wake((int *)&sem->__mlibc_count, true); e)
 			__ensure(!"sys_futex_wake() failed");
 
 	return 0;

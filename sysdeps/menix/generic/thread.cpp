@@ -13,7 +13,7 @@ extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, Tcb *tcb) {
 	tcb->invokeThreadFunc(entry, user_arg);
 
 	__atomic_store_n(&tcb->didExit, 1, __ATOMIC_RELEASE);
-	mlibc::sys_futex_wake(&tcb->didExit);
+	mlibc::sys_futex_wake(&tcb->didExit, true);
 
 	mlibc::sys_thread_exit();
 }

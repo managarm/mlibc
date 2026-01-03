@@ -396,8 +396,8 @@ int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	}
 }
 
-int sys_futex_wake(int *pointer) {
-	obos_status status = (obos_status)syscall2(Sys_FutexWake, pointer, 1);
+int sys_futex_wake(int *pointer, bool all) {
+	obos_status status = (obos_status)syscall2(Sys_FutexWake, pointer, all ? UINT32_MAX : 1);
 	switch (status) {
 		case OBOS_STATUS_SUCCESS:
 			return 0;

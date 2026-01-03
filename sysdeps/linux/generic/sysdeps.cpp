@@ -2116,8 +2116,8 @@ int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	return 0;
 }
 
-int sys_futex_wake(int *pointer) {
-	auto ret = do_syscall(SYS_futex, pointer, FUTEX_WAKE, INT_MAX);
+int sys_futex_wake(int *pointer, bool all) {
+	auto ret = do_syscall(SYS_futex, pointer, FUTEX_WAKE, all ? INT_MAX : 1);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
