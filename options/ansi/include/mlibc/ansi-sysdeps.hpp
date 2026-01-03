@@ -27,7 +27,7 @@ namespace [[gnu::visibility("hidden")]] mlibc {
 [[gnu::weak]] int sys_clone(void *tcb, pid_t *pid_out, void *stack);
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time);
-int sys_futex_wake(int *pointer);
+int sys_futex_wake(int *pointer, bool all);
 
 int sys_open(const char *pathname, int flags, mode_t mode, int *fd);
 [[gnu::weak]] int sys_flock(int fd, int options);
