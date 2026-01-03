@@ -475,13 +475,14 @@ typedef struct __ucontext {
 	unsigned long uc_flags;
 	struct __ucontext *uc_link;
 	stack_t uc_stack;
-	sigset_t uc_sigmask;
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
-	__mlibc_uint8 __unused[1024 / 8 - sizeof(sigset_t)];
-#pragma GCC diagnostic pop
+	union {
+		sigset_t uc_sigmask;
+		__mlibc_uint8 __unused[1024 / 8];
+	} __uc_sigmask_union;
 	mcontext_t uc_mcontext;
 } ucontext_t;
+
+#define uc_sigmask __uc_sigmask_union.uc_sigmask
 
 #elif defined (__aarch64__)
 
