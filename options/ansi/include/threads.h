@@ -8,6 +8,7 @@ extern "C" {
 #include <bits/ansi/timespec.h>
 #include <bits/threads.h>
 #include <bits/types.h>
+#include <time.h>
 
 #define ONCE_FLAG_INIT __MLIBC_THREAD_ONCE_INITIALIZER
 #define TSS_DTOR_ITERATIONS __MLIBC_THREAD_DESTRUCTOR_ITERATIONS
