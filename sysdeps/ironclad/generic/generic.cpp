@@ -749,7 +749,7 @@ int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	return errno;
 }
 
-int sys_futex_wake(int *pointer) {
+int sys_futex_wake(int *pointer, bool) {
 	int ret, errno;
 	struct futex_item item = {.addr = (uint64_t)pointer, .expected = 0, .flags = 0};
 	struct timespec t = {(time_t)-1, (time_t)-1};

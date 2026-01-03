@@ -850,9 +850,9 @@ namespace mlibc {
 		return syscall(SYSCALL_FUTEX, &ret, (uint64_t)pointer, FUTEX_WAIT, expected, (uint64_t)time);
 	}
 
-	int sys_futex_wake(int *pointer) {
+	int sys_futex_wake(int *pointer, bool all) {
 		long ret;
-		return syscall(SYSCALL_FUTEX, &ret, (uint64_t)pointer, FUTEX_WAKE, INT_MAX, 0);
+		return syscall(SYSCALL_FUTEX, &ret, (uint64_t)pointer, FUTEX_WAKE, all ? INT_MAX : 1, 0);
 	}
 
 	int sys_anon_allocate(size_t size, void **pointer) {
