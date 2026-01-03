@@ -72,8 +72,10 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
+#if defined(_DEFAULT_SOURCE) || (__MLIBC_POSIX1 && !__MLIBC_POSIX2008)
 int *__h_errno_location(void);
 #define h_errno (*__h_errno_location())
+#endif /* defined(_DEFAULT_SOURCE) || (__MLIBC_POSIX1 && !__MLIBC_POSIX2008) */
 
 #endif /* !__MLIBC_ABI_ONLY */
 
