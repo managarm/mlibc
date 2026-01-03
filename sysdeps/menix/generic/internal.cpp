@@ -48,7 +48,7 @@ int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	return menix_syscall(SYSCALL_FUTEX_WAIT, (size_t)pointer, expected, (size_t)time).error;
 }
 
-int sys_futex_wake(int *pointer) {
+int sys_futex_wake(int *pointer, bool) {
 	return menix_syscall(SYSCALL_FUTEX_WAKE, (size_t)pointer).error;
 }
 
