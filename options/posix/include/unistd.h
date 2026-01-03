@@ -15,7 +15,7 @@
 #include <abi-bits/pid_t.h>
 #include <abi-bits/seek-whence.h>
 
-#if __MLIBC_SYSDEP_HAS_BITS_SYSCALL_H && __MLIBC_LINUX_OPTION
+#if __MLIBC_SYSDEP_HAS_BITS_SYSCALL_H && __MLIBC_LINUX_OPTION && defined(_DEFAULT_SOURCE)
 #include <bits/syscall.h>
 #endif /* __MLIBC_SYSDEP_HAS_BITS_SYSCALL_H && __MLIBC_LINUX_OPTION */
 
