@@ -82,6 +82,7 @@ protected:
 	virtual int io_read(char *buffer, size_t max_size, size_t *actual_size) = 0;
 	virtual int io_write(const char *buffer, size_t max_size, size_t *actual_size) = 0;
 	virtual int io_seek(off_t offset, int whence, off_t *new_offset) = 0;
+	virtual int post_flush();
 
 	int _reset();
 private:

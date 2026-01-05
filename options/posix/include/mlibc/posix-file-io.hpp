@@ -43,6 +43,7 @@ struct memstream_mem_file final : public mem_file {
 	}
 
 private:
+	int post_flush() override;
 	void _update_ptrs();
 
 	// Where to write back buffer and size on flush and close.

@@ -3,6 +3,7 @@
 #include <mlibc/posix-sysdeps.hpp>
 
 #include <errno.h>
+#include <stdlib.h>
 
 namespace mlibc {
 
@@ -22,8 +23,16 @@ int mem_file::determine_bufmode(buffer_mode *mode) {
 }
 
 memstream_mem_file::memstream_mem_file(char **ptr, size_t *sizeloc, int flags, void (*do_dispose)(abstract_file *))
-: mem_file{flags, do_dispose}, _bufloc{ptr}, _sizeloc{sizeloc} { }
+: mem_file{flags, do_dispose}, _bufloc{ptr}, _sizeloc{sizeloc} {
+	// TODO(no92): set correct stream orientation
+	_buf.resize(1, '\0');
+}
 
+int memstream_mem_file::post_flush() {
+	_update_ptrs();
+
+	return 0;
+}
 
 int memstream_mem_file::close() {
 	_update_ptrs();
@@ -46,10 +55,8 @@ int memstream_mem_file::io_read(char *buffer, size_t max_size, size_t *actual_si
 }
 
 int memstream_mem_file::io_write(const char *buffer, size_t max_size, size_t *actual_size) {
-	if (_pos + max_size >= _buffer_size()) {
+	if (_pos + max_size >= _buffer_size())
 		_buf.resize(_pos + max_size + 1, '\0');
-		_update_ptrs();
-	}
 
 	size_t bytes_write = std::min(static_cast<size_t>(_buffer_size() - _pos), max_size);
 	memcpy(_buffer().data() + _pos, buffer, bytes_write);
@@ -63,29 +70,23 @@ int memstream_mem_file::io_seek(off_t offset, int whence, off_t *new_offset) {
 	switch (whence) {
 		case SEEK_SET:
 			_pos = offset;
-			if (_pos >= 0 && size_t(_pos) >= _buffer_size()) {
+			if (_pos >= 0 && size_t(_pos) >= _buffer_size())
 				_buf.resize(_pos + 1, '\0');
-				_update_ptrs();
-			}
-			*new_offset = _pos;
 			break;
 		case SEEK_CUR:
 			_pos += offset;
-			if (_pos >= 0 && size_t(_pos) >= _buffer_size()) {
+			if (_pos >= 0 && size_t(_pos) >= _buffer_size())
 				_buf.resize(_pos + 1, '\0');
-				_update_ptrs();
-			}
-			*new_offset = _pos;
 			break;
 		case SEEK_END:
 			_pos = _buffer_size() ? _buffer_size() - 1 + offset : _buffer_size() + offset;
 			_buf.resize(_pos + 1, '\0');
-			_update_ptrs();
-			*new_offset = _pos;
 			break;
 		default:
 			return EINVAL;
 	}
+
+	*new_offset = _pos;
 	return 0;
 }
 
