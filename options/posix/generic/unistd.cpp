@@ -19,6 +19,9 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/getopt.hpp>
 #include <mlibc/posix-sysdeps.hpp>
+#if __MLIBC_BSD_OPTION
+#include <mlibc/bsd-sysdeps.hpp>
+#endif
 #include <mlibc/thread.hpp>
 #include <mlibc/utmp.hpp>
 

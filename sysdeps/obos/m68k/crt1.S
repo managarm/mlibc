@@ -1,0 +1,1 @@
+../../linux/m68k/crt-src/crt1.S
