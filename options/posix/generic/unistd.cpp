@@ -263,9 +263,13 @@ int fdatasync(int fd) {
 	return 0;
 }
 
-int fexecve(int, char *const [], char *const []) {
-	mlibc::infoLogger() << "mlibc: " << __FUNCTION__ << " not implemented!" << frg::endlog;
-	return errno = ENOSYS, -1;
+int fexecve(int fd, char *const argv[], char *const envp[]) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fexecve, -1);
+	if (int e = mlibc::sys_fexecve(fd, argv, envp); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 long fpathconf(int, int name) {
@@ -994,9 +998,14 @@ int tcsetpgrp(int fd, pid_t pgrp) {
 	return 0;
 }
 
-int truncate(const char *, off_t) {
-	mlibc::infoLogger() << "mlibc: " << __FUNCTION__ << " not implemented!" << frg::endlog;
-	return errno = ENOSYS, -1;
+int truncate(const char *path, off_t length) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_truncate, -1);
+	if(int e = mlibc::sys_truncate(path, length); e) {
+		errno = e;
+		return -1;
+	}
+
+	return 0;
 }
 
 #if __MLIBC_LINUX_OPTION
@@ -1229,6 +1238,16 @@ int dup3(int oldfd, int newfd, int flags) {
 		return -1;
 	}
 	return newfd;
+}
+
+pid_t _Fork(void) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fork, -1);
+	pid_t child;
+	if (int e = mlibc::sys_fork(&child); e) {
+		errno = e;
+		return -1;
+	}
+	return child;
 }
 
 pid_t fork(void) {

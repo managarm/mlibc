@@ -459,9 +459,8 @@ int sys_isatty(int fd) {
 	auto ret = do_syscall(SYS_ioctl, fd, 0x5413 /* TIOCGWINSZ */, &winsizeHack);
 	if (int e = sc_error(ret); e)
 		return e;
-	auto res = sc_int_result<unsigned long>(ret);
-	if(!res) return 0;
-	return 1;
+
+	return 0;
 }
 
 #if __MLIBC_POSIX_OPTION
@@ -595,6 +594,13 @@ int sys_execve(const char *path, char *const argv[], char *const envp[]) {
         if (int e = sc_error(ret); e)
                 return e;
         return 0;
+}
+
+int sys_fexecve(int fd, char *const argv[], char *const envp[]) {
+	auto ret = do_syscall(SYS_execveat, fd, "", argv, envp, AT_EMPTY_PATH);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
 }
 
 int sys_sigprocmask(int how, const sigset_t *set, sigset_t *old) {
@@ -1423,28 +1429,27 @@ int sys_inotify_rm_watch(int ifd, int wd) {
 }
 
 int sys_ttyname(int fd, char *buf, size_t size) {
-	if (!isatty(fd))
-		return errno;
+	if (int e = sys_isatty(fd); e)
+		return e;
 
-	char *procname;
-	if(int e = asprintf(&procname, "/proc/self/fd/%i", fd); e)
-		return ENOMEM;
-	__ensure(procname);
+	frg::string<MemoryAllocator> str {getAllocator()};
+	frg::output_to(str) << frg::fmt("/proc/self/fd/{}", fd);
 
-	ssize_t l = readlink(procname, buf, size);
-	free(procname);
+	ssize_t l;
+	if (int e = sys_readlink(str.data(), buf, size, &l); e)
+		return e;
 
-	if (l < 0)
-		return errno;
-	else if ((size_t)l >= size)
+	if ((size_t)l >= size)
 		return ERANGE;
 
 	buf[l] = '\0';
-	struct stat st1;
-	struct stat st2;
+	struct stat st1, st2;
 
-	if (stat(buf, &st1) || fstat(fd, &st2))
-		return errno;
+	if (int e1 = sys_stat(fsfd_target::path, -1, buf, 0, &st1),
+		e2 = sys_stat(fsfd_target::fd, fd, "", 0, &st2);
+		e1 || e2)
+		return e1 ? e1 : e2;
+
 	if (st1.st_dev != st2.st_dev || st1.st_ino != st2.st_ino)
 		return ENODEV;
 
@@ -1728,6 +1733,10 @@ int sys_flock(int fd, int options) {
 
 int sys_seteuid(uid_t euid) {
 	return sys_setresuid(-1, euid, -1);
+}
+
+int sys_setegid(gid_t egid) {
+	return sys_setresgid(-1, egid, -1);
 }
 
 int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) {
@@ -2214,6 +2223,13 @@ int sys_renameat(int old_dirfd, const char *old_path, int new_dirfd, const char 
 
 int sys_rmdir(const char *path) {
 	auto ret = do_syscall(SYS_unlinkat, AT_FDCWD, path, AT_REMOVEDIR);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_truncate(const char *path, off_t length) {
+	auto ret = do_syscall(SYS_truncate, path, length);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;

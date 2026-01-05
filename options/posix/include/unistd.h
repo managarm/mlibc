@@ -312,6 +312,7 @@ int fchownat(int __fd, const char *__path, uid_t __uid, gid_t __gid, int __flags
 int fdatasync(int __fd);
 int fexecve(int __fd, char *const __argv[], char *const __envp[]);
 pid_t fork(void);
+pid_t _Fork(void);
 
 /* functions removed in Issue 7 */
 #if defined(_DEFAULT_SOURCE) || (defined(__MLIBC_XOPEN) && __MLIBC_XOPEN < 700)
