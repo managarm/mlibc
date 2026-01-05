@@ -200,7 +200,6 @@ int mkstemps(char *pattern, int suffixlen) {
 }
 
 char *mkdtemp(char *pattern) {
-	mlibc::infoLogger() << "mlibc mkdtemp(" << pattern << ") called" << frg::endlog;
 	auto n = strlen(pattern);
 	__ensure(n >= 6);
 	if(n < 6) {
