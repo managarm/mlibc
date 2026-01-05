@@ -14,7 +14,8 @@ enum class charcode_error {
 	dirty,
 	illegal_input,
 	input_underflow,
-	output_overflow
+	output_overflow,
+	input_exhausted,
 };
 
 template<typename C>
@@ -76,7 +77,7 @@ struct polymorphic_charcode {
 		code_seq<wchar_t> wseq{&wc, &wc + 1};
 		__mlibc_mbstate st = __MLIBC_MBSTATE_INITIALIZER;
 
-		if(auto e = decode_wtranscode(nseq, wseq, st); e != charcode_error::null)
+		if(auto e = decode_wtranscode(nseq, wseq, st); e != charcode_error::null && e != charcode_error::input_exhausted)
 			return e;
 		// This should have read/written exactly one code unit/code point.
 		__ensure(nseq.it == nseq.end);

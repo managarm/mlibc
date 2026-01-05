@@ -40,6 +40,7 @@ all_test_cases = [
 	'ansi/asctime',
 	'ansi/wcstof',
 	'ansi/fputwc',
+	'ansi/mbrtowc',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',

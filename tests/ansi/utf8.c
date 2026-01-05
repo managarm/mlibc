@@ -82,6 +82,12 @@ int main() {
 	assert(wcrtomb(representation, 0xaabbccdd, &state) == (size_t)-1);
 	assert(errno == EILSEQ);
 
+	wchar_t wc;
+	assert(mbtowc(&wc, "", 1) == 0);
+	assert(wc == L'\0');
+	assert(mbtowc(&wc, "\xE2\x98\x83", 3) == 3);
+	assert(wc == L'☃');
+
 	// truncated ✨
 	assert(mbrtowc(NULL, "\xE2\x9C", 1000, &state) == (size_t)-1);
 	assert(errno == EILSEQ);
