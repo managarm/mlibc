@@ -998,9 +998,14 @@ int tcsetpgrp(int fd, pid_t pgrp) {
 	return 0;
 }
 
-int truncate(const char *, off_t) {
-	mlibc::infoLogger() << "mlibc: " << __FUNCTION__ << " not implemented!" << frg::endlog;
-	return errno = ENOSYS, -1;
+int truncate(const char *path, off_t length) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_truncate, -1);
+	if(int e = mlibc::sys_truncate(path, length); e) {
+		errno = e;
+		return -1;
+	}
+
+	return 0;
 }
 
 #if __MLIBC_LINUX_OPTION

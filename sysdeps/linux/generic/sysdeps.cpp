@@ -2226,6 +2226,13 @@ int sys_rmdir(const char *path) {
 	return 0;
 }
 
+int sys_truncate(const char *path, off_t length) {
+	auto ret = do_syscall(SYS_truncate, path, length);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_ftruncate(int fd, size_t size) {
 	auto ret = do_syscall(SYS_ftruncate, fd, size);
 	if (int e = sc_error(ret); e)

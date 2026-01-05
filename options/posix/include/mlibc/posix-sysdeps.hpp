@@ -73,6 +73,7 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length);
 [[gnu::weak]] int sys_readlinkat(int dirfd, const char *path, void *buffer, size_t max_size, ssize_t *length);
 [[gnu::weak]] int sys_rmdir(const char *path);
+[[gnu::weak]] int sys_truncate(const char *path, off_t length);
 [[gnu::weak]] int sys_ftruncate(int fd, size_t size);
 [[gnu::weak]] int sys_fallocate(int fd, off_t offset, size_t size);
 [[gnu::weak]] int sys_unlinkat(int fd, const char *path, int flags);
