@@ -101,6 +101,7 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_sleep(time_t *secs, long *nanos);
 [[gnu::weak]] int sys_fork(pid_t *child);
 [[gnu::weak]] int sys_execve(const char *path, char *const argv[], char *const envp[]);
+[[gnu::weak]] int sys_fexecve(int fd, char *const argv[], char *const envp[]);
 [[gnu::weak]] int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set,
 		fd_set *except_set, const struct timespec *timeout, const sigset_t *sigmask, int *num_events);
 [[gnu::weak]] int sys_getrusage(int scope, struct rusage *usage);

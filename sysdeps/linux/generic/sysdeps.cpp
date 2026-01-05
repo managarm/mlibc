@@ -597,6 +597,13 @@ int sys_execve(const char *path, char *const argv[], char *const envp[]) {
         return 0;
 }
 
+int sys_fexecve(int fd, char *const argv[], char *const envp[]) {
+	auto ret = do_syscall(SYS_execveat, fd, "", argv, envp, AT_EMPTY_PATH);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int sys_sigprocmask(int how, const sigset_t *set, sigset_t *old) {
         auto ret = do_syscall(SYS_rt_sigprocmask, how, set, old, NSIG / 8);
         if (int e = sc_error(ret); e)

@@ -263,9 +263,13 @@ int fdatasync(int fd) {
 	return 0;
 }
 
-int fexecve(int, char *const [], char *const []) {
-	mlibc::infoLogger() << "mlibc: " << __FUNCTION__ << " not implemented!" << frg::endlog;
-	return errno = ENOSYS, -1;
+int fexecve(int fd, char *const argv[], char *const envp[]) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fexecve, -1);
+	if (int e = mlibc::sys_fexecve(fd, argv, envp); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
 
 long fpathconf(int, int name) {
