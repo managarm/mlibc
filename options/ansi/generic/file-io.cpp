@@ -276,6 +276,10 @@ void abstract_file::purge() {
 	__unget_ptr = __buffer_ptr;
 }
 
+int abstract_file::post_flush() {
+	return 0;
+}
+
 int abstract_file::flush() {
 	if (__dirty_end != __dirty_begin) {
 		if (int e = _write_back(); e)
@@ -285,7 +289,7 @@ int abstract_file::flush() {
 	if (int e = _save_pos(); e)
 		return e;
 	purge();
-	return 0;
+	return post_flush();
 }
 
 int abstract_file::tell(off_t *current_offset) {
