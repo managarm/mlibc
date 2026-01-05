@@ -26,22 +26,12 @@ libc_sources += files(
 
 if not no_headers
     install_headers(
-        'include/mntent.h'
-    )
-
-    install_headers(
         'include/obos/syscall.h',
         'include/obos/error.h',
         'include/obos/vma.h',
         'include/obos/keycode.h',
         'include/obos/mouse.h',
         subdir: 'obos'
-    )
-
-    install_headers(
-        'include/sys/mount.h',
-        'include/sys/vfs.h',
-        subdir: 'sys'
     )
 
     install_headers(
