@@ -266,7 +266,7 @@ int pthread_attr_setsigmask_np(pthread_attr_t *__restrict attr,
 
 namespace {
 	void get_own_stackinfo(void **stack_addr, size_t *stack_size) {
-		auto fp = fopen("/proc/self/maps", "r");
+	    auto fp = fopen("/proc/self/maps", "r");
 		if (!fp) {
 			mlibc::infoLogger() << "mlibc pthreads: /proc/self/maps does not exist! Producing incorrect"
 				" stack results!" << frg::endlog;
