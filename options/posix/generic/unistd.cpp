@@ -1240,6 +1240,16 @@ int dup3(int oldfd, int newfd, int flags) {
 	return newfd;
 }
 
+pid_t _Fork(void) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fork, -1);
+	pid_t child;
+	if (int e = mlibc::sys_fork(&child); e) {
+		errno = e;
+		return -1;
+	}
+	return child;
+}
+
 pid_t fork(void) {
 	auto self = mlibc::get_current_tcb();
 	pid_t child;
