@@ -169,6 +169,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events);
 [[gnu::weak]] int sys_ppoll(struct pollfd *fds, nfds_t count, const struct timespec *ts, const sigset_t *mask, int *num_events);
 [[gnu::weak]] int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
+[[gnu::weak]] int sys_posix_devctl(int fd, int dcmd, void *__restrict dev_data_ptr, size_t nbyte, int *__restrict dev_info_ptr);
 [[gnu::weak]] int sys_getsockopt(int fd, int layer, int number,
 		void *__restrict buffer, socklen_t *__restrict size);
 [[gnu::weak]] int sys_setsockopt(int fd, int layer, int number,
