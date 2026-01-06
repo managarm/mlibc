@@ -25,6 +25,13 @@
 
 namespace mlibc {
 
+int sys_get_current_stack_info(void** stack_base, size_t* stack_size)
+{
+    // Cannot fail with HANDLE_CURRENT passed.
+    syscall3(Sys_ThreadGetStack, HANDLE_CURRENT, stack_base, stack_size);
+    return 0;
+}
+
 static int parse_file_status(obos_status status);
 
 #define define_stub(signature, ret) \
