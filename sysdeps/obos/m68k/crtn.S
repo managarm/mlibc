@@ -1,1 +1,7 @@
-../../linux/m68k/crt-src/crtn.S
+.section .init
+	rts
+
+.section .fini
+	rts
+
+.section .note.GNU-stack,"",%progbits
