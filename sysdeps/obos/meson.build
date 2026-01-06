@@ -29,8 +29,6 @@ if not no_headers
         'include/obos/syscall.h',
         'include/obos/error.h',
         'include/obos/vma.h',
-        'include/obos/keycode.h',
-        'include/obos/mouse.h',
         subdir: 'obos'
     )
 
