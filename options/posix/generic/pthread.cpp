@@ -265,12 +265,16 @@ int pthread_attr_setsigmask_np(pthread_attr_t *__restrict attr,
 }
 
 namespace {
-	void get_own_stackinfo(void **stack_addr, size_t *stack_size) {
+	int get_own_stackinfo(void **stack_addr, size_t *stack_size) {
+		if (mlibc::sys_get_current_stack_info) {
+			return mlibc::sys_get_current_stack_info(stack_addr, stack_size);
+		}
+		
+		// Fallback to /proc/self/maps
 		auto fp = fopen("/proc/self/maps", "r");
 		if (!fp) {
-			mlibc::infoLogger() << "mlibc pthreads: /proc/self/maps does not exist! Producing incorrect"
-				" stack results!" << frg::endlog;
-			return;
+    		mlibc::infoLogger() << "mlibc pthreads: /proc/self/maps does not exist! Returning ENOSYS." << frg::endlog;
+			return ENOSYS;
 		}
 
 		char line[256];
@@ -284,11 +288,12 @@ namespace {
 				*stack_addr = reinterpret_cast<void*>(from);
 				*stack_size = to - from;
 				fclose(fp);
-				return;
+				return 0;
 			}
 		}
 
 		fclose(fp);
+		return ESRCH;
 	}
 } // namespace
 
@@ -297,7 +302,9 @@ int pthread_getattr_np(pthread_t thread, pthread_attr_t *attr) {
 	*attr = pthread_attr_t{};
 
 	if (!tcb->stackAddr || !tcb->stackSize) {
-		get_own_stackinfo(&attr->__mlibc_stackaddr, &attr->__mlibc_stacksize);
+		if (int err = get_own_stackinfo(&attr->__mlibc_stackaddr, &attr->__mlibc_stacksize); err) {
+			return err;
+		}
 	} else {
 		attr->__mlibc_stacksize = tcb->stackSize;
 		attr->__mlibc_stackaddr = tcb->stackAddr;
