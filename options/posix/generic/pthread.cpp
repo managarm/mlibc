@@ -264,16 +264,17 @@ int pthread_attr_setsigmask_np(pthread_attr_t *__restrict attr,
 	return 0;
 }
 
-#ifdef __obos__
-#   include <obos/syscall.h>
-#endif
-
 namespace {
 	void get_own_stackinfo(void **stack_addr, size_t *stack_size) {
-#ifdef __obos__
-        syscall3(Sys_ThreadGetStack, HANDLE_CURRENT, stack_addr, stack_size);
-        return;
-#endif
+        if (mlibc::sys_get_current_stack_info)
+        {
+            if (mlibc::sys_get_current_stack_info(stack_addr, stack_size)) {
+                mlibc::infoLogger() << "mlibc pthreads: errors from sys_get_current_stack info are not propagated! Producing incorrect stack results!" << frg::endlog;
+            }
+            return;
+        }
+        // Fallback to /proc/self/maps
+
 		auto fp = fopen("/proc/self/maps", "r");
 		if (!fp) {
 			mlibc::infoLogger() << "mlibc pthreads: /proc/self/maps does not exist! Producing incorrect"
