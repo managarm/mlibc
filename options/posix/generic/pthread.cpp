@@ -266,16 +266,17 @@ int pthread_attr_setsigmask_np(pthread_attr_t *__restrict attr,
 
 namespace {
 	void get_own_stackinfo(void **stack_addr, size_t *stack_size) {
-        if (mlibc::sys_get_current_stack_info)
-        {
-            if (mlibc::sys_get_current_stack_info(stack_addr, stack_size)) {
-                mlibc::infoLogger() << "mlibc pthreads: errors from sys_get_current_stack info are not propagated! Producing incorrect stack results!" << frg::endlog;
-            }
-            return;
-        }
-        // Fallback to /proc/self/maps
+	    if (mlibc::sys_get_current_stack_info) {
+		    if (mlibc::sys_get_current_stack_info(stack_addr, stack_size)) {
+			    mlibc::infoLogger() << "mlibc pthreads: errors from sys_get_current_stack info are "
+			                           "not propagated! Producing incorrect stack results!"
+			                        << frg::endlog;
+		    }
+		    return;
+	    }
+	    // Fallback to /proc/self/maps
 
-		auto fp = fopen("/proc/self/maps", "r");
+	    auto fp = fopen("/proc/self/maps", "r");
 		if (!fp) {
 			mlibc::infoLogger() << "mlibc pthreads: /proc/self/maps does not exist! Producing incorrect"
 				" stack results!" << frg::endlog;

@@ -3,8 +3,7 @@
 #define obos_is_error(status) ((status) != OBOS_STATUS_SUCCESS)
 #define obos_is_success(status) ((status) == OBOS_STATUS_SUCCESS)
 
-typedef enum
-{
+typedef enum {
 	OBOS_STATUS_SUCCESS,
 	OBOS_STATUS_INVALID_IRQL,
 	OBOS_STATUS_INVALID_ARGUMENT,
