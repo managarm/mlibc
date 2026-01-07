@@ -910,8 +910,6 @@ int sys_fdatasync(int fd) { return sys_fsync(fd); }
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
 	unsigned real_flags = 0;
 	unsigned prot_flags = 0;
-	if (prot == PROT_NONE)
-		real_flags |= VMA_FLAGS_RESERVE;
 	if ((prot & PROT_READ) && (~prot & PROT_WRITE))
 		prot_flags |= OBOS_PROTECTION_READ_ONLY;
 	if (prot & PROT_EXEC)
