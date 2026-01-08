@@ -329,6 +329,17 @@ int abstract_file::seek(off_t offset, int whence) {
 	return 0;
 }
 
+bool abstract_file::check_orientation(stream_orientation orientation) {
+	if (_orientation == orientation) {
+		return true;
+	} else if (_orientation == stream_orientation::none) {
+		_orientation = orientation;
+		return true;
+	} else {
+		return false;
+	}
+}
+
 int abstract_file::_init_type() {
 	if(_type != stream_type::unknown)
 		return 0;

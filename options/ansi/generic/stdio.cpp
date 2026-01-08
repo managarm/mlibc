@@ -210,10 +210,11 @@ size_t fwrite_unlocked_ignore_orientation(const void *buffer, size_t size, size_
 }
 
 wint_t fputwc_unlocked(wchar_t c, mlibc::abstract_file *f) {
-	if (f->_orientation == mlibc::stream_orientation::byte)
+	if (!f->check_orientation(mlibc::stream_orientation::wide)) {
+		f->__status_bits |= __MLIBC_ERROR_BIT;
+		errno = EIO;
 		return WEOF;
-	else if (f->_orientation == mlibc::stream_orientation::none)
-		f->_orientation = mlibc::stream_orientation::wide;
+	}
 
 	if (mlibc::iswascii(c)) {
 		char d = c;
