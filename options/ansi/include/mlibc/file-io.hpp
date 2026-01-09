@@ -76,6 +76,11 @@ public:
 	int tell(off_t *current_offset);
 	int seek(off_t offset, int whence);
 
+	// Checks if the current stream orientation is compatible with the passed-in stream orientation
+	// If the stream has no associated stream orientation yet, it is set.
+	// If the stream orientation is not permitted, the function returns false, otherwise true.
+	bool check_orientation(stream_orientation orientation);
+
 protected:
 	virtual int determine_type(stream_type *type) = 0;
 	virtual int determine_bufmode(buffer_mode *mode) = 0;

@@ -210,10 +210,11 @@ size_t fwrite_unlocked_ignore_orientation(const void *buffer, size_t size, size_
 }
 
 wint_t fputwc_unlocked(wchar_t c, mlibc::abstract_file *f) {
-	if (f->_orientation == mlibc::stream_orientation::byte)
+	if (!f->check_orientation(mlibc::stream_orientation::wide)) {
+		f->__status_bits |= __MLIBC_ERROR_BIT;
+		errno = EIO;
 		return WEOF;
-	else if (f->_orientation == mlibc::stream_orientation::none)
-		f->_orientation = mlibc::stream_orientation::wide;
+	}
 
 	if (mlibc::iswascii(c)) {
 		char d = c;
@@ -236,6 +237,89 @@ wint_t fputwc_unlocked(wchar_t c, mlibc::abstract_file *f) {
 	}
 
 	return c;
+}
+
+wint_t fgetwc_unlocked(mlibc::abstract_file *f) {
+	if (!f->check_orientation(mlibc::stream_orientation::wide)) {
+		f->__status_bits |= __MLIBC_ERROR_BIT;
+		errno = EIO;
+		return WEOF;
+	}
+
+	mbstate_t state = { };
+	size_t conversion_res = 0;
+	wchar_t wc = L'\0';
+
+	do {
+		size_t read = 0;
+		char c = '\0';
+		int err = f->read(&c, 1, &read);
+		if (err) {
+			errno = err;
+			return WEOF;
+		} else if (!read) {
+			return WEOF;
+		}
+
+		conversion_res = mbrtowc(&wc, &c, 1, &state);
+		if (conversion_res == size_t(-1)) {
+			f->__status_bits |= __MLIBC_ERROR_BIT;
+			errno = EILSEQ;
+			return WEOF;
+		}
+	} while (conversion_res == size_t(-2));
+
+	return wc;
+}
+
+wint_t ungetwc_unlocked(wint_t c, mlibc::abstract_file *f) {
+	if (!f->check_orientation(mlibc::stream_orientation::wide)) {
+		f->__status_bits |= __MLIBC_ERROR_BIT;
+		errno = EIO;
+		return WEOF;
+	}
+
+	if (c == WEOF)
+		return WEOF;
+
+	char buf[MB_LEN_MAX];
+	mbstate_t state = { };
+	auto encoding = wcrtomb(buf, static_cast<wchar_t>(c), &state);
+	if (encoding == size_t(-1))
+		return WEOF;
+
+	for (size_t i = 0; i < encoding; i--) {
+		int ret = f->unget(buf[i]);
+		if (ret == EOF)
+			return WEOF;
+	}
+
+	return c;
+}
+
+int fputws_unlocked(const wchar_t *__restrict ws, mlibc::abstract_file *f) {
+	if (!f->check_orientation(mlibc::stream_orientation::wide)) {
+		f->__status_bits |= __MLIBC_ERROR_BIT;
+		errno = EIO;
+		return -1;
+	}
+
+	char buf[512];
+	auto len = wcsrtombs(buf, (const wchar_t **__restrict)&ws, sizeof(buf), &f->_mbstate);
+	if (len == size_t(-1))
+		return -1;
+
+	while (ws && len) {
+		auto written = fwrite_unlocked_ignore_orientation(buf, 1, len, f);
+		if (written != len)
+			return 1;
+
+		len = wcsrtombs(buf, (const wchar_t **__restrict)&ws, sizeof(buf), &f->_mbstate);
+		if (len == size_t(-1))
+			return -1;
+	}
+
+	return 1;
 }
 
 } // namespace
@@ -1566,9 +1650,36 @@ int puts(const char *string) {
 }
 
 // wide-oriented (POSIX)
-wint_t fgetwc(FILE *) { MLIBC_STUB_BODY; }
+wint_t fgetwc(FILE *stream) {
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+	frg::unique_lock lock(file->_lock);
+	return fgetwc_unlocked(file);
+}
+
 // wide-oriented (POSIX)
-wchar_t *fgetws(wchar_t *__restrict, int, FILE *__restrict) { MLIBC_STUB_BODY; }
+wchar_t *fgetws(wchar_t *__restrict ws, int n, FILE *__restrict stream) {
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+	frg::unique_lock lock(file->_lock);
+
+	if (!n)
+		return ws;
+
+	for(int i = 0; i < (n - 1); i++) {
+		wint_t c = fgetwc_unlocked(file);
+		if (c == WEOF)
+			break;
+		*ws++ = c;
+		if (c == L'\n')
+			break;
+	}
+
+	*ws = 0;
+
+	if (file->__status_bits & __MLIBC_ERROR_BIT)
+		return nullptr;
+
+	return ws;
+}
 
 // wide-oriented (POSIX)
 wint_t fputwc(wchar_t c, FILE *stream) {
@@ -1578,7 +1689,11 @@ wint_t fputwc(wchar_t c, FILE *stream) {
 }
 
 // wide-oriented (POSIX)
-int fputws(const wchar_t *__restrict, FILE *__restrict) { MLIBC_STUB_BODY; }
+int fputws(const wchar_t *__restrict ws, FILE *__restrict file_base) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	frg::unique_lock lock(file->_lock);
+	return fputws_unlocked(ws, file);
+}
 
 int fwide(FILE *stream, int mode) {
 	auto file = static_cast<mlibc::abstract_file *>(stream);
@@ -1593,9 +1708,18 @@ int fwide(FILE *stream, int mode) {
 }
 
 // wide-oriented (POSIX)
-wint_t getwc(FILE *) { MLIBC_STUB_BODY; }
+wint_t getwc(FILE *stream) {
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+	frg::unique_lock lock(file->_lock);
+	return fgetwc_unlocked(file);
+}
+
 // wide-oriented (POSIX)
-wint_t getwchar(void) { MLIBC_STUB_BODY; }
+wint_t getwchar(void) {
+	auto file = static_cast<mlibc::abstract_file *>(stdout);
+	frg::unique_lock lock(file->_lock);
+	return fgetwc_unlocked(file);
+}
 
 // wide-oriented (POSIX)
 wint_t putwc(wchar_t c, FILE *f) {
@@ -1612,7 +1736,12 @@ wint_t putwchar(wchar_t c) {
 }
 
 // wide-oriented (POSIX)
-wint_t ungetwc(wint_t, FILE *) { MLIBC_STUB_BODY; }
+wint_t ungetwc(wint_t c, FILE *stream) {
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+	frg::unique_lock lock(file->_lock);
+
+	return ungetwc_unlocked(c, file);
+}
 
 // byte-oriented (POSIX)
 size_t fread(void *buffer, size_t size, size_t count, FILE *file_base) {
