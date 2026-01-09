@@ -49,7 +49,9 @@ int sys_flock(int fd, int options) {
 	return r.error;
 }
 
-int sys_open_dir(const char *path, int *handle) { return sys_open(path, O_RDONLY | O_DIRECTORY, 0600, handle); }
+int sys_open_dir(const char *path, int *handle) {
+	return sys_open(path, O_RDONLY | O_DIRECTORY, 0600, handle);
+}
 
 int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read) {
 	auto r = menix_syscall(SYSCALL_GETDENTS, handle, (size_t)buffer, (size_t)max_size);
@@ -155,26 +157,17 @@ int sys_socket(int family, int type, int protocol, int *fd) {
 	return 0;
 }
 
-int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
-	auto r = menix_syscall(SYSCALL_SENDMSG, fd, (size_t)hdr, flags);
+int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
+	auto r = menix_syscall(SYSCALL_SOCKETPAIR, domain, type_and_flags, proto);
 	if (r.error)
 		return r.error;
-	*length = (ssize_t)r.value;
+	fds[0] = static_cast<int>(r.value & 0xFFFFFFFF);
+	fds[1] = static_cast<int>((r.value >> 32) & 0xFFFFFFFF);
 	return 0;
 }
 
-ssize_t sys_sendto(
-    int fd,
-    const void *buffer,
-    size_t size,
-    int flags,
-    const struct sockaddr *sock_addr,
-    socklen_t addr_length,
-    ssize_t *length
-) {
-	auto r = menix_syscall(
-	    SYSCALL_SENDTO, fd, (size_t)buffer, size, flags, (size_t)sock_addr, addr_length
-	);
+int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
+	auto r = menix_syscall(SYSCALL_SENDMSG, fd, (size_t)hdr, flags);
 	if (r.error)
 		return r.error;
 	*length = (ssize_t)r.value;
@@ -189,25 +182,53 @@ int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
 	return 0;
 }
 
-ssize_t sys_recvfrom(
-    int fd,
-    void *buffer,
-    size_t size,
-    int flags,
-    struct sockaddr *sock_addr,
-    socklen_t *addr_length,
-    ssize_t *length
+int sys_listen(int fd, int backlog) { return menix_syscall(SYSCALL_LISTEN, fd, backlog).error; }
+
+int
+sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
+	return menix_syscall(SYSCALL_GETSOCKOPT, fd, layer, number, (size_t)buffer, (size_t)size).error;
+}
+
+int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t size) {
+	return menix_syscall(SYSCALL_SETSOCKOPT, fd, layer, number, (size_t)buffer, size).error;
+}
+
+int sys_shutdown(int sockfd, int how) { return menix_syscall(SYSCALL_SHUTDOWN, sockfd, how).error; }
+
+int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length, int flags) {
+	return menix_syscall(
+	           SYSCALL_ACCEPT, fd, (size_t)newfd, (size_t)addr_ptr, (size_t)addr_length, flags
+	)
+	    .error;
+}
+
+int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
+	return menix_syscall(SYSCALL_BIND, fd, (size_t)addr_ptr, addr_length).error;
+}
+
+int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
+	return menix_syscall(SYSCALL_CONNECT, fd, (size_t)addr_ptr, addr_length).error;
+}
+
+int sys_sockname(
+    int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length
 ) {
-	auto r = menix_syscall(
-	    SYSCALL_RECVFROM, fd, (size_t)buffer, size, flags, (size_t)sock_addr, (size_t)addr_length
-	);
+	auto r = menix_syscall(SYSCALL_GETSOCKNAME, fd, (size_t)addr_ptr, (size_t)&max_addr_length);
 	if (r.error)
 		return r.error;
-	*length = (ssize_t)r.value;
+	*actual_length = max_addr_length;
 	return 0;
 }
 
-int sys_listen(int fd, int backlog) { return menix_syscall(SYSCALL_LISTEN, fd, backlog).error; }
+int sys_peername(
+    int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length
+) {
+	auto r = menix_syscall(SYSCALL_GETPEERNAME, fd, (size_t)addr_ptr, (size_t)&max_addr_length);
+	if (r.error)
+		return r.error;
+	*actual_length = (socklen_t)max_addr_length;
+	return 0;
+}
 
 gid_t sys_getgid() { return menix_syscall(SYSCALL_GETGID).value; }
 gid_t sys_getegid() { return menix_syscall(SYSCALL_GETEGID).value; }
@@ -475,14 +496,6 @@ int sys_tcsetwinsize(int fd, const struct winsize *winsz) {
 
 int sys_pipe(int *fds, int flags) { return menix_syscall(SYSCALL_PIPE, (size_t)fds, flags).error; }
 
-int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
-	auto r = menix_syscall(SYSCALL_SOCKETPAIR, domain, type_and_flags, proto);
-	if (r.error)
-		return r.error;
-	*fds = (int)r.value;
-	return 0;
-}
-
 int sys_ppoll(
     struct pollfd *fds,
     nfds_t count,
@@ -514,17 +527,6 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	return 0;
 }
 
-int
-sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
-	return menix_syscall(SYSCALL_GETSOCKOPT, fd, layer, number, (size_t)buffer, (size_t)size).error;
-}
-
-int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t size) {
-	return menix_syscall(SYSCALL_SETSOCKOPT, fd, layer, number, (size_t)buffer, size).error;
-}
-
-int sys_shutdown(int sockfd, int how) { return menix_syscall(SYSCALL_SHUTDOWN, sockfd, how).error; }
-
 int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
 	return menix_syscall(SYSCALL_SIGPROCMASK, how, (size_t)set, (size_t)retrieve).error;
 }
@@ -548,41 +550,6 @@ int sys_sigtimedwait(
 }
 
 int sys_kill(int pid, int signal) { return menix_syscall(SYSCALL_KILL, pid, signal).error; }
-
-int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length, int flags) {
-	return menix_syscall(
-	           SYSCALL_ACCEPT, fd, (size_t)newfd, (size_t)addr_ptr, (size_t)addr_length, flags
-	)
-	    .error;
-}
-
-int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
-	return menix_syscall(SYSCALL_BIND, fd, (size_t)addr_ptr, addr_length).error;
-}
-
-int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
-	return menix_syscall(SYSCALL_CONNECT, fd, (size_t)addr_ptr, addr_length).error;
-}
-
-int sys_sockname(
-    int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length
-) {
-	auto r = menix_syscall(SYSCALL_GETSOCKNAME, fd, (size_t)addr_ptr, (size_t)&max_addr_length);
-	if (r.error)
-		return r.error;
-	*actual_length = max_addr_length;
-	return 0;
-}
-
-int sys_peername(
-    int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length
-) {
-	auto r = menix_syscall(SYSCALL_GETPEERNAME, fd, (size_t)addr_ptr, (size_t)&max_addr_length);
-	if (r.error)
-		return r.error;
-	*actual_length = (socklen_t)max_addr_length;
-	return 0;
-}
 
 int sys_gethostname(char *buffer, size_t bufsize) {
 	struct utsname name;
