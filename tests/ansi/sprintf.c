@@ -146,7 +146,6 @@ int main() {
 #pragma GCC diagnostic pop
 
 	// Test '#' flag.
-	// TODO: Test with a, A, e, E, f, F, g, G conversions.
 	sprintf(buf, "%#x", 12);
 	assert(!strcmp(buf, "0xc"));
 	sprintf(buf, "%#X", 12);
@@ -160,6 +159,27 @@ int main() {
 	assert(!strcmp(buf, "0"));
 	sprintf(buf, "%#o", 0);
 	assert(!strcmp(buf, "0"));
+
+	sprintf(buf, "%#.a", -42.0);
+	assert(!strcmp(buf, "-0x1.p+5"));
+	sprintf(buf, "%#.A", -42.0);
+	assert(!strcmp(buf, "-0X1.P+5"));
+	sprintf(buf, "%#.f", 1.0);
+	assert(!strcmp(buf, "1."));
+	sprintf(buf, "%#.F", 1.0);
+	assert(!strcmp(buf, "1."));
+	sprintf(buf, "%#.g", 1.0);
+	assert(!strcmp(buf, "1."));
+	sprintf(buf, "%#.g", 42.0);
+	assert(!strcmp(buf, "4.e+01"));
+	sprintf(buf, "%#.G", 1.0);
+	assert(!strcmp(buf, "1."));
+	sprintf(buf, "%#.G", 42.0);
+	assert(!strcmp(buf, "4.E+01"));
+	sprintf(buf, "%#.0e", -42.0);
+	assert(!strcmp(buf, "-4.e+01"));
+	sprintf(buf, "%#.0E", -42.0);
+	assert(!strcmp(buf, "-4.E+01"));
 
 	// Disable -Wformat here because the compiler might not know about the b specifier.
 #pragma GCC diagnostic push
@@ -405,6 +425,8 @@ int main() {
 	assert(!strcmp(buf, "-nan"));
 	sprintf(buf, "%A", NAN);
 	assert(!strcmp(buf, "NAN"));
+	sprintf(buf, "%.5A", 42.0);
+	assert(!strcmp(buf, "0X1.50000P+5"));
 
 	// Test %a/%A padding
 	test_roundtrip(10.25, "%25a", "%lf", "                0x1.48p+3", 1);
