@@ -190,8 +190,8 @@ int main() {
 	assert(sscanf("ab", "abcd") == EOF);
 	assert(sscanf("abab", "abcd") == 0);
 
-	char char_value[8];
-	wchar_t wchar_value[8];
+	char char_value[16];
+	wchar_t wchar_value[16];
 
 	assert(sscanf("a", "%c", char_value) == 1);
 	assert(char_value[0] == 'a');
@@ -545,6 +545,30 @@ int main() {
 	assert(int_value == 12);
 	assert(sscanf("12,34", "%f", &float_value) == 1);
 	// assert(float_value >= 12.34 - 0.01 && float_value <= 12.34 + 0.01);
+
+	assert(sscanf("αβγδ123", "%[α-ω]", char_value) == 1);
+	fprintf(stderr, "'%s'\n", char_value);
+	assert(!strcmp("αβγδ", char_value));
+
+	assert(sscanf("αβγδ123", "%l[α-ω]", wchar_value) == 1);
+	assert(!wcscmp(L"αβγδ", wchar_value));
+
+	// implementation-defined behavior, and glibc returns zero
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
+	assert(sscanf("αβγδ123", "%l[^δ-ω]", wchar_value) == 1);
+	assert(!wcscmp(L"αβγ", wchar_value));
+#endif
+
+	assert(sscanf("α-β-γ-δ-123", "%l[α-ω-]", wchar_value) == 1);
+	assert(!wcscmp(L"α-β-γ-δ-", wchar_value));
+
+	// implementation-defined behavior, and glibc returns zero
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
+	assert(sscanf("α-β-γ-δ-123", "%l[^δ-ω-]", wchar_value) == 1);
+	assert(!wcscmp(L"α", wchar_value));
+#endif
+
+	assert(sscanf("123", "%l[a-z]", wchar_value) == 0);
 
 	return 0;
 }

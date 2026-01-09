@@ -324,39 +324,62 @@ int fputws_unlocked(const wchar_t *__restrict ws, mlibc::abstract_file *f) {
 
 } // namespace
 
+template <typename Char>
 struct StreamPrinter {
-	StreamPrinter(FILE *stream)
+	using value_type = Char;
+
+	StreamPrinter(mlibc::abstract_file *stream)
 	: stream(stream), count(0) { }
 
-	void append(char c) {
-		fwrite_unlocked(&c, 1, 1, stream);
+	void append(Char c) {
+		if constexpr (std::is_same_v<Char, char>)
+			fwrite_unlocked(&c, 1, 1, stream);
+		else
+			fputwc_unlocked(c, stream);
 		count++;
 	}
 
-	void append(const char *str) {
-		fwrite_unlocked(str, strlen(str), 1, stream);
-		count += strlen(str);
+	void append(const Char *str) {
+		if constexpr (std::is_same_v<Char, char>) {
+			fwrite_unlocked(str, strlen(str), 1, stream);
+			count += strlen(str);
+		} else {
+			while (*str) {
+				fputwc_unlocked(*str++, stream);
+				count++;
+			}
+		}
 	}
 
-	void append(const char *str, size_t n) {
-		fwrite_unlocked(str, n, 1, stream);
-		count += n;
+	void append(const Char *str, size_t n) {
+		if constexpr (std::is_same_v<Char, char>) {
+			fwrite_unlocked(str, n, 1, stream);
+			count += n;
+		} else {
+			for (size_t i = 0; i < n && str[i]; i++) {
+				fputwc_unlocked(str[i], stream);
+				count++;
+			}
+		}
 	}
 
-	FILE *stream;
+	mlibc::abstract_file *stream;
 	size_t count;
 };
 
+template <typename Char>
 struct BufferPrinter {
-	BufferPrinter(char *buffer)
+	using value_type = Char;
+
+	BufferPrinter(Char *buffer)
 	: buffer(buffer), count(0) { }
 
-	void append(char c) {
+	void append(Char c) {
 		buffer[count] = c;
 		count++;
 	}
 
-	void append(const char *str) {
+	void append(const Char *str) {
 		// TODO: use strcat
 		for(size_t i = 0; str[i]; i++) {
 			buffer[count] = str[i];
@@ -364,7 +387,7 @@ struct BufferPrinter {
 		}
 	}
 
-	void append(const char *str, size_t n) {
+	void append(const Char *str, size_t n) {
 		// TODO: use strcat
 		for(size_t i = 0; i < n; i++) {
 			buffer[count] = str[i];
@@ -372,38 +395,43 @@ struct BufferPrinter {
 		}
 	}
 
-	char *buffer;
+	Char *buffer;
 	size_t count;
 };
 
+template <typename Char>
 struct LimitedPrinter {
-	LimitedPrinter(char *buffer, size_t limit)
+	using value_type = Char;
+
+	LimitedPrinter(Char *buffer, size_t limit)
 	: buffer(buffer), limit(limit), count(0) { }
 
-	void append(char c) {
+	void append(Char c) {
 		if(count < limit)
 			buffer[count] = c;
 		count++;
 	}
 
-	void append(const char *str) {
+	void append(const Char *str) {
 		// TODO: use strcat
 		for(size_t i = 0; str[i]; i++)
 			append(str[i]);
 	}
 
-	void append(const char *str, size_t n) {
+	void append(const Char *str, size_t n) {
 		// TODO: use strcat
 		for(size_t i = 0; i < n; i++)
 			append(str[i]);
 	}
 
-	char *buffer;
+	Char *buffer;
 	size_t limit;
 	size_t count;
 };
 
 struct ResizePrinter {
+	using value_type = char;
+
 	ResizePrinter()
 	: buffer(nullptr), limit(0), count(0) { }
 
@@ -574,7 +602,7 @@ int printf(const char *__restrict format, ...) {
 
 namespace {
 
-	enum {
+enum {
 	SCANF_TYPE_CHAR,
 	SCANF_TYPE_SHORT,
 	SCANF_TYPE_INTMAX,
@@ -630,8 +658,8 @@ void store_float(void *dest, unsigned int size, long double f) {
 	}
 }
 
-template<typename H>
-int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
+template<typename H, typename Char>
+int do_scanf(H &handler, const Char *fmt, __builtin_va_list args) {
 	#define NOMATCH_CHECK(cond) ({ if(cond) return match_count; }) // if cond is true, matching error
 	#define EOF_CHECK(cond) ({ if(cond) return match_count ? match_count : EOF; }) // if cond is true, no more data to read
 	int match_count = 0;
@@ -669,16 +697,29 @@ int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 		auto temp_wdest = frg::basic_string<wchar_t, MemoryAllocator>{getAllocator()};
 		int count = 0;
 
-		const auto append_to_buffer = [&](char c) {
-			if(allocate_buf) {
-				temp_dest += c;
+		const auto append_to_buffer = [&](wchar_t c) {
+			size_t res = 0;
+			char c_buf[MB_LEN_MAX];
+
+			if (c == L'\0') {
+				res = 1;
+				c_buf[0] = '\0';
+			} else {
+				mbstate_t shift_state = {};
+				res = wcrtomb(c_buf, c, &shift_state);
+				__ensure(res != size_t(-1));
+			}
+
+			if (allocate_buf) {
+				for (size_t i = 0; i < res; i++)
+					temp_dest += c_buf[i];
 			} else {
 				char *typed_dest = (char *)dest;
 				if(typed_dest)
-					typed_dest[count] = c;
+					memcpy(typed_dest + count, c_buf, res);
 			}
 
-			count++;
+			count += res;
 		};
 
 		const auto append_to_wbuffer = [&](wchar_t c) {
@@ -977,7 +1018,7 @@ int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 				break;
 			}
 			case 's': {
-				char c = handler.look_ahead();
+				Char c = handler.look_ahead();
 				EOF_CHECK(c == '\0');
 				while (c && !isspace(c)) {
 					handler.consume();
@@ -1019,42 +1060,80 @@ int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 			}
 			case '[': {
 				fmt++;
-				int invert = 0;
-				if (*fmt == '^') {
-					invert = 1;
+				bool invert = *fmt == '^';
+				if (invert)
 					fmt++;
-				}
 
-				char scanset[257];
-				memset(&scanset[0], invert, sizeof(char) * 257);
-				scanset[0] = '\0';
-
-				if (*fmt == '-') {
-					fmt++;
-					scanset[1+'-'] = 1 - invert;
-				} else if (*fmt == ']') {
-					fmt++;
-					scanset[1+']'] = 1 - invert;
-				}
-
-				for (; *fmt != ']'; fmt++) {
-					auto fmt_unsigned = reinterpret_cast<const unsigned char *>(fmt);
-
-					if (!*fmt) return EOF;
-					if (*fmt == '-' && *(fmt + 1) != ']') {
-						fmt++;
-						fmt_unsigned++;
-						for (unsigned char c = *(fmt_unsigned - 2); c < *fmt_unsigned; c++)
-							scanset[1 + c] = 1 - invert;
+				auto decodeChar = [](frg::basic_string_view<Char> view, size_t off) {
+					if constexpr (std::is_same_v<Char, char>) {
+						mbstate_t mbs{};
+						wchar_t wc;
+						auto len = mbrtowc(&wc, &view[off], view.size() - off, &mbs);
+						__ensure(len > 0);
+						return std::make_pair(wc, len);
+					} else {
+						return std::make_pair(view[off], 1);
 					}
-					scanset[1 + *fmt_unsigned] = 1 - invert;
-				}
+				};
 
-				char c = handler.look_ahead();
+				size_t scan_offset = *fmt == ']' ? 1 : 0;
+				frg::basic_string_view remaining{fmt};
+				size_t len = remaining.find_first(']', scan_offset);
+				EOF_CHECK(len == size_t(-1));
+				auto scansetView = remaining.sub_string(0, len);
+
+				auto inScanset = [&](wchar_t c) -> bool {
+					size_t off = 0;
+
+					while (off < scansetView.size()) {
+						auto [first_char, first_char_len] = decodeChar(scansetView, off);
+
+						if (first_char == c)
+							return !invert;
+
+						if (off + first_char_len + 1 == scansetView.size() && scansetView[off + first_char_len] == '-') {
+							return (c == '-') ? !invert : invert;
+						} else if ((off + first_char_len + 1) < scansetView.size() && scansetView[off + first_char_len] == L'-' && c > first_char) {
+							// determine end of range
+							auto [second_char, second_char_len] = decodeChar(scansetView, off + first_char_len + 1);
+
+							if (c <= second_char)
+								return !invert;
+							off += first_char_len + 1 + second_char_len;
+							continue;
+						}
+						off++;
+					}
+
+					return invert;
+				};
+
+				fmt += scansetView.size();
+
+				auto nextChar = [&]() -> wchar_t {
+					if constexpr (std::is_same_v<Char, char>) {
+						wchar_t wc;
+						char part = handler.look_ahead();
+						mbstate_t state{};
+
+						int res = mbrtowc(&wc, &part, 1, &state);
+
+						while (res < 0) {
+							handler.consume();
+							part = handler.look_ahead();
+							res = mbrtowc(&wc, &part, 1, &state);
+						}
+
+						return wc;
+					} else {
+						return handler.look_ahead();
+					}
+				};
+
+				wchar_t c = nextChar();
 				EOF_CHECK(c == '\0');
 				while (c && (!width || count < width)) {
-					unsigned char uc = static_cast<unsigned char>(c);
-					if (!scanset[1 + uc])
+					if (!inScanset(c))
 						break;
 					handler.consume();
 
@@ -1063,7 +1142,7 @@ int do_scanf(H &handler, const char *fmt, __builtin_va_list args) {
 					else
 						append_to_buffer(c);
 
-					c = handler.look_ahead();
+					c = nextChar();
 				}
 				NOMATCH_CHECK(count == 0);
 
@@ -1369,7 +1448,7 @@ int vfprintf(FILE *__restrict stream, const char *__restrict format, __builtin_v
 	va_copy(vs.args, args);
 	auto file = static_cast<mlibc::abstract_file *>(stream);
 	frg::unique_lock lock(file->_lock);
-	StreamPrinter p{stream};
+	StreamPrinter<char> p{file};
 	if (mlibc::globalConfig().debugPrintf)
 		mlibc::infoLogger() << "vfprintf(\"" << format << "\")" << frg::endlog;
 	auto res = frg::printf_format<NL_ARGMAX>(PrintfAgent{&p, &vs}, format, &vs);
@@ -1488,12 +1567,53 @@ int fwprintf(FILE *__restrict stream, const wchar_t *__restrict format, ...) {
 }
 
 // wide-oriented (POSIX)
-int fwscanf(FILE *__restrict, const wchar_t *__restrict, ...) { MLIBC_STUB_BODY; }
+int fwscanf(FILE *__restrict stream, const wchar_t *__restrict format, ...) {
+	va_list args;
+	va_start(args, format);
+	int result = vfwscanf(stream, format, args);
+	va_end(args);
+	return result;
+}
 
 // wide-oriented (POSIX)
 int vfwprintf(FILE *__restrict, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
 // wide-oriented (POSIX)
-int vfwscanf(FILE *__restrict, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
+int vfwscanf(FILE *__restrict stream, const wchar_t *__restrict format, __builtin_va_list args) {
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+	frg::unique_lock lock(file->_lock);
+
+	struct {
+		wchar_t look_ahead() {
+			if (peek)
+				return *peek;
+
+			auto c = fgetwc_unlocked(file);
+			if (c != WEOF) {
+				peek = c;
+				return c;
+			}
+			return 0;
+		}
+
+		wchar_t consume() {
+			if (peek) {
+				auto c = *peek;
+				peek = frg::null_opt;
+				num_consumed++;
+				return c;
+			}
+			auto c = fgetwc_unlocked(file);
+			num_consumed++;
+			return (c != WEOF) ? c : 0;
+		}
+
+		mlibc::abstract_file *file;
+		size_t num_consumed = 0;
+		frg::optional<wchar_t> peek = frg::null_opt;
+	} handler = {file};
+
+	return do_scanf(handler, format, args);
+}
 
 int swprintf(wchar_t *__restrict buffer, size_t n, const wchar_t *__restrict format, ...) {
 	va_list args;
@@ -1503,9 +1623,35 @@ int swprintf(wchar_t *__restrict buffer, size_t n, const wchar_t *__restrict for
 	return result;
 }
 
-int swscanf(const wchar_t *__restrict, const wchar_t *__restrict, ...) { MLIBC_STUB_BODY; }
+int swscanf(const wchar_t *__restrict buffer, const wchar_t *__restrict format, ...) {
+	va_list args;
+	va_start(args, format);
+	int result = vswscanf(buffer, format, args);
+	va_end(args);
+	return result;
+}
+
 int vswprintf(wchar_t *__restrict, size_t, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
-int vswscanf(const wchar_t *__restrict, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
+
+int vswscanf(const wchar_t *__restrict buffer, const wchar_t *__restrict format, __builtin_va_list args) {
+	struct {
+		wchar_t look_ahead() {
+			return *buffer;
+		}
+
+		wchar_t consume() {
+			num_consumed++;
+			return *buffer++;
+		}
+
+		const wchar_t *buffer;
+		int num_consumed;
+	} handler = {buffer, 0};
+
+	int result = do_scanf(handler, format, args);
+
+	return result;
+}
 
 // wide-oriented (POSIX)
 int wprintf(const wchar_t *__restrict format, ...) {
@@ -1517,13 +1663,21 @@ int wprintf(const wchar_t *__restrict format, ...) {
 }
 
 // wide-oriented (POSIX)
-int wscanf(const wchar_t *__restrict, ...) { MLIBC_STUB_BODY; }
+int wscanf(const wchar_t *__restrict format, ...) {
+	va_list args;
+	va_start(args, format);
+	int result = vfwscanf(stdin, format, args);
+	va_end(args);
+	return result;
+}
 
 int vwprintf(const wchar_t *__restrict format, __builtin_va_list args) {
 	return vfwprintf(stdout, format, args);
 }
 
-int vwscanf(const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
+int vwscanf(const wchar_t *__restrict format, __builtin_va_list args) {
+	return vfwscanf(stdin, format, args);
+}
 
 // byte-oriented (POSIX)
 int fgetc(FILE *stream) {
