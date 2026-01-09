@@ -33,6 +33,7 @@ using elf_vernaux = Elf32_Vernaux;
 #define R_ABSOLUTE R_68K_32
 #define R_GLOB_DAT R_68K_GLOB_DAT
 #define R_RELATIVE R_68K_RELATIVE
+#define R_PC32 R_68K_PC32
 #define R_OFFSET R_68K_PC32
 #define R_COPY R_68K_COPY
 #define R_TLS_DTPMOD R_68K_TLS_DTPMOD32
