@@ -579,7 +579,9 @@ int wcscasecmp(const wchar_t *ws1, const wchar_t *ws2) {
 	}
 }
 
-size_t wcsnlen(const wchar_t *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+size_t wcsnlen(const wchar_t *ws, size_t maxlen) {
+	const wchar_t *p = ws;
+	while (maxlen --> 0 && *p != L'\0')
+		p++;
+	return p - ws;
 }
