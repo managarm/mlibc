@@ -562,12 +562,26 @@ int wcsncasecmp(const wchar_t* s1, const wchar_t* s2, size_t n) {
 	return 0;
 }
 
-int wcscasecmp(const wchar_t *, const wchar_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int wcscasecmp(const wchar_t *ws1, const wchar_t *ws2) {
+	size_t i = 0;
+
+	while(true) {
+		auto a = towlower(ws1[i]);
+		auto b = towlower(ws2[i]);
+		if(!a && !b)
+			return 0;
+		// If only one char is null, one of the following cases applies.
+		if(a < b)
+			return -1;
+		if(a > b)
+			return 1;
+		i++;
+	}
 }
 
-size_t wcsnlen(const wchar_t *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+size_t wcsnlen(const wchar_t *ws, size_t maxlen) {
+	const wchar_t *p = ws;
+	while (maxlen --> 0 && *p != L'\0')
+		p++;
+	return p - ws;
 }
