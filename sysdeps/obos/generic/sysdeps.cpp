@@ -1247,7 +1247,7 @@ int sys_getentropy(void *buffer, size_t max_size) {
 	handle hnd = syscall0(Sys_FdAlloc);
 
 	// Open FD for reading.
-	obos_status status = (obos_status)syscall3(Sys_FdOpen, hnd, "/dev/random", (1 << 0));
+	obos_status status = (obos_status)syscall3(Sys_FdOpen, hnd, "/dev/entropy", (1 << 0));
 	if (obos_is_error(status)) {
 		syscall1(Sys_HandleClose, hnd);
 		return parse_file_status(status);
