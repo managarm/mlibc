@@ -82,6 +82,12 @@ extern "C" {
 
 #define PTHREAD_ATTR_NO_SIGMASK_NP (-1)
 
+#ifdef __MLIBC_XOPEN
+#define PTHREAD_RWLOCK_PREFER_READER_NP 0
+#define PTHREAD_RWLOCK_PREFER_WRITER_NP 1
+#define PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP 2
+#endif /* __MLIBC_XOPEN */
+
 #include <bits/posix/pthread_types.h>
 
 #ifndef __MLIBC_ABI_ONLY
@@ -292,6 +298,12 @@ int pthread_spin_destroy(pthread_spinlock_t *__lock);
 int pthread_spin_lock(pthread_spinlock_t *__lock);
 int pthread_spin_trylock(pthread_spinlock_t *__lock);
 int pthread_spin_unlock(pthread_spinlock_t *__lock);
+
+#ifdef __MLIBC_XOPEN
+int pthread_rwlockattr_setkind_np(pthread_rwlockattr_t *__attr, int __pref);
+int pthread_rwlockattr_getkind_np(const pthread_rwlockattr_t *__restrict __attr,
+		int *__restrict __pref);
+#endif /* __MLIBC_XOPEN */
 
 #endif /* !__MLIBC_ABI_ONLY */
 
