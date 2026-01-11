@@ -1409,3 +1409,13 @@ int pthread_spin_unlock(pthread_spinlock_t *__lock) {
 	__atomic_store_n(&__lock->__lock, 0, __ATOMIC_RELEASE);
 	return 0;
 }
+
+int pthread_rwlockattr_setkind_np(pthread_rwlockattr_t *, int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
+
+int pthread_rwlockattr_getkind_np(const pthread_rwlockattr_t *__restrict, int *__restrict) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
