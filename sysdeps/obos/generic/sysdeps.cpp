@@ -1243,47 +1243,20 @@ int sys_inet_configured(bool *ipv4, bool *ipv6) {
 	return 0;
 }
 
+int sys_getentropy(void *buffer, size_t max_size) {
+	handle hnd = syscall0(Sys_FdAlloc);
+
+	// Open FD for reading.
+	obos_status status = (obos_status)syscall3(Sys_FdOpen, hnd, "/dev/random", (1 << 0));
+	if (obos_is_error(status)) {
+		syscall1(Sys_HandleClose, hnd);
+		return parse_file_status(status);
+	}
+
+	status = (obos_status)syscall4(Sys_FdRead, hnd, buffer, max_size, nullptr);
+	syscall1(Sys_HandleClose, hnd);
+
+	return parse_file_status(status);
+}
+
 } // namespace mlibc
-
-#ifdef __x86_64__
-
-#include <cpuid.h>
-#include <immintrin.h>
-
-static uint64_t obos_rdrand() {
-	long long unsigned int ret = 0;
-	asm volatile("rdrand %0" : "=r"(ret)::"memory");
-	//    __builtin_ia32_rdrand64_step(&ret);
-	return ret;
-}
-static uint64_t obos_rdseed() {
-	long long unsigned int ret = 0;
-	asm volatile("rdseed %0" : "=r"(ret)::"memory");
-	//    __builtin_ia32_rdseed_di_step(&ret);
-	return ret;
-}
-
-int mlibc::sys_getentropy(void *buffer, size_t max_size) {
-	bool rdrand = false;
-	bool rdseed = false;
-	uint32_t eax = 0, ecx = 0, ebx = 0, edx = 0;
-	__get_cpuid(1, &eax, &ebx, &ecx, &edx);
-	if (ecx & (1 << 30))
-		rdrand = true;
-	__get_cpuid(7, &eax, &ebx, &ecx, &edx);
-	if (ebx & (1 << 18))
-		rdseed = true;
-	if (!rdseed && !rdrand)
-		return ENOSYS;
-	auto intrin = rdrand ? obos_rdrand : obos_rdseed;
-	uint64_t *buff64 = (uint64_t *)buffer;
-	for (size_t i = 0; i < (max_size / 8); i++)
-		buff64[i] = intrin();
-	uint8_t *buff8 = (uint8_t *)buffer;
-	uint64_t last_rand = intrin();
-	for (size_t i = max_size & ~7; i < max_size; i++)
-		buff8[i] = last_rand >> (((max_size & ~7) - i) * 8);
-	return 0;
-}
-
-#endif
