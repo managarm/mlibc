@@ -348,7 +348,7 @@ int sys_setpgid(pid_t pid, pid_t pgid) {
 }
 
 [[noreturn]] void sys_libc_panic() {
-	sys_libc_log("mlibc panicked! exiting program...");
+	sys_libc_log("mlibc panicked! exiting program...\n");
 	sys_exit(-1);
 	__builtin_unreachable();
 }
@@ -359,22 +359,6 @@ int sys_setpgid(pid_t pid, pid_t pgid) {
 }
 
 [[noreturn]] void sys_thread_exit() { sys_exit(0); }
-
-int sys_anon_allocate(size_t sz, void **pointer) {
-	struct {
-		uint32_t prot;
-		uint32_t flags;
-		handle file;
-		uintptr_t offset;
-	} extra_args = {0, 0, HANDLE_INVALID, 0};
-	*pointer =
-	    (void *)syscall5(Sys_VirtualMemoryAlloc, HANDLE_CURRENT, NULL, sz, &extra_args, NULL);
-	return 0;
-}
-
-int sys_anon_free(void *blk, size_t sz) {
-	return syscall3(Sys_VirtualMemoryFree, HANDLE_CURRENT, blk, sz) == 0 ? 0 : ENOSYS;
-}
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	obos_status status = (obos_status)syscall3(
@@ -907,6 +891,22 @@ int sys_fsync(int fd) { return parse_file_status((obos_status)syscall1(Sys_FdFlu
 
 int sys_fdatasync(int fd) { return sys_fsync(fd); }
 
+int sys_anon_allocate(size_t sz, void **pointer) {
+	struct {
+		uint32_t prot;
+		uint32_t flags;
+		handle file;
+		uintptr_t offset;
+	} extra_args = {0, 0, HANDLE_INVALID, 0};
+	*pointer =
+	    (void *)syscall5(Sys_VirtualMemoryAlloc, HANDLE_CURRENT, NULL, sz, &extra_args, NULL);
+	return 0;
+}
+
+int sys_anon_free(void *blk, size_t sz) {
+	return syscall3(Sys_VirtualMemoryFree, HANDLE_CURRENT, blk, sz) == 0 ? 0 : EINVAL;
+}
+
 int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
 	unsigned real_flags = 0;
 	unsigned prot_flags = 0;
@@ -956,7 +956,51 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 		case OBOS_STATUS_NOT_ENOUGH_MEMORY:
 			return ENOMEM;
 		default:
-			return ENOSYS;
+			sys_libc_log("unknown error code from Sys_VirtualMemoryAlloc, returning EINVAL\n");
+			return EINVAL;
+	}
+}
+
+int sys_mlock(const void *addr, size_t length) {
+	obos_status status = (obos_status)syscall3(Sys_VirtualMemoryLock, HANDLE_CURRENT, addr, length);
+	switch (status) {
+		case OBOS_STATUS_SUCCESS:
+			return 0;
+		case OBOS_STATUS_INVALID_ARGUMENT:
+			return EINVAL;
+		case OBOS_STATUS_IN_USE:
+			return EEXIST;
+		case OBOS_STATUS_UNINITIALIZED:
+			return EACCES;
+		case OBOS_STATUS_NOT_ENOUGH_MEMORY:
+			return ENOMEM;
+		case OBOS_STATUS_NOT_FOUND:
+			return EINVAL;
+		default:
+			sys_libc_log("unknown error code from Sys_VirtualMemoryLock, returning EINVAL\n");
+			return EINVAL;
+	}
+}
+
+int sys_munlock(const void *addr, size_t length)
+{
+	obos_status status = (obos_status)syscall3(Sys_VirtualMemoryUnlock, HANDLE_CURRENT, addr, length);
+	switch (status) {
+		case OBOS_STATUS_SUCCESS:
+			return 0;
+		case OBOS_STATUS_INVALID_ARGUMENT:
+			return EINVAL;
+		case OBOS_STATUS_IN_USE:
+			return EEXIST;
+		case OBOS_STATUS_UNINITIALIZED:
+			return EACCES;
+		case OBOS_STATUS_NOT_ENOUGH_MEMORY:
+			return ENOMEM;
+		case OBOS_STATUS_NOT_FOUND:
+			return EINVAL;
+		default:
+			sys_libc_log("unknown error code from Sys_VirtualMemoryUnlock, returning EINVAL\n");
+			return EINVAL;
 	}
 }
 
@@ -983,7 +1027,8 @@ int sys_vm_protect(void *pointer, size_t size, int prot) {
 		case OBOS_STATUS_NOT_FOUND:
 			return EINVAL;
 		default:
-			return ENOSYS;
+			sys_libc_log("unknown error code from Sys_VirtualMemoryProtect, returning EINVAL\n");
+			return EINVAL;
 	}
 }
 
