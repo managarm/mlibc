@@ -143,7 +143,6 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_mlock(const void *addr, size_t length);
 [[gnu::weak]] int sys_munlock(const void *addr, size_t length);
 [[gnu::weak]] int sys_mlockall(int flags);
-[[gnu::weak]] int sys_mlock(const void *addr, size_t len);
 [[gnu::weak]] int sys_munlockall(void);
 [[gnu::weak]] int sys_mincore(void *addr, size_t length, unsigned char *vec);
 
