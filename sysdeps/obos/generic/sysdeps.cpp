@@ -23,6 +23,8 @@
 #include <abi-bits/vm-flags.h>
 #include <unistd.h>
 
+#include <bits/ensure.h>
+
 namespace mlibc {
 
 int sys_get_current_stack_info(void **stack_base, size_t *stack_size) {
@@ -705,25 +707,45 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 	return parse_file_status((obos_status)syscall5(Sys_Stat, fsfdt, fd, path, flags, statbuf));
 }
 
+static bool group_cmp(gid_t against) {
+	const gid_t gid = sys_getgid();
+	if (gid == against)
+		return true;
+#ifndef MLIBC_BUILDING_RTLD
+	int ret = 0;
+	__ensure(sys_getgroups(0, nullptr, &ret) == 0);
+	gid_t *gids = (gid_t *)calloc(ret, sizeof(gid_t));
+	const int count = ret;
+	__ensure(sys_getgroups(count, gids, &ret) == 0);
+	for (int i = 0; i < count; i++) {
+		if (gids[i] == against) {
+			free(gids);
+			return true;
+		}
+	}
+	free(gids);
+#endif
+	return false;
+}
+
 static int access_common(struct stat *st, int mode) {
 	const uid_t uid = sys_getuid();
-	const gid_t gid = sys_getgid();
 
 	mode_t mode_mask = 0;
 	if (uid == st->st_uid)
 		mode_mask |=
-		    (((mode & R_OK) ? 0400 : 0000) | ((mode & W_OK) ? 0200 : 0000) | (mode & X_OK) ? 0100
-		                                                                                   : 0000);
-	else if (gid == st->st_gid)
+		    (((mode & R_OK) ? 0400 : 0000) | ((mode & W_OK) ? 0200 : 0000)
+		     | ((mode & X_OK) ? 0100 : 0000));
+	else if (group_cmp(st->st_gid))
 		mode_mask |=
-		    (((mode & R_OK) ? 0040 : 0000) | ((mode & W_OK) ? 0020 : 0000) | (mode & X_OK) ? 0010
-		                                                                                   : 0000);
+		    (((mode & R_OK) ? 0040 : 0000) | ((mode & W_OK) ? 0020 : 0000)
+		     | ((mode & X_OK) ? 0010 : 0000));
 	else
 		mode_mask |=
-		    (((mode & R_OK) ? 0004 : 0000) | ((mode & W_OK) ? 0002 : 0000) | (mode & X_OK) ? 0001
-		                                                                                   : 0000);
+		    (((mode & R_OK) ? 0004 : 0000) | ((mode & W_OK) ? 0002 : 0000)
+		     | ((mode & X_OK) ? 0001 : 0000));
 
-	return ((st->st_mode & 777) & mode_mask) == mode_mask;
+	return (((st->st_mode & 0777) & mode_mask) == mode_mask) ? 0 : EACCES;
 }
 
 int sys_access(const char *path, int mode) {
