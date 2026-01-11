@@ -143,7 +143,6 @@ int sys_close(int fd);
 [[gnu::weak]] int sys_mlock(const void *addr, size_t length);
 [[gnu::weak]] int sys_munlock(const void *addr, size_t length);
 [[gnu::weak]] int sys_mlockall(int flags);
-[[gnu::weak]] int sys_mlock(const void *addr, size_t len);
 [[gnu::weak]] int sys_munlockall(void);
 [[gnu::weak]] int sys_mincore(void *addr, size_t length, unsigned char *vec);
 
@@ -253,6 +252,8 @@ int sys_vm_unmap(void *pointer, size_t size);
 
 [[gnu::weak]] int sys_setaffinity(pid_t pid, size_t cpusetsize, const cpu_set_t *mask);
 [[gnu::weak]] int sys_setthreadaffinity(pid_t tid, size_t cpusetsize, const cpu_set_t *mask);
+
+[[gnu::weak]] int sys_get_current_stack_info(void **stack_base, size_t *stack_size);
 
 [[gnu::weak]] int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options);
 
