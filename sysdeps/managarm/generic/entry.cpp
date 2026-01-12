@@ -105,18 +105,20 @@ HelHandle getHandleForFd(int fd) {
 
 void clearCachedInfos() { has_cached_infos = PTHREAD_ONCE_INIT; }
 
-void resetCancellationId() {
+bool cancellationRequested() {
 	pthread_once(&has_cached_infos, &actuallyCacheInfos);
-	__atomic_store_n(&__mlibc_cached_thread_page->cancellationId, 0, __ATOMIC_RELEASE);
+	return __mlibc_cached_thread_page->cancellationRequested;
 }
 
-void setCancellationId(uint64_t id, HelHandle handle, int fd) {
+void resetCancellationRequested() {
 	pthread_once(&has_cached_infos, &actuallyCacheInfos);
+	__mlibc_cached_thread_page->cancellationRequested = false;
+}
 
-	__mlibc_cached_thread_page->lane = handle;
-	__mlibc_cached_thread_page->fd = fd;
-
-	__atomic_store_n(&__mlibc_cached_thread_page->cancellationId, id, __ATOMIC_RELEASE);
+void setQueueHandle(HelHandle queue) {
+	pthread_once(&has_cached_infos, &actuallyCacheInfos);
+	if (__mlibc_cached_thread_page)
+		__mlibc_cached_thread_page->queueHandle = queue;
 }
 
 namespace {
