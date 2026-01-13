@@ -29,6 +29,8 @@ struct KeyronexSysdepTags :
 	Renameat,
 	Rename,
 	Stat,
+	Readlinkat,
+	Readlink,
 	Close,
 	Read,
 	Readv,

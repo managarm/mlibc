@@ -247,6 +247,25 @@ Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int flags
 	return -r;
 }
 
+int
+Sysdeps<Readlinkat>::operator()(int dirfd, const char *path, void *buffer,
+    size_t max_size, ssize_t *length)
+{
+	int r = syscall4(SYS_readlinkat, dirfd, (uintptr_t)path,
+	    (uintptr_t)buffer, max_size, NULL);
+	if (r < 0)
+		return -r;
+	*length = r;
+	return 0;
+}
+
+int
+Sysdeps<Readlink>::operator()(const char *path, void *buffer, size_t max_size,
+    ssize_t *length)
+{
+	return sysdep<Readlinkat>(AT_FDCWD, path, buffer, max_size, length);
+}
+
 /* open file ops */
 
 int
