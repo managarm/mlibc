@@ -328,7 +328,14 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	actions[2].length = tail.size();
 	actions[3].type = kHelActionRecvInline;
 	actions[3].flags = 0;
-	HEL_CHECK(helSubmitAsync(posixLane, actions, 4, globalQueue->getHandle(), 0, 0));
+
+	HelSqExchangeMsgs sqHeader;
+	sqHeader.lane = posixLane;
+	sqHeader.count = 4;
+	sqHeader.flags = 0;
+	const void *segments[] = {&sqHeader, actions};
+	size_t segmentSizes[] = {sizeof(sqHeader), 4 * sizeof(HelAction)};
+	globalQueue->pushSq(kHelSubmitExchangeMsgs, 0, segments, segmentSizes, 2);
 
 	auto element = globalQueue->dequeueSingle();
 	auto offer = parseHandle(element);
@@ -374,7 +381,14 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(lane, actions, 3, globalQueue->getHandle(), 0, 0));
+
+	HelSqExchangeMsgs sqHeader;
+	sqHeader.lane = lane;
+	sqHeader.count = 3;
+	sqHeader.flags = 0;
+	const void *segments[] = {&sqHeader, actions};
+	size_t segmentSizes[] = {sizeof(sqHeader), 3 * sizeof(HelAction)};
+	globalQueue->pushSq(kHelSubmitExchangeMsgs, 0, segments, segmentSizes, 2);
 
 	auto element = globalQueue->dequeueSingle();
 	auto offer = parseHandle(element);
@@ -420,7 +434,14 @@ int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read) {
 	actions[4].flags = 0;
 	actions[4].buffer = data;
 	actions[4].length = length;
-	HEL_CHECK(helSubmitAsync(lane, actions, 5, globalQueue->getHandle(), 0, 0));
+
+	HelSqExchangeMsgs sqHeader;
+	sqHeader.lane = lane;
+	sqHeader.count = 5;
+	sqHeader.flags = 0;
+	const void *segments[] = {&sqHeader, actions};
+	size_t segmentSizes[] = {sizeof(sqHeader), 5 * sizeof(HelAction)};
+	globalQueue->pushSq(kHelSubmitExchangeMsgs, 0, segments, segmentSizes, 2);
 
 	auto element = globalQueue->dequeueSingle();
 	auto offer = parseHandle(element);
@@ -466,7 +487,14 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(posixLane, actions, 3, globalQueue->getHandle(), 0, 0));
+
+	HelSqExchangeMsgs sqHeader;
+	sqHeader.lane = posixLane;
+	sqHeader.count = 3;
+	sqHeader.flags = 0;
+	const void *segments[] = {&sqHeader, actions};
+	size_t segmentSizes[] = {sizeof(sqHeader), 3 * sizeof(HelAction)};
+	globalQueue->pushSq(kHelSubmitExchangeMsgs, 0, segments, segmentSizes, 2);
 
 	auto element = globalQueue->dequeueSingle();
 	auto offer = parseHandle(element);
@@ -504,7 +532,13 @@ int sys_close(int fd) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(posixLane, actions, 3, globalQueue->getHandle(), 0, 0));
+	HelSqExchangeMsgs sqHeader;
+	sqHeader.lane = posixLane;
+	sqHeader.count = 3;
+	sqHeader.flags = 0;
+	const void *segments[] = {&sqHeader, actions};
+	size_t segmentSizes[] = {sizeof(sqHeader), 3 * sizeof(HelAction)};
+	globalQueue->pushSq(kHelSubmitExchangeMsgs, 0, segments, segmentSizes, 2);
 
 	auto element = globalQueue->dequeueSingle();
 	auto offer = parseHandle(element);
@@ -568,7 +602,13 @@ int sys_vm_protect(void *pointer, size_t size, int prot) {
 	actions[1].length = ser.size();
 	actions[2].type = kHelActionRecvInline;
 	actions[2].flags = 0;
-	HEL_CHECK(helSubmitAsync(posixLane, actions, 3, globalQueue->getHandle(), 0, 0));
+	HelSqExchangeMsgs sqHeader;
+	sqHeader.lane = posixLane;
+	sqHeader.count = 3;
+	sqHeader.flags = 0;
+	const void *segments[] = {&sqHeader, actions};
+	size_t segmentSizes[] = {sizeof(sqHeader), 3 * sizeof(HelAction)};
+	globalQueue->pushSq(kHelSubmitExchangeMsgs, 0, segments, segmentSizes, 2);
 
 	auto element = globalQueue->dequeueSingle();
 	auto offer = parseHandle(element);

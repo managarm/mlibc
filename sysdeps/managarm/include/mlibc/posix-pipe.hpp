@@ -404,9 +404,17 @@ auto exchangeMsgsSync(HelHandle descriptor, Args &&...args) {
 	auto results = helix_ng::createResultsTuple(args...);
 	auto actions = helix_ng::chainActionArrays(args...);
 
-	HEL_CHECK(
-	    helSubmitAsync(descriptor, actions.data(), actions.size(), globalQueue.getQueue(), 0, 0)
-	);
+	HelSqExchangeMsgs header;
+	header.lane = descriptor;
+	header.count = actions.size();
+	header.flags = 0;
+
+	frg::array<frg::span<const std::byte>, 2> segments{
+		frg::span<const std::byte>{reinterpret_cast<const std::byte *>(&header), sizeof(header)},
+		frg::span<const std::byte>{reinterpret_cast<const std::byte *>(actions.data()),
+		                           actions.size() * sizeof(HelAction)}
+	};
+	globalQueue.pushSq(kHelSubmitExchangeMsgs, 0, segments);
 
 	auto element = globalQueue.dequeueSingle();
 	void *ptr = element.data();
@@ -423,9 +431,17 @@ auto exchangeMsgsSyncCancellable(HelHandle descriptor, uint64_t cancelId, int fd
 	auto results = helix_ng::createResultsTuple(args...);
 	auto actions = helix_ng::chainActionArrays(args...);
 
-	HEL_CHECK(
-	    helSubmitAsync(descriptor, actions.data(), actions.size(), globalQueue.getQueue(), 0, 0)
-	);
+	HelSqExchangeMsgs header;
+	header.lane = descriptor;
+	header.count = actions.size();
+	header.flags = 0;
+
+	frg::array<frg::span<const std::byte>, 2> segments{
+		frg::span<const std::byte>{reinterpret_cast<const std::byte *>(&header), sizeof(header)},
+		frg::span<const std::byte>{reinterpret_cast<const std::byte *>(actions.data()),
+		                           actions.size() * sizeof(HelAction)}
+	};
+	globalQueue.pushSq(kHelSubmitExchangeMsgs, 0, segments);
 
 	frg::optional<ElementHandle> element{};
 

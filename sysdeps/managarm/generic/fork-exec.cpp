@@ -177,9 +177,12 @@ int sys_sleep(time_t *secs, long *nanos) {
 	uint64_t now;
 	HEL_CHECK(helGetClock(&now));
 
-	HEL_CHECK(helSubmitAwaitClock(
-	    now + uint64_t(*secs) * 1000000000 + uint64_t(*nanos), globalQueue.getQueue(), 0, 0
-	));
+	HelSqAwaitClock sqData{};
+	sqData.counter = now + uint64_t(*secs) * 1000000000 + uint64_t(*nanos);
+	frg::array<frg::span<const std::byte>, 1> segments{
+	    frg::span<const std::byte>{reinterpret_cast<const std::byte *>(&sqData), sizeof(sqData)}
+	};
+	globalQueue.pushSq(kHelSubmitAwaitClock, 0, segments);
 
 	auto element = globalQueue.dequeueSingle();
 	auto result = parseSimple(element);
