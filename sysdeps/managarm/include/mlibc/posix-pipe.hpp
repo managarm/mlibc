@@ -11,6 +11,11 @@
 #include <frg/optional.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
+#include <protocols/posix/data.hpp>
+#include <protocols/posix/supercalls.hpp>
+
+void resetCancellationRequested();
+void setQueueHandle(HelHandle queue);
 
 struct SignalGuard {
 	SignalGuard();
@@ -86,6 +91,7 @@ struct Queue {
 		// Setup the queue header.
 		HelQueueParameters params{.flags = 0, .numChunks = 2, .chunkSize = 4096};
 		HEL_CHECK(helCreateQueue(&params, &_handle));
+		setQueueHandle(_handle);
 
 		auto chunksOffset = (sizeof(HelQueue) + 63) & ~size_t(63);
 		auto reservedPerChunk = (sizeof(HelChunk) + params.chunkSize + 63) & ~size_t(63);
@@ -165,6 +171,8 @@ struct Queue {
 			auto result = dequeueSingleUnlessCancelled();
 			if (result)
 				return *result;
+			else
+				resetCancellationRequested();
 		}
 	}
 
@@ -216,7 +224,9 @@ private:
 			return result;
 
 		while (true) {
-			__atomic_fetch_and(&_queue->userNotify, ~kHelUserNotifyCqProgress, __ATOMIC_ACQUIRE);
+			auto fetch = __atomic_fetch_and(&_queue->userNotify, ~(kHelUserNotifyCqProgress | kHelUserNotifyAlert), __ATOMIC_ACQUIRE);
+			if (fetch & kHelUserNotifyAlert)
+				return FutexProgress::CANCELLED;
 
 			if (auto result = check(); result != FutexProgress::NONE)
 				return result;
@@ -289,6 +299,7 @@ HelHandle *cacheFileTable();
 HelHandle getHandleForFd(int fd);
 void resetCancellationId();
 void setCancellationId(uint64_t event, HelHandle handle, int fd);
+bool cancellationRequested();
 void clearCachedInfos();
 uint64_t allocateCancellationId();
 
@@ -324,16 +335,27 @@ auto exchangeMsgsSyncCancellable(HelHandle descriptor, uint64_t cancelId, int fd
 	HEL_CHECK(
 	    helSubmitAsync(descriptor, actions.data(), actions.size(), globalQueue.getQueue(), 0, 0)
 	);
-	setCancellationId(cancelId, descriptor, fd);
 
-	auto element = globalQueue.dequeueSingle();
-	void *ptr = element.data();
+	frg::optional<ElementHandle> element{};
+
+	do {
+		element = globalQueue.dequeueSingleUnlessCancelled();
+
+		if (cancellationRequested()) {
+			HEL_CHECK(helSyscall2(
+				kHelCallSuper + posix::superCancel,
+				cancelId,
+				fd
+			));
+			resetCancellationRequested();
+		}
+	} while (!element);
+
+	void *ptr = element->data();
 
 	[&]<size_t... p>(std::index_sequence<p...>) {
-		(results.template get<p>().parse(ptr, element), ...);
+		(results.template get<p>().parse(ptr, *element), ...);
 	}(std::make_index_sequence<std::tuple_size_v<decltype(results)>>{});
-
-	resetCancellationId();
 
 	return results;
 }
