@@ -379,6 +379,53 @@ int sys_futex_wake(int *pointer) {
 
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
 #if defined(__x86_64__)
+	static struct {
+		long rtc_time_offset;
+		uint64_t rtc_time_offset_rel; // the time rtc_time_offset was recorded at.
+		uint64_t tsc_frequency;
+		double factor;
+		bool tsc_exists;
+		bool tsc_probed;
+	} timing_info;
+
+	if (__builtin_expect(!timing_info.tsc_probed, false)) {
+		timing_info.tsc_probed = true;
+		timing_info.tsc_frequency = syscall0(SysS_QueryTSCFrequency);
+		if (timing_info.tsc_frequency != UINT64_MAX && timing_info.tsc_frequency != OBOS_STATUS_UNIMPLEMENTED) {
+			syscall3(SysS_ClockGet, 0, nullptr, &timing_info.rtc_time_offset);
+			timing_info.rtc_time_offset_rel = __builtin_ia32_rdtsc();
+			timing_info.tsc_exists = true;
+			timing_info.factor = 1000000000 / timing_info.tsc_frequency;
+		}
+		else {
+			timing_info.tsc_exists = false;
+		}
+	}
+
+	if (__builtin_expect(timing_info.tsc_exists, true)) {
+		switch (clock) {
+			case 0:
+			{
+				uint64_t tstamp = __builtin_ia32_rdtsc() - timing_info.rtc_time_offset_rel;
+				tstamp *= timing_info.factor;
+
+				*nanos = timing_info.rtc_time_offset + tstamp;
+				*secs = (timing_info.rtc_time_offset + tstamp) / 1000000000;
+				break;
+			}
+			case 1:
+			{
+				*nanos = __builtin_ia32_rdtsc();
+				*secs = *nanos / 1000000000;
+				break;
+			}
+			default:
+			    return ENOSYS;
+		}
+
+		return 0;
+	}
+
 	// NOTE(oberrow): This clock is not precise.
 	obos_status st = (obos_status)syscall3(SysS_ClockGet, clock, secs, nanos);
 	switch (st) {
