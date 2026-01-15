@@ -160,6 +160,7 @@ enum {
 	SysS_GDBStubBindInet,
 	SysS_GDBStubBindDevice,
 	SysS_GDBStubStart,
+	SysS_QueryTSCFrequency,
 };
 #elif defined(__m68k__)
 enum {
