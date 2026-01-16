@@ -114,7 +114,7 @@ struct alignas(4) FutexLockImpl {
 		if(state & waitersBit) {
 			// Wake the futex if there were waiters. Since the mutex might not exist at this location
 			// anymore, we must conservatively ignore EACCES and EINVAL which may occur as a result.
-			int e = mlibc::sys_futex_wake((int *)&_state);
+			int e = mlibc::sys_futex_wake((int *)&_state, true);
 			__ensure(e >= 0 || e == EACCES || e == EINVAL);
 		}
 	}
