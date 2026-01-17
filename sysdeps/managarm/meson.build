@@ -5,84 +5,6 @@ sysdep_supported_options = {
 	'bsd': true,
 }
 
-managarm = subproject('managarm', default_options: [ 'provide_deps=true' ])
-hel_dep = managarm.get_variable('hel_dep')
-proto_posix_dep = managarm.get_variable('posix_extra_dep')
-
-bragi = find_program('bragi')
-bragi_dep = subproject('bragi', default_options: ['install_headers=false']).get_variable('bragi_dep')
-
-libdrm_dep = subproject('libdrm-headers').get_variable('libdrm_dep')
-
-bragi_gen = generator(bragi, arguments: [
-		'@INPUT@',
-		'-o',
-		'@OUTPUT@',
-		'cpp', '-l', 'frigg',
-		'--protobuf',
-	],
-	output: '@BASENAME@.frigg_bragi.hpp')
-
-fs_bragi = bragi_gen.process(managarm.get_variable('fs_bragi_files'))
-posix_bragi = bragi_gen.process(managarm.get_variable('posix_bragi_files'))
-
-rtld_sources += files(
-	'generic/ensure.cpp',
-	'generic/memory.cpp',
-	'rtld-generic/support.cpp',
-)
-rtld_sources += [
-	fs_bragi,
-	posix_bragi,
-]
-
-libc_deps += [ bragi_dep, hel_dep, proto_posix_dep, libdrm_dep ]
-rtld_deps += [ bragi_dep, hel_dep, proto_posix_dep ]
-
-libc_sources += files(
-	'generic/capability.cpp',
-	'generic/drm.cpp',
-	'generic/ensure.cpp',
-	'generic/entry.cpp',
-	'generic/file.cpp',
-	'generic/fork-exec.cpp',
-	'generic/ioctl.cpp',
-	'generic/memory.cpp',
-	'generic/mount.cpp',
-	'generic/net.cpp',
-	'generic/sched.cpp',
-	'generic/signals.cpp',
-	'generic/socket.cpp',
-	'generic/time.cpp'
-)
-libc_sources += [
-	fs_bragi,
-	posix_bragi,
-]
-
-if host_machine.cpu_family() == 'aarch64'
-	libc_sources += files(
-		'aarch64/signals.S',
-		'aarch64/thread_entry.S',
-		'aarch64/thread.cpp'
-	)
-elif host_machine.cpu_family() == 'x86_64'
-	libc_sources += files(
-		'x86_64/signals.S',
-		'x86_64/thread_entry.S',
-		'x86_64/thread.cpp',
-		'x86_64/assembly-asserts.cpp',
-	)
-elif host_machine.cpu_family() == 'riscv64'
-	libc_sources += files(
-		'riscv64/signals.S',
-		'riscv64/thread_entry.S',
-		'riscv64/thread.cpp',
-	)
-else
-	error('Unknown architecture')
-endif
-
 if not no_headers
 	install_headers(
 		'include/abi-bits/access.h',
@@ -157,28 +79,106 @@ if not no_headers
 	endif
 endif
 
-if not headers_only
-	crtstuff = ['crt0']
-	if host_machine.cpu_family() in ['x86_64', 'aarch64', 'riscv64']
-		crtstuff += [
-			'Scrt1',
-			'crti',
-			'crtn'
-		]
-	endif
-	foreach crtthing : crtstuff
-		crtf = crtthing + '.S'
-		crt_src = files(host_machine.cpu_family() / 'crt-src' / crtf)
-		crt = custom_target(
-			crtthing,
-			build_by_default: true,
-			command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-			input: crt_src,
-			output: crtthing + '.o',
-			install: true,
-			install_dir: get_option('libdir')
-		)
-	endforeach
-
+if headers_only
+	subdir_done()
 endif
 
+managarm = subproject('managarm', default_options: [ 'provide_deps=true' ])
+hel_dep = managarm.get_variable('hel_dep')
+proto_posix_dep = managarm.get_variable('posix_extra_dep')
+
+bragi = find_program('bragi')
+bragi_dep = dependency('bragi', method: 'pkg-config')
+
+libdrm_dep = subproject('libdrm-headers').get_variable('libdrm_dep')
+
+bragi_gen = generator(bragi, arguments: [
+		'@INPUT@',
+		'-o',
+		'@OUTPUT@',
+		'cpp', '-l', 'frigg',
+		'--protobuf',
+	],
+	output: '@BASENAME@.frigg_bragi.hpp')
+
+fs_bragi = bragi_gen.process(managarm.get_variable('fs_bragi_files'))
+posix_bragi = bragi_gen.process(managarm.get_variable('posix_bragi_files'))
+
+rtld_sources += files(
+	'generic/ensure.cpp',
+	'generic/memory.cpp',
+	'rtld-generic/support.cpp',
+)
+rtld_sources += [
+	fs_bragi,
+	posix_bragi,
+]
+
+libc_deps += [ bragi_dep, hel_dep, proto_posix_dep, libdrm_dep ]
+rtld_deps += [ bragi_dep, hel_dep, proto_posix_dep ]
+
+libc_sources += files(
+	'generic/capability.cpp',
+	'generic/drm.cpp',
+	'generic/ensure.cpp',
+	'generic/entry.cpp',
+	'generic/file.cpp',
+	'generic/fork-exec.cpp',
+	'generic/ioctl.cpp',
+	'generic/memory.cpp',
+	'generic/mount.cpp',
+	'generic/net.cpp',
+	'generic/sched.cpp',
+	'generic/signals.cpp',
+	'generic/socket.cpp',
+	'generic/time.cpp'
+)
+libc_sources += [
+	fs_bragi,
+	posix_bragi,
+]
+
+if host_machine.cpu_family() == 'aarch64'
+	libc_sources += files(
+		'aarch64/signals.S',
+		'aarch64/thread_entry.S',
+		'aarch64/thread.cpp'
+	)
+elif host_machine.cpu_family() == 'x86_64'
+	libc_sources += files(
+		'x86_64/signals.S',
+		'x86_64/thread_entry.S',
+		'x86_64/thread.cpp',
+		'x86_64/assembly-asserts.cpp',
+	)
+elif host_machine.cpu_family() == 'riscv64'
+	libc_sources += files(
+		'riscv64/signals.S',
+		'riscv64/thread_entry.S',
+		'riscv64/thread.cpp',
+	)
+else
+	error('Unknown architecture')
+endif
+
+crtstuff = ['crt0']
+if host_machine.cpu_family() in ['x86_64', 'aarch64', 'riscv64']
+	crtstuff += [
+		'Scrt1',
+		'crti',
+		'crtn'
+	]
+endif
+foreach crtthing : crtstuff
+	crtf = crtthing + '.S'
+	crt_src = files(host_machine.cpu_family() / 'crt-src' / crtf)
+	crt = custom_target(
+		crtthing,
+		build_by_default: true,
+		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		input: crt_src,
+		output: crtthing + '.o',
+		install: true,
+		install_dir: get_option('libdir')
+	)
+endforeach
