@@ -1,3 +1,5 @@
+#include "mlibc-asm/helpers.h"
+
 # The functions below are taken from musl.
 .global feclearexcept
 .type feclearexcept,@function
@@ -98,5 +100,4 @@ fetestexcept:
 	and %edi,%eax
 	ret
 
-.section .note.GNU-stack,"",%progbits
-
+GNU_STACK_NOTE()

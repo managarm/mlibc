@@ -1,5 +1,7 @@
 #include <bits/ansi/fenv.h>
 
+#include "mlibc-asm/helpers.h"
+
 .global feclearexcept
 .type feclearexcept,@function
 feclearexcept:
@@ -108,4 +110,4 @@ fetestexcept:
 	and.l 4(%sp), %d0
 	rts
 
-.section .note.GNU-stack,"",%progbits
+GNU_STACK_NOTE()
