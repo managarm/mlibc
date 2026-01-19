@@ -184,9 +184,8 @@ struct Queue {
 			                 _sqProgress | kHelProgressDone, __ATOMIC_RELEASE);
 
 			// Signal the kernel.
-			auto futex = __atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySqProgress, __ATOMIC_RELEASE);
-			if (!(futex & kHelKernelNotifySqProgress))
-				HEL_CHECK(helDriveQueue(_handle, 0));
+			// Note: We do not call helDriveQueue() here; instead this is done at the next dequeue.
+			__atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySqProgress, __ATOMIC_RELEASE);
 
 			_sqCurrentChunk = nextWord & ~kHelNextPresent;
 			_sqProgress = 0;
@@ -213,9 +212,8 @@ struct Queue {
 		__atomic_store_n(&_sqChunks[_sqCurrentChunk - 2]->progressFutex, _sqProgress, __ATOMIC_RELEASE);
 
 		// Signal the kernel.
-		auto futex = __atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySqProgress, __ATOMIC_RELEASE);
-		if (!(futex & kHelKernelNotifySqProgress))
-			HEL_CHECK(helDriveQueue(_handle, 0));
+		// Note: We do not call helDriveQueue() here; instead this is done at the next dequeue.
+		__atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySqProgress, __ATOMIC_RELEASE);
 	}
 
 	frg::optional<ElementHandle> dequeueSingleUnlessCancelled() {
