@@ -1,0 +1,6 @@
+[wrap-git]
+url = https://github.com/managarm/bragi.git
+revision = '523b86efac124b0d749eed201df0c7ea9f87ee17'
+
+[provide]
+bragi = bragi_dep
