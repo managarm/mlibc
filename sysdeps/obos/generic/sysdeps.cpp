@@ -344,7 +344,7 @@ int sys_setpgid(pid_t pid, pid_t pgid) {
 	__builtin_unreachable();
 }
 
-[[noreturn]] void sys_thread_exit() { sys_exit(0); }
+[[noreturn]] void sys_thread_exit() { syscall0(Sys_ExitCurrentThread); }
 
 int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	obos_status status = (obos_status)syscall3(
