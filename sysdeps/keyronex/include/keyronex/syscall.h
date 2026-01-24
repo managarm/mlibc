@@ -9,6 +9,8 @@ enum posix_syscall {
 	SYS_fork,
 	SYS_execve,
 	SYS_wait4,
+	SYS_pdfork,
+	SYS_pdwait,
 	SYS_getpid,
 	SYS_getppid,
 
@@ -29,6 +31,7 @@ enum posix_syscall {
 
 	/* signals */
 	SYS_kill,
+	SYS_pdkill,
 	SYS_sigaction,
 	SYS_sigentry,
 	SYS_sigprocmask,
