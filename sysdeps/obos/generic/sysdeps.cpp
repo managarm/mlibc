@@ -633,6 +633,8 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 		real_flags |= 4 /* FD_OFLAGS_UNCACHED */;
 	if (flags & O_CREAT)
 		real_flags |= 16 /* FD_OFLAGS_CREATE */;
+	if (flags & O_NOCTTY)
+		real_flags |= 64 /* FD_OFLAGS_NOCTTY */;
 
 	handle hnd = syscall0(Sys_FdAlloc);
 	obos_status st = (obos_status)syscall5(Sys_FdOpenAtEx, hnd, dirfd, path, real_flags, mode);
@@ -672,6 +674,8 @@ int sys_open(const char *pathname, int flags, mode_t mode, int *fd) {
 		real_flags |= 4 /* FD_OFLAGS_UNCACHED */;
 	if (flags & O_CREAT)
 		real_flags |= 16 /* FD_OFLAGS_CREATE */;
+	if (flags & O_NOCTTY)
+		real_flags |= 64 /* FD_OFLAGS_NOCTTY */;
 
 	obos_status st = OBOS_STATUS_SUCCESS;
 
