@@ -20,7 +20,7 @@ extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, Tcb *tcb) {
 	auto self = reinterpret_cast<Tcb *>(tcb);
 
 	__atomic_store_n(&self->didExit, 1, __ATOMIC_RELEASE);
-	mlibc::sys_futex_wake(&self->didExit);
+	mlibc::sys_futex_wake(&self->didExit, true);
 
 	mlibc::sys_thread_exit();
 }
