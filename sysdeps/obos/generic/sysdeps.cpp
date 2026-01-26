@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <sys/stat.h>
 
@@ -451,6 +452,32 @@ int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new
 	return parse_file_status(
 	    (obos_status)syscall5(Sys_LinkAt, olddirfd, old_path, newdirfd, new_path, flags)
 	);
+}
+
+// Copied from linux sysdep.
+
+#define TIOCGPTN 0x80045430U
+#define TIOCSPTLCK 0x40045431U
+
+#ifndef MLIBC_BUILDING_RTLD
+int sys_ptsname(int fd, char *buffer, size_t length) {
+	int index;
+	if(int e = sys_ioctl(fd, TIOCGPTN, &index, nullptr); e)
+		return e;
+	if((size_t)snprintf(buffer, length, "/dev/pts/%d", index) >= length) {
+		return ERANGE;
+	}
+	return 0;
+}
+#endif
+
+int sys_unlockpt(int fd) {
+	int unlock = 0;
+
+	if(int e = sys_ioctl(fd, TIOCSPTLCK, &unlock, nullptr); e)
+		return e;
+
+	return 0;
 }
 
 int sys_symlink(const char *target_path, const char *link_path) {
