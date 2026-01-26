@@ -150,6 +150,8 @@ enum {
 	Sys_GetGroups,
 	Sys_GetCachedByteCount,
 	Sys_GetHDADevices,
+	Sys_SetSid,
+	Sys_GetSid,
 };
 
 #if defined(__x86_64__)

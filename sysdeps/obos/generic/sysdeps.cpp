@@ -334,6 +334,23 @@ int sys_setpgid(pid_t pid, pid_t pgid) {
 	return ec;
 }
 
+// Sanity check
+static_assert(sizeof(pid_t) == sizeof(uint32_t), "unsupported pid_t size");
+
+int sys_setsid(pid_t *sid) {
+	return parse_pgid_status((obos_status)syscall2(Sys_SetSid, HANDLE_CURRENT, sid));
+}
+
+int sys_getsid(pid_t pid, pid_t *sid) {
+	handle hnd = pid != 0 ? (handle)syscall1(Sys_ProcessOpen, pid) : HANDLE_CURRENT;
+	if (HANDLE_TYPE(hnd) == HANDLE_TYPE_INVALID)
+		return ESRCH;
+	int ec = parse_pgid_status((obos_status)syscall2(Sys_GetSid, hnd, sid));
+	if (hnd != HANDLE_CURRENT)
+		syscall1(Sys_HandleClose, hnd);
+	return ec;
+}
+
 [[noreturn]] void sys_libc_panic() {
 	sys_libc_log("mlibc panicked! exiting program...\n");
 	sys_exit(-1);
