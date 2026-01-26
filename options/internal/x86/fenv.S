@@ -1,3 +1,5 @@
+#include "mlibc-asm/helpers.h"
+
 # The functions below are taken from musl.
 
 .hidden __hwcap
@@ -165,4 +167,4 @@ fetestexcept:
 1:	and %ecx,%eax
 	ret
 
-.section .note.GNU-stack,"",%progbits
+GNU_STACK_NOTE()
