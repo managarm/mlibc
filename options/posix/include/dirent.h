@@ -89,6 +89,7 @@ long telldir(DIR *__dirp);
 
 #if __MLIBC_GLIBC_OPTION && defined(_GNU_SOURCE)
 int versionsort(const struct dirent **__a, const struct dirent **__b);
+ssize_t getdents64(int __fd, void *__dirp, size_t __count);
 #endif /* __MLIBC_GLIBC_OPTION && defined(_GNU_SOURCE) */
 
 #endif /* !__MLIBC_ABI_ONLY */
