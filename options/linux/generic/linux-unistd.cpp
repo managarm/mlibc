@@ -19,3 +19,8 @@ int syncfs(int fd) {
 	}
 	return 0;
 }
+
+ssize_t copy_file_range(int, off_t *, int, off_t *, size_t, unsigned int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
