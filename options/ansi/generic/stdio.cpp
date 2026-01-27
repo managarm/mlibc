@@ -496,15 +496,6 @@ int rename(const char *path, const char *new_path) {
 	return 0;
 }
 
-int renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_renameat, -1);
-	if(int e = mlibc::sys_renameat(olddirfd, old_path, newdirfd, new_path); e) {
-		errno = e;
-		return -1;
-	}
-	return 0;
-}
-
 FILE *tmpfile(void) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_unlinkat, nullptr);
 
