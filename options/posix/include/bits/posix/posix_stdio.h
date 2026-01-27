@@ -38,6 +38,12 @@ FILE *open_memstream(char **__buf, size_t *__sizeloc);
 int fseeko(FILE *__stream, off_t __offset, int __whence);
 off_t ftello(FILE *__stream);
 
+int renameat(int __olddirfd, const char *__old_path, int __newdirfd, const char *__new_path);
+
+#if __MLIBC_LINUX_OPTION
+int renameat2(int __olddirfd, const char *__old_path, int __newdirfd, const char *__new_path, unsigned int __flags);
+#endif /* !__MLIBC_LINUX_OPTION */
+
 #if __MLIBC_LINUX_OPTION && defined(_LARGEFILE64_SOURCE)
 int fseeko64(FILE *__stream, off64_t __offset, int __whence);
 off64_t ftello64(FILE *__stream);
