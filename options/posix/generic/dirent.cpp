@@ -204,4 +204,8 @@ int versionsort(const struct dirent **a, const struct dirent **b) {
 	return strverscmp((*a)->d_name, (*b)->d_name);
 }
 
+ssize_t getdents64(int fd, void *dirp, size_t count) {
+	return posix_getdents(fd, dirp, count, 0);
+}
+
 #endif // __MLIBC_GLIBC_OPTION
