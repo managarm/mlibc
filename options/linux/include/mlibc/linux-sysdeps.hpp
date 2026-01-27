@@ -100,6 +100,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result);
 [[gnu::weak]] int sys_move_mount(int from_dirfd, const char *from_path, int to_dirfd, const char *to_path, unsigned int flags);
 [[gnu::weak]] int sys_open_tree(int dirfd, const char *path, unsigned int flags);
 
+[[gnu::weak]] int sys_copy_file_range(int fd_in, off_t *off_in, int fd_out, off_t *off_out, size_t count, unsigned int flags, ssize_t *bytes_copied);
+
 } // namespace mlibc
 
 #endif // MLIBX_LINUX_SYSDEPS
