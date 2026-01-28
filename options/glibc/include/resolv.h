@@ -31,7 +31,10 @@ int res_query(const char *__dname, int __class, int __type,
 
 int res_init(void);
 
-int dn_comp(const char *, unsigned char *, int, unsigned char **, unsigned char **);
+int dn_comp(const char *__exp_dn, unsigned char *__comp_dn, int __length,
+		unsigned char **__dnptrs, unsigned char **__lastdnptr);
+
+int dn_skipname(const unsigned char *__comp_dn, const unsigned char *__end);
 
 #endif /* !__MLIBC_ABI_ONLY */
 
