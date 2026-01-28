@@ -110,6 +110,8 @@
 #define PR_CAP_AMBIENT_LOWER 3
 #define PR_CAP_AMBIENT_CLEAR_ALL 4
 
+#define PR_SET_MEMORY_MERGE 67
+
 #ifndef __MLIBC_ABI_ONLY
 
 #ifdef __cplusplus
