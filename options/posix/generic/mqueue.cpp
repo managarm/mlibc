@@ -20,3 +20,8 @@ mqd_t mq_open(const char *, int, ...) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
+
+ssize_t mq_receive(mqd_t, char *, size_t, unsigned int *) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}

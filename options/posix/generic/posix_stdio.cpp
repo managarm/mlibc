@@ -221,3 +221,17 @@ FILE *fopencookie(void *cookie, const char *__restrict mode, cookie_io_functions
 	return frg::construct<mlibc::cookie_file>(getAllocator(), cookie, flags, funcs,
 		mlibc::file_dispose_cb<mlibc::cookie_file>);
 }
+
+int renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_renameat, -1);
+	if(int e = mlibc::sys_renameat(olddirfd, old_path, newdirfd, new_path); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
+}
+
+int renameat2(int, const char *, int, const char *, unsigned int) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
