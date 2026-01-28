@@ -31,6 +31,10 @@ struct statx_timestamp {
 #define STATX_MNT_ID 0x1000
 #define STATX_DIOALIGN 0x2000
 #define STATX_ALL 0xfff
+#define STATX_MNT_ID_UNIQUE 0x00004000U
+#define STATX_SUBVOL 0x00008000U
+#define STATX_WRITE_ATOMIC 0x00010000U
+#define STATX_DIO_READ_ALIGN 0x00020000U
 
 #define STATX_ATTR_COMPRESSED 0x4
 #define STATX_ATTR_IMMUTABLE 0x10
@@ -41,6 +45,7 @@ struct statx_timestamp {
 #define STATX_ATTR_MOUNT_ROOT 0x2000
 #define STATX_ATTR_VERITY 0x100000
 #define STATX_ATTR_DAX 0x200000
+#define STATX_ATTR_WRITE_ATOMIC 0x00400000
 
 struct statx {
 	__mlibc_uint32 stx_mask;
