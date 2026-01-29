@@ -8,9 +8,22 @@
 extern "C" {
 #endif
 
-#define NS_PACKETSZ 512
-#define NS_MAXDNAME 1025
-#define NS_MAXLABEL 63
+#define NS_PACKETSZ		512
+#define NS_MAXDNAME		1025
+#define NS_MAXMSG		65535
+#define NS_MAXCDNAME	255
+#define NS_MAXLABEL		63
+#define NS_HFIXEDSZ		12
+#define NS_QFIXEDSZ		4
+#define NS_RRFIXEDSZ	10
+#define NS_INT32SZ		4
+#define NS_INT16SZ		2
+#define NS_INT8SZ		1
+#define NS_INADDRSZ		4
+#define NS_IN6ADDRSZ	16
+#define NS_CMPRSFLGS	0xc0
+#define NS_DEFAULTPORT	53
+
 
 typedef	enum __ns_rcode {
 	ns_r_noerror = 0,
@@ -189,8 +202,20 @@ typedef struct {
 	unsigned	arcount :16;
 } HEADER;
 
-#define PACKETSZ	NS_PACKETSZ
-#define MAXDNAME	NS_MAXDNAME
+#define PACKETSZ		NS_PACKETSZ
+#define MAXDNAME		NS_MAXDNAME
+#define MAXCDNAME		NS_MAXCDNAME
+#define MAXLABEL		NS_MAXLABEL
+#define	HFIXEDSZ		NS_HFIXEDSZ
+#define QFIXEDSZ		NS_QFIXEDSZ
+#define RRFIXEDSZ		NS_RRFIXEDSZ
+#define	INT32SZ			NS_INT32SZ
+#define	INT16SZ			NS_INT16SZ
+#define INT8SZ			NS_INT8SZ
+#define	INADDRSZ		NS_INADDRSZ
+#define	IN6ADDRSZ		NS_IN6ADDRSZ
+#define	INDIR_MASK		NS_CMPRSFLGS
+#define NAMESERVER_PORT	NS_DEFAULTPORT
 
 #define NOERROR		ns_r_noerror
 #define FORMERR		ns_r_formerr

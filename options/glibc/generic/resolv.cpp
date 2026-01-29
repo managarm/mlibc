@@ -33,6 +33,24 @@ int dn_comp(const char *, unsigned char *, int, unsigned char **, unsigned char 
 	__builtin_unreachable();
 }
 
+/* Taken from musl */
+int dn_skipname(const unsigned char *s, const unsigned char *end) {
+	const unsigned char *p = s;
+	while (p < end)
+		if (!*p)
+			return p - s + 1;
+		else if (*p >= 192)
+			if (p + 1 < end)
+				return p - s + 2;
+			else
+				break;
+		else if (end - p < *p + 1)
+			break;
+		else
+			p += *p + 1;
+	return -1;
+}
+
 /* This is completely unused, and exists purely to satisfy broken apps. */
 
 struct __res_state *__res_state() {
