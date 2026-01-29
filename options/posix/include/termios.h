@@ -95,6 +95,7 @@ int tcsetwinsize(int __fd, const struct winsize *__winsz);
 
 #if defined(_DEFAULT_SOURCE)
 void cfmakeraw(struct termios *__tios);
+int cfsetspeed(struct termios *__tios, speed_t __speed);
 #endif /* defined(_DEFAULT_SOURCE) */
 
 #endif /* !__MLIBC_ABI_ONLY */

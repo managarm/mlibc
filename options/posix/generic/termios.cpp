@@ -124,3 +124,7 @@ int tcsetwinsize(int fd, const struct winsize *winsz) {
 	return 0;
 }
 
+int cfsetspeed(struct termios *, speed_t) {
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+}
