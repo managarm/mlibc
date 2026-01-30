@@ -93,17 +93,3 @@ extern "C" void __mlibc_thread_trampoline(void *(*fn)(void *), Tcb *tcb, void *a
 
 	mlibc::thread_exit(tcb->returnValue);
 }
-
-#if defined (__m68k__)
-void
-*sys_tp_get()
-{
-	return (void*)syscall0(SYS_tcb_get, NULL);
-}
-
-extern "C" void *
-__m68k_read_tp (void)
-{
-	return sys_tp_get();
-}
-#endif

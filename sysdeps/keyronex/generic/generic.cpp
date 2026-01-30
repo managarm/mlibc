@@ -12,6 +12,7 @@
 #include <frg/logging.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/tcb.hpp>
 
 namespace mlibc {
 
@@ -75,6 +76,14 @@ Sysdeps<TcbSet>::operator()(void *pointer)
 #endif
 	return 0;
 }
+
+#if defined (__m68k__)
+extern "C" void *
+__m68k_read_tp (void)
+{
+	return (void*)syscall0(SYS_tcb_get, NULL);
+}
+#endif
 
 /* vm */
 
