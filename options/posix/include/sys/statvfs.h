@@ -11,6 +11,12 @@ extern "C" {
 
 #ifndef __MLIBC_ABI_ONLY
 
+#if __MLIBC_BSD_OPTION
+/* This corresponds to the NetBSD version of getmntinfo.
+   FreeBSD and OpenBSD are known to have a different declaration (in a different header file). */
+int getmntinfo(struct statvfs **__mntbufp, int __mode);
+#endif
+
 int statvfs(const char *__restrict __pathname, struct statvfs *__restrict __buf);
 int fstatvfs(int __fd, struct statvfs *__buf);
 
@@ -26,4 +32,3 @@ int fstatvfs64(int __fd, struct statvfs64 *__buf);
 #endif
 
 #endif /* _SYS_STATVFS_H */
-

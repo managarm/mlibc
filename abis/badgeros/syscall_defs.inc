@@ -171,13 +171,5 @@ _SYSCALL_DEF_V(45, _SYSCALL_SYS_SHUTDOWN, __syscall_sys_shutdown, bool __is_rebo
 
 
 
-/* ==== TEMPORARY SYSCALLS ==== */
-// Implemented in process/syscall_impl.c
-
-// TEMPORARY: Write one or more characters to the log.
-_SYSCALL_DEF_V(46, _SYSCALL_TEMP_WRITE, __syscall_temp_write, char const *__message, __mlibc_size __length)
-
-
-
 #undef _SYSCALL_DEF
 #undef _SYSCALL_DEF_V

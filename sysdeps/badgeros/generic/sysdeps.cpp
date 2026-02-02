@@ -1,6 +1,6 @@
-#include "include/abi-bits/fcntl.h"
 #include "mlibc/tcb.hpp"
 #include <abi-bits/errno.h>
+#include <abi-bits/fcntl.h>
 #include <bits/ensure.h>
 #include <bits/syscall.h>
 #include <cstddef>
@@ -24,7 +24,7 @@ void sys_libc_panic() {
 	__builtin_trap();
 }
 
-void sys_libc_log(const char *msg) { __syscall_temp_write(msg, strlen(msg)); }
+void sys_libc_log(const char *msg) { __syscall_fs_write(1, msg, strlen(msg)); }
 
 int sys_isatty(int fd) {
 	(void)fd;
