@@ -1,1 +1,1 @@
-../../../../abis/linux/fcntl.h
+../../../../abis/badgeros/fcntl.h
