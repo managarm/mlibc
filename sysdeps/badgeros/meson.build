@@ -1,16 +1,18 @@
 sysdep_supported_options = {
 	'posix': true,
+	'glibc': true,
+	'bsd': true,
 }
 
 rtld_sources += files(
-	'sysdeps.cpp',
-	'syscall.cpp',
+	'generic/sysdeps.cpp',
+	'generic/syscall.cpp',
 )
 
 libc_sources += files(
-	'entry.cpp',
-	'sysdeps.cpp',
-	'syscall.cpp',
+	'generic/entry.cpp',
+	'generic/sysdeps.cpp',
+	'generic/syscall.cpp',
 )
 
 if not no_headers
@@ -67,13 +69,18 @@ if not no_headers
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)
+	install_headers(
+		'include/bits/syscall.h',
+		subdir: 'bits',
+		follow_symlinks: true
+	)
 endif
 
 if not headers_only
 	crt = custom_target('Scrt0',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'Scrt0.S',
+		input: 'riscv64/Scrt0.S',
 		output: 'Scrt0.o',
 		install: true,
 		install_dir: get_option('libdir')
@@ -81,7 +88,7 @@ if not headers_only
 	crt = custom_target('crt0',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt0.S',
+		input: 'riscv64/crt0.S',
 		output: 'crt0.o',
 		install: true,
 		install_dir: get_option('libdir')
@@ -89,7 +96,7 @@ if not headers_only
 	crt = custom_target('crti',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crti.S',
+		input: 'riscv64/crti.S',
 		output: 'crti.o',
 		install: true,
 		install_dir: get_option('libdir')
@@ -97,7 +104,7 @@ if not headers_only
 	crt = custom_target('crtn',
 		build_by_default: true,
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crtn.S',
+		input: 'riscv64/crtn.S',
 		output: 'crtn.o',
 		install: true,
 		install_dir: get_option('libdir')
