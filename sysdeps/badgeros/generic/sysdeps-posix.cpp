@@ -3,9 +3,9 @@
 #include <abi-bits/fcntl.h>
 #include <bits/ensure.h>
 #include <bits/syscall.h>
-#include <cstddef>
-#include <cstdint>
-#include <mlibc/all-sysdeps.hpp>
+#include <mlibc/posix-sysdeps.hpp>
+#include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 // ANCHOR: stub
@@ -86,10 +86,36 @@ int sys_open(const char *path, int oflags, unsigned int mode, int *ret) {
 	return res < 0 ? -res : 0;
 }
 
-int sys_vm_map(void *, size_t, int, int, int, off_t, void **) { STUB(); }
+int sys_vm_map(void *hint, size_t size, int prot, int flags, int, off_t, void **pointer) {
+	auto res = __syscall_mem_map(hint, size, prot, flags);
+	*pointer = (void *)res;
+	ssize_t errno = reinterpret_cast<intptr_t>(res);
+	return errno < 0 ? -errno : 0;
+}
 
-int sys_vm_unmap(void *, size_t) { STUB(); }
+int sys_vm_protect(void *pointer, size_t size, int prot) {
+	return -__syscall_mem_protect(pointer, size, prot);
+}
+
+int sys_vm_unmap(void *address, size_t size) {
+	__syscall_mem_unmap(address, size);
+	return 0;
+}
 
 int sys_clock_get(int, time_t *, long *) { STUB(); }
+
+int sys_fork(pid_t *child) {
+	pid_t res = __syscall_proc_fork();
+	if (res < 0) {
+		return -res;
+	} else {
+		*child = res;
+		return 0;
+	}
+}
+
+int sys_execve(const char *path, char *const argv[], char *const envp[]) {
+	return -__syscall_proc_exec(path, argv, envp);
+}
 
 } // namespace mlibc

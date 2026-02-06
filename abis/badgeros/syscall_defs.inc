@@ -58,7 +58,7 @@ _SYSCALL_DEF_V(8, _SYSCALL_PROC_EXIT, __syscall_proc_exit, int __code)
 _SYSCALL_DEF(9, _SYSCALL_PROC_GETARGS, __syscall_proc_getargs, __mlibc_size, __mlibc_size __cap, void *__memory)
 
 // Create a copy of the running process and return its PID (to the parent) or -1 (to the child).
-_SYSCALL_DEF(10, _SYSCALL_PROC_FORK, __syscall_proc_fork, __mlibc_uint64)
+_SYSCALL_DEF(10, _SYSCALL_PROC_FORK, __syscall_proc_fork, __mlibc_int64)
 
 // Execute the program at `path`, replacing the calling program's code and data in the process.
 _SYSCALL_DEF(11, _SYSCALL_PROC_EXEC, __syscall_proc_exec, int, char const *__path, char const *const *__argv, char const *const *__envp)
@@ -160,6 +160,10 @@ _SYSCALL_DEF(23, _SYSCALL_MEM_MAP, __syscall_mem_map, void *, void *__address, _
 // Unmap a range of memory previously allocated with `SYSCALL_MEM_MAP`.
 // Returns whether a range of memory was unmapped.
 _SYSCALL_DEF_V(25, _SYSCALL_MEM_UNMAP, __syscall_mem_unmap, void *__address, __mlibc_size __size)
+
+// Change the protection flags on a range of memory.
+// May fail if the process does not have write access to mapped objects.
+_SYSCALL_DEF(26, _SYSCALL_MEM_PROTECT, __syscall_mem_protect, int, void *__address, __mlibc_size size, int __prot)
 
 
 
