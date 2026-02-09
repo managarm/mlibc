@@ -27,51 +27,68 @@
 #include <frg/expected.hpp>
 #include <frg/printf.hpp>
 
-template<typename F>
+template<typename Char, typename F>
 struct PrintfAgent {
 	PrintfAgent(F *formatter, frg::va_struct *vsp)
 	: _formatter{formatter}, _vsp{vsp} {
 		auto l = mlibc::getActiveLocale();
-		locale_opts = frg::locale_options(
-			l->numeric.get(DECIMAL_POINT).asString().data(),
-			l->numeric.get(THOUSANDS_SEP).asString().data(),
-			reinterpret_cast<const char *>(l->numeric.get(GROUPING).asByteSpan().data())
-		);
+		if constexpr (std::is_same_v<Char, char>) {
+			locale_opts = frg::locale_options(
+				l->numeric.get(DECIMAL_POINT).asString().data(),
+				l->numeric.get(THOUSANDS_SEP).asString().data(),
+				reinterpret_cast<const char *>(l->numeric.get(GROUPING).asByteSpan().data())
+			);
+		} else {
+			wideDecimalPoint[0] = l->numeric.get(_NL_NUMERIC_DECIMAL_POINT_WC).asUint32();
+			wideThousandSeparator[0] = l->numeric.get(_NL_NUMERIC_THOUSANDS_SEP_WC).asUint32();
+
+			locale_opts = frg::locale_options<Char>(
+				wideDecimalPoint,
+				wideThousandSeparator,
+				reinterpret_cast<const char *>(l->numeric.get(GROUPING).asByteSpan().data())
+			);
+		}
 	}
 
-	frg::expected<frg::format_error> operator() (char c) {
+	frg::expected<frg::format_error> operator() (Char c) {
 		_formatter->append(c);
 		return {};
 	}
-	frg::expected<frg::format_error> operator() (const char *c, size_t n) {
+
+	frg::expected<frg::format_error> operator() (const Char *c, size_t n) {
 		_formatter->append(c, n);
 		return {};
 	}
 
-	frg::expected<frg::format_error> operator() (char t, frg::format_options opts,
+	frg::expected<frg::format_error> operator() (Char t, frg::format_options opts,
 			frg::printf_size_mod szmod) {
 		switch(t) {
 		case 'c':
 			if (szmod == frg::printf_size_mod::long_size) {
-				char c_buf[MB_LEN_MAX];
 				auto c = static_cast<wchar_t>(frg::pop_arg<wint_t>(_vsp, &opts));
-				mbstate_t shift_state = {};
-				size_t res = wcrtomb(c_buf, c, &shift_state);
-				if (res == size_t(-1))
-					return frg::format_error::agent_error;
-				_formatter->append(c_buf, res);
+
+				if constexpr (std::is_same_v<Char, char>) {
+					char c_buf[MB_LEN_MAX];
+					mbstate_t shift_state = {};
+					size_t res = wcrtomb(c_buf, c, &shift_state);
+					if (res == size_t(-1))
+						return frg::format_error::agent_error;
+					_formatter->append(c_buf, res);
+				} else {
+					_formatter->append(c);
+				}
 				break;
 			}
-			frg::do_printf_chars(*_formatter, t, opts, szmod, _vsp);
+			frg::do_printf_chars<Char, F>(*_formatter, t, opts, szmod, _vsp);
 			break;
 		case 'p': case 's':
-			frg::do_printf_chars(*_formatter, t, opts, szmod, _vsp);
+			frg::do_printf_chars<Char, F>(*_formatter, t, opts, szmod, _vsp);
 			break;
 		case 'd': case 'i': case 'o': case 'x': case 'X': case 'b': case 'B': case 'u':
-			frg::do_printf_ints(*_formatter, t, opts, szmod, _vsp, locale_opts);
+			frg::do_printf_ints<Char, F>(*_formatter, t, opts, szmod, _vsp, locale_opts);
 			break;
 		case 'f': case 'F': case 'g': case 'G': case 'e': case 'E': case 'a': case 'A':
-			frg::do_printf_floats(*_formatter, t, opts, szmod, _vsp, locale_opts);
+			frg::do_printf_floats<Char, F>(*_formatter, t, opts, szmod, _vsp, locale_opts);
 			break;
 		case 'm':
 			__ensure(!opts.fill_zeros);
@@ -80,7 +97,8 @@ struct PrintfAgent {
 			__ensure(opts.minimum_width == 0);
 			__ensure(szmod == frg::printf_size_mod::default_size);
 			__ensure(!opts.precision);
-			_formatter->append(strerror(errno));
+			if constexpr (std::is_same_v<Char, char>)
+				_formatter->append(strerror(errno));
 			break;
 		case 'n': {
 			switch(szmod) {
@@ -128,7 +146,7 @@ struct PrintfAgent {
 		return {};
 	}
 
-	std::optional<frg::printf_arg_type> format_type(char t, frg::printf_size_mod sz) {
+	std::optional<frg::printf_arg_type> format_type(Char t, frg::printf_size_mod sz) {
 		switch(t) {
 			case 'c':
 				if (sz == frg::printf_size_mod::long_size)
@@ -142,17 +160,26 @@ struct PrintfAgent {
 			case 'd': case 'i': case 'b': case 'B': case 'o': case 'x': case 'X': case 'u':
 				return frg::printf_arg_type::INT;
 			default:
-				_formatter->append("unknown format '");
-				_formatter->append(t);
-				_formatter->append('\'');
+				if constexpr (std::is_same_v<Char, char>) {
+					_formatter->append("unknown format '");
+					_formatter->append(t);
+					_formatter->append('\'');
+				} else {
+					_formatter->append(L"unknown format '");
+					_formatter->append(t);
+					_formatter->append(L'\'');
+				}
 				return std::nullopt;
 		}
 	}
 
 private:
 	F *_formatter;
-	frg::locale_options locale_opts;
+	frg::locale_options<Char> locale_opts;
 	frg::va_struct *_vsp;
+
+	wchar_t wideDecimalPoint[2] = { L'\0', L'\0' };
+	wchar_t wideThousandSeparator[2] = { L'\0', L'\0' };
 };
 
 namespace {
@@ -326,7 +353,7 @@ int fputws_unlocked(const wchar_t *__restrict ws, mlibc::abstract_file *f) {
 
 template <typename Char>
 struct StreamPrinter {
-	using value_type = Char;
+	using char_type = Char;
 
 	StreamPrinter(mlibc::abstract_file *stream)
 	: stream(stream), count(0) { }
@@ -351,6 +378,16 @@ struct StreamPrinter {
 		}
 	}
 
+	void append(const char *str)
+	requires (std::is_same_v<Char, wchar_t>) {
+		append(str, strlen(str));
+	}
+
+	void append(const wchar_t *ws)
+	requires (std::is_same_v<Char, char>) {
+		append(ws, wcslen(ws));
+	}
+
 	void append(const Char *str, size_t n) {
 		if constexpr (std::is_same_v<Char, char>) {
 			fwrite_unlocked(str, n, 1, stream);
@@ -363,13 +400,73 @@ struct StreamPrinter {
 		}
 	}
 
+	void append(const char *str, size_t n)
+	requires (std::is_same_v<Char, wchar_t>) {
+		wchar_t buf[512];
+		mbstate_t state = { };
+
+		const char *curr = str;
+		size_t remaining = n;
+
+		while (remaining > 0 && curr) {
+			const char *start = curr;
+
+			size_t num_wchars = mbsnrtowcs(buf, &curr, remaining, sizeof(buf), &state);
+			if (num_wchars == size_t(-1))
+				return;
+
+			append(buf, num_wchars);
+
+			if (!curr) {
+				break;
+			} else {
+				size_t consumed = curr - start;
+
+				if (consumed > remaining || !consumed)
+					break;
+
+				remaining -= consumed;
+			}
+		}
+	}
+
+	void append(const wchar_t *str, size_t n)
+	requires (std::is_same_v<Char, char>) {
+		char buf[512];
+		mbstate_t state = { };
+
+		const wchar_t *curr = str;
+		size_t remaining = n;
+
+		while (remaining > 0 && curr) {
+			const wchar_t *start = curr;
+
+			size_t num_chars = wcsnrtombs(buf, &curr, remaining, sizeof(buf), &state);
+			if (num_chars == size_t(-1))
+				return;
+
+			append(buf, num_chars);
+
+			if (!curr) {
+				break;
+			} else {
+				size_t consumed = curr - start;
+
+				if (consumed > remaining || !consumed)
+					break;
+
+				remaining -= consumed;
+			}
+		}
+	}
+
 	mlibc::abstract_file *stream;
 	size_t count;
 };
 
 template <typename Char>
 struct BufferPrinter {
-	using value_type = Char;
+	using char_type = Char;
 
 	BufferPrinter(Char *buffer)
 	: buffer(buffer), count(0) { }
@@ -380,7 +477,6 @@ struct BufferPrinter {
 	}
 
 	void append(const Char *str) {
-		// TODO: use strcat
 		for(size_t i = 0; str[i]; i++) {
 			buffer[count] = str[i];
 			count++;
@@ -388,10 +484,69 @@ struct BufferPrinter {
 	}
 
 	void append(const Char *str, size_t n) {
-		// TODO: use strcat
 		for(size_t i = 0; i < n; i++) {
 			buffer[count] = str[i];
 			count++;
+		}
+	}
+
+	void append(const char *str, size_t n)
+	requires (std::is_same_v<Char, wchar_t>) {
+		wchar_t buf[512];
+		mbstate_t state = { };
+
+		const char *curr = str;
+		size_t remaining = n;
+
+		while (remaining > 0 && curr) {
+			const char *start = curr;
+
+			size_t num_wchars = mbsnrtowcs(buf, &curr, remaining, sizeof(buf), &state);
+			if (num_wchars == size_t(-1))
+				return;
+
+			append(buf, num_wchars);
+
+			if (!curr) {
+				break;
+			} else {
+				size_t consumed = curr - start;
+
+				if (consumed > remaining)
+					break;
+
+				remaining -= consumed;
+			}
+		}
+	}
+
+	void append(const wchar_t *str, size_t n)
+	requires (std::is_same_v<Char, char>) {
+		char buf[512];
+		mbstate_t state = { };
+
+		const wchar_t *curr = str;
+		size_t remaining = n;
+
+		while (remaining > 0 && curr) {
+			const wchar_t *start = curr;
+
+			size_t num_chars = wcsnrtombs(buf, &curr, remaining, sizeof(buf), &state);
+			if (num_chars == size_t(-1))
+				return;
+
+			append(buf, num_chars);
+
+			if (!curr) {
+				break;
+			} else {
+				size_t consumed = curr - start;
+
+				if (consumed > remaining || !consumed)
+					break;
+
+				remaining -= consumed;
+			}
 		}
 	}
 
@@ -401,7 +556,7 @@ struct BufferPrinter {
 
 template <typename Char>
 struct LimitedPrinter {
-	using value_type = Char;
+	using char_type = Char;
 
 	LimitedPrinter(Char *buffer, size_t limit)
 	: buffer(buffer), limit(limit), count(0) { }
@@ -412,16 +567,90 @@ struct LimitedPrinter {
 		count++;
 	}
 
-	void append(const Char *str) {
-		// TODO: use strcat
+	void append(const char *str) {
 		for(size_t i = 0; str[i]; i++)
 			append(str[i]);
 	}
 
-	void append(const Char *str, size_t n) {
-		// TODO: use strcat
-		for(size_t i = 0; i < n; i++)
+	void append(const wchar_t *ws) {
+		for(size_t i = 0; ws[i]; i++)
+			append(ws[i]);
+	}
+
+	void append(const char *str, size_t n)
+	requires (std::is_same_v<Char, char>) {
+		for(size_t i = 0; str[i] && n; i++, n--)
 			append(str[i]);
+	}
+
+	void append(const char *str, size_t n)
+	requires (std::is_same_v<Char, wchar_t>) {
+		wchar_t buf[512];
+		mbstate_t state = { };
+
+		const char *curr = str;
+		size_t remaining = frg::min(n, limit - count);
+
+		while (remaining > 0 && curr) {
+			const char *start = curr;
+
+			size_t num_wchars = mbsnrtowcs(buf, &curr, remaining, sizeof(buf), &state);
+			if (num_wchars == size_t(-1))
+				return;
+
+			append(buf, num_wchars);
+
+			if (!curr) {
+				break;
+			} else {
+				size_t consumed = curr - start;
+
+				if (consumed > remaining)
+					break;
+
+				remaining -= consumed;
+			}
+		}
+	}
+
+	void append(const wchar_t *ws, size_t n)
+	requires (std::is_same_v<Char, wchar_t>) {
+		if (count == limit)
+			return;
+
+		for(size_t i = 0; ws[i] && n; i++, n--)
+			append(ws[i]);
+		count += n;
+	}
+
+	void append(const wchar_t *str, size_t n)
+	requires (std::is_same_v<Char, char>) {
+		char buf[512];
+		mbstate_t state = { };
+
+		const wchar_t *curr = str;
+		size_t remaining = frg::min(n, limit - count);
+
+		while (remaining > 0 && curr) {
+			const wchar_t *start = curr;
+
+			size_t num_chars = wcsnrtombs(buf, &curr, remaining, sizeof(buf), &state);
+			if (num_chars == size_t(-1))
+				return;
+
+			append(buf, num_chars);
+
+			if (!curr) {
+				break;
+			} else {
+				size_t consumed = curr - start;
+
+				if (consumed > remaining || !consumed)
+					break;
+
+				remaining -= consumed;
+			}
+		}
 	}
 
 	Char *buffer;
@@ -430,7 +659,7 @@ struct LimitedPrinter {
 };
 
 struct ResizePrinter {
-	using value_type = char;
+	using char_type = char;
 
 	ResizePrinter()
 	: buffer(nullptr), limit(0), count(0) { }
@@ -462,6 +691,35 @@ struct ResizePrinter {
 	void append(const char *str, size_t n) {
 		for(size_t i = 0; i < n; i++)
 			append(str[i]);
+	}
+
+	void append(const wchar_t *str, size_t n) {
+		char buf[512];
+		mbstate_t state = { };
+
+		const wchar_t *curr = str;
+		size_t remaining = n;
+
+		while (remaining > 0 && curr) {
+			const wchar_t *start = curr;
+
+			size_t num_chars = wcsnrtombs(buf, &curr, remaining, sizeof(buf), &state);
+			if (num_chars == size_t(-1))
+				return;
+
+			append(buf, num_chars);
+
+			if (!curr) {
+				break;
+			} else {
+				size_t consumed = curr - start;
+
+				if (consumed > remaining || !consumed)
+					break;
+
+				remaining -= consumed;
+			}
+		}
 	}
 
 	char *buffer;
@@ -1442,7 +1700,7 @@ int vfprintf(FILE *__restrict stream, const char *__restrict format, __builtin_v
 	StreamPrinter<char> p{file};
 	if (mlibc::globalConfig().debugPrintf)
 		mlibc::infoLogger() << "vfprintf(\"" << format << "\")" << frg::endlog;
-	auto res = frg::printf_format<NL_ARGMAX>(PrintfAgent{&p, &vs}, format, &vs);
+	auto res = frg::printf_format<char, NL_ARGMAX>(PrintfAgent<char, decltype(p)>{&p, &vs}, format, &vs);
 	if (!res) {
 		errno = EINVAL;
 		return -1;
@@ -1500,7 +1758,7 @@ int vsnprintf(char *__restrict buffer, size_t max_size,
 	if (mlibc::globalConfig().debugPrintf)
 		mlibc::infoLogger() << "vsnprintf(\"" << format << "\")" << frg::endlog;
 
-	auto res = frg::printf_format<NL_ARGMAX>(PrintfAgent{&p, &vs}, format, &vs);
+	auto res = frg::printf_format<char, NL_ARGMAX>(PrintfAgent<char, decltype(p)>{&p, &vs}, format, &vs);
 	if (!res) {
 		errno = EINVAL;
 		return -1;
@@ -1519,7 +1777,7 @@ int vsprintf(char *__restrict buffer, const char *__restrict format, __builtin_v
 
 	if (mlibc::globalConfig().debugPrintf)
 		mlibc::infoLogger() << "vsprintf(\"" << format << "\")" << frg::endlog;
-	auto res = frg::printf_format<NL_ARGMAX>(PrintfAgent{&p, &vs}, format, &vs);
+	auto res = frg::printf_format<char, NL_ARGMAX>(PrintfAgent<char, decltype(p)>{&p, &vs}, format, &vs);
 	if (!res) {
 		errno = EINVAL;
 		return -1;
@@ -1567,7 +1825,24 @@ int fwscanf(FILE *__restrict stream, const wchar_t *__restrict format, ...) {
 }
 
 // wide-oriented (POSIX)
-int vfwprintf(FILE *__restrict, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
+int vfwprintf(FILE *__restrict stream, const wchar_t *__restrict format, __builtin_va_list args) {
+	frg::va_struct vs;
+	frg::arg arg_list[NL_ARGMAX + 1];
+	vs.arg_list = arg_list;
+	va_copy(vs.args, args);
+	auto file = static_cast<mlibc::abstract_file *>(stream);
+	frg::unique_lock lock(file->_lock);
+	StreamPrinter<wchar_t> p{file};
+//	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
+	auto res = frg::printf_format<wchar_t, NL_ARGMAX>(PrintfAgent<wchar_t, decltype(p)>{&p, &vs}, format, &vs);
+	if (!res) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	return p.count;
+}
+
 // wide-oriented (POSIX)
 int vfwscanf(FILE *__restrict stream, const wchar_t *__restrict format, __builtin_va_list args) {
 	auto file = static_cast<mlibc::abstract_file *>(stream);
@@ -1622,7 +1897,25 @@ int swscanf(const wchar_t *__restrict buffer, const wchar_t *__restrict format, 
 	return result;
 }
 
-int vswprintf(wchar_t *__restrict, size_t, const wchar_t *__restrict, __builtin_va_list) { MLIBC_STUB_BODY; }
+int vswprintf(wchar_t *__restrict buffer, size_t n, const wchar_t *__restrict format, __builtin_va_list args) {
+	frg::va_struct vs;
+	frg::arg arg_list[NL_ARGMAX + 1];
+	vs.arg_list = arg_list;
+	va_copy(vs.args, args);
+	LimitedPrinter<wchar_t> p{buffer, n ? n - 1 : 0};
+//	mlibc::infoLogger() << "printf(" << format << ")" << frg::endlog;
+	auto res = frg::printf_format<wchar_t, NL_ARGMAX>(PrintfAgent<wchar_t, decltype(p)>{&p, &vs}, format, &vs);
+	if (!res) {
+		errno = EINVAL;
+		return -1;
+	} else if (p.count >= n) {
+		errno = E2BIG;
+		return -1;
+	}
+	if (n)
+		p.buffer[frg::min(n - 1, p.count)] = 0;
+	return p.count;
+}
 
 int vswscanf(const wchar_t *__restrict buffer, const wchar_t *__restrict format, __builtin_va_list args) {
 	struct {
@@ -2029,7 +2322,7 @@ int vasprintf(char **out, const char *format, __builtin_va_list args) {
 	ResizePrinter p;
 	if (mlibc::globalConfig().debugPrintf)
 		mlibc::infoLogger() << "vasprintf(\"" << format << "\")" << frg::endlog;
-	auto res = frg::printf_format<NL_ARGMAX>(PrintfAgent{&p, &vs}, format, &vs);
+	auto res = frg::printf_format<char, NL_ARGMAX>(PrintfAgent<char, decltype(p)>{&p, &vs}, format, &vs);
 	if (!res) {
 		errno = EINVAL;
 		return -1;
