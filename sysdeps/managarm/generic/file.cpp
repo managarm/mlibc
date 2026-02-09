@@ -3227,4 +3227,10 @@ int sys_getgroups(size_t size, gid_t *list, int *ret) {
 	return 0;
 }
 
+int sys_listxattr(const char *, char *, size_t, ssize_t *) {
+	// Valid return if the underlying filesystem does not support xattrs, or if they are disabled.
+	// As we don't implement them at all, we return ENOTSUP.
+	return ENOTSUP;
+}
+
 } // namespace mlibc
