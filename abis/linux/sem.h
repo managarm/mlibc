@@ -12,6 +12,10 @@
 
 #define SEM_UNDO 0x1000
 
+#define SEM_STAT 18
+#define SEM_INFO 19
+#define SEM_STAT_ANY 20
+
 struct sembuf {
 	unsigned short int sem_num;
 	short int sem_op;
@@ -25,6 +29,19 @@ struct semid_ds {
 
 	unsigned long   sem_nsems;
 	unsigned long   __unused[2];
+};
+
+struct seminfo {
+	int semmap;
+	int semmni;
+	int semmns;
+	int semmnu;
+	int semmsl;
+	int semopm;
+	int semume;
+	int semusz;
+	int semvmx;
+	int semaem;
 };
 
 #endif /* _ABIBITS_SEM_H */
