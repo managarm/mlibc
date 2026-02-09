@@ -90,7 +90,6 @@ extern FILE *stdout;
 
 int remove(const char *__filename);
 int rename(const char *__old_path, const char *__new_path);
-int renameat(int __olddirfd, const char *__old_path, int __newdirfd, const char *__new_path);
 FILE *tmpfile(void);
 char *tmpnam(char *__buffer);
 

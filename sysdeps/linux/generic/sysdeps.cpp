@@ -2035,6 +2035,17 @@ int sys_ppoll(struct pollfd *fds, nfds_t count, const struct timespec *ts, const
 	return 0;
 }
 
+int sys_renameat(int old_dirfd, const char *old_path, int new_dirfd, const char *new_path) {
+#ifdef SYS_renameat2
+	auto ret = do_syscall(SYS_renameat2, old_dirfd, old_path, new_dirfd, new_path, 0);
+#else
+	auto ret = do_syscall(SYS_renameat, old_dirfd, old_path, new_dirfd, new_path);
+#endif /* defined(SYS_renameat2) */
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #endif // __MLIBC_LINUX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {
@@ -2207,14 +2218,10 @@ int sys_fchdir(int fd) {
 }
 
 int sys_rename(const char *old_path, const char *new_path) {
-	return sys_renameat(AT_FDCWD, old_path, AT_FDCWD, new_path);
-}
-
-int sys_renameat(int old_dirfd, const char *old_path, int new_dirfd, const char *new_path) {
 #ifdef SYS_renameat2
-	auto ret = do_syscall(SYS_renameat2, old_dirfd, old_path, new_dirfd, new_path, 0);
+	auto ret = do_syscall(SYS_renameat2, AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
 #else
-	auto ret = do_syscall(SYS_renameat, old_dirfd, old_path, new_dirfd, new_path);
+	auto ret = do_syscall(SYS_renameat, AT_FDCWD, old_path, AT_FDCWD, new_path);
 #endif /* defined(SYS_renameat2) */
 	if (int e = sc_error(ret); e)
 		return e;
