@@ -218,6 +218,7 @@ int thread_attr_init(struct __mlibc_threadattr *attr) {
 
 static constexpr unsigned int mutexRecursive = 1;
 static constexpr unsigned int mutexErrorCheck = 2;
+static constexpr unsigned int mutexShared = 4;
 
 // TODO: either use uint32_t or determine the bit based on sizeof(int).
 static constexpr unsigned int mutex_owner_mask = (static_cast<uint32_t>(1) << 30) - 1;
@@ -243,10 +244,12 @@ int thread_mutex_init(struct __mlibc_mutex *__restrict mutex,
 		__ensure(type == __MLIBC_THREAD_MUTEX_NORMAL);
 	}
 
+	if (pshared == __MLIBC_THREAD_PROCESS_SHARED)
+		mutex->__mlibc_flags |= mutexShared;
+
 	// TODO: Other values aren't supported yet.
 	__ensure(robust == __MLIBC_THREAD_MUTEX_STALLED);
 	__ensure(protocol == __MLIBC_THREAD_PRIO_NONE);
-	__ensure(pshared == __MLIBC_THREAD_PROCESS_PRIVATE);
 
 	return 0;
 }
@@ -443,9 +446,6 @@ int thread_cond_broadcast(struct __mlibc_cond *cond) {
 
 int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *__restrict mutex,
 		const struct timespec *__restrict abstime, clockid_t clockid) {
-	// TODO: pshared isn't supported yet.
-	__ensure(cond->__mlibc_flags == 0);
-
 	constexpr long nanos_per_second = 1'000'000'000;
 	if (abstime && (abstime->tv_nsec < 0 || abstime->tv_nsec >= nanos_per_second))
 		return EINVAL;

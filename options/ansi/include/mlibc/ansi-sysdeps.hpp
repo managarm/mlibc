@@ -54,7 +54,6 @@ int sys_clock_get(int clock, time_t *secs, long *nanos);
 [[gnu::weak]] int sys_rmdir(const char *path);
 [[gnu::weak]] int sys_unlinkat(int dirfd, const char *path, int flags);
 [[gnu::weak]] int sys_rename(const char *path, const char *new_path);
-[[gnu::weak]] int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path);
 
 [[gnu::weak]] int sys_sigprocmask(int how, const sigset_t *__restrict set,
 		sigset_t *__restrict retrieve);

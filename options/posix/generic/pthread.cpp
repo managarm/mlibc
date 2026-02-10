@@ -984,10 +984,8 @@ int pthread_barrier_destroy(pthread_barrier_t *barrier) {
 }
 
 int pthread_barrier_wait(pthread_barrier_t *barrier) {
-	if (barrier->__mlibc_flags != 0) {
-		mlibc::panicLogger() << "mlibc: pthread_barrier_t flags were non-zero"
-			<< frg::endlog;
-	}
+	if (barrier->__mlibc_flags != 0 && barrier->__mlibc_flags != __MLIBC_THREAD_PROCESS_SHARED)
+		mlibc::panicLogger() << "mlibc: unsupported pthread_barrier_t flags" << frg::endlog;
 
 	// inside is incremented on entry and decremented on exit.
 	// This is used to synchronise with pthread_barrier_destroy, to ensure that a thread doesn't pass
@@ -1147,10 +1145,8 @@ int pthread_rwlock_destroy(pthread_rwlock_t *rw) {
 int pthread_rwlock_trywrlock(pthread_rwlock_t *rw) {
 	SCOPE_TRACE();
 
-	if (rw->__mlibc_flags != 0) {
-		mlibc::panicLogger() << "mlibc: pthread_rwlock_t flags were non-zero"
-			<< frg::endlog;
-	}
+	if (rw->__mlibc_flags != 0 && rw->__mlibc_flags != __MLIBC_THREAD_PROCESS_SHARED)
+		mlibc::panicLogger() << "mlibc: unexpected pthread_rwlock_t flags" << frg::endlog;
 
 	// Take the __mlibc_m mutex.
 	// Will be released in pthread_rwlock_unlock().
@@ -1170,10 +1166,8 @@ int pthread_rwlock_trywrlock(pthread_rwlock_t *rw) {
 int pthread_rwlock_wrlock(pthread_rwlock_t *rw) {
 	SCOPE_TRACE();
 
-	if (rw->__mlibc_flags != 0) {
-		mlibc::panicLogger() << "mlibc: pthread_rwlock_t flags were non-zero"
-			<< frg::endlog;
-	}
+	if (rw->__mlibc_flags != 0 && rw->__mlibc_flags != __MLIBC_THREAD_PROCESS_SHARED)
+		mlibc::panicLogger() << "mlibc: unexpected pthread_rwlock_t flags" << frg::endlog;
 
 	// Take the __mlibc_m mutex.
 	// Will be released in pthread_rwlock_unlock().
@@ -1212,10 +1206,8 @@ int pthread_rwlock_timedwrlock(pthread_rwlock_t *rw, const struct timespec *__re
 int pthread_rwlock_clockwrlock(pthread_rwlock_t *rw, clockid_t clock, const struct timespec *__restrict abstime) {
 	SCOPE_TRACE();
 
-	if (rw->__mlibc_flags != 0) {
-		mlibc::panicLogger() << "mlibc: pthread_rwlock_t flags were non-zero"
-			<< frg::endlog;
-	}
+	if (rw->__mlibc_flags != 0 && rw->__mlibc_flags != __MLIBC_THREAD_PROCESS_SHARED)
+		mlibc::panicLogger() << "mlibc: unexpected pthread_rwlock_t flags" << frg::endlog;
 
 	// Adjust for the fact that sys_futex_wait accepts a *timeout*, but
 	// pthread_rwlock_timedwrlock accepts an *absolute time*.
@@ -1272,10 +1264,8 @@ int pthread_rwlock_clockwrlock(pthread_rwlock_t *rw, clockid_t clock, const stru
 int pthread_rwlock_tryrdlock(pthread_rwlock_t *rw) {
 	SCOPE_TRACE();
 
-	if (rw->__mlibc_flags != 0) {
-		mlibc::panicLogger() << "mlibc: pthread_rwlock_t flags were non-zero"
-			<< frg::endlog;
-	}
+	if (rw->__mlibc_flags != 0 && rw->__mlibc_flags != __MLIBC_THREAD_PROCESS_SHARED)
+		mlibc::panicLogger() << "mlibc: unexpected pthread_rwlock_t flags" << frg::endlog;
 
 	// Increment the reader count while holding the __mlibc_m mutex.
 	if(int e = rwlock_m_trylock(rw, false); e)
@@ -1289,10 +1279,8 @@ int pthread_rwlock_tryrdlock(pthread_rwlock_t *rw) {
 int pthread_rwlock_rdlock(pthread_rwlock_t *rw) {
 	SCOPE_TRACE();
 
-	if (rw->__mlibc_flags != 0) {
-		mlibc::panicLogger() << "mlibc: pthread_rwlock_t flags were non-zero"
-			<< frg::endlog;
-	}
+	if (rw->__mlibc_flags != 0 && rw->__mlibc_flags != __MLIBC_THREAD_PROCESS_SHARED)
+		mlibc::panicLogger() << "mlibc: unexpected pthread_rwlock_t flags" << frg::endlog;
 
 	// Increment the reader count while holding the __mlibc_m mutex.
 	rwlock_m_lock(rw, false);
@@ -1309,10 +1297,8 @@ int pthread_rwlock_timedrdlock(pthread_rwlock_t *rw, const struct timespec *__re
 int pthread_rwlock_clockrdlock(pthread_rwlock_t *rw, clockid_t clock, const struct timespec *__restrict abstime) {
 	SCOPE_TRACE();
 
-	if (rw->__mlibc_flags != 0) {
-		mlibc::panicLogger() << "mlibc: pthread_rwlock_t flags were non-zero"
-			<< frg::endlog;
-	}
+	if (rw->__mlibc_flags != 0 && rw->__mlibc_flags != __MLIBC_THREAD_PROCESS_SHARED)
+		mlibc::panicLogger() << "mlibc: unexpected pthread_rwlock_t flags" << frg::endlog;
 
 	// Adjust for the fact that sys_futex_wait accepts a *timeout*, but
 	// pthread_rwlock_timedwrlock accepts an *absolute time*.

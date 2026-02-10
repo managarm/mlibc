@@ -1,5 +1,7 @@
 // vim: ft=arm64asm
 
+#include "mlibc-asm/helpers.h"
+
 .extern __sigsetjmp
 
 .type __setjmp, "function"
@@ -63,5 +65,6 @@ _longjmp:
 	cmp w1, 0
 	csinc w0, w1, wzr, ne
 	br x30
-.section .note.GNU-stack,"",%progbits
+
+GNU_STACK_NOTE()
 
