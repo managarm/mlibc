@@ -153,6 +153,10 @@ int cnd_broadcast(cnd_t *cond) {
 	return mlibc::thread_cond_broadcast(cond) == 0 ? thrd_success : thrd_error;
 }
 
+int cnd_signal(cnd_t *cond) {
+	return mlibc::thread_cond_signal(cond) == 0 ? thrd_success : thrd_error;
+}
+
 int cnd_wait(cnd_t *cond, mtx_t *mtx) {
 	return mlibc::thread_cond_timedwait(cond, mtx, nullptr, 0) == 0 ? thrd_success : thrd_error;
 }

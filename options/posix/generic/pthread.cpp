@@ -913,7 +913,7 @@ int pthread_cond_clockwait(pthread_cond_t *__restrict cond, pthread_mutex_t *__r
 int pthread_cond_signal(pthread_cond_t *cond) {
 	SCOPE_TRACE();
 
-	return pthread_cond_broadcast(cond);
+	return mlibc::thread_cond_signal(cond);
 }
 
 int pthread_cond_broadcast(pthread_cond_t *cond) {
@@ -996,7 +996,7 @@ int pthread_barrier_wait(pthread_barrier_t *barrier) {
 	auto leave = [&](){
 		unsigned inside = __atomic_sub_fetch(&barrier->__mlibc_inside, 1, __ATOMIC_RELEASE);
 		if (inside == 0)
-			mlibc::sys_futex_wake((int *)&barrier->__mlibc_inside);
+			mlibc::sys_futex_wake((int *)&barrier->__mlibc_inside, true);
 	};
 
 	unsigned seq = __atomic_load_n(&barrier->__mlibc_seq, __ATOMIC_ACQUIRE);
@@ -1011,7 +1011,7 @@ int pthread_barrier_wait(pthread_barrier_t *barrier) {
 				__atomic_fetch_add(&barrier->__mlibc_seq, 1, __ATOMIC_ACQUIRE);
 				__atomic_store_n(&barrier->__mlibc_waiting, 0, __ATOMIC_RELEASE);
 
-				mlibc::sys_futex_wake((int *)&barrier->__mlibc_seq);
+				mlibc::sys_futex_wake((int *)&barrier->__mlibc_seq, true);
 
 				leave();
 				return PTHREAD_BARRIER_SERIAL_THREAD;
@@ -1098,7 +1098,7 @@ namespace {
 	void rwlock_m_unlock(pthread_rwlock_t *rw) {
 		auto m = __atomic_exchange_n(&rw->__mlibc_m, 0, __ATOMIC_RELEASE);
 		if(m & mutex_waiters_bit)
-			mlibc::sys_futex_wake((int *)&rw->__mlibc_m);
+			mlibc::sys_futex_wake((int *)&rw->__mlibc_m, true);
 	}
 } // namespace
 
@@ -1343,7 +1343,7 @@ int pthread_rwlock_unlock(pthread_rwlock_t *rw) {
 					continue;
 
 				// Wake the futex.
-				mlibc::sys_futex_wake((int *)&rw->__mlibc_rc);
+				mlibc::sys_futex_wake((int *)&rw->__mlibc_rc, true);
 				break;
 			}else{
 				unsigned int desired = (rc_expected & ~rc_count_mask) | (count - 1);
@@ -1393,7 +1393,7 @@ int pthread_spin_trylock(pthread_spinlock_t *__lock) {
 
 	if (!__atomic_compare_exchange_n(&__lock->__lock, &expected, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
 		return EBUSY;
-	
+
 	return 0;
 }
 

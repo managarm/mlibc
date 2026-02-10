@@ -48,10 +48,10 @@ sys_futex_wait(int *pointer, int expected, const struct timespec *time)
 }
 
 int
-sys_futex_wake(int *pointer)
+sys_futex_wake(int *pointer, bool all)
 {
-	int r = syscall2(SYS_futex_wake, (uintptr_t)pointer, (uintptr_t)INT_MAX,
-	    NULL);
+	int r = syscall2(SYS_futex_wake, (uintptr_t)pointer,
+	    (uintptr_t)(all ? INT_MAX : 1), NULL);
 	if (r < 0)
 		return -r;
 	return 0;

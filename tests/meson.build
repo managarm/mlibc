@@ -137,6 +137,7 @@ all_test_cases = [
 	'posix/sig2str',
 	'posix/getlogin_r',
 	'posix/inet_aton',
+	'posix/pthread_cond_signal',
 	'posix/protoent',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',

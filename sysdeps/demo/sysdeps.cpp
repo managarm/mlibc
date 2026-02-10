@@ -72,7 +72,7 @@ void sys_exit(int status) {
 }
 
 int sys_close(int ) { STUB(); }
-int sys_futex_wake(int *) { STUB(); }
+int sys_futex_wake(int *, bool) { STUB(); }
 int sys_futex_wait(int *, int, timespec const *) { STUB(); }
 int sys_read(int, void *, unsigned long, long *) { STUB(); }
 int sys_open(const char *, int, unsigned int, int *) { STUB(); }
