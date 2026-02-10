@@ -167,6 +167,10 @@ _SYSCALL_DEF(26, _SYSCALL_MEM_PROTECT, __syscall_mem_protect, int, void *__addre
 
 
 
+_SYSCALL_DEF_V(46, _SYSCALL_TEMP_WRITE, __syscall_temp_write, char const *__message, __mlibc_size __len)
+
+
+
 /* ==== SYSTEM MANAGEMENT SYSCALLS ==== */
 // Implemented in main.c
 
