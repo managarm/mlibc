@@ -186,13 +186,9 @@ int *__h_errno_location(void) {
 }
 
 void endhostent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
 }
 
 void endnetent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
 }
 
 void endprotoent(void) {
@@ -203,8 +199,6 @@ void endprotoent(void) {
 }
 
 void endservent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
 }
 
 void freeaddrinfo(struct addrinfo *ptr) {
@@ -347,8 +341,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 }
 
 struct hostent *gethostent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return nullptr;
 }
 
 int getnameinfo(const struct sockaddr *__restrict addr, socklen_t addr_len,
@@ -431,18 +424,15 @@ int getnameinfo(const struct sockaddr *__restrict addr, socklen_t addr_len,
 }
 
 struct netent *getnetbyaddr(uint32_t, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return nullptr;
 }
 
 struct netent *getnetbyname(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return nullptr;
 }
 
 struct netent *getnetent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return nullptr;
 }
 
 struct hostent *gethostbyname(const char *name) {
@@ -518,25 +508,21 @@ struct hostent *gethostbyname(const char *name) {
 }
 
 struct hostent *gethostbyname2(const char *, int) {
-	__ensure(!"gethostbyname2() not implemented");
-	__builtin_unreachable();
+	return nullptr;
 }
 
 struct hostent *gethostbyaddr(const void *, socklen_t, int) {
-	__ensure(!"gethostbyaddr() not implemented");
-	__builtin_unreachable();
+	return nullptr;
 }
 
 int gethostbyaddr_r(const void *__restrict, socklen_t, int, struct hostent *__restrict,
 					char *__restrict, size_t, struct hostent **__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return -1;
 }
 
 int gethostbyname_r(const char *__restrict, struct hostent *__restrict, char *__restrict, size_t,
 					struct hostent **__restrict, int *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return -1;
 }
 
 struct protoent *getprotobyname(const char *name) {
@@ -718,18 +704,13 @@ struct servent *getservbyport(int port, const char *proto) {
 }
 
 struct servent *getservent(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return nullptr;
 }
 
 void sethostent(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
 }
 
 void setnetent(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
 }
 
 void setprotoent(int stayopen) {
@@ -737,11 +718,8 @@ void setprotoent(int stayopen) {
 }
 
 void setservent(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
 }
 
 const char *hstrerror(int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	return "";
 }
