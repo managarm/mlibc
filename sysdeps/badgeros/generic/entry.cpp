@@ -1,3 +1,4 @@
+#include <bits/syscall.h>
 #include <mlibc/elf/startup.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -8,6 +9,8 @@ extern char **environ;
 
 extern "C" void
 __mlibc_entry(uintptr_t *entry_stack, int (*main_fn)(int argc, char *argv[], char *env[])) {
+	__syscall_temp_write("TEST\n", 5);
+
 	__dlapi_enter(entry_stack);
 
 	auto result = main_fn(mlibc::entry_stack.argc, mlibc::entry_stack.argv, environ);
