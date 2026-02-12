@@ -32,6 +32,7 @@ namespace {
 	int parse_file_status(obos_status status);
 	int interpret_signal_status(obos_status status);
 	int parse_pgid_status(obos_status status);
+	int parse_file_flags(int flags);
 } /* namespace */
 
 namespace mlibc {
@@ -649,22 +650,8 @@ int sys_pipe(int *fds, [[maybe_unused]] int flags) {
 
 int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	(void)mode;
-	int real_flags = 0;
 
-	if ((flags & 3) == O_RDONLY)
-		real_flags |= 1 /*FD_OFLAGS_READ*/;
-	if ((flags & 3) == O_WRONLY)
-		real_flags |= 2 /*FD_OFLAGS_WRITE*/;
-	if ((flags & 3) == O_RDWR)
-		real_flags |= 1 | 2 /*FD_OFLAGS_READ|FD_OFLAGS_WRITE*/;
-	if (flags & O_CLOEXEC)
-		real_flags |= 8 /* FD_OFLAGS_NOEXEC */;
-	if (flags & O_DIRECT)
-		real_flags |= 4 /* FD_OFLAGS_UNCACHED */;
-	if (flags & O_CREAT)
-		real_flags |= 16 /* FD_OFLAGS_CREATE */;
-	if (flags & O_NOCTTY)
-		real_flags |= 64 /* FD_OFLAGS_NOCTTY */;
+	int real_flags = parse_file_flags(flags);
 
 	handle hnd = syscall0(Sys_FdAlloc);
 	obos_status st = (obos_status)syscall5(Sys_FdOpenAtEx, hnd, dirfd, path, real_flags, mode);
@@ -690,22 +677,8 @@ int sys_open(const char *pathname, int flags, mode_t mode, int *fd) {
 		return sys_open_dir(pathname, fd);
 
 	handle hnd = (handle)syscall0(Sys_FdAlloc);
-	uint32_t real_flags = 0;
 
-	if ((flags & 3) == O_RDONLY)
-		real_flags |= 1 /*FD_OFLAGS_READ*/;
-	if ((flags & 3) == O_WRONLY)
-		real_flags |= 2 /*FD_OFLAGS_WRITE*/;
-	if ((flags & 3) == O_RDWR)
-		real_flags |= 1 | 2 /*FD_OFLAGS_READ|FD_OFLAGS_WRITE*/;
-	if (flags & O_CLOEXEC)
-		real_flags |= 8 /* FD_OFLAGS_NOEXEC */;
-	if (flags & O_DIRECT)
-		real_flags |= 4 /* FD_OFLAGS_UNCACHED */;
-	if (flags & O_CREAT)
-		real_flags |= 16 /* FD_OFLAGS_CREATE */;
-	if (flags & O_NOCTTY)
-		real_flags |= 64 /* FD_OFLAGS_NOCTTY */;
+	uint32_t real_flags = parse_file_flags(flags);
 
 	obos_status st = OBOS_STATUS_SUCCESS;
 
@@ -1322,6 +1295,7 @@ namespace {
 				return ENOSYS;
 		}
 	}
+
 	int parse_pgid_status(obos_status status) {
 		switch (status) {
 			case OBOS_STATUS_SUCCESS:
@@ -1338,6 +1312,7 @@ namespace {
 				return parse_file_status(status);
 		}
 	}
+	
 	int parse_file_status(obos_status status) {
 		switch (status) {
 			case OBOS_STATUS_SUCCESS:
@@ -1407,5 +1382,26 @@ namespace {
 				mlibc::sys_libc_log("Unknown obos status code returned from a VFS syscall, returning EIO\n");
 				return EIO;
 		}
+	}
+
+	int parse_file_flags(int flags) {
+		int real_flags = 0;
+		if ((flags & O_ACCMODE) == O_RDONLY)
+			real_flags |= 1 /*FD_OFLAGS_READ*/;
+		if ((flags & O_ACCMODE) == O_WRONLY)
+			real_flags |= 2 /*FD_OFLAGS_WRITE*/;
+		if ((flags & O_ACCMODE) == O_RDWR)
+			real_flags |= 1 | 2 /*FD_OFLAGS_READ|FD_OFLAGS_WRITE*/;
+		if (flags & O_CLOEXEC)
+			real_flags |= 8 /* FD_OFLAGS_NOEXEC */;
+		if (flags & O_DIRECT)
+			real_flags |= 4 /* FD_OFLAGS_UNCACHED */;
+		if (flags & O_CREAT)
+			real_flags |= 16 /* FD_OFLAGS_CREATE */;
+		if (flags & O_NOCTTY)
+			real_flags |= 64 /* FD_OFLAGS_NOCTTY */;
+		if (flags & O_TRUNC)
+			real_flags |= 128 /* FD_OFLAGS_TRUNCATE */;
+		return real_flags;
 	}
 }
