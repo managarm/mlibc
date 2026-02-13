@@ -2317,6 +2317,8 @@ sys_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct 
 		statxbuf->stx_ctime.tv_nsec = resp.ctime_nanos();
 		statxbuf->stx_blksize = 4096;
 		statxbuf->stx_blocks = resp.file_size() / 512 + 1;
+		statxbuf->stx_attributes = resp.statx_attr();
+		statxbuf->stx_attributes_mask = resp.statx_attr_mask();
 		return 0;
 	}
 }
