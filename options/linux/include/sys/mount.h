@@ -81,6 +81,12 @@ int mount(const char *__source, const char *__target,
 int umount(const char *__target);
 int umount2(const char *__target, int __flags);
 
+int fsopen(const char *__fsname, unsigned int __flags);
+int fsmount(int __fsfd, unsigned int __flags, unsigned int __attr_flags);
+int fsconfig(int __fd, unsigned int __cmd, const char *__key, const void *__value, int __aux);
+int move_mount(int __from_dirfd, const char *__from_path, int __to_dirfd, const char *__to_path, unsigned int __flags);
+int open_tree(int __dirfd, const char *__path, unsigned int __flags);
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
