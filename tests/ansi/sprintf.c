@@ -20,6 +20,11 @@ int main() {
 	char buf[64] = { 0 };
 	sprintf(buf, "%d", 12);
 	assert(!strcmp(buf, "12"));
+#if __INTPTR_WIDTH__ == 64
+	// regression test for frigg#120
+	sprintf(buf, "%ld", 1UL << 63);
+	assert(!strcmp(buf, "-9223372036854775808"));
+#endif
 
 	sprintf(buf, "%f", 3.14);
 	assert(!strcmp(buf, "3.140000"));
