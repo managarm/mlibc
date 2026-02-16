@@ -3,21 +3,7 @@
 #include <dlfcn.h>
 
 #include <mlibc/debug.hpp>
-
-struct __dlapi_symbol {
-	const char *file;
-	void *base;
-	const char *symbol;
-	void *address;
-	const void *elf_symbol;
-	void *link_map;
-};
-
-extern "C" const char *__dlapi_error();
-extern "C" void *__dlapi_open(const char *, int, void *);
-extern "C" void *__dlapi_resolve(void *, const char *, void *, const char *);
-extern "C" int __dlapi_reverse(const void *, __dlapi_symbol *);
-extern "C" int __dlapi_close(void *);
+#include <mlibc/dlapi.hpp>
 
 int dlclose(void *handle) {
 	return __dlapi_close(handle);
