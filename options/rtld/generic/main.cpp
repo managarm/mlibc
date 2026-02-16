@@ -4,9 +4,12 @@
 
 #include <frg/manual_box.hpp>
 #include <frg/small_vector.hpp>
+#include <frg/optional.hpp>
+#include <frg/string.hpp>
 
 #include <abi-bits/auxv.h>
 #include <mlibc/debug.hpp>
+#include <mlibc/dlapi.hpp>
 #include <mlibc/rtld-sysdeps.hpp>
 #include <mlibc/rtld-config.hpp>
 #include <mlibc/rtld-abi.hpp>
@@ -56,6 +59,7 @@ frg::manual_box<frg::small_vector<frg::string_view, MLIBC_NUM_DEFAULT_LIBRARY_PA
 frg::manual_box<frg::vector<frg::string_view, MemoryAllocator>> preloads;
 
 static SharedObject *executableSO;
+static uintptr_t vdsoBase = 0;
 extern HIDDEN char __ehdr_start[];
 
 // Global debug interface variable
@@ -379,6 +383,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	__ensure(strtab_offset);
 	__ensure(soname_str);
 
+#endif // !defined(MLIBC_STATIC_BUILD)
+
 	// Find the auxiliary vector by skipping args and environment.
 	auto aux = entryStack;
 	aux += *aux + 1; // First, we skip argc and all args.
@@ -480,10 +486,15 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 			case AT_EXECFN: execfn = reinterpret_cast<const char *>(*value); break;
 			case AT_RANDOM: stack_entropy = reinterpret_cast<void*>(*value); break;
 			case AT_SECURE: rtldConfig.secureRequired = reinterpret_cast<uintptr_t>(*value); break;
+#ifdef AT_SYSINFO_EHDR
+			case AT_SYSINFO_EHDR: vdsoBase = reinterpret_cast<uintptr_t>(*value); break;
+#endif
 		}
 
 		aux += 2;
 	}
+
+#ifndef MLIBC_STATIC_BUILD
 	globalDebugInterface.base = reinterpret_cast<void*>(ldso_base);
 
 	// Handle the LD_LIBRARY_PATH and LD_PRELOAD environment variables.
@@ -528,6 +539,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 #endif
 
 #else
+	(void)env_ld_library_path;
+	(void)env_ld_preload;
 	auto ehdr = reinterpret_cast<elf_ehdr*>(__ehdr_start);
 	phdr_pointer = reinterpret_cast<void*>((uintptr_t)ehdr->e_phoff + (uintptr_t)ehdr);
 	phdr_entry_size = ehdr->e_phentsize;
@@ -545,6 +558,51 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	initialRepository.initialize();
 
 	globalScope.initialize(true);
+
+	// Add the vDSO to the repository first
+	if (vdsoBase) {
+		auto vdso_header = reinterpret_cast<elf_ehdr *>(vdsoBase);
+		auto vdso_phdrs = reinterpret_cast<void *>(vdsoBase + vdso_header->e_phoff);
+		elf_dyn *vdso_dynamic = nullptr;
+		uintptr_t actual_base = 0;
+
+		for (size_t i = 0; i < vdso_header->e_phnum; i++) {
+			auto phdr = reinterpret_cast<elf_phdr *>(vdsoBase + vdso_header->e_phoff
+				+ i * vdso_header->e_phentsize);
+			if (phdr->p_type == PT_LOAD)
+				actual_base = vdsoBase - phdr->p_vaddr + phdr->p_offset;
+			if (phdr->p_type == PT_DYNAMIC)
+				vdso_dynamic = reinterpret_cast<elf_dyn *>(vdsoBase + phdr->p_offset);
+		}
+
+		const char *vdso_strtab = nullptr;
+		size_t vdso_soname_offset = 0;
+
+		for (auto dyn = vdso_dynamic; dyn->d_tag != DT_NULL; dyn++) {
+			switch (dyn->d_tag) {
+			case DT_STRTAB:
+				vdso_strtab = reinterpret_cast<const char *>(actual_base + dyn->d_un.d_ptr);
+				break;
+			case DT_SONAME:
+				vdso_soname_offset = dyn->d_un.d_val;
+				break;
+			}
+		}
+
+		auto vdso_soname = &vdso_strtab[vdso_soname_offset];
+
+		if (rtldConfig.debug) {
+			mlibc::infoLogger() << "rtld: vDSO base:   " << (void*)vdsoBase << frg::endlog;
+			mlibc::infoLogger() << "rtld: vDSO actual: " << (void*)actual_base << frg::endlog;
+			mlibc::infoLogger() << "rtld: vDSO name:   " << vdso_soname << frg::endlog;
+		}
+
+		auto vdso = initialRepository->injectObjectFromDts(vdso_soname,
+			frg::string<MemoryAllocator> { getAllocator() }, actual_base, vdso_dynamic, 1);
+		vdso->phdrPointer = vdso_phdrs;
+		vdso->phdrCount = vdso_header->e_phnum;
+		vdso->phdrEntrySize = vdso_header->e_phentsize;
+	}
 
 	// Add the dynamic linker, as well as the exectuable to the repository.
 #ifndef MLIBC_STATIC_BUILD
@@ -815,14 +873,76 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress, con
 	return reinterpret_cast<void *>(target->virtualAddress());
 }
 
-struct __dlapi_symbol {
-	const char *file;
-	void *base;
-	const char *symbol;
-	void *address;
-	const void *elf_symbol;
-	void *link_map;
-};
+extern "C" [[gnu::visibility("default")]]
+void *__dlapi_vdsosym(const char *string, const char *version) {
+	if (!string)
+		return nullptr;
+
+	if (!vdsoBase)
+		return nullptr;
+
+	if (rtldConfig.debug)
+		mlibc::infoLogger() << "rtld: __dlapi_vdsosym(\"" << string << "\", "
+		                    << (version ? "\"" : "") << (version ? version : "nullptr")
+		                    << (version ? "\"" : "") << ")" << frg::endlog;
+
+	auto ehdr = reinterpret_cast<elf_ehdr *>(vdsoBase);
+	elf_dyn *dynamic = nullptr;
+	uintptr_t actual_base = 0;
+
+	for (size_t i = 0; i < ehdr->e_phnum; i++) {
+		auto phdr = reinterpret_cast<elf_phdr *>(vdsoBase + ehdr->e_phoff + i * ehdr->e_phentsize);
+		// On x86_64 Linux, this appears to be equal to the vDSO base, but on other platforms like
+		// aarch64 it is 0, and the actual address is already relocated.
+		if (phdr->p_type == PT_LOAD)
+			actual_base = vdsoBase - phdr->p_vaddr + phdr->p_offset;
+		if (phdr->p_type == PT_DYNAMIC)
+			dynamic = reinterpret_cast<elf_dyn *>(vdsoBase + phdr->p_offset);
+	}
+
+	size_t symtab_size = 0;
+	elf_sym* symtab = nullptr;
+	const char* strtab = nullptr;
+
+	while (dynamic->d_tag != DT_NULL) {
+		switch (dynamic->d_tag) {
+			case DT_SYMTAB:
+				symtab = reinterpret_cast<elf_sym*>(actual_base + dynamic->d_un.d_ptr);
+				break;
+			case DT_STRTAB:
+				strtab = reinterpret_cast<const char*>(actual_base + dynamic->d_un.d_ptr);
+				break;
+			case DT_HASH:
+				symtab_size = reinterpret_cast<SystemVHashTableHeader*>(actual_base + dynamic->d_un.d_ptr)->nChain;
+				break;
+		}
+		dynamic++;
+	}
+
+	if (!symtab_size || !symtab || !strtab)
+		return nullptr;
+
+	for (size_t i = 0; i < symtab_size; i++) {
+		// Check if this symbol has one of the accepted types and binds.
+		if (!(1 << ELF_ST_TYPE(symtab[i].st_info) & (1 << STT_NOTYPE | 1 << STT_OBJECT | 1 << STT_FUNC)))
+			continue;
+
+		if (!(1 << ELF_ST_BIND(symtab[i].st_info) & (1 << STB_GLOBAL | 1 << STB_WEAK | 1 << STB_GNU_UNIQUE)))
+			continue;
+
+		if (frg::string_view {string} != frg::string_view {&strtab[symtab[i].st_name]})
+			continue;
+
+		// TODO: Symbol versioning
+
+		uintptr_t addr = actual_base + symtab[i].st_value;
+		if (ELF_ST_TYPE(symtab[i].st_info) == STT_GNU_IFUNC)
+			addr = reinterpret_cast<uintptr_t (*)()>(addr)();
+		return reinterpret_cast<void *>(addr);
+	}
+
+	return nullptr;
+}
 
 extern "C" [[ gnu::visibility("default") ]]
 int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
