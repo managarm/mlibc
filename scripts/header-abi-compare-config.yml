@@ -80,6 +80,7 @@ ignored_typedefs:
   - fpos_t
   - jmp_buf
   - mtx_t
+  - once_flag
   - tss_t
   - pthread_attr_t
   - pthread_barrier_t
@@ -88,6 +89,7 @@ ignored_typedefs:
   - pthread_condattr_t
   - pthread_mutex_t
   - pthread_mutexattr_t
+  - pthread_once_t
   - pthread_rwlock_t
   - pthread_rwlockattr_t
   - sigjmp_buf
