@@ -1491,20 +1491,28 @@ int sys_get_min_priority(int policy, int *out) {
 	return 0;
 }
 
+struct ksched_param {
+	int sched_priority;
+};
+
 int sys_getschedparam(void *tcb, int *policy, struct sched_param *param) {
 	auto t = reinterpret_cast<Tcb *>(tcb);
 
-	if(!t->tid) {
+	if (!t->tid) {
 		return ESRCH;
+	} else if (!param) {
+		return EINVAL;
 	}
 
-	auto ret_param = do_syscall(SYS_sched_getparam, t->tid, param);
+	ksched_param kparam = {param->sched_priority};
+	auto ret_param = do_syscall(SYS_sched_getparam, t->tid, &kparam);
 	if (int e = sc_error(ret_param); e)
 		return e;
 
-	auto ret_sched = do_syscall(SYS_sched_getscheduler, t->tid, param);
+	auto ret_sched = do_syscall(SYS_sched_getscheduler, t->tid, &kparam);
 	if (int e = sc_error(ret_sched); e)
 		return e;
+	param->sched_priority = kparam.sched_priority;
 	*policy = sc_int_result<int>(ret_sched);
 
 	return 0;
@@ -1513,11 +1521,14 @@ int sys_getschedparam(void *tcb, int *policy, struct sched_param *param) {
 int sys_setschedparam(void *tcb, int policy, const struct sched_param *param) {
 	auto t = reinterpret_cast<Tcb *>(tcb);
 
-	if(!t->tid) {
+	if (!t->tid) {
 		return ESRCH;
+	} else if (!param) {
+		return EINVAL;
 	}
 
-	auto ret = do_syscall(SYS_sched_setscheduler, t->tid, policy, param);
+	ksched_param kparam = {param->sched_priority};
+	auto ret = do_syscall(SYS_sched_setscheduler, t->tid, policy, &kparam);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -1532,21 +1543,25 @@ int sys_getscheduler(pid_t pid, int *sched) {
 }
 
 int sys_setscheduler(pid_t pid, int policy, const struct sched_param *param) {
-	auto ret = do_syscall(SYS_sched_setscheduler, pid, policy, param);
+	ksched_param kparam = {param->sched_priority};
+	auto ret = do_syscall(SYS_sched_setscheduler, pid, policy, &kparam);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int sys_getparam(pid_t pid, struct sched_param *param) {
-	auto ret = do_syscall(SYS_sched_getparam, pid, param);
+	ksched_param kparam = {param->sched_priority};
+	auto ret = do_syscall(SYS_sched_getparam, pid, &kparam);
 	if (int e = sc_error(ret); e)
 		return e;
+	param->sched_priority = kparam.sched_priority;
 	return 0;
 }
 
 int sys_setparam(pid_t pid, const struct sched_param *param) {
-	auto ret = do_syscall(SYS_sched_setparam, pid, param);
+	ksched_param kparam = {param->sched_priority};
+	auto ret = do_syscall(SYS_sched_setparam, pid, &kparam);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
