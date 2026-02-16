@@ -14,6 +14,7 @@
 #endif
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/dlapi.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/thread-entry.hpp>
 #include <limits.h>
@@ -280,11 +281,28 @@ int sys_vm_protect(void *pointer, size_t size, int prot) {
 // All remaining functions are disabled in ldso.
 #ifndef MLIBC_BUILDING_RTLD
 
+#if __MLIBC_POSIX_OPTION
+#define VDSO_SYMBOL(name) (__dlapi_vdsosym(name, nullptr))
+#else
+#define VDSO_SYMBOL(name) ((void*)nullptr)
+#endif
+
+static auto vdso_clock_gettime = reinterpret_cast<int (*)(clockid_t, struct timespec *)>(
+	VDSO_SYMBOL("__vdso_clock_gettime")
+);
+
 int sys_clock_get(int clock, time_t *secs, long *nanos) {
 	struct timespec tp = {};
-	auto ret = do_syscall(SYS_clock_gettime, clock, &tp);
-	if (int e = sc_error(ret); e)
-		return e;
+
+	if (vdso_clock_gettime) {
+		if (int e = vdso_clock_gettime(clock, &tp); e)
+			return e;
+	} else {
+		auto ret = do_syscall(SYS_clock_gettime, clock, &tp);
+		if (int e = sc_error(ret); e)
+			return e;
+	}
+
 	*secs = tp.tv_sec;
 	*nanos = tp.tv_nsec;
 	return 0;
