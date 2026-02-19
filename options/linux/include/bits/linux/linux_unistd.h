@@ -6,6 +6,9 @@ extern "C" {
 #endif
 
 #include <mlibc-config.h>
+#include <bits/off_t.h>
+#include <bits/size_t.h>
+#include <bits/ssize_t.h>
 
 #ifndef __MLIBC_ABI_ONLY
 
@@ -15,6 +18,7 @@ int vhangup(void);
 
 #if defined(_GNU_SOURCE)
 int syncfs(int __fd);
+ssize_t copy_file_range(int __fd_in, off_t *__off_in, int __fd_out, off_t *__off_out, size_t __size, unsigned int __flags);
 #endif
 
 #endif /* !__MLIBC_ABI_ONLY */
