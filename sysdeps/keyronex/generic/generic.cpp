@@ -104,12 +104,11 @@ int
 Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int fd, off_t offset,
     void **window)
 {
-	uintptr_t addr;
-	int r = syscall6(SYS_mmap, (uintptr_t)hint, size, prot,
-	    flags, fd, offset, &addr);
-	if (r < 0)
+	uintptr_t r = syscall6(SYS_mmap, (uintptr_t)hint, size, prot,
+	    flags, fd, offset, NULL);
+	if (r > -4096UL)
 		return -r;
-	*window = (void *)addr;
+	*window = (void *)r;
 	return 0;
 }
 
