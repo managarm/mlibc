@@ -473,12 +473,12 @@ bool parse_tzfile(const char *tz) {
 	// TODO(geert): we can probably cache this somehow
 	tzfile tzfile_time;
 	memcpy(&tzfile_time, reinterpret_cast<char *>(window.get()), sizeof(tzfile));
-	tzfile_time.tzh_ttisgmtcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_ttisgmtcnt);
-	tzfile_time.tzh_ttisstdcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_ttisstdcnt);
-	tzfile_time.tzh_leapcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_leapcnt);
-	tzfile_time.tzh_timecnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_timecnt);
-	tzfile_time.tzh_typecnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_typecnt);
-	tzfile_time.tzh_charcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_charcnt);
+	tzfile_time.tzh_ttisgmtcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_ttisgmtcnt);
+	tzfile_time.tzh_ttisstdcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_ttisstdcnt);
+	tzfile_time.tzh_leapcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_leapcnt);
+	tzfile_time.tzh_timecnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_timecnt);
+	tzfile_time.tzh_typecnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_typecnt);
+	tzfile_time.tzh_charcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_charcnt);
 
 	if (tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i'
 			|| tzfile_time.magic[3] != 'f') {
@@ -509,7 +509,7 @@ bool parse_tzfile(const char *tz) {
 				+ tzfile_time.tzh_timecnt * sizeof(int32_t)
 				+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
 				+ i * sizeof(ttinfo), sizeof(ttinfo));
-		time_info.tt_gmtoff = mlibc::bit_util<uint32_t>::byteswap(time_info.tt_gmtoff);
+		time_info.tt_gmtoff = mlibc::bit_util<uint32_t>::be_to_host(time_info.tt_gmtoff);
 		if (!time_info.tt_isdst && !found_std) {
 			tznameStorage[tznameNormal] = {abbrevs + time_info.tt_abbrind, getAllocator()};
 			tzname[tznameNormal] = tznameStorage[tznameNormal].data();
@@ -805,12 +805,12 @@ int unix_local_from_gmt_tzfile(time_t unix_gmt, time_t *offset, bool *dst, frg::
 	// TODO(geert): we can probably cache this somehow
 	tzfile tzfile_time;
 	memcpy(&tzfile_time, reinterpret_cast<char *>(window.get()), sizeof(tzfile));
-	tzfile_time.tzh_ttisgmtcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_ttisgmtcnt);
-	tzfile_time.tzh_ttisstdcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_ttisstdcnt);
-	tzfile_time.tzh_leapcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_leapcnt);
-	tzfile_time.tzh_timecnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_timecnt);
-	tzfile_time.tzh_typecnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_typecnt);
-	tzfile_time.tzh_charcnt = mlibc::bit_util<uint32_t>::byteswap(tzfile_time.tzh_charcnt);
+	tzfile_time.tzh_ttisgmtcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_ttisgmtcnt);
+	tzfile_time.tzh_ttisstdcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_ttisstdcnt);
+	tzfile_time.tzh_leapcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_leapcnt);
+	tzfile_time.tzh_timecnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_timecnt);
+	tzfile_time.tzh_typecnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_typecnt);
+	tzfile_time.tzh_charcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_charcnt);
 
 	if (tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i'
 			|| tzfile_time.magic[3] != 'f') {
@@ -829,7 +829,7 @@ int unix_local_from_gmt_tzfile(time_t unix_gmt, time_t *offset, bool *dst, frg::
 		int32_t ttime;
 		memcpy(&ttime, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
 				+ i * sizeof(int32_t), sizeof(int32_t));
-		ttime = mlibc::bit_util<uint32_t>::byteswap(ttime);
+		ttime = mlibc::bit_util<uint32_t>::be_to_host(ttime);
 		// If we are before the first transition, the format dicates that
 		// the first ttinfo entry should be used (and not the ttinfo entry pointed
 		// to by the first transition time).
@@ -857,7 +857,7 @@ int unix_local_from_gmt_tzfile(time_t unix_gmt, time_t *offset, bool *dst, frg::
 			+ tzfile_time.tzh_timecnt * sizeof(int32_t)
 			+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
 			+ ttinfo_index * sizeof(ttinfo), sizeof(ttinfo));
-	time_info.tt_gmtoff = mlibc::bit_util<uint32_t>::byteswap(time_info.tt_gmtoff);
+	time_info.tt_gmtoff = mlibc::bit_util<uint32_t>::be_to_host(time_info.tt_gmtoff);
 
 	char *abbrevs = reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
 		+ tzfile_time.tzh_timecnt * sizeof(int32_t)
