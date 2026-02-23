@@ -1020,7 +1020,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 }
 
 int sys_pselect(
-    int,
+    int num_fds,
     fd_set *read_set,
     fd_set *write_set,
     fd_set *except_set,
@@ -1028,77 +1028,47 @@ int sys_pselect(
     const sigset_t *sigmask,
     int *num_events
 ) {
-	// TODO: Do not keep errors from epoll (?).
-	int fd = epoll_create1(0);
-	if (fd == -1)
-		return -1;
+	struct pollfd pfds[FD_SETSIZE];
+	int pcount = 0;
 
-	for (int k = 0; k < FD_SETSIZE; k++) {
-		struct epoll_event ev;
-		memset(&ev, 0, sizeof(struct epoll_event));
+	for (int i = 0; i < num_fds; i++) {
+		short ev = 0;
+		if (read_set && FD_ISSET(i, read_set))
+			ev |= POLLIN;
+		if (write_set && FD_ISSET(i, write_set))
+			ev |= POLLOUT;
+		if (except_set && FD_ISSET(i, except_set))
+			ev |= POLLPRI;
 
-		if (read_set && FD_ISSET(k, read_set))
-			ev.events |= EPOLLIN; // TODO: Additional events.
-		if (write_set && FD_ISSET(k, write_set))
-			ev.events |= EPOLLOUT; // TODO: Additional events.
-		if (except_set && FD_ISSET(k, except_set))
-			ev.events |= EPOLLPRI;
-
-		if (!ev.events)
-			continue;
-		ev.data.u32 = k;
-
-		if (epoll_ctl(fd, EPOLL_CTL_ADD, k, &ev))
-			return -1;
-	}
-
-	struct epoll_event evnts[16];
-	int n = epoll_pwait(
-	    fd, evnts, 16, timeout ? (timeout->tv_sec * 1000 + timeout->tv_nsec / 100) : -1, sigmask
-	);
-	if (n == -1)
-		return -1;
-
-	fd_set res_read_set;
-	fd_set res_write_set;
-	fd_set res_except_set;
-	FD_ZERO(&res_read_set);
-	FD_ZERO(&res_write_set);
-	FD_ZERO(&res_except_set);
-	int m = 0;
-
-	for (int i = 0; i < n; i++) {
-		int k = evnts[i].data.u32;
-
-		if (read_set && FD_ISSET(k, read_set)
-		    && evnts[i].events & (EPOLLIN | EPOLLERR | EPOLLHUP)) {
-			FD_SET(k, &res_read_set);
-			m++;
-		}
-
-		if (write_set && FD_ISSET(k, write_set)
-		    && evnts[i].events & (EPOLLOUT | EPOLLERR | EPOLLHUP)) {
-			FD_SET(k, &res_write_set);
-			m++;
-		}
-
-		if (except_set && FD_ISSET(k, except_set) && evnts[i].events & EPOLLPRI) {
-			FD_SET(k, &res_except_set);
-			m++;
+		if (ev) {
+			pfds[pcount].fd = i;
+			pfds[pcount].events = ev;
+			pcount++;
 		}
 	}
 
-	if (close(fd))
-		__ensure("close() failed on epoll file");
+	if (auto e = sys_ppoll(pfds, pcount, timeout, sigmask, num_events); e)
+		return e;
 
 	if (read_set)
-		memcpy(read_set, &res_read_set, sizeof(fd_set));
+		FD_ZERO(read_set);
 	if (write_set)
-		memcpy(write_set, &res_write_set, sizeof(fd_set));
+		FD_ZERO(write_set);
 	if (except_set)
-		memcpy(except_set, &res_except_set, sizeof(fd_set));
+		FD_ZERO(except_set);
 
-	*num_events = m;
+	if (*num_events) {
+
+		for (int i = 0; i < *num_events; i++) {
+			if (read_set && (pfds[i].revents & (POLLIN | POLLHUP | POLLERR)))
+				FD_SET(pfds[i].fd, read_set);
+			if (write_set && (pfds[i].revents & (POLLOUT | POLLHUP | POLLERR)))
+				FD_SET(pfds[i].fd, write_set);
+			if (except_set && (pfds[i].revents & (POLLPRI)))
+				FD_SET(pfds[i].fd, except_set);
+		}
+	}
+
 	return 0;
 }
 
