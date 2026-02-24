@@ -107,7 +107,7 @@ int sys_sigaction(
 int sys_kill(int pid, int number) {
 	// This implementation is inherently signal-safe.
 	HelWord out;
-	HEL_CHECK(helSyscall2_1(kHelObserveSuperCall + posix::superSigKill, pid, number, &out));
+	HEL_CHECK(helSyscall4_1(kHelObserveSuperCall + posix::superSigKill, pid, number, SI_USER, 0, &out));
 	return out;
 }
 
@@ -196,6 +196,13 @@ int sys_sigtimedwait(
 
 	*out_signal = signal;
 	return 0;
+}
+
+int sys_sigqueue(pid_t pid, int sig, const union sigval val) {
+	// This implementation is inherently signal-safe.
+	HelWord out;
+	HEL_CHECK(helSyscall4_1(kHelObserveSuperCall + posix::superSigKill, pid, sig, SI_QUEUE, reinterpret_cast<uintptr_t>(val.sival_ptr), &out));
+	return out;
 }
 
 } // namespace mlibc
