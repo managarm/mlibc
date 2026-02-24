@@ -8,6 +8,7 @@ libc_sources += files(
 	'generic/getopt.cpp',
 	'generic/bsd_stdlib.cpp',
 	'generic/pty.cpp',
+	'generic/ifaddrs.cpp',
 )
 
 if not no_headers
@@ -15,6 +16,7 @@ if not no_headers
 		'include/fstab.h',
 		'include/pty.h',
 		'include/utmp.h',
+		'include/ifaddrs.h',
 	)
 	install_headers(
 		'include/arpa/nameser.h',
