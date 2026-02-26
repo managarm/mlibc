@@ -131,7 +131,7 @@ int thread_join(struct __mlibc_thread_data *thread, void *ret) {
 	if(ret && tcb->returnValueType == TcbThreadReturnValue::Pointer)
 		*reinterpret_cast<void **>(ret) = tcb->returnValue.voidPtr;
 	else if(ret && tcb->returnValueType == TcbThreadReturnValue::Integer)
-		*reinterpret_cast<int *>(ret) = tcb->returnValue.intVal;
+		*reinterpret_cast<int *>(ret) = tcb->returnValue.integer;
 
 	// FIXME: destroy tcb here, currently we leak it
 
@@ -191,10 +191,7 @@ __attribute__ ((__noreturn__)) void thread_exit(thread_exit_return ret_val) {
 		}
 	}
 
-	if(self->returnValueType == TcbThreadReturnValue::Pointer)
-		self->returnValue.voidPtr = ret_val.voidPtr;
-	else if(self->returnValueType == TcbThreadReturnValue::Integer)
-		self->returnValue.intVal = ret_val.integer;
+	self->returnValue = ret_val;
 
 	__atomic_store_n(&self->didExit, 1, __ATOMIC_RELEASE);
 	sys_futex_wake(&self->didExit, true);
