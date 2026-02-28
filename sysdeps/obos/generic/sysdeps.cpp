@@ -106,6 +106,10 @@ int sys_sigaction(
 
 #endif
 
+int sys_chroot(const char *path) {
+	return parse_file_status((obos_status)syscall1(Sys_Chroot, path));
+}
+
 int sys_dup(int fd, int flags, int *newfd) {
 	(void)flags;
 	*newfd = HANDLE_ANY;

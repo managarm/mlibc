@@ -152,6 +152,7 @@ enum {
 	Sys_GetHDADevices,
 	Sys_SetSid,
 	Sys_GetSid,
+	Sys_Chroot,
 };
 
 #if defined(__x86_64__)
