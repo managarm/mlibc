@@ -1,3 +1,5 @@
+#include <bit>
+#include <type_traits>
 
 #include <string.h>
 #include <sys/select.h>
@@ -9,17 +11,21 @@
 
 #include <mlibc/posix-sysdeps.hpp>
 
+using fd_mask_unsigned = std::make_unsigned_t<__fd_mask>;
+
+#define FD_MASK(n) (fd_mask_unsigned)(fd_mask_unsigned{1} << (n))
+
 void __FD_CLR(int fd, fd_set *set) {
 	__ensure(fd < FD_SETSIZE);
-	set->fds_bits[fd / 8] &= ~(1 << (fd % 8));
+	set->fds_bits[fd / NFDBITS] &= std::bit_cast<fd_mask>(~FD_MASK(fd % NFDBITS));
 }
 int __FD_ISSET(int fd, fd_set *set) {
 	__ensure(fd < FD_SETSIZE);
-	return set->fds_bits[fd / 8] & (1 << (fd % 8));
+	return (std::bit_cast<fd_mask_unsigned>(set->fds_bits[fd / NFDBITS]) & FD_MASK(fd % NFDBITS)) != 0;
 }
 void __FD_SET(int fd, fd_set *set) {
 	__ensure(fd < FD_SETSIZE);
-	set->fds_bits[fd / 8] |= 1 << (fd % 8);
+	set->fds_bits[fd / NFDBITS] = std::bit_cast<fd_mask>(std::bit_cast<fd_mask_unsigned>(set->fds_bits[fd / NFDBITS]) | FD_MASK(fd % NFDBITS));
 }
 void __FD_ZERO(fd_set *set) {
 	memset(set->fds_bits, 0, sizeof(fd_set));
