@@ -121,8 +121,8 @@ extern "C" {
 #define _PC_NO_TRUNC		7
 #define _PC_VDISABLE		8
 
-#define _PC_FILESIZEBITS 9
-#define _PC_SYMLINK_MAX 10
+#define _PC_FILESIZEBITS 13
+#define _PC_SYMLINK_MAX 19
 
 /* MISSING: remaining _SC_macros */
 #define _SC_ARG_MAX 0
