@@ -72,7 +72,7 @@ static void test_schedparam() {
 	pthread_attr_t attr;
 	struct sched_param init_param = {0};
 	assert(!pthread_attr_setschedparam(&attr, &init_param));
-	struct sched_param param = {1};
+	struct sched_param param = {.sched_priority = 1};
 	assert(!pthread_attr_getschedparam(&attr, &param));
 	assert(param.sched_priority == init_param.sched_priority);
 }
