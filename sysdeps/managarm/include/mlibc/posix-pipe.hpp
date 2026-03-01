@@ -170,15 +170,17 @@ struct Queue {
 		// Check if we need to move to the next SQ chunk.
 		if (_sqProgress + elementSize > _chunkSize) {
 			// Wait for next chunk to become available.
-			auto nextWord = __atomic_load_n(&_sqChunks[_sqCurrentChunk - 2]->next, __ATOMIC_ACQUIRE);
-			while(!(nextWord & kHelNextPresent)) {
-				__atomic_fetch_and(&_queue->userNotify, ~kHelUserNotifySupplySqChunks, __ATOMIC_ACQUIRE);
-
+			int nextWord;
+			while (true) {
 				nextWord = __atomic_load_n(&_sqChunks[_sqCurrentChunk - 2]->next, __ATOMIC_ACQUIRE);
-				if(nextWord & kHelNextPresent)
+				if (nextWord & kHelNextPresent)
 					break;
-
-				HEL_CHECK(helDriveQueue(_handle, 0));
+				auto notify = __atomic_load_n(&_queue->userNotify, __ATOMIC_RELAXED);
+				if (!(notify & kHelUserNotifySupplySqChunks)) {
+					HEL_CHECK(helDriveQueue(_handle, 0));
+				} else {
+					__atomic_fetch_and(&_queue->userNotify, ~kHelUserNotifySupplySqChunks, __ATOMIC_ACQUIRE);
+				}
 			}
 
 			// Mark current chunk as done.
