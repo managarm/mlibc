@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <bits/size_t.h>
 #include <frg/array.hpp>
+#include <mlibc/threads.hpp>
 
 #include "elf.hpp"
 
@@ -98,10 +99,7 @@ struct Tcb {
 	uintptr_t stackCanary;
 	int cancelBits;
 
-	union {
-		void *voidPtr;
-		int intVal;
-	} returnValue;
+	mlibc::thread_exit_return returnValue;
 	TcbThreadReturnValue returnValueType;
 
 	struct AtforkHandler {
@@ -144,7 +142,7 @@ struct Tcb {
 			returnValue.voidPtr = func(user_arg);
 		} else {
 			auto func = reinterpret_cast<int (*)(void *)>(entry);
-			returnValue.intVal = func(user_arg);
+			returnValue.integer = func(user_arg);
 		}
 	}
 };
