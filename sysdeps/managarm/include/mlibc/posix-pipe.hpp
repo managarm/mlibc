@@ -309,11 +309,15 @@ private:
 
 			if (_pendingNotify & kHelUserNotifyCqProgress) {
 				auto progress = __atomic_load_n(&_chunks[_retrieveChunk]->progressFutex, __ATOMIC_ACQUIRE);
-				__ensure(!(progress & ~(kHelProgressMask | kHelProgressDone)));
+				__ensure(!(progress & ~(kHelProgressMask | kHelProgressFull | kHelProgressDone)));
+				if (progress & kHelProgressFull)
+					__ensure(_retrieveChunk != _tailChunk);
 				if (_lastProgress != (progress & kHelProgressMask))
 					return FutexProgress::PROGRESS;
-				else if (progress & kHelProgressDone)
+				else if (progress & kHelProgressDone) {
+					__ensure(progress & kHelProgressFull);
 					return FutexProgress::DONE;
+				}
 			}
 
 			// If we get here, no relevant notifications are pending.

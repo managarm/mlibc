@@ -225,11 +225,14 @@ private:
 
 			if (_pendingNotify & kHelUserNotifyCqProgress) {
 				auto progress = __atomic_load_n(&_chunks[_retrieveChunk]->progressFutex, __ATOMIC_ACQUIRE);
-				__ensure(!(progress & ~(kHelProgressMask | kHelProgressDone)));
+				__ensure(!(progress & ~(kHelProgressMask | kHelProgressFull | kHelProgressDone)));
+				if (progress & kHelProgressFull)
+					__ensure(_retrieveChunk != _tailChunk);
 				if (_lastProgress != (progress & kHelProgressMask)) {
 					*done = false;
 					return;
 				} else if (progress & kHelProgressDone) {
+					__ensure(progress & kHelProgressFull);
 					*done = true;
 					return;
 				}
