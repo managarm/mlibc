@@ -17,6 +17,7 @@
 #include <protocols/posix/supercalls.hpp>
 
 void resetCancellationRequested();
+bool cancellationRequested();
 void setQueueHandle(HelHandle queue);
 
 struct SignalGuard {
@@ -89,6 +90,7 @@ struct Queue {
 		_retrieveChunk = 0;
 		_tailChunk = 0;
 		_lastProgress = 0;
+		_pendingNotify = 0;
 
 		// Setup the queue header.
 		HelQueueParameters params{.flags = 0, .numChunks = 2, .chunkSize = 4096, .numSqChunks = _numSqChunks};
@@ -290,33 +292,47 @@ private:
 
 	// Postcondition: return value != FutexProgress::NONE.
 	FutexProgress _waitProgressFutex() {
-		auto check = [&]() -> FutexProgress {
-			auto progress = __atomic_load_n(&_chunks[_retrieveChunk]->progressFutex, __ATOMIC_ACQUIRE);
-			__ensure(!(progress & ~(kHelProgressMask | kHelProgressDone)));
-			if (_lastProgress != (progress & kHelProgressMask))
-				return FutexProgress::PROGRESS;
-			else if (progress & kHelProgressDone)
-				return FutexProgress::DONE;
-			return FutexProgress::NONE;
-		};
+		// userNotify bits checked by this function (these MUST be checked in the loop below!).
+		const auto relevantNotify = kHelUserNotifyCqProgress | kHelUserNotifyAlert;
+		// userNotify bits ignored by this function.
+		const auto maskedNotify = kHelUserNotifySupplySqChunks;
 
-		if (auto result = check(); result != FutexProgress::NONE)
-			return result;
+		// Relaxed is enough here: if a relevant bit in notify is set, we will always go through
+		// the load-acquire on the fetch_and() code path and re-check a notification afterwards
+		// before we conclude that there is truly nothing pending anymore.
+		auto notify = __atomic_load_n(&_queue->userNotify, __ATOMIC_RELAXED);
+		while(true) {
+			// Note: notify is reloaded at the end of each iteration below.
+			_pendingNotify |= notify;
 
-		while (true) {
-			auto fetch = __atomic_fetch_and(&_queue->userNotify, ~(kHelUserNotifyCqProgress | kHelUserNotifyAlert), __ATOMIC_ACQUIRE);
-			if (fetch & kHelUserNotifyAlert)
-				return FutexProgress::CANCELLED;
+			if (_pendingNotify & kHelUserNotifyCqProgress) {
+				auto progress = __atomic_load_n(&_chunks[_retrieveChunk]->progressFutex, __ATOMIC_ACQUIRE);
+				__ensure(!(progress & ~(kHelProgressMask | kHelProgressDone)));
+				if (_lastProgress != (progress & kHelProgressMask))
+					return FutexProgress::PROGRESS;
+				else if (progress & kHelProgressDone)
+					return FutexProgress::DONE;
+			}
 
-			if (auto result = check(); result != FutexProgress::NONE)
-				return result;
+			// If we get here, no relevant notifications are pending.
+			// Clear all relevant bits or wait in the kernel if all of them are already clear.
+			auto notifyToClear = notify & relevantNotify;
+			_pendingNotify &= ~relevantNotify;
+			if (!notifyToClear) {
+				__ensure(!(_pendingNotify & ~maskedNotify));
 
-			int err = helDriveQueue(_handle, kHelDriveWaitCqProgress);
-
-			if (err == kHelErrCancelled)
-				return FutexProgress::CANCELLED;
-
-			HEL_CHECK(err);
+				if (cancellationRequested())
+					return FutexProgress::CANCELLED;
+				int err = helDriveQueue(_handle, kHelDriveWaitCqProgress);
+				if (err != kHelErrCancelled)
+					HEL_CHECK(err);
+				// Relaxed is enough (same reasoning as for the initial load).
+				notify = __atomic_load_n(&_queue->userNotify, __ATOMIC_RELAXED);
+			} else {
+				// Note that we will check all cleared notifications again in the next iteration.
+				// This RMW happens before the next progressFutex wait due to the load-acquire here.
+				notify = __atomic_fetch_and(&_queue->userNotify, ~notifyToClear, __ATOMIC_ACQUIRE);
+			}
 		}
 	}
 
@@ -332,6 +348,9 @@ private:
 
 	// Progress into the current chunk.
 	int _lastProgress;
+
+	// Accumulated pending notify bits.
+	int _pendingNotify{0};
 
 	// Number of ElementHandle objects alive.
 	int _refCount[2];
@@ -388,7 +407,6 @@ HelHandle *cacheFileTable();
 HelHandle getHandleForFd(int fd);
 void resetCancellationId();
 void setCancellationId(uint64_t event, HelHandle handle, int fd);
-bool cancellationRequested();
 void clearCachedInfos();
 uint64_t allocateCancellationId();
 
@@ -445,8 +463,7 @@ auto exchangeMsgsSyncCancellable(HelHandle descriptor, uint64_t cancelId, int fd
 
 	do {
 		element = globalQueue.dequeueSingleUnlessCancelled();
-
-		if (cancellationRequested()) {
+		if (!element) {
 			HEL_CHECK(helSyscall2(
 				kHelCallSuper + posix::superCancel,
 				cancelId,

@@ -107,6 +107,8 @@ void clearCachedInfos() { has_cached_infos = PTHREAD_ONCE_INIT; }
 
 bool cancellationRequested() {
 	pthread_once(&has_cached_infos, &actuallyCacheInfos);
+	if (!__mlibc_cached_thread_page)
+		return false;
 	return __mlibc_cached_thread_page->cancellationRequested;
 }
 
