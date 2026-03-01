@@ -126,7 +126,7 @@ struct Queue {
 					break;
 				auto notify = __atomic_load_n(&_queue->userNotify, __ATOMIC_RELAXED);
 				if (!(notify & kHelUserNotifySupplySqChunks)) {
-					HEL_CHECK(helDriveQueue(_handle, 0));
+					HEL_CHECK(helDriveQueue(_handle, 0, 0));
 				} else {
 					__atomic_fetch_and(&_queue->userNotify, ~kHelUserNotifySupplySqChunks, __ATOMIC_ACQUIRE);
 				}
@@ -139,7 +139,7 @@ struct Queue {
 			// Signal the kernel.
 			auto futex = __atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySqProgress, __ATOMIC_RELEASE);
 			if (!(futex & kHelKernelNotifySqProgress))
-				HEL_CHECK(helDriveQueue(_handle, 0));
+				HEL_CHECK(helDriveQueue(_handle, 0, 0));
 
 			_sqCurrentChunk = nextWord & ~kHelNextPresent;
 			_sqProgress = 0;
@@ -168,7 +168,7 @@ struct Queue {
 		// Signal the kernel.
 		auto futex = __atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySqProgress, __ATOMIC_RELEASE);
 		if (!(futex & kHelKernelNotifySqProgress))
-			HEL_CHECK(helDriveQueue(_handle, 0));
+			HEL_CHECK(helDriveQueue(_handle, 0, 0));
 	}
 
 	void *dequeueSingle() {
@@ -206,7 +206,7 @@ private:
 		auto futex =
 		    __atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySupplyCqChunks, __ATOMIC_RELEASE);
 		if (!(futex & kHelKernelNotifySupplyCqChunks))
-			HEL_CHECK(helDriveQueue(_handle, 0));
+			HEL_CHECK(helDriveQueue(_handle, 0, 0));
 	}
 
 	void _waitProgressFutex(bool *done) {
@@ -242,7 +242,7 @@ private:
 			if (!notifyToClear) {
 				__ensure(!(_pendingNotify & ~maskedNotify));
 
-				auto e = helDriveQueue(_handle, kHelDriveWaitCqProgress);
+				auto e = helDriveQueue(_handle, kHelDriveWait, maskedNotify);
 				if (e != kHelErrCancelled)
 					HEL_CHECK(e);
 				// Relaxed is enough (same reasoning as for the initial load).

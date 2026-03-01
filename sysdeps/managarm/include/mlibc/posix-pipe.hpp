@@ -177,7 +177,7 @@ struct Queue {
 					break;
 				auto notify = __atomic_load_n(&_queue->userNotify, __ATOMIC_RELAXED);
 				if (!(notify & kHelUserNotifySupplySqChunks)) {
-					HEL_CHECK(helDriveQueue(_handle, 0));
+					HEL_CHECK(helDriveQueue(_handle, 0, 0));
 				} else {
 					__atomic_fetch_and(&_queue->userNotify, ~kHelUserNotifySupplySqChunks, __ATOMIC_ACQUIRE);
 				}
@@ -282,7 +282,7 @@ private:
 		auto futex =
 		    __atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySupplyCqChunks, __ATOMIC_RELEASE);
 		if (!(futex & kHelKernelNotifySupplyCqChunks))
-			HEL_CHECK(helDriveQueue(_handle, 0));
+			HEL_CHECK(helDriveQueue(_handle, 0, 0));
 	}
 
 	enum class FutexProgress {
@@ -325,7 +325,7 @@ private:
 
 				if (cancellationRequested())
 					return FutexProgress::CANCELLED;
-				int err = helDriveQueue(_handle, kHelDriveWaitCqProgress);
+				int err = helDriveQueue(_handle, kHelDriveWait, maskedNotify);
 				if (err != kHelErrCancelled)
 					HEL_CHECK(err);
 				// Relaxed is enough (same reasoning as for the initial load).
