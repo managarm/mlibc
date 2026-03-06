@@ -43,6 +43,10 @@
 #	include <mlibc/linux-reboot-sysdeps.hpp>
 #endif /* __MLIBC_LINUX_REBOOT_OPTION */
 
+#if __MLIBC_LINUX_WRAPPERS_OPTION
+#	include <mlibc/linux-wrappers-sysdeps.hpp>
+#endif /* __MLIBC_LINUX_WRAPPERS_OPTION */
+
 #if MLIBC_BUILDING_RTLD
 #	include <mlibc/rtld-sysdeps.hpp>
 #endif /* MLIBC_BUILDING_RTLD */

@@ -2631,6 +2631,26 @@ int sys_iopl(int level) {
 
 #endif // __MLIBC_GLIBC_OPTION
 
+#if __MLIBC_LINUX_WRAPPERS_OPTION
+
+int sys_rt_sigqueueinfo(pid_t tgid, int sig, siginfo_t *uinfo) {
+	auto ret = do_syscall(SYS_rt_sigqueueinfo, tgid, sig, uinfo);
+	if(int e = sc_error(ret); e)
+		return e;
+
+	return 0;
+}
+
+int sys_rt_tgsigqueueinfo(pid_t tgid, pid_t tid, int sig, siginfo_t *uinfo) {
+	auto ret = do_syscall(SYS_rt_tgsigqueueinfo, tgid, tid, sig, uinfo);
+	if(int e = sc_error(ret); e)
+		return e;
+
+	return 0;
+}
+
+#endif // __MLIBC_LINUX_WRAPPERS_OPTION
+
 #if __MLIBC_POSIX_OPTION
 
 int sys_shmat(void **seg_start, int shmid, const void *shmaddr, int shmflg) {
