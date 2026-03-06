@@ -104,6 +104,7 @@
 #mesondefine __MLIBC_POSIX_OPTION
 #mesondefine __MLIBC_LINUX_OPTION
 #mesondefine __MLIBC_GLIBC_OPTION
+#mesondefine __MLIBC_LINUX_WRAPPERS_OPTION
 #mesondefine __MLIBC_SYSDEP_HAS_BITS_SYSCALL_H
 
 #endif /* _MLIBC_CONFIG_H */

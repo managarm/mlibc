@@ -1,6 +1,7 @@
 sysdep_supported_options = {
 	'posix': true,
 	'linux': true,
+	'linux_wrappers': true,
 	'glibc': true,
 	'bsd': true,
 }

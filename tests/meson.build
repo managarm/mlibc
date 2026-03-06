@@ -162,6 +162,8 @@ all_test_cases = [
 	'linux/ppoll',
 	'linux/utmp',
 	'linux/utmpx',
+	'linux-wrappers/rt_tgsigqueueinfo',
+	'linux-wrappers/rt_sigqueueinfo',
 ]
 
 if host_machine.system() == 'linux'
@@ -329,6 +331,8 @@ foreach test_name : all_test_cases
 	elif test_subdir == 'posix' and not posix_option
 		continue
 	elif test_subdir == 'linux' and not linux_option
+		continue
+	elif test_subdir == 'linux-wrappers' and not linux_wrappers_option
 		continue
 	endif
 
