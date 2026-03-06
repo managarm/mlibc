@@ -3,6 +3,7 @@
 
 #include <type_traits>
 #include <ctype.h>
+#include <errno.h>
 #include <wctype.h>
 #include <limits.h>
 
