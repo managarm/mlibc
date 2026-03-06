@@ -226,7 +226,7 @@ int sys_peername(
 
 namespace {
 
-std::array<std::pair<int, int>, 7> getsockopt_passthrough = {{
+std::array<std::pair<int, int>, 8> getsockopt_passthrough = {{
     {SOL_SOCKET, SO_PROTOCOL},
     {SOL_SOCKET, SO_PEERCRED},
     {SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS},
@@ -234,6 +234,7 @@ std::array<std::pair<int, int>, 7> getsockopt_passthrough = {{
     {SOL_SOCKET, SO_ACCEPTCONN},
     {SOL_SOCKET, SO_PEERPIDFD},
 	{SOL_SOCKET, SO_BINDTODEVICE},
+	{SOL_SOCKET, SO_DOMAIN},
 }};
 
 } // namespace
@@ -560,6 +561,11 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_PASSSEC is unimplemented\e[39m"
 		  << frg::endlog;
 		return ENOSYS;
+	} else if (layer == SOL_SOCKET && number == SO_PASSRIGHTS) {
+		mlibc::infoLogger(
+		) << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_PASSRIGHTS is unimplemented\e[39m"
+		  << frg::endlog;
+		return 0;
 	} else {
 		mlibc::infoLogger() << "\e[31mmlibc: Unexpected setsockopt() call, layer: " << layer
 		                    << " number: " << number << "\e[39m" << frg::endlog;
