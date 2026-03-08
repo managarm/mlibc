@@ -81,6 +81,8 @@ enum posix_syscall {
 	SYS_setsockopt,
 	SYS_recvmsg,
 	SYS_sendmsg,
+	SYS_getsockname,
+	SYS_getpeername,
 
 	/* linux */
 	SYS_epoll_create,

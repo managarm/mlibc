@@ -102,4 +102,29 @@ Sysdeps<SetSockopt>::operator()(int fd, int layer, int number, const void *buffe
 	    (uintptr_t)buffer, size, NULL);
 }
 
+int
+Sysdeps<Sockname>::operator()(int fd, struct sockaddr *addr_ptr,
+    socklen_t max_addr_length, socklen_t *actual_length)
+{
+	int r = syscall3(SYS_getsockname, fd, (uintptr_t)addr_ptr,
+	    (uintptr_t)&max_addr_length, NULL);
+	if (r < 0)
+		return -r;
+	*actual_length = max_addr_length;
+	return 0;
+
+}
+
+int
+Sysdeps<Peername>::operator()(int fd, struct sockaddr *addr_ptr,
+    socklen_t max_addr_length, socklen_t *actual_length)
+{
+	int r = syscall3(SYS_getpeername, fd, (uintptr_t)addr_ptr,
+	    (uintptr_t)&max_addr_length, NULL);
+	if (r < 0)
+		return -r;
+	*actual_length = max_addr_length;
+	return 0;
+}
+
 }
