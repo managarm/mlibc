@@ -151,6 +151,7 @@ all_test_cases = [
 	'glibc/rpmatch',
 	'glibc/strverscmp',
 	'glibc/memmem',
+	'glibc/stdio_ext',
 	'linux/xattr',
 	'linux/pthread_setname_np',
 	'linux/pthread_attr',

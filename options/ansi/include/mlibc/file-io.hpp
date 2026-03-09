@@ -104,6 +104,10 @@ private:
 	void (*_do_dispose)(abstract_file *);
 
 public:
+	buffer_mode bufmode() const {
+		return _bufmode;
+	}
+
 	// lock for file operations
 	StdioLock _lock;
 	// All files are stored in a global linked list, so that they can be flushed at exit().
