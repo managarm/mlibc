@@ -158,6 +158,23 @@ const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
 		}
 		case AF_INET6: {
 			auto source = reinterpret_cast<const struct in6_addr*>(src);
+
+			/* check if we are dealing with an IPv6-mapped IPv4 address */
+			bool mapped = true;
+			for (int i = 0; i < 10; ++i)
+				if (source->s6_addr[i] != 0)
+					mapped = false;
+
+			if (source->s6_addr[10] != 0xff || source->s6_addr[11] != 0xff)
+				mapped = false;
+
+			if (mapped) {
+				int n = snprintf(dst, size, "::ffff:%u.%u.%u.%u", source->s6_addr[12], source->s6_addr[13], source->s6_addr[14], source->s6_addr[15]);
+				if (n >= 0 && static_cast<size_t>(n) < size)
+					return dst;
+				break;
+			}
+
 			size_t cur_zeroes_off = 0;
 			size_t cur_zeroes_len = 0;
 			size_t max_zeroes_off = 0;
