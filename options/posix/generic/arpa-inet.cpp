@@ -148,13 +148,17 @@ const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
 		case AF_INET: {
 			auto source = reinterpret_cast<const struct in_addr*>(src);
 			uint32_t addr = ntohl(source->s_addr);
-			if (snprintf(dst, size, "%d.%d.%d.%d",
+			int written = snprintf(dst, size, "%u.%u.%u.%u",
 					(addr >> 24) & 0xff,
 					(addr >> 16) & 0xff,
 					(addr >> 8) & 0xff,
-					addr & 0xff) < (int)size)
-				return dst;
-			break;
+					addr & 0xff);
+
+			if (written < 0 || static_cast<size_t>(written) >= size) {
+				errno = ENOSPC;
+				return nullptr;
+			}
+			return dst;
 		}
 		case AF_INET6: {
 			auto source = reinterpret_cast<const struct in6_addr*>(src);
@@ -185,7 +189,7 @@ const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
 				auto ptr = source->s6_addr + (i * 2);
 				if(!ptr[0] && !ptr[1]) {
 					cur_zeroes_len++;
-					if(max_zeroes_len < cur_zeroes_len) {
+					if(max_zeroes_len < cur_zeroes_len && cur_zeroes_len > 1) {
 						max_zeroes_len = cur_zeroes_len;
 						max_zeroes_off = cur_zeroes_off;
 					}
@@ -220,7 +224,12 @@ const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
 					}
 				}
 
-				off += snprintf(dst + off, size - off, "%x", ptr[0] << 8 | ptr[1]);
+				int ret = snprintf(dst + off, size - off, "%x", ptr[0] << 8 | ptr[1]);
+				if (ret < 0 || static_cast<size_t>(ret) >= size - off) {
+					errno = ENOSPC;
+					return nullptr;
+				}
+				off += ret;
 			}
 
 			dst[off] = 0;
