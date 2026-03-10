@@ -296,6 +296,7 @@ struct cmsghdr {
 #define SCM_TXTIME              SO_TXTIME
 #define SO_BINDTOIFINDEX        62
 #define SO_DETACH_REUSEPORT_BPF 68
+#define SO_PASSRIGHTS		 	83
 #endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
 #define SOL_SOCKET      1

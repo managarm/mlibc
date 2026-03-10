@@ -2317,6 +2317,8 @@ sys_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct 
 		statxbuf->stx_ctime.tv_nsec = resp.ctime_nanos();
 		statxbuf->stx_blksize = 4096;
 		statxbuf->stx_blocks = resp.file_size() / 512 + 1;
+		statxbuf->stx_attributes = resp.statx_attr();
+		statxbuf->stx_attributes_mask = resp.statx_attr_mask();
 		return 0;
 	}
 }
@@ -3131,8 +3133,8 @@ int sys_lgetxattr(const char *, const char *, void *, size_t, ssize_t *) { retur
 
 int sys_setxattr(const char *, const char *, const void *, size_t, int) { return ENOSYS; }
 
-// We don't implement name_to_handle_at
-int sys_name_to_handle_at(int, const char *, struct file_handle *, int *, int) { return ENOSYS; }
+// We don't implement name_to_handle_at, EOPNOTSUPP will cause systemd to fall through to backup options
+int sys_name_to_handle_at(int, const char *, struct file_handle *, int *, int) { return EOPNOTSUPP; }
 
 int sys_setgroups(size_t size, const gid_t *list) {
 	SignalGuard sguard;
