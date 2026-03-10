@@ -2,9 +2,10 @@
 #include <errno.h>
 
 #include <bits/ensure.h>
-#include <mlibc/debug.hpp>
 #include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/debug.hpp>
 #include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/time-helpers.hpp>
 
 static constexpr unsigned int semaphoreHasWaiters = static_cast<uint32_t>(1 << 31);
 static constexpr unsigned int semaphoreCountMask = static_cast<uint32_t>(1 << 31) - 1;
@@ -56,9 +57,52 @@ int sem_wait(sem_t *sem) {
 	}
 }
 
-int sem_timedwait(sem_t *sem, const struct timespec *) {
-	mlibc::infoLogger() << "\e[31mmlibc: sem_timedwait is implemented as sem_wait\e[0m" << frg::endlog;
-	return sem_wait(sem);
+int sem_timedwait(sem_t *sem, const struct timespec *abstime) {
+	unsigned int state = 0;
+
+	while (1) {
+		if (!(state & semaphoreCountMask)) {
+			if (__atomic_compare_exchange_n(
+			        &sem->__mlibc_count,
+			        &state,
+			        semaphoreHasWaiters,
+			        false,
+			        __ATOMIC_ACQUIRE,
+			        __ATOMIC_ACQUIRE
+			    )) {
+				// Adjust for the fact that sys_futex_wait accepts a *timeout*, but
+				// we accept an *absolute time*.
+				struct timespec timeout;
+				if (!mlibc::time_absolute_to_relative(CLOCK_REALTIME, abstime, &timeout)) {
+					errno = EINVAL;
+					return -1;
+				}
+
+				if (timeout.tv_sec == 0 && timeout.tv_nsec == 0) {
+					errno = ETIMEDOUT;
+					return -1;
+				}
+
+				int e = mlibc::sys_futex_wait((int *)&sem->__mlibc_count, state, &timeout);
+
+				if (e == 0 || e == EAGAIN) {
+					continue;
+				} else if (e == EINTR || e == ETIMEDOUT) {
+					errno = e;
+					return -1;
+				} else {
+					mlibc::panicLogger()
+					    << "sys_futex_wait() failed with error code " << e << frg::endlog;
+				}
+			}
+		} else {
+			unsigned int desired = (state - 1);
+			if (__atomic_compare_exchange_n(
+			        &sem->__mlibc_count, &state, desired, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED
+			    ))
+				return 0;
+		}
+	}
 }
 
 int sem_post(sem_t *sem) {
