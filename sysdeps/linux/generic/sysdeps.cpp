@@ -832,7 +832,7 @@ int sys_access(const char *path, int mode) {
 }
 
 int sys_faccessat(int dirfd, const char *pathname, int mode, int flags) {
-	auto ret = do_syscall(SYS_faccessat, dirfd, pathname, mode, flags);
+	auto ret = do_syscall(SYS_faccessat2, dirfd, pathname, mode, flags);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
