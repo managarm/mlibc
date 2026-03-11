@@ -2064,6 +2064,54 @@ int sys_renameat(int old_dirfd, const char *old_path, int new_dirfd, const char 
 	return 0;
 }
 
+int sys_copy_file_range(int fd_in, off_t *off_in, int fd_out, off_t *off_out, size_t count, unsigned int flags, ssize_t *bytes_copied) {
+	auto ret = do_syscall(SYS_copy_file_range, fd_in, off_in, fd_out, off_out, count, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*bytes_copied = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_fsopen(const char *fsname, unsigned int flags, int *outfd) {
+	auto ret = do_syscall(SYS_fsopen, fsname, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*outfd = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_fsmount(int fsfd, unsigned int flags, unsigned int mountflags, int *outfd) {
+	if (!fsfd)
+		return EINVAL;
+	auto ret = do_syscall(SYS_fsmount, fsfd, flags, mountflags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*outfd = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_fsconfig(int fd, unsigned int cmd, const char *key, const void *val, int aux) {
+	auto ret = do_syscall(SYS_fsconfig, fd, cmd, key, val, aux);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_move_mount(int from_dirfd, const char *from_path, int to_dirfd, const char *to_path, unsigned int flags) {
+	auto ret = do_syscall(SYS_move_mount, from_dirfd, from_path, to_dirfd, to_path, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_open_tree(int dirfd, const char *path, unsigned int flags, int *out_fd) {
+	auto ret = do_syscall(SYS_open_tree, dirfd, path, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out_fd = sc_int_result<int>(ret);
+	return 0;
+}
+
 #endif // __MLIBC_LINUX_OPTION
 
 int sys_times(struct tms *tms, clock_t *out) {
