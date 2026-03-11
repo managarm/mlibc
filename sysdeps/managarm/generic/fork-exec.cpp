@@ -119,6 +119,8 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
 	SignalGuard sguard;
 
+	mlibc::thread_testcancel();
+
 	managarm::posix::WaitIdRequest<MemoryAllocator> req(getSysdepsAllocator());
 
 	req.set_idtype(idtype);
