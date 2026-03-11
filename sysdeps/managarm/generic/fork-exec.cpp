@@ -173,6 +173,9 @@ void sys_yield() {
 
 int sys_sleep(time_t *secs, long *nanos) {
 	SignalGuard sguard;
+	// TODO: this only handles cancellations up to this point; the syscall does not get cancelled
+	mlibc::thread_testcancel();
+
 	globalQueue.trim();
 
 	uint64_t now;
