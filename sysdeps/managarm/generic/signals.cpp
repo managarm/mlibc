@@ -128,6 +128,9 @@ int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
 }
 
 int sys_sigsuspend(const sigset_t *set) {
+	// TODO: this only handles cancellations up to this point; the syscall does not get cancelled
+	mlibc::thread_testcancel();
+
 	// SignalGuard sguard;
 	uint64_t err, former, seq, unused;
 
@@ -159,6 +162,9 @@ int sys_sigpending(sigset_t *set) {
 }
 
 int sys_pause() {
+	// TODO: this only handles cancellations up to this point; the syscall does not get cancelled
+	mlibc::thread_testcancel();
+
 	HelWord set = 0;
 	uint64_t err, former, seq;
 
@@ -178,6 +184,9 @@ int sys_sigtimedwait(
     const struct timespec *__restrict timeout,
     int *out_signal
 ) {
+	// TODO: this only handles cancellations up to this point; the syscall does not get cancelled
+	mlibc::thread_testcancel();
+
 	uint64_t nanos = timeout ? (timeout->tv_nsec + timeout->tv_sec * 1'000'000'000) : UINT64_MAX;
 	HelWord status;
 	HelWord signal;
