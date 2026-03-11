@@ -437,11 +437,6 @@ int pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *par
 
 //pthread cancel functions
 
-extern "C" void __mlibc_do_cancel() {
-	//TODO(geert): for now the same as pthread_exit()
-	pthread_exit(PTHREAD_CANCELED);
-}
-
 namespace {
 
 	void sigcancel_handler(int signal, siginfo_t *info, void *ucontext) {
@@ -600,14 +595,11 @@ int pthread_setcancelstate(int state, int *oldstate) {
 
 	return 0;
 }
+
 void pthread_testcancel(void) {
-	auto self = reinterpret_cast<Tcb *>(mlibc::get_current_tcb());
-	int value = self->cancelBits;
-	if ((value & tcbCancelEnableBit) && (value & tcbCancelTriggerBit)) {
-		__mlibc_do_cancel();
-		__builtin_unreachable();
-	}
+	mlibc::thread_testcancel();
 }
+
 int pthread_cancel(pthread_t thread) {
 	if (!mlibc::sys_tgkill) {
 		MLIBC_MISSING_SYSDEP();

@@ -4,6 +4,8 @@
 #include <bits/ansi/timespec.h>
 #include <bits/threads.h>
 
+extern "C" void __mlibc_do_cancel();
+
 namespace mlibc {
 
 int thread_once(__mlibc_once *once, void (*func) (void));
@@ -41,5 +43,7 @@ int thread_key_create(__mlibc_uintptr *out, void (*destructor)(void *));
 int thread_key_delete(__mlibc_uintptr key);
 void *thread_key_get(__mlibc_uintptr key);
 int thread_key_set(__mlibc_uintptr key, const void *value);
+
+void thread_testcancel(void);
 
 } // namespace mlibc
