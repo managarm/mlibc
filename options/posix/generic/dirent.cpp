@@ -28,6 +28,7 @@ int closedir(DIR *dir) {
 int dirfd(DIR *dir) {
 	return dir->__handle;
 }
+
 DIR *fdopendir(int fd) {
 	struct stat st;
 
@@ -47,11 +48,13 @@ DIR *fdopendir(int fd) {
 	__ensure(dir);
 	dir->__ent_next = 0;
 	dir->__ent_limit = 0;
+	dir->__seek_offset = 0;
 	int flags = fcntl(fd, F_GETFD);
 	fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
 	dir->__handle = fd;
 	return dir;
 }
+
 DIR *opendir(const char *path) {
 	auto dir = frg::construct<__mlibc_dir_struct>(getAllocator());
 	__ensure(dir);
@@ -80,6 +83,7 @@ struct dirent *readdir(DIR *dir) {
 	}
 
 	auto entp = reinterpret_cast<struct dirent *>(dir->__ent_buffer + dir->__ent_next);
+	dir->__seek_offset = entp->d_off;
 	// We only copy as many bytes as we need to avoid buffer-overflows.
 	memcpy(&dir->__current, entp, offsetof(struct dirent, d_name) + strlen(entp->d_name) + 1);
 	dir->__ent_next += entp->d_reclen;
@@ -123,6 +127,7 @@ int readdir_r(DIR *dir, struct dirent *entry, struct dirent **result) {
 	}
 
 	auto entp = reinterpret_cast<struct dirent *>(dir->__ent_buffer + dir->__ent_next);
+	dir->__seek_offset = entp->d_off;
 	// We only copy as many bytes as we need to avoid buffer-overflows.
 	memcpy(entry, entp, offsetof(struct dirent, d_name) + strlen(entp->d_name) + 1);
 	dir->__ent_next += entp->d_reclen;
@@ -131,8 +136,9 @@ int readdir_r(DIR *dir, struct dirent *entry, struct dirent **result) {
 }
 
 void rewinddir(DIR *dir) {
-	lseek(dir->__handle, 0, SEEK_SET);
+	dir->__seek_offset = lseek(dir->__handle, 0, SEEK_SET);
 	dir->__ent_next = 0;
+	dir->__ent_limit = 0;
 }
 
 int scandir(const char *path, struct dirent ***res, int (*select)(const struct dirent *),
