@@ -45,10 +45,6 @@ void sys_libc_log(const char *message);
 int sys_open(const char *pathname, int flags, mode_t mode, int *fd);
 [[gnu::weak]] int sys_flock(int fd, int options);
 
-[[gnu::weak]] int sys_open_dir(const char *path, int *handle);
-[[gnu::weak]] int sys_read_entries(int handle, void *buffer, size_t max_size,
-		size_t *bytes_read);
-
 int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read);
 [[gnu::weak]] int sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read);
 

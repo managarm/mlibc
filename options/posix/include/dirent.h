@@ -49,11 +49,17 @@ struct posix_dent {
 #endif
 
 struct __mlibc_dir_struct {
+	/* the dirfd */
 	int __handle;
+	/* offset into __ent_buffer for the next dirent */
 	__mlibc_size __ent_next;
+	/* valid byte count for __ent_buffer */
 	__mlibc_size __ent_limit;
 	char __ent_buffer[2048];
+	/* cached current dirent */
 	struct dirent __current;
+	/* current seek offset; should be equivalent to lseek(dirfd, 0, SEEK_CUR) */
+	long __seek_offset;
 };
 
 typedef struct __mlibc_dir_struct DIR;
