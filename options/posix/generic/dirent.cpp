@@ -196,13 +196,15 @@ int scandir(const char *path, struct dirent ***res, int (*select)(const struct d
 	*res = array;
 	return count;
 }
-void seekdir(DIR *, long) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+void seekdir(DIR *d, long off) {
+	d->__seek_offset = lseek(d->__handle, off, SEEK_SET);
+	d->__ent_next = 0;
+	d->__ent_limit = 0;
 }
-long telldir(DIR *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+long telldir(DIR *d) {
+	return d->__seek_offset;
 }
 
 #if __MLIBC_GLIBC_OPTION
