@@ -45,7 +45,7 @@ namespace {
 	constexpr unsigned int tcbCancelingBit = 1 << 3;
 	// Set when the thread is exiting.
 	constexpr unsigned int tcbExitingBit = 1 << 4;
-}
+} // namespace
 
 namespace mlibc {
 	// Returns true when bitmask indicates thread has been asynchronously
@@ -67,7 +67,7 @@ namespace mlibc {
 		return (value & tcbCancelEnableBit);
 	}
 
-	// Returns true when bitmask indicates threas has been cancelled.
+	// Returns true when bitmask indicates thread has been cancelled.
 	static constexpr bool tcb_cancelled(int value) {
 		return (value & (tcbCancelEnableBit | tcbCancelTriggerBit))
 		       == (tcbCancelEnableBit | tcbCancelTriggerBit);
@@ -80,7 +80,7 @@ namespace mlibc {
 	// Otherwise this will be set to true after RTLD has initialized the TCB.
 	extern bool tcb_available_flag;
 #endif
-}
+} // namespace mlibc
 
 enum class TcbThreadReturnValue {
 	Pointer,

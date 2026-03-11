@@ -92,7 +92,7 @@ namespace mlibc {
 #if __MLIBC_POSIX_OPTION && !MLIBC_BUILDING_RTLD
 		auto result = static_cast<sc_result_t>(do_nargs_cp_syscall(sc, sc_cast(args)...));
 		if (int e = sc_error(result); e) {
-			auto tcb = reinterpret_cast<Tcb*>(get_current_tcb());
+			auto tcb = get_current_tcb();
 			if (tcb_cancelled(tcb->cancelBits) && e == EINTR) {
 				__mlibc_do_cancel();
 				__builtin_unreachable();
