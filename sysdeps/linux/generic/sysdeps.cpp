@@ -2792,6 +2792,39 @@ int sys_inet_configured(bool *ipv4, bool *ipv6) {
 }
 #endif // !defined(MLIBC_BUILDING_RTLD)
 
+int sys_msgctl(int q, int cmd, struct msqid_ds *buf) {
+#if __INTPTR_WIDTH__ == 32
+	cmd |= IPC_64;
+#endif
+	auto ret = do_syscall(SYS_msgctl, q, cmd, buf);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int sys_msgget(key_t k, int flag, int *out) {
+	auto ret = do_syscall(SYS_msgget, k, flag);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<int>(ret);
+	return 0;
+}
+
+int sys_msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg, ssize_t *out) {
+	auto ret = do_syscall(SYS_msgrcv, msqid, msgp, msgsz, msgtyp, msgflg);
+	if (int e = sc_error(ret); e)
+		return e;
+	*out = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int sys_msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg) {
+	auto ret = do_syscall(SYS_msgsnd, msqid, msgp, msgsz, msgflg);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #endif // __MLIBC_POSIX_OPTION
 
 } // namespace mlibc

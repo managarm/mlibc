@@ -12,6 +12,7 @@
 
 #include <fcntl.h>
 #include <time.h>
+#include <abi-bits/msg.h>
 #include <abi-bits/pid_t.h>
 #include <abi-bits/socklen_t.h>
 #include <bits/posix/stat.h>
@@ -270,6 +271,11 @@ int sys_vm_unmap(void *pointer, size_t size);
 [[gnu::weak]] int sys_nice(int nice, int *new_nice);
 
 [[gnu::weak]] int sys_openpt(int oflags, int *fd);
+
+[[gnu::weak]] int sys_msgctl(int q, int cmd, struct msqid_ds *buf);
+[[gnu::weak]] int sys_msgget(key_t k, int flag, int *out);
+[[gnu::weak]] int sys_msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg, ssize_t *out);
+[[gnu::weak]] int sys_msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg);
 
 } //namespace mlibc
 
