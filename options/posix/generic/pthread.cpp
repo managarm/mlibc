@@ -269,7 +269,7 @@ namespace {
 		if (mlibc::sys_get_current_stack_info) {
 			return mlibc::sys_get_current_stack_info(stack_addr, stack_size);
 		}
-		
+
 		// Fallback to /proc/self/maps
 		auto fp = fopen("/proc/self/maps", "r");
 		if (!fp) {
@@ -452,8 +452,8 @@ namespace {
 				info->si_code != SI_TKILL)
 			return;
 
-		auto tcb = reinterpret_cast<Tcb*>(mlibc::get_current_tcb());
-		int old_value = tcb->cancelBits;
+		auto tcb = mlibc::get_current_tcb();
+		int old_value = __atomic_load_n(&tcb->cancelBits, __ATOMIC_RELAXED);
 
 		/*
 		 * When a thread is marked with deferred cancellation and performs a blocking syscall,
@@ -527,8 +527,8 @@ int pthread_setcanceltype(int type, int *oldtype) {
 	if (type != PTHREAD_CANCEL_DEFERRED && type != PTHREAD_CANCEL_ASYNCHRONOUS)
 		return EINVAL;
 
-	auto self = reinterpret_cast<Tcb *>(mlibc::get_current_tcb());
-	int old_value = self->cancelBits;
+	auto self = mlibc::get_current_tcb();
+	int old_value = __atomic_load_n(&self->cancelBits, __ATOMIC_RELAXED);
 	while (1) {
 		int new_value = old_value & ~tcbCancelAsyncBit;
 		if (type == PTHREAD_CANCEL_ASYNCHRONOUS)
@@ -558,12 +558,13 @@ int pthread_setcanceltype(int type, int *oldtype) {
 
 	return 0;
 }
+
 int pthread_setcancelstate(int state, int *oldstate) {
 	if (state != PTHREAD_CANCEL_ENABLE && state != PTHREAD_CANCEL_DISABLE)
 		return EINVAL;
 
-	auto self = reinterpret_cast<Tcb *>(mlibc::get_current_tcb());
-	int old_value = self->cancelBits;
+	auto self = mlibc::get_current_tcb();
+	int old_value = __atomic_load_n(&self->cancelBits, __ATOMIC_RELAXED);
 	while (1) {
 		int new_value = old_value & ~tcbCancelEnableBit;
 		if (state == PTHREAD_CANCEL_ENABLE)
