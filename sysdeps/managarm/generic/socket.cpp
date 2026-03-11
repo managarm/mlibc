@@ -35,6 +35,8 @@ int fcntl_helper(int fd, int request, int *result, ...) {
 namespace mlibc {
 
 int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length, int flags) {
+	mlibc::thread_testcancel();
+
 	SignalGuard sguard;
 
 	managarm::posix::AcceptRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -111,6 +113,8 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 }
 
 int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
+	mlibc::thread_testcancel();
+
 	SignalGuard sguard;
 
 	auto handle = getHandleForFd(fd);
