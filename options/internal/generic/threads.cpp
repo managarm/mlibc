@@ -31,6 +31,11 @@ FutexLock key_mutex_;
 
 } // namespace
 
+extern "C" void __mlibc_do_cancel() {
+	//TODO(geert): for now the same as pthread_exit()
+	mlibc::thread_exit({__MLIBC_THREAD_CANCELED});
+}
+
 namespace mlibc {
 
 static constexpr unsigned int onceComplete = 1;
@@ -565,6 +570,15 @@ int thread_key_set(__mlibc_uintptr key, const void *value) {
 	(*self->localKeys)[key].generation = key_globals_[key].generation;
 
 	return 0;
+}
+
+void thread_testcancel(void) {
+	auto self = mlibc::get_current_tcb();
+	int value = __atomic_load_n(&self->cancelBits, __ATOMIC_RELAXED);
+	if ((value & tcbCancelEnableBit) && (value & tcbCancelTriggerBit)) {
+		__mlibc_do_cancel();
+		__builtin_unreachable();
+	}
 }
 
 } // namespace mlibc
