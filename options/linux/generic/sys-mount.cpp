@@ -30,20 +30,22 @@ int umount2(const char *target, int flags) {
 
 int fsopen(const char *fsname, unsigned int flags) {
 	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fsopen, -1);
-	if(int e = sysdep(fsname, flags); e) {
+	int outfd = 0;
+	if(int e = sysdep(fsname, flags, &outfd); e) {
 		errno = e;
 		return -1;
 	}
-	return 0;
+	return outfd;
 }
 
 int fsmount(int fsfd, unsigned int flags, unsigned int mountflags) {
 	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fsmount, -1);
-	if(int e = sysdep(fsfd, flags, mountflags); e) {
+	int outfd = 0;
+	if(int e = sysdep(fsfd, flags, mountflags, &outfd); e) {
 		errno = e;
 		return -1;
 	}
-	return 0;
+	return outfd;
 }
 
 int fsconfig(int fd, unsigned int cmd, const char *key, const void *val, int aux) {
@@ -65,10 +67,11 @@ int move_mount(int from_dirfd, const char *from_path, int to_dirfd, const char *
 }
 
 int open_tree(int dirfd, const char *path, unsigned int flags) {
+	int out_fd;
 	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_open_tree, -1);
-	if(int e = sysdep(dirfd, path, flags); e) {
+	if(int e = sysdep(dirfd, path, flags, &out_fd); e) {
 		errno = e;
 		return -1;
 	}
-	return 0;
+	return out_fd;
 }
