@@ -791,6 +791,8 @@ int sys_tcsetattr(int fd, int when, const struct termios *attr) {
 }
 
 int sys_tcdrain(int) {
+	mlibc::thread_testcancel();
+
 	mlibc::infoLogger() << "\e[35mmlibc: tcdrain() is a stub\e[39m" << frg::endlog;
 	return 0;
 }
@@ -901,6 +903,8 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 }
 
 int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *length) {
+	mlibc::thread_testcancel();
+
 	frg::small_vector<HelSgItem, 8, MemoryAllocator> sglist{getSysdepsAllocator()};
 	auto handle = getHandleForFd(sockfd);
 	if (!handle)
@@ -984,6 +988,8 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 }
 
 int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
+	mlibc::thread_testcancel();
+
 	if (!hdr->msg_iovlen) {
 		return EMSGSIZE;
 	}
@@ -1716,6 +1722,8 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	SignalGuard sguard;
 
+	mlibc::thread_testcancel();
+
 	// We do not support O_TMPFILE.
 	if ((flags & O_TMPFILE) == O_TMPFILE)
 		return EOPNOTSUPP;
@@ -1893,6 +1901,8 @@ int sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
 int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	SignalGuard sguard;
 
+	mlibc::thread_testcancel();
+
 	auto handle = getHandleForFd(fd);
 	if (!handle)
 		return EBADF;
@@ -1930,6 +1940,10 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 }
 
 int sys_writev(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_written) {
+	SignalGuard sguard;
+
+	mlibc::thread_testcancel();
+
 	frg::small_vector<HelSgItem, 8, MemoryAllocator> sglist{getSysdepsAllocator()};
 
 	size_t overall_size = 0;
@@ -1941,8 +1955,6 @@ int sys_writev(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_writte
 		sglist.push_back(item);
 		overall_size += iovs[i].iov_len;
 	}
-
-	SignalGuard sguard;
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -1982,6 +1994,8 @@ int sys_writev(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_writte
 
 int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 	SignalGuard sguard;
+
+	mlibc::thread_testcancel();
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -2023,6 +2037,8 @@ int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 
 int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_written) {
 	SignalGuard sguard;
+
+	mlibc::thread_testcancel();
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -2105,6 +2121,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 }
 
 int sys_close(int fd) {
+	mlibc::thread_testcancel();
 	SignalGuard sguard;
 
 	managarm::posix::CloseRequest<MemoryAllocator> req(getSysdepsAllocator());

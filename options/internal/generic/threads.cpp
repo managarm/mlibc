@@ -31,6 +31,11 @@ FutexLock key_mutex_;
 
 } // namespace
 
+extern "C" void __mlibc_do_cancel() {
+	//TODO(geert): for now the same as pthread_exit()
+	mlibc::thread_exit({__MLIBC_THREAD_CANCELED});
+}
+
 namespace mlibc {
 
 static constexpr unsigned int onceComplete = 1;
@@ -124,8 +129,11 @@ int thread_join(struct __mlibc_thread_data *thread, void *ret) {
 	if (!__atomic_load_n(&tcb->isJoinable, __ATOMIC_ACQUIRE))
 		return EINVAL;
 
+	mlibc::thread_testcancel();
+
 	while (!__atomic_load_n(&tcb->didExit, __ATOMIC_ACQUIRE)) {
-		mlibc::sys_futex_wait(&tcb->didExit, 0, nullptr);
+		if (int e = mlibc::sys_futex_wait(&tcb->didExit, 0, nullptr); e == EINTR)
+			mlibc::thread_testcancel();
 	}
 
 	if(ret && tcb->returnValueType == TcbThreadReturnValue::Pointer)
@@ -443,6 +451,8 @@ int thread_cond_broadcast(struct __mlibc_cond *cond) {
 
 int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *__restrict mutex,
 		const struct timespec *__restrict abstime, clockid_t clockid) {
+	mlibc::thread_testcancel();
+
 	constexpr long nanos_per_second = 1'000'000'000;
 	if (abstime && (abstime->tv_nsec < 0 || abstime->tv_nsec >= nanos_per_second))
 		return EINVAL;
@@ -494,6 +504,7 @@ int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *_
 			__ensure(__atomic_load_n(&cond->__mlibc_seq, __ATOMIC_ACQUIRE) > seq);
 			return 0;
 		} else if (e == EINTR) {
+			mlibc::thread_testcancel();
 			continue;
 		} else if (e == ETIMEDOUT) {
 			__ensure(abstime);
@@ -565,6 +576,15 @@ int thread_key_set(__mlibc_uintptr key, const void *value) {
 	(*self->localKeys)[key].generation = key_globals_[key].generation;
 
 	return 0;
+}
+
+void thread_testcancel(void) {
+	auto self = mlibc::get_current_tcb();
+	int value = __atomic_load_n(&self->cancelBits, __ATOMIC_RELAXED);
+	if ((value & tcbCancelEnableBit) && (value & tcbCancelTriggerBit)) {
+		__mlibc_do_cancel();
+		__builtin_unreachable();
+	}
 }
 
 } // namespace mlibc

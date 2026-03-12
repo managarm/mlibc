@@ -34,6 +34,8 @@
 
 #define __MLIBC_THREAD_DESTRUCTOR_ITERATIONS 8
 
+#define __MLIBC_THREAD_CANCELED ((void*) -1)
+
 /* KEEP IN SYNC WITH `struct sched_param`! */
 struct __mlibc_sched_param {
 	int __sched_priority;

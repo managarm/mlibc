@@ -116,6 +116,8 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 }
 
 int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
+	mlibc::thread_testcancel();
+
 	SignalGuard sguard;
 
 	managarm::posix::WaitIdRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -171,6 +173,9 @@ void sys_yield() {
 }
 
 int sys_sleep(time_t *secs, long *nanos) {
+	// TODO: this only handles cancellations up to this point; the syscall does not get cancelled
+	mlibc::thread_testcancel();
+
 	SignalGuard sguard;
 	globalQueue.trim();
 

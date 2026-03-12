@@ -463,6 +463,8 @@ auto exchangeMsgsSyncCancellable(HelHandle descriptor, uint64_t cancelId, int fd
 		frg::span<const std::byte>{reinterpret_cast<const std::byte *>(actions.data()),
 		                           actions.size() * sizeof(HelAction)}
 	};
+
+	mlibc::thread_testcancel();
 	globalQueue.pushSq(kHelSubmitExchangeMsgs, 0, segments);
 
 	frg::optional<ElementHandle> element{};
