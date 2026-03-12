@@ -53,6 +53,7 @@ int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 		case kHelErrTimeout: return ETIMEDOUT;
 		case kHelErrCancelled: return EINTR;
 		case kHelErrIllegalArgs: return EINVAL;
+		case kHelErrFutexRace: return EAGAIN;
 		default: {
 			mlibc::infoLogger() << "mlibc: helFutexWait returned unexpected error "
 								<< err << frg::endlog;
