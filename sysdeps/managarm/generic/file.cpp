@@ -545,6 +545,24 @@ int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) 
 	memset(ent, 0, sizeof(struct dirent));
 	memcpy(ent->d_name, resp.path().data(), resp.path().size());
 	ent->d_reclen = sizeof(struct dirent);
+	ent->d_ino = resp.ino();
+	ent->d_off = resp.offset();
+
+	switch (resp.file_type()) {
+		case managarm::fs::FileType::DIRECTORY:
+			ent->d_type = DT_DIR;
+			break;
+		case managarm::fs::FileType::REGULAR:
+			ent->d_type = DT_REG;
+			break;
+		case managarm::fs::FileType::SYMLINK:
+			ent->d_type = DT_LNK;
+			break;
+		case managarm::fs::FileType::SOCKET:
+			ent->d_type = DT_SOCK;
+			break;
+	}
+
 	*bytes_read = sizeof(struct dirent);
 	return 0;
 }
