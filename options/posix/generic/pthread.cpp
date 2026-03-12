@@ -346,6 +346,31 @@ int pthread_equal(pthread_t t1, pthread_t t2) {
 }
 
 __attribute__ ((__noreturn__)) void pthread_exit(void *ret_val) {
+	// POSIX: when a thread calls pthread_exit(), the thread first disables cancellation by setting
+	// its cancelability to PTHREAD_CANCEL_DISABLE + PTHREAD_CANCEL_DEFERRED; this should remain in
+	// place until the thread has terminated.
+	auto self = mlibc::get_current_tcb();
+	int old_value = __atomic_load_n(&self->cancelBits, __ATOMIC_RELAXED);
+	int new_value;
+
+	while (1) {
+		new_value = old_value & ~(tcbCancelAsyncBit | tcbCancelEnableBit);
+
+		// Avoid unecessary atomic op.
+		if (old_value == new_value)
+			break;
+
+		if (__atomic_compare_exchange_n(
+		        &self->cancelBits,
+		        &old_value,
+		        new_value,
+		        true,
+		        __ATOMIC_RELAXED,
+		        __ATOMIC_RELAXED
+		    ))
+			break;
+	}
+
 	mlibc::thread_exit({.voidPtr = ret_val});
 }
 
