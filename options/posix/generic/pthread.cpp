@@ -583,7 +583,7 @@ int pthread_setcancelstate(int state, int *oldstate) {
 
 			sigset_t set = {};
 			sigaddset(&set, SIGCANCEL);
-			if (new_value & PTHREAD_CANCEL_ENABLE)
+			if (mlibc::tcb_cancel_enabled(new_value))
 				sigprocmask(SIG_UNBLOCK, &set, nullptr);
 			else
 				sigprocmask(SIG_BLOCK, &set, nullptr);
