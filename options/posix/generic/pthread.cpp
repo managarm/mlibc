@@ -623,6 +623,13 @@ int pthread_cancel(pthread_t thread) {
 		if (__atomic_compare_exchange_n(&tcb->cancelBits, &current_value,
 					new_value, true, __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
 			if (mlibc::tcb_cancel_enabled(new_value)) {
+				if (thread == pthread_self()) {
+					// optimization: if cancelling itself, we can avoid sending a signal
+					if (mlibc::tcb_async_cancel(new_value))
+						pthread_exit(PTHREAD_CANCELED);
+					return 0;
+				}
+
 				pid_t pid = getpid();
 
 				int res = mlibc::sys_tgkill(pid, tcb->tid, SIGCANCEL);
