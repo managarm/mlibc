@@ -56,11 +56,7 @@ ssize_t strfmon_internal(char *__restrict s, size_t maxsize, mlibc::localeinfo *
 	auto pos_sign = stripNullTerminator(locale->monetary.get(POSITIVE_SIGN).asString());
 	auto neg_sign = stripNullTerminator(locale->monetary.get(NEGATIVE_SIGN).asString());
 	auto decimal_point = stripNullTerminator(locale->monetary.get(MON_DECIMAL_POINT).asString());
-	if (!decimal_point.size())
-		decimal_point = stripNullTerminator(locale->numeric.get(DECIMAL_POINT).asString());
 	auto thousands_sep = stripNullTerminator(locale->monetary.get(MON_THOUSANDS_SEP).asString());
-	if (!thousands_sep.size())
-		thousands_sep = stripNullTerminator(locale->numeric.get(THOUSANDS_SEP).asString());
 	auto grouping = locale->monetary.get(MON_GROUPING).asByteSpan();
 
 	BufferSink sink{s, maxsize};
@@ -225,6 +221,16 @@ ssize_t strfmon_internal(char *__restrict s, size_t maxsize, mlibc::localeinfo *
 				return locale->monetary.get(__builtin_signbit(number) ? N_SIGN_POSN : P_SIGN_POSN).asUint32();
 			}
 		}();
+
+		if (sign_mode == SignMode::normal && (sign_posn == CHAR_MAX || sign_posn == 255)) {
+			sign_mode = SignMode::force_positive;
+
+			if (pos_sign.starts_with("") && neg_sign.starts_with(""))
+				neg_sign = stripNullTerminator("-");
+		}
+
+		if ((sign_posn == 0 || sign_posn == 255) && sign_mode == SignMode::force_positive)
+			sign_posn = 1;
 
 		auto currency = stripNullTerminator(locale->monetary.get(int_format ? INT_CURR_SYMBOL : CURRENCY_SYMBOL).asString());
 		frg::string_view currency_symbol{};
@@ -428,7 +434,7 @@ ssize_t strfmon_internal(char *__restrict s, size_t maxsize, mlibc::localeinfo *
 
 		if (left_justify) {
 			for(size_t i = 0; i < width_fill_length; i++) {
-				EMIT(padding);
+				EMIT(' ');
 			}
 		}
 	}

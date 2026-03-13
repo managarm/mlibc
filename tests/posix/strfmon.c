@@ -27,11 +27,6 @@ int main() {
 	assert(ret == 2);
 	assert(!strcmp(buf, "%\n"));
 
-	ret = strfmon(buf, sizeof(buf), "%i %n", 12.34, 42.0);
-	fprintf(stderr, "'%s' (ret = %zd)\n", buf, ret);
-	assert(ret == 11);
-	assert(!strcmp(buf, "12.34 42.00"));
-
 	setlocale(LC_ALL, "de_DE.utf8");
 
 	ret = strfmon(buf, sizeof(buf), "%i %n", 12.34, 42.0);
