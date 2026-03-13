@@ -428,7 +428,7 @@ ssize_t strfmon_internal(char *__restrict s, size_t maxsize, mlibc::localeinfo *
 
 		if (left_justify) {
 			for(size_t i = 0; i < width_fill_length; i++) {
-				EMIT(padding);
+				EMIT(' ');
 			}
 		}
 	}
