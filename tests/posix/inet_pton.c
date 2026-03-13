@@ -11,8 +11,18 @@ int main() {
 	assert(((addr.s_addr >> 16) & 0xFF) == 1);
 	assert(((addr.s_addr >> 24) & 0xFF) == 1);
 
+	// glibc is missing this behavior
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
+	assert(inet_pton(AF_INET, "001.001.001.001", &addr));
+	assert((addr.s_addr & 0xFF) == 1);
+	assert(((addr.s_addr >> 8) & 0xFF) == 1);
+	assert(((addr.s_addr >> 16) & 0xFF) == 1);
+	assert(((addr.s_addr >> 24) & 0xFF) == 1);
+#endif
+
 	assert(!inet_pton(AF_INET, "256.999.1234.555", &addr));
 	assert(!inet_pton(AF_INET, "a.b.c.d", &addr));
+	assert(!inet_pton(AF_INET, "1.1.1", &addr));
 
 	struct in6_addr test6;
 	{
@@ -131,6 +141,14 @@ int main() {
 		assert(ret == 1);
 		assert(!memcmp(&addr6, &test6, sizeof(addr6)));
 	}
+
+	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000:0000:0000:01111", &test6));
+	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000:0000:000g:1111", &test6));
+	assert(!inet_pton(AF_INET6, " 2606:4700:4700:0000:0000:0000:0000:1111", &test6));
+	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000:0000:0000:1111 ", &test6));
+	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000: 0000:0000:1111", &test6));
+	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000 :0000:0000:1111", &test6));
+	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000::0000:0000:1111", &test6));
 
 	return 0;
 }
