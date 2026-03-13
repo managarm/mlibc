@@ -4,10 +4,13 @@
 
 #include <bits/ensure.h>
 #include <mlibc/all-sysdeps.hpp>
+#include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 
-void if_freenameindex(struct if_nameindex *) {
-	mlibc::infoLogger() << "mlibc: if_freenameindex is a no-op" << frg::endlog;
+void if_freenameindex(struct if_nameindex *p) {
+	if constexpr (mlibc::IsImplemented<IfFreeNameindex>) {
+		mlibc::sysdep_or_panic<IfFreeNameindex>(p);
+	}
 }
 
 char *if_indextoname(unsigned int index, char *name) {
@@ -20,9 +23,13 @@ char *if_indextoname(unsigned int index, char *name) {
 }
 
 struct if_nameindex *if_nameindex(void) {
-	mlibc::infoLogger() << "mlibc: if_nameindex() is a no-op" << frg::endlog;
-	errno = ENOSYS;
-	return nullptr;
+	struct if_nameindex *out = nullptr;
+	if(int e = mlibc::sysdep_or_enosys<IfNameindex>(&out); e) {
+		errno = e;
+		return nullptr;
+	}
+
+	return out;
 }
 
 unsigned int if_nametoindex(const char *name) {
