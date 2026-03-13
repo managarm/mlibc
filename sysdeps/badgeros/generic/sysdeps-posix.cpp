@@ -24,7 +24,10 @@ void sys_libc_panic() {
 	__builtin_trap();
 }
 
-void sys_libc_log(const char *msg) { __syscall_fs_write(1, msg, strlen(msg)); }
+void sys_libc_log(const char *msg) {
+	__syscall_fs_write(2, msg, strlen(msg));
+	__syscall_fs_write(2, "\n", 1);
+}
 
 int sys_isatty(int fd) {
 	(void)fd;
@@ -68,7 +71,7 @@ void sys_exit(int status) {
 
 int sys_close(int fd) { return -__syscall_fs_close(fd); }
 
-int sys_futex_wake(int *) { STUB(); }
+int sys_futex_wake(int *, bool) { STUB(); }
 
 int sys_futex_wait(int *, int, timespec const *) { STUB(); }
 
