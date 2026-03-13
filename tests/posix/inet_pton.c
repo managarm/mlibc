@@ -142,6 +142,14 @@ int main() {
 		assert(!memcmp(&addr6, &test6, sizeof(addr6)));
 	}
 
+	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000:0000:0000:01111", &test6));
+	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000:0000:000g:1111", &test6));
+	assert(!inet_pton(AF_INET6, " 2606:4700:4700:0000:0000:0000:0000:1111", &test6));
+	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000:0000:0000:1111 ", &test6));
+	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000: 0000:0000:1111", &test6));
+	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000 :0000:0000:1111", &test6));
+	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000::0000:0000:1111", &test6));
+
 	return 0;
 }
 

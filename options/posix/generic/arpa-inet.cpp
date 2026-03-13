@@ -279,35 +279,64 @@ int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 				return false;
 			};
 
+			char *end = nullptr;
+
+			if (!isxdigit(*src) && src[0] != ':')
+				return 0;
+
 			for(; i < 8; i++) {
-				char *end = nullptr;
 				auto value = strtol(src, &end, 16);
 
-				if (value > UINT16_MAX)
+				if (value > UINT16_MAX || (end - src) > 4)
 					return 0;
 				if(end[0] != '\0' && end[0] != ':' && end[0] != '.')
 					return 0;
 
 				if(end[0] == '.' && reservedRange() && i < 7) {
 					char *ipv4end = nullptr;
+					if (!isdigit(*src))
+						return 0;
 					auto value0 = strtol(src, &ipv4end, 10);
+					// reject overly large or empty values
 					if(ipv4end[0] != '.' || value0 > UINT8_MAX || src == ipv4end)
 						return 0;
+					// reject overlong segments or leading zeroes
+					if ((ipv4end - src) > 3 || (src[0] == '0' && value))
+						return 0;
 					src = ipv4end + 1;
+					if (!isdigit(*src))
+						return 0;
 					auto value1 = strtol(src, &ipv4end, 10);
+					// reject overly large or empty values
 					if(ipv4end[0] != '.' || value1 > UINT8_MAX || src == ipv4end)
+						return 0;
+					// reject overlong segments or leading zeroes
+					if ((ipv4end - src) > 3 || (src[0] == '0' && value))
 						return 0;
 					array[i++] = htons((value0 << 8) | value1);
 					src = ipv4end + 1;
 
+					if (!isdigit(*src))
+						return 0;
 					auto value2 = strtol(src, &ipv4end, 10);
+					// reject overly large or empty values
 					if(ipv4end[0] != '.' || value2 > UINT8_MAX || src == ipv4end)
 						return 0;
+					// reject overlong segments or leading zeroes
+					if ((ipv4end - src) > 3 || (src[0] == '0' && value))
+						return 0;
 					src = ipv4end + 1;
+					if (!isdigit(*src))
+						return 0;
 					auto value3 = strtol(src, &ipv4end, 10);
+					// reject overly large or empty values
 					if(value3 > UINT8_MAX || src == ipv4end)
 						return 0;
+					// reject overlong segments or leading zeroes
+					if ((ipv4end - src) > 3 || (src[0] == '0' && value))
+						return 0;
 					array[i] = htons((value2 << 8) | value3);
+					end = ipv4end;
 					break;
 				} else if(end[0] == ':' && end[1] == ':') {
 					if(doubleColonOffset)
@@ -326,10 +355,19 @@ int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 					break;
 			}
 
+			if(end[0] != '\0')
+				return 0;
+
+			if (!doubleColonOffset && i < 7)
+				return 0;
+
 			auto addr = reinterpret_cast<struct in6_addr *>(dst);
 
 			if(doubleColonOffset) {
 				size_t suffix = i - doubleColonOffset.value() + 1;
+				if (*doubleColonOffset + suffix >= 8)
+					return 0;
+
 				memset(addr->s6_addr, 0, 16);
 
 				for(size_t j = 0; j < doubleColonOffset.value(); j++) {
