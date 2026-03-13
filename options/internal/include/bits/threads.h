@@ -2,6 +2,7 @@
 #define _MLIBC_INTERNAL_THREADS_H
 
 #include <abi-bits/clockid_t.h>
+#include <bits/ansi/timespec.h>
 #include <bits/size_t.h>
 #include <bits/cpu_set.h>
 #include <bits/sigset_t.h>
@@ -29,26 +30,32 @@
 #define __MLIBC_THREAD_PRIO_INHERIT 1
 #define __MLIBC_THREAD_PRIO_PROTECT 2
 
-#define __MLIBC_THREAD_MUTEX_INITIALIZER {0, 0, 0, 0}
-#define __MLIBC_THREAD_ONCE_INITIALIZER {0}
+#define __MLIBC_THREAD_MUTEX_INITIALIZER {0, 0, 0, 0, 0}
+#define __MLIBC_THREAD_ONCE_INITIALIZER {0, 0}
 
 #define __MLIBC_THREAD_DESTRUCTOR_ITERATIONS 8
 
 /* KEEP IN SYNC WITH `struct sched_param`! */
 struct __mlibc_sched_param {
+	unsigned int __mlibc_revision;
 	int __sched_priority;
-	/* TODO: add missing [SS|TSP] fields */
+	/* [SS|TSP] */
+	int sched_ss_low_priority;
+	struct timespec sched_ss_repl_period;
+	struct timespec sched_ss_init_budget;
+	int sched_ss_max_repl;
 };
 
 struct __mlibc_thread_data;
 
 struct __mlibc_threadattr {
-	size_t __mlibc_guardsize;
-	size_t __mlibc_stacksize;
-	void *__mlibc_stackaddr;
+	unsigned int __mlibc_revision;
 	int __mlibc_detachstate;
 	int __mlibc_scope;
 	int __mlibc_inheritsched;
+	size_t __mlibc_guardsize;
+	size_t __mlibc_stacksize;
+	void *__mlibc_stackaddr;
 	struct __mlibc_sched_param __mlibc_schedparam;
 	int __mlibc_schedpolicy;
 	cpu_set_t *__mlibc_cpuset;
@@ -58,6 +65,7 @@ struct __mlibc_threadattr {
 };
 
 struct __mlibc_mutex {
+	unsigned int __mlibc_revision;
 	unsigned int __mlibc_state;
 	unsigned int __mlibc_recursion;
 	unsigned int __mlibc_flags;
@@ -65,6 +73,7 @@ struct __mlibc_mutex {
 };
 
 struct __mlibc_mutexattr {
+	unsigned int __mlibc_revision;
 	int __mlibc_type;
 	int __mlibc_robust;
 	int __mlibc_protocol;
@@ -73,17 +82,20 @@ struct __mlibc_mutexattr {
 };
 
 struct __mlibc_cond {
+	unsigned int __mlibc_revision;
 	unsigned int __mlibc_seq;
 	unsigned int __mlibc_flags;
 	clockid_t __mlibc_clock;
 };
 
 struct __mlibc_condattr {
+	unsigned int __mlibc_revision;
 	int __mlibc_pshared;
 	clockid_t __mlibc_clock;
 };
 
 struct __mlibc_barrier {
+	unsigned int __mlibc_revision;
 	unsigned int __mlibc_waiting;
 	unsigned int __mlibc_inside;
 	unsigned int __mlibc_count;
@@ -92,24 +104,29 @@ struct __mlibc_barrier {
 };
 
 struct  __mlibc_barrierattr_struct {
+	unsigned int __mlibc_revision;
 	int __mlibc_pshared;
 };
 
 struct __mlibc_fair_rwlock {
+	unsigned int __mlibc_revision;
 	unsigned int __mlibc_m; /* Mutex. */
 	unsigned int __mlibc_rc; /* Reader count (not reference count). */
 	unsigned int __mlibc_flags;
 };
 
 struct __mlibc_rwlockattr {
+	unsigned int __mlibc_revision;
 	int __mlibc_pshared;
 };
 
 struct __mlibc_once {
+	unsigned int __mlibc_revision;
 	unsigned int __mlibc_done;
 };
 
 struct __mlibc_spinlock {
+	unsigned int __mlibc_revision;
 	unsigned int __lock;
 };
 
