@@ -85,6 +85,8 @@ struct ManagarmSysdepTags :
 	GetScheduler,
 	IfIndextoname,
 	IfNametoindex,
+	IfNameindex,
+	IfFreeNameindex,
 	Ptsname,
 	Unlockpt,
 	ThreadSetname,

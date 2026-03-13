@@ -54,6 +54,32 @@ int Sysdeps<IfNametoindex>::operator()(const char *name, unsigned int *ret) {
 	return 0;
 }
 
+int Sysdeps<IfNameindex>::operator()(struct if_nameindex **out) {
+	NetlinkHelper nl;
+	frg::vector<struct if_nameindex, MemoryAllocator> list{getAllocator()};
+
+	bool link_ret = nl.send_request(RTM_GETLINK) && nl.recv(&if_nameindex_callback, &list);
+	__ensure(link_ret);
+
+	list.emplace_back(0, nullptr);
+	*out = list.data();
+	list.detach();
+
+	return 0;
+}
+
+void Sysdeps<IfFreeNameindex>::operator()(struct if_nameindex *ifn) {
+	if (!ifn)
+		return;
+
+	for (auto c = ifn; c->if_index || c->if_name; c++) {
+		if (c->if_name)
+			getAllocator().free(c->if_name);
+	}
+
+	getAllocator().free(ifn);
+}
+
 int Sysdeps<Getifaddrs>::operator()(struct ifaddrs **out) {
 	NetlinkHelper nl;
 	*out = nullptr;
