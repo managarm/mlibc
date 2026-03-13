@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 
 #include <frg/allocation.hpp>
+#include <frg/vector.hpp>
 #include <frg/span.hpp>
 #include <unistd.h>
 
@@ -281,6 +282,30 @@ void getifaddrs_callback(void *context, const nlmsghdr *hdr) {
 					memcpy(new_addr->name_, RTA_DATA(rta), RTA_PAYLOAD(rta));
 					new_addr->ifa.ifa_name = new_addr->name_;
 				}
+			}
+
+			rta = RTA_NEXT(rta, rta_len);
+		}
+	}
+}
+
+/**
+ * Callback function to be used with NetlinkHelper for implementing `sys_if_nameindex` by using rtnetlink.
+ */
+void if_nameindex_callback(void *context, const nlmsghdr *hdr) {
+	auto list = reinterpret_cast<frg::vector<struct if_nameindex, MemoryAllocator> *>(context);
+
+	if (hdr->nlmsg_type == RTM_NEWLINK) {
+		ifinfomsg *ifi = reinterpret_cast<ifinfomsg *>(NLMSG_DATA(hdr));
+
+		rtattr *rta = IFLA_RTA(ifi);
+		size_t rta_len = IFLA_PAYLOAD(hdr);
+
+		while (RTA_OK(rta, rta_len)) {
+			if (rta->rta_type == IFLA_IFNAME) {
+				auto name = strndup(reinterpret_cast<char *>(RTA_DATA(rta)), RTA_PAYLOAD(rta));
+				list->emplace_back(ifi->ifi_index, name);
+				return;
 			}
 
 			rta = RTA_NEXT(rta, rta_len);

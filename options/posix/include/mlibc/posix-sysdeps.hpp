@@ -18,6 +18,7 @@
 #include <bits/posix/stat.h>
 #include <poll.h>
 #include <stdarg.h>
+#include <net/if.h>
 #include <sys/socket.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
@@ -232,6 +233,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 
 [[gnu::weak]] int sys_if_indextoname(unsigned int index, char *name);
 [[gnu::weak]] int sys_if_nametoindex(const char *name, unsigned int *ret);
+[[gnu::weak]] int sys_if_nameindex(struct if_nameindex **out);
 
 [[gnu::weak]] int sys_ptsname(int fd, char *buffer, size_t length);
 [[gnu::weak]] int sys_unlockpt(int fd);
