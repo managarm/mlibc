@@ -251,8 +251,10 @@ int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 			uint8_t array[4] = {};
 			for (int i = 0; i < 4; i++) {
 				char *end;
+				if (!isdigit(*src))
+					return 0;
 				long int value = strtol(src, &end, 10);
-				if (value > 255)
+				if (value > 255 || (end - src) > 3)
 					return 0;
 				if (*end != '\0' && *end != '.')
 					return 0;
