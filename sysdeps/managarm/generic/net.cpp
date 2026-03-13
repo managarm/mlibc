@@ -66,6 +66,20 @@ int sys_getifaddrs(struct ifaddrs **out) {
 	return 0;
 }
 
+int sys_if_nameindex(struct if_nameindex **out) {
+	NetlinkHelper nl;
+	frg::vector<struct if_nameindex, MemoryAllocator> list{getAllocator()};
+
+	bool link_ret = nl.send_request(RTM_GETLINK) && nl.recv(&if_nameindex_callback, &list);
+	__ensure(link_ret);
+
+	list.emplace_back(0, nullptr);
+	*out = list.data();
+	list.detach();
+
+	return 0;
+}
+
 #if !defined(MLIBC_BUILDING_RTLD)
 int sys_inet_configured(bool *ipv4, bool *ipv6) {
 	struct context {
