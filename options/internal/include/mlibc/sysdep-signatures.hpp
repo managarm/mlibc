@@ -234,6 +234,7 @@ SYSDEP_FUNC(SetRegid, gid_t rgid, gid_t egid);
 SYSDEP_FUNC(GetLoginR, char *name, size_t name_len);
 SYSDEP_FUNC(IfIndextoname, unsigned int index, char *name);
 SYSDEP_FUNC(IfNametoindex, const char *name, unsigned int *ret);
+SYSDEP_FUNC(IfNameindex, struct if_nameindex **out);
 SYSDEP_FUNC(Ptsname, int fd, char *buffer, size_t length);
 SYSDEP_FUNC(Unlockpt, int fd);
 SYSDEP_FUNC(ThreadSetname, void *tcb, const char *name);
