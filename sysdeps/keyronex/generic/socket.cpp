@@ -127,4 +127,13 @@ Sysdeps<Peername>::operator()(int fd, struct sockaddr *addr_ptr,
 	return 0;
 }
 
+int
+Sysdeps<Shutdown>::operator()(int sockfd, int how)
+{
+	int r = syscall2(SYS_shutdown, sockfd, how, NULL);
+	if (r < 0)
+		return -r;
+	return 0;
+}
+
 }

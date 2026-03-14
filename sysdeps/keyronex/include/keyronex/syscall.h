@@ -83,6 +83,7 @@ enum posix_syscall {
 	SYS_sendmsg,
 	SYS_getsockname,
 	SYS_getpeername,
+	SYS_shutdown,
 
 	/* linux */
 	SYS_epoll_create,

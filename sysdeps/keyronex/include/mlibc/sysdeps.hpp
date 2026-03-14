@@ -89,6 +89,7 @@ struct KeyronexSysdepTags :
 	SetSockopt,
 	Sockname,
 	Peername,
+	Shutdown,
 	Clone,
 	PrepareStack,
 	ThreadExit,
