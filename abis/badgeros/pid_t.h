@@ -3,6 +3,6 @@
 
 #include <bits/types.h>
 
-typedef __mlibc_int64 pid_t;
+typedef int pid_t;
 
 #endif
