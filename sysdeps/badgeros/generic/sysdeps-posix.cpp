@@ -75,6 +75,19 @@ int sys_futex_wake(int *, bool) { STUB(); }
 
 int sys_futex_wait(int *, int, timespec const *) { STUB(); }
 
+int sys_open_dir(const char *path, int *ret) {
+	// TODO: Mode currently ignored.
+	auto res = __syscall_fs_open(AT_FDCWD, path, O_DIRECTORY);
+	*ret = res;
+	return res < 0 ? -res : 0;
+}
+
+int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) {
+	auto res = __syscall_fs_getdents(fd, buffer, max_size);
+	*bytes_read = res;
+	return res < 0 ? -res : 0;
+}
+
 int sys_read(int fd, void *read_buf, unsigned long read_len, long *ret) {
 	auto res = __syscall_fs_read(fd, read_buf, read_len);
 	*ret = res;
