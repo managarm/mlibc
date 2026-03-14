@@ -147,6 +147,9 @@ _SYSCALL_DEF_V(30, _SYSCALL_TEMP_WRITE, __syscall_temp_write, char const *__mess
 // Start the shutdown process.
 _SYSCALL_DEF_V(31, _SYSCALL_SYS_SHUTDOWN, __syscall_sys_shutdown, bool __is_reboot)
 
+// Get the value of some clock.
+_SYSCALL_DEF(32, _SYSCALL_TIME_GETTIME, __syscall_time_gettime, int, int __clkid, struct timespec *__time)
+
 
 
 #undef _SYSCALL_DEF

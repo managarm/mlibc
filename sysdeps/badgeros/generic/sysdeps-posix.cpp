@@ -34,6 +34,18 @@ int sys_isatty(int fd) {
 	return 0;
 }
 
+int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
+	if (fsfdt == fsfd_target::path) {
+		fd = AT_FDCWD;
+	} else if (fsfdt == fsfd_target::fd) {
+		path = NULL;
+	} else {
+		__ensure(fsfdt == fsfd_target::fd_path);
+	}
+	// TODO: This syscall subject to change.
+	return -__syscall_fs_stat(fd, path, (flags & AT_SYMLINK_NOFOLLOW) == 0, statbuf);
+}
+
 int sys_write(int fd, void const *buf, size_t size, ssize_t *ret) {
 	*ret = __syscall_fs_write(fd, buf, size);
 	return *ret >= 0 ? 0 : -*ret;
@@ -118,7 +130,13 @@ int sys_vm_unmap(void *address, size_t size) {
 	return 0;
 }
 
-int sys_clock_get(int, time_t *, long *) { STUB(); }
+int sys_clock_get(int clkid, time_t *secs, long *nanos) {
+	struct timespec ts;
+	auto res = __syscall_time_gettime(clkid, &ts);
+	*secs = ts.tv_sec;
+	*nanos = ts.tv_nsec;
+	return -res;
+}
 
 int sys_fork(pid_t *child) {
 	pid_t res = __syscall_proc_fork();
