@@ -84,7 +84,7 @@ int siginterrupt(int __sig, int __flag);
 #if defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN
 int sigaltstack(const stack_t *__restrict __ss, stack_t *__restrict __oss);
 
-int killpg(int __pgrp, int __sig);
+int killpg(pid_t __pgrp, int __sig);
 #endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
 int kill(pid_t __pid, int __number);
