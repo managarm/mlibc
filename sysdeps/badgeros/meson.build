@@ -87,6 +87,11 @@ if not no_headers
 		subdir: 'bits',
 		follow_symlinks: true
 	)
+	install_headers(
+		'include/sys/sysmacros.h',
+		subdir: 'sys',
+		follow_symlinks: true
+	)
 endif
 
 if not headers_only

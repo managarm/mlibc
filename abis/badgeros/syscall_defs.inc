@@ -50,7 +50,7 @@ _SYSCALL_DEF_V(6, _SYSCALL_PROC_EXIT, __syscall_proc_exit, int __code)
 _SYSCALL_DEF(7, _SYSCALL_PROC_GETARGS, __syscall_proc_getargs, __mlibc_size, __mlibc_size __cap, void *__memory)
 
 // Create a copy of the running process and return its PID (to the parent) or -1 (to the child).
-_SYSCALL_DEF(8, _SYSCALL_PROC_FORK, __syscall_proc_fork, __mlibc_int64)
+_SYSCALL_DEF(8, _SYSCALL_PROC_FORK, __syscall_proc_fork, int)
 
 // Execute the program at `path`, replacing the calling program's code and data in the process.
 _SYSCALL_DEF(9, _SYSCALL_PROC_EXEC, __syscall_proc_exec, int, char const *__path, char const *const *__argv, char const *const *__envp)
