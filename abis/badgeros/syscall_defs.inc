@@ -67,23 +67,23 @@ _SYSCALL_DEF(12, _SYSCALL_PROC_WAITPID, __syscall_proc_waitpid, int, int __pid, 
 // Open a file, optionally relative to a directory.
 // If `at` is -1, `path` is relative to the working directory.
 // Returns -errno on error, file descriptor number on success.
-_SYSCALL_DEF(13, _SYSCALL_FS_OPEN, __syscall_fs_open, int, int __at, char const *__path, int oflags)
+_SYSCALL_DEF(13, _SYSCALL_FS_OPEN, __syscall_fs_open, int, int __at, char const *__path, int __oflags)
 
 // Flush and close a file.
 _SYSCALL_DEF(14, _SYSCALL_FS_CLOSE, __syscall_fs_close, int, int __fd)
 
 // Read bytes from a file.
 // Returns 0 on EOF, -errno on error, read count on success.
-_SYSCALL_DEF(15, _SYSCALL_FS_READ, __syscall_fs_read, __mlibc_int64, int __fd, void *read_buf, long read_len)
+_SYSCALL_DEF(15, _SYSCALL_FS_READ, __syscall_fs_read, __mlibc_int64, int __fd, void *__read_buf, long read_len)
 
 // Write bytes to a file.
 // Returns -errno on error, write count on success.
-_SYSCALL_DEF(16, _SYSCALL_FS_WRITE, __syscall_fs_write, __mlibc_int64, int __fd, void const *write_buf, long write_len)
+_SYSCALL_DEF(16, _SYSCALL_FS_WRITE, __syscall_fs_write, __mlibc_int64, int __fd, void const *__write_buf, long write_len)
 
 // Read directory entries from a directory handle.
 // See `dirent_t` for the format.
 // Returns -errno on error, read count on success.
-_SYSCALL_DEF(17, _SYSCALL_FS_GETDENTS, __syscall_fs_getdents, __mlibc_int64, int __fd, void *read_buf, long read_len)
+_SYSCALL_DEF(17, _SYSCALL_FS_GETDENTS, __syscall_fs_getdents, __mlibc_ptrdiff, int __fd, void *__read_buf, __mlibc_size __read_len)
 
 // Rename and/or move a file to another path, optionally relative to one or two directories.
 // If `*_at` is -1, the respective `*_path` is relative to the working directory.
@@ -95,7 +95,7 @@ _SYSCALL_DEF(18, _SYSCALL_FS_RENAME, __syscall_fs_rename, int, int __old_at, cha
 // If both `path` and `fd` are specified, `path` is relative to the directory that `fd` describes.
 // If only `fd` is specified, the inode referenced by `fd` is stat'ed.
 // If `follow_link` is false, the last symlink in the path is not followed.
-_SYSCALL_DEF(19, _SYSCALL_FS_STAT, __syscall_fs_stat, int, int __fd, char const *__path, bool follow_link, struct stat *stat_out)
+_SYSCALL_DEF(19, _SYSCALL_FS_STAT, __syscall_fs_stat, int, int __fd, char const *__path, bool __follow_link, struct stat *__stat_out)
 
 // Create a new directory.
 // If `at` is -1, `path` is relative to the working directory.
@@ -127,7 +127,7 @@ _SYSCALL_DEF(24, _SYSCALL_FS_MKFIFO, __syscall_fs_mkfifo, int, int __at, char co
 // Returns -errno on error, 0 on success.
 _SYSCALL_DEF(25, _SYSCALL_FS_PIPE, __syscall_fs_pipe, int, int __fds[2], int __flags)
 
-_SYSCALL_DEF(26, _SYSCALL_FS_SEEK, __syscall_fs_seek, __mlibc_int64, int fd, __mlibc_int64 offset, int whence)
+_SYSCALL_DEF(26, _SYSCALL_FS_SEEK, __syscall_fs_seek, __mlibc_int64, int fd, __mlibc_int64 offset, int __whence)
 
 // Map a new range of memory at an arbitrary virtual address.
 // This may round up to a multiple of the page size.
