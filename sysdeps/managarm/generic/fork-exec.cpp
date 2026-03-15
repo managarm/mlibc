@@ -229,6 +229,8 @@ int sys_fork(pid_t *child) {
 
 int sys_execve(const char *path, char *const argv[], char *const envp[]) {
 	// TODO: Make this function signal-safe!
+	SignalGuard sguard;
+
 	frg::string<MemoryAllocator> args_area(getSysdepsAllocator());
 	for (auto it = argv; *it; ++it)
 		args_area += frg::string_view{*it, strlen(*it) + 1};

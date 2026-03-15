@@ -331,8 +331,6 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		*result = static_cast<int>(resp.error());
 		return 0;
 	} else if (request == F_GETFL) {
-		SignalGuard sguard;
-
 		auto handle = getHandleForFd(fd);
 		if (!handle)
 			return EBADF;
@@ -364,8 +362,6 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 		*result = resp.flags();
 		return 0;
 	} else if (request == F_SETFL) {
-		SignalGuard sguard;
-
 		auto handle = getHandleForFd(fd);
 		if (!handle)
 			return EBADF;
@@ -3006,6 +3002,8 @@ int sys_fstatfs(int fd, struct statfs *buf) {
 }
 
 int sys_prctl(int option, va_list va, int *out) {
+	SignalGuard sguard;
+
 	switch (option) {
 		case PR_CAPBSET_READ:
 			// TODO: Implement PR_CAPBSET read if we ever support capabilities

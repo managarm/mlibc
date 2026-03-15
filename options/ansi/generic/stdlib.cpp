@@ -250,10 +250,6 @@ int system(const char *command) {
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fork && mlibc::sys_waitpid &&
 			mlibc::sys_execve && mlibc::sys_sigprocmask && mlibc::sys_sigaction, -1);
 
-#if __MLIBC_POSIX_OPTION
-	pthread_testcancel();
-#endif // __MLIBC_POSIX_OPTION
-
 	if (!command) {
 		return 1;
 	}
