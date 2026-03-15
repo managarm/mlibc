@@ -37,6 +37,8 @@ namespace mlibc {
 int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length, int flags) {
 	SignalGuard sguard;
 
+	mlibc::thread_testcancel();
+
 	managarm::posix::AcceptRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_fd(fd);
 
@@ -112,6 +114,8 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 
 int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	SignalGuard sguard;
+
+	mlibc::thread_testcancel();
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)

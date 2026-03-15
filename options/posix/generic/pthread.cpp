@@ -269,7 +269,7 @@ namespace {
 		if (mlibc::sys_get_current_stack_info) {
 			return mlibc::sys_get_current_stack_info(stack_addr, stack_size);
 		}
-		
+
 		// Fallback to /proc/self/maps
 		auto fp = fopen("/proc/self/maps", "r");
 		if (!fp) {
@@ -346,6 +346,31 @@ int pthread_equal(pthread_t t1, pthread_t t2) {
 }
 
 __attribute__ ((__noreturn__)) void pthread_exit(void *ret_val) {
+	// POSIX: when a thread calls pthread_exit(), the thread first disables cancellation by setting
+	// its cancelability to PTHREAD_CANCEL_DISABLE + PTHREAD_CANCEL_DEFERRED; this should remain in
+	// place until the thread has terminated.
+	auto self = mlibc::get_current_tcb();
+	int old_value = __atomic_load_n(&self->cancelBits, __ATOMIC_RELAXED);
+	int new_value;
+
+	while (1) {
+		new_value = old_value & ~(tcbCancelAsyncBit | tcbCancelEnableBit);
+
+		// Avoid unnecessary atomic op.
+		if (old_value == new_value)
+			break;
+
+		if (__atomic_compare_exchange_n(
+		        &self->cancelBits,
+		        &old_value,
+		        new_value,
+		        true,
+		        __ATOMIC_RELAXED,
+		        __ATOMIC_RELAXED
+		    ))
+			break;
+	}
+
 	mlibc::thread_exit({.voidPtr = ret_val});
 }
 
@@ -437,11 +462,6 @@ int pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *par
 
 //pthread cancel functions
 
-extern "C" void __mlibc_do_cancel() {
-	//TODO(geert): for now the same as pthread_exit()
-	pthread_exit(PTHREAD_CANCELED);
-}
-
 namespace {
 
 	void sigcancel_handler(int signal, siginfo_t *info, void *ucontext) {
@@ -452,8 +472,8 @@ namespace {
 				info->si_code != SI_TKILL)
 			return;
 
-		auto tcb = reinterpret_cast<Tcb*>(mlibc::get_current_tcb());
-		int old_value = tcb->cancelBits;
+		auto tcb = mlibc::get_current_tcb();
+		int old_value = __atomic_load_n(&tcb->cancelBits, __ATOMIC_RELAXED);
 
 		/*
 		 * When a thread is marked with deferred cancellation and performs a blocking syscall,
@@ -527,8 +547,8 @@ int pthread_setcanceltype(int type, int *oldtype) {
 	if (type != PTHREAD_CANCEL_DEFERRED && type != PTHREAD_CANCEL_ASYNCHRONOUS)
 		return EINVAL;
 
-	auto self = reinterpret_cast<Tcb *>(mlibc::get_current_tcb());
-	int old_value = self->cancelBits;
+	auto self = mlibc::get_current_tcb();
+	int old_value = __atomic_load_n(&self->cancelBits, __ATOMIC_RELAXED);
 	while (1) {
 		int new_value = old_value & ~tcbCancelAsyncBit;
 		if (type == PTHREAD_CANCEL_ASYNCHRONOUS)
@@ -558,12 +578,13 @@ int pthread_setcanceltype(int type, int *oldtype) {
 
 	return 0;
 }
+
 int pthread_setcancelstate(int state, int *oldstate) {
 	if (state != PTHREAD_CANCEL_ENABLE && state != PTHREAD_CANCEL_DISABLE)
 		return EINVAL;
 
-	auto self = reinterpret_cast<Tcb *>(mlibc::get_current_tcb());
-	int old_value = self->cancelBits;
+	auto self = mlibc::get_current_tcb();
+	int old_value = __atomic_load_n(&self->cancelBits, __ATOMIC_RELAXED);
 	while (1) {
 		int new_value = old_value & ~tcbCancelEnableBit;
 		if (state == PTHREAD_CANCEL_ENABLE)
@@ -587,7 +608,7 @@ int pthread_setcancelstate(int state, int *oldstate) {
 
 			sigset_t set = {};
 			sigaddset(&set, SIGCANCEL);
-			if (new_value & PTHREAD_CANCEL_ENABLE)
+			if (mlibc::tcb_cancel_enabled(new_value))
 				sigprocmask(SIG_UNBLOCK, &set, nullptr);
 			else
 				sigprocmask(SIG_BLOCK, &set, nullptr);
@@ -599,14 +620,11 @@ int pthread_setcancelstate(int state, int *oldstate) {
 
 	return 0;
 }
+
 void pthread_testcancel(void) {
-	auto self = reinterpret_cast<Tcb *>(mlibc::get_current_tcb());
-	int value = self->cancelBits;
-	if ((value & tcbCancelEnableBit) && (value & tcbCancelTriggerBit)) {
-		__mlibc_do_cancel();
-		__builtin_unreachable();
-	}
+	mlibc::thread_testcancel();
 }
+
 int pthread_cancel(pthread_t thread) {
 	if (!mlibc::sys_tgkill) {
 		MLIBC_MISSING_SYSDEP();
@@ -630,6 +648,13 @@ int pthread_cancel(pthread_t thread) {
 		if (__atomic_compare_exchange_n(&tcb->cancelBits, &current_value,
 					new_value, true, __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
 			if (mlibc::tcb_cancel_enabled(new_value)) {
+				if (thread == pthread_self()) {
+					// optimization: if cancelling itself, we can avoid sending a signal
+					if (mlibc::tcb_async_cancel(new_value))
+						pthread_exit(PTHREAD_CANCELED);
+					return 0;
+				}
+
 				pid_t pid = getpid();
 
 				int res = mlibc::sys_tgkill(pid, tcb->tid, SIGCANCEL);

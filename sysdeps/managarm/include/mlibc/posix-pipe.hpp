@@ -20,19 +20,36 @@ void resetCancellationRequested();
 bool cancellationRequested();
 void setQueueHandle(HelHandle queue);
 
-struct SignalGuard {
-	SignalGuard();
+#if defined(__clang__)
+#define CAPABILITY(x) __attribute__((capability(x)))
+#define SCOPED_CAPABILITY __attribute__((scoped_lockable))
+#define CAP_ACQUIRE(...) __attribute__((acquire_capability(__VA_ARGS__)))
+#define CAP_RELEASE(...) __attribute__((release_capability(__VA_ARGS__)))
+#define CAP_REQUIRES(...) __attribute__((requires_capability(__VA_ARGS__)))
+#else
+#define CAPABILITY(x)
+#define SCOPED_CAPABILITY
+#define CAP_ACQUIRE(...)
+#define CAP_RELEASE(...)
+#define CAP_REQUIRES(...)
+#endif
+
+class CAPABILITY("SignalGuardState") SysdepAllocatorCapability{};
+extern SysdepAllocatorCapability sysdepAllocatorCapability;
+
+struct SCOPED_CAPABILITY SignalGuard {
+	SignalGuard() CAP_ACQUIRE(sysdepAllocatorCapability);
 
 	SignalGuard(const SignalGuard &) = delete;
 
-	~SignalGuard();
+	~SignalGuard() CAP_RELEASE(sysdepAllocatorCapability);
 
 	SignalGuard &operator=(const SignalGuard &) = delete;
 };
 
 // We need an allocator for message structs in sysdeps functions; the "normal" mlibc
 // allocator cannot be used, as the sysdeps function might be called from a signal.
-MemoryAllocator &getSysdepsAllocator();
+MemoryAllocator &getSysdepsAllocator() CAP_REQUIRES(sysdepAllocatorCapability);
 
 struct Queue;
 

@@ -119,6 +119,8 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
 	SignalGuard sguard;
 
+	mlibc::thread_testcancel();
+
 	managarm::posix::WaitIdRequest<MemoryAllocator> req(getSysdepsAllocator());
 
 	req.set_idtype(idtype);
@@ -173,6 +175,9 @@ void sys_yield() {
 
 int sys_sleep(time_t *secs, long *nanos) {
 	SignalGuard sguard;
+	// TODO: this only handles cancellations up to this point; the syscall does not get cancelled
+	mlibc::thread_testcancel();
+
 	globalQueue.trim();
 
 	uint64_t now;
@@ -224,6 +229,8 @@ int sys_fork(pid_t *child) {
 
 int sys_execve(const char *path, char *const argv[], char *const envp[]) {
 	// TODO: Make this function signal-safe!
+	SignalGuard sguard;
+
 	frg::string<MemoryAllocator> args_area(getSysdepsAllocator());
 	for (auto it = argv; *it; ++it)
 		args_area += frg::string_view{*it, strlen(*it) + 1};

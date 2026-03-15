@@ -4,6 +4,8 @@
 #include <bits/ansi/timespec.h>
 #include <bits/threads.h>
 
+extern "C" void __mlibc_do_cancel();
+
 namespace mlibc {
 
 int thread_once(__mlibc_once *once, void (*func) (void));
@@ -41,5 +43,21 @@ int thread_key_create(__mlibc_uintptr *out, void (*destructor)(void *));
 int thread_key_delete(__mlibc_uintptr key);
 void *thread_key_get(__mlibc_uintptr key);
 int thread_key_set(__mlibc_uintptr key, const void *value);
+
+// Calling this functionally inserts a cancellation point.
+// Before you insert a cancellation point into a function, consider a few things:
+// - POSIX has a list of functions that are MANDATORY cancellation points. Besides that, it also
+//   lists a number of functions that MAY be cancellation points. NO OTHER functions may be
+//   cancellation points. You may need to uphold that by disabling cancellation for the duration
+//   of such a function.
+// - Depending on the type of the function, the cancellation point may reasonably be handled by the
+//   sysdep itself; this allows for proper semantics (see the comments over in
+//   options/internal/include/mlibc/tcb.hpp). `sys_read` is one such example; the linux sysdeps
+//   just end up using their syscall helper `do_syscall_cp`. In other cases, you might want to keep
+//   the cancellation point itself in the functions; see `pthread_cond_*wait` for an example.
+//   There, it is desired that we check for cancellation on entry, and then handle it just like any
+//   other syscall cancellation by a signal; we check the return of `sys_futex_wait` for EINTR, and
+//   insert a cancellation point there.
+void thread_testcancel(void);
 
 } // namespace mlibc

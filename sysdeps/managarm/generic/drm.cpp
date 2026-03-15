@@ -13,7 +13,7 @@
 
 namespace mlibc {
 
-int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle handle) {
+int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle handle) CAP_REQUIRES(sysdepAllocatorCapability) {
 	managarm::fs::IoctlRequest<MemoryAllocator> ioctl_req(getSysdepsAllocator());
 
 	switch (request) {
