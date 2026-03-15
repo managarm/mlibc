@@ -100,7 +100,7 @@ if not headers_only
 	libc_deps += libsmarter_dep
 	rtld_deps += libsmarter_dep
 
-	mlibc_c_args = ['-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', '-nostdinc', '-fno-builtin', '-ffreestanding']
+	mlibc_c_args = ['-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', '-fno-builtin', '-ffreestanding']
 	mlibc_link_args = ['-nostdlib']
 	add_project_arguments('-Werror=misleading-indentation', language: ['c', 'cpp'])
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
@@ -571,7 +571,11 @@ if not headers_only
 
 	if c_compiler.get_id() == 'clang'
 		libc_cpp_args += ['-fno-sanitize=function', '-Wno-vla-cxx-extension']
+		# Disable libstdc++ assertions to avoid undefined references to std::__glibcxx_assert_fail
+		libc_cpp_args += ['-U_GLIBCXX_ASSERTIONS', '-D_GLIBCXX_NO_ASSERTIONS']
 		ld_cpp_args += ['-fno-sanitize=function']
+	elif c_compiler.get_id() == 'gcc'
+		libc_cpp_args += ['-nostdinc']
 	endif
 
 	libc_all_sources = [
