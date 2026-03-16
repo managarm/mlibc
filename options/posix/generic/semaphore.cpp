@@ -58,6 +58,10 @@ int sem_wait(sem_t *sem) {
 }
 
 int sem_timedwait(sem_t *sem, const struct timespec *abstime) {
+	return sem_clockwait(sem, CLOCK_REALTIME, abstime);
+}
+
+int sem_clockwait(sem_t *sem, clockid_t clockid, const struct timespec *abstime) {
 	unsigned int state = 0;
 
 	while (1) {
@@ -73,7 +77,7 @@ int sem_timedwait(sem_t *sem, const struct timespec *abstime) {
 				// Adjust for the fact that sys_futex_wait accepts a *timeout*, but
 				// we accept an *absolute time*.
 				struct timespec timeout;
-				if (!mlibc::time_absolute_to_relative(CLOCK_REALTIME, abstime, &timeout)) {
+				if (!mlibc::time_absolute_to_relative(clockid, abstime, &timeout)) {
 					errno = EINVAL;
 					return -1;
 				}
