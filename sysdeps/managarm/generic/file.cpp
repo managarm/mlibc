@@ -1094,6 +1094,7 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	__ensure(timeout >= 0 || timeout == -1); // TODO: Report errors correctly.
 
 	SignalGuard sguard;
+	mlibc::thread_testcancel();
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::EPOLL_CALL);
@@ -1159,6 +1160,8 @@ int sys_ppoll(
 	}
 
 	SignalGuard guard;
+	mlibc::thread_testcancel();
+
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::EPOLL_CALL);
 	req.set_timeout(ts ? (ts->tv_sec * 1'000'000'000 + ts->tv_nsec) : -1);
@@ -1838,6 +1841,7 @@ int sys_mknodat(int dirfd, const char *path, int mode, int dev) {
 
 int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	SignalGuard sguard;
+	mlibc::thread_testcancel();
 
 	auto handle = getHandleForFd(fd);
 	if (!handle)
