@@ -57,19 +57,17 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 
 	auto handle_siocgif = [&arg, &request, &result]<typename ReqSetup, typename RespParse>(
 	                          ReqSetup req_setup, RespParse resp_parse
-	                      ) CAP_REQUIRES(sysdepAllocatorCapability)
-	    requires(
-	        std::is_invocable_r_v<
-	            void,
-	            ReqSetup,
-	            managarm::fs::IfreqRequest<MemoryAllocator> &,
-	            struct ifreq *>
-	        && std::is_invocable_r_v<
-	            int,
-	            RespParse,
-	            managarm::fs::IfreqReply<MemoryAllocator> &,
-	            struct ifreq *>
-	    )
+	                      ) CAP_REQUIRES(sysdepAllocatorCapability) -> int
+		requires std::is_invocable_r_v<
+	                 void,
+	                 ReqSetup,
+	                 managarm::fs::IfreqRequest<MemoryAllocator> &,
+	                 struct ifreq *>
+	             && std::is_invocable_r_v<
+	                 int,
+	                 RespParse,
+	                 managarm::fs::IfreqReply<MemoryAllocator> &,
+	                 struct ifreq *>
 	{
 		if (!arg)
 			return EFAULT;
@@ -958,8 +956,8 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return 0;
 	} else if (request == SIOCGIFNAME) {
 		return handle_siocgif(
-		    [](auto req, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) { req.set_index(ifr->ifr_ifindex); },
-		    [](auto resp, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &req, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) { req.set_index(ifr->ifr_ifindex); },
+		    [](auto &resp, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    if (resp.error() != managarm::fs::Errors::SUCCESS)
 				    return EINVAL;
 			    strncpy(ifr->ifr_name, resp.name().data(), IFNAMSIZ);
@@ -1037,10 +1035,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		return 0;
 	} else if (request == SIOCGIFNETMASK) {
 		return handle_siocgif(
-		    [](auto req, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &req, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    req.set_name(frg::string<MemoryAllocator>{ifr->ifr_name, getSysdepsAllocator()});
 		    },
-		    [](auto resp, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &resp, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    if (resp.error() != managarm::fs::Errors::SUCCESS)
 				    return EINVAL;
 
@@ -1054,10 +1052,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		);
 	} else if (request == SIOCGIFINDEX) {
 		return handle_siocgif(
-		    [](auto req, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &req, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    req.set_name(frg::string<MemoryAllocator>{ifr->ifr_name, getSysdepsAllocator()});
 		    },
-		    [](auto resp, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &resp, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    if (resp.error() != managarm::fs::Errors::SUCCESS)
 				    return EINVAL;
 			    ifr->ifr_ifindex = resp.index();
@@ -1066,10 +1064,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		);
 	} else if (request == SIOCGIFFLAGS) {
 		return handle_siocgif(
-		    [](auto req, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &req, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    req.set_name(frg::string<MemoryAllocator>{ifr->ifr_name, getSysdepsAllocator()});
 		    },
-		    [](auto resp, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &resp, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    if (resp.error() != managarm::fs::Errors::SUCCESS)
 				    return EINVAL;
 			    ifr->ifr_flags = resp.flags();
@@ -1078,10 +1076,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		);
 	} else if (request == SIOCGIFADDR) {
 		return handle_siocgif(
-		    [](auto req, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &req, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    req.set_name(frg::string<MemoryAllocator>{ifr->ifr_name, getSysdepsAllocator()});
 		    },
-		    [](auto resp, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &resp, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    if (resp.error() != managarm::fs::Errors::SUCCESS)
 				    return EINVAL;
 
@@ -1095,10 +1093,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		);
 	} else if (request == SIOCGIFMTU) {
 		return handle_siocgif(
-		    [](auto req, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &req, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    req.set_name(frg::string<MemoryAllocator>{ifr->ifr_name, getSysdepsAllocator()});
 		    },
-		    [](auto resp, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &resp, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    if (resp.error() != managarm::fs::Errors::SUCCESS)
 				    return EINVAL;
 
@@ -1109,10 +1107,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		);
 	} else if (request == SIOCGIFBRDADDR) {
 		return handle_siocgif(
-		    [](auto req, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &req, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    req.set_name(frg::string<MemoryAllocator>{ifr->ifr_name, getSysdepsAllocator()});
 		    },
-		    [](auto resp, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &resp, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    if (resp.error() != managarm::fs::Errors::SUCCESS)
 				    return EINVAL;
 
@@ -1126,10 +1124,10 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 		);
 	} else if (request == SIOCGIFHWADDR) {
 		return handle_siocgif(
-		    [](auto req, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &req, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    req.set_name(frg::string<MemoryAllocator>{ifr->ifr_name, getSysdepsAllocator()});
 		    },
-		    [](auto resp, auto ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
+		    [](auto &resp, struct ifreq *ifr) CAP_REQUIRES(sysdepAllocatorCapability) {
 			    if (resp.error() != managarm::fs::Errors::SUCCESS)
 				    return EINVAL;
 
