@@ -2,7 +2,7 @@
 #define _ABIBITS_SIGSET_T_H
 
 typedef struct {
-	unsigned long __sig[64 / (8 * sizeof(long))];
+	unsigned long __sig[1024 / (8 * sizeof(long))];
 } sigset_t;
 
 #endif /* _ABIBITS_SIGSET_T_H */

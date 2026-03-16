@@ -150,6 +150,15 @@ _SYSCALL_DEF_V(31, _SYSCALL_SYS_SHUTDOWN, __syscall_sys_shutdown, bool __is_rebo
 // Get the value of some clock.
 _SYSCALL_DEF(32, _SYSCALL_TIME_GETTIME, __syscall_time_gettime, int, int __clkid, struct timespec *__time)
 
+// Send a signal to a thread in this process.
+_SYSCALL_DEF(33, _SYSCALL_THREAD_KILL, __syscall_thread_kill, int, long __thread_id, int __signum)
+
+// Send a signal to an arbitrary thread in a specified process. See man kill(2).
+_SYSCALL_DEF(34, _SYSCALL_PROC_KILL, __syscall_proc_kill, int, int __pid, int __signum)
+
+// Get an ID as specified by _GETID_* macros.
+_SYSCALL_DEF(35, _SYSCALL_PROC_GETID, __syscall_proc_getid, int, int __getid_type)
+
 
 
 #undef _SYSCALL_DEF

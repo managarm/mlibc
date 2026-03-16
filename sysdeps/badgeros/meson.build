@@ -83,11 +83,7 @@ if not no_headers
 		follow_symlinks: true
 	)
 	install_headers(
-		'include/bits/syscall.h',
-		subdir: 'bits',
-		follow_symlinks: true
-	)
-	install_headers(
+		'include/sys/syscall.h',
 		'include/sys/sysmacros.h',
 		subdir: 'sys',
 		follow_symlinks: true

@@ -1,8 +1,8 @@
 #include "mlibc/tcb.hpp"
+#include <abi-bits/badgeros_getid.h>
 #include <abi-bits/errno.h>
 #include <abi-bits/fcntl.h>
 #include <bits/ensure.h>
-#include <bits/syscall.h>
 #include <mlibc/posix-sysdeps.hpp>
 #include <stddef.h>
 #include <stdint.h>
@@ -153,13 +153,13 @@ int sys_execve(const char *path, char *const argv[], char *const envp[]) {
 	return -__syscall_proc_exec(path, argv, envp);
 }
 
-gid_t sys_getgid() { return 0; }
-gid_t sys_getegid() { return 0; }
-uid_t sys_getuid() { return 0; }
-uid_t sys_geteuid() { return 0; }
-pid_t sys_getpid() { return 0; }
-pid_t sys_gettid() { return 0; }
-pid_t sys_getppid() { return 0; }
+gid_t sys_getgid() { return __syscall_proc_getid(_GETID_GID); }
+gid_t sys_getegid() { return __syscall_proc_getid(_GETID_EGID); }
+uid_t sys_getuid() { return __syscall_proc_getid(_GETID_UID); }
+uid_t sys_geteuid() { return __syscall_proc_getid(_GETID_EUID); }
+pid_t sys_getpid() { return __syscall_proc_getid(_GETID_PID); }
+pid_t sys_gettid() { return __syscall_proc_getid(_GETID_TID); }
+pid_t sys_getppid() { return __syscall_proc_getid(_GETID_PPID); }
 int sys_getpgid(pid_t pid, pid_t *pgid) { return 0; }
 int sys_getsid(pid_t pid, pid_t *sid) { return 0; }
 
@@ -168,7 +168,15 @@ int sys_sigaction(
     const struct sigaction *__restrict newhandler,
     struct sigaction *__restrict oldhandler
 ) {
-	return -__syscall_proc_sigaction(signum, newhandler, oldhandler);
+	if (newhandler) {
+		struct sigaction tmp = *newhandler;
+		tmp.sa_restorer = __syscall_proc_sigret;
+		return -__syscall_proc_sigaction(signum, &tmp, oldhandler);
+	} else {
+		return -__syscall_proc_sigaction(signum, nullptr, oldhandler);
+	}
 }
+
+int sys_kill(int pid, int signo) { return -__syscall_proc_kill(pid, signo); }
 
 } // namespace mlibc
