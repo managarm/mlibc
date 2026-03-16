@@ -160,8 +160,14 @@ uid_t sys_geteuid() { return __syscall_proc_getid(_GETID_EUID); }
 pid_t sys_getpid() { return __syscall_proc_getid(_GETID_PID); }
 pid_t sys_gettid() { return __syscall_proc_getid(_GETID_TID); }
 pid_t sys_getppid() { return __syscall_proc_getid(_GETID_PPID); }
-int sys_getpgid(pid_t pid, pid_t *pgid) { return 0; }
-int sys_getsid(pid_t pid, pid_t *sid) { return 0; }
+int sys_getpgid(pid_t pid, pid_t *pgid) {
+	*pgid = 1;
+	return 0;
+}
+int sys_getsid(pid_t pid, pid_t *sid) {
+	*sid = 1;
+	return 0;
+}
 
 int sys_sigaction(
     int signum,
@@ -177,6 +183,6 @@ int sys_sigaction(
 	}
 }
 
-int sys_kill(int pid, int signo) { return -__syscall_proc_kill(pid, signo); }
+int sys_kill(pid_t pid, int signo) { return -__syscall_proc_kill(pid, signo); }
 
 } // namespace mlibc

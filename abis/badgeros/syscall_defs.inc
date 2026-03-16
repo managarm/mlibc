@@ -50,7 +50,7 @@ _SYSCALL_DEF_V(6, _SYSCALL_PROC_EXIT, __syscall_proc_exit, int __code)
 _SYSCALL_DEF(7, _SYSCALL_PROC_GETARGS, __syscall_proc_getargs, __mlibc_size, __mlibc_size __cap, void *__memory)
 
 // Create a copy of the running process and return its PID (to the parent) or -1 (to the child).
-_SYSCALL_DEF(8, _SYSCALL_PROC_FORK, __syscall_proc_fork, int)
+_SYSCALL_DEF(8, _SYSCALL_PROC_FORK, __syscall_proc_fork, __mlibc_int64)
 
 // Execute the program at `path`, replacing the calling program's code and data in the process.
 _SYSCALL_DEF(9, _SYSCALL_PROC_EXEC, __syscall_proc_exec, int, char const *__path, char const *const *__argv, char const *const *__envp)
@@ -62,7 +62,7 @@ _SYSCALL_DEF(10, _SYSCALL_PROC_SIGACTION, __syscall_proc_sigaction, int, int __s
 _SYSCALL_DEF_V(11, _SYSCALL_PROC_SIGRET, __syscall_proc_sigret)
 
 // Get child process status update.
-_SYSCALL_DEF(12, _SYSCALL_PROC_WAITPID, __syscall_proc_waitpid, int, int __pid, int *__wstatus, int __options)
+_SYSCALL_DEF(12, _SYSCALL_PROC_WAITPID, __syscall_proc_waitpid, int, __mlibc_int64 __pid, int *__wstatus, int __options)
 
 // Open a file, optionally relative to a directory.
 // If `at` is -1, `path` is relative to the working directory.
@@ -154,7 +154,7 @@ _SYSCALL_DEF(32, _SYSCALL_TIME_GETTIME, __syscall_time_gettime, int, int __clkid
 _SYSCALL_DEF(33, _SYSCALL_THREAD_KILL, __syscall_thread_kill, int, long __thread_id, int __signum)
 
 // Send a signal to an arbitrary thread in a specified process. See man kill(2).
-_SYSCALL_DEF(34, _SYSCALL_PROC_KILL, __syscall_proc_kill, int, int __pid, int __signum)
+_SYSCALL_DEF(34, _SYSCALL_PROC_KILL, __syscall_proc_kill, int, __mlibc_int64 __pid, int __signum)
 
 // Get an ID as specified by _GETID_* macros.
 _SYSCALL_DEF(35, _SYSCALL_PROC_GETID, __syscall_proc_getid, int, int __getid_type)
