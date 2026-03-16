@@ -372,7 +372,7 @@ namespace mlibc {
 	}
 	#endif
 
-	int sys_kill(int pid, int signal) {
+	int sys_kill(pid_t pid, int signal) {
 		long ret;
 		return syscall(SYSCALL_KILL, &ret, pid, signal);
 	}
