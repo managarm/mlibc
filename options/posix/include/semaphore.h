@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <abi-bits/clockid_t.h>
+#include <abi-bits/fcntl.h>
 #include <bits/ansi/time_t.h>
 #include <bits/ansi/timespec.h>
 
@@ -25,6 +27,7 @@ int sem_destroy(sem_t *__sem);
 int sem_wait(sem_t *__sem);
 int sem_trywait(sem_t *__sem);
 int sem_timedwait(sem_t *__sem, const struct timespec *__abstime);
+int sem_clockwait(sem_t *__sem, clockid_t __clockid, const struct timespec *__abstime);
 int sem_post(sem_t *__sem);
 int sem_getvalue(sem_t *__sem, int *__sval);
 
