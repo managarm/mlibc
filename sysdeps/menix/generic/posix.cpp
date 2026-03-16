@@ -549,7 +549,7 @@ int sys_sigtimedwait(
 	return 0;
 }
 
-int sys_kill(int pid, int signal) { return menix_syscall(SYSCALL_KILL, pid, signal).error; }
+int sys_kill(pid_t pid, int signal) { return menix_syscall(SYSCALL_KILL, pid, signal).error; }
 
 int sys_gethostname(char *buffer, size_t bufsize) {
 	struct utsname name;

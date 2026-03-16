@@ -617,7 +617,7 @@ int sys_setparam(pid_t pid, const struct sched_param *param) {
 	return errno;
 }
 
-int sys_kill(int pid, int sig) {
+int sys_kill(pid_t pid, int sig) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SEND_SIGNAL, pid, sig);
 	return errno;

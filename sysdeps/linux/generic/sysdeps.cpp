@@ -2158,7 +2158,7 @@ gid_t sys_getegid() {
 	return sc_int_result<pid_t>(ret);
 }
 
-int sys_kill(int pid, int sig) {
+int sys_kill(pid_t pid, int sig) {
 	auto ret = do_syscall(SYS_kill, pid, sig);
 	if (int e = sc_error(ret); e)
 		return e;

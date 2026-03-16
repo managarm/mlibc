@@ -9,7 +9,7 @@
 namespace mlibc {
 
 int
-sys_kill(int pid, int signal)
+sys_kill(pid_t pid, int signal)
 {
 	int r = syscall2(SYS_kill, pid, signal, NULL);
 	if (r < 0)

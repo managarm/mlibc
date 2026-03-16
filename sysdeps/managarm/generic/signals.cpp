@@ -104,7 +104,7 @@ int sys_sigaction(
 	return 0;
 }
 
-int sys_kill(int pid, int number) {
+int sys_kill(pid_t pid, int number) {
 	// This implementation is inherently signal-safe.
 	HelWord out;
 	HEL_CHECK(helSyscall4_1(kHelObserveSuperCall + posix::superSigKill, pid, number, SI_USER, 0, &out));

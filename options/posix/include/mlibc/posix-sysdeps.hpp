@@ -181,7 +181,7 @@ int sys_vm_unmap(void *pointer, size_t size);
 // NOTE: POSIX says that behavior of timeout = nullptr is unspecified. We treat this case
 // as an infinite timeout, making sigtimedwait(..., nullptr) equivalent to sigwaitinfo(...)
 [[gnu::weak]] int sys_sigtimedwait(const sigset_t *__restrict set, siginfo_t *__restrict info, const struct timespec *__restrict timeout, int *out_signal);
-[[gnu::weak]] int sys_kill(int, int);
+[[gnu::weak]] int sys_kill(pid_t, int);
 [[gnu::weak]] int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length, int flags);
 [[gnu::weak]] int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);
 [[gnu::weak]] int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length);
