@@ -13,12 +13,13 @@
 
 #include <bits/ensure.h>
 #include <frg/logging.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 
 namespace mlibc {
 
 int
-sys_epoll_pwait(int epfd, struct epoll_event *ev, int n, int timeout,
+Sysdeps<EpollPwait>::operator()(int epfd, struct epoll_event *ev, int n, int timeout,
     const sigset_t *sigmask, int *raised)
 {
 	(void)sigmask;
@@ -31,7 +32,7 @@ sys_epoll_pwait(int epfd, struct epoll_event *ev, int n, int timeout,
 }
 
 int
-sys_epoll_create(int flags, int *fd)
+Sysdeps<EpollCreate>::operator()(int flags, int *fd)
 {
 	int r = syscall1(SYS_epoll_create, flags, NULL);
 	if (r < 0)
@@ -40,7 +41,8 @@ sys_epoll_create(int flags, int *fd)
 	return 0;
 }
 
-int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev)
+int
+Sysdeps<EpollCtl>::operator()(int epfd, int mode, int fd, struct epoll_event *ev)
 {
 	int r = syscall4(SYS_epoll_ctl, epfd, mode, fd, (uintptr_t)ev,
 	    NULL);
@@ -50,7 +52,7 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev)
 }
 
 int
-sys_ppoll(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
+Sysdeps<Ppoll>::operator()(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
     const sigset_t *sigmask, int *num_events)
 {
 	int epfd, ready;
@@ -121,16 +123,16 @@ sys_ppoll(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 }
 
 int
-sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events)
+Sysdeps<Poll>::operator()(struct pollfd *fds, nfds_t count, int timeout, int *num_events)
 {
 	struct timespec ts;
 	ts.tv_sec = timeout / 1000;
 	ts.tv_nsec = (timeout % 1000) * 1000000;
-	return sys_ppoll(fds, count, &ts, NULL, num_events);
+	return sysdep<Ppoll>(fds, count, &ts, nullptr, num_events);
 }
 
 int
-sys_pselect(int, fd_set *read_set, fd_set *write_set,
+Sysdeps<Pselect>::operator()(int, fd_set *read_set, fd_set *write_set,
     fd_set *except_set, const struct timespec *timeout, const sigset_t *sigmask,
     int *num_events)
 {

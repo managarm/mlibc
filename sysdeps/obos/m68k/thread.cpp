@@ -14,7 +14,7 @@ extern "C"
 }
 
 namespace mlibc {
-int sys_tcb_set(void *pointer) {
+int Sysdeps<TcbSet>::operator()(void *pointer) {
 	syscall1(Sys_SetTCB, pointer);
 	return 0;
 }

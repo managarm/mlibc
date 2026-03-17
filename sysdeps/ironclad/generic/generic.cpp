@@ -25,26 +25,27 @@ extern "C" void __mlibc_sigret(void);
 
 namespace mlibc {
 
-void sys_libc_log(const char *message) {
+void Sysdeps<LibcLog>::operator()(const char *message) {
 	ssize_t unused;
-	sys_write(1, message, strlen(message), &unused);
-	sys_write(1, "\n", 1, &unused);
+	sysdep<Write>(1, message, strlen(message), &unused);
+	sysdep<Write>(1, "\n", 1, &unused);
 }
 
-void sys_libc_panic() {
+void Sysdeps<LibcPanic>::operator()() {
 	ssize_t unused;
 	char const *message = "mlibc panicked unrecoverably\n";
-	sys_write(2, message, strlen(message), &unused);
-	sys_exit(1);
+	sysdep<Write>(2, message, strlen(message), &unused);
+	sysdep<Exit>(1);
 }
 
-void sys_exit(int status) {
+[[noreturn]]
+void Sysdeps<Exit>::operator()(int status) {
 	int ret, errno;
 	SYSCALL1(SYSCALL_EXIT, status);
 	__builtin_unreachable();
 }
 
-int sys_tcb_set(void *pointer) {
+int Sysdeps<TcbSet>::operator()(void *pointer) {
 	int errno;
 
 #if defined(__x86_64__)
@@ -61,14 +62,14 @@ int sys_tcb_set(void *pointer) {
 	return errno;
 }
 
-int sys_thread_getname(void *tcb, char *name, size_t size) {
+int Sysdeps<ThreadGetname>::operator()(void *tcb, char *name, size_t size) {
 	int ret, errno;
 	auto t = reinterpret_cast<Tcb *>(tcb);
 	SYSCALL3(SYSCALL_GETTIDID, t->tid, name, size);
 	return errno;
 }
 
-int sys_thread_setname(void *tcb, const char *name) {
+int Sysdeps<ThreadSetname>::operator()(void *tcb, const char *name) {
 	int ret, errno;
 	size_t len = strlen(name);
 	auto t = reinterpret_cast<Tcb *>(tcb);
@@ -76,11 +77,39 @@ int sys_thread_setname(void *tcb, const char *name) {
 	return errno;
 }
 
-int sys_open(const char *path, int flags, mode_t mode, int *fd) {
-	return sys_openat(AT_FDCWD, path, flags, mode, fd);
+int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
+	int ret, errno;
+	(void)flags;
+
+	switch (fsfdt) {
+		case fsfd_target::fd: {
+			SYSCALL5(SYSCALL_STAT, fd, "", 0, statbuf, AT_EMPTY_PATH);
+			break;
+		}
+		case fsfd_target::path: {
+			size_t len = strlen(path);
+			SYSCALL5(SYSCALL_STAT, AT_FDCWD, path, len, statbuf, flags);
+			break;
+		}
+		case fsfd_target::fd_path: {
+			size_t len = strlen(path);
+			SYSCALL5(SYSCALL_STAT, fd, path, len, statbuf, flags);
+			break;
+		}
+		default: {
+			__ensure(!"stat: Invalid fsfdt");
+			__builtin_unreachable();
+		}
+	}
+
+	return errno;
 }
 
-int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
+int Sysdeps<Open>::operator()(const char *path, int flags, mode_t mode, int *fd) {
+	return sysdep<Openat>(AT_FDCWD, path, flags, mode, fd);
+}
+
+int Sysdeps<Openat>::operator()(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	int ret, errno;
 
 	// Check clashing sysdep-implemented files here before we do anything else.
@@ -114,11 +143,11 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 			// If the file cannot be truncated, dont sweat it, some software
 			// depends on some things being truncate-able that ironclad does
 			// not allow. For example, some devices.
-			sys_ftruncate(ret, 0);
+			sysdep<Ftruncate>(ret, 0);
 		}
 		if (flags & O_DIRECTORY) {
 			struct stat st;
-			sys_stat(fsfd_target::fd, ret, NULL, 0, &st);
+			sysdep<Stat>(fsfd_target::fd, ret, NULL, 0, &st);
 			if (!S_ISDIR (st.st_mode)) {
 				SYSCALL1(SYSCALL_CLOSE, ret);
 				ret	= -1;
@@ -131,11 +160,11 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	return errno;
 }
 
-int sys_open_dir(const char *path, int *handle) {
-	return sys_open(path, O_RDONLY | O_DIRECTORY, 0660, handle);
+int Sysdeps<OpenDir>::operator()(const char *path, int *handle) {
+	return sysdep<Open>(path, O_RDONLY | O_DIRECTORY, 0660, handle);
 }
 
-int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read) {
+int Sysdeps<ReadEntries>::operator()(int handle, void *buffer, size_t max_size, size_t *bytes_read) {
 	size_t ret;
 	int errno;
 	SYSCALL3(SYSCALL_GETDENTS, handle, buffer, max_size);
@@ -147,39 +176,39 @@ int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_re
 	}
 }
 
-void sys_thread_exit() {
+void Sysdeps<ThreadExit>::operator()() {
 	 int ret, errno;
 	 SYSCALL0(SYSCALL_EXIT_THREAD);
 	 __builtin_unreachable();
 }
 
-int sys_close(int fd) {
+int Sysdeps<Close>::operator()(int fd) {
 	int ret, errno;
 	SYSCALL1(SYSCALL_CLOSE, fd);
 	return errno;
 }
 
-void sys_sync() {
+void Sysdeps<Sync>::operator()() {
 	int ret, errno;
 	SYSCALL0(SYSCALL_SYNC);
 	if (ret != 0) {
-		sys_libc_log("mlibc: sync failed");
+		sysdep<LibcLog>("mlibc: sync failed");
 	}
 }
 
-int sys_fsync(int fd) {
+int Sysdeps<Fsync>::operator()(int fd) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_FSYNC, fd, 0);
 	return errno;
 }
 
-int sys_fdatasync(int fd) {
+int Sysdeps<Fdatasync>::operator()(int fd) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_FSYNC, fd, 1);
 	return errno;
 }
 
-int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
+int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_read) {
 	ssize_t ret;
 	int errno;
 	SYSCALL5(SYSCALL_READ, fd, buf, count, 0, 0);
@@ -187,7 +216,7 @@ int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
 	return errno;
 }
 
-int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
+int Sysdeps<Write>::operator()(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
 	ssize_t ret;
 	int errno;
 	SYSCALL5(SYSCALL_WRITE, fd, buf, count, 0, 0);
@@ -195,7 +224,7 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
 	return errno;
 }
 
-int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
+int Sysdeps<Pread>::operator()(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 	ssize_t ret;
 	int errno;
 	SYSCALL5(SYSCALL_READ, fd, buf, n, off, 1);
@@ -203,7 +232,7 @@ int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 	return errno;
 }
 
-int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_written) {
+int Sysdeps<Pwrite>::operator()(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_written) {
 	ssize_t ret;
 	int errno;
 	SYSCALL5(SYSCALL_WRITE, fd, buf, n, off, 1);
@@ -211,7 +240,7 @@ int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_writ
 	return errno;
 }
 
-int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
+int Sysdeps<Seek>::operator()(int fd, off_t offset, int whence, off_t *new_offset) {
 	ssize_t ret;
 	int errno;
 	SYSCALL3(SYSCALL_SEEK, fd, offset, whence);
@@ -219,13 +248,13 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	return errno;
 }
 
-int sys_ftruncate (int fd, size_t size) {
+int Sysdeps<Ftruncate>::operator()(int fd, size_t size) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_TRUNCATE, fd, size);
 	return errno;
 }
 
-int sys_fallocate(int fd, off_t offset, size_t size) {
+int Sysdeps<Fallocate>::operator()(int fd, off_t offset, size_t size) {
 	if (offset < 0 || size == 0) {
 		return EINVAL;
 	}
@@ -235,12 +264,12 @@ int sys_fallocate(int fd, off_t offset, size_t size) {
 	return errno;
 }
 
-int sys_flock(int fd, int options) {
+int Sysdeps<Flock>::operator()(int fd, int options) {
 	struct flock lock;
 	lock.l_whence = SEEK_SET;
 	lock.l_start = 0;
 	lock.l_len = (off_t)((uint64_t)-1);
-	lock.l_pid = sys_getpid();
+	lock.l_pid = sysdep<GetPid>();
 
 	switch (options & ~(LOCK_NB)) {
 		case LOCK_SH:
@@ -262,20 +291,20 @@ int sys_flock(int fd, int options) {
 	return errno;
 }
 
-int sys_getpriority(int which, id_t who, int *value) {
+int Sysdeps<GetPriority>::operator()(int which, id_t who, int *value) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_GETPRIO, which, who);
 	*value = ret;
 	return errno;
 }
 
-int sys_setpriority(int which, id_t who, int value) {
+int Sysdeps<SetPriority>::operator()(int which, id_t who, int value) {
 	int ret, errno;
 	SYSCALL3(SYSCALL_SETPRIO, which, who, value);
 	return errno;
 }
 
-int sys_getrusage(int scope, struct rusage *usage) {
+int Sysdeps<GetRusage>::operator()(int scope, struct rusage *usage) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_GETRUSAGE, scope, usage);
 
@@ -287,52 +316,52 @@ int sys_getrusage(int scope, struct rusage *usage) {
 	return errno;
 }
 
-int sys_anon_allocate(size_t size, void **pointer) {
-	return sys_vm_map(NULL, size, PROT_READ | PROT_WRITE, MAP_ANON, 0, 0, pointer);
+int Sysdeps<AnonAllocate>::operator()(size_t size, void **pointer) {
+	return sysdep<VmMap>(NULL, size, PROT_READ | PROT_WRITE, MAP_ANON, 0, 0, pointer);
 }
 
-int sys_anon_free(void *pointer, size_t size) {
-	return sys_vm_unmap(pointer, size);
+int Sysdeps<AnonFree>::operator()(void *pointer, size_t size) {
+	return sysdep<VmUnmap>(pointer, size);
 }
 
-int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
+int Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
 	void *ret;
 	int errno;
 	SYSCALL6(SYSCALL_MMAP, hint, size, prot, flags, fd, offset);
 	*window = ret;
 
 	if ((errno == ENOMEM) && ((flags & MAP_ANON) == 0)) {
-		int ret = sys_anon_allocate(size, window);
+		int ret = sysdep<AnonAllocate>(size, window);
 		if (ret) {
 			return ret;
 		}
 		ssize_t len;
-		ret = sys_pread(fd, *window, size, offset, &len);
+		ret = sysdep<Pread>(fd, *window, size, offset, &len);
 		return 0;
 	}
 
 	return errno;
 }
 
-int sys_posix_madvise(void *addr, size_t length, int advice) {
+int Sysdeps<PosixMadvise>::operator()(void *addr, size_t length, int advice) {
 	int ret, errno;
 	SYSCALL3(SYSCALL_MADVISE, addr, length, advice);
 	return errno;
 }
 
-int sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
+int Sysdeps<GetSockopt>::operator()(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
 	int ret, errno;
 	SYSCALL5(SYSCALL_GETSOCKOPT, fd, layer, number, buffer, size);
 	return errno;
 }
 
-int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t size) {
+int Sysdeps<SetSockopt>::operator()(int fd, int layer, int number, const void *buffer, socklen_t size) {
 	int ret, errno;
 	SYSCALL5(SYSCALL_SETSOCKOPT, fd, layer, number, buffer, size);
 	return errno;
 }
 
-int sys_vm_unmap(void *pointer, size_t size) {
+int Sysdeps<VmUnmap>::operator()(void *pointer, size_t size) {
 	int ret;
 	int errno;
 	SYSCALL2(SYSCALL_MUNMAP, pointer, size);
@@ -343,7 +372,7 @@ int sys_vm_unmap(void *pointer, size_t size) {
 	}
 }
 
-int sys_vm_protect(void *pointer, size_t size, int prot) {
+int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
 	int ret;
 	int errno;
 	SYSCALL3(SYSCALL_MPROTECT, pointer, size, prot);
@@ -353,101 +382,94 @@ int sys_vm_protect(void *pointer, size_t size, int prot) {
 	return 0;
 }
 
-int sys_getsid(pid_t pid, pid_t *sid) {
+int Sysdeps<GetSid>::operator()(pid_t pid, pid_t *sid) {
 	int ret, errno;
 	SYSCALL1(SYSCALL_GETSID, pid);
 	*sid = ret;
 	return errno;
 }
 
-pid_t sys_getpid() {
+pid_t Sysdeps<GetPid>::operator()() {
 	pid_t ret;
 	int errno;
 	SYSCALL0(SYSCALL_GETPID);
 	return ret;
 }
 
-pid_t sys_gettid() {
+pid_t Sysdeps<GetTid>::operator()() {
 	pid_t ret;
 	int errno;
 	SYSCALL0(SYSCALL_GETTID);
 	return ret;
 }
 
-pid_t sys_getppid() {
+pid_t Sysdeps<GetPpid>::operator()() {
 	pid_t ret;
 	int errno;
 	SYSCALL0(SYSCALL_GETPPID);
 	return ret;
 }
 
-int sys_getgroups(size_t size, gid_t *list, int *retval) {
+int Sysdeps<GetGroups>::operator()(size_t size, gid_t *list, int *retval) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_GETGROUPS, size, list);
 	*retval = ret;
 	return errno;
 }
 
-int sys_setgroups(size_t size, const gid_t *list) {
+int Sysdeps<SetGroups>::operator()(size_t size, const gid_t *list) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SETGROUPS, size, list);
 	return errno;
 }
 
-int sys_ptrace(long req, pid_t pid, void *addr, void *data, long *out) {
-	int ret, errno;
-	SYSCALL4(SYSCALL_PTRACE, req, pid, addr, data);
-	*out = (long)ret;
-	return errno;
-}
-
-int sys_fcntl(int fd, int request, va_list args, int *result) {
+int Sysdeps<Fcntl>::operator()(int fd, int request, va_list args, int *result) {
 	int ret, errno;
 	SYSCALL3(SYSCALL_FCNTL, fd, request, va_arg(args, uint64_t));
 	*result = ret;
 	return errno;
 }
 
-int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
+int Sysdeps<Sigprocmask>::operator()(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
 	int ret, errno;
 	SYSCALL3(SYSCALL_SIGPROCMASK, how, set, retrieve);
 	return errno;
 }
 
-int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
+int Sysdeps<Sigaltstack>::operator()(const stack_t *ss, stack_t *oss) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SIGALTSTACK, ss, oss);
 	return errno;
 }
 
-int sys_tgkill(int pid, int tid, int sig) {
+int Sysdeps<Tgkill>::operator()(int pid, int tid, int sig) {
 	(void)tid;
-	return sys_kill(pid, sig);
+	return sysdep<Kill>(pid, sig);
 }
 
-int sys_isatty(int fd) {
+int Sysdeps<Isatty>::operator()(int fd) {
 	struct termios t;
-	if (sys_tcgetattr(fd, &t) == 0) {
+	if (sysdep<Tcgetattr>(fd, &t) == 0) {
 		return 0;
 	} else {
 		return ENOTTY;
 	}
 }
 
-int sys_getpgid(pid_t pid, pid_t *pgid) {
+int Sysdeps<GetPgid>::operator()(pid_t pid, pid_t *pgid) {
 	int ret, errno;
 	SYSCALL1(SYSCALL_GETPGID, pid);
 	*pgid = ret;
 	return errno;
 }
 
-int sys_setpgid(pid_t pid, pid_t pgid) {
+int Sysdeps<SetPgid>::operator()(pid_t pid, pid_t pgid) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SETPGID, pid, pgid);
 	return errno;
 }
 
-int sys_execve(const char *path, char *const argv[], char *const envp[]) {
+int Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *const envp[]) {
 	int ret, errno, argv_len, envp_len;
 	for (argv_len = 0; argv[argv_len] != NULL; argv_len++);
 	for (envp_len = 0; envp[envp_len] != NULL; envp_len++);
@@ -462,7 +484,7 @@ int sys_execve(const char *path, char *const argv[], char *const envp[]) {
 	return 0;
 }
 
-int sys_fork(pid_t *child) {
+int Sysdeps<Fork>::operator()(pid_t *child) {
 	pid_t ret;
 	int errno;
 
@@ -479,36 +501,36 @@ int sys_fork(pid_t *child) {
 	return 0;
 }
 
-int sys_vfork(pid_t *child) {
-	pid_t ret;
-	int errno;
+// int Sysdeps<Vfork>::operator()(pid_t *child) {
+// 	pid_t ret;
+// 	int errno;
 
-	SYSCALL1(SYSCALL_FORK, 1);
+// 	SYSCALL1(SYSCALL_FORK, 1);
 
-	if (ret == -1) {
-		return errno;
-	}
+// 	if (ret == -1) {
+// 		return errno;
+// 	}
 
-	if (child != NULL) {
-		*child = ret;
-	}
+// 	if (child != NULL) {
+// 		*child = ret;
+// 	}
 
-	return 0;
-}
+// 	return 0;
+// }
 
-int sys_getrlimit(int resource, struct rlimit *limit) {
+int Sysdeps<GetRlimit>::operator()(int resource, struct rlimit *limit) {
 	uint64_t ret, errno;
 	SYSCALL3(SYSCALL_RLIMIT, resource, NULL, limit);
 	return errno;
 }
 
-int sys_setrlimit(int resource, const struct rlimit *limit) {
+int Sysdeps<SetRlimit>::operator()(int resource, const struct rlimit *limit) {
 	uint64_t ret, errno;
 	SYSCALL3(SYSCALL_RLIMIT, resource, limit, NULL);
 	return errno;
 }
 
-int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
+int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
 	pid_t ret;
 	int errno;
 
@@ -527,23 +549,23 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 	return errno;
 }
 
-int sys_uname(struct utsname *buf) {
+int Sysdeps<Uname>::operator()(struct utsname *buf) {
 	int ret, errno;
 	SYSCALL1(SYSCALL_UNAME, buf);
 	return errno;
 }
 
-int sys_ttyname(int fd, char *buff, size_t size) {
+int Sysdeps<Ttyname>::operator()(int fd, char *buff, size_t size) {
 	int ret, errno;
 	SYSCALL3(SYSCALL_TTYNAME, fd, buff, size);
 	return errno;
 }
 
-int sys_ptsname(int fd, char *buff, size_t size) {
-	return sys_ttyname(fd, buff, size);
+int Sysdeps<Ptsname>::operator()(int fd, char *buff, size_t size) {
+	return sysdep<Ttyname>(fd, buff, size);
 }
 
-int sys_sethostname(const char *buff, size_t size) {
+int Sysdeps<SetHostname>::operator()(const char *buff, size_t size) {
 	int ret, errno;
 
 	SYSCALL2(SYSCALL_SETHOSTNAME, buff, size);
@@ -555,7 +577,7 @@ int sys_sethostname(const char *buff, size_t size) {
 	return 0;
 }
 
-int sys_chdir(const char *buff) {
+int Sysdeps<Chdir>::operator()(const char *buff) {
 	int ret, errno;
 
 	size_t buff_len = strlen(buff);
@@ -573,7 +595,7 @@ int sys_chdir(const char *buff) {
 	return 0;
 }
 
-int sys_fchdir(int fd) {
+int Sysdeps<Fchdir>::operator()(int fd) {
 	int ret, errno;
 
 	SYSCALL1(SYSCALL_CHDIR, fd);
@@ -585,7 +607,7 @@ int sys_fchdir(int fd) {
 	return 0;
 }
 
-int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
+int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *result) {
 	int ret, errno;
 
 	SYSCALL3(SYSCALL_IOCTL, fd, request, arg);
@@ -600,30 +622,30 @@ int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
 	return 0;
 }
 
-void sys_yield(void) {
+void Sysdeps<Yield>::operator()() {
 	int ret, errno;
 	SYSCALL0(SYSCALL_SCHED_YIELD);
 }
 
-int sys_getparam(pid_t pid, struct sched_param *param) {
+int Sysdeps<GetParam>::operator()(pid_t pid, struct sched_param *param) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_GET_SCHEDULER, pid, param);
 	return errno;
 }
 
-int sys_setparam(pid_t pid, const struct sched_param *param) {
+int Sysdeps<SetParam>::operator()(pid_t pid, const struct sched_param *param) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SET_SCHEDULER, pid, param);
 	return errno;
 }
 
-int sys_kill(pid_t pid, int sig) {
+int Sysdeps<Kill>::operator()(pid_t pid, int sig) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SEND_SIGNAL, pid, sig);
 	return errno;
 }
 
-int sys_dup(int fd, int flags, int *newfd) {
+int Sysdeps<Dup>::operator()(int fd, int flags, int *newfd) {
 	int ret, errno;
 	SYSCALL3(SYSCALL_FCNTL, fd, F_DUPFD, 0);
 
@@ -642,13 +664,13 @@ int sys_dup(int fd, int flags, int *newfd) {
 	return errno;
 }
 
-int sys_dup2(int fd, int flags, int newfd) {
+int Sysdeps<Dup2>::operator()(int fd, int flags, int newfd) {
 	// We are to do nothing if they are equal.
 	if (fd == newfd) {
 		return 0;
 	}
 
-	int ret = sys_close(newfd);
+	int ret = sysdep<Close>(newfd);
 	if (ret != 0 && ret != EBADF) {
 		return EBADF;
 	}
@@ -670,17 +692,17 @@ int sys_dup2(int fd, int flags, int newfd) {
 	return errno;
 }
 
-int sys_tcgetattr(int fd, struct termios *attr) {
+int Sysdeps<Tcgetattr>::operator()(int fd, struct termios *attr) {
 	 int ret;
 
-	 if (int r = sys_ioctl(fd, TCGETS, attr, &ret) != 0) {
+	 if (int r = sysdep<Ioctl>(fd, TCGETS, attr, &ret) != 0) {
 		  return r;
 	 }
 
 	 return 0;
 }
 
-int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
+int Sysdeps<Tcsetattr>::operator()(int fd, int optional_action, const struct termios *attr) {
 	 int ret;
 
 	 switch (optional_action) {
@@ -694,37 +716,37 @@ int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
 				__ensure(!"Unsupported tcsetattr");
 	 }
 
-	 if (int r = sys_ioctl(fd, optional_action, (void *)attr, &ret) != 0) {
+	 if (int r = sysdep<Ioctl>(fd, optional_action, (void *)attr, &ret) != 0) {
 		  return r;
 	 }
 
 	 return 0;
 }
 
-int sys_tcflow(int fd, int action) {
+int Sysdeps<Tcflow>::operator()(int fd, int action) {
 	int ret;
-	return sys_ioctl(fd, TCXONC, &action, &ret);
+	return sysdep<Ioctl>(fd, TCXONC, &action, &ret);
 }
 
-int sys_tcflush(int fd, int action) {
+int Sysdeps<Tcflush>::operator()(int fd, int action) {
 	int ret;
-	return sys_ioctl(fd, TCFLSH, &action, &ret);
+	return sysdep<Ioctl>(fd, TCFLSH, &action, &ret);
 }
 
-int sys_tcdrain(int fd) {
+int Sysdeps<Tcdrain>::operator()(int fd) {
 	int ret;
 	int value = 0;
-	return sys_ioctl(fd, TCSBRKP, &value, &ret);
+	return sysdep<Ioctl>(fd, TCSBRKP, &value, &ret);
 }
 
-int sys_access(const char *path, int mode) {
+int Sysdeps<Access>::operator()(const char *path, int mode) {
 	int ret, errno;
 	size_t len = strlen(path);
 	SYSCALL5(SYSCALL_ACCESS, AT_FDCWD, path, len, mode, 0);
 	return errno;
 }
 
-int sys_faccessat(int dirfd, const char *pathname, int mode, int flags) {
+int Sysdeps<Faccessat>::operator()(int dirfd, const char *pathname, int mode, int flags) {
 	int ret, errno;
 	size_t len = strlen(pathname);
 	SYSCALL5(SYSCALL_ACCESS, dirfd, pathname, len, mode, flags);
@@ -737,7 +759,7 @@ struct futex_item {
 	 uint32_t flags;
 };
 
-int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
+int Sysdeps<FutexWait>::operator()(int *pointer, int expected, const struct timespec *time) {
 	int ret, errno;
 	struct futex_item item = {.addr = (uint64_t)pointer, .expected = (uint32_t)expected, .flags = 0};
 	if (time == NULL) {
@@ -749,7 +771,7 @@ int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	return errno;
 }
 
-int sys_futex_wake(int *pointer, bool) {
+int Sysdeps<FutexWake>::operator()(int *pointer, bool) {
 	int ret, errno;
 	struct futex_item item = {.addr = (uint64_t)pointer, .expected = 0, .flags = 0};
 	struct timespec t = {(time_t)-1, (time_t)-1};
@@ -757,42 +779,50 @@ int sys_futex_wake(int *pointer, bool) {
 	return errno;
 }
 
-int sys_pipe(int *fds, int flags) {
+int Sysdeps<Pipe>::operator()(int *fds, int flags) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_PIPE, fds, flags);
 	return errno;
 }
 
-int sys_getentropy(void *buffer, size_t length) {
+int Sysdeps<GetEntropy>::operator()(void *buffer, size_t length) {
 	ssize_t ret;
 	int errno;
 	SYSCALL2(SYSCALL_GETENTROPY, buffer, length);
 	return errno;
 }
 
-int sys_mkdir(const char *path, mode_t mode) {
-	return sys_mkdirat(AT_FDCWD, path, mode);
+int Sysdeps<Mknodat>::operator()(int dirfd, const char *path, int mode, int dev) {
+	int ret;
+	int errno;
+	size_t len = strlen(path);
+	SYSCALL5(SYSCALL_MAKENODE, dirfd, path, len, mode, dev);
+	return errno;
 }
 
-int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
-	return sys_mknodat(dirfd, path, S_IFDIR | mode, 0);
+int Sysdeps<Mkdir>::operator()(const char *path, mode_t mode) {
+	return sysdep<Mkdirat>(AT_FDCWD, path, mode);
 }
 
-int sys_rmdir(const char* path){
+int Sysdeps<Mkdirat>::operator()(int dirfd, const char *path, mode_t mode) {
+	return sysdep<Mknodat>(dirfd, path, S_IFDIR | mode, 0);
+}
+
+int Sysdeps<Rmdir>::operator()(const char* path){
 	int ret, errno;
 	size_t path_len = strlen (path);
 	SYSCALL4(SYSCALL_UNLINK, AT_FDCWD, path, path_len, AT_REMOVEDIR);
 	return errno;
 }
 
-int sys_unlinkat(int fd, const char *path, int flags) {
+int Sysdeps<Unlinkat>::operator()(int fd, const char *path, int flags) {
 	int ret, errno;
 	size_t path_len = strlen (path);
 	SYSCALL4(SYSCALL_UNLINK, fd, path, path_len, flags);
 	return errno;
 }
 
-int sys_link(const char* srcpath, const char* destpath) {
+int Sysdeps<Link>::operator()(const char* srcpath, const char* destpath) {
 	int ret, errno;
 	size_t src_len = strlen (srcpath);
 	size_t dst_len = strlen (destpath);
@@ -800,7 +830,7 @@ int sys_link(const char* srcpath, const char* destpath) {
 	return errno;
 }
 
-int sys_socket(int domain, int type, int protocol, int *fd) {
+int Sysdeps<Socket>::operator()(int domain, int type, int protocol, int *fd) {
 	(void)protocol;
 	int ret, errno;
 	SYSCALL2(SYSCALL_SOCKET, domain, type);
@@ -812,98 +842,98 @@ int sys_socket(int domain, int type, int protocol, int *fd) {
 	}
 }
 
-int sys_socketpair(int domain, int type, int protocol, int *fds) {
+int Sysdeps<Socketpair>::operator()(int domain, int type, int protocol, int *fds) {
 	(void)protocol;
 	int ret, errno;
 	SYSCALL3(SYSCALL_SOCKETPAIR, domain, type, fds);
 	return errno;
 }
 
-uid_t sys_getuid() {
+uid_t Sysdeps<GetUid>::operator()() {
 	uint64_t ret, errno;
 	SYSCALL0(SYSCALL_GETUID);
 	return (uid_t)ret;
 }
 
-uid_t sys_geteuid() {
+uid_t Sysdeps<GetEuid>::operator()() {
 	uint64_t ret, errno;
 	SYSCALL0(SYSCALL_GETEUID);
 	return (uid_t)ret;
 }
 
-int sys_setuid(uid_t uid) {
+int Sysdeps<SetUid>::operator()(uid_t uid) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SETUIDS, uid, uid);
 	return ret;
 }
 
-int sys_seteuid(uid_t euid) {
+int Sysdeps<SetEuid>::operator()(uid_t euid) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SETUIDS, ((uint64_t)-1), euid);
 	return ret;
 }
 
-int sys_setreuid(uid_t ruid, uid_t euid) {
+int Sysdeps<SetReuid>::operator()(uid_t ruid, uid_t euid) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SETUIDS, ruid, euid);
 	return ret;
 }
 
-gid_t sys_getgid() {
+gid_t Sysdeps<GetGid>::operator()() {
 	uint64_t ret, errno;
 	SYSCALL0(SYSCALL_GETGID);
 	return (gid_t)ret;
 }
 
-gid_t sys_getegid() {
-	return sys_getgid();
+gid_t Sysdeps<GetEgid>::operator()() {
+	return sysdep<GetGid>();
 }
 
-int sys_setgid(gid_t gid) {
+int Sysdeps<SetGid>::operator()(gid_t gid) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SETGIDS, gid, gid);
 	return ret;
 }
 
-int sys_setegid(gid_t egid) {
+int Sysdeps<SetEgid>::operator()(gid_t egid) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SETGIDS, ((uint64_t)-1), egid);
 	return ret;
 }
 
-int sys_setregid(gid_t rgid, gid_t egid) {
+int Sysdeps<SetRegid>::operator()(gid_t rgid, gid_t egid) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SETGIDS, rgid, egid);
 	return ret;
 }
 
-int sys_getresuid(uid_t *ruid, uid_t *euid, uid_t *suid) {
+int Sysdeps<GetResuid>::operator()(uid_t *ruid, uid_t *euid, uid_t *suid) {
 	if (ruid) {
-		*ruid = sys_getuid();
+		*ruid = sysdep<GetUid>();
 	}
 	if (euid) {
-		*euid = sys_geteuid();
+		*euid = sysdep<GetEuid>();
 	}
 	if (suid) {
-		*suid = sys_getuid();
+		*suid = sysdep<GetUid>();
 	}
 	return 0;
 }
 
-int sys_getresgid(uid_t *rgid, uid_t *egid, uid_t *sgid) {
+int Sysdeps<GetResgid>::operator()(uid_t *rgid, uid_t *egid, uid_t *sgid) {
 	if (rgid) {
-		*rgid = sys_getgid();
+		*rgid = sysdep<GetGid>();
 	}
 	if (egid) {
-		*egid = sys_getegid();
+		*egid = sysdep<GetEgid>();
 	}
 	if (sgid) {
-		*sgid = sys_getgid();
+		*sgid = sysdep<GetGid>();
 	}
 	return 0;
 }
 
-int sys_setsid(pid_t *sid) {
+int Sysdeps<SetSid>::operator()(pid_t *sid) {
 	int ret, errno;
 	SYSCALL0(SYSCALL_SETSID);
 	*sid = ret;
@@ -914,7 +944,7 @@ int sys_setsid(pid_t *sid) {
 
 extern "C" void __mlibc_thread_entry();
 
-int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) {
+int Sysdeps<Sigaction>::operator()(int signum, const struct sigaction *act, struct sigaction *oldact) {
 	int ret, errno;
 
 	if (act != NULL) {
@@ -927,7 +957,7 @@ int sys_sigaction(int signum, const struct sigaction *act, struct sigaction *old
 	return errno;
 }
 
-int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
+int Sysdeps<Clone>::operator()(void *tcb, pid_t *tid_out, void *stack) {
 	 int ret, errno;
 	 SYSCALL4(SYSCALL_CREATE_THREAD, (uintptr_t)__mlibc_thread_entry, 0, stack, tcb);
 
@@ -939,33 +969,7 @@ int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
 	 return 0;
 }
 
-int sys_prepare_stack(void **stack, void *entry, void *arg, void *tcb, size_t *stack_size, size_t *guard_size) {
-	// TODO guard
-
-	mlibc::infoLogger() << "mlibc: sys_prepare_stack() does not setup a guard!" << frg::endlog;
-
-	*guard_size = 0;
-	*stack_size = *stack_size ? *stack_size : 0x400000;
-
-	if (!*stack) {
-		*stack = (void *)((char *)mmap(NULL, *stack_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0) + *stack_size);
-		if (*stack == MAP_FAILED) {
-			return errno;
-		}
-	}
-
-	void **stack_it = (void **)*stack;
-
-	*--stack_it = arg;
-	*--stack_it = tcb;
-	*--stack_it = entry;
-
-	*stack = (void *)stack_it;
-
-	return 0;
-}
-
-int sys_clock_getres(int clock, time_t *secs, long *nanos) {
+int Sysdeps<ClockGetres>::operator()(int clock, time_t *secs, long *nanos) {
 	struct timespec time;
 	int ret, errno;
 	SYSCALL3(SYSCALL_CLOCK, 0, clock, &time);
@@ -974,7 +978,7 @@ int sys_clock_getres(int clock, time_t *secs, long *nanos) {
 	return errno;
 }
 
-int sys_clock_get(int clock, time_t *secs, long *nanos) {
+int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
 	struct timespec time;
 	int ret, errno;
 	SYSCALL3(SYSCALL_CLOCK, 1, clock, &time);
@@ -983,32 +987,32 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 	return errno;
 }
 
-int sys_clock_set(int clock, time_t secs, long nanos) {
+int Sysdeps<ClockSet>::operator()(int clock, time_t secs, long nanos) {
 	struct timespec time = {.tv_sec = secs, .tv_nsec = nanos };
 	int ret, errno;
 	SYSCALL3(SYSCALL_CLOCK, 2, clock, &time);
 	return errno;
 }
 
-int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addrlen) {
+int Sysdeps<Bind>::operator()(int fd, const struct sockaddr *addr_ptr, socklen_t addrlen) {
 	int ret, errno;
 	SYSCALL3(SYSCALL_BIND, fd, addr_ptr, addrlen);
 	return errno;
 }
 
-int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addrlen) {
+int Sysdeps<Connect>::operator()(int fd, const struct sockaddr *addr_ptr, socklen_t addrlen) {
 	int ret, errno;
 	SYSCALL3(SYSCALL_CONNECT, fd, addr_ptr, addrlen);
 	return errno;
 }
 
-int sys_listen(int fd, int backlog) {
+int Sysdeps<Listen>::operator()(int fd, int backlog) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_LISTEN, fd, backlog);
 	return errno;
 }
 
-int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length, int flags) {
+int Sysdeps<Accept>::operator()(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length, int flags) {
 	int ret, errno;
 	SYSCALL4(SYSCALL_ACCEPT, fd, addr_ptr, addr_length, flags);
 	*newfd = ret;
@@ -1016,32 +1020,32 @@ int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_le
 }
 
 
-int sys_sockname(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length) {
+int Sysdeps<Sockname>::operator()(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length) {
 	int ret, errno;
 	SYSCALL3(SYSCALL_GETSOCKNAME, fd, addr_ptr, &max_addr_length);
 	*actual_length = max_addr_length;
 	return errno;
 }
 
-int sys_peername(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length) {
+int Sysdeps<Peername>::operator()(int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length) {
 	int ret, errno;
 	SYSCALL3(SYSCALL_GETPEERNAME, fd, addr_ptr, &max_addr_length);
 	*actual_length = max_addr_length;
 	return errno;
 }
 
-int sys_shutdown(int sockfd, int how) {
+int Sysdeps<Shutdown>::operator()(int sockfd, int how) {
 	int ret, errno;
 	SYSCALL2(SYSCALL_SHUTDOWN, sockfd, how);
 	return errno;
 }
 
-int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
+int Sysdeps<SetItimer>::operator()(int which, const struct itimerval *new_value, struct itimerval *old_value) {
 	(void)which; (void)new_value; (void)old_value;
 	return 0;
 }
 
-int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
+int Sysdeps<MsgRecv>::operator()(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
 	int ret, errno;
 
 	if (hdr->msg_control != NULL) {
@@ -1062,7 +1066,7 @@ int sys_msg_recv(int fd, struct msghdr *hdr, int flags, ssize_t *length) {
 	return 0;
 }
 
-int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
+int Sysdeps<MsgSend>::operator()(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
 	int ret, errno;
 
 	if (hdr->msg_control != NULL) {
@@ -1084,7 +1088,7 @@ int sys_msg_send(int fd, const struct msghdr *hdr, int flags, ssize_t *length) {
 }
 
 
-int sys_ppoll(struct pollfd *fds, nfds_t count, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
+int Sysdeps<Ppoll>::operator()(struct pollfd *fds, nfds_t count, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
 	int ret, errno;
 	SYSCALL4(SYSCALL_PPOLL, fds, count, timeout, sigmask);
 	if (ret == -1) {
@@ -1095,27 +1099,27 @@ int sys_ppoll(struct pollfd *fds, nfds_t count, const struct timespec *timeout, 
 	return errno;
 }
 
-int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
+int Sysdeps<Poll>::operator()(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	struct timespec ts;
 	ts.tv_sec = timeout / 1000;
 	ts.tv_nsec = (timeout % 1000) * 1000000;
-	return sys_ppoll(fds, count, timeout == -1 ? NULL : &ts, NULL, num_events);
+	return sysdep<Ppoll>(fds, count, timeout == -1 ? NULL : &ts, NULL, num_events);
 }
 
-int sys_pause(void) {
-	return sys_ppoll(NULL, 0, NULL, NULL, NULL);
+int Sysdeps<Pause>::operator()() {
+	return sysdep<Ppoll>(NULL, 0, NULL, NULL, NULL);
 }
 
-int sys_sigsuspend(const sigset_t *set) {
-	return sys_ppoll(NULL, 0, NULL, set, NULL);
+int Sysdeps<Sigsuspend>::operator()(const sigset_t *set) {
+	return sysdep<Ppoll>(NULL, 0, NULL, set, NULL);
 }
 
-int sys_sigpending(sigset_t *set) {
+int Sysdeps<Sigpending>::operator()(sigset_t *set) {
 	*set = 0;
 	return 0;
 }
 
-int sys_pselect(int nfds, fd_set *read_set, fd_set *write_set,
+int Sysdeps<Pselect>::operator()(int nfds, fd_set *read_set, fd_set *write_set,
 		fd_set *except_set, const struct timespec *timeout,
 		const sigset_t *sigmask, int *num_events) {
 	struct pollfd *fds = (struct pollfd *)calloc(nfds, sizeof(struct pollfd));
@@ -1143,7 +1147,7 @@ int sys_pselect(int nfds, fd_set *read_set, fd_set *write_set,
 		fd->fd = i;
 	}
 
-	int ret = sys_ppoll(fds, nfds, timeout, sigmask, num_events);
+	int ret = sysdep<Ppoll>(fds, nfds, timeout, sigmask, num_events);
 	if (ret != 0) {
 		free(fds);
 		return ret;
@@ -1182,7 +1186,7 @@ int sys_pselect(int nfds, fd_set *read_set, fd_set *write_set,
 	return 0;
 }
 
-int sys_sleep(time_t *secs, long *nanos) {
+int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
 	struct timespec time = {.tv_sec = *secs, .tv_nsec = *nanos};
 	struct timespec rem  = {.tv_sec = 0, .tv_nsec = 0};
 
@@ -1193,7 +1197,7 @@ int sys_sleep(time_t *secs, long *nanos) {
 	return errno;
 }
 
-int sys_gethostname(char *buffer, size_t bufsize) {
+int Sysdeps<GetHostname>::operator()(char *buffer, size_t bufsize) {
 	struct utsname buf;
 	if (uname(&buf)) {
 		return -1;
@@ -1203,7 +1207,7 @@ int sys_gethostname(char *buffer, size_t bufsize) {
 	return 0;
 }
 
-int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
+int Sysdeps<Utimensat>::operator()(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
 	int ret, errno;
 	if (pathname == NULL) {
 		pathname = "";
@@ -1214,7 +1218,7 @@ int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2
 	if (times == NULL) {
 		 time_t secs;
 		 long nsec;
-		 ret = sys_clock_get(CLOCK_REALTIME, &secs, &nsec);
+		 ret = sysdep<ClockGet>(CLOCK_REALTIME, &secs, &nsec);
 		 if (ret) {
 			  return ret;
 		 }
@@ -1251,7 +1255,7 @@ struct cpuinfo {
 	uint32_t ref_mhz;
 };
 
-int sys_sysconf(int num, long *rret) {
+int Sysdeps<Sysconf>::operator()(int num, long *rret) {
 	struct meminfo mem;
 	struct cpuinfo cpu;
 	int ret, errno;
@@ -1311,7 +1315,7 @@ int sys_sysconf(int num, long *rret) {
 			*rret = 0x1000;
 			return 0;
 		case _SC_CLK_TCK:
-			ret = sys_clock_getres(CLOCK_MONOTONIC, &secs, &nanos);
+			ret = sysdep<ClockGetres>(CLOCK_MONOTONIC, &secs, &nanos);
 			if (ret == 0) {
 				*rret = 1000000000 / nanos;
 				return 0;
@@ -1323,75 +1327,34 @@ int sys_sysconf(int num, long *rret) {
 	}
 }
 
-int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
-	int ret, errno;
-	(void)flags;
-
-	switch (fsfdt) {
-		case fsfd_target::fd: {
-			SYSCALL5(SYSCALL_STAT, fd, "", 0, statbuf, AT_EMPTY_PATH);
-			break;
-		}
-		case fsfd_target::path: {
-			size_t len = strlen(path);
-			SYSCALL5(SYSCALL_STAT, AT_FDCWD, path, len, statbuf, flags);
-			break;
-		}
-		case fsfd_target::fd_path: {
-			size_t len = strlen(path);
-			SYSCALL5(SYSCALL_STAT, fd, path, len, statbuf, flags);
-			break;
-		}
-		default: {
-			__ensure(!"stat: Invalid fsfdt");
-			__builtin_unreachable();
-		}
-	}
-
-	return errno;
-}
-
-int sys_chmod(const char *pathname, mode_t mode) {
+int Sysdeps<Chmod>::operator()(const char *pathname, mode_t mode) {
 	int ret, errno;
 	size_t len = strlen(pathname);
 	SYSCALL5(SYSCALL_FCHMOD, AT_FDCWD, pathname, len, mode, 0);
 	return errno;
 }
 
-int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
+int Sysdeps<Fchmodat>::operator()(int fd, const char *pathname, mode_t mode, int flags) {
 	int ret, errno;
 	size_t len = strlen(pathname);
 	SYSCALL5(SYSCALL_FCHMOD, fd, pathname, len, mode, flags);
 	return errno;
 }
 
-int sys_fchmod(int fd, mode_t mode) {
+int Sysdeps<Fchmod>::operator()(int fd, mode_t mode) {
 	int ret, errno;
 	SYSCALL5(SYSCALL_FCHMOD, fd, "", 0, mode, AT_EMPTY_PATH);
 	return errno;
 }
 
-int sys_chown(const char *pathname, uid_t uid, gid_t gid) {
-	int ret, errno;
-	size_t len = strlen(pathname);
-	SYSCALL6(SYSCALL_FCHOWN, AT_FDCWD, pathname, len, uid, gid, 0);
-	return errno;
-}
-
-int sys_fchownat(int fd, const char *pathname, uid_t uid, gid_t gid, int flags) {
+int Sysdeps<Fchownat>::operator()(int fd, const char *pathname, uid_t uid, gid_t gid, int flags) {
 	int ret, errno;
 	size_t len = strlen(pathname);
 	SYSCALL6(SYSCALL_FCHOWN, fd, pathname, len, uid, gid, flags);
 	return errno;
 }
 
-int sys_fchown(int fd, uid_t uid, gid_t gid) {
-	int ret, errno;
-	SYSCALL6(SYSCALL_FCHOWN, fd, "", 0, uid, gid, AT_EMPTY_PATH);
-	return errno;
-}
-
-int sys_umask(mode_t mode, mode_t *old) {
+int Sysdeps<Umask>::operator()(mode_t mode, mode_t *old) {
 	mode_t ret;
 	int errno;
 	SYSCALL1(SYSCALL_UMASK, mode);
@@ -1399,13 +1362,13 @@ int sys_umask(mode_t mode, mode_t *old) {
 	return errno;
 }
 
-int sys_fadvise(int fd, off_t offset, off_t length, int advice) {
+int Sysdeps<Fadvise>::operator()(int fd, off_t offset, off_t length, int advice) {
 	int ret, errno;
 	SYSCALL4(SYSCALL_FADVISE, fd, offset, length, advice);
 	return errno;
 }
 
-int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *length) {
+int Sysdeps<Readlink>::operator()(const char *path, void *buffer, size_t max_size, ssize_t *length) {
 	ssize_t ret;
 	int errno;
 	size_t path_len = strlen(path);
@@ -1418,7 +1381,7 @@ int sys_readlink(const char *path, void *buffer, size_t max_size, ssize_t *lengt
 	}
 }
 
-int sys_rename(const char *path, const char *new_path) {
+int Sysdeps<Rename>::operator()(const char *path, const char *new_path) {
 	int ret;
 	int errno;
 	size_t old_len = strlen(path);
@@ -1427,7 +1390,7 @@ int sys_rename(const char *path, const char *new_path) {
 	return errno;
 }
 
-int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
+int Sysdeps<Renameat>::operator()(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
 	int ret;
 	int errno;
 	size_t old_len = strlen(old_path);
@@ -1436,25 +1399,17 @@ int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *n
 	return errno;
 }
 
-int sys_mknodat(int dirfd, const char *path, int mode, int dev) {
-	int ret;
-	int errno;
-	size_t len = strlen(path);
-	SYSCALL5(SYSCALL_MAKENODE, dirfd, path, len, mode, dev);
-	return errno;
+int Sysdeps<Mkfifoat>::operator()(int dirfd, const char *path, mode_t mode) {
+	return sysdep<Mknodat>(dirfd, path, S_IFIFO | mode, 0);
 }
 
-int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
-	return sys_mknodat(dirfd, path, S_IFIFO | mode, 0);
-}
-
-int sys_openpt(int oflags, int *fd) {
+int Sysdeps<Openpt>::operator()(int oflags, int *fd) {
 	int sfd, e;
 
-	if (e = sys_openpty(fd, &sfd, NULL, NULL, NULL); e) {
+	if (e = sysdep<Openpty>(fd, &sfd, NULL, NULL, NULL); e) {
 		return e;
 	}
-	sys_close(sfd);
+	sysdep<Close>(sfd);
 
 	int fdflags = 0;
 	if (oflags & O_CLOEXEC) {
@@ -1480,16 +1435,16 @@ int sys_openpt(int oflags, int *fd) {
 	return e;
 }
 
-int sys_unlockpt(int fd) {
+int Sysdeps<Unlockpt>::operator()(int fd) {
 	int unlock = 0;
-	return sys_ioctl(fd, TIOCSPTLCK, &unlock, NULL);
+	return sysdep<Ioctl>(fd, TIOCSPTLCK, &unlock, NULL);
 }
 
-int sys_symlink(const char *target, const char *link_path) {
-	return sys_symlinkat(target, AT_FDCWD, link_path);
+int Sysdeps<Symlink>::operator()(const char *target, const char *link_path) {
+	return sysdep<Symlinkat>(target, AT_FDCWD, link_path);
 }
 
-int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
+int Sysdeps<Symlinkat>::operator()(const char *target_path, int dirfd, const char *link_path) {
 	int ret;
 	int errno;
 	size_t target_len = strlen(target_path);
@@ -1498,7 +1453,7 @@ int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
 	return errno;
 }
 
-int sys_brk(void **out) {
+int Sysdeps<Brk>::operator()(void **out) {
 	(void)out;
 	return -1;
 }
@@ -1524,12 +1479,12 @@ struct mountinfo {
 
 #include <sys/mount.h>
 
-int sys_fstatvfs(int fd, struct statvfs *out) {
+int Sysdeps<Fstatvfs>::operator()(int fd, struct statvfs *out) {
 	(void)fd;
-	return sys_statvfs("/", out);
+	return sysdep<Statvfs>("/", out);
 }
 
-int sys_statvfs(const char *path, struct statvfs *out) {
+int Sysdeps<Statvfs>::operator()(const char *path, struct statvfs *out) {
 	long ret, errno;
 	struct mountinfo *buffer = (mountinfo *)malloc(5 * sizeof(struct mountinfo));
 	SYSCALL2(SYSCALL_LISTMOUNTS, buffer, 5);
@@ -1577,7 +1532,7 @@ int sys_statvfs(const char *path, struct statvfs *out) {
 	return 0;
 }
 
-int sys_shmat(void **seg_start, int shmid, const void *shmaddr, int shmflg) {
+int Sysdeps<Shmat>::operator()(void **seg_start, int shmid, const void *shmaddr, int shmflg) {
 	void *ret;
 	int errno;
 	SYSCALL3(SYSCALL_SHMAT, shmid, shmaddr, shmflg);
@@ -1585,27 +1540,27 @@ int sys_shmat(void **seg_start, int shmid, const void *shmaddr, int shmflg) {
 	return errno;
 }
 
-int sys_shmctl(int *idx, int shmid, int cmd, struct shmid_ds *buf) {
+int Sysdeps<Shmctl>::operator()(int *idx, int shmid, int cmd, struct shmid_ds *buf) {
 	int ret, errno;
 	SYSCALL3(SYSCALL_SHMCTL, shmid, cmd, buf);
 	*idx = ret;
 	return errno;
 }
 
-int sys_shmdt(const void *shmaddr) {
+int Sysdeps<Shmdt>::operator()(const void *shmaddr) {
 	int ret, errno;
 	SYSCALL1(SYSCALL_SHMDT, shmaddr);
 	return errno;
 }
 
-int sys_shmget(int *shm_id, key_t key, size_t size, int shmflg) {
+int Sysdeps<Shmget>::operator()(int *shm_id, key_t key, size_t size, int shmflg) {
 	int ret, errno;
 	SYSCALL3(SYSCALL_SHMGET, key, size, shmflg);
 	*shm_id = ret;
 	return errno;
 }
 
-int sys_getloadavg(double *samples) {
+int Sysdeps<GetLoadavg>::operator()(double *samples) {
 	int ret, errno;
 	int samples2[3];
 	SYSCALL2(SYSCALL_LOADAVG, samples2, 3);
@@ -1618,7 +1573,7 @@ int sys_getloadavg(double *samples) {
 	return 0;
 }
 
-int sys_openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win) {
+int Sysdeps<Openpty>::operator()(int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win) {
 	int ret;
 	int fds[2];
 	SYSCALL1(SYSCALL_OPENPTY, fds);

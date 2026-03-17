@@ -3,13 +3,12 @@
 #include <sys/inotify.h>
 
 #include <bits/ensure.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/linux-sysdeps.hpp>
 
 int inotify_init(void) {
 	int fd;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_inotify_create, -1);
-	if(int e = mlibc::sys_inotify_create(0, &fd); e) {
+	if(int e = mlibc::sysdep_or_enosys<InotifyCreate>(0, &fd); e) {
 		errno = e;
 		return -1;
 	}
@@ -18,8 +17,7 @@ int inotify_init(void) {
 
 int inotify_init1(int flags) {
 	int fd;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_inotify_create, -1);
-	if(int e = mlibc::sys_inotify_create(flags, &fd); e) {
+	if(int e = mlibc::sysdep_or_enosys<InotifyCreate>(flags, &fd); e) {
 		errno = e;
 		return -1;
 	}
@@ -28,8 +26,7 @@ int inotify_init1(int flags) {
 
 int inotify_add_watch(int ifd, const char *path, uint32_t mask) {
 	int wd;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_inotify_add_watch, -1);
-	if(int e = mlibc::sys_inotify_add_watch(ifd, path, mask, &wd); e) {
+	if(int e = mlibc::sysdep_or_enosys<InotifyAddWatch>(ifd, path, mask, &wd); e) {
 		errno = e;
 		return -1;
 	}
@@ -37,8 +34,7 @@ int inotify_add_watch(int ifd, const char *path, uint32_t mask) {
 }
 
 int inotify_rm_watch(int ifd, int wd) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_inotify_rm_watch, -1);
-	if(int e = mlibc::sys_inotify_rm_watch(ifd, wd); e) {
+	if(int e = mlibc::sysdep_or_enosys<InotifyRmWatch>(ifd, wd); e) {
 		errno = e;
 		return -1;
 	}

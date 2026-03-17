@@ -9,7 +9,7 @@
 #include <abi-bits/suseconds_t.h>
 #include <bits/ansi/time_t.h>
 #include <bits/posix/id_t.h>
-#include <bits/posix/timeval.h>
+#include <bits/timeval.h>
 #include <sys/time.h>
 
 #define RLIM_INFINITY ((rlim_t)-1)

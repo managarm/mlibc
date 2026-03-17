@@ -18,7 +18,7 @@ void __frigg_assert_fail(
 }
 
 namespace mlibc {
-void sys_libc_log(const char *message) {
+void Sysdeps<LibcLog>::operator()(const char *message) {
 	// This implementation is inherently signal-safe.
 	size_t n = 0;
 	while (message[n])
@@ -26,7 +26,8 @@ void sys_libc_log(const char *message) {
 	HEL_CHECK(helLog(kHelLogSeverityInfo, message, n));
 }
 
-void sys_libc_panic() {
+[[noreturn]]
+void Sysdeps<LibcPanic>::operator()() {
 	// This implementation is inherently signal-safe.
 	const char *message = "mlibc: Panic!";
 	size_t n = 0;

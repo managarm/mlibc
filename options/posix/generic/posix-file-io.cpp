@@ -1,6 +1,6 @@
-#include <mlibc/posix-file-io.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/posix-file-io.hpp>
 
 #include <errno.h>
 #include <stdlib.h>

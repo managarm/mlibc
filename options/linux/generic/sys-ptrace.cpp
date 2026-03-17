@@ -4,8 +4,8 @@
 #include <errno.h>
 
 #include <bits/ensure.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/linux-sysdeps.hpp>
 
 long ptrace(int req, ...) {
 	va_list ap;
@@ -21,9 +21,8 @@ long ptrace(int req, ...) {
 		data = &ret;
 	}
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ptrace, -1);
 	long out;
-	if(int e = mlibc::sys_ptrace(req, pid, addr, data, &out); e) {
+	if(int e = mlibc::sysdep_or_enosys<Ptrace>(req, pid, addr, data, &out); e) {
 		errno = e;
 		return -1;
 	} else if(req > 0 && req < 4) {

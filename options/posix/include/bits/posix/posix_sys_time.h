@@ -1,7 +1,7 @@
 #ifndef _MLIBC_POSIX_SYS_TIME_H
 #define _MLIBC_POSIX_SYS_TIME_H
 
-#include <bits/posix/timeval.h>
+#include <bits/timeval.h>
 
 #ifdef __cplusplus
 extern "C" {

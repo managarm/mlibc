@@ -15,7 +15,7 @@
 #include <ctype.h>
 #include <poll.h>
 #include <frg/scope_exit.hpp>
-#include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <time.h>
 
 namespace mlibc {
@@ -31,7 +31,7 @@ namespace {
 
 	int get_poll_timeout(struct timespec *original_time) {
 		struct timespec current_time;
-		if (int e = mlibc::sys_clock_get(CLOCK_MONOTONIC, &current_time.tv_sec, &current_time.tv_nsec); e)
+		if (int e = mlibc::sysdep<ClockGet>(CLOCK_MONOTONIC, &current_time.tv_sec, &current_time.tv_nsec); e)
 			mlibc::panicLogger() << "mlibc: sys_clock_get() failed with error code: " << e << frg::endlog;
 
 		current_time.tv_sec -= original_time->tv_sec;
@@ -155,7 +155,7 @@ int lookup_name_dns(struct lookup_result &buf, const char *name,
 	pollfd.fd = fd;
 	pollfd.events = POLLIN;
 
-	if (int e = mlibc::sys_clock_get(CLOCK_MONOTONIC, &start_time.tv_sec, &start_time.tv_nsec); e)
+	if (int e = mlibc::sysdep<ClockGet>(CLOCK_MONOTONIC, &start_time.tv_sec, &start_time.tv_nsec); e)
 		mlibc::panicLogger() << "mlibc: sys_clock_get() failed with error code: " << e << frg::endlog;
 
 	while ((fds_ready = poll(&pollfd, 1, get_poll_timeout(&start_time))) > 0) {
@@ -327,7 +327,7 @@ int lookup_addr_dns(frg::span<char> name, frg::array<uint8_t, 16> &addr, int fam
 	pollfd.fd = fd;
 	pollfd.events = POLLIN;
 
-	if (int e = mlibc::sys_clock_get(CLOCK_MONOTONIC, &start_time.tv_sec, &start_time.tv_nsec); e)
+	if (int e = mlibc::sysdep<ClockGet>(CLOCK_MONOTONIC, &start_time.tv_sec, &start_time.tv_nsec); e)
 		mlibc::panicLogger() << "mlibc: sys_clock_get() failed with error code: " << e << frg::endlog;
 
 	while ((fds_ready = poll(&pollfd, 1, get_poll_timeout(&start_time))) > 0) {

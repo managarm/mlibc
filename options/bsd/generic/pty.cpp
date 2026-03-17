@@ -9,13 +9,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/posix-sysdeps.hpp>
-#include <mlibc/bsd-sysdeps.hpp>
 
 int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win) {
-	if(mlibc::sys_openpty) {
-		if(int e = mlibc::sys_openpty(mfd, sfd, name, ios, win); e) {
+	if constexpr (mlibc::IsImplemented<Openpty>) {
+		if(int e = mlibc::sysdep_or_enosys<Openpty>(mfd, sfd, name, ios, win); e) {
 			errno = e;
 			return -1;
 		}
@@ -23,7 +22,7 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 	}
 
 	int ptmx_fd;
-	if(int e = mlibc::sys_open("/dev/ptmx", O_RDWR | O_NOCTTY, 0, &ptmx_fd); e) {
+	if(int e = mlibc::sysdep<Open>("/dev/ptmx", O_RDWR | O_NOCTTY, 0, &ptmx_fd); e) {
 		errno = e;
 		goto fail;
 	}
@@ -36,7 +35,7 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 
 	int pts_fd;
 	unlockpt(ptmx_fd);
-	if(int e = mlibc::sys_open(name, O_RDWR | O_NOCTTY, 0, &pts_fd); e) {
+	if(int e = mlibc::sysdep<Open>(name, O_RDWR | O_NOCTTY, 0, &pts_fd); e) {
 		errno = e;
 		goto fail;
 	}
@@ -52,7 +51,7 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 	return 0;
 
 fail:
-	mlibc::sys_close(ptmx_fd);
+	mlibc::sysdep<Close>(ptmx_fd);
 	return -1;
 }
 
@@ -62,21 +61,21 @@ int login_tty(int fd) {
 	if(ioctl(fd, TIOCSCTTY, 0))
 		return -1;
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_dup2, -1);
-	if(int e = mlibc::sys_dup2(fd, 0, STDIN_FILENO); e) {
+	MLIBC_CHECK_OR_ENOSYS(mlibc::IsImplemented<Dup2>, -1);
+	if(int e = mlibc::sysdep<Dup2>(fd, 0, STDIN_FILENO); e) {
 		errno = e;
 		return -1;
 	}
-	if(int e = mlibc::sys_dup2(fd, 0, STDOUT_FILENO); e) {
+	if(int e = mlibc::sysdep<Dup2>(fd, 0, STDOUT_FILENO); e) {
 		errno = e;
 		return -1;
 	}
-	if(int e = mlibc::sys_dup2(fd, 0, STDERR_FILENO); e) {
+	if(int e = mlibc::sysdep<Dup2>(fd, 0, STDERR_FILENO); e) {
 		errno = e;
 		return -1;
 	}
 
-	if(int e = mlibc::sys_close(fd); e) {
+	if(int e = mlibc::sysdep<Close>(fd); e) {
 		errno = e;
 		return -1;
 	}
@@ -89,8 +88,7 @@ int forkpty(int *mfd, char *name, const struct termios *ios, const struct winsiz
 		return -1;
 
 	pid_t child;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fork, -1);
-	if(int e = mlibc::sys_fork(&child); e) {
+	if(int e = mlibc::sysdep_or_enosys<Fork>(&child); e) {
 		errno = e;
 		return -1;
 	}
@@ -99,7 +97,7 @@ int forkpty(int *mfd, char *name, const struct termios *ios, const struct winsiz
 		if(login_tty(sfd))
 			mlibc::panicLogger() << "mlibc: TTY login fail in forkpty() child" << frg::endlog;
 	}else{
-		if(int e = mlibc::sys_close(sfd); e) {
+		if(int e = mlibc::sysdep<Close>(sfd); e) {
 			errno = e;
 			return -1;
 		}

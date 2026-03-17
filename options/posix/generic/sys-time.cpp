@@ -4,15 +4,15 @@
 #include <time.h>
 
 #include <bits/ensure.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/posix-sysdeps.hpp>
 
 int gettimeofday(struct timeval *__restrict result, void *__restrict unused) {
 	(void)unused; // Linux just ignores gettimeofday().
 
 	if(result) {
 		long nanos;
-		if(int e = mlibc::sys_clock_get(CLOCK_REALTIME, &result->tv_sec, &nanos); e) {
+		if(int e = mlibc::sysdep<ClockGet>(CLOCK_REALTIME, &result->tv_sec, &nanos); e) {
 			errno = e;
 			return -1;
 		}
@@ -29,7 +29,7 @@ int settimeofday(const struct timeval *tv, const struct timezone *) {
 		errno = EINVAL;
 		return -1;
 	}
-	if(int e = mlibc::sys_clock_set(CLOCK_REALTIME, tv->tv_sec, tv->tv_usec * 1000); e) {
+	if(int e = mlibc::sysdep_or_enosys<ClockSet>(CLOCK_REALTIME, tv->tv_sec, tv->tv_usec * 1000); e) {
 		errno = e;
 		return -1;
 	}
@@ -67,8 +67,7 @@ int timerisset(struct timeval *tvp) {
 }
 
 int getitimer(int which, struct itimerval *curr_value) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getitimer, -1);
-	if(int e = mlibc::sys_getitimer(which, curr_value); e) {
+	if(int e = mlibc::sysdep_or_enosys<GetItimer>(which, curr_value); e) {
 		errno = e;
 		return -1;
 	}
@@ -76,8 +75,7 @@ int getitimer(int which, struct itimerval *curr_value) {
 }
 
 int setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setitimer, -1);
-	if(int e = mlibc::sys_setitimer(which, new_value, old_value); e) {
+	if(int e = mlibc::sysdep_or_enosys<SetItimer>(which, new_value, old_value); e) {
 		errno = e;
 		return -1;
 	}
@@ -85,8 +83,7 @@ int setitimer(int which, const struct itimerval *new_value, struct itimerval *ol
 }
 
 int timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__restrict res) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timer_create, -1);
-	if(int e = mlibc::sys_timer_create(clk, evp, res); e) {
+	if(int e = mlibc::sysdep_or_enosys<TimerCreate>(clk, evp, res); e) {
 		errno = e;
 		return -1;
 	}
@@ -94,8 +91,7 @@ int timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__rest
 }
 
 int timer_settime(timer_t t, int flags, const struct itimerspec *__restrict val, struct itimerspec *__restrict old) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timer_settime, -1);
-	if(int e = mlibc::sys_timer_settime(t, flags, val, old); e) {
+	if(int e = mlibc::sysdep_or_enosys<TimerSettime>(t, flags, val, old); e) {
 		errno = e;
 		return -1;
 	}
@@ -103,8 +99,7 @@ int timer_settime(timer_t t, int flags, const struct itimerspec *__restrict val,
 }
 
 int timer_gettime(timer_t t, struct itimerspec *val) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timer_gettime, -1);
-	if(int e = mlibc::sys_timer_gettime(t, val); e) {
+	if(int e = mlibc::sysdep_or_enosys<TimerGettime>(t, val); e) {
 		errno = e;
 		return -1;
 	}
@@ -112,8 +107,7 @@ int timer_gettime(timer_t t, struct itimerspec *val) {
 }
 
 int timer_delete(timer_t t) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timer_delete, -1);
-	if(int e = mlibc::sys_timer_delete(t); e) {
+	if(int e = mlibc::sysdep_or_enosys<TimerDelete>(t); e) {
 		errno = e;
 		return -1;
 	}

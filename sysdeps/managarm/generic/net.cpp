@@ -7,9 +7,9 @@
 
 namespace mlibc {
 
-int sys_if_indextoname(unsigned int index, char *name) {
+int Sysdeps<IfIndextoname>::operator()(unsigned int index, char *name) {
 	int fd = 0;
-	int r = sys_socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, AF_UNSPEC, &fd);
+	int r = sysdep<Socket>(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, AF_UNSPEC, &fd);
 
 	if (r)
 		return r;
@@ -18,7 +18,7 @@ int sys_if_indextoname(unsigned int index, char *name) {
 	ifr.ifr_ifindex = index;
 
 	int res = 0;
-	int ret = sys_ioctl(fd, SIOCGIFNAME, &ifr, &res);
+	int ret = sysdep<Ioctl>(fd, SIOCGIFNAME, &ifr, &res);
 	close(fd);
 
 	if (ret) {
@@ -32,9 +32,9 @@ int sys_if_indextoname(unsigned int index, char *name) {
 	return 0;
 }
 
-int sys_if_nametoindex(const char *name, unsigned int *ret) {
+int Sysdeps<IfNametoindex>::operator()(const char *name, unsigned int *ret) {
 	int fd = 0;
-	int r = sys_socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, AF_UNSPEC, &fd);
+	int r = sysdep<Socket>(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, AF_UNSPEC, &fd);
 
 	if (r)
 		return r;
@@ -43,7 +43,7 @@ int sys_if_nametoindex(const char *name, unsigned int *ret) {
 	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 
 	int res = 0;
-	r = sys_ioctl(fd, SIOCGIFINDEX, &ifr, &res);
+	r = sysdep<Ioctl>(fd, SIOCGIFINDEX, &ifr, &res);
 	close(fd);
 
 	if (r)
@@ -54,7 +54,7 @@ int sys_if_nametoindex(const char *name, unsigned int *ret) {
 	return 0;
 }
 
-int sys_getifaddrs(struct ifaddrs **out) {
+int Sysdeps<Getifaddrs>::operator()(struct ifaddrs **out) {
 	NetlinkHelper nl;
 	*out = nullptr;
 
@@ -67,7 +67,7 @@ int sys_getifaddrs(struct ifaddrs **out) {
 }
 
 #if !defined(MLIBC_BUILDING_RTLD)
-int sys_inet_configured(bool *ipv4, bool *ipv6) {
+int Sysdeps<InetConfigured>::operator()(bool *ipv4, bool *ipv6) {
 	struct context {
 		bool *ipv4;
 		bool *ipv6;
@@ -88,7 +88,7 @@ int sys_inet_configured(bool *ipv4, bool *ipv6) {
 			    struct context *ctx = reinterpret_cast<struct context *>(data);
 
 			    char name[IF_NAMESIZE];
-			    auto interfaceNameResult = sys_if_indextoname(ifaddr->ifa_index, name);
+			    auto interfaceNameResult = sysdep<IfIndextoname>(ifaddr->ifa_index, name);
 
 			    if (interfaceNameResult || !strncmp(name, "lo", IF_NAMESIZE))
 				    return;

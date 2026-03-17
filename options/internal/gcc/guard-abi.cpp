@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include <mlibc/debug.hpp>
-#include <mlibc/internal-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 namespace {
 
@@ -20,7 +20,7 @@ struct Guard {
 				__ATOMIC_ACQUIRE, __ATOMIC_RELAXED))
 			return;
 
-		mlibc::sys_libc_log("__cxa_guard_acquire contention");
+		mlibc::sysdep<LibcLog>("__cxa_guard_acquire contention");
 		__builtin_trap();
 	}
 

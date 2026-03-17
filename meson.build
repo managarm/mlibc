@@ -503,6 +503,7 @@ if not no_headers
 		'options/internal/include/bits/search.h',
 		'options/internal/include/bits/getopt.h',
 		'options/internal/include/bits/reclen_t.h',
+		'options/internal/include/bits/timeval.h',
 		subdir: 'bits'
 	)
 endif

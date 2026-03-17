@@ -8,9 +8,9 @@
 #include <frg/string.hpp>
 
 #include <abi-bits/auxv.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/dlapi.hpp>
-#include <mlibc/rtld-sysdeps.hpp>
 #include <mlibc/rtld-config.hpp>
 #include <mlibc/rtld-abi.hpp>
 #include <mlibc/stack_protector.hpp>
@@ -295,7 +295,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// The TID is needed to use futexes, so this caching saves a lot of syscalls.
 	earlyTcb.selfPointer = &earlyTcb;
 	earlyTcb.tid = mlibc::this_tid();
-	if(mlibc::sys_tcb_set(&earlyTcb))
+	if(mlibc::sysdep<TcbSet>(&earlyTcb))
 		__ensure(!"sys_tcb_set() failed");
 	mlibc::tcb_available_flag = true;
 
@@ -649,7 +649,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 
 	auto tcb = allocateTcb();
 	tcb->tid = earlyTcb.tid;
-	if(mlibc::sys_tcb_set(tcb))
+	if(mlibc::sysdep<TcbSet>(tcb))
 		__ensure(!"sys_tcb_set() failed");
 
 	globalDebugInterface.ver = 1;

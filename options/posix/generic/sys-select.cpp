@@ -6,8 +6,7 @@
 
 #include <bits/ensure.h>
 #include <mlibc-config.h>
-
-#include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 void __FD_CLR(int fd, fd_set *set) {
 	__ensure(fd < FD_SETSIZE);
@@ -36,8 +35,7 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 		timeout_ptr = &timeouts;
 	}
 
-    MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pselect, -1);
-	if(int e = mlibc::sys_pselect(num_fds, read_set, write_set, except_set,
+	if(int e = mlibc::sysdep_or_enosys<Pselect>(num_fds, read_set, write_set, except_set,
 				timeout_ptr, nullptr, &num_events); e) {
 		errno = e;
 		return -1;
@@ -48,8 +46,7 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 int pselect(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_set,
 		fd_set *__restrict except_set, const struct timespec *timeout, const sigset_t *sigmask) {
 	int num_events = 0;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pselect, -1);
-	if(int e = mlibc::sys_pselect(num_fds, read_set, write_set, except_set,
+	if(int e = mlibc::sysdep_or_enosys<Pselect>(num_fds, read_set, write_set, except_set,
 				timeout, sigmask, &num_events); e) {
 		errno = e;
 		return -1;

@@ -5,15 +5,14 @@
 #include <sys/socket.h>
 
 #include <bits/ensure.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/posix-sysdeps.hpp>
 
 static_assert(std::is_unsigned_v<sa_family_t>, "sa_family_t must be unsigned!");
 
 int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length) {
 	int newfd;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_accept, -1);
-	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length, 0); e) {
+	if(int e = mlibc::sysdep_or_enosys<Accept>(fd, &newfd, addr_ptr, addr_length, 0); e) {
 		errno = e;
 		return -1;
 	}
@@ -22,8 +21,7 @@ int accept(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict a
 
 int accept4(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length, int flags) {
 	int newfd;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_accept, -1);
-	if(int e = mlibc::sys_accept(fd, &newfd, addr_ptr, addr_length, flags); e) {
+	if(int e = mlibc::sysdep_or_enosys<Accept>(fd, &newfd, addr_ptr, addr_length, flags); e) {
 		errno = e;
 		return -1;
 	}
@@ -32,8 +30,7 @@ int accept4(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict 
 }
 
 int bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_len) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_bind, -1);
-	if(int e = mlibc::sys_bind(fd, addr_ptr, addr_len); e) {
+	if(int e = mlibc::sysdep_or_enosys<Bind>(fd, addr_ptr, addr_len); e) {
 		errno = e;
 		return -1;
 	}
@@ -41,8 +38,7 @@ int bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_len) {
 }
 
 int connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_len) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_connect, -1);
-	if(int e = mlibc::sys_connect(fd, addr_ptr, addr_len); e) {
+	if(int e = mlibc::sysdep_or_enosys<Connect>(fd, addr_ptr, addr_len); e) {
 		errno = e;
 		return -1;
 	}
@@ -51,8 +47,7 @@ int connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_len) {
 
 int getpeername(int fd, struct sockaddr *addr_ptr, socklen_t *__restrict addr_length) {
 	socklen_t actual_length;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_peername, -1);
-	if(int e = mlibc::sys_peername(fd, addr_ptr, *addr_length, &actual_length); e) {
+	if(int e = mlibc::sysdep_or_enosys<Peername>(fd, addr_ptr, *addr_length, &actual_length); e) {
 		errno = e;
 		return -1;
 	}
@@ -62,8 +57,7 @@ int getpeername(int fd, struct sockaddr *addr_ptr, socklen_t *__restrict addr_le
 
 int getsockname(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length) {
 	socklen_t actual_length;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sockname, -1);
-	if(int e = mlibc::sys_sockname(fd, addr_ptr, *addr_length, &actual_length); e) {
+	if(int e = mlibc::sysdep_or_enosys<Sockname>(fd, addr_ptr, *addr_length, &actual_length); e) {
 		errno = e;
 		return -1;
 	}
@@ -73,8 +67,7 @@ int getsockname(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restr
 
 int getsockopt(int fd, int layer, int number,
 		void *__restrict buffer, socklen_t *__restrict size) {
-	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getsockopt, -1);
-	if (int e = sysdep(fd, layer, number, buffer, size); e) {
+	if (int e = mlibc::sysdep_or_enosys<GetSockopt>(fd, layer, number, buffer, size); e) {
 		errno = e;
 		return -1;
 	}
@@ -82,8 +75,7 @@ int getsockopt(int fd, int layer, int number,
 }
 
 int listen(int fd, int backlog) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_listen, -1);
-	if(int e = mlibc::sys_listen(fd, backlog); e) {
+	if(int e = mlibc::sysdep_or_enosys<Listen>(fd, backlog); e) {
 		errno = e;
 		return -1;
 	}
@@ -96,9 +88,9 @@ ssize_t recv(int sockfd, void *__restrict buf, size_t len, int flags) {
 
 ssize_t recvfrom(int sockfd, void *__restrict buf, size_t len, int flags,
 		struct sockaddr *__restrict src_addr, socklen_t *__restrict addrlen) {
-	if(mlibc::sys_recvfrom) {
+	if constexpr (mlibc::IsImplemented<Recvfrom>) {
 		ssize_t length;
-		if(int e = mlibc::sys_recvfrom(sockfd, buf, len, flags, src_addr, addrlen, &length); e) {
+		if(int e = mlibc::sysdep<Recvfrom>(sockfd, buf, len, flags, src_addr, addrlen, &length); e) {
 			errno = e;
 			return -1;
 		}
@@ -128,8 +120,7 @@ ssize_t recvfrom(int sockfd, void *__restrict buf, size_t len, int flags,
 
 ssize_t recvmsg(int fd, struct msghdr *hdr, int flags) {
 	ssize_t length;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_msg_recv, -1);
-	if(int e = mlibc::sys_msg_recv(fd, hdr, flags, &length); e) {
+	if(int e = mlibc::sysdep_or_enosys<MsgRecv>(fd, hdr, flags, &length); e) {
 		errno = e;
 		return -1;
 	}
@@ -147,9 +138,9 @@ ssize_t send(int fd, const void *buffer, size_t size, int flags) {
 
 ssize_t sendto(int fd, const void *buffer, size_t size, int flags,
 		const struct sockaddr *sock_addr, socklen_t addr_length) {
-	if(mlibc::sys_sendto) {
+	if constexpr (mlibc::IsImplemented<Sendto>) {
 		ssize_t length;
-		if(int e = mlibc::sys_sendto(fd, buffer, size, flags, sock_addr, addr_length, &length); e) {
+		if(int e = mlibc::sysdep_or_enosys<Sendto>(fd, buffer, size, flags, sock_addr, addr_length, &length); e) {
 			errno = e;
 			return -1;
 		}
@@ -174,8 +165,7 @@ ssize_t sendmsg(int fd, const struct msghdr *hdr, int flags) {
 		return EMSGSIZE;
 
 	ssize_t length;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_msg_send, -1);
-	if(int e = mlibc::sys_msg_send(fd, hdr, flags, &length); e) {
+	if(int e = mlibc::sysdep_or_enosys<MsgSend>(fd, hdr, flags, &length); e) {
 		errno = e;
 		return -1;
 	}
@@ -189,8 +179,7 @@ int sendmmsg(int, struct mmsghdr *, unsigned int, int) {
 
 int setsockopt(int fd, int layer, int number,
 		const void *buffer, socklen_t size) {
-	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setsockopt, -1);
-	if (int e = sysdep(fd, layer, number, buffer, size); e) {
+	if (int e = mlibc::sysdep_or_enosys<SetSockopt>(fd, layer, number, buffer, size); e) {
 		errno = e;
 		return -1;
 	}
@@ -198,8 +187,7 @@ int setsockopt(int fd, int layer, int number,
 }
 
 int shutdown(int sockfd, int how) {
-	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_shutdown, -1);
-	if(int e = sysdep(sockfd, how); e) {
+	if(int e = mlibc::sysdep_or_enosys<Shutdown>(sockfd, how); e) {
 		errno = e;
 		return -1;
 	}
@@ -208,9 +196,8 @@ int shutdown(int sockfd, int how) {
 }
 
 int sockatmark(int sockfd) {
-	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sockatmark, -1);
 	int out = 0;
-	if(int e = sysdep(sockfd, &out); e) {
+	if(int e = mlibc::sysdep_or_enosys<Sockatmark>(sockfd, &out); e) {
 		errno = e;
 		return -1;
 	}
@@ -220,8 +207,7 @@ int sockatmark(int sockfd) {
 
 int socket(int family, int type, int protocol) {
 	int fd;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_socket, -1);
-	if(int e = mlibc::sys_socket(family, type, protocol, &fd); e) {
+	if(int e = mlibc::sysdep_or_enosys<Socket>(family, type, protocol, &fd); e) {
 		errno = e;
 		return -1;
 	}
@@ -229,8 +215,7 @@ int socket(int family, int type, int protocol) {
 }
 
 int socketpair(int domain, int type, int protocol, int sv[2]) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_socketpair, -1);
-	if(int e = mlibc::sys_socketpair(domain, type, protocol, sv); e) {
+	if(int e = mlibc::sysdep_or_enosys<Socketpair>(domain, type, protocol, sv); e) {
 		errno = e;
 		return -1;
 	}

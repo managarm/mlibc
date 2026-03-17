@@ -10,8 +10,8 @@
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>
 #include <mlibc-config.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
-#include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 
 // Code taken from musl
@@ -61,8 +61,7 @@ DIR *opendir(const char *path) {
 	dir->__ent_next = 0;
 	dir->__ent_limit = 0;
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_open_dir, nullptr);
-	if(int e = mlibc::sys_open_dir(path, &dir->__handle); e) {
+	if(int e = mlibc::sysdep_or_enosys<OpenDir>(path, &dir->__handle); e) {
 		errno = e;
 		frg::destruct(getAllocator(), dir);
 		return nullptr;
@@ -74,8 +73,7 @@ DIR *opendir(const char *path) {
 struct dirent *readdir(DIR *dir) {
 	__ensure(dir->__ent_next <= dir->__ent_limit);
 	if(dir->__ent_next == dir->__ent_limit) {
-		MLIBC_CHECK_OR_ENOSYS(mlibc::sys_read_entries, nullptr);
-		if(int e = mlibc::sys_read_entries(dir->__handle, dir->__ent_buffer, 2048, &dir->__ent_limit); e)
+		if(int e = mlibc::sysdep_or_enosys<ReadEntries>(dir->__handle, dir->__ent_buffer, 2048, &dir->__ent_limit); e)
 			__ensure(!"mlibc::sys_read_entries() failed");
 		dir->__ent_next = 0;
 		if(!dir->__ent_limit)
@@ -96,9 +94,8 @@ ssize_t posix_getdents(int fildes, void *buf, size_t nbyte, int flags) {
 		return -1;
 	}
 
-	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_read_entries, -1);
 	size_t bytes_read = 0;
-	if(int e = sysdep(fildes, buf, nbyte, &bytes_read); e) {
+	if(int e = mlibc::sysdep_or_enosys<ReadEntries>(fildes, buf, nbyte, &bytes_read); e) {
 		errno = e;
 		return -1;
 	}
@@ -110,14 +107,14 @@ ssize_t posix_getdents(int fildes, void *buf, size_t nbyte, int flags) {
 #endif /* !__MLIBC_LINUX_OPTION */
 
 int readdir_r(DIR *dir, struct dirent *entry, struct dirent **result) {
-	if(!mlibc::sys_read_entries) {
+	if constexpr (!mlibc::IsImplemented<ReadEntries>) {
 		MLIBC_MISSING_SYSDEP();
 		return ENOSYS;
 	}
 
 	__ensure(dir->__ent_next <= dir->__ent_limit);
 	if(dir->__ent_next == dir->__ent_limit) {
-		if(int e = mlibc::sys_read_entries(dir->__handle, dir->__ent_buffer, 2048, &dir->__ent_limit); e)
+		if(int e = mlibc::sysdep_or_panic<ReadEntries>(dir->__handle, dir->__ent_buffer, 2048, &dir->__ent_limit); e)
 			__ensure(!"mlibc::sys_read_entries() failed");
 		dir->__ent_next = 0;
 		if(!dir->__ent_limit) {

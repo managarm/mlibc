@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#include <bits/posix/timeval.h>
+#include <bits/timeval.h>
 #include <abi-bits/utmp-defines.h>
 #include <abi-bits/utmpx.h>
 

@@ -5,15 +5,15 @@
 namespace mlibc {
 
 [[noreturn]] void
-sys_exit(int status)
+Sysdeps<Exit>::operator()(int status)
 {
 	(void)status;
 	syscall1(SYS_exit, status, NULL);
-	sys_libc_panic();
+	sysdep<LibcPanic>();
 }
 
 int
-sys_fork(pid_t *child)
+Sysdeps<Fork>::operator()(pid_t *child)
 {
 	pid_t ret = syscall0(SYS_fork, NULL);
 	if (ret < 0)
@@ -24,14 +24,14 @@ sys_fork(pid_t *child)
 }
 
 int
-sys_execve(const char *path, char *const argv[], char *const envp[])
+Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *const envp[])
 {
 	int ret = syscall3(SYS_execve, (uintptr_t)path, (uintptr_t)argv, (uintptr_t)envp, NULL);
 	return -ret;
 }
 
 int
-sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid)
+Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid)
 {
 	pid_t ret = syscall4(SYS_wait4, pid, (uintptr_t)status, flags, (uintptr_t)ru, NULL);
 	if (ret < 0)
@@ -41,13 +41,13 @@ sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid
 }
 
 pid_t
-sys_getpid()
+Sysdeps<GetPid>::operator()()
 {
 	return syscall0(SYS_getpid, NULL);
 }
 
 pid_t
-sys_getppid()
+Sysdeps<GetPpid>::operator()()
 {
 	return syscall0(SYS_getppid, NULL);
 }
@@ -55,7 +55,7 @@ sys_getppid()
 /* job control */
 
 int
-sys_getpgid(pid_t pid, pid_t *pgid_out)
+Sysdeps<GetPgid>::operator()(pid_t pid, pid_t *pgid_out)
 {
 	pid_t pgid = syscall1(SYS_getpgid, pid, NULL);
 	if (pgid < 0)
@@ -65,7 +65,7 @@ sys_getpgid(pid_t pid, pid_t *pgid_out)
 }
 
 int
-sys_setpgid(pid_t pid, pid_t pgid)
+Sysdeps<SetPgid>::operator()(pid_t pid, pid_t pgid)
 {
 	int r = syscall2(SYS_setpgid, pid, pgid, NULL);
 	if(r < 0)
@@ -74,7 +74,7 @@ sys_setpgid(pid_t pid, pid_t pgid)
 }
 
 int
-sys_getsid(pid_t pid, pid_t *sid)
+Sysdeps<GetSid>::operator()(pid_t pid, pid_t *sid)
 {
 	pid_t s = syscall1(SYS_getsid, pid, NULL);
 	if (s < 0)
@@ -84,7 +84,7 @@ sys_getsid(pid_t pid, pid_t *sid)
 }
 
 int
-sys_setsid(pid_t *sid)
+Sysdeps<SetSid>::operator()(pid_t *sid)
 {
 	pid_t s = syscall0(SYS_setsid, NULL);
 	if (s < 0)

@@ -6,18 +6,15 @@
 #include <string.h>
 #include <limits.h>
 
+#include <bits/ensure.h>
 #include <frg/vector.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/posix-sysdeps.hpp>
-#include <bits/ensure.h>
 
 ssize_t readv(int fd, const struct iovec *iovs, int iovc) {
 	ssize_t read_bytes = 0;
-
-	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_readv, -1);
-
-	if (int e = sysdep(fd, iovs, iovc, &read_bytes); e) {
+	if (int e = mlibc::sysdep_or_enosys<Readv>(fd, iovs, iovc, &read_bytes); e) {
 		errno = e;
 		return -1;
 	}
@@ -30,9 +27,8 @@ ssize_t writev(int fd, const struct iovec *iovs, int iovc) {
 
 	ssize_t written = 0;
 
-	auto sysdep = mlibc::sys_writev;
-	if(sysdep) {
-		int e = sysdep(fd, iovs, iovc, &written);
+	if constexpr (mlibc::IsImplemented<Writev>) {
+		int e = mlibc::sysdep_or_panic<Writev>(fd, iovs, iovc, &written);
 		if(e) {
 			errno = e;
 			return -1;

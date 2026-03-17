@@ -2,13 +2,12 @@
 #include <sys/sysinfo.h>
 
 #include <bits/ensure.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/linux-sysdeps.hpp>
 #include <unistd.h>
 
 int sysinfo(struct sysinfo *info) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sysinfo, -1);
-	if(int e = mlibc::sys_sysinfo(info); e) {
+	if(int e = mlibc::sysdep_or_enosys<Sysinfo>(info); e) {
 		errno = e;
 		return -1;
 	}

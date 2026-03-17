@@ -3,12 +3,11 @@
 
 #include <bits/ensure.h>
 
-#include <mlibc/linux-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 int klogctl(int type, char *bufp, int len) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_klogctl, -1);
 	int out;
-	if (int e = mlibc::sys_klogctl(type, bufp, len, &out); e) {
+	if (int e = mlibc::sysdep_or_enosys<Klogctl>(type, bufp, len, &out); e) {
 		errno = e;
 		return -1;
 	}

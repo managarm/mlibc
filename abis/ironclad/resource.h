@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include <bits/posix/timeval.h>
+#include <bits/timeval.h>
 
 #define PRIO_PROCESS 1
 #define PRIO_PGRP 2

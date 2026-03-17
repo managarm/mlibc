@@ -1,15 +1,14 @@
 #include <abi-bits/fcntl.h>
-#include <bits/posix/posix_time.h>
 #include <bits/ensure.h>
-#include <mlibc/posix-sysdeps.hpp>
+#include <bits/posix/posix_time.h>
 #include <errno.h>
-#include <time.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <sys/time.h>
+#include <time.h>
 
 int timer_getoverrun(timer_t t) {
 	int out = 0;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_timer_getoverrun, -1);
-	if(int e = mlibc::sys_timer_getoverrun(t, &out); e) {
+	if(int e = mlibc::sysdep_or_enosys<TimerGetoverrun>(t, &out); e) {
 		errno = e;
 		return -1;
 	}
@@ -17,7 +16,6 @@ int timer_getoverrun(timer_t t) {
 }
 
 int utimes(const char *filename, const struct timeval times[2]) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_utimensat, -1);
 	struct timespec time[2];
 	if(times == nullptr) {
 		time[0].tv_sec = UTIME_NOW;
@@ -31,7 +29,7 @@ int utimes(const char *filename, const struct timeval times[2]) {
 		time[1].tv_nsec = times[1].tv_usec * 1000;
 	}
 
-	if (int e = mlibc::sys_utimensat(AT_FDCWD, filename, time, 0); e) {
+	if (int e = mlibc::sysdep_or_enosys<Utimensat>(AT_FDCWD, filename, time, 0); e) {
 		errno = e;
 		return -1;
 	}
@@ -40,7 +38,6 @@ int utimes(const char *filename, const struct timeval times[2]) {
 }
 
 int futimes(int fd, const struct timeval times[2]) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_utimensat, -1);
 	struct timespec time[2];
 	if(times == nullptr) {
 		time[0].tv_sec = UTIME_NOW;
@@ -54,7 +51,7 @@ int futimes(int fd, const struct timeval times[2]) {
 		time[1].tv_nsec = times[1].tv_usec * 1000;
 	}
 
-	if (int e = mlibc::sys_utimensat(fd, "", time, AT_EMPTY_PATH); e) {
+	if (int e = mlibc::sysdep_or_enosys<Utimensat>(fd, "", time, AT_EMPTY_PATH); e) {
 		errno = e;
 		return -1;
 	}
@@ -63,7 +60,6 @@ int futimes(int fd, const struct timeval times[2]) {
 }
 
 int lutimes(const char *filename, const struct timeval tv[2]) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_utimensat, -1);
 	struct timespec time[2];
 	if(tv == nullptr) {
 		time[0].tv_sec = UTIME_NOW;
@@ -77,7 +73,7 @@ int lutimes(const char *filename, const struct timeval tv[2]) {
 		time[1].tv_nsec = tv[1].tv_usec * 1000;
 	}
 
-	if (int e = mlibc::sys_utimensat(AT_FDCWD, filename, time, AT_SYMLINK_NOFOLLOW); e) {
+	if (int e = mlibc::sysdep_or_enosys<Utimensat>(AT_FDCWD, filename, time, AT_SYMLINK_NOFOLLOW); e) {
 		errno = e;
 		return -1;
 	}

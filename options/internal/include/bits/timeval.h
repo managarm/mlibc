@@ -1,5 +1,5 @@
-#ifndef _MLIBC_POSIX_TIMEVAL_H
-#define _MLIBC_POSIX_TIMEVAL_H
+#ifndef _MLIBC_INTERNAL_TIMEVAL_H
+#define _MLIBC_INTERNAL_TIMEVAL_H
 
 #include <bits/ansi/time_t.h>
 #include <abi-bits/suseconds_t.h>
@@ -9,4 +9,4 @@ struct timeval {
 	suseconds_t tv_usec;
 };
 
-#endif /* _MLIBC_POSIX_TIMEVAL_H */
+#endif /* _MLIBC_INTERNAL_TIMEVAL_H */

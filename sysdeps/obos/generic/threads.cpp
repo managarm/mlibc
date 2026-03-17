@@ -1,6 +1,4 @@
-#include <mlibc/ansi-sysdeps.hpp>
-#include <mlibc/internal-sysdeps.hpp>
-#include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/tcb.hpp>
 
 #include <obos/error.h>
@@ -12,22 +10,26 @@
 extern "C" void __mlibc_thread_entry();
 
 extern "C" void __mlibc_thread_trampoline(void (*fn)(uintptr_t user), Tcb *tcb, uintptr_t user) {
-	mlibc::sys_tcb_set(tcb);
+	mlibc::sysdep<TcbSet>(tcb);
 
 	// wait on the TID to be set
 	while (__atomic_load_n(&tcb->tid, __ATOMIC_RELAXED) == 0)
-		mlibc::sys_futex_wait(&tcb->tid, 0, nullptr);
+		mlibc::sysdep<FutexWait>(&tcb->tid, 0, nullptr);
 
 	// invoke the entry
 	tcb->invokeThreadFunc(reinterpret_cast<void *>(fn), (void *)user);
 
 	__atomic_store_n(&tcb->didExit, 1, __ATOMIC_RELEASE);
-	mlibc::sys_futex_wake(&tcb->didExit, true);
+	mlibc::sysdep<FutexWake>(&tcb->didExit, true);
 
 	syscall0(Sys_ExitCurrentThread);
 }
 
-int mlibc::sys_clone(void *tcb, pid_t *pid_out, void *stack) {
+namespace mlibc {
+
+int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
+	(void) tcb;
+
 	handle ctx =
 	    syscall5(Sys_ThreadContextCreate, __mlibc_thread_entry, 0, stack, 0, HANDLE_CURRENT);
 	if (ctx == HANDLE_INVALID)
@@ -52,3 +54,5 @@ int mlibc::sys_clone(void *tcb, pid_t *pid_out, void *stack) {
 
 	return 0;
 }
+
+} // namespace mlibc

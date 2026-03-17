@@ -15,9 +15,9 @@
 #include <bits/ensure.h>
 #include <bits/sigset_t.h>
 
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/charcode.hpp>
-#include <mlibc/ansi-sysdeps.hpp>
 #include <mlibc/strtofp.hpp>
 #include <mlibc/strtol.hpp>
 #include <mlibc/threads.hpp>
@@ -165,24 +165,22 @@ void abort(void) {
 	sigset_t set;
 	sigemptyset(&set);
 	sigaddset(&set, SIGABRT);
-	if (mlibc::sys_sigprocmask) {
-		mlibc::sys_sigprocmask(SIG_UNBLOCK, &set, nullptr);
-	}
+	if constexpr (mlibc::IsImplemented<Sigprocmask>)
+		mlibc::sysdep_or_panic<Sigprocmask>(SIG_UNBLOCK, &set, nullptr);
 
 	raise(SIGABRT);
 
 	sigfillset(&set);
 	sigdelset(&set, SIGABRT);
-	if (mlibc::sys_sigprocmask) {
-		mlibc::sys_sigprocmask(SIG_SETMASK, &set, nullptr);
-	}
+	if constexpr (mlibc::IsImplemented<Sigprocmask>)
+		mlibc::sysdep_or_panic<Sigprocmask>(SIG_SETMASK, &set, nullptr);
 
 	struct sigaction sa;
 	sa.sa_handler = SIG_DFL;
 	sa.sa_flags = 0;
 	sigemptyset(&sa.sa_mask);
 
-	if (mlibc::sys_sigaction(SIGABRT, &sa, nullptr))
+	if (mlibc::sysdep_or_enosys<Sigaction>(SIGABRT, &sa, nullptr))
 		mlibc::panicLogger() << "mlibc: sigaction failed in abort" << frg::endlog;
 
 	if (raise(SIGABRT))
@@ -222,11 +220,11 @@ void exit(int status) {
 	mlibc::processIsExiting.store(true, std::memory_order_relaxed);
 
 	__mlibc_do_finalize();
-	mlibc::sys_exit(status);
+	mlibc::sysdep<Exit>(status);
 }
 
 void _Exit(int status) {
-	mlibc::sys_exit(status);
+	mlibc::sysdep<Exit>(status);
 }
 
 // getenv() is provided by POSIX
@@ -238,7 +236,7 @@ void quick_exit(int status) {
 		func();
 	}
 
-	mlibc::sys_exit(status);
+	mlibc::sysdep<Exit>(status);
 }
 
 extern char **environ;
@@ -247,8 +245,8 @@ int system(const char *command) {
 	int status = -1;
 	pid_t child;
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fork && mlibc::sys_waitpid &&
-			mlibc::sys_execve && mlibc::sys_sigprocmask && mlibc::sys_sigaction, -1);
+	MLIBC_CHECK_OR_ENOSYS(mlibc::IsImplemented<Fork> && mlibc::IsImplemented<Waitpid> &&
+			mlibc::IsImplemented<Execve> && mlibc::IsImplemented<Sigprocmask> && mlibc::IsImplemented<Sigaction>, -1);
 
 	if (!command) {
 		return 1;
@@ -260,31 +258,31 @@ int system(const char *command) {
 	new_sa.sa_handler = SIG_IGN;
 	new_sa.sa_flags = 0;
 	sigemptyset(&new_sa.sa_mask);
-	mlibc::sys_sigaction(SIGINT, &new_sa, &old_int);
-	mlibc::sys_sigaction(SIGQUIT, &new_sa, &old_quit);
+	mlibc::sysdep_or_panic<Sigaction>(SIGINT, &new_sa, &old_int);
+	mlibc::sysdep_or_panic<Sigaction>(SIGQUIT, &new_sa, &old_quit);
 
 	sigemptyset(&new_mask);
 	sigaddset(&new_mask, SIGCHLD);
-	mlibc::sys_sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
+	mlibc::sysdep_or_panic<Sigprocmask>(SIG_BLOCK, &new_mask, &old_mask);
 
-	if (int e = mlibc::sys_fork(&child)) {
+	if (int e = mlibc::sysdep_or_panic<Fork>(&child)) {
 		errno = e;
 	} else if (!child) {
-		mlibc::sys_sigaction(SIGINT, &old_int, nullptr);
-		mlibc::sys_sigaction(SIGQUIT, &old_quit, nullptr);
-		mlibc::sys_sigprocmask(SIG_SETMASK, &old_mask, nullptr);
+		mlibc::sysdep_or_panic<Sigaction>(SIGINT, &old_int, nullptr);
+		mlibc::sysdep_or_panic<Sigaction>(SIGQUIT, &old_quit, nullptr);
+		mlibc::sysdep_or_panic<Sigprocmask>(SIG_SETMASK, &old_mask, nullptr);
 
 		const char *args[] = {
-			"sh", "-c", command, nullptr
+			"sh", "-c", "--", command, nullptr
 		};
 
-		mlibc::sys_execve("/bin/sh", const_cast<char **>(args), environ);
+		mlibc::sysdep_or_panic<Execve>("/bin/sh", const_cast<char **>(args), environ);
 		_Exit(127);
 	} else {
 		int err;
 		pid_t unused;
 
-		while ((err = mlibc::sys_waitpid(child, &status, 0, nullptr, &unused)) < 0) {
+		while ((err = mlibc::sysdep_or_panic<Waitpid>(child, &status, 0, nullptr, &unused)) < 0) {
 			if (err == EINTR)
 				continue;
 
@@ -293,9 +291,9 @@ int system(const char *command) {
 		}
 	}
 
-	mlibc::sys_sigaction(SIGINT, &old_int, nullptr);
-	mlibc::sys_sigaction(SIGQUIT, &old_quit, nullptr);
-	mlibc::sys_sigprocmask(SIG_SETMASK, &old_mask, nullptr);
+	mlibc::sysdep_or_panic<Sigaction>(SIGINT, &old_int, nullptr);
+	mlibc::sysdep_or_panic<Sigaction>(SIGQUIT, &old_quit, nullptr);
+	mlibc::sysdep_or_panic<Sigprocmask>(SIG_SETMASK, &old_mask, nullptr);
 
 	return status;
 }

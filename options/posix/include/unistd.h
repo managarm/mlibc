@@ -258,7 +258,6 @@ extern "C" {
 
 #if defined (__ironclad__)
 #define _SC_TOTAL_PAGES 1000
-#define _SC_HOST_OPEN_MAX 1001
 #endif /* defined (__ironclad__) */
 
 #define STDERR_FILENO 2

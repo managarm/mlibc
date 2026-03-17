@@ -2,7 +2,7 @@
 #define _ABIBITS_UTMPX_H
 
 #include <abi-bits/pid_t.h>
-#include <bits/posix/timeval.h>
+#include <bits/timeval.h>
 
 #define __UT_HOSTSIZE 256
 #define __UT_NAMESIZE 32

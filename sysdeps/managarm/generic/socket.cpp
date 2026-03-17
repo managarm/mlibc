@@ -22,10 +22,10 @@ namespace {
 int fcntl_helper(int fd, int request, int *result, ...) {
 	va_list args;
 	va_start(args, result);
-	if (!mlibc::sys_fcntl) {
+	if (!mlibc::IsImplemented<Fcntl>) {
 		return ENOSYS;
 	}
-	int ret = mlibc::sys_fcntl(fd, request, args, result);
+	int ret = mlibc::sysdep<Fcntl>(fd, request, args, result);
 	va_end(args);
 	return ret;
 }
@@ -34,7 +34,7 @@ int fcntl_helper(int fd, int request, int *result, ...) {
 
 namespace mlibc {
 
-int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length, int flags) {
+int Sysdeps<Accept>::operator()(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length, int flags) {
 	SignalGuard sguard;
 
 	mlibc::thread_testcancel();
@@ -62,7 +62,7 @@ int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_le
 	}
 
 	if (addr_ptr && addr_length) {
-		if (int e = mlibc::sys_peername(*newfd, addr_ptr, *addr_length, addr_length); e) {
+		if (int e = mlibc::sysdep<Peername>(*newfd, addr_ptr, *addr_length, addr_length); e) {
 			errno = e;
 			return -1;
 		}
@@ -83,7 +83,7 @@ int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_le
 	return 0;
 }
 
-int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
+int Sysdeps<Bind>::operator()(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	SignalGuard sguard;
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -112,7 +112,7 @@ int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	return resp.error() | toErrno;
 }
 
-int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
+int Sysdeps<Connect>::operator()(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	SignalGuard sguard;
 
 	mlibc::thread_testcancel();
@@ -148,8 +148,7 @@ int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) 
 	return resp.error() | toErrno;
 }
 
-int sys_sockname(
-    int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length
+int Sysdeps<Sockname>::operator()(    int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length
 ) {
 	SignalGuard sguard;
 
@@ -184,8 +183,7 @@ int sys_sockname(
 	return resp.error() | toErrno;
 }
 
-int sys_peername(
-    int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length
+int Sysdeps<Peername>::operator()(    int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length
 ) {
 	SignalGuard sguard;
 
@@ -243,8 +241,7 @@ std::array<std::pair<int, int>, 8> getsockopt_passthrough = {{
 
 } // namespace
 
-int
-sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
+int Sysdeps<GetSockopt>::operator()(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
 	SignalGuard sguard;
 
 	if (layer == SOL_SOCKET && number == SO_SNDBUF) {
@@ -373,7 +370,7 @@ std::array<std::pair<int, int>, 2> setsockopt_passthrough_noopt = {{
 
 } // namespace
 
-int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t size) {
+int Sysdeps<SetSockopt>::operator()(int fd, int layer, int number, const void *buffer, socklen_t size) {
 	SignalGuard sguard;
 
 	if (std::find(
@@ -577,7 +574,7 @@ int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t 
 	}
 }
 
-int sys_listen(int fd, int) {
+int Sysdeps<Listen>::operator()(int fd, int) {
 	SignalGuard sguard;
 
 	auto handle = getHandleForFd(fd);
@@ -604,7 +601,7 @@ int sys_listen(int fd, int) {
 	return resp.error() | toErrno;
 }
 
-int sys_shutdown(int fd, int how) {
+int Sysdeps<Shutdown>::operator()(int fd, int how) {
 	SignalGuard sguard;
 
 	auto handle = getHandleForFd(fd);

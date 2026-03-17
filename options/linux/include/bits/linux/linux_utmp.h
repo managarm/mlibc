@@ -3,7 +3,7 @@
 
 #include <abi-bits/pid_t.h>
 #include <abi-bits/utmp-defines.h>
-#include <bits/posix/timeval.h>
+#include <bits/timeval.h>
 #include <bits/types.h>
 
 #ifdef __cplusplus

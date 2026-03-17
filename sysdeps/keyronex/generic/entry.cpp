@@ -6,14 +6,14 @@
 #include <bits/posix/posix_signal.h>
 #include <bits/ensure.h>
 #include <mlibc/elf/startup.h>
-#include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 
 extern "C" void __dlapi_enter(uintptr_t *);
 
 extern char **environ;
 
-namespace mlibc {
+namespace {
 
 int
 sys_sigentry(void *sigentry)
@@ -31,7 +31,7 @@ sys_sigreturn(ucontext_t *context)
 	__builtin_unreachable();
 }
 
-} /* namespace mlibc */
+} /* namespace */
 
 static void
 __mlibc_sigentry(int which, siginfo_t *siginfo, void *handler,
@@ -39,7 +39,7 @@ __mlibc_sigentry(int which, siginfo_t *siginfo, void *handler,
 {
 	if ((uintptr_t)handler == (uintptr_t)SIG_DFL) {
 		mlibc::infoLogger() << "Unhandled signal " << which << frg::endlog;
-		mlibc::sys_exit(128 + which);
+		mlibc::sysdep<Exit>(128 + which);
 	} else if ((uintptr_t)handler == (uintptr_t)SIG_IGN) {
 		/* epsilon */
 	} else {
@@ -50,7 +50,7 @@ __mlibc_sigentry(int which, siginfo_t *siginfo, void *handler,
 			((void (*)(int))handler)(which);
 	}
 
-	mlibc::sys_sigreturn(ret_context);
+	sys_sigreturn(ret_context);
 
 	__builtin_unreachable();
 }
@@ -59,7 +59,7 @@ extern "C" void
 __mlibc_entry(int (*main_fn)(int argc, char *argv[], char *env[])) {
 	// TODO: call __dlapi_enter, otherwise static builds will break (see
 	// Linux sysdeps)
-	mlibc::sys_sigentry((void *)__mlibc_sigentry);
+	sys_sigentry((void *)__mlibc_sigentry);
 	auto result = main_fn(mlibc::entry_stack.argc, mlibc::entry_stack.argv,
 	    environ);
 	exit(result);

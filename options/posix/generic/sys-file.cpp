@@ -1,14 +1,12 @@
 
-#include <sys/file.h>
-#include <mlibc/posix-sysdeps.hpp>
-#include <errno.h>
-
 #include <bits/ensure.h>
+#include <errno.h>
 #include <mlibc-config.h>
+#include <mlibc/all-sysdeps.hpp>
+#include <sys/file.h>
 
 int flock(int fd, int opt) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_flock, -1);
-	if(int e = mlibc::sys_flock(fd, opt); e) {
+	if(int e = mlibc::sysdep_or_enosys<Flock>(fd, opt); e) {
 		errno = e;
 		return -1;
 	}

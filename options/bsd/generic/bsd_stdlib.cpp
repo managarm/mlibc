@@ -4,10 +4,9 @@
 
 #include <stdlib.h>
 
-#include <mlibc/bsd-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 int getloadavg(double *samples, int nsample) {
-	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getloadavg, -1);
 	if (nsample < 0) {
 		errno = EINVAL;
 		return -1;
@@ -16,7 +15,7 @@ int getloadavg(double *samples, int nsample) {
 		nsample = 3;
 	}
 	double s[3];
-	if (int e = sysdep(s); e) {
+	if (int e = mlibc::sysdep_or_enosys<GetLoadavg>(s); e) {
 		errno = e;
 		return -1;
 	}

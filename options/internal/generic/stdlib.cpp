@@ -2,7 +2,7 @@
 #include <abi-bits/fcntl.h>
 #include <abi-bits/stat.h>
 #include <bits/ensure.h>
-#include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/stdlib.hpp>
 #include <stdio.h>
 #include <string.h>
@@ -29,7 +29,7 @@ int mkostemps(char *pattern, int suffixlen, int flags, int *fd) {
 		__ensure(sprintf(pattern + (n - (6 + suffixlen)), "%06zu", i) == 6);
 		pattern[n - suffixlen] = sfx;
 
-		if(int e = mlibc::sys_open(pattern, O_RDWR | O_CREAT | O_EXCL | flags, S_IRUSR | S_IWUSR, fd); !e) {
+		if(int e = mlibc::sysdep<Open>(pattern, O_RDWR | O_CREAT | O_EXCL | flags, S_IRUSR | S_IWUSR, fd); !e) {
 			return 0;
 		}else if(e != EEXIST) {
 			return e;
