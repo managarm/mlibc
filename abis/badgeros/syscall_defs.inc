@@ -62,7 +62,7 @@ _SYSCALL_DEF(10, _SYSCALL_PROC_SIGACTION, __syscall_proc_sigaction, int, int __s
 _SYSCALL_DEF_V(11, _SYSCALL_PROC_SIGRET, __syscall_proc_sigret)
 
 // Get child process status update.
-_SYSCALL_DEF(12, _SYSCALL_PROC_WAITPID, __syscall_proc_waitpid, int, __mlibc_int64 __pid, int *__wstatus, int __options)
+_SYSCALL_DEF(12, _SYSCALL_PROC_WAITPID, __syscall_proc_waitpid, __mlibc_int64, __mlibc_int64 __pid, int *__wstatus, int __options)
 
 // Open a file, optionally relative to a directory.
 // If `at` is -1, `path` is relative to the working directory.

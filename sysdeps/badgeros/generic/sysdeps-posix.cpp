@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/resource.h>
 #include <sys/syscall.h>
 
 // ANCHOR: stub
@@ -184,5 +185,17 @@ int sys_sigaction(
 }
 
 int sys_kill(pid_t pid, int signo) { return -__syscall_proc_kill(pid, signo); }
+
+int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
+	if (ru) {
+		memset(ru, 0, sizeof(struct rusage));
+	}
+	auto res = __syscall_proc_waitpid(pid, status, flags | WEXITED);
+	if (ret_pid) {
+		*ret_pid = res;
+	}
+	return res < 0 ? -res : 0;
+}
+
 
 } // namespace mlibc
