@@ -197,5 +197,41 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 	return res < 0 ? -res : 0;
 }
 
+int sys_mkdir(const char *path, mode_t mode) {
+	(void)mode;
+	// TODO: Mode currently ignored.
+	return -__syscall_fs_mkdir(AT_FDCWD, path);
+}
+
+int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
+	(void)mode;
+	// TODO: Mode currently ignored.
+	return -__syscall_fs_mkdir(dirfd, path);
+}
+
+int sys_link(const char *old_path, const char *new_path) {
+	return -__syscall_fs_link(AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
+}
+
+int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags) {
+	return -__syscall_fs_link(olddirfd, old_path, newdirfd, new_path, flags);
+}
+
+int sys_symlink(const char *target_path, const char *link_path) {
+	return -__syscall_fs_symlink(target_path, AT_FDCWD, link_path);
+}
+
+int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
+	return -__syscall_fs_symlink(target_path, dirfd, link_path);
+}
+
+int sys_rename(const char *old_path, const char *new_path) {
+	return -__syscall_fs_rename(AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
+}
+
+int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
+	return -__syscall_fs_rename(olddirfd, old_path, newdirfd, new_path, 0);
+}
+
 
 } // namespace mlibc
