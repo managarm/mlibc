@@ -66,7 +66,7 @@ int sys_clock_get(int clock, time_t *secs, long *nanos);
 [[gnu::weak]] void sys_yield();
 
 [[gnu::weak]] pid_t sys_getpid();
-[[gnu::weak]] int sys_kill(int, int);
+[[gnu::weak]] int sys_kill(pid_t, int);
 
 } //namespace mlibc
 
