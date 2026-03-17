@@ -31,8 +31,13 @@ extern "C" {
 
 /* KEEP IN SYNC WITH `struct __mlibc_sched_param`! */
 struct sched_param {
+	unsigned int __mlibc_revision;
 	int sched_priority;
-	/* TODO: add missing [SS|TSP] fields */
+	/* [SS|TSP] */
+	int sched_ss_low_priority;
+	struct timespec sched_ss_repl_period;
+	struct timespec sched_ss_init_budget;
+	int sched_ss_max_repl;
 };
 
 #ifndef __MLIBC_ABI_ONLY
