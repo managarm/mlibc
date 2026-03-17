@@ -233,5 +233,25 @@ int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *n
 	return -__syscall_fs_rename(olddirfd, old_path, newdirfd, new_path, 0);
 }
 
+int sys_unlinkat(int fd, const char *path, int flags) {
+	if (flags & AT_REMOVEDIR) {
+		return -__syscall_fs_rmdir(fd, path);
+	} else {
+		return -__syscall_fs_unlink(fd, path);
+	}
+}
+
+int sys_rmdir(const char *path) { return -__syscall_fs_rmdir(AT_FDCWD, path); }
+
+int sys_dup(int fd, int flags, int *newfd) {
+	auto res = __syscall_fs_dup(fd, flags, -1);
+	*newfd = res;
+	return res < 0 ? -res : 0;
+}
+
+int sys_dup2(int fd, int flags, int newfd) {
+	auto res = __syscall_fs_dup(fd, flags, newfd);
+	return res < 0 ? -res : 0;
+}
 
 } // namespace mlibc

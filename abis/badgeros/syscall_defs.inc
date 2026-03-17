@@ -156,6 +156,10 @@ _SYSCALL_DEF(35, _SYSCALL_PROC_GETID, __syscall_proc_getid, int, int __getid_typ
 // Returns -errno on error, 0 on success.
 _SYSCALL_DEF(36, _SYSCALL_FS_SYMLINK, __syscall_fs_symlink, int, char const *__link_target, int __at, char const *__path)
 
+// Duplicate a file descriptor.
+// If `__newfd` is `-1`, an arbitrary descriptor number is selected.
+_SYSCALL_DEF(37, _SYSCALL_FS_DUP, __syscall_fs_dup, int, int __fd, int __flags, int __newfd)
+
 
 
 #undef _SYSCALL_DEF
