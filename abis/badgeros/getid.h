@@ -14,8 +14,8 @@
 /* Effective user ID of calling process. */
 #define _GETID_EUID 4
 /* Group ID of calling process. */
-#define _GETID_GID 3
+#define _GETID_GID 5
 /* Effective group ID of calling process. */
-#define _GETID_EGID 4
+#define _GETID_EGID 6
 
 #endif /* _ABIBITS_BADGEROS_GETID_T_H */
