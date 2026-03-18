@@ -7,9 +7,9 @@
 #include <bits/ensure.h>
 #include <frg/mutex.hpp>
 #include <frg/spinlock.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/utmp.hpp>
-#include <mlibc/posix-sysdeps.hpp>
 
 namespace {
 
@@ -29,7 +29,7 @@ void setutent(void) {
 
 	if(!utmpFd) {
 		int fd;
-		int err = mlibc::sys_open(utmpPath, O_RDWR | O_CREAT | O_CLOEXEC, 0644, &fd);
+		int err = mlibc::sysdep<Open>(utmpPath, O_RDWR | O_CREAT | O_CLOEXEC, 0644, &fd);
 		if(err) {
 			mlibc::infoLogger() << "\e[31mmlibc: setutent() failed to open " << utmpPath << ": "
 			                    << strerror(err) << "\e[39m" << frg::endlog;
@@ -39,7 +39,7 @@ void setutent(void) {
 		}
 	} else {
 		off_t discard;
-		mlibc::sys_seek(utmpFd.value(), 0, SEEK_SET, &discard);
+		mlibc::sysdep<Seek>(utmpFd.value(), 0, SEEK_SET, &discard);
 	}
 }
 
@@ -86,7 +86,7 @@ void endutent(void) {
 	frg::unique_lock lock{utmpMutex};
 
 	if(utmpFd) {
-		mlibc::sys_close(utmpFd.value());
+		mlibc::sysdep<Close>(utmpFd.value());
 		utmpFd = frg::null_opt;
 	}
 }
@@ -169,7 +169,7 @@ struct utmp *getutid(const struct utmp *ut) {
 
 void updwtmp(const char *file, const struct utmp *ut) {
 	int fd;
-	int err = mlibc::sys_open(file, O_RDWR | O_CREAT | O_CLOEXEC | O_APPEND, 0644, &fd);
+	int err = mlibc::sysdep<Open>(file, O_RDWR | O_CREAT | O_CLOEXEC | O_APPEND, 0644, &fd);
 	if(err) {
 		mlibc::infoLogger() << "\e[31mmlibc: updwtmp() failed to open " << file << ": "
 							<< strerror(err) << "\e[39m" << frg::endlog;
@@ -177,5 +177,5 @@ void updwtmp(const char *file, const struct utmp *ut) {
 	}
 
 	mlibc::putUtmpEntry(fd, ut);
-	mlibc::sys_close(fd);
+	mlibc::sysdep<Close>(fd);
 }

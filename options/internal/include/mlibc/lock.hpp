@@ -3,7 +3,7 @@
 
 #include <errno.h>
 #include <stdint.h>
-#include <mlibc/internal-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/tid.hpp>
 #include <bits/ensure.h>
@@ -50,7 +50,7 @@ struct alignas(4) FutexLockImpl {
 
 				// Wait on the futex if the waiters flag is set.
 				if(expected & waitersBit) {
-					int e = mlibc::sys_futex_wait((int *)&_state, expected, nullptr);
+					int e = mlibc::sysdep<FutexWait>((int *)&_state, expected, nullptr);
 
 					// If the wait returns EAGAIN, that means that the waitersBit was just unset by
 					// some other thread. In this case, we should loop back around.
@@ -114,7 +114,7 @@ struct alignas(4) FutexLockImpl {
 		if(state & waitersBit) {
 			// Wake the futex if there were waiters. Since the mutex might not exist at this location
 			// anymore, we must conservatively ignore EACCES and EINVAL which may occur as a result.
-			int e = mlibc::sys_futex_wake((int *)&_state, true);
+			int e = mlibc::sysdep<FutexWake>((int *)&_state, true);
 			__ensure(e >= 0 || e == EACCES || e == EINVAL);
 		}
 	}

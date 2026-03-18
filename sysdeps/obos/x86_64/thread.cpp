@@ -1,4 +1,4 @@
-#include <mlibc/internal-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 #include <obos/error.h>
 #include <obos/syscall.h>
@@ -7,12 +7,12 @@
 
 namespace [[gnu::visibility("hidden")]] mlibc {
 
-int sys_tcb_set(void *pointer) {
+int Sysdeps<TcbSet>::operator()(void *pointer) {
 	syscall1(SysS_SetFSBase, pointer);
 	return 0;
 }
 
-int sys_prepare_stack(
+int Sysdeps<PrepareStack>::operator()(
     void **stack,
     void *entry,
     void *user_arg,

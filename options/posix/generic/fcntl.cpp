@@ -5,8 +5,8 @@
 #include <stdarg.h>
 
 #include <mlibc-config.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/posix-sysdeps.hpp>
 
 int creat(const char *pathname, mode_t mode) {
 	return open(pathname, O_CREAT|O_WRONLY|O_TRUNC, mode);
@@ -16,8 +16,8 @@ int fcntl(int fd, int command, ...) {
 	va_list args;
 	va_start(args, command);
 	int result;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fcntl, -1);
-	if(int e = mlibc::sys_fcntl(fd, command, args, &result); e) {
+	if(int e = mlibc::sysdep_or_enosys<Fcntl>(fd, command, args, &result); e) {
+		va_end(args);
 		errno = e;
 		return -1;
 	}
@@ -34,8 +34,8 @@ int openat(int dirfd, const char *pathname, int flags, ...) {
 	if((flags & O_CREAT || (flags & O_TMPFILE) == O_TMPFILE))
 		mode = va_arg(args, mode_t);
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_openat, -1);
-	if(int e = mlibc::sys_openat(dirfd, pathname, flags, mode, &fd); e) {
+	if(int e = mlibc::sysdep_or_enosys<Openat>(dirfd, pathname, flags, mode, &fd); e) {
+		va_end(args);
 		errno = e;
 		return -1;
 	}
@@ -44,22 +44,13 @@ int openat(int dirfd, const char *pathname, int flags, ...) {
 }
 
 int posix_fadvise(int fd, off_t offset, off_t length, int advice) {
-	if(!mlibc::sys_fadvise) {
-		mlibc::infoLogger() << "mlibc: fadvise() ignored due to missing sysdep" << frg::endlog;
-		return 0;
-	}
-
 	// posix_fadvise() returns an error instead of setting errno.
-	return mlibc::sys_fadvise(fd, offset, length, advice);
+	return mlibc::sysdep_or_enosys<Fadvise>(fd, offset, length, advice);
 }
 
 int posix_fallocate(int fd, off_t offset, off_t size) {
 	// posix_fallocate() returns an error instead of setting errno.
-	if(!mlibc::sys_fallocate) {
-		MLIBC_MISSING_SYSDEP();
-		return ENOSYS;
-	}
-	return mlibc::sys_fallocate(fd, offset, size);
+	return mlibc::sysdep_or_enosys<Fallocate>(fd, offset, size);
 }
 
 int open(const char *pathname, int flags, ...) {
@@ -73,7 +64,7 @@ int open(const char *pathname, int flags, ...) {
 	}
 
 	int fd;
-	if(int e = mlibc::sys_open(pathname, flags, mode, &fd); e) {
+	if(int e = mlibc::sysdep<Open>(pathname, flags, mode, &fd); e) {
 		errno = e;
 		return -1;
 	}

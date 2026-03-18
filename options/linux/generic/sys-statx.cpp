@@ -3,14 +3,13 @@
 #include <sys/sysmacros.h>
 #include <bits/ensure.h>
 
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/posix-sysdeps.hpp>
-#include <mlibc/linux-sysdeps.hpp>
 
 int statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf) {
-	if(!mlibc::sys_statx) {
+	if constexpr (!mlibc::IsImplemented<Statx>) {
 		struct stat statbuf;
-		MLIBC_CHECK_OR_ENOSYS(mlibc::sys_stat, -1);
+		MLIBC_CHECK_OR_ENOSYS(mlibc::IsImplemented<Stat>, -1);
 
 		if (!(flags & AT_NO_AUTOMOUNT)) {
 			mlibc::infoLogger()
@@ -28,7 +27,7 @@ int statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct 
 		// Mask out flags not appropriate for regular stat
 		flags &= ~(AT_NO_AUTOMOUNT | AT_STATX_SYNC_AS_STAT | AT_STATX_FORCE_SYNC | AT_STATX_DONT_SYNC);
 
-		if(int e = mlibc::sys_stat(mlibc::fsfd_target::fd_path, dirfd, pathname, flags, &statbuf); e) {
+		if(int e = mlibc::sysdep<Stat>(mlibc::fsfd_target::fd_path, dirfd, pathname, flags, &statbuf); e) {
 			errno = e;
 			return -1;
 		}
@@ -61,8 +60,7 @@ int statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct 
 		return 0;
 	}
 
-	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_statx, -1);
-	if(int e = sysdep(dirfd, pathname, flags, mask, statxbuf); e) {
+	if(int e = mlibc::sysdep_or_enosys<Statx>(dirfd, pathname, flags, mask, statxbuf); e) {
 		errno = e;
 		return -1;
 	}

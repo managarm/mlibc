@@ -301,7 +301,7 @@ HelHandleResult *parseHandle(void *&element) {
 
 namespace mlibc {
 
-int sys_tcb_set(void *pointer) {
+int Sysdeps<TcbSet>::operator()(void *pointer) {
 #if defined(__x86_64__)
 	HEL_CHECK(helWriteFsBase(pointer));
 #elif defined(__aarch64__)
@@ -317,7 +317,7 @@ int sys_tcb_set(void *pointer) {
 	return 0;
 }
 
-int sys_open(const char *path, int flags, mode_t mode, int *fd) {
+int Sysdeps<Open>::operator()(const char *path, int flags, mode_t mode, int *fd) {
 	cacheFileTable();
 	HelAction actions[4];
 
@@ -382,7 +382,7 @@ int sys_open(const char *path, int flags, mode_t mode, int *fd) {
 	return 0;
 }
 
-int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
+int Sysdeps<Seek>::operator()(int fd, off_t offset, int whence, off_t *new_offset) {
 	__ensure(whence == SEEK_SET);
 
 	cacheFileTable();
@@ -430,7 +430,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	return 0;
 }
 
-int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read) {
+int Sysdeps<Read>::operator()(int fd, void *data, size_t length, ssize_t *bytes_read) {
 	cacheFileTable();
 	auto lane = fileTable[fd];
 	HelAction actions[5];
@@ -487,7 +487,7 @@ int sys_read(int fd, void *data, size_t length, ssize_t *bytes_read) {
 	return 0;
 }
 
-int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
+int Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
 	cacheFileTable();
 	HelAction actions[3];
 
@@ -537,7 +537,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 	return 0;
 }
 
-int sys_close(int fd) {
+int Sysdeps<Close>::operator()(int fd) {
 	cacheFileTable();
 	HelAction actions[3];
 
@@ -579,14 +579,14 @@ int sys_close(int fd) {
 	return 0;
 }
 
-int sys_futex_tid() {
+pid_t Sysdeps<FutexTid>::operator()() {
 	HelWord tid = 0;
 	HEL_CHECK(helSyscall0_1(kHelCallSuper + posix::superGetTid, &tid));
 
 	return tid;
 }
 
-int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
+int Sysdeps<FutexWait>::operator()(int *pointer, int expected, const struct timespec *time) {
 	// This implementation is inherently signal-safe.
 	if (time) {
 		if (helFutexWait(pointer, expected, time->tv_nsec + time->tv_sec * 1000000000))
@@ -598,14 +598,14 @@ int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	return 0;
 }
 
-int sys_futex_wake(int *pointer, bool all) {
+int Sysdeps<FutexWake>::operator()(int *pointer, bool all) {
 	// This implementation is inherently signal-safe.
 	if (helFutexWake(pointer, all ? UINT32_MAX : 1))
 		return -1;
 	return 0;
 }
 
-int sys_vm_protect(void *pointer, size_t size, int prot) {
+int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
 	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
 	req.set_request_type(managarm::posix::CntReqType::VM_PROTECT);
 	req.set_address(reinterpret_cast<uintptr_t>(pointer));

@@ -2,12 +2,10 @@
 #include <sys/io.h>
 
 #include <bits/ensure.h>
-#include <mlibc/glibc-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 int ioperm(unsigned long int from, unsigned long int num, int turn_on) {
-	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ioperm, -1);
-
-	if(int e = sysdep(from, num, turn_on); e) {
+	if(int e = mlibc::sysdep_or_enosys<Ioperm>(from, num, turn_on); e) {
 		errno = e;
 		return -1;
 	}
@@ -15,9 +13,7 @@ int ioperm(unsigned long int from, unsigned long int num, int turn_on) {
 }
 
 int iopl(int level) {
-	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_iopl, -1);
-
-	if(int e = sysdep(level); e) {
+	if(int e = mlibc::sysdep_or_enosys<Iopl>(level); e) {
 		errno = e;
 		return -1;
 	}

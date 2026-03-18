@@ -4,10 +4,8 @@
 #include <sys/ipc.h>
 
 key_t ftok(const char *path, int id) {
-	auto sysdep_stat = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_stat, ENOSYS);
-
 	struct stat info;
-	if (int e = sysdep_stat(mlibc::fsfd_target::path, -1, path, 0, &info); e) {
+	if (int e = mlibc::sysdep_or_enosys<Stat>(mlibc::fsfd_target::path, -1, path, 0, &info); e) {
 		errno = e;
 		return -1;
 	}

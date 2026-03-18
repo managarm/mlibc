@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <utmpx.h>
 
-#include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/utmp.hpp>
 
 namespace {
@@ -47,7 +47,7 @@ struct utmpx *getutxline_r(const struct utmpx *ut, struct utmpx *buffer) {
 
 void updwtmpx(const char *file, const struct utmpx *ut) {
 	int fd;
-	int err = mlibc::sys_open(file, O_RDWR | O_CREAT | O_CLOEXEC | O_APPEND, 0644, &fd);
+	int err = mlibc::sysdep<Open>(file, O_RDWR | O_CREAT | O_CLOEXEC | O_APPEND, 0644, &fd);
 	if(err) {
 		mlibc::infoLogger() << "\e[31mmlibc: updwtmpx() failed to open " << file << ": "
 							<< strerror(err) << "\e[39m" << frg::endlog;
@@ -56,14 +56,14 @@ void updwtmpx(const char *file, const struct utmpx *ut) {
 
 	mlibc::putUtmpEntry(fd, ut);
 
-	mlibc::sys_close(fd);
+	mlibc::sysdep<Close>(fd);
 }
 
 void endutxent(void) {
 	frg::unique_lock lock{utmpxMutex};
 
 	if(utmpxFd) {
-		mlibc::sys_close(utmpxFd.value());
+		mlibc::sysdep<Close>(utmpxFd.value());
 		utmpxFd = frg::null_opt;
 	}
 }
@@ -80,9 +80,9 @@ void setutxent(void) {
 		//
 		// The operations that need writing like updates will naturally fail
 		// because of the underlying sysdep failing.
-		int err = mlibc::sys_open(utmpxPath, O_RDWR | O_CREAT | O_CLOEXEC, 0644, &fd);
+		int err = mlibc::sysdep<Open>(utmpxPath, O_RDWR | O_CREAT | O_CLOEXEC, 0644, &fd);
 		if(err == EACCES) {
-			err = mlibc::sys_open(utmpxPath, O_RDONLY | O_CLOEXEC, 0644, &fd);
+			err = mlibc::sysdep<Open>(utmpxPath, O_RDONLY | O_CLOEXEC, 0644, &fd);
 		}
 
 		if(err) {
@@ -94,7 +94,7 @@ void setutxent(void) {
 		}
 	} else {
 		off_t discard;
-		mlibc::sys_seek(utmpxFd.value(), 0, SEEK_SET, &discard);
+		mlibc::sysdep<Seek>(utmpxFd.value(), 0, SEEK_SET, &discard);
 	}
 }
 

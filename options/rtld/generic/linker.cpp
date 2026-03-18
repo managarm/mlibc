@@ -12,9 +12,9 @@ enum {
 #include <frg/scope_exit.hpp>
 #include <frg/small_vector.hpp>
 #include <frg/unique.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/rtld-sysdeps.hpp>
 #include <mlibc/rtld-abi.hpp>
 #include <mlibc/rtld-config.hpp>
 #include <mlibc/thread.hpp>
@@ -98,7 +98,7 @@ unsigned long getauxval(unsigned long type) {
 #include <sys/hwprobe.h>
 
 int __riscv_hwprobe(struct riscv_hwprobe *pairs, size_t pair_count, size_t cpusetsize, cpu_set_t *cpus, unsigned int flags) {
-	return mlibc::sys_riscv_hwprobe(pairs, pair_count, cpusetsize, cpus, flags);
+	return mlibc::sysdep_or_enosys<RiscvHwprobe>(pairs, pair_count, cpusetsize, cpus, flags);
 }
 
 #endif
@@ -147,14 +147,14 @@ elf_addr handleIfunc(elf_addr addr) {
 
 bool trySeek(int fd, int64_t offset) {
 	off_t noff;
-	return mlibc::sys_seek(fd, offset, SEEK_SET, &noff) == 0;
+	return mlibc::sysdep<Seek>(fd, offset, SEEK_SET, &noff) == 0;
 }
 
 bool tryReadExactly(int fd, void *data, size_t length) {
 	size_t offset = 0;
 	while(offset < length) {
 		ssize_t chunk;
-		if(mlibc::sys_read(fd, reinterpret_cast<char *>(data) + offset,
+		if(mlibc::sysdep<Read>(fd, reinterpret_cast<char *>(data) + offset,
 				length - offset, &chunk))
 			return false;
 		if (chunk > 0)
@@ -167,7 +167,7 @@ bool tryReadExactly(int fd, void *data, size_t length) {
 }
 
 void closeOrDie(int fd) {
-	if(mlibc::sys_close(fd))
+	if(mlibc::sysdep<Close>(fd))
 		__ensure(!"sys_close() failed");
 }
 
@@ -256,7 +256,7 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 
 	auto tryToOpen = [&] (const char *path) -> frg::optional<int> {
 		int fd;
-		if(auto x = mlibc::sys_open(path, O_RDONLY, 0, &fd); x) {
+		if(auto x = mlibc::sysdep<Open>(path, O_RDONLY, 0, &fd); x) {
 			return frg::null_opt;
 		}
 		return fd;
@@ -418,7 +418,7 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath
 	frg::string<MemoryAllocator> no_prefix(getAllocator(), path);
 
 	int fd;
-	if(mlibc::sys_open((no_prefix + '\0').data(), O_RDONLY, 0, &fd)) {
+	if(mlibc::sysdep<Open>((no_prefix + '\0').data(), O_RDONLY, 0, &fd)) {
 		frg::destruct(getAllocator(), object);
 		return LinkerError::notFound;
 	}
@@ -607,7 +607,7 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 #if MLIBC_MMAP_ALLOCATE_DSO
 	void *mappedAddr = nullptr;
 
-	if (mlibc::sys_vm_map(nullptr,
+	if (mlibc::sysdep<VmMap>(nullptr,
 			highest_address - object->baseAddress, PROT_NONE,
 			MAP_PRIVATE | MAP_ANONYMOUS, -1, 0, &mappedAddr)) {
 		mlibc::infoLogger() << "sys_vm_map failed when allocating address space for DSO \""
@@ -663,21 +663,22 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 				initial_prot = prot;
 
 			void *map_pointer;
-			if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
+			if(mlibc::sysdep<VmMap>(reinterpret_cast<void *>(map_address),
 					backed_map_size, initial_prot,
 					MAP_PRIVATE | MAP_FIXED, fd, phdr->p_offset - misalign, &map_pointer))
 				__ensure(!"sys_vm_map failed");
 			if(total_map_size > backed_map_size)
-				if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address + backed_map_size),
+				if(mlibc::sysdep<VmMap>(reinterpret_cast<void *>(map_address + backed_map_size),
 						total_map_size - backed_map_size, initial_prot,
 						MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
 					__ensure(!"sys_vm_map failed");
 
-			if(mlibc::sys_vm_readahead)
-				if(mlibc::sys_vm_readahead(reinterpret_cast<void *>(map_address),
+			if constexpr (mlibc::IsImplemented<VmReadahead>) {
+				if(mlibc::sysdep_or_enosys<VmReadahead>(reinterpret_cast<void *>(map_address),
 						backed_map_size))
 					mlibc::infoLogger() << "mlibc: sys_vm_readahead() failed in ld.so"
 							<< frg::endlog;
+			}
 
 			// Clear the trailing area at the end of the backed mapping.
 			// We do not clear the leading area; programs are not supposed to access it.
@@ -687,7 +688,7 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 			(void)backed_map_size;
 
 			void *map_pointer;
-			if(mlibc::sys_vm_map(reinterpret_cast<void *>(map_address),
+			if(mlibc::sysdep<VmMap>(reinterpret_cast<void *>(map_address),
 					total_map_size, initial_prot,
 					MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0, &map_pointer))
 				__ensure(!"sys_vm_map failed");
@@ -697,10 +698,10 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 					phdr->p_filesz));
 		#endif
 			if(initial_prot != prot) {
-				if (!mlibc::sys_vm_protect)
+				if constexpr (!mlibc::IsImplemented<VmProtect>)
 					__ensure(!"sys_vm_protect not provided");
 
-				if (mlibc::sys_vm_protect(reinterpret_cast<void *>(map_address), total_map_size, prot))
+				if (mlibc::sysdep_or_panic<VmProtect>(reinterpret_cast<void *>(map_address), total_map_size, prot))
 					__ensure(!"sys_vm_protect failed");
 			}
 		}else if(phdr->p_type == PT_TLS) {

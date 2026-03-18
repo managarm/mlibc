@@ -1,11 +1,11 @@
 #include <netdb.h>
 #include <bits/ensure.h>
 
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/lookup.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/services.hpp>
-#include <mlibc/posix-sysdeps.hpp>
 #include <frg/vector.hpp>
 #include <frg/array.hpp>
 #include <frg/span.hpp>
@@ -31,7 +31,7 @@ void openProtoFd(int stayopen) {
 	}
 
 	int fd = -1;
-	auto e = mlibc::sys_open("/etc/protocols", O_RDONLY | O_CLOEXEC, 0, &fd);
+	auto e = mlibc::sysdep<Open>("/etc/protocols", O_RDONLY | O_CLOEXEC, 0, &fd);
 	if (e == 0) {
 		protoFd = fd;
 		protoFdStayopen = stayopen;
@@ -64,12 +64,12 @@ requires (std::is_invocable_r_v<bool, F, frg::string_view, int>) {
 		line.resize(0);
 
 		while (true) {
-			auto e = mlibc::sys_seek(*protoFd, protoFdOffset, SEEK_SET, &protoFdOffset);
+			auto e = mlibc::sysdep<Seek>(*protoFd, protoFdOffset, SEEK_SET, &protoFdOffset);
 			__ensure(e == 0);
 
 			char buf[256];
 			ssize_t bytesRead = 0;
-			e = mlibc::sys_read(*protoFd, buf, sizeof(buf), &bytesRead);
+			e = mlibc::sysdep<Read>(*protoFd, buf, sizeof(buf), &bytesRead);
 			__ensure(e == 0);
 			if(bytesRead == 0)
 				return false;
@@ -193,7 +193,7 @@ void endnetent(void) {
 
 void endprotoent(void) {
 	if (protoFd) {
-		mlibc::sys_close(*protoFd);
+		mlibc::sysdep<Close>(*protoFd);
 		protoFd = frg::null_opt;
 	}
 }
@@ -241,11 +241,11 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 	}
 
 	if (flags & AI_ADDRCONFIG) {
-		if (mlibc::sys_inet_configured) {
+		if constexpr (mlibc::IsImplemented<InetConfigured>) {
 			bool ipv4 = false;
 			bool ipv6 = false;
 
-			if (int e = mlibc::sys_inet_configured(&ipv4, &ipv6); e) {
+			if (int e = mlibc::sysdep_or_panic<InetConfigured>(&ipv4, &ipv6); e) {
 				errno = e;
 				return EAI_SYSTEM;
 			}
@@ -531,7 +531,7 @@ struct protoent *getprotobyname(const char *name) {
 	if (!protoFd)
 		return nullptr;
 
-	auto e = mlibc::sys_seek(*protoFd, 0, SEEK_SET, &protoFdOffset);
+	auto e = mlibc::sysdep<Seek>(*protoFd, 0, SEEK_SET, &protoFdOffset);
 	__ensure(e == 0);
 
 	resetProtoentStorage();
@@ -552,7 +552,7 @@ struct protoent *getprotobynumber(int num) {
 	if (!protoFd)
 		return nullptr;
 
-	auto e = mlibc::sys_seek(*protoFd, 0, SEEK_SET, &protoFdOffset);
+	auto e = mlibc::sysdep<Seek>(*protoFd, 0, SEEK_SET, &protoFdOffset);
 	__ensure(e == 0);
 
 	resetProtoentStorage();

@@ -2,7 +2,7 @@
 #include <abi-bits/pid_t.h>
 #include <menix/archctl.hpp>
 #include <menix/syscall.hpp>
-#include <mlibc/internal-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/tcb.hpp>
 #include <stddef.h>
 #include <stdint.h>
@@ -12,17 +12,17 @@
 
 namespace mlibc {
 
-void sys_libc_log(const char *message) {
+void Sysdeps<LibcLog>::operator()(const char *message) {
 	menix_syscall(SYSCALL_SYSLOG, LOG_INFO, (size_t)message, strlen(message));
 }
 
-[[noreturn]] void sys_libc_panic() {
-	sys_libc_log("mlibc panic!");
+[[noreturn]] void Sysdeps<LibcPanic>::operator()() {
+	sysdep<LibcLog>("mlibc panic!");
 	menix_syscall(SYSCALL_EXIT, 1);
 	__builtin_unreachable();
 }
 
-int sys_tcb_set(void *pointer) {
+int Sysdeps<TcbSet>::operator()(void *pointer) {
 #if defined(__x86_64__)
 	return menix_syscall(SYSCALL_ARCHCTL, ARCHCTL_SET_FSBASE, (size_t)pointer).error;
 #elif defined(__aarch64__)
@@ -42,17 +42,17 @@ int sys_tcb_set(void *pointer) {
 #endif
 }
 
-int sys_futex_tid() { return menix_syscall(SYSCALL_GETTID).value; }
+int Sysdeps<FutexTid>::operator()() { return menix_syscall(SYSCALL_GETTID).value; }
 
-int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
+int Sysdeps<FutexWait>::operator()(int *pointer, int expected, const struct timespec *time) {
 	return menix_syscall(SYSCALL_FUTEX_WAIT, (size_t)pointer, expected, (size_t)time).error;
 }
 
-int sys_futex_wake(int *pointer, bool) {
+int Sysdeps<FutexWake>::operator()(int *pointer, bool) {
 	return menix_syscall(SYSCALL_FUTEX_WAKE, (size_t)pointer).error;
 }
 
-int sys_anon_allocate(size_t size, void **pointer) {
+int Sysdeps<AnonAllocate>::operator()(size_t size, void **pointer) {
 	auto r = menix_syscall(
 	    SYSCALL_MMAP, 0, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0
 	);
@@ -62,11 +62,11 @@ int sys_anon_allocate(size_t size, void **pointer) {
 	return 0;
 }
 
-int sys_anon_free(void *pointer, size_t size) {
+int Sysdeps<AnonFree>::operator()(void *pointer, size_t size) {
 	return menix_syscall(SYSCALL_MUNMAP, (size_t)pointer, size).error;
 }
 
-int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
+int Sysdeps<Openat>::operator()(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	auto r = menix_syscall(SYSCALL_OPENAT, dirfd, (size_t)path, flags, mode);
 	if (r.error)
 		return r.error;
@@ -74,11 +74,11 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	return 0;
 }
 
-int sys_open(const char *pathname, int flags, mode_t mode, int *fd) {
-	return sys_openat(AT_FDCWD, pathname, flags, mode, fd);
+int Sysdeps<Open>::operator()(const char *pathname, int flags, mode_t mode, int *fd) {
+	return sysdep<Openat>(AT_FDCWD, pathname, flags, mode, fd);
 }
 
-int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
+int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_read) {
 	auto r = menix_syscall(SYSCALL_READ, fd, (size_t)buf, count);
 	if (r.error)
 		return r.error;
@@ -86,7 +86,7 @@ int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
 	return 0;
 }
 
-int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
+int Sysdeps<Seek>::operator()(int fd, off_t offset, int whence, off_t *new_offset) {
 	auto r = menix_syscall(SYSCALL_SEEK, fd, offset, whence);
 	if (r.error)
 		return r.error;
@@ -94,9 +94,9 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	return 0;
 }
 
-int sys_close(int fd) { return menix_syscall(SYSCALL_CLOSE, fd).error; }
+int Sysdeps<Close>::operator()(int fd) { return menix_syscall(SYSCALL_CLOSE, fd).error; }
 
-int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
+int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
 	switch (fsfdt) {
 		case fsfd_target::path:
 			return menix_syscall(SYSCALL_FSTATAT, AT_FDCWD, (size_t)path, (size_t)statbuf, flags)
@@ -110,7 +110,7 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 	}
 }
 
-int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
+int Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
 	auto r = menix_syscall(SYSCALL_MMAP, (size_t)hint, size, prot, flags, fd, offset);
 	if (r.error)
 		return r.error;
@@ -118,11 +118,11 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 	return 0;
 }
 
-int sys_vm_unmap(void *pointer, size_t size) {
+int Sysdeps<VmUnmap>::operator()(void *pointer, size_t size) {
 	return menix_syscall(SYSCALL_MUNMAP, (size_t)pointer, size).error;
 }
 
-int sys_vm_protect(void *pointer, size_t size, int prot) {
+int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
 	return menix_syscall(SYSCALL_MPROTECT, (size_t)pointer, size, prot).error;
 }
 

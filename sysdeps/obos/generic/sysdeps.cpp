@@ -10,9 +10,7 @@
 #include <frg/logging.hpp>
 #include <mlibc/debug.hpp>
 
-#include <mlibc/ansi-sysdeps.hpp>
-#include <mlibc/internal-sysdeps.hpp>
-#include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 #include <obos/error.h>
 #include <obos/syscall.h>
@@ -43,19 +41,19 @@ namespace mlibc {
 		return (ret);                                                                              \
 	}
 
-int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
+int Sysdeps<Sigprocmask>::operator()(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
 	if (how > 3)
 		return EINVAL;
 	// 'how' in oboskrnl has the same values as in Linux (the abi we "borrow" from).
 	return interpret_signal_status((obos_status)syscall3(Sys_SigProcMask, how, set, retrieve));
 }
-int sys_sigpending(sigset_t *set) {
+int Sysdeps<Sigpending>::operator()(sigset_t *set) {
 	return interpret_signal_status((obos_status)syscall1(Sys_SigPending, set));
 }
 
-int sys_uname(struct utsname *out) {
+int Sysdeps<Uname>::operator()(struct utsname *out) {
 	memcpy(out->sysname, "OBOS", 4);
-	sys_gethostname(out->nodename, 65);
+	sysdep<GetHostname>(out->nodename, 65);
 	memcpy(out->release, "v0.0.0", 7);
 	memcpy(out->version, "UNKNOWN", 8);
 #if defined(__x86_64__)
@@ -82,7 +80,7 @@ typedef struct user_sigaction {
 	uint32_t flags;
 } user_sigaction;
 
-int sys_sigaction(
+int Sysdeps<Sigaction>::operator()(
     int sigval,
     const struct sigaction *__restrict newact_mlibc,
     struct sigaction *__restrict oldact_mlibc
@@ -106,25 +104,25 @@ int sys_sigaction(
 
 #endif
 
-int sys_chroot(const char *path) {
+int Sysdeps<Chroot>::operator()(const char *path) {
 	return parse_file_status((obos_status)syscall1(Sys_Chroot, path));
 }
 
-int sys_dup(int fd, int flags, int *newfd) {
+int Sysdeps<Dup>::operator()(int fd, int flags, int *newfd) {
 	(void)flags;
 	*newfd = HANDLE_ANY;
 	return parse_file_status((obos_status)syscall2(Sys_HandleClone, fd, newfd));
 }
-int sys_dup2(int fd, int flags, int newfd) {
+int Sysdeps<Dup2>::operator()(int fd, int flags, int newfd) {
 	(void)flags;
 	return parse_file_status((obos_status)syscall2(Sys_HandleClone, fd, &newfd));
 }
 
-int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
+int Sysdeps<Mkfifoat>::operator()(int dirfd, const char *path, mode_t mode) {
 	return parse_file_status((obos_status)syscall4(Sys_CreateNamedPipe, dirfd, path, mode, 0));
 }
 
-int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
+int Sysdeps<Fchownat>::operator()(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
 	return parse_file_status(
 	    (obos_status)syscall5(Sys_FChownAt, dirfd, pathname, owner, group, flags)
 	);
@@ -133,25 +131,25 @@ int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int 
 // idk why the mlibc maintainers decided they wanted [f]chown[at] to only use one sysdep, while
 // [f]chmod[at] has 3 separate sysdeps
 
-int sys_chmod(const char *pathname, mode_t mode) {
-	return sys_fchmodat(AT_FDCWD, pathname, mode, 0);
+int Sysdeps<Chmod>::operator()(const char *pathname, mode_t mode) {
+	return sysdep<Fchmodat>(AT_FDCWD, pathname, mode, 0);
 }
-int sys_fchmod(int fd, mode_t mode) { return sys_fchmodat(fd, "", mode, AT_EMPTY_PATH); }
-int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
+int Sysdeps<Fchmod>::operator()(int fd, mode_t mode) { return sysdep<Fchmodat>(fd, "", mode, AT_EMPTY_PATH); }
+int Sysdeps<Fchmodat>::operator()(int fd, const char *pathname, mode_t mode, int flags) {
 	return parse_file_status((obos_status)syscall4(Sys_FChmodAt, fd, pathname, mode, flags));
 }
 
-int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
+int Sysdeps<Sigaltstack>::operator()(const stack_t *ss, stack_t *oss) {
 	// stack_t is the same on obos and on Linux (the abi we "borrow" from)
 	return interpret_signal_status((obos_status)syscall2(Sys_SigAltStack, ss, oss));
 }
 
-int sys_kill(pid_t pid, int sigval) {
+int Sysdeps<Kill>::operator()(pid_t pid, int sigval) {
 	if (pid == -1)
 		return ENOSYS;
 	if (pid == 0) {
 		pid_t pgid = 0;
-		sys_getpgid(0, &pgid);
+		sysdep<GetPgid>(0, &pgid);
 		return interpret_signal_status((obos_status)syscall2(Sys_KillProcessGroup, pgid, sigval));
 	}
 	if (pid < -1)
@@ -164,7 +162,7 @@ int sys_kill(pid_t pid, int sigval) {
 	return err;
 }
 
-int sys_tgkill(int, int tid, int sigval) {
+int Sysdeps<Tgkill>::operator()(int, int tid, int sigval) {
 	// TODO: Thread groups?
 	handle thread = syscall2(Sys_ThreadOpen, HANDLE_CURRENT, tid);
 	if (thread == HANDLE_INVALID)
@@ -174,11 +172,11 @@ int sys_tgkill(int, int tid, int sigval) {
 	return err;
 }
 
-int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
+int Sysdeps<Utimensat>::operator()(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
 	return parse_file_status((obos_status)syscall4(Sys_UTimeNSAt, dirfd, pathname, times, flags));
 }
 
-int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
+int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
 	// TODO(oberrow): struct rusage and pid values that are < -1 or zero
 	if (ru) {
 		mlibc::infoLogger() << "mlibc: " << __func__
@@ -214,11 +212,9 @@ exit:
 	return ec;
 }
 
-// define_stub(int sys_isatty(int fd), 1)
-
 // Architecture-specific.
 #ifndef MLIBC_BUILDING_RTLD
-int sys_fork(pid_t* out_child)
+int Sysdeps<Fork>::operator()(pid_t* out_child)
 {
 	// Do this in case pid_t changes
 	// to a different-sized integer in
@@ -229,13 +225,13 @@ int sys_fork(pid_t* out_child)
 	return ret;
 }
 #else
-int sys_fork(pid_t*)
+int Sysdeps<Fork>::operator()(pid_t*)
 {
 	return ENOSYS;
 }
 #endif
 
-int sys_execve(const char *path, char *const argv[], char *const envp[]) {
+int Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *const envp[]) {
 	obos_status st = (obos_status)syscall3(Sys_ExecVE, path, argv, envp);
 	switch (st) {
 		case OBOS_STATUS_UNIMPLEMENTED:
@@ -253,17 +249,17 @@ int sys_execve(const char *path, char *const argv[], char *const envp[]) {
 	}
 }
 
-int sys_chdir(const char *path) {
+int Sysdeps<Chdir>::operator()(const char *path) {
 	return parse_file_status((obos_status)syscall1(Sys_Chdir, path));
 }
-int sys_fchdir(int fd) { return parse_file_status((obos_status)syscall1(Sys_ChdirEnt, fd)); }
-int sys_getcwd(char *buffer, size_t size) {
+int Sysdeps<Fchdir>::operator()(int fd) { return parse_file_status((obos_status)syscall1(Sys_ChdirEnt, fd)); }
+int Sysdeps<GetCwd>::operator()(char *buffer, size_t size) {
 	return parse_file_status((obos_status)syscall2(Sys_GetCWD, buffer, size));
 }
 
-void sys_libc_log(char const *str) { syscall1(Sys_LibCLog, str); }
+void Sysdeps<LibcLog>::operator()(char const *str) { syscall1(Sys_LibCLog, str); }
 
-int sys_get_current_stack_info(void **stack_base, size_t *stack_size)
+int Sysdeps<GetCurrentStackInfo>::operator()(void **stack_base, size_t *stack_size)
 {
 	obos_status status = (obos_status)syscall3(Sys_ThreadGetStack, HANDLE_CURRENT, stack_base, stack_size);
 	if (obos_is_success(status))
@@ -276,48 +272,48 @@ int sys_get_current_stack_info(void **stack_base, size_t *stack_size)
 	}
 }
 
-uid_t sys_getuid() { return (uid_t)syscall0(Sys_GetUid); }
+uid_t Sysdeps<GetUid>::operator()() { return (uid_t)syscall0(Sys_GetUid); }
 
-uid_t sys_geteuid() {
+uid_t Sysdeps<GetEuid>::operator()() {
 	uid_t res = 0;
-	sys_getresuid(nullptr, &res, nullptr);
+	sysdep<GetResuid>(nullptr, &res, nullptr);
 	return res;
 }
 
-int sys_getresuid(uid_t *ruid, uid_t *euid, uid_t *suid) {
+int Sysdeps<GetResuid>::operator()(uid_t *ruid, uid_t *euid, uid_t *suid) {
 	return parse_file_status((obos_status)syscall3(Sys_GetRESUid, ruid, euid, suid));
 }
-int sys_setresuid(uid_t ruid, uid_t euid, uid_t suid) {
+int Sysdeps<SetResuid>::operator()(uid_t ruid, uid_t euid, uid_t suid) {
 	return parse_file_status((obos_status)syscall3(Sys_SetRESUid, ruid, euid, suid));
 }
 
-gid_t sys_getgid() { return (gid_t)syscall0(Sys_GetGid); }
+gid_t Sysdeps<GetGid>::operator()() { return (gid_t)syscall0(Sys_GetGid); }
 
-gid_t sys_getegid() {
+gid_t Sysdeps<GetEgid>::operator()() {
 	gid_t res = 0;
-	sys_getresgid(nullptr, &res, nullptr);
+	sysdep<GetResgid>(nullptr, &res, nullptr);
 	return res;
 }
 
-int sys_getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid) {
+int Sysdeps<GetResgid>::operator()(gid_t *rgid, gid_t *egid, gid_t *sgid) {
 	return parse_file_status((obos_status)syscall3(Sys_GetRESGid, rgid, egid, sgid));
 }
-int sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
+int Sysdeps<SetResgid>::operator()(gid_t rgid, gid_t egid, gid_t sgid) {
 	return parse_file_status((obos_status)syscall3(Sys_SetRESGid, rgid, egid, sgid));
 }
 
-int sys_setreuid(uid_t ruid, uid_t euid) { return sys_setresuid(ruid, euid, -1); }
-int sys_setregid(gid_t rgid, gid_t egid) { return sys_setresgid(rgid, egid, -1); }
+int Sysdeps<SetReuid>::operator()(uid_t ruid, uid_t euid) { return sysdep<SetResuid>(ruid, euid, -1); }
+int Sysdeps<SetRegid>::operator()(gid_t rgid, gid_t egid) { return sysdep<SetResgid>(rgid, egid, -1); }
 
-int sys_setuid(uid_t uid) { return parse_file_status((obos_status)syscall1(Sys_SetUid, uid)); }
-int sys_seteuid(uid_t euid) { return sys_setresuid(-1, euid, -1); }
-int sys_setgid(gid_t gid) { return parse_file_status((obos_status)syscall1(Sys_SetGid, gid)); }
-int sys_setegid(gid_t egid) { return sys_setresgid(-1, egid, -1); }
+int Sysdeps<SetUid>::operator()(uid_t uid) { return parse_file_status((obos_status)syscall1(Sys_SetUid, uid)); }
+int Sysdeps<SetEuid>::operator()(uid_t euid) { return sysdep<SetResuid>(-1, euid, -1); }
+int Sysdeps<SetGid>::operator()(gid_t gid) { return parse_file_status((obos_status)syscall1(Sys_SetGid, gid)); }
+int Sysdeps<SetEgid>::operator()(gid_t egid) { return sysdep<SetResgid>(-1, egid, -1); }
 
-int sys_setgroups(size_t size, const gid_t *list) {
+int Sysdeps<SetGroups>::operator()(size_t size, const gid_t *list) {
 	return parse_file_status((obos_status)syscall3(Sys_SetGroups, HANDLE_CURRENT, size, list));
 }
-int sys_getgroups(size_t size, gid_t *list, int *ret) {
+int Sysdeps<GetGroups>::operator()(size_t size, gid_t *list, int *ret) {
 	if (!ret)
 		return EINVAL;
 	size_t sz_ret = size;
@@ -326,13 +322,15 @@ int sys_getgroups(size_t size, gid_t *list, int *ret) {
 	return ec;
 }
 
-pid_t sys_gettid() { return (pid_t)syscall1(Sys_ThreadGetTid, HANDLE_CURRENT); }
-pid_t sys_getpid() { return (pid_t)syscall1(Sys_ProcessGetPID, HANDLE_CURRENT); }
-pid_t sys_getppid() { return (pid_t)syscall1(Sys_ProcessGetPPID, HANDLE_CURRENT); }
+pid_t Sysdeps<GetTid>::operator()() { return (pid_t)syscall1(Sys_ThreadGetTid, HANDLE_CURRENT); }
+
+pid_t Sysdeps<GetPid>::operator()() { return (pid_t)syscall1(Sys_ProcessGetPID, HANDLE_CURRENT); }
+
+pid_t Sysdeps<GetPpid>::operator()() { return (pid_t)syscall1(Sys_ProcessGetPPID, HANDLE_CURRENT); }
 
 #define HANDLE_TYPE_INVALID 0xff
 
-int sys_getpgid(pid_t pid, pid_t *pgid) {
+int Sysdeps<GetPgid>::operator()(pid_t pid, pid_t *pgid) {
 	handle hnd = pid != 0 ? (handle)syscall1(Sys_ProcessOpen, pid) : HANDLE_CURRENT;
 	if (HANDLE_TYPE(hnd) == HANDLE_TYPE_INVALID)
 		return ESRCH;
@@ -342,7 +340,7 @@ int sys_getpgid(pid_t pid, pid_t *pgid) {
 	return ec;
 }
 
-int sys_setpgid(pid_t pid, pid_t pgid) {
+int Sysdeps<SetPgid>::operator()(pid_t pid, pid_t pgid) {
 	handle hnd = pid != 0 ? (handle)syscall1(Sys_ProcessOpen, pid) : HANDLE_CURRENT;
 	if (HANDLE_TYPE(hnd) == HANDLE_TYPE_INVALID)
 		return ESRCH;
@@ -355,11 +353,11 @@ int sys_setpgid(pid_t pid, pid_t pgid) {
 // Sanity check
 static_assert(sizeof(pid_t) == sizeof(uint32_t), "unsupported pid_t size");
 
-int sys_setsid(pid_t *sid) {
+int Sysdeps<SetSid>::operator()(pid_t *sid) {
 	return parse_pgid_status((obos_status)syscall2(Sys_SetSid, HANDLE_CURRENT, sid));
 }
 
-int sys_getsid(pid_t pid, pid_t *sid) {
+int Sysdeps<GetSid>::operator()(pid_t pid, pid_t *sid) {
 	handle hnd = pid != 0 ? (handle)syscall1(Sys_ProcessOpen, pid) : HANDLE_CURRENT;
 	if (HANDLE_TYPE(hnd) == HANDLE_TYPE_INVALID)
 		return ESRCH;
@@ -369,20 +367,20 @@ int sys_getsid(pid_t pid, pid_t *sid) {
 	return ec;
 }
 
-[[noreturn]] void sys_libc_panic() {
-	sys_libc_log("mlibc panicked! exiting program...\n");
-	sys_exit(-1);
+[[noreturn]] void Sysdeps<LibcPanic>::operator()() {
+	sysdep<LibcLog>("mlibc panicked! exiting program...\n");
+	sysdep<Exit>(-1);
 	__builtin_unreachable();
 }
 
-[[noreturn]] void sys_exit(int status) {
+[[noreturn]] void Sysdeps<Exit>::operator()(int status) {
 	syscall1(Sys_ExitCurrentProcess, status);
 	__builtin_unreachable();
 }
 
-[[noreturn]] void sys_thread_exit() { syscall0(Sys_ExitCurrentThread); }
+[[noreturn]] void Sysdeps<ThreadExit>::operator()() { syscall0(Sys_ExitCurrentThread); }
 
-int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
+int Sysdeps<FutexWait>::operator()(int *pointer, int expected, const struct timespec *time) {
 	obos_status status = (obos_status)syscall3(
 	    Sys_FutexWait, pointer, expected, time ? time->tv_sec * 1000 : UINT64_MAX
 	);
@@ -397,11 +395,11 @@ int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 		case OBOS_STATUS_ABORTED:
 			return EINTR;
 		default:
-			sys_libc_panic(); // TODO: Generic errno value?
+			sysdep<LibcPanic>(); // TODO: Generic errno value?
 	}
 }
 
-int sys_futex_wake(int *pointer, bool all) {
+int Sysdeps<FutexWake>::operator()(int *pointer, bool all) {
 	obos_status status = (obos_status)syscall2(Sys_FutexWake, pointer, all ? UINT32_MAX : 1);
 	switch (status) {
 		case OBOS_STATUS_SUCCESS:
@@ -413,7 +411,7 @@ int sys_futex_wake(int *pointer, bool all) {
 	}
 }
 
-int sys_clock_get(int clock, time_t *secs, long *nanos) {
+int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
 #if defined(__x86_64__)
 	static struct {
 		long rtc_time_offset;
@@ -479,11 +477,11 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 #endif
 }
 
-int sys_link(const char *old_path, const char *new_path) {
-	return sys_linkat(AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
+int Sysdeps<Link>::operator()(const char *old_path, const char *new_path) {
+	return sysdep<Linkat>(AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
 }
 
-int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags) {
+int Sysdeps<Linkat>::operator()(int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags) {
 	return parse_file_status(
 	    (obos_status)syscall5(Sys_LinkAt, olddirfd, old_path, newdirfd, new_path, flags)
 	);
@@ -495,9 +493,9 @@ int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new
 #define TIOCSPTLCK 0x40045431U
 
 #ifndef MLIBC_BUILDING_RTLD
-int sys_ptsname(int fd, char *buffer, size_t length) {
+int Sysdeps<Ptsname>::operator()(int fd, char *buffer, size_t length) {
 	int index;
-	if(int e = sys_ioctl(fd, TIOCGPTN, &index, nullptr); e)
+	if(int e = sysdep<Ioctl>(fd, TIOCGPTN, &index, nullptr); e)
 		return e;
 	if((size_t)snprintf(buffer, length, "/dev/pts/%d", index) >= length) {
 		return ERANGE;
@@ -506,32 +504,32 @@ int sys_ptsname(int fd, char *buffer, size_t length) {
 }
 #endif
 
-int sys_unlockpt(int fd) {
+int Sysdeps<Unlockpt>::operator()(int fd) {
 	int unlock = 0;
 
-	if(int e = sys_ioctl(fd, TIOCSPTLCK, &unlock, nullptr); e)
+	if(int e = sysdep<Ioctl>(fd, TIOCSPTLCK, &unlock, nullptr); e)
 		return e;
 
 	return 0;
 }
 
-int sys_symlink(const char *target_path, const char *link_path) {
+int Sysdeps<Symlink>::operator()(const char *target_path, const char *link_path) {
 	return parse_file_status((obos_status)syscall2(Sys_SymLink, target_path, link_path));
 }
-int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
+int Sysdeps<Symlinkat>::operator()(const char *target_path, int dirfd, const char *link_path) {
 	return parse_file_status((obos_status)syscall3(Sys_SymLinkAt, target_path, dirfd, link_path));
 }
 
-int sys_rename(const char *path, const char *new_path) {
-	return sys_renameat(AT_FDCWD, path, AT_FDCWD, new_path);
+int Sysdeps<Rename>::operator()(const char *path, const char *new_path) {
+	return sysdep<Renameat>(AT_FDCWD, path, AT_FDCWD, new_path);
 }
-int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
+int Sysdeps<Renameat>::operator()(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
 	return parse_file_status(
 	    (obos_status)syscall4(Sys_RenameAt, olddirfd, old_path, newdirfd, new_path)
 	);
 }
 
-int sys_open_dir(const char *path, int *hnd) {
+int Sysdeps<OpenDir>::operator()(const char *path, int *hnd) {
 	obos_status st = OBOS_STATUS_SUCCESS;
 	handle dir = (handle)syscall2(Sys_OpenDir, path, &st);
 	if (obos_is_error(st))
@@ -540,14 +538,14 @@ int sys_open_dir(const char *path, int *hnd) {
 	return 0;
 }
 
-int sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read) {
+int Sysdeps<ReadEntries>::operator()(int handle, void *buffer, size_t max_size, size_t *bytes_read) {
 	return parse_file_status(
 	    (obos_status)syscall4(Sys_ReadEntries, handle, buffer, max_size, bytes_read)
 	);
 }
 
 /*
-int sys_pselect(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set, const struct
+int Sysdeps<Pselect>::operator()(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set, const struct
 timespec *timeout, const sigset_t *sigmask, int *num_events)
 {
     (void)(num_fds && read_set && write_set && except_set && timeout && sigmask);
@@ -555,7 +553,7 @@ timespec *timeout, const sigset_t *sigmask, int *num_events)
     return 0;
 }*/
 
-int sys_pselect(
+int Sysdeps<Pselect>::operator()(
     int num_fds,
     fd_set *read_set,
     fd_set *write_set,
@@ -577,7 +575,7 @@ int sys_pselect(
 	);
 }
 
-int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
+int Sysdeps<Poll>::operator()(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	uintptr_t obos_timeout = 0;
 	if (timeout < 0)
 		obos_timeout = UINTPTR_MAX;
@@ -588,14 +586,14 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	);
 }
 
-int sys_fcntl(int fd, int request, va_list vargs, int *result) {
+int Sysdeps<Fcntl>::operator()(int fd, int request, va_list vargs, int *result) {
 	uintptr_t arg = va_arg(vargs, uintptr_t);
 	return parse_file_status((obos_status)syscall5(Sys_Fcntl, fd, request, &arg, 1, result));
 }
 
-int sys_isatty(int fd) { return parse_file_status((obos_status)syscall1(Sys_IsATTY, fd)); }
+int Sysdeps<Isatty>::operator()(int fd) { return parse_file_status((obos_status)syscall1(Sys_IsATTY, fd)); }
 
-int sys_ttyname(int fd, char *buf, size_t size) {
+int Sysdeps<Ttyname>::operator()(int fd, char *buf, size_t size) {
 	return parse_file_status((obos_status)syscall3(Sys_TTYName, fd, buf, size));
 }
 
@@ -605,39 +603,39 @@ int sys_ttyname(int fd, char *buf, size_t size) {
 #define TTY_IOCTL_FLUSH 0x04
 #define TTY_IOCTL_DRAIN 0x05
 
-int sys_tcgetattr(int fd, struct termios *attr) {
+int Sysdeps<Tcgetattr>::operator()(int fd, struct termios *attr) {
 	return parse_file_status(
 	    (obos_status)syscall4(Sys_FdIoctl, fd, TTY_IOCTL_GETATTR, attr, sizeof(*attr))
 	);
 }
-int sys_tcsetattr(int fd, int ign, const struct termios *attr) {
+int Sysdeps<Tcsetattr>::operator()(int fd, int ign, const struct termios *attr) {
 	(void)ign;
 	return parse_file_status(
 	    (obos_status)syscall4(Sys_FdIoctl, fd, TTY_IOCTL_SETATTR, attr, sizeof(*attr))
 	);
 }
-int sys_tcflow(int fd, int ehow) {
+int Sysdeps<Tcflow>::operator()(int fd, int ehow) {
 	uint32_t how = ehow;
 	return parse_file_status(
 	    (obos_status)syscall4(Sys_FdIoctl, fd, TTY_IOCTL_FLOW, &how, sizeof(how))
 	);
 }
-int sys_tcflush(int fd, int queue) {
+int Sysdeps<Tcflush>::operator()(int fd, int queue) {
 	(void)(fd && queue);
 	return ENOSYS;
 }
-int sys_tcdrain(int fd) {
+int Sysdeps<Tcdrain>::operator()(int fd) {
 	return parse_file_status((obos_status)syscall4(Sys_FdIoctl, fd, TTY_IOCTL_DRAIN, nullptr, 0));
 }
 
-int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
+int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *result) {
 	int res = parse_file_status((obos_status)syscall4(Sys_FdIoctl, fd, request, arg, SIZE_MAX));
 	if (result)
 		*result = 0;
 	return res;
 }
 
-int sys_pipe(int *fds, [[maybe_unused]] int flags) {
+int Sysdeps<Pipe>::operator()(int *fds, [[maybe_unused]] int flags) {
 	int ec = parse_file_status((obos_status)syscall2(Sys_CreatePipe, fds, 0));
 #ifndef MLIBC_BUILDING_RTLD
 	if (ec == 0) {
@@ -652,7 +650,7 @@ int sys_pipe(int *fds, [[maybe_unused]] int flags) {
 	return ec;
 }
 
-int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
+int Sysdeps<Openat>::operator()(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	(void)mode;
 
 	int real_flags = parse_file_flags(flags);
@@ -660,7 +658,7 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	handle hnd = syscall0(Sys_FdAlloc);
 	obos_status st = (obos_status)syscall5(Sys_FdOpenAtEx, hnd, dirfd, path, real_flags, mode);
 	if (st == OBOS_STATUS_NOT_A_FILE && dirfd == AT_FDCWD)
-		return sys_open_dir(path, fd);
+		return sysdep<OpenDir>(path, fd);
 	if (int ec = parse_file_status(st); ec != 0)
 		return ec;
 	*fd = hnd;
@@ -671,14 +669,14 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	return 0;
 }
 
-int sys_umask(mode_t mode, mode_t *old) {
+int Sysdeps<Umask>::operator()(mode_t mode, mode_t *old) {
 	syscall2(Sys_UMask, mode, old);
 	return 0;
 }
 
-int sys_open(const char *pathname, int flags, mode_t mode, int *fd) {
+int Sysdeps<Open>::operator()(const char *pathname, int flags, mode_t mode, int *fd) {
 	if (flags & O_DIRECTORY)
-		return sys_open_dir(pathname, fd);
+		return sysdep<OpenDir>(pathname, fd);
 
 	handle hnd = (handle)syscall0(Sys_FdAlloc);
 
@@ -689,7 +687,7 @@ int sys_open(const char *pathname, int flags, mode_t mode, int *fd) {
 	st = (obos_status)syscall4(Sys_FdOpenEx, hnd, pathname, real_flags, mode);
 	if (st == OBOS_STATUS_NOT_A_FILE) {
 		syscall1(Sys_HandleClose, hnd);
-		return sys_open_dir(pathname, fd);
+		return sysdep<OpenDir>(pathname, fd);
 	}
 
 	if (int ec = parse_file_status(st); ec != 0)
@@ -702,21 +700,21 @@ int sys_open(const char *pathname, int flags, mode_t mode, int *fd) {
 	return 0;
 }
 
-int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
+int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
 	return parse_file_status((obos_status)syscall5(Sys_Stat, fsfdt, fd, path, flags, statbuf));
 }
 
 namespace {
 	bool group_cmp(gid_t against) {
-		const gid_t gid = sys_getgid();
+		const gid_t gid = sysdep<GetGid>();
 		if (gid == against)
 			return true;
 #ifndef MLIBC_BUILDING_RTLD
 		int ret = 0;
-		__ensure(sys_getgroups(0, nullptr, &ret) == 0);
+		__ensure(sysdep<GetGroups>(0, nullptr, &ret) == 0);
 		gid_t *gids = (gid_t *)calloc(ret, sizeof(gid_t));
 		const int count = ret;
-		__ensure(sys_getgroups(count, gids, &ret) == 0);
+		__ensure(sysdep<GetGroups>(count, gids, &ret) == 0);
 		for (int i = 0; i < count; i++) {
 			if (gids[i] == against) {
 				free(gids);
@@ -729,7 +727,7 @@ namespace {
 	}
 
 	int access_common(struct stat *st, int mode) {
-		const uid_t uid = sys_getuid();
+		const uid_t uid = sysdep<GetUid>();
 
 		mode_t mode_mask = 0;
 		if (uid == st->st_uid)
@@ -749,11 +747,11 @@ namespace {
 	}
 } /* anon namespace */
 
-int sys_access(const char *path, int mode) {
+int Sysdeps<Access>::operator()(const char *path, int mode) {
 	mode &= 7;
 
 	struct stat st = {};
-	int ec = sys_stat(fsfd_target::path, -1, path, 0, &st);
+	int ec = sysdep<Stat>(fsfd_target::path, -1, path, 0, &st);
 	if (ec != 0)
 		return ec;
 	else if (mode == F_OK)
@@ -762,7 +760,7 @@ int sys_access(const char *path, int mode) {
 	return access_common(&st, mode);
 }
 
-int sys_faccessat(int dirfd, const char *pathname, int mode, int flags) {
+int Sysdeps<Faccessat>::operator()(int dirfd, const char *pathname, int mode, int flags) {
 	mode &= 7;
 
 	fsfd_target fsfdt = fsfd_target::none;
@@ -772,7 +770,7 @@ int sys_faccessat(int dirfd, const char *pathname, int mode, int flags) {
 		fsfdt = fsfd_target::fd;
 
 	struct stat st = {};
-	int ec = sys_stat(fsfdt, dirfd, pathname, flags, &st);
+	int ec = sysdep<Stat>(fsfdt, dirfd, pathname, flags, &st);
 	if (ec != 0)
 		return ec;
 	else if (mode == F_OK)
@@ -781,28 +779,28 @@ int sys_faccessat(int dirfd, const char *pathname, int mode, int flags) {
 	return access_common(&st, mode);
 }
 
-int sys_readlinkat(int dirfd, const char *path, void *buffer, size_t size, ssize_t *read) {
+int Sysdeps<Readlinkat>::operator()(int dirfd, const char *path, void *buffer, size_t size, ssize_t *read) {
 	return parse_file_status(
 	    (obos_status)syscall5(Sys_ReadLinkAt, dirfd, path, buffer, size, read)
 	);
 }
-int sys_readlink(const char *path, void *buffer, size_t size, ssize_t *read) {
+int Sysdeps<Readlink>::operator()(const char *path, void *buffer, size_t size, ssize_t *read) {
 	return parse_file_status(
 	    (obos_status)syscall5(Sys_ReadLinkAt, AT_FDCWD, path, buffer, size, read)
 	);
 }
 
-int sys_mkdir(const char *path, mode_t mode) {
+int Sysdeps<Mkdir>::operator()(const char *path, mode_t mode) {
 	return parse_file_status((obos_status)syscall2(Sys_Mkdir, path, mode));
 }
-int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
+int Sysdeps<Mkdirat>::operator()(int dirfd, const char *path, mode_t mode) {
 	return parse_file_status((obos_status)syscall3(Sys_MkdirAt, (handle)dirfd, path, mode));
 }
 
-int sys_unlinkat(int dirfd, const char *path, int flags) {
+int Sysdeps<Unlinkat>::operator()(int dirfd, const char *path, int flags) {
 	return parse_file_status((obos_status)syscall3(Sys_UnlinkAt, (handle)dirfd, path, flags));
 }
-int sys_rmdir(const char *path) { return sys_unlinkat(AT_FDCWD, path, AT_REMOVEDIR); }
+int Sysdeps<Rmdir>::operator()(const char *path) { return sysdep<Unlinkat>(AT_FDCWD, path, AT_REMOVEDIR); }
 
 typedef struct drv_fs_info {
 	size_t fsBlockSize;
@@ -825,17 +823,17 @@ enum {
 	FS_FLAGS_RDONLY = 1 << 1,
 };
 
-int sys_statvfs(const char *path, struct statvfs *out) {
+int Sysdeps<Statvfs>::operator()(const char *path, struct statvfs *out) {
 	obos_status status = OBOS_STATUS_SUCCESS;
 	handle hnd = (handle)syscall2(Sys_OpenDir, path, &status);
 	if (status != OBOS_STATUS_SUCCESS)
 		return parse_file_status(status);
-	int ec = sys_fstatvfs(hnd, out);
+	int ec = sysdep<Fstatvfs>(hnd, out);
 	syscall1(Sys_HandleClose, hnd);
 	return ec;
 }
 
-int sys_fstatvfs(int fd, struct statvfs *out) {
+int Sysdeps<Fstatvfs>::operator()(int fd, struct statvfs *out) {
 	handle hnd = (handle)fd;
 	if (HANDLE_TYPE(hnd) != 2 /* HANDLE_TYPE_DIRENT */)
 		return EINVAL;
@@ -872,22 +870,22 @@ int sys_fstatvfs(int fd, struct statvfs *out) {
 	return 0;
 }
 
-int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
+int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_read) {
 	return parse_file_status((obos_status)syscall4(Sys_FdRead, fd, buf, count, bytes_read));
 }
 
-int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
+int Sysdeps<Write>::operator()(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
 	return parse_file_status((obos_status)syscall4(Sys_FdWrite, fd, buf, count, bytes_written));
 }
 
-int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
+int Sysdeps<Pread>::operator()(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 	return parse_file_status((obos_status)syscall5(Sys_FdPRead, fd, buf, n, bytes_read, off));
 }
-int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_written) {
+int Sysdeps<Pwrite>::operator()(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_written) {
 	return parse_file_status((obos_status)syscall5(Sys_FdPWrite, fd, buf, n, bytes_written, off));
 }
 
-int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
+int Sysdeps<Seek>::operator()(int fd, off_t offset, int whence, off_t *new_offset) {
 	/*if (offset == 0 && whence == SEEK_CUR)
 	{
 	    *new_offset = syscall1(Sys_FdTellOff, fd);
@@ -906,15 +904,15 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	return ec;
 }
 
-int sys_close(int fd) { return parse_file_status((obos_status)syscall1(Sys_HandleClose, fd)); }
+int Sysdeps<Close>::operator()(int fd) { return parse_file_status((obos_status)syscall1(Sys_HandleClose, fd)); }
 
-void sys_sync() { syscall0(Sys_Sync); }
+void Sysdeps<Sync>::operator()() { syscall0(Sys_Sync); }
 
-int sys_fsync(int fd) { return parse_file_status((obos_status)syscall1(Sys_FdFlush, fd)); }
+int Sysdeps<Fsync>::operator()(int fd) { return parse_file_status((obos_status)syscall1(Sys_FdFlush, fd)); }
 
-int sys_fdatasync(int fd) { return sys_fsync(fd); }
+int Sysdeps<Fdatasync>::operator()(int fd) { return sysdep<Fsync>(fd); }
 
-int sys_anon_allocate(size_t sz, void **pointer) {
+int Sysdeps<AnonAllocate>::operator()(size_t sz, void **pointer) {
 	struct {
 		uint32_t prot;
 		uint32_t flags;
@@ -926,11 +924,11 @@ int sys_anon_allocate(size_t sz, void **pointer) {
 	return 0;
 }
 
-int sys_anon_free(void *blk, size_t sz) {
+int Sysdeps<AnonFree>::operator()(void *blk, size_t sz) {
 	return syscall3(Sys_VirtualMemoryFree, HANDLE_CURRENT, blk, sz) == 0 ? 0 : EINVAL;
 }
 
-int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
+int Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
 	unsigned real_flags = 0;
 	unsigned prot_flags = 0;
 	if ((prot & PROT_READ) && (~prot & PROT_WRITE))
@@ -979,12 +977,12 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 		case OBOS_STATUS_NOT_ENOUGH_MEMORY:
 			return ENOMEM;
 		default:
-			sys_libc_log("unknown error code from Sys_VirtualMemoryAlloc, returning EINVAL\n");
+			sysdep<LibcLog>("unknown error code from Sys_VirtualMemoryAlloc, returning EINVAL\n");
 			return EINVAL;
 	}
 }
 
-int sys_mlock(const void *addr, size_t length) {
+int Sysdeps<Mlock>::operator()(const void *addr, size_t length) {
 	obos_status status = (obos_status)syscall3(Sys_VirtualMemoryLock, HANDLE_CURRENT, addr, length);
 	switch (status) {
 		case OBOS_STATUS_SUCCESS:
@@ -1000,12 +998,12 @@ int sys_mlock(const void *addr, size_t length) {
 		case OBOS_STATUS_NOT_FOUND:
 			return EINVAL;
 		default:
-			sys_libc_log("unknown error code from Sys_VirtualMemoryLock, returning EINVAL\n");
+			sysdep<LibcLog>("unknown error code from Sys_VirtualMemoryLock, returning EINVAL\n");
 			return EINVAL;
 	}
 }
 
-int sys_munlock(const void *addr, size_t length)
+int Sysdeps<Munlock>::operator()(const void *addr, size_t length)
 {
 	obos_status status = (obos_status)syscall3(Sys_VirtualMemoryUnlock, HANDLE_CURRENT, addr, length);
 	switch (status) {
@@ -1022,12 +1020,12 @@ int sys_munlock(const void *addr, size_t length)
 		case OBOS_STATUS_NOT_FOUND:
 			return EINVAL;
 		default:
-			sys_libc_log("unknown error code from Sys_VirtualMemoryUnlock, returning EINVAL\n");
+			sysdep<LibcLog>("unknown error code from Sys_VirtualMemoryUnlock, returning EINVAL\n");
 			return EINVAL;
 	}
 }
 
-int sys_vm_protect(void *pointer, size_t size, int prot) {
+int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
 	unsigned prot_flags = 0;
 	if ((prot & PROT_READ) && (~prot & PROT_WRITE))
 		prot_flags |= OBOS_PROTECTION_READ_ONLY;
@@ -1050,20 +1048,20 @@ int sys_vm_protect(void *pointer, size_t size, int prot) {
 		case OBOS_STATUS_NOT_FOUND:
 			return EINVAL;
 		default:
-			sys_libc_log("unknown error code from Sys_VirtualMemoryProtect, returning EINVAL\n");
+			sysdep<LibcLog>("unknown error code from Sys_VirtualMemoryProtect, returning EINVAL\n");
 			return EINVAL;
 	}
 }
 
-int sys_vm_unmap(void *pointer, size_t size) { return sys_anon_free(pointer, size); }
+int Sysdeps<VmUnmap>::operator()(void *pointer, size_t size) { return sysdep<AnonFree>(pointer, size); }
 
-int sys_sysconf(int num, long *ret) {
+int Sysdeps<Sysconf>::operator()(int num, long *ret) {
 	return syscall2(Sys_SysConf, num, ret) == OBOS_STATUS_SUCCESS ? 0 : ENOSYS;
 }
 
-void sys_yield() { syscall0(Sys_Yield); }
+void Sysdeps<Yield>::operator()() { syscall0(Sys_Yield); }
 
-int sys_sleep(time_t *secs, long *nanos) {
+int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
 	long ms = *secs * 1000;
 	if (!ms)
 		ms = *nanos / 1000000;
@@ -1074,7 +1072,7 @@ int sys_sleep(time_t *secs, long *nanos) {
 }
 
 #if __MLIBC_BSD_OPTION
-int sys_brk(void **out) {
+int Sysdeps<Brk>::operator()(void **out) {
 	(void)out;
 	return ENOMEM;
 }
@@ -1093,7 +1091,7 @@ struct sys_socket_io_params {
 	};
 };
 
-int sys_socket(int family, int type, int protocol, int *fd) {
+int Sysdeps<Socket>::operator()(int family, int type, int protocol, int *fd) {
 	*fd = syscall0(Sys_FdAlloc);
 	int ec = parse_file_status((obos_status)syscall4(Sys_Socket, *fd, family, type, protocol));
 	if (ec)
@@ -1101,7 +1099,7 @@ int sys_socket(int family, int type, int protocol, int *fd) {
 	return ec;
 }
 
-ssize_t sys_sendto(
+int Sysdeps<Sendto>::operator()(
     int fd,
     const void *buffer,
     size_t size,
@@ -1119,7 +1117,7 @@ ssize_t sys_sendto(
 	return ec;
 }
 
-ssize_t sys_recvfrom(
+int Sysdeps<Recvfrom>::operator()(
     int fd,
     void *buffer,
     size_t size,
@@ -1140,11 +1138,11 @@ ssize_t sys_recvfrom(
 	return ec;
 }
 
-int sys_listen(int fd, int backlog) {
+int Sysdeps<Listen>::operator()(int fd, int backlog) {
 	return parse_file_status((obos_status)syscall2(Sys_Listen, fd, backlog));
 }
 
-int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length, int flags) {
+int Sysdeps<Accept>::operator()(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_length, int flags) {
 	*newfd = syscall0(Sys_FdAlloc);
 	size_t saddr_klength = addr_length ? *addr_length : 0;
 	int ec = parse_file_status((obos_status)syscall5(
@@ -1157,15 +1155,15 @@ int sys_accept(int fd, int *newfd, struct sockaddr *addr_ptr, socklen_t *addr_le
 	return ec;
 }
 
-int sys_bind(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
+int Sysdeps<Bind>::operator()(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	return parse_file_status((obos_status)syscall3(Sys_Bind, fd, addr_ptr, addr_length));
 }
 
-int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
+int Sysdeps<Connect>::operator()(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) {
 	return parse_file_status((obos_status)syscall3(Sys_Connect, fd, addr_ptr, addr_length));
 }
 
-int sys_sockname(
+int Sysdeps<Sockname>::operator()(
     int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length
 ) {
 	size_t actual_length_s = 0;
@@ -1177,7 +1175,7 @@ int sys_sockname(
 	return ec;
 }
 
-int sys_peername(
+int Sysdeps<Peername>::operator()(
     int fd, struct sockaddr *addr_ptr, socklen_t max_addr_length, socklen_t *actual_length
 ) {
 	size_t actual_length_s = 0;
@@ -1189,8 +1187,7 @@ int sys_peername(
 	return ec;
 }
 
-int
-sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
+int Sysdeps<GetSockopt>::operator()(int fd, int layer, int number, void *__restrict buffer, socklen_t *__restrict size) {
 	size_t sz = *size;
 	int ec =
 	    parse_file_status((obos_status)syscall5(Sys_GetSockOpt, fd, layer, number, buffer, &sz));
@@ -1199,17 +1196,17 @@ sys_getsockopt(int fd, int layer, int number, void *__restrict buffer, socklen_t
 	return ec;
 }
 
-int sys_setsockopt(int fd, int layer, int number, const void *buffer, socklen_t size) {
+int Sysdeps<SetSockopt>::operator()(int fd, int layer, int number, const void *buffer, socklen_t size) {
 	return parse_file_status(
 	    (obos_status)syscall5(Sys_SetSockOpt, fd, layer, number, buffer, size)
 	);
 }
 
-int sys_shutdown(int sockfd, int how) {
+int Sysdeps<Shutdown>::operator()(int sockfd, int how) {
 	return parse_file_status((obos_status)syscall2(Sys_ShutdownSocket, sockfd, how));
 }
 
-int sys_gethostname(char *buffer, size_t bufsize) {
+int Sysdeps<GetHostname>::operator()(char *buffer, size_t bufsize) {
 	obos_status st = (obos_status)syscall2(Sys_GetHostname, buffer, bufsize);
 	switch (st) {
 		case OBOS_STATUS_INVALID_ARGUMENT:
@@ -1221,7 +1218,7 @@ int sys_gethostname(char *buffer, size_t bufsize) {
 	}
 }
 
-int sys_sethostname(const char *buffer, size_t bufsize) {
+int Sysdeps<SetHostname>::operator()(const char *buffer, size_t bufsize) {
 	return parse_file_status((obos_status)syscall2(Sys_SetHostname, buffer, bufsize));
 }
 
@@ -1233,10 +1230,10 @@ typedef uint32_t thread_affinity;
 #error typedef thread_affinity for the new port!
 #endif
 
-int sys_setaffinity(pid_t pid, size_t cpusetsize, const cpu_set_t *mask) {
-	return sys_setthreadaffinity(pid, cpusetsize, mask);
+int Sysdeps<SetAffinity>::operator()(pid_t pid, size_t cpusetsize, const cpu_set_t *mask) {
+	return sysdep<SetThreadaffinity>(pid, cpusetsize, mask);
 }
-int sys_setthreadaffinity(pid_t tid, size_t cpusetsize, const cpu_set_t *mask) {
+int Sysdeps<SetThreadaffinity>::operator()(pid_t tid, size_t cpusetsize, const cpu_set_t *mask) {
 	thread_affinity affinity = 0;
 	memcpy(&affinity, mask, frg::min(cpusetsize, sizeof(thread_affinity)));
 	handle thr = syscall1(Sys_ThreadOpen, tid);
@@ -1245,10 +1242,10 @@ int sys_setthreadaffinity(pid_t tid, size_t cpusetsize, const cpu_set_t *mask) {
 	return ec;
 }
 
-int sys_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask) {
-	return sys_getthreadaffinity(pid, cpusetsize, mask);
+int Sysdeps<GetAffinity>::operator()(pid_t pid, size_t cpusetsize, cpu_set_t *mask) {
+	return sysdep<GetThreadaffinity>(pid, cpusetsize, mask);
 }
-int sys_getthreadaffinity(pid_t tid, size_t cpusetsize, cpu_set_t *mask) {
+int Sysdeps<GetThreadaffinity>::operator()(pid_t tid, size_t cpusetsize, cpu_set_t *mask) {
 	thread_affinity res = 0;
 	handle thr = syscall1(Sys_ThreadOpen, tid);
 	int ec = parse_file_status((obos_status)syscall3(Sys_ThreadAffinity, thr, nullptr, &res));
@@ -1258,7 +1255,7 @@ int sys_getthreadaffinity(pid_t tid, size_t cpusetsize, cpu_set_t *mask) {
 	return 0;
 }
 
-int sys_inet_configured(bool *ipv4, bool *ipv6) {
+int Sysdeps<InetConfigured>::operator()(bool *ipv4, bool *ipv6) {
 	if (ipv4)
 		*ipv4 = true;
 	if (ipv6)
@@ -1266,7 +1263,7 @@ int sys_inet_configured(bool *ipv4, bool *ipv6) {
 	return 0;
 }
 
-int sys_getentropy(void *buffer, size_t max_size) {
+int Sysdeps<GetEntropy>::operator()(void *buffer, size_t max_size) {
 	handle hnd = syscall0(Sys_FdAlloc);
 
 	// Open FD for reading.
@@ -1316,7 +1313,7 @@ namespace {
 				return parse_file_status(status);
 		}
 	}
-	
+
 	int parse_file_status(obos_status status) {
 		switch (status) {
 			case OBOS_STATUS_SUCCESS:
@@ -1383,7 +1380,7 @@ namespace {
 			case OBOS_STATUS_SEEK_UNALLOWED:
 				return ESPIPE;
 			default:
-				mlibc::sys_libc_log("Unknown obos status code returned from a VFS syscall, returning EIO\n");
+				mlibc::sysdep<LibcLog>("Unknown obos status code returned from a VFS syscall, returning EIO\n");
 				return EIO;
 		}
 	}

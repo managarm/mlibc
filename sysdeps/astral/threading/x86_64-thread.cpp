@@ -6,11 +6,11 @@
 #include <mlibc/tcb.hpp>
 
 extern "C" void __mlibc_thread_trampoline(void *(*fn)(void *), Tcb *tcb, void *arg) {
-	if(mlibc::sys_tcb_set(tcb))
+	if(mlibc::sysdep<TcbSet>(tcb))
 		__ensure(!"failed to set tcb for new thread");
 
 	while(__atomic_load_n(&tcb->tid, __ATOMIC_RELAXED) == 0)
-		mlibc::sys_futex_wait(&tcb->tid, 0, nullptr);
+		mlibc::sysdep<FutexWait>(&tcb->tid, 0, nullptr);
 
 	tcb->invokeThreadFunc(reinterpret_cast<void *>(fn), arg);
 
@@ -20,7 +20,15 @@ extern "C" void __mlibc_thread_trampoline(void *(*fn)(void *), Tcb *tcb, void *a
 #define DEFAULT_STACK 0x400000
 
 namespace mlibc {
-	int sys_prepare_stack(void **stack, void *entry, void *arg, void *tcb, size_t *stack_size, size_t *guard_size, void **stack_base) {
+	int Sysdeps<PrepareStack>::operator()(
+		void **stack,
+		void *entry,
+		void *arg,
+		void *tcb,
+		size_t *stack_size,
+		size_t *guard_size,
+		void **stack_base
+	) {
 		// TODO guard
 
 		mlibc::infoLogger() << "mlibc: sys_prepare_stack() does not setup a guard!" << frg::endlog;
@@ -36,7 +44,7 @@ namespace mlibc {
 		} else {
 			*stack_base = *stack;
 		}
-		
+
 		*stack = (void *)((char *)*stack_base + *stack_size);
 
 		void **stack_it = (void **)*stack;

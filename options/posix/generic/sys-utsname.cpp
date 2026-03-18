@@ -4,9 +4,9 @@
 #include <errno.h>
 
 #include <bits/ensure.h>
-#include <mlibc/debug.hpp>
 #include <internal-config.h>
-#include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
+#include <mlibc/debug.hpp>
 
 int uname(struct utsname *p) {
 	if (p == nullptr) {
@@ -14,8 +14,7 @@ int uname(struct utsname *p) {
 		return -1;
 	}
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_uname, -1);
-	if(int e = mlibc::sys_uname(p); e) {
+	if(int e = mlibc::sysdep_or_enosys<Uname>(p); e) {
 		errno = e;
 		return -1;
 	}

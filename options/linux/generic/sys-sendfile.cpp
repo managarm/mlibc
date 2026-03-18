@@ -1,12 +1,11 @@
-#include <errno.h>
-#include <sys/sendfile.h>
 #include <bits/ensure.h>
-#include <mlibc/linux-sysdeps.hpp>
+#include <errno.h>
+#include <mlibc/all-sysdeps.hpp>
+#include <sys/sendfile.h>
 
 ssize_t sendfile(int outfd, int infd, off_t *offset, size_t size) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sendfile, -1);
 	ssize_t out;
-	if(int e = mlibc::sys_sendfile(outfd, infd, offset, size, &out); e) {
+	if(int e = mlibc::sysdep_or_enosys<Sendfile>(outfd, infd, offset, size, &out); e) {
 		errno = e;
 		return -1;
 	}

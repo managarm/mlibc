@@ -2,7 +2,7 @@
 #include <bits/ensure.h>
 #include <errno.h>
 #include <mlibc-config.h>
-#include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/thread.hpp>
 #include <mlibc/threads.hpp>
@@ -35,7 +35,7 @@ thrd_t thrd_current(void) {
 }
 
 int thrd_sleep(const struct timespec *duration, struct timespec *remaining) {
-	if(!mlibc::sys_sleep) {
+	if constexpr (!mlibc::IsImplemented<Sleep>) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_sleep()");
 	}
@@ -48,7 +48,7 @@ int thrd_sleep(const struct timespec *duration, struct timespec *remaining) {
 	}
 
 	struct timespec tmp = *duration;
-	int e = mlibc::sys_sleep(&tmp.tv_sec, &tmp.tv_nsec);
+	int e = mlibc::sysdep_or_panic<Sleep>(&tmp.tv_sec, &tmp.tv_nsec);
 
 	switch (e) {
 		case 0:
@@ -66,8 +66,8 @@ int thrd_sleep(const struct timespec *duration, struct timespec *remaining) {
 }
 
 void thrd_yield(void) {
-	if(mlibc::sys_yield) {
-		mlibc::sys_yield();
+	if constexpr (mlibc::IsImplemented<Yield>) {
+		mlibc::sysdep_or_panic<Yield>();
 	}else{
 		// Missing sched_yield() is not an error.
 		MLIBC_MISSING_SYSDEP();

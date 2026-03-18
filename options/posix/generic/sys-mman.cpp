@@ -7,12 +7,11 @@
 #include <bits/ensure.h>
 
 #include <mlibc-config.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/posix-sysdeps.hpp>
 
 int mprotect(void *pointer, size_t size, int prot) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_vm_protect, -1);
-	if(int e = mlibc::sys_vm_protect(pointer, size, prot); e) {
+	if(int e = mlibc::sysdep_or_enosys<VmProtect>(pointer, size, prot); e) {
 		errno = e;
 		return -1;
 	}
@@ -20,8 +19,7 @@ int mprotect(void *pointer, size_t size, int prot) {
 }
 
 int mlock(const void *addr, size_t len) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_mlock, -1);
-	if(int e = mlibc::sys_mlock(addr, len); e) {
+	if(int e = mlibc::sysdep_or_enosys<Mlock>(addr, len); e) {
 		errno = e;
 		return -1;
 	}
@@ -29,8 +27,7 @@ int mlock(const void *addr, size_t len) {
 }
 
 int mlockall(int flags) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_mlockall, -1);
-	if(int e = mlibc::sys_mlockall(flags); e) {
+	if(int e = mlibc::sysdep_or_enosys<Mlockall>(flags); e) {
 		errno = e;
 		return -1;
 	}
@@ -38,8 +35,7 @@ int mlockall(int flags) {
 }
 
 int munlock(const void *addr, size_t len) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_munlock, -1);
-	if(int e = mlibc::sys_munlock(addr, len); e) {
+	if(int e = mlibc::sysdep_or_enosys<Munlock>(addr, len); e) {
 		errno = e;
 		return -1;
 	}
@@ -47,26 +43,19 @@ int munlock(const void *addr, size_t len) {
 }
 
 int munlockall(void) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_munlockall, -1);
-	if(int e = mlibc::sys_munlockall(); e) {
+	if(int e = mlibc::sysdep_or_enosys<Munlockall>(); e) {
 		errno = e;
 		return -1;
 	}
 	return 0;
 }
 
-
 int posix_madvise(void *addr, size_t length, int advice) {
-	if(!mlibc::sys_posix_madvise) {
-		MLIBC_MISSING_SYSDEP();
-		return ENOSYS;
-	}
-	return mlibc::sys_posix_madvise(addr, length, advice);
+	return mlibc::sysdep_or_enosys<PosixMadvise>(addr, length, advice);
 }
 
 int msync(void *addr, size_t length, int flags) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_msync, -1);
-	if(int e = mlibc::sys_msync(addr, length, flags); e) {
+	if(int e = mlibc::sysdep_or_enosys<Msync>(addr, length, flags); e) {
 		errno = e;
 		return -1;
 	}
@@ -75,7 +64,7 @@ int msync(void *addr, size_t length, int flags) {
 
 void *mmap(void *hint, size_t size, int prot, int flags, int fd, off_t offset) {
 	void *window;
-	if(int e = mlibc::sys_vm_map(hint, size, prot, flags, fd, offset, &window); e) {
+	if(int e = mlibc::sysdep<VmMap>(hint, size, prot, flags, fd, offset, &window); e) {
 		errno = e;
 		return (void *)-1;
 	}
@@ -87,7 +76,7 @@ void *mmap(void *hint, size_t size, int prot, int flags, int fd, off_t offset) {
 #endif /* !__MLIBC_LINUX_OPTION */
 
 int munmap(void *pointer, size_t size) {
-	if(int e = mlibc::sys_vm_unmap(pointer, size); e) {
+	if(int e = mlibc::sysdep<VmUnmap>(pointer, size); e) {
 		errno = e;
 		return -1;
 	}
@@ -138,8 +127,7 @@ void *mremap(void *pointer, size_t size, size_t new_size, int flags, ...) {
 	__ensure(flags == MREMAP_MAYMOVE);
 
 	void *window;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_vm_remap, (void *)-1);
-	if(int e = mlibc::sys_vm_remap(pointer, size, new_size, &window); e) {
+	if(int e = mlibc::sysdep_or_enosys<VmRemap>(pointer, size, new_size, &window); e) {
 		errno = e;
 		return (void *)-1;
 	}
@@ -154,8 +142,7 @@ int remap_file_pages(void *, size_t, int, size_t, int) {
 int memfd_create(const char *name, unsigned int flags) {
 	int ret = -1;
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_memfd_create, -1);
-	if(int e = mlibc::sys_memfd_create(name, flags, &ret)) {
+	if(int e = mlibc::sysdep_or_enosys<MemfdCreate>(name, flags, &ret)) {
 		errno = e;
 		return -1;
 	}
@@ -164,8 +151,7 @@ int memfd_create(const char *name, unsigned int flags) {
 }
 
 int madvise(void *addr, size_t length, int advice) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_madvise, -1);
-	if(int e = mlibc::sys_madvise(addr, length, advice)) {
+	if(int e = mlibc::sysdep_or_enosys<Madvise>(addr, length, advice)) {
 		errno = e;
 		return -1;
 	}
@@ -174,8 +160,7 @@ int madvise(void *addr, size_t length, int advice) {
 }
 
 int mincore(void *addr, size_t length, unsigned char *vec) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_munlockall, -1);
-	if(int e = mlibc::sys_mincore(addr, length, vec); e) {
+	if(int e = mlibc::sysdep_or_enosys<Mincore>(addr, length, vec); e) {
 		errno = e;
 		return -1;
 	}

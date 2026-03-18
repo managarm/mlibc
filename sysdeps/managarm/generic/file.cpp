@@ -32,7 +32,7 @@ HelHandle __mlibc_getPassthrough(int fd) {
 
 namespace mlibc {
 
-int sys_chdir(const char *path) {
+int Sysdeps<Chdir>::operator()(const char *path) {
 	SignalGuard sguard;
 
 	managarm::posix::ChdirRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -58,7 +58,7 @@ int sys_chdir(const char *path) {
 	return 0;
 }
 
-int sys_fchdir(int fd) {
+int Sysdeps<Fchdir>::operator()(int fd) {
 	SignalGuard sguard;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -83,7 +83,7 @@ int sys_fchdir(int fd) {
 	return 0;
 }
 
-int sys_chroot(const char *path) {
+int Sysdeps<Chroot>::operator()(const char *path) {
 	SignalGuard sguard;
 
 	managarm::posix::ChrootRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -108,9 +108,9 @@ int sys_chroot(const char *path) {
 	return 0;
 }
 
-int sys_mkdir(const char *path, mode_t mode) { return sys_mkdirat(AT_FDCWD, path, mode); }
+int Sysdeps<Mkdir>::operator()(const char *path, mode_t mode) { return sysdep<Mkdirat>(AT_FDCWD, path, mode); }
 
-int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
+int Sysdeps<Mkdirat>::operator()(int dirfd, const char *path, mode_t mode) {
 	SignalGuard sguard;
 
 	managarm::posix::MkdirAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -138,11 +138,11 @@ int sys_mkdirat(int dirfd, const char *path, mode_t mode) {
 	return 0;
 }
 
-int sys_symlink(const char *target_path, const char *link_path) {
-	return sys_symlinkat(target_path, AT_FDCWD, link_path);
+int Sysdeps<Symlink>::operator()(const char *target_path, const char *link_path) {
+	return sysdep<Symlinkat>(target_path, AT_FDCWD, link_path);
 }
 
-int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
+int Sysdeps<Symlinkat>::operator()(const char *target_path, int dirfd, const char *link_path) {
 	SignalGuard sguard;
 
 	managarm::posix::SymlinkAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -170,11 +170,11 @@ int sys_symlinkat(const char *target_path, int dirfd, const char *link_path) {
 	return 0;
 }
 
-int sys_link(const char *old_path, const char *new_path) {
-	return sys_linkat(AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
+int Sysdeps<Link>::operator()(const char *old_path, const char *new_path) {
+	return sysdep<Linkat>(AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
 }
 
-int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags) {
+int Sysdeps<Linkat>::operator()(int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags) {
 	SignalGuard sguard;
 
 	managarm::posix::LinkAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -204,11 +204,11 @@ int sys_linkat(int olddirfd, const char *old_path, int newdirfd, const char *new
 	return 0;
 }
 
-int sys_rename(const char *path, const char *new_path) {
-	return sys_renameat(AT_FDCWD, path, AT_FDCWD, new_path);
+int Sysdeps<Rename>::operator()(const char *path, const char *new_path) {
+	return sysdep<Renameat>(AT_FDCWD, path, AT_FDCWD, new_path);
 }
 
-int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
+int Sysdeps<Renameat>::operator()(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
 	SignalGuard sguard;
 
 	managarm::posix::RenameAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -271,7 +271,7 @@ int do_dup2(int fd, int flags, int newfd, bool fcntl_mode, int *outfd) {
 	return 0;
 }
 
-int sys_fcntl(int fd, int request, va_list args, int *result) {
+int Sysdeps<Fcntl>::operator()(int fd, int request, va_list args, int *result) {
 	SignalGuard sguard;
 	if (request == F_DUPFD) {
 		int newfd;
@@ -490,9 +490,9 @@ int sys_fcntl(int fd, int request, va_list args, int *result) {
 	}
 }
 
-int sys_open_dir(const char *path, int *handle) { return sys_open(path, 0, 0, handle); }
+int Sysdeps<OpenDir>::operator()(const char *path, int *handle) { return sysdep<Open>(path, 0, 0, handle); }
 
-int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) {
+int Sysdeps<ReadEntries>::operator()(int fd, void *buffer, size_t max_size, size_t *bytes_read) {
 	SignalGuard sguard;
 	auto handle = getHandleForFd(fd);
 	if (!handle)
@@ -563,7 +563,7 @@ int sys_read_entries(int fd, void *buffer, size_t max_size, size_t *bytes_read) 
 	return 0;
 }
 
-int sys_ttyname(int fd, char *buf, size_t size) {
+int Sysdeps<Ttyname>::operator()(int fd, char *buf, size_t size) {
 	SignalGuard sguard;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -592,12 +592,12 @@ int sys_ttyname(int fd, char *buf, size_t size) {
 	return 0;
 }
 
-int sys_fdatasync(int) {
+int Sysdeps<Fdatasync>::operator()(int) {
 	mlibc::infoLogger() << "\e[35mmlibc: fdatasync() is a no-op\e[39m" << frg::endlog;
 	return 0;
 }
 
-int sys_getcwd(char *buffer, size_t size) {
+int Sysdeps<GetCwd>::operator()(char *buffer, size_t size) {
 	SignalGuard sguard;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -627,7 +627,7 @@ int sys_getcwd(char *buffer, size_t size) {
 	return 0;
 }
 
-int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
+int Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
 	SignalGuard sguard;
 
 	managarm::posix::VmMapRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -658,7 +658,7 @@ int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offse
 	return 0;
 }
 
-int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) {
+int Sysdeps<VmRemap>::operator()(void *pointer, size_t size, size_t new_size, void **window) {
 	SignalGuard sguard;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -687,7 +687,7 @@ int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window) {
 	return 0;
 }
 
-int sys_vm_protect(void *pointer, size_t size, int prot) {
+int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
 	SignalGuard sguard;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -715,7 +715,7 @@ int sys_vm_protect(void *pointer, size_t size, int prot) {
 	return 0;
 }
 
-int sys_vm_unmap(void *pointer, size_t size) {
+int Sysdeps<VmUnmap>::operator()(void *pointer, size_t size) {
 	SignalGuard sguard;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -742,7 +742,7 @@ int sys_vm_unmap(void *pointer, size_t size) {
 	return 0;
 }
 
-int sys_setsid(pid_t *sid) {
+int Sysdeps<SetSid>::operator()(pid_t *sid) {
 	SignalGuard sguard;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -770,40 +770,40 @@ int sys_setsid(pid_t *sid) {
 	return 0;
 }
 
-int sys_tcgetattr(int fd, struct termios *attr) {
+int Sysdeps<Tcgetattr>::operator()(int fd, struct termios *attr) {
 	int result;
-	if (int e = sys_ioctl(fd, TCGETS, attr, &result); e)
+	if (int e = sysdep<Ioctl>(fd, TCGETS, attr, &result); e)
 		return e;
 	return 0;
 }
 
-int sys_tcsetattr(int fd, int when, const struct termios *attr) {
+int Sysdeps<Tcsetattr>::operator()(int fd, int when, const struct termios *attr) {
 	if (when < TCSANOW || when > TCSAFLUSH)
 		return EINVAL;
 
-	if (int e = sys_ioctl(fd, TCSETS, const_cast<struct termios *>(attr), nullptr); e)
+	if (int e = sysdep<Ioctl>(fd, TCSETS, const_cast<struct termios *>(attr), nullptr); e)
 		return e;
 	return 0;
 }
 
-int sys_tcdrain(int) {
+int Sysdeps<Tcdrain>::operator()(int) {
 	mlibc::thread_testcancel();
 
 	mlibc::infoLogger() << "\e[35mmlibc: tcdrain() is a stub\e[39m" << frg::endlog;
 	return 0;
 }
 
-int sys_tcgetwinsize(int fd, struct winsize *winsz) {
+int Sysdeps<Tcgetwinsize>::operator()(int fd, struct winsize *winsz) {
 	int result;
-	return sys_ioctl(fd, TIOCGWINSZ, winsz, &result);
+	return sysdep<Ioctl>(fd, TIOCGWINSZ, winsz, &result);
 }
 
-int sys_tcsetwinsize(int fd, const struct winsize *winsz) {
+int Sysdeps<Tcsetwinsize>::operator()(int fd, const struct winsize *winsz) {
 	int result;
-	return sys_ioctl(fd, TIOCSWINSZ, const_cast<struct winsize *>(winsz), &result);
+	return sysdep<Ioctl>(fd, TIOCSWINSZ, const_cast<struct winsize *>(winsz), &result);
 }
 
-int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
+int Sysdeps<Socket>::operator()(int domain, int type_and_flags, int proto, int *fd) {
 	constexpr int type_mask = int(0xF);
 	constexpr int flags_mask = ~int(0xF);
 
@@ -835,7 +835,7 @@ int sys_socket(int domain, int type_and_flags, int proto, int *fd) {
 	return 0;
 }
 
-int sys_pipe(int *fds, int flags) {
+int Sysdeps<Pipe>::operator()(int *fds, int flags) {
 	SignalGuard sguard;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -863,7 +863,7 @@ int sys_pipe(int *fds, int flags) {
 	return 0;
 }
 
-int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
+int Sysdeps<Socketpair>::operator()(int domain, int type_and_flags, int proto, int *fds) {
 	constexpr int type_mask = int(0xF);
 	constexpr int flags_mask = ~int(0xF);
 	__ensure(!((type_and_flags & flags_mask) & ~(SOCK_CLOEXEC | SOCK_NONBLOCK)));
@@ -898,7 +898,7 @@ int sys_socketpair(int domain, int type_and_flags, int proto, int *fds) {
 	return 0;
 }
 
-int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *length) {
+int Sysdeps<MsgSend>::operator()(int sockfd, const struct msghdr *hdr, int flags, ssize_t *length) {
 	SignalGuard sguard;
 	mlibc::thread_testcancel();
 
@@ -982,7 +982,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 	return 0;
 }
 
-int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
+int Sysdeps<MsgRecv>::operator()(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	SignalGuard sguard;
 	mlibc::thread_testcancel();
 
@@ -1037,7 +1037,7 @@ int sys_msg_recv(int sockfd, struct msghdr *hdr, int flags, ssize_t *length) {
 	}
 }
 
-int sys_pselect(
+int Sysdeps<Pselect>::operator()(
     int num_fds,
     fd_set *read_set,
     fd_set *write_set,
@@ -1065,7 +1065,7 @@ int sys_pselect(
 		}
 	}
 
-	if (auto e = sys_ppoll(pfds, pcount, timeout, sigmask, num_events); e)
+	if (auto e = sysdep<Ppoll>(pfds, pcount, timeout, sigmask, num_events); e)
 		return e;
 
 	if (read_set)
@@ -1090,7 +1090,7 @@ int sys_pselect(
 	return 0;
 }
 
-int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
+int Sysdeps<Poll>::operator()(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	__ensure(timeout >= 0 || timeout == -1); // TODO: Report errors correctly.
 
 	SignalGuard sguard;
@@ -1138,7 +1138,7 @@ int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
 	}
 }
 
-int sys_ppoll(
+int Sysdeps<Ppoll>::operator()(
     struct pollfd *fds,
     nfds_t count,
     const struct timespec *ts,
@@ -1214,7 +1214,7 @@ int sys_ppoll(
 	}
 }
 
-int sys_epoll_create(int flags, int *fd) {
+int Sysdeps<EpollCreate>::operator()(int flags, int *fd) {
 	// Some applications assume EPOLL_CLOEXEC and O_CLOEXEC to be the same.
 	// They are on linux, but not yet on managarm.
 	__ensure(!(flags & ~(EPOLL_CLOEXEC | O_CLOEXEC)));
@@ -1248,7 +1248,7 @@ int sys_epoll_create(int flags, int *fd) {
 	return 0;
 }
 
-int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
+int Sysdeps<EpollCtl>::operator()(int epfd, int mode, int fd, struct epoll_event *ev) {
 	SignalGuard sguard;
 
 	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -1289,7 +1289,7 @@ int sys_epoll_ctl(int epfd, int mode, int fd, struct epoll_event *ev) {
 	return 0;
 }
 
-int sys_epoll_pwait(
+int Sysdeps<EpollPwait>::operator()(
     int epfd, struct epoll_event *ev, int n, int timeout, const sigset_t *sigmask, int *raised
 ) {
 	if (!(timeout >= 0 || timeout == -1))
@@ -1332,7 +1332,7 @@ int sys_epoll_pwait(
 	return 0;
 }
 
-int sys_timerfd_create(int clockid, int flags, int *fd) {
+int Sysdeps<TimerfdCreate>::operator()(int clockid, int flags, int *fd) {
 	SignalGuard sguard;
 
 	managarm::posix::TimerFdCreateRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -1358,7 +1358,7 @@ int sys_timerfd_create(int clockid, int flags, int *fd) {
 	return 0;
 }
 
-int sys_timerfd_settime(
+int Sysdeps<TimerfdSettime>::operator()(
     int fd, int flags, const struct itimerspec *value, struct itimerspec *oldvalue
 ) {
 	SignalGuard sguard;
@@ -1397,7 +1397,7 @@ int sys_timerfd_settime(
 	return 0;
 }
 
-int sys_timerfd_gettime(int fd, struct itimerspec *its) {
+int Sysdeps<TimerfdGettime>::operator()(int fd, struct itimerspec *its) {
 	SignalGuard sguard;
 
 	managarm::posix::TimerFdGetRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -1431,7 +1431,7 @@ int sys_timerfd_gettime(int fd, struct itimerspec *its) {
 	return 0;
 }
 
-int sys_signalfd_create(const sigset_t *masks, int flags, int *fd) {
+int Sysdeps<SignalfdCreate>::operator()(const sigset_t *masks, int flags, int *fd) {
 	__ensure(!(flags & ~(SFD_CLOEXEC | SFD_NONBLOCK)));
 
 	uint32_t proto_flags = 0;
@@ -1467,7 +1467,7 @@ int sys_signalfd_create(const sigset_t *masks, int flags, int *fd) {
 	return 0;
 }
 
-int sys_pidfd_open(pid_t pid, unsigned int flags, int *outfd) {
+int Sysdeps<PidfdOpen>::operator()(pid_t pid, unsigned int flags, int *outfd) {
 	SignalGuard sguard;
 
 	managarm::posix::PidfdOpenRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -1495,7 +1495,7 @@ int sys_pidfd_open(pid_t pid, unsigned int flags, int *outfd) {
 	return 0;
 }
 
-int sys_pidfd_getpid(int pidfd, pid_t *outpid) {
+int Sysdeps<PidfdGetpid>::operator()(int pidfd, pid_t *outpid) {
 	SignalGuard sguard;
 
 	managarm::posix::PidfdGetPidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -1522,7 +1522,7 @@ int sys_pidfd_getpid(int pidfd, pid_t *outpid) {
 	return 0;
 }
 
-int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info, unsigned int flags) {
+int Sysdeps<PidfdSendSignal>::operator()(int pidfd, int sig, siginfo_t *info, unsigned int flags) {
 	SignalGuard sguard;
 
 	if (info) {
@@ -1556,7 +1556,7 @@ int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info, unsigned int flag
 	return 0;
 }
 
-int sys_reboot(int command) {
+int Sysdeps<Reboot>::operator()(int command) {
 	if (command != RB_POWER_OFF && command != RB_AUTOBOOT) {
 		mlibc::infoLogger(
 		) << "mlibc: Anything other than power off or reboot is not supported yet!"
@@ -1587,7 +1587,7 @@ int sys_reboot(int command) {
 	return 0;
 }
 
-int sys_inotify_create(int flags, int *fd) {
+int Sysdeps<InotifyCreate>::operator()(int flags, int *fd) {
 	__ensure(!(flags & ~(IN_CLOEXEC | IN_NONBLOCK)));
 
 	SignalGuard sguard;
@@ -1620,7 +1620,7 @@ int sys_inotify_create(int flags, int *fd) {
 	return 0;
 }
 
-int sys_inotify_add_watch(int ifd, const char *path, uint32_t mask, int *wd) {
+int Sysdeps<InotifyAddWatch>::operator()(int ifd, const char *path, uint32_t mask, int *wd) {
 	SignalGuard sguard;
 
 	managarm::posix::InotifyAddRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -1649,7 +1649,7 @@ int sys_inotify_add_watch(int ifd, const char *path, uint32_t mask, int *wd) {
 	return 0;
 }
 
-int sys_inotify_rm_watch(int ifd, int wd) {
+int Sysdeps<InotifyRmWatch>::operator()(int ifd, int wd) {
 	SignalGuard sguard;
 
 	managarm::posix::InotifyRmRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -1675,7 +1675,7 @@ int sys_inotify_rm_watch(int ifd, int wd) {
 	return 0;
 }
 
-int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
+int Sysdeps<EventfdCreate>::operator()(unsigned int initval, int flags, int *fd) {
 	if (flags & ~(EFD_NONBLOCK | EFD_CLOEXEC | EFD_SEMAPHORE))
 		return EINVAL;
 
@@ -1712,11 +1712,11 @@ int sys_eventfd_create(unsigned int initval, int flags, int *fd) {
 	return 0;
 }
 
-int sys_open(const char *path, int flags, mode_t mode, int *fd) {
-	return sys_openat(AT_FDCWD, path, flags, mode, fd);
+int Sysdeps<Open>::operator()(const char *path, int flags, mode_t mode, int *fd) {
+	return sysdep<Openat>(AT_FDCWD, path, flags, mode, fd);
 }
 
-int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
+int Sysdeps<Openat>::operator()(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	SignalGuard sguard;
 
 	mlibc::thread_testcancel();
@@ -1782,7 +1782,7 @@ int sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd) {
 	return 0;
 }
 
-int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
+int Sysdeps<Mkfifoat>::operator()(int dirfd, const char *path, mode_t mode) {
 	SignalGuard sguard;
 
 	managarm::posix::MkfifoAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -1810,7 +1810,7 @@ int sys_mkfifoat(int dirfd, const char *path, mode_t mode) {
 	return 0;
 }
 
-int sys_mknodat(int dirfd, const char *path, int mode, int dev) {
+int Sysdeps<Mknodat>::operator()(int dirfd, const char *path, int mode, int dev) {
 	SignalGuard sguard;
 
 	managarm::posix::MknodAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -1839,7 +1839,7 @@ int sys_mknodat(int dirfd, const char *path, int mode, int dev) {
 	return 0;
 }
 
-int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
+int Sysdeps<Read>::operator()(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	SignalGuard sguard;
 	mlibc::thread_testcancel();
 
@@ -1881,11 +1881,11 @@ int sys_read(int fd, void *data, size_t max_size, ssize_t *bytes_read) {
 	return resp.error() | toErrno;
 }
 
-int sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
+int Sysdeps<Readv>::operator()(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
 	for (int i = 0; i < iovc; i++) {
 		ssize_t intermed = 0;
 
-		if (int e = sys_read(fd, iovs[i].iov_base, iovs[i].iov_len, &intermed); e)
+		if (int e = sysdep<Read>(fd, iovs[i].iov_base, iovs[i].iov_len, &intermed); e)
 			return e;
 		else if (intermed == 0)
 			break;
@@ -1896,7 +1896,7 @@ int sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
 	return 0;
 }
 
-int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
+int Sysdeps<Write>::operator()(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	SignalGuard sguard;
 
 	mlibc::thread_testcancel();
@@ -1937,7 +1937,7 @@ int sys_write(int fd, const void *data, size_t size, ssize_t *bytes_written) {
 	return 0;
 }
 
-int sys_writev(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_written) {
+int Sysdeps<Writev>::operator()(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_written) {
 	SignalGuard sguard;
 
 	mlibc::thread_testcancel();
@@ -1990,7 +1990,7 @@ int sys_writev(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_writte
 	return 0;
 }
 
-int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
+int Sysdeps<Pread>::operator()(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 	SignalGuard sguard;
 
 	mlibc::thread_testcancel();
@@ -2033,7 +2033,7 @@ int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
 	return resp.error() | toErrno;
 }
 
-int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_written) {
+int Sysdeps<Pwrite>::operator()(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_written) {
 	SignalGuard sguard;
 
 	mlibc::thread_testcancel();
@@ -2076,7 +2076,7 @@ int sys_pwrite(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_writ
 	return 0;
 }
 
-int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
+int Sysdeps<Seek>::operator()(int fd, off_t offset, int whence, off_t *new_offset) {
 	SignalGuard sguard;
 
 	auto handle = getHandleForFd(fd);
@@ -2118,7 +2118,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 	return 0;
 }
 
-int sys_close(int fd) {
+int Sysdeps<Close>::operator()(int fd) {
 	SignalGuard sguard;
 	mlibc::thread_testcancel();
 
@@ -2142,7 +2142,7 @@ int sys_close(int fd) {
 	return resp.error() | toErrno;
 }
 
-int sys_dup(int fd, int flags, int *newfd) {
+int Sysdeps<Dup>::operator()(int fd, int flags, int *newfd) {
 	SignalGuard sguard;
 
 	__ensure(!(flags & ~(O_CLOEXEC)));
@@ -2176,9 +2176,9 @@ int sys_dup(int fd, int flags, int *newfd) {
 	return 0;
 }
 
-int sys_dup2(int fd, int flags, int newfd) { return do_dup2(fd, flags, newfd, false, nullptr); }
+int Sysdeps<Dup2>::operator()(int fd, int flags, int newfd) { return do_dup2(fd, flags, newfd, false, nullptr); }
 
-int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *result) {
+int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *result) {
 	SignalGuard sguard;
 
 	managarm::posix::FstatAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -2264,8 +2264,7 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 	return 0;
 }
 
-int
-sys_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf) {
+int Sysdeps<Statx>::operator()(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf) {
 	SignalGuard sguard;
 
 	managarm::posix::FstatAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -2356,11 +2355,11 @@ sys_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct 
 	}
 }
 
-int sys_readlink(const char *path, void *data, size_t max_size, ssize_t *length) {
-	return sys_readlinkat(AT_FDCWD, path, data, max_size, length);
+int Sysdeps<Readlink>::operator()(const char *path, void *data, size_t max_size, ssize_t *length) {
+	return sysdep<Readlinkat>(AT_FDCWD, path, data, max_size, length);
 }
 
-int sys_readlinkat(int dirfd, const char *path, void *data, size_t max_size, ssize_t *length) {
+int Sysdeps<Readlinkat>::operator()(int dirfd, const char *path, void *data, size_t max_size, ssize_t *length) {
 	SignalGuard sguard;
 
 	managarm::posix::ReadlinkAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -2389,7 +2388,7 @@ int sys_readlinkat(int dirfd, const char *path, void *data, size_t max_size, ssi
 	return 0;
 }
 
-int sys_rmdir(const char *path) {
+int Sysdeps<Rmdir>::operator()(const char *path) {
 	SignalGuard sguard;
 
 	managarm::posix::RmdirRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -2415,7 +2414,7 @@ int sys_rmdir(const char *path) {
 	return 0;
 }
 
-int sys_ftruncate(int fd, size_t size) {
+int Sysdeps<Ftruncate>::operator()(int fd, size_t size) {
 	SignalGuard sguard;
 
 	auto handle = getHandleForFd(fd);
@@ -2444,7 +2443,7 @@ int sys_ftruncate(int fd, size_t size) {
 	return 0;
 }
 
-int sys_fallocate(int fd, off_t offset, size_t size) {
+int Sysdeps<Fallocate>::operator()(int fd, off_t offset, size_t size) {
 	SignalGuard sguard;
 
 	auto handle = getHandleForFd(fd);
@@ -2474,7 +2473,7 @@ int sys_fallocate(int fd, off_t offset, size_t size) {
 	return 0;
 }
 
-int sys_unlinkat(int fd, const char *path, int flags) {
+int Sysdeps<Unlinkat>::operator()(int fd, const char *path, int flags) {
 	SignalGuard sguard;
 
 	managarm::posix::UnlinkAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -2502,9 +2501,9 @@ int sys_unlinkat(int fd, const char *path, int flags) {
 	return 0;
 }
 
-int sys_access(const char *path, int mode) { return sys_faccessat(AT_FDCWD, path, mode, 0); }
+int Sysdeps<Access>::operator()(const char *path, int mode) { return sysdep<Faccessat>(AT_FDCWD, path, mode, 0); }
 
-int sys_faccessat(int dirfd, const char *pathname, int, int flags) {
+int Sysdeps<Faccessat>::operator()(int dirfd, const char *pathname, int, int flags) {
 	SignalGuard sguard;
 
 	managarm::posix::AccessAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -2532,7 +2531,7 @@ int sys_faccessat(int dirfd, const char *pathname, int, int flags) {
 	return 0;
 }
 
-int sys_flock(int fd, int opts) {
+int Sysdeps<Flock>::operator()(int fd, int opts) {
 	SignalGuard sguard;
 
 	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -2562,7 +2561,7 @@ int sys_flock(int fd, int opts) {
 	return 0;
 }
 
-int sys_isatty(int fd) {
+int Sysdeps<Isatty>::operator()(int fd) {
 	SignalGuard sguard;
 
 	managarm::posix::IsTtyRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -2589,13 +2588,13 @@ int sys_isatty(int fd) {
 	return ENOTTY;
 }
 
-int sys_chmod(const char *pathname, mode_t mode) {
-	return sys_fchmodat(AT_FDCWD, pathname, mode, 0);
+int Sysdeps<Chmod>::operator()(const char *pathname, mode_t mode) {
+	return sysdep<Fchmodat>(AT_FDCWD, pathname, mode, 0);
 }
 
-int sys_fchmod(int fd, mode_t mode) { return sys_fchmodat(fd, "", mode, AT_EMPTY_PATH); }
+int Sysdeps<Fchmod>::operator()(int fd, mode_t mode) { return sysdep<Fchmodat>(fd, "", mode, AT_EMPTY_PATH); }
 
-int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
+int Sysdeps<Fchmodat>::operator()(int fd, const char *pathname, mode_t mode, int flags) {
 	SignalGuard sguard;
 
 	managarm::posix::FchmodAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -2624,7 +2623,7 @@ int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags) {
 	return 0;
 }
 
-int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
+int Sysdeps<Fchownat>::operator()(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
 	SignalGuard sguard;
 
 	managarm::posix::FchownAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -2654,7 +2653,7 @@ int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int 
 	return 0;
 }
 
-int sys_umask(mode_t mode, mode_t *old) {
+int Sysdeps<Umask>::operator()(mode_t mode, mode_t *old) {
 	SignalGuard sguard;
 
 	managarm::posix::UmaskRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -2678,7 +2677,7 @@ int sys_umask(mode_t mode, mode_t *old) {
 	return 0;
 }
 
-int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
+int Sysdeps<Utimensat>::operator()(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
 	SignalGuard sguard;
 
 	managarm::posix::UtimensAtRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -2718,7 +2717,7 @@ int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2
 	return 0;
 }
 
-int sys_getentropy(void *buffer, size_t length) {
+int Sysdeps<GetEntropy>::operator()(void *buffer, size_t length) {
 	SignalGuard sguard;
 	auto p = reinterpret_cast<char *>(buffer);
 	size_t n = 0;
@@ -2732,7 +2731,7 @@ int sys_getentropy(void *buffer, size_t length) {
 	return 0;
 }
 
-int sys_gethostname(char *buffer, size_t bufsize) {
+int Sysdeps<GetHostname>::operator()(char *buffer, size_t bufsize) {
 	SignalGuard sguard;
 	mlibc::infoLogger() << "mlibc: gethostname always returns managarm" << frg::endlog;
 	char name[10] = "managarm\0";
@@ -2742,7 +2741,7 @@ int sys_gethostname(char *buffer, size_t bufsize) {
 	return 0;
 }
 
-int sys_fsync(int fd) {
+int Sysdeps<Fsync>::operator()(int fd) {
 	auto handle = getHandleForFd(fd);
 	if (!handle)
 		return EBADF;
@@ -2750,7 +2749,7 @@ int sys_fsync(int fd) {
 	return 0;
 }
 
-int sys_memfd_create(const char *name, int flags, int *fd) {
+int Sysdeps<MemfdCreate>::operator()(const char *name, int flags, int *fd) {
 	SignalGuard sguard;
 
 	managarm::posix::MemFdCreateRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -2778,7 +2777,7 @@ int sys_memfd_create(const char *name, int flags, int *fd) {
 	return 0;
 }
 
-int sys_uname(struct utsname *buf) {
+int Sysdeps<Uname>::operator()(struct utsname *buf) {
 	__ensure(buf);
 	mlibc::infoLogger() << "\e[31mmlibc: uname() returns static information\e[39m" << frg::endlog;
 	strcpy(buf->sysname, "Managarm");
@@ -2798,14 +2797,14 @@ int sys_uname(struct utsname *buf) {
 	return 0;
 }
 
-int sys_madvise(void *, size_t, int) {
+int Sysdeps<Madvise>::operator()(void *, size_t, int) {
 	mlibc::infoLogger() << "mlibc: sys_madvise is a stub!" << frg::endlog;
 	return 0;
 }
 
-int sys_ptsname(int fd, char *buffer, size_t length) {
+int Sysdeps<Ptsname>::operator()(int fd, char *buffer, size_t length) {
 	int index;
-	if (int e = sys_ioctl(fd, TIOCGPTN, &index, nullptr); e)
+	if (int e = sysdep<Ioctl>(fd, TIOCGPTN, &index, nullptr); e)
 		return e;
 	if ((size_t)snprintf(buffer, length, "/dev/pts/%d", index) >= length) {
 		return ERANGE;
@@ -2813,16 +2812,16 @@ int sys_ptsname(int fd, char *buffer, size_t length) {
 	return 0;
 }
 
-int sys_unlockpt(int fd) {
+int Sysdeps<Unlockpt>::operator()(int fd) {
 	int unlock = 0;
 
-	if (int e = sys_ioctl(fd, TIOCSPTLCK, &unlock, nullptr); e)
+	if (int e = sysdep<Ioctl>(fd, TIOCSPTLCK, &unlock, nullptr); e)
 		return e;
 
 	return 0;
 }
 
-int sys_setrlimit(int resource, const struct rlimit *limit) {
+int Sysdeps<SetRlimit>::operator()(int resource, const struct rlimit *limit) {
 	switch (resource) {
 		case RLIMIT_NOFILE: {
 			SignalGuard sguard;
@@ -2854,7 +2853,7 @@ int sys_setrlimit(int resource, const struct rlimit *limit) {
 	}
 }
 
-int sys_getrlimit(int resource, struct rlimit *limit) {
+int Sysdeps<GetRlimit>::operator()(int resource, struct rlimit *limit) {
 	switch (resource) {
 		case RLIMIT_NOFILE:
 			/* TODO: change this once we support more than 512 */
@@ -2866,11 +2865,11 @@ int sys_getrlimit(int resource, struct rlimit *limit) {
 	}
 }
 
-int sys_sysconf(int num, long *ret) {
+int Sysdeps<Sysconf>::operator()(int num, long *ret) {
 	switch (num) {
 		case _SC_OPEN_MAX: {
 			struct rlimit ru;
-			if (int e = sys_getrlimit(RLIMIT_NOFILE, &ru); e) {
+			if (int e = sysdep<GetRlimit>(RLIMIT_NOFILE, &ru); e) {
 				return e;
 			}
 			*ret = (ru.rlim_cur == RLIM_INFINITY) ? -1 : ru.rlim_cur;
@@ -2912,7 +2911,7 @@ int sys_sysconf(int num, long *ret) {
 	return 0;
 }
 
-int sys_sysinfo(struct sysinfo *info) {
+int Sysdeps<Sysinfo>::operator()(struct sysinfo *info) {
 	SignalGuard sguard;
 
 	managarm::posix::GetMemoryInformationRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -2997,15 +2996,15 @@ static int do_statfs(int fd, const char *path, struct statfs *buf) {
 	return 0;
 }
 
-int sys_statfs(const char *path, struct statfs *buf) {
+int Sysdeps<Statfs>::operator()(const char *path, struct statfs *buf) {
 	return do_statfs(-1, path, buf);
 }
 
-int sys_fstatfs(int fd, struct statfs *buf) {
+int Sysdeps<Fstatfs>::operator()(int fd, struct statfs *buf) {
 	return do_statfs(fd, nullptr, buf);
 }
 
-int sys_prctl(int option, va_list va, int *out) {
+int Sysdeps<Prctl>::operator()(int option, va_list va, int *out) {
 	SignalGuard sguard;
 
 	switch (option) {
@@ -3142,36 +3141,29 @@ static int do_statvfs(int fd, const char *path, struct statvfs *buf) {
 	return 0;
 }
 
-int sys_statvfs(const char *path, struct statvfs *buf) {
+int Sysdeps<Statvfs>::operator()(const char *path, struct statvfs *buf) {
 	return do_statvfs(-1, path, buf);
 }
 
-int sys_fstatvfs(int fd, struct statvfs *buf) {
+int Sysdeps<Fstatvfs>::operator()(int fd, struct statvfs *buf) {
 	return do_statvfs(fd, nullptr, buf);
 }
 
-int sys_getpriority(int, id_t, int *value) {
+int Sysdeps<GetPriority>::operator()(int, id_t, int *value) {
 	mlibc::infoLogger() << "\e[35mmlibc: getpriority() always returns 0\e[39m" << frg::endlog;
 	*value = 0;
 	return 0;
 }
 
-int sys_setpriority(int, id_t, int) {
+int Sysdeps<SetPriority>::operator()(int, id_t, int) {
 	mlibc::infoLogger() << "\e[35mmlibc: setpriority() is a stub\e[39m" << frg::endlog;
 	return 0;
 }
 
-// We don't support extended attributes yet
-int sys_removexattr(const char *, const char *) { return ENOSYS; }
-
-int sys_lgetxattr(const char *, const char *, void *, size_t, ssize_t *) { return ENOSYS; }
-
-int sys_setxattr(const char *, const char *, const void *, size_t, int) { return ENOSYS; }
-
 // We don't implement name_to_handle_at, EOPNOTSUPP will cause systemd to fall through to backup options
-int sys_name_to_handle_at(int, const char *, struct file_handle *, int *, int) { return EOPNOTSUPP; }
+int Sysdeps<NameToHandleAt>::operator()(int, const char *, struct file_handle *, int *, int) { return EOPNOTSUPP; }
 
-int sys_setgroups(size_t size, const gid_t *list) {
+int Sysdeps<SetGroups>::operator()(size_t size, const gid_t *list) {
 	SignalGuard sguard;
 
 	managarm::posix::SetGroupsRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -3199,7 +3191,7 @@ int sys_setgroups(size_t size, const gid_t *list) {
 	return 0;
 }
 
-int sys_getgroups(size_t size, gid_t *list, int *ret) {
+int Sysdeps<GetGroups>::operator()(size_t size, gid_t *list, int *ret) {
 	SignalGuard sguard;
 
 	managarm::posix::GetGroupsRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -3234,7 +3226,7 @@ int sys_getgroups(size_t size, gid_t *list, int *ret) {
 	return 0;
 }
 
-int sys_listxattr(const char *, char *, size_t, ssize_t *) {
+int Sysdeps<Listxattr>::operator()(const char *, char *, size_t, ssize_t *) {
 	// Valid return if the underlying filesystem does not support xattrs, or if they are disabled.
 	// As we don't implement them at all, we return ENOTSUP.
 	return ENOTSUP;

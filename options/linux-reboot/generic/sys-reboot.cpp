@@ -1,11 +1,10 @@
 #include <errno.h>
 #include <sys/reboot.h>
 #include <bits/ensure.h>
-#include <mlibc/linux-reboot-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 int reboot(int what) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_reboot, -1);
-	if (int e = mlibc::sys_reboot(what); e) {
+	if (int e = mlibc::sysdep_or_enosys<Reboot>(what); e) {
 		errno = e;
 		return -1;
 	}

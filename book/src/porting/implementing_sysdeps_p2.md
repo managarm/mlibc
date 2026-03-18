@@ -2,7 +2,7 @@
 
 Let's try building mlibc:
 
-```
+```sh
 $   meson \
     setup \
     --cross-file=path/to/your.cross-file \
@@ -28,13 +28,13 @@ Part of configuring an [OS Specific Toolchain](https://wiki.osdev.org/OS_Specifi
 
 We recommend copying `(S)crt1.S` from an existing target like Linux. Then, we'll compile it by adding the following to our `meson.build`:
 
-```
+```meson
 {{#include ../../../sysdeps/demo/meson.build:crt1}}
 ```
 
 ## Implementing a C++ entry point
 
-Now, we'll implement the C++ entry point that we call from `crt1.S`. 
+Now, we'll implement the C++ entry point that we call from `crt1.S`.
 
 ```cpp
 {{#include ../../../sysdeps/demo/entry.cpp}}
@@ -50,35 +50,17 @@ The final piece of infrastructure we require is the ability to invoke system cal
 
 For example, on RISC-V a system call is invoked via the `ecall` instruction and requires putting arguments in specific registers, which requires a bit of (inline) assembly. We recommend copying this glue from an existing target.
 
-For the demo OS, this is provided by `syscall.cpp` and `include/bits/syscall.h`.
+For the demo OS, this is provided by [`syscall.cpp`](https://github.com/managarm/mlibc/blob/master/sysdeps/demo/syscall.cpp) and [`include/bits/syscall.h`](https://github.com/managarm/mlibc/blob/master/sysdeps/demo/include/bits/syscall.h).
 
 ## Implementing sysdeps
 
-Finally we're ready to implement the actual sysdep functions. For a basic statically-linked hello world program, you'll need to provide definitions of the following sysdep functions:
+Finally we're ready to implement the actual sysdep functions. While most sysdep functions are optional, a small list of them are mandatory. These mandatory sysdeps are enough for running a basic statically-linked hello world program. Their presence is enforced by these `static_asserts`:
 
-- `mlibc::sys_libc_panic`
-- `mlibc::sys_libc_log`
-- `mlibc::sys_isatty`
-- `mlibc::sys_write`
-- `mlibc::sys_tcb_set`
-- `mlibc::sys_anon_allocate`
-- `mlibc::sys_anon_free`
-- `mlibc::sys_seek`
-- `mlibc::sys_exit`
-- `mlibc::sys_close`
-- `mlibc::sys_futex_wake`
-- `mlibc::sys_futex_wait`
-- `mlibc::sys_read`
-- `mlibc::sys_open`
-- `mlibc::sys_vm_map`
-- `mlibc::sys_vm_unmap`
-- `mlibc::sys_clock_get`
+```cpp
+{{#include ../../../options/internal/include/mlibc/all-sysdeps.hpp:mandatory-sysdeps}}
+```
 
-Note that many of these functions are declared as weak symbols. You _must_ include the relevant headers (e.g `<mlibc/all-sysdeps.hpp>`) before providing definitions.
-
-Diverging from the declared sysdep signature will result in different mangling of the function (because they are not declared extern "C", but have C++ linkage instead), which makes it look like the sysdep is missing - this is a silent breakage that likely does not result in compiler errors or even warnings.
-
-Most sysdep functions return an integer error code (0 for success, or a value that matches the sysdep's abi-bits errno definitions on failure) and return data via out parameters. Note that sysdeps shouldn't set errno directly - mlibc will set it from the error code you return.
+Most sysdep functions return an integer error code (0 for success, or a value that matches the sysdep's abi-bits errno definitions on failure) and return data via out parameters. Note that sysdeps should never set errno directly - mlibc will set it from the error code you return.
 
 As a general strategy, it's a good idea to stub whatever's required to make things compile, and then add proper implementations later. For example:
 
@@ -86,11 +68,14 @@ As a general strategy, it's a good idea to stub whatever's required to make thin
 {{#include ../../../sysdeps/demo/sysdeps.cpp:stub}}
 
 namespace mlibc {
-int sys_close(int fd) { STUB(); }
+
+{{#include ../../../sysdeps/demo/sysdeps.cpp:stubbed-sysdep}}
+
 }
 ```
 
 ## Adding source files and includes to the build system
+
 Finally, tell meson about your sources and includes:
 
 ```meson
@@ -102,13 +87,15 @@ Finally, tell meson about your sources and includes:
 At this point, you should be able to compile and link mlibc itself. Congratulations!
 
 Install mlibc into the sysroot:
-```
+
+```bash
 DESTDIR=${SYSROOT_DIR} ninja -C build install
 ```
 
 Now we'll compile a simple hello world program that we can run on our kernel:
+
 ```bash
-$ riscv64-demo-gcc -march=rv64gc -mabi=lp64d helloworld.c -o helloworld
+riscv64-demo-gcc -march=rv64gc -mabi=lp64d helloworld.c -o helloworld
 ```
 
 ## Troubleshooting

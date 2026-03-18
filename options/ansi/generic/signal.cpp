@@ -3,8 +3,8 @@
 #include <errno.h>
 #include <signal.h>
 
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/ansi-sysdeps.hpp>
 
 __sighandler signal(int sn, __sighandler handler) {
 	struct sigaction sa;
@@ -12,8 +12,7 @@ __sighandler signal(int sn, __sighandler handler) {
 	sa.sa_flags = 0;
 	sigemptyset(&sa.sa_mask);
 	struct sigaction old;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sigaction, SIG_ERR);
-	if(int e = mlibc::sys_sigaction(sn, &sa, &old)){
+	if(int e = mlibc::sysdep_or_enosys<Sigaction>(sn, &sa, &old)){
 		errno = e;
 		return SIG_ERR;
 	}
@@ -21,10 +20,10 @@ __sighandler signal(int sn, __sighandler handler) {
 }
 
 int raise(int sig) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getpid && mlibc::sys_kill, -1);
-	pid_t pid = mlibc::sys_getpid();
+	MLIBC_CHECK_OR_ENOSYS(mlibc::IsImplemented<GetPid> && mlibc::IsImplemented<Kill>, -1);
+	pid_t pid = mlibc::sysdep_or_panic<GetPid>();
 
-	if (int e = mlibc::sys_kill(pid, sig)) {
+	if (int e = mlibc::sysdep_or_panic<Kill>(pid, sig)) {
 		errno = e;
 		return -1;
 	}
@@ -34,8 +33,7 @@ int raise(int sig) {
 
 // This is a POSIX extension, but we have it in here for sigsetjmp
 int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sigprocmask, -1);
-	if(int e = mlibc::sys_sigprocmask(how, set, retrieve); e) {
+	if(int e = mlibc::sysdep_or_enosys<Sigprocmask>(how, set, retrieve); e) {
 		errno = e;
 		return -1;
 	}

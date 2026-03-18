@@ -23,7 +23,7 @@ extern "C" void __mlibc_signal_restore();
 
 namespace mlibc {
 
-int sys_sigprocmask(int how, const sigset_t *set, sigset_t *retrieve) {
+int Sysdeps<Sigprocmask>::operator()(int how, const sigset_t *set, sigset_t *retrieve) {
 	// This implementation is inherently signal-safe.
 	uint64_t err, former, unused;
 	if (set) {
@@ -45,7 +45,7 @@ int sys_sigprocmask(int how, const sigset_t *set, sigset_t *retrieve) {
 	return err;
 }
 
-int sys_sigaction(
+int Sysdeps<Sigaction>::operator()(
     int number, const struct sigaction *__restrict action, struct sigaction *__restrict saved_action
 ) {
 	SignalGuard sguard;
@@ -104,16 +104,16 @@ int sys_sigaction(
 	return 0;
 }
 
-int sys_kill(pid_t pid, int number) {
+int Sysdeps<Kill>::operator()(pid_t pid, int number) {
 	// This implementation is inherently signal-safe.
 	HelWord out;
 	HEL_CHECK(helSyscall4_1(kHelObserveSuperCall + posix::superSigKill, pid, number, SI_USER, 0, &out));
 	return out;
 }
 
-int sys_tgkill(int, int tid, int number) { return sys_kill(tid, number); }
+int Sysdeps<Tgkill>::operator()(int, int tid, int number) { return sysdep<Kill>(tid, number); }
 
-int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
+int Sysdeps<Sigaltstack>::operator()(const stack_t *ss, stack_t *oss) {
 	HelWord out;
 
 	// This implementation is inherently signal-safe.
@@ -127,7 +127,7 @@ int sys_sigaltstack(const stack_t *ss, stack_t *oss) {
 	return out;
 }
 
-int sys_sigsuspend(const sigset_t *set) {
+int Sysdeps<Sigsuspend>::operator()(const sigset_t *set) {
 	// TODO: this only handles cancellations up to this point; the syscall does not get cancelled
 	SignalGuard sguard;
 	mlibc::thread_testcancel();
@@ -152,7 +152,7 @@ int sys_sigsuspend(const sigset_t *set) {
 	return EINTR;
 }
 
-int sys_sigpending(sigset_t *set) {
+int Sysdeps<Sigpending>::operator()(sigset_t *set) {
 	uint64_t pendingMask;
 
 	HEL_CHECK(helSyscall0_1(kHelObserveSuperCall + posix::superSigGetPending, &pendingMask));
@@ -161,7 +161,7 @@ int sys_sigpending(sigset_t *set) {
 	return 0;
 }
 
-int sys_pause() {
+int Sysdeps<Pause>::operator()() {
 	// TODO: this only handles cancellations up to this point; the syscall does not get cancelled
 	SignalGuard sguard;
 	mlibc::thread_testcancel();
@@ -179,7 +179,7 @@ int sys_pause() {
 	return EINTR;
 }
 
-int sys_sigtimedwait(
+int Sysdeps<Sigtimedwait>::operator()(
     const sigset_t *__restrict set,
     siginfo_t *__restrict info,
     const struct timespec *__restrict timeout,
@@ -209,7 +209,7 @@ int sys_sigtimedwait(
 	return 0;
 }
 
-int sys_sigqueue(pid_t pid, int sig, const union sigval val) {
+int Sysdeps<Sigqueue>::operator()(pid_t pid, int sig, const union sigval val) {
 	// This implementation is inherently signal-safe.
 	HelWord out;
 	HEL_CHECK(helSyscall4_1(kHelObserveSuperCall + posix::superSigKill, pid, sig, SI_QUEUE, reinterpret_cast<uintptr_t>(val.sival_ptr), &out));

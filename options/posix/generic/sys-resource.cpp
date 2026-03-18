@@ -4,21 +4,19 @@
 
 #include <bits/ensure.h>
 #include <mlibc-config.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/posix-sysdeps.hpp>
 
 int getpriority(int which, id_t who) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getpriority, -1);
 	int value = 0;
-	if(int e = mlibc::sys_getpriority(which, who, &value); e) {
+	if(int e = mlibc::sysdep_or_enosys<GetPriority>(which, who, &value); e) {
 		errno = e;
 	}
 	return value;
 }
 
 int setpriority(int which, id_t who, int prio) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setpriority, -1);
-	if(int e = mlibc::sys_setpriority(which, who, prio); e) {
+	if(int e = mlibc::sysdep_or_enosys<SetPriority>(which, who, prio); e) {
 		errno = e;
 		return -1;
 	}
@@ -26,8 +24,7 @@ int setpriority(int which, id_t who, int prio) {
 }
 
 int getrusage(int scope, struct rusage *usage) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getrusage, -1);
-	if(int e = mlibc::sys_getrusage(scope, usage); e) {
+	if(int e = mlibc::sysdep_or_enosys<GetRusage>(scope, usage); e) {
 		errno = e;
 		return -1;
 	}
@@ -35,8 +32,7 @@ int getrusage(int scope, struct rusage *usage) {
 }
 
 int getrlimit(int resource, struct rlimit *limit) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getrlimit, -1);
-	if(int e = mlibc::sys_getrlimit(resource, limit); e) {
+	if(int e = mlibc::sysdep_or_enosys<GetRlimit>(resource, limit); e) {
 		errno = e;
 		return -1;
 	}
@@ -48,8 +44,7 @@ int getrlimit(int resource, struct rlimit *limit) {
 #endif /* !__MLIBC_LINUX_OPTION */
 
 int setrlimit(int resource, const struct rlimit *limit) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setrlimit, -1);
-	if(int e = mlibc::sys_setrlimit(resource, limit); e) {
+	if(int e = mlibc::sysdep_or_enosys<SetRlimit>(resource, limit); e) {
 		errno = e;
 		return -1;
 	}

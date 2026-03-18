@@ -28,14 +28,14 @@
 
 namespace mlibc {
 
-int sys_futex_tid() {
+pid_t Sysdeps<FutexTid>::operator()() {
 	HelWord tid = 0;
 	HEL_CHECK(helSyscall0_1(kHelCallSuper + posix::superGetTid, &tid));
 
 	return tid;
 }
 
-int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
+int Sysdeps<FutexWait>::operator()(int *pointer, int expected, const struct timespec *time) {
 	// This implementation is inherently signal-safe.
 	int err = 0;
 
@@ -62,14 +62,14 @@ int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
 	}
 }
 
-int sys_futex_wake(int *pointer, bool all) {
+int Sysdeps<FutexWake>::operator()(int *pointer, bool all) {
 	// This implementation is inherently signal-safe.
 	if (helFutexWake(pointer, all ? UINT32_MAX : 1))
 		return -1;
 	return 0;
 }
 
-int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
+int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
 	SignalGuard sguard;
 	mlibc::thread_testcancel();
 
@@ -117,7 +117,7 @@ int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret
 	return 0;
 }
 
-int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
+int Sysdeps<Waitid>::operator()(idtype_t idtype, id_t id, siginfo_t *info, int options) {
 	SignalGuard sguard;
 
 	mlibc::thread_testcancel();
@@ -163,18 +163,18 @@ int sys_waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
 	return 0;
 }
 
-void sys_exit(int status) {
+void Sysdeps<Exit>::operator()(int status) {
 	// This implementation is inherently signal-safe.
 	HEL_CHECK(helSyscall1(kHelCallSuper + posix::superExit, status));
 	__builtin_trap();
 }
 
-void sys_yield() {
+void Sysdeps<Yield>::operator()() {
 	// This implementation is inherently signal-safe.
 	HEL_CHECK(helYield());
 }
 
-int sys_sleep(time_t *secs, long *nanos) {
+int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
 	SignalGuard sguard;
 	// TODO: this only handles cancellations up to this point; the syscall does not get cancelled
 	mlibc::thread_testcancel();
@@ -201,7 +201,7 @@ int sys_sleep(time_t *secs, long *nanos) {
 	return 0;
 }
 
-int sys_fork(pid_t *child) {
+int Sysdeps<Fork>::operator()(pid_t *child) {
 	// This implementation is inherently signal-safe.
 	int res;
 
@@ -228,7 +228,7 @@ int sys_fork(pid_t *child) {
 	return 0;
 }
 
-int sys_execve(const char *path, char *const argv[], char *const envp[]) {
+int Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *const envp[]) {
 	// TODO: Make this function signal-safe!
 	SignalGuard sguard;
 
@@ -256,7 +256,7 @@ int sys_execve(const char *path, char *const argv[], char *const envp[]) {
 	return out;
 }
 
-gid_t sys_getgid() {
+gid_t Sysdeps<GetGid>::operator()() {
 	SignalGuard sguard;
 
 	managarm::posix::GetGidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -278,7 +278,7 @@ gid_t sys_getgid() {
 	return resp.uid();
 }
 
-int sys_setgid(gid_t gid) {
+int Sysdeps<SetGid>::operator()(gid_t gid) {
 	SignalGuard sguard;
 
 	managarm::posix::SetGidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -304,7 +304,7 @@ int sys_setgid(gid_t gid) {
 	return 0;
 }
 
-gid_t sys_getegid() {
+gid_t Sysdeps<GetEgid>::operator()() {
 	SignalGuard sguard;
 
 	managarm::posix::GetEgidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -326,7 +326,7 @@ gid_t sys_getegid() {
 	return resp.uid();
 }
 
-int sys_setegid(gid_t egid) {
+int Sysdeps<SetEgid>::operator()(gid_t egid) {
 	SignalGuard sguard;
 
 	managarm::posix::SetEgidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -352,22 +352,22 @@ int sys_setegid(gid_t egid) {
 	return 0;
 }
 
-int sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
+int Sysdeps<SetResgid>::operator()(gid_t rgid, gid_t egid, gid_t sgid) {
 	// TODO: handle saved set-user-ID
 	(void)sgid;
 
-	int real = sys_setgid(rgid);
+	int real = sysdep<SetGid>(rgid);
 	if (real)
 		return real;
 
-	int effective = sys_setegid(egid);
+	int effective = sysdep<SetEgid>(egid);
 	if (effective)
 		return effective;
 
 	return 0;
 }
 
-uid_t sys_getuid() {
+uid_t Sysdeps<GetUid>::operator()() {
 	SignalGuard sguard;
 
 	managarm::posix::GetUidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -389,7 +389,7 @@ uid_t sys_getuid() {
 	return resp.uid();
 }
 
-int sys_setuid(uid_t uid) {
+int Sysdeps<SetUid>::operator()(uid_t uid) {
 	SignalGuard sguard;
 
 	managarm::posix::SetUidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -415,7 +415,7 @@ int sys_setuid(uid_t uid) {
 	return 0;
 }
 
-uid_t sys_geteuid() {
+uid_t Sysdeps<GetEuid>::operator()() {
 	SignalGuard sguard;
 
 	managarm::posix::GetEuidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -437,7 +437,7 @@ uid_t sys_geteuid() {
 	return resp.uid();
 }
 
-int sys_seteuid(uid_t euid) {
+int Sysdeps<SetEuid>::operator()(uid_t euid) {
 	SignalGuard sguard;
 
 	managarm::posix::SetEuidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -463,53 +463,53 @@ int sys_seteuid(uid_t euid) {
 	return 0;
 }
 
-int sys_setresuid(uid_t ruid, uid_t euid, uid_t suid) {
+int Sysdeps<SetResuid>::operator()(uid_t ruid, uid_t euid, uid_t suid) {
 	// TODO: handle saved set-user-ID
 	(void)suid;
 
-	int real = sys_setuid(ruid);
+	int real = sysdep<SetUid>(ruid);
 	if (real)
 		return real;
 
-	int effective = sys_seteuid(euid);
+	int effective = sysdep<SetEuid>(euid);
 	if (effective)
 		return effective;
 
 	return 0;
 }
 
-int sys_setreuid(uid_t ruid, uid_t euid) {
-	int real = sys_setuid(ruid);
+int Sysdeps<SetReuid>::operator()(uid_t ruid, uid_t euid) {
+	int real = sysdep<SetUid>(ruid);
 	if (real)
 		return real;
 
-	int effective = sys_seteuid(euid);
+	int effective = sysdep<SetEuid>(euid);
 	if (effective)
 		return effective;
 
 	return 0;
 }
 
-int sys_setregid(gid_t rgid, gid_t egid) {
-	int real = sys_setgid(rgid);
+int Sysdeps<SetRegid>::operator()(gid_t rgid, gid_t egid) {
+	int real = sysdep<SetGid>(rgid);
 	if (real)
 		return real;
 
-	int effective = sys_setegid(egid);
+	int effective = sysdep<SetEgid>(egid);
 	if (effective)
 		return effective;
 
 	return 0;
 }
 
-pid_t sys_gettid() {
+pid_t Sysdeps<GetTid>::operator()() {
 	HelWord tid = 0;
 	HEL_CHECK(helSyscall0_1(kHelCallSuper + posix::superGetTid, &tid));
 
 	return tid;
 }
 
-pid_t sys_getpid() {
+pid_t Sysdeps<GetPid>::operator()() {
 	SignalGuard sguard;
 
 	managarm::posix::GetPidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -531,7 +531,7 @@ pid_t sys_getpid() {
 	return resp.pid();
 }
 
-pid_t sys_getppid() {
+pid_t Sysdeps<GetPpid>::operator()() {
 	SignalGuard sguard;
 
 	managarm::posix::GetPpidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -553,7 +553,7 @@ pid_t sys_getppid() {
 	return resp.pid();
 }
 
-int sys_getsid(pid_t pid, pid_t *sid) {
+int Sysdeps<GetSid>::operator()(pid_t pid, pid_t *sid) {
 	SignalGuard sguard;
 
 	managarm::posix::GetSidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -580,7 +580,7 @@ int sys_getsid(pid_t pid, pid_t *sid) {
 	return 0;
 }
 
-int sys_getpgid(pid_t pid, pid_t *pgid) {
+int Sysdeps<GetPgid>::operator()(pid_t pid, pid_t *pgid) {
 	SignalGuard sguard;
 
 	managarm::posix::GetPgidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -607,7 +607,7 @@ int sys_getpgid(pid_t pid, pid_t *pgid) {
 	return 0;
 }
 
-int sys_setpgid(pid_t pid, pid_t pgid) {
+int Sysdeps<SetPgid>::operator()(pid_t pid, pid_t pgid) {
 	SignalGuard sguard;
 
 	managarm::posix::SetPgidRequest<MemoryAllocator> req(getSysdepsAllocator());
@@ -634,7 +634,7 @@ int sys_setpgid(pid_t pid, pid_t pgid) {
 	return 0;
 }
 
-int sys_getrusage(int scope, struct rusage *usage) {
+int Sysdeps<GetRusage>::operator()(int scope, struct rusage *usage) {
 	memset(usage, 0, sizeof(struct rusage));
 
 	SignalGuard sguard;
@@ -665,7 +665,7 @@ int sys_getrusage(int scope, struct rusage *usage) {
 	return 0;
 }
 
-int sys_getschedparam(void *tcb, int *policy, struct sched_param *param) {
+int Sysdeps<GetSchedparam>::operator()(void *tcb, int *policy, struct sched_param *param) {
 	if (tcb != mlibc::get_current_tcb()) {
 		return ESRCH;
 	}
@@ -680,7 +680,7 @@ int sys_getschedparam(void *tcb, int *policy, struct sched_param *param) {
 	return 0;
 }
 
-int sys_setschedparam(void *tcb, int policy, const struct sched_param *param) {
+int Sysdeps<SetSchedparam>::operator()(void *tcb, int policy, const struct sched_param *param) {
 	if (tcb != mlibc::get_current_tcb()) {
 		return ESRCH;
 	}
@@ -694,7 +694,7 @@ int sys_setschedparam(void *tcb, int policy, const struct sched_param *param) {
 	return 0;
 }
 
-int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
+int Sysdeps<Clone>::operator()(void *tcb, pid_t *tid_out, void *stack) {
 	(void)tcb;
 
 	HelWord posixErr = 0;
@@ -721,7 +721,7 @@ int sys_clone(void *tcb, pid_t *tid_out, void *stack) {
 	return 0;
 }
 
-int sys_tcb_set(void *pointer) {
+int Sysdeps<TcbSet>::operator()(void *pointer) {
 #if defined(__x86_64__)
 	HEL_CHECK(helWriteFsBase(pointer));
 #elif defined(__aarch64__)
@@ -737,13 +737,13 @@ int sys_tcb_set(void *pointer) {
 	return 0;
 }
 
-void sys_thread_exit() {
+void Sysdeps<ThreadExit>::operator()() {
 	// This implementation is inherently signal-safe.
 	HEL_CHECK(helSyscall1(kHelCallSuper + posix::superThreadExit, 0));
 	__builtin_trap();
 }
 
-int sys_thread_setname(void *tcb, const char *name) {
+int Sysdeps<ThreadSetname>::operator()(void *tcb, const char *name) {
 	if (strlen(name) > 15) {
 		return ERANGE;
 	}
@@ -759,22 +759,22 @@ int sys_thread_setname(void *tcb, const char *name) {
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 
 	int fd;
-	if (int e = sys_open(path, O_WRONLY, 0, &fd); e) {
+	if (int e = sysdep<Open>(path, O_WRONLY, 0, &fd); e) {
 		return e;
 	}
 
-	if (int e = sys_write(fd, name, strlen(name) + 1, nullptr)) {
+	if (int e = sysdep<Write>(fd, name, strlen(name) + 1, nullptr)) {
 		return e;
 	}
 
-	sys_close(fd);
+	sysdep<Close>(fd);
 
 	pthread_setcancelstate(cs, nullptr);
 
 	return 0;
 }
 
-int sys_thread_getname(void *tcb, char *name, size_t size) {
+int Sysdeps<ThreadGetname>::operator()(void *tcb, char *name, size_t size) {
 	auto t = reinterpret_cast<Tcb *>(tcb);
 	char *path;
 	int cs = 0;
@@ -787,16 +787,16 @@ int sys_thread_getname(void *tcb, char *name, size_t size) {
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 
 	int fd;
-	if (int e = sys_open(path, O_RDONLY | O_CLOEXEC, 0, &fd); e) {
+	if (int e = sysdep<Open>(path, O_RDONLY | O_CLOEXEC, 0, &fd); e) {
 		return e;
 	}
 
-	if (int e = sys_read(fd, name, size, &real_size)) {
+	if (int e = sysdep<Read>(fd, name, size, &real_size)) {
 		return e;
 	}
 
 	name[real_size - 1] = 0;
-	sys_close(fd);
+	sysdep<Close>(fd);
 
 	pthread_setcancelstate(cs, nullptr);
 

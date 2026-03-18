@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include <mlibc/internal-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/tcb.hpp>
 #include <bits/ensure.h>
 

@@ -4,17 +4,15 @@
 #include <bits/ensure.h>
 #include <sys/prctl.h>
 
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 
-#include "mlibc/linux-sysdeps.hpp"
-
 int prctl(int op, ...) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_prctl, -1);
-
 	int val;
 	va_list ap;
 	va_start(ap, op);
-	if(int e = mlibc::sys_prctl(op, ap, &val); e) {
+	if(int e = mlibc::sysdep_or_enosys<Prctl>(op, ap, &val); e) {
+		va_end(ap);
 		errno = e;
 		return -1;
 	}

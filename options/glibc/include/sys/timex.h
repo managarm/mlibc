@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 #include <abi-bits/clockid_t.h>
-#include <bits/posix/timeval.h>
+#include <bits/timeval.h>
 
 struct timex {
 	int modes;

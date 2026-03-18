@@ -5,12 +5,12 @@
 #include <abi-bits/seek-whence.h>
 #include <abi-bits/utmp-defines.h>
 #include <bits/ensure.h>
-#include <bits/posix/timeval.h>
+#include <bits/timeval.h>
 #include <bits/size_t.h>
-#include <utmpx.h>
-#include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <string.h>
 #include <type_traits>
+#include <utmpx.h>
 
 namespace mlibc {
 
@@ -30,7 +30,7 @@ int getUtmpEntry(int fd, U *res) {
 	ssize_t read = 0;
 	char *ptr = reinterpret_cast<char *>(res);
 
-	int err = sys_read(fd, ptr, sizeof(U), &read);
+	int err = sysdep<Read>(fd, ptr, sizeof(U), &read);
 	if(err)
 		return err;
 
@@ -42,7 +42,7 @@ int getUtmpEntry(int fd, U *res) {
 	progress = read;
 
 	while(read) {
-		err = sys_read(fd, ptr + progress, sizeof(U) - progress, &read);
+		err = sysdep<Read>(fd, ptr + progress, sizeof(U) - progress, &read);
 		if(err)
 			return err;
 
@@ -100,12 +100,12 @@ int putUtmpEntry(int fd, const U *ut) {
 	char *ptr = (char *) ut;
 
 	off_t discard;
-	if(int e = sys_seek(fd, 0, SEEK_END, &discard); e)
+	if(int e = sysdep<Seek>(fd, 0, SEEK_END, &discard); e)
 		return e;
 
 	while(progress < sizeof(U)) {
 		ssize_t written = 0;
-		if(int e = sys_write(fd, ptr + progress, sizeof(U) - progress, &written); e)
+		if(int e = sysdep<Write>(fd, ptr + progress, sizeof(U) - progress, &written); e)
 			return e;
 		progress += written;
 	}

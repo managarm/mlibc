@@ -3,13 +3,11 @@
 #include <sys/wait.h>
 #include <bits/ensure.h>
 
-#include <mlibc/ansi-sysdeps.hpp>
-#include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 
 int waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
-	auto sysdep = MLIBC_CHECK_OR_ENOSYS(mlibc::sys_waitid, -1);
-	if(int e = sysdep(idtype, id, info, options); e) {
+	if(int e = mlibc::sysdep_or_enosys<Waitid>(idtype, id, info, options); e) {
 		errno = e;
 		return -1;
 	}
@@ -19,8 +17,7 @@ int waitid(idtype_t idtype, id_t id, siginfo_t *info, int options) {
 pid_t waitpid(pid_t pid, int *status, int flags) {
 	pid_t ret;
 	int tmp_status = 0;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_waitpid, -1);
-	if(int e = mlibc::sys_waitpid(pid, &tmp_status, flags, nullptr, &ret); e) {
+	if(int e = mlibc::sysdep_or_enosys<Waitpid>(pid, &tmp_status, flags, nullptr, &ret); e) {
 		errno = e;
 		return -1;
 	}
@@ -43,8 +40,7 @@ pid_t wait3(int *status, int options, struct rusage *rusage) {
 
 pid_t wait4(pid_t pid, int *status, int options, struct rusage *ru) {
 	pid_t ret;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_waitpid, -1);
-	if(int e = mlibc::sys_waitpid(pid, status, options, ru, &ret); e) {
+	if(int e = mlibc::sysdep_or_enosys<Waitpid>(pid, status, options, ru, &ret); e) {
 		errno = e;
 		return -1;
 	}

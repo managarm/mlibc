@@ -2,14 +2,13 @@
 
 #include <keyronex/syscall.h>
 
-#include <mlibc/ansi-sysdeps.hpp>
-#include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 
 namespace mlibc {
 
 int
-sys_kill(pid_t pid, int signal)
+Sysdeps<Kill>::operator()(pid_t pid, int signal)
 {
 	int r = syscall2(SYS_kill, pid, signal, NULL);
 	if (r < 0)
@@ -18,7 +17,7 @@ sys_kill(pid_t pid, int signal)
 }
 
 int
-sys_sigaction(int signal, const struct sigaction *__restrict action,
+Sysdeps<Sigaction>::operator()(int signal, const struct sigaction *__restrict action,
     struct sigaction *__restrict oldAction)
 {
 	int r = syscall3(SYS_sigaction, signal, (uintptr_t)action,
@@ -29,7 +28,7 @@ sys_sigaction(int signal, const struct sigaction *__restrict action,
 }
 
 int
-sys_sigprocmask(int how, const sigset_t *__restrict set,
+Sysdeps<Sigprocmask>::operator()(int how, const sigset_t *__restrict set,
     sigset_t *__restrict retrieve)
 {
 	int r = syscall3(SYS_sigprocmask, how, (uintptr_t)set,
@@ -40,7 +39,7 @@ sys_sigprocmask(int how, const sigset_t *__restrict set,
 }
 
 int
-sys_sigsuspend(const sigset_t *set)
+Sysdeps<Sigsuspend>::operator()(const sigset_t *set)
 {
 	int r = syscall1(SYS_sigsuspend, (uintptr_t)set, NULL);
 	if (r < 0)

@@ -14,21 +14,13 @@
 
 #include <bits/ensure.h>
 #include <mlibc-config.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/arch-defs.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/getopt.hpp>
-#include <mlibc/posix-sysdeps.hpp>
 #include <mlibc/thread.hpp>
 #include <mlibc/utmp.hpp>
-
-#if __MLIBC_BSD_OPTION
-#include <mlibc/bsd-sysdeps.hpp>
-#endif
-
-#if __MLIBC_LINUX_OPTION
-#include <mlibc/linux-sysdeps.hpp>
-#endif
 
 namespace {
 
@@ -44,8 +36,7 @@ unsigned int alarm(unsigned int seconds) {
 }
 
 int chdir(const char *path) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_chdir, -1);
-	if(int e = mlibc::sys_chdir(path); e) {
+	if(int e = mlibc::sysdep_or_enosys<Chdir>(path); e) {
 		errno = e;
 		return -1;
 	}
@@ -53,8 +44,7 @@ int chdir(const char *path) {
 }
 
 int fchdir(int fd) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fchdir, -1);
-	if(int e = mlibc::sys_fchdir(fd); e) {
+	if(int e = mlibc::sysdep_or_enosys<Fchdir>(fd); e) {
 		errno = e;
 		return -1;
 	}
@@ -62,8 +52,7 @@ int fchdir(int fd) {
 }
 
 int chown(const char *path, uid_t uid, gid_t gid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fchownat, -1);
-	if(int e = mlibc::sys_fchownat(AT_FDCWD, path, uid, gid, 0); e) {
+	if(int e = mlibc::sysdep_or_enosys<Fchownat>(AT_FDCWD, path, uid, gid, 0); e) {
 		errno = e;
 		return -1;
 	}
@@ -90,7 +79,7 @@ size_t confstr(int name, char *buf, size_t len) {
 }
 
 void _exit(int status) {
-	mlibc::sys_exit(status);
+	mlibc::sysdep<Exit>(status);
 }
 
 int execl(const char *path, const char *arg0, ...) {
@@ -172,10 +161,10 @@ int execvpe(const char *file, char *const argv[], char *const envp[]) {
 	if(!envp)
 		envp = null_list;
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_execve, -1);
+	MLIBC_CHECK_OR_ENOSYS(mlibc::IsImplemented<Execve>, -1);
 
 	if(strchr(file, '/')) {
-		int e = mlibc::sys_execve(file, argv, envp);
+		int e = mlibc::sysdep_or_panic<Execve>(file, argv, envp);
 		__ensure(e && "sys_execve() is supposed to never return with success");
 		errno = e;
 		return -1;
@@ -206,7 +195,7 @@ int execvpe(const char *file, char *const argv[], char *const envp[]) {
 		if(logExecvpeTries)
 			mlibc::infoLogger() << "mlibc: execvpe() tries '" << path.data() << "'" << frg::endlog;
 
-		int e = mlibc::sys_execve(path.data(), argv, envp);
+		int e = mlibc::sysdep_or_panic<Execve>(path.data(), argv, envp);
 		__ensure(e && "sys_execve() is supposed to never return with success");
 		switch(e) {
 		case ENOENT:
@@ -228,8 +217,7 @@ int execvpe(const char *file, char *const argv[], char *const envp[]) {
 }
 
 int faccessat(int dirfd, const char *pathname, int mode, int flags) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_faccessat, -1);
-	if(int e = mlibc::sys_faccessat(dirfd, pathname, mode, flags); e) {
+	if(int e = mlibc::sysdep_or_enosys<Faccessat>(dirfd, pathname, mode, flags); e) {
 		errno = e;
 		return -1;
 	}
@@ -237,8 +225,7 @@ int faccessat(int dirfd, const char *pathname, int mode, int flags) {
 }
 
 int fchown(int fd, uid_t uid, gid_t gid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fchownat, -1);
-	if(int e = mlibc::sys_fchownat(fd, "", uid, gid, AT_EMPTY_PATH); e) {
+	if(int e = mlibc::sysdep_or_enosys<Fchownat>(fd, "", uid, gid, AT_EMPTY_PATH); e) {
 		errno = e;
 		return -1;
 	}
@@ -246,8 +233,7 @@ int fchown(int fd, uid_t uid, gid_t gid) {
 }
 
 int fchownat(int fd, const char *path, uid_t uid, gid_t gid, int flags) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fchownat, -1);
-	if(int e = mlibc::sys_fchownat(fd, path, uid, gid, flags); e) {
+	if(int e = mlibc::sysdep_or_enosys<Fchownat>(fd, path, uid, gid, flags); e) {
 		errno = e;
 		return -1;
 	}
@@ -255,8 +241,7 @@ int fchownat(int fd, const char *path, uid_t uid, gid_t gid, int flags) {
 }
 
 int fdatasync(int fd) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fdatasync, -1);
-	if(int e = mlibc::sys_fdatasync(fd); e) {
+	if(int e = mlibc::sysdep_or_enosys<Fdatasync>(fd); e) {
 		errno = e;
 		return -1;
 	}
@@ -264,8 +249,7 @@ int fdatasync(int fd) {
 }
 
 int fexecve(int fd, char *const argv[], char *const envp[]) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fexecve, -1);
-	if (int e = mlibc::sys_fexecve(fd, argv, envp); e) {
+	if (int e = mlibc::sysdep_or_enosys<Fexecve>(fd, argv, envp); e) {
 		errno = e;
 		return -1;
 	}
@@ -286,8 +270,7 @@ long fpathconf(int, int name) {
 }
 
 int fsync(int fd) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fsync, -1);
-	if(auto e = mlibc::sys_fsync(fd); e) {
+	if(auto e = mlibc::sysdep_or_enosys<Fsync>(fd); e) {
 		errno = e;
 		return -1;
 	}
@@ -295,8 +278,7 @@ int fsync(int fd) {
 }
 
 int ftruncate(int fd, off_t size) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ftruncate, -1);
-	if(int e = mlibc::sys_ftruncate(fd, size); e) {
+	if(int e = mlibc::sysdep_or_enosys<Ftruncate>(fd, size); e) {
 		errno = e;
 		return -1;
 	}
@@ -320,21 +302,20 @@ char *getcwd(char *buffer, size_t size) {
 		buffer = (char *)malloc(size);
 	}
 
-	if (mlibc::sys_getcwd) {
-		if(int e = mlibc::sys_getcwd(buffer, size); e) {
+	if constexpr (mlibc::IsImplemented<GetCwd>) {
+		if(int e = mlibc::sysdep_or_panic<GetCwd>(buffer, size); e) {
 			errno = e;
 			return nullptr;
 		}
 		return buffer;
 	}
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_stat, nullptr);
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_openat, nullptr);
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_close, nullptr);
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_dup, nullptr);
+	MLIBC_CHECK_OR_ENOSYS(mlibc::IsImplemented<Stat>, nullptr);
+	MLIBC_CHECK_OR_ENOSYS(mlibc::IsImplemented<Openat>, nullptr);
+	MLIBC_CHECK_OR_ENOSYS(mlibc::IsImplemented<Dup>, nullptr);
 
 	struct stat root_stat;
-	if (int e = mlibc::sys_stat(mlibc::fsfd_target::fd_path, AT_FDCWD,
+	if (int e = mlibc::sysdep_or_panic<Stat>(mlibc::fsfd_target::fd_path, AT_FDCWD,
 	                            "/", AT_SYMLINK_NOFOLLOW,
 	                            &root_stat); e) {
 		errno = e;
@@ -342,7 +323,7 @@ char *getcwd(char *buffer, size_t size) {
 	}
 
 	struct stat cur_dir_stat;
-	if (int e = mlibc::sys_stat(mlibc::fsfd_target::fd_path, AT_FDCWD,
+	if (int e = mlibc::sysdep_or_panic<Stat>(mlibc::fsfd_target::fd_path, AT_FDCWD,
 	                            ".", AT_SYMLINK_NOFOLLOW,
 	                            &cur_dir_stat); e) {
 		errno = e;
@@ -367,33 +348,33 @@ char *getcwd(char *buffer, size_t size) {
 
 	for (;;) {
 		int old_par_dir = par_dir;
-		if (int e = mlibc::sys_openat(old_par_dir, "..", O_RDONLY, 0, &par_dir); e) {
+		if (int e = mlibc::sysdep_or_panic<Openat>(old_par_dir, "..", O_RDONLY, 0, &par_dir); e) {
 			errno = e;
 			return nullptr;
 		}
 		if (old_par_dir != AT_FDCWD) {
-			mlibc::sys_close(old_par_dir);
+			mlibc::sysdep<Close>(old_par_dir);
 		}
 
 		struct stat par_dir_stat;
-		if (int e = mlibc::sys_stat(mlibc::fsfd_target::fd, par_dir, nullptr,
+		if (int e = mlibc::sysdep_or_panic<Stat>(mlibc::fsfd_target::fd, par_dir, nullptr,
 		                            0, &par_dir_stat); e) {
-			mlibc::sys_close(par_dir);
+			mlibc::sysdep<Close>(par_dir);
 			errno = e;
 			return nullptr;
 		}
 
 		int par_dir_copy;
-		if (int e = mlibc::sys_dup(par_dir, 0, &par_dir_copy); e) {
-			mlibc::sys_close(par_dir);
+		if (int e = mlibc::sysdep_or_panic<Dup>(par_dir, 0, &par_dir_copy); e) {
+			mlibc::sysdep<Close>(par_dir);
 			errno = e;
 			return nullptr;
 		}
 
 		DIR *par_dir_dir = fdopendir(par_dir_copy);
 		if (par_dir_dir == nullptr) {
-			mlibc::sys_close(par_dir_copy);
-			mlibc::sys_close(par_dir);
+			mlibc::sysdep<Close>(par_dir_copy);
+			mlibc::sysdep<Close>(par_dir);
 			return nullptr;
 		}
 
@@ -406,7 +387,7 @@ char *getcwd(char *buffer, size_t size) {
 			struct dirent *cur_ent = readdir(par_dir_dir);
 			if (cur_ent == nullptr) {
 				closedir(par_dir_dir);
-				mlibc::sys_close(par_dir);
+				mlibc::sysdep<Close>(par_dir);
 				return nullptr;
 			}
 
@@ -415,11 +396,11 @@ char *getcwd(char *buffer, size_t size) {
 			}
 
 			struct stat cur_ent_stat;
-			if (int e = mlibc::sys_stat(mlibc::fsfd_target::fd_path, par_dir,
+			if (int e = mlibc::sysdep_or_panic<Stat>(mlibc::fsfd_target::fd_path, par_dir,
 			                            cur_ent->d_name, AT_SYMLINK_NOFOLLOW,
 			                            &cur_ent_stat)) {
 				closedir(par_dir_dir);
-				mlibc::sys_close(par_dir);
+				mlibc::sysdep<Close>(par_dir);
 				errno = e;
 				return nullptr;
 			}
@@ -429,7 +410,7 @@ char *getcwd(char *buffer, size_t size) {
 				size_t len = strlen(cur_ent->d_name);
 				if (len + 1 > bufptr + 1) {
 					closedir(par_dir_dir);
-					mlibc::sys_close(par_dir);
+					mlibc::sysdep<Close>(par_dir);
 					errno = ERANGE;
 					return nullptr;
 				}
@@ -450,16 +431,15 @@ char *getcwd(char *buffer, size_t size) {
 		}
 	}
 
-	mlibc::sys_close(par_dir);
+	mlibc::sysdep<Close>(par_dir);
 
 	memmove(buffer, &buffer[bufptr], strlen(&buffer[bufptr]) + 1);
 	return buffer;
 }
 
 int getgroups(int size, gid_t list[]) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getgroups, -1);
 	int ret;
-	if(int e = mlibc::sys_getgroups(size, list, &ret); e) {
+	if(int e = mlibc::sysdep_or_enosys<GetGroups>(size, list, &ret); e) {
 		errno = e;
 		return -1;
 	}
@@ -472,8 +452,7 @@ long gethostid(void) {
 }
 
 int gethostname(char *buffer, size_t bufsize) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_gethostname, -1);
-	if(auto e = mlibc::sys_gethostname(buffer, bufsize); e) {
+	if(auto e = mlibc::sysdep_or_enosys<GetHostname>(buffer, bufsize); e) {
 		errno = e;
 		return -1;
 	}
@@ -481,8 +460,7 @@ int gethostname(char *buffer, size_t bufsize) {
 }
 
 int sethostname(const char *buffer, size_t bufsize) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_sethostname, -1);
-	if(auto e = mlibc::sys_sethostname(buffer, bufsize); e) {
+	if(auto e = mlibc::sysdep_or_enosys<SetHostname>(buffer, bufsize); e) {
 		errno = e;
 		return -1;
 	}
@@ -504,8 +482,8 @@ char *getlogin(void) {
 }
 
 int getlogin_r(char *name, size_t name_len) {
-	if(mlibc::sys_getlogin_r) {
-		int e = mlibc::sys_getlogin_r(name, name_len);
+	if constexpr (mlibc::IsImplemented<GetLoginR>) {
+		int e = mlibc::sysdep_or_enosys<GetLoginR>(name, name_len);
 		if (e == 0) {
 			return 0;
 		} else if (e && e != EINVAL) {
@@ -542,8 +520,7 @@ int getopt(int argc, char *const argv[], const char *optstring) {
 pid_t getpgid(pid_t pid) {
 	pid_t pgid;
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getpgid, -1);
-	if(int e = mlibc::sys_getpgid(pid, &pgid); e) {
+	if(int e = mlibc::sysdep_or_enosys<GetPgid>(pid, &pgid); e) {
 		errno = e;
 		return -1;
 	}
@@ -555,12 +532,8 @@ pid_t getpgrp(void) {
 }
 
 pid_t getsid(pid_t pid) {
-	if(!mlibc::sys_getsid) {
-		MLIBC_MISSING_SYSDEP();
-		return -1;
-	}
 	pid_t sid;
-	if(int e = mlibc::sys_getsid(pid, &sid); e) {
+	if(int e = mlibc::sysdep_or_enosys<GetSid>(pid, &sid); e) {
 		errno = e;
 		return -1;
 	}
@@ -568,8 +541,7 @@ pid_t getsid(pid_t pid) {
 }
 
 int lchown(const char *path, uid_t uid, gid_t gid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fchownat, -1);
-	if(int e = mlibc::sys_fchownat(AT_FDCWD, path, uid, gid, AT_SYMLINK_NOFOLLOW); e) {
+	if(int e = mlibc::sysdep_or_enosys<Fchownat>(AT_FDCWD, path, uid, gid, AT_SYMLINK_NOFOLLOW); e) {
 		errno = e;
 		return -1;
 	}
@@ -577,8 +549,7 @@ int lchown(const char *path, uid_t uid, gid_t gid) {
 }
 
 int link(const char *old_path, const char *new_path) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_link, -1);
-	if(int e = mlibc::sys_link(old_path, new_path); e) {
+	if(int e = mlibc::sysdep_or_enosys<Link>(old_path, new_path); e) {
 		errno = e;
 		return -1;
 	}
@@ -586,8 +557,7 @@ int link(const char *old_path, const char *new_path) {
 }
 
 int linkat(int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_linkat, -1);
-	if(int e = mlibc::sys_linkat(olddirfd, old_path, newdirfd, new_path, flags); e) {
+	if(int e = mlibc::sysdep_or_enosys<Linkat>(olddirfd, old_path, newdirfd, new_path, flags); e) {
 		errno = e;
 		return -1;
 	}
@@ -628,9 +598,7 @@ int lockf(int fd, int op, off_t size) {
 
 int nice(int nice) {
 	int new_nice;
-
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_nice, -1);
-	if(int e = mlibc::sys_nice(nice, &new_nice); e) {
+	if(int e = mlibc::sysdep_or_enosys<Nice>(nice, &new_nice); e) {
 		errno = e;
 		return -1;
 	}
@@ -652,8 +620,7 @@ long pathconf(const char *, int name) {
 }
 
 int pause(void) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pause, -1);
-	if(int e = mlibc::sys_pause(); e) {
+	if(int e = mlibc::sysdep_or_enosys<Pause>(); e) {
 		errno = e;
 		return -1;
 	}
@@ -662,8 +629,7 @@ int pause(void) {
 }
 
 int pipe(int *fds) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pipe, -1);
-	if(int e = mlibc::sys_pipe(fds, 0); e) {
+	if(int e = mlibc::sysdep_or_enosys<Pipe>(fds, 0); e) {
 		errno = e;
 		return -1;
 	}
@@ -671,8 +637,7 @@ int pipe(int *fds) {
 }
 
 int pipe2(int *fds, int flags) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pipe, -1);
-	if(int e = mlibc::sys_pipe(fds, flags); e) {
+	if(int e = mlibc::sysdep_or_enosys<Pipe>(fds, flags); e) {
 		errno = e;
 		return -1;
 	}
@@ -682,8 +647,7 @@ int pipe2(int *fds, int flags) {
 ssize_t pread(int fd, void *buf, size_t n, off_t off) {
 	ssize_t num_read;
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pread, -1);
-	if(int e = mlibc::sys_pread(fd, buf, n, off, &num_read); e) {
+	if(int e = mlibc::sysdep_or_enosys<Pread>(fd, buf, n, off, &num_read); e) {
 		errno = e;
 		return -1;
 	}
@@ -696,9 +660,7 @@ ssize_t pread(int fd, void *buf, size_t n, off_t off) {
 
 ssize_t pwrite(int fd, const void *buf, size_t n, off_t off) {
 	ssize_t num_written;
-
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_pwrite, -1);
-	if(int e = mlibc::sys_pwrite(fd, buf, n, off, &num_written); e) {
+	if(int e = mlibc::sysdep_or_enosys<Pwrite>(fd, buf, n, off, &num_written); e) {
 		errno = e;
 		return -1;
 	}
@@ -711,8 +673,7 @@ ssize_t pwrite(int fd, const void *buf, size_t n, off_t off) {
 
 ssize_t readlink(const char *__restrict path, char *__restrict buffer, size_t max_size) {
 	ssize_t length;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_readlink, -1);
-	if(int e = mlibc::sys_readlink(path, buffer, max_size, &length); e) {
+	if(int e = mlibc::sysdep_or_enosys<Readlink>(path, buffer, max_size, &length); e) {
 		errno = e;
 		return -1;
 	}
@@ -721,8 +682,7 @@ ssize_t readlink(const char *__restrict path, char *__restrict buffer, size_t ma
 
 ssize_t readlinkat(int dirfd, const char *__restrict path, char *__restrict buffer, size_t max_size) {
 	ssize_t length;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_readlinkat, -1);
-	if(int e = mlibc::sys_readlinkat(dirfd, path, buffer, max_size, &length); e) {
+	if(int e = mlibc::sysdep_or_enosys<Readlinkat>(dirfd, path, buffer, max_size, &length); e) {
 		errno = e;
 		return -1;
 	}
@@ -730,8 +690,7 @@ ssize_t readlinkat(int dirfd, const char *__restrict path, char *__restrict buff
 }
 
 int rmdir(const char *path) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_rmdir, -1);
-	if(int e = mlibc::sys_rmdir(path); e) {
+	if(int e = mlibc::sysdep_or_enosys<Rmdir>(path); e) {
 		errno = e;
 		return -1;
 	}
@@ -739,8 +698,7 @@ int rmdir(const char *path) {
 }
 
 int setegid(gid_t egid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setegid, 0);
-	if(int e = mlibc::sys_setegid(egid); e) {
+	if(int e = mlibc::sysdep_or_enosys<SetEgid>(egid); e) {
 		errno = e;
 		return -1;
 	}
@@ -748,8 +706,7 @@ int setegid(gid_t egid) {
 }
 
 int seteuid(uid_t euid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_seteuid, 0);
-	if(int e = mlibc::sys_seteuid(euid); e) {
+	if(int e = mlibc::sysdep_or_enosys<SetEuid>(euid); e) {
 		errno = e;
 		return -1;
 	}
@@ -757,8 +714,7 @@ int seteuid(uid_t euid) {
 }
 
 int setgid(gid_t gid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setgid, 0);
-	if(int e = mlibc::sys_setgid(gid); e) {
+	if(int e = mlibc::sysdep_or_enosys<SetGid>(gid); e) {
 		errno = e;
 		return -1;
 	}
@@ -766,8 +722,7 @@ int setgid(gid_t gid) {
 }
 
 int setpgid(pid_t pid, pid_t pgid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setpgid, -1);
-	if(int e = mlibc::sys_setpgid(pid, pgid); e) {
+	if(int e = mlibc::sysdep_or_enosys<SetPgid>(pid, pgid); e) {
 		errno = e;
 		return -1;
 	}
@@ -779,8 +734,7 @@ pid_t setpgrp(void) {
 }
 
 int setregid(gid_t rgid, gid_t egid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setregid, -1);
-	if(int e = mlibc::sys_setregid(rgid, egid); e) {
+	if(int e = mlibc::sysdep_or_enosys<SetRegid>(rgid, egid); e) {
 		errno = e;
 		return -1;
 	}
@@ -788,8 +742,7 @@ int setregid(gid_t rgid, gid_t egid) {
 }
 
 int setreuid(uid_t ruid, uid_t euid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setreuid, -1);
-	if(int e = mlibc::sys_setreuid(ruid, euid); e) {
+	if(int e = mlibc::sysdep_or_enosys<SetReuid>(ruid, euid); e) {
 		errno = e;
 		return -1;
 	}
@@ -797,12 +750,8 @@ int setreuid(uid_t ruid, uid_t euid) {
 }
 
 pid_t setsid(void) {
-	if(!mlibc::sys_setsid) {
-		MLIBC_MISSING_SYSDEP();
-		return -1;
-	}
 	pid_t sid;
-	if(int e = mlibc::sys_setsid(&sid); e) {
+	if(int e = mlibc::sysdep_or_enosys<SetSid>(&sid); e) {
 		errno = e;
 		return -1;
 	}
@@ -810,12 +759,7 @@ pid_t setsid(void) {
 }
 
 int setuid(uid_t uid) {
-	if(!mlibc::sys_setuid) {
-		MLIBC_MISSING_SYSDEP();
-		mlibc::infoLogger() << "mlibc: missing sysdep sys_setuid(). Returning 0" << frg::endlog;
-		return 0;
-	}
-	if(int e = mlibc::sys_setuid(uid); e) {
+	if(int e = mlibc::sysdep_or_enosys<SetUid>(uid); e) {
 		errno = e;
 		return -1;
 	}
@@ -832,8 +776,7 @@ void swab(const void *__restrict _src, void *__restrict _dest, ssize_t n) {
 }
 
 int symlink(const char *target_path, const char *link_path) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_symlink, -1);
-	if(int e = mlibc::sys_symlink(target_path, link_path); e) {
+	if(int e = mlibc::sysdep_or_enosys<Symlink>(target_path, link_path); e) {
 		errno = e;
 		return -1;
 	}
@@ -841,8 +784,7 @@ int symlink(const char *target_path, const char *link_path) {
 }
 
 int symlinkat(const char *target_path, int dirfd, const char *link_path) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_symlinkat, -1);
-	if(int e = mlibc::sys_symlinkat(target_path, dirfd, link_path); e) {
+	if(int e = mlibc::sysdep_or_enosys<Symlinkat>(target_path, dirfd, link_path); e) {
 		errno = e;
 		return -1;
 	}
@@ -850,18 +792,18 @@ int symlinkat(const char *target_path, int dirfd, const char *link_path) {
 }
 
 void sync(void) {
-	if(!mlibc::sys_sync) {
+	if constexpr (!mlibc::IsImplemented<Sync>) {
 		MLIBC_MISSING_SYSDEP();
 	} else {
-		mlibc::sys_sync();
+		mlibc::sysdep_or_panic<Sync>();
 	}
 }
 
 long sysconf(int number) {
-	if(mlibc::sys_sysconf) {
+	if constexpr (mlibc::IsImplemented<Sysconf>) {
 		long ret = 0;
 
-		int e = mlibc::sys_sysconf(number, &ret);
+		int e = mlibc::sysdep_or_enosys<Sysconf>(number, &ret);
 
 		if(e && e != EINVAL) {
 			errno = e;
@@ -889,9 +831,9 @@ long sysconf(int number) {
 			return -1;
 		case _SC_PHYS_PAGES:
 #if __MLIBC_LINUX_OPTION
-			if(mlibc::sys_sysinfo) {
+			if constexpr (mlibc::IsImplemented<Sysinfo>) {
 				struct sysinfo info{};
-				if(mlibc::sys_sysinfo(&info) == 0)
+				if(mlibc::sysdep_or_enosys<Sysinfo>(&info) == 0)
 					return info.totalram * info.mem_unit / mlibc::page_size;
 			}
 #endif
@@ -899,9 +841,9 @@ long sysconf(int number) {
 			return 1024;
 		case _SC_AVPHYS_PAGES:
 #if __MLIBC_LINUX_OPTION
-			if(mlibc::sys_sysinfo) {
+			if constexpr (mlibc::IsImplemented<Sysinfo>) {
 				struct sysinfo info{};
-				if(mlibc::sys_sysinfo(&info) == 0)
+				if(mlibc::sysdep_or_panic<Sysinfo>(&info) == 0)
 					return info.freeram * info.mem_unit / mlibc::page_size;
 			}
 #endif
@@ -978,8 +920,7 @@ long sysconf(int number) {
 
 pid_t tcgetpgrp(int fd) {
 	int pgrp, scratch;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ioctl, -1);
-	if(int e = mlibc::sys_ioctl(fd, TIOCGPGRP, &pgrp, &scratch); e) {
+	if(int e = mlibc::sysdep_or_enosys<Ioctl>(fd, TIOCGPGRP, &pgrp, &scratch); e) {
 		errno = e;
 		return -1;
 	}
@@ -989,8 +930,7 @@ pid_t tcgetpgrp(int fd) {
 
 int tcsetpgrp(int fd, pid_t pgrp) {
 	int scratch;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ioctl, -1);
-	if(int e = mlibc::sys_ioctl(fd, TIOCSPGRP, &pgrp, &scratch); e) {
+	if(int e = mlibc::sysdep_or_enosys<Ioctl>(fd, TIOCSPGRP, &pgrp, &scratch); e) {
 		errno = e;
 		return -1;
 	}
@@ -999,8 +939,7 @@ int tcsetpgrp(int fd, pid_t pgrp) {
 }
 
 int truncate(const char *path, off_t length) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_truncate, -1);
-	if(int e = mlibc::sys_truncate(path, length); e) {
+	if(int e = mlibc::sysdep_or_enosys<Truncate>(path, length); e) {
 		errno = e;
 		return -1;
 	}
@@ -1015,8 +954,7 @@ int truncate(const char *path, off_t length) {
 char *ttyname(int fd) {
 	const size_t size = 128;
 	static thread_local char buf[size];
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ttyname, nullptr);
-	if(int e = mlibc::sys_ttyname(fd, buf, size); e) {
+	if(int e = mlibc::sysdep_or_enosys<Ttyname>(fd, buf, size); e) {
 		errno = e;
 		return nullptr;
 	}
@@ -1024,16 +962,14 @@ char *ttyname(int fd) {
 }
 
 int ttyname_r(int fd, char *buf, size_t size) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ttyname, -1);
-	if(int e = mlibc::sys_ttyname(fd, buf, size); e) {
+	if(int e = mlibc::sysdep_or_enosys<Ttyname>(fd, buf, size); e) {
 		return e;
 	}
 	return 0;
 }
 
 int unlink(const char *path) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_unlinkat, -1);
-	if(int e = mlibc::sys_unlinkat(AT_FDCWD, path, 0); e) {
+	if(int e = mlibc::sysdep_or_enosys<Unlinkat>(AT_FDCWD, path, 0); e) {
 		errno = e;
 		return -1;
 	}
@@ -1041,8 +977,7 @@ int unlink(const char *path) {
 }
 
 int unlinkat(int fd, const char *path, int flags) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_unlinkat, -1);
-	if(int e = mlibc::sys_unlinkat(fd, path, flags); e) {
+	if(int e = mlibc::sysdep_or_enosys<Unlinkat>(fd, path, flags); e) {
 		errno = e;
 		return -1;
 	}
@@ -1116,20 +1051,20 @@ char *get_current_dir_name(void) {
 
 // This is a Linux extension
 pid_t gettid(void) {
-	if(!mlibc::sys_gettid) {
+	if constexpr (!mlibc::IsImplemented<GetTid>) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_gettid()");
+	} else {
+		return mlibc::sysdep_or_panic<GetTid>();
 	}
-	return mlibc::sys_gettid();
 }
 
 int getentropy(void *buffer, size_t length) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getentropy, -1);
 	if(length > GETENTROPY_MAX) {
 		errno = EINVAL;
 		return -1;
 	}
-	if(int e = mlibc::sys_getentropy(buffer, length); e) {
+	if(int e = mlibc::sysdep_or_enosys<GetEntropy>(buffer, length); e) {
 		errno = e;
 		return -1;
 	}
@@ -1138,7 +1073,7 @@ int getentropy(void *buffer, size_t length) {
 
 ssize_t write(int fd, const void *buf, size_t count) {
 	ssize_t bytes_written;
-	if(int e = mlibc::sys_write(fd, buf, count, &bytes_written); e) {
+	if(int e = mlibc::sysdep<Write>(fd, buf, count, &bytes_written); e) {
 		errno = e;
 		return (ssize_t)-1;
 	}
@@ -1147,7 +1082,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
 
 ssize_t read(int fd, void *buf, size_t count) {
 	ssize_t bytes_read;
-	if(int e = mlibc::sys_read(fd, buf, count, &bytes_read); e) {
+	if(int e = mlibc::sysdep<Read>(fd, buf, count, &bytes_read); e) {
 		errno = e;
 		return (ssize_t)-1;
 	}
@@ -1156,7 +1091,7 @@ ssize_t read(int fd, void *buf, size_t count) {
 
 off_t lseek(int fd, off_t offset, int whence) {
 	off_t new_offset;
-	if(int e = mlibc::sys_seek(fd, offset, whence, &new_offset); e) {
+	if(int e = mlibc::sysdep<Seek>(fd, offset, whence, &new_offset); e) {
 		errno = e;
 		return (off_t)-1;
 	}
@@ -1165,7 +1100,7 @@ off_t lseek(int fd, off_t offset, int whence) {
 
 off64_t lseek64(int fd, off64_t offset, int whence) {
 	off64_t new_offset;
-	if(int e = mlibc::sys_seek(fd, offset, whence, &new_offset); e) {
+	if(int e = mlibc::sysdep<Seek>(fd, offset, whence, &new_offset); e) {
 		errno = e;
 		return (off64_t)-1;
 	}
@@ -1173,7 +1108,7 @@ off64_t lseek64(int fd, off64_t offset, int whence) {
 }
 
 int close(int fd) {
-	if(int e = mlibc::sys_close(fd); e) {
+	if(int e = mlibc::sysdep<Close>(fd); e) {
 		errno = e;
 		return -1;
 	}
@@ -1183,11 +1118,11 @@ int close(int fd) {
 unsigned int sleep(unsigned int secs) {
 	time_t seconds = secs;
 	long nanos = 0;
-	if(!mlibc::sys_sleep) {
+	if constexpr (!mlibc::IsImplemented<Sleep>) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_sleep()");
 	}
-	mlibc::sys_sleep(&seconds, &nanos);
+	mlibc::sysdep_or_panic<Sleep>(&seconds, &nanos);
 	return seconds;
 }
 
@@ -1197,11 +1132,11 @@ int usleep(useconds_t usecs) {
 
 	time_t seconds = usecs / usec_per_sec;
 	long nanos = (usecs % usec_per_sec) * 1000;
-	if(!mlibc::sys_sleep) {
+	if constexpr (!mlibc::IsImplemented<Sleep>) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_sleep()");
 	}
-	if (int e = mlibc::sys_sleep(&seconds, &nanos); e) {
+	if (int e = mlibc::sysdep_or_panic<Sleep>(&seconds, &nanos); e) {
 		errno = e;
 		return -1;
 	}
@@ -1210,8 +1145,7 @@ int usleep(useconds_t usecs) {
 
 int dup(int fd) {
 	int newfd;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_dup, -1);
-	if(int e = mlibc::sys_dup(fd, 0, &newfd); e) {
+	if(int e = mlibc::sysdep_or_enosys<Dup>(fd, 0, &newfd); e) {
 		errno = e;
 		return -1;
 	}
@@ -1219,8 +1153,7 @@ int dup(int fd) {
 }
 
 int dup2(int fd, int newfd) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_dup2, -1);
-	if(int e = mlibc::sys_dup2(fd, 0, newfd); e) {
+	if(int e = mlibc::sysdep_or_enosys<Dup2>(fd, 0, newfd); e) {
 		errno = e;
 		return -1;
 	}
@@ -1232,8 +1165,7 @@ int dup3(int oldfd, int newfd, int flags) {
 		errno = EINVAL;
 		return -1;
 	}
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_dup2, -1);
-	if(int e = mlibc::sys_dup2(oldfd, flags, newfd); e) {
+	if(int e = mlibc::sysdep_or_enosys<Dup2>(oldfd, flags, newfd); e) {
 		errno = e;
 		return -1;
 	}
@@ -1241,9 +1173,8 @@ int dup3(int oldfd, int newfd, int flags) {
 }
 
 pid_t _Fork(void) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fork, -1);
 	pid_t child;
-	if (int e = mlibc::sys_fork(&child); e) {
+	if (int e = mlibc::sysdep_or_enosys<Fork>(&child); e) {
 		errno = e;
 		return -1;
 	}
@@ -1254,7 +1185,7 @@ pid_t fork(void) {
 	auto self = mlibc::get_current_tcb();
 	pid_t child;
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_fork, -1);
+	MLIBC_CHECK_OR_ENOSYS(mlibc::IsImplemented<Fork>, -1);
 
 	auto hand = self->atforkEnd;
 	while (hand) {
@@ -1264,7 +1195,7 @@ pid_t fork(void) {
 		hand = hand->prev;
 	}
 
-	if(int e = mlibc::sys_fork(&child); e) {
+	if(int e = mlibc::sysdep_or_panic<Fork>(&child); e) {
 		errno = e;
 		return -1;
 	}
@@ -1301,13 +1232,7 @@ pid_t vfork(void) {
 	/* deferring to fork as implementing vfork correctly requires assembly
 	 * to handle not mucking up the stack
 	 */
-	if(!mlibc::sys_fork) {
-		MLIBC_MISSING_SYSDEP();
-		errno = ENOSYS;
-		return -1;
-	}
-
-	if(int e = mlibc::sys_fork(&child); e) {
+	if(int e = mlibc::sysdep_or_enosys<Fork>(&child); e) {
 		errno = e;
 		return -1;
 	}
@@ -1325,64 +1250,68 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
 	if(!envp)
 		envp = null_list;
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_execve, -1);
-	int e = mlibc::sys_execve(path, argv, envp);
+	int e = mlibc::sysdep_or_enosys<Execve>(path, argv, envp);
 	__ensure(e && "sys_execve() is expected to fail if it returns");
 	errno = e;
 	return -1;
 }
 
 gid_t getgid(void) {
-	if(!mlibc::sys_getgid) {
+	if constexpr (!mlibc::IsImplemented<GetGid>) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_getgid()");
+	} else {
+		return mlibc::sysdep_or_panic<GetGid>();
 	}
-	return mlibc::sys_getgid();
 }
 
 gid_t getegid(void) {
-	if(!mlibc::sys_getegid) {
+	if constexpr (!mlibc::IsImplemented<GetEgid>) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_getegid()");
+	} else {
+		return mlibc::sysdep_or_panic<GetEgid>();
 	}
-	return mlibc::sys_getegid();
 }
 
 uid_t getuid(void) {
-	if(!mlibc::sys_getuid) {
+	if constexpr (!mlibc::IsImplemented<GetUid>) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_getuid()");
+	} else {
+		return mlibc::sysdep_or_panic<GetUid>();
 	}
-	return mlibc::sys_getuid();
 }
 
 uid_t geteuid(void) {
-	if(!mlibc::sys_geteuid) {
+	if constexpr (!mlibc::IsImplemented<GetEuid>) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_geteuid()");
+	} else {
+		return mlibc::sysdep_or_panic<GetEuid>();
 	}
-	return mlibc::sys_geteuid();
 }
 
 pid_t getpid(void) {
-	if(!mlibc::sys_getpid) {
+	if constexpr (!mlibc::IsImplemented<GetPid>) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_getpid()");
+	} else {
+		return mlibc::sysdep_or_panic<GetPid>();
 	}
-	return mlibc::sys_getpid();
 }
 
 pid_t getppid(void) {
-	if(!mlibc::sys_getppid) {
+	if constexpr (!mlibc::IsImplemented<GetPpid>) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_getppid()");
+	} else {
+		return mlibc::sysdep_or_panic<GetPpid>();
 	}
-	return mlibc::sys_getppid();
 }
 
 int access(const char *path, int mode) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_access, -1);
-	if(int e = mlibc::sys_access(path, mode); e) {
+	if(int e = mlibc::sysdep_or_enosys<Access>(path, mode); e) {
 		errno = e;
 		return -1;
 	}
@@ -1445,8 +1374,7 @@ void endusershell(void) {
 }
 
 int isatty(int fd) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_isatty, 0);
-	if(int e = mlibc::sys_isatty(fd); e) {
+	if(int e = mlibc::sysdep_or_enosys<Isatty>(fd); e) {
 		errno = e;
 		return 0;
 	}
@@ -1454,8 +1382,7 @@ int isatty(int fd) {
 }
 
 int chroot(const char *ptr) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_chroot, -1);
-	if(int e = mlibc::sys_chroot(ptr); e) {
+	if(int e = mlibc::sysdep_or_enosys<Chroot>(ptr); e) {
 		errno = e;
 		return -1;
 	}
@@ -1497,8 +1424,7 @@ char *ctermid(char *s) {
 }
 
 int setresuid(uid_t ruid, uid_t euid, uid_t suid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setresuid, -1);
-	if(int e = mlibc::sys_setresuid(ruid, euid, suid); e) {
+	if(int e = mlibc::sysdep_or_enosys<SetResuid>(ruid, euid, suid); e) {
 		errno = e;
 		return -1;
 	}
@@ -1506,8 +1432,7 @@ int setresuid(uid_t ruid, uid_t euid, uid_t suid) {
 }
 
 int setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_setresgid, -1);
-	if(int e = mlibc::sys_setresgid(rgid, egid, sgid); e) {
+	if(int e = mlibc::sysdep_or_enosys<SetResgid>(rgid, egid, sgid); e) {
 		errno = e;
 		return -1;
 	}
@@ -1525,8 +1450,7 @@ int setdomainname(const char *, size_t) {
 }
 
 int getresuid(uid_t *ruid, uid_t *euid, uid_t *suid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getresuid, -1);
-	if(int e = mlibc::sys_getresuid(ruid, euid, suid); e) {
+	if(int e = mlibc::sysdep_or_enosys<GetResuid>(ruid, euid, suid); e) {
 		errno = e;
 		return -1;
 	}
@@ -1534,8 +1458,7 @@ int getresuid(uid_t *ruid, uid_t *euid, uid_t *suid) {
 }
 
 int getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_getresgid, -1);
-	if(int e = mlibc::sys_getresgid(rgid, egid, sgid); e) {
+	if(int e = mlibc::sysdep_or_enosys<GetResgid>(rgid, egid, sgid); e) {
 		errno = e;
 		return -1;
 	}
@@ -1549,9 +1472,8 @@ void *sbrk(intptr_t increment) {
 		return (void *)-1;
 	}
 
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_brk, (void *)-1);
 	void *out;
-	if(int e = mlibc::sys_brk(&out); e) {
+	if(int e = mlibc::sysdep_or_enosys<Brk>(&out); e) {
 		errno = e;
 		return (void *)-1;
 	}

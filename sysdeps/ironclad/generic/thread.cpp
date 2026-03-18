@@ -8,7 +8,7 @@
 
 extern "C" void __mlibc_thread_trampoline(void *(*fn)(void *), Tcb *tcb, void *arg) {
 	while (__atomic_load_n(&tcb->tid, __ATOMIC_RELAXED) == 0) {
-		mlibc::sys_futex_wait(&tcb->tid, 0, nullptr);
+		mlibc::sysdep<FutexWait>(&tcb->tid, 0, nullptr);
 	}
 
 	tcb->invokeThreadFunc(reinterpret_cast<void *>(fn), arg);
@@ -19,7 +19,7 @@ extern "C" void __mlibc_thread_trampoline(void *(*fn)(void *), Tcb *tcb, void *a
 #define DEFAULT_STACK 0x20000
 
 namespace mlibc {
-	int sys_prepare_stack(void **stack, void *entry, void *arg, void *tcb, size_t *stack_size, size_t *guard_size, void **stack_base) {
+	int Sysdeps<PrepareStack>::operator()(void **stack, void *entry, void *arg, void *tcb, size_t *stack_size, size_t *guard_size, void **stack_base) {
 		*guard_size = mlibc::page_size;
 
 		*stack_size = *stack_size ? *stack_size : DEFAULT_STACK;

@@ -3,7 +3,7 @@
 #include <abi-bits/clockid_t.h>
 #include <bits/ansi/timespec.h>
 #include <bits/ensure.h>
-#include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <time.h>
 
@@ -22,7 +22,7 @@ inline bool time_absolute_to_relative(const clockid_t clock, const struct timesp
 	}
 
 	struct timespec now;
-	if (mlibc::sys_clock_get(clock, &now.tv_sec, &now.tv_nsec))
+	if (mlibc::sysdep<ClockGet>(clock, &now.tv_sec, &now.tv_nsec))
 		__ensure(!"sys_clock_get() failed");
 
 	reltime->tv_sec = abstime->tv_sec - now.tv_sec;

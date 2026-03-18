@@ -3,13 +3,12 @@
 #include <poll.h>
 
 #include <bits/ensure.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
-#include <mlibc/posix-sysdeps.hpp>
 
 int poll(struct pollfd *fds, nfds_t count, int timeout) {
 	int num_events;
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_poll, -1);
-	if(int e = mlibc::sys_poll(fds, count, timeout, &num_events); e) {
+	if(int e = mlibc::sysdep_or_enosys<Poll>(fds, count, timeout, &num_events); e) {
 		errno = e;
 		return -1;
 	}
@@ -17,9 +16,9 @@ int poll(struct pollfd *fds, nfds_t count, int timeout) {
 }
 
 int ppoll(struct pollfd *fds, nfds_t nfds, const struct timespec *timeout_ts, const sigset_t *sigmask) {
-	if (mlibc::sys_ppoll) {
+	if constexpr (mlibc::IsImplemented<Ppoll>) {
 		int num_events;
-		if(int e = mlibc::sys_ppoll(fds, nfds, timeout_ts, sigmask, &num_events); e) {
+		if(int e = mlibc::sysdep_or_panic<Ppoll>(fds, nfds, timeout_ts, sigmask, &num_events); e) {
 			errno = e;
 			return -1;
 		}

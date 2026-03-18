@@ -2,11 +2,10 @@
 #include <signal.h>
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
-#include <mlibc/glibc-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 int tgkill(int tgid, int tid, int sig) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_tgkill, -1);
-	if(int e = mlibc::sys_tgkill(tgid, tid, sig); e) {
+	if(int e = mlibc::sysdep_or_enosys<Tgkill>(tgid, tid, sig); e) {
 		errno = e;
 		return -1;
 	}

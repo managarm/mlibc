@@ -28,7 +28,7 @@ extern thread_local TrackerPage *__mlibc_clk_tracker_page;
 
 namespace mlibc {
 
-int sys_clock_get(int clock, time_t *secs, long *nanos) {
+int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
 	// This implementation is inherently signal-safe.
 	if (clock == CLOCK_MONOTONIC || clock == CLOCK_MONOTONIC_RAW
 	    || clock == CLOCK_MONOTONIC_COARSE) {
@@ -79,14 +79,14 @@ int sys_clock_get(int clock, time_t *secs, long *nanos) {
 	return 0;
 }
 
-int sys_clock_getres(int clock, time_t *secs, long *nanos) {
+int Sysdeps<ClockGetres>::operator()(int clock, time_t *secs, long *nanos) {
 	(void)clock;
 	*secs = 0;
 	*nanos = 1;
 	return 0;
 }
 
-int sys_setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value) {
+int Sysdeps<SetItimer>::operator()(int which, const struct itimerval *new_value, struct itimerval *old_value) {
 	SignalGuard sguard;
 
 	if (which != ITIMER_REAL) {
@@ -168,7 +168,7 @@ void *timer_setup(void *arg) {
 
 	while (true) {
 		pthread_testcancel();
-		while (sys_sigtimedwait(&set, &si, nullptr, &signo))
+		while (sysdep<Sigtimedwait>(&set, &si, nullptr, &signo))
 			;
 		pthread_testcancel();
 		if (si.si_code == SI_TIMER && signo == SIGTIMER)
@@ -180,7 +180,7 @@ void *timer_setup(void *arg) {
 
 } // namespace
 
-int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__restrict res) {
+int Sysdeps<TimerCreate>::operator()(clockid_t clk, struct sigevent *__restrict evp, timer_t *__restrict res) {
 	SignalGuard sguard;
 
 	if (!res)
@@ -192,13 +192,13 @@ int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__
 	// TODO: pass sigev_value
 	if (!evp) {
 		req.set_sigev_signo(SIGALRM);
-		req.set_sigev_tid(sys_gettid());
+		req.set_sigev_tid(sysdep<GetTid>());
 	} else if (evp->sigev_notify == SIGEV_NONE) {
 		req.set_sigev_signo(0);
 		req.set_sigev_tid(0);
 	} else if (evp->sigev_notify == SIGEV_SIGNAL) {
 		req.set_sigev_signo(evp->sigev_signo);
-		req.set_sigev_tid(sys_gettid());
+		req.set_sigev_tid(sysdep<GetTid>());
 	} else if (evp->sigev_notify == SIGEV_THREAD_ID) {
 		req.set_sigev_signo(evp->sigev_signo);
 		req.set_sigev_tid(evp->sigev_notify_thread_id);
@@ -207,7 +207,7 @@ int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__
 			struct sigaction sa{};
 			sa.sa_flags = SA_SIGINFO | SA_RESTART;
 			sa.sa_sigaction = timer_handle;
-			sys_sigaction(SIGTIMER, &sa, nullptr);
+			sysdep<Sigaction>(SIGTIMER, &sa, nullptr);
 			timerThreadInit = true;
 		}
 
@@ -319,8 +319,7 @@ int sys_timer_create(clockid_t clk, struct sigevent *__restrict evp, timer_t *__
 	return 0;
 }
 
-int sys_timer_settime(
-    timer_t t, int flags, const struct itimerspec *__restrict val, struct itimerspec *__restrict old
+int Sysdeps<TimerSettime>::operator()(    timer_t t, int flags, const struct itimerspec *__restrict val, struct itimerspec *__restrict old
 ) {
 	SignalGuard sguard;
 
@@ -358,7 +357,7 @@ int sys_timer_settime(
 	return 0;
 }
 
-int sys_timer_gettime(timer_t t, struct itimerspec *val) {
+int Sysdeps<TimerGettime>::operator()(timer_t t, struct itimerspec *val) {
 	SignalGuard sguard;
 
 	auto timerHandle = reinterpret_cast<TimerHandle *>(t);
@@ -390,7 +389,7 @@ int sys_timer_gettime(timer_t t, struct itimerspec *val) {
 	return 0;
 }
 
-int sys_timer_delete(timer_t t) {
+int Sysdeps<TimerDelete>::operator()(timer_t t) {
 	SignalGuard sguard;
 
 	auto timerHandle = reinterpret_cast<TimerHandle *>(t);

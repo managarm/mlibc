@@ -4,10 +4,9 @@
 #include <errno.h>
 
 #include <bits/ensure.h>
-#include <mlibc/posix-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 int utime(const char *filename, const struct utimbuf *times) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_utimensat, -1);
 	struct timespec time[2];
 	if(times) {
 		time[0].tv_sec = times->actime;
@@ -21,7 +20,7 @@ int utime(const char *filename, const struct utimbuf *times) {
 		time[1].tv_nsec = UTIME_NOW;
 	}
 
-	if (int e = mlibc::sys_utimensat(AT_FDCWD, filename, time, 0); e) {
+	if (int e = mlibc::sysdep_or_enosys<Utimensat>(AT_FDCWD, filename, time, 0); e) {
 		errno = e;
 		return -1;
 	}

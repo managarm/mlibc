@@ -1,13 +1,13 @@
 #include <errno.h>
 #include <menix/syscall.hpp>
-#include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/arch-defs.hpp>
 #include <mlibc/tcb.hpp>
 #include <sys/mman.h>
 
 extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, Tcb *tcb) {
 	while (__atomic_load_n(&tcb->tid, __ATOMIC_RELAXED) == 0) {
-		mlibc::sys_futex_wait(&tcb->tid, 0, nullptr);
+		mlibc::sysdep<FutexWait>(&tcb->tid, 0, nullptr);
 	}
 
 	tcb->invokeThreadFunc(entry, user_arg);
@@ -22,7 +22,7 @@ extern "C" void __mlibc_start_thread();
 
 namespace mlibc {
 
-int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
+int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
 	(void)tcb;
 	auto r = menix_syscall(SYSCALL_THREAD_CREATE, (size_t)__mlibc_start_thread, (size_t)stack);
 	if (r.error)
@@ -31,7 +31,7 @@ int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
 	return 0;
 }
 
-int sys_prepare_stack(
+int Sysdeps<PrepareStack>::operator()(
     void **stack,
     void *entry,
     void *arg,

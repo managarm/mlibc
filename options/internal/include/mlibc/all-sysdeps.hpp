@@ -4,53 +4,87 @@
 #include <mlibc-config.h>
 #include <internal-config.h>
 
-/* The ANSI option is always enabled. */
-#include <mlibc/ansi-sysdeps.hpp>
+#include <bits/ensure.h>
+#include <errno.h>
+#include <mlibc/sysdeps.hpp>
+#include <utility>
 
-#if __MLIBC_POSIX_OPTION
-#	include <mlibc/posix-sysdeps.hpp>
-#endif /* __MLIBC_POSIX_OPTION */
+namespace mlibc {
 
-#if __MLIBC_LINUX_OPTION
-#	include <mlibc/linux-sysdeps.hpp>
-#endif /* __MLIBC_LINUX_OPTION */
+// Concept that checks whether a sysdep is implemented;
+template <typename Tag>
+concept IsImplemented = !std::same_as<Sysdeps<Tag>, NoImpl>;
 
-#if __MLIBC_GLIBC_OPTION
-#	include <mlibc/glibc-sysdeps.hpp>
-#endif /* __MLIBC_GLIBC_OPTION */
+// Concept that returns whether the sysdep is marked [[noreturn]].
+template <typename Tag>
+concept IsNoReturn = requires { requires Tag::is_noreturn == true; };
 
-#if __MLIBC_BSD_OPTION
-#	include <mlibc/bsd-sysdeps.hpp>
-#endif /* __MLIBC_BSD_OPTION */
+template <typename Tag, typename... Args>
+using sysdep_return_t = std::invoke_result_t<SysdepImpl<Tag>, Args...>;
 
-#if __MLIBC_LINUX_EPOLL_OPTION
-#	include <mlibc/linux-epoll-sysdeps.hpp>
-#endif /* __MLIBC_LINUX_EPOLL_OPTION */
+// Wrapper for calling a sysdep.
+template <typename Tag, typename... Args>
+    requires(IsImplemented<Tag> && !IsNoReturn<Tag>)
+inline sysdep_return_t<Tag, Args...> sysdep(Args &&...args) {
+	return Sysdeps<Tag>::operator()(std::forward<Args>(args)...);
+}
 
-#if __MLIBC_LINUX_TIMERFD_OPTION
-#	include <mlibc/linux-timerfd-sysdeps.hpp>
-#endif /* __MLIBC_LINUX_TIMERFD_OPTION */
+// Wrapper for calling a sysdep, selected when the sysdep is marked [[noreturn]].
+template <typename Tag, typename... Args>
+    requires(IsImplemented<Tag> && IsNoReturn<Tag>)
+[[noreturn]] inline void sysdep(Args &&...args) {
+	Sysdeps<Tag>::operator()(std::forward<Args>(args)...);
+}
 
-#if __MLIBC_LINUX_SIGNALFD_OPTION
-#	include <mlibc/linux-signalfd-sysdeps.hpp>
-#endif /* __MLIBC_LINUX_SIGNALFD_OPTION */
+// Placeholder wrapper that is selected when a missing sysdep gets mistakenly used.
+template <typename Tag, typename... Args>
+    requires(!IsImplemented<Tag>)
+[[gnu::error("Unimplemented sysdep called!")]]
+sysdep_return_t<Tag, Args...> sysdep(Args &&...) {
+	static_assert(false, "Unimplemented sysdep called!");
+}
 
-#if __MLIBC_LINUX_EVENTFD_OPTION
-#	include <mlibc/linux-eventfd-sysdeps.hpp>
-#endif /* __MLIBC_LINUX_EVENTFD_OPTION */
+// Wrapper that calls an optional sysdep, or returns ENOSYS if it is not implemented.
+template <typename Tag, typename... Args>
+inline sysdep_return_t<Tag, Args...> sysdep_or_enosys(Args &&...args) {
+	if constexpr (IsImplemented<Tag>) {
+		return Sysdeps<Tag>::operator()(std::forward<Args>(args)...);
+	} else {
+		__ensure_warn("Library function fails due to missing sysdep", __FILE__, __LINE__, __func__);
+		return ENOSYS;
+	}
+}
 
-#if __MLIBC_LINUX_REBOOT_OPTION
-#	include <mlibc/linux-reboot-sysdeps.hpp>
-#endif /* __MLIBC_LINUX_REBOOT_OPTION */
+template<typename Tag, typename... Args>
+inline sysdep_return_t<Tag, Args...> sysdep_or_panic(Args &&... args) {
+	if constexpr (IsImplemented<Tag>) {
+		return Sysdeps<Tag>::operator() (std::forward<Args>(args)...);
+	} else {
+		__ensure_warn("Library function fails due to missing sysdep", __FILE__, __LINE__, __func__);
+		__builtin_trap();
+	}
+}
 
-#if __MLIBC_LINUX_WRAPPERS_OPTION
-#	include <mlibc/linux-wrappers-sysdeps.hpp>
-#endif /* __MLIBC_LINUX_WRAPPERS_OPTION */
+// ANCHOR: mandatory-sysdeps
+// Ensure that required sysdeps are implemented.
+static_assert(IsImplemented<Exit>);
+static_assert(IsImplemented<FutexWait>);
+static_assert(IsImplemented<FutexWake>);
+static_assert(IsImplemented<Open>);
+static_assert(IsImplemented<Read>);
+static_assert(IsImplemented<Write>);
+static_assert(IsImplemented<Seek>);
+static_assert(IsImplemented<Close>);
+static_assert(IsImplemented<ClockGet>);
+static_assert(IsImplemented<LibcLog>);
+static_assert(IsImplemented<LibcPanic>);
+static_assert(IsImplemented<AnonAllocate>);
+static_assert(IsImplemented<AnonFree>);
+static_assert(IsImplemented<VmMap>);
+static_assert(IsImplemented<VmUnmap>);
+static_assert(IsImplemented<TcbSet>);
+// ANCHOR_END: mandatory-sysdeps
 
-#if MLIBC_BUILDING_RTLD
-#	include <mlibc/rtld-sysdeps.hpp>
-#endif /* MLIBC_BUILDING_RTLD */
-
-#include <mlibc/internal-sysdeps.hpp>
+} // namespace mlibc
 
 #endif /* MLIBC_ALL_SYSDEPS */

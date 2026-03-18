@@ -2,14 +2,11 @@
 #include <errno.h>
 
 #include <bits/ensure.h>
-#include <mlibc/ansi-sysdeps.hpp>
-#include <mlibc/linux-eventfd-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 int eventfd(unsigned int initval, int flags) {
 	int fd = 0;
-
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_eventfd_create, -1);
-	if (int e = mlibc::sys_eventfd_create(initval, flags, &fd); e) {
+	if (int e = mlibc::sysdep_or_enosys<EventfdCreate>(initval, flags, &fd); e) {
 		errno = e;
 		return -1;
 	}
@@ -19,7 +16,7 @@ int eventfd(unsigned int initval, int flags) {
 
 int eventfd_read(int fd, eventfd_t *value) {
 	ssize_t bytes_read;
-	if (int e = mlibc::sys_read(fd, value, 8, &bytes_read); e) {
+	if (int e = mlibc::sysdep<Read>(fd, value, 8, &bytes_read); e) {
 		errno = e;
 		return -1;
 	}
@@ -33,7 +30,7 @@ int eventfd_read(int fd, eventfd_t *value) {
 
 int eventfd_write(int fd, eventfd_t value) {
 	ssize_t bytes_written;
-	if (int e = mlibc::sys_write(fd, &value, 8, &bytes_written); e) {
+	if (int e = mlibc::sysdep<Write>(fd, &value, 8, &bytes_written); e) {
 		errno = e;
 		return -1;
 	}

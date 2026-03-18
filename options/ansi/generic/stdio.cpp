@@ -11,21 +11,19 @@
 #include <math.h>
 
 #include <abi-bits/fcntl.h>
-
 #include <bits/ensure.h>
-
-#include <mlibc/lock.hpp>
+#include <frg/expected.hpp>
+#include <frg/mutex.hpp>
+#include <frg/printf.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
+#include <mlibc/ctype.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/file-io.hpp>
-#include <mlibc/locale.hpp>
-#include <mlibc/ansi-sysdeps.hpp>
-#include <mlibc/stdlib.hpp>
 #include <mlibc/global-config.hpp>
-#include <mlibc/ctype.hpp>
-#include <frg/mutex.hpp>
-#include <frg/expected.hpp>
-#include <frg/printf.hpp>
+#include <mlibc/locale.hpp>
+#include <mlibc/lock.hpp>
+#include <mlibc/stdlib.hpp>
 
 template<typename Char, typename F>
 struct PrintfAgent {
@@ -728,17 +726,16 @@ struct ResizePrinter {
 };
 
 int remove(const char *filename) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_rmdir, -1);
-	if(int e = mlibc::sys_rmdir(filename); e) {
+	if(int e = mlibc::sysdep_or_enosys<Rmdir>(filename); e) {
 		if (e == ENOTDIR) {
-			MLIBC_CHECK_OR_ENOSYS(mlibc::sys_unlinkat, -1);
-			if(e = mlibc::sys_unlinkat(AT_FDCWD, filename, 0); e) {
+			if(e = mlibc::sysdep_or_enosys<Unlinkat>(AT_FDCWD, filename, 0); e) {
 				errno = e;
 				return -1;
 			}
 
 			return 0;
 		}
+		errno = e;
 		return -1;
 	}
 
@@ -746,8 +743,7 @@ int remove(const char *filename) {
 }
 
 int rename(const char *path, const char *new_path) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_rename, -1);
-	if(int e = mlibc::sys_rename(path, new_path); e) {
+	if(int e = mlibc::sysdep_or_enosys<Rename>(path, new_path); e) {
 		errno = e;
 		return -1;
 	}
@@ -755,7 +751,7 @@ int rename(const char *path, const char *new_path) {
 }
 
 FILE *tmpfile(void) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_unlinkat, nullptr);
+	MLIBC_CHECK_OR_ENOSYS(mlibc::IsImplemented<Unlinkat>, nullptr);
 
 	int fd = 0;
 	char pattern[] = "/tmp/tmpfile_XXXXXX";
@@ -763,9 +759,9 @@ FILE *tmpfile(void) {
 	if (res)
 		return nullptr;
 
-	res = mlibc::sys_unlinkat(AT_FDCWD, pattern, 0);
+	res = mlibc::sysdep_or_panic<Unlinkat>(AT_FDCWD, pattern, 0);
 	if (res) {
-		mlibc::sys_close(fd);
+		mlibc::sysdep<Close>(fd);
 		errno = res;
 		return nullptr;
 	}
@@ -784,9 +780,9 @@ char *tmpnam(char *buf) {
 			return nullptr;
 
 		int fd;
-		ret = mlibc::sys_open(result, O_RDONLY, 0666, &fd);
+		ret = mlibc::sysdep<Open>(result, O_RDONLY, 0666, &fd);
 		if (ret == 0) {
-			mlibc::sys_close(fd);
+			mlibc::sysdep<Close>(fd);
 		} else {
 			return result;
 		}

@@ -11,7 +11,7 @@
 
 namespace mlibc {
 
-int sys_anon_allocate(size_t size, void **pointer) {
+int Sysdeps<AnonAllocate>::operator()(size_t size, void **pointer) {
 	// This implementation is inherently signal-safe.
 	__ensure(!(size & 0xFFF));
 	HelWord out;
@@ -20,7 +20,7 @@ int sys_anon_allocate(size_t size, void **pointer) {
 	return 0;
 }
 
-int sys_anon_free(void *pointer, size_t size) {
+int Sysdeps<AnonFree>::operator()(void *pointer, size_t size) {
 	// This implementation is inherently signal-safe.
 	HEL_CHECK(helSyscall2(kHelCallSuper + posix::superAnonDeallocate, (HelWord)pointer, size));
 	return 0;

@@ -38,7 +38,7 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
     sysdepAllocatorCapability
 );
 
-int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
+int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *result) {
 	if (logIoctls)
 		mlibc::infoLogger() << "mlibc: ioctl with"
 		                    << " type: 0x" << frg::hex_fmt(_IOC_TYPE(request)) << ", number: 0x"

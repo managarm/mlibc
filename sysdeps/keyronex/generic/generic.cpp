@@ -18,27 +18,27 @@ namespace mlibc {
 /* libc */
 
 void
-sys_libc_log(const char *message)
+Sysdeps<LibcLog>::operator()(const char *message)
 {
 	syscall1(SYS_debug_message, (uintptr_t)message, NULL);
 }
 
 void
-sys_libc_panic()
+Sysdeps<LibcPanic>::operator()()
 {
-	sys_libc_log("\nMLIBC PANIC\n");
+	sysdep<LibcLog>("\nMLIBC PANIC\n");
 	for (;;)
 		;
 }
 
 int
-sys_futex_tid()
+Sysdeps<FutexTid>::operator()()
 {
 	return syscall0(SYS_thread_gettid, NULL);
 }
 
 int
-sys_futex_wait(int *pointer, int expected, const struct timespec *time)
+Sysdeps<FutexWait>::operator()(int *pointer, int expected, const struct timespec *time)
 {
 	int r =syscall3(SYS_futex_wait, (uintptr_t)pointer, expected,
 	    (uintptr_t)time, NULL);
@@ -48,7 +48,7 @@ sys_futex_wait(int *pointer, int expected, const struct timespec *time)
 }
 
 int
-sys_futex_wake(int *pointer, bool all)
+Sysdeps<FutexWake>::operator()(int *pointer, bool all)
 {
 	int r = syscall2(SYS_futex_wake, (uintptr_t)pointer,
 	    (uintptr_t)(all ? INT_MAX : 1), NULL);
@@ -58,7 +58,7 @@ sys_futex_wake(int *pointer, bool all)
 }
 
 int
-sys_tcb_set(void *pointer)
+Sysdeps<TcbSet>::operator()(void *pointer)
 {
 #if defined(__m68k__)
 	syscall1(SYS_tcb_set, (uintptr_t)pointer + 0x7000 + sizeof(Tcb), NULL);
@@ -76,29 +76,23 @@ sys_tcb_set(void *pointer)
 	return 0;
 }
 
-void
-*sys_tp_get()
-{
-	return (void*)syscall0(SYS_tcb_get, NULL);
-}
-
 /* vm */
 
 int
-sys_anon_allocate(size_t size, void **pointer)
+Sysdeps<AnonAllocate>::operator()(size_t size, void **pointer)
 {
-	return sys_vm_map(NULL, size, PROT_READ | PROT_WRITE,
+	return sysdep<VmMap>(nullptr, size, PROT_READ | PROT_WRITE,
 	    MAP_ANONYMOUS | MAP_PRIVATE, -1, 0, pointer);
 }
 
 int
-sys_anon_free(void *pointer, size_t size)
+Sysdeps<AnonFree>::operator()(void *pointer, size_t size)
 {
-	return sys_vm_unmap(pointer, size);
+	return sysdep<VmUnmap>(pointer, size);
 }
 
 int
-sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset,
+Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int fd, off_t offset,
     void **window)
 {
 	uintptr_t addr;
@@ -111,7 +105,7 @@ sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset,
 }
 
 int
-sys_vm_protect(void *pointer, size_t size, int prot)
+Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot)
 {
 	int r = syscall3(SYS_mprotect, (uintptr_t)pointer, size, prot, NULL);
 	if (r < 0)
@@ -120,7 +114,7 @@ sys_vm_protect(void *pointer, size_t size, int prot)
 }
 
 int
-sys_vm_unmap(void *pointer, size_t size)
+Sysdeps<VmUnmap>::operator()(void *pointer, size_t size)
 {
 	int r = syscall2(SYS_munmap, (uintptr_t)pointer, size, NULL);
 	if (r < 0)
@@ -131,13 +125,13 @@ sys_vm_unmap(void *pointer, size_t size)
 /* vfs */
 
 int
-sys_access(const char *path, int mode)
+Sysdeps<Access>::operator()(const char *path, int mode)
 {
-	return sys_faccessat(AT_FDCWD, path, mode, 0);
+	return sysdep<Faccessat>(AT_FDCWD, path, mode, 0);
 }
 
 int
-sys_faccessat(int dirfd, const char *pathname, int mode, int flags)
+Sysdeps<Faccessat>::operator()(int dirfd, const char *pathname, int mode, int flags)
 {
 	int r = syscall4(SYS_faccessat, dirfd, (uintptr_t)pathname,
 	    mode, flags, NULL);
@@ -147,19 +141,19 @@ sys_faccessat(int dirfd, const char *pathname, int mode, int flags)
 }
 
 int
-sys_open(const char *pathname, int flags, mode_t mode, int *fd)
+Sysdeps<Open>::operator()(const char *pathname, int flags, mode_t mode, int *fd)
 {
-	return sys_openat(AT_FDCWD, pathname, flags, mode, fd);
+	return sysdep<Openat>(AT_FDCWD, pathname, flags, mode, fd);
 }
 
 int
-sys_open_dir(const char *path, int *handle)
+Sysdeps<OpenDir>::operator()(const char *path, int *handle)
 {
-    return sys_open(path, O_DIRECTORY, 0, handle);
+    return sysdep<Open>(path, O_DIRECTORY, 0, handle);
 }
 
 int
-sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd)
+Sysdeps<Openat>::operator()(int dirfd, const char *path, int flags, mode_t mode, int *fd)
 {
 	int r = syscall4(SYS_openat, dirfd, (uintptr_t)path, flags, mode, NULL);
 	if (r < 0)
@@ -169,13 +163,13 @@ sys_openat(int dirfd, const char *path, int flags, mode_t mode, int *fd)
 }
 
 int
-sys_link(const char *old_path, const char *new_path)
+Sysdeps<Link>::operator()(const char *old_path, const char *new_path)
 {
-	return sys_linkat(AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
+	return sysdep<Linkat>(AT_FDCWD, old_path, AT_FDCWD, new_path, 0);
 }
 
 int
-sys_linkat(int olddirfd, const char *old_path, int newdirfd,
+Sysdeps<Linkat>::operator()(int olddirfd, const char *old_path, int newdirfd,
     const char *new_path, int flags)
 {
 	int r = syscall5(SYS_linkat, olddirfd, (uintptr_t)old_path,
@@ -186,7 +180,7 @@ sys_linkat(int olddirfd, const char *old_path, int newdirfd,
 }
 
 int
-sys_unlinkat(int fd, const char *path, int flags)
+Sysdeps<Unlinkat>::operator()(int fd, const char *path, int flags)
 {
 	int r = syscall3(SYS_unlinkat, fd, (uintptr_t)path, flags, NULL);
 	if (r < 0)
@@ -195,7 +189,7 @@ sys_unlinkat(int fd, const char *path, int flags)
 }
 
 int
-sys_mkdirat(int dirfd, const char *path, mode_t mode)
+Sysdeps<Mkdirat>::operator()(int dirfd, const char *path, mode_t mode)
 {
 	int r = syscall3(SYS_mkdirat, dirfd, (uintptr_t)path, mode, NULL);
 	if (r < 0)
@@ -204,12 +198,13 @@ sys_mkdirat(int dirfd, const char *path, mode_t mode)
 }
 
 int
-sys_mkdir(const char *path, mode_t mode)
+Sysdeps<Mkdir>::operator()(const char *path, mode_t mode)
 {
-	return sys_mkdirat(AT_FDCWD, path, mode);
+	return sysdep<Mkdirat>(AT_FDCWD, path, mode);
 }
 
-int sys_renameat(int olddirfd, const char *old_path, int newdirfd,
+int
+Sysdeps<Renameat>::operator()(int olddirfd, const char *old_path, int newdirfd,
     const char *new_path)
 {
 	int r = syscall5(SYS_renameat, olddirfd, (uintptr_t)old_path,
@@ -219,13 +214,14 @@ int sys_renameat(int olddirfd, const char *old_path, int newdirfd,
 	return 0;
 }
 
-int sys_rename(const char *path, const char *new_path)
+int
+Sysdeps<Rename>::operator()(const char *path, const char *new_path)
 {
-	return sys_renameat(AT_FDCWD, path, AT_FDCWD, new_path);
+	return sysdep<Renameat>(AT_FDCWD, path, AT_FDCWD, new_path);
 }
 
 int
-sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags,
+Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int flags,
     struct stat *statbuf)
 {
 	uintptr_t r;
@@ -254,14 +250,14 @@ sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags,
 /* open file ops */
 
 int
-sys_close(int fd)
+Sysdeps<Close>::operator()(int fd)
 {
 	int r = syscall1(SYS_close, fd, NULL);
 	return -r;
 }
 
 int
-sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read)
+Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_read)
 {
 	int r = syscall3(SYS_read, fd, (uintptr_t)buf, count, NULL);
 	if (r >= 0) {
@@ -272,7 +268,7 @@ sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read)
 }
 
 int
-sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read)
+Sysdeps<Readv>::operator()(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read)
 {
 	int r = syscall3(SYS_readv, fd, (uintptr_t)iovs, iovc, NULL);
 	if (r < 0)
@@ -282,7 +278,7 @@ sys_readv(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read)
 }
 
 int
-sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read)
+Sysdeps<ReadEntries>::operator()(int handle, void *buffer, size_t max_size, size_t *bytes_read)
 {
 	int r = syscall3(SYS_getdents, handle, (uintptr_t)buffer,
 	    max_size, NULL);
@@ -293,7 +289,8 @@ sys_read_entries(int handle, void *buffer, size_t max_size, size_t *bytes_read)
 	return -r;
 }
 
-int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written)
+int
+Sysdeps<Write>::operator()(int fd, const void *buf, size_t count, ssize_t *bytes_written)
 {
 	int r = syscall3(SYS_write, fd, (uintptr_t)buf, count, NULL);
 	if (r >= 0) {
@@ -303,7 +300,8 @@ int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written)
 	return -r;
 }
 
-int sys_seek(int fd, off_t offset, int whence, off_t *new_offset)
+int
+Sysdeps<Seek>::operator()(int fd, off_t offset, int whence, off_t *new_offset)
 {
 	off_t r = syscall3(SYS_seek, fd, offset, whence, NULL);
 	if (r >= 0) {
@@ -314,7 +312,7 @@ int sys_seek(int fd, off_t offset, int whence, off_t *new_offset)
 }
 
 int
-sys_ioctl(int fd, unsigned long request, void *arg, int *result)
+Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *result)
 {
 	int r = syscall3(SYS_ioctl, fd, request, (uintptr_t)arg,
 	    NULL);
@@ -327,25 +325,25 @@ sys_ioctl(int fd, unsigned long request, void *arg, int *result)
 
 
 int
-sys_isatty(int fd)
+Sysdeps<Isatty>::operator()(int fd)
 {
 	struct winsize ws;
 	int result;
 
-	if (sys_ioctl(fd, TIOCGWINSZ, &ws, &result) == 0)
+	if (sysdep<Ioctl>(fd, TIOCGWINSZ, &ws, &result) == 0)
 		return 0;
 
 	return ENOTTY;
 }
 
 int
-sys_tcgetattr(int fd, struct termios *attr)
+Sysdeps<Tcgetattr>::operator()(int fd, struct termios *attr)
 {
-	return sys_ioctl(fd, TCGETS, (void *)attr, NULL);
+	return sysdep<Ioctl>(fd, TCGETS, (void *)attr, nullptr);
 }
 
 int
-sys_tcsetattr(int fd, int optional_action, const struct termios *attr)
+Sysdeps<Tcsetattr>::operator()(int fd, int optional_action, const struct termios *attr)
 {
 	int req;
 
@@ -356,15 +354,15 @@ sys_tcsetattr(int fd, int optional_action, const struct termios *attr)
 		default: return EINVAL;
 	}
 
-	return sys_ioctl(fd, req, (void *)attr, NULL);
+	return sysdep<Ioctl>(fd, req, (void *)attr, nullptr);
 }
 
 #ifndef MLIBC_BUILDING_RTLD
 int
-sys_ptsname(int fd, char *buffer, size_t length)
+Sysdeps<Ptsname>::operator()(int fd, char *buffer, size_t length)
 {
 	int index;
-	if (int e = sys_ioctl(fd, TIOCGPTN, &index, NULL); e)
+	if (int e = sysdep<Ioctl>(fd, TIOCGPTN, &index, nullptr); e)
 		return e;
 	if ((size_t)snprintf(buffer, length, "/dev/pts%d", index) >= length) {
 		return ERANGE;
@@ -376,7 +374,7 @@ sys_ptsname(int fd, char *buffer, size_t length)
 /* fd manipulation */
 
 int
-sys_dup(int fd, int flags, int *newfd) {
+Sysdeps<Dup>::operator()(int fd, int flags, int *newfd) {
 	int r = syscall2(SYS_dup, fd, flags, NULL);
 	if (r < 0)
 		return -r;
@@ -385,7 +383,7 @@ sys_dup(int fd, int flags, int *newfd) {
 }
 
 int
-sys_dup2(int fd, int flags, int newfd) {
+Sysdeps<Dup2>::operator()(int fd, int flags, int newfd) {
 	int r = syscall3(SYS_dup3, fd, newfd, flags, NULL);
 	if (r < 0)
 		return -r;
@@ -393,7 +391,7 @@ sys_dup2(int fd, int flags, int newfd) {
 }
 
 int
-sys_fcntl(int fd, int request, va_list args, int *result)
+Sysdeps<Fcntl>::operator()(int fd, int request, va_list args, int *result)
 {
 	uintptr_t arg = va_arg(args, uintptr_t);
 	int r = syscall3(SYS_fcntl, fd, request, arg, NULL);
@@ -405,7 +403,7 @@ sys_fcntl(int fd, int request, va_list args, int *result)
 }
 
 int
-sys_pipe(int *fds, int flags)
+Sysdeps<Pipe>::operator()(int *fds, int flags)
 {
 	int r = syscall2(SYS_pipe, (uintptr_t)fds, flags, NULL);
 	if (r < 0)
@@ -416,7 +414,7 @@ sys_pipe(int *fds, int flags)
 /* time */
 
 int
-sys_sleep(time_t *secs, long *nanos)
+Sysdeps<Sleep>::operator()(time_t *secs, long *nanos)
 {
 	struct timespec rqtp, rmtp;
 	int r;
@@ -430,7 +428,7 @@ sys_sleep(time_t *secs, long *nanos)
 }
 
 int
-sys_clock_get(int clock, time_t *secs, long *nanos)
+Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos)
 {
 	struct timespec tp;
 	int r = syscall2(SYS_clock_gettime, clock, (uintptr_t)&tp, NULL);
@@ -442,7 +440,7 @@ sys_clock_get(int clock, time_t *secs, long *nanos)
 }
 
 int
-sys_clock_getres(int clock, time_t *secs, long *nanos)
+Sysdeps<ClockGetres>::operator()(int clock, time_t *secs, long *nanos)
 {
 	struct timespec tp = {};
 	int r = syscall2(SYS_clock_getres, clock, (uintptr_t)&tp, NULL);
@@ -456,7 +454,7 @@ sys_clock_getres(int clock, time_t *secs, long *nanos)
 /* credentials */
 
 int
-sys_getresuid(uid_t *ruid, uid_t *euid, uid_t *suid)
+Sysdeps<GetResuid>::operator()(uid_t *ruid, uid_t *euid, uid_t *suid)
 {
 	uintptr_t r = syscall3(SYS_getresuid, (uintptr_t)ruid,
 	    (uintptr_t)euid, (uintptr_t)suid, NULL);
@@ -464,7 +462,7 @@ sys_getresuid(uid_t *ruid, uid_t *euid, uid_t *suid)
 }
 
 int
-sys_getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid)
+Sysdeps<GetResgid>::operator()(gid_t *rgid, gid_t *egid, gid_t *sgid)
 {
 	uintptr_t r = syscall3(SYS_getresgid, (uintptr_t)rgid,
 	    (uintptr_t)egid, (uintptr_t)sgid, NULL);
@@ -472,41 +470,41 @@ sys_getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid)
 }
 
 uid_t
-sys_geteuid()
+Sysdeps<GetEuid>::operator()()
 {
 	uid_t r, e, s;
-	__ensure(sys_getresuid(&r, &e, &s) == 0);
+	__ensure(sysdep<GetResuid>(&r, &e, &s) == 0);
 	return e;
 }
 
 uid_t
-sys_getuid()
+Sysdeps<GetUid>::operator()()
 {
 	uid_t r, e, s;
-	__ensure(sys_getresuid(&r, &e, &s) == 0);
+	__ensure(sysdep<GetResuid>(&r, &e, &s) == 0);
 	return r;
 }
 
 gid_t
-sys_getgid()
+Sysdeps<GetGid>::operator()()
 {
 	gid_t r, e, s;
-	__ensure(sys_getresgid(&r, &e, &s) == 0);
+	__ensure(sysdep<GetResgid>(&r, &e, &s) == 0);
 	return r;
 }
 
 gid_t
-sys_getegid()
+Sysdeps<GetEgid>::operator()()
 {
 	gid_t r, e, s;
-	__ensure(sys_getresgid(&r, &e, &s) == 0);
+	__ensure(sysdep<GetResgid>(&r, &e, &s) == 0);
 	return e;
 }
 
 /* misc */
 
 int
-sys_uname(struct utsname *buf) {
+Sysdeps<Uname>::operator()(struct utsname *buf) {
 	int r = syscall1(SYS_utsname, (uintptr_t)buf, NULL);
 	if (r < 0)
 		return -r;
@@ -514,10 +512,10 @@ sys_uname(struct utsname *buf) {
 }
 
 int
-sys_gethostname(char *buf, size_t bufsize)
+Sysdeps<GetHostname>::operator()(char *buf, size_t bufsize)
 {
 	struct utsname uname_buf;
-	if (int r = sys_uname(&uname_buf); r != 0)
+	if (int r = sysdep<Uname>(&uname_buf); r != 0)
 		return r;
 
 	auto node_len = strlen(uname_buf.nodename);
