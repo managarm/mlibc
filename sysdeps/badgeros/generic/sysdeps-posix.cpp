@@ -254,4 +254,14 @@ int sys_dup2(int fd, int flags, int newfd) {
 	return res < 0 ? -res : 0;
 }
 
+int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
+	return -__syscall_thread_sigmask(how, set, retrieve);
+}
+
+int sys_thread_sigmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve) {
+	return -__syscall_thread_sigmask(how, set, retrieve);
+}
+
+int sys_uname(struct utsname *buf) { return -__syscall_sys_uname(buf); }
+
 } // namespace mlibc

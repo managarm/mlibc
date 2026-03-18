@@ -4,6 +4,7 @@
 #pragma once
 
 #include <abi-bits/signal.h>
+#include <abi-bits/sigset_t.h>
 #include <abi-bits/stat.h>
 #include <bits/types.h>
 

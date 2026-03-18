@@ -160,6 +160,12 @@ _SYSCALL_DEF(36, _SYSCALL_FS_SYMLINK, __syscall_fs_symlink, int, char const *__l
 // If `__newfd` is `-1`, an arbitrary descriptor number is selected.
 _SYSCALL_DEF(37, _SYSCALL_FS_DUP, __syscall_fs_dup, int, int __fd, int __flags, int __newfd)
 
+// Modify the signal mask for this thread.
+_SYSCALL_DEF(38, _SYSCALL_THREAD_SIGMASK, __syscall_thread_sigmask, int, int __how, sigset_t const *__set, sigset_t *__oldset)
+
+// Get system information.
+_SYSCALL_DEF(39, _SYSCALL_SYS_UNAME, __syscall_sys_uname, int, struct utsname *__name)
+
 
 
 #undef _SYSCALL_DEF
