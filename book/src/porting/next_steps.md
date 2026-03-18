@@ -8,9 +8,9 @@ To get it to work, you will need to reconfigure mlibc without the `-Ddefault_lib
 
 ## Implementing more sysdeps
 
-Most sysdeps in mlibc are defined as weak symbols, and so do not need to be defined right away. Whenever an unimplemented sysdep is hit, mlibc will log about it and return an error to the user application.
+Most sysdeps in mlibc are optional, and so do not need to be defined right away. Whenever an unimplemented sysdep is hit, mlibc will log about it and return an error to the user application (typically ENOSYS).
 
-The list of sysdeps for every option can be found under its include directory. For example, the sysdeps for the POSIX option are declared in `options/posix/include/mlibc/posix-sysdeps.hpp`. As mentioned earlier, make sure your definitions match the ones in the header, as mlibc won't be able to find them otherwise.
+The list of sysdeps can be found in the [`options/internal/include/mlibc/sysdep-signatures.hpp`](https://github.com/managarm/mlibc/blob/master/options/internal/include/mlibc/sysdep-signatures.hpp) header. As mentioned earlier, make sure your definitions match the ones in the header, as mismatches will cause compilation or linking errors.
 
 ## Enabling more options
 
