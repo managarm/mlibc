@@ -8,6 +8,7 @@ libc_sources += files(
 	'generic/getopt.cpp',
 	'generic/bsd_stdlib.cpp',
 	'generic/pty.cpp',
+	'generic/sys-statvfs.cpp',
 )
 
 if not no_headers
@@ -23,6 +24,7 @@ if not no_headers
 		subdir: 'arpa'
 	)
 	install_headers(
+		'include/sys/mount.h',
 		'include/sys/queue.h',
 		subdir: 'sys'
 	)
