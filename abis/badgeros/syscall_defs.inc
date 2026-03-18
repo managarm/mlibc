@@ -166,6 +166,15 @@ _SYSCALL_DEF(38, _SYSCALL_THREAD_SIGMASK, __syscall_thread_sigmask, int, int __h
 // Get system information.
 _SYSCALL_DEF(39, _SYSCALL_SYS_UNAME, __syscall_sys_uname, int, struct utsname *__name)
 
+// Succeed if `__fd` is a TTY, fail otherwise.
+_SYSCALL_DEF(40, _SYSCALL_FS_ISATTY, __syscall_fs_isatty, int, int __fd)
+
+// Get TTY attributes.
+_SYSCALL_DEF(41, _SYSCALL_FS_TCGETATTR, __syscall_fs_tcgetattr, int, int __fd, struct termios *__attr)
+
+// Set TTY attributes.
+_SYSCALL_DEF(42, _SYSCALL_FS_TCSETATTR, __syscall_fs_tcsetattr, int, int __fd, struct termios const *__attr)
+
 
 
 #undef _SYSCALL_DEF

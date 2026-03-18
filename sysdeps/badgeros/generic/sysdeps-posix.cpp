@@ -31,11 +31,6 @@ void sys_libc_log(const char *msg) {
 	__syscall_fs_write(2, "\n", 1);
 }
 
-int sys_isatty(int fd) {
-	(void)fd;
-	return 0;
-}
-
 int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
 	if (fsfdt == fsfd_target::path) {
 		fd = AT_FDCWD;
@@ -263,5 +258,14 @@ int sys_thread_sigmask(int how, const sigset_t *__restrict set, sigset_t *__rest
 }
 
 int sys_uname(struct utsname *buf) { return -__syscall_sys_uname(buf); }
+
+int sys_isatty(int fd) { return -__syscall_fs_isatty(fd); }
+
+int sys_tcgetattr(int fd, struct termios *attr) { return -__syscall_fs_tcgetattr(fd, attr); }
+
+int sys_tcsetattr(int fd, int act, const struct termios *attr) {
+	(void)act;
+	return -__syscall_fs_tcsetattr(fd, attr);
+}
 
 } // namespace mlibc
