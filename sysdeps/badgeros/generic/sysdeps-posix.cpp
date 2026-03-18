@@ -35,7 +35,7 @@ int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat
 	if (fsfdt == fsfd_target::path) {
 		fd = AT_FDCWD;
 	} else if (fsfdt == fsfd_target::fd) {
-		path = NULL;
+		path = nullptr;
 	} else {
 		__ensure(fsfdt == fsfd_target::fd_path);
 	}
@@ -267,5 +267,11 @@ int sys_tcsetattr(int fd, int act, const struct termios *attr) {
 	(void)act;
 	return -__syscall_fs_tcsetattr(fd, attr);
 }
+
+int sys_getcwd(char *buffer, size_t size) { return -__syscall_fs_getcwd(buffer, size); }
+
+int sys_chdir(const char *path) { return -__syscall_fs_chdir(-1, path); }
+
+int sys_fchdir(int fd) { return -__syscall_fs_chdir(fd, nullptr); }
 
 } // namespace mlibc

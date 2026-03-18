@@ -175,6 +175,14 @@ _SYSCALL_DEF(41, _SYSCALL_FS_TCGETATTR, __syscall_fs_tcgetattr, int, int __fd, s
 // Set TTY attributes.
 _SYSCALL_DEF(42, _SYSCALL_FS_TCSETATTR, __syscall_fs_tcsetattr, int, int __fd, struct termios const *__attr)
 
+// Get the absolute path path of the current working directory.
+// May be outdated if the directory was moved.
+_SYSCALL_DEF(43, _SYSCALL_FS_GETCWD, __syscall_fs_getcwd, int, void *__buf, __mlibc_size __buflen)
+
+// Change the working directory.
+// Since setting both `at` and `path` is non-standard, it is currently unsupported.
+_SYSCALL_DEF(44, _SYSCALL_FS_CHDIR, __syscall_fs_chdir, int, int __at, char const *__path)
+
 
 
 #undef _SYSCALL_DEF
