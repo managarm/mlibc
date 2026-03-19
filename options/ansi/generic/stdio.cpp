@@ -1905,7 +1905,7 @@ int vswprintf(wchar_t *__restrict buffer, size_t n, const wchar_t *__restrict fo
 		errno = EINVAL;
 		return -1;
 	} else if (p.count >= n) {
-		errno = E2BIG;
+		errno = EOVERFLOW;
 		return -1;
 	}
 	if (n)

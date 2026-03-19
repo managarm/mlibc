@@ -40,14 +40,14 @@ int main() {
 
 	written_len = swprintf(buffer, 10, L"This string is definitely too long");
 	assert(written_len < 0);
-	assert(errno == E2BIG);
+	assert(errno == EOVERFLOW || errno == E2BIG);
 
 	written_len = swprintf(buffer, 10, L"abcdefghi");
 	assert(written_len == 9);
 
 	written_len = swprintf(buffer, 10, L"abcdefghij");
 	assert(written_len < 0);
-	assert(errno == E2BIG);
+	assert(errno == EOVERFLOW || errno == E2BIG);
 
 	written_len = swprintf(buffer, 10, L"%s", "€öß");
 	assert(written_len == 3);
