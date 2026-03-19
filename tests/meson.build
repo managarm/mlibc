@@ -47,6 +47,7 @@ all_test_cases = [
 	'ansi/fwscanf',
 	'ansi/swprintf',
 	'ansi/wcsftime',
+	'ansi/wctype',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
