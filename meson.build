@@ -449,7 +449,6 @@ internal_sources = [
 	'options/internal/generic/threads.cpp',
 	'options/internal/generic/search.cpp',
 	'options/internal/generic/stdlib.cpp',
-	'options/internal/generic/time.cpp',
 	'options/internal/generic/wide.cpp',
 	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',

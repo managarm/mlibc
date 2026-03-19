@@ -106,15 +106,22 @@ struct tm *localtime(const time_t *unix_gmt) {
 	return localtime_r(unix_gmt, &per_thread_tm);
 }
 
-size_t strftime(char *__restrict dest, size_t max_size,
-		const char *__restrict format, const struct tm *__restrict tm) {
+size_t strftime(
+    char *__restrict dest,
+    size_t max_size,
+    const char *__restrict format,
+    const struct tm *__restrict tm
+) {
 	return mlibc::strftime(dest, max_size, format, tm, mlibc::getActiveLocale());
 }
 
-size_t wcsftime(wchar_t *__restrict, size_t, const wchar_t *__restrict,
-		const struct tm *__restrict) {
-	mlibc::infoLogger() << "mlibc: wcsftime is a stub" << frg::endlog;
-	return 0;
+size_t wcsftime(
+    wchar_t *__restrict dest,
+    size_t max_size,
+    const wchar_t *__restrict format,
+    const struct tm *__restrict tm
+) {
+	return mlibc::strftime(dest, max_size, format, tm, mlibc::getActiveLocale());
 }
 
 namespace {
