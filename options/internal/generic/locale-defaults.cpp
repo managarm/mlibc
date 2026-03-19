@@ -1,5 +1,43 @@
 #include <mlibc/locale.hpp>
 
+namespace {
+
+constexpr const char defaultCtypeClassNames[] = "upper\0"
+                                                "lower\0"
+                                                "alpha\0"
+                                                "digit\0"
+                                                "xdigit\0"
+                                                "space\0"
+                                                "print\0"
+                                                "graph\0"
+                                                "blank\0"
+                                                "cntrl\0"
+                                                "punct\0"
+                                                "alnum\0";
+
+constexpr const char defaultCtypeMapNames[] = "toupper\0"
+                                              "tolower\0";
+
+constexpr const char defaultIdentificationCategory[] = "i18n:1999\0"
+                                                       "i18n:1999\0"
+                                                       "i18n:1999\0"
+                                                       "i18n:1999\0"
+                                                       "i18n:1999\0"
+                                                       "i18n:1999\0"
+                                                       "\0"
+                                                       "i18n:1999\0"
+                                                       "i18n:1999\0"
+                                                       "i18n:1999\0"
+                                                       "i18n:1999\0"
+                                                       "i18n:1999\0"
+                                                       "i18n:1999\0"
+                                                       "i18n:1999\0"
+                                                       "i18n:1999\0"
+                                                       "i18n:1999\0"
+                                                       "i18n:1999";
+
+} // namespace
+
 namespace mlibc {
 
 nl_ctype::nl_ctype() {
@@ -7,8 +45,8 @@ nl_ctype::nl_ctype() {
 	set(_NL_CTYPE_TOLOWER, frg::span<const uint32_t>{cLocaleCtypeToLower});
 	set(_NL_CTYPE_TOUPPER, frg::span<const uint32_t>{cLocaleCtypeToUpper});
 	set(_NL_CTYPE_CLASS32, frg::span<const uint8_t>{cLocaleCtypeClass32});
-	set(_NL_CTYPE_CLASS_NAMES, {"upper\0" "lower\0" "alpha\0" "digit\0" "xdigit\0" "space\0" "print\0" "graph\0" "blank\0" "cntrl\0" "punct\0"  "alnum\0"});
-	set(_NL_CTYPE_MAP_NAMES, {"toupper\0" "tolower\0"});
+	set(_NL_CTYPE_CLASS_NAMES, frg::string_view{defaultCtypeClassNames, sizeof(defaultCtypeClassNames)});
+	set(_NL_CTYPE_MAP_NAMES, frg::string_view{defaultCtypeMapNames, sizeof(defaultCtypeMapNames)});
 	set(_NL_CTYPE_MB_CUR_MAX, uint32_t{1});
 	set(_NL_CTYPE_CODESET_NAME, {"ANSI_X3.4-1968"});
 	set(_NL_CTYPE_CLASS_OFFSET, uint32_t{72});
@@ -361,13 +399,7 @@ nl_identification::nl_identification() {
 	set(_NL_IDENTIFICATION_ABBREVIATION, {""});
 	set(_NL_IDENTIFICATION_REVISION, {"1.0"});
 	set(_NL_IDENTIFICATION_DATE, {"2001-12-08"});
-	set(_NL_IDENTIFICATION_CATEGORY, {
-		"i18n:1999\0" "i18n:1999\0" "i18n:1999\0" "i18n:1999\0"
-		"i18n:1999\0" "i18n:1999\0" "\0" "i18n:1999\0"
-		"i18n:1999\0" "i18n:1999\0" "i18n:1999\0" "i18n:1999\0"
-		"i18n:1999\0" "i18n:1999\0" "i18n:1999\0" "i18n:1999\0"
-		"i18n:1999"
-	});
+	set(_NL_IDENTIFICATION_CATEGORY, frg::string_view{defaultIdentificationCategory, sizeof(defaultIdentificationCategory)});
 	set(_NL_IDENTIFICATION_CODESET, {"ANSI_X3.4-1968"});
 }
 
