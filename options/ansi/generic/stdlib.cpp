@@ -405,12 +405,12 @@ int mblen(const char *mbs, size_t mb_limit) {
 	}
 
 	auto e = cc->decode_wtranscode(nseq, wseq, mblen_state);
-	if(e == mlibc::charcode_error::input_exhausted) {
+	if(e == mlibc::transcode_status::input_exhausted || e == mlibc::transcode_status::output_exhausted) {
 		return nseq.it - mbs;
-	} else if(e == mlibc::charcode_error::null) {
+	} else if(e == mlibc::transcode_status::null_terminator) {
 		return 0;
 	} else {
-		__ensure(e == mlibc::charcode_error::illegal_input || e == mlibc::charcode_error::input_underflow);
+		__ensure(e == mlibc::transcode_status::illegal_input || e == mlibc::transcode_status::input_underflow);
 		errno = EILSEQ;
 		return -1;
 	}
@@ -433,22 +433,18 @@ int mbtowc(wchar_t *__restrict wc, const char *__restrict mb, size_t max_size) {
 			auto e = cc->decode_wtranscode(nseq, wseq, mbtowc_state);
 			switch(e) {
 				// We keep the state, so we can simply return here.
-				case mlibc::charcode_error::input_underflow:
-				case mlibc::charcode_error::input_exhausted:
-				case mlibc::charcode_error::null: {
+				case mlibc::transcode_status::input_underflow:
+				case mlibc::transcode_status::input_exhausted:
+				case mlibc::transcode_status::output_exhausted:
+				case mlibc::transcode_status::null_terminator: {
 					return nseq.it - mb;
 				}
-				case mlibc::charcode_error::illegal_input: {
+				case mlibc::transcode_status::illegal_input: {
 					errno = -EILSEQ;
 					return -1;
 				}
-				case mlibc::charcode_error::dirty: {
-					mlibc::panicLogger() << "decode_wtranscode() charcode_error::dirty errors are not handled" << frg::endlog;
-					break;
-				}
-				case mlibc::charcode_error::output_overflow: {
-					mlibc::panicLogger() << "decode_wtranscode() charcode_error::output_overflow errors are not handled" << frg::endlog;
-					break;
+				case mlibc::transcode_status::output_overflow: {
+					__ensure(!"unexpected transcode error");
 				}
 			}
 			__builtin_unreachable();
@@ -481,15 +477,17 @@ size_t mbstowcs(wchar_t *__restrict wcs, const char *__restrict mbs, size_t wc_l
 
 	if(!wcs) {
 		size_t size;
-		if(auto e = cc->decode_wtranscode_length(nseq, &size, st); e != mlibc::charcode_error::null && e != mlibc::charcode_error::input_exhausted) {
-			__ensure(e == mlibc::charcode_error::illegal_input || e == mlibc::charcode_error::input_underflow);
+		if(auto e = cc->decode_wtranscode_length(nseq, &size, st); e != mlibc::transcode_status::null_terminator && e != mlibc::transcode_status::input_exhausted) {
+			__ensure(e == mlibc::transcode_status::illegal_input || e == mlibc::transcode_status::input_underflow);
 			errno = EILSEQ;
 			return static_cast<size_t>(-1);
 		}
 		return size;
 	}
 
-	if(auto e = cc->decode_wtranscode(nseq, wseq, st); e != mlibc::charcode_error::null && e != mlibc::charcode_error::input_exhausted) {
+	auto e = cc->decode_wtranscode(nseq, wseq, st);
+	if(e != mlibc::transcode_status::null_terminator && e != mlibc::transcode_status::output_exhausted) {
+		__ensure(e != mlibc::transcode_status::input_exhausted);
 		errno = EILSEQ;
 		return size_t(-1);
 	}else{

@@ -56,7 +56,7 @@ struct StrToFpPolicy<wchar_t> {
 	static int is_space(int wc, mlibc::localeinfo *l) {
 		auto cc = mlibc::platform_wide_charcode();
 		mlibc::codepoint cp;
-		if(auto e = cc->promote(wc, cp); e != mlibc::charcode_error::null)
+		if(auto e = cc->promote(wc, cp); e != mlibc::transcode_status::input_exhausted)
 			return 0;
 		return mlibc::current_charset()->is_space(cp, static_cast<mlibc::localeinfo *>(l));
 	}
@@ -64,7 +64,7 @@ struct StrToFpPolicy<wchar_t> {
 	static int is_digit(int wc, mlibc::localeinfo *l) {
 		auto cc = mlibc::platform_wide_charcode();
 		mlibc::codepoint cp;
-		if(auto e = cc->promote(wc, cp); e != mlibc::charcode_error::null)
+		if(auto e = cc->promote(wc, cp); e != mlibc::transcode_status::input_exhausted)
 			return 0;
 		return mlibc::current_charset()->is_digit(cp, static_cast<mlibc::localeinfo *>(l));
 	}
