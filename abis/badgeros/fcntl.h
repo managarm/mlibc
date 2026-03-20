@@ -19,6 +19,8 @@
 #define O_APPEND   0x00000004
 #define O_NONBLOCK 0x00000200
 #define O_CLOEXEC  0x00010000
+// For __syscall_fs_dup: Use fncntl(F_DUPFD)-style FD selection; choose the next available instead of overwriting.
+#define DUP2_FCNTL 0x00000800
 // #define O_NOATIME
 
 // #define O_DIRECT
@@ -87,7 +89,7 @@
 #define F_WRLCK 1
 #define F_UNLCK 2
 
-#define FD_CLOEXEC 1
+#define FD_CLOEXEC 0x00010000
 
 #define AT_FDCWD -100
 #define AT_SYMLINK_NOFOLLOW 0x100

@@ -183,6 +183,18 @@ _SYSCALL_DEF(43, _SYSCALL_FS_GETCWD, __syscall_fs_getcwd, int, void *__buf, __ml
 // Since setting both `at` and `path` is non-standard, it is currently unsupported.
 _SYSCALL_DEF(44, _SYSCALL_FS_CHDIR, __syscall_fs_chdir, int, int __at, char const *__path)
 
+// Get file descriptor flags.
+_SYSCALL_DEF(45, _SYSCALL_FS_GETFD, __syscall_fs_getfd, int, int __fd)
+
+// Set file descriptor flags.
+_SYSCALL_DEF(46, _SYSCALL_FS_SETFD, __syscall_fs_setfd, int, int __fd, int __flags)
+
+// Get file status flags.
+_SYSCALL_DEF(47, _SYSCALL_FS_GETFL, __syscall_fs_getfl, int, int __fd)
+
+// Set file status flags.
+_SYSCALL_DEF(48, _SYSCALL_FS_SETFL, __syscall_fs_setfl, int, int __fd, int __flags)
+
 
 
 #undef _SYSCALL_DEF

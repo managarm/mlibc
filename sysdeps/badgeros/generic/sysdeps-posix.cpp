@@ -274,4 +274,39 @@ int sys_chdir(const char *path) { return -__syscall_fs_chdir(-1, path); }
 
 int sys_fchdir(int fd) { return -__syscall_fs_chdir(fd, nullptr); }
 
+int sys_fcntl(int fd, int request, va_list args, int *result) {
+	switch (request) {
+		case F_DUPFD: {
+			int minfd = va_arg(args, int);
+			auto res = __syscall_fs_dup(fd, DUP2_FCNTL, minfd);
+			*result = res;
+			return res < 0 ? -res : 0;
+		}
+		case F_DUPFD_CLOEXEC: {
+			int minfd = va_arg(args, int);
+			auto res = __syscall_fs_dup(fd, DUP2_FCNTL | O_CLOEXEC, minfd);
+			*result = res;
+			return res < 0 ? -res : 0;
+		}
+		case F_GETFD: {
+			auto res = __syscall_fs_getfd(fd);
+			*result = res;
+			return res < 0 ? -res : 0;
+		}
+		case F_SETFD: {
+			return -__syscall_fs_setfd(fd, va_arg(args, int));
+		}
+		case F_GETFL: {
+			auto res = __syscall_fs_getfl(fd);
+			*result = res;
+			return res < 0 ? -res : 0;
+		}
+		case F_SETFL: {
+			return -__syscall_fs_setfl(fd, va_arg(args, int));
+		}
+		default:
+			return EINVAL;
+	}
+}
+
 } // namespace mlibc
