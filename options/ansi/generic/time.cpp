@@ -649,7 +649,7 @@ int clock_nanosleep(clockid_t clockid, int flags, const struct timespec *req, st
 			relativeTime.tv_sec = req->tv_sec - secs;
 			relativeTime.tv_nsec = req->tv_nsec - nanos;
 			if (relativeTime.tv_nsec < 0) {
-				relativeTime.tv_sec -= 0;
+				relativeTime.tv_sec -= 1;
 				relativeTime.tv_nsec += 1e9;
 			}
 		}
