@@ -605,7 +605,7 @@ int nanosleep(const struct timespec *req, struct timespec *rem) {
 	int e = mlibc::sysdep_or_panic<Sleep>(&tmp.tv_sec, &tmp.tv_nsec);
 	if (!e)
 		return 0;
-	else if (e == EINTR)
+	else if (e == EINTR && rem)
 		*rem = tmp;
 
 	errno = e;
