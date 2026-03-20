@@ -49,6 +49,7 @@ all_test_cases = [
 	'ansi/wcsftime',
 	'ansi/wctype',
 	'ansi/wctrans',
+	'ansi/nanosleep',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
