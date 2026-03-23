@@ -3226,10 +3226,40 @@ int Sysdeps<GetGroups>::operator()(size_t size, gid_t *list, int *ret) {
 	return 0;
 }
 
+int Sysdeps<Setxattr>::operator()(const char *, const char *, const void *, size_t, int) {
+	return ENOTSUP;
+}
+
+int Sysdeps<Lsetxattr>::operator()(const char *, const char *, const void *, size_t, int) {
+	return ENOTSUP;
+}
+
+int Sysdeps<Fsetxattr>::operator()(int, const char *, const void *, size_t, int) { return ENOTSUP; }
+
+int Sysdeps<Getxattr>::operator()(const char *, const char *, void *, size_t, ssize_t *) {
+	return ENOTSUP;
+}
+
+int Sysdeps<Lgetxattr>::operator()(const char *, const char *, void *, size_t, ssize_t *) {
+	return ENOTSUP;
+}
+
+int Sysdeps<Fgetxattr>::operator()(int, const char *, void *, size_t, ssize_t *) { return ENOTSUP; }
+
 int Sysdeps<Listxattr>::operator()(const char *, char *, size_t, ssize_t *) {
 	// Valid return if the underlying filesystem does not support xattrs, or if they are disabled.
 	// As we don't implement them at all, we return ENOTSUP.
 	return ENOTSUP;
 }
+
+int Sysdeps<Llistxattr>::operator()(const char *, char *, size_t, ssize_t *) { return ENOTSUP; }
+
+int Sysdeps<Flistxattr>::operator()(int, char *, size_t, ssize_t *) { return ENOTSUP; }
+
+int Sysdeps<Removexattr>::operator()(const char *, const char *) { return ENOTSUP; }
+
+int Sysdeps<Lremovexattr>::operator()(const char *, const char *) { return ENOTSUP; }
+
+int Sysdeps<Fremovexattr>::operator()(int, const char *) { return ENOTSUP; }
 
 } // namespace mlibc
