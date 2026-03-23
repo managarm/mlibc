@@ -10,6 +10,7 @@ extern "C" {
 #ifndef __MLIBC_ABI_ONLY
 
 int statfs(const char *__path, struct statfs *__buf);
+int statfs64(const char *__path, struct statfs64 *__buf);
 int fstatfs(int __fd, struct statfs *__buf);
 int fstatfs64(int __fd, struct statfs64 *__buf);
 
