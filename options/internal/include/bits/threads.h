@@ -1,6 +1,10 @@
 #ifndef _MLIBC_INTERNAL_THREADS_H
 #define _MLIBC_INTERNAL_THREADS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <abi-bits/clockid_t.h>
 #include <bits/ansi/timespec.h>
 #include <bits/size_t.h>
@@ -125,5 +129,9 @@ struct __mlibc_spinlock {
 	unsigned int __mlibc_revision;
 	unsigned int __lock;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _MLIBC_INTERNAL_THREADS_H */
