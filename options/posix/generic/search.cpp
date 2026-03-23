@@ -273,15 +273,26 @@ void *lsearch(const void *key, void *base, size_t *nelp, size_t width,
 	__builtin_unreachable();
 }
 
-void *lfind(const void *key, const void *base, size_t *nelp,
-		size_t width, int (*compar)(const void *, const void *)) {
-	(void)key;
-	(void)base;
-	(void)nelp;
-	(void)width;
-	(void)compar;
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void *lfind(
+    const void *key,
+    const void *base,
+    size_t *nelp,
+    size_t width,
+    int (*compar)(const void *, const void *)
+) {
+	if (!nelp)
+		return nullptr;
+
+	auto *current = static_cast<const char *>(base);
+	size_t n = *nelp;
+
+	for (size_t i = 0; i < n; i++) {
+		if (compar(key, current) == 0)
+			return const_cast<char *>(current);
+		current += width;
+	}
+
+	return nullptr;
 }
 
 namespace {
