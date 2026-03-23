@@ -170,6 +170,11 @@ struct LinuxSysdepTags :
 	Msgget,
 	Msgrcv,
 	Msgsnd,
+	MqOpen,
+	MqUnlink,
+	MqReceive,
+	MqGetAttr,
+	MqSetAttr,
 #endif // __MLIBC_POSIX_OPTION
 
 #if __MLIBC_BSD_OPTION

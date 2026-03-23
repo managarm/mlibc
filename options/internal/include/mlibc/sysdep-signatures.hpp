@@ -260,6 +260,11 @@ SYSDEP_FUNC(Msgctl, int q, int cmd, struct msqid_ds *buf);
 SYSDEP_FUNC(Msgget, key_t k, int flag, int *out);
 SYSDEP_FUNC(Msgrcv, int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg, ssize_t *out);
 SYSDEP_FUNC(Msgsnd, int msqid, const void *msgp, size_t msgsz, int msgflg);
+SYSDEP_FUNC(MqOpen, const char *name, int oflag, mode_t mode, mq_attr *attr, mqd_t *out);
+SYSDEP_FUNC(MqUnlink, const char *name);
+SYSDEP_FUNC(MqReceive, mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio);
+SYSDEP_FUNC(MqGetAttr, mqd_t mqdes, mq_attr *mqstat);
+SYSDEP_FUNC(MqSetAttr, mqd_t mqdes, const mq_attr *mqstat, mq_attr *omqstat);
 #endif // __MLIBC_POSIX_OPTION
 
 #if __MLIBC_LINUX_OPTION

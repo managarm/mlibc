@@ -173,6 +173,7 @@ struct RiscvFlushIcache {};
 #include <bits/ssize_t.h>
 #include <fcntl.h>
 #include <mlibc/fsfd_target.hpp>
+#include <mqueue.h>
 #include <poll.h>
 #include <sched.h>
 #include <stdarg.h>
@@ -525,6 +526,16 @@ struct Msgget {};
 struct Msgrcv {};
 // [[gnu::weak]] int sys_msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg);
 struct Msgsnd {};
+// [[gnu::weak]] int sys_mq_open(const char *name, int oflag, mode_t mode, mq_attr *attr, mqd_t *out);
+struct MqOpen {};
+// [[gnu::weak]] int sys_mq_unlink(const char *name);
+struct MqUnlink {};
+// [[gnu::weak]] int sys_mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio);
+struct MqReceive {};
+// [[gnu::weak]] int sys_mq_get_attr(mqd_t mqdes, mq_attr *mqstat);
+struct MqGetAttr {};
+// [[gnu::weak]] int sys_mq_set_attr(mqd_t mqdes, mq_attr *mqstat, mq_attr *omqstat);
+struct MqSetAttr {};
 #endif // __MLIBC_POSIX_OPTION
 
 #if __MLIBC_LINUX_OPTION
