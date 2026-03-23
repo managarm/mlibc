@@ -50,7 +50,7 @@ inline sysdep_return_t<Tag, Args...> sysdep_or_enosys(Args &&...args) {
 	if constexpr (IsImplemented<Tag>) {
 		return Sysdeps<Tag>::operator()(std::forward<Args>(args)...);
 	} else {
-		__ensure_warn("Library function fails due to missing sysdep", __FILE__, __LINE__, __func__);
+		__ensure_warn("Library function fails due to missing sysdep", __FILE__, __LINE__, __PRETTY_FUNCTION__);
 		return ENOSYS;
 	}
 }
@@ -60,7 +60,7 @@ inline sysdep_return_t<Tag, Args...> sysdep_or_panic(Args &&... args) {
 	if constexpr (IsImplemented<Tag>) {
 		return Sysdeps<Tag>::operator() (std::forward<Args>(args)...);
 	} else {
-		__ensure_warn("Library function fails due to missing sysdep", __FILE__, __LINE__, __func__);
+		__ensure_warn("Library function fails due to missing sysdep", __FILE__, __LINE__, __PRETTY_FUNCTION__);
 		__builtin_trap();
 	}
 }
