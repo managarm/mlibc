@@ -144,6 +144,7 @@ all_test_cases = [
 	'posix/pthread_cond_signal',
 	'posix/protoent',
 	'posix/lfind',
+	'posix/lsearch',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
