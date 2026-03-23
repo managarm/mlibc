@@ -27,6 +27,7 @@ This document lists the ABI breaks that were made in each mlibc major version.
 - [#1460](https://github.com/managarm/mlibc/pull/1460): `useconds_t` was turned into a 32-bit value, as it only needs to hold microsecond values worth up to a second.
 - [#1492](https://github.com/managarm/mlibc/pull/1492): changes the values of `LC_*` macros and `nl_item` values to match glibc, so that glibc locale files can be consumed.
 - [#1492](https://github.com/managarm/mlibc/pull/1492): fix `struct epoll_event` alignment on x86
+- [#1722](https://github.com/managarm/mlibc/pull/1722): fmake `posix_spawnattr_t` and `posix_spawn_file_actions_t` opaque and heap-allocated
 
 ## Version 6
 
