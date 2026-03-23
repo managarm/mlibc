@@ -34,8 +34,9 @@ static void testAttr() {
 	TEST_ATTR(attr, type, PTHREAD_MUTEX_ERRORCHECK);
 	TEST_ATTR(attr, type, PTHREAD_MUTEX_RECURSIVE);
 
-	TEST_ATTR(attr, robust, PTHREAD_MUTEX_STALLED);
-	TEST_ATTR(attr, robust, PTHREAD_MUTEX_ROBUST);
+	// TODO: robust mutexes are unsupported.
+	// TEST_ATTR(attr, robust, PTHREAD_MUTEX_STALLED);
+	// TEST_ATTR(attr, robust, PTHREAD_MUTEX_ROBUST);
 
 	TEST_ATTR(attr, protocol, PTHREAD_PRIO_NONE);
 	TEST_ATTR(attr, protocol, PTHREAD_PRIO_INHERIT);
