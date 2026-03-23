@@ -49,6 +49,7 @@ int renameat2(int __olddirfd, const char *__old_path, int __newdirfd, const char
 #if __MLIBC_LINUX_OPTION && defined(_LARGEFILE64_SOURCE)
 int fseeko64(FILE *__stream, off64_t __offset, int __whence);
 off64_t ftello64(FILE *__stream);
+FILE *fopen64(const char *__restrict __filename, const char *__restrict __mode);
 #endif /* !__MLIBC_LINUX_OPTION */
 
 __attribute__((format(__printf__, 2, 3))) int dprintf(int __fd, const char *__format, ...);

@@ -652,6 +652,10 @@ FILE *fopen(const char *path, const char *mode) {
 			mlibc::file_dispose_cb<mlibc::fd_file>);
 }
 
+#if __MLIBC_LINUX_OPTION
+[[gnu::alias("fopen")]] FILE *fopen64(const char *path, const char *mode);
+#endif /* !__MLIBC_LINUX_OPTION */
+
 int fclose(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	int e = 0;
