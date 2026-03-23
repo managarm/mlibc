@@ -740,15 +740,23 @@ int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type) {
 
 int pthread_mutexattr_getrobust(const pthread_mutexattr_t *__restrict attr,
 		int *__restrict robust) {
-	*robust = attr->__mlibc_robust;
-	return 0;
+	// *robust = attr->__mlibc_robust;
+	// return 0;
+	(void) attr;
+	(void) robust;
+	mlibc::infoLogger() << "mlibc: POSIX_ROBUST_MUTEXES are unsupported!" << frg::endlog;
+	return ENOSYS;
 }
 int pthread_mutexattr_setrobust(pthread_mutexattr_t *attr, int robust) {
-	if (robust != PTHREAD_MUTEX_STALLED && robust != PTHREAD_MUTEX_ROBUST)
-		return EINVAL;
+	// if (robust != PTHREAD_MUTEX_STALLED && robust != PTHREAD_MUTEX_ROBUST)
+	// 	return EINVAL;
 
-	attr->__mlibc_robust = robust;
-	return 0;
+	// attr->__mlibc_robust = robust;
+	// return 0;
+	(void) attr;
+	(void) robust;
+	mlibc::infoLogger() << "mlibc: POSIX_ROBUST_MUTEXES are unsupported!" << frg::endlog;
+	return ENOSYS;
 }
 
 int pthread_mutexattr_getpshared(const pthread_mutexattr_t *attr, int *pshared) {
@@ -834,8 +842,8 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
 }
 
 int pthread_mutex_consistent(pthread_mutex_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::infoLogger() << "mlibc: pthread_mutex_consistent is unsupported!" << frg::endlog;
+	return ENOSYS;
 }
 
 // ----------------------------------------------------------------------------
