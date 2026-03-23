@@ -2073,6 +2073,27 @@ int Sysdeps<GetAffinity>::operator()(pid_t pid, size_t cpusetsize, cpu_set_t *ma
 	return 0;
 }
 
+int Sysdeps<GetThreadaffinity>::operator()(pid_t tid, size_t cpusetsize, cpu_set_t *mask) {
+	auto ret = do_syscall(SYS_sched_getaffinity, tid, cpusetsize, mask);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int Sysdeps<SetAffinity>::operator()(pid_t pid, size_t cpusetsize, const cpu_set_t *mask) {
+	auto ret = do_syscall(SYS_sched_setaffinity, pid, cpusetsize, mask);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int Sysdeps<SetThreadaffinity>::operator()(pid_t tid, size_t cpusetsize, const cpu_set_t *mask) {
+	auto ret = do_syscall(SYS_sched_setaffinity, tid, cpusetsize, mask);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int Sysdeps<Waitid>::operator()(idtype_t idtype, id_t id, siginfo_t *info, int options) {
 	auto ret = do_syscall(SYS_waitid, idtype, id, info, options, 0);
 	if(int e = sc_error(ret); e)
