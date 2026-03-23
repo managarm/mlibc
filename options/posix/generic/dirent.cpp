@@ -194,6 +194,12 @@ int scandir(const char *path, struct dirent ***res, int (*select)(const struct d
 	return count;
 }
 
+#if __MLIBC_LINUX_OPTION
+[[gnu::alias("scandir")]] int scandir64(const char *path, struct dirent64 ***res, int (*select)(const struct dirent64 *),
+		int (*compare)(const struct dirent64 **, const struct dirent64 **));
+[[gnu::alias("versionsort")]] int versionsort64(const struct dirent64 **__a, const struct dirent64 **__b);
+#endif /* !__MLIBC_LINUX_OPTION */
+
 void seekdir(DIR *d, long off) {
 	d->__seek_offset = lseek(d->__handle, off, SEEK_SET);
 	d->__ent_next = 0;

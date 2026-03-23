@@ -84,6 +84,9 @@ struct dirent64 {
 };
 
 struct dirent64 *readdir64(DIR *__dirp);
+int scandir64(const char *__pathname, struct dirent64 ***__res, int (*__select)(const struct dirent64 *__entry),
+		int (*__compare)(const struct dirent64 **__a, const struct dirent64 **__b));
+int versionsort64(const struct dirent64 **__a, const struct dirent64 **__b);
 #endif /* __MLIBC_LINUX_OPTION && defined(_LARGEFILE64_SOURCE) */
 
 #undef __MLIBC_DIRENT_BODY
