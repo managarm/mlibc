@@ -173,6 +173,7 @@ struct RiscvFlushIcache {};
 #include <bits/ssize_t.h>
 #include <fcntl.h>
 #include <mlibc/fsfd_target.hpp>
+#include <net/if.h>
 #include <poll.h>
 #include <sched.h>
 #include <stdarg.h>
@@ -473,6 +474,8 @@ struct GetLoginR {};
 struct IfIndextoname {};
 // [[gnu::weak]] int sys_if_nametoindex(const char *name, unsigned int *ret);
 struct IfNametoindex {};
+// [[gnu::weak]] int sys_if_nameindex(struct if_nameindex **out);
+struct IfNameindex {};
 // [[gnu::weak]] int sys_ptsname(int fd, char *buffer, size_t length);
 struct Ptsname {};
 // [[gnu::weak]] int sys_unlockpt(int fd);

@@ -146,6 +146,7 @@ struct LinuxSysdepTags :
 	GetLoginR,
 	IfIndextoname,
 	IfNametoindex,
+	IfNameindex,
 	Ptsname,
 	Unlockpt,
 	ThreadSetname,
