@@ -143,6 +143,8 @@ all_test_cases = [
 	'posix/inet_aton',
 	'posix/pthread_cond_signal',
 	'posix/protoent',
+	'posix/lfind',
+	'posix/lsearch',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
