@@ -135,6 +135,7 @@ size_t wcslcat(wchar_t *__restrict __dst, const wchar_t *__restrict __src, size_
 size_t wcslcpy(wchar_t *__restrict __dst, const wchar_t *__restrict __src, size_t __dstsize);
 
 wchar_t *wcpcpy(wchar_t *__restrict __ws1, const wchar_t *__restrict __ws2);
+wchar_t *wcpncpy(wchar_t *__restrict __ws1, const wchar_t *__restrict __ws2, size_t __n);
 
 #endif /* __MLIBC_POSIX_OPTION */
 

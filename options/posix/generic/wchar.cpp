@@ -638,3 +638,15 @@ wchar_t *wcpcpy(wchar_t *__restrict ws1, const wchar_t *__restrict ws2) {
 	for (; (*ws1 = *ws2); ws1++, ws2++);
 	return ws1;
 }
+
+wchar_t *wcpncpy(wchar_t *__restrict ws1, const wchar_t *__restrict ws2, size_t n) {
+	for (; n--; ws1++, ws2++) {
+		if (!(*ws1 = *ws2)) {
+			wchar_t *ret = ws1;
+			while (n--)
+				*++ws1 = L'\0';
+			return ret;
+		}
+	}
+	return ws1;
+}
