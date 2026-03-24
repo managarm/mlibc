@@ -585,3 +585,31 @@ size_t wcsnlen(const wchar_t *ws, size_t maxlen) {
 		p++;
 	return p - ws;
 }
+
+size_t wcslcat(wchar_t *__restrict dst, const wchar_t *__restrict src, size_t dstsize) {
+	const wchar_t *original_dst = dst;
+	const wchar_t *original_src = src;
+	size_t n = dstsize;
+
+	while (n-- && *dst != L'\0')
+		dst++;
+
+	size_t dstlen = dst - original_dst;
+	n = dstsize - dstlen;
+
+	if (n == 0)
+		return dstlen + wcslen(src);
+
+	n--;
+
+	while (*src != L'\0') {
+		if (n != 0) {
+			*dst++ = *src;
+			n--;
+		}
+		src++;
+	}
+
+	*dst = L'\0';
+	return dstlen + (src - original_src);
+}
