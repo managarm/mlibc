@@ -149,6 +149,7 @@ all_test_cases = [
 	'posix/nftw',
 	'posix/wcslcat',
 	'posix/wcslcpy',
+	'posix/wcpcpy',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',

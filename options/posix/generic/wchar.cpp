@@ -633,3 +633,8 @@ size_t wcslcpy(wchar_t *__restrict dst, const wchar_t *__restrict src, size_t ds
 
 	return (src - original - 1);
 }
+
+wchar_t *wcpcpy(wchar_t *__restrict ws1, const wchar_t *__restrict ws2) {
+	for (; (*ws1 = *ws2); ws1++, ws2++);
+	return ws1;
+}
