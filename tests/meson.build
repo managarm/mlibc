@@ -148,6 +148,7 @@ all_test_cases = [
 	'posix/lsearch',
 	'posix/nftw',
 	'posix/wcslcat',
+	'posix/wcslcpy',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',

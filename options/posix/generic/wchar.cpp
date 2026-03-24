@@ -613,3 +613,23 @@ size_t wcslcat(wchar_t *__restrict dst, const wchar_t *__restrict src, size_t ds
 	*dst = L'\0';
 	return dstlen + (src - original_src);
 }
+
+size_t wcslcpy(wchar_t *__restrict dst, const wchar_t *__restrict src, size_t dstsize) {
+	auto original = src;
+	size_t left = dstsize;
+
+	if (left) {
+		while (--left) {
+			if ((*dst++ = *src++) == L'\0')
+				break;
+		}
+	}
+
+	if (!left) {
+		if (dstsize)
+			*dst = L'\0';
+		while (*src++);
+	}
+
+	return (src - original - 1);
+}

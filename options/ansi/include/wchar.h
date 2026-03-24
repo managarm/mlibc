@@ -132,6 +132,7 @@ size_t wcsnlen(const wchar_t *__s, size_t __maxlen);
 #include <bits/posix/locale_t.h>
 
 size_t wcslcat(wchar_t *__restrict __dst, const wchar_t *__restrict __src, size_t __dstsize);
+size_t wcslcpy(wchar_t *__restrict __dst, const wchar_t *__restrict __src, size_t __dstsize);
 
 #endif /* __MLIBC_POSIX_OPTION */
 
