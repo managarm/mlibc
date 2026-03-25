@@ -80,6 +80,8 @@ struct Rmdir {};
 struct Unlinkat {};
 // [[gnu::weak]] int sys_rename(const char *path, const char *new_path);
 struct Rename {};
+// [[gnu::weak]] int sys_fd_to_path(int fd, char **path);
+struct FdToPath {};
 
 // [[gnu::weak]] int sys_sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve);
 struct Sigprocmask {};

@@ -440,6 +440,14 @@ int Sysdeps<Rename>::operator()(const char *old_path, const char *new_path) {
 	return 0;
 }
 
+int Sysdeps<FdToPath>::operator()(int fd, char **out) {
+	frg::string path{getAllocator()};
+	frg::output_to(path) << frg::fmt("/proc/self/fd/{}", fd);
+	*out = path.data();
+	path.detach();
+	return 0;
+}
+
 int Sysdeps<Sigprocmask>::operator()(int how, const sigset_t *set, sigset_t *old) {
 	auto ret = do_syscall(SYS_rt_sigprocmask, how, set, old, NSIG / 8);
 	if (int e = sc_error(ret); e)

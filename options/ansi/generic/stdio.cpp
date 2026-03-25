@@ -797,8 +797,8 @@ FILE *freopen(const char *__restrict path, const char *__restrict mode, FILE *__
 	auto file = static_cast<mlibc::abstract_file *>(f);
 	frg::unique_lock lock(file->_lock);
 
-	if(file->reopen(path, mode) == -1) {
-		errno = EINVAL;
+	if(int e = file->reopen(path, mode); e) {
+		errno = e;
 		return nullptr;
 	}
 

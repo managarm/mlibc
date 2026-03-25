@@ -9,7 +9,7 @@ namespace mlibc {
 
 int mem_file::reopen(const char *, const char *) {
 	mlibc::panicLogger() << "mlibc: freopen() on a mem_file stream is unimplemented!" << frg::endlog;
-	return -1;
+	return ENOSYS;
 }
 
 int mem_file::determine_type(stream_type *type) {
@@ -199,7 +199,7 @@ int cookie_file::close() {
 
 int cookie_file::reopen(const char *, const char *) {
 	mlibc::panicLogger() << "mlibc: freopen() on a cookie_file stream is unimplemented!" << frg::endlog;
-	return -1;
+	return ENOSYS;
 }
 
 int cookie_file::determine_type(stream_type *type) {
