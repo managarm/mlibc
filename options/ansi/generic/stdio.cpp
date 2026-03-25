@@ -330,18 +330,18 @@ int fputws_unlocked(const wchar_t *__restrict ws, mlibc::abstract_file *f) {
 	}
 
 	char buf[512];
-	auto len = wcsrtombs(buf, (const wchar_t **__restrict)&ws, sizeof(buf), &f->_mbstate);
-	if (len == size_t(-1))
-		return -1;
 
-	while (ws && len) {
+	while (ws) {
+		auto len = wcsrtombs(buf, (const wchar_t **__restrict)&ws, sizeof(buf), &f->_mbstate);
+		if (len == size_t(-1))
+			return -1;
+
 		auto written = fwrite_unlocked_ignore_orientation(buf, 1, len, f);
 		if (written != len)
 			return 1;
 
-		len = wcsrtombs(buf, (const wchar_t **__restrict)&ws, sizeof(buf), &f->_mbstate);
-		if (len == size_t(-1))
-			return -1;
+		if (len == 0)
+			break;
 	}
 
 	return 1;
@@ -1905,7 +1905,7 @@ int vswprintf(wchar_t *__restrict buffer, size_t n, const wchar_t *__restrict fo
 		errno = EINVAL;
 		return -1;
 	} else if (p.count >= n) {
-		errno = E2BIG;
+		errno = EOVERFLOW;
 		return -1;
 	}
 	if (n)

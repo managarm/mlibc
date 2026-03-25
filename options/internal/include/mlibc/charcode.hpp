@@ -9,13 +9,28 @@
 
 namespace mlibc {
 
-enum class charcode_error {
-	null,
-	dirty,
+// Resulting status of a decode/encode action of a charcode.
+enum class transcode_status {
+	// Transcoding ended because we encountered a null terminator.
+	null_terminator,
+	// A malformed sequence was encountered.
 	illegal_input,
+
+	// The multibyte input ended with a incomplete codepoint.
+	// The mbstate_t should encode the current conversion state.
 	input_underflow,
+	// The multibyte output was terminated because the next codepoint won't fit.
+	// The mbstate_t should encode the current conversion state.
 	output_overflow,
+
+	// The input sequence was transcoded without encountering a null terminator.
+	// This means that the mbstate_t will be in its initial state.
+	// This condition might coincide with `output_exhausted`; if this happens, input_exhausted
+	// takes priority.
 	input_exhausted,
+	// There is no more room in the output sequence, and no null terminator was encountered.
+	// This means that the mbstate_t will be in its initial state.
+	output_exhausted,
 };
 
 template<typename C>
@@ -23,6 +38,7 @@ struct code_seq {
 	C *it;
 	const C *end;
 
+	// Returns whether there are still characters left to consume.
 	explicit operator bool () {
 		return it != end;
 	}
@@ -45,62 +61,64 @@ typedef uint32_t codepoint;
 struct polymorphic_charcode {
 	virtual ~polymorphic_charcode();
 
-	// Helper function to decode a single char.
-	charcode_error promote(char nc, codepoint &wc) {
+	// Helper function to decode a single char to its codepoint.
+	transcode_status promote(char nc, codepoint &wc) {
 		auto uc = static_cast<unsigned char>(nc);
 		if(uc <= 0x7F && preserves_7bit_units) {
 			wc = uc;
-			return charcode_error::null;
+			return transcode_status::input_exhausted;
 		}
 
 		code_seq<const char> nseq{&nc, &nc + 1};
 		code_seq<codepoint> wseq{&wc, &wc + 1};
 		__mlibc_mbstate st = __MLIBC_MBSTATE_INITIALIZER;
 
-		if(auto e = decode(nseq, wseq, st); e != charcode_error::null)
+		auto e = decode(nseq, wseq, st);
+		if(e != transcode_status::input_exhausted)
 			return e;
 		// This should have read/written exactly one code unit/code point.
 		__ensure(nseq.it == nseq.end);
 		__ensure(wseq.it == wseq.end);
-		return charcode_error::null;
+		return transcode_status::input_exhausted;
 	}
 
-	// Helper function to decode a single char.
-	charcode_error promote_wtranscode(char nc, wchar_t &wc) {
+	// Helper function to decode a single char to wchar_t.
+	transcode_status promote_wtranscode(char nc, wchar_t &wc) {
 		auto uc = static_cast<unsigned char>(nc);
 		if(uc <= 0x7F && preserves_7bit_units) { // TODO: Use "wtranscode_preserves_7bit_units".
 			wc = uc;
-			return charcode_error::null;
+			return transcode_status::input_exhausted;
 		}
 
 		code_seq<const char> nseq{&nc, &nc + 1};
 		code_seq<wchar_t> wseq{&wc, &wc + 1};
 		__mlibc_mbstate st = __MLIBC_MBSTATE_INITIALIZER;
 
-		if(auto e = decode_wtranscode(nseq, wseq, st); e != charcode_error::null && e != charcode_error::input_exhausted)
+		auto e = decode_wtranscode(nseq, wseq, st);
+		if(e != transcode_status::null_terminator && e != transcode_status::input_exhausted)
 			return e;
 		// This should have read/written exactly one code unit/code point.
 		__ensure(nseq.it == nseq.end);
 		__ensure(wseq.it == wseq.end);
-		return charcode_error::null;
+		return transcode_status::input_exhausted;
 	}
 
 	polymorphic_charcode(bool preserves_7bit_units_, bool has_shift_states_)
 	: preserves_7bit_units{preserves_7bit_units_}, has_shift_states{has_shift_states_} { }
 
-	virtual charcode_error decode(code_seq<const char> &nseq, code_seq<codepoint> &wseq,
+	virtual transcode_status decode(code_seq<const char> &nseq, code_seq<codepoint> &wseq,
 			__mlibc_mbstate &st) = 0;
 
-	virtual charcode_error decode_wtranscode(code_seq<const char> &nseq, code_seq<wchar_t> &wseq,
+	virtual transcode_status decode_wtranscode(code_seq<const char> &nseq, code_seq<wchar_t> &wseq,
 			__mlibc_mbstate &st) = 0;
 
-	virtual charcode_error decode_wtranscode_length(code_seq<const char> &nseq, size_t *n,
+	virtual transcode_status decode_wtranscode_length(code_seq<const char> &nseq, size_t *n,
 			__mlibc_mbstate &st) = 0;
 
-	virtual charcode_error encode_wtranscode(code_seq<char> &nseq, code_seq<const wchar_t> &wseq,
+	virtual transcode_status encode_wtranscode(code_seq<char> &nseq, code_seq<const wchar_t> &wseq,
 			__mlibc_mbstate &st) = 0;
 
-	virtual charcode_error encode_wtranscode_length(code_seq<const wchar_t> &wseq, size_t *n,
+	virtual transcode_status encode_wtranscode_length(code_seq<const wchar_t> &wseq, size_t *n,
 			__mlibc_mbstate &st) = 0;
 
 	// True if promotion only zero-extends units below 0x7F.
@@ -115,7 +133,7 @@ polymorphic_charcode *current_charcode();
 // Similar to polymorphic_charcode but for wchar_t. Note that this encoding is fixed per-platform;
 // thus, it does not need to be polymorphic.
 struct wide_charcode {
-	charcode_error promote(wchar_t nc, codepoint &wc);
+	transcode_status promote(wchar_t nc, codepoint &wc);
 };
 
 wide_charcode *platform_wide_charcode();
