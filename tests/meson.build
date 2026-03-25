@@ -146,6 +146,7 @@ all_test_cases = [
 	'posix/protoent',
 	'posix/lfind',
 	'posix/lsearch',
+	'posix/nftw',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
