@@ -199,6 +199,7 @@ struct ManagarmSysdepTags :
 	Rmdir,
 	Unlinkat,
 	Rename,
+	FdToPath,
 	Sigprocmask,
 	Sigaction,
 	Fork,
