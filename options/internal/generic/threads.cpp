@@ -280,8 +280,7 @@ int thread_mutex_timedlock(struct __mlibc_mutex *mutex, const struct timespec *_
 			// If this (recursive) mutex is already owned by us, increment the recursion level.
 			if((expected & mutex_owner_mask) == this_tid) {
 				if(!(mutex->__mlibc_flags & mutexRecursive)) {
-					if (!abstime)
-						return EDEADLK;
+					return EDEADLK;
 				} else {
 					++mutex->__mlibc_recursion;
 					return 0;
