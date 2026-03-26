@@ -33,8 +33,8 @@ int do_nftw(char *path, Callback fn, int fd_limit, int flags, struct history *h)
 	struct history n;
 	int type;
 	int r;
-	int dfd;
-	int err;
+	int dfd = -1;
+	int err = 0;
 	struct FTW lev;
 
 	st.st_dev = st.st_ino = 0;
