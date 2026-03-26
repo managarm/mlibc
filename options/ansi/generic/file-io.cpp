@@ -15,6 +15,7 @@
 #include <abi-bits/fcntl.h>
 #include <frg/allocation.hpp>
 #include <frg/mutex.hpp>
+#include <frg/scope_exit.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/file-io.hpp>
@@ -468,9 +469,23 @@ int fd_file::reopen(const char *path, const char *mode) {
 	flush();
 
 	int mode_flags = parse_modestring(mode);
+	const char *reopen_path = path;
+
+	if (!path) {
+		char *out = nullptr;
+		if (int e = sysdep_or_enosys<FdToPath>(_fd, &out); e)
+			return e;
+		reopen_path = out;
+	}
+
+	frg::scope_exit freePath([&]() {
+		// free `reopen_path` if it was allocated
+		if (path != reopen_path)
+			getAllocator().free(const_cast<char *>(reopen_path));
+	});
 
 	int fd;
-	if(int e = sysdep<Open>(path, mode_flags, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH, &fd); e) {
+	if(int e = sysdep<Open>(reopen_path, mode_flags, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH, &fd); e) {
 		return e;
 	}
 

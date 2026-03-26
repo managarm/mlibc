@@ -237,9 +237,15 @@ int Sysdeps<Renameat>::operator()(int olddirfd, const char *old_path, int newdir
 	return 0;
 }
 
-} // namespace mlibc
+int Sysdeps<FdToPath>::operator()(int fd, char **out) {
+	frg::string path{getAllocator()};
+	frg::output_to(path) << frg::fmt("/proc/self/fd/{}", fd);
+	*out = path.data();
+	path.detach();
+	return 0;
+}
 
-namespace mlibc {
+namespace {
 
 int do_dup2(int fd, int flags, int newfd, bool fcntl_mode, int *outfd) {
 	SignalGuard sguard;
@@ -270,6 +276,8 @@ int do_dup2(int fd, int flags, int newfd, bool fcntl_mode, int *outfd) {
 
 	return 0;
 }
+
+} // namespace
 
 int Sysdeps<Fcntl>::operator()(int fd, int request, va_list args, int *result) {
 	SignalGuard sguard;

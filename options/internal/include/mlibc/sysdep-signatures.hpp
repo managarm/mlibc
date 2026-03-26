@@ -80,6 +80,7 @@ SYSDEP_FUNC(Isatty, int fd);
 SYSDEP_FUNC(Rmdir, const char *path);
 SYSDEP_FUNC(Unlinkat, int dirfd, const char *path, int flags);
 SYSDEP_FUNC(Rename, const char *path, const char *new_path);
+SYSDEP_FUNC(FdToPath, int fd, char **out);
 SYSDEP_FUNC(Sigprocmask, int how, const sigset_t *__restrict set, sigset_t *__restrict retrieve);
 SYSDEP_FUNC(Sigaction, int, const struct sigaction *__restrict, struct sigaction *__restrict);
 SYSDEP_FUNC(Fork, pid_t *child);

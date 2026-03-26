@@ -797,8 +797,8 @@ FILE *freopen(const char *__restrict path, const char *__restrict mode, FILE *__
 	auto file = static_cast<mlibc::abstract_file *>(f);
 	frg::unique_lock lock(file->_lock);
 
-	if(file->reopen(path, mode) == -1) {
-		errno = EINVAL;
+	if(int e = file->reopen(path, mode); e) {
+		errno = e;
 		return nullptr;
 	}
 
@@ -820,6 +820,7 @@ void setbuffer(FILE *f, char *buf, size_t size) {
 
 // byte-oriented (POSIX)
 int fprintf(FILE *__restrict stream, const char *__restrict format, ...) {
+	// orientation checking in vfprintf
 	va_list args;
 	va_start(args, format);
 	int result = vfprintf(stream, format, args);
@@ -829,6 +830,7 @@ int fprintf(FILE *__restrict stream, const char *__restrict format, ...) {
 
 // byte-oriented (POSIX)
 int fscanf(FILE *__restrict stream, const char *__restrict format, ...) {
+	// orientation checking in vfscanf
 	va_list args;
 	va_start(args, format);
 	int result = vfscanf(stream, format, args);
@@ -838,6 +840,7 @@ int fscanf(FILE *__restrict stream, const char *__restrict format, ...) {
 
 // byte-oriented (POSIX)
 int printf(const char *__restrict format, ...) {
+	// orientation checking in vfprintf
 	va_list args;
 	va_start(args, format);
 	int result = vfprintf(stdout, format, args);
@@ -1652,6 +1655,7 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args) {
 
 // byte-oriented (POSIX)
 int scanf(const char *__restrict format, ...) {
+	// orientation checking in vfscanf
 	va_list args;
 	va_start(args, format);
 	int result = vfscanf(stdin, format, args);
@@ -1687,6 +1691,13 @@ int sscanf(const char *__restrict buffer, const char *__restrict format, ...) {
 
 // byte-oriented (POSIX)
 int vfprintf(FILE *__restrict stream, const char *__restrict format, __builtin_va_list args) {
+	auto f = static_cast<mlibc::abstract_file *>(stream);
+	if (!f->check_orientation(mlibc::stream_orientation::byte)) {
+		f->__status_bits |= __MLIBC_ERROR_BIT;
+		errno = EIO;
+		return -1;
+	}
+
 	frg::va_struct vs;
 	frg::arg arg_list[NL_ARGMAX + 1];
 	vs.arg_list = arg_list;
@@ -1708,6 +1719,12 @@ int vfprintf(FILE *__restrict stream, const char *__restrict format, __builtin_v
 int vfscanf(FILE *__restrict stream, const char *__restrict format, __builtin_va_list args) {
 	auto file = static_cast<mlibc::abstract_file *>(stream);
 	frg::unique_lock lock(file->_lock);
+
+	if (!file->check_orientation(mlibc::stream_orientation::byte)) {
+		file->__status_bits |= __MLIBC_ERROR_BIT;
+		errno = EIO;
+		return -1;
+	}
 
 	struct {
 		char look_ahead() {
@@ -1737,10 +1754,12 @@ int vfscanf(FILE *__restrict stream, const char *__restrict format, __builtin_va
 
 // byte-oriented (POSIX)
 int vprintf(const char *__restrict format, __builtin_va_list args){
+	// orientation checking in vfprintf
 	return vfprintf(stdout, format, args);
 }
 
 int vscanf(const char *__restrict format, __builtin_va_list args) {
+	// orientation checking in vfscanf
 	return vfscanf(stdin, format, args);
 }
 
@@ -1961,6 +1980,13 @@ int vwscanf(const wchar_t *__restrict format, __builtin_va_list args) {
 
 // byte-oriented (POSIX)
 int fgetc(FILE *stream) {
+	auto f = static_cast<mlibc::abstract_file *>(stream);
+	if (!f->check_orientation(mlibc::stream_orientation::byte)) {
+		f->__status_bits |= __MLIBC_ERROR_BIT;
+		errno = EIO;
+		return EOF;
+	}
+
 	char c;
 	auto bytes_read = fread(&c, 1, 1, stream);
 	if(bytes_read != 1)
@@ -2181,6 +2207,13 @@ wint_t ungetwc(wint_t c, FILE *stream) {
 size_t fread(void *buffer, size_t size, size_t count, FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	frg::unique_lock lock(file->_lock);
+
+	if (!file->check_orientation(mlibc::stream_orientation::byte)) {
+		file->__status_bits |= __MLIBC_ERROR_BIT;
+		errno = EIO;
+		return EOF;
+	}
+
 	return fread_unlocked(buffer, size, count, file_base);
 }
 
@@ -2188,6 +2221,13 @@ size_t fread(void *buffer, size_t size, size_t count, FILE *file_base) {
 size_t fwrite(const void *buffer, size_t size , size_t count, FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	frg::unique_lock lock(file->_lock);
+
+	if (!file->check_orientation(mlibc::stream_orientation::byte)) {
+		file->__status_bits |= __MLIBC_ERROR_BIT;
+		errno = EIO;
+		return EOF;
+	}
+
 	return fwrite_unlocked(buffer, size, count, file_base);
 }
 
