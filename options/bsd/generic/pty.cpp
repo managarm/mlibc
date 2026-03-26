@@ -11,6 +11,8 @@
 
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/thread.hpp>
+#include <mlibc/tid.hpp>
 
 int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win) {
 	if constexpr (mlibc::IsImplemented<Openpty>) {
@@ -94,6 +96,10 @@ int forkpty(int *mfd, char *name, const struct termios *ios, const struct winsiz
 	}
 
 	if(!child) {
+		// update the cached TID in the TCB
+		auto self = mlibc::get_current_tcb();
+		__atomic_store_n(&self->tid, mlibc::refetch_tid(), __ATOMIC_RELAXED);
+
 		if(login_tty(sfd))
 			mlibc::panicLogger() << "mlibc: TTY login fail in forkpty() child" << frg::endlog;
 	}else{
