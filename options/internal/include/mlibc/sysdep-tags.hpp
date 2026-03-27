@@ -170,6 +170,7 @@ struct RiscvFlushIcache {};
 #include <abi-bits/seek-whence.h>
 #include <abi-bits/socklen_t.h>
 #include <abi-bits/vm-flags.h>
+#include <abi-bits/aio.h>
 #include <bits/off_t.h>
 #include <bits/posix/stat.h>
 #include <bits/ssize_t.h>
@@ -538,6 +539,22 @@ struct MqReceive {};
 struct MqGetAttr {};
 // int sys_mq_set_attr(mqd_t mqdes, mq_attr *mqstat, mq_attr *omqstat);
 struct MqSetAttr {};
+// int sys_aio_read(struct aiocb *cb);
+struct AioRead {};
+// int sys_aio_write(struct aiocb *cb);
+struct AioWrite {};
+// int sys_aio_fsync(int op, struct aiocb *cb);
+struct AioFsync {};
+// int sys_aio_listio(int mode, struct aiocb *__restrict const list[], int n, struct sigevent *__restrict sevp);
+struct AioListio {};
+// int sys_aio_suspend(const struct aiocb *const list[], int n, const struct timespec *ts);
+struct AioSuspend {};
+// int sys_aio_cancel(int fildes, struct aiocb *cb, int *result);
+struct AioCancel {};
+// int sys_aio_error(const struct aiocb *cb, int *out);
+struct AioError {};
+// int sys_aio_return(struct aiocb *cb, ssize_t *out);
+struct AioReturn {};
 #endif // __MLIBC_POSIX_OPTION
 
 #if __MLIBC_LINUX_OPTION

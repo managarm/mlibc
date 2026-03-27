@@ -60,6 +60,7 @@ libc_sources += files(
 	'generic/mqueue.cpp',
 	'generic/utmpx.cpp',
 	'generic/monetary.cpp',
+	'generic/aio.cpp',
 )
 
 if not headers_only
@@ -114,6 +115,7 @@ if not no_headers
 		'include/tar.h',
 		'include/cpio.h',
 		'include/monetary.h',
+		'include/aio.h',
 	)
 	install_headers(
 		'include/arpa/inet.h',

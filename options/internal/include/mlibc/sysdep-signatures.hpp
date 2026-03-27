@@ -266,6 +266,14 @@ SYSDEP_FUNC(MqUnlink, const char *name);
 SYSDEP_FUNC(MqReceive, mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio);
 SYSDEP_FUNC(MqGetAttr, mqd_t mqdes, mq_attr *mqstat);
 SYSDEP_FUNC(MqSetAttr, mqd_t mqdes, const mq_attr *mqstat, mq_attr *omqstat);
+SYSDEP_FUNC(AioRead, struct aiocb *cb);
+SYSDEP_FUNC(AioWrite, struct aiocb *cb);
+SYSDEP_FUNC(AioFsync, int op, struct aiocb *cb);
+SYSDEP_FUNC(AioListio, int mode, struct aiocb *__restrict const list[], int n, struct sigevent *__restrict sevp);
+SYSDEP_FUNC(AioSuspend, const struct aiocb *const list[], int n, const struct timespec *ts);
+SYSDEP_FUNC(AioCancel, int fildes, struct aiocb *cb, int *result);
+SYSDEP_FUNC(AioError, const struct aiocb *cb, int *out);
+SYSDEP_FUNC(AioReturn, struct aiocb *cb, ssize_t *out);
 #endif // __MLIBC_POSIX_OPTION
 
 #if __MLIBC_LINUX_OPTION
