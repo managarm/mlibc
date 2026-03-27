@@ -268,6 +268,10 @@ int system(const char *command) {
 	if (int e = mlibc::sysdep_or_panic<Fork>(&child)) {
 		errno = e;
 	} else if (!child) {
+		// update the cached TID in the TCB
+		auto self = mlibc::get_current_tcb();
+		__atomic_store_n(&self->tid, mlibc::refetch_tid(), __ATOMIC_RELAXED);
+
 		mlibc::sysdep_or_panic<Sigaction>(SIGINT, &old_int, nullptr);
 		mlibc::sysdep_or_panic<Sigaction>(SIGQUIT, &old_quit, nullptr);
 		mlibc::sysdep_or_panic<Sigprocmask>(SIG_SETMASK, &old_mask, nullptr);

@@ -1173,11 +1173,17 @@ int dup3(int oldfd, int newfd, int flags) {
 }
 
 pid_t _Fork(void) {
+	auto self = mlibc::get_current_tcb();
 	pid_t child;
 	if (int e = mlibc::sysdep_or_enosys<Fork>(&child); e) {
 		errno = e;
 		return -1;
 	}
+
+	// update the cached TID in the TCB
+	if (!child)
+		__atomic_store_n(&self->tid, mlibc::refetch_tid(), __ATOMIC_RELAXED);
+
 	return child;
 }
 
@@ -1200,6 +1206,10 @@ pid_t fork(void) {
 		return -1;
 	}
 
+	// update the cached TID in the TCB
+	if (!child)
+		__atomic_store_n(&self->tid, mlibc::refetch_tid(), __ATOMIC_RELAXED);
+
 	hand = self->atforkBegin;
 	while (hand) {
 		if (!child) {
@@ -1216,7 +1226,9 @@ pid_t fork(void) {
 }
 
 pid_t vfork(void) {
+	auto self = mlibc::get_current_tcb();
 	pid_t child;
+
 	/*
 	 * Fork handlers established using pthread_atfork(3) are not
 	 * called when a multithreaded program employing the NPTL
@@ -1236,6 +1248,10 @@ pid_t vfork(void) {
 		errno = e;
 		return -1;
 	}
+
+	// update the cached TID in the TCB
+	if (!child)
+		__atomic_store_n(&self->tid, mlibc::refetch_tid(), __ATOMIC_RELAXED);
 
 	return child;
 }

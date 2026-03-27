@@ -112,6 +112,10 @@ FILE *popen(const char *command, const char *typestr) {
 		mlibc::sysdep<Close>(fds[0]);
 		mlibc::sysdep<Close>(fds[1]);
 	} else if (!child) {
+		// update the cached TID in the TCB
+		auto self = mlibc::get_current_tcb();
+		__atomic_store_n(&self->tid, mlibc::refetch_tid(), __ATOMIC_RELAXED);
+
 		// For the child
 		mlibc::sysdep_or_panic<Sigaction>(SIGINT, &old_int, nullptr);
 		mlibc::sysdep_or_panic<Sigaction>(SIGQUIT, &old_quit, nullptr);
