@@ -1,6 +1,9 @@
+#include <array>
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>
+#include <optional>
+#include <pthread.h>
 #include <pwd.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -799,6 +802,140 @@ void sync(void) {
 	}
 }
 
+namespace {
+
+constexpr long SYSCONF_NO_LIMIT = -1;
+
+constexpr auto staticSysconfValues = [] {
+	auto entries = std::to_array<std::pair<int, long>>({
+	    // {_SC_AIO_LISTIO_MAX, AIO_LISTIO_MAX},
+	    // {_SC_AIO_MAX, AIO_MAX},
+	    // {_SC_AIO_PRIO_DELTA_MAX, AIO_PRIO_DELTA_MAX},
+	    {_SC_ARG_MAX,
+	     2097152}, // On linux, it is defined to 2097152 in most cases, so define it to be 2097152
+	    {_SC_ATEXIT_MAX, SYSCONF_NO_LIMIT},
+	    {_SC_BC_BASE_MAX, BC_BASE_MAX},
+	    {_SC_BC_DIM_MAX, BC_DIM_MAX},
+	    {_SC_BC_SCALE_MAX, BC_SCALE_MAX},
+	    {_SC_BC_STRING_MAX, BC_STRING_MAX},
+	    // {_SC_CHILD_MAX, SYSCONF_NO_LIMIT},
+	    {_SC_COLL_WEIGHTS_MAX, COLL_WEIGHTS_MAX},
+	    {_SC_DELAYTIMER_MAX, INT_MAX},
+	    {_SC_EXPR_NEST_MAX, EXPR_NEST_MAX},
+	    {_SC_HOST_NAME_MAX, HOST_NAME_MAX},
+	    {_SC_IOV_MAX, IOV_MAX},
+	    {_SC_LINE_MAX, LINE_MAX},
+	    {_SC_LOGIN_NAME_MAX, LOGIN_NAME_MAX},
+	    {_SC_NGROUPS_MAX, NGROUPS_MAX},
+	    // {_SC_MQ_OPEN_MAX, MQ_OPEN_MAX},
+	    // {_SC_MQ_PRIO_MAX, MQ_PRIO_MAX},
+	    {_SC_OPEN_MAX, OPEN_MAX},
+	    {_SC_PAGE_SIZE, mlibc::page_size},
+	    {_SC_PAGESIZE, mlibc::page_size},
+	    {_SC_THREAD_DESTRUCTOR_ITERATIONS, PTHREAD_DESTRUCTOR_ITERATIONS},
+	    {_SC_THREAD_KEYS_MAX, PTHREAD_KEYS_MAX},
+	    {_SC_THREAD_STACK_MIN, PTHREAD_STACK_MIN},
+	    {_SC_THREAD_THREADS_MAX, SYSCONF_NO_LIMIT},
+	    {_SC_RE_DUP_MAX, RE_DUP_MAX},
+	    // {_SC_RTSIG_MAX, RTSIG_MAX},
+	    // {_SC_SEM_NSEMS_MAX, SEM_NSEMS_MAX},
+	    // {_SC_SEM_VALUE_MAX, SEM_VALUE_MAX},
+	    // {_SC_SIGQUEUE_MAX, SIGQUEUE_MAX},
+	    // {_SC_STREAM_MAX, STREAM_MAX},
+	    // {_SC_SYMLOOP_MAX, SYMLOOP_MAX},
+	    // {_SC_TIMER_MAX, TIMER_MAX},
+	    // {_SC_TTY_NAME_MAX, TTY_NAME_MAX},
+	    {_SC_TZNAME_MAX, TZNAME_MAX},
+
+	    {_SC_ADVISORY_INFO, _POSIX_ADVISORY_INFO},
+	    {_SC_BARRIERS, _POSIX_BARRIERS},
+	    {_SC_ASYNCHRONOUS_IO, _POSIX_ASYNCHRONOUS_IO},
+
+	    {_SC_CLOCK_SELECTION, _POSIX_CLOCK_SELECTION},
+	    // {_SC_CPUTIME, _POSIX_CPUTIME},
+	    // {_SC_DEVICE_CONTROL, _POSIX_DEVICE_CONTROL},
+	    {_SC_FSYNC, _POSIX_FSYNC},
+	    {_SC_IPV6, _POSIX_IPV6},
+	    {_SC_JOB_CONTROL, _POSIX_JOB_CONTROL},
+	    {_SC_MAPPED_FILES, _POSIX_MAPPED_FILES},
+	    {_SC_MEMLOCK, _POSIX_MEMLOCK},
+	    {_SC_MEMLOCK_RANGE, _POSIX_MEMLOCK_RANGE},
+	    {_SC_MEMORY_PROTECTION, _POSIX_MEMORY_PROTECTION},
+	    // {_SC_MESSAGE_PASSING, _POSIX_MESSAGE_PASSING},
+	    {_SC_MONOTONIC_CLOCK, _POSIX_MONOTONIC_CLOCK},
+	    // {_SC_PRIORITIZED_IO, _POSIX_PRIORITIZED_IO},
+	    // {_SC_PRIORITY_SCHEDULING, _POSIX_PRIORITY_SCHEDULING},
+	    // {_SC_RAW_SOCKETS, _POSIX_RAW_SOCKETS},
+	    {_SC_READER_WRITER_LOCKS, _POSIX_READER_WRITER_LOCKS},
+	    {_SC_REALTIME_SIGNALS, _POSIX_REALTIME_SIGNALS},
+	    {_SC_REGEXP, _POSIX_REGEXP},
+	    {_SC_SAVED_IDS, _POSIX_SAVED_IDS},
+	    {_SC_SEMAPHORES, _POSIX_SEMAPHORES},
+	    {_SC_SHARED_MEMORY_OBJECTS, _POSIX_SHARED_MEMORY_OBJECTS},
+	    {_SC_SHELL, _POSIX_SHELL},
+	    {_SC_SPAWN, _POSIX_SPAWN},
+	    {_SC_SPIN_LOCKS, _POSIX_SPIN_LOCKS},
+	    // {_SC_SPORADIC_SERVER, _POSIX_SPORADIC_SERVER},
+	    {_SC_SS_REPL_MAX, _POSIX_SS_REPL_MAX},
+	    {_SC_SYNCHRONIZED_IO, _POSIX_SYNCHRONIZED_IO},
+	    {_SC_THREAD_ATTR_STACKADDR, _POSIX_THREAD_ATTR_STACKADDR},
+	    {_SC_THREAD_ATTR_STACKSIZE, _POSIX_THREAD_ATTR_STACKSIZE},
+	    // {_SC_THREAD_CPUTIME, _POSIX_THREAD_CPUTIME},
+	    // {_SC_THREAD_PRIO_INHERIT, _POSIX_THREAD_PRIO_INHERIT},
+	    // {_SC_THREAD_PRIO_PROTECT, _POSIX_THREAD_PRIO_PROTECT},
+	    // {_SC_THREAD_PRIORITY_SCHEDULING, _POSIX_THREAD_PRIORITY_SCHEDULING},
+	    // {_SC_THREAD_PROCESS_SHARED, _POSIX_THREAD_PROCESS_SHARED},
+	    // {_SC_THREAD_ROBUST_PRIO_INHERIT, _POSIX_THREAD_ROBUST_PRIO_INHERIT},
+	    // {_SC_THREAD_ROBUST_PRIO_PROTECT, _POSIX_THREAD_ROBUST_PRIO_PROTECT},
+	    {_SC_THREAD_SAFE_FUNCTIONS, _POSIX_THREAD_SAFE_FUNCTIONS},
+	    // {_SC_THREAD_SPORADIC_SERVER, _POSIX_THREAD_SPORADIC_SERVER},
+	    {_SC_THREADS, _POSIX_THREADS},
+	    {_SC_TIMEOUTS, _POSIX_TIMEOUTS},
+	    {_SC_TIMERS, _POSIX_TIMERS},
+	    // {_SC_TYPED_MEMORY_OBJECTS, _POSIX_TYPED_MEMORY_OBJECTS},
+	    {_SC_VERSION, _POSIX_VERSION},
+	    // {_SC_V8_ILP32_OFF32, _POSIX_V8_ILP32_OFF32},
+	    // {_SC_V8_ILP32_OFFBIG, _POSIX_V8_ILP32_OFFBIG},
+	    // {_SC_V8_LP64_OFF64, _POSIX_V8_LP64_OFF64},
+	    // {_SC_V8_LPBIG_OFFBIG, _POSIX_V8_LPBIG_OFFBIG},
+	    // {_SC_V7_ILP32_OFF32, _POSIX_V7_ILP32_OFF32},
+	    // {_SC_V7_ILP32_OFFBIG, _POSIX_V7_ILP32_OFFBIG},
+	    // {_SC_V7_LP64_OFF64, _POSIX_V7_LP64_OFF64},
+	    // {_SC_V7_LPBIG_OFFBIG, _POSIX_V7_LPBIG_OFFBIG},
+	    // {_SC_2_C_BIND, _POSIX2_C_BIND},
+	    // {_SC_2_C_DEV, _POSIX2_C_DEV},
+	    // {_SC_2_CHAR_TERM, _POSIX2_CHAR_TERM},
+	    // {_SC_2_FORT_RUN, _POSIX2_FORT_RUN},
+	    // {_SC_2_LOCALEDEF, _POSIX2_LOCALEDEF},
+	    // {_SC_2_SW_DEV, _POSIX2_SW_DEV},
+	    // {_SC_2_UPE, _POSIX2_UPE},
+	    {_SC_2_VERSION, _POSIX2_VERSION},
+	    // {_SC_XOPEN_CRYPT, _XOPEN_CRYPT},
+	    {_SC_XOPEN_CRYPT, -1},
+	    // {_SC_XOPEN_ENH_I18N, _XOPEN_ENH_I18N},
+	    // {_SC_XOPEN_REALTIME, _XOPEN_REALTIME},
+	    // {_SC_XOPEN_REALTIME_THREADS, _XOPEN_REALTIME_THREADS},
+	    // {_SC_XOPEN_SHM, _XOPEN_SHM},
+	    {_SC_XOPEN_UNIX, _XOPEN_UNIX},
+	    // {_SC_XOPEN_UUCP, _XOPEN_UUCP},
+	    {_SC_XOPEN_VERSION, _XOPEN_VERSION},
+
+	    {_SC_TIMERS, _POSIX_TIMERS},
+	    {_SC_VERSION, _POSIX_VERSION},
+	    {_SC_2_VERSION, _POSIX2_VERSION},
+	    {_SC_XOPEN_VERSION, _XOPEN_VERSION},
+	});
+
+	std::array<std::optional<long>, __MLIBC_SC_MAX> res{};
+
+	for (auto [name, value] : entries)
+		res[name] = value;
+
+	return res;
+}();
+
+} // namespace
+
 long sysconf(int number) {
 	if constexpr (mlibc::IsImplemented<Sysconf>) {
 		long ret = 0;
@@ -815,20 +952,12 @@ long sysconf(int number) {
 		}
 	}
 
+	if (number >= 0 && static_cast<size_t>(number) < staticSysconfValues.size())
+		if (auto val = staticSysconfValues[number]; val)
+			return *val;
+
 	/* default return values, if not overriden by sysdep */
 	switch(number) {
-		case _SC_ARG_MAX:
-			// On linux, it is defined to 2097152 in most cases, so define it to be 2097152
-			return 2097152;
-		case _SC_PAGE_SIZE:
-			return mlibc::page_size;
-		case _SC_OPEN_MAX:
-			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_OPEN_MAX) returns fallback value 256\e[39m" << frg::endlog;
-			return 256;
-		case _SC_COLL_WEIGHTS_MAX:
-			return COLL_WEIGHTS_MAX;
-		case _SC_TZNAME_MAX:
-			return -1;
 		case _SC_PHYS_PAGES:
 #if __MLIBC_LINUX_OPTION
 			if constexpr (mlibc::IsImplemented<Sysinfo>) {
@@ -861,56 +990,17 @@ long sysconf(int number) {
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_CHILD_MAX) returns fallback value 25\e[39m" << frg::endlog;
 			// On linux, it is defined to 25 in most cases, so define it to be 25
 			return 25;
-		case _SC_JOB_CONTROL:
-			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_JOB_CONTROL) returns fallback value 1\e[39m" << frg::endlog;
-			// If 1, job control is supported
-			return 1;
 		case _SC_CLK_TCK:
 			// TODO: This should be obsolete?
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_CLK_TCK) is obsolete and returns arbitrary value 1000000\e[39m" << frg::endlog;
 			return 1000000;
-		case _SC_NGROUPS_MAX:
-			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_NGROUPS_MAX) returns fallback value 65536\e[39m" << frg::endlog;
-			// On linux, it is defined to 65536 in most cases, so define it to be 65536
-			return 65536;
-		case _SC_RE_DUP_MAX:
-			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_RE_DUP_MAX) returns fallback value RE_DUP_MAX\e[39m" << frg::endlog;
-			return RE_DUP_MAX;
-		case _SC_LINE_MAX:
-			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_LINE_MAX) returns fallback value 2048\e[39m" << frg::endlog;
-			// Linux defines it as 2048.
-			return 2048;
-		case _SC_XOPEN_CRYPT:
-			return -1;
 		case _SC_NPROCESSORS_CONF:
 			// TODO: actually return a proper value for _SC_NPROCESSORS_CONF
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_NPROCESSORS_CONF) unconditionally returns fallback value 1\e[39m" << frg::endlog;
 			return 1;
-		case _SC_HOST_NAME_MAX:
-			return HOST_NAME_MAX;
-		case _SC_LOGIN_NAME_MAX:
-			return LOGIN_NAME_MAX;
-		case _SC_FSYNC:
-			return _POSIX_FSYNC;
-		case _SC_SAVED_IDS:
-			return _POSIX_SAVED_IDS;
 		case _SC_SYMLOOP_MAX:
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_SYMLOOP_MAX) unconditionally returns fallback value 8\e[39m" << frg::endlog;
 			return 8;
-		case _SC_VERSION:
-			return _POSIX_VERSION;
-		case _SC_2_VERSION:
-			return _POSIX2_VERSION;
-		case _SC_XOPEN_VERSION:
-			return _XOPEN_VERSION;
-		case _SC_MEMLOCK:
-			return _POSIX_MEMLOCK;
-		case _SC_MEMLOCK_RANGE:
-			return _POSIX_MEMLOCK_RANGE;
-		case _SC_MAPPED_FILES:
-			return _POSIX_MAPPED_FILES;
-		case _SC_SHARED_MEMORY_OBJECTS:
-			return _POSIX_SHARED_MEMORY_OBJECTS;
 		default:
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf() call is not implemented, number: " << number << "\e[39m" << frg::endlog;
 			errno = EINVAL;

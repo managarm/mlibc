@@ -269,6 +269,8 @@ extern "C" {
 #define _SC_MINSIGSTKSZ 249
 #define _SC_SIGSTKSZ 250
 
+#define __MLIBC_SC_MAX (_SC_SIGSTKSZ+1)
+
 /* Port-specific _SC_* define values */
 
 #if defined (__ironclad__)
