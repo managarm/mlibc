@@ -261,6 +261,13 @@ extern "C" {
 #define _SC_TRACE_EVENT_FILTER 182
 #define _SC_TRACE_INHERIT 183
 #define _SC_TRACE_LOG 184
+#define _SC_IPV6 235
+#define _SC_RAW_SOCKETS 236
+#define _SC_SS_REPL_MAX 241
+#define _SC_THREAD_ROBUST_PRIO_INHERIT 247
+#define _SC_THREAD_ROBUST_PRIO_PROTECT 248
+#define _SC_MINSIGSTKSZ 249
+#define _SC_SIGSTKSZ 250
 
 /* Port-specific _SC_* define values */
 
