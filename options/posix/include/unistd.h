@@ -59,8 +59,16 @@ extern "C" {
 #define _POSIX_MEMLOCK_RANGE _POSIX_VERSION
 /* mmap, munmap, shm_open, shm_unlink */
 #define _POSIX_SHARED_MEMORY_OBJECTS _POSIX_VERSION
+/* pthread_spin_{destroy,init,lock,trylock,unlock} */
+#define _POSIX_SPIN_LOCKS _POSIX_VERSION
 /* open, msync, fsync, fdatasync */
 #define _POSIX_SYNCHRONIZED_IO _POSIX_VERSION
+/* pthread_attr_setstack */
+#define _POSIX_THREAD_ATTR_STACKADDR _POSIX_VERSION
+/* pthread_attr_setstacksize */
+#define _POSIX_THREAD_ATTR_STACKSIZE _POSIX_VERSION
+
+#define _XOPEN_UNIX 1
 
 /* MISSING: additional _POSIX and _XOPEN feature macros */
 /* MISSING: _POSIX_TIMESTAMP_RESOLUTION and _POSIX2_SYMLINKS */
