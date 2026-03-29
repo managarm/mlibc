@@ -81,6 +81,8 @@ ignored_typedefs:
   - jmp_buf
   - mtx_t
   - tss_t
+  - posix_spawn_file_actions_t
+  - posix_spawnattr_t
   - pthread_attr_t
   - pthread_barrier_t
   - pthread_barrierattr_t
