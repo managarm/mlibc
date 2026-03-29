@@ -2176,7 +2176,7 @@ wint_t getwc(FILE *stream) {
 
 // wide-oriented (POSIX)
 wint_t getwchar(void) {
-	auto file = static_cast<mlibc::abstract_file *>(stdout);
+	auto file = static_cast<mlibc::abstract_file *>(stdin);
 	frg::unique_lock lock(file->_lock);
 	return fgetwc_unlocked(file);
 }
