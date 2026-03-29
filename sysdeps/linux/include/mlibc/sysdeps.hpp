@@ -175,6 +175,12 @@ struct LinuxSysdepTags :
 	MqReceive,
 	MqGetAttr,
 	MqSetAttr,
+	AioRead,
+	AioWrite,
+	AioFsync,
+	AioListio,
+	AioSuspend,
+	AioCancel,
 #endif // __MLIBC_POSIX_OPTION
 
 #if __MLIBC_BSD_OPTION

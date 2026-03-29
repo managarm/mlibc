@@ -28,6 +28,7 @@ libc_sources += files(
 
 if get_option('posix_option').allowed()
 	libc_sources += files(
+		'generic/posix/aio.cpp',
 		'generic/thread.cpp',
 		host_machine.cpu_family() / 'cp_syscall.S',
 		host_machine.cpu_family() / 'thread_entry.S'
