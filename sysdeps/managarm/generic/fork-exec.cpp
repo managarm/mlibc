@@ -78,7 +78,7 @@ int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusag
 		return ENOSYS;
 	}
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::WAIT);
 	req.set_pid(pid);
 	req.set_flags(flags);
@@ -97,7 +97,7 @@ int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusag
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -122,7 +122,7 @@ int Sysdeps<Waitid>::operator()(idtype_t idtype, id_t id, siginfo_t *info, int o
 
 	mlibc::thread_testcancel();
 
-	managarm::posix::WaitIdRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::WaitIdRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	req.set_idtype(idtype);
 	req.set_id(id);
@@ -139,7 +139,7 @@ int Sysdeps<Waitid>::operator()(idtype_t idtype, id_t id, siginfo_t *info, int o
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::WaitIdResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::WaitIdResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -232,11 +232,11 @@ int Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *cons
 	// TODO: Make this function signal-safe!
 	SignalGuard sguard;
 
-	frg::string<MemoryAllocator> args_area(getSysdepsAllocator());
+	frg::string<SysdepsAllocator> args_area(getSysdepsAllocator());
 	for (auto it = argv; *it; ++it)
 		args_area += frg::string_view{*it, strlen(*it) + 1};
 
-	frg::string<MemoryAllocator> env_area(getSysdepsAllocator());
+	frg::string<SysdepsAllocator> env_area(getSysdepsAllocator());
 	for (auto it = envp; *it; ++it)
 		env_area += frg::string_view{*it, strlen(*it) + 1};
 
@@ -259,7 +259,7 @@ int Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *cons
 gid_t Sysdeps<GetGid>::operator()() {
 	SignalGuard sguard;
 
-	managarm::posix::GetGidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::GetGidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
@@ -272,7 +272,7 @@ gid_t Sysdeps<GetGid>::operator()() {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return resp.uid();
@@ -281,7 +281,7 @@ gid_t Sysdeps<GetGid>::operator()() {
 int Sysdeps<SetGid>::operator()(gid_t gid) {
 	SignalGuard sguard;
 
-	managarm::posix::SetGidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::SetGidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	req.set_uid(gid);
 
@@ -296,7 +296,7 @@ int Sysdeps<SetGid>::operator()(gid_t gid) {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -307,7 +307,7 @@ int Sysdeps<SetGid>::operator()(gid_t gid) {
 gid_t Sysdeps<GetEgid>::operator()() {
 	SignalGuard sguard;
 
-	managarm::posix::GetEgidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::GetEgidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
@@ -320,7 +320,7 @@ gid_t Sysdeps<GetEgid>::operator()() {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return resp.uid();
@@ -329,7 +329,7 @@ gid_t Sysdeps<GetEgid>::operator()() {
 int Sysdeps<SetEgid>::operator()(gid_t egid) {
 	SignalGuard sguard;
 
-	managarm::posix::SetEgidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::SetEgidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	req.set_uid(egid);
 
@@ -344,7 +344,7 @@ int Sysdeps<SetEgid>::operator()(gid_t egid) {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -370,7 +370,7 @@ int Sysdeps<SetResgid>::operator()(gid_t rgid, gid_t egid, gid_t sgid) {
 uid_t Sysdeps<GetUid>::operator()() {
 	SignalGuard sguard;
 
-	managarm::posix::GetUidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::GetUidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
@@ -383,7 +383,7 @@ uid_t Sysdeps<GetUid>::operator()() {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return resp.uid();
@@ -392,7 +392,7 @@ uid_t Sysdeps<GetUid>::operator()() {
 int Sysdeps<SetUid>::operator()(uid_t uid) {
 	SignalGuard sguard;
 
-	managarm::posix::SetUidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::SetUidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	req.set_uid(uid);
 
@@ -407,7 +407,7 @@ int Sysdeps<SetUid>::operator()(uid_t uid) {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -418,7 +418,7 @@ int Sysdeps<SetUid>::operator()(uid_t uid) {
 uid_t Sysdeps<GetEuid>::operator()() {
 	SignalGuard sguard;
 
-	managarm::posix::GetEuidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::GetEuidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
@@ -431,7 +431,7 @@ uid_t Sysdeps<GetEuid>::operator()() {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return resp.uid();
@@ -440,7 +440,7 @@ uid_t Sysdeps<GetEuid>::operator()() {
 int Sysdeps<SetEuid>::operator()(uid_t euid) {
 	SignalGuard sguard;
 
-	managarm::posix::SetEuidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::SetEuidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	req.set_uid(euid);
 
@@ -455,7 +455,7 @@ int Sysdeps<SetEuid>::operator()(uid_t euid) {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -512,7 +512,7 @@ pid_t Sysdeps<GetTid>::operator()() {
 pid_t Sysdeps<GetPid>::operator()() {
 	SignalGuard sguard;
 
-	managarm::posix::GetPidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::GetPidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
@@ -525,7 +525,7 @@ pid_t Sysdeps<GetPid>::operator()() {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return resp.pid();
@@ -534,7 +534,7 @@ pid_t Sysdeps<GetPid>::operator()() {
 pid_t Sysdeps<GetPpid>::operator()() {
 	SignalGuard sguard;
 
-	managarm::posix::GetPpidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::GetPpidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
@@ -547,7 +547,7 @@ pid_t Sysdeps<GetPpid>::operator()() {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return resp.pid();
@@ -556,7 +556,7 @@ pid_t Sysdeps<GetPpid>::operator()() {
 int Sysdeps<GetSid>::operator()(pid_t pid, pid_t *sid) {
 	SignalGuard sguard;
 
-	managarm::posix::GetSidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::GetSidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_pid(pid);
 
 	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
@@ -570,7 +570,7 @@ int Sysdeps<GetSid>::operator()(pid_t pid, pid_t *sid) {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS) {
 		return resp.error() | toErrno;
@@ -583,7 +583,7 @@ int Sysdeps<GetSid>::operator()(pid_t pid, pid_t *sid) {
 int Sysdeps<GetPgid>::operator()(pid_t pid, pid_t *pgid) {
 	SignalGuard sguard;
 
-	managarm::posix::GetPgidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::GetPgidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_pid(pid);
 
 	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
@@ -597,7 +597,7 @@ int Sysdeps<GetPgid>::operator()(pid_t pid, pid_t *pgid) {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS) {
 		return resp.error() | toErrno;
@@ -610,7 +610,7 @@ int Sysdeps<GetPgid>::operator()(pid_t pid, pid_t *pgid) {
 int Sysdeps<SetPgid>::operator()(pid_t pid, pid_t pgid) {
 	SignalGuard sguard;
 
-	managarm::posix::SetPgidRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::SetPgidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	req.set_pid(pid);
 	req.set_pgid(pgid);
@@ -626,7 +626,7 @@ int Sysdeps<SetPgid>::operator()(pid_t pid, pid_t pgid) {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -639,7 +639,7 @@ int Sysdeps<GetRusage>::operator()(int scope, struct rusage *usage) {
 
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::GET_RESOURCE_USAGE);
 	req.set_mode(scope);
 
@@ -654,7 +654,7 @@ int Sysdeps<GetRusage>::operator()(int scope, struct rusage *usage) {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;

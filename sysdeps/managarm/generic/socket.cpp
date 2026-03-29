@@ -39,7 +39,7 @@ int Sysdeps<Accept>::operator()(int fd, int *newfd, struct sockaddr *addr_ptr, s
 
 	mlibc::thread_testcancel();
 
-	managarm::posix::AcceptRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::AcceptRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_fd(fd);
 
 	auto [offer, sendReq, recvResp] = exchangeMsgsSync(
@@ -53,7 +53,7 @@ int Sysdeps<Accept>::operator()(int fd, int *newfd, struct sockaddr *addr_ptr, s
 	HEL_CHECK(sendReq.error());
 	HEL_CHECK(recvResp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS) {
 		return resp.error() | toErrno;
@@ -89,7 +89,7 @@ int Sysdeps<Bind>::operator()(int fd, const struct sockaddr *addr_ptr, socklen_t
 	if (!handle)
 		return EBADF;
 
-	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::fs::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_BIND);
 
 	auto [offer, send_req, send_creds, send_buf, recv_resp] = exchangeMsgsSync(
@@ -107,7 +107,7 @@ int Sysdeps<Bind>::operator()(int fd, const struct sockaddr *addr_ptr, socklen_t
 	HEL_CHECK(send_buf.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::fs::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	return resp.error() | toErrno;
 }
@@ -121,10 +121,10 @@ int Sysdeps<Connect>::operator()(int fd, const struct sockaddr *addr_ptr, sockle
 	if (!handle)
 		return EBADF;
 
-	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::fs::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_CONNECT);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<SysdepsAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 
 	auto [offer, send_req, imbue_creds, send_addr, recv_resp] = exchangeMsgsSync(
@@ -143,7 +143,7 @@ int Sysdeps<Connect>::operator()(int fd, const struct sockaddr *addr_ptr, sockle
 	HEL_CHECK(send_addr.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::fs::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	return resp.error() | toErrno;
 }
@@ -156,7 +156,7 @@ int Sysdeps<Sockname>::operator()(    int fd, struct sockaddr *addr_ptr, socklen
 	if (!handle)
 		return EBADF;
 
-	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::fs::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_SOCKNAME);
 	req.set_fd(fd);
 	req.set_size(max_addr_length);
@@ -173,7 +173,7 @@ int Sysdeps<Sockname>::operator()(    int fd, struct sockaddr *addr_ptr, socklen
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::fs::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() == managarm::fs::Errors::SUCCESS) {
 		HEL_CHECK(recv_addr.error());
@@ -191,12 +191,12 @@ int Sysdeps<Peername>::operator()(    int fd, struct sockaddr *addr_ptr, socklen
 	if (!handle)
 		return EBADF;
 
-	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::fs::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_PEERNAME);
 	req.set_fd(fd);
 	req.set_size(max_addr_length);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<SysdepsAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 
 	auto [offer, sendReq, recvResp, recvData] = exchangeMsgsSync(
@@ -214,7 +214,7 @@ int Sysdeps<Peername>::operator()(    int fd, struct sockaddr *addr_ptr, socklen
 		return ENOTSOCK;
 	HEL_CHECK(recvResp.error());
 
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::fs::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 
 	if (resp.error() == managarm::fs::Errors::SUCCESS) {
@@ -303,7 +303,7 @@ int Sysdeps<GetSockopt>::operator()(int fd, int layer, int number, void *__restr
 		if (!handle)
 			return EBADF;
 
-		managarm::fs::GetSockOpt<MemoryAllocator> req(getSysdepsAllocator());
+		managarm::fs::GetSockOpt<SysdepsAllocator> req(getSysdepsAllocator());
 		req.set_layer(layer);
 		req.set_number(number);
 		req.set_optlen(size ? *size : 0);
@@ -322,7 +322,7 @@ int Sysdeps<GetSockopt>::operator()(int fd, int layer, int number, void *__restr
 		HEL_CHECK(send_creds.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		*size = resp.size();
 
@@ -383,7 +383,7 @@ int Sysdeps<SetSockopt>::operator()(int fd, int layer, int number, const void *b
 		if (!handle)
 			return EBADF;
 
-		managarm::fs::SetSockOpt<MemoryAllocator> req(getSysdepsAllocator());
+		managarm::fs::SetSockOpt<SysdepsAllocator> req(getSysdepsAllocator());
 		req.set_layer(layer);
 		req.set_number(number);
 		req.set_optlen(size);
@@ -401,7 +401,7 @@ int Sysdeps<SetSockopt>::operator()(int fd, int layer, int number, const void *b
 		HEL_CHECK(send_buf.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		return resp.error() | toErrno;
 	} else if (std::find(
@@ -414,7 +414,7 @@ int Sysdeps<SetSockopt>::operator()(int fd, int layer, int number, const void *b
 		if (!handle)
 			return EBADF;
 
-		managarm::fs::SetSockOpt<MemoryAllocator> req(getSysdepsAllocator());
+		managarm::fs::SetSockOpt<SysdepsAllocator> req(getSysdepsAllocator());
 		req.set_layer(layer);
 		req.set_number(number);
 		req.set_optlen(0);
@@ -429,7 +429,7 @@ int Sysdeps<SetSockopt>::operator()(int fd, int layer, int number, const void *b
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		return resp.error() | toErrno;
 	} else if (std::find(
@@ -450,7 +450,7 @@ int Sysdeps<SetSockopt>::operator()(int fd, int layer, int number, const void *b
 
 		auto fprog = reinterpret_cast<const sock_fprog *>(buffer);
 
-		managarm::fs::SetSockOpt<MemoryAllocator> req(getSysdepsAllocator());
+		managarm::fs::SetSockOpt<SysdepsAllocator> req(getSysdepsAllocator());
 		req.set_layer(layer);
 		req.set_number(number);
 		req.set_optlen(fprog->len * sizeof(*fprog->filter));
@@ -468,7 +468,7 @@ int Sysdeps<SetSockopt>::operator()(int fd, int layer, int number, const void *b
 		HEL_CHECK(send_buf.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+		managarm::fs::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		return resp.error() | toErrno;
 	} else if (layer == SOL_SOCKET && number == SO_RCVBUFFORCE) {
@@ -581,10 +581,10 @@ int Sysdeps<Listen>::operator()(int fd, int) {
 	if (!handle)
 		return EBADF;
 
-	managarm::fs::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::fs::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_req_type(managarm::fs::CntReqType::PT_LISTEN);
 
-	frg::string<MemoryAllocator> ser(getSysdepsAllocator());
+	frg::string<SysdepsAllocator> ser(getSysdepsAllocator());
 	req.SerializeToString(&ser);
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
@@ -596,7 +596,7 @@ int Sysdeps<Listen>::operator()(int fd, int) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::fs::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	return resp.error() | toErrno;
 }
@@ -608,7 +608,7 @@ int Sysdeps<Shutdown>::operator()(int fd, int how) {
 	if (!handle)
 		return EBADF;
 
-	managarm::fs::ShutdownSocket<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::fs::ShutdownSocket<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_how(how);
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
@@ -622,7 +622,7 @@ int Sysdeps<Shutdown>::operator()(int fd, int how) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::fs::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::fs::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::fs::Errors::SUCCESS)
 		return resp.error() | toErrno;
