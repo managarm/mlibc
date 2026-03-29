@@ -7,7 +7,7 @@
 #include <frg/slab.hpp>
 #include <internal-config.h>
 
-#if !MLIBC_DEBUG_ALLOCATOR
+#ifdef MLIBC_BUILDING_RTLD
 
 struct VirtualAllocator {
 public:
@@ -15,6 +15,16 @@ public:
 
 	void unmap(uintptr_t address, size_t length);
 };
+
+typedef frg::slab_pool<VirtualAllocator, FutexLock> LdsoPool;
+
+typedef frg::slab_allocator<VirtualAllocator, FutexLock> LdsoAllocator;
+
+LdsoAllocator &getLdsoAllocator();
+
+#else // MLIBC_BUILDING_RTLD
+
+#if !MLIBC_DEBUG_ALLOCATOR
 
 typedef frg::slab_pool<VirtualAllocator, FutexLock> MemoryPool;
 
@@ -35,6 +45,8 @@ struct MemoryAllocator {
 MemoryAllocator &getAllocator();
 
 #endif // !MLIBC_DEBUG_ALLOCATOR
+
+#endif // MLIBC_BUILDING_RTLD
 
 namespace mlibc {
 
