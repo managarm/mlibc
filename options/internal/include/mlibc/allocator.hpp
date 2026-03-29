@@ -24,11 +24,26 @@ LdsoAllocator &getLdsoAllocator();
 
 #else // MLIBC_BUILDING_RTLD
 
+#include <frg/sharded_slab.hpp>
+
+struct ShardedSlabPolicy {
+	void *map(size_t size);
+	void unmap(void *ptr, size_t size);
+};
+
 #if !MLIBC_DEBUG_ALLOCATOR
 
-typedef frg::slab_pool<VirtualAllocator, FutexLock> MemoryPool;
+using MemoryPool = frg::sharded_slab::pool<ShardedSlabPolicy>;
 
-typedef frg::slab_allocator<VirtualAllocator, FutexLock> MemoryAllocator;
+MemoryPool &getMemoryPool();
+
+struct MemoryAllocator {
+	void *allocate(size_t size) { return getMemoryPool().allocate(size); }
+	void free(void *ptr) { getMemoryPool().deallocate(ptr); }
+	void deallocate(void *ptr, size_t) { getMemoryPool().deallocate(ptr); }
+	void *reallocate(void *ptr, size_t size) { return getMemoryPool().reallocate(ptr, size); }
+	size_t get_size(void *ptr) { return getMemoryPool().get_size(ptr); }
+};
 
 MemoryAllocator &getAllocator();
 

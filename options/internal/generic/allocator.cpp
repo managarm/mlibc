@@ -44,25 +44,32 @@ LdsoAllocator &getLdsoAllocator() {
 
 #else // MLIBC_BUILDING_RTLD
 
+void *ShardedSlabPolicy::map(size_t size) {
+	void *ptr;
+	__ensure(!mlibc::sysdep<AnonAllocate>(size, &ptr));
+	return ptr;
+}
+
+void ShardedSlabPolicy::unmap(void *ptr, size_t size) {
+	__ensure(!mlibc::sysdep<AnonFree>(ptr, size));
+}
+
 #if !MLIBC_DEBUG_ALLOCATOR
 
 // --------------------------------------------------------
 // Globals
 // --------------------------------------------------------
 
-struct AllocatorPackage {
-	AllocatorPackage()
-	: heap{virtualAllocator}, singleton{&heap} {}
+constinit thread_local mlibc::lazy_eternal<MemoryPool> thread_memory_pool;
 
-	VirtualAllocator virtualAllocator;
-	MemoryPool heap;
-	MemoryAllocator singleton;
-};
+MemoryPool &getMemoryPool() {
+	return thread_memory_pool.get();
+}
 
-constinit mlibc::lazy_eternal<AllocatorPackage> global_allocator_package;
+constinit mlibc::lazy_eternal<MemoryAllocator> global_allocator;
 
 MemoryAllocator &getAllocator() {
-	return global_allocator_package.get().singleton;
+	return global_allocator.get();
 }
 
 #else
