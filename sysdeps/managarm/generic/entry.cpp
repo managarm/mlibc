@@ -6,7 +6,6 @@
 
 #include <bits/ensure.h>
 #include <mlibc/all-sysdeps.hpp>
-#include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/elf/startup.h>
 #include <mlibc/posix-pipe.hpp>
@@ -76,14 +75,27 @@ SignalGuard::~SignalGuard() {
 	}
 }
 
-MemoryAllocator &getSysdepsAllocator() {
-	// use frg::eternal to prevent a call to __cxa_atexit().
-	// this is necessary because __cxa_atexit() call this function.
-	static frg::eternal<VirtualAllocator> virtualAllocator;
-	static frg::eternal<MemoryPool> heap{virtualAllocator.get()};
-	static frg::eternal<MemoryAllocator> singleton{&heap.get()};
-	return singleton.get();
+void *ShardedSlabPolicy::map(size_t size) {
+	void *ptr;
+	auto e = mlibc::sysdep<AnonAllocate>(size, &ptr);
+	__ensure(!e);
+	return ptr;
 }
+
+void ShardedSlabPolicy::unmap(void *ptr, size_t size) {
+	auto e = mlibc::sysdep<AnonFree>(ptr, size);
+	__ensure(!e);
+}
+
+SysdepsPool &getSysdepsPool() {
+	// Use frg::eternal to prevent a call to __cxa_atexit().
+	// This is necessary because __cxa_atexit() calls this function.
+	// TODO: Investigate/fix this.
+	static thread_local frg::eternal<SysdepsPool> pool;
+	return pool.get();
+}
+
+constinit SysdepsAllocator sysdepsAllocator;
 
 HelHandle getPosixLane() {
 	cacheFileTable();

@@ -52,7 +52,7 @@ int Sysdeps<Sigaction>::operator()(
 
 	// TODO: Respect restorer. __ensure(!(action->sa_flags & SA_RESTORER));
 
-	managarm::posix::CntRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_request_type(managarm::posix::CntReqType::SIG_ACTION);
 	req.set_sig_number(number);
 	if (action) {
@@ -79,7 +79,7 @@ int Sysdeps<Sigaction>::operator()(
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 	if (resp.error() == managarm::posix::Errors::ILLEGAL_REQUEST) {

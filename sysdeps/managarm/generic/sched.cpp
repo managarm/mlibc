@@ -24,7 +24,7 @@ int Sysdeps<GetAffinity>::operator()(pid_t pid, size_t cpusetsize, cpu_set_t *ma
 int Sysdeps<GetThreadaffinity>::operator()(pid_t tid, size_t cpusetsize, cpu_set_t *mask) {
 	SignalGuard sguard;
 
-	managarm::posix::GetAffinityRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::GetAffinityRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	req.set_pid(tid);
 	req.set_size(cpusetsize);
@@ -42,7 +42,7 @@ int Sysdeps<GetThreadaffinity>::operator()(pid_t tid, size_t cpusetsize, cpu_set
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 	if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
@@ -64,10 +64,10 @@ int Sysdeps<SetAffinity>::operator()(pid_t pid, size_t cpusetsize, const cpu_set
 int Sysdeps<SetThreadaffinity>::operator()(pid_t tid, size_t cpusetsize, const cpu_set_t *mask) {
 	SignalGuard sguard;
 
-	frg::vector<uint8_t, MemoryAllocator> affinity_mask(getSysdepsAllocator());
+	frg::vector<uint8_t, SysdepsAllocator> affinity_mask(getSysdepsAllocator());
 	affinity_mask.resize(cpusetsize);
 	memcpy(affinity_mask.data(), mask, cpusetsize);
-	managarm::posix::SetAffinityRequest<MemoryAllocator> req(getSysdepsAllocator());
+	managarm::posix::SetAffinityRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	req.set_pid(tid);
 	req.set_mask(affinity_mask);
@@ -84,7 +84,7 @@ int Sysdeps<SetThreadaffinity>::operator()(pid_t tid, size_t cpusetsize, const c
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 	if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
