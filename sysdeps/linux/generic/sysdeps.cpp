@@ -513,14 +513,6 @@ int Sysdeps<Rename>::operator()(const char *old_path, const char *new_path) {
 	return 0;
 }
 
-int Sysdeps<FdToPath>::operator()(int fd, char **out) {
-	frg::string path{getAllocator()};
-	frg::output_to(path) << frg::fmt("/proc/self/fd/{}", fd);
-	*out = path.data();
-	path.detach();
-	return 0;
-}
-
 int Sysdeps<Sigprocmask>::operator()(int how, const sigset_t *set, sigset_t *old) {
 	auto ret = do_syscall(SYS_rt_sigprocmask, how, set, old, NSIG / 8);
 	if (int e = sc_error(ret); e)
@@ -529,6 +521,14 @@ int Sysdeps<Sigprocmask>::operator()(int how, const sigset_t *set, sigset_t *old
 }
 
 #if !MLIBC_BUILDING_RTLD
+int Sysdeps<FdToPath>::operator()(int fd, char **out) {
+	frg::string path{getAllocator()};
+	frg::output_to(path) << frg::fmt("/proc/self/fd/{}", fd);
+	*out = path.data();
+	path.detach();
+	return 0;
+}
+
 # if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__) || defined(__m68k__)
 #  define HAS_SA_RESTORER 1
 # elif defined(__riscv) || defined(__loongarch64)

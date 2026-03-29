@@ -55,9 +55,9 @@ frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 frg::manual_box<FutexLock> runtimeTlsMapLock;
 
 // We use a small vector to avoid memory allocation for the default library paths
-frg::manual_box<frg::small_vector<frg::string_view, MLIBC_NUM_DEFAULT_LIBRARY_PATHS, MemoryAllocator>> libraryPaths;
+frg::manual_box<frg::small_vector<frg::string_view, MLIBC_NUM_DEFAULT_LIBRARY_PATHS, LdsoAllocator>> libraryPaths;
 
-frg::manual_box<frg::vector<frg::string_view, MemoryAllocator>> preloads;
+frg::manual_box<frg::vector<frg::string_view, LdsoAllocator>> preloads;
 
 static SharedObject *executableSO;
 static uintptr_t vdsoBase = 0;
@@ -250,8 +250,8 @@ extern "C" [[gnu::alias("dl_debug_state"), gnu::visibility("default")]] void _dl
 
 namespace {
 
-frg::vector<frg::string_view, MemoryAllocator> parseList(frg::string_view paths, frg::string_view separators) {
-	frg::vector<frg::string_view, MemoryAllocator> list{getAllocator()};
+frg::vector<frg::string_view, LdsoAllocator> parseList(frg::string_view paths, frg::string_view separators) {
+	frg::vector<frg::string_view, LdsoAllocator> list{getLdsoAllocator()};
 
 	size_t p = 0;
 	while(p < paths.size()) {
@@ -333,7 +333,7 @@ void setupVdso(uintptr_t vdsoBase) {
 	}
 
 	auto vdso = initialRepository->injectObjectFromDts(vdso_soname,
-		frg::string<MemoryAllocator> { getAllocator() }, actual_base, vdso_dynamic, 1);
+		frg::string<LdsoAllocator> { getLdsoAllocator() }, actual_base, vdso_dynamic, 1);
 	vdso->phdrPointer = vdso_phdrs;
 	vdso->phdrCount = vdso_header->e_phnum;
 	vdso->phdrEntrySize = vdso_header->e_phentsize;
@@ -361,8 +361,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 
 	runtimeTlsMapLock.initialize();
 	runtimeTlsMap.initialize();
-	libraryPaths.initialize(getAllocator());
-	preloads.initialize(getAllocator());
+	libraryPaths.initialize(getLdsoAllocator());
+	preloads.initialize(getLdsoAllocator());
 
 	void *phdr_pointer = nullptr;
 	size_t phdr_entry_size = 0;
@@ -627,11 +627,11 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// We inject the executable first such that it is the first entry in dl_iterate_phdr.
 #ifndef MLIBC_STATIC_BUILD
 	executableSO = initialRepository->injectObjectFromPhdrs(execfn,
-		frg::string<MemoryAllocator> { execfn, getAllocator() },
+		frg::string<LdsoAllocator> { execfn, getLdsoAllocator() },
 		phdr_pointer, phdr_entry_size, phdr_count, entry_pointer, 1);
 #else
 	executableSO = initialRepository->injectStaticObject(execfn,
-			frg::string<MemoryAllocator>{ execfn, getAllocator() },
+			frg::string<LdsoAllocator>{ execfn, getLdsoAllocator() },
 			phdr_pointer, phdr_entry_size, phdr_count, entry_pointer, 1);
 	globalDebugInterface.base = (void*)executableSO->baseAddress;
 #endif
@@ -639,7 +639,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 #ifndef MLIBC_STATIC_BUILD
 	auto ldso_soname = reinterpret_cast<const char *>(ldso_base + strtab_offset + soname_str);
 	auto ldso = initialRepository->injectObjectFromDts(ldso_soname,
-		frg::string<MemoryAllocator> { getAllocator() },
+		frg::string<LdsoAllocator> { getLdsoAllocator() },
 		ldso_base, _DYNAMIC, 1);
 
 	auto ldso_ehdr = reinterpret_cast<elf_ehdr *>(__ehdr_start);
@@ -861,13 +861,13 @@ void *__dlapi_resolve(void *handle, const char *string, void *returnAddress, con
 		// than just the dependencies of the DSO, if the DSO was loaded as a dependency
 		// of a dlopen()ed DSO).
 
-		frg::vector<SharedObject *, MemoryAllocator> queue{getAllocator()};
+		frg::vector<SharedObject *, LdsoAllocator> queue{getLdsoAllocator()};
 
 		struct Token { };
 		frg::hash_map<
 				SharedObject *, Token,
-				frg::hash<SharedObject *>, MemoryAllocator
-		> visited{frg::hash<SharedObject *>{}, getAllocator()};
+				frg::hash<SharedObject *>, LdsoAllocator
+		> visited{frg::hash<SharedObject *>{}, getLdsoAllocator()};
 
 		auto root = reinterpret_cast<SharedObject *>(handle);
 		visited.insert(root, Token{});

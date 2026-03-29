@@ -7,6 +7,43 @@
 #include <mlibc/allocator.hpp>
 #include <internal-config.h>
 
+// --------------------------------------------------------
+// VirtualAllocator
+// --------------------------------------------------------
+
+#ifdef MLIBC_BUILDING_RTLD
+
+uintptr_t VirtualAllocator::map(size_t length) {
+	void *ptr;
+	__ensure(!mlibc::sysdep<AnonAllocate>(length, &ptr));
+	return (uintptr_t)ptr;
+}
+
+void VirtualAllocator::unmap(uintptr_t address, size_t length) {
+	__ensure(!mlibc::sysdep<AnonFree>((void *)address, length));
+}
+
+// --------------------------------------------------------
+// RTLD Allocator
+// --------------------------------------------------------
+
+struct LdsoAllocatorPackage {
+	LdsoAllocatorPackage()
+	: heap{virtualAllocator}, singleton{&heap} {}
+
+	VirtualAllocator virtualAllocator;
+	LdsoPool heap;
+	LdsoAllocator singleton;
+};
+
+constinit mlibc::lazy_eternal<LdsoAllocatorPackage> global_ldso_allocator_package;
+
+LdsoAllocator &getLdsoAllocator() {
+	return global_ldso_allocator_package.get().singleton;
+}
+
+#else // MLIBC_BUILDING_RTLD
+
 #if !MLIBC_DEBUG_ALLOCATOR
 
 // --------------------------------------------------------
@@ -26,20 +63,6 @@ constinit mlibc::lazy_eternal<AllocatorPackage> global_allocator_package;
 
 MemoryAllocator &getAllocator() {
 	return global_allocator_package.get().singleton;
-}
-
-// --------------------------------------------------------
-// VirtualAllocator
-// --------------------------------------------------------
-
-uintptr_t VirtualAllocator::map(size_t length) {
-	void *ptr;
-	__ensure(!mlibc::sysdep<AnonAllocate>(length, &ptr));
-	return (uintptr_t)ptr;
-}
-
-void VirtualAllocator::unmap(uintptr_t address, size_t length) {
-	__ensure(!mlibc::sysdep<AnonFree>((void *)address, length));
 }
 
 #else
@@ -212,3 +235,5 @@ MemoryAllocator &getAllocator() {
 }
 
 #endif /* !MLIBC_DEBUG_ALLOCATOR */
+
+#endif /* MLIBC_BUILDING_RTLD */
