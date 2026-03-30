@@ -1,4 +1,4 @@
-
+#include <utility>
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -344,24 +344,49 @@ void qsort(void *base, size_t count, size_t size,
 void qsort_r(void *base, size_t count, size_t size,
 		int (*compare)(const void *, const void *, void *),
 		void *arg) {
-	// TODO: implement a faster sort
-	for(size_t i = 0; i < count; i++) {
-		void *u = (void *)((uintptr_t)base + i * size);
-		for(size_t j = i + 1; j < count; j++) {
-			void *v = (void *)((uintptr_t)base + j * size);
-			if(compare(u, v, arg) <= 0)
-				continue;
+	auto compare_idx = [&] (size_t i, size_t j) -> int {
+		auto *pi = reinterpret_cast<uint8_t *>(base) + i * size;
+		auto *pj = reinterpret_cast<uint8_t *>(base) + j * size;
+		return compare(pi, pj, arg);
+	};
 
-			// swap u and v
-			char *u_bytes = (char *)u;
-			char *v_bytes = (char *)v;
-			for(size_t k = 0; k < size; k++) {
-				char temp = u_bytes[k];
-				u_bytes[k] = v_bytes[k];
-				v_bytes[k] = temp;
+	auto swap_idx = [&] (size_t i, size_t j) {
+		auto *pi = reinterpret_cast<uint8_t *>(base) + i * size;
+		auto *pj = reinterpret_cast<uint8_t *>(base) + j * size;
+		for (size_t k = 0; k < size; ++k) {
+			std::swap(pi[k], pj[k]);
+		}
+	};
+
+	// Partition the range [begin, end) and return the position of the pivot.
+	auto partition = [&] (size_t begin, size_t end) -> size_t {
+		__ensure(begin < end);
+		// Invariant: every element before i is compares smaller or equal to the pivot.
+		auto pivot = end - 1;
+		size_t i = begin;
+		for (size_t j = begin; j < pivot; ++j) {
+			if (compare_idx(j, pivot) <= 0) {
+				swap_idx(i, j);
+				++i;
 			}
 		}
-	}
+		swap_idx(i, pivot);
+		return i;
+	};
+
+	// Sort the range [begin, end).
+	// TODO: If we are doing more than C * log_2(n) iterations for some C,
+	//       fall back to a guaranteed O(log n) implementation.
+	auto quick_sort = [&] (this auto self, size_t begin, size_t end) {
+		__ensure(begin <= end);
+		if (end - begin <= 1)
+			return;
+		auto pivot = partition(begin, end);
+		self(begin, pivot);
+		self(pivot + 1, end);
+	};
+
+	quick_sort(0, count);
 }
 
 int abs(int num) {
