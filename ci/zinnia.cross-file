@@ -6,7 +6,7 @@ cpp = 'g++'
 needs_exe_wrapper = true
 
 [host_machine]
-system = 'menix'
+system = 'zinnia'
 cpu_family = 'x86_64'
 cpu = 'x86_64'
 endian = 'little'

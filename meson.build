@@ -279,13 +279,13 @@ elif host_machine.system() == 'obos'
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
 	subdir('sysdeps/obos')
-elif host_machine.system() == 'menix'
-	rtld_include_dirs += include_directories('sysdeps/menix/include')
-	libc_include_dirs += include_directories('sysdeps/menix/include')
+elif host_machine.system() == 'zinnia'
+	rtld_include_dirs += include_directories('sysdeps/zinnia/include')
+	libc_include_dirs += include_directories('sysdeps/zinnia/include')
 	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
 	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
-	subdir('sysdeps/menix')
+	subdir('sysdeps/zinnia')
 # ANCHOR: demo-sysdeps
 elif host_machine.system() == 'demo'
 	subdir('sysdeps/demo')

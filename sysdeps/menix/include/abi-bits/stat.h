@@ -1,1 +1,0 @@
-../../../../abis/menix/stat.h
