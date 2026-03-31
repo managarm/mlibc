@@ -1140,7 +1140,7 @@ int Sysdeps<Fchmod>::operator()(int fd, mode_t mode) {
 }
 
 int Sysdeps<Fchmodat>::operator()(int fd, const char *pathname, mode_t mode, int flags) {
-	auto ret = do_cp_syscall(SYS_fchmodat, fd, pathname, mode, flags);
+	auto ret = do_cp_syscall(SYS_fchmodat2, fd, pathname, mode, flags);
 	if(int e = sc_error(ret); e)
 		return e;
 	return 0;
