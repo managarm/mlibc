@@ -1,5 +1,5 @@
 #include <errno.h>
-#include <menix/syscall.hpp>
+#include <zinnia/syscall.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/arch-defs.hpp>
 #include <mlibc/tcb.hpp>
@@ -24,7 +24,7 @@ namespace mlibc {
 
 int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
 	(void)tcb;
-	auto r = menix_syscall(SYSCALL_THREAD_CREATE, (size_t)__mlibc_start_thread, (size_t)stack);
+	auto r = zinnia_syscall(SYSCALL_THREAD_CREATE, (size_t)__mlibc_start_thread, (size_t)stack);
 	if (r.error)
 		return r.error;
 	*pid_out = (pid_t)r.value;

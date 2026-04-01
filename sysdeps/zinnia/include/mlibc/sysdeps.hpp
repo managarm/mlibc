@@ -4,7 +4,7 @@
 
 namespace mlibc {
 
-struct MenixSysdepTags :
+struct ZinniaSysdepTags :
 	LibcLog,
 	LibcPanic,
 	TcbSet,
@@ -158,6 +158,6 @@ struct MenixSysdepTags :
 {};
 
 template<typename Tag>
-using Sysdeps = SysdepOf<MenixSysdepTags, Tag>;
+using Sysdeps = SysdepOf<ZinniaSysdepTags, Tag>;
 
 } // namespace mlibc
