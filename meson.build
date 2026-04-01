@@ -9,6 +9,10 @@ project(
 	meson_version: '>=1.3.0',
 )
 
+if meson.is_subproject()
+	error('mlibc cannot be correctly used as a meson subproject. Instead, bootstrap a compiler, use mlibc headers and mlibc proper to build a correct toolchain.')
+endif
+
 fs = import('fs')
 
 rtld_include_dirs = [
