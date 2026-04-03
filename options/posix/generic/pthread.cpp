@@ -1384,10 +1384,14 @@ int pthread_spin_lock(pthread_spinlock_t *__lock) {
 	unsigned int desired = mlibc::this_tid();
 	unsigned int expected = 0;
 
-	while(!__atomic_compare_exchange_n(&__lock->__lock, &expected, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
+	while (true) {
+		if (__atomic_compare_exchange_n(&__lock->__lock, &expected, desired, true, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED))
+		 	break;
 		if (expected == desired)
 			return EDEADLK;
-		frg::detail::loophint();
+
+		while (__atomic_load_n(&__lock->__lock, __ATOMIC_RELAXED) != 0)
+			frg::detail::loophint();
 		expected = 0;
 	}
 
@@ -1398,14 +1402,16 @@ int pthread_spin_trylock(pthread_spinlock_t *__lock) {
 	unsigned int desired = mlibc::this_tid();
 	unsigned int expected = 0;
 
-	if (!__atomic_compare_exchange_n(&__lock->__lock, &expected, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
+	if (!__atomic_compare_exchange_n(&__lock->__lock, &expected, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED))
 		return EBUSY;
 
 	return 0;
 }
 
 int pthread_spin_unlock(pthread_spinlock_t *__lock) {
-	__ensure(__atomic_load_n(&__lock->__lock, __ATOMIC_RELAXED) == mlibc::this_tid());
+	auto val = __atomic_load_n(&__lock->__lock, __ATOMIC_RELAXED);
+	if (val != mlibc::this_tid())
+		return EPERM;
 	__atomic_store_n(&__lock->__lock, 0, __ATOMIC_RELEASE);
 	return 0;
 }
