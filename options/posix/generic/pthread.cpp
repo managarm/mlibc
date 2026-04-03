@@ -1409,7 +1409,9 @@ int pthread_spin_trylock(pthread_spinlock_t *__lock) {
 }
 
 int pthread_spin_unlock(pthread_spinlock_t *__lock) {
-	__ensure(__atomic_load_n(&__lock->__lock, __ATOMIC_RELAXED) == mlibc::this_tid());
+	auto val = __atomic_load_n(&__lock->__lock, __ATOMIC_RELAXED);
+	if (val != mlibc::this_tid())
+		return EPERM;
 	__atomic_store_n(&__lock->__lock, 0, __ATOMIC_RELEASE);
 	return 0;
 }
