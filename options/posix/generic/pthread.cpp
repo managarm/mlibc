@@ -1402,7 +1402,7 @@ int pthread_spin_trylock(pthread_spinlock_t *__lock) {
 	unsigned int desired = mlibc::this_tid();
 	unsigned int expected = 0;
 
-	if (!__atomic_compare_exchange_n(&__lock->__lock, &expected, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
+	if (!__atomic_compare_exchange_n(&__lock->__lock, &expected, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED))
 		return EBUSY;
 
 	return 0;
