@@ -1,8 +1,7 @@
 #ifndef _SYS_SIGNALFD_H
 #define _SYS_SIGNALFD_H
 
-/* TODO: Define sigset separately and remove this include. */
-#include <signal.h>
+#include <abi-bits/sigset_t.h>
 /* musl includes those. Restructure this so we do not need them? */
 #include <stdint.h>
 #include <fcntl.h>
@@ -32,7 +31,11 @@ struct signalfd_siginfo {
 	uint64_t  ssi_stime;
 	uint64_t  ssi_addr;
 	uint16_t  ssi_addr_lsb;
-	uint8_t   pad[128-12*4-4*8-2];
+	uint16_t  __pad2;
+	int32_t   ssi_syscall;
+	uint64_t  ssi_call_addr;
+	uint32_t  ssi_arch;
+	uint8_t   __pad[28];
 };
 
 #ifndef __MLIBC_ABI_ONLY
