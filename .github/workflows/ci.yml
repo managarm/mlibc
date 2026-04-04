@@ -132,6 +132,7 @@ jobs:
 
     compile-sysdeps:
         strategy:
+            fail-fast: false
             matrix:
                 sysdeps: [ironclad, keyronex, managarm, astral, zinnia, demo, obos]
         name: Compile sysdeps

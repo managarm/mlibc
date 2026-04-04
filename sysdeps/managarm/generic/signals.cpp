@@ -107,11 +107,30 @@ int Sysdeps<Sigaction>::operator()(
 int Sysdeps<Kill>::operator()(pid_t pid, int number) {
 	// This implementation is inherently signal-safe.
 	HelWord out;
-	HEL_CHECK(helSyscall4_1(kHelObserveSuperCall + posix::superSigKill, pid, number, SI_USER, 0, &out));
+	HEL_CHECK(helSyscall4_1(
+	    kHelObserveSuperCall + posix::superSigKill,
+	    std::to_underlying(posix::SuperKillMode::Kill),
+	    pid,
+	    0,
+	    number,
+	    &out
+	));
 	return out;
 }
 
-int Sysdeps<Tgkill>::operator()(int, int tid, int number) { return sysdep<Kill>(tid, number); }
+int Sysdeps<Tgkill>::operator()(int pid, int tid, int number) {
+	// This implementation is inherently signal-safe.
+	HelWord out;
+	HEL_CHECK(helSyscall4_1(
+	    kHelObserveSuperCall + posix::superSigKill,
+	    std::to_underlying(posix::SuperKillMode::Kill),
+	    pid,
+	    tid,
+	    number,
+	    &out
+	));
+	return out;
+}
 
 int Sysdeps<Sigaltstack>::operator()(const stack_t *ss, stack_t *oss) {
 	HelWord out;
@@ -212,7 +231,22 @@ int Sysdeps<Sigtimedwait>::operator()(
 int Sysdeps<Sigqueue>::operator()(pid_t pid, int sig, const union sigval val) {
 	// This implementation is inherently signal-safe.
 	HelWord out;
-	HEL_CHECK(helSyscall4_1(kHelObserveSuperCall + posix::superSigKill, pid, sig, SI_QUEUE, reinterpret_cast<uintptr_t>(val.sival_ptr), &out));
+
+	siginfo_t info{};
+	info.si_code = SI_QUEUE;
+	info.si_signo = sig;
+	info.si_pid = getpid();
+	info.si_uid = getuid();
+	info.si_value = val;
+
+	HEL_CHECK(helSyscall4_1(
+	    kHelObserveSuperCall + posix::superSigKill,
+	    std::to_underlying(posix::SuperKillMode::QueueInfo),
+	    pid,
+	    0,
+	    reinterpret_cast<HelWord>(&info),
+	    &out
+	));
 	return out;
 }
 
