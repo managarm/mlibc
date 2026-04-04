@@ -84,33 +84,37 @@ T strtofp(const Char *str, Char **endptr, mlibc::localeinfo *l) {
 	while(Type::is_space(*str, l))
 		str++;
 
+	bool negative = *str == '-';
+	if (*str == '+' || *str == '-')
+		str++;
+
 	if (Type::string_compare(str, Type::infUpper) == 0 || Type::string_compare(str, Type::inf) == 0) {
 		if (endptr)
 			*endptr = (Char *)str + 3;
 		if constexpr (std::is_same_v<T, float>)
-			return __builtin_inff();
+			return negative ? -__builtin_inff() : __builtin_inff();
 		else if constexpr (std::is_same_v<T, double>)
-			return __builtin_inf();
+			return negative ? -__builtin_inf() : __builtin_inf();
 		else
-			return __builtin_infl();
+			return negative ? -__builtin_infl() : __builtin_infl();
 	} else if (Type::string_compare(str, Type::infinityUpper) == 0 || Type::string_compare(str, Type::infinity) == 0) {
 		if (endptr)
 			*endptr = (Char *)str + 8;
 		if constexpr (std::is_same_v<T, float>)
-			return __builtin_inff();
+			return negative ? -__builtin_inff() : __builtin_inff();
 		else if constexpr (std::is_same_v<T, double>)
-			return __builtin_inf();
+			return negative ? -__builtin_inf() : __builtin_inf();
 		else
-			return __builtin_infl();
+			return negative ? -__builtin_infl() : __builtin_infl();
 	} else if (Type::string_compare_n(str, Type::nanUpper, 3) == 0 || Type::string_compare_n(str, Type::nan, 3) == 0) {
 		if (endptr)
 			*endptr = (Char *)str + 3;
 		if constexpr (std::is_same_v<T, float>)
-			return __builtin_nanf("");
+			return negative ? -__builtin_nanf("") : __builtin_nanf("");
 		else if constexpr (std::is_same_v<T, double>)
-			return __builtin_nan("");
+			return negative ? -__builtin_nan("") : __builtin_nan("");
 		else
-			return __builtin_nanl("");
+			return negative ? -__builtin_nanl("") : __builtin_nanl("");
 	}
 
 	wchar_t wideDecimalPoint[2] = { L'\0', L'\0' };
@@ -123,10 +127,6 @@ T strtofp(const Char *str, Char **endptr, mlibc::localeinfo *l) {
 			return wideDecimalPoint;
 		}
 	}();
-
-	bool negative = *str == '-';
-	if (*str == '+' || *str == '-')
-		str++;
 
 	bool hex = false;
 	if (*str == '0' && (*(str + 1) == 'x' || *(str + 1) == 'X')) {
