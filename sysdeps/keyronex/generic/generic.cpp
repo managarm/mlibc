@@ -274,6 +274,15 @@ Sysdeps<Readlink>::operator()(const char *path, void *buffer, size_t max_size,
 	return sysdep<Readlinkat>(AT_FDCWD, path, buffer, max_size, length);
 }
 
+int
+Sysdeps<Truncate>::operator()(const char *path, off_t length)
+{
+	int r = syscall2(SYS_truncate, (uintptr_t)path, length, NULL);
+	if (r < 0)
+		return -r;
+	return 0;
+}
+
 /* open file ops */
 
 int
@@ -350,6 +359,24 @@ Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *result
 	return 0;
 }
 
+int
+Sysdeps<Ftruncate>::operator()(int fd, size_t size)
+{
+	int r = syscall2(SYS_ftruncate, fd, size, NULL);
+	if (r < 0)
+		return -r;
+	return 0;
+}
+
+
+int
+Sysdeps<Flock>::operator()(int fd, int options)
+{
+	int r = syscall2(SYS_flock, fd, options, NULL);
+	if (r < 0)
+		return -r;
+	return 0;
+}
 
 int
 Sysdeps<Isatty>::operator()(int fd)

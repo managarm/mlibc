@@ -52,6 +52,7 @@ enum posix_syscall {
 	SYS_renameat,
 	SYS_fstatat,
 	SYS_readlinkat,
+	SYS_truncate,
 
 	/* open file ops */
 	SYS_close,
@@ -62,6 +63,8 @@ enum posix_syscall {
 	SYS_seek,
 	SYS_ioctl,
 	SYS_fsync,
+	SYS_ftruncate,
+	SYS_flock,
 
 	/* fd manipulation */
 	SYS_pipe,
