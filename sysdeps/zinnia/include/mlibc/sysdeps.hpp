@@ -154,7 +154,9 @@ struct ZinniaSysdepTags :
 	IfNametoindex,
 	Clone,
 	PrepareStack,
-	Reboot
+	Reboot,
+	Readv,
+	Writev
 {};
 
 template<typename Tag>

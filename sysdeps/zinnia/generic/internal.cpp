@@ -1,14 +1,15 @@
 #include <abi-bits/fcntl.h>
 #include <abi-bits/pid_t.h>
-#include <zinnia/archctl.hpp>
-#include <zinnia/syscall.hpp>
+#include <errno.h>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/tcb.hpp>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <errno.h>
+#include <sys/uio.h>
 #include <syslog.h>
+#include <zinnia/archctl.hpp>
+#include <zinnia/syscall.hpp>
 
 namespace mlibc {
 
@@ -78,12 +79,24 @@ int Sysdeps<Open>::operator()(const char *pathname, int flags, mode_t mode, int 
 	return sysdep<Openat>(AT_FDCWD, pathname, flags, mode, fd);
 }
 
-int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_read) {
-	auto r = zinnia_syscall(SYSCALL_READ, fd, (size_t)buf, count);
+int Sysdeps<Readv>::operator()(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
+	if (iovc < 0)
+		return EINVAL;
+	if (iovc == 0) {
+		*bytes_read = 0;
+		return 0;
+	}
+
+	auto r = zinnia_syscall(SYSCALL_READV, fd, (uint64_t)iovs, (size_t)iovc);
 	if (r.error)
 		return r.error;
-	*bytes_read = (ssize_t)r.value;
+	*bytes_read = r.value;
 	return 0;
+}
+
+int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_read) {
+	const struct iovec iov = {buf, count};
+	return sysdep<Readv>(fd, &iov, 1, bytes_read);
 }
 
 int Sysdeps<Seek>::operator()(int fd, off_t offset, int whence, off_t *new_offset) {
@@ -96,7 +109,9 @@ int Sysdeps<Seek>::operator()(int fd, off_t offset, int whence, off_t *new_offse
 
 int Sysdeps<Close>::operator()(int fd) { return zinnia_syscall(SYSCALL_CLOSE, fd).error; }
 
-int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf) {
+int Sysdeps<Stat>::operator()(
+    fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *statbuf
+) {
 	switch (fsfdt) {
 		case fsfd_target::path:
 			return zinnia_syscall(SYSCALL_FSTATAT, AT_FDCWD, (size_t)path, (size_t)statbuf, flags)
@@ -110,7 +125,9 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int f
 	}
 }
 
-int Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
+int Sysdeps<VmMap>::operator()(
+    void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window
+) {
 	auto r = zinnia_syscall(SYSCALL_MMAP, (size_t)hint, size, prot, flags, fd, offset);
 	if (r.error)
 		return r.error;

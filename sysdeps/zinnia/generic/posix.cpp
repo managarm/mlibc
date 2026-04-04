@@ -64,12 +64,25 @@ Sysdeps<ReadEntries>::operator()(int handle, void *buffer, size_t max_size, size
 	return 0;
 }
 
-int Sysdeps<Write>::operator()(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
-	auto r = zinnia_syscall(SYSCALL_WRITE, fd, (size_t)buf, count);
+int
+Sysdeps<Writev>::operator()(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_written) {
+	if (iovc < 0)
+		return EINVAL;
+	if (iovc == 0) {
+		*bytes_written = 0;
+		return 0;
+	}
+
+	auto r = zinnia_syscall(SYSCALL_WRITEV, fd, (uint64_t)iovs, (size_t)iovc);
 	if (r.error)
 		return r.error;
 	*bytes_written = r.value;
 	return 0;
+}
+
+int Sysdeps<Write>::operator()(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
+	const struct iovec iov = {const_cast<void *>(buf), count};
+	return sysdep<Writev>(fd, &iov, 1, bytes_written);
 }
 
 int Sysdeps<Pread>::operator()(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
