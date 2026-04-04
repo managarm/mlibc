@@ -1,8 +1,7 @@
 #ifndef _SYS_SIGNALFD_H
 #define _SYS_SIGNALFD_H
 
-/* TODO: Define sigset separately and remove this include. */
-#include <signal.h>
+#include <abi-bits/sigset_t.h>
 /* musl includes those. Restructure this so we do not need them? */
 #include <stdint.h>
 #include <fcntl.h>
