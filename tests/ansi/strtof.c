@@ -46,6 +46,10 @@ int main () {
 	DO_TEST_SUCCESS_FUNC("nan", isnan, -1, strtof);
 	DO_TEST_SUCCESS_FUNC("INF", isinf, -1, strtof);
 	DO_TEST_SUCCESS_FUNC("INFINITY", isinf, -1, strtof);
+	DO_TEST_SUCCESS_FUNC("-NAN", isnan, -1, strtof);
+	DO_TEST_SUCCESS_FUNC("-nan", isnan, -1, strtof);
+	DO_TEST_SUCCESS_FUNC("-INF", isinf, -1, strtof);
+	DO_TEST_SUCCESS_FUNC("-INFINITY", isinf, -1, strtof);
 
 	DO_TEST("0", 0.0, -1, strtod, DBL_RANGE);
 	DO_TEST("0.12", 0.12, -1, strtod, DBL_RANGE);
@@ -90,6 +94,10 @@ int main () {
 	DO_TEST_SUCCESS_FUNC("nan", isnan, -1, strtold);
 	DO_TEST_SUCCESS_FUNC("INF", isinf, -1, strtold);
 	DO_TEST_SUCCESS_FUNC("INFINITY", isinf, -1, strtold);
+	DO_TEST_SUCCESS_FUNC("-NAN", isnan, -1, strtold);
+	DO_TEST_SUCCESS_FUNC("-nan", isnan, -1, strtold);
+	DO_TEST_SUCCESS_FUNC("-INF", isinf, -1, strtold);
+	DO_TEST_SUCCESS_FUNC("-INFINITY", isinf, -1, strtold);
 
 	return 0;
 }
