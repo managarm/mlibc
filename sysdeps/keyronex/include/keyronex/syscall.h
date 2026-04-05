@@ -53,6 +53,8 @@ enum posix_syscall {
 	SYS_fstatat,
 	SYS_readlinkat,
 	SYS_truncate,
+	SYS_fchmodat,
+	SYS_fchownat,
 
 	/* open file ops */
 	SYS_close,

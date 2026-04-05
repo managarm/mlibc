@@ -283,6 +283,40 @@ Sysdeps<Truncate>::operator()(const char *path, off_t length)
 	return 0;
 }
 
+int
+Sysdeps<Fchmodat>::operator()(int dirfd, const char *pathname, mode_t mode,
+    int flags)
+{
+	int r = syscall4(SYS_fchmodat, dirfd, (uintptr_t)pathname, mode, flags,
+	    NULL);
+	if (r < 0)
+		return -r;
+	return 0;
+}
+
+int
+Sysdeps<Fchmod>::operator()(int fd, mode_t mode)
+{
+	return sysdep<Fchmodat>(fd, "", mode, AT_EMPTY_PATH);
+}
+
+int
+Sysdeps<Chmod>::operator()(const char *pathname, mode_t mode)
+{
+	return sysdep<Fchmodat>(AT_FDCWD, pathname, mode, 0);
+}
+
+int
+Sysdeps<Fchownat>::operator()(int dirfd, const char *pathname, uid_t owner,
+    gid_t group, int flags)
+{
+	int r = syscall5(SYS_fchownat, dirfd, (uintptr_t)pathname, owner,
+	    group, flags, NULL);
+	if (r < 0)
+		return -r;
+	return 0;
+}
+
 /* open file ops */
 
 int
@@ -367,7 +401,6 @@ Sysdeps<Ftruncate>::operator()(int fd, size_t size)
 		return -r;
 	return 0;
 }
-
 
 int
 Sysdeps<Flock>::operator()(int fd, int options)
