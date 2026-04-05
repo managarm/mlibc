@@ -372,6 +372,14 @@ long double fmal(long double __x, long double __y, long double __z);
 #if defined(_GNU_SOURCE) || __MLIBC_XOPEN
 extern int signgam;
 #define __signgam signgam
+
+double j0(double);
+double j1(double);
+double jn(int, double);
+
+double y0(double);
+double y1(double);
+double yn(int, double);
 #endif
 
 #if defined(_GNU_SOURCE)
