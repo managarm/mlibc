@@ -116,6 +116,18 @@ int main() {
 	assert(ret == -1);
 	ret = str2sig("RTMAX-1337", &outnum);
 	assert(ret == -1);
+
+	ret = sig2str(NSIG, str);
+	assert(ret == -1);
+
+	ret = sig2str(34, str);
+	assert(ret == 0);
+	assert(!strcmp("SIG#34", str));
+
+	outnum = 0;
+	ret = str2sig(str, &outnum);
+	assert(ret == 0);
+	assert(outnum == 34);
 #endif
 
 	return 0;

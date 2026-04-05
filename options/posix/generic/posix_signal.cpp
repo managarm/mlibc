@@ -146,6 +146,9 @@ int sigqueue(pid_t pid, int sig, const union sigval val) {
 int sig2str(int signum, char *str) {
 	const char *name = nullptr;
 
+	if (signum <= 0 || signum >= NSIG)
+		return -1;
+
 	if (signum > SIGRTMIN && signum < SIGRTMAX) {
 		snprintf(str, SIG2STR_MAX, "RTMIN+%d", signum - SIGRTMIN);
 		return 0;
@@ -198,7 +201,8 @@ int sig2str(int signum, char *str) {
 #undef CASE_FOR
 
 		default:
-			return -1;
+			snprintf(str, SIG2STR_MAX, "SIG#%d", signum);
+			return 0;
 	}
 
 	strlcpy(str, name, SIG2STR_MAX);
@@ -270,6 +274,16 @@ int str2sig(const char *__restrict str, int *__restrict pnum) {
 			return -1;
 
 		*pnum = SIGRTMAX - offset;
+		return 0;
+	} else if(!strncmp(str, "SIG#", 4)) {
+		char *endptr = nullptr;
+		errno = 0;
+		auto val = strtol(str + 4, &endptr, 10);
+
+		if (errno || *endptr != '\0' || val <= 0 || val >= NSIG)
+			return -1;
+
+		*pnum = val;
 		return 0;
 	}
 
