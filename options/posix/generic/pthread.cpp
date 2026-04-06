@@ -386,27 +386,13 @@ void pthread_cleanup_push(void (*func) (void *), void *arg) {
 	auto hand = frg::construct<Tcb::CleanupHandler>(getAllocator());
 	hand->func = func;
 	hand->arg = arg;
-	hand->next = nullptr;
-	hand->prev = self->cleanupEnd;
-
-	if (self->cleanupEnd)
-		self->cleanupEnd->next = hand;
-
-	self->cleanupEnd = hand;
-
-	if (!self->cleanupBegin)
-		self->cleanupBegin = self->cleanupEnd;
+	self->cleanupHandlers.push_back(hand);
 }
 
 void pthread_cleanup_pop(int execute) {
 	auto self = mlibc::get_current_tcb();
 
-	auto hand = self->cleanupEnd;
-
-	if (self->cleanupEnd)
-		self->cleanupEnd = self->cleanupEnd->prev;
-	if (self->cleanupEnd)
-		self->cleanupEnd->next = nullptr;
+	auto hand = self->cleanupHandlers.pop_back();
 
 	if (execute)
 		hand->func(hand->arg);

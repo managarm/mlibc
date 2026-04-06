@@ -176,12 +176,10 @@ __attribute__ ((__noreturn__)) void thread_exit(thread_exit_return ret_val) {
 
 	__atomic_fetch_or(&self->cancelBits, tcbExitingBit, __ATOMIC_RELAXED);
 
-	auto hand = self->cleanupEnd;
-	while (hand) {
-		auto old = hand;
+	while (!self->cleanupHandlers.empty()) {
+		auto hand = self->cleanupHandlers.pop_back();
 		hand->func(hand->arg);
-		hand = hand->prev;
-		frg::destruct(getAllocator(), old);
+		frg::destruct(getAllocator(), hand);
 	}
 
 	for (size_t j = 0; j < __MLIBC_THREAD_DESTRUCTOR_ITERATIONS; j++) {
