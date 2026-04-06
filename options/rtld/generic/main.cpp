@@ -622,6 +622,18 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		setupVdso(vdsoBase);
 
 	// Add the dynamic linker, as well as the exectuable to the repository.
+	// We inject the executable first such that it is the first entry in dl_iterate_phdr.
+#ifndef MLIBC_STATIC_BUILD
+	executableSO = initialRepository->injectObjectFromPhdrs(execfn,
+		frg::string<MemoryAllocator> { execfn, getAllocator() },
+		phdr_pointer, phdr_entry_size, phdr_count, entry_pointer, 1);
+#else
+	executableSO = initialRepository->injectStaticObject(execfn,
+			frg::string<MemoryAllocator>{ execfn, getAllocator() },
+			phdr_pointer, phdr_entry_size, phdr_count, entry_pointer, 1);
+	globalDebugInterface.base = (void*)executableSO->baseAddress;
+#endif
+
 #ifndef MLIBC_STATIC_BUILD
 	auto ldso_soname = reinterpret_cast<const char *>(ldso_base + strtab_offset + soname_str);
 	auto ldso = initialRepository->injectObjectFromDts(ldso_soname,
@@ -635,11 +647,6 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	ldso->phdrCount = ldso_ehdr->e_phnum;
 	ldso->phdrEntrySize = ldso_ehdr->e_phentsize;
 
-	// TODO: support non-zero base addresses?
-	executableSO = initialRepository->injectObjectFromPhdrs(execfn,
-		frg::string<MemoryAllocator> { execfn, getAllocator() },
-		phdr_pointer, phdr_entry_size, phdr_count, entry_pointer, 1);
-
 	// We can't initialise the ldso object after the executable SO,
 	// so we have to set the ldso path after loading both.
 	ldso->path = executableSO->interpreterPath;
@@ -650,11 +657,6 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		initialRepository->discoverDependenciesFromLoadedObject(current);
 		current->dependenciesDiscovered = true;
 	}
-#else
-	executableSO = initialRepository->injectStaticObject(execfn,
-			frg::string<MemoryAllocator>{ execfn, getAllocator() },
-			phdr_pointer, phdr_entry_size, phdr_count, entry_pointer, 1);
-	globalDebugInterface.base = (void*)executableSO->baseAddress;
 #endif
 
 	globalDebugInterface.head = &executableSO->linkMap;
