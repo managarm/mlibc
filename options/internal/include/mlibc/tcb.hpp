@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <bits/size_t.h>
 #include <frg/array.hpp>
+#include <frg/list.hpp>
 #include <mlibc/threads.hpp>
 
 #include "elf.hpp"
@@ -118,12 +119,19 @@ struct Tcb {
 		void (*func)(void *);
 		void *arg;
 
-		CleanupHandler *next;
-		CleanupHandler *prev;
+		frg::default_list_hook<CleanupHandler> hook_;
 	};
 
-	CleanupHandler *cleanupBegin;
-	CleanupHandler *cleanupEnd;
+	using CleanupHandlerList = frg::intrusive_list<
+		CleanupHandler,
+		frg::locate_member<
+			CleanupHandler,
+			frg::default_list_hook<CleanupHandler>,
+			&CleanupHandler::hook_
+		>
+	>;
+
+	CleanupHandlerList cleanupHandlers;
 	int isJoinable;
 
 	struct LocalKey {

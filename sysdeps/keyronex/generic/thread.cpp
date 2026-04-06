@@ -89,6 +89,9 @@ extern "C" void __mlibc_thread_trampoline(void *(*fn)(void *), Tcb *tcb, void *a
 		mlibc::sysdep<FutexWait>(&tcb->tid, 0, nullptr);
 	}
 
+	// Enable cancellation once the TCB is up
+	__atomic_fetch_or(&tcb->cancelBits, tcbCancelEnableBit, __ATOMIC_RELAXED);
+
 	tcb->invokeThreadFunc(reinterpret_cast<void *>(fn), arg);
 
 	mlibc::thread_exit(tcb->returnValue);

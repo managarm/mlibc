@@ -109,6 +109,7 @@ int thread_create(struct __mlibc_thread_data **__restrict thread, const struct _
 	new_tcb->guardSize = attr.__mlibc_guardsize;
 	new_tcb->returnValueType = (returns_int) ? TcbThreadReturnValue::Integer : TcbThreadReturnValue::Pointer;
 	new_tcb->isJoinable = (attr.__mlibc_detachstate == __MLIBC_THREAD_CREATE_JOINABLE);
+	__atomic_store_n(&new_tcb->cancelBits, 0, __ATOMIC_RELAXED);
 	sysdep_or_panic<Clone>(new_tcb, &tid, stack);
 	*thread = reinterpret_cast<struct __mlibc_thread_data *>(new_tcb);
 
@@ -176,12 +177,10 @@ __attribute__ ((__noreturn__)) void thread_exit(thread_exit_return ret_val) {
 
 	__atomic_fetch_or(&self->cancelBits, tcbExitingBit, __ATOMIC_RELAXED);
 
-	auto hand = self->cleanupEnd;
-	while (hand) {
-		auto old = hand;
+	while (!self->cleanupHandlers.empty()) {
+		auto hand = self->cleanupHandlers.pop_back();
 		hand->func(hand->arg);
-		hand = hand->prev;
-		frg::destruct(getAllocator(), old);
+		frg::destruct(getAllocator(), hand);
 	}
 
 	for (size_t j = 0; j < __MLIBC_THREAD_DESTRUCTOR_ITERATIONS; j++) {
