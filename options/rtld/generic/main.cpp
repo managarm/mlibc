@@ -1078,10 +1078,11 @@ int __dlapi_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void*), 
 	for (auto object : initialRepository->loadedObjects) {
 		struct dl_phdr_info info;
 		info.dlpi_addr = object->baseAddress;
-		info.dlpi_name = object->name.data();
 
 		if(object->isMainObject) {
 			info.dlpi_name = "";
+		} else if(!object->path.empty()) {
+			info.dlpi_name = object->path.data();
 		} else {
 			info.dlpi_name = object->name.data();
 		}
