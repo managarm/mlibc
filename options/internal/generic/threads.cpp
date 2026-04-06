@@ -109,6 +109,7 @@ int thread_create(struct __mlibc_thread_data **__restrict thread, const struct _
 	new_tcb->guardSize = attr.__mlibc_guardsize;
 	new_tcb->returnValueType = (returns_int) ? TcbThreadReturnValue::Integer : TcbThreadReturnValue::Pointer;
 	new_tcb->isJoinable = (attr.__mlibc_detachstate == __MLIBC_THREAD_CREATE_JOINABLE);
+	__atomic_store_n(&new_tcb->cancelBits, 0, __ATOMIC_RELAXED);
 	sysdep_or_panic<Clone>(new_tcb, &tid, stack);
 	*thread = reinterpret_cast<struct __mlibc_thread_data *>(new_tcb);
 

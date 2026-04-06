@@ -8,12 +8,15 @@
 #include <sys/mman.h>
 
 extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, Tcb *tcb) {
+	if (mlibc::sysdep<TcbSet>(tcb))
+		__ensure(!"sys_tcb_set() failed");
+
 	// Wait until our parent sets up the TID.
 	while (!__atomic_load_n(&tcb->tid, __ATOMIC_RELAXED))
 		mlibc::sysdep<FutexWait>(&tcb->tid, 0, nullptr);
 
-	if (mlibc::sysdep<TcbSet>(tcb))
-		__ensure(!"sys_tcb_set() failed");
+	// Enable cancellation once the TCB is up
+	__atomic_fetch_or(&tcb->cancelBits, tcbCancelEnableBit, __ATOMIC_RELAXED);
 
 	tcb->invokeThreadFunc(entry, user_arg);
 
