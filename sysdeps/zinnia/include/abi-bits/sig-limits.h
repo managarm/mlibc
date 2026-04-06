@@ -1,1 +1,1 @@
-../../../../abis/linux/sig-limits.h
+../../../../abis/zinnia/sig-limits.h

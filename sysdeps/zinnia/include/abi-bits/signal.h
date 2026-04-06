@@ -1,1 +1,1 @@
-../../../../abis/linux/signal.h
+../../../../abis/zinnia/signal.h

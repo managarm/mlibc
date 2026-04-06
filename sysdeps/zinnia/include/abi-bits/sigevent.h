@@ -1,1 +1,1 @@
-../../../../abis/linux/sigevent.h
+../../../../abis/zinnia/sigevent.h

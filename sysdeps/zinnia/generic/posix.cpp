@@ -641,9 +641,16 @@ int Sysdeps<Sigprocmask>::operator()(
 	return zinnia_syscall(SYSCALL_SIGPROCMASK, how, (size_t)set, (size_t)retrieve).error;
 }
 
+extern "C" void __mlibc_restorer();
+
 int Sysdeps<Sigaction>::operator()(
     int sig, const struct sigaction *__restrict act, struct sigaction *__restrict oact
 ) {
+	if (act && !act->sa_restorer) {
+		struct sigaction modified = *act;
+		modified.sa_restorer = __mlibc_restorer;
+		return zinnia_syscall(SYSCALL_SIGACTION, sig, (size_t)&modified, (size_t)oact).error;
+	}
 	return zinnia_syscall(SYSCALL_SIGACTION, sig, (size_t)act, (size_t)oact).error;
 }
 
