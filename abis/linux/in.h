@@ -183,6 +183,7 @@ struct group_source_req {
 #endif /* defined(_DEFAULT_SOURCE) */
 
 #define IPV6_2292PKTOPTIONS 6
+#define IPV6_CHECKSUM 7
 #define IPV6_2292HOPLIMIT 8
 #define IPV6_UNICAST_HOPS 16
 #define IPV6_MULTICAST_IF 17
