@@ -247,7 +247,9 @@ extern "C" [[gnu::alias("dl_debug_state"), gnu::visibility("default")]] void _dl
 // This symbol can be used by GDB to find the global interface structure
 [[ gnu::visibility("default") ]] DebugInterface *_dl_debug_addr = &globalDebugInterface;
 
-static frg::vector<frg::string_view, MemoryAllocator> parseList(frg::string_view paths, frg::string_view separators) {
+namespace {
+
+frg::vector<frg::string_view, MemoryAllocator> parseList(frg::string_view paths, frg::string_view separators) {
 	frg::vector<frg::string_view, MemoryAllocator> list{getAllocator()};
 
 	size_t p = 0;
@@ -280,6 +282,63 @@ static frg::vector<frg::string_view, MemoryAllocator> parseList(frg::string_view
 
 	return list;
 }
+
+void setupVdso(uintptr_t vdsoBase) {
+	auto vdso_header = reinterpret_cast<elf_ehdr *>(vdsoBase);
+	auto vdso_phdrs = reinterpret_cast<void *>(vdsoBase + vdso_header->e_phoff);
+	elf_dyn *vdso_dynamic = nullptr;
+	uintptr_t actual_base = 0;
+	bool found_load = false;
+
+	for (size_t i = 0; i < vdso_header->e_phnum; i++) {
+		auto phdr = reinterpret_cast<elf_phdr *>(
+		    vdsoBase + vdso_header->e_phoff + i * vdso_header->e_phentsize
+		);
+		if (phdr->p_type == PT_LOAD) {
+			actual_base = vdsoBase - phdr->p_vaddr + phdr->p_offset;
+			found_load = true;
+		}
+
+		if (phdr->p_type == PT_DYNAMIC)
+			vdso_dynamic = reinterpret_cast<elf_dyn *>(vdsoBase + phdr->p_offset);
+	}
+
+	if (!found_load || !vdso_dynamic)
+		return;
+
+	const char *vdso_strtab = nullptr;
+	size_t vdso_soname_offset = 0;
+
+	for (auto dyn = vdso_dynamic; dyn->d_tag != DT_NULL; dyn++) {
+		switch (dyn->d_tag) {
+		case DT_STRTAB:
+			vdso_strtab = reinterpret_cast<const char *>(actual_base + dyn->d_un.d_ptr);
+			break;
+		case DT_SONAME:
+			vdso_soname_offset = dyn->d_un.d_val;
+			break;
+		}
+	}
+
+	if (!vdso_strtab)
+		return;
+
+	auto vdso_soname = &vdso_strtab[vdso_soname_offset];
+
+	if (rtldConfig.debug) {
+		mlibc::infoLogger() << "rtld: vDSO base:   " << (void*)vdsoBase << frg::endlog;
+		mlibc::infoLogger() << "rtld: vDSO actual: " << (void*)actual_base << frg::endlog;
+		mlibc::infoLogger() << "rtld: vDSO name:   " << vdso_soname << frg::endlog;
+	}
+
+	auto vdso = initialRepository->injectObjectFromDts(vdso_soname,
+		frg::string<MemoryAllocator> { getAllocator() }, actual_base, vdso_dynamic, 1);
+	vdso->phdrPointer = vdso_phdrs;
+	vdso->phdrCount = vdso_header->e_phnum;
+	vdso->phdrEntrySize = vdso_header->e_phentsize;
+}
+
+} // namespace
 
 #ifndef MLIBC_STATIC_BUILD
 static constexpr uint64_t supportedDtFlags = DF_BIND_NOW;
@@ -559,50 +618,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 
 	globalScope.initialize(true);
 
-	// Add the vDSO to the repository first
-	if (vdsoBase) {
-		auto vdso_header = reinterpret_cast<elf_ehdr *>(vdsoBase);
-		auto vdso_phdrs = reinterpret_cast<void *>(vdsoBase + vdso_header->e_phoff);
-		elf_dyn *vdso_dynamic = nullptr;
-		uintptr_t actual_base = 0;
-
-		for (size_t i = 0; i < vdso_header->e_phnum; i++) {
-			auto phdr = reinterpret_cast<elf_phdr *>(vdsoBase + vdso_header->e_phoff
-				+ i * vdso_header->e_phentsize);
-			if (phdr->p_type == PT_LOAD)
-				actual_base = vdsoBase - phdr->p_vaddr + phdr->p_offset;
-			if (phdr->p_type == PT_DYNAMIC)
-				vdso_dynamic = reinterpret_cast<elf_dyn *>(vdsoBase + phdr->p_offset);
-		}
-
-		const char *vdso_strtab = nullptr;
-		size_t vdso_soname_offset = 0;
-
-		for (auto dyn = vdso_dynamic; dyn->d_tag != DT_NULL; dyn++) {
-			switch (dyn->d_tag) {
-			case DT_STRTAB:
-				vdso_strtab = reinterpret_cast<const char *>(actual_base + dyn->d_un.d_ptr);
-				break;
-			case DT_SONAME:
-				vdso_soname_offset = dyn->d_un.d_val;
-				break;
-			}
-		}
-
-		auto vdso_soname = &vdso_strtab[vdso_soname_offset];
-
-		if (rtldConfig.debug) {
-			mlibc::infoLogger() << "rtld: vDSO base:   " << (void*)vdsoBase << frg::endlog;
-			mlibc::infoLogger() << "rtld: vDSO actual: " << (void*)actual_base << frg::endlog;
-			mlibc::infoLogger() << "rtld: vDSO name:   " << vdso_soname << frg::endlog;
-		}
-
-		auto vdso = initialRepository->injectObjectFromDts(vdso_soname,
-			frg::string<MemoryAllocator> { getAllocator() }, actual_base, vdso_dynamic, 1);
-		vdso->phdrPointer = vdso_phdrs;
-		vdso->phdrCount = vdso_header->e_phnum;
-		vdso->phdrEntrySize = vdso_header->e_phentsize;
-	}
+	if (vdsoBase)
+		setupVdso(vdsoBase);
 
 	// Add the dynamic linker, as well as the exectuable to the repository.
 #ifndef MLIBC_STATIC_BUILD
