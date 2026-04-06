@@ -1,1 +1,1 @@
-../../../../abis/linux/sigset_t.h
+../../../../abis/zinnia/sigset_t.h

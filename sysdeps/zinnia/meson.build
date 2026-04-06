@@ -19,6 +19,7 @@ libc_sources += files(
 	'generic/mount.cpp',
 	'generic/reboot.cpp',
 	host_machine.cpu_family() / 'thread.S',
+	host_machine.cpu_family() / 'signal.S',
 )
 
 if not no_headers
