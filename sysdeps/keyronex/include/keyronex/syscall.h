@@ -9,6 +9,8 @@ enum posix_syscall {
 	SYS_fork,
 	SYS_execve,
 	SYS_wait4,
+	SYS_pdfork,
+	SYS_pdwait,
 	SYS_getpid,
 	SYS_getppid,
 
@@ -29,6 +31,7 @@ enum posix_syscall {
 
 	/* signals */
 	SYS_kill,
+	SYS_pdkill,
 	SYS_sigaction,
 	SYS_sigentry,
 	SYS_sigprocmask,
@@ -48,6 +51,10 @@ enum posix_syscall {
 	SYS_unlinkat,
 	SYS_renameat,
 	SYS_fstatat,
+	SYS_readlinkat,
+	SYS_truncate,
+	SYS_fchmodat,
+	SYS_fchownat,
 
 	/* open file ops */
 	SYS_close,
@@ -58,6 +65,8 @@ enum posix_syscall {
 	SYS_seek,
 	SYS_ioctl,
 	SYS_fsync,
+	SYS_ftruncate,
+	SYS_flock,
 
 	/* fd manipulation */
 	SYS_pipe,
@@ -77,6 +86,9 @@ enum posix_syscall {
 	SYS_setsockopt,
 	SYS_recvmsg,
 	SYS_sendmsg,
+	SYS_getsockname,
+	SYS_getpeername,
+	SYS_shutdown,
 
 	/* linux */
 	SYS_epoll_create,

@@ -1,9 +1,15 @@
 #include <sys/errno.h>
+#include <sys/ioctl.h>
 
 #include <keyronex/syscall.h>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
+
+#include <net/if.h>
+#include <linux/netlink.h>
+
+#include "generic-helpers/netlink.hpp"
 
 namespace mlibc {
 
@@ -102,4 +108,108 @@ Sysdeps<SetSockopt>::operator()(int fd, int layer, int number, const void *buffe
 	    (uintptr_t)buffer, size, NULL);
 }
 
+int
+Sysdeps<Sockname>::operator()(int fd, struct sockaddr *addr_ptr,
+    socklen_t max_addr_length, socklen_t *actual_length)
+{
+	int r = syscall3(SYS_getsockname, fd, (uintptr_t)addr_ptr,
+	    (uintptr_t)&max_addr_length, NULL);
+	if (r < 0)
+		return -r;
+	*actual_length = max_addr_length;
+	return 0;
+
 }
+
+int
+Sysdeps<Peername>::operator()(int fd, struct sockaddr *addr_ptr,
+    socklen_t max_addr_length, socklen_t *actual_length)
+{
+	int r = syscall3(SYS_getpeername, fd, (uintptr_t)addr_ptr,
+	    (uintptr_t)&max_addr_length, NULL);
+	if (r < 0)
+		return -r;
+	*actual_length = max_addr_length;
+	return 0;
+}
+
+int
+Sysdeps<Shutdown>::operator()(int sockfd, int how)
+{
+	int r = syscall2(SYS_shutdown, sockfd, how, NULL);
+	if (r < 0)
+		return -r;
+	return 0;
+}
+
+int
+Sysdeps<IfIndextoname>::operator()(unsigned int index, char *name)
+{
+	int r;
+	struct ifreq ifr;
+	int ipfd;
+
+	ipfd = open("/dev/ip", 0);
+	if (ipfd < 0)
+		return errno;
+
+	ifr.ifr_ifindex = index;
+
+	r = sysdep<Ioctl>(ipfd, SIOCGIFNAME, &ifr, NULL);
+	close(ipfd);
+
+	if (r != 0) {
+		if (r == ENODEV)
+			return ENXIO;
+		return r;
+	}
+
+	strncpy(name, ifr.ifr_name, IF_NAMESIZE);
+
+	return 0;
+}
+
+int
+Sysdeps<IfNametoindex>::operator()(const char *name, unsigned int *ret)
+{
+	int r;
+	struct ifreq ifr;
+	int ipfd;
+
+	ipfd = open("/dev/ip", 0);
+	if (ipfd < 0)
+		return errno;
+
+
+	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
+
+	r = sysdep<Ioctl>(ipfd, SIOCGIFINDEX, &ifr, NULL);
+	close(ipfd);
+
+	if (r != 0)
+		return r;
+
+	*ret = ifr.ifr_ifindex;
+
+	return 0;
+}
+
+int
+Sysdeps<Getifaddrs>::operator()(struct ifaddrs **out)
+{
+	NetlinkHelper nl;
+
+	*out = nullptr;
+
+	bool link_ret = nl.send_request(RTM_GETLINK) &&
+	    nl.recv(&getifaddrs_callback, out);
+	__ensure(link_ret);
+	bool addr_ret = nl.send_request(RTM_GETADDR) &&
+	    nl.recv(&getifaddrs_callback, out);
+	__ensure(addr_ret);
+
+	return 0;
+}
+
+
+} // namespace mlibc

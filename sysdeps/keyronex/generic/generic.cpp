@@ -12,6 +12,7 @@
 #include <frg/logging.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/tcb.hpp>
 
 namespace mlibc {
 
@@ -76,6 +77,14 @@ Sysdeps<TcbSet>::operator()(void *pointer)
 	return 0;
 }
 
+#if defined (__m68k__)
+extern "C" void *
+__m68k_read_tp (void)
+{
+	return (void*)syscall0(SYS_tcb_get, NULL);
+}
+#endif
+
 /* vm */
 
 int
@@ -95,12 +104,11 @@ int
 Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int fd, off_t offset,
     void **window)
 {
-	uintptr_t addr;
-	int r = syscall6(SYS_mmap, (uintptr_t)hint, size, prot,
-	    flags, fd, offset, &addr);
-	if (r < 0)
+	uintptr_t r = syscall6(SYS_mmap, (uintptr_t)hint, size, prot,
+	    flags, fd, offset, NULL);
+	if (r > -4096UL)
 		return -r;
-	*window = (void *)addr;
+	*window = (void *)r;
 	return 0;
 }
 
@@ -247,6 +255,68 @@ Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int flags
 	return -r;
 }
 
+int
+Sysdeps<Readlinkat>::operator()(int dirfd, const char *path, void *buffer,
+    size_t max_size, ssize_t *length)
+{
+	int r = syscall4(SYS_readlinkat, dirfd, (uintptr_t)path,
+	    (uintptr_t)buffer, max_size, NULL);
+	if (r < 0)
+		return -r;
+	*length = r;
+	return 0;
+}
+
+int
+Sysdeps<Readlink>::operator()(const char *path, void *buffer, size_t max_size,
+    ssize_t *length)
+{
+	return sysdep<Readlinkat>(AT_FDCWD, path, buffer, max_size, length);
+}
+
+int
+Sysdeps<Truncate>::operator()(const char *path, off_t length)
+{
+	int r = syscall2(SYS_truncate, (uintptr_t)path, length, NULL);
+	if (r < 0)
+		return -r;
+	return 0;
+}
+
+int
+Sysdeps<Fchmodat>::operator()(int dirfd, const char *pathname, mode_t mode,
+    int flags)
+{
+	int r = syscall4(SYS_fchmodat, dirfd, (uintptr_t)pathname, mode, flags,
+	    NULL);
+	if (r < 0)
+		return -r;
+	return 0;
+}
+
+int
+Sysdeps<Fchmod>::operator()(int fd, mode_t mode)
+{
+	return sysdep<Fchmodat>(fd, "", mode, AT_EMPTY_PATH);
+}
+
+int
+Sysdeps<Chmod>::operator()(const char *pathname, mode_t mode)
+{
+	return sysdep<Fchmodat>(AT_FDCWD, pathname, mode, 0);
+}
+
+int
+Sysdeps<Fchownat>::operator()(int dirfd, const char *pathname, uid_t owner,
+    gid_t group, int flags)
+{
+	int r = syscall5(SYS_fchownat, dirfd, (uintptr_t)pathname, owner,
+	    group, flags, NULL);
+	if (r < 0)
+		return -r;
+	return 0;
+}
+
 /* open file ops */
 
 int
@@ -323,6 +393,23 @@ Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *result
 	return 0;
 }
 
+int
+Sysdeps<Ftruncate>::operator()(int fd, size_t size)
+{
+	int r = syscall2(SYS_ftruncate, fd, size, NULL);
+	if (r < 0)
+		return -r;
+	return 0;
+}
+
+int
+Sysdeps<Flock>::operator()(int fd, int options)
+{
+	int r = syscall2(SYS_flock, fd, options, NULL);
+	if (r < 0)
+		return -r;
+	return 0;
+}
 
 int
 Sysdeps<Isatty>::operator()(int fd)
