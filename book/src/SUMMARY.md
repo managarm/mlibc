@@ -8,4 +8,5 @@
     - [Building the toolchain](porting/toolchain.md)
     - [Implementing sysdeps (part 2)](porting/implementing_sysdeps_p2.md)
     - [Next steps](porting/next_steps.md)
+- [Contributing](contributing.md)
 - [Adding a new ISA port]()
