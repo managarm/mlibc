@@ -17,6 +17,14 @@ typedef enum {
   leaf
 } VISIT;
 
+#if defined(_GNU_SOURCE)
+struct qelem {
+	struct qelem *q_forw;
+	struct qelem *q_back;
+	char q_data[1];
+};
+#endif
+
 #if __MLIBC_GLIBC_OPTION && defined(_GNU_SOURCE)
 #include <bits/glibc/glibc_search.h>
 #endif
@@ -42,6 +50,9 @@ void *lfind(const void *__key, const void *__base, size_t *__nelp,
 int hcreate(size_t __num_entries);
 void hdestroy(void);
 ENTRY *hsearch(ENTRY __item, ACTION __action);
+
+void insque(void *__element, void *__pred);
+void remque(void *__element);
 
 #endif /* defined(_GNU_SOURCE) || __MLIBC_XOPEN */
 
