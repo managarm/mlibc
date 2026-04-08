@@ -102,6 +102,7 @@ struct ManagarmSysdepTags :
 	Waitid,
 	Reboot,
 	Getifaddrs,
+	Freeifaddrs,
 	PidfdOpen,
 	PidfdGetpid,
 	PidfdSendSignal,

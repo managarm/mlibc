@@ -229,6 +229,7 @@ struct LinuxSysdepTags :
 	Fstatfs,
 	Statx,
 	Getifaddrs,
+	Freeifaddrs,
 	Sendfile,
 	Syncfs,
 	Unshare,
