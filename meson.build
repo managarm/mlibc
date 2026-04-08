@@ -98,7 +98,7 @@ if not headers_only
 
 	libsmarter_dep = dependency(
 		'libsmarter',
-		default_options: [],
+		default_options: ['no_install=true'],
 		fallback: ['libsmarter', 'libsmarter_dep'],
 	)
 	libc_deps += libsmarter_dep
