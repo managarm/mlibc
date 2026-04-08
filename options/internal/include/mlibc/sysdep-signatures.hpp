@@ -303,6 +303,7 @@ SYSDEP_FUNC(Statfs, const char *path, struct statfs *buf);
 SYSDEP_FUNC(Fstatfs, int fd, struct statfs *buf);
 SYSDEP_FUNC(Statx, int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf);
 SYSDEP_FUNC(Getifaddrs, struct ifaddrs **);
+SYSDEP_FUNC_RET(void, Freeifaddrs, struct ifaddrs *ifa);
 SYSDEP_FUNC(Sendfile, int outfd, int infd, off_t *offset, size_t count, ssize_t *out);
 SYSDEP_FUNC(Syncfs, int fd);
 SYSDEP_FUNC(Unshare, int flags);

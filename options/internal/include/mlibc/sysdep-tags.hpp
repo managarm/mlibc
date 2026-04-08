@@ -624,6 +624,8 @@ struct Fstatfs {};
 struct Statx {};
 // int sys_getifaddrs(struct ifaddrs **);
 struct Getifaddrs {};
+// void sys_freeifaddrs(struct ifaddrs *ifa);
+struct Freeifaddrs {};
 // int sys_sendfile(int outfd, int infd, off_t *offset, size_t count, ssize_t *out);
 struct Sendfile {};
 // int sys_syncfs(int fd);

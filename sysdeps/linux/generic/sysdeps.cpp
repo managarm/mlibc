@@ -2582,6 +2582,14 @@ int Sysdeps<Getifaddrs>::operator()(struct ifaddrs **out) {
 
 	return 0;
 }
+
+void Sysdeps<Freeifaddrs>::operator()(struct ifaddrs *ifa) {
+	while (ifa != nullptr) {
+		ifaddrs *current = ifa;
+		ifa = ifa->ifa_next;
+		frg::destruct(getAllocator(), reinterpret_cast<IfaddrHelper *>(current));
+	}
+}
 #endif // !defined(MLIBC_BUILDING_RTLD)
 
 int Sysdeps<Sendfile>::operator()(int outfd, int infd, off_t *offset, size_t count, ssize_t *out) {

@@ -92,6 +92,14 @@ int Sysdeps<Getifaddrs>::operator()(struct ifaddrs **out) {
 	return 0;
 }
 
+void Sysdeps<Freeifaddrs>::operator()(struct ifaddrs *ifa) {
+	while (ifa != nullptr) {
+		ifaddrs *current = ifa;
+		ifa = ifa->ifa_next;
+		frg::destruct(getAllocator(), reinterpret_cast<IfaddrHelper *>(current));
+	}
+}
+
 #if !defined(MLIBC_BUILDING_RTLD)
 int Sysdeps<InetConfigured>::operator()(bool *ipv4, bool *ipv6) {
 	struct context {
