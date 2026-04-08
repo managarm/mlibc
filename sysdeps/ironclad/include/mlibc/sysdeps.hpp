@@ -158,4 +158,8 @@ struct IroncladSysdepTags :
 template<typename Tag>
 using Sysdeps = SysdepOf<IroncladSysdepTags, Tag>;
 
+struct SysdepTraits {
+	static constexpr bool usesRtNetlink = false;
+};
+
 } // namespace mlibc

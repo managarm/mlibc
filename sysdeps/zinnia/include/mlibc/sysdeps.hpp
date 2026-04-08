@@ -175,4 +175,8 @@ struct ZinniaSysdepTags :
 template<typename Tag>
 using Sysdeps = SysdepOf<ZinniaSysdepTags, Tag>;
 
+struct SysdepTraits {
+	static constexpr bool usesRtNetlink = false;
+};
+
 } // namespace mlibc

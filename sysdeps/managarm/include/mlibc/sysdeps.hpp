@@ -213,4 +213,8 @@ struct ManagarmSysdepTags :
 template<typename Tag>
 using Sysdeps = SysdepOf<ManagarmSysdepTags, Tag>;
 
+struct SysdepTraits {
+	static constexpr bool usesRtNetlink = true;
+};
+
 } // namespace mlibc
