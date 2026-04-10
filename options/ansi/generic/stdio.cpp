@@ -705,6 +705,10 @@ struct ResizePrinter {
 			append(str[i]);
 	}
 
+	void append(const char *str, size_t n, size_t m) {
+		return append(str, frg::min(n, m));
+	}
+
 	void append(const wchar_t *str, size_t n) {
 		char buf[512];
 		mbstate_t state = { };
@@ -738,6 +742,9 @@ struct ResizePrinter {
 	size_t limit;
 	size_t count;
 };
+
+static_assert(frg::SinkFor<ResizePrinter>);
+static_assert(frg::SinkFor<ResizePrinter>);
 
 int remove(const char *filename) {
 	if(int e = mlibc::sysdep_or_enosys<Rmdir>(filename); e) {
