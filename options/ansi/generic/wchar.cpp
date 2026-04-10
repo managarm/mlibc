@@ -280,7 +280,10 @@ size_t wcsnrtombs(char *__restrict mbs, const wchar_t **__restrict wcsp, size_t 
 		if(n < mb_limit) // Null-terminate resulting wide string.
 			mbs[n] = 0;
 		return n;
-	} else if (e == mlibc::transcode_status::input_underflow || e == mlibc::transcode_status::input_exhausted || e == mlibc::transcode_status::output_exhausted) {
+	} else if (e == mlibc::transcode_status::input_underflow
+	           || e == mlibc::transcode_status::output_overflow
+	           || e == mlibc::transcode_status::input_exhausted
+	           || e == mlibc::transcode_status::output_exhausted) {
 		size_t n = nseq.it - mbs;
 		*wcsp = wseq.it;
 		return n;
