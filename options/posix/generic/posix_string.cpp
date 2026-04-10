@@ -204,3 +204,18 @@ size_t strlcat(char *d, const char *s, size_t n) {
 	}
 	return l + mlibc::strlcpy(d + l, s, n - l);
 }
+
+int wcscoll_l(const wchar_t *l, const wchar_t *r, locale_t) {
+	// TODO: fix once we implement collation
+	return wcscmp(l, r);
+}
+
+size_t wcsxfrm_l(wchar_t *__restrict dest, const wchar_t *__restrict src, size_t size, locale_t) {
+	// TODO: fix once we implement collation
+	return wcsxfrm(dest, src, size);
+}
+
+size_t strxfrm_l(char *__restrict dest, const char *__restrict src, size_t max_size, locale_t *) {
+	// TODO: fix once we implement collation
+	return strxfrm(dest, src, max_size);
+}
