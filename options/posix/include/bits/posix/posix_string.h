@@ -22,6 +22,7 @@ char *stpncpy(char *__restrict __dest, const char *__restrict __src, size_t __n)
 void *memccpy(void *__restrict __dest, const void *__restrict __src, int __c, size_t __n);
 
 int strcoll_l(const char *__s1, const char *__s2, locale_t __locale);
+size_t strxfrm_l(char *__restrict __dest, const char *__restrict __src, size_t __max_size, locale_t __locale);
 
 char *strerror_l(int __errnum, locale_t __locale);
 

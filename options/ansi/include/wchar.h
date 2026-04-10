@@ -137,6 +137,9 @@ size_t wcslcpy(wchar_t *__restrict __dst, const wchar_t *__restrict __src, size_
 wchar_t *wcpcpy(wchar_t *__restrict __ws1, const wchar_t *__restrict __ws2);
 wchar_t *wcpncpy(wchar_t *__restrict __ws1, const wchar_t *__restrict __ws2, size_t __n);
 
+int wcscoll_l(const wchar_t *__l, const wchar_t *__r, locale_t __loc);
+size_t wcsxfrm_l(wchar_t *__restrict __dest, const wchar_t *__restrict __src, size_t __size, locale_t __loc);
+
 #endif /* __MLIBC_POSIX_OPTION */
 
 #endif /* !__MLIBC_ABI_ONLY */
