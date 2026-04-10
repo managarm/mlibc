@@ -349,6 +349,15 @@ int fputws_unlocked(const wchar_t *__restrict ws, mlibc::abstract_file *f) {
 	return 1;
 }
 
+template <typename From, typename To = std::conditional_t<std::is_same_v<From, char>, wchar_t, char>>
+size_t convertString(To *dest, const From **__restrict src, size_t src_max, size_t dest_max, mbstate_t *__restrict ps) {
+	if constexpr (std::is_same_v<From, char>) {
+		return mbsnrtowcs(dest, src, src_max, dest_max, ps);
+	} else {
+		return wcsnrtombs(dest, src, src_max, dest_max, ps);
+	}
+}
+
 } // namespace
 
 template <typename Char>
@@ -400,48 +409,18 @@ struct StreamPrinter {
 		}
 	}
 
-	void append(const char *str, size_t n)
-	requires (std::is_same_v<Char, wchar_t>) {
-		wchar_t buf[512];
+	template <typename C>
+	void append(const C *str, size_t n)
+	requires (!std::is_same_v<Char, C>) {
+		Char buf[512];
 		mbstate_t state = { };
 
-		const char *curr = str;
-		size_t remaining = n;
+		const C *curr = str;
 
-		while (remaining > 0 && curr) {
-			const char *start = curr;
+		while (n > 0 && curr) {
+			const C *start = curr;
 
-			size_t num_wchars = mbsnrtowcs(buf, &curr, remaining, sizeof(buf), &state);
-			if (num_wchars == size_t(-1))
-				return;
-
-			append(buf, num_wchars);
-
-			if (!curr) {
-				break;
-			} else {
-				size_t consumed = curr - start;
-
-				if (consumed > remaining || !consumed)
-					break;
-
-				remaining -= consumed;
-			}
-		}
-	}
-
-	void append(const wchar_t *str, size_t n)
-	requires (std::is_same_v<Char, char>) {
-		char buf[512];
-		mbstate_t state = { };
-
-		const wchar_t *curr = str;
-		size_t remaining = n;
-
-		while (remaining > 0 && curr) {
-			const wchar_t *start = curr;
-
-			size_t num_chars = wcsnrtombs(buf, &curr, remaining, sizeof(buf), &state);
+			size_t num_chars = convertString(buf, &curr, n, sizeof(buf) / sizeof(*buf), &state);
 			if (num_chars == size_t(-1))
 				return;
 
@@ -452,17 +431,56 @@ struct StreamPrinter {
 			} else {
 				size_t consumed = curr - start;
 
-				if (consumed > remaining || !consumed)
+				if (consumed > n || !consumed)
 					break;
 
-				remaining -= consumed;
+				n -= consumed;
 			}
 		}
+	}
+
+	template <typename C>
+	void append(const C *str, size_t src_max, size_t dest_max)
+	requires (!std::is_same_v<Char, C>) {
+		Char buf[512];
+		mbstate_t state = { };
+		const C *curr = str;
+
+		while (src_max > 0 && dest_max > 0 && curr) {
+			const C *start = curr;
+
+			size_t num_chars = convertString(buf, &curr, frg::min(sizeof(buf), src_max), dest_max, &state);
+			if (num_chars == size_t(-1))
+				return;
+
+			append(buf, num_chars);
+			dest_max -= num_chars;
+
+			if (!curr) {
+				break;
+			} else {
+				size_t consumed = curr - start;
+
+				if (consumed > src_max || !consumed)
+					break;
+
+				src_max -= consumed;
+			}
+		}
+	}
+
+	void append(const Char *str, size_t src_max, size_t dest_max) {
+		append(str, frg::min(src_max, dest_max));
 	}
 
 	mlibc::abstract_file *stream;
 	size_t count;
 };
+
+static_assert(frg::SinkFor<StreamPrinter<char>>);
+static_assert(frg::SinkFor<StreamPrinter<char>, wchar_t>);
+static_assert(frg::SinkFor<StreamPrinter<wchar_t>>);
+static_assert(frg::SinkFor<StreamPrinter<wchar_t>, wchar_t>);
 
 template <typename Char>
 struct BufferPrinter {
