@@ -22,4 +22,11 @@ wctrans_t find_wctrans(frg::string_view property, mlibc::localeinfo *l) {
 	return 0;
 }
 
+size_t wcsnlen(const wchar_t *ws, size_t maxlen) {
+	const wchar_t *p = ws;
+	while (maxlen --> 0 && *p != L'\0')
+		p++;
+	return p - ws;
+}
+
 } // namespace mlibc

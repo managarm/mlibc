@@ -14,6 +14,7 @@
 
 #include <mlibc/charcode.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/wide.hpp>
 
 /*
  * The code in this anonymous namespace and the wcwidth function below
@@ -580,10 +581,7 @@ int wcscasecmp(const wchar_t *ws1, const wchar_t *ws2) {
 }
 
 size_t wcsnlen(const wchar_t *ws, size_t maxlen) {
-	const wchar_t *p = ws;
-	while (maxlen --> 0 && *p != L'\0')
-		p++;
-	return p - ws;
+	return mlibc::wcsnlen(ws, maxlen);
 }
 
 size_t wcslcat(wchar_t *__restrict dst, const wchar_t *__restrict src, size_t dstsize) {
