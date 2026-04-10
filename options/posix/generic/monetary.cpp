@@ -37,6 +37,10 @@ struct BufferSink {
 		return true;
 	}
 
+	bool append(const char *str, size_t n, size_t m) {
+		return append(str, frg::min(n, m));
+	}
+
 	std::optional<ssize_t> finalize() {
 		if (!append('\0'))
 			return std::nullopt;
@@ -45,6 +49,8 @@ struct BufferSink {
 		return usedsize - 1;
 	}
 };
+
+static_assert(frg::SinkFor<BufferSink>);
 
 ssize_t strfmon_internal(char *__restrict s, size_t maxsize, mlibc::localeinfo *locale, const char *__restrict format, va_list ap) {
 	auto stripNullTerminator = [](frg::string_view v) {
