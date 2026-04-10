@@ -494,83 +494,66 @@ struct BufferPrinter {
 		count++;
 	}
 
-	void append(const Char *str) {
-		for(size_t i = 0; str[i]; i++) {
-			buffer[count] = str[i];
-			count++;
-		}
-	}
-
-	void append(const Char *str, size_t n) {
-		for(size_t i = 0; i < n; i++) {
-			buffer[count] = str[i];
-			count++;
-		}
-	}
-
-	void append(const char *str, size_t n)
+	void append(char c)
 	requires (std::is_same_v<Char, wchar_t>) {
-		wchar_t buf[512];
-		mbstate_t state = { };
-
-		const char *curr = str;
-		size_t remaining = n;
-
-		while (remaining > 0 && curr) {
-			const char *start = curr;
-
-			size_t num_wchars = mbsnrtowcs(buf, &curr, remaining, sizeof(buf), &state);
-			if (num_wchars == size_t(-1))
-				return;
-
-			append(buf, num_wchars);
-
-			if (!curr) {
-				break;
-			} else {
-				size_t consumed = curr - start;
-
-				if (consumed > remaining)
-					break;
-
-				remaining -= consumed;
-			}
-		}
+		auto ret = btowc(c);
+		if (ret != WEOF)
+			buffer[count++] = ret;
 	}
 
-	void append(const wchar_t *str, size_t n)
+	void append(wchar_t wc)
 	requires (std::is_same_v<Char, char>) {
-		char buf[512];
-		mbstate_t state = { };
+		mbstate_t state = {};
+		auto ret = wcrtomb(buffer + count, wc, &state);
+		if (ret != static_cast<size_t>(-1))
+			count += ret;
+	}
 
-		const wchar_t *curr = str;
-		size_t remaining = n;
+	template <typename C>
+	void append(const C *s) {
+		auto str_len = frg::generic_strlen(s);
+		append(s, str_len, SIZE_MAX);
+	}
 
-		while (remaining > 0 && curr) {
-			const wchar_t *start = curr;
+	template <typename C>
+	void append(const C *str, size_t n) {
+		append(str, n, SIZE_MAX);
+	}
 
-			size_t num_chars = wcsnrtombs(buf, &curr, remaining, sizeof(buf), &state);
-			if (num_chars == size_t(-1))
-				return;
+	void append(const char *str, size_t src_max, size_t dest_max)
+	requires (std::is_same_v<Char, char>) {
+		auto str_len = frg::min(src_max, dest_max);
+		str_len = frg::min(mlibc::strnlen(str, src_max), str_len);
+		memcpy(buffer + count, str, str_len);
+		count += str_len;
+	}
 
-			append(buf, num_chars);
+	void append(const wchar_t *str, size_t src_max, size_t dest_max)
+	requires (std::is_same_v<Char, wchar_t>) {
+		auto str_len = frg::min(src_max, dest_max);
+		str_len = frg::min(mlibc::wcsnlen(str, src_max), str_len);
+		wcsncpy(buffer + count, str, str_len);
+		count += str_len;
+	}
 
-			if (!curr) {
-				break;
-			} else {
-				size_t consumed = curr - start;
-
-				if (consumed > remaining || !consumed)
-					break;
-
-				remaining -= consumed;
-			}
-		}
+	template <typename C>
+	void append(const C *str, size_t src_max, size_t dest_max)
+	requires (!std::is_same_v<C, Char>) {
+		const C *src = str;
+		mbstate_t state = {};
+		size_t written = convertString(buffer + count, &src, src_max, dest_max, &state);
+		if (written != static_cast<size_t>(-1))
+			count += written;
 	}
 
 	Char *buffer;
 	size_t count;
 };
+
+static_assert(frg::SinkFor<BufferPrinter<char>>);
+static_assert(frg::SinkFor<BufferPrinter<char>, wchar_t>);
+static_assert(frg::SinkFor<BufferPrinter<wchar_t>>);
+static_assert(frg::SinkFor<BufferPrinter<wchar_t>, wchar_t>);
 
 template <typename Char>
 struct LimitedPrinter {
