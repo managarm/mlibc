@@ -64,6 +64,11 @@ struct PrintfAgent {
 	frg::expected<frg::format_error> operator() (Char t, frg::format_options opts,
 			frg::printf_size_mod szmod) {
 		switch(t) {
+		case 'C':
+			// No length modifiers should be given to %C.
+			__ensure(szmod == frg::printf_size_mod::default_size);
+			szmod = frg::printf_size_mod::long_size;
+			[[fallthrough]];
 		case 'c':
 			// %c only supports no size or `l`
 			__ensure(szmod == frg::printf_size_mod::default_size || szmod == frg::printf_size_mod::long_size);
@@ -87,6 +92,11 @@ struct PrintfAgent {
 			}
 			frg::do_printf_chars<Char, F>(*_formatter, t, opts, szmod, _vsp);
 			break;
+		case 'S':
+			// No length modifiers should be given to %S.
+			__ensure(szmod == frg::printf_size_mod::default_size);
+			szmod = frg::printf_size_mod::long_size;
+			[[fallthrough]];
 		case 's':
 			// %s only supports no size or `l`
 			__ensure(szmod == frg::printf_size_mod::default_size || szmod == frg::printf_size_mod::long_size);
@@ -167,12 +177,14 @@ struct PrintfAgent {
 
 	std::optional<frg::printf_arg_type> format_type(Char t, frg::printf_size_mod sz) {
 		switch(t) {
+			case 'C':
+				return frg::printf_arg_type::WCHAR;
 			case 'c':
 				if (sz == frg::printf_size_mod::long_size)
 					return frg::printf_arg_type::WCHAR;
 				else
 					return frg::printf_arg_type::CHAR;
-			case 's': case 'n':
+			case 'S': case 's': case 'n':
 				return frg::printf_arg_type::POINTER;
 			case 'f': case 'F': case 'g': case 'G': case 'e': case 'E': case 'a': case 'A':
 				return frg::printf_arg_type::DOUBLE;
@@ -477,6 +489,46 @@ struct StreamPrinter {
 				n -= consumed;
 			}
 		}
+	}
+
+	template <typename C>
+	void append(const C *str, size_t n, size_t m)
+	requires (!std::is_same_v<Char, C>) {
+		Char buf[512];
+		mbstate_t state = { };
+
+		const C *curr = str;
+
+		while (n > 0 && curr) {
+			const C *start = curr;
+
+			size_t num_chars = convertString(buf, &curr, SIZE_MAX, frg::min(n, m), &state);
+			if (num_chars == size_t(-1)) {
+				failed = true;
+				return;
+			}
+
+			append(buf, num_chars);
+			if (failed)
+				return;
+
+			if (!curr) {
+				break;
+			} else {
+				size_t consumed = curr - start;
+
+				if (consumed > n || !consumed)
+					break;
+
+				n -= consumed;
+			}
+		}
+	}
+
+	template <typename C>
+	void append(const C *str, size_t n, size_t m)
+	requires (std::is_same_v<Char, C>) {
+		return append(str, frg::min(n, m));
 	}
 
 	mlibc::abstract_file *stream;
