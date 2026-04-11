@@ -49,8 +49,8 @@ int Sysdeps<FutexWait>::operator()(int *pointer, int expected, const struct time
 	return zinnia_syscall(SYSCALL_FUTEX_WAIT, (size_t)pointer, expected, (size_t)time).error;
 }
 
-int Sysdeps<FutexWake>::operator()(int *pointer, bool) {
-	return zinnia_syscall(SYSCALL_FUTEX_WAKE, (size_t)pointer).error;
+int Sysdeps<FutexWake>::operator()(int *pointer, bool all) {
+	return zinnia_syscall(SYSCALL_FUTEX_WAKE, (size_t)pointer, all).error;
 }
 
 int Sysdeps<AnonAllocate>::operator()(size_t size, void **pointer) {

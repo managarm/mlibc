@@ -22,7 +22,7 @@ struct msghdr {
 
 struct mmsghdr {
 	struct msghdr msg_hdr;
-	unsigned int  msg_len;
+	unsigned int msg_len;
 };
 
 struct cmsghdr {
@@ -43,13 +43,13 @@ struct cmsghdr {
 
 #define SCM_CREDENTIALS 0x02
 
-#define SOCK_DGRAM     (1 << 0)
-#define SOCK_RAW       (1 << 1)
-#define SOCK_STREAM    (1 << 2)
+#define SOCK_DGRAM (1 << 0)
+#define SOCK_RAW (1 << 1)
+#define SOCK_STREAM (1 << 2)
 #define SOCK_SEQPACKET (1 << 3)
-#define SOCK_NONBLOCK  (1 << 15)
-#define SOCK_CLOEXEC   (1 << 16)
-#define SOCK_CLOFORK   (1 << 17)
+#define SOCK_NONBLOCK (1 << 15)
+#define SOCK_CLOEXEC (1 << 16)
+#define SOCK_CLOFORK (1 << 17)
 
 #define SOL_SOCKET 1
 #define SOL_IPV6 41
@@ -154,6 +154,6 @@ struct cmsghdr {
 #define AF_MAX PF_MAX
 
 #define SHUT_RD 1
-#define SHUT_RDWR 2
-#define SHUT_WR 3
+#define SHUT_WR 2
+#define SHUT_RDWR (SHUT_RD | SHUT_WR)
 #endif

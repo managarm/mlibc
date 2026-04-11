@@ -548,7 +548,7 @@ int Sysdeps<Fchmod>::operator()(int fd, mode_t mode) {
 }
 
 int Sysdeps<Fchmodat>::operator()(int fd, const char *pathname, mode_t mode, int flags) {
-	return zinnia_syscall(SYSCALL_FCHMOD, fd, (size_t)pathname, mode, flags).error;
+	return zinnia_syscall(SYSCALL_FCHMODAT, fd, (size_t)pathname, mode, flags).error;
 }
 
 int Sysdeps<Utimensat>::operator()(
