@@ -112,7 +112,7 @@ struct PrintfAgent {
 			__ensure(opts.minimum_width == 0);
 			__ensure(szmod == frg::printf_size_mod::default_size);
 			__ensure(!opts.precision);
-			if constexpr (std::is_same_v<Char, char>)
+			if constexpr (frg::SinkFor<F, char>)
 				_formatter->append(strerror(errno));
 			break;
 		case 'n': {
