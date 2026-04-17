@@ -109,14 +109,21 @@ int sem_clockwait(sem_t *sem, clockid_t clockid, const struct timespec *abstime)
 }
 
 int sem_post(sem_t *sem) {
-	auto old_count = __atomic_load_n(&sem->__mlibc_count, __ATOMIC_RELAXED) & semaphoreCountMask;
+	auto state = __atomic_load_n(&sem->__mlibc_count, __ATOMIC_RELAXED);
 
-	if (old_count + 1 > SEM_VALUE_MAX) {
-		errno = EOVERFLOW;
-		return -1;
+	while (true) {
+		auto count = state & semaphoreCountMask;
+
+		if (count + 1 > SEM_VALUE_MAX) {
+			errno = EOVERFLOW;
+			return -1;
+		}
+
+		auto new_state = (count + 1) | (state & semaphoreHasWaiters);
+
+		if (__atomic_compare_exchange_n(&sem->__mlibc_count, &state, new_state, true, __ATOMIC_RELEASE, __ATOMIC_RELAXED))
+			break;
 	}
-
-	auto state = __atomic_exchange_n(&sem->__mlibc_count, old_count + 1, __ATOMIC_RELEASE);
 
 	if (state & semaphoreHasWaiters)
 		if (int e = mlibc::sysdep<FutexWake>((int *)&sem->__mlibc_count, true); e)
