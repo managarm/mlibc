@@ -2380,8 +2380,7 @@ void funlockfile(FILE *file_base) {
 }
 
 int ftrylockfile(FILE *file_base) {
-	static_cast<mlibc::abstract_file *>(file_base)->_lock.try_lock();
-	return 0;
+	return static_cast<mlibc::abstract_file *>(file_base)->_lock.try_lock() ? 0 : 1;
 }
 
 void clearerr_unlocked(FILE *file_base) {
