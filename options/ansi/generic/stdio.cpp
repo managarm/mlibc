@@ -1434,7 +1434,8 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args) {
 				}
 				NOMATCH_CHECK(count == 0);
 				void **typed_dest = (void **)dest;
-				*typed_dest = (void *)(uintptr_t)res;
+				if (typed_dest)
+					*typed_dest = (void *)(uintptr_t)res;
 				break;
 			}
 			case 'n': {
