@@ -517,6 +517,7 @@ int main() {
 	assert(sscanf("0xabcdef12", "%p", &ptr) == 1);
 	assert(ptr == (void*)0xabcdef12);
 #endif
+	assert(sscanf("0x123", "%*p") == 0);
 
 	assert(sscanf("a", "%*c") == 0);
 	char_value[2] = 'q';

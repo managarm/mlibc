@@ -313,8 +313,8 @@ wint_t ungetwc_unlocked(wint_t c, mlibc::abstract_file *f) {
 	if (encoding == size_t(-1))
 		return WEOF;
 
-	for (size_t i = 0; i < encoding; i--) {
-		int ret = f->unget(buf[i]);
+	for (size_t i = 0; i < encoding; i++) {
+		int ret = f->unget(buf[encoding - 1 - i]);
 		if (ret == EOF)
 			return WEOF;
 	}
@@ -1434,7 +1434,8 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args) {
 				}
 				NOMATCH_CHECK(count == 0);
 				void **typed_dest = (void **)dest;
-				*typed_dest = (void *)(uintptr_t)res;
+				if (typed_dest)
+					*typed_dest = (void *)(uintptr_t)res;
 				break;
 			}
 			case 'n': {
@@ -1987,11 +1988,11 @@ int fgetc(FILE *stream) {
 		return EOF;
 	}
 
-	char c;
+	unsigned char c;
 	auto bytes_read = fread(&c, 1, 1, stream);
 	if(bytes_read != 1)
 		return EOF;
-	return c;
+	return static_cast<int>(c);
 }
 
 // byte-oriented (POSIX)
@@ -2380,8 +2381,7 @@ void funlockfile(FILE *file_base) {
 }
 
 int ftrylockfile(FILE *file_base) {
-	static_cast<mlibc::abstract_file *>(file_base)->_lock.try_lock();
-	return 0;
+	return static_cast<mlibc::abstract_file *>(file_base)->_lock.try_lock() ? 0 : 1;
 }
 
 void clearerr_unlocked(FILE *file_base) {

@@ -1,31 +1,55 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
 
-#include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
+#include <mlibc/debug.hpp>
+#include <mlibc/tid.hpp>
 
 namespace {
 
 // Itanium ABI static initialization guard.
 struct Guard {
-	// bit of the mutex member variable.
-	// indicates that the mutex is locked.
-	static constexpr int32_t locked = 1;
+	static constexpr uint32_t waitersBit = 0x80000000;
+	static constexpr uint32_t ownerMask = 0x3FFFFFFF;
 
 	void lock() {
-		uint32_t v = 0;
-		if(__atomic_compare_exchange_n(&mutex, &v, Guard::locked, false,
-				__ATOMIC_ACQUIRE, __ATOMIC_RELAXED))
-			return;
+		uint32_t tid = mlibc::this_tid();
+		uint32_t expected = 0;
 
-		mlibc::sysdep<LibcLog>("__cxa_guard_acquire contention");
-		__builtin_trap();
+		while (true) {
+			if (!expected) {
+				if (__atomic_compare_exchange_n(
+				        &mutex, &expected, tid, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE
+				    ))
+					return;
+			} else {
+				if ((expected & ownerMask) == tid)
+					mlibc::panicLogger()
+					    << "mlibc: __cxa_guard_acquire deadlock detected!" << frg::endlog;
+
+				if (expected & waitersBit) {
+					int e = mlibc::sysdep<FutexWait>((int *)&mutex, expected, nullptr);
+					if (e && e != EAGAIN && e != EINTR)
+						mlibc::panicLogger()
+						    << "sys_futex_wait() failed with error code " << e << frg::endlog;
+					expected = 0;
+				} else {
+					uint32_t desired = expected | waitersBit;
+					if (__atomic_compare_exchange_n(
+					        &mutex, &expected, desired, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED
+					    ))
+						expected = desired;
+				}
+			}
+		}
 	}
 
 	void unlock() {
-		__atomic_store_n(&mutex, 0, __ATOMIC_RELEASE);
+		uint32_t state = __atomic_exchange_n(&mutex, 0, __ATOMIC_RELEASE);
+		__ensure((state & ownerMask) == mlibc::this_tid());
+		if(state & waitersBit)
+			mlibc::sysdep<FutexWake>((int *)&mutex, true);
 	}
 
 	// the first byte's meaning is fixed by the ABI.

@@ -43,10 +43,11 @@ struct StdioLock {
 			futexlock.unlock();
 		}
 	}
-	void try_lock() {
+	bool try_lock() {
 		if (uselock) {
-			futexlock.try_lock();
+			return futexlock.try_lock();
 		}
+		return true;
 	}
 };
 struct abstract_file : __mlibc_file_base {

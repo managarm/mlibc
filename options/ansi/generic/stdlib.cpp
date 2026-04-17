@@ -469,7 +469,7 @@ int mbtowc(wchar_t *__restrict wc, const char *__restrict mb, size_t max_size) {
 					return nseq.it - mb;
 				}
 				case mlibc::transcode_status::illegal_input: {
-					errno = -EILSEQ;
+					errno = EILSEQ;
 					return -1;
 				}
 				case mlibc::transcode_status::output_overflow: {
