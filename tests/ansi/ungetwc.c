@@ -52,6 +52,9 @@ void test(int buffering) {
 		assert(fgetwc(f) == c - L'0' + L'a');
 	}
 
+	assert(ungetwc(L'α', f) == L'α');
+	assert(fgetwc(f) == L'α');
+
 #if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
 	// Too many ungetcs should fail.
 	int eof = 0;

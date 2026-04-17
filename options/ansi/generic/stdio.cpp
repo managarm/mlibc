@@ -313,8 +313,8 @@ wint_t ungetwc_unlocked(wint_t c, mlibc::abstract_file *f) {
 	if (encoding == size_t(-1))
 		return WEOF;
 
-	for (size_t i = 0; i < encoding; i--) {
-		int ret = f->unget(buf[i]);
+	for (size_t i = 0; i < encoding; i++) {
+		int ret = f->unget(buf[encoding - 1 - i]);
 		if (ret == EOF)
 			return WEOF;
 	}
