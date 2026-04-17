@@ -1987,11 +1987,11 @@ int fgetc(FILE *stream) {
 		return EOF;
 	}
 
-	char c;
+	unsigned char c;
 	auto bytes_read = fread(&c, 1, 1, stream);
 	if(bytes_read != 1)
 		return EOF;
-	return c;
+	return static_cast<int>(c);
 }
 
 // byte-oriented (POSIX)
