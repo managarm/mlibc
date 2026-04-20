@@ -156,7 +156,16 @@ struct ZinniaSysdepTags :
 	PrepareStack,
 	Reboot,
 	Readv,
-	Writev
+	Writev,
+	EpollCreate,
+	EpollCtl,
+	EpollPwait,
+	SignalfdCreate,
+	EventfdCreate,
+	TimerfdCreate,
+	TimerfdSettime,
+	TimerfdGettime,
+	Msync
 {};
 
 template<typename Tag>

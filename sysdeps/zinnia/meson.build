@@ -3,6 +3,10 @@ sysdep_supported_options = {
 	'glibc': true,
 	'bsd': true,
 	'linux-reboot': true,
+	'linux-epoll': true,
+	'linux-signalfd': true,
+	'linux-timerfd': true,
+	'linux-eventfd': true,
 }
 
 rtld_sources += files(
@@ -18,6 +22,10 @@ libc_sources += files(
 	'generic/module.cpp',
 	'generic/mount.cpp',
 	'generic/reboot.cpp',
+	'generic/epoll.cpp',
+	'generic/signalfd.cpp',
+	'generic/timerfd.cpp',
+	'generic/eventfd.cpp',
 	host_machine.cpu_family() / 'thread.S',
 	host_machine.cpu_family() / 'signal.S',
 )
@@ -30,6 +38,7 @@ if not no_headers
 		'include/abi-bits/blksize_t.h',
 		'include/abi-bits/clockid_t.h',
 		'include/abi-bits/dev_t.h',
+		'include/abi-bits/epoll.h',
 		'include/abi-bits/errno.h',
 		'include/abi-bits/fcntl.h',
 		'include/abi-bits/fd_set.h',
@@ -92,7 +101,6 @@ if not no_headers
 		'include/sys/ioccom.h',
 		'include/sys/module.h',
 		'include/sys/mount.h',
-		'include/sys/reboot.h',
 		subdir: 'sys',
 	)
 
