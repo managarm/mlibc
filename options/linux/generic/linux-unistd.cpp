@@ -20,7 +20,7 @@ int syncfs(int fd) {
 
 ssize_t copy_file_range(int fd_in, off_t *off_in, int fd_out, off_t *off_out, size_t count, unsigned int flags) {
 	ssize_t bytes_copied = 0;
-	if(int e = mlibc::sysdep_or_enosys<CopyFileRange>(fd_in, off_in, fd_out, off_out, count, flags, &bytes_copied); e < 0) {
+	if(int e = mlibc::sysdep_or_enosys<CopyFileRange>(fd_in, off_in, fd_out, off_out, count, flags, &bytes_copied); e) {
 		errno = e;
 		return -1;
 	}
