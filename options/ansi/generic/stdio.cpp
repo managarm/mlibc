@@ -1233,9 +1233,12 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args) {
 
 				if(c == '-') {
 					handler.consume();
+					c = handler.look_ahead();
 					is_negative = true;
-				} else if(c == '+')
+				} else if(c == '+') {
 					handler.consume();
+					c = handler.look_ahead();
+				}
 
 				if (c == '0') {
 					handler.consume();
