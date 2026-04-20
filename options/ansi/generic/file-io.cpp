@@ -490,7 +490,8 @@ int fd_file::reopen(const char *path, const char *mode) {
 	}
 
 	close();
-	getAllocator().deallocate(__buffer_ptr, __buffer_size + ungetBufferSize);
+	if (__buffer_ptr)
+		getAllocator().deallocate(__buffer_ptr - ungetBufferSize, __buffer_size + ungetBufferSize);
 
 	__buffer_ptr = nullptr;
 	__unget_ptr = nullptr;
