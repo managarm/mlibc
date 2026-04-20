@@ -39,7 +39,7 @@ int do_nftw(char *path, Callback fn, int fd_limit, int flags, struct history *h)
 
 	st.st_dev = st.st_ino = 0;
 
-	if ((flags & FTW_PHYS) ? lstat(path, &st) : stat(path, &st) < 0) {
+	if (((flags & FTW_PHYS) ? lstat(path, &st) : stat(path, &st)) < 0) {
 		if (!(flags & FTW_PHYS) && errno == ENOENT && !lstat(path, &st))
 			type = FTW_SLN;
 		else if (errno != EACCES)
