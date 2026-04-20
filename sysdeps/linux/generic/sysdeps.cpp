@@ -15,6 +15,7 @@
 #include <abi-bits/ioctls.h>
 #include <abi-bits/socklen_t.h>
 #include <bits/ensure.h>
+#include <frg/scope_exit.hpp>
 #include <limits.h>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
@@ -2609,10 +2610,17 @@ size_t pidfdGetPidLineSize = 0;
 int Sysdeps<PidfdGetpid>::operator()(int fd, pid_t *outpid) {
 	char *path = nullptr;
 	asprintf(&path, "/proc/self/fdinfo/%d", fd);
+	frg::scope_exit freePath{[&] {
+		free(path);
+	}};
 
 	FILE *fdinfo = fopen(path, "r");
 	if (!fdinfo)
 		return errno;
+
+	frg::scope_exit closeFile{[&] {
+		fclose(fdinfo);
+	}};
 
 	while (getline(&pidfdGetPidLine, &pidfdGetPidLineSize, fdinfo) != -1) {
 		pid_t pid;
@@ -2630,7 +2638,6 @@ int Sysdeps<PidfdGetpid>::operator()(int fd, pid_t *outpid) {
 		return 0;
 	}
 
-	free(path);
 	return EBADF;
 }
 
