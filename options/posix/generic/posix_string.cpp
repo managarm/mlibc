@@ -3,6 +3,7 @@
 #endif
 
 #include <bits/ensure.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -16,8 +17,10 @@ char *strdup(const char *string) {
 	auto num_bytes = strlen(string);
 
 	char *new_string = (char *)malloc(num_bytes + 1);
-	if(!new_string) // TODO: set errno
+	if(!new_string) {
+		errno = ENOMEM;
 		return nullptr;
+	}
 
 	memcpy(new_string, string, num_bytes);
 	new_string[num_bytes] = 0;
@@ -27,8 +30,10 @@ char *strdup(const char *string) {
 char *strndup(const char *string, size_t max_size) {
 	auto num_bytes = strnlen(string, max_size);
 	char *new_string = (char *)malloc(num_bytes + 1);
-	if(!new_string) // TODO: set errno
+	if(!new_string) {
+		errno = ENOMEM;
 		return nullptr;
+	}
 
 	memcpy(new_string, string, num_bytes);
 	new_string[num_bytes] = 0;
