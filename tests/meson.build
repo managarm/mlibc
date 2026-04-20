@@ -51,6 +51,7 @@ all_test_cases = [
 	'ansi/wctrans',
 	'ansi/nanosleep',
 	'ansi/btowc',
+	'ansi/wctob',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',

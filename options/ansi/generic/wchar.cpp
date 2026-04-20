@@ -34,8 +34,22 @@ wint_t btowc(int c) {
 }
 
 int wctob(wint_t wc) {
-	// TODO: Revisit this once we have character encoding functions.
-	return wc;
+	if (wc == WEOF)
+		return EOF;
+
+	char c;
+	wchar_t w = wc;
+	mlibc::code_seq<char> nseq{&c, &c + 1};
+	mlibc::code_seq<const wchar_t> wseq{&w, &w + 1};
+	auto cc = mlibc::current_charcode();
+	mbstate_t st{};
+
+	auto e = cc->encode_wtranscode(nseq, wseq, st);
+	if (e == mlibc::transcode_status::null_terminator)
+		return '\0';
+	else if(e != mlibc::transcode_status::input_exhausted)
+		return EOF;
+	return c;
 }
 
 int mbsinit(const mbstate_t *stp) {
