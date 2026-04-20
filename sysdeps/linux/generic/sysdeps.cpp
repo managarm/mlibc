@@ -1846,18 +1846,23 @@ int Sysdeps<GetLoginR>::operator()(char *name, size_t name_len) {
 	if(sysdep<Open>("/proc/self/loginuid", O_RDONLY, 0, &fd))
 		return EINVAL;
 
+	long uid;
 
-	char buf[12];
-	ssize_t bytes_read = 0;
-	if(int e = sysdep<Read>(fd, buf, sizeof(buf), &bytes_read); e || !bytes_read)
-		return EINVAL;
+	{
+		frg::scope_exit closeFile{[&] {
+			sysdep<Close>(fd);
+		}};
 
-	char *uid_end = nullptr;
-	auto uid = strtol(buf, &uid_end, 10);
-	if (uid_end == buf || uid < 0)
-		return EINVAL;
+		char buf[12];
+		ssize_t bytes_read = 0;
+		if(int e = sysdep<Read>(fd, buf, sizeof(buf), &bytes_read); e || !bytes_read)
+			return EINVAL;
 
-	sysdep<Close>(fd);
+		char *uid_end = nullptr;
+		uid = strtol(buf, &uid_end, 10);
+		if (uid_end == buf || uid < 0)
+			return EINVAL;
+	}
 
 	pthread_setcancelstate(cs, nullptr);
 
