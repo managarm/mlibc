@@ -960,17 +960,15 @@ int pthread_barrier_init(pthread_barrier_t *__restrict barrier,
 }
 
 int pthread_barrier_destroy(pthread_barrier_t *barrier) {
-	// Wait until there are no threads still using the barrier.
-	unsigned inside = 0;
-	do {
-		unsigned expected = __atomic_load_n(&barrier->__mlibc_inside, __ATOMIC_RELAXED);
+	while (true) {
+		unsigned expected = __atomic_load_n(&barrier->__mlibc_inside, __ATOMIC_ACQUIRE);
 		if (expected == 0)
 			break;
 
 		int e = mlibc::sysdep<FutexWait>((int *)&barrier->__mlibc_inside, expected, nullptr);
 		if (e != 0 && e != EAGAIN && e != EINTR)
 			mlibc::panicLogger() << "mlibc: sys_futex_wait() returned error " << e << frg::endlog;
-	} while (inside > 0);
+	}
 
 	memset(barrier, 0, sizeof *barrier);
 	return 0;
