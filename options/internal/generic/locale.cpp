@@ -319,6 +319,8 @@ void openLocaleDatabase() {
 						getAllocator()
 					}
 				);
+				if (end != static_cast<size_t>(-1))
+					off += end + 1;
 			}
 		}
 		locpaths.push_back(frg::string<MemoryAllocator>{"/usr/lib/locale", getAllocator()});
