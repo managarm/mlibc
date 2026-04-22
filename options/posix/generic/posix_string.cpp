@@ -7,6 +7,7 @@
 #include <string.h>
 #include <strings.h>
 #include <signal.h>
+#include <wchar.h>
 
 #include <mlibc/debug.hpp>
 #include <mlibc/strings.hpp>
