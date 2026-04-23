@@ -170,8 +170,9 @@ apply_parsers(const T &parser, frg::span<const uint8_t> base, frg::span<const ui
 			if constexpr (std::is_void_v<parser_result_t<decltype(std::get<I>(parser.parsers))>>)
 				return std::nullopt;
 			else {
+                size_t item_size = (I + 1 == offsets.size()) ? base.size() - offsets[I] : (offsets[I + 1] - offsets[I]);
 				return std::optional{std::get<I>(parser.parsers)(
-				    base.subspan(offsets[I], frg::min(sizeof(T), base.size() - offsets[I]))
+				    base.subspan(offsets[I], item_size)
 				)};
 			}
 		}()
