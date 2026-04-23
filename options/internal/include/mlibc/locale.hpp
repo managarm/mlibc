@@ -92,7 +92,7 @@ struct nl_category {
 	std::array<category_item, (N & 0xFFFF)> members;
 	frg::string<MemoryAllocator> localeName{"C", getAllocator()};
 
-	const category_item &get(nl_item item) {
+	const category_item &get(nl_item item) const {
 		__ensure(item >> 16 == Category);
 		return members[item & 0xFFFF];
 	}
