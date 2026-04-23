@@ -10,7 +10,9 @@
 #include <signal.h>
 #include <wchar.h>
 
+#include <mlibc/collation.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/locale.hpp>
 #include <mlibc/strings.hpp>
 
 char *strdup(const char *string) {
@@ -211,9 +213,9 @@ size_t strlcat(char *d, const char *s, size_t n) {
 	return l + mlibc::strlcpy(d + l, s, n - l);
 }
 
-int wcscoll_l(const wchar_t *l, const wchar_t *r, locale_t) {
-	// TODO: fix once we implement collation
-	return wcscmp(l, r);
+int wcscoll_l(const wchar_t *a, const wchar_t *b, locale_t loc) {
+	const auto l = static_cast<const mlibc::localeinfo *>(loc);
+	return mlibc::strcoll<wchar_t>(a, b, l);
 }
 
 size_t wcsxfrm_l(wchar_t *__restrict dest, const wchar_t *__restrict src, size_t size, locale_t) {

@@ -440,4 +440,52 @@ struct coll_seq {
 	}
 };
 
+template <typename Char>
+int strcoll(const Char *a, const Char *b, const mlibc::localeinfo *l) {
+	using P = CollationPolicy<Char>;
+
+	const auto nrules = l->collate.get(_NL_COLLATE_NRULES).asUint32();
+	if (!nrules)
+		return frg::generic_strcmp(a, b);
+
+	if (*a == '\0' || *b == '\0')
+		return (*a != '\0') - (*b != '\0');
+
+	const auto ctx = mlibc::coll_context<Char>::from_localeinfo(l);
+
+	mlibc::coll_seq<Char> seq1{};
+	mlibc::coll_seq<Char> seq2{};
+	int result = 0;
+	uint8_t rule = 0;
+
+	for (const auto pass : std::views::iota(0u, nrules)) {
+		seq1.pass_reset();
+		seq2.pass_reset();
+
+		seq1.us = reinterpret_cast<const P::UCharType *>(a);
+		seq2.us = reinterpret_cast<const P::UCharType *>(b);
+
+		while (true) {
+			const auto w1 = seq1.next(ctx, pass);
+			const auto w2 = seq2.next(ctx, pass);
+
+			if (!w1 || !w2) {
+				if (auto cmp = static_cast<int>(seq1.weights.size()) - static_cast<int>(seq2.weights.size()); cmp)
+					return (cmp > 0) - (cmp < 0); // same as std::clamp(cmp, -1, 1)
+				if (pass == 0 && !frg::generic_strcmp(a, b))
+					return result;
+				break;
+			}
+
+			result = seq1.compare(seq2, ctx.rulesets[rule * nrules + pass] & mlibc::coll::sort_position);
+			if (result)
+				return result;
+		}
+
+		rule = seq1.rule;
+	}
+
+	return result;
+}
+
 } // namespace mlibc

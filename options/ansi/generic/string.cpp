@@ -5,6 +5,7 @@
 #include <wchar.h>
 
 #include <bits/ensure.h>
+#include <mlibc/collation.hpp>
 #include <mlibc/strtofp.hpp>
 #include <mlibc/strtol.hpp>
 
@@ -81,8 +82,8 @@ int strcmp(const char *a, const char *b) {
 }
 
 int strcoll(const char *a, const char *b) {
-	// TODO: strcoll should take "LC_COLLATE" into account.
-	return strcmp(a, b);
+	const auto l = mlibc::getActiveLocale();
+	return mlibc::strcoll<char>(a, b, l);
 }
 
 int strncmp(const char *a, const char *b, size_t max_size) {
@@ -305,9 +306,9 @@ int wcscmp(const wchar_t *l, const wchar_t *r) {
 	return *l - *r;
 }
 
-int wcscoll(const wchar_t *l, const wchar_t *r) {
-	// TODO: fix once we implement collation
-	return wcscmp(l, r);
+int wcscoll(const wchar_t *a, const wchar_t *b) {
+	const auto l = mlibc::getActiveLocale();
+	return mlibc::strcoll<wchar_t>(a, b, l);
 }
 
 int wcsncmp(const wchar_t *l, const wchar_t *r, size_t n) {
