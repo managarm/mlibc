@@ -123,6 +123,10 @@ frg::span<const uint8_t> parse_bytearray(frg::span<const uint8_t> data) {
 	return frg::span{data.data(), len};
 }
 
+frg::span<const uint8_t> parse_raw_bytearray(frg::span<const uint8_t> data) {
+	return data;
+}
+
 template <size_t N>
 frg::span<const uint32_t> parse_uint32array(frg::span<const uint8_t> data) {
 	auto ptr = reinterpret_cast<const uint32_t *>(data.data());
@@ -332,22 +336,25 @@ auto collate_parser = category{
     .name = "LC_COLLATE",
     .glibc_val = LC_COLLATE,
     .parsers = std::make_tuple(
-        parse<uint32_t>, // nrules
-        parse_string,    // rulesets
-        parse_string,    // tablemb
-        parse_string,    // weightmb
-        parse_string,    // extramb
-        parse_string,    // indirectmb
-        parse_string,    // tablewc
-        parse_string,    // weightwc
-        parse_string,    // extrawc
-        parse_string,    // indirectwc
-        parse<uint32_t>, // symb-hash-sizemb
-        parse_string,    // symb-tablemb
-        parse_string,    // symb-extramb
-        parse_string,    // collseqmb
-        parse_string,    // collseqwc
-        parse_string     // codeset
+        parse<uint32_t>,     // nrules
+        parse_raw_bytearray, // rulesets
+        parse_raw_bytearray, // tablemb
+        parse_raw_bytearray, // weightmb
+        parse_raw_bytearray, // extramb
+        parse_raw_bytearray, // indirectmb
+        parse_ignore,        // gap
+        parse_ignore,        // gap
+        parse_ignore,        // gap
+        parse_raw_bytearray, // tablewc
+        parse_raw_bytearray, // weightwc
+        parse_raw_bytearray, // extrawc
+        parse_raw_bytearray, // indirectwc
+        parse<uint32_t>,     // symb-hash-sizemb
+        parse_string,        // symb-tablemb
+        parse_string,        // symb-extramb
+        parse_string,        // collseqmb
+        parse_string,        // collseqwc
+        parse_string         // codeset
     )
 };
 
