@@ -2,8 +2,8 @@
 #define _ABIBITS_IOCTLS_H
 
 #include <bits/winsize.h>
-#include <sys/ttydefaults.h>
 #include <sys/ioccom.h>
+#include <sys/ttydefaults.h>
 
 #define RTC_RD_TIME 1
 #define RTC_SET_TIME 2
@@ -56,8 +56,8 @@
 #define TCSETSF2 3
 #define TIOCGRS485 0x542E
 #define TIOCSRS485 0x542F
-#define TIOCGPTN 3
-#define TIOCSPTLCK 3
+#define TIOCGPTN _IOR('T', 0x30, int)
+#define TIOCSPTLCK _IOW('T', 0x31, int)
 #define TIOCGDEV 3
 #define TCGETX 0x5432
 #define TCSETX 0x5433

@@ -143,4 +143,8 @@ int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
 	return zinnia_syscall(SYSCALL_MPROTECT, (size_t)pointer, size, prot).error;
 }
 
+int Sysdeps<Msync>::operator()(void *addr, size_t length, int flags) {
+	return zinnia_syscall(SYSCALL_MSYNC, (size_t)addr, length, flags).error;
+}
+
 } // namespace mlibc
