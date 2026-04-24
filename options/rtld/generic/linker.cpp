@@ -394,12 +394,11 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 
 frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath(frg::string_view path,
 		Scope *localScope, bool createScope, uint64_t rts) {
-	// TODO: Support SONAME correctly.
-	auto lastSlash = path.find_last('/') + 1;
+	auto lastSlash = path.find_last('/');
 	auto name = path;
-	if (!lastSlash) {
-		name = name.sub_string(lastSlash, path.size() - lastSlash);
-	}
+	if (lastSlash != static_cast<size_t>(-1))
+		name = name.sub_string(lastSlash + 1, path.size() - (lastSlash + 1));
+
 	if (auto obj = findLoadedObject(name))
 		return obj;
 

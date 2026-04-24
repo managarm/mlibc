@@ -82,7 +82,7 @@ int Sysdeps<InetConfigured>::operator()(bool *ipv4, bool *ipv6) {
 
 	auto ret = nl.recv(
 	    [](void *data, const nlmsghdr *hdr) {
-		    if (hdr->nlmsg_type == RTM_NEWADDR || hdr->nlmsg_len >= sizeof(struct ifaddrmsg)) {
+		    if (hdr->nlmsg_type == RTM_NEWADDR && hdr->nlmsg_len >= sizeof(struct ifaddrmsg)) {
 			    const struct ifaddrmsg *ifaddr =
 			        reinterpret_cast<const struct ifaddrmsg *>(NLMSG_DATA(hdr));
 			    struct context *ctx = reinterpret_cast<struct context *>(data);

@@ -15,6 +15,7 @@
 #include <abi-bits/ioctls.h>
 #include <abi-bits/socklen_t.h>
 #include <bits/ensure.h>
+#include <frg/scope_exit.hpp>
 #include <limits.h>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
@@ -2174,7 +2175,7 @@ int Sysdeps<InetConfigured>::operator()(bool *ipv4, bool *ipv6) {
 	}
 
 	auto ret = nl.recv([](void *data, const nlmsghdr *hdr) {
-		if (hdr->nlmsg_type == RTM_NEWADDR || hdr->nlmsg_len >= sizeof(struct ifaddrmsg)) {
+		if (hdr->nlmsg_type == RTM_NEWADDR && hdr->nlmsg_len >= sizeof(struct ifaddrmsg)) {
 			const struct ifaddrmsg *ifaddr = reinterpret_cast<const struct ifaddrmsg *>(NLMSG_DATA(hdr));
 			struct context *ctx = reinterpret_cast<struct context *>(data);
 
@@ -2609,10 +2610,17 @@ size_t pidfdGetPidLineSize = 0;
 int Sysdeps<PidfdGetpid>::operator()(int fd, pid_t *outpid) {
 	char *path = nullptr;
 	asprintf(&path, "/proc/self/fdinfo/%d", fd);
+	frg::scope_exit freePath{[&] {
+		free(path);
+	}};
 
 	FILE *fdinfo = fopen(path, "r");
 	if (!fdinfo)
 		return errno;
+
+	frg::scope_exit closeFile{[&] {
+		fclose(fdinfo);
+	}};
 
 	while (getline(&pidfdGetPidLine, &pidfdGetPidLineSize, fdinfo) != -1) {
 		pid_t pid;
@@ -2630,7 +2638,6 @@ int Sysdeps<PidfdGetpid>::operator()(int fd, pid_t *outpid) {
 		return 0;
 	}
 
-	free(path);
 	return EBADF;
 }
 
