@@ -176,6 +176,7 @@ struct RiscvFlushIcache {};
 #include <fcntl.h>
 #include <mlibc/fsfd_target.hpp>
 #include <mqueue.h>
+#include <net/if.h>
 #include <poll.h>
 #include <sched.h>
 #include <stdarg.h>
@@ -476,6 +477,10 @@ struct GetLoginR {};
 struct IfIndextoname {};
 // int sys_if_nametoindex(const char *name, unsigned int *ret);
 struct IfNametoindex {};
+// int sys_if_nameindex(struct if_nameindex **out);
+struct IfNameindex {};
+// void sys_if_freenameindex(struct if_nameindex *ifn);
+struct IfFreeNameindex {};
 // int sys_ptsname(int fd, char *buffer, size_t length);
 struct Ptsname {};
 // int sys_unlockpt(int fd);
@@ -619,6 +624,8 @@ struct Fstatfs {};
 struct Statx {};
 // int sys_getifaddrs(struct ifaddrs **);
 struct Getifaddrs {};
+// void sys_freeifaddrs(struct ifaddrs *ifa);
+struct Freeifaddrs {};
 // int sys_sendfile(int outfd, int infd, off_t *offset, size_t count, ssize_t *out);
 struct Sendfile {};
 // int sys_syncfs(int fd);

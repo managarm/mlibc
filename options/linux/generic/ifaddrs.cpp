@@ -13,9 +13,6 @@ int getifaddrs(struct ifaddrs **ifap) {
 }
 
 void freeifaddrs(struct ifaddrs *ifa) {
-	while (ifa != nullptr) {
-		ifaddrs *current = ifa;
-		ifa = ifa->ifa_next;
-		getAllocator().free(current);
-	}
+	if constexpr (mlibc::IsImplemented<Freeifaddrs>)
+		mlibc::sysdep_or_panic<Freeifaddrs>(ifa);
 }

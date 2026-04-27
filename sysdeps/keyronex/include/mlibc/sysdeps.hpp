@@ -100,6 +100,7 @@ struct KeyronexSysdepTags :
 	IfIndextoname,
 	IfNametoindex,
 	Getifaddrs,
+	Freeifaddrs,
 	Clone,
 	PrepareStack,
 	ThreadExit,
