@@ -3,32 +3,34 @@
 #define _SPAWN_H
 
 #include <abi-bits/signal.h>
+#include <abi-bits/sigset_t.h>
 #include <abi-bits/mode_t.h>
 #include <abi-bits/pid_t.h>
+#include <bits/threads.h>
 #include <sched.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+struct sched_param;
+
 typedef struct {
+	unsigned int __mlibc_revision;
 	int __flags;
 	pid_t __pgrp;
-	sigset_t __def, __mask;
-	int __prio, __pol;
-	void *__fn;
-	char __pad[64 - sizeof(void *)];
+	sigset_t __def;
+	sigset_t __mask;
+	int __prio;
+	int __pol;
+	struct __mlibc_sched_param __schedparam;
+	int __schedpolicy;
 } posix_spawnattr_t;
 
 typedef struct {
-	int __pad0[2];
+	unsigned int __mlibc_revision;
 	void *__actions;
-	int __pad[16];
 } posix_spawn_file_actions_t;
-
-/* MISSIG: sigset_t */
-
-struct sched_param;
 
 #define POSIX_SPAWN_RESETIDS 1
 #define POSIX_SPAWN_SETPGROUP 2
@@ -51,8 +53,12 @@ int posix_spawnattr_destroy(posix_spawnattr_t *__attr);
 int posix_spawnattr_setflags(posix_spawnattr_t *__attr, short __flags);
 int posix_spawnattr_setsigdefault(posix_spawnattr_t *__restrict __attr,
 		const sigset_t *__restrict __sigdefault);
+int posix_spawnattr_getschedparam(const posix_spawnattr_t *__restrict attr,
+		struct sched_param *__restrict schedparam);
 int posix_spawnattr_setschedparam(posix_spawnattr_t *__restrict __attr,
 		const struct sched_param *__restrict __schedparam);
+int posix_spawnattr_getschedpolicy(const posix_spawnattr_t *__restrict attr,
+		int *__restrict schedpolicy);
 int posix_spawnattr_setschedpolicy(posix_spawnattr_t *__attr, int __schedpolicy);
 int posix_spawnattr_setsigmask(posix_spawnattr_t *__restrict __attr,
 		const sigset_t *__restrict __sigmask);
