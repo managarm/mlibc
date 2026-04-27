@@ -1,6 +1,5 @@
 #include <math.h>
-#include "weak_alias.h"
-//#include "libc.h"
+#include "helpers.h"
 
 float remainderf(float x, float y)
 {
