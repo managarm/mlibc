@@ -329,3 +329,29 @@ ENTRY *hsearch(ENTRY item, ACTION action) {
 	}
 	return ret;
 }
+
+void insque(void *element, void *pred) {
+	struct qelem *e = reinterpret_cast<struct qelem *>(element);
+	struct qelem *p = reinterpret_cast<struct qelem *>(pred);
+
+	if (!p) {
+		e->q_forw = e->q_back = nullptr;
+		return;
+	}
+
+	e->q_forw = p->q_forw;
+	e->q_back = p;
+	p->q_forw = e;
+
+	if (e->q_forw)
+		e->q_forw->q_back = e;
+}
+
+void remque(void *element) {
+	struct qelem *e = reinterpret_cast<struct qelem *>(element);
+
+	if (e->q_forw)
+		e->q_forw->q_back = e->q_back;
+	if (e->q_back)
+		e->q_back->q_forw = e->q_forw;
+}
