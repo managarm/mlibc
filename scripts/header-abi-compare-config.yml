@@ -66,6 +66,7 @@ ignored_structs:
   - cmsghdr
 
   # libc-level constructs that are allowed to differ, and probably do
+  - aiocb
   - ifaddrs
   - lastlog
   - regmatch_t

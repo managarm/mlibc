@@ -28,6 +28,7 @@ libc_sources += files(
 
 if get_option('posix_option').allowed()
 	libc_sources += files(
+		'generic/posix/aio.cpp',
 		'generic/thread.cpp',
 		host_machine.cpu_family() / 'cp_syscall.S',
 		host_machine.cpu_family() / 'thread_entry.S'
@@ -96,6 +97,7 @@ if not no_headers
 		'include/abi-bits/sockaddr_storage.h',
 		'include/abi-bits/sig-limits.h',
 		'include/abi-bits/sigset_t.h',
+		'include/abi-bits/aio.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)
