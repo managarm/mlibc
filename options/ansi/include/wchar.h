@@ -111,7 +111,7 @@ size_t mbsrtowcs(wchar_t *__restrict __wcs, const char **__restrict __mbs, size_
 size_t mbsnrtowcs(wchar_t *__restrict __wcs, const char **__restrict __mbs, size_t __mb_limit, size_t __wc_limit,
 		mbstate_t *__restrict __stp);
 size_t wcsrtombs(char *__restrict __mbs, const wchar_t **__restrict __wcs, size_t __mb_limit, mbstate_t *__restrict __stp);
-size_t wcsnrtombs(char *__restrict __mbs, const wchar_t **__restrict __wcs, size_t __mb_limit, size_t __wc_limit,
+size_t wcsnrtombs(char *__restrict __mbs, const wchar_t **__restrict __wcs, size_t __wc_limit, size_t __mb_limit,
 		mbstate_t *__restrict __stp);
 
 /* POSIX extensions */
