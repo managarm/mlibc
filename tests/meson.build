@@ -153,7 +153,9 @@ all_test_cases = [
 	'posix/wcpncpy',
 	'posix/getwchar',
 	'posix/strcoll_l',
+	'posix/strxfrm_l',
 	'posix/wcscoll_l',
+	'posix/wcsxfrm_l',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
@@ -221,6 +223,8 @@ host_libc_noasan_test_cases = [
 	'linux/pthread_attr', # encounters memory leaks
 	'posix/strcoll_l', # glibc leaks memory internally
 	'posix/wcscoll_l', # glibc leaks memory internally
+	'posix/strxfrm_l', # glibc leaks memory internally
+	'posix/wcsxfrm_l', # glibc leaks memory internally
 ]
 
 cross_libc_excluded_test_cases = [

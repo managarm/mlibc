@@ -488,4 +488,83 @@ int strcoll(const Char *a, const Char *b, const mlibc::localeinfo *l) {
 	return result;
 }
 
+template <typename Char>
+size_t do_xfrm(
+    const typename CollationPolicy<Char>::UCharType *usrc,
+    typename CollationPolicy<Char>::StringType *dest,
+    const size_t n,
+    const coll_context<Char> &ctx
+) {
+	size_t needed = 0;
+	size_t pass_start_needed = 0;
+
+	coll_seq<Char> seq{};
+
+	// Helper to write out data if there is space and to keep track of the `needed` counter.
+	auto write = [&](const auto &range) {
+		const auto sz = std::ranges::size(range);
+		if (needed + sz < n)
+			std::ranges::copy(range, dest + needed);
+		needed += sz;
+	};
+
+	// Encode a uint32_t into a UTF-8 sequence
+	auto encode_as_utf8 = [](frg::span<char> buf, uint32_t val) -> frg::span<char> {
+		if (val < 0x80) {
+			buf[0] = static_cast<char>(val);
+			return buf.subspan(0, 1);
+		}
+
+		const int bytes = *std::ranges::find_if(std::views::iota(2, 6), [&](int b) {
+			return (val >> (5 * b + 1)) == 0;
+		});
+
+		std::ranges::for_each(buf.subspan(1, bytes - 1) | std::views::reverse, [&](char &b) {
+			b = static_cast<char>(0x80 | (val & 0x3F));
+			val >>= 6;
+		});
+
+		buf[0] = static_cast<char>((0xFF << (8 - bytes)) | val);
+		return buf.subspan(0, bytes);
+	};
+
+	for (const auto pass : std::views::iota(0u, ctx.nrules)) {
+		pass_start_needed = needed;
+		seq.pass_reset();
+		seq.us = usrc;
+
+		const typename CollationPolicy<Char>::UCharType *pos_us = usrc;
+		const auto [rule, idx] = ctx.get_index(pos_us);
+		const bool position = ctx.rulesets[rule * ctx.nrules + pass] & coll::sort_position;
+
+		while (auto w = seq.next(ctx, pass)) {
+			if (position) {
+				if constexpr (std::is_same_v<Char, char>) {
+					char buf[7];
+					write(encode_as_utf8(frg::span<char>{buf, 7}, seq.offset_from_previous));
+				} else {
+					write(frg::span(&seq.offset_from_previous, 1));
+				}
+			}
+
+			write(*w);
+			seq.weights = {};
+		}
+
+		// Insert pass separator.
+		if (needed < n)
+			dest[needed] = (pass + 1 < ctx.nrules) ? '\1' : '\0';
+		needed++;
+	}
+
+	// glibc trims "\1\0" to just '\0' for the final pass.
+	if (needed > 2 && needed == pass_start_needed + 1) {
+		if (--needed <= n)
+			dest[needed - 1] = '\0';
+	}
+
+	// Return `needed` excluding the mandatory null termination.
+	return needed - 1;
+}
+
 } // namespace mlibc

@@ -218,12 +218,22 @@ int wcscoll_l(const wchar_t *a, const wchar_t *b, locale_t loc) {
 	return mlibc::strcoll<wchar_t>(a, b, l);
 }
 
-size_t wcsxfrm_l(wchar_t *__restrict dest, const wchar_t *__restrict src, size_t size, locale_t) {
-	// TODO: fix once we implement collation
-	return wcsxfrm(dest, src, size);
-}
+size_t wcsxfrm_l(wchar_t *__restrict dest, const wchar_t *__restrict src, size_t size, locale_t loc) {
+	auto l = static_cast<mlibc::localeinfo *>(loc);
 
-size_t strxfrm_l(char *__restrict dest, const char *__restrict src, size_t max_size, locale_t *) {
-	// TODO: fix once we implement collation
-	return strxfrm(dest, src, max_size);
+	auto nrules = l->collate.get(_NL_COLLATE_NRULES).asUint32();
+	if (nrules == 0) {
+		size_t len = wcslen(src);
+		if (size)
+			wcpncpy(dest, src, frg::min(len + 1, size));
+		return len;
+	}
+
+	if (*src == L'\0') {
+		if (size)
+			*dest = L'\0';
+		return 0;
+	}
+
+	return mlibc::do_xfrm<wchar_t>(reinterpret_cast<const wint_t *>(src), dest, size, mlibc::coll_context<wchar_t>::from_localeinfo(l));
 }

@@ -503,6 +503,26 @@ int strcoll_l(const char *a, const char *b, locale_t loc) {
 	return mlibc::strcoll<char>(a, b, l);
 }
 
+size_t strxfrm_l(char *__restrict dest, const char *__restrict src, size_t n, locale_t loc) {
+	auto l = static_cast<mlibc::localeinfo *>(loc);
+
+	auto nrules = l->collate.get(_NL_COLLATE_NRULES).asUint32();
+	if (nrules == 0) {
+		size_t len = strlen(src);
+		if (n)
+			stpncpy(dest, src, frg::min(len + 1, n));
+		return len;
+	}
+
+	if (*src == '\0') {
+		if (n)
+			*dest = '\0';
+		return 0;
+	}
+
+	return do_xfrm(reinterpret_cast<const uint8_t *>(src), dest, n, mlibc::coll_context<char>::from_localeinfo(l));
+}
+
 int getsubopt(char **__restrict__ optionp, char *const *__restrict__ keylistp, char **__restrict__ valuep) {
 	*valuep = nullptr;
 
