@@ -353,6 +353,13 @@ SYSDEP_FUNC(GetLoadavg, double *samples);
 SYSDEP_FUNC(Openpty, int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win);
 #endif // __MLIBC_BSD_OPTION
 
+#if __MLIBC_BSD_PROCDESC_OPTION
+SYSDEP_FUNC(Pdfork, int *fdp, int flags, pid_t *child);
+SYSDEP_FUNC(Pdkill, int fd, int sig);
+SYSDEP_FUNC(Pdgetpid, int fd, pid_t *pidp);
+SYSDEP_FUNC(Pdwait, int fd, int *status, int options, struct __wrusage *rusage, siginfo_t *info);
+#endif // __MLIBC_BSD_PROCDESC_OPTION
+
 #if __MLIBC_GLIBC_OPTION
 SYSDEP_FUNC(Personality, unsigned long persona, int *out);
 SYSDEP_FUNC(Ioperm, unsigned long int from, unsigned long int num, int turn_on);

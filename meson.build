@@ -306,6 +306,7 @@ posix_option = get_option('posix_option').require(sysdep_supported_options.get('
 linux_option = get_option('linux_option').require(sysdep_supported_options.get('linux', false)).allowed()
 glibc_option = get_option('glibc_option').require(sysdep_supported_options.get('glibc', false)).allowed()
 bsd_option = get_option('bsd_option').require(sysdep_supported_options.get('bsd', false)).allowed()
+bsd_procdesc_option = sysdep_supported_options.get('bsd-procdesc', false)
 linux_epoll_option = sysdep_supported_options.get('linux-epoll', linux_option)
 linux_timerfd_option = sysdep_supported_options.get('linux-timerfd', linux_option)
 linux_signalfd_option = sysdep_supported_options.get('linux-signalfd', linux_option)
@@ -317,6 +318,7 @@ mlibc_conf.set10('__MLIBC_POSIX_OPTION', posix_option)
 mlibc_conf.set10('__MLIBC_LINUX_OPTION', linux_option)
 mlibc_conf.set10('__MLIBC_GLIBC_OPTION', glibc_option)
 mlibc_conf.set10('__MLIBC_BSD_OPTION', bsd_option)
+mlibc_conf.set10('__MLIBC_BSD_PROCDESC_OPTION', bsd_procdesc_option)
 mlibc_conf.set10('__MLIBC_LINUX_EPOLL_OPTION', linux_epoll_option)
 mlibc_conf.set10('__MLIBC_LINUX_TIMERFD_OPTION', linux_timerfd_option)
 mlibc_conf.set10('__MLIBC_LINUX_SIGNALFD_OPTION', linux_signalfd_option)
@@ -388,6 +390,11 @@ endif
 if bsd_option
 	rtld_include_dirs += include_directories('options/bsd/include')
 	libc_include_dirs += include_directories('options/bsd/include')
+endif
+
+if bsd_procdesc_option
+	rtld_include_dirs += include_directories('options/bsd-procdesc/include')
+	libc_include_dirs += include_directories('options/bsd-procdesc/include')
 endif
 
 if linux_epoll_option
@@ -536,6 +543,7 @@ subdir('options/glibc')
 subdir('options/linux-wrappers')
 subdir('options/linux')
 subdir('options/bsd')
+subdir('options/bsd-procdesc')
 subdir('options/linux-epoll')
 subdir('options/linux-timerfd')
 subdir('options/linux-signalfd')
