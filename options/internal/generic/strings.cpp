@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <string.h>
 
 #include <mlibc/strings.hpp>
 
@@ -44,6 +45,21 @@ size_t strlcpy(char *d, const char *s, size_t n) {
 	}
 
 	return (src - s - 1);
+}
+
+char *stpncpy(char *__restrict dest, const char *__restrict src, size_t n) {
+	size_t nulls, copied, srcLen = strlen(src);
+	if (n >= srcLen) {
+		nulls = n - srcLen;
+		copied = srcLen;
+	} else {
+		nulls = 0;
+		copied = n;
+	}
+
+	memcpy(dest, src, copied);
+	memset(dest + srcLen, 0, nulls);
+	return dest + n - nulls;
 }
 
 } // namespace mlibc

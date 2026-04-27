@@ -5,8 +5,11 @@
 #include <wchar.h>
 
 #include <bits/ensure.h>
+#include <mlibc/collation.hpp>
+#include <mlibc/strings.hpp>
 #include <mlibc/strtofp.hpp>
 #include <mlibc/strtol.hpp>
+#include <mlibc/wide.hpp>
 
 // memset() is defined in options/internals.
 // memcpy() is defined in options/internals.
@@ -81,8 +84,8 @@ int strcmp(const char *a, const char *b) {
 }
 
 int strcoll(const char *a, const char *b) {
-	// TODO: strcoll should take "LC_COLLATE" into account.
-	return strcmp(a, b);
+	const auto l = mlibc::getActiveLocale();
+	return mlibc::strcoll<char>(a, b, l);
 }
 
 int strncmp(const char *a, const char *b, size_t max_size) {
@@ -104,14 +107,23 @@ int strncmp(const char *a, const char *b, size_t max_size) {
 }
 
 size_t strxfrm(char *__restrict dest, const char *__restrict src, size_t n) {
-	// NOTE: This might not work for non ANSI charsets.
-	size_t l = strlen(src);
+	auto l = mlibc::getActiveLocale();
 
-	// man page: If the value returned is n or more, the contents of dest are indeterminate.
-	if(n > l)
-		strncpy(dest, src, n);
+	auto nrules = l->collate.get(_NL_COLLATE_NRULES).asUint32();
+	if (nrules == 0) {
+		size_t len = strlen(src);
+		if (n)
+			mlibc::stpncpy(dest, src, frg::min(len + 1, n));
+		return len;
+	}
 
-	return l;
+	if (*src == '\0') {
+		if (n)
+			*dest = '\0';
+		return 0;
+	}
+
+	return mlibc::do_xfrm<char>(reinterpret_cast<const uint8_t *>(src), dest, n, mlibc::coll_context<char>::from_localeinfo(l));
 }
 
 void *memchr(const void *s, int c, size_t size) {
@@ -305,9 +317,9 @@ int wcscmp(const wchar_t *l, const wchar_t *r) {
 	return *l - *r;
 }
 
-int wcscoll(const wchar_t *l, const wchar_t *r) {
-	// TODO: fix once we implement collation
-	return wcscmp(l, r);
+int wcscoll(const wchar_t *a, const wchar_t *b) {
+	const auto l = mlibc::getActiveLocale();
+	return mlibc::strcoll<wchar_t>(a, b, l);
 }
 
 int wcsncmp(const wchar_t *l, const wchar_t *r, size_t n) {
@@ -315,16 +327,24 @@ int wcsncmp(const wchar_t *l, const wchar_t *r, size_t n) {
 	return n ? (*l < *r ? -1 : *l > *r) : 0;
 }
 
-size_t wcsxfrm(wchar_t *__restrict dest, const wchar_t *__restrict src, size_t n) {
-	// TODO: fix once we implement collation
-	// NOTE: This might not work for non ANSI charsets.
-	size_t l = wcslen(src);
+size_t wcsxfrm(wchar_t *__restrict dest, const wchar_t *__restrict src, size_t size) {
+	const auto l = mlibc::getActiveLocale();
 
-	// man page: If the value returned is n or more, the contents of dest are indeterminate.
-	if(n > l)
-		wcsncpy(dest, src, n);
+	auto nrules = l->collate.get(_NL_COLLATE_NRULES).asUint32();
+	if (nrules == 0) {
+		size_t len = wcslen(src);
+		if (size)
+			mlibc::wcpncpy(dest, src, frg::min(len + 1, size));
+		return len;
+	}
 
-	return l;
+	if (*src == L'\0') {
+		if (size)
+			*dest = L'\0';
+		return 0;
+	}
+
+	return mlibc::do_xfrm<wchar_t>(reinterpret_cast<const wint_t *>(src), dest, size, mlibc::coll_context<wchar_t>::from_localeinfo(l));
 }
 
 int wmemcmp(const wchar_t *a, const wchar_t *b, size_t size) {

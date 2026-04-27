@@ -22,4 +22,16 @@ wctrans_t find_wctrans(frg::string_view property, mlibc::localeinfo *l) {
 	return 0;
 }
 
+wchar_t *wcpncpy(wchar_t *__restrict ws1, const wchar_t *__restrict ws2, size_t n) {
+	for (; n--; ws1++, ws2++) {
+		if (!(*ws1 = *ws2)) {
+			wchar_t *ret = ws1;
+			while (n--)
+				*++ws1 = L'\0';
+			return ret;
+		}
+	}
+	return ws1;
+}
+
 } // namespace mlibc

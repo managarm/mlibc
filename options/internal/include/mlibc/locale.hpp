@@ -77,6 +77,13 @@ struct category_item {
 		return frg::span{reinterpret_cast<const uint32_t *>(span.data()), span.size() / sizeof(uint32_t)};
 	}
 
+	frg::span<const int32_t> asInt32Span() const {
+		if (std::holds_alternative<std::monostate>(value))
+			return {};
+		auto span = std::get<frg::span<const uint8_t>>(value);
+		return frg::span{reinterpret_cast<const int32_t *>(span.data()), span.size() / sizeof(int32_t)};
+	}
+
 	value_types value;
 };
 
@@ -85,7 +92,7 @@ struct nl_category {
 	std::array<category_item, (N & 0xFFFF)> members;
 	frg::string<MemoryAllocator> localeName{"C", getAllocator()};
 
-	const category_item &get(nl_item item) {
+	const category_item &get(nl_item item) const {
 		__ensure(item >> 16 == Category);
 		return members[item & 0xFFFF];
 	}

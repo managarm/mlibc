@@ -13,6 +13,7 @@
 #include <frg/small_vector.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
+#include <mlibc/collation.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/global-config.hpp>
 #include <mlibc/locale.hpp>
@@ -497,9 +498,29 @@ float strtof_l(const char *__restrict__ nptr, char **__restrict__ endptr, locale
 	return mlibc::strtofp<float>(nptr, endptr, static_cast<mlibc::localeinfo *>(loc));
 }
 
-int strcoll_l(const char *a, const char *b, locale_t) {
-	// TODO: strcoll_l should take "LC_COLLATE" into account.
-	return strcmp(a, b);
+int strcoll_l(const char *a, const char *b, locale_t loc) {
+	const auto l = static_cast<const mlibc::localeinfo *>(loc);
+	return mlibc::strcoll<char>(a, b, l);
+}
+
+size_t strxfrm_l(char *__restrict dest, const char *__restrict src, size_t n, locale_t loc) {
+	auto l = static_cast<mlibc::localeinfo *>(loc);
+
+	auto nrules = l->collate.get(_NL_COLLATE_NRULES).asUint32();
+	if (nrules == 0) {
+		size_t len = strlen(src);
+		if (n)
+			stpncpy(dest, src, frg::min(len + 1, n));
+		return len;
+	}
+
+	if (*src == '\0') {
+		if (n)
+			*dest = '\0';
+		return 0;
+	}
+
+	return do_xfrm(reinterpret_cast<const uint8_t *>(src), dest, n, mlibc::coll_context<char>::from_localeinfo(l));
 }
 
 int getsubopt(char **__restrict__ optionp, char *const *__restrict__ keylistp, char **__restrict__ valuep) {
