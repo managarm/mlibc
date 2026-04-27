@@ -1382,6 +1382,7 @@ void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, MemoryAllocator>
 }
 
 Tcb *allocateTcb() {
+	frg::unique_lock lock{*runtimeTlsMapLock};
 	size_t tlsInitialSize = runtimeTlsMap->initialLimit;
 
 	// To make sure that both the TCB and TLS data are sufficiently aligned, allocate
@@ -1452,15 +1453,18 @@ Tcb *allocateTcb() {
 void *accessDtv(SharedObject *object) {
 	Tcb *tcb_ptr = mlibc::get_current_tcb();
 
-	// We might need to reallocate the DTV.
-	if(object->tlsIndex >= tcb_ptr->dtvSize) {
-		// TODO: need to protect runtimeTlsMap against concurrent access.
-		auto ndtv = frg::construct_n<void *>(getAllocator(), runtimeTlsMap->indices.size());
-		memset(ndtv, 0, sizeof(void *) * runtimeTlsMap->indices.size());
-		memcpy(ndtv, tcb_ptr->dtvPointers, sizeof(void *) * tcb_ptr->dtvSize);
-		frg::destruct_n(getAllocator(), tcb_ptr->dtvPointers, tcb_ptr->dtvSize);
-		tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
-		tcb_ptr->dtvPointers = ndtv;
+	{
+		frg::unique_lock lock{*runtimeTlsMapLock};
+
+		// We might need to reallocate the DTV.
+		if(object->tlsIndex >= tcb_ptr->dtvSize) {
+			auto ndtv = frg::construct_n<void *>(getAllocator(), runtimeTlsMap->indices.size());
+			memset(ndtv, 0, sizeof(void *) * runtimeTlsMap->indices.size());
+			memcpy(ndtv, tcb_ptr->dtvPointers, sizeof(void *) * tcb_ptr->dtvSize);
+			frg::destruct_n(getAllocator(), tcb_ptr->dtvPointers, tcb_ptr->dtvSize);
+			tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
+			tcb_ptr->dtvPointers = ndtv;
+		}
 	}
 
 	// We might need to fill in a new DTV entry.
@@ -1841,6 +1845,8 @@ void Loader::linkObjects(SharedObject *root) {
 }
 
 void Loader::_buildTlsMaps() {
+	frg::unique_lock lock{*runtimeTlsMapLock};
+
 	if(_isInitialLink) {
 		__ensure(runtimeTlsMap->initialPtr == 0);
 		__ensure(runtimeTlsMap->initialLimit == 0);

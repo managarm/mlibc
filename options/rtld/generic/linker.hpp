@@ -347,6 +347,7 @@ struct RuntimeTlsMap {
 	frg::vector<SharedObject *, MemoryAllocator> indices;
 };
 
+extern frg::manual_box<FutexLock> runtimeTlsMapLock;
 extern frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
 Tcb *allocateTcb();

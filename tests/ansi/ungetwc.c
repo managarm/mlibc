@@ -23,6 +23,7 @@ void test(int buffering) {
 	}
 
 	assert(ungetwc(L'x', f) == L'x');
+	assert(!feof(f));
 	assert(fgetwc(f) == L'x');
 
 	// Test pushing back the same character
@@ -33,10 +34,12 @@ void test(int buffering) {
 	}
 	assert(fgetwc(f) == WEOF);
 	assert(ungetwc(WEOF, f) == WEOF);
+	assert(feof(f));
 
 	// Even though the spec does not guarantee it, we should be able to
 	// ungetwc more than one character.
 	assert(ungetwc(L'x', f) == L'x');
+	assert(!feof(f));
 	assert(ungetwc(L'y', f) == L'y');
 	assert(fgetwc(f) == L'y');
 	assert(fgetwc(f) == L'x');

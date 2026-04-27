@@ -52,6 +52,7 @@ frg::manual_box<ObjectRepository> initialRepository;
 frg::manual_box<Scope> globalScope;
 
 frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
+frg::manual_box<FutexLock> runtimeTlsMapLock;
 
 // We use a small vector to avoid memory allocation for the default library paths
 frg::manual_box<frg::small_vector<frg::string_view, MLIBC_NUM_DEFAULT_LIBRARY_PATHS, MemoryAllocator>> libraryPaths;
@@ -358,6 +359,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		__ensure(!"sys_tcb_set() failed");
 	mlibc::tcb_available_flag = true;
 
+	runtimeTlsMapLock.initialize();
 	runtimeTlsMap.initialize();
 	libraryPaths.initialize(getAllocator());
 	preloads.initialize(getAllocator());

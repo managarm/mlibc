@@ -271,6 +271,10 @@ wint_t fgetwc_unlocked(mlibc::abstract_file *f) {
 		return WEOF;
 	}
 
+	// POSIX: If the EOF indicator is set, return WEOF.
+	if (f->__status_bits & __MLIBC_EOF_BIT)
+		return WEOF;
+
 	mbstate_t state = { };
 	size_t conversion_res = 0;
 	wchar_t wc = L'\0';
@@ -280,9 +284,11 @@ wint_t fgetwc_unlocked(mlibc::abstract_file *f) {
 		char c = '\0';
 		int err = f->read(&c, 1, &read);
 		if (err) {
+			f->__status_bits |= __MLIBC_ERROR_BIT;
 			errno = err;
 			return WEOF;
 		} else if (!read) {
+			f->__status_bits |= __MLIBC_EOF_BIT;
 			return WEOF;
 		}
 
@@ -318,6 +324,10 @@ wint_t ungetwc_unlocked(wint_t c, mlibc::abstract_file *f) {
 		if (ret == EOF)
 			return WEOF;
 	}
+
+	// POSIX: A successful call to ungetwc shall clear the EOF indicator for the stream.
+	if (encoding)
+		f->__status_bits &= ~__MLIBC_EOF_BIT;
 
 	return c;
 }
