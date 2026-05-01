@@ -275,6 +275,12 @@ private:
 
 frg::manual_box<Queue> globalQueue;
 
+extern "C" [[ gnu::visibility("default") ]] void __dlapi_postfork() {
+	globalQueue.destruct();
+	globalQueue.initialize();
+	fileTable = nullptr;
+}
+
 HelSimpleResult *parseSimple(void *&element) {
 	auto result = reinterpret_cast<HelSimpleResult *>(element);
 	element = (char *)element + sizeof(HelSimpleResult);
