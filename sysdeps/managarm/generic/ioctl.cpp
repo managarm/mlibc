@@ -650,6 +650,10 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		mlibc::infoLogger() << "mlibc: EVIOCGRAB is a no-op" << frg::endlog;
 		*result = 0;
 		return 0;
+	} else if (_IOC_TYPE(request) == 'E' && _IOC_NR(request) == _IOC_NR(EVIOCREVOKE)) {
+		mlibc::infoLogger() << "mlibc: EVIOCREVOKE is a no-op" << frg::endlog;
+		*result = 0;
+		return 0;
 	} else if (_IOC_TYPE(request) == 'E' && _IOC_NR(request) == _IOC_NR(EVIOCGPHYS(0))) {
 		// Returns the sysfs path of the device.
 		const char *s = "input0";
