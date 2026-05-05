@@ -231,5 +231,34 @@ int main() {
 	freeaddrinfo(res);
 	res = NULL;
 
+	hints = (struct addrinfo){0};
+	hints.ai_family = AF_INET;
+
+	ret = getaddrinfo("127.0.0.1", "80", &hints, &res);
+	assert(ret == 0);
+
+	int count = 0;
+	bool found_tcp = false;
+	bool found_udp = false;
+
+	for (struct addrinfo *p = res; p != NULL; p = p->ai_next) {
+		count++;
+		if (p->ai_socktype == SOCK_STREAM && p->ai_protocol == IPPROTO_TCP)
+			found_tcp = true;
+		if (p->ai_socktype == SOCK_DGRAM && p->ai_protocol == IPPROTO_UDP)
+			found_udp = true;
+
+		assert(p->ai_family == AF_INET);
+		struct sockaddr_in *sin = (struct sockaddr_in *)p->ai_addr;
+		assert(sin->sin_port == htons(80));
+	}
+
+	assert(count >= 2);
+	assert(found_tcp);
+	assert(found_udp);
+
+	freeaddrinfo(res);
+	res = NULL;
+
 	return 0;
 }
