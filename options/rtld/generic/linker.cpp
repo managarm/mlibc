@@ -1577,14 +1577,12 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 
 	// Checks if the symbol's version matches the desired version.
 	auto correctVersion = [&] (SymbolVersion candVersion) {
-		// Local version symbols shouldn't participate in symbol resolution.
-		// Only time .dynsym can contain a local version symbol is if it's
-		// undefined, so it should be discarded earlier.
-		__ensure(!candVersion.isLocal());
+		if (object->definedVersions.size())
+    		__ensure(!candVersion.isLocal());
 
 		// Caller requested default version, ...
 		// ... and this symbol matches.
-		if(!version && (candVersion.isDefault() || candVersion.isGlobal()))
+		if(!version && (candVersion.isDefault() || candVersion.isGlobal() || candVersion.isLocal()))
 			return true;
 		// ... but this symbol isn't the default.
 		if(!version)
@@ -1594,9 +1592,9 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 		// LLD prior to version 22, and binutils between versions 2.35 and 2.45
 		// produce a global version symbol for this case, while newer ones produce
 		// a local version symbol.
-		// In this case, accept either the global or default version.
+		// In this case, accept either the global, default, or local version.
 		if((version->isLocal() || version->isGlobal())
-				&& (candVersion.isGlobal() || candVersion.isDefault()))
+				&& (candVersion.isGlobal() || candVersion.isDefault() || candVersion.isLocal()))
 			return true;
 
 		// Otherwise, make sure the version is correct.
