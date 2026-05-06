@@ -57,20 +57,23 @@ int backtrace(void **buffer, int size) {
 
 	if (!libgccHandle) {
 		libgccHandle = dlopen("libgcc_s.so.1", RTLD_LAZY | RTLD_LOCAL);
-		if (!libgccHandle || libgccHandle.value() == nullptr) {
+		if (libgccHandle && libgccHandle.value()) {
+			unwindBacktrace = reinterpret_cast<UnwindBacktrace>(dlsym(libgccHandle.value(), "_Unwind_Backtrace"));
+			unwindGetIP = reinterpret_cast<UnwindGetIP>(dlsym(libgccHandle.value(), "_Unwind_GetIP"));
+
+			if (!unwindBacktrace || !unwindGetIP) {
+				mlibc::infoLogger() << "Failed to find unwind functions in libgcc_s.so.1: " << dlerror() << frg::endlog;
+				unwindBacktrace = nullptr;
+				unwindGetIP = nullptr;
+			}
+		} else {
 			auto error = dlerror();
 			mlibc::infoLogger() << "Failed to load libgcc_s.so.1: " << (error ? error : "") << frg::endlog;
-			return 0;
-		}
-
-		unwindBacktrace = reinterpret_cast<UnwindBacktrace>(dlsym(libgccHandle.value(), "_Unwind_Backtrace"));
-		unwindGetIP = reinterpret_cast<UnwindGetIP>(dlsym(libgccHandle.value(), "_Unwind_GetIP"));
-
-		if (!unwindBacktrace || !unwindGetIP) {
-			mlibc::infoLogger() << "Failed to find unwind functions in libgcc_s.so.1: " << dlerror() << frg::endlog;
-			return 0;
 		}
 	}
+
+	if (!unwindBacktrace || !unwindGetIP)
+		return 0;
 
 	UnwindState state{buffer, size};
 	unwindBacktrace(trace, &state);
