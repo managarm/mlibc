@@ -16,7 +16,7 @@ size_t __mlibc_cpu_alloc_size(int num_cpus) {
 }
 
 void __mlibc_cpu_zero(const size_t setsize, cpu_set_t *set) {
-	memset(set, 0, CPU_ALLOC_SIZE(setsize));
+	memset(set, 0, setsize);
 }
 
 void __mlibc_cpu_set(const int cpu, const size_t setsize, cpu_set_t *set) {
