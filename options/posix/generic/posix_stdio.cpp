@@ -150,7 +150,7 @@ FILE *popen(const char *command, const char *typestr) {
 		file->set_popen_pid(child);
 
 		if (cloexec == true) {
-			fcntl(file->fd(), F_SETFD, O_CLOEXEC);
+			fcntl(file->fd(), F_SETFD, FD_CLOEXEC);
 		}
 	}
 
