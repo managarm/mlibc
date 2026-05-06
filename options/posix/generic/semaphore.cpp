@@ -50,7 +50,7 @@ int sem_wait(sem_t *sem) {
 		} else {
 			unsigned int desired = (state - 1);
 			if (__atomic_compare_exchange_n(&sem->__mlibc_count, &state, desired, false,
-						__ATOMIC_RELAXED, __ATOMIC_RELAXED))
+						__ATOMIC_ACQUIRE, __ATOMIC_RELAXED))
 				return 0;
 		}
 	}
@@ -101,7 +101,7 @@ int sem_clockwait(sem_t *sem, clockid_t clockid, const struct timespec *abstime)
 		} else {
 			unsigned int desired = (state - 1);
 			if (__atomic_compare_exchange_n(
-			        &sem->__mlibc_count, &state, desired, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED
+			        &sem->__mlibc_count, &state, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED
 			    ))
 				return 0;
 		}
@@ -162,7 +162,7 @@ int sem_trywait(sem_t *sem) {
 		}
 
 		auto desired = state - 1;
-		if (__atomic_compare_exchange_n(&sem->__mlibc_count, &state, desired, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED)) {
+		if (__atomic_compare_exchange_n(&sem->__mlibc_count, &state, desired, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED)) {
 			return 0;
 		}
 	}
