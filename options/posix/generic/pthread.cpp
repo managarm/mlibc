@@ -644,7 +644,7 @@ int pthread_atfork(void (*prepare) (void), void (*parent) (void), void (*child) 
 
 	auto hand = frg::construct<Tcb::AtforkHandler>(getAllocator());
 	if (!hand)
-		return -1;
+		return ENOMEM;
 
 	hand->prepare = prepare;
 	hand->parent = parent;
