@@ -1351,7 +1351,7 @@ void doDestruct(SharedObject *object) {
 // --------------------------------------------------------
 
 RuntimeTlsMap::RuntimeTlsMap()
-: initialPtr{0}, initialLimit{0}, indices{getAllocator()} { }
+: initialPtr{0}, initialLimit{0}, indices{getAllocator()}, tcbs{getAllocator()} { }
 
 void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, MemoryAllocator> &objects, bool checkInitialized) {
 	// Initialize TLS segments that follow the static model.
@@ -1437,64 +1437,48 @@ Tcb *allocateTcb() {
 	memset(tcb_ptr->dtvPointers, 0, sizeof(void *) * runtimeTlsMap->indices.size());
 	for(size_t i = 0; i < runtimeTlsMap->indices.size(); ++i) {
 		auto object = runtimeTlsMap->indices[i];
-		if(object->tlsModel != TlsModel::initial)
-			continue;
-
-		if constexpr (tlsAboveTp) {
-			tcb_ptr->dtvPointers[i] = reinterpret_cast<char *>(tcb_ptr) + sizeof(Tcb) + object->tlsOffset;
-		} else {
-			tcb_ptr->dtvPointers[i] = reinterpret_cast<char *>(tcb_ptr) + object->tlsOffset;
+		if(object->tlsModel == TlsModel::initial) {
+			if constexpr (tlsAboveTp) {
+				tcb_ptr->dtvPointers[i] = reinterpret_cast<char *>(tcb_ptr) + sizeof(Tcb) + object->tlsOffset;
+			} else {
+				tcb_ptr->dtvPointers[i] = reinterpret_cast<char *>(tcb_ptr) + object->tlsOffset;
+			}
+		} else if(object->tlsModel == TlsModel::dynamic) {
+			auto buffer = getAllocator().allocate(object->tlsSegmentSize);
+			__ensure(!(reinterpret_cast<uintptr_t>(buffer) & (object->tlsAlignment - 1)));
+			memset(buffer, 0, object->tlsSegmentSize);
+			memcpy(buffer, object->tlsImagePtr, object->tlsImageSize);
+			tcb_ptr->dtvPointers[i] = buffer;
 		}
 	}
+
+	runtimeTlsMap->tcbs.push_back(tcb_ptr);
 
 	return tcb_ptr;
 }
 
 void *accessDtv(SharedObject *object) {
 	Tcb *tcb_ptr = mlibc::get_current_tcb();
-
-	{
-		frg::unique_lock lock{*runtimeTlsMapLock};
-
-		// We might need to reallocate the DTV.
-		if(object->tlsIndex >= tcb_ptr->dtvSize) {
-			auto ndtv = frg::construct_n<void *>(getAllocator(), runtimeTlsMap->indices.size());
-			memset(ndtv, 0, sizeof(void *) * runtimeTlsMap->indices.size());
-			memcpy(ndtv, tcb_ptr->dtvPointers, sizeof(void *) * tcb_ptr->dtvSize);
-			frg::destruct_n(getAllocator(), tcb_ptr->dtvPointers, tcb_ptr->dtvSize);
-			tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
-			tcb_ptr->dtvPointers = ndtv;
-		}
-	}
-
-	// We might need to fill in a new DTV entry.
-	if(!tcb_ptr->dtvPointers[object->tlsIndex]) {
-		__ensure(object->tlsModel == TlsModel::dynamic);
-
-		auto buffer = getAllocator().allocate(object->tlsSegmentSize);
-		__ensure(!(reinterpret_cast<uintptr_t>(buffer) & (object->tlsAlignment - 1)));
-		memset(buffer, 0, object->tlsSegmentSize);
-		memcpy(buffer, object->tlsImagePtr, object->tlsImageSize);
-		tcb_ptr->dtvPointers[object->tlsIndex] = buffer;
-
-		if (rtldConfig.debugVerbose) {
-			mlibc::infoLogger() << "rtld: accessDtv wrote tls image at " << buffer
-					<< ", size = 0x" << frg::hex_fmt{object->tlsSegmentSize} << frg::endlog;
-		}
-	}
-
-	return (void *)((char *)tcb_ptr->dtvPointers[object->tlsIndex] + TLS_DTV_OFFSET);
+	size_t size = __atomic_load_n(&tcb_ptr->dtvSize, __ATOMIC_ACQUIRE);
+	__ensure(object->tlsIndex < size);
+	void **pointers = __atomic_load_n(&tcb_ptr->dtvPointers, __ATOMIC_ACQUIRE);
+	void *ptr = pointers[object->tlsIndex];
+	__ensure(ptr);
+	return (void *)((char *)ptr + TLS_DTV_OFFSET);
 }
 
 void *tryAccessDtv(SharedObject *object) {
 	Tcb *tcb_ptr = mlibc::get_current_tcb();
 
-	if (object->tlsIndex >= tcb_ptr->dtvSize)
+	size_t size = __atomic_load_n(&tcb_ptr->dtvSize, __ATOMIC_ACQUIRE);
+	if (object->tlsIndex >= size)
 		return nullptr;
-	if (!tcb_ptr->dtvPointers[object->tlsIndex])
+	void **pointers = __atomic_load_n(&tcb_ptr->dtvPointers, __ATOMIC_ACQUIRE);
+	void *ptr = pointers[object->tlsIndex];
+	if (!ptr)
 		return nullptr;
 
-	return (void *)((char *)tcb_ptr->dtvPointers[object->tlsIndex] + TLS_DTV_OFFSET);
+	return (void *)((char *)ptr + TLS_DTV_OFFSET);
 }
 
 // --------------------------------------------------------
@@ -1937,6 +1921,50 @@ void Loader::_buildTlsMaps() {
 			}
 		}
 	}
+
+	size_t new_size = runtimeTlsMap->indices.size();
+
+	for (auto tcb : runtimeTlsMap->tcbs) {
+		if (tcb->didExit)
+			continue;
+
+		size_t size = __atomic_load_n(&tcb->dtvSize, __ATOMIC_ACQUIRE);
+		if (new_size > size) {
+			void **ndtv = frg::construct_n<void *>(getAllocator(), new_size);
+			void **pointers = __atomic_load_n(&tcb->dtvPointers, __ATOMIC_ACQUIRE);
+			memcpy(ndtv, pointers, sizeof(void *) * size);
+			memset(ndtv + size, 0, sizeof(void *) * (new_size - size));
+
+			for (size_t i = size; i < new_size; i++) {
+				auto object = runtimeTlsMap->indices[i];
+				if (object->tlsModel == TlsModel::dynamic) {
+					auto buffer = getAllocator().allocate(object->tlsSegmentSize);
+					__ensure(!(reinterpret_cast<uintptr_t>(buffer) & (object->tlsAlignment - 1)));
+					memset(buffer, 0, object->tlsSegmentSize);
+					memcpy(buffer, object->tlsImagePtr, object->tlsImageSize);
+					ndtv[i] = buffer;
+				} else if (object->tlsModel == TlsModel::initial) {
+					char *tls_ptr;
+					if constexpr (tlsAboveTp) {
+						tls_ptr = reinterpret_cast<char *>(tcb) + sizeof(Tcb) + object->tlsOffset;
+					} else {
+						tls_ptr = reinterpret_cast<char *>(tcb) + object->tlsOffset;
+					}
+					ndtv[i] = tls_ptr;
+
+					// Initialize the TLS segment for this thread as well.
+					memset(tls_ptr, 0, object->tlsSegmentSize);
+					memcpy(tls_ptr, object->tlsImagePtr, object->tlsImageSize);
+				}
+			}
+
+			// Note: We intentionally leak the old `dtvPointers` array here. Since other threads
+			// can concurrently access their own TCB's `dtvPointers` lock-free, freeing the old
+			// array immediately would lead to use-after-free races.
+			__atomic_store_n(&tcb->dtvPointers, ndtv, __ATOMIC_RELEASE);
+			__atomic_store_n(&tcb->dtvSize, new_size, __ATOMIC_RELEASE);
+		}
+	}
 }
 
 void Loader::initObjects(ObjectRepository *repository) {
@@ -1985,6 +2013,17 @@ void Loader::_scheduleInit(SharedObject *object) {
 	_initQueue.push(object);
 	object->onInitStack = false;
 }
+
+// TODO: TLSDESC relocations aren't aarch64/x86_64 specific
+#if defined(__aarch64__) || defined(__x86_64__)
+extern "C" void *__mlibcTlsdescStatic(void *);
+extern "C" void *__mlibcTlsdescDynamic(void *);
+
+struct TlsdescData {
+	uintptr_t tlsIndex;
+	uintptr_t addend;
+};
+#endif
 
 void Loader::_processRelocations(Relocation &rel) {
 	// copy and irelative relocations have to be performed after all other relocations
@@ -2092,6 +2131,53 @@ void Loader::_processRelocations(Relocation &rel) {
 		off += tls_offset + tlsOffsetFromTp;
 		rel.relocate(off);
 	} break;
+// TODO: TLSDESC relocations aren't aarch64/x86_64 specific, but require an assembly implementation
+// of the resolver functions
+#if defined(__aarch64__) || defined(__x86_64__)
+		case R_TLSDESC: {
+			size_t symValue = 0;
+			SharedObject *target = nullptr;
+
+			if (rel.symbol_index()) {
+				auto [sym, ver] = rel.object()->getSymbolByIndex(rel.symbol_index());
+				auto p = Scope::resolveGlobalOrLocal(*globalScope, rel.object()->localScope, sym.getString(), rel.object()->objectRts, 0, ver);
+
+				if (!p) {
+					if (ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK) {
+						mlibc::panicLogger() << "rtld: Unresolved TLSDESC for symbol "
+							<< sym.getString() << " in object " << rel.object()->name << frg::endlog;
+					}
+					target = nullptr;
+					symValue = 0;
+				} else {
+					target = p->object();
+					if (p->symbol())
+						symValue = p->symbol()->st_value;
+				}
+			} else {
+				target = rel.object();
+			}
+
+			if (!target) {
+				((uint64_t *)rel.destination())[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
+				((uint64_t *)rel.destination())[1] = 0;
+			} else if (target->tlsModel == TlsModel::initial) {
+				((uint64_t *)rel.destination())[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
+				uint64_t value = symValue + target->tlsOffset + tlsOffsetFromTp + rel.addend_norel();
+				((uint64_t *)rel.destination())[1] = value;
+			} else {
+				__ensure(target->tlsIndex < mlibc::get_current_tcb()->dtvSize);
+
+				// TODO: We should free this when the DSO gets destroyed
+				auto data = frg::construct<TlsdescData>(getAllocator());
+				data->tlsIndex = target->tlsIndex;
+				data->addend = symValue + rel.addend_norel();
+
+				((uint64_t *)rel.destination())[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescDynamic);
+				((uint64_t *)rel.destination())[1] = reinterpret_cast<uintptr_t>(data);
+			}
+		} break;
+#endif
 	default:
 		mlibc::panicLogger() << "Unexpected relocation type "
 				<< (void *) rel.type() << frg::endlog;
@@ -2194,12 +2280,6 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 	}
 }
 
-// TODO: TLSDESC relocations aren't aarch64/x86_64 specific
-#if defined(__aarch64__) || defined(__x86_64__)
-extern "C" void *__mlibcTlsdescStatic(void *);
-extern "C" void *__mlibcTlsdescDynamic(void *);
-#endif
-
 void Loader::_processLazyRelocations(SharedObject *object) {
 	if(object->globalOffsetTable == nullptr) {
 		__ensure(object->lazyRelocTableOffset == 0);
@@ -2276,9 +2356,12 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, sym.getString(), object->objectRts, 0, ver);
 
 				if (!p) {
-					__ensure(ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK);
-					mlibc::panicLogger() << "rtld: Unresolved TLSDESC for symbol "
-						<< sym.getString() << " in object " << object->name << frg::endlog;
+					if (ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK) {
+						mlibc::panicLogger() << "rtld: Unresolved TLSDESC for symbol "
+							<< sym.getString() << " in object " << object->name << frg::endlog;
+					}
+					target = nullptr;
+					symValue = 0;
 				} else {
 					target = p->object();
 					if (p->symbol())
@@ -2288,21 +2371,14 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				target = object;
 			}
 
-			__ensure(target);
-
-			if (target->tlsModel == TlsModel::initial) {
+			if (!target) {
+				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
+				((uint64_t *)rel_addr)[1] = 0;
+			} else if (target->tlsModel == TlsModel::initial) {
 				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
 				uint64_t value = symValue + target->tlsOffset + tlsOffsetFromTp + addend;
 				((uint64_t *)rel_addr)[1] = value;
 			} else {
-				struct TlsdescData {
-					uintptr_t tlsIndex;
-					uintptr_t addend;
-				};
-
-				// Access DTV for object to force the entry to be allocated and initialized
-				accessDtv(target);
-
 				__ensure(target->tlsIndex < mlibc::get_current_tcb()->dtvSize);
 
 				// TODO: We should free this when the DSO gets destroyed

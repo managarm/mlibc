@@ -13,11 +13,14 @@ __mlibcTlsdescStatic:
 .type __mlibcTlsdescDynamic,@function
 __mlibcTlsdescDynamic:
 	stp x1, x2, [sp, #-16]!
-	ldr x0, [x0, #8]
-	ldp x1, x2, [x0] // tlsIndex, addend
-	mrs x0, tpidr_el0 // tp
-	ldr x0, [x0, #-104] // tp->dtvPointers
-	ldr x0, [x0, x1, lsl 3] // [tlsIndex]
+	ldr x1, [x0, #8] // TlsdescData *
+	ldp x0, x2, [x1] // tlsIndex, addend
+
+	mrs x1, tpidr_el0 // tp
+	sub x1, x1, #104 // address of tp->dtvPointers
+	ldar x1, [x1] // load dtvPointers with acquire
+	ldr x0, [x1, x0, lsl 3] // dtvPointers[tlsIndex]
+
 	add x0, x0, x2 // + addend
 	mrs x1, tpidr_el0 // tp
 	sub x0, x0, x1 // result - tp
