@@ -26,7 +26,7 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 	int ptmx_fd;
 	if(int e = mlibc::sysdep<Open>("/dev/ptmx", O_RDWR | O_NOCTTY, 0, &ptmx_fd); e) {
 		errno = e;
-		goto fail;
+		goto fail_noclose;
 	}
 
 	char spath[32];
@@ -54,6 +54,7 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 
 fail:
 	mlibc::sysdep<Close>(ptmx_fd);
+fail_noclose:
 	return -1;
 }
 
