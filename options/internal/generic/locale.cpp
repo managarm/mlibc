@@ -773,6 +773,9 @@ char *nl_langinfo_l(nl_item item, localeinfo * loc) {
 	auto l = reinterpret_cast<localeinfo *>(loc);
 
 	auto category = item >> 16;
+	auto item_num = item & 0xFFFF;
+	if (item_num == 0xFFFF && category != LC_ALL)
+		return l->getCategoryLocaleName(category).data();
 
 	switch(item) {
 		case CODESET:

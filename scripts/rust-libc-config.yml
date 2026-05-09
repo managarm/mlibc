@@ -416,6 +416,8 @@ ignored_macros:
   - "no_argument"
   - "required_argument"
   - "optional_argument"
+  - "_NL_LOCALE_NAME"
+  - "NL_LOCALE_NAME"
   # DO NOT REMOVE: mlibc internals
   - "MLIBC_UNIMPLEMENTED"
   - "MLIBC_MISSING_SYSDEP"

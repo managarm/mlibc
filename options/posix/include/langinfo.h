@@ -14,6 +14,11 @@ extern "C" {
 char *nl_langinfo(nl_item __item);
 char *nl_langinfo_l(nl_item __item, locale_t __loc);
 
+#define _NL_LOCALE_NAME(category) ((category) << 16 | 0xFFFF)
+#if defined(_GNU_SOURCE)
+#define NL_LOCALE_NAME(category) _NL_LOCALE_NAME(category)
+#endif /* defined(_GNU_SOURCE) */
+
 #endif /* !__MLIBC_ABI_ONLY */
 
 #ifdef __cplusplus
