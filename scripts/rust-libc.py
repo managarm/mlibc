@@ -29,7 +29,6 @@ import yaml
 from clang.cindex import Cursor, CursorKind, TokenKind, TypeKind
 from dataclasses import dataclass
 
-dry_run = True
 errors_emitted = 0
 
 
@@ -40,11 +39,6 @@ def log_err(prefix, msg):
         f"{colorama.Fore.RED}{prefix}{colorama.Style.RESET_ALL}: {msg}", file=sys.stderr
     )
     errors_emitted += 1
-
-
-def emit(msg):
-    if not dry_run:
-        print(msg)
 
 
 def no_system_includes(cursor, level):
@@ -106,7 +100,7 @@ class Type:
             case ["struct", x, *_] if x in config["force_local_type"]:
                 return prefix + x
             case ["struct", x, *_]:
-                return f"{prefix} crate::{x}"
+                return f"{prefix}crate::{x}"
             case ["int", *_]:
                 return prefix + "c_int"
             case ["unsigned", "char", *_]:
@@ -265,13 +259,17 @@ class State:
     structs = []
     variables = []
 
+    decorated_structs_out = []
+    undecorated_structs_out = []
+    functions_out = []
+    types_out = []
+    constants_out = []
+    enums_out = []
+
 
 @dataclass
 class RustBindingGenerator:
     config: dict
-    in_function_block = False
-    in_struct_block = False
-    in_union_block = False
 
     def handle_macro(self, cursor, gen, state):
         def is_num(s):
@@ -304,6 +302,7 @@ class RustBindingGenerator:
                     i += 1
                 elif gen[i].kind == TokenKind.PUNCTUATION and gen[i].spelling == "-":
                     is_unsigned = False
+                    is_negative = True
                     i += 1
                 elif gen[i].kind in (
                     TokenKind.LITERAL,
@@ -353,7 +352,7 @@ class RustBindingGenerator:
                     if cursor.displayname in config["force_macro_type"][name]:
                         c_type = name
                         break
-                emit(
+                state.constants_out.append(
                     "pub const {}: {} = {}{};".format(
                         cursor.displayname,
                         c_type,
@@ -363,12 +362,11 @@ class RustBindingGenerator:
                 )
                 state.macros.append(cursor.displayname)
 
-    def indent(self, level=0):
-        if self.in_function_block or self.in_struct_block or self.in_union_block:
-            return "\t" * (level + 1)
-        return ""
+    def indent(self, level):
+        return "    " * level
 
-    def handle_field_decl(self, cursor, c, inline_defs):
+    def handle_field_decl(self, cursor, c, inline_defs, level) -> str:
+        out = ""
         tc = Type(c)
         assert tc.is_valid()
         name = str(tc)
@@ -383,28 +381,30 @@ class RustBindingGenerator:
                     name = (
                         detail["rename-to"] if "rename-to" in detail else c.displayname
                     )
-                    emit(
-                        self.indent(1)
-                        + f"pub {Type.escape_name(name)}: {detail['type']},"
+                    out += (
+                        self.indent(level)
+                        + f"pub {Type.escape_name(name)}: {detail['type']},\n"
                     )
-                    if inline_defs[-1].get_usr() == c.type.get_declaration().get_usr():
+                    if inline_defs and inline_defs[-1].get_usr() == c.type.get_declaration().get_usr():
                         inline_defs.pop()
-                    return
+                    return out
                 elif "replace" in detail:
                     for member in detail["replace"]:
-                        emit(
-                            self.indent(1)
-                            + "pub {}: {},".format(member["name"], member["type"])
+                        out += (
+                            self.indent(level)
+                            + "pub {}: {},\n".format(member["name"], member["type"])
                         )
-                    return
+                    return out
                 else:
                     log_err(
                         "invalid configuration",
                         f"missing info for override for struct '{c.displayname}'",
                     )
-        emit(self.indent(1) + f"pub {Type.escape_name(c.displayname)}: {name},")
+        out += (self.indent(level) + f"pub {Type.escape_name(c.displayname)}: {name},\n")
+        return out
 
-    def handle_data_structs(self, cursor, state, level=0):
+    def handle_data_structs(self, cursor, state, level=0) -> str:
+        out: str = ""
         inline_defs = []
 
         children = [i for i in cursor.get_children()]
@@ -413,74 +413,75 @@ class RustBindingGenerator:
             not children
             and Type.cursor_name(cursor) not in config["forced_empty_structs"]
         ):
-            return
-
-        if self.in_struct_block and cursor.kind != CursorKind.STRUCT_DECL:
-            emit("}")
-            self.in_struct_block = False
-        if self.in_union_block and cursor.kind != CursorKind.UNION_DECL:
-            emit("}")
-            self.in_union_block = False
+            return out
 
         match cursor.kind:
             case CursorKind.STRUCT_DECL:
-                if not self.in_struct_block:
-                    emit("s! {")
-                    self.in_struct_block = True
                 packed = False
                 for m in cursor.get_children():
                     if CursorKind.PACKED_ATTR == m.kind:
                         packed = True
                         break
+                struct_name = Type.cursor_name(cursor)
                 if packed:
-                    emit(self.indent() + "#[repr(packed)]")
-                emit(self.indent() + f"pub struct {Type.cursor_name(cursor)} {{")
-                state.structs.append(Type.cursor_name(cursor))
+                    out += (self.indent(level) + "#[repr(packed)]\n")
+                if "force_struct_extra_traits" in config and struct_name in config["force_struct_extra_traits"]:
+                    for l in config["force_struct_extra_traits"][struct_name]:
+                        out += (self.indent(level) + l + "\n")
+                out += (self.indent(level) + f"pub struct {struct_name} {{\n")
+                state.structs.append(struct_name)
             case CursorKind.UNION_DECL:
-                if not self.in_union_block:
-                    emit("s_no_extra_traits! {")
-                    self.in_union_block = True
-                emit("#[repr(C)]")
-                emit(self.indent() + f"pub union {Type.cursor_name(cursor)} {{")
+                out += ("#[repr(C)]\n")
+                out += (self.indent(level) + f"pub union {Type.cursor_name(cursor)} {{\n")
                 state.structs.append(Type.cursor_name(cursor))
             case CursorKind.ENUM_DECL:
                 if cursor.type.get_declaration().is_anonymous() and level == 1:
                     # ignore anonymous enums in the global scope
-                    return
-                emit(self.indent() + f"pub enum {Type.cursor_name(cursor)} {{")
+                    return out
+                out += (self.indent(level) + f"pub enum {Type.cursor_name(cursor)} {{\n")
                 state.structs.append(Type.cursor_name(cursor))
             case _:
                 log_err("unhandled data struct kind", f"{cursor.kind}")
 
         if Type.cursor_name(cursor) in config["force_struct_zero_fill"]:
             struct_size = cursor.type.get_size()
-            emit("\t\t#[doc(hidden)]")
-            emit(f"\t\tsize: [u8; {struct_size}],")
+            out += (self.indent(level + 1) + "#[doc(hidden)]\n")
+            out += (self.indent(level + 1) + f"size: [u8; {struct_size}],\n")
         else:
             for c in children:
                 match c.kind:
                     case CursorKind.FIELD_DECL:
-                        self.handle_field_decl(cursor, c, inline_defs)
+                        out += self.handle_field_decl(cursor, c, inline_defs, level + 1)
                     case CursorKind.STRUCT_DECL | CursorKind.UNION_DECL:
                         inline_defs.append(c)
                     case CursorKind.ENUM_CONSTANT_DECL:
-                        emit(f"{c.displayname} = {c.enum_value},")
+                        out += (f"{c.displayname} = {c.enum_value},\n")
                     case CursorKind.PACKED_ATTR:
                         pass
                     case _:
                         log_err(f"unhandled {cursor.kind} member", f"kind {c.kind}")
-        emit(self.indent() + "}")
+        if Type.cursor_name(cursor) in config["force_struct_member_type"]:
+            for field in config["force_struct_member_type"][Type.cursor_name(cursor)]:
+                if not field.get("append", False):
+                    continue
+                out += (
+                    self.indent(level + 1)
+                    + f"pub {Type.escape_name(field["name"])}: {field['type']},\n"
+                )
+        out += (self.indent(level) + "}\n")
 
         if cursor.kind == CursorKind.ENUM_DECL:
-            emit(f"impl Copy for {Type.cursor_name(cursor)} " + "{}")
-            emit(f"impl Clone for {Type.cursor_name(cursor)} " + "{")
-            emit(f"\tfn clone(&self) -> {Type.cursor_name(cursor)} {{")
-            emit("\t\t*self")
-            emit("\t}")
-            emit("}")
+            out += (self.indent(level) + f"impl Copy for {Type.cursor_name(cursor)} " + "{}\n")
+            out += (self.indent(level) + f"impl Clone for {Type.cursor_name(cursor)} " + "{\n")
+            out += (self.indent(level + 1) + f"fn clone(&self) -> {Type.cursor_name(cursor)} {{\n")
+            out += (self.indent(level + 2) + "*self\n")
+            out += (self.indent(level + 1) + "}\n")
+            out += (self.indent(level) + "}\n")
 
         for s in inline_defs:
-            self.handle_data_structs(s, state, level + 1)
+            out = self.handle_data_structs(s, state, level) + '\n' + out
+
+        return out.rstrip('\n')
 
     def is_ignored(self, typename, ignorelist, name):
         if typename == "macros" and name.startswith("_") and name.endswith("_H"):
@@ -520,16 +521,6 @@ class RustBindingGenerator:
         if filter_pred(cursor, level):
             t = Type(cursor)
 
-            if self.in_struct_block and cursor.kind != CursorKind.STRUCT_DECL:
-                emit("}")
-                self.in_struct_block = False
-            if self.in_union_block and cursor.kind != CursorKind.STRUCT_DECL:
-                emit("}")
-                self.in_union_block = False
-            if self.in_function_block and cursor.kind != CursorKind.FUNCTION_DECL:
-                emit("}")
-                self.in_function_block = False
-
             match cursor.kind:
                 case CursorKind.MACRO_DEFINITION:
                     if not self.is_ignored("macros", [], cursor.displayname):
@@ -539,17 +530,23 @@ class RustBindingGenerator:
                     if self.is_ignored("structs", state.structs, cursor.displayname):
                         return
 
-                    self.handle_data_structs(cursor, state, level)
+                    generated = self.handle_data_structs(cursor, state, level)
+                    if generated:
+                        state.decorated_structs_out.append(generated)
                 case CursorKind.UNION_DECL:
                     if self.is_ignored("unions", state.structs, cursor.displayname):
                         return
 
-                    self.handle_data_structs(cursor, state, level)
+                    generated = self.handle_data_structs(cursor, state, level)
+                    if generated:
+                        state.undecorated_structs_out.append(generated)
                 case CursorKind.ENUM_DECL:
                     if self.is_ignored("enums", state.structs, cursor.displayname):
                         return
 
-                    self.handle_data_structs(cursor, state, level)
+                    generated = self.handle_data_structs(cursor, state, level)
+                    if generated:
+                        state.enums_out.append(generated)
                 case CursorKind.TYPEDEF_DECL:
                     if not self.is_ignored("types", state.types, cursor.displayname):
                         underlying = Type(cursor, cursor.underlying_typedef_type)
@@ -561,7 +558,7 @@ class RustBindingGenerator:
                             level,
                         )
                         if cursor.displayname not in state.structs:
-                            emit(f"pub type {cursor.displayname} = {underlying};")
+                            state.types_out.append(f"pub type {cursor.displayname} = {underlying};")
                         state.types.append(cursor.displayname)
                 case CursorKind.FUNCTION_DECL:
                     if self.is_ignored("functions", state.functions, cursor.spelling):
@@ -580,11 +577,9 @@ class RustBindingGenerator:
                         args.append("...")
                     arg_str = ", ".join(args)
                     ret_type = str(Type(cursor, cursor.type.get_result()))
-                    if not self.in_function_block:
-                        emit('extern "C" {')
-                        self.in_function_block = True
-                    emit(
-                        f"\tpub fn {cursor.spelling}({arg_str})"
+                    state.functions_out.append(
+                        self.indent(level)
+                        + f"pub fn {cursor.spelling}({arg_str})"
                         + (f" -> {ret_type};" if ret_type != "c_void" else ";")
                     )
                     state.functions.append(cursor.spelling)
@@ -615,19 +610,7 @@ class RustBindingGenerator:
                     )
 
                     if t.is_valid():
-                        emit(f"type '{t}' canonical '{t.canonical}'")
-
-        if level == 0 and self.in_struct_block:
-            emit("}")
-            self.in_struct_block = False
-
-        if level == 0 and self.in_union_block:
-            emit("}")
-            self.in_union_block = False
-
-        if level == 0 and self.in_function_block:
-            emit("}")
-            self.in_function_block = False
+                        print(f"type '{t}' canonical '{t.canonical}'")
 
 
 def parse(file: pathlib.Path, base_dir: pathlib.Path):
@@ -654,8 +637,6 @@ def parse(file: pathlib.Path, base_dir: pathlib.Path):
             exit(errors_emitted + 1)
 
         parser = RustBindingGenerator(config)
-        emit("")
-        print(f"// {tu.spelling.removeprefix(str(base_dir)).removeprefix('/')}")
         parser.from_cursor(base_dir, file, tu.cursor, no_system_includes)
 
 
@@ -682,16 +663,24 @@ if __name__ == "__main__":
     argparser.add_argument("-n", dest="dry_run", action="store_true")
     argparser.add_argument("path")
     argparser.add_argument("gcc")
+    argparser.add_argument("-c", dest="configs", type=argparse.FileType(), nargs="+", help="Configuration files to use")
     argparser.add_argument("file", nargs="?")
 
     args = argparser.parse_args()
 
-    dry_run = args.dry_run
-
     colorama.just_fix_windows_console()
 
-    with io.open(os.path.join(os.path.dirname(__file__), "rust-libc-config.yml"), "r") as f:
-        config = yaml.load(f, yaml.CSafeLoader)
+    config = yaml.load(args.configs.pop(0), yaml.CSafeLoader)
+
+    for f in args.configs:
+        ignores = yaml.load(f, yaml.CSafeLoader)
+
+        for l in ignores:
+            if ignores[l]:
+                if l in config:
+                    config[l].extend(ignores[l])
+                else:
+                    config[l] = ignores[l]
 
     path = pathlib.Path(args.path)
 
@@ -705,9 +694,6 @@ if __name__ == "__main__":
             config["includes"] = list()
     config["includes"].insert(0, gcc_include_path)
 
-    with io.open(os.path.join(os.path.dirname(__file__), "rust-libc-header.rs"), "r") as f:
-        emit(f.read())
-
     state = State()
 
     if not args.file:
@@ -718,5 +704,18 @@ if __name__ == "__main__":
 
     if errors_emitted > 0:
         print(f"\n{errors_emitted} errors emitted")
+
+    if not args.dry_run:
+        with io.open(os.path.join(os.path.dirname(__file__), "rust-libc-bindings.rs.in"), "r") as f:
+            out = f.read()
+            out = out.replace('@BINDINGS_TYPES@', '\n'.join(state.types_out))
+            out = out.replace('@BINDINGS_CONSTANTS@\n', '\n'.join(state.constants_out))
+            out = out.replace('@BINDINGS_STRUCTS_UNDECORATED@\n', '\n'.join(state.undecorated_structs_out))
+            out = out.replace('@BINDINGS_STRUCTS_DECORATED@', '\n'.join(state.decorated_structs_out))
+            out = out.replace('@BINDINGS_FUNCTIONS@', '\n'.join(state.functions_out))
+            out = out.replace('@BINDINGS_ENUMS@', '\n'.join(state.enums_out))
+            print("// This file is autogenerated!")
+            print("// All changes made will be lost (eventually)!")
+            print(out)
 
     exit(errors_emitted)
