@@ -296,11 +296,11 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 
 	for (int i = 0, k = 0; i < addr_count; i++) {
 		for (int j = 0; j < serv_count; j++, k++) {
-			out[i].ai.ai_family = addr_buf.buf[i].family;
-			out[i].ai.ai_socktype = serv_buf[j].socktype;
-			out[i].ai.ai_protocol = serv_buf[j].protocol;
-			out[i].ai.ai_flags = flags;
-			out[i].ai.ai_addr = (struct sockaddr *) &out[i].sa;
+			out[k].ai.ai_family = addr_buf.buf[i].family;
+			out[k].ai.ai_socktype = serv_buf[j].socktype;
+			out[k].ai.ai_protocol = serv_buf[j].protocol;
+			out[k].ai.ai_flags = flags;
+			out[k].ai.ai_addr = (struct sockaddr *) &out[k].sa;
 
 			// If `node` is not null, and if requested by the AI_CANONNAME flag,
 			// the `ai_canonname` field of the first returned addrinfo structure
@@ -308,30 +308,30 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 			// corresponding to the node argument. If the canonical name is not available,
 			// then the ai_canonname field shall refer to the `node` argument or a string with
 			// the same contents.
-			if (node && (flags & AI_CANONNAME) && i == 0 && !canon.empty())
-				out[i].ai.ai_canonname = canon.data();
+			if (node && (flags & AI_CANONNAME) && k == 0 && !canon.empty())
+				out[k].ai.ai_canonname = canon.data();
 
-			if(i)
-				out[i - 1].ai.ai_next = &out[i].ai;
+			if(k)
+				out[k - 1].ai.ai_next = &out[k].ai;
 
 			switch (addr_buf.buf[i].family) {
 				case AF_INET:
-					out[i].ai.ai_addrlen = sizeof(struct sockaddr_in);
-					out[i].sa.sin.sin_port = htons(serv_buf[j].port);
-					out[i].sa.sin.sin_family = AF_INET;
-					memcpy(&out[i].sa.sin.sin_addr, addr_buf.buf[i].addr, 4);
+					out[k].ai.ai_addrlen = sizeof(struct sockaddr_in);
+					out[k].sa.sin.sin_port = htons(serv_buf[j].port);
+					out[k].sa.sin.sin_family = AF_INET;
+					memcpy(&out[k].sa.sin.sin_addr, addr_buf.buf[i].addr, 4);
 					break;
 				case AF_INET6:
-					out[i].ai.ai_addrlen = sizeof(struct sockaddr_in6);
-					out[i].sa.sin6.sin6_port = htons(serv_buf[j].port);
-					out[i].sa.sin6.sin6_family = AF_INET6;
-					memcpy(&out[i].sa.sin6.sin6_addr, addr_buf.buf[i].addr, 16);
+					out[k].ai.ai_addrlen = sizeof(struct sockaddr_in6);
+					out[k].sa.sin6.sin6_port = htons(serv_buf[j].port);
+					out[k].sa.sin6.sin6_family = AF_INET6;
+					memcpy(&out[k].sa.sin6.sin6_addr, addr_buf.buf[i].addr, 16);
 					break;
 			}
 		}
 	}
-	if (addr_count)
-		out[addr_count - 1].ai.ai_next = nullptr;
+	if (addr_count > 0 && serv_count > 0)
+		out[addr_count * serv_count - 1].ai.ai_next = nullptr;
 
 	if (canon.size())
 		canon.detach();
