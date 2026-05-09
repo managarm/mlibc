@@ -12,6 +12,7 @@
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>
 #include <frg/array.hpp>
+#include <frg/bitops.hpp>
 #include <frg/spinlock.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
@@ -960,17 +961,15 @@ int pthread_barrier_init(pthread_barrier_t *__restrict barrier,
 }
 
 int pthread_barrier_destroy(pthread_barrier_t *barrier) {
-	// Wait until there are no threads still using the barrier.
-	unsigned inside = 0;
-	do {
-		unsigned expected = __atomic_load_n(&barrier->__mlibc_inside, __ATOMIC_RELAXED);
+	while (true) {
+		unsigned expected = __atomic_load_n(&barrier->__mlibc_inside, __ATOMIC_ACQUIRE);
 		if (expected == 0)
 			break;
 
 		int e = mlibc::sysdep<FutexWait>((int *)&barrier->__mlibc_inside, expected, nullptr);
 		if (e != 0 && e != EAGAIN && e != EINTR)
 			mlibc::panicLogger() << "mlibc: sys_futex_wait() returned error " << e << frg::endlog;
-	} while (inside > 0);
+	}
 
 	memset(barrier, 0, sizeof *barrier);
 	return 0;
@@ -981,45 +980,67 @@ int pthread_barrier_wait(pthread_barrier_t *barrier) {
 		mlibc::panicLogger() << "mlibc: unsupported pthread_barrier_t flags" << frg::endlog;
 
 	// inside is incremented on entry and decremented on exit.
-	// This is used to synchronise with pthread_barrier_destroy, to ensure that a thread doesn't pass
-	// the barrier and immediately destroy its state while other threads still rely on it.
-
+	// This is used to synchronise with pthread_barrier_destroy, to ensure that a thread doesn't
+	// pass the barrier and immediately destroy its state while other threads still rely on it.
 	__atomic_fetch_add(&barrier->__mlibc_inside, 1, __ATOMIC_ACQUIRE);
 
-	auto leave = [&](){
+	auto leave = [&]() {
 		unsigned inside = __atomic_sub_fetch(&barrier->__mlibc_inside, 1, __ATOMIC_RELEASE);
 		if (inside == 0)
 			mlibc::sysdep<FutexWake>((int *)&barrier->__mlibc_inside, true);
 	};
 
-	unsigned seq = __atomic_load_n(&barrier->__mlibc_seq, __ATOMIC_ACQUIRE);
+	unsigned int count = barrier->__mlibc_count;
+	unsigned int gen_shift = frg::ceil_log2(count);
+	unsigned int mask = (gen_shift < 32) ? ((1U << gen_shift) - 1) : ~0U;
+
+	unsigned int old = __atomic_load_n(&barrier->__mlibc_waiting, __ATOMIC_RELAXED);
 
 	while (true) {
-		unsigned expected = __atomic_load_n(&barrier->__mlibc_waiting, __ATOMIC_RELAXED);
-		bool swapped = __atomic_compare_exchange_n(&barrier->__mlibc_waiting, &expected, expected + 1, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE);
+		unsigned int gen = (gen_shift < 32) ? (old >> gen_shift) : 0;
+		unsigned int waiters = old & mask;
 
-		if (swapped) {
-			if (expected + 1 == barrier->__mlibc_count) {
-				// We were the last thread to hit the barrier. Reset waiters and wake the others.
-				__atomic_fetch_add(&barrier->__mlibc_seq, 1, __ATOMIC_ACQUIRE);
-				__atomic_store_n(&barrier->__mlibc_waiting, 0, __ATOMIC_RELEASE);
-
+		if (waiters + 1 == count) {
+			// Last thread of the generation.
+			unsigned int next_gen_start = (gen + 1) << gen_shift;
+			if (__atomic_compare_exchange_n(
+			        &barrier->__mlibc_waiting,
+			        &old,
+			        next_gen_start,
+			        true,
+			        __ATOMIC_ACQ_REL,
+			        __ATOMIC_RELAXED
+			    )) {
+				// Update the sequence number to match the new generation.
+				// This acts as the signal for all threads in the current generation to leave.
+				__atomic_store_n(&barrier->__mlibc_seq, gen + 1, __ATOMIC_RELEASE);
 				mlibc::sysdep<FutexWake>((int *)&barrier->__mlibc_seq, true);
-
 				leave();
 				return PTHREAD_BARRIER_SERIAL_THREAD;
 			}
-
-			while (true) {
-				int e = mlibc::sysdep<FutexWait>((int *)&barrier->__mlibc_seq, seq, nullptr);
-				if (e != 0 && e != EAGAIN && e != EINTR)
-					mlibc::panicLogger() << "mlibc: sys_futex_wait() returned error " << e << frg::endlog;
-
-				unsigned newSeq = __atomic_load_n(&barrier->__mlibc_seq, __ATOMIC_ACQUIRE);
-				if (newSeq > seq) {
-					leave();
-					return 0;
+		} else {
+			if (__atomic_compare_exchange_n(
+			        &barrier->__mlibc_waiting,
+			        &old,
+			        old + 1,
+			        true,
+			        __ATOMIC_ACQ_REL,
+			        __ATOMIC_RELAXED
+			    )) {
+				while (true) {
+					unsigned int current_seq =
+					    __atomic_load_n(&barrier->__mlibc_seq, __ATOMIC_ACQUIRE);
+					if ((int)(current_seq - gen) > 0)
+						break;
+					int e = mlibc::sysdep<FutexWait>(
+					    (int *)&barrier->__mlibc_seq, current_seq, nullptr
+					);
+					if (e != 0 && e != EAGAIN && e != EINTR)
+						mlibc::panicLogger()
+						    << "mlibc: sys_futex_wait() returned error " << e << frg::endlog;
 				}
+				leave();
+				return 0;
 			}
 		}
 	}
