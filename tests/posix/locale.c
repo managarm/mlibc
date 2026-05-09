@@ -53,6 +53,9 @@ int main() {
 	locale = setlocale(LC_ALL, "C");
 	assert(locale && strlen(locale));
 
+	char *locname = nl_langinfo(NL_LOCALE_NAME(LC_NUMERIC));
+	assert(!strcmp(locname, "C"));
+
 	char *decimal_point = nl_langinfo_l(DECIMAL_POINT, german);
 	assert(!strcmp(",", decimal_point));
 	char *thousands_sep = nl_langinfo_l(THOUSEP, german);
@@ -174,6 +177,9 @@ int main() {
 	locale = setlocale(LC_ALL, "de_DE");
 	assert(locale && strlen(locale));
 
+	locname = nl_langinfo(NL_LOCALE_NAME(LC_NUMERIC));
+	assert(!strcmp(locname, "de_DE"));
+
 	thousands_sep = nl_langinfo(THOUSEP);
 	assert(!strcmp(".", thousands_sep));
 	decimal_point = nl_langinfo(DECIMAL_POINT);
@@ -197,6 +203,9 @@ int main() {
 
 	locale = setlocale(LC_NUMERIC, "C");
 	assert(locale && strlen(locale));
+
+	locname = nl_langinfo(NL_LOCALE_NAME(LC_NUMERIC));
+	assert(!strcmp(locname, "C"));
 
 	thousands_sep = nl_langinfo(THOUSEP);
 	assert(!strcmp("", thousands_sep));
