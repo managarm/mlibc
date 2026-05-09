@@ -1,5 +1,5 @@
-#ifndef _STDINT_H
-#define _STDINT_H
+#ifndef _INTTYPES_H
+#define _INTTYPES_H
 
 #include <stdint.h>
 #include <bits/wchar_t.h>
@@ -205,4 +205,4 @@ uintmax_t wcstoumax(const wchar_t *__restrict __string, wchar_t **__restrict __e
 }
 #endif
 
-#endif /* _STDINT_H */
+#endif /* _INTTYPES_H */

@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <sched.h>
+#include <string.h>
 
 #define SET_SIZE 15
 
@@ -22,6 +23,21 @@ int main() {
 	assert(!CPU_ISSET_S(11, setsize, set));
 
 	CPU_FREE(set);
+
+	// Regression test: CPU_ZERO_S should clear the entire allocated size.
+	int large_num_cpus = 1024;
+	cpu_set_t *large_set = CPU_ALLOC(large_num_cpus);
+	size_t large_setsize = CPU_ALLOC_SIZE(large_num_cpus);
+
+	memset(large_set, 0xFF, large_setsize);
+	CPU_ZERO_S(large_setsize, large_set);
+
+	unsigned char *ptr = (unsigned char *)large_set;
+	for (size_t i = 0; i < large_setsize; i++) {
+		assert(ptr[i] == 0);
+	}
+
+	CPU_FREE(large_set);
 
 	return 0;
 }
