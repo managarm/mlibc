@@ -1,6 +1,7 @@
 #include <frg/allocation.hpp>
 #include <frg/hash_map.hpp>
 #include <frg/scope_exit.hpp>
+#include <frg/safe_int.hpp>
 #include <frg/vector.hpp>
 #include <locale.h>
 #include <smarter.hpp>
@@ -338,6 +339,9 @@ void openLocaleDatabase() {
 		return;
 
 	auto window = smarter::allocate_shared<file_window>(getAllocator(), "/usr/lib/locale/locale-archive");
+	if (window->size() < sizeof(LocaleArchive::Header))
+		return;
+
 	LocaleArchive::Header *header = static_cast<LocaleArchive::Header *>(window->get());
 	if (header->magic != LocaleArchive::HEADER_MAGIC)
 		return;
@@ -345,30 +349,60 @@ void openLocaleDatabase() {
 	localeArchive = std::move(window);
 }
 
-frg::optional<off_t> findLocaleRecord(frg::string_view  name) {
+frg::optional<off_t> findLocaleRecord(frg::string_view name) {
 	__ensure(localeArchive);
 
-	auto header = static_cast<LocaleArchive::Header *>(localeArchive->get());
-	if (header->namehash_size <= 2)
+	if (localeArchive->size() < sizeof(LocaleArchive::Header))
 		return frg::null_opt;
-	auto namehashtab = reinterpret_cast<LocaleArchive::NameHashEntry *>((uint8_t *) localeArchive->get() + header->namehash_offset);
+
+	auto header = static_cast<LocaleArchive::Header *>(localeArchive->get());
+
+	size_t namehash_total;
+	if (!frg::checked_mul(sizeof(LocaleArchive::NameHashEntry), size_t{header->namehash_size}, namehash_total))
+		return frg::null_opt;
+
+	if (header->namehash_size <= 2
+	    || header->namehash_offset > localeArchive->size()
+	    || namehash_total > (localeArchive->size() - header->namehash_offset))
+		return frg::null_opt;
+
+	auto namehashtab = frg::span<LocaleArchive::NameHashEntry>{
+	    reinterpret_cast<LocaleArchive::NameHashEntry *>(
+	        (std::byte *)localeArchive->get() + header->namehash_offset
+	    ),
+	    header->namehash_size
+	};
 
 	auto parsedName = parseLocaleName(name);
 	auto list = buildLocaleList(parsedName);
 
 	for (auto e : list) {
-		auto hash = nameHashVal<uint32_t>(e.data(), e.size());
+		auto hash = nameHashVal<uint32_t>({e.data(), e.size()});
 		auto idx = hash % header->namehash_size;
 		auto incr = 1 + hash % (header->namehash_size - 2);
 
-		while(true) {
-			if (namehashtab[idx].name_offset == 0)
+		while (true) {
+			auto current_entry_off = namehashtab[idx].name_offset;
+			if (current_entry_off == 0)
 				break;
 
-			auto current_entry_name = (char *) localeArchive->get() + namehashtab[idx].name_offset;
+			if (localeArchive->size() <= current_entry_off)
+				return frg::null_opt;
 
-			if (namehashtab[idx].hashval == hash && !strcmp(e.data(), current_entry_name))
-				return namehashtab[idx].locrec_offset ? frg::optional<off_t>{namehashtab[idx].locrec_offset} : frg::null_opt;
+			auto current_entry_ptr = (char *)localeArchive->get() + current_entry_off;
+			frg::string_view current_entry_name{
+			    current_entry_ptr,
+			    mlibc::strnlen(current_entry_ptr, localeArchive->size() - current_entry_off)
+			};
+
+			if (namehashtab[idx].hashval == hash && e == current_entry_name) {
+				if (namehashtab[idx].locrec_offset == 0)
+					return frg::null_opt;
+				if (namehashtab[idx].locrec_offset > localeArchive->size() - sizeof(LocaleArchive::LocaleRecord))
+					return frg::null_opt;
+
+				return frg::optional<off_t>{namehashtab[idx].locrec_offset};
+			}
 
 			idx += incr;
 			if (idx >= header->namehash_size)
@@ -380,6 +414,9 @@ frg::optional<off_t> findLocaleRecord(frg::string_view  name) {
 }
 
 bool parseCategoryInfo(int category, frg::string_view name, frg::span<const uint8_t> rec, mlibc::localeinfo *out) {
+	if (rec.size_bytes() < 8)
+		return false;
+
 	uint32_t magic;
 	memcpy(&magic, rec.data(), sizeof(magic));
 	if (magic != categoryMagic(category))
@@ -387,6 +424,14 @@ bool parseCategoryInfo(int category, frg::string_view name, frg::span<const uint
 
 	uint32_t elements;
 	memcpy(&elements, rec.data() + 4, sizeof(elements));
+
+	size_t offsets_size;
+	if (!frg::checked_mul(sizeof(uint32_t), size_t{elements}, offsets_size))
+		return false;
+
+	if (rec.size_bytes() < (8 + offsets_size))
+		return false;
+
 	frg::span<const uint32_t> offsets{reinterpret_cast<const uint32_t *>(rec.data() + 8), elements};
 
 	switch(category) {
@@ -514,6 +559,10 @@ bool findLocaleArchiveRecord(int category, frg::string_view name, mlibc::localei
 
 	auto locrec = reinterpret_cast<LocaleArchive::LocaleRecord *>((uint8_t *) localeArchive->get() + *recordOff);
 	if (locrec->record[category].offset == 0 || locrec->record[category].len == 0)
+		return false;
+
+	if (locrec->record[category].offset > localeArchive->size()
+			|| locrec->record[category].len > localeArchive->size() - locrec->record[category].offset)
 		return false;
 
 	const uint8_t *record = reinterpret_cast<const uint8_t *>(localeArchive->get()) + locrec->record[category].offset;
