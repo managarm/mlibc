@@ -1,7 +1,9 @@
+#include <zinnia/syscall.hpp>
+
 .global __mlibc_restorer
 
 __mlibc_restorer:
-    mov x8, #128 /* SYSCALL_SIGRETURN */
+    mov x8, #SYSCALL_SIGRETURN
     svc 0
     udf #0
 

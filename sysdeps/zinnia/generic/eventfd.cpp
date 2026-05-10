@@ -5,7 +5,7 @@
 namespace mlibc {
 
 int Sysdeps<EventfdCreate>::operator()(unsigned int initval, int flags, int *fd) {
-	auto r = zinnia_syscall(SYSCALL_SIGNALFD_CREATE, initval, flags);
+	auto r = zinnia_syscall(SYSCALL_EVENTFD_CREATE, initval, flags);
 	if (r.error)
 		return r.error;
 	*fd = r.value;
