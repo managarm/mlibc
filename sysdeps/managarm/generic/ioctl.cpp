@@ -907,6 +907,14 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 		*result = 0;
 		return 0;
+	} else if (request == KDGKBMODE) {
+		auto param = reinterpret_cast<long *>(arg);
+		mlibc::infoLogger() << "\e[35mmlibc: KD_GKBMODE(" << frg::hex_fmt(param) << ") is a no-op"
+		                    ", and hardcodes K_RAW" << frg::endlog;
+
+		*param = K_RAW;
+		*result = 0;
+		return 0;
 	} else if (request == VT_GETMODE) {
 		auto param = reinterpret_cast<struct vt_mode *>(arg);
 
