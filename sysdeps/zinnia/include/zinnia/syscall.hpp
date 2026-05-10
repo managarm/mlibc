@@ -1,7 +1,9 @@
 #ifndef _ZINNIA_SYSCALL_HPP
 #define _ZINNIA_SYSCALL_HPP
 
+#ifndef __ASSEMBLER__
 #include <stddef.h>
+#endif
 
 #define SYSCALL_EXIT 0
 #define SYSCALL_SYSLOG 1
@@ -140,6 +142,8 @@
 #define SYSCALL_SIGNALFD_CREATE 134
 #define SYSCALL_EVENTFD_CREATE 135
 #define SYSCALL_MSYNC 136
+
+#ifndef __ASSEMBLER__
 
 #if defined(__x86_64__)
 #define ZINNIA_ASM_REG_NUM "rax"
@@ -307,5 +311,7 @@ zinnia_syscall(size_t num, size_t a0, size_t a1, size_t a2, size_t a3, size_t a4
 }
 
 #endif /* !__MLIBC_ABI_ONLY */
+
+#endif /* !__ASSEMBLER__ */
 
 #endif /* _ZINNIA_SYSCALL_HPP */

@@ -1,7 +1,9 @@
+#include <zinnia/syscall.hpp>
+
 .global __mlibc_restorer
 
 __mlibc_restorer:
-    mov $128, %rax /* SYSCALL_SIGRETURN */
+    mov $SYSCALL_SIGRETURN, %rax
     syscall
     ud2
 

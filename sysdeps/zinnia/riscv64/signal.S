@@ -1,7 +1,9 @@
+#include <zinnia/syscall.hpp>
+
 .global __mlibc_restorer
 
 __mlibc_restorer:
-    li a7, 128 /* SYSCALL_SIGRETURN */
+    li a7, SYSCALL_SIGRETURN
     ecall
     unimp
 
