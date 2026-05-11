@@ -72,8 +72,9 @@ namespace {
 		__ensure(shell);
 
 		// Chop the newline off the end of shell
-		__ensure(strlen(shell) > 0);
-		shell[strlen(shell) - 1] = '\0';
+		size_t shell_len = strlen(shell);
+		if(shell_len > 0 && shell[shell_len - 1] == '\n')
+			shell[shell_len - 1] = '\0';
 
 		entry->pw_name = name;
 		entry->pw_passwd = passwd;
