@@ -68,15 +68,15 @@ struct SumHashEntry {
 
 #pragma mark - hash and magic calculations
 template <typename T>
-constexpr T nameHashVal(const void *key, size_t keylen) {
-	size_t cnt = 0;
-	T hval = keylen;
+constexpr T nameHashVal(const frg::span<char> data) {
+	T hval = data.size_bytes();
 
-	while (cnt < keylen) {
-		hval = (hval << 9) | (hval >> (sizeof hval * CHAR_BIT - 9));
-		hval += (T)((const unsigned char *)key)[cnt++];
+    for (auto val : data) {
+		hval = (hval << 9) | (hval >> (sizeof(hval) * CHAR_BIT - 9));
+        hval += static_cast<unsigned char>(val);
 	}
-	return hval != 0 ? hval : ~((T)0);
+
+	return hval != 0 ? hval : ~(T{0});
 }
 
 constexpr uint32_t categoryMagic(int category) {
@@ -102,17 +102,25 @@ frg::string_view parse_stringlist(frg::span<const uint8_t> data) {
 	frg::string_view area{reinterpret_cast<const char *>(data.data()), data.size()};
 
 	for (; i < Min; i++) {
-		termIndex = area.find_first('\0', termIndex) + 1;
-		__ensure(area[termIndex] != '\0');
+		auto next = area.find_first('\0', termIndex);
+		if (next == size_t(-1))
+			return {};
+		termIndex = next + 1;
+		if (termIndex >= area.size() || area[termIndex] == '\0')
+			return {};
 	}
 
 	for (; i < Max; i++) {
-		if (area[termIndex] == '\0')
+		if (termIndex >= area.size() || area[termIndex] == '\0')
 			break;
-		termIndex = area.find_first('\0', termIndex) + 1;
+		auto next = area.find_first('\0', termIndex);
+		if (next == size_t(-1))
+			break;
+		termIndex = next + 1;
 	}
 
-	__ensure(area[termIndex] == '\0');
+	if (termIndex >= area.size() || area[termIndex] != '\0')
+		return {};
 
 	return area.sub_string(0, termIndex + 1);
 }
@@ -131,19 +139,24 @@ template <size_t N>
 frg::span<const uint32_t> parse_uint32array(frg::span<const uint8_t> data) {
 	auto ptr = reinterpret_cast<const uint32_t *>(data.data());
 	auto len = frg::min(data.size() & ~(sizeof(uint32_t) - 1), N * sizeof(uint32_t));
-	return frg::span{ptr, len};
+	return frg::span{ptr, len / sizeof(uint32_t)};
 }
 
 void parse_ignore(frg::span<const uint8_t>) { return; }
 
-char parse_int_elem(frg::span<const uint8_t> data) { return data[0] == 255 ? CHAR_MAX : data[0]; }
+char parse_int_elem(frg::span<const uint8_t> data) {
+	if (data.empty())
+		return 0;
+	return data[0] == 255 ? CHAR_MAX : data[0];
+}
 
 // parse generic types, typically `uint*_t`
 template <typename T>
     requires std::is_trivially_copyable_v<T>
 T parse(frg::span<const uint8_t> data) {
 	T v{};
-	memcpy(&v, data.data(), frg::min(sizeof(v), data.size()));
+	if (data.size() >= sizeof(T))
+		memcpy(&v, data.data(), sizeof(v));
 	return v;
 }
 
@@ -170,7 +183,13 @@ apply_parsers(const T &parser, frg::span<const uint8_t> base, frg::span<const ui
 			if constexpr (std::is_void_v<parser_result_t<decltype(std::get<I>(parser.parsers))>>)
 				return std::nullopt;
 			else {
-                size_t item_size = (I + 1 == offsets.size()) ? base.size() - offsets[I] : (offsets[I + 1] - offsets[I]);
+				if (offsets[I] > base.size())
+					return std::optional<parser_result_t<decltype(std::get<I>(parser.parsers))>>{std::nullopt};
+
+				size_t item_size = (I + 1 == offsets.size()) ? base.size() - offsets[I] : (offsets[I + 1] - offsets[I]);
+				if (offsets[I] + item_size > base.size())
+					return std::optional<parser_result_t<decltype(std::get<I>(parser.parsers))>>{std::nullopt};
+
 				return std::optional{std::get<I>(parser.parsers)(
 				    base.subspan(offsets[I], item_size)
 				)};

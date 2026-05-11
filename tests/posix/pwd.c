@@ -121,6 +121,25 @@ int main()
 	assert(strncmp(expected, buf, expectedlen) == 0);
 
 	fclose(tmp);
+
+	char bug_filename[] = "pwdbugXXXXXX";
+	int bug_tmpfd = mkstemp(bug_filename);
+	assert(bug_tmpfd != -1);
+	FILE *bug_tmp = fdopen(bug_tmpfd, "w+");
+	assert(bug_tmp);
+
+	const char *no_newline = "buggy:x:1000:1000:buggy:/home/buggy:/bin/bash";
+	assert(fputs(no_newline, bug_tmp) != EOF);
+	assert(fflush(bug_tmp) == 0);
+	rewind(bug_tmp);
+
+	result = fgetpwent(bug_tmp);
+	assert(result);
+	assert(!strcmp(result->pw_name, "buggy"));
+	assert(!strcmp(result->pw_shell, "/bin/bash"));
+
+	fclose(bug_tmp);
+	unlink(bug_filename);
 	unlink(filename);
 	free(buf);
 

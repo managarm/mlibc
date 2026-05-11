@@ -135,12 +135,14 @@ void *memchr(const void *s, int c, size_t size) {
 }
 char *strchr(const char *s, int c) {
 	size_t i = 0;
+	char cc = static_cast<char>(c);
+
 	while(s[i]) {
-		if(s[i] == c)
+		if(s[i] == cc)
 			return const_cast<char *>(&s[i]);
 		i++;
 	}
-	if(c == 0)
+	if(cc == 0)
 		return const_cast<char *>(&s[i]);
 	return nullptr;
 }
@@ -162,10 +164,12 @@ char *strpbrk(const char *s, const char *chrs) {
 	return nullptr;
 }
 char *strrchr(const char *s, int c) {
+	char cc = static_cast<char>(c);
+
 	// The null-terminator is considered to be part of the string.
 	size_t length = strlen(s);
 	for(size_t i = 0; i <= length; i++) {
-		if(s[length - i] == c)
+		if(s[length - i] == cc)
 			return const_cast<char *>(s + (length - i));
 	}
 	return nullptr;
