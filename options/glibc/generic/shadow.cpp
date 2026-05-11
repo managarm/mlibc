@@ -8,6 +8,8 @@
 #include <sys/stat.h>
 
 #include <bits/ensure.h>
+#include <frg/vector.hpp>
+#include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 
 /*
@@ -34,7 +36,7 @@ int putspent(const struct spwd *sp, FILE *f) {
 
 static long xatol(char **s) {
 	long x;
-	if(**s == ':' || **s == '\n') {
+	if(**s == ':' || **s == '\n' || **s == '\0') {
 		return -1;
 	}
 	for(x = 0; (unsigned int)**s - '0' < 10U; ++*s) {
@@ -94,7 +96,7 @@ static int __parsespent(char *s, struct spwd *sp) {
 
 	s++;
 	sp->sp_flag = xatol(&s);
-	if(*s != '\n') {
+	if(*s != '\n' && *s != '\0') {
 		return -1;
 	}
 	return 0;
@@ -225,7 +227,13 @@ void endspent(void) {
 	mlibc::infoLogger() << "mlibc: endspent is a stub" << frg::endlog;
 }
 
-struct spwd *sgetspent(const char *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+struct spwd *sgetspent(const char *s) {
+	static frg::string<MemoryAllocator> buffer{getAllocator()};
+	static struct spwd sp;
+
+	buffer = {s, getAllocator()};
+
+	if (__parsespent(buffer.data(), &sp) == 0)
+		return &sp;
+	return nullptr;
 }
