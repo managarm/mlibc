@@ -26,6 +26,8 @@
 #include <posix.frigg_bragi.hpp>
 #include <protocols/posix/supercalls.hpp>
 
+extern "C" void __dlapi_postfork();
+
 namespace mlibc {
 
 pid_t Sysdeps<FutexTid>::operator()() {
@@ -220,6 +222,7 @@ int Sysdeps<Fork>::operator()(pid_t *child) {
 	if (!out) {
 		clearCachedInfos();
 		globalQueue.recreateQueue();
+		__dlapi_postfork();
 	}
 
 	res = sigprocmask(SIG_SETMASK, &former_sigset, nullptr);

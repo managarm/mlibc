@@ -36,7 +36,7 @@ int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
 		HEL_CHECK(helGetClock(&tick));
 		*secs = tick / 1000000000;
 		*nanos = tick % 1000000000;
-	} else if (clock == CLOCK_REALTIME) {
+	} else if (clock == CLOCK_REALTIME || clock == CLOCK_REALTIME_COARSE || clock == CLOCK_REALTIME_ALARM) {
 		cacheFileTable();
 
 		// Start the seqlock read.
@@ -67,7 +67,7 @@ int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
 		                    << frg::endlog;
 		*secs = 0;
 		*nanos = 0;
-	} else if (clock == CLOCK_BOOTTIME) {
+	} else if (clock == CLOCK_BOOTTIME || clock == CLOCK_BOOTTIME_ALARM) {
 		uint64_t tick;
 		HEL_CHECK(helGetClock(&tick));
 

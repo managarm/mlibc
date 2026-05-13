@@ -650,6 +650,10 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		mlibc::infoLogger() << "mlibc: EVIOCGRAB is a no-op" << frg::endlog;
 		*result = 0;
 		return 0;
+	} else if (_IOC_TYPE(request) == 'E' && _IOC_NR(request) == _IOC_NR(EVIOCREVOKE)) {
+		mlibc::infoLogger() << "mlibc: EVIOCREVOKE is a no-op" << frg::endlog;
+		*result = 0;
+		return 0;
 	} else if (_IOC_TYPE(request) == 'E' && _IOC_NR(request) == _IOC_NR(EVIOCGPHYS(0))) {
 		// Returns the sysfs path of the device.
 		const char *s = "input0";
@@ -916,45 +920,165 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		*result = 0;
 		return 0;
 	} else if (request == VT_GETMODE) {
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
+				helix_ng::recvInline()
+			)
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		if (send_req.error() == kHelErrDismissed)
+			return EINVAL;
+		HEL_CHECK(imbue_creds.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
 		auto param = reinterpret_cast<struct vt_mode *>(arg);
 
-		param->mode = VT_AUTO;
-		param->waitv = 0;
-		param->relsig = 0;
-		param->acqsig = 0;
-		param->frsig = 0;
+		managarm::fs::VtGetModeResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
-		mlibc::infoLogger() << "\e[35mmlibc: VT_GETMODE is hardcoded to VT_AUTO" << frg::endlog;
+		param->mode = resp.vt_mode();
+		param->waitv = resp.vt_waitv();
+		param->relsig = resp.vt_relsig();
+		param->acqsig = resp.vt_acqsig();
+		param->frsig = resp.vt_frsig();
 
 		*result = 0;
 		return 0;
 	} else if(request == VT_OPENQRY) {
-		auto param = reinterpret_cast<int *>(arg);
-		*param = 2; // Second VT
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
 
-		mlibc::infoLogger() << "\e[35mmlibc: VT_OPENQRY is hardcoded to 2" << frg::endlog;
+		auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
+				helix_ng::recvInline()
+			)
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		if (send_req.error() == kHelErrDismissed)
+			return EINVAL;
+		HEL_CHECK(imbue_creds.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		
+		managarm::fs::VtOpenqryResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		auto param = reinterpret_cast<int *>(arg);
+		*param = resp.vt_nr();
 
 		*result = 0;
 		return 0;
 	} else if (request == VT_SETMODE) {
-		// auto param = reinterpret_cast<struct vt_mode *>(arg);
-		mlibc::infoLogger() << "\e[35mmlibc: VT_SETMODE is a no-op" << frg::endlog;
+		managarm::fs::VtSetModeRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		auto param = reinterpret_cast<struct vt_mode *>(arg);
+		req.set_vt_mode(param->mode);
+		req.set_vt_waitv(param->waitv);
+		req.set_vt_relsig(param->relsig);
+		req.set_vt_acqsig(param->acqsig);
+		req.set_vt_frsig(param->frsig);
+
+		auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
+				helix_ng::recvInline()
+			)
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		if (send_req.error() == kHelErrDismissed)
+			return EINVAL;
+		HEL_CHECK(imbue_creds.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::VtSetModeResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
 		*result = 0;
 		return 0;
 	} else if (request == VT_GETSTATE) {
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+		
+		auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
+				helix_ng::recvInline()
+			)
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		if (send_req.error() == kHelErrDismissed)
+			return EINVAL;
+		HEL_CHECK(imbue_creds.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
 		auto param = reinterpret_cast<struct vt_stat *>(arg);
 
-		param->v_active = 0;
-		param->v_signal = 0;
-		param->v_state = 0;
+		managarm::fs::VtGetStateResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 
-		mlibc::infoLogger() << "\e[35mmlibc: VT_GETSTATE is a no-op" << frg::endlog;
+		param->v_active = resp.vt_nr();
+		param->v_signal = resp.vt_relsig(); // Intended, reuse an existing field to avoid adding a new one to the protocol.
+		param->v_state = resp.vt_state();
 
 		*result = 0;
 		return 0;
 	} else if (request == VT_ACTIVATE || request == VT_WAITACTIVE) {
-		mlibc::infoLogger() << "\e[35mmlibc: VT_ACTIVATE/VT_WAITACTIVE are no-ops" << frg::endlog;
+		managarm::fs::VtActivateRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_vt_mode(reinterpret_cast<long>(arg));
+
+		auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
+			handle,
+			helix_ng::offer(
+				helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
+				helix_ng::recvInline()
+			)
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		if (send_req.error() == kHelErrDismissed)
+			return EINVAL;
+		HEL_CHECK(imbue_creds.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::VtActivateResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		*result = 0;
+		return 0;
+	} else if (request == VT_RELDISP) {
+		mlibc::infoLogger() << "\e[35mmlibc: VT_RELDISP is a no-op" << frg::endlog;
 		*result = 0;
 		return 0;
 	} else if (request == TIOCSPTLCK) {
