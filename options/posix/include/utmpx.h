@@ -6,6 +6,8 @@
 extern "C" {
 #endif
 
+#include <mlibc-config.h>
+
 #include <bits/timeval.h>
 #include <abi-bits/utmp-defines.h>
 #include <abi-bits/utmpx.h>
@@ -24,6 +26,10 @@ void updwtmpx(const char *__wtmp_file, const struct utmpx *__ut);
 int utmpxname(const char *__file);
 
 #endif /* !__MLIBC_ABI_ONLY */
+
+#if defined(_GNU_SOURCE) && __MLIBC_GLIBC_OPTION
+#include <paths.h>
+#endif
 
 #ifdef __cplusplus
 }

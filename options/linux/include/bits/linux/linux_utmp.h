@@ -1,6 +1,8 @@
 #ifndef  _BITS_LINUX_UTMP_H
 #define  _BITS_LINUX_UTMP_H
 
+#include <mlibc-config.h>
+
 #include <abi-bits/pid_t.h>
 #include <abi-bits/utmp-defines.h>
 #include <bits/timeval.h>
@@ -63,6 +65,10 @@ int utmpname(const char *__file);
 void updwtmp(const char *wtmp_file, const struct utmp *ut);
 
 #endif /* !__MLIBC_ABI_ONLY */
+
+#if defined(_GNU_SOURCE) && __MLIBC_GLIBC_OPTION
+#include <paths.h>
+#endif
 
 #ifdef __cplusplus
 }
