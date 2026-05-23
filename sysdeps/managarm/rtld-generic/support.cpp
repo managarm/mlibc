@@ -441,8 +441,7 @@ int Sysdeps<Read>::operator()(int fd, void *data, size_t length, ssize_t *bytes_
 	auto lane = fileTable[fd];
 	HelAction actions[5];
 
-	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_req_type(managarm::fs::CntReqType::READ);
+	managarm::fs::ReadRequest<MemoryAllocator> req(getAllocator());
 	req.set_size(length);
 
 	if (!globalQueue.valid())
