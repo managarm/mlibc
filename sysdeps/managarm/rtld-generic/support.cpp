@@ -626,8 +626,7 @@ int Sysdeps<FutexWake>::operator()(int *pointer, bool all) {
 }
 
 int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
-	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_request_type(managarm::posix::CntReqType::VM_PROTECT);
+	managarm::posix::VmProtectRequest<MemoryAllocator> req(getAllocator());
 	req.set_address(reinterpret_cast<uintptr_t>(pointer));
 	req.set_size(size);
 	req.set_mode(prot);

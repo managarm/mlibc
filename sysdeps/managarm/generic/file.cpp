@@ -669,8 +669,7 @@ int Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int
 int Sysdeps<VmRemap>::operator()(void *pointer, size_t size, size_t new_size, void **window) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::VM_REMAP);
+	managarm::posix::VmRemapRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_address(reinterpret_cast<uintptr_t>(pointer));
 	req.set_size(size);
 	req.set_new_size(new_size);
@@ -698,8 +697,7 @@ int Sysdeps<VmRemap>::operator()(void *pointer, size_t size, size_t new_size, vo
 int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::VM_PROTECT);
+	managarm::posix::VmProtectRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_address(reinterpret_cast<uintptr_t>(pointer));
 	req.set_size(size);
 	req.set_mode(prot);
@@ -726,8 +724,7 @@ int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
 int Sysdeps<VmUnmap>::operator()(void *pointer, size_t size) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::VM_UNMAP);
+	managarm::posix::VmUnmapRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_address(reinterpret_cast<uintptr_t>(pointer));
 	req.set_size(size);
 
