@@ -872,4 +872,21 @@ int Sysdeps<IfNametoindex>::operator()(const char *name, unsigned int *ret) {
 	return 0;
 }
 
+int Sysdeps<InetConfigured>::operator()(bool *ipv4, bool *ipv6) {
+	// TODO
+	if (ipv4)
+		*ipv4 = true;
+	if (ipv6)
+		*ipv6 = false;
+	return 0;
+}
+
+int Sysdeps<Sysconf>::operator()(int num, long *ret) {
+	auto r = zinnia_syscall(SYSCALL_SYSCONF, num);
+	if (r.error)
+		return r.error;
+	*ret = r.value;
+	return 0;
+}
+
 } // namespace mlibc

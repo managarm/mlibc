@@ -165,7 +165,9 @@ struct ZinniaSysdepTags :
 	TimerfdCreate,
 	TimerfdSettime,
 	TimerfdGettime,
-	Msync
+	Msync,
+	InetConfigured,
+	Sysconf
 {};
 
 template<typename Tag>
