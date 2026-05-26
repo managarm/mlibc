@@ -669,8 +669,7 @@ int Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int
 int Sysdeps<VmRemap>::operator()(void *pointer, size_t size, size_t new_size, void **window) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::VM_REMAP);
+	managarm::posix::VmRemapRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_address(reinterpret_cast<uintptr_t>(pointer));
 	req.set_size(size);
 	req.set_new_size(new_size);
@@ -698,8 +697,7 @@ int Sysdeps<VmRemap>::operator()(void *pointer, size_t size, size_t new_size, vo
 int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::VM_PROTECT);
+	managarm::posix::VmProtectRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_address(reinterpret_cast<uintptr_t>(pointer));
 	req.set_size(size);
 	req.set_mode(prot);
@@ -726,8 +724,7 @@ int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
 int Sysdeps<VmUnmap>::operator()(void *pointer, size_t size) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::VM_UNMAP);
+	managarm::posix::VmUnmapRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_address(reinterpret_cast<uintptr_t>(pointer));
 	req.set_size(size);
 
@@ -1855,21 +1852,16 @@ int Sysdeps<Read>::operator()(int fd, void *data, size_t max_size, ssize_t *byte
 	if (!handle)
 		return EBADF;
 
-	managarm::fs::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_req_type(managarm::fs::CntReqType::READ);
-	req.set_fd(fd);
+	managarm::fs::ReadRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_size(max_size);
 	req.set_cancellation_id(allocateCancellationId());
-
-	frg::string<SysdepsAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
 
 	auto [offer, send_req, imbue_creds, recv_resp, recv_data] = exchangeMsgsSyncCancellable(
 	    handle,
 	    req.cancellation_id(),
 	    fd,
 	    helix_ng::offer(
-	        helix_ng::sendBuffer(ser.data(), ser.size()),
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 	        helix_ng::imbueCredentials(),
 	        helix_ng::recvInline(),
 	        helix_ng::recvBuffer(data, max_size)
@@ -1913,9 +1905,7 @@ int Sysdeps<Write>::operator()(int fd, const void *data, size_t size, ssize_t *b
 	if (!handle)
 		return EBADF;
 
-	managarm::fs::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_req_type(managarm::fs::CntReqType::WRITE);
-	req.set_fd(fd);
+	managarm::fs::WriteRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_size(size);
 
 	auto [offer, send_req, imbue_creds, send_data, recv_resp] = exchangeMsgsSync(
@@ -1966,9 +1956,7 @@ int Sysdeps<Writev>::operator()(int fd, const struct iovec *iovs, int iovc, ssiz
 	if (!handle)
 		return EBADF;
 
-	managarm::fs::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_req_type(managarm::fs::CntReqType::WRITE);
-	req.set_fd(fd);
+	managarm::fs::WriteRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_size(overall_size);
 
 	auto [offer, send_req, imbue_creds, send_data, recv_resp] = exchangeMsgsSync(
@@ -2007,9 +1995,7 @@ int Sysdeps<Pread>::operator()(int fd, void *buf, size_t n, off_t off, ssize_t *
 	if (!handle)
 		return EBADF;
 
-	managarm::fs::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_req_type(managarm::fs::CntReqType::PT_PREAD);
-	req.set_fd(fd);
+	managarm::fs::PreadRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_size(n);
 	req.set_offset(off);
 
@@ -2050,14 +2036,9 @@ int Sysdeps<Pwrite>::operator()(int fd, const void *buf, size_t n, off_t off, ss
 	if (!handle)
 		return EBADF;
 
-	managarm::fs::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_req_type(managarm::fs::CntReqType::PT_PWRITE);
-	req.set_fd(fd);
+	managarm::fs::PwriteRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_size(n);
 	req.set_offset(off);
-
-	frg::string<SysdepsAllocator> ser(getSysdepsAllocator());
-	req.SerializeToString(&ser);
 
 	auto [offer, send_head, imbue_creds, to_write, recv_resp] = exchangeMsgsSync(
 	    handle,
@@ -2429,8 +2410,7 @@ int Sysdeps<Ftruncate>::operator()(int fd, size_t size) {
 	if (!handle)
 		return EBADF;
 
-	managarm::fs::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_req_type(managarm::fs::CntReqType::PT_TRUNCATE);
+	managarm::fs::TruncateRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_size(size);
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
@@ -2458,8 +2438,7 @@ int Sysdeps<Fallocate>::operator()(int fd, off_t offset, size_t size) {
 	if (!handle)
 		return EBADF;
 
-	managarm::fs::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_req_type(managarm::fs::CntReqType::PT_FALLOCATE);
+	managarm::fs::FallocateRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_rel_offset(offset);
 	req.set_size(size);
 

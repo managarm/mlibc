@@ -441,8 +441,7 @@ int Sysdeps<Read>::operator()(int fd, void *data, size_t length, ssize_t *bytes_
 	auto lane = fileTable[fd];
 	HelAction actions[5];
 
-	managarm::fs::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_req_type(managarm::fs::CntReqType::READ);
+	managarm::fs::ReadRequest<MemoryAllocator> req(getAllocator());
 	req.set_size(length);
 
 	if (!globalQueue.valid())
@@ -627,8 +626,7 @@ int Sysdeps<FutexWake>::operator()(int *pointer, bool all) {
 }
 
 int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
-	managarm::posix::CntRequest<MemoryAllocator> req(getAllocator());
-	req.set_request_type(managarm::posix::CntReqType::VM_PROTECT);
+	managarm::posix::VmProtectRequest<MemoryAllocator> req(getAllocator());
 	req.set_address(reinterpret_cast<uintptr_t>(pointer));
 	req.set_size(size);
 	req.set_mode(prot);
