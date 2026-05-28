@@ -163,6 +163,8 @@ inline int operator|(managarm::posix::Errors e, ToErrno) {
 			return EMFILE;
 		case managarm::posix::Errors::INTERRUPTED:
 			return EINTR;
+		case managarm::posix::Errors::CROSS_DEVICE_LINK:
+			return EXDEV;
 	}
 
 	mlibc::panicLogger() << "unhandled managarm::posix::Errors " << static_cast<int32_t>(e)
