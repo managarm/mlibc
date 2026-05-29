@@ -1198,7 +1198,8 @@ int pthread_rwlock_wrlock(pthread_rwlock_t *rw) {
 
 	// Take the __mlibc_m mutex.
 	// Will be released in pthread_rwlock_unlock().
-	rwlock_m_lock(rw, true);
+	if (int e = rwlock_m_lock(rw, true); e)
+		return e;
 
 	// Now wait until there are no more readers.
 	unsigned int rc_expected = __atomic_load_n(&rw->__mlibc_rc, __ATOMIC_ACQUIRE);
@@ -1243,7 +1244,7 @@ int pthread_rwlock_clockwrlock(pthread_rwlock_t *rw, clockid_t clock, const stru
 	// Take the __mlibc_m mutex.
 	// Will be released in pthread_rwlock_unlock().
 	if (int e = rwlock_m_lock(rw, true, clock, abstime); e)
-		return ETIMEDOUT;
+		return e;
 	frg::scope_exit unlockOnError{[&] { rwlock_m_unlock(rw); }};
 
 	// Now wait until there are no more readers.
@@ -1303,7 +1304,8 @@ int pthread_rwlock_rdlock(pthread_rwlock_t *rw) {
 		mlibc::panicLogger() << "mlibc: unexpected pthread_rwlock_t flags" << frg::endlog;
 
 	// Increment the reader count while holding the __mlibc_m mutex.
-	rwlock_m_lock(rw, false);
+	if (int e = rwlock_m_lock(rw, false); e)
+		return e;
 	__atomic_fetch_add(&rw->__mlibc_rc, 1, __ATOMIC_ACQUIRE);
 	rwlock_m_unlock(rw);
 
