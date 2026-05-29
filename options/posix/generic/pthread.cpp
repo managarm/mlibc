@@ -13,6 +13,7 @@
 #include <frg/allocation.hpp>
 #include <frg/array.hpp>
 #include <frg/bitops.hpp>
+#include <frg/scope_exit.hpp>
 #include <frg/spinlock.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
@@ -1239,6 +1240,7 @@ int pthread_rwlock_clockwrlock(pthread_rwlock_t *rw, clockid_t clock, const stru
 	// Will be released in pthread_rwlock_unlock().
 	if (int e = rwlock_m_lock(rw, true, &timeout); e)
 		return ETIMEDOUT;
+	frg::scope_exit unlockOnError{[&] { rwlock_m_unlock(rw); }};
 
 	// Now wait until there are no more readers.
 	unsigned int rc_expected = __atomic_load_n(&rw->__mlibc_rc, __ATOMIC_ACQUIRE);
@@ -1263,15 +1265,14 @@ int pthread_rwlock_clockwrlock(pthread_rwlock_t *rw, clockid_t clock, const stru
 
 		// Wait on the futex.
 		int e = mlibc::sysdep<FutexWait>((int *)&rw->__mlibc_rc, rc_expected | rc_waiters_bit, &timeout);
-		if (e != 0 && e != EAGAIN && e != EINTR) {
-			rwlock_m_unlock(rw);
+		if (e != 0 && e != EAGAIN && e != EINTR)
 			return e;
-		}
 
 		// Re-check the reader counter.
 		rc_expected = __atomic_load_n(&rw->__mlibc_rc, __ATOMIC_ACQUIRE);
 	}
 
+	unlockOnError.release();
 	return 0;
 }
 
