@@ -447,7 +447,6 @@ int mblen(const char *mbs, size_t mb_limit) {
 
 int mbtowc(wchar_t *__restrict wc, const char *__restrict mb, size_t max_size) {
 	auto cc = mlibc::current_charcode();
-	__ensure(max_size);
 
 	// If wc is NULL, decode into a single local character which we discard
 	// to obtain the length.
@@ -457,6 +456,11 @@ int mbtowc(wchar_t *__restrict wc, const char *__restrict mb, size_t max_size) {
 
 	if (mb) {
 		if (*mb) {
+			if (max_size == 0) {
+				errno = EILSEQ;
+				return -1;
+			}
+
 			mlibc::code_seq<wchar_t> wseq{wc, wc + 1};
 			mlibc::code_seq<const char> nseq{mb, mb + frg::min(max_size, MB_CUR_MAX)};
 			auto e = cc->decode_wtranscode(nseq, wseq, mbtowc_state);
