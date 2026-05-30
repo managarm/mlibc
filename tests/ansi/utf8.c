@@ -93,5 +93,15 @@ int main() {
 	assert(errno == EILSEQ);
 	assert(mbrtowc(NULL, "\xE2\x9C", 2, &state) == (size_t)-2);
 
+	// check 0-sized mbtowc
+	char zero = '\0';
+	char nonzero = 'c';
+	assert(mbtowc(&wc, &zero, 0) == 0);
+	assert(mbtowc(NULL, &zero, 0) == 0);
+	assert(mbtowc(&wc, &nonzero, 0) == -1 && errno == EILSEQ);
+	assert(mbtowc(NULL, &nonzero, 0) == -1 && errno == EILSEQ);
+	assert(mbtowc(&wc, NULL, 0) == 0);
+	assert(mbtowc(NULL, NULL, 0) == 0);
+
 	return 0;
 }
