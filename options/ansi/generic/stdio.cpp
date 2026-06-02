@@ -1209,24 +1209,32 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args) {
 				unsigned long long res = 0;
 				char c = handler.look_ahead();
 				int count = 0;
+				// Number of input characters consumed by this conversion;
+				// the optional field width caps it (C99 7.21.6.2p3).
+				int consumed = 0;
 				EOF_CHECK(c == '\0');
 
 				if(c == '-') {
 					handler.consume();
+					consumed++;
 					is_negative = true;
-				} else if(c == '+')
+				} else if(c == '+') {
 					handler.consume();
+					consumed++;
+				}
 
 				c = handler.look_ahead();
-				if (c == '0') {
+				if (c == '0' && (!width || consumed < width)) {
 					handler.consume();
+					consumed++;
 					c = handler.look_ahead();
-					if (tolower(c) == 'x') {
+					if (tolower(c) == 'x' && (!width || consumed < width)) {
 						handler.consume();
+						consumed++;
 						c = handler.look_ahead();
 					}
 				}
-				while (true) {
+				while (!width || consumed < width) {
 					if (c >= '0' && c <= '9') {
 						handler.consume();
 						res = res * 16 + (c - '0');
@@ -1240,6 +1248,7 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args) {
 						break;
 					}
 					count++;
+					consumed++;
 					c = handler.look_ahead();
 				}
 				NOMATCH_CHECK(count == 0);

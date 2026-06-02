@@ -37,6 +37,11 @@ typedef char *__caddr_t;
 #include <endian.h>
 #include <stdint.h>
 #include <sys/select.h>
+#include <sys/sysmacros.h>
+
+#ifndef NODEV
+#define NODEV ((dev_t)(-1))
+#endif
 
 typedef unsigned int u_int;
 typedef unsigned char u_char;
