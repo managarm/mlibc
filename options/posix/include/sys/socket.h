@@ -56,7 +56,7 @@ struct sockaddr {
 
 /* For parsing control messages only. */
 /* Returns a pointer to the first header or nullptr if there is none. */
-#define CMSG_FIRSTHDR(m) ((size_t)(m)->msg_controllen <= sizeof(struct cmsghdr) \
+#define CMSG_FIRSTHDR(m) ((size_t)(m)->msg_controllen < sizeof(struct cmsghdr) \
 	? (struct cmsghdr *)0 : (struct cmsghdr *) (m)->msg_control)
 
 /* For parsing control messages only. */
