@@ -56,7 +56,7 @@ struct sockaddr {
 
 /* For parsing control messages only. */
 /* Returns a pointer to the first header or nullptr if there is none. */
-#define CMSG_FIRSTHDR(m) ((size_t)(m)->msg_controllen <= sizeof(struct cmsghdr) \
+#define CMSG_FIRSTHDR(m) ((size_t)(m)->msg_controllen < sizeof(struct cmsghdr) \
 	? (struct cmsghdr *)0 : (struct cmsghdr *) (m)->msg_control)
 
 /* For parsing control messages only. */
@@ -64,7 +64,7 @@ struct sockaddr {
 #define CMSG_NXTHDR(m, c) \
 	((c)->cmsg_len < sizeof(struct cmsghdr) || \
 		(ssize_t)(sizeof(struct cmsghdr) + __CMSG_ALIGN((c)->cmsg_len)) \
-			>= __MLIBC_MHDR_LIMIT(m) - (char *)(c) \
+			> __MLIBC_MHDR_LIMIT(m) - (char *)(c) \
 	? (struct cmsghdr *)0 : (struct cmsghdr *)__MLIBC_CMSG_NEXT(c))
 
 struct linger{
