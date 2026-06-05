@@ -575,8 +575,14 @@ int getsubopt(char **__restrict__ optionp, char *const *__restrict__ keylistp, c
 char *secure_getenv(const char *name) {
 	if (mlibc::rtldConfig().secureRequired)
 		return nullptr;
-	else
-		return getenv(name);
+	if (!environ || !name[0])
+		return nullptr;
+	size_t len = strlen(name);
+	for (char **ep = environ; *ep; ++ep) {
+		if (!strncmp(*ep, name, len) && (*ep)[len] == '=')
+			return *ep + len + 1;
+	}
+	return nullptr;
 }
 
 void *reallocarray(void *ptr, size_t m, size_t n) {
