@@ -970,9 +970,8 @@ int Sysdeps<MsgSend>::operator()(int sockfd, const struct msghdr *hdr, int flags
 	req.set_has_cmsg_creds(false);
 	req.set_has_cmsg_rights(false);
 	for (auto cmsg = CMSG_FIRSTHDR(hdr); cmsg; cmsg = CMSG_NXTHDR(hdr, cmsg)) {
-		__ensure(cmsg->cmsg_level == SOL_SOCKET);
 		__ensure(cmsg->cmsg_len >= sizeof(struct cmsghdr));
-		if (cmsg->cmsg_type == SCM_CREDENTIALS) {
+		if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_CREDENTIALS) {
 			req.set_has_cmsg_creds(true);
 			size_t size = cmsg->cmsg_len - CMSG_ALIGN(sizeof(struct cmsghdr));
 			__ensure(size == sizeof(struct ucred));
@@ -981,7 +980,7 @@ int Sysdeps<MsgSend>::operator()(int sockfd, const struct msghdr *hdr, int flags
 			req.set_creds_pid(creds.pid);
 			req.set_creds_uid(creds.uid);
 			req.set_creds_gid(creds.gid);
-		} else if (cmsg->cmsg_type == SCM_RIGHTS) {
+		} else if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS) {
 			req.set_has_cmsg_rights(true);
 			size_t size = cmsg->cmsg_len - CMSG_ALIGN(sizeof(struct cmsghdr));
 			__ensure(!(size % sizeof(int)));
@@ -992,9 +991,8 @@ int Sysdeps<MsgSend>::operator()(int sockfd, const struct msghdr *hdr, int flags
 			}
 		} else {
 			mlibc::infoLogger(
-			) << "mlibc: sys_msg_send only supports SCM_RIGHTS or SCM_CREDENTIALS, got: "
-			  << cmsg->cmsg_type << "!" << frg::endlog;
-			return EINVAL;
+			) << "mlibc: sys_msg_send ignoring unsupported cmsg level "
+			  << cmsg->cmsg_level << " type " << cmsg->cmsg_type << frg::endlog;
 		}
 	}
 
