@@ -1121,17 +1121,22 @@ int Sysdeps<Pselect>::operator()(
 	if (except_set)
 		FD_ZERO(except_set);
 
-	if (*num_events) {
-
-		for (int i = 0; i < *num_events; i++) {
-			if (read_set && (pfds[i].revents & (POLLIN | POLLHUP | POLLERR)))
-				FD_SET(pfds[i].fd, read_set);
-			if (write_set && (pfds[i].revents & (POLLOUT | POLLHUP | POLLERR)))
-				FD_SET(pfds[i].fd, write_set);
-			if (except_set && (pfds[i].revents & (POLLPRI)))
-				FD_SET(pfds[i].fd, except_set);
+	int ready = 0;
+	for (int i = 0; i < pcount; i++) {
+		if (read_set && (pfds[i].revents & (POLLIN | POLLHUP | POLLERR))) {
+			FD_SET(pfds[i].fd, read_set);
+			ready++;
+		}
+		if (write_set && (pfds[i].revents & (POLLOUT | POLLHUP | POLLERR))) {
+			FD_SET(pfds[i].fd, write_set);
+			ready++;
+		}
+		if (except_set && (pfds[i].revents & (POLLPRI))) {
+			FD_SET(pfds[i].fd, except_set);
+			ready++;
 		}
 	}
+	*num_events = ready;
 
 	return 0;
 }
