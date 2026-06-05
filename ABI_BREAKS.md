@@ -33,6 +33,7 @@ This document lists the ABI breaks that were made in each mlibc major version.
 - [#1743](https://github.com/managarm/mlibc/pull/1743): change the value of `math_errhandling` from `MATH_ERRNO|MATH_ERREXCEPT` to `MATH_ERREXCEPT`, as our libm does not set errno.
 - [#1658](https://github.com/managarm/mlibc/pull/1658): fix incorrect definition of `struct fd_set`
 - [#1818](https://github.com/managarm/mlibc/pull/1818): enforce `HOSTNAME_MAX >= _POSIX_HOST_NAME_MAX`
+- [#1834](https://github.com/managarm/mlibc/pull/1834): fix incorrect calculations in `CMSG_FIRSTHDR` and `CMSG_NXTHDR`
 
 ## Version 6
 
