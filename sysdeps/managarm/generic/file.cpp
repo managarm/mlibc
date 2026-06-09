@@ -565,6 +565,15 @@ int Sysdeps<ReadEntries>::operator()(int fd, void *buffer, size_t max_size, size
 		case managarm::fs::FileType::SOCKET:
 			ent->d_type = DT_SOCK;
 			break;
+		case managarm::fs::FileType::CHAR_DEVICE:
+			ent->d_type = DT_CHR;
+			break;
+		case managarm::fs::FileType::BLOCK_DEVICE:
+			ent->d_type = DT_BLK;
+			break;
+		case managarm::fs::FileType::FIFO:
+			ent->d_type = DT_FIFO;
+			break;
 	}
 
 	*bytes_read = sizeof(struct dirent);
