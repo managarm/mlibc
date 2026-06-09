@@ -597,9 +597,14 @@ struct servent *getservbyname(const char *name, const char *proto) {
 		free(ret.s_name);
 		ret.s_name = nullptr;
 
-		for (char **alias = ret.s_aliases; *alias != nullptr; alias++) {
-			free(*alias);
-			*alias = nullptr;
+		if (ret.s_aliases) {
+			for (char **alias = ret.s_aliases; *alias != nullptr; alias++) {
+				free(*alias);
+				*alias = nullptr;
+			}
+
+			free(ret.s_aliases);
+			ret.s_aliases = nullptr;
 		}
 
 		free(ret.s_proto);
@@ -658,9 +663,14 @@ struct servent *getservbyport(int port, const char *proto) {
 		free(ret.s_name);
 		ret.s_name = nullptr;
 
-		for (char **alias = ret.s_aliases; *alias != nullptr; alias++) {
-			free(*alias);
-			*alias = nullptr;
+		if (ret.s_aliases) {
+			for (char **alias = ret.s_aliases; *alias != nullptr; alias++) {
+				free(*alias);
+				*alias = nullptr;
+			}
+
+			free(ret.s_aliases);
+			ret.s_aliases = nullptr;
 		}
 
 		free(ret.s_proto);
