@@ -729,7 +729,12 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 	// TODO: Thread-safety!
 	auto rts = rtsCounter++;
 
-	SharedObject *object = initialRepository->findLoadedObject(file);
+	auto objectName = frg::string_view{file};
+	auto lastSlash = objectName.find_last('/');
+	if (lastSlash != static_cast<size_t>(-1))
+		objectName = objectName.sub_string(lastSlash + 1, objectName.size() - (lastSlash + 1));
+
+	SharedObject *object = initialRepository->findLoadedObject(objectName);
 	if (object && object->globalRts == 0 && (flags & RTLD_GLOBAL)) {
 		// The object was opened with RTLD_LOCAL, but we are called with RTLD_GLOBAL.
 		// According to the man page, we should promote to the global scope here.
