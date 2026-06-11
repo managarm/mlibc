@@ -133,6 +133,7 @@ libc_sources += files(
 	'generic/sched.cpp',
 	'generic/signals.cpp',
 	'generic/socket.cpp',
+	'generic/sysv-shm.cpp',
 	'generic/time.cpp'
 )
 libc_sources += [
