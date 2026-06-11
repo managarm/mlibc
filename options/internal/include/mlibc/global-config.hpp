@@ -14,11 +14,8 @@ struct GlobalConfig {
 	bool debugMonetaryLengths;
 };
 
-inline const GlobalConfig &globalConfig() {
-	static GlobalConfig cached;
-	return cached;
-}
+const GlobalConfig &globalConfig();
 
-}
+} // namespace mlibc
 
 #endif // MLIBC_GLOBAL_CONFIG
