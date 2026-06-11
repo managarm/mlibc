@@ -1450,6 +1450,9 @@ Tcb *allocateTcb() {
 	return tcb_ptr;
 }
 
+#if defined(__x86_64__) || defined(__aarch64__)
+__attribute__((target("general-regs-only")))
+#endif // defined(__x86_64__) || defined(__aarch64__)
 void *accessDtv(SharedObject *object) {
 	Tcb *tcb_ptr = mlibc::get_current_tcb();
 
@@ -1577,14 +1580,9 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 
 	// Checks if the symbol's version matches the desired version.
 	auto correctVersion = [&] (SymbolVersion candVersion) {
-		// Local version symbols shouldn't participate in symbol resolution.
-		// Only time .dynsym can contain a local version symbol is if it's
-		// undefined, so it should be discarded earlier.
-		__ensure(!candVersion.isLocal());
-
 		// Caller requested default version, ...
 		// ... and this symbol matches.
-		if(!version && (candVersion.isDefault() || candVersion.isGlobal()))
+		if(!version && (candVersion.isDefault() || candVersion.isGlobal() || candVersion.isLocal()))
 			return true;
 		// ... but this symbol isn't the default.
 		if(!version)
@@ -1594,9 +1592,9 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 		// LLD prior to version 22, and binutils between versions 2.35 and 2.45
 		// produce a global version symbol for this case, while newer ones produce
 		// a local version symbol.
-		// In this case, accept either the global or default version.
+		// In this case, accept either the global, default, or local version.
 		if((version->isLocal() || version->isGlobal())
-				&& (candVersion.isGlobal() || candVersion.isDefault()))
+				&& (candVersion.isGlobal() || candVersion.isDefault() || candVersion.isLocal()))
 			return true;
 
 		// Otherwise, make sure the version is correct.
@@ -1988,6 +1986,25 @@ void Loader::_scheduleInit(SharedObject *object) {
 	object->onInitStack = false;
 }
 
+// TODO: TLSDESC relocations aren't aarch64/x86_64 specific
+#if defined(__aarch64__) || defined(__x86_64__)
+extern "C" void *__mlibcTlsdescStatic(void *);
+extern "C" void *__mlibcTlsdescDynamic(void *);
+
+struct TlsdescData {
+	uintptr_t tlsIndex;
+	uintptr_t addend;
+	SharedObject *object;
+};
+
+extern "C"
+__attribute__((target("general-regs-only")))
+ptrdiff_t __mlibc_tlsdesc_slowpath(TlsdescData *data) {
+	auto tcb = mlibc::get_current_tcb();
+	return reinterpret_cast<uintptr_t>(accessDtv(data->object)) - reinterpret_cast<uintptr_t>(tcb->selfPointer) + data->addend;
+}
+#endif
+
 void Loader::_processRelocations(Relocation &rel) {
 	// copy and irelative relocations have to be performed after all other relocations
 	if(rel.type() == R_COPY || rel.type() == R_IRELATIVE)
@@ -2094,6 +2111,57 @@ void Loader::_processRelocations(Relocation &rel) {
 		off += tls_offset + tlsOffsetFromTp;
 		rel.relocate(off);
 	} break;
+// TODO: TLSDESC relocations aren't aarch64/x86_64 specific, but require an assembly implementation
+// of the resolver functions
+#if defined(__aarch64__) || defined(__x86_64__)
+		case R_TLSDESC: {
+			size_t symValue = 0;
+			SharedObject *target = nullptr;
+
+			if (rel.symbol_index()) {
+				auto [sym, ver] = rel.object()->getSymbolByIndex(rel.symbol_index());
+				auto p = Scope::resolveGlobalOrLocal(*globalScope, rel.object()->localScope, sym.getString(), rel.object()->objectRts, 0, ver);
+
+				if (!p) {
+					if (ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK) {
+						mlibc::panicLogger() << "rtld: Unresolved TLSDESC for symbol "
+							<< sym.getString() << " in object " << rel.object()->name << frg::endlog;
+					}
+					target = nullptr;
+					symValue = 0;
+				} else {
+					target = p->object();
+					if (p->symbol())
+						symValue = p->symbol()->st_value;
+				}
+			} else {
+				target = rel.object();
+			}
+
+			if (!target) {
+				((uint64_t *)rel.destination())[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
+				((uint64_t *)rel.destination())[1] = 0;
+			} else if (target->tlsModel == TlsModel::initial) {
+				((uint64_t *)rel.destination())[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
+				uint64_t value = symValue + target->tlsOffset + tlsOffsetFromTp + rel.addend_norel();
+				((uint64_t *)rel.destination())[1] = value;
+			} else {
+				// Access DTV for object to force the entry to be allocated and initialized
+				accessDtv(target);
+
+				__ensure(target->tlsIndex < mlibc::get_current_tcb()->dtvSize);
+
+				// TODO: We should free this when the DSO gets destroyed
+				auto data = frg::construct<TlsdescData>(getAllocator());
+				data->tlsIndex = target->tlsIndex;
+				data->addend = symValue + rel.addend_norel();
+				data->object = target;
+
+				((uint64_t *)rel.destination())[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescDynamic);
+				((uint64_t *)rel.destination())[1] = reinterpret_cast<uintptr_t>(data);
+			}
+		} break;
+#endif
 	default:
 		mlibc::panicLogger() << "Unexpected relocation type "
 				<< (void *) rel.type() << frg::endlog;
@@ -2196,12 +2264,6 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 	}
 }
 
-// TODO: TLSDESC relocations aren't aarch64/x86_64 specific
-#if defined(__aarch64__) || defined(__x86_64__)
-extern "C" void *__mlibcTlsdescStatic(void *);
-extern "C" void *__mlibcTlsdescDynamic(void *);
-#endif
-
 void Loader::_processLazyRelocations(SharedObject *object) {
 	if(object->globalOffsetTable == nullptr) {
 		__ensure(object->lazyRelocTableOffset == 0);
@@ -2278,9 +2340,12 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, sym.getString(), object->objectRts, 0, ver);
 
 				if (!p) {
-					__ensure(ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK);
-					mlibc::panicLogger() << "rtld: Unresolved TLSDESC for symbol "
-						<< sym.getString() << " in object " << object->name << frg::endlog;
+					if (ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK) {
+						mlibc::panicLogger() << "rtld: Unresolved TLSDESC for symbol "
+							<< sym.getString() << " in object " << object->name << frg::endlog;
+					}
+					target = nullptr;
+					symValue = 0;
 				} else {
 					target = p->object();
 					if (p->symbol())
@@ -2290,18 +2355,14 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				target = object;
 			}
 
-			__ensure(target);
-
-			if (target->tlsModel == TlsModel::initial) {
+			if (!target) {
+				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
+				((uint64_t *)rel_addr)[1] = 0;
+			} else if (target->tlsModel == TlsModel::initial) {
 				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
 				uint64_t value = symValue + target->tlsOffset + tlsOffsetFromTp + addend;
 				((uint64_t *)rel_addr)[1] = value;
 			} else {
-				struct TlsdescData {
-					uintptr_t tlsIndex;
-					uintptr_t addend;
-				};
-
 				// Access DTV for object to force the entry to be allocated and initialized
 				accessDtv(target);
 
@@ -2311,6 +2372,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				auto data = frg::construct<TlsdescData>(getAllocator());
 				data->tlsIndex = target->tlsIndex;
 				data->addend = symValue + addend;
+				data->object = target;
 
 				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescDynamic);
 				((uint64_t *)rel_addr)[1] = reinterpret_cast<uintptr_t>(data);

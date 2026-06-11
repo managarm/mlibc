@@ -161,6 +161,8 @@ struct Tcb {
 static_assert(offsetof(Tcb, stackCanary) == 0x28);
 // sysdeps/linux/x86_64/cp_syscall.S uses the offset of cancelBits.
 static_assert(offsetof(Tcb, cancelBits) == 0x30);
+// options/linker/x86_64/runtime.S uses the offset of dtvSize.
+static_assert(offsetof(Tcb, dtvSize) == 8);
 // options/linker/x86_64/runtime.S uses the offset of dtvPointers.
 static_assert(offsetof(Tcb, dtvPointers) == 16);
 #elif defined(__i386__)
@@ -173,6 +175,8 @@ static_assert(offsetof(Tcb, stackCanary) == 0x14);
 static_assert(offsetof(Tcb, cancelBits) == 0x18);
 #elif defined(__aarch64__)
 // The thread pointer on AArch64 points to 16 bytes before the end of the TCB.
+// options/linker/aarch64/runtime.S uses the offset of dtvSize.
+static_assert(sizeof(Tcb) - offsetof(Tcb, dtvSize) - TP_TCB_OFFSET == 112);
 // options/linker/aarch64/runtime.S uses the offset of dtvPointers.
 static_assert(sizeof(Tcb) - offsetof(Tcb, dtvPointers) - TP_TCB_OFFSET == 104);
 // sysdeps/linux/aarch64/cp_syscall.S uses the offset of cancelBits.
