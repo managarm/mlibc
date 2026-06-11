@@ -14,7 +14,7 @@
 
 template<bool Recursive>
 struct alignas(4) FutexLockImpl {
-	FutexLockImpl() : _state{0}, _recursion{0} { }
+	constexpr FutexLockImpl() : _state{0}, _recursion{0} { }
 
 	FutexLockImpl(const FutexLockImpl &) = delete;
 
