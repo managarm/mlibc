@@ -142,9 +142,10 @@ int sem_close(sem_t *) {
 	return -1;
 }
 
-int sem_getvalue(sem_t *, int *) {
-	errno = ENOSYS;
-	return -1;
+int sem_getvalue(sem_t *sem, int *sval) {
+	auto state = __atomic_load_n(&sem->__mlibc_count, __ATOMIC_RELAXED);
+	*sval = state & semaphoreCountMask;
+	return 0;
 }
 
 int sem_unlink(const char *) {
