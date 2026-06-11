@@ -9,12 +9,26 @@ int main() {
 	assert(sem_init(&sem, 0, -1) == -1);
 	assert(errno == EINVAL);
 
+	int val;
 	assert(sem_init(&sem, 0, 3) == 0);
+	assert(sem_getvalue(&sem, &val) == 0);
+	assert(val == 3);
 	assert(sem_trywait(&sem) == 0);
+	assert(sem_getvalue(&sem, &val) == 0);
+	assert(val == 2);
 	assert(sem_trywait(&sem) == 0);
+	assert(sem_getvalue(&sem, &val) == 0);
+	assert(val == 1);
 	assert(sem_trywait(&sem) == 0);
+	assert(sem_getvalue(&sem, &val) == 0);
+	assert(val == 0);
 	assert(sem_trywait(&sem) == -1);
 	assert(errno == EAGAIN);
+	assert(sem_getvalue(&sem, &val) == 0);
+	assert(val == 0);
+	assert(sem_post(&sem) == 0);
+	assert(sem_getvalue(&sem, &val) == 0);
+	assert(val == 1);
 	assert(sem_destroy(&sem) == 0);
 
 	sem_init(&sem, 0, 1);
