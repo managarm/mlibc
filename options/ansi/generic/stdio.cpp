@@ -1208,7 +1208,7 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args) {
 				bool is_negative = false;
 				unsigned long long res = 0;
 				char c = handler.look_ahead();
-				int count = 0;
+				int digit_count = 0;
 				EOF_CHECK(c == '\0');
 
 				if(c == '-') {
@@ -1220,11 +1220,12 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args) {
 				c = handler.look_ahead();
 				if (c == '0') {
 					handler.consume();
-					++count;
 					c = handler.look_ahead();
 					if (tolower(c) == 'x') {
 						handler.consume();
 						c = handler.look_ahead();
+					} else {
+						digit_count++;
 					}
 				}
 
@@ -1241,10 +1242,10 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args) {
 					} else {
 						break;
 					}
-					count++;
+					digit_count++;
 					c = handler.look_ahead();
 				}
-				NOMATCH_CHECK(count == 0);
+				NOMATCH_CHECK(digit_count == 0);
 
 				if (dest) {
 					if(is_negative)
