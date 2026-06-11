@@ -44,7 +44,7 @@ typedef float float_t;
 
 #define MATH_ERRNO 1
 #define MATH_ERREXCEPT 2
-#define math_errhandling 3
+#define math_errhandling MATH_ERREXCEPT
 
 /* [C11/7.12.3 Classification macros] */
 
