@@ -253,7 +253,9 @@ int thread_mutex_init(struct __mlibc_mutex *__restrict mutex,
 
 	// TODO: Other values aren't supported yet.
 	__ensure(robust == __MLIBC_THREAD_MUTEX_STALLED);
-	__ensure(protocol == __MLIBC_THREAD_PRIO_NONE);
+
+	if(protocol != __MLIBC_THREAD_PRIO_NONE)
+		infoLogger() << "mlibc: mutex priority " << protocol << " is not implemented" << frg::endlog;
 
 	return 0;
 }
