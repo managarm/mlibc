@@ -59,7 +59,7 @@ static constexpr unsigned int mutex_excl_bit = static_cast<uint32_t>(1) << 30;
 static constexpr unsigned int rc_count_mask = (static_cast<uint32_t>(1) << 31) - 1;
 static constexpr unsigned int rc_waiters_bit = static_cast<uint32_t>(1) << 31;
 
-static constexpr size_t default_stacksize = 0x200000;
+static constexpr size_t default_stacksize = 0x800000;
 static constexpr size_t default_guardsize = 4096;
 
 // ----------------------------------------------------------------------------
