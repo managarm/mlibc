@@ -46,6 +46,7 @@ struct posix_dent {
 
 #if defined(_DEFAULT_SOURCE)
 #define IFTODT(mode) (((mode) & 0170000) >> 12)
+#define DTTOIF(dirtype) ((dirtype) << 12)
 #endif
 
 struct __mlibc_dir_struct {

@@ -212,6 +212,7 @@ ignored_macros:
   - "CPU_ZERO"
   - "CPU_ZERO_S"
   - "DOUBLEBITS"
+  - "DTTOIF"
   - "FE_ALL_EXCEPT"
   - "FE_DFL_ENV"
   - "FLOATBITS"
