@@ -1,1 +1,1 @@
-../../../../abis/linux/limits.h
+../../../../abis/zinnia/limits.h

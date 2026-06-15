@@ -326,12 +326,8 @@ void Sysdeps<Yield>::operator()() { zinnia_syscall(SYSCALL_YIELD); }
 
 int
 Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
-	if (ru) {
-		mlibc::infoLogger() << "mlibc: struct rusage in sys_waitpid is unsupported" << frg::endlog;
-		return ENOSYS;
-	}
 again:
-	auto r = zinnia_syscall(SYSCALL_WAITPID, pid, (size_t)status, flags);
+	auto r = zinnia_syscall(SYSCALL_WAITPID, pid, (size_t)status, flags, (size_t)ru);
 	if (r.error) {
 		if (r.error == EINTR)
 			goto again;
@@ -740,6 +736,10 @@ int Sysdeps<Madvise>::operator()(void *addr, size_t length, int advice) {
 	return zinnia_syscall(SYSCALL_MADVISE, (size_t)addr, length, advice).error;
 }
 
+int Sysdeps<PosixMadvise>::operator()(void *addr, size_t length, int advice) {
+	return zinnia_syscall(SYSCALL_MADVISE, (size_t)addr, length, advice).error;
+}
+
 int Sysdeps<GetItimer>::operator()(int which, struct itimerval *curr_value) {
 	return zinnia_syscall(SYSCALL_ITIMER_GET, which, (size_t)curr_value).error;
 }
@@ -887,6 +887,10 @@ int Sysdeps<Sysconf>::operator()(int num, long *ret) {
 		return r.error;
 	*ret = r.value;
 	return 0;
+}
+
+int Sysdeps<Pause>::operator()() {
+	return sysdep<Ppoll>(NULL, 0, NULL, NULL, NULL);
 }
 
 } // namespace mlibc

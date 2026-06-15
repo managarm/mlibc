@@ -26,6 +26,7 @@ libc_sources += files(
 	'generic/signalfd.cpp',
 	'generic/timerfd.cpp',
 	'generic/eventfd.cpp',
+	'generic/ifaddrs.cpp',
 	host_machine.cpu_family() / 'thread.S',
 	host_machine.cpu_family() / 'signal.S',
 )
@@ -105,6 +106,7 @@ if not no_headers
 	)
 
 	install_headers('include/mntent.h')
+	install_headers('include/ifaddrs.h')
 endif
 
 if not headers_only

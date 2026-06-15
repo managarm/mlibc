@@ -89,7 +89,7 @@ struct cmsghdr {
 #define SO_PRIORITY 31
 #define SO_MARK 32
 
-#define SOMAXCONN 1
+#define SOMAXCONN 128
 
 #define MSG_CTRUNC 0x1
 #define MSG_DONTROUTE 0x2
