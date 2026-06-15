@@ -8,6 +8,7 @@
 #include <linux/nvme_ioctl.h>
 #include <linux/usb/cdc-wdm.h>
 #include <linux/vt.h>
+#include <sound/asound.h>
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <netinet/in.h>
@@ -1379,6 +1380,446 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		*result = 0;
+		return 0;
+	} else if (request == SNDRV_CTL_IOCTL_CARD_INFO) {
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, send_ioctl_req, send_req, recv_resp, recv_data] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		            helix_ng::recvInline(),
+		            helix_ng::recvBuffer(arg, sizeof(snd_ctl_card_info))
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+		HEL_CHECK(recv_data.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		return 0;
+	} else if (request == SNDRV_CTL_IOCTL_PVERSION || request == SNDRV_PCM_IOCTL_PVERSION) {
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, send_ioctl_req, send_req, recv_resp] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		            helix_ng::recvInline()
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		*static_cast<int *>(arg) = resp.snd_pversion();
+		return 0;
+	} else if (request == SNDRV_CTL_IOCTL_PCM_PREFER_SUBDEVICE) {
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+		req.set_snd_pcm_prefer_subdevice(*static_cast<int *>(arg));
+
+		auto [offer, send_ioctl_req, send_req, recv_resp] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		            helix_ng::recvInline()
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		return 0;
+	} else if (request == SNDRV_CTL_IOCTL_PCM_NEXT_DEVICE) {
+		int *param = static_cast<int *>(arg);
+
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+		req.set_snd_device(*param);
+
+		auto [offer, send_ioctl_req, send_req, recv_resp] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		            helix_ng::recvInline()
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		*param = resp.snd_device();
+		return 0;
+	} else if (request == SNDRV_CTL_IOCTL_PCM_INFO) {
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, send_ioctl_req, send_req, send_data, recv_resp, recv_data] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+					helix_ng::sendBuffer(arg, sizeof(snd_pcm_info)),
+		            helix_ng::recvInline(),
+		            helix_ng::recvBuffer(arg, sizeof(snd_pcm_info))
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_data.error());
+		HEL_CHECK(recv_resp.error());
+		HEL_CHECK(recv_data.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+		if (resp.error() == managarm::fs::Errors::FILE_NOT_FOUND) {
+			return ENOENT;
+		}
+
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		return 0;
+	} else if (request == SNDRV_PCM_IOCTL_INFO) {
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, send_ioctl_req, send_req, recv_resp, recv_data] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		            helix_ng::recvInline(),
+		            helix_ng::recvBuffer(arg, sizeof(snd_pcm_info))
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+		HEL_CHECK(recv_data.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		return 0;
+	} else if (request == SNDRV_PCM_IOCTL_USER_PVERSION) {
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+		req.set_snd_pcm_user_pversion(*static_cast<int *>(arg));
+
+		auto [offer, send_ioctl_req, send_req, recv_resp] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		            helix_ng::recvInline()
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		return 0;
+	} else if (request == SNDRV_PCM_IOCTL_TTSTAMP) {
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+		req.set_snd_pcm_ttstamp(*static_cast<int *>(arg));
+
+		auto [offer, send_ioctl_req, send_req, recv_resp] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		            helix_ng::recvInline()
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		return 0;
+	} else if (request == SNDRV_PCM_IOCTL_HW_REFINE || request == SNDRV_PCM_IOCTL_HW_PARAMS) {
+		auto param = static_cast<snd_pcm_hw_params *>(arg);
+
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, send_ioctl_req, send_req, send_buffer, recv_resp, recv_data] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		            helix_ng::sendBuffer(param, sizeof(*param)),
+		            helix_ng::recvInline(),
+		            helix_ng::recvBuffer(param, sizeof(*param))
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_buffer.error());
+		HEL_CHECK(recv_resp.error());
+		HEL_CHECK(recv_data.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+		if (resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT)
+			return EINVAL;
+		else {
+			__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+			*result = resp.result();
+		}
+
+		return 0;
+	} else if (request == SNDRV_PCM_IOCTL_SW_PARAMS) {
+		auto param = static_cast<snd_pcm_sw_params *>(arg);
+
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, send_ioctl_req, send_req, send_buffer, recv_resp, recv_data] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		            helix_ng::sendBuffer(param, sizeof(*param)),
+		            helix_ng::recvInline(),
+		            helix_ng::recvBuffer(param, sizeof(*param))
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_buffer.error());
+		HEL_CHECK(recv_resp.error());
+		HEL_CHECK(recv_data.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		return 0;
+	} else if (request == SNDRV_PCM_IOCTL_PREPARE || request == SNDRV_PCM_IOCTL_START
+				|| request == SNDRV_PCM_IOCTL_DROP || request == SNDRV_PCM_IOCTL_HW_FREE
+				|| request == SNDRV_PCM_IOCTL_HWSYNC || request == SNDRV_PCM_IOCTL_XRUN) {
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, send_ioctl_req, send_req, recv_resp] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		            helix_ng::recvInline()
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		return 0;
+	} else if (request == SNDRV_PCM_IOCTL_DELAY) {
+		auto param = static_cast<snd_pcm_sframes_t *>(arg);
+
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, send_ioctl_req, send_req, send_buffer, recv_resp, recv_data] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		            helix_ng::sendBuffer(param, sizeof(*param)),
+		            helix_ng::recvInline(),
+		            helix_ng::recvBuffer(param, sizeof(*param))
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_buffer.error());
+		HEL_CHECK(recv_resp.error());
+		HEL_CHECK(recv_data.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		return 0;
+	} else if (request == SNDRV_PCM_IOCTL_STATUS_EXT) {
+		auto param = static_cast<snd_pcm_status *>(arg);
+
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, send_ioctl_req, send_req, send_buffer, recv_resp, recv_data] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		            helix_ng::sendBuffer(param, sizeof(*param)),
+		            helix_ng::recvInline(),
+		            helix_ng::recvBuffer(param, sizeof(*param))
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_buffer.error());
+		HEL_CHECK(recv_resp.error());
+		HEL_CHECK(recv_data.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		return 0;
+	} else if (request == SNDRV_PCM_IOCTL_CHANNEL_INFO) {
+		auto param = static_cast<snd_pcm_channel_info *>(arg);
+
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+
+		auto [offer, send_ioctl_req, send_req, send_buffer, recv_resp, recv_data] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+		            helix_ng::sendBuffer(param, sizeof(*param)),
+		            helix_ng::recvInline(),
+		            helix_ng::recvBuffer(param, sizeof(*param))
+		        )
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(send_buffer.error());
+		HEL_CHECK(recv_resp.error());
+		HEL_CHECK(recv_data.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+		*result = resp.result();
+		return 0;
+	} else if (request == SNDRV_PCM_IOCTL_WRITEI_FRAMES) {
+		auto param = static_cast<snd_xferi *>(arg);
+
+		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_command(request);
+		req.set_snd_pcm_frames(param->frames);
+
+		auto [offer, send_ioctl_req, send_req, recv_info_resp] =
+		    exchangeMsgsSync(
+		        handle,
+		        helix_ng::offer(
+					helix_ng::want_lane,
+		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+					helix_ng::recvInline()
+				)
+		    );
+
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_info_resp.error());
+
+		managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_info_resp.data(), recv_info_resp.length());
+		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
+
+		auto [send_buffer, recv_resp] =
+		exchangeMsgsSync(
+			offer.descriptor().getHandle(),
+			helix_ng::sendBuffer(param->buf, param->frames * resp.snd_frame_size()),
+			helix_ng::recvInline()
+		);
+
+		HEL_CHECK(send_buffer.error());
+		HEL_CHECK(recv_resp.error());
+
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+
+		if (resp.error() != managarm::fs::Errors::SUCCESS)
+			return resp.error() | toErrno;
+
+		*result = resp.result();
+		param->result = resp.snd_result();
 		return 0;
 	} else if (request == FICLONE || request == FICLONERANGE) {
 		mlibc::infoLogger() << "\e[35mmlibc: FICLONE/FICLONERANGE are no-ops" << frg::endlog;
