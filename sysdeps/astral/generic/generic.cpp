@@ -296,7 +296,7 @@ namespace mlibc {
 			__builtin_unreachable();
 		}
 
-		strcpy(buffer, TTY_PREFIX);
+		memcpy(buffer, TTY_PREFIX, prefixLen + 1);
 
 		int res;
 		return sysdep<Ioctl>(fd, TTY_IOCTL_NAME, (void *)(buffer + prefixLen), &res);
@@ -578,7 +578,9 @@ namespace mlibc {
 
 #ifndef MLIBC_BUILDING_RTLD
 	int Sysdeps<Pselect>::operator()(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set, const struct timespec *timeout, const sigset_t *sigmask, int *num_events) {
-		pollfd *fds = (pollfd *)malloc(num_fds * sizeof(pollfd));
+		if(num_fds < 0)
+			return EINVAL;
+		pollfd *fds = (pollfd *)calloc(num_fds, sizeof(pollfd));
 
 		if(fds == NULL)
 			return ENOMEM;
