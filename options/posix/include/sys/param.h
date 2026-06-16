@@ -2,11 +2,16 @@
 #ifndef _SYS_PARAM_H
 #define _SYS_PARAM_H
 
+#include <abi-bits/dev_t.h>
 #include <endian.h>
 #include <limits.h>
 
 #define NBBY CHAR_BIT
 #define NGROUPS NGROUPS_MAX
+
+#ifndef NODEV
+#define NODEV ((dev_t)(-1))
+#endif
 
 /* Report the same value as Linux here. */
 #define MAXNAMLEN 255

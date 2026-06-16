@@ -34,6 +34,7 @@ all_test_cases = [
 	'ansi/fgetpos',
 	'ansi/fputs',
 	'ansi/ftell',
+	'ansi/fseek-eof',
 	'ansi/tmpfile',
 	'ansi/mbstowcs',
 	'ansi/locale',

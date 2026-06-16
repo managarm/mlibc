@@ -401,8 +401,23 @@ int main() {
 	assert(sscanf("00xc0ffee", "%x", &int_value) == 1);
 	assert(int_value == 0);
 
+	assert(sscanf("1234ab", "%2x", &int_value) == 1);
+	assert(int_value == 0x12);
+	assert(sscanf("-1234ab", "%3x", &int_value) == 1);
+	assert(int_value == -0x12);
+	assert(sscanf("+1234ab", "%3x", &int_value) == 1);
+	assert(int_value == 0x12);
+	assert(sscanf("0x1234", "%4x", &int_value) == 1);
+	assert(int_value == 0x12);
+	assert(sscanf("0x1234", "%3x", &int_value) == 1);
+	assert(int_value == 0x1);
+	assert(sscanf("-0x1234", "%4x", &int_value) == 1);
+	assert(int_value == -0x1);
+
 #if (!defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 43)
 	// glibc before 2.42 or 2.43 did not handle prefixes with no following digits correctly
+	assert(sscanf("0x12", "%2x", &int_value) == 0);
+	assert(sscanf("-0x1234", "%3x", &int_value) == 0);
 	assert(sscanf("0xg", "%x%c", &uint_value, char_value) == 0);
 #endif
 
