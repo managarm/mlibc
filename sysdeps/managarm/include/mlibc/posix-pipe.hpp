@@ -38,11 +38,13 @@ struct ElementHandle {
 		swap(u._queue, v._queue);
 		swap(u._n, v._n);
 		swap(u._data, v._data);
+		swap(u._context, v._context);
 	}
 
-	ElementHandle() : _queue{nullptr}, _n{-1}, _data{nullptr} {}
+	ElementHandle() : _queue{nullptr}, _n{-1}, _data{nullptr}, _context{0} {}
 
-	ElementHandle(Queue *queue, int n, void *data) : _queue{queue}, _n{n}, _data{data} {}
+	ElementHandle(Queue *queue, int n, void *data, uintptr_t context)
+	: _queue{queue}, _n{n}, _data{data}, _context{context} {}
 
 	ElementHandle(const ElementHandle &other);
 
@@ -57,12 +59,16 @@ struct ElementHandle {
 
 	void *data() { return _data; }
 
+	// Context that was passed at submission time.
+	uintptr_t context() { return _context; }
+
 	void advance(size_t size) { _data = reinterpret_cast<char *>(_data) + size; }
 
 private:
 	Queue *_queue;
 	int _n;
 	void *_data;
+	uintptr_t _context;
 };
 
 struct Queue {
@@ -242,7 +248,8 @@ struct Queue {
 			auto element = reinterpret_cast<HelElement *>(ptr);
 			_lastProgress += sizeof(HelElement) + element->length;
 			_refCount[n]++;
-			return ElementHandle{this, n, ptr + sizeof(HelElement)};
+			return ElementHandle{this, n, ptr + sizeof(HelElement),
+					reinterpret_cast<uintptr_t>(element->context)};
 		}
 	}
 
@@ -376,6 +383,7 @@ inline ElementHandle::ElementHandle(const ElementHandle &other) {
 	_queue = other._queue;
 	_n = other._n;
 	_data = other._data;
+	_context = other._context;
 
 	_queue->reference(_n);
 }
