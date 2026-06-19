@@ -1,6 +1,7 @@
 #include <array>
 #include <bits/ensure.h>
 #include <frg/string.hpp>
+#include <mlibc/allocator.hpp>
 #include <mlibc/charcode.hpp>
 #include <mlibc/debug.hpp>
 
@@ -312,9 +313,10 @@ struct polymorphic_charcode_adapter : polymorphic_charcode {
 	}
 };
 
+constinit mlibc::lazy_eternal<polymorphic_charcode_adapter<utf8_charcode>> global_charcode;
+
 polymorphic_charcode *current_charcode() {
-	static polymorphic_charcode_adapter<utf8_charcode> global_charcode;
-	return &global_charcode;
+	return &global_charcode.get();
 }
 
 transcode_status wide_charcode::promote(wchar_t nc, codepoint &wc) {

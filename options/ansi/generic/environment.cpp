@@ -34,11 +34,16 @@ size_t find_environ_index(frg::string_view name) {
 	return -1;
 }
 
+struct EnvironmentVector {
+	EnvironmentVector() : vector{getAllocator()} {}
+	frg::vector<char *, MemoryAllocator> vector;
+};
+
+constinit mlibc::lazy_eternal<EnvironmentVector> global_vector;
+
 // Environment vector that is mutated by putenv() and setenv().
-// Cannot be global as it is accessed during library initialization.
 frg::vector<char *, MemoryAllocator> &get_vector() {
-	static frg::vector<char *, MemoryAllocator> vector{getAllocator()};
-	return vector;
+	return global_vector.get().vector;
 }
 
 void update_vector() {

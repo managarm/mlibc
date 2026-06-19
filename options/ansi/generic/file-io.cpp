@@ -44,10 +44,11 @@ namespace {
 	// The maximum number of characters we permit the user to ungetc.
 	constexpr size_t ungetBufferSize = 8;
 
+	constinit mlibc::lazy_eternal<file_list> global_file_list_instance;
+
 	// List of files that will be flushed before exit().
 	file_list &global_file_list() {
-		static frg::eternal<file_list> list;
-		return list.get();
+		return global_file_list_instance.get();
 	};
 } // namespace
 

@@ -227,10 +227,17 @@ void endspent(void) {
 	mlibc::infoLogger() << "mlibc: endspent is a stub" << frg::endlog;
 }
 
+struct SgetspentBuffer {
+	SgetspentBuffer() : string{getAllocator()} {}
+	frg::string<MemoryAllocator> string;
+};
+
+static constinit mlibc::lazy_eternal<SgetspentBuffer> globalSgetspentBuffer;
+
 struct spwd *sgetspent(const char *s) {
-	static frg::string<MemoryAllocator> buffer{getAllocator()};
 	static struct spwd sp;
 
+	auto &buffer = globalSgetspentBuffer.get().string;
 	buffer = {s, getAllocator()};
 
 	if (__parsespent(buffer.data(), &sp) == 0)
