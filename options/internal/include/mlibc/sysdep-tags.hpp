@@ -151,6 +151,24 @@ struct GetLoadavg {};
 struct Openpty {};
 #endif // __MLIBC_BSD_OPTION
 
+#if __MLIBC_BSD_PROCDESC_OPTION
+#include <abi-bits/signal.h>
+#include <sys/procdesc.h>
+
+// int sys_pdfork(int *fdp, int flags, pid_t *child);
+struct Pdfork {};
+
+// int sys_pdkill(int fd, int sig);
+struct Pdkill {};
+
+// int sys_pdgetpid(int fd, pid_t *pidp);
+struct Pdgetpid {};
+
+// int sys_pdwait(int fd, int *status, int options, struct __wrusage *rusage, siginfo_t *info);
+struct Pdwait {};
+
+#endif /* __MLIBC_BSD_PROCDESC_OPTION */
+
 #if __MLIBC_GLIBC_OPTION
 // int sys_personality(unsigned long persona, int *out);
 struct Personality {};
