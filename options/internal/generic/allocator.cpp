@@ -13,13 +13,19 @@
 // Globals
 // --------------------------------------------------------
 
+struct AllocatorPackage {
+	AllocatorPackage()
+	: heap{virtualAllocator}, singleton{&heap} {}
+
+	VirtualAllocator virtualAllocator;
+	MemoryPool heap;
+	MemoryAllocator singleton;
+};
+
+constinit mlibc::lazy_eternal<AllocatorPackage> global_allocator_package;
+
 MemoryAllocator &getAllocator() {
-	// use frg::eternal to prevent a call to __cxa_atexit().
-	// this is necessary because __cxa_atexit() call this function.
-	static frg::eternal<VirtualAllocator> virtualAllocator;
-	static frg::eternal<MemoryPool> heap{virtualAllocator.get()};
-	static frg::eternal<MemoryAllocator> singleton{&heap.get()};
-	return singleton.get();
+	return global_allocator_package.get().singleton;
 }
 
 // --------------------------------------------------------
@@ -199,11 +205,10 @@ size_t MemoryAllocator::get_size(void *ptr) {
 	return meta->allocatedSize;
 }
 
+constinit mlibc::lazy_eternal<MemoryAllocator> global_debug_allocator;
+
 MemoryAllocator &getAllocator() {
-	// use frg::eternal to prevent a call to __cxa_atexit().
-	// this is necessary because __cxa_atexit() call this function.
-	static frg::eternal<MemoryAllocator> singleton{};
-	return singleton.get();
+	return global_debug_allocator.get();
 }
 
 #endif /* !MLIBC_DEBUG_ALLOCATOR */
