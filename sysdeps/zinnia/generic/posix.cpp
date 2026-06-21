@@ -5,7 +5,9 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/tcb.hpp>
+#include <ifaddrs.h>
 #include <net/if.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -873,11 +875,32 @@ int Sysdeps<IfNametoindex>::operator()(const char *name, unsigned int *ret) {
 }
 
 int Sysdeps<InetConfigured>::operator()(bool *ipv4, bool *ipv6) {
-	// TODO
 	if (ipv4)
-		*ipv4 = true;
+		*ipv4 = false;
 	if (ipv6)
 		*ipv6 = false;
+
+	struct ifaddrs *ifaddr = nullptr;
+	if (getifaddrs(&ifaddr) != 0)
+		return 0;
+
+	for (struct ifaddrs *ifa = ifaddr; ifa; ifa = ifa->ifa_next) {
+		if (!ifa->ifa_addr || !ifa->ifa_name)
+			continue;
+		if (!strncmp(ifa->ifa_name, "lo", IF_NAMESIZE))
+			continue;
+
+		if (ifa->ifa_addr->sa_family == AF_INET) {
+			auto *in = reinterpret_cast<struct sockaddr_in *>(ifa->ifa_addr);
+			if (in->sin_addr.s_addr != 0 && ipv4)
+				*ipv4 = true;
+		} else if (ifa->ifa_addr->sa_family == AF_INET6) {
+			if (ipv6)
+				*ipv6 = true;
+		}
+	}
+
+	freeifaddrs(ifaddr);
 	return 0;
 }
 

@@ -107,6 +107,9 @@ if not no_headers
 
 	install_headers('include/mntent.h')
 	install_headers('include/ifaddrs.h')
+
+	install_headers('include/netpacket/packet.h', subdir: 'netpacket')
+	install_headers('include/net/bpf.h', subdir: 'net')
 endif
 
 if not headers_only
