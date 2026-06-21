@@ -23,6 +23,7 @@ if not no_headers
 		subdir: 'arpa'
 	)
 	install_headers(
+		'include/sys/mount.h',
 		'include/sys/queue.h',
 		subdir: 'sys'
 	)

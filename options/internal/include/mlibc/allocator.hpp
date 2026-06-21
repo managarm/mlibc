@@ -3,6 +3,7 @@
 
 #include <mlibc/lock.hpp>
 #include <bits/ensure.h>
+#include <frg/manual_box.hpp>
 #include <frg/slab.hpp>
 #include <internal-config.h>
 
@@ -34,5 +35,35 @@ struct MemoryAllocator {
 MemoryAllocator &getAllocator();
 
 #endif // !MLIBC_DEBUG_ALLOCATOR
+
+namespace mlibc {
+
+template <typename T>
+struct lazy_eternal {
+	constexpr lazy_eternal() = default;
+
+	template <typename Self>
+	auto &get(this Self &&self) {
+		if (__atomic_load_n(&self.initialized_, __ATOMIC_ACQUIRE))
+			return *self.box_.get();
+
+		{
+			frg::unique_lock lock{self.lock_};
+			if (!__atomic_load_n(&self.initialized_, __ATOMIC_RELAXED)) {
+				self.box_.initialize();
+				__atomic_store_n(&self.initialized_, 1, __ATOMIC_RELEASE);
+			}
+		}
+
+		return *self.box_.get();
+	}
+
+private:
+	mutable uint32_t initialized_ = 0;
+	mutable FutexLock lock_;
+	mutable frg::manual_box<T> box_;
+};
+
+} // namespace mlibc
 
 #endif // MLIBC_FRIGG_ALLOC
