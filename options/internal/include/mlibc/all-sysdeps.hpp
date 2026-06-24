@@ -7,6 +7,7 @@
 #include <bits/ensure.h>
 #include <errno.h>
 #include <mlibc/sysdeps.hpp>
+#include <mlibc/sysdep-traits.hpp>
 #include <utility>
 
 namespace mlibc {
@@ -84,6 +85,8 @@ static_assert(IsImplemented<VmMap>);
 static_assert(IsImplemented<VmUnmap>);
 static_assert(IsImplemented<TcbSet>);
 // ANCHOR_END: mandatory-sysdeps
+
+static_assert(AllSysdepTraits<SysdepTraits>);
 
 } // namespace mlibc
 

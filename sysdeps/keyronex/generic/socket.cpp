@@ -211,5 +211,15 @@ Sysdeps<Getifaddrs>::operator()(struct ifaddrs **out)
 	return 0;
 }
 
+void
+Sysdeps<Freeifaddrs>::operator()(struct ifaddrs *ifa)
+{
+	while (ifa != nullptr) {
+		ifaddrs *current = ifa;
+		ifa = ifa->ifa_next;
+		frg::destruct(getAllocator(), reinterpret_cast<IfaddrHelper *>(current));
+	}
+}
+
 
 } // namespace mlibc

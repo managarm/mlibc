@@ -100,6 +100,7 @@ struct KeyronexSysdepTags :
 	IfIndextoname,
 	IfNametoindex,
 	Getifaddrs,
+	Freeifaddrs,
 	Clone,
 	PrepareStack,
 	ThreadExit,
@@ -108,5 +109,9 @@ struct KeyronexSysdepTags :
 
 template<typename Tag>
 using Sysdeps = SysdepOf<KeyronexSysdepTags, Tag>;
+
+struct SysdepTraits {
+	static constexpr bool usesRtNetlink = false;
+};
 
 } // namespace mlibc

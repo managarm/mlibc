@@ -27,4 +27,8 @@ struct DemoSysdepTags :
 template<typename Tag>
 using Sysdeps = SysdepOf<DemoSysdepTags, Tag>;
 
+struct SysdepTraits {
+	static constexpr bool usesRtNetlink = false;
+};
+
 } // namespace mlibc

@@ -102,6 +102,7 @@ struct ManagarmSysdepTags :
 	Waitid,
 	Reboot,
 	Getifaddrs,
+	Freeifaddrs,
 	PidfdOpen,
 	PidfdGetpid,
 	PidfdSendSignal,
@@ -211,5 +212,9 @@ struct ManagarmSysdepTags :
 
 template<typename Tag>
 using Sysdeps = SysdepOf<ManagarmSysdepTags, Tag>;
+
+struct SysdepTraits {
+	static constexpr bool usesRtNetlink = true;
+};
 
 } // namespace mlibc
