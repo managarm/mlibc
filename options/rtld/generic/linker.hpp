@@ -345,6 +345,9 @@ struct RuntimeTlsMap {
 
 	// TLS indices.
 	frg::vector<SharedObject *, MemoryAllocator> indices;
+
+	// Track all allocated TCBs.
+	frg::vector<Tcb *, MemoryAllocator> tcbs;
 };
 
 extern frg::manual_box<FutexLock> runtimeTlsMapLock;
