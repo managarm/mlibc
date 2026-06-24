@@ -3,6 +3,7 @@
 #include <abi-bits/clockid_t.h>
 #include <bits/ansi/timespec.h>
 #include <bits/ensure.h>
+#include <frg/safe_int.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <time.h>
@@ -16,7 +17,7 @@ inline bool time_absolute_to_relative(const clockid_t clock, const struct timesp
 	constexpr long nanos_per_second = 1'000'000'000;
 
 	if (clock != CLOCK_REALTIME && clock != CLOCK_MONOTONIC) {
-		mlibc::infoLogger() << "mlibc: time_relative_to_absolute() only supports CLOCK_REALTIME and CLOCK_MONOTONIC"
+		mlibc::infoLogger() << "mlibc: time_absolute_to_relative() only supports CLOCK_REALTIME and CLOCK_MONOTONIC"
 			<< frg::endlog;
 		return false;
 	}
@@ -25,8 +26,10 @@ inline bool time_absolute_to_relative(const clockid_t clock, const struct timesp
 	if (mlibc::sysdep<ClockGet>(clock, &now.tv_sec, &now.tv_nsec))
 		__ensure(!"sys_clock_get() failed");
 
-	reltime->tv_sec = abstime->tv_sec - now.tv_sec;
-	reltime->tv_nsec = abstime->tv_nsec - now.tv_nsec;
+	if (!frg::checked_sub(abstime->tv_sec, now.tv_sec, reltime->tv_sec))
+		return false;
+	if (!frg::checked_sub(abstime->tv_nsec, now.tv_nsec, reltime->tv_nsec))
+		return false;
 
 	// Check if abstime has already passed.
 	if (reltime->tv_sec < 0 || (reltime->tv_sec == 0 && reltime->tv_nsec < 0)) {
@@ -35,15 +38,62 @@ inline bool time_absolute_to_relative(const clockid_t clock, const struct timesp
 		return true;
 	} else if (reltime->tv_nsec >= nanos_per_second) {
 		reltime->tv_nsec -= nanos_per_second;
-		reltime->tv_sec++;
+		if (!frg::checked_add(reltime->tv_sec, time_t{1}, reltime->tv_sec))
+			return false;
 		if (reltime->tv_nsec >= nanos_per_second)
 			return false;
 	} else if (reltime->tv_nsec < 0) {
 		reltime->tv_nsec += nanos_per_second;
-		reltime->tv_sec--;
+		if (!frg::checked_sub(reltime->tv_sec, time_t{1}, reltime->tv_sec))
+			return false;
 		if (reltime->tv_nsec < 0)
 			return false;
 	}
+
+	return true;
+}
+
+// Converts the relative time `reltime` to an absolute time `abstime`.
+// Returns false if the conversion failed (e.g. due to over-/underflow).
+inline bool time_relative_to_absolute(
+    const clockid_t clock, const struct timespec *__restrict reltime, struct timespec *abstime
+) {
+	constexpr long nanos_per_second = 1'000'000'000;
+
+	if (clock != CLOCK_REALTIME && clock != CLOCK_MONOTONIC) {
+		mlibc::infoLogger()
+		    << "mlibc: time_relative_to_absolute() only supports CLOCK_REALTIME and CLOCK_MONOTONIC"
+		    << frg::endlog;
+		return false;
+	}
+
+	struct timespec now;
+	if (mlibc::sysdep<ClockGet>(clock, &now.tv_sec, &now.tv_nsec))
+		__ensure(!"sys_clock_get() failed");
+
+	// Add relative time to current time
+	if (!frg::checked_add(now.tv_sec, reltime->tv_sec, abstime->tv_sec))
+		return false;
+	if (!frg::checked_add(now.tv_nsec, reltime->tv_nsec, abstime->tv_nsec))
+		return false;
+
+	// Normalize nanoseconds
+	if (abstime->tv_nsec >= nanos_per_second) {
+		abstime->tv_nsec -= nanos_per_second;
+		if (!frg::checked_add(abstime->tv_sec, time_t{1}, abstime->tv_sec))
+			return false;
+		if (abstime->tv_nsec >= nanos_per_second)
+			return false;
+	} else if (abstime->tv_nsec < 0) {
+		abstime->tv_nsec += nanos_per_second;
+		if (!frg::checked_sub(abstime->tv_sec, time_t{1}, abstime->tv_sec))
+			return false;
+		if (abstime->tv_nsec < 0)
+			return false;
+	}
+
+	if (now.tv_sec > 0 && reltime->tv_sec > 0 && abstime->tv_sec < 0)
+		return false;
 
 	return true;
 }

@@ -18,7 +18,9 @@ jobs:
                     compiler: clang
         name: Build mlibc
         runs-on: ubuntu-latest
-        container: debian:trixie
+        container:
+            image: debian:trixie
+            options: --security-opt seccomp=unconfined --privileged
         steps:
           - name: Setup
             run: |

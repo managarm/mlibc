@@ -158,6 +158,7 @@ all_test_cases = [
 	'posix/strxfrm_l',
 	'posix/wcscoll_l',
 	'posix/wcsxfrm_l',
+	'posix/aio',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',
