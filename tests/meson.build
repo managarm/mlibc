@@ -73,6 +73,7 @@ all_test_cases = [
 	'posix/pthread_mutex',
 	'posix/pthread_key',
 	'posix/pthread_thread_local',
+	'posix/cxa_thread_atexit',
 	'posix/pthread_attr',
 	'posix/pthread_schedparam',
 	'posix/pthread_spin',

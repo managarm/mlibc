@@ -17,7 +17,7 @@ __mlibcTlsdescDynamic:
 	ldp x0, x2, [x1] // tlsIndex, addend
 
 	mrs x1, tpidr_el0 // tp
-	sub x1, x1, #104 // address of tp->dtvPointers
+	sub x1, x1, #112 // address of tp->dtvPointers
 	ldar x1, [x1] // load dtvPointers with acquire
 	ldr x0, [x1, x0, lsl 3] // dtvPointers[tlsIndex]
 

@@ -68,6 +68,7 @@ extern "C" void *__dso_handle;
 }
 
 void __mlibc_do_finalize() {
+	mlibc::run_thread_local_destructors();
 	// Invoke any handlers registered with atexit (NOT associated with a DSO).
 	// Note that we deliberately do not invoke other handlers here, since
 	// that would destroy mlibc's global objects including stdout and flushing
