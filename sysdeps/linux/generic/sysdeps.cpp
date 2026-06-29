@@ -230,6 +230,11 @@ int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
 	// TODO: We should change the sysdep so that we don't need to do this.
 	auto tp = reinterpret_cast<char *>(tcb) + sizeof(Tcb) - 0x10;
 	tcb = reinterpret_cast<void *>(tp);
+#elif defined(__m68k__)
+	// TP should point 0x7000 bytes past the end of the TCB.
+	// TODO: We should change the sysdep so that we don't need to do this.
+	auto tp = reinterpret_cast<uintptr_t>(tcb) + sizeof(Tcb) + 0x7000;
+	tcb = reinterpret_cast<void *>(tp);
 #elif defined(__i386__)
 	/* get the entry number, as we don't request a new one here */
 	uint32_t gs;
