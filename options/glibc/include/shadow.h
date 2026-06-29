@@ -33,6 +33,7 @@ int getspnam_r(const char *__name, struct spwd *__sp, char *__buf, size_t __size
 struct spwd *fgetspent(FILE *__f);
 void endspent(void);
 struct spwd *sgetspent(const char *__s);
+void setspent(void);
 
 #endif /* !__MLIBC_ABI_ONLY */
 

@@ -244,3 +244,7 @@ struct spwd *sgetspent(const char *s) {
 		return &sp;
 	return nullptr;
 }
+
+void setspent(void) {
+	mlibc::infoLogger() << "mlibc: setspent is a stub" << frg::endlog;
+}
