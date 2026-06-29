@@ -16,6 +16,7 @@ rtld_test_cases = [
 	'scope5',
 	'search-order',
 	'tls_align',
+	'dlopen-tls-relocation',
 	'relr',
 	'symver',
 	'fail-load',
