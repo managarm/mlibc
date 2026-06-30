@@ -4,8 +4,48 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/charcode.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/locale.hpp>
 
 namespace mlibc {
+
+struct ascii_charcode {
+	static constexpr bool preserves_7bit_units = true;
+	static constexpr bool has_shift_states = false;
+
+	struct decode_state {
+		decode_state(int, codepoint cpoint) : _cpoint{cpoint} {}
+
+		int progress() { return 0; }
+		auto cpoint() { return _cpoint; }
+
+		transcode_status operator()(code_seq<const char> &seq) {
+			auto uc = static_cast<unsigned char>(*seq.it);
+			_cpoint = uc;
+			++seq.it;
+			return transcode_status::input_exhausted;
+		}
+
+	private:
+		codepoint _cpoint = 0;
+	};
+
+	struct encode_state {
+		transcode_status operator()(code_seq<char> &nseq, code_seq<const codepoint> &wseq) {
+			auto const wc = *wseq.it;
+
+			if (wc > UCHAR_MAX)
+				return transcode_status::illegal_input;
+
+			if (!nseq)
+				return transcode_status::output_overflow;
+
+			++wseq.it;
+			*nseq.it = static_cast<char>(wc);
+			++nseq.it;
+			return transcode_status::input_exhausted;
+		}
+	};
+};
 
 struct utf8_charcode {
 	static constexpr bool preserves_7bit_units = true;
@@ -313,10 +353,19 @@ struct polymorphic_charcode_adapter : polymorphic_charcode {
 	}
 };
 
-constinit mlibc::lazy_eternal<polymorphic_charcode_adapter<utf8_charcode>> global_charcode;
+constinit mlibc::lazy_eternal<polymorphic_charcode_adapter<struct ascii_charcode>> global_ascii_charcode;
+constinit mlibc::lazy_eternal<polymorphic_charcode_adapter<struct utf8_charcode>> global_utf8_charcode;
 
 polymorphic_charcode *current_charcode() {
-	return &global_charcode.get();
+	auto loc = mlibc::getActiveLocale();
+	if (loc->ctype.codeset() == "ANSI_X3.4-1968")
+		return &global_ascii_charcode.get();
+
+	return &global_utf8_charcode.get();
+}
+
+polymorphic_charcode *utf8_charcode() {
+	return &global_utf8_charcode.get();
 }
 
 transcode_status wide_charcode::promote(wchar_t nc, codepoint &wc) {

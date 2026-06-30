@@ -129,6 +129,7 @@ struct polymorphic_charcode {
 };
 
 polymorphic_charcode *current_charcode();
+polymorphic_charcode *utf8_charcode();
 
 // Similar to polymorphic_charcode but for wchar_t. Note that this encoding is fixed per-platform;
 // thus, it does not need to be polymorphic.
