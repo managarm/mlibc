@@ -103,5 +103,17 @@ int main() {
 	assert(mbtowc(&wc, NULL, 0) == 0);
 	assert(mbtowc(NULL, NULL, 0) == 0);
 
+	setlocale(LC_ALL, "POSIX");
+
+#if !USE_HOST_LIBC && !USE_CROSS_LIBC
+	// Yep, glibc messes this up.
+	for (int c = 0; c <= 255; c++) {
+		char buf[2] = {(char) c, '\0'};
+		wchar_t out[2] = {0, 0};
+		int ret = mbtowc(out, buf, 1);
+		assert(ret == 0 || ret == 1);
+	}
+#endif // !USE_HOST_LIBC && !USE_CROSS_LIBC
+
 	return 0;
 }
