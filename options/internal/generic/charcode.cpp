@@ -4,8 +4,48 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/charcode.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/locale.hpp>
 
 namespace mlibc {
+
+struct ascii_charcode {
+	static constexpr bool preserves_7bit_units = true;
+	static constexpr bool has_shift_states = false;
+
+	struct decode_state {
+		decode_state(int, codepoint cpoint) : _cpoint{cpoint} {}
+
+		int progress() { return 0; }
+		auto cpoint() { return _cpoint; }
+
+		transcode_status operator()(code_seq<const char> &seq) {
+			auto uc = static_cast<unsigned char>(*seq.it);
+			_cpoint = uc;
+			++seq.it;
+			return transcode_status::input_exhausted;
+		}
+
+	private:
+		codepoint _cpoint = 0;
+	};
+
+	struct encode_state {
+		transcode_status operator()(code_seq<char> &nseq, code_seq<const codepoint> &wseq) {
+			auto const wc = *wseq.it;
+
+			if (wc > UCHAR_MAX)
+				return transcode_status::illegal_input;
+
+			if (!nseq)
+				return transcode_status::output_overflow;
+
+			++wseq.it;
+			*nseq.it = static_cast<char>(wc);
+			++nseq.it;
+			return transcode_status::input_exhausted;
+		}
+	};
+};
 
 struct utf8_charcode {
 	static constexpr bool preserves_7bit_units = true;
@@ -313,10 +353,19 @@ struct polymorphic_charcode_adapter : polymorphic_charcode {
 	}
 };
 
-constinit mlibc::lazy_eternal<polymorphic_charcode_adapter<utf8_charcode>> global_charcode;
+constinit mlibc::lazy_eternal<polymorphic_charcode_adapter<struct ascii_charcode>> global_ascii_charcode;
+constinit mlibc::lazy_eternal<polymorphic_charcode_adapter<struct utf8_charcode>> global_utf8_charcode;
 
 polymorphic_charcode *current_charcode() {
-	return &global_charcode.get();
+	auto loc = mlibc::getActiveLocale();
+	if (loc->ctype.codeset() == "ANSI_X3.4-1968")
+		return &global_ascii_charcode.get();
+
+	return &global_utf8_charcode.get();
+}
+
+polymorphic_charcode *utf8_charcode() {
+	return &global_utf8_charcode.get();
 }
 
 transcode_status wide_charcode::promote(wchar_t nc, codepoint &wc) {
@@ -328,6 +377,58 @@ transcode_status wide_charcode::promote(wchar_t nc, codepoint &wc) {
 wide_charcode *platform_wide_charcode() {
 	static wide_charcode global_wide_charcode;
 	return &global_wide_charcode;
+}
+
+size_t mbrtowc(wchar_t *__restrict wcp, const char *__restrict mbs, size_t mb_limit, mbstate_t *__restrict stp, polymorphic_charcode *cc) {
+	if(!mbs) {
+		*stp = __MLIBC_MBSTATE_INITIALIZER;
+		return 0;
+	}
+
+	wchar_t temp = 0;
+	if(!wcp)
+		wcp = &temp;
+
+	mlibc::code_seq<const char> nseq{mbs, mbs + mb_limit};
+	mlibc::code_seq<wchar_t> wseq{wcp, wcp + 1};
+	auto e = cc->decode_wtranscode(nseq, wseq, *stp);
+	if (e == mlibc::transcode_status::input_exhausted || e == mlibc::transcode_status::output_exhausted) {
+		return nseq.it - mbs;
+	} else if (e == mlibc::transcode_status::null_terminator) {
+		*stp = __MLIBC_MBSTATE_INITIALIZER;
+		*wcp = 0;
+		return 0;
+	} else if(e == mlibc::transcode_status::input_underflow) {
+		return static_cast<size_t>(-2);
+	} else {
+		__ensure(e == mlibc::transcode_status::illegal_input);
+		errno = EILSEQ;
+		return static_cast<size_t>(-1);
+	}
+}
+
+size_t wcrtomb(char *__restrict mbs, wchar_t wc, mbstate_t *__restrict stp, polymorphic_charcode *cc) {
+	// TODO: Implement the following case:
+	__ensure(mbs);
+
+	mlibc::code_seq<const wchar_t> wseq{&wc, &wc + 1};
+	mlibc::code_seq<char> nseq{mbs, mbs + MB_LEN_MAX};
+
+	auto e = cc->encode_wtranscode(nseq, wseq, *stp);
+	if (e == mlibc::transcode_status::input_exhausted) {
+		size_t n = nseq.it - mbs;
+		// If we reached a null terminator, we need to reset mbstate_t
+		*stp = __MLIBC_MBSTATE_INITIALIZER;
+		return n;
+	} else if (e == mlibc::transcode_status::null_terminator) {
+		mbs[0] = '\0';
+		*stp = __MLIBC_MBSTATE_INITIALIZER;
+		return 1;
+	} else {
+		__ensure(e == mlibc::transcode_status::illegal_input);
+		errno = EILSEQ;
+		return static_cast<size_t>(-1);
+	}
 }
 
 } // namespace mlibc

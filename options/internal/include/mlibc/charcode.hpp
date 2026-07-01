@@ -129,6 +129,7 @@ struct polymorphic_charcode {
 };
 
 polymorphic_charcode *current_charcode();
+polymorphic_charcode *utf8_charcode();
 
 // Similar to polymorphic_charcode but for wchar_t. Note that this encoding is fixed per-platform;
 // thus, it does not need to be polymorphic.
@@ -137,6 +138,9 @@ struct wide_charcode {
 };
 
 wide_charcode *platform_wide_charcode();
+
+size_t mbrtowc(wchar_t *__restrict wcp, const char *__restrict mbs, size_t mb_limit, mbstate_t *__restrict stp, polymorphic_charcode *cc);
+size_t wcrtomb(char *__restrict mbs, wchar_t wc, mbstate_t *__restrict stp, polymorphic_charcode *cc);
 
 } // namespace mlibc
 
