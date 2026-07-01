@@ -119,6 +119,7 @@ all_test_cases = [
 	'posix/flockfile',
 	'posix/basename',
 	'posix/regex',
+	'posix/regex-highbyte',
 	'posix/sigtimedwait',
 	'posix/if_indextoname',
 	'posix/readv-writev',
