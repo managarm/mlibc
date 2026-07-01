@@ -500,7 +500,8 @@ public:
 
 private:
 	void _buildLinkBfs(SharedObject *root);
-	void _buildTlsMaps();
+	size_t _buildTlsMaps();
+	void _publishTlsMaps(size_t previousSize);
 
 	void _processStaticRelocations(SharedObject *object);
 	void _processLazyRelocations(SharedObject *object);

@@ -29,7 +29,27 @@ constinit frg::array<
 
 FutexLock key_mutex_;
 
+struct CxaThreadExitHandler {
+	void (*function)(void *);
+	void *argument;
+	void *dsoSymbol;
+	CxaThreadExitHandler *next;
+};
+
+thread_local CxaThreadExitHandler *cxaThreadExitHandlers;
+
 } // namespace
+
+extern "C" int __cxa_thread_atexit_impl(void (*function)(void *), void *argument,
+		void *dso_symbol) {
+	auto handler = frg::construct<CxaThreadExitHandler>(getAllocator());
+	handler->function = function;
+	handler->argument = argument;
+	handler->dsoSymbol = dso_symbol;
+	handler->next = cxaThreadExitHandlers;
+	cxaThreadExitHandlers = handler;
+	return 0;
+}
 
 extern "C" void __mlibc_do_cancel() {
 	//TODO(geert): for now the same as pthread_exit()
@@ -40,6 +60,15 @@ namespace mlibc {
 
 static constexpr unsigned int onceComplete = 1;
 static constexpr unsigned int onceLocked = 2;
+
+void run_thread_local_destructors() {
+	while (cxaThreadExitHandlers) {
+		auto handler = cxaThreadExitHandlers;
+		cxaThreadExitHandlers = handler->next;
+		handler->function(handler->argument);
+		frg::destruct(getAllocator(), handler);
+	}
+}
 
 int thread_once(__mlibc_once *once, void (*func) (void)) {
 	auto expected = __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
@@ -182,6 +211,8 @@ __attribute__ ((__noreturn__)) void thread_exit(thread_exit_return ret_val) {
 		hand->func(hand->arg);
 		frg::destruct(getAllocator(), hand);
 	}
+
+	run_thread_local_destructors();
 
 	for (size_t j = 0; j < __MLIBC_THREAD_DESTRUCTOR_ITERATIONS; j++) {
 		for (size_t i = 0; i < PTHREAD_KEYS_MAX; i++) {

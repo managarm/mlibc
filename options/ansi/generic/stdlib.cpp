@@ -219,6 +219,7 @@ void exit(int status) {
 
 	mlibc::processIsExiting.store(true, std::memory_order_relaxed);
 
+	mlibc::run_thread_local_destructors();
 	__mlibc_do_finalize();
 	mlibc::sysdep<Exit>(status);
 }
