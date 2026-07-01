@@ -33,6 +33,7 @@ using elf_vernaux = Elf32_Vernaux;
 #define R_ABSOLUTE R_386_32
 #define R_GLOB_DAT R_386_GLOB_DAT
 #define R_RELATIVE R_386_RELATIVE
+#define R_PC32 R_386_PC32
 #define R_IRELATIVE R_386_IRELATIVE
 #define R_OFFSET R_386_PC32
 #define R_COPY R_386_COPY
