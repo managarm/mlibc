@@ -2619,6 +2619,14 @@ int Sysdeps<Fchmodat>::operator()(int fd, const char *pathname, mode_t mode, int
 	return 0;
 }
 
+int Sysdeps<Fchown>::operator()(int fd, uid_t owner, gid_t group) {
+	(void)fd;
+	(void)owner;
+	(void)group;
+	mlibc::infoLogger() << "mlibc: sys_fchown is a stub!" << frg::endlog;
+	return 0;
+}
+
 int Sysdeps<Fchownat>::operator()(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
 	SignalGuard sguard;
 

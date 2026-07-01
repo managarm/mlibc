@@ -85,7 +85,6 @@
  *
  */
 
-#define _GNU_SOURCE
 #include "libm.h"
 #include "weak_alias.h"
 //#include "libc.h"
