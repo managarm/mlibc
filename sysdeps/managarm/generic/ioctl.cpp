@@ -147,10 +147,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
 			req.set_command(FIONREAD);
 
-			auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			        helix_ng::recvInline()
 			    )
@@ -158,6 +159,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 			HEL_CHECK(offer.error());
 			HEL_CHECK(send_ioctl_req.error());
+			HEL_CHECK(imbue_creds.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
 
@@ -202,10 +204,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
 			req.set_command(request);
 
-			auto [offer, send_ioctl_req, send_req, recv_resp, recv_attrs] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp, recv_attrs] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			        helix_ng::recvInline(),
 			        helix_ng::recvBuffer(param, sizeof(struct termios))
@@ -214,6 +217,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 			HEL_CHECK(offer.error());
 			HEL_CHECK(send_ioctl_req.error());
+			HEL_CHECK(imbue_creds.error());
 			if (send_req.error() == kHelErrDismissed)
 				return EINVAL;
 			HEL_CHECK(send_req.error());
@@ -233,10 +237,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
 			req.set_command(request);
 
-			auto [offer, send_ioctl_req, send_req, send_attrs, recv_resp] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, imbue_creds, send_req, send_attrs, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			        helix_ng::sendBuffer(param, sizeof(struct termios)),
 			        helix_ng::recvInline()
@@ -245,6 +250,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 			HEL_CHECK(offer.error());
 			HEL_CHECK(send_ioctl_req.error());
+			HEL_CHECK(imbue_creds.error());
 			if (send_req.error() == kHelErrDismissed)
 				return EINVAL;
 			HEL_CHECK(send_req.error());
@@ -262,10 +268,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
 			req.set_command(request);
 
-			auto [offer, send_ioctl_req, send_req, imbue_creds, recv_resp] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, imbue_creds_ioctl, send_req, imbue_creds, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			        helix_ng::imbueCredentials(),
 			        helix_ng::recvInline()
@@ -276,6 +283,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			if (send_req.error() == kHelErrDismissed)
 				return EINVAL;
 			HEL_CHECK(send_ioctl_req.error());
+			HEL_CHECK(imbue_creds_ioctl.error());
 			HEL_CHECK(imbue_creds.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -294,10 +302,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
 			req.set_command(request);
 
-			auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			        helix_ng::recvInline()
 			    )
@@ -305,6 +314,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 			HEL_CHECK(offer.error());
 			HEL_CHECK(send_ioctl_req.error());
+			HEL_CHECK(imbue_creds.error());
 			if (send_req.error() == kHelErrDismissed)
 				return ENOTTY;
 			HEL_CHECK(send_req.error());
@@ -334,16 +344,18 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			req.set_pts_pixel_width(param->ws_xpixel);
 			req.set_pts_pixel_height(param->ws_ypixel);
 
-			auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			        helix_ng::recvInline()
 			    )
 			);
 			HEL_CHECK(offer.error());
 			HEL_CHECK(send_ioctl_req.error());
+			HEL_CHECK(imbue_creds.error());
 			if (send_req.error() == kHelErrDismissed)
 				return EINVAL;
 			HEL_CHECK(send_req.error());
@@ -360,10 +372,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
 			req.set_command(request);
 
-			auto [offer, send_ioctl_req, send_req, imbue_creds, recv_resp] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, imbue_creds_ioctl, send_req, imbue_creds, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			        helix_ng::imbueCredentials(),
 			        helix_ng::recvInline()
@@ -372,6 +385,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 			HEL_CHECK(offer.error());
 			HEL_CHECK(send_ioctl_req.error());
+			HEL_CHECK(imbue_creds_ioctl.error());
 			if (imbue_creds.error() == kHelErrDismissed)
 				return ENOTTY;
 			HEL_CHECK(imbue_creds.error());
@@ -392,16 +406,18 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
 			req.set_command(request);
 
-			auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			        helix_ng::recvInline()
 			    )
 			);
 			HEL_CHECK(offer.error());
 			HEL_CHECK(send_ioctl_req.error());
+			HEL_CHECK(imbue_creds.error());
 			if (send_req.error() == kHelErrDismissed)
 				return EINVAL;
 			HEL_CHECK(send_req.error());
@@ -422,10 +438,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			frg::string<SysdepsAllocator> ser(getSysdepsAllocator());
 			req.SerializeToString(&ser);
 
-			auto [offer, send_ioctl_req, send_req, imbue_creds, recv_resp] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, imbue_creds_ioctl, send_req, imbue_creds, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 			        helix_ng::sendBuffer(ser.data(), ser.size()),
 			        helix_ng::imbueCredentials(),
 			        helix_ng::recvInline()
@@ -434,6 +451,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 			HEL_CHECK(offer.error());
 			HEL_CHECK(send_ioctl_req.error());
+			HEL_CHECK(imbue_creds_ioctl.error());
 			HEL_CHECK(send_req.error());
 			if (imbue_creds.error() == kHelErrDismissed)
 				return ENOTTY;
@@ -458,10 +476,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			frg::string<SysdepsAllocator> ser(getSysdepsAllocator());
 			req.SerializeToString(&ser);
 
-			auto [offer, send_ioctl_req, send_req, imbue_creds, recv_resp] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, imbue_creds_ioctl, send_req, imbue_creds, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 			        helix_ng::sendBuffer(ser.data(), ser.size()),
 			        helix_ng::imbueCredentials(),
 			        helix_ng::recvInline()
@@ -470,6 +489,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 			HEL_CHECK(offer.error());
 			HEL_CHECK(send_ioctl_req.error());
+			HEL_CHECK(imbue_creds_ioctl.error());
 			if (send_req.error() == kHelErrDismissed)
 				return EINVAL;
 			HEL_CHECK(send_req.error());
@@ -491,10 +511,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			frg::string<SysdepsAllocator> ser(getSysdepsAllocator());
 			req.SerializeToString(&ser);
 
-			auto [offer, send_ioctl_req, send_req, imbue_creds, recv_resp] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, imbue_creds_ioctl, send_req, imbue_creds, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 			        helix_ng::sendBuffer(ser.data(), ser.size()),
 			        helix_ng::imbueCredentials(),
 			        helix_ng::recvInline()
@@ -507,6 +528,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			HEL_CHECK(send_ioctl_req.error());
 			if (send_req.error())
 				return EINVAL;
+			HEL_CHECK(imbue_creds_ioctl.error());
 			HEL_CHECK(send_req.error());
 			if (imbue_creds.error() == kHelErrDismissed)
 				return EINVAL;
@@ -530,10 +552,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			frg::string<SysdepsAllocator> ser(getSysdepsAllocator());
 			req.SerializeToString(&ser);
 
-			auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 			        helix_ng::sendBuffer(ser.data(), ser.size()),
 			        helix_ng::recvInline()
 			    )
@@ -543,6 +566,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			if (send_ioctl_req.error())
 				return EINVAL;
 			HEL_CHECK(send_ioctl_req.error());
+			HEL_CHECK(imbue_creds.error());
 			if (send_req.error())
 				return EINVAL;
 			HEL_CHECK(send_req.error());
@@ -581,11 +605,12 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 		managarm::fs::EvioGetIdRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
-		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
 		    handle,
 		    helix_ng::offer(
 		        helix_ng::want_lane,
 		        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
 		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 		        helix_ng::recvInline()
 		    )
@@ -593,6 +618,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		HEL_CHECK(offer.error());
 		auto conversation = offer.descriptor();
 		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
@@ -611,11 +637,12 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 	} else if (_IOC_TYPE(request) == 'E' && _IOC_NR(request) == _IOC_NR(EVIOCGNAME(0))) {
 		managarm::fs::EvioGetNameRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
-		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
 		    handle,
 		    helix_ng::offer(
 		        helix_ng::want_lane,
 		        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
 		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 		        helix_ng::recvInline()
 		    )
@@ -623,6 +650,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		HEL_CHECK(offer.error());
 		auto conversation = offer.descriptor();
 		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
@@ -701,11 +729,12 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		managarm::fs::EvioGetMultitouchSlotsRequest<SysdepsAllocator> req(getSysdepsAllocator());
 		req.set_code(*reinterpret_cast<uint32_t *>(arg));
 
-		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
 		    handle,
 		    helix_ng::offer(
 		        helix_ng::want_lane,
 		        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
 		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 		        helix_ng::recvInline()
 		    )
@@ -713,6 +742,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		HEL_CHECK(offer.error());
 		auto conversation = offer.descriptor();
 		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
@@ -769,10 +799,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			req.set_command(EVIOCGBIT(0, 0));
 			req.set_size(_IOC_SIZE(request));
 
-			auto [offer, send_ioctl_req, send_req, recv_resp, recv_data] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp, recv_data] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			        helix_ng::recvInline(),
 			        helix_ng::recvBuffer(arg, _IOC_SIZE(request))
@@ -781,6 +812,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 			HEL_CHECK(offer.error());
 			HEL_CHECK(send_ioctl_req.error());
+			HEL_CHECK(imbue_creds.error());
 			if (send_req.error() == kHelErrDismissed)
 				return EINVAL;
 			HEL_CHECK(send_req.error());
@@ -801,10 +833,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			req.set_input_type(type);
 			req.set_size(_IOC_SIZE(request));
 
-			auto [offer, send_ioctl_req, send_req, recv_resp, recv_data] = exchangeMsgsSync(
+			auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp, recv_data] = exchangeMsgsSync(
 			    handle,
 			    helix_ng::offer(
 			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 			        helix_ng::recvInline(),
 			        helix_ng::recvBuffer(arg, _IOC_SIZE(request))
@@ -813,6 +846,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 			HEL_CHECK(offer.error());
 			HEL_CHECK(send_ioctl_req.error());
+			HEL_CHECK(imbue_creds.error());
 			if (send_req.error() == kHelErrDismissed)
 				return EINVAL;
 			HEL_CHECK(send_req.error());
@@ -832,10 +866,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		req.set_command(request);
 		req.set_input_clock(*param);
 
-		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
 		    handle,
 		    helix_ng::offer(
 		        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
 		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 		        helix_ng::recvInline()
 		    )
@@ -843,6 +878,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 		HEL_CHECK(offer.error());
 		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(imbue_creds.error());
 		if (send_req.error() == kHelErrDismissed)
 			return EINVAL;
 		HEL_CHECK(send_req.error());
@@ -862,10 +898,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		req.set_command(EVIOCGABS(0));
 		req.set_input_type(type);
 
-		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
 		    handle,
 		    helix_ng::offer(
 		        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
 		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 		        helix_ng::recvInline()
 		    )
@@ -873,6 +910,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 		HEL_CHECK(offer.error());
 		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(imbue_creds.error());
 		if (send_req.error() == kHelErrDismissed)
 			return EINVAL;
 		HEL_CHECK(send_req.error());
@@ -1278,10 +1316,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 
-		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
 		    handle,
 		    helix_ng::offer(
 		        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
 		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 		        helix_ng::recvInline()
 		    )
@@ -1289,6 +1328,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 		HEL_CHECK(offer.error());
 		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
@@ -1302,10 +1342,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 
-		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
 		    handle,
 		    helix_ng::offer(
 		        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
 		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 		        helix_ng::recvInline()
 		    )
@@ -1313,6 +1354,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 		HEL_CHECK(offer.error());
 		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
@@ -1327,11 +1369,12 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
 
-		auto [offer, send_ioctl_req, send_req, send_buffer, send_data, recv_resp, recv_data] =
+		auto [offer, send_ioctl_req, imbue_creds, send_req, send_buffer, send_data, recv_resp, recv_data] =
 		    exchangeMsgsSync(
 		        handle,
 		        helix_ng::offer(
 		            helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+					helix_ng::imbueCredentials(),
 		            helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 		            helix_ng::sendBuffer(param, sizeof(*param)),
 		            helix_ng::sendBuffer(reinterpret_cast<void *>(param->addr), param->data_len),
@@ -1342,6 +1385,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 		HEL_CHECK(offer.error());
 		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(send_buffer.error());
 		HEL_CHECK(send_data.error());
@@ -1363,10 +1407,11 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		req.set_command(request);
 		req.set_ticks(*param);
 
-		auto [offer, send_ioctl_req, send_req, recv_resp] = exchangeMsgsSync(
+		auto [offer, send_ioctl_req, imbue_creds, send_req, recv_resp] = exchangeMsgsSync(
 		    handle,
 		    helix_ng::offer(
 		        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+				helix_ng::imbueCredentials(),
 		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 		        helix_ng::recvInline()
 		    )
@@ -1374,6 +1419,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 		HEL_CHECK(offer.error());
 		HEL_CHECK(send_ioctl_req.error());
+		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
