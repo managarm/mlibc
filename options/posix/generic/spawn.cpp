@@ -11,6 +11,8 @@
 #include <sys/wait.h>
 
 #include <bits/ensure.h>
+#include <frg/allocation.hpp>
+#include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 
 /*
@@ -32,13 +34,14 @@ struct fdop {
 	char path[];
 };
 
+namespace {
 /*
  * This posix_spawn implementation is taken from musl
  */
 
 static unsigned long handler_set[NSIG / (8 * sizeof(long))];
 
-static void __get_handler_set(sigset_t *set) {
+void __get_handler_set(sigset_t *set) {
 	memcpy(set, handler_set, sizeof handler_set);
 }
 
@@ -49,9 +52,10 @@ struct args {
 	const posix_spawn_file_actions_t *fa;
 	const posix_spawnattr_t *__restrict attr;
 	char *const *argv, *const *envp;
+	int (*exec_fn)(const char *path, char *const argv[], char *const env[]);
 };
 
-static int child(void *args_vp) {
+int child(void *args_vp) {
 	int i, ret;
 	struct sigaction sa = {};
 	struct args *args = (struct args *)args_vp;
@@ -59,12 +63,10 @@ static int child(void *args_vp) {
 	const posix_spawn_file_actions_t *fa = args->fa;
 	const posix_spawnattr_t *__restrict attr = args->attr;
 	sigset_t hset;
-	bool use_execvpe = false;
-
-	if(attr->__fn)
-		use_execvpe = true;
 
 	close(args->p[0]);
+
+	int flags = attr ? attr->__flags : 0;
 
 	/* All signal dispositions must be either SIG_DFL or SIG_IGN
 	 * before signals are unblocked. Otherwise a signal handler
@@ -74,7 +76,7 @@ static int child(void *args_vp) {
 	 * potentially have a signal handler. */
 	__get_handler_set(&hset);
 	for(i = 1; i < NSIG; i++) {
-		if((attr->__flags & POSIX_SPAWN_SETSIGDEF) && sigismember(&attr->__def, i)) {
+		if((flags & POSIX_SPAWN_SETSIGDEF) && sigismember(&attr->__def, i)) {
 			sa.sa_handler = SIG_DFL;
 		} else if(sigismember(&hset, i)) {
 			if (i - 32 < 3) {
@@ -91,18 +93,35 @@ static int child(void *args_vp) {
 		sigaction(i, &sa, nullptr);
 	}
 
-	if(attr->__flags & POSIX_SPAWN_SETSID) {
+	if(flags & POSIX_SPAWN_SETSID) {
 		if((ret = setsid()) < 0)
 			goto fail;
 	}
 
-	if(attr->__flags & POSIX_SPAWN_SETPGROUP) {
-		mlibc::infoLogger() << "mlibc: posix_spawn: ignoring SETPGROUP" << frg::endlog;
-		//if((ret = setpgid(0, attr->__pgrp)))
-		//	goto fail;
+	if(flags & POSIX_SPAWN_SETPGROUP) {
+		if(setpgid(0, attr->__pgrp) == -1) {
+			ret = -errno;
+			goto fail;
+		}
 	}
 
-	if(attr->__flags & POSIX_SPAWN_RESETIDS) {
+	if (flags & POSIX_SPAWN_SETSCHEDULER) {
+		if (sched_setscheduler(0, attr->__schedpolicy, reinterpret_cast<const sched_param *>(&attr->__schedparam)) == -1) {
+			if (errno != ENOSYS) {
+				ret = -errno;
+				goto fail;
+			}
+		}
+	} else if (flags & POSIX_SPAWN_SETSCHEDPARAM) {
+		if (sched_setparam(0, reinterpret_cast<const sched_param *>(&attr->__schedparam)) == -1) {
+			if (errno != ENOSYS) {
+				ret = -errno;
+				goto fail;
+			}
+		}
+	}
+
+	if(flags & POSIX_SPAWN_RESETIDS) {
 		if((ret = setgid(getgid())) || (ret = setuid(getuid())) )
 			goto fail;
 	}
@@ -171,13 +190,10 @@ static int child(void *args_vp) {
 	 * to a different fd. */
 	fcntl(p, F_SETFD, FD_CLOEXEC);
 
-	pthread_sigmask(SIG_SETMASK, (attr->__flags & POSIX_SPAWN_SETSIGMASK)
+	pthread_sigmask(SIG_SETMASK, (flags & POSIX_SPAWN_SETSIGMASK)
 		? &attr->__mask : &args->oldmask, nullptr);
 
-	if(use_execvpe)
-		execvpe(args->path, args->argv, args->envp);
-	else
-		execve(args->path, args->argv, args->envp);
+	args->exec_fn(args->path, args->argv, args->envp);
 	ret = -errno;
 
 fail:
@@ -188,14 +204,14 @@ fail:
 	_exit(127);
 }
 
-int posix_spawn(pid_t *__restrict res, const char *__restrict path,
+int posix_spawn_impl(pid_t *__restrict res, const char *__restrict path,
 		const posix_spawn_file_actions_t *file_actions,
 		const posix_spawnattr_t *__restrict attrs,
-		char *const argv[], char *const envp[]) {
+		char *const argv[], char *const envp[],
+		int exec_fn(const char *path, char *const argv[], char *const env[])) {
 	pid_t pid;
 	int ec = 0, cs;
 	struct args args;
-	const posix_spawnattr_t empty_attr = {};
 	sigset_t full_sigset;
 	sigfillset(&full_sigset);
 
@@ -203,9 +219,10 @@ int posix_spawn(pid_t *__restrict res, const char *__restrict path,
 
 	args.path = path;
 	args.fa = file_actions;
-	args.attr = attrs ? attrs : &empty_attr;
+	args.attr = attrs ? attrs : nullptr;
 	args.argv = argv;
 	args.envp = envp;
+	args.exec_fn = exec_fn;
 	pthread_sigmask(SIG_BLOCK, &full_sigset, &args.oldmask);
 
 	/* The lock guards both against seeing a SIGABRT disposition change
@@ -249,8 +266,17 @@ fail:
 	return ec;
 }
 
+} // namespace
+
+int posix_spawn(pid_t *__restrict res, const char *__restrict path,
+		const posix_spawn_file_actions_t *file_actions,
+		const posix_spawnattr_t *__restrict attrs,
+		char *const argv[], char *const envp[]) {
+	return posix_spawn_impl(res, path, file_actions, attrs, argv, envp, execve);
+}
+
 int posix_spawnattr_init(posix_spawnattr_t *attr) {
-	*attr = (posix_spawnattr_t){};
+	*attr = posix_spawnattr_t{};
 	return 0;
 }
 
@@ -259,7 +285,7 @@ int posix_spawnattr_destroy(posix_spawnattr_t *) {
 }
 
 int posix_spawnattr_setflags(posix_spawnattr_t *attr, short flags) {
-	const unsigned all_flags = 
+	const unsigned all_flags =
 			POSIX_SPAWN_RESETIDS |
 			POSIX_SPAWN_SETPGROUP |
 			POSIX_SPAWN_SETSIGDEF |
@@ -280,15 +306,30 @@ int posix_spawnattr_setsigdefault(posix_spawnattr_t *__restrict attr,
 	return 0;
 }
 
-int posix_spawnattr_setschedparam(posix_spawnattr_t *__restrict,
-		const struct sched_param *__restrict) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int posix_spawnattr_getschedparam(
+    const posix_spawnattr_t *__restrict attr, struct sched_param *__restrict schedparam
+) {
+	memcpy(schedparam, &attr->__schedparam, sizeof(*schedparam));
+	return 0;
 }
 
-int posix_spawnattr_setschedpolicy(posix_spawnattr_t *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int posix_spawnattr_setschedparam(
+    posix_spawnattr_t *__restrict attr, const struct sched_param *__restrict sp
+) {
+	memcpy(&attr->__schedparam, sp, sizeof(attr->__schedparam));
+	return 0;
+}
+
+int posix_spawnattr_getschedpolicy(
+    const posix_spawnattr_t *__restrict attr, int *__restrict schedpolicy
+) {
+	*schedpolicy = attr->__schedpolicy;
+	return 0;
+}
+
+int posix_spawnattr_setschedpolicy(posix_spawnattr_t *attr, int sp) {
+	attr->__schedpolicy = sp;
+	return 0;
 }
 
 int posix_spawnattr_setsigmask(posix_spawnattr_t *__restrict attr,
@@ -303,14 +344,14 @@ int posix_spawnattr_setpgroup(posix_spawnattr_t *attr, pid_t pgroup) {
 }
 
 int posix_spawn_file_actions_init(posix_spawn_file_actions_t *file_actions) {
-	file_actions->__actions = nullptr;
+	*file_actions = posix_spawn_file_actions_t{};
 	return 0;
 }
 
 int posix_spawn_file_actions_destroy(posix_spawn_file_actions_t *file_actions) {
-	struct fdop *op = (struct fdop *)file_actions->__actions, *next;
+	struct fdop *op = (struct fdop *)file_actions->__actions;
 	while(op) {
-		next = op->next;
+		auto next = op->next;
 		free(op);
 		op = next;
 	}
@@ -367,10 +408,6 @@ int posix_spawnp(pid_t *__restrict pid, const char *__restrict file,
 		const posix_spawn_file_actions_t *file_actions,
 		const posix_spawnattr_t *__restrict attrp,
 		char *const argv[], char *const envp[]) {
-	posix_spawnattr_t spawnp_attr = {};
-	if(attrp)
-		spawnp_attr = *attrp;
-	spawnp_attr.__fn = (void *)execvpe;	
-	return posix_spawn(pid, file, file_actions, &spawnp_attr, argv, envp);
+	return posix_spawn_impl(pid, file, file_actions, attrp, argv, envp, execvpe);
 }
 

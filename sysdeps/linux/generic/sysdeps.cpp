@@ -907,6 +907,8 @@ int Sysdeps<GetSchedparam>::operator()(void *tcb, int *policy, struct sched_para
 
 	if(!t->tid) {
 		return ESRCH;
+	} else if (!param) {
+		return EINVAL;
 	}
 
 	auto ret_param = do_syscall(SYS_sched_getparam, t->tid, param);
@@ -926,6 +928,8 @@ int Sysdeps<SetSchedparam>::operator()(void *tcb, int policy, const struct sched
 
 	if(!t->tid) {
 		return ESRCH;
+	} else if (!param) {
+		return EINVAL;
 	}
 
 	auto ret = do_syscall(SYS_sched_setscheduler, t->tid, policy, param);
