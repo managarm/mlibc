@@ -20,7 +20,7 @@ namespace {
 } // namespace
 
 wint_t btowc(int c) {
-	if(c == EOF)
+	if(c == EOF || !std::in_range<unsigned char>(c))
 		return WEOF;
 
 	char nc = c;
