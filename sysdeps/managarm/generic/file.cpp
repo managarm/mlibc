@@ -1270,8 +1270,7 @@ int Sysdeps<EpollCreate>::operator()(int flags, int *fd) {
 	if (flags & EPOLL_CLOEXEC || flags & O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::EPOLL_CREATE);
+	managarm::posix::EpollCreateRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_flags(proto_flags);
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
@@ -1285,7 +1284,7 @@ int Sysdeps<EpollCreate>::operator()(int flags, int *fd) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::EpollCreateResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
