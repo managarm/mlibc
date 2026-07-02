@@ -1296,21 +1296,21 @@ int Sysdeps<EpollCreate>::operator()(int flags, int *fd) {
 int Sysdeps<EpollCtl>::operator()(int epfd, int mode, int fd, struct epoll_event *ev) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
+	managarm::posix::EpollCtlRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	if (mode == EPOLL_CTL_ADD) {
 		__ensure(ev);
-		req.set_request_type(managarm::posix::CntReqType::EPOLL_ADD);
+		req.set_op(managarm::posix::EpollCtlOp::EPOLL_ADD);
 		req.set_flags(ev->events);
 		req.set_cookie(ev->data.u64);
 	} else if (mode == EPOLL_CTL_MOD) {
 		__ensure(ev);
-		req.set_request_type(managarm::posix::CntReqType::EPOLL_MODIFY);
+		req.set_op(managarm::posix::EpollCtlOp::EPOLL_MODIFY);
 		req.set_flags(ev->events);
 		req.set_cookie(ev->data.u64);
 	} else if (mode == EPOLL_CTL_DEL) {
-		req.set_request_type(managarm::posix::CntReqType::EPOLL_DELETE);
+		req.set_op(managarm::posix::EpollCtlOp::EPOLL_DELETE);
 	} else {
-		mlibc::panicLogger() << "\e[31mmlibc: Illegal epoll_ctl() mode\e[39m" << frg::endlog;
+		return EINVAL;
 	}
 	req.set_fd(epfd);
 	req.set_newfd(fd);
@@ -1326,7 +1326,7 @@ int Sysdeps<EpollCtl>::operator()(int epfd, int mode, int fd, struct epoll_event
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::EpollCtlResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
