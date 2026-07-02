@@ -1342,8 +1342,7 @@ int Sysdeps<EpollPwait>::operator()(
 
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::EPOLL_WAIT);
+	managarm::posix::EpollWaitRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_fd(epfd);
 	req.set_size(n);
 	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
@@ -1367,7 +1366,7 @@ int Sysdeps<EpollPwait>::operator()(
 	HEL_CHECK(recv_resp.error());
 	HEL_CHECK(recv_data.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::EpollWaitResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
