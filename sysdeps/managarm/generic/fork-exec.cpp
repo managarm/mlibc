@@ -80,8 +80,7 @@ int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusag
 		return ENOSYS;
 	}
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::WAIT);
+	managarm::posix::WaitRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_pid(pid);
 	req.set_flags(flags);
 	req.set_cancellation_id(allocateCancellationId());
@@ -99,7 +98,7 @@ int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusag
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::WaitResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -109,7 +108,7 @@ int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusag
 		return 0;
 
 	if (status)
-		*status = resp.mode();
+		*status = resp.status();
 
 	if (ru != nullptr) {
 		ru->ru_utime.tv_sec = resp.ru_user_time() / 1'000'000'000;
