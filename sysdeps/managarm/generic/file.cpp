@@ -2187,8 +2187,7 @@ int Sysdeps<Dup>::operator()(int fd, int flags, int *newfd) {
 	if (flags & O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::DUP);
+	managarm::posix::DupRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_fd(fd);
 	req.set_flags(proto_flags);
 
@@ -2203,7 +2202,7 @@ int Sysdeps<Dup>::operator()(int fd, int flags, int *newfd) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::DupResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
