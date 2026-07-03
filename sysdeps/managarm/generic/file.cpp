@@ -2246,7 +2246,7 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int f
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::FstatAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -2330,7 +2330,7 @@ int Sysdeps<Statx>::operator()(int dirfd, const char *pathname, int flags, unsig
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::FstatAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -2385,6 +2385,7 @@ int Sysdeps<Statx>::operator()(int dirfd, const char *pathname, int flags, unsig
 		statxbuf->stx_blocks = resp.file_size() / 512 + 1;
 		statxbuf->stx_attributes = resp.statx_attr();
 		statxbuf->stx_attributes_mask = resp.statx_attr_mask();
+		statxbuf->stx_mnt_id = resp.mount_id();
 		return 0;
 	}
 }
