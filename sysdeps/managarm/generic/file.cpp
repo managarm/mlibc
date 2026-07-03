@@ -2586,9 +2586,9 @@ int Sysdeps<Flock>::operator()(int fd, int opts) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::fs::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() != managarm::posix::Errors::SUCCESS)
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
 		return resp.error() | toErrno;
 
 	return 0;
