@@ -615,8 +615,7 @@ int Sysdeps<Fdatasync>::operator()(int) {
 int Sysdeps<GetCwd>::operator()(char *buffer, size_t size) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::GETCWD);
+	managarm::posix::GetCwdRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_size(size);
 
 	auto [offer, send_req, recv_resp, recv_path] = exchangeMsgsSync(
@@ -633,7 +632,7 @@ int Sysdeps<GetCwd>::operator()(char *buffer, size_t size) {
 	HEL_CHECK(recv_resp.error());
 	HEL_CHECK(recv_path.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::GetCwdResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
