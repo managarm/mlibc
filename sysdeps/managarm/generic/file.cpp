@@ -852,8 +852,7 @@ int Sysdeps<Socket>::operator()(int domain, int type_and_flags, int proto, int *
 int Sysdeps<Pipe>::operator()(int *fds, int flags) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::PIPE_CREATE);
+	managarm::posix::PipeCreateRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_flags(flags);
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
@@ -867,7 +866,7 @@ int Sysdeps<Pipe>::operator()(int *fds, int flags) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::PipeCreateResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
