@@ -296,8 +296,7 @@ int Sysdeps<Fcntl>::operator()(int fd, int request, va_list args, int *result) {
 		*result = newfd;
 		return 0;
 	} else if (request == F_GETFD) {
-		managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-		req.set_request_type(managarm::posix::CntReqType::FD_GET_FLAGS);
+		managarm::posix::FdGetFlagsRequest<SysdepsAllocator> req(getSysdepsAllocator());
 		req.set_fd(fd);
 
 		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
@@ -310,15 +309,14 @@ int Sysdeps<Fcntl>::operator()(int fd, int request, va_list args, int *result) {
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+		managarm::posix::FdGetFlagsResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if (resp.error() != managarm::posix::Errors::SUCCESS)
 			return resp.error() | toErrno;
 		*result = resp.flags();
 		return 0;
 	} else if (request == F_SETFD) {
-		managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-		req.set_request_type(managarm::posix::CntReqType::FD_SET_FLAGS);
+		managarm::posix::FdSetFlagsRequest<SysdepsAllocator> req(getSysdepsAllocator());
 		req.set_fd(fd);
 		req.set_flags(va_arg(args, int));
 
@@ -332,7 +330,7 @@ int Sysdeps<Fcntl>::operator()(int fd, int request, va_list args, int *result) {
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+		managarm::posix::FdSetFlagsResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if (resp.error() != managarm::posix::Errors::SUCCESS)
 			return resp.error() | toErrno;
