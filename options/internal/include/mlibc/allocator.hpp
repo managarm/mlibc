@@ -26,19 +26,29 @@ LdsoAllocator &getLdsoAllocator();
 
 #include <frg/sharded_slab.hpp>
 
-struct ShardedSlabPolicy {
+// map()/unmap() shared by the sharded-slab policies below.
+struct ShardedSlabBasePolicy {
 	void *map(size_t size);
 	void unmap(void *ptr, size_t size);
 };
 
+// Policy for the main allocator.
+struct ShardedSlabPolicy : ShardedSlabBasePolicy {
+	using mutex_type = FutexLock;
+
+	static constexpr bool support_overaligned = true;
+};
+
 #if !MLIBC_DEBUG_ALLOCATOR
 
+using MemoryDomain = frg::sharded_slab::domain<ShardedSlabPolicy>;
 using MemoryPool = frg::sharded_slab::pool<ShardedSlabPolicy>;
 
 MemoryPool &getMemoryPool();
 
 struct MemoryAllocator {
 	void *allocate(size_t size) { return getMemoryPool().allocate(size); }
+	void *allocate(size_t size, size_t alignment) { return getMemoryPool().allocate(size, alignment); }
 	void free(void *ptr) { getMemoryPool().deallocate(ptr); }
 	void deallocate(void *ptr, size_t) { getMemoryPool().deallocate(ptr); }
 	void *reallocate(void *ptr, size_t size) { return getMemoryPool().reallocate(ptr, size); }
@@ -51,6 +61,7 @@ MemoryAllocator &getAllocator();
 
 struct MemoryAllocator {
 	void *allocate(size_t size);
+	void *allocate(size_t size, size_t alignment);
 	void free(void *ptr);
 	void deallocate(void *ptr, size_t size);
 	void *reallocate(void *ptr, size_t size);
