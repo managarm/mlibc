@@ -759,9 +759,7 @@ int Sysdeps<VmUnmap>::operator()(void *pointer, size_t size) {
 int Sysdeps<SetSid>::operator()(pid_t *sid) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::SETSID);
-
+	managarm::posix::SetSidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
 	    helix_ng::offer(
@@ -773,7 +771,7 @@ int Sysdeps<SetSid>::operator()(pid_t *sid) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SetSidResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS) {
 		*sid = -1;
