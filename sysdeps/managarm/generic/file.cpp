@@ -61,8 +61,7 @@ int Sysdeps<Chdir>::operator()(const char *path) {
 int Sysdeps<Fchdir>::operator()(int fd) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::FCHDIR);
+	managarm::posix::FchdirRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_fd(fd);
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
@@ -76,7 +75,7 @@ int Sysdeps<Fchdir>::operator()(int fd) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::FchdirResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
