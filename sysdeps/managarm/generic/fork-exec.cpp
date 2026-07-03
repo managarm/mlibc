@@ -642,8 +642,7 @@ int Sysdeps<GetRusage>::operator()(int scope, struct rusage *usage) {
 
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::GET_RESOURCE_USAGE);
+	managarm::posix::GetResourceUsageRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_mode(scope);
 
 	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
@@ -657,7 +656,7 @@ int Sysdeps<GetRusage>::operator()(int scope, struct rusage *usage) {
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::GetResourceUsageResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
