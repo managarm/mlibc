@@ -53,7 +53,7 @@ int Sysdeps<Accept>::operator()(int fd, int *newfd, struct sockaddr *addr_ptr, s
 	HEL_CHECK(sendReq.error());
 	HEL_CHECK(recvResp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::AcceptResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS) {
 		return resp.error() | toErrno;
