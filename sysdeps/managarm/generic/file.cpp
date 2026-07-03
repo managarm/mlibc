@@ -581,23 +581,39 @@ int Sysdeps<ReadEntries>::operator()(int fd, void *buffer, size_t max_size, size
 int Sysdeps<Ttyname>::operator()(int fd, char *buf, size_t size) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::TTY_NAME);
+	managarm::posix::TtyNameRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_fd(fd);
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
 	    helix_ng::offer(
-	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	        helix_ng::want_lane,
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+	        helix_ng::recvInline()
 	    )
 	);
 
 	HEL_CHECK(offer.error());
+	auto conversation = offer.descriptor();
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	auto preamble = bragi::read_preamble(recv_resp);
+	__ensure(!preamble.error());
+
+	frg::vector<std::byte, SysdepsAllocator> tailBuffer{getSysdepsAllocator()};
+	tailBuffer.resize(preamble.tail_size());
+	auto [recv_tail] = exchangeMsgsSync(
+	    conversation.getHandle(), helix_ng::recvBuffer(tailBuffer.data(), tailBuffer.size())
+	);
+
+	HEL_CHECK(recv_tail.error());
+
+	auto resp = *bragi::parse_head_tail<managarm::posix::TtyNameResponse>(
+	    recv_resp, tailBuffer, getSysdepsAllocator()
+	);
+	recv_resp.reset();
+
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
 
