@@ -1484,8 +1484,7 @@ int Sysdeps<SignalfdCreate>::operator()(const sigset_t *masks, int flags, int *f
 
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::SIGNALFD_CREATE);
+	managarm::posix::SignalfdCreateRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_flags(proto_flags);
 	req.set_sigset(*reinterpret_cast<const uint64_t *>(masks));
 	req.set_fd(*fd);
@@ -1501,7 +1500,7 @@ int Sysdeps<SignalfdCreate>::operator()(const sigset_t *masks, int flags, int *f
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SignalfdCreateResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
