@@ -18,7 +18,7 @@
 class CAPABILITY("SignalGuardState") SysdepAllocatorCapability{};
 extern SysdepAllocatorCapability sysdepAllocatorCapability;
 
-using SysdepsPool = frg::sharded_slab::pool<ShardedSlabPolicy>;
+using SysdepsPool = frg::sharded_slab::pool<ShardedSlabBasePolicy>;
 
 SysdepsPool &getSysdepsPool();
 

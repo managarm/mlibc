@@ -44,13 +44,13 @@ LdsoAllocator &getLdsoAllocator() {
 
 #else // MLIBC_BUILDING_RTLD
 
-void *ShardedSlabPolicy::map(size_t size) {
+void *ShardedSlabBasePolicy::map(size_t size) {
 	void *ptr;
 	__ensure(!mlibc::sysdep<AnonAllocate>(size, &ptr));
 	return ptr;
 }
 
-void ShardedSlabPolicy::unmap(void *ptr, size_t size) {
+void ShardedSlabBasePolicy::unmap(void *ptr, size_t size) {
 	__ensure(!mlibc::sysdep<AnonFree>(ptr, size));
 }
 
@@ -60,10 +60,20 @@ void ShardedSlabPolicy::unmap(void *ptr, size_t size) {
 // Globals
 // --------------------------------------------------------
 
-constinit thread_local mlibc::lazy_eternal<MemoryPool> thread_memory_pool;
+// Domain shared by all thread-local allocators.
+constinit mlibc::lazy_eternal<MemoryDomain> global_memory_domain;
+
+struct MemoryPoolPackage {
+	MemoryPoolPackage()
+	: pool{&global_memory_domain.get()} {}
+
+	MemoryPool pool;
+};
+
+constinit thread_local mlibc::lazy_eternal<MemoryPoolPackage> thread_memory_pool_package;
 
 MemoryPool &getMemoryPool() {
-	return thread_memory_pool.get();
+	return thread_memory_pool_package.get().pool;
 }
 
 constinit mlibc::lazy_eternal<MemoryAllocator> global_allocator;
@@ -152,6 +162,13 @@ void *MemoryAllocator::allocate(size_t size) {
 		mlibc::infoLogger() << "MemoryAllocator::allocate(" << size << ") = " << out << frg::endlog;
 
 	return out;
+}
+
+void *MemoryAllocator::allocate(size_t size, size_t alignment) {
+	// The debug allocator is not alignment-aware.
+	auto p = allocate(alignment > size ? alignment : size);
+	__ensure(!(reinterpret_cast<uintptr_t>(p) & (alignment - 1)));
+	return p;
 }
 
 void MemoryAllocator::free(void *ptr) {
