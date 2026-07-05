@@ -1894,10 +1894,16 @@ int Sysdeps<Read>::operator()(int fd, void *data, size_t max_size, ssize_t *byte
 	req.set_size(max_size);
 	req.set_cancellation_id(allocateCancellationId());
 
-	auto [offer, send_req, imbue_creds, recv_resp, recv_data] = exchangeMsgsSyncCancellable(
+	auto [offer, send_req, imbue_creds, recv_resp, recv_data] = exchangeMsgsSyncCancelViaLane(
 	    handle,
-	    req.cancellation_id(),
-	    fd,
+	    [&] {
+	        managarm::fs::CancelOperation<SysdepsAllocator> cancelReq(getSysdepsAllocator());
+	        cancelReq.set_cancellation_id(req.cancellation_id());
+	        return helix_ng::offer(
+	            helix_ng::sendBragiHeadOnly(cancelReq, getSysdepsAllocator()),
+	            helix_ng::imbueCredentials()
+	        );
+	    },
 	    helix_ng::offer(
 	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 	        helix_ng::imbueCredentials(),
