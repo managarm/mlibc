@@ -1105,13 +1105,10 @@ int Sysdeps<Pselect>::operator()(
 }
 
 int Sysdeps<Poll>::operator()(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
-	__ensure(timeout >= 0 || timeout == -1); // TODO: Report errors correctly.
-
 	SignalGuard sguard;
 	mlibc::thread_testcancel();
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::EPOLL_CALL);
+	managarm::posix::EpollCallRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
 	req.set_cancellation_id(allocateCancellationId());
 
@@ -1120,21 +1117,39 @@ int Sysdeps<Poll>::operator()(struct pollfd *fds, nfds_t count, int timeout, int
 		req.add_events(fds[i].events);
 	}
 
-	auto [offer, send_req, recv_resp] = exchangeMsgsSyncCancellable(
+	auto [offer, send_req, send_tail, recv_resp] = exchangeMsgsSyncCancellable(
 	    getPosixLane(),
 	    req.cancellation_id(),
 	    -1,
 	    helix_ng::offer(
-	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	        helix_ng::want_lane,
+	        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
+	        helix_ng::recvInline()
 	    )
 	);
 
 	HEL_CHECK(offer.error());
+	auto conversation = offer.descriptor();
 	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	auto preamble = bragi::read_preamble(recv_resp);
+	__ensure(!preamble.error());
+
+	frg::vector<std::byte, SysdepsAllocator> tailBuffer{getSysdepsAllocator()};
+	tailBuffer.resize(preamble.tail_size());
+	auto [recv_tail] = exchangeMsgsSync(
+		conversation.getHandle(), helix_ng::recvBuffer(tailBuffer.data(), tailBuffer.size())
+	);
+
+	HEL_CHECK(recv_tail.error());
+
+	auto resp = *bragi::parse_head_tail<managarm::posix::EpollCallResponse>(
+		recv_resp, tailBuffer, getSysdepsAllocator()
+	);
+	recv_resp.reset();
+
 	if (resp.error() != managarm::posix::Errors::SUCCESS) {
 		return resp.error() | toErrno;
 	} else {
@@ -1176,8 +1191,7 @@ int Sysdeps<Ppoll>::operator()(
 	SignalGuard guard;
 	mlibc::thread_testcancel();
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::EPOLL_CALL);
+	managarm::posix::EpollCallRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_timeout(ts ? (ts->tv_sec * 1'000'000'000 + ts->tv_nsec) : -1);
 	req.set_cancellation_id(allocateCancellationId());
 	req.set_signal_seq(seq);
@@ -1188,21 +1202,38 @@ int Sysdeps<Ppoll>::operator()(
 		req.add_events(fds[i].events);
 	}
 
-	auto [offer, send_req, recv_resp] = exchangeMsgsSyncCancellable(
+	auto [offer, send_req, send_tail, recv_resp] = exchangeMsgsSyncCancellable(
 	    getPosixLane(),
 	    req.cancellation_id(),
 	    -1,
 	    helix_ng::offer(
-	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	        helix_ng::want_lane,
+	        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
+	        helix_ng::recvInline()
 	    )
 	);
 
 	HEL_CHECK(offer.error());
+	auto conversation = offer.descriptor();
 	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	auto preamble = bragi::read_preamble(recv_resp);
+	__ensure(!preamble.error());
+
+	frg::vector<std::byte, SysdepsAllocator> tailBuffer{getSysdepsAllocator()};
+	tailBuffer.resize(preamble.tail_size());
+	auto [recv_tail] = exchangeMsgsSync(
+	    conversation.getHandle(), helix_ng::recvBuffer(tailBuffer.data(), tailBuffer.size())
+	);
+
+	HEL_CHECK(recv_tail.error());
+
+	auto resp = *bragi::parse_head_tail<managarm::posix::EpollCallResponse>(
+	    recv_resp, tailBuffer, getSysdepsAllocator()
+	);
+	recv_resp.reset();
 
 	if (mask) {
 		HEL_CHECK(helSyscall2_3(
@@ -1239,8 +1270,7 @@ int Sysdeps<EpollCreate>::operator()(int flags, int *fd) {
 	if (flags & EPOLL_CLOEXEC || flags & O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::EPOLL_CREATE);
+	managarm::posix::EpollCreateRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_flags(proto_flags);
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
@@ -1254,7 +1284,7 @@ int Sysdeps<EpollCreate>::operator()(int flags, int *fd) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::EpollCreateResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -1265,21 +1295,21 @@ int Sysdeps<EpollCreate>::operator()(int flags, int *fd) {
 int Sysdeps<EpollCtl>::operator()(int epfd, int mode, int fd, struct epoll_event *ev) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
+	managarm::posix::EpollCtlRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	if (mode == EPOLL_CTL_ADD) {
 		__ensure(ev);
-		req.set_request_type(managarm::posix::CntReqType::EPOLL_ADD);
+		req.set_op(managarm::posix::EpollCtlOp::EPOLL_ADD);
 		req.set_flags(ev->events);
 		req.set_cookie(ev->data.u64);
 	} else if (mode == EPOLL_CTL_MOD) {
 		__ensure(ev);
-		req.set_request_type(managarm::posix::CntReqType::EPOLL_MODIFY);
+		req.set_op(managarm::posix::EpollCtlOp::EPOLL_MODIFY);
 		req.set_flags(ev->events);
 		req.set_cookie(ev->data.u64);
 	} else if (mode == EPOLL_CTL_DEL) {
-		req.set_request_type(managarm::posix::CntReqType::EPOLL_DELETE);
+		req.set_op(managarm::posix::EpollCtlOp::EPOLL_DELETE);
 	} else {
-		mlibc::panicLogger() << "\e[31mmlibc: Illegal epoll_ctl() mode\e[39m" << frg::endlog;
+		return EINVAL;
 	}
 	req.set_fd(epfd);
 	req.set_newfd(fd);
@@ -1295,7 +1325,7 @@ int Sysdeps<EpollCtl>::operator()(int epfd, int mode, int fd, struct epoll_event
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::EpollCtlResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -1311,8 +1341,7 @@ int Sysdeps<EpollPwait>::operator()(
 
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::EPOLL_WAIT);
+	managarm::posix::EpollWaitRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_fd(epfd);
 	req.set_size(n);
 	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
@@ -1336,7 +1365,7 @@ int Sysdeps<EpollPwait>::operator()(
 	HEL_CHECK(recv_resp.error());
 	HEL_CHECK(recv_data.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::EpollWaitResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
