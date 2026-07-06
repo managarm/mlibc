@@ -295,6 +295,28 @@ int Sysdeps<Fcntl>::operator()(int fd, int request, va_list args, int *result) {
 			return e;
 		*result = newfd;
 		return 0;
+	} else if (request == F_DUPFD_QUERY) {
+		int query_fd = va_arg(args, int);
+		managarm::posix::DupFdQueryRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_fd(fd);
+		req.set_query_fd(query_fd);
+
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		    getPosixLane(),
+		    helix_ng::offer(
+		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+		    )
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::posix::DupFdQueryResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		if (resp.error() != managarm::posix::Errors::SUCCESS)
+			return resp.error() | toErrno;
+		*result = resp.result();
+		return 0;
 	} else if (request == F_GETFD) {
 		managarm::posix::FdGetFlagsRequest<SysdepsAllocator> req(getSysdepsAllocator());
 		req.set_fd(fd);
