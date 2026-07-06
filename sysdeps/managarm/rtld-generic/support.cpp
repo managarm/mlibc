@@ -378,7 +378,7 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t mode, int *fd)
 	HEL_CHECK(send_tail->error);
 	HEL_CHECK(recv_resp->error);
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	managarm::posix::OpenAtResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 
 	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND)
@@ -535,7 +535,7 @@ int Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	managarm::posix::VmMapResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	*window = reinterpret_cast<void *>(resp.offset());
@@ -578,7 +578,7 @@ int Sysdeps<Close>::operator()(int fd) {
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	managarm::posix::CloseResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
@@ -662,7 +662,7 @@ int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
 	HEL_CHECK(send_req->error);
 	HEL_CHECK(recv_resp->error);
 
-	managarm::posix::SvrResponse<MemoryAllocator> resp(getAllocator());
+	managarm::posix::VmProtectResponse<MemoryAllocator> resp(getAllocator());
 	resp.ParseFromArray(recv_resp->data, recv_resp->length);
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	return 0;
