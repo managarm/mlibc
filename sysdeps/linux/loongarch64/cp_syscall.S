@@ -13,7 +13,7 @@ __mlibc_do_asm_cp_syscall:
 	move $a4, $a5
 	move $a5, $a6
 	move $a6, $a7
-	ld.w $t0, $tp, -96 // Tcb::cancelBits. See asserts in tcb.hpp.
+	ld.w $t0, $tp, -104 // Tcb::cancelBits. See asserts in tcb.hpp.
 __mlibc_syscall_begin:
 	// tcbCancelEnableBit && tcbCancelTriggerBit
 	addi.d $t1, $r0, (1 << 0) | (1 << 2)

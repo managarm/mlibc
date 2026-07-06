@@ -1431,6 +1431,7 @@ Tcb *allocateTcb() {
 	tcb_ptr->didExit = 0;
 	tcb_ptr->isJoinable = 1;
 	memset(&tcb_ptr->returnValue, 0, sizeof(tcb_ptr->returnValue));
+	tcb_ptr->cxaThreadExitHandlers = nullptr;
 	tcb_ptr->localKeys = frg::construct<frg::array<Tcb::LocalKey, PTHREAD_KEYS_MAX>>(getAllocator());
 	tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
 	tcb_ptr->dtvPointers = frg::construct_n<void *>(getAllocator(), runtimeTlsMap->indices.size());
@@ -1766,7 +1767,7 @@ void Loader::_buildLinkBfs(SharedObject *root) {
 
 void Loader::linkObjects(SharedObject *root) {
 	_buildLinkBfs(root);
-	_buildTlsMaps();
+	auto previousTlsMapSize = _buildTlsMaps();
 
 	// Promote objects to the desired scope.
 	for(auto object : _linkBfs) {
@@ -1793,6 +1794,10 @@ void Loader::linkObjects(SharedObject *root) {
 		_processStaticRelocations(object);
 		_processLazyRelocations(object);
 	}
+
+	// TLS images can contain relocations themselves. Publish their DTV entries only
+	// after those relocations have been applied.
+	_publishTlsMaps(previousTlsMapSize);
 
 	// Process copy relocations.
 	for(auto object : _linkBfs) {
@@ -1826,8 +1831,9 @@ void Loader::linkObjects(SharedObject *root) {
 	}
 }
 
-void Loader::_buildTlsMaps() {
+size_t Loader::_buildTlsMaps() {
 	frg::unique_lock lock{*runtimeTlsMapLock};
+	auto previousSize = runtimeTlsMap->indices.size();
 
 	if(_isInitialLink) {
 		__ensure(runtimeTlsMap->initialPtr == 0);
@@ -1922,47 +1928,61 @@ void Loader::_buildTlsMaps() {
 		}
 	}
 
-	size_t new_size = runtimeTlsMap->indices.size();
+	return previousSize;
+}
+
+void Loader::_publishTlsMaps(size_t previousSize) {
+	frg::unique_lock lock{*runtimeTlsMapLock};
+	size_t newSize = runtimeTlsMap->indices.size();
 
 	for (auto tcb : runtimeTlsMap->tcbs) {
 		if (tcb->didExit)
 			continue;
 
 		size_t size = __atomic_load_n(&tcb->dtvSize, __ATOMIC_ACQUIRE);
-		if (new_size > size) {
-			void **ndtv = frg::construct_n<void *>(getAllocator(), new_size);
-			void **pointers = __atomic_load_n(&tcb->dtvPointers, __ATOMIC_ACQUIRE);
+		void **pointers = __atomic_load_n(&tcb->dtvPointers, __ATOMIC_ACQUIRE);
+		if (newSize > size) {
+			void **ndtv = frg::construct_n<void *>(getAllocator(), newSize);
 			memcpy(ndtv, pointers, sizeof(void *) * size);
-			memset(ndtv + size, 0, sizeof(void *) * (new_size - size));
+			memset(ndtv + size, 0, sizeof(void *) * (newSize - size));
+			pointers = ndtv;
+		}
 
-			for (size_t i = size; i < new_size; i++) {
-				auto object = runtimeTlsMap->indices[i];
-				if (object->tlsModel == TlsModel::dynamic) {
-					auto buffer = getAllocator().allocate(object->tlsSegmentSize);
+		// A TCB can be allocated after _buildTlsMaps() but before this function.
+		// Refresh all newly assigned slots so such a TCB does not retain an
+		// unrelocated copy of the TLS image.
+		for (size_t i = previousSize; i < newSize; i++) {
+			auto object = runtimeTlsMap->indices[i];
+			if (object->tlsModel == TlsModel::dynamic) {
+				auto buffer = pointers[i];
+				if (!buffer) {
+					buffer = getAllocator().allocate(object->tlsSegmentSize);
 					__ensure(!(reinterpret_cast<uintptr_t>(buffer) & (object->tlsAlignment - 1)));
-					memset(buffer, 0, object->tlsSegmentSize);
-					memcpy(buffer, object->tlsImagePtr, object->tlsImageSize);
-					ndtv[i] = buffer;
-				} else if (object->tlsModel == TlsModel::initial) {
-					char *tls_ptr;
-					if constexpr (tlsAboveTp) {
-						tls_ptr = reinterpret_cast<char *>(tcb) + sizeof(Tcb) + object->tlsOffset;
-					} else {
-						tls_ptr = reinterpret_cast<char *>(tcb) + object->tlsOffset;
-					}
-					ndtv[i] = tls_ptr;
-
-					// Initialize the TLS segment for this thread as well.
-					memset(tls_ptr, 0, object->tlsSegmentSize);
-					memcpy(tls_ptr, object->tlsImagePtr, object->tlsImageSize);
+					pointers[i] = buffer;
 				}
-			}
+				memset(buffer, 0, object->tlsSegmentSize);
+				memcpy(buffer, object->tlsImagePtr, object->tlsImageSize);
+			} else if (object->tlsModel == TlsModel::initial) {
+				char *tls_ptr;
+				if constexpr (tlsAboveTp) {
+					tls_ptr = reinterpret_cast<char *>(tcb) + sizeof(Tcb) + object->tlsOffset;
+				} else {
+					tls_ptr = reinterpret_cast<char *>(tcb) + object->tlsOffset;
+				}
+				pointers[i] = tls_ptr;
 
+				// Initialize the TLS segment for this thread as well.
+				memset(tls_ptr, 0, object->tlsSegmentSize);
+				memcpy(tls_ptr, object->tlsImagePtr, object->tlsImageSize);
+			}
+		}
+
+		if (newSize > size) {
 			// Note: We intentionally leak the old `dtvPointers` array here. Since other threads
 			// can concurrently access their own TCB's `dtvPointers` lock-free, freeing the old
 			// array immediately would lead to use-after-free races.
-			__atomic_store_n(&tcb->dtvPointers, ndtv, __ATOMIC_RELEASE);
-			__atomic_store_n(&tcb->dtvSize, new_size, __ATOMIC_RELEASE);
+			__atomic_store_n(&tcb->dtvPointers, pointers, __ATOMIC_RELEASE);
+			__atomic_store_n(&tcb->dtvSize, newSize, __ATOMIC_RELEASE);
 		}
 	}
 }
@@ -2166,8 +2186,6 @@ void Loader::_processRelocations(Relocation &rel) {
 				uint64_t value = symValue + target->tlsOffset + tlsOffsetFromTp + rel.addend_norel();
 				((uint64_t *)rel.destination())[1] = value;
 			} else {
-				__ensure(target->tlsIndex < mlibc::get_current_tcb()->dtvSize);
-
 				// TODO: We should free this when the DSO gets destroyed
 				auto data = frg::construct<TlsdescData>(getAllocator());
 				data->tlsIndex = target->tlsIndex;
@@ -2379,8 +2397,6 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				uint64_t value = symValue + target->tlsOffset + tlsOffsetFromTp + addend;
 				((uint64_t *)rel_addr)[1] = value;
 			} else {
-				__ensure(target->tlsIndex < mlibc::get_current_tcb()->dtvSize);
-
 				// TODO: We should free this when the DSO gets destroyed
 				auto data = frg::construct<TlsdescData>(getAllocator());
 				data->tlsIndex = target->tlsIndex;

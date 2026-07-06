@@ -20,6 +20,7 @@ union thread_exit_return {
 	int integer;
 };
 __attribute__ ((__noreturn__)) void thread_exit(thread_exit_return ret_val);
+void run_thread_local_destructors();
 
 int thread_mutex_init(struct __mlibc_mutex *__restrict mutex, const struct __mlibc_mutexattr *__restrict attr);
 int thread_mutex_destroy(struct __mlibc_mutex *mutex);

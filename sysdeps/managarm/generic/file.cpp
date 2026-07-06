@@ -281,6 +281,7 @@ int do_dup2(int fd, int flags, int newfd, bool fcntl_mode, int *outfd) {
 
 int Sysdeps<Fcntl>::operator()(int fd, int request, va_list args, int *result) {
 	SignalGuard sguard;
+	*result = 0;
 	if (request == F_DUPFD) {
 		int newfd;
 		int wantedFd = va_arg(args, int);
