@@ -1,14 +1,17 @@
-#include <ctype.h>
 #include <string.h>
 
+#include <mlibc/ctype.hpp>
 #include <mlibc/strings.hpp>
 
 namespace mlibc {
 
-int strncasecmp(const char *a, const char *b, size_t size) {
+int strncasecmp(const char *a, const char *b, size_t size, localeinfo *l) {
+	if (a == b || size == 0)
+		return 0;
+
 	for(size_t i = 0; i < size; i++) {
-		unsigned char a_byte = tolower(a[i]);
-		unsigned char b_byte = tolower(b[i]);
+		unsigned char a_byte = mlibc::tolower_l(a[i], l);
+		unsigned char b_byte = mlibc::tolower_l(b[i], l);
 		if(!a_byte && !b_byte)
 			return 0;
 		// If only one char is null, one of the following cases applies.
