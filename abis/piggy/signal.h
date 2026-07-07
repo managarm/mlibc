@@ -13,9 +13,9 @@ extern "C" {
 
 typedef void (*__sighandler)(int);
 
-#define SIG_ERR ((__sighandler)(void *)(-1))
-#define SIG_DFL ((__sighandler)(void *)(0))
-#define SIG_IGN ((__sighandler)(void *)(1))
+#define SIG_ERR ((__sighandler)(void*) (-1))
+#define SIG_DFL ((__sighandler)(void*) (0))
+#define SIG_IGN ((__sighandler)(void*) (1))
 
 #define SIGABRT     1
 #define SIGALRM     2

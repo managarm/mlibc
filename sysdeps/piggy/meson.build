@@ -70,21 +70,22 @@ if not no_headers
         'include/abi-bits/vm-flags.h',
         'include/abi-bits/wait.h',
         subdir: 'abi-bits',
-		follow_symlinks: true,
+		follow_symlinks: true
 	)
 
     install_headers(
       'include/piggy/archctl.h',
       'include/piggy/hwclock.h',
       'include/piggy/mount.h',
+      'include/piggy/route.h',
       'include/piggy/poweroff.h',
       'include/piggy/syscall.h',
-      subdir: 'piggy',
+      subdir: 'piggy'
     )
 
     install_headers(
       'include/sys/sysmacros.h',
-      subdir: 'sys',
+      subdir: 'sys'
     )
 endif
 

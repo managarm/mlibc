@@ -54,11 +54,18 @@
 #define SYS_SIGPROCMASK 50
 #define SYS_SIGRETURN   51
 #define SYS_SIGSUSPEND  52
-#define SYS_UNAME       53
-#define SYS_FUTEX       54
-#define SYS_POWEROFF    55
-#define SYS_ARCHCTL     56
-
+#define SYS_SOCKET      53
+#define SYS_BIND        54
+#define SYS_CONNECT     55
+#define SYS_RECV        56
+#define SYS_SEND        57
+#define SYS_GETSOCKNAME 58
+#define SYS_GETPEERNAME 59
+#define SYS_SHUTDOWN    60
+#define SYS_UNAME       61
+#define SYS_FUTEX       62
+#define SYS_POWEROFF    63
+#define SYS_ARCHCTL     64
 
 #ifndef __MLIBC_ABI_ONLY
 
