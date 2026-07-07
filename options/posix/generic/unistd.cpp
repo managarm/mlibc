@@ -984,7 +984,6 @@ long sysconf(int number) {
 		case _SC_GETPW_R_SIZE_MAX:
 			return NSS_BUFLEN_PASSWD;
 		case _SC_GETGR_R_SIZE_MAX:
-			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_GETGR_R_SIZE_MAX) returns fallback value 1024\e[39m" << frg::endlog;
 			return 1024;
 		case _SC_CHILD_MAX:
 			mlibc::infoLogger() << "\e[31mmlibc: sysconf(_SC_CHILD_MAX) returns fallback value 25\e[39m" << frg::endlog;
