@@ -127,7 +127,9 @@ int wcswidth(const wchar_t *__s, size_t __size);
 #if __MLIBC_POSIX2008
 wchar_t *wcsdup(const wchar_t *__s);
 int wcsncasecmp(const wchar_t *__a, const wchar_t *__b, size_t __size);
+int wcsncasecmp_l(const wchar_t *__a, const wchar_t *__b, size_t __size, locale_t __locale);
 int wcscasecmp(const wchar_t *__a, const wchar_t *__b);
+int wcscasecmp_l(const wchar_t *__a, const wchar_t *__b, locale_t __locale);
 size_t wcsnlen(const wchar_t *__s, size_t __maxlen);
 #endif /* __MLIBC_POSIX2008 */
 
