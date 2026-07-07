@@ -206,6 +206,7 @@ SYSDEP_FUNC(Mknodat, int dirfd, const char *path, int mode, int dev);
 SYSDEP_FUNC(Umask, mode_t mode, mode_t *old);
 SYSDEP_FUNC(BeforeCancellableSyscall, ucontext_t *uctx);
 SYSDEP_FUNC(Tgkill, int tgid, int tid, int sig);
+SYSDEP_FUNC(Fchown, int fd, uid_t owner, gid_t group);
 SYSDEP_FUNC(Fchownat, int dirfd, const char *pathname, uid_t owner, gid_t group, int flags);
 SYSDEP_FUNC(Sigaltstack, const stack_t *ss, stack_t *oss);
 SYSDEP_FUNC(Sigsuspend, const sigset_t *set);
