@@ -114,6 +114,10 @@ size_t wcsrtombs(char *__restrict __mbs, const wchar_t **__restrict __wcs, size_
 size_t wcsnrtombs(char *__restrict __mbs, const wchar_t **__restrict __wcs, size_t __wc_limit, size_t __mb_limit,
 		mbstate_t *__restrict __stp);
 
+#if __MLIBC_POSIX_OPTION
+
+#include <bits/posix/locale_t.h>
+
 /* POSIX extensions */
 #if __MLIBC_XOPEN
 int wcwidth(wchar_t __wc);
@@ -126,10 +130,6 @@ int wcsncasecmp(const wchar_t *__a, const wchar_t *__b, size_t __size);
 int wcscasecmp(const wchar_t *__a, const wchar_t *__b);
 size_t wcsnlen(const wchar_t *__s, size_t __maxlen);
 #endif /* __MLIBC_POSIX2008 */
-
-#if __MLIBC_POSIX_OPTION
-
-#include <bits/posix/locale_t.h>
 
 size_t wcslcat(wchar_t *__restrict __dst, const wchar_t *__restrict __src, size_t __dstsize);
 size_t wcslcpy(wchar_t *__restrict __dst, const wchar_t *__restrict __src, size_t __dstsize);
