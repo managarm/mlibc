@@ -73,6 +73,9 @@ int ffsll(long long i) {
 }
 
 int strcasecmp(const char *a, const char *b) {
+	if (a == b)
+		return 0;
+
 	size_t i = 0;
 	while(true) {
 		unsigned char a_byte = tolower(a[i]);
