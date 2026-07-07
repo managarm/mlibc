@@ -438,6 +438,8 @@ struct Umask {};
 struct BeforeCancellableSyscall {};
 // int sys_tgkill(int tgid, int tid, int sig);
 struct Tgkill {};
+// int sys_fchown(int fd, uid_t owner, gid_t group);
+struct Fchown {};
 // int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags);
 struct Fchownat {};
 // int sys_sigaltstack(const stack_t *ss, stack_t *oss);
