@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <wchar.h>
 
 #define WRITE_NO 1024
 
@@ -10,6 +11,8 @@ int main() {
 
 	FILE *fp = open_memstream(&buf, &size);
 	assert(fp);
+
+	assert(fwide(fp, 0) < 0);
 
 	char c = 'A';
 	for (size_t i = 0; i < WRITE_NO; i++)

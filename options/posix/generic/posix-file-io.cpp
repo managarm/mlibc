@@ -24,7 +24,7 @@ int mem_file::determine_bufmode(buffer_mode *mode) {
 
 memstream_mem_file::memstream_mem_file(char **ptr, size_t *sizeloc, int flags, void (*do_dispose)(abstract_file *))
 : mem_file{flags, do_dispose}, _bufloc{ptr}, _sizeloc{sizeloc} {
-	// TODO(no92): set correct stream orientation
+	_orientation = stream_orientation::byte;
 	_buf.resize(1, '\0');
 }
 
