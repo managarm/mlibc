@@ -14,6 +14,10 @@ struct strcmp_impl {
 
 #if !USE_HOST_LIBC && !USE_CROSS_LIBC
 int __mlibc_strcmp_default(const char *s1, const char *s2);
+
+#if defined(__x86_64__)
+int __mlibc_strcmp_sse2(const char *s1, const char *s2);
+#endif
 #endif // !USE_HOST_LIBC && !USE_CROSS_LIBC
 
 static struct strcmp_impl impls[] = {
@@ -21,6 +25,10 @@ static struct strcmp_impl impls[] = {
 
 #if !USE_HOST_LIBC && !USE_CROSS_LIBC
 	{"mlibc default fallback", __mlibc_strcmp_default},
+
+#if defined(__x86_64__)
+	{"x86_64 sse2", __mlibc_strcmp_sse2},
+#endif
 #endif // !USE_HOST_LIBC && !USE_CROSS_LIBC
 };
 

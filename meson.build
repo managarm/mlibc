@@ -535,6 +535,9 @@ rtld_sources += [
 
 rtld_dso_sources += ['options/rtld' / host_machine.cpu_family() / 'entry.S']
 
+ld_cpp_args = []
+libc_cpp_args = []
+
 subdir('options/elf')
 subdir('options/ansi')
 subdir('options/posix')
@@ -567,7 +570,7 @@ if not headers_only
 		rtlib_deps += libgcc
 	endif
 
-	ld_cpp_args = [
+	ld_cpp_args += [
 		'-fvisibility=hidden',
 		'-fvisibility-inlines-hidden',
 		'-fno-stack-protector',
@@ -576,7 +579,7 @@ if not headers_only
 		'-Wno-unknown-pragmas',
 	] + mlibc_c_args
 
-	libc_cpp_args = [
+	libc_cpp_args += [
 		'-Wno-unknown-pragmas',
 		'-DFRG_HAVE_LIBC',
 	] + mlibc_c_args
