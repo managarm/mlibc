@@ -107,7 +107,58 @@ int __mlibc_strcmp_sse4_2(const char *s1, const char *s2) {
 }
 
 extern "C" [[gnu::visibility("protected")]]
+__attribute__((target("avx2")))
+int __mlibc_strcmp_avx2(const char *s1, const char *s2) {
+	auto nearPageBoundary = [](uintptr_t addr) { return (addr & 0xFFF) > 4064; };
+	const __m256i zero = _mm256_setzero_si256();
+
+	while (true) {
+		// fast path: are both pointers safe from crossing a 4k page boundary?
+		if (!nearPageBoundary(reinterpret_cast<uintptr_t>(s1))
+		    && !nearPageBoundary(reinterpret_cast<uintptr_t>(s2))) [[likely]] {
+
+			while (true) {
+				auto chunk1 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(s1));
+				auto chunk2 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(s2));
+
+				auto eq_mask = _mm256_cmpeq_epi8(chunk1, chunk2);
+				auto null_mask_vec = _mm256_cmpeq_epi8(chunk1, zero);
+
+				uint32_t eq = _mm256_movemask_epi8(eq_mask);
+				uint32_t null_mask = _mm256_movemask_epi8(null_mask_vec);
+				uint32_t mask = (~eq & 0xFFFFFFFF) | null_mask;
+
+				if (mask != 0) [[unlikely]] {
+					int index = std::countr_zero(mask);
+					return static_cast<unsigned char>(s1[index])
+					       - static_cast<unsigned char>(s2[index]);
+				}
+
+				s1 += 32;
+				s2 += 32;
+
+				if (nearPageBoundary(reinterpret_cast<uintptr_t>(s1))
+				    || nearPageBoundary(reinterpret_cast<uintptr_t>(s2))) [[unlikely]] {
+					break;
+				}
+			}
+		} else {
+			unsigned char c1 = *s1;
+			unsigned char c2 = *s2;
+			if (c1 != c2)
+				return c1 - c2;
+			if (c1 == '\0')
+				return 0;
+			s1++;
+			s2++;
+		}
+	}
+}
+
+extern "C" [[gnu::visibility("protected")]]
 strcmp_signature __mlibc_resolve_strcmp() {
+	if (cpu_supports<x86Feature::AVX2>())
+		return __mlibc_strcmp_avx2;
 	if (cpu_supports<x86Feature::SSE4_2>())
 		return __mlibc_strcmp_sse4_2;
 	if (cpu_supports<x86Feature::SSE2>())

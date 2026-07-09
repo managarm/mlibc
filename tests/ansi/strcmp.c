@@ -18,6 +18,7 @@ int __mlibc_strcmp_default(const char *s1, const char *s2);
 #if defined(__x86_64__)
 int __mlibc_strcmp_sse2(const char *s1, const char *s2);
 int __mlibc_strcmp_sse4_2(const char *s1, const char *s2);
+int __mlibc_strcmp_avx2(const char *s1, const char *s2);
 #endif
 #endif // !USE_HOST_LIBC && !USE_CROSS_LIBC
 
@@ -30,6 +31,7 @@ static struct strcmp_impl impls[] = {
 #if defined(__x86_64__)
 	{"x86_64 sse2", __mlibc_strcmp_sse2},
 	{"x86_64 sse4.2", __mlibc_strcmp_sse4_2},
+	{"x86_64 avx2", __mlibc_strcmp_avx2},
 #endif
 #endif // !USE_HOST_LIBC && !USE_CROSS_LIBC
 };
