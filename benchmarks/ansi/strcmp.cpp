@@ -10,6 +10,12 @@ static char buf2[MAX_LEN];
 
 typedef int (*strcmp_func)(const char*, const char*);
 
+extern "C" {
+#if !USE_HOST_LIBC && !USE_CROSS_LIBC
+int __mlibc_strcmp_default(const char *s1, const char *s2);
+#endif // !USE_HOST_LIBC && !USE_CROSS_LIBC
+}
+
 static void run_strcmp_bench(benchmark::State& state, strcmp_func func, bool equal) {
 	size_t len = state.range(0);
 
@@ -52,3 +58,8 @@ static void bench_strcmp(benchmark::State& state) {
 
 BENCHMARK_TEMPLATE(bench_strcmp, strcmp, true)->Apply(custom_args);
 BENCHMARK_TEMPLATE(bench_strcmp, strcmp, false)->Apply(custom_args);
+
+#if !USE_HOST_LIBC && !USE_CROSS_LIBC
+BENCHMARK_TEMPLATE(bench_strcmp, __mlibc_strcmp_default, true)->Apply(custom_args);
+BENCHMARK_TEMPLATE(bench_strcmp, __mlibc_strcmp_default, false)->Apply(custom_args);
+#endif // !USE_HOST_LIBC && !USE_CROSS_LIBC

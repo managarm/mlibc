@@ -12,8 +12,16 @@ struct strcmp_impl {
 	strcmp_func func;
 };
 
+#if !USE_HOST_LIBC && !USE_CROSS_LIBC
+int __mlibc_strcmp_default(const char *s1, const char *s2);
+#endif // !USE_HOST_LIBC && !USE_CROSS_LIBC
+
 static struct strcmp_impl impls[] = {
 	{"libc-provided strcmp", strcmp},
+
+#if !USE_HOST_LIBC && !USE_CROSS_LIBC
+	{"mlibc default fallback", __mlibc_strcmp_default},
+#endif // !USE_HOST_LIBC && !USE_CROSS_LIBC
 };
 
 const size_t num_impls = sizeof(impls) / sizeof(impls[0]);
