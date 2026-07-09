@@ -676,6 +676,7 @@ summary(summary_info, bool_yn: true, section: 'mlibc options')
 
 if build_tests
 	subdir('tests/')
+	subdir('benchmarks/')
 endif
 
 hdoc = find_program('hdoc', required: false)
