@@ -53,6 +53,7 @@ all_test_cases = [
 	'ansi/nanosleep',
 	'ansi/btowc',
 	'ansi/wctob',
+	'ansi/strcmp',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
@@ -241,6 +242,7 @@ cross_libc_excluded_test_cases = [
 
 extra_cflags_test_cases = {
 	'ansi/calloc': ['-Wno-alloc-size-larger-than'],
+	'ansi/strcmp': ['-Wno-stringop-overflow'],
 }
 
 test_sources = []
@@ -366,13 +368,19 @@ foreach test_name : all_test_cases
 		continue
 	endif
 
+	if test_name in extra_cflags_test_cases
+		extra_cflags = extra_cflags_test_cases[test_name]
+	else
+		extra_cflags = []
+	endif
+
 	should_fail = fail_test_cases.contains(test_name)
 	exec = executable(test_exec_name, [test_name + '.c', test_sources],
 		dependencies: libc_dep,
 		objects: test_objects,
 		build_rpath: meson.global_build_root(),
 		override_options: test_override_options,
-		c_args: mlibc_c_args + test_c_args,
+		c_args: mlibc_c_args + test_c_args + extra_cflags,
 		link_args: mlibc_link_args + test_link_args,
 		pie: use_pie,
 	)
@@ -398,12 +406,6 @@ foreach test_name : all_test_cases
 			host_libc_sanitize_options = 'b_sanitize=undefined'
 		else
 			host_libc_sanitize_options = 'b_sanitize=address,undefined'
-		endif
-
-		if test_name in extra_cflags_test_cases
-			extra_cflags = extra_cflags_test_cases[test_name]
-		else
-			extra_cflags = []
 		endif
 
 		exec = executable('host-libc-' + test_exec_name, test_name + '.c',
@@ -432,12 +434,6 @@ foreach test_name : all_test_cases
 	endif
 
 	if build_tests_cross_libc and not cross_libc_excluded_test_cases.contains(test_name)
-		if test_name in extra_cflags_test_cases
-			extra_cflags = extra_cflags_test_cases[test_name]
-		else
-			extra_cflags = []
-		endif
-
 		exec = executable('cross-libc-' + test_exec_name, test_name + '.c',
 			build_rpath: meson.global_build_root(),
 			override_options: test_override_options,
