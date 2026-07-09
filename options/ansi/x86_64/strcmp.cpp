@@ -55,7 +55,61 @@ int __mlibc_strcmp_sse2(const char *s1, const char *s2) {
 }
 
 extern "C" [[gnu::visibility("protected")]]
+__attribute__((target("sse4.2")))
+int __mlibc_strcmp_sse4_2(const char *s1, const char *s2) {
+	auto nearPageBoundary = [](uintptr_t addr) { return (addr & 0xFFF) > 4080; };
+
+	while (true) {
+		// fast path: are both pointers safe from crossing a 4k page boundary?
+		if (!nearPageBoundary(reinterpret_cast<uintptr_t>(s1))
+		    && !nearPageBoundary(reinterpret_cast<uintptr_t>(s2))) [[likely]] {
+
+			while (true) {
+				auto chunk1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(s1));
+				auto chunk2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(s2));
+
+				constexpr int modeFlags = _SIDD_SBYTE_OPS
+										| _SIDD_CMP_EQUAL_EACH
+										| _SIDD_NEGATIVE_POLARITY
+										| _SIDD_LEAST_SIGNIFICANT;
+
+				int index = _mm_cmpistri(chunk1, chunk2, modeFlags);
+				int mismatch_found = _mm_cmpistrc(chunk1, chunk2, modeFlags);
+				int null_found = _mm_cmpistrz(chunk1, chunk2, modeFlags);
+
+				if (mismatch_found) {
+					unsigned char c1 = s1[index];
+					unsigned char c2 = s2[index];
+					return c1 - c2;
+				}
+
+				if (null_found)
+					return 0;
+
+				s1 += 16;
+				s2 += 16;
+
+				if (nearPageBoundary(reinterpret_cast<uintptr_t>(s1))
+				    || nearPageBoundary(reinterpret_cast<uintptr_t>(s2))) [[unlikely]]
+					break;
+			}
+		} else {
+			unsigned char c1 = *s1;
+			unsigned char c2 = *s2;
+			if (c1 != c2)
+				return c1 - c2;
+			if (c1 == '\0')
+				return 0;
+			s1++;
+			s2++;
+		}
+	}
+}
+
+extern "C" [[gnu::visibility("protected")]]
 strcmp_signature __mlibc_resolve_strcmp() {
+	if (cpu_supports<x86Feature::SSE4_2>())
+		return __mlibc_strcmp_sse4_2;
 	if (cpu_supports<x86Feature::SSE2>())
 		return __mlibc_strcmp_sse2;
 

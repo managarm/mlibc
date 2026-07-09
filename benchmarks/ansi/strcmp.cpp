@@ -16,6 +16,7 @@ int __mlibc_strcmp_default(const char *s1, const char *s2);
 
 #if defined(__x86_64__)
 int __mlibc_strcmp_sse2(const char *s1, const char *s2);
+int __mlibc_strcmp_sse4_2(const char *s1, const char *s2);
 #endif // defined(__x86_64__)
 #endif // !USE_HOST_LIBC && !USE_CROSS_LIBC
 }
@@ -70,5 +71,7 @@ BENCHMARK_TEMPLATE(bench_strcmp, __mlibc_strcmp_default, false)->Apply(custom_ar
 #if defined(__x86_64__)
 BENCHMARK_TEMPLATE(bench_strcmp, __mlibc_strcmp_sse2, true)->Apply(custom_args);
 BENCHMARK_TEMPLATE(bench_strcmp, __mlibc_strcmp_sse2, false)->Apply(custom_args);
+BENCHMARK_TEMPLATE(bench_strcmp, __mlibc_strcmp_sse4_2, true)->Apply(custom_args);
+BENCHMARK_TEMPLATE(bench_strcmp, __mlibc_strcmp_sse4_2, false)->Apply(custom_args);
 #endif // defined(__x86_64__)
 #endif // !USE_HOST_LIBC && !USE_CROSS_LIBC
