@@ -553,6 +553,7 @@ rtld_sources += [
 
 rtld_dso_sources += ['options/rtld' / host_machine.cpu_family() / 'entry.S']
 
+static_cpp_args = []
 ld_cpp_args = []
 libc_cpp_args = []
 
@@ -623,7 +624,7 @@ if not headers_only
 	# Our libraries have different behaviour when built as static and shared libraries.
 	# Hence we need to rebuild the object files with a different define for each mode.
 	if library_type in ['static', 'both']
-		static_cpp_args = [
+		static_cpp_args += [
 			'-DMLIBC_STATIC_BUILD',
 		]
 		ld_static_lib = static_library(ld_library_name, rtld_sources,

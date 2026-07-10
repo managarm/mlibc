@@ -54,6 +54,7 @@ all_test_cases = [
 	'ansi/btowc',
 	'ansi/wctob',
 	'ansi/strcmp',
+	'ansi/strlen',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
