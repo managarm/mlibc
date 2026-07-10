@@ -4,6 +4,7 @@
 
 #include <bits/ensure.h>
 #include <errno.h>
+#include <internal-config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
