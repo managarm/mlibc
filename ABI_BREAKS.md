@@ -39,6 +39,7 @@ This document lists the ABI breaks that were made in each mlibc major version.
 - [#1678](https://github.com/managarm/mlibc/pull/1678): `struct sched_param` received new reserved members to allow for future expansion.
 - [#1678](https://github.com/managarm/mlibc/pull/1678): various pthread structs changed size and alignment; the public types are opaque now.
 - [#1678](https://github.com/managarm/mlibc/pull/1678): posix_spawn structs are now opaque and heap-allocated.
+- [#1823](https://github.com/managarm/mlibc/pull/1823): have `time_t` be always 64-bit wide
 
 ## Version 6
 

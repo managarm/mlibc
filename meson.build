@@ -542,6 +542,7 @@ if not no_headers
 		'options/internal/include/bits/pthread_types.h',
 		'options/internal/include/bits/pthread_attr_t.h',
 		'options/internal/include/bits/pthread_sizes.h',
+		'options/internal/include/bits/sysmacros.h',
 		subdir: 'bits'
 	)
 endif
