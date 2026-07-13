@@ -30,7 +30,7 @@ extern "C" {
 
 typedef int key_t;
 
-struct ipc64_perm {
+struct ipc_perm {
 	key_t __ipc_perm_key;
 	uid_t uid;
 	gid_t gid;
@@ -41,7 +41,7 @@ struct ipc64_perm {
 	long __unused[2];
 };
 
-#define ipc_perm ipc64_perm
+#define ipc64_perm ipc_perm
 
 #ifdef __cplusplus
 }

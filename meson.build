@@ -532,6 +532,7 @@ if not no_headers
 		'options/internal/include/bits/getopt.h',
 		'options/internal/include/bits/reclen_t.h',
 		'options/internal/include/bits/timeval.h',
+		'options/internal/include/bits/sysmacros.h',
 		subdir: 'bits'
 	)
 endif
