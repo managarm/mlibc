@@ -51,7 +51,14 @@ int futimes(int fd, const struct timeval times[2]) {
 		time[1].tv_nsec = times[1].tv_usec * 1000;
 	}
 
-	if (int e = mlibc::sysdep_or_enosys<Utimensat>(fd, "", time, AT_EMPTY_PATH); e) {
+#ifdef AT_EMPTY_PATH
+	if (int e = mlibc::sysdep_or_enosys<Utimensat>(fd, "", time, AT_EMPTY_PATH); e != ENOSYS) {
+		errno = e;
+		return -1;
+	}
+#endif
+
+	if (int e = mlibc::sysdep_or_enosys<Futimens>(fd, time); e) {
 		errno = e;
 		return -1;
 	}
