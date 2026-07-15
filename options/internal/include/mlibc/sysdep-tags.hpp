@@ -354,6 +354,8 @@ struct Chmod {};
 struct Fchmod {};
 // int sys_fchmodat(int fd, const char *pathname, mode_t mode, int flags);
 struct Fchmodat {};
+// int sys_futimens(int fd, const struct timespec times[2]);
+struct Futimens {};
 // int sys_utimensat(int dirfd, const char *pathname, const struct timespec times[2], int flags);
 struct Utimensat {};
 // int sys_mlock(const void *addr, size_t length);

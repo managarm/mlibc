@@ -165,6 +165,7 @@ SYSDEP_FUNC(Fdatasync, int fd);
 SYSDEP_FUNC(Chmod, const char *pathname, mode_t mode);
 SYSDEP_FUNC(Fchmod, int fd, mode_t mode);
 SYSDEP_FUNC(Fchmodat, int fd, const char *pathname, mode_t mode, int flags);
+SYSDEP_FUNC(Futimens, int fd, const struct timespec times[2]);
 SYSDEP_FUNC(Utimensat, int dirfd, const char *pathname, const struct timespec times[2], int flags);
 SYSDEP_FUNC(Mlock, const void *addr, size_t length);
 SYSDEP_FUNC(Munlock, const void *addr, size_t length);
