@@ -10,6 +10,7 @@
 #include <mlibc/strtofp.hpp>
 #include <mlibc/strtol.hpp>
 #include <mlibc/wide.hpp>
+#include <mlibc/string.hpp>
 
 // memset() is defined in options/internals.
 // memcpy() is defined in options/internals.
@@ -67,7 +68,9 @@ int memcmp(const void *a, const void *b, size_t size) {
 	}
 	return 0;
 }
-int strcmp(const char *a, const char *b) {
+
+extern "C" [[gnu::visibility("protected")]]
+int __mlibc_strcmp_default(const char *a, const char *b) {
 	size_t i = 0;
 	while(true) {
 		unsigned char a_byte = a[i];
@@ -82,6 +85,10 @@ int strcmp(const char *a, const char *b) {
 		i++;
 	}
 }
+
+#if !defined(MLIBC_ARCH_HAS_STRCMP)
+int strcmp(const char *a, const char *b) __attribute__((alias("__mlibc_strcmp_default")));
+#endif
 
 int strcoll(const char *a, const char *b) {
 	const auto l = mlibc::getActiveLocale();

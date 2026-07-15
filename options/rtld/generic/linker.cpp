@@ -63,6 +63,11 @@ extern "C" size_t __fini_array_start[];
 extern "C" size_t __fini_array_end[];
 extern "C" size_t __preinit_array_start[];
 extern "C" size_t __preinit_array_end[];
+
+extern "C" const elf_rela __rela_iplt_start[] __attribute__((weak));
+extern "C" const elf_rela __rela_iplt_end[] __attribute__((weak));
+extern "C" const elf_rel __rel_iplt_start[] __attribute__((weak));
+extern "C" const elf_rel __rel_iplt_end[] __attribute__((weak));
 #endif
 
 size_t tlsMaxAlignment = 16;
@@ -1813,6 +1818,26 @@ void Loader::linkObjects(SharedObject *root) {
 
 		processLateRelocations(object);
 	}
+
+#if MLIBC_STATIC_BUILD
+	if (root->isMainObject) {
+		if (__rela_iplt_start && __rela_iplt_end) {
+			for (const elf_rela *r = __rela_iplt_start; r < __rela_iplt_end; r++) {
+				Relocation rel{root, const_cast<elf_rela *>(r)};
+				__ensure(rel.type() == R_IRELATIVE);
+				rel.relocate(handleIfunc(rel.object()->baseAddress + rel.addend_rel()));
+			}
+		}
+
+		if (__rel_iplt_start && __rel_iplt_end) {
+			for (const elf_rel *r = __rel_iplt_start; r < __rel_iplt_end; r++) {
+				Relocation rel{root, const_cast<elf_rel *>(r)};
+				__ensure(rel.type() == R_IRELATIVE);
+				rel.relocate(handleIfunc(rel.object()->baseAddress + rel.addend_rel()));
+			}
+		}
+	}
+#endif
 
 	for(auto object : _linkBfs) {
 		object->wasLinked = true;
