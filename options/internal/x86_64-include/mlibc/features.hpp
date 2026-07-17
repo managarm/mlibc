@@ -11,6 +11,7 @@ enum class x86Feature {
 	SSE4_1,
 	SSE4_2,
 	AVX2,
+	BMI2,
 	__FEATURE_COUNT,
 };
 
@@ -94,6 +95,14 @@ inline bool feature_supported(x86FeatureTag<x86Feature::AVX2>) noexcept {
 		return false;
 
 	return (cpuid(7, 0).ebx & (1U << 5)) != 0;
+}
+
+// BMI1: Leaf 7, Subleaf 0, EBX, Bit 8
+[[gnu::always_inline]]
+inline bool feature_supported(x86FeatureTag<x86Feature::BMI2>) noexcept {
+	if (cpuid_max_leaf() < 7)
+		return false;
+	return (cpuid(7, 0).ebx & (1U << 8)) != 0;
 }
 
 enum class CachedSupport : uint8_t {
