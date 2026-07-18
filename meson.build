@@ -290,6 +290,10 @@ elif host_machine.system() == 'zinnia'
 	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/zinnia')
+elif host_machine.system() == 'roxy'
+	rtld_include_dirs += include_directories('sysdeps/roxy/include')
+	libc_include_dirs += include_directories('sysdeps/roxy/include')
+	subdir('sysdeps/roxy')
 # ANCHOR: demo-sysdeps
 elif host_machine.system() == 'demo'
 	subdir('sysdeps/demo')
