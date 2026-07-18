@@ -65,6 +65,24 @@ if not headers_only
 		error('GCC version 13 or higher is required; found version ' + cpp_compiler.version())
 	endif
 
+	ifunc_check = '''
+	void my_func_impl() {}
+
+	extern "C" void (*resolver())() {
+		return my_func_impl;
+	}
+
+	void my_func() __attribute__((ifunc("resolver")));
+
+	int main() {
+		return 0;
+	}
+	'''
+
+	if not cpp_compiler.compiles(ifunc_check, name: 'C++ compiler supports ifunc')
+		error('Compiler does not support __attribute__((ifunc)).')
+	endif
+
 	target_triple = run_command(c_compiler.cmd_array(), '-dumpmachine', check: true).stdout()
 	use_freestnd_hdrs = get_option('use_freestnd_hdrs').disable_auto_if(
 			target_triple.to_lower().contains('mlibc'))
