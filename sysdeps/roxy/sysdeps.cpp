@@ -1,5 +1,15 @@
-#include <bits/ensure.h>
 #include <mlibc/all-sysdeps.hpp>
+#include <roxy/syscall.h>
+
+#include <bits/ensure.h>
+
+static int syscall_result(long result, ssize_t *transferred) {
+	if(result < 0)
+		return static_cast<int>(-result);
+
+	*transferred = result;
+	return 0;
+}
 
 #define STUB()                                                                                     \
 	({                                                                                             \
@@ -29,8 +39,10 @@ int Sysdeps<Open>::operator()(const char *, int, mode_t, int *) {
 	STUB();
 }
 
-int Sysdeps<Read>::operator()(int, void *, size_t, ssize_t *) {
-	STUB();
+int Sysdeps<Read>::operator()(int fd, void *buffer, size_t count, ssize_t *bytes_read) {
+	return syscall_result(
+	    roxy_syscall3(ROXY_SYS_READ, fd, reinterpret_cast<long>(buffer), count), bytes_read
+	);
 }
 
 int Sysdeps<Close>::operator()(int) {
@@ -45,8 +57,10 @@ int Sysdeps<Isatty>::operator()(int) {
 	STUB();
 }
 
-int Sysdeps<Write>::operator()(int, const void *, size_t, ssize_t *) {
-	STUB();
+int Sysdeps<Write>::operator()(int fd, const void *buffer, size_t count, ssize_t *bytes_written) {
+	return syscall_result(
+	    roxy_syscall3(ROXY_SYS_WRITE, fd, reinterpret_cast<long>(buffer), count), bytes_written
+	);
 }
 
 int Sysdeps<TcbSet>::operator()(void *) {

@@ -9,6 +9,7 @@ rtld_sources += files(
 libc_sources += files(
 	'entry.cpp',
 	'sysdeps.cpp',
+	'arch/x86_64/syscall.cpp',
 )
 
 if not no_headers
