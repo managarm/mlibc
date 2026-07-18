@@ -87,8 +87,9 @@ int Sysdeps<Seek>::operator()(int, off_t, int, off_t *) {
 	STUB();
 }
 
-void Sysdeps<Exit>::operator()(int) {
-	STUB();
+void Sysdeps<Exit>::operator()(int status) {
+	roxy_syscall1(ROXY_SYS_EXIT, status);
+	__builtin_unreachable();
 }
 
 } // namespace mlibc
