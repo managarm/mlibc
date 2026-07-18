@@ -1,0 +1,55 @@
+
+#ifndef _SYS_PTRACE_H
+#define _SYS_PTRACE_H
+
+#include <abi-bits/ptrace.h>
+#include <stdint.h>
+
+#define PTRACE_TRACEME 0
+#define PT_TRACE_ME PTRACE_TRACEME
+
+#define PT_READ_I PTRACE_PEEKTEXT
+#define PT_READ_D PTRACE_PEEKDATA
+#define PT_READ_U PTRACE_PEEKUSER
+#define PT_WRITE_I PTRACE_POKETEXT
+#define PT_WRITE_D PTRACE_POKEDATA
+#define PT_WRITE_U PTRACE_POKEUSER
+#define PT_CONTINUE PTRACE_CONT
+#define PT_KILL PTRACE_KILL
+#define PT_STEP PTRACE_SINGLESTEP
+#define PT_GETREGS PTRACE_GETREGS
+#define PT_SETREGS PTRACE_SETREGS
+#define PT_GETFPREGS PTRACE_GETFPREGS
+#define PT_SETFPREGS PTRACE_SETFPREGS
+#define PT_ATTACH PTRACE_ATTACH
+#define PT_DETACH PTRACE_DETACH
+#define PT_GETFPXREGS PTRACE_GETFPXREGS
+#define PT_SETFPXREGS PTRACE_SETFPXREGS
+#define PT_SYSCALL PTRACE_SYSCALL
+#define PT_SETOPTIONS PTRACE_SETOPTIONS
+#define PT_GETEVENTMSG PTRACE_GETEVENTMSG
+#define PT_GETSIGINFO PTRACE_GETSIGINFO
+#define PT_SETSIGINFO PTRACE_SETSIGINFO
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct ptrace_peeksiginfo_args {
+	uint64_t offset;
+	uint32_t flags;
+	int32_t nr;
+};
+
+#ifndef __MLIBC_ABI_ONLY
+
+long ptrace(int __op, ...);
+
+#endif /* !__MLIBC_ABI_ONLY */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _SYS_PTRACE_H */
+
