@@ -121,11 +121,11 @@ int Sysdeps<VmMap>::operator()(void *addr, size_t size, int prot, int flags, int
 }
 
 int Sysdeps<VmUnmap>::operator()(void *pointer, size_t size) {
-    return SYSCALL2(SYS_MUNMAP, pointer, size);
+    return -SYSCALL2(SYS_MUNMAP, pointer, size);
 }
 
 int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
-    return SYSCALL3(SYS_MPROTECT, pointer, size, prot);
+    return -SYSCALL3(SYS_MPROTECT, pointer, size, prot);
 }
 
 int Sysdeps<AnonAllocate>::operator()(size_t size, void **pointer) {
@@ -137,12 +137,11 @@ int Sysdeps<AnonFree>::operator()(void *pointer, size_t size) {
 }
 
 int Sysdeps<TcbSet>::operator()(void *pointer) {
-    return SYSCALL1(SYS_SETTLS, (uintptr_t)pointer);
+    return -SYSCALL1(SYS_SETTLS, (uintptr_t)pointer);
 }
 
 int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
-    int err = SYSCALL3(SYS_CLOCK_GETTIME, clock, secs, nanos);
-    return -err;
+    return -SYSCALL3(SYS_CLOCK_GETTIME, clock, secs, nanos);
 }
 
 int Sysdeps<Times>::operator()(struct tms *tms, clock_t *out) {
@@ -176,7 +175,7 @@ int Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *cons
     if (error < 0) {
         return -error;
     }
-    
+
     return 0;
 }
 
@@ -212,8 +211,7 @@ int Sysdeps<Ptsname>::operator()(int fd, char *buffer, size_t length) {
 
 int Sysdeps<Ttyname>::operator()(int fd, char *buffer, size_t size) {
     // !!!: This is wrong
-    int e = sysdep<Ptsname>(fd, buffer, size);
-    return e;
+    return sysdep<Ptsname>(fd, buffer, size);
 }
 
 int Sysdeps<Pread>::operator()(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
@@ -317,7 +315,7 @@ void Sysdeps<Yield>::operator()() {
 }
 
 int Sysdeps<Pause>::operator()() {
-    return SYSCALL0(SYS_PAUSE);
+    return -SYSCALL0(SYS_PAUSE);
 }
 
 int Sysdeps<FutexWait>::operator()(int *pointer, int expected, const struct timespec *time) {
