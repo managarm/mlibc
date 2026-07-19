@@ -2,6 +2,11 @@
 #include <roxy/syscall.h>
 
 #include <bits/ensure.h>
+#include <stdint.h>
+
+static int syscall_error(long result) {
+	return result < 0 ? static_cast<int>(-result) : 0;
+}
 
 static int syscall_result(long result, ssize_t *transferred) {
 	if(result < 0)
@@ -27,12 +32,22 @@ void Sysdeps<LibcLog>::operator()(const char *) {
 	STUB();
 }
 
-int Sysdeps<FutexWait>::operator()(int *, int, const timespec *) {
-	STUB();
+int Sysdeps<FutexWait>::operator()(int *pointer, int expected, const timespec *timeout) {
+	return syscall_error(roxy_syscall3(
+	    ROXY_SYS_FUTEX_WAIT,
+	    reinterpret_cast<long>(pointer),
+	    expected,
+	    reinterpret_cast<long>(timeout)
+	));
 }
 
-int Sysdeps<FutexWake>::operator()(int *, bool) {
-	STUB();
+int Sysdeps<FutexWake>::operator()(int *pointer, bool all) {
+	return syscall_error(roxy_syscall3(
+	    ROXY_SYS_FUTEX_WAKE,
+	    reinterpret_cast<long>(pointer),
+	    all ? UINT32_MAX : 1,
+	    0
+	));
 }
 
 int Sysdeps<Open>::operator()(const char *, int, mode_t, int *) {

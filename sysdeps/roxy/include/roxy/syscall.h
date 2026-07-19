@@ -10,6 +10,8 @@ typedef long roxy_syscall_word_t;
 #define ROXY_SYS_EXIT 0
 #define ROXY_SYS_READ 1
 #define ROXY_SYS_WRITE 2
+#define ROXY_SYS_FUTEX_WAIT 3
+#define ROXY_SYS_FUTEX_WAKE 4
 
 roxy_syscall_word_t roxy_syscall1(long number, roxy_syscall_word_t first);
 
