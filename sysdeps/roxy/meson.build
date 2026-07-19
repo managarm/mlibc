@@ -4,6 +4,7 @@ sysdep_supported_options = {
 
 rtld_sources += files(
 	'sysdeps.cpp',
+	'arch/x86_64/syscall.cpp',
 )
 
 libc_sources += files(
