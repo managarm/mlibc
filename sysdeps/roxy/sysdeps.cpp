@@ -105,8 +105,8 @@ int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
 	return 0;
 }
 
-int Sysdeps<Isatty>::operator()(int) {
-	STUB();
+int Sysdeps<Isatty>::operator()(int fd) {
+	return syscall_error(roxy_syscall1(ROXY_SYS_ISATTY, fd));
 }
 
 int Sysdeps<Write>::operator()(int fd, const void *buffer, size_t count, ssize_t *bytes_written) {
