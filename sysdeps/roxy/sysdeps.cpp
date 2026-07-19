@@ -77,8 +77,8 @@ int Sysdeps<Write>::operator()(int fd, const void *buffer, size_t count, ssize_t
 	);
 }
 
-int Sysdeps<TcbSet>::operator()(void *) {
-	STUB();
+int Sysdeps<TcbSet>::operator()(void *pointer) {
+	return syscall_error(roxy_syscall1(ROXY_SYS_TCB_SET, reinterpret_cast<long>(pointer)));
 }
 
 int Sysdeps<AnonAllocate>::operator()(size_t size, void **pointer) {
