@@ -25,17 +25,36 @@ typedef long roxy_syscall_word_t;
 #define ROXY_SYS_SEEK 12
 #define ROXY_SYS_ISATTY 13
 #define ROXY_SYS_OPEN 14
+#define ROXY_SYS_VM_PROTECT 15
+#define ROXY_SYS_STAT 16
 
 typedef struct {
 	int64_t seconds;
 	int64_t nanoseconds;
 } roxy_clock_result;
 
+typedef struct {
+	uint64_t file_id;
+	uint64_t size;
+	uint64_t blocks;
+	uint64_t hard_links;
+	uint32_t mode;
+	uint32_t block_size;
+} roxy_stat_result;
+
 #ifdef __cplusplus
 static_assert(sizeof(roxy_clock_result) == 16);
 static_assert(alignof(roxy_clock_result) == 8);
 static_assert(offsetof(roxy_clock_result, seconds) == 0);
 static_assert(offsetof(roxy_clock_result, nanoseconds) == 8);
+static_assert(sizeof(roxy_stat_result) == 40);
+static_assert(alignof(roxy_stat_result) == 8);
+static_assert(offsetof(roxy_stat_result, file_id) == 0);
+static_assert(offsetof(roxy_stat_result, size) == 8);
+static_assert(offsetof(roxy_stat_result, blocks) == 16);
+static_assert(offsetof(roxy_stat_result, hard_links) == 24);
+static_assert(offsetof(roxy_stat_result, mode) == 32);
+static_assert(offsetof(roxy_stat_result, block_size) == 36);
 #endif
 
 roxy_syscall_word_t roxy_syscall1(long number, roxy_syscall_word_t first);

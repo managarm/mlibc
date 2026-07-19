@@ -20,6 +20,8 @@ struct RoxySysdepTags :
 	AnonFree,
 	VmMap,
 	VmUnmap,
+	VmProtect,
+	Stat,
 	Seek,
 	Exit
 {};

@@ -168,6 +168,46 @@ int Sysdeps<VmUnmap>::operator()(void *pointer, size_t size) {
 	);
 }
 
+int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int protection) {
+	return syscall_error(roxy_syscall3(
+	    ROXY_SYS_VM_PROTECT,
+	    reinterpret_cast<long>(pointer),
+	    size,
+	    protection
+	));
+}
+
+int Sysdeps<Stat>::operator()(
+	fsfd_target target,
+	int fd,
+	const char *path,
+	int flags,
+	struct stat *output
+) {
+	roxy_stat_result result;
+	auto error = syscall_error(roxy_syscall5(
+	    ROXY_SYS_STAT,
+	    static_cast<long>(target),
+	    fd,
+	    reinterpret_cast<long>(path),
+	    flags,
+	    reinterpret_cast<long>(&result)
+	));
+	if(error)
+		return error;
+	if(result.size > INT64_MAX)
+		return EOVERFLOW;
+
+	*output = {};
+	output->st_ino = result.file_id;
+	output->st_mode = result.mode;
+	output->st_nlink = result.hard_links;
+	output->st_size = result.size;
+	output->st_blksize = result.block_size;
+	output->st_blocks = result.blocks;
+	return 0;
+}
+
 int Sysdeps<Seek>::operator()(int fd, off_t offset, int whence, off_t *new_offset) {
 	auto result = roxy_syscall3(ROXY_SYS_SEEK, fd, offset, whence);
 	if(result < 0)
