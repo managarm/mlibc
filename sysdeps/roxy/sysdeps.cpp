@@ -89,8 +89,8 @@ int Sysdeps<Read>::operator()(int fd, void *buffer, size_t count, ssize_t *bytes
 	);
 }
 
-int Sysdeps<Close>::operator()(int) {
-	STUB();
+int Sysdeps<Close>::operator()(int fd) {
+	return syscall_error(roxy_syscall1(ROXY_SYS_CLOSE, fd));
 }
 
 int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {

@@ -21,6 +21,7 @@ typedef long roxy_syscall_word_t;
 #define ROXY_SYS_CLOCK_GET 8
 #define ROXY_SYS_VM_MAP 9
 #define ROXY_SYS_VM_UNMAP 10
+#define ROXY_SYS_CLOSE 11
 
 typedef struct {
 	int64_t seconds;
