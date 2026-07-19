@@ -42,11 +42,10 @@ int Sysdeps<FutexWait>::operator()(int *pointer, int expected, const timespec *t
 }
 
 int Sysdeps<FutexWake>::operator()(int *pointer, bool all) {
-	return syscall_error(roxy_syscall3(
+	return syscall_error(roxy_syscall2(
 	    ROXY_SYS_FUTEX_WAKE,
 	    reinterpret_cast<long>(pointer),
-	    all ? UINT32_MAX : 1,
-	    0
+	    all ? UINT32_MAX : 1
 	));
 }
 
@@ -92,13 +91,9 @@ int Sysdeps<AnonAllocate>::operator()(size_t size, void **pointer) {
 }
 
 int Sysdeps<AnonFree>::operator()(void *pointer, size_t size) {
-	auto result = roxy_syscall3(
-	    ROXY_SYS_ANON_FREE,
-	    reinterpret_cast<long>(pointer),
-	    size,
-	    0
+	return syscall_error(
+	    roxy_syscall2(ROXY_SYS_ANON_FREE, reinterpret_cast<long>(pointer), size)
 	);
-	return result < 0 ? static_cast<int>(-result) : 0;
 }
 
 int Sysdeps<VmMap>::operator()(void *, size_t, int, int, int, off_t, void **) {
