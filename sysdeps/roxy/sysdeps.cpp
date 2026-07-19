@@ -1,7 +1,6 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <roxy/syscall.h>
 
-#include <bits/ensure.h>
 #include <stdint.h>
 
 static int syscall_error(long result) {
@@ -15,12 +14,6 @@ static int syscall_result(long result, ssize_t *transferred) {
 	*transferred = result;
 	return 0;
 }
-
-#define STUB()                                                                                     \
-	({                                                                                             \
-		__ensure(!"STUB function was called");                                                     \
-		__builtin_unreachable();                                                                   \
-	})
 
 namespace mlibc {
 
@@ -79,8 +72,18 @@ int Sysdeps<FutexWake>::operator()(int *pointer, bool all) {
 	));
 }
 
-int Sysdeps<Open>::operator()(const char *, int, mode_t, int *) {
-	STUB();
+int Sysdeps<Open>::operator()(const char *path, int flags, mode_t mode, int *fd) {
+	auto result = roxy_syscall3(
+	    ROXY_SYS_OPEN,
+	    reinterpret_cast<long>(path),
+	    flags,
+	    mode
+	);
+	if(result < 0)
+		return static_cast<int>(-result);
+
+	*fd = static_cast<int>(result);
+	return 0;
 }
 
 int Sysdeps<Read>::operator()(int fd, void *buffer, size_t count, ssize_t *bytes_read) {
