@@ -24,6 +24,7 @@ struct RoxySysdepTags :
 	Stat,
 	Seek,
 	Fork,
+	Execve,
 	Exit
 {};
 

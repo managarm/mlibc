@@ -228,6 +228,15 @@ int Sysdeps<Fork>::operator()(pid_t *child) {
 	return 0;
 }
 
+int Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *const envp[]) {
+	return syscall_error(roxy_syscall3(
+	    ROXY_SYS_EXECVE,
+	    reinterpret_cast<long>(path),
+	    reinterpret_cast<long>(argv),
+	    reinterpret_cast<long>(envp)
+	));
+}
+
 void Sysdeps<Exit>::operator()(int status) {
 	roxy_syscall1(ROXY_SYS_EXIT, status);
 	__builtin_unreachable();
