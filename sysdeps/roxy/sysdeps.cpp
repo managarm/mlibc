@@ -82,12 +82,23 @@ int Sysdeps<TcbSet>::operator()(void *) {
 	STUB();
 }
 
-int Sysdeps<AnonAllocate>::operator()(size_t, void **) {
-	STUB();
+int Sysdeps<AnonAllocate>::operator()(size_t size, void **pointer) {
+	auto result = roxy_syscall1(ROXY_SYS_ANON_ALLOCATE, size);
+	if(result < 0)
+		return static_cast<int>(-result);
+
+	*pointer = reinterpret_cast<void *>(result);
+	return 0;
 }
 
-int Sysdeps<AnonFree>::operator()(void *, size_t) {
-	STUB();
+int Sysdeps<AnonFree>::operator()(void *pointer, size_t size) {
+	auto result = roxy_syscall3(
+	    ROXY_SYS_ANON_FREE,
+	    reinterpret_cast<long>(pointer),
+	    size,
+	    0
+	);
+	return result < 0 ? static_cast<int>(-result) : 0;
 }
 
 int Sysdeps<VmMap>::operator()(void *, size_t, int, int, int, off_t, void **) {

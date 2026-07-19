@@ -12,6 +12,8 @@ typedef long roxy_syscall_word_t;
 #define ROXY_SYS_WRITE 2
 #define ROXY_SYS_FUTEX_WAIT 3
 #define ROXY_SYS_FUTEX_WAKE 4
+#define ROXY_SYS_ANON_ALLOCATE 5
+#define ROXY_SYS_ANON_FREE 6
 
 roxy_syscall_word_t roxy_syscall1(long number, roxy_syscall_word_t first);
 
