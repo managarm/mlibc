@@ -107,11 +107,13 @@ __MLIBC_INLINE_DEFINITION int __mlibc_isgreaterequall(long double __x, long doub
 #define isgreater(x, y) __MLIBC_CHOOSE_COMPARISON(x, y, __mlibc_isgreater)
 #define isgreaterequal(x, y) __MLIBC_CHOOSE_COMPARISON(x, y, __mlibc_isgreaterequal)
 
-#if defined(_GNU_SOURCE)
+#if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 void sincos(double __x, double *__sin, double *__cos);
 void sincosf(float __x, float *__sin, float *__cos);
 void sincosl(long double __x, long double *__sin, long double *__cos);
+#endif /* defined(_GNU_SOURCE) || defined(_BSD_SOURCE) */
 
+#if defined(_GNU_SOURCE)
 double exp10(double __x);
 float exp10f(float __x);
 long double exp10l(long double __x);
@@ -383,11 +385,11 @@ double y1(double __x);
 double yn(int __n, double __x);
 #endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
-#if defined(_GNU_SOURCE)
+#if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 /* BSD floating-point classification functions - obsolete */
 int finite(double __x);
 int finitef(float __x);
-#endif
+#endif /* defined(_GNU_SOURCE) || defined(_BSD_SOURCE) */
 
 #if defined(_DEFAULT_SOURCE)
 double lgamma_r(double __x, int *__signp);
