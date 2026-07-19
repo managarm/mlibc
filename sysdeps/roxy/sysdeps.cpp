@@ -217,6 +217,17 @@ int Sysdeps<Seek>::operator()(int fd, off_t offset, int whence, off_t *new_offse
 	return 0;
 }
 
+int Sysdeps<Fork>::operator()(pid_t *child) {
+	auto result = roxy_syscall1(ROXY_SYS_FORK, 0);
+	if(result < 0)
+		return static_cast<int>(-result);
+	if(result > INT32_MAX)
+		return EOVERFLOW;
+
+	*child = static_cast<pid_t>(result);
+	return 0;
+}
+
 void Sysdeps<Exit>::operator()(int status) {
 	roxy_syscall1(ROXY_SYS_EXIT, status);
 	__builtin_unreachable();
