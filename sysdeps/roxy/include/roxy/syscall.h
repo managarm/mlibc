@@ -17,11 +17,44 @@ typedef long roxy_syscall_word_t;
 
 roxy_syscall_word_t roxy_syscall1(long number, roxy_syscall_word_t first);
 
+roxy_syscall_word_t roxy_syscall2(
+	long number,
+	roxy_syscall_word_t first,
+	roxy_syscall_word_t second
+);
+
 roxy_syscall_word_t roxy_syscall3(
 	long number,
 	roxy_syscall_word_t first,
 	roxy_syscall_word_t second,
 	roxy_syscall_word_t third
+);
+
+roxy_syscall_word_t roxy_syscall4(
+	long number,
+	roxy_syscall_word_t first,
+	roxy_syscall_word_t second,
+	roxy_syscall_word_t third,
+	roxy_syscall_word_t fourth
+);
+
+roxy_syscall_word_t roxy_syscall5(
+	long number,
+	roxy_syscall_word_t first,
+	roxy_syscall_word_t second,
+	roxy_syscall_word_t third,
+	roxy_syscall_word_t fourth,
+	roxy_syscall_word_t fifth
+);
+
+roxy_syscall_word_t roxy_syscall6(
+	long number,
+	roxy_syscall_word_t first,
+	roxy_syscall_word_t second,
+	roxy_syscall_word_t third,
+	roxy_syscall_word_t fourth,
+	roxy_syscall_word_t fifth,
+	roxy_syscall_word_t sixth
 );
 
 #ifdef __cplusplus
