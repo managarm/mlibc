@@ -165,8 +165,13 @@ int Sysdeps<VmUnmap>::operator()(void *pointer, size_t size) {
 	);
 }
 
-int Sysdeps<Seek>::operator()(int, off_t, int, off_t *) {
-	STUB();
+int Sysdeps<Seek>::operator()(int fd, off_t offset, int whence, off_t *new_offset) {
+	auto result = roxy_syscall3(ROXY_SYS_SEEK, fd, offset, whence);
+	if(result < 0)
+		return static_cast<int>(-result);
+
+	*new_offset = result;
+	return 0;
 }
 
 void Sysdeps<Exit>::operator()(int status) {
