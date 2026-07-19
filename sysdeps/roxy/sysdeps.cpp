@@ -104,12 +104,35 @@ int Sysdeps<AnonFree>::operator()(void *pointer, size_t size) {
 	);
 }
 
-int Sysdeps<VmMap>::operator()(void *, size_t, int, int, int, off_t, void **) {
-	STUB();
+int Sysdeps<VmMap>::operator()(
+	void *hint,
+	size_t size,
+	int prot,
+	int flags,
+	int fd,
+	off_t offset,
+	void **window
+) {
+	auto result = roxy_syscall6(
+	    ROXY_SYS_VM_MAP,
+	    reinterpret_cast<long>(hint),
+	    size,
+	    prot,
+	    flags,
+	    fd,
+	    offset
+	);
+	if(result < 0)
+		return static_cast<int>(-result);
+
+	*window = reinterpret_cast<void *>(result);
+	return 0;
 }
 
-int Sysdeps<VmUnmap>::operator()(void *, size_t) {
-	STUB();
+int Sysdeps<VmUnmap>::operator()(void *pointer, size_t size) {
+	return syscall_error(
+	    roxy_syscall2(ROXY_SYS_VM_UNMAP, reinterpret_cast<long>(pointer), size)
+	);
 }
 
 int Sysdeps<Seek>::operator()(int, off_t, int, off_t *) {
