@@ -63,8 +63,16 @@ int Sysdeps<Close>::operator()(int) {
 	STUB();
 }
 
-int Sysdeps<ClockGet>::operator()(int, time_t *, long *) {
-	STUB();
+int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
+	roxy_clock_result result;
+	auto error =
+	    syscall_error(roxy_syscall2(ROXY_SYS_CLOCK_GET, clock, reinterpret_cast<long>(&result)));
+	if (error)
+		return error;
+
+	*secs = result.seconds;
+	*nanos = result.nanoseconds;
+	return 0;
 }
 
 int Sysdeps<Isatty>::operator()(int) {

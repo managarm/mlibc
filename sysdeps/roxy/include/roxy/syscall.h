@@ -1,6 +1,9 @@
 #ifndef _ROXY_SYSCALL_H
 #define _ROXY_SYSCALL_H
 
+#include <stddef.h>
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -15,6 +18,19 @@ typedef long roxy_syscall_word_t;
 #define ROXY_SYS_ANON_ALLOCATE 5
 #define ROXY_SYS_ANON_FREE 6
 #define ROXY_SYS_TCB_SET 7
+#define ROXY_SYS_CLOCK_GET 8
+
+typedef struct {
+	int64_t seconds;
+	int64_t nanoseconds;
+} roxy_clock_result;
+
+#ifdef __cplusplus
+static_assert(sizeof(roxy_clock_result) == 16);
+static_assert(alignof(roxy_clock_result) == 8);
+static_assert(offsetof(roxy_clock_result, seconds) == 0);
+static_assert(offsetof(roxy_clock_result, nanoseconds) == 8);
+#endif
 
 roxy_syscall_word_t roxy_syscall1(long number, roxy_syscall_word_t first);
 
