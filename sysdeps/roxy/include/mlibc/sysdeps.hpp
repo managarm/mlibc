@@ -23,6 +23,7 @@ struct RoxySysdepTags :
 	VmProtect,
 	Stat,
 	Seek,
+	GetPid,
 	Fork,
 	Execve,
 	Exit

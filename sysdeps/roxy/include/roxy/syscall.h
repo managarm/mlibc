@@ -29,6 +29,7 @@ typedef long roxy_syscall_word_t;
 #define ROXY_SYS_STAT 16
 #define ROXY_SYS_FORK 17
 #define ROXY_SYS_EXECVE 18
+#define ROXY_SYS_GETPID 19
 
 typedef struct {
 	int64_t seconds;
@@ -58,6 +59,8 @@ static_assert(offsetof(roxy_stat_result, hard_links) == 24);
 static_assert(offsetof(roxy_stat_result, mode) == 32);
 static_assert(offsetof(roxy_stat_result, block_size) == 36);
 #endif
+
+roxy_syscall_word_t roxy_syscall0(long number);
 
 roxy_syscall_word_t roxy_syscall1(long number, roxy_syscall_word_t first);
 
