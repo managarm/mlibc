@@ -24,6 +24,7 @@ struct RoxySysdepTags :
 	Stat,
 	Seek,
 	GetPid,
+	GetPpid,
 	Fork,
 	Execve,
 	Exit

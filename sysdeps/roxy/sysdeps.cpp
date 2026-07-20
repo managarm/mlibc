@@ -221,6 +221,10 @@ pid_t Sysdeps<GetPid>::operator()() {
 	return static_cast<pid_t>(roxy_syscall0(ROXY_SYS_GETPID));
 }
 
+pid_t Sysdeps<GetPpid>::operator()() {
+	return static_cast<pid_t>(roxy_syscall0(ROXY_SYS_GETPPID));
+}
+
 int Sysdeps<Fork>::operator()(pid_t *child) {
 	auto result = roxy_syscall1(ROXY_SYS_FORK, 0);
 	if(result < 0)
