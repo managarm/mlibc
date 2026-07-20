@@ -98,6 +98,7 @@ if not no_headers
 		'include/abi-bits/sig-limits.h',
 		'include/abi-bits/sigset_t.h',
 		'include/abi-bits/aio.h',
+		'include/abi-bits/sched_param.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)

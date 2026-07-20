@@ -5,6 +5,7 @@
 #include <mlibc-config.h>
 
 #include <abi-bits/pid_t.h>
+#include <abi-bits/sched_param.h>
 #include <bits/ansi/time_t.h>
 #include <bits/ansi/timespec.h>
 #include <bits/threads.h>
@@ -20,20 +21,6 @@ extern "C" {
 #include <bits/linux/linux_sched.h>
 #include <bits/linux/cpu_set.h>
 #endif
-
-#define SCHED_OTHER 0
-#define SCHED_FIFO 1
-#define SCHED_RR 2
-#define SCHED_BATCH 3
-#define SCHED_IDLE 5
-#define SCHED_DEADLINE 6
-#define SCHED_RESET_ON_FORK 0x40000000
-
-/* KEEP IN SYNC WITH `struct __mlibc_sched_param`! */
-struct sched_param {
-	int sched_priority;
-	/* TODO: add missing [SS|TSP] fields */
-};
 
 #ifndef __MLIBC_ABI_ONLY
 
