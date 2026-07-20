@@ -171,6 +171,16 @@ void closeOrDie(int fd) {
 		__ensure(!"sys_close() failed");
 }
 
+// On sysdeps that do not implement `Stat` objects are deduplicated by name alone.
+bool tryFileId(int fd, dev_t *dev, ino_t *ino) {
+	struct stat st;
+	if (mlibc::sysdep_or_enosys<Stat>(mlibc::fsfd_target::fd, fd, "", 0, &st))
+		return false;
+	*dev = st.st_dev;
+	*ino = st.st_ino;
+	return true;
+}
+
 uintptr_t alignUp(uintptr_t address, size_t align) {
 	return (address + align - 1) & ~(align - 1);
 }
@@ -399,8 +409,12 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath
 	if (lastSlash != static_cast<size_t>(-1))
 		name = name.sub_string(lastSlash + 1, path.size() - (lastSlash + 1));
 
-	if (auto obj = findLoadedObject(name))
-		return obj;
+	for (auto obj : loadedObjects) {
+		if (frg::string_view{obj->path} == path)
+			return obj;
+		if (obj->soName && name == obj->soName)
+			return obj;
+	}
 
 	if (createScope) {
 		__ensure(localScope == nullptr);
@@ -421,6 +435,18 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath
 		frg::destruct(getAllocator(), object);
 		return LinkerError::notFound;
 	}
+
+	// A different path can still resolve to an already-loaded object. Deduplicate on the file's device/inode.
+	dev_t dev;
+	ino_t ino;
+	if (tryFileId(fd, &dev, &ino)) {
+		if (auto existing = findObjectByFileId(dev, ino)) {
+			closeOrDie(fd);
+			frg::destruct(getAllocator(), object);
+			return existing;
+		}
+	}
+
 	auto result = _fetchFromFile(object, fd);
 	closeOrDie(fd);
 	if(!result) {
@@ -470,7 +496,15 @@ SharedObject *ObjectRepository::findLoadedObject(frg::string_view name) {
 			return object;
 	}
 
-	// TODO: We should also look at the device and inode here as a fallback.
+	return nullptr;
+}
+
+SharedObject *ObjectRepository::findObjectByFileId(dev_t dev, ino_t ino) {
+	for (auto object : loadedObjects) {
+		if (object->hasFileId && object->fileDev == dev && object->fileIno == ino)
+			return object;
+	}
+
 	return nullptr;
 }
 
@@ -549,6 +583,9 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 
 frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	__ensure(!object->isMainObject);
+
+	if (tryFileId(fd, &object->fileDev, &object->fileIno))
+		object->hasFileId = true;
 
 	// read the elf file header
 	elf_ehdr ehdr;
