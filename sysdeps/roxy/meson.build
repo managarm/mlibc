@@ -1,5 +1,6 @@
 sysdep_supported_options = {
 	'posix': true,
+	'glibc': true,
 }
 
 rtld_sources += files(
@@ -30,6 +31,7 @@ if not no_headers
 		'include/abi-bits/gid_t.h',
 		'include/abi-bits/in.h',
 		'include/abi-bits/ino_t.h',
+		'include/abi-bits/ioctls.h',
 		'include/abi-bits/ipc.h',
 		'include/abi-bits/limits.h',
 		'include/abi-bits/mode_t.h',
