@@ -50,9 +50,6 @@ extern "C" void __mlibc_do_cancel() {
 
 namespace mlibc {
 
-static constexpr unsigned int onceComplete = 1;
-static constexpr unsigned int onceLocked = 2;
-
 void run_thread_local_destructors() {
 	auto self = get_current_tcb();
 	while (self->cxaThreadExitHandlers) {
@@ -64,32 +61,33 @@ void run_thread_local_destructors() {
 }
 
 int thread_once(__mlibc_once *once, void (*func) (void)) {
-	auto expected = __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
+	auto expected = once->__mlibc_done.load(std::memory_order_acquire);
 
 	// fast path: the function was already run.
-	while(!(expected & onceComplete)) {
+	while(!(expected & __mlibc_once::onceComplete)) {
 		if(!expected) {
 			// try to acquire the mutex.
-			if(!__atomic_compare_exchange_n(&once->__mlibc_done,
-					&expected, onceLocked, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
+			if (!once->__mlibc_done.compare_exchange_weak(
+			        expected, __mlibc_once::onceLocked, std::memory_order_acquire, std::memory_order_acquire
+			    ))
 				continue;
 
 			func();
 
 			// unlock the mutex.
-			__atomic_exchange_n(&once->__mlibc_done, onceComplete, __ATOMIC_RELEASE);
+			once->__mlibc_done.exchange(__mlibc_once::onceComplete, std::memory_order_release);
 			if(int e = mlibc::sysdep<FutexWake>((int *)&once->__mlibc_done, true); e)
 				__ensure(!"sys_futex_wake() failed");
 			return 0;
 		}else{
 			// a different thread is currently running the initializer.
-			__ensure(expected == onceLocked);
+			__ensure(expected == __mlibc_once::onceLocked);
 			// if the wait gets interrupted by a signal, check again.
 			// EAGAIN will also be a retry, as it means the other thread completed
 			// and changed the __mlibc_done variable to signal it before we actually went to sleep.
-			if(int e = sysdep<FutexWait>((int *)&once->__mlibc_done, onceLocked, nullptr); e && e != EINTR && e != EAGAIN)
+			if(int e = sysdep<FutexWait>((int *)&once->__mlibc_done, __mlibc_once::onceLocked, nullptr); e && e != EINTR && e != EAGAIN)
 				__ensure(!"sys_futex_wait() failed");
-			expected =  __atomic_load_n(&once->__mlibc_done, __ATOMIC_ACQUIRE);
+			expected = once->__mlibc_done.load(std::memory_order_acquire);
 		}
 	}
 
@@ -100,26 +98,24 @@ int thread_create(struct __mlibc_thread_data **__restrict thread, const struct _
 	auto new_tcb = __rtld_allocateTcb();
 	pid_t tid;
 	struct __mlibc_threadattr attr = {};
-	if (!attrp)
-		thread_attr_init(&attr);
-	else
+	if (attrp)
 		attr = *attrp;
 
-	if (attr.__mlibc_cpuset)
+	if (attr.__cpuset)
 		mlibc::infoLogger() << "pthread_create(): cpuset is ignored!" << frg::endlog;
-	if (attr.__mlibc_sigmaskset)
+	if (attr.__sigmaskset)
 		mlibc::infoLogger() << "pthread_create(): sigmask is ignored!" << frg::endlog;
 
 	// TODO: due to alignment guarantees, the stackaddr and stacksize might change
 	// when the stack is allocated. Currently this isn't propagated to the TCB,
 	// but it should be.
-	void *stack = attr.__mlibc_stackaddr;
+	void *stack = attr.__stackaddr;
 	if (!IsImplemented<PrepareStack>) {
 		MLIBC_MISSING_SYSDEP();
 		return ENOSYS;
 	}
 	int ret = sysdep_or_panic<PrepareStack>(&stack, entry,
-			user_arg, new_tcb, &attr.__mlibc_stacksize, &attr.__mlibc_guardsize, &new_tcb->stackAddr);
+			user_arg, new_tcb, &attr.__stacksize, &attr.__guardsize, &new_tcb->stackAddr);
 	if (ret)
 		return ret;
 
@@ -127,10 +123,10 @@ int thread_create(struct __mlibc_thread_data **__restrict thread, const struct _
 		MLIBC_MISSING_SYSDEP();
 		return ENOSYS;
 	}
-	new_tcb->stackSize = attr.__mlibc_stacksize;
-	new_tcb->guardSize = attr.__mlibc_guardsize;
+	new_tcb->stackSize = attr.__stacksize;
+	new_tcb->guardSize = attr.__guardsize;
 	new_tcb->returnValueType = (returns_int) ? TcbThreadReturnValue::Integer : TcbThreadReturnValue::Pointer;
-	new_tcb->isJoinable = (attr.__mlibc_detachstate == __MLIBC_THREAD_CREATE_JOINABLE);
+	new_tcb->isJoinable = (attr.__detachstate == __MLIBC_THREAD_CREATE_JOINABLE);
 	__atomic_store_n(&new_tcb->cancelBits, 0, __ATOMIC_RELAXED);
 	sysdep_or_panic<Clone>(new_tcb, &tid, stack);
 	*thread = reinterpret_cast<struct __mlibc_thread_data *>(new_tcb);
@@ -233,25 +229,6 @@ __attribute__ ((__noreturn__)) void thread_exit(thread_exit_return ret_val) {
 	mlibc::do_exit();
 }
 
-static constexpr size_t default_stacksize = 0x200000;
-static constexpr size_t default_guardsize = 4096;
-
-int thread_attr_init(struct __mlibc_threadattr *attr) {
-	*attr = __mlibc_threadattr{};
-	attr->__mlibc_stacksize = default_stacksize;
-	attr->__mlibc_guardsize = default_guardsize;
-	attr->__mlibc_detachstate = __MLIBC_THREAD_CREATE_JOINABLE;
-	return 0;
-}
-
-static constexpr unsigned int mutexRecursive = 1;
-static constexpr unsigned int mutexErrorCheck = 2;
-static constexpr unsigned int mutexShared = 4;
-
-// TODO: either use uint32_t or determine the bit based on sizeof(int).
-static constexpr unsigned int mutex_owner_mask = (static_cast<uint32_t>(1) << 30) - 1;
-static constexpr unsigned int mutex_waiters_bit = static_cast<uint32_t>(1) << 31;
-
 int thread_mutex_init(struct __mlibc_mutex *__restrict mutex,
 		const struct __mlibc_mutexattr *__restrict attr) {
 	auto type = attr ? attr->__mlibc_type : __MLIBC_THREAD_MUTEX_DEFAULT;
@@ -259,21 +236,18 @@ int thread_mutex_init(struct __mlibc_mutex *__restrict mutex,
 	auto protocol = attr ? attr->__mlibc_protocol : __MLIBC_THREAD_PRIO_NONE;
 	auto pshared = attr ? attr->__mlibc_pshared : __MLIBC_THREAD_PROCESS_PRIVATE;
 
-	mutex->__mlibc_state = 0;
-	mutex->__mlibc_recursion = 0;
-	mutex->__mlibc_flags = 0;
-	mutex->__mlibc_prioceiling = 0; // TODO: We don't implement this.
+	new (mutex) __mlibc_mutex();
 
 	if(type == __MLIBC_THREAD_MUTEX_RECURSIVE) {
-		mutex->__mlibc_flags |= mutexRecursive;
+		mutex->__mlibc_flags |= __mlibc_mutex::mutexRecursive;
 	}else if(type == __MLIBC_THREAD_MUTEX_ERRORCHECK) {
-		mutex->__mlibc_flags |= mutexErrorCheck;
+		mutex->__mlibc_flags |= __mlibc_mutex::mutexErrorCheck;
 	}else{
 		__ensure(type == __MLIBC_THREAD_MUTEX_NORMAL);
 	}
 
 	if (pshared == __MLIBC_THREAD_PROCESS_SHARED)
-		mutex->__mlibc_flags |= mutexShared;
+		mutex->__mlibc_flags |= __mlibc_mutex::mutexShared;
 
 	// TODO: Other values aren't supported yet.
 	__ensure(robust == __MLIBC_THREAD_MUTEX_STALLED);
@@ -296,15 +270,15 @@ int thread_mutex_timedlock(struct __mlibc_mutex *mutex, const struct timespec *_
 		if(!expected) {
 			// Try to take the mutex here.
 			if(__atomic_compare_exchange_n(&mutex->__mlibc_state,
-					&expected, this_tid | mutex_waiters_bit, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
+					&expected, this_tid | __mlibc_mutex::mutex_waiters_bit, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
 				__ensure(!mutex->__mlibc_recursion);
 				mutex->__mlibc_recursion = 1;
 				return 0;
 			}
 		}else{
 			// If this (recursive) mutex is already owned by us, increment the recursion level.
-			if((expected & mutex_owner_mask) == this_tid) {
-				if(!(mutex->__mlibc_flags & mutexRecursive)) {
+			if((expected & __mlibc_mutex::mutex_owner_mask) == this_tid) {
+				if(!(mutex->__mlibc_flags & __mlibc_mutex::mutexRecursive)) {
 					return EDEADLK;
 				} else {
 					++mutex->__mlibc_recursion;
@@ -313,7 +287,7 @@ int thread_mutex_timedlock(struct __mlibc_mutex *mutex, const struct timespec *_
 			}
 
 			// Wait on the futex if the waiters flag is set.
-			if(expected & mutex_waiters_bit) {
+			if(expected & __mlibc_mutex::mutex_waiters_bit) {
 				int e;
 				if (abstime) {
 					// Adjust for the fact that sys_futex_wait accepts a *timeout*, but
@@ -343,7 +317,7 @@ int thread_mutex_timedlock(struct __mlibc_mutex *mutex, const struct timespec *_
 				expected = 0;
 			}else{
 				// Otherwise we have to set the waiters flag first.
-				unsigned int desired = expected | mutex_waiters_bit;
+				unsigned int desired = expected | __mlibc_mutex::mutex_waiters_bit;
 				if(__atomic_compare_exchange_n((int *)&mutex->__mlibc_state,
 						reinterpret_cast<int*>(&expected), desired, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED))
 					expected = desired;
@@ -369,8 +343,8 @@ int thread_mutex_trylock(struct __mlibc_mutex *mutex) {
 		}
 	} else {
 		// If this (recursive) mutex is already owned by us, increment the recursion level.
-		if((expected & mutex_owner_mask) == this_tid) {
-			if(!(mutex->__mlibc_flags & mutexRecursive)) {
+		if((expected & __mlibc_mutex::mutex_owner_mask) == this_tid) {
+			if(!(mutex->__mlibc_flags & __mlibc_mutex::mutexRecursive)) {
 				return EBUSY;
 			}
 			++mutex->__mlibc_recursion;
@@ -396,34 +370,21 @@ int thread_mutex_unlock(struct __mlibc_mutex *mutex) {
 	// may have been destroyed by another thread.
 
 	unsigned int this_tid = mlibc::this_tid();
-	if ((flags & mutexErrorCheck) && (state & mutex_owner_mask) != this_tid)
+	if ((flags & __mlibc_mutex::mutexErrorCheck) && (state & __mlibc_mutex::mutex_owner_mask) != this_tid)
 		return EPERM;
 
-	if ((flags & mutexErrorCheck) && !(state & mutex_owner_mask))
+	if ((flags & __mlibc_mutex::mutexErrorCheck) && !(state & __mlibc_mutex::mutex_owner_mask))
 		return EINVAL;
 
-	__ensure((state & mutex_owner_mask) == this_tid);
+	__ensure((state & __mlibc_mutex::mutex_owner_mask) == this_tid);
 
-	if(state & mutex_waiters_bit) {
+	if(state & __mlibc_mutex::mutex_waiters_bit) {
 		// Wake the futex if there were waiters. Since the mutex might not exist at this location
 		// anymore, we must conservatively ignore EACCES and EINVAL which may occur as a result.
 		int e = mlibc::sysdep<FutexWake>((int *)&mutex->__mlibc_state, true);
 		__ensure(e >= 0 || e == EACCES || e == EINVAL);
 	}
 
-	return 0;
-}
-
-int thread_mutexattr_init(struct __mlibc_mutexattr *attr) {
-	attr->__mlibc_type = __MLIBC_THREAD_MUTEX_DEFAULT;
-	attr->__mlibc_robust = __MLIBC_THREAD_MUTEX_STALLED;
-	attr->__mlibc_pshared = __MLIBC_THREAD_PROCESS_PRIVATE;
-	attr->__mlibc_protocol = __MLIBC_THREAD_PRIO_NONE;
-	return 0;
-}
-
-int thread_mutexattr_destroy(struct __mlibc_mutexattr *attr) {
-	memset(attr, 0, sizeof(*attr));
 	return 0;
 }
 
@@ -442,13 +403,12 @@ int thread_mutexattr_settype(struct __mlibc_mutexattr *attr, int type) {
 }
 
 int thread_cond_init(struct __mlibc_cond *__restrict cond, const struct __mlibc_condattr *__restrict attr) {
-	auto clock = attr ? attr->__mlibc_clock : CLOCK_REALTIME;
-	auto pshared = attr ? attr->__mlibc_pshared : __MLIBC_THREAD_PROCESS_PRIVATE;
+	new (cond) __mlibc_cond();
 
-	cond->__mlibc_clock = clock;
-	cond->__mlibc_flags = pshared;
-
-	__atomic_store_n(&cond->__mlibc_seq, 1, __ATOMIC_RELAXED);
+	if (attr) {
+		cond->__mlibc_clock = attr->__mlibc_clock;
+		cond->__mlibc_flags = attr->__mlibc_pshared;
+	}
 
 	return 0;
 }
@@ -458,7 +418,7 @@ int thread_cond_destroy(struct __mlibc_cond *) {
 }
 
 int thread_cond_signal(struct __mlibc_cond *cond) {
-	__atomic_fetch_add(&cond->__mlibc_seq, 1, __ATOMIC_RELEASE);
+	cond->__mlibc_seq.fetch_add(1, std::memory_order_release);
 	if(int e = mlibc::sysdep<FutexWake>((int *)&cond->__mlibc_seq, false); e)
 		__ensure(!"sys_futex_wake() failed");
 
@@ -466,7 +426,7 @@ int thread_cond_signal(struct __mlibc_cond *cond) {
 }
 
 int thread_cond_broadcast(struct __mlibc_cond *cond) {
-	__atomic_fetch_add(&cond->__mlibc_seq, 1, __ATOMIC_RELEASE);
+	cond->__mlibc_seq.fetch_add(1, std::memory_order_release);
 	if(int e = mlibc::sysdep<FutexWake>((int *)&cond->__mlibc_seq, true); e)
 		__ensure(!"sys_futex_wake() failed");
 
@@ -481,7 +441,7 @@ int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *_
 	if (abstime && (abstime->tv_nsec < 0 || abstime->tv_nsec >= nanos_per_second))
 		return EINVAL;
 
-	auto seq = __atomic_load_n(&cond->__mlibc_seq, __ATOMIC_ACQUIRE);
+	auto seq = cond->__mlibc_seq.load(std::memory_order_acquire);
 
 	// TODO: handle locking errors and cancellation properly.
 	while (true) {
@@ -521,11 +481,11 @@ int thread_cond_timedwait(struct __mlibc_cond *__restrict cond, __mlibc_mutex *_
 		//      to match other libcs.
 		//   4. e == ETIMEDOUT: this should only happen if abstime is set.
 		if (e == 0) {
-			auto cur_seq = __atomic_load_n(&cond->__mlibc_seq, __ATOMIC_ACQUIRE);
+			auto cur_seq = cond->__mlibc_seq.load(std::memory_order_acquire);
 			if (cur_seq > seq)
 				return 0;
 		} else if (e == EAGAIN) {
-			__ensure(__atomic_load_n(&cond->__mlibc_seq, __ATOMIC_ACQUIRE) > seq);
+			__ensure(cond->__mlibc_seq.load(std::memory_order_acquire) > seq);
 			return 0;
 		} else if (e == EINTR) {
 			mlibc::thread_testcancel();

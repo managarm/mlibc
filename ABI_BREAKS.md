@@ -28,6 +28,7 @@ This document lists the ABI breaks that were made in each mlibc major version.
 - [#1492](https://github.com/managarm/mlibc/pull/1492): changes the values of `LC_*` macros and `nl_item` values to match glibc, so that glibc locale files can be consumed.
 - [#1492](https://github.com/managarm/mlibc/pull/1492): fix `struct epoll_event` alignment on x86
 - [#1678](https://github.com/managarm/mlibc/pull/1678): `struct sched_param` received new reserved members to allow for future expansion.
+- [#1678](https://github.com/managarm/mlibc/pull/1678): various pthread structs changed size and alignment; the public types are opaque now.
 
 ## Version 6
 
