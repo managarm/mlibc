@@ -2,6 +2,7 @@
 #include <immintrin.h>
 #include <stdint.h>
 
+#include <internal-config.h>
 #include <mlibc/string.hpp>
 #include <mlibc/features.hpp>
 
@@ -167,4 +168,6 @@ strcmp_signature __mlibc_resolve_strcmp() {
 	return __mlibc_strcmp_default;
 }
 
+#if MLIBC_IFUNCS_SUPPORTED
 extern "C" int strcmp(const char *a, const char *b) __attribute__((ifunc("__mlibc_resolve_strcmp")));
+#endif

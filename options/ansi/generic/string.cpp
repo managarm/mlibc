@@ -5,6 +5,7 @@
 #include <wchar.h>
 
 #include <bits/ensure.h>
+#include <internal-config.h>
 #include <mlibc/collation.hpp>
 #include <mlibc/strings.hpp>
 #include <mlibc/strtofp.hpp>
@@ -86,7 +87,7 @@ int __mlibc_strcmp_default(const char *a, const char *b) {
 	}
 }
 
-#if !defined(MLIBC_ARCH_HAS_STRCMP)
+#if !defined(MLIBC_ARCH_HAS_STRCMP) || !MLIBC_IFUNCS_SUPPORTED
 int strcmp(const char *a, const char *b) __attribute__((alias("__mlibc_strcmp_default")));
 #endif
 

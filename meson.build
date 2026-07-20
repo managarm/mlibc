@@ -52,6 +52,7 @@ if cross_libc_ld_prefix == '' or build_machine.cpu_family() == host_machine.cpu_
 endif
 
 libgcc_dependency = get_option('libgcc_dependency')
+ifuncs_supported = false
 internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
@@ -79,9 +80,7 @@ if not headers_only
 	}
 	'''
 
-	if not cpp_compiler.compiles(ifunc_check, name: 'C++ compiler supports ifunc')
-		error('Compiler does not support __attribute__((ifunc)).')
-	endif
+	ifuncs_supported = cpp_compiler.compiles(ifunc_check, name: 'C++ compiler supports ifunc')
 
 	target_triple = run_command(c_compiler.cmd_array(), '-dumpmachine', check: true).stdout()
 	use_freestnd_hdrs = get_option('use_freestnd_hdrs').disable_auto_if(
@@ -236,6 +235,7 @@ internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', false)
 internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', false)
 internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', false)
 internal_conf.set10('MLIBC_DEBUG_ALLOCATOR', get_option('debug_allocator'))
+internal_conf.set10('MLIBC_IFUNCS_SUPPORTED', ifuncs_supported)
 
 #----------------------------------------------------------------------------------------
 # Configuration based on sysdeps.
