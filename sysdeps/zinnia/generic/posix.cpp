@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <zinnia/syscall.hpp>
 
@@ -45,6 +46,13 @@ int Sysdeps<ClockGetres>::operator()(int clock, time_t *secs, long *nanos) {
 	*secs = ts.tv_sec;
 	*nanos = ts.tv_nsec;
 	return 0;
+}
+
+int Sysdeps<ClockSet>::operator()(int clock, time_t secs, long nanos) {
+	struct timespec ts;
+	ts.tv_sec = secs;
+	ts.tv_nsec = nanos;
+	return zinnia_syscall(SYSCALL_CLOCK_SET, clock, (size_t)&ts).error;
 }
 
 int Sysdeps<Flock>::operator()(int fd, int options) {
@@ -163,6 +171,14 @@ int Sysdeps<Rmdir>::operator()(const char *path) {
 
 int Sysdeps<Ftruncate>::operator()(int fd, size_t size) {
 	return zinnia_syscall(SYSCALL_FTRUNCATE, fd, size).error;
+}
+
+int Sysdeps<Truncate>::operator()(const char *path, off_t length) {
+	return zinnia_syscall(SYSCALL_TRUNCATE, (size_t)path, length).error;
+}
+
+int Sysdeps<Fadvise>::operator()(int fd, off_t offset, off_t length, int advice) {
+	return zinnia_syscall(SYSCALL_FADVISE, fd, offset, length, advice).error;
 }
 
 int Sysdeps<Fallocate>::operator()(int fd, off_t offset, size_t size) {
@@ -349,6 +365,10 @@ int Sysdeps<Fork>::operator()(pid_t *child) {
 
 int Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *const envp[]) {
 	return zinnia_syscall(SYSCALL_EXECVE, (size_t)path, (size_t)argv, (size_t)envp).error;
+}
+
+int Sysdeps<Fexecve>::operator()(int fd, char *const argv[], char *const envp[]) {
+	return zinnia_syscall(SYSCALL_FEXECVE, fd, (size_t)argv, (size_t)envp).error;
 }
 
 int Sysdeps<Pselect>::operator()(
@@ -588,6 +608,27 @@ int Sysdeps<Tcsetattr>::operator()(int fd, int optional_action, const struct ter
 	return sysdep<Ioctl>(fd, req, (void *)attr, &ret);
 }
 
+int Sysdeps<Tcsendbreak>::operator()(int fd, int) {
+	// Like Linux, we ignore the duration and always send a break of the default length.
+	int ret;
+	return sysdep<Ioctl>(fd, TCSBRK, (void *)0, &ret);
+}
+
+int Sysdeps<Tcdrain>::operator()(int fd) {
+	int ret;
+	return sysdep<Ioctl>(fd, TCSBRK, (void *)1, &ret);
+}
+
+int Sysdeps<Tcflow>::operator()(int fd, int action) {
+	int ret;
+	return sysdep<Ioctl>(fd, TCXONC, (void *)(uintptr_t)action, &ret);
+}
+
+int Sysdeps<Tcflush>::operator()(int fd, int queue) {
+	int ret;
+	return sysdep<Ioctl>(fd, TCFLSH, (void *)(uintptr_t)queue, &ret);
+}
+
 int Sysdeps<Tcgetwinsize>::operator()(int fd, struct winsize *winsz) {
 	int result;
 	return sysdep<Ioctl>(fd, TIOCGWINSZ, winsz, &result);
@@ -621,7 +662,7 @@ int Sysdeps<Poll>::operator()(struct pollfd *fds, nfds_t count, int timeout, int
 	ts.tv_sec = timeout / 1000;
 	ts.tv_nsec = (timeout % 1000) * 1000000;
 
-	return sysdep<Ppoll>(fds, count, timeout != -1 ? &ts : NULL, NULL, num_events);
+	return sysdep<Ppoll>(fds, count, timeout != -1 ? &ts : nullptr, nullptr, num_events);
 }
 
 int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *result) {
@@ -667,6 +708,27 @@ int Sysdeps<Sigtimedwait>::operator()(
 
 int Sysdeps<Kill>::operator()(pid_t pid, int signal) {
 	return zinnia_syscall(SYSCALL_KILL, pid, signal).error;
+}
+
+int Sysdeps<Sigqueue>::operator()(pid_t pid, int sig, const union sigval val) {
+	return zinnia_syscall(SYSCALL_SIGQUEUE, pid, sig, (size_t)val.sival_ptr).error;
+}
+
+int Sysdeps<Nice>::operator()(int inc, int *new_nice) {
+	auto r = zinnia_syscall(SYSCALL_GETPRIORITY, PRIO_PROCESS, 0);
+	if (r.error)
+		return r.error;
+
+	int target = (int)r.value + inc;
+	if (int e = zinnia_syscall(SYSCALL_SETPRIORITY, PRIO_PROCESS, 0, target).error)
+		return e;
+
+	auto updated = zinnia_syscall(SYSCALL_GETPRIORITY, PRIO_PROCESS, 0);
+	if (updated.error)
+		return updated.error;
+
+	*new_nice = (int)updated.value;
+	return 0;
 }
 
 int Sysdeps<GetHostname>::operator()(char *buffer, size_t bufsize) {
@@ -764,6 +826,18 @@ int Sysdeps<TimerSettime>::operator()(
 	return zinnia_syscall(SYSCALL_TIMER_SET, (size_t)t, flags, (size_t)val, (size_t)old).error;
 }
 
+int Sysdeps<TimerGettime>::operator()(timer_t t, struct itimerspec *val) {
+	return zinnia_syscall(SYSCALL_TIMER_GET, (size_t)t, (size_t)val).error;
+}
+
+int Sysdeps<TimerGetoverrun>::operator()(timer_t t, int *out) {
+	auto r = zinnia_syscall(SYSCALL_TIMER_GETOVERRUN, (size_t)t);
+	if (r.error)
+		return r.error;
+	*out = (int)r.value;
+	return 0;
+}
+
 int Sysdeps<TimerDelete>::operator()(timer_t t) {
 	return zinnia_syscall(SYSCALL_TIMER_DELETE, (size_t)t).error;
 }
@@ -799,7 +873,7 @@ int Sysdeps<SetRegid>::operator()(gid_t rgid, gid_t egid) {
 
 int Sysdeps<Unlockpt>::operator()(int fd) {
 	int unlock = 0;
-	if (int e = sysdep<Ioctl>(fd, TIOCSPTLCK, &unlock, NULL); e)
+	if (int e = sysdep<Ioctl>(fd, TIOCSPTLCK, &unlock, nullptr); e)
 		return e;
 	return 0;
 }
@@ -820,7 +894,7 @@ int Sysdeps<Waitid>::operator()(idtype_t idtype, id_t id, siginfo_t *info, int o
 
 int Sysdeps<Ptsname>::operator()(int fd, char *buffer, size_t length) {
 	int index;
-	if (int e = sysdep<Ioctl>(fd, TIOCGPTN, &index, NULL); e)
+	if (int e = sysdep<Ioctl>(fd, TIOCGPTN, &index, nullptr); e)
 		return e;
 	if ((size_t)snprintf(buffer, length, "/dev/pts/%d", index) >= length) {
 		return ERANGE;
@@ -838,7 +912,7 @@ int Sysdeps<IfIndextoname>::operator()(unsigned int index, char *name) {
 	struct ifreq ifr;
 	ifr.ifr_ifindex = index;
 
-	int ret = sysdep<Ioctl>(fd, SIOCGIFNAME, &ifr, NULL);
+	int ret = sysdep<Ioctl>(fd, SIOCGIFNAME, &ifr, nullptr);
 	close(fd);
 
 	if (ret) {
@@ -862,7 +936,7 @@ int Sysdeps<IfNametoindex>::operator()(const char *name, unsigned int *ret) {
 	struct ifreq ifr;
 	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 
-	r = sysdep<Ioctl>(fd, SIOCGIFINDEX, &ifr, NULL);
+	r = sysdep<Ioctl>(fd, SIOCGIFINDEX, &ifr, nullptr);
 	close(fd);
 
 	if (r) {
@@ -913,7 +987,7 @@ int Sysdeps<Sysconf>::operator()(int num, long *ret) {
 }
 
 int Sysdeps<Pause>::operator()() {
-	return sysdep<Ppoll>(NULL, 0, NULL, NULL, NULL);
+	return sysdep<Ppoll>(nullptr, 0, nullptr, nullptr, nullptr);
 }
 
 } // namespace mlibc

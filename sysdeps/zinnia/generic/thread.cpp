@@ -3,7 +3,10 @@
 #include <mlibc/arch-defs.hpp>
 #include <mlibc/tcb.hpp>
 #include <sys/mman.h>
+#include <sys/resource.h>
 #include <zinnia/syscall.hpp>
+
+extern "C" uintptr_t *__dlapi_entrystack();
 
 extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, Tcb *tcb) {
 	if (mlibc::sysdep<TcbSet>(tcb))
@@ -75,6 +78,24 @@ int Sysdeps<PrepareStack>::operator()(
 
 	*stack = (void *)stack_it;
 
+	return 0;
+}
+
+int Sysdeps<GetCurrentStackInfo>::operator()(void **stack_base, size_t *stack_size) {
+	auto top = reinterpret_cast<uintptr_t>(__dlapi_entrystack());
+	if (!top)
+		return ESRCH;
+
+	size_t size = DEFAULT_STACK;
+	struct rlimit rl;
+	if (!sysdep<GetRlimit>(RLIMIT_STACK, &rl) && rl.rlim_cur && rl.rlim_cur != RLIM_INFINITY)
+		size = rl.rlim_cur;
+
+	// Round up to the top of the mapping and report its lowest byte.
+	top = (top + page_size - 1) & ~(page_size - 1);
+
+	*stack_base = reinterpret_cast<void *>(top - size);
+	*stack_size = size;
 	return 0;
 }
 
