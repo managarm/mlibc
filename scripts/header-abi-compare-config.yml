@@ -74,6 +74,7 @@ ignored_structs:
   - sigevent
   - utmp
   - utmpx
+  - sched_param
 
 ignored_typedefs:
   # opaque structs where users can't rely on any particular layout

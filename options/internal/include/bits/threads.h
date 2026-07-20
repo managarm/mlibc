@@ -36,11 +36,18 @@
 
 #define __MLIBC_THREAD_CANCELED ((void*) -1)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* KEEP IN SYNC WITH `struct sched_param`! */
 struct __mlibc_sched_param {
 	int __sched_priority;
-	/* TODO: add missing [SS|TSP] fields */
-};
+
+	/* [SS|TSP] members missing */
+
+	__mlibc_uint32 __reserved[15];
+} __attribute__((aligned(__INTPTR_WIDTH__ / 8)));
 
 struct __mlibc_thread_data;
 
@@ -114,5 +121,9 @@ struct __mlibc_once {
 struct __mlibc_spinlock {
 	unsigned int __lock;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _MLIBC_INTERNAL_THREADS_H */
