@@ -3,6 +3,7 @@
 
 #include <abi-bits/sigval.h>
 #include <abi-bits/pid_t.h>
+#include <bits/pthread_attr_t.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,7 +14,7 @@ struct sigevent {
 	int sigev_notify;
 	int sigev_signo;
 	void (*sigev_notify_function)(union sigval);
-	struct __mlibc_threadattr *sigev_notify_attributes;
+	pthread_attr_t *sigev_notify_attributes;
 	pid_t sigev_notify_thread_id;
 };
 

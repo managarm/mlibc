@@ -29,7 +29,6 @@
 #define __MLIBC_THREAD_PRIO_INHERIT 1
 #define __MLIBC_THREAD_PRIO_PROTECT 2
 
-#define __MLIBC_THREAD_MUTEX_INITIALIZER {0, 0, 0, 0}
 #define __MLIBC_THREAD_ONCE_INITIALIZER {0}
 
 #define __MLIBC_THREAD_DESTRUCTOR_ITERATIONS 8
@@ -40,87 +39,7 @@
 extern "C" {
 #endif
 
-/* KEEP IN SYNC WITH `struct sched_param`! */
-struct __mlibc_sched_param {
-	int __sched_priority;
-
-	/* [SS|TSP] members missing */
-
-	__mlibc_uint32 __reserved[15];
-} __attribute__((aligned(__INTPTR_WIDTH__ / 8)));
-
 struct __mlibc_thread_data;
-
-struct __mlibc_threadattr {
-	size_t __mlibc_guardsize;
-	size_t __mlibc_stacksize;
-	void *__mlibc_stackaddr;
-	int __mlibc_detachstate;
-	int __mlibc_scope;
-	int __mlibc_inheritsched;
-	struct __mlibc_sched_param __mlibc_schedparam;
-	int __mlibc_schedpolicy;
-	cpu_set_t *__mlibc_cpuset;
-	size_t __mlibc_cpusetsize;
-	sigset_t __mlibc_sigmask;
-	int __mlibc_sigmaskset;
-};
-
-struct __mlibc_mutex {
-	unsigned int __mlibc_state;
-	unsigned int __mlibc_recursion;
-	unsigned int __mlibc_flags;
-	int __mlibc_prioceiling;
-};
-
-struct __mlibc_mutexattr {
-	int __mlibc_type;
-	int __mlibc_robust;
-	int __mlibc_protocol;
-	int __mlibc_pshared;
-	int __mlibc_prioceiling;
-};
-
-struct __mlibc_cond {
-	unsigned int __mlibc_seq;
-	unsigned int __mlibc_flags;
-	clockid_t __mlibc_clock;
-};
-
-struct __mlibc_condattr {
-	int __mlibc_pshared;
-	clockid_t __mlibc_clock;
-};
-
-struct __mlibc_barrier {
-	unsigned int __mlibc_waiting;
-	unsigned int __mlibc_inside;
-	unsigned int __mlibc_count;
-	unsigned int __mlibc_seq;
-	unsigned int __mlibc_flags;
-};
-
-struct  __mlibc_barrierattr_struct {
-	int __mlibc_pshared;
-};
-
-struct __mlibc_fair_rwlock {
-	unsigned int __mlibc_m; /* Mutex. */
-	unsigned int __mlibc_rc; /* Reader count (not reference count). */
-	unsigned int __mlibc_flags;
-};
-
-struct __mlibc_rwlockattr {
-	int __mlibc_pshared;
-};
-
-struct __mlibc_once {
-	unsigned int __mlibc_done;
-};
-
-struct __mlibc_spinlock {
-	unsigned int __lock;
-};
 
 #ifdef __cplusplus
 }
