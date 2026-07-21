@@ -217,6 +217,10 @@ int Sysdeps<Seek>::operator()(int fd, off_t offset, int whence, off_t *new_offse
 	return 0;
 }
 
+uid_t Sysdeps<GetEuid>::operator()() {
+	return static_cast<uid_t>(roxy_syscall0(ROXY_SYS_GETEUID));
+}
+
 pid_t Sysdeps<GetPid>::operator()() {
 	return static_cast<pid_t>(roxy_syscall0(ROXY_SYS_GETPID));
 }
