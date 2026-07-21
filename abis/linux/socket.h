@@ -140,7 +140,7 @@ struct cmsghdr {
 #define PF_QIPCRTR      42
 #define PF_SMC          43
 #define PF_XDP          44
-#define PF_MAX          45
+#define PF_MAX          46
 
 #define AF_LOCAL        PF_LOCAL
 #define AF_FILE         AF_LOCAL
