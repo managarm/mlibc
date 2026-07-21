@@ -23,6 +23,7 @@ struct RoxySysdepTags :
 	VmProtect,
 	Stat,
 	Seek,
+	GetUid,
 	GetEuid,
 	GetPid,
 	GetPpid,
