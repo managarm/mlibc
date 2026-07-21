@@ -34,6 +34,7 @@ This document lists the ABI breaks that were made in each mlibc major version.
 - [#1658](https://github.com/managarm/mlibc/pull/1658): fix incorrect definition of `struct fd_set`
 - [#1818](https://github.com/managarm/mlibc/pull/1818): enforce `HOSTNAME_MAX >= _POSIX_HOST_NAME_MAX`
 - [#1834](https://github.com/managarm/mlibc/pull/1834): fix incorrect calculations in `CMSG_FIRSTHDR` and `CMSG_NXTHDR`
+- [#1832](https://github.com/managarm/mlibc/pull/1832): change the values of `MINSIGSTKSZ` and `SIGSTKSZ` on aarch64 and loongarch64
 
 ## Version 6
 
