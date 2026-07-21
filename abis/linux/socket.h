@@ -332,7 +332,7 @@ struct cmsghdr {
 #define SOL_XDP         283
 #endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
-#define SOMAXCONN       128
+#define SOMAXCONN       4096
 
 #define MSG_OOB       0x0001
 #define MSG_PEEK      0x0002
