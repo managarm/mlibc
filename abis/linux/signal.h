@@ -265,7 +265,7 @@ struct sigaction {
 
 #define __NGREG 23
 #if defined(_DEFAULT_SOURCE)
-#define NGREG __NREG
+#define NGREG __NGREG
 #endif
 
 struct _fpxreg {
