@@ -221,6 +221,10 @@ gid_t Sysdeps<GetGid>::operator()() {
 	return static_cast<gid_t>(roxy_syscall0(ROXY_SYS_GETGID));
 }
 
+gid_t Sysdeps<GetEgid>::operator()() {
+	return static_cast<gid_t>(roxy_syscall0(ROXY_SYS_GETEGID));
+}
+
 uid_t Sysdeps<GetUid>::operator()() {
 	return static_cast<uid_t>(roxy_syscall0(ROXY_SYS_GETUID));
 }

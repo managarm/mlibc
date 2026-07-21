@@ -24,6 +24,7 @@ struct RoxySysdepTags :
 	Stat,
 	Seek,
 	GetGid,
+	GetEgid,
 	GetUid,
 	GetEuid,
 	GetPid,
