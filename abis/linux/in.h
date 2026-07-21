@@ -154,7 +154,7 @@ struct group_source_req {
 #define IPPROTO_UDPLITE  136
 #define IPPROTO_MPLS     137
 #define IPPROTO_RAW      255
-#define IPPROTO_MAX      256
+#define IPPROTO_MAX      263
 
 #define IP_TOS 1
 #define IP_TTL 2
