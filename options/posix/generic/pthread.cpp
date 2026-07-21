@@ -8,6 +8,9 @@
 #include <unistd.h>
 #include <errno.h>
 #include <inttypes.h>
+#if __MLIBC_BSD_OPTION
+#include <pthread_np.h>
+#endif
 
 #include <bits/ensure.h>
 #include <frg/allocation.hpp>
@@ -186,6 +189,43 @@ int pthread_attr_setschedpolicy(pthread_attr_t *__restrict attr, int policy) {
 	return 0;
 }
 
+namespace {
+	int get_own_stackinfo(void **stack_addr, size_t *stack_size) {
+		if constexpr (mlibc::IsImplemented<GetCurrentStackInfo>) {
+			return mlibc::sysdep_or_enosys<GetCurrentStackInfo>(stack_addr, stack_size);
+		}
+
+#if __MLIBC_LINUX_OPTION
+		// Fallback to /proc/self/maps
+		auto fp = fopen("/proc/self/maps", "r");
+		if (!fp) {
+			mlibc::infoLogger() << "mlibc pthreads: /proc/self/maps does not exist! Returning ENOSYS." << frg::endlog;
+			return ENOSYS;
+		}
+
+		char line[256];
+		auto sp = mlibc::get_sp();
+		while (fgets(line, 256, fp)) {
+			uintptr_t from, to;
+			if(sscanf(line, "%" SCNxPTR "-%" SCNxPTR, &from, &to) != 2)
+				continue;
+			if (sp < to && sp > from) {
+				// We need to return the lowest byte of the stack.
+				*stack_addr = reinterpret_cast<void*>(from);
+				*stack_size = to - from;
+				fclose(fp);
+				return 0;
+			}
+		}
+
+		fclose(fp);
+		return ESRCH;
+#else
+		return ENOSYS;
+#endif // __MLIBC_LINUX_OPTION
+	}
+} // namespace
+
 #if __MLIBC_LINUX_OPTION
 int pthread_attr_getaffinity_np(const pthread_attr_t *__restrict attr,
 		size_t cpusetsize, cpu_set_t *__restrict cpusetp) {
@@ -266,39 +306,6 @@ int pthread_attr_setsigmask_np(pthread_attr_t *__restrict attr,
 	return 0;
 }
 
-namespace {
-	int get_own_stackinfo(void **stack_addr, size_t *stack_size) {
-		if constexpr (mlibc::IsImplemented<GetCurrentStackInfo>) {
-			return mlibc::sysdep_or_enosys<GetCurrentStackInfo>(stack_addr, stack_size);
-		}
-
-		// Fallback to /proc/self/maps
-		auto fp = fopen("/proc/self/maps", "r");
-		if (!fp) {
-    		mlibc::infoLogger() << "mlibc pthreads: /proc/self/maps does not exist! Returning ENOSYS." << frg::endlog;
-			return ENOSYS;
-		}
-
-		char line[256];
-		auto sp = mlibc::get_sp();
-		while (fgets(line, 256, fp)) {
-			uintptr_t from, to;
-			if(sscanf(line, "%" SCNxPTR "-%" SCNxPTR, &from, &to) != 2)
-				continue;
-			if (sp < to && sp > from) {
-				// We need to return the lowest byte of the stack.
-				*stack_addr = reinterpret_cast<void*>(from);
-				*stack_size = to - from;
-				fclose(fp);
-				return 0;
-			}
-		}
-
-		fclose(fp);
-		return ESRCH;
-	}
-} // namespace
-
 int pthread_getattr_np(pthread_t thread, pthread_attr_t *attr) {
 	auto tcb = reinterpret_cast<Tcb*>(thread);
 	*attr = pthread_attr_t{};
@@ -326,6 +333,25 @@ int pthread_setaffinity_np(pthread_t thread, size_t cpusetsize, const cpu_set_t 
 	return mlibc::sysdep_or_enosys<SetThreadaffinity>(reinterpret_cast<Tcb*>(thread)->tid, cpusetsize, mask);
 }
 #endif // __MLIBC_LINUX_OPTION
+
+#if __MLIBC_BSD_OPTION
+int pthread_attr_get_np(pthread_t thread, pthread_attr_t *attr) {
+	auto tcb = reinterpret_cast<Tcb*>(thread);
+
+	if (!tcb->stackAddr || !tcb->stackSize) {
+		if (int err = get_own_stackinfo(&attr->__mlibc_stackaddr, &attr->__mlibc_stacksize); err) {
+			return err;
+		}
+	} else {
+		attr->__mlibc_stacksize = tcb->stackSize;
+		attr->__mlibc_stackaddr = tcb->stackAddr;
+	}
+
+	attr->__mlibc_guardsize = tcb->guardSize;
+	attr->__mlibc_detachstate = tcb->isJoinable ? PTHREAD_CREATE_JOINABLE : PTHREAD_CREATE_DETACHED;
+	return 0;
+}
+#endif // __MLIBC_BSD_OPTION
 
 extern "C" Tcb *__rtld_allocateTcb();
 

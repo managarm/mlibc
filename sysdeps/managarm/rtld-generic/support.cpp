@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <string.h>
@@ -385,6 +386,130 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t mode, int *fd)
 		return -1;
 	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 	*fd = resp.fd();
+	return 0;
+}
+
+int Sysdeps<Stat>::operator()(
+    fsfd_target fsfdt, int fd, const char *path, int flags, struct stat *result
+) {
+	cacheFileTable();
+	HelAction actions[4];
+
+	managarm::posix::FstatAtRequest<MemoryAllocator> req(getAllocator());
+	if (fsfdt == fsfd_target::path) {
+		req.set_fd(AT_FDCWD);
+		req.set_path(frg::string<MemoryAllocator>(getAllocator(), path));
+	} else if (fsfdt == fsfd_target::fd) {
+		flags |= AT_EMPTY_PATH;
+		req.set_fd(fd);
+	} else {
+		__ensure(fsfdt == fsfd_target::fd_path);
+		req.set_fd(fd);
+		req.set_path(frg::string<MemoryAllocator>(getAllocator(), path));
+	}
+
+	if (!(flags & AT_EMPTY_PATH) && (!path || !strlen(path)))
+		return ENOENT;
+
+	req.set_flags(flags);
+
+	if (!globalQueue.valid())
+		globalQueue.initialize();
+
+	frg::string<MemoryAllocator> head(getAllocator());
+	frg::string<MemoryAllocator> tail(getAllocator());
+	head.resize(req.size_of_head());
+	tail.resize(req.size_of_tail());
+	bragi::limited_writer headWriter{head.data(), head.size()};
+	bragi::limited_writer tailWriter{tail.data(), tail.size()};
+	auto headOk = req.encode_head(headWriter);
+	auto tailOk = req.encode_tail(tailWriter);
+	__ensure(headOk);
+	__ensure(tailOk);
+
+	actions[0].type = kHelActionOffer;
+	actions[0].flags = kHelItemAncillary;
+	actions[1].type = kHelActionSendFromBuffer;
+	actions[1].flags = kHelItemChain;
+	actions[1].buffer = head.data();
+	actions[1].length = head.size();
+	actions[2].type = kHelActionSendFromBuffer;
+	actions[2].flags = kHelItemChain;
+	actions[2].buffer = tail.data();
+	actions[2].length = tail.size();
+	actions[3].type = kHelActionRecvInline;
+	actions[3].flags = 0;
+
+	HelSqExchangeMsgs sqHeader;
+	sqHeader.lane = posixLane;
+	sqHeader.count = 4;
+	sqHeader.flags = 0;
+	const void *segments[] = {&sqHeader, actions};
+	size_t segmentSizes[] = {sizeof(sqHeader), 4 * sizeof(HelAction)};
+	globalQueue->pushSq(kHelSubmitExchangeMsgs, 0, segments, segmentSizes, 2);
+
+	auto element = globalQueue->dequeueSingle();
+	auto offer = parseHandle(element);
+	auto send_head = parseSimple(element);
+	auto send_tail = parseSimple(element);
+	auto recv_resp = parseInline(element);
+	HEL_CHECK(offer->error);
+	HEL_CHECK(send_head->error);
+	HEL_CHECK(send_tail->error);
+	HEL_CHECK(recv_resp->error);
+
+	managarm::posix::FstatAtResponse<MemoryAllocator> resp(getAllocator());
+	resp.ParseFromArray(recv_resp->data, recv_resp->length);
+
+	if (resp.error() == managarm::posix::Errors::FILE_NOT_FOUND)
+		return ENOENT;
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return EIO;
+
+	memset(result, 0, sizeof(struct stat));
+
+	switch (resp.file_type()) {
+		case managarm::posix::FileType::FT_REGULAR:
+			result->st_mode = S_IFREG;
+			break;
+		case managarm::posix::FileType::FT_DIRECTORY:
+			result->st_mode = S_IFDIR;
+			break;
+		case managarm::posix::FileType::FT_SYMLINK:
+			result->st_mode = S_IFLNK;
+			break;
+		case managarm::posix::FileType::FT_CHAR_DEVICE:
+			result->st_mode = S_IFCHR;
+			break;
+		case managarm::posix::FileType::FT_BLOCK_DEVICE:
+			result->st_mode = S_IFBLK;
+			break;
+		case managarm::posix::FileType::FT_SOCKET:
+			result->st_mode = S_IFSOCK;
+			break;
+		case managarm::posix::FileType::FT_FIFO:
+			result->st_mode = S_IFIFO;
+			break;
+		default:
+			__ensure(!resp.file_type());
+	}
+
+	result->st_dev = resp.stat_dev();
+	result->st_ino = resp.fs_inode();
+	result->st_mode |= resp.mode();
+	result->st_nlink = resp.num_links();
+	result->st_uid = resp.uid();
+	result->st_gid = resp.gid();
+	result->st_rdev = resp.ref_devnum();
+	result->st_size = resp.file_size();
+	result->st_atim.tv_sec = resp.atime_secs();
+	result->st_atim.tv_nsec = resp.atime_nanos();
+	result->st_mtim.tv_sec = resp.mtime_secs();
+	result->st_mtim.tv_nsec = resp.mtime_nanos();
+	result->st_ctim.tv_sec = resp.ctime_secs();
+	result->st_ctim.tv_nsec = resp.ctime_nanos();
+	result->st_blksize = 4096;
+	result->st_blocks = resp.file_size() / 512 + 1;
 	return 0;
 }
 
