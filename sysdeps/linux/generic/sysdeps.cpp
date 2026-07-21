@@ -916,6 +916,8 @@ int Sysdeps<GetSchedparam>::operator()(void *tcb, int *policy, struct sched_para
 
 	if(!t->tid) {
 		return ESRCH;
+	} else if (!param) {
+		return EINVAL;
 	}
 
 	struct ksched_param p = {};
@@ -937,6 +939,8 @@ int Sysdeps<SetSchedparam>::operator()(void *tcb, int policy, const struct sched
 
 	if(!t->tid) {
 		return ESRCH;
+	} else if (!param) {
+		return EINVAL;
 	}
 
 	struct ksched_param p = {
