@@ -16,6 +16,12 @@ libc_sources += files(
 
 if not no_headers
 	install_headers(
+		'include/sys/sysmacros.h',
+		subdir: 'sys',
+		follow_symlinks: true,
+	)
+
+	install_headers(
 		'include/abi-bits/access.h',
 		'include/abi-bits/aio.h',
 		'include/abi-bits/auxv.h',
