@@ -160,8 +160,20 @@ typedef void (*__sighandler) (int);
 #define SIGTIMER  33
 
 #if __MLIBC_XOPEN
+
+#if defined(__x86_64__) || defined(__i386__) || defined(__riscv) || defined(__m68k__)
 #define MINSIGSTKSZ 2048
 #define SIGSTKSZ 8192
+#elif defined(__aarch64__)
+#define MINSIGSTKSZ 5120
+#define SIGSTKSZ 16384
+#elif defined(__loongarch64)
+#define MINSIGSTKSZ 4096
+#define SIGSTKSZ 16384
+#else
+#error unhandled architecture
+#endif
+
 #define SS_ONSTACK 1
 #define SS_DISABLE 2
 #endif
