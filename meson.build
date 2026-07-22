@@ -553,6 +553,7 @@ rtld_sources += [
 
 rtld_dso_sources += ['options/rtld' / host_machine.cpu_family() / 'entry.S']
 
+static_cpp_args = []
 ld_cpp_args = []
 libc_cpp_args = []
 
@@ -622,29 +623,28 @@ if not headers_only
 
 	# Our libraries have different behaviour when built as static and shared libraries.
 	# Hence we need to rebuild the object files with a different define for each mode.
-	if library_type in ['static', 'both']
-		static_cpp_args = [
-			'-DMLIBC_STATIC_BUILD',
-		]
-		ld_static_lib = static_library(ld_library_name, rtld_sources,
-			name_prefix: '',
-			cpp_args: mlibc_c_args + ld_cpp_args + static_cpp_args,
-			link_args: mlibc_link_args,
-			include_directories: rtld_include_dirs,
-			dependencies: rtld_deps + rtlib_deps,
-			install: false
-		)
-		libc_static = static_library('c', libc_all_sources,
-			c_args: mlibc_c_args,
-			cpp_args: static_cpp_args + ['-fno-stack-protector', libc_cpp_args],
-			link_args: mlibc_link_args,
-			include_directories: libc_include_dirs,
-			dependencies: libc_deps + rtlib_deps,
-			link_with: [ld_static_lib],
-			link_whole: [libc_sublibs, ld_static_lib],
-			install: true
-		)
-	endif
+	static_cpp_args += [
+		'-DMLIBC_STATIC_BUILD',
+	]
+	ld_static_lib = static_library(ld_library_name, rtld_sources,
+		name_prefix: '',
+		cpp_args: mlibc_c_args + ld_cpp_args + static_cpp_args,
+		link_args: mlibc_link_args,
+		include_directories: rtld_include_dirs,
+		dependencies: rtld_deps + rtlib_deps,
+		install: false
+	)
+	libc_static = static_library('c', libc_all_sources,
+		c_args: mlibc_c_args,
+		cpp_args: static_cpp_args + ['-fno-stack-protector', libc_cpp_args],
+		link_args: mlibc_link_args,
+		include_directories: libc_include_dirs,
+		dependencies: libc_deps + rtlib_deps,
+		link_with: [ld_static_lib],
+		link_whole: [libc_sublibs, ld_static_lib],
+		install: true
+	)
+
 	if library_type in ['shared', 'both']
 		ld_shared_lib = shared_library(ld_library_name, rtld_sources + rtld_dso_sources,
 			name_prefix: '',
