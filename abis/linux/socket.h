@@ -140,7 +140,7 @@ struct cmsghdr {
 #define PF_QIPCRTR      42
 #define PF_SMC          43
 #define PF_XDP          44
-#define PF_MAX          45
+#define PF_MAX          46
 
 #define AF_LOCAL        PF_LOCAL
 #define AF_FILE         AF_LOCAL
@@ -332,7 +332,7 @@ struct cmsghdr {
 #define SOL_XDP         283
 #endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
-#define SOMAXCONN       128
+#define SOMAXCONN       4096
 
 #define MSG_OOB       0x0001
 #define MSG_PEEK      0x0002
