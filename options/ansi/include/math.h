@@ -378,6 +378,9 @@ extern int signgam;
 double j0(double __x);
 double j1(double __x);
 double jn(int __n, double __x);
+double y0(double __x);
+double y1(double __x);
+double yn(int __n, double __x);
 #endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
 #if defined(_GNU_SOURCE)
