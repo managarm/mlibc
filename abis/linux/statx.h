@@ -3,7 +3,7 @@
 
 #include <mlibc-config.h>
 
-#if !__MLIBC_LINUX_OPTION
+#if !__MLIBC_LINUX_OPTION && !defined(__linux__)
 #  error "statx() is inherently Linux specific. Enable the Linux option or do not use this header."
 #endif /* !__MLIBC_LINUX_OPTION */
 

@@ -14,7 +14,7 @@ int main() {
 	time_t expected_result = 0;
 	// This should be epoch.
 	result = timegm(&soon);
-	printf("epoch: %ld\n", result);
+	printf("epoch: %lld\n", (long long) result);
 	assert(result == expected_result);
 
 	soon.tm_sec = 12;
@@ -26,7 +26,7 @@ int main() {
 	expected_result = 1652803692;
 	result = timegm(&soon);
 	// On my host, this returned 1652803692, verify this.
-	printf("epoch: %ld\n", result);
+	printf("epoch: %lld\n", (long long) result);
 	assert(result == expected_result);
 
 	soon.tm_sec = 45;
@@ -38,7 +38,7 @@ int main() {
 	expected_result = -9181035;
 	result = timegm(&soon);
 	// On my host, this returned -9181035, verify this.
-	printf("epoch: %ld\n", result);
+	printf("epoch: %lld\n", (long long) result);
 	assert(result == expected_result);
 
 	return 0;

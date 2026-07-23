@@ -10,11 +10,14 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
+#include <time.h>
 
+#include <abi-bits/statx.h>
 #include <abi-bits/fcntl.h>
 #include <abi-bits/ioctls.h>
 #include <abi-bits/socklen_t.h>
 #include <bits/ensure.h>
+#include <bits/sysmacros.h>
 #include <frg/scope_exit.hpp>
 #include <limits.h>
 #include <mlibc/all-sysdeps.hpp>
@@ -32,10 +35,6 @@
 #include <string.h>
 #include <sys/user.h>
 #endif // __MLIBC_POSIX_OPTION
-
-#if __MLIBC_LINUX_OPTION
-#include <abi-bits/statx.h>
-#endif // __MLIBC_LINUX_OPTION
 
 #include <sys/syscall.h>
 #include "cxx-syscall.hpp"
@@ -91,14 +90,32 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int f
 	else
 		__ensure(fsfdt == fsfd_target::fd_path);
 
-#if defined(SYS_newfstatat)
-	auto ret = do_cp_syscall(SYS_newfstatat, fd, path, statbuf, flags);
+#if __INTPTR_WIDTH__ == 32
+	struct statx tmp;
+	auto ret = do_cp_syscall(SYS_statx, fd, path, flags | AT_NO_AUTOMOUNT, STATX_BASIC_STATS, &tmp);
+#elif defined(SYS_newfstatat)
+	auto ret = do_cp_syscall(SYS_newfstatat, fd, path, statbuf, flags | AT_NO_AUTOMOUNT);
 #else
-	auto ret = do_cp_syscall(SYS_fstatat64, fd, path, statbuf, flags);
+	auto ret = do_cp_syscall(SYS_fstatat64, fd, path, statbuf, flags | AT_NO_AUTOMOUNT);
 #endif
-	if (int e = sc_error(ret); e) {
+	if (int e = sc_error(ret); e)
 		return e;
-	}
+
+#if __INTPTR_WIDTH__ == 32
+	statbuf->st_dev = __mlibc_dev_makedev(tmp.stx_dev_major, tmp.stx_dev_minor);
+	statbuf->st_rdev = __mlibc_dev_makedev(tmp.stx_rdev_major, tmp.stx_rdev_minor);
+	statbuf->st_ino = tmp.stx_ino;
+	statbuf->st_mode = tmp.stx_mode;
+	statbuf->st_nlink = tmp.stx_nlink;
+	statbuf->st_uid = tmp.stx_uid;
+	statbuf->st_gid = tmp.stx_gid;
+	statbuf->st_atim = {tmp.stx_atime.tv_sec, static_cast<suseconds_t>(tmp.stx_atime.tv_nsec)};
+	statbuf->st_mtim = {tmp.stx_mtime.tv_sec, static_cast<suseconds_t>(tmp.stx_mtime.tv_nsec)};
+	statbuf->st_ctim = {tmp.stx_ctime.tv_sec, static_cast<suseconds_t>(tmp.stx_ctime.tv_nsec)};
+	statbuf->st_size = tmp.stx_size;
+	statbuf->st_blocks = tmp.stx_blocks;
+	statbuf->st_blksize = tmp.stx_blksize;
+#endif
 
 	return 0;
 }
@@ -267,14 +284,22 @@ int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
 #define FUTEX_WAKE 1
 
 int Sysdeps<FutexWait>::operator()(int *pointer, int expected, const struct timespec *time) {
+#if __INTPTR_WIDTH__ == 64
 	auto ret = do_cp_syscall(SYS_futex, pointer, FUTEX_WAIT, expected, time);
+#else
+	auto ret = do_cp_syscall(SYS_futex_time64, pointer, FUTEX_WAIT, expected, time);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int Sysdeps<FutexWake>::operator()(int *pointer, bool all) {
+#if __INTPTR_WIDTH__ == 64
 	auto ret = do_syscall(SYS_futex, pointer, FUTEX_WAKE, all ? INT_MAX : 1);
+#else
+	auto ret = do_syscall(SYS_futex_time64, pointer, FUTEX_WAKE, all ? INT_MAX : 1);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -354,7 +379,11 @@ int Sysdeps<Close>::operator()(int fd) {
 #endif
 
 static auto vdso_clock_gettime = reinterpret_cast<int (*)(clockid_t, struct timespec *)>(
+#if __INTPTR_WIDTH__ == 64
 	VDSO_SYMBOL("__vdso_clock_gettime")
+#else
+	VDSO_SYMBOL("__vdso_clock_gettime64")
+#endif
 );
 
 int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
@@ -364,7 +393,11 @@ int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
 		if (int e = vdso_clock_gettime(clock, &tp); e)
 			return e;
 	} else {
+#if __INTPTR_WIDTH__ == 64
 		auto ret = do_syscall(SYS_clock_gettime, clock, &tp);
+#else
+		auto ret = do_syscall(SYS_clock_gettime64, clock, &tp);
+#endif
 		if (int e = sc_error(ret); e)
 			return e;
 	}
@@ -378,7 +411,11 @@ int Sysdeps<ClockSet>::operator()(int clock, time_t secs, long nanos) {
 	struct timespec tp{};
 	tp.tv_sec = secs;
 	tp.tv_nsec = nanos;
+#if __INTPTR_WIDTH__ == 64
 	auto ret = do_syscall(SYS_clock_settime, clock, &tp);
+#else
+	auto ret = do_syscall(SYS_clock_settime64, clock, &tp);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -386,7 +423,11 @@ int Sysdeps<ClockSet>::operator()(int clock, time_t secs, long nanos) {
 
 int Sysdeps<ClockGetres>::operator()(int clock, time_t *secs, long *nanos) {
 	struct timespec tp = {};
+#if __INTPTR_WIDTH__ == 64
 	auto ret = do_syscall(SYS_clock_getres, clock, &tp);
+#else
+	auto ret = do_syscall(SYS_clock_getres_time64, clock, &tp);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	*secs = tp.tv_sec;
@@ -403,9 +444,13 @@ int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
 	};
 	struct timespec rem = {};
 
+#if __INTPTR_WIDTH__ == 64
 	auto ret = do_cp_syscall(SYS_nanosleep, &req, &rem);
-		if (int e = sc_error(ret); e)
-			return e;
+#else
+	auto ret = do_cp_syscall(SYS_clock_nanosleep_time64, CLOCK_MONOTONIC, 0, &req, &rem);
+#endif
+	if (int e = sc_error(ret); e)
+		return e;
 
 	*secs = rem.tv_sec;
 	*nanos = rem.tv_nsec;
@@ -508,11 +553,78 @@ int Sysdeps<Fork>::operator()(pid_t *child) {
 	return 0;
 }
 
+struct krusage {
+	struct koldtimeval {
+		long tv_sec;
+		long tv_usec;
+	};
+
+	krusage() = default;
+	krusage(struct rusage *r)
+	: ru_utime{static_cast<long>(r->ru_utime.tv_sec), r->ru_utime.tv_usec},
+	  ru_stime{static_cast<long>(r->ru_stime.tv_sec), r->ru_stime.tv_usec},
+	  ru_maxrss{r->ru_maxrss},
+	  ru_ixrss{r->ru_ixrss},
+	  ru_idrss{r->ru_idrss},
+	  ru_isrss{r->ru_isrss},
+	  ru_minflt{r->ru_minflt},
+	  ru_majflt{r->ru_majflt},
+	  ru_nswap{r->ru_nswap},
+	  ru_inblock{r->ru_inblock},
+	  ru_oublock{r->ru_oublock},
+	  ru_msgsnd{r->ru_msgsnd},
+	  ru_msgrcv{r->ru_msgrcv},
+	  ru_nsignals{r->ru_nsignals},
+	  ru_nvcsw{r->ru_nvcsw},
+	  ru_nivcsw{r->ru_nivcsw} {}
+
+	explicit operator rusage() const {
+		return rusage{
+			.ru_utime = {ru_utime.tv_sec, ru_utime.tv_usec},
+			.ru_stime = {ru_stime.tv_sec, ru_stime.tv_usec},
+			.ru_maxrss = ru_maxrss,
+			.ru_ixrss = ru_ixrss,
+			.ru_idrss = ru_idrss,
+			.ru_isrss = ru_isrss,
+			.ru_minflt = ru_minflt,
+			.ru_majflt = ru_majflt,
+			.ru_nswap = ru_nswap,
+			.ru_inblock = ru_inblock,
+			.ru_oublock = ru_oublock,
+			.ru_msgsnd = ru_msgsnd,
+			.ru_msgrcv = ru_msgrcv,
+			.ru_nsignals = ru_nsignals,
+			.ru_nvcsw = ru_nvcsw,
+			.ru_nivcsw = ru_nivcsw
+		};
+	}
+
+	koldtimeval ru_utime;
+	koldtimeval ru_stime;
+	long ru_maxrss;
+	long ru_ixrss;
+	long ru_idrss;
+	long ru_isrss;
+	long ru_minflt;
+	long ru_majflt;
+	long ru_nswap;
+	long ru_inblock;
+	long ru_oublock;
+	long ru_msgsnd;
+	long ru_msgrcv;
+	long ru_nsignals;
+	long ru_nvcsw;
+	long ru_nivcsw;
+};
+
 int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
-	auto ret = do_syscall(SYS_wait4, pid, status, flags, ru);
+	struct krusage kru;
+	auto ret = do_syscall(SYS_wait4, pid, status, flags, ru ? &kru : nullptr);
 	if (int e = sc_error(ret); e)
 			return e;
 	*ret_pid = sc_int_result<pid_t>(ret);
+	if (ru)
+		*ru = rusage(kru);
 	return 0;
 }
 
@@ -862,8 +974,13 @@ int Sysdeps<Pselect>::operator()(int nfds, fd_set *readfds, fd_set *writefds,
 	data.sigmask = sigmask;
 	data.ss_len = NSIG / 8;
 
+#if __INTPTR_WIDTH__ == 64
 	auto ret = do_cp_syscall(SYS_pselect6, nfds, readfds, writefds,
 			exceptfds, timeout ? &local_timeout : nullptr, &data);
+#else
+	auto ret = do_cp_syscall(SYS_pselect6_time64, nfds, readfds, writefds,
+			exceptfds, timeout ? &local_timeout : nullptr, &data);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	*num_events = sc_int_result<int>(ret);
@@ -871,9 +988,11 @@ int Sysdeps<Pselect>::operator()(int nfds, fd_set *readfds, fd_set *writefds,
 }
 
 int Sysdeps<GetRusage>::operator()(int scope, struct rusage *usage) {
-	auto ret = do_syscall(SYS_getrusage, scope, usage);
+	krusage kru;
+	auto ret = do_syscall(SYS_getrusage, scope, &kru);
 	if (int e = sc_error(ret); e)
 		return e;
+	*usage = rusage(kru);
 	return 0;
 }
 
@@ -1153,7 +1272,11 @@ int Sysdeps<Fchmodat>::operator()(int fd, const char *pathname, mode_t mode, int
 }
 
 int Sysdeps<Utimensat>::operator()(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
+#if __INTPTR_WIDTH__ == 64
 	auto ret = do_cp_syscall(SYS_utimensat, dirfd, pathname, times, flags);
+#else
+	auto ret = do_cp_syscall(SYS_utimensat_time64, dirfd, pathname, times, flags);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -1294,7 +1417,11 @@ int Sysdeps<Poll>::operator()(struct pollfd *fds, nfds_t count, int timeout, int
 	struct timespec tm;
 	tm.tv_sec = timeout / 1000;
 	tm.tv_nsec = timeout % 1000 * 1000000;
+#if __INTPTR_WIDTH__ == 64
 	auto ret = do_syscall(SYS_ppoll, fds, count, timeout >= 0 ? &tm : nullptr, 0, NSIG / 8);
+#else
+	auto ret = do_syscall(SYS_ppoll_time64, fds, count, timeout >= 0 ? &tm : nullptr, 0, NSIG / 8);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	*num_events = sc_int_result<int>(ret);
@@ -1302,7 +1429,11 @@ int Sysdeps<Poll>::operator()(struct pollfd *fds, nfds_t count, int timeout, int
 }
 
 int Sysdeps<Ppoll>::operator()(struct pollfd *fds, nfds_t count, const struct timespec *ts, const sigset_t *mask, int *num_events) {
+#if __INTPTR_WIDTH__ == 64
 	auto ret = do_syscall(SYS_ppoll, fds, count, ts, mask, NSIG / 8);
+#else
+	auto ret = do_syscall(SYS_ppoll_time64, fds, count, ts, mask, NSIG / 8);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	*num_events = sc_int_result<int>(ret);
@@ -1348,7 +1479,11 @@ int Sysdeps<Sockatmark>::operator()(int sockfd, int *out) {
 }
 
 int Sysdeps<Sigtimedwait>::operator()(const sigset_t *__restrict set, siginfo_t *__restrict info, const struct timespec *__restrict timeout, int *out_signal) {
+#if __INTPTR_WIDTH__ == 64
 	auto ret = do_syscall(SYS_rt_sigtimedwait, set, info, timeout, NSIG / 8);
+#else
+	auto ret = do_syscall(SYS_rt_sigtimedwait_time64, set, info, timeout, NSIG / 8);
+#endif
 
 	if (int e = sc_error(ret); e)
 		return e;
@@ -1581,9 +1716,46 @@ int Sysdeps<Msync>::operator()(void *addr, size_t length, int flags) {
 }
 
 int Sysdeps<SetItimer>::operator()(int which, const struct itimerval *new_value, struct itimerval *old_value) {
+#if __INTPTR_WIDTH__ == 32
+	if (new_value->it_interval.tv_sec > INT32_MAX || new_value->it_value.tv_sec > INT32_MAX)
+		return EOVERFLOW;
+
+	struct ktimeval32 {
+		int32_t tv_sec;
+		int32_t tv_usec;
+	};
+
+	struct itimerval32 {
+		ktimeval32 it_interval;
+		ktimeval32 it_value;
+	};
+
+	itimerval32 new_value32{
+		.it_interval = {static_cast<int32_t>(new_value->it_interval.tv_sec), static_cast<int32_t>(new_value->it_interval.tv_usec)},
+		.it_value = {static_cast<int32_t>(new_value->it_value.tv_sec), static_cast<int32_t>(new_value->it_value.tv_usec)},
+	};
+
+	itimerval32 old_value32;
+
+	auto ret = do_syscall(SYS_setitimer, which, &new_value32, &old_value32);
+	if (int e = sc_error(ret); e)
+		return e;
+
+	if (old_value) {
+		old_value->it_interval = {
+			static_cast<time_t>(old_value32.it_interval.tv_sec),
+			static_cast<suseconds_t>(old_value32.it_interval.tv_usec)
+		};
+		old_value->it_value = {
+			static_cast<time_t>(old_value32.it_value.tv_sec),
+			static_cast<suseconds_t>(old_value32.it_value.tv_usec)
+		};
+	}
+#else
 	auto ret = do_syscall(SYS_setitimer, which, new_value, old_value);
 	if (int e = sc_error(ret); e)
 		return e;
+#endif
 	return 0;
 }
 
@@ -1742,7 +1914,11 @@ int Sysdeps<TimerCreate>::operator()(clockid_t clk, struct sigevent *__restrict 
 }
 
 int Sysdeps<TimerSettime>::operator()(timer_t t, int flags, const struct itimerspec *__restrict val, struct itimerspec *__restrict old) {
+#if __INTPTR_WIDTH__ == 64
 	auto ret = do_syscall(SYS_timer_settime, t, flags, val, old);
+#else
+	auto ret = do_syscall(SYS_timer_settime64, t, flags, val, old);
+#endif
 	if (int e = sc_error(ret); e) {
 		return e;
 	}
@@ -1750,7 +1926,11 @@ int Sysdeps<TimerSettime>::operator()(timer_t t, int flags, const struct itimers
 }
 
 int Sysdeps<TimerGettime>::operator()(timer_t t, struct itimerspec *val) {
+#if __INTPTR_WIDTH__ == 64
 	auto ret = do_syscall(SYS_timer_gettime, t, val);
+#else
+	auto ret = do_syscall(SYS_timer_gettime64, t, val);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 
@@ -1793,6 +1973,8 @@ int Sysdeps<Uname>::operator()(struct utsname *buf) {
 int Sysdeps<Pause>::operator()() {
 #ifdef SYS_pause
 	auto ret = do_syscall(SYS_pause);
+#elif defined(SYS_ppoll_time64)
+	auto ret = do_syscall(SYS_ppoll_time64, 0, 0, 0, 0);
 #else
 	auto ret = do_syscall(SYS_ppoll, 0, 0, 0, 0);
 #endif
@@ -2136,6 +2318,59 @@ int Sysdeps<Splice>::operator()(int in_fd, off_t *in_off, int out_fd, off_t *out
 	return 0;
 }
 
+struct kshmid64_ds {
+	kshmid64_ds() = default;
+	kshmid64_ds(shmid_ds &m)
+	: shm_perm{m.shm_perm},
+	  shm_segsz{m.shm_segsz},
+	  shm_atime{static_cast<unsigned long>(m.shm_atime)},
+	  shm_atime_high{static_cast<unsigned long>(m.shm_atime >> 32)},
+	  shm_dtime{static_cast<unsigned long>(m.shm_dtime)},
+	  shm_dtime_high{static_cast<unsigned long>(m.shm_dtime >> 32)},
+	  shm_ctime{static_cast<unsigned long>(m.shm_ctime)},
+	  shm_ctime_high{static_cast<unsigned long>(m.shm_ctime >> 32)},
+	  shm_cpid{m.shm_cpid},
+	  shm_lpid{m.shm_lpid},
+	  shm_nattch{m.shm_nattch} {
+#if defined(__m68k__)
+		shm_perm.mode <<= 16;
+#endif
+	}
+
+	explicit operator shmid_ds() {
+		shmid_ds ret{
+			.shm_perm = shm_perm,
+			.shm_segsz = shm_segsz,
+			.shm_atime = static_cast<time_t>(shm_atime) | (static_cast<time_t>(shm_atime_high) << 32),
+			.shm_dtime = static_cast<time_t>(shm_dtime) | (static_cast<time_t>(shm_dtime_high) << 32),
+			.shm_ctime = static_cast<time_t>(shm_ctime) | (static_cast<time_t>(shm_ctime_high) << 32),
+			.shm_cpid = shm_cpid,
+			.shm_lpid = shm_lpid,
+			.shm_nattch = shm_nattch,
+			.__unused = {},
+		};
+
+#if defined(__m68k__)
+		ret.shm_perm.mode >>= 16;
+#endif
+
+		return ret;
+	}
+
+	struct ipc_perm shm_perm;
+	size_t shm_segsz;
+	unsigned long shm_atime;
+	unsigned long shm_atime_high;
+	unsigned long shm_dtime;
+	unsigned long shm_dtime_high;
+	unsigned long shm_ctime;
+	unsigned long shm_ctime_high;
+	pid_t shm_cpid;
+	pid_t shm_lpid;
+	unsigned long shm_nattch;
+	unsigned long __unused[2];
+};
+
 int Sysdeps<Shmat>::operator()(void **seg_start, int shmid, const void *shmaddr, int shmflg) {
 	auto ret = do_syscall(SYS_shmat, shmid, shmaddr, shmflg);
 	if (int e = sc_error(ret); e)
@@ -2145,10 +2380,51 @@ int Sysdeps<Shmat>::operator()(void **seg_start, int shmid, const void *shmaddr,
 }
 
 int Sysdeps<Shmctl>::operator()(int *idx, int shmid, int cmd, struct shmid_ds *buf) {
+#if __INTPTR_WIDTH__ == 32
+	kshmid64_ds kbuf;
+
+	switch (cmd & ~(IPC_64)) {
+		case IPC_STAT:
+		case IPC_RMID:
+			break;
+		case IPC_SET:
+			kbuf = kshmid64_ds{*buf};
+			break;
+		case IPC_INFO:
+		default:
+			mlibc::infoLogger() << "mlibc: unexpected shmctl op " << cmd << frg::endlog;
+			break;
+	}
+
+#if defined(__i386__)
+	auto ret = do_syscall(SYS_ipc, 24, shmid, cmd | IPC_64, 0, &kbuf);
+#elif defined(__m68k__)
+	auto ret = do_syscall(SYS_shmctl, shmid, cmd | IPC_64, &kbuf);
+#else
+#error unhandled architecture
+#endif
+#else
 	auto ret = do_syscall(SYS_shmctl, shmid, cmd, buf);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	*idx = sc_int_result<int>(ret);
+
+#if __INTPTR_WIDTH__ == 32
+	switch (cmd & ~(IPC_64)) {
+		case IPC_STAT:
+			*buf = shmid_ds(kbuf);
+			break;
+		case IPC_SET:
+		case IPC_RMID:
+			break;
+		case IPC_INFO:
+		default:
+			mlibc::infoLogger() << "mlibc: unexpected shmctl op " << cmd << frg::endlog;
+			break;
+	}
+#endif
+
 	return 0;
 }
 
@@ -2238,13 +2514,91 @@ int Sysdeps<Nice>::operator()(int increment, int *new_nice) {
 	return 0;
 }
 
+struct kmsqid64_ds {
+	kmsqid64_ds() = default;
+	kmsqid64_ds(msqid_ds &m)
+	: msg_perm{m.msg_perm},
+	  msg_stime{static_cast<unsigned long>(m.msg_stime)},
+	  msg_stime_high{static_cast<unsigned long>(m.msg_stime >> 32)},
+	  msg_rtime{static_cast<unsigned long>(m.msg_rtime)},
+	  msg_rtime_high{static_cast<unsigned long>(m.msg_rtime >> 32)},
+	  msg_ctime{static_cast<unsigned long>(m.msg_ctime)},
+	  msg_ctime_high{static_cast<unsigned long>(m.msg_ctime >> 32)},
+	  msg_cbytes{m.msg_cbytes},
+	  msg_qnum{m.msg_qnum},
+	  msg_qbytes{m.msg_qbytes},
+	  msg_lspid{m.msg_lspid},
+	  msg_lrpid{m.msg_lrpid} {}
+
+	explicit operator msqid_ds() {
+		return msqid_ds{
+			.msg_perm = msg_perm,
+			.msg_stime = static_cast<time_t>(msg_stime) | (static_cast<time_t>(msg_stime_high) << 32),
+			.msg_rtime = static_cast<time_t>(msg_rtime) | (static_cast<time_t>(msg_rtime_high) << 32),
+			.msg_ctime = static_cast<time_t>(msg_ctime) | (static_cast<time_t>(msg_ctime_high) << 32),
+			.msg_cbytes = msg_cbytes,
+			.msg_qnum = msg_qnum,
+			.msg_qbytes = msg_qbytes,
+			.msg_lspid = msg_lspid,
+			.msg_lrpid = msg_lrpid,
+			.__unused = {},
+		};
+	}
+
+	struct ipc_perm msg_perm;
+	unsigned long msg_stime;
+	unsigned long msg_stime_high;
+	unsigned long msg_rtime;
+	unsigned long msg_rtime_high;
+	unsigned long msg_ctime;
+	unsigned long msg_ctime_high;
+	unsigned long msg_cbytes;
+	msgqnum_t msg_qnum;
+	msglen_t msg_qbytes;
+	pid_t msg_lspid;
+	pid_t msg_lrpid;
+	unsigned long __unused[2] = {};
+};
+
 int Sysdeps<Msgctl>::operator()(int q, int cmd, struct msqid_ds *buf) {
 #if __INTPTR_WIDTH__ == 32
-	cmd |= IPC_64;
-#endif
+	kmsqid64_ds kbuf;
+
+	switch (cmd & ~(IPC_64)) {
+		case IPC_STAT:
+		case IPC_RMID:
+			break;
+		case IPC_SET:
+			kbuf = kmsqid64_ds{*buf};
+			break;
+		case IPC_INFO:
+		default:
+			mlibc::infoLogger() << "mlibc: unexpected msgctl op " << cmd << frg::endlog;
+			break;
+	}
+
+	auto ret = do_syscall(SYS_msgctl, q, cmd | IPC_64, &kbuf);
+#else
 	auto ret = do_syscall(SYS_msgctl, q, cmd, buf);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
+
+#if __INTPTR_WIDTH__ == 32
+	switch (cmd & ~(IPC_64)) {
+		case IPC_STAT:
+			*buf = msqid_ds(kbuf);
+			break;
+		case IPC_SET:
+		case IPC_RMID:
+			break;
+		case IPC_INFO:
+		default:
+			mlibc::infoLogger() << "mlibc: unexpected msgctl op " << cmd << frg::endlog;
+			break;
+	}
+#endif
+
 	return 0;
 }
 
@@ -2292,7 +2646,11 @@ int Sysdeps<MqUnlink>::operator()(const char *name) {
 }
 
 int Sysdeps<MqReceive>::operator()(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio) {
+#if defined(SYS_mq_timedreceive_time64)
+	auto ret = do_syscall(SYS_mq_timedreceive_time64, mqdes, msg_ptr, msg_len, msg_prio, nullptr);
+#else
 	auto ret = do_syscall(SYS_mq_timedreceive, mqdes, msg_ptr, msg_len, msg_prio, nullptr);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -2533,14 +2891,22 @@ int Sysdeps<Fremovexattr>::operator()(int fd, const char *name) {
 }
 
 int Sysdeps<Statfs>::operator()(const char *path, struct statfs *buf) {
+#if defined(SYS_statfs64)
+	auto ret = do_cp_syscall(SYS_statfs64, path, buf);
+#else
 	auto ret = do_cp_syscall(SYS_statfs, path, buf);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int Sysdeps<Fstatfs>::operator()(int fd, struct statfs *buf) {
+#if defined(SYS_fstatfs64)
+	auto ret = do_cp_syscall(SYS_fstatfs64, fd, buf);
+#else
 	auto ret = do_cp_syscall(SYS_fstatfs, fd, buf);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
@@ -2777,14 +3143,22 @@ int Sysdeps<TimerfdCreate>::operator()(int clockid, int flags, int *fd) {
 }
 
 int Sysdeps<TimerfdSettime>::operator()(int fd, int flags, const struct itimerspec *value, struct itimerspec *oldvalue) {
+#if __INTPTR_WIDTH__ == 64
 	auto ret = do_syscall(SYS_timerfd_settime, fd, flags, value, oldvalue);
+#else
+	auto ret = do_syscall(SYS_timerfd_settime64, fd, flags, value, oldvalue);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
 }
 
 int Sysdeps<TimerfdGettime>::operator()(int fd, struct itimerspec *its) {
+#if __INTPTR_WIDTH__ == 64
 	auto ret = do_syscall(SYS_timerfd_gettime, fd, its);
+#else
+	auto ret = do_syscall(SYS_timerfd_gettime64, fd, its);
+#endif
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;

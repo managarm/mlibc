@@ -44,7 +44,7 @@ namespace {
 		// poll timeout unit is msec
 		// default timeout is 5 seconds
 		// TODO resolv.conf can specify a timeout and we ignore it currently.
-		return frg::max(5000l - (current_time.tv_sec * 1000 + current_time.tv_nsec / 1000000), 0l);
+		return frg::max(5000l - (current_time.tv_sec * 1000 + current_time.tv_nsec / 1000000), time_t{0});
 	}
 } // namespace
 

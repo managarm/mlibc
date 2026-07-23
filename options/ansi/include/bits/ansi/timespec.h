@@ -8,10 +8,23 @@
 extern "C" {
 #endif
 
+#if __INTPTR_WIDTH__ == 32
+struct timespec {
+	time_t tv_sec;
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+	long tv_nsec;
+	int :32;
+#else
+	int :32;
+	long tv_nsec;
+#endif
+};
+#else
 struct timespec {
 	time_t tv_sec;
 	long tv_nsec;
 };
+#endif
 
 #ifdef __cplusplus
 }
