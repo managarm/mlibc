@@ -327,6 +327,7 @@ SYSDEP_FUNC(Fsconfig, int fd, unsigned int cmd, const char *key, const void *val
 SYSDEP_FUNC(MoveMount, int from_dirfd, const char *from_path, int to_dirfd, const char *to_path, unsigned int flags);
 SYSDEP_FUNC(OpenTree, int dirfd, const char *path, unsigned int flags, int *outfd);
 SYSDEP_FUNC(CopyFileRange, int fd_in, off_t *off_in, int fd_out, off_t *off_out, size_t count, unsigned int flags, ssize_t *bytes_copied);
+SYSDEP_FUNC(Renameat2, int olddirfd, const char *old_path, int newdirfd, const char *new_path, unsigned int flags);
 #endif // __MLIBC_LINUX_OPTION
 
 #if __MLIBC_LINUX_EPOLL_OPTION
