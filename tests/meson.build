@@ -60,6 +60,7 @@ all_test_cases = [
 	'ansi/threads-once',
 	'ansi/threads-tss',
 	'ansi/threads-thrd',
+	'ansi/string-search',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
