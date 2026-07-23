@@ -168,6 +168,7 @@ all_test_cases = [
 	'posix/getwchar',
 	'posix/strcoll_l',
 	'posix/strxfrm_l',
+	'posix/strtok',
 	'posix/wcscoll_l',
 	'posix/wcsxfrm_l',
 	'posix/aio',
