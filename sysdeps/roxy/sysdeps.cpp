@@ -252,6 +252,27 @@ int Sysdeps<Fork>::operator()(pid_t *child) {
 	return 0;
 }
 
+int Sysdeps<Waitpid>::operator()(
+	pid_t pid,
+	int *status,
+	int flags,
+	struct rusage *ru,
+	pid_t *ret_pid
+) {
+	auto result = roxy_syscall4(
+	    ROXY_SYS_WAITPID,
+	    pid,
+	    reinterpret_cast<long>(status),
+	    flags,
+	    reinterpret_cast<long>(ru)
+	);
+	if(result < 0)
+		return static_cast<int>(-result);
+
+	*ret_pid = static_cast<pid_t>(result);
+	return 0;
+}
+
 int Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *const envp[]) {
 	return syscall_error(roxy_syscall3(
 	    ROXY_SYS_EXECVE,

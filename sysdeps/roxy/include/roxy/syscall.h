@@ -35,6 +35,7 @@ typedef long roxy_syscall_word_t;
 #define ROXY_SYS_GETUID 22
 #define ROXY_SYS_GETGID 23
 #define ROXY_SYS_GETEGID 24
+#define ROXY_SYS_WAITPID 25
 
 typedef struct {
 	int64_t seconds;

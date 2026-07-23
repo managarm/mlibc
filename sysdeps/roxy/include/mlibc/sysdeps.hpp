@@ -30,6 +30,7 @@ struct RoxySysdepTags :
 	GetPid,
 	GetPpid,
 	Fork,
+	Waitpid,
 	Execve,
 	Exit
 {};
