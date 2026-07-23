@@ -122,25 +122,17 @@ void srand(unsigned int s) {
 }
 
 void *aligned_alloc(size_t alignment, size_t size) {
-	void *ptr;
-
 	// alignment must be a power of two, and size % alignment must be 0
 	if (alignment & (alignment - 1) || size & (alignment - 1)) {
 		errno = EINVAL;
 		return nullptr;
 	}
-
-	// posix_memalign requires that the alignment is a multiple of sizeof(void *)
-	if (alignment < sizeof(void *))
-		alignment = sizeof(void *);
-
-	int ret = posix_memalign(&ptr, alignment, size);
-	if (ret) {
-		errno = ret;
+	auto p = getAllocator().allocate(size, alignment);
+	if (!p) {
+		errno = ENOMEM;
 		return nullptr;
 	}
-	return ptr;
-
+	return p;
 }
 void *calloc(size_t count, size_t size) {
 	// we want to ensure that count*size > SIZE_MAX doesn't happen
@@ -570,12 +562,9 @@ int posix_memalign(void **out, size_t align, size_t size) {
 		return EINVAL;
 	if(align & (align - 1)) // Make sure that align is a power of two.
 		return EINVAL;
-	auto p = getAllocator().allocate(frg::max(align, size));
+	auto p = getAllocator().allocate(size, align);
 	if(!p)
 		return ENOMEM;
-	// Hope that the alignment was respected. This works on the current allocator.
-	// TODO: Make the allocator alignment-aware.
-	__ensure(!(reinterpret_cast<uintptr_t>(p) & (align - 1)));
 	*out = p;
 	return 0;
 }

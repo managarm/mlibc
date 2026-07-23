@@ -53,8 +53,8 @@ extern DebugInterface globalDebugInterface;
 extern uintptr_t __stack_chk_guard;
 extern mlibc::RtldConfig rtldConfig;
 
-extern frg::manual_box<frg::small_vector<frg::string_view, MLIBC_NUM_DEFAULT_LIBRARY_PATHS, MemoryAllocator>> libraryPaths;
-extern frg::manual_box<frg::vector<frg::string_view, MemoryAllocator>> preloads;
+extern frg::manual_box<frg::small_vector<frg::string_view, MLIBC_NUM_DEFAULT_LIBRARY_PATHS, LdsoAllocator>> libraryPaths;
+extern frg::manual_box<frg::vector<frg::string_view, LdsoAllocator>> preloads;
 
 #if MLIBC_STATIC_BUILD
 extern "C" size_t __init_array_start[];
@@ -195,17 +195,17 @@ uintptr_t alignUp(uintptr_t address, size_t align) {
 // --------------------------------------------------------
 
 ObjectRepository::ObjectRepository()
-: loadedObjects{getAllocator()},
-	dependencyQueue{getAllocator()},
-	_nameMap{frg::hash<frg::string_view>{}, getAllocator()},
-	_destructQueue{getAllocator()} {}
+: loadedObjects{getLdsoAllocator()},
+	dependencyQueue{getLdsoAllocator()},
+	_nameMap{frg::hash<frg::string_view>{}, getLdsoAllocator()},
+	_destructQueue{getLdsoAllocator()} {}
 
 SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
-		frg::string<MemoryAllocator> path, uintptr_t base_address,
+		frg::string<LdsoAllocator> path, uintptr_t base_address,
 		elf_dyn *dynamic, uint64_t rts) {
 	__ensure(!findLoadedObject(name));
 
-	auto object = frg::construct<SharedObject>(getAllocator(),
+	auto object = frg::construct<SharedObject>(getLdsoAllocator(),
 		name.data(), std::move(path), false, globalScope.get(), rts);
 	object->baseAddress = base_address;
 	object->dynamic = dynamic;
@@ -220,12 +220,12 @@ SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 }
 
 SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
-		frg::string<MemoryAllocator> path, void *phdr_pointer,
+		frg::string<LdsoAllocator> path, void *phdr_pointer,
 		size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 		uint64_t rts) {
 	__ensure(!findLoadedObject(name));
 
-	auto object = frg::construct<SharedObject>(getAllocator(),
+	auto object = frg::construct<SharedObject>(getLdsoAllocator(),
 		name.data(), std::move(path), true, globalScope.get(), rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 	_parseDynamic(object);
@@ -239,11 +239,11 @@ SharedObject *ObjectRepository::injectObjectFromPhdrs(frg::string_view name,
 }
 
 SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
-		frg::string<MemoryAllocator> path, void *phdr_pointer,
+		frg::string<LdsoAllocator> path, void *phdr_pointer,
 		size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 		uint64_t rts) {
 	__ensure(!findLoadedObject(name));
-	auto object = frg::construct<SharedObject>(getAllocator(),
+	auto object = frg::construct<SharedObject>(getLdsoAllocator(),
 		name.data(), std::move(path), true, globalScope.get(), rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
 
@@ -280,8 +280,8 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 	// TODO(arsen): this process can probably undergo heavy optimization, by
 	// preprocessing the rpath only once on parse
 	auto processRpath = [&] (frg::string_view path)
-	-> frg::expected<LinkerError, frg::tuple<frg::string<MemoryAllocator>, int>> {
-		frg::string<MemoryAllocator> sPath { getAllocator() };
+	-> frg::expected<LinkerError, frg::tuple<frg::string<LdsoAllocator>, int>> {
+		frg::string<LdsoAllocator> sPath { getLdsoAllocator() };
 		if (path.starts_with("$ORIGIN")) {
 			frg::string_view dirname = origin->path;
 			auto lastsl = dirname.find_last('/');
@@ -290,10 +290,10 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 			} else {
 				dirname = ".";
 			}
-			sPath = frg::string<MemoryAllocator>{ getAllocator(), dirname };
+			sPath = frg::string<LdsoAllocator>{ getLdsoAllocator(), dirname };
 			sPath += path.sub_string(7, path.size() - 7);
 		} else {
-			sPath = frg::string<MemoryAllocator>{ getAllocator(), path };
+			sPath = frg::string<LdsoAllocator>{ getLdsoAllocator(), path };
 		}
 		if (sPath[sPath.size() - 1] != '/') {
 			sPath += '/';
@@ -315,21 +315,21 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 		__ensure(localScope == nullptr);
 
 		// TODO: Free this when the scope is no longer needed.
-		localScope = frg::construct<Scope>(getAllocator());
+		localScope = frg::construct<Scope>(getLdsoAllocator());
 	}
 
 	// Avoid leaking the localScope on error returns
 	frg::scope_exit localScopeGuard{[&]{
 		if (createScope)
-			frg::destruct(getAllocator(), localScope);
+			frg::destruct(getLdsoAllocator(), localScope);
 	}};
 
 	__ensure(localScope != nullptr);
 
-	frg::expected<LinkerError, frg::unique_ptr<SharedObject, MemoryAllocator>> res = LinkerError::notFound;
+	frg::expected<LinkerError, frg::unique_ptr<SharedObject, LdsoAllocator>> res = LinkerError::notFound;
 
-	auto trySharedObjectSetup = [&] (frg::string<MemoryAllocator> path, int fd) -> frg::expected<LinkerError, frg::unique_ptr<SharedObject, MemoryAllocator>> {
-		auto object = frg::make_unique<SharedObject>(getAllocator(),
+	auto trySharedObjectSetup = [&] (frg::string<LdsoAllocator> path, int fd) -> frg::expected<LinkerError, frg::unique_ptr<SharedObject, LdsoAllocator>> {
+		auto object = frg::make_unique<SharedObject>(getLdsoAllocator(),
 			name.data(), std::move(path), false, localScope, rts);
 
 		auto result = _fetchFromFile(object.get(), fd);
@@ -378,7 +378,7 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 
 	for(size_t i = 0; i < libraryPaths->size() && !res; i++) {
 		auto ldPath = (*libraryPaths)[i];
-		auto path = frg::string<MemoryAllocator>{getAllocator(), ldPath} + '/' + name;
+		auto path = frg::string<LdsoAllocator>{getLdsoAllocator(), ldPath} + '/' + name;
 		if(rtldConfig.debug)
 			mlibc::infoLogger() << "rtld: Trying to load " << name << " from ldpath " << ldPath << "/" << frg::endlog;
 
@@ -425,19 +425,19 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath
 		__ensure(localScope == nullptr);
 
 		// TODO: Free this when the scope is no longer needed.
-		localScope = frg::construct<Scope>(getAllocator());
+		localScope = frg::construct<Scope>(getLdsoAllocator());
 	}
 
 	__ensure(localScope != nullptr);
 
-	auto object = frg::construct<SharedObject>(getAllocator(),
+	auto object = frg::construct<SharedObject>(getLdsoAllocator(),
 		name.data(), path.data(), false, localScope, rts);
 
-	frg::string<MemoryAllocator> no_prefix(getAllocator(), path);
+	frg::string<LdsoAllocator> no_prefix(getLdsoAllocator(), path);
 
 	int fd;
 	if(mlibc::sysdep<Open>((no_prefix + '\0').data(), O_RDONLY, 0, &fd)) {
-		frg::destruct(getAllocator(), object);
+		frg::destruct(getLdsoAllocator(), object);
 		return LinkerError::notFound;
 	}
 
@@ -447,7 +447,7 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath
 	if (tryFileId(fd, &dev, &ino)) {
 		if (auto existing = findObjectByFileId(dev, ino)) {
 			closeOrDie(fd);
-			frg::destruct(getAllocator(), object);
+			frg::destruct(getLdsoAllocator(), object);
 			return existing;
 		}
 	}
@@ -455,7 +455,7 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath
 	auto result = _fetchFromFile(object, fd);
 	closeOrDie(fd);
 	if(!result) {
-		frg::destruct(getAllocator(), object);
+		frg::destruct(getLdsoAllocator(), object);
 		return result.error();
 	}
 
@@ -568,9 +568,9 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			tls_offset = phdr->p_vaddr;
 			break;
 		case PT_INTERP:
-			object->interpreterPath = frg::string<MemoryAllocator>{
+			object->interpreterPath = frg::string<LdsoAllocator>{
 				(char*)(object->baseAddress + phdr->p_vaddr),
-					getAllocator()
+					getLdsoAllocator()
 			};
 		} break;
 		default:
@@ -609,16 +609,16 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 		return LinkerError::wrongElfType;
 
 	// read the elf program headers
-	auto phdr_buffer = (char *)getAllocator().allocate(ehdr.e_phnum * ehdr.e_phentsize);
+	auto phdr_buffer = (char *)getLdsoAllocator().allocate(ehdr.e_phnum * ehdr.e_phentsize);
 	if(!phdr_buffer)
 		return LinkerError::outOfMemory;
 
 	if(!trySeek(fd, ehdr.e_phoff)) {
-		getAllocator().deallocate(phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
+		getLdsoAllocator().deallocate(phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
 		return LinkerError::invalidProgramHeader;
 	}
 	if(!tryReadExactly(fd, phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize)) {
-		getAllocator().deallocate(phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
+		getLdsoAllocator().deallocate(phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
 		return LinkerError::invalidProgramHeader;
 	}
 
@@ -656,7 +656,7 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 				<< ", base " << (void *)object->baseAddress
 				<< ", requested " << (highest_address - object->baseAddress) << " bytes"
 				<< frg::endlog;
-		getAllocator().deallocate(phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
+		getLdsoAllocator().deallocate(phdr_buffer, ehdr.e_phnum * ehdr.e_phentsize);
 		return LinkerError::outOfMemory;
 	}
 
@@ -1183,21 +1183,21 @@ void ObjectRepository::_addLoadedObject(SharedObject *object) {
 // SharedObject
 // --------------------------------------------------------
 
-SharedObject::SharedObject(const char *name, frg::string<MemoryAllocator> path,
+SharedObject::SharedObject(const char *name, frg::string<LdsoAllocator> path,
 	bool is_main_object, Scope *local_scope, uint64_t object_rts)
-		: name(name, getAllocator()), path(std::move(path)),
-		interpreterPath(getAllocator()), soName(nullptr),
+		: name(name, getLdsoAllocator()), path(std::move(path)),
+		interpreterPath(getLdsoAllocator()), soName(nullptr),
 		isMainObject(is_main_object), objectRts(object_rts), inLinkMap(false),
 		baseAddress(0), localScope(local_scope), dynamic(nullptr),
 		globalOffsetTable(nullptr), entry(nullptr), tlsSegmentSize(0),
 		tlsAlignment(0), tlsImageSize(0), tlsImagePtr(nullptr),
 		tlsInitialized(false), hashTableOffset(0), symbolTableOffset(0),
 		stringTableOffset(0),
-		knownVersions({}, getAllocator()), definedVersions(getAllocator()),
+		knownVersions({}, getLdsoAllocator()), definedVersions(getLdsoAllocator()),
 		lazyRelocTableOffset(0), lazyTableSize(0),
 		lazyExplicitAddend(false), symbolicResolution(false),
 		eagerBinding(false), haveStaticTls(false),
-		dependencies(getAllocator()), tlsModel(TlsModel::null),
+		dependencies(getLdsoAllocator()), tlsModel(TlsModel::null),
 		tlsOffset(0), globalRts(0), wasLinked(false),
 		scheduledForInit(false), onInitStack(false),
 		wasInitialized(false) { }
@@ -1205,7 +1205,7 @@ SharedObject::SharedObject(const char *name, frg::string<MemoryAllocator> path,
 SharedObject::SharedObject(const char *name, const char *path,
 	bool is_main_object, Scope *localScope, uint64_t object_rts)
 		: SharedObject(name,
-			frg::string<MemoryAllocator> { path, getAllocator() },
+			frg::string<LdsoAllocator> { path, getLdsoAllocator() },
 			is_main_object, localScope, object_rts) {}
 
 frg::tuple<ObjectSymbol, SymbolVersion> SharedObject::getSymbolByIndex(size_t index) {
@@ -1393,9 +1393,9 @@ void doDestruct(SharedObject *object) {
 // --------------------------------------------------------
 
 RuntimeTlsMap::RuntimeTlsMap()
-: initialPtr{0}, initialLimit{0}, indices{getAllocator()}, tcbs{getAllocator()} { }
+: initialPtr{0}, initialLimit{0}, indices{getLdsoAllocator()}, tcbs{getLdsoAllocator()} { }
 
-void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, MemoryAllocator> &objects, bool checkInitialized) {
+void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, LdsoAllocator> &objects, bool checkInitialized) {
 	// Initialize TLS segments that follow the static model.
 	for(auto object : objects) {
 		if(object->tlsModel == TlsModel::initial) {
@@ -1431,7 +1431,7 @@ Tcb *allocateTcb() {
 	// slightly more than necessary and adjust alignment afterwards.
 	size_t alignOverhead = frg::max(alignof(Tcb), tlsMaxAlignment);
 	size_t allocSize = tlsInitialSize + sizeof(Tcb) + alignOverhead;
-	auto allocation = reinterpret_cast<uintptr_t>(getAllocator().allocate(allocSize));
+	auto allocation = reinterpret_cast<uintptr_t>(getLdsoAllocator().allocate(allocSize));
 	memset(reinterpret_cast<void *>(allocation), 0, allocSize);
 
 	uintptr_t tlsAddress, tcbAddress;
@@ -1474,9 +1474,9 @@ Tcb *allocateTcb() {
 	tcb_ptr->isJoinable = 1;
 	memset(&tcb_ptr->returnValue, 0, sizeof(tcb_ptr->returnValue));
 	tcb_ptr->cxaThreadExitHandlers = nullptr;
-	tcb_ptr->localKeys = frg::construct<frg::array<Tcb::LocalKey, PTHREAD_KEYS_MAX>>(getAllocator());
+	tcb_ptr->localKeys = frg::construct<frg::array<Tcb::LocalKey, PTHREAD_KEYS_MAX>>(getLdsoAllocator());
 	tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
-	tcb_ptr->dtvPointers = frg::construct_n<void *>(getAllocator(), runtimeTlsMap->indices.size());
+	tcb_ptr->dtvPointers = frg::construct_n<void *>(getLdsoAllocator(), runtimeTlsMap->indices.size());
 	memset(tcb_ptr->dtvPointers, 0, sizeof(void *) * runtimeTlsMap->indices.size());
 	for(size_t i = 0; i < runtimeTlsMap->indices.size(); ++i) {
 		auto object = runtimeTlsMap->indices[i];
@@ -1487,7 +1487,7 @@ Tcb *allocateTcb() {
 				tcb_ptr->dtvPointers[i] = reinterpret_cast<char *>(tcb_ptr) + object->tlsOffset;
 			}
 		} else if(object->tlsModel == TlsModel::dynamic) {
-			auto buffer = getAllocator().allocate(object->tlsSegmentSize);
+			auto buffer = getLdsoAllocator().allocate(object->tlsSegmentSize);
 			__ensure(!(reinterpret_cast<uintptr_t>(buffer) & (object->tlsAlignment - 1)));
 			memset(buffer, 0, object->tlsSegmentSize);
 			memcpy(buffer, object->tlsImagePtr, object->tlsImageSize);
@@ -1709,7 +1709,7 @@ frg::optional<ObjectSymbol> Scope::_resolveNext(frg::string_view string,
 }
 
 Scope::Scope(bool isGlobal)
-: isGlobal{isGlobal}, _objects(getAllocator()) { }
+: isGlobal{isGlobal}, _objects(getLdsoAllocator()) { }
 
 void Scope::appendObject(SharedObject *object) {
 	// Don't insert duplicates.
@@ -1771,15 +1771,15 @@ frg::optional<ObjectSymbol> Scope::resolveSymbol(frg::string_view string,
 
 Loader::Loader(Scope *scope, SharedObject *mainExecutable, bool is_initial_link, uint64_t rts)
 : _mainExecutable{mainExecutable}, _loadScope{scope}, _isInitialLink{is_initial_link},
-		_linkRts{rts}, _linkBfs{getAllocator()}, _initQueue{getAllocator()} { }
+		_linkRts{rts}, _linkBfs{getLdsoAllocator()}, _initQueue{getLdsoAllocator()} { }
 
 void Loader::_buildLinkBfs(SharedObject *root) {
 	__ensure(_linkBfs.size() == 0);
 
 	struct Token {};
 	using Set = frg::hash_map<SharedObject *, Token,
-			frg::hash<SharedObject *>, MemoryAllocator>;
-	Set set{frg::hash<SharedObject *>{}, getAllocator()};
+			frg::hash<SharedObject *>, LdsoAllocator>;
+	Set set{frg::hash<SharedObject *>{}, getLdsoAllocator()};
 	_linkBfs.push(root);
 
 	// Loop over indices (not iterators) here: We are adding elements in the loop!
@@ -2004,7 +2004,7 @@ void Loader::_publishTlsMaps(size_t previousSize) {
 		size_t size = __atomic_load_n(&tcb->dtvSize, __ATOMIC_ACQUIRE);
 		void **pointers = __atomic_load_n(&tcb->dtvPointers, __ATOMIC_ACQUIRE);
 		if (newSize > size) {
-			void **ndtv = frg::construct_n<void *>(getAllocator(), newSize);
+			void **ndtv = frg::construct_n<void *>(getLdsoAllocator(), newSize);
 			memcpy(ndtv, pointers, sizeof(void *) * size);
 			memset(ndtv + size, 0, sizeof(void *) * (newSize - size));
 			pointers = ndtv;
@@ -2018,7 +2018,7 @@ void Loader::_publishTlsMaps(size_t previousSize) {
 			if (object->tlsModel == TlsModel::dynamic) {
 				auto buffer = pointers[i];
 				if (!buffer) {
-					buffer = getAllocator().allocate(object->tlsSegmentSize);
+					buffer = getLdsoAllocator().allocate(object->tlsSegmentSize);
 					__ensure(!(reinterpret_cast<uintptr_t>(buffer) & (object->tlsAlignment - 1)));
 					pointers[i] = buffer;
 				}
@@ -2249,7 +2249,7 @@ void Loader::_processRelocations(Relocation &rel) {
 				((uint64_t *)rel.destination())[1] = value;
 			} else {
 				// TODO: We should free this when the DSO gets destroyed
-				auto data = frg::construct<TlsdescData>(getAllocator());
+				auto data = frg::construct<TlsdescData>(getLdsoAllocator());
 				data->tlsIndex = target->tlsIndex;
 				data->addend = symValue + rel.addend_norel();
 
@@ -2460,7 +2460,7 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				((uint64_t *)rel_addr)[1] = value;
 			} else {
 				// TODO: We should free this when the DSO gets destroyed
-				auto data = frg::construct<TlsdescData>(getAllocator());
+				auto data = frg::construct<TlsdescData>(getLdsoAllocator());
 				data->tlsIndex = target->tlsIndex;
 				data->addend = symValue + addend;
 

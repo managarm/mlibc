@@ -75,18 +75,6 @@ SignalGuard::~SignalGuard() {
 	}
 }
 
-void *ShardedSlabPolicy::map(size_t size) {
-	void *ptr;
-	auto e = mlibc::sysdep<AnonAllocate>(size, &ptr);
-	__ensure(!e);
-	return ptr;
-}
-
-void ShardedSlabPolicy::unmap(void *ptr, size_t size) {
-	auto e = mlibc::sysdep<AnonFree>(ptr, size);
-	__ensure(!e);
-}
-
 SysdepsPool &getSysdepsPool() {
 	// Use frg::eternal to prevent a call to __cxa_atexit().
 	// This is necessary because __cxa_atexit() calls this function.
