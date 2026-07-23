@@ -2737,6 +2737,19 @@ int Sysdeps<CopyFileRange>::operator()(int fd_in, off_t *off_in, int fd_out, off
 	*bytes_copied = sc_int_result<ssize_t>(ret);
 	return 0;
 }
+
+int Sysdeps<Renameat2>::operator()(
+    int old_dirfd, const char *old_path, int new_dirfd, const char *new_path, unsigned int flags
+) {
+#ifdef SYS_renameat2
+	auto ret = do_syscall(SYS_renameat2, old_dirfd, old_path, new_dirfd, new_path, flags);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+#else
+	return ENOSYS;
+#endif /* defined(SYS_renameat2) */
+}
 #endif // __MLIBC_LINUX_OPTION
 
 #if __MLIBC_LINUX_EPOLL_OPTION
