@@ -330,24 +330,12 @@ void *bsearch(const void *key, const void *base, size_t count, size_t size,
 	return nullptr;
 }
 
-static int qsort_callback(const void *a, const void *b, void *arg) {
-	auto compare = reinterpret_cast<int (*)(const void *, const void *)>(arg);
-
-	return compare(a, b);
-}
-
-void qsort(void *base, size_t count, size_t size,
-		int (*compare)(const void *, const void *)) {
-	return qsort_r(base, count, size, qsort_callback, (void *) compare);
-}
-
-void qsort_r(void *base, size_t count, size_t size,
-		int (*compare)(const void *, const void *, void *),
-		void *arg) {
+template<typename Compare>
+static void qsort_impl(void *base, size_t count, size_t size, Compare compare) {
 	auto compare_idx = [&] (size_t i, size_t j) -> int {
 		auto *pi = reinterpret_cast<uint8_t *>(base) + i * size;
 		auto *pj = reinterpret_cast<uint8_t *>(base) + j * size;
-		return compare(pi, pj, arg);
+		return compare(pi, pj);
 	};
 
 	auto swap_idx = [&] (size_t i, size_t j) {
@@ -387,6 +375,21 @@ void qsort_r(void *base, size_t count, size_t size,
 	};
 
 	quick_sort(0, count);
+}
+
+void qsort(void *base, size_t count, size_t size,
+		int (*compare)(const void *, const void *)) {
+	qsort_impl(base, count, size, [compare] (const void *a, const void *b) {
+		return compare(a, b);
+	});
+}
+
+void qsort_r(void *base, size_t count, size_t size,
+		int (*compare)(const void *, const void *, void *),
+		void *arg) {
+	qsort_impl(base, count, size, [compare, arg] (const void *a, const void *b) {
+		return compare(a, b, arg);
+	});
 }
 
 int abs(int num) {
