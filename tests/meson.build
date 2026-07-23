@@ -110,6 +110,7 @@ all_test_cases = [
 	'posix/wordexp',
 	'posix/rlimits',
 	'posix/accept4',
+	'posix/cmsg',
 	'posix/setpriority',
 	'posix/nice',
 	'posix/alarm',
