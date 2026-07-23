@@ -482,6 +482,7 @@ internal_sources = [
 	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc-extra/cxxabi.cpp',
+	'options/internal' / host_machine.cpu_family() / 'atomics.cpp',
 	'options/internal' / host_machine.cpu_family() / 'setjmp.S',
 	'options/internal' / host_machine.cpu_family() / 'fenv.S',
 ]
