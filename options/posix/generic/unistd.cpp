@@ -454,6 +454,8 @@ long gethostid(void) {
 	return errno = ENOSYS, -1;
 }
 
+static_assert(HOST_NAME_MAX >= _POSIX_HOST_NAME_MAX);
+
 int gethostname(char *buffer, size_t bufsize) {
 	if(auto e = mlibc::sysdep_or_enosys<GetHostname>(buffer, bufsize); e) {
 		errno = e;
