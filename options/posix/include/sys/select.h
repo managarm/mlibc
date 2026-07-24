@@ -14,9 +14,6 @@
 extern "C" {
 #endif
 
-typedef long int __fd_mask;
-#define __NFDBITS (8 * (int) sizeof (__fd_mask))
-
 #if defined(_DEFAULT_SOURCE)
 typedef __fd_mask fd_mask;
 #define NFDBITS __NFDBITS
