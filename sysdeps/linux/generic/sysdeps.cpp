@@ -214,7 +214,9 @@ void Sysdeps<ThreadExit>::operator()() {
 	__builtin_trap();
 }
 
-#if __MLIBC_POSIX_OPTION && !MLIBC_BUILDING_RTLD
+#if !MLIBC_BUILDING_RTLD
+#include <abi-bits/clone-flags.h>
+
 int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
 	unsigned long flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND
 		| CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS
@@ -261,7 +263,7 @@ int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
 
 	return 0;
 }
-#endif // __MLIBC_POSIX_OPTION
+#endif // !MLIBC_BUILDING_RTLD
 
 #define FUTEX_WAIT 0
 #define FUTEX_WAKE 1

@@ -292,10 +292,8 @@ struct LinuxSysdepTags :
 #endif
 	Exit,
 	ThreadExit,
-#if __MLIBC_POSIX_OPTION
 	PrepareStack,
 	Clone,
-#endif // __MLIBC_POSIX_OPTION
 	FutexWait,
 	FutexWake,
 	Open,
