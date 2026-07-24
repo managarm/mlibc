@@ -29,6 +29,7 @@ This document lists the ABI breaks that were made in each mlibc major version.
 - [#1492](https://github.com/managarm/mlibc/pull/1492): fix `struct epoll_event` alignment on x86
 - [#1544](https://github.com/managarm/mlibc/pull/1544): extend `jmp_buf` so that it matches the definition of `sigjmp_buf`
 - [#1621](https://github.com/managarm/mlibc/pull/1621): make `sigaction->sa_flags` an `int` as per POSIX
+- [#1647](https://github.com/managarm/mlibc/pull/1647): all `_PC_*` constants are aligned to Linux kernel ABI
 
 ## Version 6
 
