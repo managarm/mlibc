@@ -136,7 +136,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                sysdeps: [ironclad, keyronex, managarm, astral, zinnia, demo, obos]
+                sysdeps: [ironclad, keyronex, managarm, astral, zinnia, demo, obos, ethereal]
         name: Compile sysdeps
         runs-on: ubuntu-latest
         container: debian:trixie
