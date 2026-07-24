@@ -8,8 +8,36 @@ extern "C" {
 #include <abi-bits/clockid_t.h>
 #include <bits/timeval.h>
 
+#if __INTPTR_WIDTH__ == 32
 struct timex {
-	int modes;
+	unsigned int modes;
+	int :32;
+	long long offset;
+	long long freq;
+	long long maxerror;
+	long long esterror;
+	int status;
+	int :32;
+	long long constant;
+	long long precision;
+	long long tolerance;
+	struct timeval time;
+	long long tick;
+	long long ppsfreq;
+	long long jitter;
+	int shift;
+	int :32;
+	long long stabil;
+	long long jitcnt;
+	long long calcnt;
+	long long errcnt;
+	long long stbcnt;
+	int tai;
+	int __padding[11];
+};
+#else
+struct timex {
+	unsigned int modes;
 	long offset;
 	long freq;
 	long maxerror;
@@ -31,6 +59,7 @@ struct timex {
 	int tai;
 	int __padding[11];
 };
+#endif
 
 #define ADJ_OFFSET 0x0001
 #define ADJ_FREQUENCY 0x0002
