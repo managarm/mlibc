@@ -462,15 +462,27 @@ int Sysdeps<Sigprocmask>::operator()(int how, const sigset_t *set, sigset_t *old
 }
 
 #if !MLIBC_BUILDING_RTLD
+# if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__) || defined(__m68k__)
+#  define HAS_SA_RESTORER 1
+# elif defined(__riscv) || defined(__loongarch64)
+// no restorer member, kernel uses the vDSO trampoline automatically
+# else
+#  error unhandled architecture
+# endif
+
+#if HAS_SA_RESTORER
 extern "C" void __mlibc_signal_restore(void);
 extern "C" void __mlibc_signal_restore_rt(void);
+#endif
 
 int Sysdeps<Sigaction>::operator()(int signum, const struct sigaction *act,
 		struct sigaction *oldact) {
 	struct ksigaction {
 		void (*handler)(int);
 		unsigned long flags;
+#if HAS_SA_RESTORER
 		void (*restorer)(void);
+#endif
 		uint32_t mask[2];
 	};
 
@@ -478,7 +490,9 @@ int Sysdeps<Sigaction>::operator()(int signum, const struct sigaction *act,
 	if (act) {
 		kernel_act.handler = act->sa_handler;
 		kernel_act.flags = act->sa_flags | SA_RESTORER;
+#if HAS_SA_RESTORER
 		kernel_act.restorer = (act->sa_flags & SA_SIGINFO) ? __mlibc_signal_restore_rt : __mlibc_signal_restore;
+#endif
 		memcpy(&kernel_act.mask, &act->sa_mask, sizeof(kernel_act.mask));
 	}
 
@@ -493,7 +507,9 @@ int Sysdeps<Sigaction>::operator()(int signum, const struct sigaction *act,
 	if (oldact) {
 		oldact->sa_handler = kernel_oldact.handler;
 		oldact->sa_flags = kernel_oldact.flags;
+#if HAS_SA_RESTORER
 		oldact->sa_restorer = kernel_oldact.restorer;
+#endif
 		memcpy(&oldact->sa_mask, &kernel_oldact.mask, sizeof(kernel_oldact.mask));
 	}
 	return 0;
