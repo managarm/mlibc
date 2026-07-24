@@ -10,6 +10,8 @@ struct RoxySysdepTags :
 	FutexWait,
 	FutexWake,
 	Open,
+	OpenDir,
+	ReadEntries,
 	Read,
 	Close,
 	ClockGet,

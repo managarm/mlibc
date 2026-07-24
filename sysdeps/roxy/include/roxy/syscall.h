@@ -38,6 +38,8 @@ typedef long roxy_syscall_word_t;
 #define ROXY_SYS_WAITPID 25
 #define ROXY_SYS_SIGPROCMASK 26
 #define ROXY_SYS_SIGACTION 27
+#define ROXY_SYS_OPEN_DIR 28
+#define ROXY_SYS_READ_ENTRIES 29
 
 typedef struct {
 	int64_t seconds;
@@ -53,6 +55,15 @@ typedef struct {
 	uint32_t block_size;
 } roxy_stat_result;
 
+typedef struct {
+	uint64_t inode;
+	int64_t offset;
+	uint16_t record_size;
+	uint8_t type;
+	char name[256];
+	uint8_t padding[5];
+} roxy_dirent;
+
 #ifdef __cplusplus
 static_assert(sizeof(roxy_clock_result) == 16);
 static_assert(alignof(roxy_clock_result) == 8);
@@ -66,6 +77,13 @@ static_assert(offsetof(roxy_stat_result, blocks) == 16);
 static_assert(offsetof(roxy_stat_result, hard_links) == 24);
 static_assert(offsetof(roxy_stat_result, mode) == 32);
 static_assert(offsetof(roxy_stat_result, block_size) == 36);
+static_assert(sizeof(roxy_dirent) == 280);
+static_assert(alignof(roxy_dirent) == 8);
+static_assert(offsetof(roxy_dirent, inode) == 0);
+static_assert(offsetof(roxy_dirent, offset) == 8);
+static_assert(offsetof(roxy_dirent, record_size) == 16);
+static_assert(offsetof(roxy_dirent, type) == 18);
+static_assert(offsetof(roxy_dirent, name) == 19);
 #endif
 
 roxy_syscall_word_t roxy_syscall0(long number);
