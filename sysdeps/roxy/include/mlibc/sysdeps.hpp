@@ -31,6 +31,8 @@ struct RoxySysdepTags :
 	GetPpid,
 	Fork,
 	Waitpid,
+	Sigprocmask,
+	Sigaction,
 	Execve,
 	Exit
 {};
