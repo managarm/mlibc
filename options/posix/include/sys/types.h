@@ -28,7 +28,7 @@
 #include <bits/posix/timer_t.h>
 #include <abi-bits/uid_t.h>
 
-#include <bits/posix/pthread_types.h>
+#include <bits/pthread_types.h>
 
 typedef char *__caddr_t;
 

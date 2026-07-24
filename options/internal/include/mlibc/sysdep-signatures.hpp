@@ -95,6 +95,8 @@ SYSDEP_FUNC(VmReadahead, void *pointer, size_t size);
 #endif /* MLIBC_BUILDING_RTLD */
 
 #if __MLIBC_POSIX_OPTION
+#include <abi-bits/sched_param.h>
+
 SYSDEP_FUNC(Readv, int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read);
 SYSDEP_FUNC(Writev, int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_written);
 SYSDEP_FUNC(Pwrite, int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_read);
