@@ -32,6 +32,7 @@ This document lists the ABI breaks that were made in each mlibc major version.
 - [#1647](https://github.com/managarm/mlibc/pull/1647): all `_PC_*` constants are aligned to Linux kernel ABI
 - [#1743](https://github.com/managarm/mlibc/pull/1743): change the value of `math_errhandling` from `MATH_ERRNO|MATH_ERREXCEPT` to `MATH_ERREXCEPT`, as our libm does not set errno.
 - [#1658](https://github.com/managarm/mlibc/pull/1658): fix incorrect definition of `struct fd_set`
+- [#1818](https://github.com/managarm/mlibc/pull/1818): enforce `HOSTNAME_MAX >= _POSIX_HOST_NAME_MAX`
 
 ## Version 6
 
