@@ -13,6 +13,12 @@ static_assert(offsetof(roxy_dirent, name) == offsetof(struct dirent, d_name));
 
 namespace mlibc {
 
+int Sysdeps<Chdir>::operator()(const char *path) {
+	auto result = roxy_syscall1(ROXY_SYS_CHDIR, reinterpret_cast<long>(path));
+
+	return result < 0 ? static_cast<int>(-result) : 0;
+}
+
 int Sysdeps<OpenDir>::operator()(const char *path, int *handle) {
 	auto result = roxy_syscall1(ROXY_SYS_OPEN_DIR, reinterpret_cast<long>(path));
 	if(result < 0)
