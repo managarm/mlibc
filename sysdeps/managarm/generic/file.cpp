@@ -970,9 +970,8 @@ int Sysdeps<MsgSend>::operator()(int sockfd, const struct msghdr *hdr, int flags
 	req.set_has_cmsg_creds(false);
 	req.set_has_cmsg_rights(false);
 	for (auto cmsg = CMSG_FIRSTHDR(hdr); cmsg; cmsg = CMSG_NXTHDR(hdr, cmsg)) {
-		__ensure(cmsg->cmsg_level == SOL_SOCKET);
 		__ensure(cmsg->cmsg_len >= sizeof(struct cmsghdr));
-		if (cmsg->cmsg_type == SCM_CREDENTIALS) {
+		if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_CREDENTIALS) {
 			req.set_has_cmsg_creds(true);
 			size_t size = cmsg->cmsg_len - CMSG_ALIGN(sizeof(struct cmsghdr));
 			__ensure(size == sizeof(struct ucred));
@@ -981,7 +980,7 @@ int Sysdeps<MsgSend>::operator()(int sockfd, const struct msghdr *hdr, int flags
 			req.set_creds_pid(creds.pid);
 			req.set_creds_uid(creds.uid);
 			req.set_creds_gid(creds.gid);
-		} else if (cmsg->cmsg_type == SCM_RIGHTS) {
+		} else if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS) {
 			req.set_has_cmsg_rights(true);
 			size_t size = cmsg->cmsg_len - CMSG_ALIGN(sizeof(struct cmsghdr));
 			__ensure(!(size % sizeof(int)));
@@ -992,9 +991,8 @@ int Sysdeps<MsgSend>::operator()(int sockfd, const struct msghdr *hdr, int flags
 			}
 		} else {
 			mlibc::infoLogger(
-			) << "mlibc: sys_msg_send only supports SCM_RIGHTS or SCM_CREDENTIALS, got: "
-			  << cmsg->cmsg_type << "!" << frg::endlog;
-			return EINVAL;
+			) << "mlibc: sys_msg_send ignoring unsupported cmsg level "
+			  << cmsg->cmsg_level << " type " << cmsg->cmsg_type << frg::endlog;
 		}
 	}
 
@@ -1121,17 +1119,22 @@ int Sysdeps<Pselect>::operator()(
 	if (except_set)
 		FD_ZERO(except_set);
 
-	if (*num_events) {
-
-		for (int i = 0; i < *num_events; i++) {
-			if (read_set && (pfds[i].revents & (POLLIN | POLLHUP | POLLERR)))
-				FD_SET(pfds[i].fd, read_set);
-			if (write_set && (pfds[i].revents & (POLLOUT | POLLHUP | POLLERR)))
-				FD_SET(pfds[i].fd, write_set);
-			if (except_set && (pfds[i].revents & (POLLPRI)))
-				FD_SET(pfds[i].fd, except_set);
+	int ready = 0;
+	for (int i = 0; i < pcount; i++) {
+		if (read_set && (pfds[i].revents & (POLLIN | POLLHUP | POLLERR))) {
+			FD_SET(pfds[i].fd, read_set);
+			ready++;
+		}
+		if (write_set && (pfds[i].revents & (POLLOUT | POLLHUP | POLLERR))) {
+			FD_SET(pfds[i].fd, write_set);
+			ready++;
+		}
+		if (except_set && (pfds[i].revents & (POLLPRI))) {
+			FD_SET(pfds[i].fd, except_set);
+			ready++;
 		}
 	}
+	*num_events = ready;
 
 	return 0;
 }
