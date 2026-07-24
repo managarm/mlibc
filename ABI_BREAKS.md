@@ -30,6 +30,7 @@ This document lists the ABI breaks that were made in each mlibc major version.
 - [#1544](https://github.com/managarm/mlibc/pull/1544): extend `jmp_buf` so that it matches the definition of `sigjmp_buf`
 - [#1621](https://github.com/managarm/mlibc/pull/1621): make `sigaction->sa_flags` an `int` as per POSIX
 - [#1647](https://github.com/managarm/mlibc/pull/1647): all `_PC_*` constants are aligned to Linux kernel ABI
+- [#1743](https://github.com/managarm/mlibc/pull/1743): change the value of `math_errhandling` from `MATH_ERRNO|MATH_ERREXCEPT` to `MATH_ERREXCEPT`, as our libm does not set errno.
 
 ## Version 6
 
