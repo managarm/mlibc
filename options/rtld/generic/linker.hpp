@@ -52,17 +52,17 @@ struct ObjectRepository {
 
 	// This is primarily used to create a SharedObject for the RTLD itself.
 	SharedObject *injectObjectFromDts(frg::string_view name,
-			frg::string<MemoryAllocator> path,
+			frg::string<LdsoAllocator> path,
 			uintptr_t base_address, elf_dyn *dynamic, uint64_t rts);
 
 	// This is used to create a SharedObject for the executable that we want to link.
 	SharedObject *injectObjectFromPhdrs(frg::string_view name,
-			frg::string<MemoryAllocator> path, void *phdr_pointer,
+			frg::string<LdsoAllocator> path, void *phdr_pointer,
 			size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 			uint64_t rts);
 
 	SharedObject *injectStaticObject(frg::string_view name,
-			frg::string<MemoryAllocator> path, void *phdr_pointer,
+			frg::string<LdsoAllocator> path, void *phdr_pointer,
 			size_t phdr_entry_size, size_t num_phdrs, void *entry_pointer,
 			uint64_t rts);
 
@@ -85,10 +85,10 @@ struct ObjectRepository {
 	void destructObjects();
 
 	// Used by dl_iterate_phdr: stores objects in the order they are loaded.
-	frg::vector<SharedObject *, MemoryAllocator> loadedObjects;
+	frg::vector<SharedObject *, LdsoAllocator> loadedObjects;
 
 	// Used for breadth-first searching dependencies.
-	frg::vector<SharedObject *, MemoryAllocator> dependencyQueue;
+	frg::vector<SharedObject *, LdsoAllocator> dependencyQueue;
 
 private:
 	void _fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
@@ -106,10 +106,10 @@ private:
 	void _addLoadedObject(SharedObject *object);
 
 	frg::hash_map<frg::string_view, SharedObject *,
-			frg::hash<frg::string_view>, MemoryAllocator> _nameMap;
+			frg::hash<frg::string_view>, LdsoAllocator> _nameMap;
 
 	// Used for destructing the objects, stores all the objects in the order they are initialized.
-	frg::stack<SharedObject *, MemoryAllocator> _destructQueue;
+	frg::stack<SharedObject *, LdsoAllocator> _destructQueue;
 };
 
 // --------------------------------------------------------
@@ -155,15 +155,15 @@ struct LinkMap {
 
 struct SharedObject {
 	// path is copied
-	SharedObject(const char *name, frg::string<MemoryAllocator> path,
+	SharedObject(const char *name, frg::string<LdsoAllocator> path,
 		bool is_main_object, Scope *localScope, uint64_t object_rts);
 
 	SharedObject(const char *name, const char *path, bool is_main_object,
 		Scope *localScope, uint64_t object_rts);
 
-	frg::string<MemoryAllocator> name;
-	frg::string<MemoryAllocator> path;
-	frg::string<MemoryAllocator> interpreterPath;
+	frg::string<LdsoAllocator> name;
+	frg::string<LdsoAllocator> path;
+	frg::string<LdsoAllocator> interpreterPath;
 	const char *soName;
 
 	dev_t fileDev = 0;
@@ -221,10 +221,10 @@ struct SharedObject {
 		elf_version,
 		SymbolVersion,
 		frg::hash<unsigned int>,
-		MemoryAllocator
+		LdsoAllocator
 	> knownVersions;
 	// Versions that this object defines.
-	frg::vector<SymbolVersion, MemoryAllocator> definedVersions;
+	frg::vector<SymbolVersion, LdsoAllocator> definedVersions;
 
 	const char *runPath = nullptr;
 
@@ -238,7 +238,7 @@ struct SharedObject {
 	bool haveStaticTls;
 
 	// vector of dependencies
-	frg::vector<SharedObject *, MemoryAllocator> dependencies;
+	frg::vector<SharedObject *, LdsoAllocator> dependencies;
 
 	TlsModel tlsModel;
 	size_t tlsIndex;
@@ -352,17 +352,17 @@ struct RuntimeTlsMap {
 	size_t initialLimit;
 
 	// TLS indices.
-	frg::vector<SharedObject *, MemoryAllocator> indices;
+	frg::vector<SharedObject *, LdsoAllocator> indices;
 
 	// Track all allocated TCBs.
-	frg::vector<Tcb *, MemoryAllocator> tcbs;
+	frg::vector<Tcb *, LdsoAllocator> tcbs;
 };
 
 extern frg::manual_box<FutexLock> runtimeTlsMapLock;
 extern frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
 Tcb *allocateTcb();
-void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, MemoryAllocator> &objects, bool checkInitialized);
+void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, LdsoAllocator> &objects, bool checkInitialized);
 void *accessDtv(SharedObject *object);
 // Tries to access the DTV, if not allocated, or object doesn't have
 // PT_TLS, return nullptr.
@@ -490,7 +490,7 @@ private:
 	frg::optional<ObjectSymbol> _resolveNext(frg::string_view string, SharedObject *target,
 			frg::optional<SymbolVersion> version);
 public: // TODO: Make this private again. (Was made public for __dlapi_reverse()).
-	frg::vector<SharedObject *, MemoryAllocator> _objects;
+	frg::vector<SharedObject *, LdsoAllocator> _objects;
 };
 
 extern frg::manual_box<Scope> globalScope;
@@ -528,9 +528,9 @@ private:
 	bool _isInitialLink;
 	uint64_t _linkRts;
 
-	frg::vector<SharedObject *, MemoryAllocator> _linkBfs;
+	frg::vector<SharedObject *, LdsoAllocator> _linkBfs;
 
-	frg::vector<SharedObject *, MemoryAllocator> _initQueue;
+	frg::vector<SharedObject *, LdsoAllocator> _initQueue;
 };
 
 // --------------------------------------------------------
