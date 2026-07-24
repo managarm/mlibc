@@ -10,7 +10,7 @@
 #include <time.h>
 
 void call_once(once_flag *flag, void (*func)(void)) {
-	mlibc::thread_once(flag, func);
+	mlibc::thread_once(__mlibc_once::from(flag), func);
 }
 
 int thrd_create(thrd_t *thr, thrd_start_t func, void *arg) {
@@ -91,29 +91,24 @@ __attribute__((__noreturn__)) void thrd_exit(int ret_val) {
 }
 
 int mtx_init(mtx_t *mtx, int type) {
-	struct __mlibc_mutexattr attr;
-	mlibc::thread_mutexattr_init(&attr);
+	__mlibc_mutexattr attr{};
 
-	if(type & mtx_recursive) {
+	if(type & mtx_recursive)
 		mlibc::thread_mutexattr_settype(&attr, __MLIBC_THREAD_MUTEX_RECURSIVE);
-	}
 
-	int res = mlibc::thread_mutex_init(mtx, &attr) == 0 ? thrd_success : thrd_error;
-	mlibc::thread_mutexattr_destroy(&attr);
-
-	return res;
+	return mlibc::thread_mutex_init(__mlibc_mutex::from(mtx), &attr) == 0 ? thrd_success : thrd_error;
 }
 
 void mtx_destroy(mtx_t *mtx) {
-	mlibc::thread_mutex_destroy(mtx);
+	mlibc::thread_mutex_destroy(__mlibc_mutex::from(mtx));
 }
 
 int mtx_lock(mtx_t *mtx) {
-	return mlibc::thread_mutex_lock(mtx) == 0 ? thrd_success : thrd_error;
+	return mlibc::thread_mutex_lock(__mlibc_mutex::from(mtx)) == 0 ? thrd_success : thrd_error;
 }
 
 int mtx_timedlock(mtx_t *__restrict mtx, const struct timespec *__restrict abstime) {
-	auto ret = mlibc::thread_mutex_timedlock(mtx, abstime, CLOCK_REALTIME);
+	auto ret = mlibc::thread_mutex_timedlock(__mlibc_mutex::from(mtx), abstime, CLOCK_REALTIME);
 
 	switch (ret) {
 		case 0:
@@ -126,7 +121,7 @@ int mtx_timedlock(mtx_t *__restrict mtx, const struct timespec *__restrict absti
 }
 
 int mtx_trylock(mtx_t *mtx) {
-	auto ret = mlibc::thread_mutex_trylock(mtx);
+	auto ret = mlibc::thread_mutex_trylock(__mlibc_mutex::from(mtx));
 	switch (ret) {
 		case 0:
 			return thrd_success;
@@ -138,31 +133,37 @@ int mtx_trylock(mtx_t *mtx) {
 }
 
 int mtx_unlock(mtx_t *mtx) {
-	return mlibc::thread_mutex_unlock(mtx) == 0 ? thrd_success : thrd_error;
+	return mlibc::thread_mutex_unlock(__mlibc_mutex::from(mtx)) == 0 ? thrd_success : thrd_error;
 }
 
 int cnd_init(cnd_t *cond) {
-	return mlibc::thread_cond_init(cond, nullptr) == 0 ? thrd_success : thrd_error;
+	return mlibc::thread_cond_init(__mlibc_cond::from(cond), nullptr) == 0 ? thrd_success : thrd_error;
 }
 
 void cnd_destroy(cnd_t *cond) {
-	mlibc::thread_cond_destroy(cond);
+	mlibc::thread_cond_destroy(__mlibc_cond::from(cond));
 }
 
 int cnd_broadcast(cnd_t *cond) {
-	return mlibc::thread_cond_broadcast(cond) == 0 ? thrd_success : thrd_error;
+	return mlibc::thread_cond_broadcast(__mlibc_cond::from(cond)) == 0 ? thrd_success : thrd_error;
 }
 
 int cnd_signal(cnd_t *cond) {
-	return mlibc::thread_cond_signal(cond) == 0 ? thrd_success : thrd_error;
+	return mlibc::thread_cond_signal(__mlibc_cond::from(cond)) == 0 ? thrd_success : thrd_error;
 }
 
 int cnd_wait(cnd_t *cond, mtx_t *mtx) {
-	return mlibc::thread_cond_timedwait(cond, mtx, nullptr, 0) == 0 ? thrd_success : thrd_error;
+	return mlibc::thread_cond_timedwait(
+	           __mlibc_cond::from(cond), __mlibc_mutex::from(mtx), nullptr, 0
+	       ) == 0
+	           ? thrd_success
+	           : thrd_error;
 }
 
 int cnd_timedwait(cnd_t *__restrict cond, mtx_t *__restrict mutex, const struct timespec *__restrict abstime) {
-	auto ret = mlibc::thread_cond_timedwait(cond, mutex, abstime, CLOCK_REALTIME);
+	auto ret = mlibc::thread_cond_timedwait(
+	    __mlibc_cond::from(cond), __mlibc_mutex::from(mutex), abstime, CLOCK_REALTIME
+	);
 	switch (ret) {
 		case 0:
 			return thrd_success;

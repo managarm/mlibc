@@ -5,7 +5,7 @@
 #include <abi-bits/signal.h>
 #include <bits/ansi/timespec.h>
 #include <bits/off_t.h>
-#include <bits/posix/pthread_attr_t.h>
+#include <bits/pthread_attr_t.h>
 #include <bits/size_t.h>
 #include <bits/ssize_t.h>
 

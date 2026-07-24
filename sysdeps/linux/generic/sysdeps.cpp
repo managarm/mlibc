@@ -907,18 +907,26 @@ int Sysdeps<SetPriority>::operator()(int which, id_t who, int prio) {
 	return 0;
 }
 
+struct ksched_param {
+	int sched_priority;
+};
+
 int Sysdeps<GetSchedparam>::operator()(void *tcb, int *policy, struct sched_param *param) {
 	auto t = reinterpret_cast<Tcb *>(tcb);
 
 	if(!t->tid) {
 		return ESRCH;
+	} else if (!param) {
+		return EINVAL;
 	}
 
-	auto ret_param = do_syscall(SYS_sched_getparam, t->tid, param);
+	struct ksched_param p = {};
+	auto ret_param = do_syscall(SYS_sched_getparam, t->tid, &p);
 	if (int e = sc_error(ret_param); e)
 		return e;
+	param->sched_priority = p.sched_priority;
 
-	auto ret_sched = do_syscall(SYS_sched_getscheduler, t->tid, param);
+	auto ret_sched = do_syscall(SYS_sched_getscheduler, t->tid);
 	if (int e = sc_error(ret_sched); e)
 		return e;
 	*policy = sc_int_result<int>(ret_sched);
@@ -931,9 +939,14 @@ int Sysdeps<SetSchedparam>::operator()(void *tcb, int policy, const struct sched
 
 	if(!t->tid) {
 		return ESRCH;
+	} else if (!param) {
+		return EINVAL;
 	}
 
-	auto ret = do_syscall(SYS_sched_setscheduler, t->tid, policy, param);
+	struct ksched_param p = {
+		.sched_priority = param->sched_priority
+	};
+	auto ret = do_syscall(SYS_sched_setscheduler, t->tid, policy, &p);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;

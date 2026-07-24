@@ -4,12 +4,16 @@
 #include <mlibc-config.h>
 
 #include <abi-bits/pid_t.h>
-#include <abi-bits/sigevent.h>
+#include <abi-bits/sigval.h>
 #include <abi-bits/sigset_t.h>
 #include <abi-bits/uid_t.h>
 #include <bits/ansi/clock_t.h>
 #include <bits/size_t.h>
 #include <bits/types.h>
+
+#if __MLIBC_POSIX_OPTION
+#include <abi-bits/sigevent.h>
+#endif
 
 #if defined(_DEFAULT_SOURCE) || (__MLIBC_POSIX1 && !__MLIBC_POSIX2024)
 #define POLL_IN 1

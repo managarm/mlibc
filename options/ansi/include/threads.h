@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <bits/ansi/timespec.h>
+#include <bits/pthread_sizes.h>
 #include <bits/threads.h>
 #include <bits/types.h>
 #include <time.h>
@@ -27,10 +28,20 @@ enum {
 	thrd_nomem
 };
 
-typedef struct __mlibc_once once_flag;
+typedef struct {
+	int __opaque[__MLIBC_THREAD_ONCE_SIZE / sizeof(int)];
+} once_flag;
+
 typedef struct __mlibc_thread_data *thrd_t;
-typedef struct __mlibc_mutex mtx_t;
-typedef struct __mlibc_cond cnd_t;
+
+typedef struct {
+	char __opaque[__MLIBC_THREAD_MUTEX_SIZE];
+} __attribute__((aligned(__INTPTR_WIDTH__ / 8))) mtx_t;
+
+typedef struct {
+	char __opaque[__MLIBC_THREAD_COND_SIZE];
+} __attribute__((aligned(__INTPTR_WIDTH__ / 8))) cnd_t;
+
 typedef __mlibc_uintptr tss_t;
 typedef void (*tss_dtor_t)(void *__val);
 typedef int (*thrd_start_t)(void* __arg);

@@ -532,6 +532,9 @@ if not no_headers
 		'options/internal/include/bits/getopt.h',
 		'options/internal/include/bits/reclen_t.h',
 		'options/internal/include/bits/timeval.h',
+		'options/internal/include/bits/pthread_types.h',
+		'options/internal/include/bits/pthread_attr_t.h',
+		'options/internal/include/bits/pthread_sizes.h',
 		subdir: 'bits'
 	)
 endif

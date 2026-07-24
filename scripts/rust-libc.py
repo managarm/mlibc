@@ -465,7 +465,7 @@ class RustBindingGenerator:
                         inline_defs.append(c)
                     case CursorKind.ENUM_CONSTANT_DECL:
                         emit(f"{c.displayname} = {c.enum_value},")
-                    case CursorKind.PACKED_ATTR:
+                    case CursorKind.PACKED_ATTR | CursorKind.ALIGNED_ATTR:
                         pass
                     case _:
                         log_err(f"unhandled {cursor.kind} member", f"kind {c.kind}")
