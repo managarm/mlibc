@@ -11,4 +11,3 @@ extern "C" void __mlibc_entry(int (*main_fn)(int argc, char *argv[], char *env[]
     auto result = main_fn(mlibc::entry_stack.argc, mlibc::entry_stack.argv, environ);
     exit(result);
 }
-

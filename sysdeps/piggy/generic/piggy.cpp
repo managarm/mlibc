@@ -1,7 +1,7 @@
 #include <errno.h>
 #include <piggy/archctl.h>
 #include <piggy/mount.h>
-#include <piggy/poweroff.h>
+#include <piggy/powerctl.h>
 #include <piggy/syscall.h>
 
 #ifndef MLIBC_BUILDING_RTLD
@@ -36,8 +36,8 @@ int umount(const char *target) {
     return 0;
 }
 
-int poweroff(int how) {
-    long ret = syscall1(SYS_POWEROFF, how);
+int powerctl(int op) {
+    long ret = syscall1(SYS_POWERCTL, op);
     if (ret < 0) {
         errno = -ret;
         return -1;

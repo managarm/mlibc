@@ -62,10 +62,11 @@
 #define SYS_GETSOCKNAME 58
 #define SYS_GETPEERNAME 59
 #define SYS_SHUTDOWN    60
-#define SYS_UNAME       61
-#define SYS_FUTEX       62
-#define SYS_POWEROFF    63
-#define SYS_ARCHCTL     64
+#define SYS_SETHOSTNAME 61
+#define SYS_UNAME       62
+#define SYS_FUTEX       63
+#define SYS_POWERCTL    64
+#define SYS_ARCHCTL     65
 
 #ifndef __MLIBC_ABI_ONLY
 
