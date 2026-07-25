@@ -11,6 +11,7 @@ rtld_sources += files(
 libc_sources += files(
 	'directory.cpp',
 	'entry.cpp',
+	'ioctl.cpp',
 	'signal.cpp',
 	'sysdeps.cpp',
 	'arch/x86_64/syscall.cpp',

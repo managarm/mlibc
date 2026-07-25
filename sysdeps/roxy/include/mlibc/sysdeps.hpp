@@ -17,6 +17,7 @@ struct RoxySysdepTags :
 	Close,
 	ClockGet,
 	Isatty,
+	Ioctl,
 	Write,
 	TcbSet,
 	AnonAllocate,
