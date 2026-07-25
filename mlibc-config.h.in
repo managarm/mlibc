@@ -107,5 +107,7 @@
 #mesondefine __MLIBC_GLIBC_OPTION
 #mesondefine __MLIBC_LINUX_WRAPPERS_OPTION
 #mesondefine __MLIBC_SYSDEP_HAS_BITS_SYSCALL_H
+#mesondefine __MLIBC_ABI_SYSV
+#mesondefine __MLIBC_ABI_MS
 
 #endif /* _MLIBC_CONFIG_H */

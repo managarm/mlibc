@@ -78,4 +78,3 @@ _longjmp:
 	jr      $ra
 
 GNU_STACK_NOTE()
-
