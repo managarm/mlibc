@@ -1,0 +1,18 @@
+LIBRARY KERNEL32.dll
+EXPORTS
+GetStdHandle
+GetConsoleMode
+CreateFileA
+ReadFile
+WriteFile
+CloseHandle
+GetLastError
+SetFilePointerEx
+GetSystemTimePreciseAsFileTime
+ExitProcess
+VirtualAlloc
+VirtualFree
+TlsAlloc
+TlsSetValue
+TlsGetValue
+GetCurrentThreadId

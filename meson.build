@@ -313,6 +313,9 @@ elif host_machine.system() == 'zinnia'
 elif host_machine.system() == 'demo'
 	subdir('sysdeps/demo')
 # ANCHOR_END: demo-sysdeps
+elif host_machine.system() == 'windows'
+	sysdep_abi = 'ms'
+	subdir('sysdeps/windows')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
