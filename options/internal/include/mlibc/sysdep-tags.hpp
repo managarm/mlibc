@@ -104,6 +104,8 @@ struct Kill {};
 
 // int sys_tcb_set(void *pointer);
 struct TcbSet {};
+// void *sys_tcb_get();
+struct TcbGet {};
 
 #if MLIBC_BUILDING_RTLD
 // int sys_vm_readahead(void *pointer, size_t size);
