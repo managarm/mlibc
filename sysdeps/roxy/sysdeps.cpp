@@ -96,6 +96,20 @@ int Sysdeps<Close>::operator()(int fd) {
 	return syscall_error(roxy_syscall1(ROXY_SYS_CLOSE, fd));
 }
 
+int Sysdeps<Poll>::operator()(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
+	auto result = roxy_syscall3(
+	    ROXY_SYS_POLL,
+	    reinterpret_cast<long>(fds),
+	    count,
+	    timeout
+	);
+	if(result < 0)
+		return static_cast<int>(-result);
+
+	*num_events = static_cast<int>(result);
+	return 0;
+}
+
 int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
 	roxy_clock_result result;
 	auto error =

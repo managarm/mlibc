@@ -42,6 +42,7 @@ struct RoxySysdepTags :
 	Waitpid,
 	Sigprocmask,
 	Sigaction,
+	Poll,
 	Execve,
 	Exit
 {};
