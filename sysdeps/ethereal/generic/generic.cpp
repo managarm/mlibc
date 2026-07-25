@@ -330,6 +330,32 @@ int Sysdeps<SetSid>::operator()(pid_t *sid) {
 	return 0;
 }
 
+int Sysdeps<SetGroups>::operator()(size_t size, const gid_t *list) {
+	(void)size;
+	(void)list;
+	// TODO unstub
+	return 0;
+}
+
+int Sysdeps<GetGroups>::operator()(size_t size, gid_t *list, int *ret) {
+	(void)size;
+	(void)list;
+	(void)ret;
+	// TODO unstub
+	*ret = 0;
+	return 0;
+}
+
+int Sysdeps<SetResgid>::operator()(gid_t _rgid, gid_t _egid, gid_t _sgid) {
+	mlibc::infoLogger() << "SetResgid is a stub" << frg::endlog;
+	return 0;
+}
+
+int Sysdeps<SetResuid>::operator()(uid_t _ruid, uid_t _euid, uid_t _suid) {
+	mlibc::infoLogger() << "SetResuid is a stub" << frg::endlog;
+	return 0;
+}
+
 void Sysdeps<Yield>::operator()() { SYSCALL0(SYS_YIELD); }
 
 int Sysdeps<Pause>::operator()() { return -SYSCALL0(SYS_PAUSE); }
@@ -400,6 +426,12 @@ int Sysdeps<Stat>::operator()(
 		mlibc::panicLogger() << "mlibc: fsfd_target is invalid" << frg::endlog;
 		__builtin_unreachable();
 	}
+}
+
+int Sysdeps<InetConfigured>::operator()(bool *ipv4, bool *ipv6) {
+	*ipv4 = true;
+	*ipv6 = false;
+	return 0;
 }
 
 int Sysdeps<Socket>::operator()(int family, int type, int protocol, int *fd) {
@@ -680,6 +712,11 @@ int Sysdeps<Openpty>::operator()(
     int *mfd, int *sfd, char *name, const struct termios *ios, const struct winsize *win
 ) {
 	return -SYSCALL5(SYS_OPENPTY, mfd, sfd, name, ios, win);
+}
+
+int Sysdeps<Chroot>::operator()(const char *path) {
+	mlibc::infoLogger() << "warning: sysdeps<Chroot> not implemented." << frg::endlog;
+	return 0;
 }
 
 #ifndef MLIBC_BUILDING_RTLD

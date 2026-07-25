@@ -15,6 +15,7 @@ libc_sources += files(
 	'generic/thread.cpp',
 	'generic/mount.cpp',
 	'generic/ptrace.cpp',
+	'generic/sysinfo.cpp',
 	'x86_64/thread.S'
 )
 
@@ -84,6 +85,7 @@ if not no_headers
 		'include/sys/ioctl_ethereal.h',
 		'include/sys/ptrace.h',
 		'include/sys/mount.h',
+		'include/sys/sysinfo.h',
 		subdir: 'sys',
 		follow_symlinks: true,
 	)
