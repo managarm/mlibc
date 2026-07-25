@@ -19,6 +19,16 @@ int Sysdeps<Chdir>::operator()(const char *path) {
 	return result < 0 ? static_cast<int>(-result) : 0;
 }
 
+int Sysdeps<GetCwd>::operator()(char *buffer, size_t size) {
+	auto result = roxy_syscall2(
+	    ROXY_SYS_GETCWD,
+	    reinterpret_cast<long>(buffer),
+	    size
+	);
+
+	return result < 0 ? static_cast<int>(-result) : 0;
+}
+
 int Sysdeps<OpenDir>::operator()(const char *path, int *handle) {
 	auto result = roxy_syscall1(ROXY_SYS_OPEN_DIR, reinterpret_cast<long>(path));
 	if(result < 0)

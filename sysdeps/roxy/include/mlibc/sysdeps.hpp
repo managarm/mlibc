@@ -12,6 +12,7 @@ struct RoxySysdepTags :
 	Open,
 	OpenDir,
 	ReadEntries,
+	GetCwd,
 	Chdir,
 	Read,
 	Close,
