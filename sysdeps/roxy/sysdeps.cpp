@@ -122,6 +122,21 @@ int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
 	return 0;
 }
 
+int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
+	struct timespec request = {
+	    .tv_sec = *secs,
+	    .tv_nsec = *nanos,
+	};
+
+	auto error = syscall_error(
+	    roxy_syscall1(ROXY_SYS_SLEEP, reinterpret_cast<long>(&request))
+	);
+	if(error)
+		return error;
+
+	return 0;
+}
+
 int Sysdeps<Isatty>::operator()(int fd) {
 	return syscall_error(roxy_syscall1(ROXY_SYS_ISATTY, fd));
 }

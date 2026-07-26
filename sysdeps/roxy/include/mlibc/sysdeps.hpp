@@ -17,6 +17,7 @@ struct RoxySysdepTags :
 	Read,
 	Close,
 	ClockGet,
+	Sleep,
 	Isatty,
 	Ioctl,
 	Tcgetattr,
