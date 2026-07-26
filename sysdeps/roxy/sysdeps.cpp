@@ -131,6 +131,31 @@ int Sysdeps<Ppoll>::operator()(
 	return 0;
 }
 
+int Sysdeps<Pselect>::operator()(
+	int num_fds,
+	fd_set *read_set,
+	fd_set *write_set,
+	fd_set *except_set,
+	const struct timespec *timeout,
+	const sigset_t *signal_mask,
+	int *num_events
+) {
+	auto result = roxy_syscall6(
+	    ROXY_SYS_PSELECT,
+	    num_fds,
+	    reinterpret_cast<long>(read_set),
+	    reinterpret_cast<long>(write_set),
+	    reinterpret_cast<long>(except_set),
+	    reinterpret_cast<long>(timeout),
+	    reinterpret_cast<long>(signal_mask)
+	);
+	if(result < 0)
+		return static_cast<int>(-result);
+
+	*num_events = static_cast<int>(result);
+	return 0;
+}
+
 int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
 	roxy_clock_result result;
 	auto error =
