@@ -11,6 +11,10 @@ int syscall_error(long result) {
 
 namespace mlibc {
 
+int Sysdeps<Kill>::operator()(pid_t pid, int signal) {
+	return syscall_error(roxy_syscall2(ROXY_SYS_SEND_SIGNAL, pid, signal));
+}
+
 int Sysdeps<Sigprocmask>::operator()(
 	int how,
 	const sigset_t *__restrict set,
