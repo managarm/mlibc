@@ -110,6 +110,27 @@ int Sysdeps<Poll>::operator()(struct pollfd *fds, nfds_t count, int timeout, int
 	return 0;
 }
 
+int Sysdeps<Ppoll>::operator()(
+	struct pollfd *fds,
+	nfds_t count,
+	const struct timespec *timeout,
+	const sigset_t *signal_mask,
+	int *num_events
+) {
+	auto result = roxy_syscall4(
+	    ROXY_SYS_PPOLL,
+	    reinterpret_cast<long>(fds),
+	    count,
+	    reinterpret_cast<long>(timeout),
+	    reinterpret_cast<long>(signal_mask)
+	);
+	if(result < 0)
+		return static_cast<int>(-result);
+
+	*num_events = static_cast<int>(result);
+	return 0;
+}
+
 int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
 	roxy_clock_result result;
 	auto error =

@@ -45,6 +45,7 @@ struct RoxySysdepTags :
 	Sigprocmask,
 	Sigaction,
 	Poll,
+	Ppoll,
 	Execve,
 	Exit
 {};
