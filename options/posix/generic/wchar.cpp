@@ -550,6 +550,9 @@ wchar_t *wcsdup(const wchar_t *s) {
 }
 
 int wcsncasecmp(const wchar_t* s1, const wchar_t* s2, size_t n) {
+	if (s1 == s2 || n == 0)
+		return 0;
+
 	for(size_t i = 0; i < n; i++) {
 		wint_t c1 = towlower(s1[i]);
 		wint_t c2 = towlower(s2[i]);
@@ -563,12 +566,52 @@ int wcsncasecmp(const wchar_t* s1, const wchar_t* s2, size_t n) {
 	return 0;
 }
 
+int wcsncasecmp_l(const wchar_t *s1, const wchar_t *s2, size_t n, locale_t locale) {
+	if (s1 == s2 || n == 0)
+		return 0;
+
+	for(size_t i = 0; i < n; i++) {
+		wint_t c1 = towlower_l(s1[i], locale);
+		wint_t c2 = towlower_l(s2[i], locale);
+		if(c1 == L'\0' && c2 == L'\0')
+			return 0;
+		if(c1 < c2)
+			return -1;
+		if(c1 > c2)
+			return 1;
+	}
+	return 0;
+}
+
 int wcscasecmp(const wchar_t *ws1, const wchar_t *ws2) {
+	if (ws1 == ws2)
+		return 0;
+
 	size_t i = 0;
 
 	while(true) {
 		auto a = towlower(ws1[i]);
 		auto b = towlower(ws2[i]);
+		if(!a && !b)
+			return 0;
+		// If only one char is null, one of the following cases applies.
+		if(a < b)
+			return -1;
+		if(a > b)
+			return 1;
+		i++;
+	}
+}
+
+int wcscasecmp_l(const wchar_t *ws1, const wchar_t *ws2, locale_t locale) {
+	if (ws1 == ws2)
+		return 0;
+
+	size_t i = 0;
+
+	while(true) {
+		auto a = towlower_l(ws1[i], locale);
+		auto b = towlower_l(ws2[i], locale);
 		if(!a && !b)
 			return 0;
 		// If only one char is null, one of the following cases applies.

@@ -13,6 +13,7 @@ libc_sources += files(
 if not no_headers
 	install_headers(
 		'include/fstab.h',
+		'include/pthread_np.h',
 		'include/pty.h',
 		'include/utmp.h',
 	)

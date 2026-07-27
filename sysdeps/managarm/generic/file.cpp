@@ -61,8 +61,7 @@ int Sysdeps<Chdir>::operator()(const char *path) {
 int Sysdeps<Fchdir>::operator()(int fd) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::FCHDIR);
+	managarm::posix::FchdirRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_fd(fd);
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
@@ -76,7 +75,7 @@ int Sysdeps<Fchdir>::operator()(int fd) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::FchdirResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -130,7 +129,7 @@ int Sysdeps<Mkdirat>::operator()(int dirfd, const char *path, mode_t mode) {
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::MkdirAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -162,7 +161,7 @@ int Sysdeps<Symlinkat>::operator()(const char *target_path, int dirfd, const cha
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SymlinkAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -196,7 +195,7 @@ int Sysdeps<Linkat>::operator()(int olddirfd, const char *old_path, int newdirfd
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::LinkAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -229,7 +228,7 @@ int Sysdeps<Renameat>::operator()(int olddirfd, const char *old_path, int newdir
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::RenameAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -281,6 +280,7 @@ int do_dup2(int fd, int flags, int newfd, bool fcntl_mode, int *outfd) {
 
 int Sysdeps<Fcntl>::operator()(int fd, int request, va_list args, int *result) {
 	SignalGuard sguard;
+	*result = 0;
 	if (request == F_DUPFD) {
 		int newfd;
 		int wantedFd = va_arg(args, int);
@@ -295,9 +295,30 @@ int Sysdeps<Fcntl>::operator()(int fd, int request, va_list args, int *result) {
 			return e;
 		*result = newfd;
 		return 0;
+	} else if (request == F_DUPFD_QUERY) {
+		int query_fd = va_arg(args, int);
+		managarm::posix::DupFdQueryRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_fd(fd);
+		req.set_query_fd(query_fd);
+
+		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
+		    getPosixLane(),
+		    helix_ng::offer(
+		        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+		    )
+		);
+		HEL_CHECK(offer.error());
+		HEL_CHECK(send_req.error());
+		HEL_CHECK(recv_resp.error());
+
+		managarm::posix::DupFdQueryResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+		if (resp.error() != managarm::posix::Errors::SUCCESS)
+			return resp.error() | toErrno;
+		*result = resp.result();
+		return 0;
 	} else if (request == F_GETFD) {
-		managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-		req.set_request_type(managarm::posix::CntReqType::FD_GET_FLAGS);
+		managarm::posix::FdGetFlagsRequest<SysdepsAllocator> req(getSysdepsAllocator());
 		req.set_fd(fd);
 
 		auto [offer, send_req, recv_resp] = exchangeMsgsSync(
@@ -310,15 +331,14 @@ int Sysdeps<Fcntl>::operator()(int fd, int request, va_list args, int *result) {
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+		managarm::posix::FdGetFlagsResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if (resp.error() != managarm::posix::Errors::SUCCESS)
 			return resp.error() | toErrno;
 		*result = resp.flags();
 		return 0;
 	} else if (request == F_SETFD) {
-		managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-		req.set_request_type(managarm::posix::CntReqType::FD_SET_FLAGS);
+		managarm::posix::FdSetFlagsRequest<SysdepsAllocator> req(getSysdepsAllocator());
 		req.set_fd(fd);
 		req.set_flags(va_arg(args, int));
 
@@ -332,7 +352,7 @@ int Sysdeps<Fcntl>::operator()(int fd, int request, va_list args, int *result) {
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
-		managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+		managarm::posix::FdSetFlagsResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		if (resp.error() != managarm::posix::Errors::SUCCESS)
 			return resp.error() | toErrno;
@@ -583,23 +603,39 @@ int Sysdeps<ReadEntries>::operator()(int fd, void *buffer, size_t max_size, size
 int Sysdeps<Ttyname>::operator()(int fd, char *buf, size_t size) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::TTY_NAME);
+	managarm::posix::TtyNameRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_fd(fd);
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
 	    helix_ng::offer(
-	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	        helix_ng::want_lane,
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+	        helix_ng::recvInline()
 	    )
 	);
 
 	HEL_CHECK(offer.error());
+	auto conversation = offer.descriptor();
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	auto preamble = bragi::read_preamble(recv_resp);
+	__ensure(!preamble.error());
+
+	frg::vector<std::byte, SysdepsAllocator> tailBuffer{getSysdepsAllocator()};
+	tailBuffer.resize(preamble.tail_size());
+	auto [recv_tail] = exchangeMsgsSync(
+	    conversation.getHandle(), helix_ng::recvBuffer(tailBuffer.data(), tailBuffer.size())
+	);
+
+	HEL_CHECK(recv_tail.error());
+
+	auto resp = *bragi::parse_head_tail<managarm::posix::TtyNameResponse>(
+	    recv_resp, tailBuffer, getSysdepsAllocator()
+	);
+	recv_resp.reset();
+
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
 
@@ -617,8 +653,7 @@ int Sysdeps<Fdatasync>::operator()(int) {
 int Sysdeps<GetCwd>::operator()(char *buffer, size_t size) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::GETCWD);
+	managarm::posix::GetCwdRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_size(size);
 
 	auto [offer, send_req, recv_resp, recv_path] = exchangeMsgsSync(
@@ -635,7 +670,7 @@ int Sysdeps<GetCwd>::operator()(char *buffer, size_t size) {
 	HEL_CHECK(recv_resp.error());
 	HEL_CHECK(recv_path.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::GetCwdResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -666,7 +701,7 @@ int Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int
 	HEL_CHECK(sendReq.error());
 	HEL_CHECK(recvResp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::VmMapResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -694,7 +729,7 @@ int Sysdeps<VmRemap>::operator()(void *pointer, size_t size, size_t new_size, vo
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::VmRemapResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -722,7 +757,7 @@ int Sysdeps<VmProtect>::operator()(void *pointer, size_t size, int prot) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::VmProtectResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -748,7 +783,7 @@ int Sysdeps<VmUnmap>::operator()(void *pointer, size_t size) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::VmUnmapResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -759,9 +794,7 @@ int Sysdeps<VmUnmap>::operator()(void *pointer, size_t size) {
 int Sysdeps<SetSid>::operator()(pid_t *sid) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::SETSID);
-
+	managarm::posix::SetSidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
 	    helix_ng::offer(
@@ -773,7 +806,7 @@ int Sysdeps<SetSid>::operator()(pid_t *sid) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SetSidResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS) {
 		*sid = -1;
@@ -840,7 +873,7 @@ int Sysdeps<Socket>::operator()(int domain, int type_and_flags, int proto, int *
 	HEL_CHECK(sendReq.error());
 	HEL_CHECK(recvResp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SocketResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -852,8 +885,7 @@ int Sysdeps<Socket>::operator()(int domain, int type_and_flags, int proto, int *
 int Sysdeps<Pipe>::operator()(int *fds, int flags) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::PIPE_CREATE);
+	managarm::posix::PipeCreateRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_flags(flags);
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
@@ -867,7 +899,7 @@ int Sysdeps<Pipe>::operator()(int *fds, int flags) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::PipeCreateResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -901,7 +933,7 @@ int Sysdeps<Socketpair>::operator()(int domain, int type_and_flags, int proto, i
 	HEL_CHECK(sendReq.error());
 	HEL_CHECK(recvResp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SockpairResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -1105,13 +1137,10 @@ int Sysdeps<Pselect>::operator()(
 }
 
 int Sysdeps<Poll>::operator()(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
-	__ensure(timeout >= 0 || timeout == -1); // TODO: Report errors correctly.
-
 	SignalGuard sguard;
 	mlibc::thread_testcancel();
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::EPOLL_CALL);
+	managarm::posix::EpollCallRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
 	req.set_cancellation_id(allocateCancellationId());
 
@@ -1120,21 +1149,39 @@ int Sysdeps<Poll>::operator()(struct pollfd *fds, nfds_t count, int timeout, int
 		req.add_events(fds[i].events);
 	}
 
-	auto [offer, send_req, recv_resp] = exchangeMsgsSyncCancellable(
+	auto [offer, send_req, send_tail, recv_resp] = exchangeMsgsSyncCancellable(
 	    getPosixLane(),
 	    req.cancellation_id(),
 	    -1,
 	    helix_ng::offer(
-	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	        helix_ng::want_lane,
+	        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
+	        helix_ng::recvInline()
 	    )
 	);
 
 	HEL_CHECK(offer.error());
+	auto conversation = offer.descriptor();
 	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	auto preamble = bragi::read_preamble(recv_resp);
+	__ensure(!preamble.error());
+
+	frg::vector<std::byte, SysdepsAllocator> tailBuffer{getSysdepsAllocator()};
+	tailBuffer.resize(preamble.tail_size());
+	auto [recv_tail] = exchangeMsgsSync(
+		conversation.getHandle(), helix_ng::recvBuffer(tailBuffer.data(), tailBuffer.size())
+	);
+
+	HEL_CHECK(recv_tail.error());
+
+	auto resp = *bragi::parse_head_tail<managarm::posix::EpollCallResponse>(
+		recv_resp, tailBuffer, getSysdepsAllocator()
+	);
+	recv_resp.reset();
+
 	if (resp.error() != managarm::posix::Errors::SUCCESS) {
 		return resp.error() | toErrno;
 	} else {
@@ -1176,8 +1223,7 @@ int Sysdeps<Ppoll>::operator()(
 	SignalGuard guard;
 	mlibc::thread_testcancel();
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::EPOLL_CALL);
+	managarm::posix::EpollCallRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_timeout(ts ? (ts->tv_sec * 1'000'000'000 + ts->tv_nsec) : -1);
 	req.set_cancellation_id(allocateCancellationId());
 	req.set_signal_seq(seq);
@@ -1188,21 +1234,38 @@ int Sysdeps<Ppoll>::operator()(
 		req.add_events(fds[i].events);
 	}
 
-	auto [offer, send_req, recv_resp] = exchangeMsgsSyncCancellable(
+	auto [offer, send_req, send_tail, recv_resp] = exchangeMsgsSyncCancellable(
 	    getPosixLane(),
 	    req.cancellation_id(),
 	    -1,
 	    helix_ng::offer(
-	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+	        helix_ng::want_lane,
+	        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()),
+	        helix_ng::recvInline()
 	    )
 	);
 
 	HEL_CHECK(offer.error());
+	auto conversation = offer.descriptor();
 	HEL_CHECK(send_req.error());
+	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
-	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	auto preamble = bragi::read_preamble(recv_resp);
+	__ensure(!preamble.error());
+
+	frg::vector<std::byte, SysdepsAllocator> tailBuffer{getSysdepsAllocator()};
+	tailBuffer.resize(preamble.tail_size());
+	auto [recv_tail] = exchangeMsgsSync(
+	    conversation.getHandle(), helix_ng::recvBuffer(tailBuffer.data(), tailBuffer.size())
+	);
+
+	HEL_CHECK(recv_tail.error());
+
+	auto resp = *bragi::parse_head_tail<managarm::posix::EpollCallResponse>(
+	    recv_resp, tailBuffer, getSysdepsAllocator()
+	);
+	recv_resp.reset();
 
 	if (mask) {
 		HEL_CHECK(helSyscall2_3(
@@ -1239,8 +1302,7 @@ int Sysdeps<EpollCreate>::operator()(int flags, int *fd) {
 	if (flags & EPOLL_CLOEXEC || flags & O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::EPOLL_CREATE);
+	managarm::posix::EpollCreateRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_flags(proto_flags);
 
 	auto [offer, send_req, recv_resp] = exchangeMsgsSync(
@@ -1254,7 +1316,7 @@ int Sysdeps<EpollCreate>::operator()(int flags, int *fd) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::EpollCreateResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -1265,21 +1327,21 @@ int Sysdeps<EpollCreate>::operator()(int flags, int *fd) {
 int Sysdeps<EpollCtl>::operator()(int epfd, int mode, int fd, struct epoll_event *ev) {
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
+	managarm::posix::EpollCtlRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	if (mode == EPOLL_CTL_ADD) {
 		__ensure(ev);
-		req.set_request_type(managarm::posix::CntReqType::EPOLL_ADD);
+		req.set_op(managarm::posix::EpollCtlOp::EPOLL_ADD);
 		req.set_flags(ev->events);
 		req.set_cookie(ev->data.u64);
 	} else if (mode == EPOLL_CTL_MOD) {
 		__ensure(ev);
-		req.set_request_type(managarm::posix::CntReqType::EPOLL_MODIFY);
+		req.set_op(managarm::posix::EpollCtlOp::EPOLL_MODIFY);
 		req.set_flags(ev->events);
 		req.set_cookie(ev->data.u64);
 	} else if (mode == EPOLL_CTL_DEL) {
-		req.set_request_type(managarm::posix::CntReqType::EPOLL_DELETE);
+		req.set_op(managarm::posix::EpollCtlOp::EPOLL_DELETE);
 	} else {
-		mlibc::panicLogger() << "\e[31mmlibc: Illegal epoll_ctl() mode\e[39m" << frg::endlog;
+		return EINVAL;
 	}
 	req.set_fd(epfd);
 	req.set_newfd(fd);
@@ -1295,7 +1357,7 @@ int Sysdeps<EpollCtl>::operator()(int epfd, int mode, int fd, struct epoll_event
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::EpollCtlResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -1311,8 +1373,7 @@ int Sysdeps<EpollPwait>::operator()(
 
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::EPOLL_WAIT);
+	managarm::posix::EpollWaitRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_fd(epfd);
 	req.set_size(n);
 	req.set_timeout(timeout > 0 ? int64_t{timeout} * 1000000 : timeout);
@@ -1336,7 +1397,7 @@ int Sysdeps<EpollPwait>::operator()(
 	HEL_CHECK(recv_resp.error());
 	HEL_CHECK(recv_data.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::EpollWaitResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -1456,8 +1517,7 @@ int Sysdeps<SignalfdCreate>::operator()(const sigset_t *masks, int flags, int *f
 
 	SignalGuard sguard;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::SIGNALFD_CREATE);
+	managarm::posix::SignalfdCreateRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_flags(proto_flags);
 	req.set_sigset(*reinterpret_cast<const uint64_t *>(masks));
 	req.set_fd(*fd);
@@ -1473,7 +1533,7 @@ int Sysdeps<SignalfdCreate>::operator()(const sigset_t *masks, int flags, int *f
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SignalfdCreateResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -1594,7 +1654,7 @@ int Sysdeps<Reboot>::operator()(int command) {
 	HEL_CHECK(sendReq.error());
 	HEL_CHECK(recvResp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::RebootResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -1626,7 +1686,7 @@ int Sysdeps<InotifyCreate>::operator()(int flags, int *fd) {
 	HEL_CHECK(sendReq.error());
 	HEL_CHECK(recvResp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::InotifyCreateResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -1654,7 +1714,7 @@ int Sysdeps<InotifyAddWatch>::operator()(int ifd, const char *path, uint32_t mas
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::InotifyAddResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -1718,7 +1778,7 @@ int Sysdeps<EventfdCreate>::operator()(unsigned int initval, int flags, int *fd)
 	HEL_CHECK(sendReq.error());
 	HEL_CHECK(recvResp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::EventfdCreateResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -1787,7 +1847,7 @@ int Sysdeps<Openat>::operator()(int dirfd, const char *path, int flags, mode_t m
 	HEL_CHECK(sendTail.error());
 	HEL_CHECK(recvResp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::OpenAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -1816,7 +1876,7 @@ int Sysdeps<Mkfifoat>::operator()(int dirfd, const char *path, mode_t mode) {
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::MkfifoAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -1845,7 +1905,7 @@ int Sysdeps<Mknodat>::operator()(int dirfd, const char *path, int mode, int dev)
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::MknodAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -1865,10 +1925,16 @@ int Sysdeps<Read>::operator()(int fd, void *data, size_t max_size, ssize_t *byte
 	req.set_size(max_size);
 	req.set_cancellation_id(allocateCancellationId());
 
-	auto [offer, send_req, imbue_creds, recv_resp, recv_data] = exchangeMsgsSyncCancellable(
+	auto [offer, send_req, imbue_creds, recv_resp, recv_data] = exchangeMsgsSyncCancelViaLane(
 	    handle,
-	    req.cancellation_id(),
-	    fd,
+	    [&] {
+	        managarm::fs::CancelOperation<SysdepsAllocator> cancelReq(getSysdepsAllocator());
+	        cancelReq.set_cancellation_id(req.cancellation_id());
+	        return helix_ng::offer(
+	            helix_ng::sendBragiHeadOnly(cancelReq, getSysdepsAllocator()),
+	            helix_ng::imbueCredentials()
+	        );
+	    },
 	    helix_ng::offer(
 	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
 	        helix_ng::imbueCredentials(),
@@ -2134,7 +2200,7 @@ int Sysdeps<Close>::operator()(int fd) {
 	HEL_CHECK(sendReq.error());
 	HEL_CHECK(recvResp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::CloseResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 
 	return resp.error() | toErrno;
@@ -2149,8 +2215,7 @@ int Sysdeps<Dup>::operator()(int fd, int flags, int *newfd) {
 	if (flags & O_CLOEXEC)
 		proto_flags |= managarm::posix::OpenFlags::OF_CLOEXEC;
 
-	managarm::posix::CntRequest<SysdepsAllocator> req(getSysdepsAllocator());
-	req.set_request_type(managarm::posix::CntReqType::DUP);
+	managarm::posix::DupRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_fd(fd);
 	req.set_flags(proto_flags);
 
@@ -2165,7 +2230,7 @@ int Sysdeps<Dup>::operator()(int fd, int flags, int *newfd) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::DupResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -2210,7 +2275,7 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int f
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::FstatAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -2294,7 +2359,7 @@ int Sysdeps<Statx>::operator()(int dirfd, const char *pathname, int flags, unsig
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::FstatAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -2349,6 +2414,7 @@ int Sysdeps<Statx>::operator()(int dirfd, const char *pathname, int flags, unsig
 		statxbuf->stx_blocks = resp.file_size() / 512 + 1;
 		statxbuf->stx_attributes = resp.statx_attr();
 		statxbuf->stx_attributes_mask = resp.statx_attr_mask();
+		statxbuf->stx_mnt_id = resp.mount_id();
 		return 0;
 	}
 }
@@ -2377,7 +2443,7 @@ int Sysdeps<Readlinkat>::operator()(int dirfd, const char *path, void *data, siz
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::ReadlinkAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -2404,7 +2470,7 @@ int Sysdeps<Rmdir>::operator()(const char *path) {
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::RmdirResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -2489,7 +2555,7 @@ int Sysdeps<Unlinkat>::operator()(int fd, const char *path, int flags) {
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::UnlinkAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -2519,7 +2585,7 @@ int Sysdeps<Faccessat>::operator()(int dirfd, const char *pathname, int, int fla
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::AccessAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -2549,9 +2615,9 @@ int Sysdeps<Flock>::operator()(int fd, int opts) {
 	HEL_CHECK(send_req.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::fs::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	if (resp.error() != managarm::posix::Errors::SUCCESS)
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
 		return resp.error() | toErrno;
 
 	return 0;
@@ -2574,7 +2640,7 @@ int Sysdeps<Isatty>::operator()(int fd) {
 	HEL_CHECK(sendReq.error());
 	HEL_CHECK(recvResp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::IsTtyResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recvResp.data(), recvResp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -2611,7 +2677,7 @@ int Sysdeps<Fchmodat>::operator()(int fd, const char *pathname, mode_t mode, int
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::FchmodAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -2705,7 +2771,7 @@ int Sysdeps<Utimensat>::operator()(int dirfd, const char *pathname, const struct
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::UtimensAtResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
@@ -2764,7 +2830,7 @@ int Sysdeps<MemfdCreate>::operator()(const char *name, int flags, int *fd) {
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::MemFdCreateResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;

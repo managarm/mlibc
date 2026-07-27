@@ -20,9 +20,9 @@ extern "C" {
 
 #define IPC_PRIVATE ((key_t) 0)
 
-#if defined(__aarch64__) || defined(__i386__) || defined(__m68k__)
+#if defined(__i386__) || defined(__m68k__)
 #define IPC_64 0x100
-#elif defined(__x86_64__) || (defined(__riscv) && __riscv_xlen == 64) || defined(__loongarch64)
+#elif defined(__x86_64__) || (defined(__riscv) && __riscv_xlen == 64) || defined(__loongarch64) || defined(__aarch64__)
 #define IPC_64 0
 #else
 #error "Unsupported arch!"
@@ -30,7 +30,7 @@ extern "C" {
 
 typedef int key_t;
 
-struct ipc64_perm {
+struct ipc_perm {
 	key_t __ipc_perm_key;
 	uid_t uid;
 	gid_t gid;
@@ -41,7 +41,7 @@ struct ipc64_perm {
 	long __unused[2];
 };
 
-#define ipc_perm ipc64_perm
+#define ipc64_perm ipc_perm
 
 #ifdef __cplusplus
 }

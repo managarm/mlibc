@@ -299,9 +299,30 @@ int setgroups(size_t size, const gid_t *list) {
 	return 0;
 }
 
-int initgroups(const char *, gid_t) {
-	mlibc::infoLogger() << "mlibc: initgroups is a stub" << frg::endlog;
-	return 0;
+int initgroups(const char *user, gid_t gid) {
+	int ngroups = 32;
+	gid_t *groups = static_cast<gid_t *>(malloc(sizeof(gid_t) * ngroups));
+	if(!groups) {
+		errno = ENOMEM;
+		return -1;
+	}
+	if(getgrouplist(user, gid, groups, &ngroups) < 0) {
+		// Resize if it doesn't fit.
+		gid_t *resized = static_cast<gid_t *>(realloc(groups, sizeof(gid_t) * ngroups));
+		if(!resized) {
+			free(groups);
+			errno = ENOMEM;
+			return -1;
+		}
+		groups = resized;
+		if(getgrouplist(user, gid, groups, &ngroups) < 0) {
+			free(groups);
+			return -1;
+		}
+	}
+	int ret = setgroups(static_cast<size_t>(ngroups), groups);
+	free(groups);
+	return ret;
 }
 
 int putgrent(const struct group *g, FILE *f) {

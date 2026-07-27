@@ -123,6 +123,10 @@ if not no_headers
 	)
 endif
 
+if fs.is_dir(host_machine.cpu_family())
+	subdir(host_machine.cpu_family())
+endif
+
 if not headers_only
 	c_compiler = meson.get_compiler('c')
 

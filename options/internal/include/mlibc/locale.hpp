@@ -170,6 +170,10 @@ struct nl_ctype : nl_category<LC_CTYPE, _NL_NUM_LC_CTYPE> {
 		return get(_NL_CTYPE_MAP_OFFSET).asUint32();
 	}
 
+	frg::string_view codeset() {
+		return get(_NL_CTYPE_CODESET_NAME).asString();
+	}
+
 	frg::span<const uint8_t> data;
 	frg::span<const uint32_t> offsets;
 };

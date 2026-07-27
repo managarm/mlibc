@@ -30,6 +30,8 @@ struct utmpx {
 #define e_exit __e_exit
 #define e_termination __e_termination
 
+#define ut_name ut_user
+
 #define UTMPX_FILE "/var/run/utmp"
 #define WTMPX_FILE "/var/log/wtmp"
 

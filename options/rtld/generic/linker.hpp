@@ -78,6 +78,9 @@ struct ObjectRepository {
 
 	SharedObject *findLoadedObject(frg::string_view name);
 
+	// Finds a loaded object by the device/inode of its backing file.
+	SharedObject *findObjectByFileId(dev_t dev, ino_t ino);
+
 	void addObjectToDestructQueue(SharedObject *object);
 	void destructObjects();
 
@@ -162,6 +165,11 @@ struct SharedObject {
 	frg::string<MemoryAllocator> path;
 	frg::string<MemoryAllocator> interpreterPath;
 	const char *soName;
+
+	dev_t fileDev = 0;
+	ino_t fileIno = 0;
+	bool hasFileId = false;
+
 	bool isMainObject;
 	uint64_t objectRts;
 
@@ -500,7 +508,8 @@ public:
 
 private:
 	void _buildLinkBfs(SharedObject *root);
-	void _buildTlsMaps();
+	size_t _buildTlsMaps();
+	void _publishTlsMaps(size_t previousSize);
 
 	void _processStaticRelocations(SharedObject *object);
 	void _processLazyRelocations(SharedObject *object);

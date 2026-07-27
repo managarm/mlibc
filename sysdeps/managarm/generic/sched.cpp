@@ -42,7 +42,7 @@ int Sysdeps<GetThreadaffinity>::operator()(pid_t tid, size_t cpusetsize, cpu_set
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::GetAffinityResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 	if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
@@ -84,7 +84,7 @@ int Sysdeps<SetThreadaffinity>::operator()(pid_t tid, size_t cpusetsize, const c
 	HEL_CHECK(send_tail.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::SetAffinityResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 
 	if (resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {

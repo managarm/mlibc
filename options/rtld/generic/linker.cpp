@@ -63,6 +63,11 @@ extern "C" size_t __fini_array_start[];
 extern "C" size_t __fini_array_end[];
 extern "C" size_t __preinit_array_start[];
 extern "C" size_t __preinit_array_end[];
+
+extern "C" const elf_rela __rela_iplt_start[] __attribute__((weak));
+extern "C" const elf_rela __rela_iplt_end[] __attribute__((weak));
+extern "C" const elf_rel __rel_iplt_start[] __attribute__((weak));
+extern "C" const elf_rel __rel_iplt_end[] __attribute__((weak));
 #endif
 
 size_t tlsMaxAlignment = 16;
@@ -169,6 +174,16 @@ bool tryReadExactly(int fd, void *data, size_t length) {
 void closeOrDie(int fd) {
 	if(mlibc::sysdep<Close>(fd))
 		__ensure(!"sys_close() failed");
+}
+
+// On sysdeps that do not implement `Stat` objects are deduplicated by name alone.
+bool tryFileId(int fd, dev_t *dev, ino_t *ino) {
+	struct stat st;
+	if (mlibc::sysdep_or_enosys<Stat>(mlibc::fsfd_target::fd, fd, "", 0, &st))
+		return false;
+	*dev = st.st_dev;
+	*ino = st.st_ino;
+	return true;
 }
 
 uintptr_t alignUp(uintptr_t address, size_t align) {
@@ -399,8 +414,12 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath
 	if (lastSlash != static_cast<size_t>(-1))
 		name = name.sub_string(lastSlash + 1, path.size() - (lastSlash + 1));
 
-	if (auto obj = findLoadedObject(name))
-		return obj;
+	for (auto obj : loadedObjects) {
+		if (frg::string_view{obj->path} == path)
+			return obj;
+		if (obj->soName && name == obj->soName)
+			return obj;
+	}
 
 	if (createScope) {
 		__ensure(localScope == nullptr);
@@ -421,6 +440,18 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath
 		frg::destruct(getAllocator(), object);
 		return LinkerError::notFound;
 	}
+
+	// A different path can still resolve to an already-loaded object. Deduplicate on the file's device/inode.
+	dev_t dev;
+	ino_t ino;
+	if (tryFileId(fd, &dev, &ino)) {
+		if (auto existing = findObjectByFileId(dev, ino)) {
+			closeOrDie(fd);
+			frg::destruct(getAllocator(), object);
+			return existing;
+		}
+	}
+
 	auto result = _fetchFromFile(object, fd);
 	closeOrDie(fd);
 	if(!result) {
@@ -470,7 +501,15 @@ SharedObject *ObjectRepository::findLoadedObject(frg::string_view name) {
 			return object;
 	}
 
-	// TODO: We should also look at the device and inode here as a fallback.
+	return nullptr;
+}
+
+SharedObject *ObjectRepository::findObjectByFileId(dev_t dev, ino_t ino) {
+	for (auto object : loadedObjects) {
+		if (object->hasFileId && object->fileDev == dev && object->fileIno == ino)
+			return object;
+	}
+
 	return nullptr;
 }
 
@@ -549,6 +588,9 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 
 frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *object, int fd) {
 	__ensure(!object->isMainObject);
+
+	if (tryFileId(fd, &object->fileDev, &object->fileIno))
+		object->hasFileId = true;
 
 	// read the elf file header
 	elf_ehdr ehdr;
@@ -1431,6 +1473,7 @@ Tcb *allocateTcb() {
 	tcb_ptr->didExit = 0;
 	tcb_ptr->isJoinable = 1;
 	memset(&tcb_ptr->returnValue, 0, sizeof(tcb_ptr->returnValue));
+	tcb_ptr->cxaThreadExitHandlers = nullptr;
 	tcb_ptr->localKeys = frg::construct<frg::array<Tcb::LocalKey, PTHREAD_KEYS_MAX>>(getAllocator());
 	tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
 	tcb_ptr->dtvPointers = frg::construct_n<void *>(getAllocator(), runtimeTlsMap->indices.size());
@@ -1766,7 +1809,7 @@ void Loader::_buildLinkBfs(SharedObject *root) {
 
 void Loader::linkObjects(SharedObject *root) {
 	_buildLinkBfs(root);
-	_buildTlsMaps();
+	auto previousTlsMapSize = _buildTlsMaps();
 
 	// Promote objects to the desired scope.
 	for(auto object : _linkBfs) {
@@ -1794,6 +1837,10 @@ void Loader::linkObjects(SharedObject *root) {
 		_processLazyRelocations(object);
 	}
 
+	// TLS images can contain relocations themselves. Publish their DTV entries only
+	// after those relocations have been applied.
+	_publishTlsMaps(previousTlsMapSize);
+
 	// Process copy relocations.
 	for(auto object : _linkBfs) {
 		if(!object->isMainObject)
@@ -1808,6 +1855,26 @@ void Loader::linkObjects(SharedObject *root) {
 
 		processLateRelocations(object);
 	}
+
+#if MLIBC_STATIC_BUILD
+	if (root->isMainObject) {
+		if (__rela_iplt_start && __rela_iplt_end) {
+			for (const elf_rela *r = __rela_iplt_start; r < __rela_iplt_end; r++) {
+				Relocation rel{root, const_cast<elf_rela *>(r)};
+				__ensure(rel.type() == R_IRELATIVE);
+				rel.relocate(handleIfunc(rel.object()->baseAddress + rel.addend_rel()));
+			}
+		}
+
+		if (__rel_iplt_start && __rel_iplt_end) {
+			for (const elf_rel *r = __rel_iplt_start; r < __rel_iplt_end; r++) {
+				Relocation rel{root, const_cast<elf_rel *>(r)};
+				__ensure(rel.type() == R_IRELATIVE);
+				rel.relocate(handleIfunc(rel.object()->baseAddress + rel.addend_rel()));
+			}
+		}
+	}
+#endif
 
 	for(auto object : _linkBfs) {
 		object->wasLinked = true;
@@ -1826,8 +1893,9 @@ void Loader::linkObjects(SharedObject *root) {
 	}
 }
 
-void Loader::_buildTlsMaps() {
+size_t Loader::_buildTlsMaps() {
 	frg::unique_lock lock{*runtimeTlsMapLock};
+	auto previousSize = runtimeTlsMap->indices.size();
 
 	if(_isInitialLink) {
 		__ensure(runtimeTlsMap->initialPtr == 0);
@@ -1922,47 +1990,61 @@ void Loader::_buildTlsMaps() {
 		}
 	}
 
-	size_t new_size = runtimeTlsMap->indices.size();
+	return previousSize;
+}
+
+void Loader::_publishTlsMaps(size_t previousSize) {
+	frg::unique_lock lock{*runtimeTlsMapLock};
+	size_t newSize = runtimeTlsMap->indices.size();
 
 	for (auto tcb : runtimeTlsMap->tcbs) {
 		if (tcb->didExit)
 			continue;
 
 		size_t size = __atomic_load_n(&tcb->dtvSize, __ATOMIC_ACQUIRE);
-		if (new_size > size) {
-			void **ndtv = frg::construct_n<void *>(getAllocator(), new_size);
-			void **pointers = __atomic_load_n(&tcb->dtvPointers, __ATOMIC_ACQUIRE);
+		void **pointers = __atomic_load_n(&tcb->dtvPointers, __ATOMIC_ACQUIRE);
+		if (newSize > size) {
+			void **ndtv = frg::construct_n<void *>(getAllocator(), newSize);
 			memcpy(ndtv, pointers, sizeof(void *) * size);
-			memset(ndtv + size, 0, sizeof(void *) * (new_size - size));
+			memset(ndtv + size, 0, sizeof(void *) * (newSize - size));
+			pointers = ndtv;
+		}
 
-			for (size_t i = size; i < new_size; i++) {
-				auto object = runtimeTlsMap->indices[i];
-				if (object->tlsModel == TlsModel::dynamic) {
-					auto buffer = getAllocator().allocate(object->tlsSegmentSize);
+		// A TCB can be allocated after _buildTlsMaps() but before this function.
+		// Refresh all newly assigned slots so such a TCB does not retain an
+		// unrelocated copy of the TLS image.
+		for (size_t i = previousSize; i < newSize; i++) {
+			auto object = runtimeTlsMap->indices[i];
+			if (object->tlsModel == TlsModel::dynamic) {
+				auto buffer = pointers[i];
+				if (!buffer) {
+					buffer = getAllocator().allocate(object->tlsSegmentSize);
 					__ensure(!(reinterpret_cast<uintptr_t>(buffer) & (object->tlsAlignment - 1)));
-					memset(buffer, 0, object->tlsSegmentSize);
-					memcpy(buffer, object->tlsImagePtr, object->tlsImageSize);
-					ndtv[i] = buffer;
-				} else if (object->tlsModel == TlsModel::initial) {
-					char *tls_ptr;
-					if constexpr (tlsAboveTp) {
-						tls_ptr = reinterpret_cast<char *>(tcb) + sizeof(Tcb) + object->tlsOffset;
-					} else {
-						tls_ptr = reinterpret_cast<char *>(tcb) + object->tlsOffset;
-					}
-					ndtv[i] = tls_ptr;
-
-					// Initialize the TLS segment for this thread as well.
-					memset(tls_ptr, 0, object->tlsSegmentSize);
-					memcpy(tls_ptr, object->tlsImagePtr, object->tlsImageSize);
+					pointers[i] = buffer;
 				}
-			}
+				memset(buffer, 0, object->tlsSegmentSize);
+				memcpy(buffer, object->tlsImagePtr, object->tlsImageSize);
+			} else if (object->tlsModel == TlsModel::initial) {
+				char *tls_ptr;
+				if constexpr (tlsAboveTp) {
+					tls_ptr = reinterpret_cast<char *>(tcb) + sizeof(Tcb) + object->tlsOffset;
+				} else {
+					tls_ptr = reinterpret_cast<char *>(tcb) + object->tlsOffset;
+				}
+				pointers[i] = tls_ptr;
 
+				// Initialize the TLS segment for this thread as well.
+				memset(tls_ptr, 0, object->tlsSegmentSize);
+				memcpy(tls_ptr, object->tlsImagePtr, object->tlsImageSize);
+			}
+		}
+
+		if (newSize > size) {
 			// Note: We intentionally leak the old `dtvPointers` array here. Since other threads
 			// can concurrently access their own TCB's `dtvPointers` lock-free, freeing the old
 			// array immediately would lead to use-after-free races.
-			__atomic_store_n(&tcb->dtvPointers, ndtv, __ATOMIC_RELEASE);
-			__atomic_store_n(&tcb->dtvSize, new_size, __ATOMIC_RELEASE);
+			__atomic_store_n(&tcb->dtvPointers, pointers, __ATOMIC_RELEASE);
+			__atomic_store_n(&tcb->dtvSize, newSize, __ATOMIC_RELEASE);
 		}
 	}
 }
@@ -2166,8 +2248,6 @@ void Loader::_processRelocations(Relocation &rel) {
 				uint64_t value = symValue + target->tlsOffset + tlsOffsetFromTp + rel.addend_norel();
 				((uint64_t *)rel.destination())[1] = value;
 			} else {
-				__ensure(target->tlsIndex < mlibc::get_current_tcb()->dtvSize);
-
 				// TODO: We should free this when the DSO gets destroyed
 				auto data = frg::construct<TlsdescData>(getAllocator());
 				data->tlsIndex = target->tlsIndex;
@@ -2379,8 +2459,6 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 				uint64_t value = symValue + target->tlsOffset + tlsOffsetFromTp + addend;
 				((uint64_t *)rel_addr)[1] = value;
 			} else {
-				__ensure(target->tlsIndex < mlibc::get_current_tcb()->dtvSize);
-
 				// TODO: We should free this when the DSO gets destroyed
 				auto data = frg::construct<TlsdescData>(getAllocator());
 				data->tlsIndex = target->tlsIndex;

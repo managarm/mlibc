@@ -7,8 +7,8 @@
 __mlibc_do_asm_cp_syscall:
 	movem.l %d2-%d5, -(%sp)
 	jbsr __m68k_read_tp@PLTPC
-	/* cancelBits is at TP - 0x7030; LSB at -0x702d */
-	move.b -0x702d(%a0), %d0
+	/* cancelBits is at TP - 0x7034; LSB at -0x7031 */
+	move.b -0x7031(%a0), %d0
 __mlibc_syscall_begin:
 	/* tcbCancelEnableBit && tcbCancelTriggerBit */
 	andi.b #0x5, %d0

@@ -38,7 +38,7 @@ namespace {
 	thread_local __mlibc_mbstate mblen_state = __MLIBC_MBSTATE_INITIALIZER;
 	thread_local __mlibc_mbstate mbtowc_state = __MLIBC_MBSTATE_INITIALIZER;
 
-	__mlibc_mutex exit_mutex = __MLIBC_THREAD_MUTEX_INITIALIZER;
+	__mlibc_mutex exit_mutex{};
 } // namespace
 
 double atof(const char *string) {
@@ -200,7 +200,7 @@ int atexit(void (*func)(void)) {
 namespace {
 
 frg::vector<void (*)(void), MemoryAllocator> quickExitQueue{getAllocator()};
-__mlibc_mutex quickExitQueueMutex = __MLIBC_THREAD_MUTEX_INITIALIZER;
+__mlibc_mutex quickExitQueueMutex{};
 
 } // namespace
 

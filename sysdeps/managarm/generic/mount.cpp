@@ -36,7 +36,7 @@ int Sysdeps<Mount>::operator()(const char *source, const char *target, const cha
 	HEL_CHECK(recv_resp.error());
 
 	auto resp =
-	    *bragi::parse_head_only<managarm::posix::SvrResponse>(recv_resp, getSysdepsAllocator());
+	    *bragi::parse_head_only<managarm::posix::MountResponse>(recv_resp, getSysdepsAllocator());
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
 

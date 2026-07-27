@@ -52,6 +52,7 @@ if cross_libc_ld_prefix == '' or build_machine.cpu_family() == host_machine.cpu_
 endif
 
 libgcc_dependency = get_option('libgcc_dependency')
+ifuncs_supported = false
 internal_conf = configuration_data()
 mlibc_conf = configuration_data()
 
@@ -64,6 +65,22 @@ if not headers_only
 	if cpp_compiler.get_id() == 'gcc' and not cpp_compiler.version().version_compare('>=13.1.0')
 		error('GCC version 13 or higher is required; found version ' + cpp_compiler.version())
 	endif
+
+	ifunc_check = '''
+	void my_func_impl() {}
+
+	extern "C" void (*resolver())() {
+		return my_func_impl;
+	}
+
+	void my_func() __attribute__((ifunc("resolver")));
+
+	int main() {
+		return 0;
+	}
+	'''
+
+	ifuncs_supported = cpp_compiler.compiles(ifunc_check, name: 'C++ compiler supports ifunc')
 
 	target_triple = run_command(c_compiler.cmd_array(), '-dumpmachine', check: true).stdout()
 	use_freestnd_hdrs = get_option('use_freestnd_hdrs').disable_auto_if(
@@ -218,6 +235,7 @@ internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', false)
 internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', false)
 internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', false)
 internal_conf.set10('MLIBC_DEBUG_ALLOCATOR', get_option('debug_allocator'))
+internal_conf.set10('MLIBC_IFUNCS_SUPPORTED', ifuncs_supported)
 
 #----------------------------------------------------------------------------------------
 # Configuration based on sysdeps.
@@ -290,10 +308,6 @@ elif host_machine.system() == 'zinnia'
 	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/zinnia')
-elif host_machine.system() == 'nyaux'
-	rtld_include_dirs += include_directories('sysdeps/nyaux/include')
-	libc_include_dirs += include_directories('sysdeps/nyaux/include')
-	subdir('sysdeps/nyaux')
 elif host_machine.system() == 'piggy'
 	rtld_include_dirs += include_directories('sysdeps/piggy/include')
 	libc_include_dirs += include_directories('sysdeps/piggy/include')
@@ -301,6 +315,13 @@ elif host_machine.system() == 'piggy'
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
 	subdir('sysdeps/piggy')
+elif host_machine.system() == 'ethereal'
+	rtld_include_dirs += include_directories('sysdeps/ethereal/include')
+	libc_include_dirs += include_directories('sysdeps/ethereal/include')
+	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
+	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', false)
+	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
+	subdir('sysdeps/ethereal')
 # ANCHOR: demo-sysdeps
 elif host_machine.system() == 'demo'
 	subdir('sysdeps/demo')
@@ -525,6 +546,10 @@ if not no_headers
 		'options/internal/include/bits/getopt.h',
 		'options/internal/include/bits/reclen_t.h',
 		'options/internal/include/bits/timeval.h',
+		'options/internal/include/bits/pthread_types.h',
+		'options/internal/include/bits/pthread_attr_t.h',
+		'options/internal/include/bits/pthread_sizes.h',
+		'options/internal/include/bits/sysmacros.h',
 		subdir: 'bits'
 	)
 endif
@@ -545,6 +570,9 @@ rtld_sources += [
 ]
 
 rtld_dso_sources += ['options/rtld' / host_machine.cpu_family() / 'entry.S']
+
+ld_cpp_args = []
+libc_cpp_args = []
 
 subdir('options/elf')
 subdir('options/ansi')
@@ -578,7 +606,7 @@ if not headers_only
 		rtlib_deps += libgcc
 	endif
 
-	ld_cpp_args = [
+	ld_cpp_args += [
 		'-fvisibility=hidden',
 		'-fvisibility-inlines-hidden',
 		'-fno-stack-protector',
@@ -587,7 +615,7 @@ if not headers_only
 		'-Wno-unknown-pragmas',
 	] + mlibc_c_args
 
-	libc_cpp_args = [
+	libc_cpp_args += [
 		'-Wno-unknown-pragmas',
 		'-DFRG_HAVE_LIBC',
 	] + mlibc_c_args
@@ -687,6 +715,7 @@ summary(summary_info, bool_yn: true, section: 'mlibc options')
 
 if build_tests
 	subdir('tests/')
+	subdir('benchmarks/')
 endif
 
 hdoc = find_program('hdoc', required: false)

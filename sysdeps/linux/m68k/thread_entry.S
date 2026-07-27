@@ -7,7 +7,6 @@ __mlibc_spawn_thread:
 
 	move.l #120, %d0
 	movem.l 20(%sp), %d1-%d5
-	addi.l #0x7048, %d5
 	trap #0
 
 	tst.l %d0
@@ -21,4 +20,3 @@ __mlibc_spawn_thread:
 	illegal
 
 .section .note.GNU-stack,"",%progbits
-

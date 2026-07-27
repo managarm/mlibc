@@ -28,6 +28,8 @@ struct ManagarmSysdepTags :
 	Pipe,
 	SetResuid,
 	SetResgid,
+	GetResuid,
+	GetResgid,
 	SetReuid,
 	SetRegid,
 	Sysinfo,

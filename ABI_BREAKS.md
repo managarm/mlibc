@@ -27,6 +27,19 @@ This document lists the ABI breaks that were made in each mlibc major version.
 - [#1460](https://github.com/managarm/mlibc/pull/1460): `useconds_t` was turned into a 32-bit value, as it only needs to hold microsecond values worth up to a second.
 - [#1492](https://github.com/managarm/mlibc/pull/1492): changes the values of `LC_*` macros and `nl_item` values to match glibc, so that glibc locale files can be consumed.
 - [#1492](https://github.com/managarm/mlibc/pull/1492): fix `struct epoll_event` alignment on x86
+- [#1544](https://github.com/managarm/mlibc/pull/1544): extend `jmp_buf` so that it matches the definition of `sigjmp_buf`
+- [#1621](https://github.com/managarm/mlibc/pull/1621): make `sigaction->sa_flags` an `int` as per POSIX
+- [#1647](https://github.com/managarm/mlibc/pull/1647): all `_PC_*` constants are aligned to Linux kernel ABI
+- [#1743](https://github.com/managarm/mlibc/pull/1743): change the value of `math_errhandling` from `MATH_ERRNO|MATH_ERREXCEPT` to `MATH_ERREXCEPT`, as our libm does not set errno.
+- [#1658](https://github.com/managarm/mlibc/pull/1658): fix incorrect definition of `struct fd_set`
+- [#1818](https://github.com/managarm/mlibc/pull/1818): enforce `HOSTNAME_MAX >= _POSIX_HOST_NAME_MAX`
+- [#1834](https://github.com/managarm/mlibc/pull/1834): fix incorrect calculations in `CMSG_FIRSTHDR` and `CMSG_NXTHDR`
+- [#1832](https://github.com/managarm/mlibc/pull/1832): change the values of `MINSIGSTKSZ` and `SIGSTKSZ` on aarch64 and loongarch64
+- [#1832](https://github.com/managarm/mlibc/pull/1832): bump `SOMAXCONN`, `AF_MAX`, `PF_MAX` and `IPPROTO_MAX` to align with the current Linux numbers
+- [#1678](https://github.com/managarm/mlibc/pull/1678): `struct sched_param` received new reserved members to allow for future expansion.
+- [#1678](https://github.com/managarm/mlibc/pull/1678): various pthread structs changed size and alignment; the public types are opaque now.
+- [#1678](https://github.com/managarm/mlibc/pull/1678): posix_spawn structs are now opaque and heap-allocated.
+- [#1823](https://github.com/managarm/mlibc/pull/1823): have `time_t` be always 64-bit wide
 
 ## Version 6
 

@@ -244,3 +244,5 @@ struct spwd *sgetspent(const char *s) {
 		return &sp;
 	return nullptr;
 }
+
+void setspent(void) {}

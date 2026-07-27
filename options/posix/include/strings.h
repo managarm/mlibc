@@ -22,7 +22,9 @@ int ffsll(long long __i);
 #endif
 
 int strcasecmp(const char *__a, const char *__b);
+int strcasecmp_l(const char *__a, const char *__b, locale_t __locale);
 int strncasecmp(const char *__a, const char *__b, size_t __size);
+int strncasecmp_l(const char *__a, const char *__b, size_t __size, locale_t __locale);
 
 #if defined(_DEFAULT_SOURCE) || (__MLIBC_POSIX1 && !__MLIBC_POSIX2008)
 /* Marked as obsolete in POSIX 2008 but used by at least tracker */

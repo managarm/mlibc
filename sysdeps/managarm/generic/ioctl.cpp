@@ -190,7 +190,7 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 				return EINVAL;
 			HEL_CHECK(recvResp.error());
 
-			managarm::posix::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+			managarm::posix::IoctlFioclexResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recvResp.data(), recvResp.length());
 			__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 			*result = 0;

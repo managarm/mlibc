@@ -20,7 +20,7 @@ namespace {
 } // namespace
 
 wint_t btowc(int c) {
-	if(c == EOF)
+	if(c == EOF || !std::in_range<unsigned char>(c))
 		return WEOF;
 
 	char nc = c;
@@ -90,31 +90,8 @@ size_t mbrtowc(wchar_t *__restrict wcp, const char *__restrict mbs, size_t mb_li
 
 	if(!stp)
 		stp = &mbrtowc_state;
-	if(!mbs) {
-		*stp = __MLIBC_MBSTATE_INITIALIZER;
-		return 0;
-	}
 
-	wchar_t temp = 0;
-	if(!wcp)
-		wcp = &temp;
-
-	mlibc::code_seq<const char> nseq{mbs, mbs + mb_limit};
-	mlibc::code_seq<wchar_t> wseq{wcp, wcp + 1};
-	auto e = cc->decode_wtranscode(nseq, wseq, *stp);
-	if (e == mlibc::transcode_status::input_exhausted || e == mlibc::transcode_status::output_exhausted) {
-		return nseq.it - mbs;
-	} else if (e == mlibc::transcode_status::null_terminator) {
-		*stp = __MLIBC_MBSTATE_INITIALIZER;
-		*wcp = 0;
-		return 0;
-	} else if(e == mlibc::transcode_status::input_underflow) {
-		return static_cast<size_t>(-2);
-	} else {
-		__ensure(e == mlibc::transcode_status::illegal_input);
-		errno = EILSEQ;
-		return static_cast<size_t>(-1);
-	}
+	return mlibc::mbrtowc(wcp, mbs, mb_limit, stp, cc);
 }
 
 size_t wcrtomb(char *__restrict mbs, wchar_t wc, mbstate_t *__restrict stp) {
@@ -123,27 +100,7 @@ size_t wcrtomb(char *__restrict mbs, wchar_t wc, mbstate_t *__restrict stp) {
 	// wcrtomb() always takes a mbstate_t.
 	__ensure(stp);
 
-	// TODO: Implement the following case:
-	__ensure(mbs);
-
-	mlibc::code_seq<const wchar_t> wseq{&wc, &wc + 1};
-	mlibc::code_seq<char> nseq{mbs, mbs + MB_LEN_MAX};
-
-	auto e = cc->encode_wtranscode(nseq, wseq, *stp);
-	if (e == mlibc::transcode_status::input_exhausted) {
-		size_t n = nseq.it - mbs;
-		// If we reached a null terminator, we need to reset mbstate_t
-		*stp = __MLIBC_MBSTATE_INITIALIZER;
-		return n;
-	} else if (e == mlibc::transcode_status::null_terminator) {
-		mbs[0] = '\0';
-		*stp = __MLIBC_MBSTATE_INITIALIZER;
-		return 1;
-	} else {
-		__ensure(e == mlibc::transcode_status::illegal_input);
-		errno = EILSEQ;
-		return static_cast<size_t>(-1);
-	}
+	return mlibc::wcrtomb(mbs, wc, stp, cc);
 }
 
 size_t mbsrtowcs(wchar_t *__restrict wcs, const char **__restrict mbsp, size_t wc_limit, mbstate_t *__restrict stp) {

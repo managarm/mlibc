@@ -17,6 +17,7 @@
 #include <frg/printf.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
+#include <mlibc/charcode.hpp>
 #include <mlibc/ctype.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/file-io.hpp>
@@ -277,7 +278,7 @@ wint_t fgetwc_unlocked(mlibc::abstract_file *f) {
 	if (f->__status_bits & __MLIBC_EOF_BIT)
 		return WEOF;
 
-	mbstate_t state = { };
+	mbstate_t state = __MLIBC_MBSTATE_INITIALIZER;
 	size_t conversion_res = 0;
 	wchar_t wc = L'\0';
 
@@ -294,7 +295,7 @@ wint_t fgetwc_unlocked(mlibc::abstract_file *f) {
 			return WEOF;
 		}
 
-		conversion_res = mbrtowc(&wc, &c, 1, &state);
+		conversion_res = mlibc::mbrtowc(&wc, &c, 1, &state, mlibc::utf8_charcode());
 		if (conversion_res == size_t(-1)) {
 			f->__status_bits |= __MLIBC_ERROR_BIT;
 			errno = EILSEQ;
@@ -316,8 +317,8 @@ wint_t ungetwc_unlocked(wint_t c, mlibc::abstract_file *f) {
 		return WEOF;
 
 	char buf[MB_LEN_MAX];
-	mbstate_t state = { };
-	auto encoding = wcrtomb(buf, static_cast<wchar_t>(c), &state);
+	mbstate_t state = __MLIBC_MBSTATE_INITIALIZER;
+	auto encoding = mlibc::wcrtomb(buf, static_cast<wchar_t>(c), &state, mlibc::utf8_charcode());
 	if (encoding == size_t(-1))
 		return WEOF;
 

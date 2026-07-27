@@ -8,12 +8,18 @@
 
 static void test_detachstate() {
 	pthread_attr_t attr;
+	int ret = pthread_attr_init(&attr);
+	assert(!ret);
+
 	assert(!pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED));
 	int detachstate;
 	assert(!pthread_attr_getdetachstate(&attr, &detachstate));
 	assert(detachstate == PTHREAD_CREATE_DETACHED);
 	assert(pthread_attr_setdetachstate(&attr, 2* (PTHREAD_CREATE_DETACHED +
 				PTHREAD_CREATE_JOINABLE)) == EINVAL);
+
+	ret = pthread_attr_destroy(&attr);
+	assert(!ret);
 }
 
 static void *stacksize_worker(void *arg) {
@@ -30,61 +36,94 @@ static void *stacksize_worker(void *arg) {
 
 static void test_stacksize() {
 	pthread_attr_t attr;
-	assert(!pthread_attr_init(&attr));
+	int ret = pthread_attr_init(&attr);
+	assert(!ret);
+
 	size_t stacksize;
 	assert(!pthread_attr_getstacksize(&attr, &stacksize));
 	assert(!pthread_attr_setstacksize(&attr, stacksize * 2));
 	pthread_t thread;
 	assert(!pthread_create(&thread, &attr, stacksize_worker, &stacksize));
 	assert(!pthread_join(thread, NULL));
+
+	ret = pthread_attr_destroy(&attr);
+	assert(!ret);
 }
 
 static void test_guardsize() {
 	pthread_attr_t attr;
-	assert(!pthread_attr_init(&attr));
+	int ret = pthread_attr_init(&attr);
+	assert(!ret);
 	assert(!pthread_attr_setguardsize(&attr, 0));
 	size_t guardsize;
 	assert(!pthread_attr_getguardsize(&attr, &guardsize));
 	assert(!guardsize);
+	ret = pthread_attr_destroy(&attr);
+	assert(!ret);
 }
 
 static void test_scope() {
 	pthread_attr_t attr;
+	int ret = pthread_attr_init(&attr);
+	assert(!ret);
+
 	assert(!pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM));
 	int scope;
 	assert(!pthread_attr_getscope(&attr, &scope));
 	assert(scope == PTHREAD_SCOPE_SYSTEM);
 	assert(pthread_attr_setscope(&attr, 2* (PTHREAD_SCOPE_SYSTEM +
 				PTHREAD_SCOPE_PROCESS)) == EINVAL);
+
+	ret = pthread_attr_destroy(&attr);
+	assert(!ret);
 }
 
 static void test_inheritsched() {
 	pthread_attr_t attr;
+	int ret = pthread_attr_init(&attr);
+	assert(!ret);
+
 	assert(!pthread_attr_setinheritsched(&attr, PTHREAD_INHERIT_SCHED));
 	int inheritsched;
 	assert(!pthread_attr_getinheritsched(&attr, &inheritsched));
 	assert(inheritsched == PTHREAD_INHERIT_SCHED);
 	assert(pthread_attr_setinheritsched(&attr, 2* (PTHREAD_INHERIT_SCHED +
 				PTHREAD_EXPLICIT_SCHED)) == EINVAL);
+
+	ret = pthread_attr_destroy(&attr);
+	assert(!ret);
 }
 
 static void test_schedparam() {
 	pthread_attr_t attr;
+	int ret = pthread_attr_init(&attr);
+	assert(!ret);
+
 	struct sched_param init_param = {0};
 	assert(!pthread_attr_setschedparam(&attr, &init_param));
-	struct sched_param param = {1};
+	struct sched_param param = {};
+	param.sched_priority = 1;
 	assert(!pthread_attr_getschedparam(&attr, &param));
 	assert(param.sched_priority == init_param.sched_priority);
+
+	ret = pthread_attr_destroy(&attr);
+	assert(!ret);
 }
 
 static void test_schedpolicy() {
 	pthread_attr_t attr;
+	int ret = pthread_attr_init(&attr);
+	assert(!ret);
+
 	assert(!pthread_attr_setschedpolicy(&attr, SCHED_FIFO));
 	int policy;
 	assert(!pthread_attr_getschedpolicy(&attr, &policy));
 	assert(policy == SCHED_FIFO);
 	assert(pthread_attr_setinheritsched(&attr, 2* (SCHED_FIFO + SCHED_RR +
 				SCHED_OTHER)) == EINVAL);
+
+	ret = pthread_attr_destroy(&attr);
+	assert(!ret);
 }
 
 static void *stackaddr_worker(void *arg) {
@@ -115,7 +154,9 @@ static void *stackaddr_worker(void *arg) {
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 static void test_stackaddr() {
 	pthread_attr_t attr;
-	assert(!pthread_attr_init(&attr));
+	int ret = pthread_attr_init(&attr);
+	assert(!ret);
+
 	size_t size;
 	assert(!pthread_attr_getstacksize(&attr, &size));
 	void *addr = mmap(NULL, size, PROT_READ | PROT_WRITE,
@@ -131,12 +172,18 @@ static void test_stackaddr() {
 	pthread_t thread;
 	assert(!pthread_create(&thread, &attr, stackaddr_worker, &addr));
 	assert(!pthread_join(thread, NULL));
+
+	ret = pthread_attr_destroy(&attr);
+	assert(!ret);
 }
 #pragma GCC diagnostic pop
 
 #if (!defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
 static void test_stack() {
 	pthread_attr_t attr;
+	int ret = pthread_attr_init(&attr);
+	assert(!ret);
+
 	void *stackaddr = (void*)1;
 	size_t stacksize = PTHREAD_STACK_MIN;
 
@@ -146,6 +193,9 @@ static void test_stack() {
 	assert(!pthread_attr_getstack(&attr, &new_addr, &new_size));
 	assert(new_addr == stackaddr);
 	assert(new_size == stacksize);
+
+	ret = pthread_attr_destroy(&attr);
+	assert(!ret);
 }
 #endif
 
