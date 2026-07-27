@@ -4,6 +4,7 @@
 
 #include <bits/ensure.h>
 #include <mlibc/allocator.hpp>
+#include <mlibc/file-io.hpp>
 
 #include <frg/eternal.hpp>
 #include <frg/vector.hpp>
@@ -90,4 +91,8 @@ void __mlibc_do_finalize() {
 	// to implement [[gnu::destructor]]. Note that C++ applications will call
 	// __cxa_finalize from here.
 	__dlapi_exit();
+
+	// The standard streams outlive __cxa_finalize(), so flush them here, once
+	// everything that could still write to them has run.
+	mlibc::flush_all_files();
 }
