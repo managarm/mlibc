@@ -147,6 +147,10 @@ void file_dispose_cb(abstract_file *base) {
 	frg::destruct(getAllocator(), static_cast<T *>(base));
 }
 
+// Flushes every open FILE without closing it. Called from __mlibc_do_finalize()
+// after the program's destructors, so that stdio stays usable in them.
+void flush_all_files();
+
 } // namespace mlibc
 
 #endif // MLIBC_FILE_IO_HPP
