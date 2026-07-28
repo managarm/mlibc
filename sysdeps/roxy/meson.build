@@ -9,7 +9,6 @@ rtld_sources += files(
 )
 
 libc_sources += files(
-	'directory.cpp',
 	'entry.cpp',
 	'filesystem.cpp',
 	'ioctl.cpp',
