@@ -62,6 +62,7 @@ struct RoxySysdepTags :
 	Renameat,
 	Sync,
 	Fsync,
+	Ftruncate,
 	Execve,
 	Exit
 {};

@@ -187,4 +187,10 @@ int Sysdeps<Fsync>::operator()(int fd) {
 	return result < 0 ? static_cast<int>(-result) : 0;
 }
 
+int Sysdeps<Ftruncate>::operator()(int fd, size_t size) {
+	auto result = roxy_syscall2(ROXY_SYS_FTRUNCATE, fd, size);
+
+	return result < 0 ? static_cast<int>(-result) : 0;
+}
+
 } // namespace mlibc
