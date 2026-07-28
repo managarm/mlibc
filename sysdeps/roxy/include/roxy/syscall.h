@@ -49,6 +49,14 @@ typedef long roxy_syscall_word_t;
 #define ROXY_SYS_PPOLL 36
 #define ROXY_SYS_PSELECT 37
 #define ROXY_SYS_UNAME 38
+#define ROXY_SYS_MKDIRAT 39
+#define ROXY_SYS_UNLINKAT 40
+#define ROXY_SYS_READLINKAT 41
+#define ROXY_SYS_LINKAT 42
+#define ROXY_SYS_SYMLINKAT 43
+#define ROXY_SYS_RENAMEAT 44
+#define ROXY_SYS_SYNC 45
+#define ROXY_SYS_FSYNC 46
 
 typedef struct {
 	int64_t seconds;
