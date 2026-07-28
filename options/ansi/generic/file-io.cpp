@@ -14,11 +14,13 @@
 
 #include <abi-bits/fcntl.h>
 #include <frg/allocation.hpp>
+#include <frg/manual_box.hpp>
 #include <frg/mutex.hpp>
 #include <frg/scope_exit.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/file-io.hpp>
+#include <mlibc/init-priority.hpp>
 #include <mlibc/lock.hpp>
 #include <mlibc/exit.hpp>
 
@@ -626,27 +628,41 @@ int fd_file::parse_modestring(const char *mode) {
 } // namespace mlibc
 
 namespace {
-	mlibc::fd_file stdin_file{0};
-	mlibc::fd_file stdout_file{1};
-	mlibc::fd_file stderr_file{2, nullptr, true};
+	// Never destroyed: manual_box is trivially destructible, so __cxa_finalize()
+	// cannot tear the streams down while [[gnu::destructor]] functions may still
+	// use them. mlibc::flush_all_files() flushes them at exit.
+	constinit frg::manual_box<mlibc::fd_file> stdin_box;
+	constinit frg::manual_box<mlibc::fd_file> stdout_box;
+	constinit frg::manual_box<mlibc::fd_file> stderr_box;
 
-	struct stdio_guard {
-		stdio_guard() { }
+	[[gnu::constructor(MLIBC_INIT_PRIORITY_STDIO)]]
+	void init_stdio() {
+		stdin_box.initialize(0);
+		stdout_box.initialize(1);
+		stderr_box.initialize(2, nullptr, true);
 
-		~stdio_guard() {
-			// Only flush the files but do not close them.
-			for(auto it : mlibc::global_file_list()) {
-				if(int e = it->flush(); e && !mlibc::processIsExiting.load(std::memory_order_relaxed))
-					mlibc::infoLogger() << "mlibc warning: Failed to flush file before exit()"
-							<< frg::endlog;
-			}
-		}
-	} global_stdio_guard;
+		stdin = stdin_box.get();
+		stdout = stdout_box.get();
+		stderr = stderr_box.get();
+	}
 } // namespace
 
-FILE *stderr = &stderr_file;
-FILE *stdin = &stdin_file;
-FILE *stdout = &stdout_file;
+FILE *stderr;
+FILE *stdin;
+FILE *stdout;
+
+namespace mlibc {
+
+void flush_all_files() {
+	// Only flush the files but do not close them.
+	for(auto it : global_file_list()) {
+		if(int e = it->flush(); e && !processIsExiting.load(std::memory_order_relaxed))
+			infoLogger() << "mlibc warning: Failed to flush file before exit()"
+					<< frg::endlog;
+	}
+}
+
+} // namespace mlibc
 
 int fileno_unlocked(FILE *file_base) {
 	auto file = static_cast<mlibc::fd_file *>(file_base);

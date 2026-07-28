@@ -25,6 +25,7 @@ all_test_cases = [
 	'ansi/tz',
 	'ansi/ungetc',
 	'ansi/fopen',
+	'ansi/init-fini-order',
 	'ansi/creal-cimag',
 	'ansi/fenv',
 	'ansi/qsort',

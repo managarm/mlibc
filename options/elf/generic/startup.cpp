@@ -7,6 +7,7 @@
 #include <bits/ensure.h>
 #include <mlibc/elf/startup.h>
 #include <mlibc/environment.hpp>
+#include <mlibc/init-priority.hpp>
 #include <mlibc/rtld-config.hpp>
 #include <mlibc/debug.hpp>
 
@@ -31,7 +32,7 @@ namespace mlibc {
 
 exec_stack_data entry_stack;
 
-[[gnu::constructor]]
+[[gnu::constructor(MLIBC_INIT_PRIORITY_STARTUP)]]
 void init_libc() {
 	mlibc::parse_exec_stack(__dlapi_entrystack(), &entry_stack);
 	mlibc::set_startup_data(entry_stack.argc, entry_stack.argv, entry_stack.envp);

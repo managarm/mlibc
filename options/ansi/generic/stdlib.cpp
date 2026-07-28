@@ -199,14 +199,30 @@ int atexit(void (*func)(void)) {
 
 namespace {
 
-frg::vector<void (*)(void), MemoryAllocator> quickExitQueue{getAllocator()};
+using QuickExitQueue = frg::vector<void (*)(void), MemoryAllocator>;
+
+// Wrapper so that lazy_eternal, which default-constructs, can pass the
+// allocator. Same pattern as the exit queue in options/lsb/generic/dso_exit.cpp.
+struct QuickExitQueueWrapper {
+	QuickExitQueueWrapper() : queue{getAllocator()} { }
+	QuickExitQueue queue;
+};
+
+// Built on first use: initialising from .init_array would run after the
+// program's constructors, so at_quick_exit() from one faulted on a null allocator.
+constinit mlibc::lazy_eternal<QuickExitQueueWrapper> quickExitQueueInstance;
+
+QuickExitQueue &quickExitQueue() {
+	return quickExitQueueInstance.get().queue;
+}
+
 __mlibc_mutex quickExitQueueMutex{};
 
 } // namespace
 
 int at_quick_exit(void (*func)(void)) {
 	mlibc::thread_mutex_lock(&quickExitQueueMutex);
-	quickExitQueue.push(func);
+	quickExitQueue().push(func);
 	mlibc::thread_mutex_unlock(&quickExitQueueMutex);
 
 	return 0;
@@ -231,8 +247,8 @@ void _Exit(int status) {
 void quick_exit(int status) {
 	mlibc::thread_mutex_lock(&quickExitQueueMutex);
 
-	while (!quickExitQueue.empty()) {
-		auto func = quickExitQueue.pop();
+	while (!quickExitQueue().empty()) {
+		auto func = quickExitQueue().pop();
 		func();
 	}
 
