@@ -183,6 +183,10 @@ int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
 	return 0;
 }
 
+int Sysdeps<Uname>::operator()(struct utsname *output) {
+	return syscall_error(roxy_syscall1(ROXY_SYS_UNAME, reinterpret_cast<long>(output)));
+}
+
 int Sysdeps<Isatty>::operator()(int fd) {
 	return syscall_error(roxy_syscall1(ROXY_SYS_ISATTY, fd));
 }

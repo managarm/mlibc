@@ -47,6 +47,7 @@ struct RoxySysdepTags :
 	Poll,
 	Ppoll,
 	Pselect,
+	Uname,
 	Execve,
 	Exit
 {};
