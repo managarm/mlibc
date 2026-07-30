@@ -45,11 +45,11 @@ typedef struct {
 
 typedef struct {
 	int __opaque[__MLIBC_THREAD_ONCE_SIZE / sizeof(int)];
-} pthread_once_t;
+} __attribute__((aligned(4))) pthread_once_t;
 
 typedef struct {
 	int __opaque[__MLIBC_THREAD_SPINLOCK_SIZE / sizeof(int)];
-} pthread_spinlock_t;
+} __attribute__((aligned(4))) pthread_spinlock_t;
 
 #ifdef __cplusplus
 }

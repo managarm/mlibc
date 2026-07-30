@@ -229,7 +229,7 @@ struct __mlibc_once {
 	}
 
 	std::atomic<unsigned int> __mlibc_done = 0;
-};
+} __attribute__((aligned(4)));
 
 struct __mlibc_spinlock {
 	static __mlibc_spinlock *from(pthread_spinlock_t *lock) {
@@ -237,4 +237,4 @@ struct __mlibc_spinlock {
 	}
 
 	std::atomic<unsigned int> __lock = 0;
-};
+} __attribute__((aligned(4)));

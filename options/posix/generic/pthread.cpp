@@ -66,8 +66,12 @@ static_assert(sizeof(__mlibc_fair_rwlock) == sizeof(pthread_rwlock_t));
 static_assert(alignof(__mlibc_fair_rwlock) == sizeof(uintptr_t));
 static_assert(sizeof(__mlibc_fair_rwlock) == __MLIBC_THREAD_RWLOCK_SIZE);
 static_assert(sizeof(__mlibc_once) == sizeof(pthread_once_t));
+static_assert(alignof(__mlibc_once) == 4);
+static_assert(alignof(pthread_once_t) == 4);
 static_assert(sizeof(__mlibc_once) == __MLIBC_THREAD_ONCE_SIZE);
 static_assert(sizeof(__mlibc_spinlock) == sizeof(pthread_spinlock_t));
+static_assert(alignof(__mlibc_spinlock) == 4);
+static_assert(alignof(pthread_spinlock_t) == 4);
 static_assert(sizeof(__mlibc_spinlock) == __MLIBC_THREAD_SPINLOCK_SIZE);
 
 // ----------------------------------------------------------------------------

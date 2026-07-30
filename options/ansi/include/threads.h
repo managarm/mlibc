@@ -29,8 +29,8 @@ enum {
 };
 
 typedef struct {
-	int __opaque[__MLIBC_THREAD_ONCE_SIZE / sizeof(int)];
-} once_flag;
+	char __opaque[__MLIBC_THREAD_ONCE_SIZE];
+} __attribute__((aligned(4))) once_flag;
 
 typedef struct __mlibc_thread_data *thrd_t;
 
