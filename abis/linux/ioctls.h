@@ -1,20 +1,11 @@
 #ifndef _ABIBITS_IOCTLS_H
 #define _ABIBITS_IOCTLS_H
 
-#define TIOCEXCL 0x540C
-#define TIOCNXCL 0x540D
+#include <mlibc-config.h>
 
-#define SIOCPROTOPRIVATE 0x89E0
-#define SIOCGSTAMP 0x8906
-#define SIOCGIFNAME 0x8910
-#define SIOCGIFCONF 0x8912
-#define SIOCGIFFLAGS 0x8913
-#define SIOCSIFFLAGS 0x8914
-#define SIOCGIFADDR 0x8915
-#define SIOCGIFINDEX 0x8933
-#define SIOCATMARK 0x8905
-#define SIOCGIFHWADDR 0x8927
-#define SIOCGIFBRDADDR 0x8919
-#define SIOCGIFNETMASK 0x891B
+#if __MLIBC_LINUX_OPTION
+#include <asm/ioctls.h>
+#include <linux/sockios.h>
+#endif /* __MLIBC_LINUX_OPTION */
 
 #endif /* _ABIBITS_IOCTLS_H */
