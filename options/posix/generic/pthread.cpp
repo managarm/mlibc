@@ -1075,7 +1075,7 @@ int pthread_barrier_wait(pthread_barrier_t *barrier) {
 
 	auto leave = [&]() {
 		unsigned inside = b->__mlibc_inside.fetch_sub(1, std::memory_order_release);
-		if (inside == 0)
+		if (inside == 1)
 			mlibc::sysdep<FutexWake>((int *)&b->__mlibc_inside, true);
 	};
 
