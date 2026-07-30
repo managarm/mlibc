@@ -555,8 +555,9 @@ int Sysdeps<Sigaction>::operator()(int signum, const struct sigaction *act,
 	struct ksigaction kernel_act, kernel_oldact;
 	if (act) {
 		kernel_act.handler = act->sa_handler;
-		kernel_act.flags = act->sa_flags | SA_RESTORER;
+		kernel_act.flags = static_cast<unsigned long>(static_cast<unsigned int>(act->sa_flags));
 #if HAS_SA_RESTORER
+		kernel_act.flags |= SA_RESTORER;
 		kernel_act.restorer = (act->sa_flags & SA_SIGINFO) ? __mlibc_signal_restore_rt : __mlibc_signal_restore;
 #endif
 		memcpy(&kernel_act.mask, &act->sa_mask, sizeof(kernel_act.mask));
