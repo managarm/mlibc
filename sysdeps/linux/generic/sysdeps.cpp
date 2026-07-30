@@ -636,12 +636,12 @@ struct krusage {
 };
 
 int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
-	struct krusage kru;
+	struct krusage kru{};
 	auto ret = do_syscall(SYS_wait4, pid, status, flags, ru ? &kru : nullptr);
 	if (int e = sc_error(ret); e)
-			return e;
+		return e;
 	*ret_pid = sc_int_result<pid_t>(ret);
-	if (ru)
+	if (ru && *ret_pid > 0)
 		*ru = rusage(kru);
 	return 0;
 }
