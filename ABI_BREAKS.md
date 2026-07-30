@@ -41,6 +41,7 @@ This document lists the ABI breaks that were made in each mlibc major version.
 - [#1678](https://github.com/managarm/mlibc/pull/1678): posix_spawn structs are now opaque and heap-allocated.
 - [#1823](https://github.com/managarm/mlibc/pull/1823): have `time_t` be always 64-bit wide
 - [#1841](https://github.com/managarm/mlibc/pull/1841): Force `pthread_{once,spinlock}_t` to 4-byte alignment
+- [#1841](https://github.com/managarm/mlibc/pull/1841): Fix incorrect computation in `CMSG_ALIGN`; this only affected m68k.
 
 ## Version 6
 

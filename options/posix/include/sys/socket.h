@@ -28,7 +28,7 @@ struct sockaddr {
 };
 
 /* Control message format: */
-/* The offsets marked with ^ are aligned to alignof(size_t). */
+/* The offsets marked with ^ are aligned to sizeof(long). */
 /* */
 /* |---HEADER---|---DATA---|---PADDING---|---HEADER---|... */
 /* ^            ^                        ^ */
@@ -37,8 +37,8 @@ struct sockaddr {
 
 /* Auxiliary macro. While there is basically no reason for applications */
 /* to use this, it is exported by glibc. */
-#define __CMSG_ALIGN(s) (((s) + __alignof__(size_t) - 1) & \
-		~(__alignof__(size_t) - 1))
+#define __CMSG_ALIGN(s) (((s) + sizeof(long) - 1) & \
+		~(sizeof(long) - 1))
 
 #if defined(_DEFAULT_SOURCE)
 #define CMSG_ALIGN(s) __CMSG_ALIGN(s)
