@@ -70,9 +70,7 @@ extern "C" {
 __attribute__((__noreturn__)) void siglongjmp(sigjmp_buf buffer, int value) {
 	if (buffer[0].__savesigs)
 		sigprocmask(SIG_SETMASK, &buffer[0].__sigset, nullptr);
-	jmp_buf b;
-	b[0].__reg_state = buffer[0].__reg_state;
-	longjmp(b, value);
+	longjmp(buffer, value);
 }
 
 double strtod(const char *__restrict string, char **__restrict end) {
