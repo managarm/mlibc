@@ -29,6 +29,13 @@ struct __mlibc_threadattr {
 		return std::launder(reinterpret_cast<TargetType *>(s->__heap_ptr));
 	}
 
+	__mlibc_threadattr() = default;
+
+	__mlibc_threadattr(const __mlibc_threadattr &other);
+	__mlibc_threadattr &operator=(const __mlibc_threadattr &other);
+
+	~__mlibc_threadattr();
+
 	size_t __guardsize = default_guardsize;
 
 	void *__stackaddr = nullptr;
