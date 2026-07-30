@@ -119,6 +119,7 @@ struct LinuxSysdepTags :
 	Umask,
 	BeforeCancellableSyscall,
 	Tgkill,
+	Fchown,
 	Fchownat,
 	Sigaltstack,
 	Sigsuspend,

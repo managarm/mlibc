@@ -40,8 +40,14 @@ int fstatat(int dirfd, const char *path, struct stat *result, int flags) {
 }
 
 int futimens(int fd, const struct timespec times[2]) {
+#ifdef AT_EMPTY_PATH
+	if (int e = mlibc::sysdep_or_enosys<Utimensat>(fd, "", times, AT_EMPTY_PATH); e != ENOSYS) {
+		errno = e;
+		return -1;
+	}
+#endif
 
-	if (int e = mlibc::sysdep_or_enosys<Utimensat>(fd, nullptr, times, 0); e) {
+	if (int e = mlibc::sysdep_or_enosys<Futimens>(fd, times); e) {
 		errno = e;
 		return -1;
 	}
