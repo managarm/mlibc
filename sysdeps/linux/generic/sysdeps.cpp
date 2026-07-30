@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
 #include <sys/user.h>
 #include <sys/sem.h>
 #endif // __MLIBC_POSIX_OPTION
@@ -1491,6 +1492,10 @@ int Sysdeps<GetSockopt>::operator()(int fd, int layer, int number, void *__restr
 int Sysdeps<SetSockopt>::operator()(int fd, int layer, int number, const void *buffer, socklen_t size) {
 	int64_t ktimeval[2];
 	if (layer == SOL_SOCKET && (number == SO_RCVTIMEO || number == SO_SNDTIMEO)) {
+		if (size < sizeof(timeval))
+			return EINVAL;
+		if (!buffer)
+			return EFAULT;
 		auto tv = reinterpret_cast<const timeval *>(buffer);
 		ktimeval[0] = tv->tv_sec;
 		ktimeval[1] = tv->tv_usec;
