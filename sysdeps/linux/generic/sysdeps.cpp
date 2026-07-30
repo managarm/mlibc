@@ -25,6 +25,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/dlapi.hpp>
 #include <mlibc/thread-entry.hpp>
+#include <mlibc/thread-types.hpp>
 
 #if __MLIBC_POSIX_OPTION
 #include <net/if.h>
@@ -1885,10 +1886,17 @@ int Sysdeps<TimerCreate>::operator()(clockid_t clk, struct sigevent *__restrict 
 			}
 
 			pthread_attr_t attr;
-			if(evp->sigev_notify_attributes)
-				attr = *evp->sigev_notify_attributes;
-			else
-				pthread_attr_init(&attr);
+			pthread_attr_init(&attr);
+
+			frg::scope_exit destroy_attr{[&] { pthread_attr_destroy(&attr); }};
+
+			if (evp->sigev_notify_attributes) {
+				auto to_attr = __mlibc_threadattr::from(&attr);
+				auto from_attr = __mlibc_threadattr::from(evp->sigev_notify_attributes);
+				if (to_attr && from_attr) {
+					*to_attr = *from_attr;
+				}
+			}
 
 			int ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 			if(ret)
