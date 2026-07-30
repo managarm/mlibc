@@ -14,6 +14,8 @@ Individual operating systems can opt in or out of certain features as desired; f
 
 **Official Discord server:** https://discord.gg/7WB6Ur3
 
+**Official IRC channel:** `#managarm-mlibc` on `irc.libera.chat`. To find other managarm channels, type `/msg alis list managarm`.
+
 **AUR package** (provides `mlibc-gcc`): https://aur.archlinux.org/packages/mlibc
 
 ## Design of the library
