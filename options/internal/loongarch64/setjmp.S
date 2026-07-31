@@ -1,4 +1,5 @@
 #include "mlibc-asm/helpers.h"
+#include "mlibc-asm/jmp_buf.h"
 
 .hidden __setjmp
 .type __setjmp, "function"
@@ -25,6 +26,7 @@ __setjmp:
 	fst.d $fs6, $a0, 152
 	fst.d $fs7, $a0, 160
 	bnez $t1, 1f
+	st.w $zero, $a0, JMP_BUF_SAVESIGS_OFFSET
 	move $a0, $zero
 	ret
 
