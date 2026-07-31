@@ -2,6 +2,9 @@ functions:
   - __errno_location
   - accept4
   - dl_iterate_phdr
+  - madvise
+  - mprotect
+  - msync
   - preadv
   - pwritev
   - recvfrom
@@ -170,6 +173,7 @@ constants:
   - EXDEV
   - EXFULL
   - FIONBIO
+  - MAP_ANON
   - O_ACCMODE
   - O_APPEND
   - O_CLOEXEC
