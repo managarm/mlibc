@@ -4,10 +4,18 @@
 #include <mlibc-config.h>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/thread-types.hpp>
 #include <mlibc/thread.hpp>
 #include <mlibc/threads.hpp>
 #include <threads.h>
 #include <time.h>
+
+static_assert(sizeof(__mlibc_mutex) == sizeof(mtx_t));
+static_assert(alignof(__mlibc_mutex) == alignof(mtx_t));
+static_assert(sizeof(__mlibc_cond) == sizeof(cnd_t));
+static_assert(alignof(__mlibc_cond) == alignof(cnd_t));
+static_assert(sizeof(__mlibc_once) == sizeof(once_flag));
+static_assert(alignof(__mlibc_once) == alignof(once_flag));
 
 void call_once(once_flag *flag, void (*func)(void)) {
 	mlibc::thread_once(__mlibc_once::from(flag), func);

@@ -10,6 +10,7 @@
 #include <sched.h>
 #include <signal.h>
 #include <spawn.h>
+#include <stdarg.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -46,8 +47,20 @@ struct args {
 	int (*exec_fn)(const char *path, char *const argv[], char *const env[]);
 };
 
+int sysdep_fcntl(int fd, int request, ...) {
+	va_list args;
+	int result = 0;
+	va_start(args, request);
+	int e = mlibc::sysdep_or_enosys<Fcntl>(fd, request, args, &result);
+	va_end(args);
+	if (e)
+		return -e;
+	return result;
+}
+
 int child(void *args_vp) {
-	int i, ret;
+	int i;
+	int ret = 0;
 	struct sigaction sa = {};
 	struct args *args = (struct args *)args_vp;
 	int p = args->p[1];
@@ -86,36 +99,47 @@ int child(void *args_vp) {
 	}
 
 	if(flags & POSIX_SPAWN_SETSID) {
-		if((ret = setsid()) < 0)
+		pid_t sid;
+		if(int e = mlibc::sysdep_or_enosys<SetSid>(&sid); e) {
+			ret = e;
 			goto fail;
+		}
 	}
 
 	if(flags & POSIX_SPAWN_SETPGROUP) {
-		if(setpgid(0, attr->__pgrp) == -1) {
-			ret = -errno;
+		if(int e = mlibc::sysdep_or_enosys<SetPgid>(0, attr->__pgrp); e) {
+			ret = e;
 			goto fail;
 		}
 	}
 
 	if (flags & POSIX_SPAWN_SETSCHEDULER) {
-		if (sched_setscheduler(0, attr->__schedpolicy, reinterpret_cast<const sched_param *>(&attr->__schedparam)) == -1) {
-			if (errno != ENOSYS) {
-				ret = -errno;
-				goto fail;
-			}
+		if (int e = mlibc::sysdep_or_enosys<SetScheduler>(
+		        0, attr->__schedpolicy, reinterpret_cast<const sched_param *>(&attr->__schedparam)
+		    );
+		    e && e != ENOSYS) {
+			ret = e;
+			goto fail;
 		}
 	} else if (flags & POSIX_SPAWN_SETSCHEDPARAM) {
-		if (sched_setparam(0, reinterpret_cast<const sched_param *>(&attr->__schedparam)) == -1) {
-			if (errno != ENOSYS) {
-				ret = -errno;
-				goto fail;
-			}
+		if (int e = mlibc::sysdep_or_enosys<SetParam>(
+		        0, reinterpret_cast<const sched_param *>(&attr->__schedparam)
+		    );
+		    e && e != ENOSYS) {
+			ret = e;
+			goto fail;
 		}
 	}
 
 	if(flags & POSIX_SPAWN_RESETIDS) {
-		if((ret = setgid(getgid())) || (ret = setuid(getuid())) )
+		if(int e = mlibc::sysdep_or_enosys<SetGid>(getgid()); e) {
+			ret = e;
 			goto fail;
+		}
+		if(int e = mlibc::sysdep_or_enosys<SetUid>(getuid()); e) {
+			ret = e;
+			goto fail;
+		}
 	}
 
 	if(fa) {
@@ -125,11 +149,13 @@ int child(void *args_vp) {
 			 * parent. To avoid that, we dup the pipe onto
 			 * an unoccupied fd. */
 			if(op.fd == p) {
-				ret = dup(p);
-				if(ret < 0)
+				int newfd;
+				if(int e = mlibc::sysdep_or_enosys<Dup>(p, 0, &newfd); e) {
+					ret = e;
 					goto fail;
+				}
 				close(p);
-				p = ret;
+				p = newfd;
 			}
 			switch(op.cmd) {
 			case FDOP_CLOSE:
@@ -138,40 +164,54 @@ int child(void *args_vp) {
 			case FDOP_DUP2: {
 				int fd = op.srcfd;
 				if(fd == p) {
-					ret = -EBADF;
+					ret = EBADF;
 					goto fail;
 				}
 				if(fd != op.fd) {
-					if((ret = dup2(fd, op.fd)) < 0)
+					if(int e = mlibc::sysdep_or_enosys<Dup2>(fd, 0, op.fd); e) {
+						ret = e;
 						goto fail;
+					}
 				} else {
-					ret = fcntl(fd, F_GETFD);
-					ret = fcntl(fd, F_SETFD, ret & ~FD_CLOEXEC);
-					if(ret < 0)
+					int res = sysdep_fcntl(fd, F_GETFD);
+					if(res < 0) {
+						ret = -res;
 						goto fail;
+					}
+					res = sysdep_fcntl(fd, F_SETFD, res & ~FD_CLOEXEC);
+					if(res < 0) {
+						ret = -res;
+						goto fail;
+					}
 				}
 				break;
 			}
 			case FDOP_OPEN: {
-				int fd = open(op.path.data(), op.oflag, op.mode);
-				if((ret = fd) < 0)
+				int fd;
+				if(int e = mlibc::sysdep_or_enosys<Open>(op.path.data(), op.oflag, op.mode, &fd); e) {
+					ret = e;
 					goto fail;
+				}
 				if(fd != op.fd) {
-					if((ret = dup2(fd, op.fd)) < 0)
+					if(int e = mlibc::sysdep_or_enosys<Dup2>(fd, 0, op.fd); e) {
+						ret = e;
 						goto fail;
+					}
 					close(fd);
 				}
 				break;
 			}
 			case FDOP_CHDIR:
-				ret = chdir(op.path.data());
-				if(ret < 0)
+				if(int e = mlibc::sysdep_or_enosys<Chdir>(op.path.data()); e) {
+					ret = e;
 					goto fail;
+				}
 				break;
 			case FDOP_FCHDIR:
-				ret = fchdir(op.fd);
-				if(ret < 0)
+				if(int e = mlibc::sysdep_or_enosys<Fchdir>(op.fd); e) {
+					ret = e;
 					goto fail;
+				}
 				break;
 			}
 		}
@@ -179,19 +219,23 @@ int child(void *args_vp) {
 
 	/* Close-on-exec flag may have been lost if we moved the pipe
 	 * to a different fd. */
-	fcntl(p, F_SETFD, FD_CLOEXEC);
+	sysdep_fcntl(p, F_SETFD, FD_CLOEXEC);
 
 	pthread_sigmask(SIG_SETMASK, (flags & POSIX_SPAWN_SETSIGMASK)
 		? &attr->__mask : &args->oldmask, nullptr);
 
 	args->exec_fn(args->path, args->argv, args->envp);
-	ret = -errno;
+	ret = errno;
 
 fail:
 	/* Since sizeof errno < PIPE_BUF, the write is atomic. */
-	ret = -ret;
-	if(ret)
-		while(write(p, &ret, sizeof ret) < 0);
+	if(ret) {
+		ssize_t bytes_written = 0;
+		int err;
+		do {
+			err = mlibc::sysdep_or_enosys<Write>(p, &ret, sizeof(ret), &bytes_written);
+		} while(err == EINTR);
+	}
 	_exit(127);
 }
 
@@ -225,12 +269,17 @@ int posix_spawn_impl(pid_t *__restrict res, const char *__restrict path,
 		ec = errno;
 		goto fail;
 	}
+	// TODO: do not leak fds on fork() failure
 
 	/* Mlibc change: We use fork + execve, as clone is not implemented.
 	 * This yields the same result in the end. */
 	//pid = clone(child, stack + sizeof stack, CLONE_VM | CLONE_VFORK | SIGCHLD, &args);
-	pid = fork();
+	if(ec = mlibc::sysdep_or_enosys<Fork>(&pid); ec)
+		goto fail;
+
 	if(!pid) {
+		auto self = mlibc::get_current_tcb();
+		__atomic_store_n(&self->tid, mlibc::refetch_tid(), __ATOMIC_RELAXED);
 		child(&args);
 	}
 	close(args.p[1]);
@@ -241,8 +290,6 @@ int posix_spawn_impl(pid_t *__restrict res, const char *__restrict path,
 			ec = 0;
 		else
 			waitpid(pid, nullptr, 0);
-	} else {
-		ec = -pid;
 	}
 
 	close(args.p[0]);

@@ -25,6 +25,7 @@
 #include <mlibc/debug.hpp>
 #include <mlibc/dlapi.hpp>
 #include <mlibc/thread-entry.hpp>
+#include <mlibc/thread-types.hpp>
 
 #if __MLIBC_POSIX_OPTION
 #include <net/if.h>
@@ -33,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
 #include <sys/user.h>
 #include <sys/sem.h>
 #endif // __MLIBC_POSIX_OPTION
@@ -554,8 +556,9 @@ int Sysdeps<Sigaction>::operator()(int signum, const struct sigaction *act,
 	struct ksigaction kernel_act, kernel_oldact;
 	if (act) {
 		kernel_act.handler = act->sa_handler;
-		kernel_act.flags = act->sa_flags | SA_RESTORER;
+		kernel_act.flags = static_cast<unsigned long>(static_cast<unsigned int>(act->sa_flags));
 #if HAS_SA_RESTORER
+		kernel_act.flags |= SA_RESTORER;
 		kernel_act.restorer = (act->sa_flags & SA_SIGINFO) ? __mlibc_signal_restore_rt : __mlibc_signal_restore;
 #endif
 		memcpy(&kernel_act.mask, &act->sa_mask, sizeof(kernel_act.mask));
@@ -635,12 +638,12 @@ struct krusage {
 };
 
 int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
-	struct krusage kru;
+	struct krusage kru{};
 	auto ret = do_syscall(SYS_wait4, pid, status, flags, ru ? &kru : nullptr);
 	if (int e = sc_error(ret); e)
-			return e;
+		return e;
 	*ret_pid = sc_int_result<pid_t>(ret);
-	if (ru)
+	if (ru && *ret_pid > 0)
 		*ru = rusage(kru);
 	return 0;
 }
@@ -1489,6 +1492,10 @@ int Sysdeps<GetSockopt>::operator()(int fd, int layer, int number, void *__restr
 int Sysdeps<SetSockopt>::operator()(int fd, int layer, int number, const void *buffer, socklen_t size) {
 	int64_t ktimeval[2];
 	if (layer == SOL_SOCKET && (number == SO_RCVTIMEO || number == SO_SNDTIMEO)) {
+		if (size < sizeof(timeval))
+			return EINVAL;
+		if (!buffer)
+			return EFAULT;
 		auto tv = reinterpret_cast<const timeval *>(buffer);
 		ktimeval[0] = tv->tv_sec;
 		ktimeval[1] = tv->tv_usec;
@@ -1885,10 +1892,17 @@ int Sysdeps<TimerCreate>::operator()(clockid_t clk, struct sigevent *__restrict 
 			}
 
 			pthread_attr_t attr;
-			if(evp->sigev_notify_attributes)
-				attr = *evp->sigev_notify_attributes;
-			else
-				pthread_attr_init(&attr);
+			pthread_attr_init(&attr);
+
+			frg::scope_exit destroy_attr{[&] { pthread_attr_destroy(&attr); }};
+
+			if (evp->sigev_notify_attributes) {
+				auto to_attr = __mlibc_threadattr::from(&attr);
+				auto from_attr = __mlibc_threadattr::from(evp->sigev_notify_attributes);
+				if (to_attr && from_attr) {
+					*to_attr = *from_attr;
+				}
+			}
 
 			int ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 			if(ret)

@@ -10,7 +10,8 @@ __setjmp:
 	rts
 
 1:
-	move.l #1, -(%sp)
+	move.l 8(%sp), %d0
+	move.l %d0, -(%sp)
 	move.l %a0, -(%sp)
 	jbsr __sigsetjmp@PLTPC
 	addq.l #8, %sp

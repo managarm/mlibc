@@ -100,6 +100,7 @@ struct __mlibc_jmpbuf_register_state {
 	__mlibc_uint64 __ra;
 	__mlibc_uint64 __sp;
 	__mlibc_uint64 __u0;
+	__mlibc_uint64 __fp;
 	__mlibc_uint64 __s0;
 	__mlibc_uint64 __s1;
 	__mlibc_uint64 __s2;

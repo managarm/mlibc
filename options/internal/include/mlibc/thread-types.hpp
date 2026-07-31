@@ -29,6 +29,13 @@ struct __mlibc_threadattr {
 		return std::launder(reinterpret_cast<TargetType *>(s->__heap_ptr));
 	}
 
+	__mlibc_threadattr() = default;
+
+	__mlibc_threadattr(const __mlibc_threadattr &other);
+	__mlibc_threadattr &operator=(const __mlibc_threadattr &other);
+
+	~__mlibc_threadattr();
+
 	size_t __guardsize = default_guardsize;
 
 	void *__stackaddr = nullptr;
@@ -222,7 +229,7 @@ struct __mlibc_once {
 	}
 
 	std::atomic<unsigned int> __mlibc_done = 0;
-};
+} __attribute__((aligned(4)));
 
 struct __mlibc_spinlock {
 	static __mlibc_spinlock *from(pthread_spinlock_t *lock) {
@@ -230,4 +237,4 @@ struct __mlibc_spinlock {
 	}
 
 	std::atomic<unsigned int> __lock = 0;
-};
+} __attribute__((aligned(4)));

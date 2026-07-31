@@ -21,6 +21,29 @@ static void *worker(void *arg) {
 	return NULL;
 }
 
+pthread_barrier_t destroy_barrier;
+
+static void *destroy_worker(void *arg) {
+	(void)arg;
+	int res = pthread_barrier_wait(&destroy_barrier);
+	if (res == PTHREAD_BARRIER_SERIAL_THREAD) {
+		pthread_barrier_destroy(&destroy_barrier);
+	}
+	return NULL;
+}
+
+int test_destroy() {
+	pthread_barrier_init(&destroy_barrier, NULL, 2);
+	pthread_t dt1, dt2;
+	int ret = pthread_create(&dt1, NULL, &destroy_worker, NULL);
+	assert(!ret);
+	ret = pthread_create(&dt2, NULL, &destroy_worker, NULL);
+	assert(!ret);
+	pthread_join(dt1, NULL);
+	pthread_join(dt2, NULL);
+	return 0;
+}
+
 int main() {
 	// pthread_barrierattr_t
 	pthread_barrierattr_t attr;
@@ -85,6 +108,8 @@ int main() {
 	assert(__atomic_load_n(&pastBarrierCount, __ATOMIC_RELAXED) == THREAD_COUNT * 1000);
 
 	pthread_barrier_destroy(&barrier);
+
+	test_destroy();
 
 	return 0;
 }

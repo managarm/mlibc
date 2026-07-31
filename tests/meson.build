@@ -198,6 +198,7 @@ all_test_cases = [
 	'linux/ppoll',
 	'linux/utmp',
 	'linux/utmpx',
+	'linux/SIOCGSTAMP',
 	'linux-wrappers/rt_tgsigqueueinfo',
 	'linux-wrappers/rt_sigqueueinfo',
 ]
