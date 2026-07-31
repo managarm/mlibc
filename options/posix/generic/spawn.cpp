@@ -411,6 +411,10 @@ int posix_spawn_file_actions_destroy(posix_spawn_file_actions_t *file_actions) {
 
 int posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t *file_actions,
 		int fildes, int newfildes) {
+	// POSIX-mandated fd checks
+	if (fildes < 0 || newfildes < 0)
+		return EBADF;
+
 	auto fa = __mlibc_spawn_file_actions::from(file_actions);
 	fa->ops.emplace_back(FDOP_DUP2, newfildes, fildes);
 
@@ -419,6 +423,10 @@ int posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t *file_actions,
 
 int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *file_actions,
 		int fildes) {
+	// POSIX-mandated fd check
+	if (fildes < 0)
+		return EBADF;
+
 	auto fa = __mlibc_spawn_file_actions::from(file_actions);
 	fa->ops.emplace_back(FDOP_CLOSE, fildes);
 
@@ -427,6 +435,10 @@ int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *file_actions,
 
 int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t *__restrict file_actions,
 		int fildes, const char *__restrict path, int oflag, mode_t mode) {
+	// POSIX-mandated fd check
+	if (fildes < 0)
+		return EBADF;
+
 	auto fa = __mlibc_spawn_file_actions::from(file_actions);
 	fa->ops.emplace_back(
 	    FDOP_OPEN, fildes, -1, oflag, mode, frg::string<MemoryAllocator>{getAllocator(), path}
