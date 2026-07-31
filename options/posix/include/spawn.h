@@ -27,8 +27,11 @@ typedef struct {
 #define POSIX_SPAWN_SETSIGMASK 8
 #define POSIX_SPAWN_SETSCHEDPARAM 16
 #define POSIX_SPAWN_SETSCHEDULER 32
-#define POSIX_SPAWN_USEVFORK 64
 #define POSIX_SPAWN_SETSID 128
+
+#if defined(_GNU_SOURCE)
+#define POSIX_SPAWN_USEVFORK 64
+#endif /* defined(_GNU_SOURCE) */
 
 #ifndef __MLIBC_ABI_ONLY
 
@@ -42,12 +45,12 @@ int posix_spawnattr_destroy(posix_spawnattr_t *__attr);
 int posix_spawnattr_setflags(posix_spawnattr_t *__attr, short __flags);
 int posix_spawnattr_setsigdefault(posix_spawnattr_t *__restrict __attr,
 		const sigset_t *__restrict __sigdefault);
-int posix_spawnattr_getschedparam(const posix_spawnattr_t *__restrict attr,
-		struct sched_param *__restrict schedparam);
+int posix_spawnattr_getschedparam(const posix_spawnattr_t *__restrict __attr,
+		struct sched_param *__restrict __schedparam);
 int posix_spawnattr_setschedparam(posix_spawnattr_t *__restrict __attr,
 		const struct sched_param *__restrict __schedparam);
-int posix_spawnattr_getschedpolicy(const posix_spawnattr_t *__restrict attr,
-		int *__restrict schedpolicy);
+int posix_spawnattr_getschedpolicy(const posix_spawnattr_t *__restrict __attr,
+		int *__restrict __schedpolicy);
 int posix_spawnattr_setschedpolicy(posix_spawnattr_t *__attr, int __schedpolicy);
 int posix_spawnattr_setsigmask(posix_spawnattr_t *__restrict __attr,
 		const sigset_t *__restrict __sigmask);
