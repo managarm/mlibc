@@ -45,6 +45,9 @@ namespace mlibc {
 		return __do_syscall6(sc, arg1, arg2, arg3, arg4, arg5, arg6);
 	}
 
+	inline sc_word_t do_nargs_cp_syscall(int sc) {
+		return __mlibc_do_asm_cp_syscall(sc, 0, 0, 0, 0, 0, 0);
+	}
 	inline sc_word_t do_nargs_cp_syscall(int sc, sc_word_t arg1) {
 		return __mlibc_do_asm_cp_syscall(sc, arg1, 0, 0, 0, 0, 0);
 	}
