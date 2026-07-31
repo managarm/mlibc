@@ -284,6 +284,28 @@ static void test_attributes(const char *exec_path) {
 	ret = posix_spawnattr_setsigdefault(&attr, &sigdefault);
 	assert(ret == 0);
 
+	short flags_get = -1;
+	ret = posix_spawnattr_getflags(&attr, &flags_get);
+	assert(ret == 0);
+	assert(flags_get == flags);
+
+	pid_t pgroup_get = -1;
+	ret = posix_spawnattr_getpgroup(&attr, &pgroup_get);
+	assert(ret == 0);
+	assert(pgroup_get == 0);
+
+	sigset_t sigmask_get;
+	ret = posix_spawnattr_getsigmask(&attr, &sigmask_get);
+	assert(ret == 0);
+	assert(sigismember(&sigmask_get, SIGUSR1) == 1);
+	assert(sigismember(&sigmask_get, SIGUSR2) == 0);
+
+	sigset_t sigdefault_get;
+	ret = posix_spawnattr_getsigdefault(&attr, &sigdefault_get);
+	assert(ret == 0);
+	assert(sigismember(&sigdefault_get, SIGUSR2) == 1);
+	assert(sigismember(&sigdefault_get, SIGUSR1) == 0);
+
 	pid_t pid;
 	ret = do_spawn(&pid, exec_path, NULL, &attr, "child_attributes", NULL);
 	assert(ret == 0);
@@ -404,6 +426,51 @@ static void test_fchdir(const char *exec_path) {
 	rmdir(test_dir);
 }
 
+static int child_setpgroup(void) {
+	pid_t pid = getpid();
+	pid_t pgid = getpgid(0);
+	if (pgid != pid) {
+		return 40;
+	}
+	return 0;
+}
+
+static void test_setpgroup(const char *exec_path) {
+	posix_spawnattr_t attr;
+	int ret = posix_spawnattr_init(&attr);
+	assert(ret == 0);
+
+	ret = posix_spawnattr_setflags(&attr, POSIX_SPAWN_SETPGROUP);
+	assert(ret == 0);
+
+	ret = posix_spawnattr_setpgroup(&attr, 0);
+	assert(ret == 0);
+
+	short flags_get = -1;
+	ret = posix_spawnattr_getflags(&attr, &flags_get);
+	assert(ret == 0);
+	assert(flags_get == POSIX_SPAWN_SETPGROUP);
+
+	pid_t pgroup_get = -1;
+	ret = posix_spawnattr_getpgroup(&attr, &pgroup_get);
+	assert(ret == 0);
+	assert(pgroup_get == 0);
+
+	pid_t pid;
+	ret = do_spawn(&pid, exec_path, NULL, &attr, "child_setpgroup", NULL);
+	assert(ret == 0);
+
+	int status = 0;
+	pid_t wait_ret = waitpid(pid, &status, 0);
+	assert(wait_ret == pid);
+	assert(WIFEXITED(status));
+	int exit_status = WEXITSTATUS(status);
+	assert(exit_status == 0);
+
+	ret = posix_spawnattr_destroy(&attr);
+	assert(ret == 0);
+}
+
 int main(int argc, char *argv[]) {
 	if (argc > 1) {
 		if (strcmp(argv[1], "child_file_actions") == 0) {
@@ -416,6 +483,9 @@ int main(int argc, char *argv[]) {
 			assert(argc > 2);
 			return child_chdir(argv[2]);
 		}
+		if (strcmp(argv[1], "child_setpgroup") == 0) {
+			return child_setpgroup();
+		}
 		return 127;
 	}
 
@@ -424,5 +494,6 @@ int main(int argc, char *argv[]) {
 	test_attributes(argv[0]);
 	test_chdir(argv[0]);
 	test_fchdir(argv[0]);
+	test_setpgroup(argv[0]);
 	return 0;
 }

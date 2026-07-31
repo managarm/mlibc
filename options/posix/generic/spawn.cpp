@@ -343,10 +343,22 @@ int posix_spawnattr_setflags(posix_spawnattr_t *attr, short flags) {
 	return 0;
 }
 
+int posix_spawnattr_getflags(const posix_spawnattr_t *__restrict attr, short *__restrict flags) {
+	auto a = __mlibc_spawnattr::from(attr);
+	*flags = a->__flags;
+	return 0;
+}
+
 int posix_spawnattr_setsigdefault(posix_spawnattr_t *__restrict attr,
 		const sigset_t *__restrict sigdefault) {
 	auto a = __mlibc_spawnattr::from(attr);
 	a->__def = *sigdefault;
+	return 0;
+}
+
+int posix_spawnattr_getsigdefault(const posix_spawnattr_t *__restrict attr, sigset_t *__restrict sigdefault) {
+	auto a = __mlibc_spawnattr::from(attr);
+	*sigdefault = a->__def;
 	return 0;
 }
 
@@ -387,9 +399,21 @@ int posix_spawnattr_setsigmask(posix_spawnattr_t *__restrict attr,
 	return 0;
 }
 
+int posix_spawnattr_getsigmask(const posix_spawnattr_t *__restrict attr, sigset_t *__restrict sigmask) {
+	auto a = __mlibc_spawnattr::from(attr);
+	*sigmask = a->__mask;
+	return 0;
+}
+
 int posix_spawnattr_setpgroup(posix_spawnattr_t *attr, pid_t pgroup) {
 	auto a = __mlibc_spawnattr::from(attr);
 	a->__pgrp = pgroup;
+	return 0;
+}
+
+int posix_spawnattr_getpgroup(const posix_spawnattr_t *__restrict attr, pid_t *__restrict pgroup) {
+	auto a = __mlibc_spawnattr::from(attr);
+	*pgroup = a->__pgrp;
 	return 0;
 }
 
