@@ -2,6 +2,7 @@
 #ifndef _MLIBC_INTERNAL_MACHINE_H
 #define _MLIBC_INTERNAL_MACHINE_H
 
+#include <mlibc-config.h>
 #include <bits/types.h>
 
 #if defined (__i386__)
@@ -14,6 +15,39 @@ struct __mlibc_jmpbuf_register_state {
 	__mlibc_uint32 __eip;
 };
 #elif defined (__x86_64__)
+#if __MLIBC_ABI_MS
+struct __mlibc_xmm_register_state {
+	__mlibc_uint64 __low;
+	__mlibc_uint64 __high;
+};
+
+struct __mlibc_jmpbuf_register_state {
+	__mlibc_uint64 __frame;
+	__mlibc_uint64 __rbx;
+	__mlibc_uint64 __rsp;
+	__mlibc_uint64 __rbp;
+	__mlibc_uint64 __rsi;
+	__mlibc_uint64 __rdi;
+	__mlibc_uint64 __r12;
+	__mlibc_uint64 __r13;
+	__mlibc_uint64 __r14;
+	__mlibc_uint64 __r15;
+	__mlibc_uint64 __rip;
+	__mlibc_uint32 __mxcsr;
+	__mlibc_uint16 __x87_control_word;
+	__mlibc_uint16 __reserved;
+	struct __mlibc_xmm_register_state __xmm6;
+	struct __mlibc_xmm_register_state __xmm7;
+	struct __mlibc_xmm_register_state __xmm8;
+	struct __mlibc_xmm_register_state __xmm9;
+	struct __mlibc_xmm_register_state __xmm10;
+	struct __mlibc_xmm_register_state __xmm11;
+	struct __mlibc_xmm_register_state __xmm12;
+	struct __mlibc_xmm_register_state __xmm13;
+	struct __mlibc_xmm_register_state __xmm14;
+	struct __mlibc_xmm_register_state __xmm15;
+};
+#else
 struct __mlibc_jmpbuf_register_state {
 	__mlibc_uint64 __rbx;
 	__mlibc_uint64 __rbp;
@@ -24,6 +58,7 @@ struct __mlibc_jmpbuf_register_state {
 	__mlibc_uint64 __rsp;
 	__mlibc_uint64 __rip;
 };
+#endif
 #elif defined (__aarch64__)
 struct __mlibc_jmpbuf_register_state {
 	__mlibc_uint64 __x19;

@@ -1,11 +1,15 @@
 #pragma once
 
 #include <stdint.h>
+#include <mlibc/all-sysdeps.hpp>
 #include <mlibc/tcb.hpp>
 
 namespace mlibc {
 
 inline Tcb *get_current_tcb() {
+	if constexpr(IsImplemented<TcbGet>)
+		return static_cast<Tcb *>(sysdep<TcbGet>());
+
 	// On AArch64, TPIDR_EL0 points to 0x10 bytes before the first TLS block.
 	uintptr_t ptr;
 	asm volatile ("mrs %0, tpidr_el0" : "=r"(ptr));

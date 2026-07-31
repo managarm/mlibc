@@ -67,4 +67,3 @@ _longjmp:
 	br x30
 
 GNU_STACK_NOTE()
-

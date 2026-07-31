@@ -249,6 +249,7 @@ rtld_include_dirs += include_directories('sysdeps/generic-helpers/include')
 libc_include_dirs += include_directories('sysdeps/generic-helpers/include')
 
 # Process sysdeps first, as sysdeps might want to disable unsupported options.
+sysdep_abi = 'sysv'
 provides_bits_syscall_h = false
 if host_machine.system() == 'linux'
 	provides_bits_syscall_h = true
@@ -323,9 +324,15 @@ elif host_machine.system() == 'ethereal'
 elif host_machine.system() == 'demo'
 	subdir('sysdeps/demo')
 # ANCHOR_END: demo-sysdeps
+elif host_machine.system() == 'windows'
+	sysdep_abi = 'ms'
+	subdir('sysdeps/windows')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
+
+mlibc_conf.set10('__MLIBC_ABI_SYSV', sysdep_abi == 'sysv')
+mlibc_conf.set10('__MLIBC_ABI_MS', sysdep_abi == 'ms')
 
 #----------------------------------------------------------------------------------------
 # Configuration based on enabled options.
@@ -493,9 +500,27 @@ internal_sources = [
 	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc-extra/cxxabi.cpp',
-	'options/internal' / host_machine.cpu_family() / 'setjmp.S',
-	'options/internal' / host_machine.cpu_family() / 'fenv.S',
 ]
+
+if sysdep_abi == 'sysv'
+	internal_sources += [
+		'options/internal' / host_machine.cpu_family() / 'setjmp-sysv.S',
+		'options/internal' / host_machine.cpu_family() / 'fenv-sysv.S',
+	]
+
+elif sysdep_abi == 'ms'
+	if host_machine.cpu_family() != 'x86_64'
+		error('The Microsoft ABI is only supported on x86_64')
+	endif
+
+	internal_sources += [
+		'options/internal' / host_machine.cpu_family() / 'setjmp-ms.S',
+		'options/internal' / host_machine.cpu_family() / 'fenv-ms.S',
+	]
+
+else
+	error('Unsupported sysdep ABI: ' + sysdep_abi)
+endif
 
 if host_machine.cpu_family() == 'riscv64'
 	internal_sources += [
@@ -551,22 +576,29 @@ if not no_headers
 	)
 endif
 
-rtld_sources += [
-	'options/internal/gcc/stack_protector.cpp',
-	'options/internal/gcc/guard-abi.cpp',
-	'options/internal/generic/allocator.cpp',
-	'options/internal/generic/debug.cpp',
-	'options/internal/generic/ensure.cpp',
-	'options/internal/generic/essential.cpp',
-	'options/internal/generic/inline-emitter.cpp',
-	'options/internal/generic/frigg.cpp',
-	'options/internal/generic/ubsan.cpp',
-	'options/rtld/generic/main.cpp',
-	'options/rtld/generic/linker.cpp',
-	'options/rtld' / host_machine.cpu_family() / 'runtime.S'
-]
+if sysdep_abi == 'ms'
+	libc_sources += ['options/rtld/generic/ld-stub-ms.cpp']
 
-rtld_dso_sources += ['options/rtld' / host_machine.cpu_family() / 'entry.S']
+elif sysdep_abi == 'sysv'
+	rtld_sources += [
+		'options/internal/gcc/stack_protector.cpp',
+		'options/internal/gcc/guard-abi.cpp',
+		'options/internal/generic/allocator.cpp',
+		'options/internal/generic/debug.cpp',
+		'options/internal/generic/ensure.cpp',
+		'options/internal/generic/essential.cpp',
+		'options/internal/generic/inline-emitter.cpp',
+		'options/internal/generic/frigg.cpp',
+		'options/internal/generic/ubsan.cpp',
+		'options/rtld/generic/main.cpp',
+		'options/rtld/generic/linker.cpp',
+	]
+	rtld_sources += ['options/rtld' / host_machine.cpu_family() / 'runtime.S']
+	rtld_dso_sources += ['options/rtld' / host_machine.cpu_family() / 'entry.S']
+
+else
+	error('Unsupported sysdep ABI: ' + sysdep_abi)
+endif
 
 ld_cpp_args = []
 libc_cpp_args = []
@@ -641,34 +673,44 @@ if not headers_only
 		static_cpp_args = [
 			'-DMLIBC_STATIC_BUILD',
 		]
-		ld_static_lib = static_library(ld_library_name, rtld_sources,
-			name_prefix: '',
-			cpp_args: mlibc_c_args + ld_cpp_args + static_cpp_args,
-			link_args: mlibc_link_args,
-			include_directories: rtld_include_dirs,
-			dependencies: rtld_deps + rtlib_deps,
-			install: false
-		)
+		libc_static_link_with = []
+		libc_static_link_whole = libc_sublibs
+		if sysdep_abi == 'sysv'
+			ld_static_lib = static_library(ld_library_name, rtld_sources,
+				name_prefix: '',
+				cpp_args: mlibc_c_args + ld_cpp_args + static_cpp_args,
+				link_args: mlibc_link_args,
+				include_directories: rtld_include_dirs,
+				dependencies: rtld_deps + rtlib_deps,
+				install: false
+			)
+			libc_static_link_with += [ld_static_lib]
+			libc_static_link_whole += [ld_static_lib]
+		endif
 		libc_static = static_library('c', libc_all_sources,
 			c_args: mlibc_c_args,
 			cpp_args: static_cpp_args + ['-fno-stack-protector', libc_cpp_args],
 			link_args: mlibc_link_args,
 			include_directories: libc_include_dirs,
 			dependencies: libc_deps + rtlib_deps,
-			link_with: [ld_static_lib],
-			link_whole: [libc_sublibs, ld_static_lib],
+			link_with: libc_static_link_with,
+			link_whole: libc_static_link_whole,
 			install: true
 		)
 	endif
 	if library_type in ['shared', 'both']
-		ld_shared_lib = shared_library(ld_library_name, rtld_sources + rtld_dso_sources,
-			name_prefix: '',
-			cpp_args: mlibc_c_args + ld_cpp_args,
-			link_args: mlibc_link_args,
-			include_directories: rtld_include_dirs,
-			dependencies: rtld_deps + rtlib_deps,
-			install: true
-		)
+		libc_shared_link_with = []
+		if sysdep_abi == 'sysv'
+			ld_shared_lib = shared_library(ld_library_name, rtld_sources + rtld_dso_sources,
+				name_prefix: '',
+				cpp_args: mlibc_c_args + ld_cpp_args,
+				link_args: mlibc_link_args,
+				include_directories: rtld_include_dirs,
+				dependencies: rtld_deps + rtlib_deps,
+				install: true
+			)
+			libc_shared_link_with += [ld_shared_lib]
+		endif
 		hide_everything_ld = (meson.current_source_dir()
 				      / 'scripts/hide-everything.ld')
 		libc_shared = shared_library('c', libc_all_sources,
@@ -676,7 +718,7 @@ if not headers_only
 			cpp_args: [libc_cpp_args],
 			include_directories: libc_include_dirs,
 			dependencies: libc_deps + rtlib_deps,
-			link_with: [ld_shared_lib],
+			link_with: libc_shared_link_with,
 			link_whole: libc_sublibs,
 			link_args: ['-Wl,--version-script,' + hide_everything_ld, mlibc_link_args],
 			link_depends: [hide_everything_ld],

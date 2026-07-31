@@ -10,6 +10,9 @@ namespace mlibc {
 extern "C" void *__m68k_read_tp();
 
 inline Tcb *get_current_tcb() {
+	if constexpr(IsImplemented<TcbGet>)
+		return static_cast<Tcb *>(sysdep<TcbGet>());
+
 	// On m68k, the end of the TCB is 0x7000 below the thread pointer.
 	void *ptr = __m68k_read_tp();
 	return reinterpret_cast<Tcb *>((uintptr_t)ptr - 0x7000 - sizeof(Tcb));

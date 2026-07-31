@@ -52,6 +52,7 @@ SYSDEP_FUNC(VmMap, void *hint, size_t size, int prot, int flags, int fd, off_t o
 SYSDEP_FUNC(VmUnmap, void *pointer, size_t size);
 SYSDEP_FUNC(VmProtect, void *pointer, size_t size, int prot);
 SYSDEP_FUNC(TcbSet, void *pointer);
+SYSDEP_FUNC_RET(void *, TcbGet);
 #if defined(__riscv)
 SYSDEP_FUNC(RiscvHwprobe, struct riscv_hwprobe *pairs, size_t pair_count, size_t cpusetsize, cpu_set_t *cpus, unsigned int flags);
 #endif

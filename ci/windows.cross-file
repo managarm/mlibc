@@ -1,0 +1,24 @@
+[binaries]
+c = 'x86_64-w64-mingw32-gcc-win32'
+cpp = 'x86_64-w64-mingw32-g++-win32'
+ar = 'x86_64-w64-mingw32-ar'
+dlltool = 'x86_64-w64-mingw32-dlltool'
+ranlib = 'x86_64-w64-mingw32-ranlib'
+strip = 'x86_64-w64-mingw32-strip'
+
+[constants]
+# this is needed because of differences between x86_64-w64-windows-mlibc and x86_64-w64-mingw32
+windows_mlibc_abi_args = ['-U__INT_FAST16_TYPE__', '-D__INT_FAST16_TYPE__=long long int', '-U__INT_FAST16_MAX__', '-D__INT_FAST16_MAX__=0x7fffffffffffffffLL', '-U__INT_FAST32_TYPE__', '-D__INT_FAST32_TYPE__=long long int', '-U__INT_FAST32_MAX__', '-D__INT_FAST32_MAX__=0x7fffffffffffffffLL', '-U__UINT_FAST16_TYPE__', '-D__UINT_FAST16_TYPE__=long long unsigned int', '-U__UINT_FAST16_MAX__', '-D__UINT_FAST16_MAX__=0xffffffffffffffffULL', '-U__UINT_FAST32_TYPE__', '-D__UINT_FAST32_TYPE__=long long unsigned int', '-U__UINT_FAST32_MAX__', '-D__UINT_FAST32_MAX__=0xffffffffffffffffULL', '-U__WINT_TYPE__', '-D__WINT_TYPE__=unsigned int', '-U__WINT_MAX__', '-D__WINT_MAX__=0xffffffffU', '-U__WINT_MIN__', '-D__WINT_MIN__=0U', '-U__SIZEOF_WINT_T__', '-D__SIZEOF_WINT_T__=4']
+
+[built-in options]
+c_args = windows_mlibc_abi_args
+cpp_args = windows_mlibc_abi_args
+
+[properties]
+needs_exe_wrapper = true
+
+[host_machine]
+system = 'windows'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'

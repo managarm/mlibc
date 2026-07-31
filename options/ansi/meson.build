@@ -123,7 +123,7 @@ if not no_headers
 	)
 endif
 
-if fs.is_dir(host_machine.cpu_family())
+if sysdep_abi == 'sysv' and fs.is_dir(host_machine.cpu_family())
 	subdir(host_machine.cpu_family())
 endif
 

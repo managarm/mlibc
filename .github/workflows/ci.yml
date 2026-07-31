@@ -214,3 +214,30 @@ jobs:
                     "../src/mlibc/"
                 ninja -C compile-${{matrix.sysdeps}}
             working-directory: build/
+
+    compile-windows-sysdeps:
+        name: Compile sysdeps (windows) 
+        runs-on: ubuntu-latest
+        container: debian:trixie
+        steps:
+          - name: Install prerequisites
+            run: |
+                apt-get update
+                apt-get install -y meson ninja-build git gcc g++ \
+                                binutils-mingw-w64-x86-64 \
+                                gcc-mingw-w64-x86-64-win32 \
+                                g++-mingw-w64-x86-64-win32
+          - name: Checkout
+            uses: actions/checkout@v4
+            with:
+              path: src/mlibc/
+          - name: Compile Windows sysdeps
+            run: |
+                meson setup \
+                    -Ddefault_library=static \
+                    -Duse_freestnd_hdrs=enabled \
+                    -Dbuild_tests=false \
+                    --cross-file src/mlibc/ci/windows.cross-file \
+                    build/windows \
+                    src/mlibc/
+                ninja -C build/windows
