@@ -343,10 +343,22 @@ int posix_spawnattr_setflags(posix_spawnattr_t *attr, short flags) {
 	return 0;
 }
 
+int posix_spawnattr_getflags(const posix_spawnattr_t *__restrict attr, short *__restrict flags) {
+	auto a = __mlibc_spawnattr::from(attr);
+	*flags = a->__flags;
+	return 0;
+}
+
 int posix_spawnattr_setsigdefault(posix_spawnattr_t *__restrict attr,
 		const sigset_t *__restrict sigdefault) {
 	auto a = __mlibc_spawnattr::from(attr);
 	a->__def = *sigdefault;
+	return 0;
+}
+
+int posix_spawnattr_getsigdefault(const posix_spawnattr_t *__restrict attr, sigset_t *__restrict sigdefault) {
+	auto a = __mlibc_spawnattr::from(attr);
+	*sigdefault = a->__def;
 	return 0;
 }
 
@@ -387,9 +399,21 @@ int posix_spawnattr_setsigmask(posix_spawnattr_t *__restrict attr,
 	return 0;
 }
 
+int posix_spawnattr_getsigmask(const posix_spawnattr_t *__restrict attr, sigset_t *__restrict sigmask) {
+	auto a = __mlibc_spawnattr::from(attr);
+	*sigmask = a->__mask;
+	return 0;
+}
+
 int posix_spawnattr_setpgroup(posix_spawnattr_t *attr, pid_t pgroup) {
 	auto a = __mlibc_spawnattr::from(attr);
 	a->__pgrp = pgroup;
+	return 0;
+}
+
+int posix_spawnattr_getpgroup(const posix_spawnattr_t *__restrict attr, pid_t *__restrict pgroup) {
+	auto a = __mlibc_spawnattr::from(attr);
+	*pgroup = a->__pgrp;
 	return 0;
 }
 
@@ -411,6 +435,10 @@ int posix_spawn_file_actions_destroy(posix_spawn_file_actions_t *file_actions) {
 
 int posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t *file_actions,
 		int fildes, int newfildes) {
+	// POSIX-mandated fd checks
+	if (fildes < 0 || newfildes < 0)
+		return EBADF;
+
 	auto fa = __mlibc_spawn_file_actions::from(file_actions);
 	fa->ops.emplace_back(FDOP_DUP2, newfildes, fildes);
 
@@ -419,6 +447,10 @@ int posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t *file_actions,
 
 int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *file_actions,
 		int fildes) {
+	// POSIX-mandated fd check
+	if (fildes < 0)
+		return EBADF;
+
 	auto fa = __mlibc_spawn_file_actions::from(file_actions);
 	fa->ops.emplace_back(FDOP_CLOSE, fildes);
 
@@ -427,10 +459,36 @@ int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *file_actions,
 
 int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t *__restrict file_actions,
 		int fildes, const char *__restrict path, int oflag, mode_t mode) {
+	// POSIX-mandated fd check
+	if (fildes < 0)
+		return EBADF;
+
 	auto fa = __mlibc_spawn_file_actions::from(file_actions);
 	fa->ops.emplace_back(
 	    FDOP_OPEN, fildes, -1, oflag, mode, frg::string<MemoryAllocator>{getAllocator(), path}
 	);
+
+	return 0;
+}
+
+int posix_spawn_file_actions_addchdir(
+    posix_spawn_file_actions_t *__restrict file_actions, const char *__restrict path
+) {
+	auto fa = __mlibc_spawn_file_actions::from(file_actions);
+	fa->ops.emplace_back(
+	    FDOP_CHDIR, -1, -1, 0, 0, frg::string<MemoryAllocator>{getAllocator(), path}
+	);
+
+	return 0;
+}
+
+int posix_spawn_file_actions_addfchdir(posix_spawn_file_actions_t *file_actions, int fildes) {
+	// POSIX-mandated fd check
+	if (fildes < 0)
+		return EBADF;
+
+	auto fa = __mlibc_spawn_file_actions::from(file_actions);
+	fa->ops.emplace_back(FDOP_FCHDIR, fildes);
 
 	return 0;
 }
