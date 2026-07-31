@@ -447,6 +447,28 @@ int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t *__restrict file
 	return 0;
 }
 
+int posix_spawn_file_actions_addchdir(
+    posix_spawn_file_actions_t *__restrict file_actions, const char *__restrict path
+) {
+	auto fa = __mlibc_spawn_file_actions::from(file_actions);
+	fa->ops.emplace_back(
+	    FDOP_CHDIR, -1, -1, 0, 0, frg::string<MemoryAllocator>{getAllocator(), path}
+	);
+
+	return 0;
+}
+
+int posix_spawn_file_actions_addfchdir(posix_spawn_file_actions_t *file_actions, int fildes) {
+	// POSIX-mandated fd check
+	if (fildes < 0)
+		return EBADF;
+
+	auto fa = __mlibc_spawn_file_actions::from(file_actions);
+	fa->ops.emplace_back(FDOP_FCHDIR, fildes);
+
+	return 0;
+}
+
 int posix_spawnp(pid_t *__restrict pid, const char *__restrict file,
 		const posix_spawn_file_actions_t *file_actions,
 		const posix_spawnattr_t *__restrict attrp,
