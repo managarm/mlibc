@@ -1762,6 +1762,8 @@ int Sysdeps<Msync>::operator()(void *addr, size_t length, int flags) {
 
 int Sysdeps<SetItimer>::operator()(int which, const struct itimerval *new_value, struct itimerval *old_value) {
 #if __INTPTR_WIDTH__ == 32
+	if (!new_value)
+		return EFAULT;
 	if (new_value->it_interval.tv_sec > INT32_MAX || new_value->it_value.tv_sec > INT32_MAX)
 		return EOVERFLOW;
 
