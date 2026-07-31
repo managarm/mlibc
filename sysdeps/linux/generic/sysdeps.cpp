@@ -413,7 +413,7 @@ int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
 
 	if (vdso_clock_gettime) {
 		if (int e = vdso_clock_gettime(clock, &tp); e)
-			return e;
+			return -e;
 	} else {
 #if __INTPTR_WIDTH__ == 64
 		auto ret = do_syscall(SYS_clock_gettime, clock, &tp);
