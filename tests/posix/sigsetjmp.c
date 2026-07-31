@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 static sigjmp_buf env;
@@ -88,6 +89,44 @@ int main(void) {
 		siglongjmp(env, 1);
 	} else {
 		print_mask("Part 2 after siglongjmp");
+
+		sigset_t final_set;
+		sigprocmask(SIG_SETMASK, NULL, &final_set);
+
+		int sigusr1_blocked = sigismember(&final_set, SIGUSR1);
+		int sigusr2_blocked = sigismember(&final_set, SIGUSR2);
+
+		assert(!sigusr1_blocked && sigusr2_blocked);
+	}
+
+	// Part 3: Test setjmp(env) so the mask should not be saved/restored
+	// Start with SIGUSR1 blocked and SIGUSR2 unblocked
+	memset(&env, 0xFF, sizeof(env));
+	sigemptyset(&block_set);
+	sigaddset(&block_set, SIGUSR1);
+	sigemptyset(&unblock_set);
+	sigaddset(&unblock_set, SIGUSR2);
+	sigprocmask(SIG_BLOCK, &block_set, NULL);
+	sigprocmask(SIG_UNBLOCK, &unblock_set, NULL);
+
+	print_mask("Part 3 before setjmp");
+
+	if (setjmp(env) == 0) {
+		sigset_t new_block;
+		sigemptyset(&new_block);
+		sigaddset(&new_block, SIGUSR2);
+		sigprocmask(SIG_BLOCK, &new_block, NULL);
+
+		sigset_t new_unblock;
+		sigemptyset(&new_unblock);
+		sigaddset(&new_unblock, SIGUSR1);
+		sigprocmask(SIG_UNBLOCK, &new_unblock, NULL);
+
+		print_mask("Part 3 post-modification");
+
+		siglongjmp(env, 1);
+	} else {
+		print_mask("Part 3 after siglongjmp");
 
 		sigset_t final_set;
 		sigprocmask(SIG_SETMASK, NULL, &final_set);

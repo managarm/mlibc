@@ -1,3 +1,4 @@
+#include "mlibc-asm/jmp_buf.h"
 
 .type __setjmp, "function"
 __setjmp:
@@ -15,6 +16,7 @@ __setjmp:
 
 	test %rdx, %rdx
 	jnz 1f
+	movl $0, JMP_BUF_SAVESIGS_OFFSET(%rdi) # set __savesigs = 0
 	xor %rax, %rax
 	ret
 

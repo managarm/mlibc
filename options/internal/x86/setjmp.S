@@ -1,4 +1,5 @@
 #include "mlibc-asm/helpers.h"
+#include "mlibc-asm/jmp_buf.h"
 
 .hidden __setjmp
 .type __setjmp, "function"
@@ -16,6 +17,7 @@ __setjmp:
 
 	test %edx, %edx
 	jnz 1f
+	movl $0, JMP_BUF_SAVESIGS_OFFSET(%eax)
 	xor %eax, %eax
 	ret
 
