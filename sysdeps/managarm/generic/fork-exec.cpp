@@ -534,18 +534,28 @@ int Sysdeps<SetReuid>::operator()(uid_t ruid, uid_t euid) {
 }
 
 int Sysdeps<SetRegid>::operator()(gid_t rgid, gid_t egid) {
-	// If the value is -1, we don't change the corresponding ID.
-	if(rgid != static_cast<gid_t>(-1)) {
-		int real = sysdep<SetGid>(rgid);
-		if (real)
-			return real;
-	}
+	SignalGuard sguard;
 
-	if(egid != static_cast<gid_t>(-1)) {
-		int effective = sysdep<SetEgid>(egid);
-		if (effective)
-			return effective;
-	}
+	managarm::posix::SetRegidRequest<SysdepsAllocator> req(getSysdepsAllocator());
+
+	req.set_rgid(rgid);
+	req.set_egid(egid);
+
+	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+		)
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SetRegidResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 
 	return 0;
 }
