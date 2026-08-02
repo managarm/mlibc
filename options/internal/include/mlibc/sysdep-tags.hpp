@@ -101,6 +101,8 @@ struct Yield {};
 struct GetPid {};
 // int sys_kill(pid_t, int);
 struct Kill {};
+// int sys_tgkill(int tgid, int tid, int sig);
+struct Tgkill {};
 
 // int sys_tp_set(void *pointer);
 struct TpSet {};
@@ -444,8 +446,6 @@ struct Mknodat {};
 struct Umask {};
 // int sys_before_cancellable_syscall(ucontext_t *uctx);
 struct BeforeCancellableSyscall {};
-// int sys_tgkill(int tgid, int tid, int sig);
-struct Tgkill {};
 // int sys_fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags);
 struct Fchownat {};
 // int sys_sigaltstack(const stack_t *ss, stack_t *oss);
