@@ -466,42 +466,29 @@ int Sysdeps<SetEuid>::operator()(uid_t euid) {
 }
 
 int Sysdeps<SetResuid>::operator()(uid_t ruid, uid_t euid, uid_t suid) {
-	// If the value is -1, we don't change the corresponding ID.
-	if(ruid != static_cast<uid_t>(-1)) {
-		int real = sysdep<SetUid>(ruid);
-		if (real)
-			return real;
-	}
+	SignalGuard sguard;
 
-	if(euid != static_cast<uid_t>(-1)) {
-		int effective = sysdep<SetEuid>(euid);
-		if (effective)
-			return effective;
-	}
+	managarm::posix::SetResuidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
-	if(suid != static_cast<uid_t>(-1)) {
-		SignalGuard sguard;
+	req.set_ruid(ruid);
+	req.set_euid(euid);
+	req.set_suid(suid);
 
-		managarm::posix::SetSuidRequest<SysdepsAllocator> req(getSysdepsAllocator());
+	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+		)
+	);
 
-		req.set_suid(suid);
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(recv_resp.error());
 
-		auto [offer, send_head, recv_resp] = exchangeMsgsSync(
-			getPosixLane(),
-			helix_ng::offer(
-				helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
-			)
-		);
-
-		HEL_CHECK(offer.error());
-		HEL_CHECK(send_head.error());
-		HEL_CHECK(recv_resp.error());
-
-		managarm::posix::SetSuidResponse<SysdepsAllocator> resp(getSysdepsAllocator());
-		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-		if (resp.error() != managarm::posix::Errors::SUCCESS)
-			return resp.error() | toErrno;
-	}
+	managarm::posix::SetResuidResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 
 	return 0;
 }
