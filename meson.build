@@ -1,5 +1,6 @@
 project(
 	'mlibc',
+	version: '7.0.0',
 	default_options: [
 		'cpp_std=c++23',
 		'c_std=gnu11',
