@@ -589,35 +589,29 @@ int Sysdeps<GetResuid>::operator()(uid_t *ruid, uid_t *euid, uid_t *suid) {
 }
 
 int Sysdeps<GetResgid>::operator()(gid_t *rgid, gid_t *egid, gid_t *sgid) {
-	int real = sysdep<GetGid>();
-	if (real)
-		*rgid = real;
-
-	int effective = sysdep<GetEgid>();
-	if (effective)
-		*egid = effective;
-
 	SignalGuard sguard;
 
-	managarm::posix::GetSgidRequest<SysdepsAllocator> req(getSysdepsAllocator());
+	managarm::posix::GetResgidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
 	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
-	    getPosixLane(),
-	    helix_ng::offer(
-	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
-	    )
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+		)
 	);
 
 	HEL_CHECK(offer.error());
 	HEL_CHECK(send_head.error());
 	HEL_CHECK(recv_resp.error());
 
-	managarm::posix::GetSgidResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	managarm::posix::GetResgidResponse<SysdepsAllocator> resp(getSysdepsAllocator());
 	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
-	__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
-	int saved = resp.gid();
-	if(saved)
-		*sgid = saved;
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*rgid = resp.rgid();
+	*egid = resp.egid();
+	*sgid = resp.sgid();
 
 	return 0;
 }
