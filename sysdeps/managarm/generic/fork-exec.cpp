@@ -355,16 +355,29 @@ int Sysdeps<SetEgid>::operator()(gid_t egid) {
 }
 
 int Sysdeps<SetResgid>::operator()(gid_t rgid, gid_t egid, gid_t sgid) {
-	// TODO: handle saved set-group-ID
-	(void)sgid;
+	SignalGuard sguard;
 
-	int real = sysdep<SetGid>(rgid);
-	if (real)
-		return real;
+	managarm::posix::SetResgidRequest<SysdepsAllocator> req(getSysdepsAllocator());
 
-	int effective = sysdep<SetEgid>(egid);
-	if (effective)
-		return effective;
+	req.set_rgid(rgid);
+	req.set_egid(egid);
+	req.set_sgid(sgid);
+
+	auto [offer, send_head, recv_resp] = exchangeMsgsSync(
+		getPosixLane(),
+		helix_ng::offer(
+			helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()), helix_ng::recvInline()
+		)
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::posix::SetResgidResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
 
 	return 0;
 }
