@@ -31,6 +31,7 @@ all_test_cases = [
 	'ansi/creal-cimag',
 	'ansi/fenv',
 	'ansi/qsort',
+	'ansi/raise',
 	'ansi/freopen',
 	'ansi/strxfrm',
 	'ansi/calloc',
