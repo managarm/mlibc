@@ -320,6 +320,8 @@ int abstract_file::seek(off_t offset, int whence) {
 	if(whence == SEEK_CUR) {
 		auto seek_offset = offset + (off_t(__offset) - off_t(__io_offset));
 		if(int e = io_seek(seek_offset, whence, &new_offset); e) {
+			if(e == ESPIPE)
+				_type = stream_type::pipe_like;
 			// A failed seek is not a read/write error. In particular, ESPIPE
 			// on a pipe must not set the stream error indicator.
 			return e;
@@ -327,6 +329,9 @@ int abstract_file::seek(off_t offset, int whence) {
 	}else{
 		__ensure(whence == SEEK_SET || whence == SEEK_END);
 		if(int e = io_seek(offset, whence, &new_offset); e) {
+			if(e == ESPIPE)
+				_type = stream_type::pipe_like;
+			// As above, a seek failure is not a read/write error.
 			return e;
 		}
 	}
@@ -390,9 +395,17 @@ int abstract_file::_write_back() {
 		if(__io_offset != __dirty_begin) {
 			__ensure(__dirty_begin - __io_offset > 0);
 			off_t new_offset;
-			if(int e = io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR, &new_offset); e)
-				return e;
-			__io_offset = __dirty_begin;
+			if(int e = io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR, &new_offset); e) {
+				if(e != ESPIPE)
+					return e;
+				// dup2() can replace the descriptor behind a FILE* with a pipe.
+				// POSIX does not specify how stdio caches this state, but glibc
+				// keeps the stream usable, so resynchronize with that behavior.
+				_type = stream_type::pipe_like;
+				__io_offset = __dirty_begin;
+			} else {
+				__io_offset = __dirty_begin;
+			}
 		}
 	}else{
 		__ensure(_type == stream_type::pipe_like);
@@ -424,6 +437,11 @@ int abstract_file::_save_pos() {
 		off_t new_offset;
 		auto seek_offset = (off_t(__offset) - off_t(__io_offset));
 		if (int e = io_seek(seek_offset, SEEK_CUR, &new_offset); e) {
+			if(e == ESPIPE) {
+				// See the corresponding resynchronization in _write_back().
+				_type = stream_type::pipe_like;
+				return 0;
+			}
 			__status_bits |= __MLIBC_ERROR_BIT;
 			if(!mlibc::processIsExiting.load(std::memory_order_relaxed))
 				mlibc::infoLogger() << "hit io_seek() error " << e << frg::endlog;
