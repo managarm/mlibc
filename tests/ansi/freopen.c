@@ -2,6 +2,15 @@
 #include <stdio.h>
 #include <string.h>
 
+// This test is also built for the ANSI-only mlibc configuration. In that
+// configuration neither fileno() nor unlink() is available.
+#if defined(USE_HOST_LIBC) || __MLIBC_POSIX_OPTION
+#include <unistd.h>
+#define TEST_HAS_POSIX 1
+#else
+#define TEST_HAS_POSIX 0
+#endif
+
 #ifdef USE_HOST_LIBC
 #define TEST_FILE "freopen-host-libc.tmp"
 #elif defined(USE_CROSS_LIBC)
@@ -11,10 +20,24 @@
 #endif
 
 int main() {
+	// POSIX requires freopen() to ignore errors while flushing the old stream.
+	FILE *full = fopen("/dev/full", "w");
+	assert(full);
+	assert(fwrite("x", 1, 1, full) == 1);
+	assert(freopen("/dev/null", "w", full));
+	assert(fclose(full) == 0);
+
 	FILE *file = fopen(TEST_FILE, "w");
 	assert(file);
 
+#if TEST_HAS_POSIX
+	int original_fd = fileno(file);
+#endif
 	assert(freopen("/dev/null", "w", file));
+
+#if TEST_HAS_POSIX
+	assert(fileno(file) == original_fd);
+#endif
 
 	char str[] = "mlibc freopen test";
 	fwrite(str, 1, sizeof(str) - 1, file);
@@ -46,6 +69,8 @@ int main() {
 	fprintf(stderr, "buffer content '%s'\n", buf);
 	assert(!strcmp(buf, "mlibc freopen test"));
 	fclose(file);
+
+	assert(remove(TEST_FILE) == 0);
 
 	return 0;
 }
