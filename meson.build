@@ -131,6 +131,10 @@ if not headers_only
 	add_project_arguments(cpp_compiler.get_supported_arguments('-Wno-prio-ctor-dtor'),
 		language: 'cpp')
 
+	if library_type == 'static'
+		add_project_arguments('-fdata-sections', '-ffunction-sections', language: ['c', 'cpp'])
+	endif
+
 	if get_option('buildtype').startswith('debug')
 		add_project_arguments('-D__MLIBC_DEBUG', language : ['c', 'cpp'])
 	endif
