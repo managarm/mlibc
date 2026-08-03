@@ -324,13 +324,14 @@ int abstract_file::seek(off_t offset, int whence) {
 	if(whence == SEEK_CUR) {
 		auto seek_offset = offset + (off_t(__offset) - off_t(__io_offset));
 		if(int e = io_seek(seek_offset, whence, &new_offset); e) {
-			__status_bits |= __MLIBC_ERROR_BIT;
+			// A pure seek failure is not a read/write error. In particular,
+			// ESPIPE on a pipe must not set ferror(); glibc keeps the stream
+			// error indicator clear in this case, so match glibc here.
 			return e;
 		}
 	}else{
 		__ensure(whence == SEEK_SET || whence == SEEK_END);
 		if(int e = io_seek(offset, whence, &new_offset); e) {
-			__status_bits |= __MLIBC_ERROR_BIT;
 			return e;
 		}
 	}
