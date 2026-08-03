@@ -88,6 +88,7 @@ all_test_cases = [
 	'posix/pwd',
 	'posix/fdopen',
 	'posix/stdio-epipe',
+	'posix/dup2-stream',
 	'posix/fopencookie',
 	'posix/fmemopen',
 	'posix/getaddrinfo',
