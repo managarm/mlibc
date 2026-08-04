@@ -31,6 +31,7 @@ using elf_vernaux = Elf64_Vernaux;
 #define R_NONE R_X86_64_NONE
 #define R_JUMP_SLOT R_X86_64_JUMP_SLOT
 #define R_ABSOLUTE R_X86_64_64
+#define R_PC32 R_X86_64_PC32
 #define R_GLOB_DAT R_X86_64_GLOB_DAT
 #define R_RELATIVE R_X86_64_RELATIVE
 #define R_IRELATIVE R_X86_64_IRELATIVE
