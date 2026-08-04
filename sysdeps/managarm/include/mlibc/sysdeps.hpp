@@ -110,6 +110,7 @@ struct ManagarmSysdepTags :
 	PidfdSendSignal,
 	Ppoll,
 	Renameat,
+	Renameat2,
 	GetTid,
 	GetUid,
 	GetEuid,

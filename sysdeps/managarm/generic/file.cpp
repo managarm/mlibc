@@ -208,6 +208,11 @@ int Sysdeps<Rename>::operator()(const char *path, const char *new_path) {
 }
 
 int Sysdeps<Renameat>::operator()(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
+	return sysdep<Renameat2>(olddirfd, old_path, newdirfd, new_path, NULL);
+}
+
+int Sysdeps<Renameat2>::operator()(
+		int olddirfd, const char *old_path, int newdirfd, const char *new_path, unsigned int flags) {
 	SignalGuard sguard;
 
 	managarm::posix::RenameAtRequest<SysdepsAllocator> req(getSysdepsAllocator());
@@ -215,6 +220,7 @@ int Sysdeps<Renameat>::operator()(int olddirfd, const char *old_path, int newdir
 	req.set_target_path(frg::string<SysdepsAllocator>(getSysdepsAllocator(), new_path));
 	req.set_fd(olddirfd);
 	req.set_newfd(newdirfd);
+	req.set_flags(flags);
 
 	auto [offer, send_head, send_tail, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
