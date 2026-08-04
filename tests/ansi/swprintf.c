@@ -444,6 +444,12 @@ int main() {
 	swprintf(buffer, BUFFER_SIZE, L"%A", NAN);
 	assert(!wcscmp(buffer, L"NAN"));
 
+	// %m
+	errno = EINVAL;
+	swprintf(buffer, BUFFER_SIZE, L"%m");
+	assert(!wcsncmp(buffer, L"Invalid argument", 16));
+	errno = 0;
+
 	// Test %a/%A padding
 	test_roundtrip(10.25, L"%25a", L"%lf", L"                0x1.48p+3", 1);
 	test_roundtrip(10.25, L"%-25a", L"%lf", L"0x1.48p+3                ", 1);
