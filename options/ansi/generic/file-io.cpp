@@ -86,7 +86,10 @@ abstract_file::abstract_file(void (*do_dispose)(abstract_file *))
 }
 
 abstract_file::~abstract_file() {
-	if(__dirty_begin != __dirty_end)
+	// A failed write can legitimately leave data buffered for a caller that
+	// chooses to clear the error and retry. Do not emit a misleading warning
+	// while tearing down a stream whose output error is already recorded.
+	if(__dirty_begin != __dirty_end && !(__status_bits & __MLIBC_ERROR_BIT))
 		mlibc::infoLogger() << "mlibc warning: File is not flushed before destruction"
 				<< frg::endlog;
 
@@ -248,8 +251,8 @@ int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_siz
 
 	// Flush line-buffered streams.
 	if(flush_line) {
-		if(_write_back())
-			return -1;
+		if(int e = _write_back(); e)
+			return e;
 	}
 
 	*actual_size = chunk;
@@ -324,13 +327,13 @@ int abstract_file::seek(off_t offset, int whence) {
 	if(whence == SEEK_CUR) {
 		auto seek_offset = offset + (off_t(__offset) - off_t(__io_offset));
 		if(int e = io_seek(seek_offset, whence, &new_offset); e) {
-			__status_bits |= __MLIBC_ERROR_BIT;
+			// A failed seek is not a read/write error. In particular, ESPIPE
+			// on a pipe must not set the stream error indicator.
 			return e;
 		}
 	}else{
 		__ensure(whence == SEEK_SET || whence == SEEK_END);
 		if(int e = io_seek(offset, whence, &new_offset); e) {
-			__status_bits |= __MLIBC_ERROR_BIT;
 			return e;
 		}
 	}
@@ -472,7 +475,7 @@ int fd_file::fd() {
 }
 
 int fd_file::close() {
-	if(__dirty_begin != __dirty_end)
+	if(__dirty_begin != __dirty_end && !(__status_bits & __MLIBC_ERROR_BIT))
 		mlibc::infoLogger() << "mlibc warning: File is not flushed before closing"
 				<< frg::endlog;
 	if(int e = mlibc::sysdep<Close>(_fd); e)
@@ -704,13 +707,23 @@ FILE *fopen(const char *path, const char *mode) {
 
 int fclose(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
-	int e = 0;
-	if(file->flush())
-		e = EOF;
-	if(file->close())
-		e = EOF;
+	int result = 0;
+	int error = 0;
+	if(int e = file->flush(); e) {
+		file->__status_bits |= __MLIBC_ERROR_BIT;
+		result = EOF;
+		error = e;
+	}
+	if(int e = file->close(); e) {
+		file->__status_bits |= __MLIBC_ERROR_BIT;
+		result = EOF;
+		if(!error)
+			error = e;
+	}
 	file->dispose();
-	return e;
+	if(error)
+		errno = error;
+	return result;
 }
 
 int fseek(FILE *file_base, long offset, int whence) {
@@ -738,35 +751,55 @@ int fflush_unlocked(FILE *file_base) {
 	if(file_base == nullptr) {
 		// Only flush the files but do not close them.
 		frg::unique_lock list_lock(mlibc::global_file_list_mutex);
+		int error = 0;
 		for(auto it : mlibc::global_file_list()) {
-			if(int e = it->flush(); e)
-				mlibc::infoLogger() << "mlibc warning: Failed to flush file"
-					<< frg::endlog;
+			if(int e = it->flush(); e) {
+				it->__status_bits |= __MLIBC_ERROR_BIT;
+				if(!error)
+					error = e;
+			}
+		}
+		if(error) {
+			errno = error;
+			return EOF;
 		}
 		return 0;
 	}
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
-	if(file->flush())
+	if(int e = file->flush(); e) {
+		errno = e;
+		file->__status_bits |= __MLIBC_ERROR_BIT;
 		return EOF;
+	}
 	return 0;
 }
 int fflush(FILE *file_base) {
 	if(file_base == nullptr) {
 		// Only flush the files but do not close them.
 		frg::unique_lock list_lock(mlibc::global_file_list_mutex);
+		int error = 0;
 		for(auto it : mlibc::global_file_list()) {
 			frg::unique_lock lock(it->_lock);
-			if(int e = it->flush(); e)
-				mlibc::infoLogger() << "mlibc warning: Failed to flush file"
-					<< frg::endlog;
+			if(int e = it->flush(); e) {
+				it->__status_bits |= __MLIBC_ERROR_BIT;
+				if(!error)
+					error = e;
+			}
+		}
+		if(error) {
+			errno = error;
+			return EOF;
 		}
 		return 0;
 	}
 
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	frg::unique_lock lock(file->_lock);
-	if (file->flush())
+	if (int e = file->flush(); e) {
+		errno = e;
+		file->__status_bits |= __MLIBC_ERROR_BIT;
 		return EOF;
+	}
 	return 0;
 }
 
@@ -820,4 +853,3 @@ void __fpurge(FILE *file_base) {
 	file->purge();
 }
 #endif
-

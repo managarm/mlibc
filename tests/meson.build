@@ -87,6 +87,7 @@ all_test_cases = [
 	'posix/pthread_spin',
 	'posix/pwd',
 	'posix/fdopen',
+	'posix/stdio-epipe',
 	'posix/fopencookie',
 	'posix/fmemopen',
 	'posix/getaddrinfo',
