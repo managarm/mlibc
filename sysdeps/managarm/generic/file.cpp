@@ -208,7 +208,7 @@ int Sysdeps<Rename>::operator()(const char *path, const char *new_path) {
 }
 
 int Sysdeps<Renameat>::operator()(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
-	return sysdep<Renameat2>(olddirfd, old_path, newdirfd, new_path, NULL);
+	return sysdep<Renameat2>(olddirfd, old_path, newdirfd, new_path, 0);
 }
 
 int Sysdeps<Renameat2>::operator()(
