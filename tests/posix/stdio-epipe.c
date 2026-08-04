@@ -45,6 +45,20 @@ int main(void) {
 	int close_result = fclose(line_stream);
 	assert(close_result == 0 || (close_result == EOF && errno == EPIPE));
 
+	int fprintf_fds[2];
+	assert(pipe(fprintf_fds) == 0);
+	assert(close(fprintf_fds[0]) == 0);
+	FILE *fprintf_stream = fdopen(fprintf_fds[1], "w");
+	assert(fprintf_stream);
+	assert(setvbuf(fprintf_stream, NULL, _IOLBF, 0) == 0);
+	errno = 0;
+	assert(fprintf(fprintf_stream, "x\n") < 0);
+	assert(errno == EPIPE);
+	assert(ferror(fprintf_stream));
+	errno = 0;
+	close_result = fclose(fprintf_stream);
+	assert(close_result == 0 || (close_result == EOF && errno == EPIPE));
+
 	int flush_fds[2];
 	assert(pipe(flush_fds) == 0);
 	assert(close(flush_fds[0]) == 0);
