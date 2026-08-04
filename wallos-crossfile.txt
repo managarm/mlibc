@@ -1,0 +1,15 @@
+[binaries]
+c = 'x86_64-wallos-gcc'
+cpp = 'x86_64-wallos-g++'
+strip = 'x86_64-wallos-strip'
+ld = 'x86_64-wallos-ld'
+pkgconfig = 'pkg-config'
+
+[host_machine]
+system = 'wallos'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'
+
+[paths]
+prefix = '~/wallos/sysroot'
