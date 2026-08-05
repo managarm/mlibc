@@ -1,4 +1,5 @@
 #include "mlibc-asm/helpers.h"
+#include "mlibc-asm/jmp_buf.h"
 
 .hidden __setjmp
 .type __setjmp, "function"
@@ -29,7 +30,8 @@ __setjmp:
 	fsd fs9, 184(a0)
 	fsd fs10, 192(a0)
 	fsd fs11, 200(a0)
-	bne t1, zero, 1f
+	bne a2, zero, 1f
+	sw zero, JMP_BUF_SAVESIGS_OFFSET(a0)
 	li a0, 0
 	ret
 
@@ -42,13 +44,14 @@ __setjmp:
 .type _setjmp, "function"
 setjmp:
 _setjmp:
-	li t1, 0
+	li a1, 0
+	li a2, 0
 	tail __setjmp
 
 .global sigsetjmp
 .type sigsetjmp, "function"
 sigsetjmp:
-	li t1, 1
+	li a2, 1
 	tail __setjmp
 
 .global longjmp

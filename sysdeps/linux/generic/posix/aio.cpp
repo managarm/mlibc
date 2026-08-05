@@ -302,10 +302,17 @@ static void handleCompletionNotification(struct sigevent *sevp) {
 		do_syscall(SYS_rt_sigqueueinfo, si.si_pid, si.si_signo, &si);
 	} else if (sevp->sigev_notify == SIGEV_THREAD) {
 		pthread_attr_t attr;
-		if (sevp->sigev_notify_attributes)
-			attr = *sevp->sigev_notify_attributes;
-		else
-			pthread_attr_init(&attr);
+		pthread_attr_init(&attr);
+
+		frg::scope_exit destroy_attr{[&] { pthread_attr_destroy(&attr); }};
+
+		if (sevp->sigev_notify_attributes) {
+			auto to_attr = __mlibc_threadattr::from(&attr);
+			auto from_attr = __mlibc_threadattr::from(sevp->sigev_notify_attributes);
+			if (to_attr && from_attr) {
+				*to_attr = *from_attr;
+			}
+		}
 
 		int ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 		__ensure(!ret);
@@ -318,9 +325,6 @@ static void handleCompletionNotification(struct sigevent *sevp) {
 		threadContext->val = sevp->sigev_value;
 		ret = pthread_create(&pthread, &attr, invokeThreadNotification, threadContext);
 		__ensure(!ret);
-
-		if (!sevp->sigev_notify_attributes)
-			pthread_attr_destroy(&attr);
 	} else {
 		__ensure(!"unsupported");
 	}

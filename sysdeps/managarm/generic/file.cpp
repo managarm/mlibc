@@ -208,6 +208,11 @@ int Sysdeps<Rename>::operator()(const char *path, const char *new_path) {
 }
 
 int Sysdeps<Renameat>::operator()(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
+	return sysdep<Renameat2>(olddirfd, old_path, newdirfd, new_path, 0);
+}
+
+int Sysdeps<Renameat2>::operator()(
+		int olddirfd, const char *old_path, int newdirfd, const char *new_path, unsigned int flags) {
 	SignalGuard sguard;
 
 	managarm::posix::RenameAtRequest<SysdepsAllocator> req(getSysdepsAllocator());
@@ -215,6 +220,7 @@ int Sysdeps<Renameat>::operator()(int olddirfd, const char *old_path, int newdir
 	req.set_target_path(frg::string<SysdepsAllocator>(getSysdepsAllocator(), new_path));
 	req.set_fd(olddirfd);
 	req.set_newfd(newdirfd);
+	req.set_flags(flags);
 
 	auto [offer, send_head, send_tail, recv_resp] = exchangeMsgsSync(
 	    getPosixLane(),
@@ -1121,17 +1127,22 @@ int Sysdeps<Pselect>::operator()(
 	if (except_set)
 		FD_ZERO(except_set);
 
-	if (*num_events) {
-
-		for (int i = 0; i < *num_events; i++) {
-			if (read_set && (pfds[i].revents & (POLLIN | POLLHUP | POLLERR)))
-				FD_SET(pfds[i].fd, read_set);
-			if (write_set && (pfds[i].revents & (POLLOUT | POLLHUP | POLLERR)))
-				FD_SET(pfds[i].fd, write_set);
-			if (except_set && (pfds[i].revents & (POLLPRI)))
-				FD_SET(pfds[i].fd, except_set);
+	int ready_count = 0;
+	for (int i = 0; i < pcount; i++) {
+		if (read_set && (pfds[i].revents & (POLLIN | POLLHUP | POLLERR))) {
+			FD_SET(pfds[i].fd, read_set);
+			ready_count++;
+		}
+		if (write_set && (pfds[i].revents & (POLLOUT | POLLHUP | POLLERR))) {
+			FD_SET(pfds[i].fd, write_set);
+			ready_count++;
+		}
+		if (except_set && (pfds[i].revents & (POLLPRI))) {
+			FD_SET(pfds[i].fd, except_set);
+			ready_count++;
 		}
 	}
+	*num_events = ready_count;
 
 	return 0;
 }

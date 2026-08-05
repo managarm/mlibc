@@ -95,6 +95,10 @@
 #define TIOCPKT_IOCTL 64
 #define TIOCSER_TEMT 0x01
 
+#define BLKGETSIZE64 _IOR('B', 0x00, unsigned long long)
+#define BLKSSZGET _IOR('B', 0x01, int)
+#define BLKRRPART _IO('B', 0x02)
+
 #define SIOCPROTOPRIVATE 0x89E0
 #define SIOCADDRT 0x890B
 #define SIOCDELRT 0x890C

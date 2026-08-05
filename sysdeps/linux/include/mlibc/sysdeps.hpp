@@ -246,6 +246,7 @@ struct LinuxSysdepTags :
 	MoveMount,
 	OpenTree,
 	CopyFileRange,
+	Renameat2,
 #endif // __MLIBC_LINUX_OPTION
 
 #if __MLIBC_LINUX_EPOLL_OPTION

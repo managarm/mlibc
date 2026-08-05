@@ -233,7 +233,16 @@ int renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_p
 	return 0;
 }
 
-int renameat2(int, const char *, int, const char *, unsigned int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+#if __MLIBC_LINUX_OPTION
+int renameat2(int olddirfd, const char *oldpath, int newdirfd, const char *newpath, unsigned int flags) {
+	if(int e = mlibc::sysdep_or_enosys<Renameat2>(olddirfd, oldpath, newdirfd, newpath, flags); e) {
+		// renameat2() with flags == 0 is equivalent to POSIX renameat()
+		if (e == ENOSYS && flags == 0)
+			return renameat(olddirfd, oldpath, newdirfd, newpath);
+
+		errno = e;
+		return -1;
+	}
+	return 0;
 }
+#endif

@@ -1,3 +1,5 @@
+#include "mlibc-asm/jmp_buf.h"
+
 .type __setjmp, "function"
 __setjmp:
 	movea.l 4(%sp), %a0
@@ -6,11 +8,13 @@ __setjmp:
 	tst.l %d0
 	bne 1f
 
+	clr.l JMP_BUF_SAVESIGS_OFFSET(%a0)
 	clr.l %d0
 	rts
 
 1:
-	move.l #1, -(%sp)
+	move.l 8(%sp), %d0
+	move.l %d0, -(%sp)
 	move.l %a0, -(%sp)
 	jbsr __sigsetjmp@PLTPC
 	addq.l #8, %sp

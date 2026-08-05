@@ -60,6 +60,7 @@ all_test_cases = [
 	'ansi/threads-once',
 	'ansi/threads-tss',
 	'ansi/threads-thrd',
+	'ansi/string-search',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
@@ -168,6 +169,7 @@ all_test_cases = [
 	'posix/getwchar',
 	'posix/strcoll_l',
 	'posix/strxfrm_l',
+	'posix/strtok',
 	'posix/wcscoll_l',
 	'posix/wcsxfrm_l',
 	'posix/aio',
@@ -198,6 +200,7 @@ all_test_cases = [
 	'linux/ppoll',
 	'linux/utmp',
 	'linux/utmpx',
+	'linux/SIOCGSTAMP',
 	'linux-wrappers/rt_tgsigqueueinfo',
 	'linux-wrappers/rt_sigqueueinfo',
 ]

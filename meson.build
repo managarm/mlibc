@@ -1,5 +1,6 @@
 project(
 	'mlibc',
+	version: '7.0.0',
 	default_options: [
 		'cpp_std=c++23',
 		'c_std=gnu11',
@@ -500,6 +501,7 @@ internal_sources = [
 	'options/internal/gcc/stack_protector.cpp',
 	'options/internal/gcc/guard-abi.cpp',
 	'options/internal/gcc-extra/cxxabi.cpp',
+	'options/internal' / host_machine.cpu_family() / 'assembly-asserts.cpp',
 	'options/internal' / host_machine.cpu_family() / 'setjmp.S',
 	'options/internal' / host_machine.cpu_family() / 'fenv.S',
 ]

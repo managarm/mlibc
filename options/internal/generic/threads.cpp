@@ -10,6 +10,7 @@
 #include <mlibc/threads.hpp>
 #include <mlibc/tcb.hpp>
 #include <mlibc/time-helpers.hpp>
+#include <stdlib.h>
 
 extern "C" Tcb *__rtld_allocateTcb();
 
@@ -572,3 +573,70 @@ void thread_testcancel(void) {
 }
 
 } // namespace mlibc
+
+__mlibc_threadattr::__mlibc_threadattr(const __mlibc_threadattr &other) {
+	__guardsize = other.__guardsize;
+	__stackaddr = other.__stackaddr;
+	__stacksize = other.__stacksize;
+	__detachstate = other.__detachstate;
+	__inheritsched = other.__inheritsched;
+	__scope = other.__scope;
+	__schedparam = other.__schedparam;
+	__schedpolicy = other.__schedpolicy;
+	__sigmask = other.__sigmask;
+	__sigmaskset = other.__sigmaskset;
+
+	if (other.__cpuset) {
+		__cpuset = static_cast<cpu_set_t *>(malloc(other.__cpusetsize));
+		if (__cpuset) {
+			memcpy(__cpuset, other.__cpuset, other.__cpusetsize);
+			__cpusetsize = other.__cpusetsize;
+		} else {
+			__cpusetsize = 0;
+		}
+	} else {
+		__cpuset = nullptr;
+		__cpusetsize = 0;
+	}
+}
+
+__mlibc_threadattr &__mlibc_threadattr::operator=(const __mlibc_threadattr &other) {
+	if (this == &other)
+		return *this;
+
+	if (__cpuset) {
+		free(__cpuset);
+		__cpuset = nullptr;
+	}
+
+	__guardsize = other.__guardsize;
+	__stackaddr = other.__stackaddr;
+	__stacksize = other.__stacksize;
+	__detachstate = other.__detachstate;
+	__inheritsched = other.__inheritsched;
+	__scope = other.__scope;
+	__schedparam = other.__schedparam;
+	__schedpolicy = other.__schedpolicy;
+	__sigmask = other.__sigmask;
+	__sigmaskset = other.__sigmaskset;
+
+	if (other.__cpuset) {
+		__cpuset = static_cast<cpu_set_t *>(malloc(other.__cpusetsize));
+		if (__cpuset) {
+			memcpy(__cpuset, other.__cpuset, other.__cpusetsize);
+			__cpusetsize = other.__cpusetsize;
+		} else {
+			__cpusetsize = 0;
+		}
+	} else {
+		__cpuset = nullptr;
+		__cpusetsize = 0;
+	}
+
+	return *this;
+}
+
+__mlibc_threadattr::~__mlibc_threadattr() {
+	if (__cpuset)
+		free(__cpuset);
+}

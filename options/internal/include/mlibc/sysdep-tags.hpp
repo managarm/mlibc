@@ -691,6 +691,8 @@ struct MoveMount {};
 struct OpenTree {};
 // int sys_copy_file_range(int fd_in, off_t *off_in, int fd_out, off_t *off_out, size_t count, unsigned int flags, ssize_t *bytes_copied);
 struct CopyFileRange {};
+// int sys_renameat2(int olddirfd, const char *old_path, int newdirfd, const char *new_path, unsigned int flags);
+struct Renameat2 {};
 #endif // __MLIBC_LINUX_OPTION
 
 #if __MLIBC_LINUX_EPOLL_OPTION
