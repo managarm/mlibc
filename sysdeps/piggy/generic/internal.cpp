@@ -113,6 +113,29 @@ namespace mlibc {
         return 0;
     }
 
+    int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char* path, int flags, struct stat* statbuf) {
+        switch (fsfdt) {
+            case fsfd_target::fd:
+                flags |= AT_EMPTY_PATH;
+                path = "";
+                break;
+            case fsfd_target::fd_path:
+                break;
+            case fsfd_target::path:
+                fd = AT_FDCWD;
+                break;
+            default:
+                __builtin_unreachable();
+        }
+
+        long ret = syscall4(SYS_STAT, fd, (long) path, (long) statbuf, flags);
+        if (ret < 0) {
+            return -ret;
+        }
+
+        return 0;
+    }
+
     int Sysdeps<VmMap>::operator()(void* hint, size_t size, int prot, int flags, int fd, off_t offset, void** window) {
         long ret = syscall6(SYS_MMAP, (long) hint, size, prot, flags, fd, offset);
         if (ret < 0 && ret >= -4095) {

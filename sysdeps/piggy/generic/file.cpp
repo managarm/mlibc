@@ -251,30 +251,6 @@ namespace mlibc {
         return 0;
     }
 
-	int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char* path, int flags, struct stat* statbuf) {
-        switch (fsfdt) {
-            case fsfd_target::fd:
-                flags |= AT_EMPTY_PATH;
-                path = "";
-                break;
-            case fsfd_target::fd_path:
-                break;
-            case fsfd_target::path:
-                fd = AT_FDCWD;
-                break;
-            default:
-                mlibc::infoLogger() << "mlibc: stat: Unknown fsfd_target: " << (int) fsfdt << frg::endlog;
-                return ENOSYS;
-        }
-
-        long ret = syscall4(SYS_STAT, fd, (long) path, (long) statbuf, flags);
-        if (ret < 0) {
-            return -ret;
-        }
-
-        return 0;
-	}
-
     int Sysdeps<Utimensat>::operator()(int dirfd, const char* pathname, const struct timespec times[2], int flags) {
         if (pathname == NULL) {
             flags |= AT_EMPTY_PATH;
