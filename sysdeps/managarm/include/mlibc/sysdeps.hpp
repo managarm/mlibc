@@ -180,6 +180,7 @@ struct ManagarmSysdepTags :
 	TcbSet,
 #if MLIBC_BUILDING_RTLD
 	// Not supported: VmReadahead,
+	VerifyKernel,
 #endif
 	Exit,
 	ThreadExit,

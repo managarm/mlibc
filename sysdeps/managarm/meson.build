@@ -113,6 +113,7 @@ rtld_sources += files(
 	'generic/ensure.cpp',
 	'generic/memory.cpp',
 	'rtld-generic/support.cpp',
+	'rtld-generic/verify-kernel.cpp',
 )
 rtld_sources += [
 	fs_bragi,
