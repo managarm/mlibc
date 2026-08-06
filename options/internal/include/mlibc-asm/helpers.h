@@ -34,3 +34,5 @@
 
 #define GNU_STACK_NOTE() \
 	.section .note.GNU-stack,"",%progbits
+
+#define LABEL(name) .L##name

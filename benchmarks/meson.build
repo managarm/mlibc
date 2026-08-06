@@ -5,17 +5,14 @@ endif
 benchmark_dep = subproject('google-benchmark', default_options: ['tests=disabled', 'default_library=static'], required: true).get_variable('google_benchmark_main_dep')
 
 all_benchmarks = [
-	'ansi/strcmp'
+	'ansi/strcmp',
+	'ansi/strlen',
 ]
 
 # We link with libc_static if available, otherwise libc_shared.
 # This compiles the benchmark as a standard hosted C++ program, avoiding
 # header resolution and runtime linker conflicts with the host C++ standard library.
-if library_type == 'static' or library_type == 'both'
-	benchmark_link_libs = [libc_static]
-else
-	benchmark_link_libs = [libc_shared]
-endif
+benchmark_link_libs = [libc_static]
 
 benchmark_utils = files(
 	'utils.cpp',

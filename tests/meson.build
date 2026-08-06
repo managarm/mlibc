@@ -61,6 +61,7 @@ all_test_cases = [
 	'ansi/threads-tss',
 	'ansi/threads-thrd',
 	'ansi/string-search',
+	'ansi/strlen',
 	'bsd/ns_get_put',
 	'bsd/reallocarray',
 	'bsd/strl',
