@@ -108,6 +108,8 @@ struct TcbSet {};
 #if MLIBC_BUILDING_RTLD
 // int sys_vm_readahead(void *pointer, size_t size);
 struct VmReadahead {};
+// void sys_verify_kernel();
+struct VerifyKernel {};
 #endif /* MLIBC_BUILDING_RTLD */
 
 // void sys_libc_log(const char *message);

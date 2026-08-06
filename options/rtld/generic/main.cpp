@@ -347,6 +347,11 @@ static constexpr uint64_t supportedDtFlags1 = DF_1_NOW;
 #endif
 
 extern "C" void *interpreterMain(uintptr_t *entry_stack) {
+	// Give the sysdeps a chance to detect that this executable is not running on a foreign kernel
+	// and exit early if so.
+	if constexpr (mlibc::IsImplemented<VerifyKernel>)
+		mlibc::sysdep<VerifyKernel>();
+
 	if(rtldConfig.debug)
 		mlibc::infoLogger() << "Entering ld.so" << frg::endlog;
 	entryStack = entry_stack;

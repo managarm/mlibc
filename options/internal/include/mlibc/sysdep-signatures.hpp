@@ -92,6 +92,7 @@ SYSDEP_FUNC(Kill, pid_t, int);
 
 #if MLIBC_BUILDING_RTLD
 SYSDEP_FUNC(VmReadahead, void *pointer, size_t size);
+SYSDEP_FUNC_RET(void, VerifyKernel);
 #endif /* MLIBC_BUILDING_RTLD */
 
 #if __MLIBC_POSIX_OPTION
