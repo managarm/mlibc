@@ -21,7 +21,13 @@ struct RobuSysdepTags :
 	Open,
 	VmMap,
 	VmUnmap,
-	ClockGet
+	ClockGet,
+	Stat,
+	OpenDir,
+	ReadEntries,
+	GetCwd,
+	Chdir,
+	Waitpid
 {};
 
 template<typename Tag>
