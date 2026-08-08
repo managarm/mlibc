@@ -21,7 +21,6 @@ namespace {
 
 enum FdKind {
 	FD_NONE = 0,
-	FD_DEVFS,
 	FD_RAMFS,
 	FD_RAMFS_DIR,
 	FD_PROCFS,
@@ -65,9 +64,14 @@ bool fd_valid(int fd) {
 
 int64_t console_handle_cached = -1;
 
+// Uses devfs's statically-known tid (kinfo_page_t.devfs_tid) directly rather
+// than resolve_mount() -- this needs to work for early debug/panic output
+// (LibcLog/LibcPanic below) with no dependency on the dynamic mount table
+// ever having been populated, only on devfs itself being up (same boot
+// ordering guarantee this had before the vfs.h migration).
 int64_t console_handle() {
 	if (console_handle_cached < 0) {
-		console_handle_cached = robu::devfs_open("/dev/console");
+		console_handle_cached = robu::vfs_open(robu::devfs_tid(), "console", 0);
 	}
 	return console_handle_cached;
 }
@@ -80,10 +84,10 @@ void console_write_all(const char *buf, size_t len) {
 	size_t off = 0;
 	while (off < len) {
 		size_t chunk = len - off;
-		if (chunk > (size_t)robu::DEVFS_WRITE_MAX) {
-			chunk = robu::DEVFS_WRITE_MAX;
+		if (chunk > (size_t)robu::VFS_WRITE_MAX) {
+			chunk = robu::VFS_WRITE_MAX;
 		}
-		robu::devfs_write((uint64_t)h, buf + off, chunk);
+		robu::vfs_write(robu::devfs_tid(), (uint64_t)h, buf + off, chunk);
 		off += chunk;
 	}
 }
@@ -91,8 +95,7 @@ void console_write_all(const char *buf, size_t len) {
 void ensure_stdio_defaults() {
 	for (int fd = 0; fd <= 2; fd++) {
 		if (g_fds[fd].kind == FD_NONE) {
-			g_fds[fd].kind = FD_DEVFS;
-			g_fds[fd].handle = (uint64_t)console_handle();
+			g_fds[fd] = { FD_VFS, (uint64_t)console_handle(), 0, robu::devfs_tid() };
 		}
 	}
 }
@@ -131,6 +134,7 @@ extern "C" void __robu_fd_inherit(uint64_t spawn_info) {
 			g_fds[fd].kind = (FdKind)fds[i].kind;
 		}
 		g_fds[fd].handle = fds[i].handle;
+		g_fds[fd].server_tid = fds[i].server_tid;
 	}
 }
 
@@ -230,15 +234,12 @@ int stat_path(const char *resolved, struct stat *buf) {
 		if (robu::vfs_stat(mount_tid, rel, &size, &is_dir, &ino) != 0) {
 			return ENOENT;
 		}
+		if (mount_tid == robu::devfs_tid()) {
+			fill_stat(buf, size, is_dir, ROBU_STDEV_DEVFS, (ino_t)ino);
+			buf->st_mode = S_IFCHR | 0666;
+			return 0;
+		}
 		fill_stat(buf, size, is_dir, ROBU_STDEV_VFS, (ino_t)ino);
-		return 0;
-	}
-	if (strncmp(resolved, "/dev/", 5) == 0) {
-		int64_t h = robu::devfs_open(resolved);
-		if (h < 0) return ENOENT;
-		robu::devfs_close((uint64_t)h);
-		fill_stat(buf, 0, 0, ROBU_STDEV_DEVFS, (ino_t)h + 1);
-		buf->st_mode = S_IFCHR | 0666;
 		return 0;
 	}
 	if (strncmp(resolved, "/proc/", 6) == 0) {
@@ -291,7 +292,7 @@ void Sysdeps<LibcLog>::operator()(const char *msg) {
 }
 
 int Sysdeps<Isatty>::operator()(int fd) {
-	if (fd_valid(fd) && g_fds[fd].kind == FD_DEVFS) {
+	if (fd_valid(fd) && g_fds[fd].kind == FD_VFS && g_fds[fd].server_tid == robu::devfs_tid()) {
 		return 0;
 	}
 	return ENOTTY;
@@ -304,10 +305,9 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 
 	// Mount-table-first: try the dynamic registry (include/robu/kinfo.h's
 	// kinfo_page_t.mounts[]) before falling through to the legacy hardcoded
-	// chain below. Empty table (no servers migrated yet) always misses here
-	// and falls through -- see A0's own boot verification. Once a server
-	// migrates (A1-A4), its legacy branch below gets deleted and traffic
-	// for its prefix is handled here instead.
+	// chain below for backends not yet migrated (A1-A4). devfs (this file's
+	// former FD_DEVFS branch) is migrated as of A1 and now only ever
+	// resolved through this path.
 	int matched_len = 0;
 	uint32_t mount_tid = robu::resolve_mount(resolved, &matched_len);
 	if (mount_tid != 0) {
@@ -325,15 +325,6 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 		return 0;
 	}
 
-	if (strncmp(resolved, "/dev/", 5) == 0) {
-		int64_t h = robu::devfs_open(resolved);
-		if (h < 0) return ENOENT;
-		int fd = alloc_fd();
-		if (fd < 0) { robu::devfs_close((uint64_t)h); return EMFILE; }
-		g_fds[fd] = { FD_DEVFS, (uint64_t)h, 0 };
-		*fd_out = fd;
-		return 0;
-	}
 	if (strncmp(resolved, "/proc/", 6) == 0) {
 		uint64_t size;
 		int64_t h = robu::procfs_open(resolved + 6, &size);
@@ -449,7 +440,6 @@ int Sysdeps<Close>::operator()(int fd) {
 	}
 	if (!shared) {
 		switch (g_fds[fd].kind) {
-		case FD_DEVFS: robu::devfs_close(g_fds[fd].handle); break;
 		case FD_RAMFS: robu::ramfs_close(g_fds[fd].handle); break;
 		case FD_PROCFS: robu::procfs_close(g_fds[fd].handle); break;
 		case FD_SYSFS: robu::sysfs_close(g_fds[fd].handle); break;
@@ -496,7 +486,6 @@ int Sysdeps<Write>::operator()(int fd, const void *buf, size_t count, ssize_t *b
 		size_t chunk = count - total;
 		int64_t n;
 		switch (g_fds[fd].kind) {
-		case FD_DEVFS: n = robu::devfs_write(g_fds[fd].handle, p + total, chunk); break;
 		case FD_RAMFS: n = robu::ramfs_write(g_fds[fd].handle, p + total, chunk); break;
 		case FD_VFS: n = robu::vfs_write(g_fds[fd].server_tid, g_fds[fd].handle, p + total, chunk); break;
 		default: return EBADF;
@@ -540,12 +529,12 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 		*bytes_read = (ssize_t)n;
 		return 0;
 	}
-	bool is_console = g_fds[fd].kind == FD_DEVFS && g_fds[fd].handle == robu::DEV_CONSOLE;
+	bool is_console = g_fds[fd].kind == FD_VFS && g_fds[fd].server_tid == robu::devfs_tid() &&
+	                  g_fds[fd].handle == robu::DEV_CONSOLE;
 	while (total < count) {
 		size_t chunk = count - total;
 		int64_t n;
 		switch (g_fds[fd].kind) {
-		case FD_DEVFS: n = robu::devfs_read(g_fds[fd].handle, p + total, chunk); break;
 		case FD_RAMFS: n = robu::ramfs_read(g_fds[fd].handle, p + total, chunk); break;
 		case FD_PROCFS: n = robu::procfs_read(g_fds[fd].handle, p + total, chunk); break;
 		case FD_SYSFS: n = robu::sysfs_read(g_fds[fd].handle, p + total, chunk); break;
@@ -586,10 +575,6 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int, 
 	if (fsfdt == fsfd_target::fd) {
 		if (!fd_valid(fd)) return EBADF;
 		switch (g_fds[fd].kind) {
-		case FD_DEVFS:
-			fill_stat(statbuf, 0, 0, ROBU_STDEV_DEVFS, (ino_t)g_fds[fd].handle + 1);
-			statbuf->st_mode = S_IFCHR | 0666;
-			return 0;
 		case FD_RAMFS_DIR:
 			fill_stat(statbuf, 0, 1, ROBU_STDEV_RAMFS, (ino_t)g_fds[fd].handle);
 			return 0;
@@ -610,6 +595,11 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int, 
 			uint64_t size, ino;
 			int is_dir;
 			if (robu::vfs_fstat(g_fds[fd].server_tid, g_fds[fd].handle, &size, &is_dir, &ino) != 0) return EBADF;
+			if (g_fds[fd].server_tid == robu::devfs_tid()) {
+				fill_stat(statbuf, size, is_dir, ROBU_STDEV_DEVFS, (ino_t)ino);
+				statbuf->st_mode = S_IFCHR | 0666;
+				return 0;
+			}
 			fill_stat(statbuf, size, is_dir, ROBU_STDEV_VFS, (ino_t)ino);
 			return 0;
 		}
@@ -872,7 +862,7 @@ int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusag
 // it's exposed as the same non-POSIX __libc_spawn() extension apps/libc
 // already provided -- minibox-shell.c and hello_initsys call this directly.
 extern "C" int __libc_spawn(const char *name, char *const argv[], char *const envp[]) {
-	auto fd_export = [](int fd, uint32_t *kind, uint64_t *handle) -> bool {
+	auto fd_export = [](int fd, uint32_t *kind, uint64_t *handle, uint32_t *server_tid) -> bool {
 		ensure_stdio_defaults();
 		if (!fd_valid(fd)) return false;
 		// Every kind but pipes is opaque to the kernel and passes straight
@@ -890,6 +880,7 @@ extern "C" int __libc_spawn(const char *name, char *const argv[], char *const en
 			*kind = (uint32_t)g_fds[fd].kind;
 		}
 		*handle = g_fds[fd].handle;
+		*server_tid = g_fds[fd].server_tid;
 		return true;
 	};
 	int64_t rc = robu::robu_spawn(name, argv, envp, fd_export);

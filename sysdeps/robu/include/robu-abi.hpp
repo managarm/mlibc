@@ -13,9 +13,9 @@ constexpr uint64_t IPC_FLAG_NONE = 0;
 constexpr uint64_t IPC_FLAG_NOBLOCK = 1ull << 4;
 constexpr uint64_t IPC_FLAG_RECV = 1ull << 1;
 constexpr uint64_t IPC_FLAG_CONSOLE_WRITE = 1ull << 7;
-// Matches include/robu/devfs.h's dev_id_t enum -- devfs's console read is
-// deliberately non-blocking (see apps/devfs/devfs.c), so a 0-byte reply
-// means "nothing typed yet," not EOF.
+// Matches apps/devfs/devfs.c's local dev_id_t enum -- devfs's console read
+// is deliberately non-blocking, so a 0-byte reply means "nothing typed
+// yet," not EOF.
 constexpr uint64_t DEV_CONSOLE = 0;
 constexpr uint64_t IPC_FLAG_EXIT = 1ull << 14;
 constexpr uint64_t IPC_FLAG_SPAWN = 1ull << 15;
@@ -158,13 +158,6 @@ inline uint64_t self_tid() {
 	return m.word[0];
 }
 
-constexpr uint64_t DEVFS_OP_OPEN = 1;
-constexpr uint64_t DEVFS_OP_READ = 2;
-constexpr uint64_t DEVFS_OP_WRITE = 3;
-constexpr int DEVFS_PATH_MAX = 40;
-constexpr int DEVFS_READ_MAX = 40;
-constexpr int DEVFS_WRITE_MAX = 24;
-
 constexpr uint64_t KINFO_VA = 0x0000000080000000ULL;
 
 // Must stay byte-for-byte in sync with include/robu/kinfo.h's kinfo_page_t
@@ -257,67 +250,6 @@ inline uint32_t resolve_mount(const char *path, int *matched_len_out = nullptr) 
 
 inline uint32_t devfs_tid() {
 	return kinfo()->devfs_tid;
-}
-
-inline int64_t devfs_open(const char *path) {
-	msg_regs m{};
-	m.word[0] = DEVFS_OP_OPEN;
-	char *dst = reinterpret_cast<char *>(&m.word[1]);
-	int i = 0;
-	for (; path[i] && i < DEVFS_PATH_MAX - 1; i++) {
-		dst[i] = path[i];
-	}
-	dst[i] = '\0';
-	uint32_t from;
-	ipc_call(devfs_tid(), &m, &from);
-	int64_t status = (int64_t)m.word[0];
-	uint64_t handle = m.word[1];
-	return status == 0 ? (int64_t)handle : status;
-}
-
-inline int64_t devfs_read(uint64_t handle, void *buf, uint64_t len) {
-	msg_regs m{};
-	m.word[0] = DEVFS_OP_READ;
-	m.word[1] = handle;
-	m.word[2] = len > (uint64_t)DEVFS_READ_MAX ? (uint64_t)DEVFS_READ_MAX : len;
-	uint32_t from;
-	ipc_call(devfs_tid(), &m, &from);
-	int64_t status = (int64_t)m.word[0];
-	if (status > 0) {
-		const uint8_t *data = reinterpret_cast<const uint8_t *>(&m.word[1]);
-		uint8_t *out = reinterpret_cast<uint8_t *>(buf);
-		for (int64_t i = 0; i < status; i++) {
-			out[i] = data[i];
-		}
-	}
-	return status;
-}
-
-inline int64_t devfs_write(uint64_t handle, const void *buf, uint64_t len) {
-	msg_regs m{};
-	m.word[0] = DEVFS_OP_WRITE;
-	m.word[1] = handle;
-	uint64_t clamped = len > (uint64_t)DEVFS_WRITE_MAX ? (uint64_t)DEVFS_WRITE_MAX : len;
-	m.word[2] = clamped;
-	uint8_t *dst = reinterpret_cast<uint8_t *>(&m.word[3]);
-	const uint8_t *src = reinterpret_cast<const uint8_t *>(buf);
-	for (uint64_t i = 0; i < clamped; i++) {
-		dst[i] = src[i];
-	}
-	uint32_t from;
-	ipc_call(devfs_tid(), &m, &from);
-	return (int64_t)m.word[0];
-}
-
-constexpr uint64_t DEVFS_OP_CLOSE = 4;
-
-inline int64_t devfs_close(uint64_t handle) {
-	msg_regs m{};
-	m.word[0] = DEVFS_OP_CLOSE;
-	m.word[1] = handle;
-	uint32_t from;
-	ipc_call(devfs_tid(), &m, &from);
-	return (int64_t)m.word[0];
 }
 
 inline void msg_put_str(msg_regs &m, unsigned word_off, const char *s, int max) {
@@ -726,6 +658,7 @@ struct robu_spawn_fd {
 	uint32_t fd;
 	uint32_t kind;
 	uint64_t handle;
+	uint32_t server_tid; // FD_VFS/FD_VFS_DIR only; opaque to the kernel.
 };
 
 // Matches include/robu/spawn.h -- the kernel's spawn handler
@@ -758,7 +691,8 @@ struct robu_spawn_info {
 // args).
 inline int32_t build_spawn_req_buf(uint8_t *buf, const char *name, char *const argv[],
                                     char *const envp[],
-                                    bool (*fd_export)(int fd, uint32_t *kind, uint64_t *handle)) {
+                                    bool (*fd_export)(int fd, uint32_t *kind, uint64_t *handle,
+                                                       uint32_t *server_tid)) {
 	robu_spawn_req *req = reinterpret_cast<robu_spawn_req *>(buf);
 	int argc = 0;
 	while (argv && argv[argc]) argc++;
@@ -811,10 +745,12 @@ inline int32_t build_spawn_req_buf(uint8_t *buf, const char *name, char *const a
 		for (int fd = 0; fd <= 2; fd++) {
 			uint32_t kind;
 			uint64_t handle;
-			if (fd_export(fd, &kind, &handle)) {
+			uint32_t server_tid = 0;
+			if (fd_export(fd, &kind, &handle, &server_tid)) {
 				fds[nfds].fd = (uint32_t)fd;
 				fds[nfds].kind = kind;
 				fds[nfds].handle = handle;
+				fds[nfds].server_tid = server_tid;
 				nfds++;
 			}
 		}
@@ -843,7 +779,8 @@ inline int32_t build_spawn_req_buf(uint8_t *buf, const char *name, char *const a
 // fd_kind/fd_handle: caller-supplied lookup for fds 0/1/2, same shape as
 // apps/libc's __libc_fd_export -- return false if that fd isn't open.
 inline int64_t robu_spawn(const char *name, char *const argv[], char *const envp[],
-                           bool (*fd_export)(int fd, uint32_t *kind, uint64_t *handle)) {
+                           bool (*fd_export)(int fd, uint32_t *kind, uint64_t *handle,
+                                              uint32_t *server_tid)) {
 	static uint8_t buf[SPAWN_REQ_MAX_LEN];
 	int32_t len = build_spawn_req_buf(buf, name, argv, envp, fd_export);
 	if (len < 0) {
