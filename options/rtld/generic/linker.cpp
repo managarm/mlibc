@@ -1525,7 +1525,9 @@ void *tryAccessDtv(SharedObject *object) {
 	if (!ptr)
 		return nullptr;
 
-	return (void *)((char *)ptr + TLS_DTV_OFFSET);
+	// Unlike accessDtvIndex(), this returns the start of the TLS block:
+	// the caller wants the segment itself and not an address that DTPREL offsets are relative to.
+	return ptr;
 }
 
 // --------------------------------------------------------
