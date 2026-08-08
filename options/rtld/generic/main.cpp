@@ -701,7 +701,7 @@ const char *__dlapi_error() {
 
 extern "C" [[ gnu::visibility("default") ]]
 void *__dlapi_get_tls(struct __abi_tls_entry *entry) {
-	return reinterpret_cast<char *>(accessDtv(entry->object)) + entry->offset;
+	return reinterpret_cast<char *>(accessDtvIndex(entry->index)) + entry->offset;
 }
 
 extern "C" [[ gnu::visibility("default") ]]
@@ -1097,10 +1097,7 @@ int __dlapi_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void*), 
 		info.dlpi_phnum = object->phdrCount;
 		info.dlpi_adds = rtsCounter;
 		info.dlpi_subs = 0; // TODO(geert): implement dlclose().
-		if (object->tlsModel != TlsModel::null)
-			info.dlpi_tls_modid = object->tlsIndex;
-		else
-			info.dlpi_tls_modid = 0;
+		info.dlpi_tls_modid = object->tlsIndex;
 		info.dlpi_tls_data = tryAccessDtv(object);
 
 		last_return = callback(&info, sizeof(struct dl_phdr_info), data);

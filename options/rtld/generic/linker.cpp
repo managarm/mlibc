@@ -1198,7 +1198,7 @@ SharedObject::SharedObject(const char *name, frg::string<MemoryAllocator> path,
 		lazyExplicitAddend(false), symbolicResolution(false),
 		eagerBinding(false), haveStaticTls(false),
 		dependencies(getAllocator()), tlsModel(TlsModel::null),
-		tlsOffset(0), globalRts(0), wasLinked(false),
+		tlsIndex(0), tlsOffset(0), globalRts(0), wasLinked(false),
 		scheduledForInit(false), onInitStack(false),
 		wasInitialized(false) { }
 
@@ -1393,7 +1393,10 @@ void doDestruct(SharedObject *object) {
 // --------------------------------------------------------
 
 RuntimeTlsMap::RuntimeTlsMap()
-: initialPtr{0}, initialLimit{0}, indices{getAllocator()}, tcbs{getAllocator()} { }
+: initialPtr{0}, initialLimit{0}, indices{getAllocator()}, tcbs{getAllocator()} {
+	// Reserve index zero: the psABI uses it to denote the absence of a TLS module.
+	indices.push_back(nullptr);
+}
 
 void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, MemoryAllocator> &objects, bool checkInitialized) {
 	// Initialize TLS segments that follow the static model.
@@ -1478,7 +1481,7 @@ Tcb *allocateTcb() {
 	tcb_ptr->dtvSize = runtimeTlsMap->indices.size();
 	tcb_ptr->dtvPointers = frg::construct_n<void *>(getAllocator(), runtimeTlsMap->indices.size());
 	memset(tcb_ptr->dtvPointers, 0, sizeof(void *) * runtimeTlsMap->indices.size());
-	for(size_t i = 0; i < runtimeTlsMap->indices.size(); ++i) {
+	for(size_t i = 1; i < runtimeTlsMap->indices.size(); ++i) {
 		auto object = runtimeTlsMap->indices[i];
 		if(object->tlsModel == TlsModel::initial) {
 			if constexpr (tlsAboveTp) {
@@ -1500,12 +1503,13 @@ Tcb *allocateTcb() {
 	return tcb_ptr;
 }
 
-void *accessDtv(SharedObject *object) {
+void *accessDtvIndex(size_t index) {
 	Tcb *tcb_ptr = mlibc::get_current_tcb();
 	size_t size = __atomic_load_n(&tcb_ptr->dtvSize, __ATOMIC_ACQUIRE);
-	__ensure(object->tlsIndex < size);
+	__ensure(index);
+	__ensure(index < size);
 	void **pointers = __atomic_load_n(&tcb_ptr->dtvPointers, __ATOMIC_ACQUIRE);
-	void *ptr = pointers[object->tlsIndex];
+	void *ptr = pointers[index];
 	__ensure(ptr);
 	return (void *)((char *)ptr + TLS_DTV_OFFSET);
 }
@@ -1514,14 +1518,16 @@ void *tryAccessDtv(SharedObject *object) {
 	Tcb *tcb_ptr = mlibc::get_current_tcb();
 
 	size_t size = __atomic_load_n(&tcb_ptr->dtvSize, __ATOMIC_ACQUIRE);
-	if (object->tlsIndex >= size)
+	if (!object->tlsIndex || object->tlsIndex >= size)
 		return nullptr;
 	void **pointers = __atomic_load_n(&tcb_ptr->dtvPointers, __ATOMIC_ACQUIRE);
 	void *ptr = pointers[object->tlsIndex];
 	if (!ptr)
 		return nullptr;
 
-	return (void *)((char *)ptr + TLS_DTV_OFFSET);
+	// Unlike accessDtvIndex(), this returns the start of the TLS block:
+	// the caller wants the segment itself and not an address that DTPREL offsets are relative to.
+	return ptr;
 }
 
 // --------------------------------------------------------
@@ -1914,6 +1920,10 @@ size_t Loader::_buildTlsMaps() {
 			object->tlsIndex = runtimeTlsMap->indices.size();
 			runtimeTlsMap->indices.push_back(object);
 
+			// Linkers resolve the module index of the main executable to 1 statically,
+			// hence it has to be the first index that we hand out.
+			__ensure(!object->isMainObject || object->tlsIndex == 1);
+
 			object->tlsModel = TlsModel::initial;
 
 			if constexpr (tlsAboveTp) {
@@ -2168,17 +2178,19 @@ void Loader::_processRelocations(Relocation &rel) {
 	// DTPMOD and DTPREL are dynamic TLS relocations (for __tls_get_addr()).
 	// TPOFF is a relocation to the initial TLS model.
 	case R_TLS_DTPMOD: {
-		// sets the first `sizeof(uintptr_t)` bytes of `struct __abi_tls_entry`
-		// this means that we can just use the `SharedObject *` to resolve whatever we need
+		// Sets the module index of `struct __abi_tls_entry`. Linkers omit this relocation
+		// whenever they can determine the index themselves, so it has to match the ABI.
 		__ensure(!rel.addend_rel());
 		if(rel.symbol_index()) {
 			__ensure(p);
-			rel.relocate(elf_addr(p->object()));
+			__ensure(p->object()->tlsIndex);
+			rel.relocate(p->object()->tlsIndex);
 		}else{
 			if(rtldConfig.debugVerbose)
 				mlibc::infoLogger() << "rtld: Warning: TLS_DTPMOD64 with no symbol in object "
 					<< rel.object()->name << frg::endlog;
-			rel.relocate(elf_addr(rel.object()));
+			__ensure(rel.object()->tlsIndex);
+			rel.relocate(rel.object()->tlsIndex);
 		}
 	} break;
 	case R_TLS_DTPREL: {
