@@ -86,6 +86,11 @@ extern "C" [[noreturn]] void __mlibc_robu_entry(uint64_t argc, char **argv, char
 	put_aux(ROBU_AT_ENTRY, ehdr->e_entry);
 	put_aux(ROBU_AT_NULL, 0);
 
+	// __dlapi_enter() runs interpreterMain(), which -- via Loader::initObjects()
+	// / doInitialize() -- already walks this binary's __init_array_start..end
+	// and calls every global constructor exactly once. A second walk here used
+	// to double-run them (e.g. file-io.cpp's init_stdio() a second time), which
+	// tripped frg::manual_box's reentrancy assert on stdin_box/stdout_box.
 	__dlapi_enter(stack_blob);
 
 	auto result = main(mlibc::entry_stack.argc, mlibc::entry_stack.argv, environ);

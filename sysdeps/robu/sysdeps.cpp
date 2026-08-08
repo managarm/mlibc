@@ -392,6 +392,7 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 	}
 	uint8_t *p = (uint8_t *)buf;
 	size_t total = 0;
+	bool is_console = g_fds[fd].kind == FD_DEVFS && g_fds[fd].handle == robu::DEV_CONSOLE;
 	while (total < count) {
 		size_t chunk = count - total;
 		int64_t n;
@@ -403,7 +404,19 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 		default: return EBADF;
 		}
 		if (n < 0) return EIO;
-		if (n == 0) break;
+		if (n == 0) {
+			// devfs's console read is deliberately non-blocking -- 0 bytes
+			// means "nothing typed yet," not EOF. Retry (with nothing read
+			// yet this call) instead of reporting a false EOF, matching
+			// apps/libc's own read()'s is_console handling. Once we already
+			// have some bytes, stop and return them rather than blocking
+			// for more (short reads are normal here).
+			if (is_console && total == 0) {
+				robu::ipc_raw(0, 1, robu::IPC_FLAG_NONE, nullptr, nullptr);
+				continue;
+			}
+			break;
+		}
 		total += (size_t)n;
 		// Console/ramfs reads may legitimately return short of `count`;
 		// don't loop trying to fill the whole buffer in one Read() call.
@@ -535,6 +548,15 @@ int Sysdeps<Chdir>::operator()(const char *path) {
 	}
 	strncpy(g_cwd, resolved, sizeof(g_cwd) - 1);
 	g_cwd[sizeof(g_cwd) - 1] = '\0';
+	return 0;
+}
+
+// None of this kernel's backends (ramfs/devfs/procfs/sysfs) track per-file
+// timestamps, so there's nothing to actually set -- apps/libc's own
+// utimensat()/futimens() were equally no-ops regarding `times`. touch(1)'s
+// file-creation itself goes through the real Open sysdep before this ever
+// runs, so this only needs to not fail it.
+int Sysdeps<Utimensat>::operator()(int, const char *, const struct timespec *, int) {
 	return 0;
 }
 

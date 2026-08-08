@@ -13,6 +13,10 @@ constexpr uint64_t IPC_FLAG_NONE = 0;
 constexpr uint64_t IPC_FLAG_NOBLOCK = 1ull << 4;
 constexpr uint64_t IPC_FLAG_RECV = 1ull << 1;
 constexpr uint64_t IPC_FLAG_CONSOLE_WRITE = 1ull << 7;
+// Matches include/robu/devfs.h's dev_id_t enum -- devfs's console read is
+// deliberately non-blocking (see apps/devfs/devfs.c), so a 0-byte reply
+// means "nothing typed yet," not EOF.
+constexpr uint64_t DEV_CONSOLE = 0;
 constexpr uint64_t IPC_FLAG_EXIT = 1ull << 14;
 constexpr uint64_t IPC_FLAG_SPAWN = 1ull << 15;
 constexpr uint64_t IPC_FLAG_WAIT = 1ull << 16;

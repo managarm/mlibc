@@ -27,7 +27,8 @@ struct RobuSysdepTags :
 	ReadEntries,
 	GetCwd,
 	Chdir,
-	Waitpid
+	Waitpid,
+	Utimensat
 {};
 
 template<typename Tag>
