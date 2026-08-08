@@ -167,6 +167,17 @@ constexpr int DEVFS_WRITE_MAX = 24;
 
 constexpr uint64_t KINFO_VA = 0x0000000080000000ULL;
 
+// Must stay byte-for-byte in sync with include/robu/kinfo.h's kinfo_page_t
+// and mount_entry_t -- this file hand-mirrors the C header instead of
+// including it, so any field added on the kernel side needs the matching
+// edit here too.
+constexpr int MOUNT_PREFIX_MAX = 24;
+constexpr int MOUNT_TABLE_MAX = 8;
+struct mount_entry {
+	uint32_t in_use;
+	uint32_t owner_tid;
+	char prefix[MOUNT_PREFIX_MAX];
+};
 struct kinfo_page {
 	uint32_t abi_version_major;
 	uint32_t abi_version_minor;
@@ -185,6 +196,8 @@ struct kinfo_page {
 	uint32_t abitest_exit_helper_tid;
 	uint32_t procfs_tid;
 	uint32_t sysfs_tid;
+	mount_entry mounts[MOUNT_TABLE_MAX];
+	volatile uint32_t mount_seq;
 };
 
 inline const kinfo_page *kinfo() {
@@ -203,6 +216,43 @@ inline uint64_t kinfo_ticks() {
 		seq1 = k->clock_seq;
 	} while (seq0 != seq1 || (seq0 & 1u));
 	return ticks;
+}
+
+// Longest-prefix match, mirrors include/robu/kinfo.h's kinfo_resolve_mount()
+// exactly. Returns 0 (never a real tid) if nothing matches; *matched_len_out
+// (if non-null) gets how many leading bytes of `path` matched, so the
+// caller can strip them before sending a mount-relative path to the server
+// (every migrated server receives paths relative to its own mount point).
+inline uint32_t resolve_mount(const char *path, int *matched_len_out = nullptr) {
+	const kinfo_page *k = kinfo();
+	uint32_t seq0, seq1;
+	uint32_t best_tid;
+	int best_len;
+	do {
+		best_tid = 0;
+		best_len = -1;
+		seq0 = k->mount_seq;
+		asm volatile("" ::: "memory");
+		for (int i = 0; i < MOUNT_TABLE_MAX; i++) {
+			if (!k->mounts[i].in_use) continue;
+			int len = 0;
+			while (len < MOUNT_PREFIX_MAX && k->mounts[i].prefix[len]) len++;
+			int j = 0;
+			for (; j < len; j++) {
+				if (path[j] != k->mounts[i].prefix[j]) break;
+			}
+			if (j == len && len > best_len) {
+				best_len = len;
+				best_tid = k->mounts[i].owner_tid;
+			}
+		}
+		asm volatile("" ::: "memory");
+		seq1 = k->mount_seq;
+	} while (seq0 != seq1 || (seq0 & 1u));
+	if (matched_len_out) {
+		*matched_len_out = best_len < 0 ? 0 : best_len;
+	}
+	return best_tid;
 }
 
 inline uint32_t devfs_tid() {
@@ -270,6 +320,151 @@ inline int64_t devfs_close(uint64_t handle) {
 	return (int64_t)m.word[0];
 }
 
+inline void msg_put_str(msg_regs &m, unsigned word_off, const char *s, int max) {
+	char *dst = reinterpret_cast<char *>(&m.word[word_off]);
+	int i = 0;
+	for (; s[i] && i < max - 1; i++) {
+		dst[i] = s[i];
+	}
+	dst[i] = '\0';
+}
+
+// --- generic vfs (include/robu/vfs.h) --------------------------------------
+// The mount-table-routed protocol every migrated server (devfs/procfs/
+// sysfs/ramfs, in that order) speaks. Op codes and wire layout are
+// identical to ramfs's own protocol below on purpose -- ramfs.h was the
+// richest of the four original bespoke protocols and vfs.h formalizes its
+// shape as the shared one. Every function takes an explicit `tid_t server`
+// (resolved dynamically via resolve_mount()) instead of hardcoding one
+// server's tid the way ramfs_open()/etc. below still do.
+
+constexpr uint64_t VFS_OP_OPEN    = 1;
+constexpr uint64_t VFS_OP_READ    = 2;
+constexpr uint64_t VFS_OP_WRITE   = 3;
+constexpr uint64_t VFS_OP_CLOSE   = 4;
+constexpr uint64_t VFS_OP_STAT    = 5;
+constexpr uint64_t VFS_OP_FSTAT   = 6;
+constexpr uint64_t VFS_OP_READDIR = 7;
+constexpr uint64_t VFS_OP_RENAME  = 8;
+constexpr uint64_t VFS_OP_UNLINK  = 9;
+constexpr int64_t VFS_ERR_NOT_FOUND     = -1;
+constexpr int64_t VFS_ERR_NOT_SUPPORTED = -3;
+constexpr int VFS_NAME_MAX  = 20;
+constexpr int VFS_PATH_MAX  = 32;
+constexpr int VFS_READ_MAX  = 40;
+constexpr int VFS_WRITE_MAX = 24;
+constexpr uint64_t VFS_ROOT_INO = 1;
+constexpr uint64_t VFS_O_CREAT  = 0x0040;
+constexpr uint64_t VFS_O_TRUNC  = 0x0200;
+constexpr uint64_t VFS_O_APPEND = 0x0400;
+
+inline int64_t vfs_open(uint32_t server, const char *path, uint64_t flags) {
+	msg_regs m{};
+	m.word[0] = VFS_OP_OPEN;
+	m.word[1] = flags;
+	msg_put_str(m, 2, path, VFS_PATH_MAX);
+	uint32_t from;
+	ipc_call(server, &m, &from);
+	int64_t status = (int64_t)m.word[0];
+	return status == 0 ? (int64_t)m.word[1] : status;
+}
+
+inline int64_t vfs_read(uint32_t server, uint64_t handle, void *buf, uint64_t len) {
+	msg_regs m{};
+	m.word[0] = VFS_OP_READ;
+	m.word[1] = handle;
+	m.word[2] = len > (uint64_t)VFS_READ_MAX ? (uint64_t)VFS_READ_MAX : len;
+	uint32_t from;
+	ipc_call(server, &m, &from);
+	int64_t status = (int64_t)m.word[0];
+	if (status > 0) {
+		const uint8_t *data = reinterpret_cast<const uint8_t *>(&m.word[1]);
+		uint8_t *out = reinterpret_cast<uint8_t *>(buf);
+		for (int64_t i = 0; i < status; i++) {
+			out[i] = data[i];
+		}
+	}
+	return status;
+}
+
+inline int64_t vfs_write(uint32_t server, uint64_t handle, const void *buf, uint64_t len) {
+	msg_regs m{};
+	m.word[0] = VFS_OP_WRITE;
+	m.word[1] = handle;
+	uint64_t clamped = len > (uint64_t)VFS_WRITE_MAX ? (uint64_t)VFS_WRITE_MAX : len;
+	m.word[2] = clamped;
+	uint8_t *dst = reinterpret_cast<uint8_t *>(&m.word[3]);
+	const uint8_t *src = reinterpret_cast<const uint8_t *>(buf);
+	for (uint64_t i = 0; i < clamped; i++) {
+		dst[i] = src[i];
+	}
+	uint32_t from;
+	ipc_call(server, &m, &from);
+	return (int64_t)m.word[0];
+}
+
+inline int64_t vfs_close(uint32_t server, uint64_t handle) {
+	msg_regs m{};
+	m.word[0] = VFS_OP_CLOSE;
+	m.word[1] = handle;
+	uint32_t from;
+	ipc_call(server, &m, &from);
+	return (int64_t)m.word[0];
+}
+
+inline int64_t vfs_stat(uint32_t server, const char *path, uint64_t *size_out, int *is_dir_out,
+                        uint64_t *ino_out) {
+	msg_regs m{};
+	m.word[0] = VFS_OP_STAT;
+	msg_put_str(m, 1, path, VFS_PATH_MAX);
+	uint32_t from;
+	ipc_call(server, &m, &from);
+	int64_t status = (int64_t)m.word[0];
+	if (status == 0) {
+		if (size_out) *size_out = m.word[1];
+		if (is_dir_out) *is_dir_out = (int)m.word[2];
+		if (ino_out) *ino_out = m.word[3];
+	}
+	return status;
+}
+
+inline int64_t vfs_fstat(uint32_t server, uint64_t handle, uint64_t *size_out, int *is_dir_out,
+                         uint64_t *ino_out) {
+	msg_regs m{};
+	m.word[0] = VFS_OP_FSTAT;
+	m.word[1] = handle;
+	uint32_t from;
+	ipc_call(server, &m, &from);
+	int64_t status = (int64_t)m.word[0];
+	if (status == 0) {
+		if (size_out) *size_out = m.word[1];
+		if (is_dir_out) *is_dir_out = (int)m.word[2];
+		if (ino_out) *ino_out = m.word[3];
+	}
+	return status;
+}
+
+inline int64_t vfs_readdir(uint32_t server, uint64_t dir_ino, uint64_t index, char *name_out,
+                           int *is_dir_out) {
+	msg_regs m{};
+	m.word[0] = VFS_OP_READDIR;
+	m.word[1] = dir_ino;
+	m.word[2] = index;
+	uint32_t from;
+	ipc_call(server, &m, &from);
+	int64_t status = (int64_t)m.word[0];
+	if (status == 0) {
+		if (is_dir_out) *is_dir_out = (int)m.word[1];
+		const char *src = reinterpret_cast<const char *>(&m.word[2]);
+		int i = 0;
+		for (; i < VFS_NAME_MAX - 1 && src[i]; i++) {
+			name_out[i] = src[i];
+		}
+		name_out[i] = '\0';
+	}
+	return status;
+}
+
 // --- ramfs -----------------------------------------------------------------
 
 constexpr uint64_t RAMFS_OP_OPEN    = 1;
@@ -290,15 +485,6 @@ constexpr uint64_t RAMFS_O_APPEND = 0x0400;
 
 inline uint32_t ramfs_tid() {
 	return kinfo()->ramfs_tid;
-}
-
-inline void msg_put_str(msg_regs &m, unsigned word_off, const char *s, int max) {
-	char *dst = reinterpret_cast<char *>(&m.word[word_off]);
-	int i = 0;
-	for (; s[i] && i < max - 1; i++) {
-		dst[i] = s[i];
-	}
-	dst[i] = '\0';
 }
 
 inline int64_t ramfs_open(const char *name, uint64_t flags) {

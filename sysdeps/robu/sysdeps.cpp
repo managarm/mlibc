@@ -28,6 +28,15 @@ enum FdKind {
 	FD_SYSFS,
 	FD_PIPE_READ,
 	FD_PIPE_WRITE,
+	// Generic include/robu/vfs.h protocol, spoken to whichever server the
+	// kernel-resident mount table (kinfo_page_t.mounts[]) says owns a given
+	// path prefix -- unlike the fixed kinds above (each hardcoded to one
+	// server via a *_server_tid() helper), the same FD_VFS/FD_VFS_DIR kind
+	// is shared by every mounted server, so the owning tid has to travel
+	// with the fd itself (FdEntry::server_tid) instead of being implied by
+	// the kind.
+	FD_VFS,
+	FD_VFS_DIR,
 };
 
 constexpr int MAX_FDS = 64;
@@ -35,7 +44,8 @@ constexpr int MAX_FDS = 64;
 struct FdEntry {
 	FdKind kind = FD_NONE;
 	uint64_t handle = 0;
-	uint64_t size = 0; // procfs/sysfs: size reported at open()
+	uint64_t size = 0; // procfs/sysfs/FD_VFS: size reported at open()
+	uint32_t server_tid = 0; // FD_VFS/FD_VFS_DIR only
 };
 
 FdEntry g_fds[MAX_FDS];
@@ -207,8 +217,22 @@ constexpr dev_t ROBU_STDEV_DEVFS = 1;
 constexpr dev_t ROBU_STDEV_RAMFS = 2;
 constexpr dev_t ROBU_STDEV_PROCFS = 3;
 constexpr dev_t ROBU_STDEV_SYSFS = 4;
+constexpr dev_t ROBU_STDEV_VFS = 5;
 
 int stat_path(const char *resolved, struct stat *buf) {
+	int matched_len = 0;
+	uint32_t mount_tid = robu::resolve_mount(resolved, &matched_len);
+	if (mount_tid != 0) {
+		const char *rel = resolved + matched_len;
+		uint64_t size = 0;
+		int is_dir = 0;
+		uint64_t ino = 0;
+		if (robu::vfs_stat(mount_tid, rel, &size, &is_dir, &ino) != 0) {
+			return ENOENT;
+		}
+		fill_stat(buf, size, is_dir, ROBU_STDEV_VFS, (ino_t)ino);
+		return 0;
+	}
 	if (strncmp(resolved, "/dev/", 5) == 0) {
 		int64_t h = robu::devfs_open(resolved);
 		if (h < 0) return ENOENT;
@@ -277,6 +301,29 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 	ensure_stdio_defaults();
 	char resolved[CWD_MAX];
 	resolve_path(path, resolved, sizeof(resolved));
+
+	// Mount-table-first: try the dynamic registry (include/robu/kinfo.h's
+	// kinfo_page_t.mounts[]) before falling through to the legacy hardcoded
+	// chain below. Empty table (no servers migrated yet) always misses here
+	// and falls through -- see A0's own boot verification. Once a server
+	// migrates (A1-A4), its legacy branch below gets deleted and traffic
+	// for its prefix is handled here instead.
+	int matched_len = 0;
+	uint32_t mount_tid = robu::resolve_mount(resolved, &matched_len);
+	if (mount_tid != 0) {
+		const char *rel = resolved + matched_len;
+		uint64_t vflags = 0;
+		if (flags & O_CREAT) vflags |= robu::VFS_O_CREAT;
+		if (flags & O_TRUNC) vflags |= robu::VFS_O_TRUNC;
+		if (flags & O_APPEND) vflags |= robu::VFS_O_APPEND;
+		int64_t h = robu::vfs_open(mount_tid, rel, vflags);
+		if (h < 0) return h == robu::VFS_ERR_NOT_FOUND ? ENOENT : EIO;
+		int fd = alloc_fd();
+		if (fd < 0) { robu::vfs_close(mount_tid, (uint64_t)h); return EMFILE; }
+		g_fds[fd] = { FD_VFS, (uint64_t)h, 0, mount_tid };
+		*fd_out = fd;
+		return 0;
+	}
 
 	if (strncmp(resolved, "/dev/", 5) == 0) {
 		int64_t h = robu::devfs_open(resolved);
@@ -394,7 +441,8 @@ int Sysdeps<Close>::operator()(int fd) {
 	}
 	bool shared = false;
 	for (int i = 0; i < MAX_FDS; i++) {
-		if (i != fd && g_fds[i].kind == g_fds[fd].kind && g_fds[i].handle == g_fds[fd].handle) {
+		if (i != fd && g_fds[i].kind == g_fds[fd].kind && g_fds[i].handle == g_fds[fd].handle &&
+		    g_fds[i].server_tid == g_fds[fd].server_tid) {
 			shared = true;
 			break;
 		}
@@ -407,6 +455,7 @@ int Sysdeps<Close>::operator()(int fd) {
 		case FD_SYSFS: robu::sysfs_close(g_fds[fd].handle); break;
 		case FD_PIPE_READ: robu::pipe_close_raw(g_fds[fd].handle, 0); break;
 		case FD_PIPE_WRITE: robu::pipe_close_raw(g_fds[fd].handle, 1); break;
+		case FD_VFS: robu::vfs_close(g_fds[fd].server_tid, g_fds[fd].handle); break;
 		default: break;
 		}
 	}
@@ -449,6 +498,7 @@ int Sysdeps<Write>::operator()(int fd, const void *buf, size_t count, ssize_t *b
 		switch (g_fds[fd].kind) {
 		case FD_DEVFS: n = robu::devfs_write(g_fds[fd].handle, p + total, chunk); break;
 		case FD_RAMFS: n = robu::ramfs_write(g_fds[fd].handle, p + total, chunk); break;
+		case FD_VFS: n = robu::vfs_write(g_fds[fd].server_tid, g_fds[fd].handle, p + total, chunk); break;
 		default: return EBADF;
 		}
 		if (n <= 0) {
@@ -499,6 +549,7 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 		case FD_RAMFS: n = robu::ramfs_read(g_fds[fd].handle, p + total, chunk); break;
 		case FD_PROCFS: n = robu::procfs_read(g_fds[fd].handle, p + total, chunk); break;
 		case FD_SYSFS: n = robu::sysfs_read(g_fds[fd].handle, p + total, chunk); break;
+		case FD_VFS: n = robu::vfs_read(g_fds[fd].server_tid, g_fds[fd].handle, p + total, chunk); break;
 		default: return EBADF;
 		}
 		if (n < 0) return EIO;
@@ -553,6 +604,13 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int, 
 			int is_dir;
 			if (robu::ramfs_fstat(g_fds[fd].handle, &size, &is_dir, &ino) != 0) return EBADF;
 			fill_stat(statbuf, size, is_dir, ROBU_STDEV_RAMFS, (ino_t)ino);
+			return 0;
+		}
+		case FD_VFS: {
+			uint64_t size, ino;
+			int is_dir;
+			if (robu::vfs_fstat(g_fds[fd].server_tid, g_fds[fd].handle, &size, &is_dir, &ino) != 0) return EBADF;
+			fill_stat(statbuf, size, is_dir, ROBU_STDEV_VFS, (ino_t)ino);
 			return 0;
 		}
 		default:
