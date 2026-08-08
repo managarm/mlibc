@@ -26,6 +26,8 @@ enum FdKind {
 	FD_RAMFS_DIR,
 	FD_PROCFS,
 	FD_SYSFS,
+	FD_PIPE_READ,
+	FD_PIPE_WRITE,
 };
 
 constexpr int MAX_FDS = 64;
@@ -106,7 +108,18 @@ extern "C" void __robu_fd_inherit(uint64_t spawn_info) {
 	for (uint32_t i = 0; i < nfds; i++) {
 		int fd = (int)fds[i].fd;
 		if (fd < 0 || fd > 2) continue;
-		g_fds[fd].kind = (FdKind)fds[i].kind;
+		// Undo fd_export's kind translation (see __libc_spawn() below) --
+		// the wire uses SPAWN_FD_KIND_PIPE_READ/WRITE so the kernel can
+		// recognize and register pipe holders; this backend's own fd table
+		// needs its internal FD_PIPE_READ/WRITE enum values instead so
+		// Read/Write/Close's kind-based dispatch works on the inherited fd.
+		if (fds[i].kind == robu::SPAWN_FD_KIND_PIPE_READ) {
+			g_fds[fd].kind = FD_PIPE_READ;
+		} else if (fds[i].kind == robu::SPAWN_FD_KIND_PIPE_WRITE) {
+			g_fds[fd].kind = FD_PIPE_WRITE;
+		} else {
+			g_fds[fd].kind = (FdKind)fds[i].kind;
+		}
 		g_fds[fd].handle = fds[i].handle;
 	}
 }
@@ -335,6 +348,45 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 	return 0;
 }
 
+// dup()/dup2() just add another fd-table slot pointing at the same (kind,
+// handle) pair -- the same sharing model Close's own "shared" scan below
+// already assumes (it's what keeps a shared devfs/ramfs/pipe handle from
+// being closed server-side while another fd still names it). This is
+// exactly what a real shell needs for `cmd > file` / `cmd1 | cmd2`-style
+// redirection: dup2(pipe_write_fd, 1) before spawning, in the shell's own
+// process, before any of this backend's spawn-time fd export ever runs.
+int Sysdeps<Dup>::operator()(int fd, int, int *newfd_out) {
+	ensure_stdio_defaults();
+	if (!fd_valid(fd)) {
+		return EBADF;
+	}
+	int newfd = alloc_fd();
+	if (newfd < 0) {
+		return EMFILE;
+	}
+	g_fds[newfd] = g_fds[fd];
+	*newfd_out = newfd;
+	return 0;
+}
+
+int Sysdeps<Dup2>::operator()(int fd, int, int newfd) {
+	ensure_stdio_defaults();
+	if (!fd_valid(fd)) {
+		return EBADF;
+	}
+	if (newfd < 0 || newfd >= MAX_FDS) {
+		return EBADF;
+	}
+	if (newfd == fd) {
+		return 0;
+	}
+	if (fd_valid(newfd)) {
+		Sysdeps<Close>{}(newfd);
+	}
+	g_fds[newfd] = g_fds[fd];
+	return 0;
+}
+
 int Sysdeps<Close>::operator()(int fd) {
 	ensure_stdio_defaults();
 	if (!fd_valid(fd)) {
@@ -353,6 +405,8 @@ int Sysdeps<Close>::operator()(int fd) {
 		case FD_RAMFS: robu::ramfs_close(g_fds[fd].handle); break;
 		case FD_PROCFS: robu::procfs_close(g_fds[fd].handle); break;
 		case FD_SYSFS: robu::sysfs_close(g_fds[fd].handle); break;
+		case FD_PIPE_READ: robu::pipe_close_raw(g_fds[fd].handle, 0); break;
+		case FD_PIPE_WRITE: robu::pipe_close_raw(g_fds[fd].handle, 1); break;
 		default: break;
 		}
 	}
@@ -367,6 +421,28 @@ int Sysdeps<Write>::operator()(int fd, const void *buf, size_t count, ssize_t *b
 	}
 	const uint8_t *p = (const uint8_t *)buf;
 	size_t total = 0;
+	if (g_fds[fd].kind == FD_PIPE_WRITE) {
+		// pipe_write is deliberately non-blocking in-kernel: IPC_ERR_NONE
+		// with out_len==0 means "ring full, try again"; IPC_ERR_NOT_FOUND
+		// means every reader has closed (EPIPE), not "try again".
+		while (total < count) {
+			uint64_t n = 0;
+			int64_t rc = robu::pipe_write_raw(g_fds[fd].handle, p + total, count - total, &n);
+			if (rc == robu::IPC_ERR_NOT_FOUND) {
+				return total > 0 ? 0 : EPIPE;
+			}
+			if (rc != robu::IPC_ERR_NONE) {
+				return total > 0 ? 0 : EIO;
+			}
+			if (n == 0) {
+				robu::ipc_raw(0, 1, robu::IPC_FLAG_NONE, nullptr, nullptr);
+				continue;
+			}
+			total += (size_t)n;
+		}
+		*bytes_written = (ssize_t)total;
+		return 0;
+	}
 	while (total < count) {
 		size_t chunk = count - total;
 		int64_t n;
@@ -392,6 +468,28 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 	}
 	uint8_t *p = (uint8_t *)buf;
 	size_t total = 0;
+	if (g_fds[fd].kind == FD_PIPE_READ) {
+		// pipe_read is deliberately non-blocking in-kernel: IPC_ERR_NONE
+		// with out_len==0 means "empty, try again" as long as some writer
+		// is still open; IPC_ERR_NOT_FOUND means every writer has closed
+		// (real EOF). Short reads (n < requested) are normal and returned
+		// immediately, matching every other fd kind here.
+		uint64_t n = 0;
+		int64_t rc = robu::pipe_read_raw(g_fds[fd].handle, p, count, &n);
+		while (rc == robu::IPC_ERR_NONE && n == 0) {
+			robu::ipc_raw(0, 1, robu::IPC_FLAG_NONE, nullptr, nullptr);
+			rc = robu::pipe_read_raw(g_fds[fd].handle, p, count, &n);
+		}
+		if (rc == robu::IPC_ERR_NOT_FOUND) {
+			*bytes_read = 0;
+			return 0;
+		}
+		if (rc != robu::IPC_ERR_NONE) {
+			return EIO;
+		}
+		*bytes_read = (ssize_t)n;
+		return 0;
+	}
 	bool is_console = g_fds[fd].kind == FD_DEVFS && g_fds[fd].handle == robu::DEV_CONSOLE;
 	while (total < count) {
 		size_t chunk = count - total;
@@ -615,11 +713,87 @@ int Sysdeps<ClockGet>::operator()(int, time_t *secs, long *nanos) {
 	robu::exit_raw(status);
 }
 
-// This kernel has no fork()+execve() image-replace primitive, so Fork and
-// Execve are deliberately left unimplemented (RobuSysdepTags doesn't list
-// them; mlibc's posix layer falls back to ENOSYS for callers that need
-// them). Waitpid, however, maps directly onto this kernel's real
-// IPC_FLAG_WAIT verb, so mlibc's standard waitpid()/wait() work as-is.
+// IPC_FLAG_FORK is a real, working kernel primitive (proven by the
+// now-removed apps/libc's own fork()) -- it returns twice, with word[0] (r8)
+// distinguishing the two threads (0 in the child, the real child tid in the
+// parent). mlibc's own fork()/vfork() wrapper (options/posix/generic/
+// unistd.cpp) calls this, then -- only in the child branch -- refetches its
+// cached tid via the FutexTid sysdep below, since the child's copy of
+// mlibc's internal per-thread bookkeeping still holds the parent's tid.
+int Sysdeps<Fork>::operator()(pid_t *child) {
+	uint64_t child_or_zero = 0;
+	int64_t rc = robu::fork_raw(&child_or_zero);
+	if (rc != robu::IPC_ERR_NONE) {
+		return rc == robu::IPC_ERR_NO_MEM ? ENOMEM : EAGAIN;
+	}
+	*child = (pid_t)child_or_zero;
+	return 0;
+}
+
+pid_t Sysdeps<FutexTid>::operator()() {
+	return (pid_t)robu::self_tid();
+}
+
+pid_t Sysdeps<GetPid>::operator()() {
+	return (pid_t)robu::self_tid();
+}
+
+// Kernel-resident, no server process -- see robu-abi.hpp's pipe_* wrappers.
+// `flags` (O_CLOEXEC/O_NONBLOCK) isn't honored: there's no exec() to make
+// O_CLOEXEC meaningful yet, and every read/write here already treats "ring
+// empty/full" as "sleep and retry" rather than surfacing it to the caller,
+// so there's no non-blocking mode to opt into.
+int Sysdeps<Pipe>::operator()(int *fds, int) {
+	uint64_t handle = 0;
+	int64_t rc = robu::pipe_create(&handle);
+	if (rc != robu::IPC_ERR_NONE) {
+		return rc == robu::IPC_ERR_NO_MEM ? ENOMEM : EMFILE;
+	}
+	int rfd = alloc_fd();
+	if (rfd < 0) {
+		robu::pipe_close_raw(handle, 0);
+		robu::pipe_close_raw(handle, 1);
+		return EMFILE;
+	}
+	g_fds[rfd] = { FD_PIPE_READ, handle, 0 };
+	int wfd = alloc_fd();
+	if (wfd < 0) {
+		g_fds[rfd] = FdEntry{};
+		robu::pipe_close_raw(handle, 0);
+		robu::pipe_close_raw(handle, 1);
+		return EMFILE;
+	}
+	g_fds[wfd] = { FD_PIPE_WRITE, handle, 0 };
+	fds[0] = rfd;
+	fds[1] = wfd;
+	return 0;
+}
+
+// IPC_FLAG_EXEC is a real, working kernel primitive: it replaces the
+// calling thread's own address space and saved register frame in place
+// (same tid, same fd table -- see docs/libc-and-abi-reference.md §4.3 for
+// the design). On success this genuinely never returns -- the trap that
+// carried this request resumes directly into the new image's entry point,
+// not back into this function. Only a failure return is ever observed by
+// the caller. Robu's rootfs has no directory structure, so (matching
+// __libc_spawn()'s own behavior) `path` is looked up as a bare name with no
+// $PATH resolution and no leading-slash stripping.
+int Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *const envp[]) {
+	int64_t rc = robu::exec_raw(path, argv, envp);
+	if (rc == robu::IPC_ERR_NOT_FOUND) {
+		return ENOENT;
+	}
+	if (rc == robu::IPC_ERR_NO_MEM) {
+		return ENOMEM;
+	}
+	if (rc != robu::IPC_ERR_NONE) {
+		return EINVAL;
+	}
+	return 0;
+}
+
+// Waitpid maps directly onto this kernel's real IPC_FLAG_WAIT verb, so
+// mlibc's standard waitpid()/wait() work as-is.
 int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusage *, pid_t *ret_pid) {
 	bool nohang = (flags & WNOHANG) != 0;
 	int64_t rc = robu::robu_waitpid(pid, status, nohang);
@@ -643,7 +817,20 @@ extern "C" int __libc_spawn(const char *name, char *const argv[], char *const en
 	auto fd_export = [](int fd, uint32_t *kind, uint64_t *handle) -> bool {
 		ensure_stdio_defaults();
 		if (!fd_valid(fd)) return false;
-		*kind = (uint32_t)g_fds[fd].kind;
+		// Every kind but pipes is opaque to the kernel and passes straight
+		// through; pipes are the two values the kernel's spawn handler
+		// specifically recognizes to register the new child as a holder
+		// (see robu-abi.hpp's SPAWN_FD_KIND_PIPE_READ/WRITE) -- get this
+		// wrong and a spawned pipeline stage's end of the pipe is never
+		// counted, so the *other* end sees premature EOF/EPIPE the moment
+		// the parent closes its own (uncounted-as-real) copy.
+		if (g_fds[fd].kind == FD_PIPE_READ) {
+			*kind = robu::SPAWN_FD_KIND_PIPE_READ;
+		} else if (g_fds[fd].kind == FD_PIPE_WRITE) {
+			*kind = robu::SPAWN_FD_KIND_PIPE_WRITE;
+		} else {
+			*kind = (uint32_t)g_fds[fd].kind;
+		}
 		*handle = g_fds[fd].handle;
 		return true;
 	};

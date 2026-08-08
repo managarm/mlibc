@@ -21,7 +21,14 @@ constexpr uint64_t IPC_FLAG_EXIT = 1ull << 14;
 constexpr uint64_t IPC_FLAG_SPAWN = 1ull << 15;
 constexpr uint64_t IPC_FLAG_WAIT = 1ull << 16;
 constexpr uint64_t IPC_FLAG_CONSOLE_READ = 1ull << 17;
+constexpr uint64_t IPC_FLAG_PIPE_CREATE = 1ull << 18;
+constexpr uint64_t IPC_FLAG_PIPE_READ = 1ull << 19;
+constexpr uint64_t IPC_FLAG_PIPE_WRITE = 1ull << 20;
+constexpr uint64_t IPC_FLAG_PIPE_CLOSE = 1ull << 21;
+constexpr uint64_t IPC_FLAG_FORK = 1ull << 24;
 constexpr uint64_t IPC_FLAG_SET_FSBASE = 1ull << 25;
+constexpr uint64_t IPC_FLAG_SELF_TID = 1ull << 26;
+constexpr uint64_t IPC_FLAG_EXEC = 1ull << 27;
 
 constexpr int64_t IPC_ERR_NONE = 0;
 constexpr int64_t IPC_ERR_NOT_FOUND = -1;
@@ -70,6 +77,85 @@ inline int64_t ipc_call(uint32_t dest, msg_regs *io, uint32_t *from) {
 	ipc_raw(0, 0, IPC_FLAG_EXIT, &m, nullptr);
 	for (;;) {
 	}
+}
+
+// --- pipes ---------------------------------------------------------------
+// Kernel-resident ring buffers, matching include/robu/pipe.h -- no server
+// process involved, these are direct dest==0 null-IPC calls resolved
+// entirely in-kernel. Reads/writes are deliberately non-blocking in the
+// kernel (0 bytes with IPC_ERR_NONE means "try again", IPC_ERR_NOT_FOUND
+// means real EOF/EPIPE) -- callers that want blocking semantics sleep-retry
+// on their own, same shape as the console read path.
+constexpr uint64_t PIPE_CHUNK_MAX = 32;
+
+inline int64_t pipe_create(uint64_t *out_handle) {
+	msg_regs m{};
+	int64_t rc = ipc_raw(0, 0, IPC_FLAG_PIPE_CREATE, &m, nullptr);
+	*out_handle = m.word[0];
+	return rc;
+}
+
+inline int64_t pipe_read_raw(uint64_t handle, void *buf, uint64_t max, uint64_t *out_len) {
+	msg_regs m{};
+	m.word[0] = handle;
+	m.word[1] = max > PIPE_CHUNK_MAX ? PIPE_CHUNK_MAX : max;
+	int64_t rc = ipc_raw(0, 0, IPC_FLAG_PIPE_READ, &m, nullptr);
+	*out_len = m.word[0];
+	uint64_t n = *out_len > PIPE_CHUNK_MAX ? PIPE_CHUNK_MAX : *out_len;
+	uint8_t *dst = (uint8_t *)buf;
+	const uint8_t *src = (const uint8_t *)&m.word[2];
+	for (uint64_t i = 0; i < n; i++) dst[i] = src[i];
+	return rc;
+}
+
+inline int64_t pipe_write_raw(uint64_t handle, const void *buf, uint64_t len, uint64_t *out_len) {
+	msg_regs m{};
+	m.word[0] = handle;
+	uint64_t n = len > PIPE_CHUNK_MAX ? PIPE_CHUNK_MAX : len;
+	m.word[1] = n;
+	uint8_t *dst = (uint8_t *)&m.word[2];
+	const uint8_t *src = (const uint8_t *)buf;
+	for (uint64_t i = 0; i < n; i++) dst[i] = src[i];
+	int64_t rc = ipc_raw(0, 0, IPC_FLAG_PIPE_WRITE, &m, nullptr);
+	*out_len = m.word[0];
+	return rc;
+}
+
+inline int64_t pipe_close_raw(uint64_t handle, int is_write_end) {
+	msg_regs m{};
+	m.word[0] = handle;
+	m.word[1] = (uint64_t)is_write_end;
+	return ipc_raw(0, 0, IPC_FLAG_PIPE_CLOSE, &m, nullptr);
+}
+
+// --- fork ------------------------------------------------------------------
+// IPC_FLAG_FORK is the one call in this whole ABI that returns twice: the
+// kernel clones the caller's address space (real, eager, no COW) and
+// creates a second thread whose saved register frame is a byte-for-byte
+// copy of the caller's -- so *both* threads resume here. `rc` (rax) is
+// IPC_ERR_NONE in both threads (the call itself succeeded); word[0] (r8) is
+// what actually distinguishes them -- 0 in the child, the real child tid in
+// the parent (this is exactly what the removed apps/libc's own fork()
+// relied on: `rc = robu_ipc_raw(...); return (pid_t)m.word[0];`). Nothing
+// else needs to be built in userspace to make fork() "work" the way it does
+// on a fork-based OS: the fd table, heap, and every other bit of process
+// state the caller had is already correct in both copies, since it's just
+// process memory that got duplicated along with everything else.
+inline int64_t fork_raw(uint64_t *out_child_or_zero) {
+	msg_regs m{};
+	int64_t rc = ipc_raw(0, 0, IPC_FLAG_FORK, &m, nullptr);
+	*out_child_or_zero = m.word[0];
+	return rc;
+}
+
+// No prior primitive told a thread its own tid (spawn/fork replies only
+// ever tell the *caller* the *child's* tid) -- needed so a forked child can
+// correct its own cached tid (mlibc's FutexTid sysdep) once it starts
+// running with a copy of the parent's, which is now wrong for it.
+inline uint64_t self_tid() {
+	msg_regs m{};
+	ipc_raw(0, 0, IPC_FLAG_SELF_TID, &m, nullptr);
+	return m.word[0];
 }
 
 constexpr uint64_t DEVFS_OP_OPEN = 1;
@@ -456,6 +542,17 @@ struct robu_spawn_fd {
 	uint64_t handle;
 };
 
+// Matches include/robu/spawn.h -- the kernel's spawn handler
+// (elf_load_and_spawn_req in src/core/elf.c) special-cases exactly these two
+// numeric `kind` values to call pipe_add_holder() for the new child, so the
+// pipe's reader/writer bitmask (used for EOF/EPIPE detection) stays correct
+// across a spawn. Every other fd `kind` value is opaque to the kernel, just
+// copied through for the child's own sysdeps.cpp to interpret -- these two
+// are the only ones that need translating to/from this backend's internal
+// FdKind enum (sysdeps.cpp) when crossing the spawn wire.
+constexpr uint32_t SPAWN_FD_KIND_PIPE_READ = 100;
+constexpr uint32_t SPAWN_FD_KIND_PIPE_WRITE = 101;
+
 constexpr int SPAWN_FD_INFO_MAX = 3;
 constexpr uint32_t SPAWN_INFO_MAGIC = 0x314e4953u;
 
@@ -467,11 +564,15 @@ struct robu_spawn_info {
 	uint32_t nfds;
 };
 
-// fd_kind/fd_handle: caller-supplied lookup for fds 0/1/2, same shape as
-// apps/libc's __libc_fd_export -- return false if that fd isn't open.
-inline int64_t robu_spawn(const char *name, char *const argv[], char *const envp[],
-                           bool (*fd_export)(int fd, uint32_t *kind, uint64_t *handle)) {
-	static uint8_t buf[SPAWN_REQ_MAX_LEN];
+// Shared by robu_spawn() and exec_raw(): both send the identical
+// name+argv+envp(+fds) wire format (robu_spawn_req) to the kernel, just
+// under different IPC verbs with different kernel-side handling (create a
+// new process vs. replace the calling one in place). Returns the built
+// request's total length, or -1 on error (buffer too small / too many
+// args).
+inline int32_t build_spawn_req_buf(uint8_t *buf, const char *name, char *const argv[],
+                                    char *const envp[],
+                                    bool (*fd_export)(int fd, uint32_t *kind, uint64_t *handle)) {
 	robu_spawn_req *req = reinterpret_cast<robu_spawn_req *>(buf);
 	int argc = 0;
 	while (argv && argv[argc]) argc++;
@@ -491,29 +592,29 @@ inline int64_t robu_spawn(const char *name, char *const argv[], char *const envp
 		off += len;
 		return o;
 	};
-	if (off + strlen_(name) > sizeof(buf)) return -1;
+	if (off + strlen_(name) > SPAWN_REQ_MAX_LEN) return -1;
 	uint32_t name_len = (uint32_t)strlen_(name);
 	uint32_t name_off = put(name, name_len);
 	for (int i = 0; i < argc; i++) {
 		uint32_t len = (uint32_t)strlen_(argv[i]);
-		if (off + len > sizeof(buf)) return -1;
+		if (off + len > SPAWN_REQ_MAX_LEN) return -1;
 		argv_table[i].off = put(argv[i], len);
 		argv_table[i].len = len;
 	}
 	for (int i = 0; i < envc; i++) {
 		uint32_t len = (uint32_t)strlen_(envp[i]);
-		if (off + len > sizeof(buf)) return -1;
+		if (off + len > SPAWN_REQ_MAX_LEN) return -1;
 		envp_table[i].off = put(envp[i], len);
 		envp_table[i].len = len;
 	}
 	uint32_t argv_off = off;
-	if (off + (uint32_t)argc * sizeof(robu_spawn_str) > sizeof(buf)) return -1;
+	if (off + (uint32_t)argc * sizeof(robu_spawn_str) > SPAWN_REQ_MAX_LEN) return -1;
 	for (int i = 0; i < argc; i++) {
 		reinterpret_cast<robu_spawn_str *>(buf + off)[i] = argv_table[i];
 	}
 	off += (uint32_t)argc * sizeof(robu_spawn_str);
 	uint32_t envp_off = off;
-	if (off + (uint32_t)envc * sizeof(robu_spawn_str) > sizeof(buf)) return -1;
+	if (off + (uint32_t)envc * sizeof(robu_spawn_str) > SPAWN_REQ_MAX_LEN) return -1;
 	for (int i = 0; i < envc; i++) {
 		reinterpret_cast<robu_spawn_str *>(buf + off)[i] = envp_table[i];
 	}
@@ -534,7 +635,7 @@ inline int64_t robu_spawn(const char *name, char *const argv[], char *const envp
 	}
 	uint32_t fds_off = off;
 	if (nfds > 0) {
-		if (off + nfds * sizeof(robu_spawn_fd) > sizeof(buf)) return -1;
+		if (off + nfds * sizeof(robu_spawn_fd) > SPAWN_REQ_MAX_LEN) return -1;
 		for (uint32_t i = 0; i < nfds; i++) {
 			reinterpret_cast<robu_spawn_fd *>(buf + off)[i] = fds[i];
 		}
@@ -550,14 +651,45 @@ inline int64_t robu_spawn(const char *name, char *const argv[], char *const envp
 	req->envp_off = envc ? envp_off : 0;
 	req->nfds = nfds;
 	req->fds_off = nfds ? fds_off : 0;
+	return (int32_t)off;
+}
+
+// fd_kind/fd_handle: caller-supplied lookup for fds 0/1/2, same shape as
+// apps/libc's __libc_fd_export -- return false if that fd isn't open.
+inline int64_t robu_spawn(const char *name, char *const argv[], char *const envp[],
+                           bool (*fd_export)(int fd, uint32_t *kind, uint64_t *handle)) {
+	static uint8_t buf[SPAWN_REQ_MAX_LEN];
+	int32_t len = build_spawn_req_buf(buf, name, argv, envp, fd_export);
+	if (len < 0) {
+		return -1;
+	}
 	msg_regs m{};
 	m.word[0] = (uint64_t)buf;
-	m.word[1] = off;
+	m.word[1] = (uint64_t)len;
 	int64_t rc = ipc_raw(0, 0, IPC_FLAG_SPAWN, &m, nullptr);
 	if (rc != IPC_ERR_NONE) {
 		return -1;
 	}
 	return (int64_t)m.word[0];
+}
+
+// execve(): replaces the calling process's own image in place (same tid,
+// same fd table -- it's just process memory that survives the swap, no
+// special inheritance logic needed). Never returns on success; returns a
+// negative IPC_ERR_* on failure. No fd export -- POSIX exec() inherits
+// every fd unless it was marked close-on-exec, and nothing in this backend
+// marks any fd close-on-exec, so "inherit everything" already falls out for
+// free (the caller's fd table isn't touched by any of this at all).
+inline int64_t exec_raw(const char *name, char *const argv[], char *const envp[]) {
+	static uint8_t buf[SPAWN_REQ_MAX_LEN];
+	int32_t len = build_spawn_req_buf(buf, name, argv, envp, nullptr);
+	if (len < 0) {
+		return -1;
+	}
+	msg_regs m{};
+	m.word[0] = (uint64_t)buf;
+	m.word[1] = (uint64_t)len;
+	return ipc_raw(0, 0, IPC_FLAG_EXEC, &m, nullptr);
 }
 
 inline int64_t robu_waitpid(int64_t pid, int *status, bool nohang) {
