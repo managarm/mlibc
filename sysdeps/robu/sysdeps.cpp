@@ -14,26 +14,11 @@ extern "C" uint64_t __robu_heap_base;
 
 namespace {
 
-// --- fd table ----------------------------------------------------------
-// Mirrors apps/libc/src/fdtable.c's model: an fd is just (kind, handle).
-// ramfs/devfs/procfs/sysfs all track read/write position server-side per
-// handle, so there is no client-side seek offset to maintain.
-
 enum FdKind {
 	FD_NONE = 0,
-	// Real directories only ever come from ramfs (the sole directory-capable
-	// backend, even post-migration -- OpenDir()/ReadEntries() below still
-	// call ramfs directly rather than through the generic vfs_* dispatch).
 	FD_RAMFS_DIR,
 	FD_PIPE_READ,
 	FD_PIPE_WRITE,
-	// Generic include/robu/vfs.h protocol, spoken to whichever server the
-	// kernel-resident mount table (kinfo_page_t.mounts[]) says owns a given
-	// path prefix -- unlike the fixed kinds above (each hardcoded to one
-	// server via a *_server_tid() helper), the same FD_VFS kind is shared by
-	// every mounted server (including ramfs's own regular files, as of A4),
-	// so the owning tid has to travel with the fd itself
-	// (FdEntry::server_tid) instead of being implied by the kind.
 	FD_VFS,
 };
 
@@ -42,8 +27,8 @@ constexpr int MAX_FDS = 64;
 struct FdEntry {
 	FdKind kind = FD_NONE;
 	uint64_t handle = 0;
-	uint64_t size = 0; // procfs/sysfs/FD_VFS: size reported at open()
-	uint32_t server_tid = 0; // FD_VFS/FD_VFS_DIR only
+	uint64_t size = 0;
+	uint32_t server_tid = 0;
 };
 
 FdEntry g_fds[MAX_FDS];
@@ -62,12 +47,6 @@ bool fd_valid(int fd) {
 }
 
 int64_t console_handle_cached = -1;
-
-// Uses devfs's statically-known tid (kinfo_page_t.devfs_tid) directly rather
-// than resolve_mount() -- this needs to work for early debug/panic output
-// (LibcLog/LibcPanic below) with no dependency on the dynamic mount table
-// ever having been populated, only on devfs itself being up (same boot
-// ordering guarantee this had before the vfs.h migration).
 int64_t console_handle() {
 	if (console_handle_cached < 0) {
 		console_handle_cached = robu::vfs_open(robu::devfs_tid(), "console", 0);
@@ -120,11 +99,6 @@ extern "C" void __robu_fd_inherit(uint64_t spawn_info) {
 	for (uint32_t i = 0; i < nfds; i++) {
 		int fd = (int)fds[i].fd;
 		if (fd < 0 || fd > 2) continue;
-		// Undo fd_export's kind translation (see __libc_spawn() below) --
-		// the wire uses SPAWN_FD_KIND_PIPE_READ/WRITE so the kernel can
-		// recognize and register pipe holders; this backend's own fd table
-		// needs its internal FD_PIPE_READ/WRITE enum values instead so
-		// Read/Write/Close's kind-based dispatch works on the inherited fd.
 		if (fds[i].kind == robu::SPAWN_FD_KIND_PIPE_READ) {
 			g_fds[fd].kind = FD_PIPE_READ;
 		} else if (fds[i].kind == robu::SPAWN_FD_KIND_PIPE_WRITE) {
@@ -138,11 +112,6 @@ extern "C" void __robu_fd_inherit(uint64_t spawn_info) {
 }
 
 namespace {
-
-// --- path resolution -----------------------------------------------------
-// Mirrors fdtable.c's resolve_path()/ramfs_name_from_path(): normalize
-// "." / ".." against a tracked cwd, then dispatch on a fixed set of
-// mount-point prefixes, falling through to a flat ramfs path otherwise.
 
 constexpr int CWD_MAX = 256;
 char g_cwd[CWD_MAX] = "/";
@@ -205,13 +174,6 @@ int ramfs_name_from_path(const char *resolved, char *name, size_t name_size) {
 	return 0;
 }
 
-// resolve_mount() does a plain prefix match against `resolved`, but every
-// non-catch-all mount prefix carries a trailing '/' (kinfo_mount_add("/dev/",
-// ...) etc.) -- so a bare mount root like "/boot" (no trailing slash, e.g.
-// from `stat("/boot")`/`opendir("/boot")`) never matches its own mount at
-// all. Retrying with a synthetic trailing slash appended fixes exactly that
-// case without changing anything for paths that already have content past
-// the mount point (resolved+matched_len is identical either way there).
 uint32_t resolve_mount_for_dir(const char *resolved, const char **rel_out) {
 	size_t rlen = strlen(resolved);
 	char match_buf[CWD_MAX];
@@ -274,7 +236,7 @@ int stat_path(const char *resolved, struct stat *buf) {
 
 uint8_t *g_anon_cursor;
 
-} // namespace
+}
 
 namespace mlibc {
 
@@ -300,14 +262,6 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 	ensure_stdio_defaults();
 	char resolved[CWD_MAX];
 	resolve_path(path, resolved, sizeof(resolved));
-
-	// The root itself is handled directly (not through the mount table)
-	// since ramfs's own registered prefix is "/" -- resolve_mount() would
-	// hand this a mount-relative name of "" (matched_len==1), which isn't
-	// a resolvable ramfs name. Every other path always matches some mount
-	// (ramfs's "/" is the catch-all -- see kinfo_mount_add("/", ...) in
-	// ramfs_init(), src/boot/servers.c) and reaches the generic dispatch
-	// below.
 	if (strcmp(resolved, "/") == 0) {
 		if ((flags & O_ACCMODE) != O_RDONLY) return EISDIR;
 		int fd = alloc_fd();
@@ -321,14 +275,6 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 	uint32_t mount_tid = robu::resolve_mount(resolved, &matched_len);
 	if (mount_tid != 0) {
 		const char *rel = resolved + matched_len;
-		// Real directories under ramfs (/bin, /etc, ...) are the only
-		// O_RDONLY-directory-open case actually exercised today, so this
-		// extra stat round-trip is skipped for every other mount (devfs/
-		// procfs/sysfs/bootfs) -- same shape as devfs_tid()'s S_IFCHR
-		// special-case in stat_path() below. bootfs's own root also answers
-		// is_dir=1 (see resolve_mount_for_dir()'s use in OpenDir()/
-		// stat_path()), but open()ing it as a directory isn't needed for
-		// `ls /boot` (opendir() takes a separate path) and isn't wired here.
 		if (mount_tid == robu::ramfs_tid()) {
 			uint64_t size;
 			int is_dir;
@@ -357,13 +303,6 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 	return ENOENT;
 }
 
-// dup()/dup2() just add another fd-table slot pointing at the same (kind,
-// handle) pair -- the same sharing model Close's own "shared" scan below
-// already assumes (it's what keeps a shared devfs/ramfs/pipe handle from
-// being closed server-side while another fd still names it). This is
-// exactly what a real shell needs for `cmd > file` / `cmd1 | cmd2`-style
-// redirection: dup2(pipe_write_fd, 1) before spawning, in the shell's own
-// process, before any of this backend's spawn-time fd export ever runs.
 int Sysdeps<Dup>::operator()(int fd, int, int *newfd_out) {
 	ensure_stdio_defaults();
 	if (!fd_valid(fd)) {
@@ -429,9 +368,6 @@ int Sysdeps<Write>::operator()(int fd, const void *buf, size_t count, ssize_t *b
 	const uint8_t *p = (const uint8_t *)buf;
 	size_t total = 0;
 	if (g_fds[fd].kind == FD_PIPE_WRITE) {
-		// pipe_write is deliberately non-blocking in-kernel: IPC_ERR_NONE
-		// with out_len==0 means "ring full, try again"; IPC_ERR_NOT_FOUND
-		// means every reader has closed (EPIPE), not "try again".
 		while (total < count) {
 			uint64_t n = 0;
 			int64_t rc = robu::pipe_write_raw(g_fds[fd].handle, p + total, count - total, &n);
@@ -475,11 +411,6 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 	uint8_t *p = (uint8_t *)buf;
 	size_t total = 0;
 	if (g_fds[fd].kind == FD_PIPE_READ) {
-		// pipe_read is deliberately non-blocking in-kernel: IPC_ERR_NONE
-		// with out_len==0 means "empty, try again" as long as some writer
-		// is still open; IPC_ERR_NOT_FOUND means every writer has closed
-		// (real EOF). Short reads (n < requested) are normal and returned
-		// immediately, matching every other fd kind here.
 		uint64_t n = 0;
 		int64_t rc = robu::pipe_read_raw(g_fds[fd].handle, p, count, &n);
 		while (rc == robu::IPC_ERR_NONE && n == 0) {
@@ -507,12 +438,6 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 		}
 		if (n < 0) return EIO;
 		if (n == 0) {
-			// devfs's console read is deliberately non-blocking -- 0 bytes
-			// means "nothing typed yet," not EOF. Retry (with nothing read
-			// yet this call) instead of reporting a false EOF, matching
-			// apps/libc's own read()'s is_console handling. Once we already
-			// have some bytes, stop and return them rather than blocking
-			// for more (short reads are normal here).
 			if (is_console && total == 0) {
 				robu::ipc_raw(0, 1, robu::IPC_FLAG_NONE, nullptr, nullptr);
 				continue;
@@ -520,8 +445,6 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 			break;
 		}
 		total += (size_t)n;
-		// Console/ramfs reads may legitimately return short of `count`;
-		// don't loop trying to fill the whole buffer in one Read() call.
 		break;
 	}
 	*bytes_read = (ssize_t)total;
@@ -529,8 +452,6 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 }
 
 int Sysdeps<Seek>::operator()(int, off_t, int, off_t *) {
-	// ramfs/devfs/procfs/sysfs track position server-side per handle with
-	// no seek verb -- matches apps/libc's own (lack of) seek support.
 	return ESPIPE;
 }
 
@@ -562,8 +483,6 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int, 
 			return EBADF;
 		}
 	}
-	// path, fd_path (dirfd is ignored beyond AT_FDCWD -- no real subdirectory
-	// fd concept here, matching fdtable.c's own openat()/fstatat() shape).
 	char resolved[CWD_MAX];
 	resolve_path(path, resolved, sizeof(resolved));
 	return stat_path(resolved, statbuf);
@@ -600,8 +519,6 @@ int Sysdeps<ReadEntries>::operator()(int handle, void *buffer, size_t max_size, 
 	if (!fd_valid(handle) || g_fds[handle].kind != FD_RAMFS_DIR) {
 		return EBADF;
 	}
-	// The cursor lives in the high bits of `size` (unused for directories);
-	// simplest to keep a small side table instead.
 	static uint64_t cursors[MAX_FDS];
 	char name[32];
 	int is_dir;
@@ -654,11 +571,6 @@ int Sysdeps<Chdir>::operator()(const char *path) {
 	return 0;
 }
 
-// None of this kernel's backends (ramfs/devfs/procfs/sysfs) track per-file
-// timestamps, so there's nothing to actually set -- apps/libc's own
-// utimensat()/futimens() were equally no-ops regarding `times`. touch(1)'s
-// file-creation itself goes through the real Open sysdep before this ever
-// runs, so this only needs to not fail it.
 int Sysdeps<Utimensat>::operator()(int, const char *, const struct timespec *, int) {
 	return 0;
 }
@@ -718,13 +630,6 @@ int Sysdeps<ClockGet>::operator()(int, time_t *secs, long *nanos) {
 	robu::exit_raw(status);
 }
 
-// IPC_FLAG_FORK is a real, working kernel primitive (proven by the
-// now-removed apps/libc's own fork()) -- it returns twice, with word[0] (r8)
-// distinguishing the two threads (0 in the child, the real child tid in the
-// parent). mlibc's own fork()/vfork() wrapper (options/posix/generic/
-// unistd.cpp) calls this, then -- only in the child branch -- refetches its
-// cached tid via the FutexTid sysdep below, since the child's copy of
-// mlibc's internal per-thread bookkeeping still holds the parent's tid.
 int Sysdeps<Fork>::operator()(pid_t *child) {
 	uint64_t child_or_zero = 0;
 	int64_t rc = robu::fork_raw(&child_or_zero);
@@ -743,11 +648,6 @@ pid_t Sysdeps<GetPid>::operator()() {
 	return (pid_t)robu::self_tid();
 }
 
-// Kernel-resident, no server process -- see robu-abi.hpp's pipe_* wrappers.
-// `flags` (O_CLOEXEC/O_NONBLOCK) isn't honored: there's no exec() to make
-// O_CLOEXEC meaningful yet, and every read/write here already treats "ring
-// empty/full" as "sleep and retry" rather than surfacing it to the caller,
-// so there's no non-blocking mode to opt into.
 int Sysdeps<Pipe>::operator()(int *fds, int) {
 	uint64_t handle = 0;
 	int64_t rc = robu::pipe_create(&handle);
@@ -774,15 +674,6 @@ int Sysdeps<Pipe>::operator()(int *fds, int) {
 	return 0;
 }
 
-// IPC_FLAG_EXEC is a real, working kernel primitive: it replaces the
-// calling thread's own address space and saved register frame in place
-// (same tid, same fd table -- see docs/libc-and-abi-reference.md §4.3 for
-// the design). On success this genuinely never returns -- the trap that
-// carried this request resumes directly into the new image's entry point,
-// not back into this function. Only a failure return is ever observed by
-// the caller. Robu's rootfs has no directory structure, so (matching
-// __libc_spawn()'s own behavior) `path` is looked up as a bare name with no
-// $PATH resolution and no leading-slash stripping.
 int Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *const envp[]) {
 	int64_t rc = robu::exec_raw(path, argv, envp);
 	if (rc == robu::IPC_ERR_NOT_FOUND) {
@@ -797,8 +688,6 @@ int Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *cons
 	return 0;
 }
 
-// Waitpid maps directly onto this kernel's real IPC_FLAG_WAIT verb, so
-// mlibc's standard waitpid()/wait() work as-is.
 int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusage *, pid_t *ret_pid) {
 	bool nohang = (flags & WNOHANG) != 0;
 	int64_t rc = robu::robu_waitpid(pid, status, nohang);
@@ -815,20 +704,11 @@ int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusag
 
 }
 
-// This kernel's spawn primitive is not POSIX fork()+exec() (see above), so
-// it's exposed as the same non-POSIX __libc_spawn() extension apps/libc
-// already provided -- minibox-shell.c and hello_initsys call this directly.
+
 extern "C" int __libc_spawn(const char *name, char *const argv[], char *const envp[]) {
 	auto fd_export = [](int fd, uint32_t *kind, uint64_t *handle, uint32_t *server_tid) -> bool {
 		ensure_stdio_defaults();
 		if (!fd_valid(fd)) return false;
-		// Every kind but pipes is opaque to the kernel and passes straight
-		// through; pipes are the two values the kernel's spawn handler
-		// specifically recognizes to register the new child as a holder
-		// (see robu-abi.hpp's SPAWN_FD_KIND_PIPE_READ/WRITE) -- get this
-		// wrong and a spawned pipeline stage's end of the pipe is never
-		// counted, so the *other* end sees premature EOF/EPIPE the moment
-		// the parent closes its own (uncounted-as-real) copy.
 		if (g_fds[fd].kind == FD_PIPE_READ) {
 			*kind = robu::SPAWN_FD_KIND_PIPE_READ;
 		} else if (g_fds[fd].kind == FD_PIPE_WRITE) {
