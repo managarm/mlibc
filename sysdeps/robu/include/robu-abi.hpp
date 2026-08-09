@@ -398,100 +398,26 @@ inline int64_t vfs_readdir(uint32_t server, uint64_t dir_ino, uint64_t index, ch
 }
 
 // --- ramfs -----------------------------------------------------------------
+// Open/read/write/close/fstat all go through the generic vfs_* dispatch
+// (mount table entry "/", registered in ramfs_init(), src/boot/servers.c)
+// as of A4. Only stat-by-name and readdir stay ramfs-specific below, since
+// OpenDir()/ReadEntries() in sysdeps.cpp call ramfs directly -- it remains
+// the sole directory-capable backend.
 
-constexpr uint64_t RAMFS_OP_OPEN    = 1;
-constexpr uint64_t RAMFS_OP_READ    = 2;
-constexpr uint64_t RAMFS_OP_WRITE   = 3;
-constexpr uint64_t RAMFS_OP_CLOSE   = 4;
 constexpr uint64_t RAMFS_OP_STAT    = 5;
-constexpr uint64_t RAMFS_OP_FSTAT   = 6;
 constexpr uint64_t RAMFS_OP_READDIR = 7;
 constexpr int RAMFS_NAME_MAX  = 20;
 constexpr int RAMFS_PATH_MAX  = 32;
-constexpr int RAMFS_READ_MAX  = 40;
-constexpr int RAMFS_WRITE_MAX = 24;
 constexpr uint64_t RAMFS_ROOT_INO = 1;
-constexpr uint64_t RAMFS_O_CREAT  = 0x0040;
-constexpr uint64_t RAMFS_O_TRUNC  = 0x0200;
-constexpr uint64_t RAMFS_O_APPEND = 0x0400;
 
 inline uint32_t ramfs_tid() {
 	return kinfo()->ramfs_tid;
-}
-
-inline int64_t ramfs_open(const char *name, uint64_t flags) {
-	msg_regs m{};
-	m.word[0] = RAMFS_OP_OPEN;
-	m.word[1] = flags;
-	msg_put_str(m, 2, name, RAMFS_PATH_MAX);
-	uint32_t from;
-	ipc_call(ramfs_tid(), &m, &from);
-	int64_t status = (int64_t)m.word[0];
-	return status == 0 ? (int64_t)m.word[1] : status;
-}
-
-inline int64_t ramfs_read(uint64_t handle, void *buf, uint64_t len) {
-	msg_regs m{};
-	m.word[0] = RAMFS_OP_READ;
-	m.word[1] = handle;
-	m.word[2] = len > (uint64_t)RAMFS_READ_MAX ? (uint64_t)RAMFS_READ_MAX : len;
-	uint32_t from;
-	ipc_call(ramfs_tid(), &m, &from);
-	int64_t status = (int64_t)m.word[0];
-	if (status > 0) {
-		const uint8_t *data = reinterpret_cast<const uint8_t *>(&m.word[1]);
-		uint8_t *out = reinterpret_cast<uint8_t *>(buf);
-		for (int64_t i = 0; i < status; i++) {
-			out[i] = data[i];
-		}
-	}
-	return status;
-}
-
-inline int64_t ramfs_write(uint64_t handle, const void *buf, uint64_t len) {
-	msg_regs m{};
-	m.word[0] = RAMFS_OP_WRITE;
-	m.word[1] = handle;
-	uint64_t clamped = len > (uint64_t)RAMFS_WRITE_MAX ? (uint64_t)RAMFS_WRITE_MAX : len;
-	m.word[2] = clamped;
-	uint8_t *dst = reinterpret_cast<uint8_t *>(&m.word[3]);
-	const uint8_t *src = reinterpret_cast<const uint8_t *>(buf);
-	for (uint64_t i = 0; i < clamped; i++) {
-		dst[i] = src[i];
-	}
-	uint32_t from;
-	ipc_call(ramfs_tid(), &m, &from);
-	return (int64_t)m.word[0];
-}
-
-inline int64_t ramfs_close(uint64_t handle) {
-	msg_regs m{};
-	m.word[0] = RAMFS_OP_CLOSE;
-	m.word[1] = handle;
-	uint32_t from;
-	ipc_call(ramfs_tid(), &m, &from);
-	return (int64_t)m.word[0];
 }
 
 inline int64_t ramfs_stat(const char *name, uint64_t *size_out, int *is_dir_out, uint64_t *ino_out) {
 	msg_regs m{};
 	m.word[0] = RAMFS_OP_STAT;
 	msg_put_str(m, 1, name, RAMFS_PATH_MAX);
-	uint32_t from;
-	ipc_call(ramfs_tid(), &m, &from);
-	int64_t status = (int64_t)m.word[0];
-	if (status == 0) {
-		if (size_out) *size_out = m.word[1];
-		if (is_dir_out) *is_dir_out = (int)m.word[2];
-		if (ino_out) *ino_out = m.word[3];
-	}
-	return status;
-}
-
-inline int64_t ramfs_fstat(uint64_t handle, uint64_t *size_out, int *is_dir_out, uint64_t *ino_out) {
-	msg_regs m{};
-	m.word[0] = RAMFS_OP_FSTAT;
-	m.word[1] = handle;
 	uint32_t from;
 	ipc_call(ramfs_tid(), &m, &from);
 	int64_t status = (int64_t)m.word[0];

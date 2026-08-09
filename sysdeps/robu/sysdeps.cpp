@@ -21,19 +21,20 @@ namespace {
 
 enum FdKind {
 	FD_NONE = 0,
-	FD_RAMFS,
+	// Real directories only ever come from ramfs (the sole directory-capable
+	// backend, even post-migration -- OpenDir()/ReadEntries() below still
+	// call ramfs directly rather than through the generic vfs_* dispatch).
 	FD_RAMFS_DIR,
 	FD_PIPE_READ,
 	FD_PIPE_WRITE,
 	// Generic include/robu/vfs.h protocol, spoken to whichever server the
 	// kernel-resident mount table (kinfo_page_t.mounts[]) says owns a given
 	// path prefix -- unlike the fixed kinds above (each hardcoded to one
-	// server via a *_server_tid() helper), the same FD_VFS/FD_VFS_DIR kind
-	// is shared by every mounted server, so the owning tid has to travel
-	// with the fd itself (FdEntry::server_tid) instead of being implied by
-	// the kind.
+	// server via a *_server_tid() helper), the same FD_VFS kind is shared by
+	// every mounted server (including ramfs's own regular files, as of A4),
+	// so the owning tid has to travel with the fd itself
+	// (FdEntry::server_tid) instead of being implied by the kind.
 	FD_VFS,
-	FD_VFS_DIR,
 };
 
 constexpr int MAX_FDS = 64;
@@ -220,6 +221,10 @@ constexpr dev_t ROBU_STDEV_RAMFS = 2;
 constexpr dev_t ROBU_STDEV_VFS = 5;
 
 int stat_path(const char *resolved, struct stat *buf) {
+	if (strcmp(resolved, "/") == 0) {
+		fill_stat(buf, 0, 1, ROBU_STDEV_RAMFS, 1);
+		return 0;
+	}
 	int matched_len = 0;
 	uint32_t mount_tid = robu::resolve_mount(resolved, &matched_len);
 	if (mount_tid != 0) {
@@ -235,23 +240,14 @@ int stat_path(const char *resolved, struct stat *buf) {
 			buf->st_mode = S_IFCHR | 0666;
 			return 0;
 		}
+		if (mount_tid == robu::ramfs_tid()) {
+			fill_stat(buf, size, is_dir, ROBU_STDEV_RAMFS, (ino_t)ino);
+			return 0;
+		}
 		fill_stat(buf, size, is_dir, ROBU_STDEV_VFS, (ino_t)ino);
 		return 0;
 	}
-	if (strcmp(resolved, "/") == 0) {
-		fill_stat(buf, 0, 1, ROBU_STDEV_RAMFS, 1);
-		return 0;
-	}
-	char name[robu::RAMFS_PATH_MAX];
-	int rc = ramfs_name_from_path(resolved, name, sizeof(name));
-	if (rc != 0) return rc;
-	uint64_t size, ino;
-	int is_dir;
-	if (robu::ramfs_stat(name, &size, &is_dir, &ino) != 0) {
-		return ENOENT;
-	}
-	fill_stat(buf, size, is_dir, ROBU_STDEV_RAMFS, (ino_t)ino);
-	return 0;
+	return ENOENT;
 }
 
 uint8_t *g_anon_cursor;
@@ -283,15 +279,43 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 	char resolved[CWD_MAX];
 	resolve_path(path, resolved, sizeof(resolved));
 
-	// Mount-table-first: try the dynamic registry (include/robu/kinfo.h's
-	// kinfo_page_t.mounts[]) before falling through to the legacy hardcoded
-	// chain below for backends not yet migrated (A1-A4). devfs (this file's
-	// former FD_DEVFS branch) is migrated as of A1 and now only ever
-	// resolved through this path.
+	// The root itself is handled directly (not through the mount table)
+	// since ramfs's own registered prefix is "/" -- resolve_mount() would
+	// hand this a mount-relative name of "" (matched_len==1), which isn't
+	// a resolvable ramfs name. Every other path always matches some mount
+	// (ramfs's "/" is the catch-all -- see kinfo_mount_add("/", ...) in
+	// ramfs_init(), src/boot/servers.c) and reaches the generic dispatch
+	// below.
+	if (strcmp(resolved, "/") == 0) {
+		if ((flags & O_ACCMODE) != O_RDONLY) return EISDIR;
+		int fd = alloc_fd();
+		if (fd < 0) return EMFILE;
+		g_fds[fd] = { FD_RAMFS_DIR, robu::RAMFS_ROOT_INO, 0 };
+		*fd_out = fd;
+		return 0;
+	}
+
 	int matched_len = 0;
 	uint32_t mount_tid = robu::resolve_mount(resolved, &matched_len);
 	if (mount_tid != 0) {
 		const char *rel = resolved + matched_len;
+		// Only ramfs (the sole directory-capable backend) ever answers
+		// is_dir=1, so this extra stat round-trip is skipped for
+		// devfs/procfs/sysfs opens -- same shape as devfs_tid()'s S_IFCHR
+		// special-case in stat_path() below.
+		if (mount_tid == robu::ramfs_tid()) {
+			uint64_t size;
+			int is_dir;
+			uint64_t ino;
+			if (robu::vfs_stat(mount_tid, rel, &size, &is_dir, &ino) == 0 && is_dir) {
+				if ((flags & O_ACCMODE) != O_RDONLY) return EISDIR;
+				int fd = alloc_fd();
+				if (fd < 0) return EMFILE;
+				g_fds[fd] = { FD_RAMFS_DIR, ino, 0 };
+				*fd_out = fd;
+				return 0;
+			}
+		}
 		uint64_t vflags = 0;
 		if (flags & O_CREAT) vflags |= robu::VFS_O_CREAT;
 		if (flags & O_TRUNC) vflags |= robu::VFS_O_TRUNC;
@@ -304,46 +328,7 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 		*fd_out = fd;
 		return 0;
 	}
-
-	if (strcmp(resolved, "/") == 0) {
-		if ((flags & O_ACCMODE) != O_RDONLY) return EISDIR;
-		int fd = alloc_fd();
-		if (fd < 0) return EMFILE;
-		g_fds[fd] = { FD_RAMFS_DIR, robu::RAMFS_ROOT_INO, 0 };
-		*fd_out = fd;
-		return 0;
-	}
-
-	char name[robu::RAMFS_PATH_MAX];
-	int rc = ramfs_name_from_path(resolved, name, sizeof(name));
-	if (rc != 0) return rc;
-
-	uint64_t size;
-	int is_dir;
-	if (robu::ramfs_stat(name, &size, &is_dir, nullptr) == 0 && is_dir) {
-		if ((flags & O_ACCMODE) != O_RDONLY) return EISDIR;
-		int fd = alloc_fd();
-		if (fd < 0) return EMFILE;
-		uint64_t ino;
-		robu::ramfs_stat(name, &size, &is_dir, &ino);
-		g_fds[fd] = { FD_RAMFS_DIR, ino, 0 };
-		*fd_out = fd;
-		return 0;
-	}
-
-	uint64_t rflags = 0;
-	if (flags & O_CREAT) rflags |= robu::RAMFS_O_CREAT;
-	if (flags & O_TRUNC) rflags |= robu::RAMFS_O_TRUNC;
-	if (flags & O_APPEND) rflags |= robu::RAMFS_O_APPEND;
-	int64_t h = robu::ramfs_open(name, rflags);
-	if (h < 0) {
-		return ENOENT;
-	}
-	int fd = alloc_fd();
-	if (fd < 0) { robu::ramfs_close((uint64_t)h); return EMFILE; }
-	g_fds[fd] = { FD_RAMFS, (uint64_t)h, 0 };
-	*fd_out = fd;
-	return 0;
+	return ENOENT;
 }
 
 // dup()/dup2() just add another fd-table slot pointing at the same (kind,
@@ -400,7 +385,6 @@ int Sysdeps<Close>::operator()(int fd) {
 	}
 	if (!shared) {
 		switch (g_fds[fd].kind) {
-		case FD_RAMFS: robu::ramfs_close(g_fds[fd].handle); break;
 		case FD_PIPE_READ: robu::pipe_close_raw(g_fds[fd].handle, 0); break;
 		case FD_PIPE_WRITE: robu::pipe_close_raw(g_fds[fd].handle, 1); break;
 		case FD_VFS: robu::vfs_close(g_fds[fd].server_tid, g_fds[fd].handle); break;
@@ -444,7 +428,6 @@ int Sysdeps<Write>::operator()(int fd, const void *buf, size_t count, ssize_t *b
 		size_t chunk = count - total;
 		int64_t n;
 		switch (g_fds[fd].kind) {
-		case FD_RAMFS: n = robu::ramfs_write(g_fds[fd].handle, p + total, chunk); break;
 		case FD_VFS: n = robu::vfs_write(g_fds[fd].server_tid, g_fds[fd].handle, p + total, chunk); break;
 		default: return EBADF;
 		}
@@ -493,7 +476,6 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 		size_t chunk = count - total;
 		int64_t n;
 		switch (g_fds[fd].kind) {
-		case FD_RAMFS: n = robu::ramfs_read(g_fds[fd].handle, p + total, chunk); break;
 		case FD_VFS: n = robu::vfs_read(g_fds[fd].server_tid, g_fds[fd].handle, p + total, chunk); break;
 		default: return EBADF;
 		}
@@ -534,13 +516,6 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int, 
 		case FD_RAMFS_DIR:
 			fill_stat(statbuf, 0, 1, ROBU_STDEV_RAMFS, (ino_t)g_fds[fd].handle);
 			return 0;
-		case FD_RAMFS: {
-			uint64_t size, ino;
-			int is_dir;
-			if (robu::ramfs_fstat(g_fds[fd].handle, &size, &is_dir, &ino) != 0) return EBADF;
-			fill_stat(statbuf, size, is_dir, ROBU_STDEV_RAMFS, (ino_t)ino);
-			return 0;
-		}
 		case FD_VFS: {
 			uint64_t size, ino;
 			int is_dir;
@@ -548,6 +523,10 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int, 
 			if (g_fds[fd].server_tid == robu::devfs_tid()) {
 				fill_stat(statbuf, size, is_dir, ROBU_STDEV_DEVFS, (ino_t)ino);
 				statbuf->st_mode = S_IFCHR | 0666;
+				return 0;
+			}
+			if (g_fds[fd].server_tid == robu::ramfs_tid()) {
+				fill_stat(statbuf, size, is_dir, ROBU_STDEV_RAMFS, (ino_t)ino);
 				return 0;
 			}
 			fill_stat(statbuf, size, is_dir, ROBU_STDEV_VFS, (ino_t)ino);
