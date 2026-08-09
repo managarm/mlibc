@@ -205,6 +205,29 @@ int ramfs_name_from_path(const char *resolved, char *name, size_t name_size) {
 	return 0;
 }
 
+// resolve_mount() does a plain prefix match against `resolved`, but every
+// non-catch-all mount prefix carries a trailing '/' (kinfo_mount_add("/dev/",
+// ...) etc.) -- so a bare mount root like "/boot" (no trailing slash, e.g.
+// from `stat("/boot")`/`opendir("/boot")`) never matches its own mount at
+// all. Retrying with a synthetic trailing slash appended fixes exactly that
+// case without changing anything for paths that already have content past
+// the mount point (resolved+matched_len is identical either way there).
+uint32_t resolve_mount_for_dir(const char *resolved, const char **rel_out) {
+	size_t rlen = strlen(resolved);
+	char match_buf[CWD_MAX];
+	if (rlen + 2 > sizeof(match_buf)) {
+		*rel_out = resolved + rlen;
+		return 0;
+	}
+	memcpy(match_buf, resolved, rlen);
+	match_buf[rlen] = '/';
+	match_buf[rlen + 1] = '\0';
+	int matched_len = 0;
+	uint32_t tid = robu::resolve_mount(match_buf, &matched_len);
+	*rel_out = ((size_t)matched_len <= rlen) ? resolved + matched_len : resolved + rlen;
+	return tid;
+}
+
 void fill_stat(struct stat *buf, uint64_t size, int is_dir, dev_t dev, ino_t ino) {
 	memset(buf, 0, sizeof(*buf));
 	buf->st_mode = is_dir ? (S_IFDIR | 0755) : (S_IFREG | 0644);
@@ -225,10 +248,9 @@ int stat_path(const char *resolved, struct stat *buf) {
 		fill_stat(buf, 0, 1, ROBU_STDEV_RAMFS, 1);
 		return 0;
 	}
-	int matched_len = 0;
-	uint32_t mount_tid = robu::resolve_mount(resolved, &matched_len);
+	const char *rel;
+	uint32_t mount_tid = resolve_mount_for_dir(resolved, &rel);
 	if (mount_tid != 0) {
-		const char *rel = resolved + matched_len;
 		uint64_t size = 0;
 		int is_dir = 0;
 		uint64_t ino = 0;
@@ -290,7 +312,7 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 		if ((flags & O_ACCMODE) != O_RDONLY) return EISDIR;
 		int fd = alloc_fd();
 		if (fd < 0) return EMFILE;
-		g_fds[fd] = { FD_RAMFS_DIR, robu::RAMFS_ROOT_INO, 0 };
+		g_fds[fd] = { FD_RAMFS_DIR, robu::RAMFS_ROOT_INO, 0, robu::ramfs_tid() };
 		*fd_out = fd;
 		return 0;
 	}
@@ -299,10 +321,14 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 	uint32_t mount_tid = robu::resolve_mount(resolved, &matched_len);
 	if (mount_tid != 0) {
 		const char *rel = resolved + matched_len;
-		// Only ramfs (the sole directory-capable backend) ever answers
-		// is_dir=1, so this extra stat round-trip is skipped for
-		// devfs/procfs/sysfs opens -- same shape as devfs_tid()'s S_IFCHR
-		// special-case in stat_path() below.
+		// Real directories under ramfs (/bin, /etc, ...) are the only
+		// O_RDONLY-directory-open case actually exercised today, so this
+		// extra stat round-trip is skipped for every other mount (devfs/
+		// procfs/sysfs/bootfs) -- same shape as devfs_tid()'s S_IFCHR
+		// special-case in stat_path() below. bootfs's own root also answers
+		// is_dir=1 (see resolve_mount_for_dir()'s use in OpenDir()/
+		// stat_path()), but open()ing it as a directory isn't needed for
+		// `ls /boot` (opendir() takes a separate path) and isn't wired here.
 		if (mount_tid == robu::ramfs_tid()) {
 			uint64_t size;
 			int is_dir;
@@ -311,7 +337,7 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 				if ((flags & O_ACCMODE) != O_RDONLY) return EISDIR;
 				int fd = alloc_fd();
 				if (fd < 0) return EMFILE;
-				g_fds[fd] = { FD_RAMFS_DIR, ino, 0 };
+				g_fds[fd] = { FD_RAMFS_DIR, ino, 0, mount_tid };
 				*fd_out = fd;
 				return 0;
 			}
@@ -548,22 +574,24 @@ int Sysdeps<OpenDir>::operator()(const char *path, int *handle) {
 	char resolved[CWD_MAX];
 	resolve_path(path, resolved, sizeof(resolved));
 	uint64_t dir_ino;
+	uint32_t server_tid;
 	if (strcmp(resolved, "/") == 0) {
 		dir_ino = robu::RAMFS_ROOT_INO;
+		server_tid = robu::ramfs_tid();
 	} else {
-		char name[robu::RAMFS_PATH_MAX];
-		int rc = ramfs_name_from_path(resolved, name, sizeof(name));
-		if (rc != 0) return rc;
+		const char *rel;
+		server_tid = resolve_mount_for_dir(resolved, &rel);
+		if (server_tid == 0) return ENOENT;
 		uint64_t size, ino;
 		int is_dir;
-		if (robu::ramfs_stat(name, &size, &is_dir, &ino) != 0 || !is_dir) {
+		if (robu::vfs_stat(server_tid, rel, &size, &is_dir, &ino) != 0 || !is_dir) {
 			return ENOTDIR;
 		}
 		dir_ino = ino;
 	}
 	int fd = alloc_fd();
 	if (fd < 0) return EMFILE;
-	g_fds[fd] = { FD_RAMFS_DIR, dir_ino, 0 };
+	g_fds[fd] = { FD_RAMFS_DIR, dir_ino, 0, server_tid };
 	*handle = fd;
 	return 0;
 }
@@ -577,7 +605,7 @@ int Sysdeps<ReadEntries>::operator()(int handle, void *buffer, size_t max_size, 
 	static uint64_t cursors[MAX_FDS];
 	char name[32];
 	int is_dir;
-	int64_t rc = robu::ramfs_readdir(g_fds[handle].handle, cursors[handle], name, &is_dir);
+	int64_t rc = robu::vfs_readdir(g_fds[handle].server_tid, g_fds[handle].handle, cursors[handle], name, &is_dir);
 	if (rc != 0) {
 		*bytes_read = 0;
 		return 0;
