@@ -80,7 +80,7 @@ void ensure_stdio_defaults() {
 
 bool g_fd_inherit_done;
 
-} // namespace
+}
 
 extern "C" void __robu_fd_inherit(uint64_t spawn_info) {
 	g_fd_inherit_done = true;
@@ -703,7 +703,6 @@ int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusag
 }
 
 }
-
 
 extern "C" int __libc_spawn(const char *name, char *const argv[], char *const envp[]) {
 	auto fd_export = [](int fd, uint32_t *kind, uint64_t *handle, uint32_t *server_tid) -> bool {

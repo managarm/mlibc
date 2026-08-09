@@ -13,9 +13,7 @@ constexpr uint64_t IPC_FLAG_NONE = 0;
 constexpr uint64_t IPC_FLAG_NOBLOCK = 1ull << 4;
 constexpr uint64_t IPC_FLAG_RECV = 1ull << 1;
 constexpr uint64_t IPC_FLAG_CONSOLE_WRITE = 1ull << 7;
-// Matches apps/devfs/devfs.c's local dev_id_t enum -- devfs's console read
-// is deliberately non-blocking, so a 0-byte reply means "nothing typed
-// yet," not EOF.
+
 constexpr uint64_t DEV_CONSOLE = 0;
 constexpr uint64_t IPC_FLAG_EXIT = 1ull << 14;
 constexpr uint64_t IPC_FLAG_SPAWN = 1ull << 15;
@@ -79,13 +77,6 @@ inline int64_t ipc_call(uint32_t dest, msg_regs *io, uint32_t *from) {
 	}
 }
 
-// --- pipes ---------------------------------------------------------------
-// Kernel-resident ring buffers, matching include/robu/pipe.h -- no server
-// process involved, these are direct dest==0 null-IPC calls resolved
-// entirely in-kernel. Reads/writes are deliberately non-blocking in the
-// kernel (0 bytes with IPC_ERR_NONE means "try again", IPC_ERR_NOT_FOUND
-// means real EOF/EPIPE) -- callers that want blocking semantics sleep-retry
-// on their own, same shape as the console read path.
 constexpr uint64_t PIPE_CHUNK_MAX = 32;
 
 inline int64_t pipe_create(uint64_t *out_handle) {
@@ -128,19 +119,6 @@ inline int64_t pipe_close_raw(uint64_t handle, int is_write_end) {
 	return ipc_raw(0, 0, IPC_FLAG_PIPE_CLOSE, &m, nullptr);
 }
 
-// --- fork ------------------------------------------------------------------
-// IPC_FLAG_FORK is the one call in this whole ABI that returns twice: the
-// kernel clones the caller's address space (real, eager, no COW) and
-// creates a second thread whose saved register frame is a byte-for-byte
-// copy of the caller's -- so *both* threads resume here. `rc` (rax) is
-// IPC_ERR_NONE in both threads (the call itself succeeded); word[0] (r8) is
-// what actually distinguishes them -- 0 in the child, the real child tid in
-// the parent (this is exactly what the removed apps/libc's own fork()
-// relied on: `rc = robu_ipc_raw(...); return (pid_t)m.word[0];`). Nothing
-// else needs to be built in userspace to make fork() "work" the way it does
-// on a fork-based OS: the fd table, heap, and every other bit of process
-// state the caller had is already correct in both copies, since it's just
-// process memory that got duplicated along with everything else.
 inline int64_t fork_raw(uint64_t *out_child_or_zero) {
 	msg_regs m{};
 	int64_t rc = ipc_raw(0, 0, IPC_FLAG_FORK, &m, nullptr);
@@ -148,10 +126,6 @@ inline int64_t fork_raw(uint64_t *out_child_or_zero) {
 	return rc;
 }
 
-// No prior primitive told a thread its own tid (spawn/fork replies only
-// ever tell the *caller* the *child's* tid) -- needed so a forked child can
-// correct its own cached tid (mlibc's FutexTid sysdep) once it starts
-// running with a copy of the parent's, which is now wrong for it.
 inline uint64_t self_tid() {
 	msg_regs m{};
 	ipc_raw(0, 0, IPC_FLAG_SELF_TID, &m, nullptr);
@@ -160,10 +134,6 @@ inline uint64_t self_tid() {
 
 constexpr uint64_t KINFO_VA = 0x0000000080000000ULL;
 
-// Must stay byte-for-byte in sync with include/robu/kinfo.h's kinfo_page_t
-// and mount_entry_t -- this file hand-mirrors the C header instead of
-// including it, so any field added on the kernel side needs the matching
-// edit here too.
 constexpr int MOUNT_PREFIX_MAX = 24;
 constexpr int MOUNT_TABLE_MAX = 8;
 struct mount_entry {
@@ -211,11 +181,6 @@ inline uint64_t kinfo_ticks() {
 	return ticks;
 }
 
-// Longest-prefix match, mirrors include/robu/kinfo.h's kinfo_resolve_mount()
-// exactly. Returns 0 (never a real tid) if nothing matches; *matched_len_out
-// (if non-null) gets how many leading bytes of `path` matched, so the
-// caller can strip them before sending a mount-relative path to the server
-// (every migrated server receives paths relative to its own mount point).
 inline uint32_t resolve_mount(const char *path, int *matched_len_out = nullptr) {
 	const kinfo_page *k = kinfo();
 	uint32_t seq0, seq1;
@@ -260,15 +225,6 @@ inline void msg_put_str(msg_regs &m, unsigned word_off, const char *s, int max) 
 	}
 	dst[i] = '\0';
 }
-
-// --- generic vfs (include/robu/vfs.h) --------------------------------------
-// The mount-table-routed protocol every migrated server (devfs/procfs/
-// sysfs/ramfs, in that order) speaks. Op codes and wire layout are
-// identical to ramfs's own protocol below on purpose -- ramfs.h was the
-// richest of the four original bespoke protocols and vfs.h formalizes its
-// shape as the shared one. Every function takes an explicit `tid_t server`
-// (resolved dynamically via resolve_mount()) instead of hardcoding one
-// server's tid the way ramfs_open()/etc. below still do.
 
 constexpr uint64_t VFS_OP_OPEN    = 1;
 constexpr uint64_t VFS_OP_READ    = 2;
@@ -397,13 +353,6 @@ inline int64_t vfs_readdir(uint32_t server, uint64_t dir_ino, uint64_t index, ch
 	return status;
 }
 
-// --- ramfs -----------------------------------------------------------------
-// Open/read/write/close/fstat all go through the generic vfs_* dispatch
-// (mount table entry "/", registered in ramfs_init(), src/boot/servers.c)
-// as of A4. Only stat-by-name and readdir stay ramfs-specific below, since
-// OpenDir()/ReadEntries() in sysdeps.cpp call ramfs directly -- it remains
-// the sole directory-capable backend.
-
 constexpr uint64_t RAMFS_OP_STAT    = 5;
 constexpr uint64_t RAMFS_OP_READDIR = 7;
 constexpr int RAMFS_NAME_MAX  = 20;
@@ -455,11 +404,6 @@ inline uint64_t strlen_(const char *s) {
 	return n;
 }
 
-// --- spawn / wait ------------------------------------------------------------
-// Ungated dest==0 kernel verbs -- not part of POSIX fork()/execve(), this
-// kernel has no in-place image-replace primitive. Mirrors the wire format
-// apps/libc/src/spawn.c already uses for __libc_spawn()/waitpid().
-
 constexpr uint32_t SPAWN_REQ_MAGIC = 0x314e5053u;
 constexpr int SPAWN_MAX_ARGS = 64;
 constexpr int SPAWN_REQ_MAX_LEN = 4096;
@@ -482,37 +426,20 @@ struct robu_spawn_fd {
 	uint32_t fd;
 	uint32_t kind;
 	uint64_t handle;
-	uint32_t server_tid; // FD_VFS/FD_VFS_DIR only; opaque to the kernel.
+	uint32_t server_tid;
 };
 
-// Matches include/robu/spawn.h -- the kernel's spawn handler
-// (elf_load_and_spawn_req in src/core/elf.c) special-cases exactly these two
-// numeric `kind` values to call pipe_add_holder() for the new child, so the
-// pipe's reader/writer bitmask (used for EOF/EPIPE detection) stays correct
-// across a spawn. Every other fd `kind` value is opaque to the kernel, just
-// copied through for the child's own sysdeps.cpp to interpret -- these two
-// are the only ones that need translating to/from this backend's internal
-// FdKind enum (sysdeps.cpp) when crossing the spawn wire.
 constexpr uint32_t SPAWN_FD_KIND_PIPE_READ = 100;
 constexpr uint32_t SPAWN_FD_KIND_PIPE_WRITE = 101;
 
 constexpr int SPAWN_FD_INFO_MAX = 3;
 constexpr uint32_t SPAWN_INFO_MAGIC = 0x314e4953u;
 
-// Layout of the fd-info block a spawned child finds via its 5th entry arg
-// (spawn_info VA): a robu_spawn_info header immediately followed by
-// info.nfds robu_spawn_fd entries.
 struct robu_spawn_info {
 	uint32_t magic;
 	uint32_t nfds;
 };
 
-// Shared by robu_spawn() and exec_raw(): both send the identical
-// name+argv+envp(+fds) wire format (robu_spawn_req) to the kernel, just
-// under different IPC verbs with different kernel-side handling (create a
-// new process vs. replace the calling one in place). Returns the built
-// request's total length, or -1 on error (buffer too small / too many
-// args).
 inline int32_t build_spawn_req_buf(uint8_t *buf, const char *name, char *const argv[],
                                     char *const envp[],
                                     bool (*fd_export)(int fd, uint32_t *kind, uint64_t *handle,
@@ -600,8 +527,6 @@ inline int32_t build_spawn_req_buf(uint8_t *buf, const char *name, char *const a
 	return (int32_t)off;
 }
 
-// fd_kind/fd_handle: caller-supplied lookup for fds 0/1/2, same shape as
-// apps/libc's __libc_fd_export -- return false if that fd isn't open.
 inline int64_t robu_spawn(const char *name, char *const argv[], char *const envp[],
                            bool (*fd_export)(int fd, uint32_t *kind, uint64_t *handle,
                                               uint32_t *server_tid)) {
@@ -620,13 +545,6 @@ inline int64_t robu_spawn(const char *name, char *const argv[], char *const envp
 	return (int64_t)m.word[0];
 }
 
-// execve(): replaces the calling process's own image in place (same tid,
-// same fd table -- it's just process memory that survives the swap, no
-// special inheritance logic needed). Never returns on success; returns a
-// negative IPC_ERR_* on failure. No fd export -- POSIX exec() inherits
-// every fd unless it was marked close-on-exec, and nothing in this backend
-// marks any fd close-on-exec, so "inherit everything" already falls out for
-// free (the caller's fd table isn't touched by any of this at all).
 inline int64_t exec_raw(const char *name, char *const argv[], char *const envp[]) {
 	static uint8_t buf[SPAWN_REQ_MAX_LEN];
 	int32_t len = build_spawn_req_buf(buf, name, argv, envp, nullptr);
