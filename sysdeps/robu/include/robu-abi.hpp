@@ -575,56 +575,6 @@ inline int64_t procfs_close(uint64_t handle) {
 	return (int64_t)m.word[0];
 }
 
-constexpr uint64_t SYSFS_OP_OPEN  = 1;
-constexpr uint64_t SYSFS_OP_READ  = 2;
-constexpr uint64_t SYSFS_OP_CLOSE = 3;
-constexpr int SYSFS_PATH_MAX = 16;
-constexpr int SYSFS_READ_MAX = 40;
-
-inline uint32_t sysfs_tid() {
-	return kinfo()->sysfs_tid;
-}
-
-inline int64_t sysfs_open(const char *path, uint64_t *size_out) {
-	msg_regs m{};
-	m.word[0] = SYSFS_OP_OPEN;
-	msg_put_str(m, 1, path, SYSFS_PATH_MAX);
-	uint32_t from;
-	ipc_call(sysfs_tid(), &m, &from);
-	int64_t status = (int64_t)m.word[0];
-	if (status == 0 && size_out) {
-		*size_out = m.word[2];
-	}
-	return status == 0 ? (int64_t)m.word[1] : status;
-}
-
-inline int64_t sysfs_read(uint64_t handle, void *buf, uint64_t len) {
-	msg_regs m{};
-	m.word[0] = SYSFS_OP_READ;
-	m.word[1] = handle;
-	m.word[2] = len > (uint64_t)SYSFS_READ_MAX ? (uint64_t)SYSFS_READ_MAX : len;
-	uint32_t from;
-	ipc_call(sysfs_tid(), &m, &from);
-	int64_t status = (int64_t)m.word[0];
-	if (status > 0) {
-		const uint8_t *data = reinterpret_cast<const uint8_t *>(&m.word[1]);
-		uint8_t *out = reinterpret_cast<uint8_t *>(buf);
-		for (int64_t i = 0; i < status; i++) {
-			out[i] = data[i];
-		}
-	}
-	return status;
-}
-
-inline int64_t sysfs_close(uint64_t handle) {
-	msg_regs m{};
-	m.word[0] = SYSFS_OP_CLOSE;
-	m.word[1] = handle;
-	uint32_t from;
-	ipc_call(sysfs_tid(), &m, &from);
-	return (int64_t)m.word[0];
-}
-
 inline uint64_t strlen_(const char *s) {
 	uint64_t n = 0;
 	while (s[n]) n++;

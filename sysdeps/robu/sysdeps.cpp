@@ -24,7 +24,6 @@ enum FdKind {
 	FD_RAMFS,
 	FD_RAMFS_DIR,
 	FD_PROCFS,
-	FD_SYSFS,
 	FD_PIPE_READ,
 	FD_PIPE_WRITE,
 	// Generic include/robu/vfs.h protocol, spoken to whichever server the
@@ -220,7 +219,6 @@ void fill_stat(struct stat *buf, uint64_t size, int is_dir, dev_t dev, ino_t ino
 constexpr dev_t ROBU_STDEV_DEVFS = 1;
 constexpr dev_t ROBU_STDEV_RAMFS = 2;
 constexpr dev_t ROBU_STDEV_PROCFS = 3;
-constexpr dev_t ROBU_STDEV_SYSFS = 4;
 constexpr dev_t ROBU_STDEV_VFS = 5;
 
 int stat_path(const char *resolved, struct stat *buf) {
@@ -248,14 +246,6 @@ int stat_path(const char *resolved, struct stat *buf) {
 		if (h < 0) return ENOENT;
 		robu::procfs_close((uint64_t)h);
 		fill_stat(buf, size, 0, ROBU_STDEV_PROCFS, (ino_t)h + 1);
-		return 0;
-	}
-	if (strncmp(resolved, "/var/sys/", 9) == 0) {
-		uint64_t size = 0;
-		int64_t h = robu::sysfs_open(resolved + 9, &size);
-		if (h < 0) return ENOENT;
-		robu::sysfs_close((uint64_t)h);
-		fill_stat(buf, size, 0, ROBU_STDEV_SYSFS, (ino_t)h + 1);
 		return 0;
 	}
 	if (strcmp(resolved, "/") == 0) {
@@ -332,16 +322,6 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 		int fd = alloc_fd();
 		if (fd < 0) { robu::procfs_close((uint64_t)h); return EMFILE; }
 		g_fds[fd] = { FD_PROCFS, (uint64_t)h, size };
-		*fd_out = fd;
-		return 0;
-	}
-	if (strncmp(resolved, "/var/sys/", 9) == 0) {
-		uint64_t size;
-		int64_t h = robu::sysfs_open(resolved + 9, &size);
-		if (h < 0) return ENOENT;
-		int fd = alloc_fd();
-		if (fd < 0) { robu::sysfs_close((uint64_t)h); return EMFILE; }
-		g_fds[fd] = { FD_SYSFS, (uint64_t)h, size };
 		*fd_out = fd;
 		return 0;
 	}
@@ -442,7 +422,6 @@ int Sysdeps<Close>::operator()(int fd) {
 		switch (g_fds[fd].kind) {
 		case FD_RAMFS: robu::ramfs_close(g_fds[fd].handle); break;
 		case FD_PROCFS: robu::procfs_close(g_fds[fd].handle); break;
-		case FD_SYSFS: robu::sysfs_close(g_fds[fd].handle); break;
 		case FD_PIPE_READ: robu::pipe_close_raw(g_fds[fd].handle, 0); break;
 		case FD_PIPE_WRITE: robu::pipe_close_raw(g_fds[fd].handle, 1); break;
 		case FD_VFS: robu::vfs_close(g_fds[fd].server_tid, g_fds[fd].handle); break;
@@ -537,7 +516,6 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 		switch (g_fds[fd].kind) {
 		case FD_RAMFS: n = robu::ramfs_read(g_fds[fd].handle, p + total, chunk); break;
 		case FD_PROCFS: n = robu::procfs_read(g_fds[fd].handle, p + total, chunk); break;
-		case FD_SYSFS: n = robu::sysfs_read(g_fds[fd].handle, p + total, chunk); break;
 		case FD_VFS: n = robu::vfs_read(g_fds[fd].server_tid, g_fds[fd].handle, p + total, chunk); break;
 		default: return EBADF;
 		}
@@ -580,9 +558,6 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int, 
 			return 0;
 		case FD_PROCFS:
 			fill_stat(statbuf, g_fds[fd].size, 0, ROBU_STDEV_PROCFS, (ino_t)g_fds[fd].handle + 1);
-			return 0;
-		case FD_SYSFS:
-			fill_stat(statbuf, g_fds[fd].size, 0, ROBU_STDEV_SYSFS, (ino_t)g_fds[fd].handle + 1);
 			return 0;
 		case FD_RAMFS: {
 			uint64_t size, ino;
