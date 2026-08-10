@@ -50,7 +50,13 @@ struct RobuSysdepTags :
 	SetPgid,
 	GetPgid,
 	SetSid,
-	Pselect
+	Pselect,
+	GetUid,
+	GetEuid,
+	GetGid,
+	GetEgid,
+	SetUid,
+	SetGid
 {};
 
 template<typename Tag>
