@@ -351,7 +351,8 @@ struct RuntimeTlsMap {
 	// Size of the inital TLS segment.
 	size_t initialLimit;
 
-	// TLS indices.
+	// TLS indices. These are the module indices of the psABI and hence 1-based:
+	// index zero is reserved and never handed out to an object.
 	frg::vector<SharedObject *, MemoryAllocator> indices;
 
 	// Track all allocated TCBs.
@@ -363,7 +364,7 @@ extern frg::manual_box<RuntimeTlsMap> runtimeTlsMap;
 
 Tcb *allocateTcb();
 void initTlsObjects(Tcb *tcb, const frg::vector<SharedObject *, MemoryAllocator> &objects, bool checkInitialized);
-void *accessDtv(SharedObject *object);
+void *accessDtvIndex(size_t index);
 // Tries to access the DTV, if not allocated, or object doesn't have
 // PT_TLS, return nullptr.
 void *tryAccessDtv(SharedObject *object);

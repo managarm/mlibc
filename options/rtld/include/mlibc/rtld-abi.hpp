@@ -5,8 +5,10 @@
 
 #if defined(__x86_64__) || defined(__aarch64__) || defined(__i386__) || defined(__riscv) || defined (__m68k__) || defined(__loongarch64)
 
+// This is the psABI's tls_index: a TLS module index and an offset into that module's TLS block.
+// Both words are ABI: linkers resolve them statically (to 1) for symbols that live in the main executable.
 struct __abi_tls_entry {
-	struct SharedObject *object;
+	size_t index;
 	size_t offset;
 };
 static_assert(sizeof(__abi_tls_entry) == sizeof(size_t) * 2, "Bad __abi_tls_entry size");
