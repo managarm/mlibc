@@ -238,6 +238,20 @@ int stat_path(const char *resolved, struct stat *buf) {
 	return ENOENT;
 }
 
+int vfs_err_to_errno(int64_t status) {
+	switch (status) {
+	case 0: return 0;
+	case robu::VFS_ERR_NOT_FOUND: return ENOENT;
+	case robu::VFS_ERR_EXISTS: return EEXIST;
+	case robu::VFS_ERR_IS_DIR: return EISDIR;
+	case robu::VFS_ERR_NOT_DIR: return ENOTDIR;
+	case robu::VFS_ERR_NOT_EMPTY: return ENOTEMPTY;
+	case robu::VFS_ERR_NOT_SUPPORTED: return ENOTSUP;
+	case robu::VFS_ERR_NO_SPACE: return ENOSPC;
+	default: return EIO;
+	}
+}
+
 uint8_t *g_anon_cursor;
 
 }
@@ -577,6 +591,58 @@ int Sysdeps<Chdir>::operator()(const char *path) {
 
 int Sysdeps<Utimensat>::operator()(int, const char *, const struct timespec *, int) {
 	return 0;
+}
+
+int Sysdeps<Mkdir>::operator()(const char *path, mode_t) {
+	char resolved[CWD_MAX];
+	resolve_path(path, resolved, sizeof(resolved));
+	int matched_len = 0;
+	uint32_t mount_tid = robu::resolve_mount(resolved, &matched_len);
+	if (mount_tid == 0) return ENOENT;
+	return vfs_err_to_errno(robu::vfs_mkdir(mount_tid, resolved + matched_len));
+}
+
+int Sysdeps<Rmdir>::operator()(const char *path) {
+	char resolved[CWD_MAX];
+	resolve_path(path, resolved, sizeof(resolved));
+	int matched_len = 0;
+	uint32_t mount_tid = robu::resolve_mount(resolved, &matched_len);
+	if (mount_tid == 0) return ENOENT;
+	return vfs_err_to_errno(robu::vfs_rmdir(mount_tid, resolved + matched_len));
+}
+
+int Sysdeps<Unlinkat>::operator()(int, const char *path, int) {
+	char resolved[CWD_MAX];
+	resolve_path(path, resolved, sizeof(resolved));
+	int matched_len = 0;
+	uint32_t mount_tid = robu::resolve_mount(resolved, &matched_len);
+	if (mount_tid == 0) return ENOENT;
+	return vfs_err_to_errno(robu::vfs_unlink(mount_tid, resolved + matched_len));
+}
+
+int Sysdeps<Link>::operator()(const char *old_path, const char *new_path) {
+	char old_resolved[CWD_MAX], new_resolved[CWD_MAX];
+	resolve_path(old_path, old_resolved, sizeof(old_resolved));
+	resolve_path(new_path, new_resolved, sizeof(new_resolved));
+	int old_matched = 0, new_matched = 0;
+	uint32_t old_tid = robu::resolve_mount(old_resolved, &old_matched);
+	uint32_t new_tid = robu::resolve_mount(new_resolved, &new_matched);
+	if (old_tid == 0 || new_tid == 0) return ENOENT;
+	if (old_tid != new_tid) return EXDEV;
+	return vfs_err_to_errno(robu::vfs_link(old_tid, old_resolved + old_matched, new_resolved + new_matched));
+}
+
+int Sysdeps<Mknodat>::operator()(int, const char *path, int mode, int dev) {
+	char resolved[CWD_MAX];
+	resolve_path(path, resolved, sizeof(resolved));
+	int matched_len = 0;
+	uint32_t mount_tid = robu::resolve_mount(resolved, &matched_len);
+	if (mount_tid == 0) return ENOENT;
+	return vfs_err_to_errno(robu::vfs_mknod(mount_tid, resolved + matched_len, (uint64_t)mode, (uint64_t)dev));
+}
+
+void Sysdeps<Sync>::operator()() {
+	robu::vfs_quiesce_disk();
 }
 
 int Sysdeps<TcbSet>::operator()(void *pointer) {
