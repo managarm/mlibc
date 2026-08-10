@@ -65,8 +65,9 @@
 #define SYS_SETHOSTNAME 61
 #define SYS_UNAME       62
 #define SYS_FUTEX       63
-#define SYS_POWERCTL    64
-#define SYS_ARCHCTL     65
+#define SYS_PROCCTL     64
+#define SYS_POWERCTL    65
+#define SYS_ARCHCTL     66
 
 #ifndef __MLIBC_ABI_ONLY
 

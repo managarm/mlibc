@@ -85,6 +85,7 @@ if not no_headers
     'include/piggy/mount.h',
     'include/piggy/route.h',
     'include/piggy/powerctl.h',
+    'include/piggy/procctl.h',
     'include/piggy/syscall.h',
     subdir: 'piggy'
   )

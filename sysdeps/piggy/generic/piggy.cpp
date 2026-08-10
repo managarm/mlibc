@@ -2,6 +2,7 @@
 #include <piggy/archctl.h>
 #include <piggy/mount.h>
 #include <piggy/powerctl.h>
+#include <piggy/procctl.h>
 #include <piggy/syscall.h>
 
 #ifndef MLIBC_BUILDING_RTLD
@@ -43,6 +44,19 @@ int powerctl(int op) {
         return -1;
     }
 
+    return 0;
+}
+
+int procctl(pid_t pid, int op, void* buf, size_t* len) {
+    size_t max_len = *len;
+
+    long ret = syscall4(SYS_PROCCTL, pid, op, (long) buf, max_len);
+    if (ret < 0) {
+        errno = -ret;
+        return -1;
+    }
+
+    *len = ret;
     return 0;
 }
 
