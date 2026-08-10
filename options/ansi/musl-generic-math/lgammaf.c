@@ -1,11 +1,5 @@
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
 #include <math.h>
-
-extern int __signgam;
-float __lgammaf_r(float, int *);
+#include "libm.h"
 
 float lgammaf(float x)
 {

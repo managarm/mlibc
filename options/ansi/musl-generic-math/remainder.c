@@ -1,6 +1,5 @@
 #include <math.h>
-#include "weak_alias.h"
-//#include "libc.h"
+#include "helpers.h"
 
 double remainder(double x, double y)
 {
