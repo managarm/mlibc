@@ -15,6 +15,8 @@ constexpr uint64_t IPC_FLAG_RECV = 1ull << 1;
 constexpr uint64_t IPC_FLAG_CONSOLE_WRITE = 1ull << 7;
 
 constexpr uint64_t DEV_CONSOLE = 0;
+constexpr uint64_t DEV_RSTTY1 = 4;
+constexpr uint64_t DEV_RSTTY6 = 9;
 constexpr uint64_t IPC_FLAG_EXIT = 1ull << 14;
 constexpr uint64_t IPC_FLAG_SPAWN = 1ull << 15;
 constexpr uint64_t IPC_FLAG_WAIT = 1ull << 16;
@@ -196,18 +198,20 @@ inline void sleep_raw(uint64_t ticks) {
 	ipc_raw(0, ticks, IPC_FLAG_NONE, nullptr, nullptr);
 }
 
-inline int64_t console_mode_query_raw() {
+inline int64_t console_mode_query_raw(int vt) {
 	msg_regs m{};
 	m.word[0] = SYS_INFO_CAT_CONSOLE_MODE;
 	m.word[1] = 2;
+	m.word[2] = (uint64_t)vt;
 	ipc_raw(0, 0, IPC_FLAG_SYS_INFO, &m, nullptr);
 	return (int64_t)m.word[0];
 }
 
-inline void console_mode_set_raw(int enable) {
+inline void console_mode_set_raw(int vt, int enable) {
 	msg_regs m{};
 	m.word[0] = SYS_INFO_CAT_CONSOLE_MODE;
 	m.word[1] = (uint64_t)enable;
+	m.word[2] = (uint64_t)vt;
 	ipc_raw(0, 0, IPC_FLAG_SYS_INFO, &m, nullptr);
 }
 

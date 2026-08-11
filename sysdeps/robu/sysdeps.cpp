@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -50,10 +51,26 @@ bool fd_valid(int fd) {
 	return fd >= 0 && fd < MAX_FDS && g_fds[fd].kind != FD_NONE;
 }
 
+bool is_tty_handle(uint64_t handle) {
+	return handle == robu::DEV_CONSOLE || (handle >= robu::DEV_RSTTY1 && handle <= robu::DEV_RSTTY6);
+}
+
+int fd_to_vt(int fd) {
+	if (!fd_valid(fd) || g_fds[fd].kind != FD_VFS || g_fds[fd].server_tid != robu::devfs_tid()) {
+		return 0;
+	}
+	uint64_t h = g_fds[fd].handle;
+	if (h >= robu::DEV_RSTTY1 && h <= robu::DEV_RSTTY6) {
+		return (int)(h - robu::DEV_RSTTY1);
+	}
+	return 0;
+}
+
 int64_t console_handle_cached = -1;
 int64_t console_handle() {
 	if (console_handle_cached < 0) {
-		console_handle_cached = robu::vfs_open(robu::devfs_tid(), "console", 0);
+		const char *tty_dev = getenv("ROBU_TTY_DEV");
+		console_handle_cached = robu::vfs_open(robu::devfs_tid(), tty_dev && tty_dev[0] ? tty_dev : "console", 0);
 	}
 	return console_handle_cached;
 }
@@ -447,7 +464,7 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 		return 0;
 	}
 	bool is_console = g_fds[fd].kind == FD_VFS && g_fds[fd].server_tid == robu::devfs_tid() &&
-	                  g_fds[fd].handle == robu::DEV_CONSOLE;
+	                  is_tty_handle(g_fds[fd].handle);
 	while (total < count) {
 		size_t chunk = count - total;
 		int64_t n;
@@ -955,11 +972,12 @@ int Sysdeps<Sigsuspend>::operator()(const sigset_t *set) {
 }
 
 int Sysdeps<Tcgetattr>::operator()(int fd, struct termios *attr) {
-	(void)fd;
+	ensure_stdio_defaults();
+	int vt = fd_to_vt(fd);
 	memset(attr, 0, sizeof(*attr));
 	attr->c_cflag = CREAD | CS8;
 	attr->c_lflag = ISIG | ECHOE | ECHOK | ECHO;
-	if (!robu::console_mode_query_raw()) {
+	if (!robu::console_mode_query_raw(vt)) {
 		attr->c_lflag |= ICANON;
 	}
 	attr->c_cc[VMIN] = 1;
@@ -968,10 +986,11 @@ int Sysdeps<Tcgetattr>::operator()(int fd, struct termios *attr) {
 }
 
 int Sysdeps<Tcsetattr>::operator()(int fd, int when, const struct termios *attr) {
-	(void)fd;
 	(void)when;
+	ensure_stdio_defaults();
+	int vt = fd_to_vt(fd);
 	int raw = !(attr->c_lflag & ICANON);
-	robu::console_mode_set_raw(raw);
+	robu::console_mode_set_raw(vt, raw);
 	return 0;
 }
 
@@ -1074,7 +1093,7 @@ int Sysdeps<Pselect>::operator()(int num_fds, fd_set *read_set, fd_set *write_se
 	}
 
 	bool is_console = g_fds[fd].kind == FD_VFS && g_fds[fd].server_tid == robu::devfs_tid() &&
-	                   g_fds[fd].handle == robu::DEV_CONSOLE;
+	                   is_tty_handle(g_fds[fd].handle);
 
 	bool has_timeout = timeout != nullptr;
 	uint64_t ticks_left = has_timeout
@@ -1082,7 +1101,7 @@ int Sysdeps<Pselect>::operator()(int num_fds, fd_set *read_set, fd_set *write_se
 		: 0;
 
 	for (;;) {
-		bool ready = is_console ? robu::vfs_peek(robu::devfs_tid(), robu::DEV_CONSOLE) > 0 : true;
+		bool ready = is_console ? robu::vfs_peek(robu::devfs_tid(), g_fds[fd].handle) > 0 : true;
 		if (ready) {
 			FD_SET(fd, read_set);
 			*num_events = 1;
