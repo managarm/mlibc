@@ -62,7 +62,9 @@ struct RobuSysdepTags :
 	Unlinkat,
 	Link,
 	Mknodat,
-	Sync
+	Sync,
+	Sleep,
+	GetPpid
 {};
 
 template<typename Tag>

@@ -28,6 +28,7 @@ constexpr uint64_t IPC_FLAG_SET_FSBASE = 1ull << 25;
 constexpr uint64_t IPC_FLAG_SELF_TID = 1ull << 26;
 constexpr uint64_t IPC_FLAG_EXEC = 1ull << 27;
 constexpr uint64_t IPC_FLAG_SYS_INFO = 1ull << 23;
+constexpr uint64_t IPC_FLAG_THREAD_INFO = 1ull << 22;
 constexpr uint64_t SYS_INFO_CAT_SIGACTION = 5;
 constexpr uint64_t SYS_INFO_CAT_KILL = 6;
 constexpr uint64_t SYS_INFO_CAT_SIGPROCMASK = 7;
