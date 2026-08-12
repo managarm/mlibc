@@ -13,10 +13,6 @@ uint64_t __robu_heap_base;
 
 extern "C" void __robu_fd_inherit(uint64_t spawn_info);
 
-// Auto-defined by the linker to the start of the ELF header, since every
-// apps/link/*.ld script for mlibc-based apps uses "FILEHDR PHDRS" on the
-// first PT_LOAD so the header/phdrs are actually part of the mapped image
-// (interpreterMain()'s auxv walk needs a real AT_PHDR to point at).
 extern "C" char __ehdr_start[];
 
 struct RobuElf64Ehdr {
@@ -45,7 +41,7 @@ struct RobuElf64Ehdr {
 #define ROBU_AT_ENTRY  9
 
 #define ROBU_ENTRY_MAX_ARGS 512
-#define ROBU_AUXV_PAIRS 6 /* PHDR, PHENT, PHNUM, PAGESZ, BASE, ENTRY -- plus one AT_NULL pair */
+#define ROBU_AUXV_PAIRS 6
 
 extern "C" [[noreturn]] void __mlibc_robu_entry(uint64_t argc, char **argv, char **envp,
                                                 uint64_t heap_base, uint64_t spawn_info) {
@@ -85,12 +81,6 @@ extern "C" [[noreturn]] void __mlibc_robu_entry(uint64_t argc, char **argv, char
 	put_aux(ROBU_AT_BASE, 0);
 	put_aux(ROBU_AT_ENTRY, ehdr->e_entry);
 	put_aux(ROBU_AT_NULL, 0);
-
-	// __dlapi_enter() runs interpreterMain(), which -- via Loader::initObjects()
-	// / doInitialize() -- already walks this binary's __init_array_start..end
-	// and calls every global constructor exactly once. A second walk here used
-	// to double-run them (e.g. file-io.cpp's init_stdio() a second time), which
-	// tripped frg::manual_box's reentrancy assert on stdin_box/stdout_box.
 	__dlapi_enter(stack_blob);
 
 	auto result = main(mlibc::entry_stack.argc, mlibc::entry_stack.argv, environ);
