@@ -923,6 +923,30 @@ int Sysdeps<Pselect>::operator()(int num_fds, fd_set *read_set, fd_set *write_se
 	}
 }
 
+uid_t Sysdeps<GetUid>::operator()() {
+	return 0;
+}
+
+uid_t Sysdeps<GetEuid>::operator()() {
+	return 0;
+}
+
+gid_t Sysdeps<GetGid>::operator()() {
+	return 0;
+}
+
+gid_t Sysdeps<GetEgid>::operator()() {
+	return 0;
+}
+
+int Sysdeps<SetUid>::operator()(uid_t) {
+	return 0;
+}
+
+int Sysdeps<SetGid>::operator()(gid_t) {
+	return 0;
+}
+
 }
 
 extern "C" int __libc_spawn(const char *name, char *const argv[], char *const envp[]) {
