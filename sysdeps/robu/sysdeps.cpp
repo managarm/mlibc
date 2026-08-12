@@ -645,6 +645,17 @@ void Sysdeps<Sync>::operator()() {
 	robu::vfs_quiesce_disk();
 }
 
+int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
+	uint64_t hz = robu::kinfo()->clock_hz;
+	if (hz == 0) hz = 100;
+	uint64_t ticks = (uint64_t)(*secs) * hz + ((uint64_t)(*nanos) * hz) / 1000000000ull;
+	if (ticks == 0 && (*secs != 0 || *nanos != 0)) ticks = 1;
+	robu::sleep_raw(ticks);
+	*secs = 0;
+	*nanos = 0;
+	return 0;
+}
+
 int Sysdeps<TcbSet>::operator()(void *pointer) {
 	robu::msg_regs m{};
 	m.word[0] = (uint64_t)pointer;
@@ -716,6 +727,16 @@ pid_t Sysdeps<FutexTid>::operator()() {
 
 pid_t Sysdeps<GetPid>::operator()() {
 	return (pid_t)robu::self_tid();
+}
+
+pid_t Sysdeps<GetPpid>::operator()() {
+	robu::msg_regs q{};
+	q.word[0] = robu::self_tid();
+	int64_t rc = robu::ipc_raw(0, 0, robu::IPC_FLAG_THREAD_INFO, &q, nullptr);
+	if (rc != 0) {
+		return 1;
+	}
+	return (pid_t)q.word[3];
 }
 
 int Sysdeps<Pipe>::operator()(int *fds, int) {
