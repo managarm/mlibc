@@ -2,9 +2,11 @@
 #include <string.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <sys/stat.h>
+#include <termios.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <dirent.h>
+#include <bits/winsize.h>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/fsfd_target.hpp>
 #include <bits/ensure.h>
@@ -773,6 +775,87 @@ int Sysdeps<Sigsuspend>::operator()(const sigset_t *set) {
 	robu::sleep_raw(0xFFFFFFFFULL);
 	robu::sig_procmask_raw(SIG_SETMASK, old_mask, 1, nullptr);
 	return EINTR;
+}
+
+int Sysdeps<Tcgetattr>::operator()(int fd, struct termios *attr) {
+	(void)fd;
+	memset(attr, 0, sizeof(*attr));
+	attr->c_cflag = CREAD | CS8;
+	attr->c_lflag = ISIG | ECHOE | ECHOK;
+	if (!robu::console_mode_query_raw()) {
+		attr->c_lflag |= ICANON | ECHO;
+	}
+	attr->c_cc[VMIN] = 1;
+	attr->c_cc[VTIME] = 0;
+	return 0;
+}
+
+int Sysdeps<Tcsetattr>::operator()(int fd, int when, const struct termios *attr) {
+	(void)fd;
+	(void)when;
+	int raw = !(attr->c_lflag & ICANON);
+	robu::console_mode_set_raw(raw);
+	return 0;
+}
+
+int Sysdeps<Tcgetwinsize>::operator()(int fd, struct winsize *winsz) {
+	(void)fd;
+	winsz->ws_row = 25;
+	winsz->ws_col = 80;
+	winsz->ws_xpixel = 0;
+	winsz->ws_ypixel = 0;
+	return 0;
+}
+
+int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *result) {
+	(void)fd;
+	if (result) {
+		*result = 0;
+	}
+	if (request == robu::ROBU_TIOCGWINSZ) {
+		struct winsize *ws = (struct winsize *)arg;
+		ws->ws_row = 25;
+		ws->ws_col = 80;
+		ws->ws_xpixel = 0;
+		ws->ws_ypixel = 0;
+		return 0;
+	}
+	if (request == robu::ROBU_TIOCGPGRP) {
+		*(int *)arg = (int)robu::tcgetpgrp_raw();
+		return 0;
+	}
+	if (request == robu::ROBU_TIOCSPGRP) {
+		robu::tcsetpgrp_raw((uint64_t)(*(int *)arg));
+		return 0;
+	}
+	if (request == robu::ROBU_TIOCSCTTY) {
+		return 0;
+	}
+	return ENOTTY;
+}
+
+int Sysdeps<SetPgid>::operator()(pid_t pid, pid_t pgid) {
+	int64_t rc = robu::setpgid_raw((uint64_t)pid, (uint64_t)pgid);
+	return rc == robu::IPC_ERR_NONE ? 0 : ESRCH;
+}
+
+int Sysdeps<GetPgid>::operator()(pid_t pid, pid_t *pgid) {
+	uint64_t g = 0;
+	int64_t rc = robu::getpgid_raw((uint64_t)pid, &g);
+	if (rc != robu::IPC_ERR_NONE) {
+		return ESRCH;
+	}
+	*pgid = (pid_t)g;
+	return 0;
+}
+
+int Sysdeps<SetSid>::operator()(pid_t *sid) {
+	uint64_t s = 0;
+	robu::setsid_raw(&s);
+	if (sid) {
+		*sid = (pid_t)s;
+	}
+	return 0;
 }
 
 }
