@@ -37,6 +37,7 @@ struct FdEntry {
 };
 
 FdEntry g_fds[MAX_FDS];
+uint64_t g_dir_cursors[MAX_FDS];
 
 int alloc_fd() {
 	for (int i = 0; i < MAX_FDS; i++) {
@@ -303,6 +304,7 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 		int fd = alloc_fd();
 		if (fd < 0) return EMFILE;
 		g_fds[fd] = { FD_RAMFS_DIR, robu::RAMFS_ROOT_INO, 0, robu::ramfs_tid() };
+		g_dir_cursors[fd] = 0;
 		*fd_out = fd;
 		return 0;
 	}
@@ -320,6 +322,7 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 				int fd = alloc_fd();
 				if (fd < 0) return EMFILE;
 				g_fds[fd] = { FD_RAMFS_DIR, ino, 0, mount_tid };
+				g_dir_cursors[fd] = 0;
 				*fd_out = fd;
 				return 0;
 			}
@@ -547,6 +550,7 @@ int Sysdeps<OpenDir>::operator()(const char *path, int *handle) {
 	int fd = alloc_fd();
 	if (fd < 0) return EMFILE;
 	g_fds[fd] = { FD_RAMFS_DIR, dir_ino, 0, server_tid };
+	g_dir_cursors[fd] = 0;
 	*handle = fd;
 	return 0;
 }
@@ -555,15 +559,14 @@ int Sysdeps<ReadEntries>::operator()(int handle, void *buffer, size_t max_size, 
 	if (!fd_valid(handle) || g_fds[handle].kind != FD_RAMFS_DIR) {
 		return EBADF;
 	}
-	static uint64_t cursors[MAX_FDS];
 	char name[32];
 	int is_dir;
-	int64_t rc = robu::vfs_readdir(g_fds[handle].server_tid, g_fds[handle].handle, cursors[handle], name, &is_dir);
+	int64_t rc = robu::vfs_readdir(g_fds[handle].server_tid, g_fds[handle].handle, g_dir_cursors[handle], name, &is_dir);
 	if (rc != 0) {
 		*bytes_read = 0;
 		return 0;
 	}
-	cursors[handle]++;
+	g_dir_cursors[handle]++;
 	struct dirent *de = (struct dirent *)buffer;
 	if (max_size < sizeof(*de)) {
 		return EINVAL;
