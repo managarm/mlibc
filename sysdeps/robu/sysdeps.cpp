@@ -270,6 +270,7 @@ void Sysdeps<LibcLog>::operator()(const char *msg) {
 }
 
 int Sysdeps<Isatty>::operator()(int fd) {
+	ensure_stdio_defaults();
 	if (fd_valid(fd) && g_fds[fd].kind == FD_VFS && g_fds[fd].server_tid == robu::devfs_tid()) {
 		return 0;
 	}
@@ -957,9 +958,9 @@ int Sysdeps<Tcgetattr>::operator()(int fd, struct termios *attr) {
 	(void)fd;
 	memset(attr, 0, sizeof(*attr));
 	attr->c_cflag = CREAD | CS8;
-	attr->c_lflag = ISIG | ECHOE | ECHOK;
+	attr->c_lflag = ISIG | ECHOE | ECHOK | ECHO;
 	if (!robu::console_mode_query_raw()) {
-		attr->c_lflag |= ICANON | ECHO;
+		attr->c_lflag |= ICANON;
 	}
 	attr->c_cc[VMIN] = 1;
 	attr->c_cc[VTIME] = 0;
