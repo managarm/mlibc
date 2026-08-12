@@ -33,6 +33,16 @@ constexpr uint64_t SYS_INFO_CAT_KILL = 6;
 constexpr uint64_t SYS_INFO_CAT_SIGPROCMASK = 7;
 constexpr uint64_t SYS_INFO_CAT_SIGRETURN = 8;
 constexpr uint64_t SYS_INFO_CAT_SIGPENDING = 9;
+constexpr uint64_t SYS_INFO_CAT_CONSOLE_MODE = 10;
+constexpr uint64_t SYS_INFO_CAT_SETPGID = 11;
+constexpr uint64_t SYS_INFO_CAT_GETPGID = 12;
+constexpr uint64_t SYS_INFO_CAT_SETSID = 13;
+constexpr uint64_t SYS_INFO_CAT_TCGETPGRP = 14;
+constexpr uint64_t SYS_INFO_CAT_TCSETPGRP = 15;
+constexpr unsigned long ROBU_TIOCSCTTY = 0x540E;
+constexpr unsigned long ROBU_TIOCGPGRP = 0x540F;
+constexpr unsigned long ROBU_TIOCSPGRP = 0x5410;
+constexpr unsigned long ROBU_TIOCGWINSZ = 0x5413;
 
 constexpr int64_t IPC_ERR_NONE = 0;
 constexpr int64_t IPC_ERR_NOT_FOUND = -1;
@@ -183,6 +193,60 @@ inline uint64_t sig_pending_raw() {
 
 inline void sleep_raw(uint64_t ticks) {
 	ipc_raw(0, ticks, IPC_FLAG_NONE, nullptr, nullptr);
+}
+
+inline int64_t console_mode_query_raw() {
+	msg_regs m{};
+	m.word[0] = SYS_INFO_CAT_CONSOLE_MODE;
+	m.word[1] = 2;
+	ipc_raw(0, 0, IPC_FLAG_SYS_INFO, &m, nullptr);
+	return (int64_t)m.word[0];
+}
+
+inline void console_mode_set_raw(int enable) {
+	msg_regs m{};
+	m.word[0] = SYS_INFO_CAT_CONSOLE_MODE;
+	m.word[1] = (uint64_t)enable;
+	ipc_raw(0, 0, IPC_FLAG_SYS_INFO, &m, nullptr);
+}
+
+inline int64_t setpgid_raw(uint64_t target_tid, uint64_t new_pgid) {
+	msg_regs m{};
+	m.word[0] = SYS_INFO_CAT_SETPGID;
+	m.word[1] = target_tid;
+	m.word[2] = new_pgid;
+	return ipc_raw(0, 0, IPC_FLAG_SYS_INFO, &m, nullptr);
+}
+
+inline int64_t getpgid_raw(uint64_t target_tid, uint64_t *out_pgid) {
+	msg_regs m{};
+	m.word[0] = SYS_INFO_CAT_GETPGID;
+	m.word[1] = target_tid;
+	int64_t rc = ipc_raw(0, 0, IPC_FLAG_SYS_INFO, &m, nullptr);
+	if (out_pgid) *out_pgid = m.word[0];
+	return rc;
+}
+
+inline int64_t setsid_raw(uint64_t *out_sid) {
+	msg_regs m{};
+	m.word[0] = SYS_INFO_CAT_SETSID;
+	int64_t rc = ipc_raw(0, 0, IPC_FLAG_SYS_INFO, &m, nullptr);
+	if (out_sid) *out_sid = m.word[0];
+	return rc;
+}
+
+inline uint64_t tcgetpgrp_raw() {
+	msg_regs m{};
+	m.word[0] = SYS_INFO_CAT_TCGETPGRP;
+	ipc_raw(0, 0, IPC_FLAG_SYS_INFO, &m, nullptr);
+	return m.word[0];
+}
+
+inline void tcsetpgrp_raw(uint64_t pgid) {
+	msg_regs m{};
+	m.word[0] = SYS_INFO_CAT_TCSETPGRP;
+	m.word[1] = pgid;
+	ipc_raw(0, 0, IPC_FLAG_SYS_INFO, &m, nullptr);
 }
 
 constexpr uint64_t KINFO_VA = 0x0000000080000000ULL;

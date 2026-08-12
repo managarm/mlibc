@@ -41,7 +41,14 @@ struct RobuSysdepTags :
 	Tgkill,
 	Sigprocmask,
 	Sigpending,
-	Sigsuspend
+	Sigsuspend,
+	Tcgetattr,
+	Tcsetattr,
+	Tcgetwinsize,
+	Ioctl,
+	SetPgid,
+	GetPgid,
+	SetSid
 {};
 
 template<typename Tag>
