@@ -64,7 +64,13 @@ struct RobuSysdepTags :
 	Mknodat,
 	Sync,
 	Sleep,
-	GetPpid
+	GetPpid,
+	Ttyname,
+	GetResuid,
+	GetResgid,
+	GetHostname,
+	GetGroups,
+	Fcntl
 {};
 
 template<typename Tag>
