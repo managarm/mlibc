@@ -56,7 +56,13 @@ struct RobuSysdepTags :
 	GetGid,
 	GetEgid,
 	SetUid,
-	SetGid
+	SetGid,
+	Mkdir,
+	Rmdir,
+	Unlinkat,
+	Link,
+	Mknodat,
+	Sync
 {};
 
 template<typename Tag>

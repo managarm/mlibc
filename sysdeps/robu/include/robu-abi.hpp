@@ -352,9 +352,20 @@ constexpr uint64_t VFS_OP_FSTAT   = 6;
 constexpr uint64_t VFS_OP_READDIR = 7;
 constexpr uint64_t VFS_OP_RENAME  = 8;
 constexpr uint64_t VFS_OP_UNLINK  = 9;
+constexpr uint64_t VFS_OP_QUIESCE = 11;
 constexpr uint64_t VFS_OP_PEEK    = 12;
+constexpr uint64_t VFS_OP_MKDIR   = 13;
+constexpr uint64_t VFS_OP_RMDIR   = 14;
+constexpr uint64_t VFS_OP_LINK    = 15;
+constexpr uint64_t VFS_OP_MKNOD   = 16;
 constexpr int64_t VFS_ERR_NOT_FOUND     = -1;
+constexpr int64_t VFS_ERR_BAD_HANDLE    = -2;
 constexpr int64_t VFS_ERR_NOT_SUPPORTED = -3;
+constexpr int64_t VFS_ERR_NO_SPACE      = -4;
+constexpr int64_t VFS_ERR_IS_DIR        = -5;
+constexpr int64_t VFS_ERR_EXISTS        = -6;
+constexpr int64_t VFS_ERR_NOT_DIR       = -7;
+constexpr int64_t VFS_ERR_NOT_EMPTY     = -8;
 constexpr int VFS_NAME_MAX  = 20;
 constexpr int VFS_PATH_MAX  = 32;
 constexpr int VFS_READ_MAX  = 40;
@@ -478,6 +489,74 @@ inline int64_t vfs_readdir(uint32_t server, uint64_t dir_ino, uint64_t index, ch
 		name_out[i] = '\0';
 	}
 	return status;
+}
+
+inline int64_t vfs_unlink(uint32_t server, const char *name) {
+	msg_regs m{};
+	m.word[0] = VFS_OP_UNLINK;
+	msg_put_str(m, 1, name, VFS_PATH_MAX);
+	uint32_t from;
+	ipc_call(server, &m, &from);
+	return (int64_t)m.word[0];
+}
+
+inline int64_t vfs_mkdir(uint32_t server, const char *name) {
+	msg_regs m{};
+	m.word[0] = VFS_OP_MKDIR;
+	msg_put_str(m, 1, name, VFS_PATH_MAX);
+	uint32_t from;
+	ipc_call(server, &m, &from);
+	return (int64_t)m.word[0];
+}
+
+inline int64_t vfs_rmdir(uint32_t server, const char *name) {
+	msg_regs m{};
+	m.word[0] = VFS_OP_RMDIR;
+	msg_put_str(m, 1, name, VFS_PATH_MAX);
+	uint32_t from;
+	ipc_call(server, &m, &from);
+	return (int64_t)m.word[0];
+}
+
+inline int64_t vfs_link(uint32_t server, const char *oldname, const char *newname) {
+	msg_regs m{};
+	m.word[0] = VFS_OP_LINK;
+	char *bytes = reinterpret_cast<char *>(&m);
+	int i = 0;
+	for (; i < VFS_NAME_MAX - 1 && oldname[i]; i++) bytes[8 + i] = oldname[i];
+	bytes[8 + i] = '\0';
+	i = 0;
+	for (; i < VFS_NAME_MAX - 1 && newname[i]; i++) bytes[8 + VFS_NAME_MAX + i] = newname[i];
+	bytes[8 + VFS_NAME_MAX + i] = '\0';
+	uint32_t from;
+	ipc_call(server, &m, &from);
+	return (int64_t)m.word[0];
+}
+
+inline int64_t vfs_mknod(uint32_t server, const char *name, uint64_t mode, uint64_t dev) {
+	msg_regs m{};
+	m.word[0] = VFS_OP_MKNOD;
+	m.word[1] = mode;
+	m.word[2] = dev;
+	msg_put_str(m, 3, name, VFS_NAME_MAX);
+	uint32_t from;
+	ipc_call(server, &m, &from);
+	return (int64_t)m.word[0];
+}
+
+inline int64_t vfs_quiesce(uint32_t server) {
+	msg_regs m{};
+	m.word[0] = VFS_OP_QUIESCE;
+	uint32_t from;
+	ipc_call(server, &m, &from);
+	return (int64_t)m.word[0];
+}
+
+inline void vfs_quiesce_disk() {
+	uint32_t tid = resolve_mount("/mnt/disk0/", nullptr);
+	if (tid != 0) {
+		vfs_quiesce(tid);
+	}
 }
 
 constexpr uint64_t RAMFS_OP_STAT    = 5;
