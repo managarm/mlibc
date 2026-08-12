@@ -45,10 +45,12 @@ struct RobuSysdepTags :
 	Tcgetattr,
 	Tcsetattr,
 	Tcgetwinsize,
+	Tcsetwinsize,
 	Ioctl,
 	SetPgid,
 	GetPgid,
-	SetSid
+	SetSid,
+	Pselect
 {};
 
 template<typename Tag>
