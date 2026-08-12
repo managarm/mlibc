@@ -28,7 +28,14 @@ struct RobuSysdepTags :
 	GetCwd,
 	Chdir,
 	Waitpid,
-	Utimensat
+	Utimensat,
+	Fork,
+	FutexTid,
+	GetPid,
+	Pipe,
+	Dup,
+	Dup2,
+	Execve
 {};
 
 template<typename Tag>
