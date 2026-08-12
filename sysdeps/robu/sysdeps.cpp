@@ -5,6 +5,7 @@
 #include <termios.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 #include <dirent.h>
 #include <bits/winsize.h>
 #include <mlibc/all-sysdeps.hpp>
@@ -807,6 +808,12 @@ int Sysdeps<Tcgetwinsize>::operator()(int fd, struct winsize *winsz) {
 	return 0;
 }
 
+int Sysdeps<Tcsetwinsize>::operator()(int fd, const struct winsize *winsz) {
+	(void)fd;
+	(void)winsz;
+	return 0;
+}
+
 int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *result) {
 	(void)fd;
 	if (result) {
@@ -856,6 +863,64 @@ int Sysdeps<SetSid>::operator()(pid_t *sid) {
 		*sid = (pid_t)s;
 	}
 	return 0;
+}
+
+int Sysdeps<Pselect>::operator()(int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set,
+		const struct timespec *timeout, const sigset_t *, int *num_events) {
+	if (write_set) {
+		FD_ZERO(write_set);
+	}
+	if (except_set) {
+		FD_ZERO(except_set);
+	}
+	if (!read_set) {
+		*num_events = 0;
+		return 0;
+	}
+
+	int fd = -1;
+	for (int i = 0; i < num_fds; i++) {
+		if (FD_ISSET(i, read_set)) {
+			fd = i;
+			break;
+		}
+	}
+	FD_ZERO(read_set);
+	if (fd < 0) {
+		*num_events = 0;
+		return 0;
+	}
+
+	ensure_stdio_defaults();
+	if (!fd_valid(fd)) {
+		*num_events = 0;
+		return 0;
+	}
+
+	bool is_console = g_fds[fd].kind == FD_VFS && g_fds[fd].server_tid == robu::devfs_tid() &&
+	                   g_fds[fd].handle == robu::DEV_CONSOLE;
+
+	bool has_timeout = timeout != nullptr;
+	uint64_t ticks_left = has_timeout
+		? (uint64_t)timeout->tv_sec * 100 + (uint64_t)timeout->tv_nsec / 10000000
+		: 0;
+
+	for (;;) {
+		bool ready = is_console ? robu::vfs_peek(robu::devfs_tid(), robu::DEV_CONSOLE) > 0 : true;
+		if (ready) {
+			FD_SET(fd, read_set);
+			*num_events = 1;
+			return 0;
+		}
+		if (has_timeout) {
+			if (ticks_left == 0) {
+				*num_events = 0;
+				return 0;
+			}
+			ticks_left--;
+		}
+		robu::sleep_raw(1);
+	}
 }
 
 }

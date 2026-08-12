@@ -352,6 +352,7 @@ constexpr uint64_t VFS_OP_FSTAT   = 6;
 constexpr uint64_t VFS_OP_READDIR = 7;
 constexpr uint64_t VFS_OP_RENAME  = 8;
 constexpr uint64_t VFS_OP_UNLINK  = 9;
+constexpr uint64_t VFS_OP_PEEK    = 12;
 constexpr int64_t VFS_ERR_NOT_FOUND     = -1;
 constexpr int64_t VFS_ERR_NOT_SUPPORTED = -3;
 constexpr int VFS_NAME_MAX  = 20;
@@ -390,6 +391,15 @@ inline int64_t vfs_read(uint32_t server, uint64_t handle, void *buf, uint64_t le
 		}
 	}
 	return status;
+}
+
+inline int64_t vfs_peek(uint32_t server, uint64_t handle) {
+	msg_regs m{};
+	m.word[0] = VFS_OP_PEEK;
+	m.word[1] = handle;
+	uint32_t from;
+	ipc_call(server, &m, &from);
+	return (int64_t)m.word[0];
 }
 
 inline int64_t vfs_write(uint32_t server, uint64_t handle, const void *buf, uint64_t len) {
