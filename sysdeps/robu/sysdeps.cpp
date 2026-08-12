@@ -739,6 +739,94 @@ pid_t Sysdeps<GetPpid>::operator()() {
 	return (pid_t)q.word[3];
 }
 
+int Sysdeps<Ttyname>::operator()(int fd, char *buf, size_t size) {
+	if (!fd_valid(fd) || g_fds[fd].kind != FD_VFS || g_fds[fd].server_tid != robu::devfs_tid()) {
+		return ENOTTY;
+	}
+	const char *name = "/dev/console";
+	size_t len = strlen(name);
+	if (len + 1 > size) {
+		return ERANGE;
+	}
+	memcpy(buf, name, len + 1);
+	return 0;
+}
+
+int Sysdeps<GetResuid>::operator()(uid_t *ruid, uid_t *euid, uid_t *suid) {
+	*ruid = 0;
+	*euid = 0;
+	*suid = 0;
+	return 0;
+}
+
+int Sysdeps<GetResgid>::operator()(gid_t *rgid, gid_t *egid, gid_t *sgid) {
+	*rgid = 0;
+	*egid = 0;
+	*sgid = 0;
+	return 0;
+}
+
+int Sysdeps<GetHostname>::operator()(char *buffer, size_t bufsize) {
+	const char *name = "robu";
+	size_t len = strlen(name);
+	if (len + 1 > bufsize) {
+		return ENAMETOOLONG;
+	}
+	memcpy(buffer, name, len + 1);
+	return 0;
+}
+
+int Sysdeps<GetGroups>::operator()(size_t size, gid_t *list, int *ret) {
+	(void)size;
+	(void)list;
+	*ret = 0;
+	return 0;
+}
+
+int Sysdeps<Fcntl>::operator()(int fd, int request, va_list args, int *result) {
+	if (!fd_valid(fd)) {
+		return EBADF;
+	}
+	switch (request) {
+	case F_GETFD:
+		*result = 0;
+		return 0;
+	case F_SETFD:
+		(void)va_arg(args, int);
+		*result = 0;
+		return 0;
+	case F_GETFL:
+		*result = 0;
+		return 0;
+	case F_SETFL:
+		(void)va_arg(args, int);
+		*result = 0;
+		return 0;
+	case F_DUPFD:
+	case F_DUPFD_CLOEXEC: {
+		int min_fd = va_arg(args, int);
+		if (min_fd < 0) {
+			return EINVAL;
+		}
+		int newfd = -1;
+		for (int i = min_fd; i < MAX_FDS; i++) {
+			if (g_fds[i].kind == FD_NONE) {
+				newfd = i;
+				break;
+			}
+		}
+		if (newfd < 0) {
+			return EMFILE;
+		}
+		g_fds[newfd] = g_fds[fd];
+		*result = newfd;
+		return 0;
+	}
+	default:
+		return EINVAL;
+	}
+}
+
 int Sysdeps<Pipe>::operator()(int *fds, int) {
 	uint64_t handle = 0;
 	int64_t rc = robu::pipe_create(&handle);
