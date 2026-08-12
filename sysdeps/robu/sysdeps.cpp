@@ -14,20 +14,12 @@ extern "C" uint64_t __robu_heap_base;
 
 namespace {
 
-// --- fd table ----------------------------------------------------------
-// Mirrors apps/libc/src/fdtable.c's model: an fd is just (kind, handle).
-// ramfs/devfs/procfs/sysfs all track read/write position server-side per
-// handle, so there is no client-side seek offset to maintain.
-
 enum FdKind {
 	FD_NONE = 0,
-	FD_DEVFS,
-	FD_RAMFS,
 	FD_RAMFS_DIR,
-	FD_PROCFS,
-	FD_SYSFS,
 	FD_PIPE_READ,
 	FD_PIPE_WRITE,
+	FD_VFS,
 };
 
 constexpr int MAX_FDS = 64;
@@ -35,7 +27,8 @@ constexpr int MAX_FDS = 64;
 struct FdEntry {
 	FdKind kind = FD_NONE;
 	uint64_t handle = 0;
-	uint64_t size = 0; // procfs/sysfs: size reported at open()
+	uint64_t size = 0;
+	uint32_t server_tid = 0;
 };
 
 FdEntry g_fds[MAX_FDS];
@@ -54,10 +47,9 @@ bool fd_valid(int fd) {
 }
 
 int64_t console_handle_cached = -1;
-
 int64_t console_handle() {
 	if (console_handle_cached < 0) {
-		console_handle_cached = robu::devfs_open("/dev/console");
+		console_handle_cached = robu::vfs_open(robu::devfs_tid(), "console", 0);
 	}
 	return console_handle_cached;
 }
@@ -70,10 +62,10 @@ void console_write_all(const char *buf, size_t len) {
 	size_t off = 0;
 	while (off < len) {
 		size_t chunk = len - off;
-		if (chunk > (size_t)robu::DEVFS_WRITE_MAX) {
-			chunk = robu::DEVFS_WRITE_MAX;
+		if (chunk > (size_t)robu::VFS_WRITE_MAX) {
+			chunk = robu::VFS_WRITE_MAX;
 		}
-		robu::devfs_write((uint64_t)h, buf + off, chunk);
+		robu::vfs_write(robu::devfs_tid(), (uint64_t)h, buf + off, chunk);
 		off += chunk;
 	}
 }
@@ -81,15 +73,14 @@ void console_write_all(const char *buf, size_t len) {
 void ensure_stdio_defaults() {
 	for (int fd = 0; fd <= 2; fd++) {
 		if (g_fds[fd].kind == FD_NONE) {
-			g_fds[fd].kind = FD_DEVFS;
-			g_fds[fd].handle = (uint64_t)console_handle();
+			g_fds[fd] = { FD_VFS, (uint64_t)console_handle(), 0, robu::devfs_tid() };
 		}
 	}
 }
 
 bool g_fd_inherit_done;
 
-} // namespace
+}
 
 extern "C" void __robu_fd_inherit(uint64_t spawn_info) {
 	g_fd_inherit_done = true;
@@ -108,11 +99,6 @@ extern "C" void __robu_fd_inherit(uint64_t spawn_info) {
 	for (uint32_t i = 0; i < nfds; i++) {
 		int fd = (int)fds[i].fd;
 		if (fd < 0 || fd > 2) continue;
-		// Undo fd_export's kind translation (see __libc_spawn() below) --
-		// the wire uses SPAWN_FD_KIND_PIPE_READ/WRITE so the kernel can
-		// recognize and register pipe holders; this backend's own fd table
-		// needs its internal FD_PIPE_READ/WRITE enum values instead so
-		// Read/Write/Close's kind-based dispatch works on the inherited fd.
 		if (fds[i].kind == robu::SPAWN_FD_KIND_PIPE_READ) {
 			g_fds[fd].kind = FD_PIPE_READ;
 		} else if (fds[i].kind == robu::SPAWN_FD_KIND_PIPE_WRITE) {
@@ -121,15 +107,11 @@ extern "C" void __robu_fd_inherit(uint64_t spawn_info) {
 			g_fds[fd].kind = (FdKind)fds[i].kind;
 		}
 		g_fds[fd].handle = fds[i].handle;
+		g_fds[fd].server_tid = fds[i].server_tid;
 	}
 }
 
 namespace {
-
-// --- path resolution -----------------------------------------------------
-// Mirrors fdtable.c's resolve_path()/ramfs_name_from_path(): normalize
-// "." / ".." against a tracked cwd, then dispatch on a fixed set of
-// mount-point prefixes, falling through to a flat ramfs path otherwise.
 
 constexpr int CWD_MAX = 256;
 char g_cwd[CWD_MAX] = "/";
@@ -192,6 +174,22 @@ int ramfs_name_from_path(const char *resolved, char *name, size_t name_size) {
 	return 0;
 }
 
+uint32_t resolve_mount_for_dir(const char *resolved, const char **rel_out) {
+	size_t rlen = strlen(resolved);
+	char match_buf[CWD_MAX];
+	if (rlen + 2 > sizeof(match_buf)) {
+		*rel_out = resolved + rlen;
+		return 0;
+	}
+	memcpy(match_buf, resolved, rlen);
+	match_buf[rlen] = '/';
+	match_buf[rlen + 1] = '\0';
+	int matched_len = 0;
+	uint32_t tid = robu::resolve_mount(match_buf, &matched_len);
+	*rel_out = ((size_t)matched_len <= rlen) ? resolved + matched_len : resolved + rlen;
+	return tid;
+}
+
 void fill_stat(struct stat *buf, uint64_t size, int is_dir, dev_t dev, ino_t ino) {
 	memset(buf, 0, sizeof(*buf));
 	buf->st_mode = is_dir ? (S_IFDIR | 0755) : (S_IFREG | 0644);
@@ -205,53 +203,40 @@ void fill_stat(struct stat *buf, uint64_t size, int is_dir, dev_t dev, ino_t ino
 
 constexpr dev_t ROBU_STDEV_DEVFS = 1;
 constexpr dev_t ROBU_STDEV_RAMFS = 2;
-constexpr dev_t ROBU_STDEV_PROCFS = 3;
-constexpr dev_t ROBU_STDEV_SYSFS = 4;
+constexpr dev_t ROBU_STDEV_VFS = 5;
 
 int stat_path(const char *resolved, struct stat *buf) {
-	if (strncmp(resolved, "/dev/", 5) == 0) {
-		int64_t h = robu::devfs_open(resolved);
-		if (h < 0) return ENOENT;
-		robu::devfs_close((uint64_t)h);
-		fill_stat(buf, 0, 0, ROBU_STDEV_DEVFS, (ino_t)h + 1);
-		buf->st_mode = S_IFCHR | 0666;
-		return 0;
-	}
-	if (strncmp(resolved, "/proc/", 6) == 0) {
-		uint64_t size = 0;
-		int64_t h = robu::procfs_open(resolved + 6, &size);
-		if (h < 0) return ENOENT;
-		robu::procfs_close((uint64_t)h);
-		fill_stat(buf, size, 0, ROBU_STDEV_PROCFS, (ino_t)h + 1);
-		return 0;
-	}
-	if (strncmp(resolved, "/var/sys/", 9) == 0) {
-		uint64_t size = 0;
-		int64_t h = robu::sysfs_open(resolved + 9, &size);
-		if (h < 0) return ENOENT;
-		robu::sysfs_close((uint64_t)h);
-		fill_stat(buf, size, 0, ROBU_STDEV_SYSFS, (ino_t)h + 1);
-		return 0;
-	}
 	if (strcmp(resolved, "/") == 0) {
 		fill_stat(buf, 0, 1, ROBU_STDEV_RAMFS, 1);
 		return 0;
 	}
-	char name[robu::RAMFS_PATH_MAX];
-	int rc = ramfs_name_from_path(resolved, name, sizeof(name));
-	if (rc != 0) return rc;
-	uint64_t size, ino;
-	int is_dir;
-	if (robu::ramfs_stat(name, &size, &is_dir, &ino) != 0) {
-		return ENOENT;
+	const char *rel;
+	uint32_t mount_tid = resolve_mount_for_dir(resolved, &rel);
+	if (mount_tid != 0) {
+		uint64_t size = 0;
+		int is_dir = 0;
+		uint64_t ino = 0;
+		if (robu::vfs_stat(mount_tid, rel, &size, &is_dir, &ino) != 0) {
+			return ENOENT;
+		}
+		if (mount_tid == robu::devfs_tid()) {
+			fill_stat(buf, size, is_dir, ROBU_STDEV_DEVFS, (ino_t)ino);
+			buf->st_mode = S_IFCHR | 0666;
+			return 0;
+		}
+		if (mount_tid == robu::ramfs_tid()) {
+			fill_stat(buf, size, is_dir, ROBU_STDEV_RAMFS, (ino_t)ino);
+			return 0;
+		}
+		fill_stat(buf, size, is_dir, ROBU_STDEV_VFS, (ino_t)ino);
+		return 0;
 	}
-	fill_stat(buf, size, is_dir, ROBU_STDEV_RAMFS, (ino_t)ino);
-	return 0;
+	return ENOENT;
 }
 
 uint8_t *g_anon_cursor;
 
-} // namespace
+}
 
 namespace mlibc {
 
@@ -267,7 +252,7 @@ void Sysdeps<LibcLog>::operator()(const char *msg) {
 }
 
 int Sysdeps<Isatty>::operator()(int fd) {
-	if (fd_valid(fd) && g_fds[fd].kind == FD_DEVFS) {
+	if (fd_valid(fd) && g_fds[fd].kind == FD_VFS && g_fds[fd].server_tid == robu::devfs_tid()) {
 		return 0;
 	}
 	return ENOTTY;
@@ -277,84 +262,47 @@ int Sysdeps<Open>::operator()(const char *path, int flags, mode_t, int *fd_out) 
 	ensure_stdio_defaults();
 	char resolved[CWD_MAX];
 	resolve_path(path, resolved, sizeof(resolved));
-
-	if (strncmp(resolved, "/dev/", 5) == 0) {
-		int64_t h = robu::devfs_open(resolved);
-		if (h < 0) return ENOENT;
-		int fd = alloc_fd();
-		if (fd < 0) { robu::devfs_close((uint64_t)h); return EMFILE; }
-		g_fds[fd] = { FD_DEVFS, (uint64_t)h, 0 };
-		*fd_out = fd;
-		return 0;
-	}
-	if (strncmp(resolved, "/proc/", 6) == 0) {
-		uint64_t size;
-		int64_t h = robu::procfs_open(resolved + 6, &size);
-		if (h < 0) return ENOENT;
-		int fd = alloc_fd();
-		if (fd < 0) { robu::procfs_close((uint64_t)h); return EMFILE; }
-		g_fds[fd] = { FD_PROCFS, (uint64_t)h, size };
-		*fd_out = fd;
-		return 0;
-	}
-	if (strncmp(resolved, "/var/sys/", 9) == 0) {
-		uint64_t size;
-		int64_t h = robu::sysfs_open(resolved + 9, &size);
-		if (h < 0) return ENOENT;
-		int fd = alloc_fd();
-		if (fd < 0) { robu::sysfs_close((uint64_t)h); return EMFILE; }
-		g_fds[fd] = { FD_SYSFS, (uint64_t)h, size };
-		*fd_out = fd;
-		return 0;
-	}
 	if (strcmp(resolved, "/") == 0) {
 		if ((flags & O_ACCMODE) != O_RDONLY) return EISDIR;
 		int fd = alloc_fd();
 		if (fd < 0) return EMFILE;
-		g_fds[fd] = { FD_RAMFS_DIR, robu::RAMFS_ROOT_INO, 0 };
+		g_fds[fd] = { FD_RAMFS_DIR, robu::RAMFS_ROOT_INO, 0, robu::ramfs_tid() };
 		*fd_out = fd;
 		return 0;
 	}
 
-	char name[robu::RAMFS_PATH_MAX];
-	int rc = ramfs_name_from_path(resolved, name, sizeof(name));
-	if (rc != 0) return rc;
-
-	uint64_t size;
-	int is_dir;
-	if (robu::ramfs_stat(name, &size, &is_dir, nullptr) == 0 && is_dir) {
-		if ((flags & O_ACCMODE) != O_RDONLY) return EISDIR;
+	int matched_len = 0;
+	uint32_t mount_tid = robu::resolve_mount(resolved, &matched_len);
+	if (mount_tid != 0) {
+		const char *rel = resolved + matched_len;
+		if (mount_tid == robu::ramfs_tid()) {
+			uint64_t size;
+			int is_dir;
+			uint64_t ino;
+			if (robu::vfs_stat(mount_tid, rel, &size, &is_dir, &ino) == 0 && is_dir) {
+				if ((flags & O_ACCMODE) != O_RDONLY) return EISDIR;
+				int fd = alloc_fd();
+				if (fd < 0) return EMFILE;
+				g_fds[fd] = { FD_RAMFS_DIR, ino, 0, mount_tid };
+				*fd_out = fd;
+				return 0;
+			}
+		}
+		uint64_t vflags = 0;
+		if (flags & O_CREAT) vflags |= robu::VFS_O_CREAT;
+		if (flags & O_TRUNC) vflags |= robu::VFS_O_TRUNC;
+		if (flags & O_APPEND) vflags |= robu::VFS_O_APPEND;
+		int64_t h = robu::vfs_open(mount_tid, rel, vflags);
+		if (h < 0) return h == robu::VFS_ERR_NOT_FOUND ? ENOENT : EIO;
 		int fd = alloc_fd();
-		if (fd < 0) return EMFILE;
-		uint64_t ino;
-		robu::ramfs_stat(name, &size, &is_dir, &ino);
-		g_fds[fd] = { FD_RAMFS_DIR, ino, 0 };
+		if (fd < 0) { robu::vfs_close(mount_tid, (uint64_t)h); return EMFILE; }
+		g_fds[fd] = { FD_VFS, (uint64_t)h, 0, mount_tid };
 		*fd_out = fd;
 		return 0;
 	}
-
-	uint64_t rflags = 0;
-	if (flags & O_CREAT) rflags |= robu::RAMFS_O_CREAT;
-	if (flags & O_TRUNC) rflags |= robu::RAMFS_O_TRUNC;
-	if (flags & O_APPEND) rflags |= robu::RAMFS_O_APPEND;
-	int64_t h = robu::ramfs_open(name, rflags);
-	if (h < 0) {
-		return ENOENT;
-	}
-	int fd = alloc_fd();
-	if (fd < 0) { robu::ramfs_close((uint64_t)h); return EMFILE; }
-	g_fds[fd] = { FD_RAMFS, (uint64_t)h, 0 };
-	*fd_out = fd;
-	return 0;
+	return ENOENT;
 }
 
-// dup()/dup2() just add another fd-table slot pointing at the same (kind,
-// handle) pair -- the same sharing model Close's own "shared" scan below
-// already assumes (it's what keeps a shared devfs/ramfs/pipe handle from
-// being closed server-side while another fd still names it). This is
-// exactly what a real shell needs for `cmd > file` / `cmd1 | cmd2`-style
-// redirection: dup2(pipe_write_fd, 1) before spawning, in the shell's own
-// process, before any of this backend's spawn-time fd export ever runs.
 int Sysdeps<Dup>::operator()(int fd, int, int *newfd_out) {
 	ensure_stdio_defaults();
 	if (!fd_valid(fd)) {
@@ -394,19 +342,17 @@ int Sysdeps<Close>::operator()(int fd) {
 	}
 	bool shared = false;
 	for (int i = 0; i < MAX_FDS; i++) {
-		if (i != fd && g_fds[i].kind == g_fds[fd].kind && g_fds[i].handle == g_fds[fd].handle) {
+		if (i != fd && g_fds[i].kind == g_fds[fd].kind && g_fds[i].handle == g_fds[fd].handle &&
+		    g_fds[i].server_tid == g_fds[fd].server_tid) {
 			shared = true;
 			break;
 		}
 	}
 	if (!shared) {
 		switch (g_fds[fd].kind) {
-		case FD_DEVFS: robu::devfs_close(g_fds[fd].handle); break;
-		case FD_RAMFS: robu::ramfs_close(g_fds[fd].handle); break;
-		case FD_PROCFS: robu::procfs_close(g_fds[fd].handle); break;
-		case FD_SYSFS: robu::sysfs_close(g_fds[fd].handle); break;
 		case FD_PIPE_READ: robu::pipe_close_raw(g_fds[fd].handle, 0); break;
 		case FD_PIPE_WRITE: robu::pipe_close_raw(g_fds[fd].handle, 1); break;
+		case FD_VFS: robu::vfs_close(g_fds[fd].server_tid, g_fds[fd].handle); break;
 		default: break;
 		}
 	}
@@ -422,9 +368,6 @@ int Sysdeps<Write>::operator()(int fd, const void *buf, size_t count, ssize_t *b
 	const uint8_t *p = (const uint8_t *)buf;
 	size_t total = 0;
 	if (g_fds[fd].kind == FD_PIPE_WRITE) {
-		// pipe_write is deliberately non-blocking in-kernel: IPC_ERR_NONE
-		// with out_len==0 means "ring full, try again"; IPC_ERR_NOT_FOUND
-		// means every reader has closed (EPIPE), not "try again".
 		while (total < count) {
 			uint64_t n = 0;
 			int64_t rc = robu::pipe_write_raw(g_fds[fd].handle, p + total, count - total, &n);
@@ -447,8 +390,7 @@ int Sysdeps<Write>::operator()(int fd, const void *buf, size_t count, ssize_t *b
 		size_t chunk = count - total;
 		int64_t n;
 		switch (g_fds[fd].kind) {
-		case FD_DEVFS: n = robu::devfs_write(g_fds[fd].handle, p + total, chunk); break;
-		case FD_RAMFS: n = robu::ramfs_write(g_fds[fd].handle, p + total, chunk); break;
+		case FD_VFS: n = robu::vfs_write(g_fds[fd].server_tid, g_fds[fd].handle, p + total, chunk); break;
 		default: return EBADF;
 		}
 		if (n <= 0) {
@@ -469,11 +411,6 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 	uint8_t *p = (uint8_t *)buf;
 	size_t total = 0;
 	if (g_fds[fd].kind == FD_PIPE_READ) {
-		// pipe_read is deliberately non-blocking in-kernel: IPC_ERR_NONE
-		// with out_len==0 means "empty, try again" as long as some writer
-		// is still open; IPC_ERR_NOT_FOUND means every writer has closed
-		// (real EOF). Short reads (n < requested) are normal and returned
-		// immediately, matching every other fd kind here.
 		uint64_t n = 0;
 		int64_t rc = robu::pipe_read_raw(g_fds[fd].handle, p, count, &n);
 		while (rc == robu::IPC_ERR_NONE && n == 0) {
@@ -490,25 +427,17 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 		*bytes_read = (ssize_t)n;
 		return 0;
 	}
-	bool is_console = g_fds[fd].kind == FD_DEVFS && g_fds[fd].handle == robu::DEV_CONSOLE;
+	bool is_console = g_fds[fd].kind == FD_VFS && g_fds[fd].server_tid == robu::devfs_tid() &&
+	                  g_fds[fd].handle == robu::DEV_CONSOLE;
 	while (total < count) {
 		size_t chunk = count - total;
 		int64_t n;
 		switch (g_fds[fd].kind) {
-		case FD_DEVFS: n = robu::devfs_read(g_fds[fd].handle, p + total, chunk); break;
-		case FD_RAMFS: n = robu::ramfs_read(g_fds[fd].handle, p + total, chunk); break;
-		case FD_PROCFS: n = robu::procfs_read(g_fds[fd].handle, p + total, chunk); break;
-		case FD_SYSFS: n = robu::sysfs_read(g_fds[fd].handle, p + total, chunk); break;
+		case FD_VFS: n = robu::vfs_read(g_fds[fd].server_tid, g_fds[fd].handle, p + total, chunk); break;
 		default: return EBADF;
 		}
 		if (n < 0) return EIO;
 		if (n == 0) {
-			// devfs's console read is deliberately non-blocking -- 0 bytes
-			// means "nothing typed yet," not EOF. Retry (with nothing read
-			// yet this call) instead of reporting a false EOF, matching
-			// apps/libc's own read()'s is_console handling. Once we already
-			// have some bytes, stop and return them rather than blocking
-			// for more (short reads are normal here).
 			if (is_console && total == 0) {
 				robu::ipc_raw(0, 1, robu::IPC_FLAG_NONE, nullptr, nullptr);
 				continue;
@@ -516,8 +445,6 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 			break;
 		}
 		total += (size_t)n;
-		// Console/ramfs reads may legitimately return short of `count`;
-		// don't loop trying to fill the whole buffer in one Read() call.
 		break;
 	}
 	*bytes_read = (ssize_t)total;
@@ -525,8 +452,6 @@ int Sysdeps<Read>::operator()(int fd, void *buf, size_t count, ssize_t *bytes_re
 }
 
 int Sysdeps<Seek>::operator()(int, off_t, int, off_t *) {
-	// ramfs/devfs/procfs/sysfs track position server-side per handle with
-	// no seek verb -- matches apps/libc's own (lack of) seek support.
 	return ESPIPE;
 }
 
@@ -535,32 +460,29 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int, 
 	if (fsfdt == fsfd_target::fd) {
 		if (!fd_valid(fd)) return EBADF;
 		switch (g_fds[fd].kind) {
-		case FD_DEVFS:
-			fill_stat(statbuf, 0, 0, ROBU_STDEV_DEVFS, (ino_t)g_fds[fd].handle + 1);
-			statbuf->st_mode = S_IFCHR | 0666;
-			return 0;
 		case FD_RAMFS_DIR:
 			fill_stat(statbuf, 0, 1, ROBU_STDEV_RAMFS, (ino_t)g_fds[fd].handle);
 			return 0;
-		case FD_PROCFS:
-			fill_stat(statbuf, g_fds[fd].size, 0, ROBU_STDEV_PROCFS, (ino_t)g_fds[fd].handle + 1);
-			return 0;
-		case FD_SYSFS:
-			fill_stat(statbuf, g_fds[fd].size, 0, ROBU_STDEV_SYSFS, (ino_t)g_fds[fd].handle + 1);
-			return 0;
-		case FD_RAMFS: {
+		case FD_VFS: {
 			uint64_t size, ino;
 			int is_dir;
-			if (robu::ramfs_fstat(g_fds[fd].handle, &size, &is_dir, &ino) != 0) return EBADF;
-			fill_stat(statbuf, size, is_dir, ROBU_STDEV_RAMFS, (ino_t)ino);
+			if (robu::vfs_fstat(g_fds[fd].server_tid, g_fds[fd].handle, &size, &is_dir, &ino) != 0) return EBADF;
+			if (g_fds[fd].server_tid == robu::devfs_tid()) {
+				fill_stat(statbuf, size, is_dir, ROBU_STDEV_DEVFS, (ino_t)ino);
+				statbuf->st_mode = S_IFCHR | 0666;
+				return 0;
+			}
+			if (g_fds[fd].server_tid == robu::ramfs_tid()) {
+				fill_stat(statbuf, size, is_dir, ROBU_STDEV_RAMFS, (ino_t)ino);
+				return 0;
+			}
+			fill_stat(statbuf, size, is_dir, ROBU_STDEV_VFS, (ino_t)ino);
 			return 0;
 		}
 		default:
 			return EBADF;
 		}
 	}
-	// path, fd_path (dirfd is ignored beyond AT_FDCWD -- no real subdirectory
-	// fd concept here, matching fdtable.c's own openat()/fstatat() shape).
 	char resolved[CWD_MAX];
 	resolve_path(path, resolved, sizeof(resolved));
 	return stat_path(resolved, statbuf);
@@ -571,22 +493,24 @@ int Sysdeps<OpenDir>::operator()(const char *path, int *handle) {
 	char resolved[CWD_MAX];
 	resolve_path(path, resolved, sizeof(resolved));
 	uint64_t dir_ino;
+	uint32_t server_tid;
 	if (strcmp(resolved, "/") == 0) {
 		dir_ino = robu::RAMFS_ROOT_INO;
+		server_tid = robu::ramfs_tid();
 	} else {
-		char name[robu::RAMFS_PATH_MAX];
-		int rc = ramfs_name_from_path(resolved, name, sizeof(name));
-		if (rc != 0) return rc;
+		const char *rel;
+		server_tid = resolve_mount_for_dir(resolved, &rel);
+		if (server_tid == 0) return ENOENT;
 		uint64_t size, ino;
 		int is_dir;
-		if (robu::ramfs_stat(name, &size, &is_dir, &ino) != 0 || !is_dir) {
+		if (robu::vfs_stat(server_tid, rel, &size, &is_dir, &ino) != 0 || !is_dir) {
 			return ENOTDIR;
 		}
 		dir_ino = ino;
 	}
 	int fd = alloc_fd();
 	if (fd < 0) return EMFILE;
-	g_fds[fd] = { FD_RAMFS_DIR, dir_ino, 0 };
+	g_fds[fd] = { FD_RAMFS_DIR, dir_ino, 0, server_tid };
 	*handle = fd;
 	return 0;
 }
@@ -595,12 +519,10 @@ int Sysdeps<ReadEntries>::operator()(int handle, void *buffer, size_t max_size, 
 	if (!fd_valid(handle) || g_fds[handle].kind != FD_RAMFS_DIR) {
 		return EBADF;
 	}
-	// The cursor lives in the high bits of `size` (unused for directories);
-	// simplest to keep a small side table instead.
 	static uint64_t cursors[MAX_FDS];
 	char name[32];
 	int is_dir;
-	int64_t rc = robu::ramfs_readdir(g_fds[handle].handle, cursors[handle], name, &is_dir);
+	int64_t rc = robu::vfs_readdir(g_fds[handle].server_tid, g_fds[handle].handle, cursors[handle], name, &is_dir);
 	if (rc != 0) {
 		*bytes_read = 0;
 		return 0;
@@ -649,11 +571,6 @@ int Sysdeps<Chdir>::operator()(const char *path) {
 	return 0;
 }
 
-// None of this kernel's backends (ramfs/devfs/procfs/sysfs) track per-file
-// timestamps, so there's nothing to actually set -- apps/libc's own
-// utimensat()/futimens() were equally no-ops regarding `times`. touch(1)'s
-// file-creation itself goes through the real Open sysdep before this ever
-// runs, so this only needs to not fail it.
 int Sysdeps<Utimensat>::operator()(int, const char *, const struct timespec *, int) {
 	return 0;
 }
@@ -713,13 +630,6 @@ int Sysdeps<ClockGet>::operator()(int, time_t *secs, long *nanos) {
 	robu::exit_raw(status);
 }
 
-// IPC_FLAG_FORK is a real, working kernel primitive (proven by the
-// now-removed apps/libc's own fork()) -- it returns twice, with word[0] (r8)
-// distinguishing the two threads (0 in the child, the real child tid in the
-// parent). mlibc's own fork()/vfork() wrapper (options/posix/generic/
-// unistd.cpp) calls this, then -- only in the child branch -- refetches its
-// cached tid via the FutexTid sysdep below, since the child's copy of
-// mlibc's internal per-thread bookkeeping still holds the parent's tid.
 int Sysdeps<Fork>::operator()(pid_t *child) {
 	uint64_t child_or_zero = 0;
 	int64_t rc = robu::fork_raw(&child_or_zero);
@@ -738,11 +648,6 @@ pid_t Sysdeps<GetPid>::operator()() {
 	return (pid_t)robu::self_tid();
 }
 
-// Kernel-resident, no server process -- see robu-abi.hpp's pipe_* wrappers.
-// `flags` (O_CLOEXEC/O_NONBLOCK) isn't honored: there's no exec() to make
-// O_CLOEXEC meaningful yet, and every read/write here already treats "ring
-// empty/full" as "sleep and retry" rather than surfacing it to the caller,
-// so there's no non-blocking mode to opt into.
 int Sysdeps<Pipe>::operator()(int *fds, int) {
 	uint64_t handle = 0;
 	int64_t rc = robu::pipe_create(&handle);
@@ -769,15 +674,6 @@ int Sysdeps<Pipe>::operator()(int *fds, int) {
 	return 0;
 }
 
-// IPC_FLAG_EXEC is a real, working kernel primitive: it replaces the
-// calling thread's own address space and saved register frame in place
-// (same tid, same fd table -- see docs/libc-and-abi-reference.md §4.3 for
-// the design). On success this genuinely never returns -- the trap that
-// carried this request resumes directly into the new image's entry point,
-// not back into this function. Only a failure return is ever observed by
-// the caller. Robu's rootfs has no directory structure, so (matching
-// __libc_spawn()'s own behavior) `path` is looked up as a bare name with no
-// $PATH resolution and no leading-slash stripping.
 int Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *const envp[]) {
 	int64_t rc = robu::exec_raw(path, argv, envp);
 	if (rc == robu::IPC_ERR_NOT_FOUND) {
@@ -792,8 +688,6 @@ int Sysdeps<Execve>::operator()(const char *path, char *const argv[], char *cons
 	return 0;
 }
 
-// Waitpid maps directly onto this kernel's real IPC_FLAG_WAIT verb, so
-// mlibc's standard waitpid()/wait() work as-is.
 int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusage *, pid_t *ret_pid) {
 	bool nohang = (flags & WNOHANG) != 0;
 	int64_t rc = robu::robu_waitpid(pid, status, nohang);
@@ -810,20 +704,10 @@ int Sysdeps<Waitpid>::operator()(pid_t pid, int *status, int flags, struct rusag
 
 }
 
-// This kernel's spawn primitive is not POSIX fork()+exec() (see above), so
-// it's exposed as the same non-POSIX __libc_spawn() extension apps/libc
-// already provided -- minibox-shell.c and hello_initsys call this directly.
 extern "C" int __libc_spawn(const char *name, char *const argv[], char *const envp[]) {
-	auto fd_export = [](int fd, uint32_t *kind, uint64_t *handle) -> bool {
+	auto fd_export = [](int fd, uint32_t *kind, uint64_t *handle, uint32_t *server_tid) -> bool {
 		ensure_stdio_defaults();
 		if (!fd_valid(fd)) return false;
-		// Every kind but pipes is opaque to the kernel and passes straight
-		// through; pipes are the two values the kernel's spawn handler
-		// specifically recognizes to register the new child as a holder
-		// (see robu-abi.hpp's SPAWN_FD_KIND_PIPE_READ/WRITE) -- get this
-		// wrong and a spawned pipeline stage's end of the pipe is never
-		// counted, so the *other* end sees premature EOF/EPIPE the moment
-		// the parent closes its own (uncounted-as-real) copy.
 		if (g_fds[fd].kind == FD_PIPE_READ) {
 			*kind = robu::SPAWN_FD_KIND_PIPE_READ;
 		} else if (g_fds[fd].kind == FD_PIPE_WRITE) {
@@ -832,6 +716,7 @@ extern "C" int __libc_spawn(const char *name, char *const argv[], char *const en
 			*kind = (uint32_t)g_fds[fd].kind;
 		}
 		*handle = g_fds[fd].handle;
+		*server_tid = g_fds[fd].server_tid;
 		return true;
 	};
 	int64_t rc = robu::robu_spawn(name, argv, envp, fd_export);
