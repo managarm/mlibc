@@ -27,6 +27,12 @@ constexpr uint64_t IPC_FLAG_FORK = 1ull << 24;
 constexpr uint64_t IPC_FLAG_SET_FSBASE = 1ull << 25;
 constexpr uint64_t IPC_FLAG_SELF_TID = 1ull << 26;
 constexpr uint64_t IPC_FLAG_EXEC = 1ull << 27;
+constexpr uint64_t IPC_FLAG_SYS_INFO = 1ull << 23;
+constexpr uint64_t SYS_INFO_CAT_SIGACTION = 5;
+constexpr uint64_t SYS_INFO_CAT_KILL = 6;
+constexpr uint64_t SYS_INFO_CAT_SIGPROCMASK = 7;
+constexpr uint64_t SYS_INFO_CAT_SIGRETURN = 8;
+constexpr uint64_t SYS_INFO_CAT_SIGPENDING = 9;
 
 constexpr int64_t IPC_ERR_NONE = 0;
 constexpr int64_t IPC_ERR_NOT_FOUND = -1;
@@ -130,6 +136,53 @@ inline uint64_t self_tid() {
 	msg_regs m{};
 	ipc_raw(0, 0, IPC_FLAG_SELF_TID, &m, nullptr);
 	return m.word[0];
+}
+
+inline int64_t sig_action_raw(int signum, uint64_t new_handler, uint64_t new_flags,
+                               uint64_t new_mask, int do_set,
+                               uint64_t *old_handler, uint64_t *old_flags, uint64_t *old_mask) {
+	msg_regs m{};
+	m.word[0] = SYS_INFO_CAT_SIGACTION;
+	m.word[1] = (uint64_t)signum;
+	m.word[2] = new_handler;
+	m.word[3] = new_flags;
+	m.word[4] = (uint64_t)do_set;
+	m.word[5] = new_mask;
+	int64_t rc = ipc_raw(0, 0, IPC_FLAG_SYS_INFO, &m, nullptr);
+	if (old_handler) *old_handler = m.word[0];
+	if (old_flags) *old_flags = m.word[1];
+	if (old_mask) *old_mask = m.word[2];
+	return rc;
+}
+
+inline int64_t sig_kill_raw(uint64_t target_tid, int signum) {
+	msg_regs m{};
+	m.word[0] = SYS_INFO_CAT_KILL;
+	m.word[1] = target_tid;
+	m.word[2] = (uint64_t)signum;
+	return ipc_raw(0, 0, IPC_FLAG_SYS_INFO, &m, nullptr);
+}
+
+inline int64_t sig_procmask_raw(uint64_t how, uint64_t new_mask, int do_set, uint64_t *old_mask) {
+	msg_regs m{};
+	m.word[0] = SYS_INFO_CAT_SIGPROCMASK;
+	m.word[1] = how;
+	m.word[2] = new_mask;
+	m.word[3] = (uint64_t)do_set;
+	int64_t rc = ipc_raw(0, 0, IPC_FLAG_SYS_INFO, &m, nullptr);
+	if (old_mask) *old_mask = m.word[0];
+	return rc;
+}
+
+inline uint64_t sig_pending_raw() {
+	msg_regs m{};
+	m.word[0] = SYS_INFO_CAT_SIGPENDING;
+	ipc_raw(0, 0, IPC_FLAG_SYS_INFO, &m, nullptr);
+	return m.word[0];
+}
+
+inline void sleep_raw(uint64_t ticks) {
+	ipc_raw(0, ticks, IPC_FLAG_NONE, nullptr, nullptr);
 }
 
 constexpr uint64_t KINFO_VA = 0x0000000080000000ULL;

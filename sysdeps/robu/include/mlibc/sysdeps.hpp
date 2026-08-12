@@ -35,7 +35,13 @@ struct RobuSysdepTags :
 	Pipe,
 	Dup,
 	Dup2,
-	Execve
+	Execve,
+	Sigaction,
+	Kill,
+	Tgkill,
+	Sigprocmask,
+	Sigpending,
+	Sigsuspend
 {};
 
 template<typename Tag>
