@@ -6,6 +6,7 @@ sysdep_supported_options = {
 rtld_sources += files(
 	'sysdeps.cpp',
 	'arch/x86_64/syscall.cpp',
+	'arch/x86_64/restorer.S',
 )
 
 libc_sources += files(
@@ -16,6 +17,7 @@ libc_sources += files(
 	'socket.cpp',
 	'sysdeps.cpp',
 	'arch/x86_64/syscall.cpp',
+	'arch/x86_64/restorer.S',
 )
 
 if not no_headers

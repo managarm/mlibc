@@ -11,6 +11,8 @@ int syscall_error(long result) {
 
 namespace mlibc {
 
+extern "C" void __mlibc_restorer();
+
 int Sysdeps<Kill>::operator()(pid_t pid, int signal) {
 	return syscall_error(roxy_syscall2(ROXY_SYS_SEND_SIGNAL, pid, signal));
 }
@@ -33,10 +35,23 @@ int Sysdeps<Sigaction>::operator()(
 	const struct sigaction *__restrict action,
 	struct sigaction *__restrict old_action
 ) {
+	if (action) {
+		struct sigaction modified = *action;
+		if (modified.sa_handler != SIG_DFL && modified.sa_handler != SIG_IGN)
+			modified.sa_restorer = __mlibc_restorer;
+
+		return syscall_error(roxy_syscall3(
+		    ROXY_SYS_SIGACTION,
+		    signal,
+		    reinterpret_cast<long>(&modified),
+		    reinterpret_cast<long>(old_action)
+		));
+	}
+
 	return syscall_error(roxy_syscall3(
 	    ROXY_SYS_SIGACTION,
 	    signal,
-	    reinterpret_cast<long>(action),
+	    0,
 	    reinterpret_cast<long>(old_action)
 	));
 }
