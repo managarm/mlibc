@@ -123,8 +123,8 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 		return EBADF;
 	}
 
-	if(_init_bufmode())
-		return -1;
+	if(int e = _init_bufmode(); e)
+		return e;
 
 	size_t unget_length = 0;
 	if (__unget_ptr != __buffer_ptr) {
@@ -207,8 +207,8 @@ int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_siz
 		return EBADF;
 	}
 
-	if(_init_bufmode())
-		return -1;
+	if(int e = _init_bufmode(); e)
+		return e;
 	if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer) {
 		// As we do not buffer, nothing can be dirty.
 		__ensure(__dirty_begin == __dirty_end);
@@ -390,8 +390,8 @@ int abstract_file::_init_bufmode() {
 	if(_bufmode != buffer_mode::unknown)
 		return 0;
 
-	if(determine_bufmode(&_bufmode))
-		return -1;
+	if(int e = determine_bufmode(&_bufmode); e)
+		return e;
 	__ensure(_bufmode != buffer_mode::unknown);
 	return 0;
 }
@@ -581,7 +581,7 @@ int fd_file::determine_bufmode(buffer_mode *mode) {
 	}else{
 		mlibc::infoLogger() << "mlibc: sys_isatty() failed while determining whether"
 				" stream is interactive" << frg::endlog;
-		return -1;
+		return e;
 	}
 }
 

@@ -197,7 +197,7 @@ size_t fwrite_unlocked_ignore_orientation(const void *buffer, size_t size, size_
 			size_t chunk;
 			if(int e = file->write((const char *)buffer + progress,
 					count - progress, &chunk); e) {
-				// TODO: e can be -1.
+				// TODO: ferror() may stay clear even on a real error.
 				errno = e;
 				break;
 			}else if(!chunk) {
@@ -216,7 +216,7 @@ size_t fwrite_unlocked_ignore_orientation(const void *buffer, size_t size, size_
 				size_t chunk;
 				if(int e = file->write((const char *)buffer + i * size + progress,
 						size - progress, &chunk); e) {
-					// TODO: e can be -1.
+					// TODO: ferror() may stay clear even on a real error.
 					errno = e;
 					break;
 				}else if(!chunk) {
