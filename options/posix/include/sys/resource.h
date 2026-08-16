@@ -31,12 +31,10 @@ struct rlimit {
 
 #ifndef __MLIBC_ABI_ONLY
 
-#if defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN
 int getpriority(int __which, id_t __who);
 int setpriority(int __which, id_t __who, int __prio);
 
 int getrusage(int __who, struct rusage *__usage);
-#endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
 int getrlimit(int __resource, struct rlimit *__rlim);
 int setrlimit(int __resource, const struct rlimit *__rlim);

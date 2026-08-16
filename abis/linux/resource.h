@@ -13,7 +13,6 @@ extern "C" {
 #define PRIO_MAX 20
 #endif /* defined(_GNU_SOURCE) */
 
-#if defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN
 #define PRIO_PROCESS 0
 #define PRIO_PGRP 1
 #define PRIO_USER 2
@@ -22,8 +21,6 @@ extern "C" {
 #define RUSAGE_CHILDREN -1
 
 #define RLIMIT_CPU 0
-#endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
-
 #define RLIMIT_FSIZE 1
 #define RLIMIT_DATA 2
 #define RLIMIT_STACK 3
@@ -44,7 +41,6 @@ extern "C" {
 #define RLIMIT_NLIMITS 16
 #endif
 
-#if defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN
 struct rusage {
 	struct timeval ru_utime;
 	struct timeval ru_stime;
@@ -63,7 +59,6 @@ struct rusage {
 	long ru_nvcsw;
 	long ru_nivcsw;
 };
-#endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
 #ifdef __cplusplus
 }
