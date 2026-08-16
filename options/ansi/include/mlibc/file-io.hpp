@@ -83,6 +83,8 @@ public:
 	bool check_orientation(stream_orientation orientation);
 
 protected:
+	void set_access_mode(int flags);
+
 	virtual int determine_type(stream_type *type) = 0;
 	virtual int determine_bufmode(buffer_mode *mode) = 0;
 	virtual int io_read(char *buffer, size_t max_size, size_t *actual_size) = 0;
@@ -104,6 +106,9 @@ private:
 	buffer_mode _bufmode;
 	void (*_do_dispose)(abstract_file *);
 
+	bool _readable = true;
+	bool _writable = true;
+
 public:
 	buffer_mode bufmode() const {
 		return _bufmode;
@@ -119,7 +124,9 @@ public:
 };
 
 struct fd_file : abstract_file {
-	fd_file(int fd, void (*do_dispose)(abstract_file *) = nullptr, bool force_unbuffered = false);
+	// From `flags` only the access mode is used.
+	fd_file(int fd, int flags, void (*do_dispose)(abstract_file *) = nullptr,
+			bool force_unbuffered = false);
 
 	int fd();
 

@@ -195,11 +195,10 @@ size_t fwrite_unlocked_ignore_orientation(const void *buffer, size_t size, size_
 		size_t progress = 0;
 		while(progress < count) {
 			size_t chunk;
-			if(file->write((const char *)buffer + progress,
-					count - progress, &chunk)) {
-				// TODO: Handle I/O errors.
-				mlibc::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
-						<< frg::endlog;
+			if(int e = file->write((const char *)buffer + progress,
+					count - progress, &chunk); e) {
+				// TODO: e can be -1.
+				errno = e;
 				break;
 			}else if(!chunk) {
 				// TODO: Handle eof.
@@ -215,11 +214,10 @@ size_t fwrite_unlocked_ignore_orientation(const void *buffer, size_t size, size_
 			size_t progress = 0;
 			while(progress < size) {
 				size_t chunk;
-				if(file->write((const char *)buffer + i * size + progress,
-						size - progress, &chunk)) {
-					// TODO: Handle I/O errors.
-					mlibc::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
-							<< frg::endlog;
+				if(int e = file->write((const char *)buffer + i * size + progress,
+						size - progress, &chunk); e) {
+					// TODO: e can be -1.
+					errno = e;
 					break;
 				}else if(!chunk) {
 					// TODO: Handle eof.
@@ -795,7 +793,8 @@ FILE *tmpfile(void) {
 		return nullptr;
 	}
 
-	return frg::construct<mlibc::fd_file>(getAllocator(), fd, mlibc::file_dispose_cb<mlibc::fd_file>);
+	return frg::construct<mlibc::fd_file>(getAllocator(), fd, O_RDWR,
+			mlibc::file_dispose_cb<mlibc::fd_file>);
 
 }
 
