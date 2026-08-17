@@ -2,6 +2,7 @@ timeout_sec = 10
 
 all_test_cases = [
 	'ansi/alloc',
+	'ansi/alloc_oom',
 	'ansi/sscanf',
 	'ansi/sprintf',
 	'ansi/snprintf',
@@ -234,6 +235,7 @@ host_libc_excluded_test_cases = [
 	'rtld/fail-load', # glibc gives non-deterministic errors
 ]
 host_libc_noasan_test_cases = [
+	'ansi/alloc_oom', # purposefully allocates huge amounts
 	'posix/pthread_cancel',
 	'posix/pthread_attr', # does some stack overflowing to check stack size
 	'posix/posix_memalign',
