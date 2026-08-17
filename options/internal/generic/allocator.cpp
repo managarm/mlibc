@@ -34,7 +34,8 @@ MemoryAllocator &getAllocator() {
 
 uintptr_t VirtualAllocator::map(size_t length) {
 	void *ptr;
-	__ensure(!mlibc::sysdep<AnonAllocate>(length, &ptr));
+	if (mlibc::sysdep<AnonAllocate>(length, &ptr))
+		return 0;
 	return (uintptr_t)ptr;
 }
 
