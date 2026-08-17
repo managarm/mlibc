@@ -121,12 +121,12 @@ bool cancellationRequested() {
 	pthread_once(&has_cached_infos, &actuallyCacheInfos);
 	if (!__mlibc_cached_thread_page)
 		return false;
-	return __mlibc_cached_thread_page->cancellationRequested;
-}
-
-void resetCancellationRequested() {
-	pthread_once(&has_cached_infos, &actuallyCacheInfos);
-	__mlibc_cached_thread_page->cancellationRequested = false;
+	auto gsf = __atomic_load_n(&__mlibc_cached_thread_page->globalSignalFlag, __ATOMIC_RELAXED);
+	// Precondition: this function must only be called in a SignalGuard.
+	__ensure(gsf);
+	// globalSignalFlag == 2 means that this thread accepted a signal that is delivery at guard exit.
+	// In-flight cancellable operations must be cancelled so the guard can end.
+	return gsf == 2;
 }
 
 void setQueueHandle(HelHandle queue) {

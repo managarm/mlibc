@@ -16,7 +16,6 @@
 #include <protocols/posix/data.hpp>
 #include <protocols/posix/supercalls.hpp>
 
-void resetCancellationRequested();
 bool cancellationRequested();
 void setQueueHandle(HelHandle queue);
 
@@ -222,9 +221,12 @@ struct Queue {
 		__atomic_fetch_or(&_queue->kernelNotify, kHelKernelNotifySqProgress, __ATOMIC_RELEASE);
 	}
 
-	frg::optional<ElementHandle> dequeueSingleUnlessCancelled() {
+private:
+	// If checkCancellation is true, return nullopt if cancellationRequested() becomes true (and do not wait for completion).
+	// Otherwise, always wait for completion (whether cancellationRequested() becomes true or not).
+	frg::optional<ElementHandle> dequeueSingle_(bool checkCancellation) {
 		while (true) {
-			auto progress = _waitProgressFutex();
+			auto progress = _waitProgressFutex(checkCancellation);
 
 			auto n = _retrieveChunk;
 			__ensure(_refCount[n]);
@@ -253,14 +255,13 @@ struct Queue {
 		}
 	}
 
+public:
+	frg::optional<ElementHandle> dequeueSingleUnlessCancelled() {
+		return dequeueSingle_(true);
+	}
+
 	ElementHandle dequeueSingle() {
-		while (true) {
-			auto result = dequeueSingleUnlessCancelled();
-			if (result)
-				return *result;
-			else
-				resetCancellationRequested();
-		}
+		return *dequeueSingle_(false);
 	}
 
 	void retire(int n) {
@@ -296,7 +297,7 @@ private:
 	};
 
 	// Postcondition: return value != FutexProgress::NONE.
-	FutexProgress _waitProgressFutex() {
+	FutexProgress _waitProgressFutex(bool checkCancellation) {
 		// userNotify bits checked by this function (these MUST be checked in the loop below!).
 		const auto relevantNotify = kHelUserNotifyCqProgress | kHelUserNotifyAlert;
 		// userNotify bits ignored by this function.
@@ -330,7 +331,7 @@ private:
 			if (!notifyToClear) {
 				__ensure(!(_pendingNotify & ~maskedNotify));
 
-				if (cancellationRequested())
+				if (checkCancellation && cancellationRequested())
 					return FutexProgress::CANCELLED;
 				int err = helDriveQueue(_handle, kHelDriveWait, maskedNotify);
 				if (err != kHelErrCancelled)
@@ -464,19 +465,15 @@ auto exchangeMsgsSyncCancellable(HelHandle descriptor, uint64_t cancelId, int fd
 
 	pushExchangeMsgsToSq(descriptor, 0, actions.data(), actions.size());
 
-	frg::optional<ElementHandle> element{};
-
-	do {
-		element = globalQueue.dequeueSingleUnlessCancelled();
-		if (!element) {
-			HEL_CHECK(helSyscall2(
-				kHelCallSuper + posix::superCancel,
-				cancelId,
-				fd
-			));
-			resetCancellationRequested();
-		}
-	} while (!element);
+	auto element = globalQueue.dequeueSingleUnlessCancelled();
+	if (!element) {
+		HEL_CHECK(helSyscall2(
+			kHelCallSuper + posix::superCancel,
+			cancelId,
+			fd
+		));
+		element = globalQueue.dequeueSingle();
+	}
 
 	void *ptr = element->data();
 
@@ -509,7 +506,6 @@ auto exchangeMsgsSyncCancelViaLane(HelHandle descriptor, MakeCancel &&makeCancel
 		auto cancelExchange = makeCancel();
 		auto cancelActions = helix_ng::chainActionArrays(cancelExchange);
 		pushExchangeMsgsToSq(descriptor, cancelContext, cancelActions.data(), cancelActions.size());
-		resetCancellationRequested();
 
 		bool cancelDone = false;
 		while (!reqElement || !cancelDone) {
