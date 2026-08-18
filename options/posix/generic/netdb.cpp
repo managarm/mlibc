@@ -250,9 +250,7 @@ int getaddrinfo(const char *__restrict node, const char *__restrict service,
 				return EAI_SYSTEM;
 			}
 
-			if (!ipv4 && !ipv6)
-				return EAI_NONAME;
-			else if (ipv4 != ipv6)
+			if (ipv4 != ipv6)
 				family = ipv4 ? AF_INET : AF_INET6;
 		} else {
 			mlibc::infoLogger() << "mlibc: sys_inet_configured() not implemented, cannot handle getaddrinfo with AI_ADDRCONFIG" << frg::endlog;
