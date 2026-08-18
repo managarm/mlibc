@@ -379,7 +379,9 @@ int getnameinfo(const struct sockaddr *__restrict addr, socklen_t addr_len,
 		if (!(flags & NI_NUMERICHOST) && !res)
 			res = mlibc::lookup_addr_dns(host_span, addr_array, family);
 
-		if (!res) {
+		// Not finding or failing to look up a name is not an error. Only a caller
+		// that insists on a name gets an error.
+		if (res <= 0) {
 			if (flags & NI_NAMEREQD)
 				return EAI_NONAME;
 			if(!inet_ntop(family, addr_array.data(), host, host_len)) {
@@ -393,9 +395,6 @@ int getnameinfo(const struct sockaddr *__restrict addr, socklen_t addr_len,
 				}
 			}
 		}
-
-		if (res < 0)
-			return -res;
 	}
 
 	if (serv && serv_len) {
