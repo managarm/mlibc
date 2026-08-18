@@ -912,14 +912,23 @@ struct tm *gmtime_r(const time_t *unix_gmt, struct tm *res) {
 
 	time_t unix_local = *unix_gmt;
 
-	int days_since_epoch = unix_local / (60*60*24);
+	// Division truncates towards zero and the remainder keeps the sign of the
+	// dividend, so a time before the epoch has to be carried into the previous
+	// day to leave a non-negative time of day.
+	time_t days_since_epoch = unix_local / (60*60*24);
+	time_t secs_of_day = unix_local % (60*60*24);
+	if(secs_of_day < 0) {
+		secs_of_day += 60*60*24;
+		days_since_epoch--;
+	}
+
 	civil_from_days(days_since_epoch, &year, &month, &day);
 	weekday_from_days(days_since_epoch, &weekday);
 	yearday_from_date(year, month, day, &yday);
 
-	res->tm_sec = unix_local % 60;
-	res->tm_min = (unix_local / 60) % 60;
-	res->tm_hour = (unix_local / (60*60)) % 24;
+	res->tm_sec = secs_of_day % 60;
+	res->tm_min = (secs_of_day / 60) % 60;
+	res->tm_hour = secs_of_day / (60*60);
 	res->tm_mday = day;
 	res->tm_mon = month - 1;
 	res->tm_year = year - 1900;
@@ -950,14 +959,21 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 	}
 	time_t unix_local = *unix_gmt + offset;
 
-	int days_since_epoch = unix_local / (60*60*24);
+	// See the comment in gmtime_r().
+	time_t days_since_epoch = unix_local / (60*60*24);
+	time_t secs_of_day = unix_local % (60*60*24);
+	if(secs_of_day < 0) {
+		secs_of_day += 60*60*24;
+		days_since_epoch--;
+	}
+
 	civil_from_days(days_since_epoch, &year, &month, &day);
 	weekday_from_days(days_since_epoch, &weekday);
 	yearday_from_date(year, month, day, &yday);
 
-	res->tm_sec = unix_local % 60;
-	res->tm_min = (unix_local / 60) % 60;
-	res->tm_hour = (unix_local / (60*60)) % 24;
+	res->tm_sec = secs_of_day % 60;
+	res->tm_min = (secs_of_day / 60) % 60;
+	res->tm_hour = secs_of_day / (60*60);
 	res->tm_mday = day;
 	res->tm_mon = month - 1;
 	res->tm_year = year - 1900;
