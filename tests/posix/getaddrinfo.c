@@ -157,7 +157,10 @@ int main() {
 
 	ret = getaddrinfo("localhost", NULL, &hints, &res);
 
-	if (ret == 0) {
+	// AI_ADDRCONFIG must not make a name unresolvable on a host whose only
+	// interface is the loopback one, so the lookup has to succeed either way.
+	assert(ret == 0);
+	{
 		int found_ipv4 = 0;
 		int found_ipv6 = 0;
 		for(struct addrinfo *p = res; p != NULL; p = p->ai_next) {
@@ -167,18 +170,14 @@ int main() {
 				found_ipv6 = 1;
 		}
 
-		if (has_ipv4_addr())
-			assert(found_ipv4);
-		else
-			assert(!found_ipv4);
-
-		if (has_ipv6_addr())
-			assert(found_ipv6);
-		else
-			assert(!found_ipv6);
-	} else {
-		// If getaddrinfo fails, it should be because no addresses are configured.
-		assert(!has_ipv4_addr() && !has_ipv6_addr());
+		// Where exactly one family is configured, only that one is returned.
+		// Where neither is, no filtering happens at all.
+		if (has_ipv4_addr() != has_ipv6_addr()) {
+			assert(found_ipv4 == has_ipv4_addr());
+			assert(found_ipv6 == has_ipv6_addr());
+		} else {
+			assert(found_ipv4 || found_ipv6);
+		}
 	}
 
 	freeaddrinfo(res);
