@@ -202,6 +202,51 @@ int main() {
 	assert(ret == EAI_NONAME);
 	assert(res == NULL);
 
+	// Without a node, a client lookup resolves to the loopback address and a
+	// passive one to the wildcard address. Both are stored in network byte
+	// order.
+	hints = (struct addrinfo){0};
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+
+	ret = getaddrinfo(NULL, "8080", &hints, &res);
+	assert(ret == 0);
+	assert(res->ai_family == AF_INET);
+	addr_in = (struct sockaddr_in *)res->ai_addr;
+	assert(addr_in->sin_addr.s_addr == htonl(INADDR_LOOPBACK));
+	freeaddrinfo(res);
+	res = NULL;
+
+	hints.ai_flags = AI_PASSIVE;
+	ret = getaddrinfo(NULL, "8080", &hints, &res);
+	assert(ret == 0);
+	addr_in = (struct sockaddr_in *)res->ai_addr;
+	assert(addr_in->sin_addr.s_addr == htonl(INADDR_ANY));
+	freeaddrinfo(res);
+	res = NULL;
+
+	hints = (struct addrinfo){0};
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_STREAM;
+
+	ret = getaddrinfo(NULL, "8080", &hints, &res);
+	assert(ret == 0);
+	assert(res->ai_family == AF_INET6);
+	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)res->ai_addr;
+	assert(!memcmp(&sin6->sin6_addr, &in6addr_loopback, sizeof(struct in6_addr)));
+	freeaddrinfo(res);
+	res = NULL;
+
+	hints.ai_flags = AI_PASSIVE;
+	ret = getaddrinfo(NULL, "8080", &hints, &res);
+	assert(ret == 0);
+	sin6 = (struct sockaddr_in6 *)res->ai_addr;
+	assert(!memcmp(&sin6->sin6_addr, &in6addr_any, sizeof(struct in6_addr)));
+	freeaddrinfo(res);
+	res = NULL;
+
+	hints = (struct addrinfo){0};
+	hints.ai_flags = AI_NUMERICSERV;
 	hints.ai_family = AF_INET6;
 
 	ret = getaddrinfo(NULL, "9090", &hints, &res);
