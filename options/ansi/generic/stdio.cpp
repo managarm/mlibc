@@ -64,7 +64,14 @@ struct PrintfAgent {
 	frg::expected<frg::format_error> operator() (Char t, frg::format_options opts,
 			frg::printf_size_mod szmod) {
 		switch(t) {
+		case 'C':
+			// No length modifiers should be given to %C.
+			__ensure(szmod == frg::printf_size_mod::default_size);
+			szmod = frg::printf_size_mod::long_size;
+			[[fallthrough]];
 		case 'c':
+			// %c only supports no size or `l`
+			__ensure(szmod == frg::printf_size_mod::default_size || szmod == frg::printf_size_mod::long_size);
 			if (szmod == frg::printf_size_mod::long_size) {
 				auto c = static_cast<wchar_t>(frg::pop_arg<wint_t>(_vsp, &opts));
 
@@ -82,13 +89,31 @@ struct PrintfAgent {
 			}
 			frg::do_printf_chars<Char, F>(*_formatter, t, opts, szmod, _vsp);
 			break;
-		case 'p': case 's':
+		case 'S':
+			// No length modifiers should be given to %S.
+			__ensure(szmod == frg::printf_size_mod::default_size);
+			szmod = frg::printf_size_mod::long_size;
+			[[fallthrough]];
+		case 's':
+			// %s only supports no size or `l`
+			__ensure(szmod == frg::printf_size_mod::default_size || szmod == frg::printf_size_mod::long_size);
+			frg::do_printf_chars<Char, F>(*_formatter, t, opts, szmod, _vsp);
+			break;
+		case 'p':
+			// %p does not support any length modifiers.
+			__ensure(szmod == frg::printf_size_mod::default_size);
 			frg::do_printf_chars<Char, F>(*_formatter, t, opts, szmod, _vsp);
 			break;
 		case 'd': case 'i': case 'o': case 'x': case 'X': case 'b': case 'B': case 'u':
+			__ensure(szmod != frg::printf_size_mod::longdouble_size);
 			frg::do_printf_ints<Char, F>(*_formatter, t, opts, szmod, _vsp, locale_opts);
 			break;
 		case 'f': case 'F': case 'g': case 'G': case 'e': case 'E': case 'a': case 'A':
+			__ensure(szmod != frg::printf_size_mod::char_size);
+			__ensure(szmod != frg::printf_size_mod::short_size);
+			__ensure(szmod != frg::printf_size_mod::longlong_size);
+			__ensure(szmod != frg::printf_size_mod::intmax_size);
+			__ensure(szmod != frg::printf_size_mod::native_size);
 			frg::do_printf_floats<Char, F>(*_formatter, t, opts, szmod, _vsp, locale_opts);
 			break;
 		case 'm':
@@ -98,7 +123,7 @@ struct PrintfAgent {
 			__ensure(opts.minimum_width == 0);
 			__ensure(szmod == frg::printf_size_mod::default_size);
 			__ensure(!opts.precision);
-			if constexpr (std::is_same_v<Char, char>)
+			if constexpr (frg::SinkFor<F, char>)
 				_formatter->append(strerror(errno));
 			break;
 		case 'n': {
@@ -149,12 +174,14 @@ struct PrintfAgent {
 
 	std::optional<frg::printf_arg_type> format_type(Char t, frg::printf_size_mod sz) {
 		switch(t) {
+			case 'C':
+				return frg::printf_arg_type::WCHAR;
 			case 'c':
 				if (sz == frg::printf_size_mod::long_size)
 					return frg::printf_arg_type::WCHAR;
 				else
 					return frg::printf_arg_type::CHAR;
-			case 's': case 'n':
+			case 'S': case 's': case 'n':
 				return frg::printf_arg_type::POINTER;
 			case 'f': case 'F': case 'g': case 'G': case 'e': case 'E': case 'a': case 'A':
 				return frg::printf_arg_type::DOUBLE;
