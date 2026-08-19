@@ -848,6 +848,84 @@ void test30() {
 	assert(!strcmp(test_argv[4], "non-arg2"));
 }
 
+void test31() {
+	// If some options are duplicate, glibc silently picks the first exact match.
+	const struct option longopts[] = {
+		{"size", required_argument, NULL, '1'},
+		{"size", required_argument, NULL, '2'},
+		{NULL, 0, NULL, 0}
+	};
+
+	char *test_argv[] = {
+		"dummy",
+		"--size=8M",
+	};
+
+	fputs("Situation: duplicate long option names, first exact match wins\n", stderr);
+
+	optind = 0;
+	int idx = -1;
+	int c = getopt_long(COUNT_OF(test_argv), test_argv, "", longopts, &idx);
+	assert(c == '1');
+	assert(idx == 0);
+	assert(!strcmp(optarg, "8M"));
+
+	optind = 0;
+	idx = -1;
+	c = getopt_long_only(COUNT_OF(test_argv), test_argv, "", longopts, &idx);
+	assert(c == '1');
+	assert(idx == 0);
+	assert(!strcmp(optarg, "8M"));
+}
+
+void test32() {
+	// Abbreviations that match multiple options are ambiguous, unless (as in glibc)
+	// all matching options are indistinguishable. getopt_long_only() always reports ambiguity.
+	const struct option identical[] = {
+		{"size", required_argument, NULL, '1'},
+		{"size", required_argument, NULL, '1'},
+		{NULL, 0, NULL, 0}
+	};
+	const struct option distinguishable[] = {
+		{"size", required_argument, NULL, '1'},
+		{"size", required_argument, NULL, '2'},
+		{NULL, 0, NULL, 0}
+	};
+
+	char *test_argv[] = {
+		"dummy",
+		"--siz=8M",
+	};
+
+	fputs("Situation: ambiguous long option abbreviations\n", stderr);
+
+	optind = 0;
+	int idx = -1;
+	int c = getopt_long(COUNT_OF(test_argv), test_argv, "", identical, &idx);
+	assert(c == '1');
+	assert(idx == 0);
+	assert(!strcmp(optarg, "8M"));
+
+	opterr = 0;
+
+	optind = 0;
+	idx = -1;
+	c = getopt_long_only(COUNT_OF(test_argv), test_argv, "", identical, &idx);
+	assert(c == '?');
+
+	optind = 0;
+	idx = -1;
+	c = getopt_long(COUNT_OF(test_argv), test_argv, "", distinguishable, &idx);
+	assert(c == '?');
+
+	optind = 0;
+	idx = -1;
+	c = getopt_long_only(COUNT_OF(test_argv), test_argv, "", distinguishable, &idx);
+	assert(c == '?');
+
+	opterr = 1;
+}
+
 int main() {
 	test1();
 	test2();
@@ -879,6 +957,8 @@ int main() {
 	test28();
 	test29();
 	test30();
+	test31();
+	test32();
 
 	return 0;
 }
