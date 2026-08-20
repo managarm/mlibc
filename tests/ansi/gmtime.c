@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <stdint.h>
@@ -25,6 +26,21 @@ static void check(int64_t time, int year, int mon, int mday, int hour, int min, 
 
 	// The result has to convert back to the value we started from.
 	assert(timegm(&tm) == t);
+}
+
+static void check_localtime(time_t t, int year, int mon, int mday, int hour, int min, int sec,
+		int yday, int wday) {
+	struct tm tm;
+	memset(&tm, 0, sizeof(tm));
+	assert(localtime_r(&t, &tm) == &tm);
+	assert(tm.tm_year == year - 1900);
+	assert(tm.tm_mon == mon - 1);
+	assert(tm.tm_mday == mday);
+	assert(tm.tm_hour == hour);
+	assert(tm.tm_min == min);
+	assert(tm.tm_sec == sec);
+	assert(tm.tm_yday == yday);
+	assert(tm.tm_wday == wday);
 }
 
 int main() {
@@ -53,6 +69,11 @@ int main() {
 		check(-2203977600, 1900, 2, 28, 0, 0, 0, 58, 3);
 		check(-2203891200, 1900, 3, 1, 0, 0, 0, 59, 4);
 	}
+
+	// POSIX TZ: EST is five hours west of UTC, with no DST.
+	assert(setenv("TZ", "EST5", 1) == 0);
+	tzset();
+	check_localtime(0, 1969, 12, 31, 19, 0, 0, 364, 3);
 
 	return 0;
 }
