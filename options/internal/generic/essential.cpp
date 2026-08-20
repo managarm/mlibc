@@ -1,3 +1,4 @@
+#include <internal-config.h>
 #include <string.h>
 #include <stdint.h>
 
@@ -207,9 +208,14 @@ void *memmove(void *dest, const void *src, size_t size) {
 	return dest;
 }
 
-size_t strlen(const char *s) {
+extern "C" [[gnu::visibility("protected")]]
+size_t __mlibc_strlen_default(const char *s) {
 	size_t len = 0;
 	for(size_t i = 0; s[i]; i++)
 		len++;
 	return len;
 }
+
+#if !defined(MLIBC_ARCH_HAS_STRLEN) || !MLIBC_IFUNCS_SUPPORTED
+size_t strlen(const char *s) __attribute__((alias("__mlibc_strlen_default")));
+#endif
