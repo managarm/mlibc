@@ -67,6 +67,7 @@ all_test_cases = [
 	'bsd/sbrk',
 	'bsd/getloadavg',
 	'posix/sched_setscheduler',
+	'posix/termios_speed',
 	'posix/inet_ntop',
 	'posix/inet_pton',
 	'posix/access',
