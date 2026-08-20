@@ -89,6 +89,7 @@ if not no_headers
         install_headers(
                 'include/astral/syscall.h',
                 'include/astral/archctl.h',
+                'include/astral/sysctl.h',
                 subdir: 'astral',
                 follow_symlinks: true,
         )

@@ -1,9 +1,12 @@
 #include <bits/ensure.h>
+#include <net/if.h>
 #include <mlibc/debug.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <errno.h>
+#include <ifaddrs.h>
 #include <astral/syscall.h>
 #include <astral/archctl.h>
+#include <astral/sysctl.h>
 #include <string.h>
 #include <stdlib.h>
 #include <asm/ioctls.h>
@@ -11,10 +14,50 @@
 #include <sys/select.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <sys/statfs.h>
+#include <sys/statvfs.h>
+#include <sys/sysinfo.h>
+#include <sys/times.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <sys/sysmacros.h>
+
+typedef struct {
+	struct sockaddr addr;
+	struct sockaddr broadaddr;
+	struct sockaddr netmask;
+	struct sockaddr hwaddr;
+	short flags;
+	int mtu;
+} astral_net_info_t;
+
+typedef struct {
+	struct ifaddrs ifa;
+	unsigned int if_index;
+	char if_name[IFNAMSIZ];
+	struct sockaddr addr;
+	struct sockaddr broadaddr;
+	struct sockaddr netmask;
+} astral_ifaddrs_t;
 
 namespace mlibc {
+	int Sysdeps<Sysconf>::operator()(int number, long *result) {
+		if (number != _SC_NPROCESSORS_CONF && number != _SC_NPROCESSORS_ONLN)
+			return EINVAL;
+
+		int name[] = {SYS_CTL_HW, SYS_CTL_HW_CPUS_ONLINE};
+		size_t cpus_online;
+		size_t size = sizeof(cpus_online);
+		long ret;
+		int error = syscall(SYSCALL_SYSCTL, &ret, (uint64_t)name, 2,
+				(uint64_t)&cpus_online, (uint64_t)&size, 0, 0);
+		if (error)
+			return error;
+
+		*result = cpus_online;
+		return 0;
+	}
+
 	int Sysdeps<SetGroups>::operator()(size_t size, const gid_t *list) {
 		(void)size;
 		(void)list;
@@ -31,13 +74,331 @@ namespace mlibc {
 		return 0;
 	}
 
+	int Sysdeps<GetLoadavg>::operator()(double *samples) {
+		struct sysinfo si;
+		if(int e = sysdep<Sysinfo>(&si); e)
+			return e;
+
+		for(int i = 0; i < 3; i++)
+			samples[i] = (double)si.loads[i] / (1 << SI_LOAD_SHIFT);
+
+		return 0;
+	}
+
+	int Sysdeps<Times>::operator()(struct tms *tms, clock_t *out) {
+		if(tms) {
+			tms->tms_utime = 0;
+			tms->tms_stime = 0;
+			tms->tms_cutime = 0;
+			tms->tms_cstime = 0;
+		}
+
+		*out = 0;
+		return 0;
+	}
+
+	int Sysdeps<Fadvise>::operator()(int fd, off_t offset, off_t length, int advice) {
+		(void)fd;
+		(void)offset;
+		(void)length;
+		(void)advice;
+		return 0;
+	}
+
+	int Sysdeps<Setxattr>::operator()(const char *path, const char *name,
+		const void *val, size_t size, int flags) {
+		(void)path;
+		(void)name;
+		(void)val;
+		(void)size;
+		(void)flags;
+		return ENOTSUP;
+	}
+
+	int Sysdeps<Lsetxattr>::operator()(const char *path, const char *name,
+		const void *val, size_t size, int flags) {
+		(void)path;
+		(void)name;
+		(void)val;
+		(void)size;
+		(void)flags;
+		return ENOTSUP;
+	}
+
+	int Sysdeps<Fsetxattr>::operator()(int fd, const char *name, const void *val,
+		size_t size, int flags) {
+		(void)fd;
+		(void)name;
+		(void)val;
+		(void)size;
+		(void)flags;
+		return ENOTSUP;
+	}
+
+	int Sysdeps<Getxattr>::operator()(const char *path, const char *name,
+		void *val, size_t size, ssize_t *nread) {
+		(void)path;
+		(void)name;
+		(void)val;
+		(void)size;
+		(void)nread;
+		return ENOTSUP;
+	}
+
+	int Sysdeps<Lgetxattr>::operator()(const char *path, const char *name,
+		void *val, size_t size, ssize_t *nread) {
+		(void)path;
+		(void)name;
+		(void)val;
+		(void)size;
+		(void)nread;
+		return ENOTSUP;
+	}
+
+	int Sysdeps<Fgetxattr>::operator()(int fd, const char *name, void *val,
+		size_t size, ssize_t *nread) {
+		(void)fd;
+		(void)name;
+		(void)val;
+		(void)size;
+		(void)nread;
+		return ENOTSUP;
+	}
+
+	int Sysdeps<Listxattr>::operator()(const char *path, char *list, size_t size,
+		ssize_t *nread) {
+		(void)path;
+		(void)list;
+		(void)size;
+		(void)nread;
+		return ENOTSUP;
+	}
+
+	int Sysdeps<Llistxattr>::operator()(const char *path, char *list, size_t size,
+		ssize_t *nread) {
+		(void)path;
+		(void)list;
+		(void)size;
+		(void)nread;
+		return ENOTSUP;
+	}
+
+	int Sysdeps<Flistxattr>::operator()(int fd, char *list, size_t size,
+		ssize_t *nread) {
+		(void)fd;
+		(void)list;
+		(void)size;
+		(void)nread;
+		return ENOTSUP;
+	}
+
+	int Sysdeps<GetCurrentStackInfo>::operator()(void **stack_base, size_t *stack_size) {
+		*stack_size = 1024 * 1024 * 4;
+		*stack_base = (void *)(0x0000800000000000 - *stack_size);
+		return 0;
+	}
+
+#ifndef MLIBC_BUILDING_RTLD
+	int Sysdeps<Getifaddrs>::operator()(struct ifaddrs **out) {
+		struct ifaddrs *list = nullptr;
+
+		int dirfd;
+		int error = sysdep<Open>("/dev/", O_DIRECTORY | O_RDONLY, 0, &dirfd);
+		if(error)
+			return error;
+
+		struct dirent dent;
+		size_t bytes_read;
+		for(;;) {
+			error = sysdep<ReadEntries>(dirfd, &dent, sizeof(dent), &bytes_read);
+			if(error)
+				goto leave;
+
+			if(bytes_read == 0)
+				break;
+
+			struct stat st;
+			if(sysdep<Stat>(fsfd_target::fd_path, dirfd, dent.d_name, AT_SYMLINK_NOFOLLOW, &st))
+				continue;
+
+			if(!S_ISCHR(st.st_mode) || major(st.st_rdev) != 10)
+				continue;
+
+			if(strlen(dent.d_name) >= IFNAMSIZ)
+				continue;
+
+			int fd;
+			error = sysdep<Openat>(dirfd, dent.d_name, 0, 0, &fd);
+			if(error)
+				continue;
+
+			astral_net_info_t net_info = {};
+			int r;
+			error = sysdep<Ioctl>(fd, 0x1337631, &net_info, &r);
+			if(error) {
+				sysdep<Close>(fd);
+				continue;
+			}
+
+			astral_ifaddrs_t *next = (astral_ifaddrs_t *)calloc(1, sizeof(*next));
+			if(!next) {
+				sysdep<Close>(fd);
+				error = ENOMEM;
+				goto leave;
+			}
+
+			next->ifa.ifa_next = list;
+			next->if_index = minor(st.st_rdev) + 1;
+
+			strcpy(next->if_name, dent.d_name);
+			next->ifa.ifa_name = next->if_name;
+
+			next->ifa.ifa_flags = net_info.flags;
+
+			if(net_info.addr.sa_family) {
+				memcpy(&next->addr, &net_info.addr, sizeof(next->addr));
+				next->ifa.ifa_addr = &next->addr;
+			}
+
+			if(net_info.netmask.sa_family) {
+				memcpy(&next->netmask, &net_info.netmask, sizeof(next->netmask));
+				next->ifa.ifa_netmask = &next->netmask;
+			}
+
+			if(net_info.broadaddr.sa_family) {
+				memcpy(&next->broadaddr, &net_info.broadaddr, sizeof(next->broadaddr));
+				next->ifa.ifa_broadaddr = &next->broadaddr;
+			}
+
+			next->ifa.ifa_data = nullptr;
+
+			list = &next->ifa;
+			sysdep<Close>(fd);
+		}
+
+		*out = list;
+
+leave:
+		sysdep<Close>(dirfd);
+		if(error)
+			freeifaddrs(list);
+		return error;
+	}
+
+	int Sysdeps<IfIndextoname>::operator()(unsigned int index, char *name) {
+		if(!index || !name)
+			return EINVAL;
+
+		struct ifaddrs *ifaddrs;
+		if(int e = sysdep<Getifaddrs>(&ifaddrs); e)
+			return e;
+
+		int error = ENXIO;
+		for(struct ifaddrs *it = ifaddrs; it; it = it->ifa_next) {
+			astral_ifaddrs_t *entry = (astral_ifaddrs_t *)it;
+			if(entry->if_index != index)
+				continue;
+
+			strcpy(name, entry->if_name);
+			error = 0;
+			break;
+		}
+
+		freeifaddrs(ifaddrs);
+		return error;
+	}
+
+	int Sysdeps<IfNametoindex>::operator()(const char *name, unsigned int *ret) {
+		if(!name)
+			return EINVAL;
+
+		struct ifaddrs *ifaddrs;
+		if(int e = sysdep<Getifaddrs>(&ifaddrs); e)
+			return e;
+
+		int error = ENXIO;
+		for(struct ifaddrs *it = ifaddrs; it; it = it->ifa_next) {
+			astral_ifaddrs_t *entry = (astral_ifaddrs_t *)it;
+			if(strcmp(entry->if_name, name))
+				continue;
+
+			*ret = entry->if_index;
+			error = 0;
+			break;
+		}
+
+		freeifaddrs(ifaddrs);
+		return error;
+	}
+
+	int Sysdeps<IfNameindex>::operator()(struct if_nameindex **out) {
+		struct ifaddrs *ifaddrs;
+		if(int e = sysdep<Getifaddrs>(&ifaddrs); e)
+			return e;
+
+		struct ifaddrs *it = ifaddrs;
+		int count = 0;
+		while(it) {
+			++count;
+			it = it->ifa_next;
+		}
+
+		struct if_nameindex *arr = (struct if_nameindex *)malloc(sizeof(struct if_nameindex) * (count + 1));
+		if(!arr) {
+			freeifaddrs(ifaddrs);
+			return ENOMEM;
+		}
+
+		int i = 0;
+		for(struct ifaddrs *it = ifaddrs; it; it = it->ifa_next) {
+			astral_ifaddrs_t *entry = (astral_ifaddrs_t *)it;
+
+			arr[i].if_index = entry->if_index;
+			arr[i].if_name = strdup(entry->if_name);
+			if(!arr[i].if_name) {
+				for(int j = 0; j < i; ++j)
+					free(arr[j].if_name);
+				free(arr);
+				freeifaddrs(ifaddrs);
+				return ENOMEM;
+			}
+
+			++i;
+		}
+
+		arr[count].if_index = 0;
+		arr[count].if_name = nullptr;
+
+		*out = arr;
+		freeifaddrs(ifaddrs);
+
+		return 0;
+	}
+
+	void Sysdeps<IfFreeNameindex>::operator()(struct if_nameindex *ifn) {
+		if(!ifn)
+			return;
+
+		for(auto it = ifn; it->if_index || it->if_name; ++it)
+			free(it->if_name);
+		free(ifn);
+	}
+#endif
+
+	int Sysdeps<EventfdCreate>::operator()(unsigned int initval, int flags, int *fd) {
+		long ret;
+		int error = syscall(SYSCALL_EVENTFD, &ret, initval, flags);
+		if (error)
+			return error;
+
+		*fd = ret;
+		return 0;
+	}
+
 	int Sysdeps<GetSockopt>::operator()(int fd, int layer, int number,
 		void *__restrict buffer, socklen_t *__restrict size) {
-		(void)size;
-		(void)buffer;
-		// TODO unstub
-		mlibc::infoLogger() << "getsockopt: " << fd << " " << layer << " " << number << frg::endlog;
-		return 0;
+		long ret;
+		return syscall(SYSCALL_GETSOCKOPT, &ret, fd, layer, number, (uint64_t)buffer, (uint64_t)size);
 	}
 
 	int Sysdeps<InetConfigured>::operator()(bool *ipv4, bool *ipv6) {
@@ -45,6 +406,71 @@ namespace mlibc {
 		*ipv4 = true;
 		*ipv6 = false;
 		return 0;
+	}
+
+	int Sysdeps<Unlockpt>::operator()(int fd) {
+		int r;
+		// unlockpt is a no-op kernel side, so use this to check for an invalid pty
+		return sysdep<Ioctl>(fd, 0x13376167, nullptr, &r);
+	}
+
+	int Sysdeps<Statfs>::operator()(const char *path, struct statfs *buf) {
+		struct statvfs stvfs;
+		int ret = sysdep<Statvfs>(path, &stvfs);
+		if(ret)
+			return ret;
+
+		buf->f_type = 0; /* statvfs has no f_type */
+		buf->f_blocks = stvfs.f_blocks;
+		buf->f_bfree = stvfs.f_bfree;
+		buf->f_bavail = stvfs.f_bavail;
+		buf->f_files = stvfs.f_files;
+		buf->f_ffree = stvfs.f_ffree;
+		buf->f_fsid.__val[0] = (int)(stvfs.f_fsid & 0xFFFFFFFF);
+		buf->f_fsid.__val[1] = (int)(stvfs.f_fsid >> 32);
+		buf->f_namelen = stvfs.f_namemax;
+		buf->f_flags = stvfs.f_flag;
+		buf->f_bsize  = stvfs.f_frsize;
+		buf->f_frsize = stvfs.f_bsize;
+
+		return 0;
+	}
+
+	int Sysdeps<Fstatfs>::operator()(int fd, struct statfs *buf) {
+		struct statvfs stvfs;
+		int ret = sysdep<Fstatvfs>(fd, &stvfs);
+		if(ret)
+			return ret;
+
+		buf->f_type = 0; /* statvfs has no f_type */
+		buf->f_bsize = stvfs.f_bsize;
+		buf->f_bfree = stvfs.f_bfree;
+		buf->f_bavail = stvfs.f_bavail;
+		buf->f_files = stvfs.f_files;
+		buf->f_ffree = stvfs.f_ffree;
+		buf->f_fsid.__val[0] = (int)(stvfs.f_fsid & 0xFFFFFFFF);
+		buf->f_fsid.__val[1] = (int)(stvfs.f_fsid >> 32);
+		buf->f_namelen = stvfs.f_namemax;
+		buf->f_flags = stvfs.f_flag;
+		buf->f_bsize  = stvfs.f_frsize;
+		buf->f_frsize = stvfs.f_bsize;
+
+		return 0;
+	}
+
+	int Sysdeps<Statvfs>::operator()(const char *path, struct statvfs *out) {
+		long r;
+		return syscall(SYSCALL_FSTATVFSAT, &r, AT_FDCWD, (uint64_t)path, (uint64_t)out, 0);
+	}
+
+	int Sysdeps<Fstatvfs>::operator()(int fd, struct statvfs *out) {
+		long r;
+		return syscall(SYSCALL_FSTATVFS, &r, fd, (uint64_t)out);
+	}
+
+	void Sysdeps<Yield>::operator()() {
+		long r;
+		syscall(SYSCALL_YIELD, &r);
 	}
 
 	int Sysdeps<Readv>::operator()(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
@@ -84,6 +510,11 @@ namespace mlibc {
 		long e = syscall(SYSCALL_NICE, &r, nice);
 		*ret = r;
 		return e;
+	}
+
+	int Sysdeps<SetPriority>::operator()(int which, id_t who, int prio) {
+		long ret;
+		return syscall(SYSCALL_SETPRIORITY, &ret, which, who, prio);
 	}
 
 	int Sysdeps<Shutdown>::operator()(int sockfd, int how) {
@@ -487,8 +918,15 @@ namespace mlibc {
 		return err;
 	}
 
+	int Sysdeps<ThreadSetname>::operator()(void *tcb, const char *name) {
+		(void)tcb;
+		(void)name;
+		return 0;
+	}
+
 	int Sysdeps<SetSockopt>::operator()(int fd, int layer, int number, const void *buffer, socklen_t size) {
 		long ret;
+		mlibc::infoLogger() << "setsockopt: fd " << fd << " layer " << layer << " number " << number << frg::endlog;
 		return syscall(SYSCALL_SETSOCKOPT, &ret, fd, layer, number, (uint64_t)buffer, size);
 	}
 
@@ -509,6 +947,11 @@ namespace mlibc {
 		long err = syscall(SYSCALL_SOCKET, &ret, family, type, protocol);
 		*fd = ret;
 		return err;
+	}
+
+	int Sysdeps<Renameat2>::operator()(int old_dirfd, const char *old_path, int new_dirfd, const char *new_path, unsigned int flags) {
+		long ret;
+		return syscall(SYSCALL_RENAMEAT, &ret, old_dirfd, (uint64_t)old_path, new_dirfd, (uint64_t)new_path, flags);
 	}
 
 	int Sysdeps<Renameat>::operator()(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
@@ -560,6 +1003,16 @@ namespace mlibc {
 		(void)act;
 		int res;
 		return sysdep<Ioctl>(fd, TCSETS, (void *)attr, &res);
+	}
+
+	int Sysdeps<Tcgetwinsize>::operator()(int fd, struct winsize *winsz) {
+		int res;
+		return sysdep<Ioctl>(fd, TIOCGWINSZ, (void *)winsz, &res);
+	}
+
+	int Sysdeps<Tcsetwinsize>::operator()(int fd, const struct winsize *winsz) {
+		int res;
+		return sysdep<Ioctl>(fd, TIOCSWINSZ, (void *)winsz, &res);
 	}
 
 	int Sysdeps<Poll>::operator()(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
@@ -928,6 +1381,15 @@ namespace mlibc {
 		struct timespec ts;
 		long ret;
 		int err = syscall(SYSCALL_CLOCKGET, &ret, clock, (uint64_t)&ts);
+		*secs = ts.tv_sec;
+		*nanos = ts.tv_nsec;
+		return err;
+	}
+
+	int Sysdeps<ClockGetres>::operator()(int clock, time_t *secs, long *nanos) {
+		struct timespec ts;
+		long ret;
+		int err = syscall(SYSCALL_CLOCK_GETRES, &ret, clock, (uint64_t)&ts);
 		*secs = ts.tv_sec;
 		*nanos = ts.tv_nsec;
 		return err;
