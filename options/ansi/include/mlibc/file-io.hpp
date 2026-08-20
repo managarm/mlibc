@@ -96,7 +96,7 @@ private:
 	int _init_bufmode();
 
 	int _write_back();
-	int _save_pos();
+	int _save_pos(bool *preserve_buffer);
 
 	void _ensure_allocation();
 

@@ -13,6 +13,32 @@
 #define TEST_FILE "mlibc-dup2-stream.tmp"
 #endif
 
+static void test_read_ahead_after_replacement(void) {
+	int file_fd = open(TEST_FILE, O_RDWR | O_CREAT | O_TRUNC, 0600);
+	assert(file_fd >= 0);
+	assert(write(file_fd, "ABC", 3) == 3);
+	assert(lseek(file_fd, 0, SEEK_SET) == 0);
+
+	FILE *stream = fdopen(file_fd, "r");
+	assert(stream);
+	assert(fgetc(stream) == 'A');
+
+	int pipe_fds[2];
+	assert(pipe(pipe_fds) == 0);
+	assert(write(pipe_fds[1], "P", 1) == 1);
+	assert(close(pipe_fds[1]) == 0);
+	assert(dup2(pipe_fds[0], file_fd) == file_fd);
+	assert(close(pipe_fds[0]) == 0);
+
+	assert(fflush(stream) == 0);
+	assert(fgetc(stream) == 'B');
+	assert(fgetc(stream) == 'C');
+	assert(fgetc(stream) == 'P');
+
+	assert(fclose(stream) == 0);
+	assert(unlink(TEST_FILE) == 0);
+}
+
 int main(void) {
 	int file_fd = open(TEST_FILE, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 	assert(file_fd >= 0);
@@ -44,5 +70,7 @@ int main(void) {
 	assert(fclose(stream) == 0);
 	assert(close(pipe_fds[0]) == 0);
 	assert(unlink(TEST_FILE) == 0);
+
+	test_read_ahead_after_replacement();
 	return 0;
 }
