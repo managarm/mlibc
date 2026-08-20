@@ -21,6 +21,7 @@
 #include <frg/spinlock.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
+#include <mlibc/atfork.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/thread.hpp>
 #include <mlibc/tcb.hpp>
@@ -732,27 +733,7 @@ int pthread_cancel(pthread_t thread) {
 }
 
 int pthread_atfork(void (*prepare) (void), void (*parent) (void), void (*child) (void)) {
-	auto self = mlibc::get_current_tcb();
-
-	auto hand = frg::construct<Tcb::AtforkHandler>(getAllocator());
-	if (!hand)
-		return ENOMEM;
-
-	hand->prepare = prepare;
-	hand->parent = parent;
-	hand->child = child;
-	hand->next = nullptr;
-	hand->prev = self->atforkEnd;
-
-	if (self->atforkEnd)
-		self->atforkEnd->next = hand;
-
-	self->atforkEnd = hand;
-
-	if (!self->atforkBegin)
-		self->atforkBegin = self->atforkEnd;
-
-	return 0;
+	return mlibc::atfork_register(prepare, parent, child);
 }
 
 // ----------------------------------------------------------------------------
