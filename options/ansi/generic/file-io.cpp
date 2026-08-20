@@ -433,7 +433,7 @@ int abstract_file::_save_pos(bool *preserve_buffer) {
 	if (int e = _init_bufmode(); e)
 		return e;
 
-	if (_type == stream_type::file_like && _bufmode != buffer_mode::no_buffer) {
+	if (_bufmode != buffer_mode::no_buffer) {
 		off_t new_offset;
 		auto seek_offset = (off_t(__offset) - off_t(__io_offset));
 		if (int e = io_seek(seek_offset, SEEK_CUR, &new_offset); e) {
@@ -450,6 +450,7 @@ int abstract_file::_save_pos(bool *preserve_buffer) {
 				mlibc::infoLogger() << "hit io_seek() error " << e << frg::endlog;
 			return e;
 		}
+		_type = stream_type::file_like;
 		return 0;
 	}
 	return 0; // nothing to do for the rest
