@@ -377,8 +377,6 @@ int thread_mutex_unlock(struct __mlibc_mutex *mutex) {
 	if ((flags & __mlibc_mutex::mutexErrorCheck) && !(state & __mlibc_mutex::mutex_owner_mask))
 		return EINVAL;
 
-	__ensure((state & __mlibc_mutex::mutex_owner_mask) == this_tid);
-
 	if(state & __mlibc_mutex::mutex_waiters_bit) {
 		// Wake the futex if there were waiters. Since the mutex might not exist at this location
 		// anymore, we must conservatively ignore EACCES and EINVAL which may occur as a result.
