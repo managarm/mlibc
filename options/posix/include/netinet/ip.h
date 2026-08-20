@@ -9,6 +9,13 @@ extern "C" {
 #include <sys/types.h>
 #include <netinet/in.h>
 
+#define IPTOS_ECN_MASK 0x3
+#define IPTOS_ECN(ecn) ((ecn) & IPTOS_ECN_MASK)
+#define IPTOS_ECN_NOT_ECT 0x0
+#define IPTOS_ECN_ECT1 0x1
+#define IPTOS_ECN_ECT0 0x2
+#define IPTOS_ECN_CE 0x3
+
 #define IPTOS_TOS_MASK 0x1E
 #define IPTOS_TOS(tos) ((tos) & IPTOS_TOS_MASK)
 #define IPTOS_LOWDELAY 0x10
