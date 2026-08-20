@@ -42,6 +42,76 @@ static void test_read_ahead_after_replacement(void) {
 	ret = unlink(TEST_FILE); assert(ret == 0);
 }
 
+static void test_update_stream_after_failed_seek(void) {
+	int ret, c;
+	ssize_t io_size;
+	off_t offset;
+	int file_fd = open(TEST_FILE, O_RDWR | O_CREAT | O_TRUNC, 0600);
+	assert(file_fd >= 0);
+	io_size = write(file_fd, "ABC", 3);
+	assert(io_size == 3);
+	offset = lseek(file_fd, 0, SEEK_SET);
+	assert(offset == 0);
+
+	FILE *stream = fdopen(file_fd, "r+");
+	assert(stream);
+	c = fgetc(stream);
+	assert(c == 'A');
+
+	int pipe_fds[2];
+	ret = pipe(pipe_fds);
+	assert(ret == 0);
+	ret = dup2(pipe_fds[1], file_fd);
+	assert(ret == file_fd);
+	ret = close(pipe_fds[1]);
+	assert(ret == 0);
+
+	errno = 0;
+	ret = fseek(stream, 0, SEEK_CUR);
+	assert(ret == -1);
+	assert(errno == ESPIPE);
+	assert(!ferror(stream));
+
+	errno = 0;
+	ret = fputc('X', stream);
+	assert(ret != EOF);
+	ret = fflush(stream);
+	assert(ret == EOF);
+	assert(errno == ESPIPE);
+	assert(!ferror(stream));
+
+	ret = fclose(stream);
+	assert(ret == EOF);
+	ret = close(pipe_fds[0]);
+	assert(ret == 0);
+	ret = unlink(TEST_FILE);
+	assert(ret == 0);
+}
+
+static void test_read_after_write(void) {
+	int ret, c;
+	ssize_t io_size;
+	off_t offset;
+	int file_fd = open(TEST_FILE, O_RDWR | O_CREAT | O_TRUNC, 0600);
+	assert(file_fd >= 0);
+	io_size = write(file_fd, "ABC", 3);
+	assert(io_size == 3);
+	offset = lseek(file_fd, 0, SEEK_SET);
+	assert(offset == 0);
+
+	FILE *stream = fdopen(file_fd, "r+");
+	assert(stream);
+	ret = fputc('X', stream);
+	assert(ret != EOF);
+	c = fgetc(stream);
+	assert(c == 'B');
+
+	ret = fclose(stream);
+	assert(ret == 0);
+	ret = unlink(TEST_FILE);
+	assert(ret == 0);
+}
+
 int main(void) {
 	int ret;
 	ssize_t io_size;
@@ -89,5 +159,7 @@ int main(void) {
 	ret = unlink(TEST_FILE);
 	assert(ret == 0);
 	test_read_ahead_after_replacement();
+	test_update_stream_after_failed_seek();
+	test_read_after_write();
 	return 0;
 }
