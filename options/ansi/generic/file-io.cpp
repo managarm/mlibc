@@ -502,9 +502,10 @@ int fd_file::reopen(const char *path, const char *mode) {
 			getAllocator().free(const_cast<char *>(reopen_path));
 	});
 
-	// glibc and musl preserve the original file descriptor across freopen().
-	// Keep it open until dup2() atomically replaces it: closing it before opening
-	// the replacement would let an unrelated thread reuse and then lose old_fd.
+	// Deliberately deviate from POSIX's close-before-open ordering to match glibc
+	// and musl, which preserve the original descriptor across freopen(). Keep it
+	// open until dup2() atomically replaces it: closing it before opening the
+	// replacement would let an unrelated thread reuse and then lose old_fd.
 	int old_fd = _fd;
 	bool old_fd_is_open = true;
 	// POSIX requires freopen() to proceed even if flushing the old stream fails.
