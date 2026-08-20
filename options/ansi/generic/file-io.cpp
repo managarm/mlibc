@@ -295,9 +295,11 @@ int abstract_file::flush() {
 			return e;
 	}
 
-	if (int e = _save_pos(); e)
+	bool preserve_buffer;
+	if (int e = _save_pos(preserve_buffer); e)
 		return e;
-	purge();
+	if(!preserve_buffer)
+		purge();
 	return post_flush();
 }
 
@@ -427,7 +429,9 @@ int abstract_file::_write_back() {
 	return 0;
 }
 
-int abstract_file::_save_pos() {
+int abstract_file::_save_pos(bool &preserve_buffer) {
+	preserve_buffer = false;
+
 	if (int e = _init_type(); e)
 		return e;
 	if (int e = _init_bufmode(); e)
@@ -440,6 +444,9 @@ int abstract_file::_save_pos() {
 			if(e == ESPIPE) {
 				// See the corresponding resynchronization in _write_back().
 				_type = stream_type::pipe_like;
+				// The descriptor no longer supports restoring the file position.
+				// Retain unread input rather than silently dropping it.
+				preserve_buffer = true;
 				return 0;
 			}
 			__status_bits |= __MLIBC_ERROR_BIT;
