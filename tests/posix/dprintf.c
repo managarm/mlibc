@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <errno.h>
+#include <signal.h>
 
 #ifdef USE_HOST_LIBC
 #define TEST_FILE "dprintf-host-libc.tmp"
@@ -37,5 +38,17 @@ int main() {
 	// All the tests pass, now we can unlink the file.
 	ret = unlink(TEST_FILE);
 	assert(ret == 0);
+
+	void (*old_sigpipe)(int) = signal(SIGPIPE, SIG_IGN);
+	assert(old_sigpipe != SIG_ERR);
+	int pipe_fds[2];
+	assert(pipe(pipe_fds) == 0);
+	assert(close(pipe_fds[0]) == 0);
+	errno = 0;
+	assert(dprintf(pipe_fds[1], "x") == -1);
+	assert(errno == EPIPE);
+	assert(close(pipe_fds[1]) == 0);
+	assert(signal(SIGPIPE, old_sigpipe) != SIG_ERR);
+
 	return 0;
 }

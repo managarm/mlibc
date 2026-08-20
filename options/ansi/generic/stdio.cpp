@@ -30,8 +30,8 @@
 
 template<typename Char, typename F>
 struct PrintfAgent {
-	PrintfAgent(F *formatter, frg::va_struct *vsp)
-	: _formatter{formatter}, _vsp{vsp} {
+	PrintfAgent(F *formatter, frg::va_struct *vsp, int *format_error = nullptr)
+	: _formatter{formatter}, _vsp{vsp}, _format_error{format_error} {
 		auto l = mlibc::getActiveLocale();
 		if constexpr (std::is_same_v<Char, char>) {
 			locale_opts = frg::locale_options(
@@ -72,8 +72,11 @@ struct PrintfAgent {
 					char c_buf[MB_LEN_MAX];
 					mbstate_t shift_state = {};
 					size_t res = wcrtomb(c_buf, c, &shift_state);
-					if (res == size_t(-1))
+					if (res == size_t(-1)) {
+						if(_format_error)
+							*_format_error = errno;
 						return frg::format_error::agent_error;
+					}
 					_formatter->append(c_buf, res);
 				} else {
 					_formatter->append(c);
@@ -178,6 +181,7 @@ private:
 	F *_formatter;
 	frg::locale_options<Char> locale_opts;
 	frg::va_struct *_vsp;
+	int *_format_error;
 
 	wchar_t wideDecimalPoint[2] = { L'\0', L'\0' };
 	wchar_t wideThousandSeparator[2] = { L'\0', L'\0' };
@@ -1759,11 +1763,13 @@ int vfprintf(FILE *__restrict stream, const char *__restrict format, __builtin_v
 	auto file = static_cast<mlibc::abstract_file *>(stream);
 	frg::unique_lock lock(file->_lock);
 	StreamPrinter<char> p{file};
+	int format_error = 0;
 	if (mlibc::globalConfig().debugPrintf)
 		mlibc::infoLogger() << "vfprintf(\"" << format << "\")" << frg::endlog;
-	auto res = frg::printf_format<char, NL_ARGMAX>(PrintfAgent<char, decltype(p)>{&p, &vs}, format, &vs);
+	auto res = frg::printf_format<char, NL_ARGMAX>(
+			PrintfAgent<char, decltype(p)>{&p, &vs, &format_error}, format, &vs);
 	if (!res) {
-		errno = EINVAL;
+		errno = format_error ? format_error : EINVAL;
 		return -1;
 	}
 	if (p.failed)
