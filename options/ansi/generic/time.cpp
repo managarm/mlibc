@@ -5,6 +5,7 @@
 #include <string.h>
 #include <time.h>
 #include <limits.h>
+#include <limits>
 #include <stdint.h>
 #include <wchar.h>
 #include <stdlib.h>
@@ -748,30 +749,34 @@ time_t time(time_t *out) {
 
 namespace {
 
-constexpr static time_t days_from_civil(int year, unsigned int month, unsigned int day) noexcept {
-	time_t y = year;
+constexpr static int64_t days_from_civil(int64_t year, unsigned int month, unsigned int day) noexcept {
+	int64_t y = year;
 	y -= month <= 2;
-	const time_t era = (y >= 0 ? y : y - 399) / 400;
+	const int64_t era = (y >= 0 ? y : y - 399) / 400;
 	const unsigned int yoe = static_cast<unsigned int>(y - era * 400); // [0, 399]
 	const unsigned int doy = (153 * (month > 2 ? month - 3 : month + 9) + 2) / 5 + day - 1;
 	const unsigned int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
-	return era * 146097 + static_cast<time_t>(doe) - 719468;
+	return era * 146097 + static_cast<int64_t>(doe) - 719468;
 }
 
-void civil_from_days(time_t days_since_epoch, int *year, unsigned int *month, unsigned int *day) {
-	time_t time = days_since_epoch + 719468;
-	int era = (time >= 0 ? time : time - 146096) / 146097;
+bool civil_from_days(time_t days_since_epoch, int *year, unsigned int *month, unsigned int *day) {
+	int64_t time = static_cast<int64_t>(days_since_epoch) + 719468;
+	int64_t era = (time >= 0 ? time : time - 146096) / 146097;
 	unsigned int doe = static_cast<unsigned int>(time - era * 146097);
 	unsigned int yoe = (doe - doe/1460 + doe/36524 - doe/146096) / 365;
-	int y = static_cast<int>(yoe) + era * 400;
+	int64_t y = static_cast<int64_t>(yoe) + era * 400;
 	unsigned int doy = doe - (365*yoe + yoe/4 - yoe/100);
 	unsigned int mp = (5*doy + 2)/153;
 	unsigned int d = doy - (153*mp+2)/5 + 1;
 	unsigned int m = mp + (mp < 10 ? 3 : -9);
 
-	*year = y + (m <= 2);
+	y += m <= 2;
+	if(y - 1900 < INT_MIN || y - 1900 > INT_MAX)
+		return false;
+	*year = static_cast<int>(y);
 	*month = m;
 	*day = d;
+	return true;
 }
 
 void weekday_from_days(time_t days_since_epoch, unsigned int *weekday) {
@@ -784,7 +789,7 @@ static bool is_leap_year(int year) {
 }
 
 // Returns the one-based day of the year.
-void yearday_from_date(unsigned int year, unsigned int month, unsigned int day, unsigned int *yday) {
+void yearday_from_date(int year, unsigned int month, unsigned int day, unsigned int *yday) {
 	static const unsigned int days_before_month[12] = {
 		0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
 	};
@@ -795,8 +800,8 @@ void yearday_from_date(unsigned int year, unsigned int month, unsigned int day, 
 }
 
 // Given a rule and a year, compute the UTC time of the transition.
-time_t time_from_rule(const Rule &rule, int year, time_t offset_before_transition) {
-	time_t days;
+int64_t time_from_rule(const Rule &rule, int year, time_t offset_before_transition) {
+	int64_t days;
 	if (rule.type == JULIAN_DAY) {
 		// Jn: Julian day, ignoring Feb 29
 		uint16_t day = rule.day - 1;
@@ -808,12 +813,12 @@ time_t time_from_rule(const Rule &rule, int year, time_t offset_before_transitio
 		days = days_from_civil(year, 1, 1) + rule.day;
 	} else if (rule.type == MONTH_NTH_DAY_OF_WEEK) {
 		// Mm.n.d: Month, week, weekday (month 1-12, week 1-5, weekday 0=Sun)
-		time_t first_day = days_from_civil(year, rule.month, 1);
+		int64_t first_day = days_from_civil(year, rule.month, 1);
 		unsigned int first_wday;
 		weekday_from_days(first_day, &first_wday);
 		int day = 1 + ((7 + rule.day - first_wday) % 7) + (rule.week - 1) * 7;
 		// If week==5, but that day is past the end of the month, go back by 7 days
-		time_t next_month = days_from_civil(year + (rule.month == 12), rule.month % 12 + 1, 1);
+		int64_t next_month = days_from_civil(year + (rule.month == 12), rule.month % 12 + 1, 1);
 		if (rule.week == 5 && first_day + day - 1 >= next_month)
 			day -= 7;
 		days = first_day + day - 1;
@@ -837,18 +842,20 @@ bool is_in_dst(time_t unix_gmt) {
 	time_t days_since_epoch = unix_gmt / (60 * 60 * 24);
 	if(unix_gmt % (60 * 60 * 24) < 0)
 		days_since_epoch--;
-	civil_from_days(days_since_epoch, &year, &_month, &_day);
+	if(!civil_from_days(days_since_epoch, &year, &_month, &_day))
+		return false;
 
 	// Get the start and end transition days of the year
-	time_t start_time = time_from_rule(rules[0], year, tt_infos[tznameNormal].tt_gmtoff);
-	time_t end_time = time_from_rule(rules[1], year, tt_infos[tznameDST].tt_gmtoff);
+	int64_t start_time = time_from_rule(rules[0], year, tt_infos[tznameNormal].tt_gmtoff);
+	int64_t end_time = time_from_rule(rules[1], year, tt_infos[tznameDST].tt_gmtoff);
+	int64_t unix_time = unix_gmt;
 
 	// Check if the unix_gmt falls within the DST period
 	if (start_time <= end_time) {
-		return unix_gmt >= start_time && unix_gmt < end_time;
+		return unix_time >= start_time && unix_time < end_time;
 	} else {
 		// DST period wraps around the year end
-		return unix_gmt >= start_time || unix_gmt < end_time;
+		return unix_time >= start_time || unix_time < end_time;
 	}
 }
 
@@ -946,7 +953,10 @@ struct tm *gmtime_r(const time_t *unix_gmt, struct tm *res) {
 		days_since_epoch--;
 	}
 
-	civil_from_days(days_since_epoch, &year, &month, &day);
+	if(!civil_from_days(days_since_epoch, &year, &month, &day)) {
+		errno = EOVERFLOW;
+		return nullptr;
+	}
 	weekday_from_days(days_since_epoch, &weekday);
 	yearday_from_date(year, month, day, &yday);
 
@@ -981,7 +991,11 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 		__ensure(!"Error parsing /etc/localtime");
 		__builtin_unreachable();
 	}
-	time_t unix_local = *unix_gmt + offset;
+	time_t unix_local;
+	if(__builtin_add_overflow(*unix_gmt, offset, &unix_local)) {
+		errno = EOVERFLOW;
+		return nullptr;
+	}
 
 	// See the comment in gmtime_r().
 	time_t days_since_epoch = unix_local / (60*60*24);
@@ -991,7 +1005,10 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 		days_since_epoch--;
 	}
 
-	civil_from_days(days_since_epoch, &year, &month, &day);
+	if(!civil_from_days(days_since_epoch, &year, &month, &day)) {
+		errno = EOVERFLOW;
+		return nullptr;
+	}
 	weekday_from_days(days_since_epoch, &weekday);
 	yearday_from_date(year, month, day, &yday);
 
@@ -1037,10 +1054,51 @@ time_t timelocal(struct tm *) {
 	__builtin_unreachable();
 }
 
+bool int64_to_time_t(int64_t value, time_t *result) {
+	if constexpr (std::numeric_limits<time_t>::is_signed) {
+		if(value < std::numeric_limits<time_t>::min() || value > std::numeric_limits<time_t>::max())
+			return false;
+	} else {
+		if(value < 0 || static_cast<uint64_t>(value) > std::numeric_limits<time_t>::max())
+			return false;
+	}
+	*result = static_cast<time_t>(value);
+	return true;
+}
+
+bool timegm_to_timestamp(const struct tm *tm, time_t *result) {
+	int64_t year = static_cast<int64_t>(tm->tm_year) + 1900;
+	int64_t month = tm->tm_mon;
+	int64_t year_adjustment = month / 12;
+	month %= 12;
+	if(month < 0) {
+		month += 12;
+		year_adjustment--;
+	}
+	year += year_adjustment;
+
+	int64_t days = days_from_civil(year, static_cast<unsigned int>(month + 1), 1)
+			+ static_cast<int64_t>(tm->tm_mday) - 1;
+	int64_t seconds = static_cast<int64_t>(tm->tm_hour) * 60 * 60
+			+ static_cast<int64_t>(tm->tm_min) * 60 + tm->tm_sec;
+	int64_t timestamp;
+	if(__builtin_mul_overflow(days, INT64_C(86400), &timestamp)
+			|| __builtin_add_overflow(timestamp, seconds, &timestamp))
+		return false;
+	return int64_to_time_t(timestamp, result);
+}
+
 time_t timegm(struct tm *tm) {
-	time_t year = tm->tm_year + 1900;
-	time_t month = tm->tm_mon + 1;
-	time_t days = days_from_civil(year, month, tm->tm_mday);
-	time_t secs = (days * 86400) + (tm->tm_hour * 60 * 60) + (tm->tm_min * 60) + tm->tm_sec;
-	return secs;
+	time_t timestamp;
+	if(!timegm_to_timestamp(tm, &timestamp)) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	struct tm normalized;
+	if(!gmtime_r(&timestamp, &normalized))
+		return -1;
+	normalized.tm_isdst = 0;
+	*tm = normalized;
+	return timestamp;
 }
