@@ -5,6 +5,7 @@
 #include <string.h>
 #include <time.h>
 #include <limits.h>
+#include <stdint.h>
 #include <wchar.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -40,6 +41,7 @@ constexpr size_t tznameNormal = 0;
 constexpr size_t tznameDST = 1;
 
 frg::string<MemoryAllocator> tznameStorage[2] = { {getAllocator()}, {getAllocator()} };
+frg::string<MemoryAllocator> tmZoneStorage {getAllocator()};
 
 } // namespace
 
@@ -425,6 +427,95 @@ struct tzfile {
 	uint32_t tzh_charcnt;
 };
 
+struct tzfile_data {
+	tzfile header;
+	const char *data;
+	size_t time_size;
+};
+
+bool read_tzfile_header(const char *data, tzfile *header) {
+	memcpy(header, data, sizeof(tzfile));
+	header->tzh_ttisgmtcnt = mlibc::bit_util<uint32_t>::be_to_host(header->tzh_ttisgmtcnt);
+	header->tzh_ttisstdcnt = mlibc::bit_util<uint32_t>::be_to_host(header->tzh_ttisstdcnt);
+	header->tzh_leapcnt = mlibc::bit_util<uint32_t>::be_to_host(header->tzh_leapcnt);
+	header->tzh_timecnt = mlibc::bit_util<uint32_t>::be_to_host(header->tzh_timecnt);
+	header->tzh_typecnt = mlibc::bit_util<uint32_t>::be_to_host(header->tzh_typecnt);
+	header->tzh_charcnt = mlibc::bit_util<uint32_t>::be_to_host(header->tzh_charcnt);
+
+	return header->magic[0] == 'T' && header->magic[1] == 'Z' && header->magic[2] == 'i'
+			&& header->magic[3] == 'f' && (header->version == '\0' || header->version == '2'
+					|| header->version == '3');
+}
+
+size_t tzfile_block_size(const tzfile &header, size_t time_size) {
+	return header.tzh_timecnt * time_size + header.tzh_timecnt
+			+ header.tzh_typecnt * sizeof(ttinfo) + header.tzh_charcnt
+			+ header.tzh_leapcnt * (time_size + sizeof(uint32_t))
+			+ header.tzh_ttisstdcnt + header.tzh_ttisgmtcnt;
+}
+
+bool get_tzfile_data(const char *file, tzfile_data *data) {
+	tzfile header;
+	if(!read_tzfile_header(file, &header))
+		return false;
+
+	const char *block = file + sizeof(tzfile);
+	size_t time_size = sizeof(int32_t);
+	if(header.version != '\0') {
+		block += tzfile_block_size(header, time_size);
+		if(!read_tzfile_header(block, &header))
+			return false;
+		block += sizeof(tzfile);
+		time_size = sizeof(int64_t);
+	}
+
+	data->header = header;
+	data->data = block;
+	data->time_size = time_size;
+	return true;
+}
+
+const char *tzfile_transition_types(const tzfile_data &data) {
+	return data.data + data.header.tzh_timecnt * data.time_size;
+}
+
+const char *tzfile_ttinfos(const tzfile_data &data) {
+	return tzfile_transition_types(data) + data.header.tzh_timecnt;
+}
+
+const char *tzfile_abbrevs(const tzfile_data &data) {
+	return tzfile_ttinfos(data) + data.header.tzh_typecnt * sizeof(ttinfo);
+}
+
+ttinfo get_tzfile_ttinfo(const tzfile_data &data, size_t index) {
+	ttinfo info;
+	memcpy(&info, tzfile_ttinfos(data) + index * sizeof(ttinfo), sizeof(ttinfo));
+	uint32_t offset;
+	memcpy(&offset, &info.tt_gmtoff, sizeof(offset));
+	offset = mlibc::bit_util<uint32_t>::be_to_host(offset);
+	memcpy(&info.tt_gmtoff, &offset, sizeof(offset));
+	return info;
+}
+
+int64_t get_tzfile_transition_time(const tzfile_data &data, size_t index) {
+	const char *ptr = data.data + index * data.time_size;
+	if(data.time_size == sizeof(int32_t)) {
+		uint32_t value;
+		memcpy(&value, ptr, sizeof(value));
+		value = mlibc::bit_util<uint32_t>::be_to_host(value);
+		int32_t signed_value;
+		memcpy(&signed_value, &value, sizeof(signed_value));
+		return signed_value;
+	} else {
+		uint64_t value;
+		memcpy(&value, ptr, sizeof(value));
+		value = mlibc::bit_util<uint64_t>::be_to_host(value);
+		int64_t signed_value;
+		memcpy(&signed_value, &value, sizeof(signed_value));
+		return signed_value;
+	}
+}
+
 frg::string<MemoryAllocator> parse_tzfile_path(const char *tz) {
 	// POSIX defines :*characters* as a valid but implementation-defined format.
 	// This was originally introduced as a way to support geographical
@@ -475,46 +566,24 @@ bool parse_tzfile(const char *tz) {
 	// FIXME: Make this fallible so the above check is not needed.
 	file_window window {path.data()};
 
-	// TODO(geert): we can probably cache this somehow
-	tzfile tzfile_time;
-	memcpy(&tzfile_time, reinterpret_cast<char *>(window.get()), sizeof(tzfile));
-	tzfile_time.tzh_ttisgmtcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_ttisgmtcnt);
-	tzfile_time.tzh_ttisstdcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_ttisstdcnt);
-	tzfile_time.tzh_leapcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_leapcnt);
-	tzfile_time.tzh_timecnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_timecnt);
-	tzfile_time.tzh_typecnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_typecnt);
-	tzfile_time.tzh_charcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_charcnt);
-
-	if (tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i'
-			|| tzfile_time.magic[3] != 'f') {
+	tzfile_data data;
+	if(!get_tzfile_data(reinterpret_cast<char *>(window.get()), &data)) {
 		mlibc::infoLogger() << "mlibc: " << path << " is not a valid TZinfo file" << frg::endlog;
 		return true;
 	}
 
-	if (tzfile_time.version != '\0' && tzfile_time.version != '2' && tzfile_time.version != '3') {
-		mlibc::infoLogger() << "mlibc: " << path << " has an invalid TZinfo version"
-				<< frg::endlog;
-		return true;
-	}
-
 	// There should be at least one entry in the ttinfo table.
-	if (!tzfile_time.tzh_typecnt)
+	if (!data.header.tzh_typecnt)
 		return true;
 
-	char *abbrevs = reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
-		+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-		+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
-		+ tzfile_time.tzh_typecnt * sizeof(struct ttinfo);
+	const char *abbrevs = tzfile_abbrevs(data);
 	bool found_std = false;
 	bool found_dst = false;
 	// start from the last ttinfo entry, this matches the behaviour of glibc and musl
-	for (int i = tzfile_time.tzh_typecnt; i > 0; i--) {
-		ttinfo time_info;
-		memcpy(&time_info, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
-				+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-				+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
-				+ i * sizeof(ttinfo), sizeof(ttinfo));
-		time_info.tt_gmtoff = mlibc::bit_util<uint32_t>::be_to_host(time_info.tt_gmtoff);
+	for(size_t i = data.header.tzh_typecnt; i > 0; i--) {
+		ttinfo time_info = get_tzfile_ttinfo(data, i - 1);
+		if(time_info.tt_abbrind >= data.header.tzh_charcnt)
+			return true;
 		if (!time_info.tt_isdst && !found_std) {
 			tznameStorage[tznameNormal] = {abbrevs + time_info.tt_abbrind, getAllocator()};
 			tzname[tznameNormal] = tznameStorage[tznameNormal].data();
@@ -524,7 +593,6 @@ bool parse_tzfile(const char *tz) {
 		if (time_info.tt_isdst && !found_dst) {
 			tznameStorage[tznameDST] = {abbrevs + time_info.tt_abbrind, getAllocator()};
 			tzname[tznameDST] = tznameStorage[tznameDST].data();
-			timezone = -time_info.tt_gmtoff;
 			daylight = 1;
 			found_dst = true;
 		}
@@ -804,71 +872,30 @@ int unix_local_from_gmt_tzfile(time_t unix_gmt, time_t *offset, bool *dst, frg::
 	// FIXME: Make this fallible so the above check is not needed.
 	file_window window {path.data()};
 
-	// TODO(geert): we can probably cache this somehow
-	tzfile tzfile_time;
-	memcpy(&tzfile_time, reinterpret_cast<char *>(window.get()), sizeof(tzfile));
-	tzfile_time.tzh_ttisgmtcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_ttisgmtcnt);
-	tzfile_time.tzh_ttisstdcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_ttisstdcnt);
-	tzfile_time.tzh_leapcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_leapcnt);
-	tzfile_time.tzh_timecnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_timecnt);
-	tzfile_time.tzh_typecnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_typecnt);
-	tzfile_time.tzh_charcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_charcnt);
-
-	if (tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i'
-			|| tzfile_time.magic[3] != 'f') {
+	tzfile_data data;
+	if(!get_tzfile_data(reinterpret_cast<char *>(window.get()), &data)) {
 		mlibc::infoLogger() << "mlibc: " << path << " is not a valid TZinfo file" << frg::endlog;
 		return -1;
 	}
 
-	if (tzfile_time.version != '\0' && tzfile_time.version != '2' && tzfile_time.version != '3') {
-		mlibc::infoLogger() << "mlibc: " << path << " has an invalid TZinfo version"
-				<< frg::endlog;
-		return -1;
-	}
-
-	int index = -1;
-	for (size_t i = 0; i < tzfile_time.tzh_timecnt; i++) {
-		int32_t ttime;
-		memcpy(&ttime, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
-				+ i * sizeof(int32_t), sizeof(int32_t));
-		ttime = mlibc::bit_util<uint32_t>::be_to_host(ttime);
-		// If we are before the first transition, the format dicates that
-		// the first ttinfo entry should be used (and not the ttinfo entry pointed
-		// to by the first transition time).
-		if (i && ttime > unix_gmt) {
-			index = i - 1;
-			break;
-		}
-	}
-
-	// The format dictates that if no transition is applicable,
-	// the first entry in the file is chosen.
+	// Before the first transition, TZif requires type zero. Afterwards use the
+	// last transition at or before the requested instant.
 	uint8_t ttinfo_index = 0;
-	if (index >= 0) {
-		memcpy(&ttinfo_index, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
-				+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-				+ index * sizeof(uint8_t), sizeof(uint8_t));
+	for(size_t i = 0; i < data.header.tzh_timecnt; i++) {
+		if(get_tzfile_transition_time(data, i) > unix_gmt)
+			break;
+		ttinfo_index = static_cast<uint8_t>(tzfile_transition_types(data)[i]);
 	}
 
-	// There should be at least one entry in the ttinfo table.
-	// TODO: If there is not, we might want to fall back to UTC, no DST (?).
-	__ensure(tzfile_time.tzh_typecnt);
-
-	ttinfo time_info;
-	memcpy(&time_info, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
-			+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-			+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
-			+ ttinfo_index * sizeof(ttinfo), sizeof(ttinfo));
-	time_info.tt_gmtoff = mlibc::bit_util<uint32_t>::be_to_host(time_info.tt_gmtoff);
-
-	char *abbrevs = reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
-		+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-		+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
-		+ tzfile_time.tzh_typecnt * sizeof(struct ttinfo);
+	if(!data.header.tzh_typecnt || ttinfo_index >= data.header.tzh_typecnt)
+		return -1;
+	ttinfo time_info = get_tzfile_ttinfo(data, ttinfo_index);
+	if(time_info.tt_abbrind >= data.header.tzh_charcnt)
+		return -1;
 
 	*offset = time_info.tt_gmtoff;
 	*dst = time_info.tt_isdst;
-	tm_zone = {abbrevs + time_info.tt_abbrind, getAllocator()};
+	tm_zone = {tzfile_abbrevs(data) + time_info.tt_abbrind, getAllocator()};
 	return 0;
 }
 
@@ -878,10 +905,10 @@ int unix_local_from_gmt_tzfile(time_t unix_gmt, time_t *offset, bool *dst, frg::
 int unix_local_from_gmt(time_t unix_gmt, time_t *offset, bool *dst, char **tm_zone) {
 	do_tzset();
 
-	if (daylight && rules[0].type == TZFILE) {
-		int ret = unix_local_from_gmt_tzfile(unix_gmt, offset, dst, tznameStorage[tznameDST]);
+	if (rules[0].type == TZFILE) {
+		int ret = unix_local_from_gmt_tzfile(unix_gmt, offset, dst, tmZoneStorage);
 		if (ret == 0)
-			*tm_zone = tzname[tznameDST] = tznameStorage[tznameDST].data();
+			*tm_zone = tmZoneStorage.data();
 		return ret;
 	}
 

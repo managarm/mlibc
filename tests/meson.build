@@ -23,6 +23,7 @@ all_test_cases = [
 	'ansi/wmemcmp',
 	'ansi/gmtime',
 	'ansi/tz-rules',
+	'ansi/tzfile',
 	'ansi/timegm',
 	'ansi/tz',
 	'ansi/ungetc',
