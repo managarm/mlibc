@@ -277,11 +277,10 @@ bool parse_tz(const char *tz, char *tz_name, char *tz_name_dst, size_t tz_name_m
 	size_t tzn_len = 0;
 	for (;; tz++) {
 		tzn_len = tz - tzn;
-		if (*tz == '\0')
-			break;
-
 		if (tzn_len > tz_name_max)
 			return true;
+		if (*tz == '\0')
+			break;
 
 		// Advance until the end of the timezone name.
 		if (isalpha(*tz))
@@ -346,11 +345,10 @@ bool parse_tz(const char *tz, char *tz_name, char *tz_name_dst, size_t tz_name_m
 	size_t tzn_len_dst = 0;
 	for (;; tz++) {
 		tzn_len_dst = tz - tzn_dst;
-		if (*tz == '\0')
-			break;
-
 		if (tzn_len_dst > tz_name_max)
 			return false;
+		if (*tz == '\0')
+			break;
 
 		// Advance until the end of the timezone name.
 		if (isalpha(*tz))
