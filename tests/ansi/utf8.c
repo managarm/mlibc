@@ -82,6 +82,13 @@ int main() {
 	assert(wcrtomb(representation, 0xaabbccdd, &state) == (size_t)-1);
 	assert(errno == EILSEQ);
 
+	FILE *stream = tmpfile();
+	assert(stream);
+	errno = 0;
+	assert(fprintf(stream, "%lc", (wint_t)0xaabbccdd) < 0);
+	assert(errno == EILSEQ);
+	assert(fclose(stream) == 0);
+
 	wchar_t wc;
 	assert(mbtowc(&wc, "", 1) == 0);
 	assert(wc == L'\0');
