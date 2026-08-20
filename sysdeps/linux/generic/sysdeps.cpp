@@ -672,6 +672,13 @@ int Sysdeps<Kill>::operator()(pid_t pid, int sig) {
 	return 0;
 }
 
+int Sysdeps<Tgkill>::operator()(int tgid, int tid, int sig) {
+	auto ret = do_syscall(SYS_tgkill, tgid, tid, sig);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 #if !MLIBC_BUILDING_RTLD
 #if __MLIBC_POSIX_OPTION
 int Sysdeps<Readv>::operator()(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
@@ -1652,13 +1659,6 @@ int Sysdeps<BeforeCancellableSyscall>::operator()(ucontext_t *uct) {
 	if (pc < __mlibc_syscall_begin || pc > __mlibc_syscall_end)
 		return 0;
 	return 1;
-}
-
-int Sysdeps<Tgkill>::operator()(int tgid, int tid, int sig) {
-	auto ret = do_syscall(SYS_tgkill, tgid, tid, sig);
-	if (int e = sc_error(ret); e)
-		return e;
-	return 0;
 }
 
 int Sysdeps<Fchownat>::operator()(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
