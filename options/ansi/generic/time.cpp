@@ -682,6 +682,16 @@ time_t time(time_t *out) {
 
 namespace {
 
+constexpr static time_t days_from_civil(int year, unsigned int month, unsigned int day) noexcept {
+	time_t y = year;
+	y -= month <= 2;
+	const time_t era = (y >= 0 ? y : y - 399) / 400;
+	const unsigned int yoe = static_cast<unsigned int>(y - era * 400); // [0, 399]
+	const unsigned int doy = (153 * (month > 2 ? month - 3 : month + 9) + 2) / 5 + day - 1;
+	const unsigned int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+	return era * 146097 + static_cast<time_t>(doe) - 719468;
+}
+
 void civil_from_days(time_t days_since_epoch, int *year, unsigned int *month, unsigned int *day) {
 	time_t time = days_since_epoch + 719468;
 	int era = (time >= 0 ? time : time - 146096) / 146097;
@@ -718,54 +728,36 @@ void yearday_from_date(unsigned int year, unsigned int month, unsigned int day, 
 		(*yday)++;
 }
 
-// Given a rule and a year, compute the time of the transition in seconds since the epoch.
-// TODO: Take into account the time of day when the transition occurs
-time_t time_from_rule(const Rule &rule, int year) {
+// Given a rule and a year, compute the UTC time of the transition.
+time_t time_from_rule(const Rule &rule, int year, time_t offset_before_transition) {
+	time_t days;
 	if (rule.type == JULIAN_DAY) {
 		// Jn: Julian day, ignoring Feb 29
 		uint16_t day = rule.day - 1;
-		if (is_leap_year(year) && day >= 60)
-			day = rule.day;
-
-		struct tm t = {};
-		t.tm_year = year - 1900;
-		t.tm_yday = day;
-		return mktime(&t);
+		if (is_leap_year(year) && day >= 59)
+			day++;
+		days = days_from_civil(year, 1, 1) + day;
 	} else if (rule.type == DAY_OF_YEAR) {
 		// n: zero-based day of year, including Feb 29 in leap years
-		struct tm t = {};
-		t.tm_year = year - 1900;
-		t.tm_yday = rule.day;
-		return mktime(&t);
+		days = days_from_civil(year, 1, 1) + rule.day;
 	} else if (rule.type == MONTH_NTH_DAY_OF_WEEK) {
 		// Mm.n.d: Month, week, weekday (month 1-12, week 1-5, weekday 0=Sun)
-
-		// Find the first day of the month
-		struct tm t = {};
-		t.tm_year = year - 1900;
-		t.tm_mon = rule.month - 1;
-		t.tm_mday = 1;
-		mktime(&t);
-
-		int first_wday = t.tm_wday;
+		time_t first_day = days_from_civil(year, rule.month, 1);
+		unsigned int first_wday;
+		weekday_from_days(first_day, &first_wday);
 		int day = 1 + ((7 + rule.day - first_wday) % 7) + (rule.week - 1) * 7;
 		// If week==5, but that day is past the end of the month, go back by 7 days
-		t.tm_mday = day;
-		mktime(&t);
-		if (rule.week == 5 && t.tm_mon != rule.month - 1)
+		time_t next_month = days_from_civil(year + (rule.month == 12), rule.month % 12 + 1, 1);
+		if (rule.week == 5 && first_day + day - 1 >= next_month)
 			day -= 7;
-
-		t.tm_year = year - 1900;
-		t.tm_mon = rule.month - 1;
-		t.tm_mday = day;
-		t.tm_hour = 0;
-		t.tm_min = 0;
-		t.tm_sec = 0;
-		return mktime(&t);
+		days = first_day + day - 1;
 	} else {
 		__ensure(!"Invalid rule type");
 		__builtin_unreachable();
 	}
+
+	// POSIX transition times are expressed in local time before the transition.
+	return days * (60 * 60 * 24) + rule.time - offset_before_transition;
 }
 
 // Assumes TZ environment variable rules are used, not TZFILE.
@@ -776,11 +768,14 @@ bool is_in_dst(time_t unix_gmt) {
 	int year;
 	unsigned int _month;
 	unsigned int _day;
-	civil_from_days(unix_gmt / (60 * 60 * 24), &year, &_month, &_day);
+	time_t days_since_epoch = unix_gmt / (60 * 60 * 24);
+	if(unix_gmt % (60 * 60 * 24) < 0)
+		days_since_epoch--;
+	civil_from_days(days_since_epoch, &year, &_month, &_day);
 
 	// Get the start and end transition days of the year
-	int start_time = time_from_rule(rules[0], year);
-	int end_time = time_from_rule(rules[1], year);
+	time_t start_time = time_from_rule(rules[0], year, tt_infos[tznameNormal].tt_gmtoff);
+	time_t end_time = time_from_rule(rules[1], year, tt_infos[tznameDST].tt_gmtoff);
 
 	// Check if the unix_gmt falls within the DST period
 	if (start_time <= end_time) {
@@ -1015,15 +1010,6 @@ char *ctime_r(const time_t *clock, char *buf) {
 time_t timelocal(struct tm *) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
-}
-
-constexpr static int days_from_civil(int y, unsigned m, unsigned d) noexcept {
-	y -= m <= 2;
-	const int era = (y >= 0 ? y : y - 399) / 400;
-	const unsigned yoe = static_cast<unsigned>(y - era * 400); // [0, 399]
-	const unsigned doy = (153 * (m > 2 ? m - 3 : m + 9) + 2) / 5 + d - 1; // [0, 365]
-	const unsigned doe = yoe * 365 + yoe / 4 - yoe / 100 + doy; // [0, 146096]
-	return era * 146097 + static_cast<int>(doe) - 719468;
 }
 
 time_t timegm(struct tm *tm) {

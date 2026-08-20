@@ -22,6 +22,7 @@ all_test_cases = [
 	'ansi/mbrlen',
 	'ansi/wmemcmp',
 	'ansi/gmtime',
+	'ansi/tz-rules',
 	'ansi/timegm',
 	'ansi/tz',
 	'ansi/ungetc',
