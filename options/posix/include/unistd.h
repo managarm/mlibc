@@ -495,6 +495,9 @@ int getresgid(gid_t *__rgid, gid_t *__egid, gid_t *__sgid);
 }
 #endif
 
+#if __MLIBC_BSD_OPTION
+#	include <bits/bsd/bsd_unistd.h>
+#endif
 #if __MLIBC_LINUX_OPTION
 #	include <bits/linux/linux_unistd.h>
 #endif
