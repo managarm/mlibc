@@ -374,26 +374,27 @@ struct StreamPrinter {
 	using char_type = Char;
 
 	StreamPrinter(mlibc::abstract_file *stream)
-	: stream(stream), count(0) { }
+	: stream(stream), count(0), failed(false) { }
 
 	void append(Char c) {
-		if constexpr (std::is_same_v<Char, char>)
-			fwrite_unlocked(&c, 1, 1, stream);
-		else
-			fputwc_unlocked(c, stream);
+		if (failed)
+			return;
+
+		if constexpr (std::is_same_v<Char, char>) {
+			if (fwrite_unlocked(&c, 1, 1, stream) != 1) {
+				failed = true;
+				return;
+			}
+		} else if (fputwc_unlocked(c, stream) == WEOF) {
+			failed = true;
+			return;
+		}
+
 		count++;
 	}
 
 	void append(const Char *str) {
-		if constexpr (std::is_same_v<Char, char>) {
-			fwrite_unlocked(str, strlen(str), 1, stream);
-			count += strlen(str);
-		} else {
-			while (*str) {
-				fputwc_unlocked(*str++, stream);
-				count++;
-			}
-		}
+		append(str, frg::generic_strlen(str));
 	}
 
 	void append(const char *str)
@@ -407,13 +408,20 @@ struct StreamPrinter {
 	}
 
 	void append(const Char *str, size_t n) {
+		if (failed)
+			return;
+
 		if constexpr (std::is_same_v<Char, char>) {
-			fwrite_unlocked(str, n, 1, stream);
+			if (n && fwrite_unlocked(str, n, 1, stream) != 1) {
+				failed = true;
+				return;
+			}
 			count += n;
 		} else {
 			for (size_t i = 0; i < n && str[i]; i++) {
-				fputwc_unlocked(str[i], stream);
-				count++;
+				append(str[i]);
+				if (failed)
+					return;
 			}
 		}
 	}
@@ -430,10 +438,14 @@ struct StreamPrinter {
 			const C *start = curr;
 
 			size_t num_chars = convertString(buf, &curr, n, sizeof(buf) / sizeof(*buf), &state);
-			if (num_chars == size_t(-1))
+			if (num_chars == size_t(-1)) {
+				failed = true;
 				return;
+			}
 
 			append(buf, num_chars);
+			if (failed)
+				return;
 
 			if (!curr) {
 				break;
@@ -484,6 +496,7 @@ struct StreamPrinter {
 
 	mlibc::abstract_file *stream;
 	size_t count;
+	bool failed;
 };
 
 static_assert(frg::SinkFor<StreamPrinter<char>>);
@@ -1753,6 +1766,8 @@ int vfprintf(FILE *__restrict stream, const char *__restrict format, __builtin_v
 		errno = EINVAL;
 		return -1;
 	}
+	if (p.failed)
+		return -1;
 
 	return p.count;
 }
@@ -1895,6 +1910,8 @@ int vfwprintf(FILE *__restrict stream, const wchar_t *__restrict format, __built
 		errno = EINVAL;
 		return -1;
 	}
+	if (p.failed)
+		return -1;
 
 	return p.count;
 }
