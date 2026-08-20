@@ -195,11 +195,10 @@ size_t fwrite_unlocked_ignore_orientation(const void *buffer, size_t size, size_
 		size_t progress = 0;
 		while(progress < count) {
 			size_t chunk;
-			if(file->write((const char *)buffer + progress,
+			if(int e = file->write((const char *)buffer + progress,
 					count - progress, &chunk)) {
-				// TODO: Handle I/O errors.
-				mlibc::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
-						<< frg::endlog;
+				errno = e;
+				file->__status_bits |= __MLIBC_ERROR_BIT;
 				break;
 			}else if(!chunk) {
 				// TODO: Handle eof.
@@ -215,11 +214,10 @@ size_t fwrite_unlocked_ignore_orientation(const void *buffer, size_t size, size_
 			size_t progress = 0;
 			while(progress < size) {
 				size_t chunk;
-				if(file->write((const char *)buffer + i * size + progress,
+				if(int e = file->write((const char *)buffer + i * size + progress,
 						size - progress, &chunk)) {
-					// TODO: Handle I/O errors.
-					mlibc::infoLogger() << "mlibc: fwrite() I/O errors are not handled"
-							<< frg::endlog;
+					errno = e;
+					file->__status_bits |= __MLIBC_ERROR_BIT;
 					break;
 				}else if(!chunk) {
 					// TODO: Handle eof.
