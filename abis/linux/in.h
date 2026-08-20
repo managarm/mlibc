@@ -167,6 +167,7 @@ struct group_source_req {
 #define IP_MTU_DISCOVER 10
 #define IP_RECVERR 11
 #define IP_RECVTTL 12
+#define IP_RECVTOS 13
 #define IP_MTU 14
 #define IP_MULTICAST_IF 32
 #define IP_MULTICAST_TTL 33
