@@ -379,11 +379,8 @@ int abstract_file::_write_back() {
 	if(__dirty_begin == __dirty_end)
 		return 0;
 
-	// For non-pipe streams, first do a seek to reset the
-	// I/O position to zero, then do a write().
 	if(_type == stream_type::file_like) {
 		if(__io_offset != __dirty_begin) {
-			__ensure(__dirty_begin - __io_offset > 0);
 			off_t new_offset;
 			if(int e = io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR, &new_offset); e)
 				return e;
@@ -391,9 +388,8 @@ int abstract_file::_write_back() {
 		}
 	}else{
 		__ensure(_type == stream_type::pipe_like);
-		if(__io_offset != __dirty_begin) {
+		if(__io_offset != __dirty_begin)
 			return ESPIPE;
-		}
 	}
 
 	// Now, we are in the correct position to write-back everything.
@@ -419,7 +415,7 @@ int abstract_file::_save_pos(bool &preserve_buffer) {
 	if (int e = _init_bufmode(); e)
 		return e;
 
-	if (_type == stream_type::file_like && _bufmode != buffer_mode::no_buffer) {
+	if (_bufmode != buffer_mode::no_buffer && __offset != __io_offset) {
 		off_t new_offset;
 		auto seek_offset = (off_t(__offset) - off_t(__io_offset));
 		if (int e = io_seek(seek_offset, SEEK_CUR, &new_offset); e) {
@@ -436,6 +432,7 @@ int abstract_file::_save_pos(bool &preserve_buffer) {
 				mlibc::infoLogger() << "hit io_seek() error " << e << frg::endlog;
 			return e;
 		}
+		_type = stream_type::file_like;
 		return 0;
 	}
 	return 0; // nothing to do for the rest
