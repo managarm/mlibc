@@ -1,6 +1,5 @@
 #pragma once
-#include <frg/sharded_slab.hpp>
-#include <internal-config.h>
+#include <mlibc/allocator.hpp>
 
 #if defined(__clang__)
 #define CAPABILITY(x) __attribute__((capability(x)))
@@ -19,13 +18,7 @@
 class CAPABILITY("SignalGuardState") SysdepAllocatorCapability{};
 extern SysdepAllocatorCapability sysdepAllocatorCapability;
 
-
-struct ShardedSlabPolicy {
-	void *map(size_t size);
-	void unmap(void *ptr, size_t size);
-};
-
-using SysdepsPool = frg::sharded_slab::pool<ShardedSlabPolicy>;
+using SysdepsPool = frg::sharded_slab::pool<ShardedSlabBasePolicy>;
 
 SysdepsPool &getSysdepsPool();
 

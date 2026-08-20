@@ -7,30 +7,11 @@
 #include <mlibc/allocator.hpp>
 #include <internal-config.h>
 
-#if !MLIBC_DEBUG_ALLOCATOR
-
-// --------------------------------------------------------
-// Globals
-// --------------------------------------------------------
-
-struct AllocatorPackage {
-	AllocatorPackage()
-	: heap{virtualAllocator}, singleton{&heap} {}
-
-	VirtualAllocator virtualAllocator;
-	MemoryPool heap;
-	MemoryAllocator singleton;
-};
-
-constinit mlibc::lazy_eternal<AllocatorPackage> global_allocator_package;
-
-MemoryAllocator &getAllocator() {
-	return global_allocator_package.get().singleton;
-}
-
 // --------------------------------------------------------
 // VirtualAllocator
 // --------------------------------------------------------
+
+#ifdef MLIBC_BUILDING_RTLD
 
 uintptr_t VirtualAllocator::map(size_t length) {
 	void *ptr;
@@ -40,6 +21,65 @@ uintptr_t VirtualAllocator::map(size_t length) {
 
 void VirtualAllocator::unmap(uintptr_t address, size_t length) {
 	__ensure(!mlibc::sysdep<AnonFree>((void *)address, length));
+}
+
+// --------------------------------------------------------
+// RTLD Allocator
+// --------------------------------------------------------
+
+struct LdsoAllocatorPackage {
+	LdsoAllocatorPackage()
+	: heap{virtualAllocator}, singleton{&heap} {}
+
+	VirtualAllocator virtualAllocator;
+	LdsoPool heap;
+	LdsoAllocator singleton;
+};
+
+constinit mlibc::lazy_eternal<LdsoAllocatorPackage> global_ldso_allocator_package;
+
+LdsoAllocator &getLdsoAllocator() {
+	return global_ldso_allocator_package.get().singleton;
+}
+
+#else // MLIBC_BUILDING_RTLD
+
+void *ShardedSlabBasePolicy::map(size_t size) {
+	void *ptr;
+	__ensure(!mlibc::sysdep<AnonAllocate>(size, &ptr));
+	return ptr;
+}
+
+void ShardedSlabBasePolicy::unmap(void *ptr, size_t size) {
+	__ensure(!mlibc::sysdep<AnonFree>(ptr, size));
+}
+
+#if !MLIBC_DEBUG_ALLOCATOR
+
+// --------------------------------------------------------
+// Globals
+// --------------------------------------------------------
+
+// Domain shared by all thread-local allocators.
+constinit mlibc::lazy_eternal<MemoryDomain> global_memory_domain;
+
+struct MemoryPoolPackage {
+	MemoryPoolPackage()
+	: pool{&global_memory_domain.get()} {}
+
+	MemoryPool pool;
+};
+
+constinit thread_local mlibc::lazy_eternal<MemoryPoolPackage> thread_memory_pool_package;
+
+MemoryPool &getMemoryPool() {
+	return thread_memory_pool_package.get().pool;
+}
+
+constinit mlibc::lazy_eternal<MemoryAllocator> global_allocator;
+
+MemoryAllocator &getAllocator() {
+	return global_allocator.get();
 }
 
 #else
@@ -122,6 +162,13 @@ void *MemoryAllocator::allocate(size_t size) {
 		mlibc::infoLogger() << "MemoryAllocator::allocate(" << size << ") = " << out << frg::endlog;
 
 	return out;
+}
+
+void *MemoryAllocator::allocate(size_t size, size_t alignment) {
+	// The debug allocator is not alignment-aware.
+	auto p = allocate(alignment > size ? alignment : size);
+	__ensure(!(reinterpret_cast<uintptr_t>(p) & (alignment - 1)));
+	return p;
 }
 
 void MemoryAllocator::free(void *ptr) {
@@ -212,3 +259,5 @@ MemoryAllocator &getAllocator() {
 }
 
 #endif /* !MLIBC_DEBUG_ALLOCATOR */
+
+#endif /* MLIBC_BUILDING_RTLD */
