@@ -13,7 +13,6 @@
  * ====================================================
  */
 
-#define _GNU_SOURCE
 #include "libm.h"
 
 float jnf(int n, float x)
