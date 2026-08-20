@@ -1,3 +1,6 @@
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <time.h>
 #include <stdio.h>
 #include <assert.h>
