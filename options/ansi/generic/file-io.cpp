@@ -209,13 +209,6 @@ int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_siz
 			return e;
 	}
 
-	// Ensure correct buffer type for pipe-like streams.
-	// TODO: We could full support pipe-like files
-	// by ungetc()ing all data before a write happens,
-	// however, for now we just report an error.
-	if(!__io_mode && __valid_limit) // TODO: Only check this for pipe-like streams.
-		mlibc::panicLogger() << "mlibc: Cannot read-write to same pipe-like stream"
-				<< frg::endlog;
 	__io_mode = 1;
 
 	__ensure(__offset < __buffer_size);
@@ -299,9 +292,11 @@ int abstract_file::flush() {
 			return e;
 	}
 
-	if (int e = _save_pos(); e)
+	bool preserve_buffer;
+	if (int e = _save_pos(&preserve_buffer); e)
 		return e;
-	purge();
+	if(!preserve_buffer)
+		purge();
 	return post_flush();
 }
 
@@ -324,13 +319,19 @@ int abstract_file::seek(off_t offset, int whence) {
 	if(whence == SEEK_CUR) {
 		auto seek_offset = offset + (off_t(__offset) - off_t(__io_offset));
 		if(int e = io_seek(seek_offset, whence, &new_offset); e) {
-			__status_bits |= __MLIBC_ERROR_BIT;
+			if(e == ESPIPE)
+				_type = stream_type::pipe_like;
+			// A pure seek failure is not a read/write error. In particular,
+			// ESPIPE on a pipe must not set ferror(); glibc keeps the stream
+			// error indicator clear in this case, so match glibc here.
 			return e;
 		}
 	}else{
 		__ensure(whence == SEEK_SET || whence == SEEK_END);
 		if(int e = io_seek(offset, whence, &new_offset); e) {
-			__status_bits |= __MLIBC_ERROR_BIT;
+			if(e == ESPIPE)
+				_type = stream_type::pipe_like;
+			// As above, a seek failure is not a read/write error.
 			return e;
 		}
 	}
@@ -389,13 +390,24 @@ int abstract_file::_write_back() {
 		if(__io_offset != __dirty_begin) {
 			__ensure(__dirty_begin - __io_offset > 0);
 			off_t new_offset;
-			if(int e = io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR, &new_offset); e)
-				return e;
-			__io_offset = __dirty_begin;
+			if(int e = io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR, &new_offset); e) {
+				if(e != ESPIPE)
+					return e;
+				// dup2() can replace the descriptor behind a FILE* with a pipe.
+				// POSIX does not specify how stdio caches this state, but glibc
+				// keeps the stream usable, so resynchronize with that behavior.
+				_type = stream_type::pipe_like;
+				__io_offset = __dirty_begin;
+			} else {
+				__io_offset = __dirty_begin;
+			}
 		}
 	}else{
 		__ensure(_type == stream_type::pipe_like);
-		__ensure(__io_offset == __dirty_begin);
+		if(__io_offset != __dirty_begin) {
+			errno = ESPIPE;
+			return ESPIPE;
+		}
 	}
 
 	// Now, we are in the correct position to write-back everything.
@@ -413,21 +425,32 @@ int abstract_file::_write_back() {
 	return 0;
 }
 
-int abstract_file::_save_pos() {
+int abstract_file::_save_pos(bool *preserve_buffer) {
+	*preserve_buffer = false;
+
 	if (int e = _init_type(); e)
 		return e;
 	if (int e = _init_bufmode(); e)
 		return e;
 
-	if (_type == stream_type::file_like && _bufmode != buffer_mode::no_buffer) {
+	if (_bufmode != buffer_mode::no_buffer) {
 		off_t new_offset;
 		auto seek_offset = (off_t(__offset) - off_t(__io_offset));
 		if (int e = io_seek(seek_offset, SEEK_CUR, &new_offset); e) {
+			if(e == ESPIPE) {
+				// See the corresponding resynchronization in _write_back().
+				_type = stream_type::pipe_like;
+				// The descriptor no longer supports restoring the file position.
+				// Retain unread input rather than silently dropping it.
+				*preserve_buffer = __offset != __io_offset;
+				return 0;
+			}
 			__status_bits |= __MLIBC_ERROR_BIT;
 			if(!mlibc::processIsExiting.load(std::memory_order_relaxed))
 				mlibc::infoLogger() << "hit io_seek() error " << e << frg::endlog;
 			return e;
 		}
+		_type = stream_type::file_like;
 		return 0;
 	}
 	return 0; // nothing to do for the rest
@@ -820,4 +843,3 @@ void __fpurge(FILE *file_base) {
 	file->purge();
 }
 #endif
-
