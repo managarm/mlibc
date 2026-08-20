@@ -1,0 +1,15 @@
+[package]
+name = "libc-parser"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bindgen = "0.72"
+syn = { version = "3.0", features = ["full", "visit"] }
+quote = "1.0"
+clap = { version = "4.0", features = ["derive"] }
+saphyr = "0.0.6"
+tempfile = "3.8"
+
+[profile.dev]
+opt-level = 2
