@@ -209,13 +209,6 @@ int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_siz
 			return e;
 	}
 
-	// Ensure correct buffer type for pipe-like streams.
-	// TODO: We could full support pipe-like files
-	// by ungetc()ing all data before a write happens,
-	// however, for now we just report an error.
-	if(!__io_mode && __valid_limit) // TODO: Only check this for pipe-like streams.
-		mlibc::panicLogger() << "mlibc: Cannot read-write to same pipe-like stream"
-				<< frg::endlog;
 	__io_mode = 1;
 
 	__ensure(__offset < __buffer_size);
@@ -411,7 +404,10 @@ int abstract_file::_write_back() {
 		}
 	}else{
 		__ensure(_type == stream_type::pipe_like);
-		__ensure(__io_offset == __dirty_begin);
+		if(__io_offset != __dirty_begin) {
+			errno = ESPIPE;
+			return ESPIPE;
+		}
 	}
 
 	// Now, we are in the correct position to write-back everything.

@@ -39,6 +39,37 @@ static void test_read_ahead_after_replacement(void) {
 	assert(unlink(TEST_FILE) == 0);
 }
 
+static void test_update_stream_after_failed_seek(void) {
+	int file_fd = open(TEST_FILE, O_RDWR | O_CREAT | O_TRUNC, 0600);
+	assert(file_fd >= 0);
+	assert(write(file_fd, "ABC", 3) == 3);
+	assert(lseek(file_fd, 0, SEEK_SET) == 0);
+
+	FILE *stream = fdopen(file_fd, "r+");
+	assert(stream);
+	assert(fgetc(stream) == 'A');
+
+	int pipe_fds[2];
+	assert(pipe(pipe_fds) == 0);
+	assert(dup2(pipe_fds[1], file_fd) == file_fd);
+	assert(close(pipe_fds[1]) == 0);
+
+	errno = 0;
+	assert(fseek(stream, 0, SEEK_CUR) == -1);
+	assert(errno == ESPIPE);
+	assert(!ferror(stream));
+
+	errno = 0;
+	assert(fputc('X', stream) != EOF);
+	assert(fflush(stream) == EOF);
+	assert(errno == ESPIPE);
+	assert(!ferror(stream));
+
+	assert(fclose(stream) == EOF);
+	assert(close(pipe_fds[0]) == 0);
+	assert(unlink(TEST_FILE) == 0);
+}
+
 int main(void) {
 	int file_fd = open(TEST_FILE, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 	assert(file_fd >= 0);
@@ -72,5 +103,6 @@ int main(void) {
 	assert(unlink(TEST_FILE) == 0);
 
 	test_read_ahead_after_replacement();
+	test_update_stream_after_failed_seek();
 	return 0;
 }
