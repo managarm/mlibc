@@ -103,18 +103,6 @@ struct Tcb {
 	mlibc::thread_exit_return returnValue;
 	TcbThreadReturnValue returnValueType;
 
-	struct AtforkHandler {
-		void (*prepare)(void);
-		void (*parent)(void);
-		void (*child)(void);
-
-		AtforkHandler *next;
-		AtforkHandler *prev;
-	};
-
-	AtforkHandler *atforkBegin;
-	AtforkHandler *atforkEnd;
-
 	struct CleanupHandler {
 		void (*func)(void *);
 		void *arg;
