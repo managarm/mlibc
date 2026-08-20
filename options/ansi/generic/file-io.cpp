@@ -104,6 +104,11 @@ void abstract_file::dispose() {
 	_do_dispose(this);
 }
 
+void abstract_file::set_access_mode(int flags) {
+	_readable = (flags & O_ACCMODE) != O_WRONLY;
+	_writable = (flags & O_ACCMODE) != O_RDONLY;
+}
+
 // Note that read() and write() are asymmetric:
 // While read() can trigger a write-back, write() can never trigger a read-ahead().
 // This peculiarity is reflected in their code.
@@ -111,8 +116,15 @@ void abstract_file::dispose() {
 int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 	__ensure(max_size);
 
-	if(_init_bufmode())
-		return -1;
+	// [C11-7.21.5.3] Reading from a stream that was not opened for reading is an error.
+	// Note that this must not set the EOF bit.
+	if(!_readable) {
+		__status_bits |= __MLIBC_ERROR_BIT;
+		return EBADF;
+	}
+
+	if(int e = _init_bufmode(); e)
+		return e;
 
 	size_t unget_length = 0;
 	if (__unget_ptr != __buffer_ptr) {
@@ -187,8 +199,16 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_size) {
 	__ensure(max_size);
 
-	if(_init_bufmode())
-		return -1;
+	// [C11-7.21.5.3] Writing to a stream that was not opened for writing is an error.
+	// This has to be caught here rather than in io_write(), as buffered writes would
+	// otherwise succeed until the buffer is flushed.
+	if(!_writable) {
+		__status_bits |= __MLIBC_ERROR_BIT;
+		return EBADF;
+	}
+
+	if(int e = _init_bufmode(); e)
+		return e;
 	if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer) {
 		// As we do not buffer, nothing can be dirty.
 		__ensure(__dirty_begin == __dirty_end);
@@ -370,8 +390,8 @@ int abstract_file::_init_bufmode() {
 	if(_bufmode != buffer_mode::unknown)
 		return 0;
 
-	if(determine_bufmode(&_bufmode))
-		return -1;
+	if(int e = determine_bufmode(&_bufmode); e)
+		return e;
 	__ensure(_bufmode != buffer_mode::unknown);
 	return 0;
 }
@@ -464,8 +484,10 @@ void abstract_file::_ensure_allocation() {
 // fd_file implementation.
 // --------------------------------------------------------------------------------------
 
-fd_file::fd_file(int fd, void (*do_dispose)(abstract_file *), bool force_unbuffered)
-: abstract_file{do_dispose}, _fd{fd}, _force_unbuffered{force_unbuffered} { }
+fd_file::fd_file(int fd, int flags, void (*do_dispose)(abstract_file *), bool force_unbuffered)
+: abstract_file{do_dispose}, _fd{fd}, _force_unbuffered{force_unbuffered} {
+	set_access_mode(flags);
+}
 
 int fd_file::fd() {
 	return _fd;
@@ -515,6 +537,7 @@ int fd_file::reopen(const char *path, const char *mode) {
 	_fd = fd;
 	_orientation = stream_orientation::none;
 	_mbstate = {};
+	set_access_mode(mode_flags);
 
 	if(mode_flags & O_APPEND) {
 		seek(0, SEEK_END);
@@ -558,7 +581,7 @@ int fd_file::determine_bufmode(buffer_mode *mode) {
 	}else{
 		mlibc::infoLogger() << "mlibc: sys_isatty() failed while determining whether"
 				" stream is interactive" << frg::endlog;
-		return -1;
+		return e;
 	}
 }
 
@@ -646,9 +669,9 @@ namespace {
 
 	[[gnu::constructor(MLIBC_INIT_PRIORITY_STDIO)]]
 	void init_stdio() {
-		stdin_box.initialize(0);
-		stdout_box.initialize(1);
-		stderr_box.initialize(2, nullptr, true);
+		stdin_box.initialize(0, O_RDONLY);
+		stdout_box.initialize(1, O_WRONLY);
+		stderr_box.initialize(2, O_WRONLY, nullptr, true);
 
 		stdin = stdin_box.get();
 		stdout = stdout_box.get();
@@ -694,7 +717,7 @@ FILE *fopen(const char *path, const char *mode) {
 		return nullptr;
 	}
 
-	return frg::construct<mlibc::fd_file>(getAllocator(), fd,
+	return frg::construct<mlibc::fd_file>(getAllocator(), fd, flags,
 			mlibc::file_dispose_cb<mlibc::fd_file>);
 }
 

@@ -16,8 +16,8 @@
 #include <mlibc/posix-file-io.hpp>
 
 struct popen_file : mlibc::fd_file {
-	popen_file(int fd, void (*do_dispose)(abstract_file *) = nullptr)
-		: fd_file(fd, do_dispose) {}
+	popen_file(int fd, int flags, void (*do_dispose)(abstract_file *) = nullptr)
+		: fd_file(fd, flags, do_dispose) {}
 
 	pid_t get_popen_pid() {
 		return _popen_pid;
@@ -141,6 +141,7 @@ FILE *popen(const char *command, const char *typestr) {
 		ret = frg::construct<popen_file>(
 			getAllocator(),
 			fds[parent_end],
+			is_write ? O_WRONLY : O_RDONLY,
 			mlibc::file_dispose_cb<popen_file>
 		);
 		__ensure(ret);
@@ -202,7 +203,7 @@ int dprintf(int fd, const char *format, ...) {
 }
 
 int vdprintf(int fd, const char *format, __builtin_va_list args) {
-	mlibc::fd_file file{fd};
+	mlibc::fd_file file{fd, O_WRONLY};
 	int ret = vfprintf(&file, format, args);
 	file.flush();
 	return ret;
