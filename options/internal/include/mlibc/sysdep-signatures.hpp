@@ -297,6 +297,7 @@ SYSDEP_FUNC(DeleteModule, const char *name, unsigned flags);
 SYSDEP_FUNC(Klogctl, int type, char *bufp, int len, int *out);
 SYSDEP_FUNC(Getcpu, int *cpu);
 SYSDEP_FUNC(Sysinfo, struct sysinfo *info);
+SYSDEP_FUNC(Acct, const char *filename);
 SYSDEP_FUNC(Swapon, const char *path, int flags);
 SYSDEP_FUNC(Swapoff, const char *path);
 SYSDEP_FUNC(Setxattr, const char *path, const char *name, const void *val, size_t size, int flags);

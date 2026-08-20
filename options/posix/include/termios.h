@@ -93,9 +93,10 @@ int tcsetattr(int __fd, int __optional_actions, const struct termios *__attr);
 int tcgetwinsize(int __fd, struct winsize *__winsz);
 int tcsetwinsize(int __fd, const struct winsize *__winsz);
 
-#if defined(_DEFAULT_SOURCE)
+#if defined(_DEFAULT_SOURCE) || defined(_BSD_SOURCE)
 void cfmakeraw(struct termios *__tios);
-#endif /* defined(_DEFAULT_SOURCE) */
+int cfsetspeed(struct termios *__tios, speed_t __speed);
+#endif /* defined(_DEFAULT_SOURCE) || defined(_BSD_SOURCE) */
 
 #endif /* !__MLIBC_ABI_ONLY */
 

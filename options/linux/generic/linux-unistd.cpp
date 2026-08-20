@@ -10,6 +10,14 @@ int vhangup(void) {
 	__builtin_unreachable();
 }
 
+int acct(const char *filename) {
+	if(int e = mlibc::sysdep_or_enosys<Acct>(filename); e) {
+		errno = e;
+		return -1;
+	}
+	return 0;
+}
+
 int syncfs(int fd) {
 	if(int e = mlibc::sysdep_or_enosys<Syncfs>(fd); e) {
 		errno = e;
