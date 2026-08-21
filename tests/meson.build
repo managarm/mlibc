@@ -66,6 +66,7 @@ all_test_cases = [
 	'bsd/strl',
 	'bsd/sbrk',
 	'bsd/getloadavg',
+	'bsd/issetugid',
 	'posix/sched_setscheduler',
 	'posix/inet_ntop',
 	'posix/inet_pton',
@@ -228,6 +229,7 @@ wrapped_test_cases = [
 
 host_libc_excluded_test_cases = [
 	'bsd/strl', # These functions do not exist on Linux.
+	'bsd/issetugid', # glibc has no issetugid().
 	'glibc/error', # These tests depend on mlibc error messages.
 	'glibc/error_at_line', # These tests depend on mlibc error messages.
 	'rtld/search-order', # See rtld/search-order/meson.build.
@@ -249,6 +251,7 @@ host_libc_noasan_test_cases = [
 
 cross_libc_excluded_test_cases = [
 	'ansi/fenv',
+	'bsd/issetugid', # glibc has no issetugid().
 	'posix/pthread_cancel',
 ]
 
