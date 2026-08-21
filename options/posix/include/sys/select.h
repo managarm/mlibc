@@ -3,7 +3,7 @@
 #define _SYS_SELECT_H
 
 #include <abi-bits/fd_set.h>
-#include <abi-bits/signal.h>
+#include <abi-bits/sigset_t.h>
 
 #include <bits/ansi/time_t.h>
 #include <bits/ansi/timespec.h>
