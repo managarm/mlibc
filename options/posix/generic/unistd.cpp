@@ -603,11 +603,28 @@ int lockf(int fd, int op, off_t size) {
 
 int nice(int nice) {
 	int new_nice;
-	if(int e = mlibc::sysdep_or_enosys<Nice>(nice, &new_nice); e) {
+	if constexpr (mlibc::IsImplemented<Nice>) {
+		if(int e = mlibc::sysdep_or_enosys<Nice>(nice, &new_nice); e) {
+			errno = e;
+			return -1;
+		}
+		return new_nice;
+	}
+
+	// Like glibc, fall back to implementing nice() via the priority sysdeps.
+	int old_nice;
+	if(int e = mlibc::sysdep_or_enosys<GetPriority>(PRIO_PROCESS, 0, &old_nice); e) {
 		errno = e;
 		return -1;
 	}
-
+	if(int e = mlibc::sysdep_or_enosys<SetPriority>(PRIO_PROCESS, 0, old_nice + nice); e) {
+		errno = e;
+		return -1;
+	}
+	if(int e = mlibc::sysdep_or_enosys<GetPriority>(PRIO_PROCESS, 0, &new_nice); e) {
+		errno = e;
+		return -1;
+	}
 	return new_nice;
 }
 

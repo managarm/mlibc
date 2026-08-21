@@ -2657,32 +2657,6 @@ int Sysdeps<InetConfigured>::operator()(bool *ipv4, bool *ipv6) {
 }
 #endif // !defined(MLIBC_BUILDING_RTLD)
 
-// the first argument of the get/set priority calls is a PRIO_PROCESS constant.
-// the actual macro is not used at the moment because of a wrong #define
-// FIXME once the abi fix PR is merged
-int Sysdeps<Nice>::operator()(int increment, int *new_nice) {
-	int current;
-	if (int e = sysdep<GetPriority>(0, 0, &current); e)
-		return e;
-
-	if (increment == 0) {
-		*new_nice = current;
-		return 0;
-	}
-
-	// the system call silently clamps the value to the nice range
-	if (int e = sysdep<SetPriority>(0, 0, current + increment); e)
-		return e;
-
-	if (int e = sysdep<GetPriority>(0, 0, &current); e)
-		return e;
-
-	// NOTE: according to man 2 getpriority, the internal priority values in linux are
-	// in the range 40..1. So we have to convert it.
-	*new_nice = 20 - current;
-	return 0;
-}
-
 struct kmsqid64_ds {
 	kmsqid64_ds() = default;
 	kmsqid64_ds(msqid_ds &m)
