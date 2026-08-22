@@ -166,7 +166,6 @@ struct LinuxSysdepTags :
 	Shmdt,
 	Shmget,
 	InetConfigured,
-	Nice,
 	Msgctl,
 	Msgget,
 	Msgrcv,
