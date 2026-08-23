@@ -376,6 +376,11 @@ int abstract_file::_init_bufmode() {
 	return 0;
 }
 
+void abstract_file::_reset_type_and_bufmode() {
+	_type = stream_type::unknown;
+	_bufmode = buffer_mode::unknown;
+}
+
 int abstract_file::_write_back() {
 	if(int e = _init_type(); e)
 		return e;
@@ -481,8 +486,6 @@ int fd_file::close() {
 }
 
 int fd_file::reopen(const char *path, const char *mode) {
-	flush();
-
 	int mode_flags = parse_modestring(mode);
 	const char *reopen_path = path;
 
@@ -499,22 +502,68 @@ int fd_file::reopen(const char *path, const char *mode) {
 			getAllocator().free(const_cast<char *>(reopen_path));
 	});
 
-	int fd;
-	if(int e = sysdep<Open>(reopen_path, mode_flags, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH, &fd); e) {
-		return e;
+	// Deliberately deviate from POSIX's close-before-open ordering to match glibc
+	// and musl, which preserve the original descriptor across freopen(). Keep it
+	// open until dup2() atomically replaces it: closing it before opening the
+	// replacement would let an unrelated thread reuse and then lose old_fd.
+	int old_fd = _fd;
+	bool old_fd_is_open = true;
+	// POSIX requires freopen() to proceed even if flushing the old stream fails.
+	// The buffered data is discarded below when we reset the stream state.
+	flush();
+	int reopen_error = 0;
+	int fd = -1;
+	if (int e = sysdep<Open>(reopen_path, mode_flags,
+				S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, &fd); e)
+		reopen_error = e;
+
+	if (!reopen_error && fd != old_fd) {
+#if __MLIBC_POSIX_OPTION
+		if constexpr (IsImplemented<Dup2>) {
+			if (int e = sysdep<Dup2>(fd, mode_flags & O_CLOEXEC, old_fd); e) {
+				reopen_error = e;
+			} else {
+				old_fd_is_open = false;
+				sysdep<Close>(fd);
+				fd = old_fd;
+			}
+		} else {
+			// fd_file can still implement freopen() without Dup2, but cannot
+			// preserve the descriptor number in that configuration.
+			close();
+			old_fd_is_open = false;
+		}
+#else
+		close();
+		old_fd_is_open = false;
+#endif
 	}
 
-	close();
+	if (reopen_error) {
+		if (fd >= 0 && fd != old_fd)
+			sysdep<Close>(fd);
+		if (old_fd_is_open)
+			close();
+		_fd = -1;
+	}
+
 	if (__buffer_ptr)
 		getAllocator().deallocate(__buffer_ptr - ungetBufferSize, __buffer_size + ungetBufferSize);
 
 	__buffer_ptr = nullptr;
 	__unget_ptr = nullptr;
 	__buffer_size = 4096;
-	_reset();
-	_fd = fd;
+	purge();
+	__io_mode = 0;
+	__status_bits = 0;
+	_reset_type_and_bufmode();
 	_orientation = stream_orientation::none;
 	_mbstate = {};
+
+	if (reopen_error)
+		return reopen_error;
+
+	_fd = fd;
 
 	if(mode_flags & O_APPEND) {
 		seek(0, SEEK_END);
@@ -820,4 +869,3 @@ void __fpurge(FILE *file_base) {
 	file->purge();
 }
 #endif
-

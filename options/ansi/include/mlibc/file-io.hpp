@@ -90,6 +90,7 @@ protected:
 	virtual int io_seek(off_t offset, int whence, off_t *new_offset) = 0;
 	virtual int post_flush();
 
+	void _reset_type_and_bufmode();
 	int _reset();
 private:
 	int _init_type();
