@@ -33,6 +33,7 @@ all_test_cases = [
 	'ansi/strxfrm',
 	'ansi/calloc',
 	'ansi/fgetpos',
+	'ansi/fputc',
 	'ansi/fputs',
 	'ansi/ftell',
 	'ansi/fseek-eof',

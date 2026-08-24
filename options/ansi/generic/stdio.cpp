@@ -2035,7 +2035,7 @@ int fputc_unlocked(int c, FILE *stream) {
 	char d = c;
 	if(fwrite_unlocked(&d, 1, 1, stream) != 1)
 		return EOF;
-	return 1;
+	return static_cast<unsigned char>(c);
 }
 
 // byte-oriented (POSIX)
