@@ -464,40 +464,6 @@ struct StreamPrinter {
 		}
 	}
 
-	template <typename C>
-	void append(const C *str, size_t src_max, size_t dest_max)
-	requires (!std::is_same_v<Char, C>) {
-		Char buf[512];
-		mbstate_t state = { };
-		const C *curr = str;
-
-		while (src_max > 0 && dest_max > 0 && curr) {
-			const C *start = curr;
-
-			size_t num_chars = convertString(buf, &curr, frg::min(sizeof(buf), src_max), dest_max, &state);
-			if (num_chars == size_t(-1))
-				return;
-
-			append(buf, num_chars);
-			dest_max -= num_chars;
-
-			if (!curr) {
-				break;
-			} else {
-				size_t consumed = curr - start;
-
-				if (consumed > src_max || !consumed)
-					break;
-
-				src_max -= consumed;
-			}
-		}
-	}
-
-	void append(const Char *str, size_t src_max, size_t dest_max) {
-		append(str, frg::min(src_max, dest_max));
-	}
-
 	mlibc::abstract_file *stream;
 	size_t count;
 	bool failed;
