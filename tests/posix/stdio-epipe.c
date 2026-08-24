@@ -35,6 +35,18 @@ int main(void) {
 	void (*old_sigpipe)(int) = signal(SIGPIPE, SIG_IGN);
 	assert(old_sigpipe != SIG_ERR);
 
+	int puts_fds[2];
+	assert(pipe(puts_fds) == 0);
+	assert(close(puts_fds[0]) == 0);
+	assert(dup2(puts_fds[1], STDOUT_FILENO) == STDOUT_FILENO);
+	assert(close(puts_fds[1]) == 0);
+	assert(setvbuf(stdout, NULL, _IOLBF, 0) == 0);
+	errno = 0;
+	assert(puts("x") == EOF);
+	assert(errno == EPIPE);
+	assert(ferror(stdout));
+	assert(freopen("/dev/null", "w", stdout));
+
 	int close_fds[2];
 	assert(pipe(close_fds) == 0);
 	assert(close(close_fds[0]) == 0);

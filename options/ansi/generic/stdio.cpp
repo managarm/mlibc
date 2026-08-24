@@ -2151,24 +2151,11 @@ int puts(const char *string) {
 	auto file = static_cast<mlibc::abstract_file *>(stdout);
 	frg::unique_lock lock(file->_lock);
 
-	size_t progress = 0;
 	size_t len = strlen(string);
-	while(progress < len) {
-		size_t chunk;
-		if(file->write(string + progress,
-				len - progress, &chunk)) {
-			return EOF;
-		}else if(!chunk) {
-			return EOF;
-		}
-
-		progress += chunk;
-	}
-
-	size_t unused;
-	if (file->write("\n", 1, &unused)) {
+	if(fwrite_unlocked_ignore_orientation(string, 1, len, file) != len)
 		return EOF;
-	}
+	if(fwrite_unlocked_ignore_orientation("\n", 1, 1, file) != 1)
+		return EOF;
 
 	return 1;
 }
