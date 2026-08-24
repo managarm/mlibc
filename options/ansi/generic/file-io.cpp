@@ -786,13 +786,16 @@ long ftell(FILE *file_base) {
 int fflush_unlocked(FILE *file_base) {
 	if(file_base == nullptr) {
 		// Only flush the files but do not close them.
+		int result = 0;
 		frg::unique_lock list_lock(mlibc::global_file_list_mutex);
 		for(auto it : mlibc::global_file_list()) {
-			if(int e = it->flush(); e)
+			if(int e = it->flush(); e) {
+				result = EOF;
 				mlibc::infoLogger() << "mlibc warning: Failed to flush file"
 					<< frg::endlog;
+			}
 		}
-		return 0;
+		return result;
 	}
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	if(file->flush())
@@ -802,14 +805,17 @@ int fflush_unlocked(FILE *file_base) {
 int fflush(FILE *file_base) {
 	if(file_base == nullptr) {
 		// Only flush the files but do not close them.
+		int result = 0;
 		frg::unique_lock list_lock(mlibc::global_file_list_mutex);
 		for(auto it : mlibc::global_file_list()) {
 			frg::unique_lock lock(it->_lock);
-			if(int e = it->flush(); e)
+			if(int e = it->flush(); e) {
+				result = EOF;
 				mlibc::infoLogger() << "mlibc warning: Failed to flush file"
 					<< frg::endlog;
+			}
 		}
-		return 0;
+		return result;
 	}
 
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
