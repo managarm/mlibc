@@ -137,11 +137,6 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 		return 0;
 	}
 
-	// Ensure correct buffer type for pipe-like streams.
-	// TODO: In order to support pipe-like streams we need to write-back the buffer.
-	if(__io_mode && __valid_limit)
-		mlibc::panicLogger() << "mlibc: Cannot read-write to same pipe-like stream"
-				<< frg::endlog;
 	__io_mode = 0;
 
 	// Clear the buffer, then buffer new data.
@@ -205,13 +200,6 @@ int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_siz
 			return e;
 	}
 
-	// Ensure correct buffer type for pipe-like streams.
-	// TODO: We could full support pipe-like files
-	// by ungetc()ing all data before a write happens,
-	// however, for now we just report an error.
-	if(!__io_mode && __valid_limit) // TODO: Only check this for pipe-like streams.
-		mlibc::panicLogger() << "mlibc: Cannot read-write to same pipe-like stream"
-				<< frg::endlog;
 	__io_mode = 1;
 
 	__ensure(__offset < __buffer_size);
@@ -295,9 +283,11 @@ int abstract_file::flush() {
 			return e;
 	}
 
-	if (int e = _save_pos(); e)
+	bool preserve_buffer;
+	if (int e = _save_pos(preserve_buffer); e)
 		return e;
-	purge();
+	if(!preserve_buffer)
+		purge();
 	return post_flush();
 }
 
@@ -320,6 +310,8 @@ int abstract_file::seek(off_t offset, int whence) {
 	if(whence == SEEK_CUR) {
 		auto seek_offset = offset + (off_t(__offset) - off_t(__io_offset));
 		if(int e = io_seek(seek_offset, whence, &new_offset); e) {
+			if(e == ESPIPE)
+				_type = stream_type::pipe_like;
 			// A failed seek is not a read/write error. In particular, ESPIPE
 			// on a pipe must not set the stream error indicator.
 			return e;
@@ -327,6 +319,9 @@ int abstract_file::seek(off_t offset, int whence) {
 	}else{
 		__ensure(whence == SEEK_SET || whence == SEEK_END);
 		if(int e = io_seek(offset, whence, &new_offset); e) {
+			if(e == ESPIPE)
+				_type = stream_type::pipe_like;
+			// As above, a seek failure is not a read/write error.
 			return e;
 		}
 	}
@@ -384,11 +379,8 @@ int abstract_file::_write_back() {
 	if(__dirty_begin == __dirty_end)
 		return 0;
 
-	// For non-pipe streams, first do a seek to reset the
-	// I/O position to zero, then do a write().
 	if(_type == stream_type::file_like) {
 		if(__io_offset != __dirty_begin) {
-			__ensure(__dirty_begin - __io_offset > 0);
 			off_t new_offset;
 			if(int e = io_seek(off_t(__dirty_begin) - off_t(__io_offset), SEEK_CUR, &new_offset); e)
 				return e;
@@ -396,7 +388,8 @@ int abstract_file::_write_back() {
 		}
 	}else{
 		__ensure(_type == stream_type::pipe_like);
-		__ensure(__io_offset == __dirty_begin);
+		if(__io_offset != __dirty_begin)
+			return ESPIPE;
 	}
 
 	// Now, we are in the correct position to write-back everything.
@@ -414,21 +407,32 @@ int abstract_file::_write_back() {
 	return 0;
 }
 
-int abstract_file::_save_pos() {
+int abstract_file::_save_pos(bool &preserve_buffer) {
+	preserve_buffer = false;
+
 	if (int e = _init_type(); e)
 		return e;
 	if (int e = _init_bufmode(); e)
 		return e;
 
-	if (_type == stream_type::file_like && _bufmode != buffer_mode::no_buffer) {
+	if (_bufmode != buffer_mode::no_buffer && __offset != __io_offset) {
 		off_t new_offset;
 		auto seek_offset = (off_t(__offset) - off_t(__io_offset));
 		if (int e = io_seek(seek_offset, SEEK_CUR, &new_offset); e) {
+			if(e == ESPIPE) {
+				// See the corresponding resynchronization in _write_back().
+				_type = stream_type::pipe_like;
+				// The descriptor no longer supports restoring the file position.
+				// Retain unread input rather than silently dropping it.
+				preserve_buffer = true;
+				return 0;
+			}
 			__status_bits |= __MLIBC_ERROR_BIT;
 			if(!mlibc::processIsExiting.load(std::memory_order_relaxed))
 				mlibc::infoLogger() << "hit io_seek() error " << e << frg::endlog;
 			return e;
 		}
+		_type = stream_type::file_like;
 		return 0;
 	}
 	return 0; // nothing to do for the rest
@@ -805,7 +809,8 @@ int fflush_unlocked(FILE *file_base) {
 	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	if(int e = file->flush(); e) {
 		errno = e;
-		file->__status_bits |= __MLIBC_ERROR_BIT;
+		if(e != ESPIPE)
+			file->__status_bits |= __MLIBC_ERROR_BIT;
 		return EOF;
 	}
 	return 0;
@@ -834,7 +839,8 @@ int fflush(FILE *file_base) {
 	frg::unique_lock lock(file->_lock);
 	if (int e = file->flush(); e) {
 		errno = e;
-		file->__status_bits |= __MLIBC_ERROR_BIT;
+		if(e != ESPIPE)
+			file->__status_bits |= __MLIBC_ERROR_BIT;
 		return EOF;
 	}
 	return 0;
