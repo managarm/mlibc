@@ -13,16 +13,18 @@ jobs:
                 apt-get update
                 apt-get install -y meson ninja-build \
                                 python3-setuptools python3-jsonschema \
-                                python3-pexpect python3-pip python3-clang \
-                                netbase clang lld rustfmt git rsync
+                                python3-pexpect python3-pip \
+                                netbase clang lld rustup git rsync
                 pip install --break-system-packages -U xbstrap pyexpect
+                rustup default stable
+                rustup component add rustfmt
           - name: Prepare directories
             run: |
                 mkdir src/
                 mkdir src/mlibc/
                 mkdir build/
           - name: Checkout
-            uses: actions/checkout@v2
+            uses: actions/checkout@v6
             with:
               path: src/mlibc/
           - name: Prepare src/
@@ -42,8 +44,13 @@ jobs:
           - name: Build mlibc
             run: 'xbstrap install mlibc-headers-only'
             working-directory: build/
+          - name: Checkout rust-libc
+            uses: actions/checkout@v6
+            with:
+                repository: rust-lang/libc
+                path: src/rust-libc/
           - name: Run generator
             run: |
-                python3 ./scripts/rust-libc.py ../../build/packages/mlibc-headers-only/usr/include gcc | rustfmt
-            working-directory: src/mlibc/
+                cargo run -- -m ../../../rust-libc/src/unix/linux_like/managarm/mod.rs --headers-dir ../../../../build/packages/mlibc-headers-only/usr/include -I ../../../../build/packages/linux-headers/usr/include -c ../../sysdeps/managarm/rust/managarm.yml -p ../../sysdeps/managarm/rust/defs.rs --target x86_64-unknown-managarm
+            working-directory: src/mlibc/scripts/libc-parser
 
