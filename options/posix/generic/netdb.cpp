@@ -155,7 +155,7 @@ requires (std::is_invocable_r_v<bool, F, frg::string_view, int>) {
 			if (separatorIndex == 0)
 				break;
 
-			aliases.push_back(frg::string{lineView.sub_string(0, separatorIndex), getAllocator()});
+			aliases.push_back(frg::string<MemoryAllocator>{lineView.sub_string(0, separatorIndex), getAllocator()});
 			lineView = lineView.sub_string(separatorIndex, lineView.size() - separatorIndex);
 		}
 

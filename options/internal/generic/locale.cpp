@@ -145,7 +145,7 @@ frg::vector<frg::string<MemoryAllocator>, MemoryAllocator> buildLocaleList(Decom
 		if (codeset)
 			return normalizeCodeset(*codeset);
 		else
-			return frg::string{getAllocator()};
+			return frg::string<MemoryAllocator>{getAllocator()};
 	}();
 	frg::vector<frg::string<MemoryAllocator>, MemoryAllocator> ret{getAllocator()};
 
@@ -439,62 +439,62 @@ bool parseCategoryInfo(int category, frg::string_view name, frg::span<const uint
 			parse_category_array(out->ctype.members, ctype_parser, rec, offsets);
 			out->ctype.data = rec;
 			out->ctype.offsets = offsets;
-			out->ctype.localeName = frg::string{getAllocator(), name};
+			out->ctype.localeName = frg::string<MemoryAllocator>{getAllocator(), name};
 			break;
 		}
 		case LC_NUMERIC: {
 			parse_category_array(out->numeric.members, numeric_parser, rec, offsets);
-			out->numeric.localeName = frg::string{getAllocator(), name};
+			out->numeric.localeName = frg::string<MemoryAllocator>{getAllocator(), name};
 			break;
 		}
 		case LC_TIME: {
 			parse_category_array(out->time.members, time_parser, rec, offsets);
-			out->time.localeName = frg::string{getAllocator(), name};
+			out->time.localeName = frg::string<MemoryAllocator>{getAllocator(), name};
 			break;
 		}
 		case LC_COLLATE:
 			parse_category_array(out->collate.members, collate_parser, rec, offsets);
-			out->collate.localeName = frg::string{getAllocator(), name};
+			out->collate.localeName = frg::string<MemoryAllocator>{getAllocator(), name};
 			break;
 		case LC_MONETARY: {
 			parse_category_array(out->monetary.members, monetary_parser, rec, offsets);
-			out->monetary.localeName = frg::string{getAllocator(), name};
+			out->monetary.localeName = frg::string<MemoryAllocator>{getAllocator(), name};
 			break;
 		}
 		case LC_MESSAGES: {
 			parse_category_array(out->messages.members, messages_parser, rec, offsets);
-			out->messages.localeName = frg::string{getAllocator(), name};
+			out->messages.localeName = frg::string<MemoryAllocator>{getAllocator(), name};
 			break;
 		}
 		// skip LC_ALL
 		case LC_PAPER: {
 			parse_category_array(out->paper.members, paper_parser, rec, offsets);
-			out->paper.localeName = frg::string{getAllocator(), name};
+			out->paper.localeName = frg::string<MemoryAllocator>{getAllocator(), name};
 			break;
 		}
 		case LC_NAME: {
 			parse_category_array(out->name.members, name_parser, rec, offsets);
-			out->name.localeName = frg::string{getAllocator(), name};
+			out->name.localeName = frg::string<MemoryAllocator>{getAllocator(), name};
 			break;
 		}
 		case LC_ADDRESS: {
 			parse_category_array(out->address.members, address_parser, rec, offsets);
-			out->address.localeName = frg::string{getAllocator(), name};
+			out->address.localeName = frg::string<MemoryAllocator>{getAllocator(), name};
 			break;
 		}
 		case LC_TELEPHONE: {
 			parse_category_array(out->telephone.members, telephone_parser, rec, offsets);
-			out->telephone.localeName = frg::string{getAllocator(), name};
+			out->telephone.localeName = frg::string<MemoryAllocator>{getAllocator(), name};
 			break;
 		}
 		case LC_MEASUREMENT: {
 			parse_category_array(out->measurement.members, measurement_parser, rec, offsets);
-			out->measurement.localeName = frg::string{getAllocator(), name};
+			out->measurement.localeName = frg::string<MemoryAllocator>{getAllocator(), name};
 			break;
 		}
 		case LC_IDENTIFICATION: {
 			parse_category_array(out->identification.members, identification_parser, rec, offsets);
-			out->identification.localeName = frg::string{getAllocator(), name};
+			out->identification.localeName = frg::string<MemoryAllocator>{getAllocator(), name};
 			break;
 		}
 		default:
@@ -647,52 +647,52 @@ bool applyCategory(int category, frg::string_view name, localeinfo *info) {
 	if (name == "C" || name == "POSIX") {
 		switch (category) {
 			case LC_CTYPE:
-				info->ctype.localeName = frg::string{name, getAllocator()};
+				info->ctype.localeName = frg::string<MemoryAllocator>{name, getAllocator()};
 				info->ctype = cLocale.ctype;
 				break;
 			case LC_NUMERIC:
-				info->numeric.localeName = frg::string{name, getAllocator()};
+				info->numeric.localeName = frg::string<MemoryAllocator>{name, getAllocator()};
 				info->numeric = cLocale.numeric;
 				break;
 			case LC_TIME:
-				info->time.localeName = frg::string{name, getAllocator()};
+				info->time.localeName = frg::string<MemoryAllocator>{name, getAllocator()};
 				info->time = cLocale.time;
 				break;
 			case LC_COLLATE:
-				info->collate.localeName = frg::string{name, getAllocator()};
+				info->collate.localeName = frg::string<MemoryAllocator>{name, getAllocator()};
 				info->collate = cLocale.collate;
 				break;
 			case LC_MONETARY:
-				info->monetary.localeName = frg::string{name, getAllocator()};
+				info->monetary.localeName = frg::string<MemoryAllocator>{name, getAllocator()};
 				info->monetary = cLocale.monetary;
 				break;
 			case LC_MESSAGES:
-				info->messages.localeName = frg::string{name, getAllocator()};
+				info->messages.localeName = frg::string<MemoryAllocator>{name, getAllocator()};
 				info->messages = cLocale.messages;
 				break;
 			// skip LC_ALL
 			case LC_PAPER:
-				info->paper.localeName = frg::string{name, getAllocator()};
+				info->paper.localeName = frg::string<MemoryAllocator>{name, getAllocator()};
 				info->paper = cLocale.paper;
 				break;
 			case LC_NAME:
-				info->name.localeName = frg::string{name, getAllocator()};
+				info->name.localeName = frg::string<MemoryAllocator>{name, getAllocator()};
 				info->name = cLocale.name;
 				break;
 			case LC_ADDRESS:
-				info->address.localeName = frg::string{name, getAllocator()};
+				info->address.localeName = frg::string<MemoryAllocator>{name, getAllocator()};
 				info->address = cLocale.address;
 				break;
 			case LC_TELEPHONE:
-				info->telephone.localeName = frg::string{name, getAllocator()};
+				info->telephone.localeName = frg::string<MemoryAllocator>{name, getAllocator()};
 				info->telephone = cLocale.telephone;
 				break;
 			case LC_MEASUREMENT:
-				info->measurement.localeName = frg::string{name, getAllocator()};
+				info->measurement.localeName = frg::string<MemoryAllocator>{name, getAllocator()};
 				info->measurement = cLocale.measurement;
 				break;
 			case LC_IDENTIFICATION:
-				info->identification.localeName = frg::string{name, getAllocator()};
+				info->identification.localeName = frg::string<MemoryAllocator>{name, getAllocator()};
 				info->identification = cLocale.identification;
 				break;
 			default:
