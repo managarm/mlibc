@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/resource.h>
 #include <unistd.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -20,6 +21,7 @@
 #include <frg/spinlock.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
+#include <mlibc/atfork.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/thread.hpp>
 #include <mlibc/tcb.hpp>
@@ -238,19 +240,36 @@ namespace {
 			return ENOSYS;
 		}
 
+		struct rlimit limit;
+		if (getrlimit(RLIMIT_STACK, &limit)) {
+			int err = errno;
+			fclose(fp);
+			return err;
+		}
+
 		char line[256];
 		auto sp = mlibc::get_sp();
+		uintptr_t prev_to = 0;
 		while (fgets(line, 256, fp)) {
 			uintptr_t from, to;
 			if(sscanf(line, "%" SCNxPTR "-%" SCNxPTR, &from, &to) != 2)
 				continue;
 			if (sp < to && sp > from) {
+				rlim_t size = limit.rlim_cur;
+
+				// The limit can exceed the room below the stack, and it can be
+				// RLIM_INFINITY. Either way the stack cannot grow into the mapping
+				// that precedes it.
+				if (size > to - prev_to)
+					size = to - prev_to;
+
 				// We need to return the lowest byte of the stack.
-				*stack_addr = reinterpret_cast<void*>(from);
-				*stack_size = to - from;
+				*stack_addr = reinterpret_cast<void*>(to - static_cast<size_t>(size));
+				*stack_size = size;
 				fclose(fp);
 				return 0;
 			}
+			prev_to = to;
 		}
 
 		fclose(fp);
@@ -714,27 +733,7 @@ int pthread_cancel(pthread_t thread) {
 }
 
 int pthread_atfork(void (*prepare) (void), void (*parent) (void), void (*child) (void)) {
-	auto self = mlibc::get_current_tcb();
-
-	auto hand = frg::construct<Tcb::AtforkHandler>(getAllocator());
-	if (!hand)
-		return ENOMEM;
-
-	hand->prepare = prepare;
-	hand->parent = parent;
-	hand->child = child;
-	hand->next = nullptr;
-	hand->prev = self->atforkEnd;
-
-	if (self->atforkEnd)
-		self->atforkEnd->next = hand;
-
-	self->atforkEnd = hand;
-
-	if (!self->atforkBegin)
-		self->atforkBegin = self->atforkEnd;
-
-	return 0;
+	return mlibc::atfork_register(prepare, parent, child);
 }
 
 // ----------------------------------------------------------------------------

@@ -118,6 +118,16 @@ struct alignas(4) FutexLockImpl {
 			__ensure(e >= 0 || e == EACCES || e == EINVAL);
 		}
 	}
+
+	// A lock held across fork() cannot be unlocked in the child: the thread that
+	// took it has a different thread ID there, and the threads that were waiting
+	// on it do not exist at all. Since the child only runs the thread that
+	// forked, putting the lock back into the unlocked state is all there is to do.
+	void reset_after_fork() {
+		__atomic_store_n(&_state, 0, __ATOMIC_RELAXED);
+		if constexpr (Recursive)
+			_recursion = 0;
+	}
 private:
 	uint32_t _state;
 	uint32_t _recursion;
