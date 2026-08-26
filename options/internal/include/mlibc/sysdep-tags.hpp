@@ -623,6 +623,8 @@ struct Klogctl {};
 struct Getcpu {};
 // int sys_sysinfo(struct sysinfo *info);
 struct Sysinfo {};
+// int sys_acct(const char *filename);
+struct Acct {};
 // int sys_swapon(const char *path, int flags);
 struct Swapon {};
 // int sys_swapoff(const char *path);

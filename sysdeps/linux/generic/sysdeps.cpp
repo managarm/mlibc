@@ -2949,6 +2949,13 @@ int Sysdeps<Sysinfo>::operator()(struct sysinfo *info) {
 	return 0;
 }
 
+int Sysdeps<Acct>::operator()(const char *filename) {
+	auto ret = do_syscall(SYS_acct, filename);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
 int Sysdeps<Swapon>::operator()(const char *path, int flags) {
 	auto ret = do_syscall(SYS_swapon, path, flags);
 	if (int e = sc_error(ret); e)

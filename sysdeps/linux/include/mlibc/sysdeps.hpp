@@ -211,6 +211,7 @@ struct LinuxSysdepTags :
 	Klogctl,
 	Getcpu,
 	Sysinfo,
+	Acct,
 	Swapon,
 	Swapoff,
 	Setxattr,

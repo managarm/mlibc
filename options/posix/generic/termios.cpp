@@ -32,6 +32,13 @@ int cfsetospeed(struct termios *termios, speed_t speed) {
 	return 0;
 }
 
+int cfsetspeed(struct termios *termios, speed_t speed) {
+	// The input and the output speed share a field here, so setting the output
+	// speed covers both. POSIX reads an input speed of zero as "whatever the
+	// output speed is" anyway, which is how cfsetispeed() treats it.
+	return cfsetospeed(termios, speed);
+}
+
 void cfmakeraw(struct termios *t) {
 	t->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
 	t->c_oflag &= ~OPOST;

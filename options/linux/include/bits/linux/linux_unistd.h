@@ -14,6 +14,7 @@ extern "C" {
 
 #if defined(_DEFAULT_SOURCE)
 int vhangup(void);
+int acct(const char *__filename);
 #endif
 
 #if defined(_GNU_SOURCE)
