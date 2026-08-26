@@ -357,27 +357,24 @@ int thread_mutex_trylock(struct __mlibc_mutex *mutex) {
 }
 
 int thread_mutex_unlock(struct __mlibc_mutex *mutex) {
+	unsigned int this_tid = mlibc::this_tid();
+
+	if (mutex->__mlibc_flags & __mlibc_mutex::mutexErrorCheck) {
+		auto current = __atomic_load_n(&mutex->__mlibc_state, __ATOMIC_RELAXED);
+		if ((current & __mlibc_mutex::mutex_owner_mask) != this_tid)
+			return EPERM;
+	}
+
 	// Decrement the recursion level and unlock if we hit zero.
 	__ensure(mutex->__mlibc_recursion);
 	if(--mutex->__mlibc_recursion)
 		return 0;
-
-	auto flags = mutex->__mlibc_flags;
 
 	// Reset the mutex to the unlocked state.
 	auto state = __atomic_exchange_n(&mutex->__mlibc_state, 0, __ATOMIC_RELEASE);
 
 	// After this point the mutex is unlocked, and therefore we cannot access its contents as it
 	// may have been destroyed by another thread.
-
-	unsigned int this_tid = mlibc::this_tid();
-	if ((flags & __mlibc_mutex::mutexErrorCheck) && (state & __mlibc_mutex::mutex_owner_mask) != this_tid)
-		return EPERM;
-
-	if ((flags & __mlibc_mutex::mutexErrorCheck) && !(state & __mlibc_mutex::mutex_owner_mask))
-		return EINVAL;
-
-	__ensure((state & __mlibc_mutex::mutex_owner_mask) == this_tid);
 
 	if(state & __mlibc_mutex::mutex_waiters_bit) {
 		// Wake the futex if there were waiters. Since the mutex might not exist at this location
