@@ -1,4 +1,5 @@
 #include <bit>
+#include <internal-config.h>
 #include <immintrin.h>
 #include <stdint.h>
 
