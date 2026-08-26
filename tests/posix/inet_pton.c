@@ -142,6 +142,49 @@ int main() {
 		assert(!memcmp(&addr6, &test6, sizeof(addr6)));
 	}
 
+	// An embedded IPv4 address may contain zero octets.
+	{
+		struct in6_addr addr6 = {
+			.s6_addr = {
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0xFF, 0xFF, 127, 0, 0, 1,
+			},
+		};
+		int ret = inet_pton(AF_INET6, "::FFFF:127.0.0.1", &test6);
+		assert(ret == 1);
+		assert(!memcmp(&addr6, &test6, sizeof(addr6)));
+	}
+
+	{
+		struct in6_addr addr6 = {
+			.s6_addr = {
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0xFF, 0xFF, 0, 0, 0, 0,
+			},
+		};
+		int ret = inet_pton(AF_INET6, "::FFFF:0.0.0.0", &test6);
+		assert(ret == 1);
+		assert(!memcmp(&addr6, &test6, sizeof(addr6)));
+	}
+
+	{
+		struct in6_addr addr6 = {
+			.s6_addr = {
+				0x00, 0x64, 0xFF, 0x9B, 0, 0, 0, 0,
+				0, 0, 0, 0, 192, 0, 2, 1,
+			},
+		};
+		int ret = inet_pton(AF_INET6, "64:ff9b::192.0.2.1", &test6);
+		assert(ret == 1);
+		assert(!memcmp(&addr6, &test6, sizeof(addr6)));
+	}
+
+	// A zero octet is still not allowed to carry a leading zero.
+	assert(!inet_pton(AF_INET6, "::FFFF:127.00.0.1", &test6));
+	assert(!inet_pton(AF_INET6, "::FFFF:00.0.0.0", &test6));
+	assert(!inet_pton(AF_INET6, "::FFFF:01.2.3.4", &test6));
+	assert(!inet_pton(AF_INET6, "::FFFF:1.2.3.04", &test6));
+
 	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000:0000:0000:01111", &test6));
 	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000:0000:000g:1111", &test6));
 	assert(!inet_pton(AF_INET6, " 2606:4700:4700:0000:0000:0000:0000:1111", &test6));
