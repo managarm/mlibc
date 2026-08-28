@@ -64,6 +64,11 @@ struct RoxySysdepTags :
 	Fsync,
 	Ftruncate,
 	Socketpair,
+	Socket,
+	Bind,
+	Listen,
+	Accept,
+	Connect,
 	Execve,
 	Exit
 {};
