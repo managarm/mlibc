@@ -39,6 +39,8 @@ struct RoxySysdepTags :
 	GetEuid,
 	GetPid,
 	GetPpid,
+	SetUid,
+	SetGid,
 	Kill,
 	Fork,
 	Waitpid,

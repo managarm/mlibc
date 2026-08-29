@@ -312,6 +312,16 @@ uid_t Sysdeps<GetEuid>::operator()() {
 	return static_cast<uid_t>(roxy_syscall0(ROXY_SYS_GETEUID));
 }
 
+int Sysdeps<SetUid>::operator()(uid_t uid) {
+	// Roxy currently runs every process as root and has no credential state.
+	return uid == 0 ? 0 : EPERM;
+}
+
+int Sysdeps<SetGid>::operator()(gid_t gid) {
+	// Roxy currently runs every process as root and has no credential state.
+	return gid == 0 ? 0 : EPERM;
+}
+
 pid_t Sysdeps<GetPid>::operator()() {
 	return static_cast<pid_t>(roxy_syscall0(ROXY_SYS_GETPID));
 }
