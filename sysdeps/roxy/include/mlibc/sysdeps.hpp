@@ -26,6 +26,7 @@ struct RoxySysdepTags :
 	Tcsetwinsize,
 	Write,
 	Pipe,
+	Dup2,
 	TcbSet,
 	AnonAllocate,
 	AnonFree,

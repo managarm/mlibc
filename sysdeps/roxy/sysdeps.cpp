@@ -317,6 +317,12 @@ int Sysdeps<Pipe>::operator()(int *fds, int flags) {
 	return syscall_error(result);
 }
 
+int Sysdeps<Dup2>::operator()(int oldfd, int flags, int newfd) {
+	// The kernel ABI takes (oldfd, newfd, flags); the mlibc tag passes (fd, flags, newfd).
+	auto result = roxy_syscall3(ROXY_SYS_DUP2, oldfd, newfd, flags);
+	return syscall_error(result);
+}
+
 int Sysdeps<SetUid>::operator()(uid_t uid) {
 	// Roxy currently runs every process as root and has no credential state.
 	return uid == 0 ? 0 : EPERM;
