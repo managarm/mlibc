@@ -236,6 +236,7 @@ struct SharedObject {
 	bool symbolicResolution;
 	bool eagerBinding;
 	bool haveStaticTls;
+	bool haveTextRel;
 
 	// vector of dependencies
 	frg::vector<SharedObject *, LdsoAllocator> dependencies;
@@ -261,6 +262,8 @@ struct SharedObject {
 	void *phdrPointer = nullptr;
 	size_t phdrEntrySize = 0;
 	size_t phdrCount = 0;
+
+	frg::vector<void*, MemoryAllocator> exec_phdrs;
 
 	frg::tuple<ObjectSymbol, SymbolVersion> getSymbolByIndex(size_t index);
 };
