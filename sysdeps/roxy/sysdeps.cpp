@@ -1,6 +1,7 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <roxy/syscall.h>
 
+#include <stdarg.h>
 #include <stdint.h>
 
 static int syscall_error(long result) {
@@ -321,6 +322,16 @@ int Sysdeps<Dup2>::operator()(int oldfd, int flags, int newfd) {
 	// The kernel ABI takes (oldfd, newfd, flags); the mlibc tag passes (fd, flags, newfd).
 	auto result = roxy_syscall3(ROXY_SYS_DUP2, oldfd, newfd, flags);
 	return syscall_error(result);
+}
+
+int Sysdeps<Fcntl>::operator()(int fd, int command, va_list args, int *result) {
+	auto argument = va_arg(args, unsigned long);
+	auto raw = roxy_syscall3(ROXY_SYS_FCNTL, fd, command, argument);
+	if(int error = syscall_error(raw); error)
+		return error;
+
+	*result = static_cast<int>(raw);
+	return 0;
 }
 
 int Sysdeps<SetUid>::operator()(uid_t uid) {

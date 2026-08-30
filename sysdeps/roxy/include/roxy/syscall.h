@@ -66,6 +66,7 @@ typedef long roxy_syscall_word_t;
 #define ROXY_SYS_CONNECT 53
 #define ROXY_SYS_PIPE 55
 #define ROXY_SYS_DUP2 56
+#define ROXY_SYS_FCNTL 57
 
 typedef struct {
 	int64_t seconds;
