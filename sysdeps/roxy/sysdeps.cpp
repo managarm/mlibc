@@ -3,6 +3,7 @@
 
 #include <stdarg.h>
 #include <stdint.h>
+#include <string.h>
 
 static int syscall_error(long result) {
 	return result < 0 ? static_cast<int>(-result) : 0;
@@ -352,6 +353,17 @@ int Sysdeps<Chmod>::operator()(const char *pathname, mode_t mode) {
 int Sysdeps<Fchmod>::operator()(int fd, mode_t mode) {
 	auto raw = roxy_syscall2(ROXY_SYS_FCHMOD, fd, mode);
 	return syscall_error(raw);
+}
+
+int Sysdeps<GetHostname>::operator()(char *buffer, size_t bufsize) {
+	const char *hostname = "roxybestgirl";
+	size_t length = strlen(hostname);
+
+	if(length >= bufsize)
+		return ENAMETOOLONG;
+
+	memcpy(buffer, hostname, length + 1);
+	return 0;
 }
 
 int Sysdeps<SetUid>::operator()(uid_t uid) {
