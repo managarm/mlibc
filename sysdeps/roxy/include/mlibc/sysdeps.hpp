@@ -80,6 +80,10 @@ struct RoxySysdepTags :
 	Listen,
 	Accept,
 	Connect,
+	Sockname,
+	Peername,
+	Shutdown,
+	GetSockopt,
 	Execve,
 	Exit
 {};

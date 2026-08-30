@@ -90,4 +90,67 @@ int Sysdeps<Connect>::operator()(int fd, const struct sockaddr *addr_ptr, sockle
 	return result < 0 ? static_cast<int>(-result) : 0;
 }
 
+int Sysdeps<Sockname>::operator()(
+    int fd,
+    struct sockaddr *addr_ptr,
+    socklen_t max_addr_length,
+    socklen_t *actual_length
+) {
+	auto result = roxy_syscall4(
+	    ROXY_SYS_SOCKNAME,
+	    fd,
+	    reinterpret_cast<long>(addr_ptr),
+	    max_addr_length,
+	    reinterpret_cast<long>(actual_length)
+	);
+
+	return result < 0 ? static_cast<int>(-result) : 0;
+}
+
+int Sysdeps<Peername>::operator()(
+    int fd,
+    struct sockaddr *addr_ptr,
+    socklen_t max_addr_length,
+    socklen_t *actual_length
+) {
+	auto result = roxy_syscall4(
+	    ROXY_SYS_PEERNAME,
+	    fd,
+	    reinterpret_cast<long>(addr_ptr),
+	    max_addr_length,
+	    reinterpret_cast<long>(actual_length)
+	);
+
+	return result < 0 ? static_cast<int>(-result) : 0;
+}
+
+int Sysdeps<Shutdown>::operator()(int fd, int how) {
+	auto result = roxy_syscall2(ROXY_SYS_SHUTDOWN, fd, how);
+
+	return result < 0 ? static_cast<int>(-result) : 0;
+}
+
+int Sysdeps<GetSockopt>::operator()(
+    int fd,
+    int layer,
+    int number,
+    void *__restrict buffer,
+    socklen_t *__restrict size
+) {
+	auto result = roxy_syscall5(
+	    ROXY_SYS_GETSOCKOPT,
+	    fd,
+	    layer,
+	    number,
+	    reinterpret_cast<long>(buffer),
+	    reinterpret_cast<long>(size)
+	);
+
+	if (result < 0) {
+		return static_cast<int>(-result);
+	}
+
+	return 0;
+}
+
 } // namespace mlibc

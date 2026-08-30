@@ -64,6 +64,10 @@ typedef long roxy_syscall_word_t;
 #define ROXY_SYS_LISTEN 51
 #define ROXY_SYS_ACCEPT 52
 #define ROXY_SYS_CONNECT 53
+#define ROXY_SYS_SOCKNAME 61
+#define ROXY_SYS_PEERNAME 62
+#define ROXY_SYS_SHUTDOWN 63
+#define ROXY_SYS_GETSOCKOPT 64
 #define ROXY_SYS_PIPE 55
 #define ROXY_SYS_DUP2 56
 #define ROXY_SYS_FCNTL 57
