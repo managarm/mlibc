@@ -344,6 +344,16 @@ int Sysdeps<Umask>::operator()(mode_t mode, mode_t *old) {
 	return 0;
 }
 
+int Sysdeps<Chmod>::operator()(const char *pathname, mode_t mode) {
+	auto raw = roxy_syscall2(ROXY_SYS_CHMOD, reinterpret_cast<long>(pathname), mode);
+	return syscall_error(raw);
+}
+
+int Sysdeps<Fchmod>::operator()(int fd, mode_t mode) {
+	auto raw = roxy_syscall2(ROXY_SYS_FCHMOD, fd, mode);
+	return syscall_error(raw);
+}
+
 int Sysdeps<SetUid>::operator()(uid_t uid) {
 	// Roxy currently runs every process as root and has no credential state.
 	return uid == 0 ? 0 : EPERM;

@@ -29,6 +29,8 @@ struct RoxySysdepTags :
 	Dup2,
 	Fcntl,
 	Umask,
+	Chmod,
+	Fchmod,
 	TcbSet,
 	AnonAllocate,
 	AnonFree,
