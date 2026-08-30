@@ -44,6 +44,8 @@ struct RoxySysdepTags :
 	GetEgid,
 	GetUid,
 	GetEuid,
+	GetResuid,
+	GetResgid,
 	GetPid,
 	GetPpid,
 	SetUid,

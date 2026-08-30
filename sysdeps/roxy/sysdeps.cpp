@@ -314,6 +314,22 @@ uid_t Sysdeps<GetEuid>::operator()() {
 	return static_cast<uid_t>(roxy_syscall0(ROXY_SYS_GETEUID));
 }
 
+int Sysdeps<GetResuid>::operator()(uid_t *ruid, uid_t *euid, uid_t *suid) {
+	// Roxy has no user model yet; every ID is 0 (root).
+	*ruid = 0;
+	*euid = 0;
+	*suid = 0;
+	return 0;
+}
+
+int Sysdeps<GetResgid>::operator()(gid_t *rgid, gid_t *egid, gid_t *sgid) {
+	// Roxy has no user model yet; every ID is 0 (root).
+	*rgid = 0;
+	*egid = 0;
+	*sgid = 0;
+	return 0;
+}
+
 int Sysdeps<Pipe>::operator()(int *fds, int flags) {
 	auto result = roxy_syscall2(ROXY_SYS_PIPE, reinterpret_cast<long>(fds), flags);
 	return syscall_error(result);
