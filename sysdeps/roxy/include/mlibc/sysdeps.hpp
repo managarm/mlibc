@@ -31,6 +31,7 @@ struct RoxySysdepTags :
 	Umask,
 	Chmod,
 	Fchmod,
+	Access,
 	GetHostname,
 	TcbSet,
 	AnonAllocate,

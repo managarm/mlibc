@@ -371,6 +371,11 @@ int Sysdeps<Fchmod>::operator()(int fd, mode_t mode) {
 	return syscall_error(raw);
 }
 
+int Sysdeps<Access>::operator()(const char *pathname, int mode) {
+	auto raw = roxy_syscall2(ROXY_SYS_ACCESS, reinterpret_cast<long>(pathname), mode);
+	return syscall_error(raw);
+}
+
 int Sysdeps<GetHostname>::operator()(char *buffer, size_t bufsize) {
 	const char *hostname = "roxybestgirl";
 	size_t length = strlen(hostname);
