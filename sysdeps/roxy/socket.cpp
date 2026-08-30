@@ -153,4 +153,46 @@ int Sysdeps<GetSockopt>::operator()(
 	return 0;
 }
 
+int Sysdeps<MsgSend>::operator()(
+    int fd,
+    const struct msghdr *hdr,
+    int flags,
+    ssize_t *length
+) {
+	auto result = roxy_syscall3(
+	    ROXY_SYS_SENDMSG,
+	    fd,
+	    reinterpret_cast<long>(hdr),
+	    flags
+	);
+
+	if (result < 0) {
+		return static_cast<int>(-result);
+	}
+
+	*length = static_cast<ssize_t>(result);
+	return 0;
+}
+
+int Sysdeps<MsgRecv>::operator()(
+    int fd,
+    struct msghdr *hdr,
+    int flags,
+    ssize_t *length
+) {
+	auto result = roxy_syscall3(
+	    ROXY_SYS_RECVMSG,
+	    fd,
+	    reinterpret_cast<long>(hdr),
+	    flags
+	);
+
+	if (result < 0) {
+		return static_cast<int>(-result);
+	}
+
+	*length = static_cast<ssize_t>(result);
+	return 0;
+}
+
 } // namespace mlibc

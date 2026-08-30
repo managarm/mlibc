@@ -85,6 +85,8 @@ struct RoxySysdepTags :
 	Peername,
 	Shutdown,
 	GetSockopt,
+	MsgSend,
+	MsgRecv,
 	Execve,
 	Exit
 {};
