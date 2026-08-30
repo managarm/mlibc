@@ -312,6 +312,11 @@ uid_t Sysdeps<GetEuid>::operator()() {
 	return static_cast<uid_t>(roxy_syscall0(ROXY_SYS_GETEUID));
 }
 
+int Sysdeps<Pipe>::operator()(int *fds, int flags) {
+	auto result = roxy_syscall2(ROXY_SYS_PIPE, reinterpret_cast<long>(fds), flags);
+	return syscall_error(result);
+}
+
 int Sysdeps<SetUid>::operator()(uid_t uid) {
 	// Roxy currently runs every process as root and has no credential state.
 	return uid == 0 ? 0 : EPERM;
