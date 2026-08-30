@@ -28,6 +28,7 @@ struct RoxySysdepTags :
 	Pipe,
 	Dup2,
 	Fcntl,
+	Umask,
 	TcbSet,
 	AnonAllocate,
 	AnonFree,

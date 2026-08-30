@@ -334,6 +334,16 @@ int Sysdeps<Fcntl>::operator()(int fd, int command, va_list args, int *result) {
 	return 0;
 }
 
+int Sysdeps<Umask>::operator()(mode_t mode, mode_t *old) {
+	// The kernel stores the new mask and returns the previous one.
+	auto raw = roxy_syscall1(ROXY_SYS_UMASK, mode);
+	if(int error = syscall_error(raw); error)
+		return error;
+
+	*old = static_cast<mode_t>(raw);
+	return 0;
+}
+
 int Sysdeps<SetUid>::operator()(uid_t uid) {
 	// Roxy currently runs every process as root and has no credential state.
 	return uid == 0 ? 0 : EPERM;
