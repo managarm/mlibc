@@ -926,6 +926,31 @@ void test32() {
 	opterr = 1;
 }
 
+void test33() {
+	const struct option longopts[] = {
+		{"timeout", required_argument, NULL, 't'},
+		{NULL, no_argument, NULL, 0}
+	};
+	char *test_argv[] = {
+		"dummy",
+		"poweroff",
+		"--timeout=1s",
+	};
+
+	optind = 0;
+	int c = getopt_long(COUNT_OF(test_argv), test_argv, "-", longopts, NULL);
+	assert(c == '\001');
+	assert(!strcmp(optarg, "poweroff"));
+	assert(optind == 2);
+
+	c = getopt_long(COUNT_OF(test_argv), test_argv, "-", longopts, NULL);
+	assert(c == 't');
+	assert(!strcmp(optarg, "1s"));
+
+	c = getopt_long(COUNT_OF(test_argv), test_argv, "-", longopts, NULL);
+	assert(c == -1);
+}
+
 int main() {
 	test1();
 	test2();
@@ -959,6 +984,7 @@ int main() {
 	test30();
 	test31();
 	test32();
+	test33();
 
 	return 0;
 }
