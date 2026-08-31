@@ -133,6 +133,7 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 
 	bool colon = optstring[0] == ':';
 	bool stop_at_first_nonarg = (optstring[0] == '+' || getenv("POSIXLY_CORRECT"));
+	bool return_nonarg = optstring[0] == '-';
 
 	// if optstring contains "W;", then "-W foo" is treated as the long option "--foo".
 	bool w_long_options = [&]{
@@ -157,6 +158,12 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 			if(!strcmp(arg, "--")) {
 				optind++;
 				return -1;
+			}
+
+			if(return_nonarg) {
+				optarg = arg;
+				optind++;
+				return '\001';
 			}
 
 			if(stop_at_first_nonarg) {
