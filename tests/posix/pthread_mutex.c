@@ -100,6 +100,15 @@ static void testRecursive() {
 	pthread_mutex_destroy(&mutex);
 }
 
+static void testDestroyBusy() {
+	pthread_mutex_t busyMutex = PTHREAD_MUTEX_INITIALIZER;
+
+	assert(pthread_mutex_lock(&busyMutex) == 0);
+	assert(pthread_mutex_destroy(&busyMutex) == EBUSY);
+	assert(pthread_mutex_unlock(&busyMutex) == 0);
+	assert(pthread_mutex_destroy(&busyMutex) == 0);
+}
+
 pthread_mutex_t timedMutex;
 pthread_barrier_t timedMutexBarrier;
 
@@ -171,6 +180,7 @@ int main() {
 	testAttr();
 	testNormal();
 	testRecursive();
+	testDestroyBusy();
 	testTimedLock();
 
 	return 0;
