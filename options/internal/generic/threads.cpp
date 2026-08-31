@@ -260,7 +260,9 @@ int thread_mutex_init(struct __mlibc_mutex *__restrict mutex,
 }
 
 int thread_mutex_destroy(struct __mlibc_mutex *mutex) {
-	__ensure(!mutex->__mlibc_state);
+	if (__atomic_load_n(&mutex->__mlibc_state, __ATOMIC_RELAXED))
+		return EBUSY;
+
 	return 0;
 }
 
