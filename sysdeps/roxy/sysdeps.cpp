@@ -451,4 +451,26 @@ void Sysdeps<Exit>::operator()(int status) {
 	__builtin_unreachable();
 }
 
+int Sysdeps<SetPgid>::operator()(pid_t pid, pid_t pgid) {
+	return syscall_error(roxy_syscall2(ROXY_SYS_SET_PGID, pid, pgid));
+}
+
+int Sysdeps<GetPgid>::operator()(pid_t pid, pid_t *pgid) {
+	auto result = roxy_syscall1(ROXY_SYS_GET_PGID, pid);
+	if(result < 0)
+		return static_cast<int>(-result);
+
+	*pgid = static_cast<pid_t>(result);
+	return 0;
+}
+
+int Sysdeps<SetSid>::operator()(pid_t *sid) {
+	auto result = roxy_syscall0(ROXY_SYS_SET_SID);
+	if(result < 0)
+		return static_cast<int>(-result);
+
+	*sid = static_cast<pid_t>(result);
+	return 0;
+}
+
 } // namespace mlibc
