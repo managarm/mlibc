@@ -1593,6 +1593,9 @@ uint32_t gnuHash(frg::string_view string) {
 // TODO: move this to some namespace or class?
 frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_view string,
 		frg::optional<SymbolVersion> version) {
+	if (!object->dynamic)
+		return frg::optional<ObjectSymbol>{};
+
 	// Checks if the symbol can be used to satisfy the dependency.
 	auto eligible = [&] (ObjectSymbol cand) {
 		if(cand.symbol()->st_shndx == SHN_UNDEF)
@@ -1748,6 +1751,9 @@ frg::optional<ObjectSymbol> Scope::resolveSymbol(frg::string_view string,
 		uint64_t skipRts, ResolveFlags flags,
 		frg::optional<SymbolVersion> version) {
 	for (auto object : _objects) {
+		if(object->dynamic == nullptr)
+			continue;
+
 		if((flags & resolveCopy) && object->isMainObject)
 			continue;
 		if((flags & skipGlobalAfterRts) && object->globalRts > skipRts) {

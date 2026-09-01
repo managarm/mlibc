@@ -998,6 +998,8 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 
 	for(size_t i = 0; i < initialRepository->loadedObjects.size(); i++) {
 		auto object = initialRepository->loadedObjects[i];
+		if (!object->dynamic)
+			continue;
 
 		auto eligible = [&] (ObjectSymbol cand) {
 			if(cand.symbol()->st_shndx == SHN_UNDEF)
