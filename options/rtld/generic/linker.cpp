@@ -1751,6 +1751,9 @@ frg::optional<ObjectSymbol> Scope::resolveSymbol(frg::string_view string,
 		uint64_t skipRts, ResolveFlags flags,
 		frg::optional<SymbolVersion> version) {
 	for (auto object : _objects) {
+		if(object->dynamic == nullptr)
+			continue;
+
 		if((flags & resolveCopy) && object->isMainObject)
 			continue;
 		if((flags & skipGlobalAfterRts) && object->globalRts > skipRts) {
