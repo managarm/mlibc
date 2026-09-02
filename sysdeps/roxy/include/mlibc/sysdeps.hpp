@@ -26,6 +26,7 @@ struct RoxySysdepTags :
 	Tcsetwinsize,
 	Write,
 	Pipe,
+	Dup,
 	Dup2,
 	Fcntl,
 	Umask,

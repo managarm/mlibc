@@ -341,6 +341,15 @@ int Sysdeps<Dup2>::operator()(int oldfd, int flags, int newfd) {
 	return syscall_error(result);
 }
 
+int Sysdeps<Dup>::operator()(int fd, int flags, int *newfd) {
+	// dup(fd) = fcntl(fd, F_DUPFD, 0): returns the lowest available fd >= 0.
+	auto raw = roxy_syscall3(ROXY_SYS_FCNTL, fd, 0 /* F_DUPFD */, 0);
+	if(int error = syscall_error(raw); error)
+		return error;
+	*newfd = static_cast<int>(raw);
+	return 0;
+}
+
 int Sysdeps<Fcntl>::operator()(int fd, int command, va_list args, int *result) {
 	auto argument = va_arg(args, unsigned long);
 	auto raw = roxy_syscall3(ROXY_SYS_FCNTL, fd, command, argument);
