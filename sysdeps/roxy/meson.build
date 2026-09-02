@@ -26,7 +26,15 @@ if not no_headers
 	)
 
 	install_headers(
+		'include/asm-generic/ioctl.h',
+		subdir: 'asm-generic',
+		follow_symlinks: true,
+	)
+
+	install_headers(
 		'include/linux/fb.h',
+		'include/linux/input.h',
+		'include/linux/input-event-codes.h',
 		subdir: 'linux',
 		follow_symlinks: true,
 	)
