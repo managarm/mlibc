@@ -53,6 +53,8 @@ struct RoxySysdepTags :
 	GetPpid,
 	SetUid,
 	SetGid,
+	SetEuid,
+	SetEgid,
 	SetPgid,
 	GetPgid,
 	SetSid,

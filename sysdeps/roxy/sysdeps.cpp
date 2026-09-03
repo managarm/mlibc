@@ -412,6 +412,16 @@ int Sysdeps<SetGid>::operator()(gid_t gid) {
 	return gid == 0 ? 0 : EPERM;
 }
 
+int Sysdeps<SetEuid>::operator()(uid_t euid) {
+	// Roxy has no credential state; effective uid is always root.
+	return euid == 0 ? 0 : EPERM;
+}
+
+int Sysdeps<SetEgid>::operator()(gid_t egid) {
+	// Roxy has no credential state; effective gid is always root.
+	return egid == 0 ? 0 : EPERM;
+}
+
 pid_t Sysdeps<GetPid>::operator()() {
 	return static_cast<pid_t>(roxy_syscall0(ROXY_SYS_GETPID));
 }
