@@ -217,7 +217,7 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 			unsigned int i = __optpos;
 			while(true) {
 				if(mode == mlibc::GetoptMode::LongOnly) {
-					const char *lo_arg = &arg[1];
+					char *lo_arg = &arg[1];
 					auto s = strchr(lo_arg, '=');
 					size_t n = s ? (s - lo_arg) : strlen(lo_arg);
 
@@ -242,7 +242,7 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 				auto opt = strchr(optstring, arg[i]);
 				if(opt) {
 					if(opt[0] == 'W' && w_long_options) {
-						const char *lo_arg = [&]() {
+						char *lo_arg = [&]() {
 							if(opt[1]) {
 								return &arg[i] + 1;
 							} else {

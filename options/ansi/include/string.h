@@ -6,6 +6,12 @@
 #include <bits/size_t.h>
 
 #ifdef __cplusplus
+/* Tell C++ standard library wrappers (e.g. libc++) that this header
+ * provides the const-correct C++ overloads for the search functions. */
+#define __CORRECT_ISO_CPP_STRING_H_PROTO
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -33,17 +39,41 @@ size_t strxfrm(char *__restrict __dest, const char *__restrict __src, size_t __m
 
 /* [7.24.5] Search functions */
 
+#ifdef __cplusplus
+/* The C++ standard requires const-correct overloads for the search
+ * functions below. The const overloads are the real library functions;
+ * The mutable overloads exist only for overload resolution and resolve
+ * to the same symbol. */
+extern "C++" {
+const void *memchr(const void *__s, int __c, size_t __size) __asm__("memchr");
+void *memchr(void *__s, int __c, size_t __size) __asm__("memchr");
+const char *strchr(const char *__s, int __c) __asm__("strchr");
+char *strchr(char *__s, int __c) __asm__("strchr");
+const char *strpbrk(const char *__s, const char *__chrs) __asm__("strpbrk");
+char *strpbrk(char *__s, const char *__chrs) __asm__("strpbrk");
+const char *strrchr(const char *__s, int __c) __asm__("strrchr");
+char *strrchr(char *__s, int __c) __asm__("strrchr");
+const char *strstr(const char *__pattern, const char *__s) __asm__("strstr");
+char *strstr(char *__pattern, const char *__s) __asm__("strstr");
+}
+#else
 void *memchr(const void *__s, int __c, size_t __size);
 char *strchr(const char *__s, int __c);
-size_t strcspn(const char *__s, const char *__chrs);
 char *strpbrk(const char *__s, const char *__chrs);
 char *strrchr(const char *__s, int __c);
-size_t strspn(const char *__s, const char *__chrs);
 char *strstr(const char *__pattern, const char *__s);
+#endif
+size_t strcspn(const char *__s, const char *__chrs);
+size_t strspn(const char *__s, const char *__chrs);
 char *strtok(char *__restrict __s, const char *__restrict __delimiter);
 
 /* This is a GNU extension. */
-char *strchrnul(const char * __s, int __c);
+#ifdef __cplusplus
+const char *strchrnul(const char *__s, int __c) __asm__("strchrnul");
+char *strchrnul(char *__s, int __c) __asm__("strchrnul");
+#else
+char *strchrnul(const char *__s, int __c);
+#endif
 
 /* [7.24.6] Miscellaneous functions */
 
