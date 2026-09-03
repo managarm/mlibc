@@ -199,6 +199,12 @@ int Sysdeps<Write>::operator()(int fd, const void *buffer, size_t count, ssize_t
 	);
 }
 
+int Sysdeps<Writev>::operator()(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_written) {
+	return syscall_result(
+	    roxy_syscall3(ROXY_SYS_WRITEV, fd, reinterpret_cast<long>(iovs), iovc), bytes_written
+	);
+}
+
 int Sysdeps<TcbSet>::operator()(void *pointer) {
 	return syscall_error(roxy_syscall1(ROXY_SYS_TCB_SET, reinterpret_cast<long>(pointer)));
 }

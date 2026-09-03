@@ -25,6 +25,7 @@ struct RoxySysdepTags :
 	Tcgetwinsize,
 	Tcsetwinsize,
 	Write,
+	Writev,
 	Pipe,
 	Dup,
 	Dup2,

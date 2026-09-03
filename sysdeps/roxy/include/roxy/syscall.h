@@ -80,6 +80,7 @@ typedef long roxy_syscall_word_t;
 #define ROXY_SYS_SET_PGID 68
 #define ROXY_SYS_GET_PGID 69
 #define ROXY_SYS_SET_SID 70
+#define ROXY_SYS_WRITEV 71
 
 typedef struct {
 	int64_t seconds;
