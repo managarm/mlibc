@@ -134,24 +134,24 @@ size_t strxfrm(char *__restrict dest, const char *__restrict src, size_t n) {
 	return mlibc::do_xfrm<char>(reinterpret_cast<const uint8_t *>(src), dest, n, mlibc::coll_context<char>::from_localeinfo(l));
 }
 
-void *memchr(const void *s, int c, size_t size) {
+const void *memchr(const void *s, int c, size_t size) {
 	auto s_bytes = static_cast<const unsigned char *>(s);
 	for(size_t i = 0; i < size; i++)
 		if(s_bytes[i] == static_cast<unsigned char>(c))
-			return const_cast<unsigned char *>(s_bytes + i);
+			return s_bytes + i;
 	return nullptr;
 }
-char *strchr(const char *s, int c) {
+const char *strchr(const char *s, int c) {
 	size_t i = 0;
 	char cc = static_cast<char>(c);
 
 	while(s[i]) {
 		if(s[i] == cc)
-			return const_cast<char *>(&s[i]);
+			return &s[i];
 		i++;
 	}
 	if(cc == 0)
-		return const_cast<char *>(&s[i]);
+		return &s[i];
 	return nullptr;
 }
 size_t strcspn(const char *s, const char *chrs) {
@@ -162,23 +162,23 @@ size_t strcspn(const char *s, const char *chrs) {
 		n++;
 	}
 }
-char *strpbrk(const char *s, const char *chrs) {
+const char *strpbrk(const char *s, const char *chrs) {
 	size_t n = 0;
 	while(s[n]) {
 		if(strchr(chrs, s[n]))
-			return const_cast<char *>(s + n);
+			return s + n;
 		n++;
 	}
 	return nullptr;
 }
-char *strrchr(const char *s, int c) {
+const char *strrchr(const char *s, int c) {
 	char cc = static_cast<char>(c);
 
 	// The null-terminator is considered to be part of the string.
 	size_t length = strlen(s);
 	for(size_t i = 0; i <= length; i++) {
 		if(s[length - i] == cc)
-			return const_cast<char *>(s + (length - i));
+			return s + (length - i);
 	}
 	return nullptr;
 }
@@ -190,11 +190,11 @@ size_t strspn(const char *s, const char *chrs) {
 		n++;
 	}
 }
-char *strstr(const char *s, const char *pattern) {
+const char *strstr(const char *s, const char *pattern) {
 	// The empty pattern matches at the beginning of every string, including
 	// the empty string.
 	if(!*pattern)
-		return const_cast<char *>(s);
+		return s;
 
 	for(size_t i = 0; s[i]; i++) {
 		size_t j = 0;
@@ -202,7 +202,7 @@ char *strstr(const char *s, const char *pattern) {
 			j++;
 
 		if(!pattern[j])
-			return const_cast<char *>(&s[i]);
+			return &s[i];
 	}
 
 	return nullptr;
@@ -247,15 +247,15 @@ char *strtok(char *__restrict s, const char *__restrict delimiter) {
 }
 
 // This is a GNU extension.
-char *strchrnul(const char *s, int c) {
+const char *strchrnul(const char *s, int c) {
 	const unsigned char target = static_cast<unsigned char>(c);
 	size_t i = 0;
 	while(s[i]) {
 		if(static_cast<unsigned char>(s[i]) == target)
-			return const_cast<char *>(s + i);
+			return s + i;
 		i++;
 	}
-	return const_cast<char *>(s + i);
+	return s + i;
 }
 
 double wcstod(const wchar_t *__restrict string, wchar_t **__restrict end) {
