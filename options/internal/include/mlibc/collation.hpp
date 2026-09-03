@@ -9,6 +9,7 @@
 #include <frg/span.hpp>
 #include <mlibc/locale.hpp>
 #include <ranges>
+#include <optional>
 #include <stdint.h>
 #include <string.h>
 #include <utility>

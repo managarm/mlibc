@@ -5,6 +5,7 @@
 #include <frg/vector.hpp>
 #include <locale.h>
 #include <smarter.hpp>
+#include <optional>
 #include <mlibc-config.h>
 #include <mlibc/ctype.hpp>
 #include <mlibc/file-window.hpp>
