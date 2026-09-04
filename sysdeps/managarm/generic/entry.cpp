@@ -37,7 +37,7 @@ thread_local pthread_once_t has_cached_infos = PTHREAD_ONCE_INIT;
 void actuallyCacheInfos() {
 	posix::ManagarmProcessData data;
 	HEL_CHECK(
-	    helSyscall1(kHelCallSuper + posix::superGetProcessData, reinterpret_cast<HelWord>(&data))
+	    helSyscall2(kHelCallSuper + posix::superGetProcessData, reinterpret_cast<HelWord>(&data), sizeof(posix::ManagarmProcessData))
 	);
 
 	__mlibc_posix_lane = data.posixLane;

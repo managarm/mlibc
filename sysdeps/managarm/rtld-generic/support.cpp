@@ -35,7 +35,7 @@ void cacheFileTable() {
 
 	posix::ManagarmProcessData data;
 	HEL_CHECK(
-	    helSyscall1(kHelCallSuper + posix::superGetProcessData, reinterpret_cast<HelWord>(&data))
+	    helSyscall2(kHelCallSuper + posix::superGetProcessData, reinterpret_cast<HelWord>(&data), sizeof(posix::ManagarmProcessData))
 	);
 	posixLane = data.posixLane;
 	fileTable = data.fileTable;
