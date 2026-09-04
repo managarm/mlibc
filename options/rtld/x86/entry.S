@@ -4,9 +4,12 @@ PROC_START(_start)
 .cfi_undefined eip
 	call relocateSelf
 
-	push %esp
+	mov %esp, %esi
+	lea -12(%esp), %esp
+	push %esi
 	call interpreterMain
-
+	lea 16(%esp), %esp
+	
 	jmp *%eax
 PROC_END(_start)
 

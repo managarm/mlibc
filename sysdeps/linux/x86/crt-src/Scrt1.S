@@ -21,6 +21,9 @@ _start:
 1:
 	pop %ebx
 	addl $_GLOBAL_OFFSET_TABLE_+[.-1b], %ebx
+
+
+	lea -8(%esp), %esp
 	push main@GOT(%ebx)
 	push %edi
 	call __mlibc_entry@plt
