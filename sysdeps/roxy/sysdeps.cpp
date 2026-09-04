@@ -193,6 +193,12 @@ int Sysdeps<Isatty>::operator()(int fd) {
 	return syscall_error(roxy_syscall1(ROXY_SYS_ISATTY, fd));
 }
 
+int Sysdeps<Ttyname>::operator()(int fd, char *buf, size_t size) {
+	return syscall_error(
+	    roxy_syscall3(ROXY_SYS_TTYNAME, fd, reinterpret_cast<long>(buf), size)
+	);
+}
+
 int Sysdeps<Write>::operator()(int fd, const void *buffer, size_t count, ssize_t *bytes_written) {
 	return syscall_result(
 	    roxy_syscall3(ROXY_SYS_WRITE, fd, reinterpret_cast<long>(buffer), count), bytes_written

@@ -20,6 +20,7 @@ struct RoxySysdepTags :
 	Sleep,
 	Isatty,
 	Ioctl,
+	Ttyname,
 	Tcgetattr,
 	Tcsetattr,
 	Tcgetwinsize,
