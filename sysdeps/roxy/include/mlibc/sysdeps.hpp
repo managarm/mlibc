@@ -96,7 +96,12 @@ struct RoxySysdepTags :
 	MsgSend,
 	MsgRecv,
 	Execve,
-	Exit
+	Exit,
+	TimerCreate,
+	TimerSettime,
+	TimerGettime,
+	TimerGetoverrun,
+	TimerDelete
 {};
 
 template<typename Tag>

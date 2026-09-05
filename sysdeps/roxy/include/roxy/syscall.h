@@ -82,6 +82,11 @@ typedef long roxy_syscall_word_t;
 #define ROXY_SYS_SET_SID 70
 #define ROXY_SYS_WRITEV 71
 #define ROXY_SYS_TTYNAME 72
+#define ROXY_SYS_TIMER_CREATE 73
+#define ROXY_SYS_TIMER_SETTIME 74
+#define ROXY_SYS_TIMER_GETTIME 75
+#define ROXY_SYS_TIMER_GETOVERRUN 76
+#define ROXY_SYS_TIMER_DELETE 77
 
 typedef struct {
 	int64_t seconds;

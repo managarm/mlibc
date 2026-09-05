@@ -15,6 +15,7 @@ libc_sources += files(
 	'signal.cpp',
 	'socket.cpp',
 	'sysdeps.cpp',
+	'time.cpp',
 	'arch/x86_64/syscall.cpp',
 )
 

@@ -88,6 +88,19 @@ typedef struct {
 #define si_syscall __si_fields.__sigsys.si_syscall
 #define si_arch    __si_fields.__sigsys.si_arch
 
+#ifdef __cplusplus
+/* Contract with the kernel signal-frame writer: the `siginfo_t` layout must stay byte-for-byte
+   compatible with kernel/process/src/signal_frame. `si_value` and `si_overrun` are the POSIX
+   timer notification fields the kernel populates for SI_TIMER. The asserted offsets are LP64
+   (x86_64) values, which is the only ABI Roxy targets. */
+#if defined(__x86_64__)
+static_assert(sizeof(siginfo_t) == 128);
+static_assert(__builtin_offsetof(siginfo_t, si_pid) == 16);
+static_assert(__builtin_offsetof(siginfo_t, si_value) == 24);
+static_assert(__builtin_offsetof(siginfo_t, si_overrun) == 20);
+#endif
+#endif
+
 /* Required for sys_sigaction sysdep. */
 #define SA_NOCLDSTOP 1
 #define SA_NOCLDWAIT 2
