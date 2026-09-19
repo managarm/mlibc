@@ -119,10 +119,15 @@ frg::string_view parse_stringlist(frg::span<const uint8_t> data) {
 		termIndex = next + 1;
 	}
 
-	if (termIndex >= area.size() || area[termIndex] != '\0')
-		return {};
+	if (termIndex == area.size())
+		return area;
+	else if (termIndex < area.size()) {
+		if (area[termIndex] != '\0')
+			return {};
+		return area.sub_string(0, termIndex + 1);
+	}
 
-	return area.sub_string(0, termIndex + 1);
+	return {};
 }
 
 frg::span<const uint8_t> parse_bytearray(frg::span<const uint8_t> data) {
