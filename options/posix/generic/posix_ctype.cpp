@@ -110,7 +110,7 @@ int tolower_l(int nc, locale_t loc) {
 	auto cc = mlibc::current_charcode();
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::transcode_status::input_exhausted)
-		return 0;
+		return nc;
 	return mlibc::current_charset()->to_lower(cp, static_cast<mlibc::localeinfo *>(loc));
 }
 
@@ -118,7 +118,7 @@ int toupper_l(int nc, locale_t loc) {
 	auto cc = mlibc::current_charcode();
 	mlibc::codepoint cp;
 	if(auto e = cc->promote(nc, cp); e != mlibc::transcode_status::input_exhausted)
-		return 0;
+		return nc;
 	return mlibc::current_charset()->to_upper(cp, static_cast<mlibc::localeinfo *>(loc));
 }
 
