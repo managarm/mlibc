@@ -68,6 +68,7 @@ if not headers_only
 	endif
 
 	ifunc_check = '''
+	static_assert(__has_attribute(ifunc));
 	void my_func_impl() {}
 
 	extern "C" void (*resolver())() {
