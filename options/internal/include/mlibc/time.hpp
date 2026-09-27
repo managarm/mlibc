@@ -101,6 +101,55 @@ size_t strftime(
 		return result;
 	};
 
+	auto pos_mod = [](std::integral auto a, std::integral auto m) noexcept {
+		auto rem = a % m;
+		return rem < 0 ? rem + m : rem;
+	};
+
+	auto is_leap = [&](int year) noexcept {
+		int y = pos_mod(year, 400) + 300;
+		return (y % 4 == 0) && ((y % 100 != 0) || (y % 400 == 0));
+	};
+
+	auto week_num = [&](const struct tm *tm) noexcept {
+		// map wday to ISO: Monday = 0 ... Sunday = 6
+		const int iso_wday = pos_mod(tm->tm_wday - 1, 7);
+
+		// baseline Monday-aligned week count for current tm_yday
+		int val = (tm->tm_yday - iso_wday + 7) / 7;
+
+		// weekday of Jan 1 (0 = Sunday ... 6 = Saturday)
+		const int jan1_wday = pos_mod(tm->tm_wday - tm->tm_yday, 7);
+
+		// if Jan 1 is Tue (2), Wed (3), or Thu (4), week 1 started in/on Jan 1.
+		if (pos_mod(jan1_wday - 2, 7) <= 2)
+			val++;
+
+		if (val == 0) {
+			// underflow: Date belongs to the last week of the previous year.
+			val = 52;
+
+			const int dec31_prev_wday = pos_mod(jan1_wday - 1, 7);
+
+			// safe subtraction: if tm_year == INT_MIN, pos_mod in is_leap avoids underflow
+			const int prev_year =
+			    (tm->tm_year == INT_MIN) ? (INT_MAX - (400 - 1)) : (tm->tm_year - 1);
+
+			// previous year has 53 weeks if Dec 31 was Thu (4), or Fri (5) in a leap year.
+			if (dec31_prev_wday == 4 || (dec31_prev_wday == 5 && is_leap(prev_year))) {
+				val++;
+			}
+		} else if (val == 53) {
+			// overflow: Year has 53 weeks only if Jan 1 was Thu (4), or Wed (3) in a leap year.
+			const bool has_53_weeks = (jan1_wday == 4) || (jan1_wday == 3 && is_leap(tm->tm_year));
+			if (!has_53_weeks) {
+				val = 1;
+			}
+		}
+
+		return val;
+	};
+
 	auto c = format;
 	auto p = dest;
 
@@ -445,6 +494,14 @@ size_t strftime(
 				c++;
 				break;
 			}
+			case 'w': {
+				print_digits.template operator()<int, 6>(tm->tm_wday, P::D);
+				if (chunk >= space)
+					return 0;
+				p += chunk;
+				c++;
+				break;
+			}
 			case '%': {
 				chunk = nprintf(p, space, P::Percent);
 				if (chunk >= space)
@@ -475,8 +532,32 @@ size_t strftime(
 			case 'X': {
 				return mlibc::strftime(dest, max_size, P::tFmt(l), tm, l);
 			}
+			case 'u': {
+				print_digits.template operator()<int, 7>(tm->tm_wday ? tm->tm_wday : 7, P::D);
+				if (chunk >= space)
+					return 0;
+				p += chunk;
+				c++;
+				break;
+			}
 			case 'U': {
 				print_digits.template operator()<int, 53>((tm->tm_yday + 7 - tm->tm_wday) / 7, P::UFormat);
+				if (chunk >= space)
+					return 0;
+				p += chunk;
+				c++;
+				break;
+			}
+			case 'W': {
+				print_digits.template operator()<int, 53>((tm->tm_yday + 7 - (tm->tm_wday + 6) % 7) / 7, P::D);
+				if (chunk >= space)
+					return 0;
+				p += chunk;
+				c++;
+				break;
+			}
+			case 'V': {
+				print_digits.template operator()<int, 53>(week_num(tm), P::D);
 				if (chunk >= space)
 					return 0;
 				p += chunk;
