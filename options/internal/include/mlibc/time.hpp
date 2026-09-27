@@ -121,11 +121,10 @@ size_t strftime(
 		[[maybe_unused]] bool use_alternative_era_format = false;
 
 		if (*(c + 1) == 'O') {
-			std::array<Char, 15> valid{
+			constexpr auto valid = std::to_array<Char>(
 			    {'B', 'b', 'd', 'e', 'H', 'I', 'm', 'M', 'S', 'u', 'U', 'V', 'w', 'W', 'y'}
-			};
-			auto next = *(c + 2);
-			if (std::find(valid.begin(), valid.end(), next) != valid.end()) {
+			);
+			if (std::ranges::contains(valid, c[2])) {
 				use_alternative_symbols = true;
 				c++;
 			} else {
@@ -138,9 +137,8 @@ size_t strftime(
 				continue;
 			}
 		} else if (*(c + 1) == 'E') {
-			std::array<Char, 6> valid{{'c', 'C', 'x', 'X', 'y', 'Y'}};
-			auto next = *(c + 2);
-			if (std::find(valid.begin(), valid.end(), next) != valid.end()) {
+			constexpr auto valid = std::to_array<Char>({'c', 'C', 'x', 'X', 'y', 'Y'});
+			if (std::ranges::contains(valid, c[2])) {
 				use_alternative_era_format = true;
 				c++;
 			} else {
