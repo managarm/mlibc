@@ -119,10 +119,15 @@ frg::string_view parse_stringlist(frg::span<const uint8_t> data) {
 		termIndex = next + 1;
 	}
 
-	if (termIndex >= area.size() || area[termIndex] != '\0')
-		return {};
+	if (termIndex == area.size())
+		return area;
+	else if (termIndex < area.size()) {
+		if (area[termIndex] != '\0')
+			return {};
+		return area.sub_string(0, termIndex + 1);
+	}
 
-	return area.sub_string(0, termIndex + 1);
+	return {};
 }
 
 frg::span<const uint8_t> parse_bytearray(frg::span<const uint8_t> data) {
@@ -299,56 +304,58 @@ auto time_parser = category{
     .name = "LC_TIME",
     .glibc_val = LC_TIME,
     .parsers = std::make_tuple(
-        parse_string, // abday1
-        parse_string, // abday2
-        parse_string, // abday3
-        parse_string, // abday4
-        parse_string, // abday5
-        parse_string, // abday6
-        parse_string, // abday7
-        parse_string, // day1
-        parse_string, // day2
-        parse_string, // day3
-        parse_string, // day4
-        parse_string, // day5
-        parse_string, // day6
-        parse_string, // day7
-        parse_string, // abmon1
-        parse_string, // abmon2
-        parse_string, // abmon3
-        parse_string, // abmon4
-        parse_string, // abmon5
-        parse_string, // abmon6
-        parse_string, // abmon7
-        parse_string, // abmon8
-        parse_string, // abmon9
-        parse_string, // abmon10
-        parse_string, // abmon11
-        parse_string, // abmon12
-        parse_string, // mon1
-        parse_string, // mon2
-        parse_string, // mon3
-        parse_string, // mon4
-        parse_string, // mon5
-        parse_string, // mon6
-        parse_string, // mon7
-        parse_string, // mon8
-        parse_string, // mon9
-        parse_string, // mon10
-        parse_string, // mon11
-        parse_string, // mon12
-        parse_string, // am
-        parse_string, // pm
+        // abday1..7
+        parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string,
+        // day1..7
+        parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string,
+        // abmon1..12
+        parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string,
+        // mon1..12
+        parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string,
+        parse_string, parse_string, // am, pm
         parse_string, // d_t_fmt
         parse_string, // d_fmt
         parse_string, // t_fmt
         parse_string, // t_fmt_ampm
-        parse_string, // era
+        parse_stringlist<0, 100>, // era
         parse_string, // era_year
         parse_string, // era_d_fmt
-        parse_string, // alt_digits
+        parse_stringlist<0, 100>, // alt_digits
         parse_string, // era_d_t_fmt
-        parse_string  // era_t_fmt
+        parse_string, // era_t_fmt
+        parse<uint32_t>, // era_num_entries
+        parse_ignore, // era_entries
+        // wabday1..7
+        parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore,
+        // wday1..7
+        parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore,
+        // wabmon1..12
+        parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore,
+        // wmon1..12
+        parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore,
+        parse_ignore, parse_ignore, // wam_str, wpm_str
+        // wd_t_fmt, wd_fmt, wt_fmt, wt_fmt_ampm
+        parse_ignore, parse_ignore, parse_ignore, parse_ignore,
+        // wera_year, wera_d_fmt, walt_digits, wera_d_t_fmt, wera_t_fmt
+        parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore,
+        parse_raw_bytearray, // time_week_ndays
+        parse<uint32_t>, // time_week_1stday
+        parse_raw_bytearray, // time_week_1stweek
+        parse_raw_bytearray, // time_first_weekday
+        parse_raw_bytearray, // time_first_workday
+        parse_raw_bytearray, // time_cal_direction
+        parse_string, // timezone
+        parse_string, // date_fmt
+        parse_ignore, // w_date_fmt
+        parse_string, // time_codeset
+        // altmon1..12
+        parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string,
+        // waltmon1..12
+        parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore,
+        // abaltmon1..12
+        parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string,
+        // wabaltmon1..12
+        parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore
     )
 };
 

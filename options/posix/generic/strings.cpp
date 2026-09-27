@@ -78,8 +78,8 @@ int strcasecmp(const char *a, const char *b) {
 
 	size_t i = 0;
 	while(true) {
-		unsigned char a_byte = tolower(a[i]);
-		unsigned char b_byte = tolower(b[i]);
+		unsigned char a_byte = tolower(static_cast<unsigned char>(a[i]));
+		unsigned char b_byte = tolower(static_cast<unsigned char>(b[i]));
 		if(!a_byte && !b_byte)
 			return 0;
 		// If only one char is null, one of the following cases applies.
@@ -97,8 +97,8 @@ int strcasecmp_l(const char *a, const char *b, locale_t locale) {
 
 	size_t i = 0;
 	while(true) {
-		unsigned char a_byte = tolower_l(a[i], locale);
-		unsigned char b_byte = tolower_l(b[i], locale);
+		unsigned char a_byte = tolower_l(static_cast<unsigned char>(a[i]), locale);
+		unsigned char b_byte = tolower_l(static_cast<unsigned char>(b[i]), locale);
 		if(!a_byte && !b_byte)
 			return 0;
 		// If only one char is null, one of the following cases applies.

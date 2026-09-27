@@ -10,8 +10,8 @@ int strncasecmp(const char *a, const char *b, size_t size, localeinfo *l) {
 		return 0;
 
 	for(size_t i = 0; i < size; i++) {
-		unsigned char a_byte = mlibc::tolower_l(a[i], l);
-		unsigned char b_byte = mlibc::tolower_l(b[i], l);
+		unsigned char a_byte = mlibc::tolower_l(static_cast<unsigned char>(a[i]), l);
+		unsigned char b_byte = mlibc::tolower_l(static_cast<unsigned char>(b[i]), l);
 		if(!a_byte && !b_byte)
 			return 0;
 		// If only one char is null, one of the following cases applies.
