@@ -102,8 +102,6 @@ size_t strftime(
 
 	auto c = format;
 	auto p = dest;
-	[[maybe_unused]] bool use_alternative_symbols = false;
-	[[maybe_unused]] bool use_alternative_era_format = false;
 
 	while (*c) {
 		int chunk;
@@ -118,6 +116,9 @@ size_t strftime(
 			p++;
 			continue;
 		}
+
+		[[maybe_unused]] bool use_alternative_symbols = false;
+		[[maybe_unused]] bool use_alternative_era_format = false;
 
 		if (*(c + 1) == 'O') {
 			std::array<Char, 15> valid{
