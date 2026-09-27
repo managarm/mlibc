@@ -4,6 +4,7 @@
 #include <frg/vector.hpp>
 #include <mlibc/ctype.hpp>
 #include <mlibc/locale.hpp>
+#include <ranges>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -117,7 +118,7 @@ size_t strftime(
 			continue;
 		}
 
-		[[maybe_unused]] bool use_alternative_symbols = false;
+		bool use_alternative_symbols = false;
 		[[maybe_unused]] bool use_alternative_era_format = false;
 
 		if (*(c + 1) == 'O') {
@@ -152,6 +153,26 @@ size_t strftime(
 			}
 		}
 
+		auto print_digits = [&]<std::integral V, V Max>(V v, const Char *format) {
+			if (use_alternative_symbols && v >= 0 && v <= Max) {
+				auto altdigits = l->time.get(ALT_DIGITS).asString();
+				auto t = altdigits | std::views::split('\0') | std::views::transform([](auto&& subrange) {
+					return frg::string_view{
+						std::ranges::data(subrange),
+						static_cast<size_t>(std::ranges::distance(subrange))
+					};
+				});
+
+				auto it = t.begin();
+				if (std::ranges::advance(it, v, t.end()) == 0 && it != t.end()) {
+					chunk = nprintf(p, space, P::S, *(t | std::views::drop(v)).begin());
+					return;
+				}
+			}
+
+			chunk = nprintf(p, space, format, v);
+		};
+
 		switch (*++c) {
 			case 'Y': {
 				chunk = nprintf(p, space, P::D, 1900 + tm->tm_year);
@@ -162,7 +183,7 @@ size_t strftime(
 				break;
 			}
 			case 'm': {
-				chunk = nprintf(p, space, P::Dot2D, tm->tm_mon + 1);
+				print_digits.template operator()<int, 12>(tm->tm_mon + 1, P::Dot2D);
 				if (chunk >= space)
 					return 0;
 				p += chunk;
@@ -170,7 +191,7 @@ size_t strftime(
 				break;
 			}
 			case 'd': {
-				chunk = nprintf(p, space, P::Dot2D, tm->tm_mday);
+				print_digits.template operator()<int, 31>(tm->tm_mday, P::Dot2D);
 				if (chunk >= space)
 					return 0;
 				p += chunk;
@@ -196,7 +217,7 @@ size_t strftime(
 				break;
 			}
 			case 'H': {
-				chunk = nprintf(p, space, P::Dot2I, tm->tm_hour);
+				print_digits.template operator()<int, 23>(tm->tm_hour, P::Dot2I);
 				if (chunk >= space)
 					return 0;
 				p += chunk;
@@ -204,7 +225,7 @@ size_t strftime(
 				break;
 			}
 			case 'M': {
-				chunk = nprintf(p, space, P::Dot2I, tm->tm_min);
+				print_digits.template operator()<int, 59>(tm->tm_min, P::Dot2I);
 				if (chunk >= space)
 					return 0;
 				p += chunk;
@@ -212,7 +233,7 @@ size_t strftime(
 				break;
 			}
 			case 'S': {
-				chunk = nprintf(p, space, P::Dot2D, tm->tm_sec);
+				print_digits.template operator()<int, 60>(tm->tm_sec, P::Dot2D);
 				if (chunk >= space)
 					return 0;
 				p += chunk;
@@ -273,9 +294,27 @@ size_t strftime(
 				if (mon < 0 || mon > 11)
 					__ensure(!"Month not in bounds.");
 
-				nl_item item = (*c == 'B') ? MON_1 : ABMON_1;
+				nl_item item = [&]() {
+					if constexpr (std::is_same_v<Char, char>) {
+						if (use_alternative_symbols) {
+							return (*c == 'B') ? ALTMON_1 : ABALTMON_1;
+						} else {
+							return (*c == 'B') ? MON_1 : ABMON_1;
+						}
+					} else {
+						if (use_alternative_symbols) {
+							return (*c == 'B') ? _NL_WALTMON_1 : _NL_WABALTMON_1;
+						} else {
+							return (*c == 'B') ? _NL_WMON_1 : _NL_WABMON_1;
+						}
+					}
+				}();
 
-				chunk = nprintf(p, space, P::S, mlibc::nl_langinfo_l(item + mon, l));
+				if constexpr (std::is_same_v<Char, char>)
+					chunk = nprintf(p, space, "%s", l->time.get(item + mon).asString());
+				else
+					chunk = nprintf(p, space, L"%ls", l->time.get(item + mon).asWideString());
+
 				if (chunk >= space)
 					return 0;
 				p += chunk;
@@ -286,7 +325,7 @@ size_t strftime(
 				return mlibc::strftime(dest, max_size, P::dtFmt(l), tm, l);
 			}
 			case 'e': {
-				chunk = nprintf(p, space, P::TwoD, tm->tm_mday);
+				print_digits.template operator()<int, 31>(tm->tm_mday, P::TwoD);
 				if (chunk >= space)
 					return 0;
 				p += chunk;
@@ -320,7 +359,8 @@ size_t strftime(
 					hour = 12;
 				if (hour > 12)
 					hour -= 12;
-				chunk = nprintf(p, space, P::Dot2D, hour);
+
+				print_digits.template operator()<int, 12>(hour, P::Dot2D);
 				if (chunk >= space)
 					return 0;
 				p += chunk;
@@ -361,7 +401,7 @@ size_t strftime(
 				break;
 			}
 			case 'y': {
-				chunk = nprintf(p, space, P::Dot2D, (1900 + tm->tm_year) % 100);
+				print_digits.template operator()<int, 99>((1900 + tm->tm_year) % 100, P::Dot2D);
 				if (chunk >= space)
 					return 0;
 				p += chunk;
@@ -436,7 +476,7 @@ size_t strftime(
 				return mlibc::strftime(dest, max_size, P::tFmt(l), tm, l);
 			}
 			case 'U': {
-				chunk = nprintf(p, space, P::UFormat, (tm->tm_yday + 7 - tm->tm_wday) / 7);
+				print_digits.template operator()<int, 53>((tm->tm_yday + 7 - tm->tm_wday) / 7, P::UFormat);
 				if (chunk >= space)
 					return 0;
 				p += chunk;
