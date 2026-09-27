@@ -15,6 +15,7 @@
 #include <mlibc/allocator.hpp>
 #include <mlibc/collation.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/environment.hpp>
 #include <mlibc/global-config.hpp>
 #include <mlibc/locale.hpp>
 #include <mlibc/rtld-config.hpp>
@@ -576,7 +577,7 @@ char *secure_getenv(const char *name) {
 	if (mlibc::rtldConfig().secureRequired)
 		return nullptr;
 	else
-		return getenv(name);
+		return mlibc::getenv(name);
 }
 
 void *reallocarray(void *ptr, size_t m, size_t n) {

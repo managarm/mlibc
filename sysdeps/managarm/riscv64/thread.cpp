@@ -25,7 +25,7 @@ extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, Tcb *tcb) {
 
 namespace mlibc {
 
-static constexpr size_t default_stacksize = 0x200000;
+static constexpr size_t default_stacksize = 0x800000;
 
 int Sysdeps<PrepareStack>::operator()(
     void **stack,

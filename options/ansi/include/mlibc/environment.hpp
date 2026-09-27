@@ -3,6 +3,7 @@
 
 namespace mlibc {
 
+char *getenv(const char *name);
 int putenv(char *string);
 
 } // namespace mlibc

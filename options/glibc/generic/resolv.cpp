@@ -1,16 +1,21 @@
-#include <resolv.h>
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
+#include <netdb.h>
+#include <resolv.h>
 
-int dn_expand(const unsigned char *, const unsigned char *,
-		const unsigned char *, char *, int) {
+int dn_expand(const unsigned char *, const unsigned char *, const unsigned char *, char *, int) {
 	__ensure(!"Not implemented");
 	__builtin_unreachable();
 }
 
 int res_query(const char *, int, int, unsigned char *, int) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();	
+	static bool warned = false;
+	if (!warned) {
+		mlibc::infoLogger() << "mlibc: res_query is a stub!" << frg::endlog;
+		warned = true;
+	}
+	h_errno = HOST_NOT_FOUND;
+	return -1;
 }
 
 int res_init() {
