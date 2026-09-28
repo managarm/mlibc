@@ -18,6 +18,7 @@ extern "C" {
 #endif
 
 /* baud rate constants for speed_t */
+#ifndef B0
 #define B0       0
 #define B50      1
 #define B75      2
@@ -49,6 +50,7 @@ extern "C" {
 #define B3000000 0010015
 #define B3500000 0010016
 #define B4000000 0010017
+#endif
 
 /* constants for tcsetattr() */
 #define TCSANOW 0
