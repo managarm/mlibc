@@ -396,6 +396,16 @@ int pthread_attr_get_np(pthread_t thread, pthread_attr_t *attr) {
 	a->__detachstate = tcb->isJoinable ? PTHREAD_CREATE_JOINABLE : PTHREAD_CREATE_DETACHED;
 	return 0;
 }
+
+void pthread_set_name_np(pthread_t thread, const char *name) {
+	auto tcb = reinterpret_cast<Tcb*>(thread);
+	mlibc::sysdep_or_enosys<ThreadSetname>(tcb, name);
+}
+
+void pthread_get_name_np(pthread_t thread, char *name, size_t size) {
+	auto tcb = reinterpret_cast<Tcb*>(thread);
+	mlibc::sysdep_or_enosys<ThreadGetname>(tcb, name, size);
+}
 #endif // __MLIBC_BSD_OPTION
 
 extern "C" Tcb *__rtld_allocateTcb();
