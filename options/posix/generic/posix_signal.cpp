@@ -190,7 +190,12 @@ int sig2str(int signum, char *str) {
 		CASE_FOR(VTALRM)
 		CASE_FOR(PROF)
 		CASE_FOR(WINCH)
+#ifdef SIGPOLL
 		CASE_FOR(POLL)
+#endif
+#ifdef SIGIO
+		CASE_FOR(IO)
+#endif
 		CASE_FOR(PWR)
 		CASE_FOR(SYS)
 		CASE_FOR(CANCEL)
@@ -245,7 +250,12 @@ int str2sig(const char *__restrict str, int *__restrict pnum) {
 	CASE_FOR(VTALRM)
 	CASE_FOR(PROF)
 	CASE_FOR(WINCH)
+#ifdef SIGPOLL
 	CASE_FOR(POLL)
+#endif
+#ifdef SIGIO
+	CASE_FOR(IO)
+#endif
 	CASE_FOR(PWR)
 	CASE_FOR(SYS)
 	CASE_FOR(CANCEL)
