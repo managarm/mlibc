@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <langinfo.h>
+#include <ranges>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -11,6 +12,18 @@
 #include <mlibc/strings.hpp>
 
 namespace {
+
+template <std::integral auto N>
+consteval int count_decimal_digits() noexcept {
+	using U = std::make_unsigned_t<decltype(N)>;
+	U val = (N < 0) ? (0 - static_cast<U>(N)) : static_cast<U>(N);
+	int digits = 1;
+	while (val >= 10) {
+		val /= 10;
+		++digits;
+	}
+	return digits;
+}
 
 int month_to_day(int month) {
 	switch(month){
@@ -107,33 +120,98 @@ struct strptime_internal_state {
 	size_t input_index;
 };
 
-char *strptime_internal(const char *__restrict input, const char *__restrict format,
-	struct tm *__restrict tm, struct strptime_internal_state *__restrict state) {
-	auto matchLanginfoItem = [&] (int start, size_t num, int &dest, bool &flag) -> bool {
-		for(size_t i = start; i < (start + num); i++) {
-			const char *mon = nl_langinfo(i);
-			size_t len = strlen(mon);
-			if(mlibc::strncasecmp(&input[state->input_index], mon, len))
+char *strptime_internal(
+    const char *__restrict input,
+    const char *__restrict format,
+    struct tm *__restrict tm,
+    struct strptime_internal_state *__restrict state,
+    mlibc::localeinfo *l = mlibc::getActiveLocale()
+) {
+	auto matchLanginfoItem = [&]<int Nlitem, size_t Num>(int &dest, bool &flag) -> bool {
+		const char *current_input = &input[state->input_index];
+
+		struct Match {
+			size_t len;
+			int relative_idx;
+		};
+		std::optional<Match> best_match;
+		const int count = std::cmp_less_equal(Num, std::numeric_limits<int>::max())
+		                      ? static_cast<int>(Num)
+		                      : std::numeric_limits<int>::max();
+
+		for (int offset : std::views::iota(0, count)) {
+			auto item = l->time.get(Nlitem + offset).asString();
+			if (item.empty())
 				continue;
-			state->input_index += len;
-			dest = i - start;
+			if (item[item.size() - 1] == '\0')
+				item = item.sub_string(0, item.size() - 1);
+			if (best_match && item.size() <= best_match->len)
+				continue;
+
+			if (mlibc::strncasecmp(current_input, item.data(), item.size()) == 0)
+				best_match = {item.size(), offset};
+		}
+
+		if (best_match) {
+			state->input_index += best_match->len;
+			dest = best_match->relative_idx;
 			flag = true;
 			return true;
 		}
+
 		return false;
 	};
 
-	auto matchNumericRange = [&] (int start, int end, int &dest, bool *flag) -> bool {
+	auto matchNumericRange = [&]<int Start, int End>(int &dest, bool *flag) -> bool {
 		int product = 0, n = 0;
 		sscanf(&input[state->input_index], "%d%n", &product, &n);
-		if(n == 0 || 2 < n)
+		if (n == 0 || count_decimal_digits<End>() < n)
 			return false;
-		if(product < start || product > end)
+		if (product < Start || product > End)
 			return false;
 		state->input_index += n;
 		dest = product;
-		if(flag) *flag = true;
+		if (flag)
+			*flag = true;
 		return true;
+	};
+
+	auto matchAltDigits = [&]<int Start, int End>(int &dest, bool *flag) -> bool {
+		auto altdigits = mlibc::getActiveLocale()->time.get(ALT_DIGITS).asString();
+		if (altdigits.empty())
+			return false;
+
+		frg::string_view current_input{&input[state->input_index]};
+
+		auto matches = altdigits
+			| std::views::split('\0')
+			| std::views::transform([](auto &&subrange) {
+				return frg::string_view{
+					std::ranges::data(subrange),
+					static_cast<size_t>(std::ranges::distance(subrange))
+				};
+			})
+			| std::views::enumerate
+			| std::views::filter([&](auto &&entry) {
+				auto [val, digit] = entry;
+				return val >= Start && val <= End && !digit.empty() && current_input.starts_with(digit);
+			});
+
+		auto it = std::ranges::max_element(matches, {}, [](auto &&entry) {
+			auto [val, digit] = entry;
+			return digit.size();
+		});
+
+		if (it != matches.end()) {
+			auto [val, digit] = *it;
+			state->input_index += digit.size();
+			dest = val;
+			if (flag)
+				*flag = true;
+			return true;
+		}
+
+		return false;
 	};
 
 	while(isspace(input[state->input_index]))
@@ -156,6 +234,27 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 			continue;
 		}
 		state->format_index++;
+
+		bool alternate_symbols = false;
+		[[maybe_unused]] bool alternate_era = false;
+
+		if (format[state->format_index] == 'O') {
+			alternate_symbols = true;
+			state->format_index++;
+		} else if (format[state->format_index] == 'E') {
+			alternate_era = true;
+			state->format_index++;
+			__ensure(!"strptime() %E* directives unimplemented.");
+			__builtin_unreachable();
+		}
+
+		auto matchDigits = [&]<int Start, int End>(int &dest, bool *flag = nullptr) -> bool {
+			if (alternate_symbols)
+				return matchAltDigits.operator()<Start, End>(dest, flag);
+			else
+				return matchNumericRange.operator()<Start, End>(dest, flag);
+		};
+
 		switch(format[state->format_index]){
 			case '%':
 				if(input[state->input_index++] != '%')
@@ -163,16 +262,18 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				break;
 			case 'a':
 			case 'A': {
-				if (!matchLanginfoItem(DAY_1, 7, tm->tm_wday, state->has_day_of_week) && \
-					!matchLanginfoItem(ABDAY_1, 7, tm->tm_wday, state->has_day_of_week))
+				if (!matchLanginfoItem.operator()<DAY_1, 7>(tm->tm_wday, state->has_day_of_week) && \
+					!matchLanginfoItem.operator()<ABDAY_1, 7>(tm->tm_wday, state->has_day_of_week))
 					return nullptr;
 				break;
 			}
 			case 'b':
 			case 'B':
 			case 'h': {
-				if (!matchLanginfoItem(MON_1, 12, tm->tm_mon, state->has_month) && \
-					!matchLanginfoItem(ABMON_1, 12, tm->tm_mon, state->has_month))
+				if (!matchLanginfoItem.operator()<MON_1, 12>(tm->tm_mon, state->has_month) && \
+					!matchLanginfoItem.operator()<ALTMON_1, 12>(tm->tm_mon, state->has_month) && \
+					!matchLanginfoItem.operator()<ABMON_1, 12>(tm->tm_mon, state->has_month) && \
+					!matchLanginfoItem.operator()<ABALTMON_1, 12>(tm->tm_mon, state->has_month))
 					return nullptr;
 				break;
 			}
@@ -192,7 +293,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 			}
 			case 'd': //`%d` and `%e` are equivalent
 			case 'e': {
-				if(!matchNumericRange(1, 31, tm->tm_mday, &state->has_day_of_month))
+				if(!matchDigits.operator()<1, 31>(tm->tm_mday, &state->has_day_of_month))
 					return nullptr;
 				break;
 			}
@@ -208,29 +309,29 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				break;
 			}
 			case 'H': {
-				if(!matchNumericRange(0, 23, tm->tm_hour, nullptr))
+				if (!matchDigits.operator()<0, 23>(tm->tm_hour))
 					return nullptr;
 				break;
 			}
 			case 'I': {
-				if(!matchNumericRange(1, 12, tm->tm_hour, nullptr))
+				if (!matchDigits.operator()<1, 12>(tm->tm_hour))
 					return nullptr;
 				break;
 			}
 			case 'j': {
-				if(!matchNumericRange(1, 366, tm->tm_yday, &state->has_day_of_year))
+				if(!matchNumericRange.operator()<1, 366>(tm->tm_yday, &state->has_day_of_year))
 					return nullptr;
 				tm->tm_yday--;
 				break;
 			}
 			case 'm': {
-				if(!matchNumericRange(1, 12, tm->tm_mon, &state->has_month))
+				if (!matchDigits.operator()<0, 23>(tm->tm_mon, &state->has_month))
 					return nullptr;
 				tm->tm_mon--;
 				break;
 			}
 			case 'M': {
-				if(!matchNumericRange(0, 59, tm->tm_min, nullptr))
+				if (!matchDigits.operator()<0, 59>(tm->tm_min))
 					return nullptr;
 				break;
 			}
@@ -285,7 +386,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				break;
 			}
 			case 'S': {
-				if(!matchNumericRange(0, 60, tm->tm_sec, nullptr))
+				if (!matchDigits.operator()<0, 60>(tm->tm_sec, nullptr))
 					return nullptr;
 				break;
 			}
@@ -305,13 +406,8 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				__builtin_unreachable();
 				break;
 			case 'w': {
-				int product = 0, n = 0;
-				sscanf(&input[state->input_index], "%d%n", &product, &n);
-				if(n == 0 || 1 < n)
+				if (!matchDigits.operator()<0, 6>(tm->tm_wday, &state->has_day_of_week))
 					return nullptr;
-				state->input_index += n;
-				tm->tm_wday = product;
-				state->has_day_of_week = true;
 				break;
 			}
 			case 'W':
@@ -327,15 +423,10 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				__builtin_unreachable();
 				break;
 			case 'y': {
-				int product = 0, n = 0;
-				sscanf(&input[state->input_index], "%d%n", &product, &n);
-				if(n == 0 || 2 < n)
+				if (!matchDigits.operator()<0, 99>(tm->tm_year, &state->has_year))
 					return nullptr;
-				if(product < 69)
-					product += 100;
-				state->input_index += n;
-				tm->tm_year = product;
-				state->has_year = true;
+				if(tm->tm_year < 69)
+					tm->tm_year += 100;
 				break;
 			}
 			case 'Y': {
@@ -372,7 +463,7 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				__builtin_unreachable();
 				break;
 			case 'u': {
-				if(!matchNumericRange(1, 7, tm->tm_wday, nullptr))
+				if(!matchNumericRange.operator()<1, 7>(tm->tm_wday, nullptr))
 					return nullptr;
 				tm->tm_wday--;
 				break;
@@ -393,61 +484,6 @@ char *strptime_internal(const char *__restrict input, const char *__restrict for
 				__ensure(!"strptime() %s directive unimplemented.");
 				__builtin_unreachable();
 				break;
-			case 'E': { //locale-dependent date & time representation
-				__ensure(!"strptime() %E* directives unimplemented.");
-				__builtin_unreachable();
-				/*
-				state->format_index++;
-				switch(format[state->format_index]){
-					case 'c':
-						break;
-					case 'C':
-						break;
-					case 'x':
-						break;
-					case 'X':
-						break;
-					case 'y':
-						break;
-					case 'Y':
-						break;
-					default:
-						return NULL;
-				}
-				*/
-			}
-			case 'O': { //locale-dependent numeric symbols
-				__ensure(!"strptime() %O* directives unimplemented.");
-				__builtin_unreachable();
-				/*
-				state->format_index++;
-				switch(format[state->format_index]){
-					case 'd':
-					case 'e':
-						break;
-					case 'H':
-						break;
-					case 'I':
-						break;
-					case 'm':
-						break;
-					case 'M':
-						break;
-					case 'S':
-						break;
-					case 'U':
-						break;
-					case 'w':
-						break;
-					case 'W':
-						break;
-					case 'y':
-						break;
-					default:
-						return NULL;
-				}
-				*/
-			}
 			default:
 				return nullptr;
 		}
