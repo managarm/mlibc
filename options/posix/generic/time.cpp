@@ -420,10 +420,13 @@ char *strptime_internal(
 				}
 				break;
 			}
-			case 'W':
-				__ensure(!"strptime() %W directive unimplemented.");
-				__builtin_unreachable();
+			case 'W': {
+				// POSIX: The effect of this conversion, if any, on the tm structure is unspecified.
+				int dummy;
+				if (!matchDigits.operator()<0, 53>(dummy, nullptr))
+					return nullptr;
 				break;
+			}
 			case 'x':
 				__ensure(!"strptime() %x directive unimplemented.");
 				__builtin_unreachable();
@@ -493,10 +496,13 @@ char *strptime_internal(
 				tm->tm_wday--;
 				break;
 			}
-			case 'V':
-				__ensure(!"strptime() %V directive unimplemented.");
-				__builtin_unreachable();
+			case 'V': {
+				// POSIX: The effect of this conversion, if any, on the tm structure is unspecified.
+				int dummy;
+				if (!matchDigits.operator()<1, 53>(dummy, nullptr))
+					return nullptr;
 				break;
+			}
 			case 'z':
 				__ensure(!"strptime() %z directive unimplemented.");
 				__builtin_unreachable();
