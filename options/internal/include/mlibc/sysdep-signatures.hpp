@@ -89,6 +89,7 @@ SYSDEP_FUNC(Execve, const char *path, char *const argv[], char *const envp[]);
 SYSDEP_FUNC_RET(void, Yield);
 SYSDEP_FUNC_RET(pid_t, GetPid);
 SYSDEP_FUNC(Kill, pid_t, int);
+SYSDEP_FUNC(Tgkill, int tgid, int tid, int sig);
 
 #if MLIBC_BUILDING_RTLD
 SYSDEP_FUNC(VmReadahead, void *pointer, size_t size);
@@ -209,7 +210,6 @@ SYSDEP_FUNC(GetEntropy, void *buffer, size_t length);
 SYSDEP_FUNC(Mknodat, int dirfd, const char *path, int mode, int dev);
 SYSDEP_FUNC(Umask, mode_t mode, mode_t *old);
 SYSDEP_FUNC(BeforeCancellableSyscall, ucontext_t *uctx);
-SYSDEP_FUNC(Tgkill, int tgid, int tid, int sig);
 SYSDEP_FUNC(Fchownat, int dirfd, const char *pathname, uid_t owner, gid_t group, int flags);
 SYSDEP_FUNC(Sigaltstack, const stack_t *ss, stack_t *oss);
 SYSDEP_FUNC(Sigsuspend, const sigset_t *set);
