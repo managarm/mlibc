@@ -1,7 +1,10 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <assert.h>
 #include <locale.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -184,10 +187,71 @@ int main() {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat"
 	assert(strftime(buf, BUF_SIZE, "%", &tm) == 1);
-	fprintf(stderr, "%s\n", buf);
 	assert(!strcmp(buf, "%"));
 	memset(&tm, 0, sizeof(tm));
 #pragma GCC diagnostic pop
+
+	char *l = setlocale(LC_ALL, "ja_JP.utf8");
+	assert(l && strlen(l));
+
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_mon = 6;
+	tm.tm_min = 1;
+	tm.tm_hour = 16;
+	tm.tm_year = 1999;
+	tm.tm_mday = 2;
+	tm.tm_wday = 0;
+	tm.tm_yday = 48;
+
+	int f = strftime(buf, BUF_SIZE, "%b", &tm);
+	assert(!strcmp(buf, " 7月"));
+	assert(f == 5);
+
+	f = strftime(buf, BUF_SIZE, "%Ob", &tm);
+	assert(!strcmp(buf, " 7月"));
+	assert(f == 5);
+	f = strftime(buf, BUF_SIZE, "%OB", &tm);
+	assert(!strcmp(buf, "7月"));
+	assert(f == 4);
+	f = strftime(buf, BUF_SIZE, "%Od", &tm);
+	assert(!strcmp(buf, "二"));
+	assert(f == 3);
+	f = strftime(buf, BUF_SIZE, "%Oe", &tm);
+	assert(!strcmp(buf, "二"));
+	assert(f == 3);
+	f = strftime(buf, BUF_SIZE, "%OH", &tm);
+	assert(!strcmp(buf, "十六"));
+	assert(f == 6);
+	f = strftime(buf, BUF_SIZE, "%OI", &tm);
+	assert(!strcmp(buf, "四"));
+	assert(f == 3);
+	f = strftime(buf, BUF_SIZE, "%Om", &tm);
+	assert(!strcmp(buf, "七"));
+	assert(f == 3);
+	f = strftime(buf, BUF_SIZE, "%OM", &tm);
+	assert(!strcmp(buf, "一"));
+	assert(f == 3);
+	f = strftime(buf, BUF_SIZE, "%OS", &tm);
+	assert(!strcmp(buf, "〇"));
+	assert(f == 3);
+	f = strftime(buf, BUF_SIZE, "%Ou", &tm);
+	assert(!strcmp(buf, "七"));
+	assert(f == 3);
+	f = strftime(buf, BUF_SIZE, "%OU", &tm);
+	assert(!strcmp(buf, "七"));
+	assert(f == 3);
+	f = strftime(buf, BUF_SIZE, "%OV", &tm);
+	assert(!strcmp(buf, "七"));
+	assert(f == 3);
+	f = strftime(buf, BUF_SIZE, "%Ow", &tm);
+	assert(!strcmp(buf, "〇"));
+	assert(f == 3);
+	f = strftime(buf, BUF_SIZE, "%OW", &tm);
+	assert(!strcmp(buf, "七"));
+	assert(f == 3);
+	f = strftime(buf, BUF_SIZE, "%Oy", &tm);
+	assert(!strcmp(buf, "九十九"));
+	assert(f == 9);
 
 	return 0;
 }

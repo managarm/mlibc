@@ -18,5 +18,9 @@ int main(void) {
 	assert(length == 19);
 	assert(!wcscmp(buf, L"2026-03-19 20:45:07"));
 
+	length = wcsftime(buf, sizeof(buf), L"%b %B", &tm);
+	assert(length == 9);
+	assert(!wcscmp(buf, L"Mar March"));
+
 	return 0;
 }
