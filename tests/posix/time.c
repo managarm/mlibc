@@ -4,11 +4,22 @@
 
 #include <assert.h>
 #include <locale.h>
-#include <stdio.h>
 #include <string.h>
 #include <time.h>
 
 #define BUF_SIZE 1024
+
+#define ROUNDTRIP(format, member, min, max) \
+	for (int i = min; i < max; i++) {\
+		memset(&tm, 0, sizeof(tm));\
+		tm.member = i;\
+		int f = strftime(buf, BUF_SIZE, format, &tm);\
+		assert(f);\
+		memset(&tm, 0, sizeof(tm));\
+		char *p = strptime(buf, format, &tm);\
+		assert(p != NULL);\
+		assert(tm.member == i);\
+	}
 
 int main() {
 	struct tm tm = {0};
@@ -184,6 +195,18 @@ int main() {
 	assert(!strcmp(buf, "12:51:13 AM"));
 	memset(&tm, 0, sizeof(tm));
 
+	a = strptime("Novembe", "%B", &tm);
+	assert(a != NULL);
+	assert(*a == 'e');
+	assert(tm.tm_mon == 10);
+	memset(&tm, 0, sizeof(tm));
+
+	a = strptime("Marc", "%B", &tm);
+	assert(a != NULL);
+	assert(*a == 'c');
+	assert(tm.tm_mon == 2);
+	memset(&tm, 0, sizeof(tm));
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat"
 	assert(strftime(buf, BUF_SIZE, "%", &tm) == 1);
@@ -193,6 +216,23 @@ int main() {
 
 	char *l = setlocale(LC_ALL, "ja_JP.utf8");
 	assert(l && strlen(l));
+
+	ROUNDTRIP("%a", tm_wday, 0, 6);
+	ROUNDTRIP("%A", tm_wday, 0, 6);
+	ROUNDTRIP("%b", tm_mon, 0, 12);
+	ROUNDTRIP("%Ob", tm_mon, 0, 12);
+	ROUNDTRIP("%B", tm_mon, 0, 12);
+	ROUNDTRIP("%OB", tm_mon, 0, 12);
+	ROUNDTRIP("%e", tm_mday, 1, 32);
+	ROUNDTRIP("%h", tm_mon, 0, 12);
+	ROUNDTRIP("%H", tm_hour, 0, 24);
+	ROUNDTRIP("%I %p", tm_hour, 0, 12);
+	ROUNDTRIP("%j", tm_yday, 1, 366);
+	ROUNDTRIP("%m", tm_mon, 1, 12);
+	ROUNDTRIP("%M", tm_min, 0, 60);
+	ROUNDTRIP("%S", tm_sec, 0, 61);
+	ROUNDTRIP("%w", tm_wday, 0, 7);
+	ROUNDTRIP("%Y", tm_year, 1900, 2100);
 
 	memset(&tm, 0, sizeof(tm));
 	tm.tm_mon = 6;
@@ -252,6 +292,71 @@ int main() {
 	f = strftime(buf, BUF_SIZE, "%Oy", &tm);
 	assert(!strcmp(buf, "九十九"));
 	assert(f == 9);
+
+	a = strptime("二十一", "%Od", &tm);
+	assert(a != NULL);
+	assert(*a == '\0');
+	assert(tm.tm_mday == 21);
+	memset(&tm, 0, sizeof(tm));
+
+	a = strptime("五", "%Oe", &tm);
+	assert(a != NULL);
+	assert(*a == '\0');
+	assert(tm.tm_mday == 5);
+	memset(&tm, 0, sizeof(tm));
+
+	a = strptime("十八", "%OH", &tm);
+	assert(a != NULL);
+	assert(*a == '\0');
+	assert(tm.tm_hour == 18);
+	memset(&tm, 0, sizeof(tm));
+
+	a = strptime("六", "%OI", &tm);
+	assert(a != NULL);
+	assert(*a == '\0');
+	assert(tm.tm_hour == 6);
+	memset(&tm, 0, sizeof(tm));
+
+	a = strptime("八", "%Om", &tm);
+	assert(a != NULL);
+	assert(*a == '\0');
+	assert(tm.tm_mon == 7);
+	memset(&tm, 0, sizeof(tm));
+
+	a = strptime("四十五", "%OM", &tm);
+	assert(a != NULL);
+	assert(*a == '\0');
+	assert(tm.tm_min == 45);
+	memset(&tm, 0, sizeof(tm));
+
+	a = strptime("五十九", "%OS", &tm);
+	assert(a != NULL);
+	assert(*a == '\0');
+	assert(tm.tm_sec == 59);
+	memset(&tm, 0, sizeof(tm));
+
+	a = strptime("三", "%Ow", &tm);
+	assert(a != NULL);
+	assert(*a == '\0');
+	assert(tm.tm_wday == 3);
+	memset(&tm, 0, sizeof(tm));
+
+	a = strptime("三", "%OW", &tm);
+	assert(a != NULL);
+	assert(*a == '\0');
+	memset(&tm, 0, sizeof(tm));
+
+	a = strptime("二十四", "%Oy", &tm);
+	assert(a != NULL);
+	assert(*a == '\0');
+	assert(tm.tm_year == 124);
+	memset(&tm, 0, sizeof(tm));
+
+	a = strptime("九十五", "%Oy", &tm);
+	assert(a != NULL);
+	assert(*a == '\0');
+	assert(tm.tm_year == 95);
+	memset(&tm, 0, sizeof(tm));
 
 	return 0;
 }
