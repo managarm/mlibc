@@ -27,7 +27,10 @@ static int log_mask = 0xff;
 static int use_mlibc_logger = 0;
 static FutexLock __syslog_lock;
 
-static const struct sockaddr_un log_addr {AF_UNIX, "/dev/log"};
+static const struct sockaddr_un log_addr {
+	.sun_family = AF_UNIX,
+	.sun_path = "/dev/log",
+};
 
 void closelog(void) {
 	frg::unique_lock<FutexLock> holder { __syslog_lock };
