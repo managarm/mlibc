@@ -8,12 +8,7 @@ extern "C" {
 
 #include <mlibc-config.h>
 
-#include <abi-bits/sa_family_t.h>
-
-struct sockaddr_un {
-	sa_family_t sun_family;
-	char sun_path[108];
-};
+#include <abi-bits/sockaddr_un.h>
 
 #if defined(_DEFAULT_SOURCE)
 /* Evaluate to actual length of the `sockaddr_un' structure. */

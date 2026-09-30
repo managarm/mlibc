@@ -72,6 +72,7 @@ if not no_headers
 		'include/abi-bits/mqueue.h',
 		'include/abi-bits/sa_family_t.h',
 		'include/abi-bits/sockaddr_storage.h',
+		'include/abi-bits/sockaddr_un.h',
 		'include/abi-bits/suseconds_t.h',
 		'include/abi-bits/fsfilcnt_t.h',
 		'include/abi-bits/fsblkcnt_t.h',
