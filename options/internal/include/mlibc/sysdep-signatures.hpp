@@ -133,6 +133,8 @@ SYSDEP_FUNC(SetUid, uid_t uid);
 SYSDEP_FUNC(SetEuid, uid_t euid);
 SYSDEP_FUNC(SetGid, gid_t gid);
 SYSDEP_FUNC(SetEgid, gid_t egid);
+SYSDEP_FUNC_RET(int, SetFsuid, uid_t uid, int *out);
+SYSDEP_FUNC_RET(int, SetFsgid, gid_t gid, int *out);
 SYSDEP_FUNC(GetGroups, size_t size, gid_t *list, int *ret);
 SYSDEP_FUNC(Fexecve, int fd, char *const argv[], char *const envp[]);
 SYSDEP_FUNC(Pselect, int num_fds, fd_set *read_set, fd_set *write_set, fd_set *except_set, const struct timespec *timeout, const sigset_t *sigmask, int *num_events);
