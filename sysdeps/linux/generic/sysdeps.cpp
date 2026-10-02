@@ -955,6 +955,16 @@ int Sysdeps<SetEuid>::operator()(uid_t euid) {
 	return sysdep<SetResuid>(-1, euid, -1);
 }
 
+int Sysdeps<SetFsuid>::operator()(uid_t uid, int *out) {
+	*out = sc_int_result<int>(do_syscall(SYS_setfsuid, uid));
+	return 0;
+}
+
+int Sysdeps<SetFsgid>::operator()(gid_t gid, int *out) {
+	*out = sc_int_result<int>(do_syscall(SYS_setfsgid, gid));
+	return 0;
+}
+
 int Sysdeps<SetGid>::operator()(gid_t gid) {
 	auto ret = do_syscall(SYS_setgid, gid);
 	if (int e = sc_error(ret); e)
@@ -1158,6 +1168,13 @@ int Sysdeps<Chdir>::operator()(const char *path) {
 
 int Sysdeps<Fchdir>::operator()(int fd) {
 	auto ret = do_syscall(SYS_fchdir, fd);
+	if (int e = sc_error(ret); e)
+		return e;
+	return 0;
+}
+
+int Sysdeps<Chroot>::operator()(const char *path) {
+	auto ret = do_syscall(SYS_chroot, path);
 	if (int e = sc_error(ret); e)
 		return e;
 	return 0;
