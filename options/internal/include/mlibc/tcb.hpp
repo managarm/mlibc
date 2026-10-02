@@ -180,6 +180,8 @@ static_assert(offsetof(Tcb, stackCanary) == 0x14);
 // sysdeps/linux/x86/cp_syscall.S uses the offset of cancelBits.
 // It differs from x86_64 for the same reasons as the stack canary.
 static_assert(offsetof(Tcb, cancelBits) == 0x18);
+// options/rtld/x86/runtime.S uses the offset of dtvPointers.
+static_assert(offsetof(Tcb, dtvPointers) == 0x08);
 #elif defined(__aarch64__)
 // The thread pointer on AArch64 points to 16 bytes before the end of the TCB.
 // options/linker/aarch64/runtime.S uses the offset of dtvPointers.

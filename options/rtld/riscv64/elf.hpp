@@ -40,7 +40,9 @@ using elf_vernaux = Elf64_Vernaux;
 #define R_TLS_DTPMOD R_RISCV_TLS_DTPMOD64
 #define R_TLS_DTPREL R_RISCV_TLS_DTPREL64
 #define R_TLS_TPREL R_RISCV_TLS_TPREL64
-#define R_TLSDESC R_RISCV_TLSDESC
+// #define R_TLS_TPREL_NEG
+// TODO: we need to implement the assembly routines to enable TLSDESC support
+// #define R_TLSDESC R_RISCV_TLSDESC
 
 #define TP_TCB_OFFSET 0
 

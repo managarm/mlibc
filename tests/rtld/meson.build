@@ -31,6 +31,12 @@ rtld_test_cases = [
 	'no-dt_symbolic',
 ]
 
+if host_machine.cpu_family() in ['x86', 'x86_64', 'aarch64']
+	rtld_test_cases += [
+		'tlsdesc',
+	]
+endif
+
 if ifuncs_supported and host_machine.cpu_family() != 'm68k'
 	rtld_test_cases += [
 		'ifunc',

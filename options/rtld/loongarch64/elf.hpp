@@ -38,6 +38,7 @@ using elf_vernaux = Elf64_Vernaux;
 #define R_TLS_DTPMOD R_LARCH_TLS_DTPMOD64
 #define R_TLS_DTPREL R_LARCH_TLS_DTPREL64
 #define R_TLS_TPREL R_LARCH_TLS_TPREL64
+// #define R_TLS_TPREL_NEG
 // There appears to be no R_TLSDESC-equivalent
 
 struct ifunc_arg {
