@@ -37,7 +37,12 @@ int main() {
 		SIGVTALRM,
 		SIGPROF,
 		SIGWINCH,
+#ifdef SIGPOLL
 		SIGPOLL,
+#endif
+#ifdef SIGIO
+		SIGIO,
+#endif
 		SIGPWR,
 		SIGSYS,
 		SIGRTMIN,
@@ -76,7 +81,12 @@ int main() {
 		"VTALRM",
 		"PROF",
 		"WINCH",
+#ifdef SIGPOLL
 		"POLL",
+#endif
+#ifdef SIGIO
+		"IO",
+#endif
 		"PWR",
 		"SYS",
 		"RTMIN",

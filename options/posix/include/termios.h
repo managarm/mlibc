@@ -18,6 +18,7 @@ extern "C" {
 #endif
 
 /* baud rate constants for speed_t */
+#ifndef B0
 #define B0       0
 #define B50      1
 #define B75      2
@@ -49,6 +50,7 @@ extern "C" {
 #define B3000000 0010015
 #define B3500000 0010016
 #define B4000000 0010017
+#endif
 
 /* constants for tcsetattr() */
 #define TCSANOW 0
@@ -100,12 +102,7 @@ void cfmakeraw(struct termios *__tios);
 #endif /* !__MLIBC_ABI_ONLY */
 
 #if defined(_DEFAULT_SOURCE)
-#define TIOCSCTTY 0x540E
-#define TIOCGPGRP 0x540F
-#define TIOCSPGRP 0x5410
-#define TIOCGWINSZ 0x5413
-#define TIOCSWINSZ 0x5414
-#define TIOCGSID 0x5429
+#include <abi-bits/ioctls.h>
 #endif /* defined(_DEFAULT_SOURCE) */
 
 #ifdef __cplusplus
