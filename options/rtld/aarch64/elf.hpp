@@ -39,6 +39,7 @@ using elf_vernaux = Elf64_Vernaux;
 #define R_TLS_DTPMOD R_AARCH64_TLS_DTPMOD
 #define R_TLS_DTPREL R_AARCH64_TLS_DTPREL
 #define R_TLS_TPREL R_AARCH64_TLS_TPREL
+// #define R_TLS_TPREL_NEG
 #define R_TLSDESC R_AARCH64_TLSDESC
 
 #define TP_TCB_OFFSET (16)

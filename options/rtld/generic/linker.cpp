@@ -2091,7 +2091,7 @@ void Loader::initObjects(ObjectRepository *repository) {
 		if(!object->wasInitialized) {
 			if (!object->skipInit)
 				doInitialize(object);
-			
+
 			repository->addObjectToDestructQueue(object);
 		}
 	}
@@ -2115,8 +2115,7 @@ void Loader::_scheduleInit(SharedObject *object) {
 	object->onInitStack = false;
 }
 
-// TODO: TLSDESC relocations aren't aarch64/x86_64 specific
-#if defined(__aarch64__) || defined(__x86_64__)
+#if defined(R_TLSDESC)
 extern "C" void *__mlibcTlsdescStatic(void *);
 extern "C" void *__mlibcTlsdescDynamic(void *);
 
@@ -2124,7 +2123,7 @@ struct TlsdescData {
 	uintptr_t tlsIndex;
 	uintptr_t addend;
 };
-#endif
+#endif // defined(R_TLSDESC)
 
 void Loader::_processRelocations(Relocation &rel) {
 	// copy and irelative relocations have to be performed after all other relocations
@@ -2234,9 +2233,40 @@ void Loader::_processRelocations(Relocation &rel) {
 		off += tls_offset + tlsOffsetFromTp;
 		rel.relocate(off);
 	} break;
-// TODO: TLSDESC relocations aren't aarch64/x86_64 specific, but require an assembly implementation
+#if defined(R_TLS_TPREL_NEG)
+	case R_TLS_TPREL_NEG: {
+		// R_TLS_TPREL_NEG stores the negated offset relative to the
+		// thread pointer (TP - symbol); the code negates it again.
+		uintptr_t off = rel.addend_rel();
+		ssize_t tls_offset = 0;
+
+		if(rel.symbol_index()) {
+			__ensure(p);
+			if(p->object()->tlsModel != TlsModel::initial)
+				mlibc::panicLogger() << "rtld: In object " << rel.object()->name
+						<< ": Static TLS relocation to symbol " << p->getString()
+						<< " in dynamically loaded object "
+						<< p->object()->name << frg::endlog;
+			off -= p->symbol()->st_value;
+			tls_offset = p->object()->tlsOffset;
+		}else{
+			if(rtldConfig.debugVerbose)
+				mlibc::infoLogger() << "rtld: Warning: TPOFF32 with no symbol"
+						" in object " << rel.object()->name << frg::endlog;
+			if(rel.object()->tlsModel != TlsModel::initial)
+				mlibc::panicLogger() << "rtld: In object " << rel.object()->name
+						<< ": Static TLS relocation to dynamically loaded object "
+						<< rel.object()->name << frg::endlog;
+			tls_offset = rel.object()->tlsOffset;
+		}
+
+		off -= tls_offset + tlsOffsetFromTp;
+		rel.relocate(off);
+	} break;
+#endif
+// TODO: TLSDESC relocations aren't aarch64/x86 specific, but require an assembly implementation
 // of the resolver functions
-#if defined(__aarch64__) || defined(__x86_64__)
+#if defined(R_TLSDESC)
 		case R_TLSDESC: {
 			size_t symValue = 0;
 			SharedObject *target = nullptr;
@@ -2262,23 +2292,23 @@ void Loader::_processRelocations(Relocation &rel) {
 			}
 
 			if (!target) {
-				((uint64_t *)rel.destination())[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
-				((uint64_t *)rel.destination())[1] = 0;
+				((elf_addr *)rel.destination())[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
+				((elf_addr *)rel.destination())[1] = 0;
 			} else if (target->tlsModel == TlsModel::initial) {
-				((uint64_t *)rel.destination())[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
-				uint64_t value = symValue + target->tlsOffset + tlsOffsetFromTp + rel.addend_norel();
-				((uint64_t *)rel.destination())[1] = value;
+				((elf_addr *)rel.destination())[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
+				elf_addr value = symValue + target->tlsOffset + tlsOffsetFromTp + rel.addend_norel();
+				((elf_addr *)rel.destination())[1] = value;
 			} else {
 				// TODO: We should free this when the DSO gets destroyed
 				auto data = frg::construct<TlsdescData>(getLdsoAllocator());
 				data->tlsIndex = target->tlsIndex;
 				data->addend = symValue + rel.addend_norel();
 
-				((uint64_t *)rel.destination())[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescDynamic);
-				((uint64_t *)rel.destination())[1] = reinterpret_cast<uintptr_t>(data);
+				((elf_addr *)rel.destination())[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescDynamic);
+				((elf_addr *)rel.destination())[1] = reinterpret_cast<uintptr_t>(data);
 			}
 		} break;
-#endif
+#endif // defined(R_TLSDESC)
 	default:
 		mlibc::panicLogger() << "Unexpected relocation type "
 				<< (void *) rel.type() << frg::endlog;
@@ -2382,12 +2412,10 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 }
 
 void Loader::_processLazyRelocations(SharedObject *object) {
-	if(object->globalOffsetTable == nullptr) {
-		__ensure(object->lazyRelocTableOffset == 0);
-		return;
+	if(object->globalOffsetTable) {
+		object->globalOffsetTable[1] = object;
+		object->globalOffsetTable[2] = (void *)&pltRelocateStub;
 	}
-	object->globalOffsetTable[1] = object;
-	object->globalOffsetTable[2] = (void *)&pltRelocateStub;
 
 	if(!object->lazyTableSize)
 		return;
@@ -2446,8 +2474,8 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 			break;
 		}
 #endif
-// TODO: TLSDESC relocations aren't aarch64/x86_64 specific
-#if defined(__aarch64__) || defined(__x86_64__)
+
+#if defined(R_TLSDESC)
 		case R_TLSDESC: {
 			size_t symValue = 0;
 			SharedObject *target = nullptr;
@@ -2473,23 +2501,23 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 			}
 
 			if (!target) {
-				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
-				((uint64_t *)rel_addr)[1] = 0;
+				((elf_addr *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
+				((elf_addr *)rel_addr)[1] = 0;
 			} else if (target->tlsModel == TlsModel::initial) {
-				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
-				uint64_t value = symValue + target->tlsOffset + tlsOffsetFromTp + addend;
-				((uint64_t *)rel_addr)[1] = value;
+				((elf_addr *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescStatic);
+				elf_addr value = symValue + target->tlsOffset + tlsOffsetFromTp + addend;
+				((elf_addr *)rel_addr)[1] = value;
 			} else {
 				// TODO: We should free this when the DSO gets destroyed
 				auto data = frg::construct<TlsdescData>(getLdsoAllocator());
 				data->tlsIndex = target->tlsIndex;
 				data->addend = symValue + addend;
 
-				((uint64_t *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescDynamic);
-				((uint64_t *)rel_addr)[1] = reinterpret_cast<uintptr_t>(data);
+				((elf_addr *)rel_addr)[0] = reinterpret_cast<uintptr_t>(&__mlibcTlsdescDynamic);
+				((elf_addr *)rel_addr)[1] = reinterpret_cast<uintptr_t>(data);
 			}
 		} break;
-#endif
+#endif // defined(R_TLSDESC)
 		default:
 			mlibc::panicLogger() << "unimplemented lazy relocation type " << type << frg::endlog;
 			break;

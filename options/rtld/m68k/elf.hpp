@@ -38,6 +38,7 @@ using elf_vernaux = Elf32_Vernaux;
 #define R_TLS_DTPMOD R_68K_TLS_DTPMOD32
 #define R_TLS_DTPREL R_68K_TLS_DTPREL32
 #define R_TLS_TPREL R_68K_TLS_TPREL32
+// #define R_TLS_TPREL_NEG
 #define R_IRELATIVE 222 /* doesn't happen */
 
 #define TP_TCB_OFFSET 0
