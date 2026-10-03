@@ -776,7 +776,8 @@ FILE *tmpfile(void) {
 		return nullptr;
 	}
 
-	return frg::construct<mlibc::fd_file>(getAllocator(), fd, mlibc::file_dispose_cb<mlibc::fd_file>);
+	return frg::construct<mlibc::fd_file>(getAllocator(), fd, O_RDWR,
+			mlibc::file_dispose_cb<mlibc::fd_file>);
 
 }
 
