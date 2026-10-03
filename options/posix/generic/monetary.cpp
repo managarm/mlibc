@@ -389,6 +389,7 @@ ssize_t strfmon_internal(char *__restrict s, size_t maxsize, mlibc::localeinfo *
 			false,
 			false,
 			false,
+			false,
 			opts
 		);
 
