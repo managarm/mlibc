@@ -415,24 +415,6 @@ std::pair<struct aiocb *, AioOpState> AioWorkerContext::handle_cqe(io_uring_cqe 
 			sysdep<FutexWake>(reinterpret_cast<int *>(ctx->syncResult), true);
 		}
 
-		if ((cqe->user_data & cancelFdBit) && !err) {
-			int fd = ctx->fildes;
-
-			// Mark every affected in-flight request as cancelled.
-			for (auto e : inFlight) {
-				if (!e->parent || e->parent->aio_fildes != fd)
-					continue;
-
-				AioCbView cbv{e->parent};
-				cbv.set_operation_result(std::unexpected{ECANCELED});
-				cbv.exchange_state(AioOpState::cancelled, AioOpState::in_progress);
-			}
-		} else if (ctx->parent && !err) {
-			AioCbView cbv{ctx->parent};
-			cbv.set_operation_result(std::unexpected{ECANCELED});
-			cbv.exchange_state(AioOpState::cancelled, AioOpState::in_progress);
-		}
-
 		inFlight.erase(inFlight.iterator_to(ctx));
 		frg::destruct(getAllocator(), ctx->sqe);
 		frg::destruct(getAllocator(), ctx);
