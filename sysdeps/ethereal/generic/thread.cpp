@@ -22,6 +22,8 @@ extern "C" void __mlibc_thread_trampoline(void *(*fn)(void *), Tcb *tcb, void *a
 }
 
 #define DEFAULT_STACK 0x20000
+#define USERMODE_STACK_TOP ((uintptr_t)0x0000070000000000)
+#define MAIN_STACK_SIZE ((size_t)8 * 1024 * 1024)
 
 namespace mlibc {
 int Sysdeps<PrepareStack>::operator()(
@@ -64,6 +66,12 @@ int Sysdeps<PrepareStack>::operator()(
 
 	*stack = (void *)stack_it;
 
+	return 0;
+}
+
+int Sysdeps<GetCurrentStackInfo>::operator()(void **stack_base, size_t *stack_size) {
+	*stack_size = MAIN_STACK_SIZE;
+	*stack_base = (void *)(USERMODE_STACK_TOP - MAIN_STACK_SIZE);
 	return 0;
 }
 
