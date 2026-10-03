@@ -12,7 +12,7 @@
  * modifies the string.
  */
 char *__mlibc_gnu_basename_c(const char *path) {
-	char *basename_component = strrchr(path, '/');
+	char *basename_component = const_cast<char *>(strrchr(path, '/'));
 	if (!basename_component) {
 		return const_cast<char *>(path);
 	}
