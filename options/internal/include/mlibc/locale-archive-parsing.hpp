@@ -95,6 +95,13 @@ frg::string_view parse_string(frg::span<const uint8_t> data) {
 	return frg::string_view{ptr, frg::min(len + 1, data.size())};
 }
 
+frg::basic_string_view<wchar_t> parse_wstring(frg::span<const uint8_t> data) {
+    __ensure(reinterpret_cast<uintptr_t>(data.data()) % alignof(wchar_t) == 0);
+	auto ptr = reinterpret_cast<const wchar_t *>(data.data());
+	auto len = frg::generic_strnlen(ptr, data.size() / sizeof(wchar_t));
+	return frg::basic_string_view<wchar_t>{ptr, frg::min(len + 1, data.size() / sizeof(wchar_t))};
+}
+
 template <size_t Min, size_t Max>
 frg::string_view parse_stringlist(frg::span<const uint8_t> data) {
 	size_t termIndex = 0;
@@ -324,20 +331,20 @@ auto time_parser = category{
         parse_string, // era_d_t_fmt
         parse_string, // era_t_fmt
         parse<uint32_t>, // era_num_entries
-        parse_ignore, // era_entries
+        parse_raw_bytearray, // era_entries
         // wabday1..7
-        parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore,
+        parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring,
         // wday1..7
-        parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore,
+        parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring,
         // wabmon1..12
-        parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore,
+        parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring,
         // wmon1..12
-        parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore,
-        parse_ignore, parse_ignore, // wam_str, wpm_str
+        parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring,
+        parse_wstring, parse_wstring, // wam_str, wpm_str
         // wd_t_fmt, wd_fmt, wt_fmt, wt_fmt_ampm
-        parse_ignore, parse_ignore, parse_ignore, parse_ignore,
+        parse_wstring, parse_wstring, parse_wstring, parse_wstring,
         // wera_year, wera_d_fmt, walt_digits, wera_d_t_fmt, wera_t_fmt
-        parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore,
+        parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring,
         parse_raw_bytearray, // time_week_ndays
         parse<uint32_t>, // time_week_1stday
         parse_raw_bytearray, // time_week_1stweek
@@ -346,16 +353,16 @@ auto time_parser = category{
         parse_raw_bytearray, // time_cal_direction
         parse_string, // timezone
         parse_string, // date_fmt
-        parse_ignore, // w_date_fmt
+        parse_wstring, // w_date_fmt
         parse_string, // time_codeset
         // altmon1..12
         parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string,
         // waltmon1..12
-        parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore,
+        parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring,
         // abaltmon1..12
         parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string,
         // wabaltmon1..12
-        parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore, parse_ignore
+        parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring
     )
 };
 
@@ -401,66 +408,35 @@ auto ctype_parser = category{
         parse_ignore,                 // gap6
         parse_stringlist<10, 32>,     // class_names
         parse_stringlist<2, 32>,      // map_names
-        parse_ignore,                 // TODO: width
+        parse_raw_bytearray,          // width
         parse<uint32_t>,              // mb_cur_max
         parse_string,                 // codeset_name
-        parse_ignore,                 // TODO: toupper32
-        parse_ignore,                 // TODO: tolower32
+        parse_raw_bytearray,          // toupper32
+        parse_raw_bytearray,          // tolower32
         parse<uint32_t>,              // class_offset
         parse<uint32_t>,              // map_offset
         parse<uint32_t>,              // indigits_mb_len
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
-        parse_ignore,
+        // indigits0_mb - indigits9_mb
+        parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string,
+        parse<uint32_t>,              // indigits_wc-len
+        // indigits0_wc - indigits9_wc
+        parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring, parse_wstring,
+        // outdigits0_mb - outdigits9_mb
+        parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string, parse_string,
+        // outdigit0_wc - // outdigit9_wc
+        parse<uint32_t>, parse<uint32_t>, parse<uint32_t>, parse<uint32_t>, parse<uint32_t>, parse<uint32_t>, parse<uint32_t>, parse<uint32_t>, parse<uint32_t>, parse<uint32_t>,
+        parse<uint32_t>,              // ctype-translit-tab-size
+        parse_raw_bytearray,          // translit-from-idx
+        parse_raw_bytearray,          // translit-from-tbl
+        parse_raw_bytearray,          // translit-to-idx
+        parse_raw_bytearray,          // translit-to-tbl
+        parse<uint32_t>,              // ctype-translit-default-missing-len
+        parse_wstring,                // translit-default-missing
+        parse<uint32_t>,              // ctype-translit-ignore-len
+        parse<uint32_t>,              // ctype-translit-ignore
+        parse<uint32_t>,              // map-to-nonascii
+        parse<uint32_t>,              // nonascii-case
+        // entries for class and map name data
         parse_bytearray,
         parse_bytearray,
         parse_bytearray,
