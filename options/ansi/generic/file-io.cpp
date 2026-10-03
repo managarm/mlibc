@@ -208,7 +208,7 @@ int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_siz
 	// Line-buffered streams perform I/O on full lines.
 	bool flush_line = false;
 	if(_bufmode == buffer_mode::line_buffer) {
-		auto nl = reinterpret_cast<char *>(memchr(buffer, '\n', chunk));
+		auto nl = reinterpret_cast<const char *>(memchr(buffer, '\n', chunk));
 		if(nl) {
 			chunk = nl + 1 - buffer;
 			flush_line = true;
