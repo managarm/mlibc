@@ -830,7 +830,7 @@ char *nl_langinfo_l(nl_item item, localeinfo * loc) {
 		case CODESET:
 			return const_cast<char *>(l->ctype.get(CODESET).asString().data());
 
-		case ABDAY_1 ... ALT_DIGITS:
+		case ABDAY_1 ... (_NL_NUM_LC_TIME - 1):
 			return const_cast<char *>(l->time.get(item).asString().data());
 
 		case DECIMAL_POINT:
