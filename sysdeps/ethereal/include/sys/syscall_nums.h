@@ -13,7 +13,7 @@
 #define SYS_IOCTL           9
 /* SYS_READDIR removed */
 #define SYS_POLL            11
-#define SYS_MKDIR           12
+#define SYS_MKDIRAT         12
 #define SYS_PSELECT         13
 #define SYS_READLINK        14
 #define SYS_ACCESS          15
@@ -71,7 +71,7 @@
 #define SYS_SETTLS          67  // Ethereal API (pthread)
 #define SYS_EXIT_THREAD     68  // Ethereal API (pthread)
 /* SYS_JOIN_THREAD removed */
-/* SYS_KILL_THREAD removed */
+#define SYS_TKILL           70
 #define SYS_EPOLL_CREATE    71
 #define SYS_EPOLL_CTL       72
 #define SYS_EPOLL_PWAIT     73
@@ -123,6 +123,9 @@
 #define SYS_FSTATAT         119
 #define SYS_SETGSBASE       120 // Ethereal API
 #define SYS_SIGRETURN       121 // Return from a signal handler (called by the trampoline)
-#define SYS_SIGALTSTACK     122 // Alternate signal stack
+#define SYS_SIGALTSTACK     122
+#define SYS_SETFSBASE       123 // Ethereal API
+#define SYS_SETRESUID       124
+#define SYS_SETRESGID       125
 
 #endif

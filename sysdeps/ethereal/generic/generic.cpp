@@ -87,8 +87,12 @@ int Sysdeps<Open>::operator()(const char *pathname, int flags, mode_t mode, int 
 
 int Sysdeps<Close>::operator()(int fd) { return -SYSCALL1(SYS_CLOSE, fd); }
 
+int Sysdeps<Mkdirat>::operator()(int dirfd, const char *path, mode_t mode) {
+	return -SYSCALL3(SYS_MKDIRAT, dirfd, path, mode);
+}
+
 int Sysdeps<Mkdir>::operator()(const char *path, mode_t mode) {
-	return -SYSCALL2(SYS_MKDIR, path, mode);
+	return sysdep<Mkdirat>(AT_FDCWD, path, mode);
 }
 
 int Sysdeps<VmMap>::operator()(
@@ -297,12 +301,32 @@ int Sysdeps<Pselect>::operator()(
 	return 0;
 }
 
+int Sysdeps<GetRlimit>::operator()(int resource, struct rlimit *limit) {
+	switch(resource) {
+	case RLIMIT_NOFILE:
+		limit->rlim_cur = RLIM_INFINITY;
+		limit->rlim_max = RLIM_INFINITY;
+		return 0;
+	default:
+		return EINVAL;
+	}
+}
+
+int Sysdeps<GetRusage>::operator()(int who, struct rusage *r_usage) {
+	return ENOSYS;
+}
+
+int Sysdeps<Fadvise>::operator()(int fd, off_t offset, off_t length, int advice) {
+	return ENOSYS;
+}
+
 gid_t Sysdeps<GetGid>::operator()() { return SYSCALL0(SYS_GETGID); }
 gid_t Sysdeps<GetEgid>::operator()() { return SYSCALL0(SYS_GETEGID); }
 uid_t Sysdeps<GetUid>::operator()() { return SYSCALL0(SYS_GETUID); }
 uid_t Sysdeps<GetEuid>::operator()() { return SYSCALL0(SYS_GETEUID); }
 pid_t Sysdeps<GetPid>::operator()() { return SYSCALL0(SYS_GETPID); }
 pid_t Sysdeps<GetTid>::operator()() { return SYSCALL0(SYS_GETTID); }
+pid_t Sysdeps<FutexTid>::operator()() { return SYSCALL0(SYS_GETTID); }
 pid_t Sysdeps<GetPpid>::operator()() { return SYSCALL0(SYS_GETPPID); }
 pid_t Sysdeps<GetPgid>::operator()(pid_t pid, pid_t *pgid) {
 	long err = SYSCALL1(SYS_GETPGID, pid);
@@ -347,13 +371,11 @@ int Sysdeps<GetGroups>::operator()(size_t size, gid_t *list, int *ret) {
 }
 
 int Sysdeps<SetResgid>::operator()(gid_t _rgid, gid_t _egid, gid_t _sgid) {
-	mlibc::infoLogger() << "SetResgid is a stub" << frg::endlog;
-	return 0;
+	return -SYSCALL3(SYS_SETRESGID, _rgid, _egid, _sgid);
 }
 
 int Sysdeps<SetResuid>::operator()(uid_t _ruid, uid_t _euid, uid_t _suid) {
-	mlibc::infoLogger() << "SetResuid is a stub" << frg::endlog;
-	return 0;
+	return -SYSCALL3(SYS_SETRESUID, _ruid, _euid, _suid);
 }
 
 void Sysdeps<Yield>::operator()() { SYSCALL0(SYS_YIELD); }
@@ -549,6 +571,11 @@ int Sysdeps<Sigprocmask>::operator()(
 	return -err;
 }
 
+int Sysdeps<Sigsuspend>::operator()(const sigset_t *set) {
+	long err = SYSCALL1(SYS_SIGSUSPEND, set);
+	return -err;
+}
+
 #ifndef MLIBC_BUILDING_RTLD
 extern "C" void __mlibc_restorer();
 
@@ -580,6 +607,14 @@ int Sysdeps<Kill>::operator()(int pid, int sig) {
 	return -err;
 }
 
+int Sysdeps<Tgkill>::operator()(int pid, int tid, int sig) {
+	if (pid != sysdep<GetPid>())
+		return ESRCH;
+
+	long err = SYSCALL2(SYS_TKILL, tid, sig);
+	return -err;
+}
+
 int Sysdeps<Tcgetattr>::operator()(int fd, struct termios *attr) {
 	return -SYSCALL3(SYS_IOCTL, fd, TCGETS, attr);
 }
@@ -597,8 +632,7 @@ int Sysdeps<Tcsetattr>::operator()(int fd, int optional, const struct termios *a
 }
 
 int Sysdeps<Pipe>::operator()(int *fds, int flags) {
-	long ret = SYSCALL1(SYS_PIPE, fds);
-	return -ret;
+	return -SYSCALL2(SYS_PIPE, fds, flags);
 }
 
 int Sysdeps<GetHostname>::operator()(char *buffer, size_t bufsize) {
@@ -717,8 +751,7 @@ int Sysdeps<Symlink>::operator()(const char *target_path, const char *link_path)
 int Sysdeps<Linkat>::operator()(
     int olddirfd, const char *old_path, int newdirfd, const char *new_path, int flags
 ) {
-	// TODO
-	return sysdep<Symlinkat>(old_path, newdirfd, new_path);
+	return -SYSCALL5(SYS_LINKAT, olddirfd, old_path, newdirfd, new_path, flags);
 }
 
 int Sysdeps<Link>::operator()(const char *old_path, const char *new_path) {
@@ -738,6 +771,35 @@ int Sysdeps<Openpty>::operator()(
 	return -SYSCALL5(SYS_OPENPTY, mfd, sfd, name, ios, win);
 }
 
+int Sysdeps<Openpt>::operator()(int flags, int *fd) {
+	int slave;
+	int e = sysdep<Openpty>(fd, &slave, nullptr, nullptr, nullptr);
+	if (e) return e;
+	sysdep<Close>(slave);
+
+	if (flags & O_CLOEXEC) {
+		long ret = SYSCALL3(SYS_FCNTL, *fd, F_SETFD, FD_CLOEXEC);
+		if (ret < 0) {
+			sysdep<Close>(*fd);
+			return -ret;
+		}
+	}
+
+	if (flags & O_NONBLOCK) {
+		long ret = SYSCALL3(SYS_FCNTL, *fd, F_SETFL, O_NONBLOCK);
+		if (ret < 0) {
+			sysdep<Close>(*fd);
+			return -ret;
+		}
+	}
+
+	return 0;
+}
+
+int Sysdeps<Unlockpt>::operator()(int) {
+	return 0;
+}
+
 int Sysdeps<Chroot>::operator()(const char *path) {
 	mlibc::infoLogger() << "warning: sysdeps<Chroot> not implemented." << frg::endlog;
 	return 0;
@@ -745,6 +807,22 @@ int Sysdeps<Chroot>::operator()(const char *path) {
 
 int Sysdeps<Utimensat>::operator()(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
 	mlibc::infoLogger() << "warning: sysdeps<Utimensat> not implemented." << frg::endlog;
+	return 0;
+}
+
+int Sysdeps<Sysconf>::operator()(int number, long *result) {
+	if (number != _SC_NPROCESSORS_CONF && number != _SC_NPROCESSORS_ONLN) {
+		return EINVAL;
+	}
+
+#if defined(__x86_64__) || defined(__i386__)
+	unsigned int eax = 1, ebx, ecx, edx;
+	__asm__ volatile ("cpuid" : "+a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx));
+	long count = (ebx >> 16) & 0xff;
+	*result = count > 0 ? count : 1;
+#else
+	*result = 1;
+#endif
 	return 0;
 }
 
