@@ -284,6 +284,10 @@ struct sigaction {
 #define NGREG __NGREG
 #endif
 
+#if defined(_DEFAULT_SOURCE)
+typedef unsigned long greg_t, gregset_t[__NGREG];
+#endif
+
 struct _fpxreg {
 	unsigned short __pollution(significand)[4];
 	unsigned short __pollution(exponent);
@@ -357,6 +361,10 @@ typedef struct __ucontext {
 #define REG_UESP 17
 #define REG_SS 18
 #define NGREG 19
+
+#if defined(_DEFAULT_SOURCE)
+typedef int greg_t, gregset_t[NGREG];
+#endif
 
 struct _fpreg {
 	unsigned short significand[4];
@@ -443,6 +451,10 @@ typedef struct __ucontext {
 
 #define NGREG 32
 
+#if defined(_DEFAULT_SOURCE)
+typedef unsigned long greg_t, gregset_t[NGREG];
+#endif
+
 enum {
   REG_PC = 0,
 #define REG_PC REG_PC
@@ -503,6 +515,10 @@ typedef struct __ucontext {
 #elif defined (__aarch64__)
 
 #define NGREG 34
+
+#if defined(_DEFAULT_SOURCE)
+typedef unsigned long greg_t, gregset_t[NGREG];
+#endif
 
 typedef struct sigcontext {
 	__mlibc_uint64 fault_address;
