@@ -6,5 +6,6 @@
 #define __MLIBC_HOST_NAME_MAX 255
 #define __MLIBC_NAME_MAX 255
 #define __MLIBC_OPEN_MAX 256
+#define __MLIBC_TTY_NAME_MAX 32
 
 #endif /*_ABIBITS_LIMITS_H */
