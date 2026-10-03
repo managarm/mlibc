@@ -271,12 +271,6 @@ extern "C" {
 
 #define __MLIBC_SC_MAX (_SC_SIGSTKSZ+1)
 
-/* Port-specific _SC_* define values */
-
-#if defined (__ironclad__)
-#define _SC_TOTAL_PAGES 1000
-#endif /* defined (__ironclad__) */
-
 #define STDERR_FILENO 2
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1

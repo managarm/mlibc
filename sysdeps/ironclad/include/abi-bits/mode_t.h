@@ -1,1 +1,0 @@
-../../../../abis/ironclad/mode_t.h

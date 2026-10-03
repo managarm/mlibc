@@ -282,11 +282,6 @@ elif host_machine.system() == 'managarm'
 	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)
 	subdir('sysdeps/managarm')
-elif host_machine.system() == 'ironclad'
-	rtld_include_dirs += include_directories('sysdeps/ironclad/include')
-	libc_include_dirs += include_directories('sysdeps/ironclad/include')
-	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
-	subdir('sysdeps/ironclad')
 elif host_machine.system() == 'keyronex'
 	rtld_include_dirs += include_directories('sysdeps/keyronex/include')
 	libc_include_dirs += include_directories('sysdeps/keyronex/include')
