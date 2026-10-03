@@ -4,7 +4,7 @@ We are happy to take contributions to mlibc! This page aims to summarize the pro
 
 ## Committing changes
 
-When making your changes, ensure that they are separated out into sensible commits. Everyy commit should be self-contained, only cover one logical unit of change, and be buildable (commonly referred to as `atomic commits`). Make sure that commit messages appropriately describe the changes made. Feel free to use the commit body to explain the changes more in-depth.
+When making your changes, ensure that they are separated out into sensible commits. Every commit should be self-contained, only cover one logical unit of change, and be buildable (commonly referred to as `atomic commits`). Make sure that commit messages appropriately describe the changes made. Feel free to use the commit body to explain the changes more in-depth.
 
 ### Special case: ABI breaks
 
