@@ -234,7 +234,6 @@ struct SharedObject {
 	frg::optional<bool> lazyExplicitAddend;
 
 	bool symbolicResolution;
-	bool eagerBinding;
 	bool haveStaticTls;
 
 	// vector of dependencies
@@ -535,12 +534,6 @@ private:
 
 	frg::vector<SharedObject *, LdsoAllocator> _initQueue;
 };
-
-// --------------------------------------------------------
-// Namespace scope functions
-// --------------------------------------------------------
-
-extern "C" void pltRelocateStub() __attribute__((__visibility__("hidden")));
 
 // --------------------------------------------------------
 // RTLD interface

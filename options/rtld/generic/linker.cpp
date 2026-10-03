@@ -28,8 +28,6 @@ enum {
 uintptr_t libraryBase = 0x41000000;
 #endif
 
-constexpr bool eagerBinding = true;
-
 #if defined(__x86_64__) || defined(__i386__)
 constexpr inline bool tlsAboveTp = false;
 constexpr inline uintptr_t tlsOffsetFromTp = 0;
@@ -837,15 +835,12 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			object->symbolicResolution = true;
 			break;
 		case DT_BIND_NOW:
-			object->eagerBinding = true;
 			break;
 		case DT_FLAGS: {
 			if(dynamic->d_un.d_val & DF_SYMBOLIC)
 				object->symbolicResolution = true;
 			if(dynamic->d_un.d_val & DF_STATIC_TLS)
 				object->haveStaticTls = true;
-			if(dynamic->d_un.d_val & DF_BIND_NOW)
-				object->eagerBinding = true;
 
 			auto ignored = DF_BIND_NOW | DF_SYMBOLIC | DF_STATIC_TLS;
 #ifdef __riscv
@@ -861,8 +856,6 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 						<< frg::endlog;
 		} break;
 		case DT_FLAGS_1:
-			if(dynamic->d_un.d_val & DF_1_NOW)
-				object->eagerBinding = true;
 			// The DF_1_PIE flag is informational only. It is used by e.g file(1).
 			// The DF_1_NODELETE flag has a similar effect to RTLD_NODELETE, both of which we
 			// ignore because we don't implement dlclose().
@@ -1199,7 +1192,7 @@ SharedObject::SharedObject(const char *name, frg::string<LdsoAllocator> path,
 		knownVersions({}, getLdsoAllocator()), definedVersions(getLdsoAllocator()),
 		lazyRelocTableOffset(0), lazyTableSize(0),
 		lazyExplicitAddend(false), symbolicResolution(false),
-		eagerBinding(false), haveStaticTls(false),
+		haveStaticTls(false),
 		dependencies(getLdsoAllocator()), tlsModel(TlsModel::null),
 		tlsIndex(0), tlsOffset(0), globalRts(0), wasLinked(false),
 		scheduledForInit(false), onInitStack(false),
@@ -2411,10 +2404,18 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 	}
 }
 
+namespace {
+
+void panicOnPltLazyBinding() {
+	mlibc::panicLogger() << "mlibc: Unexpected call to lazy PLT resolver!" << frg::endlog;
+}
+
+} // namespace
+
 void Loader::_processLazyRelocations(SharedObject *object) {
 	if(object->globalOffsetTable) {
 		object->globalOffsetTable[1] = object;
-		object->globalOffsetTable[2] = (void *)&pltRelocateStub;
+		object->globalOffsetTable[2] = (void *)&panicOnPltLazyBinding;
 	}
 
 	if(!object->lazyTableSize)
@@ -2445,27 +2446,24 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 		}
 
 		switch (type) {
-		case R_JUMP_SLOT:
-			if(eagerBinding) {
-				auto [sym, ver] = object->getSymbolByIndex(symbol_index);
-				auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, sym.getString(), object->objectRts, 0, ver);
+		case R_JUMP_SLOT: {
+			auto [sym, ver] = object->getSymbolByIndex(symbol_index);
+			auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, sym.getString(), object->objectRts, 0, ver);
 
-				if(!p) {
-					if(ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK)
-						mlibc::panicLogger() << "rtld: Unresolved JUMP_SLOT symbol "
-								<< sym.getString() << " in object " << object->name << frg::endlog;
+			if(!p) {
+				if(ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK)
+					mlibc::panicLogger() << "rtld: Unresolved JUMP_SLOT symbol "
+						<< sym.getString() << " in object " << object->name << frg::endlog;
 
-					if(rtldConfig.debugVerbose)
-						mlibc::infoLogger() << "rtld: Unresolved weak JUMP_SLOT symbol "
-							<< sym.getString() << " in object " << object->name << frg::endlog;
-					*((uintptr_t *)rel_addr) = 0;
-				}else{
-					*((uintptr_t *)rel_addr) = p->virtualAddress();
-				}
+				if(rtldConfig.debugVerbose)
+					mlibc::infoLogger() << "rtld: Unresolved weak JUMP_SLOT symbol "
+						<< sym.getString() << " in object " << object->name << frg::endlog;
+				*((uintptr_t *)rel_addr) = 0;
 			}else{
-				*((uintptr_t *)rel_addr) += object->baseAddress;
+				*((uintptr_t *)rel_addr) = p->virtualAddress();
 			}
 			break;
+		}
 #if defined(__x86_64__)
 		case R_X86_64_IRELATIVE: {
 			auto ptr = object->baseAddress + addend;
