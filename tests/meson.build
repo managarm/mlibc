@@ -207,6 +207,7 @@ all_test_cases = [
 	'linux/SIOCGSTAMP',
 	'linux-wrappers/rt_tgsigqueueinfo',
 	'linux-wrappers/rt_sigqueueinfo',
+	'linux/limits-abi',
 ]
 
 if host_machine.system() == 'linux'
