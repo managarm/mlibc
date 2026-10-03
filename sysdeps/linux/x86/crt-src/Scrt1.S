@@ -16,14 +16,19 @@ _start:
 .cfi_undefined eip
 	xor %ebp, %ebp
 	mov %esp, %edi
-	call 1f
 
+	and $-16, %esp
+
+	call 1f
 1:
 	pop %ebx
 	addl $_GLOBAL_OFFSET_TABLE_+[.-1b], %ebx
+
+	lea -8(%esp), %esp
 	push main@GOT(%ebx)
 	push %edi
 	call __mlibc_entry@plt
+	ud2
 .cfi_endproc
 
 .section .note.GNU-stack,"",%progbits
