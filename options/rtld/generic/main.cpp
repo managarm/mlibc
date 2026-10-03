@@ -221,29 +221,6 @@ extern "C" void relocateSelf68k(elf_dyn *dynamic, uintptr_t ldso_base) {
 #endif // !defined(__m68k__)
 #endif
 
-extern "C" void *lazyRelocate(SharedObject *object, unsigned int rel_index) {
-	frg::unique_lock lock{loaderLock};
-	__ensure(object->lazyExplicitAddend);
-	auto reloc = (elf_rela *)(object->baseAddress + object->lazyRelocTableOffset
-			+ rel_index * sizeof(elf_rela));
-	auto type = ELF_R_TYPE(reloc->r_info);
-	auto symbol_index = ELF_R_SYM(reloc->r_info);
-
-	__ensure(type == R_X86_64_JUMP_SLOT);
-	__ensure(ELF_CLASS == ELFCLASS64);
-
-	auto [sym, ver] = object->getSymbolByIndex(symbol_index);
-	auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, sym.getString(), object->objectRts, 0, ver);
-	if(!p)
-		mlibc::panicLogger() << "Unresolved JUMP_SLOT symbol" << frg::endlog;
-
-	//mlibc::infoLogger() << "Lazy relocation to " << symbol_str
-	//		<< " resolved to " << pointer << frg::endlog;
-
-	*(uintptr_t *)(object->baseAddress + reloc->r_offset) = p->virtualAddress();
-	return (void *)p->virtualAddress();
-}
-
 extern "C" [[ gnu::visibility("default") ]] void *__rtld_allocateTcb() {
 	frg::unique_lock lock{loaderLock};
 	auto tcb = allocateTcb();
