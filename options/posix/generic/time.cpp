@@ -325,7 +325,7 @@ char *strptime_internal(
 				break;
 			}
 			case 'm': {
-				if (!matchDigits.operator()<0, 23>(tm->tm_mon, &state->has_month))
+				if (!matchDigits.operator()<1, 12>(tm->tm_mon, &state->has_month))
 					return nullptr;
 				tm->tm_mon--;
 				break;
