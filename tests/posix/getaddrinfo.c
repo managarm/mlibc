@@ -157,7 +157,10 @@ int main() {
 
 	ret = getaddrinfo("localhost", NULL, &hints, &res);
 
-	if (ret == 0) {
+	// AI_ADDRCONFIG must not make a name unresolvable on a host whose only
+	// interface is the loopback one, so the lookup has to succeed either way.
+	assert(ret == 0);
+	{
 		int found_ipv4 = 0;
 		int found_ipv6 = 0;
 		for(struct addrinfo *p = res; p != NULL; p = p->ai_next) {
@@ -167,18 +170,14 @@ int main() {
 				found_ipv6 = 1;
 		}
 
-		if (has_ipv4_addr())
-			assert(found_ipv4);
-		else
-			assert(!found_ipv4);
-
-		if (has_ipv6_addr())
-			assert(found_ipv6);
-		else
-			assert(!found_ipv6);
-	} else {
-		// If getaddrinfo fails, it should be because no addresses are configured.
-		assert(!has_ipv4_addr() && !has_ipv6_addr());
+		// Where exactly one family is configured, only that one is returned.
+		// Where neither is, no filtering happens at all.
+		if (has_ipv4_addr() != has_ipv6_addr()) {
+			assert(found_ipv4 == has_ipv4_addr());
+			assert(found_ipv6 == has_ipv6_addr());
+		} else {
+			assert(found_ipv4 || found_ipv6);
+		}
 	}
 
 	freeaddrinfo(res);
@@ -202,6 +201,51 @@ int main() {
 	assert(ret == EAI_NONAME);
 	assert(res == NULL);
 
+	// Without a node, a client lookup resolves to the loopback address and a
+	// passive one to the wildcard address. Both are stored in network byte
+	// order.
+	hints = (struct addrinfo){0};
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+
+	ret = getaddrinfo(NULL, "8080", &hints, &res);
+	assert(ret == 0);
+	assert(res->ai_family == AF_INET);
+	addr_in = (struct sockaddr_in *)res->ai_addr;
+	assert(addr_in->sin_addr.s_addr == htonl(INADDR_LOOPBACK));
+	freeaddrinfo(res);
+	res = NULL;
+
+	hints.ai_flags = AI_PASSIVE;
+	ret = getaddrinfo(NULL, "8080", &hints, &res);
+	assert(ret == 0);
+	addr_in = (struct sockaddr_in *)res->ai_addr;
+	assert(addr_in->sin_addr.s_addr == htonl(INADDR_ANY));
+	freeaddrinfo(res);
+	res = NULL;
+
+	hints = (struct addrinfo){0};
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_STREAM;
+
+	ret = getaddrinfo(NULL, "8080", &hints, &res);
+	assert(ret == 0);
+	assert(res->ai_family == AF_INET6);
+	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)res->ai_addr;
+	assert(!memcmp(&sin6->sin6_addr, &in6addr_loopback, sizeof(struct in6_addr)));
+	freeaddrinfo(res);
+	res = NULL;
+
+	hints.ai_flags = AI_PASSIVE;
+	ret = getaddrinfo(NULL, "8080", &hints, &res);
+	assert(ret == 0);
+	sin6 = (struct sockaddr_in6 *)res->ai_addr;
+	assert(!memcmp(&sin6->sin6_addr, &in6addr_any, sizeof(struct in6_addr)));
+	freeaddrinfo(res);
+	res = NULL;
+
+	hints = (struct addrinfo){0};
+	hints.ai_flags = AI_NUMERICSERV;
 	hints.ai_family = AF_INET6;
 
 	ret = getaddrinfo(NULL, "9090", &hints, &res);
