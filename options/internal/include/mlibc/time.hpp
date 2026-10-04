@@ -21,6 +21,7 @@ struct StrftimePolicy<char> {
 	static constexpr const char *Tab = "\t";
 	static constexpr const char *D = "%d";
 	static constexpr const char *S = "%s";
+	static constexpr const char *nativeS = "%s";
 	static constexpr const char *TwoD = "%2d";
 	static constexpr const char *Dot2D = "%.2d";
 	static constexpr const char *Dot3D = "%.3d";
@@ -47,6 +48,7 @@ struct StrftimePolicy<wchar_t> {
 	static constexpr const wchar_t *Tab = L"\t";
 	static constexpr const wchar_t *D = L"%d";
 	static constexpr const wchar_t *S = L"%s";
+	static constexpr const wchar_t *nativeS = L"%ls";
 	static constexpr const wchar_t *TwoD = L"%2d";
 	static constexpr const wchar_t *Dot2D = L"%.2d";
 	static constexpr const wchar_t *Dot3D = L"%.3d";
@@ -56,7 +58,7 @@ struct StrftimePolicy<wchar_t> {
 	static constexpr const wchar_t *RFormat = L"%.2i:%.2i";
 	static constexpr const wchar_t *TFormat = L"%.2i:%.2i:%.2i";
 	static constexpr const wchar_t *UFormat = L"%02d";
-	static constexpr const wchar_t *rFormat = L"%.2i:%.2i:%.2i %s";
+	static constexpr const wchar_t *rFormat = L"%.2i:%.2i:%.2i %ls";
 	static constexpr const wchar_t *zFormat = L"%c%04d";
 
 	static const wchar_t *tFmt(localeinfo *l) {
@@ -329,7 +331,14 @@ size_t strftime(
 				if (day < 0 || day > 6)
 					__ensure(!"Day not in bounds.");
 
-				chunk = nprintf(p, space, P::S, mlibc::nl_langinfo_l(ABDAY_1 + day, l));
+				auto str = [&] {
+					if constexpr (std::is_same_v<Char, char>)
+						return l->time.get(ABDAY_1 + day).asString();
+					else
+						return l->time.get(_NL_WABDAY_1 + day).asWideString();
+				}();
+
+				chunk = nprintf(p, space, P::nativeS, str.data());
 				if (chunk >= space)
 					return 0;
 				p += chunk;
@@ -360,9 +369,9 @@ size_t strftime(
 				}();
 
 				if constexpr (std::is_same_v<Char, char>)
-					chunk = nprintf(p, space, "%s", l->time.get(item + mon).asString());
+					chunk = nprintf(p, space, P::nativeS, l->time.get(item + mon).asString().data());
 				else
-					chunk = nprintf(p, space, L"%ls", l->time.get(item + mon).asWideString());
+					chunk = nprintf(p, space, P::nativeS, l->time.get(item + mon).asWideString().data());
 
 				if (chunk >= space)
 					return 0;
@@ -466,7 +475,14 @@ size_t strftime(
 				break;
 			}
 			case 'A': {
-				chunk = nprintf(p, space, P::S, mlibc::nl_langinfo_l(DAY_1 + tm->tm_wday, l));
+				auto str = [&] {
+					if constexpr (std::is_same_v<Char, char>)
+						return l->time.get(DAY_1 + tm->tm_wday).asString();
+					else
+						return l->time.get(_NL_WDAY_1 + tm->tm_wday).asWideString();
+				}();
+
+				chunk = nprintf(p, space, P::nativeS, str.data());
 				if (chunk >= space)
 					return 0;
 				p += chunk;
