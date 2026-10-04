@@ -4,6 +4,7 @@
 #include <frg/vector.hpp>
 #include <mlibc/ctype.hpp>
 #include <mlibc/locale.hpp>
+#include <mlibc/time-helpers.hpp>
 #include <ranges>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,8 +37,11 @@ struct StrftimePolicy<char> {
 	static constexpr const char *zFormat = "%c%04d";
 
 	static const char *tFmt(localeinfo *l) { return mlibc::nl_langinfo_l(T_FMT, l); }
+	static const char *eraTFmt(localeinfo *l) { return mlibc::nl_langinfo_l(ERA_T_FMT, l); }
 	static const char *dFmt(localeinfo *l) { return mlibc::nl_langinfo_l(D_FMT, l); }
+	static const char *eraDFmt(localeinfo *l) { return mlibc::nl_langinfo_l(ERA_D_FMT, l); }
 	static const char *dtFmt(localeinfo *l) { return mlibc::nl_langinfo_l(D_T_FMT, l); }
+	static const char *eraDtFmt(localeinfo *l) { return mlibc::nl_langinfo_l(ERA_D_T_FMT, l); }
 	static const char *amStr(localeinfo *l) { return mlibc::nl_langinfo_l(AM_STR, l); }
 	static const char *pmStr(localeinfo *l) { return mlibc::nl_langinfo_l(PM_STR, l); }
 };
@@ -66,11 +70,20 @@ struct StrftimePolicy<wchar_t> {
 	static const wchar_t *tFmt(localeinfo *l) {
 		return l->time.get(_NL_WT_FMT).asWideString().data();
 	}
+	static const wchar_t *eraTFmt(localeinfo *l) {
+		return l->time.get(_NL_WERA_T_FMT).asWideString().data();
+	}
 	static const wchar_t *dFmt(localeinfo *l) {
 		return l->time.get(_NL_WD_FMT).asWideString().data();
 	}
+	static const wchar_t *eraDFmt(localeinfo *l) {
+		return l->time.get(_NL_WERA_D_FMT).asWideString().data();
+	}
 	static const wchar_t *dtFmt(localeinfo *l) {
 		return l->time.get(_NL_WD_T_FMT).asWideString().data();
+	}
+	static const wchar_t *eraDtFmt(localeinfo *l) {
+		return l->time.get(_NL_WERA_D_T_FMT).asWideString().data();
 	}
 	static const wchar_t *amStr(localeinfo *l) {
 		return l->time.get(_NL_WAM_STR).asWideString().data();
@@ -249,6 +262,25 @@ size_t strftime(
 
 		switch (*++c) {
 			case 'Y': {
+				if (use_alternative_era_format) {
+					auto data = era_view{l};
+					era_entry::date target_date{tm->tm_year, tm->tm_mon, tm->tm_mday};
+
+					auto match = std::ranges::find_if(data, [&](const era_entry &e) {
+						return (e.start_date <= target_date && target_date <= e.stop_date)
+						       || (e.stop_date <= target_date && target_date <= e.start_date);
+					});
+
+					if (match != data.end()) {
+						chunk = mlibc::strftime(p, space, match->template format<Char>().data(), tm, l);
+						if (chunk >= space)
+							return 0;
+						p += chunk;
+						c++;
+						break;
+					}
+				}
+
 				chunk = nprintf(p, space, P::D, 1900 + tm->tm_year);
 				if (chunk >= space)
 					return 0;
@@ -435,7 +467,18 @@ size_t strftime(
 				break;
 			}
 			case 'c': {
-				return mlibc::strftime(dest, max_size, P::dtFmt(l), tm, l);
+				const Char *fmt = P::dtFmt(l);
+				if (use_alternative_era_format) {
+					const Char *era_fmt = P::eraDtFmt(l);
+					if (era_fmt && *era_fmt)
+						fmt = era_fmt;
+				}
+				chunk = mlibc::strftime(p, space, fmt, tm, l);
+				if (chunk >= space)
+					return 0;
+				p += chunk;
+				c++;
+				break;
 			}
 			case 'e': {
 				print_digits.template operator()<int, 31>(tm->tm_mday, P::TwoD);
@@ -506,6 +549,25 @@ size_t strftime(
 				break;
 			}
 			case 'C': {
+				if (use_alternative_era_format) {
+					auto data = era_view{l};
+					era_entry::date target_date{tm->tm_year, tm->tm_mon, tm->tm_mday};
+
+					auto match = std::ranges::find_if(data, [&](const era_entry &e) {
+						return (e.start_date <= target_date && target_date <= e.stop_date)
+						       || (e.stop_date <= target_date && target_date <= e.start_date);
+					});
+
+					if (match != data.end()) {
+						chunk = nprintf(p, space, P::nativeS, match->template name<Char>().data());
+						if (chunk >= space)
+							return 0;
+						p += chunk;
+						c++;
+						break;
+					}
+				}
+
 				if (zero_pad && minimum_width > 2) {
 					chunk = nprintf(p, space, P::DotStarD, minimum_width - 2, 0);
 					if (chunk >= space)
@@ -523,6 +585,19 @@ size_t strftime(
 			}
 			case 'y': {
 				int year = (1900 + tm->tm_year) % 100;
+
+				if (use_alternative_era_format) {
+					auto data = era_view{l};
+					era_entry::date target_date{tm->tm_year, tm->tm_mon, tm->tm_mday};
+
+					auto match = std::ranges::find_if(data, [&](const era_entry &e) {
+						return (e.start_date <= target_date && target_date <= e.stop_date)
+						       || (e.stop_date <= target_date && target_date <= e.start_date);
+					});
+
+					if (match != data.end())
+						year = (tm->tm_year - match->start_date[0]) * match->absolute_direction + match->offset;
+				}
 
 				print_digits.template operator()<int, 99>(year, P::Dot2D);
 				if (chunk >= space)
@@ -608,10 +683,32 @@ size_t strftime(
 				break;
 			}
 			case 'x': {
-				return mlibc::strftime(dest, max_size, P::dFmt(l), tm, l);
+				const Char *fmt = P::dFmt(l);
+				if (use_alternative_era_format) {
+					const Char *era_fmt = P::eraDFmt(l);
+					if (era_fmt && *era_fmt)
+						fmt = era_fmt;
+				}
+				chunk = mlibc::strftime(p, space, fmt, tm, l);
+				if (chunk >= space)
+					return 0;
+				p += chunk;
+				c++;
+				break;
 			}
 			case 'X': {
-				return mlibc::strftime(dest, max_size, P::tFmt(l), tm, l);
+				const Char *fmt = P::tFmt(l);
+				if (use_alternative_era_format) {
+					const Char *era_fmt = P::eraTFmt(l);
+					if (era_fmt && *era_fmt)
+						fmt = era_fmt;
+				}
+				chunk = mlibc::strftime(p, space, fmt, tm, l);
+				if (chunk >= space)
+					return 0;
+				p += chunk;
+				c++;
+				break;
 			}
 			case 'u': {
 				print_digits.template operator()<int, 7>(tm->tm_wday ? tm->tm_wday : 7, P::D);

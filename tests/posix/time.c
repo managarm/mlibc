@@ -321,6 +321,24 @@ int main() {
 	f = strftime(buf, BUF_SIZE, "%Oy", &tm);
 	assert(!strcmp(buf, "九十九"));
 	assert(f == 9);
+	f = strftime(buf, BUF_SIZE, "%EC", &tm);
+	assert(!strcmp(buf, "平成"));
+	assert(f == 6);
+	f = strftime(buf, BUF_SIZE, "%Ec", &tm);
+	assert(!strcmp(buf, "平成11年07月02日 16時01分00秒"));
+	assert(f == 37);
+	f = strftime(buf, BUF_SIZE, "%Ey", &tm);
+	assert(!strcmp(buf, "11"));
+	assert(f == 2);
+	f = strftime(buf, BUF_SIZE, "%EY", &tm);
+	assert(!strcmp(buf, "平成11年"));
+	assert(f == 11);
+	f = strftime(buf, BUF_SIZE, "%Ex", &tm);
+	assert(!strcmp(buf, "平成11年07月02日"));
+	assert(f == 21);
+	f = strftime(buf, BUF_SIZE, "%EX", &tm);
+	assert(!strcmp(buf, "16時01分00秒"));
+	assert(f == 15);
 
 	a = strptime("二十一", "%Od", &tm);
 	assert(a != NULL);
