@@ -157,6 +157,10 @@ int main() {
 	assert(!strcmp(buf, "0XC"));
 	sprintf(buf, "%#o", 12);
 	assert(!strcmp(buf, "014"));
+	sprintf(buf, "%#.2o", 12);
+	assert(!strcmp(buf, "014"));
+	sprintf(buf, "%#.3o", 12);
+	assert(!strcmp(buf, "014"));
 
 	sprintf(buf, "%#x", 0);
 	assert(!strcmp(buf, "0"));
@@ -251,6 +255,11 @@ int main() {
 	sprintf(buf, "%hhx", (unsigned char) 12);
 	assert(!strcmp(buf, "c"));
 
+	sprintf(buf, "%#x", 12);
+	assert(!strcmp(buf, "0xc"));
+	sprintf(buf, "%#x", 0);
+	assert(!strcmp(buf, "0"));
+
 	// Test 'X' with different size mods to see
 	// if they work
 	sprintf(buf, "%X", 12);
@@ -280,6 +289,10 @@ int main() {
 	assert(!strcmp(buf, "14"));
 	sprintf(buf, "%hho", (unsigned char) 12);
 	assert(!strcmp(buf, "14"));
+	sprintf(buf, "%.2o", 12);
+	assert(!strcmp(buf, "14"));
+	sprintf(buf, "%.3o", 12);
+	assert(!strcmp(buf, "014"));
 
 	// Disable -Wformat here because the compiler might not know about the b specifier.
 #pragma GCC diagnostic push
@@ -542,6 +555,17 @@ int main() {
 
 	sprintf(buf, "%'10g", 1337.69);
 	assert(!strcmp(buf, "  1,337.69"));
+
+	snprintf(buf, 128, "%.2ls", L"test");
+	assert(!strcmp(buf, "te"));
+
+	ret = setlocale(LC_ALL, "C.UTF-8");
+	assert(ret && *ret);
+
+	sprintf(buf, "%.2ls", L"✨⛔");
+	assert(!strcmp(buf, ""));
+	snprintf(buf, 128, "%.3ls", L"✨⛔");
+	assert(!strcmp(buf, "✨"));
 
 	return 0;
 }

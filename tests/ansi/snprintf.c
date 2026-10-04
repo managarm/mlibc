@@ -462,5 +462,10 @@ int main() {
 		assert(written == 2);
 	}
 
+	assert(snprintf(buf, 128, "'%ls'", L"✨⛔") == 8);
+	assert(strcmp(buf, "'✨⛔'") == 0);
+	assert(snprintf(buf, 6, "'%ls'", L"✨⛔") == 8);
+	assert(strncmp(buf, "'✨", 4) == 0);
+
 	return 0;
 }
