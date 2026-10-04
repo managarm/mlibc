@@ -20,6 +20,7 @@ struct StrftimePolicy<char> {
 	static constexpr const char *Newline = "\n";
 	static constexpr const char *Tab = "\t";
 	static constexpr const char *D = "%d";
+	static constexpr const char *DotStarD = "%.*d";
 	static constexpr const char *S = "%s";
 	static constexpr const char *nativeS = "%s";
 	static constexpr const char *TwoD = "%2d";
@@ -47,6 +48,7 @@ struct StrftimePolicy<wchar_t> {
 	static constexpr const wchar_t *Newline = L"\n";
 	static constexpr const wchar_t *Tab = L"\t";
 	static constexpr const wchar_t *D = L"%d";
+	static constexpr const wchar_t *DotStarD = L"%.*d";
 	static constexpr const wchar_t *S = L"%s";
 	static constexpr const wchar_t *nativeS = L"%ls";
 	static constexpr const wchar_t *TwoD = L"%2d";
@@ -169,8 +171,29 @@ size_t strftime(
 			continue;
 		}
 
+		int minimum_width = 0;
+		bool zero_pad = false;
+		[[maybe_unused]] bool plus_flag = false;
 		bool use_alternative_symbols = false;
 		[[maybe_unused]] bool use_alternative_era_format = false;
+
+		if (c[1] == '0') {
+			zero_pad = true;
+			c++;
+		} else if (c[1] == '+') {
+			// TODO: implement handling of this
+			plus_flag = true;
+			c++;
+		}
+
+		// read in width specifier
+		if (c[1] >= '1' && c[1] <= '9') {
+			minimum_width = 0;
+			while (c[1] >= '0' && c[1] <= '9') {
+				minimum_width = minimum_width * 10 + (c[1] - '0');
+				c++;
+			}
+		}
 
 		if (*(c + 1) == 'O') {
 			constexpr auto valid = std::to_array<Char>(
@@ -216,7 +239,7 @@ size_t strftime(
 
 				auto it = t.begin();
 				if (std::ranges::advance(it, v, t.end()) == 0 && it != t.end()) {
-					chunk = nprintf(p, space, P::S, *(t | std::views::drop(v)).begin());
+					chunk = nprintf(p, space, P::S, (*it).data());
 					return;
 				}
 			}
@@ -229,6 +252,19 @@ size_t strftime(
 				chunk = nprintf(p, space, P::D, 1900 + tm->tm_year);
 				if (chunk >= space)
 					return 0;
+
+				if (zero_pad && minimum_width > chunk) {
+					chunk = nprintf(p, space, P::DotStarD, minimum_width - chunk, 0);
+					if (chunk >= space)
+						return 0;
+					p += chunk;
+					space -= chunk;
+
+					chunk = nprintf(p, space, P::D, 1900 + tm->tm_year);
+					if (chunk >= space)
+						return 0;
+				}
+
 				p += chunk;
 				c++;
 				break;
@@ -312,6 +348,25 @@ size_t strftime(
 				    nprintf(p, space, P::FFormat, 1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday);
 				if (chunk >= space)
 					return 0;
+
+				// POSIX: if minimum width is less than 6, the behavior shall be as if it equalled 6.
+				if (minimum_width)
+					minimum_width = std::max(minimum_width, 6);
+
+				if (zero_pad && minimum_width > chunk) {
+					chunk = nprintf(p, space, P::DotStarD, minimum_width - chunk, 0);
+					if (chunk >= space)
+						return 0;
+					p += chunk;
+					space -= chunk;
+
+					chunk = nprintf(
+					    p, space, P::FFormat, 1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday
+					);
+					if (chunk >= space)
+						return 0;
+				}
+
 				p += chunk;
 				c++;
 				break;
@@ -451,6 +506,14 @@ size_t strftime(
 				break;
 			}
 			case 'C': {
+				if (zero_pad && minimum_width > 2) {
+					chunk = nprintf(p, space, P::DotStarD, minimum_width - 2, 0);
+					if (chunk >= space)
+						return 0;
+					p += chunk;
+					space -= chunk;
+				}
+
 				chunk = nprintf(p, space, P::Dot2D, (1900 + tm->tm_year) / 100);
 				if (chunk >= space)
 					return 0;
@@ -459,7 +522,9 @@ size_t strftime(
 				break;
 			}
 			case 'y': {
-				print_digits.template operator()<int, 99>((1900 + tm->tm_year) % 100, P::Dot2D);
+				int year = (1900 + tm->tm_year) % 100;
+
+				print_digits.template operator()<int, 99>(year, P::Dot2D);
 				if (chunk >= space)
 					return 0;
 				p += chunk;
