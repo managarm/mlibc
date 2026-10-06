@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <inttypes.h>
-#if __MLIBC_BSD_OPTION
+#if __MLIBC_BSD_OPTION && !__MLIBC_LINUX_OPTION
 #include <pthread_np.h>
 #endif
 
@@ -397,6 +397,8 @@ int pthread_attr_get_np(pthread_t thread, pthread_attr_t *attr) {
 	return 0;
 }
 
+#if !__MLIBC_LINUX_OPTION
+
 void pthread_set_name_np(pthread_t thread, const char *name) {
 	auto tcb = reinterpret_cast<Tcb*>(thread);
 	mlibc::sysdep_or_enosys<ThreadSetname>(tcb, name);
@@ -406,6 +408,8 @@ void pthread_get_name_np(pthread_t thread, char *name, size_t size) {
 	auto tcb = reinterpret_cast<Tcb*>(thread);
 	mlibc::sysdep_or_enosys<ThreadGetname>(tcb, name, size);
 }
+
+#endif // !__MLIBC_LINUX_OPTION
 #endif // __MLIBC_BSD_OPTION
 
 extern "C" Tcb *__rtld_allocateTcb();

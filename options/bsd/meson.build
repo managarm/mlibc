@@ -11,9 +11,13 @@ libc_sources += files(
 )
 
 if not no_headers
+	# These functions conflict with Linux APIs.
+	if not linux_option
+		install_headers('include/pthread_np.h')
+	endif
+	
 	install_headers(
 		'include/fstab.h',
-		'include/pthread_np.h',
 		'include/pty.h',
 		'include/utmp.h',
 	)
