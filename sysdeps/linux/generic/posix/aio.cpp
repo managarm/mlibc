@@ -6,6 +6,7 @@
 #include <bits/ensure.h>
 #include <errno.h>
 #include <expected>
+#include <optional>
 #include <fcntl.h>
 #include <frg/intrusive.hpp>
 #include <frg/list.hpp>

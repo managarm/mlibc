@@ -7,11 +7,11 @@
 #include <mlibc/strings.hpp>
 
 char *index (const char *s, int c) {
-	return strchr(s, c);
+	return const_cast<char *>(strchr(s, c));
 }
 
 char *rindex(const char *s, int c) {
-	return strrchr(s, c);
+	return const_cast<char *>(strrchr(s, c));
 }
 
 namespace {
