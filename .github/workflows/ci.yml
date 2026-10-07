@@ -3,7 +3,50 @@ name: Continuous Integration
 on: [pull_request, merge_group]
 
 jobs:
+    prepare-kernel-headers:
+        name: Prepare Linux kernel headers
+        runs-on: ubuntu-latest
+        steps:
+          - name: Restore cached kernel headers
+            id: cache-headers
+            uses: actions/cache@v4
+            with:
+                path: linux-headers
+                key: linux-headers-6.14-${{ runner.os }}
+          - name: Download and build kernel headers
+            if: steps.cache-headers.outputs.cache-hit != 'true'
+            run: |
+                wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.14.tar.xz
+                tar -xf linux-6.14.tar.xz
+                for arch in x86_64 x86 aarch64 riscv64 m68k loongarch64; do
+                  case "$arch" in
+                    aarch64)
+                      karch="arm64"
+                      ;;
+                    riscv64)
+                      karch="riscv"
+                      ;;
+                    loongarch64)
+                      karch="loongarch"
+                      ;;
+                    x86)
+                      karch="i386"
+                      ;;
+                    *)
+                      karch="$arch"
+                      ;;
+                  esac
+                  mkdir -p linux-headers/$arch/usr
+                  make -C linux-6.14 ARCH=$karch INSTALL_HDR_PATH="$(pwd)/linux-headers/$arch/usr" headers_install
+                done
+          - name: Upload kernel headers artifact
+            uses: actions/upload-artifact@v4
+            with:
+                name: linux-headers
+                path: linux-headers/
+
     build-mlibc:
+        needs: [prepare-kernel-headers]
         strategy:
             fail-fast: false
             matrix:
@@ -21,6 +64,9 @@ jobs:
         container:
             image: debian:trixie
             options: --security-opt seccomp=unconfined --privileged
+        env:
+            CCACHE_DIR: ${{ github.workspace }}/.ccache
+            CCACHE_MAXSIZE: 500M
         steps:
           - name: Setup
             run: |
@@ -54,7 +100,7 @@ jobs:
                 apt-get install -y meson ninja-build qemu-user \
                                 python3-setuptools python3-jsonschema \
                                 python3-pexpect python3-pip netbase clang lld \
-                                git rsync wget patchelf libc6-dev-$DEBIAN_ARCH-cross
+                                git rsync wget patchelf ccache libc6-dev-$DEBIAN_ARCH-cross
                 case "${{matrix.arch}}" in \
                   x86) \
                     apt-get install -y gcc-i686-linux-gnu g++-i686-linux-gnu;; \
@@ -64,6 +110,13 @@ jobs:
                     apt-get install -y gcc-${{matrix.arch}}-linux-gnu g++-${{matrix.arch}}-linux-gnu;; \
                 esac
                 pip install --break-system-packages -U xbstrap pyexpect
+          - name: Setup ccache
+            uses: actions/cache@v4
+            with:
+              path: .ccache
+              key: ccache-build-${{ matrix.arch }}-${{ matrix.builds }}-${{ matrix.compiler }}-${{ github.sha }}
+              restore-keys: |
+                ccache-build-${{ matrix.arch }}-${{ matrix.builds }}-${{ matrix.compiler }}-
           - name: Prepare directories
             run: |
                 mkdir src/
@@ -82,6 +135,22 @@ jobs:
             uses: actions/checkout@v2
             with:
               path: src/mlibc/
+          - name: Download kernel headers
+            uses: actions/download-artifact@v4
+            with:
+              name: linux-headers
+              path: linux-headers/
+          - name: Set up linux kernel headers
+            run: |
+                mkdir -p build/packages/linux-headers
+                cp -r linux-headers/${{matrix.arch}}/* build/packages/linux-headers/
+                mkdir -p build/pkg-builds/linux-headers
+                touch build/pkg-builds/linux-headers/configured.xbstrap
+                touch build/pkg-builds/linux-headers/built.xbstrap
+                touch build/pkg-builds/linux-headers/installed.xbstrap
+                touch build/pkg-builds/linux-headers/packed.xbstrap
+                mkdir -p src/linux
+                touch src/linux/checkedout.xbstrap
           - name: Prepare src/
             run: |
                 cp mlibc/ci/bootstrap.yml .
@@ -98,7 +167,10 @@ jobs:
               xbstrap init ../src
             working-directory: build/
           - name: Build mlibc
-            run: 'xbstrap install ${{matrix.builds}}'
+            run: |
+              ccache -z
+              xbstrap install ${{matrix.builds}}
+              ccache -s
             working-directory: build/
           - name: Check public headers conform to ISO standards with pedantic warnings
             if: ${{matrix.builds == 'mlibc-headers-only'}}
@@ -133,6 +205,7 @@ jobs:
               LANG: "en_US.utf8"
 
     compile-sysdeps:
+        needs: [prepare-kernel-headers]
         strategy:
             fail-fast: false
             matrix:
@@ -140,17 +213,27 @@ jobs:
         name: Compile sysdeps
         runs-on: ubuntu-latest
         container: debian:trixie
+        env:
+            CCACHE_DIR: ${{ github.workspace }}/.ccache
+            CCACHE_MAXSIZE: 500M
         steps:
           - name: Install prerequisites
             run: |
                 apt-get update
                 apt-get install -y meson ninja-build qemu-user \
                                 python3-setuptools python3-jsonschema \
-                                python3-pip git rsync wget
+                                python3-pip git rsync wget ccache
                 pip install --break-system-packages -U xbstrap
                 if [ "${{matrix.sysdeps}}" = "demo" ]; then
                   apt-get install -y gcc-riscv64-linux-gnu g++-riscv64-linux-gnu
                 fi
+          - name: Setup ccache
+            uses: actions/cache@v4
+            with:
+              path: .ccache
+              key: ccache-sysdeps-${{ matrix.sysdeps }}-${{ github.sha }}
+              restore-keys: |
+                ccache-sysdeps-${{ matrix.sysdeps }}-
           - if: ${{ matrix.sysdeps == 'managarm' }}
             name: Checkout bootstrap-managarm
             uses: actions/checkout@v2
@@ -177,15 +260,34 @@ jobs:
             name: Install bragi
             run: |
                 pip install --break-system-packages -U bragi
+          - name: Download kernel headers
+            uses: actions/download-artifact@v4
+            with:
+              name: linux-headers
+              path: linux-headers/
           - name: Set up linux kernel headers
             run: |
-                mkdir -p build/mlibc/
-                cp src/mlibc/ci/bootstrap.yml src/
-                (
-                  cd build
-                  xbstrap init ../src
-                  xbstrap install linux-headers
-                )
+                mkdir -p build/packages/linux-headers
+                if [ "${{matrix.sysdeps}}" = "demo" ]; then
+                  cp -r linux-headers/riscv64/* build/packages/linux-headers/
+                else
+                  cp -r linux-headers/x86_64/* build/packages/linux-headers/
+                fi
+                mkdir -p build/pkg-builds/linux-headers
+                touch build/pkg-builds/linux-headers/configured.xbstrap
+                touch build/pkg-builds/linux-headers/built.xbstrap
+                touch build/pkg-builds/linux-headers/installed.xbstrap
+                touch build/pkg-builds/linux-headers/packed.xbstrap
+                mkdir -p src/linux
+                touch src/linux/checkedout.xbstrap
+                if [ "${{matrix.sysdeps}}" = "managarm" ]; then
+                  mkdir -p build/mlibc/
+                  cp src/mlibc/ci/bootstrap.yml src/
+                  (
+                    cd build
+                    xbstrap init ../src
+                  )
+                fi
           - if: ${{ matrix.sysdeps == 'managarm' }}
             name: Set up drm headers
             run: |
@@ -202,6 +304,7 @@ jobs:
                 fi
           - name: Compile sysdeps
             run: |
+                ccache -z
                 LDFLAGS="-Wl,/tmp/libgcc.a" meson setup \
                     "-Dc_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized', '-D__${{matrix.sysdeps}}__']" \
                     "-Dcpp_args=['-fno-stack-protector', '-U__linux__', '-Wno-error=maybe-uninitialized', '-D__${{matrix.sysdeps}}__']" \
@@ -213,4 +316,5 @@ jobs:
                     --cross-file ../src/mlibc/ci/${{matrix.sysdeps}}.cross-file compile-${{matrix.sysdeps}} \
                     "../src/mlibc/"
                 ninja -C compile-${{matrix.sysdeps}}
+                ccache -s
             working-directory: build/
