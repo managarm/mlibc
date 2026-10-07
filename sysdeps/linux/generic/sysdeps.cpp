@@ -1,4 +1,5 @@
 #include <asm/ioctls.h>
+#include <cstdarg>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -53,6 +54,22 @@ extern "C" long __do_syscall_ret(unsigned long ret) {
 		return -1;
 	}
 	return ret;
+}
+
+// glibc/musl-compatible variadic syscall(long, ...) for foreign runtimes (e.g.
+// Rust std) that link against the variadic function.
+extern "C" long __mlibc_syscall(long n, ...) __asm__("syscall");
+extern "C" long __mlibc_syscall(long n, ...) {
+	va_list ap;
+	va_start(ap, n);
+	long arg0 = va_arg(ap, long);
+	long arg1 = va_arg(ap, long);
+	long arg2 = va_arg(ap, long);
+	long arg3 = va_arg(ap, long);
+	long arg4 = va_arg(ap, long);
+	long arg5 = va_arg(ap, long);
+	va_end(ap);
+	return __do_syscall_ret(__do_syscall6(n, arg0, arg1, arg2, arg3, arg4, arg5));
 }
 #endif
 
