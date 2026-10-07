@@ -233,10 +233,11 @@ public:
 					size_t indirect_table_off = [&] {
 						if constexpr (std::is_same_v<Char, char>) {
 							// Skip over the matching portions of the sequences.
-							auto [mismatch_v, mismatch_s] = std::ranges::mismatch(view, entry.sequence());
+							auto seq = entry.sequence();
+							auto [mismatch_v, mismatch_s] = std::ranges::mismatch(view, seq);
 							auto tail = std::views::zip(
 								std::ranges::subrange(mismatch_v, view.end()),
-								std::ranges::subrange(mismatch_s, entry.sequence().end())
+								std::ranges::subrange(mismatch_s, seq.end())
 							);
 
 							return std::ranges::fold_left(tail, size_t{0}, [](size_t acc, auto pair) {
