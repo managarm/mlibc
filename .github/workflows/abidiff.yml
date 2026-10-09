@@ -8,9 +8,13 @@ on:
 
 jobs:
   run-abidiff:
-    name: Compare ABIs
+    name: Compare ABIs (${{matrix.abi}})
     runs-on: ubuntu-latest
     container: debian:trixie
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: ['7', 'next']
     defaults:
       run:
         shell: bash
@@ -105,6 +109,7 @@ jobs:
             cd mlibc-branch
             LDFLAGS='-Wl,/tmp/libgcc-x86_64.a' meson setup \
                   --cross-file=../linux-x86_64.cross-file \
+                  -Dmlibc_abi=${{matrix.abi}} \
                   -Dlibgcc_dependency=false \
                   -Duse_freestnd_hdrs=enabled \
                   -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include \
@@ -114,8 +119,14 @@ jobs:
           )
           (
             cd mlibc-base
+            # The base branch may predate the mlibc_abi option.
+            abi_args=()
+            if grep -q "'mlibc_abi'" meson_options.txt; then
+              abi_args=(-Dmlibc_abi=${{matrix.abi}})
+            fi
             LDFLAGS='-Wl,/tmp/libgcc-x86_64.a' meson setup \
                   --cross-file=../linux-x86_64.cross-file \
+                  "${abi_args[@]}" \
                   -Dlibgcc_dependency=false \
                   -Duse_freestnd_hdrs=enabled \
                   -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include \
