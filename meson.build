@@ -697,7 +697,12 @@ if not headers_only
 	library('resolv', 'dummy-libs/libresolv/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
 	library('dl', 'dummy-libs/libdl/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
 	library('ssp', 'dummy-libs/libssp/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
-	static_library('ssp_nonshared', 'dummy-libs/libssp_nonshared/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
+	if mlibc_abi >= 8
+		static_library('ssp_nonshared', 'dummy-libs/libssp_nonshared/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
+	else
+		# ABI 7 shipped libssp_nonshared as a shared library that binaries depend on.
+		library('ssp_nonshared', 'dummy-libs/libssp_nonshared/src/shared-dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
+	endif
 endif
 
 summary_info = {}
