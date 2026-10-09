@@ -234,6 +234,12 @@ if default_library_paths.length() == 0
 	endif
 endif
 
+if get_option('mlibc_abi') == 'next'
+	mlibc_abi = 8
+else
+	mlibc_abi = get_option('mlibc_abi').to_int()
+endif
+
 internal_conf.set_quoted('MLIBC_SYSTEM_NAME', host_machine.system())
 internal_conf.set_quoted('MLIBC_DEFAULT_LIBRARY_PATHS', '\\n'.join(default_library_paths))
 internal_conf.set('MLIBC_NUM_DEFAULT_LIBRARY_PATHS', default_library_paths.length())
@@ -340,6 +346,7 @@ linux_eventfd_option = sysdep_supported_options.get('linux-eventfd', linux_optio
 linux_reboot_option = sysdep_supported_options.get('linux-reboot', linux_option)
 linux_wrappers_option = linux_option and sysdep_supported_options.get('linux_wrappers', false)
 
+mlibc_conf.set('__MLIBC_ABI', mlibc_abi)
 mlibc_conf.set10('__MLIBC_POSIX_OPTION', posix_option)
 mlibc_conf.set10('__MLIBC_LINUX_OPTION', linux_option)
 mlibc_conf.set10('__MLIBC_GLIBC_OPTION', glibc_option)
@@ -701,6 +708,7 @@ summary(summary_info, bool_yn: true, section: 'tests')
 
 summary_info = {}
 summary_info += {'headers-only': headers_only}
+summary_info += {'ABI': mlibc_abi}
 summary_info += {'POSIX option': get_option('posix_option')}
 summary_info += {'Linux option': get_option('linux_option')}
 summary_info += {'glibc option': get_option('glibc_option')}

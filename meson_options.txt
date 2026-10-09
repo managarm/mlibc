@@ -19,3 +19,5 @@ option('use_freestnd_hdrs', type : 'feature', value : 'auto',
 	description : 'Use freestnd-c{,xx}-hdrs instead of looking for compiler headers')
 option('ld_library_name', type: 'string', value: 'ld',
 	description: 'Name of the ld library to build. Defaults to "ld".')
+option('mlibc_abi', type: 'combo', choices: ['7', 'next'], value: '7',
+	description: 'ABI revision to build. "next" selects the in-development ABI, which is unstable and may change incompatibly at any time.')
