@@ -45,6 +45,7 @@ packages:
         - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
+        - '-Dmlibc_abi=next'
         - "-Dc_args=['-Wno-error=maybe-uninitialized', '-Wno-unknown-warning-option']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized', '-Wno-unknown-warning-option']"
         - "-Dlibgcc_dependency=false"
@@ -85,6 +86,7 @@ packages:
         - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
+        - '-Dmlibc_abi=next'
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dlibgcc_dependency=false"
@@ -122,6 +124,7 @@ packages:
         - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
+        - '-Dmlibc_abi=next'
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dlibgcc_dependency=false"
@@ -160,6 +163,7 @@ packages:
         - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
+        - '-Dmlibc_abi=next'
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dlibgcc_dependency=false"
@@ -200,6 +204,7 @@ packages:
         - 'setup'
         - '--prefix=/usr'
         - '--libdir=lib'
+        - '-Dmlibc_abi=next'
         - "-Dc_args=['-Wno-error=maybe-uninitialized']"
         - "-Dcpp_args=['-Wno-error=maybe-uninitialized']"
         - "-Dlibgcc_dependency=false"
