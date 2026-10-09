@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <inttypes.h>
-#if __MLIBC_BSD_OPTION && !__MLIBC_LINUX_OPTION
+#if __MLIBC_BSD_OPTION && (!__MLIBC_LINUX_OPTION || __MLIBC_ABI < 8)
 #include <pthread_np.h>
 #endif
 
@@ -377,6 +377,7 @@ int pthread_setaffinity_np(pthread_t thread, size_t cpusetsize, const cpu_set_t 
 #endif // __MLIBC_LINUX_OPTION
 
 #if __MLIBC_BSD_OPTION
+#if !__MLIBC_LINUX_OPTION || __MLIBC_ABI < 8
 int pthread_attr_get_np(pthread_t thread, pthread_attr_t *attr) {
 	auto tcb = reinterpret_cast<Tcb*>(thread);
 
@@ -396,6 +397,7 @@ int pthread_attr_get_np(pthread_t thread, pthread_attr_t *attr) {
 	a->__detachstate = tcb->isJoinable ? PTHREAD_CREATE_JOINABLE : PTHREAD_CREATE_DETACHED;
 	return 0;
 }
+#endif // !__MLIBC_LINUX_OPTION || __MLIBC_ABI < 8
 
 #if !__MLIBC_LINUX_OPTION
 
