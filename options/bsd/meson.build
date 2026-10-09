@@ -11,8 +11,8 @@ libc_sources += files(
 )
 
 if not no_headers
-	# These functions conflict with Linux APIs.
-	if not linux_option
+	# These functions conflict with Linux APIs; ABI 7 shipped the header with pthread_attr_get_np only.
+	if not linux_option or mlibc_abi < 8
 		install_headers('include/pthread_np.h')
 	endif
 	
