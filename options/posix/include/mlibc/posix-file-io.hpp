@@ -9,7 +9,9 @@
 namespace mlibc {
 
 struct mem_file : abstract_file {
-	mem_file(int flags, void (*do_dispose)(abstract_file *) = nullptr) : abstract_file{do_dispose}, _flags{flags} { };
+	mem_file(int flags, void (*do_dispose)(abstract_file *) = nullptr) : abstract_file{do_dispose}, _flags{flags} {
+		set_access_mode(flags);
+	};
 
 	int reopen(const char *path, const char *mode) override;
 protected:
@@ -79,7 +81,9 @@ private:
 
 struct cookie_file : abstract_file {
 	cookie_file(void *cookie, int flags, cookie_io_functions_t funcs, void (*do_dispose)(abstract_file *) = nullptr)
-		: abstract_file{do_dispose}, _cookie{cookie}, _flags{flags}, _funcs{funcs} { }
+		: abstract_file{do_dispose}, _cookie{cookie}, _flags{flags}, _funcs{funcs} {
+			set_access_mode(flags);
+		}
 
 	int close() override;
 	int reopen(const char *path, const char *mode) override;
