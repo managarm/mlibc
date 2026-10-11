@@ -74,14 +74,14 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 		return std::monostate{};
 	};
 
-	auto longopt_consume = [&](const char *arg, char *s, int k, bool colon) -> frg::optional<int> {
+	auto longopt_consume = [&](const char *arg, const char *s, int k, bool colon) -> frg::optional<int> {
 		assert(mode != mlibc::GetoptMode::Short);
 
 		// Consume the option and its argument.
 		if(longopts[k].has_arg == required_argument) {
 			if(s) {
 				// Consume the long option and its argument.
-				optarg = s + 1;
+				optarg = const_cast<char *>(s + 1);
 				optind++;
 			}else if(optind + 1 < argc && argv[optind + 1]) {
 				// Consume the long option.
@@ -107,7 +107,7 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 		}else if(longopts[k].has_arg == optional_argument) {
 			if(s) {
 				// Consume the long option and its argument.
-				optarg = s + 1;
+				optarg = const_cast<char *>(s + 1);
 				optind++;
 			}else{
 				// Consume the long option.
