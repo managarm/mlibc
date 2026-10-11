@@ -86,7 +86,7 @@ int munmap(void *pointer, size_t size) {
 // The implementation of shm_open and shm_unlink is taken from musl.
 namespace {
 	char *shm_mapname(const char *name, char *buf) {
-		char *p;
+		const char *p;
 		while(*name == '/')
 			name++;
 		if(*(p = strchrnul(name, '/')) || p == name ||
