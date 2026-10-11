@@ -5,6 +5,7 @@
 
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
+#include <mlibc/tid.hpp>
 
 __sighandler signal(int sn, __sighandler handler) {
 	struct sigaction sa;
@@ -20,10 +21,10 @@ __sighandler signal(int sn, __sighandler handler) {
 }
 
 int raise(int sig) {
-	MLIBC_CHECK_OR_ENOSYS(mlibc::IsImplemented<GetPid> && mlibc::IsImplemented<Kill>, -1);
-	pid_t pid = mlibc::sysdep_or_panic<GetPid>();
+	int e;
 
-	if (int e = mlibc::sysdep_or_panic<Kill>(pid, sig)) {
+	pid_t pid = mlibc::sysdep_or_panic<GetPid>();
+	if (e = mlibc::sysdep_or_enosys<Tgkill>(pid, mlibc::this_tid(), sig); e) {
 		errno = e;
 		return -1;
 	}
@@ -39,4 +40,3 @@ int sigprocmask(int how, const sigset_t *__restrict set, sigset_t *__restrict re
 	}
 	return 0;
 }
-
