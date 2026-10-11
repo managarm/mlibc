@@ -5,6 +5,8 @@
 #include <string.h>
 #include <time.h>
 #include <limits.h>
+#include <limits>
+#include <stdint.h>
 #include <wchar.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -40,6 +42,7 @@ constexpr size_t tznameNormal = 0;
 constexpr size_t tznameDST = 1;
 
 frg::string<MemoryAllocator> tznameStorage[2] = { {getAllocator()}, {getAllocator()} };
+frg::string<MemoryAllocator> tmZoneStorage {getAllocator()};
 
 } // namespace
 
@@ -277,11 +280,10 @@ bool parse_tz(const char *tz, char *tz_name, char *tz_name_dst, size_t tz_name_m
 	size_t tzn_len = 0;
 	for (;; tz++) {
 		tzn_len = tz - tzn;
-		if (*tz == '\0')
-			break;
-
 		if (tzn_len > tz_name_max)
 			return true;
+		if (*tz == '\0')
+			break;
 
 		// Advance until the end of the timezone name.
 		if (isalpha(*tz))
@@ -346,11 +348,10 @@ bool parse_tz(const char *tz, char *tz_name, char *tz_name_dst, size_t tz_name_m
 	size_t tzn_len_dst = 0;
 	for (;; tz++) {
 		tzn_len_dst = tz - tzn_dst;
-		if (*tz == '\0')
-			break;
-
 		if (tzn_len_dst > tz_name_max)
 			return false;
+		if (*tz == '\0')
+			break;
 
 		// Advance until the end of the timezone name.
 		if (isalpha(*tz))
@@ -427,6 +428,95 @@ struct tzfile {
 	uint32_t tzh_charcnt;
 };
 
+struct tzfile_data {
+	tzfile header;
+	const char *data;
+	size_t time_size;
+};
+
+bool read_tzfile_header(const char *data, tzfile *header) {
+	memcpy(header, data, sizeof(tzfile));
+	header->tzh_ttisgmtcnt = mlibc::bit_util<uint32_t>::be_to_host(header->tzh_ttisgmtcnt);
+	header->tzh_ttisstdcnt = mlibc::bit_util<uint32_t>::be_to_host(header->tzh_ttisstdcnt);
+	header->tzh_leapcnt = mlibc::bit_util<uint32_t>::be_to_host(header->tzh_leapcnt);
+	header->tzh_timecnt = mlibc::bit_util<uint32_t>::be_to_host(header->tzh_timecnt);
+	header->tzh_typecnt = mlibc::bit_util<uint32_t>::be_to_host(header->tzh_typecnt);
+	header->tzh_charcnt = mlibc::bit_util<uint32_t>::be_to_host(header->tzh_charcnt);
+
+	return header->magic[0] == 'T' && header->magic[1] == 'Z' && header->magic[2] == 'i'
+			&& header->magic[3] == 'f' && (header->version == '\0' || header->version == '2'
+					|| header->version == '3');
+}
+
+size_t tzfile_block_size(const tzfile &header, size_t time_size) {
+	return header.tzh_timecnt * time_size + header.tzh_timecnt
+			+ header.tzh_typecnt * sizeof(ttinfo) + header.tzh_charcnt
+			+ header.tzh_leapcnt * (time_size + sizeof(uint32_t))
+			+ header.tzh_ttisstdcnt + header.tzh_ttisgmtcnt;
+}
+
+bool get_tzfile_data(const char *file, tzfile_data *data) {
+	tzfile header;
+	if(!read_tzfile_header(file, &header))
+		return false;
+
+	const char *block = file + sizeof(tzfile);
+	size_t time_size = sizeof(int32_t);
+	if(header.version != '\0') {
+		block += tzfile_block_size(header, time_size);
+		if(!read_tzfile_header(block, &header))
+			return false;
+		block += sizeof(tzfile);
+		time_size = sizeof(int64_t);
+	}
+
+	data->header = header;
+	data->data = block;
+	data->time_size = time_size;
+	return true;
+}
+
+const char *tzfile_transition_types(const tzfile_data &data) {
+	return data.data + data.header.tzh_timecnt * data.time_size;
+}
+
+const char *tzfile_ttinfos(const tzfile_data &data) {
+	return tzfile_transition_types(data) + data.header.tzh_timecnt;
+}
+
+const char *tzfile_abbrevs(const tzfile_data &data) {
+	return tzfile_ttinfos(data) + data.header.tzh_typecnt * sizeof(ttinfo);
+}
+
+ttinfo get_tzfile_ttinfo(const tzfile_data &data, size_t index) {
+	ttinfo info;
+	memcpy(&info, tzfile_ttinfos(data) + index * sizeof(ttinfo), sizeof(ttinfo));
+	uint32_t offset;
+	memcpy(&offset, &info.tt_gmtoff, sizeof(offset));
+	offset = mlibc::bit_util<uint32_t>::be_to_host(offset);
+	memcpy(&info.tt_gmtoff, &offset, sizeof(offset));
+	return info;
+}
+
+int64_t get_tzfile_transition_time(const tzfile_data &data, size_t index) {
+	const char *ptr = data.data + index * data.time_size;
+	if(data.time_size == sizeof(int32_t)) {
+		uint32_t value;
+		memcpy(&value, ptr, sizeof(value));
+		value = mlibc::bit_util<uint32_t>::be_to_host(value);
+		int32_t signed_value;
+		memcpy(&signed_value, &value, sizeof(signed_value));
+		return signed_value;
+	} else {
+		uint64_t value;
+		memcpy(&value, ptr, sizeof(value));
+		value = mlibc::bit_util<uint64_t>::be_to_host(value);
+		int64_t signed_value;
+		memcpy(&signed_value, &value, sizeof(signed_value));
+		return signed_value;
+	}
+}
+
 frg::string<MemoryAllocator> parse_tzfile_path(const char *tz) {
 	// POSIX defines :*characters* as a valid but implementation-defined format.
 	// This was originally introduced as a way to support geographical
@@ -477,46 +567,24 @@ bool parse_tzfile(const char *tz) {
 	// FIXME: Make this fallible so the above check is not needed.
 	file_window window {path.data()};
 
-	// TODO(geert): we can probably cache this somehow
-	tzfile tzfile_time;
-	memcpy(&tzfile_time, reinterpret_cast<char *>(window.get()), sizeof(tzfile));
-	tzfile_time.tzh_ttisgmtcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_ttisgmtcnt);
-	tzfile_time.tzh_ttisstdcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_ttisstdcnt);
-	tzfile_time.tzh_leapcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_leapcnt);
-	tzfile_time.tzh_timecnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_timecnt);
-	tzfile_time.tzh_typecnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_typecnt);
-	tzfile_time.tzh_charcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_charcnt);
-
-	if (tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i'
-			|| tzfile_time.magic[3] != 'f') {
+	tzfile_data data;
+	if(!get_tzfile_data(reinterpret_cast<char *>(window.get()), &data)) {
 		mlibc::infoLogger() << "mlibc: " << path << " is not a valid TZinfo file" << frg::endlog;
 		return true;
 	}
 
-	if (tzfile_time.version != '\0' && tzfile_time.version != '2' && tzfile_time.version != '3') {
-		mlibc::infoLogger() << "mlibc: " << path << " has an invalid TZinfo version"
-				<< frg::endlog;
-		return true;
-	}
-
 	// There should be at least one entry in the ttinfo table.
-	if (!tzfile_time.tzh_typecnt)
+	if (!data.header.tzh_typecnt)
 		return true;
 
-	char *abbrevs = reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
-		+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-		+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
-		+ tzfile_time.tzh_typecnt * sizeof(struct ttinfo);
+	const char *abbrevs = tzfile_abbrevs(data);
 	bool found_std = false;
 	bool found_dst = false;
 	// start from the last ttinfo entry, this matches the behaviour of glibc and musl
-	for (int i = tzfile_time.tzh_typecnt; i > 0; i--) {
-		ttinfo time_info;
-		memcpy(&time_info, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
-				+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-				+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
-				+ i * sizeof(ttinfo), sizeof(ttinfo));
-		time_info.tt_gmtoff = mlibc::bit_util<uint32_t>::be_to_host(time_info.tt_gmtoff);
+	for(size_t i = data.header.tzh_typecnt; i > 0; i--) {
+		ttinfo time_info = get_tzfile_ttinfo(data, i - 1);
+		if(time_info.tt_abbrind >= data.header.tzh_charcnt)
+			return true;
 		if (!time_info.tt_isdst && !found_std) {
 			tznameStorage[tznameNormal] = {abbrevs + time_info.tt_abbrind, getAllocator()};
 			tzname[tznameNormal] = tznameStorage[tznameNormal].data();
@@ -526,7 +594,6 @@ bool parse_tzfile(const char *tz) {
 		if (time_info.tt_isdst && !found_dst) {
 			tznameStorage[tznameDST] = {abbrevs + time_info.tt_abbrind, getAllocator()};
 			tzname[tznameDST] = tznameStorage[tznameDST].data();
-			timezone = -time_info.tt_gmtoff;
 			daylight = 1;
 			found_dst = true;
 		}
@@ -682,20 +749,34 @@ time_t time(time_t *out) {
 
 namespace {
 
-void civil_from_days(time_t days_since_epoch, int *year, unsigned int *month, unsigned int *day) {
-	time_t time = days_since_epoch + 719468;
-	int era = (time >= 0 ? time : time - 146096) / 146097;
+constexpr static int64_t days_from_civil(int64_t year, unsigned int month, unsigned int day) noexcept {
+	int64_t y = year;
+	y -= month <= 2;
+	const int64_t era = (y >= 0 ? y : y - 399) / 400;
+	const unsigned int yoe = static_cast<unsigned int>(y - era * 400); // [0, 399]
+	const unsigned int doy = (153 * (month > 2 ? month - 3 : month + 9) + 2) / 5 + day - 1;
+	const unsigned int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+	return era * 146097 + static_cast<int64_t>(doe) - 719468;
+}
+
+bool civil_from_days(time_t days_since_epoch, int *year, unsigned int *month, unsigned int *day) {
+	int64_t time = static_cast<int64_t>(days_since_epoch) + 719468;
+	int64_t era = (time >= 0 ? time : time - 146096) / 146097;
 	unsigned int doe = static_cast<unsigned int>(time - era * 146097);
 	unsigned int yoe = (doe - doe/1460 + doe/36524 - doe/146096) / 365;
-	int y = static_cast<int>(yoe) + era * 400;
+	int64_t y = static_cast<int64_t>(yoe) + era * 400;
 	unsigned int doy = doe - (365*yoe + yoe/4 - yoe/100);
 	unsigned int mp = (5*doy + 2)/153;
 	unsigned int d = doy - (153*mp+2)/5 + 1;
 	unsigned int m = mp + (mp < 10 ? 3 : -9);
 
-	*year = y + (m <= 2);
+	y += m <= 2;
+	if(y - 1900 < INT_MIN || y - 1900 > INT_MAX)
+		return false;
+	*year = static_cast<int>(y);
 	*month = m;
 	*day = d;
+	return true;
 }
 
 void weekday_from_days(time_t days_since_epoch, unsigned int *weekday) {
@@ -703,65 +784,51 @@ void weekday_from_days(time_t days_since_epoch, unsigned int *weekday) {
 			(days_since_epoch+4) % 7 : (days_since_epoch+5) % 7 + 6);
 }
 
-void yearday_from_date(unsigned int year, unsigned int month, unsigned int day, unsigned int *yday) {
-	unsigned int n1 = 275 * month / 9;
-	unsigned int n2 = (month + 9) / 12;
-	unsigned int n3 = (1 + (year - 4 * year / 4 + 2) / 3);
-	*yday = n1 - (n2 * n3) + day - 30;
-}
-
 static bool is_leap_year(int year) {
 	return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
 }
 
-// Given a rule and a year, compute the time of the transition in seconds since the epoch.
-// TODO: Take into account the time of day when the transition occurs
-time_t time_from_rule(const Rule &rule, int year) {
+// Returns the one-based day of the year.
+void yearday_from_date(int year, unsigned int month, unsigned int day, unsigned int *yday) {
+	static const unsigned int days_before_month[12] = {
+		0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
+	};
+
+	*yday = days_before_month[month - 1] + day;
+	if(month > 2 && is_leap_year(year))
+		(*yday)++;
+}
+
+// Given a rule and a year, compute the UTC time of the transition.
+int64_t time_from_rule(const Rule &rule, int year, time_t offset_before_transition) {
+	int64_t days;
 	if (rule.type == JULIAN_DAY) {
 		// Jn: Julian day, ignoring Feb 29
 		uint16_t day = rule.day - 1;
-		if (is_leap_year(year) && day >= 60)
-			day = rule.day;
-
-		struct tm t = {};
-		t.tm_year = year - 1900;
-		t.tm_yday = day;
-		return mktime(&t);
+		if (is_leap_year(year) && day >= 59)
+			day++;
+		days = days_from_civil(year, 1, 1) + day;
 	} else if (rule.type == DAY_OF_YEAR) {
 		// n: zero-based day of year, including Feb 29 in leap years
-		struct tm t = {};
-		t.tm_year = year - 1900;
-		t.tm_yday = rule.day;
-		return mktime(&t);
+		days = days_from_civil(year, 1, 1) + rule.day;
 	} else if (rule.type == MONTH_NTH_DAY_OF_WEEK) {
 		// Mm.n.d: Month, week, weekday (month 1-12, week 1-5, weekday 0=Sun)
-
-		// Find the first day of the month
-		struct tm t = {};
-		t.tm_year = year - 1900;
-		t.tm_mon = rule.month - 1;
-		t.tm_mday = 1;
-		mktime(&t);
-
-		int first_wday = t.tm_wday;
+		int64_t first_day = days_from_civil(year, rule.month, 1);
+		unsigned int first_wday;
+		weekday_from_days(first_day, &first_wday);
 		int day = 1 + ((7 + rule.day - first_wday) % 7) + (rule.week - 1) * 7;
 		// If week==5, but that day is past the end of the month, go back by 7 days
-		t.tm_mday = day;
-		mktime(&t);
-		if (rule.week == 5 && t.tm_mon != rule.month - 1)
+		int64_t next_month = days_from_civil(year + (rule.month == 12), rule.month % 12 + 1, 1);
+		if (rule.week == 5 && first_day + day - 1 >= next_month)
 			day -= 7;
-
-		t.tm_year = year - 1900;
-		t.tm_mon = rule.month - 1;
-		t.tm_mday = day;
-		t.tm_hour = 0;
-		t.tm_min = 0;
-		t.tm_sec = 0;
-		return mktime(&t);
+		days = first_day + day - 1;
 	} else {
 		__ensure(!"Invalid rule type");
 		__builtin_unreachable();
 	}
+
+	// POSIX transition times are expressed in local time before the transition.
+	return days * (60 * 60 * 24) + rule.time - offset_before_transition;
 }
 
 // Assumes TZ environment variable rules are used, not TZFILE.
@@ -772,18 +839,23 @@ bool is_in_dst(time_t unix_gmt) {
 	int year;
 	unsigned int _month;
 	unsigned int _day;
-	civil_from_days(unix_gmt / (60 * 60 * 24), &year, &_month, &_day);
+	time_t days_since_epoch = unix_gmt / (60 * 60 * 24);
+	if(unix_gmt % (60 * 60 * 24) < 0)
+		days_since_epoch--;
+	if(!civil_from_days(days_since_epoch, &year, &_month, &_day))
+		return false;
 
 	// Get the start and end transition days of the year
-	int start_time = time_from_rule(rules[0], year);
-	int end_time = time_from_rule(rules[1], year);
+	int64_t start_time = time_from_rule(rules[0], year, tt_infos[tznameNormal].tt_gmtoff);
+	int64_t end_time = time_from_rule(rules[1], year, tt_infos[tznameDST].tt_gmtoff);
+	int64_t unix_time = unix_gmt;
 
 	// Check if the unix_gmt falls within the DST period
 	if (start_time <= end_time) {
-		return unix_gmt >= start_time && unix_gmt < end_time;
+		return unix_time >= start_time && unix_time < end_time;
 	} else {
 		// DST period wraps around the year end
-		return unix_gmt >= start_time || unix_gmt < end_time;
+		return unix_time >= start_time || unix_time < end_time;
 	}
 }
 
@@ -807,71 +879,30 @@ int unix_local_from_gmt_tzfile(time_t unix_gmt, time_t *offset, bool *dst, frg::
 	// FIXME: Make this fallible so the above check is not needed.
 	file_window window {path.data()};
 
-	// TODO(geert): we can probably cache this somehow
-	tzfile tzfile_time;
-	memcpy(&tzfile_time, reinterpret_cast<char *>(window.get()), sizeof(tzfile));
-	tzfile_time.tzh_ttisgmtcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_ttisgmtcnt);
-	tzfile_time.tzh_ttisstdcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_ttisstdcnt);
-	tzfile_time.tzh_leapcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_leapcnt);
-	tzfile_time.tzh_timecnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_timecnt);
-	tzfile_time.tzh_typecnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_typecnt);
-	tzfile_time.tzh_charcnt = mlibc::bit_util<uint32_t>::be_to_host(tzfile_time.tzh_charcnt);
-
-	if (tzfile_time.magic[0] != 'T' || tzfile_time.magic[1] != 'Z' || tzfile_time.magic[2] != 'i'
-			|| tzfile_time.magic[3] != 'f') {
+	tzfile_data data;
+	if(!get_tzfile_data(reinterpret_cast<char *>(window.get()), &data)) {
 		mlibc::infoLogger() << "mlibc: " << path << " is not a valid TZinfo file" << frg::endlog;
 		return -1;
 	}
 
-	if (tzfile_time.version != '\0' && tzfile_time.version != '2' && tzfile_time.version != '3') {
-		mlibc::infoLogger() << "mlibc: " << path << " has an invalid TZinfo version"
-				<< frg::endlog;
-		return -1;
-	}
-
-	int index = -1;
-	for (size_t i = 0; i < tzfile_time.tzh_timecnt; i++) {
-		int32_t ttime;
-		memcpy(&ttime, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
-				+ i * sizeof(int32_t), sizeof(int32_t));
-		ttime = mlibc::bit_util<uint32_t>::be_to_host(ttime);
-		// If we are before the first transition, the format dicates that
-		// the first ttinfo entry should be used (and not the ttinfo entry pointed
-		// to by the first transition time).
-		if (i && ttime > unix_gmt) {
-			index = i - 1;
-			break;
-		}
-	}
-
-	// The format dictates that if no transition is applicable,
-	// the first entry in the file is chosen.
+	// Before the first transition, TZif requires type zero. Afterwards use the
+	// last transition at or before the requested instant.
 	uint8_t ttinfo_index = 0;
-	if (index >= 0) {
-		memcpy(&ttinfo_index, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
-				+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-				+ index * sizeof(uint8_t), sizeof(uint8_t));
+	for(size_t i = 0; i < data.header.tzh_timecnt; i++) {
+		if(get_tzfile_transition_time(data, i) > unix_gmt)
+			break;
+		ttinfo_index = static_cast<uint8_t>(tzfile_transition_types(data)[i]);
 	}
 
-	// There should be at least one entry in the ttinfo table.
-	// TODO: If there is not, we might want to fall back to UTC, no DST (?).
-	__ensure(tzfile_time.tzh_typecnt);
-
-	ttinfo time_info;
-	memcpy(&time_info, reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
-			+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-			+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
-			+ ttinfo_index * sizeof(ttinfo), sizeof(ttinfo));
-	time_info.tt_gmtoff = mlibc::bit_util<uint32_t>::be_to_host(time_info.tt_gmtoff);
-
-	char *abbrevs = reinterpret_cast<char *>(window.get()) + sizeof(tzfile)
-		+ tzfile_time.tzh_timecnt * sizeof(int32_t)
-		+ tzfile_time.tzh_timecnt * sizeof(uint8_t)
-		+ tzfile_time.tzh_typecnt * sizeof(struct ttinfo);
+	if(!data.header.tzh_typecnt || ttinfo_index >= data.header.tzh_typecnt)
+		return -1;
+	ttinfo time_info = get_tzfile_ttinfo(data, ttinfo_index);
+	if(time_info.tt_abbrind >= data.header.tzh_charcnt)
+		return -1;
 
 	*offset = time_info.tt_gmtoff;
 	*dst = time_info.tt_isdst;
-	tm_zone = {abbrevs + time_info.tt_abbrind, getAllocator()};
+	tm_zone = {tzfile_abbrevs(data) + time_info.tt_abbrind, getAllocator()};
 	return 0;
 }
 
@@ -881,10 +912,10 @@ int unix_local_from_gmt_tzfile(time_t unix_gmt, time_t *offset, bool *dst, frg::
 int unix_local_from_gmt(time_t unix_gmt, time_t *offset, bool *dst, char **tm_zone) {
 	do_tzset();
 
-	if (daylight && rules[0].type == TZFILE) {
-		int ret = unix_local_from_gmt_tzfile(unix_gmt, offset, dst, tznameStorage[tznameDST]);
+	if (rules[0].type == TZFILE) {
+		int ret = unix_local_from_gmt_tzfile(unix_gmt, offset, dst, tmZoneStorage);
 		if (ret == 0)
-			*tm_zone = tzname[tznameDST] = tznameStorage[tznameDST].data();
+			*tm_zone = tmZoneStorage.data();
 		return ret;
 	}
 
@@ -912,14 +943,26 @@ struct tm *gmtime_r(const time_t *unix_gmt, struct tm *res) {
 
 	time_t unix_local = *unix_gmt;
 
-	int days_since_epoch = unix_local / (60*60*24);
-	civil_from_days(days_since_epoch, &year, &month, &day);
+	// Division truncates towards zero and the remainder keeps the sign of the
+	// dividend, so a time before the epoch has to be carried into the previous
+	// day to leave a non-negative time of day.
+	time_t days_since_epoch = unix_local / (60*60*24);
+	time_t secs_of_day = unix_local % (60*60*24);
+	if(secs_of_day < 0) {
+		secs_of_day += 60*60*24;
+		days_since_epoch--;
+	}
+
+	if(!civil_from_days(days_since_epoch, &year, &month, &day)) {
+		errno = EOVERFLOW;
+		return nullptr;
+	}
 	weekday_from_days(days_since_epoch, &weekday);
 	yearday_from_date(year, month, day, &yday);
 
-	res->tm_sec = unix_local % 60;
-	res->tm_min = (unix_local / 60) % 60;
-	res->tm_hour = (unix_local / (60*60)) % 24;
+	res->tm_sec = secs_of_day % 60;
+	res->tm_min = (secs_of_day / 60) % 60;
+	res->tm_hour = secs_of_day / (60*60);
 	res->tm_mday = day;
 	res->tm_mon = month - 1;
 	res->tm_year = year - 1900;
@@ -948,16 +991,30 @@ struct tm *localtime_r(const time_t *unix_gmt, struct tm *res) {
 		__ensure(!"Error parsing /etc/localtime");
 		__builtin_unreachable();
 	}
-	time_t unix_local = *unix_gmt + offset;
+	time_t unix_local;
+	if(__builtin_add_overflow(*unix_gmt, offset, &unix_local)) {
+		errno = EOVERFLOW;
+		return nullptr;
+	}
 
-	int days_since_epoch = unix_local / (60*60*24);
-	civil_from_days(days_since_epoch, &year, &month, &day);
+	// See the comment in gmtime_r().
+	time_t days_since_epoch = unix_local / (60*60*24);
+	time_t secs_of_day = unix_local % (60*60*24);
+	if(secs_of_day < 0) {
+		secs_of_day += 60*60*24;
+		days_since_epoch--;
+	}
+
+	if(!civil_from_days(days_since_epoch, &year, &month, &day)) {
+		errno = EOVERFLOW;
+		return nullptr;
+	}
 	weekday_from_days(days_since_epoch, &weekday);
 	yearday_from_date(year, month, day, &yday);
 
-	res->tm_sec = unix_local % 60;
-	res->tm_min = (unix_local / 60) % 60;
-	res->tm_hour = (unix_local / (60*60)) % 24;
+	res->tm_sec = secs_of_day % 60;
+	res->tm_min = (secs_of_day / 60) % 60;
+	res->tm_hour = secs_of_day / (60*60);
 	res->tm_mday = day;
 	res->tm_mon = month - 1;
 	res->tm_year = year - 1900;
@@ -997,19 +1054,51 @@ time_t timelocal(struct tm *) {
 	__builtin_unreachable();
 }
 
-constexpr static int days_from_civil(int y, unsigned m, unsigned d) noexcept {
-	y -= m <= 2;
-	const int era = (y >= 0 ? y : y - 399) / 400;
-	const unsigned yoe = static_cast<unsigned>(y - era * 400); // [0, 399]
-	const unsigned doy = (153 * (m > 2 ? m - 3 : m + 9) + 2) / 5 + d - 1; // [0, 365]
-	const unsigned doe = yoe * 365 + yoe / 4 - yoe / 100 + doy; // [0, 146096]
-	return era * 146097 + static_cast<int>(doe) - 719468;
+bool int64_to_time_t(int64_t value, time_t *result) {
+	if constexpr (std::numeric_limits<time_t>::is_signed) {
+		if(value < std::numeric_limits<time_t>::min() || value > std::numeric_limits<time_t>::max())
+			return false;
+	} else {
+		if(value < 0 || static_cast<uint64_t>(value) > std::numeric_limits<time_t>::max())
+			return false;
+	}
+	*result = static_cast<time_t>(value);
+	return true;
+}
+
+bool timegm_to_timestamp(const struct tm *tm, time_t *result) {
+	int64_t year = static_cast<int64_t>(tm->tm_year) + 1900;
+	int64_t month = tm->tm_mon;
+	int64_t year_adjustment = month / 12;
+	month %= 12;
+	if(month < 0) {
+		month += 12;
+		year_adjustment--;
+	}
+	year += year_adjustment;
+
+	int64_t days = days_from_civil(year, static_cast<unsigned int>(month + 1), 1)
+			+ static_cast<int64_t>(tm->tm_mday) - 1;
+	int64_t seconds = static_cast<int64_t>(tm->tm_hour) * 60 * 60
+			+ static_cast<int64_t>(tm->tm_min) * 60 + tm->tm_sec;
+	int64_t timestamp;
+	if(__builtin_mul_overflow(days, INT64_C(86400), &timestamp)
+			|| __builtin_add_overflow(timestamp, seconds, &timestamp))
+		return false;
+	return int64_to_time_t(timestamp, result);
 }
 
 time_t timegm(struct tm *tm) {
-	time_t year = tm->tm_year + 1900;
-	time_t month = tm->tm_mon + 1;
-	time_t days = days_from_civil(year, month, tm->tm_mday);
-	time_t secs = (days * 86400) + (tm->tm_hour * 60 * 60) + (tm->tm_min * 60) + tm->tm_sec;
-	return secs;
+	time_t timestamp;
+	if(!timegm_to_timestamp(tm, &timestamp)) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	struct tm normalized;
+	if(!gmtime_r(&timestamp, &normalized))
+		return -1;
+	normalized.tm_isdst = 0;
+	*tm = normalized;
+	return timestamp;
 }

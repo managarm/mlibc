@@ -1,6 +1,11 @@
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <time.h>
 #include <stdio.h>
 #include <assert.h>
+#include <limits.h>
+#include <stdint.h>
 
 int main() {
 	struct tm soon = {};
@@ -40,6 +45,23 @@ int main() {
 	// On my host, this returned -9181035, verify this.
 	printf("epoch: %lld\n", (long long) result);
 	assert(result == expected_result);
+
+	struct tm normalized = {};
+	normalized.tm_year = 70;
+	normalized.tm_mon = -2;
+	normalized.tm_mday = 1;
+	assert(timegm(&normalized) == -5270400);
+	assert(normalized.tm_year == 69);
+	assert(normalized.tm_mon == 10);
+	assert(normalized.tm_mday == 1);
+	assert(normalized.tm_yday == 304);
+
+	normalized = (struct tm) {};
+	normalized.tm_year = 70;
+	normalized.tm_mday = 1;
+	normalized.tm_hour = INT_MAX;
+	if(sizeof(time_t) > 4)
+		assert(timegm(&normalized) == INT64_C(7730941129200));
 
 	return 0;
 }
