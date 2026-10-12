@@ -161,7 +161,11 @@ int Sysdeps<Sigsuspend>::operator()(const sigset_t *set) {
 	    &seq
 	));
 	__ensure(err == 0);
-	HEL_CHECK(helSyscall1(kHelObserveSuperCall + posix::superSigSuspend, seq));
+
+	err = kHelErrCancelled;
+	while (err == kHelErrCancelled)
+		err = helSyscall1(kHelObserveSuperCall + posix::superSigSuspend, seq);
+
 	HEL_CHECK(helSyscall2_3(
 	    kHelObserveSuperCall + posix::superSigMask, SIG_SETMASK, former, &err, &unused, &unused
 	));
@@ -192,7 +196,10 @@ int Sysdeps<Pause>::operator()() {
 	    helSyscall2_3(kHelObserveSuperCall + posix::superSigMask, SIG_BLOCK, set, &err, &former, &seq)
 	);
 	__ensure(err == 0);
-	HEL_CHECK(helSyscall1(kHelObserveSuperCall + posix::superSigSuspend, seq));
+
+	err = kHelErrCancelled;
+	while (err == kHelErrCancelled)
+		err = helSyscall1(kHelObserveSuperCall + posix::superSigSuspend, seq);
 
 	return EINTR;
 }
