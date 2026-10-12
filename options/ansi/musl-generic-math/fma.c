@@ -2,18 +2,6 @@
 #include <float.h>
 #include <math.h>
 
-static inline int a_clz_64(uint64_t x)
-{
-	uint32_t y;
-	int r;
-	if (x>>32) y=x>>32, r=0; else y=x, r=32;
-	if (y>>16) y>>=16; else r |= 16;
-	if (y>>8) y>>=8; else r |= 8;
-	if (y>>4) y>>=4; else r |= 4;
-	if (y>>2) y>>=2; else r |= 2;
-	return r | !(y>>1);
-}
-
 #define ASUINT64(x) ((union {double f; uint64_t i;}){x}).i
 #define ZEROINFNAN (0x7ff-0x3ff-52-1)
 
@@ -64,7 +52,7 @@ double fma(double x, double y, double z)
 		return x*y + z;
 	if (nz.e >= ZEROINFNAN) {
 		if (nz.e > ZEROINFNAN) /* z==0 */
-			return x*y + z;
+			return x*y;
 		return z;
 	}
 
@@ -131,11 +119,11 @@ double fma(double x, double y, double z)
 	/* set rhi to top 63bit of the result (last bit is sticky) */
 	if (nonzero) {
 		e += 64;
-		d = a_clz_64(rhi)-1;
+		d = __builtin_clzll(rhi)-1;
 		/* note: d > 0 */
 		rhi = rhi<<d | rlo>>64-d | !!(rlo<<d);
 	} else if (rlo) {
-		d = a_clz_64(rlo)-1;
+		d = __builtin_clzll(rlo)-1;
 		if (d < 0)
 			rhi = rlo>>1 | (rlo&1);
 		else
