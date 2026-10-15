@@ -236,6 +236,8 @@ host_libc_excluded_test_cases = [
 	'glibc/error_at_line', # These tests depend on mlibc error messages.
 	'rtld/search-order', # See rtld/search-order/meson.build.
 	'rtld/fail-load', # glibc gives non-deterministic errors
+	'rtld/global', # glibc ignores DF_1_GLOBAL
+	'rtld/interpose', # glibc ignores DF_1_INTERPOSE
 ]
 host_libc_noasan_test_cases = [
 	'posix/pthread_cancel',

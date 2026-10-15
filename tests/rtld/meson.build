@@ -29,6 +29,11 @@ rtld_test_cases = [
 	'fail-load',
 	'dt_symbolic',
 	'no-dt_symbolic',
+	'textrel',
+	'nodlopen',
+	'global',
+	'initfirst',
+	'interpose',
 ]
 
 if host_machine.cpu_family() in ['x86', 'x86_64', 'aarch64']

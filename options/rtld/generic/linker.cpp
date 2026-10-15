@@ -52,6 +52,7 @@ extern uintptr_t __stack_chk_guard;
 extern mlibc::RtldConfig rtldConfig;
 
 extern frg::manual_box<frg::small_vector<frg::string_view, MLIBC_NUM_DEFAULT_LIBRARY_PATHS, LdsoAllocator>> libraryPaths;
+extern size_t numDefaultLibraryPaths;
 extern frg::manual_box<frg::vector<frg::string_view, LdsoAllocator>> preloads;
 
 #if MLIBC_STATIC_BUILD
@@ -377,7 +378,12 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 		mlibc::infoLogger() << "rtld: no rpath set for object" << frg::endlog;
 	}
 
-	for(size_t i = 0; i < libraryPaths->size() && !res; i++) {
+	// DF_1_NODEFLIB excludes the default library paths, but not LD_LIBRARY_PATH.
+	size_t numLibraryPaths = libraryPaths->size();
+	if (origin && (origin->flags1 & DF_1_NODEFLIB))
+		numLibraryPaths -= numDefaultLibraryPaths;
+
+	for(size_t i = 0; i < numLibraryPaths && !res; i++) {
 		auto ldPath = (*libraryPaths)[i];
 		auto path = frg::string<LdsoAllocator>{getLdsoAllocator(), ldPath} + '/' + name;
 		if(rtldConfig.debug)
@@ -397,11 +403,14 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectWithNa
 	if(!res)
 		return res.error();
 
+	_parseDynamic(res.value().get());
+	if (_rejectsDlopen(res.value().get(), rts))
+		return LinkerError::noOpen;
+
 	// the localScope is used by the SharedObject
 	localScopeGuard.release();
 	auto object = res.value().release();
 
-	_parseDynamic(object);
 	_parseVerdef(object);
 	_addLoadedObject(object);
 
@@ -461,10 +470,27 @@ frg::expected<LinkerError, SharedObject *> ObjectRepository::requestObjectAtPath
 	}
 
 	_parseDynamic(object);
+	if (_rejectsDlopen(object, rts)) {
+		frg::destruct(getLdsoAllocator(), object);
+		return LinkerError::noOpen;
+	}
+
 	_parseVerdef(object);
 	_addLoadedObject(object);
 
 	return object;
+}
+
+bool ObjectRepository::_rejectsDlopen(SharedObject *object, uint64_t rts) {
+	// Objects loaded at startup have rts 1, everything else is loaded by dlopen().
+	// This only rejects objects that are not loaded yet.
+	if (rts == 1 || !(object->flags1 & DF_1_NOOPEN))
+		return false;
+
+	if (rtldConfig.debug)
+		mlibc::infoLogger() << "rtld: " << object->name
+				<< " has DF_1_NOOPEN set and cannot be dlopen()ed" << frg::endlog;
+	return true;
 }
 
 void ObjectRepository::discoverDependenciesFromLoadedObject(SharedObject *object) {
@@ -830,40 +856,48 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 				object->lazyExplicitAddend = false;
 			}
 			break;
-		// TODO: Implement this correctly!
 		case DT_SYMBOLIC:
 			object->symbolicResolution = true;
+			break;
+		case DT_TEXTREL:
+			object->textRelocations = true;
 			break;
 		case DT_BIND_NOW:
 			break;
 		case DT_FLAGS: {
 			if(dynamic->d_un.d_val & DF_SYMBOLIC)
 				object->symbolicResolution = true;
+			if(dynamic->d_un.d_val & DF_TEXTREL)
+				object->textRelocations = true;
 			if(dynamic->d_un.d_val & DF_STATIC_TLS)
 				object->haveStaticTls = true;
 
-			auto ignored = DF_BIND_NOW | DF_SYMBOLIC | DF_STATIC_TLS;
-#ifdef __riscv
-			// Work around https://sourceware.org/bugzilla/show_bug.cgi?id=24673.
-			ignored |= DF_TEXTREL;
-#else
-			if(dynamic->d_un.d_val & DF_TEXTREL)
-				mlibc::panicLogger() << "\e[31mrtld: DF_TEXTREL is unimplemented" << frg::endlog;
-#endif
+			auto ignored = DF_ORIGIN | DF_BIND_NOW | DF_SYMBOLIC | DF_TEXTREL | DF_STATIC_TLS;
 			if(dynamic->d_un.d_val & ~ignored)
 				mlibc::infoLogger() << "\e[31mrtld: DT_FLAGS(" << frg::hex_fmt{dynamic->d_un.d_val & ~ignored}
 						<< ") is not implemented correctly!\e[39m"
 						<< frg::endlog;
 		} break;
-		case DT_FLAGS_1:
-			// The DF_1_PIE flag is informational only. It is used by e.g file(1).
-			// The DF_1_NODELETE flag has a similar effect to RTLD_NODELETE, both of which we
-			// ignore because we don't implement dlclose().
-			if(dynamic->d_un.d_val & ~(DF_1_NOW | DF_1_PIE | DF_1_NODELETE))
-				mlibc::infoLogger() << "\e[31mrtld: DT_FLAGS_1(" << frg::hex_fmt{dynamic->d_un.d_val}
-						<< ") is not implemented correctly!\e[39m"
+		case DT_FLAGS_1: {
+			object->flags1 = dynamic->d_un.d_val;
+
+			auto ignored = DF_1_NOW | DF_1_GLOBAL | DF_1_NODELETE | DF_1_INITFIRST
+					| DF_1_NOOPEN | DF_1_ORIGIN | DF_1_INTERPOSE | DF_1_NODEFLIB;
+
+			// Informational, just ignore these for now.
+			ignored |= DF_1_PIE | DF_1_NODUMP | DF_1_CONFALT | DF_1_ENDFILTEE
+					| DF_1_DISPRELDNE | DF_1_DISPRELPND | DF_1_DIRECT | DF_1_NODIRECT
+					| DF_1_IGNMULDEF | DF_1_NOKSYMS | DF_1_NOHDR | DF_1_EDITED
+					| DF_1_NORELOC | DF_1_SYMINTPOSE | DF_1_GLOBAUDIT | DF_1_SINGLETON
+					| DF_1_STUB | DF_1_KMOD | DF_1_WEAKFILTER | DF_1_NOCOMMON
+					| DF_1_TRANS;
+
+			if(dynamic->d_un.d_val & ~ignored)
+				mlibc::infoLogger() << "\e[31mrtld: DT_FLAGS_1(" << frg::hex_fmt{dynamic->d_un.d_val & ~ignored}
+						<< ") in object '" << object->name
+						<< "' is not implemented correctly!\e[39m"
 						<< frg::endlog;
-			break;
+		} break;
 		case DT_RPATH:
 			if (runpath_found) {
 				/* Ignore RPATH if RUNPATH was present.  */
@@ -939,9 +973,6 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 		case DT_RELA: case DT_RELASZ: case DT_RELAENT: case DT_RELACOUNT:
 		case DT_REL: case DT_RELSZ: case DT_RELENT: case DT_RELCOUNT:
 		case DT_RELR: case DT_RELRSZ: case DT_RELRENT:
-#ifdef __riscv
-		case DT_TEXTREL: // Work around https://sourceware.org/bugzilla/show_bug.cgi?id=24673.
-#endif
 			break;
 		case DT_TLSDESC_PLT: case DT_TLSDESC_GOT:
 			break;
@@ -1139,6 +1170,7 @@ void ObjectRepository::_discoverDependencies(SharedObject *object,
 				mlibc::infoLogger() << "rtld: Preloading " << preload << frg::endlog;
 
 			auto library = libraryResult.value();
+			library->isInterposer = true;
 			object->dependencies.push_back(library);
 			if (library->wasVisited)
 				continue;
@@ -1162,6 +1194,9 @@ void ObjectRepository::_discoverDependencies(SharedObject *object,
 			mlibc::panicLogger() << "Could not satisfy dependency " << library_str << frg::endlog;
 
 		auto library = libraryResult.value();
+		// DF_1_INTERPOSE is only relevant for direct dependencies of the executable.
+		if (object->isMainObject && (library->flags1 & DF_1_INTERPOSE))
+			library->isInterposer = true;
 		object->dependencies.push(library);
 		if (library->wasVisited)
 			continue;
@@ -1815,23 +1850,46 @@ void Loader::linkObjects(SharedObject *root) {
 	auto previousTlsMapSize = _buildTlsMaps();
 
 	// Promote objects to the desired scope.
+	if (_isInitialLink) {
+		_loadScope->appendObject(root);
+		for(auto object : _linkBfs) {
+			if (object->isInterposer)
+				_loadScope->appendObject(object);
+		}
+	}
+
 	for(auto object : _linkBfs) {
 		if (object->globalRts == 0 && _loadScope->isGlobal)
 			object->globalRts = _linkRts;
 
 		_loadScope->appendObject(object);
+
+		// DF_1_GLOBAL objects behave as if they were opened with RTLD_GLOBAL.
+		if (object->globalRts == 0 && (object->flags1 & DF_1_GLOBAL)) {
+			object->globalRts = _linkRts;
+			globalScope->appendObject(object);
+		}
+	}
+
+	auto needsRelocation = [&] (SharedObject *object) {
+		// Some objects have already been linked before.
+		if(object->objectRts < _linkRts)
+			return false;
+
+		if(object->dynamic == nullptr)
+			return false;
+
+		return !object->skipRelocation;
+	};
+
+	for(auto object : _linkBfs) {
+		if (needsRelocation(object) && object->textRelocations)
+			_setTextWritable(object, true);
 	}
 
 	// Process regular relocations.
 	for(auto object : _linkBfs) {
-		// Some objects have already been linked before.
-		if(object->objectRts < _linkRts)
-			continue;
-
-		if(object->dynamic == nullptr)
-			continue;
-
-		if (object->skipRelocation)
+		if (!needsRelocation(object))
 			continue;
 
 		if(rtldConfig.debugVerbose)
@@ -1881,6 +1939,11 @@ void Loader::linkObjects(SharedObject *root) {
 		}
 	}
 #endif
+
+	for(auto object : _linkBfs) {
+		if (needsRelocation(object) && object->textRelocations)
+			_setTextWritable(object, false);
+	}
 
 	for(auto object : _linkBfs) {
 		object->wasLinked = true;
@@ -2062,6 +2125,29 @@ void Loader::_publishTlsMaps(size_t previousSize) {
 void Loader::initObjects(ObjectRepository *repository) {
 	initTlsObjects(mlibc::get_current_tcb(), _linkBfs, true);
 
+	// Convert the breadth-first representation to a depth-first post-order representation,
+	// so that every object is initialized *after* its dependencies.
+	for(auto object : _linkBfs) {
+		if(!object->scheduledForInit)
+			_scheduleInit(object);
+	}
+
+	auto initialize = [&] (SharedObject *object) {
+		if(!object->wasInitialized) {
+			if (!object->skipInit)
+				doInitialize(object);
+
+			repository->addObjectToDestructQueue(object);
+		}
+	};
+
+	// DF_1_INITFIRST objects are initialized before everything else,
+	// including their own dependencies and DT_PREINIT_ARRAY.
+	for(auto object : _initQueue) {
+		if(object->flags1 & DF_1_INITFIRST)
+			initialize(object);
+	}
+
 	if (_mainExecutable && _mainExecutable->preInitArray) {
 		if (rtldConfig.debugVerbose)
 			mlibc::infoLogger() << "rtld: Running DT_PREINIT_ARRAY functions" << frg::endlog;
@@ -2073,21 +2159,8 @@ void Loader::initObjects(ObjectRepository *repository) {
 			_mainExecutable->preInitArray[i]();
 	}
 
-	// Convert the breadth-first representation to a depth-first post-order representation,
-	// so that every object is initialized *after* its dependencies.
-	for(auto object : _linkBfs) {
-		if(!object->scheduledForInit)
-			_scheduleInit(object);
-	}
-
-	for(auto object : _initQueue) {
-		if(!object->wasInitialized) {
-			if (!object->skipInit)
-				doInitialize(object);
-
-			repository->addObjectToDestructQueue(object);
-		}
-	}
+	for(auto object : _initQueue)
+		initialize(object);
 }
 
 // TODO: Use an explicit vector to reduce stack usage to O(1)?
@@ -2106,6 +2179,33 @@ void Loader::_scheduleInit(SharedObject *object) {
 
 	_initQueue.push(object);
 	object->onInitStack = false;
+}
+
+// Objects with text relocations need their non-writable segments to be writable while relocating.
+void Loader::_setTextWritable(SharedObject *object, bool writable) {
+	if constexpr (!mlibc::IsImplemented<VmProtect>)
+		mlibc::panicLogger() << "rtld: " << object->name
+				<< " has text relocations, but sys_vm_protect is not provided" << frg::endlog;
+
+	__ensure(object->phdrPointer);
+	for(size_t i = 0; i < object->phdrCount; i++) {
+		auto phdr = (elf_phdr *)((uintptr_t)object->phdrPointer + i * object->phdrEntrySize);
+		if(phdr->p_type != PT_LOAD || (phdr->p_flags & PF_W))
+			continue;
+
+		int prot = writable ? PROT_WRITE : 0;
+		if(phdr->p_flags & PF_R)
+			prot |= PROT_READ;
+		if(phdr->p_flags & PF_X)
+			prot |= PROT_EXEC;
+
+		auto start = (object->baseAddress + phdr->p_vaddr) & ~(mlibc::page_size - 1);
+		auto end = (object->baseAddress + phdr->p_vaddr + phdr->p_memsz + mlibc::page_size - 1)
+				& ~(mlibc::page_size - 1);
+		if(mlibc::sysdep_or_panic<VmProtect>(reinterpret_cast<void *>(start), end - start, prot))
+			mlibc::panicLogger() << "rtld: sys_vm_protect() failed while processing text relocations of "
+					<< object->name << frg::endlog;
+	}
 }
 
 #if defined(R_TLSDESC)
@@ -2448,7 +2548,11 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 		switch (type) {
 		case R_JUMP_SLOT: {
 			auto [sym, ver] = object->getSymbolByIndex(symbol_index);
-			auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, sym.getString(), object->objectRts, 0, ver);
+			frg::optional<ObjectSymbol> p;
+			if (object->symbolicResolution)
+				p = resolveInObject(object, sym.getString(), ver);
+			if (!p)
+				p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, sym.getString(), object->objectRts, 0, ver);
 
 			if(!p) {
 				if(ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK)
@@ -2480,7 +2584,11 @@ void Loader::_processLazyRelocations(SharedObject *object) {
 
 			if (symbol_index) {
 				auto [sym, ver] = object->getSymbolByIndex(symbol_index);
-				auto p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, sym.getString(), object->objectRts, 0, ver);
+				frg::optional<ObjectSymbol> p;
+				if (object->symbolicResolution)
+					p = resolveInObject(object, sym.getString(), ver);
+				if (!p)
+					p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope, sym.getString(), object->objectRts, 0, ver);
 
 				if (!p) {
 					if (ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK) {
