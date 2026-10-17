@@ -864,7 +864,7 @@ constexpr auto staticSysconfValues = [] {
 	    // {_SC_STREAM_MAX, STREAM_MAX},
 	    // {_SC_SYMLOOP_MAX, SYMLOOP_MAX},
 	    // {_SC_TIMER_MAX, TIMER_MAX},
-	    // {_SC_TTY_NAME_MAX, TTY_NAME_MAX},
+	    {_SC_TTY_NAME_MAX, TTY_NAME_MAX},
 	    {_SC_TZNAME_MAX, TZNAME_MAX},
 
 	    {_SC_ADVISORY_INFO, _POSIX_ADVISORY_INFO},

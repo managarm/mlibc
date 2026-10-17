@@ -184,4 +184,8 @@
 #endif
 #define OPEN_MAX __MLIBC_OPEN_MAX
 
+#if __MLIBC_POSIX_OPTION
+#define TTY_NAME_MAX __MLIBC_TTY_NAME_MAX
+#endif
+
 #endif /* _LIMITS_H */

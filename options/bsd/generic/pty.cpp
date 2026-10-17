@@ -8,6 +8,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
@@ -30,10 +31,10 @@ int openpty(int *mfd, int *sfd, char *name, const struct termios *ios, const str
 		goto fail_noclose;
 	}
 
-	char spath[32];
+	char spath[TTY_NAME_MAX];
 	if(!name)
 		name = spath;
-	if(ptsname_r(ptmx_fd, name, 32))
+	if(ptsname_r(ptmx_fd, name, TTY_NAME_MAX))
 		goto fail;
 
 	int pts_fd;
