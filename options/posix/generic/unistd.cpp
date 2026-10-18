@@ -20,6 +20,7 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
 #include <mlibc/arch-defs.hpp>
+#include <mlibc/atfork.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/dlapi.hpp>
 #include <mlibc/getopt.hpp>
@@ -1306,39 +1307,28 @@ pid_t fork(void) {
 
 	MLIBC_CHECK_OR_ENOSYS(mlibc::IsImplemented<Fork>, -1);
 
-	auto hand = self->atforkEnd;
-	while (hand) {
-		if (hand->prepare)
-			hand->prepare();
-
-		hand = hand->prev;
-	}
+	mlibc::atfork_prepare();
 	__dlapi_prefork();
 
 	if(int e = mlibc::sysdep_or_panic<Fork>(&child); e) {
 		__dlapi_postfork_finish();
+		// The parent handlers run even when the fork failed.
+		mlibc::atfork_parent();
 		errno = e;
 		return -1;
 	}
 
-	// update the cached TID in the TCB
-	if (!child)
+	if (!child) {
+		// update the cached TID in the TCB
 		__atomic_store_n(&self->tid, mlibc::refetch_tid(), __ATOMIC_RELAXED);
-	if (!child)
 		__dlapi_postfork_rebind(parent_tid);
-	__dlapi_postfork_finish();
-
-	hand = self->atforkBegin;
-	while (hand) {
-		if (!child) {
-			if (hand->child)
-				hand->child();
-		} else {
-			if (hand->parent)
-				hand->parent();
-		}
-		hand = hand->next;
 	}
+
+	__dlapi_postfork_finish();
+	if (!child)
+		mlibc::atfork_child();
+	else
+		mlibc::atfork_parent();
 
 	return child;
 }
