@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <math.h>
+#include <optional>
 
 #include <abi-bits/fcntl.h>
 #include <bits/ensure.h>

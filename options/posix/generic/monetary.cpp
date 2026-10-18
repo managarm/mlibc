@@ -1,5 +1,6 @@
 #include <monetary.h>
 #include <stdarg.h>
+#include <optional>
 
 #include <frg/printf.hpp>
 #include <mlibc/ctype.hpp>
