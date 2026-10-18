@@ -298,19 +298,19 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 								* and the shortopt specification does not specify an optional arg */
 							optarg = argv[optind + 1];
 							optind++;
-							__optpos = 1;
 						} else if(!required) {
 							optarg = nullptr;
 						} else {
-							__optpos = 1;
 							optopt = arg[i];
 							return colon ? ':' : '?';
 						}
+						__optpos = 1;
 						optind++;
 					} else {
 						if(arg[i+1]) {
 							__optpos++;
 						} else if(arg[i]) {
+							__optpos = 1;
 							optind++;
 						} else {
 							optarg = nullptr;
