@@ -68,6 +68,8 @@ frg::manual_box<DlErrorMap> dlErrors;
 
 // We use a small vector to avoid memory allocation for the default library paths
 frg::manual_box<frg::small_vector<frg::string_view, MLIBC_NUM_DEFAULT_LIBRARY_PATHS, LdsoAllocator>> libraryPaths;
+// The default library paths come last in libraryPaths.
+size_t numDefaultLibraryPaths = 0;
 
 frg::manual_box<frg::vector<frg::string_view, LdsoAllocator>> preloads;
 
@@ -570,6 +572,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 
 	for (const frg::string_view path : parseList(MLIBC_DEFAULT_LIBRARY_PATHS, "\n")) {
 		libraryPaths->push_back(path);
+		numDefaultLibraryPaths++;
 	}
 
 	for (size_t i = 0; i < num_ldso_ctors; i++) {
@@ -798,6 +801,9 @@ void *__dlapi_open(const char *file, int flags, void *returnAddress) {
 				break;
 			case LinkerError::invalidProgramHeader:
 				setDlError(file, "File has invalid program header");
+				break;
+			case LinkerError::noOpen:
+				setDlError(file, "Shared object cannot be opened with dlopen()");
 				break;
 			}
 			return nullptr;
