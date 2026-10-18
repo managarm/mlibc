@@ -1574,7 +1574,7 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args, mlibc::localei
 				int base = 10;
 				int count = 0;
 				bool dot = false; // set to true once a decimal point has been hit
-				char c = handler.look_ahead();
+				Char c = handler.look_ahead();
 				EOF_CHECK(c == '\0');
 
 				if (c == '-' || c == '+') {
@@ -1634,13 +1634,43 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args, mlibc::localei
 					}
 				}
 
-				while ((base == 16 ? isxdigit(c) : isdigit(c)) || (dot == false && c == '.')) {
-					handler.consume();
-					if (c == '.') {
+				wchar_t wideDecimalPoint[2] = { L'\0', L'\0' };
+				auto decimal = [&]() -> frg::basic_string_view<Char> {
+					if constexpr (std::is_same_v<Char, char>) {
+						auto s = l->numeric.get(DECIMAL_POINT).asString();
+						if (s.size())
+							return s.sub_string(0, strlen(s.data()));
+						return frg::string_view{"."};
+					} else {
+						wideDecimalPoint[0] = l->numeric.get(_NL_NUMERIC_DECIMAL_POINT_WC).asUint32();
+						if (!wideDecimalPoint[0])
+							wideDecimalPoint[0] = L'.';
+						return {wideDecimalPoint, 1};
+					}
+				}();
+
+				while ((base == 16 ? isxdigit(c) : isdigit(c)) || (!dot && c == decimal[0])) {
+					if (!dot && c == decimal[0]) {
+						handler.consume();
+						if (decimal.size() > 1) {
+							bool match = true;
+							for (size_t i = 1; i < decimal.size(); i++) {
+								c = handler.look_ahead();
+								if (c != decimal[i]) {
+									match = false;
+									break;
+								}
+								handler.consume();
+							}
+							if (!match)
+								return match_count;
+						}
 						dot = true;
 						c = handler.look_ahead();
 						continue;
 					}
+
+					handler.consume();
 
 					long double character_value;
 					if (base == 10 || (c >= '0' && c <= '9'))
