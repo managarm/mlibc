@@ -21,6 +21,7 @@ all_test_cases = [
 	'ansi/mblen',
 	'ansi/mbrlen',
 	'ansi/wmemcmp',
+	'ansi/gmtime',
 	'ansi/timegm',
 	'ansi/tz',
 	'ansi/ungetc',
@@ -268,7 +269,8 @@ test_link_args = []
 test_c_args = ['-D_GNU_SOURCE', '-U__MLIBC_DEBUG', '-U__MLIBC_BUILDING_MLIBC', '-fhosted', '-fno-builtin']
 use_pie = false
 
-host_test_c_args = ['-fno-builtin']
+host_test_c_args = ['-fno-builtin', '-D_GNU_SOURCE', '-pthread', '-D_FILE_OFFSET_BITS=64', '-D_TIME_BITS=64']
+cross_test_c_args = ['-fno-builtin', '-D_GNU_SOURCE', '-pthread', '-D_FILE_OFFSET_BITS=64', '-D_TIME_BITS=64']
 
 c_compiler = meson.get_compiler('c')
 
@@ -428,7 +430,7 @@ foreach test_name : all_test_cases
 		exec = executable('host-libc-' + test_exec_name, test_name + '.c',
 			build_rpath: meson.global_build_root(),
 			override_options: host_libc_sanitize_options,
-			c_args: [host_test_c_args + '-D_GNU_SOURCE', '-DUSE_HOST_LIBC', '-pthread', '-fno-builtin', extra_cflags],
+			c_args: host_test_c_args + ['-DUSE_HOST_LIBC', extra_cflags],
 			link_args: ['-lresolv', '-ldl', '-pthread', '-lm', '-lrt'],
 			native: true,
 		)
@@ -454,7 +456,7 @@ foreach test_name : all_test_cases
 		exec = executable('cross-libc-' + test_exec_name, test_name + '.c',
 			build_rpath: meson.global_build_root(),
 			override_options: test_override_options,
-			c_args: ['-D_GNU_SOURCE', '-DUSE_CROSS_LIBC', '-pthread', '-fno-builtin', extra_cflags],
+			c_args: cross_test_c_args + ['-DUSE_CROSS_LIBC', extra_cflags],
 			link_args: ['-lresolv', '-ldl', '-pthread', '-lm', '-lrt'],
 		)
 
