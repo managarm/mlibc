@@ -573,7 +573,7 @@ int main() {
 	assert(sscanf("12,34", "%d", &int_value) == 1);
 	assert(int_value == 12);
 	assert(sscanf("12,34", "%f", &float_value) == 1);
-	// assert(float_value >= 12.34 - 0.01 && float_value <= 12.34 + 0.01);
+	assert(float_value >= 12.34 - 0.01 && float_value <= 12.34 + 0.01);
 
 	assert(sscanf("αβγδ123", "%[α-ω]", char_value) == 1);
 	fprintf(stderr, "'%s'\n", char_value);
