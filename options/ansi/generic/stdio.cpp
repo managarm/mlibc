@@ -984,7 +984,7 @@ void store_float(void *dest, unsigned int size, long double f) {
 }
 
 template<typename H, typename Char>
-int do_scanf(H &handler, const Char *fmt, __builtin_va_list args) {
+int do_scanf(H &handler, const Char *fmt, __builtin_va_list args, mlibc::localeinfo *l = mlibc::getActiveLocale()) {
 	#define NOMATCH_CHECK(cond) ({ if(cond) return match_count; }) // if cond is true, matching error
 	#define EOF_CHECK(cond) ({ if(cond) return match_count ? match_count : EOF; }) // if cond is true, no more data to read
 	int match_count = 0;
