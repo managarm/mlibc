@@ -2,6 +2,10 @@
 
 This document lists the ABI breaks that were made in each mlibc major version.
 
+## Version 8
+
+- [#1931](https://github.com/managarm/mlibc/pull/1931): Astral, OBOS and Keyronex used a different order/set of arguments (from everyone else) in the __mlibc_entry function.
+
 ## Version 7
 
 - [#1458](https://github.com/managarm/mlibc/pull/1458): mlibc only defined `fenv_t` for x86(_64) before, new we define it correctly for all supported architectures.

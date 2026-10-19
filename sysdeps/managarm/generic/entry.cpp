@@ -13,9 +13,6 @@
 #include <protocols/posix/data.hpp>
 #include <protocols/posix/supercalls.hpp>
 
-extern "C" uintptr_t *__dlapi_entrystack();
-extern "C" void __dlapi_enter(uintptr_t *);
-
 // declared in posix-pipe.hpp
 thread_local Queue globalQueue;
 
@@ -128,12 +125,3 @@ thread_local uint64_t cancellationId = 1;
 } // namespace
 
 uint64_t allocateCancellationId() { return cancellationId++; }
-
-extern char **environ;
-
-extern "C" void
-__mlibc_entry(uintptr_t *entry_stack, int (*main_fn)(int argc, char *argv[], char *env[])) {
-	__dlapi_enter(entry_stack);
-	auto result = main_fn(mlibc::entry_stack.argc, mlibc::entry_stack.argv, environ);
-	exit(result);
-}
