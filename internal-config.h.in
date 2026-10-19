@@ -9,4 +9,4 @@
 #mesondefine MLIBC_STATIC_BUILD
 #mesondefine MLIBC_DEBUG_ALLOCATOR
 #mesondefine MLIBC_IFUNCS_SUPPORTED
-
+#mesondefine MLIBC_ENTRY_INVERTED_ORDER

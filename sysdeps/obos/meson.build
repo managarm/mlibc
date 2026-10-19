@@ -5,6 +5,8 @@ sysdep_supported_options = {
     'bsd': true,
 }
 
+internal_conf.set10('MLIBC_ENTRY_INVERTED_ORDER', mlibc_abi < 8)
+
 #libgcc_dependency = false
 
 rtld_sources += files(
@@ -14,7 +16,6 @@ rtld_sources += files(
 )
 
 libc_sources += files(
-    'generic/entry.cpp',
     'generic/sysdeps.cpp',
     'generic/threads.cpp',
     host_machine.cpu_family() + '/thread.cpp',
@@ -100,80 +101,3 @@ if not no_headers
 	)
 
 endif
-
-if not headers_only
-    if host_machine.cpu_family() != 'm68k'
-        crt = custom_target('crt1',
-            build_by_default: true,
-            command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-            input: host_machine.cpu_family() + '/crt1.S',
-            output: 'crt1.o',
-            install: true,
-            install_dir: get_option('libdir')
-        )
-
-        crt_pie = custom_target('Scrt1',
-            build_by_default: true,
-            command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-            input: host_machine.cpu_family() + '/crt1.S',
-            output: 'Scrt1.o',
-            install: true,
-            install_dir: get_option('libdir')
-        )
-
-        custom_target('crti',
-            build_by_default: true,
-            command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-            input: host_machine.cpu_family() + '/crti.S',
-            output: 'crti.o',
-            install: true,
-            install_dir: get_option('libdir')
-        )
-
-        custom_target('crtn',
-            build_by_default: true,
-            command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-            input: host_machine.cpu_family() + '/crtn.S',
-            output: 'crtn.o',
-            install: true,
-            install_dir: get_option('libdir')
-        )
-    elif host_machine.cpu_family() == 'm68k'
-        crt = custom_target('crt1',
-            build_by_default: true,
-            command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-            input: host_machine.cpu_family() + '/crt1.S',
-            output: 'crt1.o',
-            install: true,
-            install_dir: get_option('libdir')
-        )
-
-        custom_target('crti',
-            build_by_default: true,
-            command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-            input: host_machine.cpu_family() + '/crti.S',
-            output: 'crti.o',
-            install: true,
-            install_dir: get_option('libdir')
-        )
-
-        custom_target('crtn',
-            build_by_default: true,
-            command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-            input: host_machine.cpu_family() + '/crtn.S',
-            output: 'crtn.o',
-            install: true,
-            install_dir: get_option('libdir')
-        )
-        
-        custom_target('Scrt1',
-            build_by_default: true,
-            command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-            input: host_machine.cpu_family() + '/Scrt1.S',
-            output: 'Scrt1.o',
-            install: true,
-            install_dir: get_option('libdir')
-        )
-    endif
-endif
-

@@ -122,45 +122,6 @@ if not no_headers
 endif
 
 if not headers_only
-	crt = custom_target('crt1',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: host_machine.cpu_family() / 'crt-src/crt1.S',
-		output: 'crt1.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
-
-	crt_pie = custom_target('Scrt1',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-fPIE', '-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: host_machine.cpu_family() / 'crt-src/Scrt1.S',
-		output: 'Scrt1.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
-
-	# On RISC-V and LoongArch, crti.o and crtn.o are provided by GCC.
-	if host_machine.cpu_family() != 'riscv64' and host_machine.cpu_family() != 'loongarch64'
-		custom_target('crti',
-			build_by_default: true,
-			command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-			input: host_machine.cpu_family() / 'crt-src/crti.S',
-			output: 'crti.o',
-			install: true,
-			install_dir: get_option('libdir')
-		)
-
-		custom_target('crtn',
-			build_by_default: true,
-			command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-			input: host_machine.cpu_family() / 'crt-src/crtn.S',
-			output: 'crtn.o',
-			install: true,
-			install_dir: get_option('libdir')
-		)
-	endif
-
 	wrapper_conf = configuration_data()
 	wrapper_conf.set('LIBDIR', get_option('libdir'))
 	wrapper_conf.set('PREFIX', get_option('prefix'))

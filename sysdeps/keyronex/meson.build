@@ -5,6 +5,8 @@ sysdep_supported_options = {
 	'bsd': true,
 }
 
+internal_conf.set10('MLIBC_ENTRY_INVERTED_ORDER', mlibc_abi < 8)
+
 rtld_sources += files(
 	'generic/generic.cpp'
 )
@@ -98,43 +100,5 @@ if not no_headers
 	install_headers(
 		'include/keyronex/syscall.h',
 		subdir: 'keyronex',
-	)
-endif
-
-if not headers_only
-	crt = custom_target('crt0',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: host_machine.cpu_family() / 'crt-src/crt0.S',
-		output: 'crt0.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
-
-	crt = custom_target('crt1',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: host_machine.cpu_family() / 'crt-src/crt0.S',
-		output: 'crt1.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
-
-	custom_target('crti',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: host_machine.cpu_family() / 'crt-src/crti.S',
-		output: 'crti.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
-
-	custom_target('crtn',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: host_machine.cpu_family() / 'crt-src/crtn.S',
-		output: 'crtn.o',
-		install: true,
-		install_dir: get_option('libdir')
 	)
 endif
