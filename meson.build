@@ -242,6 +242,7 @@ internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', false)
 internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', false)
 internal_conf.set10('MLIBC_DEBUG_ALLOCATOR', get_option('debug_allocator'))
 internal_conf.set10('MLIBC_IFUNCS_SUPPORTED', ifuncs_supported)
+internal_conf.set10('MLIBC_ENTRY_INVERTED_ORDER', false)
 
 #----------------------------------------------------------------------------------------
 # Configuration based on sysdeps.
@@ -454,7 +455,7 @@ libc_include_dirs += include_directories('.')
 
 #----------------------------------------------------------------------------------------
 
-configure_file(input: 'internal-config.h.in',
+internal_config_h = configure_file(input: 'internal-config.h.in',
 	output: 'internal-config.h',
 	configuration: internal_conf)
 
@@ -471,6 +472,7 @@ internal_sources = [
 	'options/internal/generic/charset.cpp',
 	'options/internal/generic/ctype.cpp',
 	'options/internal/generic/debug.cpp',
+	'options/internal/generic/entry.cpp',
 	'options/internal/generic/ensure.cpp',
 	'options/internal/generic/essential.cpp',
 	'options/internal/generic/exiting.cpp',
@@ -589,6 +591,25 @@ subdir('options/linux-reboot')
 rtlib_deps = []
 
 if not headers_only
+	# On RISC-V and LoongArch, crti.o and crtn.o are provided by GCC.
+	if host_machine.cpu_family() != 'riscv64' and host_machine.cpu_family() != 'loongarch64'
+		custom_target('crti',
+			command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+			input: 'options/internal' / host_machine.cpu_family() / 'crt-src/crti.S',
+			output: 'crti.o',
+			install: true,
+			install_dir: get_option('libdir')
+		)
+
+		custom_target('crtn',
+			command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+			input: 'options/internal' / host_machine.cpu_family() / 'crt-src/crtn.S',
+			output: 'crtn.o',
+			install: true,
+			install_dir: get_option('libdir')
+		)
+	endif
+
 	if libgcc_dependency
 		cpp_compiler = meson.get_compiler('cpp')
 		cpp_link_args = get_option('cpp_link_args')
@@ -657,6 +678,24 @@ if not headers_only
 		link_with: [ld_static_lib],
 		link_whole: [libc_sublibs, ld_static_lib],
 		install: true
+	)
+
+	crt = custom_target('crt1',
+		command: c_compiler.cmd_array() + ['-I' + meson.current_build_dir(), '-c', '-o', '@OUTPUT@', '@INPUT@'],
+		input: 'options/internal' / host_machine.cpu_family() / 'crt-src/crt1.S',
+		depend_files: internal_config_h,
+		output: 'crt1.o',
+		install: true,
+		install_dir: get_option('libdir')
+	)
+
+	crt_pie = custom_target('Scrt1',
+		command: c_compiler.cmd_array() + ['-fPIE', '-I' + meson.current_build_dir(), '-c', '-o', '@OUTPUT@', '@INPUT@'],
+		input: 'options/internal' / host_machine.cpu_family() / 'crt-src/Scrt1.S',
+		output: 'Scrt1.o',
+		install: true,
+		depend_files: internal_config_h,
+		install_dir: get_option('libdir')
 	)
 
 	if library_type in ['shared', 'both']
