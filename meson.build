@@ -688,6 +688,14 @@ if not headers_only
 		install: true,
 		install_dir: get_option('libdir')
 	)
+	custom_target('crt0',
+		command: c_compiler.cmd_array() + ['-I' + meson.current_build_dir(), '-c', '-o', '@OUTPUT@', '@INPUT@'],
+		input: 'options/internal' / host_machine.cpu_family() / 'crt-src/crt1.S',
+		depend_files: internal_config_h,
+		output: 'crt0.o',
+		install: true,
+		install_dir: get_option('libdir')
+	)
 
 	crt_pie = custom_target('Scrt1',
 		command: c_compiler.cmd_array() + ['-fPIE', '-I' + meson.current_build_dir(), '-c', '-o', '@OUTPUT@', '@INPUT@'],
