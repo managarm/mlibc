@@ -142,6 +142,9 @@ struct VmProtect {};
 struct RiscvHwprobe {};
 #endif
 
+// void sys_pre_main_hook();
+struct PreMainHook {};
+
 #if __MLIBC_BSD_OPTION
 #include <termios.h>
 
