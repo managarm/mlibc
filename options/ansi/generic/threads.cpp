@@ -5,7 +5,7 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/thread-types.hpp>
-#include <mlibc/thread.hpp>
+#include <mlibc/tcb.hpp>
 #include <mlibc/threads.hpp>
 #include <threads.h>
 #include <time.h>
