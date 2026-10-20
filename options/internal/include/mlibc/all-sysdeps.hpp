@@ -83,7 +83,7 @@ static_assert(IsImplemented<AnonAllocate>);
 static_assert(IsImplemented<AnonFree>);
 static_assert(IsImplemented<VmMap>);
 static_assert(IsImplemented<VmUnmap>);
-static_assert(IsImplemented<TcbSet>);
+static_assert(IsImplemented<TpSet>);
 // ANCHOR_END: mandatory-sysdeps
 
 static_assert(AllSysdepTraits<SysdepTraits>);

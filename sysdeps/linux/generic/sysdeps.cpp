@@ -191,7 +191,7 @@ extern "C" void *__m68k_read_tp() {
 }
 #endif
 
-int Sysdeps<TcbSet>::operator()(void *pointer) {
+int Sysdeps<TpSet>::operator()(void *pointer) {
 #if defined(__x86_64__)
 	auto ret = do_syscall(SYS_arch_prctl, 0x1002 /* ARCH_SET_FS */, pointer);
 	if(int e = sc_error(ret); e)
@@ -212,18 +212,15 @@ int Sysdeps<TcbSet>::operator()(void *pointer) {
 	__ensure(!sc_error(ret));
 	asm volatile ("movw %w0, %%gs" : : "q"(desc.entry_number * 8 + 3) :);
 #elif defined(__riscv)
-	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
-	asm volatile ("mv tp, %0" :: "r"(thread_data));
+	asm volatile ("mv tp, %0" :: "r"(pointer));
 #elif defined (__aarch64__)
-	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb) - 0x10;
-	asm volatile ("msr tpidr_el0, %0" :: "r"(thread_data));
+	asm volatile ("msr tpidr_el0, %0" :: "r"(pointer));
 #elif defined (__m68k__)
-	auto ret = do_syscall(__NR_set_thread_area, (uintptr_t)pointer + 0x7000 + sizeof(Tcb));
+	auto ret = do_syscall(__NR_set_thread_area, (uintptr_t)pointer);
 	if(int e = sc_error(ret); e)
 		return e;
 #elif defined(__loongarch64)
-	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
-	asm volatile ("move $tp, %0" :: "r"(thread_data));
+	asm volatile ("move $tp, %0" :: "r"(pointer));
 #else
 #error "Missing architecture specific code."
 #endif
@@ -254,27 +251,12 @@ void Sysdeps<ThreadExit>::operator()() {
 #if !MLIBC_BUILDING_RTLD
 #include <abi-bits/clone-flags.h>
 
-int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
+int Sysdeps<Clone>::operator()(void *tp, pid_t *pid_out, void *stack) {
 	unsigned long flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND
 		| CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS
 		| CLONE_PARENT_SETTID;
 
-#if defined(__riscv) || defined(__loongarch64)
-	// TP should point to the address immediately after the TCB.
-	// TODO: We should change the sysdep so that we don't need to do this.
-	auto tls = reinterpret_cast<char *>(tcb) + sizeof(Tcb);
-	tcb = reinterpret_cast<void *>(tls);
-#elif defined(__aarch64__)
-	// TP should point to the address 16 bytes before the end of the TCB.
-	// TODO: We should change the sysdep so that we don't need to do this.
-	auto tp = reinterpret_cast<char *>(tcb) + sizeof(Tcb) - 0x10;
-	tcb = reinterpret_cast<void *>(tp);
-#elif defined(__m68k__)
-	// TP should point 0x7000 bytes past the end of the TCB.
-	// TODO: We should change the sysdep so that we don't need to do this.
-	auto tp = reinterpret_cast<uintptr_t>(tcb) + sizeof(Tcb) + 0x7000;
-	tcb = reinterpret_cast<void *>(tp);
-#elif defined(__i386__)
+#if defined(__i386__)
 	/* get the entry number, as we don't request a new one here */
 	uint32_t gs;
 	asm volatile("movw %%gs, %w0" : "=q"(gs));
@@ -282,7 +264,7 @@ int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
 	auto user_desc = reinterpret_cast<struct user_desc *>(getAllocator().allocate(sizeof(struct user_desc)));
 
 	user_desc->entry_number = (gs & 0xffff) >> 3;
-	user_desc->base_addr = uintptr_t(tcb);
+	user_desc->base_addr = uintptr_t(tp);
 	user_desc->limit = 0xfffff;
 	user_desc->seg_32bit = 1;
 	user_desc->contents = 0;
@@ -291,14 +273,10 @@ int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
 	user_desc->seg_not_present = 0;
 	user_desc->useable = 1;
 
-	tcb = reinterpret_cast<void *>(user_desc);
-#elif defined(__x86_64__)
-	// TP points at the TCB itself, nothing to adjust.
-#else
-#error "Missing architecture specific code."
+	tp = reinterpret_cast<void *>(user_desc);
 #endif
 
-	auto ret = __mlibc_spawn_thread(flags, stack, pid_out, nullptr, tcb);
+	auto ret = __mlibc_spawn_thread(flags, stack, pid_out, nullptr, tp);
 	if (ret < 0)
 		return ret;
 

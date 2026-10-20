@@ -147,7 +147,7 @@ struct AstralSysdepTags :
 	LibcLog,
 	LibcPanic,
 	Exit,
-	TcbSet,
+	TpSet,
 	FutexWait,
 	FutexWake,
 	AnonAllocate,

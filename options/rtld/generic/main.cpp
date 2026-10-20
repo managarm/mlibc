@@ -349,8 +349,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// The TID is needed to use futexes, so this caching saves a lot of syscalls.
 	earlyTcb.selfPointer = &earlyTcb;
 	earlyTcb.tid = mlibc::this_tid();
-	if(mlibc::sysdep<TcbSet>(&earlyTcb))
-		__ensure(!"sys_tcb_set() failed");
+	if(mlibc::sysdep<TpSet>(mlibc::tcb_to_tp(&earlyTcb)))
+		__ensure(!"sys_tp_set() failed");
 	mlibc::tcb_available_flag = true;
 
 	runtimeTlsMapLock.initialize();
@@ -653,8 +653,8 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 
 	auto tcb = allocateTcb();
 	tcb->tid = earlyTcb.tid;
-	if(mlibc::sysdep<TcbSet>(tcb))
-		__ensure(!"sys_tcb_set() failed");
+	if(mlibc::sysdep<TpSet>(mlibc::tcb_to_tp(tcb)))
+		__ensure(!"sys_tp_set() failed");
 
 	globalDebugInterface.ver = 1;
 	globalDebugInterface.brk = &dl_debug_state;
