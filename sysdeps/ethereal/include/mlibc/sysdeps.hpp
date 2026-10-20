@@ -111,7 +111,7 @@ struct EtherealSysdepTags :
 	Symlinkat,
 	Sync,
 	Sysconf,
-	TcbSet,
+	TpSet,
 	Tcgetattr,
 	Tcsetattr,
 	Times,

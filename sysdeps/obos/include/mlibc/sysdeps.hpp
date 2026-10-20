@@ -135,7 +135,7 @@ struct ObosSysdepTags :
 	InetConfigured,
 	GetEntropy,
 	Clone,
-	TcbSet,
+	TpSet,
 	PrepareStack
 {};
 

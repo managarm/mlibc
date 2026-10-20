@@ -7,7 +7,7 @@
 
 namespace [[gnu::visibility("hidden")]] mlibc {
 
-int Sysdeps<TcbSet>::operator()(void *pointer) {
+int Sysdeps<TpSet>::operator()(void *pointer) {
 	syscall1(SysS_SetFSBase, pointer);
 	return 0;
 }
@@ -16,7 +16,7 @@ int Sysdeps<PrepareStack>::operator()(
     void **stack,
     void *entry,
     void *user_arg,
-    void *tcb,
+    void *tp,
     size_t *stack_size,
     size_t *guard_size,
     void **stack_base
@@ -69,7 +69,7 @@ int Sysdeps<PrepareStack>::operator()(
 	--top;
 	*--top = (uintptr_t)user_arg;
 	*--top = (uintptr_t)entry;
-	*--top = (uintptr_t)tcb;
+	*--top = (uintptr_t)tp;
 	*stack = top;
 
 	return 0;

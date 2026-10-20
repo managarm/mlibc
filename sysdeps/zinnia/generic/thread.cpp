@@ -8,9 +8,11 @@
 
 extern "C" uintptr_t *__dlapi_entrystack();
 
-extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, Tcb *tcb) {
-	if (mlibc::sysdep<TcbSet>(tcb))
-		__ensure(!"failed to set tcb for new thread");
+extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, void *tp) {
+	if (mlibc::sysdep<TpSet>(tp))
+		__ensure(!"failed to set tp for new thread");
+
+	auto tcb = mlibc::tp_to_tcb(tp);
 
 	while (__atomic_load_n(&tcb->tid, __ATOMIC_RELAXED) == 0)
 		mlibc::sysdep<FutexWait>(&tcb->tid, 0, nullptr);
@@ -42,7 +44,7 @@ int Sysdeps<PrepareStack>::operator()(
     void **stack,
     void *entry,
     void *arg,
-    void *tcb,
+    void *tp,
     size_t *stack_size,
     size_t *guard_size,
     void **stack_base
@@ -72,7 +74,7 @@ int Sysdeps<PrepareStack>::operator()(
 
 	void **stack_it = (void **)*stack;
 
-	*--stack_it = tcb;   // a2
+	*--stack_it = tp;   // a2
 	*--stack_it = arg;   // a1
 	*--stack_it = entry; // a0
 
