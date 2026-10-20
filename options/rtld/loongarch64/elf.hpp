@@ -1,6 +1,7 @@
 #pragma once
 
 #include <elf.h>
+#include <stddef.h>
 
 #define ELF_CLASS ELFCLASS64
 #define ELF_MACHINE EM_LOONGARCH
@@ -45,5 +46,8 @@ struct ifunc_arg {
 	unsigned long _size;
 	unsigned long _hwcap;
 };
+
+constexpr inline bool tlsAboveTp = true;
+constexpr inline uintptr_t tlsOffsetFromTp = 0;
 
 using ifunc_handler = elf_addr (*)(ifunc_arg *);
