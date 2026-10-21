@@ -83,9 +83,18 @@ void __mlibc_sysdep_rtld_postfork() { }
 
 #ifndef MLIBC_STATIC_BUILD
 
+#ifdef __m68k__
+#define PCREL_ADDR(SYMBOL, OUT_VAR) \
+	asm volatile( \
+		"lea (" #SYMBOL ",%%pc), %0" \
+		: "=a" (OUT_VAR) \
+	)
+#endif
+
 // Use a PC-relative instruction sequence to find our runtime load address.
-uintptr_t getLdsoBase() {
-#if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__) || defined(__m68k__) || defined(__loongarch64)
+[[gnu::always_inline]]
+inline uintptr_t getLdsoBase() {
+#if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__) || defined(__loongarch64)
 	// On x86_64, the first GOT entry holds the link-time address of _DYNAMIC.
 	// TODO: This isn't guaranteed on AArch64, so this might fail with some linkers.
 	auto linktime_dynamic = reinterpret_cast<uintptr_t>(_GLOBAL_OFFSET_TABLE_[0]);
@@ -93,26 +102,50 @@ uintptr_t getLdsoBase() {
 	return runtime_dynamic - linktime_dynamic;
 #elif defined(__riscv)
 	return reinterpret_cast<uintptr_t>(&__ehdr_start);
+#elif defined(__m68k__)
+	uintptr_t *gotpc;
+	uintptr_t dynamic;
+	PCREL_ADDR(_GLOBAL_OFFSET_TABLE_@GOTPC, gotpc);
+	PCREL_ADDR(_DYNAMIC, dynamic);
+	auto linktime_dynamic = gotpc[0];
+	return dynamic - linktime_dynamic;
 #else
 	#error Unknown architecture!
 #endif
 }
 
-#if !defined(__m68k__)
+[[gnu::always_inline]]
+inline elf_dyn *getPcDynamic() {
+#if defined(__m68k__)
+	elf_dyn *dynamic;
+	PCREL_ADDR(_DYNAMIC, dynamic);
+	return dynamic;
+#else
+	return _DYNAMIC;
+#endif
+}
+
 // Relocates the dynamic linker (i.e. this DSO) itself.
 // Assumptions:
 // - There are no references to external symbols.
 // Note that this code is fragile in the sense that it must not contain relocations itself.
 // TODO: Use tooling to verify this at compile time.
-extern "C" void relocateSelf() {
+extern "C"
+#if defined(__GNUC__) && !defined(__clang__)
+// GCC creates a jump table here, which it gets with GOT on m68k...
+[[gnu::optimize("no-jump-tables")]]
+#endif
+void relocateSelf() {
+	auto dynamic = getPcDynamic();
+	
 	size_t rela_offset = 0;
 	size_t rela_size = 0;
 	size_t rel_offset = 0;
 	size_t rel_size = 0;
 	size_t relr_offset = 0;
 	size_t relr_size = 0;
-	for(size_t i = 0; _DYNAMIC[i].d_tag != DT_NULL; i++) {
-		auto ent = &_DYNAMIC[i];
+	for(size_t i = 0; dynamic[i].d_tag != DT_NULL; i++) {
+		auto ent = &dynamic[i];
 		switch(ent->d_tag) {
 		case DT_REL: rel_offset = ent->d_un.d_ptr; break;
 		case DT_RELSZ: rel_size = ent->d_un.d_val; break;
@@ -134,6 +167,8 @@ extern "C" void relocateSelf() {
 
 		auto p = reinterpret_cast<uintptr_t *>(ldso_base + reloc->r_offset);
 		switch(type) {
+		case R_NONE:
+			break;
 		case R_RELATIVE:
 			*p = ldso_base + reloc->r_addend;
 			break;
@@ -187,38 +222,6 @@ extern "C" void relocateSelf() {
 		}
 	}
 }
-#else
-// m68k needs a tighter relocation function to avoid itself relying on the GOT.
-extern "C" void relocateSelf68k(elf_dyn *dynamic, uintptr_t ldso_base) {
-	size_t rela_offset = 0;
-	size_t rela_size = 0;
-	for(size_t i = 0; dynamic[i].d_tag != DT_NULL; i++) {
-		auto ent = &dynamic[i];
-		switch(ent->d_tag) {
-		case DT_RELA: rela_offset = ent->d_un.d_ptr; break;
-		case DT_RELASZ: rela_size = ent->d_un.d_val; break;
-		}
-	}
-
-	for(size_t disp = 0; disp < rela_size; disp += sizeof(elf_rela)) {
-		auto reloc = reinterpret_cast<elf_rela *>(ldso_base + rela_offset + disp);
-		auto type = ELF_R_TYPE(reloc->r_info);
-
-		auto p = reinterpret_cast<uintptr_t *>(ldso_base + reloc->r_offset);
-		switch(type) {
-		case R_NONE:
-			break;
-
-		case R_RELATIVE:
-			*p = ldso_base + reloc->r_addend;
-			break;
-		default: {
-			__builtin_trap();
-		}
-		}
-	}
-}
-#endif // !defined(__m68k__)
 #endif
 
 extern "C" [[ gnu::visibility("default") ]] void *__rtld_allocateTcb() {
