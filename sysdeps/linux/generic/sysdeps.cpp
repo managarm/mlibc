@@ -485,7 +485,7 @@ int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
 
 int Sysdeps<Isatty>::operator()(int fd) {
 	unsigned short winsizeHack[4];
-	auto ret = do_syscall(SYS_ioctl, fd, 0x5413 /* TIOCGWINSZ */, &winsizeHack);
+	auto ret = do_syscall(SYS_ioctl, fd, TIOCGWINSZ /* TIOCGWINSZ */, &winsizeHack);
 	if (int e = sc_error(ret); e)
 		return e;
 
