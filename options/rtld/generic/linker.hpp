@@ -530,6 +530,8 @@ private:
 
 	void _setTextWritable(SharedObject *object, bool writable);
 
+	frg::optional<ObjectSymbol> _resolveSymbolByIndex(SharedObject *object, elf_info index, bool skip_resolve_local = false);
+
 public:
 	void initObjects(ObjectRepository *repository);
 
