@@ -7,7 +7,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                arch: [x86_64, riscv64, aarch64, x86, m68k, loongarch64]
+                arch: [x86_64, riscv64, aarch64, x86, m68k, loongarch64, mips64]
                 builds: [mlibc, mlibc-static, mlibc-shared, mlibc-ansi-only, mlibc-headers-only]
                 compiler: [gcc, clang]
                 exclude:
@@ -60,6 +60,8 @@ jobs:
                     apt-get install -y gcc-i686-linux-gnu g++-i686-linux-gnu;; \
                   x86_64) \
                     apt-get install -y gcc g++;; \
+                  mips64) \
+                    apt-get install -y gcc-mips64-linux-gnuabi64 g++-mips64-linux-gnuabi64;; \
                   *) \
                     apt-get install -y gcc-${{matrix.arch}}-linux-gnu g++-${{matrix.arch}}-linux-gnu;; \
                 esac
@@ -89,11 +91,17 @@ jobs:
             working-directory: src/
           - name: Prepare build/
             run: |
+              MULTILIB_PATH="/usr/$DEBIAN_MULTILIB-linux-gnu"
+              case "${{matrix.arch}}" in
+                mips64)
+                  MULTILIB_PATH="/usr/$DEBIAN_MULTILIB-linux-gnuabi64"
+                  ;;
+              esac
               cat > bootstrap-site.yml << EOF
               define_options:
                 arch: ${{matrix.arch}}
                 compiler: ${{matrix.compiler}}
-                multilib-path: "/usr/$DEBIAN_MULTILIB-linux-gnu"
+                multilib-path: $MULTILIB_PATH
               EOF
               xbstrap init ../src
             working-directory: build/
@@ -114,8 +122,14 @@ jobs:
                 esac
                 ALL_INCLUDES="-- -include\0%s\0 packages/${{matrix.builds}}/usr/include/**/*.h"
                 GCC_ARGS="-S /dev/null -o /dev/null -I packages/${{matrix.builds}}/usr/include -I packages/linux-headers/usr/include -nostdlib -Werror -Wpedantic -Wsystem-headers"
-                GCC_C_ARGS="$GCC_ARCH-linux-gnu-gcc -x c $GCC_ARGS"
-                GCC_CXX_ARGS="$GCC_ARCH-linux-gnu-g++ -x c++ $GCC_ARGS"
+                GCC_PREFIX="$GCC_ARCH-linux-gnu"
+                case "${{matrix.arch}}" in
+                  "mips64")
+                    GCC_PREFIX="$GCC_ARCH-linux-gnuabi64"
+                    ;;
+                esac
+                GCC_C_ARGS="$GCC_PREFIX-gcc -x c $GCC_ARGS"
+                GCC_CXX_ARGS="$GCC_PREFIX-g++ -x c++ $GCC_ARGS"
 
                 # For C89, exclude complex.h. We also exclude -Wlong-long because fixing it mostly involves adding
                 # __extension__ to a bunch of places (and musl doesn't even bother).
