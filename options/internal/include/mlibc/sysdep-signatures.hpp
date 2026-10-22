@@ -282,6 +282,9 @@ SYSDEP_FUNC(AioSuspend, const struct aiocb *const list[], int n, const struct ti
 SYSDEP_FUNC(AioCancel, int fildes, struct aiocb *cb, int *result);
 SYSDEP_FUNC(AioError, const struct aiocb *cb, int *out);
 SYSDEP_FUNC(AioReturn, struct aiocb *cb, ssize_t *out);
+SYSDEP_FUNC_RET(pid_t, Tcgetsid, int fd);
+SYSDEP_FUNC_RET(pid_t, Tcgetpgrp, int fd);
+SYSDEP_FUNC(Tcsetpgrp, int fd, pid_t pgrp);
 #endif // __MLIBC_POSIX_OPTION
 
 #if __MLIBC_LINUX_OPTION
