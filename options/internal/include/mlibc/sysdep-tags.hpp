@@ -582,6 +582,12 @@ struct AioCancel {};
 struct AioError {};
 // int sys_aio_return(struct aiocb *cb, ssize_t *out);
 struct AioReturn {};
+// int sys_tcgetsid(int fd, pid_t *sid_out);
+struct Tcgetsid {};
+// int tcgetpgrp(int fd, pid_t *pgrp_out);
+struct Tcgetpgrp {};
+// int tcsetpgrp(int fd, pid_t pgrp);
+struct Tcsetpgrp {};
 #endif // __MLIBC_POSIX_OPTION
 
 #if __MLIBC_LINUX_OPTION
