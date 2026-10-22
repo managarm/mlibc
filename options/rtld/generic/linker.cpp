@@ -127,6 +127,11 @@ elf_addr handleIfunc(elf_addr addr) {
 		return reinterpret_cast<ifunc_handler>(addr)(&ifunc_arg);
 	#elif defined(__i386__) || defined(__x86_64__) || defined(__m68k__)
 		return reinterpret_cast<ifunc_handler>(addr)();
+	#elif defined(__mips64)
+		__ensure(!"ifunc is not supported on mips64 yet");
+
+		(void)addr;
+		return 0;
 	#else
 	#	error Unknown architecture
 	#endif
