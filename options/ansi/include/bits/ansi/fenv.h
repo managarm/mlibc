@@ -125,6 +125,29 @@ typedef struct {
 	unsigned int __fp_control_register;
 } fenv_t;
 
+#elif defined(__mips64)
+
+#define FE_INEXACT 0x04
+#define FE_UNDERFLOW 0x08
+#define FE_OVERFLOW 0x10
+#define FE_DIVBYZERO 0x20
+#define FE_INVALID 0x40
+
+#define FE_ALL_EXCEPT (FE_INEXACT | FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID)
+
+#define FE_TONEAREST 0
+#define FE_TOWARDZERO 1
+#define FE_UPWARD 2
+#define FE_DOWNWARD 3
+
+#if !defined(__ASSEMBLER__)
+typedef unsigned int fexcept_t;
+
+typedef struct {
+	unsigned int __fp_control_register;
+} fenv_t;
+#endif /* !defined(__ASSEMBLER__) */
+
 #else
 #error Unknown architecture
 #endif

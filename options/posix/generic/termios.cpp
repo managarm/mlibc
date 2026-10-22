@@ -8,6 +8,8 @@
 #include <bits/ensure.h>
 #include <mlibc/all-sysdeps.hpp>
 
+#include <sys/ioctl.h>
+
 speed_t cfgetispeed(const struct termios *tios) {
 	return tios->c_cflag & CBAUD;
 }

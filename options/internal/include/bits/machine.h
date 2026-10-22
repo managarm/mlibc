@@ -119,6 +119,29 @@ struct __mlibc_jmpbuf_register_state {
 	double __fs6;
 	double __fs7;
 };
+#elif defined (__mips64)
+struct __mlibc_jmpbuf_register_state {
+	__mlibc_uint64 __s0;
+	__mlibc_uint64 __s1;
+	__mlibc_uint64 __s2;
+	__mlibc_uint64 __s3;
+	__mlibc_uint64 __s4;
+	__mlibc_uint64 __s5;
+	__mlibc_uint64 __s6;
+	__mlibc_uint64 __s7;
+	__mlibc_uint64 __gp;
+	__mlibc_uint64 __sp;
+	__mlibc_uint64 __s8;
+	__mlibc_uint64 __ra;
+	double __f24;
+	double __f25;
+	double __f26;
+	double __f27;
+	double __f28;
+	double __f29;
+	double __f30;
+	double __f31;
+};
 #else
 #  error "Missing architecture specific code"
 #endif

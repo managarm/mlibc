@@ -201,6 +201,8 @@ static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 104);
 static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 0x34);
 #elif defined(__loongarch64)
 static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 104);
+#elif defined(__mips64)
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) + TP_TCB_OFFSET == 0x7068);
 #else
 #error "Missing architecture specific code."
 #endif

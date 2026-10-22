@@ -1,0 +1,16 @@
+[binaries]
+c = 'mips64-linux-gnuabi64-gcc'
+cpp = 'mips64-linux-gnuabi64-g++'
+ar = 'mips64-linux-gnuabi64-ar'
+strip = 'mips64-linux-gnuabi64-strip'
+exe_wrapper = 'qemu-mips64'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'mips64'
+cpu = 'mips64r2'
+endian = 'big'
+
+[properties]
+skip_sanity_check = true
+needs_exe_wrapper = true
