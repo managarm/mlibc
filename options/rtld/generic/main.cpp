@@ -282,6 +282,7 @@ void setupVdso(uintptr_t vdsoBase) {
 	auto vdso_header = reinterpret_cast<elf_ehdr *>(vdsoBase);
 	auto vdso_phdrs = reinterpret_cast<void *>(vdsoBase + vdso_header->e_phoff);
 	elf_dyn *vdso_dynamic = nullptr;
+	uint32_t vdso_dynamic_flags = 0;
 	uintptr_t actual_base = 0;
 	bool found_load = false;
 
@@ -294,8 +295,10 @@ void setupVdso(uintptr_t vdsoBase) {
 			found_load = true;
 		}
 
-		if (phdr->p_type == PT_DYNAMIC)
+		if (phdr->p_type == PT_DYNAMIC) {
 			vdso_dynamic = reinterpret_cast<elf_dyn *>(vdsoBase + phdr->p_offset);
+			vdso_dynamic_flags = phdr->p_flags;
+		}
 	}
 
 	if (!found_load || !vdso_dynamic)
@@ -327,7 +330,7 @@ void setupVdso(uintptr_t vdsoBase) {
 	}
 
 	auto vdso = initialRepository->injectObjectFromDts(vdso_soname,
-		frg::string<LdsoAllocator> { getLdsoAllocator() }, actual_base, vdso_dynamic, 1);
+		frg::string<LdsoAllocator> { getLdsoAllocator() }, actual_base, vdso_dynamic, vdso_dynamic_flags, 1);
 	vdso->phdrPointer = vdso_phdrs;
 	vdso->phdrCount = vdso_header->e_phnum;
 	vdso->phdrEntrySize = vdso_header->e_phentsize;
@@ -618,13 +621,24 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 #endif
 
 #ifndef MLIBC_STATIC_BUILD
+	auto ldso_ehdr = reinterpret_cast<elf_ehdr *>(__ehdr_start);
+	auto ldso_phdr = reinterpret_cast<elf_phdr *>(ldso_ehdr + ldso_ehdr->e_phoff);
+
+	uint32_t dynamic_flags = 0;
+	for (size_t i = 0; i < ldso_ehdr->e_phnum; ++i) {
+		auto phdr = reinterpret_cast<const elf_phdr *>(
+			reinterpret_cast<uintptr_t>(ldso_phdr)
+			+ i * ldso_ehdr->e_phentsize);
+		if (phdr->p_type == PT_DYNAMIC) {
+			dynamic_flags = phdr->p_flags;
+			break;
+		}
+	}
+
 	auto ldso_soname = reinterpret_cast<const char *>(ldso_base + strtab_offset + soname_str);
 	auto ldso = initialRepository->injectObjectFromDts(ldso_soname,
 		frg::string<LdsoAllocator> { getLdsoAllocator() },
-		ldso_base, _DYNAMIC, 1);
-
-	auto ldso_ehdr = reinterpret_cast<elf_ehdr *>(__ehdr_start);
-	auto ldso_phdr = reinterpret_cast<elf_phdr *>(ldso_base + ldso_ehdr->e_phoff);
+		ldso_base, _DYNAMIC, dynamic_flags, 1);
 
 	ldso->phdrPointer = ldso_phdr;
 	ldso->phdrCount = ldso_ehdr->e_phnum;

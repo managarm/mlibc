@@ -208,13 +208,14 @@ ObjectRepository::ObjectRepository()
 
 SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 		frg::string<LdsoAllocator> path, uintptr_t base_address,
-		elf_dyn *dynamic, uint64_t rts) {
+		elf_dyn *dynamic, uint32_t dynamic_flags, uint64_t rts) {
 	__ensure(!findLoadedObject(name));
 
 	auto object = frg::construct<SharedObject>(getLdsoAllocator(),
 		name.data(), std::move(path), false, globalScope.get(), rts);
 	object->baseAddress = base_address;
 	object->dynamic = dynamic;
+	object->dynamicFlags = dynamic_flags;
 	_parseDynamic(object);
 	_parseVerdef(object);
 
@@ -566,6 +567,7 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			break;
 		case PT_DYNAMIC:
 			dynamic_offset = phdr->p_vaddr;
+			object->dynamicFlags = phdr->p_flags;
 			break;
 		case PT_TLS: {
 			object->tlsSegmentSize = phdr->p_memsz;
@@ -758,6 +760,7 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 			object->tlsImagePtr = (void *)(object->baseAddress + phdr->p_vaddr);
 		}else if(phdr->p_type == PT_DYNAMIC) {
 			object->dynamic = (elf_dyn *)(object->baseAddress + phdr->p_vaddr);
+			object->dynamicFlags = phdr->p_flags;
 		}else if(phdr->p_type == PT_INTERP
 				|| phdr->p_type == PT_PHDR
 				|| phdr->p_type == PT_NOTE
@@ -914,12 +917,29 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			object->preInitArraySize = dynamic->d_un.d_val;
 			break;
 		case DT_DEBUG:
+			if (!(object->dynamicFlags & PF_W))
+				// A MIPS special...
+				break;
 #if ELF_CLASS == ELFCLASS32
 			dynamic->d_un.d_val = reinterpret_cast<Elf32_Word>(&globalDebugInterface);
 #elif ELF_CLASS == ELFCLASS64
 			dynamic->d_un.d_val = reinterpret_cast<Elf64_Xword>(&globalDebugInterface);
 #endif
 			break;
+		#ifdef __mips__
+		case DT_MIPS_RLD_MAP: {
+				auto slot = reinterpret_cast<elf_addr *>(
+					object->baseAddress + dynamic->d_un.d_ptr);
+				*slot = reinterpret_cast<elf_addr>(&globalDebugInterface);
+			}
+			break;
+		case DT_MIPS_RLD_MAP_REL: {
+				auto slot = reinterpret_cast<elf_addr *>(
+					reinterpret_cast<uintptr_t>(dynamic) + dynamic->d_un.d_val);
+				*slot = reinterpret_cast<elf_addr>(&globalDebugInterface);
+			}
+			break;
+		#endif
 		case DT_SONAME:
 			soname_offset = dynamic->d_un.d_val;
 			break;
