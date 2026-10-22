@@ -8,6 +8,11 @@
 #include <bits/ensure.h>
 #include <mlibc/all-sysdeps.hpp>
 
+// TIOCGSID definition for default impl
+#if __MLIBC_LINUX_OPTION || __MLIBC_BSD_OPTION
+#include <sys/ioctl.h>
+#endif
+
 speed_t cfgetispeed(const struct termios *tios) {
 	return tios->c_cflag & CBAUD;
 }
@@ -75,12 +80,29 @@ int tcgetattr(int fd, struct termios *attr) {
 }
 
 pid_t tcgetsid(int fd) {
-	int sid, scratch;
-	if(int e = mlibc::sysdep_or_enosys<Ioctl>(fd, TIOCGSID, &sid, &scratch); e) {
-		errno = e;
-		return -1;
+	if constexpr (mlibc::IsImplemented<Tcgetsid>) {
+		auto e = mlibc::sysdep_or_enosys<Tcgetsid>(fd);
+		if (e < 0) {
+			errno = -e;
+			return -1;
+		}
+		return e;
 	}
-	return sid;
+
+	#ifdef TIOCGSID
+	if constexpr (mlibc::IsImplemented<Ioctl>) {
+		int sid, scratch;
+		if(int e = mlibc::sysdep_or_enosys<Ioctl>(fd, TIOCGSID, &sid, &scratch); e) {
+			errno = e;
+			return -1;
+		}
+		return sid;
+	}
+	#endif
+
+	mlibc::sysdep_or_enosys<Tcgetsid>(fd);
+	errno = ENOSYS;
+	return -1;
 }
 
 int tcsendbreak(int fd, int dur) {
