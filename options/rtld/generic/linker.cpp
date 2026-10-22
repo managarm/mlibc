@@ -761,7 +761,8 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 		}else if(phdr->p_type == PT_DYNAMIC) {
 			object->dynamic = (elf_dyn *)(object->baseAddress + phdr->p_vaddr);
 			object->dynamicFlags = phdr->p_flags;
-		}else if(phdr->p_type == PT_INTERP
+		}else if(phdr->p_type == PT_NULL
+				|| phdr->p_type == PT_INTERP
 				|| phdr->p_type == PT_PHDR
 				|| phdr->p_type == PT_NOTE
 				|| phdr->p_type == PT_RISCV_ATTRIBUTES
@@ -1304,9 +1305,11 @@ void processLateRelocation(Relocation rel) {
 		memcpy(rel.destination(), (void *)p->virtualAddress(), p->symbol()->st_size);
 		break;
 
+	#ifdef R_IRELATIVE
 	case R_IRELATIVE:
 		rel.relocate(handleIfunc(rel.object()->baseAddress + rel.addend_rel()));
 		break;
+	#endif
 
 	default:
 		break;
@@ -1887,7 +1890,7 @@ void Loader::linkObjects(SharedObject *root) {
 		processLateRelocations(object);
 	}
 
-#if MLIBC_STATIC_BUILD
+#if MLIBC_STATIC_BUILD && defined(R_IRELATIVE)
 	if (root->isMainObject) {
 		if (__rela_iplt_start && __rela_iplt_end) {
 			for (const elf_rela *r = __rela_iplt_start; r < __rela_iplt_end; r++) {
@@ -2143,33 +2146,48 @@ struct TlsdescData {
 };
 #endif // defined(R_TLSDESC)
 
+frg::optional<ObjectSymbol> Loader::_resolveSymbolByIndex(SharedObject *object, elf_info index, bool skip_resolve_local) {
+	if (!index)
+		return frg::optional<ObjectSymbol>{};
+
+	frg::optional<ObjectSymbol> p;
+	
+	auto [sym, ver] = object->getSymbolByIndex(index);
+
+	if (!skip_resolve_local && ELF_ST_BIND(sym.symbol()->st_info) == STB_LOCAL)
+		p = sym;
+
+	if (!p && object->symbolicResolution)
+		p = resolveInObject(object, sym.getString(), ver);
+
+	if (!p)
+		p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope,
+				sym.getString(), object->objectRts, 0, ver);
+
+	if(!p) {
+		if(ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK)
+			mlibc::panicLogger() << "Unresolved load-time symbol "
+					<< sym.getString() << " in object " << object->name << frg::endlog;
+
+		if(rtldConfig.debugVerbose)
+			mlibc::infoLogger() << "rtld: Unresolved weak load-time symbol "
+					<< sym.getString() << " in object " << object->name << frg::endlog;
+	}
+
+	return p;
+}
+
 void Loader::_processRelocations(Relocation &rel) {
 	// copy and irelative relocations have to be performed after all other relocations
-	if(rel.type() == R_COPY || rel.type() == R_IRELATIVE)
+	if(rel.type() == R_COPY
+	#if defined(R_IRELATIVE)
+	|| rel.type() == R_IRELATIVE
+	#endif
+	)
 		return;
 
 	// resolve the symbol if there is a symbol
-	frg::optional<ObjectSymbol> p;
-	if(rel.symbol_index()) {
-		auto [sym, ver] = rel.object()->getSymbolByIndex(rel.symbol_index());
-
-		if (rel.object()->symbolicResolution)
-			p = resolveInObject(rel.object(), sym.getString(), ver);
-
-		if (!p)
-			p = Scope::resolveGlobalOrLocal(*globalScope, rel.object()->localScope,
-					sym.getString(), rel.object()->objectRts, 0, ver);
-
-		if(!p) {
-			if(ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK)
-				mlibc::panicLogger() << "Unresolved load-time symbol "
-						<< sym.getString() << " in object " << rel.object()->name << frg::endlog;
-
-			if(rtldConfig.debugVerbose)
-				mlibc::infoLogger() << "rtld: Unresolved weak load-time symbol "
-						<< sym.getString() << " in object " << rel.object()->name << frg::endlog;
-		}
-	}
+	auto p = _resolveSymbolByIndex(rel.object(), rel.symbol_index());
 
 	switch(rel.type()) {
 	case R_NONE:
@@ -2327,6 +2345,16 @@ void Loader::_processRelocations(Relocation &rel) {
 			}
 		} break;
 #endif // defined(R_TLSDESC)
+#if defined(R_SYM_OR_REL)
+	case R_SYM_OR_REL: {
+		uintptr_t addr = rel.addend_rel();
+		if (rel.symbol_index())
+			addr += p ? p->virtualAddress() : 0;
+		else
+			addr += rel.object()->baseAddress;
+		rel.relocate(addr);
+	} break;
+#endif // defined(R_SYM_OR_REL)
 	default:
 		mlibc::panicLogger() << "Unexpected relocation type "
 				<< (void *) rel.type() << frg::endlog;
@@ -2342,6 +2370,14 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 
 	frg::optional<uintptr_t> relr_offset;
 	frg::optional<size_t> relr_length;
+
+	#if defined(__mips__)
+	frg::optional<uintptr_t> got_offset;
+	frg::optional<size_t> local_gotno;
+	
+	frg::optional<uintptr_t> mips_gotsym;
+	frg::optional<size_t> mips_symtabno;
+	#endif
 
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
 		elf_dyn *dynamic = &object->dynamic[i];
@@ -2374,8 +2410,42 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 		case DT_RELRENT:
 			__ensure(dynamic->d_un.d_val == sizeof(elf_relr));
 			break;
+		#if defined(__mips__)
+		case DT_PLTGOT:
+			got_offset = dynamic->d_un.d_ptr;
+			break;
+		case DT_MIPS_LOCAL_GOTNO:
+			local_gotno = dynamic->d_un.d_val;
+			break;
+		case DT_MIPS_GOTSYM:
+			mips_gotsym = dynamic->d_un.d_val;
+			break;
+		case DT_MIPS_SYMTABNO:
+			mips_symtabno = dynamic->d_un.d_val;
+			break;
+		#endif
 		}
 	}
+
+	#if defined(__mips__)
+	if (got_offset && local_gotno) {
+		__ensure(*local_gotno > 0);
+		elf_addr *got = reinterpret_cast<elf_addr *>(object->baseAddress + *got_offset);
+		size_t first = (*local_gotno > 1 && got[1] & (elf_addr{1} << (sizeof(elf_addr) * CHAR_BIT - 1))) ? 2 : 1;
+		for (size_t i = first; i < *local_gotno; i++)
+			got[i] += object->baseAddress;
+	}
+	
+	if (mips_gotsym && mips_symtabno) {
+		__ensure(got_offset && local_gotno);
+		__ensure(*mips_gotsym <= *mips_symtabno);
+		auto got = reinterpret_cast<elf_addr *>(object->baseAddress + *got_offset);
+		for (size_t symidx = *mips_gotsym; symidx < *mips_symtabno; ++symidx) {
+			auto p = _resolveSymbolByIndex(object, symidx, true);
+			got[*local_gotno + symidx - *mips_gotsym] = p ? p->virtualAddress() : 0;
+		}
+	}
+	#endif
 
 	if(rela_offset && rela_length) {
 		__ensure(!rel_offset && !rel_length);
@@ -2438,10 +2508,12 @@ void panicOnPltLazyBinding() {
 } // namespace
 
 void Loader::_processLazyRelocations(SharedObject *object) {
+	#ifndef __mips__
 	if(object->globalOffsetTable) {
 		object->globalOffsetTable[1] = object;
 		object->globalOffsetTable[2] = (void *)&panicOnPltLazyBinding;
 	}
+	#endif
 
 	if(!object->lazyTableSize)
 		return;
