@@ -3,6 +3,7 @@
 
 #include <abi-bits/pid_t.h>
 #include <mlibc-config.h>
+#include <bits/off_t.h>
 
 #define O_RDONLY (1 << 0)
 #define O_WRONLY (1 << 1)
@@ -103,5 +104,13 @@ struct f_owner_ex {
 #define POSIX_FADV_WILLNEED 3
 #define POSIX_FADV_DONTNEED 4
 #define POSIX_FADV_NOREUSE 5
+
+struct flock {
+	short l_type;
+	short l_whence;
+	off_t l_start;
+	off_t l_len;
+	pid_t l_pid;
+};
 
 #endif /* _ABIBITS_FCNTL_H */
