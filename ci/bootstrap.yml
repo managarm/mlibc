@@ -243,6 +243,9 @@ packages:
             "loongarch64")
               LINUX_ARCH="loongarch"
               ;;
+            "mips64")
+              LINUX_ARCH="mips"
+              ;;
           esac
           make O=@THIS_COLLECT_DIR@ ARCH="$LINUX_ARCH" headers_install
 
@@ -265,7 +268,7 @@ packages:
       - args: |
           ARCH="@OPTION:arch@"
           LOCALEDEF_FLAGS=""
-          if [[ "$ARCH" == "m68k" ]]; then
+          if [[ "$ARCH" == "m68k" || "$ARCH" == "mips64" ]]; then
             LOCALEDEF_FLAGS="--big-endian"
           fi
           mkdir -p @THIS_COLLECT_DIR@/usr/lib/locale/
