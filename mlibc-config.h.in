@@ -13,6 +13,18 @@
 
 /* TODO: handle C spec revisions */
 
+#if defined(__NetBSD__) && !defined(_NETBSD_SOURCE) \
+	&& !defined(_POSIX_SOURCE) \
+	&& !defined(_POSIX_C_SOURCE) \
+	&& !defined(_XOPEN_SOURCE)
+#	define _NETBSD_SOURCE 1
+#endif
+
+#ifdef _NETBSD_SOURCE
+#	undef _BSD_SOURCE
+#	define _BSD_SOURCE 1
+#endif
+
 #ifdef _GNU_SOURCE
 #	undef _DEFAULT_SOURCE
 #	define _DEFAULT_SOURCE 1
