@@ -247,6 +247,11 @@ SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
 	auto object = frg::construct<SharedObject>(getLdsoAllocator(),
 		name.data(), std::move(path), true, globalScope.get(), rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
+	if (object->dynamic) {
+		// Static PIE
+		_parseDynamic(object);
+		_parseVerdef(object);
+	}
 
 #if MLIBC_STATIC_BUILD
 	object->initArray = reinterpret_cast<InitFuncPtr*>(__init_array_start);
