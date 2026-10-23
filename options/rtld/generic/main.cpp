@@ -1033,8 +1033,9 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 					last_sym = bucket[i];
 				}
 
-				while(!(chains[last_sym - hash_table->symbolOffset] & 1))
-					last_sym++;
+				if (last_sym)
+					while(!(chains[last_sym - hash_table->symbolOffset] & 1))
+						last_sym++;
 			}
 
 			start_symbols = hash_table->symbolOffset;
