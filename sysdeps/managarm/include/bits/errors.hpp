@@ -88,6 +88,8 @@ inline int operator|(managarm::fs::Errors e, ToErrno) {
 			return ENOTSUP;
 		case managarm::fs::Errors::BAD_FILE_DESCRIPTOR:
 			return EBADF;
+		case managarm::fs::Errors::IO_ERROR:
+			return EIO;
 	}
 
 	mlibc::panicLogger() << "unhandled managarm::fs::Errors " << static_cast<int32_t>(e)
