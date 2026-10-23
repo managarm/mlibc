@@ -7,6 +7,8 @@
 #include <abi-bits/pid_t.h>
 #include <abi-bits/termios.h>
 
+#include <bits/winsize.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
