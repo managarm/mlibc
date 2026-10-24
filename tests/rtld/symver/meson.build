@@ -1,6 +1,7 @@
 version_script = meson.current_source_dir() / 'libfoo.ver'
 
 libfoo = shared_library('foo', 'libfoo.c',
+		c_args: freestanding_hdrs_args,
 		link_args : ['-Wl,--version-script', version_script] + mlibc_link_args)
 test_depends = [libfoo]
 test_link_with = [libfoo]

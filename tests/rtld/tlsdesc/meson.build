@@ -17,7 +17,7 @@ elif host_machine.cpu_family() in ['aarch64']
 	endif
 endif
 
-libfoo = shared_library('foo', 'libfoo.c', c_args: tls_flags, link_args: mlibc_link_args + tls_flags)
+libfoo = shared_library('foo', 'libfoo.c', c_args: tls_flags + freestanding_hdrs_args, link_args: mlibc_link_args + tls_flags)
 test_depends = [libfoo]
 
 libfoo_native = shared_library('native-foo', 'libfoo.c', native: true, c_args: tls_flags_native, link_args: mlibc_link_args + tls_flags_native)
