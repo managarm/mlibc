@@ -203,20 +203,21 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 					fprintf(stderr, "--%s is not a valid option.\n", arg);
 				optind++;
 				return '?';
-			} else if(std::holds_alternative<char>(k)) {
-				return std::get<char>(k);
+			} else if(auto c = std::get_if<char>(&k)) {
+				return *c;
 			}
 
+			auto idx = *std::get_if<size_t>(&k);
 			if(longindex)
-				*longindex = std::get<size_t>(k);
+				*longindex = idx;
 
-			if(auto r = longopt_consume(arg, s, std::get<size_t>(k), colon); r)
+			if(auto r = longopt_consume(arg, s, idx, colon); r)
 				return r.value();
 
-			if(!longopts[std::get<size_t>(k)].flag) {
-				return longopts[std::get<size_t>(k)].val;
+			if(!longopts[idx].flag) {
+				return longopts[idx].val;
 			}else{
-				*longopts[std::get<size_t>(k)].flag = longopts[std::get<size_t>(k)].val;
+				*longopts[idx].flag = longopts[idx].val;
 				return 0;
 			}
 		}else{
@@ -230,10 +231,10 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 
 					auto longopt_res = longopt_find(lo_arg, n);
 
-					if(std::holds_alternative<char>(longopt_res)) {
-						return std::get<char>(longopt_res);
-					} else if(std::holds_alternative<size_t>(longopt_res)) {
-						auto k = std::get<size_t>(longopt_res);
+					if(auto c = std::get_if<char>(&longopt_res)) {
+						return *c;
+					} else if(auto idx = std::get_if<size_t>(&longopt_res)) {
+						auto k = *idx;
 						if(auto r = longopt_consume(lo_arg, s, k, colon); r)
 							return r.value();
 
@@ -268,10 +269,10 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 
 						auto longopt_res = longopt_find(lo_arg, n);
 
-						if(std::holds_alternative<char>(longopt_res)) {
-							return std::get<char>(longopt_res);
-						} else if(std::holds_alternative<size_t>(longopt_res)) {
-							auto k = std::get<size_t>(longopt_res);
+						if(auto c = std::get_if<char>(&longopt_res)) {
+							return *c;
+						} else if(auto idx = std::get_if<size_t>(&longopt_res)) {
+							auto k = *idx;
 							if(auto r = longopt_consume(lo_arg, s, k, colon); r)
 								return r.value();
 

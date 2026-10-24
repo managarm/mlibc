@@ -190,7 +190,7 @@ ssize_t strfmon_internal(char *__restrict s, size_t maxsize, mlibc::localeinfo *
 		if (!right_precision)
 			right_precision = locale->monetary.get(int_format ? INT_FRAC_DIGITS : FRAC_DIGITS).asUint32();
 
-		if (right_precision.value() == 0xFF)
+		if (*right_precision == 0xFF)
 			right_precision = 2;
 
 		double number = va_arg(ap, double);
@@ -452,7 +452,7 @@ ssize_t strfmon_internal(char *__restrict s, size_t maxsize, mlibc::localeinfo *
 		return -1;
 	}
 
-	return res.value();
+	return *res;
 }
 
 } // namespace

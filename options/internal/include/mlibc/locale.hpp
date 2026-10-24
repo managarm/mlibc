@@ -44,47 +44,56 @@ struct category_item {
 	frg::string_view asString() const {
 		if (std::holds_alternative<std::monostate>(value))
 			return {""};
-		return std::get<frg::string_view>(value);
+		return get<frg::string_view>();
 	}
 
 	frg::basic_string_view<wchar_t> asWideString() const {
 		if (std::holds_alternative<std::monostate>(value))
 			return {L""};
-		return std::get<frg::basic_string_view<wchar_t>>(value);
+		return get<frg::basic_string_view<wchar_t>>();
 	}
 
 	uint32_t asUint32() const {
-		return std::get<uint32_t>(value);
+		return get<uint32_t>();
 	}
 
 	frg::span<const uint8_t> asByteSpan() const {
 		if (std::holds_alternative<std::monostate>(value))
 			return {};
-		return std::get<frg::span<const uint8_t>>(value);
+		return get<frg::span<const uint8_t>>();
 	}
 
 	frg::span<const uint16_t> asUint16Span() const {
 		if (std::holds_alternative<std::monostate>(value))
 			return {};
-		auto span = std::get<frg::span<const uint8_t>>(value);
+		auto span = get<frg::span<const uint8_t>>();
 		return frg::span{reinterpret_cast<const uint16_t *>(span.data()), span.size() / sizeof(uint16_t)};
 	}
 
 	frg::span<const uint32_t> asUint32Span() const {
 		if (std::holds_alternative<std::monostate>(value))
 			return {};
-		auto span = std::get<frg::span<const uint8_t>>(value);
+		auto span = get<frg::span<const uint8_t>>();
 		return frg::span{reinterpret_cast<const uint32_t *>(span.data()), span.size() / sizeof(uint32_t)};
 	}
 
 	frg::span<const int32_t> asInt32Span() const {
 		if (std::holds_alternative<std::monostate>(value))
 			return {};
-		auto span = std::get<frg::span<const uint8_t>>(value);
+		auto span = get<frg::span<const uint8_t>>();
 		return frg::span{reinterpret_cast<const int32_t *>(span.data()), span.size() / sizeof(int32_t)};
 	}
 
 	value_types value;
+
+private:
+	// std::get() is not freestanding, so check for the right alternative ourselves.
+	template<typename T>
+	const T &get() const {
+		auto v = std::get_if<T>(&value);
+		__ensure(v);
+		return *v;
+	}
 };
 
 template<int Category, size_t N>
