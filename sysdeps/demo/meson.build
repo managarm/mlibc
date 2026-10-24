@@ -82,7 +82,7 @@ endif
 if not headers_only
 	crt = custom_target('crt1',
 		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		command: c_compiler.cmd_array() + freestanding_hdrs_args + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
 		input: 'crt1.S',
 		output: 'crt1.o',
 		install: true,
