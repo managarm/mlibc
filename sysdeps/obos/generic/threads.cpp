@@ -9,8 +9,10 @@
 
 extern "C" void __mlibc_thread_entry();
 
-extern "C" void __mlibc_thread_trampoline(void (*fn)(uintptr_t user), Tcb *tcb, uintptr_t user) {
-	mlibc::sysdep<TcbSet>(tcb);
+extern "C" void __mlibc_thread_trampoline(void (*fn)(uintptr_t user), Tcb *tp, uintptr_t user) {
+	mlibc::sysdep<TpSet>(tp);
+
+	auto tcb = mlibc::tp_to_tcb(tp);
 
 	// wait on the TID to be set
 	while (__atomic_load_n(&tcb->tid, __ATOMIC_RELAXED) == 0)
@@ -30,8 +32,8 @@ extern "C" void __mlibc_thread_trampoline(void (*fn)(uintptr_t user), Tcb *tcb, 
 
 namespace mlibc {
 
-int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
-	(void) tcb;
+int Sysdeps<Clone>::operator()(void *tp, pid_t *pid_out, void *stack) {
+	(void) tp;
 
 	handle ctx =
 	    syscall5(Sys_ThreadContextCreate, __mlibc_thread_entry, 0, stack, 0, HANDLE_CURRENT);

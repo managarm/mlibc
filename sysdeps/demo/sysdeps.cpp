@@ -43,9 +43,8 @@ int Sysdeps<Write>::operator()(int fd, void const *buf, size_t size, ssize_t *re
 	return 0;
 }
 
-int Sysdeps<TcbSet>::operator()(void *pointer) {
-	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
-	asm volatile("mv tp, %0" ::"r"(thread_data));
+int Sysdeps<TpSet>::operator()(void *pointer) {
+	asm volatile("mv tp, %0" ::"r"(pointer));
 	// this can never fail in the demo os
 	return 0;
 }

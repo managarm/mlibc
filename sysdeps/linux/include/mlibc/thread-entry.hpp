@@ -2,7 +2,7 @@
 
 #include <mlibc/tcb.hpp>
 
-extern "C" int __mlibc_spawn_thread(int flags, void *stack, void *pid_out, void *child_tid, void *tcb);
+extern "C" int __mlibc_spawn_thread(int flags, void *stack, void *pid_out, void *child_tid, void *tp);
 extern "C" void __mlibc_enter_thread(void *entry, void *user_arg);
 
 namespace mlibc {
