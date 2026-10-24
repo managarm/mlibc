@@ -43,4 +43,31 @@ int Sysdeps<Mount>::operator()(const char *source, const char *target, const cha
 	return 0;
 }
 
+int Sysdeps<Swapon>::operator()(const char *path, int flags) {
+	SignalGuard sguard;
+
+	managarm::posix::SwaponRequest<SysdepsAllocator> req(getSysdepsAllocator());
+	req.set_path(frg::string<SysdepsAllocator>(getSysdepsAllocator(), path));
+	req.set_flags(flags);
+
+	auto [offer, send_head, send_tail, recv_resp] = exchangeMsgsSync(
+	    getPosixLane(),
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadTail(req, getSysdepsAllocator()), helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(send_tail.error());
+	HEL_CHECK(recv_resp.error());
+
+	auto resp =
+	    *bragi::parse_head_only<managarm::posix::SwaponResponse>(recv_resp, getSysdepsAllocator());
+	if (resp.error() != managarm::posix::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	return 0;
+}
+
 } // namespace mlibc

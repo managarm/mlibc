@@ -61,6 +61,7 @@ struct ManagarmSysdepTags :
 	Madvise,
 	GetAffinity,
 	Mount,
+	Swapon,
 	EpollCreate,
 	EpollCtl,
 	EpollPwait,
