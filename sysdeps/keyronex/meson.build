@@ -104,7 +104,7 @@ endif
 if not headers_only
 	crt = custom_target('crt0',
 		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		command: c_compiler.cmd_array() + freestanding_hdrs_args + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
 		input: host_machine.cpu_family() / 'crt-src/crt0.S',
 		output: 'crt0.o',
 		install: true,
@@ -113,7 +113,7 @@ if not headers_only
 
 	crt = custom_target('crt1',
 		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		command: c_compiler.cmd_array() + freestanding_hdrs_args + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
 		input: host_machine.cpu_family() / 'crt-src/crt0.S',
 		output: 'crt1.o',
 		install: true,
@@ -122,7 +122,7 @@ if not headers_only
 
 	custom_target('crti',
 		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		command: c_compiler.cmd_array() + freestanding_hdrs_args + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
 		input: host_machine.cpu_family() / 'crt-src/crti.S',
 		output: 'crti.o',
 		install: true,
@@ -131,7 +131,7 @@ if not headers_only
 
 	custom_target('crtn',
 		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		command: c_compiler.cmd_array() + freestanding_hdrs_args + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
 		input: host_machine.cpu_family() / 'crt-src/crtn.S',
 		output: 'crtn.o',
 		install: true,

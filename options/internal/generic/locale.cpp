@@ -745,7 +745,7 @@ int loadLocale(int category_mask, frg::string_view name, localeinfo **base) {
 
 		frg::string_view cat_name = [&] () {
 			if (composite) {
-				return composite.value()[mlibc_cat];
+				return (*composite)[mlibc_cat];
 			}
 			return frg::string_view{name};
 		}();

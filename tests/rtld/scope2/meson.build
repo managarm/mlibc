@@ -1,6 +1,6 @@
-libfoo = shared_library('foo', 'libfoo.c', link_args: mlibc_link_args)
-libbar = shared_library('bar', 'libbar.c', build_rpath: test_rpath, link_with: libfoo, link_args: mlibc_link_args)
-libbaz = shared_library('baz', 'libbaz.c', link_args: mlibc_link_args)
+libfoo = shared_library('foo', 'libfoo.c', c_args: freestanding_hdrs_args, link_args: mlibc_link_args)
+libbar = shared_library('bar', 'libbar.c', build_rpath: test_rpath, link_with: libfoo, c_args: freestanding_hdrs_args, link_args: mlibc_link_args)
+libbaz = shared_library('baz', 'libbaz.c', c_args: freestanding_hdrs_args, link_args: mlibc_link_args)
 test_depends = [libfoo, libbar, libbaz]
 
 libfoo_native = shared_library('native-foo', 'libfoo.c', native: true, link_args: mlibc_link_args)

@@ -1,33 +1,51 @@
 #include <bit>
 #include <internal-config.h>
-#include <immintrin.h>
 #include <stdint.h>
 
 #include <internal-config.h>
 #include <mlibc/string.hpp>
 #include <mlibc/features.hpp>
 
+namespace {
+
+// Vectors of bytes, with the vector extensions of GCC and Clang and the builtins that their
+// <immintrin.h> wraps, as we do not use the headers of the compiler.
+typedef char v16qi __attribute__((vector_size(16)));
+typedef char v32qi __attribute__((vector_size(32)));
+
+// For unaligned loads from the strings.
+typedef char v16qi_u __attribute__((vector_size(16), aligned(1), may_alias));
+typedef char v32qi_u __attribute__((vector_size(32), aligned(1), may_alias));
+
+// The modes of the SSE 4.2 string comparisons, as the _SIDD_* macros of <nmmintrin.h> have them.
+constexpr int siddSbyteOps = 0x02;
+constexpr int siddCmpEqualEach = 0x08;
+constexpr int siddNegativePolarity = 0x10;
+constexpr int siddLeastSignificant = 0x00;
+
+} // namespace
+
 extern "C" [[gnu::visibility("protected")]]
 __attribute__((target("sse2")))
 int __mlibc_strcmp_sse2(const char *s1, const char *s2) {
 	auto nearPageBoundary = [](uintptr_t addr) { return (addr & 0xFFF) > 4080; };
 
-	const __m128i zero = _mm_setzero_si128();
+	const v16qi zero = {};
 
 	while (true) {
 		// fast path: are both pointers safe from crossing a 4k page boundary?
 		if (!nearPageBoundary(reinterpret_cast<uintptr_t>(s1))
 		    && !nearPageBoundary(reinterpret_cast<uintptr_t>(s2))) [[likely]] {
 			while (true) {
-				auto chunk1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(s1));
-				auto chunk2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(s2));
+				v16qi chunk1 = *reinterpret_cast<const v16qi_u *>(s1);
+				v16qi chunk2 = *reinterpret_cast<const v16qi_u *>(s2);
 
-				auto eq_mask = _mm_cmpeq_epi8(chunk1, chunk2);
-				auto null_mask_vec = _mm_cmpeq_epi8(chunk1, zero);
+				v16qi eq_mask = (v16qi)(chunk1 == chunk2);
+				v16qi null_mask_vec = (v16qi)(chunk1 == zero);
 
 				// Combine: we look for any position that is NOT equal OR is a NULL terminator
-				unsigned int eq = _mm_movemask_epi8(eq_mask);
-				unsigned int null_mask = _mm_movemask_epi8(null_mask_vec);
+				unsigned int eq = __builtin_ia32_pmovmskb128(eq_mask);
+				unsigned int null_mask = __builtin_ia32_pmovmskb128(null_mask_vec);
 				unsigned int mask = (~eq & 0xFFFF) | null_mask;
 
 				if (mask != 0) [[unlikely]] {
@@ -67,17 +85,17 @@ int __mlibc_strcmp_sse4_2(const char *s1, const char *s2) {
 		    && !nearPageBoundary(reinterpret_cast<uintptr_t>(s2))) [[likely]] {
 
 			while (true) {
-				auto chunk1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(s1));
-				auto chunk2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(s2));
+				v16qi chunk1 = *reinterpret_cast<const v16qi_u *>(s1);
+				v16qi chunk2 = *reinterpret_cast<const v16qi_u *>(s2);
 
-				constexpr int modeFlags = _SIDD_SBYTE_OPS
-										| _SIDD_CMP_EQUAL_EACH
-										| _SIDD_NEGATIVE_POLARITY
-										| _SIDD_LEAST_SIGNIFICANT;
+				constexpr int modeFlags = siddSbyteOps
+										| siddCmpEqualEach
+										| siddNegativePolarity
+										| siddLeastSignificant;
 
-				int index = _mm_cmpistri(chunk1, chunk2, modeFlags);
-				int mismatch_found = _mm_cmpistrc(chunk1, chunk2, modeFlags);
-				int null_found = _mm_cmpistrz(chunk1, chunk2, modeFlags);
+				int index = __builtin_ia32_pcmpistri128(chunk1, chunk2, modeFlags);
+				int mismatch_found = __builtin_ia32_pcmpistric128(chunk1, chunk2, modeFlags);
+				int null_found = __builtin_ia32_pcmpistriz128(chunk1, chunk2, modeFlags);
 
 				if (mismatch_found) {
 					unsigned char c1 = s1[index];
@@ -112,7 +130,7 @@ extern "C" [[gnu::visibility("protected")]]
 __attribute__((target("avx2")))
 int __mlibc_strcmp_avx2(const char *s1, const char *s2) {
 	auto nearPageBoundary = [](uintptr_t addr) { return (addr & 0xFFF) > 4064; };
-	const __m256i zero = _mm256_setzero_si256();
+	const v32qi zero = {};
 
 	while (true) {
 		// fast path: are both pointers safe from crossing a 4k page boundary?
@@ -120,14 +138,14 @@ int __mlibc_strcmp_avx2(const char *s1, const char *s2) {
 		    && !nearPageBoundary(reinterpret_cast<uintptr_t>(s2))) [[likely]] {
 
 			while (true) {
-				auto chunk1 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(s1));
-				auto chunk2 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(s2));
+				v32qi chunk1 = *reinterpret_cast<const v32qi_u *>(s1);
+				v32qi chunk2 = *reinterpret_cast<const v32qi_u *>(s2);
 
-				auto eq_mask = _mm256_cmpeq_epi8(chunk1, chunk2);
-				auto null_mask_vec = _mm256_cmpeq_epi8(chunk1, zero);
+				v32qi eq_mask = (v32qi)(chunk1 == chunk2);
+				v32qi null_mask_vec = (v32qi)(chunk1 == zero);
 
-				uint32_t eq = _mm256_movemask_epi8(eq_mask);
-				uint32_t null_mask = _mm256_movemask_epi8(null_mask_vec);
+				uint32_t eq = __builtin_ia32_pmovmskb256(eq_mask);
+				uint32_t null_mask = __builtin_ia32_pmovmskb256(null_mask_vec);
 				uint32_t mask = (~eq & 0xFFFFFFFF) | null_mask;
 
 				if (mask != 0) [[unlikely]] {

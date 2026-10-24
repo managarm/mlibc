@@ -88,21 +88,28 @@ if not headers_only
 	use_freestnd_hdrs = get_option('use_freestnd_hdrs').disable_auto_if(
 			target_triple.to_lower().contains('mlibc'))
 
-	freestnd_c_hdrs_dep = dependency(
-		'freestnd-c-hdrs-' + host_machine.cpu_family(),
+	freestanding_c_hdrs_dep = dependency(
+		'freestanding-c-hdrs',
 		required: use_freestnd_hdrs,
-		fallback: ['freestnd-c-hdrs', 'freestnd_c_hdrs_dep'],
+		fallback: ['freestanding-c-hdrs', 'freestanding_c_hdrs_dep'],
 	)
-	libc_deps += freestnd_c_hdrs_dep
-	rtld_deps += freestnd_c_hdrs_dep
+	libc_deps += freestanding_c_hdrs_dep
+	rtld_deps += freestanding_c_hdrs_dep
 
-	freestnd_cxx_hdrs_dep = dependency(
-		'freestnd-cxx-hdrs-' + host_machine.cpu_family(),
+	freestanding_cxx_hdrs_dep = dependency(
+		'freestanding-cxx-hdrs',
 		required: use_freestnd_hdrs,
-		fallback: ['freestnd-cxx-hdrs', 'freestnd_cxx_hdrs_dep'],
+		fallback: ['freestanding-cxx-hdrs', 'freestanding_cxx_hdrs_dep'],
 	)
-	libc_deps += freestnd_cxx_hdrs_dep
-	rtld_deps += freestnd_cxx_hdrs_dep
+	libc_deps += freestanding_cxx_hdrs_dep
+	rtld_deps += freestanding_cxx_hdrs_dep
+
+	# With the freestanding headers, nothing we build for mlibc may see the headers of the
+	# compiler or of the system, only ours and the freestanding ones.
+	freestanding_hdrs_args = []
+	if freestanding_c_hdrs_dep.found() and freestanding_cxx_hdrs_dep.found()
+		freestanding_hdrs_args += '-nostdinc'
+	endif
 
 	frigg_dep = dependency(
 		'frigg',
@@ -124,6 +131,7 @@ if not headers_only
 	rtld_deps += libsmarter_dep
 
 	mlibc_c_args = ['-Wno-unused-function', '-D__MLIBC_BUILDING_MLIBC', '-fno-builtin', '-ffreestanding']
+	mlibc_c_args += freestanding_hdrs_args
 	mlibc_link_args = ['-nostdlib']
 	add_project_arguments('-Werror=misleading-indentation', language: ['c', 'cpp'])
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
@@ -136,7 +144,7 @@ if not headers_only
 		add_project_arguments('-D__MLIBC_DEBUG', language : ['c', 'cpp'])
 	endif
 
-	if not freestnd_c_hdrs_dep.found()
+	if not freestanding_c_hdrs_dep.found()
 		searchdirs = run_command(c_compiler.cmd_array(), '-print-search-dirs',
 					check: true).stdout()
 		searchdirs_arr = searchdirs.split('\n')
@@ -162,7 +170,7 @@ if not headers_only
 		libc_include_dirs += include_directories(ccdir / 'include')
 	endif
 
-	if not freestnd_cxx_hdrs_dep.found()
+	if not freestanding_cxx_hdrs_dep.found()
 		cplusplus_include_path = []
 
 		c_output = run_command(c_compiler.cmd_array(), '-E', '-v', '-x', 'c',
@@ -629,7 +637,9 @@ if not headers_only
 		# Disable libstdc++ assertions to avoid undefined references to std::__glibcxx_assert_fail
 		libc_cpp_args += ['-U_GLIBCXX_ASSERTIONS', '-D_GLIBCXX_NO_ASSERTIONS']
 		ld_cpp_args += ['-fno-sanitize=function']
-	elif c_compiler.get_id() == 'gcc'
+	elif c_compiler.get_id() == 'gcc' and '-nostdinc' not in freestanding_hdrs_args
+		# Without the freestanding headers, GCC still gets its own through the include
+		# directories added above.
 		libc_cpp_args += ['-nostdinc']
 	endif
 
@@ -649,6 +659,7 @@ if not headers_only
 	]
 	ld_static_lib = static_library(ld_library_name, rtld_sources,
 		name_prefix: '',
+		c_args: freestanding_hdrs_args,
 		cpp_args: mlibc_c_args + ld_cpp_args + static_cpp_args,
 		link_args: mlibc_link_args,
 		include_directories: rtld_include_dirs,
@@ -669,6 +680,7 @@ if not headers_only
 	if library_type in ['shared', 'both']
 		ld_shared_lib = shared_library(ld_library_name, rtld_sources + rtld_dso_sources,
 			name_prefix: '',
+			c_args: freestanding_hdrs_args,
 			cpp_args: mlibc_c_args + ld_cpp_args,
 			link_args: mlibc_link_args,
 			include_directories: rtld_include_dirs,

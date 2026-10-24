@@ -1,8 +1,8 @@
 # The test relies on libone having an unresolved symbol.
 test_additional_link_args += '-Wl,-z,undefs'
 
-libtwo = shared_library('two', 'libtwo.c', link_args: mlibc_link_args)
-libone = shared_library('one', 'libone.c', link_args: test_additional_link_args + mlibc_link_args)
+libtwo = shared_library('two', 'libtwo.c', c_args: freestanding_hdrs_args, link_args: mlibc_link_args)
+libone = shared_library('one', 'libone.c', c_args: freestanding_hdrs_args, link_args: test_additional_link_args + mlibc_link_args)
 test_depends = [libone, libtwo]
 
 libtwo_native = shared_library('native-two', 'libtwo.c', native: true, link_args: mlibc_link_args)

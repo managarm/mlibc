@@ -36,7 +36,8 @@ foreach name : all_benchmarks
 
 	benchmark_cpp_args = []
 	foreach arg : mlibc_c_args
-		if arg != '-ffreestanding'
+		# The benchmarks need the hosted C++ library of the toolchain.
+		if arg not in ['-ffreestanding', '-nostdinc']
 			benchmark_cpp_args += arg
 		endif
 	endforeach
