@@ -180,7 +180,7 @@ foreach crtthing : crtstuff
 	crt = custom_target(
 		crtthing,
 		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		command: c_compiler.cmd_array() + freestanding_hdrs_args + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
 		input: crt_src,
 		output: crtthing + '.o',
 		install: true,
