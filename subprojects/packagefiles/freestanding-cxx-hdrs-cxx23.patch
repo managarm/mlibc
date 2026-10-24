@@ -1,0 +1,248 @@
+Make the headers that mlibc uses available in C++23
+
+<algorithm>, <array>, <expected>, <optional>, <span> and <variant> are only
+freestanding from C++26 on, so freestanding-cxx-hdrs refuses them in the C++23
+that mlibc is built as. Provide them from C++23 on, along with what they need
+that is otherwise only declared from C++26 on: of <algorithm>, its result
+types, the concept of its parallel overloads and projected_value_t, the default
+value type of its algorithms (P2248); of <span>, dynamic_extent, the
+constructors and deduction guides from array, as_bytes and as_writable_bytes.
+Only from C++26 on can the destructor of bad_expected_access be constexpr, as
+that of std::exception is not before.
+
+This is applied by meson through diff_files in freestanding-cxx-hdrs.wrap.
+
+diff --git a/include/__fcxx/algorithm_results.h b/include/__fcxx/algorithm_results.h
+index 1bec4ef..1ff6848 100644
+--- a/include/__fcxx/algorithm_results.h
++++ b/include/__fcxx/algorithm_results.h
+@@ -55,7 +55,7 @@ struct in_out_result {
+ /* The others, of <algorithm>, which is freestanding from C++26 on. The one
+  * above is also that of the uninitialized algorithms of <memory>, which is
+  * freestanding from C++23 on. */
+-#  if _FCXX_STD >= 2026
++#  if _FCXX_STD >= 2023
+ template <class _It, class _Fp>
+ struct in_fun_result {
+     _FCXX_NO_UNIQUE_ADDRESS _It in;
+diff --git a/include/__fcxx/iterator_base.h b/include/__fcxx/iterator_base.h
+index b45d416..0345053 100644
+--- a/include/__fcxx/iterator_base.h
++++ b/include/__fcxx/iterator_base.h
+@@ -722,6 +722,13 @@ struct incrementable_traits<projected<_It, _Proj> > {
+     using difference_type = iter_difference_t<_It>;
+ };
+ 
++/* mlibc: <algorithm> is provided from C++23 on, and its algorithms take this
++ * as the default type of their values, as P2248 has it for C++26. */
++#  if _FCXX_STD >= 2023
++template <indirectly_readable _It, indirectly_regular_unary_invocable<_It> _Proj>
++using projected_value_t = remove_cvref_t<invoke_result_t<_Proj&, iter_value_t<_It>&> >;
++#  endif
++
+ #endif
+ 
+ /* [alg.req.ind.move], concept indirectly_movable */
+diff --git a/include/__fcxx/ranges_access.h b/include/__fcxx/ranges_access.h
+index cfdc5fd..b195162 100644
+--- a/include/__fcxx/ranges_access.h
++++ b/include/__fcxx/ranges_access.h
+@@ -557,7 +557,7 @@ concept viewable_range =
+ template <class _Tp>
+ concept constant_range = input_range<_Tp> && __fcxx_constant_iterator<iterator_t<_Tp> >;
+ 
+-#  if _FCXX_STD >= 2026
++#  if _FCXX_STD >= 2023
+ template <class _Tp>
+ concept __fcxx_sized_random_access_range = random_access_range<_Tp> && sized_range<_Tp>;
+ #  endif
+diff --git a/include/__fcxx/span.h b/include/__fcxx/span.h
+index 28847ec..a433382 100644
+--- a/include/__fcxx/span.h
++++ b/include/__fcxx/span.h
+@@ -47,7 +47,7 @@ namespace std {
+  * the rest of it is declared. */
+ inline constexpr size_t __fcxx_dynamic_extent = static_cast<size_t>(-1);
+ 
+-#if _FCXX_STD >= 2026
++#if _FCXX_STD >= 2023
+ /* [span.syn], constants */
+ inline constexpr size_t dynamic_extent = __fcxx_dynamic_extent;
+ 
+@@ -78,7 +78,7 @@ inline constexpr bool __fcxx_span_is_span<span<_Tp, _Extent> > = true;
+ template <class _Tp>
+ inline constexpr bool __fcxx_span_is_array = false;
+ 
+-#if _FCXX_STD >= 2026
++#if _FCXX_STD >= 2023
+ template <class _Tp, size_t _Np>
+ inline constexpr bool __fcxx_span_is_array<array<_Tp, _Np> > = true;
+ #endif
+@@ -143,7 +143,7 @@ public:
+         requires (_Extent == __fcxx_dynamic_extent || _Np == _Extent)
+     constexpr span(type_identity_t<element_type> (&__arr)[_Np]) noexcept : __data_ptr(__arr), __data_size(_Np) {}
+ 
+-#if _FCXX_STD >= 2026
++#if _FCXX_STD >= 2023
+     template <class _Up, size_t _Np>
+         requires ((_Extent == __fcxx_dynamic_extent || _Np == _Extent) && __fcxx_span_compatible<_Up, element_type>)
+     constexpr span(array<_Up, _Np>& __arr) noexcept : __data_ptr(__arr.data()), __data_size(_Np) {}
+@@ -257,7 +257,7 @@ span(_It, _EndOrSize) -> span<remove_reference_t<iter_reference_t<_It> >
+ template <class _Tp, size_t _Np>
+ span(_Tp (&)[_Np]) -> span<_Tp, _Np>;
+ 
+-#if _FCXX_STD >= 2026
++#if _FCXX_STD >= 2023
+ template <class _Tp, size_t _Np>
+ span(array<_Tp, _Np>&) -> span<_Tp, _Np>;
+ 
+@@ -277,7 +277,7 @@ inline constexpr bool ranges::enable_view<span<_Tp, _Extent> > = true;
+ template <class _Tp, size_t _Extent>
+ inline constexpr bool ranges::enable_borrowed_range<span<_Tp, _Extent> > = true;
+ 
+-#if _FCXX_STD >= 2026
++#if _FCXX_STD >= 2023
+ /* [span.objectrep], views of object representation, which exclude volatile
+  * objects in all revisions, as LWG 4243 has it. */
+ template <class _Tp, size_t _Extent>
+diff --git a/include/algorithm b/include/algorithm
+index a5105f7..d1f288b 100644
+--- a/include/algorithm
++++ b/include/algorithm
+@@ -22,7 +22,7 @@
+ 
+ #include <__fcxx/config.h>
+ 
+-#if _FCXX_STD < 2026
++#if _FCXX_STD < 2023
+ #  error "<algorithm> is not a freestanding header before C++26"
+ #endif
+ 
+@@ -30,7 +30,7 @@
+ #include <__fcxx/version.h>
+ #undef _FCXX_VERSION_ALGORITHM
+ 
+-#if _FCXX_STD >= 2026
++#if _FCXX_STD >= 2023
+ 
+ /* All of the header is freestanding but the algorithms that allocate:
+  * stable_sort, stable_partition and inplace_merge, of both namespaces,
+diff --git a/include/array b/include/array
+index 63026c1..fabe101 100644
+--- a/include/array
++++ b/include/array
+@@ -22,7 +22,7 @@
+ 
+ #include <__fcxx/config.h>
+ 
+-#if _FCXX_STD < 2026
++#if _FCXX_STD < 2023
+ #  error "<array> is not a freestanding header before C++26"
+ #endif
+ 
+@@ -30,7 +30,7 @@
+ #include <__fcxx/version.h>
+ #undef _FCXX_VERSION_ARRAY
+ 
+-#if _FCXX_STD >= 2026
++#if _FCXX_STD >= 2023
+ 
+ #include <initializer_list>
+ #include <type_traits>
+diff --git a/include/expected b/include/expected
+index bf41f8a..68d7ee9 100644
+--- a/include/expected
++++ b/include/expected
+@@ -22,7 +22,7 @@
+ 
+ #include <__fcxx/config.h>
+ 
+-#if _FCXX_STD < 2026
++#if _FCXX_STD < 2023
+ #  error "<expected> is not a freestanding header before C++26"
+ #endif
+ 
+@@ -30,7 +30,7 @@
+ #include <__fcxx/version.h>
+ #undef _FCXX_VERSION_EXPECTED
+ 
+-#if _FCXX_STD >= 2026
++#if _FCXX_STD >= 2023
+ 
+ #include <concepts>
+ #include <initializer_list>
+@@ -156,7 +156,7 @@ protected:
+     constexpr bad_expected_access(bad_expected_access&&) noexcept = default;
+     constexpr bad_expected_access& operator=(const bad_expected_access&) noexcept = default;
+     constexpr bad_expected_access& operator=(bad_expected_access&&) noexcept = default;
+-    constexpr ~bad_expected_access() = default;
++    _FCXX_CONSTEXPR26 ~bad_expected_access() = default;
+ 
+ public:
+     constexpr const char* what() const noexcept override {
+diff --git a/include/optional b/include/optional
+index c6f2c98..91e2466 100644
+--- a/include/optional
++++ b/include/optional
+@@ -22,7 +22,7 @@
+ 
+ #include <__fcxx/config.h>
+ 
+-#if _FCXX_STD < 2026
++#if _FCXX_STD < 2023
+ #  error "<optional> is not a freestanding header before C++26"
+ #endif
+ 
+@@ -30,7 +30,7 @@
+ #include <__fcxx/version.h>
+ #undef _FCXX_VERSION_OPTIONAL
+ 
+-#if _FCXX_STD >= 2026
++#if _FCXX_STD >= 2023
+ 
+ #include <initializer_list>
+ #include <type_traits>
+diff --git a/include/span b/include/span
+index 14a91df..01f9f91 100644
+--- a/include/span
++++ b/include/span
+@@ -22,7 +22,7 @@
+ 
+ #include <__fcxx/config.h>
+ 
+-#if _FCXX_STD < 2026
++#if _FCXX_STD < 2023
+ #  error "<span> is not a freestanding header before C++26"
+ #endif
+ 
+@@ -30,7 +30,7 @@
+ #include <__fcxx/version.h>
+ #undef _FCXX_VERSION_SPAN
+ 
+-#if _FCXX_STD >= 2026
++#if _FCXX_STD >= 2023
+ 
+ #include <__fcxx/span.h>
+ 
+diff --git a/include/variant b/include/variant
+index 9f766f3..6829389 100644
+--- a/include/variant
++++ b/include/variant
+@@ -22,7 +22,7 @@
+ 
+ #include <__fcxx/config.h>
+ 
+-#if _FCXX_STD < 2026
++#if _FCXX_STD < 2023
+ #  error "<variant> is not a freestanding header before C++26"
+ #endif
+ 
+@@ -30,7 +30,7 @@
+ #include <__fcxx/version.h>
+ #undef _FCXX_VERSION_VARIANT
+ 
+-#if _FCXX_STD >= 2026
++#if _FCXX_STD >= 2023
+ 
+ #include <initializer_list>
+ #include <type_traits>
