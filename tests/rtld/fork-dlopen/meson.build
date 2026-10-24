@@ -1,8 +1,10 @@
 test_additional_link_args += ['-pthread']
 
 libanchor = shared_library('fork-anchor', 'libanchor.c', dependencies: libc_dep,
+	c_args: freestanding_hdrs_args,
 	link_args: mlibc_link_args, override_options: 'b_sanitize=none')
 libchild = shared_library('fork-child', 'libchild.c', dependencies: libc_dep,
+	c_args: freestanding_hdrs_args,
 	link_args: mlibc_link_args, override_options: 'b_sanitize=none')
 test_depends = [libanchor, libchild]
 

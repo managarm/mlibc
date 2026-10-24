@@ -1,4 +1,4 @@
-lib_fake = shared_library('fake', 'empty.c', install_dir: 'fake', link_args: mlibc_link_args)
+lib_fake = shared_library('fake', 'empty.c', install_dir: 'fake', c_args: freestanding_hdrs_args, link_args: mlibc_link_args)
 lib_native_fake = shared_library('native-fake', 'empty.c', native: true, install_dir: 'fake', link_args: mlibc_link_args)
 
 test_link_with += [lib_fake]
