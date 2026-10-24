@@ -1,0 +1,4 @@
+[wrap-git]
+url = https://github.com/osdev0/freestanding-c-hdrs.git
+revision = 5e951873194cf131d00abe4978426e5aaaf6e379
+patch_directory = freestanding-c-hdrs

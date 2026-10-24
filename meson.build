@@ -88,21 +88,21 @@ if not headers_only
 	use_freestnd_hdrs = get_option('use_freestnd_hdrs').disable_auto_if(
 			target_triple.to_lower().contains('mlibc'))
 
-	freestnd_c_hdrs_dep = dependency(
-		'freestnd-c-hdrs-' + host_machine.cpu_family(),
+	freestanding_c_hdrs_dep = dependency(
+		'freestanding-c-hdrs',
 		required: use_freestnd_hdrs,
-		fallback: ['freestnd-c-hdrs', 'freestnd_c_hdrs_dep'],
+		fallback: ['freestanding-c-hdrs', 'freestanding_c_hdrs_dep'],
 	)
-	libc_deps += freestnd_c_hdrs_dep
-	rtld_deps += freestnd_c_hdrs_dep
+	libc_deps += freestanding_c_hdrs_dep
+	rtld_deps += freestanding_c_hdrs_dep
 
-	freestnd_cxx_hdrs_dep = dependency(
-		'freestnd-cxx-hdrs-' + host_machine.cpu_family(),
+	freestanding_cxx_hdrs_dep = dependency(
+		'freestanding-cxx-hdrs',
 		required: use_freestnd_hdrs,
-		fallback: ['freestnd-cxx-hdrs', 'freestnd_cxx_hdrs_dep'],
+		fallback: ['freestanding-cxx-hdrs', 'freestanding_cxx_hdrs_dep'],
 	)
-	libc_deps += freestnd_cxx_hdrs_dep
-	rtld_deps += freestnd_cxx_hdrs_dep
+	libc_deps += freestanding_cxx_hdrs_dep
+	rtld_deps += freestanding_cxx_hdrs_dep
 
 	frigg_dep = dependency(
 		'frigg',
@@ -136,7 +136,7 @@ if not headers_only
 		add_project_arguments('-D__MLIBC_DEBUG', language : ['c', 'cpp'])
 	endif
 
-	if not freestnd_c_hdrs_dep.found()
+	if not freestanding_c_hdrs_dep.found()
 		searchdirs = run_command(c_compiler.cmd_array(), '-print-search-dirs',
 					check: true).stdout()
 		searchdirs_arr = searchdirs.split('\n')
@@ -162,7 +162,7 @@ if not headers_only
 		libc_include_dirs += include_directories(ccdir / 'include')
 	endif
 
-	if not freestnd_cxx_hdrs_dep.found()
+	if not freestanding_cxx_hdrs_dep.found()
 		cplusplus_include_path = []
 
 		c_output = run_command(c_compiler.cmd_array(), '-E', '-v', '-x', 'c',
