@@ -951,6 +951,31 @@ void test33() {
 	assert(c == -1);
 }
 
+void test34() {
+	char *test_argv[] = {
+		"dummy"
+		"-zfk"
+		"-Fraw",
+	};
+
+	optind = 1;
+	int c;
+	while ((c = getopt(COUNT_OF(test_argv), test_argv, "cC:defF:hHlkM:qQrS:tT:vVz0123456789")) != -1) {
+		switch (c) {
+		case 'z':
+		case 'f':
+		case 'k':
+			break;
+		case 'F':
+			assert(!strcmp(optarg, "raw"));
+			return;
+		default:
+			dump(c);
+			assert(false);
+		}
+	}
+}
+
 int main() {
 	test1();
 	test2();
@@ -985,6 +1010,7 @@ int main() {
 	test31();
 	test32();
 	test33();
+	test34();
 
 	return 0;
 }
