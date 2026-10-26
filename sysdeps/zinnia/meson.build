@@ -14,7 +14,6 @@ rtld_sources += files(
 )
 
 libc_sources += files(
-	'generic/entry.cpp',
 	'generic/internal.cpp',
 	'generic/posix.cpp',
 	'generic/thread.cpp',
@@ -112,21 +111,4 @@ if not no_headers
 
 	install_headers('include/netpacket/packet.h', subdir: 'netpacket')
 	install_headers('include/net/bpf.h', subdir: 'net')
-endif
-
-if not headers_only
-	crtstuff = ['crt1', 'Scrt1', 'crti', 'crtn']
-	foreach crtthing : crtstuff
-		crtf = crtthing + '.S'
-		crt_src = files(host_machine.cpu_family() / crtf)
-		crt = custom_target(
-			crtthing,
-			build_by_default: true,
-			command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-			input: crt_src,
-			output: crtthing + '.o',
-			install: true,
-			install_dir: get_option('libdir'),
-		)
-	endforeach
 endif

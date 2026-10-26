@@ -5,14 +5,15 @@ sysdep_supported_options = {
 	'bsd': true,
 }
 
+internal_conf.set10('MLIBC_ENTRY_INVERTED_ORDER', mlibc_abi < 8)
+
 rtld_sources += files(
 	'generic/generic.cpp',
         'generic/astral.cpp',
 )
 
 libc_sources += files(
-	'generic/entry.cpp',
-        'generic/astral.cpp',
+	'generic/astral.cpp',
 	'generic/generic.cpp',
 	'threading/x86_64-thread.cpp',
 	'threading/x86_64-thread-entry.S',
@@ -93,42 +94,4 @@ if not no_headers
                 subdir: 'astral',
                 follow_symlinks: true,
         )
-endif
-
-if not headers_only
-	crt = custom_target('crt1',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-x86_64/crt1.S',
-		output: 'crt1.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
-
-        crt_pie = custom_target('Scrt1',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-x86_64/crt1.S',
-		output: 'Scrt1.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
-
-	custom_target('crti',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-x86_64/crti.S',
-		output: 'crti.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
-
-	custom_target('crtn',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt-x86_64/crtn.S',
-		output: 'crtn.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
 endif

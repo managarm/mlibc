@@ -77,16 +77,3 @@ if not no_headers
 	)
 endif
 # ANCHOR_END: abi-includes
-
-# ANCHOR: crt1
-if not headers_only
-	crt = custom_target('crt1',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'crt1.S',
-		output: 'crt1.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
-endif
-# ANCHOR_END: crt1

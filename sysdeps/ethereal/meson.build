@@ -10,7 +10,6 @@ rtld_sources += files(
 )
 
 libc_sources += files(
-	'generic/entry.cpp',
 	'generic/generic.cpp',
 	'generic/thread.cpp',
 	'generic/mount.cpp',
@@ -95,43 +94,5 @@ if not no_headers
 		'include/asm/ioctls.h',
 		subdir: 'asm',
 		follow_symlinks: true,
-	)
-endif
-
-if not headers_only
-	crt = custom_target('crt0',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'x86_64/crt-srcs/crt0.S',
-		output: 'crt0.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
-	
-	custom_target('Scrt1',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'x86_64/crt-srcs/Scrt1.S',
-		output: 'Scrt1.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
-
-	custom_target('crti',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'x86_64/crt-srcs/crti.S',
-		output: 'crti.o',
-		install: true,
-		install_dir: get_option('libdir')
-	)
-
-	custom_target('crtn',
-		build_by_default: true,
-		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
-		input: 'x86_64/crt-srcs/crtn.S',
-		output: 'crtn.o',
-		install: true,
-		install_dir: get_option('libdir')
 	)
 endif

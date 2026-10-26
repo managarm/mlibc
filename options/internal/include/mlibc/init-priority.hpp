@@ -11,4 +11,7 @@
 // Standard streams, after the environment is populated.
 #define MLIBC_INIT_PRIORITY_STDIO 51
 
+// Entry point before main() is called.
+#define MLIBC_INIT_PRIORITY_ENTRY 52
+
 #endif // MLIBC_INIT_PRIORITY_HPP
