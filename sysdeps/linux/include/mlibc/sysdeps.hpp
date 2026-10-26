@@ -121,7 +121,6 @@ struct LinuxSysdepTags :
 	Mknodat,
 	Umask,
 	BeforeCancellableSyscall,
-	Tgkill,
 	Fchownat,
 	Sigaltstack,
 	Sigsuspend,
@@ -324,7 +323,8 @@ struct LinuxSysdepTags :
 	Execve,
 	Yield,
 	GetPid,
-	Kill
+	Kill,
+	Tgkill
 {};
 
 template<typename Tag>
