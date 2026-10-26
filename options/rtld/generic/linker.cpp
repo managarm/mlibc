@@ -247,6 +247,11 @@ SharedObject *ObjectRepository::injectStaticObject(frg::string_view name,
 	auto object = frg::construct<SharedObject>(getLdsoAllocator(),
 		name.data(), std::move(path), true, globalScope.get(), rts);
 	_fetchFromPhdrs(object, phdr_pointer, phdr_entry_size, num_phdrs, entry_pointer);
+	if (object->dynamic) {
+		// Static PIE
+		_parseDynamic(object);
+		_parseVerdef(object);
+	}
 
 #if MLIBC_STATIC_BUILD
 	object->initArray = reinterpret_cast<InitFuncPtr*>(__init_array_start);
@@ -1593,6 +1598,9 @@ uint32_t gnuHash(frg::string_view string) {
 // TODO: move this to some namespace or class?
 frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_view string,
 		frg::optional<SymbolVersion> version) {
+	if (!object->dynamic)
+		return frg::optional<ObjectSymbol>{};
+
 	// Checks if the symbol can be used to satisfy the dependency.
 	auto eligible = [&] (ObjectSymbol cand) {
 		if(cand.symbol()->st_shndx == SHN_UNDEF)
@@ -1748,6 +1756,9 @@ frg::optional<ObjectSymbol> Scope::resolveSymbol(frg::string_view string,
 		uint64_t skipRts, ResolveFlags flags,
 		frg::optional<SymbolVersion> version) {
 	for (auto object : _objects) {
+		if(object->dynamic == nullptr)
+			continue;
+
 		if((flags & resolveCopy) && object->isMainObject)
 			continue;
 		if((flags & skipGlobalAfterRts) && object->globalRts > skipRts) {
