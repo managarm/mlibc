@@ -25,26 +25,6 @@ extern "C" {
 
 #define O_NDELAY O_NONBLOCK
 
-/* WARNING: keep `flock` and `flock64` in sync or bad things will happen! */
-
-struct flock {
-	short l_type;
-	short l_whence;
-	off_t l_start;
-	off_t l_len;
-	pid_t l_pid;
-};
-
-#if __MLIBC_LINUX_OPTION && defined(_LARGEFILE64_SOURCE)
-struct flock64 {
-	short l_type;
-	short l_whence;
-	off_t l_start;
-	off_t l_len;
-	pid_t l_pid;
-};
-#endif /* __MLIBC_LINUX_OPTION && defined(_LARGEFILE64_SOURCE) */
-
 #ifndef __MLIBC_ABI_ONLY
 
 int creat(const char *__path, mode_t __mode);
