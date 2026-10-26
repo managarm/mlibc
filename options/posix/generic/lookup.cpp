@@ -542,7 +542,7 @@ int lookup_name_null(struct lookup_result &buf, int flags, int family) {
 			struct dns_addr_buf addr_buf;
 			addr_buf.family = AF_INET;
 
-			in_addr_t addr = INADDR_LOOPBACK;
+			in_addr_t addr = htonl(INADDR_LOOPBACK);
 			memcpy(&addr_buf.addr, &addr, 4);
 
 			buf.buf.push_back(addr_buf);
