@@ -558,6 +558,8 @@ void free(void *ptr) {
 
 void *malloc(size_t size) {
 	auto nptr = getAllocator().allocate(size);
+	if (!nptr)
+		errno = ENOMEM;
 	// TODO: Print PID only if POSIX option is enabled.
 	if (mlibc::globalConfig().debugMalloc)
 		mlibc::infoLogger() << "mlibc (PID ?): malloc() returns "
@@ -567,6 +569,8 @@ void *malloc(size_t size) {
 
 void *realloc(void *ptr, size_t size) {
 	auto nptr = getAllocator().reallocate(ptr, size);
+	if (!nptr && size)
+		errno = ENOMEM;
 	// TODO: Print PID only if POSIX option is enabled.
 	if (mlibc::globalConfig().debugMalloc)
 		mlibc::infoLogger() << "mlibc (PID ?): realloc() on "
