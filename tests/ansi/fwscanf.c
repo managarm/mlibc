@@ -558,7 +558,7 @@ int main() {
 	TESTCASE(L"12,34", assert(fwscanf(fp, L"%d", &int_value) == 1);)
 	assert(int_value == 12);
 	TESTCASE(L"12,34", assert(fwscanf(fp, L"%f", &float_value) == 1);)
-	// assert(float_value >= 12.34 - 0.01 && float_value <= 12.34 + 0.01);
+	assert(float_value >= 12.34 - 0.01 && float_value <= 12.34 + 0.01);
 
 	TESTCASE(L"hello", {
 		int ret = fwscanf(fp, L"%[a-z]", char_value);
