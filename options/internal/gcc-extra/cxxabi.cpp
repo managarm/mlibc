@@ -18,3 +18,7 @@ extern "C" [[gnu::visibility("hidden")]] void _ZdlPvj() { // operator delete (vo
 extern "C" [[gnu::visibility("hidden")]] void _ZdlPvm() { // operator delete (void *, size_t)
 	__ensure(!"operator delete called! delete expressions cannot be used in mlibc.");
 }
+
+extern "C" [[gnu::visibility("hidden")]] void _ZNSt3__122__libcpp_verbose_abortEPKcz(const char *, ...) { // std::__libcpp_verbose_abort(const char *, ...)
+	__ensure(!"std::__libcpp_verbose_abort called!");
+}
