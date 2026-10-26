@@ -58,13 +58,15 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
         - "-Dwerror=true"
+        - "-Dbuildtype=debug"
+        - "-Ddebug=false"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
         environ:
           CFLAGS: '-Wno-error=maybe-uninitialized'
           CXXFLAGS: '-Wno-error=maybe-uninitialized'
-          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
+          LDFLAGS: '-Wl,--start-group -Wl,/tmp/libgcc-@OPTION:arch@.a -Wl,--end-group'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -99,11 +101,13 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=static"
         - "-Dwerror=true"
+        - "-Dbuildtype=debug"
+        - "-Ddebug=false"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
         environ:
-          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
+          LDFLAGS: '-Wl,--start-group -Wl,/tmp/libgcc-@OPTION:arch@.a -Wl,--end-group'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -137,11 +141,13 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=shared"
         - "-Dwerror=true"
+        - "-Dbuildtype=debug"
+        - "-Ddebug=false"
         - '-Dlinux_kernel_headers=@BUILD_ROOT@/packages/linux-headers/usr/include'
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
         environ:
-          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
+          LDFLAGS: '-Wl,--start-group -Wl,/tmp/libgcc-@OPTION:arch@.a -Wl,--end-group'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -176,6 +182,8 @@ packages:
         - "-Db_sanitize=undefined"
         - "-Ddefault_library=both"
         - "-Dwerror=true"
+        - "-Dbuildtype=debug"
+        - "-Ddebug=false"
         - "-Dposix_option=disabled"
         - "-Dlinux_option=disabled"
         - "-Dglibc_option=disabled"
@@ -184,7 +192,7 @@ packages:
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
         environ:
-          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
+          LDFLAGS: '-Wl,--start-group -Wl,/tmp/libgcc-@OPTION:arch@.a -Wl,--end-group'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']
@@ -216,7 +224,7 @@ packages:
         - "--cross-file=@THIS_SOURCE_DIR@/ci/linux-@OPTION:arch@-@OPTION:compiler@.cross-file"
         - '@THIS_SOURCE_DIR@'
         environ:
-          LDFLAGS: '-Wl,/tmp/libgcc-@OPTION:arch@.a'
+          LDFLAGS: '-Wl,--start-group -Wl,/tmp/libgcc-@OPTION:arch@.a -Wl,--end-group'
     build:
       - args: ['ninja']
       - args: ['ninja', 'install']

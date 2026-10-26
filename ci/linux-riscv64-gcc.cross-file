@@ -11,3 +11,9 @@ system = 'linux'
 cpu_family = 'riscv64'
 cpu = 'unknown'
 endian = 'little'
+
+[built-in options]
+c_args = ['-mno-relax']
+cpp_args = ['-mno-relax']
+c_link_args = ['-mno-relax']
+cpp_link_args = ['-mno-relax']
