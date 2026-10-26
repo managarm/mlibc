@@ -59,10 +59,8 @@ size_t strlen(const char *__s);
 
 #ifndef __MLIBC_ABI_ONLY
 
-/* POSIX extensions. */
+/* POSIX extensions. musl defines this even with _GNU_SOURCE gating */
 #if defined(_GNU_SOURCE)
-char *strerror_r(int __errnum, char *__buffer, size_t __size) __asm__("__gnu_strerror_r");
-#else
 int strerror_r(int __errnum, char *__buffer, size_t __size);
 #endif
 
