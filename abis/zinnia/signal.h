@@ -1,11 +1,14 @@
 #ifndef _ABIBITS_SIGNAL_H
 #define _ABIBITS_SIGNAL_H
 
+#include <mlibc-config.h>
+
 #include <abi-bits/pid_t.h>
 #include <abi-bits/sigevent.h>
 #include <abi-bits/sigset_t.h>
 #include <abi-bits/uid_t.h>
 #include <bits/size_t.h>
+#include <bits/types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -102,10 +105,18 @@ typedef void (*__sighandler)(int);
 #define SA_NOMASK SA_NODEFER
 #define SA_ONESHOT SA_RESETHAND
 
+#if defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN
+#if defined(__aarch64__)
+#define MINSIGSTKSZ 5120
+#define SIGSTKSZ 16384
+#else
 #define MINSIGSTKSZ 2048
 #define SIGSTKSZ 8192
+#endif
+
 #define SS_ONSTACK 1
 #define SS_DISABLE 2
+#endif
 
 typedef struct __stack {
 	void *ss_sp;
@@ -127,8 +138,10 @@ typedef struct __stack {
 #define SI_USER 0
 #define SI_KERNEL 128
 
-#define NSIG 65
-#define _NSIG NSIG
+#define _NSIG 65
+#if defined(_DEFAULT_SOURCE)
+#define NSIG _NSIG
+#endif
 
 #define CLD_EXITED 1
 #define CLD_KILLED 2
@@ -141,35 +154,247 @@ struct sigaction {
 	union {
 		void (*sa_handler)(int);
 		void (*sa_sigaction)(int, siginfo_t *, void *);
-	};
-	unsigned long sa_flags;
+	} __sa_handler;
+	int sa_flags;
 	void (*sa_restorer)(void);
 	sigset_t sa_mask;
 };
 
-#if defined(__x86_64__) || defined(__aarch64__) || (defined(__riscv) && __riscv_xlen == 64)        \
-    || defined(__loongarch64)
+#define sa_handler __sa_handler.sa_handler
+#define sa_sigaction __sa_handler.sa_sigaction
+
+#ifdef _DEFAULT_SOURCE
+#define __pollution(n) n
+#else
+#define __pollution(n) __##n
+#endif
+
+#if defined(__x86_64__)
+
+#if defined(_GNU_SOURCE) || defined(__MLIBC_BUILDING_MLIBC)
+#define REG_R8 0
+#define REG_R9 1
+#define REG_R10 2
+#define REG_R11 3
+#define REG_R12 4
+#define REG_R13 5
+#define REG_R14 6
+#define REG_R15 7
+#define REG_RDI 8
+#define REG_RSI 9
+#define REG_RBP 10
+#define REG_RBX 11
+#define REG_RDX 12
+#define REG_RAX 13
+#define REG_RCX 14
+#define REG_RSP 15
+#define REG_RIP 16
+#define REG_EFL 17
+#define REG_CSGSFS 18
+#define REG_ERR 19
+#define REG_TRAPNO 20
+#define REG_OLDMASK 21
+#define REG_CR2 22
+#endif
+
+#define __NGREG 23
+#if defined(_DEFAULT_SOURCE)
+#define NGREG __NGREG
+typedef unsigned long gregset_t[__NGREG];
+#endif
+
+struct _fpxreg {
+	unsigned short __pollution(significand)[4];
+	unsigned short __pollution(exponent);
+	unsigned short __padding[3];
+};
+
+struct _xmmreg {
+	__mlibc_uint32 __pollution(element)[4];
+};
+
+struct _fpstate {
+	__mlibc_uint16 __pollution(cwd);
+	__mlibc_uint16 __pollution(swd);
+	__mlibc_uint16 __pollution(ftw);
+	__mlibc_uint16 __pollution(fop);
+	__mlibc_uint64 __pollution(rip);
+	__mlibc_uint64 __pollution(rdp);
+	__mlibc_uint32 __pollution(mxcsr);
+	__mlibc_uint32 __pollution(mxcr_mask);
+	struct _fpxreg _st[8];
+	struct _xmmreg _xmm[16];
+	__mlibc_uint32 __padding[24];
+};
+
+#if defined(_DEFAULT_SOURCE)
+struct sigcontext {
+	unsigned long r8, r9, r10, r11, r12, r13, r14, r15;
+	unsigned long rdi, rsi, rbp, rbx, rdx, rax, rcx, rsp, rip, eflags;
+	unsigned short cs, gs, fs, ss;
+	unsigned long err, trapno, oldmask, cr2;
+	struct _fpstate *fpstate;
+	unsigned long __reserved1[8];
+};
+#endif
 
 typedef struct {
-	unsigned long oldmask;
-	unsigned long gregs[16];
-	unsigned long pc, pr, sr;
-	unsigned long gbr, mach, macl;
-	unsigned long fpregs[16];
-	unsigned long xfpregs[16];
-	unsigned int fpscr, fpul, ownedfp;
+	unsigned long __pollution(gregs)[__NGREG];
+	struct _libc_fpstate *__pollution(fpregs);
+	unsigned long __reserved1[8];
 } mcontext_t;
 
 typedef struct __ucontext {
+	unsigned long __pollution(uc_flags);
 	struct __ucontext *uc_link;
 	stack_t uc_stack;
 	mcontext_t uc_mcontext;
 	sigset_t uc_sigmask;
+	struct _fpstate __fpregs_mem;
+	unsigned long __ssp[4];
+} ucontext_t;
+
+#elif defined(__aarch64__)
+
+#if defined(_DEFAULT_SOURCE)
+#define NGREG 34
+typedef unsigned long greg_t, gregset_t[NGREG];
+
+#define FPSIMD_MAGIC 0x46508001
+#define ESR_MAGIC 0x45535201
+#define EXTRA_MAGIC 0x45585401
+#define SVE_MAGIC 0x53564501
+
+struct _aarch64_ctx {
+	__mlibc_uint32 magic;
+	__mlibc_uint32 size;
+};
+
+struct fpsimd_context {
+	struct _aarch64_ctx head;
+	__mlibc_uint32 fpsr;
+	__mlibc_uint32 fpcr;
+	__uint128_t vregs[32];
+};
+
+struct esr_context {
+	struct _aarch64_ctx head;
+	__mlibc_uint64 esr;
+};
+
+struct extra_context {
+	struct _aarch64_ctx head;
+	__mlibc_uint64 datap;
+	__mlibc_uint32 size;
+	__mlibc_uint32 __reserved[3];
+};
+#endif
+
+typedef struct {
+	__mlibc_uint64 __pollution(fault_address);
+	__mlibc_uint64 __pollution(regs)[31];
+	__mlibc_uint64 __pollution(sp);
+	__mlibc_uint64 __pollution(pc);
+	__mlibc_uint64 __pollution(pstate);
+	__mlibc_uint8 __reserved[4096] __attribute__((__aligned__(16)));
+} mcontext_t;
+
+typedef struct __ucontext {
+	unsigned long __pollution(uc_flags);
+	struct __ucontext *uc_link;
+	stack_t uc_stack;
+	sigset_t uc_sigmask;
+	mcontext_t uc_mcontext;
+} ucontext_t;
+
+#elif defined(__riscv) && __riscv_xlen == 64
+
+#if defined(_DEFAULT_SOURCE)
+#define NGREG 32
+#define REG_PC 0
+#define REG_RA 1
+#define REG_SP 2
+#define REG_TP 4
+#define REG_S0 8
+#define REG_S1 9
+#define REG_A0 10
+#define REG_S2 18
+#define REG_NARGS 8
+typedef unsigned long greg_t, gregset_t[NGREG];
+#endif
+
+struct __riscv_mc_f_ext_state {
+	__mlibc_uint32 __pollution(f)[32];
+	__mlibc_uint32 __pollution(fcsr);
+};
+
+struct __riscv_mc_d_ext_state {
+	__mlibc_uint64 __pollution(f)[32];
+	__mlibc_uint32 __pollution(fcsr);
+};
+
+struct __riscv_mc_q_ext_state {
+	__mlibc_uint64 __pollution(f)[64] __attribute__((__aligned__(16)));
+	__mlibc_uint32 __pollution(fcsr);
+	__mlibc_uint32 __reserved[3];
+};
+
+union __riscv_mc_fp_state {
+	struct __riscv_mc_f_ext_state __f;
+	struct __riscv_mc_d_ext_state __d;
+	struct __riscv_mc_q_ext_state __q;
+};
+
+typedef struct {
+	unsigned long __pollution(gregs)[32];
+	union __riscv_mc_fp_state __pollution(fpregs);
+} mcontext_t;
+
+typedef struct __ucontext {
+	unsigned long __pollution(uc_flags);
+	struct __ucontext *uc_link;
+	stack_t uc_stack;
+	sigset_t uc_sigmask;
+	mcontext_t uc_mcontext;
+} ucontext_t;
+
+#elif defined(__loongarch64)
+
+#if defined(_DEFAULT_SOURCE)
+#define NGREG 32
+#define REG_RA 1
+#define REG_SP 3
+#define REG_A0 4
+#define REG_S0 23
+#define REG_S1 24
+#define REG_S2 25
+#define REG_NARGS 8
+typedef unsigned long greg_t, gregset_t[NGREG];
+#endif
+
+typedef struct {
+	unsigned long __pollution(pc);
+	unsigned long __pollution(gregs)[32];
+	unsigned int __pollution(flags);
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+	__extension__ unsigned long __pollution(extcontext)[0] __attribute__((__aligned__(16)));
+#endif
+} mcontext_t;
+
+typedef struct __ucontext {
+	unsigned long __pollution(uc_flags);
+	struct __ucontext *uc_link;
+	stack_t uc_stack;
+	sigset_t uc_sigmask;
+	long __uc_pad;
+	__extension__ mcontext_t uc_mcontext;
 } ucontext_t;
 
 #else
 #error "Missing architecture specific code."
 #endif
+
+#undef __pollution
 
 #ifdef __cplusplus
 }
