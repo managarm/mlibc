@@ -52,6 +52,7 @@ int fcntl(int __fd, int __command, ...);
 int open(const char *__path, int __flags, ...);
 #if __MLIBC_LINUX_OPTION && defined(_LARGEFILE64_SOURCE)
 int open64(const char *__path, int __flags, ...);
+int openat64(int __dirfd, const char *__path, int __flags, ...);
 #endif /* __MLIBC_LINUX_OPTION && defined(_LARGEFILE64_SOURCE) */
 int openat(int __dirfd, const char *__path, int __flags, ...);
 int posix_fadvise(int __fd, off_t __offset, off_t __size, int __advice);
