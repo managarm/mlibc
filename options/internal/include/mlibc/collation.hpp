@@ -9,6 +9,7 @@
 #include <frg/span.hpp>
 #include <mlibc/locale.hpp>
 #include <ranges>
+#include <optional>
 #include <stdint.h>
 #include <string.h>
 #include <utility>
@@ -233,7 +234,8 @@ public:
 					size_t indirect_table_off = [&] {
 						if constexpr (std::is_same_v<Char, char>) {
 							// Skip over the matching portions of the sequences.
-							auto [mismatch_v, mismatch_s] = std::ranges::mismatch(view, entry.sequence());
+							auto [mismatch_v, mismatch_s] = std::ranges::mismatch(
+								view.begin(), view.end(), entry.sequence().begin(), entry.sequence().end());
 							auto tail = std::views::zip(
 								std::ranges::subrange(mismatch_v, view.end()),
 								std::ranges::subrange(mismatch_s, entry.sequence().end())

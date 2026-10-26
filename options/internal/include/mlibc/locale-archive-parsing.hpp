@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <optional>
 #include <frg/span.hpp>
 #include <frg/string.hpp>
 #include <limits.h>
