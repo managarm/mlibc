@@ -3,12 +3,23 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <unwind.h>
 
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 
 namespace {
+
+// What we use of the unwinding interface of the Itanium C++ ABI, which we load from
+// libgcc_s at runtime, so that we do not need the <unwind.h> of the compiler.
+enum _Unwind_Reason_Code : int {
+	_URC_NO_REASON = 0,
+	_URC_END_OF_STACK = 5,
+};
+
+struct _Unwind_Context;
+
+using _Unwind_Trace_Fn = _Unwind_Reason_Code (*)(_Unwind_Context *, void *);
+using _Unwind_Ptr = uintptr_t;
 
 using UnwindBacktrace =  _Unwind_Reason_Code (*)(_Unwind_Trace_Fn, void *);
 using UnwindGetIP = _Unwind_Ptr (*)(_Unwind_Context *);

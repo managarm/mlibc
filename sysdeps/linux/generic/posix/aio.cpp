@@ -755,7 +755,7 @@ int Sysdeps<AioListio>::operator()(
 		AioCbView cbv{cb};
 		auto ctx = frg::construct<AioContext>(getAllocator(), cb);
 		ctx->sqe = frg::construct<io_uring_sqe>(getAllocator());
-		ctx->sqe->opcode = opcode.value();
+		ctx->sqe->opcode = *opcode;
 		ctx->sqe->fd = cb->aio_fildes;
 		ctx->sqe->addr = reinterpret_cast<uintptr_t>(cb->aio_buf);
 		ctx->sqe->len = cb->aio_nbytes;

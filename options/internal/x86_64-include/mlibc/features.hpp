@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <stdint.h>
-#include <immintrin.h>
 #include <utility>
 
 enum class x86Feature {
