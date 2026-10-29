@@ -84,6 +84,7 @@ void __mlibc_sysdep_rtld_postfork() { }
 #ifndef MLIBC_STATIC_BUILD
 
 // Use a PC-relative instruction sequence to find our runtime load address.
+[[gnu::always_inline]]
 uintptr_t getLdsoBase() {
 #if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__) || defined(__m68k__) || defined(__loongarch64)
 	// On x86_64, the first GOT entry holds the link-time address of _DYNAMIC.
@@ -93,10 +94,38 @@ uintptr_t getLdsoBase() {
 	return runtime_dynamic - linktime_dynamic;
 #elif defined(__riscv)
 	return reinterpret_cast<uintptr_t>(&__ehdr_start);
+#elif defined(__mips64)
+    uintptr_t base;
+    asm volatile(
+        ".set push\n\t"
+        ".set noreorder\n\t"
+        "bal 1f\n\t"
+        "ld %0, %%got_disp(1f)($gp)\n\t"
+        "1: dsubu %0, $ra, %0\n\t"
+        ".set pop\n\t"
+        : "=&r"(base)
+        :
+        : "$31"
+    );
+    return base; 
 #else
 	#error Unknown architecture!
 #endif
 }
+
+[[gnu::always_inline]]
+static inline elf_dyn *getRuntimeDynamic() {
+    elf_dyn *dynamic;
+    asm(
+        "lui %0, %%hi(%%gp_rel(_DYNAMIC))\n\t"
+        "daddiu %0, %0, %%lo(%%gp_rel(_DYNAMIC))\n\t"
+        "daddu %0, %0, $gp\n\t"
+        : "=&r"(dynamic)
+    );
+    return dynamic;
+}
+
+static uintptr_t ldso_base = 0;
 
 #if !defined(__m68k__)
 // Relocates the dynamic linker (i.e. this DSO) itself.
@@ -104,15 +133,21 @@ uintptr_t getLdsoBase() {
 // - There are no references to external symbols.
 // Note that this code is fragile in the sense that it must not contain relocations itself.
 // TODO: Use tooling to verify this at compile time.
-extern "C" void relocateSelf() {
+extern "C"
+[[gnu::optimize("no-jump-tables")]]
+void relocateSelf() {
+	elf_dyn *dynamic = getRuntimeDynamic();
+
 	size_t rela_offset = 0;
 	size_t rela_size = 0;
 	size_t rel_offset = 0;
 	size_t rel_size = 0;
 	size_t relr_offset = 0;
 	size_t relr_size = 0;
-	for(size_t i = 0; _DYNAMIC[i].d_tag != DT_NULL; i++) {
-		auto ent = &_DYNAMIC[i];
+	size_t got_offset = 0;
+	size_t local_gotno = 0;
+	for(size_t i = 0; dynamic[i].d_tag != DT_NULL; i++) {
+		auto ent = &dynamic[i];
 		switch(ent->d_tag) {
 		case DT_REL: rel_offset = ent->d_un.d_ptr; break;
 		case DT_RELSZ: rel_size = ent->d_un.d_val; break;
@@ -120,10 +155,18 @@ extern "C" void relocateSelf() {
 		case DT_RELASZ: rela_size = ent->d_un.d_val; break;
 		case DT_RELR: relr_offset = ent->d_un.d_ptr; break;
 		case DT_RELRSZ: relr_size = ent->d_un.d_val; break;
+		case DT_PLTGOT: got_offset = ent->d_un.d_ptr; break;
+		case DT_MIPS_LOCAL_GOTNO: local_gotno = ent->d_un.d_val; break;
 		}
 	}
 
 	auto ldso_base = getLdsoBase();
+
+	for (size_t i = 0; i < local_gotno; i++) {
+		auto p = reinterpret_cast<uintptr_t *>(ldso_base + got_offset + i * sizeof(uintptr_t));
+		*p += ldso_base;
+	}
+
 
 	for(size_t disp = 0; disp < rela_size; disp += sizeof(elf_rela)) {
 		auto reloc = reinterpret_cast<elf_rela *>(ldso_base + rela_offset + disp);
@@ -134,9 +177,13 @@ extern "C" void relocateSelf() {
 
 		auto p = reinterpret_cast<uintptr_t *>(ldso_base + reloc->r_offset);
 		switch(type) {
+		case R_NONE:
+			break;
+		#ifdef R_RELATIVE
 		case R_RELATIVE:
 			*p = ldso_base + reloc->r_addend;
 			break;
+		#endif
 		default:
 			__builtin_trap();
 		}
@@ -151,9 +198,18 @@ extern "C" void relocateSelf() {
 
 		auto p = reinterpret_cast<uintptr_t *>(ldso_base + reloc->r_offset);
 		switch(type) {
+		case R_NONE:
+			break;
+		case (R_MIPS_64 << 8) | R_MIPS_REL32:
+			if (ELF_R_SYM(reloc->r_info))
+				__builtin_trap();
+			*p += ldso_base;
+			break;
+		#ifdef R_RELATIVE
 		case R_RELATIVE:
 			*p += ldso_base;
 			break;
+		#endif
 		default:
 			__builtin_trap();
 		}
@@ -186,6 +242,8 @@ extern "C" void relocateSelf() {
 			addr += CHAR_BIT * sizeof(elf_relr) - 1;
 		}
 	}
+
+	::ldso_base = ldso_base;
 }
 #else
 // m68k needs a tighter relocation function to avoid itself relying on the GOT.
@@ -282,6 +340,7 @@ void setupVdso(uintptr_t vdsoBase) {
 	auto vdso_header = reinterpret_cast<elf_ehdr *>(vdsoBase);
 	auto vdso_phdrs = reinterpret_cast<void *>(vdsoBase + vdso_header->e_phoff);
 	elf_dyn *vdso_dynamic = nullptr;
+	uint32_t vdso_dynamic_flags = 0;
 	uintptr_t actual_base = 0;
 	bool found_load = false;
 
@@ -294,8 +353,10 @@ void setupVdso(uintptr_t vdsoBase) {
 			found_load = true;
 		}
 
-		if (phdr->p_type == PT_DYNAMIC)
+		if (phdr->p_type == PT_DYNAMIC) {
 			vdso_dynamic = reinterpret_cast<elf_dyn *>(vdsoBase + phdr->p_offset);
+			vdso_dynamic_flags = phdr->p_flags;
+		}
 	}
 
 	if (!found_load || !vdso_dynamic)
@@ -327,7 +388,7 @@ void setupVdso(uintptr_t vdsoBase) {
 	}
 
 	auto vdso = initialRepository->injectObjectFromDts(vdso_soname,
-		frg::string<LdsoAllocator> { getLdsoAllocator() }, actual_base, vdso_dynamic, 1);
+		frg::string<LdsoAllocator> { getLdsoAllocator() }, actual_base, vdso_dynamic, vdso_dynamic_flags, 1);
 	vdso->phdrPointer = vdso_phdrs;
 	vdso->phdrCount = vdso_header->e_phnum;
 	vdso->phdrEntrySize = vdso_header->e_phentsize;
@@ -373,7 +434,6 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	ctor_fn *ldso_ctors = nullptr;
 	size_t num_ldso_ctors = 0;
 
-	auto ldso_base = getLdsoBase();
 	if(rtldConfig.debug) {
 		mlibc::infoLogger() << "ldso: Own base address is: 0x"
 				<< frg::hex_fmt(ldso_base) << frg::endlog;
@@ -418,6 +478,24 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		case DT_PLTGOT:
 		case DT_BIND_NOW:
 			continue;
+		#ifdef __mips__
+		case DT_MIPS_LOCAL_GOTNO:
+		case DT_MIPS_SYMTABNO:
+		case DT_MIPS_GOTSYM:
+		case DT_MIPS_UNREFEXTNO:
+		case DT_MIPS_BASE_ADDRESS:
+			continue;
+		case DT_MIPS_RLD_VERSION:
+			if(ent->d_un.d_val != 1) {
+				mlibc::panicLogger() << "rtld: unexpected DT_MIPS_RLD_VERSION value of " << frg::hex_fmt(ent->d_un.d_val) << " in program interpreter" << frg::endlog;
+			}
+			continue;
+		case DT_MIPS_FLAGS:
+			if(ent->d_un.d_val & ~(1 << 1)) {
+				mlibc::panicLogger() << "rtld: unexpected DT_MIPS_FLAGS value of " << frg::hex_fmt(ent->d_un.d_val) << " in program interpreter" << frg::endlog;
+			}
+			continue;
+		#endif
 		case DT_FLAGS: {
 			if((ent->d_un.d_val & ~supportedDtFlags) == 0) {
 				continue;
@@ -618,13 +696,24 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 #endif
 
 #ifndef MLIBC_STATIC_BUILD
+	auto ldso_ehdr = reinterpret_cast<elf_ehdr *>(__ehdr_start);
+	auto ldso_phdr = reinterpret_cast<elf_phdr *>(ldso_ehdr + ldso_ehdr->e_phoff);
+
+	uint32_t dynamic_flags = 0;
+	for (size_t i = 0; i < ldso_ehdr->e_phnum; ++i) {
+		auto phdr = reinterpret_cast<const elf_phdr *>(
+			reinterpret_cast<uintptr_t>(ldso_phdr)
+			+ i * ldso_ehdr->e_phentsize);
+		if (phdr->p_type == PT_DYNAMIC) {
+			dynamic_flags = phdr->p_flags;
+			break;
+		}
+	}
+
 	auto ldso_soname = reinterpret_cast<const char *>(ldso_base + strtab_offset + soname_str);
 	auto ldso = initialRepository->injectObjectFromDts(ldso_soname,
 		frg::string<LdsoAllocator> { getLdsoAllocator() },
-		ldso_base, _DYNAMIC, 1);
-
-	auto ldso_ehdr = reinterpret_cast<elf_ehdr *>(__ehdr_start);
-	auto ldso_phdr = reinterpret_cast<elf_phdr *>(ldso_base + ldso_ehdr->e_phoff);
+		ldso_base, _DYNAMIC, dynamic_flags, 1);
 
 	ldso->phdrPointer = ldso_phdr;
 	ldso->phdrCount = ldso_ehdr->e_phnum;

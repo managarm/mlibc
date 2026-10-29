@@ -43,6 +43,9 @@ constexpr inline ptrdiff_t tlsOffsetFromTp = -0x7000;
 #elif defined(__loongarch64)
 constexpr inline bool tlsAboveTp = true;
 constexpr inline uintptr_t tlsOffsetFromTp = 0;
+#elif defined(__mips64)
+constexpr inline bool tlsAboveTp = true;
+constexpr inline uintptr_t tlsOffsetFromTp = -0x7000;
 #else
 #	error Unknown architecture
 #endif
@@ -144,6 +147,8 @@ elf_addr handleIfunc(elf_addr addr) {
 		return reinterpret_cast<ifunc_handler>(addr)(&ifunc_arg);
 	#elif defined(__i386__) || defined(__x86_64__) || defined(__m68k__)
 		return reinterpret_cast<ifunc_handler>(addr)();
+	#elif defined(__mips64)
+		__ensure(!"ifunc is not supported on mips64 yet");
 	#else
 	#	error Unknown architecture
 	#endif
@@ -203,13 +208,14 @@ ObjectRepository::ObjectRepository()
 
 SharedObject *ObjectRepository::injectObjectFromDts(frg::string_view name,
 		frg::string<LdsoAllocator> path, uintptr_t base_address,
-		elf_dyn *dynamic, uint64_t rts) {
+		elf_dyn *dynamic, uint32_t dynamic_flags, uint64_t rts) {
 	__ensure(!findLoadedObject(name));
 
 	auto object = frg::construct<SharedObject>(getLdsoAllocator(),
 		name.data(), std::move(path), false, globalScope.get(), rts);
 	object->baseAddress = base_address;
 	object->dynamic = dynamic;
+	object->dynamicFlags = dynamic_flags;
 	_parseDynamic(object);
 	_parseVerdef(object);
 
@@ -561,6 +567,7 @@ void ObjectRepository::_fetchFromPhdrs(SharedObject *object, void *phdr_pointer,
 			break;
 		case PT_DYNAMIC:
 			dynamic_offset = phdr->p_vaddr;
+			object->dynamicFlags = phdr->p_flags;
 			break;
 		case PT_TLS: {
 			object->tlsSegmentSize = phdr->p_memsz;
@@ -753,7 +760,9 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 			object->tlsImagePtr = (void *)(object->baseAddress + phdr->p_vaddr);
 		}else if(phdr->p_type == PT_DYNAMIC) {
 			object->dynamic = (elf_dyn *)(object->baseAddress + phdr->p_vaddr);
-		}else if(phdr->p_type == PT_INTERP
+			object->dynamicFlags = phdr->p_flags;
+		}else if(phdr->p_type == PT_NULL
+				|| phdr->p_type == PT_INTERP
 				|| phdr->p_type == PT_PHDR
 				|| phdr->p_type == PT_NOTE
 				|| phdr->p_type == PT_RISCV_ATTRIBUTES
@@ -909,12 +918,29 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			object->preInitArraySize = dynamic->d_un.d_val;
 			break;
 		case DT_DEBUG:
+			if (!(object->dynamicFlags & PF_W))
+				// A MIPS special...
+				break;
 #if ELF_CLASS == ELFCLASS32
 			dynamic->d_un.d_val = reinterpret_cast<Elf32_Word>(&globalDebugInterface);
 #elif ELF_CLASS == ELFCLASS64
 			dynamic->d_un.d_val = reinterpret_cast<Elf64_Xword>(&globalDebugInterface);
 #endif
 			break;
+		#ifdef __mips__
+		case DT_MIPS_RLD_MAP: {
+				auto slot = reinterpret_cast<elf_addr *>(
+					object->baseAddress + dynamic->d_un.d_ptr);
+				*slot = reinterpret_cast<elf_addr>(&globalDebugInterface);
+			}
+			break;
+		case DT_MIPS_RLD_MAP_REL: {
+				auto slot = reinterpret_cast<elf_addr *>(
+					reinterpret_cast<uintptr_t>(dynamic) + dynamic->d_un.d_val);
+				*slot = reinterpret_cast<elf_addr>(&globalDebugInterface);
+			}
+			break;
+		#endif
 		case DT_SONAME:
 			soname_offset = dynamic->d_un.d_val;
 			break;
@@ -1279,9 +1305,11 @@ void processLateRelocation(Relocation rel) {
 		memcpy(rel.destination(), (void *)p->virtualAddress(), p->symbol()->st_size);
 		break;
 
+	#ifdef R_IRELATIVE
 	case R_IRELATIVE:
 		rel.relocate(handleIfunc(rel.object()->baseAddress + rel.addend_rel()));
 		break;
+	#endif
 
 	default:
 		break;
@@ -1862,7 +1890,7 @@ void Loader::linkObjects(SharedObject *root) {
 		processLateRelocations(object);
 	}
 
-#if MLIBC_STATIC_BUILD
+#if MLIBC_STATIC_BUILD && defined(R_IRELATIVE)
 	if (root->isMainObject) {
 		if (__rela_iplt_start && __rela_iplt_end) {
 			for (const elf_rela *r = __rela_iplt_start; r < __rela_iplt_end; r++) {
@@ -2118,33 +2146,48 @@ struct TlsdescData {
 };
 #endif // defined(R_TLSDESC)
 
+frg::optional<ObjectSymbol> Loader::_resolveSymbolByIndex(SharedObject *object, elf_info index, bool skip_resolve_local) {
+	if (!index)
+		return frg::optional<ObjectSymbol>{};
+
+	frg::optional<ObjectSymbol> p;
+	
+	auto [sym, ver] = object->getSymbolByIndex(index);
+
+	if (!skip_resolve_local && ELF_ST_BIND(sym.symbol()->st_info) == STB_LOCAL)
+		p = sym;
+
+	if (!p && object->symbolicResolution)
+		p = resolveInObject(object, sym.getString(), ver);
+
+	if (!p)
+		p = Scope::resolveGlobalOrLocal(*globalScope, object->localScope,
+				sym.getString(), object->objectRts, 0, ver);
+
+	if(!p) {
+		if(ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK)
+			mlibc::panicLogger() << "Unresolved load-time symbol "
+					<< sym.getString() << " in object " << object->name << frg::endlog;
+
+		if(rtldConfig.debugVerbose)
+			mlibc::infoLogger() << "rtld: Unresolved weak load-time symbol "
+					<< sym.getString() << " in object " << object->name << frg::endlog;
+	}
+
+	return p;
+}
+
 void Loader::_processRelocations(Relocation &rel) {
 	// copy and irelative relocations have to be performed after all other relocations
-	if(rel.type() == R_COPY || rel.type() == R_IRELATIVE)
+	if(rel.type() == R_COPY
+	#if defined(R_IRELATIVE)
+	|| rel.type() == R_IRELATIVE
+	#endif
+	)
 		return;
 
 	// resolve the symbol if there is a symbol
-	frg::optional<ObjectSymbol> p;
-	if(rel.symbol_index()) {
-		auto [sym, ver] = rel.object()->getSymbolByIndex(rel.symbol_index());
-
-		if (rel.object()->symbolicResolution)
-			p = resolveInObject(rel.object(), sym.getString(), ver);
-
-		if (!p)
-			p = Scope::resolveGlobalOrLocal(*globalScope, rel.object()->localScope,
-					sym.getString(), rel.object()->objectRts, 0, ver);
-
-		if(!p) {
-			if(ELF_ST_BIND(sym.symbol()->st_info) != STB_WEAK)
-				mlibc::panicLogger() << "Unresolved load-time symbol "
-						<< sym.getString() << " in object " << rel.object()->name << frg::endlog;
-
-			if(rtldConfig.debugVerbose)
-				mlibc::infoLogger() << "rtld: Unresolved weak load-time symbol "
-						<< sym.getString() << " in object " << rel.object()->name << frg::endlog;
-		}
-	}
+	auto p = _resolveSymbolByIndex(rel.object(), rel.symbol_index());
 
 	switch(rel.type()) {
 	case R_NONE:
@@ -2302,6 +2345,16 @@ void Loader::_processRelocations(Relocation &rel) {
 			}
 		} break;
 #endif // defined(R_TLSDESC)
+#if defined(R_SYM_OR_REL)
+	case R_SYM_OR_REL: {
+		uintptr_t addr = rel.addend_rel();
+		if (rel.symbol_index())
+			addr += p ? p->virtualAddress() : 0;
+		else
+			addr += rel.object()->baseAddress;
+		rel.relocate(addr);
+	} break;
+#endif // defined(R_SYM_OR_REL)
 	default:
 		mlibc::panicLogger() << "Unexpected relocation type "
 				<< (void *) rel.type() << frg::endlog;
@@ -2317,6 +2370,14 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 
 	frg::optional<uintptr_t> relr_offset;
 	frg::optional<size_t> relr_length;
+
+	#if defined(__mips__)
+	frg::optional<uintptr_t> got_offset;
+	frg::optional<size_t> local_gotno;
+	
+	frg::optional<uintptr_t> mips_gotsym;
+	frg::optional<size_t> mips_symtabno;
+	#endif
 
 	for(size_t i = 0; object->dynamic[i].d_tag != DT_NULL; i++) {
 		elf_dyn *dynamic = &object->dynamic[i];
@@ -2349,8 +2410,42 @@ void Loader::_processStaticRelocations(SharedObject *object) {
 		case DT_RELRENT:
 			__ensure(dynamic->d_un.d_val == sizeof(elf_relr));
 			break;
+		#if defined(__mips__)
+		case DT_PLTGOT:
+			got_offset = dynamic->d_un.d_ptr;
+			break;
+		case DT_MIPS_LOCAL_GOTNO:
+			local_gotno = dynamic->d_un.d_val;
+			break;
+		case DT_MIPS_GOTSYM:
+			mips_gotsym = dynamic->d_un.d_val;
+			break;
+		case DT_MIPS_SYMTABNO:
+			mips_symtabno = dynamic->d_un.d_val;
+			break;
+		#endif
 		}
 	}
+
+	#if defined(__mips__)
+	if (got_offset && local_gotno) {
+		__ensure(*local_gotno > 0);
+		elf_addr *got = reinterpret_cast<elf_addr *>(object->baseAddress + *got_offset);
+		size_t first = (*local_gotno > 1 && got[1] & (elf_addr{1} << (sizeof(elf_addr) * CHAR_BIT - 1))) ? 2 : 1;
+		for (size_t i = first; i < *local_gotno; i++)
+			got[i] += object->baseAddress;
+	}
+	
+	if (mips_gotsym && mips_symtabno) {
+		__ensure(got_offset && local_gotno);
+		__ensure(*mips_gotsym <= *mips_symtabno);
+		auto got = reinterpret_cast<elf_addr *>(object->baseAddress + *got_offset);
+		for (size_t symidx = *mips_gotsym; symidx < *mips_symtabno; ++symidx) {
+			auto p = _resolveSymbolByIndex(object, symidx, true);
+			got[*local_gotno + symidx - *mips_gotsym] = p ? p->virtualAddress() : 0;
+		}
+	}
+	#endif
 
 	if(rela_offset && rela_length) {
 		__ensure(!rel_offset && !rel_length);
@@ -2413,10 +2508,12 @@ void panicOnPltLazyBinding() {
 } // namespace
 
 void Loader::_processLazyRelocations(SharedObject *object) {
+	#ifndef __mips__
 	if(object->globalOffsetTable) {
 		object->globalOffsetTable[1] = object;
 		object->globalOffsetTable[2] = (void *)&panicOnPltLazyBinding;
 	}
+	#endif
 
 	if(!object->lazyTableSize)
 		return;

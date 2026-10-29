@@ -9,12 +9,21 @@
 #define PROT_EXEC  0x04
 
 #define MAP_FAILED ((void *)(-1))
+
+#if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__) || defined(__riscv) || defined(__loongarch64) || defined(__m68k__)
+#define MAP_ANONYMOUS 0x20
+#elif defined(__mips64)
+#define MAP_ANONYMOUS	0x0800
+#else
+#error Missing architecture specific code.
+#endif
+
 #define MAP_FILE    0x00
 #define MAP_SHARED    0x01
 #define MAP_PRIVATE   0x02
 #define MAP_FIXED     0x10
-#define MAP_ANON      0x20
-#define MAP_ANONYMOUS 0x20
+
+#define MAP_ANON MAP_ANONYMOUS
 
 #if __MLIBC_LINUX_OPTION
 

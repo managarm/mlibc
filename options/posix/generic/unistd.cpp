@@ -26,6 +26,8 @@
 #include <mlibc/thread.hpp>
 #include <mlibc/utmp.hpp>
 
+#include <sys/ioctl.h>
+
 namespace {
 
 constexpr bool logExecvpeTries = false;

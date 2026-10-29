@@ -105,6 +105,34 @@ struct stat {
 	struct timespec st_ctim;
 };
 
+#elif defined(__mips64)
+
+struct stat {
+	dev_t st_dev;
+	unsigned int st_pad0[3];
+
+	ino_t st_ino;
+	mode_t st_mode;
+	nlink_t st_nlink;
+
+	uid_t st_uid;
+	gid_t st_gid;
+
+	dev_t st_rdev;
+	unsigned int st_pad1[3];
+
+	off_t st_size;
+
+	struct timespec st_atim;
+	struct timespec st_mtim;
+	struct timespec st_ctim;
+
+	blksize_t st_blksize;
+	unsigned int st_pad2;
+
+	blkcnt_t st_blocks;
+};
+
 #else
 #error "Missing architecture specific code."
 #endif

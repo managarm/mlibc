@@ -110,7 +110,7 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int f
 	else
 		__ensure(fsfdt == fsfd_target::fd_path);
 
-#if __INTPTR_WIDTH__ == 32
+#if __INTPTR_WIDTH__ == 32 || defined(__mips64)
 	struct statx tmp;
 	auto ret = do_cp_syscall(SYS_statx, fd, path, flags | AT_NO_AUTOMOUNT, STATX_BASIC_STATS, &tmp);
 #elif defined(SYS_newfstatat)
@@ -121,7 +121,7 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int f
 	if (int e = sc_error(ret); e)
 		return e;
 
-#if __INTPTR_WIDTH__ == 32
+#if __INTPTR_WIDTH__ == 32 || defined(__mips64)
 	statbuf->st_dev = __mlibc_dev_makedev(tmp.stx_dev_major, tmp.stx_dev_minor);
 	statbuf->st_rdev = __mlibc_dev_makedev(tmp.stx_rdev_major, tmp.stx_rdev_minor);
 	statbuf->st_ino = tmp.stx_ino;
@@ -224,6 +224,11 @@ int Sysdeps<TcbSet>::operator()(void *pointer) {
 #elif defined(__loongarch64)
 	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
 	asm volatile ("move $tp, %0" :: "r"(thread_data));
+#elif defined(__mips64)
+    auto thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb) + 0x7000;
+    auto ret = do_syscall(SYS_set_thread_area, thread_data);
+    if (int e = sc_error(ret); e)
+        return e;
 #else
 #error "Missing architecture specific code."
 #endif
@@ -272,6 +277,10 @@ int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
 #elif defined(__m68k__)
 	// TP should point 0x7000 bytes past the end of the TCB.
 	// TODO: We should change the sysdep so that we don't need to do this.
+	auto tp = reinterpret_cast<uintptr_t>(tcb) + sizeof(Tcb) + 0x7000;
+	tcb = reinterpret_cast<void *>(tp);
+#elif defined(__mips64)
+	// TP should point 0x7000 bytes past the end of the TCB.
 	auto tp = reinterpret_cast<uintptr_t>(tcb) + sizeof(Tcb) + 0x7000;
 	tcb = reinterpret_cast<void *>(tp);
 #elif defined(__i386__)
@@ -485,7 +494,7 @@ int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
 
 int Sysdeps<Isatty>::operator()(int fd) {
 	unsigned short winsizeHack[4];
-	auto ret = do_syscall(SYS_ioctl, fd, 0x5413 /* TIOCGWINSZ */, &winsizeHack);
+	auto ret = do_syscall(SYS_ioctl, fd, TIOCGWINSZ /* TIOCGWINSZ */, &winsizeHack);
 	if (int e = sc_error(ret); e)
 		return e;
 
@@ -535,7 +544,7 @@ int Sysdeps<FdToPath>::operator()(int fd, char **out) {
 
 # if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__) || defined(__m68k__)
 #  define HAS_SA_RESTORER 1
-# elif defined(__riscv) || defined(__loongarch64)
+# elif defined(__riscv) || defined(__loongarch64) || defined(__mips64)
 // no restorer member, kernel uses the vDSO trampoline automatically
 # else
 #  error unhandled architecture
@@ -548,6 +557,7 @@ extern "C" void __mlibc_signal_restore_rt(void);
 
 int Sysdeps<Sigaction>::operator()(int signum, const struct sigaction *act,
 		struct sigaction *oldact) {
+#ifndef __mips64
 	struct ksigaction {
 		void (*handler)(int);
 		unsigned long flags;
@@ -556,6 +566,13 @@ int Sysdeps<Sigaction>::operator()(int signum, const struct sigaction *act,
 #endif
 		uint32_t mask[2];
 	};
+#else
+	struct ksigaction {
+		unsigned int flags;
+		void (*handler)(int);
+		uint32_t mask[4];
+	};
+#endif
 
 	struct ksigaction kernel_act, kernel_oldact;
 	if (act) {
@@ -568,7 +585,11 @@ int Sysdeps<Sigaction>::operator()(int signum, const struct sigaction *act,
 		memcpy(&kernel_act.mask, &act->sa_mask, sizeof(kernel_act.mask));
 	}
 
+	#ifndef __mips64
 	static_assert(sizeof(kernel_act.mask) == 8);
+	#else
+	static_assert(sizeof(kernel_act.mask) == 16);
+	#endif
 
 	auto ret = do_syscall(SYS_rt_sigaction, signum, act ?
 		&kernel_act : nullptr, oldact ?
@@ -1666,6 +1687,8 @@ int Sysdeps<BeforeCancellableSyscall>::operator()(ucontext_t *uct) {
 #elif defined(__m68k__)
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.gregs[R_PC]);
 #elif defined(__loongarch64)
+	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.pc);
+#elif defined(__mips64)
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.pc);
 #else
 #error "Missing architecture specific code."

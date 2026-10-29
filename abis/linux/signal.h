@@ -24,10 +24,18 @@
 #define POLL_HUP 6
 #endif
 
+#ifdef __mips64
+#define __SI_SWAP_ERRNO_CODE
+#endif
+
 /* struct taken from musl. */
 
 typedef struct {
+#ifdef __SI_SWAP_ERRNO_CODE
+	int si_signo, si_code, si_errno;
+#else
 	int si_signo, si_errno, si_code;
+#endif
 	union {
 		char __pad[128 - 2*sizeof(int) - sizeof(long)];
 		struct {
@@ -93,9 +101,16 @@ typedef struct {
 #define si_arch    __si_fields.__sigsys.si_arch
 
 /* Required for sys_sigaction sysdep. */
+#ifdef __mips64
+#define SA_NOCLDSTOP	0x00000001
+#define SA_NOCLDWAIT	0x00010000
+#define SA_SIGINFO	0x00000008
+#else
 #define SA_NOCLDSTOP 1
 #define SA_NOCLDWAIT 2
 #define SA_SIGINFO 4
+#endif
+
 #define SA_ONSTACK 0x08000000
 #define SA_RESTART 0x10000000
 #define SA_NODEFER 0x40000000
@@ -118,6 +133,7 @@ typedef void (*__sighandler) (int);
 #define SIG_DFL ((__sighandler)(void *)(0))
 #define SIG_IGN ((__sighandler)(void *)(1))
 
+#ifndef __mips__
 #define SIGABRT 6
 #define SIGFPE 8
 #define SIGILL 4
@@ -162,6 +178,53 @@ typedef void (*__sighandler) (int);
 #define SIGUNUSED SIGSYS
 #define SIGCANCEL 32
 #define SIGTIMER  33
+#else
+#define SIGABRT 6
+#define SIGFPE 8
+#define SIGILL 4
+#define SIGINT 2
+#define SIGSEGV 11
+#define SIGTERM 15
+#define SIGPROF 29
+#define SIGIO 22
+#define SIGPWR 19
+#define SIGRTMIN 35
+#define SIGRTMAX 127
+
+/* constants for sigprocmask() */
+#define SIG_BLOCK 1
+#define SIG_UNBLOCK 2
+#define SIG_SETMASK 3
+
+#define SIGHUP	  1
+#define SIGQUIT   3
+#define SIGTRAP   5
+#define SIGIOT    SIGABRT
+#define SIGEMT    7
+#define SIGKILL	  9
+#define SIGBUS    10
+#define SIGSYS    12
+#define SIGPIPE   13
+#define SIGALRM	  14
+#define SIGUSR1   16
+#define SIGUSR2   17
+#define SIGCHLD	  18
+#define SIGCLD    SIGCHLD
+#define SIGWINCH  20
+#define SIGURG    21
+#define SIGPOLL   SIGIO
+#define SIGSTOP   23
+#define SIGTSTP   24
+#define SIGCONT   25
+#define SIGTTIN   26
+#define SIGTTOU   27
+#define SIGVTALRM 28
+#define SIGXCPU   30
+#define SIGXFSZ   31
+
+#define SIGCANCEL 32
+#define SIGTIMER  33
+#endif
 
 #if __MLIBC_XOPEN
 
@@ -174,6 +237,9 @@ typedef void (*__sighandler) (int);
 #elif defined(__loongarch64)
 #define MINSIGSTKSZ 4096
 #define SIGSTKSZ 16384
+#elif defined(__mips64)
+#define MINSIGSTKSZ 2048
+#define SIGSTKSZ 8192
 #else
 #error unhandled architecture
 #endif
@@ -182,11 +248,19 @@ typedef void (*__sighandler) (int);
 #define SS_DISABLE 2
 #endif
 
+#if defined(__mips64)
+typedef struct __stack {
+	void *ss_sp;
+	size_t ss_size;
+	int ss_flags;
+} stack_t;
+#else
 typedef struct __stack {
 	void *ss_sp;
 	int ss_flags;
 	size_t ss_size;
 } stack_t;
+#endif
 
 /* constants for sigev_notify of struct sigevent */
 #define SIGEV_SIGNAL 0
@@ -213,7 +287,12 @@ typedef struct __stack {
 #define ILL_BADSTK 8
 #define ILL_BADIADDR 9
 
+#ifdef __mips64
+#define _NSIG 128
+#else
 #define _NSIG 65
+#endif
+
 #if defined(_DEFAULT_SOURCE)
 #define NSIG _NSIG
 #endif
@@ -221,9 +300,15 @@ typedef struct __stack {
 #define SI_ASYNCNL (-60)
 #define SI_TKILL (-6)
 #define SI_SIGIO (-5)
+#ifndef __mips64
 #define SI_ASYNCIO (-4)
 #define SI_MESGQ (-3)
 #define SI_TIMER (-2)
+#else
+#define SI_ASYNCIO (-2)
+#define SI_TIMER (-3)
+#define SI_MESGQ (-4)
+#endif
 #define SI_QUEUE (-1)
 #define SI_USER 0
 #define SI_KERNEL 128
@@ -717,6 +802,89 @@ typedef struct __ucontext {
 	sigset_t uc_sigmask;
 	long __uc_pad;
 	__extension__ mcontext_t uc_mcontext;
+} ucontext_t;
+
+#elif defined(__mips64)
+// Likewise taken from musl.
+
+#define NGREG 32
+#define REG_RA 31
+#define REG_SP 29
+#define REG_S0 16
+#define REG_S1 17
+#define REG_A0 4
+#define REG_S2 18
+#define REG_NARGS 8
+
+#if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
+typedef unsigned long long greg_t, gregset_t[32];
+
+typedef struct {
+	union {
+		double fp_dregs[32];
+		struct {
+			float _fp_fregs;
+			unsigned _fp_pad;
+		} fp_fregs[32];
+	} fp_r;
+} fpregset_t;
+
+struct sigcontext {
+	unsigned long long sc_regs[32];
+	unsigned long long sc_fpregs[32];
+	unsigned long long sc_mdhi;
+	unsigned long long sc_hi1;
+	unsigned long long sc_hi2;
+	unsigned long long sc_hi3;
+	unsigned long long sc_mdlo;
+	unsigned long long sc_lo1;
+	unsigned long long sc_lo2;
+	unsigned long long sc_lo3;
+	unsigned long long sc_pc;
+	unsigned int sc_fpc_csr;
+	unsigned int sc_used_math;
+	unsigned int sc_dsp;
+	unsigned int sc_reserved;
+};
+
+typedef struct {
+	gregset_t gregs;
+	fpregset_t fpregs;
+	greg_t mdhi;
+	greg_t hi1;
+	greg_t hi2;
+	greg_t hi3;
+	greg_t mdlo;
+	greg_t lo1;
+	greg_t lo2;
+	greg_t lo3;
+	greg_t pc;
+	unsigned int fpc_csr;
+	unsigned int used_math;
+	unsigned int dsp;
+	unsigned int reserved;
+} mcontext_t;
+#else
+typedef struct {
+	unsigned long long __mc1[32];
+	double __mc2[32];
+	unsigned long long __mc3[9];
+	unsigned __mc4[4];
+} mcontext_t;
+#endif
+
+struct sigaltstack {
+	void *ss_sp;
+	size_t ss_size;
+	int ss_flags;
+};
+
+typedef struct __ucontext {
+	unsigned long uc_flags;
+	struct __ucontext *uc_link;
+	stack_t uc_stack;
+	mcontext_t uc_mcontext;
+	sigset_t uc_sigmask;
 } ucontext_t;
 
 #else

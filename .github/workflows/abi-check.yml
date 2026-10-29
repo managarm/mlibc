@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86_64, riscv64, aarch64, x86, m68k, loongarch64]
+        arch: [x86_64, riscv64, aarch64, x86, m68k, loongarch64, mips64]
     name: Compare ABI against glibc
     runs-on: ubuntu-latest
     container: debian:trixie
@@ -45,6 +45,8 @@ jobs:
               apt-get install -y gcc-i686-linux-gnu g++-i686-linux-gnu;; \
             x86_64) \
               apt-get install -y gcc g++;; \
+            mips64) \
+              apt-get install -y gcc-mips64-linux-gnuabi64 g++-mips64-linux-gnuabi64;; \
             *) \
               apt-get install -y gcc-${{matrix.arch}}-linux-gnu g++-${{matrix.arch}}-linux-gnu;; \
           esac
@@ -110,6 +112,9 @@ jobs:
             loongarch64)
               arch="loong64"
               ;;
+            mips64)
+              arch="mips64"
+              ;;
           esac
           apt-get download libc6-dev-$arch-cross
           dpkg-deb -x libc6-dev-*.deb ./glibc
@@ -124,6 +129,9 @@ jobs:
               arch="i386"
               triple="i686-linux-gnu"
               ;;
+            mips64)
+              triple="mips64-linux-gnuabi64"
+              ;;
           esac
           extra_args="--ld-library-path /usr/$triple/"
           echo "Comparing ABI of mlibc against glibc for ${{matrix.arch}}" >> $GITHUB_STEP_SUMMARY
@@ -132,7 +140,7 @@ jobs:
             --config ../src/mlibc/scripts/header-abi-compare-config.yml \
             --arch "$arch" \
             $extra_args \
-            ./glibc/usr/*-linux-gnu/include/ \
+            ./glibc/usr/$triple/include/ \
             ./packages/mlibc-headers-only/usr/include/ \
             -Mmfst >> $GITHUB_STEP_SUMMARY 2>&1
           echo '```' >> $GITHUB_STEP_SUMMARY
