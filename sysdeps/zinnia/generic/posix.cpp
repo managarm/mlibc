@@ -2,18 +2,21 @@
 #include <abi-bits/pid_t.h>
 #include <errno.h>
 #include <frg/logging.hpp>
+#include <ifaddrs.h>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/tcb.hpp>
-#include <ifaddrs.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
+#include <sys/times.h>
+#include <time.h>
 #include <zinnia/syscall.hpp>
 
 namespace mlibc {
@@ -477,6 +480,80 @@ int Sysdeps<GetParam>::operator()(pid_t pid, struct sched_param *param) {
 
 int Sysdeps<SetParam>::operator()(pid_t pid, const struct sched_param *param) {
 	return zinnia_syscall(SYSCALL_SCHED_SETPARAM, pid, (size_t)param).error;
+}
+
+int Sysdeps<GetMaxPriority>::operator()(int policy, int *out) {
+	if (policy != SCHED_OTHER)
+		return EINVAL;
+	struct sched_param param;
+	if (int e = sysdep<GetParam>(0, &param); e)
+		return e;
+	*out = param.sched_priority_max;
+	return 0;
+}
+
+int Sysdeps<GetMinPriority>::operator()(int policy, int *out) {
+	if (policy != SCHED_OTHER)
+		return EINVAL;
+	struct sched_param param;
+	if (int e = sysdep<GetParam>(0, &param); e)
+		return e;
+	*out = param.sched_priority_min;
+	return 0;
+}
+
+int Sysdeps<GetScheduler>::operator()(pid_t pid, int *policy) {
+	struct sched_param param;
+	if (int e = sysdep<GetParam>(pid, &param); e)
+		return e;
+	*policy = SCHED_OTHER;
+	return 0;
+}
+
+int Sysdeps<SetScheduler>::operator()(pid_t pid, int policy, const struct sched_param *param) {
+	if (policy != SCHED_OTHER)
+		return EINVAL;
+	return sysdep<SetParam>(pid, param);
+}
+
+int Sysdeps<GetSchedparam>::operator()(void *, int *policy, struct sched_param *param) {
+	if (int e = sysdep<GetParam>(0, param); e)
+		return e;
+	*policy = SCHED_OTHER;
+	return 0;
+}
+
+int Sysdeps<SetSchedparam>::operator()(void *, int policy, const struct sched_param *param) {
+	if (policy != SCHED_OTHER)
+		return EINVAL;
+	return sysdep<SetParam>(0, param);
+}
+
+int Sysdeps<Times>::operator()(struct tms *tms, clock_t *out) {
+	long hz;
+	if (int e = sysdep<Sysconf>(_SC_CLK_TCK, &hz); e)
+		return e;
+
+	struct rusage self, children;
+	if (int e = sysdep<GetRusage>(RUSAGE_SELF, &self); e)
+		return e;
+	if (int e = sysdep<GetRusage>(RUSAGE_CHILDREN, &children); e)
+		return e;
+
+	time_t secs;
+	long nanos;
+	if (int e = sysdep<ClockGet>(CLOCK_MONOTONIC, &secs, &nanos); e)
+		return e;
+
+	auto ticks = [hz](const struct timeval &tv) {
+		return (clock_t)tv.tv_sec * hz + (clock_t)tv.tv_usec * hz / 1000000;
+	};
+	tms->tms_utime = ticks(self.ru_utime);
+	tms->tms_stime = ticks(self.ru_stime);
+	tms->tms_cutime = ticks(children.ru_utime);
+	tms->tms_cstime = ticks(children.ru_stime);
+	*out = (clock_t)secs * hz + (clock_t)nanos * hz / 1000000000;
+	return 0;
 }
 
 int Sysdeps<GetCwd>::operator()(char *buffer, size_t size) {
@@ -948,6 +1025,70 @@ int Sysdeps<IfNametoindex>::operator()(const char *name, unsigned int *ret) {
 	return 0;
 }
 
+int Sysdeps<IfNameindex>::operator()(struct if_nameindex **out) {
+	int fd;
+	if (int e = sysdep<Socket>(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0, &fd); e)
+		return e;
+
+	struct ifconf ifc;
+	memset(&ifc, 0, sizeof(ifc));
+	if (int e = sysdep<Ioctl>(fd, SIOCGIFCONF, &ifc, nullptr); e) {
+		sysdep<Close>(fd);
+		return e;
+	}
+
+	struct ifreq *reqs = nullptr;
+	if (ifc.ifc_len > 0) {
+		reqs = (struct ifreq *)malloc(ifc.ifc_len);
+		if (!reqs) {
+			sysdep<Close>(fd);
+			return ENOMEM;
+		}
+		ifc.ifc_req = reqs;
+		if (int e = sysdep<Ioctl>(fd, SIOCGIFCONF, &ifc, nullptr); e) {
+			free(reqs);
+			sysdep<Close>(fd);
+			return e;
+		}
+	}
+
+	size_t count = (size_t)ifc.ifc_len / sizeof(struct ifreq);
+	auto list = (struct if_nameindex *)calloc(count + 1, sizeof(struct if_nameindex));
+	if (!list) {
+		free(reqs);
+		sysdep<Close>(fd);
+		return ENOMEM;
+	}
+
+	size_t n = 0;
+	for (size_t i = 0; i < count; i++) {
+		if (sysdep<Ioctl>(fd, SIOCGIFINDEX, &reqs[i], nullptr))
+			continue;
+		list[n].if_name = strndup(reqs[i].ifr_name, IFNAMSIZ);
+		if (!list[n].if_name) {
+			free(reqs);
+			sysdep<Close>(fd);
+			sysdep<IfFreeNameindex>(list);
+			return ENOMEM;
+		}
+		list[n].if_index = reqs[i].ifr_ifindex;
+		n++;
+	}
+
+	free(reqs);
+	sysdep<Close>(fd);
+	*out = list;
+	return 0;
+}
+
+void Sysdeps<IfFreeNameindex>::operator()(struct if_nameindex *ifn) {
+	if (!ifn)
+		return;
+	for (auto p = ifn; p->if_index || p->if_name; p++)
+		free(p->if_name);
+	free(ifn);
+}
+
 int Sysdeps<InetConfigured>::operator()(bool *ipv4, bool *ipv6) {
 	if (ipv4)
 		*ipv4 = false;
@@ -986,8 +1127,6 @@ int Sysdeps<Sysconf>::operator()(int num, long *ret) {
 	return 0;
 }
 
-int Sysdeps<Pause>::operator()() {
-	return sysdep<Ppoll>(nullptr, 0, nullptr, nullptr, nullptr);
-}
+int Sysdeps<Pause>::operator()() { return sysdep<Ppoll>(nullptr, 0, nullptr, nullptr, nullptr); }
 
 } // namespace mlibc
