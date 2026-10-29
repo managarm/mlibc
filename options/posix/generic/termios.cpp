@@ -1,7 +1,3 @@
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE
-#endif
-
 #include <errno.h>
 #include <termios.h>
 
@@ -9,18 +5,32 @@
 #include <mlibc/all-sysdeps.hpp>
 
 speed_t cfgetispeed(const struct termios *tios) {
+#ifdef CBAUD
 	return tios->c_cflag & CBAUD;
+#else
+	return tios->c_ispeed;
+#endif
 }
 
 speed_t cfgetospeed(const struct termios *tios) {
+#ifdef CBAUD
 	return tios->c_cflag & CBAUD;
+#else
+	return tios->c_ospeed;
+#endif
 }
 
 int cfsetispeed(struct termios *termios, speed_t speed) {
+#ifdef CBAUD
 	return speed ? cfsetospeed(termios, speed) : 0;
+#else
+	termios->c_ispeed = speed;
+	return 0;
+#endif
 }
 
 int cfsetospeed(struct termios *termios, speed_t speed) {
+#ifdef CBAUD
 	if(speed & ~CBAUD) {
 		errno = EINVAL;
 		return -1;
@@ -28,6 +38,9 @@ int cfsetospeed(struct termios *termios, speed_t speed) {
 
 	termios->c_cflag &= ~CBAUD;
 	termios->c_cflag |= speed;
+#else
+	termios->c_ospeed = speed;
+#endif
 
 	return 0;
 }

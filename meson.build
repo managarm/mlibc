@@ -134,6 +134,7 @@ if not headers_only
 	mlibc_c_args += freestanding_hdrs_args
 	mlibc_link_args = ['-nostdlib']
 	add_project_arguments('-Werror=misleading-indentation', language: ['c', 'cpp'])
+	add_project_arguments('-D_GNU_SOURCE', language: ['c', 'cpp'])
 	add_project_arguments('-fno-rtti', '-fno-exceptions', language: 'cpp')
 
 	# mlibc uses the priority range reserved for the C library, which GCC warns about.
