@@ -1,7 +1,7 @@
 #pragma once
 
 #include <mlibc/all-sysdeps.hpp>
-#include <mlibc/thread.hpp>
+#include <mlibc/tcb.hpp>
 
 namespace mlibc {
 	inline unsigned int refetch_tid() {

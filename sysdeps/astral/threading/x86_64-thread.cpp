@@ -5,9 +5,11 @@
 #include <bits/ensure.h>
 #include <mlibc/tcb.hpp>
 
-extern "C" void __mlibc_thread_trampoline(void *(*fn)(void *), Tcb *tcb, void *arg) {
-	if(mlibc::sysdep<TcbSet>(tcb))
+extern "C" void __mlibc_thread_trampoline(void *(*fn)(void *), Tcb *tp, void *arg) {
+	if(mlibc::sysdep<TpSet>(tp))
 		__ensure(!"failed to set tcb for new thread");
+
+	auto tcb = mlibc::tp_to_tcb(tp);
 
 	while(__atomic_load_n(&tcb->tid, __ATOMIC_RELAXED) == 0)
 		mlibc::sysdep<FutexWait>(&tcb->tid, 0, nullptr);
@@ -27,7 +29,7 @@ namespace mlibc {
 		void **stack,
 		void *entry,
 		void *arg,
-		void *tcb,
+		void *tp,
 		size_t *stack_size,
 		size_t *guard_size,
 		void **stack_base
@@ -53,7 +55,7 @@ namespace mlibc {
 		void **stack_it = (void **)*stack;
 
 		*--stack_it = arg;
-		*--stack_it = tcb;
+		*--stack_it = tp;
 		*--stack_it = entry;
 
 		*stack = (void *)stack_it;

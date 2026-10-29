@@ -28,25 +28,6 @@ enum {
 uintptr_t libraryBase = 0x41000000;
 #endif
 
-#if defined(__x86_64__) || defined(__i386__)
-constexpr inline bool tlsAboveTp = false;
-constexpr inline uintptr_t tlsOffsetFromTp = 0;
-#elif defined(__aarch64__)
-constexpr inline bool tlsAboveTp = true;
-constexpr inline uintptr_t tlsOffsetFromTp = 16;
-#elif defined(__riscv)
-constexpr inline bool tlsAboveTp = true;
-constexpr inline uintptr_t tlsOffsetFromTp = 0;
-#elif defined(__m68k__)
-constexpr inline bool tlsAboveTp = true;
-constexpr inline ptrdiff_t tlsOffsetFromTp = -0x7000;
-#elif defined(__loongarch64)
-constexpr inline bool tlsAboveTp = true;
-constexpr inline uintptr_t tlsOffsetFromTp = 0;
-#else
-#	error Unknown architecture
-#endif
-
 extern DebugInterface globalDebugInterface;
 extern uintptr_t __stack_chk_guard;
 extern mlibc::RtldConfig rtldConfig;

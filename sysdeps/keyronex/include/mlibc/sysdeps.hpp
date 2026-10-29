@@ -10,7 +10,7 @@ struct KeyronexSysdepTags :
 	FutexTid,
 	FutexWait,
 	FutexWake,
-	TcbSet,
+	TpSet,
 	AnonAllocate,
 	AnonFree,
 	VmMap,

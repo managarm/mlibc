@@ -142,7 +142,7 @@ int Sysdeps<AnonFree>::operator()(void *pointer, size_t size) {
 	return sysdep<VmUnmap>(pointer, size);
 }
 
-int Sysdeps<TcbSet>::operator()(void *pointer) { return -SYSCALL1(SYS_SETTLS, (uintptr_t)pointer); }
+int Sysdeps<TpSet>::operator()(void *pointer) { return -SYSCALL1(SYS_SETTLS, (uintptr_t)pointer); }
 
 int Sysdeps<ClockGet>::operator()(int clock, time_t *secs, long *nanos) {
 	return -SYSCALL3(SYS_CLOCK_GETTIME, clock, secs, nanos);
@@ -828,9 +828,9 @@ int Sysdeps<Sysconf>::operator()(int number, long *result) {
 
 #ifndef MLIBC_BUILDING_RTLD
 extern "C" void __mlibc_thread_entry();
-int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
+int Sysdeps<Clone>::operator()(void *tp, pid_t *pid_out, void *stack) {
 	long ret = SYSCALL4(
-	    SYS_CREATE_THREAD, (uintptr_t)stack, (uintptr_t)tcb, (void *)__mlibc_thread_entry, nullptr
+	    SYS_CREATE_THREAD, (uintptr_t)stack, (uintptr_t)tp, (void *)__mlibc_thread_entry, nullptr
 	);
 	if (ret < 0)
 		return -ret;
