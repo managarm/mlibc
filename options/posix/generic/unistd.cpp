@@ -14,6 +14,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <utmpx.h>
+#include <fcntl.h>
 
 #include <bits/ensure.h>
 #include <mlibc-config.h>
@@ -572,13 +573,12 @@ int linkat(int olddirfd, const char *old_path, int newdirfd, const char *new_pat
 
 // Code take from musl
 int lockf(int fd, int op, off_t size) {
-	struct flock l = {
-		.l_type = F_WRLCK,
-		.l_whence = SEEK_CUR,
-		.l_start = 0,
-		.l_len = size,
-		.l_pid = 0,
-	};
+	struct flock l = {};
+	l.l_type = F_WRLCK;
+	l.l_whence = SEEK_CUR;
+	l.l_start = 0;
+	l.l_len = size;
+	l.l_pid = 0;
 
 	switch(op) {
 		case F_TEST:
