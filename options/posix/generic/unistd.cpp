@@ -27,6 +27,11 @@
 #include <mlibc/thread.hpp>
 #include <mlibc/utmp.hpp>
 
+// TIOCGPGRP and TIOCSPGRP for default implementations
+#if __MLIBC_LINUX_OPTION || __MLIBC_BSD_OPTION
+#include <sys/ioctl.h>
+#endif
+
 namespace {
 
 constexpr bool logExecvpeTries = false;
@@ -1028,23 +1033,52 @@ long sysconf(int number) {
 }
 
 pid_t tcgetpgrp(int fd) {
-	int pgrp, scratch;
-	if(int e = mlibc::sysdep_or_enosys<Ioctl>(fd, TIOCGPGRP, &pgrp, &scratch); e) {
-		errno = e;
-		return -1;
+	pid_t pgrp = -1;
+	if constexpr (mlibc::IsImplemented<Tcgetpgrp>) {
+		if (auto e = mlibc::sysdep_or_enosys<Tcgetpgrp>(fd, &pgrp); e) {
+			errno = e;
+			return -1;
+		}
+		return pgrp;
 	}
 
-	return pgrp;
+	#ifdef TIOCGPGRP
+	if constexpr (mlibc::IsImplemented<Ioctl>) {
+		int scratch;
+		if(int e = mlibc::sysdep_or_enosys<Ioctl>(fd, TIOCGPGRP, &pgrp, &scratch); e) {
+			errno = e;
+			return -1;
+		}
+		return pgrp;
+	}
+	#endif
+	mlibc::sysdep_or_enosys<Tcgetpgrp>(fd, &pgrp);
+	errno = ENOSYS;
+	return -1;
 }
 
 int tcsetpgrp(int fd, pid_t pgrp) {
-	int scratch;
-	if(int e = mlibc::sysdep_or_enosys<Ioctl>(fd, TIOCSPGRP, &pgrp, &scratch); e) {
-		errno = e;
-		return -1;
+	if constexpr (mlibc::IsImplemented<Tcsetpgrp>) {
+		if (auto e = mlibc::sysdep_or_enosys<Tcsetpgrp>(fd, pgrp); e) {
+			errno = e;
+			return -1;
+		}
+		return 0;
 	}
 
-	return 0;
+	#ifdef TIOCSPGRP
+	if constexpr (mlibc::IsImplemented<Ioctl>) {
+		int scratch;
+		if(int e = mlibc::sysdep_or_enosys<Ioctl>(fd, TIOCSPGRP, &pgrp, &scratch); e) {
+			errno = e;
+			return -1;
+		}
+		return 0;
+	}
+	#endif
+	mlibc::sysdep_or_enosys<Tcsetpgrp>(fd, pgrp);
+	errno = ENOSYS;
+	return -1;
 }
 
 int truncate(const char *path, off_t length) {
