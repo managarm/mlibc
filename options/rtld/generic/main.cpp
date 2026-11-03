@@ -998,6 +998,8 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 
 	for(size_t i = 0; i < initialRepository->loadedObjects.size(); i++) {
 		auto object = initialRepository->loadedObjects[i];
+		if (!object->dynamic)
+			continue;
 
 		auto eligible = [&] (ObjectSymbol cand) {
 			if(cand.symbol()->st_shndx == SHN_UNDEF)
@@ -1031,8 +1033,9 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 					last_sym = bucket[i];
 				}
 
-				while(!(chains[last_sym - hash_table->symbolOffset] & 1))
-					last_sym++;
+				if (last_sym)
+					while(!(chains[last_sym - hash_table->symbolOffset] & 1))
+						last_sym++;
 			}
 
 			start_symbols = hash_table->symbolOffset;
