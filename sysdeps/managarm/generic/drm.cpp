@@ -806,12 +806,11 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
-			HEL_CHECK(recv_data.error());
-
 			managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 			if (resp.error() != managarm::fs::Errors::SUCCESS)
 				return resp.error() | toErrno;
+			HEL_CHECK(recv_data.error());
 
 			param->fb_id = resp.drm_fb_id();
 			param->x = resp.drm_x();
