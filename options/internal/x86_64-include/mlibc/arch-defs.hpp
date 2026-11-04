@@ -5,7 +5,7 @@
 
 namespace mlibc {
 
-inline constexpr size_t page_size = 0x1000;
+inline constexpr size_t default_page_size = 0x1000;
 
 } // namespace mlibc
 

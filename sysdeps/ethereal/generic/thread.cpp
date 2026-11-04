@@ -2,9 +2,9 @@
 #include <bits/ensure.h>
 #include <errno.h>
 #include <mlibc/all-sysdeps.hpp>
-#include <mlibc/arch-defs.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/tcb.hpp>
+#include <mlibc/page_size.hpp>
 #include <sys/mman.h>
 #include <sys/syscall.h>
 #include <sys/syscall_nums.h>

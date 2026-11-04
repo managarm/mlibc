@@ -12,7 +12,7 @@
 #include <new>
 #include <threads.h>
 #include <time.h>
-#include <mlibc/arch-defs.hpp>
+#include <mlibc/page_size.hpp>
 
 static constexpr size_t default_stacksize = 0x200000;
 inline static size_t default_guardsize() {

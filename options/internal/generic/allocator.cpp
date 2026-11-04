@@ -5,7 +5,7 @@
 #include <frg/eternal.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
-#include <mlibc/arch-defs.hpp>
+#include <mlibc/page_size.hpp>
 #include <internal-config.h>
 
 // --------------------------------------------------------

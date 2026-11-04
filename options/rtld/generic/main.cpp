@@ -15,6 +15,7 @@
 #include <mlibc/rtld-config.hpp>
 #include <mlibc/rtld-abi.hpp>
 #include <mlibc/stack_protector.hpp>
+#include <mlibc/page_size.hpp>
 #include <internal-config.h>
 #include <abi-bits/auxv.h>
 
@@ -544,6 +545,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 			case AT_EXECFN: execfn = reinterpret_cast<const char *>(*value); break;
 			case AT_RANDOM: stack_entropy = reinterpret_cast<void*>(*value); break;
 			case AT_SECURE: rtldConfig.secureRequired = reinterpret_cast<uintptr_t>(*value); break;
+			case AT_PAGESZ: mlibc::page_size = *value; break;
 #ifdef AT_SYSINFO_EHDR
 			case AT_SYSINFO_EHDR: vdsoBase = reinterpret_cast<uintptr_t>(*value); break;
 #endif
