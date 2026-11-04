@@ -18,6 +18,7 @@ enum {
 #include <mlibc/rtld-abi.hpp>
 #include <mlibc/rtld-config.hpp>
 #include <mlibc/thread.hpp>
+#include <mlibc/page_size.hpp>
 #include <abi-bits/fcntl.h>
 #include <internal-config.h>
 

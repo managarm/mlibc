@@ -2,6 +2,7 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/arch-defs.hpp>
 #include <mlibc/tcb.hpp>
+#include <mlibc/page_size.hpp>
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <zinnia/syscall.hpp>
