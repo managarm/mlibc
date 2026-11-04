@@ -26,6 +26,7 @@
 #include <mlibc/dlapi.hpp>
 #include <mlibc/thread-entry.hpp>
 #include <mlibc/thread-types.hpp>
+#include <mlibc/arch-defs.hpp>
 
 #if __MLIBC_POSIX_OPTION
 #include <net/if.h>
@@ -2303,7 +2304,7 @@ int Sysdeps<Sysconf>::operator()(int num, long *ret) {
 				return e;
 			}
 			unsigned unit = (info.mem_unit) ? info.mem_unit : 1;
-			*ret = std::min(long((info.totalram * unit) / PAGE_SIZE), LONG_MAX);
+			*ret = std::min(long((info.totalram * unit) / mlibc::page_size), LONG_MAX);
 			break;
 		}
 		case _SC_CHILD_MAX: {
