@@ -12,9 +12,12 @@
 #include <new>
 #include <threads.h>
 #include <time.h>
+#include <mlibc/page_size.hpp>
 
 static constexpr size_t default_stacksize = 0x200000;
-static constexpr size_t default_guardsize = 4096;
+inline static size_t default_guardsize() {
+	return mlibc::page_size;
+}
 
 struct __mlibc_threadattr {
 	template <typename T>
@@ -36,7 +39,7 @@ struct __mlibc_threadattr {
 
 	~__mlibc_threadattr();
 
-	size_t __guardsize = default_guardsize;
+	size_t __guardsize = default_guardsize();
 
 	void *__stackaddr = nullptr;
 	size_t __stacksize = default_stacksize;
