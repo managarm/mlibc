@@ -33,7 +33,9 @@ enum class LinkerError {
 	notElf,
 	wrongElfType,
 	outOfMemory,
-	invalidProgramHeader
+	invalidProgramHeader,
+	noOpen,
+	pie
 };
 
 uint32_t elf64Hash(frg::string_view string);
@@ -100,6 +102,8 @@ private:
 
 	void _parseVerdef(SharedObject *object);
 	void _parseVerneed(SharedObject *object);
+
+	LinkerError _checkLoadable(SharedObject *object, uint64_t rts);
 
 	void _discoverDependencies(SharedObject *object, Scope *localScope, uint64_t rts);
 
@@ -235,6 +239,9 @@ struct SharedObject {
 
 	bool symbolicResolution;
 	bool haveStaticTls;
+	bool textRelocations = false;
+	uint64_t flags1 = 0;
+	bool isInterposer = false;
 
 	// vector of dependencies
 	frg::vector<SharedObject *, LdsoAllocator> dependencies;
@@ -517,6 +524,8 @@ private:
 	void _processLazyRelocations(SharedObject *object);
 
 	void _processRelocations(Relocation &rel);
+
+	void _setTextWritable(SharedObject *object, bool writable);
 
 public:
 	void initObjects(ObjectRepository *repository);
