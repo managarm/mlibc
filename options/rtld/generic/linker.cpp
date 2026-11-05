@@ -18,6 +18,7 @@ enum {
 #include <mlibc/rtld-abi.hpp>
 #include <mlibc/rtld-config.hpp>
 #include <mlibc/thread.hpp>
+#include <mlibc/arch-defs.hpp>
 #include <abi-bits/fcntl.h>
 #include <internal-config.h>
 
@@ -672,7 +673,7 @@ frg::expected<LinkerError, void> ObjectRepository::_fetchFromFile(SharedObject *
 				<< " at " << (void *)object->baseAddress << frg::endlog;
 
 	// Load all segments.
-	constexpr size_t pageSize = 0x1000;
+	const size_t pageSize = mlibc::page_size;
 	for(int i = 0; i < ehdr.e_phnum; i++) {
 		auto phdr = (elf_phdr *)(phdr_buffer + i * ehdr.e_phentsize);
 

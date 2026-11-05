@@ -177,8 +177,10 @@ struct user {
 }
 #endif
 
+#if defined(__x86_64__) || defined(__i386__)
 #define PAGE_SHIFT 12
 #define PAGE_SIZE (1UL << PAGE_SHIFT)
 #define PAGE_MASK (~(PAGE_SIZE - 1))
+#endif
 
 #endif
