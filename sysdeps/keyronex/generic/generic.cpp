@@ -59,20 +59,16 @@ Sysdeps<FutexWake>::operator()(int *pointer, bool all)
 }
 
 int
-Sysdeps<TcbSet>::operator()(void *pointer)
+Sysdeps<TpSet>::operator()(void *pointer)
 {
 #if defined(__m68k__)
-	syscall1(SYS_tcb_set, (uintptr_t)pointer + 0x7000 + sizeof(Tcb), NULL);
+	syscall1(SYS_tcb_set, (uintptr_t)pointer, NULL);
 #elif defined(__amd64__)
 	syscall1(SYS_tcb_set, (uintptr_t)pointer, NULL);
 #elif defined(__aarch64__)
-	uintptr_t addr = reinterpret_cast<uintptr_t>(pointer);
-	addr += sizeof(Tcb) - 0x10;
-	asm volatile("msr tpidr_el0, %0" ::"r"(addr));
+	asm volatile("msr tpidr_el0, %0" ::"r"(pointer));
 #elif defined(__riscv)
-	uintptr_t addr = reinterpret_cast<uintptr_t>(pointer);
-	addr += sizeof(Tcb);
-	asm volatile("mv tp, %0" ::"r"(addr));
+	asm volatile("mv tp, %0" ::"r"(pointer));
 #endif
 	return 0;
 }

@@ -7,9 +7,11 @@
 #include <stdint.h>
 #include <sys/mman.h>
 
-extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, Tcb *tcb) {
-	if (mlibc::sysdep<TcbSet>(tcb))
-		__ensure(!"sys_tcb_set() failed");
+extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, void *tp) {
+	if (mlibc::sysdep<TpSet>(tp))
+		__ensure(!"sys_tp_set() failed");
+
+	auto tcb = mlibc::tp_to_tcb(tp);
 
 	// Wait until our parent sets up the TID.
 	while (!__atomic_load_n(&tcb->tid, __ATOMIC_RELAXED))
@@ -31,7 +33,7 @@ int Sysdeps<PrepareStack>::operator()(
     void **stack,
     void *entry,
     void *user_arg,
-    void *tcb,
+    void *tp,
     size_t *stack_size,
     size_t *guard_size,
     void **stack_base
@@ -53,7 +55,7 @@ int Sysdeps<PrepareStack>::operator()(
 	uintptr_t *sp =
 	    reinterpret_cast<uintptr_t *>(reinterpret_cast<uintptr_t>(*stack_base) + *stack_size);
 
-	*--sp = reinterpret_cast<uintptr_t>(tcb);
+	*--sp = reinterpret_cast<uintptr_t>(tp);
 	*--sp = reinterpret_cast<uintptr_t>(user_arg);
 	*--sp = reinterpret_cast<uintptr_t>(entry);
 	*stack = reinterpret_cast<void *>(sp);

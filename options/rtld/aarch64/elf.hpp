@@ -1,6 +1,7 @@
 #pragma once
 
 #include <elf.h>
+#include <stddef.h>
 
 #define ELF_CLASS ELFCLASS64
 #define ELF_MACHINE EM_AARCH64
@@ -42,7 +43,8 @@ using elf_vernaux = Elf64_Vernaux;
 // #define R_TLS_TPREL_NEG
 #define R_TLSDESC R_AARCH64_TLSDESC
 
-#define TP_TCB_OFFSET (16)
+constexpr inline bool tlsAboveTp = true;
+constexpr inline uintptr_t tlsOffsetFromTp = 16;
 
 struct ifunc_arg {
 	unsigned long _size;

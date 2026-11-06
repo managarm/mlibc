@@ -51,7 +51,7 @@ SYSDEP_FUNC(Stat, mlibc::fsfd_target fsfdt, int fd, const char *path, int flags,
 SYSDEP_FUNC(VmMap, void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window);
 SYSDEP_FUNC(VmUnmap, void *pointer, size_t size);
 SYSDEP_FUNC(VmProtect, void *pointer, size_t size, int prot);
-SYSDEP_FUNC(TcbSet, void *pointer);
+SYSDEP_FUNC(TpSet, void *pointer);
 #if defined(__riscv)
 SYSDEP_FUNC(RiscvHwprobe, struct riscv_hwprobe *pairs, size_t pair_count, size_t cpusetsize, cpu_set_t *cpus, unsigned int flags);
 #endif
@@ -59,8 +59,8 @@ SYSDEP_FUNC(RiscvHwprobe, struct riscv_hwprobe *pairs, size_t pair_count, size_t
 // ANSI option sysdeps
 SYSDEP_FUNC_NORETURN(Exit, int status);
 SYSDEP_FUNC_NORETURN(ThreadExit);
-SYSDEP_FUNC(PrepareStack, void **stack, void *entry, void *user_arg, void* tcb, size_t *stack_size, size_t *guard_size, void **stack_base);
-SYSDEP_FUNC(Clone, void *tcb, pid_t *pid_out, void *stack);
+SYSDEP_FUNC(PrepareStack, void **stack, void *entry, void *user_arg, void* tp, size_t *stack_size, size_t *guard_size, void **stack_base);
+SYSDEP_FUNC(Clone, void *tp, pid_t *pid_out, void *stack);
 SYSDEP_FUNC(FutexWait, int *pointer, int expected, const struct timespec *time);
 SYSDEP_FUNC(FutexWake, int *pointer, bool all);
 SYSDEP_FUNC(Open, const char *pathname, int flags, mode_t mode, int *fd);
