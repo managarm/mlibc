@@ -3,6 +3,8 @@
 #include <dirent.h>
 #include <errno.h>
 #include <frg/small_vector.hpp>
+#include <frg/vector.hpp>
+#include <limits.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <sys/eventfd.h>
@@ -1992,19 +1994,60 @@ int Sysdeps<Read>::operator()(int fd, void *data, size_t max_size, ssize_t *byte
 	return resp.error() | toErrno;
 }
 
-int Sysdeps<Readv>::operator()(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
+namespace {
+
+int iovecsSize(const struct iovec *iovs, int iovc, size_t *overall_size) {
+	if (iovc < 0 || iovc > IOV_MAX)
+		return EINVAL;
+
+	size_t size = 0;
 	for (int i = 0; i < iovc; i++) {
-		ssize_t intermed = 0;
-
-		if (int e = sysdep<Read>(fd, iovs[i].iov_base, iovs[i].iov_len, &intermed); e)
-			return e;
-		else if (intermed == 0)
-			break;
-
-		*bytes_read += intermed;
+		if (SSIZE_MAX - size < iovs[i].iov_len)
+			return EINVAL;
+		size += iovs[i].iov_len;
 	}
-
+	*overall_size = size;
 	return 0;
+}
+
+// Reads once and scatters the data: reading each iovec separately would drop data that
+// was already read when a later read fails (e.g., EAGAIN on a non-blocking socket),
+// and it could block after data was already received.
+template <typename F>
+int readScattered(const struct iovec *iovs, int iovc, ssize_t *bytes_read, F read) {
+	SignalGuard sguard;
+	mlibc::thread_testcancel();
+
+	size_t overall_size = 0;
+	if (int e = iovecsSize(iovs, iovc, &overall_size); e)
+		return e;
+
+	if (iovc == 1)
+		return read(iovs[0].iov_base, iovs[0].iov_len, bytes_read);
+
+	frg::vector<char, SysdepsAllocator> buffer{getSysdepsAllocator()};
+	buffer.resize(overall_size);
+	ssize_t count = 0;
+	if (int e = read(buffer.data(), overall_size, &count); e)
+		return e;
+
+	size_t offset = 0;
+	for (int i = 0; i < iovc && offset < static_cast<size_t>(count); i++) {
+		size_t chunk = frg::min(iovs[i].iov_len, static_cast<size_t>(count) - offset);
+		if (chunk)
+			memcpy(iovs[i].iov_base, buffer.data() + offset, chunk);
+		offset += chunk;
+	}
+	*bytes_read = count;
+	return 0;
+}
+
+} // namespace
+
+int Sysdeps<Readv>::operator()(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
+	return readScattered(iovs, iovc, bytes_read, [&](void *data, size_t size, ssize_t *count) {
+		return sysdep<Read>(fd, data, size, count);
+	});
 }
 
 int Sysdeps<Write>::operator()(int fd, const void *data, size_t size, ssize_t *bytes_written) {
