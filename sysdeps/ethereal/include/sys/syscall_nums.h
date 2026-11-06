@@ -15,7 +15,7 @@
 #define SYS_POLL            11
 #define SYS_MKDIRAT         12
 #define SYS_PSELECT         13
-#define SYS_READLINK        14
+#define SYS_READLINKAT      14
 #define SYS_ACCESS          15
 /* SYS_CHMOD removed */
 #define SYS_FCNTL           17

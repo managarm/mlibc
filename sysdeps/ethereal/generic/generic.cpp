@@ -95,6 +95,14 @@ int Sysdeps<Mkdir>::operator()(const char *path, mode_t mode) {
 	return sysdep<Mkdirat>(AT_FDCWD, path, mode);
 }
 
+int Sysdeps<Mknodat>::operator()(int dirfd, const char *path, int mode, int dev) {
+	return -SYSCALL4(SYS_MKNODAT, dirfd, path, mode, dev);
+}
+
+int Sysdeps<Mkfifoat>::operator()(int dirfd, const char *path, mode_t mode) {
+	return sysdep<Mknodat>(dirfd, path, S_IFIFO | mode, 0);
+}
+
 int Sysdeps<VmMap>::operator()(
     void *addr, size_t size, int prot, int flags, int fd, off_t offset, void **window
 ) {
@@ -409,12 +417,17 @@ int Sysdeps<Chdir>::operator()(const char *path) { return -SYSCALL1(SYS_CHDIR, p
 int Sysdeps<Fchdir>::operator()(int fd) { return -SYSCALL1(SYS_FCHDIR, fd); }
 
 int
-Sysdeps<Readlink>::operator()(const char *path, void *buffer, size_t max_size, ssize_t *length) {
-	long err = SYSCALL3(SYS_READLINK, path, buffer, max_size);
+Sysdeps<Readlinkat>::operator()(int dirfd, const char *path, void *buffer, size_t max_size, ssize_t *length) {
+	long err = SYSCALL4(SYS_READLINKAT, dirfd, path, buffer, max_size);
 	if (err < 0)
 		return -err;
 	*length = err;
 	return 0;
+}
+
+int
+Sysdeps<Readlink>::operator()(const char *path, void *buffer, size_t max_size, ssize_t *length) {
+	return sysdep<Readlinkat>(AT_FDCWD, path, buffer, max_size, length);
 }
 
 int Sysdeps<OpenDir>::operator()(const char *path, int *handle) {
