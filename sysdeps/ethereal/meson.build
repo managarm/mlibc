@@ -87,6 +87,7 @@ if not no_headers
 		'include/sys/ptrace.h',
 		'include/sys/mount.h',
 		'include/sys/sysinfo.h',
+		'include/sys/sysmacros.h',
 		subdir: 'sys',
 		follow_symlinks: true,
 	)
