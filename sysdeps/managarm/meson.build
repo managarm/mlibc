@@ -136,7 +136,8 @@ libc_sources += files(
 	'generic/sched.cpp',
 	'generic/signals.cpp',
 	'generic/socket.cpp',
-	'generic/time.cpp'
+	'generic/time.cpp',
+	'generic/thread.cpp',
 )
 libc_sources += [
 	fs_bragi,
@@ -147,20 +148,17 @@ if host_machine.cpu_family() == 'aarch64'
 	libc_sources += files(
 		'aarch64/signals.S',
 		'aarch64/thread_entry.S',
-		'aarch64/thread.cpp'
 	)
 elif host_machine.cpu_family() == 'x86_64'
 	libc_sources += files(
 		'x86_64/signals.S',
 		'x86_64/thread_entry.S',
-		'x86_64/thread.cpp',
 		'x86_64/assembly-asserts.cpp',
 	)
 elif host_machine.cpu_family() == 'riscv64'
 	libc_sources += files(
 		'riscv64/signals.S',
 		'riscv64/thread_entry.S',
-		'riscv64/thread.cpp',
 	)
 else
 	error('Unknown architecture')

@@ -16,9 +16,9 @@ namespace mlibc {
 extern "C" void __mlibc_thread_entry();
 
 int
-Sysdeps<Clone>::operator()(void *tcb, pid_t *tid_out, void *stack)
+Sysdeps<Clone>::operator()(void *tp, pid_t *tid_out, void *stack)
 {
-	(void)tcb;
+	(void)tp;
 
 	auto r = syscall2(SYS_thread_create, (uintptr_t)__mlibc_thread_entry, (uintptr_t)stack, NULL);
 	if (r > 0) {
@@ -31,7 +31,7 @@ Sysdeps<Clone>::operator()(void *tcb, pid_t *tid_out, void *stack)
 }
 
 int
-Sysdeps<PrepareStack>::operator()(void **stack, void *entry, void *arg, void *tcb,
+Sysdeps<PrepareStack>::operator()(void **stack, void *entry, void *arg, void *tp,
     size_t *stack_size, size_t *guard_size, void **stack_base)
 {
 	// TODO guard
@@ -57,7 +57,7 @@ Sysdeps<PrepareStack>::operator()(void **stack, void *entry, void *arg, void *tc
 
 	*--stack_it = NULL;
 	*--stack_it = arg;
-	*--stack_it = tcb;
+	*--stack_it = tp;
 	*--stack_it = entry;
 
 	*stack = (void *)stack_it;
@@ -80,10 +80,12 @@ Sysdeps<GetTid>::operator()()
 
 } /* namespace mlibc */
 
-extern "C" void __mlibc_thread_trampoline(void *(*fn)(void *), Tcb *tcb, void *arg) {
-	if (mlibc::sysdep<TcbSet>(tcb)) {
-		__ensure(!"failed to set tcb for new thread");
+extern "C" void __mlibc_thread_trampoline(void *(*fn)(void *), void *tp, void *arg) {
+	if (mlibc::sysdep<TpSet>(tp)) {
+		__ensure(!"failed to set tp for new thread");
 	}
+
+	auto tcb = mlibc::tp_to_tcb(tp);
 
 	while (__atomic_load_n(&tcb->tid, __ATOMIC_RELAXED) == 0) {
 		mlibc::sysdep<FutexWait>(&tcb->tid, 0, nullptr);

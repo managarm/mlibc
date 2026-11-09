@@ -1,6 +1,7 @@
 #pragma once
 
 #include <elf.h>
+#include <stddef.h>
 
 #define ELF_CLASS ELFCLASS64
 #define ELF_MACHINE EM_X86_64
@@ -42,6 +43,7 @@ using elf_vernaux = Elf64_Vernaux;
 // #define R_TLS_TPREL_NEG
 #define R_TLSDESC R_X86_64_TLSDESC
 
-#define TP_TCB_OFFSET 0
+constexpr inline bool tlsAboveTp = false;
+constexpr inline uintptr_t tlsOffsetFromTp = 0;
 
 using ifunc_handler = elf_addr (*)(void);
