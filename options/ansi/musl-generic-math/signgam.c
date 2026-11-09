@@ -1,9 +1,6 @@
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
 #include <math.h>
-#include "weak_alias.h"
-//#include "libc.h"
+#include "libm.h"
 
-int signgam = 0;
+int __signgam = 0;
+
+weak_alias(__signgam, signgam);

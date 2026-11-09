@@ -1,8 +1,7 @@
 #define _GNU_SOURCE
 #include <math.h>
 #include <stdint.h>
-#include "weak_alias.h"
-//#include "libc.h"
+#include "helpers.h"
 
 float exp10f(float x)
 {
