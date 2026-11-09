@@ -552,7 +552,7 @@ int main() {
 	assert(swscanf(L"12,34", L"%d", &int_value) == 1);
 	assert(int_value == 12);
 	assert(swscanf(L"12,34", L"%f", &float_value) == 1);
-	// assert(float_value >= 12.34 - 0.01 && float_value <= 12.34 + 0.01);
+	assert(float_value >= 12.34 - 0.01 && float_value <= 12.34 + 0.01);
 
 	return 0;
 }
