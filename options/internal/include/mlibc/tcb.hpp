@@ -103,18 +103,6 @@ struct Tcb {
 	mlibc::thread_exit_return returnValue;
 	TcbThreadReturnValue returnValueType;
 
-	struct AtforkHandler {
-		void (*prepare)(void);
-		void (*parent)(void);
-		void (*child)(void);
-
-		AtforkHandler *next;
-		AtforkHandler *prev;
-	};
-
-	AtforkHandler *atforkBegin;
-	AtforkHandler *atforkEnd;
-
 	struct CleanupHandler {
 		void (*func)(void *);
 		void *arg;
@@ -185,22 +173,22 @@ static_assert(offsetof(Tcb, dtvPointers) == 0x08);
 #elif defined(__aarch64__)
 // The thread pointer on AArch64 points to 16 bytes before the end of the TCB.
 // options/linker/aarch64/runtime.S uses the offset of dtvPointers.
-static_assert(sizeof(Tcb) - offsetof(Tcb, dtvPointers) - TP_TCB_OFFSET == 112);
+static_assert(sizeof(Tcb) - offsetof(Tcb, dtvPointers) - TP_TCB_OFFSET == 96);
 // sysdeps/linux/aarch64/cp_syscall.S uses the offset of cancelBits.
-static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) - TP_TCB_OFFSET == 88);
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) - TP_TCB_OFFSET == 72);
 #elif defined(__riscv) && __riscv_xlen == 64
 // The thread pointer on RISC-V points to *after* the TCB, and since
 // we need to access specific fields that means that the value in
 // sysdeps/linux/riscv64/cp_syscall.S needs to be updated whenever
 // the struct is expanded.
-static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 104);
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 88);
 #elif defined (__m68k__)
 // The thread pointer on m68k points to 0x7000 bytes *after* the end of the
 // TCB, so similarly to as on RISC-V, we need to keep the value in
 // sysdeps/linux/m68k/cp_syscall.S up-to-date.
-static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 0x34);
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 0x2C);
 #elif defined(__loongarch64)
-static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 104);
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) == 88);
 #else
 #error "Missing architecture specific code."
 #endif
