@@ -5,6 +5,7 @@
 #include <frg/eternal.hpp>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
+#include <mlibc/arch-defs.hpp>
 #include <internal-config.h>
 
 // --------------------------------------------------------
@@ -127,31 +128,29 @@ static_assert(pointerAlignment <= 4096, "Pointer aligment of more than 4096 byte
 static_assert(!(pointerAlignment & (pointerAlignment - 1)),
 		"Pointer aligment must be a power of 2");
 
-constexpr size_t pageSize = 0x1000;
-
 void *MemoryAllocator::allocate(size_t size) {
-	size_t pg_size = (size + size_t{pageSize - 1}) & ~size_t{pageSize - 1};
+	size_t pg_size = (size + size_t{mlibc::page_size - 1}) & ~size_t{mlibc::page_size - 1};
 	size_t offset = (pg_size - size) & ~size_t{pointerAlignment - 1};
 
 	void *ptr;
 
 	// Two extra pages for metadata in front and guard page at the end
 	// Reserve the whole region as PROT_NONE...
-	if (int e = mlibc::sysdep<VmMap>(nullptr, pg_size + pageSize * 2, PROT_NONE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0, &ptr))
+	if (int e = mlibc::sysdep<VmMap>(nullptr, pg_size + mlibc::page_size * 2, PROT_NONE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0, &ptr))
 		mlibc::panicLogger() << "sys_vm_map failed in MemoryAllocator::allocate (errno " << e << ")" << frg::endlog;
 
 	// ...Then replace pages to make them accessible, excluding the guard page
-	if (int e = mlibc::sysdep<VmMap>(ptr, pg_size + pageSize, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, -1, 0, &ptr))
+	if (int e = mlibc::sysdep<VmMap>(ptr, pg_size + mlibc::page_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, -1, 0, &ptr))
 		mlibc::panicLogger() << "sys_vm_map failed in MemoryAllocator::allocate (errno " << e << ")" << frg::endlog;
 
 	void *meta = ptr;
-	void *out_page = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + pageSize);
+	void *out_page = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + mlibc::page_size);
 	void *out = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(out_page) + offset);
 	void *out_align_area = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(out) + size);
 
 	AllocatorMeta metaData{size, pg_size, allocatorMagic};
 
-	memset(meta, metaAreaValue, pageSize);
+	memset(meta, metaAreaValue, mlibc::page_size);
 	memcpy(meta, &metaData, sizeof(AllocatorMeta));
 
 	memset(out_page, offsetAreaValue, offset);
@@ -178,8 +177,8 @@ void MemoryAllocator::free(void *ptr) {
 	if constexpr (logAllocations)
 		mlibc::infoLogger() << "MemoryAllocator::free(" << ptr << ")" << frg::endlog;
 
-	uintptr_t page_addr = reinterpret_cast<uintptr_t>(ptr) & ~size_t{pageSize - 1};
-	AllocatorMeta *meta = reinterpret_cast<AllocatorMeta *>(page_addr - pageSize);
+	uintptr_t page_addr = reinterpret_cast<uintptr_t>(ptr) & ~size_t{mlibc::page_size - 1};
+	AllocatorMeta *meta = reinterpret_cast<AllocatorMeta *>(page_addr - mlibc::page_size);
 
 	if (meta->magic != allocatorMagic)
 		mlibc::panicLogger() << "Invalid allocator metadata magic in MemoryAllocator::free" << frg::endlog;
@@ -194,8 +193,8 @@ void MemoryAllocator::deallocate(void *ptr, size_t size) {
 	if constexpr (logAllocations)
 		mlibc::infoLogger() << "MemoryAllocator::deallocate(" << ptr << ", " << size << ")" << frg::endlog;
 
-	uintptr_t page_addr = reinterpret_cast<uintptr_t>(ptr) & ~size_t{pageSize - 1};
-	AllocatorMeta *meta = reinterpret_cast<AllocatorMeta *>(page_addr - pageSize);
+	uintptr_t page_addr = reinterpret_cast<uintptr_t>(ptr) & ~size_t{mlibc::page_size - 1};
+	AllocatorMeta *meta = reinterpret_cast<AllocatorMeta *>(page_addr - mlibc::page_size);
 
 	if (meta->magic != allocatorMagic)
 		mlibc::panicLogger() << "Invalid allocator metadata magic in MemoryAllocator::deallocate" << frg::endlog;
@@ -205,10 +204,10 @@ void MemoryAllocator::deallocate(void *ptr, size_t size) {
 
 	if constexpr (neverReleaseVa) {
 		void *unused;
-		if (int e = mlibc::sysdep<VmMap>(meta, meta->pagesSize + pageSize * 2, PROT_NONE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, -1, 0, &unused))
+		if (int e = mlibc::sysdep<VmMap>(meta, meta->pagesSize + mlibc::page_size * 2, PROT_NONE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, -1, 0, &unused))
 			mlibc::panicLogger() << "sys_vm_map failed in MemoryAllocator::deallocate (errno " << e << ")" << frg::endlog;
 	} else {
-		if (int e = mlibc::sysdep<VmUnmap>(meta, meta->pagesSize + pageSize * 2))
+		if (int e = mlibc::sysdep<VmUnmap>(meta, meta->pagesSize + mlibc::page_size * 2))
 			mlibc::panicLogger() << "sys_vm_unmap failed in MemoryAllocator::deallocate (errno " << e << ")" << frg::endlog;
 	}
 }
@@ -222,8 +221,8 @@ void *MemoryAllocator::reallocate(void *ptr, size_t size) {
 	void *newArea = allocate(size);
 
 	if (ptr) {
-		uintptr_t page_addr = reinterpret_cast<uintptr_t>(ptr) & ~size_t{pageSize - 1};
-		AllocatorMeta *meta = reinterpret_cast<AllocatorMeta *>(page_addr - pageSize);
+		uintptr_t page_addr = reinterpret_cast<uintptr_t>(ptr) & ~size_t{mlibc::page_size - 1};
+		AllocatorMeta *meta = reinterpret_cast<AllocatorMeta *>(page_addr - mlibc::page_size);
 
 		if (meta->magic != allocatorMagic)
 			mlibc::panicLogger() << "Invalid allocator metadata magic in MemoryAllocator::reallocate" << frg::endlog;
@@ -243,8 +242,8 @@ size_t MemoryAllocator::get_size(void *ptr) {
 	if constexpr (logAllocations)
 		mlibc::infoLogger() << "MemoryAllocator::get_size(" << ptr << ")" << frg::endlog;
 
-	uintptr_t page_addr = reinterpret_cast<uintptr_t>(ptr) & ~size_t{pageSize - 1};
-	AllocatorMeta *meta = reinterpret_cast<AllocatorMeta *>(page_addr - pageSize);
+	uintptr_t page_addr = reinterpret_cast<uintptr_t>(ptr) & ~size_t{mlibc::page_size - 1};
+	AllocatorMeta *meta = reinterpret_cast<AllocatorMeta *>(page_addr - mlibc::page_size);
 
 	if (meta->magic != allocatorMagic)
 		mlibc::panicLogger() << "Invalid allocator metadata magic in MemoryAllocator::get_size" << frg::endlog;
