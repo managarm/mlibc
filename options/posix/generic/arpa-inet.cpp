@@ -301,7 +301,7 @@ int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 					if(ipv4end[0] != '.' || value0 > UINT8_MAX || src == ipv4end)
 						return 0;
 					// reject overlong segments or leading zeroes
-					if ((ipv4end - src) > 3 || (src[0] == '0' && value))
+					if ((ipv4end - src) > 3 || (src[0] == '0' && ipv4end - src > 1))
 						return 0;
 					src = ipv4end + 1;
 					if (!isdigit(*src))
@@ -311,7 +311,7 @@ int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 					if(ipv4end[0] != '.' || value1 > UINT8_MAX || src == ipv4end)
 						return 0;
 					// reject overlong segments or leading zeroes
-					if ((ipv4end - src) > 3 || (src[0] == '0' && value))
+					if ((ipv4end - src) > 3 || (src[0] == '0' && ipv4end - src > 1))
 						return 0;
 					array[i++] = htons((value0 << 8) | value1);
 					src = ipv4end + 1;
@@ -323,7 +323,7 @@ int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 					if(ipv4end[0] != '.' || value2 > UINT8_MAX || src == ipv4end)
 						return 0;
 					// reject overlong segments or leading zeroes
-					if ((ipv4end - src) > 3 || (src[0] == '0' && value))
+					if ((ipv4end - src) > 3 || (src[0] == '0' && ipv4end - src > 1))
 						return 0;
 					src = ipv4end + 1;
 					if (!isdigit(*src))
@@ -333,7 +333,7 @@ int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 					if(value3 > UINT8_MAX || src == ipv4end)
 						return 0;
 					// reject overlong segments or leading zeroes
-					if ((ipv4end - src) > 3 || (src[0] == '0' && value))
+					if ((ipv4end - src) > 3 || (src[0] == '0' && ipv4end - src > 1))
 						return 0;
 					array[i] = htons((value2 << 8) | value3);
 					end = ipv4end;
