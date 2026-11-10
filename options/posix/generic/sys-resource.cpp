@@ -11,6 +11,7 @@ int getpriority(int which, id_t who) {
 	int value = 0;
 	if(int e = mlibc::sysdep_or_enosys<GetPriority>(which, who, &value); e) {
 		errno = e;
+		return -1;
 	}
 	return value;
 }
