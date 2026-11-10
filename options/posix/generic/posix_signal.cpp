@@ -90,7 +90,7 @@ int sigwaitinfo(const sigset_t *__restrict set, siginfo_t *__restrict info) {
 
 int sigwait(const sigset_t *__restrict set, int *__restrict sig) {
 	if (int e = sigwaitinfo(set, nullptr); e < 0) {
-		return e;
+		return errno;
 	} else {
 		if (sig)
 			*sig = e;
