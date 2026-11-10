@@ -15,6 +15,18 @@ int timer_getoverrun(timer_t t) {
 	return out;
 }
 
+namespace {
+
+bool valid_timevals(const struct timeval tv[2]) {
+	for(int i = 0; i < 2; i++) {
+		if(tv[i].tv_usec < 0 || tv[i].tv_usec >= 1000000)
+			return false;
+	}
+	return true;
+}
+
+} // namespace
+
 int utimes(const char *filename, const struct timeval times[2]) {
 	struct timespec time[2];
 	if(times == nullptr) {
@@ -23,6 +35,10 @@ int utimes(const char *filename, const struct timeval times[2]) {
 		time[1].tv_sec = UTIME_NOW;
 		time[1].tv_nsec = UTIME_NOW;
 	} else {
+		if(!valid_timevals(times)) {
+			errno = EINVAL;
+			return -1;
+		}
 		time[0].tv_sec = times[0].tv_sec;
 		time[0].tv_nsec = times[0].tv_usec * 1000;
 		time[1].tv_sec = times[1].tv_sec;
@@ -45,6 +61,10 @@ int futimes(int fd, const struct timeval times[2]) {
 		time[1].tv_sec = UTIME_NOW;
 		time[1].tv_nsec = UTIME_NOW;
 	} else {
+		if(!valid_timevals(times)) {
+			errno = EINVAL;
+			return -1;
+		}
 		time[0].tv_sec = times[0].tv_sec;
 		time[0].tv_nsec = times[0].tv_usec * 1000;
 		time[1].tv_sec = times[1].tv_sec;
@@ -67,6 +87,10 @@ int lutimes(const char *filename, const struct timeval tv[2]) {
 		time[1].tv_sec = UTIME_NOW;
 		time[1].tv_nsec = UTIME_NOW;
 	} else {
+		if(!valid_timevals(tv)) {
+			errno = EINVAL;
+			return -1;
+		}
 		time[0].tv_sec = tv[0].tv_sec;
 		time[0].tv_nsec = tv[0].tv_usec * 1000;
 		time[1].tv_sec = tv[1].tv_sec;
