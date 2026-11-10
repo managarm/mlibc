@@ -374,7 +374,7 @@ struct Mlockall {};
 struct Munlockall {};
 // int sys_mincore(void *addr, size_t length, unsigned char *vec);
 struct Mincore {};
-// int sys_vm_remap(void *pointer, size_t size, size_t new_size, void **window);
+// int sys_vm_remap(void *pointer, size_t size, size_t new_size, int flags, void *new_address, void **window);
 struct VmRemap {};
 // int sys_setsid(pid_t *sid);
 struct SetSid {};

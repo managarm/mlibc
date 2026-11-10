@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <sys/eventfd.h>
 #include <sys/inotify.h>
+#include <sys/mman.h>
 #include <sys/prctl.h>
 #include <sys/reboot.h>
 #include <sys/signalfd.h>
@@ -747,7 +748,10 @@ int Sysdeps<VmMap>::operator()(void *hint, size_t size, int prot, int flags, int
 	return 0;
 }
 
-int Sysdeps<VmRemap>::operator()(void *pointer, size_t size, size_t new_size, void **window) {
+int Sysdeps<VmRemap>::operator()(void *pointer, size_t size, size_t new_size, int flags, void *, void **window) {
+	if (flags != MREMAP_MAYMOVE)
+		return EINVAL;
+
 	SignalGuard sguard;
 
 	managarm::posix::VmRemapRequest<SysdepsAllocator> req(getSysdepsAllocator());

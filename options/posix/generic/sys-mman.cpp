@@ -1,6 +1,7 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -124,10 +125,16 @@ int shm_unlink(const char *name) {
 
 #if __MLIBC_LINUX_OPTION
 void *mremap(void *pointer, size_t size, size_t new_size, int flags, ...) {
-	__ensure(flags == MREMAP_MAYMOVE);
+	void *new_address = nullptr;
+	if(flags & MREMAP_FIXED) {
+		va_list args;
+		va_start(args, flags);
+		new_address = va_arg(args, void *);
+		va_end(args);
+	}
 
 	void *window;
-	if(int e = mlibc::sysdep_or_enosys<VmRemap>(pointer, size, new_size, &window); e) {
+	if(int e = mlibc::sysdep_or_enosys<VmRemap>(pointer, size, new_size, flags, new_address, &window); e) {
 		errno = e;
 		return (void *)-1;
 	}
