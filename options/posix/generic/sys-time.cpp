@@ -25,7 +25,7 @@ int settimeofday(const struct timeval *tv, const struct timezone *) {
 	if(!tv)
 		return 0;
 	// tv_usec must be in the range 0, 999999
-	if(tv->tv_usec >= 1000000) {
+	if(tv->tv_usec < 0 || tv->tv_usec >= 1000000) {
 		errno = EINVAL;
 		return -1;
 	}
