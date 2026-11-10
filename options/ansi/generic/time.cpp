@@ -629,35 +629,34 @@ int clock_gettime(clockid_t clock, struct timespec *time) {
 }
 
 int clock_nanosleep(clockid_t clockid, int flags, const struct timespec *req, struct timespec *rem) {
-	__ensure(clockid == CLOCK_REALTIME || clockid == CLOCK_MONOTONIC);
+	struct timespec relativeTime = *req;
 
 	if (flags & TIMER_ABSTIME) {
 		time_t secs = 0;
 		long nanos = 0;
-		if(int e = mlibc::sysdep<ClockGet>(clockid, &secs, &nanos); e) {
-			errno = e;
-			return -1;
-		}
-
-		struct timespec relativeTime;
+		if(int e = mlibc::sysdep<ClockGet>(clockid, &secs, &nanos); e)
+			return e;
 
 		if (secs > req->tv_sec)
 			return 0;
 		else if (secs == req->tv_sec && nanos >= req->tv_nsec)
 			return 0;
-		else {
-			relativeTime.tv_sec = req->tv_sec - secs;
-			relativeTime.tv_nsec = req->tv_nsec - nanos;
-			if (relativeTime.tv_nsec < 0) {
-				relativeTime.tv_sec -= 1;
-				relativeTime.tv_nsec += 1e9;
-			}
-		}
 
-		return nanosleep(&relativeTime, rem);
+		relativeTime.tv_sec = req->tv_sec - secs;
+		relativeTime.tv_nsec = req->tv_nsec - nanos;
+		if (relativeTime.tv_nsec < 0) {
+			relativeTime.tv_sec -= 1;
+			relativeTime.tv_nsec += 1000000000;
+		}
 	}
 
-	return nanosleep(req, rem);
+	int saved_errno = errno;
+	if (nanosleep(&relativeTime, rem) < 0) {
+		int e = errno;
+		errno = saved_errno;
+		return e;
+	}
+	return 0;
 }
 
 int clock_settime(clockid_t clock, const struct timespec *time) {
