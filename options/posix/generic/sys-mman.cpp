@@ -124,7 +124,10 @@ int shm_unlink(const char *name) {
 
 #if __MLIBC_LINUX_OPTION
 void *mremap(void *pointer, size_t size, size_t new_size, int flags, ...) {
-	__ensure(flags == MREMAP_MAYMOVE);
+	if(flags != MREMAP_MAYMOVE) {
+		errno = EINVAL;
+		return (void *)-1;
+	}
 
 	void *window;
 	if(int e = mlibc::sysdep_or_enosys<VmRemap>(pointer, size, new_size, &window); e) {

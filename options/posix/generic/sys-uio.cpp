@@ -23,7 +23,13 @@ ssize_t readv(int fd, const struct iovec *iovs, int iovc) {
 }
 
 ssize_t writev(int fd, const struct iovec *iovs, int iovc) {
-	__ensure(iovc);
+	if(iovc < 0 || iovc > IOV_MAX) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if(!iovc)
+		return 0;
 
 	ssize_t written = 0;
 

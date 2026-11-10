@@ -38,6 +38,10 @@ int select(int num_fds, fd_set *__restrict read_set, fd_set *__restrict write_se
 	struct timespec timeouts = {};
 	struct timespec *timeout_ptr = nullptr;
 	if (timeout) {
+		if (timeout->tv_usec < 0 || timeout->tv_usec >= 1000000) {
+			errno = EINVAL;
+			return -1;
+		}
 		timeouts.tv_sec = timeout->tv_sec;
 		timeouts.tv_nsec = timeout->tv_usec * 1000;
 		timeout_ptr = &timeouts;
