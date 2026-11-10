@@ -46,6 +46,11 @@ int connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_len) {
 }
 
 int getpeername(int fd, struct sockaddr *addr_ptr, socklen_t *__restrict addr_length) {
+	if(!addr_length) {
+		errno = EFAULT;
+		return -1;
+	}
+
 	socklen_t actual_length;
 	if(int e = mlibc::sysdep_or_enosys<Peername>(fd, addr_ptr, *addr_length, &actual_length); e) {
 		errno = e;
@@ -56,6 +61,11 @@ int getpeername(int fd, struct sockaddr *addr_ptr, socklen_t *__restrict addr_le
 }
 
 int getsockname(int fd, struct sockaddr *__restrict addr_ptr, socklen_t *__restrict addr_length) {
+	if(!addr_length) {
+		errno = EFAULT;
+		return -1;
+	}
+
 	socklen_t actual_length;
 	if(int e = mlibc::sysdep_or_enosys<Sockname>(fd, addr_ptr, *addr_length, &actual_length); e) {
 		errno = e;
