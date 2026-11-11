@@ -92,6 +92,8 @@ inline int operator|(managarm::fs::Errors e, ToErrno) {
 			return EIO;
 		case managarm::fs::Errors::BUSY:
 			return EBUSY;
+		case managarm::fs::Errors::NO_MEMORY:
+			return ENOMEM;
 	}
 
 	mlibc::panicLogger() << "unhandled managarm::fs::Errors " << static_cast<int32_t>(e)
