@@ -2094,16 +2094,17 @@ int Sysdeps<Writev>::operator()(int fd, const struct iovec *iovs, int iovc, ssiz
 
 	mlibc::thread_testcancel();
 
-	frg::small_vector<HelSgItem, 8, SysdepsAllocator> sglist{getSysdepsAllocator()};
-
 	size_t overall_size = 0;
+	if (int e = iovecsSize(iovs, iovc, &overall_size); e)
+		return e;
+
+	frg::small_vector<HelSgItem, 8, SysdepsAllocator> sglist{getSysdepsAllocator()};
 	for (int i = 0; i < iovc; i++) {
 		HelSgItem item{
 		    .buffer = iovs[i].iov_base,
 		    .length = iovs[i].iov_len,
 		};
 		sglist.push_back(item);
-		overall_size += iovs[i].iov_len;
 	}
 
 	auto handle = getHandleForFd(fd);
