@@ -2879,6 +2879,15 @@ int Sysdeps<Umask>::operator()(mode_t mode, mode_t *old) {
 int Sysdeps<Utimensat>::operator()(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
 	SignalGuard sguard;
 
+	// posix cannot see the pointer; like Linux, a null pathname operates on dirfd itself.
+	if (pathname == nullptr) {
+		if (dirfd == AT_FDCWD)
+			return EFAULT;
+		// Only futimens() passes a null pathname (without flags): the utimensat() wrapper rejects it.
+		__ensure(!flags);
+		flags = AT_EMPTY_PATH;
+	}
+
 	managarm::posix::UtimensAtRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_fd(dirfd);
 	if (pathname != nullptr)
