@@ -102,6 +102,8 @@ SYSDEP_FUNC(VmReadahead, void *pointer, size_t size);
 SYSDEP_FUNC(Readv, int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read);
 SYSDEP_FUNC(Writev, int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_written);
 SYSDEP_FUNC(Pwrite, int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_read);
+SYSDEP_FUNC(Preadv, int fd, const struct iovec *iovs, int iovc, off_t off, ssize_t *bytes_read);
+SYSDEP_FUNC(Pwritev, int fd, const struct iovec *iovs, int iovc, off_t off, ssize_t *bytes_written);
 SYSDEP_FUNC(Access, const char *path, int mode);
 SYSDEP_FUNC(Faccessat, int dirfd, const char *pathname, int mode, int flags);
 SYSDEP_FUNC(Dup, int fd, int flags, int *newfd);
