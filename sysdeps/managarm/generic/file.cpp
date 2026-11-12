@@ -2220,6 +2220,63 @@ int Sysdeps<Pwrite>::operator()(int fd, const void *buf, size_t n, off_t off, ss
 	return 0;
 }
 
+int Sysdeps<Preadv>::operator()(int fd, const struct iovec *iovs, int iovc, off_t off, ssize_t *bytes_read) {
+	return readScattered(iovs, iovc, bytes_read, [&](void *data, size_t size, ssize_t *count) {
+		return sysdep<Pread>(fd, data, size, off, count);
+	});
+}
+
+int Sysdeps<Pwritev>::operator()(int fd, const struct iovec *iovs, int iovc, off_t off, ssize_t *bytes_written) {
+	SignalGuard sguard;
+
+	mlibc::thread_testcancel();
+
+	size_t overall_size = 0;
+	if (int e = iovecsSize(iovs, iovc, &overall_size); e)
+		return e;
+
+	frg::small_vector<HelSgItem, 8, SysdepsAllocator> sglist{getSysdepsAllocator()};
+	for (int i = 0; i < iovc; i++) {
+		HelSgItem item{
+		    .buffer = iovs[i].iov_base,
+		    .length = iovs[i].iov_len,
+		};
+		sglist.push_back(item);
+	}
+
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
+
+	managarm::fs::PwriteRequest<SysdepsAllocator> req(getSysdepsAllocator());
+	req.set_size(overall_size);
+	req.set_offset(off);
+
+	auto [offer, send_head, imbue_creds, to_write, recv_resp] = exchangeMsgsSync(
+	    handle,
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+	        helix_ng::imbueCredentials(),
+	        helix_ng::sendBufferSg(sglist.data(), iovc),
+	        helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(imbue_creds.error());
+	HEL_CHECK(to_write.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::fs::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*bytes_written = resp.size();
+	return 0;
+}
+
 int Sysdeps<Seek>::operator()(int fd, off_t offset, int whence, off_t *new_offset) {
 	SignalGuard sguard;
 
