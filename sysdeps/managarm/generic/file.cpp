@@ -2216,7 +2216,7 @@ int Sysdeps<Pwrite>::operator()(int fd, const void *buf, size_t n, off_t off, ss
 	if (resp.error() != managarm::fs::Errors::SUCCESS)
 		return resp.error() | toErrno;
 
-	*bytes_written = n;
+	*bytes_written = resp.size();
 	return 0;
 }
 
