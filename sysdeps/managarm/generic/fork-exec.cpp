@@ -142,22 +142,11 @@ int Sysdeps<Waitid>::operator()(idtype_t idtype, id_t id, siginfo_t *info, int o
 	if (resp.error() != managarm::posix::Errors::SUCCESS)
 		return resp.error() | toErrno;
 
+	info->si_signo = resp.signo();
 	info->si_pid = resp.pid();
 	info->si_uid = resp.uid();
-	info->si_code = resp.sig_code();
-	switch (info->si_code) {
-		case CLD_EXITED:
-			info->si_status = WEXITSTATUS(resp.sig_status());
-			break;
-		case CLD_KILLED:
-		case CLD_DUMPED:
-		case CLD_STOPPED:
-			info->si_signo = WSTOPSIG(resp.sig_status());
-			break;
-		case CLD_CONTINUED:
-			info->si_signo = SIGCHLD;
-			break;
-	}
+	info->si_code = resp.code();
+	info->si_status = resp.status();
 	return 0;
 }
 

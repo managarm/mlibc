@@ -17,6 +17,19 @@ int main() {
 	assert(si.si_pid == pid);
 	assert(si.si_signo == SIGCHLD);
 	assert(si.si_code == CLD_EXITED);
+	assert(si.si_status == 69);
+
+	pid = fork();
+
+	if(!pid)
+		raise(SIGTERM);
+
+	ret = waitid(P_ALL, 0, &si, WEXITED);
+	assert(ret == 0);
+	assert(si.si_pid == pid);
+	assert(si.si_signo == SIGCHLD);
+	assert(si.si_code == CLD_KILLED);
+	assert(si.si_status == SIGTERM);
 
 	return 0;
 }

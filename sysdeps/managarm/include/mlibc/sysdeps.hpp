@@ -56,6 +56,8 @@ struct ManagarmSysdepTags :
 	Uname,
 	GetHostname,
 	Pwrite,
+	Preadv,
+	Pwritev,
 	Poll,
 	GetRusage,
 	Madvise,

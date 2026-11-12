@@ -3,6 +3,8 @@
 #include <dirent.h>
 #include <errno.h>
 #include <frg/small_vector.hpp>
+#include <frg/vector.hpp>
+#include <limits.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <sys/eventfd.h>
@@ -1992,19 +1994,60 @@ int Sysdeps<Read>::operator()(int fd, void *data, size_t max_size, ssize_t *byte
 	return resp.error() | toErrno;
 }
 
-int Sysdeps<Readv>::operator()(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
+namespace {
+
+int iovecsSize(const struct iovec *iovs, int iovc, size_t *overall_size) {
+	if (iovc < 0 || iovc > IOV_MAX)
+		return EINVAL;
+
+	size_t size = 0;
 	for (int i = 0; i < iovc; i++) {
-		ssize_t intermed = 0;
-
-		if (int e = sysdep<Read>(fd, iovs[i].iov_base, iovs[i].iov_len, &intermed); e)
-			return e;
-		else if (intermed == 0)
-			break;
-
-		*bytes_read += intermed;
+		if (SSIZE_MAX - size < iovs[i].iov_len)
+			return EINVAL;
+		size += iovs[i].iov_len;
 	}
-
+	*overall_size = size;
 	return 0;
+}
+
+// Reads once and scatters the data: reading each iovec separately would drop data that
+// was already read when a later read fails (e.g., EAGAIN on a non-blocking socket),
+// and it could block after data was already received.
+template <typename F>
+int readScattered(const struct iovec *iovs, int iovc, ssize_t *bytes_read, F read) {
+	SignalGuard sguard;
+	mlibc::thread_testcancel();
+
+	size_t overall_size = 0;
+	if (int e = iovecsSize(iovs, iovc, &overall_size); e)
+		return e;
+
+	if (iovc == 1)
+		return read(iovs[0].iov_base, iovs[0].iov_len, bytes_read);
+
+	frg::vector<char, SysdepsAllocator> buffer{getSysdepsAllocator()};
+	buffer.resize(overall_size);
+	ssize_t count = 0;
+	if (int e = read(buffer.data(), overall_size, &count); e)
+		return e;
+
+	size_t offset = 0;
+	for (int i = 0; i < iovc && offset < static_cast<size_t>(count); i++) {
+		size_t chunk = frg::min(iovs[i].iov_len, static_cast<size_t>(count) - offset);
+		if (chunk)
+			memcpy(iovs[i].iov_base, buffer.data() + offset, chunk);
+		offset += chunk;
+	}
+	*bytes_read = count;
+	return 0;
+}
+
+} // namespace
+
+int Sysdeps<Readv>::operator()(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_read) {
+	return readScattered(iovs, iovc, bytes_read, [&](void *data, size_t size, ssize_t *count) {
+		return sysdep<Read>(fd, data, size, count);
+	});
 }
 
 int Sysdeps<Write>::operator()(int fd, const void *data, size_t size, ssize_t *bytes_written) {
@@ -2051,16 +2094,17 @@ int Sysdeps<Writev>::operator()(int fd, const struct iovec *iovs, int iovc, ssiz
 
 	mlibc::thread_testcancel();
 
-	frg::small_vector<HelSgItem, 8, SysdepsAllocator> sglist{getSysdepsAllocator()};
-
 	size_t overall_size = 0;
+	if (int e = iovecsSize(iovs, iovc, &overall_size); e)
+		return e;
+
+	frg::small_vector<HelSgItem, 8, SysdepsAllocator> sglist{getSysdepsAllocator()};
 	for (int i = 0; i < iovc; i++) {
 		HelSgItem item{
 		    .buffer = iovs[i].iov_base,
 		    .length = iovs[i].iov_len,
 		};
 		sglist.push_back(item);
-		overall_size += iovs[i].iov_len;
 	}
 
 	auto handle = getHandleForFd(fd);
@@ -2172,7 +2216,64 @@ int Sysdeps<Pwrite>::operator()(int fd, const void *buf, size_t n, off_t off, ss
 	if (resp.error() != managarm::fs::Errors::SUCCESS)
 		return resp.error() | toErrno;
 
-	*bytes_written = n;
+	*bytes_written = resp.size();
+	return 0;
+}
+
+int Sysdeps<Preadv>::operator()(int fd, const struct iovec *iovs, int iovc, off_t off, ssize_t *bytes_read) {
+	return readScattered(iovs, iovc, bytes_read, [&](void *data, size_t size, ssize_t *count) {
+		return sysdep<Pread>(fd, data, size, off, count);
+	});
+}
+
+int Sysdeps<Pwritev>::operator()(int fd, const struct iovec *iovs, int iovc, off_t off, ssize_t *bytes_written) {
+	SignalGuard sguard;
+
+	mlibc::thread_testcancel();
+
+	size_t overall_size = 0;
+	if (int e = iovecsSize(iovs, iovc, &overall_size); e)
+		return e;
+
+	frg::small_vector<HelSgItem, 8, SysdepsAllocator> sglist{getSysdepsAllocator()};
+	for (int i = 0; i < iovc; i++) {
+		HelSgItem item{
+		    .buffer = iovs[i].iov_base,
+		    .length = iovs[i].iov_len,
+		};
+		sglist.push_back(item);
+	}
+
+	auto handle = getHandleForFd(fd);
+	if (!handle)
+		return EBADF;
+
+	managarm::fs::PwriteRequest<SysdepsAllocator> req(getSysdepsAllocator());
+	req.set_size(overall_size);
+	req.set_offset(off);
+
+	auto [offer, send_head, imbue_creds, to_write, recv_resp] = exchangeMsgsSync(
+	    handle,
+	    helix_ng::offer(
+	        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+	        helix_ng::imbueCredentials(),
+	        helix_ng::sendBufferSg(sglist.data(), iovc),
+	        helix_ng::recvInline()
+	    )
+	);
+
+	HEL_CHECK(offer.error());
+	HEL_CHECK(send_head.error());
+	HEL_CHECK(imbue_creds.error());
+	HEL_CHECK(to_write.error());
+	HEL_CHECK(recv_resp.error());
+
+	managarm::fs::SvrResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+	resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+	if (resp.error() != managarm::fs::Errors::SUCCESS)
+		return resp.error() | toErrno;
+
+	*bytes_written = resp.size();
 	return 0;
 }
 
@@ -2777,6 +2878,15 @@ int Sysdeps<Umask>::operator()(mode_t mode, mode_t *old) {
 
 int Sysdeps<Utimensat>::operator()(int dirfd, const char *pathname, const struct timespec times[2], int flags) {
 	SignalGuard sguard;
+
+	// posix cannot see the pointer; like Linux, a null pathname operates on dirfd itself.
+	if (pathname == nullptr) {
+		if (dirfd == AT_FDCWD)
+			return EFAULT;
+		// Only futimens() passes a null pathname (without flags): the utimensat() wrapper rejects it.
+		__ensure(!flags);
+		flags = AT_EMPTY_PATH;
+	}
 
 	managarm::posix::UtimensAtRequest<SysdepsAllocator> req(getSysdepsAllocator());
 	req.set_fd(dirfd);

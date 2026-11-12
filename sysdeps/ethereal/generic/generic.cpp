@@ -3,8 +3,10 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <frg/vector.hpp>
 #include <limits.h>
 #include <mlibc/all-sysdeps.hpp>
+#include <mlibc/allocator.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/tcb.hpp>
 #include <sched.h>
@@ -21,6 +23,7 @@
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <unistd.h>
 
 namespace mlibc {
@@ -251,6 +254,34 @@ Sysdeps<Pwrite>::operator()(int fd, const void *buf, size_t n, off_t off, ssize_
 	*bytes_written = s;
 	return 0;
 }
+
+#ifndef MLIBC_BUILDING_RTLD
+// TODO: this implementation is not safe to use in signal contexts
+int Sysdeps<Writev>::operator()(int fd, const struct iovec *iovs, int iovc, ssize_t *bytes_written) {
+	size_t bytes = 0;
+	for(int i = 0; i < iovc; i++) {
+		if(SSIZE_MAX - bytes < iovs[i].iov_len)
+			return EINVAL;
+		bytes += iovs[i].iov_len;
+	}
+	frg::vector<char, MemoryAllocator> buffer{getAllocator()};
+	buffer.resize(bytes);
+
+	size_t to_copy = bytes;
+	char *bp = buffer.data();
+	for(int i = 0; i < iovc; i++) {
+		size_t copy = frg::min(iovs[i].iov_len, to_copy);
+
+		bp = (char *)memcpy((void *)bp, (void *)iovs[i].iov_base, copy) + copy;
+
+		to_copy -= copy;
+		if(to_copy == 0)
+			break;
+	}
+
+	return sysdep<Write>(fd, buffer.data(), bytes, bytes_written);
+}
+#endif
 
 int Sysdeps<Dup2>::operator()(int fd, int flags, int newfd) {
 	(void)flags;

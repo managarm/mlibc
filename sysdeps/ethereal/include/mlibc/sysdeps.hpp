@@ -131,6 +131,7 @@ struct EtherealSysdepTags :
 	VmUnmap,
 	Waitpid,
 	Write,
+	Writev,
 	Yield
 {};
 
