@@ -703,6 +703,23 @@ int Sysdeps<Pwrite>::operator()(int fd, const void *buf, size_t n, off_t off, ss
 	return 0;
 }
 
+// The kernel takes the offset as two longs (low, high) on all architectures.
+int Sysdeps<Preadv>::operator()(int fd, const struct iovec *iovs, int iovc, off_t off, ssize_t *bytes_read) {
+	auto ret = do_cp_syscall(SYS_preadv, fd, iovs, iovc, (long)off, (long)((uint64_t)off >> 32));
+	if (int e = sc_error(ret); e)
+		return e;
+	*bytes_read = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
+int Sysdeps<Pwritev>::operator()(int fd, const struct iovec *iovs, int iovc, off_t off, ssize_t *bytes_written) {
+	auto ret = do_cp_syscall(SYS_pwritev, fd, iovs, iovc, (long)off, (long)((uint64_t)off >> 32));
+	if (int e = sc_error(ret); e)
+		return e;
+	*bytes_written = sc_int_result<ssize_t>(ret);
+	return 0;
+}
+
 int Sysdeps<Access>::operator()(const char *path, int mode) {
 	auto ret = do_syscall(SYS_faccessat, AT_FDCWD, path, mode, 0);
 	if (int e = sc_error(ret); e)

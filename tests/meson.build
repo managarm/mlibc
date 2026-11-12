@@ -137,6 +137,7 @@ all_test_cases = [
 	'posix/regex-highbyte',
 	'posix/sigtimedwait',
 	'posix/if_indextoname',
+	'posix/preadv-pwritev',
 	'posix/readv-writev',
 	'posix/posix-timer',
 	'posix/strdupa',

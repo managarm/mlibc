@@ -14,6 +14,8 @@ struct LinuxSysdepTags :
 	Readv,
 	Writev,
 	Pwrite,
+	Preadv,
+	Pwritev,
 	Access,
 	Faccessat,
 	Dup,
