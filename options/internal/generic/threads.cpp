@@ -107,16 +107,23 @@ int thread_create(struct __mlibc_thread_data **__restrict thread, const struct _
 	if (attr.__sigmaskset)
 		mlibc::infoLogger() << "pthread_create(): sigmask is ignored!" << frg::endlog;
 
-	// TODO: due to alignment guarantees, the stackaddr and stacksize might change
-	// when the stack is allocated. Currently this isn't propagated to the TCB,
-	// but it should be.
+	// POSIX:
+	// A conforming implementation may round up the value contained in guardsize to a
+	// multiple of the configurable system variable {PAGESIZE} (see <sys/mman.h>).
+	// If an implementation rounds up the value of guardsize to a multiple of {PAGESIZE},
+	// a call to pthread_attr_getguardsize() specifying attr shall store in the guardsize
+	// parameter the guard size specified by the previous pthread_attr_setguardsize() function call.
+	size_t guardsize = attr.__guardsize;
+	// Align to page size.
+	guardsize = (guardsize + mlibc::page_size - 1) & ~(mlibc::page_size - 1);
+
 	void *stack = attr.__stackaddr;
 	if (!IsImplemented<PrepareStack>) {
 		MLIBC_MISSING_SYSDEP();
 		return ENOSYS;
 	}
 	int ret = sysdep_or_panic<PrepareStack>(&stack, entry,
-			user_arg, new_tcb, &attr.__stacksize, &attr.__guardsize, &new_tcb->stackAddr);
+			user_arg, new_tcb, &attr.__stacksize, &guardsize, &new_tcb->stackAddr);
 	if (ret)
 		return ret;
 
@@ -125,7 +132,7 @@ int thread_create(struct __mlibc_thread_data **__restrict thread, const struct _
 		return ENOSYS;
 	}
 	new_tcb->stackSize = attr.__stacksize;
-	new_tcb->guardSize = attr.__guardsize;
+	new_tcb->guardSize = guardsize;
 	new_tcb->returnValueType = (returns_int) ? TcbThreadReturnValue::Integer : TcbThreadReturnValue::Pointer;
 	new_tcb->isJoinable = (attr.__detachstate == __MLIBC_THREAD_CREATE_JOINABLE);
 	__atomic_store_n(&new_tcb->cancelBits, 0, __ATOMIC_RELAXED);

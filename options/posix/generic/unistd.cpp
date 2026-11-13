@@ -20,12 +20,12 @@
 #include <mlibc-config.h>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/allocator.hpp>
-#include <mlibc/arch-defs.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/dlapi.hpp>
 #include <mlibc/getopt.hpp>
 #include <mlibc/thread.hpp>
 #include <mlibc/utmp.hpp>
+#include <mlibc/page_size.hpp>
 
 // TIOCGPGRP and TIOCSPGRP for default implementations
 #if __MLIBC_LINUX_OPTION || __MLIBC_BSD_OPTION
@@ -855,8 +855,6 @@ constexpr auto staticSysconfValues = [] {
 	    // {_SC_MQ_OPEN_MAX, MQ_OPEN_MAX},
 	    // {_SC_MQ_PRIO_MAX, MQ_PRIO_MAX},
 	    {_SC_OPEN_MAX, OPEN_MAX},
-	    {_SC_PAGE_SIZE, mlibc::page_size},
-	    {_SC_PAGESIZE, mlibc::page_size},
 	    {_SC_THREAD_DESTRUCTOR_ITERATIONS, PTHREAD_DESTRUCTOR_ITERATIONS},
 	    {_SC_THREAD_KEYS_MAX, PTHREAD_KEYS_MAX},
 	    {_SC_THREAD_STACK_MIN, PTHREAD_STACK_MIN},
@@ -1008,6 +1006,8 @@ long sysconf(int number) {
 			return 1;
 		case _SC_GETPW_R_SIZE_MAX:
 			return NSS_BUFLEN_PASSWD;
+		case _SC_PAGESIZE:
+			return mlibc::page_size;
 		case _SC_GETGR_R_SIZE_MAX:
 			return 1024;
 		case _SC_CHILD_MAX:

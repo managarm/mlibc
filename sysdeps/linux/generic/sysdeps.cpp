@@ -26,7 +26,7 @@
 #include <mlibc/dlapi.hpp>
 #include <mlibc/thread-entry.hpp>
 #include <mlibc/thread-types.hpp>
-#include <mlibc/arch-defs.hpp>
+#include <mlibc/page_size.hpp>
 
 #if __MLIBC_POSIX_OPTION
 #include <net/if.h>
