@@ -7,7 +7,7 @@ namespace mlibc {
 struct ZinniaSysdepTags :
 	LibcLog,
 	LibcPanic,
-	TcbSet,
+	TpSet,
 	FutexTid,
 	FutexWait,
 	FutexWake,

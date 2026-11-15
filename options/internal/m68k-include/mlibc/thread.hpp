@@ -1,18 +1,13 @@
 #pragma once
 
 #include <stdint.h>
-#include <mlibc/all-sysdeps.hpp>
-#include <mlibc/tcb.hpp>
-#include <bits/ensure.h>
 
 namespace mlibc {
 
 extern "C" void *__m68k_read_tp();
 
-inline Tcb *get_current_tcb() {
-	// On m68k, the end of the TCB is 0x7000 below the thread pointer.
-	void *ptr = __m68k_read_tp();
-	return reinterpret_cast<Tcb *>((uintptr_t)ptr - 0x7000 - sizeof(Tcb));
+inline void *get_tp() {
+	return __m68k_read_tp();
 }
 
 inline uintptr_t get_sp() {

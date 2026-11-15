@@ -308,16 +308,13 @@ HelHandleResult *parseHandle(void *&element) {
 
 namespace mlibc {
 
-int Sysdeps<TcbSet>::operator()(void *pointer) {
+int Sysdeps<TpSet>::operator()(void *pointer) {
 #if defined(__x86_64__)
 	HEL_CHECK(helWriteFsBase(pointer));
 #elif defined(__aarch64__)
-	uintptr_t addr = reinterpret_cast<uintptr_t>(pointer);
-	addr += sizeof(Tcb) - 0x10;
-	asm volatile("msr tpidr_el0, %0" ::"r"(addr));
+	asm volatile("msr tpidr_el0, %0" ::"r"(pointer));
 #elif defined(__riscv) && __riscv_xlen == 64
-	uintptr_t tp = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
-	asm volatile("mv tp, %0" : : "r"(tp) : "memory");
+	asm volatile("mv tp, %0" : : "r"(pointer) : "memory");
 #else
 #error Unknown architecture
 #endif

@@ -884,8 +884,8 @@ leave:
 
 	extern "C" void __mlibc_thread_entry();
 
-	int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
-		(void)tcb;
+	int Sysdeps<Clone>::operator()(void *tp, pid_t *pid_out, void *stack) {
+		(void)tp;
 		long ret;
 		long err = syscall(SYSCALL_NEWTHREAD, &ret, (uintptr_t)__mlibc_thread_entry, (uintptr_t)stack);
 		*pid_out = ret;
@@ -1290,7 +1290,7 @@ leave:
 		__builtin_unreachable();
 	}
 
-	int Sysdeps<TcbSet>::operator()(void *pointer) {
+	int Sysdeps<TpSet>::operator()(void *pointer) {
 		long r;
 		return syscall(SYSCALL_ARCHCTL, &r, ARCH_CTL_SET_FSBASE, (uint64_t)pointer);
 	}

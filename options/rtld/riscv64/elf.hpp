@@ -2,6 +2,7 @@
 
 #include <elf.h>
 #include <sys/hwprobe.h>
+#include <stddef.h>
 
 #define ELF_CLASS ELFCLASS64
 #define ELF_MACHINE EM_RISCV
@@ -44,6 +45,7 @@ using elf_vernaux = Elf64_Vernaux;
 // TODO: we need to implement the assembly routines to enable TLSDESC support
 // #define R_TLSDESC R_RISCV_TLSDESC
 
-#define TP_TCB_OFFSET 0
+constexpr inline bool tlsAboveTp = true;
+constexpr inline uintptr_t tlsOffsetFromTp = 0;
 
 using ifunc_handler = elf_addr (*)(uint64_t, __riscv_hwprobe_t, void *);

@@ -27,8 +27,8 @@ namespace mlibc {
 
 static constexpr size_t default_stacksize = 0x200000;
 
-int Sysdeps<PrepareStack>::operator()(void **stack, void *entry, void *user_arg, void *tcb, size_t *stack_size, size_t *guard_size, void **stack_base) {
-	(void)tcb;
+int Sysdeps<PrepareStack>::operator()(void **stack, void *entry, void *user_arg, void *tp, size_t *stack_size, size_t *guard_size, void **stack_base) {
+	(void)tp;
 	if (!*stack_size)
 		*stack_size = default_stacksize;
 

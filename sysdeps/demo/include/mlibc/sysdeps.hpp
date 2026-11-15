@@ -9,7 +9,7 @@ struct DemoSysdepTags :
 	LibcLog,
 	Isatty,
 	Write,
-	TcbSet,
+	TpSet,
 	AnonAllocate,
 	AnonFree,
 	Seek,

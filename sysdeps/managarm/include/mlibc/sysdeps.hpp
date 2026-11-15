@@ -182,7 +182,7 @@ struct ManagarmSysdepTags :
 	VmMap,
 	VmUnmap,
 	VmProtect,
-	TcbSet,
+	TpSet,
 #if MLIBC_BUILDING_RTLD
 	// Not supported: VmReadahead,
 #endif

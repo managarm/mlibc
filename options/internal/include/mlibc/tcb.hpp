@@ -6,6 +6,7 @@
 #include <frg/array.hpp>
 #include <frg/list.hpp>
 #include <mlibc/threads.hpp>
+#include <mlibc/thread.hpp>
 
 #include "elf.hpp"
 
@@ -164,6 +165,29 @@ struct Tcb {
 	}
 };
 
+namespace mlibc {
+	inline Tcb *tp_to_tcb(void *tp) {
+		if constexpr (tlsAboveTp) {
+			return reinterpret_cast<Tcb *>(reinterpret_cast<uintptr_t>(tp) - sizeof(Tcb) + tlsOffsetFromTp);
+		} else {
+			return static_cast<Tcb *>(tp);
+		}
+	}
+
+	inline void *tcb_to_tp(Tcb *tcb) {
+		if constexpr (tlsAboveTp) {
+			return reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(tcb) + sizeof(Tcb) - tlsOffsetFromTp);
+		} else {
+			return static_cast<void *>(tcb);
+		}
+	}
+
+	inline Tcb *get_current_tcb() {
+		void *tp = get_tp();
+		return tp_to_tcb(tp);
+	}
+} // namespace mlibc
+
 // There are a few places where we assume the layout of the TCB:
 #if defined(__x86_64__)
 // GCC expects the stack canary to be at fs:0x28.
@@ -185,9 +209,9 @@ static_assert(offsetof(Tcb, dtvPointers) == 0x08);
 #elif defined(__aarch64__)
 // The thread pointer on AArch64 points to 16 bytes before the end of the TCB.
 // options/linker/aarch64/runtime.S uses the offset of dtvPointers.
-static_assert(sizeof(Tcb) - offsetof(Tcb, dtvPointers) - TP_TCB_OFFSET == 112);
+static_assert(sizeof(Tcb) - offsetof(Tcb, dtvPointers) - tlsOffsetFromTp == 112);
 // sysdeps/linux/aarch64/cp_syscall.S uses the offset of cancelBits.
-static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) - TP_TCB_OFFSET == 88);
+static_assert(sizeof(Tcb) - offsetof(Tcb, cancelBits) - tlsOffsetFromTp == 88);
 #elif defined(__riscv) && __riscv_xlen == 64
 // The thread pointer on RISC-V points to *after* the TCB, and since
 // we need to access specific fields that means that the value in

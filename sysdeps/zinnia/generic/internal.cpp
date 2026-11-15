@@ -23,20 +23,17 @@ void Sysdeps<LibcLog>::operator()(const char *message) {
 	__builtin_unreachable();
 }
 
-int Sysdeps<TcbSet>::operator()(void *pointer) {
+int Sysdeps<TpSet>::operator()(void *pointer) {
 #if defined(__x86_64__)
 	return zinnia_syscall(SYSCALL_ARCHCTL, ARCHCTL_SET_FSBASE, (size_t)pointer).error;
 #elif defined(__aarch64__)
-	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb) - 0x10;
-	asm volatile("msr tpidr_el0, %0" ::"r"(thread_data));
+	asm volatile("msr tpidr_el0, %0" ::"r"(pointer));
 	return 0;
 #elif defined(__riscv)
-	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
-	asm volatile("mv tp, %0" ::"r"(thread_data));
+	asm volatile("mv tp, %0" ::"r"(pointer));
 	return 0;
 #elif defined(__loongarch64)
-	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb);
-	asm volatile("move $tp, %0" ::"r"(thread_data));
+	asm volatile("move $tp, %0" ::"r"(pointer));
 	return 0;
 #else
 #error "Unsupported architecture!"

@@ -28,10 +28,10 @@ struct ThreadExit { static constexpr bool is_noreturn = true; };
 
 // If *stack is not null, it should point to the lowest addressable byte of the stack.
 // Returns the new stack pointer in *stack and the stack base in *stack_base.
-// int sys_prepare_stack(void **stack, void *entry, void *user_arg, void* tcb, size_t *stack_size, size_t *guard_size, void **stack_base);
+// int sys_prepare_stack(void **stack, void *entry, void *user_arg, void* tp, size_t *stack_size, size_t *guard_size, void **stack_base);
 struct PrepareStack {};
 
-// int sys_clone(void *tcb, pid_t *pid_out, void *stack);
+// int sys_clone(void *tp, pid_t *pid_out, void *stack);
 struct Clone {};
 
 // int sys_futex_wait(int *pointer, int expected, const struct timespec *time);
@@ -102,8 +102,8 @@ struct GetPid {};
 // int sys_kill(pid_t, int);
 struct Kill {};
 
-// int sys_tcb_set(void *pointer);
-struct TcbSet {};
+// int sys_tp_set(void *pointer);
+struct TpSet {};
 
 #if MLIBC_BUILDING_RTLD
 // int sys_vm_readahead(void *pointer, size_t size);

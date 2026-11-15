@@ -116,7 +116,7 @@ int thread_create(struct __mlibc_thread_data **__restrict thread, const struct _
 		return ENOSYS;
 	}
 	int ret = sysdep_or_panic<PrepareStack>(&stack, entry,
-			user_arg, new_tcb, &attr.__stacksize, &attr.__guardsize, &new_tcb->stackAddr);
+			user_arg, mlibc::tcb_to_tp(new_tcb), &attr.__stacksize, &attr.__guardsize, &new_tcb->stackAddr);
 	if (ret)
 		return ret;
 
@@ -129,7 +129,7 @@ int thread_create(struct __mlibc_thread_data **__restrict thread, const struct _
 	new_tcb->returnValueType = (returns_int) ? TcbThreadReturnValue::Integer : TcbThreadReturnValue::Pointer;
 	new_tcb->isJoinable = (attr.__detachstate == __MLIBC_THREAD_CREATE_JOINABLE);
 	__atomic_store_n(&new_tcb->cancelBits, 0, __ATOMIC_RELAXED);
-	sysdep_or_panic<Clone>(new_tcb, &tid, stack);
+	sysdep_or_panic<Clone>(mlibc::tcb_to_tp(new_tcb), &tid, stack);
 	*thread = reinterpret_cast<struct __mlibc_thread_data *>(new_tcb);
 
 	__atomic_store_n(&new_tcb->tid, tid, __ATOMIC_RELAXED);
