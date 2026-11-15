@@ -224,10 +224,18 @@ int main() {
 
 	// Test AI_CANONNAME.
 	hints = (struct addrinfo){0};
-	hints.ai_flags = AI_CANONNAME;
-	ret = getaddrinfo("localhost.localdomain", NULL, &hints, &res);
+	hints.ai_flags = AI_CANONNAME | AI_NUMERICHOST;
+	ret = getaddrinfo("127.0.0.1", NULL, &hints, &res);
 	assert(ret == 0);
 	assert(res->ai_canonname);
+	assert(strcmp(res->ai_canonname, "127.0.0.1") == 0);
+	freeaddrinfo(res);
+	res = NULL;
+
+	ret = getaddrinfo("::1", NULL, &hints, &res);
+	assert(ret == 0);
+	assert(res->ai_canonname);
+	assert(strcmp(res->ai_canonname, "::1") == 0);
 	freeaddrinfo(res);
 	res = NULL;
 
