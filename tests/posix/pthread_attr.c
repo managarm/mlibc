@@ -4,7 +4,9 @@
 #include <alloca.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
 #include <signal.h>
+#include <stdint.h>
 
 static void test_detachstate() {
 	pthread_attr_t attr;
@@ -199,6 +201,30 @@ static void test_stack() {
 }
 #endif
 
+#if __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC) || defined(USE_CROSS_LIBC)
+static void test_getattr_np_stack() {
+	pthread_attr_t attr;
+	assert(!pthread_getattr_np(pthread_self(), &attr));
+
+	void *addr;
+	size_t size;
+	assert(!pthread_attr_getstack(&attr, &addr, &size));
+
+	struct rlimit limit;
+	assert(!getrlimit(RLIMIT_STACK, &limit));
+	if (limit.rlim_cur != RLIM_INFINITY)
+		assert(size > limit.rlim_cur / 2);
+
+	// Whatever it reports has to contain the stack we are running on.
+	int here;
+	uintptr_t sp = (uintptr_t)&here;
+	assert(sp >= (uintptr_t)addr);
+	assert(sp < (uintptr_t)addr + size);
+
+	assert(!pthread_attr_destroy(&attr));
+}
+#endif
+
 int main() {
 	test_detachstate();
 	test_stacksize();
@@ -210,6 +236,9 @@ int main() {
 	test_stackaddr();
 #if (!defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32)
 	test_stack();
+#endif
+#if __MLIBC_LINUX_OPTION || defined(USE_HOST_LIBC) || defined(USE_CROSS_LIBC)
+	test_getattr_np_stack();
 #endif
 
 	return 0;
