@@ -7,7 +7,7 @@
 
 #ifndef MLIBC_BUILDING_RTLD
 extern "C" int
-__mlibc_spawn_thread(int flags, void *stack, void *pid_out, void *child_tid, void *tcb);
+__mlibc_spawn_thread(int flags, void *stack, void *pid_out, void *child_tid, void *tp);
 #endif
 
 namespace mlibc {
@@ -126,16 +126,11 @@ pid_t Sysdeps<GetSid>::operator()(pid_t pid, pid_t *out) {
 }
 
 #ifndef MLIBC_BUILDING_RTLD
-int Sysdeps<Clone>::operator()(void *tcb, pid_t *pid_out, void *stack) {
+int Sysdeps<Clone>::operator()(void *tp, pid_t *pid_out, void *stack) {
 	unsigned long flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD
 	                      | CLONE_SYSVSEM | CLONE_SETTLS | CLONE_PARENT_SETTID;
 
-#if defined(__aarch64__)
-	// TP should point to the address 16 bytes before the end of the TCB.
-	tcb = reinterpret_cast<char *>(tcb) + sizeof(Tcb) - 0x10;
-#endif
-
-	auto ret = __mlibc_spawn_thread(flags, stack, pid_out, nullptr, tcb);
+	auto ret = __mlibc_spawn_thread(flags, stack, pid_out, nullptr, tp);
 	if (ret < 0)
 		return -ret;
 
@@ -169,15 +164,14 @@ int Sysdeps<Prctl>::operator()(int op, va_list va, int *out) {
 	*out = ret;
 	return 0;
 }
-int Sysdeps<TcbSet>::operator()(void *pointer) {
+int Sysdeps<TpSet>::operator()(void *pointer) {
 #if defined(__x86_64__)
 	constexpr int ARCH_SET_FS = 0x1002;
 	auto ret = Syscall(SYS_ARCH_PRCTL, ARCH_SET_FS, pointer);
 	if (auto e = syscall_error(ret); e)
 		return e;
 #elif defined(__aarch64__)
-	uintptr_t thread_data = reinterpret_cast<uintptr_t>(pointer) + sizeof(Tcb) - 0x10;
-	asm volatile("msr tpidr_el0, %0" ::"r"(thread_data));
+	asm volatile("msr tpidr_el0, %0" ::"r"(pointer));
 #else
 #error "Missing architecture specific code."
 #endif

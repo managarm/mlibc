@@ -2,7 +2,7 @@
 
 #include <errno.h>
 #include <mlibc/all-sysdeps.hpp>
-#include <mlibc/thread.hpp>
+#include <mlibc/tcb.hpp>
 #include <mlibc/threads.hpp>
 #include <stddef.h>
 #include <stdint.h>
@@ -26,12 +26,12 @@ int Sysdeps<PrepareStack>::operator()(
     void **stack,
     void *entry,
     void *user_arg,
-    void *tcb,
+    void *tp,
     size_t *stack_size,
     size_t *guard_size,
     void **stack_base
 ) {
-	(void)tcb;
+	(void)tp;
 	if (!*stack_size)
 		*stack_size = default_stacksize;
 
