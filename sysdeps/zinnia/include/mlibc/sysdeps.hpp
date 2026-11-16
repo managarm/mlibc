@@ -165,6 +165,8 @@ struct ZinniaSysdepTags :
 	Ptsname,
 	IfIndextoname,
 	IfNametoindex,
+	IfNameindex,
+	IfFreeNameindex,
 	Clone,
 	PrepareStack,
 	GetCurrentStackInfo,

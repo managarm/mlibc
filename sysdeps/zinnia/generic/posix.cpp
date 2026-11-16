@@ -2,10 +2,10 @@
 #include <abi-bits/pid_t.h>
 #include <errno.h>
 #include <frg/logging.hpp>
+#include <ifaddrs.h>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <mlibc/tcb.hpp>
-#include <ifaddrs.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -946,6 +946,70 @@ int Sysdeps<IfNametoindex>::operator()(const char *name, unsigned int *ret) {
 	*ret = ifr.ifr_ifindex;
 
 	return 0;
+}
+
+int Sysdeps<IfNameindex>::operator()(struct if_nameindex **out) {
+	int fd;
+	if (int e = sysdep<Socket>(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0, &fd); e)
+		return e;
+
+	struct ifconf ifc;
+	memset(&ifc, 0, sizeof(ifc));
+	if (int e = sysdep<Ioctl>(fd, SIOCGIFCONF, &ifc, nullptr); e) {
+		sysdep<Close>(fd);
+		return e;
+	}
+
+	struct ifreq *reqs = nullptr;
+	if (ifc.ifc_len > 0) {
+		reqs = (struct ifreq *)malloc(ifc.ifc_len);
+		if (!reqs) {
+			sysdep<Close>(fd);
+			return ENOMEM;
+		}
+		ifc.ifc_req = reqs;
+		if (int e = sysdep<Ioctl>(fd, SIOCGIFCONF, &ifc, nullptr); e) {
+			free(reqs);
+			sysdep<Close>(fd);
+			return e;
+		}
+	}
+
+	size_t count = (size_t)ifc.ifc_len / sizeof(struct ifreq);
+	auto list = (struct if_nameindex *)calloc(count + 1, sizeof(struct if_nameindex));
+	if (!list) {
+		free(reqs);
+		sysdep<Close>(fd);
+		return ENOMEM;
+	}
+
+	size_t n = 0;
+	for (size_t i = 0; i < count; i++) {
+		if (sysdep<Ioctl>(fd, SIOCGIFINDEX, &reqs[i], nullptr))
+			continue;
+		list[n].if_name = strndup(reqs[i].ifr_name, IFNAMSIZ);
+		if (!list[n].if_name) {
+			free(reqs);
+			sysdep<Close>(fd);
+			sysdep<IfFreeNameindex>(list);
+			return ENOMEM;
+		}
+		list[n].if_index = reqs[i].ifr_ifindex;
+		n++;
+	}
+
+	free(reqs);
+	sysdep<Close>(fd);
+	*out = list;
+	return 0;
+}
+
+void Sysdeps<IfFreeNameindex>::operator()(struct if_nameindex *ifn) {
+	if (!ifn)
+		return;
+	for (auto p = ifn; p->if_index || p->if_name; p++)
+		free(p->if_name);
+	free(ifn);
 }
 
 int Sysdeps<InetConfigured>::operator()(bool *ipv4, bool *ipv6) {
