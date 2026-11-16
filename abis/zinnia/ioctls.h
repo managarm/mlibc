@@ -63,9 +63,9 @@
 #define TCSETX 0x5433
 #define TCSETXF 0x5434
 #define TCSETXW 0x5435
-#define TIOCSIG 0x36
+#define TIOCSIG 0x5436
 #define TIOCVHANGUP 0x5437
-#define TIOCGPKT 3
+#define TIOCGPKT 0x5438
 #define TIOCGPTLCK 3
 #define TIOCGEXCL 3
 #define TIOCGPTPEER 3
