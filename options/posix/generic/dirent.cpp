@@ -175,6 +175,7 @@ int scandir(const char *path, struct dirent ***res, int (*select)(const struct d
 		memcpy(array[count], dir_ent, dir_ent->d_reclen);
 		count++;
 	}
+	closedir(dir);
 
 	if(errno) {
 		if(array)
