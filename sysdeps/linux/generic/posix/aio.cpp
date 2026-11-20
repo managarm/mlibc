@@ -611,6 +611,9 @@ void enqueueWorkerRequest(AioContext *req) {
 } // namespace
 
 int Sysdeps<AioRead>::operator()(struct aiocb *cb) {
+	if (cb->aio_nbytes > SSIZE_MAX)
+		return EINVAL;
+
 	__ensure((reinterpret_cast<uintptr_t>(cb) & (sizeof(uintptr_t) - 1)) == 0);
 
 	AioCbView cbv{cb};
@@ -633,6 +636,9 @@ int Sysdeps<AioRead>::operator()(struct aiocb *cb) {
 }
 
 int Sysdeps<AioWrite>::operator()(struct aiocb *cb) {
+	if (cb->aio_nbytes > SSIZE_MAX)
+		return EINVAL;
+
 	__ensure((reinterpret_cast<uintptr_t>(cb) & (sizeof(uintptr_t) - 1)) == 0);
 
 	AioCbView cbv{cb};
