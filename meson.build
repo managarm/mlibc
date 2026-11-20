@@ -319,6 +319,16 @@ elif host_machine.system() == 'obos'
 elif host_machine.system() == 'zinnia'
 	rtld_include_dirs += include_directories('sysdeps/zinnia/include')
 	libc_include_dirs += include_directories('sysdeps/zinnia/include')
+
+	if get_option('zinnia_kernel_headers') != ''
+		if not import('fs').is_dir(get_option('zinnia_kernel_headers') / 'zinnia')
+			error('zinnia_kernel_headers is not set to a valid path')
+		endif
+
+		rtld_include_dirs += include_directories(get_option('zinnia_kernel_headers'))
+		libc_include_dirs += include_directories(get_option('zinnia_kernel_headers'))
+	endif
+
 	internal_conf.set10('MLIBC_MAP_DSO_SEGMENTS', true)
 	internal_conf.set10('MLIBC_MMAP_ALLOCATE_DSO', true)
 	internal_conf.set10('MLIBC_MAP_FILE_WINDOWS', true)

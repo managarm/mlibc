@@ -1,1 +1,1 @@
-../../../../abis/linux/packet.h
+../../../../abis/zinnia/packet.h

@@ -1,1 +1,1 @@
-../../../../abis/linux/rlim_t.h
+../../../../abis/zinnia/rlim_t.h

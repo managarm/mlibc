@@ -32,9 +32,6 @@ int Sysdeps<TpSet>::operator()(void *pointer) {
 #elif defined(__riscv)
 	asm volatile("mv tp, %0" ::"r"(pointer));
 	return 0;
-#elif defined(__loongarch64)
-	asm volatile("move $tp, %0" ::"r"(pointer));
-	return 0;
 #else
 #error "Unsupported architecture!"
 #endif

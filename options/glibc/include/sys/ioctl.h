@@ -1,14 +1,14 @@
 #ifndef _SYS_IOCTL_H
 #define _SYS_IOCTL_H
 
-#include <mlibc-config.h>
 #include <abi-bits/ioctls.h>
+#include <mlibc-config.h>
 
 /* On Linux, sys/ioctl.h includes the termios ioctls. */
 #if __MLIBC_LINUX_OPTION
-#	include <asm/ioctls.h>
-#	include <bits/winsize.h>
-#   include <sys/ttydefaults.h>
+#include <asm/ioctls.h>
+#include <bits/winsize.h>
+#include <sys/ttydefaults.h>
 #endif
 
 #ifdef __cplusplus

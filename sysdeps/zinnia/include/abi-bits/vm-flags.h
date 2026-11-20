@@ -1,1 +1,1 @@
-../../../../abis/linux/vm-flags.h
+../../../../abis/zinnia/vm-flags.h

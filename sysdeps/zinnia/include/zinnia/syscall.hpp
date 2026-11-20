@@ -188,18 +188,6 @@
 #define ZINNIA_ASM_REG_A5 "a5"
 #define ZINNIA_ASM_SYSCALL "ecall"
 #define ZINNIA_ASM_CLOBBER "memory"
-#elif defined(__loongarch64)
-#define ZINNIA_ASM_REG_NUM "a7"
-#define ZINNIA_ASM_REG_RET "a0"
-#define ZINNIA_ASM_REG_ERR "a1"
-#define ZINNIA_ASM_REG_A0 "a0"
-#define ZINNIA_ASM_REG_A1 "a1"
-#define ZINNIA_ASM_REG_A2 "a2"
-#define ZINNIA_ASM_REG_A3 "a3"
-#define ZINNIA_ASM_REG_A4 "a4"
-#define ZINNIA_ASM_REG_A5 "a5"
-#define ZINNIA_ASM_SYSCALL "syscall 0"
-#define ZINNIA_ASM_CLOBBER "memory"
 #else
 #error "Unsupported architecture!"
 #endif

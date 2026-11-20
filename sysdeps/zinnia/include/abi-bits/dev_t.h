@@ -1,1 +1,1 @@
-../../../../abis/linux/dev_t.h
+../../../../abis/zinnia/dev_t.h

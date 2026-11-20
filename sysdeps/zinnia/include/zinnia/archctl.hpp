@@ -3,6 +3,9 @@
 
 #if defined(__x86_64__)
 #define ARCHCTL_SET_FSBASE 0
+#define ARCHCTL_SET_GSBASE 1
+#define ARCHCTL_GET_FSBASE 2
+#define ARCHCTL_GET_GSBASE 3
 #endif
 
 #endif /* _ZINNIA_ARCHCTL_HPP */

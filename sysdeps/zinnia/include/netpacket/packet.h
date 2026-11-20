@@ -28,6 +28,7 @@ struct packet_mreq {
 
 #define PACKET_ADD_MEMBERSHIP 1
 #define PACKET_DROP_MEMBERSHIP 2
+#define PACKET_AUXDATA 8
 
 #define PACKET_MR_MULTICAST 0
 #define PACKET_MR_PROMISC 1

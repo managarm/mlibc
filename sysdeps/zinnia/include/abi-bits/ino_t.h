@@ -1,1 +1,1 @@
-../../../../abis/linux/ino_t.h
+../../../../abis/zinnia/ino_t.h

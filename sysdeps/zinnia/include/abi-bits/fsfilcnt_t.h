@@ -1,1 +1,1 @@
-../../../../abis/linux/fsfilcnt_t.h
+../../../../abis/zinnia/fsfilcnt_t.h
