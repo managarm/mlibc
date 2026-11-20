@@ -48,13 +48,6 @@ int thrd_sleep(const struct timespec *duration, struct timespec *remaining) {
 		__ensure(!"Cannot continue without sys_sleep()");
 	}
 
-	if (duration->tv_nsec < 0 || duration->tv_nsec >= 1'000'000'000) {
-#if __MLIBC_POSIX_OPTION
-		errno = EINVAL;
-#endif
-		return -2;
-	}
-
 	struct timespec tmp = *duration;
 	int e = mlibc::sysdep_or_panic<Sleep>(CLOCK_REALTIME, &tmp.tv_sec, &tmp.tv_nsec);
 
@@ -69,6 +62,9 @@ int thrd_sleep(const struct timespec *duration, struct timespec *remaining) {
 #endif
 			return -1;
 		default:
+#if __MLIBC_POSIX_OPTION
+			errno = e;
+#endif
 			return -2;
 	}
 }
