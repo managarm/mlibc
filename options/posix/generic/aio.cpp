@@ -6,11 +6,6 @@
 #include <mlibc/all-sysdeps.hpp>
 
 int aio_read(struct aiocb *cb) {
-	if (cb->aio_nbytes > SSIZE_MAX) {
-		errno = EINVAL;
-		return -1;
-	}
-
 	if (int e = mlibc::sysdep_or_enosys<AioRead>(cb); e) {
 		errno = e;
 		return -1;
@@ -19,11 +14,6 @@ int aio_read(struct aiocb *cb) {
 }
 
 int aio_write(struct aiocb *cb) {
-	if (cb->aio_nbytes > SSIZE_MAX) {
-		errno = EINVAL;
-		return -1;
-	}
-
 	if (int e = mlibc::sysdep_or_enosys<AioWrite>(cb); e) {
 		errno = e;
 		return -1;
