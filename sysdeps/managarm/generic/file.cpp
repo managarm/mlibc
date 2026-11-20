@@ -994,6 +994,9 @@ int Sysdeps<MsgSend>::operator()(int sockfd, const struct msghdr *hdr, int flags
 	if (!handle)
 		return EBADF;
 
+	if(hdr->msg_iovlen > IOV_MAX)
+		return EMSGSIZE;
+
 	size_t overall_size = 0;
 	for (int i = 0; i < hdr->msg_iovlen; i++) {
 		HelSgItem item{
