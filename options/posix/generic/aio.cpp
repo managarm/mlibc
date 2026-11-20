@@ -32,11 +32,6 @@ int aio_fsync(int op, struct aiocb *cb) {
 int lio_listio(
     int mode, struct aiocb *__restrict const list[], int n, struct sigevent *__restrict sevp
 ) {
-	if (mode != LIO_WAIT && mode != LIO_NOWAIT) {
-		errno = EINVAL;
-		return -1;
-	}
-
 	if (int e = mlibc::sysdep_or_enosys<AioListio>(mode, list, n, sevp); e) {
 		errno = e;
 		return -1;

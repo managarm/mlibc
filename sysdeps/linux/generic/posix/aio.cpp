@@ -698,6 +698,9 @@ int Sysdeps<AioFsync>::operator()(int op, struct aiocb *cb) {
 int Sysdeps<AioListio>::operator()(
     int mode, struct aiocb *__restrict const list[], int n, struct sigevent *__restrict sevp
 ) {
+	if (mode != LIO_WAIT && mode != LIO_NOWAIT)
+		return EINVAL;
+
 	bool hasErrors = false;
 	uint32_t validOpcodes = 0;
 
