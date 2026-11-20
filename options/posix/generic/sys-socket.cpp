@@ -171,11 +171,6 @@ ssize_t sendto(int fd, const void *buffer, size_t size, int flags,
 }
 
 ssize_t sendmsg(int fd, const struct msghdr *hdr, int flags) {
-	if(hdr->msg_iovlen > IOV_MAX) {
-		errno = EMSGSIZE;
-		return -1;
-	}
-
 	ssize_t length;
 	if(int e = mlibc::sysdep_or_enosys<MsgSend>(fd, hdr, flags, &length); e) {
 		errno = e;
