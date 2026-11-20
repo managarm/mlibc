@@ -879,6 +879,9 @@ int Sysdeps<AioSuspend>::operator()(
 }
 
 int Sysdeps<AioCancel>::operator()(int fildes, struct aiocb *cb, int *result) {
+	if (cb && fildes != cb->aio_fildes)
+		return EINVAL;
+
 	// we must detect EBADF conditions synchronously
 	int dummy = 0;
 	if (fcntl_wrapper(&dummy, fildes, F_GETFL, 0))

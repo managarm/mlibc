@@ -66,11 +66,6 @@ int aio_error(const struct aiocb *cb) {
 }
 
 int aio_cancel(int fildes, struct aiocb *cb) {
-	if (cb && fildes != cb->aio_fildes) {
-		errno = EINVAL;
-		return -1;
-	}
-
 	int result = 0;
 	if (int e = mlibc::sysdep_or_enosys<AioCancel>(fildes, cb, &result); e) {
 		errno = e;
