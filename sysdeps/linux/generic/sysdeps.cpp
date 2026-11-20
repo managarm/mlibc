@@ -441,8 +441,6 @@ int Sysdeps<ClockGetres>::operator()(int clock, time_t *secs, long *nanos) {
 }
 
 int Sysdeps<Sleep>::operator()(clockid_t clockid, time_t *secs, long *nanos) {
-	__ensure(*nanos < 1'000'000'000);
-
 	struct timespec req = {
 		.tv_sec = *secs,
 		.tv_nsec = *nanos
