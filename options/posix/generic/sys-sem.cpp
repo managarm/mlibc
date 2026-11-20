@@ -7,11 +7,6 @@
 #include <mlibc/all-sysdeps.hpp>
 
 int semget(key_t key, int n, int fl) {
-	if(n > USHRT_MAX) {
-		errno = EINVAL;
-		return -1;
-	}
-
 	int id = 0;
 	if(int e = mlibc::sysdep_or_enosys<Semget>(key, n, fl, &id); e) {
 		errno = e;
