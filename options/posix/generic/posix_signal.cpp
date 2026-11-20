@@ -109,11 +109,6 @@ int sigpending(sigset_t *set) {
 }
 
 int sigaltstack(const stack_t *__restrict ss, stack_t *__restrict oss) {
-	if (ss && ss->ss_size < MINSIGSTKSZ && !(ss->ss_flags & SS_DISABLE)) {
-		errno = ENOMEM;
-		return -1;
-	}
-
 	if (int e = mlibc::sysdep_or_enosys<Sigaltstack>(ss, oss); e) {
 		errno = e;
 		return -1;
