@@ -983,7 +983,9 @@ leave:
 		return syscall(SYSCALL_FTRUNCATE, &ret, fd, size);
 	}
 
-	int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
+	int Sysdeps<Sleep>::operator()(clockid_t clockid, time_t *secs, long *nanos) {
+		if (clockid != CLOCK_REALTIME && clockid != CLOCK_TAI && clockid != CLOCK_MONOTONIC)
+			return EINVAL;
 		struct timespec ts;
 		ts.tv_sec = *secs;
 		ts.tv_nsec = *nanos;

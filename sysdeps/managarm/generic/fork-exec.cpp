@@ -161,10 +161,13 @@ void Sysdeps<Yield>::operator()() {
 	HEL_CHECK(helYield());
 }
 
-int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
+int Sysdeps<Sleep>::operator()(clockid_t clockid, time_t *secs, long *nanos) {
 	SignalGuard sguard;
 	// TODO: this only handles cancellations up to this point; the syscall does not get cancelled
 	mlibc::thread_testcancel();
+
+	if (clockid != CLOCK_REALTIME && clockid != CLOCK_TAI && clockid != CLOCK_MONOTONIC)
+		return EINVAL;
 
 	globalQueue.trim();
 

@@ -440,7 +440,7 @@ int Sysdeps<ClockGetres>::operator()(int clock, time_t *secs, long *nanos) {
 	return 0;
 }
 
-int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
+int Sysdeps<Sleep>::operator()(clockid_t clockid, time_t *secs, long *nanos) {
 	__ensure(*nanos < 1'000'000'000);
 
 	struct timespec req = {
@@ -450,9 +450,9 @@ int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
 	struct timespec rem = {};
 
 #if __INTPTR_WIDTH__ == 64
-	auto ret = do_cp_syscall(SYS_nanosleep, &req, &rem);
+	auto ret = do_cp_syscall(SYS_clock_nanosleep, clockid, 0, &req, &rem);
 #else
-	auto ret = do_cp_syscall(SYS_clock_nanosleep_time64, CLOCK_MONOTONIC, 0, &req, &rem);
+	auto ret = do_cp_syscall(SYS_clock_nanosleep_time64, clockid, 0, &req, &rem);
 #endif
 	if (int e = sc_error(ret); e)
 		return e;

@@ -1,6 +1,7 @@
 #ifndef MLIBC_SYSDEP_SIGNATURES
 #define MLIBC_SYSDEP_SIGNATURES
 
+#include <abi-bits/clockid_t.h>
 #include <abi-bits/mode_t.h>
 #include <abi-bits/pid_t.h>
 #include <abi-bits/resource.h>
@@ -75,7 +76,7 @@ SYSDEP_FUNC(Close, int fd);
 SYSDEP_FUNC(ClockGet, int clock, time_t *secs, long *nanos);
 SYSDEP_FUNC(ClockSet, int clock, time_t secs, long nanos);
 SYSDEP_FUNC(ClockGetres, int clock, time_t *secs, long *nanos);
-SYSDEP_FUNC(Sleep, time_t *secs, long *nanos);
+SYSDEP_FUNC(Sleep, clockid_t clockid, time_t *secs, long *nanos);
 SYSDEP_FUNC(Isatty, int fd);
 SYSDEP_FUNC(Rmdir, const char *path);
 SYSDEP_FUNC(Unlinkat, int dirfd, const char *path, int flags);

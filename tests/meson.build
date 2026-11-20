@@ -181,6 +181,7 @@ all_test_cases = [
 	'posix/aio',
 	'posix/if_nameindex',
 	'posix/limits-abi',
+	'posix/clock_nanosleep',
 	'glibc/getopt',
 	'glibc/ffsl-ffsll',
 	'glibc/error_message_count',

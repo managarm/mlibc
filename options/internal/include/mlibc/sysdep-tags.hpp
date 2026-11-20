@@ -68,7 +68,7 @@ struct ClockGet {};
 struct ClockSet {};
 // int sys_clock_getres(int clock, time_t *secs, long *nanos);
 struct ClockGetres {};
-// int sys_sleep(time_t *secs, long *nanos);
+// int sys_sleep(clockid_t clockid, time_t *secs, long *nanos);
 struct Sleep {};
 // // In contrast to the isatty() library function, the sysdep function uses return value
 // // zero (and not one) to indicate that the file is a terminal.

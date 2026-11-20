@@ -56,7 +56,7 @@ int thrd_sleep(const struct timespec *duration, struct timespec *remaining) {
 	}
 
 	struct timespec tmp = *duration;
-	int e = mlibc::sysdep_or_panic<Sleep>(&tmp.tv_sec, &tmp.tv_nsec);
+	int e = mlibc::sysdep_or_panic<Sleep>(CLOCK_REALTIME, &tmp.tv_sec, &tmp.tv_nsec);
 
 	switch (e) {
 		case 0:

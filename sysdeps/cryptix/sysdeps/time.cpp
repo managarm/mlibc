@@ -3,7 +3,9 @@
 #include <mlibc/all-sysdeps.hpp>
 
 namespace mlibc {
-int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
+int Sysdeps<Sleep>::operator()(clockid_t clockid, time_t *secs, long *nanos) {
+	if (clockid != CLOCK_REALTIME && clockid != CLOCK_TAI && clockid != CLOCK_MONOTONIC)
+		return EINVAL;
 	timespec duration = {.tv_sec = *secs, .tv_nsec = nanos ? *nanos : 0};
 	timespec remaining;
 	auto ret = Syscall(SYS_NANOSLEEP, &duration, &remaining);

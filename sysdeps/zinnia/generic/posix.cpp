@@ -332,7 +332,9 @@ int Sysdeps<SetGroups>::operator()(size_t size, const gid_t *list) {
 	return zinnia_syscall(SYSCALL_SETGROUPS, size, (size_t)list).error;
 }
 
-int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
+int Sysdeps<Sleep>::operator()(clockid_t clockid, time_t *secs, long *nanos) {
+	if (clockid != CLOCK_REALTIME && clockid != CLOCK_TAI && clockid != CLOCK_MONOTONIC)
+		return EINVAL;
 	struct timespec req = {.tv_sec = *secs, .tv_nsec = *nanos};
 	struct timespec rem = {};
 	auto r = zinnia_syscall(SYSCALL_SLEEP, (size_t)&req, (size_t)&rem);
