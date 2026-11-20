@@ -1,1 +1,1 @@
-../../../../abis/linux/pid_t.h
+../../../../abis/zinnia/pid_t.h

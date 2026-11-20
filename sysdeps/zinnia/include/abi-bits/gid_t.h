@@ -1,1 +1,1 @@
-../../../../abis/linux/gid_t.h
+../../../../abis/zinnia/gid_t.h

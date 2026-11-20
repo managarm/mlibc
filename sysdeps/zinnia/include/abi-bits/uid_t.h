@@ -1,1 +1,1 @@
-../../../../abis/linux/uid_t.h
+../../../../abis/zinnia/uid_t.h

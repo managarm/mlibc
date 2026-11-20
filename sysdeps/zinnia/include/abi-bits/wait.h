@@ -1,1 +1,1 @@
-../../../../abis/linux/wait.h
+../../../../abis/zinnia/wait.h

@@ -3,6 +3,7 @@
 .global __mlibc_restorer
 
 __mlibc_restorer:
+    mov %rsp, %rdi
     mov $SYSCALL_SIGRETURN, %rax
     syscall
     ud2

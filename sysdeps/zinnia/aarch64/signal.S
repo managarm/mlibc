@@ -3,6 +3,7 @@
 .global __mlibc_restorer
 
 __mlibc_restorer:
+    mov x0, sp
     mov x8, #SYSCALL_SIGRETURN
     svc 0
     udf #0

@@ -1,1 +1,1 @@
-../../../../abis/linux/seek-whence.h
+../../../../abis/zinnia/seek-whence.h

@@ -1,1 +1,1 @@
-../../../../abis/linux/nlink_t.h
+../../../../abis/zinnia/nlink_t.h

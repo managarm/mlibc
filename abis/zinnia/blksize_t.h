@@ -3,7 +3,6 @@
 
 #include <bits/types.h>
 
-typedef __mlibc_size blksize_t;
+typedef __mlibc_intptr blksize_t;
 
 #endif /* _ABIBITS_BLKSIZE_T_H */
-

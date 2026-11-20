@@ -1,1 +1,1 @@
-../../../../abis/linux/resource.h
+../../../../abis/zinnia/resource.h

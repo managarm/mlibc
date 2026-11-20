@@ -51,6 +51,7 @@ struct cmsghdr {
 #define SOCK_CLOEXEC (1 << 16)
 #define SOCK_CLOFORK (1 << 17)
 
+#define SOL_IP 0
 #define SOL_SOCKET 1
 #define SOL_IPV6 41
 #define SOL_PACKET 263

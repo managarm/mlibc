@@ -1,1 +1,1 @@
-../../../../abis/linux/mode_t.h
+../../../../abis/zinnia/mode_t.h

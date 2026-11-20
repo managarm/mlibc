@@ -1,1 +1,1 @@
-../../../../abis/linux/suseconds_t.h
+../../../../abis/zinnia/suseconds_t.h
