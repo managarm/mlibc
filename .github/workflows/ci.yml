@@ -177,6 +177,13 @@ jobs:
             name: Install bragi
             run: |
                 pip install --break-system-packages -U bragi
+          - if: ${{ matrix.sysdeps == 'zinnia' }}
+            name: Clone zinnia-os/zinnia
+            uses: actions/checkout@v4
+            with:
+              repository: 'zinnia-os/zinnia'
+              path: 'src/zinnia'
+              sparse-checkout: include
           - name: Set up linux kernel headers
             run: |
                 mkdir -p build/mlibc/
@@ -211,6 +218,7 @@ jobs:
                     "-Dbuild_tests=true" \
                     "-Db_sanitize=undefined" \
                     "-Dlinux_kernel_headers=$(pwd)/packages/linux-headers/usr/include" \
+                    "-Dzinnia_kernel_headers=$(pwd)/../src/zinnia/include" \
                     --cross-file ../src/mlibc/ci/${{matrix.sysdeps}}.cross-file compile-${{matrix.sysdeps}} \
                     "../src/mlibc/"
                 ninja -C compile-${{matrix.sysdeps}}
