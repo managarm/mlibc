@@ -52,6 +52,9 @@ int Sysdeps<Sigpending>::operator()(sigset_t *set) {
 }
 
 int Sysdeps<Uname>::operator()(struct utsname *out) {
+	if (!out)
+		return EFAULT;
+
 	memcpy(out->sysname, "OBOS", 4);
 	sysdep<GetHostname>(out->nodename, 65);
 	memcpy(out->release, "v0.0.0", 7);
