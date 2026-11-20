@@ -58,9 +58,10 @@ mqd_t mq_open(const char *name, int flags, ...) {
 }
 
 ssize_t mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned int *msg_prio) {
-	if (int e = mlibc::sysdep_or_enosys<MqReceive>(mqdes, msg_ptr, msg_len, msg_prio); e) {
+	ssize_t length;
+	if (int e = mlibc::sysdep_or_enosys<MqReceive>(mqdes, msg_ptr, msg_len, msg_prio, &length); e) {
 		errno = e;
 		return -1;
 	}
-	return 0;
+	return length;
 }
