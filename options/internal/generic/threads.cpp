@@ -110,26 +110,33 @@ int thread_create(struct __mlibc_thread_data **__restrict thread, const struct _
 	// TODO: due to alignment guarantees, the stackaddr and stacksize might change
 	// when the stack is allocated. Currently this isn't propagated to the TCB,
 	// but it should be.
-	void *stack = attr.__stackaddr;
-	if (!IsImplemented<PrepareStack>) {
+	if (!IsImplemented<PrepareStack> || !IsImplemented<Clone>) {
 		MLIBC_MISSING_SYSDEP();
 		return ENOSYS;
 	}
+
+	// We don't own stacks provided by the application.
+	// TODO: this information needs to be propagated once TCBs can be freed.
+	void *stack = attr.__stackaddr;
+	bool owns_stack = !stack;
 	int ret = sysdep_or_panic<PrepareStack>(&stack, entry,
 			user_arg, mlibc::tcb_to_tp(new_tcb), &attr.__stacksize, &attr.__guardsize, &new_tcb->stackAddr);
 	if (ret)
 		return ret;
 
-	if (!IsImplemented<Clone>) {
-		MLIBC_MISSING_SYSDEP();
-		return ENOSYS;
-	}
 	new_tcb->stackSize = attr.__stacksize;
 	new_tcb->guardSize = attr.__guardsize;
 	new_tcb->returnValueType = (returns_int) ? TcbThreadReturnValue::Integer : TcbThreadReturnValue::Pointer;
 	new_tcb->isJoinable = (attr.__detachstate == __MLIBC_THREAD_CREATE_JOINABLE);
 	__atomic_store_n(&new_tcb->cancelBits, 0, __ATOMIC_RELAXED);
-	sysdep_or_panic<Clone>(mlibc::tcb_to_tp(new_tcb), &tid, stack);
+	ret = sysdep_or_panic<Clone>(mlibc::tcb_to_tp(new_tcb), &tid, stack);
+	if (ret) {
+		if (owns_stack) {
+			if (int e = sysdep_or_panic<FreeStack>(new_tcb->stackAddr, new_tcb->stackSize, new_tcb->guardSize); e)
+				__ensure(!"sys_free_stack() failed");
+		}
+		return ret;
+	}
 	*thread = reinterpret_cast<struct __mlibc_thread_data *>(new_tcb);
 
 	__atomic_store_n(&new_tcb->tid, tid, __ATOMIC_RELAXED);
