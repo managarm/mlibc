@@ -1367,8 +1367,8 @@ int Sysdeps<Mincore>::operator()(void *addr, size_t length, unsigned char *vec) 
 	return 0;
 }
 
-int Sysdeps<VmRemap>::operator()(void *pointer, size_t size, size_t new_size, void **window) {
-	auto ret = do_syscall(SYS_mremap, pointer, size, new_size, MREMAP_MAYMOVE);
+int Sysdeps<VmRemap>::operator()(void *pointer, size_t size, size_t new_size, int flags, void *new_address, void **window) {
+	auto ret = do_syscall(SYS_mremap, pointer, size, new_size, flags, new_address);
 	// TODO: musl fixes up EPERM errors from the kernel.
 	if(int e = sc_error(ret); e)
 		return e;

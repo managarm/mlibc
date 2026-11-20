@@ -179,7 +179,7 @@ SYSDEP_FUNC(Munlock, const void *addr, size_t length);
 SYSDEP_FUNC(Mlockall, int flags);
 SYSDEP_FUNC(Munlockall);
 SYSDEP_FUNC(Mincore, void *addr, size_t length, unsigned char *vec);
-SYSDEP_FUNC(VmRemap, void *pointer, size_t size, size_t new_size, void **window);
+SYSDEP_FUNC(VmRemap, void *pointer, size_t size, size_t new_size, int flags, void *new_address, void **window);
 SYSDEP_FUNC(SetSid, pid_t *sid);
 SYSDEP_FUNC(Tcgetattr, int fd, struct termios *attr);
 SYSDEP_FUNC(Tcsetattr, int, int, const struct termios *attr);

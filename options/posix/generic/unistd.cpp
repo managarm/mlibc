@@ -299,19 +299,9 @@ int ftruncate(int fd, off_t size) {
 [[gnu::alias("ftruncate")]] int ftruncate64(int fd, off64_t size);
 #endif /* !__MLIBC_LINUX_OPTION */
 
-char *getcwd(char *buffer, size_t size) {
-	if (buffer) {
-		if (size == 0) {
-			errno = EINVAL;
-			return nullptr;
-		}
-	} else if (!buffer) {
-		if (size == 0)
-			size = PATH_MAX;
+namespace {
 
-		buffer = (char *)malloc(size);
-	}
-
+char *getcwd_impl(char *buffer, size_t size) {
 	if constexpr (mlibc::IsImplemented<GetCwd>) {
 		if(int e = mlibc::sysdep_or_panic<GetCwd>(buffer, size); e) {
 			errno = e;
@@ -445,6 +435,35 @@ char *getcwd(char *buffer, size_t size) {
 
 	memmove(buffer, &buffer[bufptr], strlen(&buffer[bufptr]) + 1);
 	return buffer;
+}
+
+} // namespace
+
+char *getcwd(char *buffer, size_t size) {
+	if (buffer) {
+		if (size == 0) {
+			errno = EINVAL;
+			return nullptr;
+		}
+		return getcwd_impl(buffer, size);
+	}
+
+	if (size == 0)
+		size = PATH_MAX;
+
+	buffer = (char *)malloc(size);
+	if (!buffer) {
+		errno = ENOMEM;
+		return nullptr;
+	}
+
+	char *ret = getcwd_impl(buffer, size);
+	if (!ret) {
+		int e = errno;
+		free(buffer);
+		errno = e;
+	}
+	return ret;
 }
 
 int getgroups(int size, gid_t list[]) {
