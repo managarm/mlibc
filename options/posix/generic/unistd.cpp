@@ -1284,7 +1284,7 @@ unsigned int sleep(unsigned int secs) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_sleep()");
 	}
-	mlibc::sysdep_or_panic<Sleep>(&seconds, &nanos);
+	mlibc::sysdep_or_panic<Sleep>(CLOCK_REALTIME, &seconds, &nanos);
 	return seconds;
 }
 
@@ -1298,7 +1298,7 @@ int usleep(useconds_t usecs) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_sleep()");
 	}
-	if (int e = mlibc::sysdep_or_panic<Sleep>(&seconds, &nanos); e) {
+	if (int e = mlibc::sysdep_or_panic<Sleep>(CLOCK_REALTIME, &seconds, &nanos); e) {
 		errno = e;
 		return -1;
 	}

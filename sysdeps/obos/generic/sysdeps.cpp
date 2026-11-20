@@ -1061,7 +1061,9 @@ int Sysdeps<Sysconf>::operator()(int num, long *ret) {
 
 void Sysdeps<Yield>::operator()() { syscall0(Sys_Yield); }
 
-int Sysdeps<Sleep>::operator()(time_t *secs, long *nanos) {
+int Sysdeps<Sleep>::operator()(clockid_t clockid, time_t *secs, long *nanos) {
+	if (clockid != CLOCK_REALTIME && clockid != CLOCK_TAI && clockid != CLOCK_MONOTONIC)
+		return EINVAL;
 	long ms = *secs * 1000;
 	if (!ms)
 		ms = *nanos / 1000000;

@@ -602,7 +602,7 @@ int nanosleep(const struct timespec *req, struct timespec *rem) {
 
 	struct timespec tmp = *req;
 
-	int e = mlibc::sysdep_or_panic<Sleep>(&tmp.tv_sec, &tmp.tv_nsec);
+	int e = mlibc::sysdep_or_panic<Sleep>(CLOCK_REALTIME, &tmp.tv_sec, &tmp.tv_nsec);
 	if (!e)
 		return 0;
 	else if (e == EINTR && rem)
@@ -653,7 +653,7 @@ int clock_nanosleep(clockid_t clockid, int flags, const struct timespec *req, st
 		}
 	}
 
-	if (int e = mlibc::sysdep_or_enosys<Sleep>(&relativeTime.tv_sec, &relativeTime.tv_nsec); e) {
+	if (int e = mlibc::sysdep_or_enosys<Sleep>(clockid, &relativeTime.tv_sec, &relativeTime.tv_nsec); e) {
 		if (e == EINTR && rem && !(flags & TIMER_ABSTIME))
 			*rem = relativeTime;
 		return e;

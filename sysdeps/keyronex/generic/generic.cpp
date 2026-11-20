@@ -497,8 +497,10 @@ Sysdeps<Pipe>::operator()(int *fds, int flags)
 /* time */
 
 int
-Sysdeps<Sleep>::operator()(time_t *secs, long *nanos)
+Sysdeps<Sleep>::operator()(clockid_t clockid, time_t *secs, long *nanos)
 {
+	if (clockid != CLOCK_REALTIME && clockid != CLOCK_TAI && clockid != CLOCK_MONOTONIC)
+		return EINVAL;
 	struct timespec rqtp, rmtp;
 	int r;
 	rqtp.tv_sec = *secs;
