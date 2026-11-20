@@ -8,12 +8,15 @@
 #include <mlibc/tcb.hpp>
 #include <net/if.h>
 #include <netinet/in.h>
+#include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
+#include <sys/times.h>
+#include <time.h>
 #include <zinnia/syscall.hpp>
 
 namespace mlibc {
@@ -477,6 +480,80 @@ int Sysdeps<GetParam>::operator()(pid_t pid, struct sched_param *param) {
 
 int Sysdeps<SetParam>::operator()(pid_t pid, const struct sched_param *param) {
 	return zinnia_syscall(SYSCALL_SCHED_SETPARAM, pid, (size_t)param).error;
+}
+
+int Sysdeps<GetMaxPriority>::operator()(int policy, int *out) {
+	if (policy != SCHED_OTHER)
+		return EINVAL;
+	struct sched_param param;
+	if (int e = sysdep<GetParam>(0, &param); e)
+		return e;
+	*out = param.sched_priority_max;
+	return 0;
+}
+
+int Sysdeps<GetMinPriority>::operator()(int policy, int *out) {
+	if (policy != SCHED_OTHER)
+		return EINVAL;
+	struct sched_param param;
+	if (int e = sysdep<GetParam>(0, &param); e)
+		return e;
+	*out = param.sched_priority_min;
+	return 0;
+}
+
+int Sysdeps<GetScheduler>::operator()(pid_t pid, int *policy) {
+	struct sched_param param;
+	if (int e = sysdep<GetParam>(pid, &param); e)
+		return e;
+	*policy = SCHED_OTHER;
+	return 0;
+}
+
+int Sysdeps<SetScheduler>::operator()(pid_t pid, int policy, const struct sched_param *param) {
+	if (policy != SCHED_OTHER)
+		return EINVAL;
+	return sysdep<SetParam>(pid, param);
+}
+
+int Sysdeps<GetSchedparam>::operator()(void *, int *policy, struct sched_param *param) {
+	if (int e = sysdep<GetParam>(0, param); e)
+		return e;
+	*policy = SCHED_OTHER;
+	return 0;
+}
+
+int Sysdeps<SetSchedparam>::operator()(void *, int policy, const struct sched_param *param) {
+	if (policy != SCHED_OTHER)
+		return EINVAL;
+	return sysdep<SetParam>(0, param);
+}
+
+int Sysdeps<Times>::operator()(struct tms *tms, clock_t *out) {
+	long hz;
+	if (int e = sysdep<Sysconf>(_SC_CLK_TCK, &hz); e)
+		return e;
+
+	struct rusage self, children;
+	if (int e = sysdep<GetRusage>(RUSAGE_SELF, &self); e)
+		return e;
+	if (int e = sysdep<GetRusage>(RUSAGE_CHILDREN, &children); e)
+		return e;
+
+	time_t secs;
+	long nanos;
+	if (int e = sysdep<ClockGet>(CLOCK_MONOTONIC, &secs, &nanos); e)
+		return e;
+
+	auto ticks = [hz](const struct timeval &tv) {
+		return (clock_t)tv.tv_sec * hz + (clock_t)tv.tv_usec * hz / 1000000;
+	};
+	tms->tms_utime = ticks(self.ru_utime);
+	tms->tms_stime = ticks(self.ru_stime);
+	tms->tms_cutime = ticks(children.ru_utime);
+	tms->tms_cstime = ticks(children.ru_stime);
+	*out = (clock_t)secs * hz + (clock_t)nanos * hz / 1000000000;
+	return 0;
 }
 
 int Sysdeps<GetCwd>::operator()(char *buffer, size_t size) {
@@ -1050,8 +1127,6 @@ int Sysdeps<Sysconf>::operator()(int num, long *ret) {
 	return 0;
 }
 
-int Sysdeps<Pause>::operator()() {
-	return sysdep<Ppoll>(nullptr, 0, nullptr, nullptr, nullptr);
-}
+int Sysdeps<Pause>::operator()() { return sysdep<Ppoll>(nullptr, 0, nullptr, nullptr, nullptr); }
 
 } // namespace mlibc

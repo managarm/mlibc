@@ -1,1 +1,1 @@
-../../../../abis/linux/sched_param.h
+../../../../abis/zinnia/sched_param.h
