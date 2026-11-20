@@ -629,7 +629,7 @@ int clock_gettime(clockid_t clock, struct timespec *time) {
 }
 
 int clock_nanosleep(clockid_t clockid, int flags, const struct timespec *req, struct timespec *rem) {
-	if (req->tv_sec < 0 || req->tv_nsec > 999999999 || req->tv_nsec < 0)
+	if (req->tv_sec < 0 || req->tv_nsec > 999999999 || req->tv_nsec < 0 || clockid == CLOCK_THREAD_CPUTIME_ID)
 		return EINVAL;
 
 	struct timespec relativeTime = *req;
