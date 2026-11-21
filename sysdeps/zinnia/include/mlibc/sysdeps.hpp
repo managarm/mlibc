@@ -33,6 +33,8 @@ struct ZinniaSysdepTags :
 	Write,
 	Pread,
 	Pwrite,
+	Preadv,
+	Pwritev,
 	Access,
 	Faccessat,
 	Dup,

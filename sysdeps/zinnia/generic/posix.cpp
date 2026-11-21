@@ -98,20 +98,41 @@ int Sysdeps<Write>::operator()(int fd, const void *buf, size_t count, ssize_t *b
 	return sysdep<Writev>(fd, &iov, 1, bytes_written);
 }
 
-int Sysdeps<Pread>::operator()(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
-	auto r = zinnia_syscall(SYSCALL_PREAD, fd, (size_t)buf, n, off);
+int Sysdeps<Preadv>::operator()(
+    int fd, const struct iovec *iovs, int iovc, off_t off, ssize_t *bytes_read
+) {
+	if (iovc < 0 || off < 0)
+		return EINVAL;
+
+	auto r = zinnia_syscall(SYSCALL_PREADV, fd, (uint64_t)iovs, (size_t)iovc, (uint64_t)off);
 	if (r.error)
 		return r.error;
 	*bytes_read = r.value;
 	return 0;
 }
 
-int Sysdeps<Pwrite>::operator()(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_read) {
-	auto r = zinnia_syscall(SYSCALL_PWRITE, fd, (size_t)buf, n, off);
+int Sysdeps<Pwritev>::operator()(
+    int fd, const struct iovec *iovs, int iovc, off_t off, ssize_t *bytes_written
+) {
+	if (iovc < 0 || off < 0)
+		return EINVAL;
+
+	auto r = zinnia_syscall(SYSCALL_PWRITEV, fd, (uint64_t)iovs, (size_t)iovc, (uint64_t)off);
 	if (r.error)
 		return r.error;
-	*bytes_read = r.value;
+	*bytes_written = r.value;
 	return 0;
+}
+
+int Sysdeps<Pread>::operator()(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
+	const struct iovec iov = {buf, n};
+	return sysdep<Preadv>(fd, &iov, 1, off, bytes_read);
+}
+
+int
+Sysdeps<Pwrite>::operator()(int fd, const void *buf, size_t n, off_t off, ssize_t *bytes_written) {
+	const struct iovec iov = {const_cast<void *>(buf), n};
+	return sysdep<Pwritev>(fd, &iov, 1, off, bytes_written);
 }
 
 int Sysdeps<Access>::operator()(const char *path, int mode) {
