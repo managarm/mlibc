@@ -77,6 +77,43 @@ int main() {
 	fprintf(stderr, "'%s'\n", timebuf);
 	assert(!strcmp(timebuf, "06"));
 
+	struct tm iso = {0};
+	iso.tm_year = 121; // Sunday 2021-01-03 is in week 53 of 2020.
+	iso.tm_mon = 0;
+	iso.tm_mday = 3;
+	iso.tm_wday = 0;
+	iso.tm_yday = 2;
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%G %g %V", &iso);
+	assert(!strcmp(timebuf, "2020 20 53"));
+
+	iso.tm_year = 124; // Monday 2024-12-30 is in week 1 of 2025.
+	iso.tm_mon = 11;
+	iso.tm_mday = 30;
+	iso.tm_wday = 1;
+	iso.tm_yday = 364;
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%G %g %V", &iso);
+	assert(!strcmp(timebuf, "2025 25 01"));
+
+	iso.tm_year = 108; // Monday 2008-12-29 (leap year) is in week 1 of 2009.
+	iso.tm_mon = 11;
+	iso.tm_mday = 29;
+	iso.tm_wday = 1;
+	iso.tm_yday = 363;
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%G %g %V", &iso);
+	assert(!strcmp(timebuf, "2009 09 01"));
+
+	iso.tm_year = 126; // Wednesday 2026-07-15 is in week 29 of 2026.
+	iso.tm_mon = 6;
+	iso.tm_mday = 15;
+	iso.tm_wday = 3;
+	iso.tm_yday = 195;
+	memset(timebuf, 0, sizeof(timebuf));
+	strftime(timebuf, sizeof(timebuf), "%G %g", &iso);
+	assert(!strcmp(timebuf, "2026 26"));
+
 	char *locale = setlocale(LC_ALL, "de_DE.utf8");
 	assert(locale && strlen(locale));
 

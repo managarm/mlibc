@@ -727,7 +727,7 @@ size_t strftime(
 				break;
 			}
 			case 'W': {
-				print_digits.template operator()<int, 53>((tm->tm_yday + 7 - (tm->tm_wday + 6) % 7) / 7, P::D);
+				print_digits.template operator()<int, 53>((tm->tm_yday + 7 - (tm->tm_wday + 6) % 7) / 7, P::Dot2D);
 				if (chunk >= space)
 					return 0;
 				p += chunk;
@@ -735,7 +735,26 @@ size_t strftime(
 				break;
 			}
 			case 'V': {
-				print_digits.template operator()<int, 53>(week_num(tm), P::D);
+				print_digits.template operator()<int, 53>(week_num(tm), P::Dot2D);
+				if (chunk >= space)
+					return 0;
+				p += chunk;
+				c++;
+				break;
+			}
+			case 'G':
+			case 'g': {
+				int year = 1900 + tm->tm_year;
+				const int week = week_num(tm);
+				if (week >= 52 && tm->tm_yday <= 2)
+					year--;
+				else if (week == 1 && tm->tm_yday >= ((is_leap(tm->tm_year) ? 366 : 365) - 3))
+					year++;
+
+				if (*c == 'G')
+					chunk = nprintf(p, space, P::D, year);
+				else
+					print_digits.template operator()<int, 99>(pos_mod(year, 100), P::Dot2D);
 				if (chunk >= space)
 					return 0;
 				p += chunk;
