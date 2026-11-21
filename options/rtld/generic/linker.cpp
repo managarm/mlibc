@@ -1657,7 +1657,9 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 		return *version == candVersion;
 	};
 
-	if (object->hashStyle == HashStyle::systemV) {
+	if (object->hashStyle == HashStyle::none) {
+		return frg::optional<ObjectSymbol>{};
+	} else if (object->hashStyle == HashStyle::systemV) {
 		auto hash_table = (Elf64_Word *)(object->baseAddress + object->hashTableOffset);
 		Elf64_Word num_buckets = hash_table[0];
 		auto bucket = elf64Hash(string) % num_buckets;
