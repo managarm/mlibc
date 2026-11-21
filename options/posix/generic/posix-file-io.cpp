@@ -271,6 +271,6 @@ FILE *fdopen(int fd, const char *mode) {
 
 	// TODO: We may need to activate line buffered mode for terminals.
 
-	return frg::construct<mlibc::fd_file>(getAllocator(), fd,
+	return frg::construct<mlibc::fd_file>(getAllocator(), fd, flags,
 			mlibc::file_dispose_cb<mlibc::fd_file>);
 }
