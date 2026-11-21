@@ -414,6 +414,32 @@ int main() {
 	assert(sscanf("-0x1234", "%4x", &int_value) == 1);
 	assert(int_value == -0x1);
 
+	// field widths bound the sign, prefix and digits of integer conversions
+	unsigned int uint_value2;
+	assert(sscanf("123456", "%4u%2u", &uint_value, &uint_value2) == 2);
+	assert(uint_value == 1234);
+	assert(uint_value2 == 56);
+	assert(sscanf("-12345", "%3d", &int_value) == 1);
+	assert(int_value == -12);
+	assert(sscanf("+12345", "%3d", &int_value) == 1);
+	assert(int_value == 12);
+	assert(sscanf("-5", "%1d", &int_value) == 0);
+	assert(sscanf("0x1f", "%3i", &int_value) == 1);
+	assert(int_value == 1);
+	assert(sscanf("0x1f", "%1i", &int_value) == 1);
+	assert(int_value == 0);
+	assert(sscanf("0777", "%3i", &int_value) == 1);
+	assert(int_value == 077);
+	assert(sscanf("-0777", "%3i", &int_value) == 1);
+	assert(int_value == -07);
+	assert(sscanf("12345", "%2i%2i", &int_value, &uint_value) == 2);
+	assert(int_value == 12);
+	assert(uint_value == 34);
+	assert(sscanf("7777", "%2o", &uint_value) == 1);
+	assert(uint_value == 077);
+	assert(sscanf("-777", "%2o", &int_value) == 1);
+	assert(int_value == -07);
+
 #if (!defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 43)
 	// glibc before 2.42 or 2.43 did not handle prefixes with no following digits correctly
 	assert(sscanf("0x12", "%2x", &int_value) == 0);
