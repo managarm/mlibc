@@ -74,3 +74,7 @@ int open(const char *pathname, int flags, ...) {
 #if __MLIBC_LINUX_OPTION
 [[gnu::alias("open")]] int open64(const char *pathname, int flags, ...);
 #endif /* !__MLIBC_LINUX_OPTION */
+
+#if __MLIBC_LINUX_OPTION
+[[gnu::alias("openat")]] int openat64(int dirfd, const char *pathname, int flags, ...);
+#endif /* !__MLIBC_LINUX_OPTION */
