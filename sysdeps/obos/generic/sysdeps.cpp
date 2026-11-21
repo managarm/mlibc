@@ -52,6 +52,9 @@ int Sysdeps<Sigpending>::operator()(sigset_t *set) {
 }
 
 int Sysdeps<Uname>::operator()(struct utsname *out) {
+	if (!out)
+		return EFAULT;
+
 	memcpy(out->sysname, "OBOS", 4);
 	sysdep<GetHostname>(out->nodename, 65);
 	memcpy(out->release, "v0.0.0", 7);
@@ -1063,6 +1066,8 @@ void Sysdeps<Yield>::operator()() { syscall0(Sys_Yield); }
 
 int Sysdeps<Sleep>::operator()(clockid_t clockid, time_t *secs, long *nanos) {
 	if (clockid != CLOCK_REALTIME && clockid != CLOCK_TAI && clockid != CLOCK_MONOTONIC)
+		return EINVAL;
+	if (*secs < 0 || *nanos < 0 || *nanos > 999999999)
 		return EINVAL;
 	long ms = *secs * 1000;
 	if (!ms)

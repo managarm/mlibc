@@ -441,8 +441,6 @@ int Sysdeps<ClockGetres>::operator()(int clock, time_t *secs, long *nanos) {
 }
 
 int Sysdeps<Sleep>::operator()(clockid_t clockid, time_t *secs, long *nanos) {
-	__ensure(*nanos < 1'000'000'000);
-
 	struct timespec req = {
 		.tv_sec = *secs,
 		.tv_nsec = *nanos
@@ -2831,7 +2829,7 @@ int Sysdeps<MqUnlink>::operator()(const char *name) {
 	return 0;
 }
 
-int Sysdeps<MqReceive>::operator()(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio) {
+int Sysdeps<MqReceive>::operator()(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio, ssize_t *length) {
 #if defined(SYS_mq_timedreceive_time64)
 	auto ret = do_cp_syscall(SYS_mq_timedreceive_time64, mqdes, msg_ptr, msg_len, msg_prio, nullptr);
 #else
@@ -2839,6 +2837,7 @@ int Sysdeps<MqReceive>::operator()(mqd_t mqdes, char *msg_ptr, size_t msg_len, u
 #endif
 	if (int e = sc_error(ret); e)
 		return e;
+	*length = sc_int_result<ssize_t>(ret);
 	return 0;
 }
 

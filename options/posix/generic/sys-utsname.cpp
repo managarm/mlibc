@@ -9,11 +9,6 @@
 #include <mlibc/debug.hpp>
 
 int uname(struct utsname *p) {
-	if (p == nullptr) {
-		errno = EFAULT;
-		return -1;
-	}
-
 	if(int e = mlibc::sysdep_or_enosys<Uname>(p); e) {
 		errno = e;
 		return -1;

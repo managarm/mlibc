@@ -590,11 +590,6 @@ void tzset(void) {
 // POSIX extensions.
 
 int nanosleep(const struct timespec *req, struct timespec *rem) {
-	if (req->tv_sec < 0 || req->tv_nsec > 999999999 || req->tv_nsec < 0) {
-		errno = EINVAL;
-		return -1;
-	}
-
 	if constexpr (!mlibc::IsImplemented<Sleep>) {
 		MLIBC_MISSING_SYSDEP();
 		__ensure(!"Cannot continue without sys_sleep()");

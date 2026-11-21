@@ -2997,7 +2997,9 @@ int Sysdeps<MemfdCreate>::operator()(const char *name, int flags, int *fd) {
 }
 
 int Sysdeps<Uname>::operator()(struct utsname *buf) {
-	__ensure(buf);
+	if (!buf)
+		return EFAULT;
+
 	mlibc::infoLogger() << "\e[31mmlibc: uname() returns static information\e[39m" << frg::endlog;
 	strcpy(buf->sysname, "Managarm");
 	strcpy(buf->nodename, "managarm");

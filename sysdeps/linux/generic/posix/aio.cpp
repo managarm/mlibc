@@ -611,6 +611,9 @@ void enqueueWorkerRequest(AioContext *req) {
 } // namespace
 
 int Sysdeps<AioRead>::operator()(struct aiocb *cb) {
+	if (cb->aio_nbytes > SSIZE_MAX)
+		return EINVAL;
+
 	__ensure((reinterpret_cast<uintptr_t>(cb) & (sizeof(uintptr_t) - 1)) == 0);
 
 	AioCbView cbv{cb};
@@ -633,6 +636,9 @@ int Sysdeps<AioRead>::operator()(struct aiocb *cb) {
 }
 
 int Sysdeps<AioWrite>::operator()(struct aiocb *cb) {
+	if (cb->aio_nbytes > SSIZE_MAX)
+		return EINVAL;
+
 	__ensure((reinterpret_cast<uintptr_t>(cb) & (sizeof(uintptr_t) - 1)) == 0);
 
 	AioCbView cbv{cb};
@@ -692,6 +698,9 @@ int Sysdeps<AioFsync>::operator()(int op, struct aiocb *cb) {
 int Sysdeps<AioListio>::operator()(
     int mode, struct aiocb *__restrict const list[], int n, struct sigevent *__restrict sevp
 ) {
+	if (mode != LIO_WAIT && mode != LIO_NOWAIT)
+		return EINVAL;
+
 	bool hasErrors = false;
 	uint32_t validOpcodes = 0;
 
@@ -870,6 +879,9 @@ int Sysdeps<AioSuspend>::operator()(
 }
 
 int Sysdeps<AioCancel>::operator()(int fildes, struct aiocb *cb, int *result) {
+	if (cb && fildes != cb->aio_fildes)
+		return EINVAL;
+
 	// we must detect EBADF conditions synchronously
 	int dummy = 0;
 	if (fcntl_wrapper(&dummy, fildes, F_GETFL, 0))
