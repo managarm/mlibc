@@ -18,31 +18,25 @@ The `-Dno_headers=true` option tells meson to not install any headers, as we alr
 
 Now run `ninja -C build` to start the build. You'll likely get a large number of compilation errors at this point, and we'll work on fixing these in the next sections.
 
-## Implementing (S)crt1
+## (S)crt1 and the C++ entry point
 
-We must provide a definition of the ELF entry point (traditionally named `_start`). Each ISA tends to require its own definition written in assembly; for example, RISC-V targets must initialise the `gp` register before jumping to C++.
+The C library must provide a definition of the ELF entry point (traditionally named `_start`). Each ISA tends to require its own definition written in assembly; for example, RISC-V targets must initialise the `gp` register before jumping to C++.
 
 Traditionally the file that defines `_start` is called `crt1.S` (or `Scrt1.S` for position independent executables). This produces an object file which has to be linked into every application.
 
 Part of configuring an [OS Specific Toolchain](https://wiki.osdev.org/OS_Specific_Toolchain) is [specifying the location of `(S)crt1.o`](https://wiki.osdev.org/OS_Specific_Toolchain#Start_Files_Directory) so that it is linked automatically.
 
-We recommend copying `(S)crt1.S` from an existing target like Linux. Then, we'll compile it by adding the following to our `meson.build`:
+Since the start files and the entry point are dictated by the psABI, and are the same across most operating systems, mlibc provides a generic implementation of the start files `crt1.o` (and its alias `crt0.o`) and `Scrt1.o` for each supported ISA. The C++ entry point is also handled by mlibc.
 
-```meson
-{{#include ../../../sysdeps/demo/meson.build:crt1}}
-```
+Make sure to take a look at the [ABI specification](https://wiki.osdev.org/System_V_ABI#See_Also) for your architecture for details like proper stack layout. People often forget to implement things like auxiliary vectors which are required by the spec.
 
-## Implementing a C++ entry point
+## Initialization code
 
-Now, we'll implement the C++ entry point that we call from `crt1.S`.
+It is not uncommon for the operating system to need to initialize some additional state (beyond what's already done by mlibc) before jumping to the program's main() function. In case that is needed, a global C++ constructor can be used. The constructor priorities 0-100 are reserved for the C library implementation, and as such, a high priority constructor is recommended for this purpose.
 
 ```cpp
 {{#include ../../../sysdeps/demo/entry.cpp}}
 ```
-
-The call to `__dlapi_enter` is used to perform initialisation in statically linked executables (but is a no-op in dynamically linked ones). For example, any global constructors in the program will be called from here.
-
-Make sure to take a look at the [ABI specification](https://wiki.osdev.org/System_V_ABI#See_Also) for your architecture for details like proper stack layout. People often forget to implement things like auxiliary vectors which are required by the spec.
 
 ## Performing system calls
 
