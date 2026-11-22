@@ -994,6 +994,9 @@ int Sysdeps<MsgSend>::operator()(int sockfd, const struct msghdr *hdr, int flags
 	if (!handle)
 		return EBADF;
 
+	if(hdr->msg_iovlen > IOV_MAX)
+		return EMSGSIZE;
+
 	size_t overall_size = 0;
 	for (int i = 0; i < hdr->msg_iovlen; i++) {
 		HelSgItem item{
@@ -2997,7 +3000,9 @@ int Sysdeps<MemfdCreate>::operator()(const char *name, int flags, int *fd) {
 }
 
 int Sysdeps<Uname>::operator()(struct utsname *buf) {
-	__ensure(buf);
+	if (!buf)
+		return EFAULT;
+
 	mlibc::infoLogger() << "\e[31mmlibc: uname() returns static information\e[39m" << frg::endlog;
 	strcpy(buf->sysname, "Managarm");
 	strcpy(buf->nodename, "managarm");

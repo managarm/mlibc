@@ -605,6 +605,8 @@ int Sysdeps<Peername>::operator()(
 int Sysdeps<Sleep>::operator()(clockid_t clockid, time_t *secs, long *nanos) {
 	if (clockid != CLOCK_REALTIME && clockid != CLOCK_TAI && clockid != CLOCK_MONOTONIC)
 		return EINVAL;
+	if (*secs < 0 || *nanos < 0 || *nanos > 999999999)
+		return EINVAL;
 	useconds_t usec = (*secs * 1000000) + (*nanos / 1000);
 	SYSCALL1(SYS_USLEEP, usec);
 	return 0;

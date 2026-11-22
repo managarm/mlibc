@@ -564,7 +564,7 @@ struct Msgsnd {};
 struct MqOpen {};
 // int sys_mq_unlink(const char *name);
 struct MqUnlink {};
-// int sys_mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio);
+// int sys_mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio, ssize_t *length);
 struct MqReceive {};
 // int sys_mq_get_attr(mqd_t mqdes, mq_attr *mqstat);
 struct MqGetAttr {};

@@ -6,11 +6,6 @@
 #include <mlibc/all-sysdeps.hpp>
 
 int aio_read(struct aiocb *cb) {
-	if (cb->aio_nbytes > SSIZE_MAX) {
-		errno = EINVAL;
-		return -1;
-	}
-
 	if (int e = mlibc::sysdep_or_enosys<AioRead>(cb); e) {
 		errno = e;
 		return -1;
@@ -19,11 +14,6 @@ int aio_read(struct aiocb *cb) {
 }
 
 int aio_write(struct aiocb *cb) {
-	if (cb->aio_nbytes > SSIZE_MAX) {
-		errno = EINVAL;
-		return -1;
-	}
-
 	if (int e = mlibc::sysdep_or_enosys<AioWrite>(cb); e) {
 		errno = e;
 		return -1;
@@ -42,11 +32,6 @@ int aio_fsync(int op, struct aiocb *cb) {
 int lio_listio(
     int mode, struct aiocb *__restrict const list[], int n, struct sigevent *__restrict sevp
 ) {
-	if (mode != LIO_WAIT && mode != LIO_NOWAIT) {
-		errno = EINVAL;
-		return -1;
-	}
-
 	if (int e = mlibc::sysdep_or_enosys<AioListio>(mode, list, n, sevp); e) {
 		errno = e;
 		return -1;
@@ -81,11 +66,6 @@ int aio_error(const struct aiocb *cb) {
 }
 
 int aio_cancel(int fildes, struct aiocb *cb) {
-	if (cb && fildes != cb->aio_fildes) {
-		errno = EINVAL;
-		return -1;
-	}
-
 	int result = 0;
 	if (int e = mlibc::sysdep_or_enosys<AioCancel>(fildes, cb, &result); e) {
 		errno = e;
