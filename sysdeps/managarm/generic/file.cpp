@@ -3305,6 +3305,7 @@ int Sysdeps<Prctl>::operator()(int option, va_list va, int *out) {
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 			if (resp.error() != managarm::posix::Errors::SUCCESS)
 				return resp.error() | toErrno;
+			*out = 0;
 			return 0;
 		}
 		default:
