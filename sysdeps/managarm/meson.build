@@ -130,6 +130,7 @@ libc_sources += files(
 	'generic/file.cpp',
 	'generic/fork-exec.cpp',
 	'generic/ioctl.cpp',
+	'generic/kvm.cpp',
 	'generic/memory.cpp',
 	'generic/mount.cpp',
 	'generic/net.cpp',
