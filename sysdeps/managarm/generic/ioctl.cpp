@@ -157,6 +157,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			);
 
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -213,9 +215,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			);
 
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp, recv_attrs))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
-			if (send_req.error() == kHelErrDismissed)
-				return EINVAL;
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
 			HEL_CHECK(recv_attrs.error());
@@ -244,9 +246,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			);
 
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, send_attrs, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
-			if (send_req.error() == kHelErrDismissed)
-				return EINVAL;
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(send_attrs.error());
 			HEL_CHECK(recv_resp.error());
@@ -273,8 +275,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			);
 
 			HEL_CHECK(offer.error());
-			if (send_req.error() == kHelErrDismissed)
-				return EINVAL;
+			if (dismissed(send_ioctl_req, send_req, imbue_creds, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(imbue_creds.error());
 			HEL_CHECK(send_req.error());
@@ -304,12 +306,10 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			);
 
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
-			if (send_req.error() == kHelErrDismissed)
-				return ENOTTY;
 			HEL_CHECK(send_req.error());
-			if (recv_resp.error() == kHelErrDismissed)
-				return ENOTTY;
 			HEL_CHECK(recv_resp.error());
 
 			managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
@@ -343,9 +343,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
-			if (send_req.error() == kHelErrDismissed)
-				return EINVAL;
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
 
@@ -371,9 +371,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			);
 
 			HEL_CHECK(offer.error());
-			HEL_CHECK(send_ioctl_req.error());
-			if (imbue_creds.error() == kHelErrDismissed)
+			if (dismissed(send_ioctl_req, send_req, imbue_creds, recv_resp))
 				return ENOTTY;
+			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(imbue_creds.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -401,9 +401,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
-			if (send_req.error() == kHelErrDismissed)
-				return EINVAL;
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
 
@@ -433,10 +433,10 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			);
 
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, imbue_creds, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
-			if (imbue_creds.error() == kHelErrDismissed)
-				return ENOTTY;
 			HEL_CHECK(imbue_creds.error());
 			HEL_CHECK(recv_resp.error());
 
@@ -469,9 +469,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			);
 
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, imbue_creds, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
-			if (send_req.error() == kHelErrDismissed)
-				return EINVAL;
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(imbue_creds.error());
 			HEL_CHECK(recv_resp.error());
@@ -502,14 +502,14 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			);
 
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, imbue_creds, recv_resp))
+				return ENOTTY;
 			if (send_ioctl_req.error())
 				return EINVAL;
 			HEL_CHECK(send_ioctl_req.error());
 			if (send_req.error())
 				return EINVAL;
 			HEL_CHECK(send_req.error());
-			if (imbue_creds.error() == kHelErrDismissed)
-				return EINVAL;
 			HEL_CHECK(imbue_creds.error());
 			HEL_CHECK(recv_resp.error());
 
@@ -540,6 +540,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			);
 
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			if (send_ioctl_req.error())
 				return EINVAL;
 			HEL_CHECK(send_ioctl_req.error());
@@ -592,6 +594,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		);
 		HEL_CHECK(offer.error());
 		auto conversation = offer.descriptor();
+		if (dismissed(send_ioctl_req, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -622,6 +626,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		);
 		HEL_CHECK(offer.error());
 		auto conversation = offer.descriptor();
+		if (dismissed(send_ioctl_req, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -712,6 +718,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		);
 		HEL_CHECK(offer.error());
 		auto conversation = offer.descriptor();
+		if (dismissed(send_ioctl_req, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -780,9 +788,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			);
 
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp, recv_data))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
-			if (send_req.error() == kHelErrDismissed)
-				return EINVAL;
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
 			HEL_CHECK(recv_data.error());
@@ -812,9 +820,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			);
 
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp, recv_data))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
-			if (send_req.error() == kHelErrDismissed)
-				return EINVAL;
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
 			HEL_CHECK(recv_data.error());
@@ -842,9 +850,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		);
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
-		if (send_req.error() == kHelErrDismissed)
-			return EINVAL;
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
@@ -872,9 +880,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		);
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
-		if (send_req.error() == kHelErrDismissed)
-			return EINVAL;
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
 
@@ -934,9 +942,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			)
 		);
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, imbue_creds, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
-		if (send_req.error() == kHelErrDismissed)
-			return EINVAL;
 		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -969,9 +977,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			)
 		);
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, imbue_creds, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
-		if (send_req.error() == kHelErrDismissed)
-			return EINVAL;
 		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1005,9 +1013,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			)
 		);
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, imbue_creds, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
-		if (send_req.error() == kHelErrDismissed)
-			return EINVAL;
 		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1032,9 +1040,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			)
 		);
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, imbue_creds, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
-		if (send_req.error() == kHelErrDismissed)
-			return EINVAL;
 		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1065,9 +1073,9 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 			)
 		);
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, imbue_creds, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
-		if (send_req.error() == kHelErrDismissed)
-			return EINVAL;
 		HEL_CHECK(imbue_creds.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1288,6 +1296,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		);
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1312,6 +1322,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		);
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1341,6 +1353,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, send_buffer, send_data, recv_resp, recv_data))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(send_buffer.error());
@@ -1373,6 +1387,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		);
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1397,6 +1413,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, recv_resp, recv_data))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1422,6 +1440,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1448,6 +1468,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1475,6 +1497,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1502,6 +1526,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, send_data, recv_resp, recv_data))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(send_data.error());
@@ -1534,6 +1560,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, recv_resp, recv_data))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1560,6 +1588,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1585,6 +1615,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1613,6 +1645,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, send_buffer, recv_resp, recv_data))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(send_buffer.error());
@@ -1649,6 +1683,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, send_buffer, recv_resp, recv_data))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(send_buffer.error());
@@ -1677,6 +1713,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, recv_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_resp.error());
@@ -1705,6 +1743,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, send_buffer, recv_resp, recv_data))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(send_buffer.error());
@@ -1735,6 +1775,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, send_buffer, recv_resp, recv_data))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(send_buffer.error());
@@ -1765,6 +1807,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, send_buffer, recv_resp, recv_data))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(send_buffer.error());
@@ -1795,6 +1839,8 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		    );
 
 		HEL_CHECK(offer.error());
+		if (dismissed(send_ioctl_req, send_req, recv_info_resp))
+			return ENOTTY;
 		HEL_CHECK(send_ioctl_req.error());
 		HEL_CHECK(send_req.error());
 		HEL_CHECK(recv_info_resp.error());

@@ -527,4 +527,11 @@ auto exchangeMsgsSyncCancelViaLane(HelHandle descriptor, MakeCancel &&makeCancel
 	return results;
 }
 
+// Whether any of the results of an exchange failed because the remote dismissed it
+// (e.g., a server that does not support an ioctl).
+template <typename... Results>
+bool dismissed(Results &...results) {
+	return ((results.error() == kHelErrDismissed) || ...);
+}
+
 #endif // MLIBC_POSIX_PIPE
