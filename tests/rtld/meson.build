@@ -113,7 +113,6 @@ foreach test_name : rtld_test_cases
 
 		exec = executable('host-libc-' + test_name, test_name / 'test.c',
 			link_with: test_native_link_with,
-			dependencies: rtlib_deps,
 			build_rpath: test_rpath,
 			override_options: host_libc_rtld_sanitize_options,
 			c_args: ['-D_GNU_SOURCE', '-DUSE_HOST_LIBC'],

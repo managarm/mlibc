@@ -62,16 +62,6 @@ jobs:
           path: src/mlibc
           submodules: true
 
-      - name: Get libgcc-binaries
-        run: |
-            set -e
-            case "${{matrix.arch}}" in \
-              x86) \
-                wget -O /tmp/libgcc-${{matrix.arch}}.a https://github.com/osdev0/libgcc-binaries/releases/latest/download/libgcc-i686.a;; \
-              *) \
-                wget -O /tmp/libgcc-${{matrix.arch}}.a https://github.com/osdev0/libgcc-binaries/releases/latest/download/libgcc-${{matrix.arch}}.a;; \
-            esac
-
       - name: Prepare src/
         run: |
             cp mlibc/ci/bootstrap.yml .

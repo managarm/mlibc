@@ -10,7 +10,9 @@ option('posix_option', type: 'feature', value : 'auto')
 option('linux_option', type: 'feature', value : 'auto')
 option('glibc_option', type: 'feature', value : 'auto')
 option('bsd_option', type: 'feature', value : 'auto')
-option('libgcc_dependency', type : 'boolean', value : true)
+option('libgcc_dependency', type : 'feature', value : 'auto',
+	deprecated : {'true': 'enabled', 'false': 'disabled'},
+	description : 'Link against the compiler\'s libgcc or compiler-rt instead of building freestanding-lgrt')
 option('linux_kernel_headers', type: 'string', value : '')
 option('zinnia_kernel_headers', type: 'string', value : '')
 option('default_library_paths', type: 'array', value: [])
