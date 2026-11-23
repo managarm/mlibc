@@ -31,6 +31,9 @@
 #define SIOCETHTOOL 0x8946
 #define SIOCGSKNS 0x894C
 #define TFD_IOC_SET_TICKS _IOW('T', 0, __u64)
+#define KCOV_REQUEST_SET_SIZE _IOW('c', 1, int)
+#define KCOV_REQUEST_START _IOW('c', 2, int)
+#define KCOV_REQUEST_STOP _IO('c', 3)
 
 namespace mlibc {
 
@@ -1405,6 +1408,49 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 		resp.ParseFromArray(recv_resp.data(), recv_resp.length());
 		*result = 0;
 		return 0;
+	} else if (request == KCOV_REQUEST_SET_SIZE || request == KCOV_REQUEST_START || request == KCOV_REQUEST_STOP) {
+		auto exchange = [&](auto &req) -> int {
+			auto [offer, send_ioctl_req, send_req, imbue_creds, recv_resp] = exchangeMsgsSync(
+			    handle,
+			    helix_ng::offer(
+			        helix_ng::sendBragiHeadOnly(ioctl_req, getSysdepsAllocator()),
+			        helix_ng::sendBragiHeadOnly(req, getSysdepsAllocator()),
+			        helix_ng::imbueCredentials(),
+			        helix_ng::recvInline()
+			    )
+			);
+
+			HEL_CHECK(offer.error());
+			HEL_CHECK(send_ioctl_req.error());
+			if (send_req.error() == kHelErrDismissed)
+				return EINVAL;
+			HEL_CHECK(send_req.error());
+			HEL_CHECK(imbue_creds.error());
+			HEL_CHECK(recv_resp.error());
+
+			managarm::fs::KcovResponse<SysdepsAllocator> resp(getSysdepsAllocator());
+			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
+			if (resp.error() != managarm::fs::Errors::SUCCESS)
+				return resp.error() | toErrno;
+			*result = 0;
+			return 0;
+		};
+
+		if (request == KCOV_REQUEST_STOP) {
+			managarm::fs::KcovStopRequest<SysdepsAllocator> req(getSysdepsAllocator());
+			return exchange(req);
+		}
+
+		if (!arg)
+			return EFAULT;
+		if (request == KCOV_REQUEST_SET_SIZE) {
+			managarm::fs::KcovSetSizeRequest<SysdepsAllocator> req(getSysdepsAllocator());
+			req.set_entries(*reinterpret_cast<int *>(arg));
+			return exchange(req);
+		}
+		managarm::fs::KcovStartRequest<SysdepsAllocator> req(getSysdepsAllocator());
+		req.set_mode(*reinterpret_cast<int *>(arg));
+		return exchange(req);
 	} else if (request == SNDRV_CTL_IOCTL_CARD_INFO) {
 		managarm::fs::GenericIoctlRequest<SysdepsAllocator> req(getSysdepsAllocator());
 		req.set_command(request);
