@@ -32,6 +32,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -86,6 +88,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -121,6 +125,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -183,13 +189,11 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
-
-			if (recv_resp.error() == kHelErrDismissed) {
-				return EINVAL;
-			}
 
 			managarm::fs::GenericIoctlReply<SysdepsAllocator> resp(getSysdepsAllocator());
 			resp.ParseFromArray(recv_resp.data(), recv_resp.length());
@@ -258,11 +262,10 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			);
 
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp, recv_list))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
-			if (recv_resp.error() == kHelErrDismissed)
-				return EINVAL;
-
 			HEL_CHECK(recv_resp.error());
 			HEL_CHECK(recv_list.error());
 
@@ -324,6 +327,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -382,6 +387,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -418,6 +425,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			);
 			HEL_CHECK(offer.error());
 			auto conversation = offer.descriptor();
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -463,6 +472,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			);
 			HEL_CHECK(offer.error());
 			auto conversation = offer.descriptor();
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -510,6 +521,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -550,6 +563,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -587,6 +602,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -624,6 +641,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -653,6 +672,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -714,6 +735,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -744,6 +767,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -772,6 +797,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -803,6 +830,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			);
 
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp, recv_data))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -848,6 +877,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			);
 
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, send_mode, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(send_mode.error());
@@ -879,6 +910,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -924,6 +957,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -963,6 +998,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -1009,6 +1046,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -1048,6 +1087,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -1081,6 +1122,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -1108,6 +1151,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, blob_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(blob_req.error());
@@ -1138,6 +1183,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -1186,6 +1233,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(recv_resp.error());
@@ -1250,6 +1299,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, send_creds, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(send_creds.error());
@@ -1280,6 +1331,8 @@ int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle h
 			    )
 			);
 			HEL_CHECK(offer.error());
+			if (dismissed(send_ioctl_req, send_req, send_creds, recv_resp))
+				return ENOTTY;
 			HEL_CHECK(send_ioctl_req.error());
 			HEL_CHECK(send_req.error());
 			HEL_CHECK(send_creds.error());
