@@ -5,6 +5,7 @@
 #include <linux/fs.h>
 #include <linux/input.h>
 #include <linux/kd.h>
+#include <linux/kvm.h>
 #include <linux/nvme_ioctl.h>
 #include <linux/usb/cdc-wdm.h>
 #include <linux/vt.h>
@@ -38,6 +39,9 @@ static constexpr bool logIoctls = false;
 int ioctl_drm(int fd, unsigned long request, void *arg, int *result, HelHandle handle) CAP_REQUIRES(
     sysdepAllocatorCapability
 );
+int ioctl_kvm(int fd, unsigned long request, void *arg, int *result, HelHandle handle) CAP_REQUIRES(
+    sysdepAllocatorCapability
+);
 
 int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *result) {
 	if (logIoctls)
@@ -54,6 +58,10 @@ int Sysdeps<Ioctl>::operator()(int fd, unsigned long request, void *arg, int *re
 
 	if (_IOC_TYPE(request) == 'd') {
 		return ioctl_drm(fd, request, arg, result, handle);
+	}
+
+	if (_IOC_TYPE(request) == KVMIO) {
+		return ioctl_kvm(fd, request, arg, result, handle);
 	}
 
 	auto handle_siocgif = [&arg, &request, &result]<typename ReqSetup, typename RespParse>(
