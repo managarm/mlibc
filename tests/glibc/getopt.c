@@ -981,6 +981,372 @@ void test34() {
 	}
 }
 
+void test35() {
+	char *test_argv[] = {
+	    "dummy",
+	    "-aXc",
+	    "-b",
+	};
+
+	optind = 0;
+	opterr = 0;
+
+	int c = getopt(COUNT_OF(test_argv), test_argv, "abc");
+	assert(c == 'a');
+	assert(optind == 1);
+
+	c = getopt(COUNT_OF(test_argv), test_argv, "abc");
+	assert(c == '?');
+	assert(optopt == 'X');
+	assert(optind == 1);
+
+	c = getopt(COUNT_OF(test_argv), test_argv, "abc");
+	assert(c == 'c');
+	assert(optind == 2);
+
+	c = getopt(COUNT_OF(test_argv), test_argv, "abc");
+	assert(c == 'b');
+	assert(optind == 3);
+
+	c = getopt(COUNT_OF(test_argv), test_argv, "abc");
+	assert(c == -1);
+	assert(optind == 3);
+}
+
+void test36() {
+	char *test_argv[] = {
+		"dummy",
+		"-a",
+	};
+
+	fputs("Situation: missing argument to short option\n", stderr);
+
+	optind = 0;
+	opterr = 0;
+	int c = getopt(COUNT_OF(test_argv), test_argv, "a:");
+	assert(c == '?');
+	assert(optopt == 'a');
+	assert(optind == 2);
+
+	c = getopt(COUNT_OF(test_argv), test_argv, "a:");
+	assert(c == -1);
+	assert(optind == 2);
+
+	optind = 0;
+	c = getopt(COUNT_OF(test_argv), test_argv, ":a:");
+	assert(c == ':');
+	assert(optopt == 'a');
+	assert(optind == 2);
+
+	c = getopt(COUNT_OF(test_argv), test_argv, ":a:");
+	assert(c == -1);
+	assert(optind == 2);
+}
+
+void test37() {
+	char *test_argv[] = {
+		"dummy",
+		"-ba",
+	};
+
+	fputs("Situation: missing argument to short option at the end of a cluster\n", stderr);
+
+	optind = 0;
+	opterr = 0;
+	int c = getopt(COUNT_OF(test_argv), test_argv, "a:b");
+	assert(c == 'b');
+	assert(optind == 1);
+
+	c = getopt(COUNT_OF(test_argv), test_argv, "a:b");
+	assert(c == '?');
+	assert(optopt == 'a');
+	assert(optind == 2);
+
+	c = getopt(COUNT_OF(test_argv), test_argv, "a:b");
+	assert(c == -1);
+	assert(optind == 2);
+}
+
+void test38() {
+	char *test_argv[] = {
+		"dummy",
+		"-o",
+		"-x",
+	};
+
+	fputs("Situation: short option argument starting with a dash\n", stderr);
+
+	optind = 0;
+	opterr = 0;
+	int c = getopt(COUNT_OF(test_argv), test_argv, "o:x");
+	assert(c == 'o');
+	assert(!strcmp(optarg, "-x"));
+	assert(optind == 3);
+
+	c = getopt(COUNT_OF(test_argv), test_argv, "o:x");
+	assert(c == -1);
+	assert(optind == 3);
+}
+
+void test39() {
+	char *test_argv[] = {
+		"dummy",
+		"nonoption",
+		"-a",
+	};
+
+	fputs("Situation: POSIXLY_CORRECT without '+' in optstring\n", stderr);
+
+	setenv("POSIXLY_CORRECT", "1", 1);
+	optind = 0;
+	opterr = 0;
+	int c = getopt(COUNT_OF(test_argv), test_argv, "ab");
+	assert(c == -1);
+	assert(optind == 1);
+	assert(!strcmp(test_argv[1], "nonoption"));
+	assert(!strcmp(test_argv[2], "-a"));
+	unsetenv("POSIXLY_CORRECT");
+}
+
+void test40() {
+	const struct option longopts[] = {
+		{"foo", no_argument, NULL, 'f'},
+		{NULL, 0, NULL, 0}
+	};
+
+	char *test_argv[] = {
+		"dummy",
+		"-aWfoo",
+		"-bc",
+	};
+
+	fputs("Situation: -W for long options in the middle of a cluster\n", stderr);
+
+	optind = 0;
+	opterr = 0;
+	int c = getopt_long(COUNT_OF(test_argv), test_argv, "aW;bc", longopts, NULL);
+	assert(c == 'a');
+	assert(optind == 1);
+
+	c = getopt_long(COUNT_OF(test_argv), test_argv, "aW;bc", longopts, NULL);
+	assert(c == 'f');
+	assert(optind == 2);
+
+	c = getopt_long(COUNT_OF(test_argv), test_argv, "aW;bc", longopts, NULL);
+	assert(c == 'b');
+	assert(optind == 2);
+
+	c = getopt_long(COUNT_OF(test_argv), test_argv, "aW;bc", longopts, NULL);
+	assert(c == 'c');
+	assert(optind == 3);
+
+	c = getopt_long(COUNT_OF(test_argv), test_argv, "aW;bc", longopts, NULL);
+	assert(c == -1);
+}
+
+void test41() {
+	const struct option longopts[] = {
+		{"foo", no_argument, NULL, 'f'},
+		{"bar", required_argument, NULL, 'b'},
+		{NULL, 0, NULL, 0}
+	};
+
+	char *test_argv[] = {
+		"dummy",
+		"-W",
+		"foo",
+		"-W",
+		"bar",
+		"value",
+	};
+
+	fputs("Situation: -W with the long option in a separate argument\n", stderr);
+
+	optind = 0;
+	opterr = 0;
+	int c = getopt_long(COUNT_OF(test_argv), test_argv, "W;", longopts, NULL);
+	assert(c == 'f');
+	assert(optind == 3);
+
+	c = getopt_long(COUNT_OF(test_argv), test_argv, "W;", longopts, NULL);
+	assert(c == 'b');
+	assert(!strcmp(optarg, "value"));
+	assert(optind == 6);
+
+	c = getopt_long(COUNT_OF(test_argv), test_argv, "W;", longopts, NULL);
+	assert(c == -1);
+}
+
+void test42() {
+	char *test_argv[] = {
+		"dummy",
+		"-:",
+		"-+",
+	};
+
+	fputs("Situation: optstring syntax characters used as options\n", stderr);
+
+	optind = 0;
+	opterr = 0;
+	int c = getopt(COUNT_OF(test_argv), test_argv, "+a:");
+	assert(c == '?');
+	assert(optopt == ':');
+	assert(optind == 2);
+
+	c = getopt(COUNT_OF(test_argv), test_argv, "+a:");
+	assert(c == '?');
+	assert(optopt == '+');
+	assert(optind == 3);
+
+	c = getopt(COUNT_OF(test_argv), test_argv, "+a:");
+	assert(c == -1);
+}
+
+void test43() {
+	char *test_argv[] = {
+		"dummy",
+		"-a",
+	};
+
+	fputs("Situation: ':' after '+' in optstring\n", stderr);
+
+	optind = 0;
+	opterr = 0;
+	int c = getopt(COUNT_OF(test_argv), test_argv, "+:a:");
+	assert(c == ':');
+	assert(optopt == 'a');
+	assert(optind == 2);
+
+	optind = 0;
+	c = getopt(COUNT_OF(test_argv), test_argv, "-:a:");
+	assert(c == ':');
+	assert(optopt == 'a');
+	assert(optind == 2);
+}
+
+void test44() {
+	const struct option longopts[] = {
+		{"foo", no_argument, NULL, 'f'},
+		{NULL, 0, NULL, 0}
+	};
+
+	char *test_argv[] = {
+		"dummy",
+		"--foo=x",
+	};
+
+	fputs("Situation: argument passed to a long option that takes none, with ':' in optstring\n", stderr);
+
+	optind = 0;
+	opterr = 0;
+	int c = getopt_long(COUNT_OF(test_argv), test_argv, ":a", longopts, NULL);
+	assert(c == '?');
+	assert(optopt == 'f');
+	assert(optind == 2);
+}
+
+void test45() {
+	const struct option longopts[] = {
+		{"add", no_argument, NULL, 'A'},
+		{NULL, 0, NULL, 0}
+	};
+
+	char *test_argv[] = {
+		"dummy",
+		"-a",
+		"-ad",
+	};
+
+	fputs("Situation: getopt_long_only with a single-character short option that prefixes a long option\n", stderr);
+
+	optind = 0;
+	opterr = 0;
+	int c = getopt_long_only(COUNT_OF(test_argv), test_argv, "a", longopts, NULL);
+	assert(c == 'a');
+	assert(optind == 2);
+
+	c = getopt_long_only(COUNT_OF(test_argv), test_argv, "a", longopts, NULL);
+	assert(c == 'A');
+	assert(optind == 3);
+}
+
+void test46() {
+	const struct option longopts[] = {
+		{"foo", no_argument, NULL, 'f'},
+		{NULL, 0, NULL, 0}
+	};
+
+	char *test_argv[] = {
+		"dummy",
+		"-xab",
+	};
+
+	fputs("Situation: getopt_long_only with an unknown option that is neither long nor short\n", stderr);
+
+	optind = 0;
+	opterr = 0;
+	int c = getopt_long_only(COUNT_OF(test_argv), test_argv, "ab", longopts, NULL);
+	assert(c == '?');
+	assert(optopt == 0);
+	assert(optind == 2);
+
+	c = getopt_long_only(COUNT_OF(test_argv), test_argv, "ab", longopts, NULL);
+	assert(c == -1);
+}
+
+void test47() {
+	char *test_argv[] = {
+		"dummy",
+		"nonoption",
+		"-ab",
+	};
+
+	fputs("Situation: optind while processing a cluster after a non-option\n", stderr);
+
+	optind = 0;
+	opterr = 0;
+	int c = getopt(COUNT_OF(test_argv), test_argv, "ab");
+	assert(c == 'a');
+	assert(optind == 2);
+
+	c = getopt(COUNT_OF(test_argv), test_argv, "ab");
+	assert(c == 'b');
+	assert(optind == 3);
+
+	c = getopt(COUNT_OF(test_argv), test_argv, "ab");
+	assert(c == -1);
+	assert(optind == 2);
+	assert(!strcmp(test_argv[1], "-ab"));
+	assert(!strcmp(test_argv[2], "nonoption"));
+}
+
+void test48() {
+	const struct option longopts[] = {
+		{"foo", no_argument, NULL, 'f'},
+		{NULL, 0, NULL, 0}
+	};
+
+	char *test_argv[] = {
+		"dummy",
+		"-z",
+		"--bar",
+	};
+
+	fputs("Situation: optopt after an unknown long option\n", stderr);
+
+	optind = 0;
+	opterr = 0;
+	int c = getopt_long(COUNT_OF(test_argv), test_argv, "a", longopts, NULL);
+	assert(c == '?');
+	assert(optopt == 'z');
+	assert(optind == 2);
+
+	c = getopt_long(COUNT_OF(test_argv), test_argv, "a", longopts, NULL);
+	assert(c == '?');
+	assert(optopt == 0);
+	assert(optind == 3);
+}
+
 int main() {
 	test1();
 	test2();
@@ -1016,6 +1382,20 @@ int main() {
 	test32();
 	test33();
 	test34();
+	test35();
+	test36();
+	test37();
+	test38();
+	test39();
+	test40();
+	test41();
+	test42();
+	test43();
+	test44();
+	test45();
+	test46();
+	test47();
+	test48();
 
 	return 0;
 }
