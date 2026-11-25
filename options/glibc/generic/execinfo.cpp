@@ -50,6 +50,8 @@ _Unwind_Reason_Code trace(_Unwind_Context *context, void *arg) {
 		ip -= 4;
 #elif defined(__riscv) || defined(__m68k__)
 		ip -= 2;
+#elif defined(__mips64)
+		ip -= 8;
 #else
 #warning "Missing support for architecture"
 		ip--;
