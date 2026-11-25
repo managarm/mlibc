@@ -19,6 +19,11 @@ namespace {
 
 int __optpos = 1;
 
+// in glibc, non-options are permuted lazily: [__first_nonopt, __last_nonopt) is the range of
+// skipped non-options; options processed after them are moved in front of them on the next call.
+int __first_nonopt = 1;
+int __last_nonopt = 1;
+
 int getopt_common_internal(int argc, char * const argv[], const char *optstring, const struct option *longopts,
 		int *longindex, enum mlibc::GetoptMode mode) {
 	// find a matching longopt for an `arg` of length `n`
@@ -64,6 +69,7 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 
 			if(opterr)
 				fprintf(stderr, "Multiple option declaration detected: %s\n", arg);
+			optopt = 0;
 			optind++;
 			return '?';
 		}
@@ -118,9 +124,12 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 			__ensure(longopts[k].has_arg == no_argument);
 
 			// did we get passed a value?
-			if(s && strlen(s)) {
+			if(s) {
+				if(opterr)
+					fprintf(stderr, "--%s does not take an argument.\n", arg);
+				optopt = longopts[k].val;
 				optind++;
-				return colon ? ':' : '?';
+				return '?';
 			}
 
 			// Consume the long option.
@@ -131,9 +140,21 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 		return frg::null_opt;
 	};
 
-	bool colon = optstring[0] == ':';
 	bool stop_at_first_nonarg = (optstring[0] == '+' || getenv("POSIXLY_CORRECT"));
 	bool return_nonarg = optstring[0] == '-';
+
+	const char *shortopts = optstring;
+	if(shortopts[0] == '+' || shortopts[0] == '-')
+		shortopts++;
+	bool colon = shortopts[0] == ':';
+	if(colon)
+		shortopts++;
+
+	auto find_shortopt = [&](char c) -> const char * {
+		if(!c || c == ':' || c == ';')
+			return nullptr;
+		return strchr(shortopts, c);
+	};
 
 	// if optstring contains "W;", then "-W foo" is treated as the long option "--foo".
 	bool w_long_options = [&]{
@@ -201,6 +222,7 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 			if(std::holds_alternative<std::monostate>(k)) {
 				if(opterr)
 					fprintf(stderr, "--%s is not a valid option.\n", arg);
+				optopt = 0;
 				optind++;
 				return '?';
 			} else if(auto c = std::get_if<char>(&k)) {
@@ -223,8 +245,14 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 		}else{
 			/* handle short options, i.e. options with only one dash prefixed; e.g. `program -s` */
 			unsigned int i = __optpos;
+			if(!arg[i]) {
+				optarg = nullptr;
+				return -1;
+			}
+
 			while(true) {
-				if(mode == mlibc::GetoptMode::LongOnly) {
+				// in glibc, "-x" is not treated as an abbreviated long option if x is a short option.
+				if(mode == mlibc::GetoptMode::LongOnly && i == 1 && (arg[2] || !find_shortopt(arg[1]))) {
 					const char *lo_arg = &arg[1];
 					auto s = strchr(lo_arg, '=');
 					size_t n = s ? (s - lo_arg) : strlen(lo_arg);
@@ -244,19 +272,28 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 							*longopts[k].flag = longopts[k].val;
 							return 0;
 						}
+					} else if(!find_shortopt(arg[1])) {
+						// Neither a long option nor a short option; skip the whole argument.
+						if(opterr)
+							fprintf(stderr, "%s is not a valid option.\n", arg);
+						optopt = 0;
+						optind++;
+						return '?';
 					}
 				}
 
-				auto opt = strchr(optstring, arg[i]);
+				auto opt = find_shortopt(arg[i]);
 				if(opt) {
 					if(opt[0] == 'W' && w_long_options) {
-						const char *lo_arg = [&]() {
-							if(opt[1]) {
-								return &arg[i] + 1;
-							} else {
-								return &arg[i + 1];
-							}
-						}();
+						// The long option is either the rest of this argument or the next argument.
+						__optpos = 1;
+						const char *lo_arg = "";
+						if(arg[i + 1]) {
+							lo_arg = &arg[i + 1];
+						} else if(optind + 1 < argc && argv[optind + 1]) {
+							optind++;
+							lo_arg = argv[optind];
+						}
 
 						auto s = strchr(lo_arg, '=');
 						size_t n = s ? (s - lo_arg) : strlen(lo_arg);
@@ -294,28 +331,29 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 
 						if(arg[i+1]) {
 							optarg = arg + i + 1;
-						} else if(optind + 1 < argc && argv[optind + 1] && required && argv[optind + 1][0] != '-') {
+						} else if(optind + 1 < argc && argv[optind + 1] && required) {
 							/* there is an argument to this short option, separated by a space,
 								* and the shortopt specification does not specify an optional arg */
 							optarg = argv[optind + 1];
 							optind++;
-							__optpos = 1;
 						} else if(!required) {
 							optarg = nullptr;
 						} else {
-							__optpos = 1;
+							if(!colon && opterr)
+								fprintf(stderr, "-%c requires an argument.\n", arg[i]);
 							optopt = arg[i];
+							__optpos = 1;
+							optind++;
 							return colon ? ':' : '?';
 						}
+						__optpos = 1;
 						optind++;
 					} else {
 						if(arg[i+1]) {
 							__optpos++;
-						} else if(arg[i]) {
-							optind++;
 						} else {
-							optarg = nullptr;
-							return -1;
+							__optpos = 1;
+							optind++;
 						}
 					}
 
@@ -324,10 +362,15 @@ int getopt_common_internal(int argc, char * const argv[], const char *optstring,
 					/*	If getopt() does not recognize an option character, it prints an error message to stderr,
 						stores the character in optopt, and returns '?'. The calling program may prevent
 						the error message by setting opterr to 0. */
-					optopt = arg[1];
+					optopt = arg[i];
 					if(opterr)
 						fprintf(stderr, "%s is not a valid option.\n", arg);
-					optind++;
+					if(arg[i+1]) {
+						__optpos++;
+					} else {
+						__optpos = 1;
+						optind++;
+					}
 					return '?';
 				}
 			}
@@ -368,39 +411,64 @@ int getopt_common(int argc, char * const argv[], const char *optstring,
 		optind = 1;
 		optopt = 0;
 		__optpos = 1;
+		__first_nonopt = 1;
+		__last_nonopt = 1;
 #if __MLIBC_BSD_OPTION
 		optreset = 0;
 #endif //__MLIBC_BSD_OPTION
 	}
 
-	int skipped = optind;
+	optarg = nullptr;
 
-	if(optstring[0] != '+' && optstring[0] != '-') {
-		int i = optind;
+	// only advance to the next argument if we are not in the middle of an option cluster
+	if(__optpos == 1) {
+		// The caller may have moved `optind` backwards.
+		if(__last_nonopt > optind)
+			__last_nonopt = optind;
+		if(__first_nonopt > optind)
+			__first_nonopt = optind;
 
-		for(;; i++) {
-			if(i >= argc || !argv[i]) {
-				optarg = nullptr;
-				return -1;
-			}
-			if(argv[i][0] == '-' && argv[i][1])
-				break;
+		// move the arguments in [__last_nonopt, optind) in front of the skipped non-options
+		auto exchange = [&] {
+			for(int i = __last_nonopt; i < optind; i++)
+				permute(const_cast<char **>(argv), __first_nonopt + (i - __last_nonopt), i);
+			__first_nonopt += optind - __last_nonopt;
+			__last_nonopt = optind;
+		};
+
+		bool permute_args = optstring[0] != '+' && optstring[0] != '-' && !getenv("POSIXLY_CORRECT");
+		if(permute_args) {
+			if(__first_nonopt != __last_nonopt && __last_nonopt != optind)
+				exchange();
+			else if(__last_nonopt != optind)
+				__first_nonopt = optind;
+
+			while(optind < argc && argv[optind] && (argv[optind][0] != '-' || !argv[optind][1]))
+				optind++;
+			__last_nonopt = optind;
 		}
 
-		optind = i;
-	}
-
-	int resumed = optind;
-	auto ret = getopt_common_internal(argc, argv, optstring, longopts, longindex, mode);
-
-	if(resumed > skipped) {
-		for(int i = 0; i < (optind - resumed); i++) {
-			permute(const_cast<char **>(argv), skipped, optind - 1);
+		// "--" ends option processing; everything after it is treated as a non-option
+		if(optind < argc && argv[optind] && !strcmp(argv[optind], "--")) {
+			optind++;
+			if(__first_nonopt != __last_nonopt && __last_nonopt != optind)
+				exchange();
+			else if(__first_nonopt == __last_nonopt)
+				__first_nonopt = optind;
+			__last_nonopt = argc;
+			optind = argc;
 		}
-		optind = skipped + (optind - resumed);
+
+		// point optind at the first non-option once all options are processed
+		if(optind >= argc || !argv[optind]) {
+			if(__first_nonopt != __last_nonopt)
+				optind = __first_nonopt;
+			optarg = nullptr;
+			return -1;
+		}
 	}
 
-	return ret;
+	return getopt_common_internal(argc, argv, optstring, longopts, longindex, mode);
 }
 
 } // namespace mlibc
