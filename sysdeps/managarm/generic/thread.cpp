@@ -53,8 +53,9 @@ int Sysdeps<PrepareStack>::operator()(
 	}
 
 	uintptr_t *sp =
-	    reinterpret_cast<uintptr_t *>(reinterpret_cast<uintptr_t>(*stack_base) + *stack_size);
+	    reinterpret_cast<uintptr_t *>((reinterpret_cast<uintptr_t>(*stack_base) + *stack_size) & ~uintptr_t{15});
 
+	--sp; // Align the stack pointer to 16 bytes
 	*--sp = reinterpret_cast<uintptr_t>(tp);
 	*--sp = reinterpret_cast<uintptr_t>(user_arg);
 	*--sp = reinterpret_cast<uintptr_t>(entry);
