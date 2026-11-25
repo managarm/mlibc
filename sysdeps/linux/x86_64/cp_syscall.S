@@ -23,6 +23,8 @@ __mlibc_syscall_end:
 	ret
 
 cancel:
+	/* align the stack as required by SysV ABI. */
+	and $-16, %rsp
 	call __mlibc_do_cancel
 	hlt
 .section .note.GNU-stack,"",%progbits
