@@ -48,8 +48,6 @@ struct _libc_fpstate {
 
 typedef struct _libc_fpstate *fpregset_t;
 #endif
-
-typedef unsigned long int greg_t;
 #endif
 
 #define FPE_INTDIV      1       /* integer divide by zero */
