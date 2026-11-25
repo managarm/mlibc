@@ -36,6 +36,8 @@ cancel:
 	pop %edi
 	pop %esi
 	pop %ebx
+	/* align the stack as required by SysV ABI. */
+	and $-16, %esp
 	call __mlibc_do_cancel@PLT
 	hlt
 
