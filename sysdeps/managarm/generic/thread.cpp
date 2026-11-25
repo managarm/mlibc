@@ -52,8 +52,9 @@ int Sysdeps<PrepareStack>::operator()(
 		}
 	}
 
-	uintptr_t *sp =
-	    reinterpret_cast<uintptr_t *>(reinterpret_cast<uintptr_t>(*stack_base) + *stack_size);
+	uintptr_t *sp = reinterpret_cast<uintptr_t *>(
+	    (reinterpret_cast<uintptr_t>(*stack_base) + *stack_size) & ~uintptr_t{15}
+	);
 
 	*--sp = reinterpret_cast<uintptr_t>(tp);
 	*--sp = reinterpret_cast<uintptr_t>(user_arg);
