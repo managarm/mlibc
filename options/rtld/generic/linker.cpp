@@ -998,6 +998,15 @@ void ObjectRepository::_parseDynamic(SharedObject *object) {
 			break;
 		case DT_TLSDESC_PLT: case DT_TLSDESC_GOT:
 			break;
+		#ifdef __mips__
+		case DT_MIPS_XHASH:
+			object->hashStyle = HashStyle::mipsXHASH;
+			object->hashTableOffset = dynamic->d_un.d_ptr;
+			break;
+		case DT_MIPS_SYMTABNO:
+			object->mipsSymtabno = dynamic->d_un.d_val;
+			break;
+		#endif
 		default:
 			// Ignore unknown entries in the os-specific area as we don't use them.
 			if((dynamic->d_tag < DT_LOOS || dynamic->d_tag > DT_HIOS)
@@ -1711,7 +1720,11 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 
 		return frg::optional<ObjectSymbol>{};
 	}else{
-		__ensure(object->hashStyle == HashStyle::gnu);
+		__ensure(object->hashStyle == HashStyle::gnu
+		#ifdef __mips__
+			|| object->hashStyle == HashStyle::mipsXHASH
+		#endif
+		);
 
 		auto hash_table = reinterpret_cast<const GnuHashTableHeader *>(object->baseAddress
 				+ object->hashTableOffset);
@@ -1722,6 +1735,15 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 				+ object->hashTableOffset + sizeof(GnuHashTableHeader)
 				+ hash_table->bloomSize * sizeof(elf_addr)
 				+ hash_table->nBuckets * sizeof(uint32_t));
+
+		const uint32_t *xlat = nullptr;
+		#ifdef __mips__
+		if (object->hashStyle == HashStyle::mipsXHASH) {
+			__ensure(object->mipsSymtabno);
+			__ensure(*object->mipsSymtabno >= hash_table->symbolOffset);
+			xlat = chains + (*object->mipsSymtabno - hash_table->symbolOffset);
+		}
+		#endif
 
 		// TODO: Use the bloom filter.
 
@@ -1734,9 +1756,11 @@ frg::optional<ObjectSymbol> resolveInObject(SharedObject *object, frg::string_vi
 
 		while(true) {
 			// chains[] contains an array of hashes, parallel to the symbol table.
-			auto chash = chains[index - hash_table->symbolOffset];
+			auto chain_slot = index - hash_table->symbolOffset;
+			auto chash = chains[chain_slot];
 			if ((chash & ~1) == (hash & ~1)) {
-				auto [cand, ver] = object->getSymbolByIndex(index);
+				auto symbol_index = xlat ? xlat[chain_slot] : index;
+				auto [cand, ver] = object->getSymbolByIndex(symbol_index);
 				if(eligible(cand) && frg::string_view{cand.getString()} == string && correctVersion(ver))
 					return cand;
 			}

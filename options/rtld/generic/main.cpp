@@ -480,6 +480,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		case DT_MIPS_GOTSYM:
 		case DT_MIPS_UNREFEXTNO:
 		case DT_MIPS_BASE_ADDRESS:
+		case DT_MIPS_XHASH:
 			continue;
 		case DT_MIPS_RLD_VERSION:
 			if(ent->d_un.d_val != 1) {
@@ -1106,18 +1107,29 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 
 		size_t start_symbols =  0;
 		size_t num_symbols =  0;
+		const uint32_t *xlat = nullptr;
 
 		if(object->hashStyle == HashStyle::systemV) {
 			auto hash_table = (Elf64_Word *)(object->baseAddress + object->hashTableOffset);
 
 			// nchain == number of symtab entries
 			num_symbols = hash_table[1];
-		} else if(object->hashStyle == HashStyle::gnu) {
+		} else if(object->hashStyle == HashStyle::gnu || object->hashStyle == HashStyle::mipsXHASH) {
 			size_t last_sym = 0;
 
 			auto hash_table = reinterpret_cast<GnuHashTableHeader *>(object->baseAddress + object->hashTableOffset);
 			auto bucket = reinterpret_cast<uint32_t *>(uintptr_t(hash_table) + sizeof(*hash_table) + (hash_table->bloomSize * sizeof(elf_addr)));
 			auto chains = reinterpret_cast<uint32_t *>(uintptr_t(bucket) + hash_table->nBuckets * 4);
+
+			#ifdef __mips__
+			if (object->hashStyle == HashStyle::mipsXHASH) {
+				__ensure(object->mipsSymtabno);
+				__ensure(*object->mipsSymtabno >= hash_table->symbolOffset);
+				xlat = chains + (*object->mipsSymtabno - hash_table->symbolOffset);
+			}
+			#else
+			__ensure(object->hashStyle != HashStyle::mipsXHASH);
+			#endif
 
 			// A bucket holds the first symbol of its chain, or 0 if the chain is empty.
 			// The chain that starts last ends at the last symbol.
@@ -1139,8 +1151,9 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 		}
 
 		for(size_t i = start_symbols; i < num_symbols; i++) {
+			auto symbol_index = xlat ? xlat[i - start_symbols] : i;
 			ObjectSymbol cand{object, (elf_sym *)(object->baseAddress
-					+ object->symbolTableOffset + i * sizeof(elf_sym))};
+					+ object->symbolTableOffset + symbol_index * sizeof(elf_sym))};
 			if(eligible(cand) && cand.contains(reinterpret_cast<uintptr_t>(ptr))) {
 				if (rtldConfig.debug)
 					mlibc::infoLogger() << "rtld: Found symbol " << cand.getString() << " in object "

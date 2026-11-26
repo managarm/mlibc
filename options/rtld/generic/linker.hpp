@@ -123,7 +123,8 @@ private:
 enum class HashStyle {
 	none,
 	systemV,
-	gnu
+	gnu,
+	mipsXHASH
 };
 
 struct SystemVHashTableHeader {
@@ -215,6 +216,10 @@ struct SharedObject {
 	uintptr_t hashTableOffset;
 	uintptr_t symbolTableOffset;
 	uintptr_t stringTableOffset;
+
+	#ifdef __mips__
+	frg::optional<uintptr_t> mipsSymtabno;
+	#endif
 
 	// Version tables of this shared object
 	uintptr_t versionTableOffset = 0;
