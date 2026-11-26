@@ -110,7 +110,15 @@ int main() {
 	assert(diff >= 1.0);
 
 #if defined(__linux__)
+	// QEMU user mips64 doesn't emulate it correctly due to a bug (due to the
+	// swapped SI_TIMER and SIGEV_THREAD constants between the abis)
+#if defined(__mips64)
+	const char *gha = getenv("GITHUB_ACTIONS");
+	if (!gha || strcmp(gha, "true"))
+		test_thread_notify();
+#else
 	test_thread_notify();
+#endif
 #endif
 
 	timer_delete(timer);

@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86_64, riscv64, aarch64, x86, m68k, loongarch64]
+        arch: [x86_64, riscv64, aarch64, x86, m68k, loongarch64, mips64]
     runs-on: ubuntu-latest
     container: debian:trixie
     steps:
