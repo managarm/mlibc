@@ -43,6 +43,7 @@ The following custom meson options are accepted, in addition to the [built-in op
 - `linux_kernel_headers`: Allows for directing mlibc to installed linux headers. [These can be obtained easily](https://docs.kernel.org/kbuild/headers_install.html), placed in a directory and this option set to the corresponding path. This is required if the linux option is enabled, i.e. when the linux option is not disabled.
 - `debug_allocator`: Replace the normal allocator with a debug allocator (see `mlibc/options/internal/generic/allocator.cpp` for implementation details).
 - `use_freestnd_hdrs`: Use [freestanding-c-hdrs](https://github.com/osdev0/freestanding-c-hdrs) and [freestanding-cxx-hdrs](https://github.com/osdev0/freestanding-cxx-hdrs) instead of looking for compiler headers. Useful if not using a compiler with the correct target triple.
+- `libgcc_dependency`: Link `libc.so`, `ld.so` and the tests against the compiler's libgcc or compiler-rt (the library that `-print-libgcc-file-name` names) instead of building [freestanding-lgrt](https://github.com/osdev0/freestanding-lgrt). By default, this is only done for compilers whose target triple contains `mlibc`, and if the library links. `libc.a` contains neither: static programs get their runtime library from their toolchain.
 
 The type of library to be built (static, shared, or both) is controlled by meson's `default_library` option. Passing `-Ddefault_library=static` effectively disables the dynamic linker.
 

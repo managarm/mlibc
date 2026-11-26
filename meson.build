@@ -52,7 +52,6 @@ if cross_libc_ld_prefix == '' or build_machine.cpu_family() == host_machine.cpu_
 	build_tests_cross_libc = false
 endif
 
-libgcc_dependency = get_option('libgcc_dependency')
 ifuncs_supported = false
 internal_conf = configuration_data()
 mlibc_conf = configuration_data()
@@ -87,6 +86,8 @@ if not headers_only
 	target_triple = run_command(c_compiler.cmd_array(), '-dumpmachine', check: true).stdout()
 	use_freestnd_hdrs = get_option('use_freestnd_hdrs').disable_auto_if(
 			target_triple.to_lower().contains('mlibc'))
+	libgcc_dependency = get_option('libgcc_dependency').enable_auto_if(
+			target_triple.to_lower().contains('mlibc')).enabled()
 
 	freestanding_c_hdrs_dep = dependency(
 		'freestanding-c-hdrs',
@@ -623,14 +624,61 @@ if not headers_only
 		cpp_compiler = meson.get_compiler('cpp')
 		cpp_link_args = get_option('cpp_link_args')
 		libgcc_path = run_command(cpp_compiler.cmd_array(), cpp_link_args, '-print-libgcc-file-name',
-							capture: true, check: true).stdout().strip()
+							capture: true, check: false).stdout().strip()
 
-		if not fs.is_file(libgcc_path)
-			error('libgcc/compiler-rt library (' + libgcc_path + ') is missing')
+		# The library may be missing or built for another ABI, so check that it links as
+		# libc.so does, with a division that needs it on every architecture. Unless it was
+		# asked for, fall back to freestanding-lgrt.
+		libgcc_check = '''
+		#ifdef __SIZEOF_INT128__
+		typedef unsigned __int128 wide;
+		#else
+		typedef unsigned long long wide;
+		#endif
+		wide divide(wide a, wide b) { return a / b; }
+		'''
+		if fs.is_file(libgcc_path) and cpp_compiler.links(libgcc_check,
+				args: ['-nostdlib', '-shared', '-fPIC', '-Wl,--no-undefined', libgcc_path],
+				name: 'libgcc/compiler-rt links')
+			libgcc = declare_dependency(link_args: libgcc_path)
+			rtlib_deps += libgcc
+		elif get_option('libgcc_dependency').enabled()
+			error('libgcc/compiler-rt library (' + libgcc_path + ') is missing or does not link')
+		else
+			libgcc_dependency = false
 		endif
+	endif
 
-		libgcc = declare_dependency(link_args: libgcc_path)
-		rtlib_deps += libgcc
+	if not libgcc_dependency
+		# freestanding-lgrt is built with the flags of the code that calls it, but without
+		# LTO or sanitizers.
+		freestanding_lgrt = subproject('freestanding-lgrt')
+		freestanding_lgrt_lib = static_library('freestanding-lgrt',
+			freestanding_lgrt.get_variable('freestanding_lgrt_sources'),
+			c_args: mlibc_c_args + [
+				'-fno-lto',
+				# ld.so calls it before it sets up the stack protector.
+				'-fno-stack-protector',
+				# libc.so and ld.so must not export its routines.
+				'-fvisibility=hidden',
+				# It is a single object, so links rely on --gc-sections to drop what is unused.
+				'-ffunction-sections',
+				'-fdata-sections',
+				'-DFREESTANDING_LGRT_ENABLE_FLOAT',
+				# mlibc provides the C library functions, and the libatomic routines that it
+				# needs in options/internal/<arch>/atomics.cpp.
+				'-DFREESTANDING_LGRT_DISABLE_LIBC_FUNCS',
+				'-DFREESTANDING_LGRT_DISABLE_LIBATOMIC_FUNCS',
+			],
+			dependencies: freestanding_c_hdrs_dep,
+			override_options: ['b_lto=false', 'b_sanitize=none', 'werror=false'],
+			pic: true,
+			install: false,
+		)
+		rtlib_deps += declare_dependency(
+			link_with: freestanding_lgrt_lib,
+			link_args: ['-Wl,--gc-sections'],
+		)
 	endif
 
 	ld_cpp_args += [
@@ -672,13 +720,15 @@ if not headers_only
 	static_cpp_args += [
 		'-DMLIBC_STATIC_BUILD',
 	]
+	# rtlib_deps would make meson bundle freestanding-lgrt into libc.a, where it would clash
+	# with the runtime library that toolchains link static programs with.
 	ld_static_lib = static_library(ld_library_name, rtld_sources,
 		name_prefix: '',
 		c_args: freestanding_hdrs_args,
 		cpp_args: mlibc_c_args + ld_cpp_args + static_cpp_args,
 		link_args: mlibc_link_args,
 		include_directories: rtld_include_dirs,
-		dependencies: rtld_deps + rtlib_deps,
+		dependencies: rtld_deps,
 		install: false
 	)
 	libc_static = static_library('c', libc_all_sources,
@@ -686,7 +736,7 @@ if not headers_only
 		cpp_args: static_cpp_args + ['-fno-stack-protector', libc_cpp_args],
 		link_args: mlibc_link_args,
 		include_directories: libc_include_dirs,
-		dependencies: libc_deps + rtlib_deps,
+		dependencies: libc_deps,
 		link_with: [ld_static_lib],
 		link_whole: [libc_sublibs, ld_static_lib],
 		install: true
@@ -746,7 +796,9 @@ summary_info += {'Linux option': get_option('linux_option')}
 summary_info += {'glibc option': get_option('glibc_option')}
 summary_info += {'BSD option': get_option('bsd_option')}
 summary_info += {'debug allocator': get_option('debug_allocator')}
-summary_info += {'libgcc dependency': libgcc_dependency}
+if not headers_only
+	summary_info += {'runtime library': libgcc_dependency ? 'libgcc/compiler-rt' : 'freestanding-lgrt'}
+endif
 summary(summary_info, bool_yn: true, section: 'mlibc options')
 
 if build_tests

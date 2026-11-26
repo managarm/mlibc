@@ -1038,18 +1038,21 @@ int __dlapi_reverse(const void *ptr, __dlapi_symbol *info) {
 			auto bucket = reinterpret_cast<uint32_t *>(uintptr_t(hash_table) + sizeof(*hash_table) + (hash_table->bloomSize * sizeof(elf_addr)));
 			auto chains = reinterpret_cast<uint32_t *>(uintptr_t(bucket) + hash_table->nBuckets * 4);
 
-			if (hash_table->nBuckets) {
-				for(size_t i = 0; i < hash_table->nBuckets; i++) {
+			// A bucket holds the first symbol of its chain, or 0 if the chain is empty.
+			// The chain that starts last ends at the last symbol.
+			for(size_t i = 0; i < hash_table->nBuckets; i++) {
 				if(last_sym < bucket[i])
 					last_sym = bucket[i];
-				}
-
-				while(!(chains[last_sym - hash_table->symbolOffset] & 1))
-					last_sym++;
 			}
 
 			start_symbols = hash_table->symbolOffset;
-			num_symbols = last_sym;
+			num_symbols = start_symbols;
+			// If all chains are empty, the table has no symbols.
+			if(last_sym) {
+				while(!(chains[last_sym - hash_table->symbolOffset] & 1))
+					last_sym++;
+				num_symbols = last_sym + 1;
+			}
 		} else {
 			__ensure(!"unexpected hash style!");
 		}
