@@ -7,10 +7,17 @@
 #define RTLD_LOCAL 0
 #define RTLD_LAZY 1
 #define RTLD_NOW 2
+#define RTLD_NODELETE 4096
+
+#ifndef __mips__
 #define RTLD_NOLOAD 4
 #define RTLD_DEEPBIND 8
 #define RTLD_GLOBAL 256
-#define RTLD_NODELETE 4096
+#else
+#define RTLD_NOLOAD 8
+#define RTLD_DEEPBIND 16
+#define RTLD_GLOBAL 4
+#endif
 
 #define RTLD_NEXT ((void *)-1)
 #define RTLD_DEFAULT ((void *)0)
