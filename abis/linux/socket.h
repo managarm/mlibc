@@ -67,7 +67,10 @@ struct cmsghdr {
 #define SHUT_WR 1
 #define SHUT_RDWR 2
 
-#ifndef SOCK_STREAM
+#ifdef __mips__
+#define SOCK_STREAM    2
+#define SOCK_DGRAM     1
+#else
 #define SOCK_STREAM    1
 #define SOCK_DGRAM     2
 #endif
@@ -81,9 +84,12 @@ struct cmsghdr {
 #define SOCK_PACKET    10
 #endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
-#ifndef SOCK_CLOEXEC
-#define SOCK_CLOEXEC   02000000
-#define SOCK_NONBLOCK  04000
+#define SOCK_CLOEXEC 02000000
+
+#ifdef __mips__
+#define SOCK_NONBLOCK 0200
+#else
+#define SOCK_NONBLOCK 04000
 #endif
 
 #define AF_UNSPEC       0
@@ -190,6 +196,24 @@ struct cmsghdr {
 #endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
 #define SO_DEBUG        1
+
+#ifdef __mips__
+#define SO_REUSEADDR    0x0004
+#define SO_TYPE         0x1008
+#define SO_ERROR        0x1007
+#define SO_DONTROUTE    0x0010
+#define SO_BROADCAST    0x0020
+#define SO_SNDBUF       0x1001
+#define SO_RCVBUF       0x1002
+#define SO_KEEPALIVE    0x0008
+#define SO_OOBINLINE    0x0100
+#define SO_LINGER       0x0080
+#define SO_RCVLOWAT     0x1004
+#define SO_SNDLOWAT     0x1003
+#define SO_ACCEPTCONN   0x1009
+#define SO_PROTOCOL     0x1028
+#define SO_DOMAIN       0x1029
+#else
 #define SO_REUSEADDR    2
 #define SO_TYPE         3
 #define SO_ERROR        4
@@ -205,10 +229,13 @@ struct cmsghdr {
 #define SO_ACCEPTCONN   30
 #define SO_PROTOCOL     38
 #define SO_DOMAIN       39
+#endif
 
 #ifndef SO_RCVTIMEO
 #if __LONG_MAX__ == 0x7fffffff
 #define SO_RCVTIMEO     66
+#elif defined(__mips__)
+#define SO_RCVTIMEO     0x1006
 #else
 #define SO_RCVTIMEO     20
 #endif
@@ -217,6 +244,8 @@ struct cmsghdr {
 #ifndef SO_SNDTIMEO
 #if __LONG_MAX__ == 0x7fffffff
 #define SO_SNDTIMEO     67
+#elif defined(__mips__)
+#define SO_SNDTIMEO     0x1005
 #else
 #define SO_SNDTIMEO     21
 #endif
@@ -224,21 +253,39 @@ struct cmsghdr {
 
 #if defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN
 #ifndef SO_RCVTIMEO_OLD
+#ifdef __mips__
+#define SO_RCVTIMEO_OLD 0x1006
+#else
 #define SO_RCVTIMEO_OLD 20
+#endif
 #endif
 
 #ifndef SO_SNDTIMEO_OLD
+#ifdef __mips__
+#define SO_SNDTIMEO_OLD 0x1005
+#else
 #define SO_SNDTIMEO_OLD 21
+#endif
 #endif
 
 #define SO_NO_CHECK     11
 #define SO_PRIORITY     12
 #define SO_BSDCOMPAT    14
+
+#ifdef __mips__
+#define SO_REUSEPORT    0x0200
+#define SO_PASSCRED     17
+#define SO_PEERCRED     18
+#define SO_PEERSEC      30
+#define SO_SNDBUFFORCE  31
+#else
 #define SO_REUSEPORT    15
 #define SO_PASSCRED     16
 #define SO_PEERCRED     17
 #define SO_PEERSEC      31
 #define SO_SNDBUFFORCE  32
+#endif
+
 #define SO_RCVBUFFORCE  33
 
 #ifndef SO_TIMESTAMP
@@ -299,7 +346,11 @@ struct cmsghdr {
 #define SO_PASSRIGHTS		 	83
 #endif /* defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN */
 
+#ifdef __mips__
+#define SOL_SOCKET      0xffff
+#else
 #define SOL_SOCKET      1
+#endif
 
 #if defined(_DEFAULT_SOURCE) || __MLIBC_XOPEN
 #define SOL_IP          0

@@ -111,7 +111,7 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int f
 	else
 		__ensure(fsfdt == fsfd_target::fd_path);
 
-#if __INTPTR_WIDTH__ == 32
+#if __INTPTR_WIDTH__ == 32 || defined(__mips64)
 	struct statx tmp;
 	auto ret = do_cp_syscall(SYS_statx, fd, path, flags | AT_NO_AUTOMOUNT, STATX_BASIC_STATS, &tmp);
 #elif defined(SYS_newfstatat)
@@ -122,7 +122,7 @@ int Sysdeps<Stat>::operator()(fsfd_target fsfdt, int fd, const char *path, int f
 	if (int e = sc_error(ret); e)
 		return e;
 
-#if __INTPTR_WIDTH__ == 32
+#if __INTPTR_WIDTH__ == 32 || defined(__mips64)
 	statbuf->st_dev = __mlibc_dev_makedev(tmp.stx_dev_major, tmp.stx_dev_minor);
 	statbuf->st_rdev = __mlibc_dev_makedev(tmp.stx_rdev_major, tmp.stx_rdev_minor);
 	statbuf->st_ino = tmp.stx_ino;
@@ -222,6 +222,10 @@ int Sysdeps<TpSet>::operator()(void *pointer) {
 		return e;
 #elif defined(__loongarch64)
 	asm volatile ("move $tp, %0" :: "r"(pointer));
+#elif defined(__mips64)
+    auto ret = do_syscall(SYS_set_thread_area, (uintptr_t)pointer);
+    if (int e = sc_error(ret); e)
+        return e;
 #else
 #error "Missing architecture specific code."
 #endif
@@ -512,7 +516,7 @@ int Sysdeps<FdToPath>::operator()(int fd, char **out) {
 
 # if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__) || defined(__m68k__)
 #  define HAS_SA_RESTORER 1
-# elif defined(__riscv) || defined(__loongarch64)
+# elif defined(__riscv) || defined(__loongarch64) || defined(__mips64)
 // no restorer member, kernel uses the vDSO trampoline automatically
 # else
 #  error unhandled architecture
@@ -525,6 +529,7 @@ extern "C" void __mlibc_signal_restore_rt(void);
 
 int Sysdeps<Sigaction>::operator()(int signum, const struct sigaction *act,
 		struct sigaction *oldact) {
+#ifndef __mips64
 	struct ksigaction {
 		void (*handler)(int);
 		unsigned long flags;
@@ -533,6 +538,13 @@ int Sysdeps<Sigaction>::operator()(int signum, const struct sigaction *act,
 #endif
 		uint32_t mask[2];
 	};
+#else
+	struct ksigaction {
+		unsigned int flags;
+		void (*handler)(int);
+		uint32_t mask[4];
+	};
+#endif
 
 	struct ksigaction kernel_act, kernel_oldact;
 	if (act) {
@@ -545,7 +557,11 @@ int Sysdeps<Sigaction>::operator()(int signum, const struct sigaction *act,
 		memcpy(&kernel_act.mask, &act->sa_mask, sizeof(kernel_act.mask));
 	}
 
+	#ifndef __mips64
 	static_assert(sizeof(kernel_act.mask) == 8);
+	#else
+	static_assert(sizeof(kernel_act.mask) == 16);
+	#endif
 
 	auto ret = do_syscall(SYS_rt_sigaction, signum, act ?
 		&kernel_act : nullptr, oldact ?
@@ -737,8 +753,8 @@ int Sysdeps<Dup2>::operator()(int fd, int flags, int newfd) {
 // Inspired by musl (src/stat/statvfs.c:28 fixup function)
 static void statfs_to_statvfs(struct statfs *from, struct statvfs *to) {
 	*to = {
-		.f_bsize = from->f_bsize,
-		.f_frsize = from->f_frsize ? from->f_frsize : from->f_bsize,
+		.f_bsize = static_cast<unsigned long>(from->f_bsize),
+		.f_frsize = static_cast<unsigned long>(from->f_frsize ? from->f_frsize : from->f_bsize),
 		.f_blocks = from->f_blocks,
 		.f_bfree = from->f_bfree,
 		.f_bavail = from->f_bavail,
@@ -749,8 +765,8 @@ static void statfs_to_statvfs(struct statfs *from, struct statvfs *to) {
 #if __INTPTR_WIDTH__ == 32
 		.__f_unused = 0,
 #endif
-		.f_flag = from->f_flags,
-		.f_namemax = from->f_namelen,
+		.f_flag = static_cast<unsigned long>(from->f_flags),
+		.f_namemax = static_cast<unsigned long>(from->f_namelen),
 		.f_spare = { 0 },
 	};
 }
@@ -1667,6 +1683,8 @@ int Sysdeps<BeforeCancellableSyscall>::operator()(ucontext_t *uct) {
 #elif defined(__m68k__)
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.gregs[R_PC]);
 #elif defined(__loongarch64)
+	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.pc);
+#elif defined(__mips64)
 	auto pc = reinterpret_cast<void*>(uct->uc_mcontext.pc);
 #else
 #error "Missing architecture specific code."

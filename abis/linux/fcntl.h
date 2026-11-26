@@ -12,6 +12,8 @@
 #define O_WRONLY   01
 #define O_RDWR     02
 
+#ifndef __mips__
+
 #define O_CREAT         0100
 #define O_EXCL          0200
 #define O_NOCTTY        0400
@@ -25,6 +27,24 @@
 #define O_RSYNC     04010000
 #define O_NOATIME   01000000
 
+#else
+
+#define O_CREAT         0400
+#define O_EXCL         02000
+#define O_NOCTTY       04000
+#define O_TRUNC        01000
+#define O_APPEND         010
+#define O_NONBLOCK      0200
+#define O_DSYNC          020
+#define O_ASYNC       010000
+#define O_CLOEXEC   02000000
+#define O_SYNC        040020
+#define O_RSYNC       O_SYNC
+#define O_NOATIME   01000000
+
+#endif
+
+
 #if defined(__x86_64__) || defined(__i386__) || defined(__riscv) || defined(__loongarch64)
 #define O_DIRECT      040000
 #define O_LARGEFILE  0100000
@@ -35,6 +55,11 @@
 #define O_NOFOLLOW   0100000
 #define O_DIRECT     0200000
 #define O_LARGEFILE  0400000
+#elif defined(__mips__)
+#define O_DIRECTORY  0x10000
+#define O_NOFOLLOW   0x20000
+#define O_DIRECT	 0x8000
+#define O_LARGEFILE	 0x2000
 #else
 #warning "Missing <fcntl.h> support for this architecture!"
 #endif
@@ -51,12 +76,29 @@
 #define F_GETFL  3
 #define F_SETFL  4
 
+#ifndef __mips__
 #define F_SETOWN 8
 #define F_GETOWN 9
+#else
+#define F_SETOWN 24
+#define F_GETOWN 23
+#endif
 #define F_SETSIG 10
 #define F_GETSIG 11
 
+#if defined(__mips__)
+
 #if __INTPTR_WIDTH__ == 64
+#define F_GETLK64  14
+#define F_SETLK64   6
+#define F_SETLKW64  7
+#else
+#define F_GETLK64  33
+#define F_SETLK64  34
+#define F_SETLKW64 35
+#endif
+
+#elif __INTPTR_WIDTH__ == 64
 
 #define F_GETLK64 5
 #define F_SETLK64 6
