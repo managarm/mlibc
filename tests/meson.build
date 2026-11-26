@@ -3,6 +3,7 @@ timeout_sec = 10
 all_test_cases = [
 	'ansi/alloc',
 	'ansi/sscanf',
+	'ansi/fscanf',
 	'ansi/sprintf',
 	'ansi/snprintf',
 	'ansi/utf8',

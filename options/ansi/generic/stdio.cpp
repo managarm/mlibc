@@ -999,9 +999,10 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args, mlibc::localei
 		if (*fmt != '%' || fmt[1] == '%') {
 			if (*fmt == '%')
 				fmt++;
-			char c = handler.consume();
+			char c = handler.look_ahead();
 			EOF_CHECK(c == '\0');
 			NOMATCH_CHECK(c != *fmt);
+			handler.consume();
 			continue;
 		}
 
