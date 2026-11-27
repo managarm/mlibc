@@ -61,6 +61,7 @@ SYSDEP_FUNC(RiscvHwprobe, struct riscv_hwprobe *pairs, size_t pair_count, size_t
 SYSDEP_FUNC_NORETURN(Exit, int status);
 SYSDEP_FUNC_NORETURN(ThreadExit);
 SYSDEP_FUNC(PrepareStack, void **stack, void *entry, void *user_arg, void* tp, size_t *stack_size, size_t *guard_size, void **stack_base);
+SYSDEP_FUNC(FreeStack, void *stack_base, size_t stack_size, size_t guard_size);
 SYSDEP_FUNC(Clone, void *tp, pid_t *pid_out, void *stack);
 SYSDEP_FUNC(FutexWait, int *pointer, int expected, const struct timespec *time);
 SYSDEP_FUNC(FutexWake, int *pointer, bool all);

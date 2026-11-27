@@ -31,6 +31,12 @@ struct ThreadExit { static constexpr bool is_noreturn = true; };
 // int sys_prepare_stack(void **stack, void *entry, void *user_arg, void* tp, size_t *stack_size, size_t *guard_size, void **stack_base);
 struct PrepareStack {};
 
+// Releases a stack that was allocated by sys_prepare_stack(), using the stack_base, stack_size
+// and guard_size values it returned. This is never called for stacks supplied by the application
+// (i.e., when *stack was not null on entry to sys_prepare_stack()).
+// int sys_free_stack(void *stack_base, size_t stack_size, size_t guard_size);
+struct FreeStack {};
+
 // int sys_clone(void *tp, pid_t *pid_out, void *stack);
 struct Clone {};
 
