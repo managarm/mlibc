@@ -444,6 +444,11 @@ int main() {
 	float float_value;
 	double double_value;
 	long double long_double_value;
+	assert(sscanf("0", "%lg", &double_value) == 1);
+	assert(double_value == 0.0);
+	assert(sscanf("-0", "%lg", &double_value) == 1);
+	assert(double_value == 0.0 && signbit(double_value));
+	assert(sscanf("0x", "%lg", &double_value) == 0);
 	assert(sscanf("1.123", "%a", &float_value) == 1);
 	assert(float_value >= 1.123f - 0.01 && float_value <= 1.123f + 0.01);
 	assert(sscanf("1.123", "%la", &double_value) == 1);
