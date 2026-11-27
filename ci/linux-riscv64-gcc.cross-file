@@ -6,6 +6,12 @@ c = 'riscv64-linux-gnu-gcc'
 cpp = 'riscv64-linux-gnu-g++'
 exe_wrapper = 'qemu-riscv64'
 
+[built-in options]
+# GNU ld's RISC-V relaxation is very slow for the static test executables, so use lld.
+# --relax-gp keeps GP-relative relaxation, which GNU ld does by default but lld does not.
+c_link_args = ['-fuse-ld=lld', '-Wl,--relax-gp']
+cpp_link_args = ['-fuse-ld=lld', '-Wl,--relax-gp']
+
 [host_machine]
 system = 'linux'
 cpu_family = 'riscv64'

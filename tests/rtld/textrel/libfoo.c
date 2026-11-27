@@ -4,10 +4,10 @@ static int target(void) {
 
 // Place a pointer in .text, which requires a relocation in a non-writable segment.
 __asm__(
-	".pushsection .text\n"
+	".pushsection .text.textrel_ptr, \"ax\"\n"
 	".globl textrel_ptr\n"
 	".type textrel_ptr, %object\n"
-	".p2align 3\n"
+	".p2align 3, 0\n"
 	"textrel_ptr:\n"
 	".dc.a target\n"
 	".size textrel_ptr, . - textrel_ptr\n"

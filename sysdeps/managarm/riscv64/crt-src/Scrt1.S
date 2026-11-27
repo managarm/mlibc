@@ -25,6 +25,7 @@ load_gp:
 	ret
 
 .section .preinit_array,"aw"
+	.balign 8
 	.dword load_gp
 
 .section .note.GNU-stack,"",%progbits
