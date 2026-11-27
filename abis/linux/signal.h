@@ -470,33 +470,33 @@ enum {
 #define REG_A0 REG_A0
 };
 
-struct __riscv_f_ext_state {
+struct __riscv_mc_f_ext_state {
 	__mlibc_uint32 f[32];
 	__mlibc_uint32 fcsr;
 };
 
-struct __riscv_d_ext_state {
+struct __riscv_mc_d_ext_state {
 	__mlibc_uint64 f[32];
 	__mlibc_uint32 fcsr;
 };
 
-struct __riscv_q_ext_state {
+struct __riscv_mc_q_ext_state {
 	__mlibc_uint64 f[64] __attribute__((__aligned__(16)));
 	__mlibc_uint32 fcsr;
 	__mlibc_uint32 reserved[3];
 };
 
-union __riscv_fp_state {
-	struct __riscv_f_ext_state f;
-	struct __riscv_d_ext_state d;
-	struct __riscv_q_ext_state q;
+union __riscv_mc_fp_state {
+	struct __riscv_mc_f_ext_state f;
+	struct __riscv_mc_d_ext_state d;
+	struct __riscv_mc_q_ext_state q;
 };
 
 typedef unsigned long __riscv_mc_gp_state[NGREG];
 
 typedef struct sigcontext {
 	__riscv_mc_gp_state gregs;
-	union __riscv_fp_state fpregs;
+	union __riscv_mc_fp_state fpregs;
 } mcontext_t;
 
 typedef struct __ucontext {
