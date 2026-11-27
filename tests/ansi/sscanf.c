@@ -31,6 +31,7 @@ struct format_test_cases {
 	{"%x", "0xCB7", 0xCB7, T_UINT, 1},
 #if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
 	{"%b", "0b1011", 0b1011, T_UINT, 1},
+	{"%b", "0", 0, T_UINT, 1},
 	{"%b", "0B1011", 0b1011, T_UINT, 1},
 	{"%b", "+0b1011", 0b1011, T_UINT, 1},
 	{"%b", "-0b1011", -0b1011, T_UINT, 1},
@@ -542,6 +543,8 @@ int main() {
 	assert(float_value >= .1f - 0.01 && float_value <= .1f + 0.01);
 
 	void* ptr;
+	assert(sscanf("0", "%p", &ptr) == 1);
+	assert(ptr == NULL);
 	assert(sscanf("hello", "%p", &ptr) == 0);
 #if UINTPTR_MAX == UINT64_MAX
 	assert(sscanf("0xabcdef12abcdef12", "%p", &ptr) == 1);

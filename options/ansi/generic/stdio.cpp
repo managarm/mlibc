@@ -1330,8 +1330,10 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args, mlibc::localei
 
 				if (c == '0') {
 					handler.consume();
+					count = 1;
 					c = handler.look_ahead();
 					if (tolower(c) == 'b') {
+						count = 0;
 						handler.consume();
 						c = handler.look_ahead();
 					}
@@ -1381,7 +1383,7 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args, mlibc::localei
 				break;
 			}
 			case 'c': {
-				char c = handler.look_ahead();
+				Char c = handler.look_ahead();
 				EOF_CHECK(c == '\0');
 				if (!width)
 					width = 1;
@@ -1500,8 +1502,10 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args, mlibc::localei
 
 				if (c == '0') {
 					handler.consume();
+					count = 1;
 					c = handler.look_ahead();
 					if (tolower(c) == 'x') {
+						count = 0;
 						handler.consume();
 						c = handler.look_ahead();
 					}
