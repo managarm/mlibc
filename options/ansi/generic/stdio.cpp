@@ -1625,11 +1625,13 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args, mlibc::localei
 
 				if (c == '0') {
 					handler.consume();
+					count = 1;
 					c = handler.look_ahead();
 
 					if (c == 'x' || c == 'X') {
 						divisor = 16;
 						base = 16;
+						count = 0;
 						handler.consume();
 						c = handler.look_ahead();
 					}
