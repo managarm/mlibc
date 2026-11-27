@@ -20,6 +20,7 @@ load_gp:
 	ret
 
 .section .preinit_array,"aw"
+	.balign 8
 .dc.a load_gp
 
 
