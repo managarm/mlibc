@@ -205,6 +205,8 @@ int main() {
 	assert(char_value[0] == 'a');
 	assert(swscanf(L"a", L"%lc", wchar_value) == 1);
 	assert(wchar_value[0] == L'a');
+	assert(swscanf(L"α", L"%lc", wchar_value) == 1);
+	assert(wchar_value[0] == L'α');
 	assert(swscanf(L"hello", L"%s", char_value) == 1);
 	assert(strcmp(char_value, "hello") == 0);
 	assert(swscanf(L"", L"%s", char_value) == EOF);
