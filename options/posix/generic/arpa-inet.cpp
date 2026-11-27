@@ -1,14 +1,16 @@
 
 #include <arpa/inet.h>
 #include <bits/ensure.h>
-#include <stdlib.h>
 #include <ctype.h>
-#include <stdio.h>
 #include <errno.h>
-#include <string.h>
-#include <sys/socket.h>
+#include <frg/optional.hpp>
+#include <frg/string.hpp>
 #include <mlibc/bitutil.hpp>
 #include <mlibc/debug.hpp>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
 
 const struct in6_addr in6addr_any = IN6ADDR_ANY_INIT;
 const struct in6_addr in6addr_loopback = IN6ADDR_LOOPBACK_INIT;
@@ -245,142 +247,133 @@ const char *inet_ntop(int af, const void *__restrict src, char *__restrict dst,
 	return nullptr;
 }
 
+namespace {
+
+// Parses a dotted-quad IPv4 address that spans the entire string.
+bool parseDottedQuad(frg::string_view str, uint8_t *octets, bool allowLeadingZeroes) {
+	size_t start = 0;
+	for (int i = 0; i < 4; i++) {
+		size_t dot = str.find_first('.', start);
+		if (i == 3) {
+			if (dot != size_t(-1))
+				return false;
+			dot = str.size();
+		} else if (dot == size_t(-1)) {
+			return false;
+		}
+
+		auto segment = str.sub_string(start, dot - start);
+		if (!segment.size() || segment.size() > 3)
+			return false;
+		if (!allowLeadingZeroes && segment[0] == '0' && segment.size() > 1)
+			return false;
+		auto value = segment.to_number<unsigned int>();
+		if (!value || *value > UINT8_MAX)
+			return false;
+
+		octets[i] = *value;
+		start = dot + 1;
+	}
+
+	return true;
+}
+
+unsigned int hexDigitValue(char c) {
+	if (isdigit(static_cast<unsigned char>(c)))
+		return c - '0';
+	return tolower(static_cast<unsigned char>(c)) - 'a' + 10;
+}
+
+} // namespace
+
 int inet_pton(int af, const char *__restrict src, void *__restrict dst) {
 	switch (af) {
 		case AF_INET: {
-			uint8_t array[4] = {};
-			for (int i = 0; i < 4; i++) {
-				char *end;
-				if (!isdigit(*src))
-					return 0;
-				long int value = strtol(src, &end, 10);
-				if (value > 255 || (end - src) > 3)
-					return 0;
-				if (*end != '\0' && *end != '.')
-					return 0;
-				src = end + 1;
-				array[i] = value;
-			}
-			auto addr = reinterpret_cast<struct in_addr*>(dst);
+			uint8_t array[4];
+			if (!parseDottedQuad(frg::string_view{src}, array, true))
+				return 0;
+			auto addr = reinterpret_cast<struct in_addr *>(dst);
 			uint32_t ip = (array[0] << 24) | (array[1] << 16) | (array[2] << 8) | array[3];
 			addr->s_addr = htonl(ip);
 			break;
 		}
 		case AF_INET6: {
-			size_t i = 0;
-			uint16_t array[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-			frg::optional<size_t> doubleColonOffset = frg::null_opt;
+			uint16_t groups[8] = {};
+			size_t n = 0;
+			// Index into groups at which the "::" was found.
+			frg::optional<size_t> gap = frg::null_opt;
 
-			auto reservedRange = [&]() -> bool {
-				if(i && ((doubleColonOffset && doubleColonOffset.value()) || !doubleColonOffset)) {
-					return (ntohs(array[0]) >> 8) == 0;
-				}
-
-				return false;
-			};
-
-			char *end = nullptr;
-
-			if (!isxdigit(*src) && src[0] != ':')
-				return 0;
-
-			for(; i < 8; i++) {
-				auto value = strtol(src, &end, 16);
-
-				if (value > UINT16_MAX || (end - src) > 4)
+			if (src[0] == ':') {
+				if (src[1] != ':')
 					return 0;
-				if(end[0] != '\0' && end[0] != ':' && end[0] != '.')
-					return 0;
-
-				if(end[0] == '.' && reservedRange() && i < 7) {
-					char *ipv4end = nullptr;
-					if (!isdigit(*src))
-						return 0;
-					auto value0 = strtol(src, &ipv4end, 10);
-					// reject overly large or empty values
-					if(ipv4end[0] != '.' || value0 > UINT8_MAX || src == ipv4end)
-						return 0;
-					// reject overlong segments or leading zeroes
-					if ((ipv4end - src) > 3 || (src[0] == '0' && ipv4end - src > 1))
-						return 0;
-					src = ipv4end + 1;
-					if (!isdigit(*src))
-						return 0;
-					auto value1 = strtol(src, &ipv4end, 10);
-					// reject overly large or empty values
-					if(ipv4end[0] != '.' || value1 > UINT8_MAX || src == ipv4end)
-						return 0;
-					// reject overlong segments or leading zeroes
-					if ((ipv4end - src) > 3 || (src[0] == '0' && ipv4end - src > 1))
-						return 0;
-					array[i++] = htons((value0 << 8) | value1);
-					src = ipv4end + 1;
-
-					if (!isdigit(*src))
-						return 0;
-					auto value2 = strtol(src, &ipv4end, 10);
-					// reject overly large or empty values
-					if(ipv4end[0] != '.' || value2 > UINT8_MAX || src == ipv4end)
-						return 0;
-					// reject overlong segments or leading zeroes
-					if ((ipv4end - src) > 3 || (src[0] == '0' && ipv4end - src > 1))
-						return 0;
-					src = ipv4end + 1;
-					if (!isdigit(*src))
-						return 0;
-					auto value3 = strtol(src, &ipv4end, 10);
-					// reject overly large or empty values
-					if(value3 > UINT8_MAX || src == ipv4end)
-						return 0;
-					// reject overlong segments or leading zeroes
-					if ((ipv4end - src) > 3 || (src[0] == '0' && ipv4end - src > 1))
-						return 0;
-					array[i] = htons((value2 << 8) | value3);
-					end = ipv4end;
-					break;
-				} else if(end[0] == ':' && end[1] == ':') {
-					if(doubleColonOffset)
-						return 0;
-					doubleColonOffset = i + 1;
-					src = end + 2;
-				} else if(end[0] == ':' || end[0] == '\0') {
-					src = end + 1;
-				} else {
-					return 0;
-				}
-
-				array[i] = htons(value);
-
-				if(end[0] == '\0')
-					break;
+				gap = 0;
+				src += 2;
 			}
 
-			if(end[0] != '\0')
-				return 0;
-
-			if (!doubleColonOffset && i < 7)
-				return 0;
-
-			auto addr = reinterpret_cast<struct in6_addr *>(dst);
-
-			if(doubleColonOffset) {
-				size_t suffix = i - doubleColonOffset.value() + 1;
-				if (*doubleColonOffset + suffix >= 8)
+			while (*src) {
+				if (n == 8)
 					return 0;
 
-				memset(addr->s6_addr, 0, 16);
+				unsigned int value = 0;
+				size_t len = 0;
+				for (; isxdigit(static_cast<unsigned char>(src[len])); len++) {
+					if (len == 4)
+						return 0;
+					value = value * 16 + hexDigitValue(src[len]);
+				}
+				if (!len)
+					return 0;
 
-				for(size_t j = 0; j < doubleColonOffset.value(); j++) {
-					addr->s6_addr16[j] = array[j];
+				// An embedded IPv4 address occupies the last two groups.
+				if (src[len] == '.') {
+					uint8_t octets[4];
+					if (n > 6 || !parseDottedQuad(frg::string_view{src}, octets, false))
+						return 0;
+					groups[n++] = (octets[0] << 8) | octets[1];
+					groups[n++] = (octets[2] << 8) | octets[3];
+					break;
 				}
 
-				for(size_t j = 0; j < suffix; j++) {
-					addr->s6_addr16[8 - suffix + j] = array[doubleColonOffset.value() + j];
+				groups[n++] = value;
+				src += len;
+
+				if (!*src)
+					break;
+				if (*src != ':')
+					return 0;
+				src++;
+
+				if (*src == ':') {
+					if (gap)
+						return 0;
+					gap = n;
+					src++;
+				} else if (!*src) {
+					return 0;
 				}
+			}
+
+			uint16_t result[8] = {};
+			if (gap) {
+				// "::" has to stand for at least one group.
+				if (n == 8)
+					return 0;
+				size_t tail = n - *gap;
+				for (size_t j = 0; j < *gap; j++)
+					result[j] = groups[j];
+				for (size_t j = 0; j < tail; j++)
+					result[8 - tail + j] = groups[*gap + j];
 			} else {
-				for(size_t j = 0; j < 8; j++) {
-					addr->s6_addr16[j] = array[j];
-				}
+				if (n != 8)
+					return 0;
+				for (size_t j = 0; j < 8; j++)
+					result[j] = groups[j];
+			}
+
+			auto addr = reinterpret_cast<struct in6_addr *>(dst);
+			for (size_t j = 0; j < 8; j++) {
+				addr->s6_addr[j * 2] = result[j] >> 8;
+				addr->s6_addr[j * 2 + 1] = result[j] & 0xFF;
 			}
 
 			break;

@@ -24,6 +24,22 @@ int main() {
 	assert(!inet_pton(AF_INET, "a.b.c.d", &addr));
 	assert(!inet_pton(AF_INET, "1.1.1", &addr));
 
+	const char *invalid4[] = {
+	    "1.2.3.4.5",
+	    "1.2.3.4.",
+	    "1.2.3.",
+	    "1..2.3",
+	    "1.2.3.-4",
+	    "1.2.3. 4",
+	    "1.2.3.4 ",
+	    "0x1.2.3.4",
+	    "",
+	};
+	for (size_t i = 0; i < sizeof(invalid4) / sizeof(*invalid4); i++) {
+		int ret = inet_pton(AF_INET, invalid4[i], &addr);
+		assert(!ret);
+	}
+
 	struct in6_addr test6;
 	{
 		struct in6_addr addr6 = {
@@ -121,11 +137,74 @@ int main() {
 	memset(&test6, 0, sizeof(test6));
 
 	{
+		struct in6_addr addr6 = {
+		    .s6_addr = {
+		        0x11,
+		        0x00,
+		        0,
+		        0,
+		        0,
+		        0,
+		        0,
+		        0,
+		        0,
+		        0,
+		        0xFF,
+		        0xFF,
+		        204,
+		        152,
+		        189,
+		        116,
+		    },
+		};
 		int ret = inet_pton(AF_INET6, "1100::FFFF:204.152.189.116", &test6);
-		(void) ret;
-#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
-		assert(!ret);
-#endif
+		assert(ret == 1);
+		assert(!memcmp(&addr6, &test6, sizeof(addr6)));
+	}
+
+	{
+		struct in6_addr addr6 = {
+		    .s6_addr = {
+		        0x20,
+		        0x01,
+		        0x0D,
+		        0xB8,
+		        0,
+		        0,
+		        0,
+		        0,
+		        0,
+		        0,
+		        0,
+		        0,
+		        192,
+		        0,
+		        2,
+		        1,
+		    },
+		};
+		int ret = inet_pton(AF_INET6, "2001:db8::192.0.2.1", &test6);
+		assert(ret == 1);
+		assert(!memcmp(&addr6, &test6, sizeof(addr6)));
+	}
+
+	// "::" may stand for a single group at either end.
+	{
+		struct in6_addr addr6 = {
+		    .s6_addr16 = {0, htons(1), htons(2), htons(3), htons(4), htons(5), htons(6), htons(7)},
+		};
+		int ret = inet_pton(AF_INET6, "::1:2:3:4:5:6:7", &test6);
+		assert(ret == 1);
+		assert(!memcmp(&addr6, &test6, sizeof(addr6)));
+	}
+
+	{
+		struct in6_addr addr6 = {
+		    .s6_addr16 = {htons(1), htons(2), htons(3), htons(4), htons(5), htons(6), htons(7), 0},
+		};
+		int ret = inet_pton(AF_INET6, "1:2:3:4:5:6:7::", &test6);
+		assert(ret == 1);
+		assert(!memcmp(&addr6, &test6, sizeof(addr6)));
 	}
 
 	memset(&test6, 0, sizeof(test6));
@@ -192,6 +271,34 @@ int main() {
 	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000: 0000:0000:1111", &test6));
 	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000 :0000:0000:1111", &test6));
 	assert(!inet_pton(AF_INET6, "2606:4700:4700:0000:0000::0000:0000:1111", &test6));
+
+	const char *invalid6[] = {
+	    "0x12::",
+	    "::0x1",
+	    "::-1",
+	    "::+1",
+	    "1:: 2",
+	    "12345::",
+	    "1:2:3:4:5:6:7:",
+	    ":1:2:3:4:5:6:7",
+	    ":1::",
+	    "1:::2",
+	    "1::2::3",
+	    "1::2:",
+	    "1:2:3:4:5:6:7:8:9",
+	    "1:2:3:4:5:6:7:8::",
+	    "1:2:3:4:5:1.2.3.4",
+	    "1:2:3:4:5:6:7:1.2.3.4",
+	    "::1.2.3.4:1",
+	    "::1.2.3.4.5",
+	    "1.2.3.4",
+	    ":",
+	    "",
+	};
+	for (size_t i = 0; i < sizeof(invalid6) / sizeof(*invalid6); i++) {
+		int ret = inet_pton(AF_INET6, invalid6[i], &test6);
+		assert(!ret);
+	}
 
 	return 0;
 }
