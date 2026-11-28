@@ -89,9 +89,16 @@ const char *__freadptr(FILE *file_base, size_t *size) {
 	return file_base->__buffer_ptr + file_base->__offset;
 }
 
-void __freadptrinc(FILE *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+void __freadptrinc(FILE *file_base, size_t increment) {
+	if(file_base->__unget_ptr != file_base->__buffer_ptr) {
+		auto unget_length = size_t(file_base->__buffer_ptr - file_base->__unget_ptr);
+		auto chunk = frg::min(unget_length, increment);
+		file_base->__unget_ptr += chunk;
+		increment -= chunk;
+	}
+
+	__ensure(file_base->__offset + increment <= file_base->__valid_limit);
+	file_base->__offset += increment;
 }
 
 void __fseterr(FILE *file_base) {

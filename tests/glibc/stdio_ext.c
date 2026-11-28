@@ -63,9 +63,27 @@ int main() {
 	cmp = memcmp(ptr, data + 1, size);
 	assert(cmp == 0);
 
+	__freadptrinc(f, 4);
+	ptr = __freadptr(f, &size);
+	assert(ptr != NULL);
+	assert(size == sizeof(data) - 6);
+	assert(*ptr == ',');
+	long pos = ftell(f);
+	assert(pos == 5);
+	c = fgetc(f);
+	assert(c == ',');
+
+	pushed = ungetc('Y', f);
+	assert(pushed == 'Y');
+	__freadptrinc(f, 1);
+	pos = ftell(f);
+	assert(pos == 6);
+	c = fgetc(f);
+	assert(c == ' ');
+
 	char rest[sizeof(data)];
 	size_t nread = fread(rest, 1, sizeof(rest), f);
-	assert(nread == sizeof(data) - 2);
+	assert(nread == sizeof(data) - 8);
 	ptr = __freadptr(f, &size);
 	assert(ptr == NULL);
 
