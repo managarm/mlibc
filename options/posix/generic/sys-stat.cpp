@@ -39,6 +39,10 @@ int fstatat(int dirfd, const char *path, struct stat *result, int flags) {
 	return 0;
 }
 
+#if __MLIBC_LINUX_OPTION
+[[gnu::alias("fstatat")]] int fstatat64(int dirfd, const char *path, struct stat *result, int flags);
+#endif /* !__MLIBC_LINUX_OPTION */
+
 int futimens(int fd, const struct timespec times[2]) {
 
 	if (int e = mlibc::sysdep_or_enosys<Utimensat>(fd, nullptr, times, 0); e) {
@@ -121,6 +125,13 @@ int stat(const char *path, struct stat *result) {
 	}
 	return 0;
 }
+
+#if __MLIBC_LINUX_OPTION
+#pragma push_macro("stat64")
+#undef stat64
+extern "C" [[gnu::alias("stat")]] int stat64(const char *path, struct stat *result);
+#pragma pop_macro("stat64")
+#endif /* !__MLIBC_LINUX_OPTION */
 
 int lstat(const char *path, struct stat *result) {
 	if(int e = mlibc::sysdep_or_enosys<Stat>(mlibc::fsfd_target::path,
