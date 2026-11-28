@@ -71,9 +71,22 @@ size_t __freadahead(FILE *file_base) {
 	return file_base->__valid_limit - file_base->__offset;
 }
 
-const char *__freadptr(FILE *, size_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+const char *__freadptr(FILE *file_base, size_t *size) {
+	if(file_base->__io_mode != 0)
+		return nullptr;
+
+	// Bytes pushed back by ungetc() are consumed before the buffer contents,
+	// and they are not necessarily contiguous with the buffered data.
+	if(file_base->__unget_ptr != file_base->__buffer_ptr) {
+		*size = file_base->__buffer_ptr - file_base->__unget_ptr;
+		return file_base->__unget_ptr;
+	}
+
+	if(file_base->__offset == file_base->__valid_limit)
+		return nullptr;
+
+	*size = file_base->__valid_limit - file_base->__offset;
+	return file_base->__buffer_ptr + file_base->__offset;
 }
 
 void __freadptrinc(FILE *, size_t) {

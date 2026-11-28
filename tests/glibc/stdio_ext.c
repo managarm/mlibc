@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdio_ext.h>
+#include <string.h>
 
 int main() {
 	FILE *f = fopen("/dev/zero", "r");
@@ -23,5 +24,58 @@ int main() {
 #endif
 
 	fclose(f);
+
+	// glibc does not support __freadptr
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
+	static const char data[] = "hello, world";
+
+	f = tmpfile();
+	assert(f != NULL);
+	size_t written = fwrite(data, 1, sizeof(data) - 1, f);
+	assert(written == sizeof(data) - 1);
+	rewind(f);
+
+	size_t size = 0;
+	const char *ptr = __freadptr(f, &size);
+	assert(ptr == NULL);
+
+	int c = fgetc(f);
+	assert(c == 'h');
+
+	ptr = __freadptr(f, &size);
+	assert(ptr != NULL);
+	assert(size == sizeof(data) - 2);
+	int cmp = memcmp(ptr, data + 1, size);
+	assert(cmp == 0);
+
+	int pushed = ungetc('X', f);
+	assert(pushed == 'X');
+	ptr = __freadptr(f, &size);
+	assert(ptr != NULL);
+	assert(size == 1);
+	assert(*ptr == 'X');
+
+	c = fgetc(f);
+	assert(c == 'X');
+	ptr = __freadptr(f, &size);
+	assert(ptr != NULL);
+	assert(size == sizeof(data) - 2);
+	cmp = memcmp(ptr, data + 1, size);
+	assert(cmp == 0);
+
+	char rest[sizeof(data)];
+	size_t nread = fread(rest, 1, sizeof(rest), f);
+	assert(nread == sizeof(data) - 2);
+	ptr = __freadptr(f, &size);
+	assert(ptr == NULL);
+
+	fseek(f, 0, SEEK_END);
+	fputc('!', f);
+	ptr = __freadptr(f, &size);
+	assert(ptr == NULL);
+
+	fclose(f);
+#endif
+
 	return 0;
 }
