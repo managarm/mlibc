@@ -145,10 +145,35 @@ static void test_flushlbf(void) {
 	fclose(f);
 }
 
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
+static void test_unbuffered(void) {
+	FILE *f = tmpfile();
+	assert(f != NULL);
+	setvbuf(f, NULL, _IONBF, 0);
+	fputs("abc", f);
+	rewind(f);
+
+	int c = fgetc(f);
+	assert(c == 'a');
+	size_t ahead = __freadahead(f);
+	assert(ahead == 0);
+
+	int pushed = ungetc('a', f);
+	assert(pushed == 'a');
+	ahead = __freadahead(f);
+	assert(ahead == 1);
+
+	fclose(f);
+}
+#endif
+
 int main() {
 	test_access_modes();
 	test_locking();
 	test_flushlbf();
+#if !defined(USE_HOST_LIBC) && !defined(USE_CROSS_LIBC)
+	test_unbuffered();
+#endif
 
 	FILE *f = fopen("/dev/zero", "r");
 	assert(f != NULL);
@@ -200,6 +225,8 @@ int main() {
 	assert(ptr != NULL);
 	assert(size == 1);
 	assert(*ptr == 'X');
+	size_t ahead = __freadahead(f);
+	assert(ahead == sizeof(data) - 1);
 
 	c = fgetc(f);
 	assert(c == 'X');
@@ -237,6 +264,8 @@ int main() {
 	fputc('!', f);
 	ptr = __freadptr(f, &size);
 	assert(ptr == NULL);
+	ahead = __freadahead(f);
+	assert(ahead == 0);
 
 	fclose(f);
 #endif

@@ -2,7 +2,6 @@
 #include <mlibc/file-io.hpp>
 #include <stdio_ext.h>
 #include <bits/ensure.h>
-#include <mlibc/debug.hpp>
 
 size_t __fbufsize(FILE *file_base) {
 	// returns the size of the buffer currently used by the given stream
@@ -64,11 +63,10 @@ void _flushlbf(void) {
 // The following functions are defined by musl.
 
 size_t __freadahead(FILE *file_base) {
-	if(file_base->__io_mode != 0) {
-		mlibc::infoLogger() << "mlibc: __freadahead() called but file is not open for reading" << frg::endlog;
+	if(file_base->__io_mode != 0)
 		return 0;
-	}
-	return file_base->__valid_limit - file_base->__offset;
+	return (file_base->__buffer_ptr - file_base->__unget_ptr)
+		+ (file_base->__valid_limit - file_base->__offset);
 }
 
 const char *__freadptr(FILE *file_base, size_t *size) {
