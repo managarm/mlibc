@@ -1,0 +1,70 @@
+name: Locale data
+
+on:
+  workflow_call:
+  push:
+    branches: [master]
+
+jobs:
+  locale-data:
+    name: Prepare locale data (${{matrix.arch}})
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, riscv64, aarch64, x86, m68k, loongarch64]
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    steps:
+      - name: Install prerequisites
+        run: |
+          apt-get update
+          apt-get install -y git python3-pip python3-yaml
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: src/mlibc/
+      - name: Compute cache key
+        id: key
+        run: |
+          # The compiled locale format is tied to the localedef that produced it.
+          export LOCALEDEF_VERSION="$(localedef --version | head -n1)"
+          hash=$(python3 - << 'EOF'
+          import hashlib, json, os, yaml
+          with open('src/mlibc/ci/bootstrap.yml') as f:
+              y = yaml.safe_load(f)
+          src = [s for s in y['sources'] if s['name'] == 'glibc']
+          pkgs = [p for p in y['packages'] if p['name'] in ('locale-data', 'host-locale-data')]
+          data = [src, pkgs, os.environ['LOCALEDEF_VERSION']]
+          print(hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()[:16])
+          EOF
+          )
+          echo "key=locale-data-${{matrix.arch}}-$hash" >> "$GITHUB_OUTPUT"
+      - name: Restore cached locale data
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: locale-data.tar
+          key: ${{steps.key.outputs.key}}
+      - name: Build locale data
+        if: ${{steps.cache.outputs.cache-hit != 'true'}}
+        run: |
+          pip install --break-system-packages -U xbstrap
+          mkdir -p build/
+          cp src/mlibc/ci/bootstrap.yml src/
+          cat > build/bootstrap-site.yml << EOF
+          define_options:
+            arch: ${{matrix.arch}}
+          EOF
+          (
+            cd build
+            xbstrap init ../src
+            xbstrap install locale-data host-locale-data
+          )
+          tar -C build/packages -cf locale-data.tar locale-data host-locale-data
+      - name: Upload locale data
+        if: ${{github.event_name != 'push'}}
+        uses: actions/upload-artifact@v4
+        with:
+          name: locale-data-${{matrix.arch}}
+          path: locale-data.tar
+          retention-days: 7
