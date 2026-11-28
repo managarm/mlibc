@@ -7,7 +7,12 @@ on:
   merge_group:
 
 jobs:
+  linux-headers:
+    name: Linux headers
+    uses: ./.github/workflows/linux-headers.yml
+
   run-abidiff:
+    needs: linux-headers
     name: Compare ABIs (${{matrix.abi}})
     runs-on: ubuntu-latest
     container: debian:trixie
@@ -25,7 +30,7 @@ jobs:
           apt-get install -y meson ninja-build qemu-user \
                              python3-setuptools python3-jsonschema \
                              python3-pip abigail-tools git rsync wget file
-          pip install --break-system-packages -U xbstrap pyexpect
+          pip install --break-system-packages -U pyexpect
 
       - name: Checkout base branch
         if: ${{ github.base_ref }}
@@ -62,28 +67,15 @@ jobs:
             git -C mlibc-base reset --hard HEAD^
           fi
 
+      - name: Download linux headers
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-headers-x86_64
+
       - name: Set up linux kernel headers
         run: |
-          set -x
-          mkdir -p linux-headers-base/{src,build}
-          cp mlibc-base/ci/bootstrap.yml linux-headers-base/src/
-          (
-            cd linux-headers-base/build
-            xbstrap init ../src
-            xbstrap install linux-headers
-          )
-          mkdir -p linux-headers-branch/{src,build}
-          cp mlibc-branch/ci/bootstrap.yml linux-headers-branch/src/
-          (
-            cd linux-headers-branch/build
-            xbstrap init ../src
-            xbstrap install linux-headers
-          )
-          cat > linux-headers-base/build/bootstrap-site.yml << EOF
-          define_options:
-            arch: ${{matrix.arch}}
-          EOF
-          cp linux-headers-base/build/bootstrap-site.yml linux-headers-branch/build/bootstrap-site.yml
+          tar -xf linux-headers.tar
+          rm linux-headers.tar
 
       - name: Build and install both copies
         run: |
@@ -106,7 +98,7 @@ jobs:
                   --cross-file=../linux-x86_64.cross-file \
                   -Dmlibc_abi=${{matrix.abi}} \
                   -Duse_freestnd_hdrs=enabled \
-                  -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include \
+                  -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers/usr/include \
                   build
             ninja -C build
             DESTDIR="$GITHUB_WORKSPACE/root-branch" ninja -C build install
@@ -122,7 +114,7 @@ jobs:
                   --cross-file=../linux-x86_64.cross-file \
                   "${abi_args[@]}" \
                   -Duse_freestnd_hdrs=enabled \
-                  -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers-branch/build/packages/linux-headers/usr/include \
+                  -Dlinux_kernel_headers=$GITHUB_WORKSPACE/linux-headers/usr/include \
                   build
             ninja -C build
             DESTDIR="$GITHUB_WORKSPACE/root-base" ninja -C build install

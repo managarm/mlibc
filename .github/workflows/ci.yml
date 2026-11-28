@@ -3,7 +3,16 @@ name: Continuous Integration
 on: [pull_request, merge_group]
 
 jobs:
+    linux-headers:
+        name: Linux headers
+        uses: ./.github/workflows/linux-headers.yml
+
+    locale-data:
+        name: Locale data
+        uses: ./.github/workflows/locale-data.yml
+
     build-mlibc:
+        needs: [linux-headers, locale-data]
         strategy:
             fail-fast: false
             matrix:
@@ -88,6 +97,30 @@ jobs:
               EOF
               xbstrap init ../src
             working-directory: build/
+          - name: Download linux headers
+            uses: actions/download-artifact@v4
+            with:
+              name: linux-headers-${{matrix.arch}}
+              path: build/
+          - name: Install linux headers
+            run: |
+              mkdir -p packages/
+              tar -C packages/ -xf linux-headers.tar
+              rm linux-headers.tar
+            working-directory: build/
+          - name: Download locale data
+            if: ${{matrix.builds != 'mlibc-headers-only'}}
+            uses: actions/download-artifact@v4
+            with:
+              name: locale-data-${{matrix.arch}}
+              path: build/
+          - name: Install locale data
+            if: ${{matrix.builds != 'mlibc-headers-only'}}
+            run: |
+              mkdir -p packages/
+              tar -C packages/ -xf locale-data.tar
+              rm locale-data.tar
+            working-directory: build/
           - name: Build mlibc
             run: 'xbstrap install ${{matrix.builds}}'
             working-directory: build/
@@ -124,6 +157,7 @@ jobs:
               LANG: "en_US.utf8"
 
     compile-sysdeps:
+        needs: linux-headers
         strategy:
             fail-fast: false
             matrix:
@@ -175,18 +209,21 @@ jobs:
               repository: 'zinnia-os/zinnia'
               path: 'src/zinnia'
               sparse-checkout: include
+          - name: Download linux headers
+            uses: actions/download-artifact@v4
+            with:
+              name: linux-headers-x86_64
+              path: build/
           - name: Set up linux kernel headers
             run: |
-                mkdir -p build/mlibc/
-                cp src/mlibc/ci/bootstrap.yml src/
-                (
-                  cd build
-                  xbstrap init ../src
-                  xbstrap install linux-headers
-                )
+                mkdir -p build/mlibc/ build/packages/
+                tar -C build/packages/ -xf build/linux-headers.tar
+                rm build/linux-headers.tar
           - if: ${{ matrix.sysdeps == 'managarm' }}
             name: Set up drm headers
             run: |
+                cp ../src/mlibc/ci/bootstrap.yml ../src/
+                xbstrap init ../src
                 xbstrap install libdrm-headers
                 ln -sv $(pwd)/packages/libdrm-headers/usr/src/libdrm-headers ../src/mlibc/subprojects/
             working-directory: build/

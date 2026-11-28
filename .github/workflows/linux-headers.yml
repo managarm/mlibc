@@ -1,0 +1,68 @@
+name: Linux kernel headers
+
+on:
+  workflow_call:
+  push:
+    branches: [master]
+
+jobs:
+  linux-headers:
+    name: Prepare linux headers (${{matrix.arch}})
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, riscv64, aarch64, x86, m68k, loongarch64]
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    steps:
+      - name: Install prerequisites
+        run: |
+          apt-get update
+          apt-get install -y build-essential git rsync wget xz-utils \
+                             python3-pip python3-yaml
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: src/mlibc/
+      - name: Compute cache key
+        id: key
+        run: |
+          hash=$(python3 - << 'EOF'
+          import hashlib, json, yaml
+          with open('src/mlibc/ci/bootstrap.yml') as f:
+              y = yaml.safe_load(f)
+          src = [s for s in y['sources'] if s['name'] == 'linux']
+          pkg = [p for p in y['packages'] if p['name'] == 'linux-headers']
+          print(hashlib.sha256(json.dumps([src, pkg], sort_keys=True).encode()).hexdigest()[:16])
+          EOF
+          )
+          echo "key=linux-headers-${{matrix.arch}}-$hash" >> "$GITHUB_OUTPUT"
+      - name: Restore cached headers
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: linux-headers.tar
+          key: ${{steps.key.outputs.key}}
+      - name: Build headers
+        if: ${{steps.cache.outputs.cache-hit != 'true'}}
+        run: |
+          pip install --break-system-packages -U xbstrap
+          mkdir -p build/
+          cp src/mlibc/ci/bootstrap.yml src/
+          cat > build/bootstrap-site.yml << EOF
+          define_options:
+            arch: ${{matrix.arch}}
+          EOF
+          (
+            cd build
+            xbstrap init ../src
+            xbstrap install linux-headers
+          )
+          tar -C build/packages -cf linux-headers.tar linux-headers
+      - name: Upload headers
+        if: ${{github.event_name != 'push'}}
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-headers-${{matrix.arch}}
+          path: linux-headers.tar
+          retention-days: 7
