@@ -18,7 +18,6 @@ long double frexpl(long double x, int *e)
 		} else *e = 0;
 		return x;
 	} else if (ee == 0x7fff) {
-		*e = 0;
 		return x;
 	}
 
