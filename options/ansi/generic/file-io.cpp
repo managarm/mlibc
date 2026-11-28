@@ -731,6 +731,17 @@ void flush_all_files() {
 	}
 }
 
+void flush_line_buffered_files() {
+	frg::unique_lock list_lock(mlibc::global_file_list_mutex);
+	for(auto it : global_file_list()) {
+		frg::unique_lock lock(it->_lock);
+		if(it->bufmode() != buffer_mode::line_buffer)
+			continue;
+		if(int e = it->flush(); e && e != ESPIPE)
+			it->__status_bits |= __MLIBC_ERROR_BIT;
+	}
+}
+
 } // namespace mlibc
 
 int fileno_unlocked(FILE *file_base) {

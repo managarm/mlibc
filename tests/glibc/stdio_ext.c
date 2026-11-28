@@ -129,9 +129,26 @@ static void test_locking(void) {
 	fclose(f);
 }
 
+static void test_flushlbf(void) {
+	FILE *f = tmpfile();
+	assert(f != NULL);
+	setvbuf(f, NULL, _IOLBF, 0);
+
+	fputs("abc", f);
+	size_t pending = __fpending(f);
+	assert(pending == 3);
+
+	_flushlbf();
+	pending = __fpending(f);
+	assert(pending == 0);
+
+	fclose(f);
+}
+
 int main() {
 	test_access_modes();
 	test_locking();
+	test_flushlbf();
 
 	FILE *f = fopen("/dev/zero", "r");
 	assert(f != NULL);

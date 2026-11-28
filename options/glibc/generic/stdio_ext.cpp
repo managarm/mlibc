@@ -58,8 +58,7 @@ int __fsetlocking(FILE *file_base, int state) {
 }
 
 void _flushlbf(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::flush_line_buffered_files();
 }
 
 // The following functions are defined by musl.

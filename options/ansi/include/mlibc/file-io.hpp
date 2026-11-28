@@ -165,6 +165,9 @@ void file_dispose_cb(abstract_file *base) {
 // after the program's destructors, so that stdio stays usable in them.
 void flush_all_files();
 
+// Flushes every open line-buffered FILE, taking each file's lock.
+void flush_line_buffered_files();
+
 } // namespace mlibc
 
 #endif // MLIBC_FILE_IO_HPP
