@@ -8,10 +8,8 @@
 #include <mlibc/elf/startup.h>
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
-
-extern "C" void __dlapi_enter(uintptr_t *);
-
-extern char **environ;
+#include <mlibc/init-priority.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 namespace {
 
@@ -55,12 +53,15 @@ __mlibc_sigentry(int which, siginfo_t *siginfo, void *handler,
 	__builtin_unreachable();
 }
 
-extern "C" void
-__mlibc_entry(int (*main_fn)(int argc, char *argv[], char *env[])) {
-	// TODO: call __dlapi_enter, otherwise static builds will break (see
-	// Linux sysdeps)
+[[gnu::constructor(MLIBC_INIT_PRIORITY_ENTRY)]]
+static void install_sigentry() {
 	sys_sigentry((void *)__mlibc_sigentry);
-	auto result = main_fn(mlibc::entry_stack.argc, mlibc::entry_stack.argv,
-	    environ);
-	exit(result);
 }
+
+namespace mlibc {
+
+void Sysdeps<PreMainHook>::operator()() {
+	// This keeps the constructor above in the static builds
+}
+
+} // mlibc

@@ -21,7 +21,8 @@ struct DemoSysdepTags :
 	Open,
 	VmMap,
 	VmUnmap,
-	ClockGet
+	ClockGet,
+	PreMainHook // Optional
 {};
 
 template<typename Tag>

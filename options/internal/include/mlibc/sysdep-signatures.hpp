@@ -56,6 +56,7 @@ SYSDEP_FUNC(TpSet, void *pointer);
 #if defined(__riscv)
 SYSDEP_FUNC(RiscvHwprobe, struct riscv_hwprobe *pairs, size_t pair_count, size_t cpusetsize, cpu_set_t *cpus, unsigned int flags);
 #endif
+SYSDEP_FUNC_RET(void, PreMainHook);
 
 // ANSI option sysdeps
 SYSDEP_FUNC_NORETURN(Exit, int status);
