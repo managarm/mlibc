@@ -69,7 +69,6 @@ namespace {
 
 abstract_file::abstract_file(void (*do_dispose)(abstract_file *))
 : _type{stream_type::unknown}, _bufmode{buffer_mode::unknown}, _do_dispose{do_dispose} {
-	// TODO: For __fwriting to work correctly, set the __io_mode to 1 if the write is write-only.
 	__buffer_ptr = nullptr;
 	__unget_ptr = nullptr;
 	__buffer_size = 4096;
@@ -78,7 +77,7 @@ abstract_file::abstract_file(void (*do_dispose)(abstract_file *))
 	__valid_limit = 0;
 	__dirty_begin = 0;
 	__dirty_end = 0;
-	__io_mode = 0;
+	__io_mode = -1;
 	__status_bits = 0;
 
 	frg::unique_lock list_lock(global_file_list_mutex);
@@ -107,8 +106,17 @@ void abstract_file::dispose() {
 int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 	__ensure(max_size);
 
+	// Reading from a stream that was not opened for reading is an error.
+	// Unlike a short read, this must not set the EOF indicator.
+	if(!_readable) {
+		__status_bits |= __MLIBC_ERROR_BIT;
+		return EBADF;
+	}
+
 	if(int e = _init_bufmode(); e)
 		return e;
+
+	__io_mode = 0;
 
 	size_t unget_length = 0;
 	if (__unget_ptr != __buffer_ptr) {
@@ -136,8 +144,6 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 		*actual_size = io_size + unget_length;
 		return 0;
 	}
-
-	__io_mode = 0;
 
 	// Clear the buffer, then buffer new data.
 	if(__offset == __valid_limit) {
@@ -178,9 +184,19 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_size) {
 	__ensure(max_size);
 
+	// Writing to a stream that was not opened for writing is an error. This has to be
+	// caught here rather than in io_write(), as buffered writes would otherwise succeed
+	// until the buffer is flushed.
+	if(!_writable) {
+		__status_bits |= __MLIBC_ERROR_BIT;
+		return EBADF;
+	}
+
 	if(int e = _init_bufmode(); e)
 		return e;
 	if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer) {
+		__io_mode = 1;
+
 		// As we do not buffer, nothing can be dirty.
 		__ensure(__dirty_begin == __dirty_end);
 		size_t io_size;
@@ -253,8 +269,15 @@ int abstract_file::unget(char c) {
 		return EOF;
 	else {
 		*(--__unget_ptr) = c;
+		__io_mode = 0;
 		return c;
 	}
+}
+
+void abstract_file::set_access_mode(int open_flags) {
+	int access = open_flags & O_ACCMODE;
+	_readable = access == O_RDONLY || access == O_RDWR;
+	_writable = access == O_WRONLY || access == O_RDWR;
 }
 
 int abstract_file::update_bufmode(buffer_mode mode) {
@@ -551,9 +574,10 @@ int fd_file::reopen(const char *path, const char *mode) {
 	__unget_ptr = nullptr;
 	__buffer_size = 4096;
 	purge();
-	__io_mode = 0;
+	__io_mode = -1;
 	__status_bits = 0;
 	_reset_type_and_bufmode();
+	set_access_mode(mode_flags);
 	_orientation = stream_orientation::none;
 	_mbstate = {};
 
@@ -696,6 +720,10 @@ namespace {
 		stdout_box.initialize(1);
 		stderr_box.initialize(2, nullptr, true);
 
+		stdin_box->set_access_mode(O_RDONLY);
+		stdout_box->set_access_mode(O_WRONLY);
+		stderr_box->set_access_mode(O_WRONLY);
+
 		stdin = stdin_box.get();
 		stdout = stdout_box.get();
 		stderr = stderr_box.get();
@@ -715,6 +743,17 @@ void flush_all_files() {
 		if(int e = it->flush(); e && !processIsExiting.load(std::memory_order_relaxed))
 			infoLogger() << "mlibc warning: Failed to flush file before exit()"
 					<< frg::endlog;
+	}
+}
+
+void flush_line_buffered_files() {
+	frg::unique_lock list_lock(mlibc::global_file_list_mutex);
+	for(auto it : global_file_list()) {
+		frg::unique_lock lock(it->_lock);
+		if(it->bufmode() != buffer_mode::line_buffer)
+			continue;
+		if(int e = it->flush(); e && e != ESPIPE)
+			it->__status_bits |= __MLIBC_ERROR_BIT;
 	}
 }
 
@@ -740,8 +779,10 @@ FILE *fopen(const char *path, const char *mode) {
 		return nullptr;
 	}
 
-	return frg::construct<mlibc::fd_file>(getAllocator(), fd,
+	auto file = frg::construct<mlibc::fd_file>(getAllocator(), fd,
 			mlibc::file_dispose_cb<mlibc::fd_file>);
+	file->set_access_mode(flags);
+	return file;
 }
 
 #if __MLIBC_LINUX_OPTION

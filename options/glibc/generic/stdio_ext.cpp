@@ -2,12 +2,14 @@
 #include <mlibc/file-io.hpp>
 #include <stdio_ext.h>
 #include <bits/ensure.h>
-#include <mlibc/debug.hpp>
 
 size_t __fbufsize(FILE *file_base) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	// returns the size of the buffer currently used by the given stream
 	// note that this _excludes_ the size of the area reserved for ungetc
-	return file_base->__buffer_size;
+	if(!file->__buffer_ptr || file->bufmode() == mlibc::buffer_mode::no_buffer)
+		return 0;
+	return file->__buffer_size;
 }
 
 size_t __fpending(FILE *file_base) {
@@ -22,21 +24,22 @@ int __flbf(FILE *file_base) {
 	return file->bufmode() == mlibc::buffer_mode::line_buffer;
 }
 
-int __freadable(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int __freadable(FILE *file_base) {
+	return static_cast<mlibc::abstract_file *>(file_base)->readable();
 }
-int __fwritable(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int __fwritable(FILE *file_base) {
+	return static_cast<mlibc::abstract_file *>(file_base)->writable();
 }
 
 int __freading(FILE *file_base) {
-	return file_base->__io_mode == 0;
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	return !file->writable() || file->__io_mode == 0;
 }
 
 int __fwriting(FILE *file_base) {
-	return file_base->__io_mode == 1;
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	return !file->readable() || file->__io_mode == 1;
 }
 
 int __fsetlocking(FILE *file_base, int state) {
@@ -57,28 +60,46 @@ int __fsetlocking(FILE *file_base, int state) {
 }
 
 void _flushlbf(void) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	mlibc::flush_line_buffered_files();
 }
 
 // The following functions are defined by musl.
 
 size_t __freadahead(FILE *file_base) {
-	if(file_base->__io_mode != 0) {
-		mlibc::infoLogger() << "mlibc: __freadahead() called but file is not open for reading" << frg::endlog;
+	if(file_base->__io_mode != 0)
 		return 0;
+	return (file_base->__buffer_ptr - file_base->__unget_ptr)
+		+ (file_base->__valid_limit - file_base->__offset);
+}
+
+const char *__freadptr(FILE *file_base, size_t *size) {
+	if(file_base->__io_mode != 0)
+		return nullptr;
+
+	// Bytes pushed back by ungetc() are consumed before the buffer contents,
+	// and they are not necessarily contiguous with the buffered data.
+	if(file_base->__unget_ptr != file_base->__buffer_ptr) {
+		*size = file_base->__buffer_ptr - file_base->__unget_ptr;
+		return file_base->__unget_ptr;
 	}
-	return file_base->__valid_limit - file_base->__offset;
+
+	if(file_base->__offset == file_base->__valid_limit)
+		return nullptr;
+
+	*size = file_base->__valid_limit - file_base->__offset;
+	return file_base->__buffer_ptr + file_base->__offset;
 }
 
-const char *__freadptr(FILE *, size_t *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
-}
+void __freadptrinc(FILE *file_base, size_t increment) {
+	if(file_base->__unget_ptr != file_base->__buffer_ptr) {
+		auto unget_length = size_t(file_base->__buffer_ptr - file_base->__unget_ptr);
+		auto chunk = frg::min(unget_length, increment);
+		file_base->__unget_ptr += chunk;
+		increment -= chunk;
+	}
 
-void __freadptrinc(FILE *, size_t) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+	__ensure(file_base->__offset + increment <= file_base->__valid_limit);
+	file_base->__offset += increment;
 }
 
 void __fseterr(FILE *file_base) {
