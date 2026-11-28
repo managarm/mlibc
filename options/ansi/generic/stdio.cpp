@@ -1146,23 +1146,30 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args, mlibc::localei
 			case 'i': {
 				bool is_negative = false;
 				unsigned long long res = 0;
+				int consumed = 0;
 				char c = handler.look_ahead();
 				EOF_CHECK(c == '\0');
 
 				if(c == '-') {
 					handler.consume();
+					consumed++;
 					is_negative = true;
-				} else if(c == '+')
+				} else if(c == '+') {
 					handler.consume();
+					consumed++;
+				}
 
-				if(*fmt == 'i' && handler.look_ahead() == '0') {
+				if(*fmt == 'i' && (!width || consumed < width) && handler.look_ahead() == '0') {
 					handler.consume();
+					consumed++;
 					c = handler.look_ahead();
-					if(tolower(c) == 'x') {
+					if(tolower(c) == 'x' && (!width || consumed < width)) {
 						handler.consume();
+						consumed++;
 						base = 16;
-					} else if(tolower(c) == 'b') {
+					} else if(tolower(c) == 'b' && (!width || consumed < width)) {
 						handler.consume();
+						consumed++;
 						base = 2;
 					} else {
 						base = 8;
@@ -1173,15 +1180,16 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args, mlibc::localei
 				int count = 0;
 				switch (base) {
 					case 10:
-						NOMATCH_CHECK(!isdigit(c));
-						while (c >= '0' && c <= '9') {
+						NOMATCH_CHECK(!isdigit(c) || (width && consumed >= width));
+						while ((!width || consumed < width) && c >= '0' && c <= '9') {
 							handler.consume();
+							consumed++;
 							res = res * 10 + (c - '0');
 							c = handler.look_ahead();
 						}
 						break;
 					case 16:
-						while (true) {
+						while (!width || consumed < width) {
 							if (c >= '0' && c <= '9') {
 								handler.consume();
 								res = res * 16 + (c - '0');
@@ -1195,25 +1203,29 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args, mlibc::localei
 								break;
 							}
 							count++;
+							consumed++;
 							c = handler.look_ahead();
 						}
 						NOMATCH_CHECK(count == 0);
 						break;
 					case 8:
-						while (c >= '0' && c <= '7') {
+						while ((!width || consumed < width) && c >= '0' && c <= '7') {
 							handler.consume();
+							consumed++;
 							res = res * 8 + (c - '0');
 							c = handler.look_ahead();
 						}
 						// no need for a match check, the starting 0 was already consumed
 						break;
 					case 2:
-						NOMATCH_CHECK(c != '0' && c != '1');
-						while (c == '0' || c == '1') {
+						while ((!width || consumed < width) && (c == '0' || c == '1')) {
 							handler.consume();
+							consumed++;
 							res = res * 2 + (c - '0');
+							count++;
 							c = handler.look_ahead();
 						}
+						NOMATCH_CHECK(count == 0);
 						break;
 				}
 
@@ -1228,19 +1240,24 @@ int do_scanf(H &handler, const Char *fmt, __builtin_va_list args, mlibc::localei
 			case 'o': {
 				bool is_negative = false;
 				unsigned long long res = 0;
+				int consumed = 0;
 				char c = handler.look_ahead();
 				EOF_CHECK(c == '\0');
 
 				if(c == '-') {
 					handler.consume();
+					consumed++;
 					is_negative = true;
-				} else if(c == '+')
+				} else if(c == '+') {
 					handler.consume();
+					consumed++;
+				}
 
 				c = handler.look_ahead();
-				NOMATCH_CHECK(!(c >= '0' && c <= '7'));
-				while (c >= '0' && c <= '7') {
+				NOMATCH_CHECK(!(c >= '0' && c <= '7') || (width && consumed >= width));
+				while ((!width || consumed < width) && c >= '0' && c <= '7') {
 					handler.consume();
+					consumed++;
 					res = res * 8 + (c - '0');
 					c = handler.look_ahead();
 				}
