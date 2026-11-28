@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
+#include <errno.h>
 #include <string.h>
 
 #ifdef USE_HOST_LIBC
@@ -17,6 +18,8 @@ int main() {
 	char completestr[] = "mlibc fopen test mlibc appending";
 	char buffer[100];
 	char buffer2[100];
+	size_t count;
+	int ch;
 
 	// Clear all the buffers to zero.
 	memset(buffer, 0, sizeof(buffer));
@@ -51,6 +54,50 @@ int main() {
 	assert(fread(buffer2, 1, sizeof(completestr) - 1, file));
 	assert(!strcmp(buffer2, completestr));
 	fclose(file);
+
+	// Writing to a stream that was not opened for writing must fail even though the
+	// write would otherwise just land in the buffer.
+	file = fopen(TEST_FILE, "r");
+	assert(file);
+	errno = 0;
+	count = fwrite(str, 1, sizeof(str) - 1, file);
+	assert(count == 0);
+	assert(errno == EBADF);
+	assert(ferror(file));
+	clearerr(file);
+	errno = 0;
+	ch = fputc('x', file);
+	assert(ch == EOF);
+	assert(errno == EBADF);
+	assert(ferror(file));
+	fclose(file);
+
+	// Likewise, reading from a stream that was not opened for reading fails and,
+	// unlike a short read, must not set the EOF indicator.
+	file = fopen(TEST_FILE, "w");
+	assert(file);
+	errno = 0;
+	count = fread(buffer, 1, sizeof(buffer), file);
+	assert(count == 0);
+	assert(errno == EBADF);
+	assert(ferror(file));
+	assert(!feof(file));
+	fclose(file);
+
+	// The standard streams carry an access mode as well.
+	errno = 0;
+	count = fwrite(str, 1, 1, stdin);
+	assert(count == 0);
+	assert(errno == EBADF);
+	assert(ferror(stdin));
+	clearerr(stdin);
+
+	errno = 0;
+	count = fread(buffer, 1, 1, stdout);
+	assert(count == 0);
+	assert(errno == EBADF);
+	assert(ferror(stdout));
+	clearerr(stdout);
 
 	// Check that stdout, stdin and stderr can be closed by the application (issue #12).
 	fclose(stdout);

@@ -106,6 +106,13 @@ void abstract_file::dispose() {
 int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 	__ensure(max_size);
 
+	// Reading from a stream that was not opened for reading is an error.
+	// Unlike a short read, this must not set the EOF indicator.
+	if(!_readable) {
+		__status_bits |= __MLIBC_ERROR_BIT;
+		return EBADF;
+	}
+
 	if(int e = _init_bufmode(); e)
 		return e;
 
@@ -176,6 +183,14 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 
 int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_size) {
 	__ensure(max_size);
+
+	// Writing to a stream that was not opened for writing is an error. This has to be
+	// caught here rather than in io_write(), as buffered writes would otherwise succeed
+	// until the buffer is flushed.
+	if(!_writable) {
+		__status_bits |= __MLIBC_ERROR_BIT;
+		return EBADF;
+	}
 
 	if(int e = _init_bufmode(); e)
 		return e;
