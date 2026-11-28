@@ -22,13 +22,12 @@ int __flbf(FILE *file_base) {
 	return file->bufmode() == mlibc::buffer_mode::line_buffer;
 }
 
-int __freadable(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+int __freadable(FILE *file_base) {
+	return static_cast<mlibc::abstract_file *>(file_base)->readable();
 }
-int __fwritable(FILE *) {
-	__ensure(!"Not implemented");
-	__builtin_unreachable();
+
+int __fwritable(FILE *file_base) {
+	return static_cast<mlibc::abstract_file *>(file_base)->writable();
 }
 
 int __freading(FILE *file_base) {

@@ -4,6 +4,34 @@
 #include <stdio_ext.h>
 #include <string.h>
 
+static void test_access_modes(void) {
+	int readable = __freadable(stdin);
+	int writable = __fwritable(stdin);
+	assert(readable != 0);
+	assert(writable == 0);
+
+	readable = __freadable(stderr);
+	writable = __fwritable(stderr);
+	assert(readable == 0);
+	assert(writable != 0);
+
+	FILE *f = fopen("/dev/null", "w");
+	assert(f != NULL);
+	readable = __freadable(f);
+	writable = __fwritable(f);
+	assert(readable == 0);
+	assert(writable != 0);
+	fclose(f);
+
+	f = tmpfile();
+	assert(f != NULL);
+	readable = __freadable(f);
+	writable = __fwritable(f);
+	assert(readable != 0);
+	assert(writable != 0);
+	fclose(f);
+}
+
 static void *try_lock_thread(void *arg) {
 	FILE *f = arg;
 	int ret = ftrylockfile(f);
@@ -54,6 +82,7 @@ static void test_locking(void) {
 }
 
 int main() {
+	test_access_modes();
 	test_locking();
 
 	FILE *f = fopen("/dev/zero", "r");

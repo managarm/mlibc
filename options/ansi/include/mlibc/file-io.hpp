@@ -104,10 +104,23 @@ private:
 	stream_type _type;
 	buffer_mode _bufmode;
 	void (*_do_dispose)(abstract_file *);
+	bool _readable = true;
+	bool _writable = true;
 
 public:
 	buffer_mode bufmode() const {
 		return _bufmode;
+	}
+
+	// Takes the access mode from open() flags. Streams default to read-write.
+	void set_access_mode(int open_flags);
+
+	bool readable() const {
+		return _readable;
+	}
+
+	bool writable() const {
+		return _writable;
 	}
 
 	// lock for file operations

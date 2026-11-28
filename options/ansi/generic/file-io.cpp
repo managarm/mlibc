@@ -257,6 +257,12 @@ int abstract_file::unget(char c) {
 	}
 }
 
+void abstract_file::set_access_mode(int open_flags) {
+	int access = open_flags & O_ACCMODE;
+	_readable = access == O_RDONLY || access == O_RDWR;
+	_writable = access == O_WRONLY || access == O_RDWR;
+}
+
 int abstract_file::update_bufmode(buffer_mode mode) {
 	// setvbuf() has undefined behavior if I/O has been performed.
 	__ensure(__dirty_begin == __dirty_end
@@ -554,6 +560,7 @@ int fd_file::reopen(const char *path, const char *mode) {
 	__io_mode = 0;
 	__status_bits = 0;
 	_reset_type_and_bufmode();
+	set_access_mode(mode_flags);
 	_orientation = stream_orientation::none;
 	_mbstate = {};
 
@@ -696,6 +703,10 @@ namespace {
 		stdout_box.initialize(1);
 		stderr_box.initialize(2, nullptr, true);
 
+		stdin_box->set_access_mode(O_RDONLY);
+		stdout_box->set_access_mode(O_WRONLY);
+		stderr_box->set_access_mode(O_WRONLY);
+
 		stdin = stdin_box.get();
 		stdout = stdout_box.get();
 		stderr = stderr_box.get();
@@ -740,8 +751,10 @@ FILE *fopen(const char *path, const char *mode) {
 		return nullptr;
 	}
 
-	return frg::construct<mlibc::fd_file>(getAllocator(), fd,
+	auto file = frg::construct<mlibc::fd_file>(getAllocator(), fd,
 			mlibc::file_dispose_cb<mlibc::fd_file>);
+	file->set_access_mode(flags);
+	return file;
 }
 
 #if __MLIBC_LINUX_OPTION

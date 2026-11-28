@@ -148,6 +148,7 @@ FILE *popen(const char *command, const char *typestr) {
 		auto file = static_cast<popen_file *>(ret);
 
 		file->set_popen_pid(child);
+		file->set_access_mode(is_write ? O_WRONLY : O_RDONLY);
 
 		if (cloexec == true) {
 			fcntl(file->fd(), F_SETFD, FD_CLOEXEC);
@@ -162,8 +163,11 @@ FILE *popen(const char *command, const char *typestr) {
 }
 
 FILE *open_memstream(char **buf, size_t *sizeloc) {
-	return frg::construct<mlibc::memstream_mem_file>(getAllocator(), buf, sizeloc, O_RDWR,
+	auto file = frg::construct<mlibc::memstream_mem_file>(getAllocator(), buf, sizeloc, O_RDWR,
 			mlibc::file_dispose_cb<mlibc::memstream_mem_file>);
+	// open_memstream() streams are write-only.
+	file->set_access_mode(O_WRONLY);
+	return file;
 }
 
 int fseeko(FILE *file_base, off_t offset, int whence) {
