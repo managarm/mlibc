@@ -2493,16 +2493,18 @@ int vasprintf(char **out, const char *format, __builtin_va_list args) {
 
 // Linux unlocked I/O extensions.
 
+// These always take the lock, even under FSETLOCKING_BYCALLER: that mode only
+// disables the locking that stdio functions perform internally.
 void flockfile(FILE *file_base) {
-	static_cast<mlibc::abstract_file *>(file_base)->_lock.lock();
+	static_cast<mlibc::abstract_file *>(file_base)->_lock.futexlock.lock();
 }
 
 void funlockfile(FILE *file_base) {
-	static_cast<mlibc::abstract_file *>(file_base)->_lock.unlock();
+	static_cast<mlibc::abstract_file *>(file_base)->_lock.futexlock.unlock();
 }
 
 int ftrylockfile(FILE *file_base) {
-	return static_cast<mlibc::abstract_file *>(file_base)->_lock.try_lock() ? 0 : 1;
+	return static_cast<mlibc::abstract_file *>(file_base)->_lock.futexlock.try_lock() ? 0 : 1;
 }
 
 void clearerr_unlocked(FILE *file_base) {

@@ -1,9 +1,61 @@
 #include <assert.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdio_ext.h>
 #include <string.h>
 
+static void *try_lock_thread(void *arg) {
+	FILE *f = arg;
+	int ret = ftrylockfile(f);
+	if(!ret)
+		funlockfile(f);
+	return (void *)(long)ret;
+}
+
+static int try_lock_from_other_thread(FILE *f) {
+	pthread_t thread;
+	int ret = pthread_create(&thread, NULL, try_lock_thread, f);
+	assert(ret == 0);
+	void *result;
+	ret = pthread_join(thread, &result);
+	assert(ret == 0);
+	return (int)(long)result;
+}
+
+static void test_locking(void) {
+	FILE *f = tmpfile();
+	assert(f != NULL);
+
+	int state = __fsetlocking(f, FSETLOCKING_QUERY);
+	assert(state == FSETLOCKING_INTERNAL);
+	state = __fsetlocking(f, FSETLOCKING_BYCALLER);
+	assert(state == FSETLOCKING_INTERNAL);
+	state = __fsetlocking(f, FSETLOCKING_QUERY);
+	assert(state == FSETLOCKING_BYCALLER);
+
+	flockfile(f);
+	int locked = try_lock_from_other_thread(f);
+	assert(locked != 0);
+	funlockfile(f);
+	locked = try_lock_from_other_thread(f);
+	assert(locked == 0);
+
+	state = __fsetlocking(f, FSETLOCKING_INTERNAL);
+	assert(state == FSETLOCKING_BYCALLER);
+
+	flockfile(f);
+	__fsetlocking(f, FSETLOCKING_BYCALLER);
+	funlockfile(f);
+	__fsetlocking(f, FSETLOCKING_INTERNAL);
+	locked = try_lock_from_other_thread(f);
+	assert(locked == 0);
+
+	fclose(f);
+}
+
 int main() {
+	test_locking();
+
 	FILE *f = fopen("/dev/zero", "r");
 	assert(f != NULL);
 
