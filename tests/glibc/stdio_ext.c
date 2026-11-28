@@ -7,28 +7,76 @@
 static void test_access_modes(void) {
 	int readable = __freadable(stdin);
 	int writable = __fwritable(stdin);
+	int reading = __freading(stdin);
+	int writing = __fwriting(stdin);
 	assert(readable != 0);
 	assert(writable == 0);
+	assert(reading != 0);
+	assert(writing == 0);
 
 	readable = __freadable(stderr);
 	writable = __fwritable(stderr);
+	reading = __freading(stderr);
+	writing = __fwriting(stderr);
 	assert(readable == 0);
 	assert(writable != 0);
+	assert(reading == 0);
+	assert(writing != 0);
 
 	FILE *f = fopen("/dev/null", "w");
 	assert(f != NULL);
 	readable = __freadable(f);
 	writable = __fwritable(f);
+	reading = __freading(f);
+	writing = __fwriting(f);
 	assert(readable == 0);
 	assert(writable != 0);
+	assert(reading == 0);
+	assert(writing != 0);
 	fclose(f);
 
 	f = tmpfile();
 	assert(f != NULL);
 	readable = __freadable(f);
 	writable = __fwritable(f);
+	reading = __freading(f);
+	writing = __fwriting(f);
 	assert(readable != 0);
 	assert(writable != 0);
+	assert(reading == 0);
+	assert(writing == 0);
+
+	fputc('a', f);
+	reading = __freading(f);
+	writing = __fwriting(f);
+	assert(reading == 0);
+	assert(writing != 0);
+
+	rewind(f);
+	int c = fgetc(f);
+	assert(c == 'a');
+	reading = __freading(f);
+	writing = __fwriting(f);
+	assert(reading != 0);
+	assert(writing == 0);
+	fclose(f);
+
+	f = tmpfile();
+	assert(f != NULL);
+	setvbuf(f, NULL, _IONBF, 0);
+	fputc('a', f);
+	reading = __freading(f);
+	writing = __fwriting(f);
+	assert(reading == 0);
+	assert(writing != 0);
+
+	rewind(f);
+	c = fgetc(f);
+	assert(c == 'a');
+	reading = __freading(f);
+	writing = __fwriting(f);
+	assert(reading != 0);
+	assert(writing == 0);
 	fclose(f);
 }
 

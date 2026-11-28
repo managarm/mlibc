@@ -31,11 +31,13 @@ int __fwritable(FILE *file_base) {
 }
 
 int __freading(FILE *file_base) {
-	return file_base->__io_mode == 0;
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	return !file->writable() || file->__io_mode == 0;
 }
 
 int __fwriting(FILE *file_base) {
-	return file_base->__io_mode == 1;
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
+	return !file->readable() || file->__io_mode == 1;
 }
 
 int __fsetlocking(FILE *file_base, int state) {

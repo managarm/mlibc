@@ -69,7 +69,6 @@ namespace {
 
 abstract_file::abstract_file(void (*do_dispose)(abstract_file *))
 : _type{stream_type::unknown}, _bufmode{buffer_mode::unknown}, _do_dispose{do_dispose} {
-	// TODO: For __fwriting to work correctly, set the __io_mode to 1 if the write is write-only.
 	__buffer_ptr = nullptr;
 	__unget_ptr = nullptr;
 	__buffer_size = 4096;
@@ -78,7 +77,7 @@ abstract_file::abstract_file(void (*do_dispose)(abstract_file *))
 	__valid_limit = 0;
 	__dirty_begin = 0;
 	__dirty_end = 0;
-	__io_mode = 0;
+	__io_mode = -1;
 	__status_bits = 0;
 
 	frg::unique_lock list_lock(global_file_list_mutex);
@@ -110,6 +109,8 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 	if(int e = _init_bufmode(); e)
 		return e;
 
+	__io_mode = 0;
+
 	size_t unget_length = 0;
 	if (__unget_ptr != __buffer_ptr) {
 		unget_length = frg::min(max_size, (size_t)(__buffer_ptr - __unget_ptr));
@@ -136,8 +137,6 @@ int abstract_file::read(char *buffer, size_t max_size, size_t *actual_size) {
 		*actual_size = io_size + unget_length;
 		return 0;
 	}
-
-	__io_mode = 0;
 
 	// Clear the buffer, then buffer new data.
 	if(__offset == __valid_limit) {
@@ -181,6 +180,8 @@ int abstract_file::write(const char *buffer, size_t max_size, size_t *actual_siz
 	if(int e = _init_bufmode(); e)
 		return e;
 	if(globallyDisableBuffering || _bufmode == buffer_mode::no_buffer) {
+		__io_mode = 1;
+
 		// As we do not buffer, nothing can be dirty.
 		__ensure(__dirty_begin == __dirty_end);
 		size_t io_size;
@@ -253,6 +254,7 @@ int abstract_file::unget(char c) {
 		return EOF;
 	else {
 		*(--__unget_ptr) = c;
+		__io_mode = 0;
 		return c;
 	}
 }
@@ -557,7 +559,7 @@ int fd_file::reopen(const char *path, const char *mode) {
 	__unget_ptr = nullptr;
 	__buffer_size = 4096;
 	purge();
-	__io_mode = 0;
+	__io_mode = -1;
 	__status_bits = 0;
 	_reset_type_and_bufmode();
 	set_access_mode(mode_flags);

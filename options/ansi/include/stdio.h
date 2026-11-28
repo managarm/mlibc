@@ -50,8 +50,8 @@ struct __mlibc_file_base {
 	/* to ungetc will trigger an allocation. */
 	char *__unget_ptr;
 
-	/* 0 if we are currently reading from the buffer. */
-	/* 1 if we are currently writing to the buffer. */
+	/* 0 if the last operation was a read, 1 if it was a write, */
+	/* -1 if no I/O has been performed since the stream was opened. */
 	/* This is only really important for pipe-like streams. */
 	int __io_mode;
 
