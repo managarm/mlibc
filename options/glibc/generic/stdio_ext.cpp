@@ -4,9 +4,12 @@
 #include <bits/ensure.h>
 
 size_t __fbufsize(FILE *file_base) {
+	auto file = static_cast<mlibc::abstract_file *>(file_base);
 	// returns the size of the buffer currently used by the given stream
 	// note that this _excludes_ the size of the area reserved for ungetc
-	return file_base->__buffer_size;
+	if(!file->__buffer_ptr || file->bufmode() == mlibc::buffer_mode::no_buffer)
+		return 0;
+	return file->__buffer_size;
 }
 
 size_t __fpending(FILE *file_base) {

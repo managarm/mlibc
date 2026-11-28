@@ -153,6 +153,10 @@ static void test_unbuffered(void) {
 	fputs("abc", f);
 	rewind(f);
 
+	// glibc reports a buffer size of 1 for unbuffered streams.
+	size_t bufsize = __fbufsize(f);
+	assert(bufsize == 0);
+
 	int c = fgetc(f);
 	assert(c == 'a');
 	size_t ahead = __freadahead(f);
