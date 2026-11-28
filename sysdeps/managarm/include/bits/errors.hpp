@@ -171,6 +171,8 @@ inline int operator|(managarm::posix::Errors e, ToErrno) {
 			return EINTR;
 		case managarm::posix::Errors::CROSS_DEVICE_LINK:
 			return EXDEV;
+		case managarm::posix::Errors::NO_DEVICE:
+			return ENODEV;
 	}
 
 	mlibc::panicLogger() << "unhandled managarm::posix::Errors " << static_cast<int32_t>(e)
