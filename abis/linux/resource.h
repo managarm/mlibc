@@ -28,13 +28,25 @@ extern "C" {
 #define RLIMIT_DATA 2
 #define RLIMIT_STACK 3
 #define RLIMIT_CORE 4
+
+#ifndef __mips__
 #define RLIMIT_NOFILE 7
 #define RLIMIT_AS 9
+#define __RLIMIT_RSS 5
+#define __RLIMIT_NPROC 6
+#define __RLIMIT_MEMLOCK 8
+#else
+#define RLIMIT_NOFILE  5
+#define RLIMIT_AS      6
+#define __RLIMIT_RSS     7
+#define __RLIMIT_NPROC   8
+#define __RLIMIT_MEMLOCK 9
+#endif
 
 #if defined(_DEFAULT_SOURCE)
-#define RLIMIT_RSS 5
-#define RLIMIT_NPROC 6
-#define RLIMIT_MEMLOCK 8
+#define RLIMIT_RSS __RLIMIT_RSS
+#define RLIMIT_NPROC __RLIMIT_NPROC
+#define RLIMIT_MEMLOCK __RLIMIT_MEMLOCK
 #define RLIMIT_LOCKS 10
 #define RLIMIT_SIGPENDING 11
 #define RLIMIT_MSGQUEUE 12

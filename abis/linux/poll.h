@@ -14,11 +14,11 @@
 #if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__) || defined(__riscv) || defined(__loongarch64)
 #define POLLWRNORM 0x0100
 #define POLLWRBAND 0x0200
-#elif defined(__m68k__)
+#elif defined(__m68k__) || defined(__mips64)
 #define POLLWRNORM POLLOUT
 #define POLLWRBAND 0x0100
 #else
-#warning "Missing poll.h definitions for this architecture!"
+#error "Missing poll.h definitions for this architecture!"
 #endif
 
 #endif /* _ABIBITS_POLL_H */

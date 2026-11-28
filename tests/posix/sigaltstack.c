@@ -56,6 +56,9 @@ int main() {
 #elif defined(__loongarch64)
 	asm volatile ("addi.d $sp, $r0, 0\n"
 		"\t" "st.d $r0, $sp, 0");
+#elif defined(__mips64)
+	asm volatile ("move $sp, $zero\n"
+		"\t" "sd $zero, 0($sp)");
 #else
 #	error Unknown architecture
 #endif

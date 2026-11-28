@@ -392,8 +392,8 @@ class Comparison:
 
 def cc_name():
     if args.clang_version:
-        return [f"clang-{args.clang_version}", f"--target={f"{args.arch}-linux-gnu"}"]
-    return ["clang", f"--target={f"{args.arch}-linux-gnu"}"]
+        return [f"clang-{args.clang_version}", f"--target={args.target}"]
+    return ["clang", f"--target={args.target}"]
 
 
 def cxx_name():
@@ -402,8 +402,8 @@ def cxx_name():
     if args.arch == "m68k":
         return ["m68k-linux-gnu-g++"]
     if args.clang_version:
-        return [f"clang++-{args.clang_version}", f"--target={f"{args.arch}-linux-gnu"}"]
-    return ["clang++", f"--target={f"{args.arch}-linux-gnu"}"]
+        return [f"clang++-{args.clang_version}", f"--target={args.target}"]
+    return ["clang++", f"--target={args.target}"]
 
 
 def parse(
@@ -415,9 +415,13 @@ def parse(
     clang_args = [f"-I{resource_dir}"]
     clang_args += [f"-I{p}" for p in config["includes"]]
     clang_args += [f"-I{base_dir}"]
-    clang_args += [f"-I{base_dir / f"{args.arch}-linux-gnu"}"]
-    clang_args += [f"--target={f"{args.arch}-linux-gnu"}"]
+    clang_args += [f"-I{base_dir / args.target}"]
+    clang_args += [f"--target={args.target}"]
     clang_args += ["-D_GNU_SOURCE", "-D_FILE_OFFSET_BITS=64", "-D_TIME_BITS=64", "-Wno-macro-redefined"]
+
+    if (args.arch == "mips64" and base_dir == args.reference and file == pathlib.Path("sys/tas.h")):
+        # libclang doesn't know about __nomips16__ attribute in glibc's sys/tas.h
+        clang_args += ["-Wno-unknown-attributes"]
 
     try:
         tu = index.parse(
@@ -873,6 +877,9 @@ if __name__ == "__main__":
         "--arch", help="target architecture", dest="arch", type=str, default="x86_64"
     )
     argparser.add_argument(
+        "--target", help="compiler target triple (defaults to <arch>-linux-gnu)", dest="target", type=str
+    )
+    argparser.add_argument(
         "--ld-library-path",
         help="additional LD_LIBRARY_PATH to supply to qemu-user",
         dest="ld_lib",
@@ -901,6 +908,8 @@ if __name__ == "__main__":
     colorama.just_fix_windows_console()
 
     args = argparser.parse_args()
+    if args.target is None:
+        args.target = f"{args.arch}-linux-gnu"
 
     config = yaml.load(args.config, yaml.CSafeLoader)
     reference_state = State(args.reference)

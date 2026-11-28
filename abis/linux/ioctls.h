@@ -3,6 +3,8 @@
 
 #include <mlibc-config.h>
 
+#include <bits/winsize.h>
+
 #if __MLIBC_LINUX_OPTION
 #include <asm/ioctls.h>
 #include <linux/sockios.h>

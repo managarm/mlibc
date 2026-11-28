@@ -55,7 +55,7 @@ struct ObjectRepository {
 	// This is primarily used to create a SharedObject for the RTLD itself.
 	SharedObject *injectObjectFromDts(frg::string_view name,
 			frg::string<LdsoAllocator> path,
-			uintptr_t base_address, elf_dyn *dynamic, uint64_t rts);
+			uintptr_t base_address, elf_dyn *dynamic, uint32_t dynamic_flags, uint64_t rts);
 
 	// This is used to create a SharedObject for the executable that we want to link.
 	SharedObject *injectObjectFromPhdrs(frg::string_view name,
@@ -123,7 +123,8 @@ private:
 enum class HashStyle {
 	none,
 	systemV,
-	gnu
+	gnu,
+	mipsXHASH
 };
 
 struct SystemVHashTableHeader {
@@ -191,6 +192,9 @@ struct SharedObject {
 	void **globalOffsetTable;
 	void *entry;
 
+	// flags from phdr->p_flags
+	uint32_t dynamicFlags = 0;
+
 	// object initialization information
 	InitFuncPtr initPtr = nullptr;
 	InitFuncPtr finiPtr = nullptr;
@@ -212,6 +216,10 @@ struct SharedObject {
 	uintptr_t hashTableOffset;
 	uintptr_t symbolTableOffset;
 	uintptr_t stringTableOffset;
+
+	#ifdef __mips__
+	frg::optional<uintptr_t> mipsSymtabno;
+	#endif
 
 	// Version tables of this shared object
 	uintptr_t versionTableOffset = 0;
@@ -526,6 +534,8 @@ private:
 	void _processRelocations(Relocation &rel);
 
 	void _setTextWritable(SharedObject *object, bool writable);
+
+	frg::optional<ObjectSymbol> _resolveSymbolByIndex(SharedObject *object, elf_info index, bool skip_resolve_local = false);
 
 public:
 	void initObjects(ObjectRepository *repository);

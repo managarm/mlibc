@@ -17,6 +17,8 @@ typedef unsigned long elf_greg_t;
 #	define ELF_NGREG (sizeof (struct user_regs_struct) / sizeof (elf_greg_t))
 #elif defined(__aarch64__) || defined(__riscv)
 #	define ELF_NGREG NGREG
+#elif defined(__mips64)
+#define ELF_NGREG 45
 #else
 #	error "Missing architecture specific code."
 #endif
